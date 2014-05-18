@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.327.2.2 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.327.2.3 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327.2.2 2013/09/23 00:57:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327.2.3 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -998,13 +998,12 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			  struct mbuf *m, int tlen, int multicast)
 {
 	int		tiflags;
-	int		todrop, dupseg;
+	int		todrop;
 	uint32_t	t_flags = 0;
 	uint64_t	*tcps;
 
 	tiflags = th->th_flags;
 	todrop  = vp->rcv_nxt - th->th_seq;
-	dupseg  = false;
 
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
@@ -1034,7 +1033,6 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			 */
 			t_flags |= TF_ACKNOW;
 			todrop = tlen;
-			dupseg = true;
 			tcps = TCP_STAT_GETREF();
 			tcps[TCP_STAT_RCVDUPPACK] += 1;
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
@@ -1103,7 +1101,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 				/* We only support this in the !NOFDREF case, which
 				 * is to say: not here.
 				 */
-				goto dropwithreset;;
+				goto dropwithreset;
 			}
 			/*
 			 * If window is closed can only take segments at
@@ -2663,12 +2661,8 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		/* XXX: make SACK have his own congestion control
-		 * struct -- rpaulo */
-		if (TCP_SACK_ENABLED(tp))
-			tcp_sack_newack(tp, th);
-		else
-			tp->t_congctl->fast_retransmit_newack(tp, th);
+		tp->t_congctl->fast_retransmit_newack(tp, th);
+
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			TCP_STATINC(TCP_STAT_RCVACKTOOMUCH);
 			goto dropafterack;
@@ -3973,7 +3967,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * to the new one.
 	 */
 	oso = so;
-	so = sonewconn(so, SS_ISCONNECTED);
+	so = sonewconn(so, true);
 	if (so == NULL)
 		goto resetandabort;
 

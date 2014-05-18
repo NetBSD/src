@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.49 2013/06/28 14:46:44 christos Exp $ */
+/* $NetBSD: mfi.c,v 1.49.2.1 2014/05/18 17:45:37 rmind Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.49 2013/06/28 14:46:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.49.2.1 2014/05/18 17:45:37 rmind Exp $");
 
 #include "bio.h"
 
@@ -184,8 +184,17 @@ static dev_type_open(mfifopen);
 static dev_type_close(mfifclose);
 static dev_type_ioctl(mfifioctl);
 const struct cdevsw mfi_cdevsw = {
-	mfifopen, mfifclose, noread, nowrite, mfifioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = mfifopen,
+	.d_close = mfifclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mfifioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver mfi_cd;
@@ -2340,7 +2349,6 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	struct mfi_pd_list	*pd;
 	int			i, found, rv = EINVAL;
 	uint8_t			mbox[MFI_MBOX_SIZE];
-	uint32_t		cmd;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate %x\n", DEVNAME(sc),
 	    bs->bs_status);
@@ -2368,21 +2376,17 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
 		mbox[2] = MFI_PD_ONLINE;
-		cmd = MD_DCMD_PD_SET_STATE;
 		break;
 
 	case BIOC_SSOFFLINE:
 		mbox[2] = MFI_PD_OFFLINE;
-		cmd = MD_DCMD_PD_SET_STATE;
 		break;
 
 	case BIOC_SSHOTSPARE:
 		mbox[2] = MFI_PD_HOTSPARE;
-		cmd = MD_DCMD_PD_SET_STATE;
 		break;
 /*
 	case BIOC_SSREBUILD:
-		cmd = MD_DCMD_PD_REBUILD;
 		break;
 */
 	default:
@@ -2945,7 +2949,7 @@ mfi_tbolt_init_desc_pool(struct mfi_softc *sc)
 	uint32_t     offset = 0;
 	uint8_t      *addr = MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
 
-	/* Request Decriptors alignement restrictions */
+	/* Request Decriptors alignment restrictions */
 	KASSERT(((uintptr_t)addr & 0xFF) == 0);
 
 	/* Skip request message pool */
@@ -3501,9 +3505,6 @@ mfifopen(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 mfifclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct mfi_softc *sc;
-
-	sc = device_lookup_private(&mfi_cd, minor(dev));
 	return (0);
 }
 

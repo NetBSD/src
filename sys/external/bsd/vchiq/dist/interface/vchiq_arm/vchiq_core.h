@@ -35,7 +35,7 @@
 #define VCHIQ_CORE_H
 
 #include <interface/compat/vchi_bsd.h>
-#include <interface/compat/list.h>
+#include <linux/list.h>
 
 #include "vchiq_cfg.h"
 
@@ -238,6 +238,8 @@ typedef enum {
 	VCHIQ_BULK_RECEIVE
 } VCHIQ_BULK_DIR_T;
 
+typedef void (*VCHIQ_USERDATA_TERM_T)(void *userdata);
+
 typedef struct vchiq_bulk_struct {
 	short mode;
 	short dir;
@@ -278,13 +280,14 @@ typedef struct vchiq_slot_info_struct {
 	/* Use two counters rather than one to avoid the need for a mutex. */
 	short use_count;
 	short release_count;
-} __packed VCHIQ_SLOT_INFO_T;
+} VCHIQ_SLOT_INFO_T;
 
 typedef struct vchiq_service_struct {
 	VCHIQ_SERVICE_BASE_T base;
 	VCHIQ_SERVICE_HANDLE_T handle;
 	unsigned int ref_count;
 	int srvstate;
+	VCHIQ_USERDATA_TERM_T userdata_term;
 	unsigned int localport;
 	unsigned int remoteport;
 	int public_fourcc;
@@ -378,7 +381,7 @@ typedef struct vchiq_shared_state_struct {
 
 	/* Debugging state */
 	int debug[DEBUG_MAX];
-} __packed VCHIQ_SHARED_STATE_T;
+} VCHIQ_SHARED_STATE_T;
 
 typedef struct vchiq_slot_zero_struct {
 	int magic;
@@ -392,7 +395,7 @@ typedef struct vchiq_slot_zero_struct {
 	VCHIQ_SHARED_STATE_T master;
 	VCHIQ_SHARED_STATE_T slave;
 	VCHIQ_SLOT_INFO_T slots[VCHIQ_MAX_SLOTS];
-} __packed VCHIQ_SLOT_ZERO_T;
+} VCHIQ_SLOT_ZERO_T;
 
 struct vchiq_state_struct {
 	int id;
@@ -535,7 +538,7 @@ vchiq_connect_internal(VCHIQ_STATE_T *state, VCHIQ_INSTANCE_T instance);
 extern VCHIQ_SERVICE_T *
 vchiq_add_service_internal(VCHIQ_STATE_T *state,
 	const VCHIQ_SERVICE_PARAMS_T *params, int srvstate,
-	VCHIQ_INSTANCE_T instance);
+	VCHIQ_INSTANCE_T instance, VCHIQ_USERDATA_TERM_T userdata_term);
 
 extern VCHIQ_STATUS_T
 vchiq_open_service_internal(VCHIQ_SERVICE_T *service, int client_id);

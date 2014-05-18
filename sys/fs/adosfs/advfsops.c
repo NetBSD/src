@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.66 2012/12/20 08:03:41 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.66.2.1 2014/05/18 17:46:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.66 2012/12/20 08:03:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.66.2.1 2014/05/18 17:46:04 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,6 +92,8 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -319,7 +321,7 @@ adosfs_unmount(struct mount *mp, int mntflags)
 		return (error);
 	amp = VFSTOADOSFS(mp);
 	if (amp->devvp->v_type != VBAD)
-		amp->devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(amp->devvp, NULL);
 	vn_lock(amp->devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED);
 	vput(amp->devvp);
@@ -785,31 +787,27 @@ const struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
 };
 
 struct vfsops adosfs_vfsops = {
-	MOUNT_ADOSFS,
-	sizeof (struct adosfs_args),
-	adosfs_mount,
-	adosfs_start,
-	adosfs_unmount,
-	adosfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	adosfs_statvfs,
-	adosfs_sync,
-	adosfs_vget,
-	adosfs_fhtovp,
-	adosfs_vptofh,
-	adosfs_init,
-	NULL,
-	adosfs_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	adosfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_ADOSFS,
+	.vfs_min_mount_data = sizeof (struct adosfs_args),
+	.vfs_mount = adosfs_mount,
+	.vfs_start = adosfs_start,
+	.vfs_unmount = adosfs_unmount,
+	.vfs_root = adosfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = adosfs_statvfs,
+	.vfs_sync = adosfs_sync,
+	.vfs_vget = adosfs_vget,
+	.vfs_fhtovp = adosfs_fhtovp,
+	.vfs_vptofh = adosfs_vptofh,
+	.vfs_init = adosfs_init,
+	.vfs_done = adosfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = adosfs_vnodeopv_descs
 };
 
 static int
@@ -822,11 +820,6 @@ adosfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&adosfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&adosfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&adosfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "adosfs",

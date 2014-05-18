@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1076.2.1 2013/08/28 23:59:24 rmind Exp $
+#	$NetBSD: files,v 1.1076.2.2 2014/05/18 17:45:34 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -170,6 +170,7 @@ include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
 # Kernel history/tracing. Old UVMHIST depends upon this.
 #
 defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
+defparam opt_kernhist.h			KERNHIST_DELAY
 file	kern/kern_history.c		kernhist
 
 #
@@ -956,8 +957,9 @@ define	ata_udma
 define	ata_piobm
 device	wdc: ata, wdc_common
 
-defflag	opt_ata.h	ATADEBUG
-defflag	opt_wdc.h	WDC_NO_IDS
+defflag opt_ata.h	ATADEBUG
+defparam opt_ata.h	ATADEBUG_MASK
+defflag opt_wdc.h	WDC_NO_IDS
 
 device	atabus: atapi,ata_hl
 attach	atabus at ata
@@ -1093,10 +1095,34 @@ file 	dev/ic/hpet.c		hpet			needs-flag
 device	smsh: arp, ether, ifnet, mii
 file	dev/ic/lan9118.c		smsh
 
+# Apple System Management Controller
+#
+define	applesmcbus	{ }
+device	applesmc: applesmcbus
+file	dev/ic/apple_smc.c		applesmc
+
+# Apple SMC fan sensors and control
+device	applesmcfan: applesmcbus, sysmon_envsys
+attach	applesmcfan at applesmcbus with apple_smc_fan
+file	dev/ic/apple_smc_fan.c		applesmcfan
+
+# Apple SMC temperature sensors
+device	applesmctemp: applesmcbus, sysmon_envsys
+attach	applesmctemp at applesmcbus with apple_smc_temp
+file	dev/ic/apple_smc_temp.c		applesmctemp
+
+# Apple SMC accelerometer (not yet implemented!)
+#device	applesmcaccel: applesmcbus, sysmon_envsys
+#attach	applesmcaccel at applesmcbus with apple_smc_accel
+#file	dev/ic/apple_smc_accel.c	applesmcaccel
+
 # DRM - Direct Rendering Infrastructure: dev/drm
 define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
+
+# DRM/KMS - Newer direct rendering manager with kernel mode-switching
+include "external/bsd/drm2/drm/files.drmkms"
 
 
 # Definitions for wscons
@@ -1209,21 +1235,24 @@ file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # DesignWare OTG host controller
 #
-device dotg: usbus, usbroothub, usb_dma
-file	dev/usb/dwc_otg.c		dotg			needs-flag
+include "external/bsd/dwc2/conf/files.dwc2"
 
 # USB HID processing (as used by bluetooth and usb code)
 define	hid
 file	dev/usb/hid.c			hid
 
 # SD Host controller
-device sdhc: sdmmcbus
+device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc			needs-flag
 
 # Winbond Integrated Media Reader
 device	wb: sdmmcbus
 file	dev/ic/w83l518d.c		wb
 file	dev/ic/w83l518d_sdmmc.c		wb
+
+# Realtek RTS5209/RTS5229 Card Reader
+device	rtsx: sdmmcbus
+file	dev/ic/rtsx.c			rtsx
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
@@ -1505,6 +1534,7 @@ file	kern/kern_idle.c
 file	kern/kern_hook.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
+file	kern/kern_ktrace_vfs.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
@@ -1647,6 +1677,7 @@ file	kern/vfs_vnops.c
 file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
+file	miscfs/deadfs/dead_vfsops.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
@@ -1704,7 +1735,7 @@ file	net/route.c
 file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | opencrypto | vnd_compression
+file	net/zlib.c			(ppp & ppp_deflate) | opencrypto | vnd_compression | kdtrace_hooks
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum

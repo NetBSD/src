@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.30.2.1 2013/08/28 23:59:25 rmind Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.30.2.2 2014/05/18 17:45:40 rmind Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.30.2.1 2013/08/28 23:59:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.30.2.2 2014/05/18 17:45:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,10 +110,12 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_6SERIES_SMB:
 		case PCI_PRODUCT_INTEL_7SERIES_SMB:
 		case PCI_PRODUCT_INTEL_8SERIES_SMB:
+		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
 		case PCI_PRODUCT_INTEL_C600_SMB_2:
+		case PCI_PRODUCT_INTEL_C2000_PCU_SMBUS:
 			return 1;
 		}
 	}
@@ -130,6 +132,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -158,7 +161,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    ichsmb_intr, sc);
 			if (sc->sc_ih != NULL) {

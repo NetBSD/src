@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.25.2.1 2013/08/28 23:59:14 rmind Exp $
+#	$NetBSD: TISDP2420,v 1.25.2.2 2014/05/18 17:45:03 rmind Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -132,7 +132,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=500000
+options 	SYMTAB_SPACE=600000
 
 ## USB Debugging options
 options USB_DEBUG

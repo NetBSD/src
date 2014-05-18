@@ -186,6 +186,7 @@ int drm_irq_install(struct drm_device *dev)
 #ifdef __NetBSD__
 	pci_intr_handle_t ih;
 	const char *istr;
+	char intrbuf[PCI_INTRSTR_LEN];
 #endif
 
 	if (dev->irq == 0 || dev->dev_private == NULL)
@@ -224,7 +225,7 @@ int drm_irq_install(struct drm_device *dev)
 		retcode = ENOENT;
 		goto err;
 	}
-	istr = pci_intr_string(dev->pa.pa_pc, ih);
+	istr = pci_intr_string(dev->pa.pa_pc, ih, intrbuf, sizeof(intrbuf));
 	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_TTY,
 	    drm_irq_handler_wrap, dev);
 	if (!dev->irqh) {

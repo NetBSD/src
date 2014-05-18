@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.4.2 2013/08/28 23:59:37 rmind Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2014/05/18 17:46:20 rmind Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../netmpls
@@ -6,7 +6,7 @@
 LIB=	rumpnet_netmpls
 
 SRCS=	mpls_ttl.c if_mpls.c
-SRCS+=	component.c
+SRCS+=	netmpls_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/../libnet/opt
 

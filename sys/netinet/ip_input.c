@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.307.2.2 2013/08/28 23:59:36 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.307.2.3 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.307.2.2 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.307.2.3 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1446,11 +1446,6 @@ sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_ip_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet",

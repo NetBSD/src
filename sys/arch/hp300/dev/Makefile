@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2010/12/28 10:15:49 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4.22.1 2014/05/18 17:45:07 rmind Exp $
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 
 diodevs.h diodevs_data.h: diodevs devlist2h.awk
 	/bin/rm -f diodevs.h diodevs_data.h

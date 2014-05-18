@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.14.2.1 2013/08/28 23:59:35 rmind Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.14.2.2 2014/05/18 17:46:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14.2.1 2013/08/28 23:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14.2.2 2014/05/18 17:46:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14.2.1 2013/08/28 23:59:35 rmind Exp
 
 #include <dev/rnd_private.h>
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
 #endif
 
@@ -150,6 +150,7 @@ static	      void	rnd_process_events(void);
 u_int32_t     rnd_extract_data_locked(void *, u_int32_t, u_int32_t); /* XXX */
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
 					uint32_t, uint32_t, uint32_t);
+static inline void	rnd_schedule_process(void);
 
 int			rnd_ready = 0;
 int			rnd_initial_entropy = 0;
@@ -170,6 +171,7 @@ rnd_init_softint(void) {
 	    rnd_intr, NULL);
 	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
 	    rnd_wake, NULL);
+	rnd_schedule_process();
 }
 
 /*
@@ -181,7 +183,7 @@ rnd_counter(void)
 {
 	struct timeval tv;
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
@@ -239,10 +241,10 @@ rnd_getmore(size_t byteswanted)
 		if (rs->flags & RND_FLAG_HASCB) {
 			KASSERT(rs->get != NULL);
 			KASSERT(rs->getarg != NULL);
-			rs->get((size_t)byteswanted, rs->getarg);
+			rs->get(byteswanted, rs->getarg);
 #ifdef RND_VERBOSE
-			printf("rnd: asking source %s for %d bytes\n",
-			       rs->name, (int)byteswanted);
+			printf("rnd: asking source %s for %zu bytes\n",
+			       rs->name, byteswanted);
 #endif
 		}    
 	}    
@@ -327,7 +329,7 @@ rnd_estimate_entropy(krndsource_t *rs, u_int32_t t)
 	return (1);
 }
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL)
+#if defined(__HAVE_CPU_COUNTER)
 static void
 rnd_skew(void *arg)
 {
@@ -430,7 +432,7 @@ rnd_init(void)
 	 * XXX clocking the callout mechanism.  How to get this right
 	 * XXX without unsightly spelunking in the timecounter code?
 	 */
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 	callout_init(&skew_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&skew_callout, rnd_skew, NULL);
 	rnd_skew(NULL);
@@ -649,7 +651,13 @@ rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 	 * itself, random.  Don't estimate entropy based on
 	 * timestamp, just directly add the data.
 	 */
-	rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+	if (__predict_false(rs == NULL)) {
+		mutex_spin_enter(&rndpool_mtx);
+		rndpool_add_data(&rnd_pool, data, len, entropy);
+		mutex_spin_exit(&rndpool_mtx);
+	} else {
+		rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+	}
 }
 
 static void
@@ -860,14 +868,14 @@ rnd_process_events(void)
 	mutex_spin_enter(&rndpool_mtx);
 
 	pool_entropy = rndpool_get_entropy_count(&rnd_pool);
-	if (pool_entropy > RND_ENTROPY_THRESHOLD * 8) {
+	if (pool_entropy > RND_ENTROPY_THRESHOLD * NBBY) {
 		wake++;
 	} else {
 		rnd_empty = 1;
-		rnd_getmore((RND_POOLBITS - pool_entropy) / 8);
+		rnd_getmore(howmany((RND_POOLBITS - pool_entropy), NBBY));
 #ifdef RND_VERBOSE
-		printf("rnd: empty, asking for %d bits\n",
-		       (int)((RND_POOLBITS - pool_entropy) / 8));
+		printf("rnd: empty, asking for %zu bytes\n",
+		       howmany((RND_POOLBITS - pool_entropy), NBBY));
 #endif
 	}
 
@@ -1024,8 +1032,8 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 	}
 #endif
 	entropy_count = rndpool_get_entropy_count(&rnd_pool);
-	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * 8) {
-		rnd_getmore(RND_POOLBITS - entropy_count * 8);
+	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
+		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
 	}
 	return rndpool_extract_data(&rnd_pool, p, len, flags);
 }

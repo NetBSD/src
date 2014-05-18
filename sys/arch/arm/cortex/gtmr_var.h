@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.2 2013/06/20 05:30:21 matt Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.2.4.1 2014/05/18 17:44:57 rmind Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,12 +37,16 @@ struct gtmr_softc {
 	uint32_t sc_freq;
 	u_long sc_autoinc;
 	void *sc_global_ih;
+#ifdef DIAGNOSTIC
+	percpu_t *sc_percpu;
+#endif
 };
 
 #ifdef _KERNEL
 struct cpu_info;
 void	gtmr_init_cpu_clock(struct cpu_info *);
 void	gtmr_delay(unsigned int n);
+void	gtmr_bootdelay(unsigned int n);
 #endif
 
 #endif /* _ARM_CORTEX_GTMR_VAR_ */

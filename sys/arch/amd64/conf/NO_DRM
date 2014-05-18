@@ -1,0 +1,11 @@
+include "arch/amd64/conf/GENERIC"
+
+no i915drm* 	at drm?
+no mach64drm* 	at drm?
+no mgadrm* 	at drm?
+no r128drm* 	at drm?
+no radeondrm* 	at drm?
+no savagedrm* 	at drm?
+no sisdrm* 	at drm?
+no tdfxdrm* 	at drm?
+no viadrm* 	at drm?

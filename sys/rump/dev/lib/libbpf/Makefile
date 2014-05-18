@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/01/19 22:38:21 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2014/05/18 17:46:15 rmind Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
@@ -6,7 +6,7 @@
 LIB=	rumpdev_bpf
 
 SRCS=	bpf.c bpf_filter.c
-SRCS+=	component.c
+SRCS+=	bpf_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 

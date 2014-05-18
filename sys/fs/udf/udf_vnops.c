@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.76.2.1 2013/08/28 23:59:35 rmind Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.76.2.2 2014/05/18 17:46:06 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.76.2.1 2013/08/28 23:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.76.2.2 2014/05/18 17:46:06 rmind Exp $");
 #endif /* not lint */
 
 
@@ -118,7 +118,6 @@ udf_inactive(void *v)
 		*ap->a_recycle = true;
 		udf_delete_node(udf_node);
 		VOP_UNLOCK(vp);
-		vrecycle(vp, NULL, curlwp);
 		return 0;
 	}
 
@@ -465,8 +464,7 @@ udf_vfsstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf   *bp = ap->a_bp;
 	struct udf_node *udf_node = VTOI(vp);
-	uint32_t lb_size, from, sectors;
-	int error;
+	uint32_t lb_size, sectors;
 
 	DPRINTF(STRATEGY, ("udf_strategy called\n"));
 
@@ -480,9 +478,6 @@ udf_vfsstrategy(void *v)
 	/* get sector size */
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
-	/* calculate sector to start from */
-	from = bp->b_blkno;
-
 	/* calculate length to fetch/store in sectors */
 	sectors = bp->b_bcount / lb_size;
 	assert(bp->b_bcount > 0);
@@ -492,20 +487,20 @@ udf_vfsstrategy(void *v)
 
 	/* check assertions: we OUGHT to always get multiples of this */
 	assert(sectors * lb_size == bp->b_bcount);
+	__USE(sectors);
 
 	/* issue buffer */
-	error = 0;
 	if (bp->b_flags & B_READ) {
 		DPRINTF(STRATEGY, ("\tread vp %p buf %p (blk no %"PRIu64")"
-		    ", sector %d for %d sectors\n",
-		    vp, bp, bp->b_blkno, from, sectors));
+		    ", for %d sectors\n",
+		    vp, bp, bp->b_blkno, sectors));
 
 		/* read buffer from the udf_node, translate vtop on the way*/
 		udf_read_filebuf(udf_node, bp);
 	} else {
 		DPRINTF(STRATEGY, ("\twrite vp %p buf %p (blk no %"PRIu64")"
-		    ", sector %d for %d sectors\n",
-		    vp, bp, bp->b_blkno, from, sectors));
+		    ", for %d sectors\n",
+		    vp, bp, bp->b_blkno, sectors));
 
 		/* write buffer to the udf_node, translate vtop on the way*/
 		udf_write_filebuf(udf_node, bp);
@@ -645,7 +640,7 @@ udf_readdir(void *v)
 int
 udf_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -840,6 +835,8 @@ done:
 			    cnp->cn_flags);
 
 out:
+	if (error == 0 && *vpp != dvp)
+		VOP_UNLOCK(*vpp);
 	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));
 
 	return error;
@@ -1459,7 +1456,7 @@ udf_access(void *v)
 int
 udf_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1474,7 +1471,6 @@ udf_create(void *v)
 	DPRINTF(CALL, ("udf_create called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1483,7 +1479,7 @@ udf_create(void *v)
 int
 udf_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1498,7 +1494,6 @@ udf_mknod(void *v)
 	DPRINTF(CALL, ("udf_mknod called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1507,7 +1502,7 @@ udf_mknod(void *v)
 int
 udf_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1522,7 +1517,6 @@ udf_mkdir(void *v)
 	DPRINTF(CALL, ("udf_mkdir called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1705,7 +1699,7 @@ udf_do_symlink(struct udf_node *udf_node, char *target)
 int
 udf_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1735,7 +1729,6 @@ udf_symlink(void *v)
 			udf_dir_detach(udf_node->ump, dir_node, udf_node, cnp);
 		}
 	}
-	vput(dvp);
 	return error;
 }
 

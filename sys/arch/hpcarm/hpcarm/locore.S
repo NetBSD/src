@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13.4.1 2013/08/28 23:59:17 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.13.4.2 2014/05/18 17:45:09 rmind Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -36,9 +36,7 @@
 #include <sys/syscall.h>
 #include <sys/errno.h>
 #include <machine/asm.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/param.h>
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 #include <arm/armreg.h>
 #endif
@@ -57,7 +55,7 @@ ENTRY_NP(kernel_text)
 ASENTRY_NP(start)
 	/* Put the processer in SVC mode */
 	mov	r5, sp
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	bic	r4, r4, #(PSR_MODE)
 	orr	r4, r4, #(PSR_SVC32_MODE)
 	msr	cpsr_all, r4
@@ -65,7 +63,7 @@ ASENTRY_NP(start)
 
 	/* Disable PID virtual address mapping */
 	mov	r4, #0
-	mcr	15, 0, r4, c13, c0, 0
+	mcr	p15, 0, r4, c13, c0, 0
 
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 /*
@@ -213,8 +211,8 @@ ENTRY_NP(cpu_reset)
 	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r0, c1, c0, 0
-	mcr     15, 0, r0, c8, c7, 0
+	mcr     p15, 0, r0, c1, c0, 0
+	mcr     p15, 0, r0, c8, c7, 0
 	mov     pc, r4
 
 	/*
@@ -255,7 +253,7 @@ ENTRY(dumpsys)
 	stmfd	sp!, {r0-r7, lr}
 	
 	/* push the status bits onto the stack */
-	mrs	r0, cpsr_all
+	mrs	r0, cpsr
 	stmfd	sp!, {r0}
 
 	/* fill in dumppcb */
@@ -265,9 +263,9 @@ ENTRY(dumpsys)
         add     r2, r0, #(PCB_R8)
         stmia   r2, {r8-r13}
 #else
-        strd    r8, [r0, #(PCB_R8)]
-        strd    r10, [r0, #(PCB_R10)]
-        strd    r12, [r0, #(PCB_R12)]
+        strd    r8, r9, [r0, #(PCB_R8)]
+        strd    r10, r11, [r0, #(PCB_R10)]
+        strd    r12, r13, [r0, #(PCB_R12)]
 #endif
 
 	bl	_C_LABEL(dodumpsys)

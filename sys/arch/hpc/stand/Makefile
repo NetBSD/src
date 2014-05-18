@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.24 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: Makefile,v 1.24.44.1 2014/05/18 17:45:09 rmind Exp $
 #
 
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.own.mk>
 
 PROJECT_DIRS=	hpcboot libz libsa
 

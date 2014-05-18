@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.141 2012/06/02 21:36:44 dsl Exp $	*/
+/*	$NetBSD: auich.c,v 1.141.4.1 2014/05/18 17:45:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.141 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.141.4.1 2014/05/18 17:45:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,6 +457,7 @@ auich_attach(device_t parent, device_t self, void *aux)
 	const struct auich_devtype *d;
 	const struct sysctlnode *node, *node_ac97clock;
 	int err, node_mib, i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	pa = aux;
@@ -533,7 +534,7 @@ map_done:
 		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, sc->intrh);
+	intrstr = pci_intr_string(pa->pa_pc, sc->intrh, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_AUDIO,
 	    auich_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -658,11 +659,6 @@ map_done:
 	if (sc->sc_fixedrate && sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		return;
 
-	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
-			     CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
-			     CTL_HW, CTL_EOL);
-	if (err != 0)
-		goto sysctl_err;
 	err = sysctl_createv(&sc->sc_log, 0, NULL, &node, 0,
 			     CTLTYPE_NODE, device_xname(self), NULL, NULL, 0,
 			     NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.152.4.1 2013/08/28 23:59:27 rmind Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.152.4.2 2014/05/18 17:45:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.152.4.1 2013/08/28 23:59:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.152.4.2 2014/05/18 17:45:48 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -65,10 +65,8 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
-Static void usbd_do_request_async_cb
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void usbd_start_next(usbd_pipe_handle pipe);
+Static usbd_status usbd_ar_pipe(usbd_pipe_handle);
+Static void usbd_start_next(usbd_pipe_handle);
 Static usbd_status usbd_open_pipe_ival
 	(usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int);
 
@@ -230,7 +228,6 @@ usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
 usbd_status
 usbd_close_pipe(usbd_pipe_handle pipe)
 {
-	int s;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
@@ -265,7 +262,6 @@ usbd_transfer(usbd_xfer_handle xfer)
 	usb_dma_t *dmap = &xfer->dmabuf;
 	usbd_status err;
 	unsigned int size, flags;
-	int s;
 
 	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%#x, pipe=%p, running=%d\n",
 		    xfer, xfer->flags, pipe, pipe->running));
@@ -326,15 +322,9 @@ usbd_transfer(usbd_xfer_handle xfer)
 
 		err = 0;
 		if ((flags & USBD_SYNCHRONOUS_SIG) != 0) {
-			if (pipe->device->bus->lock)
-				err = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
-			else
-				err = tsleep(xfer, PZERO|PCATCH, "usbsyn", 0);
+			err = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
 		} else {
-			if (pipe->device->bus->lock)
-				cv_wait(&xfer->cv, pipe->device->bus->lock);
-			else
-				err = tsleep(xfer, PRIBIO, "usbsyn", 0);
+			cv_wait(&xfer->cv, pipe->device->bus->lock);
 		}
 		if (err) {
 			if (!xfer->done)
@@ -409,8 +399,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
-	callout_init(&xfer->timeout_handle,
-	    dev->bus->methods->get_lock ? CALLOUT_MPSAFE : 0);
+	callout_init(&xfer->timeout_handle, CALLOUT_MPSAFE);
 	cv_init(&xfer->cv, "usbxfer");
 	cv_init(&xfer->hccv, "usbhcxfer");
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
@@ -559,7 +548,6 @@ usbd_status
 usbd_abort_pipe(usbd_pipe_handle pipe)
 {
 	usbd_status err;
-	int s;
 	usbd_xfer_handle intrxfer = pipe->intrxfer;
 
 #ifdef DIAGNOSTIC
@@ -608,7 +596,7 @@ XXX should we do this?
 }
 
 void
-usbd_clear_endpoint_stall_async_cb(void *arg)
+usbd_clear_endpoint_stall_task(void *arg)
 {
 	usbd_pipe_handle pipe = arg;
 	usbd_device_handle dev = pipe->device;
@@ -621,7 +609,7 @@ usbd_clear_endpoint_stall_async_cb(void *arg)
 	USETW(req.wValue, UF_ENDPOINT_HALT);
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
-	(void)usbd_do_request_async(dev, &req, 0);
+	(void)usbd_do_request(dev, &req, 0);
 }
 
 void
@@ -764,7 +752,7 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
+	KASSERT(mutex_owned(pipe->device->bus->lock));
 
 	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
 #ifdef USB_DEBUG
@@ -799,8 +787,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
 
-	KASSERT(polling || pipe->device->bus->lock == NULL ||
-	    mutex_owned(pipe->device->bus->lock));
+	KASSERT(polling || mutex_owned(pipe->device->bus->lock));
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
@@ -872,7 +859,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (repeat) {
 		if (xfer->callback) {
-			if (pipe->device->bus->lock && !polling)
+			if (!polling)
 				mutex_exit(pipe->device->bus->lock);
 
 			if (!(pipe->flags & USBD_MPSAFE))
@@ -881,14 +868,14 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			if (!(pipe->flags & USBD_MPSAFE))
 				KERNEL_UNLOCK_ONE(curlwp);
 
-			if (pipe->device->bus->lock && !polling)
+			if (!polling)
 				mutex_enter(pipe->device->bus->lock);
 		}
 		pipe->methods->done(xfer);
 	} else {
 		pipe->methods->done(xfer);
 		if (xfer->callback) {
-			if (pipe->device->bus->lock && !polling)
+			if (!polling)
 				mutex_exit(pipe->device->bus->lock);
 
 			if (!(pipe->flags & USBD_MPSAFE))
@@ -897,16 +884,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			if (!(pipe->flags & USBD_MPSAFE))
 				KERNEL_UNLOCK_ONE(curlwp);
 
-			if (pipe->device->bus->lock && !polling)
+			if (!polling)
 				mutex_enter(pipe->device->bus->lock);
 		}
 	}
 
 	if (sync && !polling) {
-		if (pipe->device->bus->lock)
-			cv_broadcast(&xfer->cv);
-		else
-			wakeup(xfer);	/* XXXSMP ok */
+		cv_broadcast(&xfer->cv);
 	}
 
 	if (!repeat) {
@@ -928,7 +912,7 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n",
 		    pipe, pipe->running, xfer->timeout));
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
+	KASSERT(mutex_owned(pipe->device->bus->lock));
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
@@ -966,7 +950,7 @@ usbd_start_next(usbd_pipe_handle pipe)
 	}
 #endif
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
+	KASSERT(mutex_owned(pipe->device->bus->lock));
 
 	/* Get next request in queue. */
 	xfer = SIMPLEQ_FIRST(&pipe->queue);
@@ -974,11 +958,10 @@ usbd_start_next(usbd_pipe_handle pipe)
 	if (xfer == NULL) {
 		pipe->running = 0;
 	} else {
-		if (pipe->device->bus->lock)
-			mutex_exit(pipe->device->bus->lock);
+		mutex_exit(pipe->device->bus->lock);
 		err = pipe->methods->start(xfer);
-		if (pipe->device->bus->lock)
-			mutex_enter(pipe->device->bus->lock);
+		mutex_enter(pipe->device->bus->lock);
+
 		if (err != USBD_IN_PROGRESS) {
 			printf("usbd_start_next: error=%d\n", err);
 			pipe->running = 0;
@@ -986,7 +969,7 @@ usbd_start_next(usbd_pipe_handle pipe)
 		}
 	}
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
+	KASSERT(mutex_owned(pipe->device->bus->lock));
 }
 
 usbd_status
@@ -1085,49 +1068,6 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	return (err);
 }
 
-void
-usbd_do_request_async_cb(usbd_xfer_handle xfer,
-    usbd_private_handle priv, usbd_status status)
-{
-#if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length) {
-		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
-			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
-			 xfer->pipe->device->address,
-			 xfer->request.bmRequestType,
-			 xfer->request.bRequest, UGETW(xfer->request.wValue),
-			 UGETW(xfer->request.wIndex),
-			 UGETW(xfer->request.wLength),
-			 xfer->length, xfer->actlen));
-	}
-#endif
-	usbd_free_xfer(xfer);
-}
-
-/*
- * Execute a request without waiting for completion.
- * Can be used from interrupt context.
- */
-usbd_status
-usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req,
-		      void *data)
-{
-	usbd_xfer_handle xfer;
-	usbd_status err;
-
-	xfer = usbd_alloc_xfer(dev);
-	if (xfer == NULL)
-		return (USBD_NOMEM);
-	usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT, req,
-	    data, UGETW(req->wLength), 0, usbd_do_request_async_cb);
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		usbd_free_xfer(xfer);
-		return (err);
-	}
-	return (USBD_NORMAL_COMPLETION);
-}
-
 const struct usbd_quirks *
 usbd_get_quirks(usbd_device_handle dev)
 {
@@ -1163,12 +1103,9 @@ usbd_set_polling(usbd_device_handle dev, int on)
 		dev->bus->use_polling--;
 
 	/* Kick the host controller when switching modes */
-	if (dev->bus->lock)
-		mutex_enter(dev->bus->lock);
+	mutex_enter(dev->bus->lock);
 	(*dev->bus->methods->soft_intr)(dev->bus);
-	if (dev->bus->lock)
-		mutex_exit(dev->bus->lock);
-
+	mutex_exit(dev->bus->lock);
 }
 
 

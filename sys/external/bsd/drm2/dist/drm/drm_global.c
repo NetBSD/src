@@ -31,6 +31,9 @@
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <asm/bug.h>
 #include <drm/drm_global.h>
 
 struct drm_global_item {
@@ -47,7 +50,11 @@ void drm_global_init(void)
 
 	for (i = 0; i < DRM_GLOBAL_NUM; ++i) {
 		struct drm_global_item *item = &glob[i];
+#ifdef __NetBSD__
+		linux_mutex_init(&item->mutex);
+#else
 		mutex_init(&item->mutex);
+#endif
 		item->object = NULL;
 		item->refcount = 0;
 	}
@@ -58,6 +65,7 @@ void drm_global_release(void)
 	int i;
 	for (i = 0; i < DRM_GLOBAL_NUM; ++i) {
 		struct drm_global_item *item = &glob[i];
+		(void)item;	/* ignore */
 		BUG_ON(item->object != NULL);
 		BUG_ON(item->refcount != 0);
 	}
@@ -67,7 +75,6 @@ int drm_global_item_ref(struct drm_global_reference *ref)
 {
 	int ret;
 	struct drm_global_item *item = &glob[ref->global_type];
-	void *object;
 
 	mutex_lock(&item->mutex);
 	if (item->refcount == 0) {
@@ -85,7 +92,6 @@ int drm_global_item_ref(struct drm_global_reference *ref)
 	}
 	++item->refcount;
 	ref->object = item->object;
-	object = item->object;
 	mutex_unlock(&item->mutex);
 	return 0;
 out_err:

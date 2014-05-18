@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.27 2013/03/18 19:35:37 plunky Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.27.6.1 2014/05/18 17:46:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.27 2013/03/18 19:35:37 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.27.6.1 2014/05/18 17:46:05 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -320,12 +320,11 @@ const struct vnodeopv_desc hfs_fifoop_opv_desc =
 int
 hfs_vop_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
 	} */ *ap = v;
-	struct buf *bp;			/* a buffer of directory entries */
 	struct componentname *cnp;
 	struct hfsnode *dp;	/* hfsnode for directory being searched */
 	kauth_cred_t cred;
@@ -343,7 +342,6 @@ hfs_vop_lookup(void *v)
 
 	DPRINTF(("VOP = hfs_vop_lookup()\n"));
 
-	bp = NULL;
 	cnp = ap->a_cnp;
 	cred = cnp->cn_cred;
 	vdp = ap->a_dvp;
@@ -477,6 +475,8 @@ hfs_vop_lookup(void *v)
 	cache_enter(vdp, *vpp, cnp);
 #endif
 	
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	error = 0;
 
 	/* FALLTHROUGH */
@@ -1027,13 +1027,11 @@ hfs_vop_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;
-	struct hfsmount *hmp;
 	
 	DPRINTF(("VOP = hfs_vop_reclaim()\n"));
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
-	hmp = hp->h_hmp;
 
 	/* Remove the hfsnode from its hash chain. */
 	hfs_nhashremove(hp);

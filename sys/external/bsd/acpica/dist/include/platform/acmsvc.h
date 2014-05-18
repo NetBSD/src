@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -144,6 +144,24 @@
 
 #if _MSC_VER > 1200 /* Versions above VC++ 6 */
 #pragma warning( disable : 4295 ) /* needed for acpredef.h array */
+#endif
+
+
+/* Debug support. Must be last in this file, do not move. */
+
+#ifdef _DEBUG
+#include <crtdbg.h>
+
+/*
+ * Debugging memory corruption issues with windows:
+ * Add #include <crtdbg.h> to accommon.h if necessary.
+ * Add _ASSERTE(_CrtCheckMemory()); where needed to test memory integrity.
+ * This can quickly localize the memory corruption.
+ */
+#define ACPI_DEBUG_INITIALIZE() \
+    _CrtSetDbgFlag (_CRTDBG_CHECK_ALWAYS_DF | \
+        _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_CRT_DF | \
+        _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG))
 #endif
 
 #endif /* __ACMSVC_H__ */

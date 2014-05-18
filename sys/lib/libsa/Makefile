@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78.4.1 2013/08/28 23:59:35 rmind Exp $
+#	$NetBSD: Makefile,v 1.78.4.2 2014/05/18 17:46:08 rmind Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -25,12 +25,8 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 # stand routines
 SRCS+=	alloc.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
-	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c \
-	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
-
-.if (${MACHINE_CPU} != "mips")
-SRCS+=	exec.c
-.endif
+	panic.c printf.c qsort.c snprintf.c strerror.c \
+	subr_prf.c twiddle.c checkpasswd.c
 
 # string routines
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"

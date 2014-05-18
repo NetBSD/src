@@ -153,7 +153,7 @@ int drm_proc_init(struct drm_minor *minor, int minor_id,
 	int ret;
 
 	INIT_LIST_HEAD(&minor->proc_nodes.list);
-	sprintf(name, "%d", minor_id);
+	snprintf(name, sizeof(name), "%d", minor_id);
 	minor->proc_root = proc_mkdir(name, root);
 	if (!minor->proc_root) {
 		DRM_ERROR("Cannot create /proc/dri/%s\n", name);
@@ -212,7 +212,7 @@ int drm_proc_cleanup(struct drm_minor *minor, struct proc_dir_entry *root)
 
 	drm_proc_remove_files(drm_proc_list, DRM_PROC_ENTRIES, minor);
 
-	sprintf(name, "%d", minor->index);
+	snprintf(name, sizeof(name), "%d", minor->index);
 	remove_proc_entry(name, root);
 
 	return 0;

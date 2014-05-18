@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.10.4.1 2013/08/28 23:59:17 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.10.4.2 2014/05/18 17:45:12 rmind Exp $
 
 .include <bsd.own.mk>
 
 BINDIR=	/usr/mdec
 
-OPT_SIZE.gcc=	-Os -ffreestanding -fomit-frame-pointer -fno-unwind-tables
+OPT_SIZE.gcc=	-Os -ffreestanding -fomit-frame-pointer -fno-unwind-tables \
+		-fno-asynchronous-unwind-tables -fno-exceptions
 OPT_SIZE.clang=	-Oz -ffreestanding -fomit-frame-pointer -DNDEBUG \
 		-fno-stack-protector -mno-sse \
 		-mstack-alignment=4 \

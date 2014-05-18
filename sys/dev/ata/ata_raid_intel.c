@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.6 2010/07/06 18:09:04 bsh Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.6.22.1 2014/05/18 17:45:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.6 2010/07/06 18:09:04 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.6.22.1 2014/05/18 17:45:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -79,7 +79,7 @@ ata_raid_intel_type(int type)
 	case INTEL_T_RAID5:
 		return "RAID5";
 	default:
-		sprintf(buffer, "UNKNOWN 0x%02x", type);
+		snprintf(buffer, sizeof(buffer), "UNKNOWN 0x%02x", type);
 		return buffer;
 	}
 }

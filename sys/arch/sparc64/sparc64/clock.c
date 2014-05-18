@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.108.2.1 2013/08/28 23:59:23 rmind Exp $ */
+/*	$NetBSD: clock.c,v 1.108.2.2 2014/05/18 17:45:26 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.108.2.1 2013/08/28 23:59:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.108.2.2 2014/05/18 17:45:26 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -108,7 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.108.2.1 2013/08/28 23:59:23 rmind Exp $"
  *  counter-timer	 timer#0	 timer#1	 %tick
  *  counter-timer + SMP	 timer#0/%tick	 -		 timer#1 or %tick
  *  no counter-timer	 %tick		 -		 %tick
+ *  US-IIe		 STICK		 -		 STICK
  *  US-IIIi		 %stick		 -		 %stick
+ *
+ * US-IIe and US-IIIi could use %tick as statclock
  */
 
 /*
@@ -213,7 +216,7 @@ stick_get_timecount(struct timecounter *tc)
 static u_int
 stick2e_get_timecount(struct timecounter *tc)
 {
-	return psycho_getstick();
+	return psycho_getstick32();
 }
 #endif
 
@@ -349,10 +352,11 @@ timerattach(device_t parent, device_t self, void *aux)
 void
 stopcounter(struct timer_4u *creg)
 {
+	volatile struct timer_4u *reg = creg;
+
 	/* Stop the clock */
-	volatile int discard;
-	discard = creg->t_limit;
-	creg->t_limit = 0;
+	(void)reg->t_limit;
+	reg->t_limit = 0;
 }
 
 /*
@@ -552,7 +556,10 @@ cpu_initclocks(void)
 	 * Establish scheduler softint.
 	 */
 	schedint = sparc_softintr_establish(PIL_SCHED, schedintr, NULL);
-	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	if (stathz > 60)
+		schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	else
+		schedhz = stathz / 2 + 1;
 	statscheddiv = stathz / schedhz;
 	if (statscheddiv <= 0)
 		panic("statscheddiv");

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35.2.1 2013/08/28 23:59:12 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.35.2.2 2014/05/18 17:44:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -133,22 +133,6 @@ void validate_trapframe(trapframe_t *, int);
 #define	DO_PENDING_SOFTINTS		/* nothing */
 #endif
 
-#ifdef MULTIPROCESSOR
-#define	KERNEL_LOCK							\
-	mov	r0, #1							;\
-	mov	r1, #0							;\
-	bl	_C_LABEL(_kernel_lock)
-
-#define	KERNEL_UNLOCK							\
-	mov	r0, #1							;\
-	mov	r1, #0							;\
-	mov	r2, #0							;\
-	bl	_C_LABEL(_kernel_unlock)
-#else
-#define	KERNEL_LOCK			/* nothing */
-#define	KERNEL_UNLOCK			/* nothing */
-#endif
-
 #ifdef _ARM_ARCH_6
 #define	GET_CPSR(rb)			/* nothing */
 #define	CPSID_I(ra,rb)			cpsid	i
@@ -201,7 +185,7 @@ void validate_trapframe(trapframe_t *, int);
 	ldr	r1, [r4, #CI_CTRL]	/* Fetch control register */	;\
 	mov	r0, #-1							;\
 	BL_CF_CONTROL(r2)		/* Enable alignment faults */	;\
-1:	KERNEL_LOCK
+1:	/* done */
 
 /*
  * This macro must be invoked just before PULLFRAMEFROMSVCANDEXIT or
@@ -236,7 +220,7 @@ void validate_trapframe(trapframe_t *, int);
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
 	CPSID_I(r0, r5)			/* Disable interrupts */	;\
 	b	1b			/* Back around again */		;\
-3:	KERNEL_UNLOCK
+3:	/* done */
 
 #else	/* !EXEC_AOUT */
 
@@ -244,8 +228,8 @@ void validate_trapframe(trapframe_t *, int);
 
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
-	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
-	KERNEL_LOCK
+	GET_CURCPU(r4)			/* r4 = cpuinfo */
+	
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	DO_PENDING_SOFTINTS						;\
@@ -263,7 +247,7 @@ void validate_trapframe(trapframe_t *, int);
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
 	CPSID_I(r0, r5)			/* Disable interrupts */	;\
 	b	1b							;\
-2:	KERNEL_UNLOCK			/* unlock the kernel */
+2:	/* done */
 #endif /* EXEC_AOUT */
 
 #ifndef _ARM_ARCH_6
@@ -351,7 +335,7 @@ LOCK_CAS_DEBUG_LOCALS
 	sub	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Get the SPSR */		   \
+	mrs	r0, spsr;		/* Get the SPSR */		   \
 	str	r0, [sp, #-TF_R0]!	/* Push the SPSR on the stack */
 
 /*
@@ -364,7 +348,7 @@ LOCK_CAS_DEBUG_LOCALS
 	str	lr, [sp, #-4]!;		/* save SVC32 lr */		   \
 	str	r6, [sp, #(TF_R6-TF_PC)]!; /* save callee-saved r6 */	   \
 	str	r4, [sp, #(TF_R4-TF_R6)]!; /* save callee-saved r4 */	   \
-	mrs	r0, cpsr_all;		/* Get the CPSR */		   \
+	mrs	r0, cpsr;		/* Get the CPSR */		   \
 	str	r0, [sp, #(-TF_R4)]!	/* Push the CPSR on the stack */
 
 /*
@@ -378,7 +362,7 @@ LOCK_CAS_DEBUG_LOCALS
 	str	ip, [sp, #TF_SVC_SP];					\
 	str	lr, [sp, #TF_SVC_LR];					\
 	str	lr, [sp, #TF_PC];					\
-	mrs	rX, cpsr_all;		/* Get the CPSR */		\
+	mrs	rX, cpsr;		/* Get the CPSR */		\
 	str	rX, [sp, #TF_SPSR]	/* save in trapframe */
 
 #define PUSHSWITCHFRAME1						   \
@@ -394,13 +378,13 @@ LOCK_CAS_DEBUG_LOCALS
 #define	PUSHSWITCHFRAME2						\
 	strd	r10, [sp, #TF_R10];	/* save r10 & r11 */		\
 	strd	r8, [sp, #TF_R8];	/* save r8 & r9 */		\
-	mrs	r0, cpsr_all;		/* Get the CPSR */		\
+	mrs	r0, cpsr;		/* Get the CPSR */		\
 	str	r0, [sp, #TF_SPSR]	/* save in trapframe */
 #else
 #define	PUSHSWITCHFRAME2						\
 	add	r0, sp, #TF_R8;		/* get ptr to r8 and above */	\
 	stmia	r0, {r8-r11};		/* save rest of registers */	\
-	mrs	r0, cpsr_all;		/* Get the CPSR */		\
+	mrs	r0, cpsr;		/* Get the CPSR */		\
 	str	r0, [sp, #TF_SPSR]	/* save in trapframe */
 #endif
 
@@ -411,7 +395,7 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PULLFRAME							   \
 	ldr     r0, [sp], #TF_R0;	/* Pop the SPSR from stack */	   \
-	msr     spsr_all, r0;						   \
+	msr     spsr_fsxc, r0;						   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	add	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
@@ -464,12 +448,12 @@ LOCK_CAS_DEBUG_LOCALS
 	str	r0, [r2, #-4]!;		/* Push return address */	   \
 	stmdb	r2!, {sp, lr};		/* Push SVC sp, lr */		   \
 	mov	sp, r2;			/* Keep stack aligned */	   \
-	msr     spsr_all, r3;		/* Restore correct spsr */	   \
+	msr     spsr_fsxc, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Get the SPSR */		   \
+	mrs	r0, spsr;		/* Get the SPSR */		   \
 	str	r0, [sp, #-TF_R0]!	/* Push the SPSR onto the stack */
 
 /*
@@ -481,7 +465,7 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
 	ldr     r0, [sp], #0x0008;	/* Pop the SPSR from stack */	   \
-	msr     spsr_all, r0;		/* restore SPSR */		   \
+	msr     spsr_fsxc, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \
 	add	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \

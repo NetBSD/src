@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.3.10.2 2013/08/28 23:59:36 rmind Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.3.10.3 2014/05/18 17:46:14 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.10.2 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.10.3 2014/05/18 17:46:14 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.10.2 2013/08/28 23:59:36 rmind Ex
 struct ifqueue mplsintrq;
 
 static int mpls_attach(struct socket *, int);
-static int mpls_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct lwp *);
 static void sysctl_net_mpls_setup(struct sysctllog **);
 
 #ifdef MBUFTRACE
@@ -105,57 +103,6 @@ mpls_usrreq(struct socket *so, int req, struct mbuf *m,
 	return EOPNOTSUPP;
 }
 
-PR_WRAP_USRREQ(mpls_usrreq)
-
-#define	mpls_usrreq	mpls_usrreq_wrapper
-
-static const struct pr_usrreqs mpls_usrreqs = {
-	.pr_attach	= mpls_attach,
-	.pr_detach	= mpls_detach,
-	.pr_generic	= mpls_usrreq,
-};
-
-DOMAIN_DEFINE(mplsdomain);
-
-const struct protosw mplssw[] = {
-	{	.pr_domain = &mplsdomain,
-		.pr_init = mpls_init,
-	},
-	{
-		.pr_type = SOCK_DGRAM,
-		.pr_domain = &mplsdomain,
-		.pr_flags = PR_ATOMIC | PR_ADDR,
-		.pr_usrreqs = &mpls_usrreqs,
-	},
-	{
-		.pr_type = SOCK_RAW,
-		.pr_domain = &mplsdomain,
-		.pr_flags = PR_ATOMIC | PR_ADDR,
-		.pr_usrreqs = &mpls_usrreqs,
-	},
-};
-
-struct domain mplsdomain = {
-	.dom_family = PF_MPLS,
-	.dom_name = "MPLS",
-	.dom_init = NULL,
-	.dom_externalize = NULL,
-	.dom_dispose = NULL, 
-	.dom_protosw = mplssw,
-	.dom_protoswNPROTOSW = &mplssw[__arraycount(mplssw)],
-	.dom_rtattach = rt_inithead,
-	.dom_rtoffset = offsetof(struct sockaddr_mpls, smpls_addr) << 3,
-	.dom_maxrtkey = sizeof(union mpls_shim),
-	.dom_ifattach = NULL,
-	.dom_ifdetach = NULL,
-	.dom_ifqueues = { &mplsintrq, NULL },
-	.dom_link = { NULL },
-	.dom_mowner = MOWNER_INIT("MPLS", ""),
-	.dom_sa_cmpofs = offsetof(struct sockaddr_mpls, smpls_addr),
-	.dom_sa_cmplen = sizeof(union mpls_shim),
-	.dom_rtcache = LIST_HEAD_INITIALIZER(mplsdomain.dom_rtcache)
-};
-
 /*
  * Sysctl for MPLS variables.
  */
@@ -163,11 +110,6 @@ static void
 sysctl_net_mpls_setup(struct sysctllog **clog)
 {
 
-        sysctl_createv(clog, 0, NULL, NULL,
-                       CTLFLAG_PERMANENT,
-                       CTLTYPE_NODE, "net", NULL,
-                       NULL, 0, NULL, 0,
-                       CTL_NET, CTL_EOL);
         sysctl_createv(clog, 0, NULL, NULL,
                        CTLFLAG_PERMANENT,
                        CTLTYPE_NODE, "mpls", NULL,
@@ -239,3 +181,54 @@ sysctl_net_mpls_setup(struct sysctllog **clog)
 		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
 #endif
 }
+
+DOMAIN_DEFINE(mplsdomain);
+
+PR_WRAP_USRREQ(mpls_usrreq)
+
+#define	mpls_usrreq	mpls_usrreq_wrapper
+
+static const struct pr_usrreqs mpls_usrreqs = {
+	.pr_attach	= mpls_attach,
+	.pr_detach	= mpls_detach,
+	.pr_generic	= mpls_usrreq,
+};
+
+const struct protosw mplssw[] = {
+	{	.pr_domain = &mplsdomain,
+		.pr_init = mpls_init,
+	},
+	{
+		.pr_type = SOCK_DGRAM,
+		.pr_domain = &mplsdomain,
+		.pr_flags = PR_ATOMIC | PR_ADDR,
+		.pr_usrreqs = &mpls_usrreqs,
+	},
+	{
+		.pr_type = SOCK_RAW,
+		.pr_domain = &mplsdomain,
+		.pr_flags = PR_ATOMIC | PR_ADDR,
+		.pr_usrreqs = &mpls_usrreqs,
+	},
+};
+
+struct domain mplsdomain = {
+	.dom_family = PF_MPLS,
+	.dom_name = "MPLS",
+	.dom_init = NULL,
+	.dom_externalize = NULL,
+	.dom_dispose = NULL, 
+	.dom_protosw = mplssw,
+	.dom_protoswNPROTOSW = &mplssw[__arraycount(mplssw)],
+	.dom_rtattach = rt_inithead,
+	.dom_rtoffset = offsetof(struct sockaddr_mpls, smpls_addr) << 3,
+	.dom_maxrtkey = sizeof(union mpls_shim),
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
+	.dom_ifqueues = { &mplsintrq, NULL },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("MPLS", ""),
+	.dom_sa_cmpofs = offsetof(struct sockaddr_mpls, smpls_addr),
+	.dom_sa_cmplen = sizeof(union mpls_shim),
+	.dom_rtcache = LIST_HEAD_INITIALIZER(mplsdomain.dom_rtcache)
+};

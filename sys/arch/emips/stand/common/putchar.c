@@ -1,4 +1,4 @@
-/*      $NetBSD: putchar.c,v 1.1 2011/01/26 01:18:54 pooka Exp $	*/
+/*      $NetBSD: putchar.c,v 1.1.24.1 2014/05/18 17:45:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
  */
 
 #include <sys/types.h>
+#include "start.h"
+#include "common.h"
 
 /* Write a character to the USART
  */

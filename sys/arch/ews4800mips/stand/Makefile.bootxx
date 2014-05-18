@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.5.22.1 2013/08/28 23:59:16 rmind Exp $
+#	$NetBSD: Makefile.bootxx,v 1.5.22.2 2014/05/18 17:45:07 rmind Exp $
 
 NOMAN		=
 
@@ -39,6 +39,7 @@ LIBS		= ${LIBKERN}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -53,7 +54,7 @@ ${PROG}: ${OBJS} ${LIBS}
 	ls -al ${PROG}
 #	-rm -f ${BASE}.tmp
 
-clean cleandir distclean: .WAIT cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

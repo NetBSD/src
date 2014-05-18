@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.4.22.1 2013/08/28 23:59:18 rmind Exp $
+# $NetBSD: Makefile.bootprogs,v 1.4.22.2 2014/05/18 17:45:14 rmind Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -16,6 +16,7 @@ SECONDARY_LOAD_ADDRESS?=0x8ff00000
 STRIPFLAG=	# override
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

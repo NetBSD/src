@@ -77,7 +77,7 @@ int vchiq_sync_log_level = VCHIQ_LOG_DEFAULT;
 
 static atomic_t pause_bulks_count = ATOMIC_INIT(0);
 
-DEFINE_SPINLOCK(service_spinlock);
+static DEFINE_SPINLOCK(service_spinlock);
 DEFINE_SPINLOCK(bulk_waiter_spinlock);
 DEFINE_SPINLOCK(quota_spinlock);
 
@@ -276,10 +276,17 @@ unlock_service(VCHIQ_SERVICE_T *service)
 		if (!service->ref_count) {
 			BUG_ON(service->srvstate != VCHIQ_SRVSTATE_FREE);
 			state->services[service->localport] = NULL;
+
+			_sema_destroy(&service->remove_event);
+			_sema_destroy(&service->bulk_remove_event);
+			lmutex_destroy(&service->bulk_mutex);
 		} else
 			service = NULL;
 	}
 	spin_unlock(&service_spinlock);
+
+	if (service && service->userdata_term)
+		service->userdata_term(service->base.userdata);
 
 	kfree(service);
 }
@@ -380,10 +387,10 @@ remote_event_create(REMOTE_EVENT_T *event)
 	event->armed = 0;
 	/* Don't clear the 'fired' flag because it may already have been set
 	** by the other side. */
-	event->event->value = 0;
+	_sema_init(event->event, 0);
 }
 
-static inline void
+__unused static inline void
 remote_event_destroy(REMOTE_EVENT_T *event)
 {
 	(void)event;
@@ -1452,18 +1459,17 @@ resume_bulks(VCHIQ_STATE_T *state)
 	}
 	state->deferred_bulks = 0;
 }
-  
+
 static int
 parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
 {
 	VCHIQ_SERVICE_T *service = NULL;
 	int msgid, size;
-	int type;
 	unsigned int localport, remoteport;
 
 	msgid = header->msgid;
 	size = header->size;
-	type = VCHIQ_MSG_TYPE(msgid);
+	//int type = VCHIQ_MSG_TYPE(msgid);
 	localport = VCHIQ_MSG_DSTPORT(msgid);
 	remoteport = VCHIQ_MSG_SRCPORT(msgid);
 	if (size >= sizeof(struct vchiq_open_payload)) {
@@ -1562,7 +1568,8 @@ fail_open:
 	return 1;
 
 bail_not_ready:
-	unlock_service(service);
+	if (service)
+		unlock_service(service);
 
 	return 0;
 }
@@ -2373,10 +2380,6 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 
 	_sema_init(&state->connect, 0);
 	lmutex_init(&state->mutex);
-	_sema_init(&state->trigger_event, 0);
-	_sema_init(&state->recycle_event, 0);
-	_sema_init(&state->sync_trigger_event, 0);
-	_sema_init(&state->sync_release_event, 0);
 
 	lmutex_init(&state->slot_mutex);
 	lmutex_init(&state->recycle_mutex);
@@ -2488,7 +2491,7 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 VCHIQ_SERVICE_T *
 vchiq_add_service_internal(VCHIQ_STATE_T *state,
 	const VCHIQ_SERVICE_PARAMS_T *params, int srvstate,
-	VCHIQ_INSTANCE_T instance)
+	VCHIQ_INSTANCE_T instance, VCHIQ_USERDATA_TERM_T userdata_term)
 {
 	VCHIQ_SERVICE_T *service;
 
@@ -2500,6 +2503,7 @@ vchiq_add_service_internal(VCHIQ_STATE_T *state,
 		service->handle        = VCHIQ_SERVICE_HANDLE_INVALID;
 		service->ref_count     = 1;
 		service->srvstate      = VCHIQ_SRVSTATE_FREE;
+		service->userdata_term = userdata_term;
 		service->localport     = VCHIQ_PORT_FREE;
 		service->remoteport    = VCHIQ_PORT_FREE;
 
@@ -2588,6 +2592,10 @@ vchiq_add_service_internal(VCHIQ_STATE_T *state,
 		lmutex_unlock(&state->mutex);
 
 		if (!pservice) {
+			_sema_destroy(&service->remove_event);
+			_sema_destroy(&service->bulk_remove_event);
+			lmutex_destroy(&service->bulk_mutex);
+
 			kfree(service);
 			service = NULL;
 		}
@@ -3252,8 +3260,7 @@ vchiq_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle,
 	bulk->size = size;
 	bulk->actual = VCHIQ_BULK_ACTUAL_ABORTED;
 
-	if (vchiq_prepare_bulk_data(bulk, memhandle,
-		(void*)offset, size, dir) !=
+	if (vchiq_prepare_bulk_data(bulk, memhandle, offset, size, dir) !=
 		VCHIQ_SUCCESS)
 		goto unlock_error_exit;
 
@@ -3320,7 +3327,7 @@ error_exit:
 
 VCHIQ_STATUS_T
 vchiq_queue_message(VCHIQ_SERVICE_HANDLE_T handle,
-	const VCHIQ_ELEMENT_T *elements, int count)
+	const VCHIQ_ELEMENT_T *elements, unsigned int count)
 {
 	VCHIQ_SERVICE_T *service = find_service_by_handle(handle);
 	VCHIQ_STATUS_T status = VCHIQ_ERROR;
@@ -3660,7 +3667,7 @@ vchiq_dump_service_state(void *dump_context, VCHIQ_SERVICE_T *service)
 			if (service->public_fourcc != VCHIQ_FOURCC_INVALID)
 				snprintf(remoteport + len2,
 					sizeof(remoteport) - len2,
-					" (client %x)", service->client_id);
+					" (client %8x)", service->client_id);
 		} else
 			strcpy(remoteport, "n/a");
 

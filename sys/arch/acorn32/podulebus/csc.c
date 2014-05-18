@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.18 2012/10/27 17:17:23 chs Exp $	*/
+/*	$NetBSD: csc.c,v 1.18.2.1 2014/05/18 17:44:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.18 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.18.2.1 2014/05/18 17:44:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,9 +289,6 @@ void
 csc_led(void *v, int mode)
 {
 	struct sfas_softc *sc = v;
-	csc_regmap_p		rp;
-
-	rp = (csc_regmap_p)sc->sc_fas;
 
 	if (mode) {
 		sc->sc_led_status++;

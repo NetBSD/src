@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.150.14.1 2013/08/28 15:21:48 rmind Exp $ */
+/*	$NetBSD: if_gre.c,v 1.150.14.2 2014/05/18 17:46:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.150.14.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.150.14.2 2014/05/18 17:46:12 rmind Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -412,7 +412,6 @@ gre_upcall_remove(struct socket *so)
 static int
 gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 {
-	const struct protosw *pr;
 	int fd, rc;
 	struct mbuf *m;
 	struct sockaddr *sa;
@@ -459,8 +458,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	m = NULL;
 
 	/* XXX convert to a (new) SOL_SOCKET call */
-  	pr = so->so_proto;
-  	KASSERT(pr != NULL);
+  	KASSERT(so->so_proto != NULL);
  	rc = so_setsockopt(curlwp, so, IPPROTO_IP, IP_TTL,
 	    &ip_gre_ttl, sizeof(ip_gre_ttl));
   	if (rc != 0) {
@@ -491,7 +489,6 @@ out:
 static int
 gre_sosend(struct socket *so, struct mbuf *top)
 {
-	struct mbuf	**mp;
 	struct proc	*p;
 	long		space, resid;
 	int		error;
@@ -516,17 +513,16 @@ gre_sosend(struct socket *so, struct mbuf *top)
 	}
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-			if ((so->so_state & SS_ISCONFIRMING) == 0)
-				snderr(ENOTCONN);
-		} else
+			snderr(ENOTCONN);
+		} else {
 			snderr(EDESTADDRREQ);
+		}
 	}
 	space = sbspace(&so->so_snd);
 	if (resid > so->so_snd.sb_hiwat)
 		snderr(EMSGSIZE);
 	if (space < resid)
 		snderr(EWOULDBLOCK);
-	mp = &top;
 	/*
 	 * Data is prepackaged in "top".
 	 */
@@ -535,7 +531,6 @@ gre_sosend(struct socket *so, struct mbuf *top)
 	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
 	    PRU_SEND, top, NULL, NULL, l);
 	top = NULL;
-	mp = &top;
  release:
 	sbunlock(&so->so_snd);
  out:
@@ -567,10 +562,6 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	*mp = NULL;
 
 	KASSERT(pr->pr_flags & PR_ATOMIC);
-
-	if (so->so_state & SS_ISCONFIRMING)
-		(*pr->pr_usrreqs->pr_generic)(so,
-		    PRU_RCVD, NULL, NULL, NULL, curlwp);
  restart:
 	if ((error = sblock(&so->so_rcv, M_NOWAIT)) != 0) {
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.86 2013/03/18 19:35:37 plunky Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.86.6.1 2014/05/18 17:46:05 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.86 2013/03/18 19:35:37 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.86.6.1 2014/05/18 17:46:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.86 2013/03/18 19:35:37 plunky Ex
 int
 msdosfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -155,13 +155,11 @@ msdosfs_create(void *v)
 		goto bad;
 	fstrans_done(ap->a_dvp->v_mount);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
 bad:
 	fstrans_done(ap->a_dvp->v_mount);
-	vput(ap->a_dvp);
 	return (error);
 }
 
@@ -829,6 +827,7 @@ msdosfs_rename(void *v)
 	struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *fvp = ap->a_fvp;
 	struct vnode *fdvp = ap->a_fdvp;
+	struct mount *mp = fdvp->v_mount;
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct denode *ip, *xp, *dp, *zp;
@@ -906,7 +905,7 @@ abortit:
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
 
-	fstrans_start(fdvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * When the target exists, both the directory
 	 * and target vnodes are returned locked.
@@ -993,7 +992,7 @@ abortit:
 	 * file/directory.
 	 */
 	if ((error = uniqdosname(VTODE(tdvp), tcnp, toname)) != 0) {
-		fstrans_done(fdvp->v_mount);
+		fstrans_done(mp);
 		goto abortit;
 	}
 
@@ -1009,7 +1008,7 @@ abortit:
 		VOP_UNLOCK(fdvp);
 		vrele(ap->a_fvp);
 		vrele(tdvp);
-		fstrans_done(fdvp->v_mount);
+		fstrans_done(mp);
 		return (error);
 	}
 	if (fvp == NULL) {
@@ -1021,7 +1020,7 @@ abortit:
 		vput(fdvp);
 		vrele(ap->a_fvp);
 		vrele(tdvp);
-		fstrans_done(fdvp->v_mount);
+		fstrans_done(mp);
 		return 0;
 	}
 	VOP_UNLOCK(fdvp);
@@ -1129,7 +1128,7 @@ bad:
 	ip->de_flag &= ~DE_RENAME;
 	vrele(fdvp);
 	vrele(fvp);
-	fstrans_done(fdvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 
 	/* XXX: uuuh */
@@ -1167,7 +1166,7 @@ static const struct {
 int
 msdosfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struvt vnode **a_vpp;
 		struvt componentname *a_cnp;
@@ -1268,7 +1267,6 @@ msdosfs_mkdir(void *v)
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
-	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	fstrans_done(ap->a_dvp->v_mount);
 	return (0);
@@ -1276,7 +1274,6 @@ msdosfs_mkdir(void *v)
 bad:
 	clusterfree(pmp, newcluster, NULL);
 bad2:
-	vput(ap->a_dvp);
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);
 }
@@ -1291,6 +1288,7 @@ msdosfs_rmdir(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
+	struct mount *mp = dvp->v_mount;
 	struct componentname *cnp = ap->a_cnp;
 	struct denode *ip, *dp;
 	int error;
@@ -1305,7 +1303,7 @@ msdosfs_rmdir(void *v)
 		vput(vp);
 		return (EINVAL);
 	}
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Verify the directory is empty (and valid).
 	 * (Rmdir ".." won't be valid since
@@ -1347,7 +1345,7 @@ out:
 	if (dvp)
 		vput(dvp);
 	vput(vp);
-	fstrans_done(ap->a_dvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 }
 

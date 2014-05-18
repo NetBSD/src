@@ -560,7 +560,7 @@ static int mach64_dma_dispatch_vertex(struct drm_device * dev,
 	int i = 0;
 	int done = 0;
 	int verify_ret = 0;
-	DMALOCALS;
+	DMALOCALS_NOOUT;
 
 	DRM_DEBUG("buf=%p used=%lu nbox=%d\n",
 		  buf, used, sarea_priv->nbox);
@@ -587,7 +587,7 @@ static int mach64_dma_dispatch_vertex(struct drm_device * dev,
 
 	copy_buf->used = used;
 
-	DMASETPTR(copy_buf);
+	DMASETPTR_NOOUT(copy_buf);
 
 	if (sarea_priv->dirty & ~MACH64_UPLOAD_CLIPRECTS) {
 		ret = mach64_emit_state(file_priv, dev_priv);

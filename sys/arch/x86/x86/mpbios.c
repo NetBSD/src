@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.60.2.1 2013/08/28 23:59:24 rmind Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.60.2.2 2014/05/18 17:45:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.60.2.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.60.2.2 2014/05/18 17:45:30 rmind Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -552,7 +552,9 @@ mpbios_scan(device_t self, int *ncpup)
 	int		count;
 	int		type;
 	int		intr_cnt, cur_intr;
+#if NLAPIC > 0
 	paddr_t		lapic_base;
+#endif
 	const struct dflt_conf_entry *dflt_conf;
 	const int *dflt_bus_irq;
 	const struct mpbios_int *iep;
@@ -580,11 +582,11 @@ mpbios_scan(device_t self, int *ncpup)
 #if NACPICA > 0
 	if (mpacpi_ncpu == 0) {
 #endif
+#if NLAPIC > 0
 		lapic_base = LAPIC_BASE;
 		if (mp_cth != NULL)
 			lapic_base = (paddr_t)mp_cth->apic_address;
 
-#if NLAPIC > 0
 		lapic_boot_init(lapic_base);
 #endif
 #if NACPICA > 0

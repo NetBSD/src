@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.159.2.1 2013/08/28 23:59:24 rmind Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.159.2.2 2014/05/18 17:45:34 rmind Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -16,6 +16,11 @@
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 #
 # all ports are expected to include bsd.own.mk for toolchain settings
+
+# Default DEBUG to -g if kernel debug info is requested by MKKDEBUG=yes
+.if defined(MKKDEBUG) && ${MKKDEBUG} == "yes"
+DEBUG?=-g
+.endif
 
 ##
 ## (0) toolchain settings for things that aren't part of the standard
@@ -88,6 +93,8 @@ CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
 
 CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":? \
     -Wno-shift-count-negative -Wno-shift-count-overflow:}
+
+CWARNFLAGS.ioconf.c= ${${ACTIVE_CC} == "clang":? -Wno-unused-const-variable :}
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}
@@ -224,7 +231,7 @@ SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_DEP+=	${KERNLDSCRIPT}
 .endif
 .if defined(CTFMERGE)
-SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 .else
 SYSTEM_CTFMERGE= ${_MKSHECHO}
 .endif
@@ -332,7 +339,7 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    > assym.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 .endif
@@ -353,6 +360,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh \
 	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+	${COMPILE_CTFCONVERT}
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)
@@ -438,7 +446,7 @@ assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
-	    ${CFLAGS:N-Wa,*} ${CPPFLAGS}
+	    ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${GENASSYM_CPPFLAGS}
 	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 

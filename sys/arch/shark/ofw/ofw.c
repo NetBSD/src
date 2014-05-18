@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.60.2.1 2013/08/28 23:59:21 rmind Exp $	*/
+/*	$NetBSD: ofw.c,v 1.60.2.2 2014/05/18 17:45:25 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.60.2.1 2013/08/28 23:59:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.60.2.2 2014/05/18 17:45:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,14 +1047,18 @@ ofw_callbackhandler(void *v)
 
 		/* Install new mappings. */
 		{
-			pt_entry_t *pte = vtopte(va);
-			int npages = size >> PGSHIFT;
-
+			pt_entry_t *ptep = vtopte(va);
+			KASSERT(ptep + size / L2_S_SIZE == vtopte(va + size));
+			pt_entry_t npte = pa | L2_TYPE_S | L2_AP(ap_bits)
+			    | cb_bits;
+			
 			ap_bits >>= 10;
-			for (; npages > 0; pte++, pa += PAGE_SIZE, npages--)
-				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S |
-				    cb_bits);
-			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
+			for (size_t npages = size >> PGSHIFT;
+			     npages-- > 0;
+			     ptep += PAGE_SIZE / L2_S_SIZE, npte += PAGE_SIZE) {
+				l2pte_set(ptep, npte, 0);
+			}
+			PTE_SYNC_RANGE(vtopte(va), size >> L2_S_SHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1091,12 +1095,14 @@ ofw_callbackhandler(void *v)
 
 		/* Zero the mappings. */
 		{
-			pt_entry_t *pte = vtopte(va);
-			int npages = size >> PGSHIFT;
-
-			for (; npages > 0; pte++, npages--)
-				*pte = 0;
-			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
+			pt_entry_t *ptep = vtopte(va);
+			
+			for (size_t npages = size >> PGSHIFT;
+			     npages-- > 0;
+			     ptep += PAGE_SIZE / L2_S_SIZE) {
+				l2pte_reset(ptep);
+			}
+			PTE_SYNC_RANGE(vtopte(va), size >> L2_S_SHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1202,7 +1208,6 @@ ofw_callbackhandler(void *v)
 		args->nreturns = 1;
 	} else if (strcmp(name, "claim-virt") == 0) {
 		vaddr_t va;
-		vsize_t size;
 		vaddr_t align;
 
 		/* XXX - notyet */
@@ -1220,7 +1225,6 @@ ofw_callbackhandler(void *v)
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
 		/* Allocate size bytes with specified alignment. */
-		size = (vsize_t)args_n_results[0];
 		align = (vaddr_t)args_n_results[1];
 		if (align % PAGE_SIZE != 0) {
 			args_n_results[nargs + 1] = -1;
@@ -1239,8 +1243,6 @@ ofw_callbackhandler(void *v)
 			args->nreturns = 3;
 		}
 	} else if (strcmp(name, "release-virt") == 0) {
-		vaddr_t va;
-		vsize_t size;
 
 		/* XXX - notyet */
 		printf("unimplemented ofw callback - %s\n", name);
@@ -1255,10 +1257,6 @@ ofw_callbackhandler(void *v)
 			return;
 		}
 		args_n_results[nargs] =	0;	/* properly formatted request */
-
-		/* Release bytes. */
-		va = (vaddr_t)args_n_results[0];
-		size = (vsize_t)args_n_results[1];
 
 		args->nreturns = 1;
 	} else {

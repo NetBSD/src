@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17.2.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: asm.h,v 1.17.2.2 2014/05/18 17:44:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +34,8 @@
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
  */
 
-#ifndef _ARM32_ASM_H_
-#define _ARM32_ASM_H_
+#ifndef _ARM_ASM_H_
+#define _ARM_ASM_H_
 
 #include <arm/cdefs.h>
 
@@ -103,7 +103,6 @@
 #define	ARM_ENTRY_NP(y)		_ARM_ENTRY(_C_LABEL(y))
 #define	THUMB_ENTRY(y)		_THUMB_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	THUMB_ENTRY_NP(y)	_THUMB_ENTRY(_C_LABEL(y))
-#define	END(y)			_END(_C_LABEL(y))
 #define	ASENTRY(y)		_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	ASENTRY_NP(y)		_ENTRY(_ASM_LABEL(y))
 #define	ASEND(y)		_END(_ASM_LABEL(y))
@@ -114,9 +113,9 @@
 
 #define	ASMSTR		.asciz
 
-#if defined(PIC) || defined(__pic__)
+#ifdef __PIC__
 #define	REL_SYM(a, b)	((a) - (b))
-#define	PLT_SYM(x)	PIC_SYM(x, PLT)
+#define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	PIC_SYM(x, GOT)
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;		\
@@ -149,7 +148,7 @@
 #define	GOT_INIT(got,gotsym,pclabel)
 #define	GOT_INITSYM(gotsym,pclabel)
 #define	PIC_SYM(x,y)	x
-#endif	/* PIC */
+#endif	/* __PIC__ */
 
 #define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 

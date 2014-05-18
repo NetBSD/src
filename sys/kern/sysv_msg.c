@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.63.4.1 2013/08/28 23:59:35 rmind Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.63.4.2 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.63.4.1 2013/08/28 23:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.63.4.2 2014/05/18 17:46:08 rmind Exp $");
 
 #define SYSVMSG
 
@@ -249,7 +249,7 @@ msgrealloc(int newmsgmni, int newmsgseg)
 	}
 
 	/*
-	 * Copy all message queue identifiers, mesage headers and buffer
+	 * Copy all message queue identifiers, message headers and buffer
 	 * pools to the new memory location.
 	 */
 	for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
@@ -1253,11 +1253,6 @@ SYSCTL_SETUP(sysctl_ipc_msg_setup, "sysctl kern.ipc subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipc",

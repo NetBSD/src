@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.3.2.2 2013/08/28 23:59:38 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.3.2.3 2014/05/18 17:46:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,8 +76,12 @@
 
 #include <sys/kcpuset.h>
 
-#if defined(MULTIPROCESSOR) && !defined(PMAP_TLB_MAX)
-#define PMAP_TLB_MAX		MAXCPUS
+#if !defined(PMAP_TLB_MAX)
+# if defined(MULTIPROCESSOR)
+#  define PMAP_TLB_MAX		MAXCPUS
+# else
+#  define PMAP_TLB_MAX		1
+# endif
 #endif
 
 /*
@@ -122,7 +126,7 @@ struct pmap_tlb_info {
 	enum tlb_invalidate_op ti_tlbinvop;
 #define tlbinfo_index(ti)	((ti)->ti_index)
 #else
-#define tlbinfo_index(ti)	(0)
+#define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
 	struct evcnt ti_evcnt_synci_asts;
 	struct evcnt ti_evcnt_synci_all;
@@ -131,7 +135,7 @@ struct pmap_tlb_info {
 	struct evcnt ti_evcnt_synci_desired;
 	struct evcnt ti_evcnt_synci_duplicate;
 #else
-#define tlbinfo_index(ti)	(0)
+#define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
 	struct evcnt ti_evcnt_asid_reinits;
 	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
@@ -145,14 +149,14 @@ extern u_int pmap_ntlbs;
 #endif
 
 #ifndef cpu_set_tlb_info
-#define	cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
+# define cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
 #endif
 #ifndef cpu_tlb_info
-#ifdef MULTIPROCESSOR
-#define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
-#else
-#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
-#endif
+# if PMAP_TLB_MAX > 1
+#  define cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+# else
+#  define cpu_tlb_info(ci)		(&pmap_tlb0_info)
+# endif
 #endif
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.29 2013/03/06 11:40:22 yamt Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.29.6.1 2014/05/18 17:46:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.29 2013/03/06 11:40:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.29.6.1 2014/05/18 17:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -243,7 +243,6 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		return error;
 
 	vp->v_type = type;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 
 	if (PUFFS_USE_NAMECACHE(pmp))
@@ -256,10 +255,8 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 void
 puffs_putvnode(struct vnode *vp)
 {
-	struct puffs_mount *pmp;
 	struct puffs_node *pnode;
 
-	pmp = VPTOPUFFSMP(vp);
 	pnode = VPTOPP(vp);
 
 #ifdef DIAGNOSTIC

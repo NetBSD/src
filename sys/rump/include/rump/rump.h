@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.56.4.1 2013/08/28 23:59:36 rmind Exp $	*/
+/*	$NetBSD: rump.h,v 1.56.4.2 2014/05/18 17:46:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@ typedef struct prop_dictionary *prop_dictionary_t;
 #endif
 #endif /* __NetBSD__ */
 
-#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#if (!defined(_KERNEL)) && (defined(__sun__) || defined(__ANDROID__)) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
 #endif
@@ -71,7 +71,7 @@ enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 enum rump_sigmodel {
 	RUMP_SIGMODEL_PANIC,
 	RUMP_SIGMODEL_IGNORE,
-	RUMP_SIGMODEL_HOST,
+	RUMP_SIGMODEL__HOST_NOTANYMORE,
 	RUMP_SIGMODEL_RAISE,
 	RUMP_SIGMODEL_RECORD
 };
@@ -99,6 +99,10 @@ enum rump_etfs_type {
 #ifdef _BEGIN_DECLS
 _BEGIN_DECLS
 #endif
+
+int	rump_getversion(void);
+int	rump_pub_getversion(void); /* compat */
+int	rump_nativeabi_p(void);
 
 int	rump_boot_gethowto(void);
 void	rump_boot_sethowto(int);

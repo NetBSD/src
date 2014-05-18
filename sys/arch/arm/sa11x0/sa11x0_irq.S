@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.16.4.1 2013/08/28 23:59:12 rmind Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.16.4.2 2014/05/18 17:44:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -150,7 +150,7 @@ Lfind_highest_ipl:
 	bl	_C_LABEL(printf)
 	ldmia	sp!, {r0,r1,r2}
 #endif
-        mrs     r0, cpsr_all		/* Enable IRQs */
+        mrs     r0, cpsr		/* Enable IRQs */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
@@ -234,7 +234,7 @@ nextirq:
 #endif
 
 	/* Kill IRQ's in preparation for exit */
-        mrs     r0, cpsr_all
+        mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
@@ -262,7 +262,7 @@ ENTRY(irq_setmasks)
 	stmfd	sp!, {r0, r1, r4, lr}	/* Preserve registers */
 
 	/* Disable interrupts */
-	mrs	r1, cpsr_all
+	mrs	r1, cpsr
 	orr	r3, r1,  #(I32_bit)
 	msr	cpsr_all, r3
 

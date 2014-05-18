@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.5 2012/10/27 17:17:58 chs Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.5.2.1 2014/05/18 17:45:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.5 2012/10/27 17:17:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.5.2.1 2014/05/18 17:45:14 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,16 +118,14 @@ bad:
 }
 
 const char *
-landisk_pci_intr_string(void *v, pci_intr_handle_t ih)
+landisk_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
 	if (ih == 0)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+	snprintf(buf, len, "irq %d", ih);
 
-	return (irqstr);
+	return buf;
 }
 
 const struct evcnt *

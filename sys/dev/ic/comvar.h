@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.74.4.1 2013/08/28 23:59:25 rmind Exp $	*/
+/*	$NetBSD: comvar.h,v 1.74.4.2 2014/05/18 17:45:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_KGDB	0x80
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
+#define	COM_HW_AFE	0x400
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
@@ -238,6 +239,9 @@ struct com_softc {
 	int (*enable)(struct com_softc *);
 	void (*disable)(struct com_softc *);
 	int enabled;
+
+	/* XXXX: vendor workaround functions */
+	int (*sc_vendor_workaround)(struct com_softc *);
 
 	struct pps_state sc_pps_state;	/* pps state */
 

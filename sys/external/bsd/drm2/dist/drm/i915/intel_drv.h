@@ -26,6 +26,7 @@
 #define __INTEL_DRV_H__
 
 #include <linux/i2c.h>
+#include <asm/processor.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 #include <drm/drm_crtc.h>
@@ -33,6 +34,59 @@
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_dp_helper.h>
 
+#ifdef __NetBSD__
+#define _wait_for(COND, MS, W) ({ \
+	int ret__ = 0;							\
+	if (cold) {							\
+		int ms = (MS);						\
+		while (!(COND)) {					\
+			if (--ms < 0) {					\
+				ret__ = -ETIMEDOUT;			\
+				break;					\
+			}						\
+			DELAY(1000);					\
+		}							\
+	} else {							\
+		unsigned long timeout__ = jiffies + msecs_to_jiffies(MS); \
+		while (!(COND)) {					\
+			if (time_after(jiffies, timeout__)) {		\
+				ret__ = -ETIMEDOUT;			\
+				break;					\
+			}						\
+			if ((W) && drm_can_sleep())  {			\
+				msleep(W);				\
+			} else {					\
+				DELAY(1000);				\
+			}						\
+		}							\
+	}								\
+	ret__;								\
+})
+
+#define wait_for_atomic_us(COND, US) ({ \
+	int ret__ = 0;							\
+	if (cold) {							\
+		int us = (US);						\
+		while (!(COND)) {					\
+			if (--us < 0) {					\
+				ret__ = -ETIMEDOUT;			\
+				break;					\
+			}						\
+			DELAY(1);					\
+		}							\
+	} else {							\
+		unsigned long timeout__ = jiffies + usecs_to_jiffies(US); \
+		while (!(COND)) {					\
+			if (time_after(jiffies, timeout__)) {		\
+				ret__ = -ETIMEDOUT;			\
+				break;					\
+			}						\
+			DELAY(1);					\
+		}							\
+	}								\
+	ret__;								\
+})
+#else	/* !NetBSD */
 #define _wait_for(COND, MS, W) ({ \
 	unsigned long timeout__ = jiffies + msecs_to_jiffies(MS);	\
 	int ret__ = 0;							\
@@ -62,6 +116,7 @@
 	}								\
 	ret__;								\
 })
+#endif	/* NetBSD */
 
 #define wait_for(COND, MS) _wait_for(COND, MS, 1)
 #define wait_for_atomic(COND, MS) _wait_for(COND, MS, 0)
@@ -588,9 +643,11 @@ extern int intel_framebuffer_init(struct drm_device *dev,
 				  struct intel_framebuffer *ifb,
 				  struct drm_mode_fb_cmd2 *mode_cmd,
 				  struct drm_i915_gem_object *obj);
+#ifndef __NetBSD__		/* XXX fb */
 extern int intel_fbdev_init(struct drm_device *dev);
 extern void intel_fbdev_fini(struct drm_device *dev);
 extern void intel_fbdev_set_suspend(struct drm_device *dev, int state);
+#endif
 extern void intel_prepare_page_flip(struct drm_device *dev, int plane);
 extern void intel_finish_page_flip(struct drm_device *dev, int pipe);
 extern void intel_finish_page_flip_plane(struct drm_device *dev, int plane);

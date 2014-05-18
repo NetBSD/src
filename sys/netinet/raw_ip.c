@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.116.2.3 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.116.2.4 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.116.2.3 2013/09/23 00:57:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.116.2.4 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -509,9 +509,9 @@ rip_bind(inpcb_t *inp, struct mbuf *nam)
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
 
 	if (nam->m_len != sizeof(*addr))
-		return EINVAL;
+		return (EINVAL);
 	if (!IFNET_FIRST())
-		return EADDRNOTAVAIL;
+		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET)
 		return EAFNOSUPPORT;
 	if (!in_nullhost(addr->sin_addr) && !ifa_ifwithaddr(sintosa(addr)))
@@ -527,9 +527,9 @@ rip_connect(inpcb_t *inp, struct mbuf *nam)
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
 
 	if (nam->m_len != sizeof(*addr))
-		return EINVAL;
+		return (EINVAL);
 	if (!IFNET_FIRST())
-		return EADDRNOTAVAIL;
+		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET)
 		return EAFNOSUPPORT;
 
@@ -730,11 +730,6 @@ const struct pr_usrreqs rip_usrreqs = {
 static void
 sysctl_net_inet_raw_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

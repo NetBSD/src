@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net_private.h,v 1.6.2.1 2013/08/28 23:59:37 rmind Exp $	*/
+/*	$NetBSD: rump_net_private.h,v 1.6.2.2 2014/05/18 17:46:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #ifndef _SYS_RUMP_NET_PRIVATE_H_
 #define _SYS_RUMP_NET_PRIVATE_H_
 
-void		rump_netisr_init(void);
+void		rump_netisr_register(int, void (*)(void));
 
 #define DOMAINADD(dom)							\
 do {									\
@@ -36,8 +36,6 @@ do {									\
 		domain_attach(&dom);					\
         }								\
 } while (/*CONSTCOND*/0)
-
-void		rump_net_components(void);
 
 #include "rumpnet_if_priv.h"
 

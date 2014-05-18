@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.14 2012/10/27 17:18:11 chs Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.14.2.1 2014/05/18 17:45:25 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.14 2012/10/27 17:18:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.14.2.1 2014/05/18 17:45:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static paddr_t	igsfb_ofbus_mmap(void *, void *, off_t, int);
 CFATTACH_DECL_NEW(igsfb_ofbus, sizeof(struct igsfb_softc),
     igsfb_ofbus_match, igsfb_ofbus_attach, NULL, NULL);
     
-static const char const *compat_strings[] = { "igs,cyperpro2010", NULL };
+static const char * const compat_strings[] = { "igs,cyperpro2010", NULL };
 
 vaddr_t igsfb_mem_vaddr = 0, igsfb_mmio_vaddr = 0;
 paddr_t igsfb_mem_paddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: cons.c,v 1.1.116.1 2014/05/18 17:45:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -137,8 +137,8 @@ awaitkey(int timeout, int tell)
 			char numbuf[20];
 			int len, j;
 
-			sprintf(numbuf, "%d ", i / POLL_FREQ);
-			len = strlen(numbuf);
+			len = snprintf(numbuf, sizeof(numbuf),
+			    "%d ", i / POLL_FREQ);
 			for (j = 0; j < len; j++)
 				numbuf[len + j] = '\b';
 			numbuf[len + j] = '\0';

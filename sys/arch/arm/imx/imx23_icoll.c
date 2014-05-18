@@ -1,4 +1,4 @@
-/* $Id: imx23_icoll.c,v 1.2 2012/12/16 19:40:00 jkunz Exp $ */
+/* $Id: imx23_icoll.c,v 1.2.4.1 2014/05/18 17:44:58 rmind Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+
+#include <arm/cpufunc.h>
 
 #define _INTR_PRIVATE
 #include <arm/pic/picvar.h>

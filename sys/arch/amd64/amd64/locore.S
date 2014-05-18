@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.73 2013/06/23 09:00:37 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.73.2.1 2014/05/18 17:44:54 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1017,9 +1017,8 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
+	 * IPL_SCHED prevents from FPU interrupt altering the LWP's saved cr0.
 	 */
 2:
 #ifndef XEN

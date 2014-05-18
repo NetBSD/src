@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.104 2013/04/27 18:19:22 christos Exp $
+# $NetBSD: INSTALL,v 1.104.4.1 2014/05/18 17:44:53 rmind Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -341,6 +341,10 @@ wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
+pseudo-device	raid			# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+
+pseudo-device	bpfilter
 pseudo-device	loop
 pseudo-device	md		
 pseudo-device	ppp		

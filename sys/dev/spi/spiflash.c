@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.11 2013/02/15 17:46:53 rkujawa Exp $ */
+/* $NetBSD: spiflash.c,v 1.11.2.1 2014/05/18 17:45:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.11 2013/02/15 17:46:53 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.11.2.1 2014/05/18 17:45:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -457,7 +457,7 @@ spiflash_process_write(spiflash_handle_t sc)
 	 * do the erase, if we need to.
 	 */
 	if (neederase) {
-		DPRINTF(("erasing from %x - %x\n", base, base + len));
+		DPRINTF(("erasing from %zx - %zx\n", base, base + len));
 		if ((err = sc->sc_erase(sc, base, len)) != 0) {
 			spiflash_process_done(sc, err);
 			return;
@@ -467,8 +467,7 @@ spiflash_process_write(spiflash_handle_t sc)
 	/*
 	 * now write our save area, and finish up.
 	 */
-	DPRINTF(("flashing %d bytes to %x from %x\n", len,
-		    base, (unsigned)save));
+	DPRINTF(("flashing %d bytes to %zx from %p\n", len, base, save));
 	err = sc->sc_write(sc, base, len, save);
 	spiflash_process_done(sc, err);
 }
@@ -509,10 +508,9 @@ spiflash_thread(void *arg)
 {
 	spiflash_handle_t sc = arg;
 	struct buf	*bp;
-	int		s;
 	int		sector;
 
-	s = splbio();
+	(void)splbio();
 	for (;;) {
 		if ((bp = bufq_get(sc->sc_waitq)) == NULL) {
 			tsleep(&sc->sc_thread, PRIBIO, "spiflash_thread", 0);

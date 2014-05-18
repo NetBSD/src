@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.10.16.1 2013/08/28 23:59:17 rmind Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.10.16.2 2014/05/18 17:45:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ bootdefault(void)
 	}
 }
 
-void
+__dead void
 doboottypemenu(void)
 {
 	int choice;

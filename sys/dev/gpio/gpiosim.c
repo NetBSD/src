@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.15 2013/05/20 15:48:25 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.15.2.1 2014/05/18 17:45:36 rmind Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -121,11 +121,6 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register(self, NULL, NULL);
 
-	sysctl_createv(NULL, 0, NULL, NULL,
-            CTLFLAG_PERMANENT,
-            CTLTYPE_NODE, "hw", NULL,
-            NULL, 0, NULL, 0,
-            CTL_HW, CTL_EOL);
         sysctl_createv(&sc->sc_log, 0, NULL, &node,
             0,
             CTLTYPE_NODE, device_xname(sc->sc_dev),

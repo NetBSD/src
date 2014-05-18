@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.56.2.1 2013/08/28 23:59:37 rmind Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.56.2.2 2014/05/18 17:46:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.56.2.1 2013/08/28 23:59:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.56.2.2 2014/05/18 17:46:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.56.2.1 2013/08/28 23:59:37 rmind Exp 
 
 #include "rump_private.h"
 #include "rump_net_private.h"
-#include "rumpcomp_user.h"
+#include "shmif_user.h"
 
 static int shmif_clone(struct if_clone *, int);
 static int shmif_unclone(struct ifnet *);
@@ -98,8 +98,6 @@ struct shmif_sc {
 	struct lwp *sc_rcvl;
 	bool sc_dying;
 };
-
-static const uint32_t busversion = SHMIF_VERSION;
 
 static void shmif_rcv(void *);
 
@@ -172,7 +170,7 @@ allocif(int unit, struct shmif_sc **scp)
 
 	ifp = &sc->sc_ec.ec_if;
 
-	sprintf(ifp->if_xname, "shmif%d", unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_init = shmif_init;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $	*/
+/*	$NetBSD: sockin.c,v 1.34.2.1 2014/05/18 17:46:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.34.2.1 2014/05/18 17:46:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -54,12 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $")
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
-#include "rumpcomp_user.h"
+#include "sockin_user.h"
 
 /*
  * An inet communication domain which uses the socket interface.
- * Currently supports only IPv4 UDP, but could easily be extended to
- * support IPv6 and TCP by adding more stuff to the protosw.
+ * Supports IPv4 & IPv6 UDP/TCP.
  */
 
 DOMAIN_DEFINE(sockindomain);
@@ -280,7 +279,7 @@ sockin_accept(struct socket *so)
 		return;
 
 	mutex_enter(softnet_lock);
-	nso = sonewconn(so, SS_ISCONNECTED);
+	nso = sonewconn(so, true);
 	if (nso == NULL)
 		goto errout;
 	if (registersock(nso, news) != 0)
@@ -560,3 +559,14 @@ sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	return rumpcomp_sockin_setsockopt(SO2S(so), sopt->sopt_level,
 	    sopt->sopt_name, sopt->sopt_data, sopt->sopt_size);
 }
+
+int sockin_unavailable(void);
+int
+sockin_unavailable(void)
+{
+
+        panic("interface not available in with sockin");
+}
+__strong_alias(rtrequest,sockin_unavailable);
+__strong_alias(ifunit,sockin_unavailable);
+__strong_alias(ifreq_setaddr,sockin_unavailable);

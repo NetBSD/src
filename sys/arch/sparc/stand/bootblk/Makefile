@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.24.1 2013/08/28 23:59:22 rmind Exp $
+#	$NetBSD: Makefile,v 1.13.24.2 2014/05/18 17:45:26 rmind Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -23,12 +23,12 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM -D_KERNEL
 
 ffs.fth.h: genfth.cf machine sparc
 	${TOOL_GENASSYM} -f -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    <${.CURDIR}/genfth.cf >ffs.fth.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} < ${.CURDIR}/genfth.cf >ffs.fth.h.tmp && \
 	    mv -f ffs.fth.h.tmp ffs.fth.h
 
 lfs.fth.h: genlfs.cf machine sparc
 	${TOOL_GENASSYM} -f -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    <${.CURDIR}/genlfs.cf >lfs.fth.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} < ${.CURDIR}/genlfs.cf >lfs.fth.h.tmp && \
 	    mv -f lfs.fth.h.tmp lfs.fth.h
 
 bootblk.text: bootblk.fth ffs.fth.h lfs.fth.h

@@ -1,4 +1,4 @@
-/*	cpu.h,v 1.45.4.7 2008/01/28 18:20:39 matt Exp	*/
+/*	$NetBSD: locore.h,v 1.4.2.3 2014/05/18 17:44:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
+#include "opt_arm_debug.h"
 #endif
 
 #include <arm/cpuconf.h>
@@ -149,7 +150,25 @@ void	cpu_attach(device_t, cpuid_t);
 
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
+extern int cpu_printfataltraps;
 extern int cpu_fpu_present;
+extern int cpu_hwdiv_present;
+extern int cpu_neon_present;
+extern int cpu_simd_present;
+extern int cpu_simdex_present;
+extern int cpu_umull_present;
+extern int cpu_synchprim_present;
+
+extern int cpu_instruction_set_attributes[6];
+extern int cpu_memory_model_features[4];
+extern int cpu_processor_features[2];
+extern int cpu_media_and_vfp_features[2];
+
+extern bool arm_has_tlbiasid_p;
+#ifdef MULTIPROCESSOR
+extern u_int arm_cpu_max;
+extern volatile u_int arm_cpu_hatched;
+#endif
 
 #if !defined(CPU_ARMV7)
 #define	CPU_IS_ARMV7_P()		false
@@ -159,6 +178,87 @@ extern bool cpu_armv7_p;
 #else
 #define	CPU_IS_ARMV7_P()		true
 #endif
+#if !defined(CPU_ARMV6)
+#define	CPU_IS_ARMV6_P()		false
+#elif defined(CPU_ARMV7) || defined(CPU_PRE_ARMV6)
+extern bool cpu_armv6_p;
+#define	CPU_IS_ARMV6_P()		(cpu_armv6_p)
+#else
+#define	CPU_IS_ARMV6_P()		true
+#endif
+
+/*
+ * Used by the fault code to read the current instruction.
+ */
+static inline uint32_t
+read_insn(vaddr_t va, bool user_p)
+{
+	uint32_t insn;
+	if (user_p) {
+		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va));
+	} else {
+		insn = *(const uint32_t *)va;
+	}
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+	insn = bswap32(insn);
+#endif
+	return insn;
+}
+
+/*
+ * Used by the fault code to read the current thumb instruction.
+ */
+static inline uint32_t
+read_thumb_insn(vaddr_t va, bool user_p)
+{
+	va &= ~1;
+	uint32_t insn;
+	if (user_p) {
+#ifdef _ARM_ARCH_T2
+		__asm __volatile("ldrht %0, [%1], #0" : "=&r"(insn) : "r"(va));
+#else
+		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va & ~3));
+#ifdef __ARMEB__
+		insn = (uint16_t) (insn >> (((va ^ 2) & 2) << 3));
+#else
+		insn = (uint16_t) (insn >> ((va & 2) << 3));
+#endif
+#endif
+	} else {
+		insn = *(const uint16_t *)va;
+	}
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+	insn = bswap16(insn);
+#endif
+	return insn;
+}
+
+static inline void
+arm_dmb(void)
+{
+	if (CPU_IS_ARMV6_P())
+		armreg_dmb_write(0);
+	else if (CPU_IS_ARMV7_P())
+		__asm __volatile("dmb");
+}
+
+static inline void
+arm_dsb(void)
+{
+	if (CPU_IS_ARMV6_P())
+		armreg_dsb_write(0);
+	else if (CPU_IS_ARMV7_P())
+		__asm __volatile("dsb");
+}
+
+static inline void
+arm_isb(void)
+{
+	if (CPU_IS_ARMV6_P())
+		armreg_isb_write(0);
+	else if (CPU_IS_ARMV7_P())
+		__asm __volatile("isb");
+}
 
 /*
  * Random cruft
@@ -166,9 +266,8 @@ extern bool cpu_armv7_p;
 
 struct lwp;
 
-/* locore.S */
-void atomic_set_bit(u_int *, u_int);
-void atomic_clear_bit(u_int *, u_int);
+/* cpu.c */
+void	identify_arm_cpu(device_t, struct cpu_info *);
 
 /* cpuswitch.S */
 struct pcb;
@@ -190,7 +289,7 @@ void	swi_handler(trapframe_t *);
 void	ucas_ras_check(trapframe_t *);
 
 /* vfp_init.c */
-void	vfp_attach(void);
+void	vfp_attach(struct cpu_info *);
 void	vfp_discardcontext(bool);
 void	vfp_savecontext(void);
 void	vfp_kernel_acquire(void);

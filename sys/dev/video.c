@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.29 2013/01/07 15:07:40 prlw1 Exp $ */
+/* $NetBSD: video.c,v 1.29.2.1 2014/05/18 17:45:35 rmind Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.29 2013/01/07 15:07:40 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.29.2.1 2014/05/18 17:45:35 rmind Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -205,8 +205,17 @@ dev_type_poll(videopoll);
 dev_type_mmap(videommap);
 
 const struct cdevsw video_cdevsw = {
-	videoopen, videoclose, videoread, videowrite, videoioctl,
-	nostop, notty, videopoll, videommap, nokqfilter, D_OTHER
+	.d_open = videoopen,
+	.d_close = videoclose,
+	.d_read = videoread,
+	.d_write = videowrite,
+	.d_ioctl = videoioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = videopoll,
+	.d_mmap = videommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 #define VIDEOUNIT(n)	(minor(n))
@@ -315,10 +324,12 @@ static const char *	video_ioctl_str(u_long);
 static int
 video_match(device_t parent, cfdata_t match, void *aux)
 {
+#ifdef VIDEO_DEBUG
 	struct video_attach_args *args;
 
 	args = aux;
 	DPRINTF(("video_match: hw=%p\n", args->hw_if));
+#endif
 	return 1;
 }
 
@@ -397,11 +408,8 @@ video_detach(device_t self, int flags)
 static int
 video_print(void *aux, const char *pnp)
 {
-	struct video_attach_args *arg;
-
 	if (pnp != NULL) {
 		DPRINTF(("video_print: have pnp\n"));
-		arg = aux;
 		aprint_normal("%s at %s\n", "video", pnp);
 	} else {
 		DPRINTF(("video_print: pnp is NULL\n"));

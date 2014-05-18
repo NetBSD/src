@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.5.2.1 2013/08/28 23:59:24 rmind Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.5.2.2 2014/05/18 17:45:30 rmind Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.5.2.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.5.2.2 2014/05/18 17:45:30 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -95,9 +95,7 @@ amd_cpufamily(void)
 	uint32_t family;
 	struct cpu_info *ci = curcpu();
 
-	family = CPUID2FAMILY(ci->ci_signature);
-	if (family == 0xf)
-		family += CPUID2EXTFAMILY(ci->ci_signature);
+	family = CPUID_TO_FAMILY(ci->ci_signature);
 
 	return family;
 }

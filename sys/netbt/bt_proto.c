@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.12.26.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.12.26.2 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.12.26.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.12.26.2 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>

@@ -33,11 +33,7 @@ General:
 Figure out why uvisor is so slow.
 Try to get specs, and check if Linux driver is really right.
 
-Add lots of bus_dmamap_sync().
-
 Do bandwidth accounting.
-
-Use the pool allocator for TDs et al.
 
 Throw out more USBDI gunk.
 
