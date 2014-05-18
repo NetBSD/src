@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.61 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: shl.mi,v 1.62 2014/05/18 10:36:34 nat Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -140,7 +140,7 @@
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug
 ./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug
-./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/lib/libpam.so.4.0.debug		comp-sys-debug	pam,debug
 ./usr/libdata/debug/usr/lib/libpcap.so.5.0.debug	comp-net-debug	debug

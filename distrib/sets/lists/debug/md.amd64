@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.51 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: md.amd64,v 1.52 2014/05/18 10:36:34 nat Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -278,7 +278,7 @@
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.4.0.debug	comp-compat-shlib	gcc=48,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.6.0.debug	comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.0.debug	comp-compat-shlib	compat,pic,pam,debug
 ./usr/libdata/debug/usr/lib/i386/libpcap.so.5.0.debug	comp-compat-shlib	compat,pic,debug

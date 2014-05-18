@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.50 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: md.sparc64,v 1.51 2014/05/18 10:36:34 nat Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -271,7 +271,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.4.0.debug			comp-compat-shlib	gcc=48,compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.6.0.debug		comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libp2k.so.2.0.debug			comp-compat-shlib	compat,pic,debug,rump
 ./usr/libdata/debug/usr/lib/sparc/libpam.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpcap.so.5.0.debug			comp-compat-shlib	compat,pic,debug
