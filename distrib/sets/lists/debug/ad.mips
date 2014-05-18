@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.28 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.mips,v 1.29 2014/05/18 10:36:34 nat Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -154,7 +154,7 @@
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
 ./usr/libdata/debug/usr/lib/64/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libpcap.so.5.0.debug	comp-net-debug	debug,compat,arch64
@@ -330,7 +330,7 @@
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
 ./usr/libdata/debug/usr/lib/o32/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libpcap.so.5.0.debug	comp-net-debug	debug,compat,arch64
