@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.32 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.33 2014/05/18 14:46:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.32 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.33 2014/05/18 14:46:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -319,7 +319,7 @@ nopages:
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-			error = (*so->so_proto->pr_usrreq)(so,
+			error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			    top, NULL, NULL, l);
 			if (dontroute)
@@ -367,7 +367,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		solock(so);
-		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
+		error = (*pr->pr_usrreqs->pr_generic)(so, PRU_RCVOOB, m,
 		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, NULL);
 		sounlock(so);
 		if (error)
@@ -631,9 +631,10 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			 * protocol in case it needs to do something to
 			 * get it filled again.
 			 */
-			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
-				(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
+			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb) {
+				(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD, NULL,
 				    (struct mbuf *)(long)flags, NULL, NULL);
+			}
 			SBLASTRECORDCHK(&so->so_rcv,
 			    "kttcp_soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv,
@@ -670,9 +671,10 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "kttcp_soreceive 4");
-		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-			(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
+		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb) {
+			(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD, NULL,
 			    (struct mbuf *)(long)flags, NULL, NULL);
+		}
 	}
 	if (orig_resid == resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {

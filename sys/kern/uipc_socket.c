@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.222 2014/05/17 23:27:59 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.223 2014/05/18 14:46:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.222 2014/05/17 23:27:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.223 2014/05/18 14:46:15 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -520,7 +520,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 			return EPROTOTYPE;
 		return EPROTONOSUPPORT;
 	}
-	if (prp->pr_usrreq == NULL)
+	if (prp->pr_usrreqs == NULL)
 		return EPROTONOSUPPORT;
 	if (prp->pr_type != type)
 		return EPROTOTYPE;
@@ -548,7 +548,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	} else {
 		/* Lock assigned and taken during PRU_ATTACH. */
 	}
-	error = (*prp->pr_usrreq)(so, PRU_ATTACH, NULL,
+	error = (*prp->pr_usrreqs->pr_generic)(so, PRU_ATTACH, NULL,
 	    (struct mbuf *)(long)proto, NULL, l);
 	KASSERT(solocked(so));
 	if (error != 0) {
@@ -625,7 +625,8 @@ sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	int	error;
 
 	solock(so);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_BIND, NULL, nam, NULL, l);
+	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+	    PRU_BIND, NULL, nam, NULL, l);
 	sounlock(so);
 	return error;
 }
@@ -641,8 +642,8 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 		sounlock(so);
 		return EINVAL;
 	}
-	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL,
-	    NULL, NULL, l);
+	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+	    PRU_LISTEN, NULL, NULL, NULL, l);
 	if (error != 0) {
 		sounlock(so);
 		return error;
@@ -751,8 +752,8 @@ soclose(struct socket *so)
 	}
  drop:
 	if (so->so_pcb) {
-		int error2 = (*so->so_proto->pr_usrreq)(so, PRU_DETACH,
-		    NULL, NULL, NULL, NULL);
+		int error2 = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    PRU_DETACH, NULL, NULL, NULL, NULL);
 		if (error == 0)
 			error = error2;
 	}
@@ -777,8 +778,8 @@ soabort(struct socket *so)
 	KASSERT(so->so_head == NULL);
 
 	so->so_aborting++;		/* XXX */
-	error = (*so->so_proto->pr_usrreq)(so, PRU_ABORT, NULL,
-	    NULL, NULL, NULL);
+	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+	    PRU_ABORT, NULL, NULL, NULL, NULL);
 	refs = --so->so_aborting;	/* XXX */
 	if (error || (refs == 0)) {
 		sofree(so);
@@ -799,8 +800,8 @@ soaccept(struct socket *so, struct mbuf *nam)
 	so->so_state &= ~SS_NOFDREF;
 	if ((so->so_state & SS_ISDISCONNECTED) == 0 ||
 	    (so->so_proto->pr_flags & PR_ABRTACPTDIS) == 0)
-		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
-		    NULL, nam, NULL, NULL);
+		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    PRU_ACCEPT, NULL, nam, NULL, NULL);
 	else
 		error = ECONNABORTED;
 
@@ -827,8 +828,8 @@ soconnect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	    (error = sodisconnect(so))))
 		error = EISCONN;
 	else
-		error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-		    NULL, nam, NULL, l);
+		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    PRU_CONNECT, NULL, nam, NULL, l);
 
 	return error;
 }
@@ -838,8 +839,8 @@ soconnect2(struct socket *so1, struct socket *so2)
 {
 	KASSERT(solocked2(so1, so2));
 
-	return (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2,
-	    NULL, (struct mbuf *)so2, NULL, NULL);
+	return (*so1->so_proto->pr_usrreqs->pr_generic)(so1,
+	    PRU_CONNECT2, NULL, (struct mbuf *)so2, NULL, NULL);
 }
 
 int
@@ -854,8 +855,8 @@ sodisconnect(struct socket *so)
 	} else if (so->so_state & SS_ISDISCONNECTING) {
 		error = EALREADY;
 	} else {
-		error = (*so->so_proto->pr_usrreq)(so, PRU_DISCONNECT,
-		    NULL, NULL, NULL, NULL);
+		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    PRU_DISCONNECT, NULL, NULL, NULL, NULL);
 	}
 	return (error);
 }
@@ -1051,7 +1052,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-			error = (*so->so_proto->pr_usrreq)(so,
+			error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			    top, addr, control, curlwp);
 			if (dontroute)
@@ -1165,7 +1166,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		solock(so);
-		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
+		error = (*pr->pr_usrreqs->pr_generic)(so, PRU_RCVOOB, m,
 		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, l);
 		sounlock(so);
 		if (error)
@@ -1533,7 +1534,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			 * get it filled again.
 			 */
 			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
-				(*pr->pr_usrreq)(so, PRU_RCVD,
+				(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD,
 				    NULL, (struct mbuf *)(long)flags, NULL, l);
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
@@ -1575,7 +1576,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-			(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
+			(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD, NULL,
 			    (struct mbuf *)(long)flags, NULL, l);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
@@ -1610,8 +1611,8 @@ soshutdown(struct socket *so, int how)
 		error = 0;
 	}
 	if (how == SHUT_WR || how == SHUT_RDWR)
-		error = (*pr->pr_usrreq)(so, PRU_SHUTDOWN, NULL,
-		    NULL, NULL, NULL);
+		error = (*pr->pr_usrreqs->pr_generic)(so,
+		    PRU_SHUTDOWN, NULL, NULL, NULL, NULL);
 
 	return error;
 }
