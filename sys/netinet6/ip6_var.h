@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.59 2012/06/23 03:14:04 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.60 2014/05/18 14:46:16 rmind Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -312,6 +312,7 @@ extern int	ip6_hashsize;		/* size of hash table */
 #endif
 
 struct in6pcb;
+extern const struct pr_usrreqs rip6_usrreqs;
 
 int	icmp6_ctloutput(int, struct socket *, struct sockopt *);
 

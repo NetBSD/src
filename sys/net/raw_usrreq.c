@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.37 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.38 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.38 2014/05/18 14:46:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -252,8 +252,8 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-			    NULL, nam, NULL, l);
+			error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+			    PRU_CONNECT, NULL, nam, NULL, l);
 			if (error) {
 			die:
 				m_freem(m);

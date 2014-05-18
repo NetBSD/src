@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.128 2013/09/14 11:43:22 martin Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.129 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.128 2013/09/14 11:43:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.129 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -188,11 +188,15 @@ extern int rsvp_on;
 static void vif_input(struct mbuf *, ...);
 static int vif_encapcheck(struct mbuf *, int, int, void *);
 
-static const struct protosw vif_protosw =
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  vif_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0,
+static const struct protosw vif_protosw = {
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inetdomain,
+	.pr_protocol	= IPPROTO_IPV4,
+	.pr_flags	= PR_ATOMIC|PR_ADDR,
+	.pr_input	= vif_input,
+	.pr_output	= rip_output,
+	.pr_ctloutput	= rip_ctloutput,
+	.pr_usrreqs	= &rip_usrreqs,
 };
 
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */

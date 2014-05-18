@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.117 2014/05/17 23:55:24 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.118 2014/05/18 14:46:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.117 2014/05/17 23:55:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.118 2014/05/18 14:46:15 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -303,8 +303,8 @@ sonewconn(struct socket *head, bool soready)
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
 
-	error = (*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL,
-	    NULL, NULL);
+	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+	    PRU_ATTACH, NULL, NULL, NULL, NULL);
 	KASSERT(solocked(so));
 	if (error) {
 out:

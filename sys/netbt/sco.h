@@ -1,4 +1,4 @@
-/*	$NetBSD: sco.h,v 1.3 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: sco.h,v 1.4 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -65,8 +65,6 @@ struct sockopt;
 /* sco_socket.c */
 extern int sco_sendspace;
 extern int sco_recvspace;
-int sco_usrreq(struct socket *, int, struct mbuf *,
-		struct mbuf *, struct mbuf *, struct lwp *);
 int sco_ctloutput(int, struct socket *, struct sockopt *);
 
 /* sco_upper.c */

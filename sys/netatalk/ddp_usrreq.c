@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.41 2014/02/25 18:30:12 pooka Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.42 2014/05/18 14:46:16 rmind Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.41 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.42 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -76,9 +75,9 @@ struct mowner atalk_rx_mowner = MOWNER_INIT("atalk", "rx");
 struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 #endif
 
-/* ARGSUSED */
-int
-ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr, struct mbuf *rights, struct lwp *l)
+static int
+ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
+    struct mbuf *rights, struct lwp *l)
 {
 	struct ddpcb   *ddp;
 	int             error = 0;
@@ -557,16 +556,13 @@ ddp_init(void)
 	MOWNER_ATTACH(&aarp_mowner);
 }
 
-#if 0
-static void
-ddp_clean(void)
-{
-	struct ddpcb   *ddp;
+PR_WRAP_USRREQ(ddp_usrreq)
 
-	for (ddp = ddpcb; ddp; ddp = ddp->ddp_next)
-		at_pcbdetach(ddp->ddp_socket, ddp);
-}
-#endif
+#define	ddp_usrreq	ddp_usrreq_wrapper
+
+const struct pr_usrreqs ddp_usrreqs = {
+	.pr_generic	= ddp_usrreq,
+};
 
 static int
 sysctl_net_atalk_ddp_stats(SYSCTLFN_ARGS)

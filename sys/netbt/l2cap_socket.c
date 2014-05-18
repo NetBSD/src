@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.10 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.11 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.10 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.11 2014/05/18 14:46:16 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -101,7 +101,7 @@ int l2cap_recvspace = 4096;
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -396,3 +396,11 @@ l2cap_input(void *arg, struct mbuf *m)
 	sbappendrecord(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQ(l2cap_usrreq)
+
+#define	l2cap_usrreq		l2cap_usrreq_wrapper
+
+const struct pr_usrreqs l2cap_usrreqs = {
+	.pr_generic	= l2cap_usrreq,
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.8 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.8 2014/05/18 14:46:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -58,6 +58,10 @@ static void link_init(void);
 
 DOMAIN_DEFINE(linkdomain);	/* forward define and add to link set */
 
+static const struct pr_usrreqs link_usrreqs = {
+	.pr_generic	= link_usrreq,
+};
+
 const struct protosw linksw[] = {
 	{	.pr_type = SOCK_DGRAM,
 		.pr_domain = &linkdomain,
@@ -66,7 +70,7 @@ const struct protosw linksw[] = {
 		.pr_input = NULL,
 		.pr_ctlinput = NULL,
 		.pr_ctloutput = NULL,
-		.pr_usrreq = link_usrreq,
+		.pr_usrreqs = &link_usrreqs,
 		.pr_init = link_init,
 	},
 };

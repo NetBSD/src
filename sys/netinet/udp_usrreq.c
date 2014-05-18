@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.194 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.195 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.194 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.195 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1195,10 +1195,9 @@ int	udp_sendspace = 9216;		/* really max datagram size */
 int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
-/*ARGSUSED*/
-int
+static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+    struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
 	int s;
@@ -1586,3 +1585,11 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	return 1;
 }
 #endif
+
+PR_WRAP_USRREQ(udp_usrreq)
+
+#define	udp_usrreq	udp_usrreq_wrapper
+
+const struct pr_usrreqs udp_usrreqs = {
+	.pr_generic	= udp_usrreq,
+};

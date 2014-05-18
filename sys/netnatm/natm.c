@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.24 2011/03/09 22:06:42 dyoung Exp $	*/
+/*	$NetBSD: natm.c,v 1.25 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24 2011/03/09 22:06:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.25 2014/05/18 14:46:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/domain.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -46,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24 2011/03/09 22:06:42 dyoung Exp $");
 #include <net/if.h>
 #include <net/if_atm.h>
 #include <net/netisr.h>
-#include <net/radix.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -63,13 +61,9 @@ u_long natm0_recvspace = 16*1024;
  * user requests
  */
 
-int natm_usrreq(so, req, m, nam, control, l)
-
-struct socket *so;
-int req;
-struct mbuf *m, *nam, *control;
-struct lwp *l;
-
+static int
+natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
   int error = 0, s, s2;
   struct natmpcb *npcb;
@@ -396,3 +390,11 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
 
   goto next;
 }
+
+PR_WRAP_USRREQ(natm_usrreq)
+
+#define	natm_usrreq	natm_usrreq_wrapper
+
+const struct pr_usrreqs natm_usrreqs = {
+	.pr_generic	= natm_usrreq,
+};

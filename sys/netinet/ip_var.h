@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.99 2014/03/19 10:54:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.100 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -176,6 +176,7 @@ struct ip_moptions {
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
 
 extern struct domain inetdomain;
+extern const struct pr_usrreqs rip_usrreqs;
 
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */

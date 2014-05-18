@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.21 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.21 2014/05/18 14:46:16 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -441,7 +441,7 @@ bad:
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -849,3 +849,11 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 		}
 	}
 }
+
+PR_WRAP_USRREQ(hci_usrreq)
+
+#define	hci_usrreq		hci_usrreq_wrapper
+
+const struct pr_usrreqs hci_usrreqs = {
+	.pr_generic	= hci_usrreq,
+};
