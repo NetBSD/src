@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.142 2014/04/27 14:50:23 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.143 2014/05/18 21:25:44 justin Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -609,7 +609,9 @@ function printproto(wrap) {
 	# occurence for the default __RENAME()
 	seen = funcseen[fbase]
 	funcseen[fbase] = rumpfname
-	if (seen)
+	# special case for mknod as type of last argument changed from
+	# uint32_t to dev_t
+	if ((seen && fbase != "mknod") || (!seen && fbase == "mknod"))
 		return
 
 	printf("%s rump_sys_%s(", returntype, realname) > rumpprotos
