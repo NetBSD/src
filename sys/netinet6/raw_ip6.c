@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.113 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.114 2014/05/18 00:10:11 rmind Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.113 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.114 2014/05/18 00:10:11 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -677,7 +677,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			error = EINVAL;
 			break;
 		}
-		if (TAILQ_EMPTY(&ifnet) || addr->sin6_family != AF_INET6) {
+		if (!IFNET_FIRST() || addr->sin6_family != AF_INET6) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -718,7 +718,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			error = EINVAL;
 			break;
 		}
-		if (TAILQ_EMPTY(&ifnet)) {
+		if (!IFNET_FIRST()) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
