@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1473 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: mi,v 1.1474 2014/05/18 18:24:16 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1193,6 +1193,7 @@
 ./usr/share/man/cat4/hppa/wax.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hpqlb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
+./usr/share/man/cat4/hythygtemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/autoconf.0		man-sys-catman		.cat
@@ -4221,6 +4222,7 @@
 ./usr/share/man/html4/hppa/wax.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpqlb.html		man-sys-htmlman		html
 ./usr/share/man/html4/hptide.html		man-sys-htmlman		html
+./usr/share/man/html4/hythygtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/PCIBIOS.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/apm.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/autoconf.html	man-sys-htmlman		html
@@ -7039,6 +7041,7 @@
 ./usr/share/man/man4/hppa/wax.4			man-sys-man		.man
 ./usr/share/man/man4/hpqlb.4			man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
+./usr/share/man/man4/hythygtemp.4		man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
 ./usr/share/man/man4/i386/autoconf.4		man-sys-man		.man
