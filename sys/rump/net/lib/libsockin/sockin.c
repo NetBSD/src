@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.38 2014/05/09 06:12:48 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.39 2014/05/18 17:57:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.38 2014/05/09 06:12:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.39 2014/05/18 17:57:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -70,13 +70,17 @@ static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
 
+static const struct pr_usrreqs sockin_usrreqs = {
+	.pr_generic = sockin_usrreq,
+};
+
 const struct protosw sockinsw[] = {
 {
 	.pr_type = SOCK_DGRAM,
 	.pr_domain = &sockindomain,
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 },
 {
@@ -84,7 +88,7 @@ const struct protosw sockinsw[] = {
 	.pr_domain = &sockindomain,
 	.pr_protocol = IPPROTO_TCP,
 	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 }};
 const struct protosw sockin6sw[] = {
@@ -93,7 +97,7 @@ const struct protosw sockin6sw[] = {
 	.pr_domain = &sockin6domain,
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 },
 {
@@ -101,7 +105,7 @@ const struct protosw sockin6sw[] = {
 	.pr_domain = &sockin6domain,
 	.pr_protocol = IPPROTO_TCP,
 	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 }};
 
