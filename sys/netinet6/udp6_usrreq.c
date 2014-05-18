@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.93 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.94 2014/05/18 14:46:16 rmind Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.93 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.94 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -521,3 +521,11 @@ udp6_statinc(u_int stat)
 	KASSERT(stat < UDP6_NSTATS);
 	UDP6_STATINC(stat);
 }
+
+PR_WRAP_USRREQ(udp6_usrreq)
+
+#define	udp6_usrreq	udp6_usrreq_wrapper
+
+const struct pr_usrreqs udp6_usrreqs = {
+	.pr_generic	= udp6_usrreq,
+};

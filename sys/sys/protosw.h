@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.44 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: protosw.h,v 1.45 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -64,6 +64,7 @@ struct sockopt;
 struct domain;
 struct proc;
 struct lwp;
+struct pr_usrreqs;
 
 struct protosw {
 	int 	pr_type;		/* socket type used for */
@@ -81,10 +82,8 @@ struct protosw {
 	int	(*pr_ctloutput)		/* control output (from above) */
 			(int, struct socket *, struct sockopt *);
 
-/* user-protocol hook */
-	int	(*pr_usrreq)		/* user request: see list below */
-			(struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct lwp *);
+/* user-protocol hooks */
+	const struct pr_usrreqs *pr_usrreqs;
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
@@ -233,6 +232,12 @@ static const char * const prcorequests[] = {
 #endif
 
 #ifdef _KERNEL
+
+struct pr_usrreqs {
+	int	(*pr_generic)(struct socket *, int, struct mbuf *,
+	    struct mbuf *, struct mbuf *, struct lwp *);
+};
+
 /*
  * Monotonically increasing time values for slow and fast timers.
  */
