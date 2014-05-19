@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.13 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.14 2014/05/19 15:44:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.13 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.14 2014/05/19 15:44:04 martin Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -119,9 +119,7 @@ rfcomm_attach1(struct socket *so, int proto)
 static void
 rfcomm_detach1(struct socket *so)
 {
-	struct rfcomm_dlc *pcb = so->so_pcb;
-
-	KASSERT(pcb != NULL);
+	KASSERT(so->so_pcb != NULL);
 	rfcomm_detach((struct rfcomm_dlc **)&so->so_pcb);
 	KASSERT(so->so_pcb == NULL);
 }

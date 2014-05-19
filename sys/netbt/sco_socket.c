@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.14 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.15 2014/05/19 15:44:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.14 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.15 2014/05/19 15:44:04 martin Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -102,9 +102,7 @@ sco_attach1(struct socket *so, int proto)
 static void
 sco_detach1(struct socket *so)
 {
-	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
-
-	KASSERT(pcb != NULL);
+	KASSERT(so->so_pcb != NULL);
 	sco_detach((struct sco_pcb **)&so->so_pcb);
 	KASSERT(so->so_pcb == NULL);
 }
