@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.95 2013/12/24 20:10:29 uwe Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.96 2014/05/19 09:49:07 martin Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,6 +115,10 @@ use the
 .Xr make 1
 .Dq reachover
 Makefile semantics when building these programs for a native host.
+.It Sy external , sys/external
+Sources and build infrastructure for components imported (mostly) unchanged
+from upstream maintainers, sorted by applicable license.
+This is (slowly) replacing the crypto/dist, dist/ and gnu/dist directories.
 .It Sy distrib/ , etc/
 Sources for items used when making a full release snapshot, such as
 files installed in
