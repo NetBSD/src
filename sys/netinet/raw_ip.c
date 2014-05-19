@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.120 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.121 2014/05/19 02:51:25 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -60,8 +60,12 @@
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
 
+/*
+ * Raw interface to IP protocol.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.120 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.121 2014/05/19 02:51:25 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -119,6 +123,9 @@ static void sysctl_net_inet_raw_setup(struct sysctllog **);
  */
 #define	RIPSNDQ		8192
 #define	RIPRCVQ		8192
+
+static u_long		rip_sendspace = RIPSNDQ;
+static u_long		rip_recvspace = RIPRCVQ;
 
 /*
  * Raw interface to IP protocol.
@@ -507,26 +514,65 @@ rip_disconnect(struct inpcb *inp)
 	inp->inp_faddr = zeroin_addr;
 }
 
-u_long	rip_sendspace = RIPSNDQ;
-u_long	rip_recvspace = RIPRCVQ;
-
-/*ARGSUSED*/
-int
-rip_usrreq(struct socket *so, int req,
-    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
+static int
+rip_attach(struct socket *so, int proto)
 {
 	struct inpcb *inp;
-	int s;
-	int error = 0;
+	int error;
+
+	KASSERT(sotoinpcb(so) == NULL);
+	sosetlock(so);
+
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		error = soreserve(so, rip_sendspace, rip_recvspace);
+		if (error) {
+			return error;
+		}
+	}
+
+	error = in_pcballoc(so, &rawcbtable);
+	if (error) {
+		return error;
+	}
+	inp = sotoinpcb(so);
+	inp->inp_ip.ip_p = proto;
+	KASSERT(solocked(so));
+
+	return 0;
+}
+
+static void
+rip_detach(struct socket *so)
+{
+	struct inpcb *inp;
+
+	KASSERT(solocked(so));
+	inp = sotoinpcb(so);
+	KASSERT(inp != NULL);
+
 #ifdef MROUTING
 	extern struct socket *ip_mrouter;
+	if (so == ip_mrouter) {
+		ip_mrouter_done();
+	}
 #endif
+	in_pcbdetach(inp);
+}
 
-	if (req == PRU_CONTROL)
-		return in_control(so, (long)m, nam, (struct ifnet *)control, l);
+int
+rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct inpcb *inp;
+	int s, error = 0;
 
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+
+	if (req == PRU_CONTROL) {
+		return in_control(so, (long)m, nam, (ifnet_t *)control, l);
+	}
 	s = splsoftnet();
-
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
@@ -534,54 +580,19 @@ rip_usrreq(struct socket *so, int req,
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
 		mutex_exit(softnet_lock);
 		splx(s);
-		return (0);
+		return 0;
 	}
 
+	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
-#ifdef DIAGNOSTIC
-	if (req != PRU_SEND && req != PRU_SENDOOB && control)
-		panic("rip_usrreq: unexpected control mbuf");
-#endif
-	if (inp == NULL && req != PRU_ATTACH) {
-		error = EINVAL;
-		goto release;
+
+	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	if (inp == NULL) {
+		splx(s);
+		return EINVAL;
 	}
 
 	switch (req) {
-
-	case PRU_ATTACH:
-		sosetlock(so);
-		if (inp != 0) {
-			error = EISCONN;
-			break;
-		}
-
-		if (l == NULL) {
-			error = EACCES;
-			break;
-		}
-
-		/* XXX: raw socket permissions are checked in socreate() */
-
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, rip_sendspace, rip_recvspace);
-			if (error)
-				break;
-		}
-		error = in_pcballoc(so, &rawcbtable);
-		if (error)
-			break;
-		inp = sotoinpcb(so);
-		inp->inp_ip.ip_p = (long)nam;
-		break;
-
-	case PRU_DETACH:
-#ifdef MROUTING
-		if (so == ip_mrouter)
-			ip_mrouter_done();
-#endif
-		in_pcbdetach(inp);
-		break;
 
 	case PRU_BIND:
 		error = rip_bind(inp, nam);
@@ -681,10 +692,9 @@ rip_usrreq(struct socket *so, int req,
 	default:
 		panic("rip_usrreq");
 	}
-
-release:
 	splx(s);
-	return (error);
+
+	return error;
 }
 
 PR_WRAP_USRREQ(rip_usrreq)
@@ -692,6 +702,8 @@ PR_WRAP_USRREQ(rip_usrreq)
 #define	rip_usrreq	rip_usrreq_wrapper
 
 const struct pr_usrreqs rip_usrreqs = {
+	.pr_attach	= rip_attach,
+	.pr_detach	= rip_detach,
 	.pr_generic	= rip_usrreq,
 };
 

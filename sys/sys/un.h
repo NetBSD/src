@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.47 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: un.h,v 1.48 2014/05/19 02:51:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -84,11 +84,9 @@ kmutex_t *uipc_dgramlock (void);
 kmutex_t *uipc_streamlock (void);
 kmutex_t *uipc_rawlock (void);
 
-int	unp_attach (struct socket *);
 int	unp_bind (struct socket *, struct mbuf *, struct lwp *);
 int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
 int	unp_connect2 (struct socket *, struct socket *, int);
-void	unp_detach (struct unpcb *);
 void	unp_discard (struct file *);
 void	unp_disconnect (struct unpcb *);
 bool	unp_drop (struct unpcb *, int);
@@ -99,6 +97,7 @@ void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
 	    struct lwp *);
 void	unp_setaddr (struct socket *, struct mbuf *, bool);
+
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */

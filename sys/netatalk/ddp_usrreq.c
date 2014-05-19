@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.42 2014/05/18 14:46:16 rmind Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.43 2014/05/19 02:51:24 rmind Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.42 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.43 2014/05/19 02:51:24 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.42 2014/05/18 14:46:16 rmind Exp $"
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
 #include <net/route.h>
@@ -59,8 +60,7 @@ static void at_pcbdisconnect(struct ddpcb *);
 static void at_sockaddr(struct ddpcb *, struct mbuf *);
 static int at_pcbsetaddr(struct ddpcb *, struct mbuf *, struct lwp *);
 static int at_pcbconnect(struct ddpcb *, struct mbuf *, struct lwp *);
-static void at_pcbdetach(struct socket *, struct ddpcb *);
-static int at_pcballoc(struct socket *);
+static void ddp_detach(struct socket *);
 
 struct ifqueue atintrq1, atintrq2;
 struct ddpcb   *ddp_ports[ATPORT_LAST];
@@ -82,6 +82,8 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct ddpcb   *ddp;
 	int             error = 0;
 
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 	ddp = sotoddpcb(so);
 
 	if (req == PRU_CONTROL) {
@@ -98,27 +100,11 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		error = EINVAL;
 		goto release;
 	}
-	if (ddp == NULL && req != PRU_ATTACH) {
+	if (ddp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 	switch (req) {
-	case PRU_ATTACH:
-		if (ddp != NULL) {
-			error = EINVAL;
-			break;
-		}
-		sosetlock(so);
-		if ((error = at_pcballoc(so)) != 0) {
-			break;
-		}
-		error = soreserve(so, ddp_sendspace, ddp_recvspace);
-		break;
-
-	case PRU_DETACH:
-		at_pcbdetach(so, ddp);
-		break;
-
 	case PRU_BIND:
 		error = at_pcbsetaddr(ddp, addr, l);
 		break;
@@ -182,7 +168,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		at_pcbdetach(so, ddp);
+		ddp_detach(so);
 		break;
 
 	case PRU_LISTEN:
@@ -426,13 +412,23 @@ at_pcbdisconnect(struct ddpcb *ddp)
 }
 
 static int
-at_pcballoc(struct socket *so)
+ddp_attach(struct socket *so, int proto)
 {
-	struct ddpcb   *ddp;
+	struct ddpcb *ddp;
+	int error;
 
-	ddp = malloc(sizeof(*ddp), M_PCB, M_WAITOK|M_ZERO);
-	if (!ddp)
-		panic("at_pcballoc");
+	KASSERT(sotoddpcb(so) == NULL);
+	sosetlock(so);
+#ifdef MBUFTRACE
+	so->so_rcv.sb_mowner = &atalk_rx_mowner;
+	so->so_snd.sb_mowner = &atalk_tx_mowner;
+#endif
+	error = soreserve(so, ddp_sendspace, ddp_recvspace);
+	if (error) {
+		return error;
+	}
+
+	ddp = kmem_zalloc(sizeof(*ddp), KM_SLEEP);
 	ddp->ddp_lsat.sat_port = ATADDR_ANYPORT;
 
 	ddp->ddp_next = ddpcb;
@@ -445,19 +441,17 @@ at_pcballoc(struct socket *so)
 	ddpcb = ddp;
 
 	ddp->ddp_socket = so;
-	so->so_pcb = (void *) ddp;
-#ifdef MBUFTRACE
-	so->so_rcv.sb_mowner = &atalk_rx_mowner;
-	so->so_snd.sb_mowner = &atalk_tx_mowner;
-#endif
+	so->so_pcb = ddp;
 	return 0;
 }
 
 static void
-at_pcbdetach(struct socket *so, struct ddpcb *ddp)
+ddp_detach(struct socket *so)
 {
+	struct ddpcb *ddp = sotoddpcb(so);
+
 	soisdisconnected(so);
-	so->so_pcb = 0;
+	so->so_pcb = NULL;
 	/* sofree drops the lock */
 	sofree(so);
 	mutex_enter(softnet_lock);
@@ -483,7 +477,7 @@ at_pcbdetach(struct socket *so, struct ddpcb *ddp)
 	if (ddp->ddp_next) {
 		ddp->ddp_next->ddp_prev = ddp->ddp_prev;
 	}
-	free(ddp, M_PCB);
+	kmem_free(ddp, sizeof(*ddp));
 }
 
 /*
@@ -561,6 +555,8 @@ PR_WRAP_USRREQ(ddp_usrreq)
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
+	.pr_attach	= ddp_attach,
+	.pr_detach	= ddp_detach,
 	.pr_generic	= ddp_usrreq,
 };
 

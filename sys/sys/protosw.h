@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.45 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: protosw.h,v 1.46 2014/05/19 02:51:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -234,6 +234,8 @@ static const char * const prcorequests[] = {
 #ifdef _KERNEL
 
 struct pr_usrreqs {
+	int	(*pr_attach)(struct socket *, int);
+	void	(*pr_detach)(struct socket *);
 	int	(*pr_generic)(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
 };

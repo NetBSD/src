@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.46 2014/04/25 15:54:12 pooka Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.47 2014/05/19 02:51:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,12 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.46 2014/04/25 15:54:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.47 2014/05/19 02:51:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.46 2014/04/25 15:54:12 pooka Exp $
 #include <netsmb/smb_tran.h>
 #include <netsmb/smb_trantcp.h>
 #include <netsmb/smb_subr.h>
-
-#define M_NBDATA	M_PCB
 
 static int nb_tcpsndbuf = NB_SNDQ;
 static int nb_tcprcvbuf = NB_RCVQ;
@@ -452,7 +450,7 @@ smb_nbst_create(struct smb_vc *vcp, struct lwp *l)
 {
 	struct nbpcb *nbp;
 
-	nbp = malloc(sizeof *nbp, M_NBDATA, M_WAITOK|M_ZERO);
+	nbp = kmem_zalloc(sizeof(*nbp), KM_SLEEP);
 	nbp->nbp_state = NBST_CLOSED;
 	nbp->nbp_vc = vcp;
 	vcp->vc_tdata = nbp;
@@ -471,7 +469,7 @@ smb_nbst_done(struct smb_vc *vcp, struct lwp *l)
 		free(nbp->nbp_laddr, M_SONAME);
 	if (nbp->nbp_paddr)
 		free(nbp->nbp_paddr, M_SONAME);
-	free(nbp, M_NBDATA);
+	kmem_free(nbp, sizeof(*nbp));
 	return 0;
 }
 

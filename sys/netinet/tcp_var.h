@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.173 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.174 2014/05/19 02:51:25 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -891,7 +891,6 @@ extern int tcp_autosndbuf_max;
 
 struct secasvar;
 
-int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);

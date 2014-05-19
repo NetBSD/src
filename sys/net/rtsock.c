@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.144 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.145 2014/05/19 02:51:24 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.144 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.145 2014/05/19 02:51:24 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -72,13 +72,13 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.144 2014/05/18 14:46:16 rmind Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/intr.h>
 #ifdef RTSOCK_DEBUG
 #include <netinet/in.h>
@@ -141,8 +141,6 @@ struct route_info COMPATNAME(route_info) = {
 
 static void COMPATNAME(route_init)(void);
 static int COMPATNAME(route_output)(struct mbuf *, ...);
-static int COMPATNAME(route_usrreq)(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
 static int rt_msg2(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
@@ -178,51 +176,65 @@ rt_adjustcount(int af, int cnt)
 	}
 }
 
-/*ARGSUSED*/
-int
-COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+static int
+COMPATNAME(route_attach)(struct socket *so, int proto)
 {
-	int error = 0;
-	struct rawcb *rp = sotorawcb(so);
-	int s;
+	struct rawcb *rp;
+	int s, error;
 
-	if (req == PRU_ATTACH) {
-		sosetlock(so);
-		rp = malloc(sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
-		so->so_pcb = rp;
-	}
-	if (req == PRU_DETACH && rp)
-		rt_adjustcount(rp->rcb_proto.sp_protocol, -1);
+	KASSERT(sotorawcb(so) == NULL);
+	rp = kmem_zalloc(sizeof(*rp), KM_SLEEP);
+	so->so_pcb = rp;
+
 	s = splsoftnet();
-
-	/*
-	 * Don't call raw_usrreq() in the attach case, because
-	 * we want to allow non-privileged processes to listen on
-	 * and send "safe" commands to the routing socket.
-	 */
-	if (req == PRU_ATTACH) {
-		if (l == NULL)
-			error = EACCES;
-		else
-			error = raw_attach(so, (int)(long)nam);
-	} else
-		error = raw_usrreq(so, req, m, nam, control, l);
-
-	rp = sotorawcb(so);
-	if (req == PRU_ATTACH && rp) {
-		if (error) {
-			free(rp, M_PCB);
-			splx(s);
-			return error;
-		}
+	if ((error = raw_attach(so, proto)) == 0) {
 		rt_adjustcount(rp->rcb_proto.sp_protocol, 1);
 		rp->rcb_laddr = &COMPATNAME(route_info).ri_src;
 		rp->rcb_faddr = &COMPATNAME(route_info).ri_dst;
-		soisconnected(so);
-		so->so_options |= SO_USELOOPBACK;
 	}
 	splx(s);
+
+	if (error) {
+		kmem_free(rp, sizeof(*rp));
+		so->so_pcb = NULL;
+		return error;
+	}
+
+	soisconnected(so);
+	so->so_options |= SO_USELOOPBACK;
+	KASSERT(solocked(so));
+
+	return error;
+}
+
+static void
+COMPATNAME(route_detach)(struct socket *so)
+{
+	struct rawcb *rp = sotorawcb(so);
+	int s;
+
+	KASSERT(rp != NULL);
+	KASSERT(solocked(so));
+
+	s = splsoftnet();
+	rt_adjustcount(rp->rcb_proto.sp_protocol, -1);
+	raw_detach(so);
+	splx(s);
+}
+
+static int
+COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
+    struct mbuf *nam, struct mbuf *control, struct lwp *l)
+{
+	int s, error = 0;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+
+	s = splsoftnet();
+	error = raw_usrreq(so, req, m, nam, control, l);
+	splx(s);
+
 	return error;
 }
 
@@ -1312,6 +1324,8 @@ PR_WRAP_USRREQ(compat_50_route_usrreq);
 #endif
 
 static const struct pr_usrreqs route_usrreqs = {
+	.pr_attach	= COMPATNAME(route_attach),
+	.pr_detach	= COMPATNAME(route_detach),
 	.pr_generic	= COMPATNAME(route_usrreq_wrapper),
 };
 

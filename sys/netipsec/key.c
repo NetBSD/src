@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.86 2014/03/01 12:55:23 joerg Exp $	*/
+/*	$NetBSD: key.c,v 1.87 2014/05/19 02:51:25 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.86 2014/03/01 12:55:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.87 2014/05/19 02:51:25 rmind Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1220,12 +1220,13 @@ key_freeso(struct socket *so)
 	case PF_INET:
 	    {
 		struct inpcb *pcb = sotoinpcb(so);
+		struct inpcbpolicy *sp = pcb->inp_sp;
 
 		/* Does it have a PCB ? */
 		if (pcb == NULL)
 			return;
-		key_freesp_so(&pcb->inp_sp->sp_in);
-		key_freesp_so(&pcb->inp_sp->sp_out);
+		key_freesp_so(&sp->sp_in);
+		key_freesp_so(&sp->sp_out);
 	    }
 		break;
 #endif
@@ -1234,12 +1235,13 @@ key_freeso(struct socket *so)
 	    {
 #ifdef HAVE_NRL_INPCB
 		struct inpcb *pcb  = sotoinpcb(so);
+		struct inpcbpolicy *sp = pcb->inp_sp;
 
 		/* Does it have a PCB ? */
 		if (pcb == NULL)
 			return;
-		key_freesp_so(&pcb->inp_sp->sp_in);
-		key_freesp_so(&pcb->inp_sp->sp_out);
+		key_freesp_so(&sp->sp_in);
+		key_freesp_so(&sp->sp_out);
 #else
 		struct in6pcb *pcb  = sotoin6pcb(so);
 

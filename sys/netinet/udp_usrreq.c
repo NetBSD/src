@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.195 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.196 2014/05/19 02:51:25 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.195 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.196 2014/05/19 02:51:25 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -174,6 +174,12 @@ static	void udp_notify (struct inpcb *, int);
 #define	UDBHASHSIZE	128
 #endif
 int	udbhashsize = UDBHASHSIZE;
+
+/*
+ * For send - really max datagram size; for receive - 40 1K datagrams.
+ */
+static int	udp_sendspace = 9216;
+static int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 
 #ifdef MBUFTRACE
 struct mowner udp_mowner = MOWNER_INIT("udp", "");
@@ -1191,24 +1197,66 @@ release:
 	return (error);
 }
 
-int	udp_sendspace = 9216;		/* really max datagram size */
-int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
-					/* 40 1K datagrams */
+static int
+udp_attach(struct socket *so, int proto)
+{
+	struct inpcb *inp;
+	int error;
+
+	KASSERT(sotoinpcb(so) == NULL);
+
+	/* Assign the lock (must happen even if we will error out). */
+	sosetlock(so);
+
+#ifdef MBUFTRACE
+	so->so_mowner = &udp_mowner;
+	so->so_rcv.sb_mowner = &udp_rx_mowner;
+	so->so_snd.sb_mowner = &udp_tx_mowner;
+#endif
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		error = soreserve(so, udp_sendspace, udp_recvspace);
+		if (error) {
+			return error;
+		}
+	}
+
+	error = in_pcballoc(so, &udbtable);
+	if (error) {
+		return error;
+	}
+	inp = sotoinpcb(so);
+	inp->inp_ip.ip_ttl = ip_defttl;
+	KASSERT(solocked(so));
+
+	return error;
+}
+
+static void
+udp_detach(struct socket *so)
+{
+	struct inpcb *inp;
+
+	KASSERT(solocked(so));
+	inp = sotoinpcb(so);
+	KASSERT(inp != NULL);
+	in_pcbdetach(inp);
+}
 
 static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
-	int s;
-	int error = 0;
+	int s, error = 0;
 
-	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (void *)nam,
-		    (struct ifnet *)control, l));
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
+	if (req == PRU_CONTROL) {
+		return in_control(so, (long)m, (void *)nam,
+		    (struct ifnet *)control, l);
+	}
 	s = splsoftnet();
-
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
@@ -1216,19 +1264,16 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
 		mutex_exit(softnet_lock);
 		splx(s);
-		return (0);
+		return 0;
 	}
 
+	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
-#ifdef DIAGNOSTIC
-	if (req != PRU_SEND && req != PRU_SENDOOB && control)
-		panic("udp_usrreq: unexpected control mbuf");
-#endif
-	if (req == PRU_ATTACH) {
-		sosetlock(so);
-	} else if (inp == 0) {
-		error = EINVAL;
-		goto release;
+
+	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	if (inp == NULL) {
+		splx(s);
+		return EINVAL;
 	}
 
 	/*
@@ -1236,33 +1281,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * the udp pcb queue and/or pcb addresses.
 	 */
 	switch (req) {
-
-	case PRU_ATTACH:
-		if (inp != 0) {
-			error = EISCONN;
-			break;
-		}
-#ifdef MBUFTRACE
-		so->so_mowner = &udp_mowner;
-		so->so_rcv.sb_mowner = &udp_rx_mowner;
-		so->so_snd.sb_mowner = &udp_tx_mowner;
-#endif
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, udp_sendspace, udp_recvspace);
-			if (error)
-				break;
-		}
-		error = in_pcballoc(so, &udbtable);
-		if (error)
-			break;
-		inp = sotoinpcb(so);
-		inp->inp_ip.ip_ttl = ip_defttl;
-		break;
-
-	case PRU_DETACH:
-		in_pcbdetach(inp);
-		break;
-
 	case PRU_BIND:
 		error = in_pcbbind(inp, nam, l);
 		break;
@@ -1365,10 +1383,9 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	default:
 		panic("udp_usrreq");
 	}
-
-release:
 	splx(s);
-	return (error);
+
+	return error;
 }
 
 static int
@@ -1591,5 +1608,7 @@ PR_WRAP_USRREQ(udp_usrreq)
 #define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
+	.pr_attach	= udp_attach,
+	.pr_detach	= udp_detach,
 	.pr_generic	= udp_usrreq,
 };

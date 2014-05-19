@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.223 2014/05/18 14:46:15 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.224 2014/05/19 02:51:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.223 2014/05/18 14:46:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.224 2014/05/19 02:51:24 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -490,7 +490,7 @@ soinit1(void)
  *
  * => Caller may specify another socket for lock sharing (must not be held).
  * => Returns the new socket without lock held.
-*/
+ */
 int
 socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	 struct socket *lockso)
@@ -538,20 +538,23 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
 	so->so_cpid = l->l_proc->p_pid;
-	if (lockso != NULL) {
-		/* Caller wants us to share a lock. */
+
+	/*
+	 * Lock assigned and taken during PCB attach, unless we share
+	 * the lock with another socket, e.g. socketpair(2) case.
+	 */
+	if (lockso) {
 		lock = lockso->so_lock;
 		so->so_lock = lock;
 		mutex_obj_hold(lock);
-		/* XXX Why is this not solock, to match sounlock? */
 		mutex_enter(lock);
-	} else {
-		/* Lock assigned and taken during PRU_ATTACH. */
 	}
-	error = (*prp->pr_usrreqs->pr_generic)(so, PRU_ATTACH, NULL,
-	    (struct mbuf *)(long)proto, NULL, l);
+
+	/* Attach the PCB (returns with the socket lock held). */
+	error = (*prp->pr_usrreqs->pr_attach)(so, proto);
 	KASSERT(solocked(so));
-	if (error != 0) {
+
+	if (error) {
 		KASSERT(so->so_pcb == NULL);
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
@@ -559,6 +562,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	}
 	so->so_cred = kauth_cred_dup(l->l_cred);
 	sounlock(so);
+
 	*aso = so;
 	return 0;
 }
@@ -752,10 +756,8 @@ soclose(struct socket *so)
 	}
  drop:
 	if (so->so_pcb) {
-		int error2 = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-		    PRU_DETACH, NULL, NULL, NULL, NULL);
-		if (error == 0)
-			error = error2;
+		KASSERT(solocked(so));
+		(*so->so_proto->pr_usrreqs->pr_detach)(so);
 	}
  discard:
 	KASSERT((so->so_state & SS_NOFDREF) == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.118 2014/05/18 14:46:15 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.119 2014/05/19 02:51:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.118 2014/05/18 14:46:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.119 2014/05/19 02:51:24 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -282,19 +282,6 @@ sonewconn(struct socket *head, bool soready)
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
 	so->so_cpid = head->so_cpid;
-#ifdef MBUFTRACE
-	so->so_mowner = head->so_mowner;
-	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
-	so->so_snd.sb_mowner = head->so_snd.sb_mowner;
-#endif
-	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat) != 0)
-		goto out;
-	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
-	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
-	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
-	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
-	so->so_rcv.sb_flags |= head->so_rcv.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
-	so->so_snd.sb_flags |= head->so_snd.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
 
 	/*
 	 * Share the lock with the listening-socket, it may get unshared
@@ -303,11 +290,32 @@ sonewconn(struct socket *head, bool soready)
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
 
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-	    PRU_ATTACH, NULL, NULL, NULL, NULL);
-	KASSERT(solocked(so));
+	/*
+	 * Reserve the space for socket buffers.
+	 */
+#ifdef MBUFTRACE
+	so->so_mowner = head->so_mowner;
+	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
+	so->so_snd.sb_mowner = head->so_snd.sb_mowner;
+#endif
+	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat)) {
+		goto out;
+	}
+	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
+	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
+	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
+	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
+	so->so_rcv.sb_flags |= head->so_rcv.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
+	so->so_snd.sb_flags |= head->so_snd.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
+
+	/*
+	 * Finally, perform the protocol attach.  Note: a new socket
+	 * lock may be assigned at this point (if so, it will be held).
+	 */
+	error = (*so->so_proto->pr_usrreqs->pr_attach)(so, 0);
 	if (error) {
 out:
+		KASSERT(solocked(so));
 		KASSERT(so->so_accf == NULL);
 		soput(so);
 
@@ -315,6 +323,7 @@ out:
 		KASSERT(solocked(head));
 		return NULL;
 	}
+	KASSERT(solocked2(head, so));
 
 	/*
 	 * Insert into the queue.  If ready, update the connection status
@@ -326,7 +335,6 @@ out:
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
 	}
-	KASSERT(solocked2(head, so));
 	return so;
 }
 
@@ -1420,8 +1428,6 @@ sosetlock(struct socket *so)
 		mutex_obj_hold(lock);
 		mutex_enter(lock);
 	}
-
-	/* In all cases, lock must be held on return from PRU_ATTACH. */
 	KASSERT(solocked(so));
 }
 
