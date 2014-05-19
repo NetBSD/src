@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.6 2014/05/14 15:58:24 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.7 2014/05/19 14:39:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.6 2014/05/14 15:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.7 2014/05/19 14:39:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -481,13 +481,17 @@ static void
 agp_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
     unsigned npages)
 {
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct intel_gtt *const gtt = dev_priv->mm.gtt;
+	const bus_addr_t addr = gtt->gtt_scratch_seg.ds_addr;
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	unsigned page;
 
 	for (page = start_page; npages--; page++)
-		agp_i810_write_gtt_entry(isc, (off_t)page << PAGE_SHIFT, 0);
+		agp_i810_write_gtt_entry(isc, (off_t)page << PAGE_SHIFT,
+		    (addr | 1));
 
-	agp_i810_post_gtt_entry(isc, ((page - 1) << PAGE_SHIFT));
+	agp_i810_post_gtt_entry(isc, ((off_t)(page - 1) << PAGE_SHIFT));
 }
 
 /*
