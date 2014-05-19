@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.96 2014/05/19 09:49:07 martin Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.97 2014/05/19 09:56:17 martin Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -445,6 +445,25 @@ cryptography.
 Will not affect use of the standard low-security password encryption system,
 .Xr crypt 3 .
 .DFLTy
+.
+.It Sy MKDEBUG
+.YorN
+Indicates whether debug information should be generated for all userland
+binaries compiled.
+The result is collected as an additional
+.Sy debug.tgz
+and
+.Sy xdebug.tgz
+set and installed in
+.Pa /usr/libdata/debug .
+.DFLTn
+.
+.It Sy MKDEBUGLIB
+.YorN
+Indicates wether debug information (see
+.Sy MKDEBUG )
+should also be generated for all libraries build.
+.DFLTn
 .
 .It Sy MKDOC
 .YorN
