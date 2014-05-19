@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.98 2013/11/10 00:50:13 christos Exp $      */
+/*      $NetBSD: cpu.h,v 1.99 2014/05/19 22:47:54 rmind Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -101,6 +101,7 @@ struct cpu_mp_dep {
 #define	IPI_TBIA	4	/* Flush the TLB */
 #define	IPI_DDB		5	/* Jump into the DDB loop */
 #define	IPI_XCALL	6	/* Helper for xcall(9) */
+#define	IPI_GENERIC	7	/* Generic ipi(9) call */
 
 #define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
 #define	IPI_DEST_ALL	-2	/* Broadcast */

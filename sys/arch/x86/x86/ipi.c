@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.23 2014/02/19 21:23:02 dsl Exp $	*/
+/*	$NetBSD: ipi.c,v 1.24 2014/05/19 22:47:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,18 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.23 2014/02/19 21:23:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.24 2014/05/19 22:47:54 rmind Exp $");
 
 #include "opt_mtrr.h"
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
- 
+
 #ifdef MULTIPROCESSOR
 
 #include <machine/cpufunc.h>
@@ -61,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.23 2014/02/19 21:23:02 dsl Exp $");
 static void	x86_ipi_halt(struct cpu_info *);
 static void	x86_ipi_kpreempt(struct cpu_info *);
 static void	x86_ipi_xcall(struct cpu_info *);
+static void	x86_ipi_generic(struct cpu_info *);
 
 #ifdef MTRR
 static void	x86_ipi_reload_mtrr(struct cpu_info *);
@@ -80,7 +82,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_ipi_halt,
 	NULL,
-	NULL,
+	x86_ipi_generic,
 	x86_ipi_synch_fpu,
 	x86_ipi_reload_mtrr,
 	gdt_reload_cpu,
@@ -206,8 +208,13 @@ x86_ipi_kpreempt(struct cpu_info *ci)
 static void
 x86_ipi_xcall(struct cpu_info *ci)
 {
-
 	xc_ipi_handler();
+}
+
+static void
+x86_ipi_generic(struct cpu_info *ci)
+{
+	ipi_cpu_handler();
 }
 
 void
@@ -226,6 +233,21 @@ xc_send_ipi(struct cpu_info *ci)
 	}
 }
 
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		x86_send_ipi(ci, X86_IPI_GENERIC);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		x86_broadcast_ipi(X86_IPI_GENERIC);
+	}
+}
+
 #else
 
 int
@@ -239,6 +261,11 @@ void
 x86_broadcast_ipi(int ipimask)
 {
 
+}
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
 }
 
 #endif

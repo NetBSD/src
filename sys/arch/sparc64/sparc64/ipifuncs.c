@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.47 2012/11/08 16:36:53 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.48 2014/05/19 22:47:54 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.47 2012/11/08 16:36:53 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.48 2014/05/19 22:47:54 rmind Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <machine/db_machdep.h>
 
@@ -506,4 +506,11 @@ xc_send_ipi(struct cpu_info *target)
 {
 
 	sparc64_generic_xcall(target, (ipi_c_call_func_t)xc_ipi_handler, NULL);
+}
+
+void
+cpu_send_ipi(struct cpu_info *target)
+{
+
+	sparc64_generic_xcall(target, (ipi_c_call_func_t)ipi_cpu_handler, NULL);
 }
