@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.38 2014/03/14 11:29:44 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.39 2014/05/19 18:45:51 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ typedef struct {
 	void *		ctx;
 	int		(*ctor)(npf_rproc_t *, prop_dictionary_t);
 	void		(*dtor)(npf_rproc_t *, void *);
-	void		(*proc)(npf_cache_t *, nbuf_t *, void *, int *);
+	bool		(*proc)(npf_cache_t *, nbuf_t *, void *, int *);
 } npf_ext_ops_t;
 
 void *		npf_ext_register(const char *, const npf_ext_ops_t *);

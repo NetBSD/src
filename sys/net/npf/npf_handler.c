@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.30 2014/05/19 18:45:51 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.30 2014/05/19 18:45:51 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,8 +252,13 @@ block:
 	 * Execute the rule procedure, if any is associated.
 	 * It may reverse the decision from pass to block.
 	 */
-	if (rp) {
-		npf_rproc_run(&npc, &nbuf, rp, &decision);
+	if (rp && !npf_rproc_run(&npc, &nbuf, rp, &decision)) {
+		if (se) {
+			npf_session_release(se);
+		}
+		npf_rproc_release(rp);
+		*mp = NULL;
+		return 0;
 	}
 out:
 	/*
