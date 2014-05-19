@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.19 2014/05/18 11:04:51 martin Exp $ */
+/* $NetBSD: fp_complete.c,v 1.20 2014/05/19 06:55:54 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.19 2014/05/18 11:04:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.20 2014/05/19 06:55:54 matt Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -408,11 +408,13 @@ alpha_write_fp_c(struct lwp *l, uint64_t fp_c)
 	if ((md_flags & MDLWP_FP_C) == fp_c)
 		return;
 	l->l_md.md_flags = (md_flags & ~MDLWP_FP_C) | fp_c;
+	kpreempt_disable();
 	if (md_flags & MDLWP_FPACTIVE) {
 		alpha_pal_wrfen(1);
 		fp_c_to_fpcr(l);
 		alpha_pal_wrfen(0);
 	}
+	kpreempt_enable();
 }
 
 uint64_t
@@ -586,7 +588,10 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
-	fpu_load();
+	kpreempt_disable();
+	if ((curlwp->l_md.md_flags & MDLWP_FPACTIVE) == 0) {
+		fpu_load();
+	}
 	alpha_pal_wrfen(1);
 	/*
 	 * If necessary, lie about the dynamic rounding mode so emulation
@@ -612,6 +617,7 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 	alpha_write_fpcr(fp_c_to_fpcr_1(orig_fpcr, md_flags));
 	needsig = changed_flags & FP_C_TO_NETBSD_MASK(md_flags);
 	alpha_pal_wrfen(0);
+	kpreempt_enable();
 	if (__predict_false(needsig)) {
 		*ucode = needsig;
 		return SIGFPE;
