@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.42 2012/05/15 15:59:01 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.43 2014/05/19 17:14:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.42 2012/05/15 15:59:01 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.43 2014/05/19 17:14:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -459,6 +459,7 @@ private void	tty__getchar(struct termios *, unsigned char *);
 private void	tty__setchar(struct termios *, unsigned char *);
 private speed_t	tty__getspeed(struct termios *);
 private int	tty_setup(EditLine *);
+private void	tty_setup_flags(EditLine *, struct termios *, int);
 
 #define	t_qu	t_ts
 
@@ -517,17 +518,7 @@ tty_setup(EditLine *el)
 	el->el_tty.t_tabs = tty__gettabs(&el->el_tty.t_ex);
 	el->el_tty.t_eight = tty__geteightbit(&el->el_tty.t_ex);
 
-	el->el_tty.t_ex.c_iflag &= ~el->el_tty.t_t[EX_IO][MD_INP].t_clrmask;
-	el->el_tty.t_ex.c_iflag |= el->el_tty.t_t[EX_IO][MD_INP].t_setmask;
-
-	el->el_tty.t_ex.c_oflag &= ~el->el_tty.t_t[EX_IO][MD_OUT].t_clrmask;
-	el->el_tty.t_ex.c_oflag |= el->el_tty.t_t[EX_IO][MD_OUT].t_setmask;
-
-	el->el_tty.t_ex.c_cflag &= ~el->el_tty.t_t[EX_IO][MD_CTL].t_clrmask;
-	el->el_tty.t_ex.c_cflag |= el->el_tty.t_t[EX_IO][MD_CTL].t_setmask;
-
-	el->el_tty.t_ex.c_lflag &= ~el->el_tty.t_t[EX_IO][MD_LIN].t_clrmask;
-	el->el_tty.t_ex.c_lflag |= el->el_tty.t_t[EX_IO][MD_LIN].t_setmask;
+	tty_setup_flags(el, &el->el_tty.t_ex, EX_IO);
 
 	/*
          * Reset the tty chars to reasonable defaults
@@ -562,17 +553,7 @@ tty_setup(EditLine *el)
 		}
 	}
 
-	el->el_tty.t_ed.c_iflag &= ~el->el_tty.t_t[ED_IO][MD_INP].t_clrmask;
-	el->el_tty.t_ed.c_iflag |= el->el_tty.t_t[ED_IO][MD_INP].t_setmask;
-
-	el->el_tty.t_ed.c_oflag &= ~el->el_tty.t_t[ED_IO][MD_OUT].t_clrmask;
-	el->el_tty.t_ed.c_oflag |= el->el_tty.t_t[ED_IO][MD_OUT].t_setmask;
-
-	el->el_tty.t_ed.c_cflag &= ~el->el_tty.t_t[ED_IO][MD_CTL].t_clrmask;
-	el->el_tty.t_ed.c_cflag |= el->el_tty.t_t[ED_IO][MD_CTL].t_setmask;
-
-	el->el_tty.t_ed.c_lflag &= ~el->el_tty.t_t[ED_IO][MD_LIN].t_clrmask;
-	el->el_tty.t_ed.c_lflag |= el->el_tty.t_t[ED_IO][MD_LIN].t_setmask;
+	tty_setup_flags(el, &el->el_tty.t_ed, ED_IO);
 
 	tty__setchar(&el->el_tty.t_ed, el->el_tty.t_c[ED_IO]);
 	tty_bind_char(el, 1);
@@ -1129,17 +1110,7 @@ tty_quotemode(EditLine *el)
 
 	el->el_tty.t_qu = el->el_tty.t_ed;
 
-	el->el_tty.t_qu.c_iflag &= ~el->el_tty.t_t[QU_IO][MD_INP].t_clrmask;
-	el->el_tty.t_qu.c_iflag |= el->el_tty.t_t[QU_IO][MD_INP].t_setmask;
-
-	el->el_tty.t_qu.c_oflag &= ~el->el_tty.t_t[QU_IO][MD_OUT].t_clrmask;
-	el->el_tty.t_qu.c_oflag |= el->el_tty.t_t[QU_IO][MD_OUT].t_setmask;
-
-	el->el_tty.t_qu.c_cflag &= ~el->el_tty.t_t[QU_IO][MD_CTL].t_clrmask;
-	el->el_tty.t_qu.c_cflag |= el->el_tty.t_t[QU_IO][MD_CTL].t_setmask;
-
-	el->el_tty.t_qu.c_lflag &= ~el->el_tty.t_t[QU_IO][MD_LIN].t_clrmask;
-	el->el_tty.t_qu.c_lflag |= el->el_tty.t_t[QU_IO][MD_LIN].t_setmask;
+	tty_setup_flags(el, &el->el_tty.t_qu, QU_IO);
 
 	if (tty_setty(el, TCSADRAIN, &el->el_tty.t_qu) == -1) {
 #ifdef DEBUG_TTY
@@ -1357,3 +1328,21 @@ tty_printchar(EditLine *el, unsigned char *s)
 	(void) fprintf(el->el_errfile, "\n");
 }
 #endif /* notyet */
+
+
+private void
+tty_setup_flags(EditLine *el, struct termios *tios, int mode)
+{
+	tios->c_iflag &= ~el->el_tty.t_t[mode][MD_INP].t_clrmask;
+	tios->c_iflag |= el->el_tty.t_t[mode][MD_INP].t_setmask;
+
+	tios->c_oflag &= ~el->el_tty.t_t[mode][MD_OUT].t_clrmask;
+	tios->c_oflag |= el->el_tty.t_t[mode][MD_OUT].t_setmask;
+
+	tios->c_cflag &= ~el->el_tty.t_t[mode][MD_CTL].t_clrmask;
+	tios->c_cflag |= el->el_tty.t_t[mode][MD_CTL].t_setmask;
+
+	tios->c_lflag &= ~el->el_tty.t_t[mode][MD_LIN].t_clrmask;
+	tios->c_lflag |= el->el_tty.t_t[mode][MD_LIN].t_setmask;
+}
+
