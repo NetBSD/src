@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.455 2014/05/19 22:47:54 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.456 2014/05/19 23:33:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.455 2014/05/19 22:47:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.456 2014/05/19 23:33:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -308,7 +308,6 @@ main(void)
 
 	uvm_init();
 	kcpuset_sysinit();
-	ipi_sysinit();
 
 	prop_kern_init();
 
@@ -518,6 +517,9 @@ main(void)
 	mm_init();
 
 	configure2();
+
+	ipi_sysinit();
+
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
 
