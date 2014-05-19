@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.7 2014/05/18 14:46:16 rmind Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.8 2014/05/19 02:51:25 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.7 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.8 2014/05/19 02:51:25 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.7 2014/05/18 14:46:16 rmind Exp $")
 
 struct ifqueue mplsintrq;
 
-static int mpls_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct lwp *);
+static int mpls_attach(struct socket *, int);
 static void sysctl_net_mpls_setup(struct sysctllog **);
 
 #ifdef MBUFTRACE
@@ -79,19 +78,27 @@ void mpls_init(void)
 }
 
 static int
-mpls_usrreq(struct socket *so, int req, struct mbuf *m,
-        struct mbuf *nam, struct mbuf *control, struct lwp *l)
+mpls_attach(struct socket *so, int proto)
 {
 	int error = EOPNOTSUPP;
 
-	if ((req == PRU_ATTACH) &&
-	    (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0)) {
-		int s = splsoftnet();
+	sosetlock(so);
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		error = soreserve(so, 8192, 8192);
-		splx(s);
 	}
-
 	return error;
+}
+
+static void
+mpls_detach(struct socket *so)
+{
+}
+
+static int
+mpls_usrreq(struct socket *so, int req, struct mbuf *m,
+    struct mbuf *nam, struct mbuf *control, struct lwp *l)
+{
+	return EOPNOTSUPP;
 }
 
 /*
@@ -180,6 +187,8 @@ PR_WRAP_USRREQ(mpls_usrreq)
 #define	mpls_usrreq	mpls_usrreq_wrapper
 
 static const struct pr_usrreqs mpls_usrreqs = {
+	.pr_attach	= mpls_attach,
+	.pr_detach	= mpls_detach,
 	.pr_generic	= mpls_usrreq,
 };
 
