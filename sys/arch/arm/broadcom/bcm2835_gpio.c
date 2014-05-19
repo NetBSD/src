@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.1 2014/04/22 18:51:35 kardel Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.2 2014/05/19 08:33:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.1 2014/04/22 18:51:35 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.2 2014/05/19 08:33:41 skrll Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -108,6 +108,7 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 	
 	sc->sc_dev = self;
 	
+#if NGPIO > 0
 	if (device_unit(sc->sc_dev) > 1) {
 		aprint_naive(" NO GPIO\n");	
 		aprint_normal(": NO GPIO\n");
@@ -127,7 +128,6 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = &bcm2835_bs_tag;
 	sc->sc_ioh = BCM2835_IOPHYSTOVIRT(BCM2835_GPIO_BASE);
 	
-#if NGPIO > 0
 	for (pin = minpin; pin <= maxpin; pin++) {
 	        int epin = pin - minpin;
 	
