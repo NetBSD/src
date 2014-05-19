@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.166 2014/05/18 00:10:11 rmind Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.167 2014/05/19 02:51:25 rmind Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,14 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.166 2014/05/18 00:10:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.167 2014/05/19 02:51:25 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -253,10 +253,7 @@ icmp6_mtudisc_callback_register(void (*func)(struct in6_addr *))
 			return;
 	}
 
-	mc = malloc(sizeof(*mc), M_PCB, M_NOWAIT);
-	if (mc == NULL)
-		panic("icmp6_mtudisc_callback_register");
-
+	mc = kmem_alloc(sizeof(*mc), KM_SLEEP);
 	mc->mc_func = func;
 	LIST_INSERT_HEAD(&icmp6_mtudisc_callbacks, mc, mc_list);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sco.h,v 1.4 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: sco.h,v 1.5 2014/05/19 02:51:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@ int sco_sockaddr(struct sco_pcb *, struct sockaddr_bt *);
 int sco_connect(struct sco_pcb *, struct sockaddr_bt *);
 int sco_peeraddr(struct sco_pcb *, struct sockaddr_bt *);
 int sco_disconnect(struct sco_pcb *, int);
-int sco_detach(struct sco_pcb **);
+void sco_detach(struct sco_pcb **);
 int sco_listen(struct sco_pcb *);
 int sco_send(struct sco_pcb *, struct mbuf *);
 int sco_setopt(struct sco_pcb *, const struct sockopt *);

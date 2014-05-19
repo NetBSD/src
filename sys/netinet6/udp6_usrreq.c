@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.94 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.95 2014/05/19 02:51:25 rmind Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.94 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.95 2014/05/19 02:51:25 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -302,13 +302,59 @@ end:
 extern	int udp6_sendspace;
 extern	int udp6_recvspace;
 
+static int
+udp6_attach(struct socket *so, int proto)
+{
+	struct in6pcb *in6p;
+	int s, error;
+
+	KASSERT(sotoin6pcb(so) == NULL);
+	sosetlock(so);
+
+	/*
+	 * MAPPED_ADDR implementation spec:
+	 *  Always attach for IPv6, and only when necessary for IPv4.
+	 */
+	s = splsoftnet();
+	error = in6_pcballoc(so, &udbtable);
+	splx(s);
+	if (error) {
+		return error;
+	}
+	error = soreserve(so, udp6_sendspace, udp6_recvspace);
+	if (error) {
+		return error;
+	}
+	in6p = sotoin6pcb(so);
+	in6p->in6p_cksum = -1;	/* just to be sure */
+
+	KASSERT(solocked(so));
+	return 0;
+}
+
+static void
+udp6_detach(struct socket *so)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(in6p != NULL);
+
+	s = splsoftnet();
+	in6_pcbdetach(in6p);
+	splx(s);
+}
+
 int
 udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
 {
-	struct	in6pcb *in6p = sotoin6pcb(so);
-	int	error = 0;
-	int	s;
+	struct in6pcb *in6p = sotoin6pcb(so);
+	int s, error = 0;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	/*
 	 * MAPPED_ADDR implementation info:
@@ -320,10 +366,10 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	 *  So AF_INET socket need to be used to control AF_INET addrs,
 	 *  and AF_INET6 socket for AF_INET6 addrs.
 	 */
-	if (req == PRU_CONTROL)
+	if (req == PRU_CONTROL) {
 		return in6_control(so, (u_long)m, (void *)addr6,
 				   (struct ifnet *)control, l);
-
+	}
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
 		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
@@ -332,40 +378,12 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		mutex_exit(softnet_lock);
 		return 0;
 	}
-
-	if (req == PRU_ATTACH)
-		sosetlock(so);
-	else if (in6p == NULL) {
+	if (in6p == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 
 	switch (req) {
-	case PRU_ATTACH:
-		/*
-		 * MAPPED_ADDR implementation spec:
-		 *  Always attach for IPv6,
-		 *  and only when necessary for IPv4.
-		 */
-		if (in6p != NULL) {
-			error = EINVAL;
-			break;
-		}
-		s = splsoftnet();
-		error = in6_pcballoc(so, &udbtable);
-		splx(s);
-		if (error)
-			break;
-		error = soreserve(so, udp6_sendspace, udp6_recvspace);
-		if (error)
-			break;
-		in6p = sotoin6pcb(so);
-		in6p->in6p_cksum = -1;	/* just to be sure */
-		break;
-
-	case PRU_DETACH:
-		in6_pcbdetach(in6p);
-		break;
 
 	case PRU_BIND:
 		s = splsoftnet();
@@ -527,5 +545,7 @@ PR_WRAP_USRREQ(udp6_usrreq)
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
+	.pr_attach	= udp6_attach,
+	.pr_detach	= udp6_detach,
 	.pr_generic	= udp6_usrreq,
 };
