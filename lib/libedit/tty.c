@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.44 2014/05/19 19:54:12 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.45 2014/05/19 21:01:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.44 2014/05/19 19:54:12 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.45 2014/05/19 21:01:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1273,6 +1273,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 		}
 	}
 
+	tty_setup_flags(el, tios, z);
 	if (el->el_tty.t_mode == z) {
 		if (tty_setty(el, TCSADRAIN, tios) == -1) {
 #ifdef DEBUG_TTY
