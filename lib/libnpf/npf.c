@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.28 2014/02/13 03:34:41 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.29 2014/05/19 18:47:19 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.28 2014/02/13 03:34:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.29 2014/05/19 18:47:19 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -430,6 +430,13 @@ npf_ext_param_bool(nl_ext_t *ext, const char *key, bool val)
 {
 	prop_dictionary_t extdict = ext->nxt_dict;
 	prop_dictionary_set_bool(extdict, key, val);
+}
+
+void
+npf_ext_param_string(nl_ext_t *ext, const char *key, const char *val)
+{
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_dictionary_set_cstring(extdict, key, val);
 }
 
 /*
