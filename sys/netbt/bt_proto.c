@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.13 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.14 2014/05/19 02:51:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.13 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.14 2014/05/19 02:51:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -62,7 +62,7 @@ PR_WRAP_CTLOUTPUT(rfcomm_ctloutput)
 #define	l2cap_ctloutput		l2cap_ctloutput_wrapper
 #define	rfcomm_ctloutput	rfcomm_ctloutput_wrapper
 
-const struct protosw btsw[] = {
+static const struct protosw btsw[] = {
 	{ /* raw HCI commands */
 		.pr_type = SOCK_RAW,
 		.pr_domain = &btdomain,
