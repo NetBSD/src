@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.9 2014/04/27 16:22:13 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.10 2014/05/19 22:47:53 rmind Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.9 2014/04/27 16:22:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.10 2014/05/19 22:47:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.9 2014/04/27 16:22:13 matt Exp $");
 #include <sys/intr.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
-#include <sys/xcall.h>		/* for xc_ipi_handler */
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -612,6 +611,8 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	    pic_ipi_nop, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_VM, IST_EDGE,
 	    pic_ipi_xcall, (void *)-1);
+	intr_establish(ARMGIC_SGI_IPIBASE + IPI_GENERIC, IPL_VM, IST_EDGE,
+	    pic_ipi_generic, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_NOP, IPL_VM, IST_EDGE,
 	    pic_ipi_nop, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_SHOOTDOWN, IPL_VM, IST_EDGE,
