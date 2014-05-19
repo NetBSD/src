@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.20 2014/05/19 06:55:54 matt Exp $ */
+/* $NetBSD: fp_complete.c,v 1.21 2014/05/19 07:09:10 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.20 2014/05/19 06:55:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.21 2014/05/19 07:09:10 matt Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -731,10 +731,20 @@ fpu_state_load(struct lwp *l, u_int flags)
 	struct pcb * const pcb = lwp_getpcb(l);
 	KASSERT(l == curlwp);
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * If the LWP got switched to another CPU, pcu_switchpoint would have
+	 * called state_release to clear MDLWP_FPACTIVE.  Now that we are back
+	 * on the CPU that has our FP context, set MDLWP_FPACTIVE again.
+	 */
 	if (flags & PCU_REENABLE) {
-		KASSERT(l->l_md.md_flags & MDLWP_FPACTIVE);
+		KASSERT(flags & PCU_VALID);
+		l->l_md.md_flags |= MDLWP_FPACTIVE;
 		return;
 	}
+#else
+	KASSERT((flags & PCU_REENABLE) == 0);
+#endif
 
 	/*
 	 * Instrument FP usage -- if a process had not previously
