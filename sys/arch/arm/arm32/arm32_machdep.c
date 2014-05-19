@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.104 2014/04/11 04:19:47 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.105 2014/05/19 22:47:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.104 2014/04/11 04:19:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.105 2014/05/19 22:47:53 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.104 2014/04/11 04:19:47 matt Exp
 #include <sys/module.h>
 #include <sys/atomic.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -706,6 +707,16 @@ xc_send_ipi(struct cpu_info *ci)
 
 	intr_ipi_send(ci != NULL ? ci->ci_kcpuset : NULL, IPI_XCALL);
 }
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	intr_ipi_send(ci != NULL ? ci->ci_kcpuset : NULL, IPI_GENERIC);
+}
+
 #endif /* MULTIPROCESSOR */
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS

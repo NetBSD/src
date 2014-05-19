@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.2 2014/05/19 22:47:53 rmind Exp $	*/
 
 #ifndef _HPPA_INTRDEFS_H_
 #define _HPPA_INTRDEFS_H_
@@ -24,7 +24,8 @@
 #define	HPPA_IPI_NOP		0
 #define	HPPA_IPI_HALT		1
 #define	HPPA_IPI_XCALL		2
-#define	HPPA_NIPI		3
+#define	HPPA_IPI_GENERIC	3
+#define	HPPA_NIPI		4
 #endif
 
 #endif
