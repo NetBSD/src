@@ -1,10 +1,11 @@
-/* $NetBSD: ipivar.h,v 1.7 2014/05/19 22:47:53 rmind Exp $ */
+/*	$NetBSD: ipi.h,v 1.1 2014/05/19 22:47:54 rmind Exp $	*/
+
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Tim Rightnour
+ * by Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,48 +29,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.7 2014/05/19 22:47:53 rmind Exp $");
+#ifndef _SYS_IPI_H_
+#define _SYS_IPI_H_
 
-#ifndef _IPI_VAR_H_
-#define _IPI_VAR_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_ppcarch.h"
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
+#error "not supposed to be exposed to userland"
 #endif
 
-#if defined(_KERNEL) && !defined(PPC_BOOKE)
-struct ipi_ops {
-	void (*ppc_send_ipi)(cpuid_t, uint32_t);
-	/* type, level, arg */
-	void (*ppc_establish_ipi)(int, int, void *);
-	int ppc_ipi_vector;
-};
+typedef void (*ipi_func_t)(void *);
 
-/* target macros, 0+ are real cpu numbers */
-#define IPI_DST_ALL	((cpuid_t) -2)
-#define IPI_DST_NOTME	((cpuid_t) -1)
+typedef struct {
+	/* Public: function handler and an argument. */
+	ipi_func_t	func;
+	void *		arg;
 
-#define IPI_NOMESG		0x0000
-#define IPI_HALT		0x0001
-#define IPI_XCALL		0x0002
-#define IPI_KPREEMPT		0x0004
-#define IPI_GENERIC		0x0008
+	/* Private (internal) elements. */
+	volatile u_int	_pending;
+} ipi_msg_t;
 
-/* OpenPIC */
-void setup_openpic_ipi(void);
+void	ipi_sysinit(void);
+void	ipi_cpu_handler(void);
+void	cpu_ipi(struct cpu_info *);
 
-/* IPI Handler */
-int ipi_intr(void *);
+/*
+ * Public ipi(9) API.
+ */
+void	ipi_unicast(ipi_msg_t *, struct cpu_info *);
+void	ipi_multicast(ipi_msg_t *, const kcpuset_t *);
+void	ipi_broadcast(ipi_msg_t *);
+void	ipi_wait(ipi_msg_t *);
 
-/* convenience */
-extern struct ipi_ops ipiops;
-
-static inline void
-cpu_send_ipi(cpuid_t cpuid, uint32_t msg)
-{
-	(*ipiops.ppc_send_ipi)(cpuid, msg);
-}
 #endif
-
-#endif /*_IPI_VAR_H_*/
