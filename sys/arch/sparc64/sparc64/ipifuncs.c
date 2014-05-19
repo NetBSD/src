@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.48 2014/05/19 22:47:54 rmind Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.49 2014/05/19 23:13:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.48 2014/05/19 22:47:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.49 2014/05/19 23:13:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -509,7 +509,7 @@ xc_send_ipi(struct cpu_info *target)
 }
 
 void
-cpu_send_ipi(struct cpu_info *target)
+cpu_ipi(struct cpu_info *target)
 {
 
 	sparc64_generic_xcall(target, (ipi_c_call_func_t)ipi_cpu_handler, NULL);
