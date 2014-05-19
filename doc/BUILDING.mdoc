@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.97 2014/05/19 09:56:17 martin Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.98 2014/05/19 10:12:19 martin Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -437,6 +437,11 @@ Indicates whether preformatted plaintext manual pages will be created
 during a build.
 .DFLTn
 .
+.It Sy MKCROSSGDB
+.YorN
+Create a cross-gdb as a host tool.
+.DFLTn
+.
 .It Sy MKCRYPTO
 .YorN
 Indicates whether cryptographic code will be included in a build;
@@ -499,6 +504,18 @@ Indicates whether GNU Info files, used for the documentation for
 most of the compilation tools, will be created and installed during a
 build.
 .DFLTy
+.
+.It Sy MKKDEBUG
+.YorN
+Force generation of full-debug symbol versions of all kernels compiled.
+Alongside of the
+.Pa netbsd
+kernel file, an unstripped version
+.Pa netbsd.gdb
+is created.
+This is usfull if a cross-gdb is build as well (see
+.Sy MKCROSSGDB ) .
+.DFLTn
 .
 .It Sy MKKMOD
 .YorN
@@ -1448,6 +1465,17 @@ on the kernel in question first unless the
 .Fl u
 option is given.
 .
+.It Sy kernel.gdb Ns = Ns Ar kconf
+Build a new kernel with debug information.
+Similar to the above
+.Sy kernel Ns = Ns Ar kconf
+operation, but creates a
+.Pa netbsd.gdb
+file alongside of the kernel
+.Pa netbsd ,
+which contains a full symbol table and can be used for debugging
+(for example with a cross-gdb build by
+.Sy MKCROSSGDB ) .
 .It Sy modules
 This command will build kernel modules and install them into
 .Sy DESTDIR .
