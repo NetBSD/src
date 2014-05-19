@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.88 2013/05/04 18:30:14 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.89 2014/05/19 16:04:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -242,9 +242,6 @@ long	 ftell(FILE *);
 size_t	 fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 int	 getc(FILE *);
 int	 getchar(void);
-ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
-	    FILE * __restrict);
-ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
 void	 perror(const char *);
 int	 printf(const char * __restrict, ...)
 		__printflike(1, 2);
@@ -526,6 +523,9 @@ int	 dprintf(int, const char * __restrict, ...)
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
     defined(_NETBSD_SOURCE)
 FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
+	    FILE * __restrict);
+ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
