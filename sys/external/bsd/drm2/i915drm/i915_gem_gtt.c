@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.9 2014/05/19 14:55:46 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.10 2014/05/19 14:57:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.9 2014/05/19 14:55:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.10 2014/05/19 14:57:37 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,16 +82,6 @@ i915_gem_gtt_init(struct drm_device *dev)
 		ret = gen6_gtt_init(dev);
 	if (ret)
 		goto fail0;
-
-	aprint_error_dev(dev->dev, "GTT:\n"
-	    "- gma_bus_addr %"PRIxMAX"\n"
-	    "- gtt_mappable_entries %"PRIxMAX"\n"
-	    "- stolen_size %"PRIxMAX"\n"
-	    "- gtt_total_entries %"PRIxMAX"\n",
-	    (uintmax_t)gtt->gma_bus_addr,
-	    (uintmax_t)gtt->gtt_mappable_entries,
-	    (uintmax_t)gtt->stolen_size,
-	    (uintmax_t)gtt->gtt_total_entries);
 
 	/*
 	 * The GTT entries are limited to 32-bit physical addresses up
