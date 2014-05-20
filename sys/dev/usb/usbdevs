@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.668 2014/04/29 10:55:02 nonaka Exp $
+$NetBSD: usbdevs,v 1.669 2014/05/20 09:55:06 zafer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2954,7 +2954,8 @@ product SMC 2202USB		0x0200	10/100 ethernet adapter
 product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
-product SMC 2862WG		0xee13	EZ Connect 54Mbps
+product SMC 2862WG		0xee13	EZ Connect 54Mbps v2 USB 2.0
+product SMC 2862WG_V1		0xee06	EZ Connect 54Mbps v1 USB 1.0
 
 /* SMK products */
 product SMK MCE_IR		0x031d	eHome Infrared Transceiver
