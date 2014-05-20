@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.8 2014/05/19 02:51:25 rmind Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.9 2014/05/20 19:04:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.8 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.9 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -182,8 +182,9 @@ sysctl_net_mpls_setup(struct sysctllog **clog)
 
 DOMAIN_DEFINE(mplsdomain);
 
-PR_WRAP_USRREQ(mpls_usrreq)
-
+PR_WRAP_USRREQS(mpls)
+#define	mpls_attach	mpls_attach_wrapper
+#define	mpls_detach	mpls_detach_wrapper
 #define	mpls_usrreq	mpls_usrreq_wrapper
 
 static const struct pr_usrreqs mpls_usrreqs = {

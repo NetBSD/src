@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.116 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.117 2014/05/20 19:04:00 rmind Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.116 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.117 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -893,8 +893,9 @@ sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 		       CTL_EOL);
 }
 
-PR_WRAP_USRREQ(rip6_usrreq)
-
+PR_WRAP_USRREQS(rip6)
+#define	rip6_attach		rip6_attach_wrapper
+#define	rip6_detach		rip6_detach_wrapper
 #define	rip6_usrreq		rip6_usrreq_wrapper
 
 const struct pr_usrreqs rip6_usrreqs = {

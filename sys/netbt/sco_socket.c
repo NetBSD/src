@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.16 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.17 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.16 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.17 2014/05/20 19:04:00 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -379,10 +379,10 @@ sco_input(void *arg, struct mbuf *m)
 	sorwakeup(so);
 }
 
-PR_WRAP_USRREQ(sco_usrreq)
+PR_WRAP_USRREQS(sco)
 
-//#define	sco_attach		sco_attach_wrapper
-//#define	sco_detach		sco_detach_wrapper
+#define	sco_attach		sco_attach_wrapper
+#define	sco_detach		sco_detach_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
 const struct pr_usrreqs sco_usrreqs = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.173 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.174 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.173 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.174 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2193,8 +2193,9 @@ tcp_usrreq_init(void)
 #endif
 }
 
-PR_WRAP_USRREQ(tcp_usrreq)
-
+PR_WRAP_USRREQS(tcp)
+#define	tcp_attach	tcp_attach_wrapper
+#define	tcp_detach	tcp_detach_wrapper
 #define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {

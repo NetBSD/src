@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.14 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.15 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.14 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.15 2014/05/20 19:04:00 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -411,10 +411,10 @@ l2cap_input(void *arg, struct mbuf *m)
 	sorwakeup(so);
 }
 
-PR_WRAP_USRREQ(l2cap_usrreq)
+PR_WRAP_USRREQS(l2cap)
 
-//#define	l2cap_attach		l2cap_attach_wrapper
-//#define	l2cap_detach		l2cap_detach_wrapper
+#define	l2cap_attach		l2cap_attach_wrapper
+#define	l2cap_detach		l2cap_detach_wrapper
 #define	l2cap_usrreq		l2cap_usrreq_wrapper
 
 const struct pr_usrreqs l2cap_usrreqs = {

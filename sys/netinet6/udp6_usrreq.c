@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.95 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.96 2014/05/20 19:04:00 rmind Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.95 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.96 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -540,8 +540,9 @@ udp6_statinc(u_int stat)
 	UDP6_STATINC(stat);
 }
 
-PR_WRAP_USRREQ(udp6_usrreq)
-
+PR_WRAP_USRREQS(udp6)
+#define	udp6_attach	udp6_attach_wrapper
+#define	udp6_detach	udp6_detach_wrapper
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
