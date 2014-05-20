@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.26 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: natm.c,v 1.27 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.26 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.27 2014/05/20 19:04:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,8 +396,9 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
   goto next;
 }
 
-PR_WRAP_USRREQ(natm_usrreq)
-
+PR_WRAP_USRREQS(natm)
+#define	natm_attach	natm_attach_wrapper
+#define	natm_detach	natm_detach_wrapper
 #define	natm_usrreq	natm_usrreq_wrapper
 
 const struct pr_usrreqs natm_usrreqs = {
