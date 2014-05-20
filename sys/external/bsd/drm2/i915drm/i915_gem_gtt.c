@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.10 2014/05/19 14:57:37 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.11 2014/05/20 15:50:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.10 2014/05/19 14:57:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.11 2014/05/20 15:50:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -345,7 +345,7 @@ i915_gem_restore_gtt_mappings(struct drm_device *dev)
 	struct drm_i915_gem_object *obj;
 
 	i915_ggtt_clear_range(dev, (dev_priv->mm.gtt_start >> PAGE_SHIFT),
-	    ((dev_priv->mm.gtt_start - dev_priv->mm.gtt_end) >> PAGE_SHIFT));
+	    ((dev_priv->mm.gtt_end - dev_priv->mm.gtt_start) >> PAGE_SHIFT));
 
 	list_for_each_entry(obj, &dev_priv->mm.bound_list, gtt_list) {
 		i915_gem_clflush_object(obj);
@@ -483,7 +483,7 @@ agp_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
 {
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	struct intel_gtt *const gtt = dev_priv->mm.gtt;
-	const bus_addr_t addr = gtt->gtt_scratch_seg.ds_addr;
+	const bus_addr_t addr = gtt->gtt_scratch_map->dm_segs[0].ds_addr;
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	unsigned page;
 
@@ -716,15 +716,15 @@ gen6_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	const bus_space_tag_t bst = dev->bst;
 	const bus_space_handle_t bsh = dev_priv->mm.gtt->gtt_bsh;
-	const gtt_pte_t scratch_pte = gen6_pte_encode(dev,
-	    dev_priv->mm.gtt->gtt_scratch_map->dm_segs[0].ds_addr,
+	const bus_addr_t scratch_addr =
+	    dev_priv->mm.gtt->gtt_scratch_map->dm_segs[0].ds_addr;
+	const gtt_pte_t scratch_pte = gen6_pte_encode(dev, scratch_addr,
 	    I915_CACHE_LLC);
 	unsigned int i;
 
 	KASSERT(start_page < dev_priv->mm.gtt->gtt_total_entries);
 	KASSERT(npages <= (dev_priv->mm.gtt->gtt_total_entries - start_page));
-	KASSERT(dev_priv->mm.gtt->gtt_scratch_map->dm_segs[0].ds_addr ==
-	    gen6_pte_decode(scratch_pte));
+	KASSERT(scratch_addr == gen6_pte_decode(scratch_pte));
 
 	for (i = 0; i < npages; i++)
 		bus_space_write_4(bst, bsh, 4*(start_page + i), scratch_pte);
