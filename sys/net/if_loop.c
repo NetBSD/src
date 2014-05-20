@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.77 2014/05/13 19:36:16 bouyer Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.78 2014/05/20 19:53:50 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.77 2014/05/13 19:36:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.78 2014/05/20 19:53:50 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -202,7 +202,7 @@ loop_clone_destroy(struct ifnet *ifp)
 	bpf_detach(ifp);
 	if_detach(ifp);
 
-	free(ifp, M_DEVBUF);
+	if_free(ifp);
 
 	return (0);
 }
