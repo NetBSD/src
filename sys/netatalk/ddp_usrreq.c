@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.43 2014/05/19 02:51:24 rmind Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.44 2014/05/20 19:04:00 rmind Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.43 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.44 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -550,8 +550,9 @@ ddp_init(void)
 	MOWNER_ATTACH(&aarp_mowner);
 }
 
-PR_WRAP_USRREQ(ddp_usrreq)
-
+PR_WRAP_USRREQS(ddp)
+#define	ddp_attach	ddp_attach_wrapper
+#define	ddp_detach	ddp_detach_wrapper
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
