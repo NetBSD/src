@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.196 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.197 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.196 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.197 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1603,8 +1603,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 }
 #endif
 
-PR_WRAP_USRREQ(udp_usrreq)
-
+PR_WRAP_USRREQS(udp)
+#define	udp_attach	udp_attach_wrapper
+#define	udp_detach	udp_detach_wrapper
 #define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
