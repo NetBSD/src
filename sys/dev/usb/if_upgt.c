@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.10 2013/11/08 03:12:17 christos Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.11 2014/05/20 10:04:38 zafer Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.10 2013/11/08 03:12:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.11 2014/05/20 10:04:38 zafer Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -149,7 +149,8 @@ CFATTACH_DECL_NEW(upgt, sizeof(struct upgt_softc),
 
 static const struct usb_devno upgt_devs_1[] = {
 	/* version 1 devices */
-	{ USB_VENDOR_ALCATELT,		USB_PRODUCT_ALCATELT_ST120G }
+	{ USB_VENDOR_ALCATELT,		USB_PRODUCT_ALCATELT_ST120G },
+	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG_V1 }
 };
 
 static const struct usb_devno upgt_devs_2[] = {
