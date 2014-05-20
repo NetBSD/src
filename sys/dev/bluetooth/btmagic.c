@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.6 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.7 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.6 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.7 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -401,27 +401,27 @@ btmagic_detach(device_t self, int flags)
 
 	/* release interrupt listen */
 	if (sc->sc_int_l != NULL) {
-		l2cap_detach(&sc->sc_int_l);
+		l2cap_detach_pcb(&sc->sc_int_l);
 		sc->sc_int_l = NULL;
 	}
 
 	/* release control listen */
 	if (sc->sc_ctl_l != NULL) {
-		l2cap_detach(&sc->sc_ctl_l);
+		l2cap_detach_pcb(&sc->sc_ctl_l);
 		sc->sc_ctl_l = NULL;
 	}
 
 	/* close interrupt channel */
 	if (sc->sc_int != NULL) {
 		l2cap_disconnect(sc->sc_int, 0);
-		l2cap_detach(&sc->sc_int);
+		l2cap_detach_pcb(&sc->sc_int);
 		sc->sc_int = NULL;
 	}
 
 	/* close control channel */
 	if (sc->sc_ctl != NULL) {
 		l2cap_disconnect(sc->sc_ctl, 0);
-		l2cap_detach(&sc->sc_ctl);
+		l2cap_detach_pcb(&sc->sc_ctl);
 		sc->sc_ctl = NULL;
 	}
 
@@ -463,7 +463,7 @@ btmagic_listen(struct btmagic_softc *sc)
 	/*
 	 * Listen on control PSM
 	 */
-	err = l2cap_attach(&sc->sc_ctl_l, &btmagic_ctl_proto, sc);
+	err = l2cap_attach_pcb(&sc->sc_ctl_l, &btmagic_ctl_proto, sc);
 	if (err)
 		return err;
 
@@ -483,7 +483,7 @@ btmagic_listen(struct btmagic_softc *sc)
 	/*
 	 * Listen on interrupt PSM
 	 */
-	err = l2cap_attach(&sc->sc_int_l, &btmagic_int_proto, sc);
+	err = l2cap_attach_pcb(&sc->sc_int_l, &btmagic_int_proto, sc);
 	if (err)
 		return err;
 
@@ -519,7 +519,7 @@ btmagic_connect(struct btmagic_softc *sc)
 	sa.bt_len = sizeof(sa);
 	sa.bt_family = AF_BLUETOOTH;
 
-	err = l2cap_attach(&sc->sc_ctl, &btmagic_ctl_proto, sc);
+	err = l2cap_attach_pcb(&sc->sc_ctl, &btmagic_ctl_proto, sc);
 	if (err) {
 		printf("%s: l2cap_attach failed (%d)\n",
 		    device_xname(sc->sc_dev), err);
@@ -811,7 +811,7 @@ btmagic_ctl_connected(void *arg)
 
 	if (ISSET(sc->sc_flags, BTMAGIC_CONNECTING)) {
 		/* initiate connect on interrupt PSM */
-		err = l2cap_attach(&sc->sc_int, &btmagic_int_proto, sc);
+		err = l2cap_attach_pcb(&sc->sc_int, &btmagic_int_proto, sc);
 		if (err)
 			goto fail;
 
@@ -839,7 +839,7 @@ btmagic_ctl_connected(void *arg)
 	return;
 
 fail:
-	l2cap_detach(&sc->sc_ctl);
+	l2cap_detach_pcb(&sc->sc_ctl);
 	sc->sc_ctl = NULL;
 
 	printf("%s: connect failed (%d)\n", device_xname(sc->sc_dev), err);
@@ -877,7 +877,7 @@ btmagic_ctl_disconnected(void *arg, int err)
 	struct btmagic_softc *sc = arg;
 
 	if (sc->sc_ctl != NULL) {
-		l2cap_detach(&sc->sc_ctl);
+		l2cap_detach_pcb(&sc->sc_ctl);
 		sc->sc_ctl = NULL;
 	}
 
@@ -903,7 +903,7 @@ btmagic_int_disconnected(void *arg, int err)
 	struct btmagic_softc *sc = arg;
 
 	if (sc->sc_int != NULL) {
-		l2cap_detach(&sc->sc_int);
+		l2cap_detach_pcb(&sc->sc_int);
 		sc->sc_int = NULL;
 	}
 
@@ -950,7 +950,7 @@ btmagic_ctl_newconn(void *arg, struct sockaddr_bt *laddr,
 		return NULL;
 	}
 
-	l2cap_attach(&sc->sc_ctl, &btmagic_ctl_proto, sc);
+	l2cap_attach_pcb(&sc->sc_ctl, &btmagic_ctl_proto, sc);
 	return sc->sc_ctl;
 }
 
@@ -976,7 +976,7 @@ btmagic_int_newconn(void *arg, struct sockaddr_bt *laddr,
 		return NULL;
 	}
 
-	l2cap_attach(&sc->sc_int, &btmagic_int_proto, sc);
+	l2cap_attach_pcb(&sc->sc_int, &btmagic_int_proto, sc);
 	return sc->sc_int;
 }
 
