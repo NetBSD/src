@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2014/05/17 09:23:51 njoly Exp $
+	$NetBSD: syscalls.master,v 1.50 2014/05/20 17:24:49 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -269,8 +269,8 @@
 112	NOARGS		{ int|sys||setsid(void); }
 113	NOARGS		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
 114	NOARGS		{ int|sys||setregid(gid_t rgid, gid_t egid); }
-115	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
-116	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
+115	NOARGS		{ int|sys||getgroups(int gidsetsize, gid_t *gidset); }
+116	NOARGS		{ int|sys||setgroups(int gidsetsize, gid_t *gidset); }
 117	STD		{ int|linux_sys||setresuid(uid_t ruid, uid_t euid, \
 			    uid_t suid); }
 118	STD		{ int|linux_sys||getresuid(uid_t *ruid, uid_t *euid, \

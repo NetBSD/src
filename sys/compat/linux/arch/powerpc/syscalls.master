@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62 2014/05/17 09:23:51 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.63 2014/05/20 17:24:49 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -181,8 +181,8 @@
 			    struct timezone *tzp); }
 79	STD		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-80	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
-81	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
+80	NOARGS		{ int|sys||getgroups(int gidsetsize, gid_t *gidset); }
+81	NOARGS		{ int|sys||setgroups(int gidsetsize, gid_t *gidset); }
 82	STD		{ int|linux_sys||select(int nfds, fd_set* readfds, \
 					fd_set* writefds, fd_set* exceptfds, \
 					struct timeval50 *timeout); }

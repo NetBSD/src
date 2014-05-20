@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 2014/05/17 09:23:51 njoly Exp $
+	$NetBSD: syscalls.master,v 1.59 2014/05/20 17:24:49 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -357,9 +357,9 @@
 				uid_t euid); }
 204	NOARGS		setregid32 { int|sys||setregid(gid_t rgid, \
 				gid_t egid); }
-205	NOARGS		getgroups32 { int|sys||getgroups(u_int gidsetsize, \
+205	NOARGS		getgroups32 { int|sys||getgroups(int gidsetsize, \
 				gid_t *gidset); }
-206	NOARGS		setgroups32 { int|sys||setgroups(u_int gidsetsize, \
+206	NOARGS		setgroups32 { int|sys||setgroups(int gidsetsize, \
 				gid_t *gidset); }
 207	NOARGS		fchown32 { int|sys||__posix_fchown(int fd, uid_t uid, \
 				gid_t gid); }
