@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.18 2011/07/27 10:25:09 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.19 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.18 2011/07/27 10:25:09 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.19 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,7 +185,7 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 	SIMPLEQ_INIT(&rs->rs_credits);
 	LIST_INIT(&rs->rs_dlcs);
 
-	err = l2cap_attach(&rs->rs_l2cap, &rfcomm_session_proto, rs);
+	err = l2cap_attach_pcb(&rs->rs_l2cap, &rfcomm_session_proto, rs);
 	if (err) {
 		free(rs, M_BLUETOOTH);
 		return NULL;
@@ -250,7 +250,7 @@ rfcomm_session_free(struct rfcomm_session *rs)
 
 	/* Goodbye! */
 	LIST_REMOVE(rs, rs_next);
-	l2cap_detach(&rs->rs_l2cap);
+	l2cap_detach_pcb(&rs->rs_l2cap);
 	callout_destroy(&rs->rs_timeout);
 	free(rs, M_BLUETOOTH);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.36 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: hci.h,v 1.37 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.36 2014/05/18 14:46:16 rmind Exp $
+ * $Id: hci.h,v 1.37 2014/05/20 18:25:54 rmind Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2571,8 +2571,8 @@ int hci_ctloutput(int, struct socket *, struct sockopt *);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 
 /* hci_unit.c */
-struct hci_unit *hci_attach(const struct hci_if *, device_t, uint16_t);
-void hci_detach(struct hci_unit *);
+struct hci_unit *hci_attach_pcb(const struct hci_if *, device_t, uint16_t);
+void hci_detach_pcb(struct hci_unit *);
 int hci_enable(struct hci_unit *);
 void hci_disable(struct hci_unit *);
 struct hci_unit *hci_unit_lookup(const bdaddr_t *);
