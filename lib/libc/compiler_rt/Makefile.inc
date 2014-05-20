@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2014/05/16 00:11:30 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.20 2014/05/20 12:23:47 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -217,7 +217,8 @@ SRCS+=	${src}
 COPTS.${src}+=	-Wno-missing-prototypes \
 		-Wno-old-style-definition \
 		-Wno-strict-prototypes \
-		-Wno-uninitialized
+		-Wno-uninitialized \
+		-Wno-cast-qual
 .    endif
 .  endif
 .endfor
