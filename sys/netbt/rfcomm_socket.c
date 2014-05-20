@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.15 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.16 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.15 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.16 2014/05/20 19:04:00 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -424,10 +424,10 @@ rfcomm_input(void *arg, struct mbuf *m)
 	sorwakeup(so);
 }
 
-PR_WRAP_USRREQ(rfcomm_usrreq)
+PR_WRAP_USRREQS(rfcomm)
 
-//#define	rfcomm_attach		rfcomm_attach_wrapper
-//#define	rfcomm_detach		rfcomm_detach_wrapper
+#define	rfcomm_attach		rfcomm_attach_wrapper
+#define	rfcomm_detach		rfcomm_detach_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct pr_usrreqs rfcomm_usrreqs = {

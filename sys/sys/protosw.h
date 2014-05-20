@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.46 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: protosw.h,v 1.47 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -270,14 +270,31 @@ void pfctlinput2(int, const struct sockaddr *, void *);
  */
 #include <sys/systm.h>	/* kernel_lock */
 
-#define	PR_WRAP_USRREQ(name)				\
+#define	PR_WRAP_USRREQS(name)				\
 static int						\
-name##_wrapper(struct socket *a, int b, struct mbuf *c,	\
-     struct mbuf *d, struct mbuf *e, struct lwp *f)	\
+name##_attach_wrapper(struct socket *a, int b)		\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
-	rv = name(a, b, c, d, e, f);			\
+	rv = name##_attach(a, b);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static void						\
+name##_detach_wrapper(struct socket *a)			\
+{							\
+	KERNEL_LOCK(1, NULL);				\
+	name##_detach(a);				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+}							\
+static int						\
+name##_usrreq_wrapper(struct socket *a, int b,		\
+    struct mbuf *c, struct mbuf *d, struct mbuf *e,	\
+    struct lwp *f)					\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_usrreq(a, b, c, d, e, f);		\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }
