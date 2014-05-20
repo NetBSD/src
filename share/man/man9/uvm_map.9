@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_map.9,v 1.2 2011/06/03 18:43:38 rmind Exp $
+.\"	$NetBSD: uvm_map.9,v 1.3 2014/05/20 15:23:12 riastradh Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -81,11 +81,14 @@ The new mapping has size
 .Fa size ,
 which must be a multiple of
 .Dv PAGE_SIZE .
+.Pp
 The
 .Fa uobj
 and
 .Fa uoffset
-arguments can have four meanings.
+arguments can have four meanings:
+.Bl -bullet -offset indent -compact
+.It
 When
 .Fa uobj
 is
@@ -98,10 +101,16 @@ is
 does not use the machine-dependent
 .Dv PMAP_PREFER
 function.
-If
+.It
+When
+.Fa uobj
+is
+.Dv NULL
+and
 .Fa uoffset
 is any other value, it is used as the hint to
 .Dv PMAP_PREFER .
+.It
 When
 .Fa uobj
 is not
@@ -113,11 +122,22 @@ is
 .Fn uvm_map
 finds the offset based upon the virtual address, passed as
 .Fa startp .
-If
+.It
+When
+.Fa uobj
+is not
+.Dv NULL
+and
 .Fa uoffset
 is any other value, then a regular mapping is performed at this offset.
 The start address of the map will be returned in
 .Fa startp .
+.El
+Note that
+.Fn uvm_map
+does not add a reference to
+.Fa uobj ;
+it is the caller's responsibility to do so.
 .Pp
 .Fa align
 specifies alignment of mapping unless
