@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.245 2014/05/19 22:47:53 rmind Exp $ */
+/*	$NetBSD: cpu.c,v 1.246 2014/05/20 18:32:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.245 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.246 2014/05/20 18:32:08 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.245 2014/05/19 22:47:53 rmind Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
 #include <sys/xcall.h>
