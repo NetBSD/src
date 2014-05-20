@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.22 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.23 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.22 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.23 2014/05/20 18:25:54 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -427,7 +427,7 @@ bad:
 }
 
 static int
-hci_attach1(struct socket *so, int proto)
+hci_attach(struct socket *so, int proto)
 {
 	struct hci_pcb *pcb;
 	int error;
@@ -465,7 +465,7 @@ hci_attach1(struct socket *so, int proto)
 }
 
 static void
-hci_detach1(struct socket *so)
+hci_detach(struct socket *so)
 {
 	struct hci_pcb *pcb;
 
@@ -542,7 +542,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_ABORT:
 		soisdisconnected(up);
-		hci_detach1(up);
+		hci_detach(up);
 		return 0;
 
 	case PRU_BIND:
@@ -866,10 +866,12 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 
 PR_WRAP_USRREQ(hci_usrreq)
 
+//#define	hci_attach		hci_attach_wrapper
+//#define	hci_detach		hci_detach_wrapper
 #define	hci_usrreq		hci_usrreq_wrapper
 
 const struct pr_usrreqs hci_usrreqs = {
-	.pr_attach	= hci_attach1,
-	.pr_detach	= hci_detach1,
+	.pr_attach	= hci_attach,
+	.pr_detach	= hci_detach,
 	.pr_generic	= hci_usrreq,
 };

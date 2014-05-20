@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.23 2011/07/27 10:25:09 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.24 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.23 2011/07/27 10:25:09 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.24 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -799,7 +799,7 @@ hci_sco_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 
 		sco = hci_link_alloc(unit, bdaddr, HCI_LINK_SCO);
 		if (sco == NULL) {
-			sco_detach(&new);
+			sco_detach_pcb(&new);
 			return NULL;
 		}
 
