@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.121 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.122 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.121 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.122 2014/05/20 19:04:00 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -697,8 +697,9 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	return error;
 }
 
-PR_WRAP_USRREQ(rip_usrreq)
-
+PR_WRAP_USRREQS(rip)
+#define	rip_attach	rip_attach_wrapper
+#define	rip_detach	rip_detach_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
 const struct pr_usrreqs rip_usrreqs = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.23 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.24 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.23 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.24 2014/05/20 19:04:00 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -864,10 +864,10 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 	}
 }
 
-PR_WRAP_USRREQ(hci_usrreq)
+PR_WRAP_USRREQS(hci)
 
-//#define	hci_attach		hci_attach_wrapper
-//#define	hci_detach		hci_detach_wrapper
+#define	hci_attach		hci_attach_wrapper
+#define	hci_detach		hci_detach_wrapper
 #define	hci_usrreq		hci_usrreq_wrapper
 
 const struct pr_usrreqs hci_usrreqs = {
