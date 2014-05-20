@@ -1490,9 +1490,11 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	    obj->gemo_shm_uao, args->offset, 0,
 	    UVM_MAPFLAG((VM_PROT_READ | VM_PROT_WRITE),
 		(VM_PROT_READ | VM_PROT_WRITE), UVM_INH_COPY, UVM_ADV_NORMAL,
-		UVM_FLAG_COPYONW));
+		0));
 	if (ret)
 		return ret;
+	uao_reference(obj->gemo_shm_uao);
+	drm_gem_object_unreference_unlocked(obj);
 #else
 	addr = vm_mmap(obj->filp, 0, args->size,
 		       PROT_READ | PROT_WRITE, MAP_SHARED,
