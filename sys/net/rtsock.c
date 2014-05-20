@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.145 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.146 2014/05/20 19:04:00 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.145 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.146 2014/05/20 19:04:00 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1318,14 +1318,14 @@ COMPATNAME(route_init)(void)
  * Definitions of protocols supported in the ROUTE domain.
  */
 #ifndef COMPAT_RTSOCK
-PR_WRAP_USRREQ(route_usrreq);
+PR_WRAP_USRREQS(route);
 #else
-PR_WRAP_USRREQ(compat_50_route_usrreq);
+PR_WRAP_USRREQS(compat_50_route);
 #endif
 
 static const struct pr_usrreqs route_usrreqs = {
-	.pr_attach	= COMPATNAME(route_attach),
-	.pr_detach	= COMPATNAME(route_detach),
+	.pr_attach	= COMPATNAME(route_attach_wrapper),
+	.pr_detach	= COMPATNAME(route_detach_wrapper),
 	.pr_generic	= COMPATNAME(route_usrreq_wrapper),
 };
 
