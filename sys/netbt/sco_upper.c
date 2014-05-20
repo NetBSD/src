@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.10 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.11 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.10 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.11 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,12 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.10 2014/05/19 02:51:24 rmind Exp $")
 struct sco_pcb_list sco_pcb = LIST_HEAD_INITIALIZER(sco_pcb);
 
 /*
- * sco_attach(handle, proto, upper)
+ * sco_attach_pcb(handle, proto, upper)
  *
  *	Attach a new instance of SCO pcb to handle
  */
 int
-sco_attach(struct sco_pcb **handle,
+sco_attach_pcb(struct sco_pcb **handle,
 		const struct btproto *proto, void *upper)
 {
 	struct sco_pcb *pcb;
@@ -222,12 +222,12 @@ sco_disconnect(struct sco_pcb *pcb, int linger)
 }
 
 /*
- * sco_detach(handle)
+ * sco_detach_pcb(handle)
  *
  *	Detach SCO pcb from handle and clear up
  */
 void
-sco_detach(struct sco_pcb **handle)
+sco_detach_pcb(struct sco_pcb **handle)
 {
 	struct sco_pcb *pcb;
 

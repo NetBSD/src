@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.12 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.13 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.12 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.13 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,13 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.12 2014/05/19 02:51:24 rmind Exp $
  */
 
 /*
- * l2cap_attach(handle, btproto, upper)
+ * l2cap_attach_pcb(handle, btproto, upper)
  *
  *	attach new l2cap_channel to handle, populate
  *	with reasonable defaults
  */
 int
-l2cap_attach(struct l2cap_channel **handle,
+l2cap_attach_pcb(struct l2cap_channel **handle,
 		const struct btproto *proto, void *upper)
 {
 	struct l2cap_channel *chan;
@@ -260,12 +260,12 @@ l2cap_disconnect(struct l2cap_channel *chan, int linger)
 }
 
 /*
- * l2cap_detach(handle)
+ * l2cap_detach_pcb(handle)
  *
  *	Detach l2cap channel from handle & close it down
  */
 void
-l2cap_detach(struct l2cap_channel **handle)
+l2cap_detach_pcb(struct l2cap_channel **handle)
 {
 	struct l2cap_channel *chan;
 
