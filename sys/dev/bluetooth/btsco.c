@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.28 2012/04/03 09:32:53 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.29 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.28 2012/04/03 09:32:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.29 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -360,13 +360,13 @@ btsco_detach(device_t self, int flags)
 	if (sc->sc_sco != NULL) {
 		DPRINTF("sc_sco=%p\n", sc->sc_sco);
 		sco_disconnect(sc->sc_sco, 0);
-		sco_detach(&sc->sc_sco);
+		sco_detach_pcb(&sc->sc_sco);
 		sc->sc_sco = NULL;
 	}
 
 	if (sc->sc_sco_l != NULL) {
 		DPRINTF("sc_sco_l=%p\n", sc->sc_sco_l);
-		sco_detach(&sc->sc_sco_l);
+		sco_detach_pcb(&sc->sc_sco_l);
 		sc->sc_sco_l = NULL;
 	}
 	mutex_exit(bt_lock);
@@ -430,7 +430,7 @@ btsco_sco_connected(void *arg)
 	 * If we are listening, no more need
 	 */
 	if (sc->sc_sco_l != NULL)
-		sco_detach(&sc->sc_sco_l);
+		sco_detach_pcb(&sc->sc_sco_l);
 
 	sc->sc_state = BTSCO_OPEN;
 	cv_broadcast(&sc->sc_connect);
@@ -446,7 +446,7 @@ btsco_sco_disconnected(void *arg, int err)
 	KASSERT(sc->sc_sco != NULL);
 
 	sc->sc_err = err;
-	sco_detach(&sc->sc_sco);
+	sco_detach_pcb(&sc->sc_sco);
 
 	switch (sc->sc_state) {
 	case BTSCO_CLOSED:		/* dont think this can happen */
@@ -494,7 +494,7 @@ btsco_sco_newconn(void *arg, struct sockaddr_bt *laddr,
 	    || sc->sc_sco != NULL)
 	    return NULL;
 
-	sco_attach(&sc->sc_sco, &btsco_sco_proto, sc);
+	sco_attach_pcb(&sc->sc_sco, &btsco_sco_proto, sc);
 	return sc->sc_sco;
 }
 
@@ -588,38 +588,38 @@ btsco_open(void *hdl, int flags)
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 
 	if (sc->sc_flags & BTSCO_LISTEN) {
-		err = sco_attach(&sc->sc_sco_l, &btsco_sco_proto, sc);
+		err = sco_attach_pcb(&sc->sc_sco_l, &btsco_sco_proto, sc);
 		if (err)
 			goto done;
 
 		err = sco_bind(sc->sc_sco_l, &sa);
 		if (err) {
-			sco_detach(&sc->sc_sco_l);
+			sco_detach_pcb(&sc->sc_sco_l);
 			goto done;
 		}
 
 		err = sco_listen(sc->sc_sco_l);
 		if (err) {
-			sco_detach(&sc->sc_sco_l);
+			sco_detach_pcb(&sc->sc_sco_l);
 			goto done;
 		}
 
 		timo = 0;	/* no timeout */
 	} else {
-		err = sco_attach(&sc->sc_sco, &btsco_sco_proto, sc);
+		err = sco_attach_pcb(&sc->sc_sco, &btsco_sco_proto, sc);
 		if (err)
 			goto done;
 
 		err = sco_bind(sc->sc_sco, &sa);
 		if (err) {
-			sco_detach(&sc->sc_sco);
+			sco_detach_pcb(&sc->sc_sco);
 			goto done;
 		}
 
 		bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
 		err = sco_connect(sc->sc_sco, &sa);
 		if (err) {
-			sco_detach(&sc->sc_sco);
+			sco_detach_pcb(&sc->sc_sco);
 			goto done;
 		}
 
@@ -637,10 +637,10 @@ btsco_open(void *hdl, int flags)
 		/* fall through to */
 	case BTSCO_WAIT_CONNECT:	/* error */
 		if (sc->sc_sco != NULL)
-			sco_detach(&sc->sc_sco);
+			sco_detach_pcb(&sc->sc_sco);
 
 		if (sc->sc_sco_l != NULL)
-			sco_detach(&sc->sc_sco_l);
+			sco_detach_pcb(&sc->sc_sco_l);
 
 		break;
 
@@ -673,11 +673,11 @@ btsco_close(void *hdl)
 
 	if (sc->sc_sco != NULL) {
 		sco_disconnect(sc->sc_sco, 0);
-		sco_detach(&sc->sc_sco);
+		sco_detach_pcb(&sc->sc_sco);
 	}
 
 	if (sc->sc_sco_l != NULL) {
-		sco_detach(&sc->sc_sco_l);
+		sco_detach_pcb(&sc->sc_sco_l);
 	}
 
 	if (sc->sc_rx_mbuf != NULL) {

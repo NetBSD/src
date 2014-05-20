@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.13 2014/05/19 03:18:57 rmind Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.14 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.13 2014/05/19 03:18:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.14 2014/05/20 18:25:54 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -83,7 +83,7 @@ int l2cap_sendspace = 4096;
 int l2cap_recvspace = 4096;
 
 static int
-l2cap_attach1(struct socket *so, int proto)
+l2cap_attach(struct socket *so, int proto)
 {
 	int error;
 
@@ -104,15 +104,15 @@ l2cap_attach1(struct socket *so, int proto)
 	if (error)
 		return error;
 
-	return l2cap_attach((struct l2cap_channel **)&so->so_pcb,
+	return l2cap_attach_pcb((struct l2cap_channel **)&so->so_pcb,
 				&l2cap_proto, so);
 }
 
 static void
-l2cap_detach1(struct socket *so)
+l2cap_detach(struct socket *so)
 {
 	KASSERT(so->so_pcb != NULL);
-	l2cap_detach((struct l2cap_channel **)&so->so_pcb);
+	l2cap_detach_pcb((struct l2cap_channel **)&so->so_pcb);
 	KASSERT(so->so_pcb == NULL);
 }
 
@@ -168,7 +168,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		l2cap_disconnect(pcb, 0);
 		soisdisconnected(up);
-		l2cap_detach1(up);
+		l2cap_detach(up);
 		return 0;
 
 	case PRU_BIND:
@@ -413,10 +413,12 @@ l2cap_input(void *arg, struct mbuf *m)
 
 PR_WRAP_USRREQ(l2cap_usrreq)
 
+//#define	l2cap_attach		l2cap_attach_wrapper
+//#define	l2cap_detach		l2cap_detach_wrapper
 #define	l2cap_usrreq		l2cap_usrreq_wrapper
 
 const struct pr_usrreqs l2cap_usrreqs = {
-	.pr_attach	= l2cap_attach1,
-	.pr_detach	= l2cap_detach1,
+	.pr_attach	= l2cap_attach,
+	.pr_detach	= l2cap_detach,
 	.pr_generic	= l2cap_usrreq,
 };

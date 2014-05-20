@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.15 2014/05/19 15:44:04 martin Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.16 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.15 2014/05/19 15:44:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.16 2014/05/20 18:25:54 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -79,7 +79,7 @@ int sco_sendspace = 4096;
 int sco_recvspace = 4096;
 
 static int
-sco_attach1(struct socket *so, int proto)
+sco_attach(struct socket *so, int proto)
 {
 	int error;
 
@@ -96,14 +96,14 @@ sco_attach1(struct socket *so, int proto)
 	if (error) {
 		return error;
 	}
-	return sco_attach((struct sco_pcb **)&so->so_pcb, &sco_proto, so);
+	return sco_attach_pcb((struct sco_pcb **)&so->so_pcb, &sco_proto, so);
 }
 
 static void
-sco_detach1(struct socket *so)
+sco_detach(struct socket *so)
 {
 	KASSERT(so->so_pcb != NULL);
-	sco_detach((struct sco_pcb **)&so->so_pcb);
+	sco_detach_pcb((struct sco_pcb **)&so->so_pcb);
 	KASSERT(so->so_pcb == NULL);
 }
 
@@ -157,7 +157,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		sco_disconnect(pcb, 0);
 		soisdisconnected(up);
-		sco_detach1(up);
+		sco_detach(up);
 		return 0;
 
 	case PRU_BIND:
@@ -381,10 +381,12 @@ sco_input(void *arg, struct mbuf *m)
 
 PR_WRAP_USRREQ(sco_usrreq)
 
+//#define	sco_attach		sco_attach_wrapper
+//#define	sco_detach		sco_detach_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
 const struct pr_usrreqs sco_usrreqs = {
-	.pr_attach	= sco_attach1,
-	.pr_detach	= sco_detach1,
+	.pr_attach	= sco_attach,
+	.pr_detach	= sco_detach,
 	.pr_generic	= sco_usrreq,
 };

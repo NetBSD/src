@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.14 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.15 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.14 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.15 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,12 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.14 2014/05/19 02:51:24 rmind Exp 
  */
 
 /*
- * rfcomm_attach(handle, proto, upper)
+ * rfcomm_attach_pcb(handle, proto, upper)
  *
  * attach a new RFCOMM DLC to handle, populate with reasonable defaults
  */
 int
-rfcomm_attach(struct rfcomm_dlc **handle,
+rfcomm_attach_pcb(struct rfcomm_dlc **handle,
 		const struct btproto *proto, void *upper)
 {
 	struct rfcomm_dlc *dlc;
@@ -268,12 +268,12 @@ rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
 }
 
 /*
- * rfcomm_detach(handle)
+ * rfcomm_detach_pcb(handle)
  *
  * detach RFCOMM DLC from handle
  */
 void
-rfcomm_detach(struct rfcomm_dlc **handle)
+rfcomm_detach_pcb(struct rfcomm_dlc **handle)
 {
 	struct rfcomm_dlc *dlc = *handle;
 

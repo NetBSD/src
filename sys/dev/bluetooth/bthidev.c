@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.24 2012/12/20 11:17:47 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.25 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.24 2012/12/20 11:17:47 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.25 2014/05/20 18:25:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -358,27 +358,27 @@ bthidev_detach(device_t self, int flags)
 
 	/* release interrupt listen */
 	if (sc->sc_int_l != NULL) {
-		l2cap_detach(&sc->sc_int_l);
+		l2cap_detach_pcb(&sc->sc_int_l);
 		sc->sc_int_l = NULL;
 	}
 
 	/* release control listen */
 	if (sc->sc_ctl_l != NULL) {
-		l2cap_detach(&sc->sc_ctl_l);
+		l2cap_detach_pcb(&sc->sc_ctl_l);
 		sc->sc_ctl_l = NULL;
 	}
 
 	/* close interrupt channel */
 	if (sc->sc_int != NULL) {
 		l2cap_disconnect(sc->sc_int, 0);
-		l2cap_detach(&sc->sc_int);
+		l2cap_detach_pcb(&sc->sc_int);
 		sc->sc_int = NULL;
 	}
 
 	/* close control channel */
 	if (sc->sc_ctl != NULL) {
 		l2cap_disconnect(sc->sc_ctl, 0);
-		l2cap_detach(&sc->sc_ctl);
+		l2cap_detach_pcb(&sc->sc_ctl);
 		sc->sc_ctl = NULL;
 	}
 
@@ -499,7 +499,7 @@ bthidev_listen(struct bthidev_softc *sc)
 	/*
 	 * Listen on control PSM
 	 */
-	err = l2cap_attach(&sc->sc_ctl_l, &bthidev_ctl_proto, sc);
+	err = l2cap_attach_pcb(&sc->sc_ctl_l, &bthidev_ctl_proto, sc);
 	if (err)
 		return err;
 
@@ -519,7 +519,7 @@ bthidev_listen(struct bthidev_softc *sc)
 	/*
 	 * Listen on interrupt PSM
 	 */
-	err = l2cap_attach(&sc->sc_int_l, &bthidev_int_proto, sc);
+	err = l2cap_attach_pcb(&sc->sc_int_l, &bthidev_int_proto, sc);
 	if (err)
 		return err;
 
@@ -556,7 +556,7 @@ bthidev_connect(struct bthidev_softc *sc)
 	sa.bt_len = sizeof(sa);
 	sa.bt_family = AF_BLUETOOTH;
 
-	err = l2cap_attach(&sc->sc_ctl, &bthidev_ctl_proto, sc);
+	err = l2cap_attach_pcb(&sc->sc_ctl, &bthidev_ctl_proto, sc);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "l2cap_attach failed (%d)\n", err);
 		return err;
@@ -679,14 +679,14 @@ bthidev_process_one(struct bthidev_softc *sc, struct mbuf *m)
 			/* close interrupt channel */
 			if (sc->sc_int != NULL) {
 				l2cap_disconnect(sc->sc_int, 0);
-				l2cap_detach(&sc->sc_int);
+				l2cap_detach_pcb(&sc->sc_int);
 				sc->sc_int = NULL;
 			}
 
 			/* close control channel */
 			if (sc->sc_ctl != NULL) {
 				l2cap_disconnect(sc->sc_ctl, 0);
-				l2cap_detach(&sc->sc_ctl);
+				l2cap_detach_pcb(&sc->sc_ctl);
 				sc->sc_ctl = NULL;
 			}
 			mutex_exit(bt_lock);
@@ -734,7 +734,7 @@ bthidev_ctl_connected(void *arg)
 
 	if (sc->sc_flags & BTHID_CONNECTING) {
 		/* initiate connect on interrupt PSM */
-		err = l2cap_attach(&sc->sc_int, &bthidev_int_proto, sc);
+		err = l2cap_attach_pcb(&sc->sc_int, &bthidev_int_proto, sc);
 		if (err)
 			goto fail;
 
@@ -762,7 +762,7 @@ bthidev_ctl_connected(void *arg)
 	return;
 
 fail:
-	l2cap_detach(&sc->sc_ctl);
+	l2cap_detach_pcb(&sc->sc_ctl);
 	sc->sc_ctl = NULL;
 
 	aprint_error_dev(sc->sc_dev, "connect failed (%d)\n", err);
@@ -799,7 +799,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 	struct bthidev_softc *sc = arg;
 
 	if (sc->sc_ctl != NULL) {
-		l2cap_detach(&sc->sc_ctl);
+		l2cap_detach_pcb(&sc->sc_ctl);
 		sc->sc_ctl = NULL;
 	}
 
@@ -831,7 +831,7 @@ bthidev_int_disconnected(void *arg, int err)
 	struct bthidev_softc *sc = arg;
 
 	if (sc->sc_int != NULL) {
-		l2cap_detach(&sc->sc_int);
+		l2cap_detach_pcb(&sc->sc_int);
 		sc->sc_int = NULL;
 	}
 
@@ -884,7 +884,7 @@ bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr,
 		return NULL;
 	}
 
-	l2cap_attach(&sc->sc_ctl, &bthidev_ctl_proto, sc);
+	l2cap_attach_pcb(&sc->sc_ctl, &bthidev_ctl_proto, sc);
 	return sc->sc_ctl;
 }
 
@@ -910,7 +910,7 @@ bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr,
 		return NULL;
 	}
 
-	l2cap_attach(&sc->sc_int, &bthidev_int_proto, sc);
+	l2cap_attach_pcb(&sc->sc_int, &bthidev_int_proto, sc);
 	return sc->sc_int;
 }
 
