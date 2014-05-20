@@ -1491,8 +1491,10 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	    UVM_MAPFLAG((VM_PROT_READ | VM_PROT_WRITE),
 		(VM_PROT_READ | VM_PROT_WRITE), UVM_INH_COPY, UVM_ADV_NORMAL,
 		0));
-	if (ret)
+	if (ret) {
+		drm_gem_object_unreference_unlocked(obj);
 		return ret;
+	}
 	uao_reference(obj->gemo_shm_uao);
 	drm_gem_object_unreference_unlocked(obj);
 #else
