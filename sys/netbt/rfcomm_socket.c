@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.14 2014/05/19 15:44:04 martin Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.15 2014/05/20 18:25:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.14 2014/05/19 15:44:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.15 2014/05/20 18:25:54 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -82,7 +82,7 @@ int rfcomm_sendspace = 4096;
 int rfcomm_recvspace = 4096;
 
 static int
-rfcomm_attach1(struct socket *so, int proto)
+rfcomm_attach(struct socket *so, int proto)
 {
 	int error;
 
@@ -103,24 +103,24 @@ rfcomm_attach1(struct socket *so, int proto)
 	if (error)
 		return error;
 
-	error = rfcomm_attach((struct rfcomm_dlc **)&so->so_pcb,
+	error = rfcomm_attach_pcb((struct rfcomm_dlc **)&so->so_pcb,
 				&rfcomm_proto, so);
 	if (error)
 		return error;
 
 	error = rfcomm_rcvd(so->so_pcb, sbspace(&so->so_rcv));
 	if (error) {
-		rfcomm_detach((struct rfcomm_dlc **)&so->so_pcb);
+		rfcomm_detach_pcb((struct rfcomm_dlc **)&so->so_pcb);
 		return error;
 	}
 	return 0;
 }
 
 static void
-rfcomm_detach1(struct socket *so)
+rfcomm_detach(struct socket *so)
 {
 	KASSERT(so->so_pcb != NULL);
-	rfcomm_detach((struct rfcomm_dlc **)&so->so_pcb);
+	rfcomm_detach_pcb((struct rfcomm_dlc **)&so->so_pcb);
 	KASSERT(so->so_pcb == NULL);
 }
 
@@ -175,7 +175,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		rfcomm_disconnect(pcb, 0);
 		soisdisconnected(up);
-		rfcomm_detach1(up);
+		rfcomm_detach(up);
 		return 0;
 
 	case PRU_BIND:
@@ -426,10 +426,12 @@ rfcomm_input(void *arg, struct mbuf *m)
 
 PR_WRAP_USRREQ(rfcomm_usrreq)
 
+//#define	rfcomm_attach		rfcomm_attach_wrapper
+//#define	rfcomm_detach		rfcomm_detach_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct pr_usrreqs rfcomm_usrreqs = {
-	.pr_attach	= rfcomm_attach1,
-	.pr_detach	= rfcomm_detach1,
+	.pr_attach	= rfcomm_attach,
+	.pr_detach	= rfcomm_detach,
 	.pr_generic	= rfcomm_usrreq,
 };
