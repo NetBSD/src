@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.6 2014/05/09 21:49:43 reinoud Exp $
+#	$NetBSD: files.exynos,v 1.7 2014/05/21 12:19:59 reinoud Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -80,4 +80,9 @@ attach	exyousb at exyo with exyo_usb
 attach	ohci at exyousb with ohci_exyousb
 attach	ehci at exyousb with ehci_exyousb
 file	arch/arm/samsung/exynos_usb.c		exyo_usb
+
+# I2C support, bitbanging trough GPIO
+device	exyoiic: i2cbus, i2c_bitbang
+attach	exyoiic at exyo with exynos_iic
+file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
 
