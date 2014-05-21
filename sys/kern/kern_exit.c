@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.236.2.2 2012/10/01 23:07:07 riz Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.236.2.3 2014/05/21 21:04:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236.2.2 2012/10/01 23:07:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236.2.3 2014/05/21 21:04:31 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -540,12 +540,10 @@ exit1(struct lwp *l, int rv)
 	 */
 	pcu_discard_all(l);
 
-	/*
-	 * Remaining lwp resources will be freed in lwp_exit2() once we've
-	 * switch to idle context; at that point, we will be marked as a
-	 * full blown zombie.
-	 */
 	mutex_enter(p->p_lock);
+	/* Free the linux lwp id */
+	if ((l->l_pflag & LP_PIDLID) != 0 && l->l_lid != p->p_pid)
+		proc_free_pid(l->l_lid);
 	lwp_drainrefs(l);
 	lwp_lock(l);
 	l->l_prflag &= ~LPR_DETACHED;
