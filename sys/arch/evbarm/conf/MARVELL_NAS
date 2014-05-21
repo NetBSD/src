@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.18 2013/10/05 03:59:49 kiyohara Exp $
+#	$NetBSD: MARVELL_NAS,v 1.19 2014/05/21 23:59:03 zafer Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -142,7 +142,7 @@ mainbus0 at root
 # The boot cpu
 cpu0	at mainbus?
 
-# Mervell MV88Fxx81 Orion System-on-Chip
+# Marvell MV88Fxx81 Orion System-on-Chip
 mvsoc0	at mainbus?
 
 # On-chip PCI Express Interface
