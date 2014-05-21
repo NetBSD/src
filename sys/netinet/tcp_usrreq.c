@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.175 2014/05/21 13:21:20 pgoyette Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.176 2014/05/21 18:41:43 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.175 2014/05/21 13:21:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.176 2014/05/21 18:41:43 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -249,10 +249,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		splx(s);
 		return EAFNOSUPPORT;
 	}
-
-#ifdef INET6
-	KASSERT((inp == NULL) || (in6p == NULL));
-#endif
 	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
 
 	/*
@@ -269,6 +265,9 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EINVAL;
 		goto release;
 	}
+#ifdef INET6
+	KASSERT((inp != NULL) ^ (in6p != NULL));
+#endif
 #ifdef INET
 	if (inp) {
 		tp = intotcpcb(inp);
