@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.194.2.1 2012/07/02 19:04:42 jdc Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.194.2.2 2014/05/21 20:34:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.194.2.1 2012/07/02 19:04:42 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.194.2.2 2014/05/21 20:34:38 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.194.2.1 2012/07/02 19:04:42 jdc Exp 
  * an internal pool of page headers (`phpool').
  */
 
-/* List of all pools */
-static TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
+/* List of all pools. Non static as needed by 'vmstat -i' */
+TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
