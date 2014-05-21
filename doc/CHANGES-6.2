@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.113 2014/05/21 21:30:34 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.114 2014/05/21 21:43:22 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2353,4 +2353,25 @@ Asia/Riyadh89					delete
 	Mideast/* aliases.  These zones were removed upstream in
 	tzdata2013i (December 2013).
 	[apb, ticket #1065]
+
+external/ibm-public/postfix/dist/HISTORY				patch
+external/ibm-public/postfix/dist/README_FILES/MULTI_INSTANCE_README	patch
+external/ibm-public/postfix/dist/README_FILES/SASL_README		patch
+external/ibm-public/postfix/dist/conf/post-install			patch
+external/ibm-public/postfix/dist/html/MULTI_INSTANCE_README.html	patch
+external/ibm-public/postfix/dist/html/SASL_README.html			patch
+external/ibm-public/postfix/dist/proto/MULTI_INSTANCE_README.html	patch
+external/ibm-public/postfix/dist/proto/SASL_README.html			patch
+external/ibm-public/postfix/dist/src/global/mail_version.h		patch
+external/ibm-public/postfix/dist/src/postconf/postconf.c		patch
+external/ibm-public/postfix/dist/src/tls/tls_misc.c			patch
+external/ibm-public/postfix/dist/src/util/dict_pcre.c			patch
+
+        Update to version 2.8.17:
+	- The postconf '-#' option reset prior options instead of adding to
+	  them.      
+	- Correct an error in MULTI_INSTANCE_README Makefile example.
+	- Correct an error in SASL_README PostgreSQL example.
+	[tron, ticket #1024]
+
 
