@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224 2011/12/12 19:03:09 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224.2.1 2014/05/21 20:56:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2011/12/12 19:03:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224.2.1 2014/05/21 20:56:36 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -298,6 +298,8 @@ cpu_startup(void)
 
 	pmapdebug = 0;
 #endif
+
+	hp300_cninit_deferred();
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
