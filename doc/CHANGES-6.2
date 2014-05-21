@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.109 2014/05/14 03:52:21 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.110 2014/05/21 21:09:34 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2208,3 +2208,112 @@ xsrc/xfree/xc/lib/font/fontfile/dirfile.c		1.5
 	- CVE-2014-0211: integer overflows calculating memory needs for xfs
 	  replies
 	[spz, ticket #1063]
+usr.sbin/postinstall/postinstall		1.166
+
+	don't apply "ptyfsoldnodes" if /dev/pts does not exist, even if ptyfs
+	is listed in /etc/fstab.  without this, postinstall happily removes
+	all your ptys leaving you with none at all.  return an error if we
+	have ptyfs in /etc/fstab, but no /dev/pts.
+	[mrg, ticket #1052]
+
+distrib/sets/lists/man/mi			1.1472
+
+	Fix MKPAM=no build
+	[abs, ticket #1053]
+
+sys/kern/subr_pool.c				1.202
+
+	Ensure pool_head is non static - for "vmstat -i"
+	[abs, ticket #1054]
+
+sys/arch/mips/mips/bus_dma.c			1.28
+
+	When decide to coalesce segments, if the d_cache isn't coherent also
+	make sure the VA is contiguous as well.
+	[skrll, ticket #1055]
+
+sys/arch/mips/mips/pmap.c			1.210 - 1.213
+sys/arch/mips/mips/vm_machdep.c			1.143
+
+	Fix a logic inversion introduced with the matt-nb5-mips64 for
+	pmap_{zero,copy}_page cache alias handing.
+	Additionally flush the cache for the uarea va to avoid potential
+	(future) cache aliases in cpu_uarea_free when handing pages back to
+	uvm for later use.
+	Use pmap_tlb_asid_check to reduce code c&p.
+	Hopefully this addresses the instability reported in the following PRs:
+	PR/44900 - R5000/Rm5200 mips ports are broken
+	PR/46170 - NetBSD/cobalt 6.0_BETA does not boot
+	PR/46890 - upcoming NetBSD 6.0 release is very unstable / unusable
+		   on cobalt qube 2
+	PR/48628 - cobalt and hpcmips ports are dead
+	[skrll, ticket #1056]
+
+sys/arch/hp300/conf/INSTALL			1.57
+sys/arch/hp300/conf/RAMDISK			1.14
+
+	Add "pseudo-device wsmux" in INSTALL (and RAMDISK) kernels.
+	Makes keyboard work on console.
+
+	Disable options NVNODE, NBUF and BUFPAGES in the RAMDISK kernel.
+	These cause slowdown/panic when installing, and we can't install
+	on 4MB machines anymore anyway.
+
+	[tsutsui, ticket #1057]
+
+sys/arch/hp300/conf/GENERIC			1.173, 1.181
+sys/arch/hp300/conf/INSTALL			1.56, 1.58
+sys/arch/hp300/conf/files.hp300			1.87, 1.88
+sys/arch/hp300/dev/com_frodo.c			1.9
+sys/arch/hp300/dev/dnkbd.c			1.6, 1.7
+sys/arch/hp300/dev/frodo.c			1.31, 1.32
+sys/arch/hp300/dev/frodoreg.h			1.5
+sys/arch/hp300/dev/mcclock_frodo.c		1.1
+sys/arch/hp300/dev/rtc.c			1.21
+sys/arch/hp300/dev/sti_sgc.c			1.1, 1.2
+sys/arch/hp300/dev/sti_sgcvar.h			1.1
+sys/arch/hp300/hp300/autoconf.c			1.102, 1.105
+sys/arch/hp300/hp300/machdep.c			1.229
+sys/arch/hp300/include/autoconf.h		1.13
+sys/arch/hp300/stand/Makefile.buildboot		1.34
+sys/arch/hp300/stand/common/apci.c		1.12, 1.13
+sys/arch/hp300/stand/common/clock.c		1.12
+sys/arch/hp300/stand/common/dnkbd.c		1.13
+sys/arch/hp300/stand/common/ite.c		1.17
+sys/arch/hp300/stand/common/ite_sti.c		1.1
+sys/arch/hp300/stand/common/itevar.h		1.16
+sys/arch/hp300/stand/common/samachdep.h		1.17
+sys/arch/hp300/stand/inst/version		1.12
+sys/arch/hp300/stand/uboot/version		1.19
+sys/dev/ic/sti.c				1.17
+sys/dev/ic/stivar.h				1.8
+
+	Add HP9000/425e support.
+	[tsutsui, ticket #1058]
+
+usr.bin/nbperf/nbperf-bdz.c			1.9 via patch
+
+	Most CPUs implement shifts modulo the width, but ARM doesn't. Don't
+	depend on this UB.
+	[joerg, ticket #1059]
+
+sys/arch/x86/pci/pci_machdep.c			1.66
+
+	Force pci_mode 1 when running as Xen HVM domU to allow cd* to be
+	detected correctly. Fixes kern/48770. Thanks to cube@
+	[sborrill, ticket #1060]
+
+sys/kern/kern_exit.c				1.244
+
+	Free pid for linux processes. Reported by Mark Davies, fix by dsl@
+	[christos, ticket #1061]
+
+sys/fs/cd9660/cd9660_node.c			1.31
+
+	PR kern/48787: inode calculation from ISO9660 block offset might get
+	truncated to 32bit - force the whole expression to be evaluated
+	as ino_t.
+	Patch from Thomas Schmitt, with minor modifications
+	(and reworded comment).
+	[martin, ticket #1062]
+
