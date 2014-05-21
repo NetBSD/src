@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.57 2014/05/21 21:58:26 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.58 2014/05/21 22:01:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -823,4 +823,15 @@ distrib/sets/lists/base/mi			patch
 	been removed from the upstream distribution.
 
 	[apb, ticket #1906]
+
+share/zoneinfo/Makefile				patch
+distrib/sets/lists/base/mi			patch
+share/zoneinfo/solar87				delete
+share/zoneinfo/solar88				delete
+share/zoneinfo/solar89				delete
+
+	Remove the the Asia/Riyadh{87,88,89} timezones, and their
+	Mideast/* aliases.  These zones were removed upstream in
+	tzdata2013i (December 2013).
+	[apb, ticket #1907]
 
