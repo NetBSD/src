@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.10.1 2012/05/19 16:39:24 riz Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.10.2 2014/05/21 22:05:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.10.1 2012/05/19 16:39:24 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.10.2 2014/05/21 22:05:40 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,6 +483,8 @@ pci_mode_detect(void)
 	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
+	extern char cpu_brand_string[];
+	const char *system_vendor, *system_product;
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -511,6 +513,19 @@ pci_mode_detect(void)
 #endif
 			return (pci_mode);
 		}
+	}
+
+	system_vendor = pmf_get_platform("system-manufacturer");
+	system_product = pmf_get_platform("system-product-name");
+        if (memcmp(cpu_brand_string, "QEMU", 4) == 0 ||
+	    (system_vendor != NULL && system_product != NULL &&
+	     !strcmp(system_vendor, "Xen") &&
+	     !strcmp(system_product, "HVM domU"))) {
+		/* PR 45671, https://bugs.launchpad.net/qemu/+bug/897771 */
+#ifdef DEBUG
+		printf("forcing PCI mode 1 for QEMU\n");
+#endif
+		return (pci_mode);
 	}
 
 	/*
