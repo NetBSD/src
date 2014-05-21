@@ -49,6 +49,12 @@ FILES
                     ``reachover'' Makefile semantics when building these
                     programs for a native host.
 
+     external, sys/external
+                    Sources and build infrastructure for components imported
+                    (mostly) unchanged from upstream maintainers, sorted by
+                    applicable license.  This is (slowly) replacing the
+                    crypto/dist, dist, and gnu/dist directories.
+
      distrib/, etc/
                     Sources for items used when making a full release
                     snapshot, such as files installed in DESTDIR/etc on the
@@ -209,6 +215,11 @@ CONFIGURATION
 
                  Default: ``no''
 
+     MKCROSSGDB  Can be set to ``yes'' or ``no''.  Create a cross-gdb as a
+                 host tool.
+
+                 Default: ``no''
+
      MKCRYPTO    Can be set to ``yes'' or ``no''.  Indicates whether
                  cryptographic code will be included in a build; provided for
                  the benefit of countries that do not allow strong
@@ -216,6 +227,19 @@ CONFIGURATION
                  security password encryption system, crypt(3).
 
                  Default: ``yes''
+
+     MKDEBUG     Can be set to ``yes'' or ``no''.  Indicates whether debug
+                 information should be generated for all userland binaries
+                 compiled.  The result is collected as an additional debug.tgz
+                 and xdebug.tgz set and installed in /usr/libdata/debug.
+
+                 Default: ``no''
+
+     MKDEBUGLIB  Can be set to ``yes'' or ``no''.  Indicates whether debug
+                 information (see MKDEBUG) should also be generated for all
+                 libraries build.
+
+                 Default: ``no''
 
      MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
                  documentation destined for DESTDIR/usr/share/doc will be
@@ -244,6 +268,14 @@ CONFIGURATION
                  tools, will be created and installed during a build.
 
                  Default: ``yes''
+
+     MKKDEBUG    Can be set to ``yes'' or ``no''.  Force generation of full-
+                 debug symbol versions of all kernels compiled.  Alongside of
+                 the netbsd kernel file, an unstripped version netbsd.gdb is
+                 created.  This is useful if a cross-gdb is built as well (see
+                 MKCROSSGDB).
+
+                 Default: ``no''
 
      MKKMOD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
                  modules are built and installed.
@@ -764,6 +796,13 @@ BUILDING
                    This command will run ``make cleandir'' on the kernel in
                    question first unless the -u option is given.
 
+     kernel.gdb=kconf
+                   Build a new kernel with debug information.  Similar to the
+                   above kernel=kconf operation, but creates a netbsd.gdb file
+                   alongside of the kernel netbsd, which contains a full
+                   symbol table and can be used for debugging (for example
+                   with a cross-gdb built by MKCROSSGDB).
+
      modules       This command will build kernel modules and install them
                    into DESTDIR.
 
@@ -837,7 +876,7 @@ BUILDING
                bandwidth.
 
      -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.  See ``-O
-               -obj'' for more information.
+               obj'' for more information.
 
                For instance, if the source directory is /usr/src, a setting of
                ``-M /usr/obj'' will place build-time files under
