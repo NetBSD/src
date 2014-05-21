@@ -272,7 +272,7 @@ static const struct exyo_locators exynos4_locators[] = {
 	{ "sscom", OFFANDSIZE(,UART1), 1, IRQ_UART1, 0 },
 	{ "sscom", OFFANDSIZE(,UART2), 2, IRQ_UART2, 0 },
 	{ "sscom", OFFANDSIZE(,UART3), 3, IRQ_UART3, 0 },
-	{ "exyousb", OFFANDSIZE(,USBHOST0), 0, IRQ_UHOST, 0},	/* ehci+ohci */
+	{ "exyousb", 0, 0, NOPORT, NOINTR, 0},		/* uses usb locators */
 };
 
 const struct exyo_locinfo exynos4_locinfo = {
@@ -299,5 +299,19 @@ static const struct exyo_locators exynos4_i2c_locators[] = {
 const struct exyo_locinfo exynos4_i2c_locinfo = {
 	.locators = exynos4_i2c_locators,
 	.nlocators = __arraycount(exynos4_i2c_locators)
+};
+
+
+/* usb locators */
+const struct exyo_usb_locinfo exynos4_usb_locinfo = {
+	.uloc_ehci_offset	= EXYNOS4_USBHOST0_OFFSET,
+	.uloc_ohci_offset	= EXYNOS4_USBHOST1_OFFSET,
+	.uloc_usbhost_irq	= IRQ_UHOST,
+	.uloc_usbotg_offset	= EXYNOS4_USBOTG1_OFFSET,
+	.uloc_usbotg_irq	= IRQ_HSOTG,
+	.uloc_usb3_ctrl		= 0,		/* no usbctl */
+	.uloc_usb3_linkoffset	= 0,		/* no usb3   */
+	.uloc_usb3_slots	= 0,		/* no usb3   */
+	.uloc_usb3_irq		= 0,		/* no usb3   */
 };
 
