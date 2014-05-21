@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.98 2014/05/19 10:12:19 martin Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.99 2014/05/21 13:11:25 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,13 +74,13 @@ to override or manually select your compilers.)
 .Ss Source tree layout
 .
 .Bl -tag -width "BUILDING.mdoc"
-.It Sy doc/BUILDING.mdoc
+.It Pa doc/BUILDING.mdoc
 This document (in -mdoc troff format; the original copy).
-.It Sy BUILDING
+.It Pa BUILDING
 This document (in plaintext).
-.It Sy tools/compat/README
+.It Pa tools/compat/README
 Special notes for cross-hosting a NetBSD build on non-NetBSD platforms.
-.It Sy Makefile
+.It Pa Makefile
 The main Makefile for
 .Nx ;
 should only be run for native builds with an appropriately up-to-date
@@ -90,12 +90,12 @@ version of
 (For building from out-of-date systems or on a non-native host, see the
 .Nm build.sh
 shell script.)
-.It Sy UPDATING
+.It Pa UPDATING
 Special notes for updating from an earlier revision of
 .Nx .
 It is important to read this file before every build of an updated
 source tree.
-.It Sy build.sh
+.It Pa build.sh
 Bourne-compatible shell script used for building the host build tools
 and the
 .Nx
@@ -103,7 +103,7 @@ system from scratch.
 Can be used for both native and cross builds, and should be used instead of
 .Xr make 1
 for any source tree that is updated and recompiled regularly.
-.It Sy crypto/dist/ , dist/ , gnu/dist/
+.It Pa crypto/dist/ , dist/ , gnu/dist/
 Sources imported verbatim from third parties, without mangling the
 existing build structure.
 Other source trees in
@@ -115,16 +115,21 @@ use the
 .Xr make 1
 .Dq reachover
 Makefile semantics when building these programs for a native host.
-.It Sy external , sys/external
+.It Pa external , sys/external
 Sources and build infrastructure for components imported (mostly) unchanged
 from upstream maintainers, sorted by applicable license.
-This is (slowly) replacing the crypto/dist, dist/ and gnu/dist directories.
-.It Sy distrib/ , etc/
+This is (slowly) replacing the
+.Pa crypto/dist ,
+.Pa dist ,
+and
+.Pa gnu/dist
+directories.
+.It Pa distrib/ , etc/
 Sources for items used when making a full release snapshot, such as
 files installed in
 .Sy DESTDIR Ns Pa /etc
 on the destination system, boot media, and release notes.
-.It Sy tests/ , regress/
+.It Pa tests/ , regress/
 Regression test harness.
 Can be cross-compiled, but only run natively.
 .Pa tests/
@@ -134,19 +139,19 @@ test framework;
 .Pa regress/
 contains older tests that have not yet been migrated to
 .Xr atf 7 .
-.It Sy sys/
+.It Pa sys/
 .Nx
 kernel sources.
-.It Sy tools/
+.It Pa tools/
 .Dq Reachover
 build structure for the host build tools.
 This has a special method of determining out-of-date status.
-.It Sy bin/ ... usr.sbin/
+.It Pa bin/ ... usr.sbin/
 Sources to the
 .Nx
 userland (non-kernel) programs.
 If any of these directories are missing, they will be skipped during the build.
-.It Sy x11/
+.It Pa x11/
 .Dq Reachover
 build structure for X11R6; the source is in
 .Sy X11SRCDIR .
@@ -356,7 +361,7 @@ Directory to contain the built
 system.
 If set, special options are passed to the compilation tools to
 prevent their default use of the host system's
-.Sy /usr/include , /usr/lib ,
+.Pa /usr/include , /usr/lib ,
 and so forth.
 This pathname must be an absolute path, and should
 .Em not
@@ -465,7 +470,7 @@ set and installed in
 .
 .It Sy MKDEBUGLIB
 .YorN
-Indicates wether debug information (see
+Indicates whether debug information (see
 .Sy MKDEBUG )
 should also be generated for all libraries build.
 .DFLTn
@@ -513,7 +518,7 @@ Alongside of the
 kernel file, an unstripped version
 .Pa netbsd.gdb
 is created.
-This is usfull if a cross-gdb is build as well (see
+This is useful if a cross-gdb is built as well (see
 .Sy MKCROSSGDB ) .
 .DFLTn
 .
@@ -890,7 +895,7 @@ files.
 When building any full
 .Nx
 source tree, this should be set to the
-.Dq share/mk
+.Dq Pa share/mk
 directory in the source tree.
 This is set automatically when building from the top level, or when using
 .Sy build.sh .
@@ -1442,11 +1447,11 @@ does not contain any
 characters, the configuration file is expected to be found in the
 .Sy KERNCONFDIR
 directory, which is typically
-.Sy sys/arch/MACHINE/conf .
+.Pa sys/arch/MACHINE/conf .
 The new kernel will be built in a subdirectory of
 .Sy KERNOBJDIR ,
 which is typically
-.Sy sys/arch/MACHINE/compile
+.Pa sys/arch/MACHINE/compile
 or an associated object directory.
 .Pp
 This command does
@@ -1474,7 +1479,7 @@ operation, but creates a
 file alongside of the kernel
 .Pa netbsd ,
 which contains a full symbol table and can be used for debugging
-(for example with a cross-gdb build by
+(for example with a cross-gdb built by
 .Sy MKCROSSGDB ) .
 .It Sy modules
 This command will build kernel modules and install them into
@@ -1871,7 +1876,7 @@ script to build
 a
 .Sy \*[toolprefix]make-MACHINE
 script will be created in
-.Sy TOOLDIR/bin
+.Sy TOOLDIR Ns Pa /bin
 upon the first build to assist in building subtrees on a cross-compile
 host.
 .Pp
@@ -1881,7 +1886,7 @@ can be invoked in lieu of
 and will instead call the up-to-date version of
 .Dq \*[toolprefix]make
 installed into
-.Sy TOOLDIR/bin
+.Sy TOOLDIR Ns Pa /bin
 with several key variables pre-set, including
 .Sy MACHINE , MACHINE_ARCH ,
 and
