@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.24 2014/05/20 19:04:00 rmind Exp $	*/
+/*	$NetBSD: keysock.c,v 1.25 2014/05/21 20:43:56 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.24 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.25 2014/05/21 20:43:56 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -631,6 +631,7 @@ key_attach(struct socket *so, int proto)
 
 	KASSERT(sotorawcb(so) == NULL);
 	kp = kmem_zalloc(sizeof(*kp), KM_SLEEP);
+	kp->kp_raw.rcb_len = sizeof(*kp);
 	so->so_pcb = kp;
 
 	s = splsoftnet();
