@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.25 2014/05/21 20:43:56 rmind Exp $	*/
+/*	$NetBSD: keysock.c,v 1.26 2014/05/21 20:46:29 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.25 2014/05/21 20:43:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.26 2014/05/21 20:46:29 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -84,12 +84,6 @@ static struct sockaddr key_src = {
 static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
 int key_registered_sb_max = (2048 * MHLEN); /* XXX arbitrary */
-
-/* XXX sysctl */
-#ifdef __FreeBSD__
-SYSCTL_INT(_net_key, OID_AUTO, registered_sbmax, CTLFLAG_RD,
-    &key_registered_sb_max , 0, "Maximum kernel-to-user PFKEY datagram size");
-#endif
 
 /*
  * key_output()
@@ -435,194 +429,6 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 	return error;
 }
 
-#ifdef __FreeBSD__
-
-/*
- * key_abort()
- * derived from net/rtsock.c:rts_abort()
- */
-static int
-key_abort(struct socket *so)
-{
-	int s, error;
-	s = splnet(); 	/* FreeBSD */
-	error = raw_usrreqs.pru_abort(so);
-	splx(s);
-	return error;
-}
-
-/*
- * key_attach()
- * derived from net/rtsock.c:rts_attach()
- */
-static int
-key_attach(struct socket *so, int proto, struct proc *td)
-{
-	struct keycb *kp;
-	int s, error;
-
-	if (sotorawcb(so) != 0)
-		return EISCONN;	/* XXX panic? */
-	kp = (struct keycb *)malloc(sizeof *kp, M_PCB, M_WAITOK|M_ZERO); /* XXX */
-	if (kp == 0)
-		return ENOBUFS;
-
-	/*
-	 * The spl[soft]net() is necessary to block protocols from sending
-	 * error notifications (like RTM_REDIRECT or RTM_LOSING) while
-	 * this PCB is extant but incompletely initialized.
-	 * Probably we should try to do more of this work beforehand and
-	 * eliminate the spl.
-	 */
-	s = splnet();	/* FreeBSD */
-	so->so_pcb = kp;
-	error = raw_usrreqs.pru_attach(so, proto, td);
-	kp = (struct keycb *)sotorawcb(so);
-	if (error) {
-		free(kp, M_PCB);
-		so->so_pcb = NULL;
-		splx(s);
-		return error;
-	}
-
-	kp->kp_promisc = kp->kp_registered = 0;
-
-	if (kp->kp_raw.rcb_proto.sp_protocol == PF_KEY) /* XXX: AF_KEY */
-		key_cb.key_count++;
-	key_cb.any_count++;
-	kp->kp_raw.rcb_laddr = &key_src;
-	kp->kp_raw.rcb_faddr = &key_dst;
-	soisconnected(so);
-	so->so_options |= SO_USELOOPBACK;
-
-	splx(s);
-	return 0;
-}
-
-/*
- * key_bind()
- * derived from net/rtsock.c:rts_bind()
- */
-static int
-key_bind(struct socket *so, struct sockaddr *nam, struct proc *td)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_bind(so, nam, td); /* xxx just EINVAL */
-	splx(s);
-	return error;
-}
-
-/*
- * key_connect()
- * derived from net/rtsock.c:rts_connect()
- */
-static int
-key_connect(struct socket *so, struct sockaddr *nam, struct proc *td)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_connect(so, nam, td); /* XXX just EINVAL */
-	splx(s);
-	return error;
-}
-
-/*
- * key_detach()
- * derived from net/rtsock.c:rts_detach()
- */
-static int
-key_detach(struct socket *so)
-{
-	struct keycb *kp = (struct keycb *)sotorawcb(so);
-	int s, error;
-
-	s = splnet();	/* FreeBSD */
-	if (kp != 0) {
-		if (kp->kp_raw.rcb_proto.sp_protocol
-		    == PF_KEY) /* XXX: AF_KEY */
-			key_cb.key_count--;
-		key_cb.any_count--;
-
-		key_freereg(so);
-	}
-	error = raw_usrreqs.pru_detach(so);
-	splx(s);
-	return error;
-}
-
-/*
- * key_disconnect()
- * derived from net/rtsock.c:key_disconnect()
- */
-static int
-key_disconnect(struct socket *so)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_disconnect(so);
-	splx(s);
-	return error;
-}
-
-/*
- * key_peeraddr()
- * derived from net/rtsock.c:rts_peeraddr()
- */
-static int
-key_peeraddr(struct socket *so, struct sockaddr **nam)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_peeraddr(so, nam);
-	splx(s);
-	return error;
-}
-
-/*
- * key_send()
- * derived from net/rtsock.c:rts_send()
- */
-static int
-key_send(struct socket *so, int flags, struct mbuf *m, struct sockaddr *nam,
-	 struct mbuf *control, struct proc *td)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_send(so, flags, m, nam, control, td);
-	splx(s);
-	return error;
-}
-
-/*
- * key_shutdown()
- * derived from net/rtsock.c:rts_shutdown()
- */
-static int
-key_shutdown(struct socket *so)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_shutdown(so);
-	splx(s);
-	return error;
-}
-
-/*
- * key_sockaddr()
- * derived from net/rtsock.c:rts_sockaddr()
- */
-static int
-key_sockaddr(struct socket *so, struct sockaddr **nam)
-{
-	int s, error;
-	s = splnet();	/* FreeBSD */
-	error = raw_usrreqs.pru_sockaddr(so, nam);
-	splx(s);
-	return error;
-}
-#else /*!__FreeBSD__ -- traditional proto_usrreq() switch */
-
 static int
 key_attach(struct socket *so, int proto)
 {
@@ -696,53 +502,10 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 
 	return error;
 }
-#endif /*!__FreeBSD__*/
-
-/* sysctl */
-#ifdef SYSCTL_NODE
-SYSCTL_NODE(_net, PF_KEY, key, CTLFLAG_RW, 0, "Key Family");
-#endif /* SYSCTL_NODE */
 
 /*
  * Definitions of protocols supported in the KEY domain.
  */
-
-#ifdef __FreeBSD__
-extern struct domain keydomain;
-
-struct pr_usrreqs key_usrreqs = {
-	key_abort, pru_accept_notsupp, key_attach, key_bind,
-	key_connect,
-	pru_connect2_notsupp, pru_control_notsupp, key_detach,
-	key_disconnect, pru_listen_notsupp, key_peeraddr,
-	pru_rcvd_notsupp,
-	pru_rcvoob_notsupp, key_send, pru_sense_null, key_shutdown,
-	key_sockaddr, sosend, soreceive, sopoll
-};
-
-struct protosw keysw[] = {
-{ SOCK_RAW,	&keydomain,	PF_KEY_V2,	PR_ATOMIC|PR_ADDR,
-  0,		(pr_output_t *)key_output,	raw_ctlinput, 0,
-  0,
-  raw_init,	0,		0,		0,
-  &key_usrreqs
-}
-};
-
-static void
-key_init0(void)
-{
-	memset(&key_cb, 0, sizeof(key_cb));
-	key_init();
-}
-
-struct domain keydomain =
-    { PF_KEY, "key", key_init0, 0, 0,
-      keysw, &keysw[sizeof(keysw)/sizeof(keysw[0])] };
-
-DOMAIN_SET(key);
-
-#else /* !__FreeBSD__ */
 
 DOMAIN_DEFINE(keydomain);
 
@@ -777,5 +540,3 @@ struct domain keydomain = {
     .dom_protosw = keysw,
     .dom_protoswNPROTOSW = &keysw[__arraycount(keysw)],
 };
-
-#endif
