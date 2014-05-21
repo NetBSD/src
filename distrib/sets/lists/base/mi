@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.16 2013/11/17 18:19:45 bouyer Exp $
+# $NetBSD: mi,v 1.984.2.17 2014/05/21 21:23:14 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4503,6 +4503,7 @@
 ./usr/share/zoneinfo/Antarctica/Rothera		base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/South_Pole	base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/Syowa		base-sys-share		share
+./usr/share/zoneinfo/Antarctica/Troll		base-sys-share		share
 ./usr/share/zoneinfo/Antarctica/Vostok		base-sys-share		share
 ./usr/share/zoneinfo/Arctic			base-sys-share
 ./usr/share/zoneinfo/Arctic/Longyearbyen	base-sys-share		share
