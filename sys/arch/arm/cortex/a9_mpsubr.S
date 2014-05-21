@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.17 2014/04/11 16:32:12 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.18 2014/05/21 01:02:45 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -632,7 +632,7 @@ cortex_mpcontinuation:
 
 	mrc	p15, 0, r1, c2, c0, 2		// TTBCR get
 	orr	r1, r1, #TTBCR_S_PD0		// prevent lookups via TTBR0
-	mrc	p15, 0, r1, c2, c0, 2		// TTBCR set
+	mcr	p15, 0, r1, c2, c0, 2		// TTBCR set
 
 #ifdef MPDEBUG
 	str	pc, [r9]			// we've got this far
