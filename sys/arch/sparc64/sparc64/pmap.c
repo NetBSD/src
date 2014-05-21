@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.286 2014/01/09 20:13:54 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.287 2014/05/21 19:33:51 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2014/01/09 20:13:54 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2014/05/21 19:33:51 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1026,7 +1026,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	BDPRINTF(PDB_BOOT1, ("Inserting mesgbuf into pmap_kernel()\n"));
 	/* it's not safe to call pmap_enter so we need to do this ourselves */
 	va = (vaddr_t)msgbufp;
-	prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, -1);
 	while (msgbufsiz) {
 		data = TSB_DATA(0 /* global */,
 			PGSZ_8K,
