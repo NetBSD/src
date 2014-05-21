@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.5 2014/05/09 21:49:43 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.6 2014/05/21 12:24:52 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -154,7 +154,7 @@ options USB_DEBUG
 options EHCI_DEBUG
 options OHCI_DEBUG
 options UHUB_DEBUG
-
+options	USBVERBOSE
 
 # Valid options for BOOT_ARGS:
 #  single		Boot to single user only
@@ -186,8 +186,8 @@ exyo0		at mainbus?
 mct0		at exyo0
 
 # Integrated Samsung UARTs
-sscom0		at exyo0  port 0		# UART0
-sscom1		at exyo0  port 1		# UART1
+sscom0		at exyo0  port 0		# UART0, expansion
+sscom1		at exyo0  port 1		# UART1, console
 
 # Exynos Watchdog Timer
 exyowdt0 	at exyo0 flags 1		# watchdog
@@ -203,8 +203,12 @@ ehci*		at exyousb?
 usb*		at ohci?
 usb*		at ehci?
 
+# I2C devices
+exyoiic0	at exyo0
+iic*		at exyoiic?
 
-# Odroid-U connectivity
+
+# serial console connectivity
 # UARTS
 # sscom0 attached to expansion port
 # sscom1 is default serial UART console, enable for low-level console:
