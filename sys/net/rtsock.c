@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.146 2014/05/20 19:04:00 rmind Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.147 2014/05/21 20:43:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.146 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.147 2014/05/21 20:43:56 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -184,6 +184,7 @@ COMPATNAME(route_attach)(struct socket *so, int proto)
 
 	KASSERT(sotorawcb(so) == NULL);
 	rp = kmem_zalloc(sizeof(*rp), KM_SLEEP);
+	rp->rcb_len = sizeof(*rp);
 	so->so_pcb = rp;
 
 	s = splsoftnet();

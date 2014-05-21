@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.21 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.22 2014/05/21 20:43:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,6 +34,8 @@
 #ifndef _NET_RAW_CB_H_
 #define _NET_RAW_CB_H_
 
+#ifdef _KERNEL
+
 /*
  * Raw protocol interface control block.  Used
  * to tie a socket to the generic raw interface.
@@ -44,6 +46,7 @@ struct rawcb {
 	struct	sockaddr *rcb_faddr;	/* destination address */
 	struct	sockaddr *rcb_laddr;	/* socket's address */
 	struct	sockproto rcb_proto;	/* protocol family, protocol */
+	size_t	rcb_len;
 };
 
 #define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
@@ -54,7 +57,6 @@ struct rawcb {
 #define	RAWSNDQ		8192
 #define	RAWRCVQ		8192
 
-#ifdef _KERNEL
 LIST_HEAD(rawcbhead, rawcb);
 extern	struct	rawcbhead rawcb;		/* head of list */
 
