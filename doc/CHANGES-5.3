@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.54 2014/05/14 05:24:46 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.55 2014/05/21 21:50:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -790,3 +790,12 @@ xsrc/xfree/xc/lib/font/fontfile/dirfile.c		1.5
 	- CVE-2014-0211: integer overflows calculating memory needs for xfs
 	  replies
 	[spz, ticket #1905]
+sys/fs/cd9660/cd9660_node.c			1.31
+
+	PR kern/48787: inode calculation from ISO9660 block offset might get
+	truncated to 32bit - force the whole expression to be evaluated
+	as ino_t.
+	Patch from Thomas Schmitt, with minor modifications
+	(and reworded comment).
+	[martin, ticket #1904]
+
