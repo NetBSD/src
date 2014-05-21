@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict_pcre.c,v 1.1.1.1.12.1 2014/05/21 21:42:40 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -60,6 +60,15 @@
 #include "dict_pcre.h"
 #include "mac_parse.h"
 #include "pcre.h"
+
+ /*
+  * Backwards compatibility.
+  */
+#ifdef PCRE_STUDY_JIT_COMPILE
+#define DICT_PCRE_FREE_STUDY(x)	pcre_free_study(x)
+#else
+#define DICT_PCRE_FREE_STUDY(x)	pcre_free((char *) (x))
+#endif
 
  /*
   * Support for IF/ENDIF based on an idea by Bert Driehuis.
@@ -389,7 +398,7 @@ static void dict_pcre_close(DICT *dict)
 	    if (match_rule->pattern)
 		myfree((char *) match_rule->pattern);
 	    if (match_rule->hints)
-		myfree((char *) match_rule->hints);
+		DICT_PCRE_FREE_STUDY(match_rule->hints);
 	    if (match_rule->replacement)
 		myfree((char *) match_rule->replacement);
 	    break;
@@ -398,7 +407,7 @@ static void dict_pcre_close(DICT *dict)
 	    if (if_rule->pattern)
 		myfree((char *) if_rule->pattern);
 	    if (if_rule->hints)
-		myfree((char *) if_rule->hints);
+		DICT_PCRE_FREE_STUDY(if_rule->hints);
 	    break;
 	case DICT_PCRE_OP_ENDIF:
 	    break;
@@ -679,7 +688,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	    if (engine.pattern)
 		myfree((char *) engine.pattern);
 	    if (engine.hints)
-		myfree((char *) engine.hints);
+		DICT_PCRE_FREE_STUDY(engine.hints);
 	    CREATE_MATCHOP_ERROR_RETURN(0);
 	}
 #endif
