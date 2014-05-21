@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.9 2014/05/16 10:04:58 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.10 2014/05/21 13:02:46 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,16 +78,19 @@ struct exyo_locators {
 	uint8_t loc_sda, loc_slc, loc_func;
 };
 
-#if 0
-#define EXYO_E4410	__BIT(0)
-#define EXYO_E4412	__BIT(1)
-#define EXYO_E5440	__BIT(2)
-#define EXYO_E5XXX	__BIT(3)
 
-#define EXYO_ONLY	__BITS(7,0)
-#define EXYO_ALL	__BITS(7,0)
-#define EXYO_REQUIRED	__BIT(8)
-#endif
+struct exyo_usb_locinfo {
+	bus_size_t	uloc_ehci_offset;
+	bus_size_t	uloc_ohci_offset;
+	int		uloc_usbhost_irq;
+	bus_size_t	uloc_usbotg_offset;
+	int		uloc_usbotg_irq;
+	bus_size_t	uloc_usb3_ctrl;
+	bus_size_t	uloc_usb3_linkoffset;
+	int		uloc_usb3_slots;
+	int		uloc_usb3_irq;
+};
+
 
 struct exyo_attach_args {
 	struct exyo_locators exyo_loc;
