@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.3,v 1.1.2.6 2014/05/21 21:50:35 bouyer Exp $
+# $NetBSD: CHANGES-5.2.3,v 1.1.2.7 2014/05/21 21:58:12 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2.2 release to the NetBSD 5.2.3
 release:
@@ -82,4 +82,29 @@ sys/fs/cd9660/cd9660_node.c			1.31
 	Patch from Thomas Schmitt, with minor modifications
 	(and reworded comment).
 	[martin, ticket #1904]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/antarctica			patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/backward				patch
+share/zoneinfo/etcetera				patch
+share/zoneinfo/europe				patch
+share/zoneinfo/iso3166.tab			patch
+share/zoneinfo/leap-seconds.list		patch
+share/zoneinfo/leapseconds			patch
+share/zoneinfo/leapseconds.awk			patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+share/zoneinfo/zone.tab				patch
+distrib/sets/lists/base/mi			patch
+
+	Update timezone database from tzdata2013d to tzdata2014c.
+	This adds a new timezone, Antarctica/Troll, and updates
+	many other timezones. The Asia/Riyadh{87,88,89} zones are
+	retained for backward compatibility, although they have
+	been removed from the upstream distribution.
+
+	[apb, ticket #1906]
 
