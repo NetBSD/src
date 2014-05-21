@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1379.2.11 2013/11/17 18:19:45 bouyer Exp $
+# $NetBSD: mi,v 1.1379.2.12 2014/05/21 20:33:32 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2006,7 +2006,7 @@
 ./usr/share/man/cat5/npf.conf.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto,.cat
-./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
+./usr/share/man/cat5/pam.conf.0			man-sys-catman		pam,.cat
 ./usr/share/man/cat5/passwd.0			man-sys-catman		.cat
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/pcap-savefile.0		man-net-catman		.cat
@@ -4795,7 +4795,7 @@
 ./usr/share/man/html5/npf.conf.html		man-npf-htmlman		html,npf
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
 ./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	crypto,html
-./usr/share/man/html5/pam.conf.html		man-sys-htmlman		html
+./usr/share/man/html5/pam.conf.html		man-sys-htmlman		pam,html
 ./usr/share/man/html5/passwd.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/passwd.html		man-sys-htmlman		html
 ./usr/share/man/html5/pcap-savefile.html	man-sys-htmlman		html
@@ -7535,7 +7535,7 @@
 ./usr/share/man/man5/npf.conf.5			man-npf-man		.man,npf
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		crypto,.man
-./usr/share/man/man5/pam.conf.5			man-sys-man		.man
+./usr/share/man/man5/pam.conf.5			man-sys-man		pam,.man
 ./usr/share/man/man5/passwd.5			man-sys-man		.man
 ./usr/share/man/man5/passwd.conf.5		man-sys-man		.man
 ./usr/share/man/man5/pcap-savefile.5		man-netutil-man		.man
