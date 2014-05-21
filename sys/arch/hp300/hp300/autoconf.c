@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.99.2.1 2012/08/08 15:51:05 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.99.2.2 2014/05/21 20:56:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99.2.1 2012/08/08 15:51:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99.2.2 2014/05/21 20:56:36 bouyer Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99.2.1 2012/08/08 15:51:05 martin Exp
 #include "topcat.h"
 #include "tvrx.h"
 #include "gendiofb.h"
+#include "sti_sgc.h"
 #include "com_dio.h"
 #include "com_frodo.h"
 #include "dcm.h"
@@ -148,6 +149,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99.2.1 2012/08/08 15:51:05 martin Exp
 #endif
 #if NCOM_FRODO > 0
 #include <hp300/dev/com_frodovar.h>
+#endif
+
+#if NSTI_SGC > 0
+#include <hp300/dev/sgcvar.h>
+#include <hp300/dev/sti_sgcvar.h>
 #endif
 
 #include <hp300/dev/diofbreg.h>
@@ -746,6 +752,8 @@ dev_data_insert(struct dev_data *dd, ddlist_t *ddlist)
 int conscode;
 void *conaddr;
 
+static bool cninit_deferred;
+
 void
 hp300_cninit(void)
 {
@@ -826,8 +834,27 @@ hp300_cninit(void)
 	if (!dio_scan(gendiofbcnattach))
 		goto find_kbd;
 #endif
+#if NSTI_SGC > 0
+	if (machineid == HP_400 ||
+	    machineid == HP_425 ||
+	    machineid == HP_433) {
+		struct bus_space_tag sgc_tag;
+		bus_space_tag_t sgc_bst;
 
+		sgc_bst = &sgc_tag;
+		memset(sgc_bst, 0, sizeof(struct bus_space_tag));
+		sgc_bst->bustype = HP300_BUS_SPACE_SGC;
+		if (sti_sgc_cnprobe(sgc_bst, sgc_slottopa(0), 0)) {
+			cninit_deferred = true;
+			goto find_kbd;
+		}
+	}
+#endif
+
+#if (NDVBOX + NGBOX + NRBOX + NTOPCAT + NDVBOX + NGBOX + NHYPER + NRBOX + \
+     NTOPCAT + NTVRX + NGENDIOFB + NSTI_SGC) > 0
 find_kbd:
+#endif
 
 #if NDNKBD > 0
 	dnkbdcnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(0))
@@ -882,6 +909,29 @@ dio_scode_probe(int scode, int (*func)(bus_space_tag_t, bus_addr_t, int))
 	iounmap(va, PAGE_SIZE);
 
 	return (*func)(bst, (bus_addr_t)pa, scode);
+}
+
+void
+hp300_cninit_deferred(void)
+{
+
+	if (!cninit_deferred)
+		return;
+
+#if NSTI_SGC > 0
+	if (machineid == HP_400 ||
+	    machineid == HP_425 ||
+	    machineid == HP_433) {
+		struct bus_space_tag sgc_tag;
+		bus_space_tag_t sgc_bst;
+
+		sgc_bst = &sgc_tag;
+		memset(sgc_bst, 0, sizeof(struct bus_space_tag));
+		sgc_bst->bustype = HP300_BUS_SPACE_SGC;
+		if (sti_sgc_cnprobe(sgc_bst, sgc_slottopa(0), 0))
+			sti_sgc_cnattach(sgc_bst, sgc_slottopa(0), 0);
+	}
+#endif
 }
 
 
