@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.29.22.1 2014/05/21 21:06:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29.22.1 2014/05/21 21:06:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,14 @@ isodirino(struct iso_directory_record *isodir, struct iso_mnt *imp)
 {
 	ino_t ino;
 
-	ino = (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length))
-	      << imp->im_bshift;
-	return (ino);
+	/*
+	 * Note there is an inverse calculation in
+	 * cd9660_vfsops.c:cd9660_vget_internal():
+	 *   ip->iso_start = ino >> imp->im_bshift;
+	 * and also a calculation of the isodir pointer
+	 * from an inode in cd9660_vnops.c:cd9660_readlink()
+	 */
+	ino = ((ino_t)isonum_733(isodir->extent) +
+		isonum_711(isodir->ext_attr_length)) << imp->im_bshift;
+	return ino;
 }
