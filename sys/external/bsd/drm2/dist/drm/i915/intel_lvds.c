@@ -473,7 +473,6 @@ static int intel_lvds_get_modes(struct drm_connector *connector)
 	return 1;
 }
 
-#ifndef __NetBSD__		/* XXX dmi hack */
 static int intel_no_modeset_on_lid_dmi_callback(const struct dmi_system_id *id)
 {
 	DRM_INFO("Skipping forced modeset for %s\n", id->ident);
@@ -491,9 +490,8 @@ static const struct dmi_system_id intel_no_modeset_on_lid[] = {
 		},
 	},
 
-	{ }	/* terminating entry */
+	{ .callback = NULL }	/* terminating entry */
 };
-#endif
 
 /*
  * Lid events. Note the use of 'modeset_on_lid':
@@ -522,11 +520,9 @@ static int intel_lid_notify(struct notifier_block *nb, unsigned long val,
 	 */
 	connector->status = connector->funcs->detect(connector, false);
 
-#ifndef __NetBSD__		/* XXX dmi hack */
 	/* Don't force modeset on machines where it causes a GPU lockup */
 	if (dmi_check_system(intel_no_modeset_on_lid))
 		return NOTIFY_OK;
-#endif
 	if (!acpi_lid_open()) {
 		dev_priv->modeset_on_lid = 1;
 		return NOTIFY_OK;
@@ -629,7 +625,6 @@ static const struct drm_encoder_funcs intel_lvds_enc_funcs = {
 	.destroy = intel_encoder_destroy,
 };
 
-#ifndef __NetBSD__		/* XXX dmi hack */
 static int __init intel_no_lvds_dmi_callback(const struct dmi_system_id *id)
 {
 	DRM_INFO("Skipping LVDS initialization for %s\n", id->ident);
@@ -798,9 +793,8 @@ static const struct dmi_system_id intel_no_lvds[] = {
 		},
 	},
 
-	{ }	/* terminating entry */
+	{ .callback = NULL }	/* terminating entry */
 };
-#endif
 
 /**
  * intel_find_lvds_downclock - find the reduced downclock for LVDS in EDID
@@ -942,11 +936,9 @@ bool intel_lvds_init(struct drm_device *dev)
 	if (!intel_lvds_supported(dev))
 		return false;
 
-#ifndef __NetBSD__		/* XXX dmi hack */
 	/* Skip init on machines we know falsely report LVDS */
 	if (dmi_check_system(intel_no_lvds))
 		return false;
-#endif
 
 	pin = GMBUS_PORT_PANEL;
 	if (!lvds_is_present_in_vbt(dev, &pin)) {
