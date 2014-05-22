@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.49.2.3 2013/01/16 05:26:02 yamt Exp $
+.\"	$NetBSD: hardware,v 1.49.2.4 2014/05/22 12:01:30 yamt Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -41,6 +41,8 @@ A4000/A1200 IDE controller, including ATAPI devices
 .It
 ELBOX FastATA 1200 Mk-III/Mk-IV
 .It
+Individual Computers ACA500 (both CF slots) 
+.It
 Individual Computers X-Surf IDE
 .bullet)
 .It
@@ -67,6 +69,8 @@ Blizzard 2060, CyberSCSI Mk I and II
 PCI bridges
 .(bullet -compact
 ELBOX Mediator PCI 1200 series (original model, LT2, LT4, SX, TX)
+.It
+ELBOX Mediator PCI 4000 series (4000D, 4000Di, 3000D, 3/4000T, also Mk-II models)
 .It
 Prometheus PCI bridge
 .It
@@ -121,7 +125,9 @@ Ariadne II Ethernet
 .It
 Quicknet Ethernet
 .It
-X-surf Ethernet port
+X-Surf Ethernet
+.It
+X-Surf 100 Ethernet
 .bullet)
 .It
 ARCnet controllers

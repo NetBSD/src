@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.cdrom,v 1.1.4.2 2014/05/22 12:01:29 yamt Exp $
+
+BOOTFILE=		cdboot.lif
+
+CDMAKEFSOPTIONS=	generic-bootimage=cdrom/${BOOTFILE}
+CDINSTKERNEL=		../../kernel
+CDKERNELS=		netbsd-RAMDISK	netbsd	# from ../instkernel
+
+prepare_md_post:
+	${RM} -f cdrom/${BOOTFILE}
+	${TOOL_HPPAMKBOOT} ${DESTDIR}/usr/mdec/cdboot cdrom/${BOOTFILE}

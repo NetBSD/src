@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.26 2008/10/19 22:05:19 apb Exp $
+#	$NetBSD: Makefile,v 1.26.18.1 2014/05/22 12:01:26 yamt Exp $
 #
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
-
 
 # we use spark, so that we get filetypes.
 ARCHIVE=BtNetBSD.spk
@@ -123,4 +122,3 @@ localclean:
 	-if [ -d tmp ]; then rm -rf tmp; fi
 
 .include <bsd.files.mk>
-.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.133.2.4 2013/01/23 00:04:10 yamt Exp $
+#	$NetBSD: sets.subr,v 1.133.2.5 2014/05/22 12:01:31 yamt Exp $
 #
 
 #
@@ -19,7 +19,7 @@
 #	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
-#	HAS_SSP
+#	HAVE_SSP
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.133.2.4 2013/01/23 00:04:10 yamt Exp $
+# 	# $NetBSD: sets.subr,v 1.133.2.5 2014/05/22 12:01:31 yamt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -225,14 +225,21 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	iscsi			${MKISCSI} != no
 #	kerberos		${MKKERBEROS} != no
 #	kmod			${MKKMOD} != no
+#	kyua			${MKKYUA} != no
 #	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
+#	libcxx			${MKLIBCXX} != no
+#	libgcc_eh		${HAVE_LIBGCC_EH} != no
+#	libstdcxx		${MKLIBSTDCXX} != no
+#	lld			${MKLLD} != no
+#	lldb			${MKLLDB} != no
 #	llvm			${MKLLVM} != no
 #	lvm			${MKLVM} != no
 #	makemandb		${MKMAKEMANDB} != no
 #	man			${MKMAN} != no
 #	manpages		${MKMANPAGES} != no
 #	manz			${MKMANZ} != no
+#	mclinker		${MKMCLINKER} != no
 #	mdns			${MKMDNS} != no
 #	nls			${MKNLS} != no
 #	nvi			${MKNVI} != no
@@ -240,6 +247,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	pcc			${MKPCC} != no
 #	pf			${MKPF} != no
 #	pic			${MKPIC} != no
+#	picinstall		${MKPICINSTALL} != no
 #	postfix			${MKPOSTFIX} != no
 #	profile			${MKPROFILE} != no
 #	perfuse			${MKPERFUSE} != no
@@ -247,14 +255,17 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
 #	sljit			${MKSLJIT} != no
+#	softfloat		${MKSOFTFLOAT} != no
 #	solaris			${MKDTRACE} != no or ${MKZFS} != no
-#	ssp			${HAS_SSP} != no
+#	ssp			${HAVE_SSP} != no
 #	tpm			${MKTPM} != no
 #	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
 #	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
+#	xorg_server		${MKXORG_SERVER} != no
 #	yp			${MKYP} != no
 #	zfs			${MKZFS} != no
 #
+#	endian=<n>		<n> = value of ${TARGET_ENDIANNESS}
 #	binutils=<n>		<n> = value of ${HAVE_BINUTILS}
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
@@ -287,8 +298,9 @@ list_set_files()
 				nv = needvars[vi]
 				kw = tolower(nv)
 				sub(/^mk/, "", kw)
-				sub(/^has_/, "", kw)
-				if (ENVIRON[nv] != "no")
+				sub(/^have_/, "", kw)
+				sub(/^target_endianness/, "endian", kw)
+				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no")
 					wanted[kw] = 1 
 			}
 
@@ -304,6 +316,8 @@ list_set_files()
 				wanted[".cat"] = 1
 			if (("man" in wanted) && ("manpages" in wanted))
 				wanted[".man"] = 1
+			if ("endian" in wanted)
+				wanted["endian=" "'"${TARGET_ENDIANNESS}"'"] = 1
 		}
 
 		/^#/ {

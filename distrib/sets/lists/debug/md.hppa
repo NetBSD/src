@@ -1,0 +1,2 @@
+# $NetBSD: md.hppa,v 1.1.4.2 2014/05/22 12:01:32 yamt Exp $
+./usr/libdata/debug/usr/mdec/mkboot.debug	comp-sysutil-debug      debug

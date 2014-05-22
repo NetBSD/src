@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34.2.6 2013/01/23 00:04:23 yamt Exp $
+# $NetBSD: mi,v 1.34.2.7 2014/05/22 12:01:33 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,9 +7,6 @@
 #		powerpc-4xx and powerpc-booke modules are incompatible.
 #		Sorry for any inconvenience this may cause, the management.
 #
-./etc/mtree/set.modules				modules-sys-root	kmod
-./stand/@MACHINE@				base-kernel-modules	kmod
-./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules	kmod
 ./@MODULEDIR@					base-kernel-modules	kmod
 ./@MODULEDIR@/accf_dataready			base-kernel-modules	kmod
 ./@MODULEDIR@/accf_dataready/accf_dataready.kmod	base-kernel-modules	kmod
@@ -19,12 +16,22 @@
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aio				base-kernel-modules	kmod
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/blowfish				base-kernel-modules	kmod
+./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/camellia				base-kernel-modules	kmod
+./@MODULEDIR@/camellia/camellia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/cast128				base-kernel-modules	kmod
+./@MODULEDIR@/cast128/cast128.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660				base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/chfs				base-kernel-modules	kmod
 ./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ccd				base-kernel-modules	kmod
+./@MODULEDIR@/ccd/ccd.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/cgd				base-kernel-modules	kmod
+./@MODULEDIR@/cgd/cgd.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda5				base-kernel-modules	kmod
@@ -35,12 +42,18 @@
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coredump				base-kernel-modules	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/crypto				base-kernel-modules	kmod
+./@MODULEDIR@/crypto/crypto.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cyclic				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
 ./@MODULEDIR@/dbcool/dbcool.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/des				base-kernel-modules	kmod
+./@MODULEDIR@/des/des.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
+./@MODULEDIR@/dk_subr				base-kernel-modules	kmod
+./@MODULEDIR@/dk_subr/dk_subr.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dtrace				base-kernel-modules	kmod,dtrace
@@ -81,6 +94,12 @@
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe/if_axe.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_axen				base-kernel-modules	kmod
+./@MODULEDIR@/if_axen/if_axen.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_npflog				base-kernel-modules	kmod
+./@MODULEDIR@/if_npflog/if_npflog.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_smsc				base-kernel-modules	kmod
+./@MODULEDIR@/if_smsc/if_smsc.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
 ./@MODULEDIR@/iic/iic.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/iscsi				base-kernel-modules	kmod,iscsi
@@ -93,6 +112,14 @@
 ./@MODULEDIR@/layerfs/layerfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lfs				base-kernel-modules	kmod
 ./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/lua				base-kernel-modules	kmod
+./@MODULEDIR@/lua/lua.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/luacore				base-obsolete		obsolete
+./@MODULEDIR@/luacore/luacore.kmod		base-obsolete		obsolete
+./@MODULEDIR@/luapmf				base-kernel-modules	kmod
+./@MODULEDIR@/luapmf/luapmf.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/luasystm				base-kernel-modules	kmod
+./@MODULEDIR@/luasystm/luasystm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mfs				base-kernel-modules	kmod
 ./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/miiverbose			base-kernel-modules	kmod
@@ -119,8 +146,10 @@
 ./@MODULEDIR@/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_log			base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/npf_ext_normalise			base-kernel-modules	kmod
-./@MODULEDIR@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_normalise			base-obsolete		obsolete
+./@MODULEDIR@/npf_ext_normalise/npf_ext_normalise.kmod	base-obsolete		obsolete
+./@MODULEDIR@/npf_ext_normalize			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_normalize/npf_ext_normalize.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_rndblock			base-kernel-modules	kmod
 ./@MODULEDIR@/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs				base-kernel-modules	kmod
@@ -129,6 +158,8 @@
 ./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/onewire				base-kernel-modules	kmod
 ./@MODULEDIR@/onewire/onewire.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/opencrypto			base-kernel-modules	kmod
+./@MODULEDIR@/opencrypto/opencrypto.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/overlay				base-kernel-modules	kmod
 ./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pciverbose			base-kernel-modules	kmod
@@ -165,6 +196,8 @@
 ./@MODULEDIR@/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel			base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/skipjack				base-kernel-modules	kmod
+./@MODULEDIR@/skipjack/skipjack.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/solaris				base-kernel-modules     kmod,solaris
@@ -173,6 +206,8 @@
 ./@MODULEDIR@/spdmem/spdmem.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/suser				base-kernel-modules	kmod
 ./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/swcrypto				base-kernel-modules	kmod
+./@MODULEDIR@/swcrypto/swcrypto.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/swsensor				base-kernel-modules	kmod
 ./@MODULEDIR@/swsensor/swsensor.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
@@ -191,11 +226,16 @@
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose/usbverbose.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/vcoda				base-kernel-modules	kmod
-./@MODULEDIR@/vcoda/vcoda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/v7fs				base-kernel-modules	kmod
 ./@MODULEDIR@/v7fs/v7fs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/vcoda				base-kernel-modules	kmod
+./@MODULEDIR@/vcoda/vcoda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vnd 				base-kernel-modules	kmod
 ./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
 ./@MODULEDIR@/zfs				base-kernel-modules     kmod,zfs
 ./@MODULEDIR@/zfs/zfs.kmod			base-kernel-modules     kmod,zfs
+./@MODULEDIR@/zlib				base-kernel-modules     kmod
+./@MODULEDIR@/zlib/zlib.kmod			base-kernel-modules     kmod
+./etc/mtree/set.modules				modules-sys-root	kmod
+./stand/@MACHINE@				base-kernel-modules	kmod
+./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules	kmod

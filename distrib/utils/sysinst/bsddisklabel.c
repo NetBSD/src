@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.56.4.1 2013/01/16 05:26:11 yamt Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.56.4.2 2014/05/22 12:01:35 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -543,6 +543,7 @@ make_bsd_partitions(void)
 	 * Initialize global variables that track space used on this disk.
 	 * Standard 4.4BSD 8-partition labels always cover whole disk.
 	 */
+	if (logfp) fprintf(logfp, "dlsize=%" PRId64 " ptsize=%" PRId64 " ptstart=%" PRId64 "\n", dlsize,ptsize,ptstart);
 	if (ptsize == 0)
 		ptsize = dlsize - ptstart;
 	if (dlsize == 0)
@@ -593,7 +594,12 @@ make_bsd_partitions(void)
 		i = (i + dlcylsize * sectorsize - 1) / (dlcylsize * sectorsize);
 		i *= dlcylsize;
 	}
+#if defined(PART_BOOT_FFS)
+	bsdlabel[PART_BOOT].pi_fstype = FS_BSDFFS;
+	bsdlabel[PART_BOOT].pi_flags = PIF_NEWFS;
+#else
 	bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+#endif
 	bsdlabel[PART_BOOT].pi_size = i;
 #ifdef BOOT_HIGH
 	bsdlabel[PART_BOOT].pi_offset = ptend - i;
@@ -604,7 +610,11 @@ make_bsd_partitions(void)
 #endif
 #elif defined(PART_BOOT)
 	if (bootsize != 0) {
+#if defined(PART_BOOT_MSDOS)
+		bsdlabel[PART_BOOT].pi_fstype = FS_MSDOS;
+#else
 		bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+#endif
 		bsdlabel[PART_BOOT].pi_size = bootsize;
 		bsdlabel[PART_BOOT].pi_offset = bootstart;
 #if defined(PART_BOOT_PI_FLAGS)
@@ -738,8 +748,9 @@ check_partitions(void)
 	if (bootxx != NULL) {
 		rv = access(bootxx, R_OK);
 		free(bootxx);
-	}
-	if (bootxx == NULL || rv != 0) {
+	} else
+		rv = -1;
+	if (rv != 0) {
 		process_menu(MENU_ok, deconst(MSG_No_Bootcode));
 		return 0;
 	}

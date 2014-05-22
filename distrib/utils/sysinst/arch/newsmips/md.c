@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20.4.1 2011/11/10 14:31:19 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.20.4.2 2014/05/22 12:01:36 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,7 +150,7 @@ md_post_newfs()
 {
 	const char *bootfile = "/boot";
 
-	printf (msg_string(MSG_dobootblks), diskdev);
+	msg_display(MSG_dobootblks, diskdev);
 	cp_to_target("/usr/mdec/boot", bootfile);
 	sync();
 	run_program(RUN_DISPLAY, "/usr/sbin/installboot /dev/r%sc %s %s",

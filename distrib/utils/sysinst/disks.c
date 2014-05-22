@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.116.2.5 2013/01/16 05:26:11 yamt Exp $ */
+/*	$NetBSD: disks.c,v 1.116.2.6 2014/05/22 12:01:35 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,12 +89,32 @@ static void fixsb(const char *, const char *, char);
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
 
+static bool tmpfs_on_var_shm(void);
+
 const char *
 getfslabelname(uint8_t f)
 {
 	if (f >= __arraycount(fstypenames) || fstypenames[f] == NULL)
 		return "invalid";
 	return fstypenames[f];
+}
+
+/*
+ * Decide wether we want to mount a tmpfs on /var/shm: we do this always
+ * when the machine has more than 16 MB of user memory. On smaller machines,
+ * shm_open() and friends will not perform well anyway.
+ */
+static bool
+tmpfs_on_var_shm()
+{
+	uint64_t ram;
+	size_t len;
+
+	len = sizeof(ram);
+	if (sysctlbyname("hw.usermem64", &ram, &len, NULL, 0))
+		return false;
+
+	return ram > 16UL*1024UL*1024UL;
 }
 
 /* from src/sbin/atactl/atactl.c
@@ -259,7 +279,8 @@ get_descr_ata(struct disk_desc *dd, int fd)
 	 * Mitsumi ATAPI devices
 	 */
 
-	if (!((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == WDC_CFG_ATAPI &&
+	if (!(inqbuf->atap_config != WDC_CFG_CFA_MAGIC &&
+	      (inqbuf->atap_config & WDC_CFG_ATAPI) &&
 	      ((inqbuf->atap_model[0] == 'N' &&
 		  inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&
@@ -494,13 +515,11 @@ fmt_fspart(menudesc *m, int ptn, void *arg)
 {
 	unsigned int poffset, psize, pend;
 	const char *desc;
-	static const char *Yes, *No;
+	static const char *Yes;
 	partinfo *p = bsdlabel + ptn;
 
-	if (Yes == NULL) {
+	if (Yes == NULL)
 		Yes = msg_string(MSG_Yes);
-		No = msg_string(MSG_No);
-	}
 
 	poffset = p->pi_offset / sizemult;
 	psize = p->pi_size / sizemult;
@@ -826,10 +845,13 @@ make_fstab(void)
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
 	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
 	    get_default_cdrom());
+	scripting_fprintf(f, "%stmpfs\t\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n",
+	    tmpfs_on_var_shm() ? "" : "#");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");
 	make_target_dir("/cdrom");
+	make_target_dir("/var/shm");
 
 	scripting_fprintf(NULL, "EOF\n");
 
