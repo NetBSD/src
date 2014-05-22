@@ -1,1 +1,0 @@
-# $NetBSD: md.cats,v 1.2.2.2 2013/01/23 00:04:20 yamt Exp $

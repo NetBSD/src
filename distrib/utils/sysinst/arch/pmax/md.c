@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.65.4.2 2012/04/17 00:02:53 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.65.4.3 2014/05/22 12:01:36 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,7 +161,7 @@ md_post_newfs(void)
 		return 0;
 	}
 
-	printf(msg_string(MSG_dobootblks), diskdev);
+	msg_display(MSG_dobootblks, diskdev);
 	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
 	bootxx = bootxx_name();
 	if (bootxx != NULL) {

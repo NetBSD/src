@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.170.2.3 2012/10/30 18:48:54 yamt Exp $	*/
+/*	$NetBSD: util.c,v 1.170.2.4 2014/05/22 12:01:35 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
 #define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
 #endif
 #ifndef MD_SETS_VALID
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE, SET_DEBUGGING
 #endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
@@ -118,6 +118,9 @@ distinfo dist_list[] = {
 #ifdef SET_KERNEL_8_NAME
 	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8, NULL},
 #endif
+#ifdef SET_KERNEL_9_NAME
+	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		MSG_set_kernel_9, NULL},
+#endif
 
 	{"modules",		SET_MODULES,		MSG_set_modules, NULL},
 	{"base",		SET_BASE,		MSG_set_base, NULL},
@@ -156,6 +159,8 @@ distinfo dist_list[] = {
 	{"sharesrc",		SET_SHARESRC,		MSG_set_sharesrc, NULL},
 	{"gnusrc",		SET_GNUSRC,		MSG_set_gnusrc, NULL},
 	{"xsrc",		SET_XSRC,		MSG_set_xsrc, NULL},
+	{"debug",		SET_DEBUG,		MSG_set_debug, NULL},
+	{"xdebug",		SET_X11_DEBUG,		MSG_set_xdebug, NULL},
 	{NULL,			SET_GROUP_END,		NULL, NULL},
 
 	{NULL,			SET_LAST,		NULL, NULL},
@@ -1138,7 +1143,6 @@ struct check_table { unsigned int mode; const char *path;} checks[] = {
   { S_IFDIR, "/dev" },
   { S_IFCHR, "/dev/console" },
 /* XXX check for rootdev in target /dev? */
-  { S_IFREG, "/etc/fstab" },
   { S_IFREG, "/sbin/fsck" },
   { S_IFREG, "/sbin/fsck_ffs" },
   { S_IFREG, "/sbin/mount" },

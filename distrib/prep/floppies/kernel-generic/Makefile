@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/04/03 22:36:35 perry Exp $
+#	$NetBSD: Makefile,v 1.9.6.1 2014/05/22 12:01:31 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ CLEANFILES+=	${KERNEL}
 
 ${KERNEL}: ${KERN}
 	-rm -f ${.TARGET}
-	gzip -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP} -9nc ${.ALLSRC} > ${.TARGET}
 
 realall: ${KERNEL}
 

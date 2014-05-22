@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.4.1 2012/04/17 00:02:35 yamt Exp $
+#	$NetBSD: Makefile,v 1.42.4.2 2014/05/22 12:01:30 yamt Exp $
 #
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ SUBDIR+= emips
 SUBDIR+= evbarm
 SUBDIR+= evbppc
 SUBDIR+= hp300
-SUBDIR+= hp700
+SUBDIR+= hppa
 SUBDIR+= hpcmips
 SUBDIR+= hpcsh
 SUBDIR+= i386

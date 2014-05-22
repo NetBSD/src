@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.9.4.1 2012/04/17 00:02:51 yamt Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.9.4.2 2014/05/22 12:01:35 yamt Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -84,3 +84,13 @@ message set_kernel_6
 {Kernel (TEAMASA_NPWR)}
 message set_kernel_7
 {Kernel (TS7200)}
+message set_kernel_8
+{Kernel (RPI)}
+message set_kernel_9
+{Kernel (KUROBOX_PRO)}
+
+message nomsdospart
+{There is no MSDOS boot partition in the MBR partition table.}
+
+message rpikernelmissing
+{The RPI kernel was not installed, perhaps you didn't select it?}

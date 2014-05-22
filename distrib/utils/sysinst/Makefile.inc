@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.57.2.1 2012/04/17 00:02:49 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.57.2.2 2014/05/22 12:01:35 yamt Exp $
 #
 # Makefile for sysinst
 
@@ -29,7 +29,6 @@ MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 .include <bsd.own.mk>		# for mk.conf
-.include <bsd.sys.mk>		# for HOST_SH, TOOL_*
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}

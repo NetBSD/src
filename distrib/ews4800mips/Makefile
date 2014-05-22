@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2007/03/06 21:57:00 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.36.1 2014/05/22 12:01:28 yamt Exp $
 
-SUBDIR=		floppies
+SUBDIR=		floppies cdroms
 TARGETS+=	release
 
 iso_image:
