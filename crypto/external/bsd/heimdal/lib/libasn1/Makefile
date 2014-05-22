@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:48 elric Exp $
+# $NetBSD: Makefile,v 1.1.4.1 2014/05/22 13:21:30 yamt Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -10,6 +10,7 @@ USE_FORT?= yes	# network protocol library
 LIB=		asn1
 
 LIBDPLIBS+=	com_err	${.CURDIR}/../libcom_err
+LIBDPLIBS+=	roken	${.CURDIR}/../libroken
 
 HEIMSRCS =		\
 	asn1_err.et	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.46.8.2 2013/01/16 05:25:55 yamt Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.46.8.3 2014/05/22 13:21:23 yamt Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1183,7 +1183,6 @@ get_proppair_and_doi_sit(sa, mode, doitype, sittype)
 			"failed to get buffer.\n");
 		goto bad;
 	}
-	memset(pair, 0, sizeof(pair));
 
 	bp = (caddr_t)(sab + 1);
 	tlen = sa->l - sizeof(*sab);

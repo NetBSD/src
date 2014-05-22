@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $	*/
-/* $OpenBSD: readconf.c,v 1.194 2011/09/23 07:45:05 markus Exp $ */
+/*	$NetBSD: readconf.c,v 1.6.2.2 2014/05/22 13:21:35 yamt Exp $	*/
+/* $OpenBSD: readconf.c,v 1.204 2013/06/10 19:19:44 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.6.2.2 2014/05/22 13:21:35 yamt Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: readconf.c,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <util.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -45,6 +46,7 @@ __RCSID("$NetBSD: readconf.c,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $");
 #include "buffer.h"
 #include "kex.h"
 #include "mac.h"
+#include "fmt_scaled.h"
 
 /* Format of the configuration file:
 
@@ -144,7 +146,8 @@ typedef enum {
 	oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
 	oVisualHostKey, oUseRoaming, oZeroKnowledgePasswordAuthentication,
-	oKexAlgorithms, oIPQoS, oRequestTTY,
+	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown,
+	oIgnoredUnknownOption,
 	oNoneEnabled, oTcpRcvBufPoll, oTcpRcvBuf, oNoneSwitch, oHPNDisabled,
 	oHPNBufferSize,
 	oSendVersionFirst,
@@ -267,6 +270,7 @@ static struct {
 	{ "kexalgorithms", oKexAlgorithms },
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
+	{ "ignoreunknown", oIgnoreUnknown },
 	{ "noneenabled", oNoneEnabled },
 	{ "tcprcvbufpoll", oTcpRcvBufPoll },
 	{ "tcprcvbuf", oTcpRcvBuf },
@@ -274,7 +278,6 @@ static struct {
 	{ "hpndisabled", oHPNDisabled },
 	{ "hpnbuffersize", oHPNBufferSize },
 	{ "sendversionfirst", oSendVersionFirst },
-
 	{ NULL, oBadOption }
 };
 
@@ -331,26 +334,44 @@ clear_forwardings(Options *options)
 	int i;
 
 	for (i = 0; i < options->num_local_forwards; i++) {
-		if (options->local_forwards[i].listen_host != NULL)
-			xfree(options->local_forwards[i].listen_host);
-		xfree(options->local_forwards[i].connect_host);
+		free(options->local_forwards[i].listen_host);
+		free(options->local_forwards[i].connect_host);
 	}
 	if (options->num_local_forwards > 0) {
-		xfree(options->local_forwards);
+		free(options->local_forwards);
 		options->local_forwards = NULL;
 	}
 	options->num_local_forwards = 0;
 	for (i = 0; i < options->num_remote_forwards; i++) {
-		if (options->remote_forwards[i].listen_host != NULL)
-			xfree(options->remote_forwards[i].listen_host);
-		xfree(options->remote_forwards[i].connect_host);
+		free(options->remote_forwards[i].listen_host);
+		free(options->remote_forwards[i].connect_host);
 	}
 	if (options->num_remote_forwards > 0) {
-		xfree(options->remote_forwards);
+		free(options->remote_forwards);
 		options->remote_forwards = NULL;
 	}
 	options->num_remote_forwards = 0;
 	options->tun_open = SSH_TUNMODE_NO;
+}
+
+void
+add_identity_file(Options *options, const char *dir, const char *filename,
+    int userprovided)
+{
+	char *path;
+
+	if (options->num_identity_files >= SSH_MAX_IDENTITY_FILES)
+		fatal("Too many identity files specified (max %d)",
+		    SSH_MAX_IDENTITY_FILES);
+
+	if (dir == NULL) /* no dir, filename is absolute */
+		path = xstrdup(filename);
+	else
+		(void)xasprintf(&path, "%.100s%.100s", dir, filename);
+
+	options->identity_file_userprovided[options->num_identity_files] =
+	    userprovided;
+	options->identity_files[options->num_identity_files++] = path;
 }
 
 /*
@@ -358,14 +379,17 @@ clear_forwardings(Options *options)
  */
 
 static OpCodes
-parse_token(const char *cp, const char *filename, int linenum)
+parse_token(const char *cp, const char *filename, int linenum,
+    const char *ignored_unknown)
 {
-	u_int i;
+	int i;
 
 	for (i = 0; keywords[i].name; i++)
-		if (strcasecmp(cp, keywords[i].name) == 0)
+		if (strcmp(cp, keywords[i].name) == 0)
 			return keywords[i].opcode;
-
+	if (ignored_unknown != NULL && match_pattern_list(cp, ignored_unknown,
+	    strlen(ignored_unknown), 1) == 1)
+		return oIgnoredUnknownOption;
 	error("%s: line %d: Bad configuration option: %s",
 	    filename, linenum, cp);
 	return oBadOption;
@@ -380,14 +404,14 @@ parse_token(const char *cp, const char *filename, int linenum)
 int
 process_config_line(Options *options, const char *host,
 		    char *line, const char *filename, int linenum,
-		    int *activep)
+		    int *activep, int userconfig)
 {
 	char *s, **charptr, *endofnumber, *keyword, *arg, *arg2;
 	char **cpptr, fwdarg[256];
-	u_int *uintptr, max_entries = 0;
-	int negated, opcode, *intptr, value, value2, scale;
+	u_int i, *uintptr, max_entries = 0;
+	int negated, opcode, *intptr, value, value2;
 	LogLevel *log_level_ptr;
-	long long orig, val64;
+	long long val64;
 	size_t len;
 	Forward fwd;
 
@@ -407,14 +431,22 @@ process_config_line(Options *options, const char *host,
 		keyword = strdelim(&s);
 	if (keyword == NULL || !*keyword || *keyword == '\n' || *keyword == '#')
 		return 0;
+	/* Match lowercase keyword */
+	for (i = 0; i < strlen(keyword); i++)
+		keyword[i] = tolower((unsigned char)keyword[i]);
 
-	opcode = parse_token(keyword, filename, linenum);
+	opcode = parse_token(keyword, filename, linenum,
+	    options->ignored_unknown);
 
 	switch (opcode) {
 	case oBadOption:
 		/* don't panic, but count bad options */
 		return -1;
 		/* NOTREACHED */
+	case oIgnoredUnknownOption:
+		debug("%s line %d: Ignored unknown option \"%s\"",
+		    filename, linenum, keyword);
+		return 0;
 	case oConnectTimeout:
 		intptr = &options->connection_timeout;
 parse_time:
@@ -617,40 +649,32 @@ parse_yesnoask:
 	case oRekeyLimit:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		if (arg[0] < '0' || arg[0] > '9')
-			fatal("%.200s line %d: Bad number.", filename, linenum);
-		orig = val64 = strtoll(arg, &endofnumber, 10);
-		if (arg == endofnumber)
-			fatal("%.200s line %d: Bad number.", filename, linenum);
-		switch (toupper((unsigned char)*endofnumber)) {
-		case '\0':
-			scale = 1;
-			break;
-		case 'K':
-			scale = 1<<10;
-			break;
-		case 'M':
-			scale = 1<<20;
-			break;
-		case 'G':
-			scale = 1<<30;
-			break;
-		default:
-			scale = 0;
-			fatal("%.200s line %d: Invalid RekeyLimit suffix",
-			    filename, linenum);
+			fatal("%.200s line %d: Missing argument.", filename,
+			    linenum);
+		if (strcmp(arg, "default") == 0) {
+			val64 = 0;
+		} else {
+			if (scan_scaled(arg, &val64) == -1)
+				fatal("%.200s line %d: Bad number '%s': %s",
+				    filename, linenum, arg, strerror(errno));
+			/* check for too-large or too-small limits */
+			if (val64 > UINT_MAX)
+				fatal("%.200s line %d: RekeyLimit too large",
+				    filename, linenum);
+			if (val64 != 0 && val64 < 16)
+				fatal("%.200s line %d: RekeyLimit too small",
+				    filename, linenum);
 		}
-		val64 *= scale;
-		/* detect integer wrap and too-large limits */
-		if ((val64 / scale) != orig || val64 > UINT_MAX)
-			fatal("%.200s line %d: RekeyLimit too large",
-			    filename, linenum);
-		if (val64 < 16)
-			fatal("%.200s line %d: RekeyLimit too small",
-			    filename, linenum);
 		if (*activep && options->rekey_limit == -1)
 			options->rekey_limit = (u_int32_t)val64;
+		if (s != NULL) { /* optional rekey interval present */
+			if (strcmp(s, "none") == 0) {
+				(void)strdelim(&s);	/* discard */
+				break;
+			}
+			intptr = &options->rekey_interval;
+			goto parse_time;
+		}
 		break;
 
 	case oIdentityFile:
@@ -662,9 +686,7 @@ parse_yesnoask:
 			if (*intptr >= SSH_MAX_IDENTITY_FILES)
 				fatal("%.200s line %d: Too many identity files specified (max %d).",
 				    filename, linenum, SSH_MAX_IDENTITY_FILES);
-			charptr = &options->identity_files[*intptr];
-			*charptr = xstrdup(arg);
-			*intptr = *intptr + 1;
+			add_identity_file(options, NULL, arg, userconfig);
 		}
 		break;
 
@@ -1130,6 +1152,10 @@ parse_int:
 		intptr = &options->send_version_first;
 		goto parse_flag;
 
+	case oIgnoreUnknown:
+		charptr = &options->ignored_unknown;
+		goto parse_string;
+
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
 		    filename, linenum, keyword);
@@ -1161,7 +1187,7 @@ parse_int:
 
 int
 read_config_file(const char *filename, const char *host, Options *options,
-    int checkperm)
+    int flags)
 {
 	FILE *f;
 	char line[1024];
@@ -1171,7 +1197,7 @@ read_config_file(const char *filename, const char *host, Options *options,
 	if ((f = fopen(filename, "r")) == NULL)
 		return 0;
 
-	if (checkperm) {
+	if (flags & SSHCONF_CHECKPERM) {
 		struct stat sb;
 
 		if (fstat(fileno(f), &sb) == -1)
@@ -1192,7 +1218,8 @@ read_config_file(const char *filename, const char *host, Options *options,
 	while (fgets(line, sizeof(line), f)) {
 		/* Update line number counter. */
 		linenum++;
-		if (process_config_line(options, host, line, filename, linenum, &active) != 0)
+		if (process_config_line(options, host, line, filename, linenum,
+		    &active, flags & SSHCONF_USERCONF) != 0)
 			bad_options++;
 	}
 	fclose(f);
@@ -1278,6 +1305,7 @@ initialize_options(Options * options)
 	options->no_host_authentication_for_localhost = - 1;
 	options->identities_only = - 1;
 	options->rekey_limit = - 1;
+	options->rekey_interval = -1;
 	options->verify_host_key_dns = -1;
 	options->server_alive_interval = -1;
 	options->server_alive_count_max = -1;
@@ -1298,6 +1326,7 @@ initialize_options(Options * options)
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
 	options->request_tty = -1;
+	options->ignored_unknown = NULL;
 	options->none_switch = -1;
 	options->none_enabled = -1;
 	options->hpn_disabled = -1;
@@ -1315,8 +1344,6 @@ initialize_options(Options * options)
 void
 fill_default_options(Options * options)
 {
-	int len;
-
 	if (options->forward_agent == -1)
 		options->forward_agent = 0;
 	if (options->forward_x11 == -1)
@@ -1394,30 +1421,16 @@ fill_default_options(Options * options)
 		options->protocol = SSH_PROTO_2;
 	if (options->num_identity_files == 0) {
 		if (options->protocol & SSH_PROTO_1) {
-			len = 2 + strlen(_PATH_SSH_CLIENT_IDENTITY) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_IDENTITY);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_IDENTITY, 0);
 		}
 		if (options->protocol & SSH_PROTO_2) {
-			len = 2 + strlen(_PATH_SSH_CLIENT_ID_RSA) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_RSA);
-
-			len = 2 + strlen(_PATH_SSH_CLIENT_ID_DSA) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_DSA);
-
-			len = 2 + strlen(_PATH_SSH_CLIENT_ID_ECDSA) + 1;
-			options->identity_files[options->num_identity_files] =
-			    xmalloc(len);
-			snprintf(options->identity_files[options->num_identity_files++],
-			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_ECDSA);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_RSA, 0);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_DSA, 0);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_ECDSA, 0);
 		}
 	}
 	if (options->escape_char == -1)
@@ -1446,6 +1459,8 @@ fill_default_options(Options * options)
 		options->enable_ssh_keysign = 0;
 	if (options->rekey_limit == -1)
 		options->rekey_limit = 0;
+	if (options->rekey_interval == -1)
+		options->rekey_interval = 0;
 	if (options->verify_host_key_dns == -1)
 		options->verify_host_key_dns = 0;
 	if (options->server_alive_interval == -1)
@@ -1574,7 +1589,7 @@ parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd, int remotefwd)
 		i = 0; /* failure */
 	}
 
-	xfree(p);
+	free(p);
 
 	if (dynamicfwd) {
 		if (!(i == 1 || i == 2))
@@ -1600,13 +1615,9 @@ parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd, int remotefwd)
 	return (i);
 
  fail_free:
-	if (fwd->connect_host != NULL) {
-		xfree(fwd->connect_host);
-		fwd->connect_host = NULL;
-	}
-	if (fwd->listen_host != NULL) {
-		xfree(fwd->listen_host);
-		fwd->listen_host = NULL;
-	}
+	free(fwd->connect_host);
+	fwd->connect_host = NULL;
+	free(fwd->listen_host);
+	fwd->listen_host = NULL;
 	return (0);
 }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.prog,v 1.1.4.2 2012/04/17 00:01:45 yamt Exp $
+# $NetBSD: Makefile.prog,v 1.1.4.3 2014/05/22 13:21:46 yamt Exp $
 .include "../Makefile.inc"
 
 PROG=${.CURDIR:T}
@@ -29,6 +29,9 @@ LDADD+=-ltpm_unseal
 .endif
 DPADD+=${LIBTSPI}
 LDADD+=-L${LIBTPMUTILSOBJDIR} -ltpm_utils -ltspi
+
+DPADD+=${LIBCRYPTO}
+LDADD+=-lcrypto
 
 .if ${PROG} != "tpm_version" && ${PROG:M*sealdata} == ""
 BINDIR=/usr/sbin

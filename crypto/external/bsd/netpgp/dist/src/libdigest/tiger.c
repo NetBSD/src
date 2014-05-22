@@ -819,7 +819,7 @@ TIGER_Update(TIGER_CTX *ctx, const void *data, size_t length)
 	for (; j < 56; j++) {
 		u.temp8[j] = 0;
 	}
-	((uint64_t *)(void *)(&(u.temp8[56])))[0] = ((uint64_t)length) << 3;
+	u.temp64[7] = ((uint64_t)length) << 3;
 	tiger_compress(u.temp64, ctx->ctx);
 }
 

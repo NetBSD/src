@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_user.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: verify_user.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -197,7 +197,7 @@ krb5_verify_user_opt(krb5_context context,
 	if (ret)
 	    return ret;
 	ret = KRB5_CONFIG_NODEFREALM;
-	
+
 	for (r = realms; *r != NULL && ret != 0; ++r) {
 	    ret = krb5_principal_set_realm(context, principal, *r);
 	    if (ret) {

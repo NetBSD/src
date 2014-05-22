@@ -1,4 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.5.2.1 2012/05/23 10:07:05 yamt Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.5.2.2 2014/05/22 13:21:35 yamt Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.106 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.5.2.1 2012/05/23 10:07:05 yamt Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.5.2.2 2014/05/22 13:21:35 yamt Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -86,16 +87,16 @@ clear_pass(void)
 {
 	if (pass) {
 		memset(pass, 0, strlen(pass));
-		xfree(pass);
+		free(pass);
 		pass = NULL;
 	}
 }
 
 static int
-delete_file(AuthenticationConnection *ac, const char *filename)
+delete_file(AuthenticationConnection *ac, const char *filename, int key_only)
 {
-	Key *public;
-	char *comment = NULL;
+	Key *public = NULL, *cert = NULL;
+	char *certpath = NULL, *comment = NULL;
 	int ret = -1;
 
 	public = key_load_public(filename, &comment);
@@ -109,8 +110,33 @@ delete_file(AuthenticationConnection *ac, const char *filename)
 	} else
 		fprintf(stderr, "Could not remove identity: %s\n", filename);
 
-	key_free(public);
-	xfree(comment);
+	if (key_only)
+		goto out;
+
+	/* Now try to delete the corresponding certificate too */
+	free(comment);
+	comment = NULL;
+	xasprintf(&certpath, "%s-cert.pub", filename);
+	if ((cert = key_load_public(certpath, &comment)) == NULL)
+		goto out;
+	if (!key_equal_public(cert, public))
+		fatal("Certificate %s does not match private key %s",
+		    certpath, filename);
+
+	if (ssh_remove_identity(ac, cert)) {
+		fprintf(stderr, "Identity removed: %s (%s)\n", certpath,
+		    comment);
+		ret = 0;
+	} else
+		fprintf(stderr, "Could not remove identity: %s\n", certpath);
+
+ out:
+	if (cert != NULL)
+		key_free(cert);
+	if (public != NULL)
+		key_free(public);
+	free(certpath);
+	free(comment);
 
 	return ret;
 }
@@ -186,7 +212,7 @@ add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 			pass = read_passphrase(msg, RP_ALLOW_STDIN);
 			if (strcmp(pass, "") == 0) {
 				clear_pass();
-				xfree(comment);
+				free(comment);
 				buffer_free(&keyblob);
 				return -1;
 			}
@@ -253,8 +279,8 @@ add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 		fprintf(stderr, "The user must confirm each use of the key\n");
  out:
 	if (certpath != NULL)
-		xfree(certpath);
-	xfree(comment);
+		free(certpath);
+	free(comment);
 	key_free(private);
 
 	return ret;
@@ -279,7 +305,7 @@ update_card(AuthenticationConnection *ac, int add, const char *id)
 		    add ? "add" : "remove", id);
 		ret = -1;
 	}
-	xfree(pin);
+	free(pin);
 	return ret;
 }
 
@@ -301,14 +327,14 @@ list_identities(AuthenticationConnection *ac, int do_fp)
 				    SSH_FP_HEX);
 				printf("%d %s %s (%s)\n",
 				    key_size(key), fp, comment, key_type(key));
-				xfree(fp);
+				free(fp);
 			} else {
 				if (!key_write(key, stdout))
 					fprintf(stderr, "key_write failed");
 				fprintf(stdout, " %s\n", comment);
 			}
 			key_free(key);
-			xfree(comment);
+			free(comment);
 		}
 	}
 	if (!had_identities) {
@@ -334,7 +360,7 @@ lock_agent(AuthenticationConnection *ac, int lock)
 			passok = 0;
 		}
 		memset(p2, 0, strlen(p2));
-		xfree(p2);
+		free(p2);
 	}
 	if (passok && ssh_lock_agent(ac, lock, p1)) {
 		fprintf(stderr, "Agent %slocked.\n", lock ? "" : "un");
@@ -342,7 +368,7 @@ lock_agent(AuthenticationConnection *ac, int lock)
 	} else
 		fprintf(stderr, "Failed to %slock agent.\n", lock ? "" : "un");
 	memset(p1, 0, strlen(p1));
-	xfree(p1);
+	free(p1);
 	return (ret);
 }
 
@@ -350,7 +376,7 @@ static int
 do_file(AuthenticationConnection *ac, int deleting, int key_only, char *file)
 {
 	if (deleting) {
-		if (delete_file(ac, file) == -1)
+		if (delete_file(ac, file, key_only) == -1)
 			return -1;
 	} else {
 		if (add_file(ac, file, key_only) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyblock.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keyblock.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -133,7 +133,7 @@ krb5_copy_keyblock (krb5_context context,
 {
     krb5_error_code ret;
     krb5_keyblock *k;
-    
+
     *to = NULL;
 
     k = calloc (1, sizeof(*k));

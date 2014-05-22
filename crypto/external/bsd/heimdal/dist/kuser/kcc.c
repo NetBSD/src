@@ -1,4 +1,4 @@
-/*	$NetBSD: kcc.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kcc.c,v 1.1.1.1.4.1 2014/05/22 13:21:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -42,8 +42,8 @@ static int version_flag;
 static int help_flag;
 
 static struct getargs args[] = {
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
 static void

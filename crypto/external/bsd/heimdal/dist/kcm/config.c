@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.1.4.1 2014/05/22 13:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -359,7 +359,7 @@ kcm_configure(int argc, char **argv)
 	ret = krb5_prepend_config_files_default(config_file, &files);
 	if (ret)
 	    krb5_err(kcm_context, 1, ret, "getting configuration files");
-	
+
 	ret = krb5_set_config_files(kcm_context, files);
 	krb5_free_config_files(files);
 	if(ret)

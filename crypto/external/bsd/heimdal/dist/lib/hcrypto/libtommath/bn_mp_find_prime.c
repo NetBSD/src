@@ -1,9 +1,9 @@
-/*	$NetBSD: bn_mp_find_prime.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_find_prime.c,v 1.1.1.1.4.1 2014/05/22 13:21:26 yamt Exp $	*/
 
 /* TomsFastMath, a fast ISO C bignum library.
- * 
+ *
  * This project is public domain and free for all purposes.
- * 
+ *
  * Love Hornquist Astrand <lha@h5l.org>
  */
 #include <tommath.h>
