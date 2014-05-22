@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.19 2014/05/22 14:59:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,7 +47,7 @@
 #define PIC_GOT(x)	x
 #endif
 
-# define _C_LABEL(x)	x
+#define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
 #define CVAROFF(x,y)		(_C_LABEL(x)+y)(%rip)
