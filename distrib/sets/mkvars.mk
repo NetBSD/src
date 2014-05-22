@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.6.2.1 2013/01/16 05:26:03 yamt Exp $
+# $NetBSD: mkvars.mk,v 1.6.2.2 2014/05/22 12:01:31 yamt Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -6,7 +6,8 @@ MKEXTRAVARS= \
 	MACHINE_CPU \
 	HAVE_GCC \
 	HAVE_GDB \
-	HAS_SSP \
+	HAVE_LIBGCC_EH \
+	HAVE_SSP \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
 	EXTSRCS \
@@ -17,19 +18,24 @@ MKEXTRAVARS= \
 	MKDYNAMICROOT \
 	MKMANPAGES \
 	MKSLJIT \
+	MKSOFTFLOAT \
 	MKXORG \
+	MKXORG_SERVER \
 	X11FLAVOR \
 	USE_INET6 \
 	USE_KERBEROS \
 	USE_LDAP \
 	USE_YP \
 	NETBSDSRCDIR \
-	MAKEVERBOSE
+	MAKEVERBOSE \
+	TARGET_ENDIANNESS \
+	EABI \
+	ARCH64
 
 #####
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
+.include <bsd.endian.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
 MKMANPAGES=no
@@ -44,6 +50,18 @@ MKX11:=no
 . else
 MKXORG:=no
 . endif
+.endif
+
+.if (!empty(MACHINE_ARCH:Mearm*))
+EABI=yes
+.else
+EABI=no
+.endif
+
+.if (!empty(MACHINE_ARCH:M*64*) || ${MACHINE_ARCH} == alpha)
+ARCH64=yes
+.else
+ARCH64=no
 .endif
 
 #####
@@ -69,3 +87,5 @@ mksolaris: .PHONY
 .else
 	@echo MKSOLARIS="no"
 .endif
+
+.include <bsd.files.mk>

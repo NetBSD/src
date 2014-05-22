@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.44.4.1 2011/11/10 14:31:19 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.44.4.2 2014/05/22 12:01:35 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,7 +175,7 @@ md_post_newfs(void)
 	if (bsdlabel[PART_A].pi_offset != 0)
 		return 0;
 
-	printf (msg_string(MSG_dobootblks), diskdev);
+	msg_display(MSG_dobootblks, diskdev);
 	cp_to_target("/usr/mdec/ofwboot", bootfile);
 	sync();
 	run_program(RUN_DISPLAY, "/usr/sbin/installboot /dev/r%sa %s %s",

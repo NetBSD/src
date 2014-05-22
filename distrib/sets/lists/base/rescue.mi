@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.32.6.2 2012/10/30 18:48:39 yamt Exp $
+# $NetBSD: rescue.mi,v 1.32.6.3 2014/05/22 12:01:32 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -66,8 +66,8 @@
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
 ./rescue/lfs_cleanerd				base-rescue-root
-./rescue/lmcctl					base-obsolete	obsolete
 ./rescue/lmcconfig				base-rescue-root
+./rescue/lmcctl					base-obsolete	obsolete
 ./rescue/ln					base-rescue-root
 ./rescue/ls					base-rescue-root
 ./rescue/mbrlabel				base-rescue-root
@@ -152,8 +152,8 @@
 ./rescue/tunefs					base-rescue-root
 ./rescue/umount					base-rescue-root
 ./rescue/veriexecctl				base-rescue-root
-./rescue/vnconfig				base-rescue-root
 ./rescue/vi					base-rescue-root
+./rescue/vnconfig				base-rescue-root
 ./rescue/wdogctl				base-rescue-root
 ./rescue/wsconsctl				base-rescue-root
 ./rescue/zcat					base-rescue-root

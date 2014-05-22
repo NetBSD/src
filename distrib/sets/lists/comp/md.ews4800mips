@@ -1,5 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.5.2.1 2013/01/16 05:26:06 yamt Exp $
-./usr/include/ieeefp.h				comp-c-include
+# $NetBSD: md.ews4800mips,v 1.5.2.2 2014/05/22 12:01:32 yamt Exp $
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
 ./usr/include/ews4800mips/aout_machdep.h	comp-c-include
@@ -56,3 +55,4 @@
 ./usr/include/ews4800mips/vmparam.h		comp-c-include
 ./usr/include/ews4800mips/vtoc.h		comp-c-include
 ./usr/include/ews4800mips/wchar_limits.h	comp-c-include
+./usr/include/ieeefp.h				comp-c-include

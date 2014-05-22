@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.88.2.2 2012/10/30 18:48:52 yamt Exp $ */
+/*	$NetBSD: mbr.c,v 1.88.2.3 2014/05/22 12:01:35 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1890,8 +1890,9 @@ get_ptn_alignment(struct mbr_partition *mbrp0)
 		}
 	} else {
 		/* Use 1MB offset for large (>128GB) disks */
-		if (dlsize > 2048 * 1024 * 128)
+		if (dlsize > 2048 * 1024 * 128) {
 			ptn_alignment = 2048;
 			ptn_0_offset = 2048;
+		}
 	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: getdirs.awk,v 1.4.20.1 2012/04/17 00:02:37 yamt Exp $
+#	$NetBSD: getdirs.awk,v 1.4.20.2 2014/05/22 12:01:31 yamt Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,6 +55,15 @@ function dirname(file) \
 /\/\// \
 {
 	print "Unsupported consecutive slashes in path:" >"/dev/stderr"
+	print >"/dev/stderr"
+	exit 1
+}
+
+#	error if path has a trailing slash
+#
+/\/$/ \
+{
+	print "Unsupported path with trailing slash:" >"/dev/stderr"
 	print >"/dev/stderr"
 	exit 1
 }

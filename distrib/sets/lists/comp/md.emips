@@ -1,6 +1,5 @@
-#	$NetBSD: md.emips,v 1.2.2.1 2013/01/16 05:26:06 yamt Exp $
+#	$NetBSD: md.emips,v 1.2.2.2 2014/05/22 12:01:32 yamt Exp $
 #
-./usr/include/ieeefp.h				comp-c-include
 ./usr/include/emips				comp-c-include
 ./usr/include/emips/ansi.h			comp-c-include
 ./usr/include/emips/asm.h			comp-c-include
@@ -56,3 +55,4 @@
 ./usr/include/emips/varargs.h			comp-obsolete		obsolete
 ./usr/include/emips/vmparam.h			comp-c-include
 ./usr/include/emips/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

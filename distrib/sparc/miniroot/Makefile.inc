@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.18.6.1 2012/10/30 18:48:50 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.18.6.2 2014/05/22 12:01:34 yamt Exp $
 
 IMAGESIZE=	8192k
-DBG=		-Os
+DBG=		-Os -fno-unwind-tables
 MAKEFS_FLAGS=   -o density=4k
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all ipty

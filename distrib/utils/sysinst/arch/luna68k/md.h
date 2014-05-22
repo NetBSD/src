@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2011/07/16 15:52:21 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.1.2.1 2014/05/22 12:01:35 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,8 +43,12 @@
 #define PART_ROOT	PART_A
 #define PART_SWAP	PART_B
 #define PART_RAW	PART_C
+#define PART_BOOT	PART_D
 #define PART_USR	PART_G	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_D
+#define PART_FIRST_FREE	PART_E
+
+#define PART_BOOT_FFS
+#define BOOT_SIZE	(8 * 1024 * 1024)	/* for a.out kernel and boot */
 
 #define DEFSWAPRAM	8	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
@@ -57,8 +61,6 @@
  * or upgrade.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-#define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11_NOSERVERS
 
 /*
  * Machine-specific command to write a new label to a disk.

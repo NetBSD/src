@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.154.2.3 2012/10/30 18:48:52 yamt Exp $	*/
+/*	$NetBSD: defs.h,v 1.154.2.4 2014/05/22 12:01:35 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,7 +95,8 @@ enum {
     SET_KERNEL_6,	/* MD kernel... */
     SET_KERNEL_7,	/* MD kernel... */
     SET_KERNEL_8,	/* MD kernel... */
-    SET_KERNEL_LAST,	/* allow 8 kernels */
+    SET_KERNEL_9,	/* MD kernel... */
+    SET_KERNEL_LAST,	/* allow 9 kernels */
 
     /* System sets */
     SET_BASE,		/* base */
@@ -130,6 +131,10 @@ enum {
     SET_GNUSRC,
     SET_XSRC,
 
+    /* Debug sets */
+    SET_DEBUG,
+    SET_X11_DEBUG,
+
     SET_LAST,
     SET_GROUP,		/* Start of submenu */
     SET_GROUP_END,	/* End of submenu */
@@ -154,6 +159,9 @@ enum {
 
 /* All source sets */
 #define SET_SOURCE SET_SYSSRC, SET_SRC, SET_SHARESRC, SET_GNUSRC, SET_XSRC
+
+/* All debug sets */
+#define SET_DEBUGGING SET_DEBUG, SET_X11_DEBUG
 
 /* Set list flags */
 #define SFLAG_MINIMAL	1
@@ -320,6 +328,9 @@ char pkg_dir[STRSIZE];
 /* Place we look for pkgsrc in all fs types */
 char pkgsrc_dir[STRSIZE];
 
+/* User shell */
+const char *ushell;
+
 struct ftpinfo {
     char host[STRSIZE];
     char dir[STRSIZE] ;
@@ -355,6 +366,7 @@ void set_menu_numopts(int, int);
 
 /* Machine dependent functions .... */
 void	md_init(void);
+void	md_prelim_menu(void);
 void	md_init_set_status(int); /* SFLAG_foo */
 
  /* MD functions if user selects install - in order called */
