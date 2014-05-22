@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.144 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: in.c,v 1.145 2014/05/22 22:01:12 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.144 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.145 2014/05/22 22:01:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -132,13 +132,14 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.144 2013/06/29 21:06:58 rmind Exp $");
 #include <netinet/in_selsrc.h>
 #endif
 
-static u_int in_mask2len(struct in_addr *);
-static void in_len2mask(struct in_addr *, u_int);
-static int in_lifaddr_ioctl(struct socket *, u_long, void *,
+static u_int	in_mask2len(struct in_addr *);
+static void	in_len2mask(struct in_addr *, u_int);
+static int	in_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *, struct lwp *);
 
-static int in_addprefix(struct in_ifaddr *, int);
-static int in_scrubprefix(struct in_ifaddr *);
+static int	in_addprefix(struct in_ifaddr *, int);
+static int	in_scrubprefix(struct in_ifaddr *);
+static void	in_sysctl_init(struct sysctllog **);
 
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	1
@@ -148,15 +149,39 @@ static int in_scrubprefix(struct in_ifaddr *);
 #define HOSTZEROBROADCAST 1
 #endif
 
-int subnetsarelocal = SUBNETSARELOCAL;
-int hostzeroisbroadcast = HOSTZEROBROADCAST;
+static int			subnetsarelocal = SUBNETSARELOCAL;
+static int			hostzeroisbroadcast = HOSTZEROBROADCAST;
 
 /*
  * This list is used to keep track of in_multi chains which belong to
  * deleted interface addresses.  We use in_ifaddr so that a chain head
  * won't be deallocated until all multicast address record are deleted.
  */
-static TAILQ_HEAD(, in_ifaddr) in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
+static TAILQ_HEAD(, in_ifaddr)	in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
+
+static struct pool		inmulti_pool;
+static u_int			in_multientries;
+struct in_multihashhead *	in_multihashtbl;
+
+u_long				in_multihash;
+struct in_ifaddrhashhead *	in_ifaddrhashtbl;
+u_long				in_ifaddrhash;
+struct in_ifaddrhead		in_ifaddrhead;
+
+void
+in_init(void)
+{
+	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
+	    NULL, IPL_SOFTNET);
+	TAILQ_INIT(&in_ifaddrhead);
+
+	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_ifaddrhash);
+	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_multihash);
+
+	in_sysctl_init(NULL);
+}
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -1131,4 +1156,117 @@ in_delmulti(struct in_multi *inm)
 		pool_put(&inmulti_pool, inm);
 	}
 	splx(s);
+}
+
+struct sockaddr_in *
+in_selectsrc(struct sockaddr_in *sin, struct route *ro,
+    int soopts, struct ip_moptions *mopts, int *errorp)
+{
+	struct rtentry *rt = NULL;
+	struct in_ifaddr *ia = NULL;
+
+	/*
+         * If route is known or can be allocated now, take the
+         * source address from the interface.  Otherwise, punt.
+	 */
+	if ((soopts & SO_DONTROUTE) != 0)
+		rtcache_free(ro);
+	else {
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_in	dst4;
+		} u;
+
+		sockaddr_in_init(&u.dst4, &sin->sin_addr, 0);
+		rt = rtcache_lookup(ro, &u.dst);
+	}
+	/*
+	 * If we found a route, use the address
+	 * corresponding to the outgoing interface
+	 * unless it is the loopback (in case a route
+	 * to our address on another net goes to loopback).
+	 *
+	 * XXX Is this still true?  Do we care?
+	 */
+	if (rt != NULL && (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+		ia = ifatoia(rt->rt_ifa);
+	if (ia == NULL) {
+		u_int16_t fport = sin->sin_port;
+
+		sin->sin_port = 0;
+		ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
+		sin->sin_port = fport;
+		if (ia == NULL) {
+			/* Find 1st non-loopback AF_INET address */
+			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
+					break;
+			}
+		}
+		if (ia == NULL) {
+			*errorp = EADDRNOTAVAIL;
+			return NULL;
+		}
+	}
+	/*
+	 * If the destination address is multicast and an outgoing
+	 * interface has been set as a multicast option, use the
+	 * address of that interface as our source address.
+	 */
+	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
+		struct ip_moptions *imo;
+		struct ifnet *ifp;
+
+		imo = mopts;
+		if (imo->imo_multicast_ifp != NULL) {
+			ifp = imo->imo_multicast_ifp;
+			IFP_TO_IA(ifp, ia);		/* XXX */
+			if (ia == 0) {
+				*errorp = EADDRNOTAVAIL;
+				return NULL;
+			}
+		}
+	}
+	if (ia->ia_ifa.ifa_getifa != NULL) {
+		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
+		                                      sintosa(sin)));
+	}
+#ifdef GETIFA_DEBUG
+	else
+		printf("%s: missing ifa_getifa\n", __func__);
+#endif
+	return satosin(&ia->ia_addr);
+}
+
+static void
+in_sysctl_init(struct sysctllog **clog)
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet",
+		       SYSCTL_DESCR("PF_INET related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ip",
+		       SYSCTL_DESCR("IPv4 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "subnetsarelocal",
+		       SYSCTL_DESCR("Whether logical subnets are considered "
+				    "local"),
+		       NULL, 0, &subnetsarelocal, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_SUBNETSARELOCAL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "hostzerobroadcast",
+		       SYSCTL_DESCR("All zeroes address is broadcast address"),
+		       NULL, 0, &hostzeroisbroadcast, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_HOSTZEROBROADCAST, CTL_EOL);
 }
