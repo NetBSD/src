@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.85 2014/03/24 19:42:58 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.86 2014/05/22 16:31:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.85 2014/03/24 19:42:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.86 2014/05/22 16:31:19 dholland Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1394,9 +1394,11 @@ dcmsetischeme(int brd, int flags)
 		for (i = 0; i < NDCMPORT; i++) {
 			tp = sc->sc_tty[i];
 
-			if ((c = tp->t_cc[VSTART]) != _POSIX_VDISABLE)
+			c = tty_getctrlchar(tp, VSTART);
+			if (c != _POSIX_VDISABLE)
 				dcm->dcm_bmap[c].data_data |= (1 << i);
-			if ((c = tp->t_cc[VSTOP]) != _POSIX_VDISABLE)
+			c = tty_getctrlchar(tp, VSTOP);
+			if (c != _POSIX_VDISABLE)
 				dcm->dcm_bmap[c].data_data |= (1 << i);
 		}
 	}
