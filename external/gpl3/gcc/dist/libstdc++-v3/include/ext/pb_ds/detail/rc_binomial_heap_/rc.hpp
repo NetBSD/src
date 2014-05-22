@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file rc.hpp
+ * @file rc_binomial_heap_/rc.hpp
  * Contains a redundant (binary counter).
  */
 
@@ -45,37 +45,22 @@ namespace __gnu_pbds
 {
   namespace detail
   {
-
-#define PB_DS_CLASS_T_DEC \
-    template<typename Node, class Allocator>
-
-#define PB_DS_CLASS_C_DEC \
-    rc<Node, Allocator>
-
-    template<typename Node, class Allocator>
+    /// Redundant binary counter.
+    template<typename _Node, typename _Alloc>
     class rc
     {
     private:
-      typedef Allocator allocator_type;
+      typedef _Alloc 					 allocator_type;
+      typedef typename allocator_type::size_type 	 size_type;
+      typedef _Node 					 node;
 
-      typedef typename allocator_type::size_type size_type;
+      typedef typename _Alloc::template rebind<node>	 __rebind_n;
+      typedef typename __rebind_n::other::pointer      	 node_pointer;
 
-      typedef Node node;
+      typedef typename _Alloc::template rebind<node_pointer>  __rebind_np;
 
-      typedef
-      typename allocator_type::template rebind<
-	node>::other::pointer
-      node_pointer;
-
-      typedef
-      typename allocator_type::template rebind<
-	node_pointer>::other::pointer
-      entry_pointer;
-
-      typedef
-      typename allocator_type::template rebind<
-	node_pointer>::other::const_pointer
-      const_entry_pointer;
+      typedef typename __rebind_np::other::pointer 	 entry_pointer;
+      typedef typename __rebind_np::other::const_pointer entry_const_pointer;
 
       enum
 	{
@@ -83,20 +68,18 @@ namespace __gnu_pbds
 	};
 
     public:
-      typedef node_pointer entry;
+      typedef node_pointer 				 entry;
+      typedef entry_const_pointer 			 const_iterator;
 
-      typedef const_entry_pointer const_iterator;
-
-    public:
       rc();
 
-      rc(const PB_DS_CLASS_C_DEC& other);
+      rc(const rc&);
 
       inline void
-      swap(PB_DS_CLASS_C_DEC& other);
+      swap(rc&);
 
       inline void
-      push(entry p_nd);
+      push(entry);
 
       inline node_pointer
       top() const;
@@ -121,37 +104,36 @@ namespace __gnu_pbds
 
 #ifdef _GLIBCXX_DEBUG
       void
-      assert_valid() const;
-#endif 
+      assert_valid(const char*, int) const;
+#endif
 
 #ifdef PB_DS_RC_BINOMIAL_HEAP_TRACE_
       void
       trace() const;
-#endif 
+#endif
 
     private:
-      node_pointer m_a_entries[max_entries];
-
-      size_type m_over_top;
+      node_pointer 	m_a_entries[max_entries];
+      size_type 	m_over_top;
     };
 
-    PB_DS_CLASS_T_DEC
-    PB_DS_CLASS_C_DEC::
+    template<typename _Node, typename _Alloc>
+    rc<_Node, _Alloc>::
     rc() : m_over_top(0)
-    { _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+    { PB_DS_ASSERT_VALID((*this)) }
 
-    PB_DS_CLASS_T_DEC
-    PB_DS_CLASS_C_DEC::
-    rc(const PB_DS_CLASS_C_DEC& other) : m_over_top(0)
-    { _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+    template<typename _Node, typename _Alloc>
+    rc<_Node, _Alloc>::
+    rc(const rc<_Node, _Alloc>& other) : m_over_top(0)
+    { PB_DS_ASSERT_VALID((*this)) }
 
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     inline void
-    PB_DS_CLASS_C_DEC::
-    swap(PB_DS_CLASS_C_DEC& other)
+    rc<_Node, _Alloc>::
+    swap(rc<_Node, _Alloc>& other)
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
 
       const size_type over_top = std::max(m_over_top, other.m_over_top);
 
@@ -159,91 +141,91 @@ namespace __gnu_pbds
 	std::swap(m_a_entries[i], other.m_a_entries[i]);
 
       std::swap(m_over_top, other.m_over_top);
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
      }
 
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     inline void
-    PB_DS_CLASS_C_DEC::
+    rc<_Node, _Alloc>::
     push(entry p_nd)
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
       _GLIBCXX_DEBUG_ASSERT(m_over_top < max_entries);
       m_a_entries[m_over_top++] = p_nd;
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
     }
 
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     inline void
-    PB_DS_CLASS_C_DEC::
+    rc<_Node, _Alloc>::
     pop()
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
       _GLIBCXX_DEBUG_ASSERT(!empty());
       --m_over_top;
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
     }
 
-    PB_DS_CLASS_T_DEC
-    inline typename PB_DS_CLASS_C_DEC::node_pointer
-    PB_DS_CLASS_C_DEC::
+    template<typename _Node, typename _Alloc>
+    inline typename rc<_Node, _Alloc>::node_pointer
+    rc<_Node, _Alloc>::
     top() const
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
       _GLIBCXX_DEBUG_ASSERT(!empty());
       return *(m_a_entries + m_over_top - 1);
     }
 
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     inline bool
-    PB_DS_CLASS_C_DEC::
+    rc<_Node, _Alloc>::
     empty() const
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
       return m_over_top == 0;
     }
 
-    PB_DS_CLASS_T_DEC
-    inline typename PB_DS_CLASS_C_DEC::size_type
-    PB_DS_CLASS_C_DEC::
+    template<typename _Node, typename _Alloc>
+    inline typename rc<_Node, _Alloc>::size_type
+    rc<_Node, _Alloc>::
     size() const
     { return m_over_top; }
 
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     void
-    PB_DS_CLASS_C_DEC::
+    rc<_Node, _Alloc>::
     clear()
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
       m_over_top = 0;
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
     }
 
-    PB_DS_CLASS_T_DEC
-    const typename PB_DS_CLASS_C_DEC::const_iterator
-    PB_DS_CLASS_C_DEC::
+    template<typename _Node, typename _Alloc>
+    const typename rc<_Node, _Alloc>::const_iterator
+    rc<_Node, _Alloc>::
     begin() const
     { return& m_a_entries[0]; }
 
-    PB_DS_CLASS_T_DEC
-    const typename PB_DS_CLASS_C_DEC::const_iterator
-    PB_DS_CLASS_C_DEC::
+    template<typename _Node, typename _Alloc>
+    const typename rc<_Node, _Alloc>::const_iterator
+    rc<_Node, _Alloc>::
     end() const
     { return& m_a_entries[m_over_top]; }
 
 #ifdef _GLIBCXX_DEBUG
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     void
-    PB_DS_CLASS_C_DEC::
-    assert_valid() const
-    { _GLIBCXX_DEBUG_ASSERT(m_over_top < max_entries); }
-#endif 
+    rc<_Node, _Alloc>::
+    assert_valid(const char* __file, int __line) const
+    { PB_DS_DEBUG_VERIFY(m_over_top < max_entries); }
+#endif
 
 #ifdef PB_DS_RC_BINOMIAL_HEAP_TRACE_
-    PB_DS_CLASS_T_DEC
+    template<typename _Node, typename _Alloc>
     void
-    PB_DS_CLASS_C_DEC::
+    rc<_Node, _Alloc>::
     trace() const
     {
       std::cout << "rc" << std::endl;
@@ -251,12 +233,8 @@ namespace __gnu_pbds
 	std::cerr << m_a_entries[i] << std::endl;
       std::cout << std::endl;
     }
-#endif 
-
-#undef PB_DS_CLASS_T_DEC
-#undef PB_DS_CLASS_C_DEC
-
+#endif
 } // namespace detail
 } // namespace __gnu_pbds
 
-#endif 
+#endif

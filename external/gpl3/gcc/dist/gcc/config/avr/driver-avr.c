@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
    Contributed by Anatoly Sokolov <aesok@post.ru>
 
 This file is part of GCC.
@@ -22,13 +22,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include <stdlib.h>
 
 /* Current architecture.  */
-const struct base_arch_s *avr_current_arch = NULL;
+const avr_arch_t *avr_current_arch = NULL;
 
 /* Current device.  */
-const struct mcu_type_s *avr_current_device = NULL;
+const avr_mcu_t *avr_current_device = NULL;
 
 /* Initialize avr_current_arch and avr_current_device variables.  */
 
@@ -49,13 +48,28 @@ avr_set_current_device (const char *name)
   avr_current_arch = &avr_arch_types[avr_current_device->arch];
 }
 
-/* Returns command line parameters that describe the device architecture.  */
+/* Returns command line parameters to pass to as.  */
 
-const char *
-avr_device_to_arch (int argc, const char **argv)
+const char*
+avr_device_to_as (int argc, const char **argv)
 {
   if (0 == argc)
-    return;
+    return NULL;
+
+  avr_set_current_device (argv[0]);
+
+  return concat ("-mmcu=", avr_current_arch->arch_name,
+                 avr_current_device->errata_skip ? "" : " -mno-skip-bug",
+                 NULL);
+}
+
+/* Returns command line parameters to pass to ld.  */
+
+const char*
+avr_device_to_ld (int argc, const char **argv)
+{
+  if (0 == argc)
+    return NULL;
 
   avr_set_current_device (argv[0]);
 
@@ -71,7 +85,7 @@ avr_device_to_data_start (int argc, const char **argv)
   char data_section_start_str[16];
 
   if (0 == argc)
-    return;  
+    return NULL;
 
   avr_set_current_device (argv[0]);
   
@@ -93,7 +107,7 @@ const char *
 avr_device_to_startfiles (int argc, const char **argv)
 {
   if (0 == argc)
-    return;
+    return NULL;
 
   avr_set_current_device (argv[0]);
 
@@ -106,10 +120,31 @@ const char *
 avr_device_to_devicelib (int argc, const char **argv)
 {
   if (0 == argc)
-    return;
+    return NULL;
 
   avr_set_current_device (argv[0]);
 
   return concat ("-l", avr_current_device->library_name, NULL);
 }
 
+const char*
+avr_device_to_sp8 (int argc, const char **argv)
+{
+  if (0 == argc)
+    return NULL;
+
+  avr_set_current_device (argv[0]);
+
+  /* Leave "avr2" and "avr25" alone.  These two architectures are
+     the only ones that mix devices with 8-bit SP and 16-bit SP.
+     -msp8 is set by mmultilib machinery.  */
+
+  if (avr_current_device->macro == NULL
+      && (avr_current_device->arch == ARCH_AVR2
+          || avr_current_device->arch == ARCH_AVR25))
+    return "";
+
+  return avr_current_device->short_sp
+    ? "-msp8"
+    : "%<msp8";
+}

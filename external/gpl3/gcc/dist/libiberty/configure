@@ -1844,41 +1844,41 @@ else
 fi
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+/* Define $2 to an innocuous variant, in case <limits.h> declares $2.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $2 innocuous_$2
+
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $2 (); below.
     Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  Under hpux,
-    including <limits.h> includes <sys/time.h> and causes problems
-    checking for functions defined therein.  */
-#if defined (__STDC__) && !defined (_HPUX_SOURCE)
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
 # include <limits.h>
 #else
 # include <assert.h>
 #endif
-/* Override any gcc2 internal prototype to avoid an error.  */
+
+#undef $2
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
 #ifdef __cplusplus
 extern "C"
-{
 #endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
 char $2 ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$2) || defined (__stub___$2)
+#if defined __stub_$2 || defined __stub___$2
 choke me
-#else
-char (*f) () = $2;
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 int
 main ()
 {
-return f != $2;
+return $2 ();
   ;
   return 0;
 }
@@ -1904,8 +1904,10 @@ $as_echo "$ac_res" >&6; }
 ac_fn_c_check_decl ()
 {
   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $2 is declared" >&5
-$as_echo_n "checking whether $2 is declared... " >&6; }
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
 if { as_var=$3; eval "test \"\${$as_var+set}\" = set"; }; then :
   $as_echo_n "(cached) " >&6
 else
@@ -1915,8 +1917,12 @@ $4
 int
 main ()
 {
-#ifndef $2
-  (void) $2;
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
 #endif
 
   ;
@@ -2345,7 +2351,7 @@ for ac_dir in $libiberty_topdir "$srcdir"/$libiberty_topdir; do
   for ac_t in install-sh install.sh shtool; do
     if test -f "$ac_dir/$ac_t"; then
       ac_aux_dir=$ac_dir
-      ac_install_sh="$ac_aux_dir/$ac_t -c"
+      ac_install_sh="$SHELL $ac_aux_dir/$ac_t -c"
       break 2
     fi
   done
@@ -3914,8 +3920,14 @@ ac_c_preproc_warn_flag=yes
 
 ac_libiberty_warn_cflags=
 save_CFLAGS="$CFLAGS"
-for option in -W -Wall -Wwrite-strings -Wc++-compat \
+for real_option in -W -Wall -Wwrite-strings -Wc++-compat \
 			  -Wstrict-prototypes; do
+  # Do the check with the no- prefix removed since gcc silently
+  # accepts any -Wno-* option on purpose
+  case $real_option in
+    -Wno-*) option=-W`expr x$real_option : 'x-Wno-\(.*\)'` ;;
+    *) option=$real_option ;;
+  esac
   as_acx_Woption=`$as_echo "acx_cv_prog_cc_warning_$option" | $as_tr_sh`
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $option" >&5
@@ -3947,11 +3959,13 @@ eval ac_res=\$$as_acx_Woption
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
   if test `eval 'as_val=${'$as_acx_Woption'};$as_echo "$as_val"'` = yes; then :
-  ac_libiberty_warn_cflags="$ac_libiberty_warn_cflags${ac_libiberty_warn_cflags:+ }$option"
+  ac_libiberty_warn_cflags="$ac_libiberty_warn_cflags${ac_libiberty_warn_cflags:+ }$real_option"
 fi
   done
 CFLAGS="$save_CFLAGS"
 
+# Do the check with the no- prefix removed from the warning options
+# since gcc silently accepts any -Wno-* option on purpose
 if test "$GCC" = yes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -pedantic " >&5
 $as_echo_n "checking whether $CC supports -pedantic ... " >&6; }
@@ -4834,6 +4848,83 @@ if [ -n "${frag}" ]; then
   frag=${libiberty_topdir}/libiberty/config/$frag
 fi
 
+
+
+
+
+case "${host}" in
+    # PIC is the default on some targets or must not be used.
+    *-*-darwin*)
+	# PIC is the default on this platform
+	# Common symbols not allowed in MH_DYLIB files
+	PICFLAG=-fno-common
+	;;
+    alpha*-dec-osf5*)
+	# PIC is the default.
+	;;
+    hppa*64*-*-hpux*)
+	# PIC is the default for 64-bit PA HP-UX.
+	;;
+    i[34567]86-*-cygwin* | i[34567]86-*-mingw* | x86_64-*-mingw*)
+	;;
+    i[34567]86-*-interix[3-9]*)
+	# Interix 3.x gcc -fpic/-fPIC options generate broken code.
+	# Instead, we relocate shared libraries at runtime.
+	;;
+    i[34567]86-*-nto-qnx*)
+	# QNX uses GNU C++, but need to define -shared option too, otherwise
+	# it will coredump.
+	PICFLAG='-fPIC -shared'
+	;;
+    i[34567]86-pc-msdosdjgpp*)
+	# DJGPP does not support shared libraries at all.
+	;;
+    ia64*-*-hpux*)
+	# On IA64 HP-UX, PIC is the default but the pic flag
+	# sets the default TLS model and affects inlining.
+	PICFLAG=-fPIC
+	;;
+    mips-sgi-irix6*)
+	# PIC is the default.
+	;;
+    rs6000-ibm-aix* | powerpc-ibm-aix*)
+	# All AIX code is PIC.
+	;;
+
+    # Some targets support both -fPIC and -fpic, but prefer the latter.
+    # FIXME: Why?
+    i[34567]86-*-* | x86_64-*-*)
+	PICFLAG=-fpic
+	;;
+    m68k-*-*)
+	PICFLAG=-fpic
+	;;
+    # FIXME: Override -fPIC default in libgcc only?
+    sh-*-linux* | sh[2346lbe]*-*-linux*)
+	PICFLAG=-fpic
+	;;
+    # FIXME: Simplify to sh*-*-netbsd*?
+    sh-*-netbsdelf* | shl*-*-netbsdelf* | sh5-*-netbsd* | sh5l*-*-netbsd* | \
+      sh64-*-netbsd* | sh64l*-*-netbsd*)
+	PICFLAG=-fpic
+	;;
+    # Default to -fPIC unless specified otherwise.
+    *)
+	PICFLAG=-fPIC
+	;;
+esac
+
+# If the user explicitly uses -fpic/-fPIC, keep that.
+case "${CFLAGS}" in
+    *-fpic*)
+	PICFLAG=-fpic
+	;;
+    *-fPIC*)
+	PICFLAG=-fPIC
+	;;
+esac
+
+
 # If they didn't specify --enable-shared, don't generate shared libs.
 case "${enable_shared}" in
   yes) shared=yes ;;
@@ -4841,27 +4932,8 @@ case "${enable_shared}" in
   "") shared=no ;;
   *) shared=yes ;;
 esac
-if [ "${shared}" = "yes" ]; then
-  case "${host}" in
-    *-*-cygwin*)	;;
-    alpha*-*-linux*)	PICFLAG=-fPIC ;;
-    arm*-*-*)		PICFLAG=-fPIC ;;
-    hppa*-*-*)		PICFLAG=-fPIC ;;
-    i370-*-*)		PICFLAG=-fPIC ;;
-    ia64-*-*)		PICFLAG=-fpic ;;
-    i[34567]86-*-* | x86_64-*-*)
-			PICFLAG=-fpic ;;
-    m68k-*-*)		PICFLAG=-fpic ;;
-    mips*-*-linux*)	PICFLAG=-fPIC ;;
-    powerpc*-*-aix*)	;;
-    powerpc*-*-*)	PICFLAG=-fPIC ;;
-    sparc*-*-*)		case "${CFLAGS}" in
-			  *-fpic* ) PICFLAG=-fpic ;;
-			  * ) PICFLAG=-fPIC ;;
-			esac ;;
-    s390*-*-*)		PICFLAG=-fpic ;;
-    sh*-*-*)		PICFLAG=-fPIC ;;
-  esac
+if [ "${shared}" != "yes" ]; then
+  PICFLAG=
 fi
 
 
@@ -4889,7 +4961,7 @@ host_makefile_frag=${frag}
 # It's OK to check for header files.  Although the compiler may not be
 # able to link anything, it had better be able to at least compile
 # something.
-for ac_header in sys/file.h sys/param.h limits.h stdlib.h malloc.h string.h unistd.h strings.h sys/time.h time.h sys/resource.h sys/stat.h sys/mman.h fcntl.h alloca.h sys/pstat.h sys/sysmp.h sys/sysinfo.h machine/hal_sysinfo.h sys/table.h sys/sysctl.h sys/systemcfg.h stdint.h stdio_ext.h
+for ac_header in sys/file.h sys/param.h limits.h stdlib.h malloc.h string.h unistd.h strings.h sys/time.h time.h sys/resource.h sys/stat.h sys/mman.h fcntl.h alloca.h sys/pstat.h sys/sysmp.h sys/sysinfo.h machine/hal_sysinfo.h sys/table.h sys/sysctl.h sys/systemcfg.h stdint.h stdio_ext.h process.h sys/prctl.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_preproc "$LINENO" "$ac_header" "$as_ac_Header"
@@ -5197,6 +5269,17 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+ac_fn_c_check_type "$LINENO" "ssize_t" "ac_cv_type_ssize_t" "$ac_includes_default"
+if test "x$ac_cv_type_ssize_t" = x""yes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define ssize_t int
+_ACEOF
+
+fi
+
 
 # Given the above check, we always have uintptr_t or a fallback
 # definition.  So define HAVE_UINTPTR_T in case any imported code
@@ -5257,6 +5340,7 @@ funcs="$funcs strchr"
 funcs="$funcs strdup"
 funcs="$funcs strncasecmp"
 funcs="$funcs strndup"
+funcs="$funcs strnlen"
 funcs="$funcs strrchr"
 funcs="$funcs strstr"
 funcs="$funcs strtod"
@@ -5270,14 +5354,16 @@ funcs="$funcs vprintf"
 funcs="$funcs vsnprintf"
 funcs="$funcs vsprintf"
 funcs="$funcs waitpid"
+funcs="$funcs setproctitle"
 
 # Also in the old function.def file: alloca, vfork, getopt.
 
 vars="sys_errlist sys_nerr sys_siglist"
 
-checkfuncs="getrusage on_exit psignal strerror strsignal sysconf times sbrk gettimeofday"
-checkfuncs="$checkfuncs realpath canonicalize_file_name pstat_getstatic pstat_getdynamic sysmp"
-checkfuncs="$checkfuncs getsysinfo table sysctl wait3 wait4 __fsetlocking"
+checkfuncs="__fsetlocking canonicalize_file_name dup3 getrlimit getrusage \
+ getsysinfo gettimeofday on_exit psignal pstat_getdynamic pstat_getstatic \
+ realpath setrlimit sbrk spawnve spawnvpe strerror strsignal sysconf sysctl \
+ sysmp table times wait3 wait4"
 
 # These are neither executed nor required, but they help keep
 # autoheader happy without adding a bunch of text to acconfig.h.
@@ -5285,16 +5371,18 @@ if test "x" = "y"; then
   for ac_func in asprintf atexit \
     basename bcmp bcopy bsearch bzero \
     calloc canonicalize_file_name clock \
+    dup3 \
     ffs __fsetlocking \
-    getcwd getpagesize getrusage getsysinfo gettimeofday \
+    getcwd getpagesize getrlimit getrusage getsysinfo gettimeofday \
     index insque \
     memchr memcmp memcpy memmem memmove memset mkstemps \
     on_exit \
     psignal pstat_getdynamic pstat_getstatic putenv \
     random realpath rename rindex \
-    sbrk setenv sigsetmask snprintf stpcpy stpncpy strcasecmp strchr strdup \
-     strerror strncasecmp strndup strrchr strsignal strstr strtod strtol \
-     strtoul strverscmp sysconf sysctl sysmp \
+    sbrk setenv setproctitle setrlimit sigsetmask snprintf spawnve spawnvpe \
+     stpcpy stpncpy strcasecmp strchr strdup \
+     strerror strncasecmp strndup strnlen strrchr strsignal strstr strtod \
+     strtol strtoul strverscmp sysconf sysctl sysmp \
     table times tmpnam \
     vasprintf vfprintf vprintf vsprintf \
     wait3 wait4 waitpid
@@ -5310,8 +5398,8 @@ _ACEOF
 fi
 done
 
-  ac_fn_c_check_decl "$LINENO" "basename" "ac_cv_have_decl_basename" "$ac_includes_default"
-if test "x$ac_cv_have_decl_basename" = x""yes; then :
+  ac_fn_c_check_decl "$LINENO" "basename(char *)" "ac_cv_have_decl_basename_char_p_" "$ac_includes_default"
+if test "x$ac_cv_have_decl_basename_char_p_" = x""yes; then :
   ac_have_decl=1
 else
   ac_have_decl=0
@@ -5576,6 +5664,12 @@ esac
 esac
 
     case " $LIBOBJS " in
+  *" strnlen.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS strnlen.$ac_objext"
+ ;;
+esac
+
+    case " $LIBOBJS " in
   *" strverscmp.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS strverscmp.$ac_objext"
  ;;
@@ -5596,7 +5690,7 @@ esac
 
     for f in $funcs; do
       case "$f" in
-	asprintf | basename | bcmp | bcopy | bzero | clock | ffs | getpagesize | index | insque | mempcpy | mkstemps | random | rindex | sigsetmask | stpcpy | stpncpy | strdup | strndup | strverscmp | vasprintf | waitpid)
+	asprintf | basename | bcmp | bcopy | bzero | clock | ffs | getpagesize | index | insque | mempcpy | mkstemps | random | rindex | sigsetmask | stpcpy | stpncpy | strdup | strndup | strnlen | strverscmp | vasprintf | waitpid)
 	  ;;
 	*)
 	  n=HAVE_`echo $f | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
@@ -6349,8 +6443,8 @@ _ACEOF
 fi
 done
 
-  ac_fn_c_check_decl "$LINENO" "basename" "ac_cv_have_decl_basename" "$ac_includes_default"
-if test "x$ac_cv_have_decl_basename" = x""yes; then :
+  ac_fn_c_check_decl "$LINENO" "basename(char *)" "ac_cv_have_decl_basename_char_p_" "$ac_includes_default"
+if test "x$ac_cv_have_decl_basename_char_p_" = x""yes; then :
   ac_have_decl=1
 else
   ac_have_decl=0
@@ -6533,10 +6627,10 @@ fi
 
 # Figure out which version of pexecute to use.
 case "${host}" in
-     *-*-mingw* | *-*-winnt*)	pexecute=./pex-win32.o  ;;
-     *-*-msdosdjgpp*)		pexecute=./pex-djgpp.o  ;;
-     *-*-msdos*)		pexecute=./pex-msdos.o  ;;
-     *)				pexecute=./pex-unix.o   ;;
+     *-*-mingw* | *-*-winnt*)	pexecute=pex-win32  ;;
+     *-*-msdosdjgpp*)		pexecute=pex-djgpp  ;;
+     *-*-msdos*)		pexecute=pex-msdos  ;;
+     *)				pexecute=pex-unix   ;;
 esac
 
 
@@ -6734,7 +6828,7 @@ if test "${ac_cv_func_strncmp_works+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  ac_cv_func_strncmp_works=no
+  ac_cv_func_strncmp_works=yes
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -6847,7 +6941,7 @@ LIBOBJS="$L"
 
 
 # We need multilib support, but only if configuring for the target.
-ac_config_files="$ac_config_files Makefile testsuite/Makefile"
+ac_config_files="$ac_config_files Makefile"
 
 ac_config_commands="$ac_config_commands default"
 
@@ -7551,7 +7645,6 @@ do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h:config.in" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "testsuite/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/Makefile" ;;
     "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

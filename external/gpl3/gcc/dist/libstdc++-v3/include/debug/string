@@ -1,7 +1,6 @@
 // Debugging string implementation -*- C++ -*-
 
-// Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2003-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -75,12 +74,12 @@ namespace __gnu_debug
     { }
 
     // Provides conversion from a release-mode string to a debug-mode string
-    basic_string(const _Base& __base) : _Base(__base), _Safe_base() { }
+    basic_string(const _Base& __base) : _Base(__base) { }
 
     // _GLIBCXX_RESOLVE_LIB_DEFECTS
     // 42. string ctors specify wrong default allocator
     basic_string(const basic_string& __str)
-    : _Base(__str, 0, _Base::npos, __str.get_allocator()), _Safe_base()
+    : _Base(__str, 0, _Base::npos, __str.get_allocator())
     { }
 
     // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -107,22 +106,24 @@ namespace __gnu_debug
 
     template<typename _InputIterator>
       basic_string(_InputIterator __begin, _InputIterator __end,
-		     const _Allocator& __a = _Allocator())
-      : _Base(__gnu_debug::__check_valid_range(__begin, __end), __end, __a)
+		   const _Allocator& __a = _Allocator())
+      : _Base(__gnu_debug::__base(__gnu_debug::__check_valid_range(__begin,
+								   __end)),
+	      __gnu_debug::__base(__end), __a)
       { }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-    basic_string(basic_string&& __str)
-    : _Base(std::forward<_Base>(__str))
+#if __cplusplus >= 201103L
+    basic_string(basic_string&& __str) noexcept
+    : _Base(std::move(__str))
     { }
 
     basic_string(std::initializer_list<_CharT> __l,
 		 const _Allocator& __a = _Allocator())
     : _Base(__l, __a)
     { }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
-    ~basic_string() { }
+    ~basic_string() _GLIBCXX_NOEXCEPT { }
 
     basic_string&
     operator=(const basic_string& __str)
@@ -149,11 +150,12 @@ namespace __gnu_debug
       return *this;
     }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
     basic_string&
     operator=(basic_string&& __str)
     {
-      *static_cast<_Base*>(this) = std::forward<_Base>(__str);
+      __glibcxx_check_self_move_assign(__str);
+      *static_cast<_Base*>(this) = std::move(__str);
       this->_M_invalidate_all();
       return *this;
     }
@@ -165,40 +167,58 @@ namespace __gnu_debug
       this->_M_invalidate_all();
       return *this;
     }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
     // 21.3.2 iterators:
     iterator
-    begin()
+    begin() _GLIBCXX_NOEXCEPT
     { return iterator(_Base::begin(), this); }
 
     const_iterator
-    begin() const
+    begin() const _GLIBCXX_NOEXCEPT
     { return const_iterator(_Base::begin(), this); }
 
     iterator
-    end()
+    end() _GLIBCXX_NOEXCEPT
     { return iterator(_Base::end(), this); }
 
     const_iterator
-    end() const
+    end() const _GLIBCXX_NOEXCEPT
     { return const_iterator(_Base::end(), this); }
 
     reverse_iterator
-    rbegin()
+    rbegin() _GLIBCXX_NOEXCEPT
     { return reverse_iterator(end()); }
 
     const_reverse_iterator
-    rbegin() const
+    rbegin() const _GLIBCXX_NOEXCEPT
     { return const_reverse_iterator(end()); }
 
     reverse_iterator
-    rend()
+    rend() _GLIBCXX_NOEXCEPT
     { return reverse_iterator(begin()); }
 
     const_reverse_iterator
-    rend() const
+    rend() const _GLIBCXX_NOEXCEPT
     { return const_reverse_iterator(begin()); }
+
+#if __cplusplus >= 201103L
+    const_iterator
+    cbegin() const noexcept
+    { return const_iterator(_Base::begin(), this); }
+
+    const_iterator
+    cend() const noexcept
+    { return const_iterator(_Base::end(), this); }
+
+    const_reverse_iterator
+    crbegin() const noexcept
+    { return const_reverse_iterator(end()); }
+
+    const_reverse_iterator
+    crend() const noexcept
+    { return const_reverse_iterator(begin()); }
+#endif
 
     // 21.3.3 capacity:
     using _Base::size;
@@ -216,15 +236,28 @@ namespace __gnu_debug
     resize(size_type __n)
     { this->resize(__n, _CharT()); }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-    using _Base::shrink_to_fit;
+#if __cplusplus >= 201103L
+    void
+    shrink_to_fit()
+    {
+      if (capacity() > size())
+	{
+	  __try
+	    {
+	      reserve(0);
+	      this->_M_invalidate_all();
+	    }
+	  __catch(...)
+	    { }
+	}
+    }
 #endif
 
     using _Base::capacity;
     using _Base::reserve;
 
     void
-    clear()
+    clear() _GLIBCXX_NOEXCEPT
     {
       _Base::clear();
       this->_M_invalidate_all();
@@ -262,6 +295,11 @@ namespace __gnu_debug
 
     using _Base::at;
 
+#if __cplusplus >= 201103L
+    using _Base::front;
+    using _Base::back;
+#endif
+
     // 21.3.5 modifiers:
     basic_string&
     operator+=(const basic_string& __str)
@@ -288,7 +326,7 @@ namespace __gnu_debug
       return *this;
     }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
     basic_string&
     operator+=(std::initializer_list<_CharT> __l)
     {
@@ -296,7 +334,7 @@ namespace __gnu_debug
       this->_M_invalidate_all();
       return *this;
     }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
     basic_string&
     append(const basic_string& __str)
@@ -345,7 +383,8 @@ namespace __gnu_debug
       append(_InputIterator __first, _InputIterator __last)
       {
 	__glibcxx_check_valid_range(__first, __last);
-	_Base::append(__first, __last);
+	_Base::append(__gnu_debug::__base(__first),
+		      __gnu_debug::__base(__last));
 	this->_M_invalidate_all();
 	return *this;
       }
@@ -367,15 +406,15 @@ namespace __gnu_debug
       return *this;
     }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
     basic_string&
     assign(basic_string&& __x)
     {
-      _Base::assign(std::forward<_Base>(__x));
+      _Base::assign(std::move(__x));
       this->_M_invalidate_all();
       return *this;
     }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
     basic_string&
     assign(const basic_string& __str, size_type __pos, size_type __n)
@@ -416,12 +455,13 @@ namespace __gnu_debug
       assign(_InputIterator __first, _InputIterator __last)
       {
 	__glibcxx_check_valid_range(__first, __last);
-	_Base::assign(__first, __last);
+	_Base::assign(__gnu_debug::__base(__first),
+		      __gnu_debug::__base(__last));
 	this->_M_invalidate_all();
 	return *this;
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
     basic_string&
     assign(std::initializer_list<_CharT> __l)
     {
@@ -429,7 +469,7 @@ namespace __gnu_debug
       this->_M_invalidate_all();
       return *this;
     }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
     basic_string&
     insert(size_type __pos1, const basic_string& __str)
@@ -496,18 +536,20 @@ namespace __gnu_debug
       insert(iterator __p, _InputIterator __first, _InputIterator __last)
       {
 	__glibcxx_check_insert_range(__p, __first, __last);
-	_Base::insert(__p.base(), __first, __last);
+	_Base::insert(__p.base(), __gnu_debug::__base(__first),
+				  __gnu_debug::__base(__last));
 	this->_M_invalidate_all();
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
     void
     insert(iterator __p, std::initializer_list<_CharT> __l)
     {
-      _Base::insert(__p, __l);
+      __glibcxx_check_insert(__p);
+      _Base::insert(__p.base(), __l);
       this->_M_invalidate_all();
     }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
     basic_string&
     erase(size_type __pos = 0, size_type __n = _Base::npos)
@@ -537,6 +579,16 @@ namespace __gnu_debug
       this->_M_invalidate_all();
       return iterator(__res, this);
     }
+
+#if __cplusplus >= 201103L
+    void
+    pop_back()
+    {
+      __glibcxx_check_nonempty();
+      _Base::pop_back();
+      this->_M_invalidate_all();
+    }
+#endif // C++11
 
     basic_string&
     replace(size_type __pos1, size_type __n1, const basic_string& __str)
@@ -632,7 +684,7 @@ namespace __gnu_debug
 	return *this;
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       basic_string& replace(iterator __i1, iterator __i2,
 			    std::initializer_list<_CharT> __l)
       {
@@ -641,7 +693,7 @@ namespace __gnu_debug
 	this->_M_invalidate_all();
 	return *this;
       }
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
     size_type
     copy(_CharT* __s, size_type __n, size_type __pos = 0) const
@@ -661,7 +713,7 @@ namespace __gnu_debug
 
     // 21.3.6 string operations:
     const _CharT*
-    c_str() const
+    c_str() const _GLIBCXX_NOEXCEPT
     {
       const _CharT* __res = _Base::c_str();
       this->_M_invalidate_all();
@@ -669,7 +721,7 @@ namespace __gnu_debug
     }
 
     const _CharT*
-    data() const
+    data() const _GLIBCXX_NOEXCEPT
     {
       const _CharT* __res = _Base::data();
       this->_M_invalidate_all();
@@ -680,6 +732,7 @@ namespace __gnu_debug
 
     size_type
     find(const basic_string& __str, size_type __pos = 0) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::find(__str, __pos); }
 
     size_type
@@ -697,11 +750,12 @@ namespace __gnu_debug
     }
 
     size_type
-    find(_CharT __c, size_type __pos = 0) const
+    find(_CharT __c, size_type __pos = 0) const _GLIBCXX_NOEXCEPT
     { return _Base::find(__c, __pos); }
 
     size_type
     rfind(const basic_string& __str, size_type __pos = _Base::npos) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::rfind(__str, __pos); }
 
     size_type
@@ -719,11 +773,12 @@ namespace __gnu_debug
     }
 
     size_type
-    rfind(_CharT __c, size_type __pos = _Base::npos) const
+    rfind(_CharT __c, size_type __pos = _Base::npos) const _GLIBCXX_NOEXCEPT
     { return _Base::rfind(__c, __pos); }
 
     size_type
     find_first_of(const basic_string& __str, size_type __pos = 0) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::find_first_of(__str, __pos); }
 
     size_type
@@ -741,12 +796,12 @@ namespace __gnu_debug
     }
 
     size_type
-    find_first_of(_CharT __c, size_type __pos = 0) const
+    find_first_of(_CharT __c, size_type __pos = 0) const _GLIBCXX_NOEXCEPT
     { return _Base::find_first_of(__c, __pos); }
 
     size_type
     find_last_of(const basic_string& __str, 
-		 size_type __pos = _Base::npos) const
+		 size_type __pos = _Base::npos) const _GLIBCXX_NOEXCEPT
     { return _Base::find_last_of(__str, __pos); }
 
     size_type
@@ -765,10 +820,12 @@ namespace __gnu_debug
 
     size_type
     find_last_of(_CharT __c, size_type __pos = _Base::npos) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::find_last_of(__c, __pos); }
 
     size_type
     find_first_not_of(const basic_string& __str, size_type __pos = 0) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::find_first_not_of(__str, __pos); }
 
     size_type
@@ -786,12 +843,13 @@ namespace __gnu_debug
     }
 
     size_type
-    find_first_not_of(_CharT __c, size_type __pos = 0) const
+    find_first_not_of(_CharT __c, size_type __pos = 0) const _GLIBCXX_NOEXCEPT
     { return _Base::find_first_not_of(__c, __pos); }
 
     size_type
     find_last_not_of(const basic_string& __str,
 				  size_type __pos = _Base::npos) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::find_last_not_of(__str, __pos); }
 
     size_type
@@ -810,6 +868,7 @@ namespace __gnu_debug
 
     size_type
     find_last_not_of(_CharT __c, size_type __pos = _Base::npos) const
+      _GLIBCXX_NOEXCEPT
     { return _Base::find_last_not_of(__c, __pos); }
 
     basic_string
@@ -857,10 +916,10 @@ namespace __gnu_debug
     }
 
     _Base&
-    _M_base() { return *this; }
+    _M_base() _GLIBCXX_NOEXCEPT       { return *this; }
 
     const _Base&
-    _M_base() const { return *this; }
+    _M_base() const _GLIBCXX_NOEXCEPT { return *this; }
 
     using _Safe_base::_M_invalidate_all;
   };

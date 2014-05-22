@@ -2,14 +2,8 @@
  * P2P - Internal definitions for P2P module
  * Copyright (c) 2009-2010, Atheros Communications
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef P2P_I_H
@@ -67,7 +61,7 @@ struct p2p_device {
 	size_t oper_ssid_len;
 
 	/**
-	 * req_config_methods - Pending provisioning discovery methods
+	 * req_config_methods - Pending provision discovery methods
 	 */
 	u16 req_config_methods;
 
@@ -96,6 +90,7 @@ struct p2p_device {
 #define P2P_DEV_PD_FOR_JOIN BIT(14)
 #define P2P_DEV_REPORTED_ONCE BIT(15)
 #define P2P_DEV_PREFER_PERSISTENT_RECONN BIT(16)
+#define P2P_DEV_PD_BEFORE_GO_NEG BIT(17)
 	unsigned int flags;
 
 	int status; /* enum p2p_status_code */
@@ -114,6 +109,7 @@ struct p2p_sd_query {
 	struct p2p_sd_query *next;
 	u8 peer[ETH_ALEN];
 	int for_all_peers;
+	int wsd; /* Wi-Fi Display Service Discovery Request */
 	struct wpabuf *tlvs;
 };
 
@@ -212,6 +208,11 @@ struct p2p_data {
 		 * P2P_SEARCH_WHEN_READY - Waiting to start Search
 		 */
 		P2P_SEARCH_WHEN_READY,
+
+		/**
+		 * P2P_CONTINUE_SEARCH_WHEN_READY - Waiting to continue Search
+		 */
+		P2P_CONTINUE_SEARCH_WHEN_READY,
 	} state;
 
 	/**
@@ -223,6 +224,11 @@ struct p2p_data {
 	 * max_disc_int - maxDiscoverableInterval
 	 */
 	int max_disc_int;
+
+	/**
+	 * max_disc_tu - Maximum number of TUs for discoverable interval
+	 */
+	int max_disc_tu;
 
 	/**
 	 * devices - List of known P2P Device peers
@@ -429,6 +435,27 @@ struct p2p_data {
 	 * in IDLE state.
 	 */
 	int pd_retries;
+
+	u8 go_timeout;
+	u8 client_timeout;
+
+	/* Extra delay in milliseconds between search iterations */
+	unsigned int search_delay;
+	int in_search_delay;
+
+#ifdef CONFIG_WIFI_DISPLAY
+	struct wpabuf *wfd_ie_beacon;
+	struct wpabuf *wfd_ie_probe_req;
+	struct wpabuf *wfd_ie_probe_resp;
+	struct wpabuf *wfd_ie_assoc_req;
+	struct wpabuf *wfd_ie_invitation;
+	struct wpabuf *wfd_ie_prov_disc_req;
+	struct wpabuf *wfd_ie_prov_disc_resp;
+	struct wpabuf *wfd_ie_go_neg;
+	struct wpabuf *wfd_dev_info;
+	struct wpabuf *wfd_assoc_bssid;
+	struct wpabuf *wfd_coupled_sink_info;
+#endif /* CONFIG_WIFI_DISPLAY */
 };
 
 /**
@@ -437,6 +464,7 @@ struct p2p_data {
 struct p2p_message {
 	struct wpabuf *p2p_attributes;
 	struct wpabuf *wps_attributes;
+	struct wpabuf *wfd_subelems;
 
 	u8 dialog_token;
 
@@ -555,6 +583,10 @@ const u8 * p2p_group_get_interface_addr(struct p2p_group *group);
 u8 p2p_group_presence_req(struct p2p_group *group,
 			  const u8 *client_interface_addr,
 			  const u8 *noa, size_t noa_len);
+int p2p_group_is_group_id_match(struct p2p_group *group, const u8 *group_id,
+				size_t group_id_len);
+void p2p_group_update_ies(struct p2p_group *group);
+struct wpabuf * p2p_group_get_wfd_ie(struct p2p_group *g);
 
 
 void p2p_buf_add_action_hdr(struct wpabuf *buf, u8 subtype, u8 dialog_token);
@@ -586,7 +618,7 @@ void p2p_buf_add_noa(struct wpabuf *buf, u8 noa_index, u8 opp_ps, u8 ctwindow,
 void p2p_buf_add_ext_listen_timing(struct wpabuf *buf, u16 period,
 				   u16 interval);
 void p2p_buf_add_p2p_interface(struct wpabuf *buf, struct p2p_data *p2p);
-void p2p_build_wps_ie(struct p2p_data *p2p, struct wpabuf *buf, u16 pw_id,
+void p2p_build_wps_ie(struct p2p_data *p2p, struct wpabuf *buf, int pw_id,
 		      int all_attr);
 
 /* p2p_sd.c */
@@ -614,6 +646,9 @@ void p2p_process_go_neg_resp(struct p2p_data *p2p, const u8 *sa,
 void p2p_process_go_neg_conf(struct p2p_data *p2p, const u8 *sa,
 			     const u8 *data, size_t len);
 int p2p_connect_send(struct p2p_data *p2p, struct p2p_device *dev);
+u16 p2p_wps_method_pw_id(enum p2p_wps_method wps_method);
+void p2p_reselect_channel(struct p2p_data *p2p,
+			  struct p2p_channels *intersection);
 
 /* p2p_pd.c */
 void p2p_process_prov_disc_req(struct p2p_data *p2p, const u8 *sa,
@@ -657,8 +692,9 @@ struct p2p_device * p2p_add_dev_from_go_neg_req(struct p2p_data *p2p,
 						struct p2p_message *msg);
 void p2p_add_dev_info(struct p2p_data *p2p, const u8 *addr,
 		      struct p2p_device *dev, struct p2p_message *msg);
-int p2p_add_device(struct p2p_data *p2p, const u8 *addr, int freq, int level,
-		   const u8 *ies, size_t ies_len);
+int p2p_add_device(struct p2p_data *p2p, const u8 *addr, int freq,
+		   unsigned int age_ms, int level, const u8 *ies,
+		   size_t ies_len, int scan_res);
 struct p2p_device * p2p_get_device(struct p2p_data *p2p, const u8 *addr);
 struct p2p_device * p2p_get_device_interface(struct p2p_data *p2p,
 					     const u8 *addr);

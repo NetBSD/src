@@ -1,6 +1,6 @@
 /* Disassemble V850 instructions.
-   Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2005, 2007, 2010
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2005, 2007, 2010,
+   2012  Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -20,9 +20,8 @@
    MA 02110-1301, USA.  */
 
 
-#include <stdio.h>
-
 #include "sysdep.h"
+#include <stdio.h>
 #include "opcode/v850.h"
 #include "dis-asm.h"
 #include "opintl.h"
@@ -283,6 +282,7 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 	       *opindex_ptr != 0;
 	       opindex_ptr++, opnum++)
 	    {
+	      bfd_boolean square = FALSE;
 	      long value;
 	      int flag;
 	      char *prefix;
@@ -323,11 +323,17 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 		}
 
 	      if (opnum == 1 && opnum == memop)
-		info->fprintf_func (info->stream, "%s[", prefix);
+		{
+		  info->fprintf_func (info->stream, "%s[", prefix);
+		  square = TRUE;
+		}
 	      else if (opnum > 1
 		       && (v850_operands[*(opindex_ptr - 1)].flags & V850_OPERAND_DISP) != 0
 		       && opnum == memop)
-		info->fprintf_func (info->stream, "%s[", prefix);
+		{
+		  info->fprintf_func (info->stream, "%s[", prefix);
+		  square = TRUE;
+		}
 	      else if (opnum > 1)
 		info->fprintf_func (info->stream, ", %s", prefix);
 
@@ -400,7 +406,7 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 				  else
 				    shown_one = 1;
 
-				  info->fprintf_func (info->stream, v850_reg_names[first]);
+				  info->fprintf_func (info->stream, "%s", v850_reg_names[first]);
 
 				  for (bit++; bit < 32; bit++)
 				    if ((mask & (1 << bit)) == 0)
@@ -431,7 +437,7 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 		  break;
 		}
 
-	      if (opnum == 2 && opnum == memop)
+	      if (square)
 		(*info->fprintf_func) (info->stream, "]");
 	    }
 

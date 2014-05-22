@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright 2009, 2012 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -227,7 +227,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
   prev_insn_vma = curr_insn_vma;
 
   if (op->name == NULL)
-    print_func (stream, ".short 0x%04x", inst);
+    print_func (stream, ".short 0x%04x", (unsigned int) inst);
   else
     {
       print_func (stream, "%s", op->name);
@@ -383,7 +383,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 	  break;
 	default:
 	  /* If the disassembler lags the instruction set.  */
-	  print_func (stream, "\tundecoded operands, inst is 0x%04x", inst);
+	  print_func (stream, "\tundecoded operands, inst is 0x%04x", (unsigned int) inst);
 	  break;
 	}
     }

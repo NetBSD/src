@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -80,7 +80,6 @@ namespace __gnu_parallel
       *  @param __result Begin iterator of output sequence.
       *  @param __bin_op Associative binary function.
       *  @param __n Length of sequence.
-      *  @param __num_threads Number of threads to use.
       *  @return End iterator of output sequence.
       */
   template<typename _IIter,
@@ -124,13 +123,16 @@ namespace __gnu_parallel
 	  __borders = new _DifferenceType[__num_threads + 2];
 
 	  if (__s.partial_sum_dilation == 1.0f)
-	    equally_split(__n, __num_threads + 1, __borders);
+	    __equally_split(__n, __num_threads + 1, __borders);
 	  else
 	    {
+	      _DifferenceType __first_part_length =
+		  std::max<_DifferenceType>(1,
+		    __n / (1.0f + __s.partial_sum_dilation * __num_threads));
 	      _DifferenceType __chunk_length =
-		((double)__n
-		 / ((double)__num_threads + __s.partial_sum_dilation)),
-		__borderstart = __n - __num_threads * __chunk_length;
+		  (__n - __first_part_length) / __num_threads;
+	      _DifferenceType __borderstart =
+		  __n - __num_threads * __chunk_length;
 	      __borders[0] = 0;
 	      for (_ThreadIndex __i = 1; __i < (__num_threads + 1); ++__i)
 		{
@@ -181,7 +183,10 @@ namespace __gnu_parallel
 					__bin_op, __sums[__iam]);
       } //parallel
 
+      for (_ThreadIndex __i = 0; __i < __num_threads; ++__i)
+	__sums[__i].~_ValueType();
       ::operator delete(__sums);
+
       delete[] __borders;
 
       return __result + __n;

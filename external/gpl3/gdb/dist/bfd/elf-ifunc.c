@@ -125,11 +125,11 @@ _bfd_elf_create_ifunc_dyn_reloc (bfd *abfd, struct bfd_link_info *info,
       sreloc = _bfd_elf_make_dynamic_reloc_section (sec, htab->dynobj,
 						    bed->s->log_file_align,
 						    abfd,
-						    bed->rela_plts_and_copies_p); 
+						    bed->rela_plts_and_copies_p);
       if (sreloc == NULL)
 	return NULL;
     }
-		      
+
   p = *head;
   if (p == NULL || p->sec != sec)
     {
@@ -175,7 +175,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 	  || info->export_dynamic)
       && h->pointer_equality_needed)
     {
-      info->callbacks->einfo 
+      info->callbacks->einfo
 	(_("%F%P: dynamic STT_GNU_IFUNC symbol `%s' with pointer "
 	   "equality in `%B' can not be used when making an "
 	   "executable; recompile with -fPIE and relink with -pie\n"),
@@ -251,7 +251,7 @@ keep:
     }
 
   /* Don't update value of STT_GNU_IFUNC symbol to PLT.  We need
-     the original value for R_*_IRELATIVE.  */  
+     the original value for R_*_IRELATIVE.  */
   h->plt.offset = plt->size;
 
   /* Make room for this entry in the .plt/.iplt section.  */
@@ -299,9 +299,10 @@ keep:
      5. Otherwise use .got so that it can be shared among different
      objects at run-time.
      We only need to relocate .got entry in shared object.  */
-  if ((info->shared
-       && (h->dynindx == -1
-	   || h->forced_local))
+  if (h->got.refcount <= 0
+      || (info->shared
+	  && (h->dynindx == -1
+	      || h->forced_local))
       || (!info->shared
 	  && !h->pointer_equality_needed)
       || (info->executable && info->shared)

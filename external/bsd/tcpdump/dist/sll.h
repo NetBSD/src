@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/sll.h,v 1.8 2008-05-30 01:37:41 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/sll.h,v 1.8 2008-05-30 01:37:41 guy Exp  (LBL)
  */
 
 /*

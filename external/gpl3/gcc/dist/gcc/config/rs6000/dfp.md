@@ -1,6 +1,5 @@
 ;; Decimal Floating Point (DFP) patterns.
-;; Copyright (C) 2007, 2008, 2010
-;; Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 ;; Contributed by Ben Elliston (bje@au.ibm.com) and Peter Bergner
 ;; (bergner@vnet.ibm.com).
 
@@ -24,9 +23,9 @@
 ;; UNSPEC usage
 ;;
 
-(define_constants
-  [(UNSPEC_MOVSD_LOAD		400)
-   (UNSPEC_MOVSD_STORE		401)
+(define_c_enum "unspec"
+  [UNSPEC_MOVSD_LOAD
+   UNSPEC_MOVSD_STORE
   ])
 
 
@@ -62,46 +61,44 @@
 }")
 
 (define_insn "movsd_hardfloat"
-  [(set (match_operand:SD 0 "nonimmediate_operand" "=r,r,m,f,*c*l,*q,!r,*h,!r,!r")
-	(match_operand:SD 1 "input_operand"        "r,m,r,f,r,r,h,0,G,Fn"))]
+  [(set (match_operand:SD 0 "nonimmediate_operand" "=r,r,m,f,*c*l,!r,*h,!r,!r")
+	(match_operand:SD 1 "input_operand"        "r,m,r,f,r,h,0,G,Fn"))]
   "(gpc_reg_operand (operands[0], SDmode)
    || gpc_reg_operand (operands[1], SDmode))
    && (TARGET_HARD_FLOAT && TARGET_FPRS)"
   "@
    mr %0,%1
-   {l%U1%X1|lwz%U1%X1} %0,%1
-   {st%U0%X0|stw%U0%X0} %1,%0
+   lwz%U1%X1 %0,%1
+   stw%U0%X0 %1,%0
    fmr %0,%1
    mt%0 %1
-   mt%0 %1
    mf%1 %0
-   {cror 0,0,0|nop}
+   nop
    #
    #"
-  [(set_attr "type" "*,load,store,fp,mtjmpr,*,mfjmpr,*,*,*")
-   (set_attr "length" "4,4,4,4,4,4,4,4,4,8")])
+  [(set_attr "type" "*,load,store,fp,mtjmpr,mfjmpr,*,*,*")
+   (set_attr "length" "4,4,4,4,4,4,4,4,8")])
 
 (define_insn "movsd_softfloat"
-  [(set (match_operand:SD 0 "nonimmediate_operand" "=r,cl,q,r,r,m,r,r,r,r,r,*h")
-	(match_operand:SD 1 "input_operand" "r,r,r,h,m,r,I,L,R,G,Fn,0"))]
+  [(set (match_operand:SD 0 "nonimmediate_operand" "=r,cl,r,r,m,r,r,r,r,r,*h")
+	(match_operand:SD 1 "input_operand" "r,r,h,m,r,I,L,R,G,Fn,0"))]
   "(gpc_reg_operand (operands[0], SDmode)
    || gpc_reg_operand (operands[1], SDmode))
    && (TARGET_SOFT_FLOAT || !TARGET_FPRS)"
   "@
    mr %0,%1
    mt%0 %1
-   mt%0 %1
    mf%1 %0
-   {l%U1%X1|lwz%U1%X1} %0,%1
-   {st%U0%X0|stw%U0%X0} %1,%0
-   {lil|li} %0,%1
-   {liu|lis} %0,%v1
-   {cal|la} %0,%a1
+   lwz%U1%X1 %0,%1
+   stw%U0%X0 %1,%0
+   li %0,%1
+   lis %0,%v1
+   la %0,%a1
    #
    #
-   {cror 0,0,0|nop}"
-  [(set_attr "type" "*,mtjmpr,*,mfjmpr,load,store,*,*,*,*,*,*")
-   (set_attr "length" "4,4,4,4,4,4,4,4,4,4,8,4")])
+   nop"
+  [(set_attr "type" "*,mtjmpr,mfjmpr,load,store,*,*,*,*,*,*")
+   (set_attr "length" "4,4,4,4,4,4,4,4,4,8,4")])
 
 (define_insn "movsd_store"
   [(set (match_operand:DD 0 "nonimmediate_operand" "=m")
@@ -338,7 +335,7 @@
    stfd%U0%X0 %1,%0
    mt%0 %1
    mf%1 %0
-   {cror 0,0,0|nop}
+   nop
    #
    #
    #
@@ -364,7 +361,7 @@
    stfd%U0%X0 %1,%0
    mt%0 %1
    mf%1 %0
-   {cror 0,0,0|nop}
+   nop
    #
    #
    #"
@@ -386,7 +383,7 @@
    #
    #
    #
-   {cror 0,0,0|nop}"
+   nop"
   [(set_attr "type" "load,store,*,mtjmpr,mfjmpr,*,*,*,*")
    (set_attr "length" "4,4,4,4,4,8,12,16,4")])
 
@@ -397,11 +394,14 @@
   "")
 
 (define_insn "*negtd2_fpr"
-  [(set (match_operand:TD 0 "gpc_reg_operand" "=d")
-	(neg:TD (match_operand:TD 1 "gpc_reg_operand" "d")))]
+  [(set (match_operand:TD 0 "gpc_reg_operand" "=d,d")
+	(neg:TD (match_operand:TD 1 "gpc_reg_operand" "0,d")))]
   "TARGET_HARD_FLOAT && TARGET_FPRS"
-  "fneg %0,%1"
-  [(set_attr "type" "fp")])
+  "@
+   fneg %0,%1
+   fneg %0,%1\;fmr %L0,%L1"
+  [(set_attr "type" "fp")
+   (set_attr "length" "4,8")])
 
 (define_expand "abstd2"
   [(set (match_operand:TD 0 "gpc_reg_operand" "")
@@ -429,12 +429,12 @@
   "TARGET_HARD_FLOAT && TARGET_FPRS"
   "{ rs6000_emit_move (operands[0], operands[1], TDmode); DONE; }")
 
-; It's important to list the o->f and f->o moves before f->f because
-; otherwise reload, given m->f, will try to pick f->f and reload it,
-; which doesn't make progress.  Likewise r->Y must be before r->r.
+; It's important to list the Y->r and r->Y moves before r->r because
+; otherwise reload, given m->r, will try to pick r->r and reload it,
+; which doesn't make progress.
 (define_insn_and_split "*movtd_internal"
-  [(set (match_operand:TD 0 "nonimmediate_operand" "=o,d,d,r,Y,r")
-	(match_operand:TD 1 "input_operand"         "d,o,d,YGHF,r,r"))]
+  [(set (match_operand:TD 0 "nonimmediate_operand" "=m,d,d,Y,r,r")
+	(match_operand:TD 1 "input_operand"         "d,m,d,r,YGHF,r"))]
   "TARGET_HARD_FLOAT && TARGET_FPRS
    && (gpc_reg_operand (operands[0], TDmode)
        || gpc_reg_operand (operands[1], TDmode))"
@@ -545,6 +545,13 @@
   "TARGET_DFP"
   "dcmpuq %0,%1,%2"
   [(set_attr "type" "fpcompare")])
+
+(define_insn "floatdidd2"
+  [(set (match_operand:DD 0 "gpc_reg_operand" "=d")
+	(float:DD (match_operand:DI 1 "gpc_reg_operand" "d")))]
+  "TARGET_DFP && TARGET_POPCNTD"
+  "dcffix %0,%1"
+  [(set_attr "type" "fp")])
 
 (define_insn "floatditd2"
   [(set (match_operand:TD 0 "gpc_reg_operand" "=d")

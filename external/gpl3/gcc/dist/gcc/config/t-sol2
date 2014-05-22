@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2008, 2009, 2010 Free Software Foundation, Inc.
+# Copyright (C) 2004-2013 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -18,13 +18,21 @@
 
 # Solaris-specific format checking and pragmas
 sol2-c.o: $(srcdir)/config/sol2-c.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
-  tree.h c-format.h intl.h $(CPPLIB_H) c-pragma.h $(TM_H) $(TM_P_H) \
-  toplev.h $(C_COMMON_H)
-	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	  $(srcdir)/config/sol2-c.c
+  tree.h c-family/c-format.h $(C_PRAGMA_H) $(C_COMMON_H) $(CPPLIB_H) \
+  intl.h $(TM_H) $(TM_P_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
+
+# Solaris-specific C++ mangling.
+sol2-cxx.o: $(srcdir)/config/sol2-cxx.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
+  tree.h cp/cp-tree.h $(TM_H) $(TM_P_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
+
+# Corresponding stub routines.
+sol2-stubs.o: $(srcdir)/config/sol2-stubs.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
+  tree.h $(TM_H) $(TM_P_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
 # Solaris-specific attributes
 sol2.o: $(srcdir)/config/sol2.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
-  tree.h output.h $(TM_H) $(TM_P_H) toplev.h $(GGC_H)
-	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	  $(srcdir)/config/sol2.c
+  tree.h output.h $(TM_H) $(TARGET_H) $(TM_P_H) $(GGC_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<

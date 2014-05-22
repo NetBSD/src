@@ -1,5 +1,5 @@
 /* OS independent definitions for AMD x86-64.
-   Copyright (C) 2001, 2005, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Bo Thorsen <bo@suse.de>.
 
 This file is part of GCC.
@@ -37,10 +37,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define MCOUNT_NAME "mcount"
 
 #undef SIZE_TYPE
-#define SIZE_TYPE (TARGET_64BIT ? "long unsigned int" : "unsigned int")
+#define SIZE_TYPE (TARGET_LP64 ? "long unsigned int" : "unsigned int")
 
 #undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
+#define PTRDIFF_TYPE (TARGET_LP64 ? "long int" : "int")
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
@@ -48,12 +48,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-#undef CC1_SPEC
-#define CC1_SPEC "%(cc1_cpu) %{profile:-p}"
-
 #undef ASM_SPEC
-#define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} \
- %{Wa,*:%*} %{m32:--32} %{m64:--64}"
+#define ASM_SPEC "%{m32:--32} %{m64:--64}"
 
 #undef ASM_OUTPUT_ALIGNED_BSS
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
@@ -107,3 +103,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #undef TARGET_ASM_UNIQUE_SECTION
 #define TARGET_ASM_UNIQUE_SECTION  x86_64_elf_unique_section
+
+#undef TARGET_SECTION_TYPE_FLAGS
+#define TARGET_SECTION_TYPE_FLAGS  x86_64_elf_section_type_flags

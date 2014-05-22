@@ -66,11 +66,19 @@
 
 #define  OPT_CAST(x)
 
+#ifdef __x86_64__
+typedef unsigned long mp_digit;
+typedef unsigned long mp_word __attribute__((mode(TI)));
+
+#define DIGIT_BIT 60
+#define MP_64BIT
+#else
 typedef unsigned long mp_digit;
 typedef u64 mp_word;
 
 #define DIGIT_BIT          28
 #define MP_28BIT
+#endif
 
 
 #define XMALLOC  os_malloc
@@ -2678,7 +2686,7 @@ mp_montgomery_setup (mp_int * n, mp_digit * rho)
  *
  * Based on Algorithm 14.32 on pp.601 of HAC.
 */
-int fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
+static int fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
 {
   int     ix, res, olduse;
   mp_word W[MP_WARRAY];

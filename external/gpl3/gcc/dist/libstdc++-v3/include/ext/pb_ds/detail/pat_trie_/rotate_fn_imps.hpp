@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file rotate_fn_imps.hpp
+ * @file pat_trie_/rotate_fn_imps.hpp
  * Contains imps for rotating nodes.
  */
 
@@ -46,7 +46,7 @@ rotate_left(node_pointer p_x)
   node_pointer p_y = p_x->m_p_right;
   p_x->m_p_right = p_y->m_p_left;
 
-  if (p_y->m_p_left != NULL)
+  if (p_y->m_p_left != 0)
     p_y->m_p_left->m_p_parent = p_x;
 
   p_y->m_p_parent = p_x->m_p_parent;
@@ -63,8 +63,8 @@ rotate_left(node_pointer p_x)
   _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_x);)
   _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_y);)
 
-  apply_update(p_x, (Node_Update* )this);
-  apply_update(p_x->m_p_parent, (Node_Update* )this);
+  apply_update(p_x, (Node_Update*)this);
+  apply_update(p_x->m_p_parent, (Node_Update*)this);
 }
 
 PB_DS_CLASS_T_DEC
@@ -75,7 +75,7 @@ rotate_right(node_pointer p_x)
   node_pointer p_y = p_x->m_p_left;
   p_x->m_p_left = p_y->m_p_right;
 
-  if (p_y->m_p_right != NULL)
+  if (p_y->m_p_right != 0)
     p_y->m_p_right->m_p_parent = p_x;
 
   p_y->m_p_parent = p_x->m_p_parent;
@@ -92,8 +92,8 @@ rotate_right(node_pointer p_x)
   _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_x);)
   _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_y);)
 
-  apply_update(p_x, (Node_Update* )this);
-  apply_update(p_x->m_p_parent, (Node_Update* )this);
+  apply_update(p_x, (Node_Update*)this);
+  apply_update(p_x->m_p_parent, (Node_Update*)this);
 }
 
 PB_DS_CLASS_T_DEC
@@ -122,10 +122,10 @@ inline void
 PB_DS_CLASS_C_DEC::
 apply_update(node_pointer p_nd, Node_Update_* p_update)
 {
-  p_update->operator()(& PB_DS_V2F(p_nd->m_value),(p_nd->m_p_left == NULL) ?
-			NULL :
-			& PB_DS_V2F(p_nd->m_p_left->m_value),(p_nd->m_p_right == NULL) ?
-			NULL :
+  p_update->operator()(& PB_DS_V2F(p_nd->m_value),(p_nd->m_p_left == 0) ?
+			0 :
+			& PB_DS_V2F(p_nd->m_p_left->m_value),(p_nd->m_p_right == 0) ?
+			0 :
 			& PB_DS_V2F(p_nd->m_p_right->m_value));
 }
 

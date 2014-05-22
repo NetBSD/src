@@ -80,9 +80,9 @@ elif [ -d "$SYSCONFDIR"/resolvconf ]; then
 	SYSCONFDIR="$SYSCONFDIR/resolvconf/resolv.conf.d"
 	base="$SYSCONFDIR/resolv.conf.d/base"
 	if [ -f "$base" ]; then
-		name_servers="$(key_get_value "nameserver " "$base")"
+		prepend_nameservers="$(key_get_value "nameserver " "$base")"
 		domain="$(key_get_value "domain " "$base")"
-		search_domains="$(key_get_value "search " "$base")"
+		prepend_search="$(key_get_value "search " "$base")"
 		resolv_conf_options="$(key_get_value "options " "$base")"
 		resolv_conf_sortlist="$(key_get_value "sortlist " "$base")"
 	fi
@@ -97,7 +97,7 @@ fi
 : ${resolv_conf:=/etc/resolv.conf}
 : ${libc_service:=nscd}
 : ${libc_restart:=@RESTARTCMD ${libc_service}@}
-: ${list_resolv:=@PREFIX@/sbin/resolvconf -l}
+: ${list_resolv:=@SBINDIR@/resolvconf -l}
 if [ "${resolv_conf_head-x}" = x -a -f "$SYSCONFDIR"/resolv.conf.head ]; then
 	resolv_conf_head="$(cat "${SYSCONFDIR}"/resolv.conf.head)"
 fi
@@ -130,12 +130,12 @@ case "${resolv_conf_passthrough:-NO}" in
 	newconf="$(cat "$newest")$NL"
 	;;
 *)
-	[ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
-	newsearch="$(uniqify $search_domains $SEARCH $search_domains_append)"
+	[ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
+	newsearch="$(uniqify $prepend_search $SEARCH)"
 	NS="$LOCALNAMESERVERS $NAMESERVERS"
 	newns=
 	gotlocal=false
-	for n in $(uniqify $name_servers $NS $name_servers_append); do
+	for n in $(uniqify $prepend_nameservers $NS); do
 		add=true
 		case "$n" in
 		127.*|0.0.0.0|255.255.255.255|::1) gotlocal=true;;

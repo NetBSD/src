@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.3 2012/10/30 18:55:53 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.2.4 2014/05/22 16:14:45 yamt Exp $
 
 LIB=	clangAnalysis
 
@@ -13,6 +13,7 @@ SRCS+=	AnalysisDeclContext.cpp \
 	CFGStmtMap.cpp \
 	CallGraph.cpp \
 	CocoaConventions.cpp \
+	Consumed.cpp \
 	Dominators.cpp \
 	FormatString.cpp \
 	LiveVariables.cpp \

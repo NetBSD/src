@@ -1,6 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999, 2000, 2001, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -56,7 +55,7 @@ extern char *varobj_format_string[];
 /* Languages supported by this variable objects system.  */
 enum varobj_languages
   {
-    vlang_unknown = 0, vlang_c, vlang_cplus, vlang_java, vlang_end
+    vlang_unknown = 0, vlang_c, vlang_cplus, vlang_java, vlang_ada, vlang_end
   };
 
 /* String representations of gdb's known languages (defined in varobj.c).  */

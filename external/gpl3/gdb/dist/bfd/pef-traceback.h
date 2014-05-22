@@ -15,7 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software 
+   along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
@@ -26,12 +26,12 @@
     sys/debug.h), which occurs, usually, one per procedure (routine). The table is marked by
     a multiple of 4 32-bit word of zeroes in the instruction space. The traceback table is
     also referred to as "procedure-end table".
- 
+
     The AIX traceback table representation on which this header is based is defined as a
     series of bit field struct specifications. Bit fields are compiler dependent! Thus,
     the definitions presented here follow the original header and the existing documentation
     (such as it is), but define the fields as BIT MASKS and other macros. The mask names,
-    however, where chosen as the original field names to give some compatibility with the 
+    however, where chosen as the original field names to give some compatibility with the
     original header and to agree with the documentation.  */
 
 #ifndef __TRACEBACK__
@@ -50,7 +50,7 @@
 #define TB_RPG 10U		/* RPG */
 #define TB_PL8 11U		/* PL8 */
 #define TB_ASM 12U		/* Asm */
- 
+
 /* Flags 1.  */
 
 #define TB_GLOBALLINK 0x80U	/* Routine is Global Linkage.  */
@@ -59,9 +59,9 @@
 #define TB_INT_PROC 0x10U	/* Internal leaf routine.  */
 #define TB_HAS_CTL 0x08U	/* Has controlled automatic storage.  */
 #define TB_TOCLESS 0X04U	/* Routine has no TOC.  */
-#define TB_FP_PRESENT 0x02U	/* Routine has floating point ops.  */ 
+#define TB_FP_PRESENT 0x02U	/* Routine has floating point ops.  */
 #define TB_LOG_ABORT 0x01U	/* fp_present && log/abort compiler opt.  */
- 
+
 /* Flags 2.  */
 
 #define TB_INT_HNDL 0x80U	/* Routine is an interrupt handler.  */
@@ -70,15 +70,15 @@
 #define TB_CL_DIS_inv 0x1CU	/* On-condition directives (see below).  */
 #define TB_SAVES_CR 0x02U	/* Routine saves the CR.  */
 #define TB_SAVES_LR 0x01U	/* Routine saves the LR.  */
-  
+
 /* cl_dis_inv "on condition" settings:  */
- 
+
 #define TB_CL_DIS_INV(x) (((x) & cl_dis_inv) >> 2U)
 
 #define TB_WALK_ONCOND 0U	/* Walk stack without restoring state.  */
 #define TB_DISCARD_ONCOND 1U	/* Walk stack and discard.  */
 #define TB_INVOKE_ONCOND 2U	/* Invoke a specific system routine.  */
- 
+
 /* Flags 3.  */
 
 #define TB_STORES_BC 0x80U	/* Routine saves frame ptr of caller.  */
@@ -87,7 +87,7 @@
 				/* (Last reg saved is ALWAYS fpr31).  */
 
 #define TB_NUM_FPR_SAVED(x) ((x) & fpr_saved)
- 
+
 /* Flags 4.  */
 
 #define TB_HAS_VEC_INFO 0x80U	/* Routine uses vectors.  */
@@ -96,12 +96,12 @@
 				/* (Last reg saved is ALWAYS gpr31).  */
 
 #define TB_NUM_GPR_SAVED(x) ((x) & gpr_saved)
- 
+
 /* Flags 5.  */
 
 #define TB_FLOATPARAMS 0xfeU	/* Number of floating point parameters.  */
 #define TB_PARAMSONSTK 0X01U	/* All parameters are on the stack.  */
- 
+
 #define TB_NUM_FLOATPARAMS(X) (((x) & floatparams) >> 1U)
 
 /* Traceback_table (fixed portion).  */
@@ -133,7 +133,7 @@ struct traceback_table
 /* Order and type encoding of parameters:  */
 struct traceback_table_fixedparams
 {
-  unsigned long paraminfo;		
+  unsigned long paraminfo;
 };
 
 /* Left-justified bit-encoding as follows:  */
@@ -169,7 +169,7 @@ struct traceback_table_interrupts
 /* Controlled automatic storage info:  */
 struct traceback_table_anchors
 {
-  unsigned long ctl_info;	/* Number of controlled automatic anchors.  */ 
+  unsigned long ctl_info;	/* Number of controlled automatic anchors.  */
   long ctl_info_disp[1];	/* Array of stack displacements where each.  */
 };				/* Anchor is located (array STARTS here).  */
 
@@ -205,12 +205,12 @@ struct traceback_table_vector
 #define TB_HAS_VARARGS 0x01U	/* Routine has a variable argument list.  */
 
 #define TB_NUM_VR_SAVED(x) (((x) & TB_VR_SAVED) >> 2U)
- 
+
   unsigned char vec_flags2;	/* Vec info bits #2:  */
 
 #define TB_VECTORPARAMS 0xfeU	/* Number of vector parameters.  */
 #define TB_VEC_PRESENT 0x01U	/* Routine uses at least one vec instr.  */
- 
+
 #define VECPARAMS(x) (((x) & TB_VECTORPARAMS) >> 1U)
 };
 

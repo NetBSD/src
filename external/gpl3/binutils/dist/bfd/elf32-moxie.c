@@ -1,5 +1,5 @@
 /* moxie-specific support for 32-bit ELF.
-   Copyright 2009, 2010 Free Software Foundation, Inc.
+   Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
 
    Copied from elf32-fr30.c which is..
    Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
@@ -250,9 +250,9 @@ moxie_elf_relocate_section (bfd *output_bfd,
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;

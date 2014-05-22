@@ -56,10 +56,17 @@ static ld_plugin_register_all_symbols_read register_all_symbols_read_hook = NULL
 static ld_plugin_register_cleanup register_cleanup_hook = NULL;
 static ld_plugin_add_symbols add_symbols = NULL;
 static ld_plugin_get_symbols get_symbols = NULL;
+static ld_plugin_get_symbols get_symbols_v2 = NULL;
 static ld_plugin_add_input_file add_input_file = NULL;
 static ld_plugin_message message = NULL;
 static ld_plugin_get_input_file get_input_file = NULL;
 static ld_plugin_release_input_file release_input_file = NULL;
+static ld_plugin_get_input_section_count get_input_section_count = NULL;
+static ld_plugin_get_input_section_type get_input_section_type = NULL;
+static ld_plugin_get_input_section_name get_input_section_name = NULL;
+static ld_plugin_get_input_section_contents get_input_section_contents = NULL;
+static ld_plugin_update_section_order update_section_order = NULL;
+static ld_plugin_allow_section_ordering allow_section_ordering = NULL;
 
 #define MAXOPTS 10
 
@@ -114,6 +121,9 @@ onload(struct ld_plugin_tv *tv)
         case LDPT_GET_SYMBOLS:
           get_symbols = entry->tv_u.tv_get_symbols;
           break;
+        case LDPT_GET_SYMBOLS_V2:
+          get_symbols_v2 = entry->tv_u.tv_get_symbols;
+          break;
         case LDPT_ADD_INPUT_FILE:
           add_input_file = entry->tv_u.tv_add_input_file;
           break;
@@ -126,6 +136,24 @@ onload(struct ld_plugin_tv *tv)
         case LDPT_RELEASE_INPUT_FILE:
           release_input_file = entry->tv_u.tv_release_input_file;
           break;
+        case LDPT_GET_INPUT_SECTION_COUNT:
+          get_input_section_count = *entry->tv_u.tv_get_input_section_count;
+          break;
+        case LDPT_GET_INPUT_SECTION_TYPE:
+          get_input_section_type = *entry->tv_u.tv_get_input_section_type;
+          break;
+        case LDPT_GET_INPUT_SECTION_NAME:
+          get_input_section_name = *entry->tv_u.tv_get_input_section_name;
+          break;
+        case LDPT_GET_INPUT_SECTION_CONTENTS:
+          get_input_section_contents = *entry->tv_u.tv_get_input_section_contents;
+          break;
+	case LDPT_UPDATE_SECTION_ORDER:
+	  update_section_order = *entry->tv_u.tv_update_section_order;
+	  break;
+	case LDPT_ALLOW_SECTION_ORDERING:
+	  allow_section_ordering = *entry->tv_u.tv_allow_section_ordering;
+	  break;
         default:
           break;
         }
@@ -176,6 +204,42 @@ onload(struct ld_plugin_tv *tv)
   if ((*register_cleanup_hook)(cleanup_hook) != LDPS_OK)
     {
       (*message)(LDPL_ERROR, "error registering cleanup hook");
+      return LDPS_ERR;
+    }
+
+  if (get_input_section_count == NULL)
+    {
+      fprintf(stderr, "tv_get_input_section_count interface missing\n");
+      return LDPS_ERR;
+    }
+
+  if (get_input_section_type == NULL)
+    {
+      fprintf(stderr, "tv_get_input_section_type interface missing\n");
+      return LDPS_ERR;
+    }
+
+  if (get_input_section_name == NULL)
+    {
+      fprintf(stderr, "tv_get_input_section_name interface missing\n");
+      return LDPS_ERR;
+    }
+
+  if (get_input_section_contents == NULL)
+    {
+      fprintf(stderr, "tv_get_input_section_contents interface missing\n");
+      return LDPS_ERR;
+    }
+
+  if (update_section_order == NULL)
+    {
+      fprintf(stderr, "tv_update_section_order interface missing\n");
+      return LDPS_ERR;
+    }
+
+  if (allow_section_ordering == NULL)
+    {
+      fprintf(stderr, "tv_allow_section_ordering interface missing\n");
       return LDPS_ERR;
     }
 
@@ -334,9 +398,9 @@ all_symbols_read_hook(void)
 
   (*message)(LDPL_INFO, "all symbols read hook called");
 
-  if (get_symbols == NULL)
+  if (get_symbols_v2 == NULL)
     {
-      fprintf(stderr, "tv_get_symbols interface missing\n");
+      fprintf(stderr, "tv_get_symbols (v2) interface missing\n");
       return LDPS_ERR;
     }
 
@@ -344,7 +408,7 @@ all_symbols_read_hook(void)
        claimed_file != NULL;
        claimed_file = claimed_file->next)
     {
-      (*get_symbols)(claimed_file->handle, claimed_file->nsyms,
+      (*get_symbols_v2)(claimed_file->handle, claimed_file->nsyms,
                      claimed_file->syms);
 
       for (i = 0; i < claimed_file->nsyms; ++i)
@@ -362,6 +426,9 @@ all_symbols_read_hook(void)
               break;
             case LDPR_PREVAILING_DEF_IRONLY:
               res = "PREVAILING_DEF_IRONLY";
+              break;
+            case LDPR_PREVAILING_DEF_IRONLY_EXP:
+              res = "PREVAILING_DEF_IRONLY_EXP";
               break;
             case LDPR_PREEMPTED_REG:
               res = "PREEMPTED_REG";

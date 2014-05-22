@@ -22,10 +22,6 @@ langs0__2do ()
 int
 main ()
 {
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   if (langs0__2do () == 5003)
     /* Success.  */
     return 0;

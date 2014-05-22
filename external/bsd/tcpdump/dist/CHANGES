@@ -1,3 +1,140 @@
+Thursday Nov. 7, 2013  mcr@sandelman.ca and guy@alum.mit.edu.
+  Summary for 4.5.0 tcpdump release
+        some NFSv4 fixes for printing  
+        fix printing of unknown TCP options, and tcp fast-open
+        fixes for syslog parser
+        some gcc-version-specific flag tuning
+        adopt MacOS deprecation workarounds for openssl
+        improvements to babel printing
+        add OpenFlow 1.0 (no SSL) and test cases
+        GeoNet printer.
+        added STBC Rx support
+        improvements to DHCPv6 decoder
+        clarify which autoconf is needed
+	Point users to the the-tcpdump-group repository on GitHub rather
+	    than the mcr repository
+	Add MSDP printer.
+	Fixed IPv6 check on Solaris and other OSes requiring extra
+	    networking libraries.
+	Add support for VXLAN (draft-mahalingam-dutt-dcops-vxlan-03),
+	    and add "vxlan" as an option for -T.
+	Add support for OTV (draft-hasmit-otv-04).
+        fixes for DLT_IEEE802_11_RADIO datalink types
+        added MPTCP decoder
+
+Saturday April 6, 2013 guy@alum.mit.edu.
+  Summary for 4.4.0 tcpdump release
+	RPKI-RTR (RFC6810) is now official (TCP Port 323)
+	Fix detection of OpenSSL libcrypto.
+	Add DNSSL (RFC6106) support.
+	Add "radius" as an option for -T.
+	Update Action codes for handle_action function according to
+	    802.11s amendment.
+	Decode DHCPv6 AFTR-Name option (RFC6334).
+	Updates for Babel.
+	Fix printing of infinite lifetime in ICMPv6.
+	Added support for SPB, SPBM Service Identifier, and Unicast
+	    Address sub-TLV in ISIS.
+	Decode RIPv2 authentication up to RFC4822.
+	Fix RIP Request/full table decoding issues.
+	On Linux systems with cap-ng.h, drop root privileges
+	    using Linux Capabilities.
+	Add support for reading multiple files.
+	Add MS NLB heartbeat printer.
+	Separate multiple nexthops in BGP.
+
+Wednesday  November 28, 2012 guy@alum.mit.edu.
+  Summary for 4.3.1 tcpdump release
+	Print "LLDP, length N" for LLDP packets even when not in verbose
+	    mode, so something is printed even if only the timestamp is
+	    present
+	Document "-T carp"
+	Print NTP poll interval correctly (it's an exponent, so print
+	    both its raw value and 2^value)
+	Document that "-e" is used to get MAC addresses
+	More clearly document that you need to escape or quote
+	    backslashes in filter expressions on the command line
+	Fix some "the the" in the man page
+	Use the right maximum path length
+	Don't treat 192_1_2, when passed to -i, as an interface number
+
+Friday  April 3, 2012.  mcr@sandelman.ca.
+  Summary for 4.3.0 tcpdump release
+        fixes for forces: SPARSE data (per RFC 5810)
+        some more test cases added
+        updates to documentation on -l, -U and -w flags.
+        Fix printing of BGP optional headers.
+        Tried to include DLT_PFSYNC support, failed due to headers required.
+        added TIPC support.
+        Fix LLDP Network Policy bit definitions.
+        fixes for IGMPv3's Max Response Time: it is in units of 0.1 second.
+        SIGUSR1 can be used rather than SIGINFO for stats
+        permit -n flag to affect print-ip for protocol numbers
+        ND_OPT_ADVINTERVAL is in milliseconds, not seconds
+        Teach PPPoE parser about RFC 4638
+
+
+Friday  December 9, 2011.  guy@alum.mit.edu.
+  Summary for 4.2.1 tcpdump release
+	Only build the Babel printer if IPv6 is enabled.
+	Support Babel on port 6696 as well as 6697.
+	Include ppi.h in release tarball.
+	Include all the test files in the release tarball, and don't
+	 "include" test files that no longer exist.
+	Don't assume we have <rpc/rpc.h> - check for it.
+	Support "-T carp" as a way of dissecting IP protocol 112 as CARP
+	 rather than VRRP.
+	Support Hilscher NetAnalyzer link-layer header format.
+	Constify some pointers and fix compiler warnings.
+	Get rid of never-true test.
+	Fix an unintended fall-through in a case statement in the ARP
+	 printer.
+	Fix several cases where sizeof(sizeof(XXX)) was used when just
+	 sizeof(XXX) was intended.
+	Make stricter sanity checks in the ES-IS printer.
+	Get rid of some GCCisms that caused builds to fai with compilers
+	 that don't support them.
+	Fix typo in man page.
+	Added length checks to Babel printer.
+
+Sunday  July 24, 2011.  mcr@sandelman.ca.
+  Summary for 4.2.+
+	merged 802.15.4 decoder from Dmitry Eremin-Solenikov <dbaryshkov
+	  at gmail dot com>
+        updates to forces for new port numbers
+        Use "-H", not "-h", for the 802.11s option. (-h always help)
+        Better ICMPv6 checksum handling.
+        add support for the RPKI/Router Protocol, per -ietf-sidr-rpki-rtr-12
+        get rid of uuencoded pcap test files, git can do binary.
+        sFlow changes for 64-bit counters.
+        fixes for PPI packet header handling and printing.
+        Add DCB Exchange protocol (DCBX) version 1.01.
+        Babel dissector, from Juliusz Chroboczek and Grégoire Henry.
+        improvements to radiotap for rate values > 127.
+        Many improvements to ForCES decode, including fix SCTP TML port
+        updated RPL type code to RPL-17 draft
+        Improve printout of DHCPv6 options.
+        added support and test case for QinQ (802.1q VLAN) packets
+        Handle DLT_IEEE802_15_4_NOFCS like DLT_IEEE802_15_4.
+        Build fixes for Sparc and other machines with alignment restrictions.
+        Merged changes from Debian package.
+        PGM: Add ACK decoding and add PGMCC DATA and FEEDBACK options.
+        Build fixes for OSX (Snow Leopard and others)
+        Add support for IEEE 802.15.4 packets
+
+Tue.    July 20, 2010.  guy@alum.mit.edu.
+  Summary for 4.1.2 tcpdump release
+	If -U is specified, flush the file after creating it, so it's
+	  not zero-length
+	Fix TCP flags output description, and some typoes, in the man
+	  page
+	Add a -h flag, and only attempt to recognize 802.11s mesh
+	  headers if it's set
+	When printing the link-layer type list, send *all* output to
+	  stderr
+	Include the CFLAGS setting when configure was run in the
+	  compiler flags
+
 Thu.	April 1, 2010.  guy@alum.mit.edu.
   Summary for 4.1.1 tcpdump release
 	Fix build on systems with PF, such as FreeBSD and OpenBSD.

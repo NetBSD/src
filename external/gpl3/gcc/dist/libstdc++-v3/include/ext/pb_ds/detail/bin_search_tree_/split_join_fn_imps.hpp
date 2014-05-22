@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file split_join_fn_imps.hpp
+ * @file bin_search_tree_/split_join_fn_imps.hpp
  * Contains an implementation class for bin_search_tree_.
  */
 
@@ -43,8 +43,8 @@ bool
 PB_DS_CLASS_C_DEC::
 join_prep(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
   if (other.m_size == 0)
     return false;
 
@@ -54,9 +54,13 @@ join_prep(PB_DS_CLASS_C_DEC& other)
       return false;
     }
 
-  const bool greater = Cmp_Fn::operator()(PB_DS_V2F(m_p_head->m_p_right->m_value), PB_DS_V2F(other.m_p_head->m_p_left->m_value));
+  const bool greater =
+    Cmp_Fn::operator()(PB_DS_V2F(m_p_head->m_p_right->m_value),
+		       PB_DS_V2F(other.m_p_head->m_p_left->m_value));
 
-  const bool lesser = Cmp_Fn::operator()(PB_DS_V2F(other.m_p_head->m_p_right->m_value), PB_DS_V2F(m_p_head->m_p_left->m_value));
+  const bool lesser =
+    Cmp_Fn::operator()(PB_DS_V2F(other.m_p_head->m_p_right->m_value),
+		       PB_DS_V2F(m_p_head->m_p_left->m_value));
 
   if (!greater && !lesser)
     __throw_join_error();
@@ -81,39 +85,39 @@ join_finish(PB_DS_CLASS_C_DEC& other)
 PB_DS_CLASS_T_DEC
 bool
 PB_DS_CLASS_C_DEC::
-split_prep(const_key_reference r_key, PB_DS_CLASS_C_DEC& other)
+split_prep(key_const_reference r_key, PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
   other.clear();
 
   if (m_size == 0)
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
       return false;
     }
 
   if (Cmp_Fn::operator()(r_key, PB_DS_V2F(m_p_head->m_p_left->m_value)))
     {
       value_swap(other);
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
       return false;
     }
 
   if (!Cmp_Fn::operator()(r_key, PB_DS_V2F(m_p_head->m_p_right->m_value)))
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
       return false;
     }
 
   if (m_size == 1)
     {
       value_swap(other);
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
       return false;
     }
 
@@ -130,8 +134,8 @@ split_finish(PB_DS_CLASS_C_DEC& other)
   other.m_size = std::distance(other.begin(), other.end());
   m_size -= other.m_size;
   initialize_min_max();
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC
@@ -139,7 +143,7 @@ typename PB_DS_CLASS_C_DEC::size_type
 PB_DS_CLASS_C_DEC::
 recursive_count(node_pointer p) const
 {
-  if (p == NULL)
+  if (p == 0)
     return 0;
   return 1 + recursive_count(p->m_p_left) + recursive_count(p->m_p_right);
 }

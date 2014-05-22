@@ -8,6 +8,6 @@
 Disassembly of section .text:
 
 [a-f0-9]+ <bar>:
-[ 	]*[a-f0-9]+:	e8 cf fe ff ff       	call   0 .*
-[ 	]*[a-f0-9]+:	c3                   	ret    
+[ 	]*[a-f0-9]+:	e8 ([0-9a-f]{2} ){4}\s+call   0 .*
+[ 	]*[a-f0-9]+:	c3\s+ret *
 #pass

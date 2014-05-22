@@ -26,9 +26,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.75 2007-04-13 09:43:11 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.75 2007-04-13 09:43:11 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-llc.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: print-llc.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 #include "ethertype.h"
 #include "oui.h"
 
-static struct tok llc_values[] = {
+static const struct tok llc_values[] = {
         { LLCSAP_NULL,     "Null" },
         { LLCSAP_GLOBAL,   "Global" },
         { LLCSAP_8021B_I,  "802.1B I" },
@@ -68,7 +68,7 @@ static struct tok llc_values[] = {
         { 0,               NULL },
 };
 
-static struct tok llc_cmd_values[] = {
+static const struct tok llc_cmd_values[] = {
 	{ LLC_UI,	"ui" },
 	{ LLC_TEST,	"test" },
 	{ LLC_XID,	"xid" },
@@ -112,6 +112,7 @@ static const struct tok cisco_values[] = {
 	{ PID_CISCO_DTP, "DTP" },
 	{ PID_CISCO_UDLD, "UDLD" },
 	{ PID_CISCO_PVST, "PVST" },
+	{ PID_CISCO_VLANBRIDGE, "VLAN Bridge" },
 	{ 0,             NULL }
 };
 
@@ -422,7 +423,7 @@ snap_print(const u_char *p, u_int length, u_int caplen, u_int bridge_pad)
 		 * Cisco hardware; the protocol ID is
 		 * an Ethernet protocol type.
 		 */
-		ret = ethertype_print(et, p, length, caplen);
+		ret = ethertype_print(gndo, et, p, length, caplen);
 		if (ret)
 			return (ret);
 		break;
@@ -437,7 +438,7 @@ snap_print(const u_char *p, u_int length, u_int caplen, u_int bridge_pad)
 			 * but used 0x000000 and an Ethernet
 			 * packet type for AARP packets.
 			 */
-			ret = ethertype_print(et, p, length, caplen);
+			ret = ethertype_print(gndo, et, p, length, caplen);
 			if (ret)
 				return (ret);
 		}
@@ -458,6 +459,7 @@ snap_print(const u_char *p, u_int length, u_int caplen, u_int bridge_pad)
                         vtp_print(p, length);
                         return (1);
                 case PID_CISCO_PVST:
+                case PID_CISCO_VLANBRIDGE:
                         stp_print(p, length);
                         return (1);
                 default:
@@ -484,7 +486,7 @@ snap_print(const u_char *p, u_int length, u_int caplen, u_int bridge_pad)
 			/*
 			 * What remains is an Ethernet packet.
 			 */
-			ether_print(p, length, caplen, NULL, NULL);
+			ether_print(gndo, p, length, caplen, NULL, NULL);
 			return (1);
 
 		case PID_RFC2684_802_5_FCS:

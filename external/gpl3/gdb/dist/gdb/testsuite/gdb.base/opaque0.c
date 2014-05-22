@@ -13,10 +13,6 @@ extern void putfoo (struct foo *foop);
 
 int main ()
 {
-#ifdef usestubs
-    set_debug_traps();
-    breakpoint();
-#endif
     foop = getfoo ();
     putfoo (foop);
     return 0;

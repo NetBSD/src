@@ -1,32 +1,19 @@
-This is a terse description of the new features added to readline-5.1 since
-the release of readline-5.0.
+This is a terse description of the new features added to readline-6.2 since
+the release of readline-6.1.
 
-1.  New Features in Readline
+a.  The history library does not try to write the history filename in the
+    current directory if $HOME is unset.  This closes a potential security
+    problem if the application does not specify a history filename.
 
-a.  The key sequence sent by the keypad `delete' key is now automatically   
-    bound to delete-char.
+b.  New bindable variable `completion-display-width' to set the number of
+    columns used when displaying completions.
 
-b.  A negative argument to menu-complete now cycles backward through the
-    completion list.
+c.  New bindable variable `completion-case-map' to cause case-insensitive
+    completion to treat `-' and `_' as identical.
 
-c.  A new bindable readline variable:  bind-tty-special-chars.  If non-zero,
-    readline will bind the terminal special characters to their readline
-    equivalents when it's called (on by default).
+d.  There are new bindable vi-mode command names to avoid readline's case-
+    insensitive matching not allowing them to be bound separately.
 
-d.  New bindable command: vi-rubout.  Saves deleted text for possible  
-    reinsertion, as with any vi-mode `text modification' command; `X' is bound
-    to this in vi command mode.
-
-e.  If the rl_completion_query_items is set to a value < 0, readline never
-    asks the user whether or not to view the possible completions.
-
-f.  New application-callable auxiliary function, rl_variable_value, returns
-    a string corresponding to a readline variable's value.
-
-g.  When parsing inputrc files and variable binding commands, the parser
-    strips trailing whitespace from values assigned to boolean variables
-    before checking them.
-
-h.  A new external application-controllable variable that allows the LINES
-    and COLUMNS environment variables to set the window size regardless of
-    what the kernel returns.
+e.  New bindable variable `menu-complete-display-prefix' causes the menu
+    completion code to display the common prefix of the possible completions
+    before cycling through the list, instead of after.

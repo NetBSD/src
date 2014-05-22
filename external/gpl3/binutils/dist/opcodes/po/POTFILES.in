@@ -24,6 +24,13 @@ dis-buf.c
 dis-init.c
 disassemble.c
 dlx-dis.c
+epiphany-asm.c
+epiphany-desc.c
+epiphany-desc.h
+epiphany-dis.c
+epiphany-ibld.c
+epiphany-opc.c
+epiphany-opc.h
 fr30-asm.c
 fr30-desc.c
 fr30-desc.h
@@ -121,6 +128,7 @@ mep-opc.c
 mep-opc.h
 microblaze-dis.c
 microblaze-opc.h
+micromips-opc.c
 mips-dis.c
 mips-opc.c
 mips16-opc.c
@@ -152,6 +160,8 @@ pj-dis.c
 pj-opc.c
 ppc-dis.c
 ppc-opc.c
+rl78-decode.c
+rl78-dis.c
 rx-decode.c
 rx-dis.c
 s390-dis.c
@@ -177,6 +187,10 @@ tic54x-opc.c
 tic6x-dis.c
 tic80-dis.c
 tic80-opc.c
+tilegx-dis.c
+tilegx-opc.c
+tilepro-dis.c
+tilepro-opc.c
 v850-dis.c
 v850-opc.c
 vax-dis.c
@@ -189,6 +203,8 @@ xc16x-dis.c
 xc16x-ibld.c
 xc16x-opc.c
 xc16x-opc.h
+xgate-dis.c
+xgate-opc.c
 xstormy16-asm.c
 xstormy16-desc.c
 xstormy16-desc.h

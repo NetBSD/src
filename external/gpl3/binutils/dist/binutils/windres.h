@@ -1,5 +1,5 @@
 /* windres.h -- header file for windres program.
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2011
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
@@ -104,12 +104,13 @@ extern void define_rcdata_file  (rc_res_id, const rc_res_res_info *, const char 
 extern rc_rcdata_item *define_rcdata_string (const char *, rc_uint_type);
 extern rc_rcdata_item *define_rcdata_unistring (const unichar *, rc_uint_type);
 extern rc_rcdata_item *define_rcdata_number (rc_uint_type, int);
-extern void define_stringtable (const rc_res_res_info *, rc_uint_type, const unichar *);
+extern void define_stringtable (const rc_res_res_info *, rc_uint_type, const unichar *, int);
 extern void define_user_data (rc_res_id, rc_res_id, const rc_res_res_info *, rc_rcdata_item *);
 extern void define_toolbar (rc_res_id, rc_res_res_info *, rc_uint_type ,rc_uint_type ,rc_toolbar_item *);
 extern void define_user_file (rc_res_id, rc_res_id, const rc_res_res_info *, const char *);
 extern void define_versioninfo (rc_res_id, rc_uint_type, rc_fixed_versioninfo *, rc_ver_info *);
-extern rc_ver_info *append_ver_stringfileinfo (rc_ver_info *, const char *, rc_ver_stringinfo *);
+extern rc_ver_info *append_ver_stringfileinfo (rc_ver_info *, rc_ver_stringtable *);
+extern rc_ver_stringtable *append_ver_stringtable (rc_ver_stringtable *, const char *, rc_ver_stringinfo *);
 extern rc_ver_info *append_ver_varfileinfo (rc_ver_info *, const unichar *, rc_ver_varinfo *);
 extern rc_ver_stringinfo *append_verval (rc_ver_stringinfo *, const unichar *, const unichar *);
 extern rc_ver_varinfo *append_vertrans (rc_ver_varinfo *, rc_uint_type, rc_uint_type);

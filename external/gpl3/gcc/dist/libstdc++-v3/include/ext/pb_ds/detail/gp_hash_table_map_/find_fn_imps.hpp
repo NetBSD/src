@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,25 +34,25 @@
 // warranty.
 
 /**
- * @file find_fn_imps.hpp
+ * @file gp_hash_table_map_/find_fn_imps.hpp
  * Contains implementations of gp_ht_map_'s find related functions.
  */
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
-find(const_key_reference r_key)
+find(key_const_reference r_key)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-   return find_key_pointer(r_key, traits_base::m_store_extra_indicator);
+  PB_DS_ASSERT_VALID((*this))
+  return find_key_pointer(r_key, traits_base::m_store_extra_indicator);
 }
 
 PB_DS_CLASS_T_DEC
-inline typename PB_DS_CLASS_C_DEC::const_point_iterator
+inline typename PB_DS_CLASS_C_DEC::point_const_iterator
 PB_DS_CLASS_C_DEC::
-find(const_key_reference r_key) const
+find(key_const_reference r_key) const
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   return const_cast<PB_DS_CLASS_C_DEC&>(*this).find_key_pointer(r_key, traits_base::m_store_extra_indicator);
 }
 
@@ -60,11 +60,11 @@ PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
 find_end()
-{ return NULL; }
+{ return 0; }
 
 PB_DS_CLASS_T_DEC
-inline typename PB_DS_CLASS_C_DEC::const_point_iterator
+inline typename PB_DS_CLASS_C_DEC::point_const_iterator
 PB_DS_CLASS_C_DEC::
 find_end() const
-{ return NULL; }
+{ return 0; }
 

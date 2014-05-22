@@ -1,5 +1,5 @@
 /* Random host-dependent support code.
-   Copyright 1995, 1997, 2000, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 1995, 1997, 2000, 2005, 2007, 2012 Free Software Foundation, Inc.
    Written by Ken Raeburn.
 
    This file is part of the GNU opcodes library.
@@ -27,6 +27,10 @@
    trying to replace often did that.  If it can be dropped from this
    file (check in a non-ANSI environment!), it should be.  */
 
+#ifdef PACKAGE
+#error sysdep.h must be included in lieu of config.h
+#endif
+
 #include "config.h"
 
 #include "ansidecl.h"
@@ -35,11 +39,16 @@
 #include <stdlib.h>
 #endif
 
+#ifdef STRING_WITH_STRINGS
+#include <string.h>
+#include <strings.h>
+#else
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 #endif
 #endif
 

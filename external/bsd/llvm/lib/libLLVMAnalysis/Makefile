@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.3 2013/01/16 05:27:59 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.4 2014/05/22 16:14:41 yamt Exp $
 
 LIB=	LLVMAnalysis
 
@@ -15,21 +15,22 @@ SRCS+=	AliasAnalysis.cpp \
 	BasicAliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
 	BranchProbabilityInfo.cpp \
+	CFG.cpp \
 	CFGPrinter.cpp \
 	CaptureTracking.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
 	CostModel.cpp \
-	DbgInfoPrinter.cpp \
+	Delinearization.cpp \
 	DependenceAnalysis.cpp \
 	DomPrinter.cpp \
 	DominanceFrontier.cpp \
 	IVUsers.cpp \
-	InlineCost.cpp \
 	InstCount.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
+	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
 	LibCallAliasAnalysis.cpp \
 	LibCallSemantics.cpp \
@@ -42,18 +43,9 @@ SRCS+=	AliasAnalysis.cpp \
 	MemoryDependenceAnalysis.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	NoAliasAnalysis.cpp \
-	PathNumbering.cpp \
-	PathProfileInfo.cpp \
-	PathProfileVerifier.cpp \
 	PHITransAddr.cpp \
 	PostDominators.cpp \
-	ProfileDataLoaderPass.cpp \
-	ProfileDataLoader.cpp \
-	ProfileEstimatorPass.cpp \
-	ProfileInfo.cpp \
-	ProfileInfoLoader.cpp \
-	ProfileInfoLoaderPass.cpp \
-	ProfileVerifierPass.cpp \
+	PtrUseVisitor.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
@@ -62,6 +54,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
 	SparsePropagation.cpp \
+	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	ValueTracking.cpp

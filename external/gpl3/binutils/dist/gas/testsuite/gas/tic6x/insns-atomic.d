@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: C6X atomic instructions
-#as: -march=c674x -matomic -mlittle-endian
+#as: -march=c674x -mlittle-endian
 
 .*: *file format elf32-tic6x-le
 

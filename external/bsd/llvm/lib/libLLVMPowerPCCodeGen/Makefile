@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2012/10/30 18:55:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2014/05/22 16:14:43 yamt Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -14,25 +14,31 @@ SRCS+=	PPCAsmPrinter.cpp \
 	PPCInstrInfo.cpp \
 	PPCISelDAGToDAG.cpp \
 	PPCISelLowering.cpp \
+	PPCFastISel.cpp \
 	PPCFrameLowering.cpp \
 	PPCJITInfo.cpp \
 	PPCMachineFunctionInfo.cpp \
 	PPCMCInstLower.cpp \
 	PPCRegisterInfo.cpp \
+	PPCSelectionDAGInfo.cpp \
 	PPCSubtarget.cpp \
 	PPCTargetMachine.cpp \
-	PPCSelectionDAGInfo.cpp
+	PPCTargetObjectFile.cpp \
+	PPCTargetTransformInfo.cpp
 
 TABLEGEN_SRC=		PPC.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/PowerPC
 TABLEGEN_OUTPUT= \
+	PPCGenAsmMatcher.inc|-gen-asm-matcher \
 	PPCGenAsmWriter.inc|-gen-asm-writer \
+	PPCGenCallingConv.inc|-gen-callingconv \
 	PPCGenCodeEmitter.inc|-gen-emitter \
+	PPCGenDAGISel.inc|-gen-dag-isel \
+	PPCGenDisassemblerTables.inc|-gen-disassembler \
+	PPCGenFastISel.inc|-gen-fast-isel \
+	PPCGenInstrInfo.inc|-gen-instr-info \
 	PPCGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	PPCGenRegisterInfo.inc|-gen-register-info \
-	PPCGenInstrInfo.inc|-gen-instr-info \
-	PPCGenDAGISel.inc|-gen-dag-isel \
-	PPCGenCallingConv.inc|-gen-callingconv \
 	PPCGenSubtargetInfo.inc|-gen-subtarget
 
 .include "${.PARSEDIR}/../../tablegen.mk"

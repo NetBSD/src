@@ -6,9 +6,9 @@
 .\"	Case Western Reserve University
 .\"	chet@ins.CWRU.Edu
 .\"
-.\"	Last Change: Thu Jul 31 08:46:08 EDT 2003
+.\"	Last Change: Thu Aug 12 22:24:41 EDT 2010
 .\"
-.TH HISTORY 3 "2003 July 31" "GNU History 5.0"
+.TH HISTORY 3 "2010 August 12" "GNU History 6.2"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -40,8 +40,8 @@
 .SH NAME
 history \- GNU History Library
 .SH COPYRIGHT
-.if t The GNU History Library is Copyright \(co 1989-2002 by the Free Software Foundation, Inc.
-.if n The GNU History Library is Copyright (C) 1989-2002 by the Free Software Foundation, Inc.
+.if t The GNU History Library is Copyright \(co 1989-2011 by the Free Software Foundation, Inc.
+.if n The GNU History Library is Copyright (C) 1989-2011 by the Free Software Foundation, Inc.
 .SH DESCRIPTION
 Many programs read input from the user a line at a time.  The GNU
 History library is able to keep track of those lines, associate arbitrary
@@ -83,6 +83,8 @@ the history expansion character.
 .PP
 An event designator is a reference to a command line entry in the
 history list.
+Unless the reference is absolute, events are relative to the current
+position in the history list.
 .PP
 .PD 0
 .TP
@@ -96,18 +98,22 @@ Refer to command line
 .IR n .
 .TP
 .B !\-\fIn\fR
-Refer to the current command line minus
+Refer to the current command minus
 .IR n .
 .TP
 .B !!
 Refer to the previous command.  This is a synonym for `!\-1'.
 .TP
 .B !\fIstring\fR
-Refer to the most recent command starting with 
+Refer to the most recent command
+preceding the current position in the history list
+starting with
 .IR string .
 .TP
 .B !?\fIstring\fR\fB[?]\fR
-Refer to the most recent command containing
+Refer to the most recent command
+preceding the current postition in the history list
+containing
 .IR string .
 The trailing \fB?\fP may be omitted if
 .I string
@@ -569,10 +575,13 @@ The number of entries currently stored in the history list.
 The maximum number of history entries.  This must be changed using
 \fBstifle_history()\fP.
 
-.Vb int history_write_timestamps
+.Vb int history_wite_timestamps
 If non-zero, timestamps are written to the history file, so they can be
 preserved between sessions.  The default value is 0, meaning that
 timestamps are not saved.
+The current timestamp format uses the value of \fIhistory_comment_char\fP
+to delimit timestamp entries in the history file.  If that variable does
+not have a value (the default), timestamps will not be written.
 
 .Vb char history_expansion_char
 The character that introduces a history event.  The default is \fB!\fP.

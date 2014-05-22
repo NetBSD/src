@@ -11,4 +11,4 @@
         colon
         .ascii ": "
 
-	.p2align 5,0
+	.p2align 5,0x11

@@ -1,0 +1,51 @@
+#### Makefile.in --- Makefile template for the RL78 simulator
+
+### Copyright (C) 2008-2013 Free Software Foundation, Inc.
+### Contributed by Red Hat, Inc.
+### 
+### This file is part of the GNU simulators.
+### 
+### The GNU simulators are free software; you can redistribute them and/or
+### modify them under the terms of the GNU General Public License as
+### published by the Free Software Foundation; either version 3 of the
+### License, or (at your option) any later version.
+### 
+### The GNU simulators are distributed in the hope that they will be
+### useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+### General Public License for more details.
+### 
+### You should have received a copy of the GNU General Public License
+### along with the GNU simulators; if not, see <http://www.gnu.org/licenses/>.
+
+## COMMON_PRE_CONFIG_FRAG
+
+SIM_EXTRA_CFLAGS = -Wall
+
+SIM_RUN_OBJS = \
+	main.o
+
+SIM_OBJS = \
+	load.o \
+	mem.o \
+	cpu.o \
+	rl78.o \
+	gdb-if.o \
+	trace.o
+
+## COMMON_POST_CONFIG_FRAG
+
+arch = rl78
+
+err.o : err.h
+fpu.o : cpu.h fpu.h
+gdb-if.o : cpu.h mem.h load.h \
+           $(srcdir)/../../include/gdb/callback.h \
+	   $(srcdir)/../../include/gdb/remote-sim.h \
+	   $(srcdir)/../../include/gdb/signals.h \
+	   $(srcdir)/../../include/gdb/sim-rl78.h
+load.o : ../../bfd/bfd.h cpu.h mem.h
+main.o : ../../bfd/bfd.h cpu.h mem.h load.h
+mem.o : mem.h cpu.h
+reg.o : cpu.h
+rl78.o : $(srcdir)/../../include/opcode/rl78.h cpu.h mem.h

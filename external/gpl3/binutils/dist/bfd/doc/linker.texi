@@ -375,12 +375,13 @@ reloceatable or final link.
 @subsubsection @code{bfd_section_already_linked}
 @strong{Synopsis}
 @example
-void bfd_section_already_linked (bfd *abfd, asection *sec,
+bfd_boolean bfd_section_already_linked (bfd *abfd,
+    asection *sec,
     struct bfd_link_info *info);
 @end example
 @strong{Description}@*
-Check if @var{sec} has been already linked during a reloceatable
-or final link.
+Check if @var{data} has been already linked during a reloceatable
+or final link.  Return TRUE if it has.
 @example
 #define bfd_section_already_linked(abfd, sec, info) \
        BFD_SEND (abfd, _section_already_linked, (abfd, sec, info))
@@ -417,4 +418,15 @@ Search an elf version script tree for symbol versioning
 info and export / don't-export status for a given symbol.
 Return non-NULL on success and NULL on failure; also sets
 the output @samp{hide} boolean parameter.
+
+@findex bfd_hide_sym_by_version
+@subsubsection @code{bfd_hide_sym_by_version}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_hide_sym_by_version
+   (struct bfd_elf_version_tree *verdefs, const char *sym_name);
+@end example
+@strong{Description}@*
+Search an elf version script tree for symbol versioning
+info for a given symbol.  Return TRUE if the symbol is hidden.
 

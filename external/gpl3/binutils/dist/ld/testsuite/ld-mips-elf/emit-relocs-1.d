@@ -1,6 +1,6 @@
 #name: Emit relocs 1
-#source: emit-relocs-1a.s -mabi=n32 -EB
-#source: emit-relocs-1b.s -mabi=n32 -EB
+#source: emit-relocs-1a.s -march=from-abi -mabi=n32 -EB
+#source: emit-relocs-1b.s -march=from-abi -mabi=n32 -EB
 #ld: -q -T emit-relocs-1.ld -melf32btsmipn32
 #objdump: -sr
 

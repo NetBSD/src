@@ -1,6 +1,6 @@
-# Id: Makefile.am 467 2011-11-02 23:42:21Z des
+# Id: Makefile.am 648 2013-03-05 17:54:27Z des 
 
-SUBDIRS =
+SUBDIRS = openpam_dump_policy
 
 if WITH_PAMTEST
 SUBDIRS += pamtest

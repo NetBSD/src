@@ -261,8 +261,8 @@ struct ia64_opcode ia64_opcodes_i[] =
     {"pmin2",	   I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 2, 3, 0), {R1, R2, R3}, EMPTY},
     {"pmax2",	   I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 2, 3, 1), {R1, R2, R3}, EMPTY},
     {"psad1",	   I, OpZaZbVeX2aX2bX2c (7, 0, 0, 0, 2, 3, 2), {R1, R2, R3}, EMPTY},
-    {"mux1", I, OpZaZbVeX2aX2bX2c (7, 0, 0, 0, 3, 2, 2), {R1, R2, MBTYPE4}, EMPTY},
-    {"mux2", I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 3, 2, 2), {R1, R2, MHTYPE8}, EMPTY},
+    {"mux1",    I, OpZaZbVeX2aX2bX2c (7, 0, 0, 0, 3, 2, 2), {R1, R2, MBTYPE4}, EMPTY},
+    {"mux2",    I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 3, 2, 2), {R1, R2, MHTYPE8}, EMPTY},
     {"pshr2",	I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 0, 2, 0), {R1, R3, R2}, EMPTY},
     {"pshr4",	I, OpZaZbVeX2aX2bX2c (7, 1, 0, 0, 0, 2, 0), {R1, R3, R2}, EMPTY},
     {"shr",	I, OpZaZbVeX2aX2bX2c (7, 1, 1, 0, 0, 2, 0), {R1, R3, R2}, EMPTY},
@@ -276,9 +276,12 @@ struct ia64_opcode ia64_opcodes_i[] =
     {"pshl2",	I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 0, 0, 1), {R1, R2, R3}, EMPTY},
     {"pshl4",	I, OpZaZbVeX2aX2bX2c (7, 1, 0, 0, 0, 0, 1), {R1, R2, R3}, EMPTY},
     {"shl",	I, OpZaZbVeX2aX2bX2c (7, 1, 1, 0, 0, 0, 1), {R1, R2, R3}, EMPTY},
+    {"mpy4",    I, OpZaZbVeX2aX2bX2c (7, 1, 0, 0, 0, 1, 3), {R1, R2, R3}, EMPTY},
+    {"mpyshl4", I, OpZaZbVeX2aX2bX2c (7, 1, 0, 0, 0, 3, 3), {R1, R2, R3}, EMPTY},
     {"pshl2",	I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 3, 1, 1), {R1, R2, CCNT5}, EMPTY},
     {"pshl4",	I, OpZaZbVeX2aX2bX2c (7, 1, 0, 0, 3, 1, 1), {R1, R2, CCNT5}, EMPTY},
     {"popcnt",	I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 1, 1, 2), {R1, R3}, EMPTY},
+    {"clz",     I, OpZaZbVeX2aX2bX2c (7, 0, 1, 0, 1, 1, 3), {R1, R3}, EMPTY},
 
     {NULL, 0, 0, 0, 0, {0}, 0, 0, NULL}
   };

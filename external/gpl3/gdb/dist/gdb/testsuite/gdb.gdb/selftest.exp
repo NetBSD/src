@@ -1,5 +1,4 @@
-# Copyright 1988, 1990, 1991, 1992, 1994, 1997, 1999, 2000, 2002, 2003, 2004,
-# 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1988-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
-
-if $tracelevel then {
-    strace $tracelevel
-}
 
 
 # are we on a target board
@@ -92,6 +87,10 @@ proc do_steps_and_nexts {} {
 		set description "step over ttyarg initialization"
 		set command "step"
 	    }
+	    -re ".*cmdarg_vec = NULL.*$gdb_prompt $" {
+		set description "step over cmdarg_vec initialization"
+		set command "step"
+	    }
 	    -re ".*pre_stat_chain = make_command_stats_cleanup.*$gdb_prompt $" {
 		set description "next over make_command_stats_cleanup and everything it calls"
 		set command "next"
@@ -128,18 +127,6 @@ proc do_steps_and_nexts {} {
 		set description "next over conditional stack alignment alloca"
 		set command "next"
 	    }
-	    -re ".*cmdsize = 1.*$gdb_prompt $" {
-		set description "step over cmdsize initialization"
-		set command "next"
-	    }
-	    -re ".*cmdarg = .* xmalloc.*$gdb_prompt $" {
-		set description "next over cmdarg initialization via xmalloc"
-		set command "next"
-	    }
-	    -re ".*ncmd = 0.*$gdb_prompt $" {
-		set description "next over ncmd initialization"
-		set command "next"
-	    }
 	    -re ".*dirsize = 1.*$gdb_prompt $" {
 		set description "next over dirsize initialization"
 		set command "next"
@@ -161,6 +148,14 @@ proc do_steps_and_nexts {} {
 	    }
 	    -re ".*textdomain .PACKAGE.;.*$gdb_prompt $" {
 		set description "next over textdomain PACKAGE"
+		set command "next"
+	    }
+	    -re ".*bfd_init ..;.*$gdb_prompt $" {
+		set description "next over bfd_init"
+		set command "next"
+	    }
+	    -re ".*VEC_cleanup .cmdarg_s.*$gdb_prompt $" {
+		set description "next over cmdarg_s VEC_cleanup"
 		set command "next"
 	    }
 	    -re "\[0-9\]+\[\t \]+\{\r\n$gdb_prompt $" {
@@ -250,6 +245,7 @@ proc test_with_self { executable } {
     global det_file
     global decimal
     global timeout
+    global INTERNAL_GDBFLAGS
 
     # load yourself into the debugger
     # This can take a relatively long time, particularly for testing where
@@ -311,7 +307,7 @@ proc test_with_self { executable } {
     set timeout 600
 
     set description "run until breakpoint at captured_main"
-    gdb_test_multiple "run -nw" "$description" {
+    gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
 	-re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.* at .*main.c:.*$gdb_prompt $" {
 	    pass "$description"
 	}
@@ -398,19 +394,29 @@ proc test_with_self { executable } {
     }
 
     # start the "xgdb" process
-    gdb_test_multiple "continue" "xgdb is at prompt" {
-	-re "GNU gdb \[0-9\.\]*.*Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.*This is free software: you are free to change and redistribute it.*There is NO WARRANTY, to the extent permitted by law.  Type \"show copying\".*and \"show warranty\" for details.*This GDB was configured as .*$gdb_prompt $" {
-	    pass "xgdb is at prompt"
+    if [target_info exists gdb,noinferiorio] {
+	# Maybe testing with a local extended-remote gdbserver.  With
+	# no way to interact with inferior GDB, all we can do is let
+	# it run.
+	send_gdb "continue\n"
+	# Wait a bit while the inferior gdb gets to its prompt.
+	sleep 1
+    } else {
+	set test "xgdb is at prompt"
+	gdb_test_multiple "continue" $test {
+	    -re "GNU gdb \[0-9\.\]*.*Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.*This is free software: you are free to change and redistribute it.*There is NO WARRANTY, to the extent permitted by law.  Type \"show copying\".*and \"show warranty\" for details.*This GDB was configured as .*$gdb_prompt $" {
+		pass $test
+	    }
+	}
+
+	# set xgdb prompt so we can tell which is which
+	gdb_test_multiple "set prompt (xgdb) " "Set xgdb_prompt" {
+	    -re "\[(\]xgdb\[)\].*\[(\]xgdb\[)\] $" {
+		pass "Set xgdb prompt"
+	    }
 	}
     }
-    
-    # set xgdb prompt so we can tell which is which
-    gdb_test_multiple "set prompt (xgdb) " "Set xgdb_prompt" {
-	-re "\[(\]xgdb\[)\].*\[(\]xgdb\[)\] $" {
-	    pass "Set xgdb prompt"
-	}
-    }
-    
+
     # kill the xgdb process
     set description "send ^C to child process"
     send_gdb "\003"

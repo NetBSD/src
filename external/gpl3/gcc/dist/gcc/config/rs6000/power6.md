@@ -1,5 +1,5 @@
 ;; Scheduling description for IBM POWER6 processor.
-;;   Copyright (C) 2006, 2007, 2009 Free Software Foundation, Inc.
+;;   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 ;;   Contributed by Peter Steinmetz (steinmtz@us.ibm.com)
 ;;
 ;; This file is part of GCC.
@@ -213,6 +213,11 @@
 
 (define_insn_reservation "power6-shift" 1
   (and (eq_attr "type" "shift")
+       (eq_attr "cpu" "power6"))
+  "FXU_power6")
+
+(define_insn_reservation "power6-popcnt" 1
+  (and (eq_attr "type" "popcnt")
        (eq_attr "cpu" "power6"))
   "FXU_power6")
 

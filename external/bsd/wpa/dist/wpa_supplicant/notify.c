@@ -2,14 +2,8 @@
  * wpa_supplicant - Event notifications
  * Copyright (c) 2009-2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -100,6 +94,12 @@ void wpas_notify_state_changed(struct wpa_supplicant *wpa_s,
 		     wpa_s->current_ssid ? wpa_s->current_ssid->id : -1,
 		     new_state, MAC2STR(wpa_s->pending_bssid));
 #endif /* ANDROID */
+}
+
+
+void wpas_notify_disconnect_reason(struct wpa_supplicant *wpa_s)
+{
+	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_DISCONNECT_REASON);
 }
 
 
@@ -323,6 +323,9 @@ void wpas_notify_bss_rsnie_changed(struct wpa_supplicant *wpa_s,
 void wpas_notify_bss_wps_changed(struct wpa_supplicant *wpa_s,
 				 unsigned int id)
 {
+#ifdef CONFIG_WPS
+	wpas_dbus_bss_signal_prop_changed(wpa_s, WPAS_DBUS_BSS_PROP_WPS, id);
+#endif /* CONFIG_WPS */
 }
 
 
@@ -607,4 +610,21 @@ void wpas_notify_certification(struct wpa_supplicant *wpa_s, int depth,
 						 cert_hash, cert);
 	/* notify the new DBus API */
 	wpas_dbus_signal_certification(wpa_s, depth, subject, cert_hash, cert);
+}
+
+
+void wpas_notify_preq(struct wpa_supplicant *wpa_s,
+		      const u8 *addr, const u8 *dst, const u8 *bssid,
+		      const u8 *ie, size_t ie_len, u32 ssi_signal)
+{
+#ifdef CONFIG_AP
+	wpas_dbus_signal_preq(wpa_s, addr, dst, bssid, ie, ie_len, ssi_signal);
+#endif /* CONFIG_AP */
+}
+
+
+void wpas_notify_eap_status(struct wpa_supplicant *wpa_s, const char *status,
+			    const char *parameter)
+{
+	wpas_dbus_signal_eap_status(wpa_s, status, parameter);
 }

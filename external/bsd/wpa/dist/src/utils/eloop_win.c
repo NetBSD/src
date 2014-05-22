@@ -2,14 +2,8 @@
  * Event loop based on Windows events and WaitForMultipleObjects
  * Copyright (c) 2002-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -104,8 +98,8 @@ static int eloop_prepare_handles(void)
 
 	if (eloop.num_handles > eloop.reader_count + eloop.event_count + 8)
 		return 0;
-	n = os_realloc(eloop.handles,
-		       eloop.num_handles * 2 * sizeof(eloop.handles[0]));
+	n = os_realloc_array(eloop.handles, eloop.num_handles * 2,
+			     sizeof(eloop.handles[0]));
 	if (n == NULL)
 		return -1;
 	eloop.handles = n;
@@ -134,8 +128,8 @@ int eloop_register_read_sock(int sock, eloop_sock_handler handler,
 		WSACloseEvent(event);
 		return -1;
 	}
-	tmp = os_realloc(eloop.readers,
-			 (eloop.reader_count + 1) * sizeof(struct eloop_sock));
+	tmp = os_realloc_array(eloop.readers, eloop.reader_count + 1,
+			       sizeof(struct eloop_sock));
 	if (tmp == NULL) {
 		WSAEventSelect(sock, event, 0);
 		WSACloseEvent(event);
@@ -197,8 +191,8 @@ int eloop_register_event(void *event, size_t event_size,
 	if (eloop_prepare_handles())
 		return -1;
 
-	tmp = os_realloc(eloop.events,
-			 (eloop.event_count + 1) * sizeof(struct eloop_event));
+	tmp = os_realloc_array(eloop.events, eloop.event_count + 1,
+			       sizeof(struct eloop_event));
 	if (tmp == NULL)
 		return -1;
 
@@ -398,9 +392,8 @@ int eloop_register_signal(int sig, eloop_signal_handler handler,
 {
 	struct eloop_signal *tmp;
 
-	tmp = os_realloc(eloop.signals,
-			 (eloop.signal_count + 1) *
-			 sizeof(struct eloop_signal));
+	tmp = os_realloc_array(eloop.signals, eloop.signal_count + 1,
+			       sizeof(struct eloop_signal));
 	if (tmp == NULL)
 		return -1;
 

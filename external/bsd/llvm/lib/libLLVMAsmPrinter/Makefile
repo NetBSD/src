@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/04/17 00:03:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2014/05/22 16:14:41 yamt Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -11,13 +11,16 @@ SRCS+=	ARMException.cpp \
 	AsmPrinterDwarf.cpp \
 	AsmPrinterInlineAsm.cpp \
 	DIE.cpp \
+	DIEHash.cpp \
 	DwarfAccelTable.cpp \
 	DwarfCFIException.cpp \
-	DwarfCompileUnit.cpp \
 	DwarfDebug.cpp \
 	DwarfException.cpp \
+	DwarfUnit.cpp \
+	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
-	Win64Exception.cpp
+	Win64Exception.cpp \
+	WinCodeViewLineTables.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

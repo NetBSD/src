@@ -15,11 +15,11 @@ Disassembly of section .text:
 0+008 <global_sym\+0x4> e1a00000 	nop			; \(mov r0, r0\)
 0+00c <global_sym\+0x8> e1a00000 	nop			; \(mov r0, r0\)
 0+010 <global_sym\+0xc> eafffffb 	b	f+ff8 <global_sym\+0xf+ff4>
-			10: ARM_26D	global_sym\+0xf+ffc
+			10: ARM_26D	global_sym-0x4
 0+014 <global_sym\+0x10> ebfffffa 	bl	f+ff4 <global_sym\+0xf+ff0>
-			14: ARM_26D	global_sym\+0xf+ffc
+			14: ARM_26D	global_sym-0x4
 0+018 <global_sym\+0x14> 0afffff9 	beq	f+ff0 <global_sym\+0xf+fec>
-			18: ARM_26D	global_sym\+0xf+ffc
+			18: ARM_26D	global_sym-0x4
 0+01c <global_sym\+0x18> eafffff8 	b	0+004 <global_sym>
 0+020 <global_sym\+0x1c> ebfffff7 	bl	0+004 <global_sym>
 0+024 <global_sym\+0x20> 0afffff6 	beq	0+004 <global_sym>

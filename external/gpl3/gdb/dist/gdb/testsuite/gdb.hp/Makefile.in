@@ -16,6 +16,7 @@ check:
 
 clean mostlyclean:
 	-rm -f *~ core *.o
+	-rm -f *.dwo *.dwp
 	if [ x"${SUBDIRS}" != x ] ; then \
 	    for dir in ${SUBDIRS}; \
 	    do \

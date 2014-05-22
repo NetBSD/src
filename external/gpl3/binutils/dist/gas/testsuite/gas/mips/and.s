@@ -22,7 +22,6 @@ foo:
 
 	xor	$4,$5,0
 
-	# Round to a 16 byte boundary, for ease in testing multiple targets.
-	nop
-	nop
-	nop
+# Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.align	2
+	.space	8

@@ -31,6 +31,10 @@
 #include "coff/pe.h"
 #endif
 
+#ifdef OBJ_XCOFF
+#include "coff/xcoff.h"
+#endif
+
 #define streq(a,b)     (strcmp ((a), (b)) == 0)
 #define strneq(a,b,n)  (strncmp ((a), (b), (n)) == 0)
 
@@ -1527,6 +1531,7 @@ coff_frob_file_after_relocs (void)
                                                  'o' for over
                                                  'w' for data
   						 'd' (apparently m88k for data)
+						 'e' for exclude
                                                  'x' for text
   						 'r' for read-only data
   						 's' for shared data (PE)
@@ -1594,6 +1599,11 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		}
 	      switch (attr)
 		{
+		case 'e':
+		  /* Exclude section from linking.  */
+		  flags |= SEC_EXCLUDE;
+		  break;
+
 		case 'b':
 		  /* Uninitialised data section.  */
 		  flags |= SEC_ALLOC;
@@ -1762,8 +1772,13 @@ coff_frob_section (segT sec)
 #endif
     {
       symbolS *secsym = section_symbol (sec);
+      unsigned char sclass = C_STAT;
 
-      S_SET_STORAGE_CLASS (secsym, C_STAT);
+#ifdef OBJ_XCOFF
+      if (bfd_get_section_flags (stdoutput, sec) & SEC_DEBUGGING)
+        sclass = C_DWARF;
+#endif
+      S_SET_STORAGE_CLASS (secsym, sclass);
       S_SET_NUMBER_AUXILIARY (secsym, 1);
       SF_SET_STATICS (secsym);
       SA_SET_SCN_SCNLEN (secsym, size);

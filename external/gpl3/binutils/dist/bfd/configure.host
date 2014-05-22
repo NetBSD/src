@@ -50,6 +50,7 @@ mips*-sgi-irix3*)	HDEFINES="-G 4" ;;
 mips*-sgi-irix4*)	HDEFINES="-G 4" ;;
 mips*-sgi-irix6*)	host64=true;;
 mips64*-*-linux*)	host64=true;;
+mips64*-*-freebsd* | mips64*-*-kfreebsd*-gnu) host64=true;;
 mips*-*-sysv4*)		;;
 mips*-*-sysv*)		HDEFINES="-G 4" ;;
 mips*-*-riscos*)	HDEFINES="-G 4" ;;

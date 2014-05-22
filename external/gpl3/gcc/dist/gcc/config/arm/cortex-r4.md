@@ -1,5 +1,5 @@
 ;; ARM Cortex-R4 scheduling description.
-;; Copyright (C) 2007, 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 ;; Contributed by CodeSourcery.
 
 ;; This file is part of GCC.
@@ -78,19 +78,19 @@
 ;; for the purposes of the dual-issue constraints above.
 (define_insn_reservation "cortex_r4_alu" 2
   (and (eq_attr "tune_cortexr4" "yes")
-       (and (eq_attr "type" "alu")
+       (and (eq_attr "type" "alu_reg,simple_alu_imm")
             (not (eq_attr "insn" "mov"))))
   "cortex_r4_alu")
 
 (define_insn_reservation "cortex_r4_mov" 2
   (and (eq_attr "tune_cortexr4" "yes")
-       (and (eq_attr "type" "alu")
+       (and (eq_attr "type" "alu_reg,simple_alu_imm")
             (eq_attr "insn" "mov")))
   "cortex_r4_mov")
 
 (define_insn_reservation "cortex_r4_alu_shift" 2
   (and (eq_attr "tune_cortexr4" "yes")
-       (eq_attr "type" "alu_shift"))
+       (eq_attr "type" "simple_alu_shift,alu_shift"))
   "cortex_r4_alu")
 
 (define_insn_reservation "cortex_r4_alu_shift_reg" 2

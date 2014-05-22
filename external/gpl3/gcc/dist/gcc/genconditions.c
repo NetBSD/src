@@ -1,6 +1,5 @@
 /* Process machine description and calculate constant conditions.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -33,6 +32,7 @@
 #include "rtl.h"
 #include "errors.h"
 #include "hashtab.h"
+#include "read-md.h"
 #include "gensupport.h"
 
 /* so we can include except.h in the generated file.  */
@@ -81,12 +81,11 @@ write_header (void)
 \n\
 #include \"regs.h\"\n\
 #include \"recog.h\"\n\
-#include \"real.h\"\n\
 #include \"output.h\"\n\
 #include \"flags.h\"\n\
 #include \"hard-reg-set.h\"\n\
 #include \"resource.h\"\n\
-#include \"toplev.h\"\n\
+#include \"diagnostic-core.h\"\n\
 #include \"reload.h\"\n\
 #include \"tm-constrs.h\"\n");
 
@@ -117,7 +116,7 @@ write_one_condition (void **slot, void * ARG_UNUSED (dummy))
   const struct c_test *test = * (const struct c_test **) slot;
   const char *p;
 
-  print_rtx_ptr_loc (test->expr);
+  print_md_ptr_loc (test->expr);
   fputs ("  { \"", stdout);
   for (p = test->expr; *p; p++)
     {
@@ -214,7 +213,7 @@ main (int argc, char **argv)
 
   progname = "genconditions";
 
-  if (init_md_reader_args (argc, argv) != SUCCESS_EXIT_CODE)
+  if (!init_rtx_reader_args (argc, argv))
     return (FATAL_EXIT_CODE);
 
   /* Read the machine description.  */

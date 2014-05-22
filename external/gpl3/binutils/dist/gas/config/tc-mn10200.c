@@ -481,6 +481,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 	  break;
 	case 0xff:
 	  opcode = 0xfe;
+	  break;
 	case 0xe8:
 	  opcode = 0xe9;
 	  break;

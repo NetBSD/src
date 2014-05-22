@@ -2,14 +2,8 @@
  * hostapd / EAP-PEAP (draft-josefsson-pppext-eap-tls-eap-10.txt)
  * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -1063,8 +1057,6 @@ static void eap_peap_process_phase2(struct eap_sm *sm,
 
 	wpa_hexdump_buf_key(MSG_DEBUG, "EAP-PEAP: Decrypted Phase 2 EAP",
 			    in_decrypted);
-
-	hdr = wpabuf_head(in_decrypted);
 
 	if (data->peap_version == 0 && data->state != PHASE2_TLV) {
 		const struct eap_hdr *resp;

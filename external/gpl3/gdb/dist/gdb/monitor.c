@@ -1,8 +1,6 @@
 /* Remote debugging interface for boot monitors, for GDB.
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by Rob Savoye for Cygnus.
    Resurrected from the ashes by Stu Grossman.
@@ -56,6 +54,7 @@
 #include "srec.h"
 #include "regcache.h"
 #include "gdbthread.h"
+#include "readline/readline.h"
 
 static char *dev_name;
 static struct target_ops *targ_ops;
@@ -122,7 +121,7 @@ static ptid_t monitor_ptid;
 
 static void monitor_debug (const char *fmt, ...) ATTRIBUTE_PRINTF (1, 2);
 
-static int monitor_debug_p = 0;
+static unsigned int monitor_debug_p = 0;
 
 /* NOTE: This file alternates between monitor_debug_p and remote_debug
    when determining if debug information is printed.  Perhaps this
@@ -219,11 +218,11 @@ monitor_error (char *function, char *message,
 
   if (final_char)
     error (_("%s (%s): %s: %s%c"),
-	   function, paddress (target_gdbarch, memaddr),
+	   function, paddress (target_gdbarch (), memaddr),
 	   message, safe_string, final_char);
   else
     error (_("%s (%s): %s: %s"),
-	   function, paddress (target_gdbarch, memaddr),
+	   function, paddress (target_gdbarch (), memaddr),
 	   message, safe_string);
 }
 
@@ -258,7 +257,7 @@ fromhex (int a)
 static void
 monitor_vsprintf (char *sndbuf, char *pattern, va_list args)
 {
-  int addr_bit = gdbarch_addr_bit (target_gdbarch);
+  int addr_bit = gdbarch_addr_bit (target_gdbarch ());
   char format[10];
   char fmt;
   char *p;
@@ -514,6 +513,7 @@ monitor_expect (char *string, char *buf, int buflen)
     }
 
   immediate_quit++;
+  QUIT;
   while (1)
     {
       if (buf)
@@ -844,6 +844,8 @@ monitor_open (char *args, struct monitor_ops *mon_ops, int from_tty)
 
   monitor_printf (current_monitor->line_term);
 
+  init_wait_for_inferior ();
+
   start_remote (from_tty);
 }
 
@@ -934,7 +936,7 @@ monitor_supply_register (struct regcache *regcache, int regno, char *valstr)
 
 static void
 monitor_resume (struct target_ops *ops,
-		ptid_t ptid, int step, enum target_signal sig)
+		ptid_t ptid, int step, enum gdb_signal sig)
 {
   /* Some monitors require a different command when starting a program.  */
   monitor_debug ("MON resume\n");
@@ -1162,7 +1164,7 @@ monitor_wait (struct target_ops *ops,
 #endif
 
   status->kind = TARGET_WAITKIND_STOPPED;
-  status->value.sig = TARGET_SIGNAL_TRAP;
+  status->value.sig = GDB_SIGNAL_TRAP;
 
   discard_cleanups (old_chain);
 
@@ -1439,15 +1441,15 @@ monitor_files_info (struct target_ops *ops)
 static int
 monitor_write_memory (CORE_ADDR memaddr, char *myaddr, int len)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   unsigned int val, hostval;
   char *cmd;
   int i;
 
-  monitor_debug ("MON write %d %s\n", len, paddress (target_gdbarch, memaddr));
+  monitor_debug ("MON write %d %s\n", len, paddress (target_gdbarch (), memaddr));
 
   if (current_monitor->flags & MO_ADDR_BITS_REMOVE)
-    memaddr = gdbarch_addr_bits_remove (target_gdbarch, memaddr);
+    memaddr = gdbarch_addr_bits_remove (target_gdbarch (), memaddr);
 
   /* Use memory fill command for leading 0 bytes.  */
 
@@ -1706,7 +1708,7 @@ monitor_write_memory_block (CORE_ADDR memaddr, char *myaddr, int len)
 static int
 monitor_read_memory_single (CORE_ADDR memaddr, char *myaddr, int len)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   unsigned int val;
   char membuf[sizeof (int) * 2 + 1];
   char *p;
@@ -1851,18 +1853,18 @@ monitor_read_memory (CORE_ADDR memaddr, char *myaddr, int len)
     }
 
   monitor_debug ("MON read block ta(%s) ha(%s) %d\n",
-		 paddress (target_gdbarch, memaddr),
+		 paddress (target_gdbarch (), memaddr),
 		 host_address_to_string (myaddr), len);
 
   if (current_monitor->flags & MO_ADDR_BITS_REMOVE)
-    memaddr = gdbarch_addr_bits_remove (target_gdbarch, memaddr);
+    memaddr = gdbarch_addr_bits_remove (target_gdbarch (), memaddr);
 
   if (current_monitor->flags & MO_GETMEM_READ_SINGLE)
     return monitor_read_memory_single (memaddr, myaddr, len);
 
   len = min (len, 16);
 
-  /* Some dumpers align the first data with the preceeding 16
+  /* Some dumpers align the first data with the preceding 16
      byte boundary.  Some print blanks and start at the
      requested boundary.  EXACT_DUMPADDR  */
 
@@ -2174,36 +2176,52 @@ monitor_wait_srec_ack (void)
 /* monitor_load -- download a file.  */
 
 static void
-monitor_load (char *file, int from_tty)
+monitor_load (char *args, int from_tty)
 {
+  CORE_ADDR load_offset = 0;
+  char **argv;
+  struct cleanup *old_cleanups;
+  char *filename;
+
   monitor_debug ("MON load\n");
 
-  if (current_monitor->load_routine)
-    current_monitor->load_routine (monitor_desc, file, hashmark);
-  else
-    {				/* The default is ascii S-records.  */
-      int n;
-      unsigned long load_offset;
-      char buf[128];
+  if (args == NULL)
+    error_no_arg (_("file to load"));
 
-      /* Enable user to specify address for downloading as 2nd arg to load.  */
-      n = sscanf (file, "%s 0x%lx", buf, &load_offset);
-      if (n > 1)
-	file = buf;
-      else
-	load_offset = 0;
+  argv = gdb_buildargv (args);
+  old_cleanups = make_cleanup_freeargv (argv);
 
-      monitor_printf (current_monitor->load);
-      if (current_monitor->loadresp)
-	monitor_expect (current_monitor->loadresp, NULL, 0);
+  filename = tilde_expand (argv[0]);
+  make_cleanup (xfree, filename);
 
-      load_srec (monitor_desc, file, (bfd_vma) load_offset,
-		 32, SREC_ALL, hashmark,
-		 current_monitor->flags & MO_SREC_ACK ?
-		 monitor_wait_srec_ack : NULL);
+  /* Enable user to specify address for downloading as 2nd arg to load.  */
+  if (argv[1] != NULL)
+    {
+      const char *endptr;
 
-      monitor_expect_prompt (NULL, 0);
+      load_offset = strtoulst (argv[1], &endptr, 0);
+
+      /* If the last word was not a valid number then
+	 treat it as a file name with spaces in.  */
+      if (argv[1] == endptr)
+	error (_("Invalid download offset:%s."), argv[1]);
+
+      if (argv[2] != NULL)
+	error (_("Too many parameters."));
     }
+
+  monitor_printf (current_monitor->load);
+  if (current_monitor->loadresp)
+    monitor_expect (current_monitor->loadresp, NULL, 0);
+
+  load_srec (monitor_desc, filename, load_offset,
+	     32, SREC_ALL, hashmark,
+	     current_monitor->flags & MO_SREC_ACK ?
+	     monitor_wait_srec_ack : NULL);
+
+  monitor_expect_prompt (NULL, 0);
+
+  do_cleanups (old_cleanups);
 
   /* Finally, make the PC point at the start address.  */
   if (exec_bfd)
@@ -2376,14 +2394,14 @@ When enabled, a hashmark \'#\' is displayed."),
 			   NULL, /* FIXME: i18n: */
 			   &setlist, &showlist);
 
-  add_setshow_zinteger_cmd ("monitor", no_class, &monitor_debug_p, _("\
+  add_setshow_zuinteger_cmd ("monitor", no_class, &monitor_debug_p, _("\
 Set debugging of remote monitor communication."), _("\
 Show debugging of remote monitor communication."), _("\
 When enabled, communication between GDB and the remote monitor\n\
 is displayed."),
-			    NULL,
-			    NULL, /* FIXME: i18n: */
-			    &setdebuglist, &showdebuglist);
+			     NULL,
+			     NULL, /* FIXME: i18n: */
+			     &setdebuglist, &showdebuglist);
 
   /* Yes, 42000 is arbitrary.  The only sense out of it, is that it
      isn't 0.  */

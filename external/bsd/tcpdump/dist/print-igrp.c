@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-igrp.c,v 1.21 2005-04-20 21:01:56 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-igrp.c,v 1.21 2005-04-20 21:01:56 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-igrp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-igrp.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ igrp_entry_print(register struct igrprte *igr, register int is_interior,
 	    mtu, igr->igr_hct);
 }
 
-static struct tok op2str[] = {
+static const struct tok op2str[] = {
 	{ IGRP_UPDATE,		"update" },
 	{ IGRP_REQUEST,		"request" },
 	{ 0,			NULL }

@@ -1,6 +1,5 @@
 /* Routines for discovering and unpropagating edge equivalences.
-   Copyright (C) 2005, 2007, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,22 +23,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "tree.h"
 #include "flags.h"
-#include "rtl.h"
 #include "tm_p.h"
-#include "ggc.h"
 #include "basic-block.h"
-#include "output.h"
-#include "expr.h"
 #include "function.h"
-#include "diagnostic.h"
-#include "timevar.h"
-#include "tree-dump.h"
 #include "tree-flow.h"
 #include "domwalk.h"
-#include "real.h"
 #include "tree-pass.h"
 #include "tree-ssa-propagate.h"
-#include "langhooks.h"
 
 /* The basic structure describing an equivalency created by traversing
    an edge.  Traversing the edge effectively means that we can assume
@@ -273,7 +263,7 @@ associate_equivalences_with_edges (void)
    leading to this block.  If no such edge equivalency exists, then we
    record NULL.  These equivalences are live until we leave the dominator
    subtree rooted at the block where we record the equivalency.  */
-static VEC(tree,heap) *equiv_stack;
+static vec<tree> equiv_stack;
 
 /* Global hash table implementing a mapping from invariant values
    to a list of SSA_NAMEs which have the same value.  We might be
@@ -287,7 +277,7 @@ struct equiv_hash_elt
   tree value;
 
   /* List of SSA_NAMEs which have the same value/key.  */
-  VEC(tree,heap) *equivalences;
+  vec<tree> equivalences;
 };
 
 static void uncprop_enter_block (struct dom_walk_data *, basic_block);
@@ -318,7 +308,7 @@ static void
 equiv_free (void *p)
 {
   struct equiv_hash_elt *elt = (struct equiv_hash_elt *) p;
-  VEC_free (tree, heap, elt->equivalences);
+  elt->equivalences.release ();
   free (elt);
 }
 
@@ -331,12 +321,12 @@ remove_equivalence (tree value)
   void **slot;
 
   equiv_hash_elt.value = value;
-  equiv_hash_elt.equivalences = NULL;
+  equiv_hash_elt.equivalences.create (0);
 
   slot = htab_find_slot (equiv, &equiv_hash_elt, NO_INSERT);
 
   equiv_hash_elt_p = (struct equiv_hash_elt *) *slot;
-  VEC_pop (tree, equiv_hash_elt_p->equivalences);
+  equiv_hash_elt_p->equivalences.pop ();
 }
 
 /* Record EQUIVALENCE = VALUE into our hash table.  */
@@ -349,7 +339,7 @@ record_equiv (tree value, tree equivalence)
 
   equiv_hash_elt = XNEW (struct equiv_hash_elt);
   equiv_hash_elt->value = value;
-  equiv_hash_elt->equivalences = NULL;
+  equiv_hash_elt->equivalences.create (0);
 
   slot = htab_find_slot (equiv, equiv_hash_elt, INSERT);
 
@@ -360,7 +350,7 @@ record_equiv (tree value, tree equivalence)
 
   equiv_hash_elt = (struct equiv_hash_elt *) *slot;
 
-  VEC_safe_push (tree, heap, equiv_hash_elt->equivalences, equivalence);
+  equiv_hash_elt->equivalences.safe_push (equivalence);
 }
 
 /* Main driver for un-cprop.  */
@@ -375,7 +365,7 @@ tree_ssa_uncprop (void)
 
   /* Create our global data structures.  */
   equiv = htab_create (1024, equiv_hash, equiv_eq, equiv_free);
-  equiv_stack = VEC_alloc (tree, heap, 2);
+  equiv_stack.create (2);
 
   /* We're going to do a dominator walk, so ensure that we have
      dominance information.  */
@@ -403,7 +393,7 @@ tree_ssa_uncprop (void)
      need to empty elements out of the hash table, free EQUIV_STACK,
      and cleanup the AUX field on the edges.  */
   htab_delete (equiv);
-  VEC_free (tree, heap, equiv_stack);
+  equiv_stack.release ();
   FOR_EACH_BB (bb)
     {
       edge e;
@@ -431,7 +421,7 @@ uncprop_leave_block (struct dom_walk_data *walk_data ATTRIBUTE_UNUSED,
 		     basic_block bb ATTRIBUTE_UNUSED)
 {
   /* Pop the topmost value off the equiv stack.  */
-  tree value = VEC_pop (tree, equiv_stack);
+  tree value = equiv_stack.pop ();
 
   /* If that value was non-null, then pop the topmost equivalency off
      its equivalency stack.  */
@@ -472,19 +462,21 @@ uncprop_into_successor_phis (basic_block bb)
 	{
 	  gimple phi = gsi_stmt (gsi);
 	  tree arg = PHI_ARG_DEF (phi, e->dest_idx);
+	  tree res = PHI_RESULT (phi);
 	  struct equiv_hash_elt equiv_hash_elt;
 	  void **slot;
 
-	  /* If the argument is not an invariant, or refers to the same
+	  /* If the argument is not an invariant, and refers to the same
 	     underlying variable as the PHI result, then there's no
 	     point in un-propagating the argument.  */
 	  if (!is_gimple_min_invariant (arg)
-	      && SSA_NAME_VAR (arg) != SSA_NAME_VAR (PHI_RESULT (phi)))
+	      && (SSA_NAME_VAR (arg) == SSA_NAME_VAR (res)
+		  && TREE_TYPE (arg) == TREE_TYPE (res)))
 	    continue;
 
 	  /* Lookup this argument's value in the hash table.  */
 	  equiv_hash_elt.value = arg;
-	  equiv_hash_elt.equivalences = NULL;
+	  equiv_hash_elt.equivalences.create (0);
 	  slot = htab_find_slot (equiv, &equiv_hash_elt, NO_INSERT);
 
 	  if (slot)
@@ -497,11 +489,12 @@ uncprop_into_successor_phis (basic_block bb)
 		 then replace the value in the argument with its equivalent
 		 SSA_NAME.  Use the most recent equivalence as hopefully
 		 that results in shortest lifetimes.  */
-	      for (j = VEC_length (tree, elt->equivalences) - 1; j >= 0; j--)
+	      for (j = elt->equivalences.length () - 1; j >= 0; j--)
 		{
-		  tree equiv = VEC_index (tree, elt->equivalences, j);
+		  tree equiv = elt->equivalences[j];
 
-		  if (SSA_NAME_VAR (equiv) == SSA_NAME_VAR (PHI_RESULT (phi)))
+		  if (SSA_NAME_VAR (equiv) == SSA_NAME_VAR (res)
+		      && TREE_TYPE (equiv) == TREE_TYPE (res))
 		    {
 		      SET_PHI_ARG_DEF (phi, e->dest_idx, equiv);
 		      break;
@@ -569,13 +562,13 @@ uncprop_enter_block (struct dom_walk_data *walk_data ATTRIBUTE_UNUSED,
 	  struct edge_equivalency *equiv = (struct edge_equivalency *) e->aux;
 
 	  record_equiv (equiv->rhs, equiv->lhs);
-	  VEC_safe_push (tree, heap, equiv_stack, equiv->rhs);
+	  equiv_stack.safe_push (equiv->rhs);
 	  recorded = true;
 	}
     }
 
   if (!recorded)
-    VEC_safe_push (tree, heap, equiv_stack, NULL_TREE);
+    equiv_stack.safe_push (NULL_TREE);
 
   uncprop_into_successor_phis (bb);
 }
@@ -591,6 +584,7 @@ struct gimple_opt_pass pass_uncprop =
  {
   GIMPLE_PASS,
   "uncprop",				/* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_uncprop,				/* gate */
   tree_ssa_uncprop,			/* execute */
   NULL,					/* sub */
@@ -601,7 +595,6 @@ struct gimple_opt_pass pass_uncprop =
   0,					/* properties_provided */
   0,					/* properties_destroyed */
   0,					/* todo_flags_start */
-  TODO_dump_func | TODO_verify_ssa	/* todo_flags_finish */
+  TODO_verify_ssa	                /* todo_flags_finish */
  }
 };
-

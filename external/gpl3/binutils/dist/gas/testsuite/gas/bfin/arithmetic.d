@@ -10,7 +10,7 @@ Disassembly of section .text:
    4:	10 c4 [0-3][[:xdigit:]] 40 	A0 = ABS A1;
    8:	30 c4 [0-3][[:xdigit:]] 00 	A1 = ABS A0;
    c:	30 c4 [0-3][[:xdigit:]] 40 	A1 = ABS A1;
-  10:	10 c4 [0-3][[:xdigit:]] c0 	A1 = ABS A0, A0 = ABS A0;
+  10:	10 c4 [0-3][[:xdigit:]] c0 	A1 = ABS A1, A0 = ABS A0;
   14:	07 c4 10 80 	R0 = ABS R2;
 
 00000018 <add>:
@@ -82,9 +82,9 @@ Disassembly of section .text:
   a8:	2b c4 [0-3][[:xdigit:]] 40 	R0.H = \(A0 \+= A1\);
 
 000000ac <multiply16>:
-  ac:	00 c2 0a 24 	R0 = R1.H \* R2.L;
-  b0:	20 c2 68 26 	R1 = R5.H \* R0.H \(S2RND\);
-  b4:	80 c2 db 23 	R7 = R3.L \* R3.H \(FU\);
+  ac:	00 c2 0a 24 	R0.L = R1.H \* R2.L;
+  b0:	20 c2 68 26 	R1.L = R5.H \* R0.H \(S2RND\);
+  b4:	80 c2 db 23 	R7.L = R3.L \* R3.H \(FU\);
   b8:	28 c3 15 27 	R4 = R2.H \* R5.H \(ISS2\);
   bc:	08 c3 0b 20 	R0 = R1.L \* R3.L \(IS\);
   c0:	08 c2 a8 25 	R6 = R5.H \* R0.L;

@@ -1,5 +1,5 @@
 /* Target definitions for Darwin (Mac OS X) systems.
-   Copyright (C) 2006, 2007, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
    Contributed by Apple Inc.
 
 This file is part of GCC.
@@ -24,36 +24,42 @@ along with GCC; see the file COPYING3.  If not see
 #define DARWIN_PREFER_DWARF
 
 /* Since DWARF2 is default, conditions for running dsymutil are different.  */
-#undef LINK_COMMAND_SPEC
-#define LINK_COMMAND_SPEC "\
-%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %(linker) %l %X %{d} %{s} %{t} %{Z} \
-    %{A} %{e*} %{m} %{r} %{x} \
-    %{o*}%{!o:-o a.out} \
-    %{!A:%{!nostdlib:%{!nostartfiles:%S}}} \
-    %{L*} %(link_libgcc) %o %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
-    %{flto} %{fwhopr} \
-    %{fopenmp|ftree-parallelize-loops=*: \
-      %{static|static-libgcc|static-libstdc++|static-libgfortran: libgomp.a%s; : -lgomp } } \
-    %{!nostdlib:%{!nodefaultlibs:  %(link_ssp) %G %L }} \
-    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}\n\
-%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
-    %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
+#undef DSYMUTIL_SPEC
+#define DSYMUTIL_SPEC \
+   "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+    %{v} \
+    %{g*:%{!gstabs*:%{!g0: -idsym}}}\
+    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm|.s|.f|.f90|.f95|.f03|.f77|.for|.F|.F90|.F95|.F03: \
+    %{g*:%{!gstabs*:%{!g0: -dsym}}}}}}}}}}}"
 
-/* libSystem contains unwind information for signal frames.  */
-#define DARWIN_LIBSYSTEM_HAS_UNWIND
+/* Tell collect2 to run dsymutil for us as necessary.  */
+#define COLLECT_RUN_DSYMUTIL 1
 
-/* The linker can generate branch islands.  */
-#define DARWIN_LINKER_GENERATES_ISLANDS 1
+#undef PIE_SPEC
+#define PIE_SPEC \
+  "%{fpie|pie|fPIE: \
+     %{mdynamic-no-pic: %n'-mdynamic-no-pic' overrides '-pie', '-fpie' or '-fPIE'; \
+      :-pie}}"
+
+/* Only ask as for debug data if the debug style is stabs (since as doesn't
+   yet generate dwarf.)  */
+
+#undef  ASM_DEBUG_SPEC
+#define ASM_DEBUG_SPEC  "%{g*:%{!g0:%{gstabs:--gstabs}}}"
 
 #undef  ASM_OUTPUT_ALIGNED_COMMON
 #define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGN)		\
   do {									\
     unsigned HOST_WIDE_INT _new_size = (SIZE);				\
-    fprintf ((FILE), ".comm ");						\
+    fprintf ((FILE), "\t.comm ");						\
     assemble_name ((FILE), (NAME));					\
     if (_new_size == 0) _new_size = 1;					\
     fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",		\
 	     _new_size, floor_log2 ((ALIGN) / BITS_PER_UNIT));		\
   } while (0)
+
+#undef DEF_MIN_OSX_VERSION
+#define DEF_MIN_OSX_VERSION "10.5"
+
+#undef STACK_CHECK_STATIC_BUILTIN
+#define STACK_CHECK_STATIC_BUILTIN 1

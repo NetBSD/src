@@ -3,14 +3,8 @@
  * Copyright (c) 2006, Dan Williams <dcbw@redhat.com> and Red Hat, Inc.
  * Copyright (c) 2009, Witold Sowa <witold.sowa@gmail.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -279,7 +273,7 @@ DBusMessage * wpas_dbus_handler_wps_start(DBusMessage *message,
 			ret = wpa_supplicant_ap_wps_pin(wpa_s,
 							params.bssid,
 							params.pin,
-							npin, sizeof(npin));
+							npin, sizeof(npin), 0);
 		else
 #endif /* CONFIG_AP */
 		{

@@ -1,4 +1,4 @@
-	.section        ".text"
+	.text
 ppc476:
 	add	3,4,5
 	add.	3,4,5
@@ -227,7 +227,7 @@ ppc476:
 	lhzux	20,22,24
 	lhzx	23,24,25
 	lmw	3,-16(1)
-	lswi	3,4,16
+	lswi	5,4,16
 	lswx	3,4,5
 	lwarx	3,4,5
 	lwarx	3,4,5,0

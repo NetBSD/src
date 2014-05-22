@@ -1,0 +1,15 @@
+#	$NetBSD: Makefile,v 1.1.4.2 2014/05/22 16:14:50 yamt Exp $
+
+LIB=	lldbPluginUnwindAssemblyX86
+
+.include <bsd.init.mk>
+
+.PATH: ${LLDB_SRCDIR}/source/Plugins/UnwindAssembly/x86
+
+SRCS+=	UnwindAssembly-x86.cpp
+
+.if defined(HOSTLIB)
+.include <bsd.hostlib.mk>
+.else
+.include <bsd.lib.mk>
+.endif

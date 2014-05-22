@@ -1,7 +1,6 @@
 // Special functions -*- C++ -*-
 
-// Copyright (C) 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2006-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,7 +24,7 @@
 
 /** @file tr1/hypergeometric.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{tr1/cmath}
  */
 
 //
@@ -42,16 +41,16 @@
 #ifndef _GLIBCXX_TR1_HYPERGEOMETRIC_TCC
 #define _GLIBCXX_TR1_HYPERGEOMETRIC_TCC 1
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
 namespace tr1
 {
-
   // [5.2] Special functions
 
   // Implementation-space details.
   namespace __detail
   {
+  _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     /**
      *   @brief This routine returns the confluent hypergeometric function
@@ -76,7 +75,7 @@ namespace tr1
      */
     template<typename _Tp>
     _Tp
-    __conf_hyperg_series(const _Tp __a, const _Tp __c, const _Tp __x)
+    __conf_hyperg_series(_Tp __a, _Tp __c, _Tp __x)
     {
       const _Tp __eps = std::numeric_limits<_Tp>::epsilon();
 
@@ -113,7 +112,7 @@ namespace tr1
      */
     template<typename _Tp>
     _Tp
-    __conf_hyperg_luke(const _Tp __a, const _Tp __c, const _Tp __xin)
+    __conf_hyperg_luke(_Tp __a, _Tp __c, _Tp __xin)
     {
       const _Tp __big = std::pow(std::numeric_limits<_Tp>::max(), _Tp(0.16L));
       const int __nmax = 20000;
@@ -219,8 +218,8 @@ namespace tr1
      *   @return  The confluent hypergeometric function.
      */
     template<typename _Tp>
-    inline _Tp
-    __conf_hyperg(const _Tp __a, const _Tp __c, const _Tp __x)
+    _Tp
+    __conf_hyperg(_Tp __a, _Tp __c, _Tp __x)
     {
 #if _GLIBCXX_USE_C99_MATH_TR1
       const _Tp __c_nint = std::tr1::nearbyint(__c);
@@ -264,8 +263,7 @@ namespace tr1
      */
     template<typename _Tp>
     _Tp
-    __hyperg_series(const _Tp __a, const _Tp __b,
-                    const _Tp __c, const _Tp __x)
+    __hyperg_series(_Tp __a, _Tp __b, _Tp __c, _Tp __x)
     {
       const _Tp __eps = std::numeric_limits<_Tp>::epsilon();
 
@@ -298,8 +296,7 @@ namespace tr1
      */
     template<typename _Tp>
     _Tp
-    __hyperg_luke(const _Tp __a, const _Tp __b, const _Tp __c,
-                  const _Tp __xin)
+    __hyperg_luke(_Tp __a, _Tp __b, _Tp __c, _Tp __xin)
     {
       const _Tp __big = std::pow(std::numeric_limits<_Tp>::max(), _Tp(0.16L));
       const int __nmax = 20000;
@@ -433,8 +430,7 @@ namespace tr1
      */
     template<typename _Tp>
     _Tp
-    __hyperg_reflect(const _Tp __a, const _Tp __b, const _Tp __c,
-                     const _Tp __x)
+    __hyperg_reflect(_Tp __a, _Tp __b, _Tp __c, _Tp __x)
     {
       const _Tp __d = __c - __a - __b;
       const int __intd  = std::floor(__d + _Tp(0.5L));
@@ -723,8 +719,8 @@ namespace tr1
      *   @return  The confluent hypergeometric function.
      */
     template<typename _Tp>
-    inline _Tp
-    __hyperg(const _Tp __a, const _Tp __b, const _Tp __c, const _Tp __x)
+    _Tp
+    __hyperg(_Tp __a, _Tp __b, _Tp __c, _Tp __x)
     {
 #if _GLIBCXX_USE_C99_MATH_TR1
       const _Tp __a_nint = std::tr1::nearbyint(__a);
@@ -771,6 +767,7 @@ namespace tr1
         return __hyperg_luke(__a, __b, __c, __x);
     }
 
+  _GLIBCXX_END_NAMESPACE_VERSION
   } // namespace std::tr1::__detail
 }
 }

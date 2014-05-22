@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2014/05/22 16:14:44 yamt Exp $
 
 LIB=	LLVMipa
 
@@ -6,11 +6,13 @@ LIB=	LLVMipa
 
 .PATH: ${LLVM_SRCDIR}/lib/Analysis/IPA
 
-SRCS+=	CallGraph.cpp \
+SRCS+=	CallPrinter.cpp \
+	CallGraph.cpp \
 	CallGraphSCCPass.cpp \
 	FindUsedTypes.cpp \
 	GlobalsModRef.cpp \
-	IPA.cpp
+	IPA.cpp \
+	InlineCost.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -37,19 +37,7 @@ proc run_elf_list_test { name suffix opts readelf_opts readelf_pipe } {
 }
 
 # We're testing bits in obj-elf -- don't run on anything else.
-if { ([istarget "*-*-*elf*"]
-      || [istarget "*-*-linux*"]
-      || [istarget "*-*-gnu*"]
-      || [istarget "m6811-*"]
-      || [istarget "m6812-*"]
-      || [istarget "sparc*-*-solaris*"]
-      || [istarget "mips*-*-irix6*"]
-      || [istarget "arm*-*-eabi"])
-     && ![istarget *-*-linux*aout*]
-     && ![istarget *-*-linux*coff*]
-     && ![istarget *-*-linux*oldld*]
-     && ![istarget sh64*-*-linux*]
-} then {
+if { [is_elf_format] } then {
     set target_machine ""
     if {[istarget "mips*-*-*"]} then {
 	set target_machine -mips
@@ -69,11 +57,11 @@ if { ([istarget "*-*-*elf*"]
     if {[istarget "rx-*-*"]} then {
 	set target_machine -rx
     }
-    if { ([istarget "*arm*-*-*"]
-	  || [istarget "xscale*-*-*"]) } {
+    if {[istarget "arm*-*-*"]} {
 
 	if { ([istarget "*-*-*eabi"]
 	      || [istarget "*-*-linux-*"]
+	      || [istarget "*-*-nacl*"]
 	      || [istarget "*-*-symbianelf"])} then {
 	    set target_machine -armeabi
 	} else {
@@ -108,8 +96,14 @@ if { ([istarget "*-*-*elf*"]
     run_dump_test "group0c"
     run_dump_test "group1a"
     run_dump_test "group1b"
-    run_dump_test "groupautoa"
     case $target_triplet in {
+	{ hppa64*-*-hpux* } { }
+	default {
+	    run_dump_test "groupautoa"
+	}
+    }
+    case $target_triplet in {
+	{ hppa64*-*-hpux* } { }
 	{ xtensa*-*-* } { }
 	default {
 	    run_dump_test "groupautob"
@@ -132,6 +126,7 @@ if { ([istarget "*-*-*elf*"]
 	    # against ordinary symbols into relocations against section symbols.
 	    # This is usually revealed by the error message:
 	    #  symbol `sym' required but not present
+    	setup_xfail "m681*-*-*" "m68hc*-*-*"
 	    run_dump_test redef
 	    run_dump_test equ-reloc
 	}
@@ -146,9 +141,11 @@ if { ([istarget "*-*-*elf*"]
     }
     run_dump_test "section3"
     run_dump_test "section4"
-    if {! [istarget "h8300-*-*"]} then {
+    if {! [istarget "h8300-*-*"] && ! [istarget "rx-*-*"]} then {
 	# The h8300 port issues a warning message for
 	# new sections created without atrributes.
+	# The RX port does not complain about changing the attributes of the
+	# .data and .bss sections since it does not use those names.
 	run_elf_list_test "section5" "" "-al" "-SW" "| grep \" \\\\.test\\\[0-9\\\]\""
     }
     run_dump_test "struct"
@@ -158,17 +155,21 @@ if { ([istarget "*-*-*elf*"]
     }
     run_dump_test "symver"
 
+    # No indirect functions on non-GNU targets.
     # The MSP port sets the ELF header's OSABI field to ELFOSABI_STANDALONE.
     # The non-eabi ARM ports sets it to ELFOSABI_ARM.
     # So for these targets we cannot include an IFUNC symbol type
     # in the symbol type test.
-    if {   [istarget "msp*-*-*"]
-	|| [istarget "arm*-*-*"]
-	|| [istarget "xscale*-*-*"]} then {
+    if { [istarget "*-*-hpux*"]
+	 || [istarget "msp*-*-*"]
+	 || [istarget "arm*-*-*"]} then {
+	# hppa64 has a non-standard common directive
+	if { ![istarget "hppa64*-*-hpux*"] } then {
 	    run_elf_list_test "type-noifunc" "" "" "-s" "| grep \"1 *\\\[FONTC\\\]\""
+	}
     } else {
-    	    run_dump_test ifunc-1
-	    run_elf_list_test "type" "" "" "-s" "| grep \"1 *\\\[FIONTCU\\\]\""
+	run_dump_test ifunc-1
+	run_elf_list_test "type" "" "" "-s" "| grep \"1 *\\\[FIONTCU\\\]\""
     }
 
     run_dump_test "section6"
@@ -178,5 +179,19 @@ if { ([istarget "*-*-*elf*"]
     run_dump_test "dwarf2-1"
     run_dump_test "dwarf2-2"
     run_dump_test "dwarf2-3"
+    run_dump_test "dwarf2-4"
     run_dump_test "bad-section-flag"
+    run_dump_test "bad-size"
+    run_dump_test "bad-group"
+
+    run_dump_test "syms"
+    
+    run_dump_test "common1"
+    run_dump_test "common2"
+
+load_lib gas-dg.exp
+dg-init
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/err-*.s $srcdir/$subdir/warn-*.s]] "" ""
+dg-finish
+    
 }

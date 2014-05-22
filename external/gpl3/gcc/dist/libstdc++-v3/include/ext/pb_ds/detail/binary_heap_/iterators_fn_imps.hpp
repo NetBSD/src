@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file iterators_fn_imps.hpp
+ * @file binary_heap_/iterators_fn_imps.hpp
  * Contains an implementation class for a binary_heap.
  */
 
@@ -42,31 +42,23 @@ PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::iterator
 PB_DS_CLASS_C_DEC::
 begin()
-{
-  return (iterator(m_a_entries));
-}
+{ return iterator(m_a_entries); }
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::const_iterator
 PB_DS_CLASS_C_DEC::
 begin() const
-{
-  return (const_iterator(m_a_entries));
-}
+{ return const_iterator(m_a_entries); }
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::iterator
 PB_DS_CLASS_C_DEC::
 end()
-{
-  return (iterator(m_a_entries + m_size));
-}
+{ return iterator(m_a_entries + m_size); }
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::const_iterator
 PB_DS_CLASS_C_DEC::
 end() const
-{
-  return (const_iterator(m_a_entries + m_size));
-}
+{ return const_iterator(m_a_entries + m_size); }
 

@@ -24,6 +24,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "libiberty.h"
+#include "mach-o/reloc.h"
 
 #define bfd_mach_o_object_p bfd_mach_o_i386_object_p
 #define bfd_mach_o_core_p bfd_mach_o_i386_core_p
@@ -62,6 +63,7 @@ bfd_mach_o_i386_mkobject (bfd *abfd)
 
 static reloc_howto_type i386_howto_table[]=
 {
+  /* 0 */
   HOWTO(BFD_RELOC_32, 0, 2, 32, FALSE, 0,
 	complain_overflow_bitfield,
 	NULL, "32",
@@ -78,6 +80,7 @@ static reloc_howto_type i386_howto_table[]=
 	complain_overflow_bitfield,
 	NULL, "DISP32",
 	FALSE, 0xffffffff, 0xffffffff, TRUE),
+  /* 4 */
   HOWTO(BFD_RELOC_16_PCREL, 0, 1, 16, TRUE, 0,
 	complain_overflow_bitfield,
 	NULL, "DISP16",
@@ -86,10 +89,27 @@ static reloc_howto_type i386_howto_table[]=
 	complain_overflow_bitfield,
 	NULL, "SECTDIFF_32",
 	FALSE, 0xffffffff, 0xffffffff, FALSE),
+  HOWTO(BFD_RELOC_MACH_O_LOCAL_SECTDIFF, 0, 2, 32, FALSE, 0,
+	complain_overflow_bitfield,
+	NULL, "LSECTDIFF_32",
+	FALSE, 0xffffffff, 0xffffffff, FALSE),
   HOWTO(BFD_RELOC_MACH_O_PAIR, 0, 2, 32, FALSE, 0,
 	complain_overflow_bitfield,
 	NULL, "PAIR_32",
 	FALSE, 0xffffffff, 0xffffffff, FALSE),
+  /* 8 */
+  HOWTO(BFD_RELOC_MACH_O_SECTDIFF, 0, 1, 16, FALSE, 0,
+	complain_overflow_bitfield,
+	NULL, "SECTDIFF_16",
+	FALSE, 0xffff, 0xffff, FALSE),
+  HOWTO(BFD_RELOC_MACH_O_LOCAL_SECTDIFF, 0, 1, 16, FALSE, 0,
+	complain_overflow_bitfield,
+	NULL, "LSECTDIFF_16",
+	FALSE, 0xffff, 0xffff, FALSE),
+  HOWTO(BFD_RELOC_MACH_O_PAIR, 0, 1, 16, FALSE, 0,
+	complain_overflow_bitfield,
+	NULL, "PAIR_16",
+	FALSE, 0xffff, 0xffff, FALSE),
 };
 
 static bfd_boolean
@@ -100,17 +120,43 @@ bfd_mach_o_i386_swap_reloc_in (arelent *res, bfd_mach_o_reloc_info *reloc)
       switch (reloc->r_type)
         {
         case BFD_MACH_O_GENERIC_RELOC_PAIR:
-          if (reloc->r_length != 2)
-            return FALSE;
-          res->howto = &i386_howto_table[6];
-          res->address = res[-1].address;
-          return TRUE;
+          if (reloc->r_length == 2)
+            {
+	      res->howto = &i386_howto_table[7];
+	      res->address = res[-1].address;
+	      return TRUE;
+            }
+          else if (reloc->r_length == 1)
+	    {
+	      res->howto = &i386_howto_table[10];
+	      res->address = res[-1].address;
+	      return TRUE;
+	    }
+          return FALSE;
         case BFD_MACH_O_GENERIC_RELOC_SECTDIFF:
+          if (reloc->r_length == 2)
+            {
+	      res->howto = &i386_howto_table[5];
+	      return TRUE;
+            }
+          else if (reloc->r_length == 1)
+            {
+	      res->howto = &i386_howto_table[8];
+	      return TRUE;
+            }
+          return FALSE;
         case BFD_MACH_O_GENERIC_RELOC_LOCAL_SECTDIFF:
-          if (reloc->r_length != 2)
-            return FALSE;
-          res->howto = &i386_howto_table[5];
-          return TRUE;
+          if (reloc->r_length == 2)
+            {
+	      res->howto = &i386_howto_table[6];
+	      return TRUE;
+            }
+          else if (reloc->r_length == 1)
+            {
+	      res->howto = &i386_howto_table[9];
+	      return TRUE;
+            }
+          return FALSE;
         default:
           return FALSE;
         }
@@ -177,20 +223,26 @@ bfd_mach_o_i386_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
       rinfo->r_scattered = 1;
       rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_SECTDIFF;
       rinfo->r_pcrel = 0;
-      rinfo->r_length = 2;
+      rinfo->r_length = rel->howto->size;
       rinfo->r_extern = 0;
-      rinfo->r_value = (*rel->sym_ptr_ptr)->value 
-        + (*rel->sym_ptr_ptr)->section->vma;
+      rinfo->r_value = rel->addend;
+      break;
+    case BFD_RELOC_MACH_O_LOCAL_SECTDIFF:
+      rinfo->r_scattered = 1;
+      rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_LOCAL_SECTDIFF;
+      rinfo->r_pcrel = 0;
+      rinfo->r_length = rel->howto->size;
+      rinfo->r_extern = 0;
+      rinfo->r_value = rel->addend;
       break;
     case BFD_RELOC_MACH_O_PAIR:
       rinfo->r_address = 0;
       rinfo->r_scattered = 1;
       rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_PAIR;
       rinfo->r_pcrel = 0;
-      rinfo->r_length = 2;
+      rinfo->r_length = rel->howto->size;
       rinfo->r_extern = 0;
-      rinfo->r_value = (*rel->sym_ptr_ptr)->value 
-        + (*rel->sym_ptr_ptr)->section->vma;
+      rinfo->r_value = rel->addend;
       break;
     default:
       return FALSE;
@@ -279,9 +331,65 @@ bfd_mach_o_i386_print_thread (bfd *abfd, bfd_mach_o_thread_flavour *thread,
   return FALSE;
 }
 
+static const mach_o_section_name_xlat text_section_names_xlat[] =
+  {
+    {	".symbol_stub",			"__symbol_stub",
+	SEC_CODE | SEC_LOAD,		BFD_MACH_O_S_SYMBOL_STUBS,
+	BFD_MACH_O_S_ATTR_PURE_INSTRUCTIONS,
+					0},
+    {	".picsymbol_stub",		"__picsymbol_stub",
+	SEC_CODE | SEC_LOAD,		BFD_MACH_O_S_SYMBOL_STUBS,
+	BFD_MACH_O_S_ATTR_PURE_INSTRUCTIONS,
+					0},
+    { NULL, NULL, 0, 0, 0, 0}
+  };
+
+static const mach_o_section_name_xlat data_section_names_xlat[] =
+  {
+    /* The first two are recognized by i386, but not emitted for x86 by
+       modern GCC.  */
+    {	".non_lazy_symbol_pointer",	"__nl_symbol_ptr",
+	SEC_DATA | SEC_LOAD,		BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS,
+	BFD_MACH_O_S_ATTR_NONE,		2},
+    {	".lazy_symbol_pointer",		"__la_symbol_ptr",
+	SEC_DATA | SEC_LOAD,		BFD_MACH_O_S_LAZY_SYMBOL_POINTERS,
+	BFD_MACH_O_S_ATTR_NONE,		2},
+    {	".lazy_symbol_pointer2",	"__la_sym_ptr2",
+	SEC_DATA | SEC_LOAD,		BFD_MACH_O_S_LAZY_SYMBOL_POINTERS,
+	BFD_MACH_O_S_ATTR_NONE,		2},
+    {	".lazy_symbol_pointer3",	"__la_sym_ptr3",
+	SEC_DATA | SEC_LOAD,		BFD_MACH_O_S_LAZY_SYMBOL_POINTERS,
+	BFD_MACH_O_S_ATTR_NONE,		2},
+    { NULL, NULL, 0, 0, 0, 0}
+  };
+
+static const mach_o_section_name_xlat import_section_names_xlat[] =
+  {
+    {	".picsymbol_stub3",		"__jump_table",
+	SEC_CODE | SEC_LOAD,		BFD_MACH_O_S_SYMBOL_STUBS,
+	BFD_MACH_O_S_ATTR_PURE_INSTRUCTIONS 
+	| BFD_MACH_O_S_SELF_MODIFYING_CODE,
+					6},
+    {	".non_lazy_symbol_pointer_x86",	"__pointers",
+	SEC_DATA | SEC_LOAD,		BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS,
+	BFD_MACH_O_S_ATTR_NONE,		2},
+    { NULL, NULL, 0, 0, 0, 0}
+  };
+
+const mach_o_segment_name_xlat mach_o_i386_segsec_names_xlat[] =
+  {
+    { "__TEXT", text_section_names_xlat },
+    { "__DATA", data_section_names_xlat },
+    { "__IMPORT", import_section_names_xlat },
+    { NULL, NULL }
+  };
+
 #define bfd_mach_o_swap_reloc_in bfd_mach_o_i386_swap_reloc_in
 #define bfd_mach_o_swap_reloc_out bfd_mach_o_i386_swap_reloc_out
 #define bfd_mach_o_print_thread bfd_mach_o_i386_print_thread
+
+#define bfd_mach_o_tgt_seg_table mach_o_i386_segsec_names_xlat
+#define bfd_mach_o_section_type_valid_for_tgt NULL
 
 #define bfd_mach_o_bfd_reloc_type_lookup bfd_mach_o_i386_bfd_reloc_type_lookup 
 #define bfd_mach_o_bfd_reloc_name_lookup bfd_mach_o_i386_bfd_reloc_name_lookup
@@ -291,4 +399,5 @@ bfd_mach_o_i386_print_thread (bfd *abfd, bfd_mach_o_thread_flavour *thread,
 #define TARGET_ARCHITECTURE	bfd_arch_i386
 #define TARGET_BIG_ENDIAN 	0
 #define TARGET_ARCHIVE 		0
+#define TARGET_PRIORITY		0
 #include "mach-o-target.c"

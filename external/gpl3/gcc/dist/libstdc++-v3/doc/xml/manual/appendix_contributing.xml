@@ -1,29 +1,21 @@
-<?xml version='1.0'?>
-<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
- "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
-[ ]>
-
-<appendix id="appendix.contrib" xreflabel="Contributing">
+<appendix xmlns="http://docbook.org/ns/docbook" version="5.0" 
+	  xml:id="appendix.contrib" xreflabel="Contributing">
 <?dbhtml filename="appendix_contributing.html"?>
 
-<appendixinfo>
-  <keywordset>
-    <keyword>
-      ISO C++
-    </keyword>
-    <keyword>
-      library
-    </keyword>
-  </keywordset>
-</appendixinfo>
-
-<title>
+<info><title>
   Contributing
   <indexterm>
     <primary>Appendix</primary>
     <secondary>Contributing</secondary>
   </indexterm>
 </title>
+  <keywordset>
+    <keyword>ISO C++</keyword>
+    <keyword>library</keyword>
+  </keywordset>
+</info>
+
+
 
 <para>
   The GNU C++ Library follows an open development model. Active
@@ -32,11 +24,11 @@
   should follow this procedure:
 </para>
 
-<sect1 id="contrib.list" xreflabel="Contributor Checklist">
-  <title>Contributor Checklist</title>
+<section xml:id="contrib.list" xreflabel="Contributor Checklist"><info><title>Contributor Checklist</title></info>
+  
 
-  <sect2 id="list.reading">
-    <title>Reading</title>
+  <section xml:id="list.reading"><info><title>Reading</title></info>
+    
 
     <itemizedlist>
       <listitem>
@@ -49,10 +41,10 @@
 	  two meeting commitment for voting rights, may get a copy of
 	  the standard from their respective national standards
 	  organization. In the USA, this national standards
-	  organization is ANSI and their web-site is right
-	  <ulink url="http://www.ansi.org">here.</ulink>
-	  (And if you've already registered with them, clicking this link will take you to directly to the place where you can
-	  <ulink url="http://webstore.ansi.org/RecordDetail.aspx?sku=ISO%2FIEC+14882:2003">buy the standard on-line.)</ulink>
+	  organization is
+	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ansi.org">ANSI</link>.
+	  (And if you've already registered with them you can
+	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://webstore.ansi.org/RecordDetail.aspx?sku=INCITS%2fISO%2fIEC+14882-2003">buy the standard on-line</link>.)
 	</para>
       </listitem>
 
@@ -60,25 +52,24 @@
 	<para>
 	  The library working group bugs, and known defects, can
 	  be obtained here:
-	  <ulink url="http://www.open-std.org/jtc1/sc22/wg21/">http://www.open-std.org/jtc1/sc22/wg21 </ulink>
+	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/">http://www.open-std.org/jtc1/sc22/wg21</link>
 	</para>
       </listitem>
 
       <listitem>
 	<para>
 	  The newsgroup dedicated to standardization issues is
-	  comp.std.c++: this FAQ for this group is quite useful and
-	  can be
-	  found <ulink url="http://www.comeaucomputing.com/csc/faq.html">
-	  here </ulink>.
+	  comp.std.c++: the
+	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.comeaucomputing.com/csc/faq.html">FAQ</link>
+          for this group is quite useful.
       </para>
       </listitem>
 
       <listitem>
 	<para>
 	  Peruse
-	  the <ulink url="http://www.gnu.org/prep/standards">GNU
-	  Coding Standards</ulink>, and chuckle when you hit the part
+	  the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnu.org/prep/standards/">GNU
+	  Coding Standards</link>, and chuckle when you hit the part
 	  about <quote>Using Languages Other Than C</quote>.
 	</para>
       </listitem>
@@ -87,22 +78,22 @@
 	<para>
 	  Be familiar with the extensions that preceded these
 	  general GNU rules. These style issues for libstdc++ can be
-	  found <link linkend="contrib.coding_style">here</link>.
+	  found in <link linkend="contrib.coding_style">Coding Style</link>.
       </para>
       </listitem>
 
       <listitem>
 	<para>
 	  And last but certainly not least, read the
-	  library-specific information
-	  found <link linkend="appendix.porting"> here</link>.
+	  library-specific information found in
+          <link linkend="appendix.porting">Porting and Maintenance</link>.
       </para>
       </listitem>
     </itemizedlist>
 
-  </sect2>
-  <sect2 id="list.copyright">
-    <title>Assignment</title>
+  </section>
+  <section xml:id="list.copyright"><info><title>Assignment</title></info>
+    
     <para>
       Small changes can be accepted without a copyright assignment form on
       file. New code and additions to the library need completed copyright
@@ -129,8 +120,8 @@
 
     <para>
       For more information about getting a copyright assignment, please see
-      <ulink url="http://www.gnu.org/prep/maintain/html_node/Legal-Matters.html">Legal
-	Matters</ulink>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnu.org/prep/maintain/html_node/Legal-Matters.html">Legal
+	Matters</link>.
     </para>
 
     <para>
@@ -141,18 +132,18 @@
       <email>mailto:assign@gnu.org</email>, please cc the libstdc++
       maintainer above so that progress can be monitored.
     </para>
-  </sect2>
+  </section>
 
-  <sect2 id="list.getting">
-    <title>Getting Sources</title>
+  <section xml:id="list.getting"><info><title>Getting Sources</title></info>
+    
     <para>
-      <ulink url="http://gcc.gnu.org/svnwrite.html">Getting write access
-	(look for &quot;Write after approval&quot;)</ulink>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/svnwrite.html">Getting write access
+	(look for "Write after approval")</link>
     </para>
-  </sect2>
+  </section>
 
-  <sect2 id="list.patches">
-    <title>Submitting Patches</title>
+  <section xml:id="list.patches"><info><title>Submitting Patches</title></info>
+    
 
     <para>
       Every patch must have several pieces of information before it can be
@@ -195,8 +186,8 @@
 	  else, use <command>diff -cp OLD NEW</command> ... If your
 	  version of diff does not support these options, then get the
 	  latest version of GNU
-	  diff. The <ulink url="http://gcc.gnu.org/wiki/SvnTricks">SVN
-	  Tricks</ulink> wiki page has information on customising the
+	  diff. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/wiki/SvnTricks">SVN
+	  Tricks</link> wiki page has information on customising the
 	  output of <code>svn diff</code>.
 	</para>
       </listitem>
@@ -211,20 +202,20 @@
       </listitem>
     </itemizedlist>
 
-  </sect2>
+  </section>
 
-</sect1>
+</section>
 
-<sect1 id="contrib.organization" xreflabel="Source Organization">
+<section xml:id="contrib.organization" xreflabel="Source Organization"><info><title>Directory Layout and Source Conventions</title></info>
   <?dbhtml filename="source_organization.html"?>
-  <title>Directory Layout and Source Conventions</title>
+  
 
   <para>
     The unpacked source directory of libstdc++ contains the files
     needed to create the GNU C++ Library.
   </para>
 
-  <literallayout>
+  <literallayout class="normal">
 It has subdirectories:
 
   doc
@@ -275,7 +266,7 @@ It has subdirectories:
     Files that are used in constructing the library, but are not
     installed.
 
-  testsuites/[backward, demangle, ext, performance, thread, 17_* to 27_*]
+  testsuites/[backward, demangle, ext, performance, thread, 17_* to 30_*]
     Test programs are here, and may be used to begin to exercise the
     library.  Support for "make check" and "make check-install" is
     complete, and runs through all the subdirectories here when this
@@ -311,20 +302,20 @@ a bug or incompletely-implemented feature.  Lines marked "XXX MT"
 indicate a place that may require attention for multi-thread safety.
   </literallayout>
 
-</sect1>
+</section>
 
-<sect1 id="contrib.coding_style" xreflabel="Coding Style">
+<section xml:id="contrib.coding_style" xreflabel="Coding Style"><info><title>Coding Style</title></info>
   <?dbhtml filename="source_code_style.html"?>
-  <title>Coding Style</title>
+  
   <para>
   </para>
-  <sect2 id="coding_style.bad_identifiers">
-    <title>Bad Identifiers</title>
+  <section xml:id="coding_style.bad_identifiers"><info><title>Bad Identifiers</title></info>
+    
     <para>
       Identifiers that conflict and should be avoided.
     </para>
 
-    <literallayout>
+    <literallayout class="normal">
       This is the list of names <quote>reserved to the
       implementation</quote> that have been claimed by certain
       compilers and system headers of interest, and should not be used
@@ -509,63 +500,71 @@ indicate a place that may require attention for multi-thread safety.
       __embedded_cplusplus
       // long double conversion members mangled as __opr
       // http://gcc.gnu.org/ml/libstdc++/1999-q4/msg00060.html
-      _opr
+      __opr
     </literallayout>
-  </sect2>
+  </section>
 
-  <sect2 id="coding_style.example">
-    <title>By Example</title>
-    <literallayout>
+  <section xml:id="coding_style.example"><info><title>By Example</title></info>
+    
+    <literallayout class="normal">
       This library is written to appropriate C++ coding standards. As such,
       it is intended to precede the recommendations of the GNU Coding
       Standard, which can be referenced in full here:
 
-      http://www.gnu.org/prep/standards/standards.html#Formatting
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnu.org/prep/standards/standards.html#Formatting">http://www.gnu.org/prep/standards/standards.html#Formatting</link>
 
       The rest of this is also interesting reading, but skip the "Design
       Advice" part.
 
       The GCC coding conventions are here, and are also useful:
-      http://gcc.gnu.org/codingconventions.html
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/codingconventions.html">http://gcc.gnu.org/codingconventions.html</link>
 
       In addition, because it doesn't seem to be stated explicitly anywhere
       else, there is an 80 column source limit.
 
-      ChangeLog entries for member functions should use the
+      <filename>ChangeLog</filename> entries for member functions should use the
       classname::member function name syntax as follows:
 
-      1999-04-15  Dennis Ritchie  &lt;dr@att.com&gt;
+<code>
+1999-04-15  Dennis Ritchie  &lt;dr@att.com&gt;
 
       * src/basic_file.cc (__basic_file::open): Fix thinko in
       _G_HAVE_IO_FILE_OPEN bits.
+</code>
 
       Notable areas of divergence from what may be previous local practice
       (particularly for GNU C) include:
 
       01. Pointers and references
-      char* p = "flop";
-      char&amp; c = *p;
-      -NOT-
-      char *p = "flop";  // wrong
-      char &amp;c = *p;      // wrong
+      <code>
+        char* p = "flop";
+        char&amp; c = *p;
+          -NOT-
+        char *p = "flop";  // wrong
+        char &amp;c = *p;      // wrong
+      </code>
 
       Reason: In C++, definitions are mixed with executable code. Here,
-      p is being initialized, not *p. This is near-universal
+      <code>p</code> is being initialized, not <code>*p</code>.  This is near-universal
       practice among C++ programmers; it is normal for C hackers
       to switch spontaneously as they gain experience.
 
       02. Operator names and parentheses
-      operator==(type)
-      -NOT-
-      operator == (type)  // wrong
+      <code>
+        operator==(type)
+          -NOT-
+        operator == (type)  // wrong
+      </code>
 
-      Reason: The == is part of the function name. Separating
+      Reason: The <code>==</code> is part of the function name. Separating
       it makes the declaration look like an expression.
 
       03. Function names and parentheses
-      void mangle()
-      -NOT-
-      void mangle ()  // wrong
+      <code>
+        void mangle()
+          -NOT-
+        void mangle ()  // wrong
+      </code>
 
       Reason: no space before parentheses (except after a control-flow
       keyword) is near-universal practice for C++. It identifies the
@@ -573,86 +572,98 @@ indicate a place that may require attention for multi-thread safety.
       opposed to an expression or other overloaded use of parentheses.
 
       04. Template function indentation
-      template&lt;typename T&gt;
-      void
-      template_function(args)
-      { }
-      -NOT-
-      template&lt;class T&gt;
-      void template_function(args) {};
+      <code>
+        template&lt;typename T&gt;
+          void
+          template_function(args)
+          { }
+          -NOT-
+        template&lt;class T&gt;
+        void template_function(args) {};
+      </code>
 
       Reason: In class definitions, without indentation whitespace is
       needed both above and below the declaration to distinguish
       it visually from other members. (Also, re: "typename"
-      rather than "class".)  T often could be int, which is
+      rather than "class".)  <code>T</code> often could be <code>int</code>, which is
       not a class. ("class", here, is an anachronism.)
 
       05. Template class indentation
-      template&lt;typename _CharT, typename _Traits&gt;
-      class basic_ios : public ios_base
-      {
-      public:
-      // Types:
-      };
-      -NOT-
-      template&lt;class _CharT, class _Traits&gt;
-      class basic_ios : public ios_base
-      {
-      public:
-      // Types:
-      };
-      -NOT-
-      template&lt;class _CharT, class _Traits&gt;
-      class basic_ios : public ios_base
-      {
-      public:
-      // Types:
-      };
+      <code>
+        template&lt;typename _CharT, typename _Traits&gt;
+          class basic_ios : public ios_base
+          {
+          public:
+            // Types:
+          };
+          -NOT-
+        template&lt;class _CharT, class _Traits&gt;
+        class basic_ios : public ios_base
+          {
+          public:
+            // Types:
+          };
+          -NOT-
+        template&lt;class _CharT, class _Traits&gt;
+          class basic_ios : public ios_base
+        {
+          public:
+            // Types:
+        };
+      </code>
 
       06. Enumerators
-      enum
-      {
-      space = _ISspace,
-      print = _ISprint,
-      cntrl = _IScntrl
-      };
-      -NOT-
-      enum { space = _ISspace, print = _ISprint, cntrl = _IScntrl };
+      <code>
+        enum
+        {
+          space = _ISspace,
+          print = _ISprint,
+          cntrl = _IScntrl
+        };
+          -NOT-
+        enum { space = _ISspace, print = _ISprint, cntrl = _IScntrl };
+      </code>
 
       07. Member initialization lists
       All one line, separate from class name.
 
-      gribble::gribble()
-      : _M_private_data(0), _M_more_stuff(0), _M_helper(0);
-      { }
-      -NOT-
-      gribble::gribble() : _M_private_data(0), _M_more_stuff(0), _M_helper(0);
-      { }
+      <code>
+        gribble::gribble()
+        : _M_private_data(0), _M_more_stuff(0), _M_helper(0)
+        { }
+          -NOT-
+        gribble::gribble() : _M_private_data(0), _M_more_stuff(0), _M_helper(0)
+        { }
+      </code>
 
       08. Try/Catch blocks
-      try
-      {
-      //
-      }
-      catch (...)
-      {
-      //
-      }
-      -NOT-
-      try {
-      //
-      } catch(...) {
-      //
-      }
+      <code>
+        try
+          {
+            //
+          }
+        catch (...)
+          {
+            //
+          }
+          -NOT-
+        try {
+          //
+        } catch(...) {
+          //
+        }
+      </code>
 
       09. Member functions declarations and definitions
       Keywords such as extern, static, export, explicit, inline, etc
       go on the line above the function name. Thus
 
+      <code>
       virtual int
       foo()
       -NOT-
       virtual int foo()
+      </code>
 
       Reason: GNU coding conventions dictate return types for functions
       are on a separate line than the function name and parameter list
@@ -663,42 +674,49 @@ indicate a place that may require attention for multi-thread safety.
 
 
       10. Invocation of member functions with "this-&gt;"
-      For non-uglified names, use this-&gt;name to call the function.
+      For non-uglified names, use <code>this-&gt;name</code> to call the function.
 
+      <code>
       this-&gt;sync()
       -NOT-
       sync()
+      </code>
 
       Reason: Koenig lookup.
 
       11. Namespaces
+      <code>
       namespace std
       {
-      blah blah blah;
+        blah blah blah;
       } // namespace std
 
       -NOT-
 
       namespace std {
-      blah blah blah;
+        blah blah blah;
       } // namespace std
+      </code>
 
       12. Spacing under protected and private in class declarations:
       space above, none below
       i.e.
 
+      <code>
       public:
-      int foo;
+        int foo;
 
       -NOT-
       public:
 
-      int foo;
+        int foo;
+      </code>
 
       13. Spacing WRT return statements.
       no extra spacing before returns, no parenthesis
       i.e.
 
+      <code>
       }
       return __ret;
 
@@ -711,21 +729,22 @@ indicate a place that may require attention for multi-thread safety.
 
       }
       return (__ret);
+      </code>
 
 
       14. Location of global variables.
       All global variables of class type, whether in the "user visible"
-      space (e.g., cin) or the implementation namespace, must be defined
+      space (e.g., <code>cin</code>) or the implementation namespace, must be defined
       as a character array with the appropriate alignment and then later
       re-initialized to the correct value.
 
       This is due to startup issues on certain platforms, such as AIX.
-      For more explanation and examples, see src/globals.cc. All such
+      For more explanation and examples, see <filename>src/globals.cc</filename>. All such
       variables should be contained in that file, for simplicity.
 
       15. Exception abstractions
-      Use the exception abstractions found in functexcept.h, which allow
-      C++ programmers to use this library with -fno-exceptions. (Even if
+      Use the exception abstractions found in <filename class="headerfile">functexcept.h</filename>, which allow
+      C++ programmers to use this library with <literal>-fno-exceptions</literal>.  (Even if
       that is rarely advisable, it's a necessary evil for backwards
       compatibility.)
 
@@ -733,9 +752,11 @@ indicate a place that may require attention for multi-thread safety.
       All start with the name of the function where the exception is
       thrown, and then (optional) descriptive text is added. Example:
 
+      <code>
       __throw_logic_error(__N("basic_string::_S_construct NULL not valid"));
+      </code>
 
-      Reason: The verbose terminate handler prints out exception::what(),
+      Reason: The verbose terminate handler prints out <code>exception::what()</code>,
       as well as the typeinfo for the thrown exception. As this is the
       default terminate handler, by putting location info into the
       exception string, a very useful error message is printed out for
@@ -755,21 +776,21 @@ indicate a place that may require attention for multi-thread safety.
       to use names that begin with underscores. This is called "uglification".
       The convention is:
 
-      Local and argument names:  __[a-z].*
+      Local and argument names:  <literal>__[a-z].*</literal>
 
-      Examples:  __count  __ix  __s1
+      Examples:  <code>__count  __ix  __s1</code>
 
-      Type names and template formal-argument names: _[A-Z][^_].*
+      Type names and template formal-argument names: <literal>_[A-Z][^_].*</literal>
 
-      Examples:  _Helper  _CharT  _N
+      Examples:  <code>_Helper  _CharT  _N</code>
 
-      Member data and function names: _M_.*
+      Member data and function names: <literal>_M_.*</literal>
 
-      Examples:  _M_num_elements  _M_initialize ()
+      Examples:  <code>_M_num_elements  _M_initialize ()</code>
 
-      Static data members, constants, and enumerations: _S_.*
+      Static data members, constants, and enumerations: <literal>_S_.*</literal>
 
-      Examples: _S_max_elements  _S_default_value
+      Examples: <code>_S_max_elements  _S_default_value</code>
 
       Don't use names in the same scope that differ only in the prefix,
       e.g. _S_top and _M_top. See BADNAMES for a list of forbidden names.
@@ -781,87 +802,88 @@ indicate a place that may require attention for multi-thread safety.
       --------------------------
 
       [BY EXAMPLE]
+      <code>
 
       #ifndef  _HEADER_
       #define  _HEADER_ 1
 
       namespace std
       {
-      class gribble
-      {
-      public:
-      gribble() throw();
+        class gribble
+        {
+        public:
+          gribble() throw();
 
-      gribble(const gribble&amp;);
+          gribble(const gribble&amp;);
 
-      explicit
-      gribble(int __howmany);
+          explicit
+          gribble(int __howmany);
 
-      gribble&amp;
-      operator=(const gribble&amp;);
+          gribble&amp;
+          operator=(const gribble&amp;);
 
-      virtual
-      ~gribble() throw ();
+          virtual
+          ~gribble() throw ();
 
-      // Start with a capital letter, end with a period.
-      inline void
-      public_member(const char* __arg) const;
+          // Start with a capital letter, end with a period.
+          inline void
+          public_member(const char* __arg) const;
 
-      // In-class function definitions should be restricted to one-liners.
-      int
-      one_line() { return 0 }
+          // In-class function definitions should be restricted to one-liners.
+          int
+          one_line() { return 0 }
 
-      int
-      two_lines(const char* arg)
-      { return strchr(arg, 'a'); }
+          int
+          two_lines(const char* arg)
+          { return strchr(arg, 'a'); }
 
-      inline int
-      three_lines();  // inline, but defined below.
+          inline int
+          three_lines();  // inline, but defined below.
 
-      // Note indentation.
-      template&lt;typename _Formal_argument&gt;
-      void
-      public_template() const throw();
+          // Note indentation.
+          template&lt;typename _Formal_argument&gt;
+            void
+            public_template() const throw();
 
-      template&lt;typename _Iterator&gt;
-      void
-      other_template();
+          template&lt;typename _Iterator&gt;
+            void
+            other_template();
 
-      private:
-      class _Helper;
+        private:
+          class _Helper;
 
-      int _M_private_data;
-      int _M_more_stuff;
-      _Helper* _M_helper;
-      int _M_private_function();
+          int _M_private_data;
+          int _M_more_stuff;
+          _Helper* _M_helper;
+          int _M_private_function();
 
-      enum _Enum
-      {
-      _S_one,
-      _S_two
-      };
+          enum _Enum
+            {
+              _S_one,
+              _S_two
+            };
 
-      static void
-      _S_initialize_library();
-      };
+          static void
+          _S_initialize_library();
+        };
 
-      // More-or-less-standard language features described by lack, not presence.
+        // More-or-less-standard language features described by lack, not presence.
       # ifndef _G_NO_LONGLONG
-      extern long long _G_global_with_a_good_long_name;  // avoid globals!
+        extern long long _G_global_with_a_good_long_name;  // avoid globals!
       # endif
 
-      // Avoid in-class inline definitions, define separately;
-      // likewise for member class definitions:
-      inline int
-      gribble::public_member() const
-      { int __local = 0; return __local; }
+        // Avoid in-class inline definitions, define separately;
+        // likewise for member class definitions:
+        inline int
+        gribble::public_member() const
+        { int __local = 0; return __local; }
 
-      class gribble::_Helper
-      {
-      int _M_stuff;
+        class gribble::_Helper
+        {
+          int _M_stuff;
 
-      friend class gribble;
-      };
+          friend class gribble;
+        };
       }
 
       // Names beginning with "__": only for arguments and
@@ -873,747 +895,53 @@ indicate a place that may require attention for multi-thread safety.
 
       namespace std
       {
-      template&lt;typename T&gt;  // notice: "typename", not "class", no space
-      long_return_value_type&lt;with_many, args&gt;
-      function_name(char* pointer,               // "char *pointer" is wrong.
-      char* argument,
-      const Reference&amp; ref)
-      {
-      // int a_local;  /* wrong; see below. */
-      if (test)
-      {
-      nested code
-      }
+        template&lt;typename T&gt;  // notice: "typename", not "class", no space
+          long_return_value_type&lt;with_many, args&gt;
+          function_name(char* pointer,               // "char *pointer" is wrong.
+                        char* argument,
+                        const Reference&amp; ref)
+          {
+            // int a_local;  /* wrong; see below. */
+            if (test)
+            {
+              nested code
+            }
 
-      int a_local = 0;  // declare variable at first use.
+            int a_local = 0;  // declare variable at first use.
 
-      //  char a, b, *p;   /* wrong */
-      char a = 'a';
-      char b = a + 1;
-      char* c = "abc";  // each variable goes on its own line, always.
+            //  char a, b, *p;   /* wrong */
+            char a = 'a';
+            char b = a + 1;
+            char* c = "abc";  // each variable goes on its own line, always.
 
-      // except maybe here...
-      for (unsigned i = 0, mask = 1; mask; ++i, mask &lt;&lt;= 1) {
-      // ...
-      }
-      }
+            // except maybe here...
+            for (unsigned i = 0, mask = 1; mask; ++i, mask &lt;&lt;= 1) {
+              // ...
+            }
+          }
 
-      gribble::gribble()
-      : _M_private_data(0), _M_more_stuff(0), _M_helper(0);
-      { }
+        gribble::gribble()
+        : _M_private_data(0), _M_more_stuff(0), _M_helper(0)
+        { }
 
-      inline int
-      gribble::three_lines()
-      {
-      // doesn't fit in one line.
-      }
+        int
+        gribble::three_lines()
+        {
+          // doesn't fit in one line.
+        }
       } // namespace std
+      </code>
     </literallayout>
-  </sect2>
-</sect1>
+  </section>
+</section>
 
-<sect1 id="contrib.doc_style" xreflabel="Documentation Style">
-  <?dbhtml filename="documentation_style.html"?>
-  <title>Documentation Style</title>
-  <sect2 id="doc_style.doxygen">
-    <title>Doxygen</title>
-    <sect3 id="doxygen.prereq">
-      <title>Prerequisites</title>
-      <para>
-	Prerequisite tools are Bash 2.x,
-	<ulink url="http://www.doxygen.org/">Doxygen</ulink>, and
-	the <ulink url="http://www.gnu.org/software/coreutils/">GNU
-	coreutils</ulink>. (GNU versions of find, xargs, and possibly
-	sed and grep are used, just because the GNU versions make
-	things very easy.) 
-      </para>
-
-      <para>
-	To generate the pretty pictures and hierarchy
-	graphs, the
-	<ulink url="http://www.graphviz.org">Graphviz</ulink> package
-	will need to be installed. For PDF
-	output, <ulink url="http://www.tug.org/applications/pdftex/">
-	pdflatex</ulink> is required.
-      </para>
-    </sect3>
-
-    <sect3 id="doxygen.rules">
-      <title>Generating the Doxygen Files</title>
-      <para>
-	The following Makefile rules run Doxygen to generate HTML
-	docs, XML docs, XML docs as a single file, PDF docs, and the man pages.
-      </para>
-
-      <para>
-	Generated files are output into separate sub directores of
-	<filename class="directory">doc/doxygen/</filename> in the
-	build directory, based on the output format. For instance, the
-	HTML docs will be in <filename
-	class="directory">doc/doxygen/html</filename>.
-      </para>
-
-      <para>
-      <screen><userinput>make doc-html-doxygen</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-xml-doxygen</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-xml-single-doxygen</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-pdf-doxygen</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-man-doxygen</userinput></screen>
-      </para>
-
-      <para>
-	Careful observers will see that the Makefile rules simply call
-	a script from the source tree, <filename>run_doxygen</filename>, which
-	does the actual work of running Doxygen and then (most
-	importantly) massaging the output files. If for some reason
-	you prefer to not go through the Makefile, you can call this
-	script directly. (Start by passing <literal>--help</literal>.)
-      </para>
-
-      <para>
-	If you wish to tweak the Doxygen settings, do so by editing
-	<filename>doc/doxygen/user.cfg.in</filename>. Notes to fellow
-	library hackers are written in triple-# comments.
-      </para>
-
-    </sect3>
-
-    <sect3 id="doxygen.markup">
-      <title>Markup</title>
-
-      <para>
-	In general, libstdc++ files should be formatted according to
-	the rules found in the
-	<link linkend="contrib.coding_style">Coding Standard</link>. Before
-	any doxygen-specific formatting tweaks are made, please try to
-	make sure that the initial formatting is sound.
-      </para>
-
-      <para>
-	Adding Doxygen markup to a file (informally called
-	<quote>doxygenating</quote>) is very simple. The Doxygen manual can be
-	found
-	<ulink url="http://www.stack.nl/~dimitri/doxygen/download.html#latestman">here</ulink>.
-	We try to use a very-recent version of Doxygen.
-      </para>
-
-      <para>
-	For classes, use
-	<classname>deque</classname>/<classname>vector</classname>/<classname>list</classname>
-	and <classname>std::pair</classname> as examples.  For
-	functions, see their member functions, and the free functions
-	in <filename>stl_algobase.h</filename>. Member functions of
-	other container-like types should read similarly to these
-	member functions.
-      </para>
-
-      <para>
-	Some commentary to accompany
-	the first list in the <ulink url="http://www.stack.nl/~dimitri/doxygen/docblocks.html">Special
-	Documentation Blocks</ulink> section of
-	the Doxygen manual:
-      </para>
-
-      <orderedlist>
-	<listitem>
-	  <para>For longer comments, use the Javadoc style...</para>
-	</listitem>
-
-	<listitem>
-	  <para>
-	    ...not the Qt style. The intermediate *'s are preferred.
-	  </para>
-	</listitem>
-
- 	<listitem>
-	  <para>
-	    Use the triple-slash style only for one-line comments (the
-	    <quote>brief</quote> mode).
-	  </para>
-	</listitem>
-
-	<listitem>
-	  <para>
-	    This is disgusting. Don't do this.
-	  </para>
-	</listitem>
-      </orderedlist>
-
-      <para>
-	Some specific guidelines:
-      </para>
-
-      <para>
-	Use the @-style of commands, not the !-style. Please be
-	careful about whitespace in your markup comments. Most of the
-	time it doesn't matter; doxygen absorbs most whitespace, and
-	both HTML and *roff are agnostic about whitespace. However,
-	in &lt;pre&gt; blocks and @code/@endcode sections, spacing can
-	have <quote>interesting</quote> effects.
-      </para>
-
-      <para>
-	Use either kind of grouping, as
-	appropriate. <filename>doxygroups.cc</filename> exists for this
-	purpose. See <filename>stl_iterator.h</filename> for a good example
-	of the <quote>other</quote> kind of grouping.
-      </para>
-
-      <para>
-	Please use markup tags like @p and @a when referring to things
-	such as the names of function parameters. Use @e for emphasis
-	when necessary. Use @c to refer to other standard names.
-	(Examples of all these abound in the present code.)
-      </para>
-
-      <para>
-	Complicated math functions should use the multi-line
-	format. An example from <filename>random.h</filename>:
-      </para>
-
-      <para>
-<literallayout>
-  /**
-   * @brief A model of a linear congruential random number generator.
-   *
-   * @f[
-   *     x_{i+1}\leftarrow(ax_{i} + c) \bmod m
-   * @f]
-   */
-</literallayout>
-      </para>
-
-      <para>
-	Be careful about using certain, special characters when
-	writing Doxygen comments. Single and double quotes, and
-	separators in filenames are two common trouble spots. When in
-	doubt, consult the following table.
-      </para>
-
-<table frame='all'>
-<title>HTML to Doxygen Markup Comparison</title>
-<tgroup cols='2' align='left' colsep='1' rowsep='1'>
-<colspec colname='c1'></colspec>
-<colspec colname='c2'></colspec>
-
-  <thead>
-    <row>
-      <entry>HTML</entry>
-      <entry>Doxygen</entry>
-    </row>
-  </thead>
-
-  <tbody>
-    <row>
-      <entry>\</entry>
-      <entry>\\</entry>
-    </row>
-
-    <row>
-      <entry>&quot;</entry>
-      <entry>\"</entry>
-    </row>
-
-    <row>
-      <entry>&apos;</entry>
-      <entry>\'</entry>
-    </row>
-
-    <row>
-      <entry>&lt;i&gt;</entry>
-      <entry>@a word</entry>
-    </row>
-
-    <row>
-      <entry>&lt;b&gt;</entry>
-      <entry>@b word</entry>
-    </row>
-
-    <row>
-      <entry>&lt;code&gt;</entry>
-      <entry>@c word</entry>
-    </row>
-
-    <row>
-      <entry>&lt;em&gt;</entry>
-      <entry>@a word</entry>
-    </row>
-
-    <row>
-      <entry>&lt;em&gt;</entry>
-      <entry>&lt;em&gt;two words or more&lt;/em&gt;</entry>
-    </row>
-  </tbody>
-
-</tgroup>
-</table>
-
-
-    </sect3>
-
-  </sect2>
-
-  <sect2 id="doc_style.docbook">
-    <title>Docbook</title>
-
-    <sect3 id="docbook.prereq">
-      <title>Prerequisites</title>
-      <para>
-	Editing the DocBook sources requires an XML editor. Many
-	exist: some notable options
-	include <command>emacs</command>, <application>Kate</application>,
-	or <application>Conglomerate</application>.
-      </para>
-
-      <para>
-	Some editors support special <quote>XML Validation</quote>
-	modes that can validate the file as it is
-	produced. Recommended is the <command>nXML Mode</command>
-	for <command>emacs</command>.
-      </para>
-
-      <para>
-	Besides an editor, additional DocBook files and XML tools are
-	also required.
-      </para>
-
-      <para>
-	Access to the DocBook stylesheets and DTD is required. The
-	stylesheets are usually packaged by vendor, in something
-	like <filename>docbook-style-xsl</filename>. To exactly match
-	generated output, please use a version of the stylesheets
-	equivalent
-	to <filename>docbook-style-xsl-1.74.0-5</filename>. The
-	installation directory for this package corresponds to
-	the <literal>XSL_STYLE_DIR</literal>
-	in <filename>doc/Makefile.am</filename> and defaults
-	to <filename class="directory">/usr/share/sgml/docbook/xsl-stylesheets</filename>.
-      </para>
-
-      <para>
-	For processing XML, an XML processor and some style
-	sheets are necessary. Defaults are <command>xsltproc</command>
-	provided by <filename>libxslt</filename>.
-      </para>
-
-      <para>
-	For validating the XML document, you'll need
-	something like <command>xmllint</command> and access to the
-	DocBook DTD. These are provided
-	by a vendor package like <filename>libxml2</filename>.
-      </para>
-
-      <para>
-	For PDF output, something that transforms valid Docbook XML to PDF is
-	required. Possible solutions include <ulink
-	url="http://dblatex.sourceforge.net">dblatex</ulink>,
-	<command>xmlto</command>, or <command>prince</command>. Of
-	these, <command>dblatex</command> is the default. Other
-	options are listed on the DocBook web <ulink
-	url="http://wiki.docbook.org/topic/DocBookPublishingTools">pages</ulink>. Please
-	consult the <email>libstdc++@gcc.gnu.org</email> list when
-	preparing printed manuals for current best practice and
-	suggestions.
-      </para>
-
-      <para>
-	For Texinfo output, something that transforms valid Docbook
-	XML to Texinfo is required. The default choice is <ulink
-	url="http://docbook2x.sourceforge.net/">docbook2X</ulink>.
-      </para>
-
-      <para>
-	Please make sure that the XML documentation and markup is valid for
-	any change. This can be done easily, with the validation rule
-	detailed below, which is equivalent to doing:
-      </para>
-
-	<screen>
-	  <userinput>
-xmllint --noout --valid <filename>xml/index.xml</filename>
-	  </userinput>
-	</screen>
-    </sect3>
-
-    <sect3 id="docbook.rules">
-      <title>Generating the DocBook Files</title>
-
-      <para>
-	The following Makefile rules generate (in order): an HTML
-	version of all the DocBook documentation, a PDF version of the same, a
-	single XML document, and the result of validating the entire XML
-	document.
-      </para>
-
-      <para>
-	Generated files are output into separate sub directores of
-	<filename class="directory">doc/docbook/</filename> in the
-	build directory, based on the output format. For instance, the
-	HTML docs will be in <filename
-	class="directory">doc/docbook/html</filename>.
-      </para>
-
-      <para>
-      <screen><userinput>make doc-html-docbook</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-pdf-docbook</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-xml-single-docbook</userinput></screen>
-      </para>
-
-      <para>
-      <screen><userinput>make doc-xml-validate-docbook</userinput></screen>
-      </para>
-
-    </sect3>
-
-    <sect3 id="docbook.examples">
-      <title>File Organization and Basics</title>
-
-    <literallayout>
-      <emphasis>Which files are important</emphasis>
-
-      All Docbook files are in the directory
-      libstdc++-v3/doc/xml
-
-      Inside this directory, the files of importance:
-      spine.xml	 	- index to documentation set
-      manual/spine.xml  - index to manual
-      manual/*.xml  	- individual chapters and sections of the manual
-      faq.xml  		- index to FAQ
-      api.xml  		- index to source level / API
-
-      All *.txml files are template xml files, i.e., otherwise empty files with
-      the correct structure, suitable for filling in with new information.
-
-      <emphasis>Canonical Writing Style</emphasis>
-
-      class template
-      function template
-      member function template
-      (via C++ Templates, Vandevoorde)
-
-      class in namespace std: allocator, not std::allocator
-
-      header file: iostream, not &lt;iostream&gt;
-
-
-      <emphasis>General structure</emphasis>
-
-      &lt;set&gt;
-      &lt;book&gt;
-      &lt;/book&gt;
-
-      &lt;book&gt;
-      &lt;chapter&gt;
-      &lt;/chapter&gt;
-      &lt;/book&gt;
-
-      &lt;book&gt;
-      &lt;part&gt;
-      &lt;chapter&gt;
-      &lt;section&gt;
-      &lt;/section&gt;
-
-      &lt;sect1&gt;
-      &lt;/sect1&gt;
-
-      &lt;sect1&gt;
-      &lt;sect2&gt;
-      &lt;/sect2&gt;
-      &lt;/sect1&gt;
-      &lt;/chapter&gt;
-
-      &lt;chapter&gt;
-      &lt;/chapter&gt;
-      &lt;/part&gt;
-      &lt;/book&gt;
-
-      &lt;/set&gt;
-    </literallayout>
-    </sect3>
-
-    <sect3 id="docbook.markup">
-      <title>Markup By Example</title>
-
-      <para>
-	Complete details on Docbook markup can be found in the DocBook
-	Element Reference,
-	<ulink url="http://www.docbook.org/tdg/en/html/part2.html">online</ulink>.
-	An incomplete reference for HTML to Docbook conversion is
-	detailed in the table below.
-      </para>
-
-<table frame='all'>
-<title>HTML to Docbook XML Markup Comparison</title>
-<tgroup cols='2' align='left' colsep='1' rowsep='1'>
-<colspec colname='c1'></colspec>
-<colspec colname='c2'></colspec>
-
-  <thead>
-    <row>
-      <entry>HTML</entry>
-      <entry>Docbook</entry>
-    </row>
-  </thead>
-
-  <tbody>
-    <row>
-      <entry>&lt;p&gt;</entry>
-      <entry>&lt;para&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;pre&gt;</entry>
-      <entry>&lt;computeroutput&gt;, &lt;programlisting&gt;,
-	&lt;literallayout&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;ul&gt;</entry>
-      <entry>&lt;itemizedlist&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;ol&gt;</entry>
-      <entry>&lt;orderedlist&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;il&gt;</entry>
-      <entry>&lt;listitem&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;dl&gt;</entry>
-      <entry>&lt;variablelist&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;dt&gt;</entry>
-      <entry>&lt;term&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;dd&gt;</entry>
-      <entry>&lt;listitem&gt;</entry>
-    </row>
-
-    <row>
-      <entry>&lt;a href=""&gt;</entry>
-      <entry>&lt;ulink url=""&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;code&gt;</entry>
-      <entry>&lt;literal&gt;, &lt;programlisting&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;strong&gt;</entry>
-      <entry>&lt;emphasis&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;em&gt;</entry>
-      <entry>&lt;emphasis&gt;</entry>
-    </row>
-    <row>
-      <entry>&quot;</entry>
-      <entry>&lt;quote&gt;</entry>
-    </row>
-   </tbody>
-</tgroup>
-</table>
-
-<para>
-  And examples of detailed markup for which there are no real HTML
-  equivalents are listed in the table below.
-</para>
-
-<table frame='all'>
-<title>Docbook XML Element Use</title>
-<tgroup cols='2' align='left' colsep='1' rowsep='1'>
-<colspec colname='c1'></colspec>
-<colspec colname='c2'></colspec>
-
-  <thead>
-    <row>
-      <entry>Element</entry>
-      <entry>Use</entry>
-    </row>
-  </thead>
-
-  <tbody>
-    <row>
-      <entry>&lt;structname&gt;</entry>
-      <entry>&lt;structname&gt;char_traits&lt;/structname&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;classname&gt;</entry>
-      <entry>&lt;classname&gt;string&lt;/classname&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;function&gt;</entry>
-      <entry>
-	<para>&lt;function&gt;clear()&lt;/function&gt;</para>
-	<para>&lt;function&gt;fs.clear()&lt;/function&gt;</para>
-      </entry>
-    </row>
-    <row>
-      <entry>&lt;type&gt;</entry>
-      <entry>&lt;type&gt;long long&lt;/type&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;varname&gt;</entry>
-      <entry>&lt;varname&gt;fs&lt;/varname&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;literal&gt;</entry>
-      <entry>
-	<para>&lt;literal&gt;-Weffc++&lt;/literal&gt;</para>
-	<para>&lt;literal&gt;rel_ops&lt;/literal&gt;</para>
-      </entry>
-    </row>
-    <row>
-      <entry>&lt;constant&gt;</entry>
-      <entry>
-	<para>&lt;constant&gt;_GNU_SOURCE&lt;/constant&gt;</para>
-	<para>&lt;constant&gt;3.0&lt;/constant&gt;</para>
-      </entry>
-    </row>
-    <row>
-      <entry>&lt;command&gt;</entry>
-      <entry>&lt;command&gt;g++&lt;/command&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;errortext&gt;</entry>
-      <entry>&lt;errortext&gt;In instantiation of&lt;/errortext&gt;</entry>
-    </row>
-    <row>
-      <entry>&lt;filename&gt;</entry>
-      <entry>
-	<para>&lt;filename class="headerfile"&gt;ctype.h&lt;/filename&gt;</para>
-	<para>&lt;filename class="directory"&gt;/home/gcc/build&lt;/filename&gt;</para>
-	<para>&lt;filename class="libraryfile"&gt;libstdc++.so&lt;/filename&gt;</para>
-      </entry>
-    </row>
-   </tbody>
-</tgroup>
-</table>
-
-    </sect3>
-  </sect2>
-
-  <sect2 id="doc_style.combines">
-    <title>Combines</title>
-
-    <sect3 id="combines.rules">
-      <title>Generating Combines and Assemblages</title>
-
-      <para>
-	The following Makefile rules are defaults, and are usually
-	aliased to more detailed rules. They are shortcuts for
-	generating HTML, PDF, Texinfo, XML, or man files and then collecting
-	the generated files into the build directory's doc directory.
-      </para>
-
-<variablelist>
-
-<varlistentry><term>
-      <emphasis>make doc-html</emphasis>
-    </term>
-<listitem>
-      <para>
-	Generates multi-page HTML documentation in the following directories:
-      </para>
-      <para>
-	<filename class="directory">doc/libstdc++-api.html</filename>
-      </para>
-      <para>
-	<filename class="directory">doc/libstdc++-manual.html</filename>
-      </para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term>
-      <emphasis>make doc-man</emphasis>
-    </term>
-<listitem>
-      <para>
-	Generates man pages in the following directory:
-      </para>
-      <para>
-	<filename class="directory">doc/libstdc++-api.man</filename>
-      </para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term>
-      <emphasis>make doc-pdf</emphasis>
-    </term>
-<listitem>
-      <para>
-	Generates indexed PDF documentation in the following files:
-      </para>
-      <para>
-	<filename>doc/libstdc++-api.pdf</filename>
-      </para>
-      <para>
-	<filename>doc/libstdc++-manual.pdf</filename>
-      </para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term>
-      <emphasis>make doc-texinfo</emphasis>
-    </term>
-<listitem>
-      <para>
-	Generates Texinfo documentation in the following files:
-      </para>
-      <para>
-	<filename>doc/libstdc++-manual.texinfo</filename>
-      </para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term>
-      <emphasis>make doc-xml</emphasis>
-    </term>
-<listitem>
-      <para>
-	Generates single-file XML documentation in the following files:
-      </para>
-      <para>
-	<filename>doc/libstdc++-api.xml</filename>
-      </para>
-      <para>
-	<filename>doc/libstdc++-manual.xml</filename>
-      </para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-
-
-  </sect3>
-  </sect2>
-</sect1>
-
-<sect1 id="contrib.design_notes" xreflabel="Design Notes">
+<section xml:id="contrib.design_notes" xreflabel="Design Notes"><info><title>Design Notes</title></info>
   <?dbhtml filename="source_design_notes.html"?>
-  <title>Design Notes</title>
+  
   <para>
   </para>
 
-  <literallayout>
+  <literallayout class="normal">
 
     The Library
     -----------
@@ -2467,6 +1795,6 @@ xmllint --noout --valid <filename>xml/index.xml</filename>
     include them via "&lt;backward/hash_map.h&gt;" or "&lt;ext/hash_map&gt;" than
     to search the subdirectory itself via a "-I" directive.
   </literallayout>
-</sect1>
+</section>
 
 </appendix>

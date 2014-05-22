@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_readline.c,v 1.2.4.2 2012/04/17 00:03:59 yamt Exp $	*/
+/*	$NetBSD: openpam_readline.c,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -34,18 +34,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_readline.c 473 2011-11-03 10:48:25Z des
+ * Id: openpam_readline.c 703 2013-08-16 11:57:54Z des 
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <security/pam_appl.h>
+
 #include "openpam_impl.h"
 
 #define MIN_LINE_LENGTH 128
@@ -63,22 +63,9 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 	size_t len, size;
 	int ch;
 
-	if ((line = malloc((size_t)MIN_LINE_LENGTH)) == NULL)
+	line = NULL;
+	if (openpam_straddch(&line, &size, &len, 0) != 0)
 		return (NULL);
-	size = MIN_LINE_LENGTH;
-	len = 0;
-
-#define line_putch(ch) do { \
-	if (len >= size - 1) { \
-		char *tmp = realloc(line, size *= 2); \
-		if (tmp == NULL) \
-			goto fail; \
-		line = tmp; \
-	} \
-	line[len++] = ch; \
-	line[len] = '\0'; \
-} while (/*CONSTCOND*/0)
-
 	for (;;) {
 		ch = fgetc(f);
 		/* strip comment */
@@ -107,22 +94,10 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 			/* done */
 			break;
 		}
-		/* whitespace */
-		if (isspace((unsigned char)ch)) {
-			/* ignore leading whitespace */
-			/* collapse linear whitespace */
-			if (len > 0 && line[len - 1] != ' ')
-				line_putch(' ');
-			continue;
-		}
 		/* anything else */
-		line_putch(ch);
+		if (openpam_straddch(&line, &size, &len, ch) != 0)
+			goto fail;
 	}
-
-	/* remove trailing whitespace */
-	while (len > 0 && isspace((unsigned char)line[len - 1]))
-		--len;
-	line[len] = '\0';
 	if (len == 0)
 		goto fail;
 	if (lenp != NULL)
@@ -134,16 +109,18 @@ fail:
 }
 
 /**
+ * DEPRECATED openpam_readlinev
+ *
  * The =openpam_readline function reads a line from a file, and returns it
- * in a NUL-terminated buffer allocated with =malloc.
+ * in a NUL-terminated buffer allocated with =!malloc.
  *
  * The =openpam_readline function performs a certain amount of processing
  * on the data it reads:
  *
- *  - Comments (introduced by a hash sign) are stripped, as is leading and
- *    trailing whitespace.
- *  - Any amount of linear whitespace is collapsed to a single space.
+ *  - Comments (introduced by a hash sign) are stripped.
+ *
  *  - Blank lines are ignored.
+ *
  *  - If a line ends in a backslash, the backslash is stripped and the
  *    next line is appended.
  *
@@ -154,5 +131,8 @@ fail:
  * terminating NUL character) is stored in the variable it points to.
  *
  * The caller is responsible for releasing the returned buffer by passing
- * it to =free.
+ * it to =!free.
+ *
+ * >openpam_readlinev
+ * >openpam_readword
  */

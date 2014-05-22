@@ -1,32 +1,25 @@
 // -*- C++ -*-
 //
-// Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2009-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
-// software; you can redistribute it and/or modify it under the terms
-// of the GNU General Public License as published by the Free Software
-// Foundation; either version 2, or (at your option) any later
-// version.
+// software; you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 3, or (at your option)
+// any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 
-// This library is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// General Public License for more details.
+// Under Section 7 of GPL version 3, you are granted additional
+// permissions described in the GCC Runtime Library Exception, version
+// 3.1, as published by the Free Software Foundation.
 
-// You should have received a copy of the GNU General Public License
-// along with this library; see the file COPYING.  If not, write to
-// the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
-// MA 02111-1307, USA.
-
-// As a special exception, you may use this file as part of a free
-// software library without restriction.  Specifically, if other files
-// instantiate templates or use macros or inline functions from this
-// file, or you compile this file and link it with other files to
-// produce an executable, this file does not by itself cause the
-// resulting executable to be covered by the GNU General Public
-// License.  This exception does not however invalidate any other
-// reasons why the executable file might be covered by the GNU General
-// Public License.
+// You should have received a copy of the GNU General Public License along
+// with this library; see the file COPYING3.  If not see
+// <http://www.gnu.org/licenses/>.
 
 /** @file profile/impl/profiler.h
  *  @brief Interface of the profiling runtime library.
@@ -37,11 +30,7 @@
 #ifndef _GLIBCXX_PROFILE_PROFILER_H
 #define _GLIBCXX_PROFILE_PROFILER_H 1
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-#include <cstddef>
-#else
-#include <stddef.h>
-#endif
+#include <bits/c++config.h>
 
 // Mechanism to define data with inline linkage.
 #define _GLIBCXX_PROFILE_DEFINE_UNINIT_DATA(__type, __name)             \
@@ -109,47 +98,50 @@ namespace __gnu_profile
   bool __is_on();
   bool __is_off();
   void __report(void);
-  void __trace_hashtable_size_resize(const void*, size_t, size_t);
-  void __trace_hashtable_size_destruct(const void*, size_t, size_t);
-  void __trace_hashtable_size_construct(const void*, size_t);
-  void __trace_vector_size_resize(const void*, size_t, size_t);
-  void __trace_vector_size_destruct(const void*, size_t, size_t);
-  void __trace_vector_size_construct(const void*, size_t);
-  void __trace_hash_func_destruct(const void*, size_t, size_t, size_t);
+  void __trace_hashtable_size_resize(const void*, std::size_t, std::size_t);
+  void __trace_hashtable_size_destruct(const void*, std::size_t, std::size_t);
+  void __trace_hashtable_size_construct(const void*, std::size_t);
+  void __trace_vector_size_resize(const void*, std::size_t, std::size_t);
+  void __trace_vector_size_destruct(const void*, std::size_t, std::size_t);
+  void __trace_vector_size_construct(const void*, std::size_t);
+  void __trace_hash_func_destruct(const void*, std::size_t, std::size_t,
+				  std::size_t);
   void __trace_hash_func_construct(const void*);
   void __trace_vector_to_list_destruct(const void*);
   void __trace_vector_to_list_construct(const void*);
-  void __trace_vector_to_list_insert(const void*, size_t, size_t);
-  void __trace_vector_to_list_iterate(const void*, size_t);
+  void __trace_vector_to_list_insert(const void*, std::size_t, std::size_t);
+  void __trace_vector_to_list_iterate(const void*, std::size_t);
   void __trace_vector_to_list_invalid_operator(const void*);
-  void __trace_vector_to_list_resize(const void*, size_t, size_t);
-  void __trace_vector_to_list_find(const void*, size_t);
+  void __trace_vector_to_list_resize(const void*, std::size_t, std::size_t);
+  void __trace_vector_to_list_find(const void*, std::size_t);
 
   void __trace_list_to_slist_destruct(const void*);
   void __trace_list_to_slist_construct(const void*);
-  void __trace_list_to_slist_rewind(const void*); 
+  void __trace_list_to_slist_rewind(const void*);
   void __trace_list_to_slist_operation(const void*);
 
   void __trace_list_to_vector_destruct(const void*);
   void __trace_list_to_vector_construct(const void*);
-  void __trace_list_to_vector_insert(const void*, size_t, size_t); 
-  void __trace_list_to_vector_iterate(const void*, size_t);
+  void __trace_list_to_vector_insert(const void*, std::size_t, std::size_t);
+  void __trace_list_to_vector_iterate(const void*, std::size_t);
   void __trace_list_to_vector_invalid_operator(const void*);
-  void __trace_list_to_vector_resize(const void*, size_t, size_t); 
+  void __trace_list_to_vector_resize(const void*, std::size_t, std::size_t);
 
   void __trace_list_to_set_destruct(const void*);
   void __trace_list_to_set_construct(const void*);
-  void __trace_list_to_set_insert(const void*, size_t, size_t); 
-  void __trace_list_to_set_iterate(const void*, size_t);
+  void __trace_list_to_set_insert(const void*, std::size_t, std::size_t); 
+  void __trace_list_to_set_iterate(const void*, std::size_t);
   void __trace_list_to_set_invalid_operator(const void*);
-  void __trace_list_to_set_find(const void*, size_t); 
+  void __trace_list_to_set_find(const void*, std::size_t); 
 
   void __trace_map_to_unordered_map_construct(const void*);
   void __trace_map_to_unordered_map_invalidate(const void*);
-  void __trace_map_to_unordered_map_insert(const void*, size_t, size_t);
-  void __trace_map_to_unordered_map_erase(const void*, size_t, size_t);
-  void __trace_map_to_unordered_map_iterate(const void*, size_t);
-  void __trace_map_to_unordered_map_find(const void*, size_t);
+  void __trace_map_to_unordered_map_insert(const void*, std::size_t,
+					   std::size_t);
+  void __trace_map_to_unordered_map_erase(const void*, std::size_t,
+					  std::size_t);
+  void __trace_map_to_unordered_map_iterate(const void*, std::size_t);
+  void __trace_map_to_unordered_map_find(const void*, std::size_t);
   void __trace_map_to_unordered_map_destruct(const void*);
 } // namespace __gnu_profile
 
@@ -196,7 +188,7 @@ namespace __gnu_profile
   _GLIBCXX_PROFILE_REENTRANCE_GUARD(__gnu_profile::__is_invalid())
 #define __profcxx_is_on() \
   _GLIBCXX_PROFILE_REENTRANCE_GUARD(__gnu_profile::__is_on())
-#define __profcxx__is_off() \
+#define __profcxx_is_off() \
   _GLIBCXX_PROFILE_REENTRANCE_GUARD(__gnu_profile::__is_off())
 #else
 #define __profcxx_report()
@@ -245,6 +237,8 @@ namespace __gnu_profile
 
 // Turn on/off instrumentation for INEFFICIENT_HASH.
 #if defined(_GLIBCXX_PROFILE_INEFFICIENT_HASH)
+#define __profcxx_inefficient_hash_is_on() \
+  __gnu_profile::__is_on()
 #define __profcxx_hashtable_construct2(__x...) \
   _GLIBCXX_PROFILE_REENTRANCE_GUARD( \
       __gnu_profile::__trace_hash_func_construct(__x))
@@ -252,8 +246,9 @@ namespace __gnu_profile
   _GLIBCXX_PROFILE_REENTRANCE_GUARD( \
       __gnu_profile::__trace_hash_func_destruct(__x))
 #else
-#define __profcxx_hashtable_destruct2(__x...) 
-#define __profcxx_hashtable_construct2(__x...)  
+#define __profcxx_inefficient_hash_is_on() false
+#define __profcxx_hashtable_destruct2(__x...)
+#define __profcxx_hashtable_construct2(__x...)
 #endif
 
 // Turn on/off instrumentation for VECTOR_TO_LIST.
@@ -391,7 +386,7 @@ namespace __gnu_profile
   "_GLIBCXX_PROFILE_MAX_STACK_DEPTH"
 #endif
 #ifndef _GLIBCXX_PROFILE_MEM_PER_DIAGNOSTIC
-#define _GLIBCXX_PROFILE_MEM_PER_DIAGNOSTIC 2 << 27
+#define _GLIBCXX_PROFILE_MEM_PER_DIAGNOSTIC (1 << 28)
 #endif
 #ifndef _GLIBCXX_PROFILE_MEM_PER_DIAGNOSTIC_ENV_VAR
 #define _GLIBCXX_PROFILE_MEM_PER_DIAGNOSTIC_ENV_VAR \

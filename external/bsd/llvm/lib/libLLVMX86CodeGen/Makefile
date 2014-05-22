@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.2 2013/01/16 05:27:59 yamt Exp $
+#	$NetBSD: Makefile,v 1.6.2.3 2014/05/22 16:14:44 yamt Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -10,6 +10,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86COFFMachineModuleInfo.cpp \
 	X86CodeEmitter.cpp \
 	X86FastISel.cpp \
+	X86FixupLEAs.cpp \
 	X86FloatingPoint.cpp \
 	X86FrameLowering.cpp \
 	X86ISelDAGToDAG.cpp \
@@ -18,11 +19,13 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86JITInfo.cpp \
 	X86MachineFunctionInfo.cpp \
 	X86MCInstLower.cpp \
+	X86PadShortFunction.cpp \
 	X86RegisterInfo.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86Subtarget.cpp \
 	X86TargetMachine.cpp \
 	X86TargetObjectFile.cpp \
+	X86TargetTransformInfo.cpp \
 	X86VZeroUpper.cpp
 
 TABLEGEN_SRC=		X86.td
@@ -34,7 +37,6 @@ TABLEGEN_OUTPUT= \
 	X86GenCallingConv.inc|-gen-callingconv \
 	X86GenDAGISel.inc|-gen-dag-isel \
 	X86GenDisassemblerTables.inc|-gen-disassembler \
-	X86GenEDInfo.inc|-gen-enhanced-disassembly-info \
 	X86GenFastISel.inc|-gen-fast-isel \
 	X86GenInstrInfo.inc|-gen-instr-info \
 	X86GenRegisterInfo.inc|-gen-register-info \

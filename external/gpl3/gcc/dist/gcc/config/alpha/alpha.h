@@ -1,7 +1,5 @@
 /* Definitions of target machine for GNU compiler, for DEC Alpha.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GCC.
@@ -96,12 +94,6 @@ along with GCC; see the file COPYING3.  If not see
   while (0)
 #endif
 
-#define WORD_SWITCH_TAKES_ARG(STR)		\
- (!strcmp (STR, "rpath") || DEFAULT_WORD_SWITCH_TAKES_ARG(STR))
-
-/* Print subsidiary information on the compiler version in use.  */
-#define TARGET_VERSION
-
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
 /* Which processor to schedule for. The cpu attribute defines a list that
@@ -141,8 +133,6 @@ enum alpha_fp_trap_mode
   ALPHA_FPTM_SUI	/* Software completion, w/underflow & inexact traps */
 };
 
-extern int target_flags;
-
 extern enum alpha_trap_precision alpha_tp;
 extern enum alpha_fp_rounding_mode alpha_fprm;
 extern enum alpha_fp_trap_mode alpha_fptm;
@@ -151,19 +141,9 @@ extern enum alpha_fp_trap_mode alpha_fptm;
 #define TARGET_FP	(!TARGET_SOFT_FP)
 
 /* These are for target os support and cannot be changed at runtime.  */
-#define TARGET_ABI_WINDOWS_NT 0
-#define TARGET_ABI_OPEN_VMS 0
-#define TARGET_ABI_UNICOSMK 0
-#define TARGET_ABI_OSF (!TARGET_ABI_WINDOWS_NT	\
-			&& !TARGET_ABI_OPEN_VMS	\
-			&& !TARGET_ABI_UNICOSMK)
+#define TARGET_ABI_OPEN_VMS	0
+#define TARGET_ABI_OSF		(!TARGET_ABI_OPEN_VMS)
 
-#ifndef TARGET_AS_CAN_SUBTRACT_LABELS
-#define TARGET_AS_CAN_SUBTRACT_LABELS TARGET_GAS
-#endif
-#ifndef TARGET_AS_SLASH_BEFORE_SUFFIX
-#define TARGET_AS_SLASH_BEFORE_SUFFIX TARGET_GAS
-#endif
 #ifndef TARGET_CAN_FAULT_IN_PROLOGUE
 #define TARGET_CAN_FAULT_IN_PROLOGUE 0
 #endif
@@ -172,9 +152,6 @@ extern enum alpha_fp_trap_mode alpha_fptm;
 #endif
 #ifndef TARGET_PROFILING_NEEDS_GP
 #define TARGET_PROFILING_NEEDS_GP 0
-#endif
-#ifndef TARGET_LD_BUGGY_LDGP
-#define TARGET_LD_BUGGY_LDGP 0
 #endif
 #ifndef TARGET_FIXUP_EV5_PREFETCH
 #define TARGET_FIXUP_EV5_PREFETCH 0
@@ -209,34 +186,6 @@ extern enum alpha_fp_trap_mode alpha_fptm;
   {"cpu", "%{!mcpu=*:-mcpu=%(VALUE)}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }
 
-/* Sometimes certain combinations of command options do not make sense
-   on a particular target machine.  You can define a macro
-   `OVERRIDE_OPTIONS' to take account of this.  This macro, if
-   defined, is executed once just after all the command options have
-   been parsed.
-
-   On the Alpha, it is used to translate target-option strings into
-   numeric values.  */
-
-#define OVERRIDE_OPTIONS override_options ()
-
-
-/* Define this macro to change register usage conditional on target flags.
-
-   On the Alpha, we use this to disable the floating-point registers when
-   they don't exist.  */
-
-#define CONDITIONAL_REGISTER_USAGE		\
-{						\
-  int i;					\
-  if (! TARGET_FPREGS)				\
-    for (i = 32; i < 63; i++)			\
-      fixed_regs[i] = call_used_regs[i] = 1;	\
-}
-
-
-/* Show we can debug even without a frame pointer.  */
-#define CAN_DEBUG_WITHOUT_FP
 
 /* target machine storage layout */
 
@@ -333,6 +282,7 @@ extern enum alpha_fp_trap_mode alpha_fptm;
 #define STRUCTURE_SIZE_BOUNDARY 8
 
 /* A bit-field declared as `int' forces `int' alignment for the struct.  */
+#undef PCC_BITFILED_TYPE_MATTERS
 #define PCC_BITFIELD_TYPE_MATTERS 1
 
 /* No data type wants to be aligned rounder than this.  */
@@ -548,19 +498,6 @@ enum reg_class {
   {0x00000000, 0x7fffffff},	/* FLOAT_REGS */	\
   {0xffffffff, 0xffffffff} }
 
-/* The following macro defines cover classes for Integrated Register
-   Allocator.  Cover classes is a set of non-intersected register
-   classes covering all hard registers used for register allocation
-   purpose.  Any move between two registers of a cover class should be
-   cheaper than load or store of the registers.  The macro value is
-   array of register classes with LIM_REG_CLASSES used as the end
-   marker.  */
-
-#define IRA_COVER_CLASSES						     \
-{									     \
-  GENERAL_REGS, FLOAT_REGS, LIM_REG_CLASSES				     \
-}
-
 /* The same information, inverted:
    Return the class number of the smallest class containing
    reg number REGNO.  This could be a conditional expression
@@ -601,12 +538,6 @@ enum reg_class {
   (GET_MODE_CLASS (MODE) == MODE_FLOAT ? (MODE)		\
    : GET_MODE_SIZE (MODE) >= 4 ? (MODE)			\
    : mode_for_size (BITS_PER_WORD, GET_MODE_CLASS (MODE), 0))
-
-/* Return the maximum number of consecutive registers
-   needed to represent mode MODE in a register of class CLASS.  */
-
-#define CLASS_MAX_NREGS(CLASS, MODE)				\
- ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
 
 /* Return the class of registers that cannot change mode from FROM to TO.  */
 
@@ -703,15 +634,6 @@ extern int alpha_memory_latency;
    in a register.  */
 /* #define REG_PARM_STACK_SPACE */
 
-/* Value is the number of bytes of arguments automatically
-   popped when returning from a subroutine call.
-   FUNDECL is the declaration node of the function (as a tree),
-   FUNTYPE is the data type of the function (as a tree),
-   or for a library call it is an identifier node for the subroutine name.
-   SIZE is the number of bytes of arguments passed on the stack.  */
-
-#define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE) 0
-
 /* Define how to find the value returned by a function.
    VALTYPE is the data type of the value (as a tree).
    If the precise function being called is known, FUNC is its FUNCTION_DECL;
@@ -768,34 +690,6 @@ extern int alpha_memory_latency;
    : (((MODE) == BLKmode ? int_size_in_bytes (TYPE) : GET_MODE_SIZE (MODE)) \
       + (UNITS_PER_WORD - 1)) / UNITS_PER_WORD)
 
-/* Update the data in CUM to advance over an argument
-   of mode MODE and data type TYPE.
-   (TYPE is null for libcalls where that information may not be available.)  */
-
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)			\
-  ((CUM) += 								\
-   (targetm.calls.must_pass_in_stack (MODE, TYPE))			\
-    ? 6 : ALPHA_ARG_SIZE (MODE, TYPE, NAMED))
-
-/* Determine where to put an argument to a function.
-   Value is zero to push the argument on the stack,
-   or a hard register in which to store the argument.
-
-   MODE is the argument's machine mode.
-   TYPE is the data type of the argument (as a tree).
-    This is null for libcalls where that information may
-    not be available.
-   CUM is a variable of type CUMULATIVE_ARGS which gives info about
-    the preceding args and about the function being called.
-   NAMED is nonzero if this argument is a named parameter
-    (otherwise it is an extra parameter matching an ellipsis).
-
-   On Alpha the first 6 words of args are normally in registers
-   and the rest are pushed.  */
-
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED)	\
-  function_arg((CUM), (MODE), (TYPE), (NAMED))
-
 /* Make (or fake) .linkage entry for function call.
    IS_LOCAL is 0 if name is used in call, 1 if name is used in definition.  */
 
@@ -805,11 +699,13 @@ extern int alpha_memory_latency;
 
 /* This macro produces the initial definition of a function.  */
 
+#undef ASM_DECLARE_FUNCTION_NAME
 #define ASM_DECLARE_FUNCTION_NAME(FILE,NAME,DECL) \
   alpha_start_function(FILE,NAME,DECL);
 
 /* This macro closes up a function definition for the assembler.  */
 
+#undef ASM_DECLARE_FUNCTION_SIZE
 #define ASM_DECLARE_FUNCTION_SIZE(FILE,NAME,DECL) \
   alpha_end_function(FILE,NAME,DECL)
 
@@ -869,7 +765,7 @@ extern int alpha_memory_latency;
 #define EH_RETURN_DATA_REGNO(N)	((N) < 4 ? (N) + 16 : INVALID_REGNUM)
 #define EH_RETURN_STACKADJ_RTX	gen_rtx_REG (Pmode, 28)
 #define EH_RETURN_HANDLER_RTX \
-  gen_rtx_MEM (Pmode, plus_constant (stack_pointer_rtx, \
+  gen_rtx_MEM (Pmode, plus_constant (Pmode, stack_pointer_rtx, \
 				     crtl->outgoing_args_size))
 
 /* Addressing modes, and classification of registers for them.  */
@@ -880,7 +776,8 @@ extern int alpha_memory_latency;
    They give nonzero only if REGNO is a hard reg of the suitable class
    or a pseudo reg currently allocated to a suitable hard reg.
    Since they use reg_renumber, they are safe only once reg_renumber
-   has been allocated, which happens in local-alloc.c.  */
+   has been allocated, which happens in reginfo.c during register
+   allocation.  */
 
 #define REGNO_OK_FOR_INDEX_P(REGNO) 0
 #define REGNO_OK_FOR_BASE_P(REGNO) \
@@ -897,11 +794,6 @@ extern int alpha_memory_latency;
 #define CONSTANT_ADDRESS_P(X)   \
   (CONST_INT_P (X)		\
    && (unsigned HOST_WIDE_INT) (INTVAL (X) + 0x8000) < 0x10000)
-
-/* Include all constant integers and constant doubles, but not
-   floating-point, except for floating-point zero.  */
-
-#define LEGITIMATE_CONSTANT_P  alpha_legitimate_constant_p
 
 /* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
    and check its validity for a certain class.
@@ -933,7 +825,7 @@ extern int alpha_memory_latency;
 #define NONSTRICT_REG_OK_FP_BASE_P(X)		\
   (REGNO (X) == 31 || REGNO (X) == 63		\
    || (REGNO (X) >= FIRST_PSEUDO_REGISTER	\
-       && REGNO (X) < LAST_VIRTUAL_REGISTER))
+       && REGNO (X) < LAST_VIRTUAL_POINTER_REGISTER))
 
 /* Nonzero if X is a hard reg that can be used as a base reg.  */
 #define STRICT_REG_OK_FOR_BASE_P(X) REGNO_OK_FOR_BASE_P (REGNO (X))
@@ -958,13 +850,6 @@ do {									     \
     }									     \
 } while (0)
 
-/* Go to LABEL if ADDR (a legitimate address expression)
-   has an effect that depends on the machine mode it is used for.
-   On the Alpha this is true only for the unaligned modes.   We can
-   simplify this test since we know that the address must be valid.  */
-
-#define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR,LABEL)  \
-{ if (GET_CODE (ADDR) == AND) goto LABEL; }
 
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.  */
@@ -1035,26 +920,6 @@ do {									     \
 #define FLOAT_STORE_FLAG_VALUE(MODE) \
   REAL_VALUE_ATOF ((TARGET_FLOAT_VAX ? "0.5" : "2.0"), (MODE))
 
-/* Canonicalize a comparison from one we don't have to one we do have.  */
-
-#define CANONICALIZE_COMPARISON(CODE,OP0,OP1) \
-  do {									\
-    if (((CODE) == GE || (CODE) == GT || (CODE) == GEU || (CODE) == GTU) \
-	&& (REG_P (OP1) || (OP1) == const0_rtx))		\
-      {									\
-	rtx tem = (OP0);						\
-	(OP0) = (OP1);							\
-	(OP1) = tem;							\
-	(CODE) = swap_condition (CODE);					\
-      }									\
-    if (((CODE) == LT || (CODE) == LTU)					\
-	&& CONST_INT_P (OP1) && INTVAL (OP1) == 256)			\
-      {									\
-	(CODE) = (CODE) == LT ? LE : LEU;				\
-	(OP1) = GEN_INT (255);						\
-      }									\
-  } while (0)
-
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
@@ -1092,10 +957,6 @@ do {									     \
 
 #define TEXT_SECTION_ASM_OP "\t.text"
 
-/* Output before read-only data.  */
-
-#define READONLY_DATA_SECTION_ASM_OP "\t.rdata"
-
 /* Output before writable data.  */
 
 #define DATA_SECTION_ASM_OP "\t.data"
@@ -1130,103 +991,23 @@ do {						\
 /* Globalizing directive for a label.  */
 #define GLOBAL_ASM_OP "\t.globl "
 
-/* The prefix to add to user-visible assembler symbols.  */
+/* Use dollar signs rather than periods in special g++ assembler names.  */
 
-#define USER_LABEL_PREFIX ""
-
-/* This is how to output a label for a jump table.  Arguments are the same as
-   for (*targetm.asm_out.internal_label), except the insn for the jump table is
-   passed.  */
-
-#define ASM_OUTPUT_CASE_LABEL(FILE,PREFIX,NUM,TABLEINSN)	\
-{ ASM_OUTPUT_ALIGN (FILE, 2); (*targetm.asm_out.internal_label) (FILE, PREFIX, NUM); }
+#undef NO_DOLLAR_IN_LABEL
 
 /* This is how to store into the string LABEL
    the symbol_ref name of an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.
    This is suitable for output with `assemble_name'.  */
 
+#undef ASM_GENERATE_INTERNAL_LABEL
 #define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)	\
   sprintf ((LABEL), "*$%s%ld", (PREFIX), (long)(NUM))
-
-/* We use the default ASCII-output routine, except that we don't write more
-   than 50 characters since the assembler doesn't support very long lines.  */
-
-#define ASM_OUTPUT_ASCII(MYFILE, MYSTRING, MYLENGTH) \
-  do {									      \
-    FILE *_hide_asm_out_file = (MYFILE);				      \
-    const unsigned char *_hide_p = (const unsigned char *) (MYSTRING);	      \
-    int _hide_thissize = (MYLENGTH);					      \
-    int _size_so_far = 0;						      \
-    {									      \
-      FILE *asm_out_file = _hide_asm_out_file;				      \
-      const unsigned char *p = _hide_p;					      \
-      int thissize = _hide_thissize;					      \
-      int i;								      \
-      fprintf (asm_out_file, "\t.ascii \"");				      \
-									      \
-      for (i = 0; i < thissize; i++)					      \
-	{								      \
-	  register int c = p[i];					      \
-									      \
-	  if (_size_so_far ++ > 50 && i < thissize - 4)			      \
-	    _size_so_far = 0, fprintf (asm_out_file, "\"\n\t.ascii \"");      \
-									      \
-	  if (c == '\"' || c == '\\')					      \
-	    putc ('\\', asm_out_file);					      \
-	  if (c >= ' ' && c < 0177)					      \
-	    putc (c, asm_out_file);					      \
-	  else								      \
-	    {								      \
-	      fprintf (asm_out_file, "\\%o", c);			      \
-	      /* After an octal-escape, if a digit follows,		      \
-		 terminate one string constant and start another.	      \
-		 The VAX assembler fails to stop reading the escape	      \
-		 after three digits, so this is the only way we		      \
-		 can get it to parse the data properly.  */		      \
-	      if (i < thissize - 1 && ISDIGIT (p[i + 1]))		      \
-		_size_so_far = 0, fprintf (asm_out_file, "\"\n\t.ascii \"");  \
-	  }								      \
-	}								      \
-      fprintf (asm_out_file, "\"\n");					      \
-    }									      \
-  }									      \
-  while (0)
 
 /* This is how to output an element of a case-vector that is relative.  */
 
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
-  fprintf (FILE, "\t.%s $L%d\n", TARGET_ABI_WINDOWS_NT ? "long" : "gprel32", \
-	   (VALUE))
-
-/* This is how to output an assembler line
-   that says to advance the location counter
-   to a multiple of 2**LOG bytes.  */
-
-#define ASM_OUTPUT_ALIGN(FILE,LOG)	\
-  if ((LOG) != 0)			\
-    fprintf (FILE, "\t.align %d\n", LOG);
-
-/* This is how to advance the location counter by SIZE bytes.  */
-
-#define ASM_OUTPUT_SKIP(FILE,SIZE)  \
-  fprintf (FILE, "\t.space "HOST_WIDE_INT_PRINT_UNSIGNED"\n", (SIZE))
-
-/* This says how to output an assembler line
-   to define a global common symbol.  */
-
-#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)  \
-( fputs ("\t.comm ", (FILE)),			\
-  assemble_name ((FILE), (NAME)),		\
-  fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", (SIZE)))
-
-/* This says how to output an assembler line
-   to define a local common symbol.  */
-
-#define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE,ROUNDED)	\
-( fputs ("\t.lcomm ", (FILE)),				\
-  assemble_name ((FILE), (NAME)),			\
-  fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", (SIZE)))
+  fprintf (FILE, "\t.gprel32 $L%d\n", (VALUE))
 
 
 /* Print operand X (an rtx) in assembler syntax to file FILE.
@@ -1259,23 +1040,10 @@ do {						\
 #define PRINT_OPERAND_ADDRESS(FILE, ADDR) \
   print_operand_address((FILE), (ADDR))
 
-/* Tell collect that the object format is ECOFF.  */
-#define OBJECT_FORMAT_COFF
-#define EXTENDED_COFF
-
 /* If we use NM, pass -g to it so it only lists globals.  */
 #define NM_FLAGS "-pg"
 
 /* Definitions for debugging.  */
-
-#define SDB_DEBUGGING_INFO 1		/* generate info for mips-tfile */
-#define DBX_DEBUGGING_INFO 1		/* generate embedded stabs */
-#define MIPS_DEBUGGING_INFO 1		/* MIPS specific debugging info */
-
-#ifndef PREFERRED_DEBUGGING_TYPE	/* assume SDB_DEBUGGING_INFO */
-#define PREFERRED_DEBUGGING_TYPE  SDB_DEBUG
-#endif
-
 
 /* Correct the offset of automatic variables and arguments.  Note that
    the Alpha debug format wants all automatic variables and arguments
@@ -1296,119 +1064,17 @@ extern long alpha_auto_offset;
   ((GET_CODE (X) == PLUS ? INTVAL (XEXP (X, 1)) : 0) + alpha_auto_offset)
 #define DEBUGGER_ARG_OFFSET(OFFSET, X) (OFFSET + alpha_arg_offset)
 
-/* mips-tfile doesn't understand .stabd directives.  */
-#define DBX_OUTPUT_SOURCE_LINE(STREAM, LINE, COUNTER) do {	\
-  dbxout_begin_stabn_sline (LINE);				\
-  dbxout_stab_value_internal_label ("LM", &COUNTER);		\
-} while (0)
-
-/* We want to use MIPS-style .loc directives for SDB line numbers.  */
-extern int num_source_filenames;
-#define SDB_OUTPUT_SOURCE_LINE(STREAM, LINE)	\
-  fprintf (STREAM, "\t.loc\t%d %d\n", num_source_filenames, LINE)
-
 #define ASM_OUTPUT_SOURCE_FILENAME(STREAM, NAME)			\
   alpha_output_filename (STREAM, NAME)
 
-/* mips-tfile.c limits us to strings of one page.  We must underestimate this
-   number, because the real length runs past this up to the next
-   continuation point.  This is really a dbxout.c bug.  */
-#define DBX_CONTIN_LENGTH 3000
+#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)	\
+  ( fputs (".comm ", (FILE)),				\
+    assemble_name ((FILE), (NAME)),			\
+    fprintf ((FILE), ",%u\n", (int)(ROUNDED)))  
+
 
 /* By default, turn on GDB extensions.  */
 #define DEFAULT_GDB_EXTENSIONS 1
-
-/* Stabs-in-ECOFF can't handle dbxout_function_end().  */
-#define NO_DBX_FUNCTION_END 1
-
-/* If we are smuggling stabs through the ALPHA ECOFF object
-   format, put a comment in front of the .stab<x> operation so
-   that the ALPHA assembler does not choke.  The mips-tfile program
-   will correctly put the stab into the object file.  */
-
-#define ASM_STABS_OP	((TARGET_GAS) ? "\t.stabs\t" : " #.stabs\t")
-#define ASM_STABN_OP	((TARGET_GAS) ? "\t.stabn\t" : " #.stabn\t")
-#define ASM_STABD_OP	((TARGET_GAS) ? "\t.stabd\t" : " #.stabd\t")
-
-/* Forward references to tags are allowed.  */
-#define SDB_ALLOW_FORWARD_REFERENCES
-
-/* Unknown tags are also allowed.  */
-#define SDB_ALLOW_UNKNOWN_REFERENCES
-
-#define PUT_SDB_DEF(a)					\
-do {							\
-  fprintf (asm_out_file, "\t%s.def\t",			\
-	   (TARGET_GAS) ? "" : "#");			\
-  ASM_OUTPUT_LABELREF (asm_out_file, a); 		\
-  fputc (';', asm_out_file);				\
-} while (0)
-
-#define PUT_SDB_PLAIN_DEF(a)				\
-do {							\
-  fprintf (asm_out_file, "\t%s.def\t.%s;",		\
-	   (TARGET_GAS) ? "" : "#", (a));		\
-} while (0)
-
-#define PUT_SDB_TYPE(a)					\
-do {							\
-  fprintf (asm_out_file, "\t.type\t0x%x;", (a));	\
-} while (0)
-
-/* For block start and end, we create labels, so that
-   later we can figure out where the correct offset is.
-   The normal .ent/.end serve well enough for functions,
-   so those are just commented out.  */
-
-extern int sdb_label_count;		/* block start/end next label # */
-
-#define PUT_SDB_BLOCK_START(LINE)			\
-do {							\
-  fprintf (asm_out_file,				\
-	   "$Lb%d:\n\t%s.begin\t$Lb%d\t%d\n",		\
-	   sdb_label_count,				\
-	   (TARGET_GAS) ? "" : "#",			\
-	   sdb_label_count,				\
-	   (LINE));					\
-  sdb_label_count++;					\
-} while (0)
-
-#define PUT_SDB_BLOCK_END(LINE)				\
-do {							\
-  fprintf (asm_out_file,				\
-	   "$Le%d:\n\t%s.bend\t$Le%d\t%d\n",		\
-	   sdb_label_count,				\
-	   (TARGET_GAS) ? "" : "#",			\
-	   sdb_label_count,				\
-	   (LINE));					\
-  sdb_label_count++;					\
-} while (0)
-
-#define PUT_SDB_FUNCTION_START(LINE)
-
-#define PUT_SDB_FUNCTION_END(LINE)
-
-#define PUT_SDB_EPILOGUE_END(NAME) ((void)(NAME))
-
-/* Macros for mips-tfile.c to encapsulate stabs in ECOFF, and for
-   mips-tdump.c to print them out.
-
-   These must match the corresponding definitions in gdb/mipsread.c.
-   Unfortunately, gcc and gdb do not currently share any directories.  */
-
-#define CODE_MASK 0x8F300
-#define MIPS_IS_STAB(sym) (((sym)->index & 0xFFF00) == CODE_MASK)
-#define MIPS_MARK_STAB(code) ((code)+CODE_MASK)
-#define MIPS_UNMARK_STAB(code) ((code)-CODE_MASK)
-
-/* Override some mips-tfile definitions.  */
-
-#define SHASH_SIZE 511
-#define THASH_SIZE 55
-
-/* Align ecoff symbol tables to avoid OSF1/1.3 nm complaints.  */
-
-#define ALIGN_SYMTABLE_OFFSET(OFFSET) (((OFFSET) + 7) & ~7)
 
 /* The system headers under Alpha systems are generally C++-aware.  */
 #define NO_IMPLICIT_EXTERN_C

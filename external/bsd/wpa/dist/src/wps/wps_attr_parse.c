@@ -2,20 +2,15 @@
  * Wi-Fi Protected Setup - attribute parsing
  * Copyright (c) 2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
 
 #include "common.h"
-#include "wps_i.h"
+#include "wps_defs.h"
+#include "wps_attr_parse.h"
 
 #ifndef CONFIG_WPS_STRICT
 #define WPS_WORKAROUNDS
@@ -268,12 +263,16 @@ static int wps_set_attr(struct wps_parse_attr *attr, u16 type,
 		attr->dev_password_id = pos;
 		break;
 	case ATTR_OOB_DEVICE_PASSWORD:
-		if (len != WPS_OOB_DEVICE_PASSWORD_ATTR_LEN) {
+		if (len < WPS_OOB_PUBKEY_HASH_LEN + 2 +
+		    WPS_OOB_DEVICE_PASSWORD_MIN_LEN ||
+		    len > WPS_OOB_PUBKEY_HASH_LEN + 2 +
+		    WPS_OOB_DEVICE_PASSWORD_LEN) {
 			wpa_printf(MSG_DEBUG, "WPS: Invalid OOB Device "
 				   "Password length %u", len);
 			return -1;
 		}
 		attr->oob_dev_password = pos;
+		attr->oob_dev_password_len = len;
 		break;
 	case ATTR_OS_VERSION:
 		if (len != 4) {
@@ -542,6 +541,14 @@ static int wps_set_attr(struct wps_parse_attr *attr, u16 type,
 	case ATTR_VENDOR_EXT:
 		if (wps_parse_vendor_ext(attr, pos, len) < 0)
 			return -1;
+		break;
+	case ATTR_AP_CHANNEL:
+		if (len != 2) {
+			wpa_printf(MSG_DEBUG, "WPS: Invalid AP Channel "
+				   "length %u", len);
+			return -1;
+		}
+		attr->ap_channel = pos;
 		break;
 	default:
 		wpa_printf(MSG_DEBUG, "WPS: Unsupported attribute type 0x%x "

@@ -10,7 +10,7 @@ SECTIONS
   .text : { *(.text) }
 
   . = ALIGN (0x10000);
-  _gp = . + 0x7ff0;
+  HIDDEN (_gp = . + 0x7ff0);
   .got : { *(.got) }
 
   /DISCARD/ : { *(.reginfo) }

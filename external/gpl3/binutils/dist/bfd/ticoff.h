@@ -21,9 +21,8 @@
 #define	F_LSYMS		F_LSYMS_TICOFF
 
 static bfd_boolean
-ticoff0_bad_format_hook (abfd, filehdr)
-     bfd *abfd;
-     PTR filehdr;
+ticoff0_bad_format_hook (bfd * abfd,
+			 void * filehdr)
 {
   struct internal_filehdr *internal_f = (struct internal_filehdr *) filehdr;
 
@@ -34,9 +33,8 @@ ticoff0_bad_format_hook (abfd, filehdr)
 }
 
 static bfd_boolean
-ticoff1_bad_format_hook (abfd, filehdr)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     PTR filehdr;
+ticoff1_bad_format_hook (bfd * abfd ATTRIBUTE_UNUSED,
+			 void * filehdr)
 {
   struct internal_filehdr *internal_f = (struct internal_filehdr *) filehdr;
 
@@ -49,9 +47,8 @@ ticoff1_bad_format_hook (abfd, filehdr)
 /* Replace the stock _bfd_coff_is_local_label_name
    to recognize TI COFF local labels.  */
 static bfd_boolean 
-ticoff_bfd_is_local_label_name (abfd, name)
-  bfd *abfd ATTRIBUTE_UNUSED;
-  const char *name;
+ticoff_bfd_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
+				const char *name)
 {
   if (TICOFF_LOCAL_LABEL_P(name))
     return TRUE;

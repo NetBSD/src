@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-decnet.c,v 1.39 2005-05-06 02:16:26 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-decnet.c,v 1.39 2005-05-06 02:16:26 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-decnet.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-decnet.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -824,7 +824,7 @@ trunc:
 	return (0);
 }
 
-static struct tok reason2str[] = {
+static const struct tok reason2str[] = {
 	{ UC_OBJREJECT,		"object rejected connect" },
 	{ UC_RESOURCES,		"insufficient resources" },
 	{ UC_NOSUCHNODE,	"unrecognized node name" },

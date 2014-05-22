@@ -1,8 +1,7 @@
 /* Target-dependent code for PowerPC systems using the SVR4 ABI
    for GDB, the GNU debugger.
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +31,22 @@
 #include "infcall.h"
 #include "dwarf2.h"
 
+
+/* Check whether FTPYE is a (pointer to) function type that should use
+   the OpenCL vector ABI.  */
+
+static int
+ppc_sysv_use_opencl_abi (struct type *ftype)
+{
+  ftype = check_typedef (ftype);
+
+  if (TYPE_CODE (ftype) == TYPE_CODE_PTR)
+    ftype = check_typedef (TYPE_TARGET_TYPE (ftype));
+
+  return (TYPE_CODE (ftype) == TYPE_CODE_FUNC
+	  && TYPE_CALLING_CONVENTION (ftype) == DW_CC_GDB_IBM_OpenCL);
+}
+
 /* Pass the arguments in either registers, or in the stack.  Using the
    ppc sysv ABI, the first eight words of the argument list (that might
    be less than eight parameters if some parameters occupy more than one
@@ -51,8 +66,7 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct type *ftype;
-  int opencl_abi = 0;
+  int opencl_abi = ppc_sysv_use_opencl_abi (value_type (function));
   ULONGEST saved_sp;
   int argspace = 0;		/* 0 is an initial wrong guess.  */
   int write_pass;
@@ -61,13 +75,6 @@ ppc_sysv_abi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   regcache_cooked_read_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
 				 &saved_sp);
-
-  ftype = check_typedef (value_type (function));
-  if (TYPE_CODE (ftype) == TYPE_CODE_PTR)
-    ftype = check_typedef (TYPE_TARGET_TYPE (ftype));
-  if (TYPE_CODE (ftype) == TYPE_CODE_FUNC
-      && TYPE_CALLING_CONVENTION (ftype) == DW_CC_GDB_IBM_OpenCL)
-    opencl_abi = 1;
 
   /* Go through the argument list twice.
 
@@ -689,11 +696,7 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int opencl_abi = 0;
-
-  if (func_type
-      && TYPE_CALLING_CONVENTION (func_type) == DW_CC_GDB_IBM_OpenCL)
-    opencl_abi = 1;
+  int opencl_abi = func_type? ppc_sysv_use_opencl_abi (func_type) : 0;
 
   gdb_assert (tdep->wordsize == 4);
 
@@ -1037,23 +1040,25 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 }
 
 enum return_value_convention
-ppc_sysv_abi_return_value (struct gdbarch *gdbarch, struct type *func_type,
+ppc_sysv_abi_return_value (struct gdbarch *gdbarch, struct value *function,
 			   struct type *valtype, struct regcache *regcache,
 			   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  return do_ppc_sysv_return_value (gdbarch, func_type, valtype, regcache,
-				   readbuf, writebuf, 0);
+  return do_ppc_sysv_return_value (gdbarch,
+				   function ? value_type (function) : NULL,
+				   valtype, regcache, readbuf, writebuf, 0);
 }
 
 enum return_value_convention
 ppc_sysv_abi_broken_return_value (struct gdbarch *gdbarch,
-				  struct type *func_type,
+				  struct value *function,
 				  struct type *valtype,
 				  struct regcache *regcache,
 				  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  return do_ppc_sysv_return_value (gdbarch, func_type, valtype, regcache,
-				   readbuf, writebuf, 1);
+  return do_ppc_sysv_return_value (gdbarch,
+				   function ? value_type (function) : NULL,
+				   valtype, regcache, readbuf, writebuf, 1);
 }
 
 /* The helper function for 64-bit SYSV push_dummy_call.  Converts the
@@ -1073,7 +1078,6 @@ convert_code_addr_to_desc_addr (CORE_ADDR code_addr, CORE_ADDR *desc_addr)
   struct obj_section *dot_fn_section;
   struct minimal_symbol *dot_fn;
   struct minimal_symbol *fn;
-  CORE_ADDR toc;
   /* Find the minimal symbol that corresponds to CODE_ADDR (should
      have a name of the form ".FN").  */
   dot_fn = lookup_minimal_symbol_by_pc (code_addr);
@@ -1114,8 +1118,7 @@ ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
   CORE_ADDR func_addr = find_function_addr (function, NULL);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct type *ftype;
-  int opencl_abi = 0;
+  int opencl_abi = ppc_sysv_use_opencl_abi (value_type (function));
   ULONGEST back_chain;
   /* See for-loop comment below.  */
   int write_pass;
@@ -1144,13 +1147,6 @@ ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
      before this and use that as the BACK_CHAIN.  */
   regcache_cooked_read_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
 				 &back_chain);
-
-  ftype = check_typedef (value_type (function));
-  if (TYPE_CODE (ftype) == TYPE_CODE_PTR)
-    ftype = check_typedef (TYPE_TARGET_TYPE (ftype));
-  if (TYPE_CODE (ftype) == TYPE_CODE_FUNC
-      && TYPE_CALLING_CONVENTION (ftype) == DW_CC_GDB_IBM_OpenCL)
-    opencl_abi = 1;
 
   /* Go through the argument list twice.
 
@@ -1714,17 +1710,14 @@ ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
    location; when READBUF is non-NULL, fill the buffer from the
    corresponding register return-value location.  */
 enum return_value_convention
-ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct type *func_type,
+ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct value *function,
 			     struct type *valtype, struct regcache *regcache,
 			     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int opencl_abi = 0;
-
-  if (func_type
-      && TYPE_CALLING_CONVENTION (func_type) == DW_CC_GDB_IBM_OpenCL)
-    opencl_abi = 1;
+  struct type *func_type = function ? value_type (function) : NULL;
+  int opencl_abi = func_type? ppc_sysv_use_opencl_abi (func_type) : 0;
 
   /* This function exists to support a calling convention that
      requires floating-point registers.  It shouldn't be used on
@@ -1927,11 +1920,13 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct type *func_type,
 	      gdb_byte regval[MAX_REGISTER_SIZE];
 	      struct type *regtype =
 		register_type (gdbarch, tdep->ppc_fp0_regnum);
+	      struct type *target_type;
+	      target_type = check_typedef (TYPE_TARGET_TYPE (valtype));
 	      if (writebuf != NULL)
 		{
 		  convert_typed_floating ((const bfd_byte *) writebuf +
-					  i * (TYPE_LENGTH (valtype) / 2),
-					  valtype, regval, regtype);
+					  i * TYPE_LENGTH (target_type), 
+					  target_type, regval, regtype);
 		  regcache_cooked_write (regcache,
                                          tdep->ppc_fp0_regnum + 1 + i,
 					 regval);
@@ -1943,8 +1938,8 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct type *func_type,
                                         regval);
 		  convert_typed_floating (regval, regtype,
 					  (bfd_byte *) readbuf +
-					  i * (TYPE_LENGTH (valtype) / 2),
-					  valtype);
+					  i * TYPE_LENGTH (target_type),
+					  target_type);
 		}
 	    }
 	}

@@ -1,5 +1,6 @@
 # Expect script for various ELF tests.
-#   Copyright 2002, 2003, 2005, 2007, 2009, 2010 Free Software Foundation, Inc.
+#   Copyright 2002, 2003, 2005, 2007, 2009, 2010, 2011, 2012
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,9 +30,65 @@ set old_ldflags $LDFLAGS
 if { [istarget spu*-*-*] } {
     set LDFLAGS "$LDFLAGS --local-store 0:0"
 }
+if { [istarget alpha*-*-* ] } {
+    # The compress1 test is written expecting 32-bit addresses; force the
+    # executable down into the low address space to match.
+    # ??? How can we adjust just the one testcase?
+    set LDFLAGS "$LDFLAGS -Ttext-segment 0x1000000"
+}
+
+if { [istarget "*-*-nacl*"] } {
+    # The eh[1-4] cases are written to expect ELFCLASS64 layout on x86-64.
+    # But the target default is ELFCLASS32.  So the cases explicitly use
+    # -melf_x86_64 to select that, but NaCl needs a different emulation name.
+    set options_regsub(ld) {-melf_x86_64 -melf_x86_64_nacl}
+}
 
 if { [is_remote host] } then {
     remote_download host merge.ld
+}
+
+if { ![istarget hppa64*-hpux*] } {
+    run_ld_link_tests {
+	{"Build symbol3.a"
+	    "" ""
+	    {symbol3.s} {} "symbol3.a"}
+	{"Build symbol3w.a"
+	    "" ""
+	    {symbol3w.s} {} "symbol3w.a"}
+    }
+
+    if { [check_shared_lib_support] } then {
+	run_ld_link_tests {
+	    {"Build pr14170a.o" "" "" "pr14170a.s" {} "pr14170.a" }
+	}
+	setup_xfail "tic6x-*-*"
+	run_ld_link_tests {
+	    {"Build shared library for pr14170"
+		"-shared" "" "pr14170b.s" {} "pr14170.so" }
+	    {"PR ld/14170"
+		"tmpdir/pr14170a.o tmpdir/pr14170.so" "" "pr14170c.s"
+		{ } "pr14170" }
+	}
+    }
+}
+
+# Run a test to check linking a shared library with a broken linker
+# script that accidentally marks dynamic sections as notes.  The
+# resulting executable is not expected to work, but the linker
+# should not seg-fault whilst creating the binary.
+#
+# Only run the test on targets thats support creating shared libraries.
+if { [check_shared_lib_support] } then {
+    setup_xfail "tic6x-*-*"
+    run_ld_link_tests {
+	{"Build shared library for next test"
+	    "-shared" "" "note-3.s" {} "note-3.so" }
+	{"Link using broken linker script"
+	    "--script note-3.t tmpdir/note-3.so" "" ""
+	    { { ld "note-3.l" } }
+	    "a.out" }
+    }
 }
 
 set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
@@ -42,6 +99,7 @@ foreach t $test_list {
 }
 
 if { [istarget *-*-linux*]
+     || [istarget *-*-nacl*]
      || [istarget *-*-gnu*] } {
     run_ld_link_tests {
 	{"Weak symbols in dynamic objects 1 (support)"
@@ -70,20 +128,42 @@ if ![isnative] {
     return
 }
 
+if [check_gc_sections_available] {
+    run_cc_link_tests {
+	{"PR ld/13195" "-Wl,--gc-sections" ""
+	 {pr13195.c} {} "pr13195"}
+    }
+}
+
 set array_tests {
     {"preinit array" "" "" {preinit.c} "preinit" "preinit.out"}
     {"init array" "" "" {init.c} "init" "init.out"}
     {"fini array" "" "" {fini.c} "fini" "fini.out"}
+    {"init array mixed" "" "" {init-mixed.c} "init-mixed" "init-mixed.out" "-I."}
+}
+set array_tests_pie {
+    {"PIE preinit array" "-pie" "" {preinit.c} "preinit" "preinit.out" "-fPIE" }
+    {"PIE init array" "-pie" "" {init.c} "init" "init.out" "-fPIE"}
+    {"PIE fini array" "-pie" "" {fini.c} "fini" "fini.out" "-fPIE"}
+    {"PIE init array mixed" "-pie" "" {init-mixed.c} "init-mixed" "init-mixed.out" "-I. -fPIE"}
 }
 set array_tests_static {
     {"static preinit array" "-static" "" {preinit.c} "preinit" "preinit.out"}
     {"static init array" "-static" "" {init.c} "init" "init.out"}
     {"static fini array" "-static" "" {fini.c} "fini" "fini.out"}
+    {"static init array mixed" "-static" "" {init-mixed.c} "init-mixed" "init-mixed.out" "-I."}
 }
 
 # NetBSD ELF systems do not currently support the .*_array sections.
 set xfails [list "*-*-netbsdelf*"]
 run_ld_link_exec_tests $xfails $array_tests
+
+if { [istarget *-*-linux*]
+     || [istarget *-*-nacl*]
+     || [istarget *-*-gnu*] } {
+    run_ld_link_exec_tests $xfails $array_tests_pie
+}
+
 # Be cautious to not XFAIL for *-*-linux-gnu*, *-*-kfreebsd-gnu*, etc.
 switch -regexp $target_triplet {
     ^\[^-\]*-\[^-\]*-gnu.*$ {
@@ -93,4 +173,4 @@ switch -regexp $target_triplet {
 }
 run_ld_link_exec_tests $xfails $array_tests_static
 
-catch "exec rm -f tmpdir/preinit tmpdir/init tmpdir/fini" status
+catch "exec rm -f tmpdir/preinit tmpdir/init tmpdir/fini tmpdir/init-mixed" status

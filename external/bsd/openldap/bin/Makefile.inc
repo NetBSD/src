@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2010/03/08 05:23:41 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.3.6.1 2014/05/22 15:50:41 yamt Exp $
 
 .include "../openldap.mk"
 
@@ -26,10 +26,10 @@ DPADD+=	${LDAPLIB.lutil}
 
 LDADD+= -lldap
 DPADD+= ${LIBLDAP}
-
-.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
 LDADD+=	-llber
 DPADD+=	${LIBLBER}
+
+.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
 .if ${MKCRYPTO} != "no" 
 DPADD+=	${LIBSSL} ${LIBCRYPTO}
 LDADD+=	-lssl -lcrypto

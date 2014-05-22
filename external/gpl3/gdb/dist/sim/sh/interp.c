@@ -862,7 +862,7 @@ do { \
 #else
 
 #define MA(n) \
-  do { memstalls += ((((int) PC & 3) != 0) ? (n) : ((n) - 1)); } while (0)
+  do { memstalls += ((((long) PC & 3) != 0) ? (n) : ((n) - 1)); } while (0)
 
 #define L(x)   thislock = x;
 #define TL(x)  if ((x) == prevlock) stalls++;
@@ -2356,7 +2356,7 @@ sim_store_register (sd, rn, memory, length)
     default:
       return 0;
     }
-  return -1;
+  return length;
 }
 
 int
@@ -2531,7 +2531,7 @@ sim_fetch_register (sd, rn, memory, length)
       return 0;
     }
   * (int *) memory = swap (val);
-  return -1;
+  return length;
 }
 
 int
@@ -2786,4 +2786,10 @@ sim_set_callbacks (p)
      host_callback *p;
 {
   callback = p;
+}
+
+char **
+sim_complete_command (SIM_DESC sd, char *text, char *word)
+{
+  return NULL;
 }

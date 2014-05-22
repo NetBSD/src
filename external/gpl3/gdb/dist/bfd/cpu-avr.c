@@ -54,7 +54,7 @@ compatible (const bfd_arch_info_type * a,
 
       if (a->mach <= b->mach)
        return b;
-       
+
       if (a->mach >= b->mach)
        return a;
     }
@@ -63,7 +63,7 @@ compatible (const bfd_arch_info_type * a,
     return a;
   if (a->mach == bfd_mach_avr25 && b->mach == bfd_mach_avr2)
     return b;
-    
+
   if (a->mach == bfd_mach_avr3 && b->mach == bfd_mach_avr31)
     return a;
   if (a->mach == bfd_mach_avr31 && b->mach == bfd_mach_avr3)
@@ -96,6 +96,7 @@ compatible (const bfd_arch_info_type * a,
   default,			/* Is this the default ?  */	\
   compatible,							\
   bfd_default_scan,						\
+  bfd_arch_default_fill,					\
   next								\
 }
 
@@ -111,7 +112,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (16, bfd_mach_avr25, "avr:25", FALSE, & arch_info_struct[3]),
 
   /* Classic, > 8K, <= 64K.  */
-  /* TODO:  addr_bits should be 16, but set to 22 for some following 
+  /* TODO:  addr_bits should be 16, but set to 22 for some following
      version of GCC (from 4.3) for backward compatibility.  */
   N (22, bfd_mach_avr3, "avr:3", FALSE, & arch_info_struct[4]),
 
@@ -125,37 +126,37 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (16, bfd_mach_avr4, "avr:4", FALSE, & arch_info_struct[7]),
 
   /* Enhanced, > 8K, <= 64K.  */
-  /* TODO:  addr_bits should be 16, but set to 22 for some following 
+  /* TODO:  addr_bits should be 16, but set to 22 for some following
      version of GCC (from 4.3) for backward compatibility.  */
   N (22, bfd_mach_avr5, "avr:5", FALSE, & arch_info_struct[8]),
-  
+
   /* Enhanced, == 128K.  */
   N (22, bfd_mach_avr51, "avr:51", FALSE, & arch_info_struct[9]),
 
   /* 3-Byte PC.  */
   N (22, bfd_mach_avr6, "avr:6", FALSE, & arch_info_struct[10]),
-  
+
   /* Xmega 1 */
   N (24, bfd_mach_avrxmega1, "avr:101", FALSE, & arch_info_struct[11]),
 
   /* Xmega 2 */
   N (24, bfd_mach_avrxmega2, "avr:102", FALSE, & arch_info_struct[12]),
-  
+
   /* Xmega 3 */
   N (24, bfd_mach_avrxmega3, "avr:103", FALSE, & arch_info_struct[13]),
-  
+
   /* Xmega 4 */
   N (24, bfd_mach_avrxmega4, "avr:104", FALSE, & arch_info_struct[14]),
-  
+
   /* Xmega 5 */
   N (24, bfd_mach_avrxmega5, "avr:105", FALSE, & arch_info_struct[15]),
-  
+
   /* Xmega 6 */
   N (24, bfd_mach_avrxmega6, "avr:106", FALSE, & arch_info_struct[16]),
-  
+
   /* Xmega 7 */
   N (24, bfd_mach_avrxmega7, "avr:107", FALSE, NULL)
-  
+
 };
 
 const bfd_arch_info_type bfd_avr_arch =

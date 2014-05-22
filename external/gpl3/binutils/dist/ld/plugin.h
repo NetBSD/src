@@ -32,8 +32,8 @@ extern bfd_boolean no_more_claiming;
    to include the plugin-api.h header in order to use this file.  */
 struct ld_plugin_input_file;
 
-/* Handle -plugin arg: find and load plugin, or return error.  */
-extern int plugin_opt_plugin (const char *plugin);
+/* Handle -plugin arg: find and load plugin.  */
+extern void plugin_opt_plugin (const char *plugin);
 
 /* Accumulate option arguments for last-loaded plugin, or return
    error if none.  */
@@ -44,7 +44,7 @@ extern int plugin_opt_plugin_arg (const char *arg);
 extern bfd_boolean plugin_active_plugins_p (void);
 
 /* Load up and initialise all plugins after argument parsing.  */
-extern int plugin_load_plugins (void);
+extern void plugin_load_plugins (void);
 
 /* Return name of plugin which caused an error in any of the above.  */
 extern const char *plugin_error_plugin (void);
@@ -65,5 +65,8 @@ extern void plugin_call_cleanup (void);
    that symbols can be added to it; it must be made readable after the
    add_symbols hook has been called so that it can be read when linking.  */
 extern bfd *plugin_get_ir_dummy_bfd (const char *name, bfd *template);
+
+/* Return true if bfd is a dynamic library that should be reloaded.  */
+extern bfd_boolean plugin_should_reload (bfd *);
 
 #endif /* !def GLD_PLUGIN_H */

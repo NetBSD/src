@@ -1,6 +1,4 @@
-#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1997, 1998, 1999, 2000,
-#   2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1988-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-if $tracelevel then {
-    strace $tracelevel
-}
 
 #
 # test special commands (if, while, etc)
@@ -294,6 +288,9 @@ proc watchpoint_command_test {} {
 	    pass "begin commands on watch"
 	}
     }
+    # See the 'No symbol "value...' fail below.  This command will
+    # fail if it's executed in the wrong frame.  If adjusting the
+    # test, make sure this property holds.
     gdb_test_multiple "print value" "add print command to watch" {
 	-re ">$" {
 	    pass "add print command to watch"
@@ -308,9 +305,18 @@ proc watchpoint_command_test {} {
 	"" \
 	"end commands on watch"
 
-    gdb_test "continue" \
-	"Continuing.*\[Ww\]atchpoint $wp_id deleted because the program has left the block in.*which its expression is valid.*run.c:(57|82).*" \
-	"continue with watch"
+    set test "continue with watch"
+    gdb_test_multiple "continue" "$test" {
+	-re "No symbol \"value\" in current context.\r\n$gdb_prompt $" {
+	    # Happens if GDB actually runs the watchpoints commands,
+	    # even though the watchpoint was deleted for not being in
+	    # scope.
+	    fail $test
+	}
+	-re "Continuing.*\[Ww\]atchpoint $wp_id deleted because the program has left the block in.*which its expression is valid.*run.c:(53|77).*$gdb_prompt $" {
+	    pass $test
+	}
+   }
 }
 
 proc test_command_prompt_position {} {
@@ -666,6 +672,74 @@ proc if_commands_test {} {
     }
 }
 
+# Verify an error during "commands" commands execution will prevent any other
+# "commands" from other breakpoints at the same location to be executed.
+
+proc error_clears_commands_left {} {
+    set test "hook-stop 1"
+    gdb_test_multiple {define hook-stop} $test {
+	-re "End with a line saying just \"end\"\\.\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "hook-stop 1a"
+    gdb_test_multiple {echo hook-stop1\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    gdb_test_no_output "end" "hook-stop 1b"
+
+    delete_breakpoints
+    gdb_breakpoint "main"
+
+    set test "main commands 1"
+    gdb_test_multiple {commands $bpnum} $test {
+	-re "End with a line saying just \"end\"\\.\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 1a"
+    gdb_test_multiple {echo cmd1\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 1b"
+    gdb_test_multiple {errorcommandxy\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    gdb_test_no_output "end" "main commands 1c"
+
+    gdb_breakpoint "main"
+    set test "main commands 2"
+    gdb_test_multiple {commands $bpnum} $test {
+	-re "End with a line saying just \"end\"\\.\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 2a"
+    gdb_test_multiple {echo cmd2\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 2b"
+    gdb_test_multiple {errorcommandyz\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    gdb_test_no_output "end" "main commands 2c"
+
+    gdb_run_cmd
+    gdb_test "" "hook-stop1\r\n.*\r\ncmd1\r\nUndefined command: \"errorcommandxy\"\\.  Try \"help\"\\." "cmd1 error"
+
+    gdb_test {echo idle\n} "\r\nidle" "no cmd2"
+}
+
 proc redefine_hook_test {} {
     global gdb_prompt
 
@@ -704,18 +778,17 @@ proc redefine_backtrace_test {} {
     global gdb_prompt
 
     gdb_test_multiple "define backtrace" "define backtrace" {
-	-re "Really redefine built-in.*$" {
-	    send_gdb "y\n"
-	    exp_continue
-	}
-
-	-re "End with"  {
-	    pass "define backtrace in redefine_backtrace_test"
-	}
-        default {
-	    fail "(timeout or eof) define backtrace in redefine_backtrace_test"
+	-re "Really redefine built-in command \"backtrace\"\\? \\(y or n\\) $"  {
+	    pass "define backtrace"
 	}
     }
+
+    gdb_test_multiple "y" "expect response to define backtrace" {
+	-re "End with a line saying just \"end\"\\.\r\n>$"  {
+	    pass "expect response to define backtrace"
+	}
+    }
+
     gdb_test "echo hibob\\n\nend" \
 	    "" \
 	    "enter commands in redefine_backtrace_test"
@@ -747,6 +820,7 @@ stray_arg0_test
 source_file_with_indented_comment
 recursive_source_test
 if_commands_test
+error_clears_commands_left
 redefine_hook_test
 # This one should come last, as it redefines "backtrace".
 redefine_backtrace_test

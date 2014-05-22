@@ -311,10 +311,10 @@ s_elseif (int arg)
       as_bad (_("\".elseif\" after \".else\""));
       as_bad_where (current_cframe->else_file_line.file,
 		    current_cframe->else_file_line.line,
-		    _("here is the previous \"else\""));
+		    _("here is the previous \".else\""));
       as_bad_where (current_cframe->if_file_line.file,
 		    current_cframe->if_file_line.line,
-		    _("here is the previous \"if\""));
+		    _("here is the previous \".if\""));
     }
   else
     {
@@ -414,13 +414,13 @@ s_else (int arg ATTRIBUTE_UNUSED)
     }
   else if (current_cframe->else_seen)
     {
-      as_bad (_("duplicate \"else\""));
+      as_bad (_("duplicate \".else\""));
       as_bad_where (current_cframe->else_file_line.file,
 		    current_cframe->else_file_line.line,
-		    _("here is the previous \"else\""));
+		    _("here is the previous \".else\""));
       as_bad_where (current_cframe->if_file_line.file,
 		    current_cframe->if_file_line.line,
-		    _("here is the previous \"if\""));
+		    _("here is the previous \".if\""));
     }
   else
     {

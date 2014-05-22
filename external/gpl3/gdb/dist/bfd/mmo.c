@@ -1,5 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
@@ -363,7 +363,7 @@ static void mmo_find_sec_w_addr (bfd *, asection *, void *);
 static void mmo_find_sec_w_addr_grow (bfd *, asection *, void *);
 static asection *mmo_make_section (bfd *, const char *);
 static void mmo_get_symbol_info (bfd *, asymbol *, symbol_info *);
-static void mmo_print_symbol (bfd *, void *, asymbol *, 
+static void mmo_print_symbol (bfd *, void *, asymbol *,
 			      bfd_print_symbol_type);
 static void mmo_init (void);
 static bfd_boolean mmo_mkobject (bfd *);
@@ -1536,6 +1536,7 @@ mmo_scan (bfd *abfd)
   long stab_loc = -1;
   char *file_names[256];
 
+  abfd->symcount = 0;
   memset (file_names, 0, sizeof (file_names));
 
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
@@ -3190,6 +3191,7 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define mmo_bfd_gc_sections bfd_generic_gc_sections
+#define mmo_bfd_lookup_section_flags bfd_generic_lookup_section_flags
 #define mmo_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define mmo_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define mmo_bfd_link_add_symbols _bfd_generic_link_add_symbols
@@ -3238,6 +3240,7 @@ const bfd_target bfd_mmo_vec =
   0,				/* leading underscore */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* data */

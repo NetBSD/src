@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.4 2012/10/30 18:55:47 yamt Exp $
+#	$NetBSD: Makefile,v 1.15.2.5 2014/05/22 16:13:21 yamt Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -20,7 +20,6 @@ CLANG_LIBS+= \
 	clangFrontendTool \
 	clangFrontend \
 	clangARCMigrate \
-	clangEdit \
 	clangStaticAnalyzerFrontend \
 	clangStaticAnalyzerCheckers \
 	clangStaticAnalyzerCore \
@@ -29,6 +28,7 @@ CLANG_LIBS+= \
 	clangCodeGen \
 	clangParse \
 	clangSema \
+	clangEdit \
 	clangAnalysis \
 	clangRewriteFrontend \
 	clangRewriteCore \
@@ -37,10 +37,18 @@ CLANG_LIBS+= \
 	clangBasic
 
 LLVM_LIBS+= \
+	ObjCARC \
 	ipo \
+	IRReader \
 	AsmParser \
 	BitReader \
 	BitWriter \
+	AArch64CodeGen \
+	AArch64TargetInfo \
+	AArch64MCTargetDesc \
+	AArch64AsmParser \
+	AArch64AsmPrinter \
+	AArch64Utils \
 	ARMCodeGen \
 	ARMTargetInfo \
 	ARMMCTargetDesc \
@@ -48,22 +56,26 @@ LLVM_LIBS+= \
 	ARMAsmPrinter \
 	MipsCodeGen \
 	MipsTargetInfo \
-	MipsMCTargetDesc \
 	MipsAsmPrinter \
 	MipsAsmParser \
+	MipsMCTargetDesc \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
+	PowerPCAsmParser \
 	PowerPCAsmPrinter \
 	SparcCodeGen \
 	SparcTargetInfo \
 	SparcMCTargetDesc \
+	SparcAsmParser \
+	SparcAsmPrinter \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
 	X86Utils \
 	X86AsmParser \
 	X86AsmPrinter \
+	Object \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
@@ -79,7 +91,8 @@ LLVM_LIBS+= \
 	Linker \
 	TransformsUtils \
 	ipa \
-	Core \
+	IR \
+	Option \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

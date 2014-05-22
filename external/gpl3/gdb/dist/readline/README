@@ -1,7 +1,7 @@
 Introduction
 ============
 
-This is the Gnu Readline library, version 5.1.
+This is the Gnu Readline library, version 6.2.
 
 The Readline library provides a set of functions for use by applications
 that allow users to edit command lines as they are typed in.  Both
@@ -16,8 +16,9 @@ may be used without Readline in applications which desire its
 capabilities.
 
 The Readline library is free software, distributed under the terms of
-the [GNU] General Public License, version 2.  For more information, see
-the file COPYING.
+the [GNU] General Public License as published by the Free Software
+Foundation, version 3 of the License.  For more information, see the
+file COPYING.
 
 To build the library, try typing `./configure', then `make'.  The
 configuration process is automated, so no further intervention should
@@ -183,4 +184,4 @@ list (mirrored to the Usenet newsgroup gnu.bash.bug) often contains
 Readline bug reports and fixes. 
 
 Chet Ramey
-chet@po.cwru.edu
+chet.ramey@case.edu

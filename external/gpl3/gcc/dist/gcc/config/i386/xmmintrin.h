@@ -1,5 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+/* Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -1225,7 +1224,7 @@ _mm_sfence (void)
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_pause (void)
 {
-  __asm__ __volatile__ ("rep; nop" : : );
+  __builtin_ia32_pause ();
 }
 
 /* Transpose the 4x4 matrix composed of row[0-3].  */

@@ -1,6 +1,6 @@
 # Test DEFINED in a linker script.
 # By Ian Lance Taylor, Cygnus Support.
-#   Copyright 2001, 2003. 2005, 2006, 2007
+#   Copyright 2001, 2003, 2005, 2006, 2007, 2010
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -66,4 +66,8 @@ if ![ld_simple_link $ld tmpdir/def "$LDFLAGS -T $srcdir/$subdir/defined.t tmpdir
 set prms_id 0
 run_dump_test "defined2"
 run_dump_test "defined3"
+run_dump_test "defined4"
+if ![is_aout_format] {
+    run_dump_test "defined5"
+}
 set LDFLAGS "$saved_LDFLAGS"

@@ -53,9 +53,38 @@ if {![istarget mips*-*-*] || ![is_elf_format]} {
     return
 }
 
-set has_newabi [expr [istarget *-*-irix6*] || [istarget mips64*-*-linux*]]
+set has_newabi [expr [istarget *-*-irix6*] \
+		     || [istarget mips*-*-linux*] \
+		     || [istarget mips*-sde-elf*]]
 set linux_gnu [expr [istarget mips*-*-linux*]]
 set embedded_elf [expr [istarget mips*-*-elf]]
+
+# Set defaults.
+set abi_asflags(o32) ""
+set abi_asflags(n32) "-march=from-abi -n32 -EB"
+set abi_asflags(n64) "-march=from-abi -64 -EB"
+set abi_ldflags(o32) ""
+set abi_ldflags(n32) -melf32bmipn32
+set abi_ldflags(n64) -melf64bmip
+
+# Override as needed.
+if { [istarget *-*-irix6*] } {
+    set abi_asflags(o32) "-32 -EB"
+    set abi_ldflags(o32) -melf32bsmip
+} elseif { [istarget mips64*-linux*] } {
+    set abi_asflags(o32) "-32 -EB"
+    set abi_ldflags(o32) -melf32btsmip
+} elseif { [istarget mips64*-*freebsd*] } {
+    set abi_asflags(o32) "-32 -EB"
+    set abi_ldflags(o32) -melf32btsmip_fbsd
+}
+if { [istarget mips*-*-linux*] || [istarget mips*-sde-elf*] } {
+    set abi_ldflags(n32) -melf32btsmipn32
+    set abi_ldflags(n64) -melf64btsmip
+} elseif { [istarget mips64*-*freebsd*] } {
+    set abi_ldflags(n32) -melf32btsmipn32_fbsd
+    set abi_ldflags(n64) -melf64btsmip_fbsd
+}
 
 if { $linux_gnu } {
     run_ld_link_tests [list \
@@ -106,19 +135,36 @@ if { $linux_gnu } {
 	      "mips16-pic-4"]]
 }
 
-if { [istarget mips64*-linux-gnu] } {
-    set o32_as_flags "-32 -EB"
-    set o32_ld_flags "-melf32btsmip"
-} else {
-    set o32_as_flags ""
-    set o32_ld_flags ""
-}
-
 # Check MIPS16 markings being passed through link.
 run_dump_test "mips16-1"
 
 # MIPS branch offset final link checking.
 run_dump_test "branch-misc-1"
+
+# Jalx test
+run_dump_test "jalx-1"
+
+if { $linux_gnu } {
+    run_ld_link_tests [list \
+	[list "Dummy shared library for JALX test 2" \
+	      "-shared -nostdlib -melf32btsmip" \
+	      "-G0 -EB -mmicromips -no-mdebug -mabi=32 -march=mips32r2 -KPIC" \
+	      { jalx-2-printf.s } \
+	      {} \
+	      "libjalx-2.so"] \
+	[list "Dummy external function for JALX test 2" \
+	      "-r -melf32btsmip" \
+	      "-G0 -EB -no-mdebug -mabi=32 -march=mips32r2 -mno-shared -call_nonpic" \
+	      { jalx-2-ex.s } \
+	      {} \
+	      "jalx-2-ex.o.r"] \
+	[list "MIPS JALX test 2" \
+	      "-nostdlib -T jalx-2.ld tmpdir/libjalx-2.so tmpdir/jalx-2-ex.o.r -melf32btsmip" \
+	      "-G0 -EB -mmicromips -no-mdebug -mabi=32 -march=mips32r2 -mno-shared -call_nonpic" \
+	      { jalx-2-main.s } \
+	      { { objdump -d jalx-2.dd } } \
+	      "jalx-2"]]
+}
 
 # Test multi-got link.  We only do this on GNU/Linux because it requires
 # the "traditional" emulations.
@@ -139,14 +185,28 @@ if { $linux_gnu } {
 }
 
 if $has_newabi {
-    run_dump_test "elf-rel-got-n32"
-    run_dump_test "elf-rel-xgot-n32"
-    if { $linux_gnu } {
-	run_dump_test "elf-rel-got-n64-linux"
-	run_dump_test "elf-rel-xgot-n64-linux"
+    if { $embedded_elf } {
+	run_dump_test "elf-rel-got-n32-embed" \
+					[list [list ld $abi_ldflags(n32)]]
+	run_dump_test "elf-rel-xgot-n32-embed" \
+					[list [list ld $abi_ldflags(n32)]]
     } else {
-	run_dump_test "elf-rel-got-n64"
-	run_dump_test "elf-rel-xgot-n64"
+	run_dump_test "elf-rel-got-n32" [list [list ld $abi_ldflags(n32)]]
+	run_dump_test "elf-rel-xgot-n32" [list [list ld $abi_ldflags(n32)]]
+    }
+    if { $linux_gnu } {
+	run_dump_test "elf-rel-got-n64-linux" \
+					[list [list ld $abi_ldflags(n64)]]
+	run_dump_test "elf-rel-xgot-n64-linux" \
+					[list [list ld $abi_ldflags(n64)]]
+    } elseif { $embedded_elf } {
+	run_dump_test "elf-rel-got-n64-embed" \
+					[list [list ld $abi_ldflags(n64)]]
+	run_dump_test "elf-rel-xgot-n64-embed" \
+					[list [list ld $abi_ldflags(n64)]]
+    } else {
+	run_dump_test "elf-rel-got-n64" [list [list ld $abi_ldflags(n64)]]
+	run_dump_test "elf-rel-xgot-n64" [list [list ld $abi_ldflags(n64)]]
     }
 
     run_dump_test "relax-jalr-n32"
@@ -157,8 +217,10 @@ if $has_newabi {
 
 if { $linux_gnu } {
     run_dump_test "rel32-o32"
-    run_dump_test "rel32-n32"
-    run_dump_test "rel64"
+    if { $has_newabi } {
+	run_dump_test "rel32-n32"
+	run_dump_test "rel64"
+    }
     # The first test checks that a mixed PIC/non-PIC relocatable link
     # will not introduce any stubs itself, but will flag PIC functions
     # for the final link.
@@ -266,6 +328,44 @@ if { $linux_gnu } {
 		      "readelf --symbols pic-and-nonpic-6-${abi}.nd" \
 		      "readelf -d pic-and-nonpic-6-${abi}.ad"] \
 		 "pic-and-nonpic-6-${abi}"]]
+
+	# This checks whether our linker scripts get the scope of _gp right,
+	# and must therefore use default scripts.  If they don't, then -- in
+	# addition to dumps failing to match -- the final link fails with:
+	#
+	#  ld: gp-hidden.o: undefined reference to symbol '_gp'
+	#  ld: note: '_gp' is defined in DSO ./tmpdir/gp-hidden-lib-${abi}.so
+	#  so try adding it to the linker command line
+	#
+	set suff64 [string map {o32 "" n32 "" n64 -64} $abi]
+	run_ld_link_tests [list \
+	    [list \
+		"_gp scope test ($abi shared library)" \
+		"$abi_ldflags($abi) -shared" \
+		"$abi_asflags($abi) -KPIC" \
+		{ gp-hidden-lib.s } \
+		[list \
+		    "readelf --relocs gp-hidden-lib${suff64}.rd" \
+		    "readelf --syms gp-hidden.sd"] \
+		"gp-hidden-lib-${abi}.so"] \
+	    [list \
+		"_gp scope test ($abi versioned library)" \
+		"$abi_ldflags($abi) -shared -version-script gp-hidden-ver.ver tmpdir/gp-hidden-lib-${abi}.so" \
+		"$abi_asflags($abi) -KPIC" \
+		{ gp-hidden-ver.s } \
+		[list \
+		    "readelf --relocs gp-hidden-ver${suff64}.rd" \
+		    "readelf --syms gp-hidden.sd"] \
+		"gp-hidden-ver-${abi}.so"] \
+	    [list \
+		"_gp scope test ($abi executable)" \
+		"$abi_ldflags($abi) -e 0 -rpath-link . tmpdir/gp-hidden-ver-${abi}.so" \
+		"$abi_asflags($abi) -call_nonpic" \
+		{ gp-hidden.s } \
+		[list \
+		    "readelf --relocs gp-hidden${suff64}.rd" \
+		    "readelf --syms gp-hidden.sd"] \
+		"gp-hidden-${abi}"]]
     }
 }
 
@@ -279,11 +379,8 @@ if $embedded_elf {
     run_dump_test "reloc-1-rel"
 }
 if $has_newabi {
-    run_dump_test "reloc-1-n32"
-    if $linux_gnu {
-	# Uses a linux-specific ld -m switch
-	run_dump_test "reloc-1-n64"
-    }
+    run_dump_test "reloc-1-n32" [list [list ld $abi_ldflags(n32)]]
+    run_dump_test "reloc-1-n64" [list [list ld $abi_ldflags(n64)]]
 }
 run_dump_test "reloc-2"
 run_dump_test "reloc-merge-lo16"
@@ -294,16 +391,21 @@ if {$has_newabi} {
 run_dump_test "reloc-4"
 run_dump_test "reloc-5"
 if { $has_newabi } {
-    run_ld_link_tests {
-	{"reloc test 6a" "-shared"
-	 "-n32" "reloc-6a.s"
-	 {}
-	 "reloc-6a.so"}
-	{"reloc test 6b" "tmpdir/reloc-6a.so"
-	 "-n32" "reloc-6b.s"
-	 {}
-	 "reloc-6b"}
-    }
+    run_ld_link_tests [list \
+	[list \
+	    "reloc test 6a" \
+	    "-shared $abi_ldflags(n32)" \
+	    "$abi_asflags(n32)" \
+	    "reloc-6a.s" \
+	    {} \
+	    "reloc-6a.so"] \
+	[list \
+	    "reloc test 6b" \
+	    "$abi_ldflags(n32) tmpdir/reloc-6a.so" \
+	    "$abi_asflags(n32)" \
+	    "reloc-6b.s" \
+	    {} \
+	    "reloc-6b"]]
 }
 
 if {$has_newabi && $linux_gnu} {
@@ -331,7 +433,7 @@ if {$linux_gnu} {
 run_dump_test "jaloverflow"
 run_dump_test "jaloverflow-2"
 if {$has_newabi} {
-    run_dump_test "jalbal"
+    run_dump_test "jalbal" [list [list ld $abi_ldflags(n32)]]
 }
 
 run_dump_test "mode-change-error-1"
@@ -342,7 +444,9 @@ if {$has_newabi} {
 }
 
 if { $linux_gnu } {
-    run_dump_test "textrel-1"
+    if { $has_newabi } {
+	run_dump_test "textrel-1"
+    }
     run_dump_test "got-page-1"
     if $has_newabi {
 	run_dump_test "got-page-2"
@@ -370,9 +474,8 @@ if {[istarget mips*-*-linux*]} {
      #
      #     the null symbol entry
      #     the .MIPS.stubs section symbol
-     #     _gp
      #     _GLOBAL_OFFSET_TABLE_
-     set base_syms 4
+     set base_syms 3
      foreach dynsym { 7fff 8000 fff0 10000 2fe80 } {
 	 run_ld_link_tests \
 	     [list [list \
@@ -471,8 +574,8 @@ if {[istarget mips*-*-linux*]} {
 
 set mips16_call_global_test [list \
     [list "Global calls from mips16" \
-	 "$o32_ld_flags" \
-	 "$o32_as_flags -mips32r2" \
+	 "$abi_ldflags(o32) -T no-shared-1.ld" \
+	 "$abi_asflags(o32) -mips32r2" \
 	 {mips16-call-global-1.s mips16-call-global-2.s mips16-call-global-3.s} \
 	 {{objdump -dr mips16-call-global.d}} \
 	 "mips16-call-global"]]
@@ -481,8 +584,8 @@ run_ld_link_tests $mips16_call_global_test
 
 set mips16_intermix_test [list \
     [list "Intermixing mips32 and mips16 functions" \
-	 "$o32_ld_flags" \
-	 "$o32_as_flags -mips32r2" \
+	 "$abi_ldflags(o32)" \
+	 "$abi_asflags(o32) -mips32r2" \
 	 {mips16-intermix-1.s mips16-intermix-2.s} \
 	 {{objdump -t mips16-intermix.d}} \
 	 "mips16-intermix"]]
@@ -541,4 +644,28 @@ run_dump_test "undefined"
 if { $linux_gnu } {
     run_dump_test "jr-to-b-1"
     run_dump_test "jr-to-b-2"
+}
+
+# MIPS16 and microMIPS interlinking test.
+run_dump_test "mips16-and-micromips"
+
+# Export class call relocation tests.
+set abis [concat o32 [expr {$has_newabi ? "n32 n64" : ""}]]
+foreach { abi } $abis {
+    set loadaddr [string map \
+	{o32 0x12340000 n32 0x12340000 n64 0x123456789abc0000} $abi]
+    set suff [subst \
+	[expr { [istarget *-*-irix*] \
+		? [string map {o32 o32-irix n32 n32 n64 n64} $abi] \
+		: $abi }]]
+    run_ld_link_tests [list \
+	[list \
+	    "MIPS export class call relocation test ($abi)" \
+	    "$abi_ldflags($abi) -shared -Ttext $loadaddr -T export-class-call16.ld" \
+	    "$abi_asflags($abi) -mips3 -KPIC" \
+	    [list export-class-call16-${abi}.s export-class-call16-def.s] \
+	    [list \
+		"objdump -d export-class-call16-${suff}.dd" \
+		"readelf -A export-class-call16-${abi}.gd"] \
+	    "export-class-call16-${abi}.so"]]
 }

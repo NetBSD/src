@@ -1,6 +1,5 @@
 /* Mudflap: narrow-pointer bounds-checking by tree rewriting.
-   Copyright (C) 2002, 2003, 2004, 2005, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Frank Ch. Eigler <fche@redhat.com>
    and Graydon Hoare <graydon@redhat.com>
 
@@ -44,6 +43,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define _ALL_SOURCE
 #define _LARGE_FILE_API
 #define _XOPEN_SOURCE_EXTENDED 1
+#define _REENTRANT
 
 #include <string.h>
 #include <stdio.h>

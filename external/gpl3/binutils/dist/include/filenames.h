@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 #ifndef FILENAMES_H
 #define FILENAMES_H
 
+#include "hashtab.h" /* for hashval_t */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,10 +36,18 @@ extern "C" {
 #  ifndef HAVE_DOS_BASED_FILE_SYSTEM
 #    define HAVE_DOS_BASED_FILE_SYSTEM 1
 #  endif
+#  ifndef HAVE_CASE_INSENSITIVE_FILE_SYSTEM
+#    define HAVE_CASE_INSENSITIVE_FILE_SYSTEM 1
+#  endif
 #  define HAS_DRIVE_SPEC(f) HAS_DOS_DRIVE_SPEC (f)
 #  define IS_DIR_SEPARATOR(c) IS_DOS_DIR_SEPARATOR (c)
 #  define IS_ABSOLUTE_PATH(f) IS_DOS_ABSOLUTE_PATH (f)
 #else /* not DOSish */
+#  if defined(__APPLE__)
+#    ifndef HAVE_CASE_INSENSITIVE_FILE_SYSTEM
+#      define HAVE_CASE_INSENSITIVE_FILE_SYSTEM 1
+#    endif
+#  endif /* __APPLE__ */
 #  define HAS_DRIVE_SPEC(f) (0)
 #  define IS_DIR_SEPARATOR(c) IS_UNIX_DIR_SEPARATOR (c)
 #  define IS_ABSOLUTE_PATH(f) IS_UNIX_ABSOLUTE_PATH (f)
@@ -72,6 +82,13 @@ extern "C" {
 
 extern int filename_cmp (const char *s1, const char *s2);
 #define FILENAME_CMP(s1, s2)	filename_cmp(s1, s2)
+
+extern int filename_ncmp (const char *s1, const char *s2,
+			  size_t n);
+
+extern hashval_t filename_hash (const void *s);
+
+extern int filename_eq (const void *s1, const void *s2);
 
 #ifdef __cplusplus
 }

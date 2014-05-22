@@ -1,6 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 2001, 2002, 2003, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -56,21 +55,21 @@ along with GCC; see the file COPYING3.  If not see
 #if TARGET_CPU_DEFAULT == 32
 # define CRIS_CPP_SUBTARGET_SPEC \
   "%{pthread:-D_REENTRANT}\
-   %{!march=*:%{!cpu=*:-D__arch_v32 -D__CRIS_arch_version=32}}"
+   %{!march=*:%{!mcpu=*:-D__arch_v32 -D__CRIS_arch_version=32}}"
 #else
 # define CRIS_CPP_SUBTARGET_SPEC \
   "%{pthread:-D_REENTRANT}\
-   %{!march=*:%{!cpu=*:-D__arch_v10 -D__CRIS_arch_version=10}}"
+   %{!march=*:%{!mcpu=*:-D__arch_v10 -D__CRIS_arch_version=10}}"
 #endif
 
 #undef CRIS_CC1_SUBTARGET_SPEC
 #if TARGET_CPU_DEFAULT == 32
 # define CRIS_CC1_SUBTARGET_SPEC \
- "%{!march=*:%{!cpu=*:-march=v32}}"
+ "%{!march=*:%{!mcpu=*:-march=v32}}"
 #define CRIS_SUBTARGET_DEFAULT_ARCH MASK_AVOID_GOTPLT
 #else
 # define CRIS_CC1_SUBTARGET_SPEC \
- "%{!march=*:%{!cpu=*:-march=v10}}"
+ "%{!march=*:%{!mcpu=*:-march=v10}}"
 #define CRIS_SUBTARGET_DEFAULT_ARCH 0
 #endif
 
@@ -78,13 +77,13 @@ along with GCC; see the file COPYING3.  If not see
 #if TARGET_CPU_DEFAULT == 32
 # define CRIS_ASM_SUBTARGET_SPEC \
  "--em=criself \
-  %{!march=*:%{!cpu=*:--march=v32}} \
+  %{!march=*:%{!mcpu=*:--march=v32}} \
   %{!fleading-underscore:--no-underscore}\
   %{fPIC|fpic|fPIE|fpie: --pic}"
 #else
 # define CRIS_ASM_SUBTARGET_SPEC \
  "--em=criself \
-  %{!march=*:%{!cpu=*:--march=v10}} \
+  %{!march=*:%{!mcpu=*:--march=v10}} \
   %{!fleading-underscore:--no-underscore}\
   %{fPIC|fpic|fPIE|fpie: --pic}"
 #endif
@@ -105,18 +104,14 @@ along with GCC; see the file COPYING3.  If not see
 
 #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
 
-/* We need an -rpath-link to ld.so.1, and presumably to each directory
-   specified with -B.  */
 #undef CRIS_LINK_SUBTARGET_SPEC
 #define CRIS_LINK_SUBTARGET_SPEC \
  "-mcrislinux\
-  %{B*:-rpath-link %*}\
-  %{!nostdlib:-rpath-link ../sys-include/asm/../../lib%s}\
   %{shared} %{static}\
-  %{symbolic:-Bdynamic} %{shlib:-Bdynamic} %{static:-Bstatic}\
+  %{symbolic:-Bdynamic} %{static:-Bstatic}\
   %{!shared:%{!static:\
               %{rdynamic:-export-dynamic}\
-              %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}}}\
+              -dynamic-linker " GNU_USER_DYNAMIC_LINKER "}}\
   %{!r:%{O2|O3: --gc-sections}}"
 
 
@@ -127,12 +122,19 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-      LINUX_TARGET_OS_CPP_BUILTINS();		\
+      GNU_USER_TARGET_OS_CPP_BUILTINS();	\
       if (flag_leading_underscore <= 0)		\
 	builtin_define ("__NO_UNDERSCORES__");	\
     }						\
   while (0)
+
+/* Node: Type Layout */
      
+#undef SIZE_TYPE
+#define SIZE_TYPE "unsigned int"
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE "int"
 
 /* Node: Sections */
 

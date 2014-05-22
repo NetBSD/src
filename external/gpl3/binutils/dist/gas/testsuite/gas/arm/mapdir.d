@@ -2,7 +2,7 @@
 #objdump: --syms --special-syms -d
 #name: ARM Mapping Symbols for .arm/.thumb
 # This test is only valid on EABI based ports.
-#target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf
+#target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf *-*-nacl*
 #source: mapdir.s
 
 

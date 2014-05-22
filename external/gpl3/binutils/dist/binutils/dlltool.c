@@ -1,6 +1,6 @@
 /* dlltool.c -- tool to generate stuff for PE style DLLs
    Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   2005, 2006, 2007, 2008, 2009, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -232,15 +232,6 @@
 
    .idata$7 = dll name (eg: "kernel32.dll"). (.idata$6 for ppc).  */
 
-/* AIX requires this to be the first thing in the file.  */
-#ifndef __GNUC__
-# ifdef _AIX
- #pragma alloca
-#endif
-#endif
-
-#define show_allnames 0
-
 #include "sysdep.h"
 #include "bfd.h"
 #include "libiberty.h"
@@ -252,8 +243,6 @@
 #include "safe-ctype.h"
 
 #include <time.h>
-#include <sys/stat.h>
-#include <stdarg.h>
 #include <assert.h>
 
 #ifdef DLLTOOL_ARM
@@ -318,6 +307,8 @@ static void mcore_elf_gen_out_file (void);
 #endif
 #endif /* defined (_WIN32) && ! defined (__CYGWIN32__) */
 #endif /* ! HAVE_SYS_WAIT_H */
+
+#define show_allnames 0
 
 /* ifunc and ihead data structures: ttk@cygnus.com 1997
 
@@ -399,6 +390,7 @@ typedef struct identify_data_t
 static char *head_label;
 static char *imp_name_lab;
 static char *dll_name;
+static int dll_name_set_by_exp_name;
 static int add_indirect = 0;
 static int add_underscore = 0;
 static int add_stdcall_underscore = 0;
@@ -523,6 +515,14 @@ static const unsigned char i386_dljtab[] =
   0xE9, 0x00, 0x00, 0x00, 0x00        /* jmp __tailMerge__dllname        */
 };
 
+static const unsigned char i386_x64_dljtab[] =
+{
+  0xFF, 0x25, 0x00, 0x00, 0x00, 0x00, /* jmp __imp__function             */
+  0x48, 0x8d, 0x05,		      /* leaq rax, (__imp__function) */
+        0x00, 0x00, 0x00, 0x00,
+  0xE9, 0x00, 0x00, 0x00, 0x00        /* jmp __tailMerge__dllname        */
+};
+
 static const unsigned char arm_jtab[] =
 {
   0x00, 0xc0, 0x9f, 0xe5,	/* ldr  ip, [pc] */
@@ -598,6 +598,22 @@ static const char i386_trampoline[] =
   "\tpopl %%edx\n"
   "\tpopl %%ecx\n"
   "\tjmp *%%eax\n";
+
+static const char i386_x64_trampoline[] =  
+  "\tpushq %%rcx\n"
+  "\tpushq %%rdx\n"
+  "\tpushq %%r8\n"
+  "\tpushq %%r9\n"
+  "\tsubq  $40, %%rsp\n"
+  "\tmovq  %%rax, %%rdx\n"
+  "\tleaq  __DELAY_IMPORT_DESCRIPTOR_%s(%%rip), %%rcx\n"
+  "\tcall __delayLoadHelper2\n"
+  "\taddq  $40, %%rsp\n"
+  "\tpopq %%r9\n"
+  "\tpopq %%r8\n"
+  "\tpopq %%rdx\n"
+  "\tpopq %%rcx\n"
+  "\tjmp *%%rax\n";
 
 struct mac
 {
@@ -743,7 +759,7 @@ mtable[] =
     "jmp *", ".global", ".space", ".align\t2",".align\t4", "",
     "pe-x86-64",bfd_arch_i386,
     i386_jtab, sizeof (i386_jtab), 2,
-    i386_dljtab, sizeof (i386_dljtab), 2, 7, 12, i386_trampoline
+    i386_x64_dljtab, sizeof (i386_x64_dljtab), 2, 9, 14, i386_x64_trampoline
   }
   ,
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -1089,6 +1105,11 @@ def_name (const char *name, int base)
   if (d_is_dll)
     non_fatal (_("Can't have LIBRARY and NAME"));
 
+  if (dll_name_set_by_exp_name && name && *name != 0)
+    {
+      dll_name = NULL;
+      dll_name_set_by_exp_name = 0;
+    }
   /* If --dllname not provided, use the one in the DEF file.
      FIXME: Is this appropriate for executables?  */
   if (!dll_name)
@@ -1104,6 +1125,12 @@ def_library (const char *name, int base)
 
   if (d_is_exe)
     non_fatal (_("Can't have LIBRARY and NAME"));
+
+  if (dll_name_set_by_exp_name && name && *name != 0)
+    {
+      dll_name = NULL;
+      dll_name_set_by_exp_name = 0;
+    }
 
   /* If --dllname not provided, use the one in the DEF file.  */
   if (!dll_name)
@@ -1251,7 +1278,7 @@ def_import (const char *app_name, const char *module, const char *dllext,
 void
 def_version (int major, int minor)
 {
-  printf ("VERSION %d.%d\n", major, minor);
+  printf (_("VERSION %d.%d\n"), major, minor);
 }
 
 void
@@ -1299,7 +1326,7 @@ run (const char *what, char *args)
   char *errmsg_fmt, *errmsg_arg;
   char *temp_base = choose_temp_base ();
 
-  inform ("run: %s %s", what, args);
+  inform (_("run: %s %s"), what, args);
 
   /* Count the args */
   i = 0;
@@ -2503,7 +2530,7 @@ make_one_lib_file (export_type *exp, int i, int delay)
   iname_lab = bfd_make_empty_symbol (abfd);
 
   iname_lab->name = head_label;
-  iname_lab->section = (asection *) &bfd_und_section;
+  iname_lab->section = bfd_und_section_ptr;
   iname_lab->flags = 0;
   iname_lab->value = 0;
 
@@ -2536,7 +2563,7 @@ make_one_lib_file (export_type *exp, int i, int delay)
 
     toc_symbol = bfd_make_empty_symbol (abfd);
     toc_symbol->name = make_label (".", "toc");
-    toc_symbol->section = (asection *)&bfd_und_section;
+    toc_symbol->section = bfd_und_section_ptr;
     toc_symbol->flags = BSF_GLOBAL;
     toc_symbol->value = 0;
 
@@ -2606,9 +2633,14 @@ make_one_lib_file (export_type *exp, int i, int delay)
 
 	      if (delay)
 	        {
-	          rel2->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+		  if (machine == MX86)
+		   rel2->howto = bfd_reloc_type_lookup (abfd,
+							BFD_RELOC_32_PCREL);
+	          else
+	            rel2->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
 	          rel2->sym_ptr_ptr = rel->sym_ptr_ptr;
-	          rel3->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32_PCREL);
+	          rel3->howto = bfd_reloc_type_lookup (abfd,
+						       BFD_RELOC_32_PCREL);
 	          rel3->sym_ptr_ptr = iname_lab_pp;
 	        }
 
@@ -2620,10 +2652,11 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	case IDATA5:
 	  if (delay)
 	    {
-	      si->data = xmalloc (4);
-	      si->size = 4;
+	      si->size = create_for_pep ? 8 : 4;
+	      si->data = xmalloc (si->size);
 	      sec->reloc_count = 1;
 	      memset (si->data, 0, si->size);
+	      /* Point after jmp [__imp_...] instruction.  */
 	      si->data[0] = 6;
 	      rel = xmalloc (sizeof (arelent));
 	      rpp = xmalloc (sizeof (arelent *) * 2);
@@ -2631,7 +2664,10 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	      rpp[1] = 0;
 	      rel->address = 0;
 	      rel->addend = 0;
-	      rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+	      if (create_for_pep)
+	        rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_64);
+	      else
+	        rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
 	      rel->sym_ptr_ptr = secdata[TEXT].sympp;
 	      sec->orelocation = rpp;
 	      break;
@@ -3002,6 +3038,8 @@ make_delay_head (void)
   fprintf (f, "\n.section .data\n");
   fprintf (f, "__DLL_HANDLE_%s:\n", imp_name_lab);
   fprintf (f, "\t%s\t0\t%s Handle\n", ASM_LONG, ASM_C);
+  if (create_for_pep)
+    fprintf (f, "\t%s\t0\n", ASM_LONG);
   fprintf (f, "\n");
 
   fprintf (f, "%sStuff for compatibility\n", ASM_C);
@@ -3010,11 +3048,10 @@ make_delay_head (void)
     {
       fprintf (f, "\t.section\t.idata$5\n");
       /* NULL terminating list.  */
-#ifdef DLLTOOL_MX86_64
-      fprintf (f,"\t%s\t0\n\t%s\t0\n", ASM_LONG, ASM_LONG);
-#else
-      fprintf (f,"\t%s\t0\n", ASM_LONG);
-#endif
+      if (create_for_pep)
+        fprintf (f,"\t%s\t0\n\t%s\t0\n", ASM_LONG, ASM_LONG);
+      else
+        fprintf (f,"\t%s\t0\n", ASM_LONG);
       fprintf (f, "__IAT_%s:\n", imp_name_lab);
     }
 
@@ -3022,6 +3059,8 @@ make_delay_head (void)
     {
       fprintf (f, "\t.section\t.idata$4\n");
       fprintf (f, "\t%s\t0\n", ASM_LONG);
+      if (create_for_pep)
+        fprintf (f, "\t%s\t0\n", ASM_LONG);
       fprintf (f, "\t.section\t.idata$4\n");
       fprintf (f, "__INT_%s:\n", imp_name_lab);
     }
@@ -4177,6 +4216,7 @@ main (int ac, char **av)
       dll_name = xmalloc (len);
       strcpy (dll_name, exp_basename);
       strcat (dll_name, ".dll");
+      dll_name_set_by_exp_name = 1;
     }
 
   if (as_name == NULL)

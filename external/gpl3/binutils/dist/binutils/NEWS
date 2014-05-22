@@ -1,7 +1,26 @@
 -*- text -*-
 
-Changes in 2.21:
+Changes in 2.23:
 
+* Add support for the VLE extension to the PowerPC architecture.
+
+* Add support for x64 Windows target of the delayed-load-library.
+
+* Add support for the Renesas RL78 architecture.
+
+Changes in 2.22:
+
+* Add support for displaying the contents of .debug.macro sections.
+
+* Add --preprocessor-arg option to windres to specify additional options
+  passed to preprocessor.
+
+* Add --dwarf-start and --dwarf-end to readelf and objdump.  These are used by
+  the new Emacs mode, see dwarf-mode.el.
+
+* Add support for the Tilera TILEPro and TILE-Gx architectures.
+
+changes in 2.21:
 
 * Add --interleave-width option to objcopy to allowing copying a range of
   bytes from the input to the output with the --interleave option.

@@ -2,14 +2,8 @@
  * WPA Supplicant - IEEE 802.11r - Fast BSS Transition
  * Copyright (c) 2006-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -21,7 +15,6 @@
 #include "common/ieee802_11_common.h"
 #include "wpa.h"
 #include "wpa_i.h"
-#include "wpa_ie.h"
 
 #ifdef CONFIG_IEEE80211R
 
@@ -178,16 +171,16 @@ static u8 * wpa_ft_gen_req_ies(struct wpa_sm *sm, size_t *len,
 	pos = (u8 *) (rsnie + 1);
 
 	/* Group Suite Selector */
-	if (sm->group_cipher == WPA_CIPHER_CCMP)
-		RSN_SELECTOR_PUT(pos, RSN_CIPHER_SUITE_CCMP);
-	else if (sm->group_cipher == WPA_CIPHER_TKIP)
-		RSN_SELECTOR_PUT(pos, RSN_CIPHER_SUITE_TKIP);
-	else {
+	if (sm->group_cipher != WPA_CIPHER_CCMP &&
+	    sm->group_cipher != WPA_CIPHER_GCMP &&
+	    sm->group_cipher != WPA_CIPHER_TKIP) {
 		wpa_printf(MSG_WARNING, "FT: Invalid group cipher (%d)",
 			   sm->group_cipher);
 		os_free(buf);
 		return NULL;
 	}
+	RSN_SELECTOR_PUT(pos, wpa_cipher_to_suite(WPA_PROTO_RSN,
+						  sm->group_cipher));
 	pos += RSN_SELECTOR_LEN;
 
 	/* Pairwise Suite Count */
@@ -195,16 +188,14 @@ static u8 * wpa_ft_gen_req_ies(struct wpa_sm *sm, size_t *len,
 	pos += 2;
 
 	/* Pairwise Suite List */
-	if (sm->pairwise_cipher == WPA_CIPHER_CCMP)
-		RSN_SELECTOR_PUT(pos, RSN_CIPHER_SUITE_CCMP);
-	else if (sm->pairwise_cipher == WPA_CIPHER_TKIP)
-		RSN_SELECTOR_PUT(pos, RSN_CIPHER_SUITE_TKIP);
-	else {
+	if (!wpa_cipher_valid_pairwise(sm->pairwise_cipher)) {
 		wpa_printf(MSG_WARNING, "FT: Invalid pairwise cipher (%d)",
 			   sm->pairwise_cipher);
 		os_free(buf);
 		return NULL;
 	}
+	RSN_SELECTOR_PUT(pos, wpa_cipher_to_suite(WPA_PROTO_RSN,
+						  sm->pairwise_cipher));
 	pos += RSN_SELECTOR_LEN;
 
 	/* Authenticated Key Management Suite Count */
@@ -330,20 +321,14 @@ static int wpa_ft_install_ptk(struct wpa_sm *sm, const u8 *bssid)
 
 	wpa_printf(MSG_DEBUG, "FT: Installing PTK to the driver.");
 
-	switch (sm->pairwise_cipher) {
-	case WPA_CIPHER_CCMP:
-		alg = WPA_ALG_CCMP;
-		keylen = 16;
-		break;
-	case WPA_CIPHER_TKIP:
-		alg = WPA_ALG_TKIP;
-		keylen = 32;
-		break;
-	default:
+	if (!wpa_cipher_valid_pairwise(sm->pairwise_cipher)) {
 		wpa_printf(MSG_WARNING, "FT: Unsupported pairwise cipher %d",
 			   sm->pairwise_cipher);
 		return -1;
 	}
+
+	alg = wpa_cipher_to_alg(sm->pairwise_cipher);
+	keylen = wpa_cipher_key_len(sm->pairwise_cipher);
 
 	if (wpa_sm_set_key(sm, alg, bssid, 0, 1, null_rsc,
 			   sizeof(null_rsc), (u8 *) sm->ptk.tk1, keylen) < 0) {
@@ -490,7 +475,7 @@ int wpa_ft_process_response(struct wpa_sm *sm, const u8 *ies, size_t ies_len,
 		    sm->pmk_r1_name, WPA_PMK_NAME_LEN);
 
 	bssid = target_ap;
-	ptk_len = sm->pairwise_cipher == WPA_CIPHER_CCMP ? 48 : 64;
+	ptk_len = sm->pairwise_cipher != WPA_CIPHER_TKIP ? 48 : 64;
 	wpa_pmk_r1_to_ptk(sm->pmk_r1, sm->snonce, ftie->anonce, sm->own_addr,
 			  bssid, sm->pmk_r1_name,
 			  (u8 *) &sm->ptk, ptk_len, ptk_name);
@@ -578,28 +563,10 @@ static int wpa_ft_process_gtk_subelem(struct wpa_sm *sm, const u8 *gtk_elem,
 		return -1;
 	}
 
-	switch (sm->group_cipher) {
-	case WPA_CIPHER_CCMP:
-		keylen = 16;
-		rsc_len = 6;
-		alg = WPA_ALG_CCMP;
-		break;
-	case WPA_CIPHER_TKIP:
-		keylen = 32;
-		rsc_len = 6;
-		alg = WPA_ALG_TKIP;
-		break;
-	case WPA_CIPHER_WEP104:
-		keylen = 13;
-		rsc_len = 0;
-		alg = WPA_ALG_WEP;
-		break;
-	case WPA_CIPHER_WEP40:
-		keylen = 5;
-		rsc_len = 0;
-		alg = WPA_ALG_WEP;
-		break;
-	default:
+	keylen = wpa_cipher_key_len(sm->group_cipher);
+	rsc_len = wpa_cipher_rsc_len(sm->group_cipher);
+	alg = wpa_cipher_to_alg(sm->group_cipher);
+	if (alg == WPA_ALG_NONE) {
 		wpa_printf(MSG_WARNING, "WPA: Unsupported Group Cipher %d",
 			   sm->group_cipher);
 		return -1;

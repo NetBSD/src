@@ -1,5 +1,5 @@
 /* tc-crx.c -- Assembler code for the CRX CPU core.
-   Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
    Free Software Foundation, Inc.
 
    Contributed by Tomer Levi, NSC, Israel.
@@ -24,6 +24,7 @@
    MA 02110-1301, USA.  */
 
 #include "as.h"
+#include "bfd_stdint.h"
 #include "safe-ctype.h"
 #include "dwarf2dbg.h"
 #include "opcode/crx.h"
@@ -1173,9 +1174,7 @@ getreg_image (reg r)
 static long
 getconstant (long x, int nbits)
 {
-  /* The following expression avoids overflow if
-     'nbits' is the number of bits in 'bfd_vma'.  */
-  return (x & ((((1 << (nbits - 1)) - 1) << 1) | 1));
+  return x & ((((1U << (nbits - 1)) - 1) << 1) | 1);
 }
 
 /* Print a constant value to 'output_opcode':
@@ -1326,17 +1325,11 @@ get_number_of_operands (void)
 static op_err
 check_range (long *num, int bits, int unsigned flags, int update)
 {
-  long min, max;
+  uint32_t max;
   int retval = OP_LEGAL;
   int bin;
-  long upper_64kb = 0xFFFF0000;
-  long value = *num;
-
-  /* For hosts witah longs bigger than 32-bits make sure that the top 
-     bits of a 32-bit negative value read in by the parser are set,
-     so that the correct comparisons are made.  */
-  if (value & 0x80000000)
-    value |= (-1L << 31);
+  uint32_t upper_64kb = 0xffff0000;
+  uint32_t value = *num;
 
   /* Verify operand value is even.  */
   if (flags & OP_EVEN)
@@ -1360,7 +1353,12 @@ check_range (long *num, int bits, int unsigned flags, int update)
 
   if (flags & OP_SHIFT)
     {
+      /* All OP_SHIFT args are also OP_SIGNED, so we want to keep the
+	 sign.  However, right shift of a signed type with a negative
+	 value is implementation defined.  See ISO C 6.5.7.  So we use
+	 an unsigned type and sign extend afterwards.  */
       value >>= 1;
+      value = (value ^ 0x40000000) - 0x40000000;
       if (update)
 	*num = value;
     }
@@ -1382,13 +1380,14 @@ check_range (long *num, int bits, int unsigned flags, int update)
     {
       int is_dispu4 = 0;
 
-      int mul = (instruction->flags & DISPUB4) ? 1 
-		: (instruction->flags & DISPUW4) ? 2
-		: (instruction->flags & DISPUD4) ? 4 : 0;
+      uint32_t mul = (instruction->flags & DISPUB4 ? 1 
+		      : instruction->flags & DISPUW4 ? 2
+		      : instruction->flags & DISPUD4 ? 4
+		      : 0);
       
       for (bin = 0; bin < cst4_maps; bin++)
 	{
-	  if (value == (mul * bin))
+	  if (value == mul * bin)
 	    {
 	      is_dispu4 = 1;
 	      if (update)
@@ -1405,7 +1404,7 @@ check_range (long *num, int bits, int unsigned flags, int update)
 
       for (bin = 0; bin < cst4_maps; bin++)
 	{
-	  if (value == cst4_map[bin])
+	  if (value == (uint32_t) cst4_map[bin])
 	    {
 	      is_cst4 = 1;
 	      if (update)
@@ -1418,17 +1417,19 @@ check_range (long *num, int bits, int unsigned flags, int update)
     }
   else if (flags & OP_SIGNED)
     {
-      max = (1 << (bits - 1)) - 1;
-      min = - (1 << (bits - 1));
-      if ((value > max) || (value < min))
+      max = 1;
+      max = max << (bits - 1);
+      value += max;
+      max = ((max - 1) << 1) | 1;
+      if (value > max)
 	retval = OP_OUT_OF_RANGE;
     }
   else if (flags & OP_UNSIGNED)
     {
-      max = ((((1 << (bits - 1)) - 1) << 1) | 1);
-      min = 0;
-      if (((unsigned long) value > (unsigned long) max) 
-	    || ((unsigned long) value < (unsigned long) min))
+      max = 1;
+      max = max << (bits - 1);
+      max = ((max - 1) << 1) | 1;
+      if (value > max)
 	retval = OP_OUT_OF_RANGE;
     }
   return retval;

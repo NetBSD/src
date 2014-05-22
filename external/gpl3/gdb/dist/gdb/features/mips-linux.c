@@ -1,6 +1,8 @@
-/* THIS FILE IS GENERATED.  Original: mips-linux.xml */
+/* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
+  Original: mips-linux.xml */
 
 #include "defs.h"
+#include "osabi.h"
 #include "target-descriptions.h"
 
 struct target_desc *tdesc_mips_linux;
@@ -9,9 +11,10 @@ initialize_tdesc_mips_linux (void)
 {
   struct target_desc *result = allocate_target_description ();
   struct tdesc_feature *feature;
-  struct tdesc_type *field_type, *type;
 
   set_tdesc_architecture (result, bfd_scan_arch ("mips"));
+
+  set_tdesc_osabi (result, osabi_from_tdesc_string ("GNU/Linux"));
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.mips.cpu");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");

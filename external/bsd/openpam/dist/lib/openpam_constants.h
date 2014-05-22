@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_constants.h,v 1.2.4.2 2012/04/17 00:03:58 yamt Exp $	*/
+/*	$NetBSD: openpam_constants.h,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -8,11 +8,13 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,11 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_constants.h 491 2011-11-12 00:12:32Z des
+ * Id: openpam_constants.h 659 2013-03-11 14:10:13Z des 
  */
 
-#ifndef OPENPAM_CONSTANTS_INCLUDED
-#define OPENPAM_CONSTANTS_INCLUDED
+#ifndef OPENPAM_CONSTANTS_H_INCLUDED
+#define OPENPAM_CONSTANTS_H_INCLUDED
 
 extern const char *pam_err_name[PAM_NUM_ERRORS];
 extern const char *pam_item_name[PAM_NUM_ITEMS];
@@ -38,5 +40,8 @@ extern const char *pam_facility_name[PAM_NUM_FACILITIES];
 extern const char *pam_control_flag_name[PAM_NUM_CONTROL_FLAGS];
 extern const char *pam_func_name[PAM_NUM_PRIMITIVES];
 extern const char *pam_sm_func_name[PAM_NUM_PRIMITIVES];
+
+extern const char *openpam_policy_path[];
+extern const char *openpam_module_path[];
 
 #endif

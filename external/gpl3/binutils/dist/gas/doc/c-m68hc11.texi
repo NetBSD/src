@@ -1,4 +1,5 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000, 2003, 2006
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000, 2003,
+@c 2006, 2011, 2012
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -34,23 +35,39 @@ dependent options.
 
 @cindex @samp{-m68hc11}
 @item -m68hc11
-This option switches the assembler in the M68HC11 mode. In this mode,
+This option switches the assembler into the M68HC11 mode. In this mode,
 the assembler only accepts 68HC11 operands and mnemonics. It produces
 code for the 68HC11.
 
 @cindex @samp{-m68hc12}
 @item -m68hc12
-This option switches the assembler in the M68HC12 mode. In this mode,
+This option switches the assembler into the M68HC12 mode. In this mode,
 the assembler also accepts 68HC12 operands and mnemonics. It produces
 code for the 68HC12. A few 68HC11 instructions are replaced by
 some 68HC12 instructions as recommended by Motorola specifications.
 
 @cindex @samp{-m68hcs12}
 @item -m68hcs12
-This option switches the assembler in the M68HCS12 mode.  This mode is
+This option switches the assembler into the M68HCS12 mode.  This mode is
 similar to @samp{-m68hc12} but specifies to assemble for the 68HCS12
 series.  The only difference is on the assembling of the @samp{movb}
 and @samp{movw} instruction when a PC-relative operand is used.
+
+@cindex @samp{-mm9s12x}
+@item -mm9s12x
+This option switches the assembler into the M9S12X mode.  This mode is
+similar to @samp{-m68hc12} but specifies to assemble for the S12X
+series which is a superset of the HCS12.
+
+@cindex @samp{-mm9s12xg}
+@item -mm9s12xg
+This option switches the assembler into the XGATE mode for the RISC
+co-processor featured on some S12X-family chips.
+
+@cindex @samp{--xgate-ramoffset}
+@item --xgate-ramoffset
+This option instructs the linker to offset RAM addresses from S12X address
+space into XGATE address space.
 
 @cindex @samp{-mshort}
 @item -mshort
@@ -145,6 +162,25 @@ lda  #23
 bset 2,x #4
 brclr *bot #8 foo
 @end smallexample
+
+@cindex line comment character, M68HC11
+@cindex M68HC11 line comment character
+The presence of a @samp{;} character or a @samp{!} character anywhere
+on a line indicates the start of a comment that extends to the end of
+that line.
+
+A @samp{*} or a @samp{#} character at the start of a line also
+introduces a line comment, but these characters do not work elsewhere
+on the line.  If the first character of the line is a @samp{#} then as
+well as starting a comment, the line could also be logical line number
+directive (@pxref{Comments}) or a preprocessor control command
+(@pxref{Preprocessing}).
+
+@cindex line separator, M68HC11
+@cindex statement separator, M68HC11
+@cindex M68HC11 line separator
+The M68HC11 assembler does not currently support a line separator
+character.
 
 @cindex M68HC11 addressing modes
 @cindex addressing modes, M68HC11

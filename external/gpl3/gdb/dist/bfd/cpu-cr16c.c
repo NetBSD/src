@@ -33,7 +33,8 @@ const bfd_arch_info_type bfd_cr16c_arch =
     "cr16c",
     1,
     TRUE, 	/* The one and only.  */
-    bfd_default_compatible, 
-    bfd_default_scan ,
+    bfd_default_compatible,
+    bfd_default_scan,
+    bfd_arch_default_fill,
     0,
   };

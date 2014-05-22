@@ -1,7 +1,6 @@
 /* Web construction code for GNU compiler.
    Contributed by Jan Hubicka.
-   Copyright (C) 2001, 2002, 2004, 2006, 2007, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -38,17 +37,17 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 
 #include "rtl.h"
 #include "hard-reg-set.h"
 #include "flags.h"
 #include "obstack.h"
 #include "basic-block.h"
-#include "output.h"
 #include "df.h"
 #include "function.h"
-#include "timevar.h"
+#include "insn-config.h"
+#include "recog.h"
 #include "tree-pass.h"
 
 
@@ -85,6 +84,69 @@ unionfind_union (struct web_entry *first, struct web_entry *second)
   return false;
 }
 
+/* For INSN, union all defs and uses that are linked by match_dup.
+   FUN is the function that does the union.  */
+
+static void
+union_match_dups (rtx insn, struct web_entry *def_entry,
+		  struct web_entry *use_entry,
+		  bool (*fun) (struct web_entry *, struct web_entry *))
+{
+  struct df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
+  df_ref *use_link = DF_INSN_INFO_USES (insn_info);
+  df_ref *def_link = DF_INSN_INFO_DEFS (insn_info);
+  struct web_entry *dup_entry;
+  int i;
+
+  extract_insn (insn);
+
+  for (i = 0; i < recog_data.n_dups; i++)
+    {
+      int op = recog_data.dup_num[i];
+      enum op_type type = recog_data.operand_type[op];
+      df_ref *ref, *dupref;
+      struct web_entry *entry;
+
+      for (dup_entry = use_entry, dupref = use_link; *dupref; dupref++)
+	if (DF_REF_LOC (*dupref) == recog_data.dup_loc[i])
+	  break;
+
+      if (*dupref == NULL && type == OP_INOUT)
+	{
+
+	  for (dup_entry = def_entry, dupref = def_link; *dupref; dupref++)
+	    if (DF_REF_LOC (*dupref) == recog_data.dup_loc[i])
+	      break;
+	}
+      /* ??? *DUPREF can still be zero, because when an operand matches
+	 a memory, DF_REF_LOC (use_link[n]) points to the register part
+	 of the address, whereas recog_data.dup_loc[m] points to the
+	 entire memory ref, thus we fail to find the duplicate entry,
+         even though it is there.
+         Example: i686-pc-linux-gnu gcc.c-torture/compile/950607-1.c
+		  -O3 -fomit-frame-pointer -funroll-loops  */
+      if (*dupref == NULL
+	  || DF_REF_REGNO (*dupref) < FIRST_PSEUDO_REGISTER)
+	continue;
+
+      ref = type == OP_IN ? use_link : def_link;
+      entry = type == OP_IN ? use_entry : def_entry;
+      for (; *ref; ref++)
+	if (DF_REF_LOC (*ref) == recog_data.operand_loc[op])
+	  break;
+
+      if (!*ref && type == OP_INOUT)
+	{
+	  for (ref = use_link, entry = use_entry; *ref; ref++)
+	    if (DF_REF_LOC (*ref) == recog_data.operand_loc[op])
+	      break;
+	}
+
+      gcc_assert (*ref);
+      (*fun) (dup_entry + DF_REF_ID (*dupref), entry + DF_REF_ID (*ref));
+    }
+}
+
 /* For each use, all possible defs reaching it must come in the same
    register, union them.
    FUN is the function that does the union.
@@ -101,7 +163,6 @@ union_defs (df_ref use, struct web_entry *def_entry,
 {
   struct df_insn_info *insn_info = DF_REF_INSN_INFO (use);
   struct df_link *link = DF_REF_CHAIN (use);
-  df_ref *use_link;
   df_ref *eq_use_link;
   df_ref *def_link;
   rtx set;
@@ -109,7 +170,6 @@ union_defs (df_ref use, struct web_entry *def_entry,
   if (insn_info)
     {
       rtx insn = insn_info->insn;
-      use_link = DF_INSN_INFO_USES (insn_info);
       eq_use_link = DF_INSN_INFO_EQ_USES (insn_info);
       def_link = DF_INSN_INFO_DEFS (insn_info);
       set = single_set (insn);
@@ -117,26 +177,12 @@ union_defs (df_ref use, struct web_entry *def_entry,
   else
     {
       /* An artificial use.  It links up with nothing.  */
-      use_link = NULL;
       eq_use_link = NULL;
       def_link = NULL;
       set = NULL;
     }
 
-  /* Some instructions may use match_dup for their operands.  In case the
-     operands are dead, we will assign them different pseudos, creating
-     invalid instructions, so union all uses of the same operand for each
-     insn.  */
-
-  if (use_link)
-    while (*use_link)
-      {
-	if (use != *use_link
-	    && DF_REF_REAL_REG (use) == DF_REF_REAL_REG (*use_link))
-	  (*fun) (use_entry + DF_REF_ID (use),
-		  use_entry + DF_REF_ID (*use_link));
-	use_link++;
-      }
+  /* Union all occurrences of the same register in reg notes.  */
 
   if (eq_use_link)
     while (*eq_use_link)
@@ -289,6 +335,7 @@ web_main (void)
   rtx insn;
 
   df_set_flags (DF_NO_HARD_REGS + DF_EQ_NOTES);
+  df_set_flags (DF_RD_PRUNE_DEAD_DEFS);
   df_chain_add_problem (DF_UD_CHAIN);
   df_analyze ();
   df_set_flags (DF_DEFER_INSN_RESCAN);
@@ -329,6 +376,7 @@ web_main (void)
       if (NONDEBUG_INSN_P (insn))
 	{
 	  df_ref *use_rec;
+	  union_match_dups (insn, def_entry, use_entry, unionfind_union);
 	  for (use_rec = DF_INSN_UID_USES (uid); *use_rec; use_rec++)
 	    {
 	      df_ref use = *use_rec;
@@ -350,7 +398,17 @@ web_main (void)
     FOR_BB_INSNS (bb, insn)
     {
       unsigned int uid = INSN_UID (insn);
-      if (NONDEBUG_INSN_P (insn))
+
+      if (NONDEBUG_INSN_P (insn)
+	  /* Ignore naked clobber.  For example, reg 134 in the second insn
+	     of the following sequence will not be replaced.
+
+	       (insn (clobber (reg:SI 134)))
+
+	       (insn (set (reg:SI 0 r0) (reg:SI 134)))
+
+	     Thus the later passes can optimize them away.  */
+	  && GET_CODE (PATTERN (insn)) != CLOBBER)
 	{
 	  df_ref *use_rec;
 	  df_ref *def_rec;
@@ -386,6 +444,7 @@ struct rtl_opt_pass pass_web =
  {
   RTL_PASS,
   "web",                                /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_handle_web,                      /* gate */
   web_main,		                /* execute */
   NULL,                                 /* sub */
@@ -396,8 +455,6 @@ struct rtl_opt_pass pass_web =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
-  TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_dump_func                        /* todo_flags_finish */
+  TODO_df_finish | TODO_verify_rtl_sharing  /* todo_flags_finish */
  }
 };
-

@@ -1,6 +1,6 @@
 // descriptors.cc -- manage file descriptors for gold
 
-// Copyright 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -34,15 +34,24 @@
 #include "descriptors.h"
 #include "binary-io.h"
 
+// O_CLOEXEC is only available on newer systems.
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
 // Very old systems may not define FD_CLOEXEC.
 #ifndef FD_CLOEXEC
 #define FD_CLOEXEC 1
 #endif
 
-// O_CLOEXEC is only available on newer systems.
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 0
+static inline void
+set_close_on_exec(int fd ATTRIBUTE_UNUSED)
+{
+// Mingw does not define F_SETFD.
+#ifdef F_SETFD
+  fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
+}
 
 namespace gold
 {
@@ -133,7 +142,7 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 	  if (O_CLOEXEC == 0
 	      && parameters->options_valid()
 	      && parameters->options().has_plugins())
-	    fcntl(new_descriptor, F_SETFD, FD_CLOEXEC);
+	    set_close_on_exec(new_descriptor);
 
 	  {
 	    Hold_optional_lock hl(this->lock_);

@@ -1,6 +1,6 @@
 /* Instruction printing code for the ARC.
-   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2005, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2005, 2007, 2009,
+   2010, 2012 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of libopcodes.
@@ -20,13 +20,12 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "ansidecl.h"
+#include "sysdep.h"
 #include "libiberty.h"
 #include "dis-asm.h"
 #include "opcode/arc.h"
 #include "elf-bfd.h"
 #include "elf/arc.h"
-#include <string.h>
 #include "opintl.h"
 
 #include <stdarg.h>
@@ -60,15 +59,14 @@ typedef enum
 } a4_decoding_class;
 
 #define BIT(word,n)	((word) & (1 << n))
-#define BITS(word,s,e)  (((word) << (31 - e)) >> (s + (31 - e)))
+#define BITS(word,s,e)  (((word) >> s) & ((1 << (e + 1 - s)) - 1))
 #define OPCODE(word)	(BITS ((word), 27, 31))
 #define FIELDA(word)	(BITS ((word), 21, 26))
 #define FIELDB(word)	(BITS ((word), 15, 20))
 #define FIELDC(word)	(BITS ((word),  9, 14))
 
-/* FIELD D is signed in all of its uses, so we make sure argument is
-   treated as signed for bit shifting purposes:  */
-#define FIELDD(word)	(BITS (((signed int)word), 0, 8))
+/* FIELD D is signed.  */
+#define FIELDD(word)	((BITS ((word), 0, 8) ^ 0x100) - 0x100)
 
 #define PUT_NEXT_WORD_IN(a)						\
   do									\

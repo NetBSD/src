@@ -1,5 +1,5 @@
 # Expect script for various ARM ELF tests.
-#   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+#   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -67,13 +67,213 @@ if { ![is_elf_format] || ![istarget "arm*-*-*"] } {
 # nm: Apply nm options on result.  Compare with regex (last arg).
 # readelf: Apply readelf options on result.  Compare with regex (last arg).
 
-set armelftests {
+set armelftests_common {
     {"Group relocations" "-Ttext 0x8000 --section-start zero=0x0 --section-start alpha=0xeef0 --section-start beta=0xffeef0" "" {group-relocs.s}
      {{objdump -dr group-relocs.d}}
      "group-relocs"}
     {"Thumb-1 BL" "-Ttext 0x1000 --section-start .foo=0x401000" "" {thumb1-bl.s}
      {{objdump -dr thumb1-bl.d}}
      "thumb1-bl"}
+    {"Indirect cross-library function reference (set-up)"
+     "-shared" "" {arm-lib-plt-2a.s}
+     {}
+     "arm-lib-plt-2a.so"}
+    {"Indirect cross-library function reference"
+     "-shared tmpdir/arm-lib-plt-2a.so" "" {arm-lib-plt-2b.s}
+     {{objdump -dr arm-lib-plt-2.dd} {readelf --relocs arm-lib-plt-2.rd}}
+     "arm-lib-plt-2b.so"}
+    {"Simple static application" "" "" {arm-static-app.s}
+     {{objdump -fdw arm-static-app.d} {objdump -rw arm-static-app.r}}
+     "arm-static-app"}
+    {"target1-abs" "-static --target1-abs -T arm.ld" "" {arm-target1.s}
+     {{objdump -s arm-target1-abs.d}}
+     "arm-target1-abs"}
+    {"target1-rel" "-static --target1-rel -T arm.ld" "" {arm-target1.s}
+     {{objdump -s arm-target1-rel.d}}
+     "arm-target1-rel"}
+    {"target2-rel" "-static --target2=rel -T arm.ld" "" {arm-target2.s}
+     {{objdump -s arm-target2-rel.d}}
+     "arm-target2-rel"}
+    {"target2-abs" "-static --target2=abs -T arm.ld" "" {arm-target2.s}
+     {{objdump -s arm-target2-abs.d}}
+     "arm-target2-abs"}
+    {"target2-got-rel" "-static --target2=got-rel -T arm.ld" "" {arm-target2.s}
+     {{objdump -s arm-target2-got-rel.d}}
+     "arm-target2-got-rel"}
+    {"arm-rel31" "-static -T arm.ld" "" {arm-rel31.s}
+     {{objdump -s arm-rel31.d}}
+     "arm-rel31"}
+    {"arm-rel32" "-shared -T arm-dyn.ld" "" {arm-rel32.s}
+     {{objdump -Rsj.data arm-rel32.d}}
+     "arm-rel32"}
+    {"arm-call" "--no-fix-arm1176 -static -T arm.ld" "-meabi=4" {arm-call1.s arm-call2.s}
+     {{objdump -d arm-call.d}}
+     "arm-call"}
+    {"TLS shared library" "-shared -T arm-lib.ld" "" {tls-lib.s}
+     {{objdump -fdw tls-lib.d} {objdump -Rw tls-lib.r}}
+     "tls-lib.so"}
+    {"TLS dynamic application" "-T arm-dyn.ld tmpdir/tls-lib.so" "" {tls-app.s}
+     {{objdump -fdw tls-app.d} {objdump -Rw tls-app.r}}
+     "tls-app"}
+    {"TLS gnu shared library got" "-shared -T arm-dyn.ld" "" {tls-gdesc-got.s}
+     {{objdump "-fDR -j .got" tls-gdesc-got.d}}
+     "tls-lib2-got.so"}
+    {"TLS gnu GD to IE relaxation" "-static -T arm-dyn.ld" "" {tls-gdierelax.s}
+     {{objdump -fdw tls-gdierelax.d}}
+     "tls-app-rel-ie"}
+    {"TLS gnu GD to IE shared relaxation" "--no-fix-arm1176 -shared -T arm-dyn.ld" "" {tls-gdierelax2.s}
+     {{objdump -fdw tls-gdierelax2.d}}
+     "tls-app-rel-ie2"}
+    {"TLS gnu GD to LE relaxation" "-T arm-dyn.ld" "" {tls-gdlerelax.s}
+     {{objdump -fdw tls-gdlerelax.d}}
+     "tls-app-rel-le"}
+    {"TLS mixed models shared lib" "-shared -T arm-dyn.ld" "" {tls-mixed.s}
+     {{objdump -Rw tls-mixed.r}}
+     "tls-mixed.so"}
+    {"TLS descseq relaxation" "-T arm-dyn.ld" "" {tls-descrelax.s}
+     {{objdump -fdw tls-descrelax.d}}
+     "tls-descrelax"}
+    {"TLS descseq relaxation v7" "-T arm-dyn.ld" "" {tls-descrelax-v7.s}
+     {{objdump -fdw tls-descrelax-v7.d}}
+     "tls-descrelax-v7"}
+    {"TLS descseq relaxation BE8" "-T arm-dyn.ld -EB --be8" "-mbig-endian" {tls-descrelax-be8.s}
+     {{objdump -fdw tls-descrelax-be8.d}}
+     "tls-descrelax-be8"}
+    {"TLS descseq relaxation BE32" "-T arm-dyn.ld -EB" "-mbig-endian" {tls-descrelax-be32.s}
+     {{objdump -fdw tls-descrelax-be32.d}}
+     "tls-descrelax-be32"}
+    {"Thumb entry point" "-T arm.ld" "" {thumb-entry.s}
+     {{readelf -h thumb-entry.d}}
+     "thumb-entry"}
+    {"thumb-rel32" "-static -T arm.ld" "" {thumb-rel32.s}
+     {{objdump -s thumb-rel32.d}}
+     "thumb-rel32"}
+    {"MOVW/MOVT" "-static -T arm.ld" "" {arm-movwt.s}
+     {{objdump -dw arm-movwt.d}}
+     "arm-movwt"}
+    {"BE8 Mapping Symbols" "-static -T arm.ld -EB --be8" "-EB" {arm-be8.s}
+     {{objdump -d arm-be8.d}}
+     "arm-be8"}
+    {"VFP11 denorm erratum fix, scalar operation"
+     "-EL --vfp11-denorm-fix=scalar -Ttext=0x8000" "-EL -mfpu=vfpxd" {vfp11-fix-scalar.s}
+     {{objdump -dr vfp11-fix-scalar.d}}
+     "vfp11-fix-scalar"}
+    {"VFP11 denorm erratum fix, vector operation"
+     "-EB --vfp11-denorm-fix=vector -Ttext=0x8000" "-EB -mfpu=vfpxd" {vfp11-fix-vector.s}
+     {{objdump -dr vfp11-fix-vector.d}}
+     "vfp11-fix-vector"}
+    {"VFP11 denorm erratum fix, embedded code-like data"
+     "-EL --vfp11-denorm-fix=scalar -Ttext=0x8000" "-EL -mfpu=vfpxd" {vfp11-fix-none.s}
+     {{objdump -dr vfp11-fix-none.d}}
+     "vfp11-fix-none"}
+    {"Cortex-A8 erratum fix, b.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-b.s}
+     {{objdump -dr cortex-a8-fix-b.d}}
+     "cortex-a8-fix-b"}
+    {"Cortex-A8 erratum fix, bl.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-bl.s}
+     {{objdump -dr cortex-a8-fix-bl.d}}
+     "cortex-a8-fix-bl"}
+    {"Cortex-A8 erratum fix, bcc.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-bcc.s}
+     {{objdump -dr cortex-a8-fix-bcc.d}}
+     "cortex-a8-fix-bcc"}
+    {"Cortex-A8 erratum fix, blx.w"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-blx.s}
+     {{objdump -dr cortex-a8-fix-blx.d}}
+     "cortex-a8-fix-blx"}
+    {"Cortex-A8 erratum fix, relocate b.w to ARM"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-b-rel.s}
+     {{objdump -dr cortex-a8-fix-b-rel-arm.d}}
+     "cortex-a8-fix-b-rel-arm"}
+    {"Cortex-A8 erratum fix, relocate b.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-b-rel.s}
+     {{objdump -dr cortex-a8-fix-b-rel-thumb.d}}
+     "cortex-a8-fix-b-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate bl.w to ARM"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-bl-rel.s}
+     {{objdump -dr cortex-a8-fix-bl-rel-arm.d}}
+     "cortex-a8-fix-bl-rel-arm"}
+    {"Cortex-A8 erratum fix, relocate bl.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bl-rel.s}
+     {{objdump -dr cortex-a8-fix-bl-rel-thumb.d}}
+     "cortex-a8-fix-bl-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate b<cond>.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bcc-rel.s}
+     {{objdump -dr cortex-a8-fix-bcc-rel-thumb.d}}
+     "cortex-a8-fix-bcc-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate blx.w to ARM"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-blx-rel.s}
+     {{objdump -dr cortex-a8-fix-blx-rel-arm.d}}
+     "cortex-a8-fix-blx-rel-arm"}
+    {"Cortex-A8 erratum fix, relocate blx.w to Thumb"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-blx-rel.s}
+     {{objdump -dr cortex-a8-fix-blx-rel-thumb.d}}
+     "cortex-a8-fix-blx-rel-thumb"}
+    {"Cortex-A8 erratum fix, relocate bl.w and far call"
+     "-EL -Ttext=0x00 --fix-cortex-a8 --defsym _start=0"
+     "-EL -mcpu=cortex-a8" {cortex-a8-far-1.s cortex-a8-far-2.s cortex-a8-far-3.s}
+     {{objdump -dr cortex-a8-far.d}}
+     "cortex-a8-far"}
+    {"Cortex-A8 erratum fix, headers"
+     "-EL --fix-cortex-a8 -T cortex-a8-fix-hdr.t"
+     "-EL -mcpu=cortex-a8" {cortex-a8-fix-hdr.s}
+     {{objdump -dr cortex-a8-fix-hdr.d}}
+     "cortex-a8-fix-hdr"}
+    {"Cortex-A8 erratum fix, blx.w and b<cond>.w together"
+     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-blx-bcond.s}
+     {{objdump -dr cortex-a8-fix-blx-bcond.d}}
+     "cortex-a8-fix-blx-bcond"}
+    {"Unwinding and -gc-sections" "-gc-sections" "" {gc-unwind.s}
+     {{objdump -sj.data gc-unwind.d}}
+     "gc-unwind"}
+    {"Thumb and -gc-sections" "-shared -T arm-dyn.ld" "" {gc-thumb-lib.s}
+     {}
+     "gc-thumb-lib.so"}
+    {"Thumb and -gc-sections" "-pie -T arm.ld -gc-sections tmpdir/gc-thumb-lib.so" "" {gc-thumb.s}
+     {{readelf --relocs gc-thumb.d}}
+     "gc-thumb"}
+    {"arm-pic-veneer" "-static -T arm.ld --pic-veneer" "" {arm-pic-veneer.s}
+     {{objdump -d arm-pic-veneer.d}}
+     "arm-pic-veneer"}
+    {"jump19" "-static -T arm.ld" "" {jump19.s}
+     {{objdump -dr jump19.d}}
+     "jump19"}
+    {"script-type" "-static -T script-type.ld" "" {script-type.s}
+     {{readelf -s script-type.sym}}
+     "script-type"}
+    {"callweak" "-static -T arm.ld" "" {callweak.s}
+     {{objdump -dr callweak.d}}
+     "callweak"}
+    {"callweak-2" "-static -T arm.ld" "" {callweak-2.s}
+     {{objdump -dr callweak-2.d}}
+     "callweak-2"}
+    {"Relocation boundaries" "-defsym x=0 -defsym y=0 -defsym _start=0" "" {reloc-boundaries.s}
+     {{objdump -s reloc-boundaries.d}}
+     "reloc-boundaries"}
+    {"Data only mapping symbols" "-T data-only-map.ld -Map map" "" {data-only-map.s}
+     {{objdump -dr data-only-map.d}}
+     "data-only-map"}
+    {"Data only mapping symbols for merged sections" "-T rodata-merge-map.ld" "" {rodata-merge-map1.s rodata-merge-map2.s rodata-merge-map3.s}
+     {{readelf -s rodata-merge-map.sym}}
+     "rodata-merge-map"}
+    {"GOT relocations in executables (setup)" "-shared"
+     "" {exec-got-1a.s}
+     {}
+     "exec-got-1.so"}
+    {"GOT relocations in executables" "tmpdir/exec-got-1.so"
+     "" {exec-got-1b.s}
+     {{readelf --relocs exec-got-1.d}}
+     "exec-got-1"}
+    {"abs call" "-T arm.ld" "" {abs-call-1.s}
+     {{objdump -d abs-call-1.d}}
+     "abs-call-1"}
+    {"Simple non-PIC shared library (no PLT check)" "-shared" "" {arm-lib.s}
+     {{objdump -Rw arm-lib.r}}
+     "arm-lib.so"}
+}
+
+set armelftests_nonacl {
     {"Simple non-PIC shared library" "-shared" "" {arm-lib.s}
      {{objdump -fdw arm-lib.d} {objdump -Rw arm-lib.r}}
      "arm-lib.so"}
@@ -83,9 +283,14 @@ set armelftests {
     {"Simple dynamic application" "tmpdir/arm-lib.so" "" {arm-app.s}
      {{objdump -fdw arm-app.d} {objdump -Rw arm-app.r}}
      "arm-app"}
-    {"Simple static application" "" "" {arm-static-app.s}
+    {"Simple static application without .rel.plt in linker script"
+	"-T arm-no-rel-plt.ld" "" {arm-static-app.s}
      {{objdump -fdw arm-static-app.d} {objdump -rw arm-static-app.r}}
      "arm-static-app"}
+    {"Simple dynamic application without .rel.plt in linker script"
+	"tmpdir/arm-lib.so -T arm-no-rel-plt.ld" "" {arm-app.s}
+     {{ld arm-no-rel-plt.out}}
+     "arm-app"}
     {"Non-pcrel function reference" "tmpdir/arm-lib.so" "" {arm-app-abs32.s}
      {{objdump -fdw arm-app-abs32.d} {objdump -Rw arm-app-abs32.r}}
      "arm-app-abs32"}
@@ -108,174 +313,133 @@ set armelftests {
      {{objdump -fdw mixed-app-v5.d} {objdump -Rw mixed-app.r}
       {readelf -Ds mixed-app.sym}}
      "mixed-app-v5"}
-    {"target1-abs" "-static --target1-abs -T arm.ld" "" {arm-target1.s}
-     {{objdump -s arm-target1-abs.d}}
-     "arm-target1-abs"}
-    {"target1-rel" "-static --target1-rel -T arm.ld" "" {arm-target1.s}
-     {{objdump -s arm-target1-rel.d}}
-     "arm-target1-rel"}
-    {"target2-rel" "-static --target2=rel -T arm.ld" "" {arm-target2.s}
-     {{objdump -s arm-target2-rel.d}}
-     "arm-target2-rel"}
-    {"target2-abs" "-static --target2=abs -T arm.ld" "" {arm-target2.s}
-     {{objdump -s arm-target2-abs.d}}
-     "arm-target2-abs"}
-    {"target2-got-rel" "-static --target2=got-rel -T arm.ld" "" {arm-target2.s}
-     {{objdump -s arm-target2-got-rel.d}}
-     "arm-target2-got-rel"}
-    {"arm-rel31" "-static -T arm.ld" "" {arm-rel31.s}
-     {{objdump -s arm-rel31.d}}
-     "arm-rel31"}
-    {"arm-call" "-static -T arm.ld" "-meabi=4" {arm-call1.s arm-call2.s}
-     {{objdump -d arm-call.d}}
-     "arm-call"}
-    {"TLS shared library" "-shared -T arm-lib.ld" "" {tls-lib.s}
-     {{objdump -fdw tls-lib.d} {objdump -Rw tls-lib.r}}
-     "tls-lib.so"}
-    {"TLS dynamic application" "-T arm-dyn.ld tmpdir/tls-lib.so" "" {tls-app.s}
-     {{objdump -fdw tls-app.d} {objdump -Rw tls-app.r}}
-     "tls-app"}
-    {"Thumb entry point" "-T arm.ld" "" {thumb-entry.s}
-     {{readelf -h thumb-entry.d}}
-     "thumb-entry"}
-    {"thumb-rel32" "-static -T arm.ld" "" {thumb-rel32.s}
-     {{objdump -s thumb-rel32.d}}
-     "thumb-rel32"}
-    {"MOVW/MOVT" "-static -T arm.ld" "" {arm-movwt.s}
-     {{objdump -dw arm-movwt.d}}
-     "arm-movwt"}
-    {"BE8 Mapping Symbols" "-static -T arm.ld -EB --be8" "-EB" {arm-be8.s}
-     {{objdump -d arm-be8.d}}
-     "arm-be8"}
     {"Using Thumb lib by another lib" "-shared tmpdir/mixed-lib.so" "" {use-thumb-lib.s}
      {{readelf -Ds use-thumb-lib.sym}}
      "use-thumb-lib.so"}
-    {"VFP11 denorm erratum fix, scalar operation"
-     "-EL --vfp11-denorm-fix=scalar -Ttext=0x8000" "-EL -mfpu=vfpxd" {vfp11-fix-scalar.s}
-     {{objdump -dr vfp11-fix-scalar.d}}
-     "vfp11-fix-scalar"}
-    {"VFP11 denorm erratum fix, vector operation"
-     "-EB --vfp11-denorm-fix=vector -Ttext=0x8000" "-EB -mfpu=vfpxd" {vfp11-fix-vector.s}
-     {{objdump -dr vfp11-fix-vector.d}}
-     "vfp11-fix-vector"}
-    {"VFP11 denorm erratum fix, embedded code-like data"
-     "-EL --vfp11-denorm-fix=scalar -Ttext=0x8000" "-EL -mfpu=vfpxd" {vfp11-fix-none.s}
-     {{objdump -dr vfp11-fix-none.d}}
-     "vfp11-fix-none"}
-    {"Cortex-A8 erratum fix, b.w"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-b.s}
-     {{objdump -dr cortex-a8-fix-b.d}}
-     "cortex-a8-fix-b"}
+    {"Preempt Thumb symbol" "tmpdir/mixed-lib.so -T arm-dyn.ld --use-blx" ""
+     {preempt-app.s}
+     {{readelf -Ds preempt-app.sym}}
+     "preempt-app"}
+    {"TLS gnu shared library inlined trampoline" "--no-fix-arm1176 -shared -T arm-dyn.ld" "" {tls-descseq.s}
+     {{objdump -fdw tls-descseq.d} {objdump -Rw tls-descseq.r}}
+     "tls-lib2inline.so"}
+    {"TLS shared library gdesc local" "--no-fix-arm1176 -shared -T arm-dyn.ld" "" {tls-lib-loc.s}
+     {{objdump -fdw tls-lib-loc.d} {objdump -Rw tls-lib-loc.r}}
+     "tls-lib-loc.so"}
     {"Cortex-A8 erratum fix, b.w to PLT"
      "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
      {cortex-a8-fix-b-plt.s}
      {{objdump -dr cortex-a8-fix-b-plt.d}}
      "cortex-a8-fix-b-plt"}
-    {"Cortex-A8 erratum fix, bl.w"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-bl.s}
-     {{objdump -dr cortex-a8-fix-bl.d}}
-     "cortex-a8-fix-bl"}
     {"Cortex-A8 erratum fix, bl.w to PLT"
      "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
      {cortex-a8-fix-bl-plt.s}
      {{objdump -dr cortex-a8-fix-bl-plt.d}}
      "cortex-a8-fix-bl-plt"}
-    {"Cortex-A8 erratum fix, bcc.w"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-bcc.s}
-     {{objdump -dr cortex-a8-fix-bcc.d}}
-     "cortex-a8-fix-bcc"}
     {"Cortex-A8 erratum fix, bcc.w to PLT"
      "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
      {cortex-a8-fix-bcc-plt.s}
      {{objdump -dr cortex-a8-fix-bcc-plt.d}}
      "cortex-a8-fix-bcc-plt"}
-    {"Cortex-A8 erratum fix, blx.w"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-blx.s}
-     {{objdump -dr cortex-a8-fix-blx.d}}
-     "cortex-a8-fix-blx"}
     {"Cortex-A8 erratum fix, blx.w to PLT"
      "-EL -Tcortex-a8-fix-plt.ld --fix-cortex-a8 -shared" "-EL"
      {cortex-a8-fix-blx-plt.s}
      {{objdump -dr cortex-a8-fix-blx-plt.d}}
      "cortex-a8-fix-blx-plt"}
-    {"Cortex-A8 erratum fix, relocate b.w to ARM"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-b-rel.s}
-     {{objdump -dr cortex-a8-fix-b-rel-arm.d}}
-     "cortex-a8-fix-b-rel-arm"}
-    {"Cortex-A8 erratum fix, relocate b.w to Thumb"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-b-rel.s}
-     {{objdump -dr cortex-a8-fix-b-rel-thumb.d}}
-     "cortex-a8-fix-b-rel-thumb"}
-    {"Cortex-A8 erratum fix, relocate bl.w to ARM"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-bl-rel.s}
-     {{objdump -dr cortex-a8-fix-bl-rel-arm.d}}
-     "cortex-a8-fix-bl-rel-arm"}
-    {"Cortex-A8 erratum fix, relocate bl.w to Thumb"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bl-rel.s}
-     {{objdump -dr cortex-a8-fix-bl-rel-thumb.d}}
-     "cortex-a8-fix-bl-rel-thumb"}
     {"Cortex-A8 erratum fix, relocate bl.w to PLT"
      "-EL --section-start=.plt=0x8e00 -Ttext=0x8f00 --fix-cortex-a8 -shared"
      "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bl-rel.s}
      {{objdump -dr cortex-a8-fix-bl-rel-plt.d}}
      "cortex-a8-fix-bl-rel-thumb"}
-    {"Cortex-A8 erratum fix, relocate b<cond>.w to Thumb"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-bcc-rel.s}
-     {{objdump -dr cortex-a8-fix-bcc-rel-thumb.d}}
-     "cortex-a8-fix-bcc-rel-thumb"}
-    {"Cortex-A8 erratum fix, relocate blx.w to ARM"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-arm-target.s cortex-a8-fix-blx-rel.s}
-     {{objdump -dr cortex-a8-fix-blx-rel-arm.d}}
-     "cortex-a8-fix-blx-rel-arm"}
-    {"Cortex-A8 erratum fix, relocate blx.w to Thumb"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-thumb-target.s cortex-a8-fix-blx-rel.s}
-     {{objdump -dr cortex-a8-fix-blx-rel-thumb.d}}
-     "cortex-a8-fix-blx-rel-thumb"}
-    {"Cortex-A8 erratum fix, relocate bl.w and far call"
-     "-EL -Ttext=0x00 --fix-cortex-a8 --defsym far_fn1=0x80000000 --defsym far_fn2=0x80000004  --defsym far_fn=0x7fff0000 --defsym _start=0"
-     "-EL -mcpu=cortex-a8" {cortex-a8-far-1.s cortex-a8-far-2.s}
-     {{objdump -dr cortex-a8-far.d}}
-     "cortex-a8-far"}
-    {"Cortex-A8 erratum fix, headers"
-     "-EL --fix-cortex-a8 -T cortex-a8-fix-hdr.t"
-     "-EL -mcpu=cortex-a8" {cortex-a8-fix-hdr.s}
-     {{objdump -dr cortex-a8-fix-hdr.d}}
-     "cortex-a8-fix-hdr"}
-    {"Cortex-A8 erratum fix, blx.w and b<cond>.w together"
-     "-EL -Ttext=0x8f00 --fix-cortex-a8" "-EL" {cortex-a8-fix-blx-bcond.s}
-     {{objdump -dr cortex-a8-fix-blx-bcond.d}}
-     "cortex-a8-fix-blx-bcond"}
-    {"Unwinding and -gc-sections" "-gc-sections" "" {gc-unwind.s}
-     {{objdump -sj.data gc-unwind.d}}
-     "gc-unwind"}
-    {"arm-pic-veneer" "-static -T arm.ld --pic-veneer" "" {arm-pic-veneer.s}
-     {{objdump -d arm-pic-veneer.d}}
-     "arm-pic-veneer"}
-    {"Preempt Thumb symbol" "tmpdir/mixed-lib.so -T arm-dyn.ld --use-blx" ""
-     {preempt-app.s}
-     {{readelf -Ds preempt-app.sym}}
-     "preempt-app"}
-    {"jump19" "-static -T arm.ld" "" {jump19.s}
-     {{objdump -dr jump19.d}}
-     "jump19"}
-    {"script-type" "-static -T script-type.ld" "" {script-type.s}
-     {{readelf -s script-type.sym}}
-     "script-type"}
-    {"callweak" "-static -T arm.ld" "" {callweak.s}
-     {{objdump -dr callweak.d}}
-     "callweak"}
-    {"callweak-2" "-static -T arm.ld" "" {callweak-2.s}
-     {{objdump -dr callweak-2.d}}
-     "callweak-2"}
-    {"Relocation boundaries" "-defsym x=0 -defsym y=0 -defsym _start=0" "" {reloc-boundaries.s}
-     {{objdump -s reloc-boundaries.d}}
-     "reloc-boundaries"}
-    {"Data only mapping symbols" "-T data-only-map.ld -Map map" "" {data-only-map.s}
-     {{objdump -dr data-only-map.d}}
-     "data-only-map"}
+    {"IFUNC test 1" "-T ifunc-static.ld" "" {ifunc-1.s}
+     {{objdump -d ifunc-1.dd}
+      {objdump {-s -j.data -j.got} ifunc-1.gd}
+      {readelf -dr ifunc-1.rd}}
+     "ifunc-1"}
+    {"IFUNC test 2" "-T ifunc-static.ld" "" {ifunc-2.s}
+     {{objdump -d ifunc-2.dd}
+      {objdump {-s -j.data -j.got} ifunc-2.gd}
+      {readelf -dr ifunc-2.rd}}
+     "ifunc-2"}
+    {"IFUNC test 3" "-T ifunc-dynamic.ld -shared" "" {ifunc-3.s}
+     {{objdump -d ifunc-3.dd}
+      {objdump {-s -j.data -j.got} ifunc-3.gd}
+      {readelf -r ifunc-3.rd}}
+     "ifunc-3.so"}
+    {"IFUNC test 4" "-T ifunc-dynamic.ld -shared" "" {ifunc-4.s}
+     {{objdump -d ifunc-4.dd}
+      {objdump {-s -j.data -j.got} ifunc-4.gd}
+      {readelf -r ifunc-4.rd}}
+     "ifunc-4.so"}
+    {"IFUNC test 5" "-T ifunc-static.ld" "" {ifunc-5.s}
+     {{objdump -d ifunc-5.dd}
+      {objdump {-s -j.data -j.got} ifunc-5.gd}
+      {readelf -dr ifunc-5.rd}}
+     "ifunc-5"}
+    {"IFUNC test 6" "-T ifunc-static.ld" "" {ifunc-6.s}
+     {{objdump -d ifunc-6.dd}
+      {objdump {-s -j.data -j.got} ifunc-6.gd}
+      {readelf -dr ifunc-6.rd}}
+     "ifunc-6"}
+    {"IFUNC test 7" "-T ifunc-dynamic.ld tmpdir/ifunc-3.so -shared"
+     "" {ifunc-7.s}
+     {{objdump -d ifunc-7.dd}
+      {objdump {-s -j.data -j.got} ifunc-7.gd}
+      {readelf -r ifunc-7.rd}}
+     "ifunc-7.so"}
+    {"IFUNC test 8" "-T ifunc-dynamic.ld tmpdir/ifunc-4.so -shared"
+     "" {ifunc-8.s}
+     {{objdump -d ifunc-8.dd}
+      {objdump {-s -j.data -j.got} ifunc-8.gd}
+      {readelf -r ifunc-8.rd}}
+     "ifunc-8.so"}
+    {"IFUNC test 9" "-T ifunc-dynamic.ld tmpdir/ifunc-3.so" "" {ifunc-9.s}
+     {{objdump -d ifunc-9.dd}
+      {objdump {-s -j.data -j.got} ifunc-9.gd}
+      {readelf -r ifunc-9.rd}}
+     "ifunc-9"}
+    {"IFUNC test 10" "-T ifunc-dynamic.ld tmpdir/ifunc-4.so" "" {ifunc-10.s}
+     {{objdump -d ifunc-10.dd}
+      {objdump {-s -j.data -j.got} ifunc-10.gd}
+      {readelf -r ifunc-10.rd}}
+     "ifunc-10"}
+    {"IFUNC test 11" "-T ifunc-static.ld" "" {ifunc-11.s}
+     {{objdump -d ifunc-11.dd}
+      {objdump {-s -j.data -j.got} ifunc-11.gd}
+      {readelf -dr ifunc-11.rd}}
+     "ifunc-11"}
+    {"IFUNC test 12" "-T ifunc-dynamic.ld -shared" "" {ifunc-12.s}
+     {{objdump -d ifunc-12.dd}
+      {objdump {-s -j.data -j.got} ifunc-12.gd}
+      {readelf -r ifunc-12.rd}}
+     "ifunc-12.so"}
+    {"IFUNC test 13" "-T ifunc-dynamic.ld tmpdir/ifunc-12.so" "" {ifunc-13.s}
+     {{objdump -d ifunc-13.dd}
+      {objdump {-s -j.data -j.got} ifunc-13.gd}
+      {readelf -r ifunc-13.rd}}
+     "ifunc-13"}
+    {"IFUNC test 14" "-T ifunc-dynamic.ld tmpdir/ifunc-12.so" "" {ifunc-14.s}
+     {{objdump -d ifunc-14.dd}
+      {objdump {-s -j.data -j.got} ifunc-14.gd}
+      {readelf -r ifunc-14.rd}}
+     "ifunc-14"}
+    {"IFUNC test 15" "-T ifunc-dynamic.ld tmpdir/ifunc-12.so" "" {ifunc-15.s}
+     {{objdump -d ifunc-15.dd}
+      {objdump {-s -j.data -j.got} ifunc-15.gd}
+      {readelf -r ifunc-15.rd}}
+     "ifunc-15"}
+    {"IFUNC test 16" "-T ifunc-dynamic.ld tmpdir/ifunc-12.so" "" {ifunc-16.s}
+     {{objdump -d ifunc-16.dd}
+      {objdump {-s -j.data -j.got} ifunc-16.gd}
+      {readelf -r ifunc-16.rd}}
+     "ifunc-16"}
 }
 
-run_ld_link_tests $armelftests
+run_ld_link_tests $armelftests_common
+if { ![istarget "arm*-*-nacl*"] } {
+    run_ld_link_tests $armelftests_nonacl
+}
+
 run_dump_test "group-relocs-alu-bad"
 run_dump_test "group-relocs-ldr-bad"
 run_dump_test "group-relocs-ldrs-bad"
@@ -290,7 +454,7 @@ run_dump_test "movw-shared-4"
 
 # Exclude non-ARM-EABI targets.
 
-if { ![istarget "arm*-*-*eabi"] } {
+if { ![istarget "arm*-*-*eabi"] && ![istarget "arm*-*-nacl*"] } {
     # Special variants of these tests, as a different farcall stub is
     # generated for a non-ARM-EABI target: indeed in such a case,
     # there are no attributes to indicate that blx can be used.
@@ -309,7 +473,7 @@ if { ![istarget "arm*-*-*eabi"] } {
 }
 
 # Farcalls stubs are fully supported for ARM-EABI only
-set armeabitests {
+set armeabitests_common {
      {"EABI attribute merging" "-r" "" {attr-merge.s attr-merge.s}
       {{readelf -A attr-merge.attr}}
       "attr-merge"}
@@ -364,7 +528,7 @@ set armeabitests {
     {"MOVW/MOVT against shared libraries" "tmpdir/arm-lib.so" "" {arm-app-movw.s}
      {{objdump -Rw arm-app.r}}
      "arm-app-movw"}
-    {"Thumb-2-as-Thumb-1 BL" "-Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-as-thumb1-bad.s}
+    {"Thumb-2-as-Thumb-1 BL" "--no-fix-arm1176 -Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-as-thumb1-bad.s}
      {{objdump -d thumb2-bl-as-thumb1-bad.d}}
      "thumb2-bl-as-thumb1-bad"}
     {"Thumb-2 BL" "-Ttext 0x1000 --section-start .foo=0x100100c" "" {thumb2-bl-bad.s}
@@ -384,10 +548,77 @@ set armeabitests {
      {{objdump -d farcall-arm-arm.d}}
      "farcall-arm-arm-be"}
 
+    {"Multiple farcalls" "-Ttext 0x1000 --section-start .foo=0x2002020" "" {farcall-mix.s}
+     {{objdump -d farcall-mix.d}}
+     "farcall-mix"}
+    {"Multiple farcalls from several sections" "-Ttext 0x1000 --section-start .mytext=0x2000 --section-start .foo=0x2003020" "" {farcall-mix2.s}
+     {{objdump -d farcall-mix2.d}}
+     "farcall-mix2"}
+
+    {"Default group size" "-Ttext 0x1000 --section-start .foo=0x2003020" "" {farcall-group.s farcall-group2.s}
+     {{objdump -d farcall-group.d}}
+     "farcall-group-default"}
+    {"Group size=2" "-Ttext 0x1000 --section-start .foo=0x2003020 --stub-group-size=2" "" {farcall-group.s farcall-group2.s}
+     {{objdump -d farcall-group-size2.d}}
+     "farcall-group-size2"}
+    {"Group size limit" "-Ttext 0x1000 --section-start .far=0x2003020" "" {farcall-group3.s farcall-group4.s}
+     {{objdump -d farcall-group-limit.d}}
+     "farcall-group-limit"}
+
+    {"Long branch with mixed text and data" "-T arm.ld" "" {farcall-data.s}
+     {{objdump -dr farcall-data.d}}
+     "farcall-data"}
+
+    {"R_ARM_THM_JUMP24 Relocation veneers: Short 1"
+     "--no-fix-arm1176 --section-start destsect=0x00009000 --section-start .text=0x8000"
+     "-march=armv7-a -mthumb"
+     {jump-reloc-veneers.s}
+     {{objdump -d jump-reloc-veneers-short1.d}}
+     "jump-reloc-veneers-short1"}
+    {"R_ARM_THM_JUMP24 Relocation veneers: Short 2"
+     "--no-fix-arm1176 --section-start destsect=0x00900000 --section-start .text=0x8000"
+     "-march=armv7-a -mthumb"
+     {jump-reloc-veneers.s}
+     {{objdump -d jump-reloc-veneers-short2.d}}
+     "jump-reloc-veneers-short2"}
+    {"R_ARM_THM_JUMP24 Relocation veneers: Long"
+     "--no-fix-arm1176 --section-start destsect=0x09000000 --section-start .text=0x8000"
+     "-march=armv7-a -mthumb"
+     {jump-reloc-veneers.s}
+     {{objdump -d jump-reloc-veneers-long.d}}
+     "jump-reloc-veneers-long"}
+
+    {"erratum 760522 fix (default for v6z)" "--section-start=.foo=0x2001014"
+     "-march=armv6z" {fix-arm1176.s}
+     {{objdump -d fix-arm1176-on.d}}
+     "fix-arm1176-1"}
+    {"erratum 760522 fix (explicitly on at v6z)" "--section-start=.foo=0x2001014 --fix-arm1176"
+     "-march=armv6z" {fix-arm1176.s}
+     {{objdump -d fix-arm1176-on.d}}
+     "fix-arm1176-2"}
+    {"erratum 760522 fix (explicitly off at v6z)" "--section-start=.foo=0x2001014 --no-fix-arm1176"
+     "-march=armv6z" {fix-arm1176.s}
+     {{objdump -d fix-arm1176-off.d}}
+     "fix-arm1176-3"}
+    {"erratum 760522 fix (default for v5)" "--section-start=.foo=0x2001014 "
+     "-march=armv5te" {fix-arm1176.s}
+     {{objdump -d fix-arm1176-on.d}}
+     "fix-arm1176-4"}
+    {"erratum 760522 fix (default for v7-a)" "--section-start=.foo=0x2001014 "
+     "-march=armv7-a" {fix-arm1176.s}
+     {{objdump -d fix-arm1176-off.d}}
+     "fix-arm1176-5"}
+    {"erratum 760522 fix (default for ARM1156)" "--section-start=.foo=0x2001014 "
+     "-mcpu=arm1156t2f-s" {fix-arm1176.s}
+     {{objdump -d fix-arm1176-off.d}}
+     "fix-arm1176-6"}
+}
+
+set armeabitests_nonacl {
     {"ARM-Thumb farcall" "-Ttext 0x1000 --section-start .foo=0x2001014" "" {farcall-arm-thumb.s}
      {{objdump -d farcall-arm-thumb.d}}
      "farcall-arm-thumb"}
-    {"ARM-Thumb farcall with BLX" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv5t" {farcall-arm-thumb.s}
+    {"ARM-Thumb farcall with BLX" "--no-fix-arm1176 -Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv5t" {farcall-arm-thumb.s}
      {{objdump -d farcall-arm-thumb-blx.d}}
      "farcall-arm-thumb-blx"}
     {"ARM-Thumb farcall (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "" {farcall-arm-thumb.s}
@@ -397,7 +628,7 @@ set armeabitests {
      {{objdump -d farcall-arm-thumb-blx-pic-veneer.d}}
      "farcall-arm-thumb-blx-pic-veneer"}
 
-    {"Thumb-Thumb farcall with BLX" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv5t" {farcall-thumb-thumb.s}
+    {"Thumb-Thumb farcall with BLX" "--no-fix-arm1176 -Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv5t" {farcall-thumb-thumb.s}
      {{objdump -d farcall-thumb-thumb-blx.d}}
      "farcall-thumb-thumb-blx"}
     {"Thumb-Thumb farcall M profile" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv7-m" {farcall-thumb-thumb.s}
@@ -409,7 +640,7 @@ set armeabitests {
     {"Thumb-Thumb farcall" "-Ttext 0x1000 --section-start .foo=0x2001014" "-march=armv4t" {farcall-thumb-thumb.s}
      {{objdump -d farcall-thumb-thumb.d}}
      "farcall-thumb-thumb"}
-    {"Thumb-Thumb farcall with BLX (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-march=armv5t" {farcall-thumb-thumb.s}
+    {"Thumb-Thumb farcall with BLX (PIC veneer)" "--no-fix-arm1176 -Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-march=armv5t" {farcall-thumb-thumb.s}
      {{objdump -d farcall-thumb-thumb-blx-pic-veneer.d}}
      "farcall-thumb-thumb-blx-pic-veneer"}
     {"Thumb-Thumb farcall M profile (PIC veneer)" "-Ttext 0x1000 --section-start .foo=0x2001014 --pic-veneer" "-march=armv7-m" {farcall-thumb-thumb.s}
@@ -431,32 +662,15 @@ set armeabitests {
     {"Thumb-ARM (short) call" "-Ttext 0x1000 --section-start .foo=0x0002014" "-W" {farcall-thumb-arm-short.s}
      {{objdump -d farcall-thumb-arm-short.d}}
      "farcall-thumb-arm-short"}
-    {"Thumb-ARM farcall with BLX" "-Ttext 0x1c01010 --section-start .foo=0x2001014" "-W -march=armv5t" {farcall-thumb-arm.s}
+    {"Thumb-ARM farcall with BLX" "--no-fix-arm1176 -Ttext 0x1c01010 --section-start .foo=0x2001014" "-W -march=armv5t" {farcall-thumb-arm.s}
      {{objdump -d farcall-thumb-arm-blx.d}}
      "farcall-thumb-arm-blx"}
-    {"Thumb-ARM farcall with BLX (PIC veneer)" "-Ttext 0x1c01010 --section-start .foo=0x2001014 --pic-veneer" "-W -march=armv5t" {farcall-thumb-arm.s}
+    {"Thumb-ARM farcall with BLX (PIC veneer)" "--no-fix-arm1176 -Ttext 0x1c01010 --section-start .foo=0x2001014 --pic-veneer" "-W -march=armv5t" {farcall-thumb-arm.s}
      {{objdump -d farcall-thumb-arm-blx-pic-veneer.d}}
      "farcall-thumb-arm-blx-pic-veneer"}
     {"Thumb-ARM farcall (PIC veneer)" "-Ttext 0x1c01010 --section-start .foo=0x2001014 --pic-veneer" "-W" {farcall-thumb-arm.s}
      {{objdump -d farcall-thumb-arm-pic-veneer.d}}
      "farcall-thumb-arm-pic-veneer"}
-
-    {"Multiple farcalls" "-Ttext 0x1000 --section-start .foo=0x2002020" "" {farcall-mix.s}
-     {{objdump -d farcall-mix.d}}
-     "farcall-mix"}
-    {"Multiple farcalls from several sections" "-Ttext 0x1000 --section-start .mytext=0x2000 --section-start .foo=0x2003020" "" {farcall-mix2.s}
-     {{objdump -d farcall-mix2.d}}
-     "farcall-mix2"}
-
-    {"Default group size" "-Ttext 0x1000 --section-start .foo=0x2003020" "" {farcall-group.s farcall-group2.s}
-     {{objdump -d farcall-group.d}}
-     "farcall-group-default"}
-    {"Group size=2" "-Ttext 0x1000 --section-start .foo=0x2003020 --stub-group-size=2" "" {farcall-group.s farcall-group2.s}
-     {{objdump -d farcall-group-size2.d}}
-     "farcall-group-size2"}
-    {"Group size limit" "-Ttext 0x1000 --section-start .far=0x2003020" "" {farcall-group3.s farcall-group4.s}
-     {{objdump -d farcall-group-limit.d}}
-     "farcall-group-limit"}
 
     {"Mixed ARM/Thumb dynamic application with farcalls" "tmpdir/mixed-lib.so -T arm-dyn.ld --section-start .far_arm=0x2100000 --section-start .far_thumb=0x2200000" ""
      {farcall-mixed-app.s}
@@ -474,36 +688,45 @@ set armeabitests {
      {{objdump -fdw farcall-mixed-lib-v4t.d}}
      "farcall-mixed-lib.so"}
 
-    {"Mixed ARM/Thumb shared library with long branches (v5t)" "-shared -T arm-lib.ld" "-march=armv5t"
+    {"Mixed ARM/Thumb shared library with long branches (v5t)" "--no-fix-arm1176 -shared -T arm-lib.ld" "-march=armv5t"
      {farcall-mixed-lib1.s farcall-mixed-lib2.s}
      {{objdump -fdw farcall-mixed-lib.d}}
      "farcall-mixed-lib.so"}
 
-    {"Long branch with mixed text and data" "-T arm.ld" "" {farcall-data.s}
-     {{objdump -dr farcall-data.d}}
-     "farcall-data"}
-
-    {"R_ARM_THM_JUMP24 Relocation veneers: Short 1" 
-     "--section-start destsect=0x00009000 --section-start .text=0x8000" 
-     "-march=armv7-a -mthumb" 
-     {jump-reloc-veneers.s}
-     {{objdump -d jump-reloc-veneers-short1.d}}
-     "jump-reloc-veneers-short1"}
-    {"R_ARM_THM_JUMP24 Relocation veneers: Short 2" 
-     "--section-start destsect=0x00900000 --section-start .text=0x8000" 
-     "-march=armv7-a -mthumb" 
-     {jump-reloc-veneers.s}
-     {{objdump -d jump-reloc-veneers-short2.d}}
-     "jump-reloc-veneers-short2"}
-    {"R_ARM_THM_JUMP24 Relocation veneers: Long" 
-     "--section-start destsect=0x09000000 --section-start .text=0x8000" 
-     "-march=armv7-a -mthumb" 
-     {jump-reloc-veneers.s}
-     {{objdump -d jump-reloc-veneers-long.d}}
-     "jump-reloc-veneers-long"}
+    {"TLS gnu shared library" "--no-fix-arm1176 -shared -T arm-dyn.ld" "" {tls-gdesc.s}
+     {{objdump -fdw tls-gdesc.d} {objdump -Rw tls-gdesc.r}}
+     "tls-lib2.so"}
+    {"TLS gnu shared library non-lazy" "-z now -shared -T arm-dyn.ld" "" {tls-gdesc.s}
+     {{readelf "-x .got" tls-gdesc-nlazy.g}}
+     "tls-lib2-nlazy.so"}
+    {"TLS long plt library" "-shared -T arm-dyn.ld --section-start .foo=0x4001000" "" {tls-longplt-lib.s}
+     {{objdump -fdw tls-longplt-lib.d}}
+     "tls-longplt-lib.so"}
+    {"TLS long plt" "-T arm-dyn.ld --section-start .foo=0x4001000 tmpdir/tls-longplt-lib.so" "" {tls-longplt.s}
+     {{objdump -fdw tls-longplt.d}}
+     "tls-longplt"}
+    {"TLS thumb1" "-shared -T arm-dyn.ld --section-start .foo=0x4001000" "" {tls-thumb1.s}
+     {{objdump -fdw tls-thumb1.d}}
+     "tls-thumb1"}
 }
 
-run_ld_link_tests $armeabitests
+run_ld_link_tests $armeabitests_common
+if { ![istarget "arm*-*-nacl*"] } {
+    run_ld_link_tests $armeabitests_nonacl
+}
+
+run_dump_test "attr-merge-div-00"
+run_dump_test "attr-merge-div-01"
+run_dump_test "attr-merge-div-10"
+run_dump_test "attr-merge-div-01-m3"
+run_dump_test "attr-merge-div-10-m3"
+run_dump_test "attr-merge-div-11"
+run_dump_test "attr-merge-div-12"
+run_dump_test "attr-merge-div-120"
+run_dump_test "attr-merge-div-21"
+run_dump_test "attr-merge-div-22"
+run_dump_test "attr-merge-div-02"
+run_dump_test "attr-merge-div-20"
 run_dump_test "attr-merge-wchar-00"
 run_dump_test "attr-merge-wchar-02"
 run_dump_test "attr-merge-wchar-04"
@@ -544,4 +767,11 @@ run_dump_test "attr-merge-vfp-5"
 run_dump_test "attr-merge-vfp-5r"
 run_dump_test "attr-merge-vfp-6"
 run_dump_test "attr-merge-vfp-6r"
+run_dump_test "attr-merge-vfp-7"
+run_dump_test "attr-merge-vfp-7r"
 run_dump_test "attr-merge-incompatible"
+run_dump_test "unresolved-1"
+if { ![istarget "arm*-*-nacl*"] } {
+    run_dump_test "unresolved-1-dyn"
+}
+run_dump_test "gc-hidden-1"

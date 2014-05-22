@@ -1,4 +1,4 @@
-/* Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,8 @@
 #include "gdbtypes.h"
 #include "gdbcore.h"
 #include "regcache.h"
+#include "windows-tdep.h"
+#include "frame.h"
 
 /* The registers used to pass integer arguments during a function call.  */
 static int amd64_windows_dummy_call_integer_regs[] =
@@ -73,7 +75,7 @@ amd64_windows_classify (struct type *type, enum amd64_reg_class class[2])
 /* Implement the "return_value" gdbarch method for amd64-windows.  */
 
 static enum return_value_convention
-amd64_windows_return_value (struct gdbarch *gdbarch, struct type *func_type,
+amd64_windows_return_value (struct gdbarch *gdbarch, struct value *function,
 			    struct type *type, struct regcache *regcache,
 			    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -153,6 +155,48 @@ amd64_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   return pc;
 }
 
+/* Check Win64 DLL jmp trampolines and find jump destination.  */
+
+static CORE_ADDR
+amd64_windows_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
+{
+  CORE_ADDR destination = 0;
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  /* Check for jmp *<offset>(%rip) (jump near, absolute indirect (/4)).  */
+  if (pc && read_memory_unsigned_integer (pc, 2, byte_order) == 0x25ff)
+    {
+      /* Get opcode offset and see if we can find a reference in our data.  */
+      ULONGEST offset
+	= read_memory_unsigned_integer (pc + 2, 4, byte_order);
+
+      /* Get address of function pointer at end of pc.  */
+      CORE_ADDR indirect_addr = pc + offset + 6;
+
+      struct minimal_symbol *indsym
+	= indirect_addr ? lookup_minimal_symbol_by_pc (indirect_addr) : NULL;
+      const char *symname = indsym ? SYMBOL_LINKAGE_NAME (indsym) : NULL;
+
+      if (symname)
+	{
+	  if (strncmp (symname, "__imp_", 6) == 0
+	      || strncmp (symname, "_imp_", 5) == 0)
+	    destination
+	      = read_memory_unsigned_integer (indirect_addr, 8, byte_order);
+	}
+    }
+
+  return destination;
+}
+
+/* Implement the "auto_wide_charset" gdbarch method.  */
+
+static const char *
+amd64_windows_auto_wide_charset (void)
+{
+  return "UTF-16";
+}
 
 static void
 amd64_windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -173,9 +217,19 @@ amd64_windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->integer_param_regs_saved_in_caller_frame = 1;
   set_gdbarch_return_value (gdbarch, amd64_windows_return_value);
   set_gdbarch_skip_main_prologue (gdbarch, amd64_skip_main_prologue);
+  set_gdbarch_skip_trampoline_code (gdbarch,
+				    amd64_windows_skip_trampoline_code);
+
+  set_gdbarch_iterate_over_objfiles_in_search_order
+    (gdbarch, windows_iterate_over_objfiles_in_search_order);
+
+  set_gdbarch_auto_wide_charset (gdbarch, amd64_windows_auto_wide_charset);
 
   set_solib_ops (gdbarch, &solib_target_so_ops);
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_amd64_windows_tdep;
 
 void
 _initialize_amd64_windows_tdep (void)

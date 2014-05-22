@@ -1,7 +1,5 @@
 /* Instruction scheduling pass.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) Enhanced by,
    and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -49,7 +47,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "rtl.h"
 #include "tm_p.h"
 #include "hard-reg-set.h"
@@ -59,14 +57,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "insn-config.h"
 #include "insn-attr.h"
 #include "except.h"
-#include "toplev.h"
 #include "recog.h"
-#include "cfglayout.h"
 #include "params.h"
 #include "sched-int.h"
 #include "sel-sched.h"
 #include "target.h"
-#include "timevar.h"
 #include "tree-pass.h"
 #include "dbgcnt.h"
 
@@ -126,6 +121,13 @@ int current_blocks;
    target are in array bblst_table.  */
 static basic_block *bblst_table;
 static int bblst_size, bblst_last;
+
+/* Arrays that hold the DFA state at the end of a basic block, to re-use
+   as the initial state at the start of successor blocks.  The BB_STATE
+   array holds the actual DFA state, and BB_STATE_ARRAY[I] is a pointer
+   into BB_STATE for basic block I.  FIXME: This should be a vec.  */
+static char *bb_state_array = NULL;
+static state_t *bb_state = NULL;
 
 /* Target info declarations.
 
@@ -188,7 +190,7 @@ static sbitmap *dom;
 
 /* Is bb_src dominated by bb_trg.  */
 #define IS_DOMINATED(bb_src, bb_trg)                                 \
-( TEST_BIT (dom[bb_src], bb_trg) )
+( bitmap_bit_p (dom[bb_src], bb_trg) )
 
 /* Probability: Prob[i] is an int in [0, REG_BR_PROB_BASE] which is
    the probability of bb i relative to the region entry.  */
@@ -235,7 +237,6 @@ static void add_branch_dependences (rtx, rtx);
 static void compute_block_dependences (int);
 
 static void schedule_region (int);
-static rtx concat_INSN_LIST (rtx, rtx);
 static void concat_insn_mem_list (rtx, rtx, rtx *, rtx *);
 static void propagate_deps (int, struct deps_desc *);
 static void free_pending_lists (void);
@@ -343,7 +344,7 @@ extract_edgelst (sbitmap set, edgelst *el)
   el->nr_members = 0;
 
   /* Iterate over each word in the bitset.  */
-  EXECUTE_IF_SET_IN_SBITMAP (set, 0, i, sbi)
+  EXECUTE_IF_SET_IN_BITMAP (set, 0, i, sbi)
     {
       edgelst_table[edgelst_last++] = rgn_edges[i];
       el->nr_members++;
@@ -354,7 +355,7 @@ extract_edgelst (sbitmap set, edgelst *el)
 
 /* Print the regions, for debugging purposes.  Callable from debugger.  */
 
-void
+DEBUG_FUNCTION void
 debug_regions (void)
 {
   int rgn, bb;
@@ -379,7 +380,7 @@ debug_regions (void)
 
 /* Print the region's basic blocks.  */
 
-void
+DEBUG_FUNCTION void
 debug_region (int rgn)
 {
   int bb;
@@ -400,7 +401,8 @@ debug_region (int rgn)
 
   for (bb = 0; bb < rgn_table[rgn].rgn_nr_blocks; bb++)
     {
-      debug_bb_n_slim (rgn_bb_table[current_blocks + bb]);
+      dump_bb (stderr, BASIC_BLOCK (rgn_bb_table[current_blocks + bb]),
+	       0, TDF_SLIM | TDF_BLOCKS);
       fprintf (stderr, "\n");
     }
 
@@ -438,7 +440,7 @@ dump_region_dot (FILE *f, int rgn)
       edge e;
       edge_iterator ei;
       int src_bb_num = rgn_bb_table[current_blocks + i];
-      struct basic_block_def *bb = BASIC_BLOCK (src_bb_num);
+      basic_block bb = BASIC_BLOCK (src_bb_num);
 
       FOR_EACH_EDGE (e, ei, bb->succs)
         if (bb_in_region_p (e->dest->index, rgn))
@@ -486,7 +488,6 @@ find_single_block_region (bool ebbs_p)
         for (bb = ebb_start; ; bb = bb->next_bb)
           {
             edge e;
-            edge_iterator ei;
 
             rgn_bb_table[i] = bb->index;
             RGN_NR_BLOCKS (nr_regions)++;
@@ -498,9 +499,7 @@ find_single_block_region (bool ebbs_p)
                 || LABEL_P (BB_HEAD (bb->next_bb)))
               break;
 
-            FOR_EACH_EDGE (e, ei, bb->succs)
-             if ((e->flags & EDGE_FALLTHRU) != 0)
-               break;
+	    e = find_fallthru_edge (bb->succs);
             if (! e)
               break;
             if (e->probability <= probability_cutoff)
@@ -569,10 +568,10 @@ too_large (int block, int *num_bbs, int *num_insns)
   if (max_hdr[blk] == -1)			\
     max_hdr[blk] = hdr;				\
   else if (dfs_nr[max_hdr[blk]] > dfs_nr[hdr])	\
-    RESET_BIT (inner, hdr);			\
+    bitmap_clear_bit (inner, hdr);			\
   else if (dfs_nr[max_hdr[blk]] < dfs_nr[hdr])	\
     {						\
-      RESET_BIT (inner,max_hdr[blk]);		\
+      bitmap_clear_bit (inner,max_hdr[blk]);		\
       max_hdr[blk] = hdr;			\
     }						\
 }
@@ -647,16 +646,16 @@ haifa_find_rgns (void)
   stack = XNEWVEC (edge_iterator, n_edges);
 
   inner = sbitmap_alloc (last_basic_block);
-  sbitmap_ones (inner);
+  bitmap_ones (inner);
 
   header = sbitmap_alloc (last_basic_block);
-  sbitmap_zero (header);
+  bitmap_clear (header);
 
   in_queue = sbitmap_alloc (last_basic_block);
-  sbitmap_zero (in_queue);
+  bitmap_clear (in_queue);
 
   in_stack = sbitmap_alloc (last_basic_block);
-  sbitmap_zero (in_stack);
+  bitmap_clear (in_stack);
 
   for (i = 0; i < last_basic_block; i++)
     max_hdr[i] = -1;
@@ -684,8 +683,8 @@ haifa_find_rgns (void)
 	      gcc_assert (node != ENTRY_BLOCK);
 	      child = ei_edge (current_edge)->dest->index;
 	      gcc_assert (child != EXIT_BLOCK);
-	      RESET_BIT (in_stack, child);
-	      if (max_hdr[child] >= 0 && TEST_BIT (in_stack, max_hdr[child]))
+	      bitmap_clear_bit (in_stack, child);
+	      if (max_hdr[child] >= 0 && bitmap_bit_p (in_stack, max_hdr[child]))
 		UPDATE_LOOP_RELATIONS (node, max_hdr[child]);
 	      ei_next (&current_edge);
 	    }
@@ -701,7 +700,7 @@ haifa_find_rgns (void)
       /* Process a node.  */
       node = ei_edge (current_edge)->src->index;
       gcc_assert (node != ENTRY_BLOCK);
-      SET_BIT (in_stack, node);
+      bitmap_set_bit (in_stack, node);
       dfs_nr[node] = ++count;
 
       /* We don't traverse to the exit block.  */
@@ -716,10 +715,10 @@ haifa_find_rgns (void)
       /* If the successor is in the stack, then we've found a loop.
 	 Mark the loop, if it is not a natural loop, then it will
 	 be rejected during the second traversal.  */
-      if (TEST_BIT (in_stack, child))
+      if (bitmap_bit_p (in_stack, child))
 	{
 	  no_loops = 0;
-	  SET_BIT (header, child);
+	  bitmap_set_bit (header, child);
 	  UPDATE_LOOP_RELATIONS (node, child);
 	  SET_EDGE_PASSED (current_edge);
 	  ei_next (&current_edge);
@@ -731,7 +730,7 @@ haifa_find_rgns (void)
 	 with a new edge.  */
       if (dfs_nr[child])
 	{
-	  if (max_hdr[child] >= 0 && TEST_BIT (in_stack, max_hdr[child]))
+	  if (max_hdr[child] >= 0 && bitmap_bit_p (in_stack, max_hdr[child]))
 	    UPDATE_LOOP_RELATIONS (node, max_hdr[child]);
 	  SET_EDGE_PASSED (current_edge);
 	  ei_next (&current_edge);
@@ -789,7 +788,7 @@ haifa_find_rgns (void)
       bool extend_regions_p;
 
       if (no_loops)
-	SET_BIT (header, 0);
+	bitmap_set_bit (header, 0);
 
       /* Second traversal:find reducible inner loops and topologically sort
 	 block of each region.  */
@@ -801,14 +800,14 @@ haifa_find_rgns (void)
         {
           degree1 = XNEWVEC (int, last_basic_block);
           extended_rgn_header = sbitmap_alloc (last_basic_block);
-          sbitmap_zero (extended_rgn_header);
+          bitmap_clear (extended_rgn_header);
 	}
 
       /* Find blocks which are inner loop headers.  We still have non-reducible
 	 loops to consider at this point.  */
       FOR_EACH_BB (bb)
 	{
-	  if (TEST_BIT (header, bb->index) && TEST_BIT (inner, bb->index))
+	  if (bitmap_bit_p (header, bb->index) && bitmap_bit_p (inner, bb->index))
 	    {
 	      edge e;
 	      edge_iterator ei;
@@ -879,7 +878,7 @@ haifa_find_rgns (void)
 			&& single_succ (jbb) == EXIT_BLOCK_PTR)
 		      {
 			queue[++tail] = jbb->index;
-			SET_BIT (in_queue, jbb->index);
+			bitmap_set_bit (in_queue, jbb->index);
 
 			if (too_large (jbb->index, &num_bbs, &num_insns))
 			  {
@@ -903,7 +902,7 @@ haifa_find_rgns (void)
 			{
 			  /* This is a loop latch.  */
 			  queue[++tail] = node;
-			  SET_BIT (in_queue, node);
+			  bitmap_set_bit (in_queue, node);
 
 			  if (too_large (node, &num_bbs, &num_insns))
 			    {
@@ -961,10 +960,10 @@ haifa_find_rgns (void)
 			  tail = -1;
 			  break;
 			}
-		      else if (!TEST_BIT (in_queue, node) && node != bb->index)
+		      else if (!bitmap_bit_p (in_queue, node) && node != bb->index)
 			{
 			  queue[++tail] = node;
-			  SET_BIT (in_queue, node);
+			  bitmap_set_bit (in_queue, node);
 
 			  if (too_large (node, &num_bbs, &num_insns))
 			    {
@@ -1028,7 +1027,7 @@ haifa_find_rgns (void)
 		     of one too_large region.  */
                   FOR_EACH_EDGE (e, ei, bb->succs)
                     if (e->dest != EXIT_BLOCK_PTR)
-                      SET_BIT (extended_rgn_header, e->dest->index);
+                      bitmap_set_bit (extended_rgn_header, e->dest->index);
                 }
 	    }
 	}
@@ -1038,7 +1037,7 @@ haifa_find_rgns (void)
         {
           free (degree1);
 
-          sbitmap_a_or_b (header, header, extended_rgn_header);
+          bitmap_ior (header, header, extended_rgn_header);
           sbitmap_free (extended_rgn_header);
 
           extend_rgns (degree, &idx, header, max_hdr);
@@ -1197,7 +1196,7 @@ extend_rgns (int *degree, int *idxp, sbitmap header, int *loop_hdr)
 	  edge_iterator ei;
 	  int bbn = order[i];
 
-	  if (max_hdr[bbn] != -1 && !TEST_BIT (header, bbn))
+	  if (max_hdr[bbn] != -1 && !bitmap_bit_p (header, bbn))
 	    {
 	      int hdr = -1;
 
@@ -1236,7 +1235,7 @@ extend_rgns (int *degree, int *idxp, sbitmap header, int *loop_hdr)
 		{
 		  /* If BB start its own region,
 		     update set of headers with BB.  */
-		  SET_BIT (header, bbn);
+		  bitmap_set_bit (header, bbn);
 		  rescan = 1;
 		}
 	      else
@@ -1411,7 +1410,7 @@ compute_dom_prob_ps (int bb)
 
   if (IS_RGN_ENTRY (bb))
     {
-      SET_BIT (dom[bb], 0);
+      bitmap_set_bit (dom[bb], 0);
       prob[bb] = REG_BR_PROB_BASE;
       return;
     }
@@ -1419,7 +1418,7 @@ compute_dom_prob_ps (int bb)
   prob[bb] = 0;
 
   /* Initialize dom[bb] to '111..1'.  */
-  sbitmap_ones (dom[bb]);
+  bitmap_ones (dom[bb]);
 
   FOR_EACH_EDGE (in_edge, in_ei, BASIC_BLOCK (BB_TO_BLOCK (bb))->preds)
     {
@@ -1431,22 +1430,22 @@ compute_dom_prob_ps (int bb)
 	continue;
 
       pred_bb = BLOCK_TO_BB (in_edge->src->index);
-      sbitmap_a_and_b (dom[bb], dom[bb], dom[pred_bb]);
-      sbitmap_a_or_b (ancestor_edges[bb],
+      bitmap_and (dom[bb], dom[bb], dom[pred_bb]);
+      bitmap_ior (ancestor_edges[bb],
 		      ancestor_edges[bb], ancestor_edges[pred_bb]);
 
-      SET_BIT (ancestor_edges[bb], EDGE_TO_BIT (in_edge));
+      bitmap_set_bit (ancestor_edges[bb], EDGE_TO_BIT (in_edge));
 
-      sbitmap_a_or_b (pot_split[bb], pot_split[bb], pot_split[pred_bb]);
+      bitmap_ior (pot_split[bb], pot_split[bb], pot_split[pred_bb]);
 
       FOR_EACH_EDGE (out_edge, out_ei, in_edge->src->succs)
-	SET_BIT (pot_split[bb], EDGE_TO_BIT (out_edge));
+	bitmap_set_bit (pot_split[bb], EDGE_TO_BIT (out_edge));
 
       prob[bb] += ((prob[pred_bb] * in_edge->probability) / REG_BR_PROB_BASE);
     }
 
-  SET_BIT (dom[bb], bb);
-  sbitmap_difference (pot_split[bb], pot_split[bb], ancestor_edges[bb]);
+  bitmap_set_bit (dom[bb], bb);
+  bitmap_and_compl (pot_split[bb], pot_split[bb], ancestor_edges[bb]);
 
   if (sched_verbose >= 2)
     fprintf (sched_dump, ";;  bb_prob(%d, %d) = %3d\n", bb, BB_TO_BLOCK (bb),
@@ -1461,10 +1460,10 @@ compute_dom_prob_ps (int bb)
 static void
 split_edges (int bb_src, int bb_trg, edgelst *bl)
 {
-  sbitmap src = sbitmap_alloc (pot_split[bb_src]->n_bits);
-  sbitmap_copy (src, pot_split[bb_src]);
+  sbitmap src = sbitmap_alloc (SBITMAP_SIZE (pot_split[bb_src]));
+  bitmap_copy (src, pot_split[bb_src]);
 
-  sbitmap_difference (src, src, pot_split[bb_trg]);
+  bitmap_and_compl (src, src, pot_split[bb_trg]);
   extract_edgelst (src, bl);
   sbitmap_free (src);
 }
@@ -1545,13 +1544,13 @@ compute_trg_info (int trg)
 	     overrunning the end of the bblst_table.  */
 
 	  update_idx = 0;
-	  sbitmap_zero (visited);
+	  bitmap_clear (visited);
 	  for (j = 0; j < el.nr_members; j++)
 	    {
 	      block = el.first_member[j]->src;
 	      FOR_EACH_EDGE (e, ei, block->succs)
 		{
-		  if (!TEST_BIT (visited, e->dest->index))
+		  if (!bitmap_bit_p (visited, e->dest->index))
 		    {
 		      for (k = 0; k < el.nr_members; k++)
 			if (e == el.first_member[k])
@@ -1560,7 +1559,7 @@ compute_trg_info (int trg)
 		      if (k >= el.nr_members)
 			{
 			  bblst_table[bblst_last++] = e->dest;
-			  SET_BIT (visited, e->dest->index);
+			  bitmap_set_bit (visited, e->dest->index);
 			  update_idx++;
 			}
 		    }
@@ -1594,7 +1593,7 @@ free_trg_info (void)
 
 /* Print candidates info, for debugging purposes.  Callable from debugger.  */
 
-void
+DEBUG_FUNCTION void
 debug_candidate (int i)
 {
   if (!candidate_table[i].is_valid)
@@ -1631,7 +1630,7 @@ debug_candidate (int i)
 
 /* Print candidates info, for debugging purposes.  Callable from debugger.  */
 
-void
+DEBUG_FUNCTION void
 debug_candidates (int trg)
 {
   int i;
@@ -1766,29 +1765,18 @@ update_live_1 (int src, rtx x)
 
   regno = REGNO (reg);
 
-  if (regno >= FIRST_PSEUDO_REGISTER || !global_regs[regno])
+  if (! HARD_REGISTER_NUM_P (regno)
+      || !global_regs[regno])
     {
-      if (regno < FIRST_PSEUDO_REGISTER)
+      for (i = 0; i < candidate_table[src].update_bbs.nr_members; i++)
 	{
-	  int j = hard_regno_nregs[regno][GET_MODE (reg)];
-	  while (--j >= 0)
-	    {
-	      for (i = 0; i < candidate_table[src].update_bbs.nr_members; i++)
-		{
-		  basic_block b = candidate_table[src].update_bbs.first_member[i];
+	  basic_block b = candidate_table[src].update_bbs.first_member[i];
 
-		  SET_REGNO_REG_SET (df_get_live_in (b), regno + j);
-		}
-	    }
-	}
-      else
-	{
-	  for (i = 0; i < candidate_table[src].update_bbs.nr_members; i++)
-	    {
-	      basic_block b = candidate_table[src].update_bbs.first_member[i];
-
-	      SET_REGNO_REG_SET (df_get_live_in (b), regno);
-	    }
+	  if (HARD_REGISTER_NUM_P (regno))
+	    bitmap_set_range (df_get_live_in (b), regno,
+			      hard_regno_nregs[regno][GET_MODE (reg)]);
+	  else
+	    bitmap_set_bit (df_get_live_in (b), regno);
 	}
     }
 }
@@ -1843,7 +1831,7 @@ update_live (rtx insn, int src)
 #define IS_REACHABLE(bb_from, bb_to)					\
   (bb_from == bb_to							\
    || IS_RGN_ENTRY (bb_from)						\
-   || (TEST_BIT (ancestor_edges[bb_to],					\
+   || (bitmap_bit_p (ancestor_edges[bb_to],					\
 	 EDGE_TO_BIT (single_pred_edge (BASIC_BLOCK (BB_TO_BLOCK (bb_from)))))))
 
 /* Turns on the fed_by_spec_load flag for insns fed by load_insn.  */
@@ -2072,12 +2060,12 @@ static int sched_n_insns;
 /* Implementations of the sched_info functions for region scheduling.  */
 static void init_ready_list (void);
 static int can_schedule_ready_p (rtx);
-static void begin_schedule_ready (rtx, rtx);
+static void begin_schedule_ready (rtx);
 static ds_t new_ready (rtx, ds_t);
 static int schedule_more_p (void);
 static const char *rgn_print_insn (const_rtx, int);
 static int rgn_rank (rtx, rtx);
-static void compute_jump_reg_dependencies (rtx, regset, regset, regset);
+static void compute_jump_reg_dependencies (rtx, regset);
 
 /* Functions for speculative scheduling.  */
 static void rgn_add_remove_insn (rtx, int);
@@ -2120,6 +2108,8 @@ init_ready_list (void)
      Count number of insns in the target block being scheduled.  */
   for (insn = NEXT_INSN (prev_head); insn != next_tail; insn = NEXT_INSN (insn))
     {
+      gcc_assert (TODO_SPEC (insn) == HARD_DEP || TODO_SPEC (insn) == DEP_POSTPONED);
+      TODO_SPEC (insn) = HARD_DEP;
       try_ready (insn);
       target_n_insns++;
 
@@ -2142,8 +2132,12 @@ init_ready_list (void)
 	src_head = head;
 
 	for (insn = src_head; insn != src_next_tail; insn = NEXT_INSN (insn))
-	  if (INSN_P (insn) && !BOUNDARY_DEBUG_INSN_P (insn))
-	    try_ready (insn);
+	  if (INSN_P (insn))
+	    {
+	      gcc_assert (TODO_SPEC (insn) == HARD_DEP || TODO_SPEC (insn) == DEP_POSTPONED);
+	      TODO_SPEC (insn) = HARD_DEP;
+	      try_ready (insn);
+	    }
       }
 }
 
@@ -2167,7 +2161,7 @@ can_schedule_ready_p (rtx insn)
    can_schedule_ready_p () differs from the one passed to
    begin_schedule_ready ().  */
 static void
-begin_schedule_ready (rtx insn, rtx last ATTRIBUTE_UNUSED)
+begin_schedule_ready (rtx insn)
 {
   /* An interblock motion?  */
   if (INSN_BB (insn) != target_bb)
@@ -2235,11 +2229,11 @@ new_ready (rtx next, ds_t ts)
 		ts = new_ds;
 	      else
 		/* NEXT isn't ready yet.  */
-		ts = (ts & ~SPECULATIVE) | HARD_DEP;
+		ts = DEP_POSTPONED;
 	    }
 	  else
 	    /* NEXT isn't ready yet.  */
-            ts = (ts & ~SPECULATIVE) | HARD_DEP;
+            ts = DEP_POSTPONED;
 	}
     }
 
@@ -2310,16 +2304,12 @@ contributes_to_priority (rtx next, rtx insn)
   return BLOCK_TO_BB (BLOCK_NUM (next)) == BLOCK_TO_BB (BLOCK_NUM (insn));
 }
 
-/* INSN is a JUMP_INSN, COND_SET is the set of registers that are
-   conditionally set before INSN.  Store the set of registers that
-   must be considered as used by this jump in USED and that of
-   registers that must be considered as set in SET.  */
+/* INSN is a JUMP_INSN.  Store the set of registers that must be
+   considered as used by this jump in USED.  */
 
 static void
 compute_jump_reg_dependencies (rtx insn ATTRIBUTE_UNUSED,
-			       regset cond_exec ATTRIBUTE_UNUSED,
-			       regset used ATTRIBUTE_UNUSED,
-			       regset set ATTRIBUTE_UNUSED)
+			       regset used ATTRIBUTE_UNUSED)
 {
   /* Nothing to do here, since we postprocess jumps in
      add_branch_dependences.  */
@@ -2384,7 +2374,9 @@ static const struct haifa_sched_info rgn_const_sched_info =
 
   rgn_add_remove_insn,
   begin_schedule_ready,
+  NULL,
   advance_target_bb,
+  NULL, NULL,
   SCHED_RGN
 };
 
@@ -2400,7 +2392,7 @@ get_rgn_sched_max_insns_priority (void)
   return rgn_sched_info.sched_max_insns_priority;
 }
 
-/* Determine if PAT sets a CLASS_LIKELY_SPILLED_P register.  */
+/* Determine if PAT sets a TARGET_CLASS_LIKELY_SPILLED_P register.  */
 
 static bool
 sets_likely_spilled (rtx pat)
@@ -2417,8 +2409,8 @@ sets_likely_spilled_1 (rtx x, const_rtx pat, void *data)
 
   if (GET_CODE (pat) == SET
       && REG_P (x)
-      && REGNO (x) < FIRST_PSEUDO_REGISTER
-      && CLASS_LIKELY_SPILLED_P (REGNO_REG_CLASS (REGNO (x))))
+      && HARD_REGISTER_P (x)
+      && targetm.class_likely_spilled_p (REGNO_REG_CLASS (REGNO (x))))
     *ret = true;
 }
 
@@ -2447,8 +2439,8 @@ add_branch_dependences (rtx head, rtx tail)
 
      COND_EXEC insns cannot be moved past a branch (see e.g. PR17808).
 
-     Insns setting CLASS_LIKELY_SPILLED_P registers (usually return values)
-     are not moved before reload because we can wind up with register
+     Insns setting TARGET_CLASS_LIKELY_SPILLED_P registers (usually return
+     values) are not moved before reload because we can wind up with register
      allocation failures.  */
 
   while (tail != head && DEBUG_INSN_P (tail))
@@ -2476,7 +2468,7 @@ add_branch_dependences (rtx head, rtx tail)
 	    {
 	      if (! sched_insns_conditions_mutex_p (last, insn))
 		add_dependence (last, insn, REG_DEP_ANTI);
-	      SET_BIT (insn_referenced, INSN_LUID (insn));
+	      bitmap_set_bit (insn_referenced, INSN_LUID (insn));
 	    }
 
 	  CANT_MOVE (insn) = 1;
@@ -2500,7 +2492,7 @@ add_branch_dependences (rtx head, rtx tail)
       {
 	insn = prev_nonnote_insn (insn);
 
-	if (TEST_BIT (insn_referenced, INSN_LUID (insn))
+	if (bitmap_bit_p (insn_referenced, INSN_LUID (insn))
 	    || DEBUG_INSN_P (insn))
 	  continue;
 
@@ -2569,20 +2561,6 @@ add_branch_dependences (rtx head, rtx tail)
 
 static struct deps_desc *bb_deps;
 
-/* Duplicate the INSN_LIST elements of COPY and prepend them to OLD.  */
-
-static rtx
-concat_INSN_LIST (rtx copy, rtx old)
-{
-  rtx new_rtx = old;
-  for (; copy ; copy = XEXP (copy, 1))
-    {
-      new_rtx = alloc_INSN_LIST (XEXP (copy, 0), new_rtx);
-      PUT_REG_NOTE_KIND (new_rtx, REG_NOTE_KIND (copy));
-    }
-  return new_rtx;
-}
-
 static void
 concat_insn_mem_list (rtx copy_insns, rtx copy_mems, rtx *old_insns_p,
 		      rtx *old_mems_p)
@@ -2636,6 +2614,9 @@ deps_join (struct deps_desc *succ_deps, struct deps_desc *pred_deps)
                         &succ_deps->pending_write_insns,
                         &succ_deps->pending_write_mems);
 
+  succ_deps->pending_jump_insns
+    = concat_INSN_LIST (pred_deps->pending_jump_insns,
+                        succ_deps->pending_jump_insns);
   succ_deps->last_pending_memory_flush
     = concat_INSN_LIST (pred_deps->last_pending_memory_flush,
                         succ_deps->last_pending_memory_flush);
@@ -2687,12 +2668,14 @@ propagate_deps (int bb, struct deps_desc *pred_deps)
   bb_deps[bb].pending_read_mems = pred_deps->pending_read_mems;
   bb_deps[bb].pending_write_insns = pred_deps->pending_write_insns;
   bb_deps[bb].pending_write_mems = pred_deps->pending_write_mems;
+  bb_deps[bb].pending_jump_insns = pred_deps->pending_jump_insns;
 
   /* Can't allow these to be freed twice.  */
   pred_deps->pending_read_insns = 0;
   pred_deps->pending_read_mems = 0;
   pred_deps->pending_write_insns = 0;
   pred_deps->pending_write_mems = 0;
+  pred_deps->pending_jump_insns = 0;
 }
 
 /* Compute dependences inside bb.  In a multiple blocks region:
@@ -2771,6 +2754,7 @@ free_pending_lists (void)
       free_INSN_LIST_list (&bb_deps[bb].pending_write_insns);
       free_EXPR_LIST_list (&bb_deps[bb].pending_read_mems);
       free_EXPR_LIST_list (&bb_deps[bb].pending_write_mems);
+      free_INSN_LIST_list (&bb_deps[bb].pending_jump_insns);
     }
 }
 
@@ -2778,7 +2762,7 @@ free_pending_lists (void)
    Callable from debugger.  */
 /* Print dependences for debugging starting from FROM_BB.
    Callable from debugger.  */
-void
+DEBUG_FUNCTION void
 debug_rgn_dependencies (int from_bb)
 {
   int bb;
@@ -2853,7 +2837,9 @@ void debug_dependencies (rtx head, rtx tail)
 	dep_t dep;
 
 	FOR_EACH_DEP (insn, SD_LIST_FORW, sd_it, dep)
-	  fprintf (sched_dump, "%d ", INSN_UID (DEP_CON (dep)));
+	  fprintf (sched_dump, "%d%s%s ", INSN_UID (DEP_CON (dep)),
+		   DEP_NONREG (dep) ? "n" : "",
+		   DEP_MULTIPLE (dep) ? "m" : "");
       }
       fprintf (sched_dump, "\n");
     }
@@ -2919,6 +2905,61 @@ compute_priorities (void)
   current_sched_info->sched_max_insns_priority++;
 }
 
+/* (Re-)initialize the arrays of DFA states at the end of each basic block.
+
+   SAVED_LAST_BASIC_BLOCK is the previous length of the arrays.  It must be
+   zero for the first call to this function, to allocate the arrays for the
+   first time.
+
+   This function is called once during initialization of the scheduler, and
+   called again to resize the arrays if new basic blocks have been created,
+   for example for speculation recovery code.  */
+
+static void
+realloc_bb_state_array (int saved_last_basic_block)
+{
+  char *old_bb_state_array = bb_state_array;
+  size_t lbb = (size_t) last_basic_block;
+  size_t slbb = (size_t) saved_last_basic_block;
+
+  /* Nothing to do if nothing changed since the last time this was called.  */
+  if (saved_last_basic_block == last_basic_block)
+    return;
+
+  /* The selective scheduler doesn't use the state arrays.  */
+  if (sel_sched_p ())
+    {
+      gcc_assert (bb_state_array == NULL && bb_state == NULL);
+      return;
+    }
+
+  gcc_checking_assert (saved_last_basic_block == 0
+		       || (bb_state_array != NULL && bb_state != NULL));
+
+  bb_state_array = XRESIZEVEC (char, bb_state_array, lbb * dfa_state_size);
+  bb_state = XRESIZEVEC (state_t, bb_state, lbb);
+
+  /* If BB_STATE_ARRAY has moved, fixup all the state pointers array.
+     Otherwise only fixup the newly allocated ones.  For the state
+     array itself, only initialize the new entries.  */
+  bool bb_state_array_moved = (bb_state_array != old_bb_state_array);
+  for (size_t i = bb_state_array_moved ? 0 : slbb; i < lbb; i++)
+    bb_state[i] = (state_t) (bb_state_array + i * dfa_state_size);
+  for (size_t i = slbb; i < lbb; i++)
+    state_reset (bb_state[i]);
+}
+
+/* Free the arrays of DFA states at the end of each basic block.  */
+
+static void
+free_bb_state_array (void)
+{
+  free (bb_state_array);
+  free (bb_state);
+  bb_state_array = NULL;
+  bb_state = NULL;
+}
+
 /* Schedule a region.  A region is either an inner loop, a loop-free
    subroutine, or a single basic block.  Each bb in the region is
    scheduled after its flow predecessors.  */
@@ -2947,7 +2988,7 @@ schedule_region (int rgn)
 
   sched_extend_ready_list (rgn_n_insns);
 
-  if (sched_pressure_p)
+  if (sched_pressure == SCHED_PRESSURE_WEIGHTED)
     {
       sched_init_region_reg_pressure_info ();
       for (bb = 0; bb < current_nr_blocks; bb++)
@@ -3001,9 +3042,23 @@ schedule_region (int rgn)
       curr_bb = first_bb;
       if (dbg_cnt (sched_block))
         {
-          schedule_block (&curr_bb);
-          gcc_assert (EBB_FIRST_BB (bb) == first_bb);
-          sched_rgn_n_insns += sched_n_insns;
+	  edge f;
+	  int saved_last_basic_block = last_basic_block;
+
+	  schedule_block (&curr_bb, bb_state[first_bb->index]);
+	  gcc_assert (EBB_FIRST_BB (bb) == first_bb);
+	  sched_rgn_n_insns += sched_n_insns;
+	  realloc_bb_state_array (saved_last_basic_block);
+	  f = find_fallthru_edge (last_bb->succs);
+	  if (f && f->probability * 100 / REG_BR_PROB_BASE >=
+	      PARAM_VALUE (PARAM_SCHED_STATE_EDGE_PROB_CUTOFF))
+	    {
+	      memcpy (bb_state[f->dest->index], curr_state,
+		      dfa_state_size);
+	      if (sched_verbose >= 5)
+		fprintf (sched_dump, "saving state for edge %d->%d\n",
+			 f->src->index, f->dest->index);
+	    }
         }
       else
         {
@@ -3047,6 +3102,8 @@ sched_rgn_init (bool single_blocks_p)
   CONTAINING_RGN (ENTRY_BLOCK) = -1;
   CONTAINING_RGN (EXIT_BLOCK) = -1;
 
+  realloc_bb_state_array (0);
+
   /* Compute regions for scheduling.  */
   if (single_blocks_p
       || n_basic_blocks == NUM_FIXED_BLOCKS + 1
@@ -3083,6 +3140,8 @@ sched_rgn_init (bool single_blocks_p)
 void
 sched_rgn_finish (void)
 {
+  free_bb_state_array ();
+
   /* Reposition the prologue and epilogue notes in case we moved the
      prologue/epilogue insns.  */
   if (reload_completed)
@@ -3159,7 +3218,7 @@ sched_rgn_compute_dependencies (int rgn)
 
       /* Initialize bitmap used in add_branch_dependences.  */
       insn_referenced = sbitmap_alloc (sched_max_luid);
-      sbitmap_zero (insn_referenced);
+      bitmap_clear (insn_referenced);
 
       /* Compute backward dependencies.  */
       for (bb = 0; bb < current_nr_blocks; bb++)
@@ -3199,7 +3258,7 @@ sched_rgn_local_init (int rgn)
       prob = XNEWVEC (int, current_nr_blocks);
 
       dom = sbitmap_vector_alloc (current_nr_blocks, current_nr_blocks);
-      sbitmap_vector_zero (dom, current_nr_blocks);
+      bitmap_vector_clear (dom, current_nr_blocks);
 
       /* Use ->aux to implement EDGE_TO_BIT mapping.  */
       rgn_nr_edges = 0;
@@ -3223,9 +3282,9 @@ sched_rgn_local_init (int rgn)
 
       /* Split edges.  */
       pot_split = sbitmap_vector_alloc (current_nr_blocks, rgn_nr_edges);
-      sbitmap_vector_zero (pot_split, current_nr_blocks);
+      bitmap_vector_clear (pot_split, current_nr_blocks);
       ancestor_edges = sbitmap_vector_alloc (current_nr_blocks, rgn_nr_edges);
-      sbitmap_vector_zero (ancestor_edges, current_nr_blocks);
+      bitmap_vector_clear (ancestor_edges, current_nr_blocks);
 
       /* Compute probabilities, dominators, split_edges.  */
       for (bb = 0; bb < current_nr_blocks; bb++)
@@ -3410,7 +3469,8 @@ rgn_add_block (basic_block bb, basic_block after)
       /* Now POS is the index of the last block in the region.  */
 
       /* Find index of basic block AFTER.  */
-      for (; rgn_bb_table[pos] != after->index; pos--);
+      for (; rgn_bb_table[pos] != after->index; pos--)
+	;
 
       pos++;
       gcc_assert (pos > ebb_head[i - 1]);
@@ -3457,12 +3517,14 @@ rgn_fix_recovery_cfg (int bbi, int check_bbi, int check_bb_nexti)
 
   for (old_pos = ebb_head[BLOCK_TO_BB (check_bbi) + 1] - 1;
        rgn_bb_table[old_pos] != check_bb_nexti;
-       old_pos--);
+       old_pos--)
+    ;
   gcc_assert (old_pos > ebb_head[BLOCK_TO_BB (check_bbi)]);
 
   for (new_pos = ebb_head[BLOCK_TO_BB (bbi) + 1] - 1;
        rgn_bb_table[new_pos] != bbi;
-       new_pos--);
+       new_pos--)
+    ;
   new_pos++;
   gcc_assert (new_pos > ebb_head[BLOCK_TO_BB (bbi)]);
 
@@ -3497,7 +3559,7 @@ static bool
 gate_handle_sched (void)
 {
 #ifdef INSN_SCHEDULING
-  return flag_schedule_insns && dbg_cnt (sched_func);
+  return optimize > 0 && flag_schedule_insns && dbg_cnt (sched_func);
 #else
   return 0;
 #endif
@@ -3522,7 +3584,7 @@ gate_handle_sched2 (void)
 {
 #ifdef INSN_SCHEDULING
   return optimize > 0 && flag_schedule_insns_after_reload
-    && dbg_cnt (sched2_func);
+    && !targetm.delay_sched2 && dbg_cnt (sched2_func);
 #else
   return 0;
 #endif
@@ -3554,6 +3616,7 @@ struct rtl_opt_pass pass_sched =
  {
   RTL_PASS,
   "sched1",                             /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_handle_sched,                    /* gate */
   rest_of_handle_sched,                 /* execute */
   NULL,                                 /* sub */
@@ -3565,7 +3628,6 @@ struct rtl_opt_pass pass_sched =
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_dump_func |
   TODO_verify_flow |
   TODO_ggc_collect                      /* todo_flags_finish */
  }
@@ -3576,6 +3638,7 @@ struct rtl_opt_pass pass_sched2 =
  {
   RTL_PASS,
   "sched2",                             /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_handle_sched2,                   /* gate */
   rest_of_handle_sched2,                /* execute */
   NULL,                                 /* sub */
@@ -3587,7 +3650,6 @@ struct rtl_opt_pass pass_sched2 =
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_dump_func |
   TODO_verify_flow |
   TODO_ggc_collect                      /* todo_flags_finish */
  }

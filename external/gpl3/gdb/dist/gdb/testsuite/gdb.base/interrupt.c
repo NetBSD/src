@@ -17,10 +17,6 @@ main ()
 {
   char x;
   int nbytes;
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
 #ifdef SIGNALS
   signal (SIGINT, sigint_handler);
 #endif

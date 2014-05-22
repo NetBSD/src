@@ -1,0 +1,46 @@
+# Copyright 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is a dejagnu "board file" and is used to run the testsuite
+# with dwarf4 debug information and gdb-generated .gdb_index.
+#
+# Example usage:
+# bash$ make check RUNTESTFLAGS='--target_board=dwarf4-gdb-index'
+
+# This is needed otherwise dejagnu tries to rsh to host "dwarf4-gdb-index".
+# set_board_info only sets the value if not already set.
+# find_gcc checks for this, so set early.
+unset_board_info isremote
+set_board_info isremote 0
+
+# This is based on baseboards/unix.exp.
+# At the moment we only support systems that unix.exp supports.
+load_generic_config "unix"
+process_multilib_options ""
+set found_gcc [find_gcc]
+set found_gxx [find_g++]
+set_board_info compiler "$found_gcc"
+
+set_board_info debug_flags "-gdwarf-4 -fdebug-types-section"
+
+set contrib_dir [file normalize $srcdir/../contrib]
+if ![info exists CC_FOR_TARGET] {
+    set CC_FOR_TARGET "$found_gcc"
+}
+set CC_FOR_TARGET "/bin/sh $contrib_dir/cc-with-tweaks.sh -i $CC_FOR_TARGET"
+if ![info exists CXX_FOR_TARGET] {
+    set CXX_FOR_TARGET "$found_gxx"
+}
+set CXX_FOR_TARGET "/bin/sh $contrib_dir/cc-with-tweaks.sh -i $CXX_FOR_TARGET"

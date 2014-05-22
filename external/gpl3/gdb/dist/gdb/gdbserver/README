@@ -99,7 +99,6 @@ The supported targets as of November 2006 are:
 	sh-*-linux*
 	spu*-*-*
 	x86_64-*-linux*
-	xscale*-*-linux*
 
 Configuring GDBserver you should specify the same machine for host and
 target (which are the machine that GDBserver is going to run on.  This

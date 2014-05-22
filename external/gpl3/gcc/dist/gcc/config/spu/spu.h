@@ -1,4 +1,4 @@
-/* Copyright (C) 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -18,18 +18,9 @@
 /* Run-time Target */
 #define TARGET_CPU_CPP_BUILTINS()	spu_cpu_cpp_builtins(pfile)
 
-#define TARGET_VERSION fprintf (stderr, " (spu %s)", __DATE__);
-
-#define OVERRIDE_OPTIONS spu_override_options()
 #define C_COMMON_OVERRIDE_OPTIONS spu_c_common_override_options()
 
-#define OPTIMIZATION_OPTIONS(level,size) \
-	  spu_optimization_options(level,size)
-
 #define INIT_EXPANDERS spu_init_expanders()
-
-extern int target_flags;
-extern const char *spu_fixed_range_string;
 
 /* Which processor to generate code or schedule for.  */
 enum processor_type
@@ -72,9 +63,16 @@ extern GTY(()) int spu_tune;
 
 #define UNITS_PER_WORD (BITS_PER_WORD/BITS_PER_UNIT)
 
-/* We never actually change UNITS_PER_WORD, but defining this causes
-   libgcc to use some different sizes of types when compiling. */
-#define MIN_UNITS_PER_WORD 4
+/* When building libgcc, we need to assume 4 words per units even
+   though UNITS_PER_WORD is 16, because the SPU has basically a 32-bit
+   instruction set although register size is 128 bits.  In particular,
+   this causes libgcc to contain __divdi3 instead of __divti3 etc.
+   However, we allow this default to be re-defined on the command
+   line, so that we can use the LIB2_SIDITI_CONV_FUNCS mechanism
+   to get (in addition) TImode versions of some routines.  */
+#ifndef LIBGCC2_UNITS_PER_WORD
+#define LIBGCC2_UNITS_PER_WORD 4
+#endif
 
 #define POINTER_SIZE 32
 
@@ -174,9 +172,6 @@ extern GTY(()) int spu_tune;
     1, 1, 1 \
 }
 
-#define CONDITIONAL_REGISTER_USAGE \
-	spu_conditional_register_usage()
-
 
 /* Values in Registers */
 
@@ -198,9 +193,6 @@ enum reg_class {
    ALL_REGS,
    LIM_REG_CLASSES 
 };
-
-/* SPU is simple, it really only has one class of registers.  */
-#define IRA_COVER_CLASSES { GENERAL_REGS, LIM_REG_CLASSES }
 
 #define N_REG_CLASSES (int) LIM_REG_CLASSES
 
@@ -232,11 +224,6 @@ enum reg_class {
 #define INT_REG_OK_FOR_BASE_P(X,STRICT) \
 	((!(STRICT) || REGNO_OK_FOR_BASE_P (REGNO (X))))
 
-#define PREFERRED_RELOAD_CLASS(X,CLASS)  (CLASS)
-
-#define CLASS_MAX_NREGS(CLASS, MODE)	\
-	((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
-
 /* GCC assumes that modes are in the lowpart of a register, which is
    only true for SPU. */
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS) \
@@ -245,6 +232,7 @@ enum reg_class {
 	 && GET_MODE_SIZE (FROM) != GET_MODE_SIZE (TO))
 
 #define REGISTER_TARGET_PRAGMAS() do {					\
+c_register_addr_space ("__ea", ADDR_SPACE_EA);				\
 targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 }while (0);
 
@@ -261,7 +249,7 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define FIRST_PARM_OFFSET(FNDECL) (0)
 
-#define DYNAMIC_CHAIN_ADDRESS(FP) plus_constant ((FP), -16)
+#define DYNAMIC_CHAIN_ADDRESS(FP) plus_constant (Pmode, (FP), -16)
 
 #define RETURN_ADDR_RTX(COUNT,FP) (spu_return_addr (COUNT, FP))
 
@@ -333,26 +321,13 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define OUTGOING_REG_PARM_STACK_SPACE(FNTYPE) 1
 
-#define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE) (0)
-
 
 /* Register Arguments */
-
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
-        (spu_function_arg((CUM),(MODE),(TYPE),(NAMED)))
 
 #define CUMULATIVE_ARGS int
 
 #define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,FNDECL,N_NAMED_ARGS) \
 		((CUM) = 0)
-
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)	\
-        ((CUM) += \
-	 (TYPE) && TREE_CODE (TYPE_SIZE (TYPE)) != INTEGER_CST ? 1 \
-	 : (MODE) == BLKmode ? ((int_size_in_bytes(TYPE)+15) / 16) \
-         : (MODE) == VOIDmode ? 1 \
-	 : HARD_REGNO_NREGS(CUM,MODE))
-
 
 /* The SPU ABI wants 32/64-bit types at offset 0 in the quad-word on the
    stack.  8/16-bit types should be at offsets 3/2 respectively.  */
@@ -414,7 +389,16 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define MAX_REGS_PER_ADDRESS 2
 
-#define LEGITIMATE_CONSTANT_P(X) spu_legitimate_constant_p(X)
+#define LEGITIMIZE_RELOAD_ADDRESS(AD, MODE, OPNUM, TYPE, IND, WIN)	\
+do {									\
+  rtx new_rtx = spu_legitimize_reload_address (AD, MODE, OPNUM,		\
+					       (int)(TYPE));		\
+  if (new_rtx)								\
+    {									\
+      (AD) = new_rtx;							\
+      goto WIN;								\
+    }									\
+} while (0)
 
 
 /* Costs */
@@ -423,7 +407,7 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define SLOW_BYTE_ACCESS 0
 
-#define MOVE_RATIO(speed) 32
+#define MOVE_RATIO(speed) ((speed)? 32 : 4)
 
 #define NO_FUNCTION_CSE
 
@@ -446,12 +430,6 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 #define ASM_APP_ON ""
 
 #define ASM_APP_OFF ""
-
-#define ASM_OUTPUT_SOURCE_FILENAME(STREAM, NAME) \
-  do {	fprintf (STREAM, "\t.file\t");			\
-	output_quoted_string (STREAM, NAME);		\
-	fprintf (STREAM, "\n");				\
-  } while (0)
 
 
 /* Uninitialized Data */
@@ -507,6 +485,8 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define USER_LABEL_PREFIX ""
 
+#define ASM_COMMENT_START "#"
+
 
 /* Dispatch Tables */
 
@@ -521,57 +501,6 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define ASM_OUTPUT_ALIGN(FILE,LOG)  \
   do { if (LOG!=0) fprintf (FILE, "\t.align\t%d\n", (LOG)); } while (0)
-
-
-/* Model costs for the vectorizer.  */
-
-/* Cost of conditional branch.  */
-#ifndef TARG_COND_BRANCH_COST
-#define TARG_COND_BRANCH_COST        6
-#endif
-
-/* Cost of any scalar operation, excluding load and store.  */
-#ifndef TARG_SCALAR_STMT_COST
-#define TARG_SCALAR_STMT_COST        1
-#endif
-
-/* Cost of scalar load. */
-#undef TARG_SCALAR_LOAD_COST
-#define TARG_SCALAR_LOAD_COST        2 /* load + rotate */
-
-/* Cost of scalar store.  */
-#undef TARG_SCALAR_STORE_COST
-#define TARG_SCALAR_STORE_COST       10
-
-/* Cost of any vector operation, excluding load, store,
-   or vector to scalar operation.  */
-#undef TARG_VEC_STMT_COST
-#define TARG_VEC_STMT_COST           1
-
-/* Cost of vector to scalar operation.  */
-#undef TARG_VEC_TO_SCALAR_COST
-#define TARG_VEC_TO_SCALAR_COST      1
-
-/* Cost of scalar to vector operation.  */
-#undef TARG_SCALAR_TO_VEC_COST
-#define TARG_SCALAR_TO_VEC_COST      1
-
-/* Cost of aligned vector load.  */
-#undef TARG_VEC_LOAD_COST
-#define TARG_VEC_LOAD_COST           1
-
-/* Cost of misaligned vector load.  */
-#undef TARG_VEC_UNALIGNED_LOAD_COST
-#define TARG_VEC_UNALIGNED_LOAD_COST 2
-
-/* Cost of vector store.  */
-#undef TARG_VEC_STORE_COST
-#define TARG_VEC_STORE_COST          1
-
-/* Cost of vector permutation.  */
-#ifndef TARG_VEC_PERMUTE_COST
-#define TARG_VEC_PERMUTE_COST        1 
-#endif
 
 
 /* Misc */
@@ -590,26 +519,9 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 #define NO_IMPLICIT_EXTERN_C 1
 
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
-
-/* Canonicalize a comparison from one we don't have to one we do have.  */
-#define CANONICALIZE_COMPARISON(CODE,OP0,OP1) \
-  do {                                                                    \
-    if (((CODE) == LE || (CODE) == LT || (CODE) == LEU || (CODE) == LTU)) \
-      {                                                                   \
-        rtx tem = (OP0);                                                  \
-        (OP0) = (OP1);                                                    \
-        (OP1) = tem;                                                      \
-        (CODE) = swap_condition (CODE);                                   \
-      }                                                                   \
-  } while (0)
-
 
 /* Address spaces.  */
 #define ADDR_SPACE_EA	1
-
-/* Named address space keywords.  */
-#define TARGET_ADDR_SPACE_KEYWORDS ADDR_SPACE_KEYWORD ("__ea", ADDR_SPACE_EA)
 
 
 /* Builtins.  */
@@ -625,7 +537,7 @@ enum spu_builtin_type
   B_INTERNAL
 };
 
-struct GTY(()) spu_builtin_description
+struct spu_builtin_description
 {
   int fcode;
   int icode;
@@ -635,8 +547,6 @@ struct GTY(()) spu_builtin_description
   /* The first element of parm is always the return type.  The rest
      are a zero terminated list of parameters.  */
   int parm[5];
-
-  tree fndecl;
 };
 
 extern struct spu_builtin_description spu_builtins[];

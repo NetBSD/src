@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for PowerPC NetBSD systems.
-   Copyright 2002, 2003, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -18,22 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
-
-/* This defines which switch letters take arguments.  On NetBSD, most
-   of the normal cases (defined by gcc.c) apply, and we also have -h*
-   and -z* options (for the linker) (coming from SVR4).
-   Copied from ../netbsd-elf.h and re{undef,defined} here to
-   override the powerpc sysv4.h definition.
-   netbsd-elf.h defines the default list + 'h' + 'z' + 'R'.
-   rs6000/sysv4.h defines the default list + 'G'. */
-
-#undef SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR)			\
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR)		\
-   || (CHAR) == 'h'				\
-   || (CHAR) == 'z'				\
-   || (CHAR) == 'R'				\
-   || (CHAR) == 'G')
 
 #undef  TARGET_OS_CPP_BUILTINS	/* FIXME: sysv4.h should not define this! */
 #define TARGET_OS_CPP_BUILTINS()		\
@@ -119,10 +103,10 @@
   { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
 
 /*
- * Add NetBSD specific defaults: -mpowerpc -mnew_mnemonics -mstrict-align
+ * Add NetBSD specific defaults: -mstrict-align
  */
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_STRICT_ALIGN)
+#define TARGET_DEFAULT (MASK_STRICT_ALIGN)
 
 /*
  * We know we have the right binutils for this (we shouldn't need to do this
@@ -134,20 +118,15 @@
 #define HAVE_AS_TLS 1
 
 /* Attempt to enable execute permissions on the stack.  */
-#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+//#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+// XXXMRG use enable-execute-stack-mprotect.c ?
 #ifdef L_trampoline
 #undef TRAMPOLINE_SIZE
 #define TRAMPOLINE_SIZE 48
 #endif
 
-/* Make sure _enable_execute_stack() isn't the empty function in libgcc2.c.
-   It gets defined in _trampoline.o via NETBSD_ENABLE_EXECUTE_STACK.  */
-#undef ENABLE_EXECUTE_STACK
-#define ENABLE_EXECUTE_STACK
-
 /* Override STACK_BOUNDARY to use Altivec compliant one.  */
 #undef STACK_BOUNDARY
 #define STACK_BOUNDARY	128
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/powerpc ELF)");
+#define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number (REGNO)
