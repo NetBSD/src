@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.62.2.4 2014/05/22 11:41:19 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.62.2.5 2014/05/22 19:12:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62.2.4 2014/05/22 11:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62.2.5 2014/05/22 19:12:52 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -296,7 +296,6 @@ bool
 uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 {
 	struct vm_page *pg;
-	struct uvm_object *uobj;
 
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
@@ -326,7 +325,6 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	 */
 
 	pg = anon->an_page;
-	uobj = pg->uobject;
 	if (anon->an_swslot > 0) {
 		uvm_swap_free(anon->an_swslot, 1);
 	}
