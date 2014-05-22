@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.23.2.2 2013/01/23 00:04:05 yamt Exp $ */
+/* $NetBSD: extern.h,v 1.23.2.3 2014/05/22 11:26:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,6 +48,9 @@ void initdesc(void);
 __dead void pintr(int);
 __dead void pintr1(int);
 void printprompt(void);
+#ifdef EDIT
+char *printpromptstr(EditLine *);
+#endif
 void process(int);
 void rechist(void);
 void untty(void);
@@ -108,7 +111,7 @@ int exp0(Char ***, int);
  * file.c
  */
 #ifdef FILEC
-int tenex(Char *, int);
+ssize_t tenex(Char *, size_t);
 #endif
 
 /*
@@ -172,6 +175,9 @@ int sortscmp(const ptr_t, const ptr_t);
  */
 void dohist(Char **, struct command *);
 struct Hist *enthist(int, struct wordent *, int);
+#ifdef EDIT
+void loadhist(struct Hist *);
+#endif
 void savehist(struct wordent *);
 
 /*
@@ -186,6 +192,9 @@ Char *domod(Char *, int);
 void freelex(struct wordent *);
 int lex(struct wordent *);
 void prlex(FILE *, struct wordent *);
+#ifdef EDIT
+int sprlex(char **, struct wordent *);
+#endif
 int readc(int);
 void settell(void);
 void unreadc(int);
@@ -207,7 +216,7 @@ int dcopy(int, int);
 int dmove(int, int);
 void donefds(void);
 Char lastchr(Char *);
-void lshift(Char **, int);
+void lshift(Char **, size_t);
 int number(Char *);
 int prefix(Char *, Char *);
 Char **saveblk(Char **);
@@ -301,7 +310,6 @@ void Free(ptr_t);
 ptr_t Malloc(size_t);
 ptr_t Realloc(ptr_t, size_t);
 ptr_t Calloc(size_t, size_t);
-void showall(Char **, struct command *);
 
 /*
  * str.c:

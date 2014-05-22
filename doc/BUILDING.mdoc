@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.85.2.3 2013/01/16 05:26:12 yamt Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.85.2.4 2014/05/22 11:27:14 yamt Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd September 19, 2012
+.Dd November 8, 2012
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -156,12 +156,11 @@ build tree is described in
 .Xr hier 7 ,
 and the release layout is described in
 .Xr release 7 .
-.Pp
 .
 .Sh CONFIGURATION
 .
 .Ss Environment variables
-..
+.
 Several environment variables control the behaviour of
 .Nx
 builds.
@@ -1575,7 +1574,7 @@ to
 Unsets
 .Sy MAKEOBJDIR .
 See
-.Dq Fl O obj
+.Dq Fl O Ar obj
 for more information.
 .Pp
 For instance, if the source directory is

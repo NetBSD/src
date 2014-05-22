@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.12.34.1 2011/11/10 14:31:10 yamt Exp $ */
+/* $NetBSD: proc.h,v 1.12.34.2 2014/05/22 11:26:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -46,8 +46,8 @@ struct process {
     struct process *p_next;	/* next in global "proclist" */
     struct process *p_friends;	/* next in job list (or self) */
     struct directory *p_cwd;	/* cwd of the job (only in head) */
-    short unsigned p_flags;	/* various job status flags */
-    char p_reason;		/* reason for entering this state */
+    int p_flags;		/* various job status flags */
+    int p_reason;		/* reason for entering this state */
     int p_index;		/* shorthand job index */
     pid_t p_pid;
     pid_t p_jobid;		/* pid of job leader */

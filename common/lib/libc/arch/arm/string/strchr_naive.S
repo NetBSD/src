@@ -28,17 +28,30 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strchr_naive.S,v 1.1.2.2 2013/01/23 00:04:06 yamt Exp $")
+RCSID("$NetBSD: strchr_naive.S,v 1.1.2.3 2014/05/22 11:26:28 yamt Exp $")
 
 /* LINTSTUB: char * strchr(const char *, int) */
 ENTRY(strchr)
-	mov	ip, r0		/* using r0 as return value */
+#ifdef __thumb__
+	movs	r3, #0xff
+	ands	r1, r1, r3	/* restrict to a byte value */
+1:	ldrb	r3, [r0]	/* read a byte */
+	cmp	r3, r1		/* does it match? */
+	beq	2f		/*   yes, set return value */
+	adds	r0, r0, #1	/* advance to next byte */
+	cmp	r3, #0		/* was it a NUL? */
+	bne	1b		/*   no, get next byte */
+	movs	r0, #0		/* set return to NULL */
+2:	RET			/* return */
+#else
+	mov	r2, r0		/* using r0 as return value */
 	mov	r0, #0		/* default to no match */
 	and	r1, r1, #0xff	/* restrict to a byte value */
-1:	ldrb	r3, [ip], #1	/* read a byte */
+1:	ldrb	r3, [r2], #1	/* read a byte */
 	cmp	r3, r1		/* does it match? */
-	subeq	r0, ip, #1	/*   yes, set return value to point to it */
-	teqne	r3, #0		/*   no, was it a NUL? */
+	subeq	r0, r2, #1	/*   yes, set return value to point to it */
+	cmpne	r3, #0		/*   no, was it a NUL? */
 	bne	1b		/*     no, get next byte */
 	RET
+#endif
 END(strchr)

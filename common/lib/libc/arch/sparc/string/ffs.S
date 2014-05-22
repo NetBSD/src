@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 2011/07/04 11:18:23 mrg Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3.2.1 2014/05/22 11:26:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.3 2011/07/04 11:18:23 mrg Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3.2.1 2014/05/22 11:26:30 yamt Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@
  */
 WEAK_ALIAS(__ffssi2,ffs)
 ENTRY(ffs)
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(ffstab, %o2, %o3)
 #else
 	set	ffstab, %o2

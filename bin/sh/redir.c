@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.32.2.3 2013/06/12 01:36:09 yamt Exp $	*/
+/*	$NetBSD: redir.c,v 1.32.2.4 2014/05/22 11:26:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.32.2.3 2013/06/12 01:36:09 yamt Exp $");
+__RCSID("$NetBSD: redir.c,v 1.32.2.4 2014/05/22 11:26:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: redir.c,v 1.32.2.3 2013/06/12 01:36:09 yamt Exp $");
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
+#define	CLOSED -1		/* fd was not open before redir */
 #ifndef PIPE_BUF
 # define PIPESIZE 4096		/* amount of buffering in a pipe */
 #else
@@ -91,7 +92,7 @@ MKINIT struct redirtab *redirlist;
 int fd0_redirected = 0;
 
 STATIC void openredirect(union node *, char[10], int);
-STATIC int openhere(union node *);
+STATIC int openhere(const union node *);
 
 
 /*
@@ -109,7 +110,6 @@ redirect(union node *redir, int flags)
 	struct redirtab *sv = NULL;
 	int i;
 	int fd;
-	int try;
 	char memory[10];	/* file descriptors to write to memory */
 
 	for (i = 10 ; --i >= 0 ; )
@@ -127,41 +127,32 @@ redirect(union node *redir, int flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
-		try = 0;
 		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
 		    n->ndup.dupfd == fd)
 			continue; /* redirect from/to same file descriptor */
 
 		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
 			INTOFF;
-again:
 			if ((i = fcntl(fd, F_DUPFD, 10)) == -1) {
 				switch (errno) {
 				case EBADF:
-					if (!try) {
-						openredirect(n, memory, flags);
-						try++;
-						goto again;
-					}
-					/* FALLTHROUGH*/
+					i = CLOSED;
+					break;
 				default:
 					INTON;
 					error("%d: %s", fd, strerror(errno));
 					/* NOTREACHED */
 				}
-			}
-			if (!try) {
-				sv->renamed[fd] = i;
-				close(fd);
-			}
+			} else
+				(void)fcntl(i, F_SETFD, FD_CLOEXEC);
+			sv->renamed[fd] = i;
 			INTON;
 		} else {
 			close(fd);
 		}
                 if (fd == 0)
                         fd0_redirected++;
-		if (!try)
-			openredirect(n, memory, flags);
+		openredirect(n, memory, flags);
 	}
 	if (memory[1])
 		out1 = &memout;
@@ -256,7 +247,7 @@ eopen:
  */
 
 STATIC int
-openhere(union node *redir)
+openhere(const union node *redir)
 {
 	int pip[2];
 	int len = 0;

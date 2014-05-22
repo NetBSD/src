@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2008/03/18 04:20:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.16.22.1 2014/05/22 11:27:19 yamt Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
@@ -17,5 +17,5 @@ snap_md_post:
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/kernel '*.gz'
 
 iso-image-md-pre:
-	gzip -dc ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd.aout-INSTALL.gz \
+	${TOOL_GZIP} -dc ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd.aout-INSTALL.gz \
 	    > ${CDROM.dir}/netbsd

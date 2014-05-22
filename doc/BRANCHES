@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.310.2.5 2013/01/16 05:26:12 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.310.2.6 2014/05/22 11:27:14 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -297,6 +297,17 @@ Notes:		This branch is used to develop the version of netpgp
 		libraries, so that it is able to operate without openssl
 		being in place.
 
+Branch:		agc-symver
+Description:	Add library symbol versioning information
+Status:		Active
+Start Date:	24 March 2013
+End Date:
+Base Tag:	agc-symver-base
+Maintainer:	Alistair Crooks <agc@NetBSD.org>
+Scope:		src
+Notes:		This branch is used to develop DSO symbol versioning, allowing
+		symbols to be added, modified and removed from shared libraries.
+
 Branch:		bjh21-hydra
 Description:	Simtec Hydra support and ARM SMP in general
 Status:		Dormant
@@ -431,6 +442,15 @@ Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
 		to this branch.
 		This branch is not expected to be compilable yet.
 
+Branch:		khorben-n900
+Description:	Supporting the Nokia N900 smartphone
+Status:		Active
+Start Date:	2013-05-07
+Maintainer:	Pierre Pronchery <khorben@netbsd.org>
+Scope:		kernel (OMAP3 support, device drivers)
+Notes:		Do not hesitate to communicate any change that would be welcome
+		in HEAD.
+
 Branch:		matt-timespec
 Description:	Convert the kernel to struct timespec as its primary time
 		storage mechanism.
@@ -518,6 +538,21 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
+
+Branch:		rmind-smpnet
+Description:	MP safe network stack (milestone 1): IPv4, UDP and ICMP
+Status:		Active
+Start Date:	17 July 2013
+End Date:	
+Base Tag:	rmind-smpnet-base
+Maintainer:	Mindaugas Rasiukevicius <rmind@netbsd.org>
+Scope:		Kernel: src/sys (src/common is tagged but not branched)
+Notes:		Goals:
+
+		- Improve the abstraction of PCB and other interfaces.
+		- Add PCB and route cache locking, adjust socket locking.
+		- Rework IPv4, UDP and ICMP paths to be MP safe.
+		- Switch UDP sockets to a separate lock, test and benchmark.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
@@ -617,7 +652,7 @@ Description:	page cache related changes
 Status:		Active
 Start Date:	Wed Nov 2 2011
 End Date:	
-Base Tag:	yamt-pagecache-base6
+Base Tag:	yamt-pagecache-base8
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src
 Notes:		- maintain object pages in radix tree rather than rb tree.

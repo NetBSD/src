@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.2.34.1 2011/11/10 14:31:10 yamt Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.2.34.2 2014/05/22 11:26:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memcmp.c,v 1.2.34.1 2011/11/10 14:31:10 yamt Exp $");
+__RCSID("$NetBSD: memcmp.c,v 1.2.34.2 2014/05/22 11:26:30 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,3 +68,7 @@ memcmp(const void *s1, const void *s2, size_t n)
 	}
 	return (0);
 }
+
+#if defined(__ARM_EABI__)
+__strong_alias(__aeabi_memcmp, memcmp)
+#endif

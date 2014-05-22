@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.35.2.1 2011/11/10 14:31:10 yamt Exp $	*/
+/*	$NetBSD: args.c,v 1.35.2.2 2014/05/22 11:26:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.35.2.1 2011/11/10 14:31:10 yamt Exp $");
+__RCSID("$NetBSD: args.c,v 1.35.2.2 2014/05/22 11:26:22 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ static const struct arg {
 	{ "ibs",	f_ibs,		C_IBS,	 C_BS|C_IBS },
 	{ "if",		f_if,		C_IF,	 C_IF },
 	{ "iseek",	f_skip,		C_SKIP,	 C_SKIP },
-	{ "msgfmt",	f_msgfmt,	C_SKIP,	 C_SKIP },
+	{ "msgfmt",	f_msgfmt,	0,	 0 },
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
 	{ "of",		f_of,		C_OF,	 C_OF },
 	{ "oseek",	f_seek,		C_SEEK,	 C_SEEK },

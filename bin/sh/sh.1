@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.106.2.1 2012/10/30 18:46:08 yamt Exp $
+.\"	$NetBSD: sh.1,v 1.106.2.2 2014/05/22 11:26:23 yamt Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd August 26, 2012
+.Dd January 20, 2014
 .Dt SH 1
 .Os
 .Sh NAME
@@ -480,9 +480,9 @@ The following redirection is often called a
 .Li delimiter
 .El
 .Pp
-All the text on successive lines up to the delimiter is saved away and
-made available to the command on standard input, or file descriptor n if
-it is specified.
+All the text on successive lines up to the delimiter, or to an EOF, is
+saved away and made available to the command on standard input, or file
+descriptor n if it is specified.
 If the delimiter as specified on the initial line is
 quoted, then the here-doc-text is treated literally; otherwise, the text is
 subjected to parameter expansion, command substitution, and arithmetic
@@ -1157,6 +1157,15 @@ matches a
 .Dq \&[
 rather than introducing a character class.
 A character class matches any of the characters between the square brackets.
+A named class of characters (see
+.Xr wctype 3 )
+may be specified by surrounding the name with
+.Pq Dq [:
+and
+.Pq Dq :] .
+For example,
+.Pq Dq [[:alpha:]]
+is a shell pattern that matches a single letter.
 A range of characters may be specified using a minus sign
 .Pq Dq - .
 The character class may be complemented
@@ -1896,6 +1905,8 @@ section above.
 The search path used with the
 .Ic cd
 built-in.
+.It Ev LINENO
+The current line number in the script or function.
 .It Ev LANG
 The string used to specify localization information that allows users
 to work with different culture-specific and language conventions.

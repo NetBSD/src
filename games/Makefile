@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.6.1 2012/10/30 18:58:16 yamt Exp $
+#	$NetBSD: Makefile,v 1.26.6.2 2014/05/22 11:36:21 yamt Exp $
 #	@(#)Makefile	8.3 (Berkeley) 7/24/94
 
 # Missing: dungeon warp
@@ -9,9 +9,9 @@
 
 SUBDIR=	adventure arithmetic atc \
 	backgammon banner battlestar bcd boggle \
-	caesar canfield ching colorbars countmail cribbage \
+	caesar canfield cgram ching colorbars countmail cribbage \
 	dm factor fish fortune gomoku \
-	hack hangman hunt larn mille monop morse number \
+	hack hals_end hangman hunt larn mille monop morse number \
 	phantasia pig pom ppt primes quiz \
 	rain random robots rogue sail snake tetris trek \
 	wargames worm worms wtf wump
