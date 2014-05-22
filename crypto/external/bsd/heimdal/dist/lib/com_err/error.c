@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.1.4.1 2014/05/22 13:21:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2001 Kungliga Tekniska Högskolan
@@ -103,7 +103,7 @@ initialize_error_table_r(struct et_list **list,
     et->next = NULL;
     *end = et;
 }
-			
+
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 free_error_table(struct et_list *et)

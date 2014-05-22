@@ -1,4 +1,4 @@
-/*	$NetBSD: test_ap-req.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_ap-req.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 
     if (argc < 3)
 	usage(1);
-		
+
     principal = argv[0];
     keytab = argv[1];
     ccache = argv[2];

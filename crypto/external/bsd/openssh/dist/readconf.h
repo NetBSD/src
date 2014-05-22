@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $	*/
-/* $OpenBSD: readconf.h,v 1.91 2011/09/23 07:45:05 markus Exp $ */
+/*	$NetBSD: readconf.h,v 1.6.2.2 2014/05/22 13:21:35 yamt Exp $	*/
+/* $OpenBSD: readconf.h,v 1.95 2013/05/16 04:27:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -111,6 +111,7 @@ typedef struct {
 
 	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
 	char   *identity_files[SSH_MAX_IDENTITY_FILES];
+	int    identity_file_userprovided[SSH_MAX_IDENTITY_FILES];
 	Key    *identity_keys[SSH_MAX_IDENTITY_FILES];
 
 	/* Local TCP/IP forward requests. */
@@ -124,6 +125,7 @@ typedef struct {
 
 	int	enable_ssh_keysign;
 	int64_t rekey_limit;
+	int	rekey_interval;
 	int     none_switch;    /* Use none cipher */
 	int     none_enabled;   /* Allow none to be used */
 	int	no_host_authentication_for_localhost;
@@ -153,6 +155,8 @@ typedef struct {
 
 	int	request_tty;
 	int	send_version_first;
+
+	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;
 
 #define SSHCTL_MASTER_NO	0
@@ -166,15 +170,20 @@ typedef struct {
 #define REQUEST_TTY_YES		2
 #define REQUEST_TTY_FORCE	3
 
+#define SSHCONF_CHECKPERM	1  /* check permissions on config file */
+#define SSHCONF_USERCONF	2  /* user provided config file not system */
+
 void     initialize_options(Options *);
 void     fill_default_options(Options *);
 int	 read_config_file(const char *, const char *, Options *, int);
 int	 parse_forward(Forward *, const char *, int, int);
 
 int
-process_config_line(Options *, const char *, char *, const char *, int, int *);
+process_config_line(Options *, const char *, char *, const char *, int, int *,
+    int);
 
 void	 add_local_forward(Options *, const Forward *);
 void	 add_remote_forward(Options *, const Forward *);
+void	 add_identity_file(Options *, const char *, const char *, int);
 
 #endif				/* READCONF_H */

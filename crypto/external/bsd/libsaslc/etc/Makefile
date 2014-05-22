@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2011/02/20 05:17:47 christos Exp $
+# $NetBSD: Makefile,v 1.3.6.1 2014/05/22 13:21:31 yamt Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=mech
 
+.if ${MKSHARE} != "no"
 FILESDIR=/usr/share/examples/libsaslc
 FILESOWN=root
 FILESGRP=wheel
@@ -19,6 +20,7 @@ CFG_MECH+= EXTERNAL.conf
 CFG_MECH+= GSSAPI.conf
 CFG_MECH+= LOGIN.conf
 CFG_MECH+= PLAIN.conf
+.endif
 
 .include <bsd.files.mk>
 .include <bsd.subdir.mk>

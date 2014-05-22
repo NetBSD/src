@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.2 2011/05/25 19:21:18 he Exp $
+# $NetBSD: Makefile.inc,v 1.2.4.1 2014/05/22 13:21:31 yamt Exp $
 
 BINDIR=/usr/libexec
 
-LDADD+= -lkrb5 -lhx509
+LDADD+= -lheimntlm -lkrb5 -lhx509 -lheimbase
 LDADD+= -lasn1 -lcom_err -lroken ${LIBVERS}
-LDADD+= -lheimbase -lheimntlm -lwind
+LDADD+= -lwind
 LDADD+= -lcrypto -lcrypt
 
 DPADD+= ${LIBKRB5} ${LIBHX509}

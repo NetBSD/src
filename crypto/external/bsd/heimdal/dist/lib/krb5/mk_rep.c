@@ -1,4 +1,4 @@
-/*	$NetBSD: mk_rep.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: mk_rep.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@ krb5_mk_rep(krb5_context context,
     EncAPRepPart body;
     u_char *buf = NULL;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     krb5_crypto crypto;
 
     ap.pvno = 5;

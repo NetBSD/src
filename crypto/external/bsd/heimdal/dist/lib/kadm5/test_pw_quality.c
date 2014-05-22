@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pw_quality.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: test_pw_quality.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "kadm5_locl.h"
 #include <krb5/getarg.h>
 
-__RCSID("$NetBSD: test_pw_quality.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 static int version_flag;
 static int help_flag;

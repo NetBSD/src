@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.8.2.1 2013/01/16 05:25:59 yamt Exp $
-#	$OpenBSD: sshd_config,v 1.87 2012/07/10 02:19:15 djm Exp $
+#	$NetBSD: sshd_config,v 1.8.2.2 2014/05/22 13:21:35 yamt Exp $
+#	$OpenBSD: sshd_config,v 1.90 2013/05/16 04:09:14 dtucker Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -28,6 +28,9 @@
 #KeyRegenerationInterval 1h
 #ServerKeyBits 1024
 
+# Ciphers and keying
+#RekeyLimit default none
+
 # Logging
 # obsoletes QuietMode and FascistLogging
 #SyslogFacility AUTH
@@ -49,6 +52,9 @@ LoginGraceTime 600
 AuthorizedKeysFile	.ssh/authorized_keys
 
 #AuthorizedPrincipalsFile none
+
+#AuthorizedKeysCommand none
+#AuthorizedKeysCommandUser nobody
 
 # For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
 #RhostsRSAAuthentication no
@@ -97,7 +103,7 @@ UsePam yes
 #ClientAliveCountMax 3
 #UseDNS yes
 #PidFile /var/run/sshd.pid
-#MaxStartups 10
+#MaxStartups 10:30:100
 #PermitTunnel no
 #ChrootDirectory none
 #VersionAddendum none

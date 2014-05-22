@@ -1,6 +1,5 @@
-/*	$NetBSD: servconf.c,v 1.9.2.2 2013/01/16 05:25:59 yamt Exp $	*/
-/* $OpenBSD: servconf.c,v 1.229 2012/07/13 01:35:21 dtucker Exp $ */
-
+/*	$NetBSD: servconf.c,v 1.9.2.3 2014/05/22 13:21:35 yamt Exp $	*/
+/* $OpenBSD: servconf.c,v 1.240 2013/07/19 07:37:48 markus Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -13,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.9.2.2 2013/01/16 05:25:59 yamt Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.9.2.3 2014/05/22 13:21:35 yamt Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -23,6 +22,7 @@ __RCSID("$NetBSD: servconf.c,v 1.9.2.2 2013/01/16 05:25:59 yamt Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
+#include <ctype.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: servconf.c,v 1.9.2.2 2013/01/16 05:25:59 yamt Exp $");
 #include <unistd.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <util.h>
 #include <time.h>
 
 #ifdef KRB4
@@ -58,6 +59,9 @@ __RCSID("$NetBSD: servconf.c,v 1.9.2.2 2013/01/16 05:25:59 yamt Exp $");
 #include "groupaccess.h"
 #include "canohost.h"
 #include "packet.h"
+#include "hostfile.h"
+#include "auth.h"
+#include "fmt_scaled.h"
 
 #ifdef WITH_LDAP_PUBKEY
 #include "ldapauth.h"
@@ -87,6 +91,7 @@ initialize_server_options(ServerOptions *options)
 	options->address_family = -1;
 	options->num_host_key_files = 0;
 	options->num_host_cert_files = 0;
+	options->host_key_agent = NULL;
 	options->pid_file = NULL;
 	options->server_key_bits = -1;
 	options->login_grace_time = -1;
@@ -129,6 +134,8 @@ initialize_server_options(ServerOptions *options)
 	options->permit_user_env = -1;
 	options->use_login = -1;
 	options->compression = -1;
+	options->rekey_limit = -1;
+	options->rekey_interval = -1;
 	options->allow_tcp_forwarding = -1;
 	options->allow_agent_forwarding = -1;
 	options->num_allow_users = 0;
@@ -175,6 +182,8 @@ initialize_server_options(ServerOptions *options)
 	options->num_permitted_opens = -1;
 	options->adm_forced_command = NULL;
 	options->chroot_directory = NULL;
+	options->authorized_keys_command = NULL;
+	options->authorized_keys_command_user = NULL;
 	options->zero_knowledge_password_authentication = -1;
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
@@ -304,18 +313,22 @@ fill_default_server_options(ServerOptions *options)
 		options->use_login = 0;
 	if (options->compression == -1)
 		options->compression = COMP_DELAYED;
+	if (options->rekey_limit == -1)
+		options->rekey_limit = 0;
+	if (options->rekey_interval == -1)
+		options->rekey_interval = 0;
 	if (options->allow_tcp_forwarding == -1)
-		options->allow_tcp_forwarding = 1;
+		options->allow_tcp_forwarding = FORWARD_ALLOW;
 	if (options->allow_agent_forwarding == -1)
 		options->allow_agent_forwarding = 1;
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->max_startups == -1)
-		options->max_startups = 10;
+		options->max_startups = 100;
 	if (options->max_startups_rate == -1)
-		options->max_startups_rate = 100;		/* 100% */
+		options->max_startups_rate = 30;		/* 30% */
 	if (options->max_startups_begin == -1)
-		options->max_startups_begin = options->max_startups;
+		options->max_startups_begin = 10;
 	if (options->max_authtries == -1)
 		options->max_authtries = DEFAULT_AUTH_FAIL_MAX;
 	if (options->max_sessions == -1)
@@ -431,7 +444,7 @@ typedef enum {
 	sX11Forwarding, sX11DisplayOffset, sX11UseLocalhost,
 	sStrictModes, sEmptyPasswd, sTCPKeepAlive,
 	sPermitUserEnvironment, sUseLogin, sAllowTcpForwarding, sCompression,
-	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
+	sRekeyLimit, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem,
 	sMaxStartups, sMaxAuthTries, sMaxSessions,
@@ -446,6 +459,8 @@ typedef enum {
 	sKexAlgorithms, sIPQoS, sVersionAddendum,
 	sIgnoreRootRhosts,
 	sNoneEnabled, sTcpRcvBufPoll,sHPNDisabled, sHPNBufferSize,
+	sAuthorizedKeysCommand, sAuthorizedKeysCommandUser,
+	sAuthenticationMethods, sHostKeyAgent,
 	sDeprecated, sUnsupported
 #ifdef WITH_LDAP_PUBKEY
 	,sLdapPublickey, sLdapServers, sLdapUserDN
@@ -473,6 +488,7 @@ static struct {
 	{ "port", sPort, SSHCFG_GLOBAL },
 	{ "hostkey", sHostKeyFile, SSHCFG_GLOBAL },
 	{ "hostdsakey", sHostKeyFile, SSHCFG_GLOBAL },		/* alias */
+	{ "hostkeyagent", sHostKeyAgent, SSHCFG_GLOBAL },
 	{ "pidfile", sPidFile, SSHCFG_GLOBAL },
 	{ "serverkeybits", sServerKeyBits, SSHCFG_GLOBAL },
 	{ "logingracetime", sLoginGraceTime, SSHCFG_GLOBAL },
@@ -537,6 +553,7 @@ static struct {
 	{ "permituserenvironment", sPermitUserEnvironment, SSHCFG_GLOBAL },
 	{ "uselogin", sUseLogin, SSHCFG_GLOBAL },
 	{ "compression", sCompression, SSHCFG_GLOBAL },
+	{ "rekeylimit", sRekeyLimit, SSHCFG_ALL },
 	{ "tcpkeepalive", sTCPKeepAlive, SSHCFG_GLOBAL },
 	{ "keepalive", sTCPKeepAlive, SSHCFG_GLOBAL },	/* obsolete alias */
 	{ "allowtcpforwarding", sAllowTcpForwarding, SSHCFG_ALL },
@@ -589,11 +606,14 @@ static struct {
 	{ "authorizedprincipalsfile", sAuthorizedPrincipalsFile, SSHCFG_ALL },
 	{ "kexalgorithms", sKexAlgorithms, SSHCFG_GLOBAL },
 	{ "ipqos", sIPQoS, SSHCFG_ALL },
+	{ "authorizedkeyscommand", sAuthorizedKeysCommand, SSHCFG_ALL },
+	{ "authorizedkeyscommanduser", sAuthorizedKeysCommandUser, SSHCFG_ALL },
 	{ "versionaddendum", sVersionAddendum, SSHCFG_GLOBAL },
 	{ "noneenabled", sNoneEnabled, SSHCFG_ALL },
 	{ "hpndisabled", sHPNDisabled, SSHCFG_ALL },
 	{ "hpnbuffersize", sHPNBufferSize, SSHCFG_ALL },
 	{ "tcprcvbufpoll", sTcpRcvBufPoll, SSHCFG_ALL },
+	{ "authenticationmethods", sAuthenticationMethods, SSHCFG_ALL },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -641,7 +661,7 @@ derelativise_path(const char *path)
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		fatal("%s: getcwd: %s", __func__, strerror(errno));
 	xasprintf(&ret, "%s/%s", cwd, expanded);
-	xfree(expanded);
+	free(expanded);
 	return ret;
 }
 
@@ -759,8 +779,9 @@ out:
 }
 
 /*
- * All of the attributes on a single Match line are ANDed together, so we need to check every
- * attribute and set the result to zero if any attribute does not match.
+ * All of the attributes on a single Match line are ANDed together, so we need
+ * to check every * attribute and set the result to zero if any attribute does
+ * not match.
  */
 static int
 match_cfg_line(char **condition, int line, struct connection_info *ci)
@@ -917,6 +938,14 @@ static const struct multistate multistate_privsep[] = {
 	{ "no",				PRIVSEP_OFF },
 	{ NULL, -1 }
 };
+static const struct multistate multistate_tcpfwd[] = {
+	{ "yes",			FORWARD_ALLOW },
+	{ "all",			FORWARD_ALLOW },
+	{ "no",				FORWARD_DENY },
+	{ "remote",			FORWARD_REMOTE },
+	{ "local",			FORWARD_LOCAL },
+	{ NULL, -1 }
+};
 
 int
 process_server_config_line(ServerOptions *options, char *line,
@@ -924,17 +953,17 @@ process_server_config_line(ServerOptions *options, char *line,
     struct connection_info *connectinfo)
 {
 	char *cp, **charptr, *arg, *p;
-	int cmdline = 0, *intptr, value, value2, n;
+	int cmdline = 0, *intptr, value, value2, n, port;
 	SyslogFacility *log_facility_ptr;
 	LogLevel *log_level_ptr;
 #ifdef WITH_LDAP_PUBKEY
  	unsigned long lvalue;
 #endif
-	time_t *timetptr;
+	time_t *timetptr __unused;
 	ServerOpCodes opcode;
-	int port = 0;
 	u_int i, flags = 0;
 	size_t len;
+	long long val64;
 	const struct multistate *multistate_ptr;
 
 	cp = line;
@@ -1093,6 +1122,17 @@ process_server_config_line(ServerOptions *options, char *line,
 			if (intptr != NULL)
 				*intptr = *intptr + 1;
 		}
+		break;
+
+	case sHostKeyAgent:
+		charptr = &options->host_key_agent;
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing socket name.",
+			    filename, linenum);
+		if (*activep && *charptr == NULL)
+			*charptr = !strcmp(arg, SSH_AUTHSOCKET_ENV_NAME) ?
+			    xstrdup(arg) : derelativise_path(arg);
 		break;
 
 	case sHostCertificate:
@@ -1270,6 +1310,37 @@ process_server_config_line(ServerOptions *options, char *line,
 		multistate_ptr = multistate_compression;
 		goto parse_multistate;
 
+	case sRekeyLimit:
+		arg = strdelim(&cp);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing argument.", filename,
+			    linenum);
+		if (strcmp(arg, "default") == 0) {
+			val64 = 0;
+		} else {
+			if (scan_scaled(arg, &val64) == -1)
+				fatal("%.200s line %d: Bad number '%s': %s",
+				    filename, linenum, arg, strerror(errno));
+			/* check for too-large or too-small limits */
+			if (val64 > UINT_MAX)
+				fatal("%.200s line %d: RekeyLimit too large",
+				    filename, linenum);
+			if (val64 != 0 && val64 < 16)
+				fatal("%.200s line %d: RekeyLimit too small",
+				    filename, linenum);
+		}
+		if (*activep && options->rekey_limit == -1)
+			options->rekey_limit = (u_int32_t)val64;
+		if (cp != NULL) { /* optional rekey interval present */
+			if (strcmp(cp, "none") == 0) {
+				(void)strdelim(&cp);	/* discard */
+				break;
+			}
+			intptr = &options->rekey_interval;
+			goto parse_time;
+		}
+		break;
+
 	case sGatewayPorts:
 		intptr = &options->gateway_ports;
 		multistate_ptr = multistate_gatewayports;
@@ -1303,7 +1374,8 @@ process_server_config_line(ServerOptions *options, char *line,
 
 	case sAllowTcpForwarding:
 		intptr = &options->allow_tcp_forwarding;
-		goto parse_flag;
+		multistate_ptr = multistate_tcpfwd;
+		goto parse_multistate;
 
 	case sAllowAgentForwarding:
 		intptr = &options->allow_agent_forwarding;
@@ -1583,7 +1655,6 @@ process_server_config_line(ServerOptions *options, char *line,
 		}
 		if (strcmp(arg, "none") == 0) {
 			if (*activep && n == -1) {
-				channel_clear_adm_permitted_opens();
 				options->num_permitted_opens = 1;
 				channel_disable_adm_local_opens();
 			}
@@ -1664,6 +1735,43 @@ process_server_config_line(ServerOptions *options, char *line,
 				    filename, linenum);
 			else
 				options->version_addendum = xstrdup(cp + len);
+		}
+		return 0;
+
+	case sAuthorizedKeysCommand:
+		len = strspn(cp, WHITESPACE);
+		if (*activep && options->authorized_keys_command == NULL) {
+			if (cp[len] != '/' && strcasecmp(cp + len, "none") != 0)
+				fatal("%.200s line %d: AuthorizedKeysCommand "
+				    "must be an absolute path",
+				    filename, linenum);
+			options->authorized_keys_command = xstrdup(cp + len);
+		}
+		return 0;
+
+	case sAuthorizedKeysCommandUser:
+		charptr = &options->authorized_keys_command_user;
+
+		arg = strdelim(&cp);
+		if (*activep && *charptr == NULL)
+			*charptr = xstrdup(arg);
+		break;
+
+	case sAuthenticationMethods:
+		if (*activep && options->num_auth_methods == 0) {
+			while ((arg = strdelim(&cp)) && *arg != '\0') {
+				if (options->num_auth_methods >=
+				    MAX_AUTH_METHODS)
+					fatal("%s line %d: "
+					    "too many authentication methods.",
+					    filename, linenum);
+				if (auth2_methods_valid(arg, 0) != 0)
+					fatal("%s line %d: invalid "
+					    "authentication method list.",
+					    filename, linenum);
+				options->auth_methods[
+				    options->num_auth_methods++] = xstrdup(arg);
+			}
 		}
 		return 0;
 
@@ -1904,9 +2012,8 @@ int server_match_spec_complete(struct connection_info *ci)
 		dst->n = src->n; \
 } while (0)
 #define M_CP_STROPT(n) do {\
-	if (src->n != NULL) { \
-		if (dst->n != NULL) \
-			xfree(dst->n); \
+	if (src->n != NULL && dst->n != src->n) { \
+		free(dst->n); \
 		dst->n = src->n; \
 	} \
 } while(0)
@@ -1950,6 +2057,8 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	M_CP_INTOPT(max_authtries);
 	M_CP_INTOPT(ip_qos_interactive);
 	M_CP_INTOPT(ip_qos_bulk);
+	M_CP_INTOPT(rekey_limit);
+	M_CP_INTOPT(rekey_interval);
 
 	/* See comment in servconf.h */
 	COPY_MATCH_STRING_OPTS();
@@ -1986,7 +2095,7 @@ parse_server_config(ServerOptions *options, const char *filename, Buffer *conf,
 		    linenum++, &active, connectinfo) != 0)
 			bad_options++;
 	}
-	xfree(obuf);
+	free(obuf);
 	if (bad_options > 0)
 		fatal("%s: terminating, %d bad configuration options",
 		    filename, bad_options);
@@ -2020,6 +2129,8 @@ fmt_intarg(ServerOpCodes code, int val)
 		return fmt_multistate_int(val, multistate_compression);
 	case sUsePrivilegeSeparation:
 		return fmt_multistate_int(val, multistate_privsep);
+	case sAllowTcpForwarding:
+		return fmt_multistate_int(val, multistate_tcpfwd);
 	case sProtocol:
 		switch (val) {
 		case SSH_PROTO_1:
@@ -2192,6 +2303,9 @@ dump_config(ServerOptions *o)
 	dump_cfg_string(sAuthorizedPrincipalsFile,
 	    o->authorized_principals_file);
 	dump_cfg_string(sVersionAddendum, o->version_addendum);
+	dump_cfg_string(sAuthorizedKeysCommand, o->authorized_keys_command);
+	dump_cfg_string(sAuthorizedKeysCommandUser, o->authorized_keys_command_user);
+	dump_cfg_string(sHostKeyAgent, o->host_key_agent);
 
 	/* string arguments requiring a lookup */
 	dump_cfg_string(sLogLevel, log_level_name(o->log_level));
@@ -2209,6 +2323,8 @@ dump_config(ServerOptions *o)
 	dump_cfg_strarray(sAllowGroups, o->num_allow_groups, o->allow_groups);
 	dump_cfg_strarray(sDenyGroups, o->num_deny_groups, o->deny_groups);
 	dump_cfg_strarray(sAcceptEnv, o->num_accept_env, o->accept_env);
+	dump_cfg_strarray_oneline(sAuthenticationMethods,
+	    o->num_auth_methods, o->auth_methods);
 
 	/* other arguments */
 	for (i = 0; i < o->num_subsystems; i++)
@@ -2227,6 +2343,8 @@ dump_config(ServerOptions *o)
 
 	printf("ipqos %s ", iptos2str(o->ip_qos_interactive));
 	printf("%s\n", iptos2str(o->ip_qos_bulk));
+
+	printf("rekeylimit %" PRId64 "%d\n", o->rekey_limit, o->rekey_interval);
 
 	channel_print_adm_permitted_opens();
 }

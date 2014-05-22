@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.234 2011/05/24 07:15:47 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.6.2.2 2014/05/22 13:21:35 yamt Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.238 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.6.2.2 2014/05/22 13:21:35 yamt Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/wait.h>
@@ -83,6 +83,13 @@ ssh_proxy_connect(const char *host, u_short port, const char *proxy_command)
 	pid_t pid;
 	char *shell, strport[NI_MAXSERV];
 
+	if (!strcmp(proxy_command, "-")) {
+		packet_set_connection(STDIN_FILENO, STDOUT_FILENO);
+		packet_set_timeout(options.server_alive_interval,
+		    options.server_alive_count_max);
+		return 0;
+	}
+
 	if ((shell = getenv("SHELL")) == NULL || *shell == '\0')
 		shell = __UNCONST(_PATH_BSHELL);
 
@@ -99,7 +106,7 @@ ssh_proxy_connect(const char *host, u_short port, const char *proxy_command)
 	xasprintf(&tmp, "exec %s", proxy_command);
 	command_string = percent_expand(tmp, "h", host, "p", strport,
 	    "r", options.user, (char *)NULL);
-	xfree(tmp);
+	free(tmp);
 
 	/* Create pipes for communicating with the proxy. */
 	if (pipe(pin) < 0 || pipe(pout) < 0)
@@ -153,7 +160,7 @@ ssh_proxy_connect(const char *host, u_short port, const char *proxy_command)
 	close(pout[1]);
 
 	/* Free the command name. */
-	xfree(command_string);
+	free(command_string);
 
 	/* Set the connection file descriptors. */
 	packet_set_connection(pout[0], pin[1]);
@@ -338,7 +345,7 @@ timeout_connect(int sockfd, const struct sockaddr *serv_addr,
 		fatal("Bogus return (%d) from select()", rc);
 	}
 
-	xfree(fdset);
+	free(fdset);
 
  done:
  	if (result == 0 && *timeoutp > 0) {
@@ -462,6 +469,24 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	return 0;
 }
 
+static void
+send_client_banner(int connection_out, int minor1)
+{
+	/* Send our own protocol version identification. */
+	if (compat20) {
+		xasprintf(&client_version_string, "SSH-%d.%d-%.100s\r\n",
+		    PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_VERSION);
+	} else {
+		xasprintf(&client_version_string, "SSH-%d.%d-%.100s\n",
+		    PROTOCOL_MAJOR_1, minor1, SSH_VERSION);
+	}
+	if (roaming_atomicio(vwrite, connection_out, client_version_string,
+	    strlen(client_version_string)) != strlen(client_version_string))
+		fatal("write: %.100s", strerror(errno));
+	chop(client_version_string);
+	debug("Local version string %.100s", client_version_string);
+}
+
 /*
  * Waits for the server identification string, and sends our own
  * identification string.
@@ -473,8 +498,7 @@ ssh_exchange_identification(int timeout_ms)
 	int remote_major, remote_minor, mismatch;
 	int connection_in = packet_get_connection_in();
 	int connection_out = packet_get_connection_out();
-	int minor1 = PROTOCOL_MINOR_1;
-	int mefirst = 0;
+	int minor1 = PROTOCOL_MINOR_1, client_banner_sent = 0;
 	u_int i, n;
 	size_t len;
 	int fdsetsz, remaining, rc;
@@ -485,29 +509,13 @@ ssh_exchange_identification(int timeout_ms)
 	fdset = xcalloc(1, fdsetsz);
 
 	/*
-	 * If we are configured to do version 2 only, we can send our
-	 * own version string first in order to work around borken
-	 * proxies that elsewise impose a delay while trying to figure
-	 * out what protocol we are speaking.
+	 * If we are SSH2-only then we can send the banner immediately and
+	 * save a round-trip.
 	 */
-
-	if (options.send_version_first == 1 && 
-	    ((options.protocol & SSH_PROTO_2) &&
-	    !(options.protocol & SSH_PROTO_1) &&
-	    !(options.protocol & SSH_PROTO_1_PREFERRED))) {
-
-        	/* Send our own protocol version identification. */
-		snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s%s",
-			 PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2,
-			 SSH_VERSION, "\r\n");
-		if (roaming_atomicio(vwrite, connection_out, buf,
-				     strlen(buf)) != strlen(buf))
-			fatal("write: %.100s", strerror(errno));
-		client_version_string = xstrdup(buf);
-		chop(client_version_string);
-		debug("Local version string %.100s", client_version_string);
-
-		mefirst = 1;
+	if (options.protocol == SSH_PROTO_2) {
+		enable_compat20();
+		send_client_banner(connection_out, 0);
+		client_banner_sent = 1;
 	}
 
 	/* Read other side's version identification. */
@@ -559,7 +567,7 @@ ssh_exchange_identification(int timeout_ms)
 		debug("ssh_exchange_identification: %s", buf);
 	}
 	server_version_string = xstrdup(buf);
-	xfree(fdset);
+	free(fdset);
 
 	/*
 	 * Check that the versions match.  In future this might accept
@@ -612,20 +620,9 @@ ssh_exchange_identification(int timeout_ms)
 		fatal("Protocol major versions differ: %d vs. %d",
 		    (options.protocol & SSH_PROTO_2) ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 		    remote_major);
-	if (!mefirst) {
-		/* Send our own protocol version identification. */
-		snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s%s",
-		    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
-		    compat20 ? PROTOCOL_MINOR_2 : minor1,
-		    SSH_RELEASE, compat20 ? "\r\n" : "\n");
-		if (roaming_atomicio(vwrite, connection_out, buf, strlen(buf))
-		    != strlen(buf))
-			fatal("write: %.100s", strerror(errno));
-		client_version_string = xstrdup(buf);
-		chop(client_version_string);
-	}
+	if (!client_banner_sent)
+		send_client_banner(connection_out, minor1);
 	chop(server_version_string);
-	debug("Local version string %.100s", client_version_string);
 }
 
 /* defaults to 'no' */
@@ -646,8 +643,7 @@ confirm(const char *prompt)
 			ret = 0;
 		if (p && strncasecmp(p, "yes", 3) == 0)
 			ret = 1;
-		if (p)
-			xfree(p);
+		free(p);
 		if (ret != -1)
 			return ret;
 	}
@@ -855,8 +851,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			ra = key_fingerprint(host_key, SSH_FP_MD5,
 			    SSH_FP_RANDOMART);
 			logit("Host key fingerprint is %s\n%s\n", fp, ra);
-			xfree(ra);
-			xfree(fp);
+			free(ra);
+			free(fp);
 		}
 		break;
 	case HOST_NEW:
@@ -916,8 +912,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			    options.visual_host_key ? "\n" : "",
 			    options.visual_host_key ? ra : "",
 			    msg2);
-			xfree(ra);
-			xfree(fp);
+			free(ra);
+			free(fp);
 			if (!confirm(msg))
 				goto fail;
 		}
@@ -1118,8 +1114,8 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 		}
 	}
 
-	xfree(ip);
-	xfree(host);
+	free(ip);
+	free(host);
 	if (host_hostkeys != NULL)
 		free_hostkeys(host_hostkeys);
 	if (ip_hostkeys != NULL)
@@ -1141,8 +1137,8 @@ fail:
 	}
 	if (raw_key != NULL)
 		key_free(raw_key);
-	xfree(ip);
-	xfree(host);
+	free(ip);
+	free(host);
 	if (host_hostkeys != NULL)
 		free_hostkeys(host_hostkeys);
 	if (ip_hostkeys != NULL)
@@ -1159,7 +1155,7 @@ verify_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 
 	fp = key_fingerprint(host_key, SSH_FP_MD5, SSH_FP_HEX);
 	debug("Server host key: %s %s", key_type(host_key), fp);
-	xfree(fp);
+	free(fp);
 
 	/* XXX certs are not yet supported for DNS */
 	if (!key_is_cert(host_key) && options.verify_host_key_dns &&
@@ -1224,7 +1220,7 @@ ssh_login(Sensitive *sensitive, const char *orighost,
 		ssh_kex(host, hostaddr);
 		ssh_userauth1(local_user, server_user, host, sensitive);
 	}
-	xfree(local_user);
+	free(local_user);
 }
 
 void
@@ -1242,7 +1238,7 @@ ssh_put_password(char *password)
 	strlcpy(padded, password, size);
 	packet_put_string(padded, size);
 	memset(padded, 0, size);
-	xfree(padded);
+	free(padded);
 }
 
 /* print all known host keys for a given host, but skip keys of given type */
@@ -1269,8 +1265,8 @@ show_other_keys(struct hostkeys *hostkeys, Key *key)
 		    key_type(found->key), fp);
 		if (options.visual_host_key)
 			logit("%s", ra);
-		xfree(ra);
-		xfree(fp);
+		free(ra);
+		free(fp);
 		ret = 1;
 	}
 	return ret;
@@ -1293,7 +1289,7 @@ warn_changed_key(Key *host_key)
 	    key_type(host_key), fp);
 	error("Please contact your system administrator.");
 
-	xfree(fp);
+	free(fp);
 }
 
 /*

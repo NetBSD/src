@@ -1,5 +1,5 @@
-/*	$NetBSD: roaming_common.c,v 1.5.6.1 2012/05/23 10:07:05 yamt Exp $	*/
-/* $OpenBSD: roaming_common.c,v 1.9 2011/12/07 05:44:38 djm Exp $ */
+/*	$NetBSD: roaming_common.c,v 1.5.6.2 2014/05/22 13:21:35 yamt Exp $	*/
+/* $OpenBSD: roaming_common.c,v 1.10 2013/07/12 00:19:59 djm Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: roaming_common.c,v 1.5.6.1 2012/05/23 10:07:05 yamt Exp $");
+__RCSID("$NetBSD: roaming_common.c,v 1.5.6.2 2014/05/22 13:21:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>

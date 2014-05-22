@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.h,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: cipher.h,v 1.37 2009/01/26 09:58:15 markus Exp $ */
+/*	$NetBSD: cipher.h,v 1.3.2.1 2014/05/22 13:21:34 yamt Exp $	*/
+/* $OpenBSD: cipher.h,v 1.40 2013/04/19 01:06:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -65,23 +65,28 @@ typedef struct CipherContext CipherContext;
 struct Cipher;
 struct CipherContext {
 	int	plaintext;
+	int	encrypt;
 	EVP_CIPHER_CTX evp;
-	Cipher *cipher;
+	const Cipher *cipher;
 };
 
 u_int	 cipher_mask_ssh1(int);
-Cipher	*cipher_by_name(const char *);
-Cipher	*cipher_by_number(int);
+const Cipher	*cipher_by_name(const char *);
+const Cipher	*cipher_by_number(int);
 int	 cipher_number(const char *);
 const char	*cipher_name(int);
 int	 ciphers_valid(const char *);
-void	 cipher_init(CipherContext *, Cipher *, const u_char *, u_int,
+char	*cipher_alg_list(void);
+void	 cipher_init(CipherContext *, const Cipher *, const u_char *, u_int,
     const u_char *, u_int, int);
-void	 cipher_crypt(CipherContext *, u_char *, const u_char *, u_int);
+void	 cipher_crypt(CipherContext *, u_char *, const u_char *,
+    u_int, u_int, u_int);
 void	 cipher_cleanup(CipherContext *);
-void	 cipher_set_key_string(CipherContext *, Cipher *, const char *, int);
+void	 cipher_set_key_string(CipherContext *, const Cipher *, const char *, int);
 u_int	 cipher_blocksize(const Cipher *);
 u_int	 cipher_keylen(const Cipher *);
+u_int	 cipher_authlen(const Cipher *);
+u_int	 cipher_ivlen(const Cipher *);
 u_int	 cipher_is_cbc(const Cipher *);
 
 u_int	 cipher_get_number(const Cipher *);
