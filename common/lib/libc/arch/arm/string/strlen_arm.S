@@ -29,7 +29,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.2.2.2 2013/01/23 00:04:06 yamt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.2.2.3 2014/05/22 11:26:28 yamt Exp $")
+
+#if defined(__thumb__) && !defined(_ARM_ARCH_T2)
+#error Only Thumb2 or ARM supported
+#endif
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -43,16 +47,48 @@ RCSID("$NetBSD: strlen_arm.S,v 1.2.2.2 2013/01/23 00:04:06 yamt Exp $")
 #define	BYTE3	0x000000ff
 #endif
 
+#ifdef STRNLEN
+#define	FUNCNAME	strnlen
+#else
+#define	FUNCNAME	strlen
+#endif
+
 	.text
-ENTRY(strlen)
-	add	ip, r0, #4		/* for the final post-inc */
+ENTRY(FUNCNAME)
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
+	.fnstart
+# endif
+	.cfi_startproc
+#endif
+#ifdef STRNLEN
+	push	{r4,r5}			/* save some registers */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
+	.save	{r4,r5}
+# endif
+	.cfi_def_cfa_offset 8
+	.cfi_offset 5, -4
+	.cfi_offset 4, -8
+#endif
+	adds	r5, r0, r1		/* get ptr to end of string */
+	mov	r4, r1			/* save maxlen */
+#endif
+	adds	r2, r0, #4		/* for the final post-inc */
 1:	tst	r0, #3			/* test for word alignment */
 	beq	.Lpre_main_loop		/*   finally word aligned */
+#ifdef STRNLEN
+	cmp	r0, r5			/* have we gone too far? */
+	beq	.Lmaxed_out		/*   yes, return maxlen */
+#endif
 	ldrb	r3, [r0], #1		/* load a byte */
-	teq	r3, #0			/* is it 0? */
+	cmp	r3, #0			/* is it 0? */
 	bne	1b			/*   no, try next byte */
-	sub	ip, ip, #3		/* subtract (4 - the NUL) */
-	sub	r0, r0, ip		/* subtract start */
+	subs	r2, r2, #3		/* subtract (4 - the NUL) */
+	subs	r0, r0, r2		/* subtract start */
+#ifdef STRNLEN
+	pop	{r4, r5}		/* restore registers */
+#endif
 	RET				/* return */
 .Lpre_main_loop:
 #if defined(_ARM_ARCH_7)
@@ -64,6 +100,10 @@ ENTRY(strlen)
 	orr	r1, r1, r1, lsl #16	/* move to next halfword */
 #endif /* _ARM_ARCH_6 */
 .Lmain_loop:
+#ifdef STRNLEN
+	cmp	r0, r5			/* gone too far? */
+	bge	.Lmaxed_out		/*   yes, return maxlen */
+#endif
 	ldr	r3, [r0], #4		/* load next word */
 #if defined(_ARM_ARCH_6)
 	/*
@@ -95,7 +135,12 @@ ENTRY(strlen)
 	rev	r3, r3			/* we want this in BE for the CLZ */
 #endif
 	clz	r3, r3			/* count how many leading zeros */
+#ifdef __thumb__
+	lsrs	r3, r3, #3
+	adds	r0, r0, r3		/* divide that by 8 and add to count */
+#else
 	add	r0, r0, r3, lsr #3	/* divide that by 8 and add to count */
+#endif
 #else
 	/*
 	 * We encountered a NUL.
@@ -115,6 +160,27 @@ ENTRY(strlen)
 	 * start of the string (which also has 4 added to it to compensate for
 	 * the post-inc.
 	 */
-	sub	r0, r0, ip		/* subtract start to get length */
-	RET
-END(strlen)
+	subs	r0, r0, r2		/* subtract start to get length */
+#ifdef STRNLEN
+	cmp	r0, r4			/* is it larger than maxlen? */
+#ifdef __thumb__
+	it	gt
+#endif
+	movgt	r0, r4			/*   yes, return maxlen */
+	pop	{r4, r5}		/* restore registers */
+#endif
+	RET				/* return */
+
+#ifdef STRNLEN
+.Lmaxed_out:
+	mov	r0, r4			/* return maxlen */
+	pop	{r4, r5}		/* restore registers */
+	RET				/* return */
+#endif
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.cfi_endproc
+# if !defined(__ARM_DWARF_EH__)
+	.fnend
+# endif
+#endif
+END(FUNCNAME)

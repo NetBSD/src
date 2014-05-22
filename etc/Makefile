@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.392.2.5 2013/01/23 00:04:29 yamt Exp $
+#	$NetBSD: Makefile,v 1.392.2.6 2014/05/22 11:27:18 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -36,7 +36,6 @@
 # For MK* vars
 .include <bsd.own.mk>
 
-.include <bsd.sys.mk>		# for HOST_SH, TOOL_AWK, ...
 .include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
 .include <bsd.endian.mk>	# For TARGET_ENDIANNESS
 
@@ -53,7 +52,7 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 # Note: At least mkisofs 2.0 should be used.
 #
 .if !defined(MKISOFS)
-MKISOFS!=       (which mkisofs || echo true)
+MKISOFS!=       (which mkisofs || echo true) 2>/dev/null
 .endif
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
@@ -93,10 +92,10 @@ BIN1+=	bootptab changelist csh.cshrc csh.login \
 	ftpusers gettytab gpio.conf group hosts hosts.lpd inetd.conf \
 	locate.conf login.conf mailer.conf man.conf monthly monthly.conf \
 	mrouted.conf named.conf netconfig networks newsyslog.conf \
-	nsswitch.conf ntp.conf passwd.conf phones printcap profile protocols \
-	rbootd.conf rc rc.conf rc.local rc.subr rc.shutdown remote rpc \
-	security security.conf services shells shrc sysctl.conf syslog.conf \
-	weekly weekly.conf wscons.conf
+	nsswitch.conf ntp.conf passwd.conf pkgpath.conf phones printcap \
+	profile protocols rbootd.conf rc rc.conf rc.local rc.subr \
+	rc.shutdown remote rpc security security.conf services shells \
+	shrc sysctl.conf syslog.conf weekly weekly.conf wscons.conf
 
 # Use machine-specific disktab if it exists, or the MI one otherwise
 .if exists(etc.${MACHINE}/disktab)
@@ -105,7 +104,7 @@ BIN1+=	etc.${MACHINE}/disktab
 BIN1+=	disktab
 .endif
 
-.if exists(etc.${MACHINE}/ld.so.conf)
+.if exists(etc.${MACHINE}/ld.so.conf) && empty(MACHINE_ARCH:M*arm*hf*)
 BIN1+=	etc.${MACHINE}/ld.so.conf
 .endif
 
@@ -195,7 +194,7 @@ etc-release: .EXEC .MAKE
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build settings:"; \
-		printf "%20s   %s\n"  "Build date" "$$(date -u)"; \
+		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
 		echo ; \
 		${PRINT_PARAMS} ; \
@@ -260,8 +259,10 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	    ${DESTDIR}/etc/master.passwd
 .if ${MKUNPRIVED} != "no"
 	( \
-		for metaent in passwd pwd.db spwd.db; do \
-	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+		mode=0600; \
+		for metaent in spwd.db passwd pwd.db; do \
+	    		echo "./etc/$${metaent} type=file mode=$${mode} uname=root gname=wheel tags=etc_pkg"; \
+			mode=0644; \
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
@@ -333,6 +334,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .if (${MKATF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/atf/etc/atf configinstall
 .endif
+.if (${MKKYUA} != "no")
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/kyua-cli/etc/kyua configinstall
+.endif
 
 
 # install-obsolete-lists --
@@ -340,6 +344,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
+.if ${MKDEBUG} != "no"
+OBSOLETE.files+=	debug
+.endif
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules
 .endif
@@ -551,7 +558,7 @@ build_kernels: .PHONY
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
-	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
+	    -U DEBUG -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
@@ -573,7 +580,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9 ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9n ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
@@ -618,8 +625,8 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
 				rm -f $${knl_gz}; \
-				echo "${TOOL_GZIP} -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
-				${TOOL_GZIP} -c -9 < $${ks} > $${knl_gz}; \
+				echo "${TOOL_GZIP} -nc -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
+				${TOOL_GZIP} -nc -9 < $${ks} > $${knl_gz}; \
 			done; \
 		done; \
 	}

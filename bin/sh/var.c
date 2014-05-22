@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.40.2.2 2013/01/23 00:04:05 yamt Exp $	*/
+/*	$NetBSD: var.c,v 1.40.2.3 2014/05/22 11:26:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.40.2.2 2013/01/23 00:04:05 yamt Exp $");
+__RCSID("$NetBSD: var.c,v 1.40.2.3 2014/05/22 11:26:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -754,10 +754,10 @@ unsetvar(const char *s, int unexport)
 
 	vp = find_var(s, &vpp, NULL);
 	if (vp == NULL)
-		return 1;
+		return 0;
 
 	if (vp->flags & VREADONLY)
-		return (1);
+		return 1;
 
 	INTOFF;
 	if (unexport) {

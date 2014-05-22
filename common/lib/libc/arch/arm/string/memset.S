@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1.50.1 2013/01/16 05:25:53 yamt Exp $	*/
+/*	$NetBSD: memset.S,v 1.1.50.2 2014/05/22 11:26:28 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -68,6 +68,25 @@
 
 #include <machine/asm.h>
 
+#if defined(__ARM_EABI__) && !defined(_BZERO)
+ENTRY(__aeabi_memset)
+	mov	r3, r1
+	mov	r1, r2
+	mov	r2, r3
+	b	memset
+END(__aeabi_memset)
+STRONG_ALIAS(__aeabi_memset4, __aeabi_memset)
+STRONG_ALIAS(__aeabi_memset8, __aeabi_memset)
+
+ENTRY(__aeabi_memclr)
+	mov	r2, r1
+	mov	r1, #0
+	b	memset
+END(__aeabi_memclr)
+STRONG_ALIAS(__aeabi_memclr4, __aeabi_memclr)
+STRONG_ALIAS(__aeabi_memclr8, __aeabi_memclr)
+#endif
+
 /*
  * memset: Sets a block of memory to the specified value
  *
@@ -124,39 +143,39 @@ ENTRY(memset)
 .Lmemset_loop128:
 	subs	r1, r1, #0x80
 #ifdef _ARM_ARCH_DWORD_OK
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
 #endif
 	bgt	.Lmemset_loop128
 	RETc(eq)			/* Zero length so just exit */
@@ -167,15 +186,15 @@ ENTRY(memset)
 .Lmemset_loop32:
 	subs	r1, r1, #0x20
 #ifdef _ARM_ARCH_DWORD_OK
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
 #endif
 	bgt	.Lmemset_loop32
 	RETc(eq)			/* Zero length so just exit */
@@ -184,11 +203,11 @@ ENTRY(memset)
 
 	/* Deal with 16 bytes or more */
 #ifdef _ARM_ARCH_DWORD_OK
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
 #endif
 	RETc(eq)			/* Zero length so just exit */
 
@@ -211,17 +230,17 @@ ENTRY(memset)
 #endif
 
 	strb	r3, [ip], #0x01		/* Set 1 byte */
-	strgeb	r3, [ip], #0x01		/* Set another byte */
-	strgtb	r3, [ip]		/* and a third */
+	strbge	r3, [ip], #0x01		/* Set another byte */
+	strbgt	r3, [ip]		/* and a third */
 	RET				/* Exit */
 
 .Lmemset_wordunaligned:
 	rsb	r2, r2, #0x004
 	strb	r3, [ip], #0x01		/* Set 1 byte */
 	cmp	r2, #0x02
-	strgeb	r3, [ip], #0x01		/* Set another byte */
+	strbge	r3, [ip], #0x01		/* Set another byte */
 	sub	r1, r1, r2
-	strgtb	r3, [ip], #0x01		/* and a third */
+	strbgt	r3, [ip], #0x01		/* and a third */
 	cmp	r1, #0x04		/* More than 4 bytes left? */
 	bge	.Lmemset_wordaligned	/* Yup */
 
@@ -230,6 +249,11 @@ ENTRY(memset)
 	RETc(eq)				/* Zero length so exit */
 	strb	r3, [ip], #0x01		/* Set 1 byte */
 	cmp	r1, #0x02
-	strgeb	r3, [ip], #0x01		/* Set another byte */
-	strgtb	r3, [ip]		/* and a third */
+	strbge	r3, [ip], #0x01		/* Set another byte */
+	strbgt	r3, [ip]		/* and a third */
 	RET				/* Exit */
+#ifdef _BZERO
+END(bzero)
+#else
+END(memset)
+#endif

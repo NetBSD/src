@@ -1,4 +1,4 @@
-/*	$NetBSD: command5.c,v 1.3.42.1 2012/10/30 18:58:18 yamt Exp $	*/
+/*	$NetBSD: command5.c,v 1.3.42.2 2014/05/22 11:36:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command5.c,v 1.3.42.1 2012/10/30 18:58:18 yamt Exp $");
+__RCSID("$NetBSD: command5.c,v 1.3.42.2 2014/05/22 11:36:21 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -186,10 +186,13 @@ zzz(void)
 {
 	int     oldtime;
 	int     n;
+	int zzztime;
+
+	zzztime = (3 * CYCLE) / 4;
 
 	oldtime = ourtime;
-	if ((snooze - ourtime) < (0.75 * CYCLE)) {
-		ourtime += 0.75 * CYCLE - (snooze - ourtime);
+	if ((snooze - ourtime) < zzztime) {
+		ourtime += zzztime - (snooze - ourtime);
 		printf("<zzz>");
 		for (n = 0; n < ourtime - oldtime; n++)
 			printf(".");

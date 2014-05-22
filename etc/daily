@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.77.6.2 2012/10/30 18:48:58 yamt Exp $
+#	$NetBSD: daily,v 1.77.6.3 2014/05/22 11:27:18 yamt Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -10,10 +10,16 @@ umask 077
 if [ -s /etc/daily.conf ]; then
 	. /etc/daily.conf
 fi
+if [ -s /etc/pkgpath.conf ]; then
+	. /etc/pkgpath.conf
+fi
 
 host="$(hostname)"
 date="$(date)"
 rcvar_manpage='daily.conf(5)'
+
+pkg_admin=${pkg_admin:-/usr/sbin/pkg_admin}
+pkg_info=${pkg_info:-/usr/sbin/pkg_info}
 
 echo "To: ${MAILTO:-root}"
 echo "Subject: $host daily output for $date"
@@ -257,15 +263,15 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 	fi
 fi
 
-if pkg_info ${_compat_K_flag} -q -E '*'; then
-	if [ -z "fetch_pkg_vulnerabilities" ]; then
+if ${pkg_info} ${_compat_K_flag} -q -E '*'; then
+	if [ -z "$fetch_pkg_vulnerabilities" ]; then
 		echo "fetch_pkg_vulnerabilities is not set in daily.conf(5)."
 		echo "You should set it to YES to enable vulnerability checks"
 		echo "or set it to NO to get rid of this warning."
 	elif checkyesno fetch_pkg_vulnerabilities; then
 		echo ""
 		echo "Fetching package vulnerabilities database:"
-		( umask 022 && pkg_admin ${_compat_K_flag} \
+		( umask 022 && ${pkg_admin} ${_compat_K_flag} \
 		    fetch-pkg-vulnerabilities -u )
 	fi
 fi

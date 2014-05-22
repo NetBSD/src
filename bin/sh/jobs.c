@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.69.2.2 2013/01/23 00:04:05 yamt Exp $	*/
+/*	$NetBSD: jobs.c,v 1.69.2.3 2014/05/22 11:26:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.69.2.2 2013/01/23 00:04:05 yamt Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.69.2.3 2014/05/22 11:26:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,7 +649,7 @@ waitcmd(int argc, char **argv)
 			if (dowait(WBLOCK|WNOFREE, job) == -1)
 			       return 128 + SIGINT;
 		}
-		status = job->ps[job->nprocs - 1].status;
+		status = job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
 		if (WIFEXITED(status))
 			retval = WEXITSTATUS(status);
 #if JOBS
@@ -858,14 +858,16 @@ makejob(union node *node, int nprocs)
 int
 forkshell(struct job *jp, union node *n, int mode)
 {
-	int pid;
+	pid_t pid;
+	int serrno;
 
 	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
 	switch ((pid = fork())) {
 	case -1:
-		TRACE(("Fork failed, errno=%d\n", errno));
+		serrno = errno;
+		TRACE(("Fork failed, errno=%d\n", serrno));
 		INTON;
-		error("Cannot fork");
+		error("Cannot fork (%s)", strerror(serrno));
 		break;
 	case 0:
 		forkchild(jp, n, mode, 0);

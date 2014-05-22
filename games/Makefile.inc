@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14.8.1 2012/10/30 18:58:16 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.14.8.2 2014/05/22 11:36:21 yamt Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 MKHIDEGAME?=	no
@@ -20,4 +20,7 @@ BINGRP=		games
 BINMODE=	2555
 .endif
 .endif
+# Note: do not bother with WARNS=6 until -Wconversion is either
+# removed from WARNS=6 or rendered useful by improving gcc; as it is
+# (with gcc48) it produces buckets of drivel.
 WARNS?=		5

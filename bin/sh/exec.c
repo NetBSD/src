@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.42.18.2 2013/01/23 00:04:05 yamt Exp $	*/
+/*	$NetBSD: exec.c,v 1.42.18.3 2014/05/22 11:26:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.42.18.2 2013/01/23 00:04:05 yamt Exp $");
+__RCSID("$NetBSD: exec.c,v 1.42.18.3 2014/05/22 11:26:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -943,9 +943,8 @@ unsetfunc(char *name)
 	    cmdp->cmdtype == CMDFUNCTION) {
 		freefunc(cmdp->param.func);
 		delete_cmd_entry();
-		return (0);
 	}
-	return (1);
+	return 0;
 }
 
 /*
