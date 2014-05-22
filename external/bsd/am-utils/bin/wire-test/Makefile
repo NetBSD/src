@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/19 21:38:41 christos Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/05/22 15:41:06 yamt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -9,7 +9,5 @@ DIST=	${IDIST}/wire-test
 
 SRCS=	wire-test.c
 MAN+=	wire-test.8
-
-LDADD+=	${LIBAMU}
 
 .include <bsd.prog.mk>

@@ -22,3 +22,4 @@
 
 rm -f dig.out.*
 rm -f */named.memstats
+rm -f */named.run

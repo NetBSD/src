@@ -1,4 +1,4 @@
-; Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2010, 2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 
 ; Id: added.db,v 1.2 2010/08/11 18:14:18 each Exp 
 
-$ORIGIN added.example.
+;$ORIGIN added.example.
 $TTL 300	; 5 minutes
 @                       IN SOA	mname1. . (
 				1          ; serial

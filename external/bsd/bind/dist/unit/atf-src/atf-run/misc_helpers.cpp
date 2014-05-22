@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <ios>
 #include <iostream>
 #include <string>
 
@@ -64,6 +65,15 @@ touch(const std::string& path)
 // ------------------------------------------------------------------------
 // Helper tests for "t_integration".
 // ------------------------------------------------------------------------
+
+ATF_TEST_CASE(pass);
+ATF_TEST_CASE_HEAD(pass)
+{
+    set_md_var("descr", "Helper test case for the t_integration test program");
+}
+ATF_TEST_CASE_BODY(pass)
+{
+}
 
 ATF_TEST_CASE(config);
 ATF_TEST_CASE_HEAD(config)
@@ -165,6 +175,26 @@ ATF_TEST_CASE_BODY(env_home)
     ATF_REQUIRE_EQ(fi1.get_inode(), fi2.get_inode());
 }
 
+ATF_TEST_CASE(read_stdin);
+ATF_TEST_CASE_HEAD(read_stdin)
+{
+    set_md_var("descr", "Helper test case for the t_integration test program");
+}
+ATF_TEST_CASE_BODY(read_stdin)
+{
+    char buf[100];
+    ssize_t len = ::read(STDIN_FILENO, buf, sizeof(buf) - 1);
+    ATF_REQUIRE(len != -1);
+
+    buf[len + 1] = '\0';
+    for (ssize_t i = 0; i < len; i++) {
+        if (buf[i] != '\0') {
+            fail("The stdin of the test case does not seem to be /dev/zero; "
+                 "got '" + std::string(buf) + "'");
+        }
+    }
+}
+
 ATF_TEST_CASE(umask);
 ATF_TEST_CASE_HEAD(umask)
 {
@@ -242,6 +272,16 @@ ATF_TEST_CASE_BODY(require_config)
 {
     std::cout << "var1: " << get_config_var("var1") << "\n";
     std::cout << "var2: " << get_config_var("var2") << "\n";
+}
+
+ATF_TEST_CASE(require_files);
+ATF_TEST_CASE_HEAD(require_files)
+{
+    set_md_var("descr", "Helper test case for the t_integration test program");
+    set_md_var("require.files", get_config_var("files", "not-set"));
+}
+ATF_TEST_CASE_BODY(require_files)
+{
 }
 
 ATF_TEST_CASE(require_machine);
@@ -336,6 +376,8 @@ ATF_INIT_TEST_CASES(tcs)
     std::string which = atf::env::get("TESTCASE");
 
     // Add helper tests for t_integration.
+    if (which == "pass")
+        ATF_ADD_TEST_CASE(tcs, pass);
     if (which == "config")
         ATF_ADD_TEST_CASE(tcs, config);
     if (which == "fds")
@@ -348,6 +390,8 @@ ATF_INIT_TEST_CASES(tcs)
         ATF_ADD_TEST_CASE(tcs, env_list);
     if (which == "env_home")
         ATF_ADD_TEST_CASE(tcs, env_home);
+    if (which == "read_stdin")
+        ATF_ADD_TEST_CASE(tcs, read_stdin);
     if (which == "umask")
         ATF_ADD_TEST_CASE(tcs, umask);
     if (which == "cleanup_states")
@@ -358,6 +402,8 @@ ATF_INIT_TEST_CASES(tcs)
         ATF_ADD_TEST_CASE(tcs, require_arch);
     if (which == "require_config")
         ATF_ADD_TEST_CASE(tcs, require_config);
+    if (which == "require_files")
+        ATF_ADD_TEST_CASE(tcs, require_files);
     if (which == "require_machine")
         ATF_ADD_TEST_CASE(tcs, require_machine);
     if (which == "require_progs")

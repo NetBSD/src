@@ -1,7 +1,7 @@
-/*	$NetBSD: stdtime.c,v 1.2.4.1 2012/10/30 18:54:17 yamt Exp $	*/
+/*	$NetBSD: stdtime.c,v 1.2.4.2 2014/05/22 15:43:22 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -35,5 +35,5 @@ isc_stdtime_get(isc_stdtime_t *t) {
 
 	REQUIRE(t != NULL);
 
-	(void)time(t);
+	(void)_time32(t);
 }

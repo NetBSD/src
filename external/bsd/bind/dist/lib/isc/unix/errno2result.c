@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.c,v 1.2.4.1 2012/10/30 18:54:11 yamt Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.2.4.2 2014/05/22 15:43:22 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -60,6 +60,10 @@ isc___errno2result(int posixerrno, const char *file, unsigned int line) {
 	case ENFILE:
 	case EMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
+#ifdef EOVERFLOW
+	case EOVERFLOW:
+		return (ISC_R_RANGE);
+#endif
 	case EPIPE:
 #ifdef ECONNRESET
 	case ECONNRESET:

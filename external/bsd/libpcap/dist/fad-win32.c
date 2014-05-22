@@ -1,3 +1,5 @@
+/*	$NetBSD: fad-win32.c,v 1.1.1.2.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /*
  * Copyright (c) 2002 - 2005 NetGroup, Politecnico di Torino (Italy)
  * Copyright (c) 2005 - 2006 CACE Technologies, Davis (California)
@@ -33,7 +35,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-win32.c,v 1.15 2007-09-25 20:34:36 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/fad-win32.c,v 1.15 2007-09-25 20:34:36 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -216,7 +218,7 @@ pcap_add_if_win32(pcap_if_t **devlist, char *name, const char *desc,
  * Win32 implementation, based on WinPcap
  */
 int
-pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
+pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 {
 	pcap_if_t *devlist = NULL;
 	int ret = 0;
@@ -225,6 +227,24 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 	ULONG NameLength;
 	char *name;
 	
+	/*
+	 * Find out how big a buffer we need.
+	 *
+	 * This call should always return FALSE; if the error is
+	 * ERROR_INSUFFICIENT_BUFFER, NameLength will be set to
+	 * the size of the buffer we need, otherwise there's a
+	 * problem, and NameLength should be set to 0.
+	 *
+	 * It shouldn't require NameLength to be set, but,
+	 * at least as of WinPcap 4.1.3, it checks whether
+	 * NameLength is big enough before it checks for a
+	 * NULL buffer argument, so, while it'll still do
+	 * the right thing if NameLength is uninitialized and
+	 * whatever junk happens to be there is big enough
+	 * (because the pointer argument will be null), it's
+	 * still reading an uninitialized variable.
+	 */
+	NameLength = 0;
 	if (!PacketGetAdapterNames(NULL, &NameLength))
 	{
 		DWORD last_error = GetLastError();

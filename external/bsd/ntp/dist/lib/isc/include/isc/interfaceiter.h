@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.h,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
+/*	$NetBSD: interfaceiter.h,v 1.1.1.1.6.2 2014/05/22 15:50:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfaceiter.h,v 1.17 2007/06/19 23:47:18 tbox Exp */
+/* Id: interfaceiter.h,v 1.17 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_INTERFACEITER_H
 #define ISC_INTERFACEITER_H 1

@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,12 @@ dnl -----------------------------------------------------------------------
 dnl Initialize the GNU build system.
 dnl -----------------------------------------------------------------------
 
-AC_INIT([Automated Testing Framework], [0.12], [atf-devel@NetBSD.org], [atf],
-        [http://www.NetBSD.org/~jmmv/atf/])
+AC_INIT([Automated Testing Framework], [0.17], [atf-devel@NetBSD.org], [atf],
+        [http://code.google.com/p/kyua/wiki/ATF])
 AC_PREREQ([2.65])
-AC_COPYRIGHT([Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.])
+AC_COPYRIGHT([Copyright (c) 2007-2012 The NetBSD Foundation, Inc.])
 AC_DEFINE([PACKAGE_COPYRIGHT],
-          ["Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc."],
+          ["Copyright (c) 2007-2012 The NetBSD Foundation, Inc."],
           [Define to the copyright string applicable to this package.])
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_HEADERS([bconfig.h])
@@ -48,22 +48,18 @@ AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
-LT_INIT([disable-shared])
-dnl This is just a hack to reverse the meaning of the --enable-shared
-dnl flag provided by libtool.  We want it to default to building static
-dnl libraries only for now, but these are painful during development.
-dnl It is nice to have an easy way to enable shared library builds.
-dnl
-dnl TODO(1.0): Enable shared libraries by default, and fix their
-dnl -version-info.
-AC_ARG_ENABLE(unstable-shared,
-    AS_HELP_STRING([--enable-unstable-shared],
-        [Enables the build of shared libraries with unstable ABIs/APIs]),
+LT_INIT
+
+AC_ARG_ENABLE(tools,
+    AS_HELP_STRING([--enable-tools],
+        [Enables the build of the deprecated ATF tools]),
     [case $enableval in
-     yes|no) enable_shared=${enableval} ;;
-     *) enable_shared=${enableval} ;;
+     yes|no) enable_tools=${enableval} ;;
+     *) AC_MSG_ERROR([Invalid value passed to --enable-tools]) ;;
      esac],
-    [enable_shared=no])
+    [enable_tools=no])
+AC_SUBST([ENABLE_TOOLS], ${enable_tools})
+AM_CONDITIONAL([ENABLE_TOOLS], [test "${enable_tools}" = yes])
 
 dnl -----------------------------------------------------------------------
 dnl Check for the C and C++ compilers and required features.
@@ -88,7 +84,7 @@ if test "${atf_cv_prog_cxx_works}" = no; then
     AC_MSG_ERROR([C++ compiler cannot create executables])
 fi
 
-ATF_DEVELOPER_MODE
+KYUA_DEVELOPER_MODE([C,C++])
 
 ATF_MODULE_APPLICATION
 ATF_MODULE_DEFS
@@ -96,6 +92,8 @@ ATF_MODULE_ENV
 ATF_MODULE_FS
 ATF_MODULE_SANITY
 ATF_MODULE_SIGNALS
+
+AC_CHECK_TYPE([timer_t], [], [], [[#include <time.h>]])
 
 ATF_RUNTIME_TOOL([ATF_BUILD_CC],
                  [C compiler to use at runtime], [${CC}])
@@ -128,23 +126,12 @@ dnl -----------------------------------------------------------------------
 dnl Architecture and machine checks.
 dnl -----------------------------------------------------------------------
 
-machine=${target_cpu}
+atf_arch=`uname -p`
+atf_machine=`uname -m`
 
-case ${machine} in
-    i@<:@3-9@:>@86)
-        arch=i386
-        ;;
-    x86_64)
-        arch=amd64
-        ;;
-    *)
-        arch=${machine}
-        ;;
-esac
-
-AC_MSG_NOTICE([Machine type: ${machine}, architecture: ${arch}])
-AC_SUBST(atf_arch, ${arch})
-AC_SUBST(atf_machine, ${machine})
+AC_MSG_NOTICE([Machine type: ${atf_machine}, architecture: ${atf_arch}])
+AC_SUBST(atf_arch, ${atf_arch})
+AC_SUBST(atf_machine, ${atf_machine})
 
 dnl -----------------------------------------------------------------------
 dnl User-customizable variables.
@@ -191,6 +178,7 @@ else
     esac
 fi
 
+AC_SUBST(atf_aclocaldir, \${datadir}/aclocal)
 AC_SUBST(atf_cssdir, \${datadir}/examples/atf)
 AC_SUBST(atf_dtddir, \${datadir}/xml/atf)
 AC_SUBST(atf_egdir, \${datadir}/examples/atf)
@@ -221,7 +209,10 @@ dnl -----------------------------------------------------------------------
 dnl Check for required tools.
 dnl -----------------------------------------------------------------------
 
-AC_PATH_PROG([MTN], [mtn])
+AC_PATH_PROG([GDB], [gdb])
+AC_PATH_PROG([KYUA], [kyua])
+AM_CONDITIONAL([HAVE_KYUA], [test -n "${KYUA}"])
+AC_PATH_PROG([GIT], [git])
 
 dnl -----------------------------------------------------------------------
 dnl Finally, generate output.
@@ -229,9 +220,9 @@ dnl -----------------------------------------------------------------------
 
 AC_OUTPUT([Makefile atf-c/defs.h])
 
-if test ${enable_shared} = yes; then
-    AC_MSG_WARN([Shared libraries with unstable ABIs/APIs have been enabled.])
-    AC_MSG_WARN([Please do not install them as part of a binary package.])
+if test ${enable_tools} = yes; then
+    AC_MSG_WARN([Building the deprecated ATF tools (atf-run and atf-report);])
+    AC_MSG_WARN([please migrate to Kyua as soon as feasible.])
 fi
 
 dnl vim: syntax=m4:expandtab:shiftwidth=4:softtabstop=4

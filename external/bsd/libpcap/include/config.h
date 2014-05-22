@@ -5,7 +5,7 @@
 /* #undef BDEBUG */
 
 /* define if you have a cloning BPF device */
-/* #undef HAVE_CLONING_BPF */
+#define HAVE_CLONING_BPF 1
 
 /* define if you have the DAG API */
 /* #undef HAVE_DAG_API */
@@ -18,6 +18,9 @@
 
 /* define if you have streams capable DAG API */
 /* #undef HAVE_DAG_STREAMS_API */
+
+/* define if you have vdag_set_device_info() */
+/* #undef HAVE_DAG_VDAG */
 
 /* Define to 1 if you have the declaration of `ether_hostton', and to 0 if you
    don't. */
@@ -53,11 +56,38 @@
 /* if libnl exists */
 /* #undef HAVE_LIBNL */
 
+/* if libnl exists and is version 2.x */
+/* #undef HAVE_LIBNL_2_x */
+
+/* if libnl exists and is version 3.x */
+/* #undef HAVE_LIBNL_3_x */
+
+/* libnl has NLE_FAILURE */
+/* #undef HAVE_LIBNL_NLE */
+
+/* libnl has new-style socket api */
+/* #undef HAVE_LIBNL_SOCKETS */
+
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
+/* Define to 1 if you have the <linux/compiler.h> header file. */
+/* #undef HAVE_LINUX_COMPILER_H */
+
+/* Define to 1 if you have the <linux/ethtool.h> header file. */
+/* #undef HAVE_LINUX_ETHTOOL_H */
+
+/* Define to 1 if you have the <linux/if_packet.h> header file. */
+/* #undef HAVE_LINUX_IF_PACKET_H */
+
+/* Define to 1 if you have the <linux/net_tstamp.h> header file. */
+/* #undef HAVE_LINUX_NET_TSTAMP_H */
+
 /* if tp_vlan_tci exists */
 /* #undef HAVE_LINUX_TPACKET_AUXDATA_TP_VLAN_TCI */
+
+/* Define to 1 if you have the <linux/types.h> header file. */
+/* #undef HAVE_LINUX_TYPES_H */
 
 /* Define to 1 if you have the <linux/usbdevice_fs.h> header file. */
 /* #undef HAVE_LINUX_USBDEVICE_FS_H */
@@ -73,6 +103,12 @@
 
 /* Define to 1 if you have the <netinet/if_ether.h> header file. */
 #define HAVE_NETINET_IF_ETHER_H 1
+
+/* Define to 1 if you have the <netpacket/if_packet.h> header file. */
+/* #undef HAVE_NETPACKET_IF_PACKET_H */
+
+/* Define to 1 if you have the <netpacket/packet.h> header file. */
+/* #undef HAVE_NETPACKET_PACKET_H */
 
 /* Define to 1 if you have the <net/if_media.h> header file. */
 #define HAVE_NET_IF_MEDIA_H 1
@@ -176,11 +212,8 @@
 /* define if your compiler has __attribute__ */
 #define HAVE___ATTRIBUTE__ 1
 
-#ifdef notdef
-/* From the Makefile */
 /* IPv6 */
 #define INET6 1
-#endif
 
 /* if unaligned access fails */
 /* #undef LBL_ALIGN */
@@ -188,11 +221,14 @@
 /* path for device for USB sniffing */
 /* #undef LINUX_USB_MON_DEV */
 
+/* if we need a pcap_parse wrapper around yyparse */
+/* #undef NEED_YYPARSE_WRAPPER */
+
 /* Define to 1 if netinet/ether.h declares `ether_hostton' */
 /* #undef NETINET_ETHER_H_DECLARES_ETHER_HOSTTON */
 
 /* Define to 1 if netinet/if_ether.h declares `ether_hostton' */
-#define NETINET_IF_ETHER_H_DECLARES_ETHER_HOSTTON 
+#define NETINET_IF_ETHER_H_DECLARES_ETHER_HOSTTON /**/
 
 /* do not use protochain */
 /* #undef NO_PROTOCHAIN */
@@ -209,6 +245,9 @@
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME ""
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION ""
 
@@ -221,11 +260,23 @@
 /* target host supports CAN sniffing */
 /* #undef PCAP_SUPPORT_CAN */
 
+/* target host supports canusb */
+/* #undef PCAP_SUPPORT_CANUSB */
+
+/* support D-Bus sniffing */
+/* #undef PCAP_SUPPORT_DBUS */
+
+/* target host supports netfilter sniffing */
+/* #undef PCAP_SUPPORT_NETFILTER */
+
 /* target host supports USB sniffing */
 /* #undef PCAP_SUPPORT_USB */
 
 /* include ACN support */
 /* #undef SITA */
+
+/* if struct sockaddr_hci has hci_channel member */
+/* #undef SOCKADDR_HCI_HAS_HCI_CHANNEL */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -233,11 +284,13 @@
 /* Enable parser debugging */
 /* #undef YYDEBUG */
 
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
-
-/* needed on HP-UX */
-/* #undef _HPUX_SOURCE */
 
 /* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
 /* #undef _LARGEFILE_SOURCE */
@@ -247,6 +300,9 @@
 
 /* define on AIX to get certain functions */
 /* #undef _SUN */
+
+/* define if your compiler allows __attribute__((format)) without a warning */
+#define __ATTRIBUTE___FORMAT_OK 1
 
 /* to handle Ultrix compilers that don't support const in prototypes */
 /* #undef const */

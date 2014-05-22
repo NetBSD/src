@@ -1,7 +1,7 @@
-/*	$NetBSD: isctest.c,v 1.1.1.1.2.2 2013/01/16 05:27:34 yamt Exp $	*/
+/*	$NetBSD: isctest.c,v 1.1.1.1.2.3 2014/05/22 15:43:21 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -93,7 +93,7 @@ create_managers() {
 	CHECK(isc_socketmgr_create(mctx, &socketmgr));
 	return (ISC_R_SUCCESS);
 
-  cleanup:
+ cleanup:
 	cleanup_managers();
 	return (result);
 }

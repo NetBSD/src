@@ -1,4 +1,4 @@
-; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,8 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: hints,v 1.1.2.1 2011/10/15 23:00:04 vjs Exp 
+; Id
 
 
-.	0	NS	ns1.
-ns1.	0	A	10.53.0.1
+.	120	NS	ns.
+ns.	120	A	10.53.0.1

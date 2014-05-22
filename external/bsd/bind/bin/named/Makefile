@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2012/10/30 18:49:17 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2014/05/22 15:42:43 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,11 @@ LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
 DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include -DCONFIGARGS=\"defaults\"
-CPPFLAGS+=-DNO_VERSION_DATE
+CPPFLAGS+=-DNO_VERSION_DATE -DPRODUCT=\"BIND\" -DSRCID=\"${SRCID}\"
+CPPFLAGS+=-DDESCRIPTION=\"\(Extended\ Support\ Version\)\"
+CPPFLAGS+=-DBUILDER=\"make\"	# I am tempted to say Bob
+
+.include "${IDIST}/srcid"
 
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
 .for f in client

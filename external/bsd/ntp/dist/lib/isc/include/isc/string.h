@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.1.1.1 2009/12/13 16:54:29 kardel Exp $	*/
+/*	$NetBSD: string.h,v 1.1.1.1.6.1 2014/05/22 15:50:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: string.h,v 1.23 2007/09/13 04:48:16 each Exp */
+/* Id: string.h,v 1.23 2007/09/13 04:48:16 each Exp  */
 
 #ifndef ISC_STRING_H
 #define ISC_STRING_H 1

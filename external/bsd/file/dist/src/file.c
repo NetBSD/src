@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.2.4.2 2013/01/23 00:04:36 yamt Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2.4.3 2014/05/22 15:45:00 yamt Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.148 2012/11/21 16:27:39 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.152 2013/06/26 14:46:54 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.2.4.2 2013/01/23 00:04:36 yamt Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.2.4.3 2014/05/22 15:45:00 yamt Exp $");
 #endif
 #endif	/* lint */
 
@@ -127,8 +127,14 @@ private const struct {
 
 private char *progname;		/* used throughout 		*/
 
+#ifdef __dead
+__dead
+#endif
 private void usage(void);
 private void docprint(const char *);
+#ifdef __dead
+__dead
+#endif
 private void help(void);
 
 private int unwrap(struct magic_set *, const char *);
@@ -281,6 +287,11 @@ main(int argc, char *argv[])
 	}
 	if (e)
 		return e;
+
+	if (MAGIC_VERSION != magic_version())
+		(void)fprintf(stderr, "%s: compiled magic version [%d] "
+		    "does not match with shared library magic version [%d]\n",
+		    progname, MAGIC_VERSION, magic_version());
 
 	switch(action) {
 	case FILE_CHECK:
@@ -466,8 +477,11 @@ file_mbswidth(const char *s)
 			 * is always right
 			 */
 			width++;
-		} else
-			width += wcwidth(nextchar);
+		} else {
+			int w = wcwidth(nextchar);
+			if (w > 0)
+				width += w;
+		}
 
 		s += bytesconsumed, n -= bytesconsumed;
 	}

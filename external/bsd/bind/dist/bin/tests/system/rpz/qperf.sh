@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: qperf.sh,v 1.1.2.1 2011/10/15 23:03:37 vjs Exp 
+# Id
+
 
 for QDIR in `echo "$PATH" | tr : ' '` ../../../../contrib/queryperf; do
     QPERF=$QDIR/queryperf

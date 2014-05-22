@@ -1,0 +1,15 @@
+$ORIGIN .
+sub.example.net		7200	IN DNSKEY 257 3 7 (
+					AwEAAcN4oi+shB1ZNhIXtSBuhAJKDp95Bc4H
+					3MyhMxUos7VWVrsAxNK8u900fdubtofcoLR4
+					FAoaPpX7LhQ1OPh+9RR4VIYrwilGkf2ZtZh0
+					URwOruYqvJAIf6ZTxyakaUaY5m0ABl1learg
+					+XhjBHcMz3Lvx4Opnw5qsM+vnqJT15vd
+					) ; key id = 855
+			7200	IN DNSKEY 257 3 10 (
+					BQEAAAABug/pvRR/mv4qDN3gWFRiir/6UNpn
+					uBuVC4z7xeaNk/KdvcdDibLrSZaGfcq7no3c
+					PvRsJ/U7S6VvYXFZNaXvqJ66ZGcCtImIoaCZ
+					IQboz3hFelJb/62KqZWcj1anv7+LmfYpuA1U
+					JCWpFriWYhzuT3q98lG/c7XqiX79Ytoy6P0=
+					) ; key id = 33176

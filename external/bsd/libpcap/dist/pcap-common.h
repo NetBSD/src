@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-common.h,v 1.1.1.1.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 
 /*
  * We use the "receiver-makes-right" approach to byte order,

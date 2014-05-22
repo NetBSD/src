@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -310,6 +310,29 @@ ATF_TEST_CASE_BODY(to_bool)
     ATF_REQUIRE_THROW(std::runtime_error, to_bool("false2"));
 }
 
+ATF_TEST_CASE(to_bytes);
+ATF_TEST_CASE_HEAD(to_bytes)
+{
+    set_md_var("descr", "Tests the to_bytes function");
+}
+ATF_TEST_CASE_BODY(to_bytes)
+{
+    using atf::text::to_bytes;
+
+    ATF_REQUIRE_EQ(0, to_bytes("0"));
+    ATF_REQUIRE_EQ(12345, to_bytes("12345"));
+    ATF_REQUIRE_EQ(2 * 1024, to_bytes("2k"));
+    ATF_REQUIRE_EQ(4 * 1024 * 1024, to_bytes("4m"));
+    ATF_REQUIRE_EQ(int64_t(8) * 1024 * 1024 * 1024, to_bytes("8g"));
+    ATF_REQUIRE_EQ(int64_t(16) * 1024 * 1024 * 1024 * 1024, to_bytes("16t"));
+
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Empty", to_bytes(""));
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Unknown size unit 'd'",
+                         to_bytes("12d"));
+    ATF_REQUIRE_THROW(std::runtime_error, to_bytes(" "));
+    ATF_REQUIRE_THROW(std::runtime_error, to_bytes(" k"));
+}
+
 ATF_TEST_CASE(to_string);
 ATF_TEST_CASE_HEAD(to_string)
 {
@@ -335,6 +358,7 @@ ATF_TEST_CASE_BODY(to_type)
 
     ATF_REQUIRE_EQ(to_type< int >("0"), 0);
     ATF_REQUIRE_EQ(to_type< int >("1234"), 1234);
+    ATF_REQUIRE_THROW(std::runtime_error, to_type< int >("   "));
     ATF_REQUIRE_THROW(std::runtime_error, to_type< int >("0 a"));
     ATF_REQUIRE_THROW(std::runtime_error, to_type< int >("a"));
 
@@ -360,6 +384,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, split_delims);
     ATF_ADD_TEST_CASE(tcs, trim);
     ATF_ADD_TEST_CASE(tcs, to_bool);
+    ATF_ADD_TEST_CASE(tcs, to_bytes);
     ATF_ADD_TEST_CASE(tcs, to_string);
     ATF_ADD_TEST_CASE(tcs, to_type);
 }

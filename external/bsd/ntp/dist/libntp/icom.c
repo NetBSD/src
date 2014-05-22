@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.c,v 1.2.6.1 2012/04/17 00:03:46 yamt Exp $	*/
+/*	$NetBSD: icom.c,v 1.2.6.2 2014/05/22 15:50:08 yamt Exp $	*/
 
 /*
  * Program to control ICOM radios
@@ -129,11 +129,9 @@ icom_init(
 {
 	TTY ttyb;
 	int fd;
-	int flags;
 	int rc;
 	int saved_errno;
 
-	flags = trace;
 	fd = tty_open(device, O_RDWR, 0777);
 	if (fd < 0)
 		return -1;

@@ -1,4 +1,4 @@
-; Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -20,3 +20,4 @@ $TTL 600
 @	IN MX	0 mail
 ns	IN A	10.53.0.6
 mail	IN A	10.53.0.6
+fetch 10 IN TXT A short ttl

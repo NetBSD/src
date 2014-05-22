@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: images,v 1.79 2012/12/18 17:28:44 christos Exp $
+# $File: images,v 1.86 2013/11/19 23:56:04 christos Exp $
 # images:  file(1) magic for image formats (see also "iff", and "c-lang" for
 # XPM bitmaps)
 #
@@ -45,7 +45,7 @@
 >>3	regex		=\ [0-9]+	\b%s
 !:strength + 45
 !:mime	image/x-portable-greymap
-0	search/1	P3		Netpbm PPM image text
+0	search/1	P3
 >3	regex		=[0-9]*\ [0-9]*		Netpbm PPM image text
 >3	regex		=[0-9]+\ 		\b, size = %sx
 >>3	regex		=\ [0-9]+	\b%s
@@ -256,6 +256,8 @@
 # at offset 8 starts imagedata followed by "RGB " marker
 
 # PC bitmaps (OS/2, Windows BMP files)  (Greg Roelofs, newt@uchicago.edu)
+# http://en.wikipedia.org/wiki/BMP_file_format#DIB_header_.\
+# 28bitmap_information_header.29
 0	string		BM
 >14	leshort		12		PC bitmap, OS/2 1.x format
 !:mime	image/x-ms-bmp
@@ -266,6 +268,16 @@
 >>18	leshort		x		\b, %d x
 >>20	leshort		x		%d
 >14	leshort		40		PC bitmap, Windows 3.x format
+!:mime	image/x-ms-bmp
+>>18	lelong		x		\b, %d x
+>>22	lelong		x		%d x
+>>28	leshort		x		%d
+>14	leshort		124		PC bitmap, Windows 98/2000 and newer format
+!:mime	image/x-ms-bmp
+>>18	lelong		x		\b, %d x
+>>22	lelong		x		%d x
+>>28	leshort		x		%d
+>14	leshort		108		PC bitmap, Windows 95/NT4 and newer format
 !:mime	image/x-ms-bmp
 >>18	lelong		x		\b, %d x
 >>22	lelong		x		%d x
@@ -427,7 +439,7 @@
 >5	byte	0x00		(white background)
 >5	byte	0xFF		(black background)
 
-# Gürkan Sengün <gurkan@linuks.mine.nu>, www.linuks.mine.nu
+# Gurkan Sengun <gurkan@linuks.mine.nu>, www.linuks.mine.nu
 # http://www.atarimax.com/jindroush.atari.org/afmtatr.html
 0	leshort	0x0296		Atari ATR image
 
@@ -454,26 +466,37 @@
 
 # PCX image files
 # From: Dan Fandrich <dan@coneharvesters.com>
-0	beshort		0x0a00	PCX ver. 2.5 image data
-0	beshort		0x0a02	PCX ver. 2.8 image data, with palette
-0	beshort		0x0a03	PCX ver. 2.8 image data, without palette
-0	beshort		0x0a04	PCX for Windows image data
-0	beshort		0x0a05	PCX ver. 3.0 image data
->4	leshort		x      bounding box [%hd,
->6	leshort		x      %hd] -
->8	leshort		x      [%hd,
->10	leshort		x      %hd],
->65	byte		>1	%d planes each of
->3	byte		x	%hhd-bit
->68	byte		0	image,
->68	byte		1	colour,
->68	byte		2	grayscale,
->68	byte		>2	image,
->68	byte		<0	image,
->12	leshort		>0	%hd x
->>14	leshort		x      %hd dpi,
->2	byte		0	uncompressed
->2	byte		1	RLE compressed
+# updated by Joerg Jenderek at Feb 2013 by http://de.wikipedia.org/wiki/PCX
+# http://web.archive.org/web/20100206055706/http://www.qzx.com/pc-gpe/pcx.txt
+# GRR: original test was still too general as it catches xbase examples T5.DBT,T6.DBT with 0xa000000
+# test for bytes 0x0a,version byte (0,2,3,4,5),compression byte flag(0,1), bit depth (>0) of PCX or T5.DBT,T6.DBT
+0	ubelong&0xffF8fe00	0x0a000000	
+# for PCX bit depth > 0 
+>3	ubyte		>0	
+# test for valid versions
+>>1	ubyte		<6	
+>>>1	ubyte		!1	PCX
+!:mime	image/x-pcx
+#!:mime	image/pcx
+>>>>1	ubyte		0	ver. 2.5 image data
+>>>>1	ubyte		2	ver. 2.8 image data, with palette
+>>>>1	ubyte		3	ver. 2.8 image data, without palette
+>>>>1	ubyte		4	for Windows image data
+>>>>1	ubyte		5	ver. 3.0 image data
+>>>>4	uleshort	x	bounding box [%hd,
+>>>>6	uleshort	x	%d] -
+>>>>8	uleshort	x	[%d,
+>>>>10	uleshort	x	%d],
+>>>>65	ubyte		>1	%d planes each of
+>>>>3	ubyte		x	%d-bit
+>>>>68	byte		1	colour,
+>>>>68	byte		2	grayscale,
+# this should not happen
+>>>>68	default		x	image,
+>>>>12	leshort		>0	%d x
+>>>>>14	uleshort	x	%d dpi,
+>>>>2	byte		0	uncompressed
+>>>>2	byte		1	RLE compressed
 
 # Adobe Photoshop
 # From: Asbjoern Sloth Toennesen <asbjorn@lila.io>
@@ -723,6 +746,15 @@
 !:mime	application/x-hdf
 0	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) data
 !:mime	application/x-hdf
+512	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 512 bytes user block
+!:mime	application/x-hdf
+1024	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 1k user block
+!:mime	application/x-hdf
+2048	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 2k user block
+!:mime	application/x-hdf
+4096	string	\211HDF\r\n\032\n	Hierarchical Data Format (version 5) with 4k user block
+!:mime	application/x-hdf
+
 
 # From: Tobias Burnus <burnus@net-b.de>
 # Xara (for a while: Corel Xara) is a graphic package, see
@@ -757,6 +789,34 @@
 # Wavelet Scalar Quantization format used in gray-scale fingerprint images
 # From Tano M Fotang <mfotang@quanteq.com>
 0	string	\xff\xa0\xff\xa8\x00	Wavelet Scalar Quantization image data
+
+# Type:		PCO B16 image files
+# URL:		http://www.pco.de/fileadmin/user_upload/db/download/MA_CWDCOPIE_0412b.pdf
+# From:		Florian Philipp <florian.philipp@binarywings.net>
+# Extension:	.b16
+# Description:	Pixel image format produced by PCO Camware, typically used
+#		together with PCO cameras.
+# Note:		Different versions exist for e.g. 8 bit and 16 bit images.
+#		Documentation is incomplete.
+0	string/b	PCO-	PCO B16 image data
+>12	lelong		x	\b, %dx
+>16	lelong		x	\b%d
+>20	lelong		0	\b, short header
+>20	lelong		-1	\b, extended header
+>>24	lelong		0	\b, grayscale
+>>>36	lelong		0	linear LUT
+>>>36	lelong		1	logarithmic LUT
+>>>28	lelong		x	[%d
+>>>32	lelong		x	\b,%d]
+>>24	lelong		1	\b, color
+>>>64	lelong		0	linear LUT
+>>>64	lelong		1	logarithmic LUT
+>>>40	lelong		x	r[%d
+>>>44	lelong		x	\b,%d]
+>>>48	lelong		x	g[%d
+>>>52	lelong		x	\b,%d]
+>>>56	lelong		x	b[%d
+>>>60	lelong		x	\b,%d]
 
 # Polar Monitor Bitmap (.pmb) used as logo for Polar Electro watches
 # From: Markus Heidelberg <markus.heidelberg at web.de>
@@ -827,3 +887,8 @@
 # Not really an image.
 # From: "Tano M. Fotang" <mfotang@quanteq.com>
 0	string	\x46\x4d\x52\x00	ISO/IEC 19794-2 Format Minutiae Record (FMR)
+
+# WEBP https://developers.google.com/speed/webp/docs/riff_container
+0	string	RIFF
+>8	string	WEBP	Web/P image data
+>>4	lelong	x	\b, %d bytes

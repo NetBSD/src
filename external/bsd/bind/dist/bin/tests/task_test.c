@@ -1,7 +1,7 @@
-/*	$NetBSD: task_test.c,v 1.2.4.1 2012/10/30 18:49:57 yamt Exp $	*/
+/*	$NetBSD: task_test.c,v 1.2.4.2 2014/05/22 15:42:48 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -71,9 +71,13 @@ main(int argc, char *argv[]) {
 	isc_timer_t *ti1, *ti2;
 	struct isc_interval interval;
 
-	if (argc > 1)
+	if (argc > 1) {
 		workers = atoi(argv[1]);
-	else
+		if (workers < 1)
+			workers = 1;
+		if (workers > 8192)
+			workers = 8192;
+	} else
 		workers = 2;
 	printf("%d workers\n", workers);
 
@@ -113,7 +117,11 @@ main(int argc, char *argv[]) {
 
 	printf("task 1 = %p\n", t1);
 	printf("task 2 = %p\n", t2);
+#ifndef WIN32
 	sleep(2);
+#else
+	Sleep(2000);
+#endif
 
 	/*
 	 * Note:  (void *)1 is used as a sender here, since some compilers
@@ -178,7 +186,11 @@ main(int argc, char *argv[]) {
 	isc_task_detach(&t3);
 	isc_task_detach(&t4);
 
+#ifndef WIN32
 	sleep(10);
+#else
+	Sleep(10000);
+#endif
 	printf("destroy\n");
 	isc_timer_detach(&ti1);
 	isc_timer_detach(&ti2);

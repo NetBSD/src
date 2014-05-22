@@ -15,7 +15,7 @@ However, as of BIND 9.8, it is also possible to link some DLZ modules
 dynamically at runtime, via the DLZ "dlopen" driver, which acts as a
 generic wrapper around a shared object that implements the DLZ API.  The
 "dlopen" driver is linked into named by default, so configure options are
-no longer necessary.
+no longer necessary unless using older DLZ drivers.
 
 When the DLZ module provides data to named, it does so in text format.
 The response is converted to DNS wire format by named.  This conversion,
@@ -25,6 +25,41 @@ for use on high-volume servers.  However, it can be used in a hidden
 master configuration, with slaves retrieving zone updates via AXFR.
 (Note, however, that DLZ has no built-in support for DNS notify; slaves
 are not automatically informed of changes to the zones in the database.)
+
+CONFIGURING DLZ:
+
+A DLZ database is configured with a "dlz" statement in named.conf.
+
+    dlz example {
+        database "dlopen driver.so <args>";
+        search yes;
+    };
+
+This specifies a DLZ module to search when answering queries; the module
+is implemented in "driver.so" and is loaded at runtime by the dlopen DLZ
+driver.  Multiple "dlz" statements can be specified; when answering a
+query, all DLZ modules with the "search" option set to "yes" will be
+checked for an answer, and the best available answer will be returned
+to the client.
+
+The "search" option in this example can be omitted, as "yes" is the
+default value.  If it is set to "no", then this DLZ module is *not*
+searched for best-match when a query is received.  Instead, zones in
+this DLZ must be separately specified in a zone statement.  This can
+be useful when conventional zone semantics are desired but you wish
+to use a different back-end storage mechanism than the standard zone
+database.  For example, to use a DLZ module for an NXDOMAIN redirection
+zone:
+
+    dlz other {
+        database "dlopen driver.so <args>";
+        search no;
+    };
+
+    zone "." {
+        type redirect;
+        dlz other;
+    };
 
 EXAMPLE DRIVER:
 
@@ -55,8 +90,8 @@ a particular name depending on the network from which the query arrived.)
 IMPLEMENTATION NOTES:
 
 The minimal set of type definitions, prototypes, and macros needed
-for implementing a DLZ driver is in dlz_minimal.h.  Copy this header
-file into your source tree when creating an external DLZ module.
+for implementing a DLZ driver is in ../modules/dlz_minimal.h.  Copy this
+header file into your source tree when creating an external DLZ module.
 
 The DLZ dlopen driver provides a set of callback functions:
 
@@ -81,7 +116,8 @@ The DLZ dlopen driver provides a set of callback functions:
   - isc_result_t writable_zone(dns_view_t *view, const char *zone_name);
 
     Allows the DLZ module to inform named that a given zone can recieve
-    DDNS updates.
+    DDNS updates.  (Note: This is not currently supported for DLZ
+    databases that are configured as 'search no;')
 
 The external DLZ module can define the following functions (some of these
 are mandatory, others optional).
@@ -90,11 +126,12 @@ are mandatory, others optional).
 
     Required for alL external DLZ modules, to indicate the version number
     of the DLZ dlopen driver that this module supports.  It should return
-    the value DLZ_DLOPEN_VERSION, which is defined in dlz_minimal.h and
-    is currently 2.  'flags' is updated to indicate capabilities
-    of the module.  In particular, if the module is thread-safe then it
-    sets 'flags' to include DNS_SDLZFLAG_THREADSAFE.  (Other capability
-    flags may be added in the future.)
+    the value DLZ_DLOPEN_VERSION, which is defined in the file
+    contrib/dlz/modules/dlz_minimal.h and is currently 3.  'flags' is
+    updated to indicate capabilities of the module.  In particular, if
+    the module is thread-safe then it sets 'flags' to include
+    DNS_SDLZFLAG_THREADSAFE.  (Other capability flags may be added in
+    the future.)
 
   - isc_result_t dlz_create(const char *dlzname,
                             unsigned int argc, char *argv[],
@@ -108,7 +145,9 @@ are mandatory, others optional).
     Optional.  If supplied, this will be called when the driver is
     unloaded.
 
-  - isc_result_t dlz_findzonedb(void *dbdata, const char *name);
+  - isc_result_t dlz_findzonedb(void *dbdata, const char *name,
+                                dns_clientinfomethods_t *methods,
+                                dns_clientinfo_t *clientinfo);
 
     Required for all external DLZ modules.  This indicates whether
     the DLZ module can answer for the given name.  Returns ISC_R_SUCCESS

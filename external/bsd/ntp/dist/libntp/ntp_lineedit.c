@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lineedit.c,v 1.2.2.1 2012/04/17 00:03:46 yamt Exp $	*/
+/*	$NetBSD: ntp_lineedit.c,v 1.2.2.2 2014/05/22 15:50:08 yamt Exp $	*/
 
 /*
  * ntp_lineedit.c - generic interface to various line editing libs
@@ -95,8 +95,7 @@ ntp_readline_init(
 
 			if (NULL == ntp_hist) {
 
-				fprintf(stderr, "history_init(): %s\n",
-						strerror(errno));
+				mfprintf(stderr, "history_init(): %m\n");
 				fflush(stderr);
 
 				el_end(ntp_el);
@@ -105,7 +104,7 @@ ntp_readline_init(
 				success = 0;
 
 			} else {
-				memset(&hev, 0, sizeof(hev));
+				ZERO(hev);
 #ifdef H_SETSIZE
 				history(ntp_hist, &hev, H_SETSIZE, 128);
 #endif

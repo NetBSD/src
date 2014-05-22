@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -407,8 +407,9 @@ muxer_test(const size_t bufsize, const size_t iterations)
     std::cout << "flush done\n";
     check_stream(std::cout);
 
+    sigchld.unprogram();
     int status;
-    ::wait(&status);
+    ATF_REQUIRE(::waitpid(pid, &status, 0) != -1);
     ATF_REQUIRE(WIFEXITED(status));
     ATF_REQUIRE(WEXITSTATUS(status) == EXIT_SUCCESS);
 

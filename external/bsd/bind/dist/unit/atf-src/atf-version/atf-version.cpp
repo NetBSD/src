@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ atf_version::main(void)
 #if defined(PACKAGE_REVISION_TYPE_DIST)
     std::cout << format_text("Built from a distribution file; no revision "
         "information available.") << "\n";
-#elif defined(PACKAGE_REVISION_TYPE_MTN)
+#elif defined(PACKAGE_REVISION_TYPE_GIT)
     std::cout << format_text_with_tag(PACKAGE_REVISION_BRANCH, "Branch: ",
                                       false) << "\n";
     std::cout << format_text_with_tag(PACKAGE_REVISION_BASE

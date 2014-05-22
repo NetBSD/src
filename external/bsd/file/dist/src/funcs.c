@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.3.4.2 2013/01/23 00:04:36 yamt Exp $	*/
+/*	$NetBSD: funcs.c,v 1.3.4.3 2014/05/22 15:45:00 yamt Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.61 2012/10/30 23:11:51 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.64 2013/11/19 23:49:44 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.3.4.2 2013/01/23 00:04:36 yamt Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.3.4.3 2014/05/22 15:45:00 yamt Exp $");
 #endif
 #endif	/* lint */
 
@@ -64,6 +64,8 @@ file_vprintf(struct magic_set *ms, const char *fmt, va_list ap)
 	int len;
 	char *buf, *newstr;
 
+	if (ms->event_flags & EVENT_HAD_ERR)
+		return 0;
 	len = vasprintf(&buf, fmt, ap);
 	if (len < 0)
 		goto out;
@@ -99,6 +101,7 @@ file_printf(struct magic_set *ms, const char *fmt, ...)
  * error - print best error message possible
  */
 /*VARARGS*/
+__attribute__((__format__(__printf__, 3, 0)))
 private void
 file_error_core(struct magic_set *ms, int error, const char *f, va_list va,
     size_t lineno)
@@ -173,22 +176,18 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 	size_t ulen;
 	const char *code = NULL;
 	const char *code_mime = "binary";
-	const char *type = NULL;
+	const char *type = "application/octet-stream";
+	const char *def = "data";
 
 
 
 	if (nb == 0) {
-		if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
-		    file_printf(ms, mime ? "application/x-empty" :
-		    "empty") == -1)
-			return -1;
-		return 1;
+		def = "empty";
+		type = "application/x-empty";
+		goto simple;
 	} else if (nb == 1) {
-		if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
-		    file_printf(ms, mime ? "application/octet-stream" :
-		    "very short file (no magic)") == -1)
-			return -1;
-		return 1;
+		def = "very short file (no magic)";
+		goto simple;
 	}
 
 	if ((ms->flags & MAGIC_NO_CHECK_ENCODING) == 0) {
@@ -214,7 +213,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if ((m = file_zmagic(ms, fd, inname, ubuf, nb)) != 0) {
 			if ((ms->flags & MAGIC_DEBUG) != 0)
 				(void)fprintf(stderr, "zmagic %d\n", m);
-			goto done;
+			goto done_encoding;
 		}
 #endif
 	/* Check if we have a tar file */
@@ -283,10 +282,11 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		}
 	}
 
+simple:
 	/* give up */
 	m = 1;
 	if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
-	    file_printf(ms, mime ? "application/octet-stream" : "data") == -1) {
+	    file_printf(ms, "%s", mime ? type : def) == -1) {
 	    rv = -1;
 	}
  done:
@@ -297,6 +297,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if (file_printf(ms, "%s", code_mime) == -1)
 			rv = -1;
 	}
+ done_encoding:
 	free(u8buf);
 	if (rv)
 		return rv;

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.7.2.2 2013/01/16 05:26:20 yamt Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.7.2.3 2014/05/22 15:42:45 yamt Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -121,10 +121,15 @@ usage(void) {
 	fprintf(stderr, "        (DNSKEY generation defaults to ZONE)\n");
 	fprintf(stderr, "    -c <class>: (default: IN)\n");
 	fprintf(stderr, "    -d <digest bits> (0 => max, default)\n");
-#ifdef USE_PKCS11
-	fprintf(stderr, "    -E <engine name> (default \"pkcs11\")\n");
+	fprintf(stderr, "    -E <engine>:\n");
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "        path to PKCS#11 provider library "
+				"(default is %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
+	fprintf(stderr, "        name of an OpenSSL engine to use "
+				"(default is \"pkcs11\")\n");
 #else
-	fprintf(stderr, "    -E <engine name>\n");
+	fprintf(stderr, "        name of an OpenSSL engine to use\n");
 #endif
 	fprintf(stderr, "    -f <keyflag>: KSK | REVOKE\n");
 	fprintf(stderr, "    -g <generator>: use specified generator "
@@ -136,7 +141,6 @@ usage(void) {
 			"records with (default: 0)\n");
 	fprintf(stderr, "    -T <rrtype>: DNSKEY | KEY (default: DNSKEY; "
 			"use KEY for SIG(0))\n");
-	fprintf(stderr, "        ECCGOST:\tignored\n");
 	fprintf(stderr, "    -t <type>: "
 			"AUTHCONF | NOAUTHCONF | NOAUTH | NOCONF "
 			"(default: AUTHCONF)\n");
@@ -225,7 +229,7 @@ main(int argc, char **argv) {
 	isc_log_t	*log = NULL;
 	isc_entropy_t	*ectx = NULL;
 #ifdef USE_PKCS11
-	const char	*engine = "pkcs11";
+	const char	*engine = PKCS11_ENGINE;
 #else
 	const char	*engine = NULL;
 #endif
@@ -345,10 +349,7 @@ main(int argc, char **argv) {
 			      "To generate a key with TYPE=KEY, use -T KEY.\n");
 			break;
 		case 'L':
-			if (strcmp(isc_commandline_argument, "none") == 0)
-				ttl = 0;
-			else
-				ttl = strtottl(isc_commandline_argument);
+			ttl = strtottl(isc_commandline_argument);
 			setttl = ISC_TRUE;
 			break;
 		case 'n':
@@ -405,61 +406,41 @@ main(int argc, char **argv) {
 			if (setpub || unsetpub)
 				fatal("-P specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setpub = ISC_TRUE;
-				publish = strtotime(isc_commandline_argument,
-						    now, now);
-			} else {
-				unsetpub = ISC_TRUE;
-			}
+			publish = strtotime(isc_commandline_argument,
+					    now, now, &setpub);
+			unsetpub = !setpub;
 			break;
 		case 'A':
 			if (setact || unsetact)
 				fatal("-A specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setact = ISC_TRUE;
-				activate = strtotime(isc_commandline_argument,
-						     now, now);
-			} else {
-				unsetact = ISC_TRUE;
-			}
+			activate = strtotime(isc_commandline_argument,
+					     now, now, &setact);
+			unsetact = !setact;
 			break;
 		case 'R':
 			if (setrev || unsetrev)
 				fatal("-R specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setrev = ISC_TRUE;
-				revoke = strtotime(isc_commandline_argument,
-						   now, now);
-			} else {
-				unsetrev = ISC_TRUE;
-			}
+			revoke = strtotime(isc_commandline_argument,
+					   now, now, &setrev);
+			unsetrev = !setrev;
 			break;
 		case 'I':
 			if (setinact || unsetinact)
 				fatal("-I specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setinact = ISC_TRUE;
-				inactive = strtotime(isc_commandline_argument,
-						     now, now);
-			} else {
-				unsetinact = ISC_TRUE;
-			}
+			inactive = strtotime(isc_commandline_argument,
+					     now, now, &setinact);
+			unsetinact = !setinact;
 			break;
 		case 'D':
 			if (setdel || unsetdel)
 				fatal("-D specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setdel = ISC_TRUE;
-				delete = strtotime(isc_commandline_argument,
-						   now, now);
-			} else {
-				unsetdel = ISC_TRUE;
-			}
+			delete = strtotime(isc_commandline_argument,
+					   now, now, &setdel);
+			unsetdel = !setdel;
 			break;
 		case 'S':
 			predecessor = isc_commandline_argument;
@@ -537,6 +518,7 @@ main(int argc, char **argv) {
 					"recommended.\nIf you still wish to "
 					"use RSA (RSAMD5) please specify "
 					"\"-a RSAMD5\"\n");
+			INSIST(freeit == NULL);
 			return (1);
 		} else if (strcasecmp(algname, "HMAC-MD5") == 0)
 			alg = DST_ALG_HMACMD5;
@@ -594,8 +576,8 @@ main(int argc, char **argv) {
 					size = 1024;
 				if (verbose > 0)
 					fprintf(stderr, "key size not "
-							"specified; defaulting "
-							"to %d\n", size);
+							"specified; defaulting"
+							" to %d\n", size);
 			} else if (alg != DST_ALG_ECCGOST &&
 				   alg != DST_ALG_ECDSA256 &&
 				   alg != DST_ALG_ECDSA384)
@@ -656,9 +638,9 @@ main(int argc, char **argv) {
 					    mctx, &prevkey);
 		if (ret != ISC_R_SUCCESS)
 			fatal("Invalid keyfile %s: %s",
-			      filename, isc_result_totext(ret));
+			      predecessor, isc_result_totext(ret));
 		if (!dst_key_isprivate(prevkey))
-			fatal("%s is not a private key", filename);
+			fatal("%s is not a private key", predecessor);
 
 		name = dst_key_name(prevkey);
 		alg = dst_key_alg(prevkey);
@@ -937,9 +919,9 @@ main(int argc, char **argv) {
 
 			if (setpub)
 				dst_key_settime(key, DST_TIME_PUBLISH, publish);
-			else if (setact)
+			else if (setact && !unsetpub)
 				dst_key_settime(key, DST_TIME_PUBLISH,
-						activate);
+						activate - prepub);
 			else if (!genonly && !unsetpub)
 				dst_key_settime(key, DST_TIME_PUBLISH, now);
 
@@ -963,8 +945,15 @@ main(int argc, char **argv) {
 				dst_key_settime(key, DST_TIME_INACTIVE,
 						inactive);
 
-			if (setdel)
+			if (setdel) {
+				if (setinact && delete < inactive)
+					fprintf(stderr, "%s: warning: Key is "
+						"scheduled to be deleted "
+						"before it is scheduled to be "
+						"made inactive.\n",
+						program);
 				dst_key_settime(key, DST_TIME_DELETE, delete);
+			}
 		} else {
 			if (setpub || setact || setrev || setinact ||
 			    setdel || unsetpub || unsetact ||

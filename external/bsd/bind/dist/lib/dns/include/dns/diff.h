@@ -1,7 +1,7 @@
-/*	$NetBSD: diff.h,v 1.2.4.1 2012/10/30 18:53:01 yamt Exp $	*/
+/*	$NetBSD: diff.h,v 1.2.4.2 2014/05/22 15:43:17 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -104,11 +104,6 @@ typedef struct dns_diff dns_diff_t;
 struct dns_diff {
 	unsigned int			magic;
 	isc_mem_t *			mctx;
-	/*
-	 * Set the 'resign' attribute to this many second before the
-	 * earliest RRSIG timeexpire.
-	 */
-	isc_uint32_t			resign;
 	ISC_LIST(dns_difftuple_t)	tuples;
 };
 

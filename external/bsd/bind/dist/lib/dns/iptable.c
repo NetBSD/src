@@ -1,7 +1,7 @@
-/*	$NetBSD: iptable.c,v 1.2.4.1 2012/10/30 18:52:48 yamt Exp $	*/
+/*	$NetBSD: iptable.c,v 1.2.4.2 2014/05/22 15:43:16 yamt Exp $	*/
 
 /*
- * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,8 @@ dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target) {
 	tab = isc_mem_get(mctx, sizeof(*tab));
 	if (tab == NULL)
 		return (ISC_R_NOMEMORY);
-	tab->mctx = mctx;
+	tab->mctx = NULL;
+	isc_mem_attach(mctx, &tab->mctx);
 	isc_refcount_init(&tab->refcount, 1);
 	tab->radix = NULL;
 	tab->magic = DNS_IPTABLE_MAGIC;
@@ -186,5 +187,5 @@ destroy_iptable(dns_iptable_t *dtab) {
 
 	isc_refcount_destroy(&dtab->refcount);
 	dtab->magic = 0;
-	isc_mem_put(dtab->mctx, dtab, sizeof(*dtab));
+	isc_mem_putanddetach(&dtab->mctx, dtab, sizeof(*dtab));
 }

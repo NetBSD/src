@@ -1,24 +1,19 @@
-# $NetBSD: Makefile,v 1.10.4.1 2012/10/30 18:49:16 yamt Exp $
+# $NetBSD: Makefile,v 1.10.4.2 2014/05/22 15:40:15 yamt Exp $
 
-.include <bsd.own.mk>
+USE_ATF_LIBTOOLS=	yes
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/atf-run
-.PATH:		${SRCDIR}/atf-run/share
-.PATH:		${.CURDIR}/../../lib/libatf-c
+.include <bsd.init.mk>
+
+.PATH:		${SRCDIR}/tools
+.PATH:		${SRCDIR}/tools/share
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-run
-SRCS=		atf-run.cpp atffile.cpp config.cpp fs.cpp io.cpp requirements.cpp \
-		signals.cpp test-program.cpp timer.cpp user.cpp
+SRCS=		atf-run.cpp
 MAN=		atf-run.1
 
 CPPFLAGS+=	-DGDB=\"/usr/bin/gdb\"
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR}
-CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
-LDADD+=		-latf-c++ -latf-c
-DPADD+=		${LIBATF_CXX} ${LIBATF_C}
+CPPFLAGS+=	-I${SRCDIR}/tools
 
 CWARNFLAGS.clang+=	-Wno-error=unused-private-field
 

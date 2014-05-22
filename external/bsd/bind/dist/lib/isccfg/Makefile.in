@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -43,10 +43,12 @@ LIBS =		@LIBS@
 SUBDIRS =	include
 
 # Alphabetically
-OBJS =		aclconf.@O@ log.@O@ namedconf.@O@ parser.@O@ version.@O@
+OBJS =		aclconf.@O@ dnsconf.@O@ log.@O@ namedconf.@O@ \
+		parser.@O@ version.@O@
 
 # Alphabetically
-SRCS =		aclconf.c log.c namedconf.c parser.c version.c
+SRCS =		aclconf.c dnsconf.c log.c namedconf.c \
+		parser.c version.c
 
 TARGETS = 	timestamp
 
@@ -68,7 +70,8 @@ libisccfg.la: ${OBJS}
 	 ${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccfg.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${DNSLIBS} ${ISCCCLIBS} ${ISCLIBS} ${LIBS}
+		${OBJS} ${DNSLIBS} ${ISCCCLIBS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ \
+		${LIBS}
 
 timestamp: libisccfg.@A@
 	touch timestamp

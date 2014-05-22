@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -116,6 +116,7 @@ else
 	echo "R:PASS"
 
 	# Clean up.
+        rm -f $SYSTEMTESTTOP/random.data
 	if test -f $test/clean.sh
 	then
 	   ( cd $test && sh clean.sh "$@" )

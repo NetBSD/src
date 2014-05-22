@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-verify.8,v 1.2.4.2 2013/01/16 05:26:21 yamt Exp $
+.\"	$NetBSD: dnssec-verify.8,v 1.2.4.3 2014/05/22 15:42:45 yamt Exp $
 .\"
-.\" Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -44,6 +44,13 @@ verifies that a zone is fully signed for each algorithm found in the DNSKEY RRse
 \-c \fIclass\fR
 .RS 4
 Specifies the DNS class of the zone.
+.RE
+.PP
+\-E \fIengine\fR
+.RS 4
+Specifies the cryptographic hardware to use, when applicable.
+.sp
+When BIND is built with OpenSSL PKCS#11 support, this defaults to the string "pkcs11", which identifies an OpenSSL engine that can drive a cryptographic accelerator or hardware service module. When BIND is built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it defaults to the path of the PKCS#11 provider library specified via "\-\-with\-pkcs11".
 .RE
 .PP
 \-I \fIinput\-format\fR
@@ -95,5 +102,5 @@ RFC 4033.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2012 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br

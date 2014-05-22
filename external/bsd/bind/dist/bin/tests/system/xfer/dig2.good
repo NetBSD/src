@@ -16,6 +16,8 @@ cname03.example.	3600	IN	CNAME	.
 dname01.example.	3600	IN	DNAME	dname-target.
 dname02.example.	3600	IN	DNAME	dname-target.example.
 dname03.example.	3600	IN	DNAME	.
+eui48.example.		3600	IN	EUI48   01-23-45-67-89-ab
+eui64.example.		3600	IN	EUI64	01-23-45-67-89-ab-cd-ef
 gpos01.example.		3600	IN	GPOS	"-22.6882" "116.8652" "250.0"
 gpos02.example.		3600	IN	GPOS	"" "" ""
 hinfo01.example.	3600	IN	HINFO	"Generic PC clone" "NetBSD-1.4"
@@ -27,10 +29,17 @@ isdn04.example.		3600	IN	ISDN	"isdn-address" "subaddress"
 hip1.example.		3600	IN	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D 
 hip2.example.		3600	IN 	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com.
 dnskey01.example.	3600	IN	DNSKEY	512 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
+keydata.example.	3600	IN	TYPE65533 \# 0
+keydata.example.	3600	IN	TYPE65533 \# 6 010203040506
+keydata.example.	3600	IN	TYPE65533 \# 18 010203040506010203040506010203040506
 kx01.example.		3600	IN	KX	10 kdc.example.
 kx02.example.		3600	IN	KX	10 .
 loc01.example.		3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 loc02.example.		3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
+l32.example.		3600	IN	L32	10 1.2.3.4
+l64.example.		3600	IN	L64	10 14:4fff:ff20:ee64
+lp.example.		3600	IN	LP	10 example.net.
+nid.example.		3600	IN	NID	10 14:4fff:ff20:ee64
 mb01.example.		3600	IN	MG	madname.example.
 mb02.example.		3600	IN	MG	.
 mg01.example.		3600	IN	MG	mgmname.example.

@@ -1,9 +1,10 @@
-/*	$NetBSD: uglydate.c,v 1.1.1.1.6.1 2012/04/17 00:03:46 yamt Exp $	*/
+/*	$NetBSD: uglydate.c,v 1.1.1.1.6.2 2014/05/22 15:50:08 yamt Exp $	*/
 
 /*
  * uglydate - convert a time stamp to something barely readable
  *	      The string returned is 37 characters long.
  */
+#include <config.h>
 #include <stdio.h>
 
 #include "ntp_fp.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq.h,v 1.1.1.1.6.1 2012/04/17 00:03:49 yamt Exp $	*/
+/*	$NetBSD: libntpq.h,v 1.1.1.1.6.2 2014/05/22 15:50:10 yamt Exp $	*/
 
 /*****************************************************************************
  *
@@ -82,9 +82,10 @@ extern struct ntpq_varlist ntpq_varlist[MAXLIST];
  */
 
 /* from libntpq.c */
-extern int ntpq_openhost(char *);
+extern int ntpq_openhost(char *, int);
 extern int ntpq_closehost(void);
-extern int ntpq_queryhost(unsigned short VARSET, associd_t association, char *resultbuf, int maxlen);
+extern int ntpq_queryhost(unsigned short VARSET, associd_t association,
+			  char *resultbuf, int maxlen);
 extern size_t ntpq_getvar(const char *resultbuf, size_t datalen,
 			  const char *varname, char *varvalue,
 			  size_t maxlen);
@@ -106,5 +107,5 @@ extern int ntpq_read_assoc_clockvars( associd_t associd, char *resultbuf, int ma
 /* in libntpq_subs.c */
 extern int ntpq_dogetassoc(void);
 extern char ntpq_decodeaddrtype(sockaddr_u *sock);
-extern int ntpq_doquerylist(struct ntpq_varlist *, int , associd_t , int , u_short *, int *, const char **datap );
-
+extern int ntpq_doquerylist(struct ntpq_varlist *, int, associd_t, int,
+			    u_short *, int *, const char **datap);

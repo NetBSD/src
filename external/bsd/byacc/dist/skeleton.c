@@ -1,10 +1,11 @@
-/*	$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $	*/
-/* Id: skeleton.c,v 1.31 2011/09/07 09:37:59 tom Exp */
+/*	$NetBSD: skeleton.c,v 1.10.2.1 2014/05/22 15:44:17 yamt Exp $	*/
+
+/* Id: skeleton.c,v 1.32 2013/03/04 23:19:39 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.10.2.1 2014/05/22 15:44:17 yamt Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -21,6 +22,9 @@ __RCSID("$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $");
 const char *const banner[] =
 {
     "#ifndef lint",
+    "#if __GNUC__ - 0 >= 4 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ >= 1)",
+    "__attribute__((__used__))",
+    "#endif",
     "static const char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#endif",
     "",
@@ -69,7 +73,7 @@ const char *const tables[] =
     "extern short yycheck[];",
     "",
     "#if YYDEBUG",
-    "extern char *yyname[];",
+    "extern char *yytname[];",
     "extern char *yyrule[];",
     "#endif",
     0
@@ -166,7 +170,7 @@ const char *const body_1[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "",
-    "    i = data->s_mark - data->s_base;",
+    "    i = (int) (data->s_mark - data->s_base);",
     "    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",
@@ -245,9 +249,7 @@ const char *const body_2[] =
     "#if YYDEBUG",
     "        if (yydebug)",
     "        {",
-    "            yys = 0;",
-    "            if (yychar <= YYMAXTOKEN) yys = yyname[yychar];",
-    "            if (!yys) yys = \"illegal-symbol\";",
+    "            yys = yytname[YYTRANSLATE(yychar)];",
     "            printf(\"%sdebug: state %d, reading %d (%s)\\n\",",
     "                    YYPREFIX, yystate, yychar, yys);",
     "        }",
@@ -334,9 +336,7 @@ const char *const body_3[] =
     "#if YYDEBUG",
     "        if (yydebug)",
     "        {",
-    "            yys = 0;",
-    "            if (yychar <= YYMAXTOKEN) yys = yyname[yychar];",
-    "            if (!yys) yys = \"illegal-symbol\";",
+    "            yys = yytname[YYTRANSLATE(yychar)];",
     "            printf(\"%sdebug: state %d, error recovery discards token %d\
  (%s)\\n\",",
     "                    YYPREFIX, yystate, yychar, yys);",
@@ -385,9 +385,7 @@ const char *const trailer[] =
     "#if YYDEBUG",
     "            if (yydebug)",
     "            {",
-    "                yys = 0;",
-    "                if (yychar <= YYMAXTOKEN) yys = yyname[yychar];",
-    "                if (!yys) yys = \"illegal-symbol\";",
+    "                yys = yytname[YYTRANSLATE(yychar)];",
     "                printf(\"%sdebug: state %d, reading %d (%s)\\n\",",
     "                        YYPREFIX, YYFINAL, yychar, yys);",
     "            }",

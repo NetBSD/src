@@ -40,16 +40,7 @@ To build and use ATF successfully you need:
 * A make(1) utility.
 
 If you are building ATF from the code on the repository, you will also need
-the following tools.  The versions listed here are the ones used to build
-the files bundled in the last formal release, but these are not strictly
-required.  Newer ones will most likely work and, maybe, some slightly older
-ones:
-
-* GNU autoconf 2.68
-
-* GNU automake 1.11.1
-
-* GNU libtool 2.2.6b
+to have GNU autoconf, automake and libtool installed.
 
 
 Regenerating the build system
@@ -186,26 +177,35 @@ script:
   and work directories for test cases.  This is just a default and can be
   overriden at run time.
 
+* GDB
+  Possible values: empty, absolute path to GNU GDB.
+  Default: empty.
+
+  Specifies the path to the GNU GDB binary that atf-run will use to gather
+  a stack trace of a crashing test program.  If empty, the configure script
+  will try to find a suitable binary for you.
+
 The following flags are specific to ATF's 'configure' script:
 
 * --enable-developer
   Possible values: yes, no
-  Default: Depends on the version number.  Stable versions define this to
-  'no' while all others have it set to 'yes'.
+  Default: 'yes' in Git HEAD builds; 'no' in formal releases.
 
-  Enables several features useful for development, such as the inclusion of
-  debugging symbols in all objects or the enabling of warnings during
-  compilation.
+  Enables several features useful for development, such as the inclusion
+  of debugging symbols in all objects or the enforcement of compilation
+  warnings.
 
-* --enable-unstable-shared
+  The compiler will be executed with an exhaustive collection of warning
+  detection features regardless of the value of this flag.  However, such
+  warnings are only fatal when --enable-developer is 'yes'.
+
+* --enable-tools
   Possible values: yes, no
   Default: no.
 
-  Forces the building of shared libraries in addition to static ones.  The
-  build of shared libraries is currently disabled because their ABIs and
-  APIs are unstable and subject to change.  This flag is provided for
-  development purposes only and will be removed once the libraries are
-  stable enough.
+  Enables the build of the deprecated atf-config, atf-report, atf-run
+  and atf-version tools.  atf-report and atf-run have been superseded by
+  Kyua, and atf-config and atf-version are unnecessary.
 
 
 Post-installation steps

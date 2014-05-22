@@ -1,6 +1,10 @@
-# $NetBSD: Makefile,v 1.4.2.2 2013/01/16 05:27:57 yamt Exp $
+# $NetBSD: Makefile,v 1.4.2.3 2014/05/22 15:44:51 yamt Exp $
 
-.if (${MACHINE} == "evbarm") && (${MACHINE_ARCH} == "arm")
+.include <bsd.own.mk>
+.include <bsd.endian.mk>
+
+.if ${MACHINE_CPU} == "arm" && ${TARGET_ENDIANNESS} == "1234"
+
 LIBISPRIVATE=	yes
 LIB=		elftosb
 SRCS=		AESKey.cpp \
@@ -38,7 +42,6 @@ SRCS=		AESKey.cpp \
 		stdafx.cpp
 .include <bsd.lib.mk>
 .else
-${.TARGETS}:
+.include <bsd.subdir.mk>
 .endif
-
 

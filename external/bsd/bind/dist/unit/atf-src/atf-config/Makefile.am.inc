@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,11 @@
 
 bin_PROGRAMS += atf-config/atf-config
 atf_config_atf_config_SOURCES = atf-config/atf-config.cpp
-atf_config_atf_config_LDADD = libatf-c++.la
+atf_config_atf_config_LDADD = $(ATF_CXX_LIBS)
 dist_man_MANS += atf-config/atf-config.1
 
-tests_atf_config_DATA = atf-config/Atffile
+tests_atf_config_DATA = atf-config/Atffile \
+                        atf-config/Kyuafile
 tests_atf_configdir = $(pkgtestsdir)/atf-config
 EXTRA_DIST += $(tests_atf_config_DATA)
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -43,13 +43,14 @@ OBJS =          ${DLOPENOBJS}
 @BIND9_MAKE_RULES@
 
 CFLAGS =	@CFLAGS@ @SO_CFLAGS@
+SO_LDFLAGS =	@LDFLAGS@ @SO_LDFLAGS@
 
 dlopen@EXEEXT@: ${DLOPENOBJS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} \
 		-o $@ ${DLOPENOBJS} ${LIBS}
 
 driver.@SO@: ${SO_OBJS}
-	${LIBTOOL_MODE_LINK} @SO_LD@ -o $@ driver.@O@
+	${LIBTOOL_MODE_LINK} @SO_LD@ ${SO_LDFLAGS} -o $@ driver.@O@
 
 clean distclean::
 	rm -f ${TARGETS}

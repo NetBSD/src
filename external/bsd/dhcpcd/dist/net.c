@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: net.c,v 1.1.1.18.4.3 2014/05/22 15:44:40 yamt Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,30 +28,33 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
-#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/if_arp.h>
+#include <netinet/in.h>
+#ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
+#  include <net/if_var.h>
+#endif
 #ifdef AF_LINK
 #  include <net/if_dl.h>
 #  include <net/if_types.h>
+#  include <netinet/in_var.h>
 #endif
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#define __FAVOR_BSD /* Nasty glibc hack so we can use BSD semantics for UDP */
-#include <netinet/udp.h>
-#undef __FAVOR_BSD
 #ifdef AF_PACKET
 #  include <netpacket/packet.h>
 #endif
 #ifdef SIOCGIFMEDIA
 #  include <net/if_media.h>
+#endif
+
+#include <net/route.h>
+#ifdef __linux__
+#  include <asm/types.h> /* for systems with broken headers */
+#  include <linux/rtnetlink.h>
 #endif
 
 #include <ctype.h>
@@ -64,84 +70,37 @@
 
 #include "config.h"
 #include "common.h"
+#include "dev.h"
 #include "dhcp.h"
+#include "dhcp6.h"
 #include "if-options.h"
-#include "ipv6rs.h"
+#include "ipv4.h"
+#include "ipv6nd.h"
 #include "net.h"
-#include "signals.h"
-
-static char hwaddr_buffer[(HWADDR_LEN * 3) + 1 + 1024];
-
-int socket_afnet = -1;
-
-int
-inet_ntocidr(struct in_addr address)
-{
-	int cidr = 0;
-	uint32_t mask = htonl(address.s_addr);
-
-	while (mask) {
-		cidr++;
-		mask <<= 1;
-	}
-	return cidr;
-}
-
-int
-inet_cidrtoaddr(int cidr, struct in_addr *addr)
-{
-	int ocets;
-
-	if (cidr < 1 || cidr > 32) {
-		errno = EINVAL;
-		return -1;
-	}
-	ocets = (cidr + 7) / 8;
-
-	addr->s_addr = 0;
-	if (ocets > 0) {
-		memset(&addr->s_addr, 255, (size_t)ocets - 1);
-		memset((unsigned char *)&addr->s_addr + (ocets - 1),
-		    (256 - (1 << (32 - cidr) % 8)), 1);
-	}
-
-	return 0;
-}
-
-uint32_t
-get_netmask(uint32_t addr)
-{
-	uint32_t dst;
-
-	if (addr == 0)
-		return 0;
-
-	dst = htonl(addr);
-	if (IN_CLASSA(dst))
-		return ntohl(IN_CLASSA_NET);
-	if (IN_CLASSB(dst))
-		return ntohl(IN_CLASSB_NET);
-	if (IN_CLASSC(dst))
-		return ntohl(IN_CLASSC_NET);
-
-	return 0;
-}
 
 char *
-hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen)
+hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen, char *buf, size_t buflen)
 {
-	char *p = hwaddr_buffer;
+	char *p;
 	size_t i;
 
+	if (buf == NULL) {
+		return NULL;
+	}
+
+	if (hwlen * 3 > buflen) {
+		errno = ENOBUFS;
+		return 0;
+	}
+
+	p = buf;
 	for (i = 0; i < hwlen; i++) {
 		if (i > 0)
 			*p ++= ':';
 		p += snprintf(p, 3, "%.2x", hwaddr[i]);
 	}
-
 	*p ++= '\0';
-
-	return hwaddr_buffer;
+	return buf;
 }
 
 size_t
@@ -183,27 +142,24 @@ hwaddr_aton(unsigned char *buffer, const char *addr)
 }
 
 void
-free_interface(struct interface *iface)
+free_interface(struct interface *ifp)
 {
-	if (!iface)
+
+	if (ifp == NULL)
 		return;
-	ipv6rs_free(iface);
-	if (iface->state) {
-		free_options(iface->state->options);
-		free(iface->state->old);
-		free(iface->state->new);
-		free(iface->state->offer);
-		free(iface->state);
-	}
-	free(iface->buffer);
-	free(iface->clientid);
-	free(iface);
+	ipv4_free(ifp);
+	dhcp_free(ifp);
+	ipv6_free(ifp);
+	dhcp6_free(ifp);
+	ipv6nd_free(ifp);
+	free_options(ifp->options);
+	free(ifp);
 }
 
 int
 carrier_status(struct interface *iface)
 {
-	int ret;
+	int s, r;
 	struct ifreq ifr;
 #ifdef SIOCGIFMEDIA
 	struct ifmediareq ifmr;
@@ -212,6 +168,8 @@ carrier_status(struct interface *iface)
 	char *p;
 #endif
 
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return LINK_UNKNOWN;
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
 #ifdef __linux__
@@ -220,32 +178,37 @@ carrier_status(struct interface *iface)
 		*p = '\0';
 #endif
 
-	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == -1)
-		return -1;
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) {
+		close(s);
+		return LINK_UNKNOWN;
+	}
 	iface->flags = ifr.ifr_flags;
 
-	ret = -1;
+	r = LINK_UNKNOWN;
 #ifdef SIOCGIFMEDIA
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, iface->name, sizeof(ifmr.ifm_name));
-	if (ioctl(socket_afnet, SIOCGIFMEDIA, &ifmr) != -1 &&
+	if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1 &&
 	    ifmr.ifm_status & IFM_AVALID)
-		ret = (ifmr.ifm_status & IFM_ACTIVE) ? 1 : 0;
+		r = (ifmr.ifm_status & IFM_ACTIVE) ? LINK_UP : LINK_DOWN;
 #endif
-	if (ret == -1)
-		ret = (ifr.ifr_flags & IFF_RUNNING) ? 1 : 0;
-	return ret;
+	if (r == LINK_UNKNOWN)
+		r = (ifr.ifr_flags & IFF_RUNNING) ? LINK_UP : LINK_DOWN;
+	close(s);
+	return r;
 }
 
-int
+static int
 up_interface(struct interface *iface)
 {
 	struct ifreq ifr;
-	int retval = -1;
+	int s, r;
 #ifdef __linux__
 	char *p;
 #endif
 
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return -1;
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
 #ifdef __linux__
@@ -253,38 +216,63 @@ up_interface(struct interface *iface)
 	if ((p = strchr(ifr.ifr_name, ':')))
 		*p = '\0';
 #endif
-	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == 0) {
+	r = -1;
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
 		if ((ifr.ifr_flags & IFF_UP))
-			retval = 0;
+			r = 0;
 		else {
 			ifr.ifr_flags |= IFF_UP;
-			if (ioctl(socket_afnet, SIOCSIFFLAGS, &ifr) == 0)
-				retval = 0;
+			if (ioctl(s, SIOCSIFFLAGS, &ifr) == 0)
+				r = 0;
 		}
 		iface->flags = ifr.ifr_flags;
 	}
-	return retval;
+	close(s);
+	return r;
 }
 
-struct interface *
-discover_interfaces(int argc, char * const *argv)
+struct if_head *
+discover_interfaces(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 {
 	struct ifaddrs *ifaddrs, *ifa;
 	char *p;
 	int i, sdl_type;
-	struct interface *ifp, *ifs, *ifl;
+	struct if_head *ifs;
+	struct interface *ifp;
 #ifdef __linux__
 	char ifn[IF_NAMESIZE];
 #endif
+#ifdef INET
+	const struct sockaddr_in *addr;
+	const struct sockaddr_in *net;
+	const struct sockaddr_in *dst;
+#endif
+#ifdef INET6
+	const struct sockaddr_in6 *sin6;
+	int ifa_flags;
+#endif
 #ifdef AF_LINK
 	const struct sockaddr_dl *sdl;
+#ifdef SIOCGIFPRIORITY
+	struct ifreq ifr;
+	int s_inet;
+#endif
 #ifdef IFLR_ACTIVE
 	struct if_laddrreq iflr;
-	int socket_aflink;
+	int s_link;
+#endif
 
-	socket_aflink = socket(AF_LINK, SOCK_DGRAM, 0);
-	if (socket_aflink == -1)
+#ifdef SIOCGIFPRIORITY
+	if ((s_inet = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		return NULL;
+#endif
+#ifdef IFLR_ACTIVE
+	if ((s_link = socket(AF_LINK, SOCK_DGRAM, 0)) == -1) {
+#ifdef SIOCGIFPRIORITY
+		close(s_inet);
+#endif
+		return NULL;
+	}
 	memset(&iflr, 0, sizeof(iflr));
 #endif
 #elif AF_PACKET
@@ -293,8 +281,11 @@ discover_interfaces(int argc, char * const *argv)
 
 	if (getifaddrs(&ifaddrs) == -1)
 		return NULL;
+	ifs = malloc(sizeof(*ifs));
+	if (ifs == NULL)
+		return NULL;
+	TAILQ_INIT(ifs);
 
-	ifs = ifl = NULL;
 	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr != NULL) {
 #ifdef AF_LINK
@@ -306,11 +297,16 @@ discover_interfaces(int argc, char * const *argv)
 #endif
 		}
 
+		/* Ensure that the interface name has settled */
+		if (!dev_initialized(ctx, ifa->ifa_name))
+			continue;
+
 		/* It's possible for an interface to have >1 AF_LINK.
 		 * For our purposes, we use the first one. */
-		for (ifp = ifs; ifp; ifp = ifp->next)
+		TAILQ_FOREACH(ifp, ifs, next) {
 			if (strcmp(ifp->name, ifa->ifa_name) == 0)
 				break;
+		}
 		if (ifp)
 			continue;
 		if (argc > 0) {
@@ -332,45 +328,58 @@ discover_interfaces(int argc, char * const *argv)
 				continue;
 			p = argv[i];
 		} else {
+			p = ifa->ifa_name;
 			/* -1 means we're discovering against a specific
 			 * interface, but we still need the below rules
 			 * to apply. */
 			if (argc == -1 && strcmp(argv[0], ifa->ifa_name) != 0)
 				continue;
-			for (i = 0; i < ifdc; i++)
-				if (!fnmatch(ifdv[i], ifa->ifa_name, 0))
-					break;
-			if (i < ifdc)
-				continue;
-			for (i = 0; i < ifac; i++)
-				if (!fnmatch(ifav[i], ifa->ifa_name, 0))
-					break;
-			if (ifac && i == ifac)
-				continue;
-			p = ifa->ifa_name;
+		}
+		for (i = 0; i < ctx->ifdc; i++)
+			if (!fnmatch(ctx->ifdv[i], p, 0))
+				break;
+		if (i < ctx->ifdc)
+			continue;
+		for (i = 0; i < ctx->ifac; i++)
+			if (!fnmatch(ctx->ifav[i], p, 0))
+				break;
+		if (ctx->ifac && i == ctx->ifac)
+			continue;
+
+		if (if_vimaster(ifa->ifa_name) == 1) {
+			syslog(argc ? LOG_ERR : LOG_DEBUG,
+				"%s: is a Virtual Interface Master, skipping",
+				ifa->ifa_name);
+			continue;
 		}
 
-		ifp = xzalloc(sizeof(*ifp));
+		ifp = calloc(1, sizeof(*ifp));
+		if (ifp == NULL) {
+			syslog(LOG_ERR, "%s: %m", __func__);
+			break;
+		}
+		ifp->ctx = ctx;
 		strlcpy(ifp->name, p, sizeof(ifp->name));
 		ifp->flags = ifa->ifa_flags;
 
 		/* Bring the interface up if not already */
 		if (!(ifp->flags & IFF_UP)
 #ifdef SIOCGIFMEDIA
-		    && carrier_status(ifp) != -1
+		    && carrier_status(ifp) != LINK_UNKNOWN
 #endif
 		   )
 		{
 			if (up_interface(ifp) == 0)
-				options |= DHCPCD_WAITUP;
+				ctx->options |= DHCPCD_WAITUP;
 			else
-				syslog(LOG_ERR, "%s: up_interface: %m", ifp->name);
+				syslog(LOG_ERR, "%s: up_interface: %m",
+				    ifp->name);
 		}
 
 		sdl_type = 0;
 		/* Don't allow loopback unless explicit */
 		if (ifp->flags & IFF_LOOPBACK) {
-			if (argc == 0 && ifac == 0) {
+			if (argc == 0 && ctx->ifac == 0) {
 				free_interface(ifp);
 				continue;
 			}
@@ -386,7 +395,7 @@ discover_interfaces(int argc, char * const *argv)
 			    MIN(ifa->ifa_addr->sa_len, sizeof(iflr.addr)));
 			iflr.flags = IFLR_PREFIX;
 			iflr.prefixlen = sdl->sdl_alen * NBBY;
-			if (ioctl(socket_aflink, SIOCGLIFADDR, &iflr) == -1 ||
+			if (ioctl(s_link, SIOCGLIFADDR, &iflr) == -1 ||
 			    !(iflr.flags & IFLR_ACTIVE))
 			{
 				free_interface(ifp);
@@ -426,12 +435,17 @@ discover_interfaces(int argc, char * const *argv)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
 #endif
 		}
+#ifdef __linux__
+		/* PPP addresses on Linux don't have hardware addresses */
+		else
+			ifp->index = if_nametoindex(ifp->name);
+#endif
 
 		/* We only work on ethernet by default */
 		if (!(ifp->flags & IFF_POINTOPOINT) &&
 		    ifp->family != ARPHRD_ETHER)
 		{
-			if (argc == 0 && ifac == 0) {
+			if (argc == 0 && ctx->ifac == 0) {
 				free_interface(ifp);
 				continue;
 			}
@@ -466,6 +480,13 @@ discover_interfaces(int argc, char * const *argv)
 			continue;
 		}
 
+#ifdef SIOCGIFPRIORITY
+		/* Respect the interface priority */
+		memset(&ifr, 0, sizeof(ifr));
+		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+		if (ioctl(s_inet, SIOCGIFPRIORITY, &ifr) == 0)
+			ifp->metric = ifr.ifr_metric;
+#else
 		/* We reserve the 100 range for virtual interfaces, if and when
 		 * we can work them out. */
 		ifp->metric = 200 + ifp->index;
@@ -473,300 +494,73 @@ discover_interfaces(int argc, char * const *argv)
 			ifp->wireless = 1;
 			ifp->metric += 100;
 		}
-		snprintf(ifp->leasefile, sizeof(ifp->leasefile),
-		    LEASEFILE, ifp->name);
-		/* 0 is a valid fd, so init to -1 */
-		ifp->raw_fd = ifp->udp_fd = ifp->arp_fd = -1;
+#endif
 
-		if (ifl)
-			ifl->next = ifp; 
-		else
-			ifs = ifp;
-		ifl = ifp;
+		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
+
+	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		switch(ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			addr = (const struct sockaddr_in *)
+			    (void *)ifa->ifa_addr;
+			net = (const struct sockaddr_in *)
+			    (void *)ifa->ifa_netmask;
+			if (ifa->ifa_flags & IFF_POINTOPOINT)
+				dst = (const struct sockaddr_in *)
+				    (void *)ifa->ifa_dstaddr;
+			else
+				dst = NULL;
+			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
+				&addr->sin_addr,
+				&net->sin_addr,
+				dst ? &dst->sin_addr : NULL);
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			sin6 = (const struct sockaddr_in6 *)
+			    (void *)ifa->ifa_addr;
+			ifa_flags = in6_addr_flags(ifa->ifa_name,
+			    &sin6->sin6_addr);
+			if (ifa_flags != -1)
+				ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
+				    ifa->ifa_name,
+				    &sin6->sin6_addr, ifa_flags);
+			break;
+#endif
+		}
+	}
+
 	freeifaddrs(ifaddrs);
 
+#ifdef SIOCGIFPRIORITY
+	close(s_inet);
+#endif
 #ifdef IFLR_ACTIVE
-	close(socket_aflink);
+	close(s_link);
 #endif
 
 	return ifs;
 }
 
 int
-do_address(const char *ifname,
-    struct in_addr *addr, struct in_addr *net, struct in_addr *dst, int act)
-{
-	struct ifaddrs *ifaddrs, *ifa;
-	const struct sockaddr_in *a, *n, *d;
-	int retval;
-
-	if (getifaddrs(&ifaddrs) == -1)
-		return -1;
-
-	retval = 0;
-	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr == NULL ||
-		    ifa->ifa_addr->sa_family != AF_INET ||
-		    strcmp(ifa->ifa_name, ifname) != 0)
-			continue;
-		a = (const struct sockaddr_in *)(void *)ifa->ifa_addr;
-		n = (const struct sockaddr_in *)(void *)ifa->ifa_netmask;
-		if (ifa->ifa_flags & IFF_POINTOPOINT)
-			d = (const struct sockaddr_in *)(void *)
-			    ifa->ifa_dstaddr;
-		else
-			d = NULL;
-		if (act == 1) {
-			addr->s_addr = a->sin_addr.s_addr;
-			net->s_addr = n->sin_addr.s_addr;
-			if (dst) {
-				if (ifa->ifa_flags & IFF_POINTOPOINT)
-					dst->s_addr = d->sin_addr.s_addr;
-				else
-					dst->s_addr = INADDR_ANY;
-			}
-			retval = 1;
-			break;
-		}
-		if (addr->s_addr == a->sin_addr.s_addr &&
-		    (net == NULL || net->s_addr == n->sin_addr.s_addr))
-		{
-			retval = 1;
-			break;
-		}
-	}
-	freeifaddrs(ifaddrs);
-	return retval;
-}
-
-int
 do_mtu(const char *ifname, short int mtu)
 {
+	int s, r;
 	struct ifreq ifr;
-	int r;
 
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return -1;
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = mtu;
-	r = ioctl(socket_afnet, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
+	r = ioctl(s, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
+	close(s);
 	if (r == -1)
 		return -1;
 	return ifr.ifr_mtu;
-}
-
-void
-free_routes(struct rt *routes)
-{
-	struct rt *r;
-
-	while (routes) {
-		r = routes->next;
-		free(routes);
-		routes = r;
-	}
-}
-
-int
-open_udp_socket(struct interface *iface)
-{
-	int s;
-	struct sockaddr_in sin;
-	int n;
-#ifdef SO_BINDTODEVICE
-	struct ifreq ifr;
-	char *p;
-#endif
-
-	if ((s = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		return -1;
-
-	n = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
-		goto eexit;
-#ifdef SO_BINDTODEVICE
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
-	/* We can only bind to the real device */
-	p = strchr(ifr.ifr_name, ':');
-	if (p)
-		*p = '\0';
-	if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr,
-		sizeof(ifr)) == -1)
-		goto eexit;
-#endif
-	/* As we don't use this socket for receiving, set the
-	 * receive buffer to 1 */
-	n = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1)
-		goto eexit;
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(DHCP_CLIENT_PORT);
-	sin.sin_addr.s_addr = iface->addr.s_addr;
-	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) == -1)
-		goto eexit;
-
-	iface->udp_fd = s;
-	set_cloexec(s);
-	return 0;
-
-eexit:
-	close(s);
-	return -1;
-}
-
-ssize_t
-send_packet(const struct interface *iface, struct in_addr to,
-    const uint8_t *data, ssize_t len)
-{
-	struct sockaddr_in sin;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = to.s_addr;
-	sin.sin_port = htons(DHCP_SERVER_PORT);
-	return sendto(iface->udp_fd, data, len, 0,
-	    (struct sockaddr *)&sin, sizeof(sin));
-}
-
-struct udp_dhcp_packet
-{
-	struct ip ip;
-	struct udphdr udp;
-	struct dhcp_message dhcp;
-};
-const size_t udp_dhcp_len = sizeof(struct udp_dhcp_packet);
-
-static uint16_t
-checksum(const void *data, uint16_t len)
-{
-	const uint8_t *addr = data;
-	uint32_t sum = 0;
-
-	while (len > 1) {
-		sum += addr[0] * 256 + addr[1];
-		addr += 2;
-		len -= 2;
-	}
-
-	if (len == 1)
-		sum += *addr * 256;
-
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum += (sum >> 16);
-
-	sum = htons(sum);
-
-	return ~sum;
-}
-
-ssize_t
-make_udp_packet(uint8_t **packet, const uint8_t *data, size_t length,
-    struct in_addr source, struct in_addr dest)
-{
-	struct udp_dhcp_packet *udpp;
-	struct ip *ip;
-	struct udphdr *udp;
-
-	udpp = xzalloc(sizeof(*udpp));
-	ip = &udpp->ip;
-	udp = &udpp->udp;
-
-	/* OK, this is important :)
-	 * We copy the data to our packet and then create a small part of the
-	 * ip structure and an invalid ip_len (basically udp length).
-	 * We then fill the udp structure and put the checksum
-	 * of the whole packet into the udp checksum.
-	 * Finally we complete the ip structure and ip checksum.
-	 * If we don't do the ordering like so then the udp checksum will be
-	 * broken, so find another way of doing it! */
-
-	memcpy(&udpp->dhcp, data, length);
-
-	ip->ip_p = IPPROTO_UDP;
-	ip->ip_src.s_addr = source.s_addr;
-	if (dest.s_addr == 0)
-		ip->ip_dst.s_addr = INADDR_BROADCAST;
-	else
-		ip->ip_dst.s_addr = dest.s_addr;
-
-	udp->uh_sport = htons(DHCP_CLIENT_PORT);
-	udp->uh_dport = htons(DHCP_SERVER_PORT);
-	udp->uh_ulen = htons(sizeof(*udp) + length);
-	ip->ip_len = udp->uh_ulen;
-	udp->uh_sum = checksum(udpp, sizeof(*udpp));
-
-	ip->ip_v = IPVERSION;
-	ip->ip_hl = sizeof(*ip) >> 2;
-	ip->ip_id = arc4random() & UINT16_MAX;
-	ip->ip_ttl = IPDEFTTL;
-	ip->ip_len = htons(sizeof(*ip) + sizeof(*udp) + length);
-	ip->ip_sum = checksum(ip, sizeof(*ip));
-
-	*packet = (uint8_t *)udpp;
-	return sizeof(*ip) + sizeof(*udp) + length;
-}
-
-ssize_t
-get_udp_data(const uint8_t **data, const uint8_t *udp)
-{
-	struct udp_dhcp_packet packet;
-
-	memcpy(&packet, udp, sizeof(packet));
-	*data = udp + offsetof(struct udp_dhcp_packet, dhcp);
-	return ntohs(packet.ip.ip_len) -
-	    sizeof(packet.ip) -
-	    sizeof(packet.udp);
-}
-
-int
-valid_udp_packet(const uint8_t *data, size_t data_len, struct in_addr *from,
-    int noudpcsum)
-{
-	struct udp_dhcp_packet packet;
-	uint16_t bytes, udpsum;
-
-	if (data_len < sizeof(packet.ip)) {
-		if (from)
-			from->s_addr = INADDR_ANY;
-		errno = EINVAL;
-		return -1;
-	}
-	memcpy(&packet, data, MIN(data_len, sizeof(packet)));
-	if (from)
-		from->s_addr = packet.ip.ip_src.s_addr;
-	if (data_len > sizeof(packet)) {
-		errno = EINVAL;
-		return -1;
-	}
-	if (checksum(&packet.ip, sizeof(packet.ip)) != 0) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	bytes = ntohs(packet.ip.ip_len);
-	if (data_len < bytes) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (noudpcsum == 0) {
-		udpsum = packet.udp.uh_sum;
-		packet.udp.uh_sum = 0;
-		packet.ip.ip_hl = 0;
-		packet.ip.ip_v = 0;
-		packet.ip.ip_tos = 0;
-		packet.ip.ip_len = packet.udp.uh_ulen;
-		packet.ip.ip_id = 0;
-		packet.ip.ip_off = 0;
-		packet.ip.ip_ttl = 0;
-		packet.ip.ip_sum = 0;
-		if (udpsum && checksum(&packet, bytes) != udpsum) {
-			errno = EINVAL;
-			return -1;
-		}
-	}
-
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pcf.c,v 1.2.6.1 2012/04/17 00:03:48 yamt Exp $	*/
+/*	$NetBSD: refclock_pcf.c,v 1.2.6.2 2014/05/22 15:50:09 yamt Exp $	*/
 
 /*
  * refclock_pcf - clock driver for the Conrad parallel port radio clock
@@ -90,7 +90,7 @@ pcf_start(
 	
 	pp = peer->procptr;
 	pp->io.clock_recv = noentry;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	
@@ -120,7 +120,8 @@ pcf_shutdown(
 	struct refclockproc *pp;
 	
 	pp = peer->procptr;
-	(void)close(pp->io.fd);
+	if (NULL != pp)
+		close(pp->io.fd);
 }
 
 
@@ -146,7 +147,7 @@ pcf_poll(
 		return;
 	}
 
-	memset(&tm, 0, sizeof(tm));
+	ZERO(tm);
 
 	tm.tm_mday = buf[11] * 10 + buf[10];
 	tm.tm_mon = buf[13] * 10 + buf[12] - 1;
