@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.189 2014/02/21 22:08:07 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.190 2014/05/22 14:01:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -539,6 +539,7 @@ void		vunmapbuf(struct buf *, vsize_t);
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
+void			uao_set_pgfl(struct uvm_object *, int);
 void			uao_detach(struct uvm_object *);
 void			uao_reference(struct uvm_object *);
 
