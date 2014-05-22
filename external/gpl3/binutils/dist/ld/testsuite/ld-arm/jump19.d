@@ -1,5 +1,5 @@
 
-.*jump19:     file format elf32-(big|little)arm
+.*jump19:     file format elf32-(big|little)arm.*
 
 Disassembly of section .text:
 

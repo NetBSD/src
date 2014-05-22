@@ -10,10 +10,6 @@ main (argc, argv, envp)
 #endif
 {
     extern void dummy();
-#ifdef usestubs
-    set_debug_traps();
-    breakpoint();
-#endif
     dummy();
     return 0;
 }
@@ -118,6 +114,13 @@ struct {
     float	v_float_member;
     double	v_double_member;
 } v_struct2;
+
+struct
+{
+  long v_long_member;
+  struct t_struct t;
+  char v_char_member;
+} v_struct3;
 
 /**** unions *******/
 

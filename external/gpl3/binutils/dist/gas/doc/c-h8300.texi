@@ -1,4 +1,4 @@
-@c Copyright (C) 1991, 1992, 1993, 1994, 1995, 2003, 2008
+@c Copyright (C) 1991, 1992, 1993, 1994, 1995, 2003, 2008, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.

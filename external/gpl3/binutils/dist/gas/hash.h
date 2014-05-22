@@ -1,5 +1,5 @@
 /* hash.h -- header file for gas hash table routines
-   Copyright 1987, 1992, 1993, 1995, 1999, 2003, 2005, 2007, 2008
+   Copyright 1987, 1992, 1993, 1995, 1999, 2003, 2005, 2007, 2008, 2013
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -31,6 +31,7 @@ void set_gas_hash_table_size (unsigned long);
 /* Create a hash table.  This return a control block.  */
 
 extern struct hash_control *hash_new (void);
+extern struct hash_control *hash_new_sized (unsigned long);
 
 /* Delete a hash table, freeing all allocated memory.  */
 

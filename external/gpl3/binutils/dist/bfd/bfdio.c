@@ -87,7 +87,6 @@ FILE *
 real_fopen (const char *filename, const char *modes)
 {
 #ifdef VMS
-  char vms_modes[4];
   char *vms_attr;
 
   /* On VMS, fopen allows file attributes as optionnal arguments.
@@ -158,9 +157,15 @@ DESCRIPTION
 .  int (*bclose) (struct bfd *abfd);
 .  int (*bflush) (struct bfd *abfd);
 .  int (*bstat) (struct bfd *abfd, struct stat *sb);
-.  {* Just like mmap: (void*)-1 on failure, mmapped address on success.  *}
+.  {* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
+.     mmap parameter, except that LEN and OFFSET do not need to be page
+.     aligned.  Returns (void *)-1 on failure, mmapped address on success.
+.     Also write in MAP_ADDR the address of the page aligned buffer and in
+.     MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
+.     MAP_LEN to unmap.  *}
 .  void *(*bmmap) (struct bfd *abfd, void *addr, bfd_size_type len,
-.                  int prot, int flags, file_ptr offset);
+.                  int prot, int flags, file_ptr offset,
+.                  void **map_addr, bfd_size_type *map_len);
 .};
 
 .extern const struct bfd_iovec _bfd_memory_iovec;
@@ -179,7 +184,8 @@ bfd_bread (void *ptr, bfd_size_type size, bfd *abfd)
      this element.  */
   if (abfd->arelt_data != NULL)
     {
-      size_t maxbytes = ((struct areltdata *) abfd->arelt_data)->parsed_size;
+      bfd_size_type maxbytes = arelt_size (abfd);
+
       if (abfd->where + size > maxbytes)
         {
           if (abfd->where >= maxbytes)
@@ -227,10 +233,14 @@ bfd_tell (bfd *abfd)
 
   if (abfd->iovec)
     {
+      bfd *parent_bfd = abfd;
       ptr = abfd->iovec->btell (abfd);
 
-      if (abfd->my_archive)
-	ptr -= abfd->origin;
+      while (parent_bfd->my_archive != NULL)
+	{
+	  ptr -= parent_bfd->origin;
+	  parent_bfd = parent_bfd->my_archive;
+	}
     }
   else
     ptr = 0;
@@ -302,8 +312,16 @@ bfd_seek (bfd *abfd, file_ptr position, int direction)
     }
 
   file_position = position;
-  if (direction == SEEK_SET && abfd->my_archive != NULL)
-    file_position += abfd->origin;
+  if (direction == SEEK_SET)
+    {
+      bfd *parent_bfd = abfd;
+
+      while (parent_bfd->my_archive != NULL)
+        {
+          file_position += parent_bfd->origin;
+          parent_bfd = parent_bfd->my_archive;
+        }
+    }
 
   if (abfd->iovec)
     result = abfd->iovec->bseek (abfd, file_position, direction);
@@ -423,23 +441,28 @@ FUNCTION
 
 SYNOPSIS
 	void *bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
-	                int prot, int flags, file_ptr offset);
+	                int prot, int flags, file_ptr offset,
+	                void **map_addr, bfd_size_type *map_len);
 
 DESCRIPTION
 	Return mmap()ed region of the file, if possible and implemented.
+        LEN and OFFSET do not need to be page aligned.  The page aligned
+        address and length are written to MAP_ADDR and MAP_LEN.
 
 */
 
 void *
 bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
-	  int prot, int flags, file_ptr offset)
+	  int prot, int flags, file_ptr offset,
+          void **map_addr, bfd_size_type *map_len)
 {
   void *ret = (void *)-1;
 
   if (abfd->iovec == NULL)
     return ret;
 
-  return abfd->iovec->bmmap (abfd, addr, len, prot, flags, offset);
+  return abfd->iovec->bmmap (abfd, addr, len, prot, flags, offset,
+                             map_addr, map_len);
 }
 
 /* Memory file I/O operations.  */
@@ -563,7 +586,7 @@ memory_bclose (struct bfd *abfd)
   free (bim);
   abfd->iostream = NULL;
 
-  return TRUE;
+  return 0;
 }
 
 static int
@@ -586,7 +609,9 @@ memory_bstat (bfd *abfd, struct stat *statbuf)
 static void *
 memory_bmmap (bfd *abfd ATTRIBUTE_UNUSED, void *addr ATTRIBUTE_UNUSED,
               bfd_size_type len ATTRIBUTE_UNUSED, int prot ATTRIBUTE_UNUSED,
-              int flags ATTRIBUTE_UNUSED, file_ptr offset ATTRIBUTE_UNUSED)
+              int flags ATTRIBUTE_UNUSED, file_ptr offset ATTRIBUTE_UNUSED,
+              void **map_addr ATTRIBUTE_UNUSED,
+              bfd_size_type *map_len ATTRIBUTE_UNUSED)
 {
   return (void *)-1;
 }

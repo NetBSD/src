@@ -1,5 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+/* Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -1309,7 +1308,7 @@ _mm_cmpgt_epi32 (__m128i __A, __m128i __B)
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_extract_epi16 (__m128i const __A, int const __N)
 {
-  return __builtin_ia32_vec_ext_v8hi ((__v8hi)__A, __N);
+  return (unsigned short) __builtin_ia32_vec_ext_v8hi ((__v8hi)__A, __N);
 }
 
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1319,7 +1318,7 @@ _mm_insert_epi16 (__m128i const __A, int const __D, int const __N)
 }
 #else
 #define _mm_extract_epi16(A, N) \
-  ((int) __builtin_ia32_vec_ext_v8hi ((__v8hi)(__m128i)(A), (int)(N)))
+  ((int) (unsigned short) __builtin_ia32_vec_ext_v8hi ((__v8hi)(__m128i)(A), (int)(N)))
 #define _mm_insert_epi16(A, D, N)				\
   ((__m128i) __builtin_ia32_vec_set_v8hi ((__v8hi)(__m128i)(A),	\
 					  (int)(D), (int)(N)))
@@ -1417,6 +1416,14 @@ _mm_stream_si32 (int *__A, int __B)
 {
   __builtin_ia32_movnti (__A, __B);
 }
+
+#ifdef __x86_64__
+extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_stream_si64 (long long int *__A, long long int __B)
+{
+  __builtin_ia32_movnti64 (__A, __B);
+}
+#endif
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_stream_si128 (__m128i *__A, __m128i __B)

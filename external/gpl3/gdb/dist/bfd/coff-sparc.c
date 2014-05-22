@@ -1,6 +1,6 @@
 /* BFD back-end for Sparc COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000, 2001,
-   2002, 2003, 2005, 2007, 2008  Free Software Foundation, Inc.
+   2002, 2003, 2005, 2007, 2008, 2012  Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,11 +34,6 @@
 /* The page size is a guess based on ELF.  */
 #define COFF_PAGE_SIZE 0x10000
 
-
-static reloc_howto_type *coff_sparc_reloc_type_lookup
-  PARAMS ((bfd *, bfd_reloc_code_real_type));
-static void rtype2howto PARAMS ((arelent *, struct internal_reloc *));
-
 enum reloc_type
   {
     R_SPARC_NONE = 0,
@@ -58,20 +53,15 @@ enum reloc_type
   };
 
 /* This is stolen pretty directly from elf.c.  */
-static bfd_reloc_status_type
-bfd_coff_generic_reloc PARAMS ((bfd *, arelent *, asymbol *, PTR,
-				asection *, bfd *, char **));
 
 static bfd_reloc_status_type
-bfd_coff_generic_reloc (abfd, reloc_entry, symbol, data, input_section,
-			output_bfd, error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+bfd_coff_generic_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+			arelent *reloc_entry,
+			asymbol *symbol,
+			void * data ATTRIBUTE_UNUSED,
+			asection *input_section,
+			bfd *output_bfd,
+			char **error_message ATTRIBUTE_UNUSED)
 {
   if (output_bfd != (bfd *) NULL
       && (symbol->flags & BSF_SECTION_SYM) == 0)
@@ -111,7 +101,8 @@ static reloc_howto_type coff_sparc_howto_table[] =
   HOWTO(R_SPARC_UA32,    0,0,00,FALSE,0,complain_overflow_dont,    bfd_coff_generic_reloc,"R_SPARC_UA32",    FALSE,0,0x00000000,TRUE),
 };
 
-struct coff_reloc_map {
+struct coff_reloc_map
+{
   bfd_reloc_code_real_type bfd_reloc_val;
   unsigned char coff_reloc_val;
 };
@@ -145,9 +136,8 @@ static const struct coff_reloc_map sparc_reloc_map[] =
 };
 
 static reloc_howto_type *
-coff_sparc_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+coff_sparc_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+			      bfd_reloc_code_real_type code)
 {
   unsigned int i;
   for (i = 0; i < sizeof (sparc_reloc_map) / sizeof (struct coff_reloc_map); i++)
@@ -178,9 +168,7 @@ coff_sparc_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 #define coff_bfd_reloc_name_lookup coff_sparc_reloc_name_lookup
 
 static void
-rtype2howto (cache_ptr, dst)
-     arelent *cache_ptr;
-     struct internal_reloc *dst;
+rtype2howto (arelent *cache_ptr, struct internal_reloc *dst)
 {
   BFD_ASSERT (dst->r_type < (unsigned int) R_SPARC_max);
   cache_ptr->howto = &coff_sparc_howto_table[dst->r_type];

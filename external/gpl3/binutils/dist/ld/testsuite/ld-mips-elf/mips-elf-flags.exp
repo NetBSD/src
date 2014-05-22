@@ -28,6 +28,10 @@ if {[istarget mips*-*-irix6*]} {
     set ldemul "-melf32ltsmip"
 } elseif {[istarget mips*-*-linux*]} {
     set ldemul "-melf32btsmip"
+} elseif {[istarget mips*el-*-*freebsd*]} {
+    set ldemul "-melf32ltsmip_fbsd"
+} elseif {[istarget mips*-*-*freebsd*]} {
+    set ldemul "-melf32btsmip_fbsd"
 } else {
     set ldemul ""
 }

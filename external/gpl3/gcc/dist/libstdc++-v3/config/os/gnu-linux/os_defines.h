@@ -1,6 +1,6 @@
 // Specific definitions for GNU/Linux  -*- C++ -*-
 
-// Copyright (C) 2000, 2001, 2002, 2003, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2000-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file os_defines.h
+/** @file bits/os_defines.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{iosfwd}
  */
 
 #ifndef _GLIBCXX_OS_DEFINES
@@ -37,5 +37,12 @@
 #define __NO_CTYPE 1
 
 #include <features.h>
+
+// Provide a declaration for the possibly deprecated gets function, as
+// glibc 2.15 and later does not declare gets for ISO C11 when
+// __GNU_SOURCE is defined.
+#if __GLIBC_PREREQ(2,15) && defined(_GNU_SOURCE)
+# undef _GLIBCXX_HAVE_GETS
+#endif
 
 #endif

@@ -19,20 +19,22 @@ Program Header:
 private flags = 0:
 
 SYMBOL TABLE:
-0+80074 l    d  .text	0+ .text
-0+82080 l    d  .got	0+ .got
-0+82090 l    d  .data	0+ .data
-0+82090 l     O .data	0+4 gc76var
-0+82080 l     O .got	0+ _GLOBAL_OFFSET_TABLE_
-0+80074 g       .text	0+ _start
-0+82094 g       \*ABS\*	0+ __bss_start
-0+82094 g       \*ABS\*	0+ _edata
-0+820a0 g       \*ABS\*	0+ _end
-0+80078 g     F .text	0+6 gc76fn
+0+80074 l    d  \.text	0+ \.text
+0+82080 l    d  \.got	0+ \.got
+0+82090 l    d  \.data	0+ \.data
+0+ l    df \*ABS\*	0+ .*
+0+82090 l     O \.data	0+4 gc76var
+0+ l    df \*ABS\*	0+ .*
+0+82094 l       \.data	0+ __bss_start
+0+82094 l       \.data	0+ _edata
+0+82080 l     O \.got	0+ _GLOBAL_OFFSET_TABLE_
+0+820a0 l       \.data	0+ _end
+0+80074 g       \.text	0+ _start
+0+80078 g     F \.text	0+6 gc76fn
 
-Contents of section .text:
+Contents of section \.text:
  80074 41b20+ 6fae0c00 0+  .*
-Contents of section .got:
+Contents of section \.got:
  82080 0+ 0+ 0+ 90200800  .*
-Contents of section .data:
+Contents of section \.data:
  82090 0+             .*

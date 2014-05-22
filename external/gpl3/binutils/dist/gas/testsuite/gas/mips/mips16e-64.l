@@ -1,3 +1,3 @@
 .*: Assembler messages:
-.*: Error: opcode not supported on this processor: .* (.*) `sew'
-.*: Error: opcode not supported on this processor: .* (.*) `zew'
+.*: Error: Opcode not supported on this processor: .* (.*) `sew'
+.*: Error: Opcode not supported on this processor: .* (.*) `zew'

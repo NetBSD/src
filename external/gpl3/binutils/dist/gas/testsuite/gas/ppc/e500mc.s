@@ -1,5 +1,5 @@
 # Power E500MC tests
-	.section ".text"
+	.text
 start:
 	rfdi
 	rfgi

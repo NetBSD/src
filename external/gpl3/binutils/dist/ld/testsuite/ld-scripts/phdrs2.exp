@@ -63,7 +63,7 @@ if ![ld_simple_link $ld tmpdir/phdrs2 $ldopt] {
 	return
     }
 
-    set exec_output [run_host_cmd "$objdump" "--private tmpdir/phdrs2"]
+    set exec_output [run_host_cmd "$objdump" "--private-headers tmpdir/phdrs2"]
     set exec_output [prune_warnings $exec_output]
     verbose -log $exec_output
 

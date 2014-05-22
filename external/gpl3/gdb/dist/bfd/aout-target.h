@@ -1,6 +1,6 @@
 /* Define a target vector and some small routines for a variant of a.out.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -486,6 +486,9 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #ifndef MY_bfd_gc_sections
 #define MY_bfd_gc_sections bfd_generic_gc_sections
 #endif
+#ifndef MY_bfd_lookup_section_flags
+#define MY_bfd_lookup_section_flags bfd_generic_lookup_section_flags
+#endif
 #ifndef MY_bfd_merge_sections
 #define MY_bfd_merge_sections bfd_generic_merge_sections
 #endif
@@ -574,7 +577,18 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 
 #ifndef MY_close_and_cleanup
-#define MY_close_and_cleanup MY_bfd_free_cached_info
+
+/* Handle closing of a BFD including the resource-releasing parts.  */
+
+static bfd_boolean
+MY_close_and_cleanup (bfd *abfd)
+{
+  if (!MY_bfd_free_cached_info (abfd))
+    return FALSE;
+
+  return _bfd_generic_close_and_cleanup (abfd);
+}
+
 #endif
 
 #ifndef MY_get_dynamic_symtab_upper_bound
@@ -627,6 +641,7 @@ const bfd_target MY (vec) =
   MY_symbol_leading_char,
   AR_PAD_CHAR,			/* AR_pad_char.  */
   15,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
 #ifdef TARGET_IS_BIG_ENDIAN_P
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
      bfd_getb32, bfd_getb_signed_32, bfd_putb32,

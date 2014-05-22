@@ -1,7 +1,6 @@
 /* Target-dependent code for GNU/Linux SPARC.
 
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -211,7 +210,7 @@ sparc32_linux_supply_core_fpregset (const struct regset *regset,
 				    struct regcache *regcache,
 				    int regnum, const void *fpregs, size_t len)
 {
-  sparc32_supply_fpregset (regcache, regnum, fpregs);
+  sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 static void
@@ -219,7 +218,7 @@ sparc32_linux_collect_core_fpregset (const struct regset *regset,
 				     const struct regcache *regcache,
 				     int regnum, void *fpregs, size_t len)
 {
-  sparc32_collect_fpregset (regcache, regnum, fpregs);
+  sparc32_collect_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 /* Set the program counter for process PTID to PC.  */

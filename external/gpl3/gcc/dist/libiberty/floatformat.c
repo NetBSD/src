@@ -1,5 +1,5 @@
 /* IEEE floating point support routines, for GDB, the GNU Debugger.
-   Copyright 1991, 1994, 1999, 2000, 2003, 2005, 2006
+   Copyright 1991, 1994, 1999, 2000, 2003, 2005, 2006, 2010, 2012
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -77,7 +77,23 @@ floatformat_always_valid (const struct floatformat *fmt ATTRIBUTE_UNUSED,
    a system header, what we do if not, etc.  */
 #define FLOATFORMAT_CHAR_BIT 8
 
-/* floatformats for IEEE single and double, big and little endian.  */
+/* floatformats for IEEE half, single and double, big and little endian.  */
+const struct floatformat floatformat_ieee_half_big =
+{
+  floatformat_big, 16, 0, 1, 5, 15, 31, 6, 10,
+  floatformat_intbit_no,
+  "floatformat_ieee_half_big",
+  floatformat_always_valid,
+  NULL
+};
+const struct floatformat floatformat_ieee_half_little =
+{
+  floatformat_little, 16, 0, 1, 5, 15, 31, 6, 10,
+  floatformat_intbit_no,
+  "floatformat_ieee_half_little",
+  floatformat_always_valid,
+  NULL
+};
 const struct floatformat floatformat_ieee_single_big =
 {
   floatformat_big, 32, 0, 1, 8, 127, 255, 9, 23,
@@ -447,7 +463,6 @@ floatformat_to_double (const struct floatformat *fmt,
   unsigned long mant;
   unsigned int mant_bits, mant_off;
   int mant_bits_left;
-  int special_exponent;		/* It's a NaN, denorm or zero */
 
   /* Split values are not handled specially, since the top half has
      the correctly rounded double value (in the only supported case of
@@ -491,20 +506,20 @@ floatformat_to_double (const struct floatformat *fmt,
   mant_off = fmt->man_start;
   dto = 0.0;
 
-  special_exponent = exponent == 0 || (unsigned long) exponent == fmt->exp_nan;
-
-  /* Don't bias zero's, denorms or NaNs.  */
-  if (!special_exponent)
-    exponent -= fmt->exp_bias;
-
   /* Build the result algebraically.  Might go infinite, underflow, etc;
      who cares. */
 
-  /* If this format uses a hidden bit, explicitly add it in now.  Otherwise,
-     increment the exponent by one to account for the integer bit.  */
-
-  if (!special_exponent)
+  /* For denorms use minimum exponent.  */
+  if (exponent == 0)
+    exponent = 1 - fmt->exp_bias;
+  else
     {
+      exponent -= fmt->exp_bias;
+
+      /* If this format uses a hidden bit, explicitly add it in now.
+	 Otherwise, increment the exponent by one to account for the
+	 integer bit.  */
+
       if (fmt->intbit == floatformat_intbit_no)
 	dto = ldexp (1.0, exponent);
       else
@@ -518,18 +533,8 @@ floatformat_to_double (const struct floatformat *fmt,
       mant = get_field (ufrom, fmt->byteorder, fmt->totalsize,
 			 mant_off, mant_bits);
 
-      /* Handle denormalized numbers.  FIXME: What should we do for
-	 non-IEEE formats?  */
-      if (special_exponent && exponent == 0 && mant != 0)
-	dto += ldexp ((double)mant,
-		      (- fmt->exp_bias
-		       - mant_bits
-		       - (mant_off - fmt->man_start)
-		       + 1));
-      else
-	dto += ldexp ((double)mant, exponent - mant_bits);
-      if (exponent != 0)
-	exponent -= mant_bits;
+      dto += ldexp ((double) mant, exponent - mant_bits);
+      exponent -= mant_bits;
       mant_off += mant_bits;
       mant_bits_left -= mant_bits;
     }
@@ -744,6 +749,7 @@ main (void)
 {
   ieee_test (0.0);
   ieee_test (0.5);
+  ieee_test (1.1);
   ieee_test (256.0);
   ieee_test (0.12345);
   ieee_test (234235.78907234);

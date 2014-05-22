@@ -1,6 +1,5 @@
 /* Low level interface to ptrace, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -120,19 +119,21 @@ sparc_fill_gregset_to_stack (struct regcache *regcache, const void *buf)
   int i;
   CORE_ADDR addr = 0;
   unsigned char tmp_reg_buf[8];
-  const int l0_regno = find_regno("l0");
+  const int l0_regno = find_regno ("l0");
   const int i7_regno = l0_regno + 15;
 
   /* These registers have to be stored in the stack.  */
-  memcpy(&addr, ((char *) buf) + sparc_regmap[find_regno("sp")], sizeof(addr));
+  memcpy (&addr,
+	  ((char *) buf) + sparc_regmap[find_regno ("sp")],
+	  sizeof (addr));
 
   addr += BIAS;
 
   for (i = l0_regno; i <= i7_regno; i++)
     {
       collect_register (regcache, i, tmp_reg_buf);
-      (*the_target->write_memory) (addr, tmp_reg_buf, sizeof(tmp_reg_buf));
-      addr += sizeof(tmp_reg_buf);
+      (*the_target->write_memory) (addr, tmp_reg_buf, sizeof (tmp_reg_buf));
+      addr += sizeof (tmp_reg_buf);
     }
 }
 
@@ -170,19 +171,21 @@ sparc_store_gregset_from_stack (struct regcache *regcache, const void *buf)
   int i;
   CORE_ADDR addr = 0;
   unsigned char tmp_reg_buf[8];
-  const int l0_regno = find_regno("l0");
+  const int l0_regno = find_regno ("l0");
   const int i7_regno = l0_regno + 15;
 
   /* These registers have to be obtained from the stack.  */
-  memcpy(&addr, ((char *) buf) + sparc_regmap[find_regno("sp")], sizeof(addr));
+  memcpy (&addr,
+	  ((char *) buf) + sparc_regmap[find_regno ("sp")],
+	  sizeof (addr));
 
   addr += BIAS;
 
   for (i = l0_regno; i <= i7_regno; i++)
     {
-      (*the_target->read_memory) (addr, tmp_reg_buf, sizeof(tmp_reg_buf));
+      (*the_target->read_memory) (addr, tmp_reg_buf, sizeof (tmp_reg_buf));
       supply_register (regcache, i, tmp_reg_buf);
-      addr += sizeof(tmp_reg_buf);
+      addr += sizeof (tmp_reg_buf);
     }
 }
 
@@ -193,7 +196,7 @@ sparc_store_gregset (struct regcache *regcache, const void *buf)
   char zerobuf[8];
   int range;
 
-  memset (zerobuf, 0, sizeof(zerobuf));
+  memset (zerobuf, 0, sizeof (zerobuf));
 
   for (range = 0; range < N_GREGS_RANGES; range++)
     for (i = gregs_ranges[range].regno_start;
@@ -242,9 +245,9 @@ sparc_breakpoint_at (CORE_ADDR where)
 {
   unsigned char insn[INSN_SIZE];
 
-  (*the_target->read_memory) (where, (unsigned char *) insn, sizeof(insn));
+  (*the_target->read_memory) (where, (unsigned char *) insn, sizeof (insn));
 
-  if (memcmp(sparc_breakpoint, insn, sizeof(insn)) == 0)
+  if (memcmp (sparc_breakpoint, insn, sizeof (insn)) == 0)
     return 1;
 
   /* If necessary, recognize more trap instructions here.  GDB only
@@ -282,8 +285,10 @@ struct linux_target_ops the_low_target = {
   sparc_num_regs,
   /* No regmap needs to be provided since this impl. doesn't use USRREGS.  */
   NULL,
+  NULL,
   sparc_cannot_fetch_register,
   sparc_cannot_store_register,
+  NULL, /* fetch_register */
   sparc_get_pc,
   /* No sparc_set_pc is needed.  */
   NULL,

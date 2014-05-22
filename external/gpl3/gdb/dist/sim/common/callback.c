@@ -1,6 +1,5 @@
 /* Remote target callback routines.
-   Copyright 1995, 1996, 1997, 2000, 2002, 2003, 2004, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright 1995-2013 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -24,6 +23,7 @@
 #ifdef HAVE_CONFIG_H
 #include "cconfig.h"
 #endif
+#include "config.h"
 #include "ansidecl.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -231,7 +231,7 @@ os_poll_quit (p)
 #endif
 #if defined (_MSC_VER)
   /* NB - this will not compile! */
-  int k = win32pollquit();
+  int k = win32pollquit ();
   if (k == 1)
     return 1;
   else if (k == 2)

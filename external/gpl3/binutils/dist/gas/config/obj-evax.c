@@ -1,5 +1,6 @@
 /* obj-evax.c - EVAX (openVMS/Alpha) object file format.
-   Copyright 1996, 1997, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2005, 2007, 2008, 2009, 2010, 2011, 2012
+   Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
    Extensively enhanced by Douglas Rupp of AdaCore.
@@ -23,9 +24,9 @@
 
 #define OBJ_HEADER "obj-evax.h"
 
+#include "as.h"
 #include "bfd.h"
 #include "vms.h"
-#include "as.h"
 #include "subsegs.h"
 #include "struc-symbol.h"
 #include "safe-ctype.h"
@@ -125,7 +126,10 @@ evax_frob_symbol (symbolS *sym, int *punt)
 	     O_symbol and we hope the equated symbol is still there.  */
 	  sym = symbol_get_value_expression (sym)->X_add_symbol;
 	  if (sym == NULL)
-	    abort ();
+            {
+              as_bad (_("no entry symbol for global function '%s'"), symname);
+              return;
+            }
 	  symbol = symbol_get_bfdsym (sym);
 	  udata->enbsym
 	    = ((struct evax_private_udata_struct *)symbol->udata.p)->enbsym;
@@ -150,7 +154,9 @@ evax_frob_file_before_adjust (void)
     {
       if (S_GET_SEGMENT (l->fixp->fx_addsy) == alpha_link_section)
 	{
-	  symbolS * entry_sym;
+          /* The symbol is defined in the file.  The linkage entry decays to
+             two relocs.  */
+	  symbolS *entry_sym;
 	  fixS *fixpentry, *fixppdesc, *fixtail;
 
 	  fixtail = seginfo->fix_tail;
@@ -163,7 +169,7 @@ evax_frob_file_before_adjust (void)
 	  fixpentry = fix_new (l->fixp->fx_frag, l->fixp->fx_where, 8,
 			       entry_sym, l->fixp->fx_offset, 0,
 			       BFD_RELOC_64);
-	  fixppdesc = fix_new (l->fixp->fx_frag, l->fixp->fx_where+8, 8,
+	  fixppdesc = fix_new (l->fixp->fx_frag, l->fixp->fx_where + 8, 8,
 			       l->fixp->fx_addsy, l->fixp->fx_offset, 0,
 			       BFD_RELOC_64);
 	  l->fixp->fx_size = 0;
@@ -181,6 +187,7 @@ evax_frob_file_before_adjust (void)
 	}
       else
 	{
+          /* Assign a linkage index.  */
 	  ((struct evax_private_udata_struct *)
 	   symbol_get_bfdsym (l->label)->udata.p)->lkindex = linkage_index;
 

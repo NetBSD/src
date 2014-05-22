@@ -1887,7 +1887,7 @@ ld_xtensa_insert_page_offsets (bfd_vma dot,
 		etree_type *name_op = exp_nameop (NAME, ".");
 		etree_type *addend_op = exp_intop (1 << xtensa_page_power);
 		etree_type *add_op = exp_binop ('+', name_op, addend_op);
-		etree_type *assign_op = exp_assign (".", add_op);
+		etree_type *assign_op = exp_assign (".", add_op, FALSE);
 
 		lang_assignment_statement_type *assign_stmt;
 		lang_statement_union_type *assign_union;

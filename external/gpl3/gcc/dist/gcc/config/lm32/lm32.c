@@ -1,7 +1,7 @@
 /* Subroutines used for code generation on the Lattice Mico32 architecture.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -27,7 +27,6 @@
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "basic-block.h"
-#include "real.h"
 #include "insn-config.h"
 #include "conditions.h"
 #include "insn-flags.h"
@@ -41,7 +40,7 @@
 #include "reload.h"
 #include "tm_p.h"
 #include "function.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "optabs.h"
 #include "libfuncs.h"
 #include "ggc.h"
@@ -66,18 +65,28 @@ static rtx emit_add (rtx dest, rtx src0, rtx src1);
 static void expand_save_restore (struct lm32_frame_info *info, int op);
 static void stack_adjust (HOST_WIDE_INT amount);
 static bool lm32_in_small_data_p (const_tree);
-static void lm32_setup_incoming_varargs (CUMULATIVE_ARGS * cum,
+static void lm32_setup_incoming_varargs (cumulative_args_t cum,
 					 enum machine_mode mode, tree type,
 					 int *pretend_size, int no_rtl);
-static bool lm32_rtx_costs (rtx x, int code, int outer_code, int *total,
-			    bool speed);
+static bool lm32_rtx_costs (rtx x, int code, int outer_code, int opno,
+			    int *total, bool speed);
 static bool lm32_can_eliminate (const int, const int);
 static bool
 lm32_legitimate_address_p (enum machine_mode mode, rtx x, bool strict);
 static HOST_WIDE_INT lm32_compute_frame_size (int size);
+static void lm32_option_override (void);
+static rtx lm32_function_arg (cumulative_args_t cum,
+			      enum machine_mode mode, const_tree type,
+			      bool named);
+static void lm32_function_arg_advance (cumulative_args_t cum,
+				       enum machine_mode mode,
+				       const_tree type, bool named);
+static bool lm32_legitimate_constant_p (enum machine_mode, rtx);
 
+#undef TARGET_OPTION_OVERRIDE
+#define TARGET_OPTION_OVERRIDE lm32_option_override
 #undef TARGET_ADDRESS_COST
-#define TARGET_ADDRESS_COST hook_int_rtx_bool_0
+#define TARGET_ADDRESS_COST hook_int_rtx_mode_as_bool_0
 #undef TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS lm32_rtx_costs
 #undef TARGET_IN_SMALL_DATA_P
@@ -86,6 +95,10 @@ static HOST_WIDE_INT lm32_compute_frame_size (int size);
 #define TARGET_PROMOTE_FUNCTION_MODE default_promote_function_mode_always_promote
 #undef TARGET_SETUP_INCOMING_VARARGS
 #define TARGET_SETUP_INCOMING_VARARGS lm32_setup_incoming_varargs
+#undef TARGET_FUNCTION_ARG
+#define TARGET_FUNCTION_ARG lm32_function_arg
+#undef TARGET_FUNCTION_ARG_ADVANCE
+#define TARGET_FUNCTION_ARG_ADVANCE lm32_function_arg_advance
 #undef TARGET_PROMOTE_PROTOTYPES
 #define TARGET_PROMOTE_PROTOTYPES hook_bool_const_tree_true
 #undef TARGET_MIN_ANCHOR_OFFSET
@@ -96,6 +109,8 @@ static HOST_WIDE_INT lm32_compute_frame_size (int size);
 #define TARGET_CAN_ELIMINATE lm32_can_eliminate
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P lm32_legitimate_address_p
+#undef TARGET_LEGITIMATE_CONSTANT_P
+#define TARGET_LEGITIMATE_CONSTANT_P lm32_legitimate_constant_p
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -169,18 +184,22 @@ gen_int_relational (enum rtx_code code,
     case LT:
     case LEU:
     case LTU:
-      code = swap_condition (code);
-      rtx temp = cmp0;
-      cmp0 = cmp1;
-      cmp1 = temp;
-      break;
+      {
+	rtx temp;
+
+	code = swap_condition (code);
+	temp = cmp0;
+	cmp0 = cmp1;
+	cmp1 = temp;
+	break;
+      }
     default:
       break;
     }
 
   if (branch_p)
     {
-      rtx insn;
+      rtx insn, cond, label;
 
       /* Operands must be in registers.  */
       if (!register_operand (cmp0, mode))
@@ -189,8 +208,8 @@ gen_int_relational (enum rtx_code code,
 	cmp1 = force_reg (mode, cmp1);
 
       /* Generate conditional branch instruction.  */
-      rtx cond = gen_rtx_fmt_ee (code, mode, cmp0, cmp1);
-      rtx label = gen_rtx_LABEL_REF (VOIDmode, destination);
+      cond = gen_rtx_fmt_ee (code, mode, cmp0, cmp1);
+      label = gen_rtx_LABEL_REF (VOIDmode, destination);
       insn = gen_rtx_SET (VOIDmode, pc_rtx,
 			  gen_rtx_IF_THEN_ELSE (VOIDmode,
 						cond, label, pc_rtx));
@@ -364,18 +383,17 @@ lm32_expand_prologue (void)
       /* Setup frame pointer if it's needed.  */
       if (frame_pointer_needed == 1)
 	{
-	  /* Load offset - Don't use total_size, as that includes pretend_size, 
-             which isn't part of this frame?  */
-	  insn =
-	    emit_move_insn (frame_pointer_rtx,
-			    GEN_INT (current_frame_info.args_size +
-				     current_frame_info.callee_size +
-				     current_frame_info.locals_size));
-	  RTX_FRAME_RELATED_P (insn) = 1;
+	  /* Move sp to fp.  */
+	  insn = emit_move_insn (frame_pointer_rtx, stack_pointer_rtx);
+	  RTX_FRAME_RELATED_P (insn) = 1; 
 
-	  /* Add in sp.  */
-	  insn = emit_add (frame_pointer_rtx,
-			   frame_pointer_rtx, stack_pointer_rtx);
+	  /* Add offset - Don't use total_size, as that includes pretend_size, 
+             which isn't part of this frame?  */
+	  insn = emit_add (frame_pointer_rtx, 
+			   frame_pointer_rtx,
+			   GEN_INT (current_frame_info.args_size +
+				    current_frame_info.callee_size +
+				    current_frame_info.locals_size));
 	  RTX_FRAME_RELATED_P (insn) = 1;
 	}
 
@@ -439,7 +457,7 @@ lm32_compute_frame_size (int size)
 	  callee_size += UNITS_PER_WORD;
 	}
     }
-  if (df_regs_ever_live_p (RA_REGNUM) || !current_function_is_leaf
+  if (df_regs_ever_live_p (RA_REGNUM) || ! crtl->is_leaf
       || !optimize)
     {
       reg_save_mask |= 1 << RA_REGNUM;
@@ -497,7 +515,7 @@ lm32_print_operand (FILE * file, rtx op, int letter)
   else if (GET_CODE (op) == CONST_DOUBLE)
     {
       if ((CONST_DOUBLE_LOW (op) != 0) || (CONST_DOUBLE_HIGH (op) != 0))
-	output_operand_lossage ("Only 0.0 can be loaded as an immediate");
+	output_operand_lossage ("only 0.0 can be loaded as an immediate");
       else
 	fprintf (file, "0");
     }
@@ -601,10 +619,12 @@ lm32_print_operand_address (FILE * file, rtx addr)
    NAMED is nonzero if this argument is a named parameter
     (otherwise it is an extra parameter matching an ellipsis).  */
 
-rtx
-lm32_function_arg (CUMULATIVE_ARGS cum, enum machine_mode mode,
-		   tree type, int named)
+static rtx
+lm32_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
+		   const_tree type, bool named)
 {
+  CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
+
   if (mode == VOIDmode)
     /* Compute operand 2 of the call insn.  */
     return GEN_INT (0);
@@ -612,10 +632,17 @@ lm32_function_arg (CUMULATIVE_ARGS cum, enum machine_mode mode,
   if (targetm.calls.must_pass_in_stack (mode, type))
     return NULL_RTX;
 
-  if (!named || (cum + LM32_NUM_REGS2 (mode, type) > LM32_NUM_ARG_REGS))
+  if (!named || (*cum + LM32_NUM_REGS2 (mode, type) > LM32_NUM_ARG_REGS))
     return NULL_RTX;
 
-  return gen_rtx_REG (mode, cum + LM32_FIRST_ARG_REG);
+  return gen_rtx_REG (mode, *cum + LM32_FIRST_ARG_REG);
+}
+
+static void
+lm32_function_arg_advance (cumulative_args_t cum, enum machine_mode mode,
+			   const_tree type, bool named ATTRIBUTE_UNUSED)
+{
+  *get_cumulative_args (cum) += LM32_NUM_REGS2 (mode, type);
 }
 
 HOST_WIDE_INT
@@ -648,19 +675,16 @@ lm32_compute_initial_elimination_offset (int from, int to)
 }
 
 static void
-lm32_setup_incoming_varargs (CUMULATIVE_ARGS * cum, enum machine_mode mode,
+lm32_setup_incoming_varargs (cumulative_args_t cum_v, enum machine_mode mode,
 			     tree type, int *pretend_size, int no_rtl)
 {
+  CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
   int first_anon_arg;
   tree fntype;
-  int stdarg_p;
 
   fntype = TREE_TYPE (current_function_decl);
-  stdarg_p = (TYPE_ARG_TYPES (fntype) != 0
-	      && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
-		  != void_type_node));
 
-  if (stdarg_p)
+  if (stdarg_p (fntype))
     first_anon_arg = *cum + LM32_FIRST_ARG_REG;
   else
     {
@@ -688,7 +712,7 @@ lm32_setup_incoming_varargs (CUMULATIVE_ARGS * cum, enum machine_mode mode,
       rtx regblock;
 
       regblock = gen_rtx_MEM (BLKmode,
-			      plus_constant (arg_pointer_rtx,
+			      plus_constant (Pmode, arg_pointer_rtx,
 					     FIRST_PARM_OFFSET (0)));
       move_block_from_reg (first_reg_offset, regblock, size);
 
@@ -697,8 +721,8 @@ lm32_setup_incoming_varargs (CUMULATIVE_ARGS * cum, enum machine_mode mode,
 }
 
 /* Override command line options.  */
-void
-lm32_override_options (void)
+static void
+lm32_option_override (void)
 {
   /* We must have sign-extend enabled if barrel-shift isn't.  */
   if (!TARGET_BARREL_SHIFT_ENABLED && !TARGET_SIGN_EXTEND_ENABLED)
@@ -778,7 +802,7 @@ lm32_in_small_data_p (const_tree exp)
 
       /* If this is an incomplete type with size 0, then we can't put it
          in sdata because it might be too big when completed.  */
-      if (size > 0 && (unsigned HOST_WIDE_INT) size <= g_switch_value)
+      if (size > 0 && size <= g_switch_value)
 	return true;
     }
 
@@ -816,7 +840,7 @@ lm32_block_move_inline (rtx dest, rtx src, HOST_WIDE_INT length,
   delta = bits / BITS_PER_UNIT;
 
   /* Allocate a buffer for the temporary registers.  */
-  regs = alloca (sizeof (rtx) * length / delta);
+  regs = XALLOCAVEC (rtx, length / delta);
 
   /* Load as many BITS-sized chunks as possible.  */
   for (offset = 0, i = 0; offset + delta <= length; offset += delta, i++)
@@ -901,7 +925,8 @@ nonpic_symbol_mentioned_p (rtx x)
    scanned.  In either case, *TOTAL contains the cost result.  */
 
 static bool
-lm32_rtx_costs (rtx x, int code, int outer_code, int *total, bool speed)
+lm32_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
+		int *total, bool speed)
 {
   enum machine_mode mode = GET_MODE (x);
   bool small_mode;
@@ -1203,13 +1228,13 @@ lm32_move_ok (enum machine_mode mode, rtx operands[2]) {
   return true;
 }
 
-/* Implement LEGITIMATE_CONSTANT_P.  */
+/* Implement TARGET_LEGITIMATE_CONSTANT_P.  */
 
-bool
-lm32_legitimate_constant_p (rtx x)
+static bool
+lm32_legitimate_constant_p (enum machine_mode mode, rtx x)
 {
   /* 32-bit addresses require multiple instructions.  */  
-  if (!flag_pic && reloc_operand (x, GET_MODE (x)))
+  if (!flag_pic && reloc_operand (x, mode))
     return false; 
   
   return true;

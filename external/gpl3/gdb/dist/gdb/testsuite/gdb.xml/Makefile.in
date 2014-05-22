@@ -8,6 +8,7 @@ all info install-info dvi install uninstall installcheck check:
 
 clean mostlyclean:
 	-rm -f *.ci *.o $(OBJS) $(PROGS) *~ core
+	-rm -f *.dwo *.dwp
 
 distclean maintainer-clean realclean: clean
 	-rm -f Makefile gdb.log gdb.sum

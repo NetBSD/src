@@ -1,6 +1,6 @@
 // Specific definitions for Darwin -*- C++ -*-
 
-// Copyright (C) 2004, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2004-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,5 +38,13 @@
 // loader to implement weak semantics properly, and uses
 // -flat_namespace to work around the way that it doesn't.
 #define _GLIBCXX_WEAK_DEFINITION __attribute__ ((weak))
+
+// Static initializer macro is buggy in darwin, see libstdc++/51906
+#define _GTHREAD_USE_RECURSIVE_MUTEX_INIT_FUNC
+
+// Configure checks for nanosleep fail on Darwin, but nanosleep and
+// sched_yield are always available, so use them.
+#define _GLIBCXX_USE_NANOSLEEP 1
+#define _GLIBCXX_USE_SCHED_YIELD 1
 
 #endif

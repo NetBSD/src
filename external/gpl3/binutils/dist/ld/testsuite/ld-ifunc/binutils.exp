@@ -1,5 +1,5 @@
 # Expect script for binutils tests
-#   Copyright 2009, 2010 Free Software Foundation, Inc.
+#   Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,11 +24,13 @@
 # Make sure that binutils can correctly handle ld output in ELF with
 # STT_GNU_IFUNC symbols.
 
-if { !([istarget "i?86-*-elf*"]		
+if { !([istarget "i?86-*-elf*"]
        || (([istarget "i?86-*-linux*"]
 	    || [istarget "i?86-*-gnu*"])
 	   && ![istarget "*-*-*aout*"]
 	   && ![istarget "*-*-*oldld*"])
+       || [istarget "i?86-*-nacl*"]
+       || [istarget "x86_64-*-nacl*"]
        || [istarget "x86_64-*-linux*"]
        || [istarget "amd64-*-linux*"]) } {
     return

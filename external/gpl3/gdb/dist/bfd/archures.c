@@ -1,7 +1,7 @@
 /* BFD library support routines for architectures.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+   2012, 2013 Free Software Foundation, Inc.
    Hacked by John Gilmore and Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -145,7 +145,7 @@ DESCRIPTION
 .#define bfd_mach_sparc_64bit_p(mach) \
 .  ((mach) >= bfd_mach_sparc_v9 && (mach) != bfd_mach_sparc_v8plusb)
 .  bfd_arch_spu,       {* PowerPC SPU *}
-.#define bfd_mach_spu		256 
+.#define bfd_mach_spu		256
 .  bfd_arch_mips,      {* MIPS Rxxxx *}
 .#define bfd_mach_mips3000		3000
 .#define bfd_mach_mips3900		3900
@@ -161,6 +161,7 @@ DESCRIPTION
 .#define bfd_mach_mips5000		5000
 .#define bfd_mach_mips5400		5400
 .#define bfd_mach_mips5500		5500
+.#define bfd_mach_mips5900		5900
 .#define bfd_mach_mips6000		6000
 .#define bfd_mach_mips7000		7000
 .#define bfd_mach_mips8000		8000
@@ -176,22 +177,29 @@ DESCRIPTION
 .#define bfd_mach_mips_loongson_3a      3003
 .#define bfd_mach_mips_sb1              12310201 {* octal 'SB', 01 *}
 .#define bfd_mach_mips_octeon		6501
+.#define bfd_mach_mips_octeonp		6601
+.#define bfd_mach_mips_octeon2		6502
 .#define bfd_mach_mips_xlr              887682   {* decimal 'XLR'  *}
 .#define bfd_mach_mipsisa32             32
 .#define bfd_mach_mipsisa32r2           33
 .#define bfd_mach_mipsisa64             64
 .#define bfd_mach_mipsisa64r2           65
+.#define bfd_mach_mips_micromips        96
 .  bfd_arch_i386,      {* Intel 386 *}
-.#define bfd_mach_i386_i386 1
-.#define bfd_mach_i386_i8086 2
-.#define bfd_mach_i386_i386_intel_syntax 3
-.#define bfd_mach_x64_32 32
-.#define bfd_mach_x64_32_intel_syntax 33
-.#define bfd_mach_x86_64 64
-.#define bfd_mach_x86_64_intel_syntax 65
+.#define bfd_mach_i386_intel_syntax	(1 << 0)
+.#define bfd_mach_i386_i8086		(1 << 1)
+.#define bfd_mach_i386_i386		(1 << 2)
+.#define bfd_mach_x86_64		(1 << 3)
+.#define bfd_mach_x64_32		(1 << 4)
+.#define bfd_mach_i386_i386_intel_syntax (bfd_mach_i386_i386 | bfd_mach_i386_intel_syntax)
+.#define bfd_mach_x86_64_intel_syntax	(bfd_mach_x86_64 | bfd_mach_i386_intel_syntax)
+.#define bfd_mach_x64_32_intel_syntax	(bfd_mach_x64_32 | bfd_mach_i386_intel_syntax)
 .  bfd_arch_l1om,   {* Intel L1OM *}
-.#define bfd_mach_l1om 66
-.#define bfd_mach_l1om_intel_syntax 67
+.#define bfd_mach_l1om			(1 << 5)
+.#define bfd_mach_l1om_intel_syntax	(bfd_mach_l1om | bfd_mach_i386_intel_syntax)
+.  bfd_arch_k1om,   {* Intel K1OM *}
+.#define bfd_mach_k1om			(1 << 6)
+.#define bfd_mach_k1om_intel_syntax	(bfd_mach_k1om | bfd_mach_i386_intel_syntax)
 .  bfd_arch_we32k,     {* AT&T WE32xxx *}
 .  bfd_arch_tahoe,     {* CCI/Harris Tahoe *}
 .  bfd_arch_i860,      {* Intel 860 *}
@@ -234,7 +242,10 @@ DESCRIPTION
 .#define bfd_mach_ppc_e500      500
 .#define bfd_mach_ppc_e500mc    5001
 .#define bfd_mach_ppc_e500mc64  5005
+.#define bfd_mach_ppc_e5500     5006
+.#define bfd_mach_ppc_e6500     5007
 .#define bfd_mach_ppc_titan     83
+.#define bfd_mach_ppc_vle       84
 .  bfd_arch_rs6000,    {* IBM RS/6000 *}
 .#define bfd_mach_rs6k		6000
 .#define bfd_mach_rs6k_rs1	6001
@@ -256,6 +267,8 @@ DESCRIPTION
 .#define bfd_mach_m6812_default 0
 .#define bfd_mach_m6812         1
 .#define bfd_mach_m6812s        2
+.  bfd_arch_m9s12x,   {* Freescale S12X *}
+.  bfd_arch_m9s12xg,  {* Freescale XGATE *}
 .  bfd_arch_z8k,       {* Zilog Z8000 *}
 .#define bfd_mach_z8001		1
 .#define bfd_mach_z8002		2
@@ -311,11 +324,13 @@ DESCRIPTION
 .  bfd_arch_tic6x,     {* Texas Instruments TMS320C6X *}
 .  bfd_arch_tic80,     {* TI TMS320c80 (MVP) *}
 .  bfd_arch_v850,      {* NEC V850 *}
+.  bfd_arch_v850_rh850,{* NEC V850 (using RH850 ABI) *}
 .#define bfd_mach_v850          1
 .#define bfd_mach_v850e 	'E'
 .#define bfd_mach_v850e1        '1'
 .#define bfd_mach_v850e2        0x4532
 .#define bfd_mach_v850e2v3      0x45325633
+.#define bfd_mach_v850e3v5      0x45335635 {* ('E'|'3'|'V'|'5') *}
 .  bfd_arch_arc,       {* ARC Cores *}
 .#define bfd_mach_arc_5         5
 .#define bfd_mach_arc_6         6
@@ -351,6 +366,8 @@ DESCRIPTION
 .#define bfd_mach_mep		1
 .#define bfd_mach_mep_h1	0x6831
 .#define bfd_mach_mep_c5	0x6335
+.  bfd_arch_metag,
+.#define bfd_mach_metag		1
 .  bfd_arch_ia64,      {* HP/Intel ia64 *}
 .#define bfd_mach_ia64_elf64	64
 .#define bfd_mach_ia64_elf32	32
@@ -360,6 +377,9 @@ DESCRIPTION
 . bfd_arch_iq2000,     {* Vitesse IQ2000.  *}
 .#define bfd_mach_iq2000        1
 .#define bfd_mach_iq10          2
+.  bfd_arch_epiphany,	{* Adapteva EPIPHANY *}
+.#define bfd_mach_epiphany16	1
+.#define bfd_mach_epiphany32	2
 .  bfd_arch_mt,
 .#define bfd_mach_ms1           1
 .#define bfd_mach_mrisc2        2
@@ -395,12 +415,14 @@ DESCRIPTION
 .#define bfd_mach_cris_v0_v10	255
 .#define bfd_mach_cris_v32	32
 .#define bfd_mach_cris_v10_v32	1032
+.  bfd_arch_rl78,
+.#define bfd_mach_rl78	0x75
 .  bfd_arch_rx,        {* Renesas RX.  *}
 .#define bfd_mach_rx            0x75
 .  bfd_arch_s390,      {* IBM s390 *}
 .#define bfd_mach_s390_31       31
 .#define bfd_mach_s390_64       64
-.  bfd_arch_score,     {* Sunplus score *} 
+.  bfd_arch_score,     {* Sunplus score *}
 .#define bfd_mach_score3         3
 .#define bfd_mach_score7         7
 .  bfd_arch_openrisc,  {* OpenRISC *}
@@ -426,7 +448,9 @@ DESCRIPTION
 .  bfd_arch_xc16x,     {* Infineon's XC16X Series.               *}
 .#define bfd_mach_xc16x         1
 .#define bfd_mach_xc16xl        2
-.#define bfd_mach_xc16xs         3
+.#define bfd_mach_xc16xs        3
+.  bfd_arch_xgate,   {* Freescale XGATE *}
+.#define bfd_mach_xgate         1
 .  bfd_arch_xtensa,    {* Tensilica's Xtensa cores.  *}
 .#define bfd_mach_xtensa	1
 .  bfd_arch_z80,
@@ -437,6 +461,15 @@ DESCRIPTION
 .  bfd_arch_lm32,      {* Lattice Mico32 *}
 .#define bfd_mach_lm32      1
 .  bfd_arch_microblaze,{* Xilinx MicroBlaze. *}
+.  bfd_arch_tilepro,   {* Tilera TILEPro *}
+.  bfd_arch_tilegx, {* Tilera TILE-Gx *}
+.#define bfd_mach_tilepro   1
+.#define bfd_mach_tilegx    1
+.#define bfd_mach_tilegx32  2
+.  bfd_arch_aarch64,   {* AArch64  *}
+.#define bfd_mach_aarch64 0
+.  bfd_arch_nios2,
+.#define bfd_mach_nios2	0
 .  bfd_arch_last
 .  };
 */
@@ -469,12 +502,19 @@ DESCRIPTION
 .
 .  bfd_boolean (*scan) (const struct bfd_arch_info *, const char *);
 .
+.  {* Allocate via bfd_malloc and return a fill buffer of size COUNT.  If
+.     IS_BIGENDIAN is TRUE, the order of bytes is big endian.  If CODE is
+.     TRUE, the buffer contains code.  *}
+.  void *(*fill) (bfd_size_type count, bfd_boolean is_bigendian,
+.		  bfd_boolean code);
+.
 .  const struct bfd_arch_info *next;
 .}
 .bfd_arch_info_type;
 .
 */
 
+extern const bfd_arch_info_type bfd_aarch64_arch;
 extern const bfd_arch_info_type bfd_alpha_arch;
 extern const bfd_arch_info_type bfd_arc_arch;
 extern const bfd_arch_info_type bfd_arm_arch;
@@ -487,6 +527,7 @@ extern const bfd_arch_info_type bfd_crx_arch;
 extern const bfd_arch_info_type bfd_d10v_arch;
 extern const bfd_arch_info_type bfd_d30v_arch;
 extern const bfd_arch_info_type bfd_dlx_arch;
+extern const bfd_arch_info_type bfd_epiphany_arch;
 extern const bfd_arch_info_type bfd_fr30_arch;
 extern const bfd_arch_info_type bfd_frv_arch;
 extern const bfd_arch_info_type bfd_h8300_arch;
@@ -499,16 +540,20 @@ extern const bfd_arch_info_type bfd_i960_arch;
 extern const bfd_arch_info_type bfd_ia64_arch;
 extern const bfd_arch_info_type bfd_ip2k_arch;
 extern const bfd_arch_info_type bfd_iq2000_arch;
+extern const bfd_arch_info_type bfd_k1om_arch;
 extern const bfd_arch_info_type bfd_l1om_arch;
 extern const bfd_arch_info_type bfd_lm32_arch;
 extern const bfd_arch_info_type bfd_m32c_arch;
 extern const bfd_arch_info_type bfd_m32r_arch;
 extern const bfd_arch_info_type bfd_m68hc11_arch;
 extern const bfd_arch_info_type bfd_m68hc12_arch;
+extern const bfd_arch_info_type bfd_m9s12x_arch;
+extern const bfd_arch_info_type bfd_m9s12xg_arch;
 extern const bfd_arch_info_type bfd_m68k_arch;
 extern const bfd_arch_info_type bfd_m88k_arch;
 extern const bfd_arch_info_type bfd_mcore_arch;
 extern const bfd_arch_info_type bfd_mep_arch;
+extern const bfd_arch_info_type bfd_metag_arch;
 extern const bfd_arch_info_type bfd_mips_arch;
 extern const bfd_arch_info_type bfd_microblaze_arch;
 extern const bfd_arch_info_type bfd_mmix_arch;
@@ -517,6 +562,7 @@ extern const bfd_arch_info_type bfd_mn10300_arch;
 extern const bfd_arch_info_type bfd_moxie_arch;
 extern const bfd_arch_info_type bfd_msp430_arch;
 extern const bfd_arch_info_type bfd_mt_arch;
+extern const bfd_arch_info_type bfd_nios2_arch;
 extern const bfd_arch_info_type bfd_ns32k_arch;
 extern const bfd_arch_info_type bfd_openrisc_arch;
 extern const bfd_arch_info_type bfd_or32_arch;
@@ -526,6 +572,7 @@ extern const bfd_arch_info_type bfd_plugin_arch;
 extern const bfd_arch_info_type bfd_powerpc_archs[];
 #define bfd_powerpc_arch bfd_powerpc_archs[0]
 extern const bfd_arch_info_type bfd_rs6000_arch;
+extern const bfd_arch_info_type bfd_rl78_arch;
 extern const bfd_arch_info_type bfd_rx_arch;
 extern const bfd_arch_info_type bfd_s390_arch;
 extern const bfd_arch_info_type bfd_score_arch;
@@ -537,13 +584,17 @@ extern const bfd_arch_info_type bfd_tic4x_arch;
 extern const bfd_arch_info_type bfd_tic54x_arch;
 extern const bfd_arch_info_type bfd_tic6x_arch;
 extern const bfd_arch_info_type bfd_tic80_arch;
+extern const bfd_arch_info_type bfd_tilegx_arch;
+extern const bfd_arch_info_type bfd_tilepro_arch;
 extern const bfd_arch_info_type bfd_v850_arch;
+extern const bfd_arch_info_type bfd_v850_rh850_arch;
 extern const bfd_arch_info_type bfd_vax_arch;
 extern const bfd_arch_info_type bfd_w65_arch;
 extern const bfd_arch_info_type bfd_we32k_arch;
 extern const bfd_arch_info_type bfd_xstormy16_arch;
 extern const bfd_arch_info_type bfd_xtensa_arch;
 extern const bfd_arch_info_type bfd_xc16x_arch;
+extern const bfd_arch_info_type bfd_xgate_arch;
 extern const bfd_arch_info_type bfd_z80_arch;
 extern const bfd_arch_info_type bfd_z8k_arch;
 
@@ -552,6 +603,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
 #ifdef SELECT_ARCHITECTURES
     SELECT_ARCHITECTURES,
 #else
+    &bfd_aarch64_arch,
     &bfd_alpha_arch,
     &bfd_arc_arch,
     &bfd_arm_arch,
@@ -564,6 +616,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_d10v_arch,
     &bfd_d30v_arch,
     &bfd_dlx_arch,
+    &bfd_epiphany_arch,
     &bfd_fr30_arch,
     &bfd_frv_arch,
     &bfd_h8300_arch,
@@ -576,16 +629,20 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_ia64_arch,
     &bfd_ip2k_arch,
     &bfd_iq2000_arch,
+    &bfd_k1om_arch,
     &bfd_l1om_arch,
     &bfd_lm32_arch,
     &bfd_m32c_arch,
     &bfd_m32r_arch,
     &bfd_m68hc11_arch,
     &bfd_m68hc12_arch,
+    &bfd_m9s12x_arch,
+    &bfd_m9s12xg_arch,
     &bfd_m68k_arch,
     &bfd_m88k_arch,
     &bfd_mcore_arch,
     &bfd_mep_arch,
+    &bfd_metag_arch,
     &bfd_microblaze_arch,
     &bfd_mips_arch,
     &bfd_mmix_arch,
@@ -594,12 +651,14 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_moxie_arch,
     &bfd_msp430_arch,
     &bfd_mt_arch,
+    &bfd_nios2_arch,
     &bfd_ns32k_arch,
     &bfd_openrisc_arch,
     &bfd_or32_arch,
     &bfd_pdp11_arch,
     &bfd_powerpc_arch,
     &bfd_rs6000_arch,
+    &bfd_rl78_arch,
     &bfd_rx_arch,
     &bfd_s390_arch,
     &bfd_score_arch,
@@ -611,13 +670,17 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_tic54x_arch,
     &bfd_tic6x_arch,
     &bfd_tic80_arch,
+    &bfd_tilegx_arch,
+    &bfd_tilepro_arch,
     &bfd_v850_arch,
+    &bfd_v850_rh850_arch,
     &bfd_vax_arch,
     &bfd_w65_arch,
     &bfd_we32k_arch,
     &bfd_xstormy16_arch,
     &bfd_xtensa_arch,
     &bfd_xc16x_arch,
+    &bfd_xgate_arch,
     &bfd_z80_arch,
     &bfd_z8k_arch,
 #endif
@@ -748,25 +811,26 @@ bfd_arch_get_compatible (const bfd *abfd,
 			 const bfd *bbfd,
 			 bfd_boolean accept_unknowns)
 {
-  const bfd * ubfd = NULL;
+  const bfd *ubfd, *kbfd;
 
   /* Look for an unknown architecture.  */
-  if (((ubfd = abfd) && ubfd->arch_info->arch == bfd_arch_unknown)
-      || ((ubfd = bbfd) && ubfd->arch_info->arch == bfd_arch_unknown))
-    {
-      /* We can allow an unknown architecture if accept_unknowns
-	 is true, or if the target is the "binary" format, which
-	 has an unknown architecture.  Since the binary format can
-	 only be set by explicit request from the user, it is safe
-	 to assume that they know what they are doing.  */
-      if (accept_unknowns
-	  || strcmp (bfd_get_target (ubfd), "binary") == 0)
-	return ubfd->arch_info;
-      return NULL;
-    }
+  if (abfd->arch_info->arch == bfd_arch_unknown)
+    ubfd = abfd, kbfd = bbfd;
+  else if (bbfd->arch_info->arch == bfd_arch_unknown)
+    ubfd = bbfd, kbfd = abfd;
+  else
+    /* Otherwise architecture-specific code has to decide.  */
+    return abfd->arch_info->compatible (abfd->arch_info, bbfd->arch_info);
 
-  /* Otherwise architecture-specific code has to decide.  */
-  return abfd->arch_info->compatible (abfd->arch_info, bbfd->arch_info);
+  /* We can allow an unknown architecture if accept_unknowns
+     is true, or if the target is the "binary" format, which
+     has an unknown architecture.  Since the binary format can
+     only be set by explicit request from the user, it is safe
+     to assume that they know what they are doing.  */
+  if (accept_unknowns
+      || strcmp (bfd_get_target (ubfd), "binary") == 0)
+    return kbfd->arch_info;
+  return NULL;
 }
 
 /*
@@ -787,6 +851,7 @@ const bfd_arch_info_type bfd_default_arch_struct = {
   32, 32, 8, bfd_arch_unknown, 0, "unknown", "unknown", 2, TRUE,
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_default_fill,
   0,
 };
 
@@ -1281,4 +1346,30 @@ bfd_arch_mach_octets_per_byte (enum bfd_architecture arch,
   if (ap)
     return ap->bits_per_byte / 8;
   return 1;
+}
+
+/*
+INTERNAL_FUNCTION
+	bfd_arch_default_fill
+
+SYNOPSIS
+	void *bfd_arch_default_fill (bfd_size_type count,
+				     bfd_boolean is_bigendian,
+				     bfd_boolean code);
+
+DESCRIPTION
+	Allocate via bfd_malloc and return a fill buffer of size COUNT.
+	If IS_BIGENDIAN is TRUE, the order of bytes is big endian.  If
+	CODE is TRUE, the buffer contains code.
+*/
+
+void *
+bfd_arch_default_fill (bfd_size_type count,
+		       bfd_boolean is_bigendian ATTRIBUTE_UNUSED,
+		       bfd_boolean code ATTRIBUTE_UNUSED)
+{
+  void *fill = bfd_malloc (count);
+  if (fill != NULL)
+    memset (fill, 0, count);
+  return fill;
 }

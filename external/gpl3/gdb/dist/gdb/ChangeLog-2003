@@ -9601,7 +9601,7 @@ Fri Aug  8 00:28:38 UTC 2003  Brendan Conoboy  <blc@redhat.com>
 	stack size.  Don't loop infinitely if ``stack_len'' is zero.
 	(execute_stack_op): Move ``ctx->in_reg'' initialization
 	out of loop.  Allow DW_OP_reg0 ... DW_OP_reg31 and DW_OP_regx to
-	be used in conjuction with DW_OP_piece.  Revise error message
+	be used in conjunction with DW_OP_piece.  Revise error message
 	accordingly.
 
 2003-05-14  Theodore A. Roth  <troth@openavr.org>

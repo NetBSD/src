@@ -1,6 +1,5 @@
 // -*- C++ -*- Allocate exception objects.
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -60,7 +59,7 @@ using namespace __cxxabiv1;
 #if INT_MAX == 32767
 # define EMERGENCY_OBJ_SIZE	128
 # define EMERGENCY_OBJ_COUNT	16
-#elif LONG_MAX == 2147483647
+#elif !defined (_GLIBCXX_LLP64) && LONG_MAX == 2147483647
 # define EMERGENCY_OBJ_SIZE	512
 # define EMERGENCY_OBJ_COUNT	32
 #else
@@ -76,7 +75,11 @@ using namespace __cxxabiv1;
 #if INT_MAX == 32767 || EMERGENCY_OBJ_COUNT <= 32
 typedef unsigned int bitmask_type;
 #else
+#if defined (_GLIBCXX_LLP64)
+typedef unsigned long long bitmask_type;
+#else
 typedef unsigned long bitmask_type;
+#endif
 #endif
 
 
@@ -94,7 +97,7 @@ namespace
 }
 
 extern "C" void *
-__cxxabiv1::__cxa_allocate_exception(std::size_t thrown_size) throw()
+__cxxabiv1::__cxa_allocate_exception(std::size_t thrown_size) _GLIBCXX_NOTHROW
 {
   void *ret;
 
@@ -126,12 +129,6 @@ __cxxabiv1::__cxa_allocate_exception(std::size_t thrown_size) throw()
 	std::terminate ();
     }
 
-  // We have an uncaught exception as soon as we allocate memory.  This
-  // yields uncaught_exception() true during the copy-constructor that
-  // initializes the exception object.  See Issue 475.
-  __cxa_eh_globals *globals = __cxa_get_globals ();
-  globals->uncaughtExceptions += 1;
-
   memset (ret, 0, sizeof (__cxa_refcounted_exception));
 
   return (void *)((char *)ret + sizeof (__cxa_refcounted_exception));
@@ -139,7 +136,7 @@ __cxxabiv1::__cxa_allocate_exception(std::size_t thrown_size) throw()
 
 
 extern "C" void
-__cxxabiv1::__cxa_free_exception(void *vptr) throw()
+__cxxabiv1::__cxa_free_exception(void *vptr) _GLIBCXX_NOTHROW
 {
   char *base = (char *) emergency_buffer;
   char *ptr = (char *) vptr;
@@ -158,7 +155,7 @@ __cxxabiv1::__cxa_free_exception(void *vptr) throw()
 
 
 extern "C" __cxa_dependent_exception*
-__cxxabiv1::__cxa_allocate_dependent_exception() throw()
+__cxxabiv1::__cxa_allocate_dependent_exception() _GLIBCXX_NOTHROW
 {
   __cxa_dependent_exception *ret;
 
@@ -188,12 +185,6 @@ __cxxabiv1::__cxa_allocate_dependent_exception() throw()
 	std::terminate ();
     }
 
-  // We have an uncaught exception as soon as we allocate memory.  This
-  // yields uncaught_exception() true during the copy-constructor that
-  // initializes the exception object.  See Issue 475.
-  __cxa_eh_globals *globals = __cxa_get_globals ();
-  globals->uncaughtExceptions += 1;
-
   memset (ret, 0, sizeof (__cxa_dependent_exception));
 
   return ret;
@@ -202,7 +193,7 @@ __cxxabiv1::__cxa_allocate_dependent_exception() throw()
 
 extern "C" void
 __cxxabiv1::__cxa_free_dependent_exception
-  (__cxa_dependent_exception *vptr) throw()
+  (__cxa_dependent_exception *vptr) _GLIBCXX_NOTHROW
 {
   char *base = (char *) dependents_buffer;
   char *ptr = (char *) vptr;

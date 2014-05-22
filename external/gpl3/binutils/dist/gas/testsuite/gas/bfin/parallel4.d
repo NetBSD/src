@@ -21,7 +21,7 @@ Disassembly of section .text:
   34:	10 9f 00 00 
   38:	37 cc 02 24 	R2 = BYTEOP3P \(R1:0, R3:2\) \(HI, R\) \|\| \[I2\+\+\] = R0 \|\| NOP;
   3c:	10 9e 00 00 
-  40:	0c cc 40 45 	R5 = A1.L \+ A1.H, R2 = A0.L \+ A0.H \|\| \[I2--\] = R0 \|\| NOP;
+  40:	0c cc 7f 45 	R5 = A1.L \+ A1.H, R2 = A0.L \+ A0.H \|\| \[I2--\] = R0 \|\| NOP;
   44:	90 9e 00 00 
   48:	15 cc 82 06 	\(R2, R3\) = BYTEOP16P \(R1:0, R3:2\) \|\| \[I3\] = R0 \|\| NOP;
   4c:	18 9f 00 00 

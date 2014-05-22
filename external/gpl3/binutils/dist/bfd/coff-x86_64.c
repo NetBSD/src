@@ -1,5 +1,6 @@
 /* BFD back-end for AMD 64 COFF files.
-   Copyright 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -546,7 +547,7 @@ coff_amd64_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 {
   reloc_howto_type *howto;
 
-  if (rel->r_type > ARRAY_SIZE (howto_table))
+  if (rel->r_type >= ARRAY_SIZE (howto_table))
     {
       bfd_set_error (bfd_error_bad_value);
       return NULL;
@@ -618,7 +619,8 @@ coff_amd64_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
     {
       bfd_vma osect_vma;
 
-      if (h && (h->type == bfd_link_hash_defined || h->type == bfd_link_hash_defweak))
+      if (h && (h->root.type == bfd_link_hash_defined
+		|| h->root.type == bfd_link_hash_defweak))
 	osect_vma = h->root.u.def.section->output_section->vma;
       else
 	{
@@ -762,6 +764,7 @@ const bfd_target
 #endif
   '/',				/* Ar_pad_char.  */
   15,				/* Ar_max_namelen.  */
+  0,				/* match priority.  */
 
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,

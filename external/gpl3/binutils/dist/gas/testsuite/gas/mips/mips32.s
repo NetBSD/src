@@ -16,16 +16,16 @@ text_label:
       msubu   $11, $12
       mul     $13, $14, $15
       pref    4, ($16)
-      pref    4, 32767($17)
-      pref    4, -32768($18)
+      pref    4, 2047($17)
+      pref    4, -2048($18)
       ssnop
 
 
       # privileged instructions
 
       cache   5, ($1)
-      cache   5, 32767($2)
-      cache   5, -32768($3)
+      cache   5, 2047($2)
+      cache   5, -2048($3)
       .set at
       cache   5, 32768($4)
       cache   5, -32769($5)
@@ -39,7 +39,7 @@ text_label:
       tlbwr
       wait
       wait    0                       # disassembles without code
-      wait    0x56789
+      wait    0x345
 
       # For a while break for the mips32 ISA interpreted a single argument
       # as a 20-bit code, placing it in the opcode differently to
@@ -54,7 +54,7 @@ text_label:
       # different.
       sdbbp
       sdbbp   0                       # disassembles without code
-      sdbbp   0x56789
+      sdbbp   0x345
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
       .space  8

@@ -1,9 +1,7 @@
 /* This file contains the definitions and documentation for the
    Register Transfer Expressions (rtx's) that make up the
    Register Transfer Language (rtl) used in the Back End of the GNU compiler.
-   Copyright (C) 1987, 1988, 1992, 1994, 1995, 1997, 1998, 1999, 2000, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -109,8 +107,8 @@ DEF_RTL_EXPR(INSN_LIST, "insn_list", "ue", RTX_EXTRA)
    `emit_insn' takes the SEQUENCE apart and makes separate insns.  */
 DEF_RTL_EXPR(SEQUENCE, "sequence", "E", RTX_EXTRA)
 
-/* Refers to the address of its argument.  This is only used in alias.c.  */
-DEF_RTL_EXPR(ADDRESS, "address", "e", RTX_MATCH)
+/* Represents a non-global base address.  This is only used in alias.c.  */
+DEF_RTL_EXPR(ADDRESS, "address", "i", RTX_EXTRA)
 
 /* ----------------------------------------------------------------------
    Expression types used for things in the instruction chain.
@@ -123,21 +121,21 @@ DEF_RTL_EXPR(ADDRESS, "address", "e", RTX_MATCH)
    ---------------------------------------------------------------------- */
 
 /* An annotation for variable assignment tracking.  */
-DEF_RTL_EXPR(DEBUG_INSN, "debug_insn", "iuuBieie", RTX_INSN)
+DEF_RTL_EXPR(DEBUG_INSN, "debug_insn", "iuuBeiie", RTX_INSN)
 
 /* An instruction that cannot jump.  */
-DEF_RTL_EXPR(INSN, "insn", "iuuBieie", RTX_INSN)
+DEF_RTL_EXPR(INSN, "insn", "iuuBeiie", RTX_INSN)
 
 /* An instruction that can possibly jump.
    Fields ( rtx->u.fld[] ) have exact same meaning as INSN's.  */
-DEF_RTL_EXPR(JUMP_INSN, "jump_insn", "iuuBieie0", RTX_INSN)
+DEF_RTL_EXPR(JUMP_INSN, "jump_insn", "iuuBeiie0", RTX_INSN)
 
 /* An instruction that can possibly call a subroutine
    but which will not change which instruction comes next
    in the current function.
    Field ( rtx->u.fld[8] ) is CALL_INSN_FUNCTION_USAGE.
    All other fields ( rtx->u.fld[] ) have exact same meaning as INSN's.  */
-DEF_RTL_EXPR(CALL_INSN, "call_insn", "iuuBieiee", RTX_INSN)
+DEF_RTL_EXPR(CALL_INSN, "call_insn", "iuuBeiiee", RTX_INSN)
 
 /* A marker that indicates that control will not flow through.  */
 DEF_RTL_EXPR(BARRIER, "barrier", "iuu00000", RTX_EXTRA)
@@ -241,7 +239,7 @@ DEF_RTL_EXPR(ADDR_VEC, "addr_vec", "E", RTX_EXTRA)
 
    The third, fourth and fifth operands are only valid when
    CASE_VECTOR_SHORTEN_MODE is defined, and only in an optimizing
-   compilations.  */
+   compilation.  */
 
 DEF_RTL_EXPR(ADDR_DIFF_VEC, "addr_diff_vec", "eEee0", RTX_EXTRA)
 
@@ -296,6 +294,12 @@ DEF_RTL_EXPR(CALL, "call", "ee", RTX_EXTRA)
 
 DEF_RTL_EXPR(RETURN, "return", "", RTX_EXTRA)
 
+/* Like RETURN, but truly represents only a function return, while
+   RETURN may represent an insn that also performs other functions
+   of the function epilogue.  Like RETURN, this may also occur in
+   conditional jumps.  */
+DEF_RTL_EXPR(SIMPLE_RETURN, "simple_return", "", RTX_EXTRA)
+
 /* Special for EH return from subroutine.  */
 
 DEF_RTL_EXPR(EH_RETURN, "eh_return", "", RTX_EXTRA)
@@ -316,9 +320,10 @@ DEF_RTL_EXPR(CONST_INT, "const_int", "w", RTX_CONST_OBJ)
 /* fixed-point constant */
 DEF_RTL_EXPR(CONST_FIXED, "const_fixed", "www", RTX_CONST_OBJ)
 
-/* numeric floating point constant.
-   Operands hold the value.  They are all 'w' and there may be from 2 to 6;
-   see real.h.  */
+/* numeric floating point or integer constant.  If the mode is
+   VOIDmode it is an int otherwise it has a floating point mode and a
+   floating point value.  Operands hold the value.  They are all 'w'
+   and there may be from 2 to 6; see real.h.  */
 DEF_RTL_EXPR(CONST_DOUBLE, "const_double", CONST_DOUBLE_FORMAT, RTX_CONST_OBJ)
 
 /* Describes a vector constant.  */
@@ -613,6 +618,10 @@ DEF_RTL_EXPR(BSWAP, "bswap", "e", RTX_UNARY)
    or 0 if arg is 0.  */
 DEF_RTL_EXPR(FFS, "ffs", "e", RTX_UNARY)
 
+/* Count number of leading redundant sign bits (number of leading
+   sign bits minus one).  */
+DEF_RTL_EXPR(CLRSB, "clrsb", "e", RTX_UNARY)
+
 /* Count leading zeros.  */
 DEF_RTL_EXPR(CLZ, "clz", "e", RTX_UNARY)
 
@@ -706,17 +715,30 @@ DEF_RTL_EXPR(SS_TRUNCATE, "ss_truncate", "e", RTX_UNARY)
 /* Unsigned saturating truncate.  */
 DEF_RTL_EXPR(US_TRUNCATE, "us_truncate", "e", RTX_UNARY)
 
+/* Floating point multiply/add combined instruction.  */
+DEF_RTL_EXPR(FMA, "fma", "eee", RTX_TERNARY)
+
 /* Information about the variable and its location.  */
 /* Changed 'te' to 'tei'; the 'i' field is for recording
    initialization status of variables.  */
 DEF_RTL_EXPR(VAR_LOCATION, "var_location", "tei", RTX_EXTRA)
 
+/* Used in VAR_LOCATION for a pointer to a decl that is no longer
+   addressable.  */
+DEF_RTL_EXPR(DEBUG_IMPLICIT_PTR, "debug_implicit_ptr", "t", RTX_OBJ)
+
+/* Represents value that argument had on function entry.  The
+   single argument is the DECL_INCOMING_RTL of the corresponding
+   parameter.  */
+DEF_RTL_EXPR(ENTRY_VALUE, "entry_value", "0", RTX_OBJ)
+
+/* Used in VAR_LOCATION for a reference to a parameter that has
+   been optimized away completely.  */
+DEF_RTL_EXPR(DEBUG_PARAMETER_REF, "debug_parameter_ref", "t", RTX_OBJ)
+
 /* All expressions from this point forward appear only in machine
    descriptions.  */
 #ifdef GENERATOR_FILE
-
-/* Include a secondary machine-description file at this point.  */
-DEF_RTL_EXPR(INCLUDE, "include", "s", RTX_EXTRA)
 
 /* Pattern-matching operators:  */
 
@@ -796,9 +818,8 @@ DEF_RTL_EXPR(MATCH_PAR_DUP, "match_par_dup", "iE", RTX_MATCH)
    the result of the one before it.  */
 DEF_RTL_EXPR(MATCH_CODE, "match_code", "ss", RTX_MATCH)
 
-/* Appears only in define_predicate/define_special_predicate
-    expressions.  The argument is a C expression to be injected at this
-    point in the predicate formula.  */
+/* Used to inject a C conditional expression into an .md file.  It can
+   appear in a predicate definition or an attribute expression.  */
 DEF_RTL_EXPR(MATCH_TEST, "match_test", "s", RTX_MATCH)
 
 /* Insn (and related) definitions.  */
@@ -883,8 +904,9 @@ DEF_RTL_EXPR(DEFINE_PEEPHOLE2, "define_peephole2", "EsES", RTX_EXTRA)
 	This might, for example, create some RTX's and store them in
 	elements of `recog_data.operand' for use by the vector of
 	insn-patterns.
-	(`operands' is an alias here for `recog_data.operand').  */
-DEF_RTL_EXPR(DEFINE_EXPAND, "define_expand", "sEss", RTX_EXTRA)
+	(`operands' is an alias here for `recog_data.operand').
+   5th: optionally, a vector of attributes for this expand.  */
+DEF_RTL_EXPR(DEFINE_EXPAND, "define_expand", "sEssV", RTX_EXTRA)
 
 /* Define a requirement for delay slots.
    1st operand: Condition involving insn attributes that, if true,
@@ -1201,6 +1223,12 @@ DEF_RTL_EXPR(DEFINE_INSN_RESERVATION, "define_insn_reservation", "sies", RTX_EXT
    3rd operand: expression for the default value of the attribute.  */
 DEF_RTL_EXPR(DEFINE_ATTR, "define_attr", "sse", RTX_EXTRA)
 
+/* Definition of an insn attribute that uses an existing enumerated type.
+   1st operand: name of the attribute
+   2nd operand: the name of the enumerated type
+   3rd operand: expression for the default value of the attribute.  */
+DEF_RTL_EXPR(DEFINE_ENUM_ATTR, "define_enum_attr", "sse", RTX_EXTRA)
+
 /* Marker for the name of an attribute.  */
 DEF_RTL_EXPR(ATTR, "attr", "s", RTX_EXTRA)
 
@@ -1240,9 +1268,7 @@ DEF_RTL_EXPR(EQ_ATTR_ALT, "eq_attr_alt", "ii", RTX_EXTRA)
    true for the insn being scheduled in reorg.
 
    genattr.c defines the following flags which can be tested by
-   (attr_flag "foo") expressions in eligible_for_delay.
-
-   forward, backward, very_likely, likely, very_unlikely, and unlikely.  */
+   (attr_flag "foo") expressions in eligible_for_delay: forward, backward.  */
 
 DEF_RTL_EXPR (ATTR_FLAG, "attr_flag", "s", RTX_EXTRA)
 
@@ -1253,6 +1279,8 @@ DEF_RTL_EXPR (ATTR_FLAG, "attr_flag", "s", RTX_EXTRA)
    true, the second operand will be used as the value of the conditional.  */
 DEF_RTL_EXPR(COND, "cond", "Ee", RTX_EXTRA)
 
+DEF_RTL_EXPR(DEFINE_SUBST, "define_subst", "sEsE", RTX_EXTRA)
+DEF_RTL_EXPR(DEFINE_SUBST_ATTR, "define_subst_attr", "ssss", RTX_EXTRA)
 #endif /* GENERATOR_FILE */
 
 /*

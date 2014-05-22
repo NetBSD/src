@@ -1,5 +1,6 @@
 #objdump: -dr
 #as: --pic
+#target: cris-*-*elf* cris-*-linux-gnu
 #source: brokw-1.s
 
 .*:     file format .*-cris

@@ -27,13 +27,13 @@ Disassembly of section \.text:
   30:	00 79 00 00 	mov\.w 0x0,#0x0
 			32: R_XSTORMY16_16	global
   34:	fe d0       	bge 0x34
-			34: R_XSTORMY16_PC8	global\+0xfffffffe
+			34: R_XSTORMY16_PC8	global-0x2
   36:	fc c0 00 00 	bge Rx,#0x0,0x36
-			36: R_XSTORMY16_PC8	global\+0xfffffffc
+			36: R_XSTORMY16_PC8	global-0x4
   3a:	00 0d fc 0f 	bge r0,r0,0x3a
-			3c: R_XSTORMY16_REL_12	global\+0xfffffffe
+			3c: R_XSTORMY16_REL_12	global-0x2
   3e:	fe 1f       	br 0x3e
-			3e: R_XSTORMY16_REL_12	global\+0xfffffffe
+			3e: R_XSTORMY16_REL_12	global-0x2
   40:	0a d0       	bge 0x4c
   42:	06 c0 00 00 	bge Rx,#0x0,0x4c
   46:	00 0d 02 00 	bge r0,r0,0x4c
@@ -49,8 +49,8 @@ Disassembly of section \.text:
   60:	00 79 00 00 	mov\.w 0x0,#0x0
 			62: R_XSTORMY16_16	\.text\+0x50
   64:	00 79 00 00 	mov\.w 0x0,#0x0
-			66: R_XSTORMY16_PC16	global\+0xffffff9c
+			66: R_XSTORMY16_PC16	global-0x64
   68:	00 79 00 00 	mov\.w 0x0,#0x0
-			6a: R_XSTORMY16_PC16	global\+0xffffffb4
+			6a: R_XSTORMY16_PC16	global-0x4c
   6c:	00 02 00 00 	jmpf 0x0
 			6c: R_XSTORMY16_24	global

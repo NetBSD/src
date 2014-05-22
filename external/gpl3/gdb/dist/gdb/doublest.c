@@ -1,8 +1,6 @@
 /* Floating point routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -274,10 +272,6 @@ convert_floatformat_to_doublest (const struct floatformat *fmt,
   *to = dto;
 }
 
-static void put_field (unsigned char *, enum floatformat_byteorders,
-		       unsigned int,
-		       unsigned int, unsigned int, unsigned long);
-
 /* Set a field which starts at START and is LEN bytes long.  DATA and
    TOTAL_LEN are the thing we are extracting it from, in byteorder ORDER.  */
 static void
@@ -449,7 +443,7 @@ convert_doublest_to_floatformat (CONST struct floatformat *fmt,
 		 fmt->exp_len, fmt->exp_nan);
       /* Be sure it's not infinity, but NaN value is irrel.  */
       put_field (uto, order, fmt->totalsize, fmt->man_start,
-		 32, 1);
+		 fmt->man_len, 1);
       goto finalize_byteorder;
     }
 
@@ -476,6 +470,28 @@ convert_doublest_to_floatformat (CONST struct floatformat *fmt,
 #else
   mant = frexp (dfrom, &exponent);
 #endif
+
+  if (exponent + fmt->exp_bias <= 0)
+    {
+      /* The value is too small to be expressed in the destination
+	 type (not enough bits in the exponent.  Treat as 0.  */
+      put_field (uto, order, fmt->totalsize, fmt->exp_start,
+		 fmt->exp_len, 0);
+      put_field (uto, order, fmt->totalsize, fmt->man_start,
+		 fmt->man_len, 0);
+      goto finalize_byteorder;
+    }
+
+  if (exponent + fmt->exp_bias >= (1 << fmt->exp_len))
+    {
+      /* The value is too large to fit into the destination.
+	 Treat as infinity.  */
+      put_field (uto, order, fmt->totalsize, fmt->exp_start,
+		 fmt->exp_len, fmt->exp_nan);
+      put_field (uto, order, fmt->totalsize, fmt->man_start,
+		 fmt->man_len, 0);
+      goto finalize_byteorder;
+    }
 
   put_field (uto, order, fmt->totalsize, fmt->exp_start, fmt->exp_len,
 	     exponent + fmt->exp_bias - 1);

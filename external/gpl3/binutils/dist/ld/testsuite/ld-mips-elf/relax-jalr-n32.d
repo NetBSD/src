@@ -1,6 +1,6 @@
 #name: MIPS relax-jalr n32
 #source: relax-jalr.s
-#as: -KPIC -n32 -EB
+#as: -march=from-abi -KPIC -n32 -EB
 #objdump: --prefix-addresses -d --show-raw-insn
 #ld: --relax -melf32btsmipn32
 

@@ -2,7 +2,7 @@
 
 # relro_test.sh -- test -z relro
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright 2010, 2011 Free Software Foundation, Inc.
 # Written by Cary Coutant <ccoutant@google.com>.
 
 # This file is part of gold.
@@ -63,8 +63,9 @@ check()
   RELRO_END=`echo "16o 16i $RELRO_START $RELRO_LEN + p" | dc`
   REM=`echo "16i $RELRO_END $LOAD_ALIGN % p" | dc`
 
-  if test "$REM" -ne 0
-  then
+  if test "$REM" -eq 0; then
+    :
+  else
     echo "PT_GNU_RELRO segment does not end at page boundary."
     exit 1
   fi

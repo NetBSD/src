@@ -35,5 +35,6 @@ const bfd_arch_info_type bfd_m68hc11_arch =
     TRUE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     0,
 };

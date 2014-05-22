@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -164,7 +164,7 @@ ia64_hpux_at_dld_breakpoint_1_p (ptid_t ptid)
 int
 ia64_hpux_at_dld_breakpoint_p (ptid_t ptid)
 {
-  struct gdb_exception e;
+  volatile struct gdb_exception e;
   ptid_t saved_ptid = inferior_ptid;
   int result = 0;
 
@@ -278,7 +278,7 @@ ia64_hpux_handle_dld_breakpoint_1 (ptid_t ptid)
 void
 ia64_hpux_handle_dld_breakpoint (ptid_t ptid)
 {
-  struct gdb_exception e;
+  volatile struct gdb_exception e;
   ptid_t saved_ptid = inferior_ptid;
 
   inferior_ptid = ptid;
@@ -396,7 +396,7 @@ ia64_hpux_clear_solib (void)
 static CORE_ADDR
 ia64_hpux_get_load_info_addr (void)
 {
-  struct type *data_ptr_type = builtin_type (target_gdbarch)->builtin_data_ptr;
+  struct type *data_ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
   CORE_ADDR addr;
   int status;
 

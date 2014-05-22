@@ -1,7 +1,6 @@
 /* Native-dependent code for BSD Unix running on ARM's, for GDB.
 
-   Copyright (C) 1988, 1989, 1991, 1992, 1994, 1996, 1999, 2002, 2004, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +29,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <arm/arm32/frame.h>
 
 /* Support for debugging kernel virtual memory images.  */
 #include <machine/pcb.h>
@@ -177,7 +177,7 @@ fill_fpregset (const struct regcache *regcache, fpregset_t *vfpregsetp, int regn
     }
   else if (regno >= ARM_D0_REGNUM && regno <= ARM_D0_REGNUM + 15)
     regcache_raw_collect(regcache, regno,
-			 (char *) vfpregsetp->fpr_vfp.vfp_regs + 8*regno);
+			 (char *) vfpregsetp->fpr_vfp.vfp_regs + 8 * (regno - ARM_D0_REGNUM));
 
   if (ARM_FPSCR_REGNUM == regno || -1 == regno)
     regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
@@ -308,7 +308,7 @@ fetch_fp_regs (struct regcache *regcache)
 
   if (ret < 0)
     {
-      warning (_("unable to fetch general registers"));
+      warning (_("unable to fetch floating-point registers"));
       return;
     }
 

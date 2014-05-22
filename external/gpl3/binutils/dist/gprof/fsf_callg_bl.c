@@ -21,7 +21,7 @@ fsf_callg_blurb (file)
   fputs ("     index	A unique number given to each element of the table.\n", file);
   fputs ("		Index numbers are sorted numerically.\n", file);
   fputs ("		The index number is printed next to every function name so\n", file);
-  fputs ("		it is easier to look up where the function in the table.\n", file);
+  fputs ("		it is easier to look up where the function is in the table.\n", file);
   fputs ("\n", file);
   fputs ("     % time	This is the percentage of the `total' time that was spent\n", file);
   fputs ("		in this function and its children.  Note that due to\n", file);

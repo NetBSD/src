@@ -1,5 +1,4 @@
-# Copyright 1998, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1998-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,25 +15,22 @@
 
 load_lib "trace-support.exp"
 
-set testfile "unavailable"
-set srcfile ${testfile}.cc
+standard_testfile unavailable.cc
 set executable $testfile
-set binfile $objdir/$subdir/$executable
 
-if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
-	executable {debug nowarnings c++}] != "" } {
-    untested unavailable.exp
+if {[prepare_for_testing $testfile.exp $testfile $srcfile \
+	 {debug nowarnings c++}]} {
     return -1
 }
 
 set ws "\[\r\n\t \]+"
 set cr "\[\r\n\]+"
 
-if [istarget "x86_64-*"] then {
+if [is_amd64_regs_target] {
     set fpreg "rbp"
     set spreg "rsp"
     set pcreg "rip"
-} elseif [istarget "i?86-*"] then {
+} elseif [is_x86_like_target] {
     set fpreg "ebp"
     set spreg "esp"
     set pcreg "eip"
@@ -103,17 +99,43 @@ proc run_trace_experiment { test_func } {
 	    "tfind test frame"
 }
 
+# Test that "display VAR" works as expected, assuming VAR is wholly
+# unavailable.
+
+proc test_maybe_regvar_display { var } {
+    global gdb_prompt
+
+    # Evaluating VAR's location description may throw an internal
+    # "unavailable" exception, if for example, the value of a register
+    # necessary for computing VAR's location is unavailable.  Such an
+    # exception is caught, and should not cause automatic disablement
+    # of the current display being printed.  (GDB used to disable the
+    # current display whenever any exception was thrown.)
+    set test "display $var"
+    gdb_test_multiple "$test" "$test" {
+	-re "Disabling display ? to avoid infinite recursion.*$gdb_prompt $" {
+	    fail "$test"
+	}
+	-re "display ${var}\r\n1: ${var} = <unavailable>\r\n$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+    gdb_test "info display" ".*1:\[ \t\]+y\[ \t\]+${var}" "display ${var} is enabled"
+
+    gdb_test "undisp" \
+	"" \
+	"delete $var display" \
+	".*Delete all auto-display expressions.*y or n. $" \
+	"y"
+}
+
 #
 # Test procs
 #
 
-proc gdb_collect_args_test {} {
+proc gdb_collect_args_test {} { with_test_prefix "unavailable arguments" {
     global cr
     global gdb_prompt
-    global pf_prefix
-
-    set old_pf_prefix $pf_prefix
-    set pf_prefix "$pf_prefix unavailable arguments:"
 
     prepare_for_trace_test
 
@@ -171,20 +193,16 @@ proc gdb_collect_args_test {} {
     set r "${r}argarray = <unavailable>${cr}"
     gdb_test "info args" "$r" "info args"
 
+    test_maybe_regvar_display "argc"
+
     gdb_test "tfind none" \
 	"#0  end .*" \
 	"cease trace debugging"
+}}
 
-    set pf_prefix $old_pf_prefix
-}
-
-proc gdb_collect_locals_test { func msg } {
+proc gdb_collect_locals_test { func msg } { with_test_prefix "unavailable locals: $msg" {
     global cr
     global gdb_prompt
-    global pf_prefix
-
-    set old_pf_prefix $pf_prefix
-    set pf_prefix "$pf_prefix unavailable locals: $msg:"
 
     prepare_for_trace_test
 
@@ -226,21 +244,17 @@ proc gdb_collect_locals_test { func msg } {
     set r "${r}loci = <unavailable>${cr}"
     gdb_test "info locals" "$r" "info locals"
 
+    test_maybe_regvar_display "loci"
+
     gdb_test "tfind none" \
 	"#0  end .*" \
 	"cease trace debugging"
+}}
 
-    set pf_prefix $old_pf_prefix
-}
-
-proc gdb_unavailable_registers_test { } {
+proc gdb_unavailable_registers_test { } { with_test_prefix "unavailable registers" {
     global gdb_prompt
     global spreg
     global pcreg
-    global pf_prefix
-
-    set old_pf_prefix $pf_prefix
-    set pf_prefix "$pf_prefix unavailable registers:"
 
     prepare_for_trace_test
 
@@ -261,12 +275,12 @@ proc gdb_unavailable_registers_test { } {
 
     # Test reading uncollected pseudo-registers.  The set of which
     # depends on target.
-    if [istarget "x86_64-*"] then {
+    if [is_amd64_regs_target] {
 	# Check the raw register first.
 	test_register_unavailable "\$rax"
 	test_register_unavailable "\$eax"
 	test_register_unavailable "\$ax"
-    } elseif [istarget "i?86-*"] then {
+    } elseif [is_x86_like_target] {
 	# Check the raw register first.
 	test_register_unavailable "\$eax"
 	test_register_unavailable "\$ax"
@@ -286,19 +300,46 @@ proc gdb_unavailable_registers_test { } {
 	"info registers \$$spreg reports not available"
 
     gdb_test "tfind none" "#0  end .*" "cease trace debugging"
+}}
 
-    set pf_prefix $old_pf_prefix
+proc gdb_unavailable_floats { } {
+    global gdb_prompt
+
+    with_test_prefix "unavailable floats" {
+	prepare_for_trace_test
+
+	# We'll simply re-use the globals_test_function for this test
+	gdb_test "trace globals_test_func" \
+	    "Tracepoint \[0-9\]+ at .*" \
+	    "set tracepoint"
+
+	# Collect nothing.
+
+	# Begin the test.
+	run_trace_experiment globals_test_func
+
+	# Necessarily target specific.
+	if {[istarget "x86_64-*-*"] || [istarget i?86-*]} {
+	    send_gdb "info float\n"
+	    gdb_expect_list "info float" ".*$gdb_prompt $" {
+		"Status Word:         <unavailable>"
+		"Control Word:        <unavailable>"
+		"Tag Word:            <unavailable>"
+		"Instruction Pointer: <unavailable>:<unavailable>"
+		"Operand Pointer:     <unavailable>:<unavailable>"
+		"Opcode:              <unavailable>"
+	    }
+	}
+
+	gdb_test "tfind none" "#0  end .*" "cease trace debugging"
+    }
 }
 
-proc gdb_collect_globals_test { } {
+proc gdb_collect_globals_test { } { with_test_prefix "collect globals" {
     global ws
     global cr
     global gdb_prompt
     global hex
-    global pf_prefix
-
-    set old_pf_prefix $pf_prefix
-    set pf_prefix "$pf_prefix collect globals:"
 
     prepare_for_trace_test
 
@@ -431,7 +472,7 @@ proc gdb_collect_globals_test { } {
 	"non collected const string is still printable"
 
     gdb_test "print g_string_p" \
-	" = $hex \"hello world\"" \
+	" = $hex <g_const_string> \"hello world\"" \
 	"printing constant string through collected pointer"
 
     gdb_test "print g_string_unavail" \
@@ -485,48 +526,43 @@ proc gdb_collect_globals_test { } {
 
     gdb_test_no_output "set print object on"
 
-    set old_pf_prefix_2 $pf_prefix
-    set pf_prefix "$pf_prefix print object on:"
+    with_test_prefix "print object on" {
+	# With print object on, printing a pointer may need to fetch
+	# the pointed-to object, to check its run-time type.  Make
+	# sure that fails gracefully and transparently when the
+	# pointer itself is unavailable.
+	gdb_test "print virtualp" " = \\(Virtual \\*\\) <unavailable>"
 
-    # With print object on, printing a pointer may need to fetch the
-    # pointed-to object, to check its run-time type.  Make sure that
-    # fails gracefully and transparently when the pointer itself is
-    # unavailable.
-    gdb_test "print virtualp" " = \\(Virtual \\*\\) <unavailable>"
+	# no vtable pointer available
+	gdb_test "print derived_unavail" \
+	    " = {<Middle> = <unavailable>, _vptr.Derived = <unavailable>, z = <unavailable>}"
 
-    # no vtable pointer available
-    gdb_test "print derived_unavail" \
-	" = {<Middle> = <unavailable>, _vptr.Derived = <unavailable>, z = <unavailable>}"
+	# vtable pointer available, but nothing else
+	gdb_test "print derived_partial" \
+	    " = \\(Derived\\) {<Middle> = {<Base> = <unavailable>, _vptr.Middle = <unavailable>, y = <unavailable>}, _vptr.Derived = $hex <vtable for Derived.*>, z = <unavailable>}"
 
-    # vtable pointer available, but nothing else
-    gdb_test "print derived_partial" \
-	" = \\(Derived\\) {<Middle> = {<Base> = <unavailable>, _vptr.Middle = <unavailable>, y = <unavailable>}, _vptr.Derived = $hex, z = <unavailable>}"
-
-    # whole object available
-    gdb_test "print derived_whole" \
-	" = \\(Derived\\) {<Middle> = {<Base> = {x = 2}, _vptr.Middle = $hex, y = 3}, _vptr.Derived = $hex, z = 4}"
-
-    set pf_prefix $old_pf_prefix_2
+	# whole object available
+	gdb_test "print derived_whole" \
+	    " = \\(Derived\\) {<Middle> = {<Base> = {x = 2}, _vptr.Middle = $hex, y = 3}, _vptr.Derived = $hex <vtable for Derived.*>, z = 4}"
+    }
 
     gdb_test_no_output "set print object off"
 
-    set pf_prefix "$pf_prefix print object off:"
+    with_test_prefix "print object off" {
+	gdb_test "print virtualp" " = \\(Virtual \\*\\) <unavailable>"
 
-    gdb_test "print virtualp" " = \\(Virtual \\*\\) <unavailable>"
+	# no vtable pointer available
+	gdb_test "print derived_unavail" \
+	    " = {<Middle> = <unavailable>, _vptr.Derived = <unavailable>, z = <unavailable>}"
 
-    # no vtable pointer available
-    gdb_test "print derived_unavail" \
-	" = {<Middle> = <unavailable>, _vptr.Derived = <unavailable>, z = <unavailable>}"
+	# vtable pointer available, but nothing else
+	gdb_test "print derived_partial" \
+	    " = {<Middle> = {<Base> = <unavailable>, _vptr.Middle = <unavailable>, y = <unavailable>}, _vptr.Derived = $hex <vtable for Derived.*>, z = <unavailable>}"
 
-    # vtable pointer available, but nothing else
-    gdb_test "print derived_partial" \
-	" = {<Middle> = {<Base> = <unavailable>, _vptr.Middle = <unavailable>, y = <unavailable>}, _vptr.Derived = $hex, z = <unavailable>}"
-
-    # whole object available
-    gdb_test "print derived_whole" \
-	" = {<Middle> = {<Base> = {x = 2}, _vptr.Middle = $hex, y = 3}, _vptr.Derived = $hex, z = 4}"
-
-    set pf_prefix $old_pf_prefix_2
+	# whole object available
+	gdb_test "print derived_whole" \
+	    " = {<Middle> = {<Base> = {x = 2}, _vptr.Middle = $hex, y = 3}, _vptr.Derived = $hex <vtable for Derived.*>, z = 4}"
+    }
 
     # An instance of a virtual class where we collected everything but
     # the vptr.
@@ -536,13 +572,12 @@ proc gdb_collect_globals_test { } {
     gdb_test "tfind none" \
 	"#0  end .*" \
 	"cease trace debugging"
-
-    set pf_prefix $old_pf_prefix
-}
+}}
 
 proc gdb_trace_collection_test {} {
     gdb_collect_globals_test
     gdb_unavailable_registers_test
+    gdb_unavailable_floats
 
     gdb_collect_args_test
     gdb_collect_locals_test local_test_func "auto locals"
@@ -550,13 +585,10 @@ proc gdb_trace_collection_test {} {
     gdb_collect_locals_test statlocal_test_func "static locals"
 }
 
-clean_restart $executable
 runto_main
 
-# We generously give ourselves one "pass" if we successfully
-# detect that this test cannot be run on this target!
 if { ![gdb_target_supports_trace] } then {
-    pass "Current target does not support trace"
+    unsupported "Current target does not support trace"
     return 1;
 }
 

@@ -1,22 +1,20 @@
-	.section	".data"
+	.data
+	.p2align	4
 dsym0:	.llong	0xdeadbeef
+	.llong	0xc0ffee
 dsym1:
 
 	.section	".toc"
+	.p2align	4
 .L_tsym0:
 	.tc	ignored0[TC],dsym0
-.L_tsym1:
 	.tc	ignored1[TC],dsym1
-.L_tsym2:
+.L_tsym1:
 	.tc	ignored2[TC],usym0
-.L_tsym3:
 	.tc	ignored3[TC],usym1
-.L_tsym4:
-	.tc	ignored4[TC],esym0
-.L_tsym5:
-	.tc	ignored5[TC],esym1
 
-	.section	".text"
+	.text
+	.p2align	4
 	lq	4,dsym0@l(3)
 	lq	4,dsym1@l(3)
 	lq	4,usym0@l(3)
@@ -25,11 +23,6 @@ dsym1:
 	lq	4,esym1@l(3)
 	lq	4,.L_tsym0@toc(2)
 	lq	4,.L_tsym1@toc(2)
-	lq	4,.L_tsym2@toc(2)
-	lq	4,.L_tsym3@toc(2)
-	lq	4,.L_tsym4@toc(2)
-	lq	4,.L_tsym5@toc(2)
-	lq	6,.L_tsym5@toc@l(2)
 	lq	4,.text@l(0)	
 	lq	6,dsym0@got(3)
 	lq	6,dsym0@got@l(3)
@@ -72,7 +65,15 @@ dsym1:
 	dcbzl   3, 4
 	dcbz    5, 6
 
+	lq 2,16(0)
+	lq 0,16(5)
+	lq 2,16(5)
+	stq 2,16(0)
+	stq 0,16(5)
+	stq 2,16(5)
+
 	.section	".data"
 usym0:	.llong	0xcafebabe
+	.llong	0xc0ffee
 usym1:
 

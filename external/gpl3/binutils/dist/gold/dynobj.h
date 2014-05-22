@@ -1,6 +1,6 @@
 // dynobj.h -- dynamic object support for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011  Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -96,6 +96,11 @@ class Dynobj : public Object
 			unsigned char** pphash, unsigned int* phashlen);
 
  protected:
+  // Return a pointer to this object.
+  virtual Dynobj*
+  do_dynobj()
+  { return this; }
+
   // Set the DT_SONAME string.
   void
   set_soname_string(const char* s)
@@ -156,7 +161,7 @@ template<int size, bool big_endian>
 class Sized_dynobj : public Dynobj
 {
  public:
-  typedef typename Sized_relobj<size, big_endian>::Symbols Symbols;
+  typedef typename Sized_relobj_file<size, big_endian>::Symbols Symbols;
 
   Sized_dynobj(const std::string& name, Input_file* input_file, off_t offset,
 	       const typename elfcpp::Ehdr<size, big_endian>&);
@@ -181,6 +186,16 @@ class Sized_dynobj : public Dynobj
   do_should_include_member(Symbol_table* symtab, Layout*, Read_symbols_data*,
                            std::string* why);
 
+  // Iterate over global symbols, calling a visitor class V for each.
+  void
+  do_for_all_global_symbols(Read_symbols_data* sd,
+			    Library_base::Symbol_visitor_base* v);
+
+  // Iterate over local symbols, calling a visitor class V for each GOT offset
+  // associated with a local symbol.
+  void
+  do_for_all_local_got_entries(Got_offset_list::Visitor* v) const;
+
   // Get the size of a section.
   uint64_t
   do_section_size(unsigned int shndx)
@@ -193,9 +208,19 @@ class Sized_dynobj : public Dynobj
 
   // Return a view of the contents of a section.  Set *PLEN to the
   // size.
-  Object::Location
-  do_section_contents(unsigned int shndx)
-  { return this->elf_file_.section_contents(shndx); }
+  const unsigned char*
+  do_section_contents(unsigned int shndx, section_size_type* plen,
+		      bool cache)
+  {
+    Location loc(this->elf_file_.section_contents(shndx));
+    *plen = convert_to_section_size_type(loc.data_size);
+    if (*plen == 0)
+      {
+	static const unsigned char empty[1] = { '\0' };
+	return empty;
+      }
+    return this->get_view(loc.file_offset, *plen, true, cache);
+  }
 
   // Return section flags.
   uint64_t
@@ -584,7 +609,8 @@ class Versions
 
   // Handle a symbol SYM defined with version VERSION.
   void
-  add_def(const Symbol* sym, const char* version, Stringpool::Key);
+  add_def(Stringpool*, const Symbol* sym, const char* version,
+	  Stringpool::Key);
 
   // Add a reference to version NAME in file FILENAME.
   void
@@ -637,7 +663,7 @@ class Versions
   // Contents of --version-script, if passed, or NULL.
   const Version_script_info& version_script_;
   // Whether we need to insert a base version.  This is only used for
-  // shared libaries and is cleared when the base version is defined.
+  // shared libraries and is cleared when the base version is defined.
   bool needs_base_version_;
 };
 

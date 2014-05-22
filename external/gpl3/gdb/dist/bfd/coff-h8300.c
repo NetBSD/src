@@ -1,6 +1,6 @@
 /* BFD back-end for Renesas H8/300 COFF binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2012
    Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -60,28 +60,6 @@ struct funcvec_hash_table
     unsigned int offset;
   };
 
-static struct bfd_hash_entry *
-funcvec_hash_newfunc
-  (struct bfd_hash_entry *, struct bfd_hash_table *, const char *);
-
-static bfd_reloc_status_type special
-  (bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **);
-static int select_reloc
-  (reloc_howto_type *);
-static void rtype2howto
-  (arelent *, struct internal_reloc *);
-static void reloc_processing
-  (arelent *, struct internal_reloc *, asymbol **, bfd *, asection *);
-static bfd_boolean h8300_symbol_address_p
-  (bfd *, asection *, bfd_vma);
-static int h8300_reloc16_estimate
-  (bfd *, asection *, arelent *, unsigned int,
-   struct bfd_link_info *);
-static void h8300_reloc16_extra_cases
-  (bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *,
-   bfd_byte *, unsigned int *, unsigned int *);
-static bfd_boolean h8300_bfd_link_add_symbols
-  (bfd *, struct bfd_link_info *);
 
 /* To lookup a value in the function vector hash table.  */
 #define funcvec_hash_lookup(table, string, create, copy) \
@@ -195,7 +173,7 @@ h8300_coff_link_hash_table_create (bfd *abfd)
   struct h8300_coff_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct h8300_coff_link_hash_table);
 
-  ret = (struct h8300_coff_link_hash_table *) bfd_malloc (amt);
+  ret = (struct h8300_coff_link_hash_table *) bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
   if (!_bfd_link_hash_table_init (&ret->root.root, abfd,
@@ -206,11 +184,6 @@ h8300_coff_link_hash_table_create (bfd *abfd)
       return NULL;
     }
 
-  /* Initialize our data.  */
-  ret->vectors_sec = NULL;
-  ret->funcvec_hash_table = NULL;
-
-  /* OK.  Everything's initialized, return the base pointer.  */
   return &ret->root.root;
 }
 
@@ -224,13 +197,13 @@ h8300_coff_link_hash_table_create (bfd *abfd)
    the addend until the final link.  */
 
 static bfd_reloc_status_type
-special (bfd *abfd ATTRIBUTE_UNUSED,
-	 arelent *reloc_entry ATTRIBUTE_UNUSED,
-	 asymbol *symbol ATTRIBUTE_UNUSED,
-	 PTR data ATTRIBUTE_UNUSED,
-	 asection *input_section ATTRIBUTE_UNUSED,
-	 bfd *output_bfd,
-	 char **error_message ATTRIBUTE_UNUSED)
+special (bfd *      abfd ATTRIBUTE_UNUSED,
+	 arelent *  reloc_entry ATTRIBUTE_UNUSED,
+	 asymbol *  symbol ATTRIBUTE_UNUSED,
+	 void *     data ATTRIBUTE_UNUSED,
+	 asection * input_section ATTRIBUTE_UNUSED,
+	 bfd *      output_bfd,
+	 char **    error_message ATTRIBUTE_UNUSED)
 {
   if (output_bfd == (bfd *) NULL)
     return bfd_reloc_continue;
@@ -240,7 +213,8 @@ special (bfd *abfd ATTRIBUTE_UNUSED,
   return bfd_reloc_ok;
 }
 
-static reloc_howto_type howto_table[] = {
+static reloc_howto_type howto_table[] =
+{
   HOWTO (R_RELBYTE, 0, 0, 8, FALSE, 0, complain_overflow_bitfield, special, "8", FALSE, 0x000000ff, 0x000000ff, FALSE),
   HOWTO (R_RELWORD, 0, 1, 16, FALSE, 0, complain_overflow_bitfield, special, "16", FALSE, 0x0000ffff, 0x0000ffff, FALSE),
   HOWTO (R_RELLONG, 0, 2, 32, FALSE, 0, complain_overflow_bitfield, special, "32", FALSE, 0xffffffff, 0xffffffff, FALSE),

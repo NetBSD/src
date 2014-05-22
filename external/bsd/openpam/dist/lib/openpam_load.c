@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_load.c,v 1.2.4.2 2012/04/17 00:03:59 yamt Exp $	*/
+/*	$NetBSD: openpam_load.c,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_load.c 491 2011-11-12 00:12:32Z des
+ * Id: openpam_load.c 664 2013-03-17 10:56:15Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -54,24 +54,24 @@
  */
 
 pam_module_t *
-openpam_load_module(const char *path)
+openpam_load_module(const char *modulename)
 {
 	pam_module_t *module;
 
-	module = openpam_dynamic(path);
+	module = openpam_dynamic(modulename);
 	openpam_log(PAM_LOG_DEBUG, "%s dynamic %s",
-	    (module == NULL) ? "no" : "using", path);
+	    (module == NULL) ? "no" : "using", modulename);
 
 #ifdef OPENPAM_STATIC_MODULES
 	/* look for a static module */
-	if (module == NULL && strchr(path, '/') == NULL) {
-		module = openpam_static(path);
+	if (module == NULL && strchr(modulename, '/') == NULL) {
+		module = openpam_static(modulename);
 		openpam_log(PAM_LOG_DEBUG, "%s static %s",
-		    (module == NULL) ? "no" : "using", path);
+		    (module == NULL) ? "no" : "using", modulename);
 	}
 #endif
 	if (module == NULL) {
-		openpam_log(PAM_LOG_ERROR, "no %s found", path);
+		openpam_log(PAM_LOG_ERROR, "no %s found", modulename);
 		return (NULL);
 	}
 	return (module);
@@ -110,9 +110,7 @@ openpam_destroy_chain(pam_chain_t *chain)
 		return;
 	openpam_destroy_chain(chain->next);
 	chain->next = NULL;
-	while (chain->optc--)
-		FREE(chain->optv[chain->optc]);
-	FREE(chain->optv);
+	FREEV(chain->optc, chain->optv);
 	openpam_release_module(chain->module);
 	chain->module = NULL;
 	FREE(chain);

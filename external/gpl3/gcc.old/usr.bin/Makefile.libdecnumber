@@ -1,0 +1,4 @@
+#	$NetBSD: Makefile.libdecnumber,v 1.1.1.1.4.2 2014/05/22 15:58:51 yamt Exp $
+
+DPADD+=		${LIBDECNUMBEROBJ}/libdecnumber.a
+LDADD+=		${LIBDECNUMBEROBJ}/libdecnumber.a

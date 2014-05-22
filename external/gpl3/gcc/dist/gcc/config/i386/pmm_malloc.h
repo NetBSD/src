@@ -1,4 +1,4 @@
-/* Copyright (C) 2004, 2006, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -31,7 +31,7 @@
 #ifndef __cplusplus
 extern int posix_memalign (void **, size_t, size_t);
 #else
-extern "C" int posix_memalign (void **, size_t, size_t) throw ();
+extern "C" int posix_memalign (void **, size_t, size_t);
 #endif
 
 static __inline void *

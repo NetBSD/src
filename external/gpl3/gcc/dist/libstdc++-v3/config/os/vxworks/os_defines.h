@@ -1,6 +1,6 @@
 // Specific definitions for VxWorks  -*- C++ -*-
 
-// Copyright (C) 2000, 2003, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2000-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file os_defines.h
+/** @file bits/os_defines.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{iosfwd}
  */
 
 #ifndef _GLIBCXX_OS_DEFINES
@@ -32,5 +32,11 @@
 
 // System-specific #define, typedefs, corrections, etc, go here.  This
 // file will come before all others.
+
+//Keep vxWorks from defining min()/max() as macros
+#ifdef NOMINMAX
+#undef NOMINMAX
+#endif
+#define NOMINMAX 1
 
 #endif

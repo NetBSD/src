@@ -1,6 +1,6 @@
 // Low-level functions for atomic operations: x86, x >= 4 version  -*- C++ -*-
 
-// Copyright (C) 1999, 2000, 2001, 2004, 2005, 2009 Free Software Foundation, Inc.
+// Copyright (C) 1999-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,7 +24,9 @@
 
 #include <ext/atomicity.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   _Atomic_word 
   __attribute__ ((__unused__))
@@ -45,5 +47,6 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 			  : "=m" (*__mem) : "ir" (__val), "m" (*__mem));
   }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 

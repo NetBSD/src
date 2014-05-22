@@ -120,7 +120,7 @@ get_cie_info (struct cie_info *info)
 
   /* First make sure that the CIE Identifier Tag is 0/-1.  */
 
-  if (strcmp (segment_name (now_seg), ".debug_frame") == 0)
+  if (strncmp (segment_name (now_seg), ".debug_frame", 12) == 0)
     CIE_id = (char)0xff;
   else
     CIE_id = 0;
@@ -285,9 +285,10 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 #endif
 
   /* Select the proper section data.  */
-  if (strcmp (segment_name (now_seg), ".eh_frame") == 0)
+  if (strncmp (segment_name (now_seg), ".eh_frame", 9) == 0
+      && segment_name (now_seg)[9] != '_')
     d = &eh_frame_data;
-  else if (strcmp (segment_name (now_seg), ".debug_frame") == 0)
+  else if (strncmp (segment_name (now_seg), ".debug_frame", 12) == 0)
     d = &debug_frame_data;
   else
     return 0;

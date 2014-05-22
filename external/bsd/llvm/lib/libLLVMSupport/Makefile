@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.3 2012/10/30 18:55:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.6.2.4 2014/05/22 16:14:43 yamt Exp $
 
 LIB=	LLVMSupport
 
@@ -11,12 +11,16 @@ NOGCCERROR=	yes
 SRCS+=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
+	ARMBuildAttrs.cpp \
 	Allocator.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
+	Compression.cpp \
 	ConstantRange.cpp \
+	ConvertUTF.c \
+	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
 	DataExtractor.cpp \
 	DataStream.cpp \
@@ -36,8 +40,11 @@ SRCS+=	APFloat.cpp \
 	IntrusiveRefCntPtr.cpp \
 	IsInf.cpp \
 	IsNAN.cpp \
+	LEB128.cpp \
+	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
+	MD5.cpp \
 	ManagedStatic.cpp \
 	MemoryBuffer.cpp \
 	MemoryObject.cpp \
@@ -53,13 +60,17 @@ SRCS+=	APFloat.cpp \
 	StringMap.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
+	StringRefMemoryObject.cpp \
 	SystemUtils.cpp \
 	TargetRegistry.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	Unicode.cpp \
+	Watchdog.cpp \
 	YAMLParser.cpp \
+	YAMLTraits.cpp \
 	raw_os_ostream.cpp \
 	raw_ostream.cpp \
 	regcomp.c \
@@ -77,7 +88,6 @@ SRCS+=	Atomic.cpp \
 	Memory.cpp \
 	Mutex.cpp \
 	Path.cpp \
-	PathV2.cpp \
 	Process.cpp \
 	Program.cpp \
 	RWMutex.cpp \
@@ -95,14 +105,27 @@ SRCS+=	Host.inc \
 	Memory.inc \
 	Mutex.inc \
 	Path.inc \
-	PathV2.inc \
 	Process.inc \
 	Program.inc \
 	RWMutex.inc \
 	Signals.inc \
+	Watchdog.inc \
 	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc
+
+.for src in ${SRCS:M*.c}
+CPPFLAGS.${src}+=	-std=gnu99
+.endfor
+
+.if !defined(HOSTLIB) && !empty(MACHINE_ARCH:M*arm*)
+# Missing __sync_fetch_and_add_4
+# Missing __sync_fetch_and_sub_4
+# Missing __sync_lock_test_and_set_4
+# Missing __sync_val_compare_and_swap_4
+# Missing __atomic_fetch_add_4
+COPTS.Atomic.cpp+= -march=armv6
+.endif
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

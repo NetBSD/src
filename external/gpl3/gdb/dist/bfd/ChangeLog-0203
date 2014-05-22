@@ -1303,7 +1303,7 @@
 	(elf32_hppa_check_relocs): Don't set SEC_HAS_GOT_REF flag.
 	(elf32_hppa_size_stubs): Pass info to hppa_type_of_stub.
 	(final_link_relocate): Change all DLTIND relocs to DPREL relocs in a
-	non-shared link.  Convert instructions that use the the linkage table
+	non-shared link.  Convert instructions that use the linkage table
 	pointer, or a facsimile thereof, to use the global data pointer when
 	the reloc has been changed.
 
@@ -11397,6 +11397,12 @@
 
 For older changes see ChangeLog-0001
 
+Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

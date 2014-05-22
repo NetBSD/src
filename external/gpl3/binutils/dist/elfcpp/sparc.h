@@ -140,7 +140,9 @@ enum
   R_SPARC_H34 = 85,           // Direct high 12 of 34 bit
   R_SPARC_SIZE32 = 86,        // size of symbol, 32-bit
   R_SPARC_SIZE64 = 87,        // size of symbol, 64-bit
+  R_SPARC_WDISP10 = 88,       // PC relative 10 bit shifted
 
+  R_SPARC_JMP_IREL = 248,     // Create PLT slot to IFUNC function
   R_SPARC_IRELATIVE = 249,    // Adjust indirectly by program base
 
   // GNU vtable garbage collection extensions.

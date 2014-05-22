@@ -2,24 +2,16 @@
  * EAP server/peer: EAP-pwd shared definitions
  * Copyright (c) 2009, Dan Harkins <dharkins@lounge.org>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the BSD license.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License version 2 as published by the Free Software
- * Foundation.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef EAP_PWD_COMMON_H
 #define EAP_PWD_COMMON_H
 
 #include <openssl/bn.h>
-#include <openssl/sha.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
-#include <openssl/hmac.h>
 
 /*
  * definition of a finite cyclic group
@@ -35,23 +27,19 @@ typedef struct group_definition_ {
 
 /*
  * EAP-pwd header, included on all payloads
+ * L(1 bit) | M(1 bit) | exch(6 bits) | total_length(if L is set)
  */
-struct eap_pwd_hdr {
-	u8 l_bit:1;
-	u8 m_bit:1;
-	u8 exch:6;
-	u8 total_length[0];         /* included when l_bit is set */
-} STRUCT_PACKED;
+#define EAP_PWD_HDR_SIZE                1
 
 #define EAP_PWD_OPCODE_ID_EXCH          1
 #define EAP_PWD_OPCODE_COMMIT_EXCH      2
 #define EAP_PWD_OPCODE_CONFIRM_EXCH     3
-#define EAP_PWD_GET_LENGTH_BIT(x)       ((x)->lm_exch & 0x80)
-#define EAP_PWD_SET_LENGTH_BIT(x)       ((x)->lm_exch |= 0x80)
-#define EAP_PWD_GET_MORE_BIT(x)         ((x)->lm_exch & 0x40)
-#define EAP_PWD_SET_MORE_BIT(x)         ((x)->lm_exch |= 0x40)
-#define EAP_PWD_GET_EXCHANGE(x)         ((x)->lm_exch & 0x3f)
-#define EAP_PWD_SET_EXCHANGE(x,y)       ((x)->lm_exch |= (y))
+#define EAP_PWD_GET_LENGTH_BIT(x)       ((x) & 0x80)
+#define EAP_PWD_SET_LENGTH_BIT(x)       ((x) |= 0x80)
+#define EAP_PWD_GET_MORE_BIT(x)         ((x) & 0x40)
+#define EAP_PWD_SET_MORE_BIT(x)         ((x) |= 0x40)
+#define EAP_PWD_GET_EXCHANGE(x)         ((x) & 0x3f)
+#define EAP_PWD_SET_EXCHANGE(x,y)       ((x) |= (y))
 
 /* EAP-pwd-ID payload */
 struct eap_pwd_id {
@@ -72,8 +60,8 @@ int compute_password_element(EAP_PWD_group *, u16, u8 *, int, u8 *, int, u8 *,
 			     int, u8 *);
 int compute_keys(EAP_PWD_group *, BN_CTX *, BIGNUM *, BIGNUM *, BIGNUM *,
 		 u8 *, u8 *, u32 *, u8 *, u8 *);
-void H_Init(HMAC_CTX *);
-void H_Update(HMAC_CTX *, const u8 *, int);
-void H_Final(HMAC_CTX *, u8 *);
+struct crypto_hash * eap_pwd_h_init(void);
+void eap_pwd_h_update(struct crypto_hash *hash, const u8 *data, size_t len);
+void eap_pwd_h_final(struct crypto_hash *hash, u8 *digest);
 
 #endif  /* EAP_PWD_COMMON_H */

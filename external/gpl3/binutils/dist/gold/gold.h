@@ -1,6 +1,6 @@
 // gold.h -- general definitions for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -27,6 +27,7 @@
 #include "ansidecl.h"
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <stdint.h>
 #include <sys/types.h>
@@ -35,18 +36,16 @@
   // The Solaris version of locale.h always includes libintl.h.  If we
   // have been configured with --disable-nls then ENABLE_NLS will not
   // be defined and the dummy definitions of bindtextdomain (et al)
-  // below will conflict with the defintions in libintl.h.  So we
+  // below will conflict with the definitions in libintl.h.  So we
   // define these values to prevent the bogus inclusion of libintl.h.
 # define _LIBINTL_H
 # define _LIBGETTEXT_H
 #endif
 
-// Always include <clocale> first to avoid conflicts with the macros
-// used when ENABLE_NLS is not defined.
-#include <clocale>
-
 #ifdef ENABLE_NLS
+// On some systems, things go awry when <libintl.h> comes after <clocale>.
 # include <libintl.h>
+# include <clocale>
 # define _(String) gettext (String)
 # ifdef gettext_noop
 #  define N_(String) gettext_noop (String)
@@ -54,11 +53,13 @@
 #  define N_(String) (String)
 # endif
 #else
+// Include <clocale> first to avoid conflicts with these macros.
+# include <clocale>
 # define gettext(Msgid) (Msgid)
 # define dgettext(Domainname, Msgid) (Msgid)
 # define dcgettext(Domainname, Msgid, Category) (Msgid)
-# define textdomain(Domainname) while (0) /* nothing */
-# define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+# define textdomain(Domainname) do {} while (0) /* nothing */
+# define bindtextdomain(Domainname, Dirname) do {} while (0) /* nothing */
 # define _(String) (String)
 # define N_(String) (String)
 #endif
@@ -78,6 +79,22 @@
 #define Unordered_multimap std::tr1::unordered_multimap
 
 #define reserve_unordered_map(map, n) ((map)->rehash(n))
+
+#ifndef HAVE_TR1_HASH_OFF_T
+// The library does not support hashes of off_t values.  Add support
+// here.  This is likely to be specific to libstdc++.  This issue
+// arises with GCC 4.1.x when compiling in 32-bit mode with a 64-bit
+// off_t type.
+namespace std { namespace tr1 {
+template<>
+struct hash<off_t> : public std::unary_function<off_t, std::size_t>
+{
+  std::size_t
+  operator()(off_t val) const
+  { return static_cast<std::size_t>(val); }
+};
+} } // Close namespaces.
+#endif // !defined(HAVE_TR1_HASH_OFF_T)
 
 #elif defined(HAVE_EXT_HASH_MAP) && defined(HAVE_EXT_HASH_SET)
 
@@ -135,11 +152,6 @@ extern "C" ssize_t pread(int, void*, size_t, off_t);
 extern "C" int ftruncate(int, off_t);
 #endif
 
-#ifndef HAVE_MREMAP
-#define MREMAP_MAYMOVE 1
-extern "C" void *mremap(void *, size_t, size_t, int, ...);
-#endif
-
 #ifndef HAVE_FFSLL
 extern "C" int ffsll(long long);
 #endif
@@ -171,6 +183,15 @@ class Output_file;
 template<int size, bool big_endian>
 struct Relocate_info;
 
+// Exit status codes.
+
+enum Exit_status
+{
+  GOLD_OK = EXIT_SUCCESS,
+  GOLD_ERR = EXIT_FAILURE,
+  GOLD_FALLBACK = EXIT_FAILURE + 1
+};
+
 // Some basic types.  For these we use lower case initial letters.
 
 // For an offset in an input or output file, use off_t.  Note that
@@ -188,7 +209,7 @@ extern const char* program_name;
 // This function is called to exit the program.  Status is true to
 // exit success (0) and false to exit failure (1).
 extern void
-gold_exit(bool status) ATTRIBUTE_NORETURN;
+gold_exit(Exit_status status) ATTRIBUTE_NORETURN;
 
 // This function is called to emit an error message and then
 // immediately exit with failure.
@@ -207,6 +228,13 @@ gold_warning(const char* msg, ...) ATTRIBUTE_PRINTF_1;
 // This function is called to print an informational message.
 extern void
 gold_info(const char* msg, ...) ATTRIBUTE_PRINTF_1;
+
+// This function is called to emit an error message and then
+// immediately exit with fallback status (e.g., when
+// --incremental-update fails and the link needs to be restarted
+// with --incremental-full).
+extern void
+gold_fallback(const char* format, ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_1;
 
 // Work around a bug in gcc 4.3.0.  http://gcc.gnu.org/PR35546 .  This
 // can probably be removed after the bug has been fixed for a while.

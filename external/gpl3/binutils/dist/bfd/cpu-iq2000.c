@@ -36,6 +36,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,			/* the default ? */
     bfd_default_compatible,	/* architecture comparison fn */
     bfd_default_scan,		/* string to architecture convert fn */
+    bfd_arch_default_fill,	/* Default fill.  */
     NULL			/* next in list */
   }
 };
@@ -53,5 +54,6 @@ const bfd_arch_info_type bfd_iq2000_arch =
   TRUE,				/* the default ? */
   bfd_default_compatible,	/* architecture comparison fn */
   bfd_default_scan,		/* string to architecture convert fn */
+  bfd_arch_default_fill,	/* Default fill.  */
   &arch_info_struct[0],		/* next in list */
 };

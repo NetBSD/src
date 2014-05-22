@@ -146,13 +146,7 @@ class Token
   }
 
   uint64_t
-  integer_value() const
-  {
-    gold_assert(this->classification_ == TOKEN_INTEGER);
-    // Null terminate.
-    std::string s(this->value_, this->value_length_);
-    return strtoull(s.c_str(), NULL, 0);
-  }
+  integer_value() const;
 
  private:
   // The token classification.
@@ -170,6 +164,35 @@ class Token
   // (one based).
   int charpos_;
 };
+
+// Return the value of a TOKEN_INTEGER.
+
+uint64_t
+Token::integer_value() const
+{
+  gold_assert(this->classification_ == TOKEN_INTEGER);
+
+  size_t len = this->value_length_;
+
+  uint64_t multiplier = 1;
+  char last = this->value_[len - 1];
+  if (last == 'm' || last == 'M')
+    {
+      multiplier = 1024 * 1024;
+      --len;
+    }
+  else if (last == 'k' || last == 'K')
+    {
+      multiplier = 1024;
+      --len;
+    }
+
+  char *end;
+  uint64_t ret = strtoull(this->value_, &end, 0);
+  gold_assert(static_cast<size_t>(end - this->value_) == len);
+
+  return ret * multiplier;
+}
 
 // This class handles lexing a file into a sequence of tokens.
 
@@ -474,9 +497,7 @@ Lex::can_continue_name(const char* c)
 // For a number we accept 0x followed by hex digits, or any sequence
 // of digits.  The old linker accepts leading '$' for hex, and
 // trailing HXBOD.  Those are for MRI compatibility and we don't
-// accept them.  The old linker also accepts trailing MK for mega or
-// kilo.  FIXME: Those are mentioned in the documentation, and we
-// should accept them.
+// accept them.
 
 // Return whether C1 C2 C3 can start a hex number.
 
@@ -703,8 +724,15 @@ Lex::gather_token(Token::Classification classification,
 		  const char** pp)
 {
   const char* new_match = NULL;
-  while ((new_match = (this->*can_continue_fn)(match)))
+  while ((new_match = (this->*can_continue_fn)(match)) != NULL)
     match = new_match;
+
+  // A special case: integers may be followed by a single M or K,
+  // case-insensitive.
+  if (classification == Token::TOKEN_INTEGER
+      && (*match == 'm' || *match == 'M' || *match == 'k' || *match == 'K'))
+    ++match;
+
   *pp = match;
   return this->make_token(classification, start, match - start, start);
 }
@@ -955,18 +983,20 @@ Symbol_assignment::sized_finalize(Symbol_table* symtab, const Layout* layout,
   uint64_t final_val = this->val_->eval_maybe_dot(symtab, layout, true,
 						  is_dot_available,
 						  dot_value, dot_section,
-						  &section, NULL);
+						  &section, NULL, false);
   Sized_symbol<size>* ssym = symtab->get_sized_symbol<size>(this->sym_);
   ssym->set_value(final_val);
   if (section != NULL)
     ssym->set_output_section(section);
 }
 
-// Set the symbol value if the expression yields an absolute value.
+// Set the symbol value if the expression yields an absolute value or
+// a value relative to DOT_SECTION.
 
 void
 Symbol_assignment::set_if_absolute(Symbol_table* symtab, const Layout* layout,
-				   bool is_dot_available, uint64_t dot_value)
+				   bool is_dot_available, uint64_t dot_value,
+				   Output_section* dot_section)
 {
   if (this->sym_ == NULL)
     return;
@@ -974,8 +1004,9 @@ Symbol_assignment::set_if_absolute(Symbol_table* symtab, const Layout* layout,
   Output_section* val_section;
   uint64_t val = this->val_->eval_maybe_dot(symtab, layout, false,
 					    is_dot_available, dot_value,
-					    NULL, &val_section, NULL);
-  if (val_section != NULL)
+					    dot_section, &val_section, NULL,
+					    false);
+  if (val_section != NULL && val_section != dot_section)
     return;
 
   if (parameters->target().get_size() == 32)
@@ -998,6 +1029,8 @@ Symbol_assignment::set_if_absolute(Symbol_table* symtab, const Layout* layout,
     }
   else
     gold_unreachable();
+  if (val_section != NULL)
+    this->sym_->set_output_section(val_section);
 }
 
 // Print for debugging.
@@ -1187,7 +1220,7 @@ Script_options::set_section_addresses(Symbol_table* symtab, Layout* layout)
   for (Symbol_assignments::iterator p = this->symbol_assignments_.begin();
        p != this->symbol_assignments_.end();
        ++p)
-    (*p)->set_if_absolute(symtab, layout, false, 0);
+    (*p)->set_if_absolute(symtab, layout, false, 0, NULL);
 
   return this->script_sections_.set_section_addresses(symtab, layout);
 }
@@ -1206,7 +1239,8 @@ class Parser_closure
                  Command_line* command_line,
 		 Script_options* script_options,
 		 Lex* lex,
-		 bool skip_on_incompatible_target)
+		 bool skip_on_incompatible_target,
+		 Script_info* script_info)
     : filename_(filename), posdep_options_(posdep_options),
       parsing_defsym_(parsing_defsym), in_group_(in_group),
       is_in_sysroot_(is_in_sysroot),
@@ -1214,7 +1248,8 @@ class Parser_closure
       found_incompatible_target_(false),
       command_line_(command_line), script_options_(script_options),
       version_script_info_(script_options->version_script_info()),
-      lex_(lex), lineno_(0), charpos_(0), lex_mode_stack_(), inputs_(NULL)
+      lex_(lex), lineno_(0), charpos_(0), lex_mode_stack_(), inputs_(NULL),
+      script_info_(script_info)
   {
     // We start out processing C symbols in the default lex mode.
     this->language_stack_.push_back(Version_script_info::LANGUAGE_C);
@@ -1365,6 +1400,11 @@ class Parser_closure
     this->language_stack_.pop_back();
   }
 
+  // Return a pointer to the incremental info.
+  Script_info*
+  script_info()
+  { return this->script_info_; }
+
  private:
   // The name of the file we are reading.
   const char* filename_;
@@ -1401,6 +1441,8 @@ class Parser_closure
   std::vector<Version_script_info::Language> language_stack_;
   // New input files found to add to the link.
   Input_arguments* inputs_;
+  // Pointer to incremental linking info.
+  Script_info* script_info_;
 };
 
 // FILE was found as an argument on the command line.  Try to read it
@@ -1422,6 +1464,17 @@ read_input_script(Workqueue* workqueue, Symbol_table* symtab, Layout* layout,
 
   Lex lex(input_string.c_str(), input_string.length(), PARSING_LINKER_SCRIPT);
 
+  Script_info* script_info = NULL;
+  if (layout->incremental_inputs() != NULL)
+    {
+      const std::string& filename = input_file->filename();
+      Timespec mtime = input_file->file().get_mtime();
+      unsigned int arg_serial = input_argument->file().arg_serial();
+      script_info = new Script_info(filename);
+      layout->incremental_inputs()->report_script(script_info, arg_serial,
+						  mtime);
+    }
+
   Parser_closure closure(input_file->filename().c_str(),
 			 input_argument->file().options(),
 			 false,
@@ -1430,7 +1483,8 @@ read_input_script(Workqueue* workqueue, Symbol_table* symtab, Layout* layout,
                          NULL,
 			 layout->script_options(),
 			 &lex,
-			 input_file->will_search_for());
+			 input_file->will_search_for(),
+			 script_info);
 
   bool old_saw_sections_clause =
     layout->script_options()->saw_sections_clause();
@@ -1476,33 +1530,31 @@ read_input_script(Workqueue* workqueue, Symbol_table* symtab, Layout* layout,
       this_blocker = nb;
     }
 
-  if (layout->incremental_inputs() != NULL)
-    {
-      // Like new Read_symbols(...) above, we rely on closure.inputs()
-      // getting leaked by closure.
-      const std::string& filename = input_file->filename();
-      Script_info* info = new Script_info(closure.inputs());
-      Timespec mtime = input_file->file().get_mtime();
-      layout->incremental_inputs()->report_script(filename, info, mtime);
-    }
-
   *used_next_blocker = true;
 
   return true;
 }
 
-// Helper function for read_version_script() and
-// read_commandline_script().  Processes the given file in the mode
-// indicated by first_token and lex_mode.
+// Helper function for read_version_script(), read_commandline_script() and
+// script_include_directive().  Processes the given file in the mode indicated
+// by first_token and lex_mode.
 
 static bool
 read_script_file(const char* filename, Command_line* cmdline,
                  Script_options* script_options,
                  int first_token, Lex::Mode lex_mode)
 {
-  // TODO: if filename is a relative filename, search for it manually
-  // using "." + cmdline->options()->search_path() -- not dirsearch.
   Dirsearch dirsearch;
+  std::string name = filename;
+
+  // If filename is a relative filename, search for it manually using "." +
+  // cmdline->options()->library_path() -- not dirsearch.
+  if (!IS_ABSOLUTE_PATH(filename))
+    {
+      const General_options::Dir_list& search_path =
+          cmdline->options().library_path();
+      name = Dirsearch::find_file_in_dir_list(name, search_path, ".");
+    }
 
   // The file locking code wants to record a Task, but we haven't
   // started the workqueue yet.  This is only for debugging purposes,
@@ -1513,7 +1565,7 @@ read_script_file(const char* filename, Command_line* cmdline,
   Position_dependent_options posdep = cmdline->position_dependent_options();
   if (posdep.format_enum() == General_options::OBJECT_FORMAT_BINARY)
     posdep.set_format_enum(General_options::OBJECT_FORMAT_ELF);
-  Input_file_argument input_argument(filename,
+  Input_file_argument input_argument(name.c_str(),
 				     Input_file_argument::INPUT_FILE_TYPE_FILE,
 				     "", false, posdep);
   Input_file input_file(&input_argument);
@@ -1535,7 +1587,8 @@ read_script_file(const char* filename, Command_line* cmdline,
                          cmdline,
 			 script_options,
 			 &lex,
-			 false);
+			 false,
+			 NULL);
   if (yyparse(&closure) != 0)
     {
       input_file.file().unlock(task);
@@ -1594,7 +1647,7 @@ Script_options::define_symbol(const char* definition)
   Position_dependent_options posdep_options;
 
   Parser_closure closure("command line", posdep_options, true,
-			 false, false, NULL, this, &lex, false);
+			 false, false, NULL, this, &lex, false, NULL);
 
   if (yyparse(&closure) != 0)
     return false;
@@ -2620,7 +2673,8 @@ script_add_file(void* closurev, const char* name, size_t length)
 			   Input_file_argument::INPUT_FILE_TYPE_FILE,
 			   extra_search_path, false,
 			   closure->position_dependent_options());
-  closure->inputs()->add_file(file);
+  Input_argument& arg = closure->inputs()->add_file(file);
+  arg.set_script_info(closure->script_info());
 }
 
 // Called by the bison parser to add a library to the link.
@@ -2638,7 +2692,8 @@ script_add_library(void* closurev, const char* name, size_t length)
 			   Input_file_argument::INPUT_FILE_TYPE_LIBRARY,
 			   "", false,
 			   closure->position_dependent_options());
-  closure->inputs()->add_file(file);
+  Input_argument& arg = closure->inputs()->add_file(file);
+  arg.set_script_info(closure->script_info());
 }
 
 // Called by the bison parser to start a group.  If we are already in
@@ -2790,7 +2845,7 @@ script_check_output_format(void* closurev,
 {
   Parser_closure* closure = static_cast<Parser_closure*>(closurev);
   std::string name(default_name, default_length);
-  Target* target = select_target_by_name(name.c_str());
+  Target* target = select_target_by_bfd_name(name.c_str());
   if (target == NULL || !parameters->is_compatible_target(target))
     {
       if (closure->skip_on_incompatible_target())
@@ -3304,10 +3359,13 @@ script_parse_memory_attr(void* closurev, const char* attrs, size_t attrlen,
 }
 
 extern "C" void
-script_include_directive(void* closurev, const char*, size_t)
+script_include_directive(void* closurev, const char* filename, size_t length)
 {
-  // FIXME: Implement ?
-  yyerror (closurev, _("GOLD does not currently support INCLUDE directives"));
+  Parser_closure* closure = static_cast<Parser_closure*>(closurev);
+  std::string name(filename, length);
+  Command_line* cmdline = closure->command_line();
+  read_script_file(name.c_str(), cmdline, &cmdline->script_options(),
+                   PARSING_LINKER_SCRIPT, Lex::LINKER_SCRIPT);
 }
 
 // Functions for memory regions.

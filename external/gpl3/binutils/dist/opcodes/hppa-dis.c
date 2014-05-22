@@ -1,6 +1,6 @@
 /* Disassembler for the PA-RISC. Somewhat derived from sparc-pinsn.c.
    Copyright 1989, 1990, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2003,
-   2005, 2007  Free Software Foundation, Inc.
+   2005, 2007, 2012  Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -86,7 +86,7 @@ static const char *const compare_cond_names[] =
 };
 static const char *const compare_cond_64_names[] =
 {
-  "", ",*=", ",*<", ",*<=", ",*<<", ",*<<=", ",*sv", ",*od",
+  ",*", ",*=", ",*<", ",*<=", ",*<<", ",*<<=", ",*sv", ",*od",
   ",*tr", ",*<>", ",*>=", ",*>", ",*>>=", ",*>>", ",*nsv", ",*ev"
 };
 static const char *const cmpib_cond_64_names[] =
@@ -100,7 +100,7 @@ static const char *const add_cond_names[] =
 };
 static const char *const add_cond_64_names[] =
 {
-  "", ",*=", ",*<", ",*<=", ",*nuv", ",*znv", ",*sv", ",*od",
+  ",*", ",*=", ",*<", ",*<=", ",*nuv", ",*znv", ",*sv", ",*od",
   ",*tr", ",*<>", ",*>=", ",*>", ",*uv", ",*vnz", ",*nsv", ",*ev"
 };
 static const char *const wide_add_cond_names[] =
@@ -114,7 +114,7 @@ static const char *const logical_cond_names[] =
   ",tr", ",<>", ",>=", ",>", 0, 0, 0, ",ev"};
 static const char *const logical_cond_64_names[] =
 {
-  "", ",*=", ",*<", ",*<=", 0, 0, 0, ",*od",
+  ",*", ",*=", ",*<", ",*<=", 0, 0, 0, ",*od",
   ",*tr", ",*<>", ",*>=", ",*>", 0, 0, 0, ",*ev"};
 static const char *const unit_cond_names[] =
 {
@@ -123,7 +123,7 @@ static const char *const unit_cond_names[] =
 };
 static const char *const unit_cond_64_names[] =
 {
-  "", ",*swz", ",*sbz", ",*shz", ",*sdc", ",*swc", ",*sbc", ",*shc",
+  ",*", ",*swz", ",*sbz", ",*shz", ",*sdc", ",*swc", ",*sbc", ",*shc",
   ",*tr", ",*nwz", ",*nbz", ",*nhz", ",*ndc", ",*nwc", ",*nbc", ",*nhc"
 };
 static const char *const shift_cond_names[] =
@@ -132,7 +132,7 @@ static const char *const shift_cond_names[] =
 };
 static const char *const shift_cond_64_names[] =
 {
-  "", ",*=", ",*<", ",*od", ",*tr", ",*<>", ",*>=", ",*ev"
+  ",*", ",*=", ",*<", ",*od", ",*tr", ",*<>", ",*>=", ",*ev"
 };
 static const char *const bb_cond_64_names[] =
 {
@@ -176,13 +176,13 @@ static const char *const add_compl_names[] = { 0, "", ",l", ",tsv" };
 static void
 fput_reg (unsigned reg, disassemble_info *info)
 {
-  (*info->fprintf_func) (info->stream, reg ? reg_names[reg] : "r0");
+  (*info->fprintf_func) (info->stream, "%s", reg ? reg_names[reg] : "r0");
 }
 
 static void
 fput_fp_reg (unsigned reg, disassemble_info *info)
 {
-  (*info->fprintf_func) (info->stream, reg ? fp_reg_names[reg] : "fr0");
+  (*info->fprintf_func) (info->stream, "%s", reg ? fp_reg_names[reg] : "fr0");
 }
 
 static void
@@ -199,7 +199,7 @@ fput_fp_reg_r (unsigned reg, disassemble_info *info)
 static void
 fput_creg (unsigned reg, disassemble_info *info)
 {
-  (*info->fprintf_func) (info->stream, control_reg[reg]);
+  (*info->fprintf_func) (info->stream, "%s", control_reg[reg]);
 }
 
 /* Print constants with sign.  */

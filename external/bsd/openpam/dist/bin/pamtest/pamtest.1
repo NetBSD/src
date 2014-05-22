@@ -1,4 +1,4 @@
-.\"	$NetBSD: pamtest.1,v 1.2.4.2 2012/04/17 00:03:55 yamt Exp $
+.\"	$NetBSD: pamtest.1,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $
 .\"
 .\"-
 .\" Copyright (c) 2011 Dag-Erling Smørgrav
@@ -12,6 +12,9 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -25,9 +28,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: pamtest.1 471 2011-11-03 09:44:40Z des
+.\" Id: pamtest.1 741 2013-09-07 13:34:02Z des 
 .\"
-.Dd November 2, 2011
+.Dd September 7, 2013
 .Dt PAMTEST 1
 .Os
 .Sh NAME
@@ -35,9 +38,10 @@
 .Nd PAM policy tester
 .Sh SYNOPSYS
 .Nm
-.Op Fl dksv
+.Op Fl dkMPsv
 .Op Fl H Ar rhost
 .Op Fl h Ar host
+.Op Fl T Ar timeout
 .Op Fl t Ar tty
 .Op Fl U Ar ruser
 .Op Fl u Ar user
@@ -118,6 +122,11 @@ The default is to use the result of calling
 .Xr gethostname 3 .
 .It Fl k
 Keep going even if one of the commands fails.
+.It Fl M
+Disable path, ownership and permission checks on module files.
+.It Fl P
+Disable service name validation and path, ownership and permission
+checks on policy files.
 .It Fl s
 Set the
 .Dv PAM_SILENT
@@ -130,6 +139,9 @@ flag when calling the
 and
 .Xr pam_close_session 3
 primitives.
+.It Fl T Ar timeout
+Set the conversation timeout (in seconds) for
+.Xr openpam_ttyconv 3 .
 .It Fl t Ar tty
 Specify the name of the tty.
 The default is to use the result of calling
@@ -151,14 +163,14 @@ policy:
 pamtest -v system auth account change setcred open close unsetcred
 .Ed
 .Sh SEE ALSO
-.Xr openpam 3
-.Xr pam 3
+.Xr openpam 3 ,
+.Xr pam 3 ,
 .Xr pam.conf 5
 .Sh AUTHORS
 The
 .Nm
 utility and this manual page were written by
-.An Dag-Erling Sm\(/orgrav Aq des@FreeBSD.org .
+.An Dag-Erling Sm\(/orgrav Aq Mt des@des.no .
 .Sh BUGS
 The
 .Nm

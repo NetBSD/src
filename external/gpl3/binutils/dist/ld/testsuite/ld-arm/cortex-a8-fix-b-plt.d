@@ -12,8 +12,8 @@ Disassembly of section \.plt:
     8010:	00000ffc 	\.word	0x00000ffc
     8014:	4778      	bx	pc
     8016:	46c0      	nop			; \(mov r8, r8\)
-    8018:	e28fc600 	add	ip, pc, #0
-    801c:	e28cca00 	add	ip, ip, #0
+    8018:	e28fc600 	add	ip, pc, #0, 12
+    801c:	e28cca00 	add	ip, ip, #0, 20
     8020:	e5bcfff8 	ldr	pc, \[ip, #4088\]!	; 0xff8
 
 Disassembly of section \.text:

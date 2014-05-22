@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file entry_list_fn_imps.hpp
+ * @file cc_hash_table_map_/entry_list_fn_imps.hpp
  * Contains implementations of cc_ht_map_'s entry-list related functions.
  */
 
@@ -43,7 +43,7 @@ void
 PB_DS_CLASS_C_DEC::
 deallocate_links_in_list(entry_pointer p_e)
 {
-  while (p_e != NULL)
+  while (p_e != 0)
     {
       entry_pointer p_dealloc_e = p_e;
       p_e = p_e->m_p_next;

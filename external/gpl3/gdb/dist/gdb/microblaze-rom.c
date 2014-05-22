@@ -1,6 +1,6 @@
 /* Remote debugging interface to Xilinx MicroBlaze.
 
-   Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,8 @@
 #include "gdb_string.h"
 #include "serial.h"
 #include "regcache.h"
+
+void _initialize_picobug_rom (void);
 
 static char *picobug_inits[] =
 {"\r", NULL};
@@ -174,7 +176,7 @@ init_picobug_cmds (void)
 }
 
 void
-_initialize_picobug_rom ()
+_initialize_picobug_rom (void)
 {
   int i;
 

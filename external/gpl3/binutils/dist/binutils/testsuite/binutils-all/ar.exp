@@ -438,6 +438,88 @@ proc unique_symbol { } {
     pass $testname
 }
 
+# Test deleting an element.
+
+proc delete_an_element { } {
+    global AR
+    global AS
+    global srcdir
+    global subdir
+
+    set testname "ar deleting an element"
+
+    if ![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o] {
+	unresolved $testname
+	return
+    }
+
+    if [is_remote host] {
+	set archive artest.a
+	set objfile [remote_download host tmpdir/bintest.o]
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/artest.a
+	set objfile tmpdir/bintest.o
+    }
+
+    remote_file build delete tmpdir/artest.a
+
+    set got [binutils_run $AR "-r -c $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    set got [binutils_run $AR "-d $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
+# Test moving an element.
+
+proc move_an_element { } {
+    global AR
+    global AS
+    global srcdir
+    global subdir
+
+    set testname "ar moving an element"
+
+    if ![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o] {
+	unresolved $testname
+	return
+    }
+
+    if [is_remote host] {
+	set archive artest.a
+	set objfile [remote_download host tmpdir/bintest.o]
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/artest.a
+	set objfile tmpdir/bintest.o
+    }
+
+    remote_file build delete tmpdir/artest.a
+
+    set got [binutils_run $AR "-r -c $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    set got [binutils_run $AR "-m $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
 # Run the tests.
 
 long_filenames
@@ -446,6 +528,8 @@ thin_archive
 thin_archive_with_nested
 argument_parsing
 deterministic_archive
+delete_an_element
+move_an_element
 if { [is_elf_format]
      && ![istarget "*-*-hpux*"]
      && ![istarget "msp*-*-*"] } {

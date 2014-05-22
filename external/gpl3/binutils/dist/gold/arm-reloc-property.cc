@@ -259,7 +259,7 @@ Arm_reloc_property::Arm_reloc_property(
 
 Arm_reloc_property_table::Arm_reloc_property_table()
 {
-  // These appers in arm-reloc.def.  Do not rename them.
+  // These appear in arm-reloc.def.  Do not rename them.
   Parse_expression A("A"), GOT_ORG("GOT_ORG"), NONE("NONE"), P("P"),
 		   Pa("Pa"), S("S"), T("T"), TLS("TLS"), tp("tp");
   const bool Y(true), N(false);

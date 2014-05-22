@@ -36,6 +36,7 @@ const bfd_arch_info_type bfd_s390_64_arch =
     TRUE, /* the default */
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     NULL
 };
 
@@ -52,5 +53,6 @@ const bfd_arch_info_type bfd_s390_arch =
     TRUE, /* the default */
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &bfd_s390_64_arch
 };

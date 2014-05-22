@@ -1,4 +1,4 @@
-/*	$NetBSD: pamtest.c,v 1.2.4.2 2012/04/17 00:03:55 yamt Exp $	*/
+/*	$NetBSD: pamtest.c,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -8,11 +8,13 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pamtest.c 472 2011-11-03 09:46:52Z des
+ * Id: pamtest.c 685 2013-07-11 16:33:34Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,6 +36,7 @@
 #endif
 
 #include <err.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -115,6 +118,7 @@ pt_authenticate(int flags)
 	int pame;
 
 	flags |= silent;
+	pt_verbose("pam_authenticate()");
 	if ((pame = pam_authenticate(pamh, flags)) != PAM_SUCCESS)
 		pt_error(pame, "pam_authenticate()");
 	return (pame);
@@ -129,6 +133,7 @@ pt_acct_mgmt(int flags)
 	int pame;
 
 	flags |= silent;
+	pt_verbose("pam_acct_mgmt()");
 	if ((pame = pam_acct_mgmt(pamh, flags)) != PAM_SUCCESS)
 		pt_error(pame, "pam_acct_mgmt()");
 	return (pame);
@@ -143,6 +148,7 @@ pt_chauthtok(int flags)
 	int pame;
 
 	flags |= silent;
+	pt_verbose("pam_chauthtok()");
 	if ((pame = pam_chauthtok(pamh, flags)) != PAM_SUCCESS)
 		pt_error(pame, "pam_chauthtok()");
 	return (pame);
@@ -157,6 +163,7 @@ pt_setcred(int flags)
 	int pame;
 
 	flags |= silent;
+	pt_verbose("pam_setcred()");
 	if ((pame = pam_setcred(pamh, flags)) != PAM_SUCCESS)
 		pt_error(pame, "pam_setcred()");
 	return (pame);
@@ -171,6 +178,7 @@ pt_open_session(int flags)
 	int pame;
 
 	flags |= silent;
+	pt_verbose("pam_open_session()");
 	if ((pame = pam_open_session(pamh, flags)) != PAM_SUCCESS)
 		pt_error(pame, "pam_open_session()");
 	return (pame);
@@ -185,6 +193,7 @@ pt_close_session(int flags)
 	int pame;
 
 	flags |= silent;
+	pt_verbose("pam_close_session()");
 	if ((pame = pam_close_session(pamh, flags)) != PAM_SUCCESS)
 		pt_error(pame, "pam_close_session()");
 	return (pame);
@@ -263,9 +272,27 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: pamtest [-dksv] %s\n",
-	    "[-H rhost] [-h host] [-t tty] [-U ruser] [-u user] service");
+	fprintf(stderr, "usage: pamtest %s service command ...\n",
+	    "[-dkMPsv] [-H rhost] [-h host] [-t tty] [-U ruser] [-u user]");
 	exit(1);
+}
+
+/*
+ * Handle an option that takes an int argument and can be used only once
+ */
+static void
+opt_num_once(int opt, long *num, const char *arg)
+{
+	char *end;
+	long l;
+
+	l = strtol(arg, &end, 0);
+	if (end == optarg || *end != '\0') {
+		fprintf(stderr,
+		    "The -%c option expects a numeric argument\n", opt);
+		usage();
+	}
+	*num = l;
 }
 
 /*
@@ -295,11 +322,12 @@ main(int argc, char *argv[])
 	const char *user = NULL;
 	const char *service = NULL;
 	const char *tty = NULL;
+	long timeout = 0;
 	int keepatit = 0;
 	int pame;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dH:h:kst:U:u:v")) != -1)
+	while ((opt = getopt(argc, argv, "dH:h:kMPsT:t:U:u:v")) != -1)
 		switch (opt) {
 		case 'd':
 			openpam_debug++;
@@ -313,8 +341,25 @@ main(int argc, char *argv[])
 		case 'k':
 			keepatit = 1;
 			break;
+		case 'M':
+			openpam_set_feature(OPENPAM_RESTRICT_MODULE_NAME, 0);
+			openpam_set_feature(OPENPAM_VERIFY_MODULE_FILE, 0);
+			break;
+		case 'P':
+			openpam_set_feature(OPENPAM_RESTRICT_SERVICE_NAME, 0);
+			openpam_set_feature(OPENPAM_VERIFY_POLICY_FILE, 0);
+			break;
 		case 's':
 			silent = PAM_SILENT;
+			break;
+		case 'T':
+			opt_num_once(opt, &timeout, optarg);
+			if (timeout < 0 || timeout > INT_MAX) {
+				fprintf(stderr,
+				    "Invalid conversation timeout\n");
+				usage();
+			}
+			openpam_ttyconv_timeout = (int)timeout;
 			break;
 		case 't':
 			opt_str_once(opt, &tty, optarg);
@@ -343,6 +388,8 @@ main(int argc, char *argv[])
 	++argv;
 
 	/* defaults */
+	if (service == NULL)
+		service = "pamtest";
 	if (rhost == NULL) {
 		if (gethostname(hostname, sizeof(hostname)) == -1)
 			err(1, "gethostname()");

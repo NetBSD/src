@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_log.c,v 1.3.4.2 2012/04/17 00:03:59 yamt Exp $	*/
+/*	$NetBSD: openpam_log.c,v 1.3.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,29 +34,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_log.c 437 2011-09-13 12:00:13Z des
+ * Id: openpam_log.c 686 2013-07-11 16:36:02Z des 
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 
 #include <security/pam_appl.h>
 
 #include "openpam_impl.h"
+#include "openpam_asprintf.h"
 
-#ifdef OPENPAM_DEBUG
-int openpam_debug = 1;
-#else
 int openpam_debug = 0;
-#endif
 
 #if !defined(openpam_log)
 
@@ -71,8 +67,10 @@ openpam_log(int level, const char *fmt, ...)
 {
 	va_list ap;
 	int priority;
+	int serrno;
 
 	switch (level) {
+	case PAM_LOG_LIBDEBUG:
 	case PAM_LOG_DEBUG:
 		if (!openpam_debug)
 			return;
@@ -89,21 +87,28 @@ openpam_log(int level, const char *fmt, ...)
 		priority = LOG_ERR;
 		break;
 	}
+	serrno = errno;
 	va_start(ap, fmt);
 	vsyslog(priority, fmt, ap);
 	va_end(ap);
+	errno = serrno;
 }
 
 #else
 
+#if defined(__clang__) || __GNUC_PREREQ__(4, 5)
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 void
 _openpam_log(int level, const char *func, const char *fmt, ...)
 {
 	va_list ap;
-	char *msg;
-	int priority, rv;
+	char *format;
+	int priority;
+	int serrno;
 
 	switch (level) {
+	case PAM_LOG_LIBDEBUG:
 	case PAM_LOG_DEBUG:
 		if (!openpam_debug)
 			return;
@@ -120,18 +125,18 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
 		priority = LOG_ERR;
 		break;
 	}
-
+	serrno = errno;
 	va_start(ap, fmt);
-	rv = vasprintf(&msg, fmt, ap);
-	va_end(ap);
-
-	if (rv < 0) {
-		syslog(priority, "Can't format message from %s: %s (%m)",
-		    func, fmt);
-		return;
+	if (asprintf(&format, "in %s(): %s", func, fmt) > 0) {
+		errno = serrno;
+		vsyslog(priority, format, ap);
+		FREE(format);
+	} else {
+		errno = serrno;
+		vsyslog(priority, fmt, ap);
 	}
-	syslog(priority, "in %s(): %s", func, msg);
-	FREE(msg);
+	va_end(ap);
+	errno = serrno;
 }
 
 #endif
@@ -143,6 +148,9 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
  * The =level argument indicates the importance of the message.
  * The following levels are defined:
  *
+ *	=PAM_LOG_LIBDEBUG:
+ *		Debugging messages.
+ *		For internal use only.
  *	=PAM_LOG_DEBUG:
  *		Debugging messages.
  *		These messages are normally not logged unless the global
@@ -165,4 +173,6 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
  *
  * The remaining arguments are a =printf format string and the
  * corresponding arguments.
+ *
+ * The =openpam_log function does not modify the value of :errno.
  */

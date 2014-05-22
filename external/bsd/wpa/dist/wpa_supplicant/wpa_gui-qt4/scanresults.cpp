@@ -2,19 +2,14 @@
  * wpa_gui - ScanResults class
  * Copyright (c) 2005-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include <cstdio>
 
 #include "scanresults.h"
+#include "signalbar.h"
 #include "wpagui.h"
 #include "networkconfig.h"
 
@@ -33,6 +28,7 @@ ScanResults::ScanResults(QWidget *parent, const char *, bool, Qt::WFlags)
 	wpagui = NULL;
 	scanResultsWidget->setItemsExpandable(FALSE);
 	scanResultsWidget->setRootIsDecorated(FALSE);
+	scanResultsWidget->setItemDelegate(new SignalBar(scanResultsWidget));
 }
 
 
@@ -91,7 +87,7 @@ void ScanResults::updateResults()
 				bssid = (*it).mid(pos);
 			else if ((*it).startsWith("freq="))
 				freq = (*it).mid(pos);
-			else if ((*it).startsWith("qual="))
+			else if ((*it).startsWith("level="))
 				signal = (*it).mid(pos);
 			else if ((*it).startsWith("flags="))
 				flags = (*it).mid(pos);

@@ -1,24 +1,23 @@
 /* rlmbutil.h -- utility functions for multibyte characters. */
 
-/* Copyright (C) 2001, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2009 Free Software Foundation, Inc.
 
-   This file is part of the GNU Readline Library, a library for
-   reading lines of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   The GNU Readline Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2, or
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
-   The GNU Readline Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #if !defined (_RL_MBUTIL_H_)
 #define _RL_MBUTIL_H_
@@ -30,22 +29,21 @@
 /************************************************/
 
 /* For platforms which support the ISO C amendement 1 functionality we
-   support user defined character classes.
-
-   Some platforms have the multibyte functions such as mbsrtowcs but
-   are lacking the multitype type mbstate_t.  BeOS (unknown version)
-   and HP/UX 11.23 without _XOPEN_SOURCE=500 are like this.
-
-   We really need mbstate_t type to operate properly.  For example, see
-   compute_lcd_of_matches, where two mbstate_t's are active at the same
-   time.  So we require both the functions and the mbstate_t type in
-   order to enable multibyte support.  */
-
+   support user defined character classes.  */
    /* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.  */
-#if defined (HAVE_WCTYPE_H) && defined (HAVE_WCHAR_H)
+#if defined (HAVE_WCTYPE_H) && defined (HAVE_WCHAR_H) && defined (HAVE_LOCALE_H)
 #  include <wchar.h>
 #  include <wctype.h>
-#  if defined (HAVE_MBSTATE_T) && defined (HAVE_MBSRTOWCS) && defined (HAVE_MBRTOWC) && defined (HAVE_MBRLEN) && defined (HAVE_WCWIDTH)
+#  if defined (HAVE_ISWCTYPE) && \
+      defined (HAVE_ISWLOWER) && \
+      defined (HAVE_ISWUPPER) && \
+      defined (HAVE_MBSRTOWCS) && \
+      defined (HAVE_MBRTOWC) && \
+      defined (HAVE_MBRLEN) && \
+      defined (HAVE_TOWLOWER) && \
+      defined (HAVE_TOWUPPER) && \
+      defined (HAVE_WCHAR_T) && \
+      defined (HAVE_WCWIDTH)
      /* system is supposed to support XPG5 */
 #    define HANDLE_MULTIBYTE      1
 #  endif

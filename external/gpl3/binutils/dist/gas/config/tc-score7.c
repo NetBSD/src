@@ -1,5 +1,5 @@
 /* tc-score7.c -- Assembler for Score7
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright 2009, 2011, 2012 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -1260,12 +1260,12 @@ static int
 s7_my_get_expression (expressionS * ep, char **str)
 {
   char *save_in;
-  segT seg;
 
   save_in = input_line_pointer;
   input_line_pointer = *str;
   s7_in_my_get_expression = 1;
-  seg = expression (ep);
+
+  (void) expression (ep);
   s7_in_my_get_expression = 0;
 
   if (ep->X_op == O_illegal)
@@ -3096,14 +3096,12 @@ s7_do_ldst_insn (char *str)
   int conflict_reg;
   int value;
   char * temp;
-  char *strbak;
   char *dataptr;
   int reg;
   int ldst_idx = 0;
 
   int hex_p = 0;
 
-  strbak = str;
   s7_skip_whitespace (str);
 
   if (((conflict_reg = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
@@ -5202,10 +5200,10 @@ s7_pic_need_relax (symbolS *sym, asection *segtype)
     }
 
   /* This must duplicate the test in adjust_reloc_syms.  */
-  return (symsec != &bfd_und_section
-	    && symsec != &bfd_abs_section
-	  && ! bfd_is_com_section (symsec)
-	    && !linkonce
+  return (!bfd_is_und_section (symsec)
+	  && !bfd_is_abs_section (symsec)
+	  && !bfd_is_com_section (symsec)
+	  && !linkonce
 #ifdef OBJ_ELF
 	  /* A global or weak symbol is treated as external.  */
 	  && (OUTPUT_FLAVOR != bfd_target_elf_flavour
@@ -5244,8 +5242,6 @@ s7_b32_relax_to_b16 (fragS * fragp)
 {
   int grows = 0;
   int relaxable_p = 0;
-  int r_old;
-  int r_new;
   int frag_addr = fragp->fr_address + fragp->insn_addr;
 
   addressT symbol_address = 0;
@@ -5259,8 +5255,6 @@ s7_b32_relax_to_b16 (fragS * fragp)
      so in relax stage , it may be wrong to calculate the symbol's offset when the frag's section
      is different from the symbol's.  */
 
-  r_old = s7_RELAX_OLD (fragp->fr_subtype);
-  r_new = s7_RELAX_NEW (fragp->fr_subtype);
   relaxable_p = s7_RELAX_OPT (fragp->fr_subtype);
 
   s = fragp->fr_symbol;
@@ -5648,7 +5642,6 @@ s7_s_score_end (int x ATTRIBUTE_UNUSED)
   /* Generate a .pdr section.  */
   segT saved_seg = now_seg;
   subsegT saved_subseg = now_subseg;
-  valueT dot;
   expressionS exp;
   char *fragp;
 
@@ -5699,7 +5692,7 @@ s7_s_score_end (int x ATTRIBUTE_UNUSED)
 
   else
     {
-      dot = frag_now_fix ();
+      (void) frag_now_fix ();
       gas_assert (s7_pdr_seg);
       subseg_set (s7_pdr_seg, 0);
       /* Write the symbol.  */
@@ -6376,7 +6369,6 @@ s7_relax_frag (asection * sec ATTRIBUTE_UNUSED,
 {
   int grows = 0;
   int insn_size;
-  int insn_relax_size;
   int do_relax_p = 0;           /* Indicate doing relaxation for this frag.  */
   int relaxable_p = 0;
   bfd_boolean word_align_p = FALSE;
@@ -6396,15 +6388,9 @@ s7_relax_frag (asection * sec ATTRIBUTE_UNUSED,
 
   /* Get instruction size and relax size after the last relaxation.  */
   if (fragp->fr_opcode)
-    {
-      insn_size = s7_RELAX_NEW (fragp->fr_subtype);
-      insn_relax_size = s7_RELAX_OLD (fragp->fr_subtype);
-    }
+    insn_size = s7_RELAX_NEW (fragp->fr_subtype);
   else
-    {
-      insn_size = s7_RELAX_OLD (fragp->fr_subtype);
-      insn_relax_size = s7_RELAX_NEW (fragp->fr_subtype);
-    }
+    insn_size = s7_RELAX_OLD (fragp->fr_subtype);
 
   /* Handle specially for s7_GP instruction.  for, s7_judge_size_before_relax() has already determine
      whether the s7_GP instruction should do relax.  */
@@ -6891,9 +6877,6 @@ s7_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   arelent *reloc;
   bfd_reloc_code_real_type code;
   char *type;
-  fragS *f;
-  symbolS *s;
-  expressionS e;
 
   reloc = retval[0] = xmalloc (sizeof (arelent));
   retval[1] = NULL;
@@ -6931,10 +6914,6 @@ s7_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       retval[1]->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
       *retval[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       retval[1]->address = (reloc->address + s7_RELAX_RELOC2 (fixp->fx_frag->fr_subtype));
-
-      f = fixp->fx_frag;
-      s = f->fr_symbol;
-      e = s->sy_value;
 
       retval[1]->addend = 0;
       retval[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_LO16);

@@ -61,11 +61,6 @@ main (argc, argv, envp)
 {
   int i;
 
-#ifdef usestubs
-  set_debug_traps ();
-  breakpoint ();
-#endif
-
   begin ();
   for (i = 0; i < sizeof(testload) / sizeof(testload[0]); i++)
     testload[i] = i + 1;
@@ -83,8 +78,5 @@ main (argc, argv, envp)
 
   end ();
 
-#ifdef usestubs
-  breakpoint ();
-#endif
   return 0;
 }

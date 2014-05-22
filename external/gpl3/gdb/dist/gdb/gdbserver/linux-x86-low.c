@@ -1,7 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +20,7 @@
 #include <stddef.h>
 #include <signal.h>
 #include <limits.h>
+#include <inttypes.h>
 #include "server.h"
 #include "linux-low.h"
 #include "i387-fp.h"
@@ -29,6 +29,7 @@
 #include "elf/common.h"
 
 #include "gdb_proc_service.h"
+#include "agent.h"
 
 /* Defined in auto-generated file i386-linux.c.  */
 void init_registers_i386_linux (void);
@@ -40,8 +41,13 @@ void init_registers_i386_avx_linux (void);
 void init_registers_amd64_avx_linux (void);
 /* Defined in auto-generated file i386-mmx-linux.c.  */
 void init_registers_i386_mmx_linux (void);
+/* Defined in auto-generated file x32-linux.c.  */
+void init_registers_x32_linux (void);
+/* Defined in auto-generated file x32-avx-linux.c.  */
+void init_registers_x32_avx_linux (void);
 
 static unsigned char jump_insn[] = { 0xe9, 0, 0, 0, 0 };
+static unsigned char small_jump_insn[] = { 0x66, 0xe9, 0, 0 };
 
 /* Backward compatibility for gdb without XML support.  */
 
@@ -190,7 +196,8 @@ ps_get_thread_area (const struct ps_prochandle *ph,
 		(void *) (intptr_t) idx, (unsigned long) &desc) < 0)
       return PS_ERR;
 
-    *(int *)base = desc[1];
+    /* Ensure we properly extend the value to 64-bits for x86_64.  */
+    *base = (void *) (uintptr_t) desc[1];
     return PS_OK;
   }
 }
@@ -555,7 +562,7 @@ x86_insert_point (char type, CORE_ADDR addr, int len)
   struct process_info *proc = current_process ();
   switch (type)
     {
-    case '0':
+    case '0': /* software-breakpoint */
       {
 	int ret;
 
@@ -566,11 +573,13 @@ x86_insert_point (char type, CORE_ADDR addr, int len)
 	done_accessing_memory ();
 	return ret;
       }
-    case '2':
-    case '3':
-    case '4':
+    case '1': /* hardware-breakpoint */
+    case '2': /* write watchpoint */
+    case '3': /* read watchpoint */
+    case '4': /* access watchpoint */
       return i386_low_insert_watchpoint (&proc->private->arch_private->debug_reg_state,
 					 type, addr, len);
+
     default:
       /* Unsupported.  */
       return 1;
@@ -583,7 +592,7 @@ x86_remove_point (char type, CORE_ADDR addr, int len)
   struct process_info *proc = current_process ();
   switch (type)
     {
-    case '0':
+    case '0': /* software-breakpoint */
       {
 	int ret;
 
@@ -594,9 +603,10 @@ x86_remove_point (char type, CORE_ADDR addr, int len)
 	done_accessing_memory ();
 	return ret;
       }
-    case '2':
-    case '3':
-    case '4':
+    case '1': /* hardware-breakpoint */
+    case '2': /* write watchpoint */
+    case '3': /* read watchpoint */
+    case '4': /* access watchpoint */
       return i386_low_remove_watchpoint (&proc->private->arch_private->debug_reg_state,
 					 type, addr, len);
     default:
@@ -654,6 +664,7 @@ static void
 x86_linux_prepare_to_resume (struct lwp_info *lwp)
 {
   ptid_t ptid = ptid_of (lwp);
+  int clear_status = 0;
 
   if (lwp->arch_private->debug_registers_changed)
     {
@@ -664,14 +675,23 @@ x86_linux_prepare_to_resume (struct lwp_info *lwp)
 	= &proc->private->arch_private->debug_reg_state;
 
       for (i = DR_FIRSTADDR; i <= DR_LASTADDR; i++)
-	x86_linux_dr_set (ptid, i, state->dr_mirror[i]);
+	if (state->dr_ref_count[i] > 0)
+	  {
+	    x86_linux_dr_set (ptid, i, state->dr_mirror[i]);
+
+	    /* If we're setting a watchpoint, any change the inferior
+	       had done itself to the debug registers needs to be
+	       discarded, otherwise, i386_low_stopped_data_address can
+	       get confused.  */
+	    clear_status = 1;
+	  }
 
       x86_linux_dr_set (ptid, DR_CONTROL, state->dr_control_mirror);
 
       lwp->arch_private->debug_registers_changed = 0;
     }
 
-  if (lwp->stopped_by_watchpoint)
+  if (clear_status || lwp->stopped_by_watchpoint)
     x86_linux_dr_set (ptid, DR_STATUS, 0);
 }
 
@@ -763,6 +783,67 @@ typedef struct compat_siginfo
     } _sigpoll;
   } _sifields;
 } compat_siginfo_t;
+
+/* For x32, clock_t in _sigchld is 64bit aligned at 4 bytes.  */
+typedef long __attribute__ ((__aligned__ (4))) compat_x32_clock_t;
+
+typedef struct compat_x32_siginfo
+{
+  int si_signo;
+  int si_errno;
+  int si_code;
+
+  union
+  {
+    int _pad[((128 / sizeof (int)) - 3)];
+
+    /* kill() */
+    struct
+    {
+      unsigned int _pid;
+      unsigned int _uid;
+    } _kill;
+
+    /* POSIX.1b timers */
+    struct
+    {
+      compat_timer_t _tid;
+      int _overrun;
+      compat_sigval_t _sigval;
+    } _timer;
+
+    /* POSIX.1b signals */
+    struct
+    {
+      unsigned int _pid;
+      unsigned int _uid;
+      compat_sigval_t _sigval;
+    } _rt;
+
+    /* SIGCHLD */
+    struct
+    {
+      unsigned int _pid;
+      unsigned int _uid;
+      int _status;
+      compat_x32_clock_t _utime;
+      compat_x32_clock_t _stime;
+    } _sigchld;
+
+    /* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
+    struct
+    {
+      unsigned int _addr;
+    } _sigfault;
+
+    /* SIGPOLL */
+    struct
+    {
+      int _band;
+      int _fd;
+    } _sigpoll;
+  } _sifields;
+} compat_x32_siginfo_t __attribute__ ((__aligned__ (8)));
 
 #define cpt_si_pid _sifields._kill._pid
 #define cpt_si_uid _sifields._kill._uid
@@ -897,6 +978,122 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
     }
 }
 
+static void
+compat_x32_siginfo_from_siginfo (compat_x32_siginfo_t *to,
+				 siginfo_t *from)
+{
+  memset (to, 0, sizeof (*to));
+
+  to->si_signo = from->si_signo;
+  to->si_errno = from->si_errno;
+  to->si_code = from->si_code;
+
+  if (to->si_code == SI_TIMER)
+    {
+      to->cpt_si_timerid = from->si_timerid;
+      to->cpt_si_overrun = from->si_overrun;
+      to->cpt_si_ptr = (intptr_t) from->si_ptr;
+    }
+  else if (to->si_code == SI_USER)
+    {
+      to->cpt_si_pid = from->si_pid;
+      to->cpt_si_uid = from->si_uid;
+    }
+  else if (to->si_code < 0)
+    {
+      to->cpt_si_pid = from->si_pid;
+      to->cpt_si_uid = from->si_uid;
+      to->cpt_si_ptr = (intptr_t) from->si_ptr;
+    }
+  else
+    {
+      switch (to->si_signo)
+	{
+	case SIGCHLD:
+	  to->cpt_si_pid = from->si_pid;
+	  to->cpt_si_uid = from->si_uid;
+	  to->cpt_si_status = from->si_status;
+	  to->cpt_si_utime = from->si_utime;
+	  to->cpt_si_stime = from->si_stime;
+	  break;
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
+	case SIGBUS:
+	  to->cpt_si_addr = (intptr_t) from->si_addr;
+	  break;
+	case SIGPOLL:
+	  to->cpt_si_band = from->si_band;
+	  to->cpt_si_fd = from->si_fd;
+	  break;
+	default:
+	  to->cpt_si_pid = from->si_pid;
+	  to->cpt_si_uid = from->si_uid;
+	  to->cpt_si_ptr = (intptr_t) from->si_ptr;
+	  break;
+	}
+    }
+}
+
+static void
+siginfo_from_compat_x32_siginfo (siginfo_t *to,
+				 compat_x32_siginfo_t *from)
+{
+  memset (to, 0, sizeof (*to));
+
+  to->si_signo = from->si_signo;
+  to->si_errno = from->si_errno;
+  to->si_code = from->si_code;
+
+  if (to->si_code == SI_TIMER)
+    {
+      to->si_timerid = from->cpt_si_timerid;
+      to->si_overrun = from->cpt_si_overrun;
+      to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
+    }
+  else if (to->si_code == SI_USER)
+    {
+      to->si_pid = from->cpt_si_pid;
+      to->si_uid = from->cpt_si_uid;
+    }
+  else if (to->si_code < 0)
+    {
+      to->si_pid = from->cpt_si_pid;
+      to->si_uid = from->cpt_si_uid;
+      to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
+    }
+  else
+    {
+      switch (to->si_signo)
+	{
+	case SIGCHLD:
+	  to->si_pid = from->cpt_si_pid;
+	  to->si_uid = from->cpt_si_uid;
+	  to->si_status = from->cpt_si_status;
+	  to->si_utime = from->cpt_si_utime;
+	  to->si_stime = from->cpt_si_stime;
+	  break;
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
+	case SIGBUS:
+	  to->si_addr = (void *) (intptr_t) from->cpt_si_addr;
+	  break;
+	case SIGPOLL:
+	  to->si_band = from->cpt_si_band;
+	  to->si_fd = from->cpt_si_fd;
+	  break;
+	default:
+	  to->si_pid = from->cpt_si_pid;
+	  to->si_uid = from->cpt_si_uid;
+	  to->si_ptr = (void* ) (intptr_t) from->cpt_si_ptr;
+	  break;
+	}
+    }
+}
+
+/* Is this process 64-bit?  */
+static int linux_is_elf64;
 #endif /* __x86_64__ */
 
 /* Convert a native/host siginfo object, into/from the siginfo in the
@@ -906,19 +1103,34 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
    INF.  */
 
 static int
-x86_siginfo_fixup (struct siginfo *native, void *inf, int direction)
+x86_siginfo_fixup (siginfo_t *native, void *inf, int direction)
 {
 #ifdef __x86_64__
   /* Is the inferior 32-bit?  If so, then fixup the siginfo object.  */
   if (register_size (0) == 4)
     {
-      if (sizeof (struct siginfo) != sizeof (compat_siginfo_t))
+      if (sizeof (siginfo_t) != sizeof (compat_siginfo_t))
 	fatal ("unexpected difference in siginfo");
 
       if (direction == 0)
 	compat_siginfo_from_siginfo ((struct compat_siginfo *) inf, native);
       else
 	siginfo_from_compat_siginfo (native, (struct compat_siginfo *) inf);
+
+      return 1;
+    }
+  /* No fixup for native x32 GDB.  */
+  else if (!linux_is_elf64 && sizeof (void *) == 8)
+    {
+      if (sizeof (siginfo_t) != sizeof (compat_x32_siginfo_t))
+	fatal ("unexpected difference in siginfo");
+
+      if (direction == 0)
+	compat_x32_siginfo_from_siginfo ((struct compat_x32_siginfo *) inf,
+					 native);
+      else
+	siginfo_from_compat_x32_siginfo (native,
+					 (struct compat_x32_siginfo *) inf);
 
       return 1;
     }
@@ -954,8 +1166,10 @@ x86_linux_update_xmltarget (void)
 #ifdef __x86_64__
   if (num_xmm_registers == 8)
     init_registers_i386_linux ();
-  else
+  else if (linux_is_elf64)
     init_registers_amd64_linux ();
+  else
+    init_registers_x32_linux ();
 #else
     {
 # ifdef HAVE_PTRACE_GETFPXREGS
@@ -1050,8 +1264,10 @@ x86_linux_update_xmltarget (void)
 	  /* I386 has 8 xmm regs.  */
 	  if (num_xmm_registers == 8)
 	    init_registers_i386_avx_linux ();
-	  else
+	  else if (linux_is_elf64)
 	    init_registers_amd64_avx_linux ();
+	  else
+	    init_registers_x32_avx_linux ();
 #else
 	  init_registers_i386_avx_linux ();
 #endif
@@ -1094,20 +1310,28 @@ x86_linux_process_qsupported (const char *query)
 static void
 x86_arch_setup (void)
 {
-#ifdef __x86_64__
   int pid = pid_of (get_thread_lwp (current_inferior));
-  char *file = linux_child_pid_to_exec_file (pid);
-  int use_64bit = elf_64_file_p (file);
+  unsigned int machine;
+  int is_elf64 = linux_pid_exe_is_elf_64_file (pid, &machine);
 
-  free (file);
+  if (sizeof (void *) == 4)
+    {
+      if (is_elf64 > 0)
+	error (_("Can't debug 64-bit process with 32-bit GDBserver"));
+#ifndef __x86_64__
+      else if (machine == EM_X86_64)
+	error (_("Can't debug x86-64 process with 32-bit GDBserver"));
+#endif
+    }
 
-  if (use_64bit < 0)
+#ifdef __x86_64__
+  if (is_elf64 < 0)
     {
       /* This can only happen if /proc/<pid>/exe is unreadable,
 	 but "that can't happen" if we've gotten this far.
 	 Fall through and assume this is a 32-bit program.  */
     }
-  else if (use_64bit)
+  else if (machine == EM_X86_64)
     {
       /* Amd64 doesn't have HAVE_LINUX_USRREGS.  */
       the_low_target.num_regs = -1;
@@ -1118,9 +1342,12 @@ x86_arch_setup (void)
       /* Amd64 has 16 xmm regs.  */
       num_xmm_registers = 16;
 
+      linux_is_elf64 = is_elf64;
       x86_linux_update_xmltarget ();
       return;
     }
+
+  linux_is_elf64 = 0;
 #endif
 
   /* Ok we have a 32-bit inferior.  */
@@ -1182,13 +1409,18 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 					CORE_ADDR lockaddr,
 					ULONGEST orig_size,
 					CORE_ADDR *jump_entry,
+					CORE_ADDR *trampoline,
+					ULONGEST *trampoline_size,
 					unsigned char *jjump_pad_insn,
 					ULONGEST *jjump_pad_insn_size,
 					CORE_ADDR *adjusted_insn_addr,
-					CORE_ADDR *adjusted_insn_addr_end)
+					CORE_ADDR *adjusted_insn_addr_end,
+					char *err)
 {
   unsigned char buf[40];
   int i, offset;
+  int64_t loffset;
+
   CORE_ADDR buildaddr = *jump_entry;
 
   /* Build the jump pad.  */
@@ -1312,7 +1544,17 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   *adjusted_insn_addr_end = buildaddr;
 
   /* Finally, write a jump back to the program.  */
-  offset = (tpaddr + orig_size) - (buildaddr + sizeof (jump_insn));
+
+  loffset = (tpaddr + orig_size) - (buildaddr + sizeof (jump_insn));
+  if (loffset > INT_MAX || loffset < INT_MIN)
+    {
+      sprintf (err,
+	       "E.Jump back from jump pad too far from tracepoint "
+	       "(offset 0x%" PRIx64 " > int32).", loffset);
+      return 1;
+    }
+
+  offset = (int) loffset;
   memcpy (buf, jump_insn, sizeof (jump_insn));
   memcpy (buf + 1, &offset, 4);
   append_insns (&buildaddr, sizeof (jump_insn), buf);
@@ -1321,7 +1563,17 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
      is always done last (by our caller actually), so that we can
      install fast tracepoints with threads running.  This relies on
      the agent's atomic write support.  */
-  offset = *jump_entry - (tpaddr + sizeof (jump_insn));
+  loffset = *jump_entry - (tpaddr + sizeof (jump_insn));
+  if (loffset > INT_MAX || loffset < INT_MIN)
+    {
+      sprintf (err,
+	       "E.Jump pad too far from tracepoint "
+	       "(offset 0x%" PRIx64 " > int32).", loffset);
+      return 1;
+    }
+
+  offset = (int) loffset;
+
   memcpy (buf, jump_insn, sizeof (jump_insn));
   memcpy (buf + 1, &offset, 4);
   memcpy (jjump_pad_insn, buf, sizeof (jump_insn));
@@ -1346,10 +1598,13 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 				       CORE_ADDR lockaddr,
 				       ULONGEST orig_size,
 				       CORE_ADDR *jump_entry,
+				       CORE_ADDR *trampoline,
+				       ULONGEST *trampoline_size,
 				       unsigned char *jjump_pad_insn,
 				       ULONGEST *jjump_pad_insn_size,
 				       CORE_ADDR *adjusted_insn_addr,
-				       CORE_ADDR *adjusted_insn_addr_end)
+				       CORE_ADDR *adjusted_insn_addr_end,
+				       char *err)
 {
   unsigned char buf[0x100];
   int i, offset;
@@ -1455,7 +1710,7 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   buf[i++] = 0x0f; /* pop %fs */
   buf[i++] = 0xa1;
   buf[i++] = 0x07; /* pop %es */
-  buf[i++] = 0x1f; /* pop %de */
+  buf[i++] = 0x1f; /* pop %ds */
   buf[i++] = 0x9d; /* popf */
   buf[i++] = 0x83; /* add $0x4,%esp (pop of tpaddr aka $pc) */
   buf[i++] = 0xc4;
@@ -1479,11 +1734,40 @@ i386_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
      is always done last (by our caller actually), so that we can
      install fast tracepoints with threads running.  This relies on
      the agent's atomic write support.  */
-  offset = *jump_entry - (tpaddr + sizeof (jump_insn));
-  memcpy (buf, jump_insn, sizeof (jump_insn));
-  memcpy (buf + 1, &offset, 4);
-  memcpy (jjump_pad_insn, buf, sizeof (jump_insn));
-  *jjump_pad_insn_size = sizeof (jump_insn);
+  if (orig_size == 4)
+    {
+      /* Create a trampoline.  */
+      *trampoline_size = sizeof (jump_insn);
+      if (!claim_trampoline_space (*trampoline_size, trampoline))
+	{
+	  /* No trampoline space available.  */
+	  strcpy (err,
+		  "E.Cannot allocate trampoline space needed for fast "
+		  "tracepoints on 4-byte instructions.");
+	  return 1;
+	}
+
+      offset = *jump_entry - (*trampoline + sizeof (jump_insn));
+      memcpy (buf, jump_insn, sizeof (jump_insn));
+      memcpy (buf + 1, &offset, 4);
+      write_inferior_memory (*trampoline, buf, sizeof (jump_insn));
+
+      /* Use a 16-bit relative jump instruction to jump to the trampoline.  */
+      offset = (*trampoline - (tpaddr + sizeof (small_jump_insn))) & 0xffff;
+      memcpy (buf, small_jump_insn, sizeof (small_jump_insn));
+      memcpy (buf + 2, &offset, 2);
+      memcpy (jjump_pad_insn, buf, sizeof (small_jump_insn));
+      *jjump_pad_insn_size = sizeof (small_jump_insn);
+    }
+  else
+    {
+      /* Else use a 32-bit relative jump instruction.  */
+      offset = *jump_entry - (tpaddr + sizeof (jump_insn));
+      memcpy (buf, jump_insn, sizeof (jump_insn));
+      memcpy (buf + 1, &offset, 4);
+      memcpy (jjump_pad_insn, buf, sizeof (jump_insn));
+      *jjump_pad_insn_size = sizeof (jump_insn);
+    }
 
   /* Return the end address of our pad.  */
   *jump_entry = buildaddr;
@@ -1497,29 +1781,83 @@ x86_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 				      CORE_ADDR lockaddr,
 				      ULONGEST orig_size,
 				      CORE_ADDR *jump_entry,
+				      CORE_ADDR *trampoline,
+				      ULONGEST *trampoline_size,
 				      unsigned char *jjump_pad_insn,
 				      ULONGEST *jjump_pad_insn_size,
 				      CORE_ADDR *adjusted_insn_addr,
-				      CORE_ADDR *adjusted_insn_addr_end)
+				      CORE_ADDR *adjusted_insn_addr_end,
+				      char *err)
 {
 #ifdef __x86_64__
   if (register_size (0) == 8)
     return amd64_install_fast_tracepoint_jump_pad (tpoint, tpaddr,
 						   collector, lockaddr,
 						   orig_size, jump_entry,
+						   trampoline, trampoline_size,
 						   jjump_pad_insn,
 						   jjump_pad_insn_size,
 						   adjusted_insn_addr,
-						   adjusted_insn_addr_end);
+						   adjusted_insn_addr_end,
+						   err);
 #endif
 
   return i386_install_fast_tracepoint_jump_pad (tpoint, tpaddr,
 						collector, lockaddr,
 						orig_size, jump_entry,
+						trampoline, trampoline_size,
 						jjump_pad_insn,
 						jjump_pad_insn_size,
 						adjusted_insn_addr,
-						adjusted_insn_addr_end);
+						adjusted_insn_addr_end,
+						err);
+}
+
+/* Return the minimum instruction length for fast tracepoints on x86/x86-64
+   architectures.  */
+
+static int
+x86_get_min_fast_tracepoint_insn_len (void)
+{
+  static int warned_about_fast_tracepoints = 0;
+
+#ifdef __x86_64__
+  /*  On x86-64, 5-byte jump instructions with a 4-byte offset are always
+      used for fast tracepoints.  */
+  if (register_size (0) == 8)
+    return 5;
+#endif
+
+  if (agent_loaded_p ())
+    {
+      char errbuf[IPA_BUFSIZ];
+
+      errbuf[0] = '\0';
+
+      /* On x86, if trampolines are available, then 4-byte jump instructions
+	 with a 2-byte offset may be used, otherwise 5-byte jump instructions
+	 with a 4-byte offset are used instead.  */
+      if (have_fast_tracepoint_trampoline_buffer (errbuf))
+	return 4;
+      else
+	{
+	  /* GDB has no channel to explain to user why a shorter fast
+	     tracepoint is not possible, but at least make GDBserver
+	     mention that something has gone awry.  */
+	  if (!warned_about_fast_tracepoints)
+	    {
+	      warning ("4-byte fast tracepoints not available; %s\n", errbuf);
+	      warned_about_fast_tracepoints = 1;
+	    }
+	  return 5;
+	}
+    }
+  else
+    {
+      /* Indicate that the minimum length is currently unknown since the IPA
+	 has not loaded yet.  */
+      return 0;
+    }
 }
 
 static void
@@ -1819,7 +2157,7 @@ amd64_emit_const (LONGEST num)
 
   i = 0;
   buf[i++] = 0x48;  buf[i++] = 0xb8; /* mov $<n>,%rax */
-  *((LONGEST *) (&buf[i])) = num;
+  memcpy (&buf[i], &num, sizeof (num));
   i += 8;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -1876,7 +2214,7 @@ amd64_emit_reg (int reg)
   buildaddr = current_insn_ptr;
   i = 0;
   buf[i++] = 0xbe; /* mov $<n>,%esi */
-  *((int *) (&buf[i])) = reg;
+  memcpy (&buf[i], &reg, sizeof (reg));
   i += 4;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -1959,7 +2297,7 @@ amd64_emit_int_call_1 (CORE_ADDR fn, int arg1)
   buildaddr = current_insn_ptr;
   i = 0;
   buf[i++] = 0xbf; /* movl $<n>,%edi */
-  *((int *) (&buf[i])) = arg1;
+  memcpy (&buf[i], &arg1, sizeof (arg1));
   i += 4;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -1978,7 +2316,7 @@ amd64_emit_void_call_2 (CORE_ADDR fn, int arg1)
   buildaddr = current_insn_ptr;
   i = 0;
   buf[i++] = 0xbf; /* movl $<n>,%edi */
-  *((int *) (&buf[i])) = arg1;
+  memcpy (&buf[i], &arg1, sizeof (arg1));
   i += 4;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -1991,6 +2329,127 @@ amd64_emit_void_call_2 (CORE_ADDR fn, int arg1)
   EMIT_ASM (amd64_void_call_2_b,
 	    /* Restore the stack top, %rax may have been trashed.  */
 	    "pop %rax");
+}
+
+void
+amd64_emit_eq_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM (amd64_eq,
+	    "cmp %rax,(%rsp)\n\t"
+	    "jne .Lamd64_eq_fallthru\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax\n\t"
+	    /* jmp, but don't trust the assembler to choose the right jump */
+	    ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	    ".Lamd64_eq_fallthru:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax");
+
+  if (offset_p)
+    *offset_p = 13;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+amd64_emit_ne_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM (amd64_ne,
+	    "cmp %rax,(%rsp)\n\t"
+	    "je .Lamd64_ne_fallthru\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax\n\t"
+	    /* jmp, but don't trust the assembler to choose the right jump */
+	    ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	    ".Lamd64_ne_fallthru:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax");
+
+  if (offset_p)
+    *offset_p = 13;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+amd64_emit_lt_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM (amd64_lt,
+	    "cmp %rax,(%rsp)\n\t"
+	    "jnl .Lamd64_lt_fallthru\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax\n\t"
+	    /* jmp, but don't trust the assembler to choose the right jump */
+	    ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	    ".Lamd64_lt_fallthru:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax");
+
+  if (offset_p)
+    *offset_p = 13;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+amd64_emit_le_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM (amd64_le,
+	    "cmp %rax,(%rsp)\n\t"
+	    "jnle .Lamd64_le_fallthru\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax\n\t"
+	    /* jmp, but don't trust the assembler to choose the right jump */
+	    ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	    ".Lamd64_le_fallthru:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax");
+
+  if (offset_p)
+    *offset_p = 13;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+amd64_emit_gt_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM (amd64_gt,
+	    "cmp %rax,(%rsp)\n\t"
+	    "jng .Lamd64_gt_fallthru\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax\n\t"
+	    /* jmp, but don't trust the assembler to choose the right jump */
+	    ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	    ".Lamd64_gt_fallthru:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax");
+
+  if (offset_p)
+    *offset_p = 13;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+amd64_emit_ge_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM (amd64_ge,
+	    "cmp %rax,(%rsp)\n\t"
+	    "jnge .Lamd64_ge_fallthru\n\t"
+	    ".Lamd64_ge_jump:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax\n\t"
+	    /* jmp, but don't trust the assembler to choose the right jump */
+	    ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	    ".Lamd64_ge_fallthru:\n\t"
+	    "lea 0x8(%rsp),%rsp\n\t"
+	    "pop %rax");
+
+  if (offset_p)
+    *offset_p = 13;
+  if (size_p)
+    *size_p = 4;
 }
 
 struct emit_ops amd64_emit_ops =
@@ -2025,7 +2484,13 @@ struct emit_ops amd64_emit_ops =
     amd64_emit_swap,
     amd64_emit_stack_adjust,
     amd64_emit_int_call_1,
-    amd64_emit_void_call_2
+    amd64_emit_void_call_2,
+    amd64_emit_eq_goto,
+    amd64_emit_ne_goto,
+    amd64_emit_lt_goto,
+    amd64_emit_le_goto,
+    amd64_emit_gt_goto,
+    amd64_emit_ge_goto
   };
 
 #endif /* __x86_64__ */
@@ -2035,7 +2500,8 @@ i386_emit_prologue (void)
 {
   EMIT_ASM32 (i386_prologue,
 	    "push %ebp\n\t"
-	    "mov %esp,%ebp");
+	    "mov %esp,%ebp\n\t"
+	    "push %ebx");
   /* At this point, the raw regs base address is at 8(%ebp), and the
      value pointer is at 12(%ebp).  */
 }
@@ -2048,6 +2514,7 @@ i386_emit_epilogue (void)
 	    "mov %eax,(%ecx)\n\t"
 	    "mov %ebx,0x4(%ecx)\n\t"
 	    "xor %eax,%eax\n\t"
+	    "pop %ebx\n\t"
 	    "pop %ebp\n\t"
 	    "ret");
 }
@@ -2301,18 +2768,19 @@ static void
 i386_emit_const (LONGEST num)
 {
   unsigned char buf[16];
-  int i, hi;
+  int i, hi, lo;
   CORE_ADDR buildaddr = current_insn_ptr;
 
   i = 0;
   buf[i++] = 0xb8; /* mov $<n>,%eax */
-  *((int *) (&buf[i])) = (num & 0xffffffff);
+  lo = num & 0xffffffff;
+  memcpy (&buf[i], &lo, sizeof (lo));
   i += 4;
   hi = ((num >> 32) & 0xffffffff);
   if (hi)
     {
       buf[i++] = 0xbb; /* mov $<n>,%ebx */
-      *((int *) (&buf[i])) = hi;
+      memcpy (&buf[i], &hi, sizeof (hi));
       i += 4;
     }
   else
@@ -2351,7 +2819,7 @@ i386_emit_reg (int reg)
   buildaddr = current_insn_ptr;
   i = 0;
   buf[i++] = 0xb8; /* mov $<n>,%eax */
-  *((int *) (&buf[i])) = reg;
+  memcpy (&buf[i], &reg, sizeof (reg));
   i += 4;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -2451,7 +2919,7 @@ i386_emit_int_call_1 (CORE_ADDR fn, int arg1)
   buf[i++] = 0xc7;  /* movl $<arg1>,(%esp) */
   buf[i++] = 0x04;
   buf[i++] = 0x24;
-  *((int *) (&buf[i])) = arg1;
+  memcpy (&buf[i], &arg1, sizeof (arg1));
   i += 4;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -2486,7 +2954,7 @@ i386_emit_void_call_2 (CORE_ADDR fn, int arg1)
   buf[i++] = 0xc7;  /* movl $<arg1>,(%esp) */
   buf[i++] = 0x04;
   buf[i++] = 0x24;
-  *((int *) (&buf[i])) = arg1;
+  memcpy (&buf[i], &arg1, sizeof (arg1));
   i += 4;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -2495,6 +2963,162 @@ i386_emit_void_call_2 (CORE_ADDR fn, int arg1)
 	    "lea 0x10(%esp),%esp\n\t"
 	    /* Restore original stack top.  */
 	    "pop %eax");
+}
+
+
+void
+i386_emit_eq_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM32 (eq,
+	      /* Check low half first, more likely to be decider  */
+	      "cmpl %eax,(%esp)\n\t"
+	      "jne .Leq_fallthru\n\t"
+	      "cmpl %ebx,4(%esp)\n\t"
+	      "jne .Leq_fallthru\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx\n\t"
+	      /* jmp, but don't trust the assembler to choose the right jump */
+	      ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	      ".Leq_fallthru:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx");
+
+  if (offset_p)
+    *offset_p = 18;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+i386_emit_ne_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM32 (ne,
+	      /* Check low half first, more likely to be decider  */
+	      "cmpl %eax,(%esp)\n\t"
+	      "jne .Lne_jump\n\t"
+	      "cmpl %ebx,4(%esp)\n\t"
+	      "je .Lne_fallthru\n\t"
+	      ".Lne_jump:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx\n\t"
+	      /* jmp, but don't trust the assembler to choose the right jump */
+	      ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	      ".Lne_fallthru:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx");
+
+  if (offset_p)
+    *offset_p = 18;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+i386_emit_lt_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM32 (lt,
+	      "cmpl %ebx,4(%esp)\n\t"
+	      "jl .Llt_jump\n\t"
+	      "jne .Llt_fallthru\n\t"
+	      "cmpl %eax,(%esp)\n\t"
+	      "jnl .Llt_fallthru\n\t"
+	      ".Llt_jump:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx\n\t"
+	      /* jmp, but don't trust the assembler to choose the right jump */
+	      ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	      ".Llt_fallthru:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx");
+
+  if (offset_p)
+    *offset_p = 20;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+i386_emit_le_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM32 (le,
+	      "cmpl %ebx,4(%esp)\n\t"
+	      "jle .Lle_jump\n\t"
+	      "jne .Lle_fallthru\n\t"
+	      "cmpl %eax,(%esp)\n\t"
+	      "jnle .Lle_fallthru\n\t"
+	      ".Lle_jump:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx\n\t"
+	      /* jmp, but don't trust the assembler to choose the right jump */
+	      ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	      ".Lle_fallthru:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx");
+
+  if (offset_p)
+    *offset_p = 20;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+i386_emit_gt_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM32 (gt,
+	      "cmpl %ebx,4(%esp)\n\t"
+	      "jg .Lgt_jump\n\t"
+	      "jne .Lgt_fallthru\n\t"
+	      "cmpl %eax,(%esp)\n\t"
+	      "jng .Lgt_fallthru\n\t"
+	      ".Lgt_jump:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx\n\t"
+	      /* jmp, but don't trust the assembler to choose the right jump */
+	      ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	      ".Lgt_fallthru:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx");
+
+  if (offset_p)
+    *offset_p = 20;
+  if (size_p)
+    *size_p = 4;
+}
+
+void
+i386_emit_ge_goto (int *offset_p, int *size_p)
+{
+  EMIT_ASM32 (ge,
+	      "cmpl %ebx,4(%esp)\n\t"
+	      "jge .Lge_jump\n\t"
+	      "jne .Lge_fallthru\n\t"
+	      "cmpl %eax,(%esp)\n\t"
+	      "jnge .Lge_fallthru\n\t"
+	      ".Lge_jump:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx\n\t"
+	      /* jmp, but don't trust the assembler to choose the right jump */
+	      ".byte 0xe9, 0x0, 0x0, 0x0, 0x0\n\t"
+	      ".Lge_fallthru:\n\t"
+	      "lea 0x8(%esp),%esp\n\t"
+	      "pop %eax\n\t"
+	      "pop %ebx");
+
+  if (offset_p)
+    *offset_p = 20;
+  if (size_p)
+    *size_p = 4;
 }
 
 struct emit_ops i386_emit_ops =
@@ -2529,7 +3153,13 @@ struct emit_ops i386_emit_ops =
     i386_emit_swap,
     i386_emit_stack_adjust,
     i386_emit_int_call_1,
-    i386_emit_void_call_2
+    i386_emit_void_call_2,
+    i386_emit_eq_goto,
+    i386_emit_ne_goto,
+    i386_emit_lt_goto,
+    i386_emit_le_goto,
+    i386_emit_gt_goto,
+    i386_emit_ge_goto
   };
 
 
@@ -2556,6 +3186,8 @@ struct linux_target_ops the_low_target =
   NULL,
   NULL,
   NULL,
+  NULL,
+  NULL, /* fetch_register */
   x86_get_pc,
   x86_set_pc,
   x86_breakpoint,
@@ -2581,5 +3213,6 @@ struct linux_target_ops the_low_target =
   x86_supports_tracepoints,
   x86_get_thread_area,
   x86_install_fast_tracepoint_jump_pad,
-  x86_emit_ops
+  x86_emit_ops,
+  x86_get_min_fast_tracepoint_insn_len,
 };

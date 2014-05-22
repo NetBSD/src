@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,6 @@
 # Test GDB bug report 11531.
 # This is a problem related to CANNOT_STEP_HW_WATCHPOINTS macro.
 # It affects Solaris native targets.
-
-if $tracelevel then {
-	strace $tracelevel
-}
 
 
 set testfile "gdb11531"

@@ -1,4 +1,4 @@
-@c Copyright 2001, 2002, 2003, 2006 Free Software Foundation, Inc.
+@c Copyright 2001, 2002, 2003, 2006, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c MMIX description by Hans-Peter Nilsson, hp@bitrange.com
@@ -172,7 +172,10 @@ specified, the rest of the line is ignored, treated as a comment.
 The characters @samp{*} and @samp{#} are line comment characters; each
 start a comment at the beginning of a line, but only at the beginning of a
 line.  A @samp{#} prefixes a hexadecimal number if found elsewhere on a
-line.
+line.  If a @samp{#} appears at the start of a line the whole line is
+treated as a comment, but the line can also act as a logical line
+number directive (@pxref{Comments}) or a preprocessor control command
+(@pxref{Preprocessing}).
 
 Two other characters, @samp{%} and @samp{!}, each start a comment anywhere
 on the line.  Thus you can't use the @samp{modulus} and @samp{not}

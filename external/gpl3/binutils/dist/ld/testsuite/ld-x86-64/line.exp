@@ -1,6 +1,6 @@
 # Test that the linker reports undefined symbol line number correctly.
 #
-#   Copyright 2007  Free Software Foundation, Inc.
+#   Copyright 2007, 2012  Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -20,8 +20,15 @@
 # MA 02110-1301, USA.
 
 if { !([istarget "x86_64-*-elf*"]
+       || [istarget "x86_64-*-nacl*"]
        || [istarget "x86_64-*-linux*"]) } {
     return
+}
+
+if [istarget "*-*-nacl*"] {
+    set emul "elf_x86_64_nacl"
+} else {
+    set emul "elf_x86_64"
 }
 
 set testline "undefined line"
@@ -36,8 +43,8 @@ remote_file host delete "tmpdir/undefined"
 
 # Using -e start prevents the SunOS linker from trying to build a
 # shared library.
-send_log "$ld -e start -melf_x86_64 -o tmpdir/undefined tmpdir/undefined.o\n"
-set exec_output [run_host_cmd "$ld" "-e start -melf_x86_64 -o tmpdir/undefined tmpdir/undefined.o"]
+send_log "$ld -e start -m$emul -o tmpdir/undefined tmpdir/undefined.o\n"
+set exec_output [run_host_cmd "$ld" "-e start -m$emul -o tmpdir/undefined tmpdir/undefined.o"]
 
 send_log "$exec_output\n"
 verbose "$exec_output"

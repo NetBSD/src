@@ -35,9 +35,6 @@ MODULE_INSTALL_FN dv_sockser_install;
 #define SIM_BREAKPOINT { 0x10, 0xf1 }
 #define SIM_BREAKPOINT_SIZE 2
 #endif
-#if 0
-#define HAVE_DV_SOCKSER
-#endif
 
 /* This is a global setting.  Different cpu families can't mix-n-match -scache
    and -pbb.  However some cpu families may use -simple while others use

@@ -13,7 +13,7 @@ Relocation section '\.rela\.text' at offset 0x... contains 5 entries:
 0+46 +.* R_MMIX_16 +0+ +target2 +\+ 30
 0+48 +.* R_MMIX_ADDR27 +0+ +target3 +\+ 38
 0+54 +.* R_MMIX_ADDR19 +0+ +target3 +\+ 0
-0+78 +.* R_MMIX_LOCAL +0+30
+0+78 +.* R_MMIX_LOCAL +30
 
 Symbol table '\.symtab' contains 12 entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name

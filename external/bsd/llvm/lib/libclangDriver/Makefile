@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.6.2 2012/10/30 18:55:54 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.6.3 2014/05/22 16:14:46 yamt Exp $
 
 LIB=	clangDriver
 
@@ -7,16 +7,14 @@ LIB=	clangDriver
 .PATH: ${CLANG_SRCDIR}/lib/Driver
 
 SRCS+=	Action.cpp \
-	Arg.cpp \
-	ArgList.cpp \
 	CC1AsOptions.cpp \
 	Compilation.cpp \
 	Driver.cpp \
 	DriverOptions.cpp \
 	Job.cpp \
-	Option.cpp \
-	OptTable.cpp \
+	Multilib.cpp \
 	Phases.cpp \
+	SanitizerArgs.cpp \
 	Tool.cpp \
 	ToolChain.cpp \
 	ToolChains.cpp \

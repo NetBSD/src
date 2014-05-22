@@ -14,10 +14,6 @@ main(argc, argv)
 #endif
 {
   int i = 1;
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
 
   if (argc <= 0 || argc > 8)
     return -1;

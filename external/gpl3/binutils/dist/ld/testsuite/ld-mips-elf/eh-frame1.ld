@@ -13,7 +13,7 @@ SECTIONS
   . = 0x30000;
   .eh_frame : { *(.eh_frame) }
   .got : { *(.got) }
-  .gcc_compiled_long32 : { *(.gcc_compiled_long32) }
+  .gcc_compiled_long32 : { KEEP (*(.gcc_compiled_long32)) }
 
   /DISCARD/ : { *(*) }
 }

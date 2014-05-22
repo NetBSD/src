@@ -44,14 +44,22 @@ if { [istarget "hppa64-*-*"] || [istarget "v850-*-*"] } {
     return
 }
 
+set as_opt ""
+
+# This target requires extra as options when building code for shared
+# libraries.
+if { [istarget "tic6x-*-*"] } {
+    set as_opt "-mpic -mpid=near"
+}
+
 set test1	"read-only .eh_frame section"
 set test2	"read-only .gcc_except_table section"
 
 global as
 global ld
 
-if { ![ld_assemble $as $srcdir/$subdir/tbss.s tmpdir/tbss.o ]
-     || ![ld_assemble $as $srcdir/$subdir/frame.s tmpdir/frame.o] } {
+if { ![ld_assemble_flags $as $as_opt $srcdir/$subdir/tbss.s tmpdir/tbss.o ]
+     || ![ld_assemble_flags $as $as_opt $srcdir/$subdir/frame.s tmpdir/frame.o] } {
     unresolved "$test1"
     return
 }
@@ -66,7 +74,7 @@ if { [ld_simple_link $ld tmpdir/frame.so "--shared tmpdir/frame.o tmpdir/tbss.o"
     }
 }
 
-if ![ld_assemble $as $srcdir/$subdir/table.s tmpdir/table.o ] {
+if ![ld_assemble_flags $as $as_opt $srcdir/$subdir/table.s tmpdir/table.o ] {
     unresolved "$test2"
     return
 }

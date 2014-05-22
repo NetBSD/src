@@ -1,4 +1,4 @@
-/* Copyright (C) 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of the GNU OpenMP Library (libgomp).
@@ -34,7 +34,10 @@ void *
 gomp_ptrlock_get_slow (gomp_ptrlock_t *ptrlock)
 {
   int *intptr;
-  __sync_bool_compare_and_swap (ptrlock, 1, 2);
+  uintptr_t oldval = 1;
+
+  __atomic_compare_exchange_n (ptrlock, &oldval, 2, false,
+			       MEMMODEL_RELAXED, MEMMODEL_RELAXED);
 
   /* futex works on ints, not pointers.
      But a valid work share pointer will be at least
@@ -47,17 +50,16 @@ gomp_ptrlock_get_slow (gomp_ptrlock_t *ptrlock)
 #endif
   do
     do_wait (intptr, 2);
-  while (*intptr == 2);
+  while (__atomic_load_n (intptr, MEMMODEL_RELAXED) == 2);
   __asm volatile ("" : : : "memory");
-  return *ptrlock;
+  return (void *) __atomic_load_n (ptrlock, MEMMODEL_ACQUIRE);
 }
 
 void
-gomp_ptrlock_set_slow (gomp_ptrlock_t *ptrlock, void *ptr)
+gomp_ptrlock_set_slow (gomp_ptrlock_t *ptrlock)
 {
   int *intptr;
 
-  *ptrlock = ptr;
   __asm volatile ("" : "=r" (intptr) : "0" (ptrlock));
 #if __BYTE_ORDER == __BIG_ENDIAN
   if (sizeof (*ptrlock) > sizeof (int))

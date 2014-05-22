@@ -2,14 +2,8 @@
  * wpa_supplicant - IBSS RSN
  * Copyright (c) 2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -22,6 +16,18 @@
 #include "wpa_supplicant_i.h"
 #include "driver_i.h"
 #include "ibss_rsn.h"
+
+
+static struct ibss_rsn_peer * ibss_rsn_get_peer(struct ibss_rsn *ibss_rsn,
+						const u8 *addr)
+{
+	struct ibss_rsn_peer *peer;
+
+	for (peer = ibss_rsn->peers; peer; peer = peer->next)
+		if (os_memcmp(addr, peer->addr, ETH_ALEN) == 0)
+			break;
+	return peer;
+}
 
 
 static void ibss_rsn_free(struct ibss_rsn_peer *peer)
@@ -168,8 +174,8 @@ static void supp_deauthenticate(void * ctx, int reason_code)
 }
 
 
-int ibss_rsn_supp_init(struct ibss_rsn_peer *peer, const u8 *own_addr,
-		       const u8 *psk)
+static int ibss_rsn_supp_init(struct ibss_rsn_peer *peer, const u8 *own_addr,
+			      const u8 *psk)
 {
 	struct wpa_sm_ctx *ctx = os_zalloc(sizeof(*ctx));
 	if (ctx == NULL)
@@ -308,6 +314,53 @@ static int auth_for_each_sta(void *ctx, int (*cb)(struct wpa_state_machine *sm,
 }
 
 
+static void ibss_set_sta_authorized(struct ibss_rsn *ibss_rsn,
+				    struct ibss_rsn_peer *peer, int authorized)
+{
+	int res;
+
+	if (authorized) {
+		res = wpa_drv_sta_set_flags(ibss_rsn->wpa_s, peer->addr,
+					    WPA_STA_AUTHORIZED,
+					    WPA_STA_AUTHORIZED, ~0);
+		wpa_printf(MSG_DEBUG, "AUTH: " MACSTR " authorizing port",
+			   MAC2STR(peer->addr));
+	} else {
+		res = wpa_drv_sta_set_flags(ibss_rsn->wpa_s, peer->addr,
+					    0, 0, ~WPA_STA_AUTHORIZED);
+		wpa_printf(MSG_DEBUG, "AUTH: " MACSTR " unauthorizing port",
+			   MAC2STR(peer->addr));
+	}
+
+	if (res && errno != ENOENT) {
+		wpa_printf(MSG_DEBUG, "Could not set station " MACSTR " flags "
+			   "for kernel driver (errno=%d)",
+			   MAC2STR(peer->addr), errno);
+	}
+}
+
+
+static void auth_set_eapol(void *ctx, const u8 *addr,
+				       wpa_eapol_variable var, int value)
+{
+	struct ibss_rsn *ibss_rsn = ctx;
+	struct ibss_rsn_peer *peer = ibss_rsn_get_peer(ibss_rsn, addr);
+
+	if (peer == NULL)
+		return;
+
+	switch (var) {
+	case WPA_EAPOL_authorized:
+		ibss_set_sta_authorized(ibss_rsn, peer, value);
+		break;
+	default:
+		/* do not handle any other event */
+		wpa_printf(MSG_DEBUG, "AUTH: eapol event not handled %d", var);
+		break;
+	}
+}
+
+
 static int ibss_rsn_auth_init_group(struct ibss_rsn *ibss_rsn,
 				    const u8 *own_addr)
 {
@@ -328,6 +381,7 @@ static int ibss_rsn_auth_init_group(struct ibss_rsn *ibss_rsn,
 	os_memset(&cb, 0, sizeof(cb));
 	cb.ctx = ibss_rsn;
 	cb.logger = auth_logger;
+	cb.set_eapol = auth_set_eapol;
 	cb.send_eapol = auth_send_eapol;
 	cb.get_psk = auth_get_psk;
 	cb.set_key = auth_set_key;
@@ -383,13 +437,11 @@ int ibss_rsn_start(struct ibss_rsn *ibss_rsn, const u8 *addr)
 	if (ibss_rsn == NULL)
 		return -1;
 
-	for (peer = ibss_rsn->peers; peer; peer = peer->next) {
-		if (os_memcmp(addr, peer->addr, ETH_ALEN) == 0) {
-			wpa_printf(MSG_DEBUG, "RSN: IBSS Authenticator and "
-				   "Supplicant for peer " MACSTR " already "
-				   "running", MAC2STR(addr));
-			return 0;
-		}
+	if (ibss_rsn_get_peer(ibss_rsn, addr)) {
+		wpa_printf(MSG_DEBUG, "RSN: IBSS Authenticator and Supplicant "
+			   "for peer " MACSTR " already running",
+			   MAC2STR(addr));
+		return 0;
 	}
 
 	wpa_printf(MSG_DEBUG, "RSN: Starting IBSS Authenticator and "
@@ -577,11 +629,9 @@ int ibss_rsn_rx_eapol(struct ibss_rsn *ibss_rsn, const u8 *src_addr,
 	if (ibss_rsn == NULL)
 		return -1;
 
-	for (peer = ibss_rsn->peers; peer; peer = peer->next) {
-		if (os_memcmp(src_addr, peer->addr, ETH_ALEN) == 0)
-			return ibss_rsn_process_rx_eapol(ibss_rsn, peer,
-							 buf, len);
-	}
+	peer = ibss_rsn_get_peer(ibss_rsn, src_addr);
+	if (peer)
+		return ibss_rsn_process_rx_eapol(ibss_rsn, peer, buf, len);
 
 	if (ibss_rsn_eapol_dst_supp(buf, len) > 0) {
 		/*

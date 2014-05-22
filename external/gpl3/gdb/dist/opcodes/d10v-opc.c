@@ -1,5 +1,5 @@
 /* d10v-opc.c -- D10V opcode list
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2005, 2007
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
@@ -20,8 +20,8 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include <stdio.h>
 #include "sysdep.h"
+#include <stdio.h>
 #include "opcode/d10v.h"
 
 

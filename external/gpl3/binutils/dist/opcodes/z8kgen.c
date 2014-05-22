@@ -1,4 +1,5 @@
-/* Copyright 2001, 2002, 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
+/* Copyright 2001, 2002, 2003, 2005, 2007, 2009, 2012
+   Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -19,8 +20,8 @@
 
 /* This program generates z8k-opc.h.  */
 
-#include <stdio.h>
 #include "sysdep.h"
+#include <stdio.h>
 #include "libiberty.h"
 
 #define BYTE_INFO_LEN 10
@@ -513,15 +514,14 @@ static struct op opt[] =
   {"-ZS---", 17, 32, "0101 1100 ddN0 1000 address_dst", "testl address_dst(rd)", 0},
   {"-ZS---", 13, 32, "1001 1100 dddd 1000", "testl rrd", 0},
 
-  {"-ZSV--", 25, 8, "1011 1000 ddN0 1000 0000 aaaa ssN0 0000", "trdb @rd,@rs,rba", 0},
-  {"-ZSV--", 25, 8, "1011 1000 ddN0 1100 0000 aaaa ssN0 0000", "trdrb @rd,@rs,rba", 0},
-  {"-ZSV--", 25, 8, "1011 1000 ddN0 0000 0000 rrrr ssN0 0000", "trib @rd,@rs,rbr", 0},
-  {"-ZSV--", 25, 8, "1011 1000 ddN0 0100 0000 rrrr ssN0 0000", "trirb @rd,@rs,rbr", 0},
-  {"-ZSV--", 25, 8, "1011 1000 aaN0 1010 0000 rrrr bbN0 0000", "trtdb @ra,@rb,rbr", 0},
-  {"-ZSV--", 25, 8, "1011 1000 aaN0 1110 0000 rrrr bbN0 1110", "trtdrb @ra,@rb,rbr", 0},
-  {"-ZSV--", 25, 8, "1011 1000 aaN0 0010 0000 rrrr bbN0 0000", "trtib @ra,@rb,rbr", 0},
-  {"-ZSV--", 25, 8, "1011 1000 aaN0 0110 0000 rrrr bbN0 1110", "trtirb @ra,@rb,rbr", 0},
-  {"-ZSV--", 25, 8, "1011 1000 aaN0 1010 0000 rrrr bbN0 0000", "trtrb @ra,@rb,rbr", 0},
+  {"---V--", 25, 8, "1011 1000 ddN0 1000 0000 rrrr ssN0 0000", "trdb @rd,@rs,rr", 0},
+  {"---V--", 25, 8, "1011 1000 ddN0 1100 0000 rrrr ssN0 0000", "trdrb @rd,@rs,rr", 0},
+  {"---V--", 25, 8, "1011 1000 ddN0 0000 0000 rrrr ssN0 0000", "trib @rd,@rs,rr", 0},
+  {"---V--", 25, 8, "1011 1000 ddN0 0100 0000 rrrr ssN0 0000", "trirb @rd,@rs,rr", 0},
+  {"-Z-V--", 25, 8, "1011 1000 aaN0 1010 0000 rrrr bbN0 0000", "trtdb @ra,@rb,rr", 0},
+  {"-Z-V--", 25, 8, "1011 1000 aaN0 1110 0000 rrrr bbN0 1110", "trtdrb @ra,@rb,rr", 0},
+  {"-Z-V--", 25, 8, "1011 1000 aaN0 0010 0000 rrrr bbN0 0000", "trtib @ra,@rb,rr", 0},
+  {"-Z-V--", 25, 8, "1011 1000 aaN0 0110 0000 rrrr bbN0 1110", "trtirb @ra,@rb,rr", 0},
 
   {"--S---", 11, 16, "0000 1101 ddN0 0110", "tset @rd", 0},
   {"--S---", 14, 16, "0100 1101 0000 0110 address_dst", "tset address_dst", 0},

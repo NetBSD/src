@@ -14,6 +14,8 @@ int do_loops()
     int k=0;
     int j=0;
     float f=3.1415;
+    int *p_i = &i;
+
     for( i = 0; i < LOOP; i++ ) { /* set breakpoint 1 here */
         for( j = 0; j < LOOP; j++ ) {
             for( k = 0; k < LOOP; k++ ) {

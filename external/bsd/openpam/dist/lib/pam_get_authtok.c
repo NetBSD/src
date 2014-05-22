@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_get_authtok.c,v 1.2.4.2 2012/04/17 00:03:59 yamt Exp $	*/
+/*	$NetBSD: pam_get_authtok.c,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_get_authtok.c 455 2011-10-29 18:31:11Z des
+ * Id: pam_get_authtok.c 670 2013-03-17 19:26:07Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -52,6 +52,7 @@
 #include "openpam_impl.h"
 
 static const char authtok_prompt[] = "Password:";
+static const char authtok_prompt_remote[] = "Password for %u@%h:";
 static const char oldauthtok_prompt[] = "Old Password:";
 static const char newauthtok_prompt[] = "New Password:";
 
@@ -71,6 +72,7 @@ pam_get_authtok(pam_handle_t *pamh,
 	size_t prompt_size;
 	const void *oldauthtok, *prevauthtok, *promptp;
 	const char *prompt_option, *default_prompt;
+	const void *lhost, *rhost;
 	char *resp, *resp2;
 	int pitem, r, style, twice;
 
@@ -84,6 +86,14 @@ pam_get_authtok(pam_handle_t *pamh,
 		pitem = PAM_AUTHTOK_PROMPT;
 		prompt_option = "authtok_prompt";
 		default_prompt = authtok_prompt;
+		r = pam_get_item(pamh, PAM_RHOST, &rhost);
+		if (r == PAM_SUCCESS && rhost != NULL) {
+			r = pam_get_item(pamh, PAM_HOST, &lhost);
+			if (r == PAM_SUCCESS && lhost != NULL) {
+				if (strcmp(rhost, lhost) != 0)
+					default_prompt = authtok_prompt_remote;
+			}
+		}
 		r = pam_get_item(pamh, PAM_OLDAUTHTOK, &oldauthtok);
 		if (r == PAM_SUCCESS && oldauthtok != NULL) {
 			default_prompt = newauthtok_prompt;
@@ -105,9 +115,9 @@ pam_get_authtok(pam_handle_t *pamh,
 		if (r == PAM_SUCCESS && prevauthtok != NULL) {
 			*authtok = prevauthtok;
 			RETURNC(PAM_SUCCESS);
-		}
-		else if (openpam_get_option(pamh, "use_first_pass"))
+		} else if (openpam_get_option(pamh, "use_first_pass")) {
 			RETURNC(r == PAM_SUCCESS ? PAM_AUTH_ERR : r);
+		}
 	}
 	/* pam policy overrides the module's choice */
 	if ((promptp = openpam_get_option(pamh, prompt_option)) != NULL)
@@ -166,10 +176,12 @@ pam_get_authtok(pam_handle_t *pamh,
  */
 
 /**
- * The =pam_get_authtok function returns the cached authentication token,
- * or prompts the user if no token is currently cached.
+ * The =pam_get_authtok function either prompts the user for an
+ * authentication token or retrieves a cached authentication token,
+ * depending on circumstances.
  * Either way, a pointer to the authentication token is stored in the
- * location pointed to by the =authtok argument.
+ * location pointed to by the =authtok argument, and the corresponding PAM
+ * item is updated.
  *
  * The =item argument must have one of the following values:
  *
@@ -184,20 +196,47 @@ pam_get_authtok(pam_handle_t *pamh,
  * If it is =NULL, the =PAM_AUTHTOK_PROMPT or =PAM_OLDAUTHTOK_PROMPT item,
  * as appropriate, will be used.
  * If that item is also =NULL, a hardcoded default prompt will be used.
- * Either way, the prompt is expanded using =openpam_subst before it is
- * passed to the conversation function.
- *
- * If =pam_get_authtok is called from a module and the ;authtok_prompt /
- * ;oldauthtok_prompt option is set in the policy file, the value of that
- * option takes precedence over both the =prompt argument and the
- * =PAM_AUTHTOK_PROMPT / =PAM_OLDAUTHTOK_PROMPT item.
+ * Additionally, when =pam_get_authtok is called from a service module,
+ * the prompt may be affected by module options as described below.
+ * The prompt is then expanded using =openpam_subst before it is passed to
+ * the conversation function.
  *
  * If =item is set to =PAM_AUTHTOK and there is a non-null =PAM_OLDAUTHTOK
  * item, =pam_get_authtok will ask the user to confirm the new token by
  * retyping it.
  * If there is a mismatch, =pam_get_authtok will return =PAM_TRY_AGAIN.
  *
+ * MODULE OPTIONS
+ *
+ * When called by a service module, =pam_get_authtok will recognize the
+ * following module options:
+ *
+ *	;authtok_prompt:
+ *		Prompt to use when =item is set to =PAM_AUTHTOK.
+ *		This option overrides both the =prompt argument and the
+ *		=PAM_AUTHTOK_PROMPT item.
+ *	;echo_pass:
+ *		If the application's conversation function allows it, this
+ *		lets the user see what they are typing.
+ *		This should only be used for non-reusable authentication
+ *		tokens.
+ *	;oldauthtok_prompt:
+ *		Prompt to use when =item is set to =PAM_OLDAUTHTOK.
+ *		This option overrides both the =prompt argument and the
+ *		=PAM_OLDAUTHTOK_PROMPT item.
+ *	;try_first_pass:
+ *		If the requested item is non-null, return it without
+ *		prompting the user.
+ *		Typically, the service module will verify the token, and
+ *		if it does not match, clear the item before calling
+ *		=pam_get_authtok a second time.
+ *	;use_first_pass:
+ *		Do not prompt the user at all; just return the cached
+ *		value, or =PAM_AUTH_ERR if there is none.
+ *
+ * >pam_conv
  * >pam_get_item
  * >pam_get_user
+ * >openpam_get_option
  * >openpam_subst
  */

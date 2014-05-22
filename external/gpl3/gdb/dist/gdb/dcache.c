@@ -1,7 +1,6 @@
 /* Caching code for GDB, the GNU debugger.
 
-   Copyright (C) 1992, 1993, 1995, 1996, 1998, 1999, 2000, 2001, 2003, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +25,10 @@
 #include "target.h"
 #include "inferior.h"
 #include "splay-tree.h"
+
+/* Commands with a prefix of `{set,show} dcache'.  */
+static struct cmd_list_element *dcache_set_list = NULL;
+static struct cmd_list_element *dcache_show_list = NULL;
 
 /* The data cache could lead to incorrect results because it doesn't
    know about volatile variables, thus making it impossible to debug
@@ -71,20 +74,21 @@
 
 /* The maximum number of lines stored.  The total size of the cache is
    equal to DCACHE_SIZE times LINE_SIZE.  */
-#define DCACHE_SIZE 4096
+#define DCACHE_DEFAULT_SIZE 4096
+static unsigned dcache_size = DCACHE_DEFAULT_SIZE;
 
-/* The size of a cache line.  Smaller values reduce the time taken to
+/* The default size of a cache line.  Smaller values reduce the time taken to
    read a single byte and make the cache more granular, but increase
    overhead and reduce the effectiveness of the cache as a prefetcher.  */
-#define LINE_SIZE_POWER 6
-#define LINE_SIZE (1 << LINE_SIZE_POWER)
+#define DCACHE_DEFAULT_LINE_SIZE 64
+static unsigned dcache_line_size = DCACHE_DEFAULT_LINE_SIZE;
 
 /* Each cache block holds LINE_SIZE bytes of data
    starting at a multiple-of-LINE_SIZE address.  */
 
-#define LINE_SIZE_MASK  ((LINE_SIZE - 1))
-#define XFORM(x) 	((x) & LINE_SIZE_MASK)
-#define MASK(x)         ((x) & ~LINE_SIZE_MASK)
+#define LINE_SIZE_MASK(dcache)  ((dcache->line_size - 1))
+#define XFORM(dcache, x) 	((x) & LINE_SIZE_MASK (dcache))
+#define MASK(dcache, x)         ((x) & ~LINE_SIZE_MASK (dcache))
 
 struct dcache_block
 {
@@ -93,8 +97,8 @@ struct dcache_block
   struct dcache_block *next;
 
   CORE_ADDR addr;		/* address of data */
-  gdb_byte data[LINE_SIZE];	/* bytes at given address */
   int refs;			/* # hits */
+  gdb_byte data[1];		/* line_size bytes at given address */
 };
 
 struct dcache_struct
@@ -108,6 +112,7 @@ struct dcache_struct
 
   /* The number of in-use lines in the cache.  */
   int size;
+  CORE_ADDR line_size;  /* current line_size.  */
 
   /* The ptid of last inferior to use cache or null_ptid.  */
   ptid_t ptid;
@@ -207,6 +212,29 @@ for_each_block (struct dcache_block **blist, block_func *func, void *param)
   while (*blist && db != *blist);
 }
 
+/* BLOCK_FUNC routine for dcache_free.  */
+
+static void
+free_block (struct dcache_block *block, void *param)
+{
+  xfree (block);
+}
+
+/* Free a data cache.  */
+
+void
+dcache_free (DCACHE *dcache)
+{
+  if (last_cache == dcache)
+    last_cache = NULL;
+
+  splay_tree_delete (dcache->tree);
+  for_each_block (&dcache->oldest, free_block, NULL);
+  for_each_block (&dcache->freelist, free_block, NULL);
+  xfree (dcache);
+}
+
+
 /* BLOCK_FUNC function for dcache_invalidate.
    This doesn't remove the block from the oldest list on purpose.
    dcache_invalidate will do it later.  */
@@ -230,6 +258,16 @@ dcache_invalidate (DCACHE *dcache)
   dcache->oldest = NULL;
   dcache->size = 0;
   dcache->ptid = null_ptid;
+
+  if (dcache->line_size != dcache_line_size)
+    {
+      /* We've been asked to use a different line size.
+	 All of our freelist blocks are now the wrong size, so free them.  */
+
+      for_each_block (&dcache->freelist, free_block, dcache);
+      dcache->freelist = NULL;
+      dcache->line_size = dcache_line_size;
+    }
 }
 
 /* Invalidate the line associated with ADDR.  */
@@ -257,7 +295,7 @@ dcache_hit (DCACHE *dcache, CORE_ADDR addr)
   struct dcache_block *db;
 
   splay_tree_node node = splay_tree_lookup (dcache->tree,
-					    (splay_tree_key) MASK (addr));
+					    (splay_tree_key) MASK (dcache, addr));
 
   if (!node)
     return NULL;
@@ -281,7 +319,7 @@ dcache_read_line (DCACHE *dcache, struct dcache_block *db)
   int reg_len;
   struct mem_region *region;
 
-  len = LINE_SIZE;
+  len = dcache->line_size;
   memaddr = db->addr;
   myaddr  = db->data;
 
@@ -325,7 +363,7 @@ dcache_alloc (DCACHE *dcache, CORE_ADDR addr)
 {
   struct dcache_block *db;
 
-  if (dcache->size >= DCACHE_SIZE)
+  if (dcache->size >= dcache_size)
     {
       /* Evict the least recently allocated line.  */
       db = dcache->oldest;
@@ -339,12 +377,13 @@ dcache_alloc (DCACHE *dcache, CORE_ADDR addr)
       if (db)
 	remove_block (&dcache->freelist, db);
       else
-	db = xmalloc (sizeof (struct dcache_block));
+	db = xmalloc (offsetof (struct dcache_block, data) +
+		      dcache->line_size);
 
       dcache->size++;
     }
 
-  db->addr = MASK (addr);
+  db->addr = MASK (dcache, addr);
   db->refs = 0;
 
   /* Put DB at the end of the list, it's the newest.  */
@@ -374,7 +413,7 @@ dcache_peek_byte (DCACHE *dcache, CORE_ADDR addr, gdb_byte *ptr)
          return 0;
     }
 
-  *ptr = db->data[XFORM (addr)];
+  *ptr = db->data[XFORM (dcache, addr)];
   return 1;
 }
 
@@ -395,7 +434,7 @@ dcache_poke_byte (DCACHE *dcache, CORE_ADDR addr, gdb_byte *ptr)
   struct dcache_block *db = dcache_hit (dcache, addr);
 
   if (db)
-    db->data[XFORM (addr)] = *ptr;
+    db->data[XFORM (dcache, addr)] = *ptr;
 
   return 1;
 }
@@ -427,33 +466,13 @@ dcache_init (void)
   dcache->oldest = NULL;
   dcache->freelist = NULL;
   dcache->size = 0;
+  dcache->line_size = dcache_line_size;
   dcache->ptid = null_ptid;
   last_cache = dcache;
 
   return dcache;
 }
 
-/* BLOCK_FUNC routine for dcache_free.  */
-
-static void
-free_block (struct dcache_block *block, void *param)
-{
-  free (block);
-}
-
-/* Free a data cache.  */
-
-void
-dcache_free (DCACHE *dcache)
-{
-  if (last_cache == dcache)
-    last_cache = NULL;
-
-  splay_tree_delete (dcache->tree);
-  for_each_block (&dcache->oldest, free_block, NULL);
-  for_each_block (&dcache->freelist, free_block, NULL);
-  xfree (dcache);
-}
 
 /* Read or write LEN bytes from inferior memory at MEMADDR, transferring
    to or from debugger address MYADDR.  Write to inferior if SHOULD_WRITE is
@@ -569,14 +588,14 @@ dcache_print_line (int index)
   db = (struct dcache_block *) n->value;
 
   printf_filtered (_("Line %d: address %s [%d hits]\n"),
-		   index, paddress (target_gdbarch, db->addr), db->refs);
+		   index, paddress (target_gdbarch (), db->addr), db->refs);
 
-  for (j = 0; j < LINE_SIZE; j++)
+  for (j = 0; j < last_cache->line_size; j++)
     {
       printf_filtered ("%02x ", db->data[j]);
 
       /* Print a newline every 16 bytes (48 characters).  */
-      if ((j % 16 == 15) && (j != LINE_SIZE - 1))
+      if ((j % 16 == 15) && (j != last_cache->line_size - 1))
 	printf_filtered ("\n");
     }
   printf_filtered ("\n");
@@ -603,8 +622,10 @@ dcache_info (char *exp, int tty)
       return;
     }
 
-  printf_filtered (_("Dcache line width %d, maximum size %d\n"),
-		   LINE_SIZE, DCACHE_SIZE);
+  printf_filtered (_("Dcache %u lines of %u bytes each.\n"),
+		   dcache_size,
+		   last_cache ? (unsigned) last_cache->line_size
+		   : dcache_line_size);
 
   if (!last_cache || ptid_equal (last_cache->ptid, null_ptid))
     {
@@ -625,7 +646,7 @@ dcache_info (char *exp, int tty)
       struct dcache_block *db = (struct dcache_block *) n->value;
 
       printf_filtered (_("Line %d: address %s [%d hits]\n"),
-		       i, paddress (target_gdbarch, db->addr), db->refs);
+		       i, paddress (target_gdbarch (), db->addr), db->refs);
       i++;
       refcount += db->refs;
 
@@ -633,6 +654,48 @@ dcache_info (char *exp, int tty)
     }
 
   printf_filtered (_("Cache state: %d active lines, %d hits\n"), i, refcount);
+}
+
+static void
+set_dcache_size (char *args, int from_tty,
+		 struct cmd_list_element *c)
+{
+  if (dcache_size == 0)
+    {
+      dcache_size = DCACHE_DEFAULT_SIZE;
+      error (_("Dcache size must be greater than 0."));
+    }
+  if (last_cache)
+    dcache_invalidate (last_cache);
+}
+
+static void
+set_dcache_line_size (char *args, int from_tty,
+		      struct cmd_list_element *c)
+{
+  if (dcache_line_size < 2
+      || (dcache_line_size & (dcache_line_size - 1)) != 0)
+    {
+      unsigned d = dcache_line_size;
+      dcache_line_size = DCACHE_DEFAULT_LINE_SIZE;
+      error (_("Invalid dcache line size: %u (must be power of 2)."), d);
+    }
+  if (last_cache)
+    dcache_invalidate (last_cache);
+}
+
+static void
+set_dcache_command (char *arg, int from_tty)
+{
+  printf_unfiltered (
+     "\"set dcache\" must be followed by the name of a subcommand.\n");
+  help_list (dcache_set_list, "set dcache ", -1, gdb_stdout);
+}
+
+static void
+show_dcache_command (char *args, int from_tty)
+{
+  cmd_show_list (dcache_show_list, from_tty, "");
 }
 
 void
@@ -656,4 +719,28 @@ Print information on the dcache performance.\n\
 With no arguments, this command prints the cache configuration and a\n\
 summary of each line in the cache.  Use \"info dcache <lineno> to dump\"\n\
 the contents of a given line."));
+
+  add_prefix_cmd ("dcache", class_obscure, set_dcache_command, _("\
+Use this command to set number of lines in dcache and line-size."),
+		  &dcache_set_list, "set dcache ", /*allow_unknown*/0, &setlist);
+  add_prefix_cmd ("dcache", class_obscure, show_dcache_command, _("\
+Show dcachesettings."),
+		  &dcache_show_list, "show dcache ", /*allow_unknown*/0, &showlist);
+
+  add_setshow_uinteger_cmd ("line-size", class_obscure,
+			    &dcache_line_size, _("\
+Set dcache line size in bytes (must be power of 2)."), _("\
+Show dcache line size."),
+			    NULL,
+			    set_dcache_line_size,
+			    NULL,
+			    &dcache_set_list, &dcache_show_list);
+  add_setshow_uinteger_cmd ("size", class_obscure,
+			    &dcache_size, _("\
+Set number of dcache lines."), _("\
+Show number of dcache lines."),
+			    NULL,
+			    set_dcache_size,
+			    NULL,
+			    &dcache_set_list, &dcache_show_list);
 }

@@ -1,7 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -264,6 +263,18 @@ i386bsd_target (void)
 #define DBREG_DRX(d, x) ((&d->dr0)[x])
 #endif
 
+static unsigned long
+i386bsd_dr_get (ptid_t ptid, int regnum)
+{
+  struct dbreg dbregs;
+
+  if (ptrace (PT_GETDBREGS, PIDGET (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+    perror_with_name (_("Couldn't read debug registers"));
+
+  return DBREG_DRX ((&dbregs), regnum);
+}
+
 static void
 i386bsd_dr_set (int regnum, unsigned int value)
 {
@@ -299,37 +310,29 @@ i386bsd_dr_set_addr (int regnum, CORE_ADDR addr)
   i386bsd_dr_set (regnum, addr);
 }
 
-void
-i386bsd_dr_reset_addr (int regnum)
+CORE_ADDR
+i386bsd_dr_get_addr (int regnum)
 {
-  gdb_assert (regnum >= 0 && regnum <= 4);
-
-  i386bsd_dr_set (regnum, 0);
+  return i386bsd_dr_get (inferior_ptid, regnum);
 }
 
 unsigned long
 i386bsd_dr_get_status (void)
 {
-  struct dbreg dbregs;
+  return i386bsd_dr_get (inferior_ptid, 6);
+}
 
-  /* FIXME: kettenis/2001-03-31: Calling perror_with_name if the
-     ptrace call fails breaks debugging remote targets.  The correct
-     way to fix this is to add the hardware breakpoint and watchpoint
-     stuff to the target vector.  For now, just return zero if the
-     ptrace call fails.  */
-  if (ptrace (PT_GETDBREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &dbregs, TIDGET (inferior_ptid)) == -1)
-#if 0
-    perror_with_name (_("Couldn't read debug registers"));
-#else
-    return 0;
-#endif
-
-  return DBREG_DRX ((&dbregs), 6);
+unsigned long
+i386bsd_dr_get_control (void)
+{
+  return i386bsd_dr_get (inferior_ptid, 7);
 }
 
 #endif /* PT_GETDBREGS */
 
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_i386bsd_nat (void);
 
 void
 _initialize_i386bsd_nat (void)

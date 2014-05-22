@@ -1,6 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -71,6 +70,10 @@ enum gdb_regnum {
    code readability in this header.  IEEE extended doubles are 80
    bits.  DWORD aligned they use 96 bits.  */
 #define FP_REGISTER_SIZE	12
+
+/* Say how long VFP double precision registers are.  Used for documentation
+   purposes and code readability.  These are fixed at 64 bits.  */
+#define VFP_REGISTER_SIZE	8
 
 /* Number of machine registers.  The only define actually required 
    is gdbarch_num_regs.  The other definitions are used for documentation
@@ -191,7 +194,7 @@ struct gdbarch_tdep
   enum struct_return struct_return;
 
   /* Cached core file helpers.  */
-  struct regset *gregset, *fpregset;
+  struct regset *gregset, *fpregset, *vfpregset;
 
   /* ISA-specific data types.  */
   struct type *arm_ext_type;
@@ -201,6 +204,9 @@ struct gdbarch_tdep
   /* Return the expected next PC if FRAME is stopped at a syscall
      instruction.  */
   CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
+
+   /* Parse swi insn args, sycall record.  */
+  int (*arm_swi_record) (struct regcache *regcache);
 };
 
 /* Structures used for displaced stepping.  */
@@ -258,8 +264,7 @@ struct displaced_step_closure
     {
       /* If non-NULL, override generic SVC handling (e.g. for a particular
          OS).  */
-      int (*copy_svc_os) (struct gdbarch *gdbarch, uint32_t insn, CORE_ADDR to,
-			  struct regcache *regs,
+      int (*copy_svc_os) (struct gdbarch *gdbarch, struct regcache *regs,
 			  struct displaced_step_closure *dsc);
     } svc;
   } u;
@@ -314,6 +319,7 @@ CORE_ADDR arm_skip_stub (struct frame_info *, CORE_ADDR);
 CORE_ADDR arm_get_next_pc (struct frame_info *, CORE_ADDR);
 void arm_insert_single_step_breakpoint (struct gdbarch *,
 					struct address_space *, CORE_ADDR);
+int arm_deal_with_atomic_sequence (struct frame_info *);
 int arm_software_single_step (struct frame_info *);
 int arm_frame_is_thumb (struct frame_info *frame);
 
@@ -331,6 +337,8 @@ extern int arm_psr_thumb_bit (struct gdbarch *);
    instruction?  */
 extern int arm_pc_is_thumb (struct gdbarch *, CORE_ADDR);
 
+extern int arm_process_record (struct gdbarch *gdbarch, 
+                               struct regcache *regcache, CORE_ADDR addr);
 /* Functions exported from armbsd-tdep.h.  */
 
 /* Return the appropriate register set for the core section identified
@@ -339,5 +347,12 @@ extern int arm_pc_is_thumb (struct gdbarch *, CORE_ADDR);
 extern const struct regset *
   armbsd_regset_from_core_section (struct gdbarch *gdbarch,
 				   const char *sect_name, size_t sect_size);
+
+/* Target descriptions.  */
+extern struct target_desc *tdesc_arm_with_m;
+extern struct target_desc *tdesc_arm_with_iwmmxt;
+extern struct target_desc *tdesc_arm_with_vfpv2;
+extern struct target_desc *tdesc_arm_with_vfpv3;
+extern struct target_desc *tdesc_arm_with_neon;
 
 #endif /* arm-tdep.h */

@@ -9,23 +9,6 @@
 
 
 
-#if defined( ALPHA___EXTERN_PREFIX_CHECK )
-#if (defined(__DECC) || defined(__PRAGMA_EXTERN_PREFIX))
-#pragma extern_prefix "_P"
-#   if  (defined(__DECC) || defined(__PRAGMA_EXTERN_PREFIX))
-#     pragma extern_prefix "_E"
-# if !defined(_LIBC_POLLUTION_H_) &&  (defined(__DECC) || defined(__PRAGMA_EXTERN_PREFIX))
-#  pragma extern_prefix ""
-#endif  /* ALPHA___EXTERN_PREFIX_CHECK */
-
-
-#if defined( ALPHA_BAD_LVAL_CHECK )
-#pragma extern_prefix "_FOO"
-#define something _FOOsomething
-#define mumble _FOOmumble
-#endif  /* ALPHA_BAD_LVAL_CHECK */
-
-
 #if defined( AVOID_WCHAR_T_TYPE_CHECK )
 #ifndef __cplusplus
 typedef unsigned short	wchar_t 	;
@@ -120,3 +103,20 @@ extern unsigned int
 extern size_t
 	strlen(), strspn();
 #endif  /* SYSV68_STRING_CHECK */
+
+
+#if defined( VMS_USE_PRAGMA_EXTERN_MODEL_CHECK )
+#if defined(__DECC) || defined(__DECCXX) || defined(__GNUC__)
+# pragma extern_model __save
+# pragma extern_model strict_refdef
+   extern struct x zz;
+# pragma extern_model __restore
+#endif
+
+#endif  /* VMS_USE_PRAGMA_EXTERN_MODEL_CHECK */
+
+
+#if defined( VXWORKS_REGS_CHECK )
+#include <arch/../regs.h>
+
+#endif  /* VXWORKS_REGS_CHECK */

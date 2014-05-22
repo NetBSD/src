@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2010
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -39,19 +39,10 @@
 /* This file is compiled more than once, but we only compile the
    final_link routine once.  */
 extern bfd_boolean mcore_bfd_coff_final_link
-  PARAMS ((bfd *, struct bfd_link_info *));
+  (bfd *, struct bfd_link_info *);
 static bfd_reloc_status_type mcore_coff_unsupported_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static bfd_boolean coff_mcore_relocate_section
-  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-	   struct internal_reloc *, struct internal_syment *, asection **));
-static reloc_howto_type *mcore_coff_reloc_type_lookup
-  PARAMS ((bfd *, bfd_reloc_code_real_type));
-static reloc_howto_type *coff_mcore_rtype_to_howto
-  PARAMS ((bfd *, asection *, struct internal_reloc *,
-	   struct coff_link_hash_entry *, struct internal_syment *,
-	   bfd_vma *));
-static bfd_boolean in_reloc_p PARAMS ((bfd *, reloc_howto_type *));
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+
 
 /* The NT loader points the toc register to &toc + 32768, in order to
    use the complete range of a 16-bit displacement. We have to adjust
@@ -241,15 +232,13 @@ mcore_emit_base_file_entry (struct bfd_link_info *info,
 }
 
 static bfd_reloc_status_type
-mcore_coff_unsupported_reloc (abfd, reloc_entry, symbol, data, input_section,
-			   output_bfd, error_message)
-     bfd * abfd;
-     arelent * reloc_entry;
-     asymbol * symbol ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
-     asection * input_section ATTRIBUTE_UNUSED;
-     bfd * output_bfd ATTRIBUTE_UNUSED;
-     char ** error_message ATTRIBUTE_UNUSED;
+mcore_coff_unsupported_reloc (bfd * abfd,
+			      arelent * reloc_entry,
+			      asymbol * symbol ATTRIBUTE_UNUSED,
+			      void * data ATTRIBUTE_UNUSED,
+			      asection * input_section ATTRIBUTE_UNUSED,
+			      bfd * output_bfd ATTRIBUTE_UNUSED,
+			      char ** error_message ATTRIBUTE_UNUSED)
 {
   BFD_ASSERT (reloc_entry->howto != (reloc_howto_type *)0);
 
@@ -266,9 +255,8 @@ mcore_coff_unsupported_reloc (abfd, reloc_entry, symbol, data, input_section,
  case bfd_rtype: return & mcore_coff_howto_table [mcore_rtype]
 
 static reloc_howto_type *
-mcore_coff_reloc_type_lookup (abfd, code)
-     bfd * abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+mcore_coff_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
+			      bfd_reloc_code_real_type code)
 {
   switch (code)
     {
@@ -307,13 +295,12 @@ mcore_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   (cache_ptr)->howto = mcore_coff_howto_table + (dst)->r_type;
 
 static reloc_howto_type *
-coff_mcore_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd * abfd ATTRIBUTE_UNUSED;
-     asection * sec;
-     struct internal_reloc * rel;
-     struct coff_link_hash_entry * h ATTRIBUTE_UNUSED;
-     struct internal_syment * sym;
-     bfd_vma * addendp;
+coff_mcore_rtype_to_howto (bfd * abfd ATTRIBUTE_UNUSED,
+			   asection * sec,
+			   struct internal_reloc * rel,
+			   struct coff_link_hash_entry * h ATTRIBUTE_UNUSED,
+			   struct internal_syment * sym,
+			   bfd_vma * addendp)
 {
   reloc_howto_type * howto;
 
@@ -348,25 +335,21 @@ coff_mcore_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
    This function is referenced in pe_mkobject in peicode.h.  */
 
 static bfd_boolean
-in_reloc_p (abfd, howto)
-     bfd * abfd ATTRIBUTE_UNUSED;
-     reloc_howto_type * howto;
+in_reloc_p (bfd * abfd ATTRIBUTE_UNUSED, reloc_howto_type * howto)
 {
   return ! howto->pc_relative && howto->type != IMAGE_REL_MCORE_RVA;
 }
 
 /* The reloc processing routine for the optimized COFF linker.  */
 static bfd_boolean
-coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
-			   contents, relocs, syms, sections)
-     bfd * output_bfd;
-     struct bfd_link_info * info;
-     bfd * input_bfd;
-     asection * input_section;
-     bfd_byte * contents;
-     struct internal_reloc * relocs;
-     struct internal_syment * syms;
-     asection ** sections;
+coff_mcore_relocate_section (bfd * output_bfd,
+			     struct bfd_link_info * info,
+			     bfd * input_bfd,
+			     asection * input_section,
+			     bfd_byte * contents,
+			     struct internal_reloc * relocs,
+			     struct internal_syment * syms,
+			     asection ** sections)
 {
   struct internal_reloc * rel;
   struct internal_reloc * relend;
@@ -377,7 +360,7 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
   if (info->relocatable)
     return TRUE;
 
-  /* Check if we have the same endianess */
+  /* Check if we have the same endianness */
   if (   input_bfd->xvec->byteorder != output_bfd->xvec->byteorder
       && output_bfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN)
     {

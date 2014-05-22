@@ -25,7 +25,7 @@
 
 namespace gold
 {
-// The Arm_reloc_property class is to store information about a paticular
+// The Arm_reloc_property class is to store information about a particular
 // relocation code.
 
 class Arm_reloc_property
@@ -282,8 +282,8 @@ class Arm_reloc_property
   bool uses_symbol_ : 1;
 };
 
-// Arm_reloc_property_table.  This table is used for looking up propeties
-// of relocationt types.  The table entries are initialized using information
+// Arm_reloc_property_table.  This table is used for looking up properties
+// of relocation types.  The table entries are initialized using information
 // from arm-reloc.def.
 
 class Arm_reloc_property_table
@@ -314,7 +314,7 @@ class Arm_reloc_property_table
 	    : NULL);
   }
   
-  // Return a string describing the a relocation code that is not
+  // Return a string describing the relocation code that is not
   // an implemented static reloc code.
   std::string
   reloc_name_in_error_message(unsigned int code);
@@ -328,7 +328,7 @@ class Arm_reloc_property_table
   // arm-reloc.def into S-expression strings, which are parsed again to
   // build actual expression trees.  We do not build the expression trees
   // directly because the parser for operations in arm-reloc.def is simpler
-  // this way.  Coversion from S-expressions to trees is simple.
+  // this way.  Conversion from S-expressions to trees is simple.
   class Parse_expression
   {
    public:

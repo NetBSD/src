@@ -83,6 +83,7 @@ static const tag_name_t tag_names[] =
   ADDENTRY(LDPT_REGISTER_CLEANUP_HOOK),
   ADDENTRY(LDPT_ADD_SYMBOLS),
   ADDENTRY(LDPT_GET_SYMBOLS),
+  ADDENTRY(LDPT_GET_SYMBOLS_V2),
   ADDENTRY(LDPT_ADD_INPUT_FILE),
   ADDENTRY(LDPT_MESSAGE),
   ADDENTRY(LDPT_GET_INPUT_FILE),
@@ -99,6 +100,7 @@ static ld_plugin_register_all_symbols_read tv_register_all_symbols_read = 0;
 static ld_plugin_register_cleanup tv_register_cleanup = 0;
 static ld_plugin_add_symbols tv_add_symbols = 0;
 static ld_plugin_get_symbols tv_get_symbols = 0;
+static ld_plugin_get_symbols tv_get_symbols_v2 = 0;
 static ld_plugin_add_input_file tv_add_input_file = 0;
 static ld_plugin_message tv_message = 0;
 static ld_plugin_get_input_file tv_get_input_file = 0;
@@ -361,6 +363,7 @@ dump_tv_tag (size_t n, struct ld_plugin_tv *tv)
       case LDPT_REGISTER_CLEANUP_HOOK:
       case LDPT_ADD_SYMBOLS:
       case LDPT_GET_SYMBOLS:
+      case LDPT_GET_SYMBOLS_V2:
       case LDPT_ADD_INPUT_FILE:
       case LDPT_MESSAGE:
       case LDPT_GET_INPUT_FILE:
@@ -417,6 +420,9 @@ parse_tv_tag (struct ld_plugin_tv *tv)
 	break;
       case LDPT_GET_SYMBOLS:
 	SETVAR(tv_get_symbols);
+	break;
+      case LDPT_GET_SYMBOLS_V2:
+	tv_get_symbols_v2 = tv->tv_u.tv_get_symbols;
 	break;
       case LDPT_ADD_INPUT_FILE:
 	SETVAR(tv_add_input_file);
@@ -562,6 +568,7 @@ onall_symbols_read (void)
       "LDPR_RESOLVED_IR",
       "LDPR_RESOLVED_EXEC",
       "LDPR_RESOLVED_DYN",
+      "LDPR_PREVAILING_DEF_IRONLY_EXP",
     };
   claim_file_t *claimfile = dumpresolutions ? claimfiles_list : NULL;
   add_file_t *addfile = addfiles_list;
@@ -570,12 +577,12 @@ onall_symbols_read (void)
     {
       enum ld_plugin_status rv;
       int n;
-      if (claimfile->n_syms_used && !tv_get_symbols)
+      if (claimfile->n_syms_used && !tv_get_symbols_v2)
 	return LDPS_ERR;
       else if (!claimfile->n_syms_used)
         continue;
-      rv = tv_get_symbols (claimfile->file.handle, claimfile->n_syms_used,
-				claimfile->symbols);
+      rv = tv_get_symbols_v2 (claimfile->file.handle, claimfile->n_syms_used,
+			      claimfile->symbols);
       if (rv != LDPS_OK)
 	return rv;
       for (n = 0; n < claimfile->n_syms_used; n++)

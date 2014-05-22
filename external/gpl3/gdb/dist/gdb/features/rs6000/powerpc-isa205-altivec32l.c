@@ -1,6 +1,8 @@
-/* THIS FILE IS GENERATED.  Original: powerpc-isa205-altivec32l.xml */
+/* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
+  Original: powerpc-isa205-altivec32l.xml */
 
 #include "defs.h"
+#include "osabi.h"
 #include "target-descriptions.h"
 
 struct target_desc *tdesc_powerpc_isa205_altivec32l;
@@ -9,7 +11,8 @@ initialize_tdesc_powerpc_isa205_altivec32l (void)
 {
   struct target_desc *result = allocate_target_description ();
   struct tdesc_feature *feature;
-  struct tdesc_type *field_type, *type;
+  struct tdesc_type *field_type;
+  struct tdesc_type *type;
 
   set_tdesc_architecture (result, bfd_scan_arch ("powerpc:common"));
 

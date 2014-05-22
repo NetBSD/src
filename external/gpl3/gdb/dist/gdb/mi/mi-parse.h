@@ -1,6 +1,5 @@
 /* MI Command Set - MI Command Parser.
-   Copyright (C) 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -61,9 +60,9 @@ struct mi_parse
    the TOKEN field of the resultant mi_parse object, to be freed by
    mi_parse_free.  */
 
-extern struct mi_parse *mi_parse (char *cmd, char **token);
+extern struct mi_parse *mi_parse (const char *cmd, char **token);
 
-/* Free a command returned by mi_parse_command. */
+/* Free a command returned by mi_parse_command.  */
 
 extern void mi_parse_free (struct mi_parse *cmd);
 

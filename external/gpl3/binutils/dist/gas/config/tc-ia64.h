@@ -323,3 +323,9 @@ typedef struct unwind_record
    && (!(FIX)->fx_pcrel					\
        || (FIX)->fx_r_type == BFD_RELOC_IA64_PLTOFF22	\
        || TC_FORCE_RELOCATION (FIX)))
+
+/* VMS backtraces expect dwarf version 3.  */
+#ifdef TE_VMS
+#define DWARF2_VERSION 3
+#define DWARF2_LINE_VERSION 3
+#endif

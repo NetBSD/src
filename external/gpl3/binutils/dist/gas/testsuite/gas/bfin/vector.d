@@ -55,14 +55,14 @@ Disassembly of section .text:
   84:	06 c4 17 40 	R0 = MIN \(R2, R7\) \(V\);
 
 00000088 <vector_mul>:
-  88:	04 c2 be 66 	R2.H = R7.L \* R6.H, R2 = R7.H \* R6.H;
-  8c:	04 c2 08 e1 	R4.H = R1.H \* R0.H, R4 = R1.L \* R0.L;
-  90:	04 c2 1a a0 	R0.H = R3.H \* R2.L, R0 = R3.L \* R2.L;
-  94:	94 c2 5a e1 	R5.H = R3.H \* R2.H \(M\), R5 = R3.L \* R2.L \(FU\);
+  88:	04 c2 be 66 	R2.H = R7.L \* R6.H, R2.L = R7.H \* R6.H;
+  8c:	04 c2 08 e1 	R4.H = R1.H \* R0.H, R4.L = R1.L \* R0.L;
+  90:	04 c2 1a a0 	R0.H = R3.H \* R2.L, R0.L = R3.L \* R2.L;
+  94:	94 c2 5a e1 	R5.H = R3.H \* R2.H \(M\), R5.L = R3.L \* R2.L \(FU\);
   98:	2c c2 27 e0 	R1 = R4.H \* R7.H, R0 = R4.L \* R7.L \(S2RND\);
   9c:	0c c2 95 27 	R7 = R2.L \* R5.L, R6 = R2.H \* R5.H;
-  a0:	24 c3 3e e0 	R0.H = R7.H \* R6.H, R0 = R7.L \* R6.L \(ISS2\);
-  a4:	04 c3 c1 e0 	R3.H = R0.H \* R1.H, R3 = R0.L \* R1.L \(IS\);
+  a0:	24 c3 3e e0 	R0.H = R7.H \* R6.H, R0.L = R7.L \* R6.L \(ISS2\);
+  a4:	04 c3 c1 e0 	R3.H = R0.H \* R1.H, R3.L = R0.L \* R1.L \(IS\);
   a8:	00 c0 13 46 	A1 = R2.L \* R3.H, A0 = R2.H \* R3.H;
   ac:	01 c0 08 c0 	A1 \+= R1.H \* R0.H, A0 = R1.L \* R0.L;
   b0:	60 c0 2f c8 	A1 = R5.H \* R7.H, A0 \+= R5.L \* R7.L \(W32\);

@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: MIPS ELF NewABI jal
-#as: -n32 -KPIC -xgot
+#as: -march=from-abi -n32 -KPIC -xgot
 
 .*: +file format elf32-n.*mips.*
 

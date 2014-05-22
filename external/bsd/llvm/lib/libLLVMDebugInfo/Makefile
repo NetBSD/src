@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2012/10/30 18:55:50 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2014/05/22 16:14:41 yamt Exp $
 
 LIB=	LLVMDebugInfo
 
@@ -13,10 +13,14 @@ SRCS+=	DIContext.cpp \
 	DWARFDebugAbbrev.cpp \
 	DWARFDebugArangeSet.cpp \
 	DWARFDebugAranges.cpp \
+	DWARFDebugFrame.cpp \
 	DWARFDebugInfoEntry.cpp \
 	DWARFDebugLine.cpp \
+	DWARFDebugLoc.cpp \
 	DWARFDebugRangeList.cpp \
-	DWARFFormValue.cpp
+	DWARFFormValue.cpp \
+	DWARFTypeUnit.cpp \
+	DWARFUnit.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

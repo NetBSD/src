@@ -10,13 +10,10 @@
 
 @copying
 @c man begin COPYRIGHT
-Copyright @copyright{} 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
-1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright @copyright{} 1987-2013 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation.  A copy of
 the license is included in the
 @c man end
@@ -215,7 +212,8 @@ Standard C@.  In its default mode, the GNU C preprocessor does not do a
 few things required by the standard.  These are features which are
 rarely, if ever, used, and may cause surprising changes to the meaning
 of a program which does not expect them.  To get strict ISO Standard C,
-you should use the @option{-std=c90} or @option{-std=c99} options, depending
+you should use the @option{-std=c90}, @option{-std=c99} or
+@option{-std=c11} options, depending
 on which version of the standard you want.  To get all the mandatory
 diagnostics, you must also use @option{-pedantic}.  @xref{Invocation}.
 
@@ -855,7 +853,8 @@ requested with @code{@w{#include <@var{file}>}} in:
 /usr/include
 @end smallexample
 
-For C++ programs, it will also look in @file{/usr/include/g++-v3},
+For C++ programs, it will also look in
+@file{@var{libdir}/../include/c++/@var{version}},
 first.  In the above, @var{target} is the canonical name of the system
 GCC was configured to compile code for; often but not always the same as
 the canonical name of the system it runs on.  @var{version} is the
@@ -1930,11 +1929,9 @@ facilities of the standard C library available.
 This macro is defined when the C++ compiler is in use.  You can use
 @code{__cplusplus} to test whether a header is compiled by a C compiler
 or a C++ compiler.  This macro is similar to @code{__STDC_VERSION__}, in
-that it expands to a version number.  A fully conforming implementation
-of the 1998 C++ standard will define this macro to @code{199711L}.  The
-GNU C++ compiler is not yet fully conforming, so it uses @code{1}
-instead.  It is hoped to complete the implementation of standard C++
-in the near future.
+that it expands to a version number.  Depending on the language standard
+selected, the value of the macro is @code{199711L}, as mandated by the
+1998 C++ standard, or @code{201103L}, per the 2011 C++ standard.
 
 @item __OBJC__
 This macro is defined, with value 1, when the Objective-C compiler is in
@@ -1966,7 +1963,7 @@ generate unique identifiers.  Care must be taken to ensure that
 which use it.  Otherwise, the precompiled headers will not be used.
 
 @item __GFORTRAN__
-The GNU Fortran compiler defines this. 
+The GNU Fortran compiler defines this.
 
 @item __GNUC__
 @itemx __GNUC_MINOR__
@@ -2022,8 +2019,8 @@ testing @code{@w{(__GNUC__ && __cplusplus)}}.
 
 @item __STRICT_ANSI__
 GCC defines this macro if and only if the @option{-ansi} switch, or a
-@option{-std} switch specifying strict conformance to some version of ISO C,
-was specified when GCC was invoked.  It is defined to @samp{1}.
+@option{-std} switch specifying strict conformance to some version of ISO C
+or ISO C++, was specified when GCC was invoked.  It is defined to @samp{1}.
 This macro exists primarily to direct GNU libc's header files to
 restrict their definitions to the minimal set found in the 1989 C
 standard.
@@ -2267,6 +2264,35 @@ Defined to the number of bytes of the C standard data types: @code{int},
 @code{double}, @code{long double}, @code{size_t}, @code{wchar_t}, @code{wint_t}
 and @code{ptrdiff_t}.
 
+@item __BYTE_ORDER__
+@itemx __ORDER_LITTLE_ENDIAN__
+@itemx __ORDER_BIG_ENDIAN__
+@itemx __ORDER_PDP_ENDIAN__
+@code{__BYTE_ORDER__} is defined to one of the values
+@code{__ORDER_LITTLE_ENDIAN__}, @code{__ORDER_BIG_ENDIAN__}, or
+@code{__ORDER_PDP_ENDIAN__} to reflect the layout of multi-byte and
+multi-word quantities in memory.  If @code{__BYTE_ORDER__} is equal to
+@code{__ORDER_LITTLE_ENDIAN__} or @code{__ORDER_BIG_ENDIAN__}, then
+multi-byte and multi-word quantities are laid out identically: the
+byte (word) at the lowest address is the least significant or most
+significant byte (word) of the quantity, respectively.  If
+@code{__BYTE_ORDER__} is equal to @code{__ORDER_PDP_ENDIAN__}, then
+bytes in 16-bit words are laid out in a little-endian fashion, whereas
+the 16-bit subwords of a 32-bit quantity are laid out in big-endian
+fashion.
+
+You should use these macros for testing like this:
+
+@smallexample
+/* @r{Test for a little-endian machine} */
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+@end smallexample
+
+@item __FLOAT_WORD_ORDER__
+@code{__FLOAT_WORD_ORDER__} is defined to one of the values
+@code{__ORDER_LITTLE_ENDIAN__} or @code{__ORDER_BIG_ENDIAN__} to reflect
+the layout of the words of multi-word floating-point quantities.
+
 @item __DEPRECATED
 This macro is defined, with value 1, when compiling a C++ source file
 with warnings about deprecated constructs enabled.  These warnings are
@@ -2324,6 +2350,10 @@ use.
 This macro is defined, with value 2, when @option{-fstack-protector-all} is
 in use.
 
+@item __SANITIZE_ADDRESS__
+This macro is defined, with value 1, when @option{-fsanitize=address} is
+in use.
+
 @item __TIMESTAMP__
 This macro expands to a string constant that describes the date and time
 of the last modification of the current source file. The string constant
@@ -2347,6 +2377,15 @@ and swap operations on operands 1, 2, 4, 8 or 16 bytes in length, respectively.
 This macro is defined when the compiler is emitting Dwarf2 CFI directives
 to the assembler.  When this is defined, it is possible to emit those same
 directives in inline assembly.
+
+@item __FP_FAST_FMA
+@itemx __FP_FAST_FMAF
+@itemx __FP_FAST_FMAL
+These macros are defined with value 1 if the backend supports the
+@code{fma}, @code{fmaf}, and @code{fmal} builtin functions, so that
+the include file @file{math.h} can define the macros
+@code{FP_FAST_FMA}, @code{FP_FAST_FMAF}, and @code{FP_FAST_FMAL}
+for compatibility with the 1999 C standard.
 @end table
 
 @node System-specific Predefined Macros
@@ -2361,7 +2400,7 @@ type of system and machine is in use.  They are obviously different on
 each target supported by GCC@.  This manual, being for all systems and
 machines, cannot tell you what their names are, but you can use
 @command{cpp -dM} to see them all.  @xref{Invocation}.  All system-specific
-predefined macros expand to the constant 1, so you can test them with
+predefined macros expand to a constant value, so you can test them with
 either @samp{#ifdef} or @samp{#if}.
 
 The C standard requires that all system-specific macros be part of the
@@ -2393,7 +2432,7 @@ check specifically for features you need, using a tool such as
 @subsection C++ Named Operators
 @cindex named operators
 @cindex C++ named operators
-@cindex iso646.h
+@cindex @file{iso646.h}
 
 In C++, there are eleven keywords which are simply alternate spellings
 of operators normally written with punctuation.  These keywords are
@@ -3384,8 +3423,8 @@ the installation in a consistent way, you can use conditionals to detect
 an inconsistency and report it with @samp{#error}.  For example,
 
 @smallexample
-#if !defined(UNALIGNED_INT_ASM_OP) && defined(DWARF2_DEBUGGING_INFO)
-#error "DWARF2_DEBUGGING_INFO requires UNALIGNED_INT_ASM_OP."
+#if !defined(FOO) && defined(BAR)
+#error "BAR requires FOO."
 #endif
 @end smallexample
 
@@ -3597,6 +3636,15 @@ will not produce an error.
 This pragma takes no arguments.  It causes the rest of the code in the
 current file to be treated as if it came from a system header.
 @xref{System Headers}.
+
+@item #pragma GCC warning
+@itemx #pragma GCC error
+@code{#pragma GCC warning "message"} causes the preprocessor to issue
+a warning diagnostic with the text @samp{message}.  The message
+contained in the pragma must be a single string literal.  Similarly,
+@code{#pragma GCC error "message"} issues an error message.  Unlike
+the @samp{#warning} and @samp{#error} directives, these pragmas can be
+embedded in preprocessor macros using @samp{_Pragma}.
 
 @end ftable
 

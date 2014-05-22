@@ -16,6 +16,7 @@
 SYMBOL TABLE:
 0+ l    d  \.text	0+ (|\.text)
 0+7e0 l    d  \.MMIX\.reg_contents	0+ (|\.MMIX\.reg_contents)
+#...
 0+fe g       \*REG\*	0+ b
 0+20 g       \.text	0+ _start
 0+fc g       \*REG\*	0+ areg

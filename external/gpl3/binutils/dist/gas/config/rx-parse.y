@@ -72,14 +72,14 @@ static int sizemap[] = { BSIZE, WSIZE, LSIZE, WSIZE };
 #define F(val,pos,sz)      rx_field (val, pos, sz)
 #define FE(exp,pos,sz)	   rx_field (exp_val (exp), pos, sz);
 
-#define O1(v)              rx_op (v, 1, RXREL_SIGNED)
-#define O2(v)              rx_op (v, 2, RXREL_SIGNED)
-#define O3(v)              rx_op (v, 3, RXREL_SIGNED)
+#define O1(v)              rx_op (v, 1, RXREL_SIGNED); rx_range (v, -128, 255)
+#define O2(v)              rx_op (v, 2, RXREL_SIGNED); rx_range (v, -32768, 65536)
+#define O3(v)              rx_op (v, 3, RXREL_SIGNED); rx_range (v, -8388608, 16777216)
 #define O4(v)              rx_op (v, 4, RXREL_SIGNED)
 
-#define UO1(v)             rx_op (v, 1, RXREL_UNSIGNED)
-#define UO2(v)             rx_op (v, 2, RXREL_UNSIGNED)
-#define UO3(v)             rx_op (v, 3, RXREL_UNSIGNED)
+#define UO1(v)             rx_op (v, 1, RXREL_UNSIGNED); rx_range (v, 0, 255)
+#define UO2(v)             rx_op (v, 2, RXREL_UNSIGNED); rx_range (v, 0, 65536)
+#define UO3(v)             rx_op (v, 3, RXREL_UNSIGNED); rx_range (v, 0, 16777216)
 #define UO4(v)             rx_op (v, 4, RXREL_UNSIGNED)
 
 #define NO1(v)             rx_op (v, 1, RXREL_NEGATIVE)
@@ -91,26 +91,30 @@ static int sizemap[] = { BSIZE, WSIZE, LSIZE, WSIZE };
 #define PC2(v)             rx_op (v, 2, RXREL_PCREL)
 #define PC3(v)             rx_op (v, 3, RXREL_PCREL)
 
-#define IMM(v,pos)	   F (immediate (v, RXREL_SIGNED, pos), pos, 2); \
+#define IMM_(v,pos,size)   F (immediate (v, RXREL_SIGNED, pos, size), pos, 2); \
 			   if (v.X_op != O_constant && v.X_op != O_big) rx_linkrelax_imm (pos)
-#define NIMM(v,pos)	   F (immediate (v, RXREL_NEGATIVE, pos), pos, 2)
-#define NBIMM(v,pos)	   F (immediate (v, RXREL_NEGATIVE_BORROW, pos), pos, 2)
+#define IMM(v,pos)	   IMM_ (v, pos, 32)
+#define IMMW(v,pos)	   IMM_ (v, pos, 16); rx_range (v, -32768, 65536)
+#define IMMB(v,pos)	   IMM_ (v, pos, 8); rx_range (v, -128, 255)
+#define NIMM(v,pos)	   F (immediate (v, RXREL_NEGATIVE, pos, 32), pos, 2)
+#define NBIMM(v,pos)	   F (immediate (v, RXREL_NEGATIVE_BORROW, pos, 32), pos, 2)
 #define DSP(v,pos,msz)	   if (!v.X_md) rx_relax (RX_RELAX_DISP, pos); \
 			   else rx_linkrelax_dsp (pos); \
 			   F (displacement (v, msz), pos, 2)
 
 #define id24(a,b2,b3)	   B3 (0xfb+a, b2, b3)
 
-static int         rx_intop (expressionS, int);
+static int         rx_intop (expressionS, int, int);
 static int         rx_uintop (expressionS, int);
 static int         rx_disp3op (expressionS);
 static int         rx_disp5op (expressionS *, int);
 static int         rx_disp5op0 (expressionS *, int);
 static int         exp_val (expressionS exp);
 static expressionS zero_expr (void);
-static int         immediate (expressionS, int, int);
+static int         immediate (expressionS, int, int, int);
 static int         displacement (expressionS, int);
 static void        rtsd_immediate (expressionS);
+static void	   rx_range (expressionS, int, int);
 
 static int    need_flag = 0;
 static int    rx_in_brackets = 0;
@@ -189,11 +193,11 @@ statement :
 	| BRA EXPR
 	  { if (rx_disp3op ($2))
 	      { B1 (0x08); rx_disp3 ($2, 5); }
-	    else if (rx_intop ($2, 8))
+	    else if (rx_intop ($2, 8, 8))
 	      { B1 (0x2e); PC1 ($2); }
-	    else if (rx_intop ($2, 16))
+	    else if (rx_intop ($2, 16, 16))
 	      { B1 (0x38); PC2 ($2); }
-	    else if (rx_intop ($2, 24))
+	    else if (rx_intop ($2, 24, 24))
 	      { B1 (0x04); PC3 ($2); }
 	    else
 	      { rx_relax (RX_RELAX_BRANCH, 0);
@@ -210,9 +214,9 @@ statement :
 /* ---------------------------------------------------------------------- */
 
 	| BSR EXPR
-	  { if (rx_intop ($2, 16))
+	  { if (rx_intop ($2, 16, 16))
 	      { B1 (0x39); PC2 ($2); }
-	    else if (rx_intop ($2, 24))
+	    else if (rx_intop ($2, 24, 24))
 	      { B1 (0x05); PC3 ($2); }
 	    else
 	      { rx_relax (RX_RELAX_BRANCH, 0);
@@ -278,7 +282,7 @@ statement :
 	  { if ($8 <= 7 && rx_uintop ($4, 8) && rx_disp5op0 (&$6, WSIZE))
 	      { B2 (0x3d, 0); rx_field5s2 ($6); F ($8, 9, 3); O1 ($4); }
 	    else
-	      { B2 (0xf8, 0x01); F ($8, 8, 4); DSP ($6, 6, WSIZE); IMM ($4, 12); } }
+	      { B2 (0xf8, 0x01); F ($8, 8, 4); DSP ($6, 6, WSIZE); IMMW ($4, 12); } }
 
 	| MOV DOT_L '#' EXPR ',' disp '[' REG ']'
 	  { if ($8 <= 7 && rx_uintop ($4, 8) && rx_disp5op0 (&$6, LSIZE))
@@ -331,7 +335,7 @@ statement :
 	      { B2 (0x60, 0); FE ($3, 8, 4); F ($5, 12, 4); }
 	    else
 	      /* This is really an add, but we negate the immediate.  */
-	      { B2 (0x38, 0); F ($5, 8, 4); F ($5, 12, 4); NIMM ($3, 6); } } /* ? */
+	      { B2 (0x70, 0); F ($5, 8, 4); F ($5, 12, 4); NIMM ($3, 6); } }
 
 	| CMP '#' EXPR ',' REG
 	  { if (rx_uintop ($3, 4))
@@ -598,10 +602,10 @@ statement :
 
 /* ---------------------------------------------------------------------- */
 
-	| SBB   { sub_op = 0; } op_dp20_rm
-	| NEG   { sub_op = 1; sub_op2 = 1; } op_dp20_rms
-	| ADC   { sub_op = 2; } op_dp20_rim
-	| ABS   { sub_op = 3; sub_op2 = 2; } op_dp20_rms
+	| SBB   { sub_op = 0; } op_dp20_rm_l
+	| NEG   { sub_op = 1; sub_op2 = 1; } op_dp20_rr
+	| ADC   { sub_op = 2; } op_dp20_rim_l
+	| ABS   { sub_op = 3; sub_op2 = 2; } op_dp20_rr
 	| MAX   { sub_op = 4; } op_dp20_rim
 	| MIN   { sub_op = 5; } op_dp20_rim
 	| EMUL  { sub_op = 6; } op_dp20_i
@@ -610,7 +614,7 @@ statement :
 	| DIVU  { sub_op = 9; } op_dp20_rim
 	| TST   { sub_op = 12; } op_dp20_rim
 	| XOR   { sub_op = 13; } op_dp20_rim
-	| NOT   { sub_op = 14; sub_op2 = 0; } op_dp20_rms
+	| NOT   { sub_op = 14; sub_op2 = 0; } op_dp20_rr
 	| STZ   { sub_op = 14; } op_dp20_i
 	| STNZ  { sub_op = 15; } op_dp20_i
 
@@ -810,6 +814,16 @@ op_subadd
 
 /* sbb, neg, adc, abs, max, min, div, divu, tst, not, xor, stz, stnz, emul, emulu */
 
+op_dp20_rm_l
+	: REG ',' REG
+	  { id24 (1, 0x03 + (sub_op<<2), 0x00); F ($1, 16, 4); F ($3, 20, 4); }
+	| disp '[' REG ']' opt_l ',' REG
+	  { B4 (MEMEX, 0xa0, 0x00 + sub_op, 0x00);
+	  F ($3, 24, 4); F ($7, 28, 4); DSP ($1, 14, LSIZE); }
+	;
+
+/* neg, adc, abs, max, min, div, divu, tst, not, xor, stz, stnz, emul, emulu */
+
 op_dp20_rm
 	: REG ',' REG
 	  { id24 (1, 0x03 + (sub_op<<2), 0x00); F ($1, 16, 4); F ($3, 20, 4); }
@@ -830,8 +844,14 @@ op_dp20_rim
 	| op_dp20_i
 	;
 
-op_dp20_rms
-	: op_dp20_rm
+op_dp20_rim_l
+	: op_dp20_rm_l
+	| op_dp20_i
+	;
+
+op_dp20_rr
+	: REG ',' REG
+	  { id24 (1, 0x03 + (sub_op<<2), 0x00); F ($1, 16, 4); F ($3, 20, 4); }
 	| REG
 	  { B2 (0x7e, sub_op2 << 4); F ($1, 12, 4); }
 	;
@@ -1170,6 +1190,8 @@ rx_lex (void)
     return 0;
 
   if (ISALPHA (*rx_lex_start)
+      || (rx_pid_register != -1 && memcmp (rx_lex_start, "%pidreg", 7) == 0)
+      || (rx_gp_register != -1 && memcmp (rx_lex_start, "%gpreg", 6) == 0)
       || (*rx_lex_start == '.' && ISALPHA (rx_lex_start[1])))
     {
       unsigned int i;
@@ -1182,6 +1204,28 @@ rx_lex (void)
 	;
       save = *e;
       *e = 0;
+
+      if (strcmp (rx_lex_start, "%pidreg") == 0)
+	{
+	  {
+	    rx_lval.regno = rx_pid_register;
+	    *e = save;
+	    rx_lex_start = e;
+	    rx_last_token = REG;
+	    return REG;
+	  }
+	}
+
+      if (strcmp (rx_lex_start, "%gpreg") == 0)
+	{
+	  {
+	    rx_lval.regno = rx_gp_register;
+	    *e = save;
+	    rx_lex_start = e;
+	    rx_last_token = REG;
+	    return REG;
+	  }
+	}
 
       if (rx_last_token == 0)
 	for (ci = 0; ci < NUM_CONDITION_OPCODES; ci ++)
@@ -1253,7 +1297,7 @@ rx_lex (void)
 }
 
 int
-rx_error (char * str)
+rx_error (const char * str)
 {
   int len;
 
@@ -1265,15 +1309,22 @@ rx_error (char * str)
 }
 
 static int
-rx_intop (expressionS exp, int nbits)
+rx_intop (expressionS exp, int nbits, int opbits)
 {
   long v;
+  long mask, msb;
 
   if (exp.X_op == O_big && nbits == 32)
       return 1;
   if (exp.X_op != O_constant)
     return 0;
   v = exp.X_add_number;
+
+  msb = 1UL << (opbits - 1);
+  mask = (1UL << opbits) - 1;
+
+  if ((v & msb) && ! (v & ~mask))
+    v -= 1UL << opbits;
 
   switch (nbits)
     {
@@ -1405,7 +1456,7 @@ zero_expr (void)
 }
 
 static int
-immediate (expressionS exp, int type, int pos)
+immediate (expressionS exp, int type, int pos, int bits)
 {
   /* We will emit constants ourself here, so negate them.  */
   if (type == RXREL_NEGATIVE && exp.X_op == O_constant)
@@ -1418,22 +1469,27 @@ immediate (expressionS exp, int type, int pos)
 	rx_error (_("sbb cannot use symbolic immediates"));
     }
 
-  if (rx_intop (exp, 8))
+  if (rx_intop (exp, 8, bits))
     {
       rx_op (exp, 1, type);
       return 1;
     }
-  else if (rx_intop (exp, 16))
+  else if (rx_intop (exp, 16, bits))
     {
       rx_op (exp, 2, type);
       return 2;
     }
-  else if (rx_intop (exp, 24))
+  else if (rx_uintop (exp, 16) && bits == 16)
+    {
+      rx_op (exp, 2, type);
+      return 2;
+    }
+  else if (rx_intop (exp, 24, bits))
     {
       rx_op (exp, 3, type);
       return 3;
     }
-  else if (rx_intop (exp, 32))
+  else if (rx_intop (exp, 32, bits))
     {
       rx_op (exp, 4, type);
       return 0;
@@ -1480,6 +1536,13 @@ displacement (expressionS exp, int msize)
 	  O2 (exp);
 	  return 2;
 	}
+    }
+
+  if (exp.X_op == O_subtract)
+    {
+      exp.X_md = BFD_RELOC_RX_DIFF;
+      O2 (exp);
+      return 2;
     }
 
   if (exp.X_op != O_constant)
@@ -1552,4 +1615,17 @@ rtsd_immediate (expressionS exp)
   val >>= 2;
   exp.X_add_number = val;
   O1 (exp);
+}
+
+static void
+rx_range (expressionS exp, int minv, int maxv)
+{
+  int val;
+
+  if (exp.X_op != O_constant)
+    return;
+
+  val = exp.X_add_number;
+  if (val < minv || val > maxv)
+    as_warn (_("Value %d out of range %d..%d"), val, minv, maxv);
 }

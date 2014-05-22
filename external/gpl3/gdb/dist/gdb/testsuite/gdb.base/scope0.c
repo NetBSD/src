@@ -20,10 +20,6 @@ void marker4 ();
 
 int main ()
 {
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   init0 ();
   foo ();
   autovars (5, 6);

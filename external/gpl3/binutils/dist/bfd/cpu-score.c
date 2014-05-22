@@ -1,5 +1,5 @@
 /* BFD support for the score processor
-   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -22,8 +22,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "bfd.h"
 #include "sysdep.h"
+#include "bfd.h"
 #include "libbfd.h"
 
 /* This routine is provided two arch_infos and works out which Score
@@ -56,6 +56,7 @@ compatible (const bfd_arch_info_type * a, const bfd_arch_info_type * b)
   default,			/* The default machine.  */	\
   compatible,							\
   bfd_default_scan,						\
+  bfd_arch_default_fill,					\
   next								\
 }
 

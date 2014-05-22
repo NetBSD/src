@@ -25,7 +25,7 @@
 
 #define N(number, print, default, next)  \
 {  32, 32, 8, bfd_arch_m32r, number, "m32r", print, 4, default, \
-     bfd_default_compatible, bfd_default_scan, next }
+     bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next }
 
 #define M32R2_NEXT   & arch_info_struct [1]
 #define NEXT         & arch_info_struct [0]

@@ -1,6 +1,5 @@
 /* Definitions for AT&T assembler syntax for the Intel 80386.
-   Copyright (C) 1988, 1996, 2000, 2001, 2002, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -46,7 +45,7 @@ do								\
     { if (i%10 == 0) { if (i!=0) putc ('\n', (FILE));		\
 		       fputs (ASM_BYTE, (FILE)); }		\
       else putc (',', (FILE));					\
-	fprintf ((FILE), "0x%x", ((PTR)[i++] & 0377)) ;}	\
+      fprintf ((FILE), "0x%x", ((PTR)[i++] & 0377)) ;}		\
       putc ('\n', (FILE));					\
 } while (0)
 

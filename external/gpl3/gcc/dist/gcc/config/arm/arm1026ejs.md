@@ -1,5 +1,5 @@
 ;; ARM 1026EJ-S Pipeline Description
-;; Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
 ;; Written by CodeSourcery, LLC.
 ;;
 ;; This file is part of GCC.
@@ -66,13 +66,13 @@
 ;; ALU operations with no shifted operand
 (define_insn_reservation "alu_op" 1 
  (and (eq_attr "tune" "arm1026ejs")
-      (eq_attr "type" "alu"))
+      (eq_attr "type" "alu_reg,simple_alu_imm"))
  "a_e,a_m,a_w")
 
 ;; ALU operations with a shift-by-constant operand
 (define_insn_reservation "alu_shift_op" 1 
  (and (eq_attr "tune" "arm1026ejs")
-      (eq_attr "type" "alu_shift"))
+      (eq_attr "type" "simple_alu_shift,alu_shift"))
  "a_e,a_m,a_w")
 
 ;; ALU operations with a shift-by-register operand
@@ -127,7 +127,7 @@
 ;; output (such as umull) make their results available in two cycles;
 ;; the least significant word is available before the most significant
 ;; word.  That fact is not modeled; instead, the instructions are
-;; described.as if the entire result was available at the end of the
+;; described as if the entire result was available at the end of the
 ;; cycle in which both words are available.
 
 ;; The "umull", "umlal", "smull", and "smlal" instructions all take

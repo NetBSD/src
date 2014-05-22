@@ -1,6 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
-   2009 Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -33,9 +32,9 @@ along with GCC; see the file COPYING3.  If not see
    the section-comment is present.  */
 
 /* Note that other header files (e.g. config/elfos.h, config/linux.h,
-   config/cris/linux.h and config/cris/aout.h) are responsible for lots of
-   settings not repeated below.  This file contains general CRIS
-   definitions and definitions for the cris-*-elf subtarget.  */
+   and config/cris/linux.h) are responsible for lots of settings not
+   repeated below.  This file contains general CRIS definitions
+   and definitions for the cris-*-elf subtarget.  */
 
 /* We don't want to use gcc_assert for everything, as that can be
    compiled out.  */
@@ -84,11 +83,7 @@ extern int cris_cpu_version;
 /* Changing the order used to be necessary to put the fourth __make_dp
    argument (a DImode parameter) in registers, to fit with the libfunc
    parameter passing scheme used for intrinsic functions.  FIXME: Check
-   performance and maybe remove definition from TARGET_LIBGCC2_CFLAGS now
-   that it isn't strictly necessary.  We used to do this through
-   TARGET_LIBGCC2_CFLAGS, but that became increasingly difficult as the
-   parenthesis (that needed quoting) travels through several layers of
-   make and shell invocations.  */
+   performance.  */
 #ifdef IN_LIBGCC2
 #define __make_dp(a,b,c,d) __cris_make_dp(d,a,b,c)
 #endif
@@ -96,16 +91,7 @@ extern int cris_cpu_version;
 
 /* Node: Driver */
 
-/* When using make with defaults.mak for Sun this will handily remove
-   any "-target sun*" switches.  */
-/* We need to override any previous definitions (linux.h) */
-#undef WORD_SWITCH_TAKES_ARG
-#define WORD_SWITCH_TAKES_ARG(STR)		\
- (DEFAULT_WORD_SWITCH_TAKES_ARG (STR)		\
-  || !strcmp (STR, "target"))
-
-/* Also provide canonical vN definitions when user specifies an alias.
-   Note that -melf overrides -maout.  */
+/* Also provide canonical vN definitions when user specifies an alias.  */
 
 #define CPP_SPEC \
  "%{mtune=*:-D__tune_%* %{mtune=v*:-D__CRIS_arch_tune=%*}\
@@ -168,13 +154,13 @@ extern int cris_cpu_version;
     " -D__CRIS_arch_tune=" CRIS_DEFAULT_TUNE "}}}}}"\
  CRIS_ARCH_CPP_DEFAULT
 
-/* Remove those Sun-make "target" switches.  */
-/* Override previous definitions (linux.h).  */
+/* Override previous definitions (../linux.h).  */
 #undef CC1_SPEC
 #define CC1_SPEC \
- "%{target*:}\
-  %{metrax4:-march=v3}\
+ "%{metrax4:-march=v3}\
   %{metrax100:-march=v8}\
+  %{march=*:-march=%*}\
+  %{mcpu=*:-mcpu=%*}\
   %(cc1_subtarget)"
 
 /* For the cris-*-elf subtarget.  */
@@ -198,31 +184,25 @@ extern int cris_cpu_version;
 #define MAYBE_AS_NO_MUL_BUG_ABORT
 #endif
 
-/* Override previous definitions (linux.h).  */
+/* Override previous definitions (../linux.h).  */
 #undef ASM_SPEC
 #define ASM_SPEC \
  MAYBE_AS_NO_MUL_BUG_ABORT \
- "%{v:-v}\
- %(asm_subtarget)\
- %{march=*:%{cpu=*:%eDo not specify both -march=... and -mcpu=...}}\
- %{march=v32:--march=v32} %{mcpu=v32:--march=v32}"
+ "%(asm_subtarget)\
+ %{march=*:%{mcpu=*:%edo not specify both -march=... and -mcpu=...}}\
+ %{march=v0|mcpu=v0|march=v3|mcpu=v3|march=v8|mcpu=v8:--march=v0_v10}\
+ %{march=v10|mcpu=v10:--march=v10}\
+ %{march=v32|mcpu=v32:--march=v32}"
 
 /* For the cris-*-elf subtarget.  */
 #define CRIS_ASM_SUBTARGET_SPEC \
- "--em=criself %{!march=*:%{!cpu=*:" CRIS_DEFAULT_ASM_ARCH_OPTION "}}"
+ "--em=criself %{!march=*:%{!mcpu=*:" CRIS_DEFAULT_ASM_ARCH_OPTION "}}"
 
 /* FIXME: We should propagate the -melf option to make the criself
    "emulation" unless a linker script is provided (-T*), but I don't know
    how to do that if either of -Ttext, -Tdata or -Tbss is given but no
    linker script, as is usually the case.  Leave it to the user for the
-   time being.
-
-   Note that -melf overrides -maout except that a.out-compiled libraries
-   are linked in (multilibbing).  The somewhat cryptic -rpath-link pair is
-   to avoid *only* picking up the linux multilib subdir from the "-B./"
-   option during build, while still giving it preference.  We'd need some
-   %s-variant that checked for existence of some specific file.  */
-/* Override previous definitions (svr4.h).  */
+   time being.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
  "%{v:--verbose}\
@@ -280,12 +260,6 @@ extern int cris_cpu_version;
     }						\
   while (0)
 
-/* This needs to be at least 32 bits.  */
-extern int target_flags;
-
-/* Previously controlled by target_flags.  */
-#define TARGET_ELF 1
-
 /* Previously controlled by target_flags.  Note that this is *not* set
    for -melinux.  */
 #define TARGET_LINUX 0
@@ -303,15 +277,25 @@ extern int target_flags;
 #define TARGET_CPU_DEFAULT CRIS_CPU_BASE
 #endif
 
-/* Default target_flags if no switches specified.  */
+/* Default target_flags if no switches specified.
+   The alignment-by-32 is to make builtin atomic support for v10 and v32
+   work for *-elf for types without specified alignment (like plain
+   "int").  See top comment in sync.md.  */
 #ifndef TARGET_DEFAULT
 # if TARGET_CPU_DEFAULT == 32
 #  define TARGET_DEFAULT \
  (MASK_STACK_ALIGN \
   + MASK_CONST_ALIGN + MASK_DATA_ALIGN \
+  + MASK_ALIGN_BY_32 \
   + MASK_PROLOGUE_EPILOGUE)
-# else  /* 10 */
-# define TARGET_DEFAULT \
+# elif TARGET_CPU_DEFAULT == 10
+#  define TARGET_DEFAULT \
+ (MASK_SIDE_EFFECT_PREFIXES + MASK_STACK_ALIGN \
+  + MASK_CONST_ALIGN + MASK_DATA_ALIGN \
+  + MASK_ALIGN_BY_32 \
+  + MASK_PROLOGUE_EPILOGUE + MASK_MUL_BUG)
+# else  /* 0 */
+#  define TARGET_DEFAULT \
  (MASK_SIDE_EFFECT_PREFIXES + MASK_STACK_ALIGN \
   + MASK_CONST_ALIGN + MASK_DATA_ALIGN \
   + MASK_PROLOGUE_EPILOGUE + MASK_MUL_BUG)
@@ -323,21 +307,28 @@ extern int target_flags;
 
 #define TARGET_HAS_MUL_INSNS (cris_cpu_version >= CRIS_CPU_NG)
 #define TARGET_HAS_LZ (cris_cpu_version >= CRIS_CPU_ETRAX4)
+#define TARGET_HAS_BREAK (cris_cpu_version >= CRIS_CPU_ETRAX4)
 #define TARGET_HAS_SWAP (cris_cpu_version >= CRIS_CPU_SVINTO)
 #define TARGET_V32 (cris_cpu_version >= CRIS_CPU_V32)
 
-#define CRIS_SUBTARGET_HANDLE_OPTION(x, y, z)
+/* The "break" instruction was introduced with ETRAX 4.  */
+#define TARGET_TRAP_USING_BREAK8 \
+ (cris_trap_using_break8 == 2 ? TARGET_HAS_BREAK : cris_trap_using_break8)
 
-#define OVERRIDE_OPTIONS cris_override_options ()
+/* Call library functions by default for GNU/Linux.  */
+#define TARGET_ATOMICS_MAY_CALL_LIBFUNCS		\
+ (cris_atomics_calling_libfunc == 2			\
+  ? TARGET_LINUX : cris_atomics_calling_libfunc)
 
-#define OPTIMIZATION_OPTIONS(OPTIMIZE, SIZE)	\
-  do						\
-    {						\
-      if ((OPTIMIZE) >= 2 || (SIZE))		\
-	flag_omit_frame_pointer = 1;		\
-    }						\
-  while (0)
-
+/* The < v10 atomics turn off interrupts, so they don't need alignment.
+   Incidentally, by default alignment is off there causing variables to
+   be default unaligned all over, so we'd have to make support
+   libraries use a proper atomic type (instead of "int"), one we'd
+   specify as aligned.  */
+#define TARGET_TRAP_UNALIGNED_ATOMIC		\
+ (cris_trap_unaligned_atomic == 2		\
+  ? (TARGET_V32 || cris_cpu_version == 10)	\
+  : cris_trap_unaligned_atomic)
 
 /* Node: Storage Layout */
 
@@ -448,15 +439,12 @@ extern int target_flags;
    registers are fixed at the moment.  The faked argument pointer register
    is fixed too.  */
 #define FIXED_REGISTERS \
- {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0}
+ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1}
 
 /* Register r9 is used for structure-address, r10-r13 for parameters,
    r10- for return values.  */
 #define CALL_USED_REGISTERS \
  {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1}
-
-#define CONDITIONAL_REGISTER_USAGE cris_conditional_register_usage ()
-
 
 /* Node: Allocation Order */
 
@@ -521,17 +509,17 @@ extern int target_flags;
 
 /* Node: Register Classes */
 
-/* FIXME: A separate class for the return register would make sense.
-
-   We need a separate register class to handle register allocation for
+/* We need a separate register class to handle register allocation for
    ACR, since it can't be used for post-increment.
 
    It's not obvious, but having subunions of all movable-between
-   register classes does really help register allocation.  */
+   register classes does really help register allocation (pre-IRA
+   comment).  */
 enum reg_class
   {
     NO_REGS,
-    ACR_REGS, MOF_REGS, CC0_REGS, SPECIAL_REGS,
+    ACR_REGS, MOF_REGS, SRP_REGS, CC0_REGS,
+    MOF_SRP_REGS, SPECIAL_REGS,
     SPEC_ACR_REGS, GENNONACR_REGS,
     SPEC_GENNONACR_REGS, GENERAL_REGS,
     ALL_REGS,
@@ -542,7 +530,8 @@ enum reg_class
 
 #define REG_CLASS_NAMES						\
   {"NO_REGS",							\
-   "ACR_REGS", "MOF_REGS", "CC0_REGS", "SPECIAL_REGS",		\
+   "ACR_REGS", "MOF_REGS", "SRP_REGS", "CC0_REGS",		\
+   "MOF_SRP_REGS", "SPECIAL_REGS",				\
    "SPEC_ACR_REGS", "GENNONACR_REGS", "SPEC_GENNONACR_REGS",	\
    "GENERAL_REGS", "ALL_REGS"}
 
@@ -555,7 +544,10 @@ enum reg_class
    {0},						\
    {1 << CRIS_ACR_REGNUM},			\
    {1 << CRIS_MOF_REGNUM},			\
+   {1 << CRIS_SRP_REGNUM},			\
    {1 << CRIS_CC0_REGNUM},			\
+   {(1 << CRIS_MOF_REGNUM)			\
+    | (1 << CRIS_SRP_REGNUM)},			\
    {CRIS_SPECIAL_REGS_CONTENTS},		\
    {CRIS_SPECIAL_REGS_CONTENTS			\
     | (1 << CRIS_ACR_REGNUM)},			\
@@ -572,31 +564,20 @@ enum reg_class
 #define REGNO_REG_CLASS(REGNO)			\
   ((REGNO) == CRIS_ACR_REGNUM ? ACR_REGS :	\
    (REGNO) == CRIS_MOF_REGNUM ? MOF_REGS :	\
+   (REGNO) == CRIS_SRP_REGNUM ? SRP_REGS :	\
    (REGNO) == CRIS_CC0_REGNUM ? CC0_REGS :	\
-   (REGNO) == CRIS_SRP_REGNUM ? SPECIAL_REGS :	\
    GENERAL_REGS)
 
 #define BASE_REG_CLASS GENERAL_REGS
 
-#define MODE_CODE_BASE_REG_CLASS(MODE, OCODE, ICODE)	\
+#define MODE_CODE_BASE_REG_CLASS(MODE, AS, OCODE, ICODE)	\
   ((OCODE) != POST_INC ? BASE_REG_CLASS : GENNONACR_REGS)
 
 #define INDEX_REG_CLASS GENERAL_REGS
 
-#define IRA_COVER_CLASSES { GENERAL_REGS, SPECIAL_REGS, LIM_REG_CLASSES }
-
-#define REG_CLASS_FROM_LETTER(C)		\
-  (						\
-   (C) == 'a' ? ACR_REGS :			\
-   (C) == 'b' ? GENNONACR_REGS :		\
-   (C) == 'h' ? MOF_REGS :			\
-   (C) == 'x' ? SPECIAL_REGS :			\
-   (C) == 'c' ? CC0_REGS :			\
-   NO_REGS					\
-  )
-
 /* Since it uses reg_renumber, it is safe only once reg_renumber
-   has been allocated, which happens in local-alloc.c.  */
+   has been allocated, which happens in reginfo.c during register
+   allocation.  */
 #define REGNO_OK_FOR_BASE_P(REGNO)					\
  ((REGNO) <= CRIS_LAST_GENERAL_REGISTER					\
   || (REGNO) == ARG_POINTER_REGNUM					\
@@ -605,7 +586,7 @@ enum reg_class
 
 /* REGNO_OK_FOR_BASE_P seems to be obsolete wrt. this one, but not yet
    documented as such.  */
-#define REGNO_MODE_CODE_OK_FOR_BASE_P(REGNO, MODE, OCODE, ICODE)	\
+#define REGNO_MODE_CODE_OK_FOR_BASE_P(REGNO, MODE, AS, OCODE, ICODE)	\
  (REGNO_OK_FOR_BASE_P (REGNO)						\
   && ((OCODE) != POST_INC						\
       || !((REGNO) == CRIS_ACR_REGNUM					\
@@ -614,21 +595,6 @@ enum reg_class
 /* See REGNO_OK_FOR_BASE_P.  */
 #define REGNO_OK_FOR_INDEX_P(REGNO) REGNO_OK_FOR_BASE_P(REGNO)
 
-/* It seems like gcc (2.7.2 and 2.9x of 2000-03-22) may send "NO_REGS" as
-   the class for a constant (testcase: __Mul in arit.c).  To avoid forcing
-   out a constant into the constant pool, we will trap this case and
-   return something a bit more sane.  FIXME: Check if this is a bug.
-   Beware that we must not "override" classes that can be specified as
-   constraint letters, or else asm operands using them will fail when
-   they need to be reloaded.  FIXME: Investigate whether that constitutes
-   a bug.  */
-#define PREFERRED_RELOAD_CLASS(X, CLASS)	\
- ((CLASS) != ACR_REGS				\
-  && (CLASS) != MOF_REGS			\
-  && (CLASS) != CC0_REGS			\
-  && (CLASS) != SPECIAL_REGS			\
-  ? GENERAL_REGS : (CLASS))
-
 /* We can't move special registers to and from memory in smaller than
    word_mode.  We also can't move between special registers.  Luckily,
    -1, as returned by true_regnum for non-sub/registers, is valid as a
@@ -636,7 +602,7 @@ enum reg_class
    the effect that any X that isn't a special-register is treated as
    a non-empty intersection with GENERAL_REGS.  */
 #define SECONDARY_RELOAD_CLASS(CLASS, MODE, X)				\
- ((((CLASS) == SPECIAL_REGS || (CLASS) == MOF_REGS)			\
+ ((reg_class_subset_p (CLASS, SPECIAL_REGS)				\
    && ((GET_MODE_SIZE (MODE) < 4 && MEM_P (X))				\
        || !reg_classes_intersect_p (REGNO_REG_CLASS (true_regnum (X)),	\
 				    GENERAL_REGS)))			\
@@ -658,118 +624,6 @@ enum reg_class
  ((MODE) == VOIDmode							\
   ? 1 /* + cris_fatal ("CLASS_MAX_NREGS with VOIDmode")	*/		\
   : ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD))
-
-/* We are now out of letters; we could use ten more.  This forces us to
-   use C-code in the 'md' file.  FIXME: Use some EXTRA_CONSTRAINTS.  */
-#define CRIS_CONST_OK_FOR_LETTER_P(VALUE, C)		\
- (							\
-  /* MOVEQ, CMPQ, ANDQ, ORQ.  */			\
-  (C) == 'I' ? (VALUE) >= -32 && (VALUE) <= 31 :	\
-  /* ADDQ, SUBQ.  */					\
-  (C) == 'J' ? (VALUE) >= 0 && (VALUE) <= 63 :		\
-  /* ASRQ, BTSTQ, LSRQ, LSLQ.  */			\
-  (C) == 'K' ? (VALUE) >= 0 && (VALUE) <= 31 :		\
-  /* A 16-bit signed number.  */			\
-  (C) == 'L' ? (VALUE) >= -32768 && (VALUE) <= 32767 :	\
-  /* The constant 0 for CLEAR.  */			\
-  (C) == 'M' ? (VALUE) == 0 :				\
-  /* A negative ADDQ or SUBQ.  */			\
-  (C) == 'N' ? (VALUE) >= -63 && (VALUE) < 0 :		\
-  /* Quickened ints, QI and HI.  */			\
-  (C) == 'O' ? (VALUE) >= 0 && (VALUE) <= 65535		\
-		&& ((VALUE) >= (65535-31)		\
-		    || ((VALUE) >= (255-31)		\
-			&& (VALUE) <= 255 )) :		\
-  /* A 16-bit number signed *or* unsigned.  */		\
-  (C) == 'P' ? (VALUE) >= -32768 && (VALUE) <= 65535 :	\
-  0)
-
-#define CONST_OK_FOR_CONSTRAINT_P(VALUE, C, S)	\
- (						\
-  ((C) != 'K' || (S)[1] == 'c')			\
-   ? CRIS_CONST_OK_FOR_LETTER_P (VALUE, C) :	\
-  ((C) == 'K' && (S)[1] == 'p')			\
-   ? exact_log2 (VALUE) >= 0 :			\
-  0)
-
-#define CONSTRAINT_LEN(C, S) ((C) == 'K' ? 2 : DEFAULT_CONSTRAINT_LEN (C, S))
-
-/* It is really simple to make up a 0.0; it is the same as int-0 in
-   IEEE754.  */
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)			\
- ((C) == 'G' && ((VALUE) == CONST0_RTX (DFmode)			\
-		 || (VALUE) == CONST0_RTX (SFmode)))
-
-/* We need this on cris to distinguish delay-slottable addressing modes.  */
-#define EXTRA_CONSTRAINT(X, C)			\
- (						\
-  /* Slottable address mode?  */		\
-  (C) == 'Q' ? EXTRA_CONSTRAINT_Q (X) :		\
-  /* Operand to BDAP or BIAP?  */		\
-  (C) == 'R' ? EXTRA_CONSTRAINT_R (X) :		\
-  /* A local PIC symbol?  */			\
-  (C) == 'S' ? EXTRA_CONSTRAINT_S (X) :		\
-  /* A three-address addressing-mode?  */	\
-  (C) == 'T' ? EXTRA_CONSTRAINT_T (X) :		\
-  /* A PLT symbol?  */				\
-  (C) == 'U' ? EXTRA_CONSTRAINT_U (X) :		\
-  0)
-
-#define EXTRA_MEMORY_CONSTRAINT(X, STR) ((X) == 'Q')
-
-#define EXTRA_CONSTRAINT_Q(X)				\
- (							\
-  /* Just an indirect register (happens to also be	\
-     "all" slottable memory addressing modes not	\
-     covered by other constraints, i.e. '>').  */	\
-  MEM_P (X) && BASE_P (XEXP (X, 0))			\
- )
-
-#define EXTRA_CONSTRAINT_R(X)					\
- (								\
-  /* An operand to BDAP or BIAP:				\
-     A BIAP; r.S? */						\
-  BIAP_INDEX_P (X)						\
-  /* A [reg] or (int) [reg], maybe with post-increment.  */	\
-  || BDAP_INDEX_P (X)						\
-  || CONSTANT_INDEX_P (X)					\
- )
-
-#define EXTRA_CONSTRAINT_T(X)						\
- (									\
-  /* Memory three-address operand.  All are indirect-memory:  */	\
-  MEM_P (X)								\
-  && ((MEM_P (XEXP (X, 0))						\
-       /* Double indirect: [[reg]] or [[reg+]]?  */			\
-       && (BASE_OR_AUTOINCR_P (XEXP (XEXP (X, 0), 0))))			\
-      /* Just an explicit indirect reference: [const]?  */		\
-      || CONSTANT_P (XEXP (X, 0))					\
-      /* Something that is indexed; [...+...]?  */			\
-      || (GET_CODE (XEXP (X, 0)) == PLUS				\
-	  /* A BDAP constant: [reg+(8|16|32)bit offset]?  */		\
-	  && ((BASE_P (XEXP (XEXP (X, 0), 0))				\
-	       && CONSTANT_INDEX_P (XEXP (XEXP (X, 0), 1)))		\
-	      /* A BDAP register: [reg+[reg(+)].S]?  */			\
-	      || (BASE_P (XEXP (XEXP (X, 0), 0))			\
-		  && BDAP_INDEX_P(XEXP(XEXP(X, 0), 1)))			\
-	      /* Same, but with swapped arguments (no canonical		\
-		 ordering between e.g. REG and MEM as of LAST_UPDATED	\
-		 "Thu May 12 03:59:11 UTC 2005").  */			\
-	      || (BASE_P (XEXP (XEXP (X, 0), 1))			\
-		  && BDAP_INDEX_P (XEXP (XEXP (X, 0), 0)))		\
-	      /* A BIAP: [reg+reg.S] (MULT comes first).  */		\
-	      || (BASE_P (XEXP (XEXP (X, 0), 1))			\
-		  && BIAP_INDEX_P (XEXP (XEXP (X, 0), 0))))))		\
- )
-
-/* PIC-constructs for symbols.  */
-#define EXTRA_CONSTRAINT_S(X)						\
- (flag_pic && GET_CODE (X) == CONST && cris_valid_pic_const (X, false))
-
-#define EXTRA_CONSTRAINT_U(X)						\
- (flag_pic								\
-  && CONSTANT_P (X)							\
-  && cris_nonmemory_operand_or_callable_symbol (X, VOIDmode))
 
 
 /* Node: Frame Layout */
@@ -859,25 +713,8 @@ enum reg_class
 
 #define ACCUMULATE_OUTGOING_ARGS 1
 
-#define RETURN_POPS_ARGS(FUNDECL, FUNTYPE, STACKSIZE) 0
-
 
 /* Node: Register Arguments */
-
-/* The void_type_node is sent as a "closing" call.  */
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED)			\
- ((CUM).regs < CRIS_MAX_ARGS_IN_REGS				\
-  ? gen_rtx_REG (MODE, (CRIS_FIRST_ARG_REG) + (CUM).regs)	\
-  : NULL_RTX)
-
-/* The differences between this and the previous, is that this one checks
-   that an argument is named, since incoming stdarg/varargs arguments are
-   pushed onto the stack, and we don't have to check against the "closing"
-   void_type_node TYPE parameter.  */
-#define FUNCTION_INCOMING_ARG(CUM, MODE, TYPE, NAMED)		\
- ((NAMED) && (CUM).regs < CRIS_MAX_ARGS_IN_REGS			\
-  ? gen_rtx_REG (MODE, CRIS_FIRST_ARG_REG + (CUM).regs)		\
-  : NULL_RTX)
 
 /* Contrary to what you'd believe, defining FUNCTION_ARG_CALLEE_COPIES
    seems like a (small total) loss, at least for gcc-2.7.2 compiling and
@@ -896,18 +733,9 @@ struct cum_args {int regs;};
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, FNDECL, N_NAMED_ARGS) \
  ((CUM).regs = 0)
 
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)		\
- ((CUM).regs += (3 + CRIS_FUNCTION_ARG_SIZE (MODE, TYPE)) / 4)
-
 #define FUNCTION_ARG_REGNO_P(REGNO)			\
  ((REGNO) >= CRIS_FIRST_ARG_REG				\
   && (REGNO) < CRIS_FIRST_ARG_REG + (CRIS_MAX_ARGS_IN_REGS))
-
-
-/* Node: Scalar Return */
-
-#define FUNCTION_VALUE_REGNO_P(N) cris_function_value_regno_p (N)
-
 
 
 /* Node: Aggregate Return */
@@ -950,121 +778,12 @@ struct cum_args {int regs;};
 
 #define HAVE_POST_INCREMENT 1
 
+#define CONSTANT_ADDRESS_P(X) \
+  (CONSTANT_P (X) && cris_legitimate_address_p (QImode, X, false))
+
 /* Must be a compile-time constant, so we go with the highest value
    among all CRIS variants.  */
 #define MAX_REGS_PER_ADDRESS 2
-
-/* There are helper macros defined here which are used only in
-   GO_IF_LEGITIMATE_ADDRESS.
-
-   Note that you *have to* reject invalid addressing modes for mode
-   MODE, even if it is legal for normal addressing modes.  You cannot
-   rely on the constraints to do this work.  They can only be used to
-   doublecheck your intentions.  One example is that you HAVE TO reject
-   (mem:DI (plus:SI (reg:SI x) (reg:SI y))) because for some reason
-   this cannot be reloaded.  (Which of course you can argue that gcc
-   should have done.)  FIXME:  Strange.  Check.  */
-
-/* No symbol can be used as an index (or more correct, as a base) together
-   with a register with PIC; the PIC register must be there.  */
-#define CONSTANT_INDEX_P(X) \
- (CONSTANT_P (X) && (!flag_pic || cris_valid_pic_const (X, true)))
-
-/* True if X is a valid base register.  */
-#define BASE_P(X) \
- (REG_P (X) && REG_OK_FOR_BASE_P (X))
-
-/* True if X is a valid base register with or without autoincrement.  */
-#define BASE_OR_AUTOINCR_P(X)				\
- (BASE_P (X)						\
-  || (GET_CODE (X) == POST_INC				\
-      && BASE_P (XEXP (X, 0))				\
-      && REGNO (XEXP (X, 0)) != CRIS_ACR_REGNUM))
-
-/* True if X is a valid (register) index for BDAP, i.e. [Rs].S or [Rs+].S.  */
-#define BDAP_INDEX_P(X)					\
- ((MEM_P (X) && GET_MODE (X) == SImode			\
-   && BASE_OR_AUTOINCR_P (XEXP (X, 0)))			\
-  || (GET_CODE (X) == SIGN_EXTEND			\
-      && MEM_P (XEXP (X, 0))				\
-      && (GET_MODE (XEXP (X, 0)) == HImode		\
-	  || GET_MODE (XEXP (X, 0)) == QImode)		\
-      && BASE_OR_AUTOINCR_P (XEXP (XEXP (X, 0), 0))))
-
-/* True if X is a valid (register) index for BIAP, i.e. Rd.m.  */
-#define BIAP_INDEX_P(X)				\
- ((BASE_P (X) && REG_OK_FOR_INDEX_P (X))	\
-  || (GET_CODE (X) == MULT			\
-      && BASE_P (XEXP (X, 0))			\
-      && REG_OK_FOR_INDEX_P (XEXP (X, 0))	\
-      && CONST_INT_P (XEXP (X, 1))		\
-      && (INTVAL (XEXP (X, 1)) == 2		\
-	  || INTVAL (XEXP (X, 1)) == 4)))
-
-/* A PIC operand looks like a normal symbol here.  At output we dress it
-   in "[rPIC+symbol:GOT]" (global symbol) or "rPIC+symbol:GOTOFF" (local
-   symbol) so we exclude all addressing modes where we can't replace a
-   plain "symbol" with that.  A global PIC symbol does not fit anywhere
-   here (but is thankfully a general_operand in itself).  A local PIC
-   symbol is valid for the plain "symbol + offset" case.  */
-#define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)			\
- {								\
-   rtx x1, x2;							\
-   if (BASE_OR_AUTOINCR_P (X))					\
-     goto ADDR;							\
-   else if (TARGET_V32)						\
-     /* Nothing else is valid then.  */				\
-     ;								\
-   else if (CONSTANT_INDEX_P (X))				\
-     goto ADDR;							\
-   /* Indexed?  */						\
-   else if (GET_CODE (X) == PLUS)				\
-     {								\
-       x1 = XEXP (X, 0);					\
-       x2 = XEXP (X, 1);					\
-       /* BDAP o, Rd.  */					\
-       if ((BASE_P (x1) && CONSTANT_INDEX_P (x2))		\
-	   || (BASE_P (x2) && CONSTANT_INDEX_P (x1))		\
-	    /* BDAP Rs[+], Rd.  */				\
-	   || (GET_MODE_SIZE (MODE) <= UNITS_PER_WORD		\
-	       && ((BASE_P (x1) && BDAP_INDEX_P (x2))		\
-		   || (BASE_P (x2) && BDAP_INDEX_P (x1))	\
-		   /* BIAP.m Rs, Rd */				\
-		   || (BASE_P (x1) && BIAP_INDEX_P (x2))	\
-		   || (BASE_P (x2) && BIAP_INDEX_P (x1)))))	\
-	 goto ADDR;						\
-     }								\
-   else if (MEM_P (X))						\
-     {								\
-       /* DIP (Rs).  Reject [[reg+]] and [[reg]] for		\
-	  DImode (long long).  */				\
-       if (GET_MODE_SIZE (MODE) <= UNITS_PER_WORD		\
-	   && (BASE_P (XEXP (X, 0))				\
-	       || BASE_OR_AUTOINCR_P (XEXP (X, 0))))		\
-	 goto ADDR;						\
-     }								\
- }
-
-#ifndef REG_OK_STRICT
- /* Nonzero if X is a hard reg that can be used as a base reg
-    or if it is a pseudo reg.  */
-# define REG_OK_FOR_BASE_P(X)			\
- (REGNO (X) <= CRIS_LAST_GENERAL_REGISTER	\
-  || REGNO (X) == ARG_POINTER_REGNUM		\
-  || REGNO (X) >= FIRST_PSEUDO_REGISTER)
-#else
- /* Nonzero if X is a hard reg that can be used as a base reg.  */
-# define REG_OK_FOR_BASE_P(X) REGNO_OK_FOR_BASE_P (REGNO (X))
-#endif
-
-#ifndef REG_OK_STRICT
- /* Nonzero if X is a hard reg that can be used as an index
-    or if it is a pseudo reg.  */
-# define REG_OK_FOR_INDEX_P(X) REG_OK_FOR_BASE_P (X)
-#else
- /* Nonzero if X is a hard reg that can be used as an index.  */
-# define REG_OK_FOR_INDEX_P(X) REGNO_OK_FOR_INDEX_P (REGNO (X))
-#endif
 
 /* Fix reloads known to cause suboptimal spilling.  */
 #define LEGITIMIZE_RELOAD_ADDRESS(X, MODE, OPNUM, TYPE, INDL, WIN)	\
@@ -1074,8 +793,6 @@ struct cum_args {int regs;};
 	goto WIN;							\
     }									\
   while (0)
-
-#define LEGITIMATE_CONSTANT_P(X) 1
 
 
 /* Node: Condition Code */
@@ -1088,14 +805,6 @@ struct cum_args {int regs;};
 
 
 /* Node: Costs */
-
-#define REGISTER_MOVE_COST(MODE, FROM, TO)	\
-  cris_register_move_cost (MODE, FROM, TO)
-
-/* This isn't strictly correct for v0..3 in buswidth-8bit mode, but
-   should suffice.  */
-#define MEMORY_MOVE_COST(M, CLASS, IN) \
- (((M) == QImode) ? 4 : ((M) == HImode) ? 4 : 6)
 
 /* Regardless of the presence of delay slots, the default value of 1 for
    BRANCH_COST is the best in the range (1, 2, 3), tested with gcc-2.7.2
@@ -1115,8 +824,6 @@ struct cum_args {int regs;};
 #define TEXT_SECTION_ASM_OP "\t.text"
 
 #define DATA_SECTION_ASM_OP "\t.data"
-
-#define FORCE_EH_FRAME_INFO_IN_DATA_SECTION (! TARGET_ELF)
 
 /* The jump table is immediately connected to the preceding insn.  */
 #define JUMP_TABLES_IN_TEXT_SECTION 1
@@ -1143,12 +850,11 @@ enum cris_pic_symbol_type
 /* Node: File Framework */
 
 /* We don't want an .ident for gcc.  To avoid that but still support
-   #ident, we override ASM_OUTPUT_IDENT and, since the gcc .ident is its
-   only use besides ASM_OUTPUT_IDENT, undef IDENT_ASM_OP from elfos.h.  */
-#undef IDENT_ASM_OP
-#undef ASM_OUTPUT_IDENT
-#define ASM_OUTPUT_IDENT(FILE, NAME) \
-  fprintf (FILE, "%s\"%s\"\n", "\t.ident\t", NAME);
+   #ident, we override TARGET_ASM_OUTPUT_IDENT and, since the gcc .ident
+   is its only use besides front-end .ident directives, we return if
+   the state if the cgraph is not CGRAPH_STATE_PARSING.  */
+#undef TARGET_ASM_OUTPUT_IDENT
+#define TARGET_ASM_OUTPUT_IDENT cris_asm_output_ident
 
 #define ASM_APP_ON "#APP\n"
 
@@ -1156,9 +862,6 @@ enum cris_pic_symbol_type
 
 
 /* Node: Data Output */
-
-#define OUTPUT_ADDR_CONST_EXTRA(STREAM, X, FAIL) \
-  do { if (!cris_output_addr_const_extra (STREAM, X)) goto FAIL; } while (0)
 
 #define IS_ASM_LOGICAL_LINE_SEPARATOR(C, STR) (C) == '@'
 
@@ -1172,7 +875,7 @@ enum cris_pic_symbol_type
    are used on the object files.  Since ".global ... .lcomm ..." works, we
    use that.  Use .._ALIGNED_COMMON, since gcc whines when we only have
    ..._COMMON, and we prefer to whine ourselves; BIGGEST_ALIGNMENT is not
-   the one to check.  This done for a.out only.  */
+   the one to check.  */
 /* FIXME: I suspect a bug in gcc with alignment.  Do not warn until
    investigated; it mucks up the testsuite results.  */
 #define CRIS_ASM_OUTPUT_ALIGNED_DECL_COMMON(FILE, DECL, NAME, SIZE, ALIGN, LOCAL) \
@@ -1187,29 +890,15 @@ enum cris_pic_symbol_type
       else if (align_ < 1)						\
 	align_ = 1;							\
 									\
-      if (TARGET_ELF)							\
+      if (LOCAL)							\
 	{								\
-	  if (LOCAL)							\
-	    {								\
-	      fprintf ((FILE), "%s", LOCAL_ASM_OP);			\
-	      assemble_name ((FILE), (NAME));				\
-	      fprintf ((FILE), "\n");					\
-	    }								\
-	  fprintf ((FILE), "%s", COMMON_ASM_OP);			\
+	  fprintf ((FILE), "%s", LOCAL_ASM_OP);				\
 	  assemble_name ((FILE), (NAME));				\
-	  fprintf ((FILE), ",%u,%u\n", (int)(SIZE), align_);		\
+	  fprintf ((FILE), "\n");					\
 	}								\
-      else								\
-	{								\
-	  /* We can't tell a one-only or weak COMM from a "global	\
-	     COMM" so just make all non-locals weak.  */		\
-	  if (! (LOCAL))						\
-	    ASM_WEAKEN_LABEL (FILE, NAME);				\
-	  fputs ("\t.lcomm ", (FILE));					\
-	  assemble_name ((FILE), (NAME));				\
-	  fprintf ((FILE), ",%u\n",					\
-		   ((int)(SIZE) + (align_ - 1)) & ~(align_ - 1));	\
-	}								\
+      fprintf ((FILE), "%s", COMMON_ASM_OP);				\
+      assemble_name ((FILE), (NAME));					\
+      fprintf ((FILE), ",%u,%u\n", (int)(SIZE), align_);		\
     }									\
   while (0)
 
@@ -1253,21 +942,11 @@ enum cris_pic_symbol_type
 #define ADDITIONAL_REGISTER_NAMES \
  {{"r14", 14}, {"r15", 15}, {"pc", 15}}
 
-#define PRINT_OPERAND(FILE, X, CODE)		\
- cris_print_operand (FILE, X, CODE)
-
-/* For delay-slot handling.  */
-#define PRINT_OPERAND_PUNCT_VALID_P(CODE)	\
- ((CODE) == '#' || (CODE) == '!' || (CODE) == ':')
-
-#define PRINT_OPERAND_ADDRESS(FILE, ADDR)	\
-   cris_print_operand_address (FILE, ADDR)
-
 /* Output an empty line to illustrate the presence of the delay slot.  */
 #define DBR_OUTPUT_SEQEND(FILE) \
   fprintf (FILE, "\n")
 
-#define LOCAL_LABEL_PREFIX (TARGET_ELF ? "." : "")
+#define LOCAL_LABEL_PREFIX "."
 
 /* cppinit.c initializes a const array from this, so it must be constant,
    can't have it different based on options.  Luckily, the prefix is
@@ -1376,8 +1055,6 @@ enum cris_pic_symbol_type
 /* FIXME: Investigate CASE_VECTOR_SHORTEN_MODE to make sure HImode is not
    used when broken-.word could possibly fail (plus testcase).  */
 
-#define FIXUNS_TRUNC_LIKE_FIX_TRUNC
-
 /* This is the number of bytes that can be moved in one
    reasonably fast instruction sequence.  For CRIS, this is two
    instructions: mem => reg, reg => mem.  */
@@ -1395,9 +1072,6 @@ enum cris_pic_symbol_type
 #define FUNCTION_MODE QImode
 
 #define NO_IMPLICIT_EXTERN_C
-
-/* No specific purpose other than warningless compatibility.  */
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
 
 /*
  * Local variables:

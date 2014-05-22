@@ -4,7 +4,7 @@
 #ld:
 #readelf: -wf
 #target: cfi
-#notarget: alpha* hppa64*
+#notarget: alpha* hppa64* tile*
 
 Contents of the .eh_frame section:
 

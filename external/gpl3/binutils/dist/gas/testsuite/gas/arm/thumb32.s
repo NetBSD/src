@@ -371,14 +371,17 @@ ldst:
 	pld	1f
 	pld	1b
 1:
-
+	nop
+here:
 	ldrd	r2, r3, [r5]
 	ldrd	r2, [r5, #0x30]
 	ldrd	r2, [r5, #-0x30]
+	ldrd	r4, r5, here
 	strd	r2, r3, [r5]
 	strd	r2, [r5, #0x30]
 	strd	r2, [r5, #-0x30]
-
+	strd    r2, r3, here
+	
 	ldrbt	r1, [r5]
 	ldrbt	r1, [r5, #0x30]
 	ldrsbt	r1, [r5]

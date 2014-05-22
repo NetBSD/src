@@ -1,4 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2002
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2002, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -24,6 +24,7 @@
 * VAX-branch::                  VAX Branch Improvement
 * VAX-operands::                VAX Operands
 * VAX-no::                      Not Supported on VAX
+* VAX-Syntax::                  VAX Syntax
 @end menu
 
 
@@ -356,3 +357,28 @@ separated.
 @cindex bitfields, not supported on VAX
 Vax bit fields can not be assembled with @code{@value{AS}}.  Someone
 can add the required code if they really need it.
+
+@node VAX-Syntax
+@section VAX Syntax
+@menu
+* VAX-Chars::                Special Characters
+@end menu
+
+@node VAX-Chars
+@subsection Special Characters
+
+@cindex line comment character, VAX
+@cindex VAX line comment character
+The presence of a @samp{#} appearing anywhere on a line indicates the
+start of a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+@cindex line separator, VAX
+@cindex statement separator, VAX
+@cindex VAX line separator
+The @samp{;} character can be used to separate statements on the same
+line.

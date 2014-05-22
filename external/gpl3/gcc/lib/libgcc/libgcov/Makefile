@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2013/01/16 05:28:02 yamt Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2014/05/22 16:53:19 yamt Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -8,22 +8,18 @@ NOLINT=		# defined
 LIB=		gcov
 
 .include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .if ${MKGCC} != "no"
 
-# XXX: Fix me
-.if ${MACHINE_ARCH} == "earmeb"
-.include "${.CURDIR}/arch/earm/defs.mk"
-.else
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
-.endif
+.include "${.CURDIR}/arch/${LIBGCC_MACHINE_ARCH}/defs.mk"
 
 LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/arch/${LIBGCC_MACHINE_ARCH}
 CPPFLAGS+=	-Wno-stack-protector
 
-DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+DPSRCS+=	${.CURDIR}/arch/${LIBGCC_MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
 
 CLEANFILES+=	${LIBGCOVSRCS}

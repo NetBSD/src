@@ -96,9 +96,9 @@ Disassembly of section \.text:
 			82: R_RX_DIR16S_PCREL	foo
   84:	3a 00 80                      	beq\.w	0xffff8084
   87:	3a ff 7f                      	beq\.w	0x8086
-  8a:	3a fc 7f                      	beq\.w	0x8086
+  8a:	3a 00 00                      	beq\.w	0x8a
 			8b: R_RX_DIR16S_PCREL	foo
   8d:	3b 00 80                      	bne\.w	0xffff808d
   90:	3b ff 7f                      	bne\.w	0x808f
-  93:	3b fc 7f                      	bne\.w	0x808f
+  93:	3b 00 00                      	bne\.w	0x93
 			94: R_RX_DIR16S_PCREL	foo

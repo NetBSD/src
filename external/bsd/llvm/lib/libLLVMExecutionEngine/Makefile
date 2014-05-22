@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/16 19:27:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2014/05/22 16:14:41 yamt Exp $
 
 LIB=	LLVMExecutionEngine
 
@@ -8,6 +8,7 @@ LIB=	LLVMExecutionEngine
 
 SRCS+=	ExecutionEngine.cpp \
 	ExecutionEngineBindings.cpp \
+	RTDyldMemoryManager.cpp \
 	TargetSelect.cpp
 
 .include <bsd.lib.mk>

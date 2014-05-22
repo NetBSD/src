@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/hppa
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -201,7 +201,6 @@ hppanbsd_supply_gregset (const struct regset *regset,
 			 int regnum, const void *gregs, size_t len)
 {
   const gdb_byte *regs = gregs;
-  size_t offset;
   int i;
 
   gdb_assert (len >= HPPANBSD_SIZEOF_GREGS);

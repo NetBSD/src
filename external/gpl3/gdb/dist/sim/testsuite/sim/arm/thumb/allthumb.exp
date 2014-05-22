@@ -1,7 +1,6 @@
 # ARM simulator testsuite.
 
-if { [istarget arm*-*-*]
-     || [istarget thumb*-*-*] } {
+if { [istarget arm*-*-*] } {
     # load support procs (none yet)
     # load_lib cgen.exp
 

@@ -1,6 +1,6 @@
 // Custom pointer adapter and sample storage policies
 
-// Copyright (C) 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2008-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,8 +23,10 @@
 // <http://www.gnu.org/licenses/>.
 
 /**
- * @file ext/pointer.h
- * @author Bob Walters
+ *  @file ext/pointer.h
+ *  This file is a GNU extension to the Standard C++ Library.
+ *
+ *  @author Bob Walters
  *
  * Provides reusable _Pointer_adapter for assisting in the development of
  * custom pointer types that can be used with the standard containers via
@@ -40,8 +42,14 @@
 #include <bits/stl_iterator_base_types.h>
 #include <ext/cast.h>
 #include <ext/type_traits.h>
+#if __cplusplus >= 201103L
+# include <bits/move.h>
+# include <bits/ptr_traits.h>
+#endif
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /** 
    * @brief A storage policy for use with _Pointer_adapter<> which yields a
@@ -225,7 +233,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     { typedef const volatile _Invalid_type&  reference; };
 
   /**
-   * This structure accomodates the way in which
+   * This structure accommodates the way in which
    * std::iterator_traits<> is normally specialized for const T*, so
    * that value_type is still T.
    */
@@ -237,14 +245,6 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     struct _Unqualified_type<const _Tp> 
     { typedef _Tp type; };
     
-  template<typename _Tp> 
-    struct _Unqualified_type<volatile _Tp> 
-    { typedef volatile _Tp type; };
-    
-  template<typename _Tp> 
-    struct _Unqualified_type<volatile const _Tp> 
-    { typedef volatile _Tp type; };
-  
   /**
    * The following provides an 'alternative pointer' that works with
    * the containers when specified as the pointer typedef of the
@@ -259,7 +259,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
    * so that it becomes reusable for creating other pointer types.
    *
    * A key point of this class is also that it allows container
-   * writers to 'assume' Alocator::pointer is a typedef for a normal
+   * writers to 'assume' Allocator::pointer is a typedef for a normal
    * pointer.  This class supports most of the conventions of a true
    * pointer, and can, for instance handle implicit conversion to
    * const and base class pointer types.  The only impositions on
@@ -267,7 +267,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
    * Allocator::pointer typedef appropriately for pointer types.  2)
    * if you need pointer casting, use the __pointer_cast<> functions
    * from ext/cast.h.  This allows pointer cast operations to be
-   * overloaded is necessary by custom pointers.
+   * overloaded as necessary by custom pointers.
    *
    * Note: The const qualifier works with this pointer adapter as
    * follows:
@@ -430,7 +430,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       } \
 // END of _CXX_POINTER_ARITH_OPERATOR_SET macro
   
-      // Expand into the various pointer arithmatic operators needed.
+      // Expand into the various pointer arithmetic operators needed.
       _CXX_POINTER_ARITH_OPERATOR_SET(short);
       _CXX_POINTER_ARITH_OPERATOR_SET(unsigned short);
       _CXX_POINTER_ARITH_OPERATOR_SET(int);
@@ -447,7 +447,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       }
   
       inline _Pointer_adapter 
-      operator++(int __unused) 
+      operator++(int)
       {
         _Pointer_adapter tmp(*this);
         _Storage_policy::set(_Storage_policy::get() + 1);
@@ -521,7 +521,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     { return __rhs.get() != reinterpret_cast<void*>(__lhs); } 
 
   /**
-   * Comparison operators for _Pointer_adapter defer to the base class'es
+   * Comparison operators for _Pointer_adapter defer to the base class'
    * comparison operators, when possible.
    */
   template<typename _Tp>
@@ -560,6 +560,34 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
                const _Pointer_adapter<_StoreT>& __p)
     { return (__os << __p.get()); }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
+
+#if __cplusplus >= 201103L
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+  template<typename _Storage_policy>
+    struct pointer_traits<__gnu_cxx::_Pointer_adapter<_Storage_policy>>
+    {
+      /// The pointer type
+      typedef __gnu_cxx::_Pointer_adapter<_Storage_policy>         pointer;
+      /// The type pointed to
+      typedef typename pointer::element_type            element_type;
+      /// Type used to represent the difference between two pointers
+      typedef typename pointer::difference_type         difference_type;
+
+      template<typename _Up>
+        using rebind = typename __gnu_cxx::_Pointer_adapter<
+	typename pointer_traits<_Storage_policy>::rebind<_Up>>;
+
+      static pointer pointer_to(typename pointer::reference __r) noexcept
+      { return pointer(std::addressof(__r)); }
+    };
+
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
+#endif
 
 #endif // _POINTER_H

@@ -19,67 +19,78 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/arm ELF EABI)", stderr);
+#undef MULTILIB_DEFAULTS
+#define MULTILIB_DEFAULTS { "mabi=aapcs-linux" }
 
-/* Default to armv5t so that thumb shared libraries work.
-   The ARM10TDMI core is the default for armv5t, so set
-   SUBTARGET_CPU_DEFAULT to achieve this.  */
-#undef  SUBTARGET_CPU_DEFAULT
-#define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm10tdmi
-
-/* This defaults us to little-endian.  */
-#ifndef TARGET_ENDIAN_DEFAULT
-#define TARGET_ENDIAN_DEFAULT 0
-#endif
+#define TARGET_LINKER_EABI_SUFFIX \
+    (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT \
+     ? "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=hard:_eabihf;:_eabi}}}" \
+     : "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=soft:_eabi;:_eabihf}}}")
+#define TARGET_LINKER_BIG_EMULATION "armelfb_nbsd%(linker_eabi_suffix)"
+#define TARGET_LINKER_LITTLE_EMULATION "armelf_nbsd%(linker_eabi_suffix)"
 
 /* TARGET_BIG_ENDIAN_DEFAULT is set in
    config.gcc for big endian configurations.  */
 #undef  TARGET_LINKER_EMULATION
-#if TARGET_ENDIAN_DEFAULT == MASK_BIG
-#define TARGET_LINKER_EMULATION "-m armelfb_nbsd_eabi"
+#if TARGET_BIG_ENDIAN_DEFAULT
+#define TARGET_LINKER_EMULATION TARGET_LINKER_BIG_EMULATION
+#undef BE8_LINK_SPEC
+#define BE8_LINK_SPEC " %{!mlittle-endian:%{march=armv7-a|mcpu=cortex-a5|mcpu=cortex-a8|mcpu=cortex-a9:%{!r:--be8}}}" 
 #else
-#define TARGET_LINKER_EMULATION "-m armelf_nbsd_eabi"
+#define TARGET_LINKER_EMULATION TARGET_LINKER_LITTLE_EMULATION
 #endif
 
 #undef MULTILIB_DEFAULTS
-
-/* Default it to use ATPCS with soft-VFP.  */
-#undef TARGET_DEFAULT
-#define TARGET_DEFAULT			\
-  (MASK_APCS_FRAME			\
-   | TARGET_ENDIAN_DEFAULT)
 
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
 #undef TARGET_OS_CPP_BUILTINS
-#define TARGET_OS_CPP_BUILTINS()	\
-  do					\
-    {					\
-      TARGET_BPABI_CPP_BUILTINS();	\
-      NETBSD_OS_CPP_BUILTINS_ELF();	\
-    }					\
+#define TARGET_OS_CPP_BUILTINS()		\
+  do						\
+    {						\
+      if (TARGET_AAPCS_BASED)			\
+	TARGET_BPABI_CPP_BUILTINS();		\
+      NETBSD_OS_CPP_BUILTINS_ELF();		\
+      if (ARM_EABI_UNWIND_TABLES)		\
+	builtin_define ("__UNWIND_TABLES__");	\
+    }						\
   while (0)
 
 #undef SUBTARGET_CPP_SPEC
 #define SUBTARGET_CPP_SPEC NETBSD_CPP_SPEC
 
+/*
+ * Override AAPCS types to remain compatible the existing NetBSD types.
+ */
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
+
+#undef SIZE_TYPE
+#define SIZE_TYPE "long unsigned int"
+ 
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE "long int"
+
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{!mabi=*|mabi=aapcs*:-meabi=4} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
+  "-matpcs %{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
 
 /* Default to full VFP if -mhard-float is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #define SUBTARGET_ASM_FLOAT_SPEC	\
-  "%{mhard-float:{!mfpu=*:-mfpu=vfp}}   \
-   %{mfloat-abi=hard:{!mfpu=*:-mfpu=vfp}}"
+  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
+   %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS				\
   { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC }, \
   { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, \
   { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },	\
+  { "linker_eabi_suffix",	TARGET_LINKER_EABI_SUFFIX }, \
+  { "linker_emulation",		TARGET_LINKER_EMULATION }, \
+  { "linker_big_emulation",	TARGET_LINKER_BIG_EMULATION }, \
+  { "linker_little_emulation",	TARGET_LINKER_LITTLE_EMULATION }, \
   { "be8_link_spec",		BE8_LINK_SPEC }, \
   { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC }, \
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
@@ -88,7 +99,8 @@
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "-X %{mbig-endian:-EB -m armelfb_nbsd_eabi} \
-   %{mlittle-endian:-EL -m armelf_nbsd_eabi} \
+  "-X %{mbig-endian:-EB -m %(linker_big_emulation)} \
+   %{mlittle-endian:-EL -m %(linker_liitle_emulation)} \
+   %{!mbig-endian:%{!mlittle-endian:-m %(linker_emulation)}} \
    %(be8_link_spec) %(target_fix_v4bx_spec) \
    %(netbsd_link_spec)"

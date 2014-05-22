@@ -1,6 +1,6 @@
 /* Input functions for reading LTO sections.
 
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -23,26 +23,24 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "toplev.h"
 #include "tree.h"
 #include "expr.h"
 #include "flags.h"
 #include "params.h"
 #include "input.h"
-#include "varray.h"
 #include "hashtab.h"
 #include "basic-block.h"
 #include "tree-flow.h"
 #include "cgraph.h"
 #include "function.h"
 #include "ggc.h"
-#include "diagnostic.h"
+#include "diagnostic-core.h"
 #include "except.h"
 #include "vec.h"
 #include "timevar.h"
-#include "output.h"
 #include "lto-streamer.h"
 #include "lto-compress.h"
+#include "ggc.h"
 
 /* Section names.  These must correspond to the values of
    enum lto_section_type.  */
@@ -50,88 +48,19 @@ const char *lto_section_name[LTO_N_SECTION_TYPES] =
 {
   "decls",
   "function_body",
-  "static_initializer",
-  "cgraph",
-  "ipa_pure_const",
-  "ipa_reference",
+  "statics",
   "symtab",
-  "wpa_fixup",
-  "opts"
+  "refs",
+  "asm",
+  "jmpfuncs",
+  "pureconst",
+  "reference",
+  "symbol_nodes",
+  "opts",
+  "cgraphopt",
+  "inline",
+  "ipcp_trans"
 };
-
-unsigned char
-lto_input_1_unsigned (struct lto_input_block *ib)
-{
-  if (ib->p >= ib->len)
-    internal_error ("bytecode stream: trying to read %d bytes "
-		    "after the end of the input buffer", ib->p - ib->len);
-
-  return (ib->data[ib->p++]);
-}
-
-
-/* Read an ULEB128 Number of IB.  */
-
-unsigned HOST_WIDE_INT
-lto_input_uleb128 (struct lto_input_block *ib)
-{
-  unsigned HOST_WIDE_INT result = 0;
-  int shift = 0;
-  unsigned HOST_WIDE_INT byte;
-
-  while (true)
-    {
-      byte = lto_input_1_unsigned (ib);
-      result |= (byte & 0x7f) << shift;
-      shift += 7;
-      if ((byte & 0x80) == 0)
-	return result;
-    }
-}
-
-/* HOST_WIDEST_INT version of lto_input_uleb128.  IB is as in
-   lto_input_uleb128.  */
-
-unsigned HOST_WIDEST_INT
-lto_input_widest_uint_uleb128 (struct lto_input_block *ib)
-{
-  unsigned HOST_WIDEST_INT result = 0;
-  int shift = 0;
-  unsigned HOST_WIDEST_INT byte;
-
-  while (true)
-    {
-      byte = lto_input_1_unsigned (ib);
-      result |= (byte & 0x7f) << shift;
-      shift += 7;
-      if ((byte & 0x80) == 0)
-	return result;
-    }
-}
-
-/* Read an SLEB128 Number of IB.  */
-
-HOST_WIDE_INT
-lto_input_sleb128 (struct lto_input_block *ib)
-{
-  HOST_WIDE_INT result = 0;
-  int shift = 0;
-  unsigned HOST_WIDE_INT byte;
-
-  while (true)
-    {
-      byte = lto_input_1_unsigned (ib);
-      result |= (byte & 0x7f) << shift;
-      shift += 7;
-      if ((byte & 0x80) == 0)
-	{
-	  if ((shift < HOST_BITS_PER_WIDE_INT) && (byte & 0x40))
-	    result |= - ((HOST_WIDE_INT)1 << shift);
-
-	  return result;
-	}
-    }
-}
 
 
 /* Hooks so that the ipa passes can call into the lto front end to get
@@ -430,11 +359,7 @@ lto_get_decl_name_mapping (struct lto_file_decl_data *decl_data,
 struct lto_in_decl_state *
 lto_new_in_decl_state (void)
 {
-  struct lto_in_decl_state *state;
-
-  state = ((struct lto_in_decl_state *) xmalloc (sizeof (*state)));
-  memset (state, 0, sizeof (*state));
-  return state;
+  return ggc_alloc_cleared_lto_in_decl_state ();
 }
 
 /* Delete STATE and its components. */
@@ -446,8 +371,8 @@ lto_delete_in_decl_state (struct lto_in_decl_state *state)
 
   for (i = 0; i < LTO_N_DECL_STREAMS; i++)
     if (state->streams[i].trees)
-      free (state->streams[i].trees);
-  free (state);
+      ggc_free (state->streams[i].trees);
+  ggc_free (state);
 }
 
 /* Hashtable helpers. lto_in_decl_states are hash by their function decls. */
@@ -486,4 +411,24 @@ lto_get_function_in_decl_state (struct lto_file_decl_data *file_data,
   temp.fn_decl = func;
   slot = htab_find_slot (file_data->function_decl_states, &temp, NO_INSERT);
   return slot? ((struct lto_in_decl_state*) *slot) : NULL;
+}
+
+
+/* Report read pass end of the section.  */
+
+void
+lto_section_overrun (struct lto_input_block *ib)
+{
+  fatal_error ("bytecode stream: trying to read %d bytes "
+	       "after the end of the input buffer", ib->p - ib->len);
+}
+
+/* Report out of range value.  */
+
+void
+lto_value_range_error (const char *purpose, HOST_WIDE_INT val,
+		       HOST_WIDE_INT min, HOST_WIDE_INT max)
+{
+  fatal_error ("%s out of range: Range is %i to %i, value is %i",
+	       purpose, (int)min, (int)max, (int)val);
 }

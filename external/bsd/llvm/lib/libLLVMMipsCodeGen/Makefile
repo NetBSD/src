@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.5 2013/01/16 05:27:59 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.2.6 2014/05/22 16:14:42 yamt Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -6,12 +6,17 @@ LIB=	LLVMMipsCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/Mips
 
-SRCS+=	Mips16InstrInfo.cpp \
+SRCS+=	Mips16ISelDAGToDAG.cpp \
+	Mips16ISelLowering.cpp \
+	Mips16InstrInfo.cpp \
 	Mips16FrameLowering.cpp \
+	Mips16HardFloat.cpp \
+	Mips16HardFloatInfo.cpp \
 	Mips16RegisterInfo.cpp \
 	MipsAnalyzeImmediate.cpp \
 	MipsAsmPrinter.cpp \
 	MipsCodeEmitter.cpp \
+	MipsConstantIslandPass.cpp \
 	MipsDelaySlotFiller.cpp \
 	MipsFrameLowering.cpp \
 	MipsInstrInfo.cpp \
@@ -20,8 +25,13 @@ SRCS+=	Mips16InstrInfo.cpp \
 	MipsJITInfo.cpp \
 	MipsLongBranch.cpp \
 	MipsMachineFunction.cpp \
+	MipsModuleISelDAGToDAG.cpp \
 	MipsMCInstLower.cpp \
+	MipsOptimizePICCall.cpp \
+	MipsOs16.cpp \
 	MipsRegisterInfo.cpp \
+	MipsSEISelLowering.cpp \
+	MipsSEISelDAGToDAG.cpp \
 	MipsSEInstrInfo.cpp \
 	MipsSEFrameLowering.cpp \
 	MipsSERegisterInfo.cpp \
@@ -29,6 +39,7 @@ SRCS+=	Mips16InstrInfo.cpp \
 	MipsTargetMachine.cpp \
 	MipsTargetObjectFile.cpp \
 	MipsSelectionDAGInfo.cpp
+
 
 TABLEGEN_SRC=		Mips.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/Mips
@@ -41,7 +52,6 @@ TABLEGEN_OUTPUT= \
 	MipsGenCodeEmitter.inc|-gen-emitter \
 	MipsGenDAGISel.inc|-gen-dag-isel \
 	MipsGenDisassemblerTables.inc|-gen-disassembler \
-	MipsGenEDInfo.inc|-gen-enhanced-disassembly-info \
 	MipsGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	MipsGenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	MipsGenSubtargetInfo.inc|-gen-subtarget

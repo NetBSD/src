@@ -6,7 +6,7 @@
 
 	@ Write to Special Register from Immediate
 	@ Write to application status register
-	msr	APSR,#0xc0000004
+	msr	APSR_nzcvq,#0xc0000004
 	msr	APSR_g,#0xc0000004
 	msr	APSR_nzcvq,#0xc0000004
 	msr	APSR_nzcvqg,#0xc0000004

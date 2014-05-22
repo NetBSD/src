@@ -11,6 +11,7 @@ BFDDIR = $(srcdir)/../bfd
 
 WARN_CFLAGS = @WARN_CFLAGS@
 NO_WERROR = @NO_WERROR@
+NO_WMISSING_FIELD_INITIALIZERS = @NO_WMISSING_FIELD_INITIALIZERS@
 AM_CFLAGS = $(WARN_CFLAGS)
 
 COMPILE_FOR_BUILD = $(CC_FOR_BUILD) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -41,6 +42,8 @@ BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 
 # Header files.
 HFILES = \
+	aarch64-asm.h aarch64-dis.h aarch64-opc.h aarch64-tbl.h \
+	epiphany-desc.h epiphany-opc.h \
 	fr30-desc.h fr30-opc.h \
 	frv-desc.h frv-opc.h \
 	h8500-opc.h \
@@ -72,6 +75,12 @@ HFILES = \
 # C source files that correspond to .o's ending up in libopcodes
 # for all machines.
 TARGET_LIBOPCODES_CFILES = \
+	aarch64-asm.c \
+	aarch64-asm-2.c \
+	aarch64-dis.c \
+	aarch64-dis-2.c \
+	aarch64-opc.c \
+	aarch64-opc-2.c \
 	alpha-dis.c \
 	alpha-opc.c \
 	arc-dis.c \
@@ -95,6 +104,11 @@ TARGET_LIBOPCODES_CFILES = \
 	d30v-dis.c \
 	d30v-opc.c \
 	dlx-dis.c \
+	epiphany-asm.c \
+	epiphany-desc.c \
+	epiphany-dis.c \
+	epiphany-ibld.c \
+	epiphany-opc.c \
 	fr30-asm.c \
 	fr30-desc.c \
 	fr30-dis.c \
@@ -159,6 +173,7 @@ TARGET_LIBOPCODES_CFILES = \
 	mep-ibld.c \
 	mep-opc.c \
 	microblaze-dis.c \
+	micromips-opc.c \
 	mips-dis.c \
 	mips-opc.c \
 	mips16-opc.c \
@@ -186,6 +201,8 @@ TARGET_LIBOPCODES_CFILES = \
 	pj-opc.c \
 	ppc-dis.c \
 	ppc-opc.c \
+	rl78-decode.c \
+	rl78-dis.c \
 	rx-decode.c \
 	rx-dis.c \
 	s390-dis.c \
@@ -206,6 +223,10 @@ TARGET_LIBOPCODES_CFILES = \
 	tic6x-dis.c \
 	tic80-dis.c \
 	tic80-opc.c \
+	tilegx-dis.c \
+	tilegx-opc.c \
+	tilepro-dis.c \
+	tilepro-opc.c \
 	v850-dis.c \
 	v850-opc.c \
 	vax-dis.c \
@@ -221,6 +242,8 @@ TARGET_LIBOPCODES_CFILES = \
 	xstormy16-ibld.c \
 	xstormy16-opc.c \
 	xtensa-dis.c \
+	xgate-dis.c \
+ 	xgate-opc.c \
 	z80-dis.c \
 	z8k-dis.c
 
@@ -234,6 +257,7 @@ LIBOPCODES_CFILES = \
 # C source files that correspond to .o's.
 CFILES = \
 	$(LIBOPCODES_CFILES) \
+	aarch64-gen.c \
 	i386-gen.c \
 	ia64-asmtab.c \
 	ia64-gen.c \
@@ -306,14 +330,14 @@ po/POTFILES.in: @MAINT@ Makefile
 	  && mv tmp $(srcdir)/po/POTFILES.in
 
 CLEANFILES = \
-	stamp-fr30 stamp-frv stamp-ip2k stamp-iq2000 stamp-lm32 \
+	stamp-epiphany stamp-fr30 stamp-frv stamp-ip2k stamp-iq2000 stamp-lm32 \
 	stamp-m32c stamp-m32r stamp-mep stamp-mt \
 	stamp-openrisc stamp-xc16x stamp-xstormy16 \
 	libopcodes.a stamp-lib
 
 
 CGENDIR = @cgendir@
-CPUDIR = $(CGENDIR)/cpu
+CPUDIR = $(srcdir)/../cpu
 CGEN = "`if test -f ../guile/libguile/guile ; then echo ../guile/libguile/guile; else echo guile ; fi` -l ${cgendir}/guile.scm -s"
 CGENFLAGS = -v
 
@@ -324,9 +348,10 @@ CGENDEPS = \
 	$(CGENDIR)/opc-opinst.scm \
 	cgen-asm.in cgen-dis.in cgen-ibld.in
 
-CGEN_CPUS = fr30 frv ip2k iq2000 lm32 m32c m32r mep mt openrisc xc16x xstormy16
+CGEN_CPUS = epiphany fr30 frv ip2k iq2000 lm32 m32c m32r mep mt openrisc xc16x xstormy16
 
 if CGEN_MAINT
+EPIPHANY_DEPS = stamp-epiphany
 FR30_DEPS = stamp-fr30
 FRV_DEPS = stamp-frv
 IP2K_DEPS = stamp-ip2k
@@ -340,6 +365,7 @@ OPENRISC_DEPS = stamp-openrisc
 XC16X_DEPS = stamp-xc16x
 XSTORMY16_DEPS = stamp-xstormy16
 else
+EPIPHANY_DEPS =
 FR30_DEPS =
 FRV_DEPS =
 IP2K_DEPS =
@@ -371,6 +397,16 @@ run-cgen-all:
 
 # For now, require developers to configure with --enable-cgen-maint.
 
+$(srcdir)/epiphany-desc.h $(srcdir)/epiphany-desc.c $(srcdir)/epiphany-opc.h \
+		$(srcdir)/epiphany-opc.c $(srcdir)/epiphany-ibld.c \
+		$(srcdir)/epiphany-opinst.c $(srcdir)/epiphany-asm.c \
+		$(srcdir)/epiphany-dis.c: $(EPIPHANY_DEPS)
+	@true
+
+stamp-epiphany: $(CGENDEPS) $(CPUDIR)/epiphany.cpu $(CPUDIR)/epiphany.opc
+	$(MAKE) run-cgen arch=epiphany prefix=epiphany options= \
+		archfile=$(CPUDIR)/epiphany.cpu opcfile=$(CPUDIR)/epiphany.opc extrafiles=
+
 $(srcdir)/fr30-desc.h $(srcdir)/fr30-desc.c $(srcdir)/fr30-opc.h $(srcdir)/fr30-opc.c $(srcdir)/fr30-ibld.c $(srcdir)/fr30-asm.c $(srcdir)/fr30-dis.c: $(FR30_DEPS)
 	@true
 stamp-fr30: $(CGENDEPS) $(CPUDIR)/fr30.cpu $(CPUDIR)/fr30.opc
@@ -379,9 +415,9 @@ stamp-fr30: $(CGENDEPS) $(CPUDIR)/fr30.cpu $(CPUDIR)/fr30.opc
 
 $(srcdir)/frv-desc.h $(srcdir)/frv-desc.c $(srcdir)/frv-opc.h $(srcdir)/frv-opc.c $(srcdir)/frv-ibld.c $(srcdir)/frv-asm.c $(srcdir)/frv-dis.c: $(FRV_DEPS)
 	@true
-stamp-frv: $(CGENDEPS) $(srcdir)/../cpu/frv.cpu $(srcdir)/../cpu/frv.opc
+stamp-frv: $(CGENDEPS) $(CPUDIR)/frv.cpu $(CPUDIR)/frv.opc
 	$(MAKE) run-cgen arch=frv prefix=frv options= \
-		archfile=$(srcdir)/../cpu/frv.cpu opcfile=$(srcdir)/../cpu/frv.opc extrafiles=
+		archfile=$(CPUDIR)/frv.cpu opcfile=$(CPUDIR)/frv.opc extrafiles=
 
 $(srcdir)/ip2k-desc.h $(srcdir)/ip2k-desc.c $(srcdir)/ip2k-opc.h $(srcdir)/ip2k-opc.c $(srcdir)/ip2k-ibld.c $(srcdir)/ip2k-asm.c $(srcdir)/ip2k-dis.c: $(IP2K_DEPS)
 	@true
@@ -391,34 +427,34 @@ stamp-ip2k: $(CGENDEPS) $(CPUDIR)/ip2k.cpu $(CPUDIR)/ip2k.opc
 
 $(srcdir)/iq2000-desc.h $(srcdir)/iq2000-desc.c $(srcdir)/iq2000-opc.h $(srcdir)/iq2000-opc.c $(srcdir)/iq2000-ibld.c $(srcdir)/iq2000-asm.c $(srcdir)/iq2000-dis.c: $(IQ2000_DEPS)
 	@true
-stamp-iq2000: $(CGENDEPS) $(srcdir)/../cpu/iq2000.cpu \
-		$(srcdir)/../cpu/iq2000.opc $(srcdir)/../cpu/iq2000m.cpu \
-		$(srcdir)/../cpu/iq10.cpu
+stamp-iq2000: $(CGENDEPS) $(CPUDIR)/iq2000.cpu \
+		$(CPUDIR)/iq2000.opc $(CPUDIR)/iq2000m.cpu \
+		$(CPUDIR)/iq10.cpu
 	$(MAKE) run-cgen arch=iq2000 prefix=iq2000 options= \
-		archfile=$(srcdir)/../cpu/iq2000.cpu \
-		opcfile=$(srcdir)/../cpu/iq2000.opc extrafiles=
+		archfile=$(CPUDIR)/iq2000.cpu \
+		opcfile=$(CPUDIR)/iq2000.opc extrafiles=
 
 $(srcdir)lm32-desc.h $(srcdir)/lm32-desc.c $(srcdir)/lm32-opc.h $(srcdir)/lm32-opc.c $(srcdir)/lm32-ibld.c $(srcdir)/lm32-opinst.c $(srcdir)/lm32-asm.c $(srcdir)/lm32-dis.c: $(LM32_DEPS)
 	@true
-stamp-lm32: $(CGENDEPS) $(srcdir)/../cpu/lm32.cpu $(srcdir)/../cpu/lm32.opc
+stamp-lm32: $(CGENDEPS) $(CPUDIR)/lm32.cpu $(CPUDIR)/lm32.opc
 	$(MAKE) run-cgen arch=lm32 prefix=lm32 options=opinst \
-		archfile=$(srcdir)/../cpu/lm32.cpu \
-		opcfile=$(srcdir)/../cpu/lm32.opc \
+		archfile=$(CPUDIR)/lm32.cpu \
+		opcfile=$(CPUDIR)/lm32.opc \
 		extrafiles=opinst
 
 $(srcdir)/m32c-desc.h $(srcdir)/m32c-desc.c $(srcdir)/m32c-opc.h $(srcdir)/m32c-opc.c $(srcdir)/m32c-ibld.c $(srcdir)/m32c-asm.c $(srcdir)/m32c-dis.c: $(M32C_DEPS)
 #	@true
-stamp-m32c: $(CGENDEPS) $(srcdir)/../cpu/m32c.cpu $(srcdir)/../cpu/m32c.opc
+stamp-m32c: $(CGENDEPS) $(CPUDIR)/m32c.cpu $(CPUDIR)/m32c.opc
 	$(MAKE) run-cgen arch=m32c prefix=m32c options= \
-		archfile=$(srcdir)/../cpu/m32c.cpu \
-		opcfile=$(srcdir)/../cpu/m32c.opc extrafiles=
+		archfile=$(CPUDIR)/m32c.cpu \
+		opcfile=$(CPUDIR)/m32c.opc extrafiles=
 
 $(srcdir)/m32r-desc.h $(srcdir)/m32r-desc.c $(srcdir)/m32r-opc.h $(srcdir)/m32r-opc.c $(srcdir)/m32r-ibld.c $(srcdir)/m32r-opinst.c $(srcdir)/m32r-asm.c $(srcdir)/m32r-dis.c: $(M32R_DEPS)
 	@true
-stamp-m32r: $(CGENDEPS) $(srcdir)/../cpu/m32r.cpu $(srcdir)/../cpu/m32r.opc
+stamp-m32r: $(CGENDEPS) $(CPUDIR)/m32r.cpu $(CPUDIR)/m32r.opc
 	$(MAKE) run-cgen arch=m32r prefix=m32r options=opinst \
-		archfile=$(srcdir)/../cpu/m32r.cpu \
-		opcfile=$(srcdir)/../cpu/m32r.opc extrafiles=opinst
+		archfile=$(CPUDIR)/m32r.cpu \
+		opcfile=$(CPUDIR)/m32r.opc extrafiles=opinst
 
 $(srcdir)/mep-desc.h $(srcdir)/mep-desc.c $(srcdir)/mep-opc.h $(srcdir)/mep-opc.c $(srcdir)/mep-ibld.c $(srcdir)/mep-asm.c $(srcdir)/mep-dis.c: $(MEP_DEPS)
 	@true
@@ -428,10 +464,10 @@ stamp-mep: $(CGENDEPS) $(CPUDIR)/mep.cpu $(CPUDIR)/mep-default.cpu $(CPUDIR)/mep
 
 $(srcdir)/mt-desc.h $(srcdir)/mt-desc.c $(srcdir)/mt-opc.h $(srcdir)/mt-opc.c $(srcdir)/mt-ibld.c $(srcdir)/mt-asm.c $(srcdir)/mt-dis.c: $(MT_DEPS)
 	@true
-stamp-mt: $(CGENDEPS) $(srcdir)/../cpu/mt.cpu $(srcdir)/../cpu/mt.opc
+stamp-mt: $(CGENDEPS) $(CPUDIR)/mt.cpu $(CPUDIR)/mt.opc
 	$(MAKE) run-cgen arch=mt prefix=mt options= \
-		archfile=$(srcdir)/../cpu/mt.cpu \
-		opcfile=$(srcdir)/../cpu/mt.opc extrafiles=
+		archfile=$(CPUDIR)/mt.cpu \
+		opcfile=$(CPUDIR)/mt.opc extrafiles=
 
 $(srcdir)/openrisc-desc.h $(srcdir)/openrisc-desc.c $(srcdir)/openrisc-opc.h $(srcdir)/openrisc-opc.c $(srcdir)/openrisc-ibld.c $(srcdir)/openrisc-asm.c $(srcdir)/openrisc-dis.c: $(OPENRISC_DEPS)
 	@true
@@ -441,10 +477,10 @@ stamp-openrisc: $(CGENDEPS) $(CPUDIR)/openrisc.cpu $(CPUDIR)/openrisc.opc
 
 $(srcdir)/xc16x-desc.h $(srcdir)/xc16x-desc.c $(srcdir)/xc16x-opc.h $(srcdir)/xc16x-opc.c $(srcdir)/xc16x-ibld.c $(srcdir)/xc16x-asm.c $(srcdir)/xc16x-dis.c: $(XC16X_DEPS)
 	@true
-stamp-xc16x: $(CGENDEPS) $(srcdir)/../cpu/xc16x.cpu $(srcdir)/../cpu/xc16x.opc
+stamp-xc16x: $(CGENDEPS) $(CPUDIR)/xc16x.cpu $(CPUDIR)/xc16x.opc
 	$(MAKE) run-cgen arch=xc16x prefix=xc16x options= \
-		archfile=$(srcdir)/../cpu/xc16x.cpu \
-		opcfile=$(srcdir)/../cpu/xc16x.opc \
+		archfile=$(CPUDIR)/xc16x.cpu \
+		opcfile=$(CPUDIR)/xc16x.opc \
 		extrafiles=
 
 $(srcdir)/xstormy16-desc.h $(srcdir)/xstormy16-desc.c $(srcdir)/xstormy16-opc.h $(srcdir)/xstormy16-opc.c $(srcdir)/xstormy16-ibld.c $(srcdir)/xstormy16-asm.c $(srcdir)/xstormy16-dis.c: $(XSTORMY16_DEPS)
@@ -453,13 +489,29 @@ stamp-xstormy16: $(CGENDEPS) $(CPUDIR)/xstormy16.cpu $(CPUDIR)/xstormy16.opc
 	$(MAKE) run-cgen arch=xstormy16 prefix=xstormy16 options= \
 		archfile=$(CPUDIR)/xstormy16.cpu opcfile=$(CPUDIR)/xstormy16.opc extrafiles=
 
-MOSTLYCLEANFILES = i386-gen$(EXEEXT_FOR_BUILD) ia64-gen$(EXEEXT_FOR_BUILD) \
-	s390-mkopc$(EXEEXT_FOR_BUILD) z8kgen$(EXEEXT_FOR_BUILD) \
-	opc2c$(EXEEXT_FOR_BUILD)
+MOSTLYCLEANFILES = aarch64-gen$(EXEEXT_FOR_BUILD) i386-gen$(EXEEXT_FOR_BUILD) \
+	ia64-gen$(EXEEXT_FOR_BUILD) s390-mkopc$(EXEEXT_FOR_BUILD) s390-opc.tab \
+	z8kgen$(EXEEXT_FOR_BUILD) opc2c$(EXEEXT_FOR_BUILD)
 
-MAINTAINERCLEANFILES = $(srcdir)/i386-tbl.h $(srcdir)/i386-init.h \
-	$(srcdir)/ia64-asmtab.c s390-opc.tab $(srcdir)/z8k-opc.h \
+MAINTAINERCLEANFILES = $(srcdir)/aarch64-asm-2.c $(srcdir)/aarch64-dis-2.c \
+	$(srcdir)/aarch64-opc-2.c $(srcdir)/i386-tbl.h $(srcdir)/i386-init.h \
+	$(srcdir)/ia64-asmtab.c $(srcdir)/z8k-opc.h \
+	$(srcdir)/rl78-decode.c \
 	$(srcdir)/rx-decode.c
+
+aarch64-gen$(EXEEXT_FOR_BUILD): aarch64-gen.o $(BUILD_LIB_DEPS)
+	$(LINK_FOR_BUILD) aarch64-gen.o $(BUILD_LIBS)
+
+aarch64-gen.o: aarch64-gen.c $(BFD_H) $(INCDIR)/getopt.h $(INCDIR)/libiberty.h\
+	$(INCDIR)/opcode/aarch64.h config.h aarch64-opc.h aarch64-tbl.h
+	$(COMPILE_FOR_BUILD) -c $(srcdir)/aarch64-gen.c
+
+$(srcdir)/aarch64-asm-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
+	./aarch64-gen$(exeext_for_build) --gen-asm > $@
+$(srcdir)/aarch64-dis-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
+	./aarch64-gen$(exeext_for_build) --gen-dis > $@
+$(srcdir)/aarch64-opc-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
+	./aarch64-gen$(exeext_for_build) --gen-opc > $@
 
 i386-gen$(EXEEXT_FOR_BUILD): i386-gen.o $(BUILD_LIB_DEPS)
 	$(LINK_FOR_BUILD) i386-gen.o $(BUILD_LIBS)
@@ -496,6 +548,18 @@ $(srcdir)/ia64-asmtab.c: @MAINT@ $(ia64_asmtab_deps)
 	./ia64-gen$(EXEEXT_FOR_BUILD) --srcdir $(srcdir) > $@
 
 ia64-opc.lo: $(srcdir)/ia64-asmtab.c
+
+$(srcdir)/rl78-decode.c: @MAINT@ $(srcdir)/rl78-decode.opc opc2c$(EXEEXT_FOR_BUILD)
+	./opc2c$(EXEEXT_FOR_BUILD) $(srcdir)/rl78-decode.opc > $(srcdir)/rl78-decode.c
+
+micromips-opc.lo: micromips-opc.c
+	$(LTCOMPILE) $(NO_WMISSING_FIELD_INITIALIZERS) -c -o $@ $<
+
+mips-opc.lo: mips-opc.c
+	$(LTCOMPILE) $(NO_WMISSING_FIELD_INITIALIZERS) -c -o $@ $<
+
+mips16-opc.lo: mips16-opc.c
+	$(LTCOMPILE) $(NO_WMISSING_FIELD_INITIALIZERS) -c -o $@ $<
 
 $(srcdir)/rx-decode.c: @MAINT@ $(srcdir)/rx-decode.opc opc2c$(EXEEXT_FOR_BUILD)
 	./opc2c$(EXEEXT_FOR_BUILD) $(srcdir)/rx-decode.opc > $(srcdir)/rx-decode.c

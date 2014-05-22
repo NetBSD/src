@@ -1,5 +1,5 @@
 ;; Scheduling description for Alpha EV6.
-;;   Copyright (C) 2002, 2004, 2005, 2007 Free Software Foundation, Inc.
+;;   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -147,10 +147,14 @@
        (eq_attr "type" "fadd,fcpys,fbr"))
   "ev6_fa")
 
+(define_bypass 6 "ev6_fmul,ev6_fadd" "ev6_fst,ev6_ftoi")
+
 (define_insn_reservation "ev6_fcmov" 8
   (and (eq_attr "tune" "ev6")
        (eq_attr "type" "fcmov"))
   "ev6_fa,nothing*3,ev6_fa")
+
+(define_bypass 10 "ev6_fcmov" "ev6_fst,ev6_ftoi")
 
 (define_insn_reservation "ev6_fdivsf" 12
   (and (eq_attr "tune" "ev6")

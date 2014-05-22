@@ -8,7 +8,7 @@ Disassembly of section \.text:
 00000000 <beq>:
        0:	20 32                         	beq\.b	32 <dsp8>
        2:	3a 86 13                      	beq\.w	1388 <dsp16>
-       5:	1e                            	bne\.s	b <bne\+0x1>
+       5:	1d                            	bne\.s	a <bne>
        6:	04 1a a1 07                   	bra\.a	7a120 <dsp24>
 
 0000000a <bne>:

@@ -2,14 +2,8 @@
  * hostapd - IEEE 802.11i-2004 / WPA Authenticator: Internal definitions
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPA_AUTH_I_H
@@ -69,10 +63,11 @@ struct wpa_state_machine {
 	Boolean pairwise_set;
 	int keycount;
 	Boolean Pair;
-	struct {
+	struct wpa_key_replay_counter {
 		u8 counter[WPA_REPLAY_COUNTER_LEN];
 		Boolean valid;
-	} key_replay[RSNA_MAX_EAPOL_RETRIES];
+	} key_replay[RSNA_MAX_EAPOL_RETRIES],
+		prev_key_replay[RSNA_MAX_EAPOL_RETRIES];
 	Boolean PInitAKeys; /* WPA only, not in IEEE 802.11i */
 	Boolean PTKRequest; /* not in IEEE 802.11i state machine */
 	Boolean has_GTK;
@@ -87,10 +82,12 @@ struct wpa_state_machine {
 	unsigned int started:1;
 	unsigned int mgmt_frame_prot:1;
 	unsigned int rx_eapol_key_secure:1;
+	unsigned int update_snonce:1;
 #ifdef CONFIG_IEEE80211R
 	unsigned int ft_completed:1;
 	unsigned int pmk_r1_name_valid:1;
 #endif /* CONFIG_IEEE80211R */
+	unsigned int is_wnmsleep:1;
 
 	u8 req_replay_counter[WPA_REPLAY_COUNTER_LEN];
 	int req_replay_counter_used;

@@ -1,5 +1,4 @@
-#   Copyright 1998, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1998-2013 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +17,11 @@
 
 load_lib "trace-support.exp";
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 
 gdb_exit
 gdb_start
 
-set testfile "actions"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/while-stepping
+standard_testfile actions.c
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested while-stepping.exp
@@ -56,7 +49,8 @@ if { $trcpt1 <= 0 } then {
 
 gdb_test "info tracepoints" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+" \
+\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
+\[\t \]+not installed on target." \
 	"5.12: set a tracepoint, stepcount is zero"
 
 set stepcount 12

@@ -1,5 +1,5 @@
 /* Simple data type for positive real numbers for the GNU compiler.
-   Copyright (C) 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -52,7 +52,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
 #include "sreal.h"
 
 static inline void copy (sreal *, sreal *);

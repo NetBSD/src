@@ -1,16 +1,16 @@
-#   Copyright 1999, 2000, 2001, 2003, 2004, 2007, 2009
+#   Copyright 1999, 2000, 2001, 2003, 2004, 2007, 2009, 2012
 #   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
@@ -84,7 +84,7 @@ proc readelf_test { options binary_file regexp_file xfails } {
     global readelf_size
     global srcdir
     global subdir
-    
+
     send_log "exec $READELF $READELFFLAGS $options $binary_file > readelf.out\n"
     set got [remote_exec host "$READELF $READELFFLAGS $options $binary_file" "" "/dev/null" "readelf.out"]
 
@@ -101,7 +101,9 @@ proc readelf_test { options binary_file regexp_file xfails } {
 
     set target_machine ""
     if [istarget "mips*-*-*"] then {
-	if { [istarget "mips*-*-*linux*"] || [istarget "mips*-sde-elf*"] } then {
+	if { [istarget "mips*-*-*linux*"]
+	     || [istarget "mips*-sde-elf*"]
+	     || [istarget "mips*-*freebsd*"] } then {
 	    set target_machine tmips
 	} else {
 	    set target_machine mips
@@ -144,7 +146,7 @@ proc readelf_wi_test {} {
     global READELFFLAGS
     global srcdir
     global subdir
-    
+
     # Compile the second test file.
     if { [target_compile $srcdir/$subdir/testprog.c tmpdir/testprog.o object debug] != "" } {
 	verbose "Unable to compile test file."
@@ -162,7 +164,7 @@ proc readelf_wi_test {} {
     set output [remote_upload host readelf.out]
 
     file_on_host delete $tempfile
-    
+
     # Strip any superflous warnings.
     set got [prune_readelf_wi_warnings [lindex $got 1]]
 
@@ -180,7 +182,7 @@ proc readelf_wi_test {} {
 	untested "readelf -wi"
 	return
     }
-    
+
     # Search for strings that should be in the output.
     set sought {
 	".*DW_TAG_compile_unit.*"
@@ -193,8 +195,8 @@ proc readelf_wi_test {} {
 	".*DW_AT_name.*(main|indirect string).*"
 	".*\(DW_OP_addr: 0\).*"
     }
-    
-    foreach looked_for $sought {	
+
+    foreach looked_for $sought {
 	set lines [grep $output $looked_for]
 	if ![llength $lines] then {
 	    fail "readelf -wi: missing: $looked_for"
@@ -204,7 +206,7 @@ proc readelf_wi_test {} {
     }
 
     file_on_host delete $output
-    
+
     # All done.
     pass "readelf -wi"
 }
@@ -217,7 +219,12 @@ proc readelf_compressed_wa_test {} {
     global READELFFLAGS
     global srcdir
     global subdir
-    
+
+    if { ![is_zlib_supported] } {
+	unsupported "readelf -wa (compressed)"
+	return
+    }
+
     # Compile the compressed-debug-section test file.
     if { [target_compile $srcdir/$subdir/dw2-compressed.S tmpdir/dw2-compressed.o object debug] != "" } {
 	verbose "Unable to compile test file."
@@ -235,7 +242,7 @@ proc readelf_compressed_wa_test {} {
     set output [remote_upload host readelf.out]
 
     file_on_host delete $tempfile
-    
+
     if { [string compare [file_contents readelf.out] [file_contents $srcdir/$subdir/readelf.wa]] != 0 } then {
 	fail "readelf -wa (compressed)"
 	verbose "output is \n[file_contents readelf.out]" 2
@@ -253,7 +260,7 @@ proc readelf_dump_test {} {
     global READELFFLAGS
     global srcdir
     global subdir
-    
+
     # Assemble the dump test file.
     if {![binutils_assemble $srcdir/$subdir/dumptest.s tmpdir/dumptest.o]} then {
       unresolved "readelf -p: failed to assemble dump test file"
@@ -281,8 +288,8 @@ proc readelf_dump_test {} {
     set sought {
 	".*test_string.*"
     }
-    
-    foreach looked_for $sought {	
+
+    foreach looked_for $sought {
 	set lines [grep $output $looked_for]
 	if ![llength $lines] then {
 	    fail "readelf -p: missing: $looked_for"
@@ -291,7 +298,7 @@ proc readelf_dump_test {} {
 	}
     }
 
-    file_on_host delete $tempfile    
+    file_on_host delete $tempfile
     file_on_host delete $output
 
     # All done.
@@ -335,3 +342,18 @@ readelf_wi_test
 readelf_compressed_wa_test
 
 readelf_dump_test
+
+# PR 13482 - Check for off-by-one errors when dumping .note sections.
+if {![binutils_assemble $srcdir/$subdir/version.s tmpdir/version.o]} then {
+    perror "could not assemble version note test file"
+    unresolved "readelf - failed to assemble"
+    return
+}
+
+if ![is_remote host] {
+    set tempfile tmpdir/version.o
+} else {
+    set tempfile [remote_download host tmpdir/version.o]
+}
+
+readelf_test -n $tempfile readelf.n  {}

@@ -579,7 +579,6 @@ hash_remove_pos_uint(hash_pos *pos)
     llistitem *li;
     void *ans;
     hash_item_uint *hi;
-    unsigned int key;
 
     /* sanity checks */
     if (pos == NULL || pos->ll_last == pos->ll_item)
@@ -597,9 +596,6 @@ hash_remove_pos_uint(hash_pos *pos)
     hi = (hash_item_uint *)li->datum;
     ans = hi->value;
 
-    /* free up the space */
-    key = hi->key;
-    ;
     ll_freeitem(li);
 
     /* back up to previous item */
@@ -917,7 +913,6 @@ hash_remove_pos_pid(hash_pos *pos)
     llistitem *li;
     void *ans;
     hash_item_pid *hi;
-    pid_t key;
 
     /* sanity checks */
     if (pos == NULL || pos->ll_last == pos->ll_item)
@@ -936,8 +931,6 @@ hash_remove_pos_pid(hash_pos *pos)
     ans = hi->value;
 
     /* free up the space */
-    key = hi->key;
-    ;
     ll_freeitem(li);
 
     /* back up to previous item */
@@ -1593,7 +1586,6 @@ hash_remove_pos_pidthr(hash_pos *pos)
     llistitem *li;
     void *ans;
     hash_item_pidthr *hi;
-    pidthr_t key;
 
     /* sanity checks */
     if (pos == NULL || pos->ll_last == pos->ll_item)
@@ -1612,8 +1604,6 @@ hash_remove_pos_pidthr(hash_pos *pos)
     ans = hi->value;
 
     /* free up the space */
-    key = hi->key;
-    ;
     ll_freeitem(li);
 
     /* back up to previous item */
@@ -1932,7 +1922,6 @@ hash_remove_pos_lwpid(hash_pos *pos)
     llistitem *li;
     void *ans;
     hash_item_lwpid *hi;
-    lwpid_t key;
 
     /* sanity checks */
     if (pos == NULL || pos->ll_last == pos->ll_item)
@@ -1951,8 +1940,6 @@ hash_remove_pos_lwpid(hash_pos *pos)
     ans = hi->value;
 
     /* free up the space */
-    key = hi->key;
-    ;
     ll_freeitem(li);
 
     /* back up to previous item */
