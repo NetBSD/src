@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.17.2.6 2014/05/22 19:09:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.6 2014/05/22 19:09:50 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp 
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.17.2.6 2014/05/22 19:09:50 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -700,9 +700,12 @@ static inline void
 gang_lookup_init(struct radix_tree *t, uint64_t idx,
     struct radix_tree_path *path, const unsigned int tagmask)
 {
-	void **vpp;
+	void **vpp __unused;
 
-	vpp = radix_tree_lookup_ptr(t, idx, path, false, tagmask);
+#if defined(DIAGNOSTIC)
+	vpp =
+#endif /* defined(DIAGNOSTIC) */
+	radix_tree_lookup_ptr(t, idx, path, false, tagmask);
 	KASSERT(vpp == NULL ||
 	    vpp == path_pptr(t, path, path->p_lastidx));
 	KASSERT(&t->t_root == path_pptr(t, path, 0));
@@ -979,11 +982,14 @@ void
 radix_tree_set_tag(struct radix_tree *t, uint64_t idx, unsigned int tagmask)
 {
 	struct radix_tree_path path;
-	void **vpp;
+	void **vpp __unused;
 	int i;
 
 	KASSERT(tagmask != 0);
-	vpp = radix_tree_lookup_ptr(t, idx, &path, false, 0);
+#if defined(DIAGNOSTIC)
+	vpp =
+#endif /* defined(DIAGNOSTIC) */
+	radix_tree_lookup_ptr(t, idx, &path, false, 0);
 	KASSERT(vpp != NULL);
 	KASSERT(*vpp != NULL);
 	KASSERT(path.p_lastidx == t->t_height);
