@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.1.6.1 2012/04/17 00:03:44 yamt Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.1.6.2 2014/05/22 15:50:05 yamt Exp $	*/
 
 /*
  * libntp local override of isc/mem.h to stub it out.
@@ -28,7 +28,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.78.120.3 2009/02/11 03:07:01 jinmei Exp */
+/* Id: mem.h,v 1.78.120.3 2009/02/11 03:07:01 jinmei Exp  */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1
@@ -62,9 +62,9 @@
 #define isc_mem_strdup(c, str)		\
 	( ISC_MEM_UNUSED_ARG(c),	estrdup(str) )
 
-#define isc_mem_attach(src, ptgt)	do { *(ptgt) = (src); } while (0)
-#define isc_mem_detach(c)		ISC_MEM_UNUSED_ARG(c)
-#define isc_mem_printallactive(s)	fprintf((s), \
+#define isc__mem_attach(src, ptgt)	do { *(ptgt) = (src); } while (0)
+#define isc__mem_detach(c)		ISC_MEM_UNUSED_ARG(c)
+#define isc__mem_printallactive(s)	fprintf((s), \
 					"isc_mem_printallactive() stubbed.\n")
 
 #endif /* ISC_MEM_H */

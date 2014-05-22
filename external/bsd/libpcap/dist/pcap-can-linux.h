@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-can-linux.h,v 1.1.1.1.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /*
  * Copyright (c) 2009 Felix Obenhuber
  * All rights reserved.
@@ -32,4 +34,5 @@
 /*
  * Prototypes for SocketCAN related functions
  */
-pcap_t* can_create(const char *device, char *ebuf);
+pcap_t* can_create(const char *device, char *ebuf, int *is_ours);
+int can_findalldevs(pcap_if_t **devlistp, char *errbuf);

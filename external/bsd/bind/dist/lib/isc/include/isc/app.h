@@ -1,7 +1,7 @@
-/*	$NetBSD: app.h,v 1.2.4.1 2012/10/30 18:53:53 yamt Exp $	*/
+/*	$NetBSD: app.h,v 1.2.4.2 2014/05/22 15:43:21 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -91,6 +91,18 @@
 #include <isc/magic.h>
 #include <isc/result.h>
 
+#ifdef WIN32
+#define isc_app_start isc__app_start
+#define isc_app_onrun isc__app_onrun
+#define isc_app_run isc__app_run
+#define isc_app_shutdown isc__app_shutdown
+#define isc_app_reload isc__app_reload
+#define isc_app_finish isc__app_finish
+#define isc_app_block isc__app_block
+#define isc_app_unblock isc__app_unblock
+
+#endif
+
 /***
  *** Types
  ***/
@@ -119,6 +131,9 @@ typedef struct isc_appmethods {
 					isc_socketmgr_t *timermgr);
 	void		(*settimermgr)(isc_appctx_t *ctx,
 				       isc_timermgr_t *timermgr);
+	isc_result_t 	(*ctxonrun)(isc_appctx_t *ctx, isc_mem_t *mctx,
+				    isc_task_t *task, isc_taskaction_t action,
+				    void *arg);
 } isc_appmethods_t;
 
 /*%
@@ -155,9 +170,12 @@ isc_app_start(void);
  *	close to the beginning of the application as possible.
  *
  * Requires:
- *	'ctx' is a valid application context (for app_ctxstart()).
+ *\li	'ctx' is a valid application context (for app_ctxstart()).
  */
 
+isc_result_t
+isc_app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx, isc_task_t *task,
+		 isc_taskaction_t action, void *arg);
 isc_result_t
 isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 	      void *arg);
@@ -166,6 +184,7 @@ isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
  *
  * Requires:
  *\li	isc_app_start() has been called.
+ *\li	'ctx' is a valid application context (for app_ctxonrun()).
  *
  * Returns:
  *	ISC_R_SUCCESS
@@ -347,7 +366,6 @@ isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
  *\li	'timermgr' is a valid timer manager.
  */
 
-#ifdef USE_APPIMPREGISTER
 /*%<
  * See isc_appctx_create() above.
  */
@@ -370,7 +388,6 @@ isc__app_register(void);
  * usually do not have to care about this function: it would call
  * isc_lib_register(), which internally calls this function.
  */
-#endif /* USE_APPIMPREGISTER */
 
 ISC_LANG_ENDDECLS
 

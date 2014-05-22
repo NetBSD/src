@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -65,7 +65,7 @@ EOF
 
 dump_cache () {
         rm -f ns2/named_dump.db
-        $RNDC $RNDCOPTS dumpdb -cache
+        $RNDC $RNDCOPTS dumpdb -cache _default
         sleep 1
 }
 
@@ -85,17 +85,22 @@ in_cache () {
 }
 
 echo "I:check correctness of routine cache cleaning"
-$DIG $DIGOPTS -f dig.batch > dig.out.ns2 || status=1
+$DIG $DIGOPTS +tcp +keepopen -b 10.53.0.7 -f dig.batch > dig.out.ns2 || status=1
 grep ";" dig.out.ns2
 
-$PERL ../digcomp.pl dig.out.ns2 knowngood.dig.out || status=1
+$PERL ../digcomp.pl --lc dig.out.ns2 knowngood.dig.out || status=1
+
+echo "I:only one tcp socket was used"
+tcpclients=`grep "client 10.53.0.7#[0-9]*:" ns2/named.run | awk '{print $4}' | sort | uniq -c | wc -l`
+
+test $tcpclients -eq 1 || { status=1; echo "I:failed"; }
 
 echo "I:reset and check that records are correctly cached initially"
 ret=0
 load_cache
 dump_cache
-nrecords=`grep flushtest.example ns2/named_dump.db | grep -v '^;' | wc -l`
-[ $nrecords -eq 20 ] || ret=1
+nrecords=`grep flushtest.example ns2/named_dump.db | grep -v '^;' | egrep '(TXT|ANY)'|  wc -l`
+[ $nrecords -eq 17 ] || { ret=1; echo "I: found $nrecords records expected 17"; }
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -180,8 +185,26 @@ status=`expr $status + $ret`
 echo "I:check the number of cached records remaining"
 ret=0
 dump_cache
-nrecords=`grep flushtest.example ns2/named_dump.db | grep -v '^;' | wc -l`
-[ $nrecords -eq 19 ] || ret=1
+nrecords=`grep flushtest.example ns2/named_dump.db | grep -v '^;' | egrep '(TXT|ANY)' |  wc -l`
+[ $nrecords -eq 17 ] || { ret=1; echo "I: found $nrecords records expected 17"; }
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check flushtree clears adb correctly"
+ret=0
+load_cache
+dump_cache
+awk '/plain success\/timeout/ {getline; getline; if ($2 == "ns.flushtest.example") exit(0); exit(1); }' ns2/named_dump.db || ret=1
+$RNDC $RNDCOPTS flushtree flushtest.example || ret=1
+dump_cache
+awk '/plain success\/timeout/ {getline; getline; if ($2 == "ns.flushtest.example") exit(1); exit(0); }' ns2/named_dump.db || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check expire option returned from slave zone"
+ret=0
+$DIG @10.53.0.2 -p 5300 +expire soa expire-test > dig.out.expire
+grep EXPIRE: dig.out.expire > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

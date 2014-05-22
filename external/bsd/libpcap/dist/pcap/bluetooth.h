@@ -1,3 +1,5 @@
+/*	$NetBSD: bluetooth.h,v 1.1.1.2.6.1 2014/05/22 15:48:21 yamt Exp $	*/
+
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
  * All rights reserved.
@@ -30,7 +32,7 @@
  * bluetooth data struct
  * By Paolo Abeni <paolo.abeni@email.it>
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap/bluetooth.h,v 1.1 2007-09-22 02:10:17 guy Exp
+ * @(#) Header: /tcpdump/master/libpcap/pcap/bluetooth.h,v 1.1 2007-09-22 02:10:17 guy Exp 
  */
  
 #ifndef _PCAP_BLUETOOTH_STRUCTS_H__

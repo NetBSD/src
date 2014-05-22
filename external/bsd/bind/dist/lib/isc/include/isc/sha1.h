@@ -1,7 +1,7 @@
-/*	$NetBSD: sha1.h,v 1.2.4.1 2012/10/30 18:53:59 yamt Exp $	*/
+/*	$NetBSD: sha1.h,v 1.2.4.2 2014/05/22 15:43:21 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -41,6 +41,11 @@
 #include <openssl/evp.h>
 
 typedef EVP_MD_CTX isc_sha1_t;
+
+#elif PKCS11CRYPTO
+#include <pk11/pk11.h>
+
+typedef pk11_context_t isc_sha1_t;
 
 #else
 

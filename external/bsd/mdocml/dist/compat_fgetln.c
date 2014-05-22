@@ -8,7 +8,7 @@ int dummy;
 
 #else
 
-/*	$NetBSD: compat_fgetln.c,v 1.2.4.2 2012/04/17 00:03:35 yamt Exp $	*/
+/*	NetBSD: fgetln.c,v 1.3 2006/09/25 07:18:17 lukem Exp 	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

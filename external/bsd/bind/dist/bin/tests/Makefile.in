@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -26,10 +26,11 @@ CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 
 CDEFINES =
 CWARNINGS =
+BACKTRACECFLAGS = @BACKTRACECFLAGS@
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../lib/isc/libisc.@A@ @DNS_CRYPTO_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @DNS_CRYPTO_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
 ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
@@ -42,13 +43,14 @@ LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 LIBS =		@LIBS@
 
 SUBDIRS =	atomic db dst master mem hashes names net rbt resolver \
-		sockaddr tasks timers system
+		sockaddr tasks timers system @PKCS11_TOOLS@
 
 # Test programs that are built by default:
 # cfg_test is needed for regenerating doc/misc/options
+# makejournal is needed by system tests
 
 # Alphabetically
-TARGETS =	cfg_test@EXEEXT@
+TARGETS =	cfg_test@EXEEXT@ makejournal@EXEEXT@
 
 # All the other tests are optional and not built by default.
 
@@ -92,7 +94,7 @@ XTARGETS =	adb_test@EXEEXT@ \
 		zone_test@EXEEXT@
 
 # Alphabetically
-SRCS =		cfg_test.c ${XSRCS}
+SRCS =		cfg_test.c makejournal.c ${XSRCS}
 
 XSRCS =		adb_test.c \
 		byaddr_test.c \
@@ -135,8 +137,8 @@ XSRCS =		adb_test.c \
 @BIND9_MAKE_RULES@
 
 # disable optimization for backtrace test to get the expected result	
-BTTEST_CFLAGS =	${EXT_CFLAGS} ${ALL_CPPFLAGS} -g ${ALWAYS_WARNINGS} \
-	${STD_CWARNINGS} ${CWARNINGS}
+BTTEST_CFLAGS =	${BACKTRACECFLAGS} ${EXT_CFLAGS} ${ALL_CPPFLAGS} -g \
+		${ALWAYS_WARNINGS} ${STD_CWARNINGS} ${CWARNINGS}
 
 all_tests: ${XTARGETS}
 
@@ -309,6 +311,10 @@ sig0_test@EXEEXT@: sig0_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 cfg_test@EXEEXT@: cfg_test.@O@ ${ISCCFGDEPLIBS} ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ cfg_test.@O@ \
 		${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+makejournal@EXEEXT@: makejournal.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ makejournal.@O@ \
+		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 distclean::
 	rm -f headerdep_test.sh

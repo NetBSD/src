@@ -1,3 +1,5 @@
+/*	$NetBSD: grammar.y,v 1.2.2.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 %{
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -22,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/grammar.y,v 1.101 2007-11-18 02:03:52 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/grammar.y,v 1.101 2007-11-18 02:03:52 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -167,7 +169,7 @@ yyerror(const char *msg)
 	/* NOTREACHED */
 }
 
-#ifndef YYBISON
+#ifdef NEED_YYPARSE_WRAPPER
 int yyparse(void);
 
 int
@@ -272,12 +274,12 @@ pfaction_to_num(const char *action)
 
 %token  DST SRC HOST GATEWAY
 %token  NET NETMASK PORT PORTRANGE LESS GREATER PROTO PROTOCHAIN CBYTE
-%token  ARP RARP IP SCTP TCP UDP ICMP IGMP IGRP PIM VRRP
+%token  ARP RARP IP SCTP TCP UDP ICMP IGMP IGRP PIM VRRP CARP
 %token  ATALK AARP DECNET LAT SCA MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
 %token  PF_IFNAME PF_RSET PF_RNR PF_SRNR PF_REASON PF_ACTION
-%token	TYPE SUBTYPE DIR ADDR1 ADDR2 ADDR3 ADDR4
+%token	TYPE SUBTYPE DIR ADDR1 ADDR2 ADDR3 ADDR4 RA TA
 %token  LINK
 %token	GEQ LEQ NEQ
 %token	ID EID HID HID6 AID
@@ -294,8 +296,9 @@ pfaction_to_num(const char *action)
 %token	OAM OAMF4 CONNECTMSG METACONNECT
 %token	VPI VCI
 %token	RADIO
-%token	FISU LSSU MSU
-%token	SIO OPC DPC SLS
+%token	FISU LSSU MSU HFISU HLSSU HMSU
+%token	SIO OPC DPC SLS HSIO HOPC HDPC HSLS
+ 
 
 %type	<s> ID
 %type	<e> EID
@@ -442,6 +445,8 @@ dqual:	  SRC			{ $$ = Q_SRC; }
 	| ADDR2			{ $$ = Q_ADDR2; }
 	| ADDR3			{ $$ = Q_ADDR3; }
 	| ADDR4			{ $$ = Q_ADDR4; }
+	| RA			{ $$ = Q_RA; }
+	| TA			{ $$ = Q_TA; }
 	;
 /* address type qualifiers */
 aqual:	  HOST			{ $$ = Q_HOST; }
@@ -464,6 +469,7 @@ pname:	  LINK			{ $$ = Q_LINK; }
 	| IGRP			{ $$ = Q_IGRP; }
 	| PIM			{ $$ = Q_PIM; }
 	| VRRP			{ $$ = Q_VRRP; }
+	| CARP 			{ $$ = Q_CARP; }
 	| ATALK			{ $$ = Q_ATALK; }
 	| AARP			{ $$ = Q_AARP; }
 	| DECNET		{ $$ = Q_DECNET; }
@@ -503,7 +509,8 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| MPLS pnum		{ $$ = gen_mpls($2); }
 	| MPLS			{ $$ = gen_mpls(-1); }
 	| PPPOED		{ $$ = gen_pppoed(); }
-	| PPPOES		{ $$ = gen_pppoes(); }
+	| PPPOES pnum		{ $$ = gen_pppoes($2); }
+	| PPPOES		{ $$ = gen_pppoes(-1); }
 	| pfvar			{ $$ = $1; }
 	| pqual p80211		{ $$ = $2; }
 	;
@@ -667,12 +674,19 @@ atmlistvalue: atmfieldvalue
 mtp2type: FISU			{ $$ = M_FISU; }
 	| LSSU			{ $$ = M_LSSU; }
 	| MSU			{ $$ = M_MSU; }
+	| HFISU			{ $$ = MH_FISU; }
+	| HLSSU			{ $$ = MH_LSSU; }
+	| HMSU			{ $$ = MH_MSU; }
 	;
 	/* MTP3 field types quantifier */
 mtp3field: SIO			{ $$.mtp3fieldtype = M_SIO; }
 	| OPC			{ $$.mtp3fieldtype = M_OPC; }
 	| DPC			{ $$.mtp3fieldtype = M_DPC; }
 	| SLS                   { $$.mtp3fieldtype = M_SLS; }
+	| HSIO			{ $$.mtp3fieldtype = MH_SIO; }
+	| HOPC			{ $$.mtp3fieldtype = MH_OPC; }
+	| HDPC			{ $$.mtp3fieldtype = MH_DPC; }
+	| HSLS                  { $$.mtp3fieldtype = MH_SLS; }
 	;
 mtp3value: mtp3fieldvalue
 	| relop NUM		{ $$.b = gen_mtp3field_code($<blk>0.mtp3fieldtype, (u_int)$2, (u_int)$1, 0); }
@@ -684,7 +698,11 @@ mtp3fieldvalue: NUM {
 	if ($$.mtp3fieldtype == M_SIO ||
 	    $$.mtp3fieldtype == M_OPC ||
 	    $$.mtp3fieldtype == M_DPC ||
-	    $$.mtp3fieldtype == M_SLS )
+	    $$.mtp3fieldtype == M_SLS ||
+	    $$.mtp3fieldtype == MH_SIO ||
+	    $$.mtp3fieldtype == MH_OPC ||
+	    $$.mtp3fieldtype == MH_DPC ||
+	    $$.mtp3fieldtype == MH_SLS)
 		$$.b = gen_mtp3field_code($$.mtp3fieldtype, (u_int) $1, BPF_JEQ, 0);
 	}
 	;

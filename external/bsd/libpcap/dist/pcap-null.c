@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-null.c,v 1.1.1.2.6.1 2014/05/22 15:48:20 yamt Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-null.c,v 1.22 2008-04-04 19:37:45 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/pcap-null.c,v 1.22 2008-04-04 19:37:45 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -40,7 +42,7 @@ static const char rcsid[] _U_ =
 static char nosup[] = "live packet capture not supported on this system";
 
 pcap_t *
-pcap_create(const char *device, char *ebuf)
+pcap_create_interface(const char *device, char *ebuf)
 {
 	(void)strlcpy(ebuf, nosup, PCAP_ERRBUF_SIZE);
 	return (NULL);

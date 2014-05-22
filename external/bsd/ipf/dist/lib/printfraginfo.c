@@ -1,4 +1,4 @@
-/*	$NetBSD: printfraginfo.c,v 1.1.1.1.2.3 2012/10/30 18:55:09 yamt Exp $	*/
+/*	$NetBSD: printfraginfo.c,v 1.1.1.1.2.4 2014/05/22 15:45:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -16,7 +16,6 @@ printfraginfo(prefix, ifr)
 	char *prefix;
 	struct ipfr *ifr;
 {
-	frentry_t fr;
 	int family;
 
 	PRINTF("%s", prefix);
@@ -27,10 +26,11 @@ printfraginfo(prefix, ifr)
 		PRINTF("inet");
 		family = AF_INET;
 	}
-	fr.fr_flags = 0xffffffff;
 
 	PRINTF(" %s -> ", hostname(family, &ifr->ipfr_src));
 /*
+	frentry_t fr;
+	fr.fr_flags = 0xffffffff;
 	if (kmemcpy((char *)&fr, (u_long)ifr->ipfr_rule,
 		    sizeof(fr)) == -1)
 		return;

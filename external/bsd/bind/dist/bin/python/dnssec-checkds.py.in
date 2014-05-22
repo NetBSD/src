@@ -1,6 +1,6 @@
 #!@PYTHON@
 ############################################################################
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,15 @@
 # PERFORMANCE OF THIS SOFTWARE.
 ############################################################################
 
+# Id
+
 import argparse
 import pprint
 import os
 
 def shellquote(s):
+    if os.name == 'nt':
+        return s
     return "'" + s.replace("'", "'\\''") + "'"
 
 ############################################################################
@@ -169,6 +173,10 @@ def checkds(zone, masterfile = None):
 
     fp.close()
 
+    if (len(dsklist) < 1):
+        print ("No DNSKEY records found in zone apex")
+        return False
+
     found = False
     for ds in dsklist:
         if ds in dslist:
@@ -177,8 +185,12 @@ def checkds(zone, masterfile = None):
                     ds.keyid, DSRR.hashalgs[ds.hashalg]))
             found = True
         else:
-            print ("No DS records found for KSK %s/%03d/%05d" %
-                   (ds.rrname, ds.keyalg, ds.keyid))
+            print ("DS for KSK %s/%03d/%05d (%s) missing from parent" %
+                   (ds.rrname.strip('.'), ds.keyalg,
+                    ds.keyid, DSRR.hashalgs[ds.hashalg]))
+
+    if not found:
+        print ("No DS records were found for any DNSKEY")
 
     return found
 
@@ -217,6 +229,10 @@ def checkdlv(zone, lookaside, masterfile = None):
 
     fp.close()
 
+    if (len(dlvklist) < 1):
+        print ("No DNSKEY records found in zone apex")
+        return False
+
     found = False
     for dlv in dlvklist:
         if dlv in dlvlist:
@@ -225,8 +241,12 @@ def checkdlv(zone, lookaside, masterfile = None):
                     DLVRR.hashalgs[dlv.hashalg], dlv.dlvname))
             found = True
         else:
-            print ("No DLV records found for KSK %s/%03d/%05d in %s" %
-                   (dlv.parent, dlv.keyalg, dlv.keyid, dlv.dlvname))
+            print ("DLV for KSK %s/%03d/%05d (%s) missing from %s" %
+                   (dlv.parent, dlv.keyalg, dlv.keyid, 
+                    DLVRR.hashalgs[dlv.hashalg], dlv.dlvname))
+
+    if not found:
+        print ("No DLV records were found for any DNSKEY")
 
     return found
 
@@ -237,6 +257,11 @@ def checkdlv(zone, lookaside, masterfile = None):
 ############################################################################
 def parse_args():
     global args
+    bindir = 'bin'
+    if os.name != 'nt':
+        sbindir = 'sbin'
+    else:
+        sbindir = 'bin'
     parser = argparse.ArgumentParser(description='checkds: checks DS coverage')
 
     parser.add_argument('zone', type=str, help='zone to check')
@@ -245,11 +270,12 @@ def parse_args():
     parser.add_argument('-l', '--lookaside', dest='lookaside', type=str,
                         help='DLV lookaside zone')
     parser.add_argument('-d', '--dig', dest='dig',
-                        default='@prefix@/bin/dig', type=str,
-                        help='path to \'dig\'')
+                        default=os.path.join('@prefix@', bindir, 'dig'),
+                        type=str, help='path to \'dig\'')
     parser.add_argument('-D', '--dsfromkey', dest='dsfromkey',
-                        default='@prefix@/sbin/dnssec-dsfromkey', type=str,
-                        help='path to \'dig\'')
+                        default=os.path.join('@prefix@', sbindir,
+                                             'dnssec-dsfromkey'),
+                        type=str, help='path to \'dig\'')
     parser.add_argument('-v', '--version', action='version', version='9.9.1')
     args = parser.parse_args()
 

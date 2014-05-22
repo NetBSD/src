@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ bin_PROGRAMS += atf-version/atf-version
 atf_version_atf_version_SOURCES = atf-version/atf-version.cpp
 nodist_atf_version_atf_version_SOURCES = atf-version/revision.h
 atf_version_atf_version_CPPFLAGS = -Iatf-version
-atf_version_atf_version_LDADD = libatf-c++.la
+atf_version_atf_version_LDADD = $(ATF_CXX_LIBS)
 dist_man_MANS += atf-version/atf-version.1
 
 EXTRA_DIST += atf-version/generate-revision.sh
@@ -44,11 +44,11 @@ atf-version/revision.h: atf-version/revision.h.stamp
 	    cp -p atf-version/revision.h.stamp atf-version/revision.h
 
 CLEANFILES += atf-version/revision.h.stamp
-.PHONY: atf-version/revision.h.stamp
+PHONY_TARGETS += atf-version/revision.h.stamp
 atf-version/revision.h.stamp:
 	@test -d atf-version || mkdir -p atf-version
 	@$(top_srcdir)/atf-version/generate-revision.sh \
-	    -m "$(MTN)" -r $(top_srcdir) -o atf-version/revision.h.stamp \
+	    -g "$(GIT)" -r $(top_srcdir) -o atf-version/revision.h.stamp \
 	    -v $(PACKAGE_VERSION)
 
 # vim: syntax=make:noexpandtab:shiftwidth=8:softtabstop=8

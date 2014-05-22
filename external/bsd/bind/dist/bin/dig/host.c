@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.3.2.1 2012/10/30 18:49:26 yamt Exp $	*/
+/*	$NetBSD: host.c,v 1.3.2.2 2014/05/22 15:42:45 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -44,6 +44,7 @@
 #include <isc/util.h>
 #include <isc/task.h>
 #include <isc/stdlib.h>
+#include <isc/timer.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -448,10 +449,18 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	if (msg->rcode != 0) {
 		char namestr[DNS_NAME_FORMATSIZE];
 		dns_name_format(query->lookup->name, namestr, sizeof(namestr));
-		printf("Host %s not found: %d(%s)\n",
-		       (msg->rcode != dns_rcode_nxdomain) ? namestr :
-		       query->lookup->textname, msg->rcode,
-		       rcode_totext(msg->rcode));
+
+		if (query->lookup->identify_previous_line)
+			printf("Nameserver %s:\n\t%s not found: %d(%s)\n",
+			       query->servname,
+			       (msg->rcode != dns_rcode_nxdomain) ? namestr :
+			       query->lookup->textname, msg->rcode,
+			       rcode_totext(msg->rcode));
+		else
+			printf("Host %s not found: %d(%s)\n",
+			       (msg->rcode != dns_rcode_nxdomain) ? namestr :
+			       query->lookup->textname, msg->rcode,
+			       rcode_totext(msg->rcode));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -632,6 +641,8 @@ pre_parse_args(int argc, char **argv) {
 		case 'w': break;
 		case 'C': break;
 		case 'D':
+			if (debugging)
+				debugtiming = ISC_TRUE;
 			debugging = ISC_TRUE;
 			break;
 		case 'N': break;

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,9 +55,11 @@ extern "C" {
 #include "atf-c/utils.h"
 }
 
+#include "noncopyable.hpp"
 #include "tests.hpp"
 
 #include "detail/application.hpp"
+#include "detail/auto_array.hpp"
 #include "detail/env.hpp"
 #include "detail/exceptions.hpp"
 #include "detail/fs.hpp"
@@ -127,7 +129,7 @@ detail::match(const std::string& regexp, const std::string& str)
 static std::map< atf_tc_t*, impl::tc* > wraps;
 static std::map< const atf_tc_t*, const impl::tc* > cwraps;
 
-struct impl::tc_impl : atf::utils::noncopyable {
+struct impl::tc_impl : atf::noncopyable {
     std::string m_ident;
     atf_tc_t m_tc;
     bool m_has_cleanup;
@@ -190,8 +192,7 @@ impl::tc::init(const vars_map& config)
 {
     atf_error_t err;
 
-    utils::auto_array< const char * > array(
-        new const char*[(config.size() * 2) + 1]);
+    auto_array< const char * > array(new const char*[(config.size() * 2) + 1]);
     const char **ptr = array.get();
     for (vars_map::const_iterator iter = config.begin();
          iter != config.end(); iter++) {
@@ -640,6 +641,16 @@ tp::run_tc(const std::string& tcarg)
     const std::pair< std::string, tc_part > fields = process_tcarg(tcarg);
 
     impl::tc* tc = find_tc(init_tcs(), fields.first);
+
+    if (!atf::env::has("__RUNNING_INSIDE_ATF_RUN") || atf::env::get(
+        "__RUNNING_INSIDE_ATF_RUN") != "internal-yes-value")
+    {
+        std::cerr << m_prog_name << ": WARNING: Running test cases without "
+            "atf-run(1) is unsupported\n";
+        std::cerr << m_prog_name << ": WARNING: No isolation nor timeout "
+            "control is being applied; you may get unexpected failures; see "
+            "atf-test-case(4)\n";
+    }
 
     try {
         switch (fields.second) {

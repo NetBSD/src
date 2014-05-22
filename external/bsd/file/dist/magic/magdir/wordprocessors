@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: wordprocessors,v 1.16 2012/10/29 17:36:49 christos Exp $
+# $File: wordprocessors,v 1.18 2013/06/03 19:07:29 christos Exp $
 # wordprocessors:  file(1) magic fo word processors.
 #
 ####### PWP file format used on Smith Corona Personal Word Processors:
@@ -110,7 +110,7 @@
 512	string		R\0o\0o\0t\0	Hangul (Korean) Word Processor File 2000
 !:mime	application/x-hwp
 
-# CosmicBook, from Benoît Rouits
+# CosmicBook, from Benoit Rouits
 0       string  CSBK    Ted Neslson's CosmicBook hypertext file
 
 2       string  EYWR    AmigaWriter file
@@ -155,6 +155,11 @@
 # From: Jamie Thompson <debian-bugs@jamie-thompson.co.uk>
 0	string/w	\<map\ version	Freemind document
 !:mime	application/x-freemind
+
+# Type: Freeplane mindmap documents
+# From: Felix Natter <fnatter@gmx.net>
+0       string/w        \<map\ version="freeplane  Freeplane document
+!:mime  application/x-freeplane
 
 # Type:        Scribus
 # From:        Werner Fink <werner@suse.de>

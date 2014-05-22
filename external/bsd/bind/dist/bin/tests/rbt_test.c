@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.2.4.1 2012/10/30 18:49:56 yamt Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.2.4.2 2014/05/22 15:42:48 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -432,7 +432,7 @@ main(int argc, char **argv) {
 
 			} else if (CMDCHECK("print")) {
 				if (arg == NULL || *arg == '\0')
-					dns_rbt_printall(rbt);
+					dns_rbt_printall(rbt, NULL);
 				else
 					printf("usage: print\n");
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: random.c,v 1.2.4.1 2012/10/30 18:53:48 yamt Exp $	*/
+/*	$NetBSD: random.c,v 1.2.4.2 2014/05/22 15:43:20 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@ initialize_rand(void)
 	 */
 	pid = ((pid << 16) & 0xffff0000) | ((pid >> 16) & 0xffff);
 
-	srand(time(NULL) ^ pid);
+	srand((unsigned)time(NULL) ^ pid);
 #endif
 }
 

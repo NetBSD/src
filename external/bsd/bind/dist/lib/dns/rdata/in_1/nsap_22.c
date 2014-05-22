@@ -1,7 +1,7 @@
-/*	$NetBSD: nsap_22.c,v 1.2.4.1 2012/10/30 18:53:25 yamt Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.2.4.2 2014/05/22 15:43:18 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -55,7 +55,6 @@ fromtext_in_nsap(ARGS_FROMTEXT) {
 		RETTOK(DNS_R_SYNTAX);
 	isc_textregion_consume(sr, 2);
 	digits = 0;
-	n = 0;
 	while (sr->length > 0) {
 		if (sr->base[0] == '.') {
 			isc_textregion_consume(sr, 1);

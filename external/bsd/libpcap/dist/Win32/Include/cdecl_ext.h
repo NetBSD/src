@@ -1,3 +1,5 @@
+/*	$NetBSD: cdecl_ext.h,v 1.1.1.1.6.1 2014/05/22 15:48:20 yamt Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.

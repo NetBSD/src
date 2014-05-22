@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2004-2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2008, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: start.pl,v 1.30 2012/02/06 23:46:44 tbox Exp 
 
 # Framework for starting test servers.
 # Based on the type of server specified, check for port availability, remove
@@ -155,13 +155,22 @@ sub start_server {
 			close FH;
 			$command .= "$options";
 		} else {
+			$command .= "-D $server ";
 			$command .= "-m record,size,mctx ";
 			$command .= "-T clienttest ";
 			$command .= "-T nosoa " 
 				if (-e "$testdir/$server/named.nosoa");
 			$command .= "-T noaa " 
 				if (-e "$testdir/$server/named.noaa");
-			$command .= "-c named.conf -d 99 -g";
+			$command .= "-T noedns " 
+				if (-e "$testdir/$server/named.noedns");
+			$command .= "-T dropedns " 
+				if (-e "$testdir/$server/named.dropedns");
+			$command .= "-T maxudp512 " 
+				if (-e "$testdir/$server/named.maxudp512");
+			$command .= "-T maxudp1460 " 
+				if (-e "$testdir/$server/named.maxudp1460");
+			$command .= "-c named.conf -d 99 -g -U 4";
 		}
 		if ($restart) {
 			$command .= " >>named.run 2>&1 &";
@@ -177,7 +186,7 @@ sub start_server {
 		} else {
 			$command .= "-m record,size,mctx ";
 			$command .= "-T clienttest ";
-			$command .= "-C resolv.conf -d 99 -g ";
+			$command .= "-C resolv.conf -d 99 -g -U 4 ";
 			$command .= "-i lwresd.pid -P 9210 -p 5300";
 		}
 		if ($restart) {
@@ -253,7 +262,7 @@ sub verify_server {
 
 	my $tries = 0;
 	while (1) {
-		my $return = system("$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p 5300 version.bind. chaos txt \@10.53.0.$n > dig.out");
+		my $return = system("$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd +noedns -p 5300 version.bind. chaos txt \@10.53.0.$n > dig.out");
 		last if ($return == 0);
 		if (++$tries >= 30) {
 			print `grep ";" dig.out > /dev/null`;

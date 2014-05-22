@@ -1,0 +1,48 @@
+2010-10-21 14:01:35.486: debug: 	Check RFC5011 status
+2010-10-21 14:01:35.486: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:01:35.486: debug: 	Check KSK status
+2010-10-21 14:01:35.486: debug: 	Check ZSK status
+2010-10-21 14:01:35.486: debug: 	No active ZSK found: generate new one
+2010-10-21 14:01:35.495: error: sub.example.net.": can't generate new ZSK
+2010-10-21 14:01:35.495: debug: 	Re-signing necessary: Modfied zone key set
+2010-10-21 14:01:35.496: notice: "sub.example.net.": re-signing triggered: Modfied zone key set
+2010-10-21 14:01:35.496: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2010-10-21 14:01:35.496: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2010-10-21 14:01:35.496: debug: 	Signing zone "sub.example.net."
+2010-10-21 14:01:35.496: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 9FC981 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2010-10-21 14:01:35.546: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: DNSSEC completeness test failed."
+2010-10-21 14:01:35.546: error: "sub.example.net.": signing failed!
+2010-10-21 14:02:09.146: debug: 	Check RFC5011 status
+2010-10-21 14:02:09.146: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:02:09.146: debug: 	Check KSK status
+2010-10-21 14:02:09.146: debug: 	Check ZSK status
+2010-10-21 14:02:09.146: debug: 	No active ZSK found: generate new one
+2010-10-21 14:02:09.156: error: sub.example.net.": can't generate new ZSK
+2010-10-21 14:02:09.156: debug: 	Re-signing necessary: Modified keys
+2010-10-21 14:02:09.156: notice: "sub.example.net.": re-signing triggered: Modified keys
+2010-10-21 14:02:09.156: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2010-10-21 14:02:09.157: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2010-10-21 14:02:09.157: debug: 	Signing zone "sub.example.net."
+2010-10-21 14:02:09.157: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 BD326D -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2010-10-21 14:02:09.208: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: DNSSEC completeness test failed."
+2010-10-21 14:02:09.208: error: "sub.example.net.": signing failed!
+2010-10-21 14:05:35.988: debug: 	Check RFC5011 status
+2010-10-21 14:05:35.988: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:05:35.988: debug: 	Check KSK status
+2010-10-21 14:05:35.988: debug: 	Check ZSK status
+2010-10-21 14:05:35.988: debug: 	No active ZSK found: generate new one
+2010-10-21 14:05:36.091: info: "sub.example.net.": generated new ZSK 7987
+2010-10-21 14:05:36.091: debug: 	Re-signing necessary: Modfied zone key set
+2010-10-21 14:05:36.091: notice: "sub.example.net.": re-signing triggered: Modfied zone key set
+2010-10-21 14:05:36.091: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2010-10-21 14:05:36.091: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2010-10-21 14:05:36.091: debug: 	Signing zone "sub.example.net."
+2010-10-21 14:05:36.091: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 75DE06 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2010-10-21 14:05:36.170: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2010-10-21 14:05:36.170: debug: 	Signing completed after 0s.
+2010-10-21 14:30:43.892: debug: 	Check RFC5011 status
+2010-10-21 14:30:43.892: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:30:43.892: debug: 	Check KSK status
+2010-10-21 14:30:43.892: debug: 	Check ZSK status
+2010-10-21 14:30:43.892: debug: 	Re-signing not necessary!
+2010-10-21 14:30:43.892: debug: 	Check if there is a parent file to copy

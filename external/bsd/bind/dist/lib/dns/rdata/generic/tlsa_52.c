@@ -1,7 +1,7 @@
-/*	$NetBSD: tlsa_52.c,v 1.1.1.1.6.2 2012/10/30 18:53:21 yamt Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.1.1.1.6.3 2014/05/22 15:43:18 yamt Exp $	*/
 
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 
 /* Id */
 
-/* draft-ietf-dane-protocol-19.txt */
+/* rfc6698.txt */
 
 #ifndef RDATA_GENERIC_TLSA_52_C
 #define RDATA_GENERIC_TLSA_52_C

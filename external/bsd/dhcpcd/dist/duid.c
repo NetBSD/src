@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: duid.c,v 1.1.1.3.8.2 2014/05/22 15:44:40 yamt Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +32,12 @@
 #define DUID_LLT	1
 #define DUID_LL		3
 
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <net/if.h>
+#include <net/if_arp.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,19 +46,23 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifndef ARPHRD_NETROM
+#  define ARPHRD_NETROM	0
+#endif
+
 #include "common.h"
 #include "duid.h"
 #include "net.h"
 
 static size_t
-make_duid(unsigned char *duid, const struct interface *ifp, uint16_t type)
+duid_make(unsigned char *d, const struct interface *ifp, uint16_t type)
 {
 	unsigned char *p;
 	uint16_t u16;
 	time_t t;
 	uint32_t u32;
 
-	p = duid;
+	p = d;
 	u16 = htons(type);
 	memcpy(p, &u16, 2);
 	p += 2;
@@ -67,51 +80,89 @@ make_duid(unsigned char *duid, const struct interface *ifp, uint16_t type)
 	/* Finally, add the MAC address of the interface */
 	memcpy(p, ifp->hwaddr, ifp->hwlen);
 	p += ifp->hwlen;
-	return p - duid;
+	return p - d;
 }
 
-size_t
-get_duid(unsigned char *duid, const struct interface *ifp)
+#define DUID_STRLEN DUID_LEN * 3
+static size_t
+duid_get(unsigned char *d, const struct interface *ifp)
 {
-	FILE *f;
+	FILE *fp;
 	int x = 0;
 	size_t len = 0;
-	char *line;
+	char line[DUID_STRLEN];
+	const struct interface *ifp2;
 
 	/* If we already have a DUID then use it as it's never supposed
 	 * to change once we have one even if the interfaces do */
-	if ((f = fopen(DUID, "r"))) {
-		while ((line = get_line(f))) {
+	if ((fp = fopen(DUID, "r"))) {
+		while (fgets(line, DUID_STRLEN, fp)) {
+			len = strlen(line);
+			if (len) {
+				if (line[len - 1] == '\n')
+					line[len - 1] = '\0';
+			}
 			len = hwaddr_aton(NULL, line);
 			if (len && len <= DUID_LEN) {
-				hwaddr_aton(duid, line);
+				hwaddr_aton(d, line);
 				break;
 			}
 			len = 0;
 		}
-		fclose(f);
+		fclose(fp);
 		if (len)
 			return len;
 	} else {
-		if (errno != ENOENT) {
+		if (errno != ENOENT)
 			syslog(LOG_ERR, "error reading DUID: %s: %m", DUID);
-			return make_duid(duid, ifp, DUID_LL);
-		}
 	}
 
 	/* No file? OK, lets make one based on our interface */
-	if (!(f = fopen(DUID, "w"))) {
-		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
-		return make_duid(duid, ifp, DUID_LL);
+	if (ifp->family == ARPHRD_NETROM) {
+		syslog(LOG_WARNING, "%s: is a NET/ROM psuedo interface",
+		    ifp->name);
+		TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
+			if (ifp2->family != ARPHRD_NETROM)
+				break;
+		}
+		if (ifp2) {
+			ifp = ifp2;
+			syslog(LOG_WARNING,
+			    "picked interface %s to generate a DUID",
+			    ifp->name);
+		} else {
+			syslog(LOG_WARNING,
+			    "no interfaces have a fixed hardware address");
+			return duid_make(d, ifp, DUID_LL);
+		}
 	}
-	len = make_duid(duid, ifp, DUID_LLT);
-	x = fprintf(f, "%s\n", hwaddr_ntoa(duid, len));
-	fclose(f);
+
+	if (!(fp = fopen(DUID, "w"))) {
+		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
+		return duid_make(d, ifp, DUID_LL);
+	}
+	len = duid_make(d, ifp, DUID_LLT);
+	x = fprintf(fp, "%s\n", hwaddr_ntoa(d, len, line, sizeof(line)));
+	fclose(fp);
 	/* Failed to write the duid? scrub it, we cannot use it */
 	if (x < 1) {
 		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
 		unlink(DUID);
-		return make_duid(duid, ifp, DUID_LL);
+		return duid_make(d, ifp, DUID_LL);
 	}
 	return len;
+}
+
+size_t duid_init(const struct interface *ifp)
+{
+
+	if (ifp->ctx->duid == NULL) {
+		ifp->ctx->duid = malloc(DUID_LEN);
+		if (ifp->ctx->duid == NULL) {
+			syslog(LOG_ERR, "%s: %m", __func__);
+			return 0;
+		}
+		ifp->ctx->duid_len = duid_get(ifp->ctx->duid, ifp);
+	}
+	return ifp->ctx->duid_len;
 }

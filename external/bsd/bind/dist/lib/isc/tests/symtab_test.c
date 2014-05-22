@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab_test.c,v 1.1.1.1.6.2 2012/10/30 18:54:09 yamt Exp $	*/
+/*	$NetBSD: symtab_test.c,v 1.1.1.1.6.3 2014/05/22 15:43:22 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -109,7 +109,7 @@ ATF_TC_BODY(symtab_grow, tc) {
 		snprintf(str, sizeof(str), "%04x", i);
 		result = isc_symtab_lookup(st, str, 0, &value);
 		ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-		ATF_CHECK_STREQ(str, value.as_pointer);
+		ATF_CHECK_STREQ(str, (char *)value.as_pointer);
 	}
 
 	/*

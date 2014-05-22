@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.3.2.1 2012/10/30 18:52:56 yamt Exp $	*/
+/*	$NetBSD: time.c,v 1.3.2.2 2014/05/22 15:43:17 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -100,7 +100,7 @@ dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, buf, l);
+	memmove(region.base, buf, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }

@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,9 +17,7 @@
 
 /* Id: AccountInfo.cpp,v 1.10 2009/09/29 23:48:04 tbox Exp  */
 
-#ifndef UNICODE
-#define UNICODE
-#endif /* UNICODE */
+/* Compiled with UNICODE */
 
 #include "stdafx.h"
 

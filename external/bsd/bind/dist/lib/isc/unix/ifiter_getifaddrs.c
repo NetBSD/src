@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.2.4.1 2012/10/30 18:54:11 yamt Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.2.4.2 2014/05/22 15:43:22 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -161,7 +161,7 @@ internal_current(isc_interfaceiter_t *iter) {
 		namelen = sizeof(iter->current.name) - 1;
 
 	memset(iter->current.name, 0, sizeof(iter->current.name));
-	memcpy(iter->current.name, ifa->ifa_name, namelen);
+	memmove(iter->current.name, ifa->ifa_name, namelen);
 
 	iter->current.flags = 0;
 

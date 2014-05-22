@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.2.4.1 2012/10/30 18:49:42 yamt Exp $	*/
+/*	$NetBSD: os.c,v 1.2.4.2 2014/05/22 15:42:46 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: os.c,v 1.39 2012/02/06 23:46:44 tbox Exp  */
 
 #include <config.h>
 #include <stdarg.h>
@@ -295,7 +295,7 @@ isc_result_t
 ns_os_gethostname(char *buf, size_t len) {
 	int n;
 
-	n = gethostname(buf, len);
+	n = gethostname(buf, (int)len);
 	return ((n == 0) ? ISC_R_SUCCESS : ISC_R_FAILURE);
 }
 

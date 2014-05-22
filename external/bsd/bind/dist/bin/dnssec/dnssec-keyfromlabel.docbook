@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2008-2012  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2008-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,7 @@
       <year>2010</year>
       <year>2011</year>
       <year>2012</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -133,8 +134,15 @@
         <term>-E <replaceable class="parameter">engine</replaceable></term>
         <listitem>
           <para>
-            Specifies the name of the crypto hardware (OpenSSL engine).
-            When compiled with PKCS#11 support it defaults to "pkcs11".
+            Specifies the cryptographic hardware to use.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -143,9 +151,32 @@
         <term>-l <replaceable class="parameter">label</replaceable></term>
         <listitem>
           <para>
-            Specifies the label of the key pair in the crypto hardware.
-            The label may be preceded by an optional OpenSSL engine name,
-            separated by a colon, as in "pkcs11:keylabel".
+            Specifies the label for a key pair in the crypto hardware.
+          </para>
+          <para>
+            When <acronym>BIND</acronym> 9 is built with OpenSSL-based
+            PKCS#11 support, the label is an arbitrary string that
+            identifies a particular key.  It may be preceded by an
+            optional OpenSSL engine name, followed by a colon, as in
+            "pkcs11:<replaceable>keylabel</replaceable>".
+          </para>
+          <para>
+            When <acronym>BIND</acronym> 9 is built with native PKCS#11
+            support, the label is a PKCS#11 URI string in the format
+            "pkcs11:<option>keyword</option>=<replaceable>value</replaceable><optional>;<option>keyword</option>=<replaceable>value</replaceable>;...</optional>"
+            Keywords include "token", which identifies the HSM; "object", which
+            identifies the key; and "pin-source", which identifies a file from
+            which the HSM's PIN code can be obtained.  The label will be
+            stored in the on-disk "private" file.
+          </para>
+          <para>
+            If the label contains a
+            <option>pin-source</option> field, tools using the generated
+            key files will be able to use the HSM for signing and other
+            operations without any need for an operator to manually enter
+            a PIN.  Note: Making the HSM's PIN accessible in this manner
+            may reduce the security advantage of using an HSM; be sure
+            this is what you want to do before making use of this feature.
           </para>
         </listitem>
       </varlistentry>
@@ -311,7 +342,8 @@
       then the offset is computed in years (defined as 365 24-hour days,
       ignoring leap years), months (defined as 30 24-hour days), weeks,
       days, hours, or minutes, respectively.  Without a suffix, the offset
-      is computed in seconds.
+      is computed in seconds.  To explicitly prevent a date from being
+      set, use 'none' or 'never'.
     </para>
 
     <variablelist>
@@ -429,7 +461,8 @@
         <refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
-      <citetitle>RFC 4034</citetitle>.
+      <citetitle>RFC 4034</citetitle>,
+      <citetitle>The PKCS#11 URI Scheme (draft-pechanec-pkcs11uri-13)</citetitle>.
     </para>
   </refsect1>
 
