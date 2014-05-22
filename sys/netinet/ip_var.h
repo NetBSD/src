@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.101 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.102 2014/05/22 23:42:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -203,12 +203,10 @@ void	 ip_drain(void);
 void	 ip_drainstub(void);
 void	 ip_forward(struct mbuf *, int);
 void	 ip_freemoptions(struct ip_moptions *);
-int	 ip_getmoptions(struct ip_moptions *, struct sockopt *);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, ...);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
-int	 ip_pcbopts(struct mbuf **, const struct sockopt *);
 
 void	 ip_reass_init(void);
 int	 ip_reass_packet(struct mbuf **, struct ip *);
@@ -217,7 +215,6 @@ void	 ip_reass_drain(void);
 
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	   struct mbuf *);
-int	 ip_setmoptions(struct ip_moptions **, const struct sockopt *);
 void	 ip_slowtimo(void);
 void	 ip_fasttimo(void);
 struct mbuf *
