@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.89 2013/06/27 19:38:16 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.90 2014/05/22 22:01:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -563,6 +563,12 @@ int	in4_cksum(struct mbuf *, u_int8_t, int, int);
 void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
+
+struct route;
+struct ip_moptions;
+
+struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
