@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.221.2.5 2014/05/22 11:41:11 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.221.2.6 2014/05/22 19:11:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.5 2014/05/22 11:41:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.6 2014/05/22 19:11:37 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1763,6 +1763,9 @@ nfs_clearcommit(struct mount *mp)
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
 	vfs_vnode_iterator_init(mp, &marker);
 	while (vfs_vnode_iterator_next(marker, &vp)) {
+		struct uvm_page_array a;
+		voff_t off;
+
 		mutex_enter(vp->v_interlock);
 		np = VTONFS(vp);
 		if (vp->v_type != VREG || vp->v_mount != mp || np == NULL) {
