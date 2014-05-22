@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.14.2.5 2014/05/22 11:41:04 yamt Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.14.2.6 2014/05/22 19:11:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14.2.5 2014/05/22 11:41:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14.2.6 2014/05/22 19:11:17 yamt Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -414,7 +414,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	uobj = &vp->v_uobj;
 	KASSERT(uobj->pgops == &uvm_vnodeops);
 	KASSERT(uobj->uo_npages == 0);
-	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
+	KASSERT(radix_tree_empty_tree_p(&uobj->uo_pages));
 
 	/* Share the vnode_t::v_interlock, if requested. */
 	if (slock) {
@@ -1034,6 +1034,7 @@ vclean(vnode_t *vp)
 
 	KASSERT(vp->v_data == NULL);
 	KASSERT(vp->v_uobj.uo_npages == 0);
+	KASSERT(radix_tree_empty_tree_p(&vp->v_uobj.uo_pages));
 
 	if (vp->v_type == VREG && vp->v_ractx != NULL) {
 		uvm_ra_freectx(vp->v_ractx);
