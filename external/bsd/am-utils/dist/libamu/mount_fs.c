@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.1.1.2.6.1 2014/05/22 15:41:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Erez Zadok
@@ -466,6 +466,7 @@ compute_nfs_attrcache_flags(nfs_args_t *nap, mntent_t *mntp)
   if (amu_hasmntopt(mntp, MNTTAB_OPT_NOAC) != NULL)
     nap->flags |= MNT2_NFS_OPT_NOAC;
 #endif /* defined(MNTTAB_OPT_NOAC) && defined(MNT2_NFS_OPT_NOAC) */
+  (void)err_acval;
 }
 
 

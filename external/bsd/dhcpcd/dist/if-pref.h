@@ -1,4 +1,6 @@
-/* 
+/* $NetBSD: if-pref.h,v 1.1.1.2.12.1 2014/05/22 15:44:40 yamt Exp $ */
+
+/*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
@@ -30,5 +32,5 @@
 
 #include "dhcpcd.h"
 
-void sort_interfaces(void);
+void sort_interfaces(struct dhcpcd_ctx *);
 #endif

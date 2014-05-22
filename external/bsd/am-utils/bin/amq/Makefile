@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/17 09:03:47 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2014/05/22 15:41:06 yamt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -11,6 +11,5 @@ SRCS=	amq_xdr.c amq_clnt.c amq.c
 MAN+=	amq.8
 
 CPPFLAGS+=	-I${DIST}
-LDADD+=		${LIBAMU}
 
 .include <bsd.prog.mk>

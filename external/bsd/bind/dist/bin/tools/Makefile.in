@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,25 +42,31 @@ NOSYMLIBS =	${ISCNOSYMLIBS} @LIBS@
 
 SUBDIRS = 
 
-TARGETS =	arpaname@EXEEXT@ named-journalprint@EXEEXT@ nsec3hash@EXEEXT@ \
+TARGETS =	arpaname@EXEEXT@ named-journalprint@EXEEXT@ \
+		named-rrchecker@EXEEXT@  nsec3hash@EXEEXT@ \
 		genrandom@EXEEXT@ isc-hmac-fixup@EXEEXT@
-SRCS =		arpaname.c named-journalprint.c nsec3hash.c genrandom.c \
-		isc-hmac-fixup.c
+SRCS =		arpaname.c named-journalprint.c named-rrchecker.c \
+		nsec3hash.c genrandom.c isc-hmac-fixup.c
 
-MANPAGES =	arpaname.1 named-journalprint.8 nsec3hash.8 genrandom.8 \
-		isc-hmac-fixup.8
-HTMLPAGES =	arpaname.html named-journalprint.html nsec3hash.html \
-		genrandom.html isc-hmac-fixup.html
+MANPAGES =	arpaname.1 named-journalprint.8 named-rrchecker.1 nsec3hash.8 \
+		genrandom.8 isc-hmac-fixup.8
+HTMLPAGES =	arpaname.html named-journalprint.html named-rrchecker.html \
+		nsec3hash.html genrandom.html isc-hmac-fixup.html
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
 arpaname@EXEEXT@: arpaname.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ arpaname.@O@ \
-		${ISCLIBS} ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} \
+		-o $@ arpaname.@O@ ${ISCLIBS} ${LIBS}
 
 named-journalprint@EXEEXT@: named-journalprint.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	export BASEOBJS="named-journalprint.@O@"; \
+	export LIBS0="${DNSLIBS}"; \
+	${FINALBUILDCMD}
+
+named-rrchecker@EXEEXT@: named-rrchecker.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	export BASEOBJS="named-rrchecker.@O@"; \
 	export LIBS0="${DNSLIBS}"; \
 	${FINALBUILDCMD}
 
@@ -75,7 +81,8 @@ isc-hmac-fixup@EXEEXT@: isc-hmac-fixup.@O@ ${ISCDEPLIBS}
 	${FINALBUILDCMD}
 
 genrandom@EXEEXT@: genrandom.@O@
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ genrandom.@O@ @GENRANDOMLIB@ ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} \
+		-o $@ genrandom.@O@ @GENRANDOMLIB@ ${LIBS}
 
 doc man:: ${MANOBJS}
 
@@ -88,14 +95,22 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} arpaname@EXEEXT@ ${DESTDIR}${sbindir}
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-journalprint@EXEEXT@ ${DESTDIR}${sbindir}
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} nsec3hash@EXEEXT@ ${DESTDIR}${sbindir}
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} genrandom@EXEEXT@ ${DESTDIR}${sbindir}
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} isc-hmac-fixup@EXEEXT@ ${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} arpaname@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-journalprint@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-rrchecker@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} nsec3hash@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} genrandom@EXEEXT@ \
+		${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} isc-hmac-fixup@EXEEXT@ \
+		${DESTDIR}${sbindir}
 	${INSTALL_DATA} ${srcdir}/arpaname.1 ${DESTDIR}${mandir}/man1
 	${INSTALL_DATA} ${srcdir}/isc-hmac-fixup.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/named-journalprint.8 ${DESTDIR}${mandir}/man8
+	${INSTALL_DATA} ${srcdir}/named-rrchecker.1 ${DESTDIR}${mandir}/man1
 	${INSTALL_DATA} ${srcdir}/nsec3hash.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/genrandom.8 ${DESTDIR}${mandir}/man8
 

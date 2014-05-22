@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_result.c,v 1.2.4.2 2013/01/16 05:27:17 yamt Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.2.4.3 2014/05/22 15:43:16 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -37,7 +37,7 @@ static const char *text[DST_R_NRESULTS] = {
 	"illegal operation for a null key",	/*%< 3 */
 	"public key is invalid",		/*%< 4 */
 	"private key is invalid",		/*%< 5 */
-	"UNUSED6",				/*%< 6 */
+	"external key",				/*%< 6 */
 	"error occurred writing key to disk",	/*%< 7 */
 	"invalid algorithm specific parameter",	/*%< 8 */
 	"UNUSED9",				/*%< 9 */
@@ -52,7 +52,8 @@ static const char *text[DST_R_NRESULTS] = {
 	"failure computing a shared secret",	/*%< 18 */
 	"no randomness available",		/*%< 19 */
 	"bad key type",				/*%< 20 */
-	"no engine"				/*%< 21 */
+	"no engine",				/*%< 21 */
+	"illegal operation for an external key"	/*%< 22 */
 };
 
 #define DST_RESULT_RESULTSET			2

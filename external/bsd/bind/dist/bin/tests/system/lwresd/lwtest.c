@@ -1,7 +1,7 @@
-/*	$NetBSD: lwtest.c,v 1.2.4.1 2012/10/30 18:50:58 yamt Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.2.4.2 2014/05/22 15:42:58 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -402,7 +402,7 @@ test_gethostbyaddr(const char *address, int af, const char *name) {
 			return;
 		}
 	} else {
-		if (strcmp(hp->h_name, name) != 0) {
+		if (name != NULL && strcmp(hp->h_name, name) != 0) {
 			printf("I:gethostbyname(%s) returned %s, "
 			       "expected %s\n", address, hp->h_name, name);
 			fails++;
@@ -442,7 +442,7 @@ test_getipnodebyaddr(const char *address, int af, const char *name) {
 			return;
 		}
 	} else {
-		if (strcmp(hp->h_name, name) != 0) {
+		if (name != NULL && strcmp(hp->h_name, name) != 0) {
 			printf("I:getipnodebyaddr(%s) returned %s, "
 			       "expected %s\n", address, hp->h_name, name);
 			freehostent(hp);
@@ -766,6 +766,7 @@ main(void) {
 	test_getrrsetbyname("a.example1.", 1, 1, 1, 0, 1);
 	test_getrrsetbyname("e.example1.", 1, 1, 1, 1, 1);
 	test_getrrsetbyname("e.example1.", 1, 255, 1, 1, 0);
+	test_getrrsetbyname("e.example1.", 1, 2, 1, 1, 1);
 	test_getrrsetbyname("e.example1.", 1, 46, 2, 0, 1);
 	test_getrrsetbyname("", 1, 1, 0, 0, 0);
 

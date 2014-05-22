@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -275,11 +275,27 @@ tlsa			TLSA	( 1 1 2 92003ba34942dc74152e2f2c408d29ec
 				1b177615d466f6c4b71c216a50292bd5
 				8c9ebdd2f74e38fe51ffd48c43326cbc )
 
+nid			NID	10 0014:4fff:ff20:ee64
+
+l32			L32	10 1.2.3.4
+
+l64			L64	10 0014:4fff:ff20:ee64
+
+lp			LP	10 example.net.
+
+eui48			EUI48	01-23-45-67-89-ab
+
+eui64			EUI64	01-23-45-67-89-ab-cd-ef
+
 ; type 255
 ; TSIG is a meta-type and should never occur in master files.
 
 ; type 256
 uri01			URI	10 20 "https://www.isc.org/"
 uri02			URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
+
+keydata			TYPE65533	\# 0
+keydata			TYPE65533	\# 6 010203040506 
+keydata			TYPE65533	\# 18 010203040506010203040506010203040506
 
 EOF

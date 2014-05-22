@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,9 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 
+#include "atf-c++/detail/auto_array.hpp"
 #include "atf-c++/detail/process.hpp"
+#include "atf-c++/detail/sanity.hpp"
 
 #include "fs.hpp"
 #include "user.hpp"
@@ -61,6 +63,19 @@ static void cleanup_aux_dir(const atf::fs::path&, const atf::fs::file_info&,
                             bool);
 static void do_unmount(const atf::fs::path&);
 
+// The cleanup routines below are tricky: they are executed immediately after
+// a test case's death, and after we have forcibly killed any stale processes.
+// However, even if the processes are dead, this does not mean that the file
+// system we are scanning is stable.  In particular, if the test case has
+// mounted file systems through fuse/puffs, the fact that the processes died
+// does not mean that the file system is truly unmounted.
+//
+// The code below attempts to cope with this by catching errors and either
+// ignoring them or retrying the actions on the same file/directory a few times
+// before giving up.
+static const int max_retries = 5;
+static const int retry_delay_in_seconds = 1;
+
 // The erase parameter in this routine is to control nested mount points.
 // We want to descend into a mount point to unmount anything that is
 // mounted under it, but we do not want to delete any files while doing
@@ -70,19 +85,24 @@ static
 void
 cleanup_aux(const atf::fs::path& p, dev_t parent_device, bool erase)
 {
-    atf::fs::file_info fi(p);
+    try {
+        atf::fs::file_info fi(p);
 
-    if (fi.get_type() == atf::fs::file_info::dir_type)
-        cleanup_aux_dir(p, fi, fi.get_device() == parent_device);
-
-    if (fi.get_device() != parent_device)
-        do_unmount(p);
-
-    if (erase) {
         if (fi.get_type() == atf::fs::file_info::dir_type)
-            atf::fs::rmdir(p);
-        else
-            atf::fs::remove(p);
+            cleanup_aux_dir(p, fi, fi.get_device() == parent_device);
+
+        if (fi.get_device() != parent_device)
+            do_unmount(p);
+
+        if (erase) {
+            if (fi.get_type() == atf::fs::file_info::dir_type)
+                atf::fs::rmdir(p);
+            else
+                atf::fs::remove(p);
+        }
+    } catch (const atf::system_error& e) {
+        if (e.code() != ENOENT && e.code() != ENOTDIR)
+            throw e;
     }
 }
 
@@ -92,15 +112,39 @@ cleanup_aux_dir(const atf::fs::path& p, const atf::fs::file_info& fi,
                 bool erase)
 {
     if (erase && ((fi.get_mode() & S_IRWXU) != S_IRWXU)) {
-        if (chmod(p.c_str(), fi.get_mode() | S_IRWXU) == -1)
-            throw atf::system_error(IMPL_NAME "::cleanup(" +
-                                    p.str() + ")", "chmod(2) failed", errno);
+        int retries = max_retries;
+retry_chmod:
+        if (chmod(p.c_str(), fi.get_mode() | S_IRWXU) == -1) {
+            if (retries > 0) {
+                retries--;
+                ::sleep(retry_delay_in_seconds);
+                goto retry_chmod;
+            } else {
+                throw atf::system_error(IMPL_NAME "::cleanup(" +
+                                        p.str() + ")", "chmod(2) failed",
+                                        errno);
+            }
+        }
     }
 
     std::set< std::string > subdirs;
     {
-        const atf::fs::directory d(p);
-        subdirs = d.names();
+        bool ok = false;
+        int retries = max_retries;
+        while (!ok) {
+            INV(retries > 0);
+            try {
+                const atf::fs::directory d(p);
+                subdirs = d.names();
+                ok = true;
+            } catch (const atf::system_error& e) {
+                retries--;
+                if (retries == 0)
+                    throw e;
+                ::sleep(retry_delay_in_seconds);
+            }
+        }
+        INV(ok);
     }
 
     for (std::set< std::string >::const_iterator iter = subdirs.begin();
@@ -122,9 +166,18 @@ do_unmount(const atf::fs::path& in_path)
         in_path : in_path.to_absolute();
 
 #if defined(HAVE_UNMOUNT)
-    if (unmount(abs_path.c_str(), 0) == -1)
-        throw atf::system_error(IMPL_NAME "::cleanup(" + in_path.str() + ")",
-                                "unmount(2) failed", errno);
+    int retries = max_retries;
+retry_unmount:
+    if (unmount(abs_path.c_str(), 0) == -1) {
+        if (errno == EBUSY && retries > 0) {
+            retries--;
+            ::sleep(retry_delay_in_seconds);
+            goto retry_unmount;
+        } else {
+            throw atf::system_error(IMPL_NAME "::cleanup(" + in_path.str() +
+                                    ")", "unmount(2) failed", errno);
+        }
+    }
 #else
     // We could use umount(2) instead if it was available... but
     // trying to do so under, e.g. Linux, is a nightmare because we
@@ -148,7 +201,7 @@ do_unmount(const atf::fs::path& in_path)
 
 impl::temp_dir::temp_dir(const atf::fs::path& p)
 {
-    atf::utils::auto_array< char > buf(new char[p.str().length() + 1]);
+    atf::auto_array< char > buf(new char[p.str().length() + 1]);
     std::strcpy(buf.get(), p.c_str());
     if (::mkdtemp(buf.get()) == NULL)
         throw system_error(IMPL_NAME "::temp_dir::temp_dir(" +

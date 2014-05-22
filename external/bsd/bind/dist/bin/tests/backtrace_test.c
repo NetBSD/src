@@ -1,7 +1,7 @@
-/*	$NetBSD: backtrace_test.c,v 1.2.4.1 2012/10/30 18:49:52 yamt Exp $	*/
+/*	$NetBSD: backtrace_test.c,v 1.2.4.2 2014/05/22 15:42:48 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -74,8 +74,8 @@ func3() {
 			if (result == ISC_R_SUCCESS)
 				printf("  [%d] %s\n", i, fname);
 			else {
-				printf("  [%d] getsymbol failed: %s\n", i,
-				       isc_result_totext(result));
+				printf("  [%d] %p getsymbol failed: %s\n", i,
+				       tracebuf[i], isc_result_totext(result));
 			}
 		}
 	}

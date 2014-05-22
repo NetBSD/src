@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@ my @ids;
 if ($id != 0) {
 	@ids = ($id);
 } else {
-	@ids = (1..7);
+	@ids = (1..8);
 }
 
 foreach $id (@ids) {

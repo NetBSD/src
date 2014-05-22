@@ -1,3 +1,5 @@
+# $NetBSD: 29-lookup-hostname,v 1.1.1.4.6.1 2014/05/22 15:44:40 yamt Exp $
+
 # Lookup the hostname in DNS if not set
 
 lookup_hostname()

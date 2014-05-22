@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2001  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -37,5 +37,5 @@ b			A	10.0.0.2
 $ORIGIN b
 $INCLUDE sub.db
 ; use the current domain name
-			A	10.0.0.99
+;			A	10.0.0.99
 c			A	10.0.0.3

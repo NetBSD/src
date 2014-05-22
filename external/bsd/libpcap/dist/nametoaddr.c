@@ -1,3 +1,5 @@
+/*	$NetBSD: nametoaddr.c,v 1.1.1.2.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -24,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.83 2008-02-06 10:21:30 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.83 2008-02-06 10:21:30 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -247,6 +249,7 @@ pcap_nametoportrange(const char *name, int *port1, int *port2, int *proto)
 			free(cpy);
 			return 0;
 		}
+		free(cpy);
 
 		if (*proto != save_proto)
 			*proto = PROTO_UNDEF;
@@ -414,6 +417,8 @@ pcap_ether_aton(const char *s)
 	register u_int d;
 
 	e = ep = (u_char *)malloc(6);
+	if (e == NULL)
+		return (NULL);
 
 	while (*s) {
 		if (*s == ':' || *s == '.' || *s == '-')

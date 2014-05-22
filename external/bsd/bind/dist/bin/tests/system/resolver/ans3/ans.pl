@@ -42,8 +42,16 @@ for (;;) {
 
 	print "**** request from " , $sock->peerhost, " port ", $sock->peerport, "\n";
 
-	my ($packet, $err) = new Net::DNS::Packet(\$buf, 0);
-	$err and die $err;
+	my $packet;
+
+	if ($Net::DNS::VERSION > 0.68) {
+		$packet = new Net::DNS::Packet(\$buf, 0);
+		$@ and die $@;
+	} else {
+		my $err;
+		($packet, $err) = new Net::DNS::Packet(\$buf, 0);
+		$err and die $err;
+	}
 
 	print "REQUEST:\n";
 	$packet->print;

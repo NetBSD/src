@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq.c,v 1.1.1.1.6.1 2012/04/17 00:03:49 yamt Exp $	*/
+/*	$NetBSD: libntpq.c,v 1.1.1.1.6.2 2014/05/22 15:50:10 yamt Exp $	*/
 
 /*****************************************************************************
  *
@@ -217,6 +217,7 @@ int ntpq_queryhost(unsigned short VARSET, unsigned short association, char *resu
  ****************************************************************************
  * Parameters:
  *	hostname	char*	Hostname/IP of the host running ntpd
+ *	fam		int	Address Family (AF_INET, AF_INET6, or 0)
  *
  * Returns:
  *	int		1 if the host connection could be set up, i.e. 
@@ -226,9 +227,13 @@ int ntpq_queryhost(unsigned short VARSET, unsigned short association, char *resu
  *			0 (zero) if a failure occured
  ****************************************************************************/
 
-int ntpq_openhost(char *hostname)
+int
+ntpq_openhost(
+	char *hostname,
+	int fam
+	)
 {
-	if ( openhost(hostname) )
+	if ( openhost(hostname, fam) )
 	{
 		numhosts = 1;
 	} else {

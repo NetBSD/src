@@ -32,6 +32,7 @@ extern "C" {
 }
 
 #include <cstdio>
+#include <new>
 
 #include "../macros.hpp"
 

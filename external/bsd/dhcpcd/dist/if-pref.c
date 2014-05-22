@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: if-pref.c,v 1.1.1.5.6.2 2014/05/22 15:44:40 yamt Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,32 +31,35 @@
 #include <sys/types.h>
 
 #include "config.h"
-#include "dhcpcd.h"
+#include "dhcp.h"
 #include "if-pref.h"
 #include "net.h"
 
 /* Interface comparer for working out ordering. */
 static int
-ifcmp(struct interface *si, struct interface *ti)
+ifcmp(const struct interface *si, const struct interface *ti)
 {
 	int sill, till;
+	const struct dhcp_state *sis, *tis;
 
-	if (si->state && !ti->state)
+	sis = D_CSTATE(si);
+	tis = D_CSTATE(ti);
+	if (sis && !tis)
 		return -1;
-	if (!si->state && ti->state)
+	if (!sis && tis)
 		return 1;
-	if (!si->state && !ti->state)
+	if (!sis && !tis)
 		return 0;
 	/* If one has a lease and the other not, it takes precedence. */
-	if (si->state->new && !ti->state->new)
+	if (sis->new && !tis->new)
 		return -1;
-	if (!si->state->new && ti->state->new)
+	if (!sis->new && tis->new)
 		return 1;
 	/* If we are either, they neither have a lease, or they both have.
 	 * We need to check for IPv4LL and make it non-preferred. */
-	if (si->state->new && ti->state->new) {
-		sill = (si->state->new->cookie == htonl(MAGIC_COOKIE));
-		till = (ti->state->new->cookie == htonl(MAGIC_COOKIE));
+	if (sis->new && tis->new) {
+		sill = (sis->new->cookie == htonl(MAGIC_COOKIE));
+		till = (tis->new->cookie == htonl(MAGIC_COOKIE));
 		if (!sill && till)
 			return 1;
 		if (sill && !till)
@@ -74,35 +80,29 @@ ifcmp(struct interface *si, struct interface *ti)
 
 /* Sort the interfaces into a preferred order - best first, worst last. */
 void
-sort_interfaces(void)
+sort_interfaces(struct dhcpcd_ctx *ctx)
 {
-	struct interface *sorted, *ifp, *ifn, *ift;
+	struct if_head sorted;
+	struct interface *ifp, *ift;
 
-	if (!ifaces || !ifaces->next)
+	if (ctx->ifaces == NULL ||
+	    (ifp = TAILQ_FIRST(ctx->ifaces)) == NULL ||
+	    TAILQ_NEXT(ifp, next) == NULL)
 		return;
-	sorted = ifaces;
-	ifaces = ifaces->next;
-	sorted->next = NULL;
-	for (ifp = ifaces; ifp && (ifn = ifp->next, 1); ifp = ifn) {
-		/* Are we the new head? */
-		if (ifcmp(ifp, sorted) == -1) {
-			ifp->next = sorted;
-			sorted = ifp;
-			continue;
-		}
-		/* Do we fit in the middle? */
-		for (ift = sorted; ift->next; ift = ift->next) {
-			if (ifcmp(ifp, ift->next) == -1) {
-				ifp->next = ift->next;
-				ift->next = ifp;
+
+	TAILQ_INIT(&sorted);
+	TAILQ_REMOVE(ctx->ifaces, ifp, next);
+	TAILQ_INSERT_HEAD(&sorted, ifp, next);
+	while ((ifp = TAILQ_FIRST(ctx->ifaces))) {
+		TAILQ_REMOVE(ctx->ifaces, ifp, next);
+		TAILQ_FOREACH(ift, &sorted, next) {
+			if (ifcmp(ifp, ift) == -1) {
+				TAILQ_INSERT_BEFORE(ift, ifp, next);
 				break;
 			}
 		}
-		/* We must be at the end */
-		if (!ift->next) {
-			ift->next = ifp;
-			ifp->next = NULL;
-		}
+		if (ift == NULL)
+			TAILQ_INSERT_TAIL(&sorted, ifp, next);
 	}
-	ifaces = sorted;
+	TAILQ_CONCAT(ctx->ifaces, &sorted, next);
 }

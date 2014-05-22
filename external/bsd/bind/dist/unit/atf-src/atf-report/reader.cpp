@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,15 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+extern "C" {
+#include <sys/time.h>
+}
+
 #include <map>
 #include <sstream>
 #include <utility>
+
+#include "atf-c/defs.h"
 
 #include "atf-c++/detail/parser.hpp"
 #include "atf-c++/detail/sanity.hpp"
@@ -44,12 +50,12 @@ namespace impl = atf::atf_report;
 // Auxiliary functions.
 // ------------------------------------------------------------------------
 
-static
-size_t
-string_to_size_t(const std::string& str)
+template< typename Type >
+Type
+string_to_int(const std::string& str)
 {
     std::istringstream ss(str);
-    size_t s;
+    Type s;
     ss >> s;
 
     return s;
@@ -112,6 +118,24 @@ public:
 
 } // namespace atf_tps
 
+struct timeval
+read_timeval(atf::parser::parser< atf_tps::tokenizer >& parser)
+{
+    using namespace atf_tps;
+
+    atf::parser::token t = parser.expect(text_type, "timestamp");
+    const std::string::size_type divider = t.text().find('.');
+    if (divider == std::string::npos || divider == 0 ||
+        divider == t.text().length() - 1)
+        throw atf::parser::parse_error(t.lineno(),
+                                       "Malformed timestamp value " + t.text());
+
+    struct timeval tv;
+    tv.tv_sec = string_to_int< long >(t.text().substr(0, divider));
+    tv.tv_usec = string_to_int< long >(t.text().substr(divider + 1));
+    return tv;
+}
+
 // ------------------------------------------------------------------------
 // The "atf_tps_reader" class.
 // ------------------------------------------------------------------------
@@ -126,44 +150,54 @@ impl::atf_tps_reader::~atf_tps_reader(void)
 }
 
 void
-impl::atf_tps_reader::got_info(const std::string& what,
-                               const std::string& val)
+impl::atf_tps_reader::got_info(
+    const std::string& what ATF_DEFS_ATTRIBUTE_UNUSED,
+    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_ntps(size_t ntps)
+impl::atf_tps_reader::got_ntps(size_t ntps ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_tp_start(const std::string& tp, size_t ntcs)
+impl::atf_tps_reader::got_tp_start(
+    const std::string& tp ATF_DEFS_ATTRIBUTE_UNUSED,
+    size_t ntcs ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_tp_end(const std::string& reason)
+impl::atf_tps_reader::got_tp_end(
+    struct timeval* tv ATF_DEFS_ATTRIBUTE_UNUSED,
+    const std::string& reason ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_tc_start(const std::string& tcname)
+impl::atf_tps_reader::got_tc_start(
+    const std::string& tcname ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_tc_stdout_line(const std::string& line)
+impl::atf_tps_reader::got_tc_stdout_line(
+    const std::string& line ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_tc_stderr_line(const std::string& line)
+impl::atf_tps_reader::got_tc_stderr_line(
+    const std::string& line ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-impl::atf_tps_reader::got_tc_end(const std::string& state,
-                                 const std::string& reason)
+impl::atf_tps_reader::got_tc_end(
+    const std::string& state ATF_DEFS_ATTRIBUTE_UNUSED,
+    struct timeval* tv ATF_DEFS_ATTRIBUTE_UNUSED,
+    const std::string& reason ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
@@ -206,13 +240,17 @@ impl::atf_tps_reader::read_tp(void* pptr)
 
     t = p.expect(colon_type, "`:'");
 
+    struct timeval s1 = read_timeval(p);
+
+    t = p.expect(comma_type, "`,'");
+
     t = p.expect(text_type, "test program name");
     std::string tpname = t.text();
 
     t = p.expect(comma_type, "`,'");
 
     t = p.expect(text_type, "number of test programs");
-    size_t ntcs = string_to_size_t(t.text());
+    size_t ntcs = string_to_int< std::size_t >(t.text());
 
     t = p.expect(nl_type, "new line");
 
@@ -232,6 +270,13 @@ impl::atf_tps_reader::read_tp(void* pptr)
 
     t = p.expect(colon_type, "`:'");
 
+    struct timeval s2 = read_timeval(p);
+
+    struct timeval s3;
+    timersub(&s2, &s1, &s3);
+
+    t = p.expect(comma_type, "`,'");
+
     t = p.expect(text_type, "test program name");
     if (t.text() != tpname)
         throw parse_error(t.lineno(), "Test program name used in "
@@ -249,7 +294,7 @@ impl::atf_tps_reader::read_tp(void* pptr)
         t = p.next();
     }
 
-    ATF_PARSER_CALLBACK(p, got_tp_end(reason));
+    ATF_PARSER_CALLBACK(p, got_tp_end(&s3, reason));
 }
 
 void
@@ -266,8 +311,13 @@ impl::atf_tps_reader::read_tc(void* pptr)
 
     t = p.expect(colon_type, "`:'");
 
+    struct timeval s1 = read_timeval(p);
+
+    t = p.expect(comma_type, "`,'");
+
     t = p.expect(text_type, "test case name");
     std::string tcname = t.text();
+
     ATF_PARSER_CALLBACK(p, got_tc_start(tcname));
 
     t = p.expect(nl_type, "new line");
@@ -297,6 +347,13 @@ impl::atf_tps_reader::read_tc(void* pptr)
 
     t = p.expect(colon_type, "`:'");
 
+    struct timeval s2 = read_timeval(p);
+
+    struct timeval s3;
+    timersub(&s2, &s1, &s3);
+
+    t = p.expect(comma_type, "`,'");
+
     t = p.expect(text_type, "test case name");
     if (t.text() != tcname)
         throw parse_error(t.lineno(),
@@ -310,7 +367,7 @@ impl::atf_tps_reader::read_tc(void* pptr)
         skipped_type, "expected_{death,exit,failure,signal,timeout}, failed, "
         "passed or skipped");
     if (t.type() == passed_type) {
-        ATF_PARSER_CALLBACK(p, got_tc_end("passed", ""));
+        ATF_PARSER_CALLBACK(p, got_tc_end("passed", &s3, ""));
     } else {
         std::string state;
         if (t.type() == expected_death_type) state = "expected_death";
@@ -327,7 +384,7 @@ impl::atf_tps_reader::read_tc(void* pptr)
         if (reason.empty())
             throw parse_error(t.lineno(), "Empty reason for " + state +
                 " test case result");
-        ATF_PARSER_CALLBACK(p, got_tc_end(state, reason));
+        ATF_PARSER_CALLBACK(p, got_tc_end(state, &s3, reason));
     }
 
     t = p.expect(nl_type, "new line");
@@ -341,7 +398,7 @@ impl::atf_tps_reader::read(void)
 
     std::pair< size_t, atf::parser::headers_map > hml =
         atf::parser::read_headers(m_is, 1);
-    atf::parser::validate_content_type(hml.second, "application/X-atf-tps", 2);
+    atf::parser::validate_content_type(hml.second, "application/X-atf-tps", 3);
 
     tokenizer tkz(m_is, hml.first);
     atf::parser::parser< tokenizer > p(tkz);
@@ -356,7 +413,7 @@ impl::atf_tps_reader::read(void)
         t = p.expect(colon_type, "`:'");
 
         t = p.expect(text_type, "number of test programs");
-        size_t ntps = string_to_size_t(t.text());
+        size_t ntps = string_to_int< std::size_t >(t.text());
         ATF_PARSER_CALLBACK(p, got_ntps(ntps));
 
         t = p.expect(nl_type, "new line");

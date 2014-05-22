@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: tests.sh,v 1.37 2012/02/22 23:47:35 tbox Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -116,8 +116,22 @@ $RNDC -c ../common/rndc.conf -s 10.53.0.7 -p 9953 reload 2>&1 | sed 's/^/I:ns7 /
 
 sleep 3
 
+echo "I:testing zone is dumped after successful transfer"
+$DIG $DIGOPTS +noall +answer +multi @10.53.0.2 -p 5300 \
+	slave. soa > dig.out.ns2 || tmp=1
+grep "1397051952 ; serial" dig.out.ns2 > /dev/null 2>&1 || tmp=1
+grep "1397051952 ; serial" ns2/slave.db > /dev/null 2>&1 || tmp=1
+if test $tmp != 0 ; then echo "I:failed"; fi
+status=`expr $status + $tmp`
+
 echo "I:testing ixfr-from-differences yes;"
 tmp=0
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIG $DIGOPTS @10.53.0.3 -p 5300 +noall +answer soa example > dig.out.soa.ns3
+	grep "1397051953" dig.out.soa.ns3 > /dev/null && break;
+	sleep 1
+done
 
 $DIG $DIGOPTS example. \
 	@10.53.0.3 axfr -p 5300 > dig.out.ns3 || tmp=1

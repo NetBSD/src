@@ -1,3 +1,99 @@
+2013-11-19  20:10  Christos Zoulas <christos@zoulas.com>
+
+	* always leave magic file loaded, don't unload for magic_check, etc.
+	* fix default encoding to binary instead of unknown which broke recently
+	* handle empty and one byte files, less specially so that
+	  --mime-encoding does not break completely.
+		`
+2013-11-06  14:40  Christos Zoulas <christos@zoulas.com>
+
+	* fix erroneous non-zero exit code from non-existant file and message
+
+2013-10-29  14:25  Christos Zoulas <christos@zoulas.com>
+
+	* add CDF MSI file detection (Guy Helmer)
+
+2013-09-03  11:56  Christos Zoulas <christos@zoulas.com>
+
+	* Don't mix errors and regular output if there was an error
+	* in magic_descriptor() don't close the file and try to restore
+	  its position
+
+2013-05-30  17:25  Christos Zoulas <christos@zoulas.com>
+
+	* Don't treat magic as an error if offset was past EOF (Christoph Biedl)
+
+2013-05-28  17:25  Christos Zoulas <christos@zoulas.com>
+	
+	* Fix spacing issues in softmagic and elf (Jan Kaluza)
+
+2013-05-02  18:00  Christos Zoulas <christos@zoulas.com>
+
+	* Fix segmentation fault with multiple magic_load commands.
+
+2013-04-22  11:20  Christos Zoulas <christos@zoulas.com>
+
+	* The way "default" was implemented was not very useful
+	  because the "if something was printed at that level"
+	  was not easily controlled by the user, and the format
+	  was bound to a string which is too restrictive. Add
+	  a "clear" for that level keyword and make "default"
+	  void. This way one can do:
+
+		>>13	clear	x
+		>>13	lelong	1	foo
+		>>13	lelong	2	bar
+		>>13	default	x
+		>>>13	lelong	x	unknown %x
+
+2013-03-25  13:20  Christos Zoulas <christos@zoulas.com>
+
+	* disallow strength setting in "name" entries
+
+2013-03-06  21:24  Christos Zoulas <christos@zoulas.com>
+
+	* fix recursive magic separator printing
+
+2013-02-26  19:28  Christos Zoulas <christos@zoulas.com>
+
+	* limit recursion level for mget
+	* fix pread() related breakage in cdf
+	* handle offsets properly in recursive "use"
+
+2013-02-18  10:39  Christos Zoulas <christos@zoulas.com>
+
+	* add elf reading of debug info to determine if file is stripped
+	  (Jan Kaluza)
+	* use pread()
+
+2013-01-25  18:05  Christos Zoulas <christos@zoulas.com>
+
+	* change mime description size from 64 to 80 to accommodate OOXML.
+
+2013-01-11  14:50  Christos Zoulas <christos@zoulas.com>
+
+	* Warn about inconsistent continuation levels.
+	* Change fsmagic to add a space after it prints.
+
+2013-01-10  21:00  Christos Zoulas <christos@zoulas.com>
+
+	* Make getline public so that file can link against it.
+	  Perhaps it is better to rename it, or hide it differently.
+	  Fixes builds on platforms that do not provide it.
+	  
+2013-01-07  16:30  Christos Zoulas <christos@zoulas.com>
+
+	* Add SuS d{,1,2,4,8}, u{,1,2,4,8} and document
+	  what long, int, short, etc is (Guy Harris)
+
+2013-01-06  11:20  Christos Zoulas <christos@zoulas.com>
+
+	* add magic_version function and constant
+	* Redo memory allocation and de-allocation.
+	  (prevents double frees on non mmap platforms)
+	* Fix bug with name/use having to do with passing
+	  found state from the parent to the child and back.
+
 2012-12-19   8:47  Christos Zoulas <christos@zoulas.com>
 
 	* Only print elf capabilities for archs we know (Jan Kaluza)

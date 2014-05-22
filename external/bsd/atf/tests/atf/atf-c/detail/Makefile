@@ -1,20 +1,19 @@
-# $NetBSD: Makefile,v 1.2.2.1 2012/10/30 18:49:16 yamt Exp $
+# $NetBSD: Makefile,v 1.2.2.2 2014/05/22 15:40:14 yamt Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-c/detail
-ATFFILE=	yes
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/atf-c/detail
 
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/bsd/atf/lib/libatf-c
-
-PROGS=			process_helpers
-SRCS.process_helpers=	process_helpers.c
-MAN.process_helpers=	# defined
-BINDIR.process_helpers=	${TESTSDIR}
+PROGS=
+.for prog in	process_helpers \
+		version_helper
+PROGS+=		${prog}
+SRCS.${prog}=	${prog}.c
+MAN.${prog}=	# defined
+BINDIR.${prog}=	${TESTSDIR}
+.endfor
 
 TESTS_C=
 .for test in	dynstr_test \
@@ -24,7 +23,6 @@ TESTS_C=
 		map_test \
 		process_test \
 		sanity_test \
-		test_helpers_test \
 		text_test \
 		user_test
 TESTS_C+=	${test}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/19 21:38:40 christos Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/05/22 15:41:06 yamt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -11,7 +11,7 @@ SRCS=	fixmount.c checkmount_bsd44.c
 MAN+=	fixmount.8
 
 CPPFLAGS+=	-I${DIST}
-LDADD+=		${LIBAMU} -lrpcsvc
+LDADD+=		-lrpcsvc
 DPADD+=		${LIBRPCSVC}
 
 .include <bsd.prog.mk>

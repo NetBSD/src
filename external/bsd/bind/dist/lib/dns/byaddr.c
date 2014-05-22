@@ -1,7 +1,7 @@
-/*	$NetBSD: byaddr.c,v 1.3.4.1 2012/10/30 18:52:44 yamt Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.3.4.2 2014/05/22 15:43:16 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -111,7 +111,6 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 	return (dns_name_fromtext(name, &buffer, dns_rootname, 0, NULL));
 }
 
-#ifdef BIND9
 struct dns_byaddr {
 	/* Unlocked. */
 	unsigned int		magic;
@@ -226,7 +225,8 @@ dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
 	byaddr = isc_mem_get(mctx, sizeof(*byaddr));
 	if (byaddr == NULL)
 		return (ISC_R_NOMEMORY);
-	byaddr->mctx = mctx;
+	byaddr->mctx = NULL;
+	isc_mem_attach(mctx, &byaddr->mctx);
 	byaddr->options = options;
 
 	byaddr->event = isc_mem_get(mctx, sizeof(*byaddr->event));
@@ -279,7 +279,7 @@ dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
 	isc_task_detach(&byaddr->task);
 
  cleanup_byaddr:
-	isc_mem_put(mctx, byaddr, sizeof(*byaddr));
+	isc_mem_putanddetach(&mctx, byaddr, sizeof(*byaddr));
 
 	return (result);
 }
@@ -312,8 +312,7 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp) {
 
 	DESTROYLOCK(&byaddr->lock);
 	byaddr->magic = 0;
-	isc_mem_put(byaddr->mctx, byaddr, sizeof(*byaddr));
+	isc_mem_putanddetach(&byaddr->mctx, byaddr, sizeof(*byaddr));
 
 	*byaddrp = NULL;
 }
-#endif /* BIND9 */

@@ -1,0 +1,7 @@
+Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+Id: SOA=10=ns.example.com.=root.example.com.=2010062900=0=0=0=10=,v 1.1 2010/08/16 04:46:15 marka Exp 
+
+The contents of this file is not read by the filesystem driver.
+This is the file for "SOA 10 ns.example.com. root.example.com. 2010062900 0 0 0 10".

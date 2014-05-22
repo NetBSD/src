@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_init.c,v 1.3.6.1 2013/01/23 00:04:38 yamt Exp $	*/
+/*	$NetBSD: dwarf_init.c,v 1.3.6.2 2014/05/22 15:48:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -468,7 +468,6 @@ dwarf_init_info(Dwarf_Debug dbg, Dwarf_Error *error)
 {
 	Dwarf_CU cu;
 	Elf_Data *d = NULL;
-	Elf_Scn *scn;
 	int i;
 	int level = 0;
 	int relocated = 0;
@@ -476,8 +475,6 @@ dwarf_init_info(Dwarf_Debug dbg, Dwarf_Error *error)
 	uint64_t length;
 	uint64_t next_offset;
 	uint64_t offset = 0;
-
-	scn = dbg->dbg_s[DWARF_debug_info].s_scn;
 
 	d = dbg->dbg_s[DWARF_debug_info].s_data;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: rpz.c,v 1.2.6.2 2013/01/16 05:26:50 yamt Exp $	*/
+/*	$NetBSD: rpz.c,v 1.2.6.3 2014/05/22 15:43:01 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rpz.c,v 1.3 2011/01/13 04:59:24 tbox Exp  */
+/* Id */
+
 
 #include <config.h>
 
@@ -41,7 +42,7 @@ main(int argc, char **argv)
 #else
 		return (1);
 #endif
-	    }
+	}
 
 	if (!strcasecmp(argv[1], "nsdname")) {
 #ifdef ENABLE_RPZ_NSDNAME
@@ -49,8 +50,8 @@ main(int argc, char **argv)
 #else
 		return (1);
 #endif
-	    }
+	}
 
-	    fputs(USAGE, stderr);
-	    return (1);
+	fputs(USAGE, stderr);
+	return (1);
 }

@@ -646,7 +646,7 @@ iscsi_initiator_get_targets(int target, strv_t *svp)
         text_len = 0;
         text[0] = 0x0;
 
-        PARAM_TEXT_ADD(sess->params, "SendTargets", "all", text, &text_len,
+        PARAM_TEXT_ADD(sess->params, "SendTargets", "All", text, &text_len,
 			DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);
         PARAM_TEXT_PARSE(sess->params, &sess->sess_params.cred, text,
 			text_len, NULL, NULL, DISCOVERY_PHASE_TEXT_LEN, 1,
@@ -749,7 +749,7 @@ discovery_phase(int target, strv_t *svp)
 	/* Full Feature Phase Negotiation (for SendTargets) */
 	text_len = 0;
 	text[0] = 0x0;
-	PARAM_TEXT_ADD(sess->params, "SendTargets", "all", text, &text_len,
+	PARAM_TEXT_ADD(sess->params, "SendTargets", "All", text, &text_len,
 		DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);
 	PARAM_TEXT_PARSE(sess->params, &sess->sess_params.cred, text,
 		text_len, NULL, NULL, DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);

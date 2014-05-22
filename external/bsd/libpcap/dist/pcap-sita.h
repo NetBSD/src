@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-sita.h,v 1.1.1.1.6.1 2014/05/22 15:48:20 yamt Exp $	*/
+
 /*
  * pcap-sita.h: Packet capture interface for SITA WAN devices
  *

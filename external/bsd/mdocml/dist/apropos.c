@@ -1,7 +1,7 @@
-/*	$Vendor-Id: apropos.c,v 1.25 2011/12/31 18:47:52 kristaps Exp $ */
+/*	Id: apropos.c,v 1.36 2013/12/31 03:41:14 schwarze Exp  */
 /*
- * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,35 +18,33 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <sys/param.h>
 
 #include <assert.h>
 #include <getopt.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#include "apropos_db.h"
-#include "mandoc.h"
 #include "manpath.h"
-
-static	int	 cmp(const void *, const void *);
-static	void	 list(struct res *, size_t, void *);
-static	void	 usage(void);
-
-static	char	*progname;
+#include "mansearch.h"
 
 int
 main(int argc, char *argv[])
 {
-	int		 ch, rc, whatis;
+	int		 ch, whatis;
+	struct mansearch search;
+	size_t		 i, sz;
+	struct manpage	*res;
 	struct manpaths	 paths;
-	size_t		 terms;
-	struct opts	 opts;
-	struct expr	*e;
 	char		*defpaths, *auxpaths;
 	char		*conf_file;
-	extern int	 optind;
+	char		*progname;
+	char		*outkey;
 	extern char	*optarg;
+	extern int	 optind;
 
 	progname = strrchr(argv[0], '/');
 	if (progname == NULL)
@@ -54,16 +52,16 @@ main(int argc, char *argv[])
 	else
 		++progname;
 
-	whatis = 0 == strncmp(progname, "whatis", 6);
+	whatis = (0 == strncmp(progname, "whatis", 6));
 
 	memset(&paths, 0, sizeof(struct manpaths));
-	memset(&opts, 0, sizeof(struct opts));
+	memset(&search, 0, sizeof(struct mansearch));
 
 	auxpaths = defpaths = NULL;
 	conf_file = NULL;
-	e = NULL;
+	outkey = NULL;
 
-	while (-1 != (ch = getopt(argc, argv, "C:M:m:S:s:")))
+	while (-1 != (ch = getopt(argc, argv, "C:M:m:O:S:s:")))
 		switch (ch) {
 		case ('C'):
 			conf_file = optarg;
@@ -74,84 +72,51 @@ main(int argc, char *argv[])
 		case ('m'):
 			auxpaths = optarg;
 			break;
+		case ('O'):
+			outkey = optarg;
+			break;
 		case ('S'):
-			opts.arch = optarg;
+			search.arch = optarg;
 			break;
 		case ('s'):
-			opts.cat = optarg;
+			search.sec = optarg;
 			break;
 		default:
-			usage();
-			return(EXIT_FAILURE);
+			goto usage;
 		}
 
 	argc -= optind;
 	argv += optind;
 
-	if (0 == argc) 
-		return(EXIT_SUCCESS);
+	if (0 == argc)
+		goto usage;
 
-	rc = 0;
+	search.deftype = whatis ? TYPE_Nm : TYPE_Nm | TYPE_Nd;
+	search.flags = whatis ? MANSEARCH_WHATIS : 0;
 
 	manpath_parse(&paths, conf_file, defpaths, auxpaths);
+	ch = mansearch(&search, &paths, argc, argv, outkey, &res, &sz);
+	manpath_free(&paths);
 
-	e = whatis ? termcomp(argc, argv, &terms) :
-		     exprcomp(argc, argv, &terms);
-		
-	if (NULL == e) {
-		fprintf(stderr, "%s: Bad expression\n", progname);
-		goto out;
+	if (0 == ch)
+		goto usage;
+
+	for (i = 0; i < sz; i++) {
+		printf("%s - %s\n", res[i].names,
+		    NULL == outkey ? res[i].desc :
+		    NULL == res[i].output ? "" : res[i].output);
+		free(res[i].file);
+		free(res[i].names);
+		free(res[i].desc);
+		free(res[i].output);
 	}
 
-	rc = apropos_search
-		(paths.sz, paths.paths,
-		 &opts, e, terms, NULL, list);
-
-	if (0 == rc)
-		fprintf(stderr, "%s: Error reading "
-				"manual database\n", progname);
-
-out:
-	manpath_free(&paths);
-	exprfree(e);
-
-	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
-}
-
-/* ARGSUSED */
-static void
-list(struct res *res, size_t sz, void *arg)
-{
-	int		 i;
-
-	qsort(res, sz, sizeof(struct res), cmp);
-
-	for (i = 0; i < (int)sz; i++)
-		printf("%s(%s%s%s) - %.70s\n", res[i].title,
-				res[i].cat,
-				*res[i].arch ? "/" : "",
-				*res[i].arch ? res[i].arch : "",
-				res[i].desc);
-}
-
-static int
-cmp(const void *p1, const void *p2)
-{
-
-	return(strcasecmp(((const struct res *)p1)->title,
-				((const struct res *)p2)->title));
-}
-
-static void
-usage(void)
-{
-
-	fprintf(stderr, "usage: %s "
-			"[-C file] "
-			"[-M manpath] "
-			"[-m manpath] "
-			"[-S arch] "
-			"[-s section] "
-			"expression ...\n",
-			progname);
+	free(res);
+	return(sz ? EXIT_SUCCESS : EXIT_FAILURE);
+usage:
+	fprintf(stderr, "usage: %s [-C file] [-M path] [-m path] "
+			"[-O outkey] "
+			"[-S arch] [-s section]%s ...\n", progname,
+			whatis ? " name" : "\n               expression");
+	return(EXIT_FAILURE);
 }

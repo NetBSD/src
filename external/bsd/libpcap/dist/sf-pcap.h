@@ -1,3 +1,5 @@
+/*	$NetBSD: sf-pcap.h,v 1.1.1.1.6.1 2014/05/22 15:48:20 yamt Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +33,7 @@
 #ifndef sf_pcap_h
 #define	sf_pcap_h
 
-extern int pcap_check_header(pcap_t *, bpf_u_int32, FILE *, char *);
+extern pcap_t *pcap_check_header(bpf_u_int32 magic, FILE *fp,
+    u_int precision, char *errbuf, int *err);
 
 #endif

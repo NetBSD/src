@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,6 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test1,v 1.8 2012/01/07 00:19:59 each Exp 
 
 
 ; Use comment lines instead of blank lines to combine update requests into
@@ -25,13 +24,13 @@ server 10.53.0.3 5300
 ; QNAME tests
 
 ; NXDOMAIN
-;	2, 20, 25
+;	2, 25
 update add  a0-1.tld2.bl.	300 CNAME .
 ; NODATA
-;	3, 21
+;	3
 update add  a3-1.tld2.bl.	300 CNAME *.
 ; and no assert-botch
-;	5, 22
+;	4, 5
 update add  a3-2.tld2.bl.	300 DNAME example.com.
 ;
 ; NXDOMAIN for a4-2-cname.tld2 via its target a4-2.tld2.
@@ -78,6 +77,14 @@ update add  a4-5.tld2.bl.	300 A	127.0.0.16
 ;	19
 update add  a4-6.tld2.bl.	300 CNAME .
 update add  a4-6-cname.tld2.bl.	300 A	127.0.0.17
+; no change instead of NXDOMAIN because +norecurse
+;	20
+update add  a5-2.tld2.bl.	300 CNAME .
+; no change instead of NODATA because +norecurse
+;	21
+update add  a5-3.tld2.bl.	300 CNAME *.
+;	22, 23
+update add  a5-4.tld2.bl.	300 DNAME example.com.
 ;
 ; assert in rbtdb.c
 ;	24
@@ -85,4 +92,10 @@ update	add c1.crash2.tld3.bl.	300 CNAME .
 ; DO=1 without signatures, DO=0 with signatures are rewritten
 ;	26 - 27
 update add  a0-1.tld2s.bl.	300 CNAME .
+;	32
+update add  a3-8.tld2.bl.	300 CNAME rpz-drop.
+;	33
+update add  a3-9.tld2.bl.	300 CNAME rpz-tcp-only.
+;	34 qname-wait-recurse yes
+update add  x.servfail.bl.	300 A	127.0.0.34
 send

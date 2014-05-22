@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_libopts.h,v 1.1.1.1.4.2 2012/04/17 00:03:44 yamt Exp $	*/
+/*	$NetBSD: ntp_libopts.h,v 1.1.1.1.4.3 2014/05/22 15:50:05 yamt Exp $	*/
 
 /*
  * ntp_libopts.h
@@ -12,4 +12,5 @@
 
 extern	int	ntpOptionProcess(tOptions *pOpts, int argc,
 				 char ** argv);
+extern	void	ntpOptionPrintVersion(tOptions *, tOptDesc *);
 #endif

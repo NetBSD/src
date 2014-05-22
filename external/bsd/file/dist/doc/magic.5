@@ -1,7 +1,7 @@
-.\"	$NetBSD: magic.5,v 1.6.2.2 2013/01/23 00:04:34 yamt Exp $
+.\"	$NetBSD: magic.5,v 1.6.2.3 2014/05/22 15:44:59 yamt Exp $
 .\"
-.\" $File: magic.man,v 1.76 2012/11/07 20:29:27 christos Exp $
-.Dd November 7, 2012
+.\" $File: magic.man,v 1.79 2013/04/22 15:30:10 christos Exp $
+.Dd April 22, 2013
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -12,7 +12,7 @@
 This manual page documents the format of the magic file as
 used by the
 .Xr file 1
-command, version 5.12.
+command, version 5.16.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -263,9 +263,78 @@ The offset works as for regex.
 .It Dv default
 This is intended to be used with the test
 .Em x
-(which is always true) and a message that is to be used if there are
-no other matches.
+(which is always true) and it has no type.
+It matches when no other test at that continuation level has matched before.
+Clearing that matched tests for a continuation level, can be done using the
+.Dv clear
+test.
+.It Dv clear
+This test is always true and clears the match flag for that continuation level.
+It is intended to be used with the
+.Dv default
+test.
 .El
+.Pp
+For compatibility with the Single
+.Ux
+Standard, the type specifiers
+.Dv dC
+and
+.Dv d1
+are equivalent to
+.Dv byte ,
+the type specifiers
+.Dv uC
+and
+.Dv u1
+are equivalent to
+.Dv ubyte ,
+the type specifiers
+.Dv dS
+and
+.Dv d2
+are equivalent to
+.Dv short ,
+the type specifiers
+.Dv uS
+and
+.Dv u2
+are equivalent to
+.Dv ushort ,
+the type specifiers
+.Dv dI ,
+.Dv dL ,
+and
+.Dv d4
+are equivalent to
+.Dv long ,
+the type specifiers
+.Dv uI ,
+.Dv uL ,
+and
+.Dv u4
+are equivalent to
+.Dv ulong ,
+the type specifier
+.Dv d8
+is equivalent to
+.Dv quad ,
+the type specifier
+.Dv u8
+is equivalent to
+.Dv uquad ,
+and the type specifier
+.Dv s
+is equivalent to
+.Dv string .
+In addition, the type specifier
+.Dv dQ
+is equivalent to
+.Dv quad
+and the type specifier
+.Dv uQ
+is equivalent to
+.Dv uquad .
 .Pp
 Each top-level magic pattern (see below for an explanation of levels)
 is classified as text or binary according to the types used.
@@ -546,7 +615,7 @@ Or even both!
 \*[Gt]\*[Gt]\*[Gt]\*[Am](\*[Am]0x54.l-3)  string  UNACE  \eb, ACE self-extracting archive
 .Ed
 .Pp
-Finally, if you have to deal with offset/length pairs in your file, even the
+If you have to deal with offset/length pairs in your file, even the
 second value in a parenthesized expression can be taken from the file itself,
 using another set of parentheses.
 Note that this additional indirect offset is always relative to the
@@ -561,6 +630,18 @@ start of the main indirect offset.
 # these are located 14 and 10 bytes after the section name
 \*[Gt]\*[Gt]\*[Gt]\*[Gt](\*[Am]0xe.l+(-4)) string       PK\e3\e4 \eb, ZIP self-extracting archive
 .Ed
+.Pp
+If you have a list of known avalues at a particular continuation level,
+and you want to provide a switch-like default case:
+.Bd -literal -offset indent
+# clear that continuation level match
+\*[Gt]18	clear
+\*[Gt]18	lelong	1	one
+\*[Gt]18	lelong	2	two
+\*[Gt]18	default	x
+# print default match
+\*[Gt]\*[Gt]18	lelong	x	unmatched 0x%x
+.Ed
 .Sh SEE ALSO
 .Xr file 1
 \- the command that reads this file.
@@ -572,19 +653,41 @@ The formats
 .Dv melong ,
 .Dv short ,
 .Dv beshort ,
-.Dv leshort ,
-.Dv date ,
-.Dv bedate ,
-.Dv medate ,
-.Dv ledate ,
-.Dv beldate ,
-.Dv leldate ,
 and
-.Dv meldate
-are system-dependent; perhaps they should be specified as a number
-of bytes (2B, 4B, etc),
-since the files being recognized typically come from
-a system on which the lengths are invariant.
+.Dv leshort
+do not depend on the length of the C data types
+.Dv short
+and
+.Dv long
+on the platform, even though the Single
+.Ux
+Specification implies that they do.  However, as OS X Mountain Lion has
+passed the Single
+.Ux
+Specification validation suite, and supplies a version of
+.Xr file 1
+in which they do not depend on the sizes of the C data types and that is
+built for a 64-bit environment in which
+.Dv long
+is 8 bytes rather than 4 bytes, presumably the validation suite does not
+test whether, for example
+.Dv long
+refers to an item with the same size as the C data type
+.Dv long .
+There should probably be
+.Dv type
+names
+.Dv int8 ,
+.Dv uint8 ,
+.Dv int16 ,
+.Dv uint16 ,
+.Dv int32 ,
+.Dv uint32 ,
+.Dv int64 ,
+and
+.Dv uint64 ,
+and specified-byte-order variants of them,
+to make it clearer that those types have specified widths.
 .\"
 .\" From: guy@sun.uucp (Guy Harris)
 .\" Newsgroups: net.bugs.usg

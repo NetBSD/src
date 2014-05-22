@@ -1,7 +1,8 @@
 ** README for file(1) Command **
-@(#) $File: README,v 1.44 2011/03/24 13:03:39 rrt Exp $
+@(#) $File: README,v 1.47 2013/06/04 23:15:02 ian Exp $
 
 Mailing List: file@mx.gw.com
+Mailing List archives: http://mx.gw.com/pipermail/file/
 Bug tracker: http://bugs.gw.com/
 E-mail: christos@astron.com
 
@@ -13,11 +14,11 @@ It knows the 'magic number' of several thousands of file types.
 This version is the standard "file" command for Linux,
 *BSD, and other systems. (See "patchlevel.h" for the exact release number).
 
-You can download the latest version of file from:
+You can download the latest version of the original sources for file from:
 
 	ftp://ftp.astron.com/pub/file/
 
-A public read-only git repository is available at:
+A public read-only git repository of the same sources is available at:
 
 	https://github.com/glensc/file
 
@@ -28,7 +29,7 @@ The major feature of 4.x is the refactoring of the code into a library,
 and the re-write of the file command in terms of that library. The library
 itself, libmagic can be used by 3rd party programs that wish to identify
 file types without having to fork() and exec() file. The prime contributor
-for 4.0 was M\xe5ns Rullg\xe5rd.
+for 4.0 was Mans Rullgard.
 
 UNIX is a trademark of UNIX System Laboratories.
 
@@ -68,15 +69,19 @@ src/apprentice.c - parses /etc/magic to learn magic
 src/apptype.c - used for OS/2 specific application type magic
 src/asprintf.c - replacement for OS's that don't have it.
 src/ascmagic.c - third & last set of tests, based on hardwired assumptions.
+src/asctime_r.c - for systems that don't have it.
+src/asprintf.c - for systems that don't have it.
 src/cdf.c - parser for Microsoft Compound Document Files
 src/cdf_time.c - time converter for CDF.
 src/compress.c - handles decompressing files to look inside.
+src/ctime_r.c - for systems that don't have it.
 src/encoding.c - handles unicode encodings
 src/file.c - the main program
 src/file.h - header file
 src/fsmagic.c - first set of tests the program runs, based on filesystem info
 src/funcs.c - utilility functions
-src/getopt_long.c - used for OS/2 specific application type magic
+src/getopt_long.c - for systems that don't have it.
+src/getline.c - for systems that don't have it.
 src/is_tar.c, tar.h - knows about tarchives (courtesy John Gilmore).
 src/names.h - header file for ascmagic.c
 src/magic.c - the libmagic api
@@ -84,14 +89,13 @@ src/print.c - print results, errors, warnings.
 src/readcdf.c - CDF wrapper.
 src/readelf.[ch] - Stand-alone elf parsing code.
 src/softmagic.c - 2nd set of tests, based on /etc/magic
-src/strlcat.c - used for OS/2 specific application type magic
-src/strlcpy.c - used for OS/2 specific application type magic
-src/vasprintf.c - used for OS/2 specific application type magic
-doc/file.1 - man page for the command
-doc/magic.4 - man page for the magic file, courtesy Guy Harris.
+src/strlcat.c - for systems that don't have it.
+src/strlcpy.c - for systems that don't have it.
+src/vasprintf.c - for systems that don't have it.
+doc/file.man - man page for the command
+doc/magic.man - man page for the magic file, courtesy Guy Harris.
 	Install as magic.4 on USG and magic.5 on V7 or Berkeley; cf Makefile.
 Magdir - directory of /etc/magic pieces
-
 ------------------------------------------------------------------------------
 
 If you submit a new magic entry please make sure you read the following

@@ -1,3 +1,5 @@
+/*	$NetBSD: fad-glifc.c,v 1.1.1.2.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -34,7 +36,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-glifc.c,v 1.7 2008-01-30 09:35:48 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/fad-glifc.c,v 1.7 2008-01-30 09:35:48 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -80,7 +82,7 @@ struct rtentry;		/* declarations in <net/if.h> */
  * SIOCGLIFCONF rather than SIOCGIFCONF in order to get IPv6 addresses.)
  */
 int
-pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
+pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 {
 	pcap_if_t *devlist = NULL;
 	register int fd4, fd6, fd;
@@ -361,15 +363,6 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 	free(buf);
 	(void)close(fd6);
 	(void)close(fd4);
-
-	if (ret != -1) {
-		/*
-		 * We haven't had any errors yet; do any platform-specific
-		 * operations to add devices.
-		 */
-		if (pcap_platform_finddevs(&devlist, errbuf) < 0)
-			ret = -1;
-	}
 
 	if (ret == -1) {
 		/*

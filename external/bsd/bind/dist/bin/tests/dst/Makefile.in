@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -49,7 +49,7 @@ dst_test@EXEEXT@: dst_test.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 		dst_test.@O@ ${LIBS}
 
-t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB}
+t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB} randomfile
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 		t_dst.@O@ ${TLIB} ${LIBS}
 
@@ -57,9 +57,29 @@ gsstest@EXEEXT@: gsstest.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 		gsstest.@O@ ${LIBS}
 
-test: t_dst@EXEEXT@
+test: t_dst@EXEEXT@ randomfile
 	../../tools/genrandom@EXEEXT@ 100 randomfile
-	-@ ./t_dst@EXEEXT@ -b @srcdir@ -q 1800 -a
+	-@ ./t_dst@EXEEXT@ -q 1800 -a
+
+randomfile:
+	../../tools/genrandom@EXEEXT@ 100 randomfile
 
 clean distclean::
 	rm -f ${TARGETS} randomfile
+
+distclean::
+	rm -f Kdh.+002+18602.key
+	rm -f Kdh.+002+18602.private
+	rm -f Kdh.+002+48957.key
+	rm -f Kdh.+002+48957.private
+	rm -f Ktest.+001+00002.key
+	rm -f Ktest.+001+54622.key
+	rm -f Ktest.+001+54622.private
+	rm -f Ktest.+003+23616.key
+	rm -f Ktest.+003+23616.private
+	rm -f Ktest.+003+49667.key
+	rm -f dst_2_data
+	rm -f t2_data_1
+	rm -f t2_data_2
+	rm -f t2_dsasig
+	rm -f t2_rsasig

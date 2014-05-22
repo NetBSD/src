@@ -1,7 +1,7 @@
-/*	$NetBSD: t_resolver.c,v 1.4.2.2 2013/01/16 05:26:29 yamt Exp $	*/
+/*	$NetBSD: t_resolver.c,v 1.4.2.3 2014/05/22 15:42:50 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,9 +55,9 @@ setup_create_dispatch_v4(void)
 	isc_sockaddr_t local_address;
 	isc_sockaddr_any(&local_address);
 
-	CHECK(dns_dispatch_getudp(dispatch_manager, socket_manager, task_manager,
-				  &local_address, 4096, 100, 100, 100, 500,
-				  0, 0, /* unsigned int attributes, unsigned int mask, */
+	CHECK(dns_dispatch_getudp(dispatch_manager, socket_manager,
+				  task_manager, &local_address,
+				  4096, 100, 100, 100, 500, 0, 0,
 				  &dispatch_v4));
 }
 static void
@@ -87,7 +87,7 @@ make_resolver(dns_resolver_t **resolverp) {
 	isc_result_t result;
 
 	result = dns_resolver_create(view,
-			    task_manager, 1,
+			    task_manager, 1, 1,
 			    socket_manager,
 			    timer_manager,
 			    0, /* unsigned int options, */
@@ -225,11 +225,18 @@ test_dns_resolver_settimeout_over_maximum(void) {
 
 
 testspec_t T_testlist[] = {
-	{ test_dns_resolver_create,	"dns_resolver_create"		},
-	{ test_dns_resolver_settimeout,	"dns_resolver_settimeout"	},
-	{ test_dns_resolver_gettimeout,	"dns_resolver_gettimeout"	},
-	{ test_dns_resolver_settimeout_to_default, "test_dns_resolver_settimeout_to_default" },
-	{ test_dns_resolver_settimeout_over_maximum, "test_dns_resolver_settimeout_over_maximum" },
-	{ NULL,	NULL }
+	{ (PFV) test_dns_resolver_create,	"dns_resolver_create"		},
+	{ (PFV) test_dns_resolver_settimeout,	"dns_resolver_settimeout"	},
+	{ (PFV) test_dns_resolver_gettimeout,	"dns_resolver_gettimeout"	},
+	{ (PFV) test_dns_resolver_settimeout_to_default, "test_dns_resolver_settimeout_to_default" },
+	{ (PFV) test_dns_resolver_settimeout_over_maximum, "test_dns_resolver_settimeout_over_maximum" },
+	{ (PFV) 0,	NULL }
 };
 
+#ifdef WIN32
+int
+main(int argc, char **argv) {
+	t_settests(T_testlist);
+	return (t_main(argc, argv));
+}
+#endif

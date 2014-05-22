@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.3.4.1 2012/10/30 18:54:44 yamt Exp $	*/
+/*	$NetBSD: net.h,v 1.3.4.2 2014/05/22 15:43:23 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -80,15 +80,15 @@
 #define FD_CLR(fd, set) do { \
     u_int __i; \
     for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
-        if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET) fd) { \
-            while (__i < ((fd_set FAR *)(set))->fd_count-1) { \
-                ((fd_set FAR *)(set))->fd_array[__i] = \
-                    ((fd_set FAR *)(set))->fd_array[__i+1]; \
-                __i++; \
-            } \
-            ((fd_set FAR *)(set))->fd_count--; \
-            break; \
-        } \
+	if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET) fd) { \
+	    while (__i < ((fd_set FAR *)(set))->fd_count-1) { \
+		((fd_set FAR *)(set))->fd_array[__i] = \
+		    ((fd_set FAR *)(set))->fd_array[__i+1]; \
+		__i++; \
+	    } \
+	    ((fd_set FAR *)(set))->fd_count--; \
+	    break; \
+	} \
     } \
 } while (/*CONSTCOND*/0)
 
@@ -96,15 +96,15 @@
 #define FD_SET(fd, set) do { \
     u_int __i; \
     for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
-        if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET)(fd)) { \
-            break; \
-        } \
+	if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET)(fd)) { \
+	    break; \
+	} \
     } \
     if (__i == ((fd_set FAR *)(set))->fd_count) { \
-        if (((fd_set FAR *)(set))->fd_count < FD_SETSIZE) { \
-            ((fd_set FAR *)(set))->fd_array[__i] = (SOCKET)(fd); \
-            ((fd_set FAR *)(set))->fd_count++; \
-        } \
+	if (((fd_set FAR *)(set))->fd_count < FD_SETSIZE) { \
+	    ((fd_set FAR *)(set))->fd_array[__i] = (SOCKET)(fd); \
+	    ((fd_set FAR *)(set))->fd_count++; \
+	} \
     } \
 } while (/*CONSTCOND*/0)
 
@@ -114,41 +114,113 @@
  * Use the WSA constants instead.
  */
 
+#include <errno.h>
+
+#ifndef EWOULDBLOCK
 #define EWOULDBLOCK             WSAEWOULDBLOCK
+#endif
+#ifndef EINPROGRESS
 #define EINPROGRESS             WSAEINPROGRESS
+#endif
+#ifndef EALREADY
 #define EALREADY                WSAEALREADY
+#endif
+#ifndef ENOTSOCK
 #define ENOTSOCK                WSAENOTSOCK
+#endif
+#ifndef EDESTADDRREQ
 #define EDESTADDRREQ            WSAEDESTADDRREQ
+#endif
+#ifndef EMSGSIZE
 #define EMSGSIZE                WSAEMSGSIZE
+#endif
+#ifndef EPROTOTYPE
 #define EPROTOTYPE              WSAEPROTOTYPE
+#endif
+#ifndef ENOPROTOOPT
 #define ENOPROTOOPT             WSAENOPROTOOPT
+#endif
+#ifndef EPROTONOSUPPORT
 #define EPROTONOSUPPORT         WSAEPROTONOSUPPORT
+#endif
+#ifndef ESOCKTNOSUPPORT
 #define ESOCKTNOSUPPORT         WSAESOCKTNOSUPPORT
+#endif
+#ifndef EOPNOTSUPP
 #define EOPNOTSUPP              WSAEOPNOTSUPP
+#endif
+#ifndef EPFNOSUPPORT
 #define EPFNOSUPPORT            WSAEPFNOSUPPORT
+#endif
+#ifndef EAFNOSUPPORT
 #define EAFNOSUPPORT            WSAEAFNOSUPPORT
+#endif
+#ifndef EADDRINUSE
 #define EADDRINUSE              WSAEADDRINUSE
+#endif
+#ifndef EADDRNOTAVAIL
 #define EADDRNOTAVAIL           WSAEADDRNOTAVAIL
+#endif
+#ifndef ENETDOWN
 #define ENETDOWN                WSAENETDOWN
+#endif
+#ifndef ENETUNREACH
 #define ENETUNREACH             WSAENETUNREACH
+#endif
+#ifndef ENETRESET
 #define ENETRESET               WSAENETRESET
+#endif
+#ifndef ECONNABORTED
 #define ECONNABORTED            WSAECONNABORTED
+#endif
+#ifndef ECONNRESET
 #define ECONNRESET              WSAECONNRESET
+#endif
+#ifndef ENOBUFS
 #define ENOBUFS                 WSAENOBUFS
+#endif
+#ifndef EISCONN
 #define EISCONN                 WSAEISCONN
+#endif
+#ifndef ENOTCONN
 #define ENOTCONN                WSAENOTCONN
+#endif
+#ifndef ESHUTDOWN
 #define ESHUTDOWN               WSAESHUTDOWN
+#endif
+#ifndef ETOOMANYREFS
 #define ETOOMANYREFS            WSAETOOMANYREFS
+#endif
+#ifndef ETIMEDOUT
 #define ETIMEDOUT               WSAETIMEDOUT
+#endif
+#ifndef ECONNREFUSED
 #define ECONNREFUSED            WSAECONNREFUSED
+#endif
+#ifndef ELOOP
 #define ELOOP                   WSAELOOP
+#endif
+#ifndef EHOSTDOWN
 #define EHOSTDOWN               WSAEHOSTDOWN
+#endif
+#ifndef EHOSTUNREACH
 #define EHOSTUNREACH            WSAEHOSTUNREACH
+#endif
+#ifndef EPROCLIM
 #define EPROCLIM                WSAEPROCLIM
+#endif
+#ifndef EUSERS
 #define EUSERS                  WSAEUSERS
+#endif
+#ifndef EDQUOT
 #define EDQUOT                  WSAEDQUOT
+#endif
+#ifndef ESTALE
 #define ESTALE                  WSAESTALE
+#endif
+#ifndef EREMOTE
 #define EREMOTE                 WSAEREMOTE
+#endif
 
 LWRES_LANG_BEGINDECLS
 

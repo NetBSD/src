@@ -1,3 +1,5 @@
+/*	$NetBSD: gai_strerror.c,v 1.1.1.1.6.1 2014/05/22 15:48:20 yamt Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@
 
 libexec_PROGRAMS += atf-sh/atf-check
 atf_sh_atf_check_SOURCES = atf-sh/atf-check.cpp
-atf_sh_atf_check_LDADD = libatf-c++.la
+atf_sh_atf_check_LDADD = $(ATF_CXX_LIBS)
 dist_man_MANS += atf-sh/atf-check.1
 
 bin_PROGRAMS += atf-sh/atf-sh
 atf_sh_atf_sh_SOURCES = atf-sh/atf-sh.cpp
-atf_sh_atf_sh_LDADD = libatf-c++.la
+atf_sh_atf_sh_LDADD = $(ATF_CXX_LIBS)
 dist_man_MANS += atf-sh/atf-sh.1
 
 atf_sh_DATA = atf-sh/libatf-sh.subr
@@ -43,7 +43,22 @@ EXTRA_DIST += $(atf_sh_DATA)
 
 dist_man_MANS += atf-sh/atf-sh-api.3
 
-tests_atf_sh_DATA = atf-sh/Atffile
+atf_aclocal_DATA += atf-sh/atf-sh.m4
+EXTRA_DIST += atf-sh/atf-sh.m4
+
+atf_shpkgconfigdir = $(atf_pkgconfigdir)
+atf_shpkgconfig_DATA = atf-sh/atf-sh.pc
+CLEANFILES += atf-sh/atf-sh.pc
+EXTRA_DIST += atf-sh/atf-sh.pc.in
+atf-sh/atf-sh.pc: $(srcdir)/atf-sh/atf-sh.pc.in Makefile
+	test -d atf-sh || mkdir -p atf-sh
+	sed -e 's#__ATF_VERSION__#$(PACKAGE_VERSION)#g' \
+	    -e 's#__EXEC_PREFIX__#$(exec_prefix)#g' \
+	    <$(srcdir)/atf-sh/atf-sh.pc.in >atf-sh/atf-sh.pc.tmp
+	mv atf-sh/atf-sh.pc.tmp atf-sh/atf-sh.pc
+
+tests_atf_sh_DATA = atf-sh/Atffile \
+                    atf-sh/Kyuafile
 tests_atf_shdir = $(pkgtestsdir)/atf-sh
 EXTRA_DIST += $(tests_atf_sh_DATA)
 

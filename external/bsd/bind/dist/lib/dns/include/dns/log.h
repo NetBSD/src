@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.2.4.2 2013/01/16 05:27:21 yamt Exp $	*/
+/*	$NetBSD: log.h,v 1.2.4.3 2014/05/22 15:43:17 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -45,6 +45,7 @@ LIBDNS_EXTERNAL_DATA extern isc_logmodule_t dns_modules[];
 #define DNS_LOGCATEGORY_DELEGATION_ONLY	(&dns_categories[10])
 #define DNS_LOGCATEGORY_EDNS_DISABLED	(&dns_categories[11])
 #define DNS_LOGCATEGORY_RPZ		(&dns_categories[12])
+#define DNS_LOGCATEGORY_RRL		(&dns_categories[13])
 
 /* Backwards compatibility. */
 #define DNS_LOGCATEGORY_GENERAL		ISC_LOGCATEGORY_GENERAL
@@ -78,6 +79,7 @@ LIBDNS_EXTERNAL_DATA extern isc_logmodule_t dns_modules[];
 #define DNS_LOGMODULE_DLZ		(&dns_modules[26])
 #define DNS_LOGMODULE_DNSSEC		(&dns_modules[27])
 #define DNS_LOGMODULE_CRYPTO		(&dns_modules[28])
+#define DNS_LOGMODULE_PACKETS		(&dns_modules[29])
 
 ISC_LANG_BEGINDECLS
 

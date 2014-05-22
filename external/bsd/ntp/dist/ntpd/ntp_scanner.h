@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.h,v 1.1.1.1.6.1 2012/04/17 00:03:47 yamt Exp $	*/
+/*	$NetBSD: ntp_scanner.h,v 1.1.1.1.6.2 2014/05/22 15:50:09 yamt Exp $	*/
 
 /* ntp_scanner.h
  *
@@ -12,6 +12,8 @@
 
 #ifndef NTP_SCANNER_H
 #define NTP_SCANNER_H
+
+#include "ntp_config.h"
 
 /*
  * ntp.conf syntax is slightly irregular in that some tokens such as
@@ -105,7 +107,7 @@ struct FILE_INFO {
 /* SCANNER GLOBAL VARIABLES 
  * ------------------------
  */
-extern struct config_tree cfgt;	  /* Parser output stored here */
+extern config_tree cfgt;	  /* Parser output stored here */
 extern int curr_include_level;    /* The current include level */
 
 extern struct FILE_INFO *ip_file; /* Pointer to the configuration file stream */

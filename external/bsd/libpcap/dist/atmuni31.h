@@ -1,3 +1,5 @@
+/*	$NetBSD: atmuni31.h,v 1.1.1.2.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /*
  * Copyright (c) 1997 Yen Yen Lim and North Dakota State University
  * All rights reserved.
@@ -29,7 +31,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/atmuni31.h,v 1.3 2007-10-22 19:28:58 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/atmuni31.h,v 1.3 2007-10-22 19:28:58 guy Exp  (LBL)
  */
 
 /* Based on UNI3.1 standard by ATM Forum */

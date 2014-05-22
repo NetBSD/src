@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.4.2.1 2012/10/30 18:52:53 yamt Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.4.2.2 2014/05/22 15:43:17 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -320,7 +320,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 			*rawbuf++ |= (x[i].rdata.flags & DNS_RDATA_OFFLINE) ?
 					    DNS_RDATASLAB_OFFLINE : 0;
 		}
-		memcpy(rawbuf, x[i].rdata.data, x[i].rdata.length);
+		memmove(rawbuf, x[i].rdata.data, x[i].rdata.length);
 		rawbuf += x[i].rdata.length;
 	}
 
@@ -713,7 +713,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	tstart = isc_mem_get(mctx, tlength);
 	if (tstart == NULL)
 		return (ISC_R_NOMEMORY);
-	memcpy(tstart, nslab, reservelen);
+	memmove(tstart, nslab, reservelen);
 	tcurrent = tstart + reservelen;
 #if DNS_RDATASET_FIXED
 	offsetbase = tcurrent;
@@ -792,7 +792,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 #if DNS_RDATASET_FIXED
 			tcurrent += 2;	/* fill in later */
 #endif
-			memcpy(tcurrent, data, length);
+			memmove(tcurrent, data, length);
 			tcurrent += length;
 			oadded++;
 			if (oadded < ocount) {
@@ -819,7 +819,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 #if DNS_RDATASET_FIXED
 			tcurrent += 2;	/* fill in later */
 #endif
-			memcpy(tcurrent, data, length);
+			memmove(tcurrent, data, length);
 			tcurrent += length;
 			nadded++;
 			if (nadded < ncount) {
@@ -915,7 +915,7 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 			 * This rdata isn't in the sslab, and thus isn't
 			 * being subtracted.
 			 */
-			tlength += mcurrent - mrdatabegin;
+			tlength += (unsigned int)(mcurrent - mrdatabegin);
 			tcount++;
 		} else
 			rcount++;
@@ -951,7 +951,7 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 	tstart = isc_mem_get(mctx, tlength);
 	if (tstart == NULL)
 		return (ISC_R_NOMEMORY);
-	memcpy(tstart, mslab, reservelen);
+	memmove(tstart, mslab, reservelen);
 	tcurrent = tstart + reservelen;
 #if DNS_RDATASET_FIXED
 	offsetbase = tcurrent;
@@ -1002,11 +1002,12 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 			 * This rdata isn't in the sslab, and thus should be
 			 * copied to the tslab.
 			 */
-			unsigned int length = mcurrent - mrdatabegin;
+			unsigned int length;
+			length = (unsigned int)(mcurrent - mrdatabegin);
 #if DNS_RDATASET_FIXED
 			offsettable[order] = tcurrent - offsetbase;
 #endif
-			memcpy(tcurrent, mrdatabegin, length);
+			memmove(tcurrent, mrdatabegin, length);
 			tcurrent += length;
 		}
 		dns_rdata_reset(&mrdata);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.c,v 1.1.1.1 2009/12/13 16:54:14 kardel Exp $	*/
+/*	$NetBSD: hex.c,v 1.1.1.1.6.1 2014/05/22 15:50:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hex.c,v 1.20 2008/09/25 04:02:39 tbox Exp */
+/* Id: hex.c,v 1.20 2008/09/25 04:02:39 tbox Exp  */
 
 /*! \file */
 

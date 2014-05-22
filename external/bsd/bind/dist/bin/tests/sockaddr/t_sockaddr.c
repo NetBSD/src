@@ -1,7 +1,7 @@
-/*	$NetBSD: t_sockaddr.c,v 1.2.4.1 2012/10/30 18:50:01 yamt Exp $	*/
+/*	$NetBSD: t_sockaddr.c,v 1.2.4.2 2014/05/22 15:42:50 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -132,8 +132,15 @@ t2(void) {
 }
 
 testspec_t	T_testlist[] = {
-	{	t1,	"isc_sockaddr_eqaddrprefix"	},
-	{	t2,	"isc_netaddr_masktoprefixlen"	},
-	{	NULL,	NULL				}
+	{	(PFV) t1,	"isc_sockaddr_eqaddrprefix"	},
+	{	(PFV) t2,	"isc_netaddr_masktoprefixlen"	},
+	{	(PFV) 0,	NULL				}
 };
 
+#ifdef WIN32
+int
+main(int argc, char **argv) {
+	t_settests(T_testlist);
+	return (t_main(argc, argv));
+}
+#endif

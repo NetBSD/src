@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator_test.c,v 1.1.1.1.2.1 2012/10/30 18:53:27 yamt Exp $	*/
+/*	$NetBSD: dbiterator_test.c,v 1.1.1.1.2.2 2014/05/22 15:43:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -44,7 +44,7 @@
 static isc_result_t
 make_name(const char *src, dns_name_t *name) {
 	isc_buffer_t b;
-	isc_buffer_init(&b, src, strlen(src));
+	isc_buffer_constinit(&b, src, strlen(src));
 	isc_buffer_add(&b, strlen(src));
 	return (dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 }

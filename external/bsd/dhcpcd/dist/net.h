@@ -1,6 +1,8 @@
-/* 
+/* $NetBSD: net.h,v 1.1.1.10.4.3 2014/05/22 15:44:40 yamt Exp $ */
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,15 +30,11 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-#include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#include <limits.h>
 
 #include "config.h"
 #include "dhcp.h"
@@ -45,16 +43,12 @@
 
 /* Some systems have route metrics */
 #ifndef HAVE_ROUTE_METRIC
-# ifdef __linux__
+# if defined(__linux__) || defined(SIOCGIFPRIORITY)
 #  define HAVE_ROUTE_METRIC 1
 # endif
 # ifndef HAVE_ROUTE_METRIC
 #  define HAVE_ROUTE_METRIC 0
 # endif
-#endif
-
-#ifndef DUID_LEN
-#  define DUID_LEN			128 + 2
 #endif
 
 #define EUI64_ADDR_LEN			8
@@ -89,83 +83,21 @@
 # define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
 #endif
 
-struct rt {
-	struct in_addr dest;
-	struct in_addr net;
-	struct in_addr gate;
-	const struct interface *iface;
-	int metric;
-	struct in_addr src;
-	struct rt *next;
-};
-
-extern int socket_afnet;
-
-uint32_t get_netmask(uint32_t);
-char *hwaddr_ntoa(const unsigned char *, size_t);
+char *hwaddr_ntoa(const unsigned char *, size_t, char *, size_t);
 size_t hwaddr_aton(unsigned char *, const char *);
 
 int getifssid(const char *, char *);
-struct interface *discover_interfaces(int, char * const *);
+int if_vimaster(const char *);
+struct if_head *discover_interfaces(struct dhcpcd_ctx *, int, char * const *);
 void free_interface(struct interface *);
 int do_mtu(const char *, short int);
 #define get_mtu(iface) do_mtu(iface, 0)
 #define set_mtu(iface, mtu) do_mtu(iface, mtu)
 
-int inet_ntocidr(struct in_addr);
-int inet_cidrtoaddr(int, struct in_addr *);
-
-int up_interface(struct interface *);
 int if_conf(struct interface *);
 int if_init(struct interface *);
 
-int do_address(const char *,
-    struct in_addr *, struct in_addr *, struct in_addr *, int);
-int if_address(const struct interface *,
-    const struct in_addr *, const struct in_addr *,
-    const struct in_addr *, int);
-#define add_address(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 1)
-#define del_address(iface, addr, net)					      \
-	if_address(iface, addr, net, NULL, -1)
-#define has_address(iface, addr, net)					      \
-	do_address(iface, addr, net, NULL, 0)
-#define get_address(iface, addr, net, dst)				      \
-	do_address(iface, addr, net, dst, 1)
-
-int if_route(const struct rt *rt, int);
-#define add_route(rt) if_route(rt, 1)
-#define change_route(rt) if_route(rt, 0)
-#define del_route(rt) if_route(rt, -1)
-#define del_src_route(rt) if_route(rt, -2);
-void free_routes(struct rt *);
-
-int if_address6(const struct interface *, const struct ipv6_addr *, int);
-#define add_address6(ifp, a) if_address6(ifp, a, 1)
-#define del_address6(ifp, a) if_address6(ifp, a, -1)
-
-int if_route6(const struct rt6 *rt, int);
-#define add_route6(rt) if_route6(rt, 1)
-#define change_route6(rt) if_route6(rt, 0)
-#define del_route6(rt) if_route6(rt, -1)
-#define del_src_route6(rt) if_route6(rt, -2);
-
-int open_udp_socket(struct interface *);
-extern const size_t udp_dhcp_len;
-ssize_t make_udp_packet(uint8_t **, const uint8_t *, size_t,
-    struct in_addr, struct in_addr);
-ssize_t get_udp_data(const uint8_t **, const uint8_t *);
-int valid_udp_packet(const uint8_t *, size_t, struct in_addr *, int);
-
-int open_socket(struct interface *, int);
-ssize_t send_packet(const struct interface *, struct in_addr, 
-    const uint8_t *, ssize_t);
-ssize_t send_raw_packet(const struct interface *, int,
-    const void *, ssize_t);
-ssize_t get_raw_packet(struct interface *, int, void *, ssize_t, int *);
-
-int init_sockets(void);
 int open_link_socket(void);
-int manage_link(int);
+int manage_link(struct dhcpcd_ctx *);
 int carrier_status(struct interface *);
 #endif

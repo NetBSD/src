@@ -1,4 +1,4 @@
-/*	$NetBSD: xml.h,v 1.1.1.1 2009/12/13 16:54:26 kardel Exp $	*/
+/*	$NetBSD: xml.h,v 1.1.1.1.6.1 2014/05/22 15:50:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xml.h,v 1.4 2007/06/19 23:47:18 tbox Exp */
+/* Id: xml.h,v 1.4 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_XML_H
 #define ISC_XML_H 1

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 #include <fstream>
 #include <vector>
+
+#include "atf-c/defs.h"
 
 #include "atf-c++/config.hpp"
 
@@ -136,8 +138,9 @@ detail::atf_config_reader::~atf_config_reader(void)
 }
 
 void
-detail::atf_config_reader::got_var(const std::string& var,
-                                   const std::string& val)
+detail::atf_config_reader::got_var(
+    const std::string& var ATF_DEFS_ATTRIBUTE_UNUSED,
+    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 

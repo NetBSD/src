@@ -9,4 +9,4 @@
 #	cishm is 0 if a case insensitive hash of testname1 should match a
 #	case insensitive hash of testname2, otherwise cishm != 0
 #
-a.b.c.d	a.b.c.d.	0	0
+a.b.c.d	A.B.C.D	0	1

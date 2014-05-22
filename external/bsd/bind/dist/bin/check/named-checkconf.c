@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.3.2.1 2012/10/30 18:49:22 yamt Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.3.2.2 2014/05/22 15:42:44 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -41,10 +41,13 @@
 
 #include <bind9/check.h>
 
+#include <dns/db.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/name.h>
+#include <dns/rdataclass.h>
 #include <dns/result.h>
+#include <dns/rootns.h>
 #include <dns/zone.h>
 
 #include "check-tool.h"
@@ -153,6 +156,30 @@ config_get(const cfg_obj_t **maps, const char *name, const cfg_obj_t **obj) {
 	}
 }
 
+static isc_result_t
+configure_hint(const char *zfile, const char *zclass, isc_mem_t *mctx) {
+	isc_result_t result;
+	dns_db_t *db = NULL;
+	dns_rdataclass_t rdclass;
+	isc_textregion_t r;
+
+	if (zfile == NULL)
+		return (ISC_R_FAILURE);
+
+	DE_CONST(zclass, r.base);
+	r.length = strlen(zclass);
+	result = dns_rdataclass_fromtext(&rdclass, &r);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = dns_rootns_create(mctx, rdclass, zfile, &db);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	dns_db_detach(&db);
+	return (ISC_R_SUCCESS);
+}
+
 /*% configure the zone */
 static isc_result_t
 configure_zone(const char *vclass, const char *view,
@@ -163,7 +190,7 @@ configure_zone(const char *vclass, const char *view,
 	isc_result_t result;
 	const char *zclass;
 	const char *zname;
-	const char *zfile;
+	const char *zfile = NULL;
 	const cfg_obj_t *maps[4];
 	const cfg_obj_t *zoptions = NULL;
 	const cfg_obj_t *classobj = NULL;
@@ -173,6 +200,7 @@ configure_zone(const char *vclass, const char *view,
 	const cfg_obj_t *obj = NULL;
 	const cfg_obj_t *fmtobj = NULL;
 	dns_masterformat_t masterformat;
+	dns_ttl_t maxttl = 0;
 
 	zone_options = DNS_ZONEOPT_CHECKNS | DNS_ZONEOPT_MANYERRORS;
 
@@ -197,15 +225,28 @@ configure_zone(const char *vclass, const char *view,
 	cfg_map_get(zoptions, "type", &typeobj);
 	if (typeobj == NULL)
 		return (ISC_R_FAILURE);
-	if (strcasecmp(cfg_obj_asstring(typeobj), "master") != 0)
+
+	cfg_map_get(zoptions, "file", &fileobj);
+	if (fileobj != NULL)
+		zfile = cfg_obj_asstring(fileobj);
+
+	/*
+	 * Check hints files for hint zones.
+	 * Skip loading checks for any type other than
+	 * master and redirect
+	 */
+	if (strcasecmp(cfg_obj_asstring(typeobj), "hint") == 0)
+		return (configure_hint(zfile, zclass, mctx));
+	else if ((strcasecmp(cfg_obj_asstring(typeobj), "master") != 0) &&
+		  (strcasecmp(cfg_obj_asstring(typeobj), "redirect") != 0))
 		return (ISC_R_SUCCESS);
+
+	if (zfile == NULL)
+		return (ISC_R_FAILURE);
+
 	cfg_map_get(zoptions, "database", &dbobj);
 	if (dbobj != NULL)
 		return (ISC_R_SUCCESS);
-	cfg_map_get(zoptions, "file", &fileobj);
-	if (fileobj == NULL)
-		return (ISC_R_FAILURE);
-	zfile = cfg_obj_asstring(fileobj);
 
 	obj = NULL;
 	if (get_maps(maps, "check-dup-records", &obj)) {
@@ -297,6 +338,18 @@ configure_zone(const char *vclass, const char *view,
 	}
 
 	obj = NULL;
+	if (get_maps(maps, "check-spf", &obj)) {
+		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKSPF;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
+			zone_options &= ~DNS_ZONEOPT_CHECKSPF;
+		} else
+			INSIST(0);
+	} else {
+		zone_options |= DNS_ZONEOPT_CHECKSPF;
+	}
+
+	obj = NULL;
 	if (get_checknames(maps, &obj)) {
 		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
 			zone_options |= DNS_ZONEOPT_CHECKNAMES;
@@ -323,15 +376,24 @@ configure_zone(const char *vclass, const char *view,
 			masterformat = dns_masterformat_text;
 		else if (strcasecmp(masterformatstr, "raw") == 0)
 			masterformat = dns_masterformat_raw;
+		else if (strcasecmp(masterformatstr, "map") == 0)
+			masterformat = dns_masterformat_map;
 		else
 			INSIST(0);
 	}
 
-	result = load_zone(mctx, zname, zfile, masterformat, zclass, NULL);
+	obj = NULL;
+	if (get_maps(maps, "max-zone-ttl", &obj)) {
+		maxttl = cfg_obj_asuint32(obj);
+		zone_options2 |= DNS_ZONEOPT2_CHECKTTL;
+	}
+
+	result = load_zone(mctx, zname, zfile, masterformat,
+			   zclass, maxttl, NULL);
 	if (result != ISC_R_SUCCESS)
 		fprintf(stderr, "%s/%s/%s: %s\n", view, zname, zclass,
 			dns_result_totext(result));
-	return(result);
+	return (result);
 }
 
 /*% configure a view */
@@ -432,10 +494,12 @@ main(int argc, char **argv) {
 	isc_entropy_t *ectx = NULL;
 	isc_boolean_t load_zones = ISC_FALSE;
 	isc_boolean_t print = ISC_FALSE;
+	unsigned int flags = 0;
 
+	isc__mem_register();
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvz")) != EOF) {
+	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvxz")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -462,6 +526,10 @@ main(int argc, char **argv) {
 			printf(VERSION "\n");
 			exit(0);
 
+		case 'x':
+			flags |= CFG_PRINTER_XKEY;
+			break;
+
 		case 'z':
 			load_zones = ISC_TRUE;
 			docheckmx = ISC_FALSE;
@@ -473,6 +541,7 @@ main(int argc, char **argv) {
 			if (isc_commandline_option != '?')
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
+			/* FALLTHROUGH */
 		case 'h':
 			usage();
 
@@ -481,6 +550,11 @@ main(int argc, char **argv) {
 				program, isc_commandline_option);
 			exit(1);
 		}
+	}
+
+	if (((flags & CFG_PRINTER_XKEY) != 0) && !print) {
+		fprintf(stderr, "%s: -x cannot be used without -p\n", program);
+		exit(1);
 	}
 
 	if (isc_commandline_index + 1 < argc)
@@ -523,7 +597,7 @@ main(int argc, char **argv) {
 	}
 
 	if (print && exit_status == 0)
-		cfg_print(config, output, NULL);
+		cfg_printx(config, flags, output, NULL);
 	cfg_obj_destroy(parser, &config);
 
 	cfg_parser_destroy(&parser);

@@ -1,6 +1,8 @@
-/* 
+/* $NetBSD: platform.h,v 1.1.1.1.6.2 2014/05/22 15:44:40 yamt Exp $ */
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +30,14 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-char *hardware_platform(void);
-int check_ipv6(const char *);
+int hardware_platform(char *, size_t);
+#ifdef INET6
+int check_ipv6(struct dhcpcd_ctx *ctx, const char *, int);
+int ipv6_dadtransmits(const char *);
+void restore_kernel_ra(struct dhcpcd_ctx *);
+#else
+#define check_ipv6(a, b,c ) -1
+#define restore_kernel_ra(a)
+#endif
 
 #endif

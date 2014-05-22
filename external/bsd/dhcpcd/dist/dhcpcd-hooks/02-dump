@@ -1,5 +1,8 @@
+# $NetBSD: 02-dump,v 1.1.1.1.6.1 2014/05/22 15:44:40 yamt Exp $
+
 # Just echo our DHCP options we have
 
 if [ "$reason" = "DUMP" ]; then
 	set | sed -ne 's/^new_//p' | sort
+	exit 0
 fi

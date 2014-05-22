@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-bpf.h,v 1.1.1.2.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-bpf.h,v 1.50 2007-04-01 21:43:55 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-bpf.h,v 1.50 2007-04-01 21:43:55 guy Exp  (LBL)
  */
 
 /*

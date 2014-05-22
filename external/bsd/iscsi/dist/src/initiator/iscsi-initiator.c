@@ -542,7 +542,6 @@ main(int argc, char **argv)
 	char			name[1024];
 	char			*colon;
 	char		       *host;
-	char		       *user;
 	char			buf[32];
 	char			devtype;
 	int			discover;
@@ -552,7 +551,6 @@ main(int argc, char **argv)
 
 	(void) memset(&tinfo, 0x0, sizeof(tinfo));
 	iscsi_initiator_set_defaults(&ini);
-	user = NULL;
 	(void) gethostname(host = hostname, sizeof(hostname));
 	discover = 0;
 	(void) stat("/etc/hosts", &sti.st);

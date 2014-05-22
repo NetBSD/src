@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.c,v 1.2.4.1 2012/10/30 18:54:11 yamt Exp $	*/
+/*	$NetBSD: entropy.c,v 1.2.4.2 2014/05/22 15:43:22 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -538,8 +538,7 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 
 		memset(&sname, 0, sizeof(sname));
 		sname.sun_family = AF_UNIX;
-		strncpy(sname.sun_path, fname, sizeof(sname.sun_path));
-		sname.sun_path[sizeof(sname.sun_path)-1] = '0';
+		strlcpy(sname.sun_path, fname, sizeof(sname.sun_path));
 #ifdef ISC_PLATFORM_HAVESALEN
 #if !defined(SUN_LEN)
 #define SUN_LEN(su) \

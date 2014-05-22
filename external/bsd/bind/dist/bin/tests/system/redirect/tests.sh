@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -328,6 +328,29 @@ grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
 grep "100.100.100.2" dig.out.ns1.test$n > /dev/null && ret=1
 grep "2001:ffff:ffff::6464:6402" dig.out.ns1.test$n > /dev/null && ret=1
 grep "IN.NSEC3" dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that redirect zones reload correctly"
+ret=0
+sleep 1 # ensure file mtime will have changed
+sed -e 's/0 0 0 0 0/1 0 0 0 0/' < ns2/example.db.in > ns2/example.db
+sed -e 's/0 0 0 0 0/1 0 0 0 0/' -e 's/\.1$/.2/' < ns2/redirect.db.in > ns2/redirect.db
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload > rndc.out || ret=1
+sed 's/^/I:ns2 /' rndc.out
+for i in 1 2 3 4 5 6 7 8 9; do
+    tmp=0
+    $DIG $DIGOPTS +short @10.53.0.2 soa example.nil > dig.out.ns1.test$n || tmp=1
+    set -- `cat dig.out.ns1.test$n`
+    [ $3 = 1 ] || tmp=1
+    $DIG $DIGOPTS nonexist. @10.53.0.2 -b 10.53.0.2 a > dig.out.ns2.test$n || tmp=1
+    grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || tmp=1
+    grep "100.100.100.2" dig.out.ns2.test$n > /dev/null || tmp=1
+    [ $tmp -eq 0 ] && break
+    sleep 1
+done
+[ $tmp -eq 1 ] && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacsha.h,v 1.2.4.1 2012/10/30 18:53:55 yamt Exp $	*/
+/*	$NetBSD: hmacsha.h,v 1.2.4.2 2014/05/22 15:43:21 yamt Exp $	*/
 
 /*
- * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -46,6 +46,15 @@ typedef HMAC_CTX isc_hmacsha224_t;
 typedef HMAC_CTX isc_hmacsha256_t;
 typedef HMAC_CTX isc_hmacsha384_t;
 typedef HMAC_CTX isc_hmacsha512_t;
+
+#elif PKCS11CRYPTO
+#include <pk11/pk11.h>
+
+typedef pk11_context_t isc_hmacsha1_t;
+typedef pk11_context_t isc_hmacsha224_t;
+typedef pk11_context_t isc_hmacsha256_t;
+typedef pk11_context_t isc_hmacsha384_t;
+typedef pk11_context_t isc_hmacsha512_t;
 
 #else
 

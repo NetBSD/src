@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-septel.h,v 1.1.1.2.6.1 2014/05/22 15:48:20 yamt Exp $	*/
+
 /*
  * pcap-septel.c: Packet capture interface for Intel Septel card
  *
@@ -8,8 +10,8 @@
  * Authors: Gilbert HOYEK (gil_hoyek@hotmail.com), Elias M. KHOURY
  * (+961 3 485343);
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-septel.h,v 1.2 2008-04-04 19:37:45 guy Exp
+ * @(#) Header: /tcpdump/master/libpcap/pcap-septel.h,v 1.2 2008-04-04 19:37:45 guy Exp 
  */
 
-pcap_t *septel_create(const char *device, char *ebuf);
-
+pcap_t *septel_create(const char *device, char *ebuf, int *is_ours);
+int septel_findalldevs(pcap_if_t **devlistp, char *errbuf);

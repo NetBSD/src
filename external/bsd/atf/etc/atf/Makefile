@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2010/11/07 17:46:45 jmmv Exp $
+# $NetBSD: Makefile,v 1.3.6.1 2014/05/22 15:40:13 yamt Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/atf-run/sample
+.PATH:		${SRCDIR}/tools/sample
 
 CONFIGFILES=	NetBSD.conf atf-run.hooks common.conf
 FILESDIR=	/etc/atf

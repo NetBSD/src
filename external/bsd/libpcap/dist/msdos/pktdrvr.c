@@ -1,3 +1,5 @@
+/*	$NetBSD: pktdrvr.c,v 1.1.1.1.6.1 2014/05/22 15:48:21 yamt Exp $	*/
+
 /*
  *  File.........: pktdrvr.c
  *

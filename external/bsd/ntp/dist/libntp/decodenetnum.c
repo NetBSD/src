@@ -1,4 +1,4 @@
-/*	$NetBSD: decodenetnum.c,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
+/*	$NetBSD: decodenetnum.c,v 1.1.1.1.6.2 2014/05/22 15:50:08 yamt Exp $	*/
 
 /*
  * decodenetnum - return a net number (this is crude, but careful)
@@ -53,8 +53,7 @@ decodenetnum(
 		else if (NULL != strchr(pp + 1, ':'))
 			cp = num;	/* two or more colons */
 		else {			/* one colon */
-			strncpy(name, num, sizeof(name));
-			name[sizeof(name) - 1] = '\0';
+			strlcpy(name, num, sizeof(name));
 			cp = name;
 			pp = strchr(cp, ':');
 			*pp = '\0';
@@ -76,6 +75,7 @@ decodenetnum(
 	if (err != 0)
 		return 0;
 	NTP_INSIST(ai->ai_addrlen <= sizeof(*netnum));
+	ZERO(*netnum);
 	memcpy(netnum, ai->ai_addr, ai->ai_addrlen);
 	freeaddrinfo(ai);
 	if (NULL == port_str || 1 != sscanf(port_str, "%hu", &port))

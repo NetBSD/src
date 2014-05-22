@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.4.2.1 2013/01/23 00:04:36 yamt Exp $	*/
+/*	$NetBSD: magic.c,v 1.4.2.2 2014/05/22 15:45:00 yamt Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.77 2012/10/31 17:20:06 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.81 2013/11/29 15:42:51 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.4.2.1 2013/01/23 00:04:36 yamt Exp $");
+__RCSID("$NetBSD: magic.c,v 1.4.2.2 2014/05/22 15:45:00 yamt Exp $");
 #endif
 #endif	/* lint */
 
@@ -288,7 +288,7 @@ private void
 close_and_restore(const struct magic_set *ms, const char *name, int fd,
     const struct stat *sb)
 {
-	if (fd == STDIN_FILENO)
+	if (fd == STDIN_FILENO || name == NULL)
 		return;
 	(void) close(fd);
 
@@ -349,6 +349,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	struct stat	sb;
 	ssize_t nbytes = 0;	/* number of bytes read from a datafile */
 	int	ispipe = 0;
+	off_t	pos = (off_t)-1;
 
 	/*
 	 * one extra for terminating '\0', and
@@ -374,10 +375,13 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	if (inname == NULL) {
 		if (fstat(fd, &sb) == 0 && S_ISFIFO(sb.st_mode))
 			ispipe = 1;
+		else
+			pos = lseek(fd, (off_t)0, SEEK_CUR);
 	} else {
 		int flags = O_RDONLY|O_BINARY;
+		int okstat = stat(inname, &sb) == 0;
 
-		if (stat(inname, &sb) == 0 && S_ISFIFO(sb.st_mode)) {
+		if (okstat && S_ISFIFO(sb.st_mode)) {
 #ifdef O_NONBLOCK
 			flags |= O_NONBLOCK;
 #endif
@@ -386,7 +390,8 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 
 		errno = 0;
 		if ((fd = open(inname, flags)) < 0) {
-			if (unreadable_info(ms, sb.st_mode, inname) == -1)
+			if (okstat &&
+			    unreadable_info(ms, sb.st_mode, inname) == -1)
 				goto done;
 			rv = 0;
 			goto done;
@@ -432,6 +437,8 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	rv = 0;
 done:
 	free(buf);
+	if (pos != (off_t)-1)
+		(void)lseek(fd, pos, SEEK_SET);
 	close_and_restore(ms, inname, fd, &sb);
 	return rv == 0 ? file_getbuffer(ms) : NULL;
 }
@@ -482,4 +489,10 @@ magic_setflags(struct magic_set *ms, int flags)
 #endif
 	ms->flags = flags;
 	return 0;
+}
+
+public int
+magic_version(void)
+{
+	return MAGIC_VERSION;
 }

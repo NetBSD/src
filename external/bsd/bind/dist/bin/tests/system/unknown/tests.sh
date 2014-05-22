@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -171,6 +171,29 @@ $DIG $DIGOPTS @10.53.0.3 +tcp +short large.example TYPE45234 > dig.out || { ret=
 diff large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
 [ $ret = 0 ] || echo "I: failed"
 status=`expr $status + $ret`
+
+echo "I:check that '"'"\\#"'"' is not treated as the unknown escape sequence"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 +tcp +short txt8.example txt > dig.out
+echo '"#" "2" "0145"' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:check that 'TXT \# text' is not treated as the unknown escape sequence"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 +tcp +short txt9.example txt > dig.out
+echo '"#" "text"' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:check that 'TYPE353 \# cat' produces 'not a valid number'"
+ret=0
+$CHECKZONE nan.bad zones/nan.bad > check.out 2>&1
+grep "not a valid number" check.out > /dev/null || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+
 
 echo "I:exit status: $status"
 exit $status

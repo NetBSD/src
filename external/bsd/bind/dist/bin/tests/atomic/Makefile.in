@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,16 +25,13 @@ CINCLUDES =	${TEST_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES}
 CDEFINES =
 CWARNINGS =
 
-# Note that we do not want to use libtool for libt_api
-DNSLIBS =	../../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../../lib/isc/libisc.@A@
+ISCLIBS =	../../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
 
-DNSDEPLIBS =	../../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../../lib/isc/libisc.@A@
 
-DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
+DEPLIBS =	${ISCDEPLIBS}
 
-LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
+LIBS =		${ISCLIBS} @LIBS@
 
 TLIB =		../../../lib/tests/libt_api.@A@
 

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-extern "C" {
-#include <regex.h>
-}
-
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -45,27 +41,31 @@ extern "C" {
 #include "test_helpers.hpp"
 
 void
-build_check_cxx_o_aux(const atf::fs::path& sfile, const char* failmsg)
+build_check_cxx_o_aux(const atf::fs::path& sfile, const char* failmsg,
+                      const bool expect_pass)
 {
     std::vector< std::string > optargs;
     optargs.push_back("-I" + atf::config::get("atf_includedir"));
+    optargs.push_back("-Wall");
+    optargs.push_back("-Werror");
 
-    if (!atf::check::build_cxx_o(sfile.str(), "test.o",
-                                 atf::process::argv_array(optargs)))
+    const bool result = atf::check::build_cxx_o(
+        sfile.str(), "test.o", atf::process::argv_array(optargs));
+    if ((expect_pass && !result) || (!expect_pass && result))
         ATF_FAIL(failmsg);
 }
 
 void
 build_check_cxx_o(const atf::tests::tc& tc, const char* sfile,
-                  const char* failmsg)
+                  const char* failmsg, const bool expect_pass)
 {
     const atf::fs::path sfilepath =
         atf::fs::path(tc.get_config_var("srcdir")) / sfile;
-    build_check_cxx_o_aux(sfilepath, failmsg);
+    build_check_cxx_o_aux(sfilepath, failmsg, expect_pass);
 }
 
 void
-header_check(const atf::tests::tc& tc, const char *hdrname)
+header_check(const char *hdrname)
 {
     std::ofstream srcfile("test.c");
     ATF_REQUIRE(srcfile);
@@ -74,7 +74,7 @@ header_check(const atf::tests::tc& tc, const char *hdrname)
 
     const std::string failmsg = std::string("Header check failed; ") +
         hdrname + " is not self-contained";
-    build_check_cxx_o_aux(atf::fs::path("test.c"), failmsg.c_str());
+    build_check_cxx_o_aux(atf::fs::path("test.c"), failmsg.c_str(), true);
 }
 
 atf::fs::path
@@ -82,43 +82,6 @@ get_process_helpers_path(const atf::tests::tc& tc)
 {
     return atf::fs::path(tc.get_config_var("srcdir")) /
            ".." / "atf-c" / "detail" / "process_helpers";
-}
-
-bool
-grep_file(const char* name, const char* regex)
-{
-    std::ifstream is(name);
-    ATF_REQUIRE(is);
-
-    bool found = false;
-
-    std::string line;
-    std::getline(is, line);
-    while (!found && is.good()) {
-        if (grep_string(line, regex))
-            found = true;
-        else
-            std::getline(is, line);
-    }
-
-    return found;
-}
-
-bool
-grep_string(const std::string& str, const char* regex)
-{
-    int res;
-    regex_t preg;
-
-    std::cout << "Looking for '" << regex << "' in '" << str << "'\n";
-    ATF_REQUIRE(::regcomp(&preg, regex, REG_EXTENDED) == 0);
-
-    res = ::regexec(&preg, str.c_str(), 0, NULL, 0);
-    ATF_REQUIRE(res == 0 || res == REG_NOMATCH);
-
-    ::regfree(&preg);
-
-    return res == 0;
 }
 
 void

@@ -1,3 +1,5 @@
+/*	$NetBSD: bpf_image.c,v 1.1.1.2.6.1 2014/05/22 15:48:19 yamt Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -21,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/bpf_image.c,v 1.28 2008-01-02 04:16:46 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/bpf_image.c,v 1.28 2008-01-02 04:16:46 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -292,11 +294,14 @@ bpf_image(p, n)
 		break;
 	}
 	(void)snprintf(operand, sizeof operand, fmt, v);
-	(void)snprintf(image, sizeof image,
-		      (BPF_CLASS(p->code) == BPF_JMP &&
-		       BPF_OP(p->code) != BPF_JA) ?
-		      "(%03d) %-8s %-16s jt %d\tjf %d"
-		      : "(%03d) %-8s %s",
-		      n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
+	if (BPF_CLASS(p->code) == BPF_JMP && BPF_OP(p->code) != BPF_JA) {
+		(void)snprintf(image, sizeof image,
+			      "(%03d) %-8s %-16s jt %d\tjf %d",
+			      n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
+	} else {
+		(void)snprintf(image, sizeof image,
+			      "(%03d) %-8s %s",
+			      n, op, operand);
+	}
 	return image;
 }

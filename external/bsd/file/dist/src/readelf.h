@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.1.1.2 2011/09/16 20:37:39 christos Exp $	*/
+/*	$NetBSD: readelf.h,v 1.1.1.2.2.1 2014/05/22 15:45:00 yamt Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -46,17 +46,9 @@ typedef uint16_t	Elf32_Half;
 typedef uint32_t	Elf32_Word;
 typedef uint8_t		Elf32_Char;
 
-#if SIZEOF_LONG_LONG != 8
-#define	USE_ARRAY_FOR_64BIT_TYPES
-typedef	uint32_t 	Elf64_Addr[2];
-typedef	uint32_t 	Elf64_Off[2];
-typedef uint32_t 	Elf64_Xword[2];
-#else
-#undef USE_ARRAY_FOR_64BIT_TYPES
 typedef	uint64_t 	Elf64_Addr;
 typedef	uint64_t 	Elf64_Off;
 typedef uint64_t 	Elf64_Xword;
-#endif
 typedef uint16_t	Elf64_Half;
 typedef uint32_t	Elf64_Word;
 typedef uint8_t		Elf64_Char;
@@ -265,6 +257,46 @@ typedef struct {
  */
 #define	NT_GNU_BUILD_ID		3
 
+/*
+ * NetBSD-specific note type: PaX.
+ * There should be 1 NOTE per executable.
+ * name: PaX\0
+ * namesz: 4
+ * desc:
+ *	word[0]: capability bitmask
+ * descsz: 4
+ */
+#define NT_NETBSD_PAX		3
+#define NT_NETBSD_PAX_MPROTECT		0x01	/* Force enable Mprotect */
+#define NT_NETBSD_PAX_NOMPROTECT	0x02	/* Force disable Mprotect */
+#define NT_NETBSD_PAX_GUARD		0x04	/* Force enable Segvguard */
+#define NT_NETBSD_PAX_NOGUARD		0x08	/* Force disable Servguard */
+#define NT_NETBSD_PAX_ASLR		0x10	/* Force enable ASLR */
+#define NT_NETBSD_PAX_NOASLR		0x20	/* Force disable ASLR */
+
+/*
+ * NetBSD-specific note type: MACHINE_ARCH.
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * desc:	string
+ * descsz:	variable
+ */
+#define NT_NETBSD_MARCH		5
+
+/*
+ * NetBSD-specific note type: COMPILER MODEL.
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * desc:	string
+ * descsz:	variable
+ */
+#define NT_NETBSD_CMODEL	6
+
+#if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
+#define ELFSIZE ARCH_ELFSIZE
+#endif
 /* SunOS 5.x hardware/software capabilities */
 typedef struct {
 	Elf32_Word	c_tag;
