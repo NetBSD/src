@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3 2009/08/01 20:35:45 dsl Exp $	*/
+/*	$NetBSD: memset.S,v 1.4 2014/05/22 15:23:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.3 2009/08/01 20:35:45 dsl Exp $")
+	RCSID("$NetBSD: memset.S,v 1.4 2014/05/22 15:23:11 uebayasi Exp $")
 #endif
 
 #ifndef _KERNEL
@@ -89,3 +89,5 @@ ENTRY(memset)
 	sub	%rdx,%rcx		/* adjust length ... */
 	add	%rdx,%rdi		/* ... and target */
 	jmp	2b
+END(memset)
+END(bzero)
