@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.100 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.101 2014/05/22 22:01:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -192,22 +192,18 @@ extern struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct mowner ip_rx_mowner;
 extern struct mowner ip_tx_mowner;
 #endif
-#ifdef GATEWAY
-extern int ip_maxflows;
-extern int ip_hashsize;
-#endif
-extern struct pool inmulti_pool;
 struct	 inpcb;
 struct   sockopt;
 
+void	ip_init(void);
+void	in_init(void);
+
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
-int	 ip_dooptions(struct mbuf *);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
 void	 ip_forward(struct mbuf *, int);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_getmoptions(struct ip_moptions *, struct sockopt *);
-void	 ip_init(void);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, ...);
@@ -219,8 +215,6 @@ int	 ip_reass_packet(struct mbuf **, struct ip *);
 void	 ip_reass_slowtimo(void);
 void	 ip_reass_drain(void);
 
-struct in_ifaddr *
-	 ip_rtaddr(struct in_addr);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	   struct mbuf *);
 int	 ip_setmoptions(struct ip_moptions **, const struct sockopt *);
@@ -238,7 +232,9 @@ void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-int	ipflow_init(int);
+
+/* IP Flow interface. */
+void	ipflow_init(void);
 void	ipflow_poolinit(void);
 struct ipflow *ipflow_reap(bool);
 void	ipflow_create(const struct route *, struct mbuf *);

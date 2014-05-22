@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.65 2010/11/05 01:35:57 rmind Exp $	*/
+/*	$NetBSD: in_var.h,v 1.66 2014/05/22 22:01:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,19 +130,15 @@ LIST_HEAD(in_ifaddrhashhead, in_ifaddr);	/* Type of the hash head */
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */
 LIST_HEAD(in_multihashhead, in_multi);		/* Type of the hash head */
 
-
 extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
-extern	int	in_ifaddrentries;		/* total number of addrs */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
 extern	u_long in_multihash;			/* size of hash table - 1 */
-extern	int	in_multientries;		/* total number of addrs */
 extern  struct in_multihashhead *in_multihashtbl;	/* Hash table head */
 
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 extern	const	int	inetctlerrmap[];
-
 
 /*
  * Macro for finding whether an internet address (in_addr) belongs to one
