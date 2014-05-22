@@ -1,6 +1,6 @@
 dnl  PowerPC-64 mpn_add_n/mpn_sub_n -- mpn addition and subtraction.
 
-dnl  Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2007 Free Software
+dnl  Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2007, 2011 Free Software
 dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
@@ -20,37 +20,12 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:     1.5
-C POWER4/PPC970:     2
-
-C   n	   POWER3/PPC630   POWER4/PPC970
-C     1	       17.00	       19.00
-C     2		9.00	       10.49
-C     3		5.33		7.66
-C     4		4.50		5.14
-C     5		4.20		4.80
-C     6		3.83		4.33
-C     7		3.00		3.99
-C     8		2.87		3.55
-C     9		2.89		3.40
-C    10		2.60		3.42
-C    11		2.45		3.15
-C    12		2.41		2.99
-C    13		2.46		3.01
-C    14		2.42		2.97
-C    15		2.20		2.85
-C    50		1.78		2.44
-C   100		1.83		2.20
-C   200		1.55		2.12
-C   400		1.53		2.05
-C  1000		1.98		2.02#
-C  2000		1.50#		2.04
-C  4000		2.55		2.50
-C  8000		2.70		2.45
-C 16000		2.65		5.94
-C 32000		2.62	       16.41
-C 64000		2.73	       18.94
+C                   cycles/limb
+C POWER3/PPC630          1.5
+C POWER4/PPC970          2
+C POWER5                 2
+C POWER6                 2.63
+C POWER7               2.25-2.87
 
 C This code is a little bit slower for POWER3/PPC630 than the simple code used
 C previously, but it is much faster for POWER4/PPC970.  The reason for the
@@ -162,7 +137,8 @@ L(go):	ld	r6, 0(r4)	C load s1 limb
 	addi	r4, r4, 32
 	addi	r5, r5, 32
 
-L(oop):	ADDSUBC	r28, r7, r6
+	ALIGN(16)
+L(top):	ADDSUBC	r28, r7, r6
 	ld	r6, 0(r4)	C load s1 limb
 	ld	r7, 0(r5)	C load s2 limb
 	ADDSUBC	r29, r9, r8
@@ -181,7 +157,7 @@ L(oop):	ADDSUBC	r28, r7, r6
 	std	r30, 16(r3)
 	std	r31, 24(r3)
 	addi	r3, r3, 32
-	bdnz	L(oop)		C decrement ctr and loop back
+	bdnz	L(top)		C decrement ctr and loop back
 
 L(end):	ADDSUBC	r28, r7, r6
 	ADDSUBC	r29, r9, r8

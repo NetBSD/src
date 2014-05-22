@@ -21,7 +21,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 int
-mpf_cmp (mpf_srcptr u, mpf_srcptr v)
+mpf_cmp (mpf_srcptr u, mpf_srcptr v) __GMP_NOTHROW
 {
   mp_srcptr up, vp;
   mp_size_t usize, vsize;

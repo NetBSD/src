@@ -108,11 +108,11 @@
 #        This  document  assumes  that header and body_checks rules
 #        are specified in the form of  Postfix  regular  expression
 #        lookup  tables.  Usually  the best performance is obtained
-#        with pcre (Perl Compatible Regular Expression) tables, but
-#        the  slower  regexp (POSIX regular expressions) support is
-#        more widely available.  Use the command "postconf  -m"  to
-#        find  out what lookup table types your Postfix system sup-
-#        ports.
+#        with pcre (Perl Compatible Regular Expression) tables. The
+#        regexp  (POSIX  regular  expressions)  tables  are usually
+#        slower, but more widely available.  Use the command "post-
+#        conf  -m" to find out what lookup table types your Postfix
+#        system supports.
 # 
 #        The general format of Postfix regular expression tables is
 #        given  below.   For  a  discussion  of specific pattern or

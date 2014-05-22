@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2011/07/25 15:41:58 njoly Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2014/05/22 14:09:44 yamt Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		compat geometry keycodes keymap rules semantics symbols types
+SUBDIR=		compat geometry keycodes rules symbols types
 
 NOOBJ=		# defined
 

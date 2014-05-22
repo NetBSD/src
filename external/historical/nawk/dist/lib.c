@@ -753,10 +753,9 @@ int isclvar(const char *s)	/* is s of form var=something ? */
 #include <math.h>
 int is_number(const char *s)
 {
-	double r;
 	char *ep;
 	errno = 0;
-	r = strtod(s, &ep);
+	(void)strtod(s, &ep);
 	if (ep == s || errno == ERANGE)
 		return 0;
 	if (ep - s >= 3 && strncasecmp(ep - 3, "nan", 3) == 0)

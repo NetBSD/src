@@ -1,7 +1,7 @@
 /* Test file for mpfr_sub.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -581,17 +581,17 @@ check_rounding (void)
                 if (mpfr_cmp_ui_2exp (a, 1, p) != 0)
                   {
                     printf ("Wrong result in check_rounding\n");
-                    printf ("p=%lu k=%ld l=%ld\n", p, k, l);
+                    printf ("p=%lu k=%ld l=%ld\n", (unsigned long) p, k, l);
                     printf ("b="); mpfr_print_binary (b); puts ("");
                     printf ("c="); mpfr_print_binary (c); puts ("");
-                    printf ("Expected 2^%lu\n", p);
+                    printf ("Expected 2^%lu\n", (unsigned long) p);
                     printf ("Got      "); mpfr_print_binary (a); puts ("");
                     exit (1);
                   }
                 if (i >= 0)
                   {
                     printf ("Wrong ternary value in check_rounding\n");
-                    printf ("p=%lu k=%ld l=%ld\n", p, k, l);
+                    printf ("p=%lu k=%ld l=%ld\n", (unsigned long) p, k, l);
                     printf ("b="); mpfr_print_binary (b); puts ("");
                     printf ("c="); mpfr_print_binary (c); puts ("");
                     printf ("a="); mpfr_print_binary (a); puts ("");

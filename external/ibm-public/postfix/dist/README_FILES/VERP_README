@@ -138,7 +138,7 @@ The first form uses the default main.cf VERP delimiters, the second form
 overrides them explicitly. The values shown are the recommended ones.
 
 You can use the smtpd_command_filter feature to append XVERP to SMTP commands
-from legacy sofware. This requires Postfix 2.7 or later.
+from legacy software. This requires Postfix 2.7 or later.
 
     /etc/postfix/main.cf:
         smtpd_command_filter = pcre:/etc/postfix/append_verp.pcre

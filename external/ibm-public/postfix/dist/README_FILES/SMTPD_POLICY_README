@@ -206,6 +206,10 @@ NOTES:
     "connection refused" and other problems when you increase the smtpd process
     limit.
 
+  * Line 8: reject_unauth_destination is not needed here if the mail relay
+    policy is specified with smtpd_relay_restrictions (available with Postfix
+    2.10 and later).
+
   * Lines 8, 9: always specify "check_policy_service" AFTER
     "reject_unauth_destination" or else your system could become an open relay.
 
@@ -221,7 +225,8 @@ NOTES:
         (in the above example, "policy") and a built-in suffix (in the above
         example: "_time_limit").
 
-  * Solaris UNIX-domain sockets do not work reliably. Use TCP sockets instead:
+  * With Solaris < 9, or Postfix < 2.10 on any Solaris version, use TCP sockets
+    instead of UNIX-domain sockets:
 
      1 /etc/postfix/master.cf:
      2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
@@ -323,14 +328,19 @@ Notes:
     it. See the spawn(8) manpage for more information about the
     transport_time_limit parameter.
 
+  * Line 9: reject_unauth_destination is not needed here if the mail relay
+    policy is specified with smtpd_relay_restrictions (available with Postfix
+    2.10 and later).
+
         Note: the "greylist_time_limit" parameter will not show up in
         "postconf" command output before Postfix version 2.9. This limitation
         applies to many parameters whose name is a combination of a master.cf
         service name (in the above example, "greylist") and a built-in suffix
         (in the above example: "_time_limit").
 
-On Solaris you must use inet: style sockets instead of unix: style, as detailed
-in the "Policy client/server configuration" section above.
+With Solaris < 9, or Postfix < 2.10 on any Solaris version, use inet: style
+sockets instead of unix: style, as detailed in the "Policy client/server
+configuration" section above.
 
      1 /etc/postfix/master.cf:
      2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
@@ -369,8 +379,13 @@ filtering/sender-domain-validate.in.
 
 NOTES:
 
-  * Line 9: On Solaris you must use inet: style sockets instead of unix: style,
-    as detailed in the "Example: greylist policy server" section above.
+  * Line 9: On Solaris < 9, or Postfix < 2.10 on any Solaris version, use inet:
+    style sockets instead of unix: style, as detailed in the "Example: greylist
+    policy server" section above.
+
+  * Line 5: reject_unauth_destination is not needed here if the mail relay
+    policy is specified with smtpd_relay_restrictions (available with Postfix
+    2.10 and later).
 
   * Line 6: Be sure to specify "check_sender_access" AFTER
     "reject_unauth_destination" or else your system could become an open mail
@@ -407,8 +422,13 @@ avoids most of the delays and most of the database pollution problem.
 
 NOTES:
 
-  * Line 7: On Solaris you must use inet: style sockets instead of unix: style,
-    as detailed in the "Example: greylist policy server" section above.
+  * Line 7: On Solaris < 9, or Postfix < 2.10 on any Solaris version, use inet:
+    style sockets instead of unix: style, as detailed in the "Example: greylist
+    policy server" section above.
+
+  * Line 5: reject_unauth_destination is not needed here if the mail relay
+    policy is specified with smtpd_relay_restrictions (available with Postfix
+    2.10 and later).
 
   * Lines 6-7: Be sure to specify check_sender_access and check_policy_service
     AFTER reject_unauth_destination or else your system could become an open

@@ -442,6 +442,8 @@ without sending `.' on the connection that injects mail back into Postfix.
             -o smtpd_helo_restrictions=
             -o smtpd_client_restrictions=
             -o smtpd_sender_restrictions=
+            # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+            -o smtpd_relay_restrictions=
             -o smtpd_recipient_restrictions=permit_mynetworks,reject
             -o mynetworks=127.0.0.0/8
             -o smtpd_authorized_xforward_hosts=127.0.0.0/8

@@ -25,9 +25,9 @@ $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
 # Eliminate dependency on installed Postfix.
-../../conf/bounce.cf.default: template_test.ref annotate.pl
+../../conf/bounce.cf.default: template_test.ref annotate.sh
 	rm -f $@
-	perl annotate.pl <template_test.ref >$@
+	./annotate.sh <template_test.ref >$@
 
 main.cf:
 	echo queue_directory=. >main.cf

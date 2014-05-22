@@ -89,9 +89,9 @@ given_full="$given_cpu$given_rest"
 case "$given_cpu" in
 itanium | itanium2)
   test_cpu=ia64 ;;
-pentium | pentiummmx | pentiumpro | pentium[234m] | k[56] | k6[23] | geode | athlon | viac3* | nano)
+pentium | pentiummmx | pentiumpro | pentium[234m] | k[567] | k6[23] | geode | athlon | viac3*)
   test_cpu=i386 ;;
-athlon64 | atom | core2 | corei | opteron)
+athlon64 | atom | core2 | corei | coreinhm | coreiwsm | coreisbr | opteron | k[89] | k10 | bobcat | bulldozer | nano)
   test_cpu=x86_64 ;;
 power[2-9] | power2sc)
   test_cpu=power ;;
@@ -106,10 +106,22 @@ powerpc801 | powerpc821 | powerpc823  | powerpc860 | \
 powerpc64)
   test_cpu=powerpc ;;
 sparcv8 | supersparc | microsparc | \
-ultrasparc | ultrasparc2 | ultrasparc2i | ultrasparc3 | ultrasparct1)
+ultrasparc | ultrasparc2 | ultrasparc2i | ultrasparc3 | ultrasparct[1234])
   test_cpu=sparc ;;
 sh2)
   test_cpu=sh ;;
+
+z900 | z990 | z9 | z10 | z196)
+  test_cpu=s390x;;
+z900esa | z990esa | z9esa | z10esa | z196esa)
+  test_cpu=s390;;
+
+armxscale | armxscale | armxscale | armxscale | armxscale | armxscale |	\
+armti915t | armti925t | arm926 | arm946 | arm966 | armsa1 | arm1026 |	\
+arm11mpcore | armsa1 | arm1136 | arm1156 | arm1176 | armcortexa5 |	\
+armcortexa8 | armcortexa9 | armcortexa15 | armcortexr4 | armcortexr5 |	\
+armcortexm3)
+  test_cpu="arm";;
 
 *)
   # Don't need or want to change the given name, just run configfsf.sub

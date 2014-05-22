@@ -149,7 +149,7 @@ lockstat_disable(void *arg, dtrace_id_t id, void *parg)
 	 * will flush that CPU's store buffer.  Either way we're covered.
 	 */
 	do {
-		delay(1);
+		xdelay(1);
 	} while (lockstat_active_threads());
 }
 

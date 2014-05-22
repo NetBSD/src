@@ -93,85 +93,90 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        <b>-bi</b>    Initialize  alias database. See the <b>newaliases</b> com-
               mand above.
 
-       <b>-bm</b>    Read mail  from  standard  input  and  arrange  for
+       <b>-bl</b>    Go into daemon mode. To accept only  local  connec-
+              tions   as  with  Sendmail's  <b>-bl</b>  option,  specify
+              "<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback</b>" in the Postfix <a href="postconf.5.html"><b>main.cf</b></a>
+              configuration file.
+
+       <b>-bm</b>    Read  mail  from  standard  input  and  arrange for
               delivery.  This is the default mode of operation.
 
        <b>-bp</b>    List the mail queue. See the <b>mailq</b> command above.
 
-       <b>-bs</b>    Stand-alone  SMTP  server  mode. Read SMTP commands
-              from standard input, and write responses  to  stan-
+       <b>-bs</b>    Stand-alone SMTP server mode.  Read  SMTP  commands
+              from  standard  input, and write responses to stan-
               dard output.  In stand-alone SMTP server mode, mail
-              relaying and other access controls are disabled  by
-              default.  To  enable  them,  run the process as the
+              relaying  and other access controls are disabled by
+              default. To enable them, run  the  process  as  the
               <b><a href="postconf.5.html#mail_owner">mail_owner</a></b> user.
 
-              This mode of operation is  implemented  by  running
+              This  mode  of  operation is implemented by running
               the <a href="smtpd.8.html"><b>smtpd</b>(8)</a> daemon.
 
-       <b>-bv</b>    Do  not collect or deliver a message. Instead, send
-              an email  report  after  verifying  each  recipient
-              address.    This  is  useful  for  testing  address
+       <b>-bv</b>    Do not collect or deliver a message. Instead,  send
+              an  email  report  after  verifying  each recipient
+              address.   This  is  useful  for  testing   address
               rewriting and routing configurations.
 
-              This feature is available in  Postfix  version  2.1
+              This  feature  is  available in Postfix version 2.1
               and later.
 
        <b>-C</b> <i>config</i><b>_</b><i>file</i>
 
        <b>-C</b> <i>config</i><b>_</b><i>dir</i>
-              The  path  name  of the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file, or of
-              its parent directory. This information  is  ignored
+              The path name of the Postfix <a href="postconf.5.html"><b>main.cf</b></a>  file,  or  of
+              its  parent  directory. This information is ignored
               with Postfix versions before 2.3.
 
               With all Postfix versions, you can specify a direc-
               tory  pathname  with  the  MAIL_CONFIG  environment
-              variable  to override the location of configuration
+              variable to override the location of  configuration
               files.
 
        <b>-F</b> <i>full</i><b>_</b><i>name</i>
-              Set the sender full name. This overrides  the  NAME
-              environment  variable,  and  is used only with mes-
+              Set  the  sender full name. This overrides the NAME
+              environment variable, and is used  only  with  mes-
               sages that have no <b>From:</b> message header.
 
        <b>-f</b> <i>sender</i>
               Set  the  envelope  sender  address.  This  is  the
-              address  where  delivery problems are sent to. With
+              address where delivery problems are sent  to.  With
               Postfix versions before 2.1, the <b>Errors-To:</b> message
               header overrides the error return address.
 
-       <b>-G</b>     Gateway  (relay)  submission, as opposed to initial
-              user submission.  Either do not  rewrite  addresses
-              at  all,  or  update  incomplete addresses with the
+       <b>-G</b>     Gateway (relay) submission, as opposed  to  initial
+              user  submission.   Either do not rewrite addresses
+              at all, or update  incomplete  addresses  with  the
               domain information specified with <b>remote_header_re-</b>
               <b>write_domain</b>.
 
-              This  option is ignored before Postfix version 2.3.
+              This option is ignored before Postfix version  2.3.
 
        <b>-h</b> <i>hop</i><b>_</b><i>count</i> (ignored)
-              Hop count limit. Use the <b><a href="postconf.5.html#hopcount_limit">hopcount_limit</a></b>  configura-
+              Hop  count limit. Use the <b><a href="postconf.5.html#hopcount_limit">hopcount_limit</a></b> configura-
               tion parameter instead.
 
-       <b>-I</b>     Initialize  alias database. See the <b>newaliases</b> com-
+       <b>-I</b>     Initialize alias database. See the <b>newaliases</b>  com-
               mand above.
 
-       <b>-i</b>     When reading a message from standard  input,  don't
-              treat  a line with only a <b>.</b> character as the end of
+       <b>-i</b>     When  reading  a message from standard input, don't
+              treat a line with only a <b>.</b> character as the end  of
               input.
 
        <b>-L</b> <i>label</i> (ignored)
-              The logging label. Use the  <b><a href="postconf.5.html#syslog_name">syslog_name</a></b>  configura-
+              The  logging  label. Use the <b><a href="postconf.5.html#syslog_name">syslog_name</a></b> configura-
               tion parameter instead.
 
        <b>-m</b> (ignored)
               Backwards compatibility.
 
        <b>-N</b> <i>dsn</i> (default: 'delay, failure')
-              Delivery   status   notification  control.  Specify
-              either a comma-separated list with one or  more  of
-              <b>failure</b>  (send  notification  when delivery fails),
+              Delivery  status  notification   control.   Specify
+              either  a  comma-separated list with one or more of
+              <b>failure</b> (send notification  when  delivery  fails),
               <b>delay</b> (send notification when delivery is delayed),
-              or  <b>success</b>  (send notification when the message is
-              delivered); or specify <b>never</b> (don't send any  noti-
+              or <b>success</b> (send notification when the  message  is
+              delivered);  or specify <b>never</b> (don't send any noti-
               fications at all).
 
               This feature is available in Postfix 2.3 and later.
@@ -180,11 +185,12 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               Backwards compatibility.
 
        <b>-oA</b><i>alias</i><b>_</b><i>database</i>
-              Non-default alias  database.  Specify  <i>pathname</i>  or
+              Non-default  alias  database.  Specify  <i>pathname</i> or
               <i>type</i>:<i>pathname</i>. See <a href="postalias.1.html"><b>postalias</b>(1)</a> for details.
 
        <b>-O</b> <i>option=value</i> (ignored)
-              Backwards compatibility.
+              Set the named <i>option</i> to <i>value</i>. Use  the  equivalent
+              configuration parameter in <a href="postconf.5.html"><b>main.cf</b></a> instead.
 
        <b>-o7</b> (ignored)
 
@@ -211,9 +217,17 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               Postfix versions before 2.1, the <b>Errors-To:</b> message
               header overrides the error return address.
 
-       <b>-R</b> <i>return</i><b>_</b><i>limit</i> (ignored)
-              Limit  the  size   of   bounced   mail.   Use   the
-              <b><a href="postconf.5.html#bounce_size_limit">bounce_size_limit</a></b>  configuration parameter instead.
+       <b>-R</b> <i>return</i>
+              Delivery  status  notification  control.    Specify
+              "hdrs"  to  return  only  the header when a message
+              bounces, "full" to return a full copy (the  default
+              behavior).
+
+              The  <b>-R</b>  option  specifies  an upper bound; Postfix
+              will return only the header, when a full copy would
+              exceed the <a href="postconf.5.html#bounce_size_limit">bounce_size_limit</a> setting.
+
+              This option is ignored before Postfix version 2.10.
 
        <b>-q</b>     Attempt to deliver all queued mail. This is  imple-
               mented by executing the <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command.
@@ -429,8 +443,8 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               <a href="postalias.1.html"><b>postalias</b>(1)</a> and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
        <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a> (0h)</b>
-              The  time  after which the sender receives the mes-
-              sage headers of mail that is still queued.
+              The  time after which the sender receives a copy of
+              the message headers of mail that is still queued.
 
        <b><a href="postconf.5.html#enable_errors_to">enable_errors_to</a> (no)</b>
               Report mail delivery errors to the  address  speci-

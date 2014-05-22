@@ -1,6 +1,6 @@
 /* mpz_set_f (dest_integer, src_float) -- Assign DEST_INTEGER from SRC_FLOAT.
 
-Copyright 1996, 2001 Free Software Foundation, Inc.
+Copyright 1996, 2001, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -36,8 +36,7 @@ mpz_set_f (mpz_ptr w, mpf_srcptr u)
       return;
     }
 
-  MPZ_REALLOC (w, exp);
-  wp = PTR(w);
+  wp = MPZ_REALLOC (w, exp);
   up = PTR(u);
 
   size = SIZ (u);

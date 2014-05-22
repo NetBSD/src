@@ -1,7 +1,7 @@
 /* Test file for mpfr_mul.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -625,6 +625,25 @@ mpfr_mulpi (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t r)
   return inex;
 }
 
+static void
+valgrind20110503 (void)
+{
+  mpfr_t a, b, c;
+
+  mpfr_init2 (a, 2);
+  mpfr_init2 (b, 2005);
+  mpfr_init2 (c, 2);
+
+  mpfr_set_ui (b, 5, MPFR_RNDN);
+  mpfr_nextabove (b);
+  mpfr_set_ui (c, 1, MPFR_RNDN);
+  mpfr_mul (a, b, c, MPFR_RNDZ);
+  /* After the call to mpfr_mulhigh_n, valgrind complains:
+     Conditional jump or move depends on uninitialised value(s) */
+
+  mpfr_clears (a, b, c, (mpfr_ptr) 0);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -670,6 +689,8 @@ main (int argc, char *argv[])
   test_generic (2, 500, 100);
 
   data_check ("data/mulpi", mpfr_mulpi, "mpfr_mulpi");
+
+  valgrind20110503 ();
 
   tests_end_mpfr ();
   return 0;

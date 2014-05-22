@@ -7,7 +7,7 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright 2006, 2007, 2009 Free Software Foundation, Inc.
+Copyright 2006, 2007, 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -29,7 +29,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 /* Computes Q = N / D mod B^n,
-	    R = N - QD.	 */
+	    R = N - QD.  */
 
 mp_limb_t
 mpn_bdiv_qr (mp_ptr qp, mp_ptr rp,
@@ -40,6 +40,7 @@ mpn_bdiv_qr (mp_ptr qp, mp_ptr rp,
   mp_limb_t di;
   mp_limb_t rh;
 
+  ASSERT (nn > dn);
   if (BELOW_THRESHOLD (dn, DC_BDIV_QR_THRESHOLD) ||
       BELOW_THRESHOLD (nn - dn, DC_BDIV_QR_THRESHOLD))
     {

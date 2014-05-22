@@ -1,6 +1,7 @@
 dnl  AMD64 mpn_addmul_1 and mpn_submul_1.
 
-dnl  Copyright 2003, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2004, 2005, 2007, 2008, 2011, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -20,27 +21,30 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 C	     cycles/limb
-C K8,K9:	 2.5
-C K10:		 2.5
-C P4:		14.9
-C P6 core2:	 5.09
-C P6 corei7:
-C P6 atom:	21.3
+C AMD K8,K9	 2.5
+C AMD K10	 2.5
+C AMD bd1	 5.0
+C AMD bobcat	 6.17
+C Intel P4	14.9
+C Intel core2	 5.09
+C Intel NHM	 4.9
+C Intel SBR	 4.0
+C Intel atom	21.3
+C VIA nano	 5.0
 
-C The inner loop of this code is the result of running a code generation and
+C The loop of this code is the result of running a code generation and
 C optimization tool suite written by David Harvey and Torbjorn Granlund.
 
-C TODO:
-C  * The inner loop is great, but the prologue and epilogue code was
-C    quickly written.  Tune it!
+C TODO
+C  * The loop is great, but the prologue and epilogue code was quickly written.
+C    Tune it!
 
-C INPUT PARAMETERS
-define(`rp',	 `%rdi')
-define(`up',	 `%rsi')
-define(`n_param',`%rdx')
-define(`vl',	 `%rcx')
+define(`rp',      `%rdi')   C rcx
+define(`up',      `%rsi')   C rdx
+define(`n_param', `%rdx')   C r8
+define(`vl',      `%rcx')   C r9
 
-define(`n',	`%r11')
+define(`n',       `%r11')
 
 ifdef(`OPERATION_addmul_1',`
       define(`ADDSUB',        `add')
@@ -51,17 +55,33 @@ ifdef(`OPERATION_submul_1',`
       define(`func',  `mpn_submul_1')
 ')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 MULFUNC_PROLOGUE(mpn_addmul_1 mpn_submul_1)
+
+IFDOS(`	define(`up', ``%rsi'')	') dnl
+IFDOS(`	define(`rp', ``%rcx'')	') dnl
+IFDOS(`	define(`vl', ``%r9'')	') dnl
+IFDOS(`	define(`r9', ``rdi'')	') dnl
+IFDOS(`	define(`n',  ``%r8'')	') dnl
+IFDOS(`	define(`r8', ``r11'')	') dnl
 
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(func)
+
+IFDOS(``push	%rsi		'')
+IFDOS(``push	%rdi		'')
+IFDOS(``mov	%rdx, %rsi	'')
+
 	mov	(up), %rax		C read first u limb early
 	push	%rbx
-	mov	n_param, %rbx		C move away n from rdx, mul uses it
+IFSTD(`	mov	n_param, %rbx   ')	C move away n from rdx, mul uses it
+IFDOS(`	mov	n, %rbx         ')
 	mul	vl
-	mov	%rbx, %r11
+IFSTD(`	mov	%rbx, n         ')
 
 	and	$3, R32(%rbx)
 	jz	L(b0)
@@ -113,7 +133,7 @@ L(top):	ADDSUB	%r10, (rp,n,8)
 	adc	%rax, %r9
 	mov	(up,n,8), %rax
 	adc	%rdx, %r8
-	mov	$0, %r10d
+	mov	$0, R32(%r10)
 L(L1):	mul	vl
 	ADDSUB	%r9, 8(rp,n,8)
 	adc	%rax, %r8
@@ -126,11 +146,11 @@ L(L0):	mov	8(up,n,8), %rax
 L(L3):	mov	16(up,n,8), %rax
 	mul	vl
 	ADDSUB	%rbx, 24(rp,n,8)
-	mov	$0, %r8d		# zero
-	mov	%r8, %rbx		# zero
+	mov	$0, R32(%r8)		C zero
+	mov	%r8, %rbx		C zero
 	adc	%rax, %r10
 	mov	24(up,n,8), %rax
-	mov	%r8, %r9		# zero
+	mov	%r8, %r9		C zero
 	adc	%rdx, %r9
 L(L2):	mul	vl
 	add	$4, n
@@ -144,5 +164,7 @@ L(ret):	adc	$0, %rdx
 	mov	%rdx, %rax
 
 	pop	%rbx
+IFDOS(``pop	%rdi		'')
+IFDOS(``pop	%rsi		'')
 	ret
 EPILOGUE()

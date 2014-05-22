@@ -3,7 +3,7 @@
    Return the single-limb remainder.
    There are no constraints on the value of the divisor.
 
-Copyright 1991, 1993, 1994, 1999, 2000, 2002, 2007, 2008, 2009 Free
+Copyright 1991, 1993, 1994, 1999, 2000, 2002, 2007, 2008, 2009, 2012 Free
 Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -57,6 +57,27 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #ifndef MOD_1_2_TO_MOD_1_4_THRESHOLD
 #define MOD_1_2_TO_MOD_1_4_THRESHOLD  20
 #endif
+
+#if TUNE_PROGRAM_BUILD && !HAVE_NATIVE_mpn_mod_1_1p
+/* Duplicates declaratinos in tune/speed.h */
+mp_limb_t mpn_mod_1_1p_1 (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [4]);
+mp_limb_t mpn_mod_1_1p_2 (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [4]);
+
+void mpn_mod_1_1p_cps_1 (mp_limb_t [4], mp_limb_t);
+void mpn_mod_1_1p_cps_2 (mp_limb_t [4], mp_limb_t);
+
+#undef mpn_mod_1_1p
+#define mpn_mod_1_1p(ap, n, b, pre)			     \
+  (mod_1_1p_method == 1 ? mpn_mod_1_1p_1 (ap, n, b, pre)     \
+   : (mod_1_1p_method == 2 ? mpn_mod_1_1p_2 (ap, n, b, pre)  \
+      : __gmpn_mod_1_1p (ap, n, b, pre)))
+
+#undef mpn_mod_1_1p_cps
+#define mpn_mod_1_1p_cps(pre, b)				\
+  (mod_1_1p_method == 1 ? mpn_mod_1_1p_cps_1 (pre, b)		\
+   : (mod_1_1p_method == 2 ? mpn_mod_1_1p_cps_2 (pre, b)	\
+      : __gmpn_mod_1_1p_cps (pre, b)))
+#endif /* TUNE_PROGRAM_BUILD && !HAVE_NATIVE_mpn_mod_1_1p */
 
 
 /* The comments in mpn/generic/divrem_1.c apply here too.
@@ -118,12 +139,12 @@ mpn_mod_1_unnorm (mp_srcptr up, mp_size_t un, mp_limb_t d)
   if (UDIV_NEEDS_NORMALIZATION
       && BELOW_THRESHOLD (un, MOD_1_UNNORM_THRESHOLD))
     {
+      mp_limb_t nshift;
       for (i = un - 2; i >= 0; i--)
 	{
 	  n0 = up[i] << GMP_NAIL_BITS;
-	  udiv_qrnnd (dummy, r, r,
-		      (n1 << cnt) | (n0 >> (GMP_NUMB_BITS - cnt)),
-		      d);
+	  nshift = (n1 << cnt) | (n0 >> (GMP_NUMB_BITS - cnt));
+	  udiv_qrnnd (dummy, r, r, nshift, d);
 	  r >>= GMP_NAIL_BITS;
 	  n1 = n0;
 	}
@@ -133,19 +154,18 @@ mpn_mod_1_unnorm (mp_srcptr up, mp_size_t un, mp_limb_t d)
     }
   else
     {
-      mp_limb_t inv;
+      mp_limb_t inv, nshift;
       invert_limb (inv, d);
 
       for (i = un - 2; i >= 0; i--)
 	{
 	  n0 = up[i] << GMP_NAIL_BITS;
-	  udiv_qrnnd_preinv (dummy, r, r,
-			     (n1 << cnt) | (n0 >> (GMP_NUMB_BITS - cnt)),
-			     d, inv);
+	  nshift = (n1 << cnt) | (n0 >> (GMP_NUMB_BITS - cnt));
+	  udiv_rnnd_preinv (r, r, nshift, d, inv);
 	  r >>= GMP_NAIL_BITS;
 	  n1 = n0;
 	}
-      udiv_qrnnd_preinv (dummy, r, r, n1 << cnt, d, inv);
+      udiv_rnnd_preinv (r, r, n1 << cnt, d, inv);
       r >>= GMP_NAIL_BITS;
       return r >> cnt;
     }
@@ -191,7 +211,7 @@ mpn_mod_1_norm (mp_srcptr up, mp_size_t un, mp_limb_t d)
       for (i = un - 1; i >= 0; i--)
 	{
 	  n0 = up[i] << GMP_NAIL_BITS;
-	  udiv_qrnnd_preinv (dummy, r, r, n0, d, inv);
+	  udiv_rnnd_preinv (r, r, n0, d, inv);
 	  r >>= GMP_NAIL_BITS;
 	}
       return r;

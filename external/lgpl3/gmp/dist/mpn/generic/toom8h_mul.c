@@ -6,7 +6,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2009, 2010 Free Software Foundation, Inc.
+Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -60,30 +60,36 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
   (MUL_FFT_THRESHOLD >= 8 * MUL_TOOM8H_THRESHOLD)
 #endif
 
-#define TOOM8H_MUL_N_REC(p, a, b, n, ws)				\
+#define TOOM8H_MUL_N_REC(p, a, b, f, p2, a2, b2, n, ws)			\
   do {									\
     if (MAYBE_mul_basecase						\
-	&& BELOW_THRESHOLD (n, MUL_TOOM22_THRESHOLD))			\
+	&& BELOW_THRESHOLD (n, MUL_TOOM22_THRESHOLD)) {			\
       mpn_mul_basecase (p, a, n, b, n);					\
-    else if (MAYBE_mul_toom22						\
-	     && BELOW_THRESHOLD (n, MUL_TOOM33_THRESHOLD))		\
+      if (f) mpn_mul_basecase (p2, a2, n, b2, n);			\
+    } else if (MAYBE_mul_toom22						\
+	     && BELOW_THRESHOLD (n, MUL_TOOM33_THRESHOLD)) {		\
       mpn_toom22_mul (p, a, n, b, n, ws);				\
-    else if (MAYBE_mul_toom33						\
-	     && BELOW_THRESHOLD (n, MUL_TOOM44_THRESHOLD))		\
+      if (f) mpn_toom22_mul (p2, a2, n, b2, n, ws);			\
+    } else if (MAYBE_mul_toom33						\
+	     && BELOW_THRESHOLD (n, MUL_TOOM44_THRESHOLD)) {		\
       mpn_toom33_mul (p, a, n, b, n, ws);				\
-    else if (MAYBE_mul_toom44						\
-	     && BELOW_THRESHOLD (n, MUL_TOOM6H_THRESHOLD))		\
+      if (f) mpn_toom33_mul (p2, a2, n, b2, n, ws);			\
+    } else if (MAYBE_mul_toom44						\
+	     && BELOW_THRESHOLD (n, MUL_TOOM6H_THRESHOLD)) {		\
       mpn_toom44_mul (p, a, n, b, n, ws);				\
-    else if (! MAYBE_mul_toom8h						\
-	     || BELOW_THRESHOLD (n, MUL_TOOM8H_THRESHOLD))		\
+      if (f) mpn_toom44_mul (p2, a2, n, b2, n, ws);			\
+    } else if (! MAYBE_mul_toom8h					\
+	     || BELOW_THRESHOLD (n, MUL_TOOM8H_THRESHOLD)) {		\
       mpn_toom6h_mul (p, a, n, b, n, ws);				\
-    else								\
+      if (f) mpn_toom6h_mul (p2, a2, n, b2, n, ws);			\
+    } else {								\
       mpn_toom8h_mul (p, a, n, b, n, ws);				\
+      if (f) mpn_toom8h_mul (p2, a2, n, b2, n, ws);			\
+    }									\
   } while (0)
 
 #define TOOM8H_MUL_REC(p, a, na, b, nb, ws)		\
-  do {	mpn_mul (p, a, na, b, nb);			\
-  } while (0)
+  do { mpn_mul (p, a, na, b, nb); } while (0)
 
 /* Toom-8.5 , compute the product {pp,an+bn} <- {ap,an} * {bp,bn}
    With: an >= bn >= 86, an*5 <  bn * 11.
@@ -111,11 +117,10 @@ mpn_toom8h_mul   (mp_ptr pp,
   /* Can not handle too small operands */
   ASSERT (bn >= 86);
   /* Can not handle too much unbalancement */
-  ASSERT (an*4 <= bn*13);
-  ASSERT (GMP_NUMB_BITS > 12*3 || an*4 <= bn*12);
-  ASSERT (GMP_NUMB_BITS > 11*3 || an*5 <= bn*11);
-  ASSERT (GMP_NUMB_BITS > 10*3 || an*6 <= bn*10);
-  ASSERT (GMP_NUMB_BITS >  9*3 || an*7 <= bn* 9);
+  ASSERT (an <= bn*4);
+  ASSERT (GMP_NUMB_BITS > 11*3 || an*4 <= bn*11);
+  ASSERT (GMP_NUMB_BITS > 10*3 || an*1 <= bn* 2);
+  ASSERT (GMP_NUMB_BITS >  9*3 || an*2 <= bn* 3);
 
   /* Limit num/den is a rational number between
      (16/15)^(log(6)/log(2*6-1)) and (16/15)^(log(8)/log(2*8-1))             */
@@ -127,8 +132,8 @@ mpn_toom8h_mul   (mp_ptr pp,
       half = 0;
       n = 1 + ((an - 1)>>3);
       p = q = 7;
-      s = an - p * n;
-      t = bn - q * n;
+      s = an - 7 * n;
+      t = bn - 7 * n;
     }
   else
     {
@@ -147,7 +152,7 @@ mpn_toom8h_mul   (mp_ptr pp,
       else if (GMP_NUMB_BITS <= 11*3 ||
 	       an * 4 < 9 * bn)
 	{ p =11; q = 5; }
-      else if (an *(LIMIT_numerator/3) < LIMIT_denominat * bn )  /* is 4*... <12*... */
+      else if (an *(LIMIT_numerator/3) < LIMIT_denominat * bn)  /* is 4*... <12*... */
 	{ p =12; q = 5; }
       else if (GMP_NUMB_BITS <= 12*3 ||
 	       an * 9 < 28 * bn )  /* is 4*... <12*... */
@@ -163,8 +168,8 @@ mpn_toom8h_mul   (mp_ptr pp,
       t = bn - q * n;
 
       if(half) { /* Recover from badly chosen splitting */
-	if (s<1) {p--; s+=n; half=0;}
-	else if (t<1) {q--; t+=n; half=0;}
+	if (UNLIKELY (s<1)) {p--; s+=n; half=0;}
+	else if (UNLIKELY (t<1)) {q--; t+=n; half=0;}
       }
     }
 #undef LIMIT_numerator
@@ -202,53 +207,53 @@ mpn_toom8h_mul   (mp_ptr pp,
   /* $\pm1/8$ */
   sign = mpn_toom_eval_pm2rexp (v2, v0, p, ap, n, s, 3, pp) ^
 	 mpn_toom_eval_pm2rexp (v3, v1, q, bp, n, t, 3, pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-1/8)*B(-1/8)*8^. */
-  TOOM8H_MUL_N_REC(r7, v2, v3, n + 1, wse); /* A(+1/8)*B(+1/8)*8^. */
+  /* A(-1/8)*B(-1/8)*8^. */ /* A(+1/8)*B(+1/8)*8^. */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r7, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r7, 2 * n + 1 + BIT_CORRECTION, pp, sign, n, 3*(1+half), 3*(half));
 
   /* $\pm1/4$ */
   sign = mpn_toom_eval_pm2rexp (v2, v0, p, ap, n, s, 2, pp) ^
 	 mpn_toom_eval_pm2rexp (v3, v1, q, bp, n, t, 2, pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-1/4)*B(-1/4)*4^. */
-  TOOM8H_MUL_N_REC(r5, v2, v3, n + 1, wse); /* A(+1/4)*B(+1/4)*4^. */
+  /* A(-1/4)*B(-1/4)*4^. */ /* A(+1/4)*B(+1/4)*4^. */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r5, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r5, 2 * n + 1, pp, sign, n, 2*(1+half), 2*(half));
 
   /* $\pm2$ */
   sign = mpn_toom_eval_pm2 (v2, v0, p, ap, n, s, pp) ^
 	 mpn_toom_eval_pm2 (v3, v1, q, bp, n, t, pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-2)*B(-2) */
-  TOOM8H_MUL_N_REC(r3, v2, v3, n + 1, wse); /* A(+2)*B(+2) */
+  /* A(-2)*B(-2) */ /* A(+2)*B(+2) */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r3, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r3, 2 * n + 1, pp, sign, n, 1, 2);
 
   /* $\pm8$ */
   sign = mpn_toom_eval_pm2exp (v2, v0, p, ap, n, s, 3, pp) ^
 	 mpn_toom_eval_pm2exp (v3, v1, q, bp, n, t, 3, pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-8)*B(-8) */
-  TOOM8H_MUL_N_REC(r1, v2, v3, n + 1, wse); /* A(+8)*B(+8) */
+  /* A(-8)*B(-8) */ /* A(+8)*B(+8) */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r1, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r1, 2 * n + 1 + BIT_CORRECTION, pp, sign, n, 3, 6);
 
   /* $\pm1/2$ */
   sign = mpn_toom_eval_pm2rexp (v2, v0, p, ap, n, s, 1, pp) ^
 	 mpn_toom_eval_pm2rexp (v3, v1, q, bp, n, t, 1, pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-1/2)*B(-1/2)*2^. */
-  TOOM8H_MUL_N_REC(r6, v2, v3, n + 1, wse); /* A(+1/2)*B(+1/2)*2^. */
+  /* A(-1/2)*B(-1/2)*2^. */ /* A(+1/2)*B(+1/2)*2^. */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r6, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r6, 2 * n + 1, pp, sign, n, 1+half, half);
 
   /* $\pm1$ */
   sign = mpn_toom_eval_pm1 (v2, v0, p, ap, n, s,    pp);
-  if (q == 3)
+  if (GMP_NUMB_BITS > 12*3 && UNLIKELY (q == 3))
     sign ^= mpn_toom_eval_dgr3_pm1 (v3, v1, bp, n, t,    pp);
   else
     sign ^= mpn_toom_eval_pm1 (v3, v1, q, bp, n, t,    pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-1)*B(-1) */
-  TOOM8H_MUL_N_REC(r4, v2, v3, n + 1, wse); /* A(1)*B(1) */
+  /* A(-1)*B(-1) */ /* A(1)*B(1) */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r4, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r4, 2 * n + 1, pp, sign, n, 0, 0);
 
   /* $\pm4$ */
   sign = mpn_toom_eval_pm2exp (v2, v0, p, ap, n, s, 2, pp) ^
 	 mpn_toom_eval_pm2exp (v3, v1, q, bp, n, t, 2, pp);
-  TOOM8H_MUL_N_REC(pp, v0, v1, n + 1, wse); /* A(-4)*B(-4) */
-  TOOM8H_MUL_N_REC(r2, v2, v3, n + 1, wse); /* A(+4)*B(+4) */
+  /* A(-4)*B(-4) */ /* A(+4)*B(+4) */
+  TOOM8H_MUL_N_REC(pp, v0, v1, 2, r2, v2, v3, n + 1, wse);
   mpn_toom_couple_handling (r2, 2 * n + 1, pp, sign, n, 2, 4);
 
 #undef v0
@@ -258,11 +263,11 @@ mpn_toom8h_mul   (mp_ptr pp,
 #undef wse
 
   /* A(0)*B(0) */
-  TOOM8H_MUL_N_REC(pp, ap, bp, n, wsi);
+  TOOM8H_MUL_N_REC(pp, ap, bp, 0, pp, ap, bp, n, wsi);
 
   /* Infinity */
-  if( half != 0) {
-    if(s>t) {
+  if (UNLIKELY (half != 0)) {
+    if (s > t) {
       TOOM8H_MUL_REC(r0, ap + p * n, s, bp + q * n, t, wsi);
     } else {
       TOOM8H_MUL_REC(r0, bp + q * n, t, ap + p * n, s, wsi);

@@ -2,8 +2,8 @@
 
    Contributed to the GNU project by Torbjorn Granlund.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2008, 2009
-Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2008,
+2009, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -24,9 +24,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp.h"
 #include "gmp-impl.h"
 #include "longlong.h"
-#ifdef BERKELEY_MP
-#include "mp.h"
-#endif
 
 
 /* TODO
@@ -52,21 +49,18 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define HANDLE_NEGATIVE_EXPONENT 1
 
 void
-#ifndef BERKELEY_MP
 mpz_powm (mpz_ptr r, mpz_srcptr b, mpz_srcptr e, mpz_srcptr m)
-#else /* BERKELEY_MP */
-pow (mpz_srcptr b, mpz_srcptr e, mpz_srcptr m, mpz_ptr r)
-#endif /* BERKELEY_MP */
 {
   mp_size_t n, nodd, ncnt;
   int cnt;
   mp_ptr rp, tp;
   mp_srcptr bp, ep, mp;
   mp_size_t rn, bn, es, en, itch;
+  mpz_t new_b;			/* note: value lives long via 'b' */
   TMP_DECL;
 
   n = ABSIZ(m);
-  if (n == 0)
+  if (UNLIKELY (n == 0))
     DIVIDE_BY_ZERO;
 
   mp = PTR(m);
@@ -76,7 +70,6 @@ pow (mpz_srcptr b, mpz_srcptr e, mpz_srcptr m, mpz_ptr r)
   es = SIZ(e);
   if (UNLIKELY (es <= 0))
     {
-      mpz_t new_b;
       if (es == 0)
 	{
 	  /* b^0 mod m,  b is anything and m is non-zero.
@@ -89,7 +82,7 @@ pow (mpz_srcptr b, mpz_srcptr e, mpz_srcptr m, mpz_ptr r)
 #if HANDLE_NEGATIVE_EXPONENT
       MPZ_TMP_INIT (new_b, n + 1);
 
-      if (! mpz_invert (new_b, b, m))
+      if (UNLIKELY (! mpz_invert (new_b, b, m)))
 	DIVIDE_BY_ZERO;
       b = new_b;
       es = -es;
@@ -158,11 +151,11 @@ pow (mpz_srcptr b, mpz_srcptr e, mpz_srcptr m, mpz_ptr r)
   cnt = 0;
   if (mp[0] % 2 == 0)
     {
-      mp_ptr new = TMP_ALLOC_LIMBS (nodd);
+      mp_ptr newmp = TMP_ALLOC_LIMBS (nodd);
       count_trailing_zeros (cnt, mp[0]);
-      mpn_rshift (new, mp, nodd, cnt);
-      nodd -= new[nodd - 1] == 0;
-      mp = new;
+      mpn_rshift (newmp, mp, nodd, cnt);
+      nodd -= newmp[nodd - 1] == 0;
+      mp = newmp;
       ncnt++;
     }
 
@@ -197,10 +190,10 @@ pow (mpz_srcptr b, mpz_srcptr e, mpz_srcptr m, mpz_ptr r)
 
       if (bn < ncnt)
 	{
-	  mp_ptr new = TMP_ALLOC_LIMBS (ncnt);
-	  MPN_COPY (new, bp, bn);
-	  MPN_ZERO (new + bn, ncnt - bn);
-	  bp = new;
+	  mp_ptr newbp = TMP_ALLOC_LIMBS (ncnt);
+	  MPN_COPY (newbp, bp, bn);
+	  MPN_ZERO (newbp + bn, ncnt - bn);
+	  bp = newbp;
 	}
 
       r2 = tp;
@@ -232,10 +225,10 @@ pow (mpz_srcptr b, mpz_srcptr e, mpz_srcptr m, mpz_ptr r)
     zero:
       if (nodd < ncnt)
 	{
-	  mp_ptr new = TMP_ALLOC_LIMBS (ncnt);
-	  MPN_COPY (new, mp, nodd);
-	  MPN_ZERO (new + nodd, ncnt - nodd);
-	  mp = new;
+	  mp_ptr newmp = TMP_ALLOC_LIMBS (ncnt);
+	  MPN_COPY (newmp, mp, nodd);
+	  MPN_ZERO (newmp + nodd, ncnt - nodd);
+	  mp = newmp;
 	}
 
       odd_inv_2exp = tp + n;

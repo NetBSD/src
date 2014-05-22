@@ -1,22 +1,22 @@
-/* Test mpz_gcd, mpz_gcdext, and mpz_gcd_ui.
+/* Test mpn_hgcd.
 
 Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2003, 2004 Free
 Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +25,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 #include "tests.h"
 
-static mp_size_t one_test __GMP_PROTO ((mpz_t, mpz_t, int));
-static void debug_mp __GMP_PROTO ((mpz_t, int));
+static mp_size_t one_test (mpz_t, mpz_t, int);
+static void debug_mp (mpz_t, int);
 
 #define MIN_OPERAND_SIZE 2
 
@@ -50,10 +50,10 @@ struct hgcd_ref
   mpz_t m[2][2];
 };
 
-static void hgcd_ref_init __GMP_PROTO ((struct hgcd_ref *hgcd));
-static void hgcd_ref_clear __GMP_PROTO ((struct hgcd_ref *hgcd));
-static int hgcd_ref __GMP_PROTO ((struct hgcd_ref *hgcd, mpz_t a, mpz_t b));
-static int hgcd_ref_equal __GMP_PROTO ((const struct hgcd_matrix *hgcd, const struct hgcd_ref *ref));
+static void hgcd_ref_init (struct hgcd_ref *);
+static void hgcd_ref_clear (struct hgcd_ref *);
+static int hgcd_ref (struct hgcd_ref *, mpz_t, mpz_t);
+static int hgcd_ref_equal (const struct hgcd_matrix *, const struct hgcd_ref *);
 
 int
 main (int argc, char **argv)
@@ -97,17 +97,15 @@ main (int argc, char **argv)
     {
       /* Generate plain operands with unknown gcd.  These types of operands
 	 have proven to trigger certain bugs in development versions of the
-	 gcd code.  The "hgcd->row[3].rsize > M" ASSERT is not triggered by
-	 the division chain code below, but that is most likely just a result
-	 of that other ASSERTs are triggered before it.  */
+	 gcd code. */
 
       mpz_urandomb (bs, rands, 32);
       size_range = mpz_get_ui (bs) % 13 + 2;
 
       mpz_urandomb (bs, rands, size_range);
-      mpz_urandomb (op1, rands, mpz_get_ui (bs) + MIN_OPERAND_SIZE);
+      mpz_rrandomb (op1, rands, mpz_get_ui (bs) + MIN_OPERAND_SIZE);
       mpz_urandomb (bs, rands, size_range);
-      mpz_urandomb (op2, rands, mpz_get_ui (bs) + MIN_OPERAND_SIZE);
+      mpz_rrandomb (op2, rands, mpz_get_ui (bs) + MIN_OPERAND_SIZE);
 
       if (mpz_cmp (op1, op2) < 0)
 	mpz_swap (op1, op2);

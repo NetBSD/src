@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.4.4.2 2013/01/23 00:05:14 yamt Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.4.4.3 2014/05/22 14:08:03 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -336,6 +336,24 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
 	    return (0);
 	}
     }
+
+    /*
+     * Register SHA-2 digests, if implemented and not already registered.
+     * Improves interoperability with clients and servers that prematurely
+     * deploy SHA-2 certificates.
+     */
+#if defined(LN_sha256) && defined(NID_sha256) && !defined(OPENSSL_NO_SHA256)
+    if (!EVP_get_digestbyname(LN_sha224))
+	EVP_add_digest(EVP_sha224());
+    if (!EVP_get_digestbyname(LN_sha256))
+	EVP_add_digest(EVP_sha256());
+#endif
+#if defined(LN_sha512) && defined(NID_sha512) && !defined(OPENSSL_NO_SHA512)
+    if (!EVP_get_digestbyname(LN_sha384))
+	EVP_add_digest(EVP_sha384());
+    if (!EVP_get_digestbyname(LN_sha512))
+	EVP_add_digest(EVP_sha512());
+#endif
 
     /*
      * If the administrator specifies an unsupported digest algorithm, fail
@@ -996,7 +1014,7 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
 	if (TLScontext->log_mask &
 	    (TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE | TLS_LOG_PEERCERT))
 	    msg_info("%s: subject_CN=%s, issuer_CN=%s, "
-		     "fingerprint %s, pkey_fingerprint=%s", props->namaddr,
+		     "fingerprint=%s, pkey_fingerprint=%s", props->namaddr,
 		     TLScontext->peer_CN, TLScontext->issuer_CN,
 		     TLScontext->peer_fingerprint,
 		     TLScontext->peer_pkey_fprint);

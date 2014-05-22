@@ -1,10 +1,10 @@
-/* mpn_redc_n.  Set cp[] <- up[]/R^n mod mp[].  Clobber up[].
+/* mpn_redc_n.  Set rp[] <- up[]/R^n mod mp[].  Clobber up[].
    mp[] is n limbs; up[] is 2n limbs, the inverse ip[] is n limbs.
 
    THIS IS AN INTERNAL FUNCTION WITH A MUTABLE INTERFACE.  IT IS ONLY
    SAFE TO REACH THIS FUNCTION THROUGH DOCUMENTED INTERFACES.
 
-Copyright (C) 2009 Free Software Foundation, Inc.
+Copyright 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -32,6 +32,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
     assumption.
 
   * Decrease scratch usage.
+
+  * Consider removing the residue canonicalisation.
 */
 
 void
@@ -42,6 +44,8 @@ mpn_redc_n (mp_ptr rp, mp_ptr up, mp_srcptr mp, mp_size_t n, mp_srcptr ip)
   mp_size_t rn;
   TMP_DECL;
   TMP_MARK;
+
+  ASSERT (n > 8);
 
   rn = mpn_mulmod_bnm1_next_size (n);
 

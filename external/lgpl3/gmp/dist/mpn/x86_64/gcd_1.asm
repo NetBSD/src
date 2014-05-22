@@ -3,7 +3,8 @@ dnl  AMD64 mpn_gcd_1 -- mpn by 1 gcd.
 dnl  Based on the K7 gcd_1.asm, by Kevin Ryde.  Rehacked for AMD64 by Torbjorn
 dnl  Granlund.
 
-dnl  Copyright 2000, 2001, 2002, 2005, 2009 Free Software Foundation, Inc.
+dnl  Copyright 2000, 2001, 2002, 2005, 2009, 2011, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -23,23 +24,22 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 
-C K8: 6.75 cycles/bit (approx)  1x1 gcd
-C     10.0 cycles/limb          Nx1 reduction (modexact_1_odd)
-
-
-dnl  Reduce using x%y if x is more than DIV_THRESHOLD bits bigger than y,
-dnl  where x is the larger of the two.  See tune/README for more.
-dnl
-dnl  div at 80 cycles compared to the gcd at about 7 cycles/bitpair
-dnl  suggests 80/7*2=23
-
-deflit(DIV_THRESHOLD, 23)
-
+C	     cycles/bit (approx)
+C AMD K8,K9	 5.21                 (4.95)
+C AMD K10	 5.15                 (5.00)
+C AMD bd1	 5.42                 (5.14)
+C AMD bobcat	 6.71                 (6.56)
+C Intel P4	13.5                 (12.75)
+C Intel core2	 6.20                 (6.16)
+C Intel NHM	 6.49                 (6.25)
+C Intel SBR	 7.75                 (7.57)
+C Intel atom	 8.77                 (8.54)
+C VIA nano	 6.60                 (6.20)
+C Numbers measured with: speed -CD -s16-64 -t48 mpn_gcd_1
 
 C ctz_table[n] is the number of trailing zeros on n, or MAXSHIFT if n==0.
 
-
-deflit(MAXSHIFT, 6)
+deflit(MAXSHIFT, 7)
 deflit(MASK, eval((m4_lshift(1,MAXSHIFT))-1))
 
 DEF_OBJECT(ctz_table,64)
@@ -49,82 +49,105 @@ forloop(i,1,MASK,
 ')
 END_OBJECT(ctz_table)
 
-C mp_limb_t mpn_gcd_1 (mp_srcptr up, mp_size_t n, mp_limb_t vlimb);
-
+C Threshold of when to call bmod when U is one limb.  Should be about
+C (time_in_cycles(bmod_1,1) + call_overhead) / (cycles/bit).
+define(`BMOD_THRES_LOG2', 8)
 
 C INPUT PARAMETERS
 define(`up',    `%rdi')
 define(`n',     `%rsi')
-define(`vlimb', `%rdx')
+define(`v0',    `%rdx')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
+IFDOS(`define(`STACK_ALLOC', 40)')
+IFSTD(`define(`STACK_ALLOC', 8)')
+
+ASM_START()
 	TEXT
 	ALIGN(16)
-
 PROLOGUE(mpn_gcd_1)
-	mov	(%rdi), %r8		C src low limb
-	or	%rdx, %r8		C x | y
+	FUNC_ENTRY(3)
+	mov	(up), %rax		C U low limb
 	mov	$-1, R32(%rcx)
+	or	v0, %rax		C x | y
 
 L(twos):
 	inc	R32(%rcx)
-	shr	%r8
+	shr	%rax
 	jnc	L(twos)
 
-	shr	R8(%rcx), %rdx
-	mov	R32(%rcx), R32(%r8)	C common twos
+	shr	R8(%rcx), v0
+	push	%rcx			C common twos
 
 L(divide_strip_y):
-	shr	%rdx
+	shr	v0
 	jnc	L(divide_strip_y)
-	adc	%rdx, %rdx
+	adc	v0, v0
 
-	push	%r8
-	push	%rdx
-	sub	$8, %rsp		C maintain ABI required rsp alignment
+	cmp	$1, n
+	jnz	L(reduce_nby1)
 
+C Both U and V are single limbs, reduce with bmod if u0 >> v0.
+	mov	(up), %r8
+	mov	%r8, %rax
+	shr	$BMOD_THRES_LOG2, %r8
+	cmp	%r8, v0
+	ja	L(noreduce)
+	push	v0
+	sub	$STACK_ALLOC, %rsp	C maintain ABI required rsp alignment
+
+L(bmod):
+IFDOS(`	mov	%rdx, %r8	')
+IFDOS(`	mov	%rsi, %rdx	')
+IFDOS(`	mov	%rdi, %rcx	')
 	CALL(	mpn_modexact_1_odd)
 
-	add	$8, %rsp
+L(reduced):
+	add	$STACK_ALLOC, %rsp
 	pop	%rdx
-	pop	%r8
 
+L(noreduce):
+	LEA(	ctz_table, %rsi)
 	test	%rax, %rax
-
 	mov	%rax, %rcx
-	jnz	L(strip_x)
+	jnz	L(mid)
+	jmp	L(end)
 
+L(reduce_nby1):
+	push	v0
+	sub	$STACK_ALLOC, %rsp	C maintain ABI required rsp alignment
+
+	cmp	$BMOD_1_TO_MOD_1_THRESHOLD, n
+	jl	L(bmod)
+IFDOS(`	mov	%rdx, %r8	')
+IFDOS(`	mov	%rsi, %rdx	')
+IFDOS(`	mov	%rdi, %rcx	')
+	CALL(	mpn_mod_1)
+	jmp	L(reduced)
+
+	ALIGN(16)			C               K8    BC    P4    NHM   SBR
+L(top):	cmovc	%rcx, %rax		C if x-y < 0	0
+	cmovc	%rdi, %rdx		C use x,y-x	0
+L(mid):	and	$MASK, R32(%rcx)	C		0
+	movzbl	(%rsi,%rcx), R32(%rcx)	C		1
+	jz	L(shift_alot)		C		1
+	shr	R8(%rcx), %rax		C		3
+	mov	%rax, %rdi		C		4
+	mov	%rdx, %rcx		C		3
+	sub	%rax, %rcx		C		4
+	sub	%rdx, %rax		C		4
+	jnz	L(top)			C		5
+
+L(end):	pop	%rcx
 	mov	%rdx, %rax
-	jmp	L(done)
-
-L(strip_x):
-	LEA(	ctz_table, %r9)
-	jmp	L(strip_x_top)
-
-	ALIGN(16)
-L(top):
-	cmovc	%r10, %rcx		C if x-y gave carry, use x,y-x	0
-	cmovc	%rax, %rdx		C				0
-
-L(strip_x_top):
-	mov	%rcx, %rax		C				1
-	and	$MASK, R32(%rcx)	C				1
-
-	mov	(%r9,%rcx), R8(%rcx)	C				1
-
-	shr	R8(%rcx), %rax		C				4
-	cmp	$MAXSHIFT, R8(%rcx)	C				4
-
-	mov	%rax, %rcx		C				5
-	mov	%rdx, %r10		C				5
-	je	L(strip_x_top)		C				5
-
-	sub	%rax, %r10		C				6
-	sub	%rdx, %rcx		C				6
-	jnz	L(top)			C				6
-
-L(done):
-	mov	%r8, %rcx
 	shl	R8(%rcx), %rax
+	FUNC_EXIT()
 	ret
 
+L(shift_alot):
+	shr	$MAXSHIFT, %rax
+	mov	%rax, %rcx
+	jmp	L(mid)
 EPILOGUE()

@@ -462,7 +462,7 @@ dump_metaslab_stats(metaslab_t *msp)
 	avl_tree_t *t = sm->sm_pp_root;
 	int free_pct = sm->sm_space * 100 / sm->sm_size;
 
-	nicenum(space_map_maxsize(sm), maxbuf);
+	nicenum(space_map_maxsize(sm), maxbuf, sizeof(maxbuf));
 
 	(void) printf("\t %25s %10lu   %7s  %6s   %4s %4d%%\n",
 	    "segments", avl_numnodes(t), "maxsize", maxbuf,
@@ -478,7 +478,7 @@ dump_metaslab(metaslab_t *msp)
 	space_map_obj_t *smo = &msp->ms_smo;
 	char freebuf[5];
 
-	nicenum(sm->sm_size - smo->smo_alloc, freebuf);
+	nicenum(sm->sm_size - smo->smo_alloc, freebuf, sizeof(freebuf));
 
 	(void) printf(
 	    "\tmetaslab %6llu   offset %12llx   spacemap %6llu   free    %5s\n",
@@ -572,7 +572,7 @@ dump_dde(const ddt_t *ddt, const ddt_entry_t *dde, uint64_t index)
 		if (ddp->ddp_phys_birth == 0)
 			continue;
 		ddt_bp_create(ddt->ddt_checksum, ddk, ddp, &blk);
-		sprintf_blkptr(blkbuf, &blk);
+		snprintf_blkptr(blkbuf, sizeof(blkbuf), &blk);
 		(void) printf("index %llx refcnt %llu %s %s\n",
 		    (u_longlong_t)index, (u_longlong_t)ddp->ddp_refcnt,
 		    types[p], blkbuf);
@@ -623,7 +623,7 @@ dump_ddt(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
 
 	ASSERT(count != 0);	/* we should have destroyed it */
 
-	ddt_object_name(ddt, type, class, name);
+	ddt_object_name(ddt, type, class, name, sizeof(name));
 
 	(void) printf("%s: %llu entries, size %llu on disk, %llu in core\n",
 	    name,
@@ -822,25 +822,30 @@ blkid2offset(const dnode_phys_t *dnp, const blkptr_t *bp, const zbookmark_t *zb)
 }
 
 static void
-sprintf_blkptr_compact(char *blkbuf, blkptr_t *bp)
+snprintf_blkptr_compact(char *blkbuf, size_t blklen, blkptr_t *bp)
 {
 	dva_t *dva = bp->blk_dva;
 	int ndvas = dump_opt['d'] > 5 ? BP_GET_NDVAS(bp) : 1;
+	size_t len;
 
 	if (dump_opt['b'] >= 5) {
-		sprintf_blkptr(blkbuf, bp);
+		snprintf_blkptr(blkbuf, blklen, bp);
 		return;
 	}
 
 	blkbuf[0] = '\0';
 
-	for (int i = 0; i < ndvas; i++)
-		(void) sprintf(blkbuf + strlen(blkbuf), "%llu:%llx:%llx ",
+	len = 0;
+	for (int i = 0; i < ndvas; i++) {
+		len += snprintf(blkbuf + len, blklen - len, "%llu:%llx:%llx ",
 		    (u_longlong_t)DVA_GET_VDEV(&dva[i]),
 		    (u_longlong_t)DVA_GET_OFFSET(&dva[i]),
 		    (u_longlong_t)DVA_GET_ASIZE(&dva[i]));
+		if (len > blklen)
+			len = blklen;
+	}
 
-	(void) sprintf(blkbuf + strlen(blkbuf),
+	snprintf(blkbuf + len, blklen - len,
 	    "%llxL/%llxP F=%llu B=%llu/%llu",
 	    (u_longlong_t)BP_GET_LSIZE(bp),
 	    (u_longlong_t)BP_GET_PSIZE(bp),
@@ -871,7 +876,7 @@ print_indirect(blkptr_t *bp, const zbookmark_t *zb,
 		}
 	}
 
-	sprintf_blkptr_compact(blkbuf, bp);
+	snprintf_blkptr_compact(blkbuf, sizeof(blkbuf), bp);
 	(void) printf("%s\n", blkbuf);
 }
 
@@ -964,15 +969,15 @@ dump_dsl_dir(objset_t *os, uint64_t object, void *data, size_t size)
 	    (u_longlong_t)dd->dd_origin_obj);
 	(void) printf("\t\tchild_dir_zapobj = %llu\n",
 	    (u_longlong_t)dd->dd_child_dir_zapobj);
-	nicenum(dd->dd_used_bytes, nice);
+	nicenum(dd->dd_used_bytes, nice, sizeof(nice));
 	(void) printf("\t\tused_bytes = %s\n", nice);
-	nicenum(dd->dd_compressed_bytes, nice);
+	nicenum(dd->dd_compressed_bytes, nice, sizeof(nice));
 	(void) printf("\t\tcompressed_bytes = %s\n", nice);
-	nicenum(dd->dd_uncompressed_bytes, nice);
+	nicenum(dd->dd_uncompressed_bytes, nice, sizeof(nice));
 	(void) printf("\t\tuncompressed_bytes = %s\n", nice);
-	nicenum(dd->dd_quota, nice);
+	nicenum(dd->dd_quota, nice, sizeof(nice));
 	(void) printf("\t\tquota = %s\n", nice);
-	nicenum(dd->dd_reserved, nice);
+	nicenum(dd->dd_reserved, nice, sizeof(nice));
 	(void) printf("\t\treserved = %s\n", nice);
 	(void) printf("\t\tprops_zapobj = %llu\n",
 	    (u_longlong_t)dd->dd_props_zapobj);
@@ -982,7 +987,7 @@ dump_dsl_dir(objset_t *os, uint64_t object, void *data, size_t size)
 	    (u_longlong_t)dd->dd_flags);
 
 #define	DO(which) \
-	nicenum(dd->dd_used_breakdown[DD_USED_ ## which], nice); \
+	nicenum(dd->dd_used_breakdown[DD_USED_ ## which], nice, sizeof(nice)); \
 	(void) printf("\t\tused_breakdown[" #which "] = %s\n", nice)
 	DO(HEAD);
 	DO(SNAP);
@@ -1006,11 +1011,11 @@ dump_dsl_dataset(objset_t *os, uint64_t object, void *data, size_t size)
 
 	ASSERT(size == sizeof (*ds));
 	crtime = ds->ds_creation_time;
-	nicenum(ds->ds_used_bytes, used);
-	nicenum(ds->ds_compressed_bytes, compressed);
-	nicenum(ds->ds_uncompressed_bytes, uncompressed);
-	nicenum(ds->ds_unique_bytes, unique);
-	sprintf_blkptr(blkbuf, &ds->ds_bp);
+	nicenum(ds->ds_used_bytes, used, sizeof(used));
+	nicenum(ds->ds_compressed_bytes, compressed, sizeof(compressed));
+	nicenum(ds->ds_uncompressed_bytes, uncompressed, sizeof(uncompressed));
+	nicenum(ds->ds_unique_bytes, unique, sizeof(unique));
+	snprintf_blkptr(blkbuf, sizeof(blkbuf), &ds->ds_bp);
 
 	(void) printf("\t\tdir_obj = %llu\n",
 	    (u_longlong_t)ds->ds_dir_obj);
@@ -1069,10 +1074,10 @@ dump_bplist(objset_t *mos, uint64_t object, char *name)
 		return;
 	}
 
-	nicenum(bpl.bpl_phys->bpl_bytes, bytes);
+	nicenum(bpl.bpl_phys->bpl_bytes, bytes, sizeof(bytes));
 	if (bpl.bpl_dbuf->db_size == sizeof (bplist_phys_t)) {
-		nicenum(bpl.bpl_phys->bpl_comp, comp);
-		nicenum(bpl.bpl_phys->bpl_uncomp, uncomp);
+		nicenum(bpl.bpl_phys->bpl_comp, comp, sizeof(comp));
+		nicenum(bpl.bpl_phys->bpl_uncomp, uncomp, sizeof(uncomp));
 		(void) printf("\n    %s: %llu entries, %s (%s/%s comp)\n",
 		    name, (u_longlong_t)bpl.bpl_phys->bpl_entries,
 		    bytes, comp, uncomp);
@@ -1093,7 +1098,7 @@ dump_bplist(objset_t *mos, uint64_t object, char *name)
 		char blkbuf[BP_SPRINTF_LEN];
 
 		ASSERT(bp->blk_birth != 0);
-		sprintf_blkptr_compact(blkbuf, bp);
+		snprintf_blkptr_compact(blkbuf, sizeof(blkbuf), bp);
 		(void) printf("\tItem %3llu: %s\n",
 		    (u_longlong_t)itor - 1, blkbuf);
 	}
@@ -1295,12 +1300,12 @@ dump_object(objset_t *os, uint64_t object, int verbosity, int *print_header)
 	}
 	dmu_object_info_from_dnode(dn, &doi);
 
-	nicenum(doi.doi_metadata_block_size, iblk);
-	nicenum(doi.doi_data_block_size, dblk);
-	nicenum(doi.doi_max_offset, lsize);
-	nicenum(doi.doi_physical_blocks_512 << 9, asize);
-	nicenum(doi.doi_bonus_size, bonus_size);
-	(void) sprintf(fill, "%6.2f", 100.0 * doi.doi_fill_count *
+	nicenum(doi.doi_metadata_block_size, iblk, sizeof(iblk));
+	nicenum(doi.doi_data_block_size, dblk, sizeof(dblk));
+	nicenum(doi.doi_max_offset, lsize, sizeof(lsize));
+	nicenum(doi.doi_physical_blocks_512 << 9, asize, sizeof(asize));
+	nicenum(doi.doi_bonus_size, bonus_size, sizeof(bonus_size));
+	(void) snprintf(fill, sizeof(fill), "%6.2f", 100.0 * doi.doi_fill_count *
 	    doi.doi_data_block_size / (object == 0 ? DNODES_PER_BLOCK : 1) /
 	    doi.doi_max_offset);
 
@@ -1367,7 +1372,7 @@ dump_object(objset_t *os, uint64_t object, int verbosity, int *print_header)
 			end = start;
 			error = dnode_next_offset(dn,
 			    DNODE_FIND_HOLE, &end, minlvl, blkfill, 0);
-			nicenum(end - start, segsize);
+			nicenum(end - start, segsize, sizeof(segsize));
 			(void) printf("\t\tsegment [%016llx, %016llx)"
 			    " size %5s\n", (u_longlong_t)start,
 			    (u_longlong_t)end, segsize);
@@ -1397,6 +1402,7 @@ dump_dir(objset_t *os)
 	int verbosity = dump_opt['d'];
 	int print_header = 1;
 	int i, error;
+	size_t len;
 
 	dmu_objset_fast_stat(os, &dds);
 
@@ -1414,11 +1420,14 @@ dump_dir(objset_t *os)
 
 	ASSERT3U(usedobjs, ==, os->os_rootbp->blk_fill);
 
-	nicenum(refdbytes, numbuf);
+	nicenum(refdbytes, numbuf, sizeof(numbuf));
 
 	if (verbosity >= 4) {
-		(void) sprintf(blkbuf, ", rootbp ");
-		(void) sprintf_blkptr(blkbuf + strlen(blkbuf), os->os_rootbp);
+		size_t blklen = sizeof(blkbuf);
+		len = snprintf(blkbuf, blklen, ", rootbp ");
+		if (len > blklen)
+			len = blklen;
+		snprintf_blkptr(blkbuf + len, blklen - len, os->os_rootbp);
 	} else {
 		blkbuf[0] = '\0';
 	}
@@ -1490,7 +1499,7 @@ dump_uberblock(uberblock_t *ub, const char *header, const char *footer)
 	    (u_longlong_t)ub->ub_timestamp, asctime(localtime(&timestamp)));
 	if (dump_opt['u'] >= 3) {
 		char blkbuf[BP_SPRINTF_LEN];
-		sprintf_blkptr(blkbuf, &ub->ub_rootbp);
+		snprintf_blkptr(blkbuf, sizeof(blkbuf), &ub->ub_rootbp);
 		(void) printf("\trootbp = %s\n", blkbuf);
 	}
 	(void) printf(footer ? footer : "");
@@ -1785,7 +1794,7 @@ zdb_blkptr_cb(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 			zcb->zcb_errors[ioerr]++;
 
 			if (dump_opt['b'] >= 2)
-				sprintf_blkptr(blkbuf, bp);
+				snprintf_blkptr(blkbuf, sizeof(blkbuf), bp);
 			else
 				blkbuf[0] = '\0';
 
@@ -1804,7 +1813,7 @@ zdb_blkptr_cb(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 	zcb->zcb_readfails = 0;
 
 	if (dump_opt['b'] >= 4) {
-		sprintf_blkptr(blkbuf, bp);
+		snprintf_blkptr(blkbuf, sizeof(blkbuf), bp);
 		(void) printf("objset %llu object %llu "
 		    "level %lld offset 0x%llx %s\n",
 		    (u_longlong_t)zb->zb_objset,
@@ -1978,7 +1987,7 @@ dump_block_stats(spa_t *spa)
 		while (bplist_iterate(bpl, &itor, &blk) == 0) {
 			if (dump_opt['b'] >= 4) {
 				char blkbuf[BP_SPRINTF_LEN];
-				sprintf_blkptr(blkbuf, &blk);
+				snprintf_blkptr(blkbuf, sizeof(blkbuf), &blk);
 				(void) printf("[%s] %s\n",
 				    "deferred free", blkbuf);
 			}
@@ -2100,11 +2109,11 @@ dump_block_stats(spa_t *spa)
 				    zcb.zcb_type[ZB_TOTAL][t].zb_asize)
 					continue;
 
-				nicenum(zb->zb_count, csize);
-				nicenum(zb->zb_lsize, lsize);
-				nicenum(zb->zb_psize, psize);
-				nicenum(zb->zb_asize, asize);
-				nicenum(zb->zb_asize / zb->zb_count, avg);
+				nicenum(zb->zb_count, csize, sizeof(csize));
+				nicenum(zb->zb_lsize, lsize, sizeof(lsize));
+				nicenum(zb->zb_psize, psize, sizeof(psize));
+				nicenum(zb->zb_asize, asize, sizeof(asize));
+				nicenum(zb->zb_asize / zb->zb_count, avg, sizeof(avg));
 
 				(void) printf("%6s\t%5s\t%5s\t%5s\t%5s"
 				    "\t%5.2f\t%6.2f\t",
@@ -2303,7 +2312,7 @@ zdb_print_blkptr(blkptr_t *bp, int flags)
 	if (flags & ZDB_FLAG_BSWAP)
 		byteswap_uint64_array((void *)bp, sizeof (blkptr_t));
 
-	sprintf_blkptr(blkbuf, bp);
+	snprintf_blkptr(blkbuf, sizeof(blkbuf), bp);
 	(void) printf("%s\n", blkbuf);
 }
 

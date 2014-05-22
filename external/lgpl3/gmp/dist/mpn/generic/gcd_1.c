@@ -1,6 +1,6 @@
 /* mpn_gcd_1 -- mpn and limb greatest common divisor.
 
-Copyright 1994, 1996, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1994, 1996, 2000, 2001, 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -28,7 +28,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define USE_ZEROTAB 0
 
 #if USE_ZEROTAB
-static const unsigned char zerotab[16] = {
+#define MAXSHIFT 4
+#define MASK ((1 << MAXSHIFT) - 1)
+static const unsigned char zerotab[1 << MAXSHIFT] =
+{
+#if MAXSHIFT > 4
+  5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+#endif
   4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0
 };
 #endif
@@ -133,8 +139,11 @@ mpn_gcd_1 (mp_srcptr up, mp_size_t size, mp_limb_t vlimb)
   while (ulimb != vlimb)
     {
       int c;
-      mp_limb_t t = ulimb - vlimb;
-      mp_limb_t vgtu = LIMB_HIGHBIT_TO_MASK (t);
+      mp_limb_t t;
+      mp_limb_t vgtu;
+
+      t = ulimb - vlimb;
+      vgtu = LIMB_HIGHBIT_TO_MASK (t);
 
       /* v <-- min (u, v) */
       vlimb += (vgtu & t);
@@ -145,16 +154,16 @@ mpn_gcd_1 (mp_srcptr up, mp_size_t size, mp_limb_t vlimb)
 #if USE_ZEROTAB
       /* Number of trailing zeros is the same no matter if we look at
        * t or ulimb, but using t gives more parallelism. */
-      c = zerotab[t & 15];
+      c = zerotab[t & MASK];
 
-      while (UNLIKELY (c == 4))
+      while (UNLIKELY (c == MAXSHIFT))
 	{
-	  ulimb >>= 4;
+	  ulimb >>= MAXSHIFT;
 	  if (0)
 	  strip_u_maybe:
 	    vlimb >>= 1;
 
-	  c = zerotab[ulimb & 15];
+	  c = zerotab[ulimb & MASK];
 	}
 #else
       if (0)

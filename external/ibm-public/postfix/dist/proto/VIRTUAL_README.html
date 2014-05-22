@@ -357,7 +357,11 @@ in the virtual(8) manual page. </p>
 domains, non-UNIX accounts</a></h2>
 
 <p> This is a variation on the Postfix virtual mailbox example.
-Again, every hosted address can have its own mailbox.  </p>
+Again, every hosted address can have its own mailbox. However, most
+parameters that control the virtual(8) delivery agent are no longer
+applicable: only virtual_mailbox_domains and virtual_mailbox_maps
+stay in effect.  These parameters are needed to reject mail for
+unknown recipients.  </p>
 
 <p> While non-Postfix software is being used for final delivery,
 some Postfix concepts are still needed in order to glue everything

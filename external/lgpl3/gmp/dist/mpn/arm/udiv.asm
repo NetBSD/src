@@ -1,7 +1,7 @@
 dnl  ARM mpn_udiv_qrnnd -- divide a two limb dividend and a one limb divisor.
 dnl  Return quotient and store remainder through a supplied pointer.
 
-dnl  Copyright 2001 Free Software Foundation, Inc.
+dnl  Copyright 2001, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -48,9 +48,12 @@ L(oop):	divstep(n1,n0,d)
 	teq	r12, #0
 	bne	L(oop)
 
-	str	n1, [ rem_ptr ]		C store remainder
+	str	n1, [rem_ptr]		C store remainder
 	adc	r0, n0, n0		C quotient: add last carry from divstep
-	mov	pc, lr
+ifdef(`ARM_THUMB_MODE',
+`	bx	lr
+',`	mov	pc, lr
+')
 
 L(_large_divisor):
 	stmfd	sp!, { r8, lr }
@@ -87,7 +90,7 @@ L(oop2):
 	addcs	n0, n0, #1		C adjust quotient
 
 L(_even_divisor):
-	str	n1, [ rem_ptr ]		C store remainder
+	str	n1, [rem_ptr]		C store remainder
 	mov	r0, n0			C quotient
 	ldmfd	sp!, { r8, pc }
 EPILOGUE(mpn_udiv_qrnnd)

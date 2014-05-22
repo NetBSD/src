@@ -2,8 +2,8 @@
 
    Contributed to the GNU project by Torbjorn Granlund.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2008, 2009
-Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2008, 2009,
+2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -35,18 +35,15 @@ mpz_powm_sec (mpz_ptr r, mpz_srcptr b, mpz_srcptr e, mpz_srcptr m)
   TMP_DECL;
 
   n = ABSIZ(m);
-  if (n == 0)
-    DIVIDE_BY_ZERO;
 
   mp = PTR(m);
 
-  if (mp[0] % 2 == 0)
+  if (UNLIKELY ((n == 0) || (mp[0] % 2 == 0)))
     DIVIDE_BY_ZERO;
 
   es = SIZ(e);
   if (UNLIKELY (es <= 0))
     {
-      mpz_t new_b;
       if (es == 0)
 	{
 	  /* b^0 mod m,  b is anything and m is non-zero.

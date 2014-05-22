@@ -38,7 +38,7 @@
  */
 
 void
-nicenum(uint64_t num, char *buf)
+nicenum(uint64_t num, char *buf, size_t buflen)
 {
 	uint64_t n = num;
 	int index = 0;
@@ -52,15 +52,15 @@ nicenum(uint64_t num, char *buf)
 	u = " KMGTPE"[index];
 
 	if (index == 0) {
-		(void) sprintf(buf, "%llu", (u_longlong_t)n);
+		(void) snprintf(buf, buflen, "%llu", (u_longlong_t)n);
 	} else if (n < 10 && (num & (num - 1)) != 0) {
-		(void) sprintf(buf, "%.2f%c",
+		(void) snprintf(buf, buflen, "%.2f%c",
 		    (double)num / (1ULL << 10 * index), u);
 	} else if (n < 100 && (num & (num - 1)) != 0) {
-		(void) sprintf(buf, "%.1f%c",
+		(void) snprintf(buf, buflen, "%.1f%c",
 		    (double)num / (1ULL << 10 * index), u);
 	} else {
-		(void) sprintf(buf, "%llu%c", (u_longlong_t)n, u);
+		(void) snprintf(buf, buflen, "%llu%c", (u_longlong_t)n, u);
 	}
 }
 
@@ -96,15 +96,15 @@ show_vdev_stats(const char *desc, const char *ctype, nvlist_t *nv, int indent)
 
 		sec = MAX(1, vs->vs_timestamp / NANOSEC);
 
-		nicenum(vs->vs_alloc, used);
-		nicenum(vs->vs_space - vs->vs_alloc, avail);
-		nicenum(vs->vs_ops[ZIO_TYPE_READ] / sec, rops);
-		nicenum(vs->vs_ops[ZIO_TYPE_WRITE] / sec, wops);
-		nicenum(vs->vs_bytes[ZIO_TYPE_READ] / sec, rbytes);
-		nicenum(vs->vs_bytes[ZIO_TYPE_WRITE] / sec, wbytes);
-		nicenum(vs->vs_read_errors, rerr);
-		nicenum(vs->vs_write_errors, werr);
-		nicenum(vs->vs_checksum_errors, cerr);
+		nicenum(vs->vs_alloc, used, sizeof(used));
+		nicenum(vs->vs_space - vs->vs_alloc, avail, sizeof(avail));
+		nicenum(vs->vs_ops[ZIO_TYPE_READ] / sec, rops, sizeof(rops));
+		nicenum(vs->vs_ops[ZIO_TYPE_WRITE] / sec, wops, sizeof(wops));
+		nicenum(vs->vs_bytes[ZIO_TYPE_READ] / sec, rbytes, sizeof(rbytes));
+		nicenum(vs->vs_bytes[ZIO_TYPE_WRITE] / sec, wbytes, sizeof(wbytes));
+		nicenum(vs->vs_read_errors, rerr, sizeof(rerr));
+		nicenum(vs->vs_write_errors, werr, sizeof(werr));
+		nicenum(vs->vs_checksum_errors, cerr, sizeof(cerr));
 
 		(void) printf("%*s%s%*s%*s%*s %5s %5s %5s %5s %5s %5s %5s\n",
 		    indent, "",

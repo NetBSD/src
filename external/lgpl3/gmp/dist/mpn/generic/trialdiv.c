@@ -6,7 +6,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,20 +21,26 @@ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.	If not, see http://www.gnu.org/licenses/.  */
+along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 /*
-   Fast, division-free trial division for GMP.
-
-   This function will find the first (smallest) factor represented in
+   This function finds the first (smallest) factor represented in
    trialdivtab.h.  It does not stop the factoring effort just because it has
    reached some sensible limit, such as the square root of the input number.
 
    The caller can limit the factoring effort by passing NPRIMES.  The function
-   well then divide to *at least* that limit.  A position which only
-   mpn_trialdiv can make sense of is returned in the WHERE parameter.  It can
-   be used for restarting the factoring effort; the first call should pass 0
-   here.
+   will then divide until that limit, or perhaps a few primes more.  A position
+   which only mpn_trialdiv can make sense of is returned in the WHERE
+   parameter.  It can be used for restarting the factoring effort; the first
+   call should pass 0 here.
+
+   Input:        1. A non-negative number T = {tp,tn}
+                 2. NPRIMES as described above,
+                 3. *WHERE as described above.
+   Output:       1. *WHERE updated as described above.
+                 2. Return value is non-zero if we found a factor, else zero
+                    To get the actual prime factor, compute the mod B inverse
+                    of the return value.
 */
 
 #include "gmp.h"
@@ -58,10 +64,6 @@ struct gmp_primes_ptab {
 
 #define PTAB_LINES (sizeof (gmp_primes_ptab) / sizeof (gmp_primes_ptab[0]))
 
-/* Attempt to find a factor of T using trial division.
-   Input: A non-negative number T.
-   Output: non-zero if we found a factor, zero otherwise.  To get the actual
-   prime factor, compute the mod B inverse of the return value.  */
 /* FIXME: We could optimize out one of the outer loop conditions if we
    had a final ptab entry with a huge nd field.  */
 mp_limb_t
@@ -80,12 +82,7 @@ mpn_trialdiv (mp_srcptr tp, mp_size_t tn, mp_size_t nprimes, int *where)
       ppp = gmp_primes_ptab[i].ppp;
       cps = gmp_primes_ptab[i].cps;
 
-#if __GNU_MP_VERSION == 4 && __GNU_MP_VERSION_MINOR < 4
-      if (tn < 4)
-	r = mpn_mod_1 (tp, tn, ppp); /* FIXME */
-      else
-#endif
-	r = mpn_mod_1s_4p (tp, tn, ppp << cps[1], cps);
+      r = mpn_mod_1s_4p (tp, tn, ppp << cps[1], cps);
 
       idx = gmp_primes_ptab[i].idx;
       np = gmp_primes_ptab[i].np;

@@ -1,6 +1,8 @@
 dnl  IA-64 mpn_addmul_1 -- Multiply a limb vector with a limb and add the
 dnl  result to a second limb vector.
 
+dnl  Contributed to the GNU project by Torbjorn Granlund.
+
 dnl  Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007 Free Software
 dnl  Foundation, Inc.
 

@@ -56,57 +56,57 @@ mpz_ui_kronecker (unsigned long a, mpz_srcptr b)
     {
       /* (0/b)=0 for b!=+/-1; and (even/even)=0 */
       if (! (a & 1))
-        return 0;
+	return 0;
 
       /* a odd, b even
 
-         Establish shifted b_low with valid bit1 for the RECIP below.  Zero
-         limbs stripped are accounted for, but zero bits on b_low are not
-         because they remain in {b_ptr,b_abs_size} for
-         JACOBI_MOD_OR_MODEXACT_1_ODD. */
+	 Establish shifted b_low with valid bit1 for the RECIP below.  Zero
+	 limbs stripped are accounted for, but zero bits on b_low are not
+	 because they remain in {b_ptr,b_abs_size} for
+	 JACOBI_MOD_OR_MODEXACT_1_ODD. */
 
       JACOBI_STRIP_LOW_ZEROS (result_bit1, a, b_ptr, b_abs_size, b_low);
       if (! (b_low & 1))
-        {
-          if (UNLIKELY (b_low == GMP_NUMB_HIGHBIT))
-            {
-              /* need b_ptr[1] to get bit1 in b_low */
-              if (b_abs_size == 1)
-                {
-                  /* (a/0x80...00) == (a/2)^(NUMB-1) */
-                  if ((GMP_NUMB_BITS % 2) == 0)
-                    {
-                      /* JACOBI_STRIP_LOW_ZEROS does nothing to result_bit1
-                         when GMP_NUMB_BITS is even, so it's still 0. */
-                      ASSERT (result_bit1 == 0);
-                      result_bit1 = JACOBI_TWO_U_BIT1 (a);
-                    }
-                  return JACOBI_BIT1_TO_PN (result_bit1);
-                }
+	{
+	  if (UNLIKELY (b_low == GMP_NUMB_HIGHBIT))
+	    {
+	      /* need b_ptr[1] to get bit1 in b_low */
+	      if (b_abs_size == 1)
+		{
+		  /* (a/0x80...00) == (a/2)^(NUMB-1) */
+		  if ((GMP_NUMB_BITS % 2) == 0)
+		    {
+		      /* JACOBI_STRIP_LOW_ZEROS does nothing to result_bit1
+			 when GMP_NUMB_BITS is even, so it's still 0. */
+		      ASSERT (result_bit1 == 0);
+		      result_bit1 = JACOBI_TWO_U_BIT1 (a);
+		    }
+		  return JACOBI_BIT1_TO_PN (result_bit1);
+		}
 
-              /* b_abs_size > 1 */
-              b_low = b_ptr[1] << 1;
-            }
-          else
-            {
-              count_trailing_zeros (twos, b_low);
-              b_low >>= twos;
-            }
-        }
+	      /* b_abs_size > 1 */
+	      b_low = b_ptr[1] << 1;
+	    }
+	  else
+	    {
+	      count_trailing_zeros (twos, b_low);
+	      b_low >>= twos;
+	    }
+	}
     }
   else
     {
       if (a == 0)        /* (0/b)=1 for b=+/-1, 0 otherwise */
-        return (b_abs_size == 1 && b_low == 1);
+	return (b_abs_size == 1 && b_low == 1);
 
       if (! (a & 1))
-        {
-          /* a even, b odd */
-          count_trailing_zeros (twos, a);
-          a >>= twos;
-          /* (a*2^n/b) = (a/b) * (2/a)^n */
-          result_bit1 = JACOBI_TWOS_U_BIT1 (twos, b_low);
-        }
+	{
+	  /* a even, b odd */
+	  count_trailing_zeros (twos, a);
+	  a >>= twos;
+	  /* (a*2^n/b) = (a/b) * (2/a)^n */
+	  result_bit1 = JACOBI_TWOS_U_BIT1 (twos, b_low);
+	}
     }
 
   if (a == 1)

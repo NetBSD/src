@@ -48,13 +48,17 @@ care about these low-level details. </p>
     permissive = permit
 
     smtpd_recipient_restrictions = 
-	permit_mynetworks
-	reject_unauth_destination
-	check_recipient_access hash:/etc/postfix/recipient_access
+        permit_mynetworks
+	# reject_unauth_destination is not needed here if the mail
+	# relay policy is specified with smtpd_relay_restrictions
+	# (available with Postfix 2.10 and later).
+        reject_unauth_destination
+        check_recipient_access hash:/etc/postfix/recipient_access
+        ...
 
 /etc/postfix/recipient_access:
-    joe@my.domain	permissive
-    jane@my.domain	restrictive
+    joe@my.domain       permissive
+    jane@my.domain      restrictive
 </pre>
 </blockquote>
 
@@ -102,6 +106,7 @@ to IP spoofing. </p>
 <pre>
 /etc/postfix/main.cf:
     smtpd_recipient_restrictions =
+        ...
         check_recipient_access hash:/etc/postfix/access
         <i>...the usual stuff...</i>
 
@@ -133,6 +138,7 @@ therefore is subject to SMTP sender spoofing. </p>
 <pre>
 /etc/postfix/main.cf:
     smtpd_recipient_restrictions =
+        ...
         check_recipient_access hash:/etc/postfix/protected_destinations
         <i>...the usual stuff...</i>
 
@@ -193,6 +199,7 @@ with LDAP or SQL. </p>
 <pre>
 /etc/postfix/main.cf:
     smtpd_recipient_restrictions =
+        ...
         check_sender_access hash:/etc/postfix/restricted_senders
         <i>...other stuff...</i>
 

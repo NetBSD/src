@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5.6.1 2012/04/17 00:04:09 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.6.2 2014/05/22 14:01:24 yamt Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
+
+.include <bsd.own.mk>
 
 .include	"../../Makefile.inc"
 
@@ -86,6 +88,10 @@ COPTS.dt_subr.c		+= -Wno-stack-protector
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
+.elif ${MACHINE_CPU} == "arm"
+CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/arm
+.PATH:		${.CURDIR}/../../dist/lib/libdtrace/arm
+SRCS+=	dt_isadep.c
 .endif
 
 LFLAGS+=-l

@@ -91,7 +91,7 @@ Timing on GNU/Linux
       LIBS="$old_LIBS"
 
       AC_SUBST(TUNE_LIBS)
-    
+
     might work.
 
 Low resolution timebase
@@ -287,10 +287,16 @@ mpn_divrem_1, using division by 32 as an example.
 
 EXAMPLE COMPARISONS - MULTIPLICATION
 
-mul_basecase takes a ".<r>" parameter which is the first (larger) size
-parameter.  For example to show speeds for 20x1 up to 20x15 in cycles,
+mul_basecase takes a ".<r>" parameter. If positivie, it gives the second
+(smaller) operand size.  For example to show speeds for 3x3 up to 20x3 in
+cycles,
 
-        ./speed -s 1-15 -c mpn_mul_basecase.20
+        ./speed -s 3-20 -c mpn_mul_basecase.3
+
+A negative ".<-r>" parameter fixes the size of the product to the absolute
+value r.  For example to show speeds for 10x10 up to 19x1 in cycles,
+
+        ./speed -s 10-19 -c mpn_mul_basecase.-20
 
 mul_basecase with no parameter does an NxN multiply, so for example to show
 speeds in cycles for 1x1, 2x2, 3x3, etc, up to 20x20, in cycles,

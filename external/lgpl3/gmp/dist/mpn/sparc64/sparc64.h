@@ -129,6 +129,24 @@ Error, error, unknown limb endianness;
 #endif
 
 
+/* Multiply u anv v, where v < 2^32.  */
+#define umul_ppmm_s(w1, w0, u, v)					\
+  do {									\
+    UWtype __x0, __x2;							\
+    UWtype __ul, __vl, __uh;						\
+    UWtype __u = (u), __v = (v);					\
+									\
+    __ul = __ll_lowpart (__u);						\
+    __uh = __ll_highpart (__u);						\
+    __vl = __ll_lowpart (__v);						\
+									\
+    __x0 = (UWtype) __ul * __vl;					\
+    __x2 = (UWtype) __uh * __vl;					\
+									\
+    (w1) = (__x2 + (__x0 >> W_TYPE_SIZE/2)) >> W_TYPE_SIZE/2;		\
+    (w0) = (__x2 << W_TYPE_SIZE/2) + __x0;				\
+  } while (0)
+
 /* Count the leading zeros on a limb, but assuming it fits in 32 bits.
    The count returned will be in the range 32 to 63.
    This is the 32-bit generic C count_leading_zeros from longlong.h. */

@@ -2,7 +2,7 @@
    the float OP to STREAM in base BASE.  Return the number of characters
    written, or 0 if an error occurred.
 
-Copyright 1996, 1997, 2001, 2002, 2005 Free Software Foundation, Inc.
+Copyright 1996, 1997, 2001, 2002, 2005, 2011 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -36,6 +36,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
+#include "longlong.h"
 
 
 size_t

@@ -1,7 +1,8 @@
 divert(-1)
 dnl  m4 macros for AIX 64-bit assembly.
 
-dnl  Copyright 2000, 2001, 2002, 2005, 2006 Free Software Foundation, Inc.
+dnl  Copyright 2000, 2001, 2002, 2005, 2006, 2010, 2012 Free Software
+dnl  Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -19,7 +20,7 @@ dnl  You should have received a copy of the GNU Lesser General Public License
 dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 define(`ASM_START',
-	`.machine	"ppc64"
+	`.machine	"any"
 	.toc')
 
 dnl  Called: PROLOGUE_cpu(GSYM_PREFIX`'foo)
@@ -35,8 +36,7 @@ m4_assert_numargs(1)
 	.csect	[DS], 3
 $1:
 	.llong	.$1, TOC[tc0], 0
-	.csect	[PR]
-	.align	4
+	.csect	.$1[PR], 6
 .$1:')
 
 define(`EPILOGUE_cpu',

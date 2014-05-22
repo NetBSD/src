@@ -4,7 +4,8 @@
    CERTAIN TO BE SUBJECT TO INCOMPATIBLE CHANGES OR DISAPPEAR COMPLETELY IN
    FUTURE GNU MP RELEASES.
 
-Copyright 1991, 1993, 1994, 1995, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1995, 2001, 2002, 2011, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -32,27 +33,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 size_t
 mpn_sizeinbase (mp_srcptr xp, mp_size_t xsize, int base)
 {
-  int lb_base, cnt;
-  mp_size_t totbits;
-
-  ASSERT (xsize >= 0);
-  ASSERT (base >= 2);
-  ASSERT (base < numberof (mp_bases));
-
-  /* Special case for X == 0.  */
-  if (xsize == 0)
-    return 1;
-
-  /* Calculate the total number of significant bits of X.  */
-  count_leading_zeros (cnt, xp[xsize-1]);
-  totbits = xsize * GMP_LIMB_BITS - cnt;
-
-  if (POW2_P (base))
-    {
-      /* Special case for powers of 2, giving exact result.  */
-      lb_base = mp_bases[base].big_base;
-      return (totbits + lb_base - 1) / lb_base;
-    }
-  else
-    return (size_t) (totbits * mp_bases[base].chars_per_bit_exactly) + 1;
+  size_t  result;
+  MPN_SIZEINBASE (result, xp, xsize, base);
+  return result;
 }

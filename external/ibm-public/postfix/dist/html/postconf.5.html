@@ -96,7 +96,7 @@ is hard-coded as "450".
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 <p>
@@ -115,7 +115,7 @@ an <a href="access.5.html">access(5)</a> map "reject" action.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -768,8 +768,15 @@ that is received by the Postfix mail system.
 </p>
 
 <p>
-Note: if mail to the BCC address bounces it will be returned to
-the sender.
+Note: with Postfix 2.3 and later the BCC address is added as if it
+was specified with NOTIFY=NONE. The sender will not be notified
+when the BCC address is undeliverable, as long as all down-stream
+software implements <a href="http://tools.ietf.org/html/rfc3461">RFC 3461</a>.
+</p>
+
+<p>
+Note: with Postfix 2.2 and earlier the sender will be notified
+when the BCC address is undeliverable.
 </p>
 
 <p> Note: automatic BCC recipients are produced only for new mail.
@@ -1204,9 +1211,10 @@ enabled with the <a href="postconf.5.html#notify_classes">notify_classes</a> par
 (default: 5d)</b></DT><DD>
 
 <p>
-The maximal time a bounce message is queued before it is considered
-undeliverable.  By default, this is the same as the queue life time
-for regular mail.
+Consider a bounce message as undeliverable, when delivery fails
+with a temporary error, and the time in the queue has reached the
+<a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a> limit.  By default, this limit is the same
+as for regular mail.
 </p>
 
 <p>
@@ -1730,6 +1738,12 @@ set up your XAUTHORITY environment variable before starting Postfix.
 </p>
 
 <p>
+Note: the command is subject to $name expansion, before it is
+passed to the default commmand interpreter. Specify "$$" to
+produce a single "$" character.
+</p>
+
+<p>
 Example:
 </p>
 
@@ -2019,9 +2033,24 @@ is the <a href="master.5.html">master.cf</a> name of the message delivery transp
 (default: 0s)</b></DT><DD>
 
 <p> The default amount of delay that is inserted between individual
-deliveries to the same destination; with per-destination recipient
-limit &gt; 1, a destination is a domain, otherwise it is a recipient.
+deliveries to the same destination; the resulting behavior depends
+on the value of the corresponding per-destination recipient limit.
 </p>
+
+<ul>
+
+<li> <p> With a corresponding per-destination recipient limit &gt;
+1, the rate delay specifies the time between deliveries to the
+<i>same domain</i>.  Different domains are delivered in parallel,
+subject to the process limits specified in <a href="master.5.html">master.cf</a>. </p>
+
+<li> <p> With a corresponding per-destination recipient limit equal
+to 1, the rate delay specifies the time between deliveries to the
+<i>same recipient</i>. Different recipients are delivered in
+parallel, subject to the process limits specified in <a href="master.5.html">master.cf</a>.
+</p>
+
+</ul>
 
 <p> To enable the delay, specify a non-zero time value (an integral
 value plus an optional one-letter suffix that specifies the time
@@ -2059,9 +2088,29 @@ This is the default limit for delivery via the <a href="lmtp.8.html">lmtp(8)</a>
 <a href="smtp.8.html">smtp(8)</a> and <a href="virtual.8.html">virtual(8)</a> delivery agents.
 </p>
 
-<p> Setting this parameter to a value of 1 changes the meaning of
-the corresponding per-destination concurrency limit from concurrency
-per domain into concurrency per recipient.  </p>
+<p> Setting this parameter to a value of 1 affects email deliveries
+as follows:</p>
+
+<ul>
+
+<li> <p> It changes the meaning of the corresponding per-destination
+concurrency limit, from concurrency of deliveries to the <i>same
+domain</i> into concurrency of deliveries to the <i>same recipient</i>.
+Different recipients are delivered in parallel, subject to the
+process limits specified in <a href="master.5.html">master.cf</a>. </p>
+
+<li> <p> It changes the meaning of the corresponding per-destination
+rate delay, from the delay between deliveries to the <i>same
+domain</i> into the delay between deliveries to the <i>same
+recipient</i>.  Again, different recipients are delivered in parallel,
+subject to the process limits specified in <a href="master.5.html">master.cf</a>.  </p>
+
+<li> <p> It changes the meaning of other corresponding per-destination
+settings in a similar manner, from settings for delivery to the
+<i>same domain</i> into settings for delivery to the <i>same
+recipient</i>.
+
+</ul>
 
 <p> Use <a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a> to specify a
 transport-specific override, where <i>transport</i> is the <a href="master.5.html">master.cf</a>
@@ -2398,7 +2447,7 @@ client request is rejected by the "defer" restriction.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -2480,7 +2529,7 @@ of mail that cannot be delivered within $<a href="postconf.5.html#delay_warning_
 units.  </p>
 
 <p>
-This feature is enabled with the <a href="postconf.5.html#delay_warning_time">delay_warning_time</a> parameter.
+See also: <a href="postconf.5.html#delay_warning_time">delay_warning_time</a>, <a href="postconf.5.html#notify_classes">notify_classes</a>.
 </p>
 
 
@@ -2490,8 +2539,8 @@ This feature is enabled with the <a href="postconf.5.html#delay_warning_time">de
 (default: 0h)</b></DT><DD>
 
 <p>
-The time after which the sender receives the message headers of
-mail that is still queued.
+The time after which the sender receives a copy of the message
+headers of mail that is still queued.
 </p>
 
 <p>
@@ -2503,6 +2552,10 @@ unit).
 <p>
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is h (hours).
+</p>
+
+<p>
+See also: <a href="postconf.5.html#delay_notice_recipient">delay_notice_recipient</a>, <a href="postconf.5.html#notify_classes">notify_classes</a>.
 </p>
 
 
@@ -2652,7 +2705,7 @@ Example:
 <DT><b><a name="dnsblog_reply_delay">dnsblog_reply_delay</a>
 (default: 0s)</b></DT><DD>
 
-<p> A debugging aid to artifically delay DNS responses. </p>
+<p> A debugging aid to artificially delay DNS responses. </p>
 
 <p> This feature is available in Postfix 2.8.  </p>
 
@@ -3646,7 +3699,7 @@ restriction.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -3740,7 +3793,7 @@ configuration parameter.  See there for details. </p>
 the
 server performs final delivery, and send "delivered" delivery status
 notifications instead of "relayed". The default setting is backwards
-compatible to avoid the infinetisimal possibility of breaking
+compatible to avoid the infinitesimal possibility of breaking
 existing LMTP-based content filters. </p>
 
 
@@ -5291,8 +5344,9 @@ the SMTP greeting banner, and in bounced mail.
 
 <p>
 The UNIX system account that owns the Postfix queue and most Postfix
-daemon processes.  Specify the name of a user account that does
-not share a group with other accounts and that owns no other files
+daemon processes.  Specify the name of an unprivileged user account
+that does not share a user or group ID with other accounts, and that
+owns no other files
 or processes on the system.  In particular, don't specify nobody
 or daemon.  PLEASE USE A DEDICATED USER ID AND GROUP ID.
 </p>
@@ -5629,7 +5683,7 @@ client request is blocked by the <a href="postconf.5.html#reject_rbl_client">rej
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -5848,8 +5902,9 @@ The default time unit is s (seconds).
 (default: 5d)</b></DT><DD>
 
 <p>
-The maximal time a message is queued before it is sent back as
-undeliverable.
+Consider a message as undeliverable, when delivery fails with a
+temporary error, and the time in the queue has reached the
+<a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a> limit.
 </p>
 
 <p>
@@ -6368,7 +6423,7 @@ restriction.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 <p>
@@ -6494,7 +6549,7 @@ The list of "trusted" remote SMTP clients that have more privileges than
 
 <p>
 In particular, "trusted" SMTP clients are allowed to relay mail
-through Postfix.  See the <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> parameter
+through Postfix.  See the <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> parameter
 description in the <a href="postconf.5.html">postconf(5)</a> manual.
 </p>
 
@@ -6696,7 +6751,8 @@ is available in Postfix 2.9 and later.  </dd>
 
 <dt><b>delay</b></dt>
 
-<dd>Send the postmaster copies of the headers of delayed mail. The
+<dd>Send the postmaster copies of the headers of delayed mail (see
+<a href="postconf.5.html#delay_warning_time">delay_warning_time</a>). The
 notification is sent to the address specified with the
 <a href="postconf.5.html#delay_notice_recipient">delay_notice_recipient</a> configuration parameter (default: postmaster).
 </dd>
@@ -7594,7 +7650,7 @@ one-letter suffix that specifies the time unit).  Time units: s
 <p> The number of clients that can be waiting for service from a
 real Postfix SMTP server process. When this queue is full, all
 clients will
-receive a 421 reponse. </p>
+receive a 421 response. </p>
 
 <p> This feature is available in Postfix 2.8. </p>
 
@@ -7608,7 +7664,7 @@ receive a 421 reponse. </p>
 a decision whether they will receive service from a real Postfix
 SMTP server
 process. When this queue is full, all non-whitelisted clients will
-receive a 421 reponse. </p>
+receive a 421 response. </p>
 
 <p> This feature is available in Postfix 2.8. </p>
 
@@ -7636,6 +7692,31 @@ a non-empty value is specified, this overrides the obsolete parameters
 for details. </p>
 
 <p> This feature is available in Postfix 2.8 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="postscreen_upstream_proxy_protocol">postscreen_upstream_proxy_protocol</a>
+(default: empty)</b></DT><DD>
+
+<p> The name of the proxy protocol used by an optional before-postscreen
+proxy agent. When a proxy agent is used, this protocol conveys local
+and remote address and port information. Specify
+"<a href="postconf.5.html#postscreen_upstream_proxy_protocol">postscreen_upstream_proxy_protocol</a> = haproxy" to enable the haproxy
+protocol. <p>
+
+<p> This feature is available in Postfix 2.10 and later.  </p>
+
+
+</DD>
+
+<DT><b><a name="postscreen_upstream_proxy_timeout">postscreen_upstream_proxy_timeout</a>
+(default: 5s)</b></DT><DD>
+
+<p> The time limit for the proxy protocol specified with the
+<a href="postconf.5.html#postscreen_upstream_proxy_protocol">postscreen_upstream_proxy_protocol</a> parameter. </p>
+
+<p> This feature is available in Postfix 2.10 and later.  </p>
 
 
 </DD>
@@ -7690,6 +7771,26 @@ can talk to a Postfix SMTP server on any address. Thus, clients
 that connect only to backup MX addresses will never become whitelisted,
 and will never be allowed to talk to a Postfix SMTP server process.
 </p>
+
+<p> Specify a list of network addresses or network/netmask patterns,
+separated by commas and/or whitespace. The netmask specifies the
+number of bits in the network part of a host address. Continue long
+lines by starting the next line with whitespace. </p>
+
+<p> You can also specify "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patterns.  A
+"/file/name" pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>"
+lookup table is matched when a table entry matches a lookup string
+(the lookup result is ignored). </p>
+
+<p> The list is matched left to right, and the search stops on the
+first match. Specify "!pattern" to exclude an address or network
+block from the list.  </p>
+
+<p> Note: IP version 6 address information must be specified inside
+[] in the <a href="postconf.5.html#postscreen_whitelist_interfaces">postscreen_whitelist_interfaces</a> value, and in files
+specified with "/file/name".  IP version 6 addresses contain the
+":" character, and would otherwise be confused with a "<a href="DATABASE_README.html">type:table</a>"
+pattern. </p>
 
 <p> Example: </p>
 
@@ -7973,7 +8074,7 @@ The maximal number of messages in the <a href="QSHAPE_README.html#active_queue">
 (default: 20000)</b></DT><DD>
 
 <p> The maximal number of recipients held in memory by the Postfix
-queue manager, and the maximal size of the size of the short-term,
+queue manager, and the maximal size of the short-term,
 in-memory "dead" destination status cache.  </p>
 
 
@@ -8299,8 +8400,15 @@ run "<b>postmap /etc/postfix/recipient_bcc</b>".
 </p>
 
 <p>
-Note: if mail to the BCC address bounces it will be returned to
-the sender.
+Note: with Postfix 2.3 and later the BCC address is added as if it
+was specified with NOTIFY=NONE. The sender will not be notified
+when the BCC address is undeliverable, as long as all down-stream
+software implements <a href="http://tools.ietf.org/html/rfc3461">RFC 3461</a>.
+</p>
+
+<p>
+Note: with Postfix 2.2 and earlier the sender will be notified
+when the BCC address is undeliverable.
 </p>
 
 <p> Note: automatic BCC recipients are produced only for new mail.
@@ -8390,7 +8498,7 @@ client request is rejected by the "reject" restriction.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -8439,6 +8547,10 @@ D7:04:2F:A7:0B:8C:A5:21:FA:31:77:E1:41:8A:EE:80 lutzpc.at.home </p>
 <p>For more fine-grained control, use <a href="postconf.5.html#check_ccert_access">check_ccert_access</a> to select
 an appropriate <a href="access.5.html">access(5)</a> policy for each client.
 See <a href="RESTRICTION_CLASS_README.html">RESTRICTION_CLASS_README</a>.</p>
+
+<p> <b>Note:</b> Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <p>This feature is available with Postfix version 2.2.</p>
 
@@ -8517,7 +8629,7 @@ restriction.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -8907,8 +9019,15 @@ run "<b>postmap /etc/postfix/sender_bcc</b>".
 </p>
 
 <p>
-Note: if mail to the BCC address bounces it will be returned to
-the sender.
+Note: with Postfix 2.3 and later the BCC address is added as if it
+was specified with NOTIFY=NONE. The sender will not be notified
+when the BCC address is undeliverable, as long as all down-stream
+software implements <a href="http://tools.ietf.org/html/rfc3461">RFC 3461</a>.
+</p>
+
+<p>
+Note: with Postfix 2.2 and earlier the sender will be notified
+when the BCC address is undeliverable.
 </p>
 
 <p> Note: automatic BCC recipients are produced only for new mail.
@@ -9125,6 +9244,21 @@ SMTP client will try first, when a destination has IPv6 and IPv4
 addresses with equal MX preference. This feature has no effect
 unless the <a href="postconf.5.html#inet_protocols">inet_protocols</a> setting enables both IPv4 and IPv6.
 With Postfix 2.8 the default is "ipv6".  </p>
+
+<p> Notes for mail delivery between sites that have both IPv4 and
+IPv6 connectivity: </p>
+
+<ul>
+
+<li> <p> The setting "<a href="postconf.5.html#smtp_address_preference">smtp_address_preference</a> = ipv6" is unsafe.
+It can fail to deliver mail when there is an outage that affects
+IPv6, while the destination is still reachable over IPv4. </p>
+
+<li> <p> The setting "<a href="postconf.5.html#smtp_address_preference">smtp_address_preference</a> = any" is safe. With
+this, mail will eventually be delivered even if there is an outage
+that affects IPv6 or IPv4, as long as it does not affect both. </p>
+
+</ul>
 
 <p> This feature is available in Postfix 2.8 and later.  </p>
 
@@ -9617,6 +9751,11 @@ By default, mail is returned to the sender when a destination is
 not found, and delivery is deferred when a destination is unreachable.
 </p>
 
+<p> With bulk email deliveries, it can be beneficial to run the
+fallback relay MTA on the same host, so that it can reuse the sender
+IP address.  This speeds up deliveries that are delayed by IP-based
+reputation systems (greylist, etc.). </p>
+
 <p> The fallback relays must be SMTP destinations. Specify a domain,
 host, host:port, [host]:port, [address] or [address]:port; the form
 [host] turns off MX lookups.  If you specify multiple SMTP
@@ -9977,12 +10116,12 @@ The default time unit is s (seconds).
 <p>
 Quote addresses in Postfix SMTP client MAIL FROM and RCPT TO commands
 as required
-by <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>. This includes putting quotes around an address localpart
+by <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>. This includes putting quotes around an address localpart
 that ends in ".".
 </p>
 
 <p>
-The default is to comply with <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>. If you have to send mail to
+The default is to comply with <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>. If you have to send mail to
 a broken SMTP server, configure a special SMTP client in <a href="master.5.html">master.cf</a>:
 </p>
 
@@ -10201,10 +10340,10 @@ parameter, but the setting "no" does not. </p>
 <p>
 If non-empty, a Postfix SMTP client filter for the remote SMTP
 server's list of offered SASL mechanisms.  Different client and
-server implementations may support different mechanism lists. By
+server implementations may support different mechanism lists; by
 default, the Postfix SMTP client will use the intersection of the
-two. <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> further restricts what server
-mechanisms the client will take into consideration.  </p>
+two. <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> specifies an optional third mechanism
+list to intersect with. </p>
 
 <p> Specify mechanism names, "/file/name" patterns or "<a href="DATABASE_README.html">type:table</a>"
 lookup tables. The right-hand side result from "<a href="DATABASE_README.html">type:table</a>" lookups
@@ -10490,6 +10629,10 @@ file may also be used to augment the client certificate trust chain,
 but it is best to include all the required certificates directly in
 $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>. </p>
 
+<p> Specify "<a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /path/to/system_CA_file" to use
+ONLY the system-supplied default certificate authority certificates.
+</p>
+
 <p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
 appending the system-supplied default CAs and trusting third-party
 certificates. </p>
@@ -10516,6 +10659,10 @@ with, for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs".
 
 <p> To use this option in chroot mode, this directory (or a copy)
 must be inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#smtp_tls_CApath">smtp_tls_CApath</a> = /path/to/system_CA_directory" to
+use ONLY the system-supplied default certificate authority certificates.
+</p>
 
 <p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
 appending the system-supplied default CAs and trusting third-party
@@ -10895,11 +11042,47 @@ SHA1 Fingerprint=D4:6A:AB:19:24:79:F8:32:BB:A6:CB:66:82:C0:8E:9B:EE:29:A8:1A
 </pre>
 </blockquote>
 
-<p> Public key fingerprints are more difficult to extract, however,
-the SHA-1 public key fingerprint is often present as the value of the
-"Subject Key Identifier" extension in X.509v3 certificates. The Postfix
-SMTP server and client log the peer certificate fingerprint and public
-key fingerprint when TLS loglevel is 1 or higher. </p>
+<p> To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint. </p>
+
+<p> The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used. </p>
+<blockquote>
+<pre>
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+</pre>
+</blockquote>
+
+<p> The Postfix SMTP server and client log the peer (leaf) certificate
+fingerprint and public key fingerprint when the TLS loglevel is 2 or
+higher. </p>
+
+<p> <b>Note:</b> Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <p> This feature is available in Postfix 2.5 and later. </p>
 
@@ -11072,7 +11255,7 @@ protocol exclusions. One can now explicitly exclude SSLv2 by setting
 SSLv3 set "<a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> = !SSLv2, !SSLv3". Listing
 the protocols to include, rather than protocols to exclude, is
 supported, but not recommended. The exclusion form more closely
-matches the behaviour when the OpenSSL library is newer than Postfix.
+matches the behavior when the OpenSSL library is newer than Postfix.
 </p>
 
 <p> Since SSL version 2 has known protocol weaknesses and is now
@@ -11356,7 +11539,7 @@ with a "!" character. To exclude SSLv2 even for opportunistic TLS set
 "<a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a> = !SSLv2". To exclude both "SSLv2" and "SSLv3" set
 "<a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a> = !SSLv2, !SSLv3". Explicitly listing the protocols to
 include, rather than protocols to exclude, is supported, but not
-recommended.  The exclusion form more closely matches the behaviour
+recommended.  The exclusion form more closely matches the behavior
 when the OpenSSL library is newer than Postfix.  </p>
 
 <p> Example: </p>
@@ -12100,8 +12283,8 @@ Example:
 (default: empty)</b></DT><DD>
 
 <p>
-Optional Postfix SMTP server access restrictions in the context of
-a remote SMTP client connection request.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client connection request.
 See <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, section "Delayed evaluation of SMTP access
 restriction lists" for a discussion of evaluation context and time.
 </p>
@@ -12425,11 +12608,14 @@ This feature is available in Postfix 2.3. </dd>
 
 <dt><b><a name="warn_if_reject">warn_if_reject</a></b></dt>
 
-<dd>Change the meaning of the next restriction, so that it logs
-a warning instead of rejecting a request (look for logfile records
-that contain "reject_warning"). This is useful for testing new
-restrictions in a "live" environment without risking unnecessary
-loss of mail. </dd>
+<dd> A safety net for testing. When "<a href="postconf.5.html#warn_if_reject">warn_if_reject</a>" is placed
+before a reject-type restriction, access table query, or
+<a href="postconf.5.html#check_policy_service">check_policy_service</a> query, this logs a "reject_warning" message
+instead of rejecting a request (when a reject-type restriction fails
+due to a temporary error, this logs a "reject_warning" message for
+any implicit "<a href="postconf.5.html#defer_if_permit">defer_if_permit</a>" actions that would normally prevent
+mail from being accepted by some later access restriction). This
+feature has no effect on <a href="postconf.5.html#defer_if_reject">defer_if_reject</a> restrictions.  </dd>
 
 </dl>
 
@@ -12528,7 +12714,7 @@ feature: </p>
 <pre>
     # Bounce-never mail sink. Use <a href="postconf.5.html#notify_classes">notify_classes</a>=bounce,resource,software
     # to send bounced mail to the postmaster (with message body removed).
-    /^(RCPT\s+TO:.*?)\bNOTIFY=\S+\b(.*)/ $1 NOTIFY=NEVER $2
+    /^(RCPT\s+TO:&lt;.*&gt;.*)\s+NOTIFY=\S+(.*)/ $1 NOTIFY=NEVER$2
     /^(RCPT\s+TO:.*)/                    $1 NOTIFY=NEVER
 </pre>
 
@@ -12733,8 +12919,8 @@ mail. </p>
 (default: empty)</b></DT><DD>
 
 <p>
-Optional SMTP server access restrictions in the context of a client
-ETRN request.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client ETRN command.
 See <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, section "Delayed evaluation of SMTP access
 restriction lists" for a discussion of evaluation context and time.
 </p>
@@ -12870,7 +13056,7 @@ Example:
 
 <p>
 Optional restrictions that the Postfix SMTP server applies in the
-context of the SMTP HELO command.
+context of a client HELO command.
 See <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, section "Delayed evaluation of SMTP access
 restriction lists" for a discussion of evaluation context and time.
 </p>
@@ -12932,8 +13118,8 @@ feature is available in Postfix 2.1 and later.
 
 <dt><b><a name="reject_invalid_helo_hostname">reject_invalid_helo_hostname</a></b> (with Postfix &lt; 2.3: reject_invalid_hostname)</dt>
 
-<dd>Reject the request when the HELO or EHLO hostname syntax is
-invalid. Note: specify "<a href="postconf.5.html#smtpd_helo_required">smtpd_helo_required</a> = yes" to fully enforce
+<dd>Reject the request when the HELO or EHLO hostname is malformed.
+Note: specify "<a href="postconf.5.html#smtpd_helo_required">smtpd_helo_required</a> = yes" to fully enforce
 this restriction (without "<a href="postconf.5.html#smtpd_helo_required">smtpd_helo_required</a> = yes", a client can simply
 skip <a href="postconf.5.html#reject_invalid_helo_hostname">reject_invalid_helo_hostname</a> by not sending HELO or EHLO).
 <br> The <a href="postconf.5.html#invalid_hostname_reject_code">invalid_hostname_reject_code</a> specifies the response code
@@ -13036,6 +13222,42 @@ command count is reset after mail is delivered.  See also the
 parameters.  Normally the default limit is 100, but it changes under
 overload to just 1. With Postfix 2.5 and earlier, the SMTP server
 always allows up to 100 junk commands by default.  </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_log_access_permit_actions">smtpd_log_access_permit_actions</a>
+(default: empty)</b></DT><DD>
+
+<p> Enable logging of the named "permit" actions in SMTP server
+access lists (by default, the SMTP server logs "reject" actions but
+not "permit" actions).  This feature does not affect conditional
+actions such as "<a href="postconf.5.html#defer_if_permit">defer_if_permit</a>". </p>
+
+<p> Specify a list of "permit" action names, "/file/name" or
+"<a href="DATABASE_README.html">type:table</a>" patterns, separated by commas and/or whitespace. The
+list is matched left to right, and the search stops on the first
+match. A "/file/name" pattern is replaced by its contents; a
+"<a href="DATABASE_README.html">type:table</a>" lookup table is matched when a name matches a lookup
+key (the lookup result is ignored).  Continue long lines by starting
+the next line with whitespace. Specify "!pattern" to exclude a name
+from the list. </p>
+
+<p> Examples: </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Log all "permit" actions.
+    <a href="postconf.5.html#smtpd_log_access_permit_actions">smtpd_log_access_permit_actions</a> = <a href="DATABASE_README.html#types">static</a>:all
+</pre>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Log "<a href="postconf.5.html#permit_dnswl_client">permit_dnswl_client</a>" only.
+    <a href="postconf.5.html#smtpd_log_access_permit_actions">smtpd_log_access_permit_actions</a> = <a href="postconf.5.html#permit_dnswl_client">permit_dnswl_client</a>
+</pre>
+
+<p> This feature is available in Postfix 2.10 and later.  </p>
 
 
 </DD>
@@ -13273,42 +13495,43 @@ for each excess recipient.  </p>
 </DD>
 
 <DT><b><a name="smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>
-(default: <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>)</b></DT><DD>
+(default: see "postconf -d" output)</b></DT><DD>
 
 <p>
-The access restrictions that the Postfix SMTP server applies in
-the context of the RCPT TO command.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client RCPT TO command, after <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
 See <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, section "Delayed evaluation of SMTP access
 restriction lists" for a discussion of evaluation context and time.
 </p>
 
-<p>
-By default, the Postfix SMTP server accepts:
-</p>
+<p> With Postfix versions before 2.10, the rules for relay permission
+and spam blocking were combined under <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>,
+resulting in error-prone configuration.  As of Postfix 2.10, relay
+permission rules are preferably implemented with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>,
+so that a permissive spam blocking policy under
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> will no longer result in a permissive
+mail relay policy.  </p>
 
-<ul>
-
-<li> Mail from clients whose IP address matches $<a href="postconf.5.html#mynetworks">mynetworks</a>, or:
-
-<li> Mail to remote destinations that match $<a href="postconf.5.html#relay_domains">relay_domains</a>, except
-for addresses that contain sender-specified routing
-(user@elsewhere@domain), or:
-
-<li> Mail to local destinations that match $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>
-or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>, $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>, or
-$<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
-
-</ul>
+<p> For backwards compatibility, sites that migrate from Postfix
+versions before 2.10 can set <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> to the empty
+value, and use <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> exactly as before. </p>
 
 <p>
-IMPORTANT: If you change this parameter setting, you must specify
+IMPORTANT: Either the <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> or the
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> parameter must specify
 at least one of the following restrictions. Otherwise Postfix will
 refuse to receive mail:
 </p>
 
 <blockquote>
 <pre>
-reject, defer, <a href="postconf.5.html#defer_if_permit">defer_if_permit</a>, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+reject, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+defer, <a href="postconf.5.html#defer_if_permit">defer_if_permit</a>, <a href="postconf.5.html#defer_unauth_destination">defer_unauth_destination</a>
 </pre>
 </blockquote>
 
@@ -13428,8 +13651,14 @@ matches $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="po
 $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>, or $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>, and contains
 no sender-specified routing (user@elsewhere@domain).
 
-</ul> The <a href="postconf.5.html#relay_domains_reject_code">relay_domains_reject_code</a> parameter specifies the response
+</ul>The <a href="postconf.5.html#relay_domains_reject_code">relay_domains_reject_code</a> parameter specifies the response
 code for rejected requests (default: 554). </dd>
+
+<dt><b><a name="defer_unauth_destination">defer_unauth_destination</a></b></dt>
+
+<dd> Reject the same requests as <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>, with a
+non-permanent error code.  This feature is available in Postfix
+2.10 and later.</dd>
 
 <dt><b><a name="reject_unknown_recipient_domain">reject_unknown_recipient_domain</a></b></dt>
 
@@ -13489,6 +13718,8 @@ Example:
 </p>
 
 <pre>
+# The Postfix before 2.10 default mail relay policy. Later Postfix
+# versions implement this preferably with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
 <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 </pre>
 
@@ -13502,11 +13733,15 @@ Example:
 server
 4XX or 5XX response. </p>
 
-<p> Example: </p>
+<p> The following example uses "\c" at the start of the template
+(supported in Postfix 2.10 and later) to suppress the line break
+between the reply text and the footer text. With earlier Postfix
+versions, the footer text always begins on a new line, and the "\c"
+is output literally. </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_reject_footer">smtpd_reject_footer</a> = For assistance, call 800-555-0101.
+    <a href="postconf.5.html#smtpd_reject_footer">smtpd_reject_footer</a> = \c. For assistance, call 800-555-0101.
      Please provide the following information in your problem report:
      time ($localtime), client ($client_address) and server
      ($server_name).
@@ -13515,8 +13750,8 @@ server
 <p> Server response: </p>
 
 <pre>
-    550-5.5.1 &lt;user@example&gt; Recipient address rejected: User unknown
-    550 5.5.1 For assistance, call 800-555-0101. Please provide the
+    550-5.5.1 &lt;user@example&gt; Recipient address rejected: User
+    unknown. For assistance, call 800-555-0101. Please provide the
     following information in your problem report: time (Jan 4 15:42:00),
     client (192.168.1.248) and server (mail1.example.com).
 </pre>
@@ -13569,6 +13804,11 @@ for a line break in the footer text. Postfix automatically inserts
 after each line break the three-digit SMTP reply code (and optional
 enhanced status code) from the original Postfix reject message.
 </p>
+
+<p> To work around mail software that mis-handles multi-line replies,
+specify the two-character sequence \c at the start of the template.
+This suppresses the line break between the reply text and the footer
+text (Postfix 2.10 and later).  </p>
 
 <p> This feature is available in Postfix 2.8 and later. </p>
 
@@ -13651,6 +13891,77 @@ This feature is available in Postfix 2.1 and later.
 
 </DD>
 
+<DT><b><a name="smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+(default: <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>, <a href="postconf.5.html#defer_unauth_destination">defer_unauth_destination</a>)</b></DT><DD>
+
+<p> Access restrictions for mail relay control that the Postfix
+SMTP server applies in the context of the RCPT TO command, before
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.
+See <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, section "Delayed evaluation of SMTP access
+restriction lists" for a discussion of evaluation context and time.
+</p>
+
+<p> With Postfix versions before 2.10, the rules for relay permission
+and spam blocking were combined under <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>,
+resulting in error-prone configuration.  As of Postfix 2.10, relay
+permission rules are preferably implemented with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>,
+so that a permissive spam blocking policy under
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> will no longer result in a permissive
+mail relay policy.  </p>
+
+<p> For backwards compatibility, sites that migrate from Postfix
+versions before 2.10 can set <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> to the empty
+value, and use <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> exactly as before. </p>
+
+<p>
+By default, the Postfix SMTP server accepts:
+</p>
+
+<ul>
+
+<li> Mail from clients whose IP address matches $<a href="postconf.5.html#mynetworks">mynetworks</a>, or:
+
+<li> Mail to remote destinations that match $<a href="postconf.5.html#relay_domains">relay_domains</a>, except
+for addresses that contain sender-specified routing
+(user@elsewhere@domain), or:
+
+<li> Mail to local destinations that match $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>
+or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>, $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>, or
+$<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
+
+</ul>
+
+<p>
+IMPORTANT: Either the <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> or the
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> parameter must specify
+at least one of the following restrictions. Otherwise Postfix will
+refuse to receive mail:
+</p>
+
+<blockquote>
+<pre>
+reject, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+defer, <a href="postconf.5.html#defer_if_permit">defer_if_permit</a>, <a href="postconf.5.html#defer_unauth_destination">defer_unauth_destination</a>
+</pre>
+</blockquote>
+
+<p>
+Specify a list of restrictions, separated by commas and/or whitespace.
+Continue long lines by starting the next line with whitespace.
+The same restrictions are available as documented under
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.
+</p>
+
+<p> This feature is available in Postix 2.10 and later. </p>
+
+
+</DD>
+
 <DT><b><a name="smtpd_restriction_classes">smtpd_restriction_classes</a>
 (default: empty)</b></DT><DD>
 
@@ -13702,6 +14013,15 @@ access restriction can be used to permit relay access, like this:
 
 <blockquote>
 <pre>
+# With Postfix 2.10 and later, the mail relay policy is
+# preferably specified under <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
+<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> =
+    <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>, ...
+</pre>
+
+<pre>
+# With Postfix before 2.10, the relay policy can be
+# specified only under <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.
 <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
     <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>, ...
 </pre>
@@ -13966,7 +14286,7 @@ or a list of SASL login names separated by comma and/or whitespace.
 
 <p>
 Optional restrictions that the Postfix SMTP server applies in the
-context of the MAIL FROM command.
+context of a client MAIL FROM command.
 See <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, section "Delayed evaluation of SMTP access
 restriction lists" for a discussion of evaluation context and time.
 </p>
@@ -14208,6 +14528,10 @@ file may also be used to augment the server certificate trust chain,
 but it is best to include all the required certificates directly in the
 server certificate file. </p>
 
+<p> Specify "<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> = /path/to/system_CA_file" to use ONLY
+the system-supplied default certificate authority certificates.
+</p>
+
 <p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
 appending the system-supplied default CAs and trusting third-party
 certificates. </p>
@@ -14242,6 +14566,10 @@ certificates. Do not forget to create the necessary "hash" links with,
 for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs". To use
 <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> in chroot mode, this directory (or a copy) must be
 inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> = /path/to/system_CA_directory" to
+use ONLY the system-supplied default certificate authority certificates.
+</p>
 
 <p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
 appending the system-supplied default CAs and trusting third-party
@@ -14688,11 +15016,47 @@ SHA1 Fingerprint=D4:6A:AB:19:24:79:F8:32:BB:A6:CB:66:82:C0:8E:9B:EE:29:A8:1A
 </pre>
 </blockquote>
 
-<p> Public key fingerprints are more difficult to extract, however,
-the SHA-1 public key fingerprint is often present as the value of the
-"Subject Key Identifier" extension in X.509v3 certificates. The Postfix
-SMTP server and client log the peer certificate fingerprint and public
-key fingerprint when TLS loglevel is 1 or higher. </p>
+<p> To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint. </p>
+
+<p> The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used. </p>
+<blockquote>
+<pre>
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+</pre>
+</blockquote>
+
+<p> The Postfix SMTP server and client log the peer (leaf) certificate
+fingerprint and public key fingerprint when the TLS loglevel is 2 or
+higher. </p>
+
+<p> <b>Note:</b> Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <p> Example: client-certificate access table, with sha1 fingerprints: </p>
 
@@ -14880,7 +15244,7 @@ protocol exclusions. One can now explicitly exclude SSLv2 by setting
 SSLv3 set "<a href="postconf.5.html#smtpd_tls_mandatory_protocols">smtpd_tls_mandatory_protocols</a> = !SSLv2, !SSLv3". Listing
 the protocols to include, rather than protocols to exclude, is
 supported, but not recommended. The exclusion form more closely
-matches the behaviour when the OpenSSL library is newer than Postfix.
+matches the behavior when the OpenSSL library is newer than Postfix.
 </p>
 
 <p> Since SSL version 2 has known protocol weaknesses and is now
@@ -14925,7 +15289,7 @@ with a "!" character. To exclude SSLv2 even for opportunistic TLS set
 "<a href="postconf.5.html#smtpd_tls_protocols">smtpd_tls_protocols</a> = !SSLv2". To exclude both "SSLv2" and "SSLv3" set
 "<a href="postconf.5.html#smtpd_tls_protocols">smtpd_tls_protocols</a> = !SSLv2, !SSLv3". Explicitly listing the protocols to
 include, rather than protocols to exclude, is supported, but not
-recommended.  The exclusion form more closely matches the behaviour
+recommended.  The exclusion form more closely matches the behavior
 when the OpenSSL library is newer than Postfix.  </p>
 
 <p> Example: </p>
@@ -15080,6 +15444,35 @@ purpose. </p>
 
 </DD>
 
+<DT><b><a name="smtpd_upstream_proxy_protocol">smtpd_upstream_proxy_protocol</a>
+(default: empty)</b></DT><DD>
+
+<p> The name of the proxy protocol used by an optional before-smtpd
+proxy agent. When a proxy agent is used, this protocol conveys local
+and remote address and port information.  Specify
+"<a href="postconf.5.html#smtpd_upstream_proxy_protocol">smtpd_upstream_proxy_protocol</a> = haproxy" to enable the haproxy
+protocol.  </p>
+
+<p> NOTE: To use the nginx proxy with <a href="smtpd.8.html">smtpd(8)</a>, enable the XCLIENT
+protocol with <a href="postconf.5.html#smtpd_authorized_xclient_hosts">smtpd_authorized_xclient_hosts</a>. This supports SASL
+authentication in the proxy agent (Postfix 2.9 and later). <p>
+
+<p> This feature is available in Postfix 2.10 and later.  </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_upstream_proxy_timeout">smtpd_upstream_proxy_timeout</a>
+(default: 5s)</b></DT><DD>
+
+<p> The time limit for the proxy protocol specified with the
+<a href="postconf.5.html#smtpd_upstream_proxy_protocol">smtpd_upstream_proxy_protocol</a> parameter. </p>
+
+<p> This feature is available in Postfix 2.10 and later.  </p>
+
+
+</DD>
+
 <DT><b><a name="smtpd_use_tls">smtpd_use_tls</a>
 (default: no)</b></DT><DD>
 
@@ -15102,9 +15495,17 @@ Postfix 2.3 and later use <a href="postconf.5.html#smtpd_tls_security_level">smt
 <p>
 Safety net to keep mail queued that would otherwise be returned to
 the sender.  This parameter disables locally-generated bounces,
-and prevents the Postfix SMTP server from rejecting mail permanently,
+changes the handling of negative responses from remote servers,
+content filters or plugins,
+and prevents the Postfix SMTP server from rejecting mail permanently
 by changing 5xx reply codes into 4xx.  However, <a href="postconf.5.html#soft_bounce">soft_bounce</a> is no
 cure for address rewriting mistakes or mail routing mistakes.
+</p>
+
+<p>
+Note: "<a href="postconf.5.html#soft_bounce">soft_bounce</a> = yes" is in some cases implemented by modifying
+server responses. Therefore, the response that Postfix logs may
+differ from the response that Postfix actually sends or receives.
 </p>
 
 <p>
@@ -15583,6 +15984,25 @@ list when they are enabled. This prefix is not needed with previous
 OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="tls_legacy_public_key_fingerprints">tls_legacy_public_key_fingerprints</a>
+(default: no)</b></DT><DD>
+
+<p> A temporary migration aid for sites that use certificate
+<i>public-key</i> fingerprints with Postfix 2.9.0..2.9.5, which use
+an incorrect algorithm. This parameter has no effect on the certificate
+fingerprint support that is available since Postfix 2.2. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_legacy_public_key_fingerprint">tls_legacy_public_key_fingerprints</a> = yes" temporarily,
+pending a migration from configuration files with incorrect Postfix
+2.9.0..2.9.5 certificate public-key finger prints, to the correct
+fingerprints used by Postfix 2.9.6 and later.  To compute the correct
+certificate public-key fingerprints, see <a href="TLS_README.html">TLS_README</a>. </p>
+
+<p> This feature is available in Postfix 2.9.6 and later.  </p>
 
 
 </DD>
@@ -16493,7 +16913,7 @@ always 450 in case of a temporary DNS error.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -16526,7 +16946,7 @@ with 450 when the mapping failed due to a temporary error condition.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -16557,7 +16977,7 @@ specified with the HELO or EHLO command is rejected by the
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 
@@ -16657,7 +17077,7 @@ accept the address anyway.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 <p>
@@ -16681,7 +17101,7 @@ accept the address anyway.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 <p>
@@ -16739,7 +17159,7 @@ accept the address anyway.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 <p>
@@ -16763,7 +17183,7 @@ accept the address anyway.
 </p>
 
 <p>
-Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a>.
+Do not change this unless you have a complete understanding of <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a>.
 </p>
 
 <p>
@@ -16970,6 +17390,10 @@ Lookup tables with the per-recipient group ID for <a href="virtual.8.html">virtu
 delivery.
 </p>
 
+<p> This parameter is specific to the <a href="virtual.8.html">virtual(8)</a> delivery agent.
+It does not apply when mail is delivered with a different mail
+delivery program.  </p>
+
 <p>
 In a lookup table, specify a left-hand side of "@domain.tld" to
 match any user in the specified domain that does not have a specific
@@ -17010,6 +17434,10 @@ file system with mailboxes.  While <a href="postconf.5.html#virtual_mailbox_base
 set to "/", this setting isn't recommended.
 </p>
 
+<p> This parameter is specific to the <a href="virtual.8.html">virtual(8)</a> delivery agent.
+It does not apply when mail is delivered with a different mail
+delivery program.  </p>
+
 <p>
 Example:
 </p>
@@ -17049,6 +17477,10 @@ value is backwards compatible with Postfix version 1.1.
 The maximal size in bytes of an individual <a href="virtual.8.html">virtual(8)</a> mailbox or
 maildir file, or zero (no limit).  </p>
 
+<p> This parameter is specific to the <a href="virtual.8.html">virtual(8)</a> delivery agent.
+It does not apply when mail is delivered with a different mail
+delivery program.  </p>
+
 
 </DD>
 
@@ -17060,6 +17492,10 @@ How to lock a UNIX-style <a href="virtual.8.html">virtual(8)</a> mailbox before 
 delivery.  For a list of available file locking methods, use the
 "<b>postconf -l</b>" command.
 </p>
+
+<p> This parameter is specific to the <a href="virtual.8.html">virtual(8)</a> delivery agent.
+It does not apply when mail is delivered with a different mail
+delivery program.  </p>
 
 <p>
 This setting is ignored with <b>maildir</b> style delivery, because
@@ -17092,6 +17528,10 @@ In a lookup table, specify a left-hand side of "@domain.tld" to
 match any user in the specified domain that does not have a specific
 "user@domain.tld" entry.
 </p>
+
+<p> The remainder of this text is specific to the <a href="virtual.8.html">virtual(8)</a> delivery
+agent.  It does not apply when mail is delivered with a different
+mail delivery program.  </p>
 
 <p>
 The <a href="virtual.8.html">virtual(8)</a> delivery agent uses this table to look up the
@@ -17148,6 +17588,10 @@ values less than this will be rejected, and the message will be
 deferred.
 </p>
 
+<p> This parameter is specific to the <a href="virtual.8.html">virtual(8)</a> delivery agent.
+It does not apply when mail is delivered with a different mail
+delivery program.  </p>
+
 
 </DD>
 
@@ -17181,6 +17625,10 @@ This feature is available in Postfix 2.0 and later.
 Lookup tables with the per-recipient user ID that the <a href="virtual.8.html">virtual(8)</a>
 delivery agent uses while writing to the recipient's mailbox.
 </p>
+
+<p> This parameter is specific to the <a href="virtual.8.html">virtual(8)</a> delivery agent.
+It does not apply when mail is delivered with a different mail
+delivery program.  </p>
 
 <p>
 In a lookup table, specify a left-hand side of "@domain.tld"

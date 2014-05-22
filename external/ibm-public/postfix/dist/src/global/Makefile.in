@@ -32,7 +32,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	match_service.c mail_conf_nint.c addr_match_list.c mail_conf_nbool.c \
 	smtp_reply_footer.c safe_ultostr.c verify_sender_addr.c \
 	dict_memcache.c mail_version.c memcache_proto.c server_acl.c \
-	mkmap_fail.c
+	mkmap_fail.c haproxy_srvr.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -66,7 +66,7 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	match_service.o mail_conf_nint.o addr_match_list.o mail_conf_nbool.o \
 	smtp_reply_footer.o safe_ultostr.o verify_sender_addr.o \
 	dict_memcache.o mail_version.o memcache_proto.o server_acl.o \
-	mkmap_fail.o
+	mkmap_fail.o haproxy_srvr.o
 HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	conv_time.h db_common.h debug_peer.h debug_process.h defer.h \
@@ -92,7 +92,8 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	verp_sender.h wildcard_inet_addr.h xtext.h delivered_hdr.h \
 	fold_addr.h header_body_checks.h data_redirect.h match_service.h \
 	addr_match_list.h smtp_reply_footer.h safe_ultostr.h \
-	verify_sender_addr.h dict_memcache.h memcache_proto.h server_acl.h
+	verify_sender_addr.h dict_memcache.h memcache_proto.h server_acl.h \
+	haproxy_srvr.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -697,6 +698,7 @@ canon_addr.o: rewrite_clnt.h
 cfg_parser.o: ../../include/argv.h
 cfg_parser.o: ../../include/dict.h
 cfg_parser.o: ../../include/msg.h
+cfg_parser.o: ../../include/myflock.h
 cfg_parser.o: ../../include/mymalloc.h
 cfg_parser.o: ../../include/sys_defs.h
 cfg_parser.o: ../../include/vbuf.h
@@ -739,6 +741,7 @@ data_redirect.o: ../../include/dict_cdb.h
 data_redirect.o: ../../include/dict_db.h
 data_redirect.o: ../../include/dict_dbm.h
 data_redirect.o: ../../include/msg.h
+data_redirect.o: ../../include/myflock.h
 data_redirect.o: ../../include/name_code.h
 data_redirect.o: ../../include/split_at.h
 data_redirect.o: ../../include/stringops.h
@@ -755,6 +758,7 @@ db_common.o: ../../include/argv.h
 db_common.o: ../../include/dict.h
 db_common.o: ../../include/match_list.h
 db_common.o: ../../include/msg.h
+db_common.o: ../../include/myflock.h
 db_common.o: ../../include/mymalloc.h
 db_common.o: ../../include/sys_defs.h
 db_common.o: ../../include/vbuf.h
@@ -885,6 +889,7 @@ dict_ldap.o: ../../include/binhash.h
 dict_ldap.o: ../../include/dict.h
 dict_ldap.o: ../../include/match_list.h
 dict_ldap.o: ../../include/msg.h
+dict_ldap.o: ../../include/myflock.h
 dict_ldap.o: ../../include/mymalloc.h
 dict_ldap.o: ../../include/name_code.h
 dict_ldap.o: ../../include/stringops.h
@@ -903,6 +908,7 @@ dict_memcache.o: ../../include/auto_clnt.h
 dict_memcache.o: ../../include/dict.h
 dict_memcache.o: ../../include/match_list.h
 dict_memcache.o: ../../include/msg.h
+dict_memcache.o: ../../include/myflock.h
 dict_memcache.o: ../../include/mymalloc.h
 dict_memcache.o: ../../include/stringops.h
 dict_memcache.o: ../../include/sys_defs.h
@@ -921,6 +927,7 @@ dict_mysql.o: ../../include/events.h
 dict_mysql.o: ../../include/find_inet.h
 dict_mysql.o: ../../include/match_list.h
 dict_mysql.o: ../../include/msg.h
+dict_mysql.o: ../../include/myflock.h
 dict_mysql.o: ../../include/mymalloc.h
 dict_mysql.o: ../../include/myrand.h
 dict_mysql.o: ../../include/split_at.h
@@ -940,6 +947,7 @@ dict_pgsql.o: ../../include/events.h
 dict_pgsql.o: ../../include/find_inet.h
 dict_pgsql.o: ../../include/match_list.h
 dict_pgsql.o: ../../include/msg.h
+dict_pgsql.o: ../../include/myflock.h
 dict_pgsql.o: ../../include/mymalloc.h
 dict_pgsql.o: ../../include/myrand.h
 dict_pgsql.o: ../../include/split_at.h
@@ -958,6 +966,7 @@ dict_proxy.o: ../../include/attr.h
 dict_proxy.o: ../../include/dict.h
 dict_proxy.o: ../../include/iostuff.h
 dict_proxy.o: ../../include/msg.h
+dict_proxy.o: ../../include/myflock.h
 dict_proxy.o: ../../include/mymalloc.h
 dict_proxy.o: ../../include/stringops.h
 dict_proxy.o: ../../include/sys_defs.h
@@ -973,6 +982,7 @@ dict_sqlite.o: ../../include/argv.h
 dict_sqlite.o: ../../include/dict.h
 dict_sqlite.o: ../../include/match_list.h
 dict_sqlite.o: ../../include/msg.h
+dict_sqlite.o: ../../include/myflock.h
 dict_sqlite.o: ../../include/mymalloc.h
 dict_sqlite.o: ../../include/stringops.h
 dict_sqlite.o: ../../include/sys_defs.h
@@ -1100,9 +1110,21 @@ fold_addr.o: ../../include/vbuf.h
 fold_addr.o: ../../include/vstring.h
 fold_addr.o: fold_addr.c
 fold_addr.o: fold_addr.h
+haproxy_srvr.o: ../../include/inet_proto.h
+haproxy_srvr.o: ../../include/msg.h
+haproxy_srvr.o: ../../include/myaddrinfo.h
+haproxy_srvr.o: ../../include/mymalloc.h
+haproxy_srvr.o: ../../include/stringops.h
+haproxy_srvr.o: ../../include/sys_defs.h
+haproxy_srvr.o: ../../include/valid_hostname.h
+haproxy_srvr.o: ../../include/vbuf.h
+haproxy_srvr.o: ../../include/vstring.h
+haproxy_srvr.o: haproxy_srvr.c
+haproxy_srvr.o: haproxy_srvr.h
 header_body_checks.o: ../../include/argv.h
 header_body_checks.o: ../../include/dict.h
 header_body_checks.o: ../../include/msg.h
+header_body_checks.o: ../../include/myflock.h
 header_body_checks.o: ../../include/mymalloc.h
 header_body_checks.o: ../../include/sys_defs.h
 header_body_checks.o: ../../include/vbuf.h
@@ -1186,6 +1208,7 @@ mail_addr_crunch.o: tok822.h
 mail_addr_find.o: ../../include/argv.h
 mail_addr_find.o: ../../include/dict.h
 mail_addr_find.o: ../../include/msg.h
+mail_addr_find.o: ../../include/myflock.h
 mail_addr_find.o: ../../include/mymalloc.h
 mail_addr_find.o: ../../include/stringops.h
 mail_addr_find.o: ../../include/sys_defs.h
@@ -1201,6 +1224,7 @@ mail_addr_find.o: strip_addr.h
 mail_addr_map.o: ../../include/argv.h
 mail_addr_map.o: ../../include/dict.h
 mail_addr_map.o: ../../include/msg.h
+mail_addr_map.o: ../../include/myflock.h
 mail_addr_map.o: ../../include/mymalloc.h
 mail_addr_map.o: ../../include/sys_defs.h
 mail_addr_map.o: ../../include/vbuf.h
@@ -1228,6 +1252,7 @@ mail_command_server.o: mail_proto.h
 mail_conf.o: ../../include/argv.h
 mail_conf.o: ../../include/dict.h
 mail_conf.o: ../../include/msg.h
+mail_conf.o: ../../include/myflock.h
 mail_conf.o: ../../include/mymalloc.h
 mail_conf.o: ../../include/readlline.h
 mail_conf.o: ../../include/safe.h
@@ -1242,6 +1267,7 @@ mail_conf.o: mail_params.h
 mail_conf_bool.o: ../../include/argv.h
 mail_conf_bool.o: ../../include/dict.h
 mail_conf_bool.o: ../../include/msg.h
+mail_conf_bool.o: ../../include/myflock.h
 mail_conf_bool.o: ../../include/sys_defs.h
 mail_conf_bool.o: ../../include/vbuf.h
 mail_conf_bool.o: ../../include/vstream.h
@@ -1251,6 +1277,7 @@ mail_conf_bool.o: mail_conf_bool.c
 mail_conf_int.o: ../../include/argv.h
 mail_conf_int.o: ../../include/dict.h
 mail_conf_int.o: ../../include/msg.h
+mail_conf_int.o: ../../include/myflock.h
 mail_conf_int.o: ../../include/mymalloc.h
 mail_conf_int.o: ../../include/stringops.h
 mail_conf_int.o: ../../include/sys_defs.h
@@ -1262,6 +1289,7 @@ mail_conf_int.o: mail_conf_int.c
 mail_conf_long.o: ../../include/argv.h
 mail_conf_long.o: ../../include/dict.h
 mail_conf_long.o: ../../include/msg.h
+mail_conf_long.o: ../../include/myflock.h
 mail_conf_long.o: ../../include/mymalloc.h
 mail_conf_long.o: ../../include/stringops.h
 mail_conf_long.o: ../../include/sys_defs.h
@@ -1273,6 +1301,7 @@ mail_conf_long.o: mail_conf_long.c
 mail_conf_nbool.o: ../../include/argv.h
 mail_conf_nbool.o: ../../include/dict.h
 mail_conf_nbool.o: ../../include/msg.h
+mail_conf_nbool.o: ../../include/myflock.h
 mail_conf_nbool.o: ../../include/sys_defs.h
 mail_conf_nbool.o: ../../include/vbuf.h
 mail_conf_nbool.o: ../../include/vstream.h
@@ -1282,6 +1311,7 @@ mail_conf_nbool.o: mail_conf_nbool.c
 mail_conf_nint.o: ../../include/argv.h
 mail_conf_nint.o: ../../include/dict.h
 mail_conf_nint.o: ../../include/msg.h
+mail_conf_nint.o: ../../include/myflock.h
 mail_conf_nint.o: ../../include/mymalloc.h
 mail_conf_nint.o: ../../include/stringops.h
 mail_conf_nint.o: ../../include/sys_defs.h
@@ -1306,6 +1336,7 @@ mail_conf_str.o: mail_conf_str.c
 mail_conf_time.o: ../../include/argv.h
 mail_conf_time.o: ../../include/dict.h
 mail_conf_time.o: ../../include/msg.h
+mail_conf_time.o: ../../include/myflock.h
 mail_conf_time.o: ../../include/mymalloc.h
 mail_conf_time.o: ../../include/stringops.h
 mail_conf_time.o: ../../include/sys_defs.h
@@ -1362,6 +1393,7 @@ mail_date.o: mail_date.h
 mail_dict.o: ../../include/argv.h
 mail_dict.o: ../../include/dict.h
 mail_dict.o: ../../include/msg.h
+mail_dict.o: ../../include/myflock.h
 mail_dict.o: ../../include/sys_defs.h
 mail_dict.o: ../../include/vbuf.h
 mail_dict.o: ../../include/vstream.h
@@ -1409,6 +1441,7 @@ mail_params.o: ../../include/iostuff.h
 mail_params.o: ../../include/msg.h
 mail_params.o: ../../include/msg_syslog.h
 mail_params.o: ../../include/myaddrinfo.h
+mail_params.o: ../../include/myflock.h
 mail_params.o: ../../include/mymalloc.h
 mail_params.o: ../../include/safe.h
 mail_params.o: ../../include/safe_open.h
@@ -1518,6 +1551,7 @@ mail_version.o: mail_version.h
 maps.o: ../../include/argv.h
 maps.o: ../../include/dict.h
 maps.o: ../../include/msg.h
+maps.o: ../../include/myflock.h
 maps.o: ../../include/mymalloc.h
 maps.o: ../../include/split_at.h
 maps.o: ../../include/stringops.h
@@ -1609,6 +1643,7 @@ mime_state.o: rec_type.h
 mkmap_cdb.o: ../../include/argv.h
 mkmap_cdb.o: ../../include/dict.h
 mkmap_cdb.o: ../../include/dict_cdb.h
+mkmap_cdb.o: ../../include/myflock.h
 mkmap_cdb.o: ../../include/mymalloc.h
 mkmap_cdb.o: ../../include/sys_defs.h
 mkmap_cdb.o: ../../include/vbuf.h
@@ -1647,6 +1682,7 @@ mkmap_dbm.o: mkmap_dbm.c
 mkmap_fail.o: ../../include/argv.h
 mkmap_fail.o: ../../include/dict.h
 mkmap_fail.o: ../../include/dict_fail.h
+mkmap_fail.o: ../../include/myflock.h
 mkmap_fail.o: ../../include/mymalloc.h
 mkmap_fail.o: ../../include/sys_defs.h
 mkmap_fail.o: ../../include/vbuf.h
@@ -1662,6 +1698,7 @@ mkmap_open.o: ../../include/dict_dbm.h
 mkmap_open.o: ../../include/dict_fail.h
 mkmap_open.o: ../../include/dict_sdbm.h
 mkmap_open.o: ../../include/msg.h
+mkmap_open.o: ../../include/myflock.h
 mkmap_open.o: ../../include/mymalloc.h
 mkmap_open.o: ../../include/sigdelay.h
 mkmap_open.o: ../../include/sys_defs.h
@@ -1673,6 +1710,7 @@ mkmap_open.o: mkmap.h
 mkmap_open.o: mkmap_open.c
 mkmap_proxy.o: ../../include/argv.h
 mkmap_proxy.o: ../../include/dict.h
+mkmap_proxy.o: ../../include/myflock.h
 mkmap_proxy.o: ../../include/mymalloc.h
 mkmap_proxy.o: ../../include/sys_defs.h
 mkmap_proxy.o: ../../include/vbuf.h
@@ -1918,6 +1956,7 @@ resolve_local.o: ../../include/inet_addr_list.h
 resolve_local.o: ../../include/match_list.h
 resolve_local.o: ../../include/msg.h
 resolve_local.o: ../../include/myaddrinfo.h
+resolve_local.o: ../../include/myflock.h
 resolve_local.o: ../../include/mymalloc.h
 resolve_local.o: ../../include/sys_defs.h
 resolve_local.o: ../../include/valid_hostname.h
@@ -2020,6 +2059,7 @@ server_acl.o: ../../include/argv.h
 server_acl.o: ../../include/dict.h
 server_acl.o: ../../include/match_list.h
 server_acl.o: ../../include/msg.h
+server_acl.o: ../../include/myflock.h
 server_acl.o: ../../include/mymalloc.h
 server_acl.o: ../../include/stringops.h
 server_acl.o: ../../include/sys_defs.h
@@ -2160,6 +2200,7 @@ user_acl.o: ../../include/argv.h
 user_acl.o: ../../include/dict.h
 user_acl.o: ../../include/dict_static.h
 user_acl.o: ../../include/match_list.h
+user_acl.o: ../../include/myflock.h
 user_acl.o: ../../include/sys_defs.h
 user_acl.o: ../../include/vbuf.h
 user_acl.o: ../../include/vstream.h

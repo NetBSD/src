@@ -19,14 +19,13 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C			cycles/limb
-C			norm	frac
+C                       cycles/limb
+C                       norm    frac
 C POWER3/PPC630
-C POWER4/PPC970		39*	39*
-C POWER5		39*	39*
-
-C STATUS
-C  * Performace fluctuates like crazy
+C POWER4/PPC970         ?       ?
+C POWER5                37      ?
+C POWER6                62      ?
+C POWER6                30.5    ?
 
 C INPUT PARAMETERS
 C qp  = r3
@@ -121,12 +120,12 @@ L(loop):
 	mulld	r6, r29, r3
 	addc	r6, r6, r31
 	adde	r8, r8, r29
+	cmpd	cr7, r27, r25
 	mulld	r0, r30, r8
-	subf	r31, r0, r31
 	mulhdu	r11, r28, r8
 	mulld	r10, r28, r8
+	subf	r31, r0, r31
 	li	r7, 0
-	cmpd	cr7, r27, r25
 	blt	cr7, L(60)
 	ld	r7, 0(r26)
 	addi	r26, r26, -8
