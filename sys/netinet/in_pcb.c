@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.146 2013/11/23 14:20:21 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.147 2014/05/22 22:01:12 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.146 2013/11/23 14:20:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.147 2014/05/22 22:01:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1052,84 +1052,4 @@ in_pcbrtentry(struct inpcb *inp)
 
 	sockaddr_in_init(&u.dst4, &inp->inp_faddr, 0);
 	return rtcache_lookup(ro, &u.dst);
-}
-
-struct sockaddr_in *
-in_selectsrc(struct sockaddr_in *sin, struct route *ro,
-    int soopts, struct ip_moptions *mopts, int *errorp)
-{
-	struct rtentry *rt = NULL;
-	struct in_ifaddr *ia = NULL;
-
-	/*
-         * If route is known or can be allocated now, take the
-         * source address from the interface.  Otherwise, punt.
-	 */
-	if ((soopts & SO_DONTROUTE) != 0)
-		rtcache_free(ro);
-	else {
-		union {
-			struct sockaddr		dst;
-			struct sockaddr_in	dst4;
-		} u;
-
-		sockaddr_in_init(&u.dst4, &sin->sin_addr, 0);
-		rt = rtcache_lookup(ro, &u.dst);
-	}
-	/*
-	 * If we found a route, use the address
-	 * corresponding to the outgoing interface
-	 * unless it is the loopback (in case a route
-	 * to our address on another net goes to loopback).
-	 *
-	 * XXX Is this still true?  Do we care?
-	 */
-	if (rt != NULL && (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
-		ia = ifatoia(rt->rt_ifa);
-	if (ia == NULL) {
-		u_int16_t fport = sin->sin_port;
-
-		sin->sin_port = 0;
-		ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
-		sin->sin_port = fport;
-		if (ia == NULL) {
-			/* Find 1st non-loopback AF_INET address */
-			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
-				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
-					break;
-			}
-		}
-		if (ia == NULL) {
-			*errorp = EADDRNOTAVAIL;
-			return NULL;
-		}
-	}
-	/*
-	 * If the destination address is multicast and an outgoing
-	 * interface has been set as a multicast option, use the
-	 * address of that interface as our source address.
-	 */
-	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
-		struct ip_moptions *imo;
-		struct ifnet *ifp;
-
-		imo = mopts;
-		if (imo->imo_multicast_ifp != NULL) {
-			ifp = imo->imo_multicast_ifp;
-			IFP_TO_IA(ifp, ia);		/* XXX */
-			if (ia == 0) {
-				*errorp = EADDRNOTAVAIL;
-				return NULL;
-			}
-		}
-	}
-	if (ia->ia_ifa.ifa_getifa != NULL) {
-		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
-		                                      sintosa(sin)));
-	}
-#ifdef GETIFA_DEBUG
-	else
-		printf("%s: missing ifa_getifa\n", __func__);
-#endif
-	return satosin(&ia->ia_addr);
 }
