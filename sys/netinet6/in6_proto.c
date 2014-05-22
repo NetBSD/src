@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.101 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.102 2014/05/22 22:56:53 rmind Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.101 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.102 2014/05/22 22:56:53 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -468,8 +468,3 @@ int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
 int	icmp6errppslim = 100;		/* 100pps */
 int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
-
-/* UDP on IP6 parameters */
-int	udp6_sendspace = 9216;		/* really max datagram size */
-int	udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
-					/* 40 1K datagrams */
