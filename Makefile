@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.289.2.4 2013/01/16 05:25:52 yamt Exp $
+#	$NetBSD: Makefile,v 1.289.2.5 2014/05/22 13:23:26 yamt Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -139,7 +139,8 @@ _SRC_TOP_OBJ_=
 #
 _SUBDIR=	tools lib include gnu external crypto/external bin games
 _SUBDIR+=	libexec sbin usr.bin
-_SUBDIR+=	usr.sbin share rescue sys etc tests compat .WAIT distrib regress
+_SUBDIR+=	usr.sbin share sys etc tests compat
+_SUBDIR+=	.WAIT rescue .WAIT distrib regress
 
 .for dir in ${_SUBDIR}
 .if "${dir}" == ".WAIT" \
@@ -204,7 +205,7 @@ BUILD_CC_LIB_BASEDIR= gnu/lib
 BUILD_CC_LIB_BASETARGET= gnu-lib
 .else
 LIBGCC_EXT=
-BUILD_CC_LIB_BASEDIR= external/gpl3/gcc/lib
+BUILD_CC_LIB_BASEDIR= external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib
 BUILD_CC_LIB_BASETARGET= external-gpl3-gcc-lib
 .endif
 .endif
@@ -523,7 +524,6 @@ install-${dir}: .PHONY
 dependall-distrib depend-distrib all-distrib: .PHONY
 	@true
 
-.include <bsd.sys.mk>
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.2.3 2013/01/23 00:04:07 yamt Exp $
+# $NetBSD: Makefile,v 1.5.2.4 2014/05/22 13:21:34 yamt Exp $
 
 LIB=netpgpverify
 SRCS=libverify.c b64.c pgpsum.c
@@ -15,6 +15,9 @@ EXTDIST=${.CURDIR}/../../dist
 
 INCS=verify.h
 INCSDIR=/usr/include/netpgp
+
+LIBDPLIBS+=	z		${NETBSDSRCDIR}/lib/libz
+LIBDPLIBS+=	bz2		${NETBSDSRCDIR}/lib/libbz2
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:44 elric Exp $
+# $NetBSD: Makefile,v 1.1.4.1 2014/05/22 13:21:23 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ SUBDIR =		\
 	kinit		\
 	kpasswd		\
 	krb5-config	\
+	kvno		\
 	string2key	\
 	verify_krb5_conf
 

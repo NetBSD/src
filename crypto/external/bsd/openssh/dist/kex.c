@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.6 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.86 2010/09/22 05:01:29 djm Exp $ */
+/*	$NetBSD: kex.c,v 1.6.2.1 2014/05/22 13:21:34 yamt Exp $	*/
+/* $OpenBSD: kex.c,v 1.91 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.6.2.1 2014/05/22 13:21:34 yamt Exp $");
 #include <sys/param.h>
 
 #include <signal.h>
@@ -55,6 +55,53 @@ __RCSID("$NetBSD: kex.c,v 1.6 2011/07/25 03:03:10 christos Exp $");
 static void kex_kexinit_finish(Kex *);
 static void kex_choose_conf(Kex *);
 
+struct kexalg {
+	const char *name;
+	int type;
+	int ec_nid;
+	const EVP_MD *(*mdfunc)(void);
+};
+static const struct kexalg kexalgs[] = {
+	{ KEX_DH1, KEX_DH_GRP1_SHA1, 0, EVP_sha1 },
+	{ KEX_DH14, KEX_DH_GRP14_SHA1, 0, EVP_sha1 },
+	{ KEX_DHGEX_SHA1, KEX_DH_GEX_SHA1, 0, EVP_sha1 },
+	{ KEX_DHGEX_SHA256, KEX_DH_GEX_SHA256, 0, EVP_sha256 },
+	{ KEX_ECDH_SHA2_NISTP256, KEX_ECDH_SHA2, NID_X9_62_prime256v1, EVP_sha256 },
+	{ KEX_ECDH_SHA2_NISTP384, KEX_ECDH_SHA2, NID_secp384r1, EVP_sha384 },
+	{ KEX_ECDH_SHA2_NISTP521, KEX_ECDH_SHA2, NID_secp521r1, EVP_sha512 },
+	{ NULL, -1, -1, NULL},
+};
+
+char *
+kex_alg_list(void)
+{
+	char *ret = NULL;
+	size_t nlen, rlen = 0;
+	const struct kexalg *k;
+
+	for (k = kexalgs; k->name != NULL; k++) {
+		if (ret != NULL)
+			ret[rlen++] = '\n';
+		nlen = strlen(k->name);
+		ret = xrealloc(ret, 1, rlen + nlen + 2);
+		memcpy(ret + rlen, k->name, nlen + 1);
+		rlen += nlen;
+	}
+	return ret;
+}
+
+static const struct kexalg *
+kex_alg_by_name(const char *name)
+{
+	const struct kexalg *k;
+
+	for (k = kexalgs; k->name != NULL; k++) {
+		if (strcmp(k->name, name) == 0)
+			return k;
+	}
+	return NULL;
+}
+
 /* Validate KEX method name list */
 int
 kex_names_valid(const char *names)
@@ -66,20 +113,14 @@ kex_names_valid(const char *names)
 	s = cp = xstrdup(names);
 	for ((p = strsep(&cp, ",")); p && *p != '\0';
 	    (p = strsep(&cp, ","))) {
-	    	if (strcmp(p, KEX_DHGEX_SHA256) != 0 &&
-		    strcmp(p, KEX_DHGEX_SHA1) != 0 &&
-		    strcmp(p, KEX_DH14) != 0 &&
-		    strcmp(p, KEX_DH1) != 0 &&
-		    (strncmp(p, KEX_ECDH_SHA2_STEM,
-		    sizeof(KEX_ECDH_SHA2_STEM) - 1) != 0 ||
-		    kex_ecdh_name_to_nid(p) == -1)) {
+		if (kex_alg_by_name(p) == NULL) {
 			error("Unsupported KEX algorithm \"%.100s\"", p);
-			xfree(s);
+			free(s);
 			return 0;
 		}
 	}
 	debug3("kex names ok: [%s]", names);
-	xfree(s);
+	free(s);
 	return 1;
 }
 
@@ -140,8 +181,8 @@ kex_prop_free(char **proposal)
 	u_int i;
 
 	for (i = 0; i < PROPOSAL_MAX; i++)
-		xfree(proposal[i]);
-	xfree(proposal);
+		free(proposal[i]);
+	free(proposal);
 }
 
 /* ARGSUSED */
@@ -178,7 +219,7 @@ kex_finish(Kex *kex)
 	buffer_clear(&kex->peer);
 	/* buffer_clear(&kex->my); */
 	kex->flags &= ~KEX_INIT_SENT;
-	xfree(kex->name);
+	free(kex->name);
 	kex->name = NULL;
 }
 
@@ -235,9 +276,19 @@ kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
 	for (i = 0; i < KEX_COOKIE_LEN; i++)
 		packet_get_char();
 	for (i = 0; i < PROPOSAL_MAX; i++)
-		xfree(packet_get_string(NULL));
-	(void) packet_get_char();
-	(void) packet_get_int();
+		free(packet_get_string(NULL));
+	/*
+	 * XXX RFC4253 sec 7: "each side MAY guess" - currently no supported
+	 * KEX method has the server move first, but a server might be using
+	 * a custom method or one that we otherwise don't support. We should
+	 * be prepared to remember first_kex_follows here so we can eat a
+	 * packet later.
+	 * XXX2 - RFC4253 is kind of ambiguous on what first_kex_follows means
+	 * for cases where the server *doesn't* go first. I guess we should
+	 * ignore it when it is set for these cases, which is what we do now.
+	 */
+	(void) packet_get_char();	/* first_kex_follows */
+	(void) packet_get_int();	/* reserved */
 	packet_check_eom();
 
 	kex_kexinit_finish(kex);
@@ -288,6 +339,7 @@ choose_enc(Enc *enc, char *client, char *server)
 	enc->name = name;
 	enc->enabled = 0;
 	enc->iv = NULL;
+	enc->iv_len = cipher_ivlen(enc->cipher);
 	enc->key = NULL;
 	enc->key_len = cipher_keylen(enc->cipher);
 	enc->block_size = cipher_blocksize(enc->cipher);
@@ -331,27 +383,16 @@ choose_comp(Comp *comp, char *client, char *server)
 static void
 choose_kex(Kex *k, char *client, char *server)
 {
+	const struct kexalg *kexalg;
+
 	k->name = match_list(client, server, NULL);
 	if (k->name == NULL)
 		fatal("Unable to negotiate a key exchange method");
-	if (strcmp(k->name, KEX_DH1) == 0) {
-		k->kex_type = KEX_DH_GRP1_SHA1;
-		k->evp_md = EVP_sha1();
-	} else if (strcmp(k->name, KEX_DH14) == 0) {
-		k->kex_type = KEX_DH_GRP14_SHA1;
-		k->evp_md = EVP_sha1();
-	} else if (strcmp(k->name, KEX_DHGEX_SHA1) == 0) {
-		k->kex_type = KEX_DH_GEX_SHA1;
-		k->evp_md = EVP_sha1();
-	} else if (strcmp(k->name, KEX_DHGEX_SHA256) == 0) {
-		k->kex_type = KEX_DH_GEX_SHA256;
-		k->evp_md = EVP_sha256();
-	} else if (strncmp(k->name, KEX_ECDH_SHA2_STEM,
-	    sizeof(KEX_ECDH_SHA2_STEM) - 1) == 0) {
-		k->kex_type = KEX_ECDH_SHA2;
-		k->evp_md = kex_ecdh_name_to_evpmd(k->name);
-	} else
-		fatal("bad kex alg %s", k->name);
+	if ((kexalg = kex_alg_by_name(k->name)) == NULL)
+		fatal("unsupported kex alg %s", k->name);
+	k->kex_type = kexalg->type;
+	k->evp_md = kexalg->mdfunc();
+	k->ec_nid = kexalg->ec_nid;
 }
 
 static void
@@ -363,7 +404,7 @@ choose_hostkeyalg(Kex *k, char *client, char *server)
 	k->hostkey_type = key_type_from_name(hostkeyalg);
 	if (k->hostkey_type == KEY_UNSPEC)
 		fatal("bad hostkey alg '%s'", hostkeyalg);
-	xfree(hostkeyalg);
+	free(hostkeyalg);
 }
 
 static int
@@ -397,7 +438,7 @@ kex_choose_conf(Kex *kex)
 	char **my, **peer;
 	char **cprop, **sprop;
 	int nenc, nmac, ncomp;
-	u_int mode, ctos, need;
+	u_int mode, ctos, need, authlen;
 	int first_kex_follows, type;
 	int log_flag = 0;
 
@@ -424,7 +465,7 @@ kex_choose_conf(Kex *kex)
 		roaming = match_list(KEX_RESUME, peer[PROPOSAL_KEX_ALGS], NULL);
 		if (roaming) {
 			kex->roaming = 1;
-			xfree(roaming);
+			free(roaming);
 		}
 	}
 
@@ -437,8 +478,11 @@ kex_choose_conf(Kex *kex)
 		nenc  = ctos ? PROPOSAL_ENC_ALGS_CTOS  : PROPOSAL_ENC_ALGS_STOC;
 		nmac  = ctos ? PROPOSAL_MAC_ALGS_CTOS  : PROPOSAL_MAC_ALGS_STOC;
 		ncomp = ctos ? PROPOSAL_COMP_ALGS_CTOS : PROPOSAL_COMP_ALGS_STOC;
-		choose_enc (&newkeys->enc,  cprop[nenc],  sprop[nenc]);
-		choose_mac (&newkeys->mac,  cprop[nmac],  sprop[nmac]);
+		choose_enc(&newkeys->enc, cprop[nenc], sprop[nenc]);
+		/* ignore mac for authenticated encryption */
+		authlen = cipher_authlen(newkeys->enc.cipher);
+		if (authlen == 0)
+			choose_mac(&newkeys->mac, cprop[nmac], sprop[nmac]);
 		choose_comp(&newkeys->comp, cprop[ncomp], sprop[ncomp]);
 		debug("REQUESTED ENC.NAME is '%s'", newkeys->enc.name);
 		if (strcmp(newkeys->enc.name, "none") == 0) {
@@ -452,7 +496,7 @@ kex_choose_conf(Kex *kex)
 		debug("kex: %s %s %s %s",
 		    ctos ? "client->server" : "server->client",
 		    newkeys->enc.name,
-		    newkeys->mac.name,
+		    authlen == 0 ? newkeys->mac.name : "<implicit>",
 		    newkeys->comp.name);
 		/* client starts withctos = 0 && log flag = 0 and no log*/
 		/* 2nd client pass ctos=1 and flag = 1 so no log*/
@@ -479,6 +523,8 @@ kex_choose_conf(Kex *kex)
 			need = newkeys->enc.key_len;
 		if (need < newkeys->enc.block_size)
 			need = newkeys->enc.block_size;
+		if (need < newkeys->enc.iv_len)
+			need = newkeys->enc.iv_len;
 		if (need < newkeys->mac.key_len)
 			need = newkeys->mac.key_len;
 	}

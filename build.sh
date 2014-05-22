@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.251.2.4 2013/01/23 00:04:04 yamt Exp $
+#	$NetBSD: build.sh,v 1.251.2.5 2014/05/22 13:23:26 yamt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -508,6 +508,7 @@ initdefaults()
 	do_iso_image_source=false
 	do_live_image=false
 	do_install_image=false
+	do_disk_image=false
 	do_params=false
 	do_rump=false
 
@@ -579,16 +580,32 @@ MACHINE=arc		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=atari		MACHINE_ARCH=m68k
 MACHINE=bebox		MACHINE_ARCH=powerpc
 MACHINE=cats		MACHINE_ARCH=arm	DEFAULT
-MACHINE=cats		MACHINE_ARCH=earm
+MACHINE=cats		MACHINE_ARCH=earmv4	ALIAS=ecats
 MACHINE=cesfic		MACHINE_ARCH=m68k
 MACHINE=cobalt		MACHINE_ARCH=mips64el	ALIAS=cobalt64
 MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=dreamcast	MACHINE_ARCH=sh3el
 MACHINE=emips		MACHINE_ARCH=mipseb
+MACHINE=epoc32		MACHINE_ARCH=arm
 MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evbarm-el	DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evbarm-eb
 MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el
 MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
+MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el
+MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el
+MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el
+MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb
+MACHINE=evbcf		MACHINE_ARCH=coldfire
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=evbmips		MACHINE_ARCH=mips64eb	ALIAS=evbmips64-eb
 MACHINE=evbmips		MACHINE_ARCH=mips64el	ALIAS=evbmips64-el
@@ -601,15 +618,16 @@ MACHINE=evbsh3		MACHINE_ARCH=sh3eb	ALIAS=evbsh3-eb
 MACHINE=evbsh3		MACHINE_ARCH=sh3el	ALIAS=evbsh3-el
 MACHINE=ews4800mips	MACHINE_ARCH=mipseb
 MACHINE=hp300		MACHINE_ARCH=m68k
-MACHINE=hp700		MACHINE_ARCH=hppa
-MACHINE=hpcarm		MACHINE_ARCH=arm
+MACHINE=hppa		MACHINE_ARCH=hppa
+MACHINE=hpcarm		MACHINE_ARCH=arm	DEFAULT
+MACHINE=hpcarm		MACHINE_ARCH=earm	ALIAS=hpcearm
 MACHINE=hpcmips		MACHINE_ARCH=mipsel
 MACHINE=hpcsh		MACHINE_ARCH=sh3el
 MACHINE=i386		MACHINE_ARCH=i386
 MACHINE=ia64		MACHINE_ARCH=ia64
 MACHINE=ibmnws		MACHINE_ARCH=powerpc
 MACHINE=iyonix		MACHINE_ARCH=arm	DEFAULT
-MACHINE=iyonix		MACHINE_ARCH=earm
+MACHINE=iyonix		MACHINE_ARCH=earm	ALIAS=eiyonix
 MACHINE=landisk		MACHINE_ARCH=sh3el
 MACHINE=luna68k		MACHINE_ARCH=m68k
 MACHINE=mac68k		MACHINE_ARCH=m68k
@@ -620,12 +638,13 @@ MACHINE=mmeye		MACHINE_ARCH=sh3eb
 MACHINE=mvme68k		MACHINE_ARCH=m68k
 MACHINE=mvmeppc		MACHINE_ARCH=powerpc
 MACHINE=netwinder	MACHINE_ARCH=arm	DEFAULT
-MACHINE=netwinder	MACHINE_ARCH=earm
+MACHINE=netwinder	MACHINE_ARCH=earmv4	ALIAS=enetwinder
 MACHINE=news68k		MACHINE_ARCH=m68k
 MACHINE=newsmips	MACHINE_ARCH=mipseb
 MACHINE=next68k		MACHINE_ARCH=m68k
 MACHINE=ofppc		MACHINE_ARCH=powerpc	DEFAULT
 MACHINE=ofppc		MACHINE_ARCH=powerpc64	ALIAS=ofppc64
+MACHINE=playstation2	MACHINE_ARCH=mipsel
 MACHINE=pmax		MACHINE_ARCH=mips64el	ALIAS=pmax64
 MACHINE=pmax		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=prep		MACHINE_ARCH=powerpc
@@ -639,7 +658,7 @@ MACHINE=sbmips		MACHINE_ARCH=mipsel	ALIAS=sbmips-el
 MACHINE=sgimips		MACHINE_ARCH=mips64eb	ALIAS=sgimips64
 MACHINE=sgimips		MACHINE_ARCH=mipseb	DEFAULT
 MACHINE=shark		MACHINE_ARCH=arm	DEFAULT
-MACHINE=shark		MACHINE_ARCH=earm
+MACHINE=shark		MACHINE_ARCH=earmv4	ALIAS=eshark
 MACHINE=sparc		MACHINE_ARCH=sparc
 MACHINE=sparc64		MACHINE_ARCH=sparc64
 MACHINE=sun2		MACHINE_ARCH=m68000
@@ -647,7 +666,7 @@ MACHINE=sun3		MACHINE_ARCH=m68k
 MACHINE=vax		MACHINE_ARCH=vax
 MACHINE=x68k		MACHINE_ARCH=m68k
 MACHINE=zaurus		MACHINE_ARCH=arm	DEFAULT
-MACHINE=zaurus		MACHINE_ARCH=earm
+MACHINE=zaurus		MACHINE_ARCH=earm	ALIAS=ezaurus
 '
 
 # getarch -- find the default MACHINE_ARCH for a MACHINE,
@@ -903,6 +922,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     install=idir        Run "make installworld" to \`idir' to install all sets
                         except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
+    kernel.gdb=conf     Build kernel (including netbsd.gdb) with config
+    			file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
     installmodules=idir Run "make installmodules" to \`idir' to install all
                         kernel modules.
@@ -920,6 +941,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                         RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
     install-image       Create bootable installation image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
+    disk-image=target	Creae bootable disk image in
+			RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
     params              Display various make(1) parameters.
 
  Options:
@@ -1199,11 +1222,19 @@ parseoptions()
 			op=install_image # used as part of a variable name
 			;;
 
-		kernel=*|releasekernel=*)
+		kernel=*|releasekernel=*|kernel.gdb=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
 			    bomb "Must supply a kernel name with \`${op}=...'"
+			;;
+
+		disk-image=*)
+			arg=${op#*=}
+			op=disk_image
+			[ -n "${arg}" ] ||
+			    bomb "Must supply a target name with \`${op}=...'"
+
 			;;
 
 		modules)
@@ -1254,14 +1285,6 @@ parseoptions()
 #
 sanitycheck()
 {
-	# Non-root should always use either the -U or -E flag.
-	#
-	if ! ${do_expertmode} && \
-	    [ "$id_u" -ne 0 ] && \
-	    [ "${MKUNPRIVED}" = "no" ] ; then
-		bomb "-U or -E must be set for build as an unprivileged user."
-	fi
-
 	# Install as non-root is a bad idea.
 	#
 	if ${do_install} && [ "$id_u" -ne 0 ] ; then
@@ -1421,7 +1444,7 @@ print_tooldir_make()
 #    1. build a new version of nbmake in a temporary directory;
 #    2. use the temporary nbmake to create the top level obj directory;
 #    3. use $(getmakevar TOOLDIR) with the temporary nbmake to
-#       get the corect value of TOOLDIR;
+#       get the correct value of TOOLDIR;
 #    4. move the temporary nbmake to ${TOOLDIR}/bin/nbmake.
 #
 # However, people don't like building nbmake unnecessarily if their
@@ -1455,7 +1478,8 @@ rebuildmake()
 		${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
 			CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
 			${HOST_SH} "${TOP}/tools/make/configure" ||
-		    bomb "Configure of ${toolprefix}make failed"
+		    ( cp ${tmpdir}/config.log ${tmpdir}-config.log
+		      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
 		${runcmd} ${HOST_SH} buildmake.sh ||
 		    bomb "Build of ${toolprefix}make failed"
 		make="${tmpdir}/${toolprefix}make"
@@ -1486,6 +1510,22 @@ validatemakeparams()
 		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
 	fi
 
+	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE.
+	# These may be set as build.sh options or in "mk.conf".
+	# Don't export them as they're only used for tests in build.sh.
+	#
+	MKOBJDIRS=$(getmakevar MKOBJDIRS)
+	MKUNPRIVED=$(getmakevar MKUNPRIVED)
+	MKUPDATE=$(getmakevar MKUPDATE)
+
+	# Non-root should always use either the -U or -E flag.
+	#
+	if ! ${do_expertmode} && \
+	    [ "$id_u" -ne 0 ] && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U or -E must be set for build as an unprivileged user."
+	fi
+
 	if [ "${runcmd}" = "echo" ]; then
 		TOOLCHAIN_MISSING=no
 		EXTERNAL_TOOLCHAIN=""
@@ -1506,14 +1546,6 @@ validatemakeparams()
 		${runcmd} echo "	${progname} $*"
 		exit 1
 	fi
-
-	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE
-	# These may be set as build.sh options or in "mk.conf".
-	# Don't export them as they're only used for tests in build.sh.
-	#
-	MKOBJDIRS=$(getmakevar MKOBJDIRS)
-	MKUNPRIVED=$(getmakevar MKUNPRIVED)
-	MKUPDATE=$(getmakevar MKUPDATE)
 
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		# Create the top-level object directory.
@@ -1716,7 +1748,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.251.2.4 2013/01/23 00:04:04 yamt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.251.2.5 2014/05/22 13:23:26 yamt Exp $
 # with these arguments: ${_args}
 #
 
@@ -1796,6 +1828,18 @@ getkernelconf()
 	kernelbuildpath="${KERNOBJDIR}/${kernelconfname}"
 }
 
+diskimage()
+{
+	ARG="$(echo $1 | tr '[:lower:]' '[:upper:]')"
+	[ -f "${DESTDIR}/etc/mtree/set.base" ] || 
+	    bomb "The release binaries must be built first"
+	kerneldir="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"
+	kernel="${kerneldir}/netbsd-${ARG}.gz"
+	[ -f "${kernel}" ] ||
+	    bomb "The kernel ${kernel} must be built first"
+	make_in_dir "${NETBSDSRCDIR}/etc" "smp_${1}"
+}
+
 buildkernel()
 {
 	if ! ${do_tools} && ! ${buildkernelwarned:-false}; then
@@ -1819,7 +1863,7 @@ buildkernel()
 	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
 	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
 	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
-		-s "${TOP}/sys" "${kernelconfpath}" ||
+		${ksymopts} -s "${TOP}/sys" "${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
 	make_in_dir "${kernelbuildpath}" depend
 	make_in_dir "${kernelbuildpath}" all
@@ -1932,6 +1976,7 @@ dorump()
 	[ "${1}" != "rumptest" ] && bomb 'build.sh rump not yet functional. ' \
 	    'did you mean "rumptest"?'
 
+	export RUMPKERN_ONLY=1
 	# create obj and distrib dirs
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		make_in_dir "${NETBSDSRCDIR}/etc/mtree" obj
@@ -1972,7 +2017,7 @@ dorump()
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
 				if (match($NF,
-				    "`(rumpuser_|__" quirks ")") == 0)
+				    "`(rumpuser_|rumpcomp_|__" quirks ")") == 0)
 					fails[NR] = $0
 			}
 			/cannot find -l/{fails[NR] = $0}
@@ -2057,10 +2102,19 @@ main()
 			arg=${op#*=}
 			buildkernel "${arg}"
 			;;
-
+		kernel.gdb=*)
+			arg=${op#*=}
+			ksymopts="-D DEBUG=-g"
+			buildkernel "${arg}"
+			;;
 		releasekernel=*)
 			arg=${op#*=}
 			releasekernel "${arg}"
+			;;
+
+		disk-image=*)
+			arg=${op#*=}
+			diskimage "${arg}"
 			;;
 
 		modules)

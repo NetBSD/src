@@ -105,6 +105,14 @@ case "$host_os" in
     ;;
 esac
 
+AH_TEMPLATE(ENABLE_WILDCARD_MATCH, [Enable wildcard matching in pre-shared-key file])
+AC_ARG_ENABLE([wildcard-match],
+[--enable-wildcard-match	Enable wildcard matching in pre-shared-key file],
+[case "${enableval}" in
+(yes)	AC_DEFINE(ENABLE_WILDCARD_MATCH);;
+(no)	;;
+(*)	AC_MSG_ERROR(bad value ${enableval} for --enable-wildcard-match);;
+esac],[])
 ### Some basic toolchain checks
 
 # Checks for header files.

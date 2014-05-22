@@ -1,4 +1,4 @@
-/*	$NetBSD: json.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: json.c,v 1.1.1.1.4.1 2014/05/22 13:21:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -141,9 +141,9 @@ heim_json2base(const void *data, size_t length)
 
  out:
     if (ret && o) {
-	heim_release(o);		       
+	heim_release(o);
 	o = NULL;
     }
-    
+
     return o;
 }

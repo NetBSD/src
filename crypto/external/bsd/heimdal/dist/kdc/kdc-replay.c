@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc-replay.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: kdc-replay.c,v 1.1.1.1.4.1 2014/05/22 13:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -92,7 +92,7 @@ main(int argc, char **argv)
     if (config->enable_pkinit) {
 	if (config->pkinit_kdc_identity == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no identity");
- 
+
 	if (config->pkinit_kdc_anchors == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
 

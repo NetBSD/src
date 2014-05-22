@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.229.2.3 2012/10/30 18:46:04 yamt Exp $
+$NetBSD: UPDATING,v 1.229.2.4 2014/05/22 13:23:26 yamt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,50 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20140131:
+	The new compiler_rt/libc integration moved a few things. It is strongly
+	advised to do a clean build. At least lib/libc, the compat version(s)
+	of libc, libkern, rump and the kernels need to be cleaned.
+
+20131227:
+	1. The new ntpd runs in a restricted mode to prevent amplification
+	   attacks. If you need ntpdc to work you need to explicitly enable
+	   mode7 in your config file. Make sure you put the necessary restrict
+	   statements to avoid being exposed.
+	2. strncat has moved from lib/libc to common/lib/libc; you might need
+	   to make clean in libc
+
+20131129:
+	The GMP sources were updated, and builds will likely fail without
+	cleaning their build trees for both tools and in-tree, like below.
+
+20131128:
+	The MPC and MPFR sources were updated, and builds may require their
+	tools and in-tree directories cleaned for successful updates.
+
+20130605:
+	The kernel option FAST_IPSEC no longer exists, it's been renamed
+	to IPSEC (and the older IPSEC version removed).
+
+20130605:
+	Previous freetype installations eroneously installed private
+	header files. If you are building against a non-empty $DESTDIR,
+	please remove ${DESTDIR}//usr/X11R7/include/freetype2/freetype/.
+
+20130531:
+	The xdm update may cause build failure due to xdm.man being
+	in the obj tree.  Make sure to ensure any like this:
+		nbmake: nbmake: don't know how to make xdm.man. Stop
+	is fixed by deleting the xdm.man in the obj tree.
+
+20130530:
+	Updates of many xsrc packages will leave old .pc files around.
+	Best to clean out the xsrc objdir entirely before rebuilds.
+
+20130301:
+	The removal of netiso requires manual removal of /usr/include/netiso
+	prior to the build and make cleandir in /usr/src/usr.bin/{ktruss,kdump}
 
 20120726:
 	The update of OpenSSL requires cleaning both the OpenSSL build

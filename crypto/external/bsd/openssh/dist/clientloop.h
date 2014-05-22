@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.5.2.1 2012/05/23 10:07:04 yamt Exp $	*/
-/* $OpenBSD: clientloop.h,v 1.29 2011/09/09 22:46:44 djm Exp $ */
+/*	$NetBSD: clientloop.h,v 1.5.2.2 2014/05/22 13:21:34 yamt Exp $	*/
+/* $OpenBSD: clientloop.h,v 1.31 2013/06/02 23:36:29 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

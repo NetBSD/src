@@ -1,4 +1,4 @@
-/*	$NetBSD: set_modifier.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: set_modifier.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: set_modifier.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 kadm5_ret_t
 _kadm5_set_modifier(kadm5_server_context *context,

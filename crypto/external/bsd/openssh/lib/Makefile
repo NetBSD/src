@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2012/10/30 18:46:22 yamt Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2014/05/22 13:21:35 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ canohost.c \
 channels.c \
 cipher-3des1.c \
 cipher-bf1.c \
-cipher-ctr.c \
 cipher.c \
 cleanup.c \
 compat.c \
@@ -37,6 +36,7 @@ kexecdhc.c \
 kexgex.c \
 kexgexc.c \
 key.c \
+krl.c \
 log.c \
 mac.c \
 match.c \

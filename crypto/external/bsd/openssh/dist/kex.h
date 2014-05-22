@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: kex.h,v 1.52 2010/09/22 05:01:29 djm Exp $ */
+/*	$NetBSD: kex.h,v 1.5.2.1 2014/05/22 13:21:34 yamt Exp $	*/
+/* $OpenBSD: kex.h,v 1.56 2013/07/19 07:37:48 markus Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -38,8 +38,9 @@
 #define	KEX_DHGEX_SHA1		"diffie-hellman-group-exchange-sha1"
 #define	KEX_DHGEX_SHA256	"diffie-hellman-group-exchange-sha256"
 #define	KEX_RESUME		"resume@appgate.com"
-/* The following represents the family of ECDH methods */
-#define	KEX_ECDH_SHA2_STEM	"ecdh-sha2-"
+#define	KEX_ECDH_SHA2_NISTP256	"ecdh-sha2-nistp256"
+#define	KEX_ECDH_SHA2_NISTP384	"ecdh-sha2-nistp384"
+#define	KEX_ECDH_SHA2_NISTP521	"ecdh-sha2-nistp521"
 
 #define COMP_NONE	0
 #define COMP_ZLIB	1
@@ -84,9 +85,10 @@ typedef struct Newkeys Newkeys;
 
 struct Enc {
 	char	*name;
-	Cipher	*cipher;
+	const Cipher *cipher;
 	int	enabled;
 	u_int	key_len;
+	u_int	iv_len;
 	u_int	block_size;
 	u_char	*key;
 	u_char	*iv;
@@ -98,6 +100,7 @@ struct Mac {
 	u_char	*key;
 	u_int	key_len;
 	int	type;
+	int	etm;		/* Encrypt-then-MAC */
 	const EVP_MD	*evp_md;
 	HMAC_CTX	evp_ctx;
 	struct umac_ctx *umac_ctx;
@@ -127,18 +130,21 @@ struct Kex {
 	sig_atomic_t done;
 	int	flags;
 	const EVP_MD *evp_md;
+	int	ec_nid;
 	char	*client_version_string;
 	char	*server_version_string;
 	int	(*verify_host_key)(Key *);
 	Key	*(*load_host_public_key)(int);
 	Key	*(*load_host_private_key)(int);
 	int	(*host_key_index)(Key *);
+	void    (*sign)(Key *, Key *, u_char **, u_int *, u_char *, u_int);
 	void	(*kex[KEX_MAX])(Kex *);
 };
 
 void	 kex_prop2buf(Buffer *, const char *proposal[PROPOSAL_MAX]);
 
 int	 kex_names_valid(const char *);
+char	*kex_alg_list(void);
 
 Kex	*kex_setup(const char *[PROPOSAL_MAX]);
 void	 kex_finish(Kex *);
@@ -167,9 +173,6 @@ void
 kex_ecdh_hash(const EVP_MD *, const EC_GROUP *, char *, char *, char *, int,
     char *, int, u_char *, int, const EC_POINT *, const EC_POINT *,
     const BIGNUM *, u_char **, u_int *);
-
-int	kex_ecdh_name_to_nid(const char *);
-const EVP_MD *kex_ecdh_name_to_evpmd(const char *);
 
 void
 derive_ssh1_session_id(BIGNUM *, BIGNUM *, u_int8_t[8], u_int8_t[16]);

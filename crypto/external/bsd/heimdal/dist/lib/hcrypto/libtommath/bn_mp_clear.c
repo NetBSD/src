@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_clear.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_clear.c,v 1.1.1.1.4.1 2014/05/22 13:21:26 yamt Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_CLEAR_C
@@ -41,6 +41,6 @@ mp_clear (mp_int * a)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_clear.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_clear.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

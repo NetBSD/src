@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.1.4.1 2014/05/22 13:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2002 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: log.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $");
+__RCSID("NetBSD");
 
 static krb5_log_facility *logf;
 

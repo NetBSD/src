@@ -1,4 +1,4 @@
-/*	$NetBSD: modify_s.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: modify_s.c,v 1.1.1.1.4.1 2014/05/22 13:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001, 2003, 2005-2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: modify_s.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 static kadm5_ret_t
 modify_principal(void *server_handle,
