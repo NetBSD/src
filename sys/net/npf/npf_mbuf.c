@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.6.8.3 2013/01/23 00:06:25 yamt Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.6.8.4 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6.8.3 2013/01/23 00:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6.8.4 2014/05/22 11:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -51,11 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6.8.3 2013/01/23 00:06:25 yamt Exp $"
 void
 nbuf_init(nbuf_t *nbuf, struct mbuf *m, const ifnet_t *ifp)
 {
+	u_int ifid = npf_ifmap_id(ifp);
+
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
-	KASSERT(ifp != NULL);
 
 	nbuf->nb_mbuf0 = m;
 	nbuf->nb_ifp = ifp;
+	nbuf->nb_ifid =  ifid;
 	nbuf_reset(nbuf);
 }
 
@@ -163,7 +165,7 @@ nbuf_ensure_contig(nbuf_t *nbuf, size_t len)
 	const struct mbuf * const n = nbuf->nb_mbuf;
 	const size_t off = (uintptr_t)nbuf->nb_nptr - mtod(n, uintptr_t);
 
-	KASSERT(off < n->m_len);
+	KASSERT(off <= n->m_len);
 
 	if (__predict_false(n->m_len < (off + len))) {
 		struct mbuf *m = nbuf->nb_mbuf0;

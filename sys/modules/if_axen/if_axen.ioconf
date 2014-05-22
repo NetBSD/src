@@ -1,0 +1,10 @@
+# $NetBSD: if_axen.ioconf,v 1.1.6.2 2014/05/22 11:41:07 yamt Exp $
+
+ioconf axen
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root usbdevif*
+
+axen* at usbdevif?

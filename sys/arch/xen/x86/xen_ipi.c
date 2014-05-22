@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.5.2.3 2013/01/23 00:06:01 yamt Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.5.2.4 2014/05/22 11:40:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.3 2013/01/23 00:06:01 yamt Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.4 2014/05/22 11:40:14 yamt Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.3 2013/01/23 00:06:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.4 2014/05/22 11:40:14 yamt Exp $");
 
 #include <sys/types.h>
 
@@ -48,11 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.3 2013/01/23 00:06:01 yamt Exp $")
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#ifdef __x86_64__
-#include <machine/fpu.h>
-#else
-#include <machine/npx.h>
-#endif /* __x86_64__ */
+#include <x86/fpu.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
 
@@ -130,12 +126,6 @@ xen_ipi_init(void)
 	}
 
 	hypervisor_enable_event(evtchn);
-}
-
-/* prefer this to global variable */
-static inline u_int max_cpus(void)
-{
-	return maxcpus;
 }
 
 static inline bool /* helper */
@@ -228,11 +218,7 @@ xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
 
-#ifdef __x86_64__
 	fpusave_cpu(true);
-#else
-	npxsave_cpu(true);
-#endif /* __x86_64__ */
 }
 
 static void

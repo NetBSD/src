@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.123.2.1 2012/04/17 00:08:38 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.123.2.2 2014/05/22 11:41:09 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,13 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123.2.1 2012/04/17 00:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123.2.2 2014/05/22 11:41:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipx.h"
-#include "opt_iso.h"
-#include "opt_pfil_hooks.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #endif
@@ -90,14 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123.2.1 2012/04/17 00:08:38 yamt E
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#include <netiso/iso_snpac.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -645,15 +635,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		break;
 #endif
-#ifdef ISO
-	case PPP_ISO:
-		/* OSI NLCP not implemented yet */
-		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-			schednetisr(NETISR_ISO);
-			inq = &clnlintrq;
-		}
-		break;
-#endif
 	}
 
 queue_pkt:
@@ -846,14 +827,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		protocol = htons((sp->pp_flags & PP_CISCO) ?
 			ETHERTYPE_IPX : PPP_IPX);
 		break;
-#endif
-#ifdef ISO
-	case AF_ISO:    /* ISO OSI Protocol */
-		if (sp->pp_flags & PP_CISCO)
-			goto nosupport;
-		protocol = htons(PPP_ISO);
-		break;
-nosupport:
 #endif
 	default:
 		m_freem(m);
@@ -4923,11 +4896,10 @@ found:
 			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", ifp->if_xname, error);
 		}
-#ifdef PFIL_HOOKS
-		if (!error)
-			(void)pfil_run_hooks(&if_pfil,
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
-#endif
+		}
 	}
 }
 
@@ -4972,10 +4944,8 @@ found:
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil,
+		(void)pfil_run_hooks(if_pfil,
 		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
-#endif
 	}
 }
 #endif
@@ -5076,11 +5046,10 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 			log(LOG_DEBUG, "%s: sppp_set_ip6_addr: in6_ifinit "
 			" failed, error=%d\n", ifp->if_xname, error);
 		}
-#ifdef PFIL_HOOKS
-		if (!error)
-			(void)pfil_run_hooks(&if_pfil,
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR_IN6, ifp, PFIL_IFADDR);
-#endif
+		}
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.2.2.2 2012/10/30 17:22:56 yamt Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.2.2.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,6 +32,7 @@
 #define _SYS_KERNHIST_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_ddb.h"
 #include "opt_kernhist.h"
 #endif
 
@@ -97,9 +98,10 @@ LIST_HEAD(kern_history_head, kern_history);
 #define KERNHIST_INIT(NAME,N)
 #define KERNHIST_INIT_STATIC(NAME,BUF)
 #define KERNHIST_LOG(NAME,FMT,A,B,C,D)
+#define KERNHIST_CALLARGS(NAME,FMT,A,B,C,D)
 #define KERNHIST_CALLED(NAME)
 #define KERNHIST_FUNC(FNAME)
-#define kernhist_dump(NAME)
+#define KERNHIST_DUMP(NAME)
 #else
 #include <sys/kernel.h>		/* for "cold" variable */
 #include <sys/atomic.h>
@@ -121,6 +123,19 @@ do { \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
 } while (/*CONSTCOND*/ 0)
 
+#define KERNHIST_INITIALIZER(NAME,BUF) \
+{ \
+	.name = __STRING(NAME), \
+	.namelen = sizeof(__STRING(NAME)) - 1, \
+	.n = sizeof(BUF) / sizeof(struct kern_history_ent), \
+	.f = 0, \
+	.e = (struct kern_history_ent *) (BUF), \
+	/* BUF will inititalized to zeroes by being in .bss */ \
+}
+
+#define KERNHIST_LINK_STATIC(NAME) \
+	LIST_INSERT_HEAD(&kern_histories, &(NAME), list)
+
 #define KERNHIST_INIT_STATIC(NAME,BUF) \
 do { \
 	(NAME).name = __STRING(NAME); \
@@ -129,8 +144,12 @@ do { \
 	(NAME).f = 0; \
 	(NAME).e = (struct kern_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
-	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
+	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
+
+#ifndef KERNHIST_DELAY
+#define KERNHIST_DELAY	100000
+#endif
 
 #if defined(KERNHIST_PRINT)
 extern int kernhist_print_enabled;
@@ -138,7 +157,8 @@ extern int kernhist_print_enabled;
 do { \
 		if (kernhist_print_enabled) { \
 			kernhist_entry_print(E); \
-			DELAY(100000); \
+			if (KERNHIST_DELAY != 0) \
+				DELAY(KERNHIST_DELAY); \
 		} \
 } while (/*CONSTCOND*/ 0)
 #else
@@ -174,10 +194,27 @@ do { \
 	KERNHIST_LOG(NAME, "called!", 0, 0, 0, 0); \
 } while (/*CONSTCOND*/ 0)
 
+/*
+ * This extends kernhist to avoid wasting a separate "called!" entry on every
+ * function.
+ */
+#define KERNHIST_CALLARGS(NAME, FMT, A, B, C, D) \
+do { \
+	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
+	KERNHIST_LOG(NAME, "called: "FMT, (A), (B), (C), (D)); \
+} while (/*CONSTCOND*/ 0)
+
 #define KERNHIST_FUNC(FNAME) \
 	static unsigned int _kernhist_cnt = 0; \
 	static const char *const _kernhist_name = FNAME; \
-	int _kernhist_call = 0;
+	unsigned int _kernhist_call = 0;
+
+#ifdef DDB
+#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME)
+#else
+#define KERNHIST_DUMP(NAME)
+#endif
+
 
 static inline void kernhist_entry_print(const struct kern_history_ent *);
 
@@ -191,6 +228,7 @@ kernhist_entry_print(const struct kern_history_ent *e)
 }
 
 #if defined(DDB)
+void	kernhist_dump(struct kern_history *);
 void	kernhist_print(void (*)(const char *, ...) __printflike(1, 2));
 #endif /* DDB */
 

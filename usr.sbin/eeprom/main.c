@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $	*/
+/*	$NetBSD: main.c,v 1.21.6.1 2014/05/22 11:43:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.6.1 2014/05/22 11:43:03 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -43,16 +43,15 @@ __RCSID("$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifdef __sun__
+#if defined(USE_EEPROM) || defined(USE_OPENPROM)
 #include <machine/eeprom.h>
 #endif
 
 #include "defs.h"
 #include "pathnames.h"
 
-#if defined(__sparc__)
-# define USE_OPENPROM
-# if defined(__arch64__)
+#ifdef USE_OPENPROM
+# ifndef USE_EEPROM
 #  define ee_action(a,b)
 #  define ee_dump()
 #  define ee_updatechecksums() (void)0
@@ -60,10 +59,9 @@ __RCSID("$NetBSD: main.c,v 1.21 2009/04/29 09:13:58 nakayama Exp $");
 # endif
 #endif
 
-int	main (int, char *[]);
-static	void action (char *);
-static	void dump_prom (void);
-static	void usage (void);
+static	void action(char *);
+static	void dump_prom(void);
+static	void usage(void) __dead;
 
 const char *path_eeprom = _PATH_EEPROM;
 const char *path_openprom = _PATH_OPENPROM;
@@ -84,9 +82,7 @@ int	verbose=0;
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
@@ -183,8 +179,7 @@ main(argc, argv)
  * the table, and call the corresponding handler function.
  */
 static void
-action(line)
-	char *line;
+action(char *line)
 {
 	char *keyword, *arg;
 
@@ -215,7 +210,7 @@ action(line)
  * Dump the contents of the prom corresponding to all known keywords.
  */
 static void
-dump_prom()
+dump_prom(void)
 {
 
 #ifdef USE_PREPNVRAM
@@ -240,8 +235,8 @@ dump_prom()
 #endif /* USE_PREPNVRAM */
 }
 
-static void
-usage()
+__dead static void
+usage(void)
 {
 
 #if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)

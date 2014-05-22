@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.4.2.1 2012/10/30 17:19:02 yamt Exp $ */
+/* $NetBSD: if_gmc.c,v 1.4.2.2 2014/05/22 11:39:32 yamt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.4.2.1 2012/10/30 17:19:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.4.2.2 2014/05/22 11:39:32 yamt Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -706,7 +706,7 @@ gmc_intr(void *arg)
 		sc->sc_if.if_ierrors++;
 	}
 	if (status & INT4_RGMII_STSCHG) {
-		mii_tick(&sc->sc_mii);
+		mii_pollstat(&sc->sc_mii);
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS, status);
 

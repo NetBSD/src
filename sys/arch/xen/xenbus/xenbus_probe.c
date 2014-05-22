@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.35.2.1 2012/10/30 17:20:37 yamt Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.35.2.2 2014/05/22 11:40:14 yamt Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.35.2.1 2012/10/30 17:20:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.35.2.2 2014/05/22 11:40:14 yamt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -107,7 +107,7 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Xen Virtual Bus Interface\n");
 	xenbus_dev = self;
-	config_pending_incr();
+	config_pending_incr(self);
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
 	    NULL, "xenbus_probe");
@@ -711,7 +711,7 @@ xenbus_probe_init(void *unused)
 	}
 
 	DPRINTK("done");
-	config_pending_decr();
+	config_pending_decr(xenbus_dev);
 #ifdef DOM0OPS
 	if (dom0) {
 		int s;

@@ -1,4 +1,4 @@
-/* $Id: imx23_digctlreg.h,v 1.1.2.2 2013/01/16 05:32:47 yamt Exp $ */
+/* $Id: imx23_digctlreg.h,v 1.1.2.3 2014/05/22 11:39:32 yamt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 
 #define HW_DIGCTL_BASE 0x8001C000
+#define HW_DIGCTL_SIZE 0x2000
 
 /*
  * DIGCTL Control Register.

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.25.12.1 2012/10/30 17:20:23 yamt Exp $	*/
+/*	$NetBSD: consinit.c,v 1.25.12.2 2014/05/22 11:40:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.25.12.1 2012/10/30 17:20:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.25.12.2 2014/05/22 11:40:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -169,7 +169,6 @@ int prom_stdout_node;
 void
 consinit(void)
 {
-	int chosen;
 	char buffer[128];
 	const char *consname = "unknown";
 
@@ -177,8 +176,6 @@ consinit(void)
 
 	if (cn_tab != &consdev_prom)
 		return;
-
-	chosen = prom_finddevice("/chosen");
 
 	if ((prom_stdin_node = prom_instance_to_package(prom_stdin())) == 0) {
 		printf("WARNING: no PROM stdin\n");
@@ -210,6 +207,9 @@ consinit(void)
 		consname = buffer;
 	}
 	DBPRINT(("console is %s\n", consname));
+#ifndef DEBUG
+	(void)consname;
+#endif
 
 	/* Initialize PROM console */
 	(*cn_tab->cn_probe)(cn_tab);

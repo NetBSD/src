@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.1.2.2 2014/05/22 11:42:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.1.2.2 2014/05/22 11:42:21 yamt Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -104,11 +104,20 @@ ATF_TC_BODY(nanosleep_err, tc)
 {
 	struct timespec ts;
 
-	ts.tv_sec = -1;
-	ts.tv_nsec = 1000;
-
+	ts.tv_sec = 1;
+	ts.tv_nsec = -1;
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, nanosleep(&ts, NULL) == -1);
+
+	ts.tv_sec = 1;
+	ts.tv_nsec = 1000000000;
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EINVAL, nanosleep(&ts, NULL) == -1);
+
+	ts.tv_sec = -1;
+	ts.tv_nsec = 0;
+	errno = 0;
+	ATF_REQUIRE_ERRNO(0, nanosleep(&ts, NULL) == 0);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EFAULT, nanosleep((void *)-1, NULL) == -1);

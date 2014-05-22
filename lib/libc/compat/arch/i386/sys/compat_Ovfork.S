@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_Ovfork.S,v 1.1 2005/09/13 01:44:08 christos Exp $	*/
+/*	$NetBSD: compat_Ovfork.S,v 1.1.44.1 2014/05/22 11:36:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat_Ovfork.S,v 1.1 2005/09/13 01:44:08 christos Exp $")
+	RCSID("$NetBSD: compat_Ovfork.S,v 1.1.44.1 2014/05/22 11:36:50 yamt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -60,7 +60,7 @@ ENTRY(vfork)
 	jmp	*%ecx
 err:
 	pushl	%ecx
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	mov	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE

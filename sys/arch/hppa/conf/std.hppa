@@ -1,0 +1,9 @@
+# $NetBSD: std.hppa,v 1.1.6.2 2014/05/22 11:39:50 yamt Exp $
+#
+# standard, required NetBSD/hppa 'options'
+
+machine		hppa
+include		"conf/std"	# MI standard options
+
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts

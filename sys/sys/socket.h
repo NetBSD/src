@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.100.2.2 2012/10/30 17:22:57 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.100.2.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -428,6 +428,8 @@ struct kinfo_pcb {
 
 #define ki_src ki_s._kis_src
 #define ki_dst ki_d._kid_dst
+#define ki_spad ki_s._kis_pad
+#define ki_dpad ki_d._kid_pad
 
 #define PCB_SLOP		20
 #define PCB_ALL			0
@@ -602,6 +604,7 @@ const struct sockaddr *sockaddr_any_by_family(int);
 const void *sockaddr_anyaddr(const struct sockaddr *, socklen_t *);
 int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
+void sockaddr_format(const struct sockaddr *, char *, size_t);
 void sockaddr_free(struct sockaddr *);
 __END_DECLS
 #endif /* _KERNEL */

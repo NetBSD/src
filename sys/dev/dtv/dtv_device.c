@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.8.2.1 2014/05/22 11:40:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.8.2.1 2014/05/22 11:40:20 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -64,7 +64,7 @@ const struct cdevsw dtv_cdevsw = {
 	.d_poll = dtvpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_flag = D_OTHER|D_MPSAFE,
+	.d_flag = D_OTHER | D_MPSAFE,
 };
 
 static int	dtv_match(device_t, cfdata_t, void *);

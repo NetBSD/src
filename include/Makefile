@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136.2.1 2012/04/17 00:05:10 yamt Exp $
+#	$NetBSD: Makefile,v 1.136.2.2 2014/05/22 11:36:35 yamt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -8,7 +8,7 @@ NOOBJ=		# defined
 # Missing: mp.h
 
 INCS=	a.out.h aio.h ar.h assert.h atomic.h \
-	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
+	bitstring.h bm.h cdbw.h complex.h cpio.h ctype.h \
 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
 	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \

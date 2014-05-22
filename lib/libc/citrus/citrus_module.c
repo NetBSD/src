@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_module.c,v 1.9.8.1 2012/10/30 18:58:42 yamt Exp $	*/
+/*	$NetBSD: citrus_module.c,v 1.9.8.2 2014/05/22 11:36:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_module.c,v 1.9.8.1 2012/10/30 18:58:42 yamt Exp $");
+__RCSID("$NetBSD: citrus_module.c,v 1.9.8.2 2014/05/22 11:36:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -302,12 +302,24 @@ _citrus_load_module(_citrus_module_t *rhandle, const char *encname)
 
 	if (_pathI18nModule == NULL) {
 		p = getenv("PATH_I18NMODULE");
-		if (p != NULL && !issetugid()) {
+		if (p == NULL || issetugid()) {
+			_pathI18nModule = _PATH_I18NMODULE;
+#ifdef MLIBDIR
+			p = strrchr(_pathI18nModule, '/');
+			if (p != NULL && MLIBDIR[0]) {
+				snprintf(path, sizeof(path), "%.*s/%s/%s",
+				    (int)(p - _pathI18nModule),
+				    _pathI18nModule, MLIBDIR, p + 1);
+				p = path;
+			} else
+				p = NULL;
+#endif
+		}
+		if (p != NULL) {
 			_pathI18nModule = strdup(p);
 			if (_pathI18nModule == NULL)
 				return ENOMEM;
-		} else
-			_pathI18nModule = _PATH_I18NMODULE;
+		}
 	}
 
 	(void)snprintf(path, sizeof(path), "lib%s", encname);

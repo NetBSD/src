@@ -1,4 +1,4 @@
-/* $NetBSD: generic_lc_template_decl.h,v 1.2.10.1 2012/04/17 00:05:20 yamt Exp $ */
+/* $NetBSD: generic_lc_template_decl.h,v 1.2.10.2 2014/05/22 11:36:52 yamt Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -30,6 +30,6 @@
 #define _GENERIC_LC_TEMPLATE_DECL_H_
 
 const char * _PREFIX(setlocale)(const char * __restrict,
-    struct _locale_impl_t * __restrict);
+    struct _locale * __restrict);
 
 #endif /*_GENERIC_LC_TEMPLATE_DECL_H_*/

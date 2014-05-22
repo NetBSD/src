@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.5.2.1 2012/04/17 00:09:48 yamt Exp $ */
+/* $NetBSD: ldp_command.c,v 1.5.2.2 2014/05/22 11:43:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -74,11 +74,8 @@ static int set_func(int, char *);
 static int exit_func(int, char *);
  
 /* Show functions */
-static int show_neighbours(int, char *);
-static int show_bindings(int, char *);
 static int show_debug(int, char *);
 static int show_hellos(int, char *);
-static int show_labels(int, char *);
 static int show_parameters(int, char *);
 static int show_version(int, char *);
 static int show_warning(int, char *);
@@ -167,6 +164,7 @@ create_command_socket(int port)
 		close(s);
 		return -1;
 	}
+	debugp("Command socket created (%d)\n", s);
 	return s;
 }
 
@@ -401,7 +399,7 @@ exit_func(int s, char *recvspace)
 /*
  * Show functions
  */
-static int
+int
 show_neighbours(int s, char *recvspace)
 {
 	struct ldp_peer *p;
@@ -416,10 +414,10 @@ show_neighbours(int s, char *recvspace)
 		    inet_ntoa(p->ldp_id));
 		writestr(s, sendspace);
 		snprintf(sendspace, MAXSEND, "Transport address: %s\n",
-		    inet_ntoa(p->transport_address));
+		    satos(p->transport_address));
 		writestr(s, sendspace);
 		snprintf(sendspace, MAXSEND, "Next-hop address: %s\n",
-		    inet_ntoa(p->address));
+		    satos(p->address));
 		writestr(s, sendspace);
 		snprintf(sendspace, MAXSEND, "State: %s\n",
 		    ldp_state_to_name(p->state));
@@ -465,8 +463,11 @@ show_neighbours(int s, char *recvspace)
 		snprintf(sendspace, MAXSEND,"Addresses bounded to this peer: ");
 		writestr(s, sendspace);
 		SLIST_FOREACH(wp, &p->ldp_peer_address_head, addresses) {
+			/* XXX: TODO */
+			if (wp->address.sa.sa_family != AF_INET)
+				continue;
 			snprintf(sendspace, MAXSEND, "%s ",
-			    inet_ntoa(wp->address));
+			    inet_ntoa(wp->address.sin.sin_addr));
 			writestr(s, sendspace);
 		}
 		sendspace[0] = sendspace[1] = '\n';
@@ -476,18 +477,22 @@ show_neighbours(int s, char *recvspace)
 }
 
 /* Shows labels grabbed from unsolicited label maps */
-static int
+int
 show_labels(int s, char *recvspace)
 {
 	struct ldp_peer *p;
-	struct label_mapping *lm;
+	struct label_mapping *lm = NULL;
 
 	SLIST_FOREACH(p, &ldp_peer_head, peers) {
 		if (p->state != LDP_PEER_ESTABLISHED)
 			continue;
-		SLIST_FOREACH(lm, &p->label_mapping_head, mappings) {
+		while ((lm = ldp_peer_lm_right(p, lm)) != NULL) {
 			char lma[256];
-			strlcpy(lma, inet_ntoa(lm->address), sizeof(lma));
+			/* XXX: TODO */
+			if (lm->address.sa.sa_family != AF_INET)
+				continue;
+			strlcpy(lma, inet_ntoa(lm->address.sin.sin_addr),
+			    sizeof(lma));
 			snprintf(sendspace, MAXSEND, "%s:%d\t%s/%d\n",
 			    inet_ntoa(p->ldp_id), lm->label, lma, lm->prefix);
 			writestr(s, sendspace);
@@ -496,22 +501,22 @@ show_labels(int s, char *recvspace)
 	return 1;
 }
 
-static int
+int
 show_bindings(int s, char *recvspace)
 {
-	struct label *l;
+	struct label *l = NULL;
 
 	snprintf(sendspace, MAXSEND, "Local label\tNetwork\t\t\t\tNexthop\n");
 	writestr(s, sendspace);
-	SLIST_FOREACH (l, &label_head, labels) {
+	while((l = label_get_right(l)) != NULL) {
 		snprintf(sendspace, MAXSEND, "%d\t\t%s/", l->binding,
-		    union_ntoa(&l->so_dest));
+		    satos(&l->so_dest.sa));
 		writestr(s, sendspace);
-		snprintf(sendspace, MAXSEND, "%s", union_ntoa(&l->so_pref));
+		snprintf(sendspace, MAXSEND, "%s", satos(&l->so_pref.sa));
 		writestr(s, sendspace);
 		if (l->p)
 			snprintf(sendspace, MAXSEND, "\t%s:%d\n",
-			    inet_ntoa(l->p->address), l->label);
+			    satos(l->p->address), l->label);
 		else
 			snprintf(sendspace, MAXSEND, "\n");
 		writestr(s, sendspace);
@@ -539,8 +544,12 @@ show_hellos(int s, char *recvspace)
 	struct hello_info *hi;
 
 	SLIST_FOREACH(hi, &hello_info_head, infos) {
-		snprintf(sendspace, MAXSEND, "%s: %ds\n", inet_ntoa(hi->ldp_id),
-		    hi->keepalive);
+		snprintf(sendspace, MAXSEND,
+		    "ID: %s\nKeepalive: %ds\nTransport address: %s\n\n",
+		    inet_ntoa(hi->ldp_id),
+		    hi->keepalive,
+		    hi->transport_address.sa.sa_family != 0 ?
+		    satos(&hi->transport_address.sa) : "None");
 		writestr(s, sendspace);
 	}
 	return 1;

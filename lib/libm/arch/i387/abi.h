@@ -1,4 +1,4 @@
-/*	$NetBSD: abi.h,v 1.7 2011/06/18 22:19:52 joerg Exp $	*/
+/*	$NetBSD: abi.h,v 1.7.2.1 2014/05/22 11:36:56 yamt Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -68,7 +68,7 @@
 #define XMM_DOUBLE_EPILOGUE
 #define XMM_FLOAT_EPILOGUE
 
-#ifdef PIC
+#ifdef __PIC__
 #define FLDL_VAR(x) \
 	PIC_PROLOGUE ; \
 	fldl PIC_GOTOFF(x) ; \

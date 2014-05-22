@@ -1,4 +1,4 @@
-/*	$NetBSD: scsivar.h,v 1.1.2.2 2013/01/23 00:05:54 yamt Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.1.2.3 2014/05/22 11:39:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -71,7 +71,9 @@
  */
 
 struct	scsi_softc {
-	struct	hp_ctlr *sc_hc;
+	struct	scsidevice *sc_spc;
+	int	sc_ctlr;
+
 	u_char	*sc_buf;				/* Data Buffer Pointor*/
 	u_char	*sc_cdb;				/* CDB Buffer Pointor */
 	volatile int *sc_lock;				/* Lock Flag addres   */

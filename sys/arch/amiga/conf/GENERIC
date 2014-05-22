@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.274.2.4 2013/01/16 05:32:41 yamt Exp $
+# $NetBSD: GENERIC,v 1.274.2.5 2014/05/22 11:39:28 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.107 2012/11/25 23:37:10 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.119 2013/08/11 16:15:52 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.274.2.4 $"
+#ident 		"GENERIC-$Revision: 1.274.2.5 $"
 
 
 maxusers	8
@@ -63,23 +63,18 @@ options 	FPU_EMULATE	# FPU emulation
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -203,12 +198,6 @@ options 	DDB		# Kernel debugger
 #
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options 	NKPTADD=4	# set this for 4 additional KPT pages
-#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
 
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.
@@ -386,6 +375,9 @@ ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
 
+xsh*		at zbus0		# X-Surf 100
+ne*		at xshbus?		# NE2000 chip on X-Surf 100
+
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
@@ -448,6 +440,7 @@ wdc*		at zbus0		# Buddha / Catweasel
 
 atabus* 	at wdc? channel ?	# ATA bus
 #atabus*	at efa? channel ?	# ATA bus 
+atabus*		at ata? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
@@ -455,19 +448,21 @@ sd*		at atapibus? drive ?	# ATAPI disk drives
 
 pccard0		at mainbus0
 pcmcia*		at pccard0
-com*		at pcmcia? function ?		# Modems and serial cards
-pcmcom*		at pcmcia? function ?		# PCMCIA multi-port serial cards
-aic*		at pcmcia? function ?		# Adaptec APA-1460 SCSI
+com*		at pcmcia? function ?	# Modems and serial cards
+pcmcom*		at pcmcia? function ?	# PCMCIA multi-port serial cards
+aic*		at pcmcia? function ?	# Adaptec APA-1460 SCSI
 wdc*		at pcmcia? function ?
-awi*		at pcmcia? function ?		# BayStack 650 (802.11FH)
-ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-mbe*		at pcmcia? function ?		# MB8696x based Ethernet
-ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
-sm*		at pcmcia? function ?		# Megahertz Ethernet
+awi*		at pcmcia? function ?	# BayStack 650 (802.11FH)
+ep*		at pcmcia? function ?	# 3Com 3c589 and 3c562 Ethernet
+mbe*		at pcmcia? function ?	# MB8696x based Ethernet
+ne*		at pcmcia? function ?	# NE2000-compatible Ethernet
+sm*		at pcmcia? function ?	# Megahertz Ethernet
 mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?
 
+nsphyter*	at mii? phy ?		# NS83843 PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
 drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0
@@ -497,8 +492,11 @@ mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
 empb0		at zbus0		# ELBOX Mediator PCI 1200
+em4k0		at zbus0		# ELBOX Mediator PCI 4000
 emmem0		at zbus0		# ELBOX Mediator PCI memory space
+empm0		at empb0		# ELBOX Mediator PCI Power Management
 pci*		at empb0
+pci*		at em4k0
 
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 
@@ -540,6 +538,16 @@ bthidev* at bthub?
 # Bluetooth Audio support
 #btsco* at bthub?
 
+# USB
+slhci*		at zbus?                # Thylacine
+usb*		at slhci?
+
+uhub*		at usb?
+uhub*		at uhub? port ?
+
+uhidev*		at uhub? port ? configuration ? interface ?
+uhid*		at uhidev? reportid ?
+
 #
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter
@@ -576,9 +584,9 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
@@ -599,7 +607,7 @@ pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

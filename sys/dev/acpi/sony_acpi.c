@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.20.8.1 2012/10/30 17:20:51 yamt Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.20.8.2 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.20.8.1 2012/10/30 17:20:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.20.8.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -179,14 +179,10 @@ sony_walk_cb(ACPI_HANDLE hnd, uint32_t v, void *context, void **status)
 	for (ptr = buf; *ptr; ptr++)
 		*ptr = tolower(*ptr);
 
-	if ((rv = sysctl_createv(&sc->sc_log, 0, NULL, &node, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto out;
-
-	if ((rv = sysctl_createv(&sc->sc_log, 0, &node, &snode, 0,
+	if ((rv = sysctl_createv(&sc->sc_log, 0, NULL, &snode, 0,
 	    CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("sony controls"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto out;
 
 	if ((rv = sysctl_createv(&sc->sc_log, 0, &snode, &node,

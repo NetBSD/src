@@ -1,11 +1,12 @@
-.\" $NetBSD: carg.3,v 1.1.28.1 2013/01/23 00:05:25 yamt Exp $
+.\" $NetBSD: carg.3,v 1.1.28.2 2014/05/22 11:36:57 yamt Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
-.Dd December 27, 2012
+.Dd January 29, 2013
 .Dt CARG 3
 .Os
 .Sh NAME
 .Nm carg ,
-.Nm cargf
+.Nm cargf ,
+.Nm cargl
 .Nd complex argument functions
 .Sh SYNOPSIS
 .In complex.h
@@ -13,6 +14,8 @@
 .Fn carg "double complex z"
 .Ft float
 .Fn cargf "float complex z"
+.Ft long double
+.Fn cargl "long double complex z"
 .Sh DESCRIPTION
 These functions compute the argument (also called phase angle)
 of

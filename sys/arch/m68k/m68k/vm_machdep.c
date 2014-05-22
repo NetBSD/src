@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37.4.1 2012/04/17 00:06:36 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.4.2 2014/05/22 11:39:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37.4.1 2012/04/17 00:06:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37.4.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ cpu_lwp_free2(struct lwp *l)
 int
 vmapbuf(struct buf *bp, vsize_t len)
 {
-	struct pmap *upmap, *kpmap;
+	struct pmap *upmap, *kpmap __unused;
 	vaddr_t uva;		/* User VA (map from) */
 	vaddr_t kva;		/* Kernel VA (new to) */
 	paddr_t pa; 		/* physical address */

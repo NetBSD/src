@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp $	*/
+/*	$NetBSD: pm.c,v 1.10.2.2 2014/05/22 11:40:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.10.2.2 2014/05/22 11:40:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -555,14 +555,12 @@ pm_flush(struct pm_softc *sc)
 	int v, i, x, y;
 	u_short *p, *pe;
 	struct hwcmap256 *cm;
-	struct rasops_info *ri;
 
 	if (sc->sc_changed == 0)
 		return (1);
 
 	vdac = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_VDAC);
 	pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
-	ri = &pm_ri;
 	v = sc->sc_changed;
 
 	if ((v & WSDISPLAY_CURSOR_DOCUR) != 0) {

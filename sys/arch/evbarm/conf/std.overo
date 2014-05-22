@@ -1,4 +1,4 @@
-#	$NetBSD: std.overo,v 1.2.14.2 2013/01/23 00:05:45 yamt Exp $
+#	$NetBSD: std.overo,v 1.2.14.3 2014/05/22 11:39:40 yamt Exp $
 #
 # standard NetBSD/evbarm for OVERO options
 
@@ -16,7 +16,6 @@ makeoptions	LOADADDRESS="0x80200000"
 makeoptions	BOARDTYPE="overo"
 options 	EVBARM_BOARDTYPE=overo
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.gumstix"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options		ARM_GENERIC_TODR

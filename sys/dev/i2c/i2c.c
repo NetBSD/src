@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.37.2.1 2012/04/17 00:07:30 yamt Exp $	*/
+/*	$NetBSD: i2c.c,v 1.37.2.2 2014/05/22 11:40:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.37.2.1 2012/04/17 00:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.37.2.2 2014/05/22 11:40:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,17 @@ static dev_type_close(iic_close);
 static dev_type_ioctl(iic_ioctl);
 
 const struct cdevsw iic_cdevsw = {
-	iic_open, iic_close, noread, nowrite, iic_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = iic_open,
+	.d_close = iic_close,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = iic_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver iic_cd;
@@ -110,7 +119,6 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct i2c_attach_args ia;
 
 	ia.ia_tag = sc->sc_tag;
-	ia.ia_addr = cf->cf_loc[IICCF_ADDR];
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
 	ia.ia_type = sc->sc_type;
 
@@ -118,13 +126,19 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_ncompat = 0;
 	ia.ia_compat = NULL;
 
-	if (ia.ia_addr != (i2c_addr_t)-1 &&
-	    ia.ia_addr <= I2C_MAX_ADDR &&
-	    !sc->sc_devices[ia.ia_addr])
-		if (config_match(parent, cf, &ia) > 0) {
+	for (ia.ia_addr = 0; ia.ia_addr <= I2C_MAX_ADDR; ia.ia_addr++) {
+		if (sc->sc_devices[ia.ia_addr] != NULL)
+			continue;
+
+		if (cf->cf_loc[IICCF_ADDR] != -1 &&
+		    cf->cf_loc[IICCF_ADDR] != ia.ia_addr)
+			continue;
+
+		if (config_match(parent, cf, &ia) > 0)
 			sc->sc_devices[ia.ia_addr] =
 			    config_attach(parent, cf, &ia, iic_print);
 	}
+
 	return 0;
 }
 
@@ -138,7 +152,7 @@ iic_child_detach(device_t parent, device_t child)
 		if (sc->sc_devices[i] == child) {
 			sc->sc_devices[i] = NULL;
 			break;
-	}
+		}
 }
 
 static int
@@ -161,9 +175,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
 	prop_array_t child_devices;
+	prop_dictionary_t props;
 	char *buf;
 	i2c_tag_t ic;
 	int rv;
+	bool indirect_config;
 
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
@@ -185,8 +201,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	child_devices = prop_dictionary_get(device_properties(parent),
-		"i2c-child-devices");
+	props = device_properties(parent);
+	if (!prop_dictionary_get_bool(props, "i2c-indirect-config",
+	    &indirect_config))
+		indirect_config = true;
+	child_devices = prop_dictionary_get(props, "i2c-child-devices");
 	if (child_devices) {
 		unsigned int i, count;
 		prop_dictionary_t dev;
@@ -221,6 +240,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
+			ia.ia_size = size;
 
 			buf = NULL;
 			cdata = prop_dictionary_get(dev, "compatible");
@@ -244,7 +264,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (buf)
 				free(buf, M_TEMP);
 		}
-	} else {
+	} else if (indirect_config) {
 		/*
 		 * Attach all i2c devices described in the kernel
 		 * configuration file.
@@ -300,7 +320,6 @@ iic_smbus_intr_thread(void *aux)
 {
 	i2c_tag_t ic;
 	struct ic_intr_list *il;
-	int rv;
 
 	ic = (i2c_tag_t)aux;
 	ic->ic_running = 1;
@@ -308,7 +327,7 @@ iic_smbus_intr_thread(void *aux)
 
 	while (ic->ic_running) {
 		if (ic->ic_pending == 0)
-			rv = tsleep(ic, PZERO, "iicintr", hz);
+			tsleep(ic, PZERO, "iicintr", hz);
 		if (ic->ic_pending > 0) {
 			LIST_FOREACH(il, &(ic->ic_proc_list), il_next) {
 				(*il->il_intr)(il->il_intrarg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19.12.1 2012/10/30 17:20:56 yamt Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.12.2 2014/05/22 11:40:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.12.1 2012/10/30 17:20:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.12.2 2014/05/22 11:40:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,17 @@ dev_type_write(ppiwrite);
 dev_type_ioctl(ppiioctl);
 
 const struct cdevsw ppi_cdevsw = {
-        ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
-        nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+        .d_open = ppiopen,
+	.d_close = ppiclose,
+	.d_read = ppiread,
+	.d_write = ppiwrite,
+	.d_ioctl = ppiioctl,
+        .d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 #define UNIT(x)		minor(x)

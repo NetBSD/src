@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.14.2.2 2012/10/30 17:21:27 yamt Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.14.2.3 2014/05/22 11:40:25 yamt Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.14.2.2 2012/10/30 17:21:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.14.2.3 2014/05/22 11:40:25 yamt Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -275,14 +275,14 @@ next:
 
 			desc = buf + sizeof(*vpd);
 
-			/* 
+			/*
 			 * ...which is an instance property...
 			 */
 			if (desc[0] != 'I')
 				continue;
 			desc += 3;
 
-			/* 
+			/*
 			 * ...that's a byte array with the proper
 			 * length for a MAC address...
 			 */
@@ -296,7 +296,7 @@ next:
 			if (strcmp(desc, "local-mac-address") != 0)
 				continue;
 			desc += strlen("local-mac-address") + 1;
-					
+				
 			memcpy(enaddr, desc, ETHER_ADDR_LEN);
 			rv = 0;
 		}
@@ -549,7 +549,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL &&
 	    sc->sc_mif_config & (CAS_MIF_CONFIG_MDI0|CAS_MIF_CONFIG_MDI1)) {
-		/* 
+		/*
 		 * Try the external PCS SERDES if we didn't find any
 		 * MII devices.
 		 */
@@ -963,10 +963,7 @@ cas_disable_tx(struct cas_softc *sc)
 int
 cas_meminit(struct cas_softc *sc)
 {
-	struct cas_rxsoft *rxs;
-	int i, error;
-
-	rxs = (void *)&error;
+	int i;
 
 	/*
 	 * Initialize the transmit descriptor ring.
@@ -1292,7 +1289,7 @@ cas_rint(struct cas_softc *sc)
 
 			cp = rxs->rxs_kva + off * 256 + ETHER_ALIGN;
 			m = m_devget(cp, len, 0, ifp, NULL);
-			
+		
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
 
@@ -1822,10 +1819,11 @@ cas_estintr(struct cas_softc *sc, int what)
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
 	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* PCI interrupts */
 	if (what & CAS_INTR_PCI) {
-		intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle);
+		intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle, intrbuf, sizeof(intrbuf));
 		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_handle,
 		    IPL_NET, cas_intr, sc);
 		if (sc->sc_ih == NULL) {

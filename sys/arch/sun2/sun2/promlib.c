@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.17 2011/07/17 20:54:48 joerg Exp $	*/
+/*	$NetBSD: promlib.c,v 1.17.2.1 2014/05/22 11:40:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.17 2011/07/17 20:54:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.17.2.1 2014/05/22 11:40:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ type new proto								\
 	int rc;								\
 	_mode_monitor(&state, 0);					\
 	rc = (*(romVectorPtr->old)) args;				\
+	__USE(rc);							\
 	_mode_kernel(&state, 0);					\
 	ret ;								\
 }
@@ -221,6 +222,7 @@ prom_printf(const char *fmt, ...)
 	    /* the PROM printf vector: */
 		(romVectorPtr->printf))
 		)(fmt, varargs);
+	__USE(rc);
 	_mode_kernel(&state, 0);
 }
 

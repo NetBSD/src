@@ -1,4 +1,4 @@
-/* $NetBSD: crypt-sha1.c,v 1.4.4.1 2012/10/30 18:59:07 yamt Exp $ */
+/* $NetBSD: crypt-sha1.c,v 1.4.4.2 2014/05/22 11:36:55 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crypt-sha1.c,v 1.4.4.1 2012/10/30 18:59:07 yamt Exp $");
+__RCSID("$NetBSD: crypt-sha1.c,v 1.4.4.2 2014/05/22 11:36:55 yamt Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -130,6 +130,8 @@ __crypt_sha1 (const char *pw, const char *salt)
     int dl;
     unsigned int iterations;
     unsigned int i;
+    /* XXX silence -Wpointer-sign (would be nice to fix this some other way) */
+    const unsigned char *pwu = (const unsigned char *)pw;
 
     /*
      * Salt format is
@@ -166,9 +168,9 @@ __crypt_sha1 (const char *pw, const char *salt)
     /*
      * Then hmac using <pw> as key, and repeat...
      */
-    __hmac_sha1(passwd, dl, pw, pl, hmac_buf);
+    __hmac_sha1((unsigned char *)passwd, dl, pwu, pl, hmac_buf);
     for (i = 1; i < iterations; i++) {
-	__hmac_sha1(hmac_buf, SHA1_SIZE, pw, pl, hmac_buf);
+	__hmac_sha1(hmac_buf, SHA1_SIZE, pwu, pl, hmac_buf);
     }
     /* Now output... */
     pl = snprintf(passwd, sizeof(passwd), "%s%u$%.*s$",
@@ -190,7 +192,7 @@ __crypt_sha1 (const char *pw, const char *salt)
     *ep = '\0';
 
     /* Don't leave anything around in vm they could use. */
-    __explicit_bzero(hmac_buf, sizeof hmac_buf);
+    explicit_memset(hmac_buf, 0, sizeof hmac_buf);
 
     return passwd;
 }	

@@ -26,6 +26,7 @@ test_case()
 	atf_test_case "${name}" cleanup
 	eval "${name}_head() { \
 		atf_set "require.user" "root" ; \
+		atf_set "require.progs" "rump_ffs" ; \
 	}"
 	eval "${name}_body() { \
 		${check_function} " "${@}" "; \

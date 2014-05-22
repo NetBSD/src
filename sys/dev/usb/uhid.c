@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.84.8.4 2013/01/23 00:06:13 yamt Exp $	*/
+/*	$NetBSD: uhid.c,v 1.84.8.5 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.8.4 2013/01/23 00:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.8.5 2014/05/22 11:40:37 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -116,8 +116,17 @@ dev_type_poll(uhidpoll);
 dev_type_kqfilter(uhidkqfilter);
 
 const struct cdevsw uhid_cdevsw = {
-	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
-	nostop, notty, uhidpoll, nommap, uhidkqfilter, D_OTHER | D_MPSAFE,
+	.d_open = uhidopen,
+	.d_close = uhidclose,
+	.d_read = uhidread,
+	.d_write = uhidwrite,
+	.d_ioctl = uhidioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = uhidpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = uhidkqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);

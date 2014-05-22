@@ -1,4 +1,4 @@
-/* $NetBSD: elfstructs.h,v 1.1.1.1.4.2 2012/04/17 00:07:08 yamt Exp $ */
+/* $NetBSD: elfstructs.h,v 1.1.1.1.4.3 2014/05/22 11:40:14 yamt Exp $ */
 #ifndef __XEN_PUBLIC_ELFSTRUCTS_H__
 #define __XEN_PUBLIC_ELFSTRUCTS_H__ 1
 /*
@@ -37,7 +37,6 @@ typedef uint16_t	Elf32_Half;	/* Unsigned medium integer */
 
 typedef uint64_t	Elf64_Addr;
 typedef uint64_t	Elf64_Off;
-typedef int32_t		Elf64_Shalf;
 
 typedef int32_t		Elf64_Sword;
 typedef uint32_t	Elf64_Word;

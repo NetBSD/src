@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.2.2.2 2012/10/30 17:18:55 yamt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.2.2.3 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -60,10 +60,10 @@
 
 
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.2.2.2 2012/10/30 17:18:55 yamt Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.2.2.3 2014/05/22 11:39:31 yamt Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -114,37 +114,27 @@ RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.2.2.2 2012/10/30 17:18:55 yamt Exp $")
 	mcr	p15, 0, reg, c7, c10, 4;/* Data Synchronization Barrier */
 #endif
 
-ENTRY(arm11x6_setttb)
-#ifdef PMAP_CACHE_VIVT
-	Flush_D_cache(r2)
-	Invalidate_I_cache(r2, r3)
-#else
-	mov	r2, #0
-#endif
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-
-	cmp	r1, #0
-	mcrne	p15, 0, r2, c8, c7, 0	/* invalidate I+D TLBs */
-	mcrne	p15, 0, r2, c7, c10, 4	/* drain write buffer */
-	RET
-
 ENTRY_NP(arm11x6_idcache_wbinv_all)
 	Flush_D_cache(r0)
 	Invalidate_I_cache(r0, r1)
 	RET
+END(arm11x6_idcache_wbinv_all)
 
 ENTRY_NP(arm11x6_dcache_wbinv_all)
 	Flush_D_cache(r0)
 	RET
+END(arm11x6_dcache_wbinv_all)
 
 ENTRY_NP(arm11x6_icache_sync_all)
 	Flush_D_cache(r0)
 	Invalidate_I_cache(r0, r1)
 	RET
+END(arm11x6_icache_sync_all)
 
 ENTRY_NP(arm11x6_flush_prefetchbuf)
 	mcr	p15, 0, r0, c7, c5, 4	/* Flush Prefetch Buffer */
 	RET
+END(arm11x6_flush_prefetchbuf)
 
 ENTRY_NP(arm11x6_icache_sync_range)
 	add	r1, r1, r0
@@ -171,6 +161,7 @@ ENTRY_NP(arm11x6_icache_sync_range)
 	mcrr	p15, 0, r1, r0, c12	/* clean and invalidate D cache range */ /* XXXNH */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(arm11x6_icache_sync_range)
 
 ENTRY_NP(arm11x6_idcache_wbinv_range)
 	add	r1, r1, r0
@@ -197,6 +188,7 @@ ENTRY_NP(arm11x6_idcache_wbinv_range)
 	mcrr	p15, 0, r1, r0, c14	/* clean and invalidate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(arm11x6_idcache_wbinv_range)
 
 /*
  * Preload the cache before issuing the WFI by conditionally disabling the
@@ -219,3 +211,4 @@ ENTRY_NP(arm11x6_sleep)
 	nop
 	bne	1b
 	RET
+END(arm11x6_sleep)

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.17.34.1 2012/04/17 00:07:50 yamt Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.17.34.2 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.17.34.1 2012/04/17 00:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.17.34.2 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ joy_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (mapsize != 2) {
-		if (!bus_space_subregion(sc->sc_iot, sc->sc_ioh, 1, 1,
-		    &sc->sc_ioh) < 0) {
+		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 1, 1,
+		    &sc->sc_ioh)) {
 			aprint_error_dev(self, "error mapping subregion\n");
 			return;
 		}

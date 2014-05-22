@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.2.2.1 2012/10/30 17:19:07 yamt Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.2.2.2 2014/05/22 11:39:33 yamt Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -82,13 +82,61 @@ enum mvsoc_tags {
 	KIRKWOOD_TAG_SPI,
 	KIRKWOOD_TAG_BOOTROM,
 	KIRKWOOD_TAG_CRYPT,
+
+	MV78XX0_TAG_DEVICE_CS0,
+	MV78XX0_TAG_DEVICE_CS1,
+	MV78XX0_TAG_DEVICE_CS2,
+	MV78XX0_TAG_DEVICE_CS3,
+	MV78XX0_TAG_DEVICE_BOOTCS,
+	MV78XX0_TAG_SPI,
+	MV78XX0_TAG_PEX0_MEM,
+	MV78XX0_TAG_PEX01_MEM,
+	MV78XX0_TAG_PEX02_MEM,
+	MV78XX0_TAG_PEX03_MEM,
+	MV78XX0_TAG_PEX0_IO,
+	MV78XX0_TAG_PEX01_IO,
+	MV78XX0_TAG_PEX02_IO,
+	MV78XX0_TAG_PEX03_IO,
+	MV78XX0_TAG_PEX1_MEM,
+	MV78XX0_TAG_PEX11_MEM,
+	MV78XX0_TAG_PEX12_MEM,
+	MV78XX0_TAG_PEX13_MEM,
+	MV78XX0_TAG_PEX1_IO,
+	MV78XX0_TAG_PEX11_IO,
+	MV78XX0_TAG_PEX12_IO,
+	MV78XX0_TAG_PEX13_IO,
+	MV78XX0_TAG_CRYPT,
+
+	ARMADAXP_TAG_PEX00_MEM,
+	ARMADAXP_TAG_PEX00_IO,
+	ARMADAXP_TAG_PEX01_MEM,
+	ARMADAXP_TAG_PEX01_IO,
+	ARMADAXP_TAG_PEX02_MEM,
+	ARMADAXP_TAG_PEX02_IO,
+	ARMADAXP_TAG_PEX03_MEM,
+	ARMADAXP_TAG_PEX03_IO,
+	ARMADAXP_TAG_PEX2_MEM,
+	ARMADAXP_TAG_PEX2_IO,
+	ARMADAXP_TAG_PEX3_MEM,
+	ARMADAXP_TAG_PEX3_IO,
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
+
+extern int (*mvsoc_clkgating)(struct marvell_attach_args *);
 
 void orion_intr_bootstrap(void);
 void orion_getclks(bus_addr_t);
 
 void kirkwood_intr_bootstrap(void);
 void kirkwood_getclks(bus_addr_t);
+int kirkwood_clkgating(struct marvell_attach_args *);
+
+void mv78xx0_intr_bootstrap(void);
+void mv78xx0_getclks(bus_addr_t);
+
+void armadaxp_intr_bootstrap(bus_addr_t);
+void armadaxp_getclks(void);
+void armada370_getclks(void);
+int armadaxp_clkgating(struct marvell_attach_args *);
 
 #endif	/* _MVSOCVAR_H_ */

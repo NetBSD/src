@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.96.8.2 2012/10/30 17:21:32 yamt Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.96.8.3 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96.8.2 2012/10/30 17:21:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96.8.3 2014/05/22 11:40:25 yamt Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -295,6 +295,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	int reg_io, reg_mem;
 	pcireg_t reg10, reg14;
 	pcireg_t csr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	aprint_normal("\n");
@@ -391,7 +392,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->tl_if.if_softc = sc;
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
@@ -747,7 +748,7 @@ tl_init(struct ifnet *ifp)
 		error = 0;
 	else if (error != 0) {
 		errstring = "could not set media";
-		goto bad; 
+		goto bad;
 	}
 
 	/* start ticks calls */

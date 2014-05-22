@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.357.2.4 2013/01/16 05:32:37 yamt Exp $
+#       $NetBSD: Makefile,v 1.357.2.5 2014/05/22 11:37:52 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -19,7 +19,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
-	fork1.9 fsetown.9 fstrans.9 getiobuf.9 genfs.9 \
+	fork1.9 fsetown.9 fstrans.9 getiobuf.9 genfs.9 genfs_rename.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
@@ -34,15 +34,15 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
 	memmove.9 memset.9 \
-	microtime.9 microuptime.9 mi_switch.9 module.9 \
+	microseq.9 microtime.9 microuptime.9 mi_switch.9 module.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
-	namei.9 npf_ncode.9 nullop.9 opencrypto.9 optstr.9 \
+	namei.9 nullop.9 opencrypto.9 optstr.9 \
 	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
 	pcmcia.9 pcq.9 pcu.9 percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 \
-	pmc.9 pmf.9 pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
-	preempt.9 proc_find.9 pserialize.9 putter.9 \
-	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 roundup.9 \
-	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 STACK.9 \
+	pmc.9 pmf.9 pool.9 pool_cache.9 powerhook_establish.9 ppi.9 \
+	ppsratecheck.9 preempt.9 proc_find.9 pserialize.9 putter.9 \
+	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rndsink.9 \
+	roundup.9 rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 STACK.9 \
 	scanc.9 \
 	sched_4bsd.9 sched_m2.9 scsipi.9 \
 	secmodel_bsd44.9 secmodel_extensions.9 \
@@ -51,7 +51,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
-	tcp_congctl.9 timecounter.9 time_second.9 todr.9 tvtohz.9 \
+	tcp_congctl.9 timecounter.9 time_second.9 todr.9 ts2timo.9 tvtohz.9 \
 	ucas.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
@@ -405,10 +405,13 @@ MLINKS+=kcpuset.9 kcpuset_create.9 \
 	kcpuset.9 kcpuset_fill.9 \
 	kcpuset.9 kcpuset_set.9 \
 	kcpuset.9 kcpuset_clear.9 \
+	kcpuset.9 kcpuset_isotherset.9 \
 	kcpuset.9 kcpuset_isset.9 \
 	kcpuset.9 kcpuset_iszero.9 \
+	kcpuset.9 kcpuset_countset.9 \
 	kcpuset.9 kcpuset_match.9 \
 	kcpuset.9 kcpuset_merge.9 \
+	kcpuset.9 kcpuset_export_32.9 \
 	kcpuset.9 kcpuset_atomic_set.9 \
 	kcpuset.9 kcpuset_atomic_clear.9
 MLINKS+=kmem.9 kmem_alloc.9 \
@@ -447,7 +450,7 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 lockinit.9 lock.9 lockmgr.9 \
 	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 lock.9 transferlockers.9 \
 	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
-MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 tsleep.9
+MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 mtsleep.9 ltsleep.9 tsleep.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 realloc.9 malloc.9 free.9 malloc.9 FREE.9
 MLINKS+=malloc.9 malloc_roundup.9 malloc.9 malloc_type_attach.9
 MLINKS+=malloc.9 malloc_type_detach.9 malloc.9 malloc_type_setlimit.9
@@ -459,8 +462,8 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
 	mbuf.9 m_copyback_cow.9 \
 	mbuf.9 m_makewritable.9 \
-	mbuf.9 m_pulldown.9 \
-	mbuf.9 m_pullup.9 mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
+	mbuf.9 m_pulldown.9 mbuf.9 m_pullup.9 mbuf.9 m_copyup.9 \
+	mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
 	mbuf.9 m_freem.9 mbuf.9 mtod.9 mbuf.9 mtocl.9 mbuf.9 cltom.9 \
 	mbuf.9 MGET.9 mbuf.9 MGETHDR.9 mbuf.9 MEXTMALLOC.9 \
 	mbuf.9 MEXTADD.9 mbuf.9 MCLGET.9 mbuf.9 M_COPY_PKTHDR.9 \
@@ -873,7 +876,10 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_reinit.9 \
 	vfssubr.9 vfs_getopsbyname.9 \
 	vfssubr.9 vfs_resume.9 \
-	vfssubr.9 vfs_suspend.9
+	vfssubr.9 vfs_suspend.9 \
+	vfssubr.9 vfs_vnode_iterator_init.9 \
+	vfssubr.9 vfs_vnode_iterator_destroy.9 \
+	vfssubr.9 vfs_vnode_iterator_next.9
 MLINKS+=vmem.9 vmem_alloc.9 \
 	vmem.9 vmem_create.9 \
 	vmem.9 vmem_destroy.9 \
@@ -892,6 +898,7 @@ MLINKS+=vnode.9 vref.9 \
 	vnode.9 vrecycle.9 \
 	vnode.9 vgone.9 \
 	vnode.9 vgonel.9 \
+	vnode.9 vdead_check.9 \
 	vnode.9 vflush.9 \
 	vnode.9 vaccess.9 \
 	vnode.9 bdevvp.9 \

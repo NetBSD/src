@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.7.12.2 2012/10/30 17:18:35 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.7.12.3 2014/05/22 11:39:25 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -30,14 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.2 2012/10/30 17:18:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.3 2014/05/22 11:39:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
+#include <arm/locore.h>
+
 #include <machine/irq.h>
 #include <machine/machdep.h>
 

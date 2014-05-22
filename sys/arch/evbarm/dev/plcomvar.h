@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.6.44.3 2012/10/30 17:19:21 yamt Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.6.44.4 2014/05/22 11:39:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,6 @@
 
 #include <sys/callout.h>
 #include <sys/timepps.h>
-#include <sys/simplelock.h>
 
 struct plcom_instance;
 
@@ -50,7 +49,7 @@ int  plcomcnattach	(struct plcom_instance *, int, int, tcflag_t, int);
 void plcomcndetach	(void);
 
 #ifdef KGDB
-int  plcom_kgdb_attach	(struct plcom_instance *, int, int, tcflag_t);
+int  plcom_kgdb_attach	(struct plcom_instance *, int, int, tcflag_t, int);
 #endif
 
 int  plcom_is_console	(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);

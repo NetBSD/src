@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.46.6.2 2012/10/30 18:59:36 yamt Exp $
+.\"	$NetBSD: bpf.4,v 1.46.6.3 2014/05/22 11:37:50 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd December 31, 2011
+.Dd August 29, 2013
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -630,6 +630,17 @@ that copy the index register to the accumulator or vice versa.
 .It Sy BPF_MISC+BPF_TAX Ta X \*[Lt]- A
 .It Sy BPF_MISC+BPF_TXA Ta A \*[Lt]- X
 .El
+.Pp
+Also, two instructions to call a "coprocessor" if initialized by the kernel
+component.
+There is no coprocessor by default.
+.Bl -column "BPF_MISC+BPF_COP" "A \*[Lt]- funcs[X](...)" -offset indent
+.It Sy BPF_MISC+BPF_COP Ta A \*[Lt]- funcs[k](..)
+.It Sy BPF_MISC+BPF_COPX Ta A \*[Lt]- funcs[X](..)
+.El
+.Pp
+If the coprocessor is not set or the function index is out of range, these
+instructions will abort the program and return zero.
 .El
 .Pp
 The BPF interface provides the following macros to facilitate

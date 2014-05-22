@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.14.20.1 2012/04/17 00:05:24 yamt Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.14.20.2 2014/05/22 11:36:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.14.20.1 2012/04/17 00:05:24 yamt Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.14.20.2 2014/05/22 11:36:54 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,14 +89,18 @@ GETTEMP(char *path, int *doopen, int domkdir)
 			xcnt = 0;	
 
 	/* Use at least one from xtra.  Use 2 if more than 6 X's. */
-	if (*(trv - 1) == 'X')
+	if (xcnt > 0) {
 		*--trv = xtra[0];
-	if (xcnt > 6 && *(trv - 1) == 'X')
+		xcnt--;
+	}
+	if (xcnt > 5) {
 		*--trv = xtra[1];
+		xcnt--;
+	}
 
 	/* Set remaining X's to pid digits with 0's to the left. */
-	while (*--trv == 'X') {
-		*trv = (pid % 10) + '0';
+	for (; xcnt > 0; xcnt--) {
+		*--trv = (pid % 10) + '0';
 		pid /= 10;
 	}
 
@@ -119,14 +123,16 @@ GETTEMP(char *path, int *doopen, int domkdir)
 		if (trv <= path)
 			break;
 		if (*trv == '/') {
+			int e;
 			*trv = '\0';
-			if (stat(path, &sbuf))
-				return 0;
+			e = stat(path, &sbuf);
+			*trv = '/';
+			if (e == -1)
+				return doopen == NULL && !domkdir;
 			if (!S_ISDIR(sbuf.st_mode)) {
 				errno = ENOTDIR;
-				return 0;
+				return doopen == NULL && !domkdir;
 			}
-			*trv = '/';
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pdu.c,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: pdu.c,v 1.1.6.1 2014/05/22 11:43:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
 #include "pdu.h"
 
 uint
-get_pdu(unsigned char *s, struct ldp_pdu * p)
+get_pdu(const unsigned char *s, struct ldp_pdu * p)
 {
-	struct ldp_pdu *p1;
-	p1 = (struct ldp_pdu *) s;
+	const struct ldp_pdu *p1 = (const struct ldp_pdu *) s;
 
 	p->version = ntohs(p1->version);
 	p->length = ntohs(p1->length);
@@ -58,7 +57,7 @@ get_pdu(unsigned char *s, struct ldp_pdu * p)
 
 /* Checks an incoming PDU for size and version */
 int 
-check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
+check_recv_pdu(const struct ldp_peer * p, const struct ldp_pdu * rpdu, int c)
 {
 	struct notification_tlv *notiftlv;
 
@@ -66,12 +65,23 @@ check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
 	if (c < MIN_PDU_SIZE)
 		return LDP_E_BAD_LENGTH;
 
+	if (p->ldp_id.s_addr != rpdu->ldp_id.s_addr) {
+		fatalp("Invalid LDP ID %s received from ",
+		    inet_ntoa(rpdu->ldp_id));
+		fatalp("%s\n", inet_ntoa(p->ldp_id));
+		notiftlv = build_notification(0,
+		    NOTIF_FATAL | NOTIF_BAD_LDP_ID);
+		send_tlv(p, (struct tlv *) notiftlv);
+		free(notiftlv);
+		return LDP_E_BAD_ID;
+	}
 
 	/* Check PDU for right LDP version */
 	if (ntohs(rpdu->version) != LDP_VERSION) {
 		fatalp("Invalid PDU version received from %s (%d)\n",
-		       inet_ntoa(p->address), ntohs(rpdu->version));
-		notiftlv = build_notification(0, NOTIF_BAD_LDP_VER);
+		       satos(p->address), ntohs(rpdu->version));
+		notiftlv = build_notification(0,
+		    NOTIF_FATAL | NOTIF_BAD_LDP_VER);
 		send_tlv(p, (struct tlv *) notiftlv);
 		free(notiftlv);
 		return LDP_E_BAD_VERSION;
@@ -79,9 +89,10 @@ check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
 	/* Check PDU for length validity */
 	if (ntohs(rpdu->length) > c - PDU_VER_LENGTH) {
 		fatalp("Invalid PDU length received from %s (announced %d, "
-		    "received %d)\n", inet_ntoa(p->address),
+		    "received %d)\n", satos(p->address),
 		    ntohs(rpdu->length), (int) (c - PDU_VER_LENGTH));
-		notiftlv = build_notification(0, NOTIF_BAD_PDU_LEN);
+		notiftlv = build_notification(0,
+		    NOTIF_FATAL | NOTIF_BAD_PDU_LEN);
 		send_tlv(p, (struct tlv *) notiftlv);
 		free(notiftlv);
 		return LDP_E_BAD_LENGTH;

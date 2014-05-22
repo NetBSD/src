@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.29.30.1 2012/04/17 00:05:34 yamt Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.29.30.2 2014/05/22 11:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.29.30.1 2012/04/17 00:05:34 yamt Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.29.30.2 2014/05/22 11:37:00 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -420,6 +420,7 @@ static struct {
 	{ RLIMIT_RSS,		R_CSIZE, "memoryuse", },
 	{ RLIMIT_MEMLOCK,	R_CSIZE, "memorylocked", },
 	{ RLIMIT_NPROC,		R_CNUMB, "maxproc", },
+	{ RLIMIT_NTHR,		R_CNUMB, "maxthread", },
 	{ RLIMIT_NOFILE,	R_CNUMB, "openfiles", },
 	{ RLIMIT_CORE,		R_CSIZE, "coredumpsize", },
 	{ RLIMIT_SBSIZE,	R_CSIZE, "sbsize", },

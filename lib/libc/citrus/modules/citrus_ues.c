@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_ues.c,v 1.2.6.1 2012/04/17 00:05:16 yamt Exp $ */
+/* $NetBSD: citrus_ues.c,v 1.2.6.2 2014/05/22 11:36:50 yamt Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ues.c,v 1.2.6.1 2012/04/17 00:05:16 yamt Exp $");
+__RCSID("$NetBSD: citrus_ues.c,v 1.2.6.2 2014/05/22 11:36:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -68,8 +68,10 @@ typedef struct {
 		_UESState	s_mbrtowc;
 		_UESState	s_mbtowc;
 		_UESState	s_mbsrtowcs;
+		_UESState	s_mbsnrtowcs;
 		_UESState	s_wcrtomb;
 		_UESState	s_wcsrtombs;
+		_UESState	s_wcsnrtombs;
 		_UESState	s_wctomb;
 	} states;
 } _UESCTypeInfo;

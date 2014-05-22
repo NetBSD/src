@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20.2.2 2012/10/30 17:19:04 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.20.2.3 2014/05/22 11:39:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,6 +67,7 @@ typedef int		register_t, register32_t;
 typedef unsigned long	pmc_evid_t;
 #define PMC_INVALID_EVID	(-1)
 typedef unsigned long	pmc_ctr_t;
+typedef unsigned short	tlb_asid_t;
 
 /*
  * This should have always been an 8-bit type, but since it's been exposed
@@ -88,6 +89,13 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_OLD_DISKLABEL
+#if defined(__ARM_EABI__) && defined(_ARM_ARCH_6)
+#define	__HAVE_ATOMIC64_OPS
+#endif
+#if defined(_ARM_ARCH_6)
+#define	__NO_STRICT_ALIGNMENT
+#endif
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU			0

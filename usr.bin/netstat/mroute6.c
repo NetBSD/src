@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.12.44.1 2012/04/17 00:09:37 yamt Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.12.44.2 2014/05/22 11:42:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -136,7 +136,6 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 	register int i;
 	register int banner_printed;
 	register int saved_numeric_addr;
-	mifi_t maxmif = 0;
 	int waitings;
 
 	if (mrpaddr == 0) {
@@ -181,7 +180,6 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 			continue;
 
 		kread((u_long)mifp->m6_ifp, (char *)&ifnet, sizeof(ifnet));
-		maxmif = mifi;
 		if (!banner_printed) {
 			printf("\nIPv6 Multicast Interface Table\n"
 			    " Mif   Rate   PhyIF   Pkts-In   Pkts-Out\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16.8.2 2013/01/16 05:32:48 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.16.8.3 2014/05/22 11:39:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -36,7 +36,10 @@
 #define	_ARM_ARM32_PARAM_H_
 
 #ifdef _KERNEL
-#  include <machine/cpu.h>
+# include <machine/cpu.h>
+#endif
+#ifdef _KERNEL_OPT
+# include "opt_arm32_pmap.h"
 #endif
 
 /*
@@ -45,19 +48,25 @@
 /* These are defined in the Port File before it includes
  * this file. */
 
+#ifndef PGSHIFT
+#if defined(_ARM_ARCH_6)
+#define	PGSHIFT		13		/* LOG2(NBPG) */
+#else
 #define	PGSHIFT		12		/* LOG2(NBPG) */
+#endif
+#endif
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 
-#define SSIZE           1               /* initial stack size/NBPG */
-#define SINCR           1               /* increment of stack/NBPG */
-#define UPAGES          2               /* pages of u-area */
-#define USPACE          (UPAGES * NBPG) /* total size of u-area */
+#define SSIZE		1		/* initial stack size/NBPG */
+#define SINCR		1		/* increment of stack/NBPG */
+#define USPACE		8192		/* total size of u-area */
+#define UPAGES		(USPACE / NBPG)	/* pages of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	16384	 	/* default message buffer size */
 #endif
 
 /*
@@ -89,8 +98,8 @@
 #define USPACE_SVC_STACK_TOP		(USPACE)
 #define USPACE_SVC_STACK_BOTTOM		(sizeof(struct pcb))
 
-#define arm_btop(x)			((x) >> PGSHIFT)
-#define arm_ptob(x)			((x) << PGSHIFT)
+#define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
+#define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
 #define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
     
 #ifdef _KERNEL

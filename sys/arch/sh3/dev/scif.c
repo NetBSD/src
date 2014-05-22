@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.60.4.1 2012/04/17 00:06:52 yamt Exp $ */
+/*	$NetBSD: scif.c,v 1.60.4.2 2014/05/22 11:40:07 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.60.4.1 2012/04/17 00:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.60.4.2 2014/05/22 11:40:07 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -212,8 +212,17 @@ dev_type_tty(sciftty);
 dev_type_poll(scifpoll);
 
 const struct cdevsw scif_cdevsw = {
-	scifopen, scifclose, scifread, scifwrite, scifioctl,
-	scifstop, sciftty, scifpoll, nommap, ttykqfilter, D_TTY
+	.d_open = scifopen,
+	.d_close = scifclose,
+	.d_read = scifread,
+	.d_write = scifwrite,
+	.d_ioctl = scifioctl,
+	.d_stop = scifstop,
+	.d_tty = sciftty,
+	.d_poll = scifpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 
@@ -695,12 +704,11 @@ static void
 scif_iflush(struct scif_softc *sc)
 {
 	int i;
-	unsigned char c;
 
 	i = scif_fdr_read() & SCFDR2_RECVCNT;
 
 	while (i > 0) {
-		c = scif_frdr_read();
+		(void)scif_frdr_read();
 		scif_ssr_write(scif_ssr_read() & ~(SCSSR2_RDF | SCSSR2_DR));
 		i--;
 	}

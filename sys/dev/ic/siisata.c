@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.15.2.2 2012/10/30 17:21:08 yamt Exp $ */
+/* $NetBSD: siisata.c,v 1.15.2.3 2014/05/22 11:40:22 yamt Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.15.2.2 2012/10/30 17:21:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.15.2.3 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -118,7 +118,7 @@ int siisata_debug_mask = 0;
 static inline uint32_t
 bus_space_read_stream_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return htole32(bus_space_read_4(t, h, o);
+	return htole32(bus_space_read_4(t, h, o));
 }
 
 static inline void
@@ -291,7 +291,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	chp->ch_channel = port;
 	chp->ch_atac = &sc->sc_atac;
 	chp->ch_queue = malloc(sizeof(struct ata_queue),
-			       M_DEVBUF, M_NOWAIT);
+			       M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (chp->ch_queue == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "port %d: can't allocate memory "
@@ -630,7 +630,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 	    DEBUG_FUNCS);
 
 	if (sata_reset_interface(chp, sc->sc_prt, schp->sch_scontrol,
-	    schp->sch_sstatus) != SStatus_DET_DEV) {
+	    schp->sch_sstatus, flags) != SStatus_DET_DEV) {
 		aprint_error("%s port %d: reset failed\n",
 		    SIISATANAME(sc), chp->ch_channel);
 		/* XXX and then ? */
@@ -687,7 +687,7 @@ siisata_probe_drive(struct ata_channel *chp)
 	siisata_disable_port_interrupt(chp);
 
 	switch(sata_reset_interface(chp, sc->sc_prt, schp->sch_scontrol,
-		schp->sch_sstatus)) {
+		schp->sch_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		/* clear any interrupts */
 		(void)PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));
@@ -1417,7 +1417,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if (drvp->drive_type == ATA_DRIVET_ATAPI) {
+	if (drvp->drive_type != ATA_DRIVET_ATAPI) {
 		SIISATA_DEBUG_PRINT(("%s: drive %d "
 		    "not present\n", __func__, target), DEBUG_PROBE);
 		return;

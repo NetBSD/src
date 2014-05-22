@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.88.8.1 2012/04/17 00:08:53 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.88.8.2 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -204,9 +204,11 @@ typedef	int		psetid_t;
  * Boolean type definitions for the kernel environment.  User-space
  * boolean definitions are found in <stdbool.h>.
  */
+#ifndef __cplusplus
 #define bool	_Bool
 #define true	1
 #define false	0
+#endif
 
 /*
  * Deprecated Mach-style boolean_t type.  Should not be used by new code.
@@ -271,6 +273,11 @@ typedef int32_t __devmajor_t, __devminor_t;
 #ifdef	_BSD_CLOCK_T_
 typedef	_BSD_CLOCK_T_		clock_t;
 #undef	_BSD_CLOCK_T_
+#endif
+
+#ifdef	_BSD_PTRDIFF_T_
+typedef	_BSD_PTRDIFF_T_		ptrdiff_t;
+#undef	_BSD_PTRDIFF_T_
 #endif
 
 #ifdef	_BSD_SIZE_T_

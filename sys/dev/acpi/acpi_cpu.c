@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.47.2.1 2012/04/17 00:07:27 yamt Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.47.2.2 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.47.2.1 2012/04/17 00:07:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.47.2.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -340,15 +340,8 @@ acpicpu_sysctl(device_t self)
 	KASSERT(acpicpu_log == NULL);
 
 	err = sysctl_createv(&acpicpu_log, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-
-	if (err != 0)
-		goto fail;
-
-	err = sysctl_createv(&acpicpu_log, 0, &node, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		goto fail;

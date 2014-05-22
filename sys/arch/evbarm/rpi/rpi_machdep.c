@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.16.2.4 2013/01/23 00:05:46 yamt Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.16.2.5 2014/05/22 11:39:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.16.2.4 2013/01/23 00:05:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.16.2.5 2014/05/22 11:39:42 yamt Exp $");
 
 #include "opt_evbarm_boardtype.h"
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include "sdhc.h"
-#include "dotg.h"
+#include "bcmdwctwo.h"
 #include "bcmspi.h"
 #include "bsciic.h"
 #include "plcom.h"
@@ -45,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.16.2.4 2013/01/23 00:05:46 yamt Ex
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/reboot.h>
+#include <sys/sysctl.h>
 #include <sys/bus.h>
 
 #include <net/if_ether.h>
@@ -71,6 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.16.2.4 2013/01/23 00:05:46 yamt Ex
 #include <evbarm/rpi/vcprop.h>
 
 #include <evbarm/rpi/rpi.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 #if NPLCOM > 0
 #include <evbarm/dev/plcomreg.h>
@@ -138,14 +148,27 @@ int plcomcnmode = PLCONMODE;
 #endif
 
 #include "opt_kgdb.h"
+#if (NPLCOM == 0)
+#error Enable plcom for KGDB support
+#endif
 #ifdef KGDB
 #include <sys/kgdb.h>
+static void kgdb_port_init(void);
+#endif
+
+#if (NPLCOM > 0 && (defined(PLCONSOLE) || defined(KGDB)))
+static struct plcom_instance rpi_pi = {
+	.pi_type = PLCOM_TYPE_PL011,
+	.pi_flags = PLC_FLAG_32BIT_ACCESS,
+	.pi_iot = &bcm2835_bs_tag,
+	.pi_size = BCM2835_UART0_SIZE
+    };
 #endif
 
 /* Smallest amount of RAM start.elf could give us. */
 #define RPI_MINIMUM_SPLIT (128U * 1024 * 1024)
 
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fwrev		vbt_fwrev;
 	struct vcprop_tag_boardmodel	vbt_boardmodel;
@@ -157,7 +180,7 @@ static struct {
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
 	struct vcprop_tag end;
-} vb __packed __aligned(16) =
+} vb =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb),
@@ -234,11 +257,11 @@ static struct {
 };
 
 #if NGENFB > 0
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_edidblock	vbt_edid;
 	struct vcprop_tag end;
-} vb_edid __packed __aligned(16) =
+} vb_edid =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_edid),
@@ -257,7 +280,7 @@ static struct {
 	}
 };
 
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fbres		vbt_res;
 	struct vcprop_tag_fbres		vbt_vres;
@@ -268,7 +291,7 @@ static struct {
 	struct vcprop_tag_blankscreen	vbt_blank;
 	struct vcprop_tag_fbpitch	vbt_pitch;
 	struct vcprop_tag end;
-} vb_setfb __packed __aligned(16) =
+} vb_setfb =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_setfb),
@@ -343,6 +366,9 @@ static struct {
 		.vpt_tag = VCPROPTAG_NULL,
 	},
 };
+
+extern void bcmgenfb_set_console_dev(device_t dev);
+extern void bcmgenfb_ddb_trap_callback(int where);
 #endif
 
 static void
@@ -354,20 +380,20 @@ rpi_bootparams(void)
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (
 #if (NSDHC > 0)
-	    (1 << VCPM_POWER_SDCARD) | 
+	    (1 << VCPM_POWER_SDCARD) |
 #endif
 #if (NPLCOM > 0)
 	    (1 << VCPM_POWER_UART0) |
 #endif
-#if (NDOTG > 0)
-	    (1 << VCPM_POWER_USB) | 
+#if (NBCMDWCTWO > 0)
+	    (1 << VCPM_POWER_USB) |
 #endif
 #if (NBSCIIC > 0)
-	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) | 
+	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) |
 	/*  (1 << VCPM_POWER_I2C2) | */
 #endif
 #if (NBCMSPI > 0)
-	    (1 << VCPM_POWER_SPI) | 
+	    (1 << VCPM_POWER_SPI) |
 #endif
 	    0) << 4);
 
@@ -407,11 +433,6 @@ rpi_bootparams(void)
 
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
-
-	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
-		printf("%s: mac-address  %llx\n", __func__,
-		    vb.vbt_macaddr.addr);
-
 
 #ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
@@ -507,23 +528,59 @@ initarm(void *arg)
 
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
+#ifdef VERBOSE_INIT_ARM
 		printf("%s: arm clock   %d\n", __func__,
 		    vb.vbt_armclockrate.rate);
+#endif
 	}
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
-	arm32_bootmem_init(bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * PAGE_SIZE, (uintptr_t)KERNEL_BASE_phys);
+
+	psize_t ram_size = bootconfig.dram[0].pages * PAGE_SIZE;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	 */
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
+
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+	    (uintptr_t)KERNEL_BASE_phys);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
+#else
+	const bool mapallmem_p = false;
+#endif
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, rpi_devmap,
-	    false);
+	    mapallmem_p);
 
 	cpu_reset_address = bcm2835_system_reset;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
+#endif
+
+#ifdef KGDB
+	kgdb_port_init();
 #endif
 
 #ifdef __HAVE_MEMORY_DISK__
@@ -549,14 +606,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-#if (NPLCOM > 0 && defined(PLCONSOLE))
-	static struct plcom_instance rpi_pi = {
-		.pi_type = PLCOM_TYPE_PL011,
-		.pi_flags = PLC_FLAG_32BIT_ACCESS,
-		.pi_iot = &bcm2835_bs_tag,
-		.pi_size = BCM2835_UART0_SIZE
-	};
-#endif
+
 	if (consinit_called != 0)
 		return;
 
@@ -574,6 +624,31 @@ consinit(void)
 
 #endif
 }
+
+#ifdef KGDB
+#if !defined(KGDB_PLCOMUNIT) || !defined(KGDB_DEVRATE) || !defined(KGDB_CONMODE)
+#error Specify KGDB_PLCOMUNIT, KGDB_DEVRATE and KGDB_CONMODE for KGDB.
+#endif
+
+void
+static kgdb_port_init(void)
+{
+	static int kgdbsinit_called = 0;
+	int res;
+
+	if (kgdbsinit_called != 0)
+		return;
+
+	kgdbsinit_called = 1;
+
+	rpi_pi.pi_iobase = consaddr;
+
+	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, BCM2835_UART0_CLK,
+	    KGDB_CONMODE, KGDB_PLCOMUNIT);
+	if (res)
+		panic("KGDB uart can not be initialized, err=%d.", res);
+}
+#endif
 
 #if NGENFB > 0
 static bool
@@ -600,7 +675,7 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	uint8_t edid_data[1024];
 	uint32_t res;
 	int error;
-	
+
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_edid,
 	    sizeof(vb_edid), &res);
 	if (error) {
@@ -609,7 +684,8 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	}
 
 	if (!vcprop_buffer_success_p(&vb_edid.vb_hdr) ||
-	    !vcprop_tag_success_p(&vb_edid.vbt_edid.tag))
+	    !vcprop_tag_success_p(&vb_edid.vbt_edid.tag) ||
+	    vb_edid.vbt_edid.status != 0)
 		return false;
 
 	memset(edid_data, 0, sizeof(edid_data));
@@ -620,8 +696,10 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	edid_print(&ei);
 #endif
 
-	*pwidth = ei.edid_preferred_mode->hdisplay;
-	*pheight = ei.edid_preferred_mode->vdisplay;
+	if (ei.edid_preferred_mode) {
+		*pwidth = ei.edid_preferred_mode->hdisplay;
+		*pheight = ei.edid_preferred_mode->vdisplay;
+	}
 
 	return true;
 }
@@ -640,7 +718,7 @@ rpi_fb_init(prop_dictionary_t dict)
 	uint32_t width = 0, height = 0;
 	uint32_t res;
 	char *ptr;
-	int integer; 
+	int integer;
 	int error;
 
 	if (get_bootconf_option(boot_args, "fb",
@@ -769,6 +847,12 @@ rpi_device_register(device_t dev, void *aux)
 #if NGENFB > 0
 	if (device_is_a(dev, "genfb")) {
 		char *ptr;
+
+		bcmgenfb_set_console_dev(dev);
+#ifdef DDB
+		db_trap_callback = bcmgenfb_ddb_trap_callback;
+#endif
+
 		if (rpi_fb_init(dict) == false)
 			return;
 		if (get_bootconf_option(boot_args, "console",
@@ -783,4 +867,16 @@ rpi_device_register(device_t dev, void *aux)
 		}
 	}
 #endif
+}
+
+SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
+	    CTLTYPE_QUAD, "serial", NULL, NULL, 0,
+	    &vb.vbt_serial.sn, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }

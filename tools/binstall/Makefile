@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.7.34.1 2013/01/16 05:34:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.34.2 2014/05/22 11:42:30 yamt Exp $
+
+NOMAN=
+.include <bsd.own.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-install
 HOST_SRCDIR=	usr.bin/xinstall
@@ -8,8 +11,6 @@ CPPFLAGS+=	-DTARGET_STRIP=\"${STRIP}\"
 # Prevent Makefile.host from trying to use the version of libnbcompat
 # from ${TOOLDIR}.
 NOCOMPATLIB=
-
-.include "${.CURDIR}/../Makefile.host"
 
 # Use uninstalled copy of host-mkdep
 HOST_MKDEP_OBJ!= cd ${.CURDIR}/../host-mkdep && ${PRINTOBJDIR}
@@ -21,5 +22,8 @@ COMPATLIB_UNINSTALLED= yes
 COMPATOBJ!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
 .-include	"${COMPATOBJ}/defs.mk"
 
+.include "${.CURDIR}/../Makefile.host"
+
 # Use uninstalled copy of the install program
 INSTALL=	./xinstall
+

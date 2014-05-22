@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.15 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: profile.h,v 1.15.28.1 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #define EPROL_EXPORT	__asm(".globl _eprol")
 
-#ifdef PIC
+#ifdef __PIC__
 #define __MCPLT	"@PLT"
 #else
 #define __MCPLT

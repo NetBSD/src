@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.37.2.1 2012/10/30 17:22:47 yamt Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.37.2.2 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,6 +92,7 @@ extern	struct	inpcbtable udbtable;
 void	 *udp_ctlinput(int, const struct sockaddr *, void *);
 int	 udp_ctloutput(int, struct socket *, struct sockopt *);
 void	 udp_init(void);
+void	 udp_init_common(void);
 void	 udp_input(struct mbuf *, ...);
 int	 udp_output(struct mbuf *, ...);
 int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);

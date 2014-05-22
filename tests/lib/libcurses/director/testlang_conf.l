@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.6 2011/10/07 13:39:33 joerg Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.6.2.1 2014/05/22 11:42:21 yamt Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -100,6 +100,12 @@ dequote(const char *s, size_t *len)
 				case 'n':
 					/* newline */
 					*q++ = '\n';
+					p++;
+					break;
+
+				case 'r':
+					/* carriage return */
+					*q++ = '\r';
 					p++;
 					break;
 

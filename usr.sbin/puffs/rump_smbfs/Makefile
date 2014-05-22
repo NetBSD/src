@@ -1,18 +1,20 @@
-#	$NetBSD: Makefile,v 1.6 2010/12/05 20:13:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2014/05/22 11:43:09 yamt Exp $
 #
 
-WARNS=2
-
-.include <bsd.own.mk>
+SMBROOT=${.CURDIR}/../../../external/bsd/smbfs
 
 MOUNTNAME=	smbfs
 SRCS+=		smb_rumpops.c
 
+PROGDPLIBS+=	smb ${SMBROOT}/lib/libsmb
 LDADD+= 	-lrumpnet_sockin -lrumpnet
 LDADD+=		-lrumpkern_crypto -lrumpdev_netsmb -lrumpdev
 
 ISRUMP=		# it is
 
-.include "${.CURDIR}/../../../sbin/mount_smbfs/Makefile.inc"
+.include "${SMBROOT}/Makefile.inc"
+
+CPPFLAGS+=-I${SMBDIST}/mount_smbfs
+.PATH: ${SMBDIST}/mount_smbfs
 
 .include <bsd.prog.mk>

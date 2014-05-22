@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.9.6.1 2012/04/17 00:05:35 yamt Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.9.6.2 2014/05/22 11:37:13 yamt Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,12 +119,9 @@ bozo_auth_cleanup(bozo_httpreq_t *request)
 
 	if (request == NULL)
 		return;
-	if (request->hr_authuser)
-		free(request->hr_authuser);
-	if (request->hr_authpass)
-		free(request->hr_authpass);
-	if (request->hr_authrealm)
-		free(request->hr_authrealm);
+	free(request->hr_authuser);
+	free(request->hr_authpass);
+	free(request->hr_authrealm);
 }
 
 int

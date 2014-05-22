@@ -1,4 +1,4 @@
-/*	$NetBSD: support.s,v 1.6.4.1 2012/04/17 00:06:36 yamt Exp $	*/
+/*	$NetBSD: support.s,v 1.6.4.2 2014/05/22 11:39:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,16 +53,16 @@
  * non-local gotos
  */
 ENTRY(setjmp)
-	movl	%sp@(4),%a0	| savearea pointer
-	moveml	#0xFCFC,%a0@	| save d2-d7/a2-a7
-	movl	%sp@,%a0@(48)	| and return address
+	movl	4(%sp),%a0	| savearea pointer
+	moveml	#0xFCFC,(%a0)	| save d2-d7/a2-a7
+	movl	(%sp),48(%a0)	| and return address
 	moveq	#0,%d0		| return 0
 	rts
 
 ENTRY(longjmp)
-	movl	%sp@(4),%a0
-	moveml	%a0@+,#0xFCFC
-	movl	%a0@,%sp@
+	movl	4(%sp),%a0
+	moveml	(%a0)+,#0xFCFC
+	movl	(%a0),(%sp)
 	moveq	#1,%d0
 	rts
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.36.2.1 2012/04/17 00:05:58 yamt Exp $ */
+/* $NetBSD: tlsb.c,v 1.36.2.2 2014/05/22 11:39:27 yamt Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.36.2.1 2012/04/17 00:05:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.36.2.2 2014/05/22 11:39:27 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -260,8 +260,8 @@ tlsb_node_type_str(uint32_t dtype)
 		return ("Dual CPU, 16MB cache");
 
 	default:
-		memset(tlsb_line, 0, sizeof(tlsb_line));
-		sprintf(tlsb_line, "unknown, dtype 0x%x", dtype);
+		snprintf(tlsb_line, sizeof(tlsb_line), "unknown, dtype 0x%x",
+		    dtype);
 		return (tlsb_line);
 	}
 	/* NOTREACHED */

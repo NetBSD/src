@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1.2.2 2013/01/23 00:05:42 yamt Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.1.2.3 2014/05/22 11:39:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM32_BUS_FUNCS_H_
-#define _ARM32_BUS_FUNCS_H_
+#ifndef _ARM_BUS_FUNCS_H_
+#define _ARM_BUS_FUNCS_H_
 
 #ifdef _KERNEL_OPT
 #include "opt_cputypes.h"
@@ -692,4 +692,4 @@ void 	_bus_dmatag_destroy(bus_dma_tag_t);
 
 #endif /* _ARM32_BUS_DMA_PRIVATE */
 
-#endif /* _ARM32_BUS_FUNCS_H_ */
+#endif /* _ARM_BUS_FUNCS_H_ */

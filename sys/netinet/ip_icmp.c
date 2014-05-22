@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.125.2.1 2012/04/17 00:08:40 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.125.2.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125.2.1 2012/04/17 00:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125.2.2 2014/05/22 11:41:09 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -123,10 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125.2.1 2012/04/17 00:08:40 yamt Exp $
 #include <netinet/icmp_var.h>
 #include <netinet/icmp_private.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#endif	/* FAST_IPSEC*/
+#endif	/* IPSEC*/
 
 /*
  * ICMP routines: error generation, receive packet processing, and
@@ -452,45 +452,42 @@ icmp_input(struct mbuf *m, ...)
 
 	case ICMP_UNREACH:
 		switch (code) {
-			case ICMP_UNREACH_NET:
-				code = PRC_UNREACH_NET;
-				break;
+		case ICMP_UNREACH_PROTOCOL:
+			code = PRC_UNREACH_PROTOCOL;
+			break;
 
-			case ICMP_UNREACH_HOST:
-				code = PRC_UNREACH_HOST;
-				break;
+		case ICMP_UNREACH_PORT:
+			code = PRC_UNREACH_PORT;
+			break;
 
-			case ICMP_UNREACH_PROTOCOL:
-				code = PRC_UNREACH_PROTOCOL;
-				break;
+		case ICMP_UNREACH_SRCFAIL:
+			code = PRC_UNREACH_SRCFAIL;
+			break;
 
-			case ICMP_UNREACH_PORT:
-				code = PRC_UNREACH_PORT;
-				break;
+		case ICMP_UNREACH_NEEDFRAG:
+			code = PRC_MSGSIZE;
+			break;
 
-			case ICMP_UNREACH_SRCFAIL:
-				code = PRC_UNREACH_SRCFAIL;
-				break;
+		case ICMP_UNREACH_NET:
+		case ICMP_UNREACH_NET_UNKNOWN:
+		case ICMP_UNREACH_NET_PROHIB:
+		case ICMP_UNREACH_TOSNET:
+			code = PRC_UNREACH_NET;
+			break;
 
-			case ICMP_UNREACH_NEEDFRAG:
-				code = PRC_MSGSIZE;
-				break;
+		case ICMP_UNREACH_HOST:
+		case ICMP_UNREACH_HOST_UNKNOWN:
+		case ICMP_UNREACH_ISOLATED:
+		case ICMP_UNREACH_HOST_PROHIB:
+		case ICMP_UNREACH_TOSHOST:
+		case ICMP_UNREACH_ADMIN_PROHIBIT:
+		case ICMP_UNREACH_HOST_PREC:
+		case ICMP_UNREACH_PREC_CUTOFF:
+			code = PRC_UNREACH_HOST;
+			break;
 
-			case ICMP_UNREACH_NET_UNKNOWN:
-			case ICMP_UNREACH_NET_PROHIB:
-			case ICMP_UNREACH_TOSNET:
-				code = PRC_UNREACH_NET;
-				break;
-
-			case ICMP_UNREACH_HOST_UNKNOWN:
-			case ICMP_UNREACH_ISOLATED:
-			case ICMP_UNREACH_HOST_PROHIB:
-			case ICMP_UNREACH_TOSHOST:
-				code = PRC_UNREACH_HOST;
-				break;
-
-			default:
-				goto badcode;
+		default:
+			goto badcode;
 		}
 		goto deliver;
 
@@ -643,7 +640,7 @@ reflect:
 			rtfree(rt);
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		key_sa_routechange((struct sockaddr *)&icmpsrc);
 #endif
 		break;
@@ -998,11 +995,6 @@ static void
 sysctl_netinet_icmp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

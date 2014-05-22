@@ -1,4 +1,4 @@
-/*	$NetBSD: t_snapshot_log.c,v 1.1 2010/11/05 11:32:09 pooka Exp $	*/
+/*	$NetBSD: t_snapshot_log.c,v 1.1.6.1 2014/05/22 11:42:18 yamt Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -19,6 +19,7 @@
 
 #define IMGNAME "ffs.img"
 #define NEWFS "newfs -F -s 10000 " IMGNAME
+#define FSCK "fsck_ffs -fn -F"
 #define BAKNAME "/mnt/le_snapp"
 
 static void

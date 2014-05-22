@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.341.2.2 2012/10/30 17:18:41 yamt Exp $
+# $NetBSD: GENERIC,v 1.341.2.3 2014/05/22 11:39:27 yamt Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.341.2.2 $"
+ident		"GENERIC-$Revision: 1.341.2.3 $"
 
 maxusers 32
 
@@ -104,18 +104,13 @@ options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -230,6 +225,8 @@ mcmem*	at	mcbus? mid ?
 #EV6 Tsunami Core Logic
 
 tsc*	at	mainbus0
+tsciic* 	at	tsc?
+iic* 	at	tsciic?
 
 # DECpc AXP150 (Jensen) internal bus support
 jensenio* at	mainbus0
@@ -317,6 +314,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 autri*	at	pci? dev ? function ?		# Trident 4DWAVE based AC'97 Audio
+bge*	at	pci? dev ? function ?		# Broadcom 570x gigabit Ethernet
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
@@ -363,6 +361,8 @@ pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
+radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
+options 	RADEONFB_DEPTH_32
 re*	at	pci? dev ? function ?		# Realtek 8169 Ethernet
 rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
@@ -382,11 +382,13 @@ yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
 opl*	at	cmpci? flags 1
 opl*	at	eso?
+opl*	at	sb?
 #opl*	at	sv?
 opl*	at	yds?
 
 mpu*	at	cmpci?
 mpu*	at	eso?
+mpu*	at	sb?
 mpu*	at	yds?
 
 # I2O devices
@@ -540,6 +542,25 @@ fd*	at	fdc? drive ?
 ld*	at	cac? unit ?
 ld*	at	mlx? unit ?
 
+# Acer Labs M7101 SMBus controller
+alipm* 	at pci? dev ? function ?
+iic* 	at alipm?
+
+# AlphaServer DS20L i2c devices
+#lmenv* 	at iic? addr 0x2c
+#lmenv* 	at iic? addr 0x2d
+#lmenv* 	at iic? addr 0x2e
+#lmenv* 	at iic? addr 0x2f
+#spdmem* 	at iic? addr 0x50
+#spdmem* 	at iic? addr 0x51
+#spdmem* 	at iic? addr 0x52
+#spdmem* 	at iic? addr 0x53
+#spdmem* 	at iic? addr 0x54
+#spdmem* 	at iic? addr 0x55
+#spdmem* 	at iic? addr 0x56
+#spdmem* 	at iic? addr 0x57
+#seeprom* 	at iic0 addr 0x51 flags 0x2
+
 # PCMCIA USB controllers
 slhci*	at pcmcia? function ?			# ScanLogic SL811HS
 
@@ -677,6 +698,7 @@ btsco* at bthub?
 audio*	at audiobus?
 midi*	at midibus?
 midi*	at pcppi?
+midi*	at sb?
 
 # Workstation Console attachments
 wsdisplay*	at	cfb?
@@ -686,6 +708,7 @@ wsdisplay*	at	sfb?
 #wsdisplay*	at	sfbp?
 wsdisplay*	at	px?
 wsdisplay*	at	pxg?
+wsdisplay*	at	radeonfb?
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	lkkbd? console ?
@@ -703,9 +726,9 @@ pseudo-device	swcrypto		# software crypto implementation
 
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ccd		4
-pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd		
+pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -716,8 +739,8 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
-pseudo-device	ipfilter	1
-pseudo-device	loop		1
+pseudo-device	ipfilter
+pseudo-device	loop
 pseudo-device	md		
 pseudo-device	ppp		
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -736,10 +759,10 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness too
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	clockctl		# user control of clock subsystem
@@ -758,7 +781,7 @@ pseudo-device	putter			# for puffs and pud
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

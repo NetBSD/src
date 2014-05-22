@@ -1,4 +1,4 @@
-/*	$NetBSD: orion.c,v 1.1.14.1 2012/04/17 00:06:06 yamt Exp $	*/
+/*	$NetBSD: orion.c,v 1.1.14.2 2014/05/22 11:39:33 yamt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.1.14.1 2012/04/17 00:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.1.14.2 2014/05/22 11:39:33 yamt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -109,7 +109,7 @@ static void
 orion_intr_init(void)
 {
 	extern struct pic_softc mvsoc_bridge_pic;
-	void *ih;
+	void *ih __diagused;
 
 	pic_add(&orion_pic, 0);
 

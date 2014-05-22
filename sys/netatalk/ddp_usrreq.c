@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.40 2011/05/08 13:51:31 bouyer Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.40.4.1 2014/05/22 11:41:09 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.40 2011/05/08 13:51:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.40.4.1 2014/05/22 11:41:09 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -581,11 +581,6 @@ sysctl_net_atalk_ddp_stats(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_net_atalk_ddp_setup, "sysctl net.atalk.ddp subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "atalk", NULL,

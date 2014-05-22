@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.1.4.4 2013/01/23 00:06:12 yamt Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.1.4.5 2014/05/22 11:40:36 yamt Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -24,6 +24,7 @@
  */
 #define URTWN_RX_LIST_COUNT		1
 #define URTWN_TX_LIST_COUNT		8
+
 #define URTWN_HOST_CMD_RING_COUNT	32
 
 #define URTWN_RXBUFSZ	(16 * 1024)
@@ -148,8 +149,8 @@ struct urtwn_softc {
 	int				avg_pwdb;
 	int				thcal_state;
 	int				thcal_lctemp;
-	int				ntxchains;
-	int				nrxchains;
+	size_t				ntxchains;
+	size_t				nrxchains;
 	int				ledlink;
 	bool				iqk_inited;
 
@@ -181,4 +182,3 @@ struct urtwn_softc {
 };
 
 #endif /* _IF_URTWNVAR_H_ */
-

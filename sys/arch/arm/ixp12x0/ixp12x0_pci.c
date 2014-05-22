@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.10.12.2 2012/10/30 17:19:05 yamt Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.10.12.3 2014/05/22 11:39:33 yamt Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10.12.2 2012/10/30 17:19:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10.12.3 2014/05/22 11:39:33 yamt Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
  */
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10.12.2 2012/10/30 17:19:05 yamt E
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-#include "opt_pci.h"
-#include "pci.h"
+#include <arm/locore.h>
 
 void ixp12x0_pci_attach_hook(device_t, device_t,
 	struct pcibus_attach_args *);

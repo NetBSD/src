@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.5.4.1 2012/04/17 00:05:15 yamt Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.5.4.2 2014/05/22 11:36:49 yamt Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.5.4.1 2012/04/17 00:05:15 yamt Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.5.4.2 2014/05/22 11:36:49 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -24,8 +24,7 @@ extern fp_except _softfloat_float_exception_flags;
 #endif
 
 fp_except
-fpsetsticky(sticky)
-	fp_except sticky;
+fpsetsticky(fp_except sticky)
 {
 	fp_except old;
 	fp_except new;

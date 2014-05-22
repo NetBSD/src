@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.295.2.4 2012/10/30 17:22:31 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.295.2.5 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.4 2012/10/30 17:22:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.5 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.4 2012/10/30 17:22:31 yamt Ex
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
-#include <sys/simplelock.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>

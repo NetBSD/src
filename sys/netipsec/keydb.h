@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.10.4.2 2012/10/30 17:22:50 yamt Exp $	*/
+/*	$NetBSD: keydb.h,v 1.10.4.3 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -128,10 +128,8 @@ struct secasvar {
 	const struct comp_algo *tdb_compalgxform; /* compression algorithm */
 	u_int64_t tdb_cryptoid;		/* crypto session id */
 
-#ifdef IPSEC_NAT_T
 	u_int16_t natt_type;
 	u_int16_t esp_frag;
-#endif
 };
 
 /* replay prevention */

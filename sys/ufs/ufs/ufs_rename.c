@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.2.2.4 2013/01/23 00:06:35 yamt Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.2.2.5 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.2.2.4 2013/01/23 00:06:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.2.2.5 2014/05/22 11:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -271,8 +270,8 @@ ufs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
  * XXX Copypasta from ufs_vnops.c.  Kill!
  */
 static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+	0,	12,			DT_DIR,	1,	".",
+	0,	UFS_DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
 
 /*
@@ -334,7 +333,6 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * Commence hacking of the data on disk.
 	 */
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto ihateyou;
@@ -555,7 +553,6 @@ arghmybrainhurts:
 	UFS_WAPBL_END(mp);
 
 ihateyou:
-	fstrans_done(mp);
 	return error;
 }
 
@@ -586,7 +583,7 @@ ufs_rename_ulr_overlap_p(const struct ufs_lookup_results *fulr,
 	 * of the free space for an entry that we are about to fill.
 	 */
 	to_start = tulr->ulr_offset;
-	KASSERT(tulr->ulr_count < (MAXDIRSIZE - to_start));
+	KASSERT(tulr->ulr_count < (UFS_MAXDIRSIZE - to_start));
 	to_end = (to_start + tulr->ulr_count);
 
 	return
@@ -644,7 +641,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 
 	/* Find the bounds of the search.  */
 	search_start = tulr->ulr_offset;
-	KASSERT(fulr->ulr_reclen < (MAXDIRSIZE - fulr->ulr_offset));
+	KASSERT(fulr->ulr_reclen < (UFS_MAXDIRSIZE - fulr->ulr_offset));
 	search_end = (fulr->ulr_offset + fulr->ulr_reclen);
 
 	/* Compaction must happen only within a directory block. (*)  */
@@ -786,7 +783,6 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(cnp->cn_nameiop == DELETE);
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto out0;
@@ -800,7 +796,7 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
 
 out1:	UFS_WAPBL_END(mp);
-out0:	fstrans_done(mp);
+out0:
 	return error;
 }
 
@@ -930,7 +926,7 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = 0;	/* XXX: gcc */
 	int error;
 
 	KASSERT(mp != NULL);

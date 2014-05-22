@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.59.12.1 2012/04/17 00:07:44 yamt Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.59.12.2 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.12.1 2012/04/17 00:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.12.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -406,6 +406,7 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -437,7 +438,7 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, emuxki_intr,
 		sc);
 	if (sc->sc_ih == NULL) {

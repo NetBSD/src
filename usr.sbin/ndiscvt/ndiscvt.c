@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.9.42.1 2012/04/17 00:09:50 yamt Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.9.42.2 2014/05/22 11:43:07 yamt Exp $");
 #endif
 
 
@@ -110,7 +110,7 @@ int insert_padding(imgbase, imglen)
         image_dos_header	*dos_hdr;
         image_nt_header		*nt_hdr;
 	image_optional_header	opt_hdr;
-        int			i = 0, sections, curlen = 0;
+        int			i = 0, sections;
 	int			offaccum = 0, oldraddr, oldrlen;
 	uint8_t			*newimg, *tmp;
 
@@ -120,7 +120,6 @@ int insert_padding(imgbase, imglen)
 		return(ENOMEM);
 
 	bcopy(*imgbase, newimg, *imglen);
-	curlen = *imglen;
 
 	if (pe_get_optional_header((vm_offset_t)newimg, &opt_hdr))
 		return(0);

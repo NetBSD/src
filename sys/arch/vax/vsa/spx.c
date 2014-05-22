@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.4.8.2 2012/05/23 10:07:50 yamt Exp $ */
+/*	$NetBSD: spx.c,v 1.4.8.3 2014/05/22 11:40:12 yamt Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4.8.2 2012/05/23 10:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4.8.3 2014/05/22 11:40:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,7 +677,7 @@ static void
 spx_cursor(void *id, int on, int row, int col)
 {
 	struct spx_screen *ss = id;
-	int attr, data;
+	int attr, data __unused;
 
 	attr = ss->ss_image[row * spx_cols + col].attr;
 	data = ss->ss_image[row * spx_cols + col].data;
@@ -1512,7 +1512,8 @@ spx_init_common(device_t self, struct vsbus_attach_args *va)
 	spx_stdscreen.nrows = spx_rows;
 	spx_stdscreen.fontwidth = spx_font.fontwidth;
 	spx_stdscreen.fontheight = spx_font.fontheight;
-	sprintf(spx_stdscreen_name, "%dx%d", spx_cols, spx_rows);
+	snprintf(spx_stdscreen_name, sizeof(spx_stdscreen_name),
+            "%dx%d", spx_cols, spx_rows);
 
 	/* for SPXg spx_fb_size represents FB window size, not FB length */
 	if (fb_type == FB_IS_SPXg)

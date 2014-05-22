@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.44.2.1 2012/05/23 10:08:28 yamt Exp $	*/
+/*	$NetBSD: err.c,v 1.44.2.2 2014/05/22 11:42:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.44.2.1 2012/05/23 10:08:28 yamt Exp $");
+__RCSID("$NetBSD: err.c,v 1.44.2.2 2014/05/22 11:42:52 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static	void	vwarning(int, va_list);
 
 
 const	char *msgs[] = {
-	"syntax error: empty declaration",			      /* 0 */
+	"empty declaration",					      /* 0 */
 	"old style declaration; add int",			      /* 1 */
 	"empty declaration",					      /* 2 */
 	"%s declared in argument declaration list",		      /* 3 */
@@ -208,7 +208,7 @@ const	char *msgs[] = {
 	"cannot take size/alignment of void",			      /* 146 */
 	"invalid cast expression",				      /* 147 */
 	"improper cast of void expression",			      /* 148 */
-	"illegal function",					      /* 149 */
+	"illegal function (type %s)",				      /* 149 */
 	"argument mismatch: %d arg%s passed, %d expected",	      /* 150 */
 	"void expressions may not be arguments, arg #%d",	      /* 151 */
 	"argument cannot have unknown size, arg #%d",		      /* 152 */
@@ -439,14 +439,17 @@ verror( int n, va_list ap)
 }
 
 static void
-vwarning( int n, va_list ap)
+vwarning(int n, va_list ap)
 {
 	const	char *fn;
 
 	if (ERR_ISSET(n, &msgset))
 		return;
 
-	if (nowarn)
+#ifdef DEBUG
+	printf("%s: lwarn=%d n=%d\n", __func__, lwarn, n);
+#endif
+	if (lwarn == LWARN_NONE || lwarn == n)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 

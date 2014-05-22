@@ -1,6 +1,6 @@
-/*	$NetBSD: mvsoctmr.c,v 1.2.2.2 2012/10/30 17:19:06 yamt Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.2.2.3 2014/05/22 11:39:33 yamt Exp $	*/
 /*
- * Copyright (c) 2007, 2008 KIYOHARA Takashi
+ * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.2.2.2 2012/10/30 17:19:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.2.2.3 2014/05/22 11:39:33 yamt Exp $");
 
 #include "opt_ddb.h"
+#include "opt_mvsoc.h"
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.2.2.2 2012/10/30 17:19:06 yamt Exp $"
 #include <arm/marvell/mvsocvar.h>
 #include <arm/marvell/mvsoctmrreg.h>
 
+#include <dev/marvell/marvellreg.h>
 #include <dev/marvell/marvellvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -67,6 +69,12 @@ struct mvsoctmr_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	int sc_irq;
+
+#define TMR_FLAGS_NOBRIDGE	(1 << 0)
+#define TMR_FLAGS_25MHZ		(1 << 1)
+#define TMR_FLAGS_SYSCLK	(1 << 2)
+	int sc_flags;
 };
 
 
@@ -86,7 +94,9 @@ static int mvsoctmr_wdog_setmode(struct sysmon_wdog *);
 static void mvsoctmr_wdog_ddb_trap(int);
 #endif
 
-#define MVSOC_WDOG_MAX_PERIOD	(0xffffffff / mvTclk)
+static int mvsoctmr_freq;
+
+#define MVSOC_WDOG_MAX_PERIOD	(0xffffffff / mvsoctmr_freq)
 
 static struct mvsoctmr_softc *mvsoctmr_sc;
 static struct timecounter mvsoctmr_timecounter = {
@@ -112,7 +122,8 @@ mvsoctmr_match(device_t parent, struct cfdata *match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
+	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;
 
 	mva->mva_size = MVSOCTMR_SIZE;
@@ -138,6 +149,22 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
 	    mva->mva_offset, mva->mva_size, &sc->sc_ioh))
 		panic("%s: Cannot map registers", device_xname(self));
+	sc->sc_irq = mva->mva_irq;
+
+	switch (mva->mva_model) {
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+		sc->sc_flags = TMR_FLAGS_25MHZ | TMR_FLAGS_NOBRIDGE;
+		break;
+	case MARVELL_ARMADA370_MV6707:
+	case MARVELL_ARMADA370_MV6710:
+	case MARVELL_ARMADA370_MV6W11:
+		sc->sc_flags = TMR_FLAGS_NOBRIDGE | TMR_FLAGS_SYSCLK;
+		break;
+	}
 
 	mvsoctmr_timecounter.tc_name = device_xname(self);
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, 1, 1);
@@ -155,6 +182,14 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 #ifdef DDB
 	db_trap_callback = mvsoctmr_wdog_ddb_trap;
 #endif
+
+	if (sc->sc_flags & TMR_FLAGS_25MHZ)
+		/* We set global timer and counter to 25 MHz mode */
+		mvsoctmr_freq = 25000000;
+	else if (sc->sc_flags & TMR_FLAGS_SYSCLK)
+		mvsoctmr_freq = mvSysclk;
+	else
+		mvsoctmr_freq = mvTclk;
 
 	sc->sc_wdog.smw_name = device_xname(self);
 	sc->sc_wdog.smw_cookie = sc;
@@ -176,6 +211,15 @@ static int
 clockhandler(void *arg)
 {
 	struct clockframe *frame = arg;
+
+#if defined(ARMADAXP)
+	KASSERT(mvsoctmr_sc != NULL);
+
+	if (mvsoctmr_sc->sc_flags & TMR_FLAGS_NOBRIDGE)
+		/* Acknowledge all timers-related interrupts */
+		bus_space_write_4(mvsoctmr_sc->sc_iot, mvsoctmr_sc->sc_ioh,
+		    MVSOCTMR_TESR, 0x0);
+#endif
 
 	hardclock(frame);
 
@@ -211,16 +255,27 @@ cpu_initclocks(void)
 		panic("cpu_initclocks: mvsoctmr not found");
 
 	mvsoctmr_timecounter.tc_priv = sc;
-	mvsoctmr_timecounter.tc_frequency = mvTclk;
+	mvsoctmr_timecounter.tc_frequency = mvsoctmr_freq;
 
-	timer0_tval = (mvTclk * 2) / (u_long) hz;
+	timer0_tval = (mvsoctmr_freq * 2) / (u_long) hz;
 	timer0_tval = (timer0_tval / 2) + (timer0_tval & 1);
 
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER0, timer0_tval, en, autoen);
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, en, autoen);
 
-	clock_ih = mvsoc_bridge_intr_establish(MVSOC_MLMB_MLMBI_CPUTIMER0INTREQ,
-	    IPL_CLOCK, clockhandler, NULL);
+	if (sc->sc_flags & TMR_FLAGS_NOBRIDGE) {
+		/*
+		 * Establishing timer interrupts is slightly different for
+		 * Armada XP than for other supported SoCs from Marvell.
+		 * Timer interrupt is no different from any other interrupt
+		 * in Armada XP, so we use generic marvell_intr_establish().
+		 */
+		clock_ih = marvell_intr_establish(sc->sc_irq, IPL_CLOCK,
+		    clockhandler, NULL);
+	} else
+		clock_ih = mvsoc_bridge_intr_establish(
+		    MVSOC_MLMB_MLMBI_CPUTIMER0INTREQ, IPL_CLOCK, clockhandler,
+		    NULL);
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
 
@@ -249,18 +304,18 @@ delay(unsigned int n)
 	initial_tick = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    MVSOCTMR_TIMER(MVSOCTMR_TIMER1));
 
-	if (n <= UINT_MAX / mvTclk) {
+	if (n <= UINT_MAX / mvsoctmr_freq) {
 		/*
 		 * For unsigned arithmetic, division can be replaced with
 		 * multiplication with the inverse and a shift.
 		 */
-		remaining = n * mvTclk / 1000000;
+		remaining = n * mvsoctmr_freq / 1000000;
 	} else {
 		/*
 		 * This is a very long delay.
 		 * Being slow here doesn't matter.
 		 */
-		remaining = (unsigned long long) n * mvTclk / 1000000;
+		remaining = (unsigned long long) n * mvsoctmr_freq / 1000000;
 	}
 
 	while (remaining > 0) {
@@ -289,8 +344,7 @@ mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,
 {
 	uint32_t ctrl;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_RELOAD(num),
-	    ticks);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_RELOAD(num), ticks);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_TIMER(num), ticks);
 
@@ -303,6 +357,9 @@ mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,
 		ctrl |= MVSOCTMR_CTCR_CPUTIMERAUTO(num);
 	else
 		ctrl &= ~MVSOCTMR_CTCR_CPUTIMERAUTO(num);
+	if (sc->sc_flags & TMR_FLAGS_25MHZ)
+		/* Set timer and counter to 25MHz mode */
+		ctrl |= MVSOCTMR_CTCR_25MHZEN(num);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_CTCR, ctrl);
 }
 
@@ -321,7 +378,7 @@ mvsoctmr_wdog_setmode(struct sysmon_wdog *smw)
 		else if (smw->smw_period > MVSOC_WDOG_MAX_PERIOD ||
 			 smw->smw_period <= 0)
 			return (EOPNOTSUPP);
-		sc->sc_wdog_period = smw->smw_period * mvTclk;
+		sc->sc_wdog_period = smw->smw_period * mvsoctmr_freq;
 		mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, sc->sc_wdog_period, 1, 0);
 	}
 

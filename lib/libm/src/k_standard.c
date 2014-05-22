@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_standard.c,v 1.17 2011/04/11 15:17:33 drochner Exp $");
+__RCSID("$NetBSD: k_standard.c,v 1.17.4.1 2014/05/22 11:36:57 yamt Exp $");
 #endif
 
 #include "math.h"
@@ -514,9 +514,15 @@ __kernel_standard(double x, double y, int type)
 		break;
 	    case 26:
 	    case 126:
+	    case 226:
 		/* sqrt(x<0) */
 		exc.type = DOMAIN;
-		exc.name = type < 100 ? "sqrt" : "sqrtf";
+		if (type == 26)
+			exc.name = "sqrt";
+		else if (type == 126)
+			exc.name = "sqrtf";
+		else
+			exc.name = "sqrtl";
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = zero;
 		else
@@ -532,9 +538,15 @@ __kernel_standard(double x, double y, int type)
 		break;
             case 27:
 	    case 127:
+	    case 227:
                 /* fmod(x,0) */
                 exc.type = DOMAIN;
-                exc.name = type < 100 ? "fmod" : "fmodf";
+		if (type == 27)
+			exc.name = "fmod";
+		else if (type == 127)
+			exc.name = "fmodf";
+		else
+			exc.name = "fmodl";
                 if (_LIB_VERSION == _SVID_)
                     exc.retval = x;
 		else

@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.8 2011/11/02 02:34:56 christos Exp $ */
+/*      $NetBSD: n_pow.c,v 1.8.2.1 2014/05/22 11:36:57 yamt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -124,6 +124,12 @@ static double pow_P (double, double);
 
 float
 powf(float x, float y)
+{
+   return pow((double) x, (double) (y));
+}
+
+long double
+powl(long double x, long double y)
 {
    return pow((double) x, (double) (y));
 }

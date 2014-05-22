@@ -1,3 +1,5 @@
+/*	$NetBSD: if_smscvar.h,v 1.1.2.3 2014/05/22 11:40:36 yamt Exp $	*/
+
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
  * Copyright (c) 2012

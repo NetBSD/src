@@ -1,4 +1,4 @@
-#	$NetBSD: files.clockport,v 1.2.2.4 2013/01/16 05:32:40 yamt Exp $
+#	$NetBSD: files.clockport,v 1.2.2.5 2014/05/22 11:39:28 yamt Exp $
 
 define	clockportbus {}
 
@@ -17,6 +17,10 @@ file	arch/amiga/clockport/a1k2cp.c		a1k2cp
 # X-Surf clockports
 attach	gencp at xsurfbus with gencp_xsurf
 file	arch/amiga/clockport/gencp_xsurf.c	gencp_xsurf needs-flag
+
+# ACA500 clockport
+attach	gencp at acafhbus with gencp_acafh
+file	arch/amiga/clockport/gencp_acafh.c	gencp_acafh needs-flag
 
 # more zbus clockports should be added, like:
 # Highway clockport

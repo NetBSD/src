@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.242.2.1 2012/10/30 17:20:21 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.242.2.2 2014/05/22 11:40:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242.2.1 2012/10/30 17:20:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242.2.2 2014/05/22 11:40:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,6 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242.2.1 2012/10/30 17:20:21 yamt Exp 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <sparc/sparc/msiiepreg.h>
+#ifdef MSIIEP
+#include <sparc/sparc/pci_fixup.h>
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -360,7 +363,6 @@ bootstrap(void)
 
 	if ((bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO)) != NULL) {
 		boothowto = bi_howto->boothowto;
-printf("initialized boothowt from bootloader: %x\n", boothowto);
 	}
 }
 
@@ -671,9 +673,11 @@ bootpath_fake(struct bootpath *bp, const char *cp)
 			} else {
 				BP_APPEND(bp, "vme", -1, 0, 0);
 			}
-			sprintf(tmpname,"x%cc", cp[1]); /* e.g. `xdc' */
+			/* e.g. `xdc' */
+			snprintf(tmpname, sizeof(tmpname), "x%cc", cp[1]);
 			BP_APPEND(bp, tmpname, -1, v0val[0], 0);
-			sprintf(tmpname,"x%c", cp[1]); /* e.g. `xd' */
+			/* e.g. `xd' */
+			snprintf(tmpname, sizeof(tmpname), "x%c", cp[1]);
 			BP_APPEND(bp, tmpname, v0val[1], v0val[2], 0);
 			return;
 		}
@@ -684,7 +688,7 @@ bootpath_fake(struct bootpath *bp, const char *cp)
 		 */
 		if ((cp[0] == 'i' || cp[0] == 'l') && cp[1] == 'e')  {
 			BP_APPEND(bp, "obio", -1, 0, 0);
-			sprintf(tmpname,"%c%c", cp[0], cp[1]);
+			snprintf(tmpname, sizeof(tmpname), "%c%c", cp[0], cp[1]);
 			BP_APPEND(bp, tmpname, -1, 0, 0);
 			return;
 		}
@@ -733,7 +737,8 @@ bootpath_fake(struct bootpath *bp, const char *cp)
 				target = v0val[1] >> 2; /* old format */
 				lun    = v0val[1] & 0x3;
 			}
-			sprintf(tmpname, "%c%c", cp[0], cp[1]);
+			snprintf(tmpname, sizeof(tmpname),
+			    "%c%c", cp[0], cp[1]);
 			BP_APPEND(bp, tmpname, target, lun, v0val[2]);
 			return;
 		}
@@ -784,9 +789,9 @@ bootpath_fake(struct bootpath *bp, const char *cp)
 		BP_APPEND(bp, "sbus", -1, 0, 0);
 		BP_APPEND(bp, "esp", -1, v0val[0], 0);
 		if (cp[1] == 'r')
-			sprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
+			snprintf(tmpname, sizeof(tmpname), "cd"); /* netbsd uses 'cd', not 'sr'*/
 		else
-			sprintf(tmpname,"%c%c", cp[0], cp[1]);
+			snprintf(tmpname, sizeof(tmpname), "%c%c", cp[0], cp[1]);
 		/* XXX - is TARGET/LUN encoded in v0val[1]? */
 		target = v0val[1];
 		lun = 0;
@@ -1028,19 +1033,10 @@ sync_crash(void)
 char *
 clockfreq(int freq)
 {
-	char *p;
 	static char buf[10];
 
-	freq /= 1000;
-	sprintf(buf, "%d", freq / 1000);
-	freq %= 1000;
-	if (freq) {
-		freq += 1000;	/* now in 1000..1999 */
-		p = buf + strlen(buf);
-		sprintf(p, "%d", freq);
-		*p = '.';	/* now buf = %d.%3d */
-	}
-	return (buf);
+	humanize_number(buf, sizeof(buf), freq / 1000, "", 1000);
+	return buf;
 }
 
 /* ARGSUSED */
@@ -1091,84 +1087,90 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
 
+	struct boot_special {
+		const char *const dev;
+#define BS_EARLY	1	/* attach device early */
+#define	BS_IGNORE	2	/* ignore root device */
+#define	BS_OPTIONAL	4	/* device not alwas present */
+		unsigned int flags;
+	};
+
 	struct mainbus_attach_args ma;
 	char namebuf[32];
 #if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
-	const char *const *ssp, *sp = NULL;
+	const char *sp = NULL;
 	int node0, node;
-	const char *const *openboot_special;
+	const struct boot_special *openboot_special, *ssp;
 #endif
 
 #if defined(SUN4C)
-	static const char *const openboot_special4c[] = {
-		/* find these first (end with empty string) */
-		"memory-error",	/* as early as convenient, in case of error */
-		"eeprom",
-		"counter-timer",
-		"auxiliary-io",
-		"",
+	static const struct boot_special openboot_special4c[] = {
+		/* find these first */
+		{ "memory-error", BS_EARLY },
+			/* as early as convenient, in case of error */
+		{ "eeprom", BS_EARLY },
+		{ "counter-timer", BS_EARLY },
+		{ "auxiliary-io", BS_EARLY },
 
-		/* ignore these (end with NULL) */
-		"aliases",
-		"interrupt-enable",
-		"memory",
-		"openprom",
-		"options",
-		"packages",
-		"virtual-memory",
-		NULL
+		/* ignore these */
+		{ "aliases", BS_IGNORE },
+		{ "interrupt-enable", BS_IGNORE },
+		{ "memory", BS_IGNORE },
+		{ "openprom", BS_IGNORE },
+		{ "options", BS_IGNORE },
+		{ "packages", BS_IGNORE },
+		{ "virtual-memory", BS_IGNORE },
+
+		/* sentinel */
+		{ NULL, 0 }
 	};
 #else
 #define openboot_special4c	((void *)0)
 #endif
 #if defined(SUN4M)
-	static const char *const openboot_special4m[] = {
+	static const struct boot_special openboot_special4m[] = {
 		/* find these first */
-#if !defined(MSIIEP)
-		"obio",		/* smart enough to get eeprom/etc mapped */
-#else
-		"pci",		/* ms-IIep */
-#endif
-		"",
+		{ "SUNW,sx", BS_EARLY|BS_OPTIONAL },
+		{ "obio", BS_EARLY|BS_OPTIONAL },
+				/* smart enough to get eeprom/etc mapped */
+		{ "pci", BS_EARLY|BS_OPTIONAL },	/* ms-IIep */
 
-		/* ignore these (end with NULL) */
 		/*
 		 * These are _root_ devices to ignore. Others must be handled
 		 * elsewhere.
 		 */
-		"SUNW,sx",		/* XXX: no driver for SX yet */
-		"virtual-memory",
-		"aliases",
-		"chosen",		/* OpenFirmware */
-		"memory",
-		"openprom",
-		"options",
-		"packages",
-		"udp",			/* OFW in Krups */
+		{ "virtual-memory", BS_IGNORE },
+		{ "aliases", BS_IGNORE },
+		{ "chosen", BS_IGNORE },	/* OpenFirmware */
+		{ "memory", BS_IGNORE },
+		{ "openprom", BS_IGNORE },
+		{ "options", BS_IGNORE },
+		{ "packages", BS_IGNORE },
+		{ "udp", BS_IGNORE },		/* OFW in Krups */
 		/* we also skip any nodes with device_type == "cpu" */
-		NULL
+
+		{ NULL, 0 }
 	};
 #else
 #define openboot_special4m	((void *)0)
 #endif
 #if defined(SUN4D)
-	static const char *const openboot_special4d[] = {
-		"",
-
-		/* ignore these (end with NULL) */
+	static const struct boot_special openboot_special4d[] = {
 		/*
 		 * These are _root_ devices to ignore. Others must be handled
 		 * elsewhere.
 		 */
-		"mem-unit",	/* XXX might need this for memory errors */
-		"boards",
-		"openprom",
-		"virtual-memory",
-		"memory",
-		"aliases",
-		"options",
-		"packages",
-		NULL
+		{ "mem-unit", BS_IGNORE },
+			/* XXX might need this for memory errors */
+		{ "boards", BS_IGNORE },
+		{ "openprom", BS_IGNORE },
+		{ "virtual-memory", BS_IGNORE },
+		{ "memory", BS_IGNORE },
+		{ "aliases", BS_IGNORE },
+		{ "options", BS_IGNORE },
+		{ "packages", BS_IGNORE },
+
+		{ NULL, 0 }
 	};
 #else
 #define	openboot_special4d	((void *)0)
@@ -1282,10 +1284,12 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		config_found(dev, (void *)&ma, mbprint);
 	}
 
-	for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
+	for (ssp = openboot_special; (sp = ssp->dev) != NULL; ssp++) {
 		struct openprom_addr romreg;
 
+		if (!(ssp->flags & BS_EARLY)) continue;
 		if ((node = findnode(node0, sp)) == 0) {
+			if (ssp->flags & BS_OPTIONAL) continue;
 			printf("could not find %s in OPENPROM\n", sp);
 			panic(sp);
 		}
@@ -1307,8 +1311,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (prom_getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
 
-		if (config_found(dev, (void *)&ma, mbprint) == NULL)
+		if (config_found(dev, (void *)&ma, mbprint) == NULL) {
+			if (ssp->flags & BS_OPTIONAL) continue;
 			panic(sp);
+		}
 	}
 
 	/*
@@ -1331,11 +1337,15 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #endif
 		cp = prom_getpropstringA(node, "name", namebuf, sizeof namebuf);
 		DPRINTF(ACDB_PROBE, (" name %s\n", namebuf));
-		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
+		for (ssp = openboot_special; (sp = ssp->dev) != NULL; ssp++) {
+			if (!(ssp->flags & (BS_EARLY|BS_IGNORE))) continue;
 			if (strcmp(cp, sp) == 0)
 				break;
+		}
 		if (sp != NULL)
-			continue; /* an "early" device already configured */
+			continue;
+			/* an "early" device already configured, or an
+			   ignored device */
 
 		memset(&ma, 0, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
@@ -1468,11 +1478,11 @@ romgetcursoraddr(int **rowp, int **colp)
 	 * correct cutoff point is unknown, as yet; we use 2.9 here.
 	 */
 	if (prom_version() < 2 || prom_revision() < 0x00020009)
-		sprintf(buf,
+		snprintf(buf, sizeof(buf),
 		    "' line# >body >user %lx ! ' column# >body >user %lx !",
 		    (u_long)rowp, (u_long)colp);
 	else
-		sprintf(buf,
+		snprintf(buf, sizeof(buf),
 		    "stdout @ is my-self addr line# %lx ! addr column# %lx !",
 		    (u_long)rowp, (u_long)colp);
 	*rowp = *colp = NULL;
@@ -1745,12 +1755,23 @@ nail_bootdev(device_t dev, struct bootpath *bp)
 	bootpath_store(1, NULL);
 }
 
+/*
+ * We use device_register() to:
+ *   set device properties on PCI devices
+ *   find the bootpath
+ */
 void
 device_register(device_t dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
 	const char *bpname;
 
+#ifdef MSIIEP
+	/* Check for PCI devices */
+	if (bus_class(device_parent(dev)) == BUSCLASS_PCI)
+		set_pci_props(dev);
+#endif
+		
 	/*
 	 * If device name does not match current bootpath component
 	 * then there's nothing interesting to consider.

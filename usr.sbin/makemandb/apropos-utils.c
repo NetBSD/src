@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.4.2.5 2013/01/23 00:06:43 yamt Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.4.2.6 2014/05/22 11:43:06 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.4.2.5 2013/01/23 00:06:43 yamt Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.4.2.6 2014/05/22 11:43:06 yamt Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -99,8 +99,8 @@ lower(char *str)
 
 /*
 * concat--
-*  Utility function. Concatenates together: dst, a space character and src. 
-* dst + " " + src 
+*  Utility function. Concatenates together: dst, a space character and src.
+* dst + " " + src
 */
 void
 concat(char **dst, const char *src)
@@ -131,7 +131,7 @@ concat2(char **dst, const char *src, size_t srclen)
 	/* Append a space at the end of dst */
 	(*dst)[dst_len++] = ' ';
 
-	/* Now, copy src at the end of dst */	
+	/* Now, copy src at the end of dst */
 	memcpy(*dst + dst_len, src, srclen + 1);
 }
 
@@ -152,7 +152,7 @@ create_db(sqlite3 *db)
 	const char *sqlstr = NULL;
 	char *schemasql;
 	char *errmsg = NULL;
-	
+
 /*------------------------ Create the tables------------------------------*/
 
 #if NOTYET
@@ -207,7 +207,7 @@ out:
  */
 static void
 zip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
-{	
+{
 	int nin;
 	long int nout;
 	const unsigned char * inbuf;
@@ -278,7 +278,7 @@ get_dbpath(const char *manconf)
 	tp = gettag("_mandb", 1);
 	if (!tp)
 		return NULL;
-	
+
 	if (TAILQ_EMPTY(&tp->entrylist))
 		return NULL;
 
@@ -289,15 +289,15 @@ get_dbpath(const char *manconf)
 /* init_db --
  *   Prepare the database. Register the compress/uncompress functions and the
  *   stopword tokenizer.
- *	 db_flag specifies the mode in which to open the database. 3 options are 
+ *	 db_flag specifies the mode in which to open the database. 3 options are
  *   available:
  *   	1. DB_READONLY: Open in READONLY mode. An error if db does not exist.
  *  	2. DB_READWRITE: Open in read-write mode. An error if db does not exist.
  *  	3. DB_CREATE: Open in read-write mode. It will try to create the db if
  *			it does not exist already.
  *  RETURN VALUES:
- *		The function will return NULL in case the db does not exist and DB_CREATE 
- *  	was not specified. And in case DB_CREATE was specified and yet NULL is 
+ *		The function will return NULL in case the db does not exist and DB_CREATE
+ *  	was not specified. And in case DB_CREATE was specified and yet NULL is
  *  	returned, then there was some other error.
  *  	In normal cases the function should return a handle to the db.
  */
@@ -329,7 +329,7 @@ init_db(int db_flag, const char *manconf)
 	/* Now initialize the database connection */
 	sqlite3_initialize();
 	rc = sqlite3_open_v2(dbpath, &db, db_flag, NULL);
-	
+
 	if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
 		sqlite3_shutdown();
@@ -362,7 +362,7 @@ init_db(int db_flag, const char *manconf)
 	sqlite3_finalize(stmt);
 
 	sqlite3_extended_result_codes(db, 1);
-	
+
 	/* Register the zip and unzip functions for FTS compression */
 	rc = sqlite3_create_function(db, "zip", 1, SQLITE_ANY, NULL, zip, NULL, NULL);
 	if (rc != SQLITE_OK) {
@@ -371,7 +371,7 @@ init_db(int db_flag, const char *manconf)
 		goto error;
 	}
 
-	rc = sqlite3_create_function(db, "unzip", 1, SQLITE_ANY, NULL, 
+	rc = sqlite3_create_function(db, "unzip", 1, SQLITE_ANY, NULL,
                                  unzip, NULL, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("Unable to register function: uncompress: %s",
@@ -391,14 +391,14 @@ error:
  *  Sqlite user defined function for ranking the documents.
  *  For each phrase of the query, it computes the tf and idf and adds them over.
  *  It computes the final rank, by multiplying tf and idf together.
- *  Weight of term t for document d = (term frequency of t in d * 
- *                                      inverse document frequency of t) 
+ *  Weight of term t for document d = (term frequency of t in d *
+ *                                      inverse document frequency of t)
  *
- *  Term Frequency of term t in document d = Number of times t occurs in d / 
- *	                                        Number of times t appears in all 
+ *  Term Frequency of term t in document d = Number of times t occurs in d /
+ *	                                        Number of times t appears in all
  *											documents
  *
- *  Inverse document frequency of t = log(Total number of documents / 
+ *  Inverse document frequency of t = log(Total number of documents /
  *										Number of documents in which t occurs)
  */
 static void
@@ -424,12 +424,12 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 		int icol;
 		const unsigned int *phraseinfo = &matchinfo[2 + ncol+ iphrase * ncol * 3];
 		for(icol = 1; icol < ncol; icol++) {
-			
+
 			/* nhitcount: number of times the current phrase occurs in the current
 			 *            column in the current document.
 			 * nglobalhitcount: number of times current phrase occurs in the current
 			 *                  column in all documents.
-			 * ndocshitcount:   number of documents in which the current phrase 
+			 * ndocshitcount:   number of documents in which the current phrase
 			 *                  occurs in the current column at least once.
 			 */
   			int nhitcount = phraseinfo[3 * icol];
@@ -440,7 +440,7 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 			if (idf->status == 0 && ndocshitcount)
 				idf->value += log(((double)ndoc / ndocshitcount))* weight;
 
-			/* Dividing the tf by document length to normalize the effect of 
+			/* Dividing the tf by document length to normalize the effect of
 			 * longer documents.
 			 */
 			if (nglobalhitcount > 0 && nhitcount)
@@ -448,9 +448,9 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 		}
 	}
 	idf->status = 1;
-	
+
 	/* Final score = (tf * idf)/ ( k + tf)
-	 *	Dividing by k+ tf further normalizes the weight leading to better 
+	 *	Dividing by k+ tf further normalizes the weight leading to better
 	 *  results.
 	 *  The value of k is experimental
 	 */
@@ -464,12 +464,12 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
  *  Performs the searches for the keywords entered by the user.
  *  The 2nd param: snippet_args is an array of strings providing values for the
  *  last three parameters to the snippet function of sqlite. (Look at the docs).
- *  The 3rd param: args contains rest of the search parameters. Look at 
+ *  The 3rd param: args contains rest of the search parameters. Look at
  *  arpopos-utils.h for the description of individual fields.
- *  
+ *
  */
-int
-run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
+static int
+run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 {
 	const char *default_snippet_args[3];
 	char *section_clause = NULL;
@@ -492,7 +492,7 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		easprintf(&machine_clause, "AND machine = \'%s\' ", args->machine);
 
 	/* Register the rank function */
-	rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY, (void *)&idf, 
+	rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY, (void *)&idf,
 	                             rank_func, NULL, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("Unable to register the ranking function: %s",
@@ -501,12 +501,12 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		sqlite3_shutdown();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	/* We want to build a query of the form: "select x,y,z from mandb where
 	 * mandb match :query [AND (section LIKE '1' OR section LIKE '2' OR...)]
 	 * ORDER BY rank DESC..."
-	 * NOTES: 1. The portion in square brackets is optional, it will be there 
-	 * only if the user has specified an option on the command line to search in 
+	 * NOTES: 1. The portion in square brackets is optional, it will be there
+	 * only if the user has specified an option on the command line to search in
 	 * one or more specific sections.
 	 * 2. I am using LIKE operator because '=' or IN operators do not seem to be
 	 * working with the compression option enabled.
@@ -549,18 +549,36 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		default_snippet_args[2] = "...";
 		snippet_args = default_snippet_args;
 	}
-	query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
-	    " snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
-	    " rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
-	    " FROM mandb"
-	    " WHERE mandb MATCH %Q %s "
-	    "%s"
-	    " ORDER BY rank DESC"
-	    "%s",
-	    snippet_args[0], snippet_args[1], snippet_args[2], args->search_str,
-	    machine_clause ? machine_clause : "",
-	    section_clause ? section_clause : "",
-	    limit_clause ? limit_clause : "");
+	if (args->legacy) {
+	    char *wild;
+	    easprintf(&wild, "%%%s%%", args->search_str);
+	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
+		" snippet(mandb, %Q, %Q, %Q, -1, 40 )"
+		" FROM mandb"
+		" WHERE name LIKE %Q OR name_desc LIKE %Q "
+		"%s"
+		"%s",
+		snippet_args[0], snippet_args[1], snippet_args[2],
+		wild,
+		section_clause ? section_clause : "",
+		snippet_args[0], snippet_args[1], snippet_args[2],
+		section_clause ? section_clause : "",
+		limit_clause ? limit_clause : "");
+		free(wild);
+	} else {
+	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
+		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
+		" rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
+		" FROM mandb"
+		" WHERE mandb MATCH %Q %s "
+		"%s"
+		" ORDER BY rank DESC"
+		"%s",
+		snippet_args[0], snippet_args[1], snippet_args[2],
+		args->search_str, machine_clause ? machine_clause : "",
+		section_clause ? section_clause : "",
+		limit_clause ? limit_clause : "");
+	}
 
 	free(machine_clause);
 	free(section_clause);
@@ -623,7 +641,7 @@ callback_html(void *data, const char *section, const char *name,
 	size_t sz = 0;
 	int count = 0;
 	struct orig_callback_data *orig_data = (struct orig_callback_data *) data;
-	int (*callback) (void *, const char *, const char *, const char *, 
+	int (*callback) (void *, const char *, const char *, const char *,
 		const char *, size_t) = orig_data->callback;
 
 	/* First scan the snippet to find out the number of occurrences of {'>', '<'
@@ -696,12 +714,12 @@ callback_html(void *data, const char *section, const char *name,
 /*
  * run_query_html --
  *  Utility function to output query result in HTML format.
- *  It internally calls run_query only, but it first passes the output to it's 
+ *  It internally calls run_query only, but it first passes the output to it's
  *  own custom callback function, which preprocess the snippet for quoting
  *  inline HTML fragments.
  *  After that it delegates the call the actual user supplied callback function.
  */
-int
+static int
 run_query_html(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
@@ -710,17 +728,20 @@ run_query_html(sqlite3 *db, query_args *args)
 	const char *snippet_args[] = {"\002", "\003", "..."};
 	args->callback = &callback_html;
 	args->callback_data = (void *) &orig_data;
-	return run_query(db, snippet_args, args);
+	return run_query_internal(db, snippet_args, args);
 }
 
 /*
  * underline a string, pager style.
  */
 static char *
-ul_pager(const char *s)
+ul_pager(int ul, const char *s)
 {
 	size_t len;
 	char *dst, *d;
+
+	if (!ul)
+		return estrdup(s);
 
 	// a -> _\ba
 	len = strlen(s) * 3 + 1;
@@ -742,14 +763,14 @@ ul_pager(const char *s)
  *  more or less.
  */
 static int
-callback_pager(void *data, const char *section, const char *name, 
+callback_pager(void *data, const char *section, const char *name,
 	const char *name_desc, const char *snippet, size_t snippet_length)
 {
 	struct orig_callback_data *orig_data = (struct orig_callback_data *) data;
 	char *psnippet;
 	const char *temp = snippet;
 	int count = 0;
-	int i = 0;
+	int i = 0, did;
 	size_t sz = 0;
 	size_t psnippet_length;
 
@@ -774,6 +795,7 @@ callback_pager(void *data, const char *section, const char *name,
 	 * 2. The bytes after \002 need to be overstriked till we encounter \003.
 	 * 3. To overstrike a byte 'A' we need to write 'A\bA'
 	 */
+	did = 0;
 	while (*snippet) {
 		sz = strcspn(snippet, "\002");
 		memcpy(&psnippet[i], snippet, sz);
@@ -786,6 +808,7 @@ callback_pager(void *data, const char *section, const char *name,
 		if (*snippet == '\002')
 			snippet++;
 		while (*snippet && *snippet != '\003') {
+			did = 1;
 			psnippet[i++] = *snippet;
 			psnippet[i++] = '\b';
 			psnippet[i++] = *snippet++;
@@ -795,9 +818,9 @@ callback_pager(void *data, const char *section, const char *name,
 	}
 
 	psnippet[i] = 0;
-	char *ul_section = ul_pager(section);
-	char *ul_name = ul_pager(name);
-	char *ul_name_desc = ul_pager(name_desc);
+	char *ul_section = ul_pager(did, section);
+	char *ul_name = ul_pager(did, name);
+	char *ul_name_desc = ul_pager(did, name_desc);
 	(orig_data->callback)(orig_data->data, ul_section, ul_name,
 	    ul_name_desc, psnippet, psnippet_length);
 	free(ul_section);
@@ -832,7 +855,7 @@ ul_term(const char *s, const struct term_args *ta)
  *  more or less.
  */
 static int
-callback_term(void *data, const char *section, const char *name, 
+callback_term(void *data, const char *section, const char *name,
 	const char *name_desc, const char *snippet, size_t snippet_length)
 {
 	struct term_args *ta = data;
@@ -856,16 +879,16 @@ callback_term(void *data, const char *section, const char *name,
  *  For this purpose it first calls it's own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
-int
+static int
 run_query_pager(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
 	orig_data.callback = args->callback;
 	orig_data.data = args->callback_data;
-	const char *snippet_args[] = {"\002", "\003", "..."};
+	const char *snippet_args[3] = { "\002", "\003", "..." };
 	args->callback = &callback_pager;
 	args->callback_data = (void *) &orig_data;
-	return run_query(db, snippet_args, args);
+	return run_query_internal(db, snippet_args, args);
 }
 
 static void
@@ -913,7 +936,7 @@ term_init(int fd, const char *sa[5])
  *  For this purpose it first calls it's own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
-int
+static int
 run_query_term(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
@@ -921,6 +944,7 @@ run_query_term(sqlite3 *db, query_args *args)
 	orig_data.callback = args->callback;
 	orig_data.data = args->callback_data;
 	const char *snippet_args[5];
+
 	term_init(STDOUT_FILENO, snippet_args);
 	ta.smul = snippet_args[3];
 	ta.rmul = snippet_args[4];
@@ -928,5 +952,35 @@ run_query_term(sqlite3 *db, query_args *args)
 
 	args->callback = &callback_term;
 	args->callback_data = &ta;
-	return run_query(db, snippet_args, args);
+	return run_query_internal(db, snippet_args, args);
+}
+
+static int
+run_query_none(sqlite3 *db, query_args *args)
+{
+	struct orig_callback_data orig_data;
+	orig_data.callback = args->callback;
+	orig_data.data = args->callback_data;
+	const char *snippet_args[3] = { "", "", "..." };
+	args->callback = &callback_pager;
+	args->callback_data = (void *) &orig_data;
+	return run_query_internal(db, snippet_args, args);
+}
+
+int
+run_query(sqlite3 *db, query_format fmt, query_args *args)
+{
+	switch (fmt) {
+	case APROPOS_NONE:
+		return run_query_none(db, args);
+	case APROPOS_HTML:
+		return run_query_html(db, args);
+	case APROPOS_TERM:
+		return run_query_term(db, args);
+	case APROPOS_PAGER:
+		return run_query_pager(db, args);
+	default:
+		warnx("Unknown query format %d", (int)fmt);
+		return -1;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 2009/01/12 11:32:43 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11.14.1 2014/05/22 11:39:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -631,10 +631,9 @@ le_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 	int cc;
 
 	t = getsecs();
-	cc = 0;
-	while (((getsecs() - t) < timeout) && !cc) {
+	do {
 		cc = le_poll(desc, pkt, len);
-	}
+	} while (cc == 0 && (getsecs() - t) < timeout);
 	return cc;
 }
 

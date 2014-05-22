@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/21 03:36:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2014/05/22 11:43:17 yamt Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
 .include <bsd.own.mk>
 
 LIB=		GLU
+LIBISCXX=	yes
 
 GLUDIR=		${X11SRCDIR.xc}/extras/ogl-sample/main/gfx/lib/glu
 
@@ -61,10 +62,8 @@ SRCS=		${SRCS.libutil} ${SRCS.libtess} \
 		${SRCS.interface} ${SRCS.internals} ${SRCS.nurbtess}
 
 LIBDPLIBS=\
-	GL	${.CURDIR}/../GL
-
-LDADD+=		-lstdc++ -lm
-DPADD+=		${LIBSTDCXX} ${LIBM}
+	GL	${.CURDIR}/../GL \
+	m	${NETBSDSRCDIR}/lib/libm
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
@@ -74,3 +73,8 @@ DPADD+=		${LIBSTDCXX} ${LIBM}
 # XXX -Wno-deprecated doesn't work?
 CXXFLAGS+=	-Wno-error
 .endif
+
+.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
+COPTS.sampleCompTop.cc+=        -O0
+.endif
+

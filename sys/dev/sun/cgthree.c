@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.28.8.1 2012/04/17 00:08:04 yamt Exp $ */
+/*	$NetBSD: cgthree.c,v 1.28.8.2 2014/05/22 11:40:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.28.8.1 2012/04/17 00:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.28.8.2 2014/05/22 11:40:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,17 @@ dev_type_ioctl(cgthreeioctl);
 dev_type_mmap(cgthreemmap);
 
 const struct cdevsw cgthree_cdevsw = {
-	cgthreeopen, nullclose, noread, nowrite, cgthreeioctl,
-	nostop, notty, nopoll, cgthreemmap, nokqfilter, D_OTHER
+	.d_open = cgthreeopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgthreeioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cgthreemmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /* frame buffer generic driver */

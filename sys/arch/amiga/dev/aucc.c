@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.40.102.2 2012/10/30 17:18:47 yamt Exp $ */
+/*	$NetBSD: aucc.c,v 1.40.102.3 2014/05/22 11:39:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.40.102.2 2012/10/30 17:18:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.40.102.3 2014/05/22 11:39:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -927,9 +927,11 @@ aucc_query_devinfo(void *addr, register mixer_devinfo_t *dip)
 		dip->type = AUDIO_MIXER_SET;
 		dip->mixer_class = AUCC_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNspeaker);
+#define setname(a) strlcpy(dip->label.name, (a), sizeof(dip->label.name))
+		setname(AudioNspeaker);
 		for (i = 0; i < 16; i++) {
-			sprintf(dip->un.s.member[i].label.name,
+			snprintf(dip->un.s.member[i].label.name,
+			    sizeof(dip->un.s.member[i].label.name),
 			    "channelmask%d", i);
 			dip->un.s.member[i].mask = i;
 		}
@@ -940,7 +942,7 @@ aucc_query_devinfo(void *addr, register mixer_devinfo_t *dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = AUCC_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmaster);
+		setname(AudioNmaster);
 		dip->un.v.num_channels = 4;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
@@ -949,7 +951,7 @@ aucc_query_devinfo(void *addr, register mixer_devinfo_t *dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = AUCC_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		setname(AudioCoutputs);
 		break;
 
 	default:

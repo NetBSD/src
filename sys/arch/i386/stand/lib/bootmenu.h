@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.2 2008/12/13 23:30:54 christos Exp $	*/
+/*	$NetBSD: bootmenu.h,v 1.2.20.1 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 void parsebootconf(const char *);
 void doboottypemenu(void);
+void bootdefault(void);
 int atoi(const char *);
 
 struct bootconf_def {

@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.31.4.3 2013/01/23 00:05:27 yamt Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.31.4.4 2014/05/22 11:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/uio.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -714,7 +715,7 @@ success(void)
 	return 0;
 }
 
-struct {
+static struct {
 	const char *id;
 	int domain;
 	socklen_t slen;

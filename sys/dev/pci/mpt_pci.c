@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.20.12.1 2012/04/17 00:07:51 yamt Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.20.12.2 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.20.12.1 2012/04/17 00:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.20.12.2 2014/05/22 11:40:25 yamt Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -134,6 +134,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	int memh_valid;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -202,7 +203,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(mpt->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mpt_intr, mpt);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(mpt->sc_dev, "unable to establish interrupt");

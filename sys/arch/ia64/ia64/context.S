@@ -1,5 +1,5 @@
-/*	$NetBSD: context.S,v 1.3.12.1 2013/01/23 00:05:49 yamt Exp $	*/
-	
+/*	$NetBSD: context.S,v 1.3.12.2 2014/05/22 11:39:53 yamt Exp $	*/
+
 /*
  * Copyright (c) 2003 Marcel Moolenaar
  * All rights reserved.
@@ -657,7 +657,7 @@ ENTRY(restore_high_fp, 1)
 	ldf.fill	f32=[r32],32
 	;;
 	ldf.fill	f33=[r31],32
-	ldf.fill	f34=[r32],32	
+	ldf.fill	f34=[r32],32
 	;;
 	ldf.fill	f35=[r31],32
 	ldf.fill	f36=[r32],32

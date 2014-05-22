@@ -1,4 +1,4 @@
-/* $Id: boot_prep.c,v 1.2.2.3 2013/01/23 00:05:46 yamt Exp $ */
+/* $Id: boot_prep.c,v 1.2.2.4 2014/05/22 11:39:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@ _start(void)
 	
 	emi_prep();
 	printf("done.\n\r");
+
+	args_prep();
 
 	return 0;
 }

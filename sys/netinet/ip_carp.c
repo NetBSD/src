@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.46.2.2 2012/10/30 17:22:46 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.46.2.3 2014/05/22 11:41:09 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,9 +28,10 @@
  */
 
 #include "opt_inet.h"
+#include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46.2.2 2012/10/30 17:22:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46.2.3 2014/05/22 11:41:09 yamt Exp $");
 
 /*
  * TODO:
@@ -158,6 +159,13 @@ int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 static percpu_t *carpstat_percpu;
 
 #define	CARP_STATINC(x)		_NET_STATINC(carpstat_percpu, x)
+
+#ifdef MBUFTRACE
+static struct mowner carp_proto_mowner_rx = MOWNER_INIT("carp", "rx");
+static struct mowner carp_proto_mowner_tx = MOWNER_INIT("carp", "tx");
+static struct mowner carp_proto6_mowner_rx = MOWNER_INIT("carp6", "rx");
+static struct mowner carp_proto6_mowner_tx = MOWNER_INIT("carp6", "tx");
+#endif
 
 struct carp_if {
 	TAILQ_HEAD(, carp_softc) vhif_vrs;
@@ -457,14 +465,14 @@ carp_proto_input(struct mbuf *m, ...)
 	struct ip *ip = mtod(m, struct ip *);
 	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
-	int iplen, len, hlen;
+	int iplen, len;
 	va_list ap;
 
 	va_start(ap, m);
-	hlen = va_arg(ap, int);
 	va_end(ap);
 
 	CARP_STATINC(CARP_STAT_IPACKETS);
+	MCLAIM(m, &carp_proto_mowner_rx);
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
@@ -534,6 +542,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 	u_int len;
 
 	CARP_STATINC(CARP_STAT_IPACKETS6);
+	MCLAIM(m, &carp_proto6_mowner_rx);
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
@@ -802,6 +811,19 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	carp_set_enaddr(sc);
 	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
 	bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
+#ifdef MBUFTRACE
+	strlcpy(sc->sc_ac.ec_tx_mowner.mo_name, ifp->if_xname,
+	    sizeof(sc->sc_ac.ec_tx_mowner.mo_name));
+	strlcpy(sc->sc_ac.ec_tx_mowner.mo_descr, "tx",
+	    sizeof(sc->sc_ac.ec_tx_mowner.mo_descr));
+	strlcpy(sc->sc_ac.ec_rx_mowner.mo_name, ifp->if_xname,
+	    sizeof(sc->sc_ac.ec_rx_mowner.mo_name));
+	strlcpy(sc->sc_ac.ec_rx_mowner.mo_descr, "rx",
+	    sizeof(sc->sc_ac.ec_rx_mowner.mo_descr));
+	MOWNER_ATTACH(&sc->sc_ac.ec_tx_mowner);
+	MOWNER_ATTACH(&sc->sc_ac.ec_rx_mowner);
+	ifp->if_mowner = &sc->sc_ac.ec_tx_mowner;
+#endif
 	return (0);
 }
 
@@ -967,6 +989,7 @@ carp_send_ad(void *v)
 			/* XXX maybe less ? */
 			goto retry_later;
 		}
+		MCLAIM(m, &carp_proto_mowner_tx);
 		len = sizeof(*ip) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
@@ -1047,6 +1070,7 @@ carp_send_ad(void *v)
 			/* XXX maybe less ? */
 			goto retry_later;
 		}
+		MCLAIM(m, &carp_proto6_mowner_tx);
 		len = sizeof(*ip6) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
@@ -2251,17 +2275,18 @@ carp_init(void)
 {
 
 	sysctl_net_inet_carp_setup(NULL);
+#ifdef MBUFTRACE
+	MOWNER_ATTACH(&carp_proto_mowner_rx);
+	MOWNER_ATTACH(&carp_proto_mowner_tx);
+	MOWNER_ATTACH(&carp_proto6_mowner_rx);
+	MOWNER_ATTACH(&carp_proto6_mowner_tx);
+#endif
 }
 
 static void
 sysctl_net_inet_carp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

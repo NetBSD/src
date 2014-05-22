@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.22.4.1 2013/01/16 05:34:08 yamt Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.22.4.2 2014/05/22 11:42:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.22.4.1 2013/01/16 05:34:08 yamt Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.22.4.2 2014/05/22 11:42:50 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -245,7 +245,6 @@ fetchbufcache(void)
 	int count;
 	struct buf_sysctl *bp, *buffers;
 	struct vnode *vn;
-	struct mount *mt;
 	struct ml_entry *ml;
 	int mib[6];
 	size_t size;
@@ -315,8 +314,7 @@ again:
 					mp = sd.sd_mountpoint;
 			}
 			if (mp != NULL)
-				mt = ml_lookup(mp,
-				    bp->b_bufsize,
+				(void)ml_lookup(mp, bp->b_bufsize,
 				    bp->b_bcount);
 		}
 	}

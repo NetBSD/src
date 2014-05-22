@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.3.2.2 2012/10/30 17:19:00 yamt Exp $	*/
+/*	$NetBSD: gic.c,v 1.3.2.3 2014/05/22 11:39:32 yamt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,16 +28,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.3.2.2 2012/10/30 17:19:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.3.2.3 2014/05/22 11:39:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/intr.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/xcall.h>		/* for xc_ipi_handler */
 
@@ -86,11 +89,15 @@ static struct armgic_softc {
 	struct pic_softc sc_pic;
 	device_t sc_dev;
 	bus_space_tag_t sc_memt;
-	bus_space_handle_t sc_memh;
+	bus_space_handle_t sc_gicch;
+	bus_space_handle_t sc_gicdh;
 	size_t sc_gic_lines;
 	uint32_t sc_gic_type;
 	uint32_t sc_gic_valid_lines[1024/32];
 	uint32_t sc_enabled_local;
+#ifdef MULTIPROCESSOR
+	uint32_t sc_mptargets;
+#endif
 } armgic_softc = {
 	.sc_pic = {
 		.pic_ops = &armgic_picops,
@@ -103,50 +110,52 @@ static struct intrsource armgic_dummy_source;
 __CTASSERT(NIPL == 8);
 
 /*
- * GIC register are always in little-endian.
+ * GIC register are always in little-endian.  It is assumed the bus_space
+ * will do any endian conversion required.
  */
 static inline uint32_t
 gicc_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_memh, GICC_BASE + o);
-	return le32toh(v);
+	return bus_space_read_4(sc->sc_memt, sc->sc_gicch, o);
 }
 
 static inline void
 gicc_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
-	v = htole32(v);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, GICC_BASE + o, v);
+	bus_space_write_4(sc->sc_memt, sc->sc_gicch, o, v);
 }
 
 static inline uint32_t
 gicd_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_memh, GICD_BASE + o);
-	return le32toh(v);
+	return bus_space_read_4(sc->sc_memt, sc->sc_gicdh, o);
 }
 
 static inline void
 gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
-	v = htole32(v);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, GICD_BASE + o, v);
+	bus_space_write_4(sc->sc_memt, sc->sc_gicdh, o, v);
 }
 
 /*
  * In the GIC prioritization scheme, lower numbers have higher priority.
+ * Only write priorities that could be non-secure.
  */
 static inline uint32_t
 armgic_ipl_to_priority(int ipl)
 {
-	return (IPL_HIGH - ipl) * GICC_PMR_PRIORITIES / NIPL;
+	return GICC_PMR_NONSECURE
+	    | ((IPL_HIGH - ipl) * GICC_PMR_NS_PRIORITIES / NIPL);
 }
 
+#if 0
 static inline int
 armgic_priority_to_ipl(uint32_t priority)
 {
-	return IPL_HIGH - priority * NIPL / GICC_PMR_PRIORITIES;
+	return IPL_HIGH
+	    - (priority & ~GICC_PMR_NONSECURE) * NIPL / GICC_PMR_NS_PRIORITIES;
 }
+#endif
 
 static void
 armgic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
@@ -341,6 +350,11 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * to the primary cpu.
 		 */
 		targets &= ~(0xff << byte_shift);
+#ifdef MULTIPROCESSOR
+		if (is->is_mpsafe) {
+			targets |= sc->sc_mptargets;
+		} else
+#endif
 		targets |= 1 << byte_shift;
 		gicd_write(sc, targets_reg, targets);
 
@@ -361,6 +375,14 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			    pic->pic_name, is->is_irq, cfg, new_cfg);
 #endif
 		}
+#ifdef MULTIPROCESSOR
+	} else {
+		/*
+		 * All group 0 interrupts are per processor and MPSAFE by
+		 * default.
+		 */
+		is->is_mpsafe = true;
+#endif
 	}
 
 	/* 
@@ -411,18 +433,42 @@ armgic_cpu_init_priorities(struct armgic_softc *sc)
 	}
 }
 
+static void
+armgic_cpu_init_targets(struct armgic_softc *sc)
+{
+	/*
+	 * Update the mpsafe targets 
+	 */
+	for (size_t irq = 32; irq < sc->sc_gic_lines; irq++) {
+		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
+		const bus_size_t targets_reg = GICD_ITARGETSRn(irq / 4);
+		if (is != NULL && is->is_mpsafe) {
+			const u_int byte_shift = 0xff << (8 * (irq & 3));
+			uint32_t targets = gicd_read(sc, targets_reg);
+			targets |= sc->sc_mptargets << byte_shift;
+			gicd_write(sc, targets_reg, targets);
+		}
+	}
+}
+
 void
 armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
-	if (!CPU_IS_PRIMARY(ci) && sc->sc_enabled_local) {
-		armgic_cpu_init_priorities(sc);
-	}
+	sc->sc_mptargets |= 1 << cpu_index(ci);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH, "ipl %d not IPL_HIGH", ci->ci_cpl);
+	if (!CPU_IS_PRIMARY(ci)) {
+		if (sc->sc_mptargets != 1) {
+			armgic_cpu_init_targets(sc);
+		}
+		if (sc->sc_enabled_local) {
+			armgic_cpu_init_priorities(sc);
+			gicd_write(sc, GICD_ISENABLERn(0),
+			    sc->sc_enabled_local);
+		}
+	}
 	gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ci->ci_cpl));	// set PMR
 	gicc_write(sc, GICC_CTRL, GICC_CTRL_V1_Enable);	// enable interrupt
-	if (!CPU_IS_PRIMARY(ci) && sc->sc_enabled_local)
-		gicd_write(sc, GICD_ISENABLERn(0), sc->sc_enabled_local);
 	cpsie(I32_bit);					// allow IRQ exceptions
 }
 
@@ -431,19 +477,28 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 
+#if 0
 	if (ipi == IPI_NOP) {
 		__asm __volatile("sev");
 		return;
 	}
+#endif
 
-	uint32_t targets;
-	kcpuset_export_u32(kcp, &targets, sizeof(targets));
-	uint32_t sgir = __SHIFTOUT(ARMGIC_SGI_IPIBASE + ipi, GICD_SGIR_SGIINTID);
-	sgir |= __SHIFTOUT(targets, GICD_SGIR_TargetList);
+	uint32_t sgir = __SHIFTIN(ARMGIC_SGI_IPIBASE + ipi, GICD_SGIR_SGIINTID);
+	if (kcp != NULL) {
+		uint32_t targets;
+		kcpuset_export_u32(kcp, &targets, sizeof(targets));
+		sgir |= __SHIFTIN(targets, GICD_SGIR_TargetList);
+		sgir |= GICD_SGIR_TargetListFilter_List;
+	} else {
+		if (ncpu == 1)
+			return;
+		sgir |= GICD_SGIR_TargetListFilter_NotMe;
+	}
 
-	printf("%s: %s: %#x", __func__, curcpu()->ci_data.cpu_name, sgir);
+	//printf("%s: %s: %#x", __func__, curcpu()->ci_data.cpu_name, sgir);
 	gicd_write(sc, GICD_SGIR, sgir);
-	printf("\n");
+	//printf("\n");
 }
 #endif
 
@@ -454,9 +509,7 @@ armgic_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(cf->cf_name, mpcaa->mpcaa_name) != 0)
 		return 0;
-	if (!CPU_ID_CORTEX_P(cputype))
-		return 0;
-	if (CPU_ID_CORTEX_A8_P(cputype))
+	if (!CPU_ID_CORTEX_P(cputype) || CPU_ID_CORTEX_A8_P(cputype))
 		return 0;
 
 	return 1;
@@ -472,7 +525,10 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	self->dv_private = sc;
 
 	sc->sc_memt = mpcaa->mpcaa_memt;	/* provided for us */
-	sc->sc_memh = mpcaa->mpcaa_memh;	/* provided for us */
+	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, mpcaa->mpcaa_off1,
+	    4096, &sc->sc_gicdh);
+	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, mpcaa->mpcaa_off2,
+	    4096, &sc->sc_gicch);
 
 	sc->sc_gic_type = gicd_read(sc, GICD_TYPER);
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(sc->sc_gic_type);
@@ -509,6 +565,10 @@ armgic_attach(device_t parent, device_t self, void *aux)
 		sc->sc_gic_lines += popcount32(valid);
 		sc->sc_gic_valid_lines[group] = valid;
 	}
+
+	aprint_normal(": Generic Interrupt Controller, "
+	    "%zu sources (%zu valid)\n",
+	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
 
 	pic_add(&sc->sc_pic, 0);
 
@@ -552,9 +612,13 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	    pic_ipi_nop, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_VM, IST_EDGE,
 	    pic_ipi_xcall, (void *)-1);
-#if 0	/* Not needed */
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_NOP, IPL_VM, IST_EDGE,
 	    pic_ipi_nop, (void *)-1);
+	intr_establish(ARMGIC_SGI_IPIBASE + IPI_SHOOTDOWN, IPL_VM, IST_EDGE,
+	    pic_ipi_shootdown, (void *)-1);
+#ifdef DDB
+	intr_establish(ARMGIC_SGI_IPIBASE + IPI_DDB, IPL_HIGH, IST_EDGE,
+	    pic_ipi_ddb, NULL);
 #endif
 #ifdef __HAVE_PREEMPTION
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_KPREEMPT, IPL_VM, IST_EDGE,
@@ -562,10 +626,6 @@ armgic_attach(device_t parent, device_t self, void *aux)
 #endif
 	armgic_cpu_init(&sc->sc_pic, curcpu());
 #endif
-
-	aprint_normal(": Generic Interrupt Controller, "
-	    "%zu sources (%zu valid)\n",
-	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
 
 	const u_int ppis = popcount32(sc->sc_gic_valid_lines[0] >> 16);
 	const u_int sgis = popcount32(sc->sc_gic_valid_lines[0] & 0xffff);

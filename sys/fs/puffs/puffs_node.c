@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.22.2.3 2013/01/16 05:33:40 yamt Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.22.2.4 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.2.3 2013/01/16 05:33:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.2.4 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -243,7 +243,6 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		return error;
 
 	vp->v_type = type;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 
 	if (PUFFS_USE_NAMECACHE(pmp))
@@ -256,10 +255,8 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 void
 puffs_putvnode(struct vnode *vp)
 {
-	struct puffs_mount *pmp;
 	struct puffs_node *pnode;
 
-	pmp = VPTOPUFFSMP(vp);
 	pnode = VPTOPP(vp);
 
 #ifdef DIAGNOSTIC
@@ -279,7 +276,7 @@ puffs_cookie2hashlist(struct puffs_mount *pmp, puffs_cookie_t ck)
 {
 	uint32_t hash;
 
-	hash = hash32_buf(&ck, sizeof(void *), HASH32_BUF_INIT);
+	hash = hash32_buf(&ck, sizeof(ck), HASH32_BUF_INIT);
 	return &pmp->pmp_pnodehash[hash % pmp->pmp_npnodehash];
 }
 
@@ -366,11 +363,18 @@ puffs_makeroot(struct puffs_mount *pmp)
 
 /*
  * Locate the in-kernel vnode based on the cookie received given
- * from userspace.  Returns a vnode, if found, NULL otherwise.
+ * from userspace.
  * The parameter "lock" control whether to lock the possible or
  * not.  Locking always might cause us to lock against ourselves
  * in situations where we want the vnode but don't care for the
  * vnode lock, e.g. file server issued putpages.
+ *
+ * returns 0 on success.  otherwise returns an errno or PUFFS_NOSUCHCOOKIE.
+ *
+ * returns PUFFS_NOSUCHCOOKIE if no vnode for the cookie is found.
+ * in that case, if willcreate=true, the pmp_newcookie list is populated with
+ * the given cookie.  it's the caller's responsibility to consume the entry
+ * with calling puffs_getvnode.
  */
 int
 puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck, int lock,

@@ -1,4 +1,4 @@
-#	$NetBSD: VME172,v 1.28.2.1 2012/04/17 00:06:41 yamt Exp $
+#	$NetBSD: VME172,v 1.28.2.2 2014/05/22 11:39:59 yamt Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -37,9 +37,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 # Networking options
 options 	INET
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO		# OSI networking
-#options 	TPIP
-#options 	EON
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out

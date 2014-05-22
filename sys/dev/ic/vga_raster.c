@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.34.8.2 2013/01/23 00:06:06 yamt Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.34.8.3 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,8 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.34.8.2 2013/01/23 00:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.34.8.3 2014/05/22 11:40:22 yamt Exp $");
 
+#include "opt_vga.h"
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
@@ -632,22 +633,25 @@ vga_raster_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		*(int *)data = vc->vc_type;
 		return 0;
 
-	case WSDISPLAYIO_GINFO:
-		/* XXX should get detailed hardware information here */
-		return EPASSTHROUGH;
+	case WSDISPLAYIO_GINFO: {
+		struct wsdisplay_fbinfo *fbi = data;
+		const struct wsscreen_descr *wd = vc->currenttype;
+		const struct videomode *vm = wd->modecookie;
+		fbi->width = vm->hdisplay;
+		fbi->height = vm->vdisplay;
+		fbi->depth = 24;	/* xxx: ? */
+		fbi->cmsize = 256;	/* xxx: from palette */
+		return 0;
+	}
 
 	case WSDISPLAYIO_GVIDEO:
-#if 1
 		*(int *)data = (vga_get_video(vc) ?
 		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF);
 		return 0;
-#endif
 
 	case WSDISPLAYIO_SVIDEO:
-#if 1
 		vga_set_video(vc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
 		return 0;
-#endif
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -656,15 +660,26 @@ vga_raster_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
+#ifdef DIAGNOSTIC
+		printf("%s: 0x%lx unsupported\n", __func__, cmd);
+#endif
 		/* NONE of these operations are by the generic VGA driver. */
 		return EPASSTHROUGH;
 	}
 
-	if (vc->vc_funcs == NULL)
-		return (EPASSTHROUGH);
+	if (vc->vc_funcs == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: no vc_funcs\n", __func__);
+#endif
+		return EPASSTHROUGH;
+	}
 
-	if (vf->vf_ioctl == NULL)
-		return (EPASSTHROUGH);
+	if (vf->vf_ioctl == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: no vf_ioctl\n", __func__);
+#endif
+		return EPASSTHROUGH;
+	}
 
 	return ((*vf->vf_ioctl)(v, cmd, data, flag, l));
 }
@@ -1030,9 +1045,6 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 static void
 vga_raster_cursor_init(struct vgascreen *scr, int existing)
 {
-	struct vga_handle *vh = scr->hdl;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
 	int off;
 
 	if (existing) {
@@ -1040,8 +1052,6 @@ vga_raster_cursor_init(struct vgascreen *scr, int existing)
 		 * This is the first screen. At this point, scr->active is
 		 * false, so we can't use vga_raster_cursor() to do this.
 		 */
-		memt = vh->vh_memt;
-		memh = vh->vh_memh;
 		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) +
 		    scr->dispoffset / 8;
 
@@ -1185,7 +1195,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 	int i;
 	int rasoff, rasoff2;
 	int fheight = scr->type->fontheight;
-	volatile u_int8_t dummy, pattern;
+	volatile u_int8_t pattern;
 	u_int8_t fgcolor, bgcolor;
 
 	rasoff = scr->dispoffset + row * scr->type->ncols * fheight + col;
@@ -1214,7 +1224,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 			pattern = ((u_int8_t *)fs->font->data)[c * fheight + i];
 			/* When pattern is 0, skip output for speed-up. */
 			if (pattern != 0) {
-				dummy = bus_space_read_1(memt, memh, rasoff2);
+				bus_space_read_1(memt, memh, rasoff2);
 				bus_space_write_1(memt, memh, rasoff2, pattern);
 			}
 			rasoff2 += scr->type->ncols;
@@ -1235,14 +1245,14 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 			pattern = ((u_int8_t *)fs->font->data)
 			    [(c * fheight + i) * 2];
 			if (pattern != 0) {
-				dummy = bus_space_read_1(memt, memh, rasoff2);
+				bus_space_read_1(memt, memh, rasoff2);
 				bus_space_write_1(memt, memh, rasoff2, pattern);
 			}
 			pattern = ((u_int8_t *)fs->font->data)
 			    [(c * fheight + i) * 2 + 1];
 			if (pattern != 0) {
 				rasoff2++;
-				dummy = bus_space_read_1(memt, memh, rasoff2);
+				bus_space_read_1(memt, memh, rasoff2);
 				bus_space_write_1(memt, memh, rasoff2, pattern);
 				rasoff2--;
 			}

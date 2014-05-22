@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.6 2011/08/18 13:20:04 christos Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.6.2.1 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -64,7 +64,7 @@ gettrailer(char *arg)
 		break;
 	}
 	if (*options == '\0')
-		return "";
+		return options;
 
 	/* trim leading blanks/tabs */
 	while (*options == ' ' || *options == '\t')

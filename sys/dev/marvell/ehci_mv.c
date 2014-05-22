@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.2 2010/10/16 05:29:29 kiyohara Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.2.12.1 2014/05/22 11:40:23 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.2 2010/10/16 05:29:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.2.12.1 2014/05/22 11:40:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,7 @@ extern int ehcidebug;
 #endif
 
 
-#define MARVELL_USB_SIZE		0x2000
+#define MARVELL_USB_SIZE		0x1000
 
 #define MARVELL_USB_NWINDOW		4
 
@@ -70,7 +70,7 @@ extern int ehcidebug;
 
 /* ehci generic registers */
 #define MARVELL_USB_EHCI_BASE		0x100
-#define MARVELL_USB_EHCI_SIZE		0x1000
+#define MARVELL_USB_EHCI_SIZE		0x100
 
 /* ehci vendor extension registers */
 #define MARVELL_USB_EHCI_PS_PSPD	0x0c000000	/* Port speed */
@@ -164,8 +164,8 @@ struct mvusb_softc {
 static int mvusb_match(device_t, cfdata_t, void *);
 static void mvusb_attach(device_t, device_t, void *);
 
-static void mvusb_init(struct mvusb_softc *);
-static void mvusb_wininit(struct mvusb_softc *);
+static void mvusb_init(struct mvusb_softc *, enum marvell_tags *);
+static void mvusb_wininit(struct mvusb_softc *, enum marvell_tags *);
 
 static void mvusb_vendor_init(struct ehci_softc *);
 static int mvusb_vendor_port_status(struct ehci_softc *, uint32_t, int);
@@ -216,7 +216,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map registers\n");
 		return;
 	}
-	mvusb_init(sc);
+	mvusb_init(sc, mva->mva_tags);
 
 	/* Map I/O registers for ehci */
 	sc->sc.sc_size = MARVELL_USB_EHCI_SIZE;
@@ -254,7 +254,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-mvusb_init(struct mvusb_softc *sc)
+mvusb_init(struct mvusb_softc *sc, enum marvell_tags *tags)
 {
 	uint32_t reg;
 	int opr_offs;
@@ -290,78 +290,83 @@ mvusb_init(struct mvusb_softc *sc)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_IPGR,
 		    reg);
 	}
+	if (!(sc->sc_model == MARVELL_ARMADAXP_MV78460)) {
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR);
+		reg &= ~MARVELL_USB_PCR_BGVSEL_MASK;
+		reg |= MARVELL_USB_PCR_BGVSEL_CONNECT_ANAGRP;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR);
-	reg &= ~MARVELL_USB_PCR_BGVSEL_MASK;
-	reg |= MARVELL_USB_PCR_BGVSEL_CONNECT_ANAGRP;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PCR, reg);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PTCR);
+		if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 1)
+			/* For OrionI A1/A0 rev: bit[21]=0 (TXDATA_BLOCK_EN=0) */
+			reg &= ~(1 << 21);
+		else
+			reg |= (1 << 21);
+		/* bit[13]=1, (REG_EXT_RCAL_EN=1) */
+		reg |= (1 << 13);
+		/* bits[6:3]=8 (IMP_CAL=8) */
+		reg &= ~(0xf << 3);
+		reg |= (8 << 3);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTCR,
+		    reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTCR);
-	if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 1)
-		/* For OrionI A1/A0 rev:  bit[21]=0 (TXDATA_BLOCK_EN=0) */
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PRCR);
+		/* bits[8:9] - (DISCON_THRESHOLD ) */
+		/*
+		 * Orion1-A0/A1/B0=11, Orion2-A0=10,
+		 * Orion1-B1 and Orion2-B0 later=00 
+		 */
+		reg &= ~(3 << 8);
+		if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 2)
+			reg |= (3 << 8);
+		else if (sc->sc_model == MARVELL_ORION_2_88F5281 &&
+		    sc->sc_rev == 0)
+			reg |= (2 << 8);
+		/* bit[21]=0 (CDR_FASTLOCK_EN=0) */
 		reg &= ~(1 << 21);
-	else
-		reg |= (1 << 21);
-	/* bit[13]=1, (REG_EXT_RCAL_EN=1) */
-	reg |= (1 << 13);
-	/* bits[6:3]=8 (IMP_CAL=8) */
-	reg &= ~(0xf << 3);
-	reg |= (8 << 3);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTCR, reg);
+		/* bits[27:26]=0 (EDGE_DET_SEL=0) */
+		reg &= ~(3 << 26);
+		/* bits[31:30]=3 (RXDATA_BLOCK_LENGHT=3) */
+		reg |= (3 << 30);
+		/* bits[7:4]=1 (SQ_THRESH=1) */
+		reg &= ~(0xf << 4);
+		reg |= (1 << 4);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PRCR,
+		    reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PRCR);
-	/* bits[8:9] - (DISCON_THRESHOLD ) */
-	/* Orion1-A0/A1/B0=11, Orion2-A0=10, Orion1-B1 and Orion2-B0 later=00 */
-	reg &= ~(3 << 8);
-	if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 2)
-		reg |= (3 << 8);
-	else if (sc->sc_model == MARVELL_ORION_2_88F5281 && sc->sc_rev == 0)
-		reg |= (2 << 8);
-	/* bit[21]=0 (CDR_FASTLOCK_EN=0) */
-	reg &= ~(1 << 21);
-	/* bits[27:26]=0 (EDGE_DET_SEL=0) */
-	reg &= ~(3 << 26);
-	/* bits[31:30]=3 (RXDATA_BLOCK_LENGHT=3) */
-	reg |= (3 << 30);
-	/* bits[7:4]=1 (SQ_THRESH=1) */
-	reg &= ~(0xf << 4);
-	reg |= (1 << 4);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PRCR, reg);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PIVREFFCR);
+		/* bits[1:0]=2 (PLLVDD12=2)*/
+		reg &= ~(3 << 0);
+		reg |= (2 << 0);
+		/* bits[5:4]=3 (RXVDD=3) */
+		reg &= ~(3 << 4);
+		reg |= (3 << 4);
+		/* bit[19] (Reserved) */
+		reg &= ~(1 << 19);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PIVREFFCR, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PIVREFFCR);
-	/* bits[1:0]=2 (PLLVDD12=2)*/
-	reg &= ~(3 << 0);
-	reg |= (2 << 0);
-	/* bits[5:4]=3 (RXVDD=3) */
-	reg &= ~(3 << 4);
-	reg |= (3 << 4);
-	/* bit[19] (Reserved) */
-	reg &= ~(1 << 19);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PIVREFFCR, reg);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    MARVELL_USB_PTGCR);
+		/* bit[15]=0 (REG_FIFO_SQ_RST=0) */
+		reg &= ~(1 << 15);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTGCR,
+		    reg);
+	}
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTGCR);
-	/* bit[15]=0 (REG_FIFO_SQ_RST=0) */
-	reg &= ~(1 << 15);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MARVELL_USB_PTGCR, reg);
-
-	mvusb_wininit(sc);
+	mvusb_wininit(sc, tags);
 }
 
 static void
-mvusb_wininit(struct mvusb_softc *sc)
+mvusb_wininit(struct mvusb_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc.sc_dev);
 	uint64_t base;
 	uint32_t size;
 	int window, target, attr, rv, i;
-	static int tags[] = {
-		MARVELL_TAG_SDRAM_CS0,
-		MARVELL_TAG_SDRAM_CS1,
-		MARVELL_TAG_SDRAM_CS2,
-		MARVELL_TAG_SDRAM_CS3,
-
-		MARVELL_TAG_UNDEFINED,
-	};
 
 	for (window = 0, i = 0;
 	    tags[i] != MARVELL_TAG_UNDEFINED && window < MARVELL_USB_NWINDOW;

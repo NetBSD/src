@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.8.8.2 2013/01/16 05:34:12 yamt Exp $	*/
+/*	$NetBSD: dump.c,v 1.8.8.3 2014/05/22 11:43:10 yamt Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ rtadvd_dump_file(const char *dumpfile)
 	    dumpfile);
 
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		syslog(LOG_WARNING, "<%s> open a dump file(%s)",
+		syslog(LOG_WARNING, "<%s> open a dump file(%s): %m",
 		       __func__, dumpfile);
 		return;
 	}

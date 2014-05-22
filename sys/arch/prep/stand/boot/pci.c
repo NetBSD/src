@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.1.2.2 2012/05/23 10:07:48 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.1.2.3 2014/05/22 11:40:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -158,7 +158,6 @@ scan_PCI(int start)
 	int slot, r;
 	struct PCI_cinfo *pslot;
 	int VGAslot = -1;
-	int highVGAslot = 0;
 
 	for (slot = start + 1; slot < PCI_NSLOTS; slot++) {
 		pslot = &PCI_slots[slot];
@@ -171,7 +170,6 @@ scan_PCI(int start)
 			    ((pslot->regs[CLASS] & 0xffffff00) ==
 				0x00010000)) {
 				/* it's a VGA card */
-				highVGAslot = slot;
 				if ((pslot->regs[CMD] & 0x03)) {
 					/* fW enabled it */
 					VGAslot = slot;

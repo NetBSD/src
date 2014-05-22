@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.112.2.1 2012/04/17 00:08:41 yamt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.112.2.2 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.112.2.1 2012/04/17 00:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.112.2.2 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -94,11 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.112.2.1 2012/04/17 00:08:41 yamt Exp $"
 #include <netinet/in_proto.h>
 #include <netinet/in_var.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
-#endif	/* FAST_IPSEC */
+#endif	/* IPSEC */
 
 #ifdef COMPAT_50
 #include <compat/sys/socket.h>
@@ -189,7 +189,7 @@ rip_input(struct mbuf *m, ...)
 	ip->ip_len = ntohs(ip->ip_len) - hlen;
 	NTOHS(ip->ip_off);
 
-	CIRCLEQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
 		inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
@@ -203,7 +203,7 @@ rip_input(struct mbuf *m, ...)
 			continue;
 		if (last == NULL)
 			;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		/* check AH/ESP integrity. */
 		else if (ipsec4_in_reject_so(m, last->inp_socket)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -217,7 +217,7 @@ rip_input(struct mbuf *m, ...)
 		}
 		last = inp;
 	}
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
@@ -247,14 +247,12 @@ rip_pcbnotify(struct inpcbtable *table,
     struct in_addr faddr, struct in_addr laddr, int proto, int errno,
     void (*notify)(struct inpcb *, int))
 {
-	struct inpcb *inp, *ninp;
+	struct inpcb_hdr *inph, *ninph;
 	int nmatch;
 
 	nmatch = 0;
-	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != (struct inpcb *)&table->inpt_queue;
-	    inp = ninp) {
-		ninp = (struct inpcb *)inp->inp_queue.cqe_next;
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
@@ -478,8 +476,7 @@ rip_bind(struct inpcb *inp, struct mbuf *nam)
 		return (EINVAL);
 	if (TAILQ_FIRST(&ifnet) == 0)
 		return (EADDRNOTAVAIL);
-	if (addr->sin_family != AF_INET &&
-	    addr->sin_family != AF_IMPLINK)
+	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 	if (!in_nullhost(addr->sin_addr) &&
 	    ifa_ifwithaddr(sintosa(addr)) == 0)
@@ -497,8 +494,7 @@ rip_connect(struct inpcb *inp, struct mbuf *nam)
 		return (EINVAL);
 	if (TAILQ_FIRST(&ifnet) == 0)
 		return (EADDRNOTAVAIL);
-	if (addr->sin_family != AF_INET &&
-	    addr->sin_family != AF_IMPLINK)
+	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 	inp->inp_faddr = addr->sin_addr;
 	return (0);
@@ -695,11 +691,6 @@ static void
 sysctl_net_inet_raw_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

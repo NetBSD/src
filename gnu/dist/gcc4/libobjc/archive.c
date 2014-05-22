@@ -351,7 +351,7 @@ objc_write_use_common (struct objc_typed_stream *stream, unsigned long key)
     }
 }
 
-static inline int
+inline int
 __objc_write_extension (struct objc_typed_stream *stream, unsigned char code)
 {
   if (code <= _B_VALUE)
@@ -367,7 +367,7 @@ __objc_write_extension (struct objc_typed_stream *stream, unsigned char code)
     }
 }
 
-inline int
+static inline int
 __objc_write_object (struct objc_typed_stream *stream, id object)
 {
   unsigned char buf = '\0';
@@ -433,7 +433,7 @@ objc_write_object (struct objc_typed_stream *stream, id object)
     }
 }
 
-inline int
+static inline int
 __objc_write_class (struct objc_typed_stream *stream, struct objc_class *class)
 {
   __objc_write_extension (stream, _BX_CLASS);

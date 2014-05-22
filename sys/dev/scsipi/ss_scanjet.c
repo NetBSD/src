@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.51.12.1 2012/04/17 00:08:03 yamt Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.51.12.2 2014/05/22 11:40:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.51.12.1 2012/04/17 00:08:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.51.12.2 2014/05/22 11:40:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 	struct scsi_rw_scanner cmd;
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph = ss->sc_periph;
-	int error;
+	int error __diagused;
 
 	/* Fill out the scsi command */
 	memset(&cmd, 0, sizeof(cmd));

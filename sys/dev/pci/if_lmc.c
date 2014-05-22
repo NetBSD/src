@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.50.8.1 2012/10/30 17:21:30 yamt Exp $ */
+/* $NetBSD: if_lmc.c,v 1.50.8.2 2014/05/22 11:40:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50.8.1 2012/10/30 17:21:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50.8.2 2014/05/22 11:40:25 yamt Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -372,7 +372,7 @@ mii_read(softc_t *sc, u_int8_t regad)
   int i;
   u_int32_t csr;
   u_int16_t data = 0;
- 
+
   WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOUT);
 
   mii_shift_bits(sc, 0xFFFFF, 20);	/* preamble */
@@ -614,7 +614,7 @@ xilinx_load_from_file(softc_t *sc, char *addr, u_int32_t len)
 
   /* Hold RESET & DP low for more than 10 uSec. */
   DELAY(50);
-  
+ 
   /* Done with RESET & DP; make them inputs. */
   gpio_make_input(sc, GPIO_RESET | GPIO_DP);
 
@@ -5384,7 +5384,7 @@ nbsd_match(device_t parent, cfdata_t match, void *aux)
   {
   struct pci_attach_args *pa = aux;
   u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
-  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);	
+  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);
 
   if (cfid != TLP_CFID_TULIP) return 0;
   switch (csid)
@@ -5411,6 +5411,7 @@ nbsd_attach(device_t parent, device_t self, void *aux)
   const char *intrstr;
   bus_addr_t csr_addr;
   int error;
+  char intrbuf[PCI_INTRSTR_LEN];
 
   /* for READ/WRITE_PCI_CFG() */
   sc->sc_dev = self;
@@ -5471,7 +5472,7 @@ nbsd_attach(device_t parent, device_t self, void *aux)
     nbsd_detach(self, 0);
     return;
     }
-  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
+  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle, intrbuf, sizeof(intrbuf));
   aprint_normal(" %s: %s\n", intrstr, sc->dev_desc);
   aprint_naive(": %s\n", sc->dev_desc);
 

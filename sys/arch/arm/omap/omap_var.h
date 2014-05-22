@@ -16,4 +16,7 @@ extern struct bus_space nobyteacc_bs_tag;
 /* platform needs to provide this */
 bus_dma_tag_t omap_bus_dma_init(struct arm32_bus_dma_tag *);
 
+/* platform needs to provide this */
+extern u_int omap_sys_clk;
+
 #endif /* _ARM_OMAP_OMAP_VAR_H_ */

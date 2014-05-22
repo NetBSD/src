@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.73.2.2 2013/01/23 00:06:18 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.73.2.3 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.73.2.2 2013/01/23 00:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.73.2.3 2014/05/22 11:41:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,31 +92,29 @@ const struct vnodeopv_desc * const cd9660_vnodeopv_descs[] = {
 };
 
 struct vfsops cd9660_vfsops = {
-	MOUNT_CD9660,
-	sizeof (struct iso_args),
-	cd9660_mount,
-	cd9660_start,
-	cd9660_unmount,
-	cd9660_root,
-	(void *)eopnotsupp,
-	cd9660_statvfs,
-	cd9660_sync,
-	cd9660_vget,
-	cd9660_fhtovp,
-	cd9660_vptofh,
-	cd9660_init,
-	cd9660_reinit,
-	cd9660_done,
-	cd9660_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	cd9660_vnodeopv_descs,
-	0,	/* refcount */
-	{ NULL, NULL } /* list */
+	.vfs_name = MOUNT_CD9660,
+	.vfs_min_mount_data = sizeof (struct iso_args),
+	.vfs_mount = cd9660_mount,
+	.vfs_start = cd9660_start,
+	.vfs_unmount = cd9660_unmount,
+	.vfs_root = cd9660_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = cd9660_statvfs,
+	.vfs_sync = cd9660_sync,
+	.vfs_vget = cd9660_vget,
+	.vfs_fhtovp = cd9660_fhtovp,
+	.vfs_vptofh = cd9660_vptofh,
+	.vfs_init = cd9660_init,
+	.vfs_reinit = cd9660_reinit,
+	.vfs_done = cd9660_done,
+	.vfs_mountroot = cd9660_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = cd9660_vnodeopv_descs
 };
 
 static const struct genfs_ops cd9660_genfsops = {
@@ -144,10 +142,6 @@ cd9660_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&cd9660_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&cd9660_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&cd9660_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "cd9660",
 			       SYSCTL_DESCR("ISO-9660 file system"),
@@ -202,9 +196,7 @@ cd9660_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
@@ -224,6 +216,8 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -266,34 +260,36 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(VREAD));
-	VOP_UNLOCK(devvp);
 	if (error) {
-		vrele(devvp);
-		return (error);
+		goto fail;
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, FREAD, FSCRED);
-		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
+		VOP_UNLOCK(devvp);
 		error = iso_mountfs(devvp, mp, l, args);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, FREAD, NOCRED);
-			VOP_UNLOCK(devvp);
 			goto fail;
 		}
+		VOP_UNLOCK(devvp);
+		/* reference to devvp is donated through iso_mountfs */
 	} else {
-		vrele(devvp);
 		if (devvp != imp->im_devvp &&
-		    devvp->v_rdev != imp->im_devvp->v_rdev)
-			return (EINVAL);	/* needs translation */
+		    devvp->v_rdev != imp->im_devvp->v_rdev) {
+			error = EINVAL;		/* needs translation */
+			goto fail;
+		}
+		VOP_UNLOCK(devvp);
+		vrele(devvp);
 	}
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
 
 fail:
+	VOP_UNLOCK(devvp);
 	vrele(devvp);
 	return (error);
 }
@@ -523,7 +519,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 		supbp = NULL;
 	}
 
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	return 0;
 out:
@@ -568,7 +564,7 @@ cd9660_unmount(struct mount *mp, int mntflags)
 	isomp = VFSTOISOFS(mp);
 
 	if (isomp->im_devvp->v_type != VBAD)
-		isomp->im_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(isomp->im_devvp, NULL);
 
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED);
@@ -759,14 +755,14 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 	if (isodir == 0) {
 		int lbn, off;
 
-		lbn = lblkno(imp, ino);
+		lbn = cd9660_lblkno(imp, ino);
 		if (lbn >= imp->volume_space_size) {
 			vput(vp);
 			printf("fhtovp: lbn exceed volume space %d\n", lbn);
 			return (ESTALE);
 		}
 
-		off = blkoff(imp, ino);
+		off = cd9660_blkoff(imp, ino);
 		if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
 			vput(vp);
 			printf("fhtovp: crosses block boundary %d\n",

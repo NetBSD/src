@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.46.4.1 2012/04/17 00:06:35 yamt Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.46.4.2 2014/05/22 11:39:56 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.46.4.1 2012/04/17 00:06:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.46.4.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -414,7 +414,7 @@ startlwp(void *arg)
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
 	struct frame *f = (struct frame *)l->l_md.md_regs;
-	int error;
+	int error __diagused;
 
 	f->f_regs[D0] = 0;
 	f->f_sr &= ~PSL_C;

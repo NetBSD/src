@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.14.2.1 2012/04/17 00:06:02 yamt Exp $ */
+/* $NetBSD: toccata.c,v 1.14.2.2 2014/05/22 11:39:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14.2.1 2012/04/17 00:06:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14.2.2 2014/05/22 11:39:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,7 @@ const struct audio_hw_if audiocs_hw_if = {
 	toccata_close,
 	0,	/*
 		 * XXX toccata_drain could be written:
-		 * sleep for play interrupt. This loses less then 512 bytes of
+		 * sleep for play interrupt. This loses less than 512 bytes of
 		 * sample data, otherwise up to 1024.
 		 */
 	ad1848_query_encoding,
@@ -473,11 +473,9 @@ int
 toccata_halt_input(void *addr)
 {
 	struct toccata_softc *sc;
-	struct ad1848_softc *asc;
 	unsigned reg;
 
 	sc = addr;
-	asc = &sc->sc_ad;
 
 	/* we're half_duplex; be brutal */
 	*sc->sc_boardp = TOCC_CP_TAIL;
@@ -525,11 +523,9 @@ int
 toccata_halt_output(void *addr)
 {
 	struct toccata_softc *sc;
-	struct ad1848_softc *asc;
 	unsigned int reg;
 
 	sc = addr;
-	asc = &sc->sc_ad;
 
 	/* we're half_duplex; be brutal */
 	*sc->sc_boardp = TOCC_PB_TAIL;

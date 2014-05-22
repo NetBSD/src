@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.2.2.2 2012/10/30 17:18:56 yamt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.2.2.3 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,15 +123,21 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.2.2.2 2012/10/30 17:18:56 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.2.2.3 2014/05/22 11:39:31 yamt Exp $");
+
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/atomic.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/locore.h>
 #include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
 
@@ -139,6 +145,10 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.2.2.2 2012/10/30 17:18:56 yamt Exp 
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 vaddr_t
 initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
@@ -162,7 +172,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	printf("bootstrap done.\n");
 #endif
 
+#ifdef VERBOSE_INIT_ARM
+	printf("vectors");
+#endif
 	arm32_vector_init(systempage.pv_va, ARM_VEC_ALL);
+#ifdef VERBOSE_INIT_ARM
+	printf(" %#"PRIxVADDR"\n", vector_page);
+#endif
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -306,19 +322,34 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	 */
 	splhigh();
 
+#ifdef VERBOSE_INIT_ARM
 	printf("%s(%s): ", __func__, ci->ci_data.cpu_name);
+#endif
+	uint32_t mpidr = armreg_mpidr_read();
+	if (mpidr & MPIDR_MT) {
+		ci->ci_data.cpu_smt_id = mpidr & MPIDR_AFF0;
+		ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF1;
+		ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF2;
+	} else {
+		ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF0;
+		ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF1;
+	}
 
 	/*
 	 * Make sure we have the right vector page.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf(" vectors");
+#endif
 	arm32_vector_init(systempage.pv_va, ARM_VEC_ALL);
 
 	/*
-	 * Initialize the stack for each mode (we are already running on the SVC32
-	 * stack of the idlelwp).
+	 * Initialize the stack for each mode (we are already running on the
+	 * SVC32 stack of the idlelwp).
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf(" stacks");
+#endif
 	set_stackptr(PSR_FIQ32_MODE,
 	    fiqstack.pv_va + cpu_index(ci) * FIQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_IRQ32_MODE,
@@ -328,14 +359,19 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	set_stackptr(PSR_UND32_MODE,
 	    undstack.pv_va + cpu_index(ci) * UND_STACK_SIZE * PAGE_SIZE);
 
-#if 0
-	/*
-	 * Now that we are going to apart of the kernel,
-	 * take out the kernel lock.
-	 */
-	printf(" kernel_lock");
-	KERNEL_LOCK(1, NULL);
+	ci->ci_lastlwp = NULL;
+	ci->ci_pmap_lastuser = NULL;
+#ifdef ARM_MMU_EXTENDED
+#ifdef VERBOSE_INIT_ARM
+	printf(" tlb");
 #endif
+	/*
+	 * Attach to the tlb.
+	 */
+	ci->ci_pmap_cur = pmap_kernel();
+	ci->ci_pmap_asid_cur = KERNEL_PID;
+#endif
+
 #ifdef CPU_CORTEX
 	if (CPU_ID_CORTEX_P(ci->ci_arm_cpuid)) {
 		/*
@@ -346,24 +382,32 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	}
 #endif
 
+	aprint_naive("%s", device_xname(ci->ci_dev));
+	aprint_normal("%s", device_xname(ci->ci_dev));
+	identify_arm_cpu(ci->ci_dev, ci);
+#ifdef VERBOSE_INIT_ARM
+	printf(" vfp");
+#endif
+	vfp_attach(ci);
+
+#ifdef VERBOSE_INIT_ARM
 	printf(" interrupts");
+#endif
 	/*
 	 * Let the interrupts do what they need to on this CPU.
 	 */
 	intr_cpu_init(ci);
 
+#ifdef VERBOSE_INIT_ARM
 	printf(" md(%p)", md_cpu_init);
+#endif
 	if (md_cpu_init != NULL)
 		(*md_cpu_init)(ci);
 
-#if 0
-	/*
-	 * Tell the MI code we are alive!
-	 */
-	printf(" mi_cpu");
-	mi_cpu_running(ci);
-#endif
-
+#ifdef VERBOSE_INIT_ARM
 	printf(" done!\n");
+#endif
+	atomic_and_32(&arm_cpu_mbox, ~(1 << cpuid));
+	__asm __volatile("sev; sev; sev");
 }
 #endif /* MULTIPROCESSOR */

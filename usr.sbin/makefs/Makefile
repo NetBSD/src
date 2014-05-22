@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.2.1 2012/05/23 10:08:28 yamt Exp $
+#	$NetBSD: Makefile,v 1.29.2.2 2014/05/22 11:43:05 yamt Exp $
 #
 
 WARNS?=	5
@@ -6,7 +6,7 @@ WARNS?=	5
 .include <bsd.own.mk>
 
 PROG=	makefs
-SRCS=	cd9660.c chfs.c ffs.c v7fs.c \
+SRCS=	cd9660.c chfs.c ffs.c v7fs.c msdos.c udf.c\
 	getid.c \
 	makefs.c misc.c \
 	pack_dev.c \
@@ -17,13 +17,16 @@ MAN=	makefs.8
 MKNODSRC=	${NETBSDSRCDIR}/sbin/mknod
 MTREESRC=	${NETBSDSRCDIR}/usr.sbin/mtree
 
-CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC}
+CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC} -DMAKEFS
+#CPPFLAGS+=	-DMSDOSFS_DEBUG
 .PATH:		${MKNODSRC} ${MTREESRC}
 
 .include "${.CURDIR}/cd9660/Makefile.inc"
 .include "${.CURDIR}/chfs/Makefile.inc"
 .include "${.CURDIR}/ffs/Makefile.inc"
 .include "${.CURDIR}/v7fs/Makefile.inc"
+.include "${.CURDIR}/msdos/Makefile.inc"
+.include "${.CURDIR}/udf/Makefile.inc"
 
 .if !defined(HOSTPROG)
 DPADD+= ${LIBUTIL}
@@ -31,3 +34,4 @@ LDADD+= -lutil
 .endif
 
 .include <bsd.prog.mk>
+# DO NOT DELETE

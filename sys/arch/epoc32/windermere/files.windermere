@@ -1,0 +1,18 @@
+#
+# Configuration info for Windermere support
+#
+device	windermere {[offset = -1], [irq = -1]}
+attach	windermere at internal
+file	arch/epoc32/windermere/windermere.c	windermere
+
+device	wmcom
+attach	wmcom at windermere
+file	arch/epoc32/windermere/wmcom.c		wmcom		needs-flag
+
+device	wmlcd : rasops2, rasops4, wsemuldisplaydev
+attach	wmlcd at windermere
+file	arch/epoc32/windermere/wmlcd.c		wmlcd		needs-flag
+
+device	wmrtc
+attach	wmrtc at windermere
+file	arch/epoc32/windermere/wmrtc.c		wmrtc

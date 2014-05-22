@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.c,v 1.5.2.1 2012/04/17 00:05:16 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype.c,v 1.5.2.2 2014/05/22 11:36:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype.c,v 1.5.2.1 2012/04/17 00:05:16 yamt Exp $");
+__RCSID("$NetBSD: citrus_ctype.c,v 1.5.2.2 2014/05/22 11:36:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -92,6 +92,8 @@ _initctypemodule(_citrus_ctype_t cc, char const *modname,
 		cc->cc_ops->co_wctob = &_citrus_ctype_wctob_fallback;
 		/* FALLTHROUGH */
 	case 0x00000002:
+		cc->cc_ops->co_mbsnrtowcs = &_citrus_ctype_mbsnrtowcs_fallback;
+		cc->cc_ops->co_wcsnrtombs = &_citrus_ctype_wcsnrtombs_fallback;
 		/* FALLTHROUGH */
 	default:
 		break;
@@ -106,10 +108,12 @@ _initctypemodule(_citrus_ctype_t cc, char const *modname,
 	    cc->cc_ops->co_mbrtowc == NULL ||
 	    cc->cc_ops->co_mbsinit == NULL ||
 	    cc->cc_ops->co_mbsrtowcs == NULL ||
+	    cc->cc_ops->co_mbsnrtowcs == NULL ||
 	    cc->cc_ops->co_mbstowcs == NULL ||
 	    cc->cc_ops->co_mbtowc == NULL ||
 	    cc->cc_ops->co_wcrtomb == NULL ||
 	    cc->cc_ops->co_wcsrtombs == NULL ||
+	    cc->cc_ops->co_wcsnrtombs == NULL ||
 	    cc->cc_ops->co_wcstombs == NULL ||
 	    cc->cc_ops->co_wctomb == NULL ||
 	    cc->cc_ops->co_btowc == NULL ||

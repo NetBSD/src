@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts13.c,v 1.6.6.1 2012/04/17 00:05:16 yamt Exp $	*/
+/*	$NetBSD: compat___fts13.c,v 1.6.6.2 2014/05/22 11:36:51 yamt Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -42,9 +42,9 @@ __warn_references(__fts_set13,
     ((a) > USHRT_MAX ? USHRT_MAX : (unsigned short)(a))
 #endif
 
-#define	stat		__stat13
-#define	lstat		__lstat13
-#define	fstat		__fstat13
+#define	stat		__compat___stat13
+#define	lstat		__compat___lstat13
+#define	fstat		__compat___fstat13
 
 #undef	fts_children
 #define	fts_children __fts_children13

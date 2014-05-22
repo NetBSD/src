@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.38.4.3 2012/10/30 17:22:25 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.38.4.4 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38.4.3 2012/10/30 17:22:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38.4.4 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,7 +65,7 @@ static void sysvbfs_file_setsize(struct vnode *, size_t);
 int
 sysvbfs_lookup(void *arg)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -118,6 +118,7 @@ sysvbfs_lookup(void *arg)
 			DPRINTF("%s: can't get vnode.\n", __func__);
 			return error;
 		}
+		VOP_UNLOCK(vpp);
 		*a->a_vpp = vpp;
 	}
 
@@ -127,7 +128,7 @@ sysvbfs_lookup(void *arg)
 int
 sysvbfs_create(void *arg)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -152,7 +153,7 @@ sysvbfs_create(void *arg)
 	if ((err = bfs_file_create(bfs, a->a_cnp->cn_nameptr, 0, 0, &attr))
 	    != 0) {
 		DPRINTF("%s: bfs_file_create failed.\n", __func__);
-		goto unlock_exit;
+		return err;
 	}
 
 	if (!bfs_dirent_lookup_by_name(bfs, a->a_cnp->cn_nameptr, &dirent))
@@ -160,16 +161,13 @@ sysvbfs_create(void *arg)
 
 	if ((err = sysvbfs_vget(mp, dirent->inode, a->a_vpp)) != 0) {
 		DPRINTF("%s: sysvbfs_vget failed.\n", __func__);
-		goto unlock_exit;
+		return err;
 	}
 	bnode = (*a->a_vpp)->v_data;
 	bnode->update_ctime = true;
 	bnode->update_mtime = true;
 	bnode->update_atime = true;
-
- unlock_exit:
-	/* unlock parent directory */
-	vput(a->a_dvp);	/* locked at sysvbfs_lookup(); */
+	VOP_UNLOCK(*a->a_vpp);
 
 	return err;
 }
@@ -185,14 +183,10 @@ sysvbfs_open(void *arg)
 	struct vnode *v = a->a_vp;
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_inode *inode = bnode->inode;
-	struct bfs *bfs = bnode->bmp->bfs;
-	struct bfs_dirent *dirent;
 
 	DPRINTF("%s:\n", __func__);
 	KDASSERT(v->v_type == VREG || v->v_type == VDIR);
 
-	if (!bfs_dirent_lookup_by_inode(bfs, inode->number, &dirent))
-		return ENOENT;
 	bnode->update_atime = true;
 	if ((a->a_mode & FWRITE) && !(a->a_mode & O_APPEND)) {
 		bnode->size = 0;
@@ -218,6 +212,10 @@ sysvbfs_close(void *arg)
 	struct bfs_fileattr attr;
 
 	DPRINTF("%s:\n", __func__);
+
+	if (v->v_mount->mnt_flag & MNT_RDONLY)
+		goto out;
+
 	uvm_vnp_setsize(v, bnode->size);
 
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
@@ -231,6 +229,7 @@ sysvbfs_close(void *arg)
 
 	VOP_FSYNC(a->a_vp, a->a_cred, FSYNC_WAIT, 0, 0);
 
+ out:
 	return 0;
 }
 
@@ -251,7 +250,7 @@ sysvbfs_check_permitted(struct vnode *vp, struct sysvbfs_node *bnode,
 {
 	struct bfs_fileattr *attr = &bnode->inode->attr;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, attr->mode), vp, NULL, genfs_can_access(vp->v_type,
 	    attr->mode, attr->uid, attr->gid, mode, cred));
 }
@@ -522,7 +521,7 @@ sysvbfs_remove(void *arg)
 	if (vp->v_type == VDIR)
 		return EPERM;
 
-	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr)) != 0)
+	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr, true)) != 0)
 		DPRINTF("%s: bfs_file_delete failed.\n", __func__);
 
 	VN_KNOTE(ap->a_vp, NOTE_DELETE);
@@ -693,8 +692,13 @@ sysvbfs_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
+	struct bfs *bfs = bnode->bmp->bfs;
 
 	DPRINTF("%s:\n", __func__);
+	if (bnode->removed) {
+		if (bfs_inode_delete(bfs, bnode->inode->number) != 0)
+			DPRINTF("%s: delete inode failed\n", __func__);
+	}
 	mutex_enter(&mntvnode_lock);
 	LIST_REMOVE(bnode, link);
 	mutex_exit(&mntvnode_lock);
@@ -876,6 +880,9 @@ sysvbfs_update(struct vnode *vp, const struct timespec *acc,
 {
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs_fileattr attr;
+
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		return 0;
 
 	DPRINTF("%s:\n", __func__);
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka730.c,v 1.3.2.1 2012/10/30 17:20:29 yamt Exp $ */
+/*	$NetBSD: ka730.c,v 1.3.2.2 2014/05/22 11:40:12 yamt Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka730.c,v 1.3.2.1 2012/10/30 17:20:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka730.c,v 1.3.2.2 2014/05/22 11:40:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ ka730_conf(void)
 void
 ka730_attach_cpu(device_t self)
 {
-	aprint_normal("KA730, ucode rev %d\n", V730UCODE(vax_cpudata));
+	aprint_normal(": KA730, ucode rev %d\n", V730UCODE(vax_cpudata));
 }
 
 static void ka730_memenable(device_t, device_t, void *);

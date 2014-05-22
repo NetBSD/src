@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.33.4.2 2013/01/23 00:06:19 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.33.4.3 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.33.4.2 2013/01/23 00:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.33.4.3 2014/05/22 11:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ filecore_check_permitted(struct vnode *vp, struct filecore_node *ip,
 {
 	struct filecore_mnt *fcmp = ip->i_mnt;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, filecore_mode(ip)), vp, NULL,
 	    genfs_can_access(vp->v_type, filecore_mode(ip), fcmp->fc_uid,
 	    fcmp->fc_gid, mode, cred));
@@ -204,7 +204,7 @@ filecore_read(void *v)
 	struct filecore_node *ip = VTOI(vp);
 	struct filecore_mnt *fcmp;
 	struct buf *bp;
-	daddr_t lbn, rablock;
+	daddr_t lbn;
 	off_t diff;
 	int error = 0;
 	long size, n, on;
@@ -239,16 +239,15 @@ filecore_read(void *v)
 	}
 
 	do {
-		lbn = lblkno(fcmp, uio->uio_offset);
-		on = blkoff(fcmp, uio->uio_offset);
-		n = MIN(blksize(fcmp, ip, lbn) - on, uio->uio_resid);
+		lbn = filecore_lblkno(fcmp, uio->uio_offset);
+		on = filecore_blkoff(fcmp, uio->uio_offset);
+		n = MIN(filecore_blksize(fcmp, ip, lbn) - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
 		if (diff <= 0)
 			return (0);
 		if (diff < n)
 			n = diff;
-		size = blksize(fcmp, ip, lbn);
-		rablock = lbn + 1;
+		size = filecore_blksize(fcmp, ip, lbn);
 		if (ip->i_dirent.attr & FILECORE_ATTR_DIR) {
 			error = filecore_dbread(ip, &bp);
 			on = uio->uio_offset;
@@ -294,7 +293,6 @@ filecore_readdir(void *v)
 	struct uio *uio = ap->a_uio;
 	struct vnode *vdp = ap->a_vp;
 	struct filecore_node *dp;
-	struct filecore_mnt *fcmp;
 	struct buf *bp = NULL;
 	struct dirent *de;
 	struct filecore_direntry *dep = NULL;
@@ -315,7 +313,6 @@ filecore_readdir(void *v)
 	uiooff = uio->uio_offset;
 
 	*ap->a_eofflag = 0;
-	fcmp = dp->i_mnt;
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
@@ -436,7 +433,7 @@ filecore_link(void *v)
 int
 filecore_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -445,7 +442,6 @@ filecore_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

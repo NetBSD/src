@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.4.10.3 2012/10/30 17:22:41 yamt Exp $
+# $NetBSD: Makefile,v 1.4.10.4 2014/05/22 11:41:08 yamt Exp $
+#
+# Public Domain.
+#
 
 .include "../Makefile.inc"
 
@@ -6,11 +9,11 @@
 
 KMOD=		npf
 
-SRCS=		npf.c npf_alg.c npf_ctl.c npf_handler.c
-SRCS+=		npf_inet.c npf_instr.c npf_mbuf.c npf_nat.c
-SRCS+=		npf_processor.c npf_ruleset.c npf_rproc.c npf_sendpkt.c
-SRCS+=		npf_session.c npf_state.c npf_state_tcp.c
-SRCS+=		npf_tableset.c npf_tableset_ptree.c
+SRCS=		npf.c npf_alg.c npf_conf.c npf_ctl.c npf_handler.c
+SRCS+=		npf_bpf.c npf_if.c npf_inet.c npf_mbuf.c npf_nat.c
+SRCS+=		npf_ruleset.c npf_rproc.c npf_sendpkt.c npf_session.c
+SRCS+=		npf_state.c npf_state_tcp.c npf_tableset.c
+SRCS+=		npf_tableset_ptree.c npf_worker.c
 
 CPPFLAGS+=	-DINET6
 

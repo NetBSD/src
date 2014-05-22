@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.12.8.1 2012/04/17 00:05:21 yamt Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.12.8.2 2014/05/22 11:36:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ip6opt.c,v 1.12.8.1 2012/04/17 00:05:21 yamt Exp $");
+__RCSID("$NetBSD: ip6opt.c,v 1.12.8.2 2014/05/22 11:36:53 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -442,11 +442,8 @@ inet6_opt_init(void *extbuf, socklen_t extlen)
 {
 	struct ip6_ext *ext = (struct ip6_ext *)extbuf;
 
-	if (extlen % 8)
-		return (-1);
-
 	if (ext) {
-		if (extlen == 0)
+		if (extlen == 0 || (extlen % 8))
 			return (-1);
 		ext->ip6e_len = (extlen >> 3) - 1;
 	}

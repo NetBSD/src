@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.7.8.2 2013/01/23 00:05:49 yamt Exp $
+# $NetBSD: GENERIC.SKI,v 1.7.8.3 2014/05/22 11:39:53 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7.8.2 $"
+#ident 		"GENERIC-$Revision: 1.7.8.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,7 +40,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -90,5 +90,5 @@ pseudo-device	ssccons			# Ski emulator console
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	md		
+pseudo-device	md
 

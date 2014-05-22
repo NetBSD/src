@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.4.2.1 2012/04/17 00:05:16 yamt Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.4.2.2 2014/05/22 11:36:50 yamt Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.4.2.1 2012/04/17 00:05:16 yamt Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.4.2.2 2014/05/22 11:36:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -234,8 +234,10 @@ typedef struct {
 		_VIQRState	s_mbrtowc;
 		_VIQRState	s_mbtowc;
 		_VIQRState	s_mbsrtowcs;
+		_VIQRState	s_mbsnrtowcs;
 		_VIQRState	s_wcrtomb;
 		_VIQRState	s_wcsrtombs;
+		_VIQRState	s_wcsnrtombs;
 		_VIQRState	s_wctomb;
 	} states;
 } _VIQRCTypeInfo;

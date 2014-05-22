@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.42.8.1 2012/10/30 17:20:49 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.42.8.2 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42.8.1 2012/10/30 17:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42.8.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42.8.1 2012/10/30 17:20:49 yamt Exp $")
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/namei.h>
+#include <sys/module.h>
 
 #include <dev/dkvar.h>
 
@@ -63,6 +64,8 @@ int	dkdebug = 0;
 #define DPRINTF(x,y)
 #define DPRINTF_FOLLOW(y)
 #endif
+
+static int dk_subr_modcmd(modcmd_t, void *);
 
 #define DKLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), DISKUNIT((dev)), RAW_PART))
@@ -340,12 +343,12 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	switch (cmd) {
 #ifdef DIOCGSECTORSIZE
 	case DIOCGSECTORSIZE:
-		*(u_int *)data = dksc->sc_geom.pdg_secsize;
+		*(u_int *)data = dksc->sc_dkdev.dk_geom.dg_secsize;
 		return 0;
 	case DIOCGMEDIASIZE:
 		*(off_t *)data =
-		    (off_t)dksc->sc_geom.pdg_secsize *
-		    dksc->sc_geom.pdg_nsectors;
+		    (off_t)dksc->sc_dkdev.dk_geom.dg_secsize *
+		    dksc->sc_dkdev.dk_geom.dg_nsectors;
 		return 0;
 #endif
 
@@ -548,15 +551,15 @@ void
 dk_getdefaultlabel(struct dk_intf *di, struct dk_softc *dksc,
 		      struct disklabel *lp)
 {
-	struct dk_geom *pdg = &dksc->sc_geom;
+	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
 	memset(lp, 0, sizeof(*lp));
 
-	lp->d_secperunit = dksc->sc_size;
-	lp->d_secsize = pdg->pdg_secsize;
-	lp->d_nsectors = pdg->pdg_nsectors;
-	lp->d_ntracks = pdg->pdg_ntracks;
-	lp->d_ncylinders = pdg->pdg_ncylinders;
+	lp->d_secperunit = dg->dg_secperunit;
+	lp->d_secsize = dg->dg_secsize;
+	lp->d_nsectors = dg->dg_nsectors;
+	lp->d_ntracks = dg->dg_ntracks;
+	lp->d_ncylinders = dg->dg_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	strncpy(lp->d_typename, di->di_dkname, sizeof(lp->d_typename));
@@ -567,7 +570,7 @@ dk_getdefaultlabel(struct dk_intf *di, struct dk_softc *dksc,
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = dksc->sc_size;
+	lp->d_partitions[RAW_PART].p_size = dg->dg_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -582,6 +585,7 @@ dk_getdisklabel(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 {
 	struct	 disklabel *lp = dksc->sc_dkdev.dk_label;
 	struct	 cpu_disklabel *clp = dksc->sc_dkdev.dk_cpulabel;
+	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 	struct	 partition *pp;
 	int	 i;
 	const char	*errstring;
@@ -601,17 +605,17 @@ dk_getdisklabel(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 		return;
 
 	/* Sanity check */
-	if (lp->d_secperunit != dksc->sc_size)
+	if (lp->d_secperunit != dg->dg_secperunit)
 		printf("WARNING: %s: total sector size in disklabel (%d) "
-		    "!= the size of %s (%lu)\n", dksc->sc_xname,
-		    lp->d_secperunit, di->di_dkname, (u_long)dksc->sc_size);
+		    "!= the size of %s (%" PRId64 ")\n", dksc->sc_xname,
+		    lp->d_secperunit, di->di_dkname, dg->dg_secperunit);
 
 	for (i=0; i < lp->d_npartitions; i++) {
 		pp = &lp->d_partitions[i];
-		if (pp->p_offset + pp->p_size > dksc->sc_size)
+		if (pp->p_offset + pp->p_size > dg->dg_secperunit)
 			printf("WARNING: %s: end of partition `%c' exceeds "
-			    "the size of %s (%lu)\n", dksc->sc_xname,
-			    'a' + i, di->di_dkname, (u_long)dksc->sc_size);
+			    "the size of %s (%" PRId64 ")\n", dksc->sc_xname,
+			    'a' + i, di->di_dkname, dg->dg_secperunit);
 	}
 }
 
@@ -624,46 +628,6 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
 	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
 	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
 	lp->d_checksum = dkcksum(lp);
-}
-
-void
-dk_set_properties(struct dk_intf *di, struct dk_softc *dksc)
-{
-	prop_dictionary_t disk_info, odisk_info, geom;
-
-	disk_info = prop_dictionary_create();
-
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", dksc->sc_size);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    dksc->sc_geom.pdg_secsize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    dksc->sc_geom.pdg_nsectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    dksc->sc_geom.pdg_ntracks);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    dksc->sc_geom.pdg_ncylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(dksc->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = dksc->sc_dkdev.dk_info;
-	dksc->sc_dkdev.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
 }
 
 /* This function is taken from ccd.c:1.76  --rcd */
@@ -718,4 +682,20 @@ out:
 	VOP_UNLOCK(vp);
 	(void) vn_close(vp, FREAD | FWRITE, l->l_cred);
 	return error;
+}
+
+MODULE(MODULE_CLASS_MISC, dk_subr, NULL);
+
+static int
+dk_subr_modcmd(modcmd_t cmd, void *arg)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	case MODULE_CMD_STAT:
+	case MODULE_CMD_AUTOUNLOAD:
+	default:
+		return ENOTTY;
+	}
 }

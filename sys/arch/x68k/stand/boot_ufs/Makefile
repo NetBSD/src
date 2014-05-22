@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2011/10/11 13:07:06 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.26.2.1 2014/05/22 11:40:12 yamt Exp $
 
 NOMAN=		# defined
 
@@ -37,7 +37,7 @@ vers.c:	${VERSIONFILE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh \
 	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
-CFLAGS=	-Os -fomit-frame-pointer
+CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 CFLAGS+= -m68020-60
 CFLAGS+= -W -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"

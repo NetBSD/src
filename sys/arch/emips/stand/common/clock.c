@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.1 2011/01/26 01:18:54 pooka Exp $ */
+/*      $NetBSD: clock.c,v 1.1.10.1 2014/05/22 11:39:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,11 +33,12 @@
 
 #include <sys/types.h>
 #include <machine/emipsreg.h>
+#include <lib/libsa/net.h>
 
 #include <stand/common/common.h>
 
-long
-getsecs()
+satime_t
+getsecs(void)
 {
     struct _Tc *Tc = (struct _Tc *)TIMER_DEFAULT_ADDRESS;
 	uint64_t now;

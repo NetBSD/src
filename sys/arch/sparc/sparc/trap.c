@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.188.2.2 2012/05/23 10:07:49 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.188.2.3 2014/05/22 11:40:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188.2.2 2012/05/23 10:07:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188.2.3 2014/05/22 11:40:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -1269,7 +1269,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

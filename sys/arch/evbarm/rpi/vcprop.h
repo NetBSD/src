@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.1.2.4 2013/01/23 00:05:46 yamt Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.1.2.5 2014/05/22 11:39:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -125,12 +125,12 @@ struct vcprop_tag_boardrev {
 struct vcprop_tag_macaddr {
 	struct vcprop_tag tag;
 	uint64_t addr;
-};
+} __packed;
 
 struct vcprop_tag_boardserial {
 	struct vcprop_tag tag;
 	uint64_t sn;
-};
+} __packed;
 
 #define	VCPROP_CLK_EMMC		1
 #define	VCPROP_CLK_UART		2

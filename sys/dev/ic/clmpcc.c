@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.45.2.1 2012/10/30 17:21:01 yamt Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.45.2.2 2014/05/22 11:40:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45.2.1 2012/10/30 17:21:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45.2.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,8 +96,17 @@ dev_type_tty(clmpcctty);
 dev_type_poll(clmpccpoll);
 
 const struct cdevsw clmpcc_cdevsw = {
-	clmpccopen, clmpccclose, clmpccread, clmpccwrite, clmpccioctl,
-	clmpccstop, clmpcctty, clmpccpoll, nommap, ttykqfilter, D_TTY
+	.d_open = clmpccopen,
+	.d_close = clmpccclose,
+	.d_read = clmpccread,
+	.d_write = clmpccwrite,
+	.d_ioctl = clmpccioctl,
+	.d_stop = clmpccstop,
+	.d_tty = clmpcctty,
+	.d_poll = clmpccpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*
@@ -320,8 +329,8 @@ clmpcc_attach(struct clmpcc_softc *sc)
 static int
 clmpcc_init(struct clmpcc_softc *sc)
 {
-	u_int tcor, tbpr;
-	u_int rcor, rbpr;
+	u_int tcor = 0, tbpr = 0;
+	u_int rcor = 0, rbpr = 0;
 	u_int msvr_rts, msvr_dtr;
 	u_int ccr;
 	int is_console;
@@ -1192,7 +1201,6 @@ clmpcc_txintr(void *arg)
 {
 	struct clmpcc_softc *sc = (struct clmpcc_softc *)arg;
 	struct clmpcc_chan *ch;
-	struct tty *tp;
 	u_char ftc, oftc;
 	u_char tir, teoir;
 	int etcmode = 0;
@@ -1209,7 +1217,6 @@ clmpcc_txintr(void *arg)
 
 	/* Get pointer to interrupting channel's data structure */
 	ch = &sc->sc_chans[tir & CLMPCC_TIR_TCN_MASK];
-	tp = ch->ch_tty;
 
 	/* Dummy read of the interrupt status register */
 	(void) clmpcc_rdreg(sc, CLMPCC_REG_TISR);

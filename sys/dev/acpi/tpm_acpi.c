@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.3.6.2 2012/04/17 00:07:28 yamt Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.3.6.3 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.3.6.2 2012/04/17 00:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.3.6.3 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -185,9 +185,10 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 	else
 		inum = irq->ar_irq;
 
-	if ((rv = (*sc->sc_init)(sc, inum, device_xname(sc->sc_dev))) != 0)
+	if ((rv = (*sc->sc_init)(sc, inum, device_xname(sc->sc_dev))) != 0) {
 		aprint_error_dev(sc->sc_dev, "cannot init device %d\n", rv);
 		goto out1;
+	}
 
 	if (inum != -1 &&
 	    (sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.17.2.1 2012/04/17 00:07:28 yamt Exp $	*/
+/*	$NetBSD: bthub.c,v 1.17.2.2 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.17.2.1 2012/04/17 00:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.17.2.2 2014/05/22 11:40:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -70,8 +70,17 @@ CFATTACH_DECL_NEW(bthub, 0,
 dev_type_ioctl(bthubioctl);
 
 const struct cdevsw bthub_cdevsw = {
-	nullopen, nullclose, noread, nowrite, bthubioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = bthubioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 /* bthub functions */

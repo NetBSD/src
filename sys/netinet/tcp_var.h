@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.168.2.1 2012/04/17 00:08:41 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.168.2.2 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -328,6 +328,11 @@ struct tcpcb {
 	tcp_seq snd_fack;		/* FACK TCP.  Forward-most data held by
 					   peer. */
 
+/* CUBIC variables */
+	ulong snd_cubic_wmax;		/* W_max */
+	ulong snd_cubic_wmax_last;	/* Used for fast convergence */
+	ulong snd_cubic_ctime;		/* Last congestion time */
+
 /* pointer for syn cache entries*/
 	LIST_HEAD(, syn_cache) t_sc;	/* list of entries by this tcb */
 
@@ -613,8 +618,7 @@ struct syn_cache_head {
  * Compute the initial window for slow start.
  */
 #define	TCP_INITIAL_WINDOW(iw, segsz) \
-	(((iw) == 0) ? (min(4 * (segsz), max(2 * (segsz), 4380))) : \
-	 ((segsz) * (iw)))
+	min((iw) * (segsz), max(2 * (segsz), tcp_init_win_max[(iw)]))
 
 /*
  * TCP statistics.
@@ -797,6 +801,7 @@ extern	int tcp_minmss;		/* minimal seg size */
 extern  int tcp_msl;		/* max segment life */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_init_win_local;	/* initial window for local nets */
+extern	int tcp_init_win_max[11];/* max sizes for values of tcp_init_win_* */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
 extern	int tcp_compat_42;	/* work around ancient broken TCP peers */
 extern	int tcp_cwm;		/* enable Congestion Window Monitoring */
@@ -907,6 +912,7 @@ void	 tcp_drain(void);
 void	 tcp_drainstub(void);
 void	 tcp_established(struct tcpcb *);
 void	 tcp_init(void);
+void	 tcp_init_common(unsigned);
 #ifdef INET6
 int	 tcp6_input(struct mbuf **, int *, int);
 #endif
@@ -930,6 +936,9 @@ void	 tcp_quench(struct inpcb *, int);
 void	 tcp6_quench(struct in6pcb *, int);
 #endif
 void	 tcp_mtudisc(struct inpcb *, int);
+#ifdef INET6
+void	 tcp6_mtudisc_callback(struct in6_addr *);
+#endif
 
 void	tcpipqent_init(void);
 struct ipqent *tcpipqent_alloc(void);
@@ -943,7 +952,8 @@ void	 tcp_setpersist(struct tcpcb *);
 int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 	    int, u_char *, u_int);
 #endif
-void	 tcp_slowtimo(void);
+void	 tcp_slowtimo(void *);
+extern callout_t tcp_slowtimo_ch;
 void	 tcp_fasttimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
@@ -966,7 +976,6 @@ void	 tcp_del_sackholes(struct tcpcb *, const struct tcphdr *);
 void	 tcp_free_sackholes(struct tcpcb *);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
-void	 tcp_sack_newack(struct tcpcb *, const struct tcphdr *);
 int	 tcp_sack_numblks(const struct tcpcb *);
 #define	TCP_SACK_OPTLEN(nblks)	((nblks) * 8 + 2 + 2)
 

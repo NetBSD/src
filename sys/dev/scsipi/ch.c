@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.86.12.1 2012/10/30 17:22:01 yamt Exp $	*/
+/*	$NetBSD: ch.c,v 1.86.12.2 2014/05/22 11:40:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.86.12.1 2012/10/30 17:22:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.86.12.2 2014/05/22 11:40:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.86.12.1 2012/10/30 17:22:01 yamt Exp $");
 #include <dev/scsipi/scsiconf.h>
 
 #define CHRETRIES	2
+#define CHTIMEOUT	(5 * 60 * 1000)
+
 #define CHUNIT(x)	(minor((x)))
 
 struct ch_softc {
@@ -119,8 +121,17 @@ static dev_type_poll(chpoll);
 static dev_type_kqfilter(chkqfilter);
 
 const struct cdevsw ch_cdevsw = {
-	chopen, chclose, chread, nowrite, chioctl,
-	nostop, notty, chpoll, nommap, chkqfilter, D_OTHER
+	.d_open = chopen,
+	.d_close = chclose,
+	.d_read = chread,
+	.d_write = nowrite,
+	.d_ioctl = chioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = chpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = chkqfilter,
+	.d_flag = D_OTHER
 };
 
 /* SCSI glue */
@@ -612,7 +623,7 @@ ch_move(struct ch_softc *sc, struct changer_move_request *cm)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CHRETRIES, 100000, NULL, 0));
+	    CHRETRIES, CHTIMEOUT, NULL, 0));
 }
 
 static int
@@ -666,7 +677,7 @@ ch_exchange(struct ch_softc *sc, struct changer_exchange_request *ce)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CHRETRIES, 100000, NULL, 0));
+	    CHRETRIES, CHTIMEOUT, NULL, 0));
 }
 
 static int
@@ -702,7 +713,7 @@ ch_position(struct ch_softc *sc, struct changer_position_request *cp)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CHRETRIES, 100000, NULL, 0));
+	    CHRETRIES, CHTIMEOUT, NULL, 0));
 }
 
 /*
@@ -1041,7 +1052,7 @@ ch_getelemstatus(struct ch_softc *sc, int first, int count, void *data,
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
 	    (void *)data, datalen,
-	    CHRETRIES, 100000, NULL, scsiflags | XS_CTL_DATA_IN));
+	    CHRETRIES, CHTIMEOUT, NULL, scsiflags | XS_CTL_DATA_IN));
 }
 
 static int
@@ -1105,7 +1116,7 @@ ch_setvoltag(struct ch_softc *sc, struct changer_set_voltag_request *csvr)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, datalen, CHRETRIES, 100000, NULL,
+	    (void *)data, datalen, CHRETRIES, CHTIMEOUT, NULL,
 	    datalen ? XS_CTL_DATA_OUT : 0));
 }
 

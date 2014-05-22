@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.12.2.1 2014/05/22 11:40:05 yamt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12.2.1 2014/05/22 11:40:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,20 +58,36 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
 void decr_intr(struct clockframe *);
 void init_powerpc_tc(void);
 static u_int get_powerpc_timecount(struct timecounter *);
+#ifdef PPC_OEA601
+static u_int get_601_timecount(struct timecounter *);
+#endif
 
 uint32_t ticks_per_sec;
 uint32_t ns_per_tick;
 uint32_t ticks_per_intr = 0;
 
+#ifdef PPC_OEA601
+static struct timecounter powerpc_601_timecounter = {
+	.tc_get_timecount = get_601_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0x7fffffff,
+	.tc_frequency = 0,
+	.tc_name = "rtc",
+	.tc_quality = 100,
+	.tc_priv = NULL,
+	.tc_next = NULL
+};
+#endif
+
 static struct timecounter powerpc_timecounter = {
-	get_powerpc_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0x7fffffff,		/* counter_mask */
-	0,			/* frequency */
-	"mftb",			/* name */
-	100,			/* quality */
-	NULL,			/* tc_priv */
-	NULL			/* tc_next */
+	.tc_get_timecount = get_powerpc_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0x7fffffff,
+	.tc_frequency = 0,
+	.tc_name = "mftb",
+	.tc_quality = 100,
+	.tc_priv = NULL,
+	.tc_next = NULL
 };
 
 /*
@@ -88,8 +104,7 @@ cpu_initclocks(void)
 	cpu_timebase = ticks_per_sec;
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile 
-		    ("mfspr %0,%1" : "=r"(ci->ci_lasttb) : "n"(SPR_RTCL_R));
+		ci->ci_lasttb = rtc_nanosecs();
 	else
 #endif
 		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
@@ -119,7 +134,7 @@ void
 decr_intr(struct clockframe *cfp)
 {
 	struct cpu_info * const ci = curcpu();
-	int msr;
+	const register_t msr = mfmsr();
 	int pri;
 	u_long tb;
 	long ticks;
@@ -154,20 +169,14 @@ decr_intr(struct clockframe *cfp)
 		 */
 #ifdef PPC_OEA601
 		if ((mfpvr() >> 16) == MPC601)
-			__asm volatile 
-			    ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+			tb = rtc_nanosecs();
 		else
 #endif
 			__asm volatile ("mftb %0" : "=r"(tb));
 
 		ci->ci_lasttb = tb + ticks - ticks_per_intr;
-
-		/*
-		 * Reenable interrupts
-		 */
-		__asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-
+		ci->ci_idepth++;
+		mtmsr(msr | PSL_EE);
 		/*
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.
@@ -175,8 +184,12 @@ decr_intr(struct clockframe *cfp)
 		while (--nticks > 0)
 			hardclock(cfp);
 		hardclock(cfp);
+		mtmsr(msr);
+		ci->ci_idepth--;
 	}
+	mtmsr(msr | PSL_EE);
 	splx(pri);
+	mtmsr(msr);
 }
 
 /*
@@ -185,8 +198,11 @@ decr_intr(struct clockframe *cfp)
 void
 delay(unsigned int n)
 {
-	u_quad_t tb;
-	u_long tbh, tbl, scratch;
+#ifdef _ARCH_PPC64
+	uint64_t tb, scratch;
+#else
+	uint64_t tb;
+	uint32_t tbh, tbl, scratch;
 
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601) {
@@ -208,16 +224,23 @@ delay(unsigned int n)
 		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
 		    : "cr0");
 	} else
-#endif
+#endif /* PPC_OEA601 */
+#endif /* !_ARCH_PPC64 */
 	{
 		tb = mftb();
 		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+#ifdef _ARCH_PPC64
+		__asm volatile ("1: mftb %0; cmpld %0,%1; blt 1b;"
+			      : "=&r"(scratch) : "r"(tb)
+			      : "cr0");
+#else
 		tbh = tb >> 32;
 		tbl = tb;
 		__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 			      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 			      : "=&r"(scratch) : "r"(tbh), "r"(tbl)
 			      : "cr0");
+#endif
 	}
 }
 
@@ -229,21 +252,42 @@ get_powerpc_timecount(struct timecounter *tc)
 	
 	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-#ifdef PPC_OEA601
-	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
-	else
-#endif
-		__asm volatile ("mftb %0" : "=r"(tb));
+
+	tb = (u_int)(mftb() & 0x7fffffff);
 	mtmsr(msr);
 
 	return tb;
 }
 
+#ifdef PPC_OEA601
+static u_int
+get_601_timecount(struct timecounter *tc)
+{
+	u_long tb;
+	int msr, scratch;
+	
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+
+	tb = rtc_nanosecs();
+	mtmsr(msr);
+
+	return tb;
+}
+#endif
+
 void
 init_powerpc_tc(void)
 {
-	/* from machdep initialization */
-	powerpc_timecounter.tc_frequency = ticks_per_sec;
-	tc_init(&powerpc_timecounter);
+	struct timecounter *tc;
+
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601) {
+		tc = &powerpc_601_timecounter;
+	} else
+#endif
+		tc = &powerpc_timecounter;
+
+	tc->tc_frequency = ticks_per_sec;
+	tc_init(tc);
 }

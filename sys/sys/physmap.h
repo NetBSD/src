@@ -1,4 +1,4 @@
-/*	$NetBSD: physmap.h,v 1.3.2.2 2013/01/23 00:06:30 yamt Exp $	*/
+/*	$NetBSD: physmap.h,v 1.3.2.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _SYS_PHYSMAP_H_
 #define _SYS_PHYSMAP_H_
 
-#if !defined(_KERNEL) && !defined(KMEMUSER)
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error "not supposed to be exposed to userland"
 #endif
 

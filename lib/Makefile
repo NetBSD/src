@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179.2.4 2013/01/16 05:32:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.179.2.5 2014/05/22 11:36:43 yamt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -7,15 +7,9 @@ SUBDIR=		csu .WAIT
 
 .if (${MKGCC} != "no")
 . if ${HAVE_GCC} == 4
-.  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../gnu/lib/crtstuff4 .WAIT
-.  endif
 SUBDIR+=	../gnu/lib/libgcc4 .WAIT
 . else
-.  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../external/gpl3/gcc/lib/crtstuff .WAIT
-.  endif
-SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgcc .WAIT
 . endif
 .endif
 
@@ -33,22 +27,27 @@ SUBDIR+=	i18n_module
 SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
-		libintl libipsec libisns libkvm libm \
+		libintl libipsec libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
+.if !defined(BSD_MK_COMPAT_FILE)
+SUBDIR+=	libkern
+.endif
+
+.if (${MACHINE_CPU} == "arm")
+LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
+.if empty(LIBC_MACHINE_ARCH:M*hf*)
+SUBDIR+=	libc_vfp
+.endif
+.endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient
 .endif
 .if (${MKSKEY} != "no")
 SUBDIR+=	libskey
-.endif
-
-.if (${MKCRYPTO} != "no")
-SUBDIR+=	../crypto/external/bsd/netpgp/libmj
-SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify
 .endif
 
 .if (${MKMDNS} != "no")
@@ -59,13 +58,15 @@ SUBDIR+=	../external/bsd/am-utils/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
-SUBDIR+=	../external/bsd/libdwarf/lib
-SUBDIR+=	../external/bsd/libelf/lib
-SUBDIR+=	../external/bsd/libevent/lib
+SUBDIR+=	../external/bsd/elftoolchain/lib/libelf
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
-SUBDIR+=	../external/mit/lua/lib
+.if ${MKSLJIT} != "no"
+SUBDIR+=	../external/bsd/sljit/lib
+SUBDIR+=	libbpfjit
+.endif
+
 SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
@@ -77,15 +78,15 @@ SUBDIR+=	../gnu/lib/libmalloc
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libobjc4
 . else
-SUBDIR+=	../external/gpl3/gcc/lib/libobjc
-SUBDIR+=	../external/gpl3/gcc/lib/libgomp
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
 . endif
 . if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 . endif
 .endif
 
@@ -96,6 +97,13 @@ SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKCRYPTO} != "no")
+SUBDIR+=	../crypto/external/bsd/netpgp/libmj
+SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify # depends on libz
+.endif
+
+SUBDIR+=	../external/bsd/elftoolchain/lib/libdwarf # depends on libelf
+SUBDIR+=	../external/mit/lua/lib # depends on libm
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
@@ -104,6 +112,7 @@ SUBDIR+=	libppath	# depends on libprop
 SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
+SUBDIR+=	libisns 	# depends on libpthread
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
@@ -111,7 +120,6 @@ SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 
 .if (${MKNPF} != "no")
 SUBDIR+=	libnpf		# depends on libprop
-SUBDIR+=	npf
 .endif
 
 .if (${MKCRYPTO} != "no")
@@ -134,21 +142,33 @@ SUBDIR+=	../external/gpl2/lvm2/lib	# depends on libprop
 SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
 .endif
 
-.if (${MKGCC} != "no" && ${MKCXX} != "no")
+.if (${MKLIBCXX} != "no")
+SUBDIR+=	../external/bsd/libc++
+.endif
+
+.if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
 . else
-SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
-SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 . endif
 .endif
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKNPF} != "no")
+SUBDIR+=	npf		# depends on libnpf
+.endif
+
 .if (${MKATF} != "no")
 SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
+.endif
+
+.if (${MKKYUA} != "no")
+SUBDIR+=	../external/bsd/lutok/lib	# depends on lua and libstdc++
 .endif
 
 SUBDIR+=	libform		# depends on libcurses
@@ -168,7 +188,7 @@ SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
 SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 
-SUBDIR+=	../external/bsd/bind/lib	# depends on libcrypto
+SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
 SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
@@ -177,6 +197,8 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
 
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpdev	# depends on librump
@@ -190,12 +212,6 @@ SUBDIR+=	libpam		# depends on heimdal
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
-.endif
-
-.if ${MKSLJIT} != "no"
-SUBDIR+=	../external/bsd/sljit/lib
-SUBDIR+=	.WAIT
-SUBDIR+=	libbpfjit
 .endif
 
 SUBDIR+=	../external/bsd/mdocml/lib
@@ -229,6 +245,9 @@ SUBDIR+=	../sys/rump/net/lib
 
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
+
+# Needed by rump and rescue which are outside the smbfs tree
+SUBDIR+=	../external/bsd/smbfs/lib
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>

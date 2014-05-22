@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10.34.1 2012/04/17 00:06:43 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.10.34.2 2014/05/22 11:40:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.34.1 2012/04/17 00:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.34.2 2014/05/22 11:40:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ news68k_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
 		panic("bus_space_probe: unupported data size %d", sz);
 		/* NOTREACHED */
 	}
-
+	__USE(i);
 	nofault = NULL;
 	return 1;
 }

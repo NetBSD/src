@@ -1,8 +1,8 @@
-/*	$NetBSD: db_disasm.c,v 1.26.12.1 2012/04/17 00:06:48 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.26.12.2 2014/05/22 11:40:05 yamt Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26.12.1 2012/04/17 00:06:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26.12.2 2014/05/22 11:40:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -628,7 +628,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		pstr += len; \
 	} while(0)
 #define APP_PSTR(fmt, arg)	ADD_LEN(snprintf(pstr, slen, (fmt), (arg)))
-#define APP_PSTRS(fmt)		ADD_LEN(snprintf(pstr, slen, (fmt)))
+#define APP_PSTRS(fmt)		ADD_LEN(snprintf(pstr, slen, "%s", (fmt)))
 
 	pstr = disasm_str;
 

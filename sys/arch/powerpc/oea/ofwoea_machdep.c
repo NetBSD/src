@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.26.2.4 2014/05/22 11:40:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.4 2014/05/22 11:40:04 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
+
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,6 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
@@ -55,7 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt
 #include <machine/autoconf.h>
 #include <sys/bus.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/ofw_rasconsvar.h>
 #include <powerpc/oea/cpufeat.h>
+#include <powerpc/include/oea/spr.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
 #include <powerpc/pic/picvar.h>
@@ -113,6 +121,11 @@ char model_name[64];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
+
+#if PPC_OEA601
+#define TIMEBASE_FREQ (1000000000)  /* RTC register */
+#endif
+
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
 #else
@@ -167,6 +180,10 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		model_init();
 	}
 
+	if (strcmp(model_name, "PowerMac11,2") == 0 ||
+	    strcmp(model_name, "PowerMac11,1") == 0)
+		OF_quiesce();
+
 	/* Initialize bus_space */
 	ofwoea_bus_space_init();
 
@@ -174,7 +191,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 #if defined(MULTIPROCESSOR) && defined(ofppc)
 	for (i=1; i < CPU_MAXNUM; i++) {
-		sprintf(cpupath, "/cpus/@%x", i);
+		snprintf(cpupath, sizeof(cpupath), "/cpus/@%x", i);
 		node = OF_finddevice(cpupath);
 		if (node <= 0)
 			continue;
@@ -188,13 +205,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			__asm volatile ("sync");
 		}
 	}
-#endif
-
-#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
-	if (oeacpufeat & OEACPU_64_BRIDGE)
-		pmap_setup64bridge();
-	else
-		pmap_setup32();
 #endif
 
 	oea_init(pic_ext_intr);
@@ -230,9 +240,45 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 #if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #if defined (PMAC_G5)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
-	if (oeacpufeat & OEACPU_64_BRIDGE)
-		pmap_setup_segment0_map(0, 0xff800000, 0x3fc00000, 0x400000,
-		    0x0);
+	if (oeacpufeat & OEACPU_64_BRIDGE) {
+		vaddr_t va;
+		paddr_t pa;
+		int i;
+
+		pmap_setup_segment0_map(0, msgbuf_paddr, msgbuf_paddr,
+		    round_page(MSGBUFSIZE), 0x0);
+
+		/* Map OFW code+data */
+
+		for (i = 0; i < ofmaplen / sizeof(struct ofw_translations); i++) {
+			if (ofmap[i].va < 0xff800000)
+				continue;
+
+			for (va = ofmap[i].va, pa = ofmap[i].pa;
+			    va < ofmap[i].va + ofmap[i].len;
+			    va += PAGE_SIZE, pa += PAGE_SIZE) {
+				pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL,
+				    VM_PROT_ALL | PMAP_WIRED);
+			}
+		}
+
+#if NWSDISPLAY > 0
+		/* Map video frame buffer */
+
+		struct rasops_info *ri = &rascons_console_screen.scr_ri;
+
+		if (ri->ri_bits != NULL) {
+			for (va = (vaddr_t) ri->ri_bits;
+			    va < round_page((vaddr_t) ri->ri_bits +
+				ri->ri_height * ri->ri_stride);
+			    va += PAGE_SIZE) {
+				pmap_enter(pmap_kernel(), va, va,
+				    VM_PROT_READ | VM_PROT_WRITE,
+				    PMAP_NOCACHE | PMAP_WIRED);
+			}
+		}
+#endif
+	}
 #elif defined (MAMBO)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
 	if (oeacpufeat & OEACPU_64_BRIDGE)
@@ -248,7 +294,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	restore_ofmap(ofmap, ofmaplen);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((uintptr_t)endsym - (uintptr_t)startsym), startsym, endsym);
 #endif
 
 	/* CPU clock stuff */
@@ -294,7 +340,14 @@ found:
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
+
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601)
+	    curcpu()->ci_lasttb = rtc_nanosecs();
+	else
+#endif
 	curcpu()->ci_lasttb = mftbl();
+
 	mtspr(SPR_DEC, ticks_per_intr);
 	mtmsr(msr);
 }
@@ -330,10 +383,13 @@ restore_ofmap(struct ofw_translations *map, int len)
 
 	pmap_pinit(&ofw_pmap);
 
-	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+#ifndef _LP64
+	ofw_pmap.pm_sr[0] = KERNELN_SEGMENT(0)|SR_PRKEY;
+	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 
 #ifdef KERNEL2_SR
-	ofw_pmap.pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
+	ofw_pmap.pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
+#endif
 #endif
 
 	for (i = 0; i < n; i++) {
@@ -364,7 +420,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 /*
  * Scan the device tree for ranges, and return them as bitmap 0..15
  */
-#ifndef macppc
+#if !defined(macppc) && defined(PPC_OEA)
 static u_int16_t
 ranges_bitmap(int node, u_int16_t bitmap)
 {
@@ -405,7 +461,7 @@ noranges:
 	}
 	return bitmap;
 }
-#endif /* !macppc */
+#endif /* !macppc && PPC_OEA */
 
 void
 ofwoea_batinit(void)
@@ -415,6 +471,24 @@ ofwoea_batinit(void)
 #ifdef macppc
 	/*
 	 * cover PCI and register space but not the firmware ROM
+	 */
+#ifdef PPC_OEA601
+
+        /*
+	 * use segment registers for the 601
+	 */
+	if ((mfpvr() >> 16 ) == MPC601)
+	    oea_batinit(
+		0x80000000, BAT_BL_256M,
+		0x90000000, BAT_BL_256M,
+		0xa0000000, BAT_BL_256M,
+		0xb0000000, BAT_BL_256M,
+		0xf0000000, BAT_BL_256M,
+		0);
+	else
+#endif
+	/*
+	 * map to bats
 	 */
 	oea_batinit(0x80000000, BAT_BL_1G,
 		    0xf0000000, BAT_BL_128M,
@@ -466,7 +540,7 @@ static void
 find_ranges(int base, rangemap_t *regions, int *cur, int type)
 {
 	int node, i, len, reclen;
-	u_int32_t acells, scells, map[160];
+	u_int32_t parent_acells, acells, scells, map[160];
 	char tmp[32];
 
 	node = base;
@@ -480,12 +554,15 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 	len = OF_getprop(node, "ranges", map, sizeof(map));
 	if (len == -1)
 		goto rec;
+	if (OF_getprop(OF_parent(node), "#address-cells", &parent_acells,
+	    sizeof(parent_acells)) != sizeof(parent_acells))
+		parent_acells = 1;
 	if (OF_getprop(node, "#address-cells", &acells,
 	    sizeof(acells)) != sizeof(acells))
-		acells = 1;
+		acells = 3;
 	if (OF_getprop(node, "#size-cells", &scells,
 	    sizeof(scells)) != sizeof(scells))
-		scells = 1;
+		scells = 2;
 #ifdef ofppc
 	if (modeldata.ranges_offset == 0)
 		scells -= 1;
@@ -493,7 +570,7 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 	if (type == RANGE_TYPE_ISA)
 		reclen = 6;
 	else
-		reclen = acells + scells + 1;
+		reclen = parent_acells + acells + scells;
 	/*
 	 * There exist ISA buses with empty ranges properties.  This is
 	 * known to occur on the Pegasos II machine, and likely others.
@@ -514,12 +591,12 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 			for (i=0; i < len/(4*reclen); i++) {
 				DPRINTF("FOUND PCI RANGE\n");
 				regions[*cur].size =
-				    map[i*reclen + acells + scells];
+				    map[i*reclen + parent_acells + acells + scells - 1];
 				/* skip ranges of size==0 */
 				if (regions[*cur].size == 0)
 					continue;
-				regions[*cur].type = map[i*reclen] >> 24;
-				regions[*cur].addr = map[i*reclen + acells];
+				regions[*cur].type = (map[i*reclen] >> 24) & 0x3;
+				regions[*cur].addr = map[i*reclen + parent_acells + acells - 1];
 				(*cur)++;
 			}
 			break;
@@ -579,10 +656,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 {
 	int i, cur, range, nrofholes, error;
 	static int exmap=0;
-	u_int32_t addr;
 	rangemap_t region, holes[32], list[32];
 
 	memset(list, 0, sizeof(list));
+	memset(&region, 0, sizeof(region));
 	cur = 0;
 	if (rangetype == RANGE_TYPE_ISA || node == -1)
 		node = OF_finddevice("/");
@@ -652,7 +729,6 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		DPRINTF("addr=0x%x size=0x%x type=%d\n", list[i].addr,
 		    list[i].size, list[i].type);
 
-	addr=0;
 	range = find_lowest_range(list, cur, iomem);
 	i = 0;
 	nrofholes = 0;

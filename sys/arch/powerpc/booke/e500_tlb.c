@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.7.2.3 2013/01/16 05:33:02 yamt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.7.2.4 2014/05/22 11:40:03 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.7.2.3 2013/01/16 05:33:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.7.2.4 2014/05/22 11:40:03 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -141,7 +141,7 @@ hwtlb_read(uint32_t mas0, u_int slot)
 	 * ESEL is the way we want to look up.
 	 * If tlbassoc is the same as tlbentries (like in TLB1) then the TLB is
 	 * fully associative, the entire slot is placed into ESEL.  If tlbassoc 
-	 * is less then the number of tlb entries, the slot is split in two
+	 * is less than the number of tlb entries, the slot is split in two
 	 * fields.  Since the TLB is M rows by N ways, the lowers bits are for
 	 * row (MAS2[EPN]) and the upper for the way (MAS1[ESEL]). 
 	 */

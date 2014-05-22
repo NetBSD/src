@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.156.2.4 2013/01/23 00:06:30 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.156.2.5 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -348,7 +348,7 @@ void	*_lwp_getspecific_by_lwp(lwp_t *, specificdata_key_t);
 void	lwp_setspecific(specificdata_key_t, void *);
 
 /* Syscalls. */
-int	lwp_park(struct timespec *, const void *);
+int	lwp_park(clockid_t, int, struct timespec *, const void *);
 int	lwp_unpark(lwpid_t, const void *);
 
 /* DDB. */

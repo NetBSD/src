@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 	 */
 	lseek(fd, (off_t)0, SEEK_SET);
 	read(fd, &hdr, sizeof(hdr));
-	elfpriv = *(unsigned short *)&hdr[0x24];
+	memcpy(&elfpriv, &hdr[0x24], sizeof(elfpriv));
 
 	entry = (void *)marks[MARK_ENTRY];
 	if (elfpriv == 0x0602) {
@@ -399,6 +399,7 @@ mini2440_panic()
 		for(l=0; l<0xffffff; l++) {
 			v = *((int*)(S3C2440_TIMER_BASE+TIMER_TCNTO(0)));
 		}
+		__USE(v);
 	}
 }
 
@@ -497,6 +498,7 @@ _rtt()
 	*(volatile uint32_t *)(S3C2440_WDT_BASE + WDT_WTCON) =
 		(0 << WTCON_PRESCALE_SHIFT) | WTCON_ENABLE |
 		WTCON_CLKSEL_16 | WTCON_ENRST;
+	__builtin_unreachable();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.59.4.1 2012/10/30 17:20:30 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.59.4.2 2014/05/22 11:40:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59.4.1 2012/10/30 17:20:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59.4.2 2014/05/22 11:40:12 yamt Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -166,8 +166,17 @@ dev_type_tty(itetty);
 dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
-	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+	.d_open = iteopen,
+	.d_close = iteclose,
+	.d_read = iteread,
+	.d_write = itewrite,
+	.d_ioctl = iteioctl,
+	.d_stop = nostop,
+	.d_tty = itetty,
+	.d_poll = itepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 int
@@ -499,11 +508,10 @@ void
 itestart(struct tty *tp)
 {
 	struct clist *rbp;
-	struct ite_softc *ip;
 	u_char buf[ITEBURST];
 	int s, len;
 
-	ip = getitesp(tp->t_dev);
+	getitesp(tp->t_dev);
 	/*
 	 * (Potentially) lower priority.  We only need to protect ourselves
 	 * from keyboard interrupts since that is all that can affect the
@@ -1568,8 +1576,9 @@ iteputchar(int c, struct ite_softc *ip)
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf(ip->argbuf, "\033[%d;%dR",
-						 ip->cury + 1, ip->curx + 1);
+					snprintf(ip->argbuf, sizeof(ip->argbuf),
+					    "\033[%d;%dR",
+					     ip->cury + 1, ip->curx + 1);
 					ite_sendstr(ip, ip->argbuf);
 					break;
 				}

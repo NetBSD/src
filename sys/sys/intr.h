@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9.12.2 2012/10/30 17:22:56 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.12.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #ifndef _SYS_INTR_H_
 #define	_SYS_INTR_H_
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
+
+#include <sys/types.h>
 
 struct cpu_info;
 
@@ -51,7 +51,9 @@ void	softint_block(lwp_t *);
 
 /* MD-MI interface. */
 void	softint_init_md(lwp_t *, u_int, uintptr_t *);
+#ifndef __HAVE_MD_SOFTINT_TRIGGER
 void	softint_trigger(uintptr_t);
+#endif
 void	softint_dispatch(lwp_t *, int);
 
 /* Flags for softint_establish(). */
@@ -88,6 +90,10 @@ extern u_int	softint_timing;
 #define	splclock()	splsched()
 #define	splserial()	splhigh()
 
+#include <machine/intr.h>
+
+#elif defined(_KMEMUSER)
+#define	SOFTINT_COUNT	0x0004
 #endif	/* _KERNEL */
 
 #endif	/* _SYS_INTR_H_ */

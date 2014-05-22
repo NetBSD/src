@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.37.2.2 2012/10/30 17:22:25 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.37.2.3 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37.2.2 2012/10/30 17:22:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37.2.3 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,11 +77,13 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	DPRINTF("%s: mnt_flag=%x\n", __func__, mp->mnt_flag);
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
-		if ((bmp = (void *)mp->mnt_data) == NULL)
+		if ((bmp = (struct sysvbfs_mount *)mp->mnt_data) == NULL)
 			return EIO;
 		args->fspec = NULL;
 		*data_len = sizeof *args;
@@ -116,6 +118,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
+			bmp = (struct sysvbfs_mount *)mp->mnt_data;
 			if (devvp != bmp->devvp)
 				error = EINVAL;
 		}

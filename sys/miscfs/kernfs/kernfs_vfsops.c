@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.91 2011/09/27 01:23:05 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.91.2.1 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.91 2011/09/27 01:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.91.2.1 2014/05/22 11:41:05 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -224,31 +224,28 @@ const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 };
 
 struct vfsops kernfs_vfsops = {
-	MOUNT_KERNFS,
-	0,
-	kernfs_mount,
-	kernfs_start,
-	kernfs_unmount,
-	kernfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	genfs_statvfs,
-	kernfs_sync,
-	kernfs_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	kernfs_init,
-	kernfs_reinit,
-	kernfs_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	kernfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_KERNFS,
+	.vfs_min_mount_data = 0,
+	.vfs_mount = kernfs_mount,
+	.vfs_start = kernfs_start,
+	.vfs_unmount = kernfs_unmount,
+	.vfs_root = kernfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = genfs_statvfs,
+	.vfs_sync = kernfs_sync,
+	.vfs_vget = kernfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = kernfs_init,
+	.vfs_reinit = kernfs_reinit,
+	.vfs_done = kernfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = kernfs_vnodeopv_descs
 };
 
 static int
@@ -261,11 +258,6 @@ kernfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&kernfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "kernfs",

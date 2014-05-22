@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.79.4.1 2012/04/17 00:07:42 yamt Exp $	*/
+/*	$NetBSD: agp.c,v 1.79.4.2 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.79.4.1 2012/04/17 00:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.79.4.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1102,8 +1102,17 @@ agpmmap(dev_t dev, off_t offset, int prot)
 }
 
 const struct cdevsw agp_cdevsw = {
-	agpopen, agpclose, noread, nowrite, agpioctl,
-	nostop, notty, nopoll, agpmmap, nokqfilter, D_OTHER
+	.d_open = agpopen,
+	.d_close = agpclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = agpioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = agpmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /* Implementation of the kernel api */

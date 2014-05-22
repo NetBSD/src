@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.41.6.2 2013/01/16 05:32:37 yamt Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.41.6.3 2014/05/22 11:37:52 yamt Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -302,7 +302,7 @@ condition is met, an event is sent to the
 .Xr powerd 8
 daemon (if running), which will shutdown the system gracefully
 by executing the
-.Fa /etc/powerd/scripts/sensor_battery
+.Pa /etc/powerd/scripts/sensor_battery
 script.
 .Pp
 If

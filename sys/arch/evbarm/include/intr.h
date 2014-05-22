@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22.8.2 2013/01/16 05:32:54 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.8.3 2014/05/22 11:39:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -65,6 +65,8 @@
 #define IST_EDGE_BOTH	6
 #define IST_SOFT	7
 
+#define IST_MPSAFE	0x100	/* interrupt is MPSAFE */
+
 #ifndef _LOCORE
 
 #include <sys/queue.h>
@@ -74,9 +76,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #else	/* _LKM */
 

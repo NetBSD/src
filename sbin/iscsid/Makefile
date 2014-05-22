@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2012/10/30 18:59:27 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2014/05/22 11:37:29 yamt Exp $
 
 PROG=	iscsid
 
@@ -10,8 +10,6 @@ CPPFLAGS+= -I${DESTDIR}/usr/include
 CPPFLAGS+= -D_THREAD_SAFE
 
 MAN=	iscsid.8
-
-WARNS=	4
 
 LDADD = -lpthread -lisns
 

@@ -1,21 +1,27 @@
-#	$NetBSD: Makefile,v 1.43 2009/04/10 16:16:12 apb Exp $
+#	$NetBSD: Makefile,v 1.43.6.1 2014/05/22 11:37:54 yamt Exp $
 
 .include <bsd.own.mk>
-
-# Change the line below for your time zone (after finding the zone you want in
-# the time zone files, or adding it to a time zone file).
-# Alternately, if you discover you've got the wrong time zone, you can just
-#	zic -l rightzone
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
 # change the line below (after finding the zone you want in the
 # time zone files, or adding it to a time zone file).
+# (When a POSIX-style environment variable is handled, the rules in the
+# template file are used to determine "spring forward" and "fall back" days and
+# times; the environment variable itself specifies UT offsets of standard and
+# summer time.)
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -p rightzone
+# to correct things.
+# Use the command
+#	make zonenames
+# to get a list of the values you can use for POSIXRULES.
+# If you want POSIX compatibility, use "America/New_York".
 
-POSIXRULES=	US/Pacific
+POSIXRULES=	America/New_York
 
+# "Compiled" time zone information is placed in the "TZDIR" directory
+# (and subdirectories).
 # Use an absolute path name for TZDIR unless you're just testing the software.
 # Note: ${DESTDIR} is prepended to this for the actual copy.
 
@@ -23,7 +29,7 @@ TZDIR=	/usr/share/zoneinfo
 
 # If you always want time values interpreted as "seconds since the epoch
 # (not counting leap seconds)", use
-# 	REDO=		posix_only
+#	REDO=		posix_only
 # below.  If you always want right time values interpreted as "seconds since
 # the epoch" (counting leap seconds)", use
 #	REDO=		right_only
@@ -40,15 +46,13 @@ REDO=		posix_only
 # Since "." may not be in PATH...
 YEARISTYPE=	"${HOST_SH} ${.CURDIR}/yearistype.sh"
 
-YDATA=		africa antarctica asia australasia \
-		europe northamerica southamerica pacificnew etcetera factory \
-		backward
-NDATA=		systemv
-SDATA=		solar87 solar88 solar89
-TDATA=		$(YDATA) $(NDATA) $(SDATA)
+PRIMARY_YDATA=	africa antarctica asia australasia \
+		europe northamerica southamerica
+YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
+NDATA=		systemv factory
+TDATA=		$(YDATA) $(NDATA)
 TABDATA=	iso3166.tab zone.tab
-DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
-USNO=		usno1988 usno1989
+DATA=		$(YDATA) $(NDATA) leapseconds # yearistype.sh
 
 TZBUILDDIR=	${.OBJDIR}/builddir
 
@@ -97,9 +101,16 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
 	| while read devino tzfile; do \
 		destfile=${DESTDIR}${TZDIR}/$${tzfile#./}; \
+		destdir=$$(dirname $${destfile}); \
+		if [ ! -d "$$destdir" ]; then \
+			${_MKSHMSG_INSTALL} $$destdir; \
+			${_MKSHECHO} ${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} \
+			$$destdir; \
+			${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} $$destdir; \
+		fi; \
 		if [ "$$devino" = "$$lastdevino" ]; then \
-			if  ldevino=`${TOOL_STAT} -qf '%d %i' $$lastfile` && \
-			    tdevino=`${TOOL_STAT} -qf '%d %i' $$destfile` && \
+			if  ldevino=$$(${TOOL_STAT} -qf '%d %i' $$lastfile) && \
+			    tdevino=$$(${TOOL_STAT} -qf '%d %i' $$destfile) && \
 			    [ "$$ldevino" = "$$tdevino" ]; then \
 				continue; \
 			fi; \

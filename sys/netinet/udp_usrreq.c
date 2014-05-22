@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.183.2.2 2012/10/30 17:22:47 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.183.2.3 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.183.2.2 2012/10/30 17:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.183.2.3 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.183.2.2 2012/10/30 17:22:47 yamt Ex
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/once.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -118,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.183.2.2 2012/10/30 17:22:47 yamt Ex
 #include <net/if_faith.h>
 #endif
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
@@ -126,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.183.2.2 2012/10/30 17:22:47 yamt Ex
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
-#endif	/* FAST_IPSEC */
+#endif	/* IPSEC */
 
 #ifdef COMPAT_50
 #include <compat/sys/socket.h>
@@ -148,7 +149,7 @@ struct	inpcbtable udbtable;
 percpu_t *udpstat_percpu;
 
 #ifdef INET
-#ifdef IPSEC_NAT_T
+#ifdef IPSEC
 static int udp4_espinudp (struct mbuf **, int, struct sockaddr *,
 	struct socket *);
 #endif
@@ -225,24 +226,35 @@ EVCNT_ATTACH_STATIC(udp6_swcsum);
 
 static void sysctl_net_inet_udp_setup(struct sysctllog **);
 
+static int
+do_udpinit(void)
+{
+
+	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
+	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
+
+	MOWNER_ATTACH(&udp_tx_mowner);
+	MOWNER_ATTACH(&udp_rx_mowner);
+	MOWNER_ATTACH(&udp_mowner);
+
+	return 0;
+}
+
+void
+udp_init_common(void)
+{
+	static ONCE_DECL(doudpinit);
+
+	RUN_ONCE(&doudpinit, do_udpinit);
+}
+
 void
 udp_init(void)
 {
 
 	sysctl_net_inet_udp_setup(NULL);
 
-	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
-
-	MOWNER_ATTACH(&udp_tx_mowner);
-	MOWNER_ATTACH(&udp_rx_mowner);
-	MOWNER_ATTACH(&udp_mowner);
-
-#ifdef INET
-	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
-#endif
-#ifdef INET6
-	udp6stat_percpu = percpu_alloc(sizeof(uint64_t) * UDP6_NSTATS);
-#endif
+	udp_init_common();
 }
 
 /*
@@ -404,6 +416,14 @@ udp_input(struct mbuf *m, ...)
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
 	}
+	if (m == NULL) {
+		/*
+		 * packet has been processed by ESP stuff -
+		 * e.g. dropped NAT-T-keep-alive-packet ...
+		 */
+		return;
+	}
+	ip = mtod(m, struct ip *);
 #ifdef INET6
 	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
 		struct sockaddr_in6 src6, dst6;
@@ -626,7 +646,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 		return;
 	}
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -676,7 +696,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 		return;
 	in6p = sotoin6pcb(so);
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -758,7 +778,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
+		TAILQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
 			inp = (struct inpcb *)inph;
 			if (inp->inp_af != AF_INET)
 				continue;
@@ -804,7 +824,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 				return rcvcnt;
 		}
 
-#ifdef IPSEC_NAT_T
+#ifdef IPSEC
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
@@ -903,7 +923,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
+		TAILQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
 			in6p = (struct in6pcb *)inph;
 			if (in6p->in6p_af != AF_INET6)
 				continue;
@@ -1058,7 +1078,6 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				break;
 
 			switch(optval) {
-#ifdef IPSEC_NAT_T
 			case 0:
 				inp->inp_flags &= ~INP_ESPINUDP_ALL;
 				break;
@@ -1072,7 +1091,6 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				inp->inp_flags &= ~INP_ESPINUDP_ALL;
 				inp->inp_flags |= INP_ESPINUDP_NON_IKE;
 				break;
-#endif
 			default:
 				error = EINVAL;
 				break;
@@ -1367,11 +1385,7 @@ sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_udp_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
@@ -1437,7 +1451,7 @@ udp_statinc(u_int stat)
 	UDP_STATINC(stat);
 }
 
-#if (defined INET && defined IPSEC_NAT_T)
+#if defined(INET) && defined(IPSEC)
 /*
  * Returns:
  * 1 if the packet was processed
@@ -1455,7 +1469,6 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	size_t minlen;
 	size_t iphdrlen;
 	struct ip *ip;
-	struct mbuf *n;
 	struct m_tag *tag;
 	struct udphdr *udphdr;
 	u_int16_t sport, dport;
@@ -1483,6 +1496,8 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/* Ignore keepalive packets */
 	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
+		m_free(m);
+		*mp = NULL; /* avoid any further processiong by caller ... */
 		return 1;
 	}
 
@@ -1542,16 +1557,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	ip->ip_p = IPPROTO_ESP;
 
 	/*
-	 * Copy the mbuf to avoid multiple free, as both
-	 * esp4_input (which we call) and udp_input (which
-	 * called us) free the mbuf.
-	 */
-	if ((n = m_dup(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
-		printf("udp4_espinudp: m_dup failed\n");
-		return 0;
-	}
-
-	/*
+	 * We have modified the packet - it is now ESP, so we should not
+	 * return to UDP processing ... 
+	 *
 	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
 	 * the source UDP port. This is required if we want
 	 * to select the right SPD for multiple hosts behind 
@@ -1560,20 +1568,21 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
 		printf("udp4_espinudp: m_tag_get failed\n");
-		m_freem(n);
-		return 0;
+		m_freem(m);
+		return -1;
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
-	m_tag_prepend(n, tag);
+	m_tag_prepend(m, tag);
 
-#ifdef FAST_IPSEC
-	ipsec4_common_input(n, iphdrlen, IPPROTO_ESP);
+#ifdef IPSEC
+	ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
 #else
-	esp4_input(n, iphdrlen);
+	esp4_input(m, iphdrlen);
 #endif
 
 	/* We handled it, it shouldn't be handled by UDP */
+	*mp = NULL; /* avoid free by caller ... */
 	return 1;
 }
 #endif

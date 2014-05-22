@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.23.2.2 2013/01/16 05:32:50 yamt Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.23.2.3 2014/05/22 11:39:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.23.2.2 2013/01/16 05:32:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.23.2.3 2014/05/22 11:39:34 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -307,7 +307,7 @@ ixp425_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 	}
 
 	ixp425_intr_calculate_masks();

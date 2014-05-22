@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.36 2011/08/08 14:49:06 jakllsch Exp $	*/
+/*	$NetBSD: fdc.c,v 1.36.2.1 2014/05/22 11:40:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.36 2011/08/08 14:49:06 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.36.2.1 2014/05/22 11:40:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -339,12 +339,27 @@ dev_type_ioctl(fdioctl);
 dev_type_strategy(fdstrategy);
 
 const struct bdevsw fd_bdevsw = {
-	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+	.d_open = fdopen,
+	.d_close = fdclose,
+	.d_strategy = fdstrategy,
+	.d_ioctl = fdioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw fd_cdevsw = {
-	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = fdopen,
+	.d_close = fdclose,
+	.d_read = fdread,
+	.d_write = fdwrite,
+	.d_ioctl = fdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void fdgetdisklabel(dev_t);
@@ -383,7 +398,7 @@ static void establish_chip_type(
 		bus_addr_t,
 		bus_size_t,
 		bus_space_handle_t);
-static void	fd_set_properties(struct fd_softc *);
+static void	fd_set_geometry(struct fd_softc *);
 
 #ifdef MEMORY_DISK_HOOKS
 int	fd_read_md_image(size_t *, void **);
@@ -971,7 +986,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	 */
 	mountroothook_establish(fd_mountroot_hook, fd->sc_dev);
 
-	fd_set_properties(fd);
+	fd_set_geometry(fd);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
 	if (!pmf_device_register1(self, fdsuspend, NULL, fdshutdown))
@@ -2564,57 +2579,33 @@ fd_read_md_image(size_t	*sizep, void **addrp)
 #endif /* MEMORY_DISK_HOOKS */
 
 static void
-fd_set_properties(struct fd_softc *fd)
+fd_set_geometry(struct fd_softc *fd)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
-	struct fd_type *fdt;
-	int secsize;
+	const struct fd_type *fdt;
 
-	fdt = fd->sc_deftype;
-
-	disk_info = prop_dictionary_create();
-
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    fdt->size);
-
-	switch (fdt->secsize) {
-	case 2:
-		secsize = 512;
-		break;
-	case 3:
-		secsize = 1024;
-		break;
-	default:
-		secsize = 0;
+	fdt = fd->sc_type;
+	if (fdt == NULL) {
+		fdt = fd->sc_deftype;
+		if (fdt == NULL)
+			return;
 	}
 
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    secsize);
+	struct disk_geom *dg = &fd->sc_dk.dk_geom;
 
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    fdt->sectrac);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    fdt->heads);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    fdt->cylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(fd->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = fd->sc_dk.dk_info;
-	fd->sc_dk.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	memset(dg, 0, sizeof(*dg));
+	dg->dg_secperunit = fdt->size;
+	dg->dg_nsectors = fdt->sectrac;
+	switch (fdt->secsize) {
+	case 2:
+		dg->dg_secsize = 512;
+		break;
+	case 3:
+		dg->dg_secsize = 1024;
+		break;
+	default:
+		break;
+	}
+	dg->dg_ntracks = fdt->heads;
+	dg->dg_ncylinders = fdt->cylinders;
+	disk_set_info(fd->sc_dev, &fd->sc_dk, NULL);
 }

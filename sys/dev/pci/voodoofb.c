@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.28.2.3 2013/01/16 05:33:31 yamt Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.28.2.4 2014/05/22 11:40:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.28.2.3 2013/01/16 05:33:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.28.2.4 2014/05/22 11:40:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,10 +296,9 @@ voodoo3_write_gra(struct voodoofb_softc *sc, uint8_t reg, uint8_t val)
 static inline void
 voodoo3_write_attr(struct voodoofb_softc *sc, uint8_t reg, uint8_t val)
 {
-	volatile uint8_t junk;
 	uint8_t index;
 	
-	junk = bus_space_read_1(sc->sc_ioregt, sc->sc_ioregh, IS1_R - 0x300);
+	(void)bus_space_read_1(sc->sc_ioregt, sc->sc_ioregh, IS1_R - 0x300);
 	index = bus_space_read_1(sc->sc_ioregt, sc->sc_ioregh, ATT_IW - 0x300);
 	bus_space_write_1(sc->sc_ioregt, sc->sc_ioregh, ATT_IW - 0x300, reg);
 	bus_space_write_1(sc->sc_ioregt, sc->sc_ioregh, ATT_IW - 0x300, val);
@@ -363,7 +362,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 #endif
 	ulong defattr;
-	int console, width, height, i, j;
+	int console, width, height, i;
 	prop_dictionary_t dict;
 	int linebytes, depth, flags;
 	uint32_t bg, fg, ul;
@@ -463,11 +462,12 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 		voodoofb_defaultscreen.ncols = ri->ri_cols;
 		wsdisplay_cnattach(&voodoofb_defaultscreen, ri, 0, 0, defattr);
 	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		voodoofb_set_videomode(sc, sc->sc_videomode);		 
+		if (voodoofb_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &voodoofb_console_screen,
+			    1, &defattr);
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 
 	printf("%s: %d MB aperture at 0x%08x, %d MB registers at 0x%08x\n",
@@ -478,7 +478,6 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	printf("fb: %08lx\n", (ulong)ri->ri_bits);
 #endif
 	
-	j = 0;
 	if (sc->sc_bits_per_pixel == 8) {
 		uint8_t tmp;
 		for (i = 0; i < 256; i++) {
@@ -515,13 +514,14 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	}
 
 #ifdef VOODOOFB_ENABLE_INTR
+	char intrbuf[PCI_INTRSTR_LEN];
 	/* Interrupt. We don't use it for anything yet */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "failed to map interrupt\n");
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pc, ih);
+	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr, 
 	    sc);
 	if (sc->sc_ih == NULL) {
@@ -1028,9 +1028,8 @@ static void
 voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width, 
     int height, int colour) 
 {
-	uint32_t fmt, col;
+	uint32_t fmt;
 	
-	col = (colour << 24) | (colour << 16) | (colour << 8) | colour;
 	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
@@ -1195,6 +1194,12 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
+		/* XXX WSDISPLAYIO_GET_EDID */
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+	}
 	}
 	return EPASSTHROUGH;
 }
@@ -1388,7 +1393,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 
 	uint8_t misc;
 
-	memset(&mod, 0, sizeof(mode));
+	memset(&mod, 0, sizeof(mod));
 	
 	mode = &mod;
 	
@@ -1535,7 +1540,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 {
 	uint32_t miscinit0 = 0;
 	int vidpll, fout;
-	uint32_t vp, vidproc = VIDPROCDEFAULT;
+	uint32_t vidproc = VIDPROCDEFAULT;
 	uint32_t bpp = 1;	/* for now */
 	uint32_t bytes_per_row = vm->hdisplay * bpp;
 
@@ -1545,7 +1550,6 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	sc->sc_linebytes = bytes_per_row;
 	
 	voodoofb_setup_monitor(sc, vm);
-	vp = voodoo3_read32(sc, VIDPROCCFG);
 	
 	vidproc &= ~(0x1c0000); /* clear bits 18 to 20, bpp in vidproccfg */
 	/* enable bits 18 to 20 to the required bpp */
@@ -1554,6 +1558,8 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	vidpll = voodoofb_calc_pll(vm->dot_clock, &fout, 0);
 
 #ifdef VOODOOFB_DEBUG
+	uint32_t vp;
+	vp = voodoo3_read32(sc, VIDPROCCFG);
 	printf("old vidproc: %08x\n", vp);
 	printf("pll: %08x %d\n", vidpll, fout);
 #endif

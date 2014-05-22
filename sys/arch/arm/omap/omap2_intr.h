@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_intr.h,v 1.6.8.1 2012/10/30 17:19:08 yamt Exp $ */
+/*	$NetBSD: omap2_intr.h,v 1.6.8.2 2014/05/22 11:39:33 yamt Exp $ */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -41,6 +41,8 @@
 
 #if defined(OMAP_4430)
 #include <arm/omap/omap4430_intr.h>
+#elif defined(OMAP_5430)
+#include <arm/omap/omap5430_intr.h>
 #elif defined(OMAP2) || defined(OMAP3)
 #include <arm/omap/omap2430_intr.h>
 #endif

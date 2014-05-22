@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.3.2.2 2012/04/17 00:08:50 yamt Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.3.2.3 2014/05/22 11:41:17 yamt Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.3.2.2 2012/04/17 00:08:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.3.2.3 2014/05/22 11:41:17 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,18 +73,29 @@ static int secmodel_extensions_network_cb(kauth_cred_t, kauth_action_t,
 static void
 sysctl_security_extensions_setup(struct sysctllog **clog)
 {
-	const struct sysctlnode *rnode;
+	const struct sysctlnode *rnode, *rnode2;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
 		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
+
+	/* Compatibility: security.models.bsd44 */
+	rnode2 = rnode;
+	sysctl_createv(clog, 0, &rnode2, &rnode2,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "bsd44", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+        /* Compatibility: security.models.bsd44.curtain */
+	sysctl_createv(clog, 0, &rnode2, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects to "\
+		       		    "users not owning them."),
+		       sysctl_extensions_curtain_handler, 0, &curtain, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
@@ -127,12 +138,6 @@ sysctl_security_extensions_setup(struct sysctllog **clog)
 	/* Compatibility: vfs.generic.usermount */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "generic",
 		       SYSCTL_DESCR("Non-specific vfs related information"),
 		       NULL, 0, NULL, 0,
@@ -147,19 +152,13 @@ sysctl_security_extensions_setup(struct sysctllog **clog)
 		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
 
 	/* Compatibility: security.curtain */
-	sysctl_createv(clog, 0, NULL, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "curtain",
 		       SYSCTL_DESCR("Curtain information about objects to "\
 		       		    "users not owning them."),
 		       sysctl_extensions_curtain_handler, 0, &curtain, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
 }
 
 static int
@@ -463,6 +462,9 @@ secmodel_extensions_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	if (curtain != 0) {
 		struct socket *so = (struct socket *)arg1;
+
+		if (__predict_false(so == NULL || so->so_cred == NULL))
+			return KAUTH_RESULT_DENY;
 
 		if (!kauth_cred_uidmatch(cred, so->so_cred)) {
 			int error;

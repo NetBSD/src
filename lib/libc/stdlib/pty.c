@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.2 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: pty.c,v 1.2.4.1 2014/05/22 11:36:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,11 +31,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pty.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: pty.c,v 1.2.4.1 2014/05/22 11:36:54 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 
@@ -63,4 +65,17 @@ ptsname(int fildes)
 		return NULL;
 
 	return pm.sn;
+}
+
+int
+ptsname_r(int fildes, char *buf, size_t buflen) {
+	struct ptmget pm;
+
+	if (buf == NULL)
+		return EINVAL;
+	if (ioctl(fildes, TIOCPTSNAME, &pm) == -1)
+		return errno;
+	if (strlcpy(buf, pm.sn, buflen) > buflen)
+		return ERANGE;
+	return 0;
 }

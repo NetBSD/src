@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.51.2.2 2012/10/30 18:59:15 yamt Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.51.2.3 2014/05/22 11:36:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.51.2.2 2012/10/30 18:59:15 yamt Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.51.2.3 2014/05/22 11:36:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -56,11 +56,13 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.51.2.2 2012/10/30 18:59:15 yamt Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <stdio.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 #define	MUTEX_WAITERS_BIT		((uintptr_t)0x01)
 #define	MUTEX_RECURSIVE_BIT		((uintptr_t)0x02)
@@ -103,6 +105,9 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 {
 	intptr_t type;
 
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_init_stub(ptm, attr);
+
 	if (attr == NULL)
 		type = PTHREAD_MUTEX_NORMAL;
 	else
@@ -130,10 +135,12 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 	return 0;
 }
 
-
 int
 pthread_mutex_destroy(pthread_mutex_t *ptm)
 {
+
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_destroy_stub(ptm);
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
@@ -149,6 +156,9 @@ pthread_mutex_lock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
 	void *val;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_lock_stub(ptm);
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -198,11 +208,61 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 	return owner;
 }
 
+NOINLINE static void
+pthread__mutex_setwaiters(pthread_t self, pthread_mutex_t *ptm)
+{
+	void *new, *owner;
+
+	/*
+	 * Note that the mutex can become unlocked before we set
+	 * the waiters bit.  If that happens it's not safe to sleep
+	 * as we may never be awoken: we must remove the current
+	 * thread from the waiters list and try again.
+	 *
+	 * Because we are doing this atomically, we can't remove
+	 * one waiter: we must remove all waiters and awken them,
+	 * then sleep in _lwp_park() until we have been awoken. 
+	 *
+	 * Issue a memory barrier to ensure that we are reading
+	 * the value of ptm_owner/pt_mutexwait after we have entered
+	 * the waiters list (the CAS itself must be atomic).
+	 */
+again:
+	membar_consumer();
+	owner = ptm->ptm_owner;
+
+	if (MUTEX_OWNER(owner) == 0) {
+		pthread__mutex_wakeup(self, ptm);
+		return;
+	}
+	if (!MUTEX_HAS_WAITERS(owner)) {
+		new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
+		if (atomic_cas_ptr(&ptm->ptm_owner, owner, new) != owner) {
+			goto again;
+		}
+	}
+
+	/*
+	 * Note that pthread_mutex_unlock() can do a non-interlocked CAS.
+	 * We cannot know if the presence of the waiters bit is stable
+	 * while the holding thread is running.  There are many assumptions;
+	 * see sys/kern/kern_mutex.c for details.  In short, we must spin if
+	 * we see that the holder is running again.
+	 */
+	membar_sync();
+	pthread__mutex_spin(ptm, owner);
+
+	if (membar_consumer(), !MUTEX_HAS_WAITERS(ptm->ptm_owner)) {
+		goto again;
+	}
+}
+
 NOINLINE static int
 pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 {
 	void *waiters, *new, *owner, *next;
 	pthread_t self;
+	int serrno;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
@@ -222,6 +282,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 			return EDEADLK;
 	}
 
+	serrno = errno;
 	for (;; owner = ptm->ptm_owner) {
 		/* Spin while the owner is running. */
 		owner = pthread__mutex_spin(ptm, owner);
@@ -234,6 +295,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 				next = atomic_cas_ptr(&ptm->ptm_owner, owner,
 				    new);
 				if (next == owner) {
+					errno = serrno;
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 					membar_enter();
 #endif
@@ -264,48 +326,8 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 			    	break;
 		}
 
-		/*
-		 * Set the waiters bit and block.
-		 *
-		 * Note that the mutex can become unlocked before we set
-		 * the waiters bit.  If that happens it's not safe to sleep
-		 * as we may never be awoken: we must remove the current
-		 * thread from the waiters list and try again.
-		 *
-		 * Because we are doing this atomically, we can't remove
-		 * one waiter: we must remove all waiters and awken them,
-		 * then sleep in _lwp_park() until we have been awoken. 
-		 *
-		 * Issue a memory barrier to ensure that we are reading
-		 * the value of ptm_owner/pt_mutexwait after we have entered
-		 * the waiters list (the CAS itself must be atomic).
-		 */
-		membar_consumer();
-		for (owner = ptm->ptm_owner;; owner = next) {
-			if (MUTEX_HAS_WAITERS(owner))
-				break;
-			if (MUTEX_OWNER(owner) == 0) {
-				pthread__mutex_wakeup(self, ptm);
-				break;
-			}
-			new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
-			next = atomic_cas_ptr(&ptm->ptm_owner, owner, new);
-			if (next == owner) {
-				/*
-				 * pthread_mutex_unlock() can do a
-				 * non-interlocked CAS.  We cannot
-				 * know if our attempt to set the
-				 * waiters bit has succeeded while
-				 * the holding thread is running.
-				 * There are many assumptions; see
-				 * sys/kern/kern_mutex.c for details.
-				 * In short, we must spin if we see
-				 * that the holder is running again.
-				 */
-				membar_sync();
-				next = pthread__mutex_spin(ptm, owner);
-			}
-		}
+		/* Set the waiters bit and block. */
+		pthread__mutex_setwaiters(self, ptm);
 
 		/*
 		 * We may have been awoken by the current thread above,
@@ -317,8 +339,8 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 		 */
 		while (self->pt_mutexwait) {
 			self->pt_blocking++;
-			(void)_lwp_park(NULL, self->pt_unpark,
-			    __UNVOLATILE(&ptm->ptm_waiters),
+			(void)_lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, NULL,
+			    self->pt_unpark, __UNVOLATILE(&ptm->ptm_waiters),
 			    __UNVOLATILE(&ptm->ptm_waiters));
 			self->pt_unpark = 0;
 			self->pt_blocking--;
@@ -332,6 +354,9 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
 	void *val, *new, *next;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_trylock_stub(ptm);
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -369,6 +394,9 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
 	void *value;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_mutex_unlock_stub(ptm);
 
 	/*
 	 * Note this may be a non-interlocked CAS.  See lock_slow()
@@ -465,6 +493,12 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	return error;
 }
 
+/*
+ * pthread__mutex_wakeup: unpark threads waiting for us
+ *
+ * unpark threads on the ptm->ptm_waiters list and self->pt_waiters.
+ */
+
 static void
 pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 {
@@ -530,9 +564,12 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 		}
 	}
 }
+
 int
 pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_mutexattr_init_stub(attr);
 
 	attr->ptma_magic = _PT_MUTEXATTR_MAGIC;
 	attr->ptma_private = (void *)PTHREAD_MUTEX_DEFAULT;
@@ -542,6 +579,8 @@ pthread_mutexattr_init(pthread_mutexattr_t *attr)
 int
 pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_mutexattr_destroy_stub(attr);
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
@@ -552,7 +591,6 @@ pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 int
 pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 {
-
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
@@ -563,6 +601,8 @@ pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 int
 pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_mutexattr_settype_stub(attr, type);
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
@@ -577,6 +617,16 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 		return EINVAL;
 	}
 }
+
+/*
+ * pthread__mutex_deferwake: try to defer unparking threads in self->pt_waiters
+ *
+ * In order to avoid unnecessary contention on the interlocking mutex,
+ * we defer waking up threads until we unlock the mutex.  The threads will
+ * be woken up when the calling thread (self) releases the first mutex with
+ * MUTEX_DEFERRED_BIT set.  It likely be the mutex 'ptm', but no problem
+ * even if it isn't.
+ */
 
 void
 pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm)

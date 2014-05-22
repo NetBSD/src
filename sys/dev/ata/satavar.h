@@ -1,4 +1,4 @@
-/*	$NetBSD: satavar.h,v 1.5.34.1 2012/10/30 17:20:53 yamt Exp $	*/
+/*	$NetBSD: satavar.h,v 1.5.34.2 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 const char *sata_speed(uint32_t);
 uint32_t sata_reset_interface(struct ata_channel *, bus_space_tag_t,
-    bus_space_handle_t, bus_space_handle_t);
+    bus_space_handle_t, bus_space_handle_t, int);
 void	sata_interpret_sig(struct ata_channel *, int, uint32_t);
 
 #endif /* _DEV_ATA_SATAVAR_H_ */

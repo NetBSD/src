@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.shark.inc,v 1.16 2011/07/10 04:37:56 tsutsui Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.16.2.1 2014/05/22 11:40:08 yamt Exp $
 
-MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
+COPTS+=			-fno-unwind-tables
 GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 
 # Need to convert the kernel from ELF to a.out so that OpenFirmware

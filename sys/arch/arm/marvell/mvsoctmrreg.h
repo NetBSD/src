@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmrreg.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsoctmrreg.h,v 1.1.14.1 2014/05/22 11:39:33 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,16 +30,19 @@
 #define MVSOCTMR_SIZE		0x100
 
 #define MVSOCTMR_CTCR		0x00		/* CPU Timers Control */
+#define MVSOCTMR_TESR		0x04		/* CPU Timers Event Status */
 #define MVSOCTMR_RELOAD(n)	(0x10 + (n) * 8)/* CPU Timer(n) Reload */
 #define MVSOCTMR_TIMER(n)	(0x14 + (n) * 8)/* CPU Timer(n) */
 
 #define MVSOCTMR_TIMER0		0
 #define MVSOCTMR_TIMER1		1
 #define MVSOCTMR_WATCHDOG	2
-
+#define MVSOCTMR_TIMER2		4	/* Discovery Innovation only */
+#define MVSOCTMR_TIMER3		5	/* Discovery Innovation only */
 
 /* CPU Timers Control Register (MVSOCTMR_CTCR) */
-#define MVSOCTMR_CTCR_CPUTIMEREN(n)	(1 << (n * 2))
-#define MVSOCTMR_CTCR_CPUTIMERAUTO(n)	(1 << (n * 2 + 1))
+#define MVSOCTMR_CTCR_CPUTIMEREN(n)	(1 << ((n) * 2))
+#define MVSOCTMR_CTCR_CPUTIMERAUTO(n)	(1 << ((n) * 2 + 1))
+#define MVSOCTMR_CTCR_25MHZEN(n)	(1 << ((n) + 11)) /* Armada XP only */
 
 #endif	/* !_MVSOCTMRREG_H_ */

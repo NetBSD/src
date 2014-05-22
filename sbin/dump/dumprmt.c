@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.34.2.1 2013/01/23 00:05:29 yamt Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.34.2.2 2014/05/22 11:37:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.34.2.1 2013/01/23 00:05:29 yamt Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.34.2.2 2014/05/22 11:37:27 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,14 +43,11 @@ __RCSID("$NetBSD: dumprmt.c,v 1.34.2.1 2013/01/23 00:05:29 yamt Exp $");
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <ufs/ufs/dinode.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-
-#include <protocols/dumprestore.h>
 
 #include <ctype.h>
 #include <err.h>

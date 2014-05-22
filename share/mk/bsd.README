@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.289.2.4 2013/01/16 05:32:37 yamt Exp $
+#	$NetBSD: bsd.README,v 1.289.2.5 2014/05/22 11:37:53 yamt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -113,8 +113,11 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    3	Ignore the effect of the "@" prefix in make commands
 		    4	Trace shell commands using the shell's -x flag
 
-MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
-		with the Automated Testing Framework (ATF).
+MKATF		If "no", don't build the Automated Testing Framework (ATF),
+		which includes the libatf-c, libatf-c++ and libatf-sh libraries
+		and the various command line tools.  Also, because the build of
+		the libraries is disabled, don't build the NetBSD test suite
+		either.
 		Default: yes
 
 MKBFD		Obsolete, use MKBINUTILS
@@ -143,6 +146,11 @@ MKCRYPTO	If "no", no cryptography support will be built into the system,
 MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
 		Default: no
 
+MKCTF		If "no", do not build and install CTF tools, and also
+		don't generate and manipulate CTF data of ELF binaries
+		during build.
+		Default: no
+
 MKCVS		If "no", don't build or install cvs(1).
 		Default: yes
 
@@ -153,6 +161,13 @@ MKDEBUG		If "no", don't build and install separate debugging symbols
 MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.
 		Default: no
+
+MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
+		instead of inlining the contents of the .d files. Useful
+		when stale dependencies are present, to list the exact
+		files that need refreshing. It is off by default because
+		it is possibly slower.
+		Default "no"
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
@@ -219,6 +234,10 @@ MKISCSI		If "no", don't build or install iSCSI library or applications
 		(depends on libpthread.)
 		Default: yes
 
+MKKDEBUG	If "yes", force building of kernel symbol info and creation
+		of netbsd.gdb in all kernel builds, independently of the
+		settings for "makeoptions DEBUG" in the kernel config file.
+
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
 		Default: yes
@@ -226,8 +245,20 @@ MKKERBEROS	If "no", disables building of Kerberos v5
 MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
 
+MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
+		Note that setting this to "no" does not disable the build of
+		the NetBSD test suite itself; the build of the tests is
+		controlled by the MKATF knob.
+		Default: no (until the import is done and validated)
+
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
+		Default: yes
+
+MKLIBCXX	If not "no", build and install libc++.
+		Default: no
+
+MKLIBSTDCXX	If not "no", build and install libstdc++.
 		Default: yes
 
 MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
@@ -330,7 +361,7 @@ MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+MKSLJIT		If "no", disables building of sljit (stack-less platform
 		independent JIT compiler) private library and tests.
 		Default: yes on amd64, i386 and sparc, no elsewhere.
 
@@ -368,6 +399,12 @@ MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
 		install the X fonts.  The xfont set is still created but
 		will be empty.
 		Default: yes
+
+MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
+		libGLw with Motif stubs.  If Motif is not installed in the
+		default location /usr/pkg, the location can be specified
+		using the X11MOTIFPATH variable.
+		Default: no
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
@@ -435,8 +472,8 @@ USE_YP		If "no", disables building YP (NIS) support into
 		If ${MKYP} is "no", USE_YP will also be forced to "no".
 
 USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
-		Otherwise, build tools/pigz and use nbpigz to compress
-		things.
+		Otherwise, build tools/pigz, set TOOL_GZIP=${TOOL_PIGZ},
+		and use nbpigz to compress things.
 		Default: "no".
 
 X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
@@ -758,11 +795,13 @@ TOOL_GREP		Print lines matching a pattern.  [grep]
 
 TOOL_GROFF		Front end for groff document formatting system.  [groff]
 
+TOOL_GZIP		Compression/decompression tool.  [gzip]
+
 TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
 
 TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
 
-TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
+TOOL_HPPAMKBOOT		Make bootable image for hppa.  [hppa-mkboot]
 
 TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
 
@@ -797,11 +836,15 @@ TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
 
 TOOL_MKMAGIC		Create database for file(1).  [file]
 
+TOOL_MKNOD		Make device special file.  [mknod]
+
 TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 
 TOOL_MSGC		Simple message list compiler.  [msgc]
 
 TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_NCDCS		Turn ELF kernel into a NCD firmware image. [ncdcs]
 
 TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
@@ -849,6 +892,10 @@ TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
 TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
 
 TOOL_ZIC		Time zone compiler.  [zic]
+
+For each possible value of MACHINE_CPU, MACHINES.${MACHINE_CPU} contain a
+list of what ports can be built for it.  This keeps those definitions in
+centralized place.
 
 <bsd.own.mk> is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
@@ -1089,6 +1136,11 @@ kernel Makefiles.  It uses similar variables to <bsd.inc.mk>.
 Please see <bsd.kinc.mk> for more details, and keep the documentation
 in that file up to date.
 
+=-=-=-=-=   bsd.syscall.mk =-=-=-=-=
+
+The include file <bsd.syscall.mk> contains the logic to create syscall
+files for various emulations. It includes <bsd.kinc.mk> to handle the
+rest of the targets.
 
 =-=-=-=-=   bsd.lib.mk   =-=-=-=-=
 
@@ -1109,7 +1161,8 @@ LIBDIR		Target directory for libraries.
 MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 		permissions in files inside its archives to those of
 		the file it was fed. This leads to non-reproduceable
-		builds. If MKARZERO is set to "yes" (default is "no")
+		builds. If MKARZERO is set to "yes" (default is the
+		same as MKREPRO, or "no" if MKREPRO is not defined),
 		then the "D" flag is passed to ar, causing the
 		timestamp, uid and gid to be zeroed and the file
 		permissions to be set to 644. This allows .a files
@@ -1455,6 +1508,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 		LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+		LIBCRTI?=	${DESTDIR}/usr/lib/crti.o
 		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 		LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
@@ -1467,6 +1521,8 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEVENT_OPENSSL?=	${DESTDIR}/usr/lib/libevent_openssl.a
+		LIBEVENT_PTHREADS?=	${DESTDIR}/usr/lib/libevent_pthreads.a
 		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
@@ -1494,6 +1550,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
 		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
 		LIBLUA?=	${DESTDIR}/usr/lib/liblua.a
+		LIBLUTOK?=	${DESTDIR}/usr/lib/liblutok.a
 		LIBLWRES?=	${DESTDIR}/usr/lib/liblwres.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
 		LIBMAGIC?=	${DESTDIR}/usr/lib/libmagic.a
@@ -1557,9 +1614,11 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBICE?=	${DESTDIR}/usr/X11R7/lib/libICE.a
 		LIBSM?=		${DESTDIR}/usr/X11R7/lib/libSM.a
 		LIBX11?=	${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBX11_XCB?=	${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
 		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a
+		LIBXCB?=	${DESTDIR}/usr/X11R7/lib/libxcb.a
 		LIBXDMCP?=	${DESTDIR}/usr/X11R7/lib/libXdmcp.a
 		LIBXEXT?=	${DESTDIR}/usr/X11R7/lib/libXext.a
 		LIBXFONT?=	${DESTDIR}/usr/X11R7/lib/libXfont.a
@@ -1704,129 +1763,6 @@ SUBDIR		For all of the directories listed in ${SUBDIR}, the
 		and other special sources.
 
 
-=-=-=-=-=   bsd.sys.mk   =-=-=-=-=
-
-The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
-<bsd.lib.mk>.  It contains overrides that are used when building
-the NetBSD source tree.
-
-The following variables control how various files are compiled/built.
-(Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
-
-AR		Create, modify, and extract from archives.  [ar]
-
-ARFLAGS		Options to ${AR}.  [rl]
-
-AS		Assembler.  [as]
-
-AFLAGS		Options to ${CC} when compiling or linking .s or .S
-		assembly source files.  []
-
-BUILDSEED	GCC uses random numbers when compiling C++ code.
-		If this option is present, seed the random number
-		generator based on the value, source file names and
-		the output file name to make builds more deterministic.
-		Additional information is available in the GCC
-		documentation of -frandom-seed.
-
-CC		C compiler.  [cc]
-
-CFLAGS		Options to ${CC}.  [Usually -O or -O2]
-
-CPP		C Pre-Processor.  [cpp]
-
-CPPFLAGS	Options to ${CPP}.  []
-
-CPUFLAGS	Optimization flags for ${CC}.  []
-
-CXX		C++ compiler.  [c++]
-
-CXXFLAGS	Options to ${CXX}.  [${CFLAGS}]
-
-ELF2ECOFF	Convert ELF-format executable to ECOFF.  [elf2ecoff]
-
-FC		Fortran compiler.  [f77]
-
-FFLAGS		Options to {$FC}.  [-O]
-
-HOST_SH		Shell.	This must be an absolute path, because it may be
-		substituted into "#!" lines in scripts.	 [/bin/sh]
-
-INSTALL		install(1) command.  [install]
-
-LEX		Lexical analyzer.  [lex]
-
-LFLAGS		Options to ${LEX}.  []
-
-LPREFIX		Symbol prefix for ${LEX} (see -P option in lex(1)) [yy]
-
-LD		Linker.  [ld]
-
-LDFLAGS		Options to ${CC} during the link process.  []
-
-LINT		C program verifier.  [lint]
-
-LINTFLAGS	Options to ${LINT}.  [-chapbxzFS]
-
-LORDER		List dependencies for object files.  [lorder]
-
-MAKE		make(1).  [make]
-
-MKDEP		Construct Makefile dependency list.  [mkdep]
-
-NM		List symbols from object files.  [nm]
-
-PC		Pascal compiler.  [pc]  (Not present)
-
-PFLAGS		Options to ${PC}.  []
-
-OBJC		Objective C compiler.  [${CC}]
-
-OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
-
-OBJCOPY		Copy and translate object files.  [objcopy]
-
-OBJCOPYLIBFLAGS	Flags to pass to objcopy when library objects are
-		being built. [${.TARGET} =~ "*.po" ? -X : -x]
-
-OBJDUMP		Display information from object files.  [objdump]
-
-RANLIB		Generate index to archive.  [ranlib]
-
-SIZE		List section sizes and total size.  [size]
-
-STRIP		Discard symbols from object files.  [strip]
-
-TSORT		Topological sort of a directed graph.  [tsort -q]
-
-YACC		LALR(1) parser generator.  [yacc]
-
-YFLAGS		Options to ${YACC}.  []
-
-YHEADER		If defined, add "-d" to YFLAGS, and add dependencies
-		from <file>.y to <file>.h and <file>.c, and add
-		<foo>.h to CLEANFILES.
-
-YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
-
-
-Other variables of note (incomplete list):
-
-NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
-		that cause warnings to be fatal, such as:
-			-Werror -Wa,--fatal-warnings
-		(The latter being for as(1).)
-
-NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
-		passed to it.
-
-WARNS		Crank up compiler warning options; the distinct levels are:
-			WARNS=1
-			WARNS=2
-			WARNS=3
-			WARNS=4
-			WARNS=5
-
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 
 The include file <bsd.x11.mk> contains parameters and targets for
@@ -1889,5 +1825,186 @@ CPPSCRIPTFLAGS		Additional flags to cpp(1) when building CPPSCRIPTS.
 
 CPPSCRIPTFLAGS_<fn>	Additional flags to cpp(1) when building CPPSCRIPT <fn>.
 
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The following files are described here for completion, but they are not
+supposed to be included directly from other Makefiles; they are used
+internally by other system files.
+
+=-=-=-=-=   bsd.sys.mk   =-=-=-=-=
+
+The include file <bsd.sys.mk> is used by other system mk files and
+it is not intended to be included standalone. It contains rules and
+system build variables. It requires bsd.own.mk to be included first.
+It contains overrides that are used when building the NetBSD source tree.
+
+The following variables control how various files are compiled/built.
+(Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
+
+AR		Create, modify, and extract from archives.  [ar]
+
+ARFLAGS		Options to ${AR}.  [rl]
+
+AS		Assembler.  [as]
+
+AFLAGS		Options to ${CC} when compiling or linking .s or .S
+		assembly source files.  []
+
+BUILDSEED	GCC uses random numbers when compiling C++ code.
+		If this option is present, seed the random number
+		generator based on the value, source file names and
+		the output file name to make builds more deterministic.
+		Additional information is available in the GCC
+		documentation of -frandom-seed.
+
+CC		C compiler.  [cc]
+
+CFLAGS		Options to ${CC}.  [Usually -O or -O2]
+
+CPP		C Pre-Processor.  [cpp]
+
+CPPFLAGS	Options to ${CPP}.  []
+
+CPUFLAGS	Optimization flags for ${CC}.  []
+
+CXX		C++ compiler.  [c++]
+
+CXXFLAGS	Options to ${CXX}.  [${CFLAGS}]
+
+ELF2ECOFF	Convert ELF-format executable to ECOFF.  [elf2ecoff]
+
+FC		Fortran compiler.  [f77]
+
+FFLAGS		Options to {$FC}.  [-O]
+
+HOST_SH		Shell.	This must be an absolute path, because it may be
+		substituted into "#!" lines in scripts.	 [/bin/sh]
+
+INSTALL		install(1) command.  [install]
+
+LEX		Lexical analyzer.  [lex]
+
+LFLAGS		Options to ${LEX}.  []
+
+LPREFIX		Symbol prefix for ${LEX} (see -P option in lex(1)) [yy]
+
+LD		Linker.  [ld]
+
+LDFLAGS		Options to ${CC} during the link process.  []
+
+LINT		C program verifier.  [lint]
+
+LINTFLAGS	Options to ${LINT}.  [-chapbxzgFS]
+
+LORDER		List dependencies for object files.  [lorder]
+
+MAKE		make(1).  [make]
+
+MKDEP		Construct Makefile dependency list.  [mkdep]
+
+MKDEPCXX	Construct Makefile dependency list for C++ files.  [mkdep]
+
+NM		List symbols from object files.  [nm]
+
+PC		Pascal compiler.  [pc]  (Not present)
+
+PFLAGS		Options to ${PC}.  []
+
+OBJC		Objective C compiler.  [${CC}]
+
+OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
+
+OBJCOPY		Copy and translate object files.  [objcopy]
+
+OBJCOPYLIBFLAGS	Flags to pass to objcopy when library objects are
+		being built. [${.TARGET} =~ "*.po" ? -X : -x]
+
+OBJDUMP		Display information from object files.  [objdump]
+
+RANLIB		Generate index to archive.  [ranlib]
+
+SIZE		List section sizes and total size.  [size]
+
+STRIP		Discard symbols from object files.  [strip]
+
+TSORT		Topological sort of a directed graph.  [tsort -q]
+
+YACC		LALR(1) parser generator.  [yacc]
+
+YFLAGS		Options to ${YACC}.  []
+
+YHEADER		If defined, add "-d" to YFLAGS, and add dependencies
+		from <file>.y to <file>.h and <file>.c, and add
+		<foo>.h to CLEANFILES.
+
+YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
+
+
+Other variables of note (incomplete list):
+
+NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
+		that cause warnings to be fatal, such as:
+			-Werror -Wa,--fatal-warnings
+		(The latter being for as(1).)
+
+NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
+		passed to it.
+
+WARNS		Crank up compiler warning options; the distinct levels are:
+			WARNS=1
+			WARNS=2
+			WARNS=3
+			WARNS=4
+			WARNS=5
+
+=-=-=-=-=   bsd.host.mk  =-=-=-=-=
+
+This file is automatically included from bsd.own.mk. It contains settings
+for all the HOST_* variables that are used in host programs and libraries.
+
+HOST_AR			The host archive processing command
+
+HOST_CC			The host c compiler
+
+HOST_CFLAGS		The host c compiler flags
+
+HOST_COMPILE.c		The host c compiler line with flags
+
+HOST_COMPILE.cc		The host c++ compiler line with flags
+
+HOST_CPP		The host c pre-processor
+
+HOST_CPPFLAGS		The cost c pre-processor flags
+
+HOST_CXX		The host c++ compiler
+
+HOST_CXXFLAGS		The host c++ compiler flags
+
+HOST_INSTALL_DIR	The host command to install a directory
+
+HOST_INSTALL_FILE	The host command to install a file
+
+HOST_INSTALL_SYMLINK	The host command to install a symlink
+
+HOST_LD			The host linker command
+
+HOST_LDFLAGS		The host linker flags
+
+HOST_LINK.c		The host c linker line with flags
+
+HOST_LINK.cc		The host c++ linker line with flags
+
+HOST_LN			The host command to link two files
+
+HOST_MKDEP		The host command to create dependencies for c programs
+
+HOST_MKDEPCXX		The host command to create dependencies for c++ programs
+
+HOST_OSTYPE		The host OSNAME-RELEASE-ARCH tupple
+
+HOST_RANLIB		The host command to create random access archives
+
+HOST_SH			The host Bourne shell interpreter name (absolute path)
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

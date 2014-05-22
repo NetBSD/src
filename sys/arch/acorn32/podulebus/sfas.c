@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.21.8.1 2012/10/30 17:18:38 yamt Exp $	*/
+/*	$NetBSD: sfas.c,v 1.21.8.2 2014/05/22 11:39:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21.8.1 2012/10/30 17:18:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21.8.2 2014/05/22 11:39:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,6 @@ sfas_init_nexus(struct sfas_softc *dev, struct nexus *nexus)
 void
 sfasinitialize(struct sfas_softc *dev)
 {
-	u_int		*pte;
 	int		 i;
 
 	dev->sc_led_status = 0;
@@ -245,9 +244,11 @@ sfasinitialize(struct sfas_softc *dev)
  * Setup pages to noncachable, that way we don't have to flush the cache
  * every time we need "bumped" transfer.
  */
-	pte = vtopte((vaddr_t) dev->sc_bump_va);
-	*pte &= ~(L2_C | L2_B);
-	PTE_SYNC(pte);
+	pt_entry_t * const ptep = vtopte((vaddr_t) dev->sc_bump_va);
+	const pt_entry_t opte = *ptep;
+	const pt_entry_t npte = opte & ~(L2_C | L2_B);
+	l2pte_set(ptep, npte, opte);
+	PTE_SYNC(ptep);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, PAGE_SIZE);
 
@@ -1538,11 +1539,9 @@ sfasintr(struct sfas_softc *dev)
 void
 sfasicmd(struct sfas_softc *dev, struct sfas_pending *pendp)
 {
-	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
 
 	nexus = &dev->sc_nexus[pendp->xs->xs_periph->periph_target];
-	rp = dev->sc_fas;
 
 	if (!sfasselect(dev, pendp, (char *)pendp->xs->cmd, pendp->xs->cmdlen,
 			(char *)pendp->xs->data, pendp->xs->datalen,

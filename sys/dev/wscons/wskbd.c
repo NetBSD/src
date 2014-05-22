@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.130.8.2 2012/10/30 17:22:12 yamt Exp $ */
+/* $NetBSD: wskbd.c,v 1.130.8.3 2014/05/22 11:40:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130.8.2 2012/10/30 17:22:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130.8.3 2014/05/22 11:40:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -297,8 +297,17 @@ dev_type_poll(wskbdpoll);
 dev_type_kqfilter(wskbdkqfilter);
 
 const struct cdevsw wskbd_cdevsw = {
-	wskbdopen, wskbdclose, wskbdread, nowrite, wskbdioctl,
-	nostop, notty, wskbdpoll, nommap, wskbdkqfilter, D_OTHER
+	.d_open = wskbdopen,
+	.d_close = wskbdclose,
+	.d_read = wskbdread,
+	.d_write = nowrite,
+	.d_ioctl = wskbdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = wskbdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = wskbdkqfilter,
+	.d_flag = D_OTHER
 };
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH

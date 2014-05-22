@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64func.S,v 1.6 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: amd64func.S,v 1.6.32.1 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -47,3 +47,4 @@ ENTRY(tsc_get_timecount)
 	ret
 2:
 	jmp	1b
+END(tsc_get_timecount)

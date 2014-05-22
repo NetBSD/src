@@ -1,10 +1,22 @@
-#	$NetBSD: Makefile.inc,v 1.9.12.2 2013/01/16 05:33:46 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.9.12.3 2014/05/22 11:41:04 yamt Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S
 SRCS+=	ffs.S
-SRCS+=	divsi3.S udivsi3.S divide.S clzsi2.S modsi3.S umodsi3.S
 SRCS+=	memcmp.S memcpy.S memset.S memmove.S strcmp.S strncmp.S
 
-.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
-SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S __aeabi_lcmp.c __aeabi_ulcmp.c
+.if !empty(MACHINE_ARCH:Mearm*)
+SRCS+=	unwind_stub.c
+.endif
+.if empty(MACHINE_ARCH:Mearmv7*)
+CPUFLAGS.ffs.S+=	-marm
+.endif
+CPUFLAGS.divide.S+=	-marm
+CPUFLAGS.memcmp.S+=	-marm
+CPUFLAGS.memcpy.S+=	-marm
+CPUFLAGS.memmove.S+=	-marm
+CPUFLAGS.memset.S+=	-marm
+.if empty(CPPFLAGS:M-D_STANDALONE)
+CPUFLAGS.strcpy.S+=	-marm
+CPUFLAGS.strlcpy.S+=	-marm
+CPUFLAGS.strncpy.S+=	-marm
 .endif

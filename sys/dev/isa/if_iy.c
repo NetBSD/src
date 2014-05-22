@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.88.8.2 2012/10/30 17:21:14 yamt Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.88.8.3 2014/05/22 11:40:23 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.88.8.2 2012/10/30 17:21:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.88.8.3 2014/05/22 11:40:23 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1088,6 +1088,8 @@ iy_intr_rx(struct iy_softc *sc)
 			printf("%s: pck at 0x%04x stat %s next 0x%x len 0x%x\n",
 			    device_xname(sc->sc_dev), rxadrs, sbuf, rxnext, rxlen);
 		}
+#else
+		__USE(rxstatus);
 #endif
 		iyget(sc, iot, ioh, rxlen);
 
@@ -1346,6 +1348,7 @@ iy_mc_setup(struct iy_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	dum = bus_space_read_2(iot, ioh, MEM_PORT_REG); /* dummy read */
+	__USE(dum);
 	bus_space_write_2(iot, ioh, XMT_ADDR_REG, last);
 	bus_space_write_1(iot, ioh, 0, MC_SETUP_CMD);
 

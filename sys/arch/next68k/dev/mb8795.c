@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.49.8.2 2012/10/30 17:20:07 yamt Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.49.8.3 2014/05/22 11:40:01 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.49.8.2 2012/10/30 17:20:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.49.8.3 2014/05/22 11:40:01 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -254,6 +254,7 @@ mb8795_rint(struct mb8795_softc *sc)
 
 	rxstat = MB_READ_REG(sc, MB8795_RXSTAT);
 	rxmask = MB_READ_REG(sc, MB8795_RXMASK);
+	__USE(rxmask);
 
 	MB_WRITE_REG(sc, MB8795_RXSTAT, MB8795_RXSTAT_CLEAR);
 
@@ -376,6 +377,7 @@ mb8795_tint(struct mb8795_softc *sc)
 	panic ("tint");
 	txstat = MB_READ_REG(sc, MB8795_TXSTAT);
 	txmask = MB_READ_REG(sc, MB8795_TXMASK);
+	__USE(txmask);
 
 	if ((txstat & MB8795_TXSTAT_READY) ||
 	    (txstat & MB8795_TXSTAT_TXRECV)) {
@@ -764,6 +766,7 @@ mb8795_start_dma(struct mb8795_softc *sc)
 
 	MB_WRITE_REG(sc, MB8795_TXSTAT, MB8795_TXSTAT_CLEAR);
 	txmask = MB_READ_REG(sc, MB8795_TXMASK);
+	__USE(txmask);
 	/* MB_WRITE_REG(sc, MB8795_TXMASK, txmask | MB8795_TXMASK_READYIE); */
 	/* MB_WRITE_REG(sc, MB8795_TXMASK, txmask | MB8795_TXMASK_TXRXIE); */
 

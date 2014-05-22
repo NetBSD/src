@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.53.4.2 2012/10/30 17:20:05 yamt Exp $
+# 	$NetBSD: INSTALL,v 1.53.4.3 2014/05/22 11:40:00 yamt Exp $
 
 #	config for bootable floppy kernel
 #
@@ -77,7 +77,6 @@ options 	WAPBL		# File system journaling support
 # Networking options
 options 	INET		# Internet protocols
 #options 	GATEWAY		# IP packet forwarding
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -152,7 +151,7 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 
 # Misc.
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	sl			# SLIP interfaces

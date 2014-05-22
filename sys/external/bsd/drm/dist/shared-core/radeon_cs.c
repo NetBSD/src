@@ -725,7 +725,6 @@ static inline int r600_cs_packet3(struct drm_radeon_cs_parser *parser, uint32_t 
 
 static int r600_cs_parse(struct drm_radeon_cs_parser *parser)
 {
-	volatile int rb;
 	struct drm_radeon_kernel_chunk *ib_chunk;
 	/* scan the packet for various things */
 	int count_dw = 0, size_dw;
@@ -765,7 +764,7 @@ static int r600_cs_parse(struct drm_radeon_cs_parser *parser)
 	memcpy(parser->ib, ib_chunk->kdata, ib_chunk->length_dw * sizeof(uint32_t));
 
 	/* read back last byte to flush WC buffers */
-	rb = readl(((vm_offset_t)parser->ib + (ib_chunk->length_dw-1) * sizeof(uint32_t)));
+	readl(((vm_offset_t)parser->ib + (ib_chunk->length_dw-1) * sizeof(uint32_t)));
 
 	return 0;
 }

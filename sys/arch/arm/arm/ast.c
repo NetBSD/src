@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.20.8.1 2012/10/30 17:18:55 yamt Exp $	*/
+/*	$NetBSD: ast.c,v 1.20.8.2 2014/05/22 11:39:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,11 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.20.8.1 2012/10/30 17:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.20.8.2 2014/05/22 11:39:30 yamt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/systm.h>
@@ -54,10 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.20.8.1 2012/10/30 17:18:55 yamt Exp $");
 #include <sys/vmmeter.h>
 #include <sys/userret.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
-
-#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,6 +73,17 @@ userret(struct lwp *l)
 {
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+#if defined(__PROG32) && defined(ARM_MMU_EXTENDED)
+	/*
+	 * If our ASID got released, access via TTBR0 will have been disabled.
+	 * So if it is disabled, activate the lwp again to get a new ASID.
+	 */
+	KASSERT(curcpu()->ci_pmap_cur == l->l_proc->p_vmspace->vm_map.pmap);
+	if (armreg_ttbcr_read() & TTBCR_S_PD0) {
+		pmap_activate(l);
+	}
+#endif
 
 #if defined(__PROG32) && defined(DIAGNOSTIC)
 	KASSERT((lwp_trapframe(l)->tf_spsr & IF32_bits) == 0);

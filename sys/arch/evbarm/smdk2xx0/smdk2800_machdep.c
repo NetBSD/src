@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.37.2.1 2012/10/30 17:19:26 yamt Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.37.2.2 2014/05/22 11:39:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.37.2.1 2012/10/30 17:19:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.37.2.2 2014/05/22 11:39:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,6 +124,9 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.37.2.1 2012/10/30 17:19:26 ya
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -138,10 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.37.2.1 2012/10/30 17:19:26 ya
 #endif
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/intr.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>

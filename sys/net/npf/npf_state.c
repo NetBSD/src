@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.4.4.4 2013/01/23 00:06:25 yamt Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.4.4.5 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4.4.4 2013/01/23 00:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4.4.5 2014/05/22 11:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4.4.4 2013/01/23 00:06:25 yamt Exp $
 #define	NPF_ANY_SESSION_ESTABLISHED	2
 #define	NPF_ANY_SESSION_NSTATES		3
 
-static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] = {
+static const uint8_t npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] = {
 	[NPF_ANY_SESSION_CLOSED] = {
 		[NPF_FLOW_FORW]		= NPF_ANY_SESSION_NEW,
 	},
@@ -94,7 +94,7 @@ static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
 bool
 npf_state_init(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	bool ret;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -124,7 +124,6 @@ npf_state_init(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 void
 npf_state_destroy(npf_state_t *nst)
 {
-
 	nst->nst_state = 0;
 	mutex_destroy(&nst->nst_lock);
 }
@@ -139,7 +138,7 @@ bool
 npf_state_inspect(npf_cache_t *npc, nbuf_t *nbuf,
     npf_state_t *nst, const bool forw)
 {
-	const int proto = npf_cache_ipproto(npc);
+	const int proto = npc->npc_proto;
 	const int di = forw ? NPF_FLOW_FORW : NPF_FLOW_BACK;
 	bool ret;
 
@@ -170,7 +169,7 @@ npf_state_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 int
 npf_state_etime(const npf_state_t *nst, const int proto)
 {
-	const int state = nst->nst_state;
+	const u_int state = nst->nst_state;
 	int timeout = 0;
 
 	switch (proto) {

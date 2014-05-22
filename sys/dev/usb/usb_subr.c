@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.180.2.3 2013/01/23 00:06:14 yamt Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.180.2.4 2014/05/22 11:40:37 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.2.3 2013/01/23 00:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.2.4 2014/05/22 11:40:37 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -82,12 +82,8 @@ Static int usbd_getnewaddr(usbd_bus_handle);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
 Static void usbd_free_iface_data(usbd_device_handle, int);
-Static void usbd_kill_pipe(usbd_pipe_handle);
-usbd_status usbd_attach_roothub(device_t, usbd_device_handle);
-Static usbd_status usbd_probe_and_attach(device_t, usbd_device_handle, int,
-    int);
 
-Static u_int32_t usb_cookie_no = 0;
+uint32_t usb_cookie_no = 0;
 
 Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
@@ -774,7 +770,7 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 		free(p, M_USB);
 		return (err);
 	}
-	usb_init_task(&p->async_task, usbd_clear_endpoint_stall_async_cb, p,
+	usb_init_task(&p->async_task, usbd_clear_endpoint_stall_task, p,
 	    USB_TASKQ_MPSAFE);
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
@@ -784,8 +780,6 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 void
 usbd_kill_pipe(usbd_pipe_handle pipe)
 {
-	int s;
-
 	usbd_abort_pipe(pipe);
 	usbd_lock_pipe(pipe);
 	pipe->methods->close(pipe);
@@ -801,7 +795,7 @@ usbd_getnewaddr(usbd_bus_handle bus)
 	int addr;
 
 	for (addr = 1; addr < USB_MAX_DEVICES; addr++)
-		if (bus->devices[addr] == 0)
+		if (bus->devices[addr] == NULL)
 			return (addr);
 	return (-1);
 }
@@ -1064,7 +1058,7 @@ usbd_reattach_device(device_t parent, usbd_device_handle dev,
  * recognize the initial descriptor fetch (before the control endpoint's
  * MaxPacketSize is known by the host) by exactly this length.
  */
-static usbd_status
+usbd_status
 usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
 {
 	usb_device_request_t req;
@@ -1107,6 +1101,11 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 
 	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
 		 bus, port, depth, speed));
+
+	if (bus->methods->new_device != NULL)
+		return (bus->methods->new_device)(parent, bus, depth, speed,
+		    port, up);
+
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n",
@@ -1133,7 +1132,11 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	 * (which uses 64 bytes so it shouldn't be less),
 	 * highspeed devices must support 64 byte packets anyway
 	 */
-	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	if (speed == USB_SPEED_HIGH || speed == USB_SPEED_FULL)
+		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	else
+		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+
 	dev->def_ep_desc.bInterval = 0;
 
 	/* doesn't matter, just don't let it uninitialized */
@@ -1234,6 +1237,16 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
+	/* Re-establish the default pipe with the new MPS. */
+	usbd_kill_pipe(dev->default_pipe);
+	err = usbd_setup_pipe_flags(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe, USBD_MPSAFE);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
+		usbd_remove_device(dev, up);
+		return err;
+	}
+
 	/* Set the address */
 	DPRINTFN(5, ("usbd_new_device: setting device address=%d\n", addr));
 	err = usbd_set_address(dev, addr);
@@ -1249,14 +1262,6 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->address = addr;	/* new device address now */
 	bus->devices[addr] = dev;
 
-	err = usbd_reload_device_desc(dev);
-	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
-			      "failed\n", addr));
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->default_pipe);
 	err = usbd_setup_pipe_flags(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
@@ -1265,6 +1270,14 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
 		usbd_remove_device(dev, up);
 		return err;
+	}
+
+	err = usbd_reload_device_desc(dev);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
+			      "failed\n", addr));
+		usbd_remove_device(dev, up);
+		return (err);
 	}
 
 	/* Assume 100mA bus powered for now. Changed when configured. */

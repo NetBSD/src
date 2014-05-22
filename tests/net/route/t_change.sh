@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.3 2011/05/14 17:42:28 jmmv Exp $
+#	$NetBSD: t_change.sh,v 1.3.4.1 2014/05/22 11:42:23 yamt Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ reject2blackhole_head()
 {
 
 	atf_set "descr" "Change a reject route to blackhole"
+	atf_set "require.progs" "rump_server"
 }
 
 reject2blackhole_body()

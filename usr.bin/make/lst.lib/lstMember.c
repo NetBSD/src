@@ -1,4 +1,4 @@
-/*	$NetBSD: lstMember.c,v 1.13 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: lstMember.c,v 1.13.8.1 2014/05/22 11:42:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstMember.c,v 1.13 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstMember.c,v 1.13.8.1 2014/05/22 11:42:46 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstMember.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstMember.c,v 1.13 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: lstMember.c,v 1.13.8.1 2014/05/22 11:42:46 yamt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -58,6 +58,9 @@ Lst_Member(Lst l, void *d)
     List    	  	list = l;
     ListNode	lNode;
 
+    if (list == NULL) {
+	return NULL;
+    }
     lNode = list->firstPtr;
     if (lNode == NULL) {
 	return NULL;

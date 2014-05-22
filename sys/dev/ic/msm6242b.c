@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242b.c,v 1.2.4.2 2013/01/16 05:33:15 yamt Exp $ */
+/*      $NetBSD: msm6242b.c,v 1.2.4.3 2014/05/22 11:40:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.2.4.2 2013/01/16 05:33:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.2.4.3 2014/05/22 11:40:22 yamt Exp $");
 
 /* 
  * Driver for OKI MSM6242B Real Time Clock. Somewhat based on an ancient, amiga
@@ -243,8 +243,8 @@ msm6242b_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	msm6242b_write(sc, MSM6242B_1DAY, dt->dt_day % 10);
 	msm6242b_write(sc, MSM6242B_10MONTH, dt->dt_mon / 10);
 	msm6242b_write(sc, MSM6242B_1MONTH, dt->dt_mon % 10);
-	msm6242b_write(sc, MSM6242B_10YEAR, (dt->dt_mon / 10) % 10);
-	msm6242b_write(sc, MSM6242B_1YEAR, dt->dt_mon % 10);
+	msm6242b_write(sc, MSM6242B_10YEAR, (dt->dt_year / 10) % 10);
+	msm6242b_write(sc, MSM6242B_1YEAR, dt->dt_year % 10);
 	msm6242b_write(sc, MSM6242B_WEEK, dt->dt_wday);
 
 	msm6242b_free(sc);

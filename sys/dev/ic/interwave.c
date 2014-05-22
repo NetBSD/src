@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.34.12.2 2012/10/30 17:21:04 yamt Exp $	*/
+/*	$NetBSD: interwave.c,v 1.34.12.3 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.34.12.2 2012/10/30 17:21:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.34.12.3 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,6 +576,7 @@ iw_set_speed(struct iw_softc *sc, u_long freq, char in)
 	IW_READ_CODEC_1(CRDFI, reg);
 
 	DPRINTF((" CRDFI %x ", reg));
+	__USE(reg);
 
 	return freq;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.6.6.1 2013/01/23 00:06:42 yamt Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.6.6.2 2014/05/22 11:43:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ext2fs.c,v 1.6.6.1 2013/01/23 00:06:42 yamt Exp $");
+__RCSID("$NetBSD: ext2fs.c,v 1.6.6.2 2014/05/22 11:43:04 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -169,7 +169,7 @@ ext2fs_read_gdblock(ib_params *params, struct m_ext2fs *fs)
 	gdpb = fs->e2fs_bsize / sizeof(struct ext2_gd);
 
 	for (i = 0; i < fs->e2fs_ngdb; i++) {
-		if (ext2fs_read_disk_block(params, fsbtodb(fs,
+		if (ext2fs_read_disk_block(params, EXT2_FSBTODB(fs,
 		    fs->e2fs.e2fs_first_dblock + 1 /* superblock */ + i),
 		    SBSIZE, gdbuf) == 0)
 			return 0;
@@ -236,7 +236,7 @@ ext2fs_find_disk_blocks(ib_params *params, ino_t ino,
 
 	/* Read the inode. */
 	if (ext2fs_read_disk_block(params,
-		fsbtodb(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
+		EXT2_FSBTODB(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
 		fs->e2fs_bsize, inodebuf))
 		return 0;
 	inode = (void *)inodebuf;
@@ -288,23 +288,23 @@ ext2fs_find_disk_blocks(ib_params *params, ino_t ino,
 			if (blk == 0)
 				memset(level[level_i].diskbuf, 0, MAXBSIZE);
 			else if (ext2fs_read_disk_block(params, 
-				fsbtodb(fs, blk) + params->fstype->offset,
+				EXT2_FSBTODB(fs, blk) + params->fstype->offset,
 				fs->e2fs_bsize, level[level_i].diskbuf) == 0)
 				return 0;
 			/* XXX ondisk32 */
 			level[level_i].blknums = 
 			    (uint32_t *)level[level_i].diskbuf;
-			level[level_i].blkcount = NINDIR(fs);
+			level[level_i].blkcount = EXT2_NINDIR(fs);
 			continue;
 		}
 
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %lu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    EXT2_FSBTODB(fs, blk), ext2_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
-		    fsbtodb(fs, blk) + params->fstype->offset, fs->e2fs_bsize);
+		    EXT2_FSBTODB(fs, blk) + params->fstype->offset, fs->e2fs_bsize);
 		lblk++;
 		nblk--;
 		if (rv != 1)

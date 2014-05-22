@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.50.2.1 2012/04/17 00:09:44 yamt Exp $ */
+/* $NetBSD: cgram.y,v 1.50.2.2 2014/05/22 11:42:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.50.2.1 2012/04/17 00:09:44 yamt Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.50.2.2 2014/05/22 11:42:52 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -63,7 +63,7 @@ int	mblklev;
  * Save the no-warns state and restore it to avoid the problem where
  * if (expr) { stmt } / * NOLINT * / stmt;
  */
-static int onowarn = -1;
+static int olwarn = LWARN_BAD;
 
 static	int	toicon(tnode_t *, int);
 static	void	idecl(sym_t *, int, sbuf_t *);
@@ -76,38 +76,38 @@ static inline void CLRWFLGS(const char *file, size_t line)
 	printf("%s, %d: clear flags %s %zu\n", curr_pos.p_file,
 	    curr_pos.p_line, file, line);
 	clrwflgs();
-	onowarn = -1;
+	olwarn = LWARN_BAD;
 }
 
 static inline void SAVE(const char *file, size_t line);
 static inline void SAVE(const char *file, size_t line)
 {
-	if (onowarn != -1)
+	if (olwarn != LWARN_BAD)
 		abort();
 	printf("%s, %d: save flags %s %zu = %d\n", curr_pos.p_file,
-	    curr_pos.p_line, file, line, nowarn);
-	onowarn = nowarn;
+	    curr_pos.p_line, file, line, lwarn);
+	olwarn = lwarn;
 }
 
 static inline void RESTORE(const char *file, size_t line);
 static inline void RESTORE(const char *file, size_t line)
 {
-	if (onowarn != -1) {
-		nowarn = onowarn;
+	if (olwarn != LWARN_BAD) {
+		lwarn = olwarn;
 		printf("%s, %d: restore flags %s %zu = %d\n", curr_pos.p_file,
-		    curr_pos.p_line, file, line, nowarn);
-		onowarn = -1;
+		    curr_pos.p_line, file, line, lwarn);
+		olwarn = LWARN_BAD;
 	} else
 		CLRWFLGS(file, line);
 }
 #else
-#define CLRWFLGS(f, l) clrwflgs(), onowarn = -1
-#define SAVE(f, l)	onowarn = nowarn
-#define RESTORE(f, l) (void)(onowarn == -1 ? (clrwflgs(), 0) : (nowarn = onowarn))
+#define CLRWFLGS(f, l) clrwflgs(), olwarn = LWARN_BAD
+#define SAVE(f, l)	olwarn = lwarn
+#define RESTORE(f, l) (void)(olwarn == LWARN_BAD ? (clrwflgs(), 0) : (lwarn = olwarn))
 #endif
 %}
 
-%expect 5
+%expect 75
 
 %union {
 	int	y_int;
@@ -130,6 +130,8 @@ static inline void RESTORE(const char *file, size_t line)
 %token	<y_op>		T_UNOP
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
+%token			T_TYPEOF
+%token			T_EXTENSION
 %token			T_ALIGNOF
 %token	<y_op>		T_MULT
 %token	<y_op>		T_DIVOP
@@ -187,13 +189,21 @@ static inline void RESTORE(const char *file, size_t line)
 %token <y_type>		T_ATTRIBUTE
 %token <y_type>		T_AT_ALIGNED
 %token <y_type>		T_AT_DEPRECATED
+%token <y_type>		T_AT_NORETURN
 %token <y_type>		T_AT_MAY_ALIAS
 %token <y_type>		T_AT_PACKED
+%token <y_type>		T_AT_PURE
 %token <y_type>		T_AT_TUINION
 %token <y_type>		T_AT_TUNION
 %token <y_type>		T_AT_UNUSED
-
-
+%token <y_type>		T_AT_FORMAT
+%token <y_type>		T_AT_FORMAT_PRINTF
+%token <y_type>		T_AT_FORMAT_SCANF
+%token <y_type>		T_AT_FORMAT_STRFTIME
+%token <y_type>		T_AT_FORMAT_ARG
+%token <y_type>		T_AT_SENTINEL
+%token <y_type>		T_AT_RETURNS_TWICE
+%token <y_type>		T_AT_COLD
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASS
@@ -373,7 +383,7 @@ func_def:
 		funcdef($1);
 		blklev++;
 		pushdecl(ARG);
-		if (nowarn)
+		if (lwarn == LWARN_NONE)
 			$1->s_used = 1;
 	  } opt_arg_declaration_list {
 		popdecl();
@@ -468,19 +478,41 @@ declaration:
 	| error T_SEMI
 	;
 
+type_attribute_format_type:
+	  T_AT_FORMAT_PRINTF
+	| T_AT_FORMAT_SCANF
+	| T_AT_FORMAT_STRFTIME
+	;
+
 type_attribute_spec:
 	  T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
+	| T_AT_SENTINEL T_LPARN constant T_RPARN
+	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
 	| T_AT_MAY_ALIAS
+	| T_AT_NORETURN
+	| T_AT_COLD
+	| T_AT_RETURNS_TWICE
 	| T_AT_PACKED {
 		addpacked();
 	}
+	| T_AT_PURE
 	| T_AT_TUNION
+	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
+	    constant T_COMMA constant T_RPARN
 	| T_AT_UNUSED
+	| T_QUAL {
+		if ($1 != CONST)	
+			yyerror("Bad attribute");
+	}
 	;
 
 type_attribute:
-	  T_ATTRIBUTE T_LPARN T_LPARN type_attribute_spec T_RPARN T_RPARN
+	  T_ATTRIBUTE T_LPARN T_LPARN {
+	    attron = 1;
+	} type_attribute_spec {
+	    attron = 0;
+	} T_RPARN T_RPARN
 	| T_PACKED {
 		addpacked();
 	}
@@ -505,6 +537,7 @@ declspecs:
 	| declmods typespec {
 		addtype($2);
 	  }
+	| type_attribute declspecs
 	| declspecs type_attribute
 	| declspecs declmod
 	| declspecs notype_typespec {
@@ -553,6 +586,9 @@ notype_typespec:
 	  T_TYPE {
 		$$ = gettyp($1);
 	  }
+	| T_TYPEOF term {
+		$$ = $2->tn_type;
+	  }
 	| struct_spec {
 		popdecl();
 		$$ = $1;
@@ -570,7 +606,7 @@ struct_spec:
 		 * a new tag if "a" is not declared at current level
 		 *
 		 * yychar is valid because otherwise the parser would
-		 * not been able to deceide if he must shift or reduce
+		 * not been able to decide if he must shift or reduce
 		 */
 		$$ = mktag($2, $1, 0, yychar == T_SEMI);
 	  }
@@ -681,6 +717,7 @@ noclass_declspecs:
 	  clrtyp_typespec {
 		addtype($1);
 	  }
+	| type_attribute noclass_declspecs
 	| noclass_declmods typespec {
 		addtype($2);
 	  }
@@ -892,13 +929,16 @@ notype_direct_decl:
 	| T_LPARN type_decl T_RPARN {
 		$$ = $2;
 	  }
+	| type_attribute notype_direct_decl {
+		$$ = $2;
+	}
 	| notype_direct_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
 	| notype_direct_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| notype_direct_decl param_list {
+	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -922,13 +962,16 @@ type_direct_decl:
 	| T_LPARN type_decl T_RPARN {
 		$$ = $2;
 	  }
+	| type_attribute type_direct_decl {
+		$$ = $2;
+	}
 	| type_direct_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
 	| type_direct_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| type_direct_decl param_list {
+	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -965,7 +1008,7 @@ direct_param_decl:
 	| direct_param_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| direct_param_decl param_list {
+	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -994,7 +1037,7 @@ direct_notype_param_decl:
 	| direct_notype_param_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| direct_notype_param_decl param_list {
+	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -1171,6 +1214,7 @@ init_expr:
 		mkinit($1);
 	  }
 	| init_by_name init_expr	%prec T_COMMA
+	| init_lbrace init_rbrace
 	| init_lbrace init_expr_list init_rbrace
 	| init_lbrace init_expr_list T_COMMA init_rbrace
 	| error
@@ -1271,18 +1315,21 @@ direct_abs_decl:
 	| T_LBRACK constant T_RBRACK {
 		$$ = addarray(aname(), 1, toicon($2, 0));
 	  }
+	| type_attribute direct_abs_decl {
+		$$ = $2;
+	}
 	| direct_abs_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
 	| direct_abs_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| abs_decl_param_list {
+	| abs_decl_param_list opt_asm_or_symbolrename {
 		$$ = addfunc(aname(), $1);
 		popdecl();
 		blklev--;
 	  }
-	| direct_abs_decl abs_decl_param_list {
+	| direct_abs_decl abs_decl_param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -1339,7 +1386,7 @@ stmnt_d_list:
 
 comp_stmnt:
 	  comp_stmnt_lbrace comp_stmnt_rbrace
-	| comp_stmnt_lbrace stmnt_list comp_stmnt_rbrace
+	| comp_stmnt_lbrace stmnt_d_list comp_stmnt_rbrace
 	| comp_stmnt_lbrace declaration_list comp_stmnt_rbrace
 	| comp_stmnt_lbrace declaration_list stmnt_d_list comp_stmnt_rbrace
 	;
@@ -1724,6 +1771,9 @@ term:
 	  }
 	| T_IMAG term {
 		$$ = build(IMAG, $2, NULL);
+	  }
+	| T_EXTENSION term {
+		$$ = $2;
 	  }
 	| T_REAL T_LPARN term T_RPARN {
 		$$ = build(REAL, $3, NULL);

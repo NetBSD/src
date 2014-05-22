@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.22.8.1 2012/10/30 17:19:55 yamt Exp $	*/
+/*	$NetBSD: akbd.c,v 1.22.8.2 2014/05/22 11:39:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.22.8.1 2012/10/30 17:19:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.22.8.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -132,7 +132,7 @@ akbdattach(device_t parent, device_t self, void *aux)
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = device_private(self);
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
-	int error, kbd_done;
+	int error __unused, kbd_done;
 	short cmd;
 	u_char buffer[9];
 #if NWSKBD > 0

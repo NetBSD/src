@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.83.2.3 2013/01/16 05:32:37 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.83.2.4 2014/05/22 11:37:52 yamt Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 2012
+.Dd February 27, 2014
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -367,7 +367,7 @@ is the locked vnode of the directory to search and
 .Fa cnp
 is the pathname component to be searched for.
 If the pathname component is found, the address of the resulting
-locked vnode is returned in
+unlocked vnode is returned in
 .Fa vpp .
 The operation specified in
 .Em cnp-\*[Gt]cn_nameiop
@@ -382,13 +382,6 @@ If the pathname component being searched for is ".", then
 .Fa dvp
 has an extra reference added to it and it is returned in
 .Fa *vpp .
-If the pathname component being search for is ".." (ISDOTDOT),
-.Fa dvp
-is unlocked, the ".." node is locked and then
-.Fa dvp
-is relocked.
-This process preserves the protocol of always locking nodes from root
-downward and prevents deadlock.
 For other pathname components,
 .Fn VOP_LOOKUP
 checks the accessibility of the directory and searches the name cache
@@ -397,7 +390,7 @@ See
 .Xr namecache 9 .
 If the pathname is not found in the name cache, the directory is
 searched for the pathname.
-The resulting locked vnode is returned in
+The resulting unlocked vnode is returned in
 .Fa vpp .
 .Fa dvp
 is always returned locked.
@@ -411,7 +404,7 @@ and
 is left locked.
 If the operation is successful
 .Fa *vpp
-is locked and zero is returned.
+is unlocked and zero is returned.
 Typically, if
 .Fa *vpp
 and
@@ -429,12 +422,9 @@ The argument
 .Fa vap
 specifies the attributes that the new file should be created with.
 If the file is successfully created, the address of the resulting
-locked vnode is returned in
+unlocked vnode is returned in
 .Fa vpp
 and zero is returned.
-Regardless of the return value, the directory vnode
-.Fa dvp
-will be unlocked on return.
 .Pp
 This function is called after
 .Fn VOP_LOOKUP
@@ -464,7 +454,7 @@ The argument
 specifies the attributes that the new device-special file should be
 created with.
 If the file is successfully created, the address of the resulting
-locked vnode is returned in
+unlocked vnode is returned in
 .Fa vpp
 and zero is returned.
 .Pp
@@ -878,7 +868,7 @@ The argument
 specifies the attributes that the new directory should be created
 with.
 If the file is successfully created, the address of the resulting
-locked vnode is returned in
+unlocked vnode is returned in
 .Fa vpp
 and zero is returned.
 .Pp
@@ -928,7 +918,7 @@ with and
 .Fa target
 specifies the pathname of the target of the symbolic link.
 If the symbolic link is successfully created, the address of the
-resulting locked vnode is returned in
+resulting unlocked vnode is returned in
 .Fa vpp
 and zero is returned.
 .Pp
@@ -1081,6 +1071,11 @@ If
 contains
 .Dv LK_NOWAIT
 and the lock is busy, the operation will return immediately with an error code.
+If
+.Fa flags
+contains
+.Dv LK_RETRY
+this is a hint the caller wants the lock on dead vnodes too.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK

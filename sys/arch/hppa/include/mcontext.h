@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6.4.1 2012/04/17 00:06:26 yamt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.4.2 2014/05/22 11:39:50 yamt Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -68,8 +68,6 @@ __lwp_getprivate_fast(void)
 }
 
 #endif /* !__ASSEMBLER__ */
-
-#define	_OFFSETOF_UC_GREGS 40
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000

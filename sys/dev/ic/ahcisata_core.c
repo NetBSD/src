@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.32.2.3 2012/10/30 17:21:00 yamt Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.32.2.4 2014/05/22 11:40:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.32.2.3 2012/10/30 17:21:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.32.2.4 2014/05/22 11:40:21 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -119,6 +119,18 @@ const struct ata_bustype ahci_ata_bustype = {
 static void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 static void ahci_setup_port(struct ahci_softc *sc, int i);
 
+static void
+ahci_enable(struct ahci_softc *sc)
+{
+	uint32_t ghc;
+
+	ghc = AHCI_READ(sc, AHCI_GHC);
+	if (!(ghc & AHCI_GHC_AE)) {
+		ghc |= AHCI_GHC_AE;
+		AHCI_WRITE(sc, AHCI_GHC, ghc);
+	}
+}
+
 static int
 ahci_reset(struct ahci_softc *sc)
 {
@@ -137,19 +149,25 @@ ahci_reset(struct ahci_softc *sc)
 		return -1;
 	}
 	/* enable ahci mode */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_AE);
+	ahci_enable(sc);
+
+	if (sc->sc_save_init_data) {
+		AHCI_WRITE(sc, AHCI_CAP, sc->sc_init_data.cap);
+		if (sc->sc_init_data.cap2)
+			AHCI_WRITE(sc, AHCI_CAP2, sc->sc_init_data.cap2);
+		AHCI_WRITE(sc, AHCI_PI, sc->sc_init_data.ports);
+	}
+
 	return 0;
 }
 
 static void
 ahci_setup_ports(struct ahci_softc *sc)
 {
-	uint32_t ahci_ports;
 	int i, port;
 	
-	ahci_ports = AHCI_READ(sc, AHCI_PI);
 	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
-		if ((ahci_ports & (1 << i)) == 0)
+		if ((sc->sc_ahci_ports & (1 << i)) == 0)
 			continue;
 		if (port >= sc->sc_atac.atac_nchannels) {
 			aprint_error("%s: more ports than announced\n",
@@ -163,14 +181,12 @@ ahci_setup_ports(struct ahci_softc *sc)
 static void
 ahci_reprobe_drives(struct ahci_softc *sc)
 {
-	uint32_t ahci_ports;
 	int i, port;
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
 
-	ahci_ports = AHCI_READ(sc, AHCI_PI);
 	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
-		if ((ahci_ports & (1 << i)) == 0)
+		if ((sc->sc_ahci_ports & (1 << i)) == 0)
 			continue;
 		if (port >= sc->sc_atac.atac_nchannels) {
 			aprint_error("%s: more ports than announced\n",
@@ -210,7 +226,7 @@ ahci_enable_intrs(struct ahci_softc *sc)
 void
 ahci_attach(struct ahci_softc *sc)
 {
-	uint32_t ahci_rev, ahci_ports;
+	uint32_t ahci_rev;
 	int i, j, port;
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
@@ -219,6 +235,24 @@ ahci_attach(struct ahci_softc *sc)
 	char buf[128];
 	void *cmdhp;
 	void *cmdtblp;
+
+	if (sc->sc_save_init_data) {
+		ahci_enable(sc);
+
+		sc->sc_init_data.cap = AHCI_READ(sc, AHCI_CAP);
+		sc->sc_init_data.ports = AHCI_READ(sc, AHCI_PI);
+		
+		ahci_rev = AHCI_READ(sc, AHCI_VS);
+		if (AHCI_VS_MJR(ahci_rev) > 1 ||
+		    (AHCI_VS_MJR(ahci_rev) == 1 && AHCI_VS_MNR(ahci_rev) >= 20)) {
+			sc->sc_init_data.cap2 = AHCI_READ(sc, AHCI_CAP2);
+		} else {
+			sc->sc_init_data.cap2 = 0;
+		}
+		if (sc->sc_init_data.ports == 0) {
+			sc->sc_init_data.ports = sc->sc_ahci_ports;
+		}
+	}
 
 	if (ahci_reset(sc) != 0)
 		return;
@@ -259,9 +293,11 @@ ahci_attach(struct ahci_softc *sc)
 			"b\037S64A\0"
 			"\0", sc->sc_ahci_cap);
 	aprint_normal_dev(sc->sc_atac.atac_dev, "AHCI revision %u.%u"
-	    ", %d ports, %d slots, CAP %s\n",
+	    ", %d port%s, %d slot%s, CAP %s\n",
 	    AHCI_VS_MJR(ahci_rev), AHCI_VS_MNR(ahci_rev),
-	    sc->sc_atac.atac_nchannels, sc->sc_ncmds, buf);
+	    sc->sc_atac.atac_nchannels,
+	    (sc->sc_atac.atac_nchannels == 1 ? "" : "s"), 
+	    sc->sc_ncmds, (sc->sc_ncmds == 1 ? "" : "s"), buf);
 
 	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA;
 	sc->sc_atac.atac_cap |= sc->sc_atac_capflags;
@@ -311,9 +347,13 @@ ahci_attach(struct ahci_softc *sc)
 
 	ahci_enable_intrs(sc);
 
-	ahci_ports = AHCI_READ(sc, AHCI_PI);
+	if (sc->sc_ahci_ports == 0) {
+		sc->sc_ahci_ports = AHCI_READ(sc, AHCI_PI);
+		AHCIDEBUG_PRINT(("active ports %#x\n", sc->sc_ahci_ports),
+		    DEBUG_PROBE);
+	}
 	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
-		if ((ahci_ports & (1 << i)) == 0)
+		if ((sc->sc_ahci_ports & (1 << i)) == 0)
 			continue;
 		if (port >= sc->sc_atac.atac_nchannels) {
 			aprint_error("%s: more ports than announced\n",
@@ -326,7 +366,7 @@ ahci_attach(struct ahci_softc *sc)
 		chp->ch_channel = i;
 		chp->ch_atac = &sc->sc_atac;
 		chp->ch_queue = malloc(sizeof(struct ata_queue),
-		    M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (chp->ch_queue == NULL) {
 			aprint_error("%s port %d: can't allocate memory for "
 			    "command queue", AHCINAME(sc), i);
@@ -435,19 +475,17 @@ ahci_detach(struct ahci_softc *sc, int flags)
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
 	struct scsipi_adapter *adapt;
-	uint32_t ahci_ports;
 	int i, j;
 	int error;
 
 	atac = &sc->sc_atac;
 	adapt = &atac->atac_atapi_adapter._generic;
 
-	ahci_ports = AHCI_READ(sc, AHCI_PI);
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
 		achp = &sc->sc_channels[i];
 		chp = &achp->ata_channel;
 
-		if ((ahci_ports & (1 << i)) == 0)
+		if ((sc->sc_ahci_ports & (1 << i)) == 0)
 			continue;
 		if (i >= sc->sc_atac.atac_nchannels) {
 			aprint_error("%s: more ports than announced\n",
@@ -716,10 +754,9 @@ again:
 	 * This should not be needed, but some controllers clear the
 	 * command slot before receiving the D2H FIS ...
 	 */
-	for (i = 0; i <AHCI_RST_WAIT; i++) {
+	for (i = 0; i < AHCI_RST_WAIT; i++) {
 		sig = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
-		if ((((sig & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
-		    & WDCS_BSY) == 0)
+		if ((__SHIFTOUT(sig, AHCI_P_TFD_ST) & WDCS_BSY) == 0)
 			break;
 		if (flags & AT_WAIT)
 			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
@@ -749,7 +786,7 @@ end:
 		delay(500000);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
-	ahci_channel_start(sc, chp, AT_WAIT,
+	ahci_channel_start(sc, chp, flags,
 	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
 	return 0;
 }
@@ -763,7 +800,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 
 	ahci_channel_stop(sc, chp, flags);
 	if (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
-	    achp->ahcic_sstatus) != SStatus_DET_DEV) {
+	    achp->ahcic_sstatus, flags) != SStatus_DET_DEV) {
 		printf("%s: port %d reset failed\n", AHCINAME(sc), chp->ch_channel);
 		/* XXX and then ? */
 	}
@@ -771,7 +808,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		chp->ch_queue->active_xfer->c_kill_xfer(chp,
 		    chp->ch_queue->active_xfer, KILL_RESET);
 	}
-	tsleep(&sc, PRIBIO, "ahcirst", mstohz(500));
+	ata_delay(500, "ahcirst", flags);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -782,7 +819,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		if ((((tfd & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
 		    & WDCS_BSY) == 0)
 			break;
-		tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
+		ata_delay(10, "ahcid2h", flags);
 	}
 	if (i == AHCI_RST_WAIT)
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
@@ -826,7 +863,7 @@ ahci_probe_drive(struct ata_channel *chp)
 	    AHCI_P_CMD_POD | AHCI_P_CMD_SUD);
 	/* reset the PHY and bring online */
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
-	    achp->ahcic_sstatus)) {
+	    achp->ahcic_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		tsleep(&sc, PRIBIO, "ahcidv", mstohz(500));
 		if (sc->sc_ahci_cap & AHCI_CAP_SPM) {
@@ -1199,14 +1236,11 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/*
 	 * Polled command. 
 	 */
-	for (i = 0; i < ATA_DELAY / 10; i++) {
+	for (i = 0; i < ATA_DELAY * 10; i++) {
 		if (ata_bio->flags & ATA_ITSDONE)
 			break;
 		ahci_intr_port(sc, achp);
-		if (ata_bio->flags & ATA_NOSLEEP)
-			delay(10000);
-		else
-			tsleep(&xfer, PRIBIO, "ahcipl", mstohz(10));
+		delay(100);
 	}
 	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
@@ -1334,6 +1368,9 @@ ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
 		/* XXX controller reset ? */
 		return;
 	}
+
+	if (sc->sc_channel_stop)
+		sc->sc_channel_stop(sc, chp);
 }
 
 static void
@@ -1367,6 +1404,10 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 			return;
 		}
 	}
+
+	if (sc->sc_channel_start)
+		sc->sc_channel_start(sc, chp);
+
 	/* and start controller */
 	p_cmd = AHCI_P_CMD_ICC_AC | AHCI_P_CMD_POD | AHCI_P_CMD_SUD |
 	    AHCI_P_CMD_FRE | AHCI_P_CMD_ST;
@@ -1386,7 +1427,7 @@ ahci_timeout(void *v)
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 #endif
 	int s = splbio();
-	AHCIDEBUG_PRINT(("ahci_timeout xfer %p intr %#x\n", xfer, AHCI_READ(sc, AHCI_P_IS(chp->ch_channel))), DEBUG_INTR);
+	AHCIDEBUG_PRINT(("ahci_timeout xfer %p intr %#x ghc %08x is %08x\n", xfer, AHCI_READ(sc, AHCI_P_IS(chp->ch_channel)), AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS)), DEBUG_INTR);
 	
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		xfer->c_flags |= C_TIMEOU;

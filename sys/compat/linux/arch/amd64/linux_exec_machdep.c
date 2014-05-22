@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.18.8.1 2012/04/17 00:07:15 yamt Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.18.8.2 2014/05/22 11:40:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18.8.1 2012/04/17 00:07:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18.8.2 2014/05/22 11:40:16 yamt Exp $");
 
 #define ELFSIZE 64
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18.8.1 2012/04/17 00:07:15 
 #include <sys/exec.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <sys/cpu.h>
 #include <machine/vmparam.h>
@@ -223,16 +224,18 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	esd.ai[i].a_type = LINUX_AT_PLATFORM;
 	esd.ai[i++].a_v = (Elf_Addr)&esdp->hw_platform[0];
 
+	esd.ai[i].a_type = LINUX_AT_RANDOM;
+	esd.ai[i++].a_v = (Elf_Addr)&esdp->randbytes[0];
+	esd.randbytes[0] = cprng_strong32();
+	esd.randbytes[1] = cprng_strong32();
+	esd.randbytes[2] = cprng_strong32();
+	esd.randbytes[3] = cprng_strong32();
+
 	esd.ai[i].a_type = AT_NULL;
 	esd.ai[i++].a_v = 0;
 
-#ifdef DEBUG_LINUX
-	if (i != LINUX_ELF_AUX_ENTRIES) {
-		printf("linux_elf64_copyargs: %d Aux entries\n", i);
-		return EINVAL;
-	}
-#endif
-		
+	KASSERT(i == LINUX_ELF_AUX_ENTRIES);
+
 	strcpy(esd.hw_platform, LINUX_PLATFORM); 
 
 	exec_free_emul_arg(pack);

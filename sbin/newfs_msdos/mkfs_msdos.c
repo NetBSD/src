@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.1.2.2 2013/01/23 00:05:32 yamt Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.1.2.3 2014/05/22 11:37:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -27,22 +27,28 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.1.2.2 2013/01/23 00:05:32 yamt Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.1.2.3 2014/05/22 11:37:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifndef MAKEFS
+#include <sys/mount.h>
 #include <sys/disk.h>
+#endif
 
 #include <ctype.h>
 #include <err.h>
@@ -59,7 +65,9 @@ __RCSID("$NetBSD: mkfs_msdos.c,v 1.1.2.2 2013/01/23 00:05:32 yamt Exp $");
 #include <util.h>
 #include <disktab.h>
 
+#ifndef MAKEFS
 #include "partutil.h"
+#endif
 #include "mkfs_msdos.h"
 
 #define MAXU16	  0xffff	/* maximum unsigned 16-bit quantity */
@@ -223,7 +231,9 @@ static u_int8_t bootcode[] = {
 
 static int got_siginfo = 0; /* received a SIGINFO */
 
+#ifndef MAKEFS
 static int check_mounted(const char *, mode_t);
+#endif
 static int getstdfmt(const char *, struct bpb *);
 static int getbpbinfo(int, const char *, const char *, int, struct bpb *, int);
 static void print_bpb(struct bpb *);
@@ -253,39 +263,44 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     u_int bss, rds, cls, dir, lsn, x, x1, x2;
     int ch, fd, fd1;
     struct msdos_options o = *op;
+    int oflags = O_RDWR | O_CREAT;
 
     if (o.block_size && o.sectors_per_cluster) {
 	warnx("Cannot specify both block size and sectors per cluster");
 	return -1;
     }
-    if (strlen(o.OEM_string) > 8) {
+    if (o.OEM_string && strlen(o.OEM_string) > 8) {
 	warnx("%s: bad OEM string", o.OEM_string);
 	return -1;
     }
     if (o.create_size) {
-	off_t pos;
 	if (o.no_create) {
 	    warnx("create (-C) is incompatible with -N");
 	    return -1;
 	}
-	fd = open(fname, O_RDWR | O_CREAT | O_TRUNC, 0644);
+	if (o.offset == 0)
+		oflags |= O_TRUNC;
+	fd = open(fname, oflags, 0644);
 	if (fd == -1) {
 	    warnx("failed to create %s", fname);
 	    return -1;
 	}
-	pos = lseek(fd, o.create_size - 1, SEEK_SET);
+	(void)lseek(fd, o.create_size - 1, SEEK_SET);
 	if (write(fd, "\0", 1) != 1) {
 	    warn("failed to set file size");
 	    return -1;
 	}
-	pos = lseek(fd, 0, SEEK_SET);
+	(void)lseek(fd, 0, SEEK_SET);
     } else if ((fd = open(fname, o.no_create ? O_RDONLY : O_RDWR)) == -1 ||
-	fstat(fd, &sb))
+	fstat(fd, &sb)) {
 	warn("%s", fname);
 	return -1;
+    }
+#ifndef MAKEFS
     if (!o.no_create)
 	if (check_mounted(fname, sb.st_mode) == -1)
 	    return -1;
+#endif
     if (!S_ISCHR(sb.st_mode) && !o.create_size) {
 	warnx("warning, %s is not a character device", fname);
 	return -1;
@@ -333,7 +348,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	}
     }
 
-    if (!oklabel(o.volume_label)) {
+    if (o.volume_label && !oklabel(o.volume_label)) {
 	warnx("%s: bad volume label", o.volume_label);
 	return -1;
     }
@@ -385,12 +400,12 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	}
 	if (o.block_size < bpb.bps) {
 	    warnx("block size (%u) is too small; minimum is %u",
-		 o.block_size, bpb.bps);
+		o.block_size, bpb.bps);
 	    return -1;
 	}
 	if (o.block_size > bpb.bps * MAXSPC) {
 	    warnx("block size (%u) is too large; maximum is %u",
-		 o.block_size, bpb.bps * MAXSPC);
+		o.block_size, bpb.bps * MAXSPC);
 	    return -1;
 	}
 	bpb.spc = o.block_size / bpb.bps;
@@ -435,8 +450,10 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	bname = o.bootstrap;
 	if (!strchr(bname, '/')) {
 	    snprintf(buf, sizeof(buf), "/boot/%s", bname);
-	    if (!(bname = strdup(buf)))
-		err(1, NULL);
+	    if (!(bname = strdup(buf))) {
+		warn(NULL);
+		return -1;
+	    }
 	}
 	if ((fd1 = open(bname, O_RDONLY)) == -1 || fstat(fd1, &sb)) {
 	    warn("%s", bname);
@@ -600,7 +617,9 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	if (!(img = malloc(bpb.bps)))
 	    err(1, NULL);
 	dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;
+#ifdef SIGINFO
 	signal(SIGINFO, infohandler);
+#endif
 	for (lsn = 0; lsn < dir + (o.fat_type == 32 ? bpb.spc : rds); lsn++) {
 	    if (got_siginfo) {
 		fprintf(stderr,"%s: writing sector %u of %u (%u%%)\n",
@@ -690,7 +709,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 		mk4(img, 0x41615252);
 		mk4(img + MINBPS - 28, 0x61417272);
 		mk4(img + MINBPS - 24, 0xffffffff);
-		mk4(img + MINBPS - 20, bpb.rdcl);
+		mk4(img + MINBPS - 20, 0xffffffff);
 		mk2(img + MINBPS - 2, DOSMAGIC);
 	    } else if (lsn >= bpb.res && lsn < dir &&
 		       !((lsn - bpb.res) %
@@ -724,6 +743,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     return 0;
 }
 
+#ifndef MAKEFS
 /*
  * return -1 with error if file system is mounted.
  */
@@ -756,6 +776,7 @@ check_mounted(const char *fname, mode_t mode)
     }
     return 0;
 }
+#endif
 
 /*
  * Get a standard format.
@@ -782,11 +803,8 @@ static int
 getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
     struct bpb *bpb, int create)
 {
-    struct disk_geom geo;
-    struct dkwedge_info dkw;
     const char *s1, *s2;
     int part;
-    int maxpartitions;
 
     part = -1;
     s1 = fname;
@@ -799,14 +817,32 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 	while (isdigit((unsigned char)*++s2));
     s1 = s2;
 
-    maxpartitions = getmaxpartitions();
+#ifndef MAKEFS
+    int maxpartitions = getmaxpartitions();
 
+    // XXX: Does not work with wedges
     if (s2 && *s2 >= 'a' && *s2 <= 'a' + maxpartitions - 1) {
 	part = *s2++ - 'a';
     }
+#endif
     if (((part != -1) && ((!iflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
-	if (create || getdiskinfo(fname, fd, NULL, &geo, &dkw) == -1) {
+	u_int sector_size;
+	u_int nsectors;
+	u_int ntracks;
+	u_int size;
+#ifndef MAKEFS
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
+
+	if (!create && getdiskinfo(fname, fd, NULL, &geo, &dkw) != -1) {
+	    sector_size = geo.dg_secsize = 512;
+	    nsectors = geo.dg_nsectors = 63;
+	    ntracks = geo.dg_ntracks = 255;
+	    size = dkw.dkw_size;
+	} else
+#endif
+	{
 	    struct stat st;
 
 	    if (fstat(fd, &st) == -1) {
@@ -814,37 +850,37 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 		return -1;
 	    }
 	    /* create a fake geometry for a file image */
-	    geo.dg_secsize = 512;
-	    geo.dg_nsectors = 63;
-	    geo.dg_ntracks = 255;
-	    dkw.dkw_size = st.st_size / geo.dg_secsize;
+	    sector_size = 512;
+	    nsectors = 63;
+	    ntracks = 255;
+	    size = st.st_size / sector_size;
 	}
 	if (!bpb->bps) {
-	    if (ckgeom(fname, geo.dg_secsize, "bytes/sector") == -1)
+	    if (ckgeom(fname, sector_size, "bytes/sector") == -1)
 		return -1;
-	    bpb->bps = geo.dg_secsize;
+	    bpb->bps = sector_size;
 	}
 
-	if (geo.dg_nsectors > 63) {
+	if (nsectors > 63) {
 		/*
 		 * The kernel doesn't accept BPB with spt > 63.
 		 * (see sys/fs/msdosfs/msdosfs_vfsops.c:msdosfs_mountfs())
 		 * If values taken from disklabel don't match these
 		 * restrictions, use popular BIOS default values instead.
 		 */
-		geo.dg_nsectors = 63;
+		nsectors = 63;
 	}
 	if (!bpb->spt) {
-	    if (ckgeom(fname, geo.dg_nsectors, "sectors/track") == -1)
+	    if (ckgeom(fname, nsectors, "sectors/track") == -1)
 		return -1;
-	    bpb->spt = geo.dg_nsectors;
+	    bpb->spt = nsectors;
 	}
 	if (!bpb->hds)
-	    if (ckgeom(fname, geo.dg_ntracks, "drive heads") == -1)
+	    if (ckgeom(fname, ntracks, "drive heads") == -1)
 		return -1;
-	    bpb->hds = geo.dg_ntracks;
+	    bpb->hds = ntracks;
 	if (!bpb->bsec)
-	    bpb->bsec = dkw.dkw_size;
+	    bpb->bsec = size;
     }
     return 0;
 }

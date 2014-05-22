@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.S,v 1.4.50.2 2013/01/23 00:05:21 yamt Exp $	*/
+/*	$NetBSD: fpsetmask.S,v 1.4.50.3 2014/05/22 11:36:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ ENTRY(fpsetmask)
 	bic	r1, r1, #VFP_FPSCR_ESUM
 	orr	r1, r1, r2, lsl #8
 	vmsr	fpscr, r1
-	mcr	p10, 7, r1, c1, c0, 0
 	and	r0, r0, #VFP_FPSCR_CSUM
 	RET
 END(fpsetmask)

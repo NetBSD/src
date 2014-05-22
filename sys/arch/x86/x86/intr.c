@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.72.2.1 2012/10/30 17:20:34 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.72.2.2 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72.2.1 2012/10/30 17:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72.2.2 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -912,9 +912,8 @@ intr_disestablish(struct intrhand *ih)
 }
 
 const char *
-intr_string(int ih)
+intr_string(int ih, char *buf, size_t len)
 {
-	static char irqstr[64];
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
 #endif
@@ -927,22 +926,22 @@ intr_string(int ih)
 	if (ih & APIC_INT_VIA_APIC) {
 		pic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
-			snprintf(irqstr, sizeof(irqstr), "%s pin %d",
+			snprintf(buf, len, "%s pin %d",
 			    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih));
 		} else {
-			snprintf(irqstr, sizeof(irqstr),
+			snprintf(buf, len,
 			    "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),
 			    APIC_IRQ_PIN(ih),
 			    ih&0xff);
 		}
 	} else
-		snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
+		snprintf(buf, len, "irq %d", ih&0xff);
 #else
 
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
+	snprintf(buf, len, "irq %d", ih&0xff);
 #endif
-	return (irqstr);
+	return buf;
 
 }
 
@@ -1063,10 +1062,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #if defined(INTRDEBUG) || defined(DDB)
 
-#ifdef DDB
-#define printf db_printf
-#endif
-
 void
 intr_printconfig(void)
 {
@@ -1075,30 +1070,45 @@ intr_printconfig(void)
 	struct intrsource *isp;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+	void (*pr)(const char *, ...);
+
+	pr = printf;
+#ifdef DDB
+	extern int db_active;
+	if (db_active) {
+		pr = db_printf;
+	}
+#endif
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("%s: interrupt masks:\n", device_xname(ci->ci_dev));
+		(*pr)("%s: interrupt masks:\n", device_xname(ci->ci_dev));
 		for (i = 0; i < NIPL; i++)
-			printf("IPL %d mask %lx unmask %lx\n", i,
+			(*pr)("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
 		for (i = 0; i < MAX_INTR_SOURCES; i++) {
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
 				continue;
-			printf("%s source %d is pin %d from pic %s maxlevel %d\n",
+			(*pr)("%s source %d is pin %d from pic %s type %d maxlevel %d\n",
 			    device_xname(ci->ci_dev), i, isp->is_pin,
-			    isp->is_pic->pic_name, isp->is_maxlevel);
+			    isp->is_pic->pic_name, isp->is_type, isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)
-				printf("\thandler %p level %d\n",
+				(*pr)("\thandler %p level %d\n",
 				    ih->ih_fun, ih->ih_level);
+#if NIOAPIC > 0
+			if (isp->is_pic->pic_type == PIC_IOAPIC) {
+				struct ioapic_softc *sc;
+				sc = isp->is_pic->pic_ioapic;
+				(*pr)("\tioapic redir 0x%x\n",
+				    sc->sc_pins[isp->is_pin].ip_map->redir);
+			}
+#endif
 
 		}
 	}
 }
-#ifdef DDB
-#undef printf
-#endif
+
 #endif
 
 void

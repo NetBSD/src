@@ -15,7 +15,7 @@
 __FBSDID("$FreeBSD: src/lib/msun/src/s_trunc.c,v 1.1 2004/06/20 09:25:43 das Exp $");
 #endif
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_trunc.c,v 1.3 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: s_trunc.c,v 1.3.4.1 2014/05/22 11:36:57 yamt Exp $");
 #endif
 
 /*
@@ -29,6 +29,11 @@ __RCSID("$NetBSD: s_trunc.c,v 1.3 2008/04/25 22:21:53 christos Exp $");
 
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_truncl, trunc)
+__weak_alias(truncl, trunc)
+#endif
 
 static const double huge = 1.0e300;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.6.2 2012/10/30 18:59:34 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.6.3 2014/05/22 11:37:45 yamt Exp $
 
 NOOBJ=	# defined
 
@@ -6,6 +6,7 @@ NOOBJ=	# defined
 
 .if ${MKSHARE} != "no"
 FILES=		host-npf.conf soho_gw-npf.conf hashtablefile treetablefile
+FILES+=		l2tp_gw-npf.conf
 FILESDIR=	/usr/share/examples/npf
 .endif
 

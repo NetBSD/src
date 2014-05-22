@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.64.10.1 2012/10/30 17:19:55 yamt Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.64.10.2 2014/05/22 11:39:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.64.10.1 2012/10/30 17:19:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.64.10.2 2014/05/22 11:39:56 yamt Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -262,7 +262,6 @@ ncr5380_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_periph *periph; 
 	struct ncr_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	int	sps, flags;
 	SC_REQ	*reqp, *link, *tmp;
@@ -271,7 +270,6 @@ ncr5380_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		flags = xs->xs_control;
-		periph = xs->xs_periph;
 
 		/*
 		 * We do not queue RESET commands
@@ -1629,7 +1627,6 @@ static int
 reach_msg_out(struct ncr_softc *sc, u_long len)
 {
 	u_char	phase;
-	u_char	data;
 	u_long	n = len;
 
 	ncr_aprint(sc, "Trying to reach Message-out phase\n");
@@ -1648,7 +1645,7 @@ reach_msg_out(struct ncr_softc *sc, u_long len)
 		if (((GET_5380_REG(NCR5380_IDSTAT) >> 2) & 7) != phase)
 			break;
 		if (PH_IN(phase)) {
-			data = GET_5380_REG(NCR5380_DATA);
+			GET_5380_REG(NCR5380_DATA);
 			SET_5380_REG(NCR5380_ICOM, SC_A_ACK | SC_A_ATN);
 		}
 		else {

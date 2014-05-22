@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.86.2.1 2012/05/23 10:08:14 yamt Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.86.2.2 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.86.2.1 2012/05/23 10:08:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.86.2.2 2014/05/22 11:41:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -129,6 +129,9 @@ procfs_mount(
 	struct procfsmount *pmnt;
 	struct procfs_args *args = data;
 	int error;
+
+	if (args == NULL)
+		return EINVAL;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");
@@ -199,8 +202,18 @@ procfs_unmount(struct mount *mp, int mntflags)
 int
 procfs_root(struct mount *mp, struct vnode **vpp)
 {
+	int error;
 
-	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL));
+	error = procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL);
+	if (error == 0) {
+		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		if (error != 0) {
+			vrele(*vpp);
+			*vpp = NULL;
+		}
+	}
+
+	return error;
 }
 
 /* ARGSUSED */
@@ -276,31 +289,28 @@ const struct vnodeopv_desc * const procfs_vnodeopv_descs[] = {
 };
 
 struct vfsops procfs_vfsops = {
-	MOUNT_PROCFS,
-	sizeof (struct procfs_args),
-	procfs_mount,
-	procfs_start,
-	procfs_unmount,
-	procfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	procfs_statvfs,
-	procfs_sync,
-	procfs_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	procfs_init,
-	procfs_reinit,
-	procfs_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	procfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_PROCFS,
+	.vfs_min_mount_data = sizeof (struct procfs_args),
+	.vfs_mount = procfs_mount,
+	.vfs_start = procfs_start,
+	.vfs_unmount = procfs_unmount,
+	.vfs_root = procfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = procfs_statvfs,
+	.vfs_sync = procfs_sync,
+	.vfs_vget = procfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = procfs_init,
+	.vfs_reinit = procfs_reinit,
+	.vfs_done = procfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = procfs_vnodeopv_descs
 };
 
 static int
@@ -352,11 +362,6 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&procfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "procfs",

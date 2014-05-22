@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.7.8.2 2013/01/23 00:06:09 yamt Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.7.8.3 2014/05/22 11:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.7.8.2 2013/01/23 00:06:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.7.8.3 2014/05/22 11:40:36 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -135,7 +135,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	 * It is avoided that the error occurs when the card attaches it,
 	 * when wedge is supported.
 	 */
-	config_pending_incr();
+	config_pending_incr(self);
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    ld_sdmmc_doattach, sc, &lwp, "%sattach", device_xname(self))) {
 		aprint_error_dev(self, "couldn't create thread\n");
@@ -157,7 +157,7 @@ ld_sdmmc_doattach(void *arg)
 		    ssc->sc_busclk / 1000, ssc->sc_busclk % 1000);
 	else
 		aprint_normal(" %u KHz\n", ssc->sc_busclk % 1000);
-	config_pending_decr();
+	config_pending_decr(ld->sc_dv);
 	kthread_exit(0);
 }
 

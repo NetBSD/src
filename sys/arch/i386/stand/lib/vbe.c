@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.7 2011/02/09 04:37:54 jmcneill Exp $ */
+/* $NetBSD: vbe.c,v 1.7.4.1 2014/05/22 11:39:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -414,6 +414,6 @@ command_vesa(char *cmd)
 		return;
 	}
 
-	printf("invalid flag, must be 'on', 'off', "
+	printf("invalid flag, must be 'on', 'off', 'list', "
 	    "a display mode, or a VBE mode number\n");
 }

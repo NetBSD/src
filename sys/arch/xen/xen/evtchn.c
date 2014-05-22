@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.55.2.3 2013/01/23 00:06:01 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.55.2.4 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.55.2.3 2013/01/23 00:06:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.55.2.4 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -343,13 +343,6 @@ splx:
 					ih_fun = (void *)ih->ih_fun;
 					ih_fun(ih->ih_arg, regs);
 					cli();
-					if (ci->ci_ilevel != i) {
-						printf("evtchn_do_event: "
-						    "handler %p didn't lower "
-						    "ipl %d %d\n",
-						    ih_fun, ci->ci_ilevel, i);
-						ci->ci_ilevel = i;
-					}
 				}
 				hypervisor_enable_ipl(i);
 				/* more pending IPLs may have been registered */

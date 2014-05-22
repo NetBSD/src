@@ -1,4 +1,4 @@
-/*	$NetBSD: nside.c,v 1.2.4.1 2012/10/30 17:21:37 yamt Exp $	*/
+/*	$NetBSD: nside.c,v 1.2.4.2 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.2.4.1 2012/10/30 17:21:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.2.4.2 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,13 +45,8 @@ static void natsemi_irqack(struct ata_channel *);
 static int  nside_match(device_t, cfdata_t, void *);
 static void nside_attach(device_t, device_t, void *);
 
-struct nside_softc {
-	struct pciide_softc pciide_sc;
-	struct pci_attach_args pcib_pa;
-};
-
-CFATTACH_DECL_NEW(nside, sizeof(struct nside_softc),
-    nside_match, nside_attach, NULL, NULL);
+CFATTACH_DECL_NEW(nside, sizeof(struct pciide_softc),
+    nside_match, nside_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_natsemi_products[] =  {
 	{ PCI_PRODUCT_NS_PC87415,       /* National Semi PC87415 IDE */

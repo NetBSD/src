@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgareg.h,v 1.3.112.1 2012/10/30 17:19:22 yamt Exp $ */
+/*	$NetBSD: ifpgareg.h,v 1.3.112.2 2014/05/22 11:39:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -168,6 +168,7 @@
 #define TIMERx_MAX			0xffff	/* Max count value */
 
 #define TIMERx_CTRL_ENABLE		0x80	/* Timer enable */
+#define TIMERx_CTRL_RAISE_IRQ		0x20	/* Raise IRQ on tick */
 #define TIMERx_CTRL_MODE_ONCE		0x00	/* Single shot */
 #define TIMERx_CTRL_MODE_PERIODIC	0x40	/* Single shot */
 #define TIMERx_CTRL_PRESCALE_DIV1	0x00	/* CLK / 1 */
@@ -210,7 +211,11 @@
 #define IFPGA_INTR_UARTINT0		0x00000002
 #define IFPGA_INTR_SOFTINT		0x00000001
 
+#if defined(INTEGRATOR_CP)
+#define IFPGA_INTR_HWMASK		0x083fffff
+#else
 #define IFPGA_INTR_HWMASK		0x003fffff
+#endif
 
 /* ... and the corresponding numbers.  */
 #define IFPGA_INTRNUM_APCINT		21

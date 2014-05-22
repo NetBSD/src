@@ -1,7 +1,8 @@
-#	$NetBSD: files.des,v 1.1 2002/10/11 01:52:10 thorpej Exp $
+#	$NetBSD: files.des,v 1.1.146.1 2014/05/22 11:40:18 yamt Exp $
 
 define	des
 
+file	crypto/des/des_module.c		des
 file	crypto/des/des_ecb.c		des
 file	crypto/des/des_setkey.c		des
 file	crypto/des/des_enc.c		des

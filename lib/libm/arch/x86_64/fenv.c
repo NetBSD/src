@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.1.6.1 2012/10/30 18:59:12 yamt Exp $ */
+/* $NetBSD: fenv.c,v 1.1.6.2 2014/05/22 11:36:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1.6.1 2012/10/30 18:59:12 yamt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.1.6.2 2014/05/22 11:36:56 yamt Exp $");
 
 #include <assert.h>
 #include <fenv.h>
@@ -57,6 +57,10 @@ __RCSID("$NetBSD: fenv.c,v 1.1.6.1 2012/10/30 18:59:12 yamt Exp $");
 /* No-Wait Store x87 environment */
 #define	__fnstenv(__env)	__asm__ __volatile__ \
 	("fnstenv %0" : "=m" (*(__env)))
+
+/* Check for and handle pending unmasked x87 pending FPU exceptions */
+#define	__fwait(__env)		__asm__	__volatile__	\
+	("fwait")
 
 /* Load the MXCSR register */
 #define	__ldmxcsr(__mxcsr)	__asm__ __volatile__ \
@@ -95,6 +99,16 @@ fenv_t __fe_dfl_env = {
 	__INITIAL_MXCSR__       /* MXCSR register */
 };
 #define FE_DFL_ENV      ((const fenv_t *) &__fe_dfl_env)
+
+static void __init_libm(void) __attribute__ ((constructor, used));
+
+static void __init_libm(void)
+{
+	uint16_t control;
+
+	__fnstcw(&control);
+	__fe_dfl_env.x87.control = control;
+}
 
 
 /*
@@ -177,7 +191,8 @@ feraiseexcept(int excepts)
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
 	ex = excepts & FE_ALL_EXCEPT;
-	fesetexceptflag((unsigned int *)&excepts, excepts);
+	fesetexceptflag((unsigned int *)&ex, ex);
+	__fwait();
 
 	/* Success */
 	return (0);
@@ -519,6 +534,6 @@ fegetexcept(void)
 	 */
 	__fnstcw(&control);
 
-	return (control & FE_ALL_EXCEPT);
+	return (~control & FE_ALL_EXCEPT);
 }
 

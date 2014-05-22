@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.7.2.6 2013/01/23 00:06:43 yamt Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.7.2.7 2014/05/22 11:43:06 yamt Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.7.2.6 2013/01/23 00:06:43 yamt Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.7.2.7 2014/05/22 11:43:06 yamt Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -108,7 +108,7 @@ static void pmdoc_Nd(const struct mdoc_node *, mandb_rec *);
 static void pmdoc_Sh(const struct mdoc_node *, mandb_rec *);
 static void pmdoc_Xr(const struct mdoc_node *, mandb_rec *);
 static void pmdoc_Pp(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_macro_handler(const struct mdoc_node *, mandb_rec *, 
+static void pmdoc_macro_handler(const struct mdoc_node *, mandb_rec *,
 				enum mdoct);
 static void pman_node(const struct man_node *n, mandb_rec *);
 static void pman_parse_node(const struct man_node *, secbuff *);
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 	memset(&rec, 0, sizeof(rec));
 
 	init_secbuffs(&rec);
-	mp = mparse_alloc(MPARSE_AUTO, MANDOCLEVEL_FATAL, NULL, NULL);
+	mp = mparse_alloc(MPARSE_AUTO, MANDOCLEVEL_FATAL, NULL, NULL, NULL);
 
 	if (manconf) {
 		char *arg;
@@ -349,8 +349,12 @@ main(int argc, char *argv[])
 		manconf = MANCONF;
 	}
 
-	if (mflags.recreate)
-		remove(get_dbpath(manconf));
+	if (mflags.recreate) {
+		char *dbp = get_dbpath(manconf);
+		/* No error here, it will fail in init_db in the same call */
+		if (dbp != NULL)
+			remove(dbp);
+	}
 
 	if ((db = init_db(MANDB_CREATE, manconf)) == NULL)
 		exit(EXIT_FAILURE);
@@ -387,7 +391,7 @@ main(int argc, char *argv[])
 		free(errmsg);
 		exit(EXIT_FAILURE);
 	}
-		
+
 	sqlstr = "CREATE TABLE metadb.file_cache(device, inode, mtime, parent,"
 		 " file PRIMARY KEY);"
 		 "CREATE UNIQUE INDEX metadb.index_file_cache_dev"
@@ -464,13 +468,7 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 			warn("stat failed: %s", file);
 		return;
 	}
-	
-	/* If it is a regular file or a symlink, pass it to build_cache() */
-	if (S_ISREG(sb.st_mode) || S_ISLNK(sb.st_mode)) {
-		build_file_cache(db, parent, file, &sb);
-		return;
-	}
-	
+
 	/* If it is a directory, traverse it recursively */
 	if (S_ISDIR(sb.st_mode)) {
 		if ((dp = opendir(file)) == NULL) {
@@ -478,7 +476,7 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 				warn("opendir error: %s", file);
 			return;
 		}
-		
+
 		while ((dirp = readdir(dp)) != NULL) {
 			/* Avoid . and .. entries in a directory */
 			if (strncmp(dirp->d_name, ".", 1)) {
@@ -489,6 +487,16 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 		}
 		closedir(dp);
 	}
+
+	if (!S_ISREG(sb.st_mode) && !S_ISLNK(sb.st_mode))
+		return;
+
+	if (sb.st_size == 0) {
+		if (mflags.verbosity)
+			warnx("Empty file: %s", file);
+		return;
+	}
+	build_file_cache(db, parent, file, &sb);
 }
 
 /* build_file_cache --
@@ -625,37 +633,40 @@ update_existing_entry(sqlite3 *db, const char *file, const char *hash,
 }
 
 /* read_and_decompress --
- *	Reads the given file into memory. If it is compressed, decompres
+ *	Reads the given file into memory. If it is compressed, decompress
  *	it before returning to the caller.
  */
 static int
-read_and_decompress(const char *file, void **buf, size_t *len)
+read_and_decompress(const char *file, void **bufp, size_t *len)
 {
 	size_t off;
 	ssize_t r;
 	struct archive *a;
 	struct archive_entry *ae;
+	char *buf;
 
 	if ((a = archive_read_new()) == NULL)
 		errx(EXIT_FAILURE, "memory allocation failed");
 
+	*bufp = NULL;
 	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
 	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
 	    archive_read_open_filename(a, file, 65536) != ARCHIVE_OK ||
 	    archive_read_next_header(a, &ae) != ARCHIVE_OK)
 		goto archive_error;
 	*len = 65536;
-	*buf = emalloc(*len);
+	buf = emalloc(*len);
 	off = 0;
 	for (;;) {
-		r = archive_read_data(a, (char *)*buf + off, *len - off);
+		r = archive_read_data(a, buf + off, *len - off);
 		if (r == ARCHIVE_OK) {
 			archive_read_close(a);
+			*bufp = buf;
 			*len = off;
 			return 0;
 		}
 		if (r <= 0) {
-			free(*buf);
+			free(buf);
 			break;
 		}
 		off += r;
@@ -664,11 +675,11 @@ read_and_decompress(const char *file, void **buf, size_t *len)
 			if (*len < off) {
 				if (mflags.verbosity)
 					warnx("File too large: %s", file);
-				free(*buf);
+				free(buf);
 				archive_read_close(a);
 				return -1;
 			}
-			*buf = erealloc(*buf, *len);
+			buf = erealloc(buf, *len);
 		}
 	}
 
@@ -690,12 +701,20 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 {
 	const char *sqlstr;
 	sqlite3_stmt *stmt = NULL;
-	const char *file;
-	const char *parent;
+	char *file;
+	char *parent;
 	char *errmsg = NULL;
 	char *md5sum;
 	void *buf;
 	size_t buflen;
+	struct sql_row {
+		struct sql_row *next;
+		dev_t device;
+		ino_t inode;
+		time_t mtime;
+		char *parent;
+		char *file;
+	} *rows, *row;
 	int new_count = 0;	/* Counter for newly indexed/updated pages */
 	int total_count = 0;	/* Counter for total number of pages */
 	int err_count = 0;	/* Counter for number of failed pages */
@@ -718,17 +737,33 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	}
 
 	buf = NULL;
+	rows = NULL;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
-		free(buf);
+		row = emalloc(sizeof(struct sql_row));
+		row->device = sqlite3_column_int64(stmt, 0);
+		row->inode = sqlite3_column_int64(stmt, 1);
+		row->mtime = sqlite3_column_int64(stmt, 2);
+		row->parent = estrdup((const char *) sqlite3_column_text(stmt, 3));
+		row->file = estrdup((const char *) sqlite3_column_text(stmt, 4));
+		row->next = rows;
+		rows = row;
 		total_count++;
-		rec->device = sqlite3_column_int64(stmt, 0);
-		rec->inode = sqlite3_column_int64(stmt, 1);
-		rec->mtime = sqlite3_column_int64(stmt, 2);
-		parent = (const char *) sqlite3_column_text(stmt, 3);
-		file = (const char *) sqlite3_column_text(stmt, 4);
+	}
+	sqlite3_finalize(stmt);
+
+	for ( ; rows != NULL; free(parent), free(file), free(buf)) {
+		row = rows;
+		rows = rows->next;
+
+		rec->device = row->device;
+		rec->inode = row->inode;
+		rec->mtime = row->mtime;
+		parent = row->parent;
+		file = row->file;
+		free(row);
+
 		if (read_and_decompress(file, &buf, &buflen)) {
 			err_count++;
-			buf = NULL;
 			continue;
 		}
 		md5_status = check_md5(file, db, "mandb_meta", &md5sum, buf, buflen);
@@ -781,10 +816,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			}
 		}
 	}
-	free(buf);
 
-	sqlite3_finalize(stmt);
-	
 	if (mflags.verbosity == 2) {
 		printf("Total Number of new or updated pages encountered = %d\n"
 			"Total number of (hard or symbolic) links found = %d\n"
@@ -1179,7 +1211,7 @@ pman_node(const struct man_node *n, mandb_rec *rec)
 	pman_node(n->next, rec);
 }
 
-/* 
+/*
  * pman_parse_name --
  *  Parses the NAME section and puts the complete content in the name_desc
  *  variable.
@@ -1212,7 +1244,7 @@ pman_block(const struct man_node *n, mandb_rec *rec)
 {
 }
 
-/* 
+/*
  * pman_sh --
  * This function does one of the two things:
  *  1. If the present section is NAME, then it will:
@@ -1283,7 +1315,7 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 		/* Remove any leading spaces. */
 		while (name_desc[0] == ' ')
 			name_desc++;
-			
+
 		/* If the line begins with a "\&", avoid those */
 		if (name_desc[0] == '\\' && name_desc[1] == '&')
 			name_desc += 2;
@@ -1375,7 +1407,7 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 
 /*
  * pman_parse_node --
- *  Generic function to iterate through a node. Usually called from 
+ *  Generic function to iterate through a node. Usually called from
  *  man_parse_section to parse a particular section of the man page.
  */
 static void
@@ -1386,14 +1418,14 @@ pman_parse_node(const struct man_node *n, secbuff *s)
 
 	if (n->type == MAN_TEXT)
 		append(s, n->string);
-		
+
 	pman_parse_node(n->child, s);
 	pman_parse_node(n->next, s);
 }
 
 /*
  * man_parse_section --
- *  Takes two parameters: 
+ *  Takes two parameters:
  *   sec: Tells which section we are present in
  *   n: Is the present node of the AST.
  * Depending on the section, we call pman_parse_node to parse that section and
@@ -1464,12 +1496,12 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 	char *ln = NULL;
 	char *errmsg = NULL;
 	long int mandb_rowid;
-	
+
 	/*
 	 * At the very minimum we want to make sure that we store
 	 * the following data:
 	 *   Name, one line description, and the MD5 hash
-	 */		
+	 */
 	if (rec->name == NULL || rec->name_desc == NULL ||
 	    rec->md5_hash == NULL) {
 		cleanup(rec);
@@ -1601,14 +1633,14 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 		sqlite3_finalize(stmt);
 		goto Out;
 	}
-	
+
 	idx = sqlite3_bind_parameter_index(stmt, ":md5_hash");
 	rc = sqlite3_bind_text(stmt, idx, rec->md5_hash, -1, NULL);
 	if (rc != SQLITE_OK) {
 		sqlite3_finalize(stmt);
 		goto Out;
 	}
-	
+
 	idx = sqlite3_bind_parameter_index(stmt, ":machine");
 	if (rec->machine)
 		rc = sqlite3_bind_text(stmt, idx, rec->machine, -1, NULL);
@@ -1626,10 +1658,10 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 	}
 
 	sqlite3_finalize(stmt);
-	
+
 	/* Get the row id of the last inserted row */
 	mandb_rowid = sqlite3_last_insert_rowid(db);
-		
+
 /*------------------------Populate the mandb_meta table-----------------------*/
 	sqlstr = "INSERT INTO mandb_meta VALUES (:device, :inode, :mtime,"
 		 " :file, :md5_hash, :id)";
@@ -1752,7 +1784,7 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 
 /*------------------------ Populate the mandb_links table---------------------*/
 	char *str = NULL;
-	char *links;	
+	char *links;
 	if (rec->links && strlen(rec->links)) {
 		links = rec->links;
 		for(ln = strtok(links, " "); ln; ln = strtok(NULL, " ")) {
@@ -1760,7 +1792,7 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 				ln++;
 			if(ln[strlen(ln) - 1] == ',')
 				ln[strlen(ln) - 1] = 0;
-			
+
 			str = sqlite3_mprintf("INSERT INTO mandb_links"
 					      " VALUES (%Q, %Q, %Q, %Q, %Q)",
 					      ln, rec->name, rec->section,
@@ -1839,7 +1871,7 @@ check_md5(const char *file, sqlite3 *db, const char *table, char **md5sum,
 	}
 
 	if (sqlite3_step(stmt) == SQLITE_ROW) {
-		sqlite3_finalize(stmt);	
+		sqlite3_finalize(stmt);
 		free(sqlstr);
 		return 0;
 	}
@@ -1869,7 +1901,7 @@ optimize(sqlite3 *db)
 	}
 }
 
-/* 
+/*
  * cleanup --
  *  cleans up the global buffers
  */
@@ -2018,7 +2050,7 @@ parse_escape(const char *str)
 	} while (backslash != NULL);
 	if (last_backslash != NULL)
 		strcpy(iter, last_backslash);
-	
+
 	replace_hyph(result);
 	return result;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/10/30 20:42:09 phx Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2014/05/22 11:40:06 yamt Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -19,9 +19,11 @@ CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S}
 DBG=		-Os
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -31,14 +33,6 @@ BINMODE=	444
 
 RELOC=		1000000
 ENTRY=		_start
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-.NOPATH: machine powerpc
-.endif
-CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -62,6 +56,7 @@ vers.c: version
 	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version "sandpoint"
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${PROG} ${PROG}.bin

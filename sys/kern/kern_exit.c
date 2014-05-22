@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.235.2.2 2012/10/30 17:22:28 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.235.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235.2.2 2012/10/30 17:22:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -123,7 +123,7 @@ static void proc_free(struct proc *, struct rusage *);
 /*
  * DTrace SDT provider definitions
  */
-SDT_PROBE_DEFINE(proc,,,exit, 
+SDT_PROBE_DEFINE(proc,,,exit,exit,
 	    "int", NULL, 		/* reason */
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
@@ -541,12 +541,10 @@ exit1(struct lwp *l, int rv)
 	 */
 	pcu_discard_all(l);
 
-	/*
-	 * Remaining lwp resources will be freed in lwp_exit2() once we've
-	 * switch to idle context; at that point, we will be marked as a
-	 * full blown zombie.
-	 */
 	mutex_enter(p->p_lock);
+	/* Free the linux lwp id */
+	if ((l->l_pflag & LP_PIDLID) != 0 && l->l_lid != p->p_pid)
+		proc_free_pid(l->l_lid);
 	lwp_drainrefs(l);
 	lwp_lock(l);
 	l->l_prflag &= ~LPR_DETACHED;

@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.15.2.1 2012/10/30 17:20:13 yamt Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.15.2.2 2014/05/22 11:40:04 yamt Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.15.2.1 2012/10/30 17:20:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.15.2.2 2014/05/22 11:40:04 yamt Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.15.2.1 2012/10/30 17:20:13 yamt E
 
 extern char bootpath[256];
 char cbootpath[256];
-int console_node = 0, console_instance = 0;
 
 static void canonicalize_bootpath(void);
 
@@ -169,12 +168,15 @@ canonicalize_bootpath(void)
 	/*
 	 * OF_1.x (at least) always returns addr == 0 for
 	 * SCSI disks (i.e. "/bandit@.../.../sd@0,0").
+	 * also check for .../disk@ which some Adaptec firmware uses
 	 */
 	lastp = strrchr(cbootpath, '/');
 	if (lastp != NULL) {
 		lastp++;
-		if (strncmp(lastp, "sd@", 3) == 0
-		    && strncmp(last, "sd@", 3) == 0)
+		if ((strncmp(lastp, "sd@", 3) == 0
+		     && strncmp(last, "sd@", 3) == 0) ||
+		    (strncmp(lastp, "disk@", 5) == 0
+		     && strncmp(last, "disk@", 5) == 0))
 			strcpy(lastp, last);
 	} else {
 		lastp = cbootpath;
@@ -346,6 +348,15 @@ device_register(device_t dev, void *aux)
 				    "shared-pins");
 			}
 		}
+#ifdef macppc
+		/*
+		 * XXX
+		 * some macppc boxes have onboard devices where parts or all of
+		 * the PCI_INTERRUPT register are hardwired to 0
+		 */
+		if (pa->pa_intrpin == 0)
+			pa->pa_intrpin = 1;
+#endif
 	}
 
 	if (booted_device)

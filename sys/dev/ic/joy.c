@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.17.38.1 2012/04/17 00:07:34 yamt Exp $	*/
+/*	$NetBSD: joy.c,v 1.17.38.2 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.17.38.1 2012/04/17 00:07:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.17.38.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,17 @@ static dev_type_read(joyread);
 static dev_type_ioctl(joyioctl);
 
 const struct cdevsw joy_cdevsw = {
-	joyopen, joyclose, joyread, nowrite, joyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE,
+	.d_open = joyopen,
+	.d_close = joyclose,
+	.d_read = joyread,
+	.d_write = nowrite,
+	.d_ioctl = joyioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 void

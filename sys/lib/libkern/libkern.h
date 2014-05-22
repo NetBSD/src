@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.103.2.2 2012/10/30 17:22:39 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.103.2.3 2014/05/22 11:41:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,6 +52,9 @@ LIBKERN_INLINE long lmin(long, long) __unused;
 LIBKERN_INLINE u_long ulmax(u_long, u_long) __unused;
 LIBKERN_INLINE u_long ulmin(u_long, u_long) __unused;
 LIBKERN_INLINE int abs(int) __unused;
+LIBKERN_INLINE long labs(long) __unused;
+LIBKERN_INLINE long long llabs(long long) __unused;
+LIBKERN_INLINE intmax_t imaxabs(intmax_t) __unused;
 
 LIBKERN_INLINE int isspace(int) __unused;
 LIBKERN_INLINE int isascii(int) __unused;
@@ -107,6 +110,24 @@ ulmin(u_long a, u_long b)
 
 LIBKERN_INLINE int
 abs(int j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE long
+labs(long j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE long long
+llabs(long long j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE intmax_t
+imaxabs(intmax_t j)
 {
 	return(j < 0 ? -j : j);
 }
@@ -189,9 +210,15 @@ tolower(int ch)
 #endif
 #endif
 
+#ifndef	CTASSERT
 #define	CTASSERT(x)		__CTASSERT(x)
+#endif
+#ifndef	CTASSERT_SIGNED
 #define	CTASSERT_SIGNED(x)	__CTASSERT(((typeof(x))-1) < 0)
+#endif
+#ifndef	CTASSERT_UNSIGNED
 #define	CTASSERT_UNSIGNED(x)	__CTASSERT(((typeof(x))-1) >= 0)
+#endif
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
@@ -286,6 +313,7 @@ char	*strsep(char **, const char *);
 /* These exist in GCC 3.x, but we don't bother. */
 char	*strcat(char *, const char *);
 char	*strncpy(char *, const char *, size_t);
+char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
 char	*strchr(const char *, int);
 char	*strrchr(const char *, int);
@@ -321,6 +349,8 @@ char	*initstate(unsigned long, char *, size_t);
 char	*setstate(char *);
 #endif /* SMALL_RANDOM */
 long	 random(void);
+void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
+	    uint32_t[3]);
 void	 mtprng_init32(struct mtprng_state *, uint32_t);
 void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
 uint32_t mtprng_rawrandom(struct mtprng_state *);
@@ -334,6 +364,7 @@ int	 strncasecmp(const char *, const char *, size_t);
 u_long	 strtoul(const char *, char **, int);
 long long strtoll(const char *, char **, int);
 unsigned long long strtoull(const char *, char **, int);
+intmax_t  strtoimax(const char *, char **, int);
 uintmax_t strtoumax(const char *, char **, int);
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
@@ -346,6 +377,6 @@ unsigned int	popcountll(unsigned long long) __constfunc;
 unsigned int	popcount32(uint32_t) __constfunc;
 unsigned int	popcount64(uint64_t) __constfunc;
 
-void	explicit_bzero(void *, size_t);
-int	consttime_bcmp(const void *, const void *, size_t);
+void	*explicit_memset(void *, int, size_t);
+int	consttime_memequal(const void *, const void *, size_t);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2011/06/30 00:53:00 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73.2.1 2014/05/22 11:40:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2011/06/30 00:53:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73.2.1 2014/05/22 11:40:05 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -313,7 +313,6 @@ prep_setup_openpic(PPC_DEVICE *dev)
 {
 	uint32_t l;
 	uint8_t *p;
-	void *v;
 	int tag, size, item, i;
 	unsigned char *baseaddr = NULL;
 
@@ -329,7 +328,6 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		struct _L4_PPCPack *pa = &pack->L4_Data.L4_PPCPack;
 
 		tag = *p;
-		v = p;
 		if (tag_type(p[0]) == PNP_SMALL) {
 			size = tag_small_count(tag) + 1;
 			continue;
@@ -361,7 +359,7 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		openpic_write(OPENPIC_TIMER_FREQ, busfreq/8);
 		primary_pic = 1;
 		/* set up the IVR as a cascade on openpic 0 */
-		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		intr_establish(16, IST_LEVEL, IPL_HIGH, pic_handle_intr,
 		    isa_pic);
 		oea_install_extint(pic_ext_intr);
 #ifdef MULTIPROCESSOR
@@ -383,7 +381,6 @@ setup_ivr(PPC_DEVICE *dev)
 {
 	uint32_t l, addr;
 	uint8_t *p;
-	void *v;
 	int tag, size, item;
 
 	l = be32toh(dev->AllocatedOffset);
@@ -395,7 +392,6 @@ setup_ivr(PPC_DEVICE *dev)
 		struct _L4_PPCPack *pa = &pack->L4_Data.L4_PPCPack;
 
 		tag = *p;
-		v = p;
 		if (tag_type(p[0]) == PNP_SMALL) {
 			size = tag_small_count(tag) + 1;
 			continue;

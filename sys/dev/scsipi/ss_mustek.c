@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.40.12.1 2012/04/17 00:08:02 yamt Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.40.12.2 2014/05/22 11:40:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.40.12.1 2012/04/17 00:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.40.12.2 2014/05/22 11:40:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -451,7 +451,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph = ss->sc_periph;
 	u_long lines_to_read;
-	int error;
+	int error __diagused;
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_read: start\n"));
 

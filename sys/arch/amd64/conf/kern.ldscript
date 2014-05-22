@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.5 2010/06/01 22:13:30 mjf Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.5.8.1 2014/05/22 11:39:28 yamt Exp $	*/
 
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")
@@ -8,7 +8,7 @@ SECTIONS
 {
    /* Read-only sections, merged into text segment: */
    .text :
-   AT (ADDR(.text))
+   AT (ADDR(.text) & 0x0fffffff)
    {
      *(.text)
      *(.text.*)

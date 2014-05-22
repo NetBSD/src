@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.35.8.2 2013/01/23 00:06:14 yamt Exp $	*/
+/*	$NetBSD: urio.c,v 1.35.8.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.35.8.2 2013/01/23 00:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.35.8.3 2014/05/22 11:40:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,17 @@ dev_type_write(uriowrite);
 dev_type_ioctl(urioioctl);
 
 const struct cdevsw urio_cdevsw = {
-	urioopen, urioclose, urioread, uriowrite, urioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = urioopen,
+	.d_close = urioclose,
+	.d_read = urioread,
+	.d_write = uriowrite,
+	.d_ioctl = urioioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 #define URIO_CONFIG_NO		1

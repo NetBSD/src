@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.24.2.1 2012/04/17 00:08:48 yamt Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.24.2.2 2014/05/22 11:41:11 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.24.2.1 2012/04/17 00:08:48 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.24.2.2 2014/05/22 11:41:11 yamt Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.24.2.1 2012/04/17 00:08:48 ya
 #include <sys/rmd160.h>
 #include <sys/sha1.h>
 #include <sys/sha2.h>
+#include <sys/cprng.h>
 #include <opencrypto/aesxcbcmac.h>
 #include <opencrypto/gmac.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.52.4.1 2012/04/17 00:05:37 yamt Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.52.4.2 2014/05/22 11:37:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.52.4.1 2012/04/17 00:05:37 yamt Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.52.4.2 2014/05/22 11:37:14 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,9 +649,6 @@ int
 terminaltypeok(char *s)
 {
     char buf[1024];
-
-    if (terminaltype == NULL)
-	return(1);
 
     /*
      * tgetent() will return 1 if the type is known, and

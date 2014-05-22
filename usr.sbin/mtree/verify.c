@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.39.40.2 2012/10/30 19:00:42 yamt Exp $	*/
+/*	$NetBSD: verify.c,v 1.39.40.3 2014/05/22 11:43:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.39.40.2 2012/10/30 19:00:42 yamt Exp $");
+__RCSID("$NetBSD: verify.c,v 1.39.40.3 2014/05/22 11:43:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,10 @@ vwalk(void)
 	specdepth = rval = 0;
 	while ((p = fts_read(t)) != NULL) {
 		if (check_excludes(p->fts_name, p->fts_path)) {
+			fts_set(t, p, FTS_SKIP);
+			continue;
+		}
+		if (!find_only(p->fts_path)) {
 			fts_set(t, p, FTS_SKIP);
 			continue;
 		}

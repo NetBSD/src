@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.3.2.2 2013/01/23 00:05:41 yamt Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.3.2.3 2014/05/22 11:39:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.3.2.2 2013/01/23 00:05:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.3.2.3 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,6 +58,12 @@ static void	bcmgenfb_attach(device_t, device_t, void *);
 
 static int	bcmgenfb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 static paddr_t	bcmgenfb_mmap(void *, void *, off_t, int);
+static bool	bcmgenfb_shutdown(device_t, int);
+
+void		bcmgenfb_set_console_dev(device_t);
+void		bcmgenfb_ddb_trap_callback(int);
+
+static device_t bcmgenfb_console_dev = NULL;
 
 CFATTACH_DECL_NEW(bcmgenfb, sizeof(struct bcmgenfb_softc),
     bcmgenfb_match, bcmgenfb_attach, NULL, NULL);
@@ -94,6 +100,8 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
+
+	pmf_device_register1(self, NULL, NULL, bcmgenfb_shutdown);
 
 	error = bus_space_map(sc->sc_iot, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize,
@@ -133,6 +141,16 @@ bcmgenfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		busid = data;
 		busid->bus_type = WSDISPLAYIO_BUS_SOC;
 		return 0;
+	case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+			struct rasops_info *ri = &sc->sc_gen.vd.active->scr_ri;
+			int ret;
+
+			ret = wsdisplayio_get_fbinfo(ri, fbi);
+			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
+			return ret;
+		}
 	default:
 		return EPASSTHROUGH;
 	}
@@ -148,4 +166,30 @@ bcmgenfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	return bus_space_mmap(sc->sc_iot, sc->sc_gen.sc_fboffset, offset,
 	    prot, BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
+}
+
+static bool
+bcmgenfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
+}
+void
+bcmgenfb_set_console_dev(device_t dev)
+{
+	KASSERT(bcmgenfb_console_dev == NULL);
+	bcmgenfb_console_dev = dev;
+}
+
+void
+bcmgenfb_ddb_trap_callback(int where)
+{
+	if (bcmgenfb_console_dev == NULL)
+		return;
+
+	if (where) {
+		genfb_enable_polling(bcmgenfb_console_dev);
+	} else {
+		genfb_disable_polling(bcmgenfb_console_dev);
+	}
 }

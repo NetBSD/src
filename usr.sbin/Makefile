@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258.2.2 2012/10/30 19:00:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.258.2.3 2014/05/22 11:43:00 yamt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR=	ac accton acpitools altq apm apmd arp \
 	bad144 bootp btattach btconfig btdevctl bthcid btpand catman \
 	chroot cnwctl cpuctl crash \
-	dev_mkdb dhcp diskpart dumpfs dumplfs \
+	dev_mkdb diskpart dumpfs dumplfs \
 	edquota eeprom envstat eshconfig etcupdate extattrctl \
 	flashctl fssconfig fusermount fwctl \
 	gpioctl grfconfig gspa \
@@ -19,7 +19,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	mopd mountd moused mrinfo mrouted mscdlabel mtrace mtree \
 	ndbootd ndiscvt netgroup_mkdb nfsd \
 	ofctl \
-	paxctl pcictl perfused pppd psrset pstat pwd_mkdb postinstall \
+	paxctl pcictl perfused psrset pstat pwd_mkdb postinstall \
 	powerd \
 	quot quotacheck quotaon quotarestore \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \

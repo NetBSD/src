@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_once.c,v 1.2.2.2 2012/04/17 00:05:31 yamt Exp $	*/
+/*	$NetBSD: pthread_once.c,v 1.2.2.3 2014/05/22 11:36:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_once.c,v 1.2.2.2 2012/04/17 00:05:31 yamt Exp $");
+__RCSID("$NetBSD: pthread_once.c,v 1.2.2.3 2014/05/22 11:36:59 yamt Exp $");
 
 #include "pthread.h"
+#include "pthread_int.h"
+#include "reentrant.h"
 
 static void
 once_cleanup(void *closure)
@@ -51,6 +53,8 @@ once_cleanup(void *closure)
 int
 pthread_once(pthread_once_t *once_control, void (*routine)(void))
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_once_stub(once_control, routine);
 
 	if (once_control->pto_done == 0) {
 		pthread_mutex_lock(&once_control->pto_mutex);

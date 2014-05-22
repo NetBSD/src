@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.10 2011/10/01 17:39:14 christos Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.10.2.1 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 #define _FLOAT_IEEE754	1
 
-#ifndef FLT_ROUNDS
+#if !defined(__ASSEMBLER__) && !defined(FLT_ROUNDS)
 __BEGIN_DECLS
 extern int __flt_rounds(void);
 __END_DECLS

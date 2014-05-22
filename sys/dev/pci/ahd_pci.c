@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.32.8.1 2012/04/17 00:07:42 yamt Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.32.8.2 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.32.8.1 2012/04/17 00:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.32.8.2 2014/05/22 11:40:24 yamt Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -324,6 +324,7 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t  	ih;
 	const char         	*intrstr;
 	struct ahd_pci_busdata 	*bd;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	ahd->sc_dev = self;
 	ahd_set_name(ahd, device_xname(self));
@@ -537,7 +538,7 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 		ahd_free(ahd);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	ahd->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahd_intr, ahd);
 	if (ahd->ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
@@ -1033,7 +1034,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 	 * additionally have SG engine splits to look at.
 	 */
 	pcix_status = pci_conf_read(bd->pc, bd->tag,
-	    bd->pcix_off + PCI_PCIX_STATUS);
+	    bd->pcix_off + PCIX_STATUS);
 	printf("%s: PCI Split Interrupt - PCI-X status = 0x%x\n",
 	       ahd_name(ahd), pcix_status);
 
@@ -1082,7 +1083,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 	/*
 	 * Clear PCI-X status bits.
 	 */
-	pci_conf_write(bd->pc, bd->tag, bd->pcix_off + PCI_PCIX_STATUS,
+	pci_conf_write(bd->pc, bd->tag, bd->pcix_off + PCIX_STATUS,
 	    pcix_status);
 	ahd_outb(ahd, CLRINT, CLRSPLTINT);
 	ahd_restore_modes(ahd, saved_modes);

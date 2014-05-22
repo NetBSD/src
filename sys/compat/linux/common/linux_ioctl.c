@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.56.2.1 2012/10/30 17:20:43 yamt Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.56.2.2 2014/05/22 11:40:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.56.2.1 2012/10/30 17:20:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.56.2.2 2014/05/22 11:40:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -148,7 +148,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 #if NSEQUENCER > 0
 /* XXX XAX 2x check this. */
 		/*
-		 * Both termios and the MIDI sequncer use 'T' to identify
+		 * Both termios and the MIDI sequencer use 'T' to identify
 		 * the ioctl, so we have to differentiate them in another
 		 * way.  We do it by indexing in the cdevsw with the major
 		 * device number and check if that is the sequencer entry.

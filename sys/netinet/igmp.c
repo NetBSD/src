@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.52.2.1 2012/04/17 00:08:40 yamt Exp $	*/
+/*	$NetBSD: igmp.c,v 1.52.2.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.52.2.1 2012/04/17 00:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.52.2.2 2014/05/22 11:41:09 yamt Exp $");
 
 #include "opt_mrouting.h"
 
@@ -613,11 +613,6 @@ static void
 sysctl_net_inet_igmp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "net", NULL,
-			NULL, 0, NULL, 0,
-			CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_NODE, "inet", NULL,

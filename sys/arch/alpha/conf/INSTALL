@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.100.8.2 2012/10/30 17:18:42 yamt Exp $
+# $NetBSD: INSTALL,v 1.100.8.3 2014/05/22 11:39:27 yamt Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -341,10 +341,14 @@ wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
-pseudo-device	loop		1
+pseudo-device	raid			# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+
+pseudo-device	bpfilter
+pseudo-device	loop
 pseudo-device	md		
 pseudo-device	ppp		
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		
 
 #pseudo-device	fss			# file system snapshot device

@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.4 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.4.34.1 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.4 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.4.34.1 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
-#include <arm/cpufunc.h>
+
+#include <arm/locore.h>
 
 void
 cpu_idle(void)
