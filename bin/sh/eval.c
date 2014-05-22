@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.102.2.3 2013/01/23 00:04:05 yamt Exp $	*/
+/*	$NetBSD: eval.c,v 1.102.2.4 2014/05/22 11:26:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.102.2.3 2013/01/23 00:04:05 yamt Exp $");
+__RCSID("$NetBSD: eval.c,v 1.102.2.4 2014/05/22 11:26:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -845,15 +845,17 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		 */
 		if (cmdentry.cmdtype == CMDNORMAL) {
 			pid_t	pid;
+			int serrno;
 
 			savelocalvars = localvars;
 			localvars = NULL;
 			vforked = 1;
 			switch (pid = vfork()) {
 			case -1:
-				TRACE(("Vfork failed, errno=%d\n", errno));
+				serrno = errno;
+				TRACE(("Vfork failed, errno=%d\n", serrno));
 				INTON;
-				error("Cannot vfork");
+				error("Cannot vfork (%s)", strerror(serrno));
 				break;
 			case 0:
 				/* Make sure that exceptions only unwind to
@@ -947,7 +949,7 @@ normal_fork:
 		}
 		savehandler = handler;
 		handler = &jmploc;
-		listmklocal(varlist.list, 0);
+		listmklocal(varlist.list, VEXPORT);
 		/* stop shell blowing its stack */
 		if (++funcnest > 1000)
 			error("too many nested function calls");
@@ -1053,7 +1055,6 @@ normal_fork:
 #ifdef DEBUG
 		trputs("normal command:  ");  trargs(argv);
 #endif
-		clearredir(vforked);
 		redirect(cmd->ncmd.redirect, vforked ? REDIR_VFORK : 0);
 		if (!vforked)
 			for (sp = varlist.list ; sp ; sp = sp->next)

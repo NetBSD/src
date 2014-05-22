@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.16.6.1 2014/05/22 11:36:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,7 +61,7 @@ extern struct termios	tty_start, tty_new;
 
 extern DISPLACEMENT	displacement[MAXDIR];
 
-int		addplane(void);
+void		addplane(void);
 void		append(LIST *, PLANE *);
 void		check_adir(int, int, int);
 void		delete(LIST *, PLANE *);

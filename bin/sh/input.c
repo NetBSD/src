@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.44.4.1 2012/04/17 00:01:38 yamt Exp $	*/
+/*	$NetBSD: input.c,v 1.44.4.2 2014/05/22 11:26:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.44.4.1 2012/04/17 00:01:38 yamt Exp $");
+__RCSID("$NetBSD: input.c,v 1.44.4.2 2014/05/22 11:26:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,9 @@ preadbuffer(void)
 {
 	char *p, *q;
 	int more;
+#ifndef SMALL
 	int something;
+#endif
 	char savec;
 
 	if (parsefile->strpush) {
@@ -262,7 +264,9 @@ again:
 	q = p = parsenextc;
 
 	/* delete nul characters */
+#ifndef SMALL
 	something = 0;
+#endif
 	for (more = 1; more;) {
 		switch (*p) {
 		case '\0':
@@ -279,7 +283,9 @@ again:
 			break;
 
 		default:
+#ifndef SMALL
 			something = 1;
+#endif
 			break;
 		}
 

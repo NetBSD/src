@@ -1,4 +1,4 @@
-/*	$NetBSD: strnlen.c,v 1.1 2011/09/01 22:35:18 jym Exp $	*/
+/*	$NetBSD: strnlen.c,v 1.1.2.1 2014/05/22 11:26:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 David Schultz <das@FreeBSD.org>
@@ -26,9 +26,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strnlen.c,v 1.1 2011/09/01 22:35:18 jym Exp $");
+__RCSID("$NetBSD: strnlen.c,v 1.1.2.1 2014/05/22 11:26:30 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 /* FreeBSD: src/lib/libc/string/strnlen.c,v 1.1 2009/02/28 06:00:58 das Exp */
 
@@ -38,6 +42,7 @@ __RCSID("$NetBSD: strnlen.c,v 1.1 2011/09/01 22:35:18 jym Exp $");
 #include <lib/libkern/libkern.h>
 #endif
 
+#if !HAVE_STRNLEN
 size_t
 strnlen(const char *s, size_t maxlen)
 {
@@ -49,3 +54,4 @@ strnlen(const char *s, size_t maxlen)
 	}
 	return (len);
 }
+#endif /* !HAVE_STRNLEN */

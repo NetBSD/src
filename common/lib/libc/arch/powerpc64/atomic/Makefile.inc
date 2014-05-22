@@ -1,15 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.6 2009/01/04 17:54:29 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.6.8.1 2014/05/22 11:26:29 yamt Exp $
 
-.if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
-	|| ${LIB} == "rump")
+.PATH:	${NETBSDSRCDIR}/common/lib/libc/arch/powerpc/atomic
 
-SRCS+=	atomic_add.S atomic_and.S atomic_cas.S atomic_dec.S \
-	atomic_inc.S atomic_or.S atomic_swap.S membar_ops.S
-
-.endif
-
-.if defined(LIB) && (${LIB} == "c" || ${LIB} == "pthread")
-
-SRCS+=	atomic_init_cas.c
-
-.endif
+.include "${NETBSDSRCDIR}/common/lib/libc/arch/powerpc/atomic/Makefile.inc"

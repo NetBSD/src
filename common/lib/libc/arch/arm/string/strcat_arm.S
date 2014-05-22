@@ -33,20 +33,39 @@
  * Implementation of strcat using strlen/strcpy.
  */
 ENTRY(strcat)
-	str	lr, [sp, #-8]!		/* save return address */
-	push	{r4, r5}		/* save registers */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
+	.fnstart
+# endif
+	.cfi_startproc
+#endif
+	push	{r3-r5, lr}		/* save registers */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
+	.save	{r3-r5, lr}
+# endif
+	.cfi_def_cfa_offset 16
+	.cfi_offset 14, -4
+	.cfi_offset 5, -8
+	.cfi_offset 4, -12
+	.cfi_offset 3, -16
+#endif
 
 	mov	r4, r0			/* save dst */
 	mov	r5, r1			/* save append */
 
 	bl	PLT_SYM(strlen)		/* find length of dst */
 
-	add	r0, r0, r4		/* add to dst pointer */
+	adds	r0, r0, r4		/* add to dst pointer */
 	mov	r1, r5			/* fetch append */
 	bl	PLT_SYM(strcpy)		/* append string */
 
 	mov	r0, r4			/* restore dst as return value */
-	pop	{r4, r5}		/* restore registers */
-	ldr	lr, [sp], #8		/* restore return address */
-	RET
+	pop	{r3-r5, pc}		/* restore registers */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.cfi_endproc
+# if !defined(__ARM_DWARF_EH__)
+	.fnend
+# endif
+#endif
 END(strcat)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_cas.c,v 1.4 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_add_32_cas.c,v 1.4.4.1 2014/05/22 11:26:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,8 +33,15 @@
 
 #include <sys/atomic.h>
 
-void
-atomic_add_32(volatile uint32_t *addr, int32_t val)
+uint32_t fetch_and_add_4(volatile uint32_t *, uint32_t, ...)
+#if defined(_LIBC) || defined(_HARDKERNEL)
+    asm("__sync_fetch_and_add_4");	/* C runtime internal */
+#else
+    ;
+#endif
+
+uint32_t
+fetch_and_add_4(volatile uint32_t *addr, uint32_t val, ...)
 {
 	uint32_t old, new;
 
@@ -42,6 +49,13 @@ atomic_add_32(volatile uint32_t *addr, int32_t val)
 		old = *addr;
 		new = old + val;
 	} while (atomic_cas_32(addr, old, new) != old);
+	return old;
+}
+
+void
+atomic_add_32(volatile uint32_t *addr, int32_t val)
+{
+	(void) fetch_and_add_4(addr, val);
 }
 
 #undef atomic_add_32
