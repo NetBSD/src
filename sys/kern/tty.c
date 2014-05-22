@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.259 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: tty.c,v 1.260 2014/05/22 16:28:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.259 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.260 2014/05/22 16:28:06 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
+
+#define TTY_ALLOW_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
