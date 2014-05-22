@@ -1,5 +1,7 @@
 dnl  IA-64 mpn_popcount -- mpn population count.
 
+dnl  Contributed to the GNU project by Torbjorn Granlund.
+
 dnl  Copyright 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation,
 dnl  Inc.
 

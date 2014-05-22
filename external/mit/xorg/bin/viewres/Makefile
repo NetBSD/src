@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/21 06:04:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2014/05/22 14:09:36 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

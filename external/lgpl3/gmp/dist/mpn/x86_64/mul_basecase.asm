@@ -2,7 +2,7 @@ dnl  AMD64 mpn_mul_basecase.
 
 dnl  Contributed to the GNU project by Torbjorn Granlund and David Harvey.
 
-dnl  Copyright 2008 Free Software Foundation, Inc.
+dnl  Copyright 2008, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -22,10 +22,13 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 C	     cycles/limb
-C K8,K9:	 2.375
-C K10:		 2.375
-C P4:		 ?
-C P6-15:	 4.45
+C AMD K8,K9	 2.375
+C AMD K10	 2.375
+C Intel P4	15-16
+C Intel core2	 4.45
+C Intel corei	 4.35
+C Intel atom	 ?
+C VIA nano	 4.5
 
 C The inner loops of this code are the result of running a code generation and
 C optimization tool suite written by David Harvey and Torbjorn Granlund.
@@ -56,10 +59,15 @@ define(`n',  `%r11')
 define(`outer_addr', `%r14')
 define(`un',  `%r13')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(mpn_mul_basecase)
+	FUNC_ENTRY(4)
+IFDOS(`	mov	56(%rsp), %r8d	')
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -92,7 +100,13 @@ L(mul_1):
 	cmp	$2, R32(w0)
 	jc	L(mul_1_prologue_1)
 	jz	L(mul_1_prologue_2)
-	jmp	L(mul_1_prologue_3)
+
+L(mul_1_prologue_3):
+	add	$-1, n
+	lea	L(addmul_outer_3)(%rip), outer_addr
+	mov	%rax, w3
+	mov	%rdx, w0
+	jmp	L(mul_1_entry_3)
 
 L(mul_1_prologue_0):
 	mov	%rax, w2
@@ -123,13 +137,6 @@ L(mul_1_prologue_2):
 	xor	R32(w2), R32(w2)
 	xor	R32(w3), R32(w3)
 	jmp	L(mul_1_entry_2)
-
-L(mul_1_prologue_3):
-	add	$-1, n
-	lea	L(addmul_outer_3)(%rip), outer_addr
-	mov	%rax, w3
-	mov	%rdx, w0
-	jmp	L(mul_1_entry_3)
 
 
 	C this loop is 10 c/loop = 2.5 c/l on K8, for all up/rp alignments
@@ -291,7 +298,7 @@ L(mul_2_entry_1):
 	mov	w3, -32(rp,n,8)
 	js	L(mul_2_top)
 
-	mov	-32(up,n,8), %rax
+	mov	-32(up,n,8), %rax	C FIXME: n is constant
 	mul	v1
 	add	%rax, w0
 	mov	w0, (rp)
@@ -445,6 +452,7 @@ L(ret):	pop	%r15
 	pop	%r12
 	pop	%rbp
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 
 EPILOGUE()

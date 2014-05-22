@@ -30,6 +30,7 @@
  */
 #include "cvs.h"
 #include "getline.h"
+#include <pwd.h>
 #include <grp.h>
 
 static int acl_fileproc (void *callerdat, struct file_info *finfo);
@@ -556,18 +557,24 @@ check_default:
 	if (debug) fprintf (stderr, "usesystemgroups=%d\n", use_system_groups);
 	if (use_system_groups) {
 	    struct group *griter;
+	    struct passwd *pwd;
+	    gid_t gid = (pwd = getpwnam(username)) != NULL ? pwd->pw_gid : -1;
 	    setgrent ();
 	    while (griter = getgrent ())
 	    {
-		char **users=griter->gr_mem;
-		int index = 0;
-		char *userchk = users [index++];
-		while(userchk != NULL) {
-		    if(strcmp (userchk, username) == 0)
-			break;
-		    userchk = users[index++];
+		char *userchk;
+		if (gid == griter->gr_gid) {
+		    userchk = username;
+		} else  {
+		    char **users = griter->gr_mem;
+		    int index = 0;
+		    userchk = users [index++];
+		    while(userchk != NULL) {
+			if(strcmp (userchk, username) == 0)
+			    break;
+			userchk = users[index++];
+		    }
 		}
-		if (debug) fprintf (stderr, "usercheck=%s\n", userchk);
 		if (userchk != NULL) {
 		    char *grp;
 		    if ((grp = findusername (part_perms, griter->gr_name)))

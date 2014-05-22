@@ -3,8 +3,8 @@
 # GMP config.guess wrapper.
 
 
-# Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2008 Free Software
-# Foundation, Inc.
+# Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2008, 2011, 2012 Free
+# Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library.
 #
@@ -151,6 +151,37 @@ EOF
     esac
   fi
   rm -f $dummy.s $dummy.o $dummy
+  ;;
+
+arm*-*-*)
+  cpu_code=`sed -n 's/^CPU part.*\(0x.*\)$/\1/p' /proc/cpuinfo 2>/dev/null`
+  case "$cpu_code" in
+      0x210)	exact_cpu="armxscale";;		# v5 pxa250
+      0x290)	exact_cpu="armxscale";;		# v5 pxa260
+      0x2d0)	exact_cpu="armxscale";;		# v5 pxa255
+      0x2d0)	exact_cpu="armxscale";;		# v5 pxa261
+      0x2d0)	exact_cpu="armxscale";;		# v5 pxa262
+      0x411)	exact_cpu="armxscale";;		# v5 pxa270
+      0x915)	exact_cpu="armti915t";;		# v?
+      0x925)	exact_cpu="armti925t";;		# v?
+      0x926)	exact_cpu="arm926";;		# v5
+      0x946)	exact_cpu="arm946";;		# v5
+      0x966)	exact_cpu="arm966";;		# v5
+      0xa11)	exact_cpu="armsa1";;		# v4 strongarm/sa1100
+      0xa26)	exact_cpu="arm1026";;		# v5
+      0xb02)	exact_cpu="arm11mpcore";;	# v6
+      0xb11)	exact_cpu="armsa1";;		# v4 strongarm/sa1110
+      0xb36)	exact_cpu="arm1136";;		# v6
+      0xb56)	exact_cpu="arm1156";;		# v6t2
+      0xb76)	exact_cpu="arm1176";;		# v6
+      0xc05)	exact_cpu="armcortexa5";;	# v7a
+      0xc08)	exact_cpu="armcortexa8";;	# v7a
+      0xc09)	exact_cpu="armcortexa9";;	# v7a
+      0xc0f)	exact_cpu="armcortexa15";;	# v7a
+      0xc14)	exact_cpu="armcortexr4";;	# v7r
+      0xc15)	exact_cpu="armcortexr5";;	# v7r
+      0xc23)	exact_cpu="armcortexm3";;	# v7m
+  esac
   ;;
 
 ia64*-*-*)
@@ -454,6 +485,9 @@ main ()
 #ifdef POWER_6
   case POWER_6:    puts ("power6"); break;
 #endif
+#ifdef POWER_7
+  case POWER_7:    puts ("power7"); break;
+#endif
   default:
     if (_system_configuration.architecture == POWER_RS)
       puts ("power");
@@ -539,8 +573,11 @@ sparc-*-* | sparc64-*-*)
     elif grep 'cpu.*MB86904' /proc/cpuinfo >/dev/null; then
       # actually MicroSPARC-II
       exact_cpu=microsparc
+    elif grep 'cpu.*UltraSparc T3' /proc/cpuinfo >/dev/null; then
+      exact_cpu="ultrasparct3"
+    elif grep 'cpu.*UltraSparc T2' /proc/cpuinfo >/dev/null; then
+      exact_cpu="ultrasparct2"
     elif grep 'cpu.*UltraSparc T1' /proc/cpuinfo >/dev/null; then
-      # this grep pattern has not been tested against any Linux
       exact_cpu="ultrasparct1"
     elif grep 'cpu.*UltraSparc III' /proc/cpuinfo >/dev/null; then
       exact_cpu="ultrasparc3"
@@ -595,7 +632,11 @@ sparc-*-* | sparc64-*-*)
   for prtconfopt in "" "-vp"; do
     if test -z "$exact_cpu"; then
       if $SHELL -c "/usr/sbin/prtconf $prtconfopt" 2>/dev/null >conftest.dat; then
-	if grep 'SUNW,UltraSPARC-T1' conftest.dat >/dev/null; then
+	if grep 'SUNW,UltraSPARC-T3' conftest.dat >/dev/null; then
+	  exact_cpu=ultrasparct3
+	elif grep 'SUNW,UltraSPARC-T2' conftest.dat >/dev/null; then
+	  exact_cpu=ultrasparct2
+	elif grep 'SUNW,UltraSPARC-T1' conftest.dat >/dev/null; then
 	  exact_cpu=ultrasparct1
 	elif grep 'SUNW,UltraSPARC-III' conftest.dat >/dev/null; then
 	  exact_cpu=ultrasparc3
@@ -630,16 +671,19 @@ sparc-*-* | sparc64-*-*)
   #
   if test -z "$exact_cpu"; then
     if $SHELL -c "/sbin/sysctl hw.model" 2>/dev/null >conftest.dat; then
-      if grep 'UltraSparc-T1' conftest.dat >/dev/null; then
-	# this grep pattern has not been tested against any BSD
+      if grep -i 'UltraSparc-T3' conftest.dat >/dev/null; then
+        exact_cpu=ultrasparct3
+      elif grep -i 'UltraSparc-T2' conftest.dat >/dev/null; then
+        exact_cpu=ultrasparct2
+      elif grep -i 'UltraSparc-T1' conftest.dat >/dev/null; then
         exact_cpu=ultrasparct1
-      elif grep 'UltraSparc-III' conftest.dat >/dev/null; then
+      elif grep -i 'UltraSparc-III' conftest.dat >/dev/null; then
         exact_cpu=ultrasparc3
-      elif grep 'UltraSparc-IIi' conftest.dat >/dev/null; then
+      elif grep -i 'UltraSparc-IIi' conftest.dat >/dev/null; then
         exact_cpu=ultrasparc2i
-      elif grep 'UltraSparc-II' conftest.dat >/dev/null; then
+      elif grep -i 'UltraSparc-II' conftest.dat >/dev/null; then
         exact_cpu=ultrasparc2
-      elif grep 'UltraSparc' conftest.dat >/dev/null; then
+      elif grep -i 'UltraSparc' conftest.dat >/dev/null; then
         exact_cpu=ultrasparc
       elif grep 'TMS390Z5.' conftest.dat >/dev/null; then
         # TMS390Z50 and TMS390Z55
@@ -666,6 +710,12 @@ sparc-*-* | sparc64-*-*)
   fi
   ;;
 
+
+# Recognise x86 processors using a tricky cpuid with 4 arguments, repeating
+# arguments; for x86-64 we effectively pass the 1st in rdx and the 2nd in rcx.
+# This allows the same asm to work for both standard and Windoze calling
+# conventions.
+
 i?86-*-* | amd64-*-* | x86_64-*-*)
   cat <<EOF >${dummy}0.s
 	.globl cpuid
@@ -674,10 +724,10 @@ cpuid:
 _cpuid:
 	pushl %esi
 	pushl %ebx
-	movl 16(%esp),%eax
+	movl 24(%esp),%eax
 	.byte 0x0f
 	.byte 0xa2
-	movl 12(%esp),%esi
+	movl 20(%esp),%esi
 	movl %ebx,(%esi)
 	movl %edx,4(%esi)
 	movl %ecx,8(%esi)
@@ -690,35 +740,49 @@ EOF
 	.globl _cpuid
 cpuid:
 _cpuid:
-	push %rbx
-	mov %esi,%eax
-	.byte 0x0f
-	.byte 0xa2
-	mov %ebx,(%rdi)
-	mov %edx,4(%rdi)
-	mov %ecx,8(%rdi)
-	pop %rbx
+	push	%rbx
+	mov	%rdx, %r8
+	mov	%ecx, %eax
+	.byte	0x0f
+	.byte	0xa2
+	mov	%ebx, (%r8)
+	mov	%edx, 4(%r8)
+	mov	%ecx, 8(%r8)
+	pop	%rbx
 	ret
 EOF
   cat <<EOF >${dummy}2.c
+#include <string.h>
+#include <stdio.h>
+#define CPUID(a,b) cpuid(b,a,a,b)
+#if __cplusplus
+extern "C"
+#endif
+unsigned int cpuid (int, char *, char *, int);
+int
 main ()
 {
   char vendor_string[13];
   char dummy_string[12];
   long fms;
   int family, model, stepping;
-  char *modelstr;
+  const char *modelstr;
+  int cpu_64bit = 0;
 
-  cpuid (vendor_string, 0);
+  CPUID (vendor_string, 0);
   vendor_string[12] = 0;
 
-  fms = cpuid (dummy_string, 1);
+  fms = CPUID (dummy_string, 1);
 
   family = ((fms >> 8) & 0xf) + ((fms >> 20) & 0xff);
   model = ((fms >> 4) & 0xf) + ((fms >> 12) & 0xf0);
   stepping = fms & 0xf;
 
   modelstr = "$guess_cpu";
+
+  /**************************************************/
+  /*** WARNING: keep this list in sync with fat.c ***/
+  /**************************************************/
   if (strcmp (vendor_string, "GenuineIntel") == 0)
     {
       switch (family)
@@ -734,19 +798,26 @@ main ()
 	  else if (model <= 9)		modelstr = "pentiumm";
 	  else if (model <= 0x0c)	modelstr = "pentium3";
 	  else if (model <= 0x0e)	modelstr = "pentiumm";
-	  else if (model <= 0x19)	modelstr = "core2";
-	  else if (model == 0x1a)	modelstr = "corei"; /* NHM Gainestown */
-	  else if (model == 0x1c)	modelstr = "atom";  /* Silverthorne */
-	  else if (model == 0x1d)	modelstr = "core2"; /* PNR Dunnington */
-	  else if (model == 0x1e)	modelstr = "corei"; /* NHM Lynnfield/Jasper */
-	  else if (model == 0x25)	modelstr = "corei"; /* WSM Clarkdale/Arrandale */
-	  else if (model == 0x26)	modelstr = "atom";  /* Lincroft */
-	  else if (model == 0x27)	modelstr = "atom";  /* Saltwell */
-	  else if (model == 0x2c)	modelstr = "corei"; /* WSM Gulftown */
-	  else if (model == 0x2e)	modelstr = "corei"; /* NHM Beckton */
+	  else if (model <= 0x19)	cpu_64bit = 1, modelstr = "core2";
+	  else if (model == 0x1a)	cpu_64bit = 1, modelstr = "coreinhm"; /* NHM Gainestown */
+	  else if (model == 0x1c)	cpu_64bit = 1, modelstr = "atom";  /* Silverthorne */
+	  else if (model == 0x1d)	cpu_64bit = 1, modelstr = "core2"; /* PNR Dunnington */
+	  else if (model == 0x1e)	cpu_64bit = 1, modelstr = "coreinhm"; /* NHM Lynnfield/Jasper */
+	  else if (model == 0x25)	cpu_64bit = 1, modelstr = "coreiwsm"; /* WSM Clarkdale/Arrandale */
+	  else if (model == 0x26)	cpu_64bit = 1, modelstr = "atom";  /* Lincroft */
+	  else if (model == 0x27)	cpu_64bit = 1, modelstr = "atom";  /* Saltwell */
+	  else if (model == 0x2a)	cpu_64bit = 1, modelstr = "coreisbr"; /* SB */
+	  else if (model == 0x2c)	cpu_64bit = 1, modelstr = "coreiwsm"; /* WSM Gulftown */
+	  else if (model == 0x2d)	cpu_64bit = 1, modelstr = "coreisbr"; /* SBC-EP */
+	  else if (model == 0x2e)	cpu_64bit = 1, modelstr = "coreinhm"; /* NHM Beckton */
+	  else if (model == 0x2f)	cpu_64bit = 1, modelstr = "coreiwsm"; /* WSM Eagleton */
+	  else if (model == 0x3a)	cpu_64bit = 1, modelstr = "coreisbr"; /* IBR */
+	  else if (model == 0x3c)	cpu_64bit = 1, modelstr = "coreisbr"; /* Haswell */
+	  else if (model == 0x36)	cpu_64bit = 1, modelstr = "atom";  /* Cedarview/Saltwell */
+	  else cpu_64bit = 1, modelstr = "corei"; /* default */
 	  break;
 	case 15:
-	  modelstr = "pentium4";
+	  cpu_64bit = 1, modelstr = "pentium4";
 	  break;
 	}
     }
@@ -765,9 +836,29 @@ main ()
 	case 6:
 	  modelstr = "athlon";
 	  break;
-	case 15:
-	case 16:
-	  modelstr = "athlon64";
+	case 15:		/* K8, K9 */
+	  cpu_64bit = 1, modelstr = "k8";
+	  break;
+	case 16:		/* K10 */
+	  cpu_64bit = 1, modelstr = "k10";
+	  break;
+	case 17:		/* Hybrid k8/k10, claim k8 */
+	  cpu_64bit = 1, modelstr = "k8";
+	  break;
+	case 18:		/* Llano, uses K10 core */
+	  cpu_64bit = 1, modelstr = "k10";
+	  break;
+	case 19:		/* AMD Internal, assume future K10 */
+	  cpu_64bit = 1, modelstr = "k10";
+	  break;
+	case 20:		/* Bobcat */
+	  cpu_64bit = 1, modelstr = "bobcat";
+	  break;
+	case 21:		/* Bulldozer */
+	  cpu_64bit = 1, modelstr = "bulldozer";
+	  break;
+	case 22:		/* jaguar, an improved bobcat */
+	  cpu_64bit = 1, modelstr = "bobcat";
 	  break;
 	}
     }
@@ -782,12 +873,18 @@ main ()
 	case 6:
 	  if (model < 9)	modelstr = "viac3";
 	  else if (model < 15)	modelstr = "viac32";
-	  else			modelstr = "nano";
+	  else			cpu_64bit = 1, modelstr = "nano";
 	  break;
 	}
     }
 
-  printf ("%s\n", modelstr);
+  /* If our cpuid-based exact guess is more conservative than the previous
+     guess, revert.  This is of course wrong, but it can happen in an emulator,
+     so this workaround allows for successful 64-bit builds.  */
+  if (strcmp ("$guess_cpu", "x86_64") == 0 && ! cpu_64bit)
+    modelstr = "$guess_cpu";
+
+  printf ("%s", modelstr);
   return 0;
 }
 EOF
@@ -825,6 +922,21 @@ EOF
   # We need to remove some .o files here since lame C compilers
   # generate these even when not asked.
   rm -f ${dummy}0.s ${dummy}0.o ${dummy}1.s ${dummy}1.o ${dummy}2.c ${dummy}2.o $dummy
+  ;;
+
+s390*-*-*)
+  model=`grep "^processor 0: version =" /proc/cpuinfo | sed -e 's/.*machine = //'`
+  case $model in
+    2064 | 2066) zcpu="z900" ;;
+    2084 | 2086) zcpu="z990" ;;
+    2094 | 2096) zcpu="z9"   ;;
+    2097 | 2098) zcpu="z10"  ;;
+    2817 | 2818 | *) zcpu="z196" ;;
+  esac
+  case "$guess_full" in
+    s390x-*-*) exact_cpu=${zcpu}    ;;
+    s390-*-*)  exact_cpu=${zcpu}esa ;;
+  esac
   ;;
 
 esac

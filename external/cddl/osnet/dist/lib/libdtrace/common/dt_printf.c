@@ -1482,11 +1482,15 @@ dt_printf_format(dtrace_hdl_t *dtp, FILE *fp, const dt_pfargv_t *pfv,
 		if (func == pfprint_stack && (pfd->pfd_flags & DT_PFCONV_LEFT))
 			width = 0;
 
-		if (width != 0)
-			f += snprintf(f, sizeof (format), "%d", ABS(width));
+		if (width != 0) {
+			f += snprintf(f, format + sizeof (format) - f,
+			    "%d", ABS(width));
+		}
 
-		if (prec > 0)
-			f += snprintf(f, sizeof (format), ".%d", prec);
+		if (prec > 0) {
+			f += snprintf(f, format + sizeof (format) - f,
+			    ".%d", prec);
+		}
 
 		(void) strcpy(f, pfd->pfd_fmt);
 		pfd->pfd_rec = rec;
@@ -1857,10 +1861,10 @@ dtrace_printf_format(dtrace_hdl_t *dtp, void *fmtdata, char *s, size_t len)
 			*f++ = '@';
 
 		if (width != 0)
-			f += snprintf(f, sizeof (format), "%d", width);
+			f += snprintf(f, format + formatlen - f, "%d", width);
 
 		if (prec != 0)
-			f += snprintf(f, sizeof (format), ".%d", prec);
+			f += snprintf(f, format + formatlen - f, ".%d", prec);
 
 		/*
 		 * If the output format is %s, then either %s is the underlying

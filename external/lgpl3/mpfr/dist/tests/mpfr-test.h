@@ -1,7 +1,7 @@
 /* auxiliary functions for MPFR tests.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -91,10 +91,11 @@ FILE *src_fopen _MPFR_PROTO ((const char *, const char *));
 void set_emin _MPFR_PROTO ((mpfr_exp_t));
 void set_emax _MPFR_PROTO ((mpfr_exp_t));
 void tests_default_random _MPFR_PROTO ((mpfr_ptr, int, mpfr_exp_t, mpfr_exp_t));
-void data_check _MPFR_PROTO ((char *, int (*) (FLIST), char *));
+void data_check _MPFR_PROTO ((const char *, int (*) (FLIST), const char *));
 void bad_cases _MPFR_PROTO ((int (*)(FLIST), int (*)(FLIST),
-                             char *, int, mpfr_exp_t, mpfr_exp_t,
+                             const char *, int, mpfr_exp_t, mpfr_exp_t,
                              mpfr_prec_t, mpfr_prec_t, mpfr_prec_t, int));
+void flags_out _MPFR_PROTO ((unsigned int));
 
 int mpfr_cmp_str _MPFR_PROTO ((mpfr_srcptr x, const char *, int, mpfr_rnd_t));
 #define mpfr_cmp_str1(x,s) mpfr_cmp_str(x,s,10,MPFR_RNDN)

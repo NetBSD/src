@@ -1,19 +1,20 @@
 dnl  AMD64 mpn_lshift -- mpn left shift.
 
-dnl  Copyright 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2005, 2007, 2009, 2011, 2012 Free Software Foundation,
+dnl  Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
-dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
-dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
-dnl
+
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of the GNU Lesser General Public License as published
+dnl  by the Free Software Foundation; either version 3 of the License, or (at
+dnl  your option) any later version.
+
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+dnl  License for more details.
+
 dnl  You should have received a copy of the GNU Lesser General Public License
 dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
@@ -21,11 +22,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb   cycles/limb cnt=1
-C K8,K9:	 2.375		 1.375
-C K10:		 2.375		 1.375
-C P4:		 8		10.5
-C P6-15 (Core2): 2.11		 4.28
-C P6-28 (Atom):	 5.75		 3.5
+C AMD K8,K9	 2.375		 1.375
+C AMD K10	 2.375		 1.375
+C Intel P4	 8		10.5
+C Intel core2	 2.11		 4.28
+C Intel corei	 ?		 ?
+C Intel atom	 5.75		 3.5
+C VIA nano	 3.5		 2.25
 
 
 C INPUT PARAMETERS
@@ -34,15 +37,19 @@ define(`up',	`%rsi')
 define(`n',	`%rdx')
 define(`cnt',	`%rcx')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(32)
 PROLOGUE(mpn_lshift)
+	FUNC_ENTRY(4)
 	cmp	$1, R8(%rcx)
 	jne	L(gen)
 
 C For cnt=1 we want to work from lowest limb towards higher limbs.
-C Check for bad overlap (up=rp is OK!) up=1..rp+n-1 is bad.
+C Check for bad overlap (up=rp is OK!) up=rp+1..rp+n-1 is bad.
 C FIXME: this could surely be done more cleverly.
 
 	mov    rp, %rax
@@ -81,6 +88,7 @@ L(t1):	mov	(up), %r8
 	dec	R32(%rax)
 	jne	L(n00)
 	adc	R32(%rax), R32(%rax)
+	FUNC_EXIT()
 	ret
 L(e1):	test	R32(%rax), R32(%rax)	C clear cy
 L(n00):	mov	(up), %r8
@@ -89,6 +97,7 @@ L(n00):	mov	(up), %r8
 	adc	%r8, %r8
 	mov	%r8, (rp)
 L(ret):	adc	R32(%rax), R32(%rax)
+	FUNC_EXIT()
 	ret
 L(n01):	dec	R32(%rax)
 	mov	8(up), %r9
@@ -98,6 +107,7 @@ L(n01):	dec	R32(%rax)
 	mov	%r8, (rp)
 	mov	%r9, 8(rp)
 	adc	R32(%rax), R32(%rax)
+	FUNC_EXIT()
 	ret
 L(n10):	mov	16(up), %r10
 	adc	%r8, %r8
@@ -107,6 +117,7 @@ L(n10):	mov	16(up), %r10
 	mov	%r9, 8(rp)
 	mov	%r10, 16(rp)
 	adc	$-1, R32(%rax)
+	FUNC_EXIT()
 	ret
 
 L(gen):	neg	R32(%rcx)		C put rsh count in cl
@@ -220,5 +231,6 @@ L(end):
 L(ast):	mov	(up), %r10
 	shl	R8(%rcx), %r10
 	mov	%r10, (rp)
+	FUNC_EXIT()
 	ret
 EPILOGUE()

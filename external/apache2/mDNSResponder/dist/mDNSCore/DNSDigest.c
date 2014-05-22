@@ -13,99 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-
-    Change History (most recent first):
-
-Log: DNSDigest.c,v $
-Revision 1.26  2008/10/10 23:21:51  mcguire
-fixed typo in original MD5 source reference
-
-Revision 1.25  2007/12/17 23:48:29  cheshire
-DNSDigest_SignMessage doesn't need to return a result -- it already updates the 'end' parameter
-
-Revision 1.24  2007/11/30 23:03:51  cheshire
-Fixes for EFI: Use "mDNSPlatformMemCopy" instead of assuming existence of "memcpy"
-
-Revision 1.23  2007/09/21 21:12:36  cheshire
-DNSDigest_SignMessage does not need separate "mDNSu16 *numAdditionals" parameter
-
-Revision 1.22  2007/04/22 06:02:02  cheshire
-<rdar://problem/4615977> Query should immediately return failure when no server
-
-Revision 1.21  2007/03/22 18:31:48  cheshire
-Put dst parameter first in mDNSPlatformStrCopy/mDNSPlatformMemCopy, like conventional Posix strcpy/memcpy
-
-Revision 1.20  2006/12/22 20:59:49  cheshire
-<rdar://problem/4742742> Read *all* DNS keys from keychain,
- not just key for the system-wide default registration domain
-
-Revision 1.19  2006/12/21 00:06:07  cheshire
-Don't need to do mDNSPlatformMemZero() -- mDNS_SetupResourceRecord() does it for us
-
-Revision 1.18  2006/12/19 22:41:21  cheshire
-Fix compiler warnings
-
-Revision 1.17  2006/08/14 23:24:22  cheshire
-Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
-
-Revision 1.16  2006/07/05 23:05:15  cheshire
-<rdar://problem/4472013> Add Private DNS server functionality to dnsextd
-Add DNSDigest_VerifyMessage() function
-
-Revision 1.15  2006/06/20 04:12:30  cheshire
-<rdar://problem/4490961> DNS Update broken
-
-Revision 1.14  2006/02/25 23:12:07  cheshire
-<rdar://problem/4427969> Fix to avoid code generation warning/error on FreeBSD 7
-
-Revision 1.13  2004/12/16 20:12:59  cheshire
-<rdar://problem/3324626> Cache memory management improvements
-
-Revision 1.12  2004/12/03 07:20:50  ksekar
-<rdar://problem/3674208> Wide-Area: Registration of large TXT record fails
-
-Revision 1.11  2004/12/02 01:10:27  cheshire
-Fix to compile cleanly on 64-bit x86
-
-Revision 1.10  2004/11/01 20:36:04  ksekar
-<rdar://problem/3802395> mDNSResponder should not receive Keychain Notifications
-
-Revision 1.9  2004/10/26 09:00:12  cheshire
-Save a few bytes by creating HMAC_MD5_AlgName as a C string instead of a 256-byte object
-
-Revision 1.8  2004/09/17 01:08:48  cheshire
-Renamed mDNSClientAPI.h to mDNSEmbeddedAPI.h
-  The name "mDNSClientAPI.h" is misleading to new developers looking at this code. The interfaces
-  declared in that file are ONLY appropriate to single-address-space embedded applications.
-  For clients on general-purpose computers, the interfaces defined in dns_sd.h should be used.
-
-Revision 1.7  2004/08/15 18:36:38  cheshire
-Don't use strcpy() and strlen() on "struct domainname" objects;
-use AssignDomainName() and DomainNameLength() instead
-(A "struct domainname" is a collection of packed pascal strings, not a C string.)
-
-Revision 1.6  2004/06/02 00:17:46  ksekar
-Referenced original OpenSSL license headers in source file description.
-
-Revision 1.5  2004/05/20 18:37:37  cheshire
-Fix compiler warnings
-
-Revision 1.4  2004/04/22 20:28:20  cheshire
-Use existing facility of PutResourceRecordTTL() to update count field for us
-
-Revision 1.3  2004/04/22 03:05:28  cheshire
-kDNSClass_ANY should be kDNSQClass_ANY
-
-Revision 1.2  2004/04/15 00:51:28  bradley
-Minor tweaks for Windows and C++ builds. Added casts for signed/unsigned integers and 64-bit pointers.
-Prefix some functions with mDNS to avoid conflicts. Disable benign warnings on Microsoft compilers.
-
-Revision 1.1  2004/04/14 23:09:28  ksekar
-Support for TSIG signed dynamic updates.
-
-
-
-*/
+ */
 
 
 #ifdef __cplusplus
@@ -523,6 +431,11 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
    * what we need here...
    *
    * 					<appro@fy.chalmers.se>
+   */
+  /*
+   * LLVM is more strict about compatibility of types between input & output constraints,
+   * but we want these to be rotations of 32 bits, not 64, so we explicitly drop the
+   * most significant bytes by casting to an unsigned int.
    */
 #  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
@@ -1432,7 +1345,7 @@ mDNSexport void DNSDigest_SignMessage(DNSMessage *msg, mDNSu8 **end, DomainAuthI
 	MD5_Update(&c, (mDNSu8 *)msg, (unsigned long)(*end - (mDNSu8 *)msg));
 	   
 	// Construct TSIG RR, digesting variables as apporpriate
-	mDNS_SetupResourceRecord(&tsig, mDNSNULL, 0, kDNSType_TSIG, 0, kDNSRecordTypeKnownUnique, mDNSNULL, mDNSNULL);
+	mDNS_SetupResourceRecord(&tsig, mDNSNULL, 0, kDNSType_TSIG, 0, kDNSRecordTypeKnownUnique, AuthRecordAny, mDNSNULL, mDNSNULL);
 
 	// key name
 	AssignDomainName(&tsig.namestorage, &info->keyname);

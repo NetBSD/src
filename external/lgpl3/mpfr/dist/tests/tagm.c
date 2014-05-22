@@ -1,7 +1,7 @@
 /* Test file for mpfr_agm.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -129,7 +129,7 @@ check_large (void)
     }
 
   /* problem found by Damien Fischer <damien@maths.usyd.edu.au> 4 Aug 2003:
-     produced a division by zero exception */
+     produced a divide-by-zero exception */
   mpfr_set_prec (a, 268);
   mpfr_set_prec (b, 268);
   mpfr_set_prec (agm, 268);

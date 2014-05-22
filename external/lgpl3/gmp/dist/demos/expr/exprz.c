@@ -86,7 +86,7 @@ e_mpz_clrbit (mpz_ptr w, mpz_srcptr x, unsigned long n)
   mpz_clrbit (w, n);
 }
 
-static __gmp_const struct mpexpr_operator_t  _mpz_expr_standard_table[] = {
+static const struct mpexpr_operator_t  _mpz_expr_standard_table[] = {
 
   { "**",  (mpexpr_fun_t) mpz_pow_ui,
     MPEXPR_TYPE_BINARY_UI | MPEXPR_TYPE_RIGHTASSOC,                  220 },
@@ -172,13 +172,13 @@ static __gmp_const struct mpexpr_operator_t  _mpz_expr_standard_table[] = {
 
 /* The table is available globally only through a pointer, so the table size
    can change without breaking binary compatibility. */
-__gmp_const struct mpexpr_operator_t * __gmp_const mpz_expr_standard_table
+const struct mpexpr_operator_t * const mpz_expr_standard_table
 = _mpz_expr_standard_table;
 
 
 int
 #if HAVE_STDARG
-mpz_expr (mpz_ptr res, int base, __gmp_const char *e, ...)
+mpz_expr (mpz_ptr res, int base, const char *e, ...)
 #else
 mpz_expr (va_alist)
      va_dcl
@@ -190,13 +190,13 @@ mpz_expr (va_alist)
 #if HAVE_STDARG
   va_start (ap, e);
 #else
-  mpz_ptr           res;
-  int               base;
-  __gmp_const char  *e;
+  mpz_ptr     res;
+  int         base;
+  const char  *e;
   va_start (ap);
   res  = va_arg (ap, mpz_ptr);
   base = va_arg (ap, int);
-  e    = va_arg (ap, __gmp_const char *);
+  e    = va_arg (ap, const char *);
 #endif
 
   TRACE (printf ("mpz_expr(): base %d, %s\n", base, e));

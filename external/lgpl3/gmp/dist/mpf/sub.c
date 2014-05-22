@@ -1,6 +1,6 @@
 /* mpf_sub -- Subtract two floats.
 
-Copyright 1993, 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005 Free
+Copyright 1993, 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005, 2011 Free
 Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -273,19 +273,19 @@ general_case:
       vsize = prec - ediff;
     }
 
-  /* Allocate temp space for the result.  Allocate
-     just vsize + ediff later???  */
-  tp = TMP_ALLOC_LIMBS (prec);
-
   if (ediff >= prec)
     {
       /* V completely cancelled.  */
-      if (tp != up)
+      if (rp != up)
 	MPN_COPY (rp, up, usize);
       rsize = usize;
     }
   else
     {
+      /* Allocate temp space for the result.  Allocate
+	 just vsize + ediff later???  */
+      tp = TMP_ALLOC_LIMBS (prec);
+
       /* Locate the least significant non-zero limb in (the needed
 	 parts of) U and V, to simplify the code below.  */
       for (;;)

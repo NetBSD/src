@@ -1,6 +1,7 @@
 dnl  PowerPC-32 mpn_mod_34lsub1 -- mpn remainder mod 2^24-1.
 
-dnl  Copyright 2002, 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+dnl  Copyright 2002, 2003, 2005, 2006, 2007, 2012 Free Software Foundation,
+dnl  Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -135,15 +136,15 @@ L(large):
 
 	andi.	r7, up, 15
 	vxor	a0, v0, v0
-	lis	r0, 0xaaaa
+	lis	r9, 0xaaaa
 	vxor	a1, v0, v0
-	ori	r0, r0, 0xaaab
+	ori	r9, r9, 0xaaab
 	vxor	a2, v0, v0
 	li	r5, 16
 	vxor	c0, v0, v0
 	li	r6, 32
 	vxor	c1, v0, v0
-	LEAL(	r11, cnsts)
+	LEAL(	r11, cnsts)		C CAUTION clobbers r0 for elf, darwin
 	vxor	c2, v0, v0
 	vxor	z, v0, v0
 
@@ -158,7 +159,7 @@ L(large):
 	vsldoi	a2, z, a2, 12
 
 	addi	n, n, 9
-	mulhwu	r0, n, r0
+	mulhwu	r0, n, r9
 	srwi	r0, r0, 3		C r0 = floor(n/12)
 	mtctr	r0
 
@@ -174,7 +175,7 @@ L(na4):	bne	cr7, L(na8)
 	vsldoi	a1, z, a1, 8
 
 	addi	n, n, 6
-	mulhwu	r0, n, r0
+	mulhwu	r0, n, r9
 	srwi	r0, r0, 3		C r0 = floor(n/12)
 	mtctr	r0
 
@@ -188,7 +189,7 @@ L(na8):
 	vsldoi	a0, z, a0, 4
 
 	addi	n, n, 3
-	mulhwu	r0, n, r0
+	mulhwu	r0, n, r9
 	srwi	r0, r0, 3		C r0 = floor(n/12)
 	mtctr	r0
 
@@ -197,7 +198,7 @@ L(na8):
 	b	L(0)
 
 L(aligned16):
-	mulhwu	r0, n, r0
+	mulhwu	r0, n, r9
 	srwi	r0, r0, 3		C r0 = floor(n/12)
 	mtctr	r0
 

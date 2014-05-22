@@ -1647,6 +1647,8 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		} else
 			tv = time((time_t *) 0);
 		tm = localtime(&tv);
+		if (tm == NULL)
+			FATAL("bad time %jd", (intmax_t)tv);
 
 		if (isrec(x)) {
 			/* format argument not provided, use default */
@@ -2074,6 +2076,7 @@ Cell *gensub(Node **a, int nnn)	/* global selective substitute */
 	x = execute(a[4]);	/* source string */
 	t = getsval(x);
 	res = copycell(x);	/* target string - initially copy of source */
+	res->csub = CTEMP;	/* result values are temporary */
 	if (a[0] == 0)		/* 0 => a[1] is already-compiled regexpr */
 		pfa = (fa *) a[1];	/* regular expression */
 	else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.10.2.1 2013/01/23 00:04:40 yamt Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.10.2.2 2014/05/22 14:01:24 yamt Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -403,7 +403,7 @@ extern vnode_t *rootdir;
 #define	lbolt64	(gethrtime() >> 23)
 #define	hz	119	/* frequency when using gethrtime() >> 23 for lbolt */
 	
-extern void delay(clock_t ticks);
+extern void xdelay(clock_t ticks);
 
 #define	gethrestime_sec() time(NULL)
 #define gethrestime(t) \
@@ -431,7 +431,7 @@ extern void kernel_init(int);
 extern void kernel_fini(void);
 
 struct spa;
-extern void nicenum(uint64_t num, char *buf);
+extern void nicenum(uint64_t, char *, size_t);
 extern void show_pool_stats(struct spa *);
 
 typedef struct callb_cpr {

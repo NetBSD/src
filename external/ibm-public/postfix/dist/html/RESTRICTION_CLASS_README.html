@@ -48,13 +48,17 @@ care about these low-level details. </p>
     permissive = permit
 
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
-	<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-	<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
-	<a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/recipient_access
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+	# <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if the mail
+	# relay policy is specified with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+	# (available with Postfix 2.10 and later).
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/recipient_access
+        ...
 
 /etc/postfix/recipient_access:
-    joe@my.domain	permissive
-    jane@my.domain	restrictive
+    joe@my.domain       permissive
+    jane@my.domain      restrictive
 </pre>
 </blockquote>
 
@@ -102,6 +106,7 @@ to IP spoofing. </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
+        ...
         <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/access
         <i>...the usual stuff...</i>
 
@@ -133,6 +138,7 @@ therefore is subject to SMTP sender spoofing. </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
+        ...
         <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/protected_destinations
         <i>...the usual stuff...</i>
 
@@ -193,6 +199,7 @@ with LDAP or SQL. </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
+        ...
         <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/restricted_senders
         <i>...other stuff...</i>
 

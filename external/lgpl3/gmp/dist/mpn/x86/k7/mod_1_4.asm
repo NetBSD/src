@@ -1,50 +1,42 @@
 dnl  x86-32 mpn_mod_1s_4p, requiring cmov.
 
 dnl  Contributed to the GNU project by Torbjorn Granlund.
-
-dnl  Copyright 2009 Free Software Foundation, Inc.
-
+dnl
+dnl  Copyright 2009, 2010 Free Software Foundation, Inc.
+dnl
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
 dnl  it under the terms of the GNU Lesser General Public License as published
 dnl  by the Free Software Foundation; either version 3 of the License, or (at
 dnl  your option) any later version.
-
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 dnl  License for more details.
-
+dnl
 dnl  You should have received a copy of the GNU Lesser General Public License
 dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C                           cycles/limb
-C P5:
-C P6 model 0-8,10-12)
-C P6 model 9  (Banias)
-C P6 model 13 (Dothan)		 6.0
-C P4 model 0  (Willamette)
-C P4 model 1  (?)
+C			    cycles/limb
+C P5				 ?
+C P6 model 0-8,10-12		 ?
+C P6 model 9  (Banias)		 ?
+C P6 model 13 (Dothan)		 6
+C P4 model 0  (Willamette)	 ?
+C P4 model 1  (?)		 ?
 C P4 model 2  (Northwood)	15.5
-C P4 model 3  (Prescott)
-C P4 model 4  (Nocona)
-C K6:
-C K7:                            4.75
-C K8:
-
-
-C Ths inner loop was manually written, it ought to be loopmixed.
-C Presumably, we could get to 4 c/l for K7.
-
-C The cps function was compiler generated.  It can clearly be optimized.
-
+C P4 model 3  (Prescott)	 ?
+C P4 model 4  (Nocona)		 ?
+C AMD K6			 ?
+C AMD K7			 4.75
+C AMD K8			 ?
 
 ASM_START()
 	TEXT
-
 	ALIGN(16)
 PROLOGUE(mpn_mod_1s_4p)
 	push	%ebp
@@ -52,7 +44,7 @@ PROLOGUE(mpn_mod_1s_4p)
 	push	%esi
 	push	%ebx
 	sub	$28, %esp
-	mov	60(%esp), %edi		C cps
+	mov	60(%esp), %edi		C cps[]
 	mov	8(%edi), %eax
 	mov	12(%edi), %edx
 	mov	16(%edi), %ecx
@@ -101,11 +93,10 @@ L(b1):	mov	8(%esi), %ebp
 	lea	-4(%esi), %esi
 	jmp	L(m1)
 
-L(b2):	mov	8(%esi), %eax
-	mull	4(%esp)
+L(b2):	mov	8(%esi), %edi
 	mov	4(%esi), %ebp
 	lea	-8(%esi), %esi
-	jmp	L(m0)
+	jmp	L(m1)
 
 	ALIGN(16)
 L(top):	mov	(%esi), %eax
@@ -154,18 +145,18 @@ L(end):	mov	4(%esp), %eax
 	mov	%ebx, %ecx
 	mov	%eax, %ebx
 	mov	%ebp, %eax
+	mov	56(%esp), %ebp
 	sal	%cl, %eax
 	add	%eax, %ebx
 	adc	%esi, %edx
-	imul	56(%esp), %edx
-	mov	56(%esp), %esi
+	imul	%ebp, %edx
 	sub	%edx, %eax
-	lea	(%eax,%esi), %edx
+	lea	(%eax,%ebp), %edx
 	cmp	%eax, %ebx
-	cmovb(	%edx, %eax)
+	cmovc(	%edx, %eax)
 	mov	%eax, %edx
-	sub	%esi, %eax
-	cmovb(	%edx, %eax)
+	sub	%ebp, %eax
+	cmovc(	%edx, %eax)
 	add	$28, %esp
 	pop	%ebx
 	pop	%esi
@@ -177,105 +168,82 @@ EPILOGUE()
 
 	ALIGN(16)
 PROLOGUE(mpn_mod_1s_4p_cps)
-	sub	$56, %esp
-	mov	%esi, 44(%esp)
-	mov	64(%esp), %esi
-	mov	%edi, 48(%esp)
-	mov	%ebx, 40(%esp)
-	mov	$-1, %ebx
-	mov	%ebp, 52(%esp)
-	bsr	%esi, %eax
-	xor	$31, %eax
-	mov	%eax, %ecx
-	mov	%eax, 24(%esp)
-	mov	%ebx, %eax
-	sal	%cl, %esi
-	mov	%esi, %ecx
-	mov	%esi, %edi
-	mov	%esi, %ebp
-	neg	%ecx
-	not	%edi
-	mov	%ecx, 20(%esp)
-	mov	$32, %ecx
-	sub	24(%esp), %ecx
-	mov	%edi, %edx
-	mov	%edi, 16(%esp)
-	mov	20(%esp), %edi
-	div	%esi
-	mov	%eax, %ebx
-	shr	%cl, %eax
-	movzbl	24(%esp), %ecx
-	mov	%eax, 12(%esp)
-	mov	$1, %eax
-	sal	%cl, %eax
-	or	%eax, 12(%esp)
-	imul	12(%esp), %edi
-	mov	%edi, %eax
-	mov	%edi, 20(%esp)
-	mul	%ebx
-	mov	%eax, %ecx
-	lea	1(%edx,%edi), %eax
-	neg	%eax
-	imul	%eax, %ebp
-	lea	(%ebp,%esi), %eax
-	cmp	%ebp, %ecx
-	cmovb(	%eax, %ebp)
-	mov	%ebp, %eax
-	mul	%ebx
-	lea	1(%ebp,%edx), %edi
-	mov	%eax, %ecx
-	neg	%edi
-	mov	%edi, 8(%esp)
-	imul	%esi, %edi
-	mov	%edi, %eax
-	add	%esi, %eax
-	cmp	%edi, %ecx
-	cmovae(	%edi, %eax)
-	mov	%eax, 32(%esp)
-	mov	32(%esp), %edi
-	mul	%ebx
-	mov	%eax, 36(%esp)
-	lea	1(%edi,%edx), %eax
-	negl	%eax
-	imul	%esi, %eax
-	mov	%eax, %ecx
-	add	%esi, %ecx
-	cmp	%eax, 36(%esp)
-	cmovae(	%eax, %ecx)
-	mov	%ecx, (%esp)
-	mov	%ecx, %eax
-	mul	%ebx
+C CAUTION: This is the same code as in pentium4/sse2/mod_1_4.asm
+	push	%ebp
+	push	%edi
+	push	%esi
+	push	%ebx
+	mov	20(%esp), %ebp		C FIXME: avoid bp for 0-idx
+	mov	24(%esp), %ebx
+	bsr	%ebx, %ecx
+	xor	$31, %ecx
+	sal	%cl, %ebx		C b << cnt
+	mov	%ebx, %edx
+	not	%edx
+	mov	$-1, %eax
+	div	%ebx
+	xor	%edi, %edi
+	sub	%ebx, %edi
+	mov	$1, %esi
+	mov	%eax, (%ebp)		C store bi
+	mov	%ecx, 4(%ebp)		C store cnt
+	shld	%cl, %eax, %esi
+	imul	%edi, %esi
 	mov	%eax, %edi
-	mov	(%esp), %eax
-	lea	1(%eax,%edx), %ecx
-	mov	60(%esp), %edx
-	neg	%ecx
-	imul	%esi, %ecx
-	mov	%ebx, (%edx)
-	add	%ecx, %esi
-	cmp	%ecx, %edi
-	cmovae(	%ecx, %esi)
-	mov	24(%esp), %ecx
-	shrl	%cl, 20(%esp)
-	mov	20(%esp), %edi
-	mov	%esi, 4(%esp)
-	mov	%ecx, 4(%edx)
-	movzbl	24(%esp), %ecx
-	mov	%edi, 8(%edx)
-	shr	%cl, %ebp
-	shr	%cl, %eax
-	mov	%ebp, 12(%edx)
-	shrl	%cl, 32(%esp)
-	mov	32(%esp), %edi
-	shrl	%cl, 4(%esp)
-	mov	%eax, 20(%edx)
-	mov	%edi, 16(%edx)
-	mov	4(%esp), %edi
-	mov	%edi, 24(%edx)
-	mov	40(%esp), %ebx
-	mov	44(%esp), %esi
-	mov	48(%esp), %edi
-	mov	52(%esp), %ebp
-	add	$56, %esp
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 8(%ebp)		C store B1modb
+
+	not	%edx
+	imul	%ebx, %edx
+	lea	(%edx,%ebx), %esi
+	cmp	%edx, %eax
+	cmovnc(	%edx, %esi)
+	mov	%edi, %eax
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 12(%ebp)		C store B2modb
+
+	not	%edx
+	imul	%ebx, %edx
+	lea	(%edx,%ebx), %esi
+	cmp	%edx, %eax
+	cmovnc(	%edx, %esi)
+	mov	%edi, %eax
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 16(%ebp)		C store B3modb
+
+	not	%edx
+	imul	%ebx, %edx
+	lea	(%edx,%ebx), %esi
+	cmp	%edx, %eax
+	cmovnc(	%edx, %esi)
+	mov	%edi, %eax
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 20(%ebp)		C store B4modb
+
+	not	%edx
+	imul	%ebx, %edx
+	add	%edx, %ebx
+	cmp	%edx, %eax
+	cmovnc(	%edx, %ebx)
+
+	shr	%cl, %ebx
+	mov	%ebx, 24(%ebp)		C store B5modb
+
+	pop	%ebx
+	pop	%esi
+	pop	%edi
+	pop	%ebp
 	ret
 EPILOGUE()

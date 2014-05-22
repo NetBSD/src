@@ -509,7 +509,7 @@ zvol_create_minor(const char *name)
 	devpath = kmem_alloc(devpathlen, KM_SLEEP);
 	
 	/* Get full path to ZFS volume disk device */
-	(void) sprintf(devpath, "%s/%s", ZVOL_FULL_DEV_DIR, name);
+	(void) snprintf(devpath, devpathlen, "%s/%s", ZVOL_FULL_DEV_DIR, name);
 	
 	error = lookupname(devpath, UIO_SYSSPACE, NULL, &vp);
 	

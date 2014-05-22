@@ -2,20 +2,20 @@
 
 Copyright 2002 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +25,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "longlong.h"
 #include "tests.h"
 
-void debug_mp __GMP_PROTO ((mpz_t, int));
-void dump_abort __GMP_PROTO ((int, char *, mpz_t, mpz_t));
+void debug_mp (mpz_t, int);
+void dump_abort (int, const char *, mpz_t, mpz_t);
 
 int
 main (int argc, char **argv)
@@ -107,7 +107,7 @@ main (int argc, char **argv)
 }
 
 void
-dump_abort (int i, char *s, mpz_t op1, mpz_t op2)
+dump_abort (int i, const char *s, mpz_t op1, mpz_t op2)
 {
   fprintf (stderr, "ERROR: %s in test %d\n", s, i);
   fprintf (stderr, "op1 = "); debug_mp (op1, -16);

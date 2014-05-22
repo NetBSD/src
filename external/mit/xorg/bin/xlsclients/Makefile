@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/23 07:11:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2014/05/22 14:09:38 yamt Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xlsclients
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} -DHAVE_STRNLEN
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} -DHAVE_STRNLEN \
+		-DPACKAGE_STRING=\"1.1.3\"
 
 #BUILDSYMLINKS=	xlscli.man xlsclients.man
 

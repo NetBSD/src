@@ -1,7 +1,7 @@
-/*	$NetBSD: lstrlib.c,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.1.1.1.6.2 2014/05/22 14:09:34 yamt Exp $	*/
 
 /*
-** $Id: lstrlib.c,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $
+** $Id: lstrlib.c,v 1.1.1.1.6.2 2014/05/22 14:09:34 yamt Exp $
 ** Standard library for string operations and pattern-matching
 ** See Copyright Notice in lua.h
 */
@@ -776,24 +776,30 @@ static int str_format (lua_State *L) {
       strfrmt = scanformat(L, strfrmt, form);
       switch (*strfrmt++) {
         case 'c': {
-          sprintf(buff, form, (int)luaL_checknumber(L, arg));
+          snprintf(buff, sizeof(buff), form, (int)luaL_checknumber(L, arg));
           break;
         }
         case 'd':  case 'i': {
           addintlen(form);
-          sprintf(buff, form, (LUA_INTFRM_T)luaL_checknumber(L, arg));
+          snprintf(buff, sizeof(buff), form, (LUA_INTFRM_T)luaL_checknumber(L, arg));
           break;
         }
         case 'o':  case 'u':  case 'x':  case 'X': {
           addintlen(form);
-          sprintf(buff, form, (unsigned LUA_INTFRM_T)luaL_checknumber(L, arg));
+#ifndef _KERNEL
+          snprintf(buff, sizeof(buff), form, (unsigned LUA_INTFRM_T)luaL_checknumber(L, arg));
+#else
+          snprintf(buff, sizeof(buff), form, (LUA_UINTFRM_T)luaL_checknumber(L, arg));
+#endif
           break;
         }
+#ifndef _KERNEL
         case 'e':  case 'E': case 'f':
         case 'g': case 'G': {
-          sprintf(buff, form, (double)luaL_checknumber(L, arg));
+          snprintf(buff, sizeof(buff), form, (double)luaL_checknumber(L, arg));
           break;
         }
+#endif
         case 'q': {
           addquoted(L, &b, arg);
           continue;  /* skip the 'addsize' at the end */
@@ -809,7 +815,7 @@ static int str_format (lua_State *L) {
             continue;  /* skip the `addsize' at the end */
           }
           else {
-            sprintf(buff, form, s);
+            snprintf(buff, sizeof(buff), form, s);
             break;
           }
         }

@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_node.c,v 1.1.1.1.2.2 2013/01/23 00:05:06 yamt Exp $	*/
+/*	$NetBSD: postconf_node.c,v 1.1.1.1.2.3 2014/05/22 14:08:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -155,7 +155,7 @@ PC_PARAM_NODE *make_param_node(int flags, char *param_data,
     return (node);
 }
 
-/* convert_param_node - get actual or default parameter value */
+/* convert_param_node - get default parameter value */
 
 const char *convert_param_node(int mode, const char *name, PC_PARAM_NODE *node)
 {

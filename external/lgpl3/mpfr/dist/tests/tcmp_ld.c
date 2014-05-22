@@ -1,7 +1,7 @@
 /* Test file for mpfr_cmp_ld.
 
-Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -67,6 +67,7 @@ main (void)
       exit (1);
     }
 
+#if !defined(MPFR_ERRDIVZERO)
   /* Check NAN */
   mpfr_clear_erangeflag ();
   c = mpfr_cmp_ld (x, DBL_NAN);
@@ -93,6 +94,7 @@ main (void)
 #endif
       exit (1);
     }
+#endif  /* MPFR_ERRDIVZERO */
 
   mpfr_clear(x);
 

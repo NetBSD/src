@@ -1,21 +1,21 @@
 /* Miscellaneous test program support routines.
 
-Copyright 2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
+Copyright 2000, 2001, 2002, 2003, 2005, 2013 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "config.h"
 
@@ -123,7 +123,7 @@ tests_rand_end (void)
 
 
 /* Only used if CPU calling conventions checking is available. */
-mp_limb_t (*calling_conventions_function) __GMP_PROTO ((ANYARGS));
+mp_limb_t (*calling_conventions_function) (ANYARGS);
 
 
 /* Return p advanced to the next multiple of "align" bytes.  "align" must be
@@ -163,7 +163,7 @@ __gmp_allocate_strdup (const char *s)
   size_t  len;
   char    *t;
   len = strlen (s);
-  t = (*__gmp_allocate_func) (len+1);
+  t = (char *) (*__gmp_allocate_func) (len+1);
   memcpy (t, s, len+1);
   return t;
 }
@@ -382,7 +382,7 @@ urandom (void)
 
 /* Call (*func)() with various random number generators. */
 void
-call_rand_algs (void (*func) __GMP_PROTO ((const char *, gmp_randstate_ptr)))
+call_rand_algs (void (*func) (const char *, gmp_randstate_ptr))
 {
   gmp_randstate_t  rstate;
   mpz_t            a;
@@ -465,7 +465,7 @@ tests_isinf (double d)
 int
 tests_hardware_setround (int mode)
 {
-#if HAVE_HOST_CPU_FAMILY_x86
+#if WANT_ASSEMBLY && HAVE_HOST_CPU_FAMILY_x86
   int  rc;
   switch (mode) {
   case 0: rc = 0; break;  /* nearest */
@@ -486,7 +486,7 @@ tests_hardware_setround (int mode)
 int
 tests_hardware_getround (void)
 {
-#if HAVE_HOST_CPU_FAMILY_x86
+#if WANT_ASSEMBLY && HAVE_HOST_CPU_FAMILY_x86
   switch ((x86_fstcw () & ~0xC00) >> 10) {
   case 0: return 0; break;  /* nearest */
   case 1: return 3; break;  /* down    */

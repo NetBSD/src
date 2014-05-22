@@ -1,7 +1,7 @@
 /* Test file for mpfr_set_z_2exp.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -51,8 +51,14 @@ check0 (void)
       inexact = mpfr_set_z_2exp (x, y, e, (mpfr_rnd_t) r);
       if (!MPFR_IS_ZERO(x) || !MPFR_IS_POS(x) || inexact)
         {
-          printf ("mpfr_set_z_2exp(x,0,e) failed for e=%ld, rnd=%s\n", e,
-                  mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+          printf ("mpfr_set_z_2exp(x,0,e) failed for e=");
+          if (e < LONG_MIN)
+            printf ("(<LONG_MIN)");
+          else if (e > LONG_MAX)
+            printf ("(>LONG_MAX)");
+          else
+            printf ("%ld", (long) e);
+          printf (", rnd=%s\n", mpfr_print_rnd_mode ((mpfr_rnd_t) r));
           exit (1);
         }
     }
@@ -92,10 +98,16 @@ check (long i, mpfr_rnd_t rnd)
   mpfr_div_2si (f, f, e, rnd);
   if (mpfr_get_si (f, MPFR_RNDZ) != i)
     {
-      printf ("Error in mpfr_set_z_2exp for i=%ld e=%ld rnd_mode=%d\n",
-              i, e, rnd);
+      printf ("Error in mpfr_set_z_2exp for i=%ld e=", i);
+      if (e < LONG_MIN)
+        printf ("(<LONG_MIN)");
+      else if (e > LONG_MAX)
+        printf ("(>LONG_MAX)");
+      else
+        printf ("%ld", (long) e);
+      printf (" rnd_mode=%d\n", rnd);
       printf ("expected %ld\n", i);
-      mpfr_printf ("got %Re\n", f);
+      printf ("got      "); mpfr_dump (f);
       exit (1);
     }
   mpfr_clear (f);

@@ -2,20 +2,20 @@
 
 Copyright 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 
 /* With no arguments the various Kronecker/Jacobi symbol routines are
@@ -40,7 +40,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp.h"
 #include "gmp-impl.h"
 #include "tests.h"
-
 
 #ifdef _LONG_LONG_LIMB
 #define LL(l,ll)  ll
@@ -199,6 +198,10 @@ try_pari (mpz_srcptr a, mpz_srcptr b, int answer)
 void
 try_each (mpz_srcptr a, mpz_srcptr b, int answer)
 {
+#if 0
+  fprintf(stderr, "asize = %d, bsize = %d\n",
+	  mpz_sizeinbase (a, 2), mpz_sizeinbase (b, 2));
+#endif
   if (option_pari)
     {
       try_pari (a, b, answer);
@@ -613,6 +616,33 @@ check_data (void)
     /* special values inducing a==b==1 at the end of jac_or_kron() */
     { "0x10000000000000000000000000000000000000000000000001",
       "0x10000000000000000000000000000000000000000000000003", 1 },
+
+    /* Test for previous bugs in jacobi_2. */
+    { "0x43900000000", "0x42400000439", -1 }, /* 32-bit limbs */
+    { "0x4390000000000000000", "0x4240000000000000439", -1 }, /* 64-bit limbs */
+
+    { "198158408161039063", "198158360916398807", -1 },
+
+    /* Some tests involving large quotients in the continued fraction
+       expansion. */
+    { "37200210845139167613356125645445281805",
+      "451716845976689892447895811408978421929", -1 },
+    { "67674091930576781943923596701346271058970643542491743605048620644676477275152701774960868941561652032482173612421015",
+      "4902678867794567120224500687210807069172039735", 0 },
+    { "2666617146103764067061017961903284334497474492754652499788571378062969111250584288683585223600172138551198546085281683283672592", "2666617146103764067061017961903284334497474492754652499788571378062969111250584288683585223600172138551198546085281683290481773", 1 },
+
+    /* Exersizes the case asize == 1, btwos > 0 in mpz_jacobi. */
+    { "804609", "421248363205206617296534688032638102314410556521742428832362659824", 1 } ,
+    { "4190209", "2239744742177804210557442048984321017460028974602978995388383905961079286530650825925074203175536427000", 1 },
+
+    /* Exersizes the case asize == 1, btwos = 63 in mpz_jacobi
+       (relevant when GMP_LIMB_BITS == 64). */
+    { "17311973299000934401", "1675975991242824637446753124775689449936871337036614677577044717424700351103148799107651171694863695242089956242888229458836426332300124417011114380886016", 1 },
+    { "3220569220116583677", "41859917623035396746", -1 },
+
+    /* Other test cases that triggered bugs during development. */
+    { "37200210845139167613356125645445281805", "340116213441272389607827434472642576514", -1 },
+    { "74400421690278335226712251290890563610", "451716845976689892447895811408978421929", -1 },
   };
 
   int    i;
@@ -652,7 +682,7 @@ check_squares_zi (void)
   for (i = 0; i < 50; i++)
     {
       mpz_urandomb (bs, rands, 32);
-      size_range = mpz_get_ui (bs) % 10 + 2;
+      size_range = mpz_get_ui (bs) % 10 + i/8 + 2;
 
       mpz_urandomb (bs, rands, size_range);
       an = mpz_get_ui (bs);
@@ -719,6 +749,242 @@ check_a_zero (void)
 }
 
 
+/* Assumes that b = prod p_k^e_k */
+int
+ref_jacobi (mpz_srcptr a, mpz_srcptr b, unsigned nprime,
+	    mpz_t prime[], unsigned *exp)
+{
+  unsigned i;
+  int res;
+
+  for (i = 0, res = 1; i < nprime; i++)
+    if (exp[i])
+      {
+	int legendre = refmpz_legendre (a, prime[i]);
+	if (!legendre)
+	  return 0;
+	if (exp[i] & 1)
+	  res *= legendre;
+      }
+  return res;
+}
+
+void
+check_jacobi_factored (void)
+{
+#define PRIME_N 10
+#define PRIME_MAX_SIZE 50
+#define PRIME_MAX_EXP 4
+#define PRIME_A_COUNT 10
+#define PRIME_B_COUNT 5
+#define PRIME_MAX_B_SIZE 2000
+
+  gmp_randstate_ptr rands = RANDS;
+  mpz_t prime[PRIME_N];
+  unsigned exp[PRIME_N];
+  mpz_t a, b, t, bs;
+  unsigned i;
+
+  mpz_init (a);
+  mpz_init (b);
+  mpz_init (t);
+  mpz_init (bs);
+
+  /* Generate primes */
+  for (i = 0; i < PRIME_N; i++)
+    {
+      mp_size_t size;
+      mpz_init (prime[i]);
+      mpz_urandomb (bs, rands, 32);
+      size = mpz_get_ui (bs) % PRIME_MAX_SIZE + 2;
+      mpz_rrandomb (prime[i], rands, size);
+      if (mpz_cmp_ui (prime[i], 3) <= 0)
+	mpz_set_ui (prime[i], 3);
+      else
+	mpz_nextprime (prime[i], prime[i]);
+    }
+
+  for (i = 0; i < PRIME_B_COUNT; i++)
+    {
+      unsigned j, k;
+      mp_bitcnt_t bsize;
+
+      mpz_set_ui (b, 1);
+      bsize = 1;
+
+      for (j = 0; j < PRIME_N && bsize < PRIME_MAX_B_SIZE; j++)
+	{
+	  mpz_urandomb (bs, rands, 32);
+	  exp[j] = mpz_get_ui (bs) % PRIME_MAX_EXP;
+	  mpz_pow_ui (t, prime[j], exp[j]);
+	  mpz_mul (b, b, t);
+	  bsize = mpz_sizeinbase (b, 2);
+	}
+      for (k = 0; k < PRIME_A_COUNT; k++)
+	{
+	  int answer;
+	  mpz_rrandomb (a, rands, bsize + 2);
+	  answer = ref_jacobi (a, b, j, prime, exp);
+	  try_all (a, b, answer);
+	}
+    }
+  for (i = 0; i < PRIME_N; i++)
+    mpz_clear (prime[i]);
+
+  mpz_clear (a);
+  mpz_clear (b);
+  mpz_clear (t);
+  mpz_clear (bs);
+
+#undef PRIME_N
+#undef PRIME_MAX_SIZE
+#undef PRIME_MAX_EXP
+#undef PRIME_A_COUNT
+#undef PRIME_B_COUNT
+#undef PRIME_MAX_B_SIZE
+}
+
+/* These tests compute (a|n), where the quotient sequence includes
+   large quotients, and n has a known factorization. Such inputs are
+   generated as follows. First, construct a large n, as a power of a
+   prime p of moderate size.
+
+   Next, compute a matrix from factors (q,1;1,0), with q chosen with
+   uniformly distributed size. We must stop with matrix elements of
+   roughly half the size of n. Denote elements of M as M = (m00, m01;
+   m10, m11).
+
+   We now look for solutions to
+
+     n = m00 x + m01 y
+     a = m10 x + m11 y
+
+   with x,y > 0. Since n >= m00 * m01, there exists a positive
+   solution to the first equation. Find those x, y, and substitute in
+   the second equation to get a. Then the quotient sequence for (a|n)
+   is precisely the quotients used when constructing M, followed by
+   the quotient sequence for (x|y).
+
+   Numbers should also be large enough that we exercise hgcd_jacobi,
+   which means that they should be larger than
+
+     max (GCD_DC_THRESHOLD, 3 * HGCD_THRESHOLD)
+
+   With an n of roughly 40000 bits, this should hold on most machines.
+*/
+
+void
+check_large_quotients (void)
+{
+#define COUNT 50
+#define PBITS 200
+#define PPOWER 201
+#define MAX_QBITS 500
+
+  gmp_randstate_ptr rands = RANDS;
+
+  mpz_t p, n, q, g, s, t, x, y, bs;
+  mpz_t M[2][2];
+  mp_bitcnt_t nsize;
+  unsigned i;
+
+  mpz_init (p);
+  mpz_init (n);
+  mpz_init (q);
+  mpz_init (g);
+  mpz_init (s);
+  mpz_init (t);
+  mpz_init (x);
+  mpz_init (y);
+  mpz_init (bs);
+  mpz_init (M[0][0]);
+  mpz_init (M[0][1]);
+  mpz_init (M[1][0]);
+  mpz_init (M[1][1]);
+
+  /* First generate a number with known factorization, as a random
+     smallish prime raised to an odd power. Then (a|n) = (a|p). */
+  mpz_rrandomb (p, rands, PBITS);
+  mpz_nextprime (p, p);
+  mpz_pow_ui (n, p, PPOWER);
+
+  nsize = mpz_sizeinbase (n, 2);
+
+  for (i = 0; i < COUNT; i++)
+    {
+      unsigned j;
+      unsigned chain_len;
+      int answer;
+      mp_bitcnt_t msize;
+
+      mpz_set_ui (M[0][0], 1);
+      mpz_set_ui (M[0][1], 0);
+      mpz_set_ui (M[1][0], 0);
+      mpz_set_ui (M[1][1], 1);
+
+      for (msize = 1; 2*(msize + MAX_QBITS) + 1 < nsize ;)
+	{
+	  unsigned i;
+	  mpz_rrandomb (bs, rands, 32);
+	  mpz_rrandomb (q, rands, 1 + mpz_get_ui (bs) % MAX_QBITS);
+
+	  /* Multiply by (q, 1; 1,0) from the right */
+	  for (i = 0; i < 2; i++)
+	    {
+	      mp_bitcnt_t size;
+	      mpz_swap (M[i][0], M[i][1]);
+	      mpz_addmul (M[i][0], M[i][1], q);
+	      size = mpz_sizeinbase (M[i][0], 2);
+	      if (size > msize)
+		msize = size;
+	    }
+	}
+      mpz_gcdext (g, s, t, M[0][0], M[0][1]);
+      ASSERT_ALWAYS (mpz_cmp_ui (g, 1) == 0);
+
+      /* Solve n = M[0][0] * x + M[0][1] * y */
+      if (mpz_sgn (s) > 0)
+	{
+	  mpz_mul (x, n, s);
+	  mpz_fdiv_qr (q, x, x, M[0][1]);
+	  mpz_mul (y, q, M[0][0]);
+	  mpz_addmul (y, t, n);
+	  ASSERT_ALWAYS (mpz_sgn (y) > 0);
+	}
+      else
+	{
+	  mpz_mul (y, n, t);
+	  mpz_fdiv_qr (q, y, y, M[0][0]);
+	  mpz_mul (x, q, M[0][1]);
+	  mpz_addmul (x, s, n);
+	  ASSERT_ALWAYS (mpz_sgn (x) > 0);
+	}
+      mpz_mul (x, x, M[1][0]);
+      mpz_addmul (x, y, M[1][1]);
+
+      /* Now (x|n) has the selected large quotients */
+      answer = refmpz_legendre (x, p);
+      try_zi_zi (x, n, answer);
+    }
+  mpz_clear (p);
+  mpz_clear (n);
+  mpz_clear (q);
+  mpz_clear (g);
+  mpz_clear (s);
+  mpz_clear (t);
+  mpz_clear (x);
+  mpz_clear (y);
+  mpz_clear (bs);
+  mpz_clear (M[0][0]);
+  mpz_clear (M[0][1]);
+  mpz_clear (M[1][0]);
+  mpz_clear (M[1][1]);
+#undef COUNT
+#undef PBITS
+#undef PPOWER
+#undef MAX_QBITS
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -741,7 +1007,8 @@ try(a,b,answer) =\n\
   check_data ();
   check_squares_zi ();
   check_a_zero ();
-
+  check_jacobi_factored ();
+  check_large_quotients ();
   tests_end ();
   exit (0);
 }

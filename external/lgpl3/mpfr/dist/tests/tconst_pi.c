@@ -1,7 +1,7 @@
 /* Test file for mpfr_const_pi.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -87,13 +87,15 @@ bug20091030 (void)
       inex = mpfr_const_pi (x, MPFR_RNDU);
       if (inex < 0)
         {
-          printf ("Error, inex < 0 for RNDU (prec=%lu)\n", p);
+          printf ("Error, inex < 0 for RNDU (prec=%lu)\n",
+                  (unsigned long) p);
           exit (1);
         }
       inex = mpfr_const_pi (x, MPFR_RNDD);
       if (inex > 0)
         {
-          printf ("Error, inex > 0 for RNDD (prec=%lu)\n", p);
+          printf ("Error, inex > 0 for RNDD (prec=%lu)\n",
+                  (unsigned long) p);
           exit (1);
         }
     }

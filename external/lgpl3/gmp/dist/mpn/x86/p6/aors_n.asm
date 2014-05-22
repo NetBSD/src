@@ -23,10 +23,10 @@ C TODO:
 C  * Avoid indexed addressing, it makes us stall on the two-ported register
 C    file.
 
-C                           cycles/limb
-C P6 model 0-8,10-12)           3.17
-C P6 model 9   (Banias)         ?
-C P6 model 13  (Dothan)         2.25
+C			    cycles/limb
+C P6 model 0-8,10-12		3.17
+C P6 model 9   (Banias)		2.15
+C P6 model 13  (Dothan)		2.25
 
 
 define(`rp',	`%edi')

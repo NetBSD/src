@@ -1,7 +1,7 @@
 /* Test file for mpfr_get_decimal64 and mpfr_set_decimal64.
 
-Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -20,12 +20,17 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+#ifdef MPFR_WANT_DECIMAL_FLOATS
+
 #include <stdlib.h> /* for exit */
 #include "mpfr-test.h"
 
+#ifndef DEC64_MAX
+# define DEC64_MAX 9.999999999999999E384dd
+#endif
+
 /* #define DEBUG */
 
-#ifdef MPFR_WANT_DECIMAL_FLOATS
 static void
 print_decimal64 (_Decimal64 d)
 {
@@ -148,6 +153,15 @@ check_inf_nan (void)
   mpfr_set_str (x, "9.999999999999999E384", 10, MPFR_RNDZ);
   mpfr_set (y, x, MPFR_RNDZ);
   d = mpfr_get_decimal64 (x, MPFR_RNDU);
+  ASSERT_ALWAYS (d == DEC64_MAX);
+  mpfr_set_ui (x, 0, MPFR_RNDZ);
+  mpfr_set_decimal64 (x, d, MPFR_RNDZ);
+  ASSERT_ALWAYS (mpfr_cmp (x, y) == 0);
+
+  mpfr_set_str (x, "-9.999999999999999E384", 10, MPFR_RNDZ);
+  mpfr_set (y, x, MPFR_RNDZ);
+  d = mpfr_get_decimal64 (x, MPFR_RNDA);
+  ASSERT_ALWAYS (d == -DEC64_MAX);
   mpfr_set_ui (x, 0, MPFR_RNDZ);
   mpfr_set_decimal64 (x, d, MPFR_RNDZ);
   ASSERT_ALWAYS (mpfr_cmp (x, y) == 0);
@@ -223,7 +237,83 @@ check_native (void)
 
   mpfr_clear (x);
 }
-#endif /* MPFR_WANT_DECIMAL_FLOATS */
+
+static void
+check_overflow (void)
+{
+  mpfr_t x;
+  int err = 0, neg, rnd;
+
+  mpfr_init2 (x, 96);
+  for (neg = 0; neg < 2; neg++)
+    RND_LOOP (rnd)
+      {
+        _Decimal64 d, e;
+        mpfr_rnd_t r = (mpfr_rnd_t) rnd;
+        int sign = neg ? -1 : 1;
+
+        e = sign * (MPFR_IS_LIKE_RNDZ (r, neg) ? 1 : 2) * DEC64_MAX;
+        /* This tests the binary exponent e > 1279 case of get_d64.c */
+        mpfr_set_si_2exp (x, sign, 9999, MPFR_RNDN);
+        d = mpfr_get_decimal64 (x, r);
+        if (d != e)
+          {
+            printf ("Error 1 in check_overflow for %s, %s\n",
+                    neg ? "negative" : "positive",
+                    mpfr_print_rnd_mode (r));
+            err = 1;
+          }
+        /* This tests the decimal exponent e > 385 case of get_d64.c */
+        mpfr_set_si_2exp (x, sign * 31, 1274, MPFR_RNDN);
+        d = mpfr_get_decimal64 (x, r);
+        if (d != e)
+          {
+            printf ("Error 2 in check_overflow for %s, %s\n",
+                    neg ? "negative" : "positive",
+                    mpfr_print_rnd_mode (r));
+            err = 1;
+          }
+        /* This tests the last else (-382 <= e <= 385) of get_d64.c */
+        mpfr_set_decimal64 (x, e, MPFR_RNDA);
+        d = mpfr_get_decimal64 (x, r);
+        if (d != e)
+          {
+            printf ("Error 3 in check_overflow for %s, %s\n",
+                    neg ? "negative" : "positive",
+                    mpfr_print_rnd_mode (r));
+            err = 1;
+          }
+      }
+  mpfr_clear (x);
+  if (err)
+    exit (1);
+}
+
+static void
+check_tiny (void)
+{
+  mpfr_t x;
+  _Decimal64 d;
+
+  /* If 0.5E-398 < |x| < 1E-398 (smallest subnormal), x should round
+     to +/- 1E-398 in MPFR_RNDN. Note: the midpoint 0.5E-398 between
+     0 and 1E-398 is not a representable binary number, so that there
+     are no tests for it. */
+  mpfr_init2 (x, 128);
+  mpfr_set_str (x, "1E-398", 10, MPFR_RNDZ);
+  d = mpfr_get_decimal64 (x, MPFR_RNDN);
+  MPFR_ASSERTN (d == 1.0E-398dd);
+  mpfr_neg (x, x, MPFR_RNDN);
+  d = mpfr_get_decimal64 (x, MPFR_RNDN);
+  MPFR_ASSERTN (d == -1.0E-398dd);
+  mpfr_set_str (x, "0.5E-398", 10, MPFR_RNDU);
+  d = mpfr_get_decimal64 (x, MPFR_RNDN);
+  MPFR_ASSERTN (d == 1.0E-398dd);
+  mpfr_neg (x, x, MPFR_RNDN);
+  d = mpfr_get_decimal64 (x, MPFR_RNDN);
+  MPFR_ASSERTN (d == -1.0E-398dd);
+  mpfr_clear (x);
+}
 
 int
 main (void)
@@ -231,7 +321,6 @@ main (void)
   tests_start_mpfr ();
   mpfr_test_init ();
 
-#ifdef MPFR_WANT_DECIMAL_FLOATS
 #ifdef DEBUG
 #ifdef DPD_FORMAT
   printf ("Using DPD format\n");
@@ -242,8 +331,19 @@ main (void)
   check_inf_nan ();
   check_random ();
   check_native ();
-#endif
+  check_overflow ();
+  check_tiny ();
 
   tests_end_mpfr ();
   return 0;
 }
+
+#else /* MPFR_WANT_DECIMAL_FLOATS */
+
+int
+main (void)
+{
+  return 77;
+}
+
+#endif /* MPFR_WANT_DECIMAL_FLOATS */

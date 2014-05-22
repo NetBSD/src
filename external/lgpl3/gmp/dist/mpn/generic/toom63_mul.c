@@ -6,7 +6,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -105,8 +105,8 @@ mpn_toom63_mul (mp_ptr pp,
 
   ASSERT (0 < s && s <= n);
   ASSERT (0 < t && t <= n);
-  /* WARNING! it assumes s+t>n */
-  ASSERT ( s + t > n );
+  /* WARNING! it assumes s+t>=n */
+  ASSERT ( s + t >= n );
   ASSERT ( s + t > 4);
   /* WARNING! it assumes n>1 */
   ASSERT ( n > 2);

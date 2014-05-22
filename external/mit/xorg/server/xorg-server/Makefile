@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2009/06/11 05:43:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.19.6.1 2014/05/22 14:09:46 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -10,21 +10,9 @@ SUBDIR.xfont=Xfont fontbase
 SUBDIR.xfont=
 .endif
 
-.if ${XSERVER_NEEDS_MIEXT} != "no"
-SUBDIR.miext=miext
-.else
-SUBDIR.miext=
-.endif
-
-.if ${XSERVER_HAS_IPLAN} != "no"
-SUBDIR.iplan=iplan2p4 iplan2p8
-.else
-SUBDIR.iplan=
-.endif
-
 SUBDIR=		doc include .WAIT
 SUBDIR+=	glx
-SUBDIR+=	dix fb mi Xext ${SUBDIR.miext} os randr render 
+SUBDIR+=	dix fb mi Xext miext os randr render 
 SUBDIR+=	Xi xkb xkbstubs dbe record xfixes
 SUBDIR+=	damageext composite config .WAIT
 SUBDIR+=	hw
@@ -32,6 +20,10 @@ SUBDIR+=	hw
 .PATH:	${X11SRCDIR.xorg-server}
 
 PKGCONFIG=	xorg-server
+# Use -fvisibility=hidden for symbol_visibility?
+PKGCONFIG_SED_FLAGS= \
+	-e "s,@sysconfigdir@,${X11ETCDIR},; \
+	    s,@symbol_visibility@,,"
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>

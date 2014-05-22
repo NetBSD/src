@@ -1,6 +1,6 @@
 dnl  PPC64 mpn_bdiv_dbm1c.
 
-dnl  Copyright 2008 Free Software Foundation, Inc.
+dnl  Copyright 2008, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -19,10 +19,13 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:    6-18
-C POWER4/PPC970:    8.5
-C POWER5:           ?
+C                 cycles/limb
+C POWER3/PPC630       6-18
+C POWER4/PPC970       8.5?
+C POWER5              8.5  fluctuating as function of n % 3
+C POWER6             15
+C POWER6             15
+C POWER7              4.75
 
 C TODO
 C  * Nothing to do...
@@ -48,6 +51,7 @@ PROLOGUE(mpn_bdiv_dbm1c)
 	blt	cr6, L(b01)
 	beq	cr6, L(b10)
 
+	ALIGN(16)
 L(b11):	mulld	r5, r0, r6
 	mulhdu	r12, r0, r6
 	ld	r0, 8(r4)
@@ -55,13 +59,14 @@ L(b11):	mulld	r5, r0, r6
 	addi	r3, r3, -24
 	b	L(3)
 
+	ALIGN(16)
 L(b00):	mulld	r9, r0, r6
 	mulhdu	r8, r0, r6
-	ld	r0, 8(r4)
 	addi	r4, r4, -16
 	addi	r3, r3, -16
 	b	L(0)
 
+	ALIGN(16)
 L(b01):	mulld	r5, r0, r6
 	mulhdu	r12, r0, r6
 	addi	r3, r3, -8
@@ -70,42 +75,43 @@ L(b01):	mulld	r5, r0, r6
 	addi	r4, r4, -8
 	b	L(1)
 
+	ALIGN(16)
 L(b10):	mulld	r9, r0, r6
 	mulhdu	r8, r0, r6
-	ld	r0, 8(r4)
 	ble	cr7, L(e2)
 
 	ALIGN(16)
-L(top):	mulld	r5, r0, r6
-	mulhdu	r12, r0, r6
-	subfc	r11, r9, r7
+L(top):	subfc	r11, r9, r7
+	ld	r10, 8(r4)
 	ld	r0, 16(r4)
 	subfe	r7, r8, r11
 	std	r11, 0(r3)
+	mulld	r5, r10, r6
+	mulhdu	r12, r10, r6
 L(1):	mulld	r9, r0, r6
 	mulhdu	r8, r0, r6
 	subfc	r11, r5, r7
-	ld	r0, 24(r4)
 	subfe	r7, r12, r11
 	std	r11, 8(r3)
-L(0):	mulld	r5, r0, r6
-	mulhdu	r12, r0, r6
-	subfc	r11, r9, r7
+L(0):	subfc	r11, r9, r7
+	ld	r10, 24(r4)
 	ld	r0, 32(r4)
 	subfe	r7, r8, r11
 	std	r11, 16(r3)
+	mulld	r5, r10, r6
+	mulhdu	r12, r10, r6
 L(3):	mulld	r9, r0, r6
 	mulhdu	r8, r0, r6
 	subfc	r11, r5, r7
-	ld	r0, 40(r4)
 	subfe	r7, r12, r11
 	std	r11, 24(r3)
 	addi	r4, r4, 32
 	addi	r3, r3, 32
 	bdnz	L(top)
 
-L(e2):	mulld	r5, r0, r6
-	mulhdu	r12, r0, r6
+L(e2):	ld	r10, 8(r4)
+	mulld	r5, r10, r6
+	mulhdu	r12, r10, r6
 	subfc	r11, r9, r7
 	subfe	r7, r8, r11
 	std	r11, 0(r3)

@@ -1,7 +1,7 @@
 /* Test file for mpfr_sqr.
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -38,7 +38,8 @@ static void
 error1 (mpfr_rnd_t rnd, mpfr_prec_t prec,
         mpfr_t in, mpfr_t outmul, mpfr_t outsqr)
 {
-  printf("ERROR: for %s and prec=%lu\nINPUT=", mpfr_print_rnd_mode(rnd), prec);
+  printf("ERROR: for %s and prec=%lu\nINPUT=", mpfr_print_rnd_mode(rnd),
+         (unsigned long) prec);
   mpfr_dump(in);
   printf("OutputMul="); mpfr_dump(outmul);
   printf("OutputSqr="); mpfr_dump(outsqr);
@@ -49,7 +50,8 @@ static void
 error2 (mpfr_rnd_t rnd, mpfr_prec_t prec, mpfr_t in, mpfr_t out,
         int inexactmul, int inexactsqr)
 {
-  printf("ERROR: for %s and prec=%lu\nINPUT=", mpfr_print_rnd_mode(rnd), prec);
+  printf("ERROR: for %s and prec=%lu\nINPUT=", mpfr_print_rnd_mode(rnd),
+         (unsigned long) prec);
   mpfr_dump(in);
   printf("Output="); mpfr_dump(out);
   printf("InexactMul= %d InexactSqr= %d\n", inexactmul, inexactsqr);
@@ -119,12 +121,49 @@ check_special (void)
   mpfr_clear (x);
 }
 
+/* Test of a bug seen with GCC 4.5.2 and GMP 5.0.1 on m68k (m68000 target).
+     https://sympa.inria.fr/sympa/arc/mpfr/2011-05/msg00003.html
+     https://sympa.inria.fr/sympa/arc/mpfr/2011-05/msg00041.html
+*/
+static void
+check_mpn_sqr (void)
+{
+#if GMP_NUMB_BITS == 32 && __GNU_MP_VERSION >= 5
+  /* Note: since we test a low-level bug, src is initialized
+     without using a GMP function, just in case. */
+  mp_limb_t src[5] =
+    { 0x90000000, 0xbaa55f4f, 0x2cbec4d9, 0xfcef3242, 0xda827999 };
+  mp_limb_t exd[10] =
+    { 0x00000000, 0x31000000, 0xbd4bc59a, 0x41fbe2b5, 0x33471e7e,
+      0x90e826a7, 0xbaa55f4f, 0x2cbec4d9, 0xfcef3242, 0xba827999 };
+  mp_limb_t dst[10];
+  int i;
+
+  mpn_sqr (dst, src, 5);  /* new in GMP 5 */
+  for (i = 0; i < 10; i++)
+    {
+      if (dst[i] != exd[i])
+        {
+          printf ("Error in check_mpn_sqr\n");
+          printf ("exd[%d] = 0x%08lx\n", i, (unsigned long) exd[i]);
+          printf ("dst[%d] = 0x%08lx\n", i, (unsigned long) dst[i]);
+          printf ("Note: This is not a bug in MPFR, but a bug in"
+                  " either GMP or, more\nprobably, in the compiler."
+                  " It may cause other tests to fail.\n");
+          exit (1);
+        }
+    }
+#endif
+}
+
 int
 main (void)
 {
   mpfr_prec_t p;
 
   tests_start_mpfr ();
+
+  check_mpn_sqr ();
 
   check_special ();
   for (p = 2; p < 200; p++)

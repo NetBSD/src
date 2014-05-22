@@ -7,7 +7,7 @@
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
 Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010 Free Software Foundation, Inc.
+2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -64,11 +64,11 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define HAVE_NATIVE_mpn_add_n_sub_n 1
 #endif
 
-static mp_limb_t mpn_mul_fft_internal
-__GMP_PROTO ((mp_ptr, mp_size_t, int, mp_ptr *, mp_ptr *,
-	      mp_ptr, mp_ptr, mp_size_t, mp_size_t, mp_size_t, int **, mp_ptr, int));
-static void mpn_mul_fft_decompose
-__GMP_PROTO ((mp_ptr, mp_ptr *, int, int, mp_srcptr, mp_size_t, int, int, mp_ptr));
+static mp_limb_t mpn_mul_fft_internal (mp_ptr, mp_size_t, int, mp_ptr *,
+				       mp_ptr *, mp_ptr, mp_ptr, mp_size_t,
+				       mp_size_t, mp_size_t, int **, mp_ptr, int);
+static void mpn_mul_fft_decompose (mp_ptr, mp_ptr *, int, int, mp_srcptr,
+				   mp_size_t, int, int, mp_ptr);
 
 
 /* Find the best k to use for a mod 2^(m*GMP_NUMB_BITS)+1 FFT for m >= n.
@@ -81,7 +81,7 @@ __GMP_PROTO ((mp_ptr, mp_ptr *, int, int, mp_srcptr, mp_size_t, int, int, mp_ptr
 
 #if TUNE_PROGRAM_BUILD || (defined (MUL_FFT_TABLE3) && defined (SQR_FFT_TABLE3))
 
-#ifndef FFT_TABLE3_SIZE		/* When tuning, this is define in gmp-impl.h */
+#ifndef FFT_TABLE3_SIZE		/* When tuning this is defined in gmp-impl.h */
 #if defined (MUL_FFT_TABLE3_SIZE) && defined (SQR_FFT_TABLE3_SIZE)
 #if MUL_FFT_TABLE3_SIZE > SQR_FFT_TABLE3_SIZE
 #define FFT_TABLE3_SIZE MUL_FFT_TABLE3_SIZE

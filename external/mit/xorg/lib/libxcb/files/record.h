@@ -652,6 +652,9 @@ xcb_record_client_spec_next (xcb_record_client_spec_iterator_t *i  /**< */);
 xcb_generic_iterator_t
 xcb_record_client_spec_end (xcb_record_client_spec_iterator_t i  /**< */);
 
+int
+xcb_record_client_info_sizeof (const void  *_buffer  /**< */);
+
 
 /*****************************************************************************
  **
@@ -735,7 +738,7 @@ xcb_generic_iterator_t
 xcb_record_client_info_end (xcb_record_client_info_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -760,7 +763,7 @@ xcb_record_query_version (xcb_connection_t *c  /**< */,
                           uint16_t          minor_version  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -818,8 +821,11 @@ xcb_record_query_version_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_record_query_version_cookie_t   cookie  /**< */,
                                 xcb_generic_error_t               **e  /**< */);
 
+int
+xcb_record_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -855,7 +861,7 @@ xcb_record_create_context_checked (xcb_connection_t               *c  /**< */,
                                    const xcb_record_range_t       *ranges  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -887,8 +893,11 @@ xcb_record_create_context (xcb_connection_t               *c  /**< */,
                            const xcb_record_client_spec_t *client_specs  /**< */,
                            const xcb_record_range_t       *ranges  /**< */);
 
+int
+xcb_record_register_clients_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -924,7 +933,7 @@ xcb_record_register_clients_checked (xcb_connection_t               *c  /**< */,
                                      const xcb_record_range_t       *ranges  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -956,8 +965,11 @@ xcb_record_register_clients (xcb_connection_t               *c  /**< */,
                              const xcb_record_client_spec_t *client_specs  /**< */,
                              const xcb_record_range_t       *ranges  /**< */);
 
+int
+xcb_record_unregister_clients_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -987,7 +999,7 @@ xcb_record_unregister_clients_checked (xcb_connection_t               *c  /**< *
                                        const xcb_record_client_spec_t *client_specs  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1013,8 +1025,11 @@ xcb_record_unregister_clients (xcb_connection_t               *c  /**< */,
                                uint32_t                        num_client_specs  /**< */,
                                const xcb_record_client_spec_t *client_specs  /**< */);
 
+int
+xcb_record_get_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1037,7 +1052,7 @@ xcb_record_get_context (xcb_connection_t     *c  /**< */,
                         xcb_record_context_t  context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1119,8 +1134,11 @@ xcb_record_get_context_reply (xcb_connection_t                 *c  /**< */,
                               xcb_record_get_context_cookie_t   cookie  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
+int
+xcb_record_enable_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1143,7 +1161,7 @@ xcb_record_enable_context (xcb_connection_t     *c  /**< */,
                            xcb_record_context_t  context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1239,7 +1257,7 @@ xcb_record_enable_context_reply (xcb_connection_t                    *c  /**< */
                                  xcb_generic_error_t                **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1265,7 +1283,7 @@ xcb_record_disable_context_checked (xcb_connection_t     *c  /**< */,
                                     xcb_record_context_t  context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1288,7 +1306,7 @@ xcb_record_disable_context (xcb_connection_t     *c  /**< */,
                             xcb_record_context_t  context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1314,7 +1332,7 @@ xcb_record_free_context_checked (xcb_connection_t     *c  /**< */,
                                  xcb_record_context_t  context  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

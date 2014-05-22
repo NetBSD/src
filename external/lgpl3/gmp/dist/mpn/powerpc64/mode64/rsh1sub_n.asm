@@ -1,6 +1,6 @@
 dnl  PowerPC-64 mpn_rsh1sub_n -- rp[] = (up[] - vp[]) >> 1
 
-dnl  Copyright 2003, 2005 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2005, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -19,15 +19,12 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:     2		(1.5 c/l should be possible)
-C POWER4/PPC970:     4		(2.0 c/l should be possible)
-
-C INPUT PARAMETERS
-C rp	r3
-C up	r4
-C vp	r5
-C n	r6
+C                  cycles/limb
+C POWER3/PPC630          2              (1.5 c/l should be possible)
+C POWER4/PPC970          4              (2.0 c/l should be possible)
+C POWER5                 3.5            (2.0 c/l should be possible)
+C POWER6                 4.5
+C POWER7                 3.5
 
 define(`rp',`r3')
 define(`up',`r4')
@@ -60,14 +57,15 @@ PROLOGUE(mpn_rsh1sub_n)
 
 	bdz	L(end)
 
-L(oop):	ldu	u1, 16(up)
+	ALIGN(32)
+L(top):	ldu	u1, 16(up)
 	ldu	v1, 16(vp)
 	subfe	x, v0, u0
 	srdi	s0, x, 1
 	rldimi	s1, x, 63, 0
 	std	s1, 8(rp)
 
-	bdz	L(exit)
+	bdz	L(exi)
 
 	ld	u0, 8(up)
 	ld	v0, 8(vp)
@@ -76,7 +74,7 @@ L(oop):	ldu	u1, 16(up)
 	rldimi	s0, x, 63, 0
 	stdu	s0, 16(rp)
 
-	bdnz	L(oop)
+	bdnz	L(top)
 
 L(end):	subfe	x, v0, u0
 	srdi	s0, x, 1
@@ -89,7 +87,7 @@ L(end):	subfe	x, v0, u0
 	mr	r3, r12
 	blr
 
-L(exit):	subfe	x, v1, u1
+L(exi):	subfe	x, v1, u1
 	srdi	s1, x, 1
 	rldimi	s0, x, 63, 0
 	stdu	s0, 16(rp)

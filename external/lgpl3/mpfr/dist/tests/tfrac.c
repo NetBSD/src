@@ -1,7 +1,7 @@
 /* Test file for mpfr_frac.
 
-Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -179,7 +179,7 @@ bug20090918 (void)
   mp_limb_t y0;
   int inexy, inexz;
   int r, i;
-  char *s[] = { "61680.352935791015625", "61680.999999" };
+  const char *s[] = { "61680.352935791015625", "61680.999999" };
   mpfr_exp_t emin;
 
   emin = mpfr_get_emin ();

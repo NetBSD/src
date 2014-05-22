@@ -1,10 +1,11 @@
-/* mpn_redc_2.  Set cp[] <- up[]/R^n mod mp[].  Clobber up[].
+/* mpn_redc_2.  Set rp[] <- up[]/R^n mod mp[].  Clobber up[].
    mp[] is n limbs; up[] is 2n limbs.
 
    THIS IS AN INTERNAL FUNCTION WITH A MUTABLE INTERFACE.  IT IS ONLY
    SAFE TO REACH THIS FUNCTION THROUGH DOCUMENTED INTERFACES.
 
-Copyright (C) 2000, 2001, 2002, 2004, 2008 Free Software Foundation, Inc.
+Copyright (C) 2000, 2001, 2002, 2004, 2008, 2012 Free Software Foundation,
+Inc.
 
 This file is part of the GNU MP Library.
 
@@ -33,7 +34,8 @@ you lose
 /* For testing purposes, define our own mpn_addmul_2 if there is none already
    available.  */
 #ifndef HAVE_NATIVE_mpn_addmul_2
-mp_limb_t
+#undef mpn_addmul_2
+static mp_limb_t
 mpn_addmul_2 (mp_ptr rp, mp_srcptr up, mp_size_t n, mp_srcptr vp)
 {
   rp[n] = mpn_addmul_1 (rp, up, n, vp[0]);
@@ -66,7 +68,7 @@ mpn_addmul_2 (mp_ptr rp, mp_srcptr up, mp_size_t n, mp_srcptr vp)
   } while (0)
 #endif
 
-void
+mp_limb_t
 mpn_redc_2 (mp_ptr rp, mp_ptr up, mp_srcptr mp, mp_size_t n, mp_srcptr mip)
 {
   mp_limb_t q[2];
@@ -92,7 +94,7 @@ mpn_redc_2 (mp_ptr rp, mp_ptr up, mp_srcptr mp, mp_size_t n, mp_srcptr mip)
       up[n] = upn;
       up += 2;
     }
+
   cy = mpn_add_n (rp, up, up - n, n);
-  if (cy != 0)
-    mpn_sub_n (rp, rp, mp, n);
+  return cy;
 }

@@ -1,6 +1,7 @@
 /* __gmp_extract_double -- convert from double to array of mp_limb_t.
 
-Copyright 1996, 1999, 2000, 2001, 2002, 2006 Free Software Foundation, Inc.
+Copyright 1996, 1999, 2000, 2001, 2002, 2006, 2012 Free Software Foundation,
+Inc.
 
 This file is part of the GNU MP Library.
 
@@ -27,8 +28,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #ifndef _GMP_IEEE_FLOATS
 #define _GMP_IEEE_FLOATS 0
 #endif
-
-#define BITS_IN_MANTISSA 53
 
 /* Extract a non-negative double in d.  */
 

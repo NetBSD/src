@@ -1,7 +1,7 @@
 /* Test file for mpfr_get_sj and mpfr_get_uj.
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -27,20 +27,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <stdio.h>
 #include <stdlib.h>
 
-/* The ISO C99 standard specifies that in C++ implementations the
-   INTMAX_MAX, ... macros should only be defined if explicitly requested.  */
-#if defined __cplusplus
-# define __STDC_LIMIT_MACROS
-# define __STDC_CONSTANT_MACROS
-#endif
-
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
-
+#include "mpfr-intmax.h"
 #include "mpfr-test.h"
 
 #ifndef _MPFR_H_HAVE_INTMAX_T
@@ -48,7 +35,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 main (void)
 {
-  return 0;
+  return 77;
 }
 
 #else
@@ -243,6 +230,13 @@ main (void)
   mpfr_set_ui (x, 0, MPFR_RNDN);
   check_sj (0, x);
   check_uj (0, x);
+
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  check_sj (1, x);
+  check_uj (1, x);
+
+  mpfr_neg (x, x, MPFR_RNDN);
+  check_sj (-1, x);
 
   mpfr_set_si_2exp (x, 1, prec, MPFR_RNDN);
   mpfr_sub_ui (x, x, 1, MPFR_RNDN); /* UINTMAX_MAX */

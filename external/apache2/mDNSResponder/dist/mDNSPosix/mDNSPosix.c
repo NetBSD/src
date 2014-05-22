@@ -26,123 +26,7 @@
  * thinking that variables x and y are both of type "char*" -- and anyone who doesn't
  * understand why variable y is not of type "char*" just proves the point that poor code
  * layout leads people to unfortunate misunderstandings about how the C language really works.)
-
-	Change History (most recent first):
-
-Log: mDNSPosix.c,v $
-Revision 1.108  2009/01/25 03:16:46  mkrochma
-Added skeleton definition of mDNSPlatformSetLocalARP
-
-Revision 1.107  2009/01/07 08:25:03  mkrochma
-Added skeleton definition of mDNSPlatformUpdateProxyList
-
-Revision 1.106  2008/10/22 17:19:57  cheshire
-Don't need to define BPF_fd any more (it's now per-interface, not global)
-
-Revision 1.105  2008/10/03 23:34:08  cheshire
-Added skeleton definition of mDNSPlatformSendRawPacket
-
-Revision 1.104  2008/09/05 22:16:48  cheshire
-<rdar://problem/3988320> Should use randomized source ports and transaction IDs to avoid DNS cache poisoning
-Add "UDPSocket *src" parameter in mDNSPlatformSendUDP
-
-Revision 1.103  2007/10/02 19:31:17  cheshire
-In ParseDNSServers, should use strncasecmp for case-insensitive compare
-
-Revision 1.102  2007/09/12 19:23:17  cheshire
-Get rid of unnecessary mDNSPlatformTCPIsConnected() routine
-
-Revision 1.101  2007/07/20 00:54:23  cheshire
-<rdar://problem/4641118> Need separate SCPreferences for per-user .Mac settings
-
-Revision 1.100  2007/07/19 21:45:30  cheshire
-Fixed code spacing
-
-Revision 1.99  2007/07/11 02:56:51  cheshire
-<rdar://problem/5303807> Register IPv6-only hostname and don't create port mappings for AutoTunnel services
-Remove unused mDNSPlatformDefaultRegDomainChanged
-
-Revision 1.98  2007/06/20 01:10:13  cheshire
-<rdar://problem/5280520> Sync iPhone changes into main mDNSResponder code
-
-Revision 1.97  2007/04/26 00:35:16  cheshire
-<rdar://problem/5140339> uDNS: Domain discovery not working over VPN
-Fixes to make sure results update correctly when connectivity changes (e.g. a DNS server
-inside the firewall may give answers where a public one gives none, and vice versa.)
-
-Revision 1.96  2007/04/22 20:29:59  cheshire
-Fix locking error
-
-Revision 1.95  2007/04/22 20:15:46  cheshire
-Add missing parameters for mDNSPosixEventCallback
-
-Revision 1.94  2007/04/17 19:21:29  cheshire
-<rdar://problem/5140339> Domain discovery not working over VPN
-
-Revision 1.93  2007/04/16 20:49:40  cheshire
-Fix compile errors for mDNSPosix build
-
-Revision 1.92  2007/04/05 20:40:37  cheshire
-Remove unused mDNSPlatformTCPGetFlags()
-
-Revision 1.91  2007/03/22 18:31:48  cheshire
-Put dst parameter first in mDNSPlatformStrCopy/mDNSPlatformMemCopy, like conventional Posix strcpy/memcpy
-
-Revision 1.90  2007/03/21 00:31:45  cheshire
-Remove unnecessary (and unimplemented) platform functions
-
-Revision 1.89  2007/03/20 17:07:15  cheshire
-Rename "struct uDNS_TCPSocket_struct" to "TCPSocket", "struct uDNS_UDPSocket_struct" to "UDPSocket"
-
-Revision 1.88  2007/03/07 00:30:18  mkrochma
-<rdar://problem/5034370> POSIX: kDNSServiceInterfaceIndexAny not correctly handled
-Thanks goes to Aidan Williams of Audinate who did a lot of work in diagnosing this
-
-Revision 1.87  2007/02/08 21:12:28  cheshire
-<rdar://problem/4386497> Stop reading /etc/mDNSResponder.conf on every sleep/wake
-
-Revision 1.86  2007/01/05 08:30:52  cheshire
-Trim excessive "Log" checkin history from before 2006
-(checkin history still available via "cvs log ..." of course)
-
-Revision 1.85  2007/01/04 23:12:20  cheshire
-Remove unused mDNSPlatformDefaultBrowseDomainChanged
-
-Revision 1.84  2006/12/22 21:07:35  cheshire
-<rdar://problem/4742742> Read *all* DNS keys from keychain,
- not just key for the system-wide default registration domain
-
-Revision 1.83  2006/12/21 00:09:46  cheshire
-Use mDNSPlatformMemZero instead of bzero
-
-Revision 1.82  2006/12/19 22:43:55  cheshire
-Fix compiler warnings
-
-Revision 1.81  2006/08/14 23:24:46  cheshire
-Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
-
-Revision 1.80  2006/07/22 03:05:33  cheshire
-Improve error reporting for socket creation failures
-
-Revision 1.79  2006/07/06 00:02:16  cheshire
-<rdar://problem/4472014> Add Private DNS client functionality to mDNSResponder
-
-Revision 1.78  2006/06/28 09:12:22  cheshire
-Added debugging message
-
-Revision 1.77  2006/03/19 02:00:11  cheshire
-<rdar://problem/4073825> Improve logic for delaying packets after repeated interface transitions
-
-Revision 1.76  2006/01/09 19:29:16  cheshire
-<rdar://problem/4403128> Cap number of "sendto failed" messages we allow mDNSResponder to log
-
-Revision 1.75  2006/01/05 22:04:57  cheshire
-<rdar://problem/4399479> Log error message when send fails with "operation not permitted"
-
-Revision 1.74  2006/01/05 21:45:27  cheshire
-<rdar://problem/4400118> Fix uninitialized structure member in IPv6 code
-
-*/
+ */
 
 #include "mDNSEmbeddedAPI.h"           // Defines the interface provided to the client layer above
 #include "DNSCommon.h"
@@ -450,12 +334,13 @@ mDNSexport int mDNSPlatformTCPGetFD(TCPSocket *sock)
 	return -1;
 	}
 
-mDNSexport mStatus mDNSPlatformTCPConnect(TCPSocket *sock, const mDNSAddr *dst, mDNSOpaque16 dstport, mDNSInterfaceID InterfaceID,
+mDNSexport mStatus mDNSPlatformTCPConnect(TCPSocket *sock, const mDNSAddr *dst, mDNSOpaque16 dstport, domainname *hostname, mDNSInterfaceID InterfaceID,
 										  TCPConnectionCallback callback, void *context)
 	{
 	(void)sock;			// Unused
 	(void)dst;			// Unused
 	(void)dstport;		// Unused
+	(void)hostname;     // Unused
 	(void)InterfaceID;	// Unused
 	(void)callback;		// Unused
 	(void)context;		// Unused
@@ -509,8 +394,9 @@ mDNSexport void mDNSPlatformSendRawPacket(const void *const msg, const mDNSu8 *c
 	(void)InterfaceID;			// Unused
 	}
 	
-mDNSexport void mDNSPlatformSetLocalARP(const mDNSv4Addr *const tpa, const mDNSEthAddr *const tha, mDNSInterfaceID InterfaceID)
+mDNSexport void mDNSPlatformSetLocalAddressCacheEntry(mDNS *const m, const mDNSAddr *const tpa, const mDNSEthAddr *const tha, mDNSInterfaceID InterfaceID)
 	{
+	(void)m;			// Unused
 	(void)tpa;			// Unused
 	(void)tha;			// Unused
 	(void)InterfaceID;			// Unused
@@ -524,6 +410,26 @@ mDNSexport mStatus mDNSPlatformTLSSetupCerts(void)
 mDNSexport void mDNSPlatformTLSTearDownCerts(void)
 	{
 	}
+
+mDNSexport void mDNSPlatformSetAllowSleep(mDNS *const m, mDNSBool allowSleep, const char *reason)
+	{
+	(void) m;
+	(void) allowSleep;
+	(void) reason;
+	}
+
+#if COMPILER_LIKES_PRAGMA_MARK
+#pragma mark -
+#pragma mark - /etc/hosts support
+#endif
+
+mDNSexport void FreeEtcHosts(mDNS *const m, AuthRecord *const rr, mStatus result)
+    {
+    (void)m;  // unused
+	(void)rr;
+	(void)result;
+	}
+
 
 #if COMPILER_LIKES_PRAGMA_MARK
 #pragma mark ***** DDNS Config Platform Functions
@@ -596,7 +502,7 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
 			mDNSAddr DNSAddr;
 			DNSAddr.type = mDNSAddrType_IPv4;
 			DNSAddr.ip.v4.NotAnInteger = ina.s_addr;
-			mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, &DNSAddr, UnicastDNSPort);
+			mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, &DNSAddr, UnicastDNSPort, mDNSfalse, 0);
 			numOfServers++;
 			}
 		}  
@@ -627,6 +533,7 @@ mDNSexport mDNSInterfaceID mDNSPlatformInterfaceIDfromInterfaceIndex(mDNS *const
 	assert(m != NULL);
 
 	if (index == kDNSServiceInterfaceIndexLocalOnly) return(mDNSInterface_LocalOnly);
+	if (index == kDNSServiceInterfaceIndexP2P      ) return(mDNSInterface_P2P);
 	if (index == kDNSServiceInterfaceIndexAny      ) return(mDNSInterface_Any);
 
 	intf = (PosixNetworkInterface*)(m->HostInterfaces);
@@ -636,13 +543,15 @@ mDNSexport mDNSInterfaceID mDNSPlatformInterfaceIDfromInterfaceIndex(mDNS *const
 	return (mDNSInterfaceID) intf;
 	}
 	
-mDNSexport mDNSu32 mDNSPlatformInterfaceIndexfromInterfaceID(mDNS *const m, mDNSInterfaceID id)
+mDNSexport mDNSu32 mDNSPlatformInterfaceIndexfromInterfaceID(mDNS *const m, mDNSInterfaceID id, mDNSBool suppressNetworkChange)
 	{
 	PosixNetworkInterface *intf;
+	(void) suppressNetworkChange; // Unused
 
 	assert(m != NULL);
 
 	if (id == mDNSInterface_LocalOnly) return(kDNSServiceInterfaceIndexLocalOnly);
+	if (id == mDNSInterface_P2P      ) return(kDNSServiceInterfaceIndexP2P);
 	if (id == mDNSInterface_Any      ) return(kDNSServiceInterfaceIndexAny);
 
 	intf = (PosixNetworkInterface*)(m->HostInterfaces);
@@ -1306,6 +1215,36 @@ mDNSlocal mDNSBool mDNSPlatformInit_CanReceiveUnicast(void)
 	return(err == 0);
 	}
 
+#ifdef __NetBSD__
+#include <sys/param.h>
+#include <sys/sysctl.h>
+
+void
+initmachinedescr(mDNS *const m)
+{
+	char hwbuf[256], swbuf[256];
+	size_t hwlen, swlen;
+	const int hwmib[] = { CTL_HW, HW_MODEL };
+	const int swmib[] = { CTL_KERN, KERN_OSRELEASE };
+	const char netbsd[] = "NetBSD ";
+
+	hwlen = sizeof(hwbuf);
+	swlen = sizeof(swbuf);
+	if (sysctl(hwmib, 2, hwbuf, &hwlen, 0, 0) ||
+	    sysctl(swmib, 2, swbuf, &swlen, 0, 0))
+		return;
+	
+	if (hwlen + swlen + sizeof(netbsd) >=254)
+		return;
+
+	m->HIHardware.c[0] = hwlen - 1;
+	m->HISoftware.c[0] = swlen + sizeof(netbsd) - 2;
+	memcpy(&m->HIHardware.c[1], hwbuf, hwlen - 1);
+	memcpy(&m->HISoftware.c[1], netbsd, sizeof(netbsd) - 1);
+	memcpy(&m->HISoftware.c[1 + sizeof(netbsd) - 1], swbuf, swlen - 1);
+}
+#endif
+
 // mDNS core calls this routine to initialise the platform-specific data.
 mDNSexport mStatus mDNSPlatformInit(mDNS *const m)
 	{
@@ -1326,6 +1265,10 @@ mDNSexport mStatus mDNSPlatformInit(mDNS *const m)
 	m->hostlabel.c[0] = 0;
 	GetUserSpecifiedRFC1034ComputerName(&m->hostlabel);
 	if (m->hostlabel.c[0] == 0) MakeDomainLabelFromLiteralString(&m->hostlabel, "Computer");
+
+#ifdef __NetBSD__
+	initmachinedescr(m);
+#endif
 
 	mDNS_SetFQDN(m);
 
@@ -1482,6 +1425,23 @@ mDNSexport mDNSs32  mDNSPlatformRawTime()
 mDNSexport mDNSs32 mDNSPlatformUTC(void)
 	{
 	return time(NULL);
+	}
+
+mDNSexport void mDNSPlatformSendWakeupPacket(mDNS *const m, mDNSInterfaceID InterfaceID, char *EthAddr, char *IPAddr, int iteration)
+	{
+	(void) m;
+	(void) InterfaceID;
+	(void) EthAddr;
+	(void) IPAddr;
+	(void) iteration;
+	}
+
+mDNSexport mDNSBool mDNSPlatformValidRecordForInterface(AuthRecord *rr, const NetworkInterfaceInfo *intf)
+	{
+	(void) rr;
+	(void) intf;
+
+	return 1;
 	}
 
 mDNSlocal void mDNSPosixAddToFDSet(int *nfds, fd_set *readfds, int s)

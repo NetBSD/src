@@ -2286,7 +2286,7 @@ extern void dtrace_safe_synchronous_signal(void);
 
 extern int dtrace_mach_aframes(void);
 
-#if defined(__i386) || defined(__amd64)
+#if defined(__i386) || defined(__amd64) || defined(__arm__)
 extern int dtrace_instr_size(uchar_t *instr);
 extern int dtrace_instr_size_isa(uchar_t *, model_t, int *);
 extern void dtrace_invop_add(int (*)(uintptr_t, uintptr_t *, uintptr_t));
@@ -2330,6 +2330,20 @@ extern void dtrace_getfsr(uint64_t *);
 #define	DTRACE_INVOP_LEAVE		3
 #define	DTRACE_INVOP_NOP		4
 #define	DTRACE_INVOP_RET		5
+
+#elif defined(__arm__)
+
+#define	DTRACE_INVOP_MOV_IP_SP		1
+#define	DTRACE_INVOP_BX_LR		2
+#define	DTRACE_INVOP_MOV_PC_LR		3
+#define	DTRACE_INVOP_LDM		4
+#define	DTRACE_INVOP_LDMIB		5
+#define	DTRACE_INVOP_LDR_IMM		6
+#define	DTRACE_INVOP_MOVW		7
+#define	DTRACE_INVOP_MOV_IMM		8
+#define	DTRACE_INVOP_CMP_IMM		9
+#define	DTRACE_INVOP_B_LABEL		10
+#define	DTRACE_INVOP_PUSH		11
 
 #endif
 

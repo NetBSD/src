@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.1.1.1.2.2 2013/01/23 00:05:06 yamt Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.1.1.1.2.3 2014/05/22 14:08:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -8,22 +8,30 @@
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
+/*	const char daemon_options_expecting_value[];
+/*
 /*	void	read_master(fail_on_open)
 /*	int	fail_on_open;
 /*
-/*	void	show_master(mode, filters)
+/*	void	show_master(fp, mode, filters)
+/*	VSTREAM	*fp;
 /*	int	mode;
 /*	char	**filters;
 /* DESCRIPTION
 /*	read_master() reads entries from master.cf into memory.
 /*
 /*	show_master() writes the entries in the master.cf file
-/*	to standard output.
+/*	to the specified stream.
+/*
+/*	daemon_options_expecting_value[] is an array of master.cf
+/*	daemon command-line options that expect an option value.
 /*
 /*	Arguments
 /* .IP fail_on_open
 /*	Specify FAIL_ON_OPEN if open failure is a fatal error,
 /*	WARN_ON_OPEN if a warning should be logged instead.
+/* .IP fp
+/*	Output stream.
 /* .IP mode
 /*	If the FOLD_LINE flag is set, show_master() wraps long
 /*	output lines.
@@ -68,6 +76,8 @@
 
 #include <postconf.h>
 
+const char daemon_options_expecting_value[] = "o";
+
 #define STR(x) vstring_str(x)
 
 /* normalize_options - bring options into canonical form */
@@ -76,6 +86,8 @@ static void normalize_options(ARGV *argv)
 {
     int     field;
     char   *arg;
+    char   *cp;
+    char   *junk;
 
     /*
      * Normalize options to simplify later processing.
@@ -84,19 +96,61 @@ static void normalize_options(ARGV *argv)
 	arg = argv->argv[field];
 	if (arg[0] != '-' || strcmp(arg, "--") == 0)
 	    break;
-	if (strncmp(arg, "-o", 2) == 0) {
-	    if (arg[2] != 0) {
-		/* Split "-oname=value" into "-o" "name=value". */
-		argv_insert_one(argv, field + 1, arg + 2);
-		argv_replace_one(argv, field, "-o");
-		/* arg is now a dangling pointer. */
-		field += 1;
-	    } else if (argv->argv[field + 1] != 0) {
-		/* Already in "-o" "name=value" form. */
-		field += 1;
+	for (cp = arg + 1; *cp; cp++) {
+	    if (strchr(daemon_options_expecting_value, *cp) != 0
+		&& cp > arg + 1) {
+		/* Split "-stuffo" into "-stuff" and "-o". */
+		junk = concatenate("-", cp, (char *) 0);
+		argv_insert_one(argv, field + 1, junk);
+		myfree(junk);
+		*cp = 0;			/* XXX argv_replace_one() */
+		break;
 	    }
 	}
+	if (strchr(daemon_options_expecting_value, arg[1]) == 0)
+	    /* Option requires no value. */
+	    continue;
+	if (arg[2] != 0) {
+	    /* Split "-oname=value" into "-o" "name=value". */
+	    argv_insert_one(argv, field + 1, arg + 2);
+	    arg[2] = 0;				/* XXX argv_replace_one() */
+	    field += 1;
+	} else if (argv->argv[field + 1] != 0) {
+	    /* Already in "-o" "name=value" form. */
+	    field += 1;
+	}
     }
+}
+
+/* parse_master_line - parse one master line */
+
+static const char *parse_master_line(PC_MASTER_ENT *masterp, const char *buf)
+{
+    ARGV   *argv;
+
+    /*
+     * We can't use the master daemon's master_ent routines in their current
+     * form. They convert everything to internal form, and they skip disabled
+     * services.
+     * 
+     * The postconf command needs to show default fields as "-", and needs to
+     * know about all service names so that it can generate service-dependent
+     * parameter names (transport-dependent etc.).
+     */
+#define MASTER_BLANKS	" \t\r\n"		/* XXX */
+
+    argv = argv_split(buf, MASTER_BLANKS);
+    if (argv->argc < PC_MASTER_MIN_FIELDS) {
+	argv_free(argv);
+	return ("bad field count");
+    }
+    normalize_options(argv);
+    masterp->name_space =
+	concatenate(argv->argv[0], ".", argv->argv[1], (char *) 0);
+    masterp->argv = argv;
+    masterp->valid_names = 0;
+    masterp->all_params = 0;
+    return (0);
 }
 
 /* read_master - read and digest the master.cf file */
@@ -106,8 +160,8 @@ void    read_master(int fail_on_open_error)
     const char *myname = "read_master";
     char   *path;
     VSTRING *buf;
-    ARGV   *argv;
     VSTREAM *fp;
+    const char *err;
     int     entry_count = 0;
     int     line_count = 0;
 
@@ -123,17 +177,6 @@ void    read_master(int fail_on_open_error)
     if (var_config_dir == 0)
 	set_config_dir();
     path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
-
-    /*
-     * We can't use the master daemon's master_ent routines in their current
-     * form. They convert everything to internal form, and they skip disabled
-     * services.
-     * 
-     * The postconf command needs to show default fields as "-", and needs to
-     * know about all service names so that it can generate service-dependent
-     * parameter names (transport-dependent etc.).
-     */
-#define MASTER_BLANKS	" \t\r\n"		/* XXX */
 
     /*
      * Initialize the in-memory master table.
@@ -153,16 +196,9 @@ void    read_master(int fail_on_open_error)
 	while (readlline(buf, fp, &line_count) != 0) {
 	    master_table = (PC_MASTER_ENT *) myrealloc((char *) master_table,
 				 (entry_count + 2) * sizeof(*master_table));
-	    argv = argv_split(STR(buf), MASTER_BLANKS);
-	    if (argv->argc < PC_MASTER_MIN_FIELDS)
-		msg_fatal("file %s: line %d: bad field count",
-			  path, line_count);
-	    normalize_options(argv);
-	    master_table[entry_count].name_space =
-		concatenate(argv->argv[0], ".", argv->argv[1], (char *) 0);
-	    master_table[entry_count].argv = argv;
-	    master_table[entry_count].valid_names = 0;
-	    master_table[entry_count].all_params = 0;
+	    if ((err = parse_master_line(master_table + entry_count,
+					 STR(buf))) != 0)
+		msg_fatal("file %s: line %d: %s", path, line_count, err);
 	    entry_count += 1;
 	}
 	vstream_fclose(fp);
@@ -178,10 +214,12 @@ void    read_master(int fail_on_open_error)
 
 /* print_master_line - print one master line */
 
-static void print_master_line(int mode, ARGV *argv)
+static void print_master_line(VSTREAM *fp, int mode, PC_MASTER_ENT *masterp)
 {
-    char   *arg;
-    char   *aval;
+    char  **argv = masterp->argv->argv;
+    const char *arg;
+    const char *aval;
+    int     arg_len;
     int     line_len;
     int     field;
     int     in_daemon_options;
@@ -197,7 +235,7 @@ static void print_master_line(int mode, ARGV *argv)
     };
 
 #define ADD_TEXT(text, len) do { \
-        vstream_fputs(text, VSTREAM_OUT); line_len += len; } \
+        vstream_fputs(text, fp); line_len += len; } \
     while (0)
 #define ADD_SPACE ADD_TEXT(" ", 1)
 
@@ -206,7 +244,7 @@ static void print_master_line(int mode, ARGV *argv)
      * least one-space column separation.
      */
     for (line_len = 0, field = 0; field < PC_MASTER_MIN_FIELDS; field++) {
-	arg = argv->argv[field];
+	arg = argv[field];
 	if (line_len > 0) {
 	    do {
 		ADD_SPACE;
@@ -221,8 +259,9 @@ static void print_master_line(int mode, ARGV *argv)
      * have argument grouping preferences.
      */
     in_daemon_options = 1;
-    for ( /* void */ ; argv->argv[field] != 0; field++) {
-	arg = argv->argv[field];
+    for ( /* void */ ; (arg = argv[field]) != 0; field++) {
+	arg_len = strlen(arg);
+	aval = 0;
 	if (in_daemon_options) {
 
 	    /*
@@ -233,51 +272,59 @@ static void print_master_line(int mode, ARGV *argv)
 		in_daemon_options = 0;
 		if ((mode & FOLD_LINE)
 		    && line_len > column_goal[PC_MASTER_MIN_FIELDS - 1]) {
-		    vstream_fputs("\n" INDENT_TEXT, VSTREAM_OUT);
-		    line_len = INDENT_LEN;
+		    /* Force line wrap. */
+		    line_len = LINE_LIMIT;
 		}
 	    }
 
 	    /*
-	     * Try to avoid breaking "-o name=value" over multiple lines if
-	     * it would fit on one line.
+	     * Special processing for options that require a value.
 	     */
-	    else if ((mode & FOLD_LINE)
-		     && line_len > INDENT_LEN && strcmp(arg, "-o") == 0
-		     && (aval = argv->argv[field + 1]) != 0
-		     && INDENT_LEN + 3 + strlen(aval) < LINE_LIMIT) {
-		vstream_fputs("\n" INDENT_TEXT, VSTREAM_OUT);
-		line_len = INDENT_LEN;
-		ADD_TEXT(arg, strlen(arg));
-		arg = aval;
-		field += 1;
+	    else if (strchr(daemon_options_expecting_value, arg[1]) != 0
+		     && (aval = argv[field + 1]) != 0) {
+
+		/*
+		 * Optionally, expand $name in parameter value.
+		 */
+		if (strcmp(arg, "-o") == 0
+		    && (mode & SHOW_EVAL) != 0)
+		    aval = expand_parameter_value((VSTRING *) 0, mode,
+						  aval, masterp);
+
+		/*
+		 * Keep option and value on the same line.
+		 */
+		arg_len += strlen(aval) + 1;
 	    }
 	}
 
 	/*
-	 * Insert a line break when the next argument won't fit (unless, of
-	 * course, we just inserted a line break).
+	 * Insert a line break when the next item won't fit.
 	 */
 	if (line_len > INDENT_LEN) {
 	    if ((mode & FOLD_LINE) == 0
-		|| line_len + 1 + strlen(arg) < LINE_LIMIT) {
+		|| line_len + 1 + arg_len < LINE_LIMIT) {
 		ADD_SPACE;
 	    } else {
-		vstream_fputs("\n" INDENT_TEXT, VSTREAM_OUT);
+		vstream_fputs("\n" INDENT_TEXT, fp);
 		line_len = INDENT_LEN;
 	    }
 	}
 	ADD_TEXT(arg, strlen(arg));
+	if (aval) {
+	    ADD_SPACE;
+	    ADD_TEXT(aval, strlen(aval));
+	    field += 1;
+	}
     }
-    vstream_fputs("\n", VSTREAM_OUT);
+    vstream_fputs("\n", fp);
 }
 
 /* show_master - show master.cf entries */
 
-void    show_master(int mode, char **filters)
+void    show_master(VSTREAM *fp, int mode, char **filters)
 {
     PC_MASTER_ENT *masterp;
-    ARGV   *argv;
     ARGV   *service_filter = 0;
 
     /*
@@ -289,10 +336,11 @@ void    show_master(int mode, char **filters)
     /*
      * Iterate over the master table.
      */
-    for (masterp = master_table; (argv = masterp->argv) != 0; masterp++)
-	if (service_filter == 0
-	    || match_service_match(service_filter, masterp->name_space) != 0)
-	    print_master_line(mode, argv);
+    for (masterp = master_table; masterp->argv != 0; masterp++)
+	if ((service_filter == 0
+	     || match_service_match(service_filter, masterp->name_space))
+	    && ((mode & SHOW_NONDEF) == 0 || masterp->all_params != 0))
+	    print_master_line(fp, mode, masterp);
 
     /*
      * Cleanup.

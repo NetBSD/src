@@ -1,12 +1,19 @@
-#	$NetBSD: Makefile,v 1.6 2011/01/13 23:18:24 haad Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2014/05/22 14:01:24 yamt Exp $
 
 .PATH: ${.CURDIR}/../../dist/common/zfs
 .PATH: ${.CURDIR}/../../dist/common/fs/zfs
 .PATH: ${.CURDIR}/../../dist/lib/libzfs/common
 
 LIB=	zfs
-DPADD=	${LIBUTIL}
-LDADD=	-lutil
+
+LIBDPLIBS+= \
+	avl	${.CURDIR}/../libavl \
+	nvpair	${.CURDIR}/../libnvpair \
+	m	${NETBSDSRCDIR}/lib/libm \
+	pthread	${NETBSDSRCDIR}/lib/libpthread \
+	umem	${.CURDIR}/../libumem \
+	util	${NETBSDSRCDIR}/lib/libutil \
+	uutil	${.CURDIR}/../libuutil
 
 # Local
 SRCS=	deviceid.c mnttab.c mkdirp.c zmount.c fsshare.c zone.c efi.c ucred.c stubs.c

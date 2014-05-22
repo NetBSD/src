@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2011/10/22 22:23:50 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2014/05/22 14:09:34 yamt Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	cleanlinks cxpm editres \
-	fc-cache fc-cat fc-list fc-match fc-query fc-scan \
+	fc-cache fc-cat fc-list fc-match fc-pattern fc-query fc-scan \
+	fc-validate \
 	fonttosfnt fslsfonts fstobdf glxgears glxinfo \
 	iceauth ico imake listres lndir luit makedepend \
 	makeg makestrs mergelib mkdirhier mkfontdir \

@@ -1,7 +1,7 @@
 /* mpz_sqrt(root, u) --  Set ROOT to floor(sqrt(U)).
 
-Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2005 Free Software Foundation,
-Inc.
+Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2005, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -27,58 +27,40 @@ mpz_sqrt (mpz_ptr root, mpz_srcptr op)
 {
   mp_size_t op_size, root_size;
   mp_ptr root_ptr, op_ptr;
-  mp_ptr free_me = NULL;
-  mp_size_t free_me_size;
-  TMP_DECL;
 
-  TMP_MARK;
-  op_size = op->_mp_size;
-  if (op_size <= 0)
+  op_size = SIZ (op);
+  if (UNLIKELY (op_size <= 0))
     {
       if (op_size < 0)
-        SQRT_OF_NEGATIVE;
+	SQRT_OF_NEGATIVE;
       SIZ(root) = 0;
       return;
     }
 
   /* The size of the root is accurate after this simple calculation.  */
   root_size = (op_size + 1) / 2;
+  SIZ (root) = root_size;
 
-  root_ptr = root->_mp_d;
-  op_ptr = op->_mp_d;
+  op_ptr = PTR (op);
 
-  if (root->_mp_alloc < root_size)
+  if (root == op)
     {
-      if (root_ptr == op_ptr)
-	{
-	  free_me = root_ptr;
-	  free_me_size = root->_mp_alloc;
-	}
-      else
-	(*__gmp_free_func) (root_ptr, root->_mp_alloc * BYTES_PER_MP_LIMB);
+      /* Allocate temp space for the root, which we then copy to the
+	 shared OP/ROOT variable.  */
+      TMP_DECL;
+      TMP_MARK;
 
-      root->_mp_alloc = root_size;
-      root_ptr = (mp_ptr) (*__gmp_allocate_func) (root_size * BYTES_PER_MP_LIMB);
-      root->_mp_d = root_ptr;
+      root_ptr = TMP_ALLOC_LIMBS (root_size);
+      mpn_sqrtrem (root_ptr, NULL, op_ptr, op_size);
+
+      MPN_COPY (op_ptr, root_ptr, root_size);
+
+      TMP_FREE;
     }
   else
     {
-      /* Make OP not overlap with ROOT.  */
-      if (root_ptr == op_ptr)
-	{
-	  /* ROOT and OP are identical.  Allocate temporary space for OP.  */
-	  op_ptr = TMP_ALLOC_LIMBS (op_size);
-	  /* Copy to the temporary space.  Hack: Avoid temporary variable
-	     by using ROOT_PTR.  */
-	  MPN_COPY (op_ptr, root_ptr, op_size);
-	}
+      root_ptr = MPZ_REALLOC (root, root_size);
+
+      mpn_sqrtrem (root_ptr, NULL, op_ptr, op_size);
     }
-
-  mpn_sqrtrem (root_ptr, NULL, op_ptr, op_size);
-
-  root->_mp_size = root_size;
-
-  if (free_me != NULL)
-    (*__gmp_free_func) (free_me, free_me_size * BYTES_PER_MP_LIMB);
-  TMP_FREE;
 }

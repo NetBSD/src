@@ -1,6 +1,6 @@
 /* mpz_export -- create word data from mpz.
 
-Copyright 2002, 2003 Free Software Foundation, Inc.
+Copyright 2002, 2003, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -34,22 +34,9 @@ static const mp_limb_t  endian_test = (CNST_LIMB(1) << (GMP_LIMB_BITS-7)) - 1;
 #define HOST_ENDIAN     (* (signed char *) &endian_test)
 #endif
 
-
-#define MPN_SIZEINBASE_2EXP(result, ptr, size, base2exp)                \
-  do {                                                                  \
-    int            __cnt;                                               \
-    unsigned long  __totbits;                                           \
-    ASSERT ((size) > 0);                                                \
-    ASSERT ((ptr)[(size)-1] != 0);                                      \
-    count_leading_zeros (__cnt, (ptr)[(size)-1]);                       \
-    __totbits = (size) * GMP_NUMB_BITS - (__cnt - GMP_NAIL_BITS);       \
-    (result) = (__totbits + (base2exp)-1) / (base2exp);                 \
-  } while (0)
-
-
 void *
 mpz_export (void *data, size_t *countp, int order,
-            size_t size, int endian, size_t nail, mpz_srcptr z)
+	    size_t size, int endian, size_t nail, mpz_srcptr z)
 {
   mp_size_t      zsize;
   mp_srcptr      zp;
@@ -60,7 +47,7 @@ mpz_export (void *data, size_t *countp, int order,
   ASSERT (order == 1 || order == -1);
   ASSERT (endian == 1 || endian == 0 || endian == -1);
   ASSERT (nail <= 8*size);
-  ASSERT (8*size-nail > 0);
+  ASSERT (nail <  8*size || SIZ(z) == 0); /* nail < 8*size+(SIZ(z)==0) */
 
   if (countp == NULL)
     countp = &dummy;
@@ -89,29 +76,29 @@ mpz_export (void *data, size_t *countp, int order,
   if (nail == GMP_NAIL_BITS)
     {
       if (size == sizeof (mp_limb_t) && align == 0)
-        {
-          if (order == -1 && endian == HOST_ENDIAN)
-            {
-              MPN_COPY ((mp_ptr) data, zp, (mp_size_t) count);
-              return data;
-            }
-          if (order == 1 && endian == HOST_ENDIAN)
-            {
-              MPN_REVERSE ((mp_ptr) data, zp, (mp_size_t) count);
-              return data;
-            }
+	{
+	  if (order == -1 && endian == HOST_ENDIAN)
+	    {
+	      MPN_COPY ((mp_ptr) data, zp, (mp_size_t) count);
+	      return data;
+	    }
+	  if (order == 1 && endian == HOST_ENDIAN)
+	    {
+	      MPN_REVERSE ((mp_ptr) data, zp, (mp_size_t) count);
+	      return data;
+	    }
 
-          if (order == -1 && endian == -HOST_ENDIAN)
-            {
-              MPN_BSWAP ((mp_ptr) data, zp, (mp_size_t) count);
-              return data;
-            }
-          if (order == 1 && endian == -HOST_ENDIAN)
-            {
-              MPN_BSWAP_REVERSE ((mp_ptr) data, zp, (mp_size_t) count);
-              return data;
-            }
-        }
+	  if (order == -1 && endian == -HOST_ENDIAN)
+	    {
+	      MPN_BSWAP ((mp_ptr) data, zp, (mp_size_t) count);
+	      return data;
+	    }
+	  if (order == 1 && endian == -HOST_ENDIAN)
+	    {
+	      MPN_BSWAP_REVERSE ((mp_ptr) data, zp, (mp_size_t) count);
+	      return data;
+	    }
+	}
     }
 
   {
@@ -162,31 +149,31 @@ mpz_export (void *data, size_t *countp, int order,
     limb = 0;
     for (i = 0; i < count; i++)
       {
-        for (j = 0; j < wbytes; j++)
-          {
-            EXTRACT (8, + 0);
-            dp -= endian;
-          }
-        if (wbits != 0)
-          {
-            EXTRACT (wbits, & wbitsmask);
-            dp -= endian;
-            j++;
-          }
-        for ( ; j < size; j++)
-          {
-            *dp = '\0';
-            dp -= endian;
-          }
-        dp += woffset;
+	for (j = 0; j < wbytes; j++)
+	  {
+	    EXTRACT (8, + 0);
+	    dp -= endian;
+	  }
+	if (wbits != 0)
+	  {
+	    EXTRACT (wbits, & wbitsmask);
+	    dp -= endian;
+	    j++;
+	  }
+	for ( ; j < size; j++)
+	  {
+	    *dp = '\0';
+	    dp -= endian;
+	  }
+	dp += woffset;
       }
 
     ASSERT (zp == PTR(z) + ABSIZ(z));
 
     /* low byte of word after most significant */
     ASSERT (dp == (unsigned char *) data
-            + (order < 0 ? count*size : - (mp_size_t) size)
-            + (endian >= 0 ? (mp_size_t) size - 1 : 0));
+	    + (order < 0 ? count*size : - (mp_size_t) size)
+	    + (endian >= 0 ? (mp_size_t) size - 1 : 0));
   }
   return data;
 }
