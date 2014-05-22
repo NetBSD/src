@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.115.2.4 2013/01/23 00:06:11 yamt Exp $
+#	$NetBSD: files.usb,v 1.115.2.5 2014/05/22 11:40:36 yamt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -8,8 +8,10 @@ defflag	USBVERBOSE
 defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
 defflag	opt_usb.h	EHCI_DEBUG OHCI_DEBUG UHCI_DEBUG UHUB_DEBUG USB_DEBUG
 
+defflag	opt_umodem.h	UMODEM_DEBUG
 defflag	opt_uvideo.h	UVIDEO_DEBUG
 defflag	opt_umass.h	UMASS_DEBUG
+defflag	opt_uatp.h	UATP_DEBUG
 
 define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
@@ -106,7 +108,7 @@ device	uep: wsmousedev, tpcalib
 attach	uep at usbdevif
 file	dev/usb/uep.c			uep			needs-flag
 
-# Cypress microcontroller based serial adpaters
+# Cypress microcontroller based serial adapters
 device	ucycom: hid
 attach	ucycom at uhidbus
 file	dev/usb/ucycom.c		ucycom			needs-flag
@@ -282,6 +284,11 @@ device	axe: arp, ether, ifnet, mii, mii_phy
 attach	axe at usbdevif
 file	dev/usb/if_axe.c		axe
 
+# ASIX AX88178a and AX88179
+device	axen: arp, ether, ifnet, mii
+attach	axen at usbdevif
+file	dev/usb/if_axen.c		axen
+
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy
 attach	udav at usbdevif
@@ -319,6 +326,11 @@ file	dev/usb/umct.c			umct
 device	moscom: ucombus
 attach	moscom at usbdevif
 file	dev/usb/moscom.c		moscom
+
+# andother driver for the same chip
+device	umcs: ucombus
+attach	umcs at usbdevif
+file	dev/usb/umcs.c			umcs
 
 # SUNTAC Slipper U VS-10U driver
 device	uvscom: ucombus
@@ -441,3 +453,18 @@ file	dev/usb/if_urtw.c		urtw
 device	run: ether, ifnet, arp, wlan, firmload
 attach	run at usbdevif
 file	dev/usb/if_run.c		run
+
+# Atheros AR9002U
+attach	athn at usbdevif with athn_usb: firmload
+file	dev/usb/if_athn_usb.c		athn_usb		needs-flag
+
+# XXX: ljt
+# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+device	rsu: arp, ether, firmload, ifnet, wlan
+attach	rsu at usbdevif
+file	dev/usb/if_rsu.c		rsu
+
+# KingSun/DonShine IrDA adaptors
+device	udsir: irbus, irdasir
+attach	udsir at usbifif
+file	dev/usb/udsir.c			udsir

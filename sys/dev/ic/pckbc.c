@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.51.8.2 2012/10/30 17:21:07 yamt Exp $ */
+/* $NetBSD: pckbc.c,v 1.51.8.3 2014/05/22 11:40:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.51.8.2 2012/10/30 17:21:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.51.8.3 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,13 +243,9 @@ static int
 pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = sc->id;
-	struct pckbc_attach_args pa;
 	void *sdata;
 	device_t child;
 	int alloced = 0;
-
-	pa.pa_tag = t;
-	pa.pa_slot = slot;
 
 	if (t->t_slotdata[slot] == NULL) {
 		sdata = malloc(sizeof(struct pckbc_slotdata),
@@ -601,12 +597,14 @@ pckbcintr(void *vsc)
 		if (!(stat & KBS_DIB))
 			break;
 
-		served = 1;
-
 		slot = (t->t_haveaux && (stat & 0x20)) ?
 		    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
 		q = t->t_slotdata[slot];
 
+		if (q != NULL && q->polling)
+			return 0;
+
+		served = 1;
 		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 

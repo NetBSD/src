@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.39.2.2 2012/10/30 17:22:50 yamt Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.39.2.3 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.39.2.2 2012/10/30 17:22:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.39.2.3 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -503,19 +503,15 @@ esp_input_cb(struct cryptop *crp)
 	u_int8_t lastthree[3], aalg[AH_ALEN_MAX];
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
-	struct cryptodesc *crd;
+	struct cryptodesc *crd __diagused;
 	const struct auth_hash *esph;
-	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	void *ptr;
-	u_int16_t dport = 0;
-	u_int16_t sport = 0;
-#ifdef IPSEC_NAT_T
-	struct m_tag * tag = NULL;
-#endif
+	u_int16_t dport;
+	u_int16_t sport;
 
 	crd = crp->crp_desc;
 	IPSEC_ASSERT(crd != NULL, ("esp_input_cb: null crypto descriptor!"));
@@ -527,13 +523,8 @@ esp_input_cb(struct cryptop *crp)
 	mtag = (struct m_tag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
-#ifdef IPSEC_NAT_T
 	/* find the source port for NAT-T */
-	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
-		sport = ((u_int16_t *)(tag + 1))[0];
-		dport = ((u_int16_t *)(tag + 1))[1];
-	}
-#endif
+	nat_t_ports_get(m, &dport, &sport);
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
@@ -555,7 +546,6 @@ esp_input_cb(struct cryptop *crp)
 		 saidx->dst.sa.sa_family));
 
 	esph = sav->tdb_authalgxform;
-	espx = sav->tdb_encalgxform;
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {
@@ -601,7 +591,7 @@ esp_input_cb(struct cryptop *crp)
 			ptr = (tc + 1);
 
 			/* Verify authenticator */
-			if (consttime_bcmp(ptr, aalg, esph->authsize) != 0) {
+			if (!consttime_memequal(ptr, aalg, esph->authsize)) {
 				DPRINTF(("esp_input_cb: "
 		    "authentication hash mismatch for packet in SA %s/%08lx\n",
 				    ipsec_address(&saidx->dst),
@@ -727,7 +717,7 @@ esp_output(
 {
 	const struct enc_xform *espx;
 	const struct auth_hash *esph;
-	int hlen, rlen, plen, padding, blks, alen, i, roff;
+	int hlen, rlen, padding, blks, alen, i, roff;
 	struct mbuf *mo = NULL;
 	struct tdb_crypto *tc;
 	const struct secasvar *sav;
@@ -761,7 +751,6 @@ esp_output(
 
 	/* XXX clamp padding length a la KAME??? */
 	padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
-	plen = rlen + padding;		/* Padded payload length. */
 
 	if (esph)
 		alen = esph->authsize;

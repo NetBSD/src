@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.2.3 2012/10/30 17:20:09 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.2.4 2014/05/22 11:40:03 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.2.3 2012/10/30 17:20:09 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.2.4 2014/05/22 11:40:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,9 +480,9 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	if (tf->tf_esr & ESR_PIL) {
 		struct pcb * const pcb = lwp_getpcb(curlwp);
-		if (__predict_false(!(curlwp->l_md.md_flags & MDLWP_USEDFPU))) {
+		if (__predict_false(!fpu_used_p(curlwp))) {
 			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-			curlwp->l_md.md_flags |= MDLWP_USEDFPU;
+			fpu_mark_used(curlwp);
 		}
 		if (fpu_emulate(tf, &pcb->pcb_fpu, ksi)) {
 			if (ksi->ksi_signo == 0) {

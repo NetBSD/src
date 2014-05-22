@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.31.2.2 2012/10/30 17:22:09 yamt Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.31.2.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -226,6 +226,9 @@ struct umass_softc {
 	usbd_xfer_handle	transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
 	void			*data_buffer;
+	void			*cmd_buffer;
+	void			*s1_buffer;
+	void			*s2_buffer;
 
 	int			transfer_dir;		/* data direction */
 	void			*transfer_data;		/* data buffer */

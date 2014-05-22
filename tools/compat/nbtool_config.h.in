@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.26.2.1 2011/11/10 14:31:53 yamt Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.26.2.2 2014/05/22 11:42:30 yamt Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -203,6 +203,10 @@
    don't. */
 #undef HAVE_DECL_STRNDUP
 
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNLEN
+
 /* Define to 1 if you have the declaration of `strsuftoll', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRSUFTOLL
@@ -236,6 +240,9 @@
 
 /* Define if `__dd_fd' is member of `DIR'. */
 #undef HAVE_DIR___DD_FD
+
+/* Define if you have the `dprintf' function. */
+#undef HAVE_DPRINTF
 
 /* Define if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
@@ -317,6 +324,9 @@
 
 /* Define if you have the `regex' library (-lregex). */
 #undef HAVE_LIBREGEX
+
+/* Define if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
 
 /* Define if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
@@ -414,6 +424,9 @@
 /* Define if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
+/* Define if you have the `snprintb_m' function. */
+#undef HAVE_SNPRINTB_M
+
 /* Define if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
@@ -453,6 +466,9 @@
 /* Define if you have the `strndup' function. */
 #undef HAVE_STRNDUP
 
+/* Define if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
+
 /* Define if you have the `strsep' function. */
 #undef HAVE_STRSEP
 
@@ -485,6 +501,9 @@
 
 /* Define if `st_mtimensec' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIMENSEC
+
+/* Define if `tm_gmtoff' is member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_GMTOFF
 
 /* Define if you have the <sys/bswap.h> header file. */
 #undef HAVE_SYS_BSWAP_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.38.6.1 2012/04/17 00:09:30 yamt Exp $	*/
+/*	$NetBSD: sem.c,v 1.38.6.2 2014/05/22 11:42:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1427,8 +1427,6 @@ addpseudoroot(const char *name)
 	struct devi *i;
 	struct deva *iba;
 	struct devbase *ib;
-
-	fprintf(stderr, "WARNING: pseudo-root is an experimental feature\n");
 
 	if (split(name, strlen(name), buf, sizeof(buf), &unit)) {
 		cfgerror("invalid pseudo-root name `%s'", name);

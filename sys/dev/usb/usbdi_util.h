@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.41.12.2 2012/10/30 17:22:11 yamt Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.41.12.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -58,8 +58,6 @@ usbd_status	usbd_get_report_descriptor(usbd_device_handle dev, int ifcno,
 usb_hid_descriptor_t *usbd_get_hid_descriptor(usbd_interface_handle ifc);
 usbd_status	usbd_set_report(usbd_interface_handle iface, int type, int id,
 				void *data,int len);
-usbd_status	usbd_set_report_async(usbd_interface_handle iface, int type,
-				      int id, void *data, int len);
 usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
 				void *data, int len);
 usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);

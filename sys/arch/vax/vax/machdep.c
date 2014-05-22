@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182.2.3 2012/10/30 17:20:29 yamt Exp $	 */
+/* $NetBSD: machdep.c,v 1.182.2.4 2014/05/22 11:40:12 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.2.3 2012/10/30 17:20:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.2.4 2014/05/22 11:40:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -145,7 +145,6 @@ extern paddr_t avail_end;
  */
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char		cpu_model[100];
 void *		msgbufaddr;
 int		*symtab_start;
 int		*symtab_end;
@@ -186,7 +185,7 @@ cpu_startup(void)
 	 * Also call CPU init on systems that need that.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
         if (dep_call->cpu_conf)
                 (*dep_call->cpu_conf)();
 

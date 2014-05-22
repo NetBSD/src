@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.23 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: search.c,v 1.23.6.1 2014/05/22 11:37:13 yamt Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.23 2010/12/24 12:41:43 skrll Exp $");
+__RCSID("$NetBSD: search.c,v 1.23.6.1 2014/05/22 11:37:13 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -140,7 +140,7 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int flags)
 		strncpy(tmperror, tmperrorp, sizeof tmperror);
 		tmperrorp = tmperror;
 	}
-	
+
 	namelen = strlen(name);
 
 	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)

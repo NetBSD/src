@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.425.2.2 2012/05/23 10:08:12 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.425.2.3 2014/05/22 11:41:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.425.2.2 2012/05/23 10:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.425.2.3 2014/05/22 11:41:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -131,8 +131,8 @@ vntblinit(void)
 {
 
 	vn_initialize_syncerd();
-	vfs_vnode_sysinit();
 	vfs_mount_sysinit();
+	vfs_vnode_sysinit();
 }
 
 /*
@@ -460,7 +460,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 				delayx = dirdelay;
 				break;
 			case VBLK:
-				if (vp->v_specmountpoint != NULL) {
+				if (spec_node_getmountedfs(vp) != NULL) {
 					delayx = metadelay;
 					break;
 				}
@@ -513,23 +513,8 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 int
 vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 {
-	vnode_t *vp;
 
-	mutex_enter(&device_lock);
-	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
-		if (type == vp->v_type && dev == vp->v_rdev)
-			break;
-	}
-	if (vp == NULL) {
-		mutex_exit(&device_lock);
-		return 0;
-	}
-	mutex_enter(vp->v_interlock);
-	mutex_exit(&device_lock);
-	if (vget(vp, 0) != 0)
-		return 0;
-	*vpp = vp;
-	return 1;
+	return (spec_node_lookup_by_dev(type, dev, vpp) == 0);
 }
 
 /*
@@ -539,34 +524,17 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 void
 vdevgone(int maj, int minl, int minh, enum vtype type)
 {
-	vnode_t *vp, **vpp;
+	vnode_t *vp;
 	dev_t dev;
 	int mn;
 
-	vp = NULL;	/* XXX gcc */
-
-	mutex_enter(&device_lock);
 	for (mn = minl; mn <= minh; mn++) {
 		dev = makedev(maj, mn);
-		vpp = &specfs_hash[SPECHASH(dev)];
-		for (vp = *vpp; vp != NULL;) {
-			mutex_enter(vp->v_interlock);
-			if ((vp->v_iflag & VI_CLEAN) != 0 ||
-			    type != vp->v_type || dev != vp->v_rdev) {
-				mutex_exit(vp->v_interlock);
-				vp = vp->v_specnext;
-				continue;
-			}
-			mutex_exit(&device_lock);
-			if (vget(vp, 0) == 0) {
-				VOP_REVOKE(vp, REVOKEALL);
-				vrele(vp);
-			}
-			mutex_enter(&device_lock);
-			vp = *vpp;
+		while (spec_node_lookup_by_dev(type, dev, &vp) == 0) {
+			VOP_REVOKE(vp, REVOKEALL);
+			vrele(vp);
 		}
 	}
-	mutex_exit(&device_lock);
 }
 
 /*
@@ -643,7 +611,8 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	char *where = oldp;
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
-	vnode_t *vp, *mvp, vbuf;
+	vnode_t *vp, vbuf;
+	struct vnode_iterator *marker;
 	char *bp = where;
 	char *ewhere;
 	int error;
@@ -663,52 +632,33 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	    mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
-		/* Allocate a marker vnode. */
-		mvp = vnalloc(mp);
-		/* Should never fail for mp != NULL */
-		KASSERT(mvp != NULL);
-		mutex_enter(&mntvnode_lock);
-		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp;
-		    vp = vunmark(mvp)) {
-			vmark(mvp, vp);
-			/*
-			 * Check that the vp is still associated with
-			 * this filesystem.  RACE: could have been
-			 * recycled onto the same filesystem.
-			 */
-			if (vp->v_mount != mp || vismarker(vp))
-				continue;
+		vfs_vnode_iterator_init(mp, &marker);
+		while (vfs_vnode_iterator_next(marker, &vp)) {
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
-				(void)vunmark(mvp);
-				mutex_exit(&mntvnode_lock);
-				vnfree(mvp);
+				vrele(vp);
+				vfs_vnode_iterator_destroy(marker);
 				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				*sizep = bp - where;
 				return (ENOMEM);
 			}
 			memcpy(&vbuf, vp, VNODESZ);
-			mutex_exit(&mntvnode_lock);
 			if ((error = copyout(&vp, bp, VPTRSZ)) ||
 			    (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
-			   	mutex_enter(&mntvnode_lock);
-				(void)vunmark(mvp);
-				mutex_exit(&mntvnode_lock);
-				vnfree(mvp);
+				vrele(vp);
+				vfs_vnode_iterator_destroy(marker);
 				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				return (error);
 			}
+			vrele(vp);
 			bp += VPTRSZ + VNODESZ;
-			mutex_enter(&mntvnode_lock);
 		}
-		mutex_exit(&mntvnode_lock);
-		vnfree(mvp);
+		vfs_vnode_iterator_destroy(marker);
 		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
@@ -800,7 +750,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	printf("vaccess: deprecated interface used.\n");
 #endif /* DIAGNOSTIC */
 
-	return kauth_authorize_vnode(cred, kauth_access_action(acc_mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(acc_mode,
 	    type, file_mode), NULL /* This may panic. */, NULL,
 	    genfs_can_access(type, file_mode, uid, gid, acc_mode, cred));
 }
@@ -935,16 +885,16 @@ setrootfstime(time_t t)
 	rootfstime = t;
 }
 
-static const uint8_t vttodt_tab[9] = {
-	DT_UNKNOWN,	/* VNON  */
-	DT_REG,		/* VREG  */
-	DT_DIR,		/* VDIR  */
-	DT_BLK,		/* VBLK  */
-	DT_CHR,		/* VCHR  */
-	DT_LNK,		/* VLNK  */
-	DT_SOCK,	/* VSUCK */
-	DT_FIFO,	/* VFIFO */
-	DT_UNKNOWN	/* VBAD  */
+static const uint8_t vttodt_tab[ ] = {
+	[VNON]	=	DT_UNKNOWN,
+	[VREG]	=	DT_REG,
+	[VDIR]	=	DT_DIR,
+	[VBLK]	=	DT_BLK,
+	[VCHR]	=	DT_CHR,
+	[VLNK]	=	DT_LNK,
+	[VSOCK]	=	DT_SOCK,
+	[VFIFO]	=	DT_FIFO,
+	[VBAD]	=	DT_UNKNOWN
 };
 
 uint8_t
@@ -1296,8 +1246,7 @@ printlockedvnodes(void)
 
 	printf("Locked vnodes\n");
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}

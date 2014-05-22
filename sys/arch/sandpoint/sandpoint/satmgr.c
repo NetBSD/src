@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.12.2.2 2012/05/23 10:07:48 yamt Exp $ */
+/* $NetBSD: satmgr.c,v 1.12.2.3 2014/05/22 11:40:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -106,8 +106,17 @@ static dev_type_poll(satpoll);
 static dev_type_kqfilter(satkqfilter);
 
 const struct cdevsw satmgr_cdevsw = {
-	satopen, satclose, satread, satwrite, noioctl,
-	nostop, notty, satpoll, nommap, satkqfilter, D_OTHER
+	.d_open = satopen,
+	.d_close = satclose,
+	.d_read = satread,
+	.d_write = satwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = satpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = satkqfilter,
+	.d_flag = D_OTHER
 };
 
 static void satmgr_reboot(int);
@@ -847,8 +856,11 @@ static void
 dpwroff(struct satmgr_softc *sc)
 {
 
+	send_sat(sc, "ZWC\n");
+
 	/*
-	 * The DSM-G600 has no hardware-shutdown, so we flash the power LED
+	 * When this line is reached, then this board revision doesn't
+	 * support hardware-shutdown, so we flash the power LED
 	 * to indicate that the device can be switched off.
 	 */
 	send_sat(sc, "SYN\nSYN\n");

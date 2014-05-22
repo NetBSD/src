@@ -1,6 +1,6 @@
-/* $NetBSD: ldp_errors.c,v 1.1.6.1 2012/04/17 00:09:48 yamt Exp $ */
+/* $NetBSD: ldp_errors.c,v 1.1.6.2 2014/05/22 11:43:05 yamt Exp $ */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,10 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <arpa/inet.h>
+#include <netmpls/mpls.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -42,6 +45,9 @@
 int	debug_f = 0, warn_f = 0, syslog_f = 0;
 
 static void do_syslog(int, const char*, va_list) __printflike(2, 0);
+static char satos_str[INET6_ADDRSTRLEN > INET_ADDRSTRLEN ? INET6_ADDRSTRLEN :
+		INET_ADDRSTRLEN];
+static char *mpls_ntoa(const struct sockaddr_mpls *smpls);
 
 void 
 debugp(const char *fmt, ...)
@@ -107,4 +113,57 @@ printtime()
 		if (buf[i] == '\n')
 			buf[i] = 0;
 	printf("%s ", buf);
+}
+
+const char *
+satos(const struct sockaddr *sa)
+{
+	switch (sa->sa_family) {
+		case AF_INET:
+		{
+			const struct sockaddr_in *sin =
+			    (const struct sockaddr_in *)sa;
+			if (inet_ntop(AF_INET, &(sin->sin_addr), satos_str,
+			    sizeof(satos_str)) == NULL)
+				return "INET ERROR";
+			break;
+		}
+		case AF_INET6:
+		{
+			const struct sockaddr_in6 *sin6 =
+			    (const struct sockaddr_in6 *)sa;
+			if (inet_ntop(AF_INET6, &(sin6->sin6_addr), satos_str,
+			    sizeof(satos_str)) == NULL)
+				return "INET6 ERROR";
+			break;
+		}
+		case AF_LINK:
+		{
+			strlcpy(satos_str,
+			    link_ntoa((const struct sockaddr_dl *)sa),
+			    sizeof(satos_str));
+			break;
+		}
+		case AF_MPLS:
+		{
+			strlcpy(satos_str,
+			    mpls_ntoa((const struct sockaddr_mpls *)sa),
+			    sizeof(satos_str));
+			break;
+		}
+		default:
+			return "UNKNOWN AF";
+	}
+	return satos_str;
+}
+
+static char *
+mpls_ntoa(const struct sockaddr_mpls *smpls)
+{
+	static char ret[10];
+	union mpls_shim ms2;
+
+	ms2.s_addr = ntohl(smpls->smpls_addr.s_addr);
+	snprintf(ret, sizeof(ret), "%d", ms2.shim.label);
+	return ret;
 }

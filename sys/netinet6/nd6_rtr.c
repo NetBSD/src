@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.81.4.2 2012/10/30 17:22:49 yamt Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.81.4.3 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.81.4.2 2012/10/30 17:22:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.81.4.3 2014/05/22 11:41:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1038,10 +1038,12 @@ prelist_remove(struct nd_prefix *pr)
 		free(pfr, M_IP6NDP);
 	}
 
-	ext->nprefixes--;
-	if (ext->nprefixes < 0) {
-		log(LOG_WARNING, "prelist_remove: negative count on %s\n",
-		    pr->ndpr_ifp->if_xname);
+	if (ext) {
+		ext->nprefixes--;
+		if (ext->nprefixes < 0) {
+			log(LOG_WARNING, "prelist_remove: negative count on "
+			    "%s\n", pr->ndpr_ifp->if_xname);
+		}
 	}
 	splx(s);
 
@@ -1062,7 +1064,6 @@ prelist_update(struct nd_prefixctl *new,
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int newprefix = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1119,8 +1120,6 @@ prelist_update(struct nd_prefixctl *new,
 			pfxrtr_add(pr, dr);
 	} else {
 		struct nd_prefix *newpr = NULL;
-
-		newprefix = 1;
 
 		if (new->ndpr_vltime == 0)
 			goto end;
@@ -1402,7 +1401,9 @@ find_pfxlist_reachable_router(struct nd_prefix *pr)
 
 	for (pfxrtr = LIST_FIRST(&pr->ndpr_advrtrs); pfxrtr;
 	     pfxrtr = LIST_NEXT(pfxrtr, pfr_entry)) {
-		if ((rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
+		if (pfxrtr->router->ifp->if_flags & IFF_UP &&
+		    pfxrtr->router->ifp->if_link_state != LINK_STATE_DOWN &&
+		    (rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
 		    pfxrtr->router->ifp)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
 		    ND6_IS_LLINFO_PROBREACH(ln))
@@ -1578,10 +1579,14 @@ pfxlist_onlink_check(void)
 					ifa->ia6_flags |= IN6_IFF_TENTATIVE;
 					nd6_dad_start((struct ifaddr *)ifa,
 					    0);
+					/* We will notify the routing socket
+					 * of the DAD result, so no need to
+					 * here */
 				}
 			} else {
 				if ((ifa->ia6_flags & IN6_IFF_DETACHED) == 0) {
 					ifa->ia6_flags |= IN6_IFF_DETACHED;
+					nd6_newaddrmsg((struct ifaddr *)ifa);
 				}
 			}
 		}
@@ -1674,6 +1679,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	 * ifa->ifa_rtrequest = nd6_rtrequest;
 	 */
 	memset(&mask6, 0, sizeof(mask6));
+	mask6.sin6_family = AF_INET6;
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
 	/* rtrequest() will probably set RTF_UP, but we're not sure. */

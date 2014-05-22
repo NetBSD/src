@@ -1,4 +1,4 @@
-/*	$NetBSD: newdisk.c,v 1.9.4.1 2012/10/30 17:20:32 yamt Exp $	*/
+/*	$NetBSD: newdisk.c,v 1.9.4.2 2014/05/22 11:40:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Minoura Makoto
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Building disk mark... ");
 	memset(buf, 0, 3072);
 #define n label.d_secperunit
-	sprintf(buf, "X68SCSI1%c%c%c%c%c%c%c%c%s",
+	snprintf(buf, sizeof(buf), "X68SCSI1%c%c%c%c%c%c%c%c%s",
 		2, 0,
 		(n/16777216)%256, (n/65536)%256, (n/256)%256, n%256,
 		1, 0, copyright);
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 			fprintf(stderr,
 				"Creating an empty partition table... ");
 #define n (label.d_secperunit/2)
-		sprintf(buf+2048,
+		snprintf(buf + 2048, sizeof(buf) - 2048,
 			"X68K%c%c%c%c%c%c%c%c%c%c%c%c",
 			0, 0, 0, 32,
 			(n/16777215)%256, (n/65536)%256, (n/256)%256, n%256,

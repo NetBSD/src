@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.75.2.2 2012/10/30 17:22:40 yamt Exp $
+#	$NetBSD: Makefile,v 1.75.2.3 2014/05/22 11:41:04 yamt Exp $
 
 LIB=	sa
-NOPIC=	# defined
-NOPROFILE=# defined
+LIBISPRIVATE?= yes
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
@@ -26,12 +25,8 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 # stand routines
 SRCS+=	alloc.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
-	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c \
-	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
-
-.if (${MACHINE_CPU} != "mips")
-SRCS+=	exec.c
-.endif
+	panic.c printf.c qsort.c snprintf.c strerror.c \
+	subr_prf.c twiddle.c checkpasswd.c
 
 # string routines
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
@@ -80,10 +75,6 @@ SRCS+=	fnmatch.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
-# only needed during build
-libinstall::
-
-.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

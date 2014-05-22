@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.gzboot,v 1.17.4.1 2012/10/30 17:19:26 yamt Exp $
+#	$NetBSD: Makefile.gzboot,v 1.17.4.2 2014/05/22 11:39:43 yamt Exp $
 
 NOMAN=  # defined
 
 .include <bsd.obj.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 EVBARM_STAND=	${S}/arch/evbarm/stand
 
@@ -21,6 +22,7 @@ DBG=	-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN= 
 LIBCRTEND=      
@@ -35,6 +37,12 @@ STARTFILE= srtbegin.o
 CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
+CPPFLAGS+= ${ARM_APCS_FLAGS}
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
+CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.endif
 
 CPPFLAGS+= -D_STANDALONE
 
@@ -50,26 +58,13 @@ CPPFLAGS+= -DLOADADDR=${LOADADDR}
 
 COPTS+=	-ffreestanding
 COPTS+=	-fno-stack-protector
+COPTS+=	-fno-unwind-tables
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 CLEANFILES+= ${PROGSYM}
 SRCS+= vers.c
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine
-.endif
-
-realdepend realall: machine
-CLEANFILES+= arm machine
-
-machine::
-	-rm -f arm machine
-	ln -s ${S}/arch/evbarm/include machine
-	ln -s ${S}/arch/arm/include arm
-
-${OBJS}: machine
 
 ### find out what to use for libkern
 KERN_AS=	library

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.78.2.2 2012/10/30 17:22:24 yamt Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.78.2.3 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -95,7 +95,7 @@ extern int puffsdebug; /* puffs_subr.c */
 #define PUFFS_USE_DOTDOTCACHE(pmp)	\
     ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_DOTDOT)
 
-#define PUFFS_WCACHEINFO(pmp)	0
+#define PUFFS_WCACHEINFO(pmp)	(__USE(pmp), 0)
 
 struct puffs_newcookie {
 	puffs_cookie_t	pnc_cookie;
@@ -147,6 +147,10 @@ struct puffs_mount {
 	struct puffs_node_hashlist	*pmp_pnodehash;
 	int				pmp_npnodehash;
 
+	/*
+	 * a list of cookies which is going to be puffs_getvnode'd.
+	 * this is merely a loose attempt to prevent races.
+	 */
 	LIST_HEAD(, puffs_newcookie)	pmp_newcookie;
 
 	struct mount			*pmp_mp;
@@ -332,6 +336,18 @@ checkerr(struct puffs_mount *pmp, int error, const char *str)
 #define PUFFS_MSG_RELEASE(a) 						\
 do {									\
 	if (park_##a) puffs_msgmem_release(park_##a);			\
+} while (/*CONSTCOND*/0)
+
+#define PUFFS_MSG_ENQUEUEWAIT_NOERROR(pmp, park)			\
+do {									\
+	puffs_msg_enqueue(pmp, park);					\
+	puffs_msg_wait(pmp, park);					\
+} while (/*CONSTCOND*/0)
+
+#define PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park, vp1, vp2)		\
+do {									\
+	puffs_msg_enqueue(pmp, park);					\
+	puffs_msg_wait2(pmp, park, vp1, vp2);				\
 } while (/*CONSTCOND*/0)
 
 #define PUFFS_MSG_ENQUEUEWAIT(pmp, park, var)				\

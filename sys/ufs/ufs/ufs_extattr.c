@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.35.2.4 2013/01/16 05:33:56 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.35.2.5 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35.2.4 2013/01/16 05:33:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35.2.5 2014/05/22 11:41:19 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -437,7 +437,7 @@ static int
 ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
     struct vnode **vp, struct lwp *l)
 {
-	struct vop_lookup_args vargs;
+	struct vop_lookup_v2_args vargs;
 	struct componentname cnp;
 	struct vnode *target_vp;
 	char *pnbuf;
@@ -479,8 +479,15 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 		panic("ufs_extattr_lookup: target_vp == start_dvp");
 #endif
 
-	if ((target_vp != start_dvp) && (lockparent == 0))
-		 VOP_UNLOCK(start_dvp);
+	if (target_vp != start_dvp) {
+		error = vn_lock(target_vp, LK_EXCLUSIVE);
+		if (lockparent == 0)
+			VOP_UNLOCK(start_dvp);
+		if (error) {
+			vrele(target_vp);
+			return error;
+		}
+	}
 
 	KASSERT(VOP_ISLOCKED(target_vp) == LK_EXCLUSIVE);
 	*vp = target_vp;
@@ -545,7 +552,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	dirbuf = kmem_alloc(DIRBLKSIZ, KM_SLEEP);
+	dirbuf = kmem_alloc(UFS_DIRBLKSIZ, KM_SLEEP);
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -562,9 +569,9 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	vargs.a_cookies = NULL;
 
 	while (!eofflag) {
-		auio.uio_resid = DIRBLKSIZ;
+		auio.uio_resid = UFS_DIRBLKSIZ;
 		aiov.iov_base = dirbuf;
-		aiov.iov_len = DIRBLKSIZ;
+		aiov.iov_len = UFS_DIRBLKSIZ;
 		error = ufs_readdir(&vargs);
 		if (error) {
 			printf("ufs_extattr_iterate_directory: ufs_readdir "
@@ -573,12 +580,12 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 		}
 
 		/*
-		 * XXXRW: While in UFS, we always get DIRBLKSIZ returns from
+		 * XXXRW: While in UFS, we always get UFS_DIRBLKSIZ returns from
 		 * the directory code on success, on other file systems this
 		 * may not be the case.  For portability, we should check the
 		 * read length on return from ufs_readdir().
 		 */
-		edp = (struct dirent *)&dirbuf[DIRBLKSIZ];
+		edp = (struct dirent *)&dirbuf[UFS_DIRBLKSIZ];
 		for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 			if (dp->d_reclen == 0)
 				break;
@@ -617,7 +624,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 				break;
 		}
 	}
-	kmem_free(dirbuf, DIRBLKSIZ);
+	kmem_free(dirbuf, UFS_DIRBLKSIZ);
 	
 	return (0);
 }

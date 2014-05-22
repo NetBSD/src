@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.71.2.1 2012/10/30 17:20:08 yamt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.71.2.2 2014/05/22 11:40:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.71.2.1 2012/10/30 17:20:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.71.2.2 2014/05/22 11:40:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -183,7 +183,7 @@ dec_3min_init(void)
 		physmem_boardmax = physmem_boardmax >> 2;
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
 
-	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", mips_options.mips_cpu_mhz);
+	cpu_setmodel("DECstation 5000/1%d (3MIN)", mips_options.mips_cpu_mhz);
 }
 
 /*

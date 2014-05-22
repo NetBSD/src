@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.25 2009/03/14 22:52:52 dholland Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.25.6.1 2014/05/22 11:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.25 2009/03/14 22:52:52 dholland Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.25.6.1 2014/05/22 11:36:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ try(struct ship *f, struct ship *t,
 	}
 	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') ||
 	    !strlen(temp)) {
-		strlcat(temp, "l", sizeof(temp));
+		strlcat(temp, "l", tempmax);
 		new = score(f, t, temp, tempmax, rakeme);
 		if (new > *high && (!rakeme ||
 				    (gunsbear(f, t) && !gunsbear(t, f)))) {

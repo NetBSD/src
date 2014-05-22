@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.12 2008/06/08 03:49:26 tsutsui Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.12.32.1 2014/05/22 11:40:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.12 2008/06/08 03:49:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.12.32.1 2014/05/22 11:40:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.12 2008/06/08 03:49:26 tsutsui Exp $")
  * larger than 512kb).  Be sure to check the datasheet of your EEPROM
  * because there's much variation between models.
  */
-#define	AT24CXX_ADDRMASK	0x78
+#define	AT24CXX_ADDRMASK	0x3f8
 #define	AT24CXX_ADDR		0x50
 
 #define	AT24CXX_WRITE_CYCLE_MS	10
@@ -94,20 +94,39 @@ dev_type_read(seeprom_read);
 dev_type_write(seeprom_write);
 
 const struct cdevsw seeprom_cdevsw = {
-	seeprom_open, seeprom_close, seeprom_read, seeprom_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = seeprom_open,
+	.d_close = seeprom_close,
+	.d_read = seeprom_read,
+	.d_write = seeprom_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 static int seeprom_wait_idle(struct seeprom_softc *);
 
+static const char * seeprom_compats[] = {
+	"i2c-at24c64",
+	"i2c-at34c02",
+	NULL
+};
 
 static int
 seeprom_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
-		return (1);
+	if (ia->ia_name) {
+		if (iic_compat_match(ia, seeprom_compats))
+			return (1);
+	} else {
+		if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
+			return (1);
+	}
 
 	return (0);
 }
@@ -122,8 +141,13 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
 
-	aprint_naive(": EEPROM\n");
-	aprint_normal(": AT24Cxx EEPROM\n");
+	if (ia->ia_name != NULL) {
+		aprint_naive(": %s", ia->ia_name);
+		aprint_normal(": %s", ia->ia_name);
+	} else {
+		aprint_naive(": EEPROM");
+		aprint_normal(": AT24Cxx or compatible EEPROM");
+	}
 
 	/*
 	 * The AT24C01A/02/04/08/16 EEPROMs use a 1 byte command
@@ -139,7 +163,10 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	 * switching to select the proper super-page.  This isn't
 	 * supported by this driver.
 	 */
-	sc->sc_size = ia->ia_size;
+	if (device_cfdata(self)->cf_flags)
+		sc->sc_size = (device_cfdata(self)->cf_flags << 7);
+	else
+		sc->sc_size = ia->ia_size;
 	switch (sc->sc_size) {
 	case 128:		/* 1Kbit */
 	case 256:		/* 2Kbit */
@@ -147,6 +174,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	case 1024:		/* 8Kbit */
 	case 2048:		/* 16Kbit */
 		sc->sc_cmdlen = 1;
+		aprint_normal(": size %d\n", sc->sc_size);
 		break;
 
 	case 4096:		/* 32Kbit */
@@ -155,6 +183,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	case 32768:		/* 256Kbit */
 	case 65536:		/* 512Kbit */
 		sc->sc_cmdlen = 2;
+		aprint_normal(": size %d\n", sc->sc_size);
 		break;
 
 	default:
@@ -168,6 +197,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 		 * Obviously this will not work for 4KB or 8KB
 		 * EEPROMs, but them's the breaks.
 		 */
+		aprint_normal("\n");
 		aprint_error_dev(self, "invalid size specified; "
 		    "assuming 2KB (16Kb)\n");
 		sc->sc_size = 2048;
@@ -223,9 +253,6 @@ seeprom_read(dev_t dev, struct uio *uio, int flags)
 	if (uio->uio_offset >= sc->sc_size)
 		return (EINVAL);
 
-	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
-		return (error);
-
 	/*
 	 * Even though the AT24Cxx EEPROMs support sequential
 	 * reads within a page, some I2C controllers do not
@@ -234,6 +261,9 @@ seeprom_read(dev_t dev, struct uio *uio, int flags)
 	 */
 
 	while (uio->uio_resid > 0 && uio->uio_offset < sc->sc_size) {
+		if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
+			return (error);
+
 		a = (int)uio->uio_offset;
 		if (sc->sc_cmdlen == 1) {
 			addr = sc->sc_address + (a >> 8);
@@ -255,9 +285,8 @@ seeprom_read(dev_t dev, struct uio *uio, int flags)
 			iic_release_bus(sc->sc_tag, 0);
 			return (error);
 		}
+		iic_release_bus(sc->sc_tag, 0);
 	}
-
-	iic_release_bus(sc->sc_tag, 0);
 
 	return (0);
 }
@@ -277,15 +306,15 @@ seeprom_write(dev_t dev, struct uio *uio, int flags)
 	if (uio->uio_offset >= sc->sc_size)
 		return (EINVAL);
 
-	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
-		return (error);
-
 	/*
 	 * See seeprom_read() for why we don't use sequential
 	 * writes within a page.
 	 */
 
 	while (uio->uio_resid > 0 && uio->uio_offset < sc->sc_size) {
+		if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
+			return (error);
+
 		a = (int)uio->uio_offset;
 		if (sc->sc_cmdlen == 1) {
 			addr = sc->sc_address + (a >> 8);
@@ -313,9 +342,8 @@ seeprom_write(dev_t dev, struct uio *uio, int flags)
 			iic_release_bus(sc->sc_tag, 0);
 			return (error);
 		}
+		iic_release_bus(sc->sc_tag, 0);
 	}
-
-	iic_release_bus(sc->sc_tag, 0);
 
 	return (0);
 }

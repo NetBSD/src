@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.30.2.1 2012/04/17 00:09:45 yamt Exp $       */
+/*      $NetBSD: catman.c,v 1.30.2.2 2014/05/22 11:43:02 yamt Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -421,13 +421,19 @@ scanmandir(const char *catdir, const char *mandir)
 					continue;
 				}
 				buffer[len] = '\0';
-				bp = basename(buffer);
-				strlcpy(tmp, manpage, sizeof(tmp));
-				snprintf(manpage, sizeof(manpage), "%s/%s",
-				    dirname(tmp), bp);
-				strlcpy(tmp, catpage, sizeof(tmp));
-				snprintf(catpage, sizeof(catpage), "%s/%s",
-				    dirname(tmp), buffer);
+
+				if (strcmp(buffer, basename(buffer)) == 0) {
+					bp = basename(buffer);
+					strlcpy(tmp, manpage, sizeof(tmp));
+					snprintf(manpage, sizeof(manpage),
+					    "%s/%s", dirname(tmp), bp);
+					strlcpy(tmp, catpage, sizeof(tmp));
+					snprintf(catpage, sizeof(catpage),
+					    "%s/%s", dirname(tmp), buffer);
+				} else {
+					*linkname = '\0';
+				}
+
 			}
 			else
 				*linkname = '\0';

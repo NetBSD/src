@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2.4.1 2012/10/30 17:19:07 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2.4.2 2014/05/22 11:39:33 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2.4.1 2012/10/30 17:19:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2.4.2 2014/05/22 11:39:33 yamt Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -70,7 +70,8 @@ static void gtpci_mbus_conf_write(void *, pcitag_t, int, pcireg_t);
 #endif
 static int gtpci_gpp_intr_map(const struct pci_attach_args *,
     pci_intr_handle_t *);
-static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t);
+static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t,
+    char *, size_t);
 static const struct evcnt *gtpci_gpp_intr_evcnt(void *, pci_intr_handle_t);
 static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *);
 static void gtpci_gpp_intr_disestablish(void *, void *);
@@ -127,6 +128,7 @@ struct arm32_pci_chipset arm32_mvpex0_chipset = {
 #ifdef __HAVE_PCI_CONF_HOOK
 	mvpex_conf_hook,
 #endif
+	mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex1_chipset = {
 	NULL,	/* conf_v */
@@ -151,8 +153,99 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 #endif
 	mvpex_conf_interrupt,
 };
+struct arm32_pci_chipset arm32_mvpex2_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
 #endif
-
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex3_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex4_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex5_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+#endif /* NMVPEX > 0 */
 
 #if NGTPCI > 0
 /* ARGSUSED */
@@ -220,18 +313,17 @@ gtpci_gpp_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 /* ARGSUSED */
 static const char *
-gtpci_gpp_intr_string(void *v, pci_intr_handle_t pin)
+gtpci_gpp_intr_string(void *v, pci_intr_handle_t pin, char *buf, size_t len)
 {
 	struct gtpci_softc *sc = v;
 	prop_array_t int2gpp;
 	prop_object_t gpp;
-	static char intrstr[8];
 
 	int2gpp = prop_dictionary_get(device_properties(sc->sc_dev), "int2gpp");
 	gpp = prop_array_get(int2gpp, pin);
-	sprintf(intrstr, "gpp %d", (int)prop_number_integer_value(gpp));
+	snprintf(buf, len, "gpp %d", (int)prop_number_integer_value(gpp));
 
-	return intrstr;
+	return buf;
 }
 
 /* ARGSUSED */

@@ -473,6 +473,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
    }
 
 #ifndef TARGET_UNWIND_TABLES_DEFAULT
+#error "Missing unwind_tables_default"
 #define TARGET_UNWIND_TABLES_DEFAULT false
 #endif
 

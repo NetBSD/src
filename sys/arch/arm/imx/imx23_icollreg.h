@@ -1,4 +1,4 @@
-/* $Id: imx23_icollreg.h,v 1.2.2.3 2013/01/23 00:05:41 yamt Exp $ */
+/* $Id: imx23_icollreg.h,v 1.2.2.4 2014/05/22 11:39:32 yamt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 				    * suspended. */
 #define IRQ_GPMI_DMA		13 /* From DMA channel for GPMI */
 #define IRQ_SSP1_DMA		14 /* From DMA channel for SSP1 */
-#define IRQ_SSP_ERROR		15 /* SSP1 device-level error and status */
+#define IRQ_SSP1_ERROR		15 /* SSP1 device-level error and status */
 #define IRQ_GPIO0		16 /* GPIO bank 0 interrupt */
 #define IRQ_GPIO1		17 /* GPIO bank 1 interrupt */
 #define IRQ_GPIO2		18 /* GPIO bank 2 interrupt */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.9.8.1 2012/04/17 00:07:35 yamt Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.9.8.2 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -230,9 +230,11 @@ typedef struct mpt_softc {
 	/* SCSIPI and software management */
 	request_t		*request_pool;
 	SLIST_HEAD(req_queue, req_entry) request_free_list;
+	request_t      *mngt_req;
 
 	struct scsipi_adapter	sc_adapter;
 	struct scsipi_channel	sc_channel;
+	device_t       sc_scsibus_dv; /*So we can rescan in case of errors*/
 
 	uint32_t		sequence;	/* sequence number */
 	uint32_t		timeouts;	/* timeout count */

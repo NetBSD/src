@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.1.2.2 2013/01/23 00:05:54 yamt Exp $	*/
+/*	$NetBSD: screen.c,v 1.1.2.3 2014/05/22 11:39:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -128,5 +128,5 @@ screen(int argc, char *argv[])
 		}
 	}
 
-	return(ST_NORMAL);
+	return ST_NORMAL;
 }

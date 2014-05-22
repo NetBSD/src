@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.10.4.2 2012/10/30 18:59:07 yamt Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.10.4.3 2014/05/22 11:36:55 yamt Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.10.4.2 2012/10/30 18:59:07 yamt Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.10.4.3 2014/05/22 11:36:55 yamt Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -314,7 +314,7 @@ __bcrypt(const char *key, const char *salt)
 	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
-	__explicit_bzero(&state, sizeof(state));
+	explicit_memset(&state, 0, sizeof(state));
 	return encrypted;
 }
 

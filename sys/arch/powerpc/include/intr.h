@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9.2.1 2012/04/17 00:06:47 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.9.2.2 2014/05/22 11:40:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,11 +28,11 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.9.2.1 2012/04/17 00:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.9.2.2 2014/05/22 11:40:04 yamt Exp $");
 #endif
 
-#ifndef POWERPC_INTR_MACHDEP_H
-#define POWERPC_INTR_MACHDEP_H
+#ifndef _POWERPC_INTR_MACHDEP_H_
+#define _POWERPC_INTR_MACHDEP_H_
 
 #define	__HAVE_FAST_SOFTINTS	1
 
@@ -70,6 +70,8 @@ int	spllower(int);
 void	splx(int);
 
 #if !defined(_MODULE)
+
+#include <powerpc/softint.h>
 
 void	genppc_cpu_configure(void);
 
@@ -136,4 +138,4 @@ splraiseipl(ipl_cookie_t icookie)
 
 #endif /* _LOCORE */
 
-#endif /* POWERPC_INTR_MACHDEP_H */
+#endif /* _POWERPC_INTR_MACHDEP_H_ */

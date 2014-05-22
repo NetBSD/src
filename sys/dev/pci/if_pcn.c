@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.52.8.2 2012/10/30 17:21:31 yamt Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.52.8.3 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.52.8.2 2012/10/30 17:21:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.52.8.3 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ pcn_is_vmware(const char *enaddr)
 	 */
 	if (enaddr[0] == 0x00 && enaddr[1] == 0x0c && enaddr[2] == 0x29)
 		return (TRUE);
-	
+
 	/*
 	 * VMware uses the OUI 00:50:56 for manually-set MAC
 	 * addresses (and some auto-generated ones).
@@ -578,6 +578,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	prop_object_t obj;
 	bool is_vmware;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
@@ -682,7 +683,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, pcn_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
@@ -2117,9 +2118,9 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 	/*
 	 * The built-in 10BASE-T interface is mapped to the MII
 	 * on the PCNet-FAST.  Unfortunately, there's no EEPROM
-	 * word that tells us which PHY to use. 
-	 * This driver used to ignore all but the first PHY to 
-	 * answer, but this code was removed to support multiple 
+	 * word that tells us which PHY to use.
+	 * This driver used to ignore all but the first PHY to
+	 * answer, but this code was removed to support multiple
 	 * external PHYs. As the default instance will be the first
 	 * one to answer, no harm is done by letting the possibly
 	 * non-connected internal PHY show up.

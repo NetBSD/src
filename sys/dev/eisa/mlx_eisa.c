@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.22.12.1 2012/10/30 17:20:56 yamt Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.22.12.2 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.22.12.1 2012/10/30 17:20:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.22.12.2 2014/05/22 11:40:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	const char *intrstr;
 	int irq, i, icfg;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	ea = aux;
 	mlx = device_private(self);
@@ -163,7 +164,7 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	mlx->mlx_ih = eisa_intr_establish(ec, ih,
 	    ((icfg & 0x08) != 0 ? IST_LEVEL : IST_EDGE),
 	    IPL_BIO, mlx_intr, mlx);

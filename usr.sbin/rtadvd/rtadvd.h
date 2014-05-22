@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.10.42.2 2013/01/16 05:34:12 yamt Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.10.42.3 2014/05/22 11:43:10 yamt Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#define RTADVD_USER	"_rtadvd"
 
 #define ALLNODES "ff02::1"
 #define ALLROUTERS_LINK "ff02::2"

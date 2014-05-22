@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10.8.2 2013/01/23 00:05:42 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.10.8.3 2014/05/22 11:39:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PROC_H_
-#define	_ARM32_PROC_H_
+#ifndef _ARM_PROC_H_
+#define _ARM_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure for arm.
@@ -48,7 +48,6 @@ struct mdlwp {
 };
 
 /* Flags setttings for md_flags */
-#define MDLWP_VFPUSED		0x00000001	/* LWP used the VFP */
 #define MDLWP_NOALIGNFLT	0x00000002	/* For EXEC_AOUT */
 #define MDLWP_VFPINTR		0x00000004	/* VFP used in intr */
 
@@ -57,6 +56,9 @@ struct mdproc {
 	void	(*md_syscall)(struct trapframe *, struct lwp *, uint32_t);
 	int	pmc_enabled;		/* bitfield of enabled counters */
 	void	*pmc_state;		/* port-specific pmc state */
+	char	md_march[12];		/* machine arch of executable */
 };
 
-#endif /* _ARM32_PROC_H_ */
+#define	PROC0_MD_INITIALIZERS .p_md = { .md_march = MACHINE_ARCH },
+
+#endif /* _ARM_PROC_H_ */

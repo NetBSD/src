@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2010/06/19 23:11:10 riz Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2014/05/22 11:42:30 yamt Exp $
+
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 HOSTPROGNAME=   ${_TOOL_PREFIX}ctfmerge
 HOST_SRCDIR=    external/cddl/osnet/usr.bin/ctfmerge
 
-LIBELF_DIR=	${.CURDIR}/../../external/bsd/libelf/dist
-LIBDWARF_DIR=	${.CURDIR}/../../external/bsd/libdwarf/dist
+LIBELFTOOLCHAIN_DIR=	${.CURDIR}/../../external/bsd/elftoolchain/dist
+LIBELF_DIR=		${LIBELFTOOLCHAIN_DIR}/libelf
+LIBDWARF_DIR=		${LIBELFTOOLCHAIN_DIR}libdwarf
 
 HOST_CPPFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OSNETDIR}/include \

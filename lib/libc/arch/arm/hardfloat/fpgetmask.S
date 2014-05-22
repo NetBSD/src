@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.S,v 1.4.50.2 2013/01/23 00:05:21 yamt Exp $	*/
+/*	$NetBSD: fpgetmask.S,v 1.4.50.3 2014/05/22 11:36:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,8 +45,8 @@ WEAK_ALIAS(fpgetmask, _fpgetmask)
 #endif
 
 ENTRY(fpgetmask)
-	mrc	p10, 7, r0, c1, c0, 0
-	and	r0, r0, #VFP_FPSCR_ESUM
+	vmrs    r0, fpscr
 	mov	r0, r0, lsr #8
+	and	r0, r0, #VFP_FPSCR_CSUM
 	RET
 END(fpgetmask)

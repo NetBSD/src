@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.77.2.1 2012/04/17 00:05:55 yamt Exp $ */
+/* $NetBSD: cpu.h,v 1.77.2.2 2014/05/22 11:39:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ struct cpu_info {
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-#ifndef _KMEMUSER
+#if !defined(_KMEMUSER)
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 	int ci_mtx_count;
@@ -130,7 +130,7 @@ struct cpu_info {
 	volatile u_long ci_flags;	/* flags; see below */
 	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
-#endif /* _KMEMUSER */
+#endif /* !_KMEMUSER */
 };
 
 #endif /* _KERNEL || _KMEMUSER */
@@ -146,8 +146,8 @@ struct cpu_info {
 extern	struct cpu_info cpu_info_primary;
 extern	struct cpu_info *cpu_info_list;
 
-#define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+#define	CPU_INFO_ITERATOR		int __unused
+#define	CPU_INFO_FOREACH(cii, ci)	ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
 #if defined(MULTIPROCESSOR)

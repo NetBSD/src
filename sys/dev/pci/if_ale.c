@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.13.4.1 2012/10/30 17:21:26 yamt Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.13.4.2 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.13.4.1 2012/10/30 17:21:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.13.4.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include "vlan.h"
 
@@ -127,7 +127,7 @@ int aledebug = 0;
 #define DPRINTF(x)	do { if (aledebug) printf x; } while (0)
 
 #define ETHER_ALIGN 2
-#define ALE_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)	
+#define ALE_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)
 
 static int
 ale_miibus_readreg(device_t dev, int phy, int reg)
@@ -296,7 +296,7 @@ ale_get_macaddr(struct ale_softc *sc)
 		CSR_WRITE_4(sc, ALE_SPI_CTRL, reg);
 	}
 
-	if (pci_get_capability(sc->sc_pct, sc->sc_pcitag, PCI_CAP_VPD, 
+	if (pci_get_capability(sc->sc_pct, sc->sc_pcitag, PCI_CAP_VPD,
 	    &vpdc, NULL)) {
 		/*
 		 * PCI VPD capability found, let TWSI reload EEPROM.
@@ -389,6 +389,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
 	const char *chipname;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
 	aprint_normal(": Attansic/Atheros L1E Ethernet\n");
@@ -426,7 +427,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate IRQ
 	 */
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, ale_intr, sc);
 	if (sc->sc_irq_handle == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
@@ -650,8 +651,8 @@ ale_dma_alloc(struct ale_softc *sc)
 		return ENOBUFS;
 	}
 
-	/* Allocate DMA'able memory for TX ring */ 
-	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_RING_SZ, 
+	/* Allocate DMA'able memory for TX ring */
+	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_RING_SZ,
 	    0, 0, &sc->ale_cdata.ale_tx_ring_seg, 1,
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
@@ -669,16 +670,16 @@ ale_dma_alloc(struct ale_softc *sc)
 	memset(sc->ale_cdata.ale_tx_ring, 0, ALE_TX_RING_SZ);
 
 	/* Load the DMA map for Tx ring. */
-	error = bus_dmamap_load(sc->sc_dmat, sc->ale_cdata.ale_tx_ring_map, 
+	error = bus_dmamap_load(sc->sc_dmat, sc->ale_cdata.ale_tx_ring_map,
 	    sc->ale_cdata.ale_tx_ring, ALE_TX_RING_SZ, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not load DMA'able memory for Tx ring.\n",
 		    device_xname(sc->sc_dev));
-		bus_dmamem_free(sc->sc_dmat, 
+		bus_dmamem_free(sc->sc_dmat,
 		    &sc->ale_cdata.ale_tx_ring_seg, 1);
 		return error;
 	}
-	sc->ale_cdata.ale_tx_ring_paddr = 
+	sc->ale_cdata.ale_tx_ring_paddr =
 	    sc->ale_cdata.ale_tx_ring_map->dm_segs[0].ds_addr;
 
 	for (i = 0; i < ALE_RX_PAGES; i++) {
@@ -686,7 +687,7 @@ ale_dma_alloc(struct ale_softc *sc)
 		 * Create DMA stuffs for RX pages
 		 */
 		error = bus_dmamap_create(sc->sc_dmat, sc->ale_pagesize, 1,
-		    sc->ale_pagesize, 0, BUS_DMA_NOWAIT, 
+		    sc->ale_pagesize, 0, BUS_DMA_NOWAIT,
 		    &sc->ale_cdata.ale_rx_page[i].page_map);
 		if (error) {
 			sc->ale_cdata.ale_rx_page[i].page_map = NULL;
@@ -702,9 +703,9 @@ ale_dma_alloc(struct ale_softc *sc)
 			    "Rx ring.\n", device_xname(sc->sc_dev));
 			return error;
 		}
-		error = bus_dmamem_map(sc->sc_dmat, 
+		error = bus_dmamem_map(sc->sc_dmat,
 		    &sc->ale_cdata.ale_rx_page[i].page_seg, nsegs,
-		    sc->ale_pagesize, 
+		    sc->ale_pagesize,
 		    (void **)&sc->ale_cdata.ale_rx_page[i].page_addr,
 		    BUS_DMA_NOWAIT);
 		if (error)
@@ -752,13 +753,13 @@ ale_dma_alloc(struct ale_softc *sc)
 	error = bus_dmamem_map(sc->sc_dmat, &sc->ale_cdata.ale_tx_cmb_seg,
 	    nsegs, ALE_TX_CMB_SZ, (void **)&sc->ale_cdata.ale_tx_cmb,
 	    BUS_DMA_NOWAIT);
-	if (error) 
+	if (error)
 		return ENOBUFS;
 
 	memset(sc->ale_cdata.ale_tx_cmb, 0, ALE_TX_CMB_SZ);
 
 	/* Load the DMA map for Tx CMB. */
-	error = bus_dmamap_load(sc->sc_dmat, sc->ale_cdata.ale_tx_cmb_map, 
+	error = bus_dmamap_load(sc->sc_dmat, sc->ale_cdata.ale_tx_cmb_map,
 	    sc->ale_cdata.ale_tx_cmb, ALE_TX_CMB_SZ, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not load DMA'able memory for Tx CMB.\n",
@@ -768,7 +769,7 @@ ale_dma_alloc(struct ale_softc *sc)
 		return error;
 	}
 
-	sc->ale_cdata.ale_tx_cmb_paddr = 
+	sc->ale_cdata.ale_tx_cmb_paddr =
 	    sc->ale_cdata.ale_tx_cmb_map->dm_segs[0].ds_addr;
 
 	for (i = 0; i < ALE_RX_PAGES; i++) {
@@ -792,9 +793,9 @@ ale_dma_alloc(struct ale_softc *sc)
 			    "Rx CMB\n", device_xname(sc->sc_dev));
 			return error;
 		}
-		error = bus_dmamem_map(sc->sc_dmat, 
+		error = bus_dmamem_map(sc->sc_dmat,
 		    &sc->ale_cdata.ale_rx_page[i].cmb_seg, nsegs,
-		    ALE_RX_CMB_SZ, 
+		    ALE_RX_CMB_SZ,
 		    (void **)&sc->ale_cdata.ale_rx_page[i].cmb_addr,
 		    BUS_DMA_NOWAIT);
 		if (error)
@@ -1008,7 +1009,7 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	for (i = 0; i < nsegs; i++) {
 		desc = &sc->ale_cdata.ale_tx_ring[prod];
 		desc->addr = htole64(map->dm_segs[i].ds_addr);
-		desc->len = 
+		desc->len =
 		    htole32(ALE_TX_BYTES(map->dm_segs[i].ds_len) | vtag);
 		desc->flags = htole32(cflags);
 		sc->ale_cdata.ale_tx_cnt++;
@@ -1338,7 +1339,7 @@ ale_txeof(struct ale_softc *sc)
 	    sc->ale_cdata.ale_tx_ring_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	if ((sc->ale_flags & ALE_FLAG_TXCMB_BUG) == 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->ale_cdata.ale_tx_cmb_map, 0,
-		    sc->ale_cdata.ale_tx_cmb_map->dm_mapsize, 
+		    sc->ale_cdata.ale_tx_cmb_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 		prod = *sc->ale_cdata.ale_tx_cmb & TPD_CNT_MASK;
 	} else
@@ -1549,7 +1550,7 @@ ale_rxeof(struct ale_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it to upper layer. */
-		ether_input(ifp, m);
+		(*ifp->if_input)(ifp, m);
 
 		ale_rx_update_page(sc, &rx_page, length, &prod);
 	}

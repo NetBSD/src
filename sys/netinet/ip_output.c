@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.210.2.3 2012/10/30 17:22:46 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.210.2.4 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,9 +91,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210.2.3 2012/10/30 17:22:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210.2.4 2014/05/22 11:41:09 yamt Exp $");
 
-#include "opt_pfil_hooks.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -107,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210.2.3 2012/10/30 17:22:46 yamt Exp
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/kauth.h>
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <sys/domain.h>
 #endif
 #include <sys/systm.h>
@@ -126,29 +125,21 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210.2.3 2012/10/30 17:22:46 yamt Exp
 #include <netinet/ip_private.h>
 #include <netinet/in_offload.h>
 #include <netinet/portalgo.h>
+#include <netinet/udp.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
 
-#ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#include <netipsec/xform.h>
-#endif	/* FAST_IPSEC*/
-
-#ifdef IPSEC_NAT_T
-#include <netinet/udp.h>
-#endif
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *,
     const struct sockaddr_in *);
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet_pfil_hook;			/* XXX */
-#endif
+extern pfil_head_t *inet_pfil_hook;			/* XXX */
 
 int	ip_do_loopback_cksum = 0;
 
@@ -173,21 +164,14 @@ ip_output(struct mbuf *m0, ...)
 	struct ifaddr *xifa;
 	struct mbuf *opt;
 	struct route *ro;
-	int flags, sw_csum;
-	int *mtu_p;
+	int flags, sw_csum, *mtu_p;
 	u_long mtu;
 	struct ip_moptions *imo;
 	struct socket *so;
 	va_list ap;
-#ifdef IPSEC_NAT_T
-	int natt_frag = 0;
-#endif
-#ifdef FAST_IPSEC
-	struct inpcb *inp;
 	struct secpolicy *sp = NULL;
-	int s;
-#endif
-	u_int16_t ip_len;
+	bool natt_frag = false;
+	bool __unused done = false;
 	union {
 		struct sockaddr		dst;
 		struct sockaddr_in	dst4;
@@ -210,12 +194,6 @@ ip_output(struct mbuf *m0, ...)
 	va_end(ap);
 
 	MCLAIM(m, &ip_tx_mowner);
-#ifdef FAST_IPSEC
-	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET)
-		inp = (struct inpcb *)so->so_pcb;
-	else
-		inp = NULL;
-#endif /* FAST_IPSEC */
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -492,114 +470,24 @@ sendit:
 	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= htons(IP_DF);
 
-	/* Remember the current ip_len */
-	ip_len = ntohs(ip->ip_len);
-
-#ifdef FAST_IPSEC
-	/*
-	 * Check the security policy (SP) for the packet and, if
-	 * required, do IPsec-related processing.  There are two
-	 * cases here; the first time a packet is sent through
-	 * it will be untagged and handled by ipsec4_checkpolicy.
-	 * If the packet is resubmitted to ip_output (e.g. after
-	 * AH, ESP, etc. processing), there will be a tag to bypass
-	 * the lookup and related policy checking.
-	 */
-	if (!ipsec_outdone(m)) {
-		s = splsoftnet();
-		if (inp != NULL &&
-		    IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
-			splx(s);
-			goto spd_done;
-		}
-		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
-				&error, inp);
-		/*
-		 * There are four return cases:
-		 *    sp != NULL	 	    apply IPsec policy
-		 *    sp == NULL, error == 0	    no IPsec handling needed
-		 *    sp == NULL, error == -EINVAL  discard packet w/o error
-		 *    sp == NULL, error != 0	    discard packet, report error
-		 */
-		if (sp != NULL) {
-#ifdef IPSEC_NAT_T
-			/*
-			 * NAT-T ESP fragmentation: don't do IPSec processing now,
-			 * we'll do it on each fragmented packet.
-			 */
-			if (sp->req->sav &&
-					((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
-					 (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
-				if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
-					natt_frag = 1;
-					mtu = sp->req->sav->esp_frag;
-					splx(s);
-					goto spd_done;
-				}
-			}
-#endif /* IPSEC_NAT_T */
-
-			/*
-			 * Do delayed checksums now because we send before
-			 * this is done in the normal processing path.
-			 */
-			if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-				in_delayed_cksum(m);
-				m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-			}
-
-#ifdef __FreeBSD__
-			ip->ip_len = htons(ip->ip_len);
-			ip->ip_off = htons(ip->ip_off);
+#ifdef IPSEC
+	/* Perform IPsec processing, if any. */
+	error = ipsec4_output(m, so, flags, &sp, &mtu, &natt_frag, &done);
+	if (error || done) {
+		goto done;
+	}
 #endif
 
-			/* NB: callee frees mbuf */
-			error = ipsec4_process_packet(m, sp->req, flags, 0);
-			/*
-			 * Preserve KAME behaviour: ENOENT can be returned
-			 * when an SA acquire is in progress.  Don't propagate
-			 * this to user-level; it confuses applications.
-			 *
-			 * XXX this will go away when the SADB is redone.
-			 */
-			if (error == ENOENT)
-				error = 0;
-			splx(s);
-			goto done;
-		} else {
-			splx(s);
-
-			if (error != 0) {
-				/*
-				 * Hack: -EINVAL is used to signal that a packet
-				 * should be silently discarded.  This is typically
-				 * because we asked key management for an SA and
-				 * it was delayed (e.g. kicked up to IKE).
-				 */
-				if (error == -EINVAL)
-					error = 0;
-				goto bad;
-			} else {
-				/* No IPsec processing for this packet. */
-			}
-		}
-	}
-spd_done:
-#endif /* FAST_IPSEC */
-
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
 		goto done;
 	if (m == NULL)
 		goto done;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
-	ip_len = ntohs(ip->ip_len);
-#endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_data |= hlen << 16;
 
@@ -620,11 +508,11 @@ spd_done:
 	 * If small enough for mtu of path, or if using TCP segmentation
 	 * offload, can just send directly.
 	 */
-	if (ip_len <= mtu ||
+	if (ntohs(ip->ip_len) <= mtu ||
 	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 #if IFA_STATS
 		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
+			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
 #endif
 		/*
 		 * Always initialize the sum to 0!  Some HW assisted
@@ -716,19 +604,17 @@ spd_done:
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 				    ntohs(ip->ip_len);
 #endif
-#ifdef IPSEC_NAT_T
 			/*
-			 * If we get there, the packet has not been handeld by
-			 * IPSec whereas it should have. Now that it has been
+			 * If we get there, the packet has not been handled by
+			 * IPsec whereas it should have. Now that it has been
 			 * fragmented, re-inject it in ip_output so that IPsec
 			 * processing can occur.
 			 */
 			if (natt_frag) {
-				error = ip_output(m, opt,
-				    ro, flags | IP_RAWOUTPUT | IP_NOIPNEWID, imo, so, mtu_p);
-			} else
-#endif /* IPSEC_NAT_T */
-			{
+				error = ip_output(m, opt, ro,
+				    flags | IP_RAWOUTPUT | IP_NOIPNEWID,
+				    imo, so, mtu_p);
+			} else {
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
 				KERNEL_LOCK(1, NULL);
@@ -746,13 +632,12 @@ spd_done:
 		IP_STATINC(IP_STAT_FRAGMENTED);
 done:
 	rtcache_free(&iproute);
-
-#ifdef FAST_IPSEC
-	if (sp != NULL)
+	if (sp) {
+#ifdef IPSEC
 		KEY_FREESP(&sp);
-#endif /* FAST_IPSEC */
-
-	return (error);
+#endif
+	}
+	return error;
 bad:
 	m_freem(m);
 	goto done;
@@ -1036,7 +921,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	struct inpcb *inp = sotoinpcb(so);
 	int optval = 0;
 	int error = 0;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
@@ -1059,10 +944,12 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IP_TOS:
 		case IP_TTL:
 		case IP_MINTTL:
+		case IP_PKTINFO:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_RECVPKTINFO:
 		case IP_RECVTTL:
 			error = sockopt_getint(sopt, &optval);
 			if (error)
@@ -1089,8 +976,16 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	else \
 		inp->inp_flags &= ~bit;
 
+			case IP_PKTINFO:
+				OPTSET(INP_PKTINFO);
+				break;
+
 			case IP_RECVOPTS:
 				OPTSET(INP_RECVOPTS);
+				break;
+
+			case IP_RECVPKTINFO:
+				OPTSET(INP_RECVPKTINFO);
 				break;
 
 			case IP_RECVRETOPTS:
@@ -1152,7 +1047,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			    (struct inpcb_hdr *)inp, optval);
 			break;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		case IP_IPSEC_POLICY:
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
 			    sopt->sopt_data, sopt->sopt_size, l->l_cred);
@@ -1183,6 +1078,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			}
 			break;
 
+		case IP_PKTINFO:
 		case IP_TOS:
 		case IP_TTL:
 		case IP_MINTTL:
@@ -1190,6 +1086,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_RECVPKTINFO:
 		case IP_RECVTTL:
 		case IP_ERRORMTU:
 			switch (sopt->sopt_name) {
@@ -1211,8 +1108,16 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 #define	OPTBIT(bit)	(inp->inp_flags & bit ? 1 : 0)
 
+			case IP_PKTINFO:
+				optval = OPTBIT(INP_PKTINFO);
+				break;
+
 			case IP_RECVOPTS:
 				optval = OPTBIT(INP_RECVOPTS);
+				break;
+
+			case IP_RECVPKTINFO:
+				optval = OPTBIT(INP_RECVPKTINFO);
 				break;
 
 			case IP_RECVRETOPTS:
@@ -1234,7 +1139,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_setint(sopt, optval);
 			break;
 
-#if 0	/* defined(FAST_IPSEC) */
+#if 0	/* defined(IPSEC) */
 		case IP_IPSEC_POLICY:
 		{
 			struct mbuf *m = NULL;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.6 2010/10/30 03:46:03 uebayasi Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.6.8.1 2014/05/22 11:39:45 yamt Exp $
 
 CFLAGS+=-mcpu=405
 AFLAGS+=-mcpu=405
@@ -15,8 +15,8 @@ SYSTEM_FIRST_SFILE=	${THISPPC}/obs405/obs200_locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} $@ $@.img
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
 
 
 .elif ${PRDCTTYPE} == "obs266"
@@ -30,8 +30,8 @@ SYSTEM_FIRST_SFILE=	${POWERPC}/${PPCDIR}/openbios/locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} $@ $@.img
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
 
 
 .elif ${PRDCTTYPE} == "obs600"
@@ -41,8 +41,25 @@ TEXTADDR?=	25000
 SYSTEM_FIRST_OBJ=	obs600_locore.o
 SYSTEM_FIRST_SFILE=	${THISPPC}/obs405/obs600_locore.S
 
+.if ${USETOOLS} == "yes"
+MKUBOOTIMAGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
+.else
+MKUBOOTIMAGE=		mkubootimage
+.endif
+MKUBOOTIMAGEARGS=	-A powerpc -T kernel
+MKUBOOTIMAGEARGS+=	-a $(TEXTADDR)
+MKUBOOTIMAGEARGS+=	-n "NetBSD/openblocks600 ${_OSRELEASE}"
+MKUBOOTIMAGEARGS_NONE=  ${MKUBOOTIMAGEARGS} -C none
+MKUBOOTIMAGEARGS_GZ=    ${MKUBOOTIMAGEARGS} -C gz
+
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
-	${OBJCOPY} -S -O binary $@ $@.bin;
+	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo "${TOOL_GZIP} -nc $@.bin > $@.bin.gz"; \
+	${TOOL_GZIP} -nc $@.bin > $@.bin.gz; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub;
 
 .endif

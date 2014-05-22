@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104.2.1 2012/10/30 17:19:14 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.2.2 2014/05/22 11:39:36 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104.2.1 2012/10/30 17:19:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104.2.2 2014/05/22 11:39:36 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -164,7 +164,7 @@ cpu_startup(void)
 	/*
 	 * set up i8259 as a cascade on BeInterruptController irq 26.
 	 */
-	intr_establish(16 + 26, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
+	intr_establish(16 + 26, IST_LEVEL, IPL_HIGH, pic_handle_intr, isa_pic);
 
 	oea_install_extint(pic_ext_intr);
 

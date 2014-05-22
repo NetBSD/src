@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74.4.1 2012/10/30 17:20:02 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74.4.2 2014/05/22 11:39:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.4.1 2012/10/30 17:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.4.2 2014/05/22 11:39:58 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.4.1 2012/10/30 17:20:02 yamt Exp $"
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -342,7 +343,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

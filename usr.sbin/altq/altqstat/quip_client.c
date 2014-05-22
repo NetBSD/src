@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.9 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.9.40.1 2014/05/22 11:43:01 yamt Exp $	*/
 /*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -269,7 +269,6 @@ void
 quip_rawmode(void)
 {
 	char line[MAXLINESIZE];
-	int result_code;
 
 	printf(">>>Entering the raw interactive mode to the server:\n\n");
 	if (server == NULL) {
@@ -297,7 +296,7 @@ quip_rawmode(void)
 		quip_sendrequest(server, line);
 
 		/* get a response message from the server */
-		result_code = quip_recvresponse(server, NULL, NULL, NULL);
+		(void)quip_recvresponse(server, NULL, NULL, NULL);
 	}
 }
 

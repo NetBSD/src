@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.127.2.5 2013/01/23 00:05:21 yamt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.127.2.6 2014/05/22 11:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -159,6 +159,16 @@ extern	 int optopt;
 #endif
 
 /*
+ * The Open Group Base Specifications, Issue 5; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
+#if __SSP_FORTIFY_LEVEL == 0
+ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
+#endif
+#endif
+
+/*
  * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
@@ -260,9 +270,6 @@ int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 int	 lchown(const char *, uid_t, gid_t);
 #endif
 int	 lockf(int, int, off_t);
-#if __SSP_FORTIFY_LEVEL == 0
-ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
-#endif
 void	*sbrk(intptr_t);
 /* XXX prototype wrong! */
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
@@ -298,11 +305,7 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
     defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 int	linkat(int, const char *, int, const char *, int);
 int	renameat(int, const char *, int, const char *);
-int	mkfifoat(int, const char *, mode_t);
-int	mknodat(int, const char *, mode_t, uint32_t);
-int	mkdirat(int, const char *, mode_t);
 int	faccessat(int, const char *, int, int);
-int	fchmodat(int, const char *, mode_t, int);
 int	fchownat(int, const char *, uid_t, gid_t, int);
 int	readlinkat(int, const char *, char *, size_t);
 int	symlinkat(const char *, int, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.47 2011/09/07 07:46:45 mbalmer Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.47.2.1 2014/05/22 11:40:35 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.47 2011/09/07 07:46:45 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.47.2.1 2014/05/22 11:40:35 yamt Exp $");
 
 #include <sys/errno.h>
 
@@ -631,9 +631,11 @@ PropagateResults(RF_DagNode_t *node, int context)
 static void
 ProcessNode(RF_DagNode_t *node, int context)
 {
+#if RF_DEBUG_ENGINE
 	RF_Raid_t *raidPtr;
 
 	raidPtr = node->dagHdr->raidPtr;
+#endif
 
 	switch (node->status) {
 	case rf_good:
@@ -862,7 +864,7 @@ rf_RaidIOThread(RF_ThreadArg_t arg)
 	while (!raidPtr->shutdown_raidio) {
 		/* if there is nothing to do, then snooze. */
 		if (TAILQ_EMPTY(&(raidPtr->iodone)) &&
-		    rf_buf_queue_check(raidPtr->raidid)) {
+		    rf_buf_queue_check(raidPtr)) {
 			rf_wait_cond2(raidPtr->iodone_cv, raidPtr->iodone_lock);
 		}
 

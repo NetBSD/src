@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.22 2011/10/10 22:45:45 tnozaki Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.22.2.1 2014/05/22 11:36:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.22 2011/10/10 22:45:45 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.22.2.1 2014/05/22 11:36:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -133,8 +133,10 @@ typedef struct {
 		_ISO2022State	s_mbrtowc;
 		_ISO2022State	s_mbtowc;
 		_ISO2022State	s_mbsrtowcs;
+		_ISO2022State	s_mbsnrtowcs;
 		_ISO2022State	s_wcrtomb;
 		_ISO2022State	s_wcsrtombs;
+		_ISO2022State	s_wcsnrtombs;
 		_ISO2022State	s_wctomb;
 	} states;
 } _ISO2022CTypeInfo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.27.2.1 2012/10/30 17:19:51 yamt Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.27.2.2 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.27.2.1 2012/10/30 17:19:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.27.2.2 2014/05/22 11:39:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	cp->ata_channel.ch_channel = 0;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue = malloc(sizeof(struct ata_queue),
-					  M_DEVBUF, M_NOWAIT);
+					  M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error_dev(self, "unable to allocate memory for command "
 		    "queue\n");

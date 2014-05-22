@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.42.4.2 2012/10/30 17:22:45 yamt Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.42.4.3 2014/05/22 11:41:09 yamt Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -98,6 +98,7 @@ struct icmp6_hdr {
 #define MLD_LISTENER_QUERY		130 	/* multicast listener query */
 #define MLD_LISTENER_REPORT		131	/* multicast listener report */
 #define MLD_LISTENER_DONE		132	/* multicast listener done */
+#define MLD_LISTENER_REDUCTION MLD_LISTENER_DONE /* RFC3542 definition */
 
 /* RFC2292 decls */
 #define ICMP6_MEMBERSHIP_QUERY		130	/* group membership query */

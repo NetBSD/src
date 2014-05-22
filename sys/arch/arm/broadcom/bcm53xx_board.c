@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.8.2.3 2013/01/23 00:05:41 yamt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.8.2.4 2014/05/22 11:39:31 yamt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,12 +29,13 @@
  */
 
 #include "opt_broadcom.h"
+#include "arml2cc.h"
 
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.2.3 2013/01/23 00:05:41 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.2.4 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +47,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8.2.3 2013/01/23 00:05:41 yamt E
 #include <net/if.h>
 #include <net/if_ether.h>
 
+#define CCA_PRIVATE
 #define CRU_PRIVATE
 #define DDR_PRIVATE
 #define DMU_PRIVATE
@@ -66,7 +68,8 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 
 static struct cpu_softc cpu_softc;
 
-struct arm32_dma_range bcm53xx_dma_ranges[2] = {
+struct arm32_dma_range bcm53xx_dma_ranges[] = {
+#ifdef BCM5301X
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -75,6 +78,16 @@ struct arm32_dma_range bcm53xx_dma_ranges[2] = {
 		.dr_sysbase = 0x90000000,
 		.dr_busbase = 0x90000000,
 	},
+#elif defined(BCM563XX)
+	[0] = {
+		.dr_sysbase = 0x60000000,
+		.dr_busbase = 0x60000000,
+		.dr_len = 0x20000000,
+	}, [1] = {
+		.dr_sysbase = 0x80000000,
+		.dr_busbase = 0x80000000,
+	},
+#endif
 };
 
 struct arm32_bus_dma_tag bcm53xx_dma_tag = {
@@ -85,7 +98,8 @@ struct arm32_bus_dma_tag bcm53xx_dma_tag = {
 	_BUS_DMATAG_FUNCS,
 };
 
-struct arm32_dma_range bcm53xx_coherent_dma_ranges[2] = {
+struct arm32_dma_range bcm53xx_coherent_dma_ranges[] = {
+#ifdef BCM5301X
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -95,6 +109,17 @@ struct arm32_dma_range bcm53xx_coherent_dma_ranges[2] = {
 		.dr_sysbase = 0x90000000,
 		.dr_busbase = 0x90000000,
 	},
+#elif defined(BCM563XX)
+	[0] = {
+		.dr_sysbase = 0x60000000,
+		.dr_busbase = 0x60000000,
+		.dr_len = 0x20000000,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	}, [1] = {
+		.dr_sysbase = 0x80000000,
+		.dr_busbase = 0x80000000,
+	},
+#endif
 };
 
 struct arm32_bus_dma_tag bcm53xx_coherent_dma_tag = {
@@ -104,6 +129,16 @@ struct arm32_bus_dma_tag bcm53xx_coherent_dma_tag = {
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,
 };
+
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+struct arm32_bus_dma_tag bcm53xx_bounce_dma_tag = {
+	._ranges = bcm53xx_coherent_dma_ranges,
+	._nranges = 1,
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
+};
+#endif
 
 #ifdef BCM53XX_CONSOLE_EARLY
 #include <dev/ic/ns16550reg.h>
@@ -443,12 +478,17 @@ bcm53xx_cpu_softc_init(struct cpu_info *ci)
 
 	cpu->cpu_armcore_bst = bcm53xx_armcore_bst;
 	cpu->cpu_armcore_bsh = bcm53xx_armcore_bsh;
+
+	const uint32_t chipid = bus_space_read_4(cpu->cpu_ioreg_bst,
+	    cpu->cpu_ioreg_bsh, CCA_MISC_BASE + MISC_CHIPID);
+
+	cpu->cpu_chipid = __SHIFTOUT(chipid, CHIPID_ID);
 }
 
 void
 bcm53xx_print_clocks(void)
 {
-#if defined(VERBOSE_ARM_INIT)
+#if defined(VERBOSE_INIT_ARM)
 	const struct bcm53xx_clock_info * const clk = &cpu_softc.cpu_clk;
 	printf("ref clk =	%u (%#x)\n", clk->clk_ref, clk->clk_ref);
 	printf("sys clk =	%u (%#x)\n", clk->clk_sys, clk->clk_sys);
@@ -515,13 +555,21 @@ bcm53xx_bootstrap(vaddr_t iobase)
 
 	curcpu()->ci_data.cpu_cc_freq = clk->clk_cpu;
 
-	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh, ARMCORE_L2C_BASE);
+#if NARML2CC > 0
+	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_L2C_BASE);
+#endif
 }
 
 void
 bcm53xx_dma_bootstrap(psize_t memsize)
 {
-	if (memsize > 256*1024*1024) {
+	if (memsize <= 256*1024*1024) {
+		bcm53xx_dma_ranges[0].dr_len = memsize;
+		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
+		bcm53xx_dma_tag._nranges = 1;
+		bcm53xx_coherent_dma_tag._nranges = 1;
+	} else {
 		/*
 		 * By setting up two ranges, bus_dmamem_alloc will always
 		 * try to allocate from range 0 first resulting in allocations
@@ -529,14 +577,12 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		 */
 		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
 		bcm53xx_coherent_dma_ranges[1].dr_len = memsize - 0x10000000;
-	} else {
-		bcm53xx_dma_ranges[0].dr_len = memsize;
-		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
-		bcm53xx_dma_tag._nranges = 1;
-		bcm53xx_coherent_dma_tag._nranges = 1;
 	}
 	KASSERT(bcm53xx_dma_tag._ranges[0].dr_flags == 0);
 	KASSERT(bcm53xx_coherent_dma_tag._ranges[0].dr_flags == _BUS_DMAMAP_COHERENT);
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	KASSERT(bcm53xx_bounce_dma_tag._ranges[0].dr_flags == _BUS_DMAMAP_COHERENT);
+#endif
 }
 
 #ifdef MULTIPROCESSOR
@@ -594,6 +640,7 @@ bcm53xx_device_register(device_t self, void *aux)
 	}
 }
 
+#ifdef SRAB_BASE
 static kmutex_t srab_lock __cacheline_aligned;
 
 void
@@ -696,3 +743,4 @@ bcm53xx_srab_write_8(u_int pageoffset, uint64_t val)
 	bcm53xx_srab_busywait(bst, bsh);
 	mutex_spin_exit(&srab_lock);
 }
+#endif

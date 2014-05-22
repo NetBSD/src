@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.18.8.1 2012/10/30 17:20:50 yamt Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.18.8.2 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.18.8.1 2012/10/30 17:20:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.18.8.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -903,6 +903,10 @@ acpi_pci_link_srs(struct acpi_pci_link_softc *sc, ACPI_BUFFER *srsbuf)
 	else
 		status = acpi_pci_link_srs_from_crs(sc, srsbuf);
 
+	if (ACPI_FAILURE(status))
+		printf("%s: Unable to find link srs : %s\n",
+		    sc->pl_name, AcpiFormatException(status));
+
 	/* Write out new resources via _SRS. */
 	return AcpiSetCurrentResources(sc->pl_handle, srsbuf);
 }
@@ -1258,7 +1262,7 @@ acpi_AppendBufferResource(ACPI_BUFFER *buf, ACPI_RESOURCE *res)
 	}
 
 	/* Insert the new resource. */
-	memcpy(rp, res, res->Length + ACPI_RS_SIZE_NO_DATA);
+	memcpy(rp, res, res->Length);
 
 	/* And add the terminator. */
 	rp = ACPI_NEXT_RESOURCE(rp);

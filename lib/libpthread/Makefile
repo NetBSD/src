@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72.2.2 2012/10/30 18:59:14 yamt Exp $
+#	$NetBSD: Makefile,v 1.72.2.3 2014/05/22 11:36:59 yamt Exp $
 #
 
 WARNS?=	5
@@ -25,15 +25,14 @@ INCSDIR=/usr/include
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
-CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
-CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
+CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC -D_REENTRANT
+CPPFLAGS+=	-I${.CURDIR}/../libc/include
+CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__ -D__LIBC_THREAD_STUBS
 
 # XXX: This crappy poke at libc's internals needs to be fixed.
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 
 LIB=	pthread
-
-LDFLAGS+=	-Wl,-znodlopen
 
 #
 # NOTE: When you create a new file for libpthread, make sure that pthread.c
@@ -59,7 +58,15 @@ SRCS+=	sem.c
 .if exists(${ARCHDIR}/pthread_md.S)
 SRCS+= pthread_md.S
 .endif
+.if exists(${ARCHDIR}/Makefile.inc)
+.include "${ARCHDIR}/Makefile.inc"
+.endif
 
+# The PTHREAD__COMPAT flag builds a libpthread that can be dropped
+# into a NetBSD 2/3/4 chroot with a NetBSD 5 or later kernel.
+# This makes threading work in the chroot, no other modifications
+# required.
+#
 .if defined(PTHREAD__COMPAT)
 SRCS+=		pthread_compat.c
 .PATH.c:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic
@@ -71,21 +78,27 @@ SRCS+=		pthread_compat.c
 
 ALIGN_FUNCTIONS=	${${ACTIVE_CC} == "gcc":? -falign-functions=32 :}
 
+.if ${MACHINE_CPU} != "m68k" && ${MACHINE_CPU} != "sh3" && ${MACHINE_ARCH} != "vax"
+OMIT_FRAME_POINTER=	-fomit-frame-pointer
+.else
+OMIT_FRAME_POINTER=
+.endif
+
 # The TSD routines are used in the implementation of profiling, and so
 # can't be profiled themselves.
-COPTS.pthread_specific.c+=	-fomit-frame-pointer ${ALIGN_FUNCTIONS}
+COPTS.pthread_specific.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
 pthread_specific.po: pthread_specific.o
 	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
 
 # Internal spinlock routines are performance critical.  Don't profile them,
 # it's incompatibile with -fomit-frame-pointer.
-COPTS.pthread_lock.c+=	-fomit-frame-pointer ${ALIGN_FUNCTIONS}
+COPTS.pthread_lock.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
 pthread_lock.po: pthread_lock.o
 	${_MKTARGET_CREATE}
 	cp pthread_lock.o pthread_lock.po
 
-COPTS.pthread_mutex.c+=	-fomit-frame-pointer ${ALIGN_FUNCTIONS}
+COPTS.pthread_mutex.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
 pthread_mutex.po: pthread_mutex.o
 	${_MKTARGET_CREATE}
 	cp pthread_mutex.o pthread_mutex.po
@@ -161,6 +174,7 @@ MLINKS+=	pthread_cond.3 pthread_cond_timedwait.3
 
 MLINKS+=	pthread_condattr.3 pthread_condattr_init.3
 MLINKS+=	pthread_condattr.3 pthread_condattr_destroy.3
+MLINKS+=	pthread_condattr.3 pthread_condattr_setclock.3
 
 MLINKS+=	pthread_getname_np.3 pthread_setname_np.3
 MLINKS+=	pthread_getspecific.3 pthread_setspecific.3

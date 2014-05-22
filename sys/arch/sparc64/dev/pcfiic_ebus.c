@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.2.2.1 2012/04/17 00:06:55 yamt Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.2.2.2 2014/05/22 11:40:09 yamt Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.2.2.1 2012/04/17 00:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.2.2.2 2014/05/22 11:40:09 yamt Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -146,6 +146,7 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		sc->sc_master = 1;
+		printf(": iic mux present");
 	}
 
 	if (ea->ea_nintr >= 1)

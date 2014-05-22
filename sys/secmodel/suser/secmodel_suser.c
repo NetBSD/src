@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.34.14.2 2013/01/16 05:33:52 yamt Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.34.14.3 2014/05/22 11:41:17 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.34.14.2 2013/01/16 05:33:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.34.14.3 2014/05/22 11:41:17 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,15 +70,9 @@ sysctl_security_suser_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,

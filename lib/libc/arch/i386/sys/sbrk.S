@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.19.2.1 2012/04/17 00:05:13 yamt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.19.2.2 2014/05/22 11:36:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.19.2.1 2012/04/17 00:05:13 yamt Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.19.2.2 2014/05/22 11:36:47 yamt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -53,7 +53,7 @@ CURBRK:	.long	_end
 	.text
 
 ENTRY(_sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
 	movl	PIC_GOT(CURBRK),%edx

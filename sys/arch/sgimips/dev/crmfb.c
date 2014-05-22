@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.35.2.1 2012/04/17 00:06:51 yamt Exp $ */
+/* $NetBSD: crmfb.c,v 1.35.2.2 2014/05/22 11:40:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.35.2.1 2012/04/17 00:06:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.35.2.2 2014/05/22 11:40:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,13 +419,11 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vcons_data *vd;
 	struct crmfb_softc *sc;
-	struct vcons_screen *ms;
 	struct wsdisplay_fbinfo *wdf;
 	int nmode;
 
 	vd = (struct vcons_data *)v;
 	sc = (struct crmfb_softc *)vd->cookie;
-	ms = (struct vcons_screen *)vd->active;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:

@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.7.4.3 2013/01/23 00:05:27 yamt Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.7.4.4 2014/05/22 11:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,10 +30,17 @@
  * Called during rump bootstrap.
  */
 
+/*
+ * Solaris libelf.h doesn't support _FILE_OFFSET_BITS=64.  Luckily,
+ * for this module it doesn't matter.
+ */
+#if defined(__sun__)
+#define RUMPUSER_NO_FILE_OFFSET_BITS
+#endif
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.3 2013/01/23 00:05:27 yamt Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.4 2014/05/22 11:37:00 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -41,9 +48,9 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.3 2013/01/23 00:05:27 yamt Exp $");
 #include <assert.h>
 
 #include <dlfcn.h>
-#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,8 +59,9 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.7.4.3 2013/01/23 00:05:27 yamt Exp $");
 #include <rump/rumpuser.h>
 
 #if defined(__ELF__) && (defined(__NetBSD__) || defined(__FreeBSD__)	\
-    || (defined(__sun__) && defined(__svr4__))) || defined(__linux__)	\
-    || defined(__DragonFly__)
+    || (defined(__sun__) && defined(__svr4__))) || defined(__DragonFly__)	\
+    || (defined(__linux__) && !defined(__ANDROID__))
+#include <elf.h>
 #include <link.h>
 
 static size_t symtabsize = 0, strtabsize = 0;
@@ -66,12 +74,6 @@ static unsigned char eident;
 #ifndef Elf_Symindx
 #define Elf_Symindx uint32_t
 #endif
-
-/*
- * Linux ld.so requires a valid handle for dlinfo(), so use the main
- * handle.  We initialize this variable in rumpuser_dl_bootstrap()
- */
-static void *mainhandle;
 
 static void *
 reservespace(void *store, size_t *storesize,
@@ -143,18 +145,24 @@ do {									\
 
 /*
  * On NetBSD, the dynamic section pointer values seem to be relative to
- * the address the dso is mapped at.  On Linux, they seem to contain
+ * the address the dso is mapped at.  On glibc, they seem to contain
  * the absolute address.  I couldn't find anything definite from a quick
  * read of the standard and therefore I will not go and figure beyond ifdef.
+ * On Solaris and DragonFly / FreeBSD, the main object works differently
+ * ... uuuuh.
  */
-#ifdef __linux__
+#if defined(__GLIBC__) && !defined(__mips__)
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
+#elif defined(__sun__) || defined(__DragonFly__) || defined(__FreeBSD__)
+#define adjptr(_map_, _ptr_) \
+    (ismainobj ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
+/* NetBSD and some others, e.g. Linux + musl */
 #define adjptr(_map_, _ptr_) ((void *)(_map_->l_addr + (_ptr_)))
 #endif
 
 static int
-getsymbols(struct link_map *map)
+getsymbols(struct link_map *map, int ismainobj)
 {
 	char *str_base;
 	void *syms_base = NULL; /* XXXgcc */
@@ -341,29 +349,24 @@ getsymbols(struct link_map *map)
 }
 
 static void
-process(const char *soname, rump_modinit_fn domodinit)
+process_object(void *handle,
+	rump_modinit_fn domodinit, rump_compload_fn docompload)
 {
-	void *handle;
 	const struct modinfo *const *mi_start, *const *mi_end;
-
-	if (strstr(soname, "librump") == NULL)
-		return;
-
-	handle = dlopen(soname, RTLD_LAZY);
-	if (handle == NULL)
-		return;
+	struct rump_component *const *rc, *const *rc_end;
 
 	mi_start = dlsym(handle, "__start_link_set_modules");
-	if (!mi_start)
-		goto out;
 	mi_end = dlsym(handle, "__stop_link_set_modules");
-	if (!mi_end)
-		goto out;
+	if (mi_start && mi_end)
+		domodinit(mi_start, (size_t)(mi_end-mi_start));
 
-	domodinit(mi_start, (size_t)(mi_end-mi_start));
-
- out:
-	dlclose(handle);
+	rc = dlsym(handle, "__start_link_set_rump_components");
+	rc_end = dlsym(handle, "__stop_link_set_rump_components");
+	if (rc && rc_end) {
+		for (; rc < rc_end; rc++)
+			docompload(*rc);
+		assert(rc == rc_end);
+	}
 }
 
 /*
@@ -372,17 +375,39 @@ process(const char *soname, rump_modinit_fn domodinit)
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload)
+	rump_symload_fn symload, rump_compload_fn compload)
 {
-	struct link_map *map, *origmap;
+	struct link_map *map, *origmap, *mainmap;
+	void *mainhandle;
 	int error;
 
 	mainhandle = dlopen(NULL, RTLD_NOW);
-	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &origmap) == -1) {
+	/* Will be null if statically linked so just return */
+	if (mainhandle == NULL)
+		return;
+	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &mainmap) == -1) {
 		fprintf(stderr, "warning: rumpuser module bootstrap "
 		    "failed: %s\n", dlerror());
 		return;
 	}
+	origmap = mainmap;
+
+	/*
+	 * Use a heuristic to determine if we are static linked.
+	 * A dynamically linked binary should always have at least
+	 * two objects: itself and ld.so.
+	 *
+	 * In a statically linked binary with glibc the linkmap
+	 * contains some "info" that leads to a segfault.  Since we
+	 * can't really do anything useful in here without ld.so, just
+	 * simply bail and let the symbol references in librump do the
+	 * right things.
+	 */
+	if (origmap->l_next == NULL && origmap->l_prev == NULL) {
+		dlclose(mainhandle);
+		return;
+	}
+
 	/*
 	 * Process last->first because that's the most probable
 	 * order for dependencies
@@ -397,11 +422,8 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	 */
 	error = 0;
 	for (map = origmap; map && !error; map = map->l_prev) {
-		if (strstr(map->l_name, "librump") != NULL)
-			error = getsymbols(map);
-		/* this should be the main object */
-		else if (!map->l_addr && map->l_prev == NULL)
-			error = getsymbols(map);
+		if (strstr(map->l_name, "librump") != NULL || map == mainmap)
+			error = getsymbols(map, map == mainmap);
 	}
 
 	if (error == 0) {
@@ -432,83 +454,36 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	free(strtab);
 
 	/*
-	 * Next, load modules from dynlibs.
+	 * Next, load modules and components.
+	 *
+	 * Simply loop through all objects, ones unrelated to rump kernels
+	 * will not contain link_set_rump_components (well, not including
+	 * "sabotage", but that needs to be solved at another level anyway).
 	 */
-	for (map = origmap; map; map = map->l_prev)
-		process(map->l_name, domodinit);
-}
+	for (map = origmap; map; map = map->l_prev) {
+		void *handle;
 
-void
-rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
-{
-	struct link_map *map;
-
-	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &map) == -1) {
-		fprintf(stderr, "warning: rumpuser module bootstrap "
-		    "failed: %s\n", dlerror());
-		return;
-	}
-
-	for (; map->l_next; map = map->l_next)
-		continue;
-	for (; map; map = map->l_prev) {
-		if (strstr(map->l_name, "librump") != NULL) {
-			void *handle;
-			struct rump_component **rc, **rc_end;
-
+		if (map == mainmap) {
+			handle = mainhandle;
+		} else {
 			handle = dlopen(map->l_name, RTLD_LAZY);
 			if (handle == NULL)
 				continue;
-
-			rc = dlsym(handle,
-			    "__start_link_set_rump_components");
-			if (!rc)
-				goto loop;
-			rc_end = dlsym(handle,
-			    "__stop_link_set_rump_components");
-			if (!rc_end)
-				goto loop;
-
-			for (; rc < rc_end; rc++)
-				compinit(*rc, type);
-			assert(rc == rc_end);
- loop:
-			dlclose(handle);
 		}
+		process_object(handle, domodinit, compload);
+		if (map != mainmap)
+			dlclose(handle);
 	}
 }
 #else
+/*
+ * no dynamic linking supported
+ */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload)
+	rump_symload_fn symload, rump_compload_fn compload)
 {
 
-	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
-}
-
-/*
- * "default" implementation for platforms where we don't support
- * dynamic linking.  Assumes that all rump kernel components are
- * statically linked with the local client.
- */
-
-extern void *__start_link_set_rump_components;
-extern void *__stop_link_set_rump_components;
-void
-rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
-{
-	void **rc = &__start_link_set_rump_components;
-	void **rc_end = &__stop_link_set_rump_components;
-
-	for (; rc < rc_end; rc++)
-		compinit(*rc, type);
-
+	return;
 }
 #endif
-
-void *
-rumpuser_dl_globalsym(const char *symname)
-{
-
-	return dlsym(RTLD_DEFAULT, symname);
-}

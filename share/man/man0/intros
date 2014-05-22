@@ -11,8 +11,8 @@
 ../man4/man4.emips/intro.4
 ../man4/man4.evbarm/intro.4
 ../man4/man4.hp300/intro.4
-../man4/man4.hp700/intro.4
 ../man4/man4.hpcsh/intro.4
+../man4/man4.hppa/intro.4
 ../man4/man4.i386/intro.4
 ../man4/man4.mac68k/intro.4
 ../man4/man4.macppc/intro.4

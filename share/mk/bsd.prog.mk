@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.269.2.4 2013/01/23 00:05:36 yamt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.269.2.5 2014/05/22 11:37:53 yamt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -33,12 +33,18 @@ CLEANFILES+=strings
 .c.o:
 	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
 	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	@rm -f x.c
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
 	@mv -f x.c x.cc
 	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	@rm -f x.cc
 .endif
 
@@ -56,9 +62,12 @@ OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
 
 # CTF preserve debug symbols
-.if defined(MKDTRACE) && (${MKDTRACE} != "no") && (${CFLAGS:M-g} != "")
+.if (${MKCTF:Uno} != "no") && (${CFLAGS:M-g} != "")
 CTFFLAGS+= -g
 CTFMFLAGS+= -g
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+#CFLAGS+=-gdwarf-2
+.endif
 .endif
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
@@ -75,6 +84,11 @@ _SHLINKER=	${SHLINKDIR}/ld.elf_so
 .ifndef LIBCRT0
 LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 .MADE: ${LIBCRT0}
+.endif
+
+.ifndef LIBCRTI
+LIBCRTI=	${DESTDIR}/usr/lib/crti.o
+.MADE: ${LIBCRTI}
 .endif
 
 ##### Installed system library definitions
@@ -98,7 +112,6 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	c_pic \
 	com_err \
 	compat \
-	crt0 \
 	crypt \
 	crypto \
 	crypto_idea \
@@ -263,6 +276,10 @@ LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .endif
 .endfor
 
+# Ugly one-offs
+LIBX11_XCB=	${DESTDIR}${X11USRLIBDIR}/libX11-xcb.a
+LIBXCB=	${DESTDIR}${X11USRLIBDIR}/libxcb.a
+
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
 .endif
@@ -371,6 +388,23 @@ PROGS=		${PROG}
 .  endif
 .endif
 
+##### Libraries that this may depend upon.
+.if defined(PROGDPLIBS) 						# {
+.for _lib _dir in ${PROGDPLIBS}
+.if !defined(BINDO.${_lib})
+PROGDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=PROGDO.${_lib}
+.endif
+LDADD+=		-L${PROGDO.${_lib}} -l${_lib}
+.if exists(${PROGDO.${_lib}}/lib${_lib}_pic.a)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
+.elif exists(${PROGDO.${_lib}}/lib${_lib}.so)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.so
+.else
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
+.endif
+.endfor
+.endif									# }
 #
 # Per-program definitions and targets.
 #
@@ -449,7 +483,8 @@ NODPSRCS+=	${f}
 .endif
 .endfor
 
-${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${XOBJS.${_P}} ${SRCS.${_P}} \
+    ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 .if defined(DESTDIR)
 	${_CCLINK.${_P}} -Wl,-nostdlib \
@@ -482,13 +517,13 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
+    ${LIBCRTEND} ${_DPADD.${_P}}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
-	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    ${_PROGLDOPTS}
+	    ${OBJS.${_P}} ${_PROGLDOPTS} ${_LDADD.${_P}}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif
@@ -503,7 +538,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_
 
 ${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
-	${CC} ${LDFLAGS} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
+	${CC} ${LDFLAGS:N-Wl,-pie} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
 
 .if defined(_PROGDEBUG.${_P})
 ${_PROGDEBUG.${_P}}: ${_P}

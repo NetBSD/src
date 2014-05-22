@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.53.4.3 2013/01/16 05:33:03 yamt Exp $ */
+/* $NetBSD: sci.c,v 1.53.4.4 2014/05/22 11:40:07 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.53.4.3 2013/01/16 05:33:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.53.4.4 2014/05/22 11:40:07 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -248,8 +248,17 @@ dev_type_tty(scitty);
 dev_type_poll(scipoll);
 
 const struct cdevsw sci_cdevsw = {
-	sciopen, sciclose, sciread, sciwrite, sciioctl,
-	scistop, scitty, scipoll, nommap, ttykqfilter, D_TTY
+	.d_open = sciopen,
+	.d_close = sciclose,
+	.d_read = sciread,
+	.d_write = sciwrite,
+	.d_ioctl = sciioctl,
+	.d_stop = scistop,
+	.d_tty = scitty,
+	.d_poll = scipoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 void InitializeSci (unsigned int);

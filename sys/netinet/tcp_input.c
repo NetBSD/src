@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.317.2.1 2012/04/17 00:08:41 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.317.2.2 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317.2.1 2012/04/17 00:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317.2.2 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -223,7 +223,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317.2.1 2012/04/17 00:08:41 yamt Exp
 #endif
 #endif	/* INET6 */
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
@@ -231,7 +231,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317.2.1 2012/04/17 00:08:41 yamt Exp
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
-#endif	/* FAST_IPSEC*/
+#endif	/* IPSEC*/
 
 #include <netinet/tcp_vtw.h>
 
@@ -997,13 +997,12 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			  struct mbuf *m, int tlen, int multicast)
 {
 	int		tiflags;
-	int		todrop, dupseg;
+	int		todrop;
 	uint32_t	t_flags = 0;
 	uint64_t	*tcps;
 
 	tiflags = th->th_flags;
 	todrop  = vp->rcv_nxt - th->th_seq;
-	dupseg  = false;
 
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
@@ -1033,7 +1032,6 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			 */
 			t_flags |= TF_ACKNOW;
 			todrop = tlen;
-			dupseg = true;
 			tcps = TCP_STAT_GETREF();
 			tcps[TCP_STAT_RCVDUPPACK] += 1;
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
@@ -1102,7 +1100,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 				/* We only support this in the !NOFDREF case, which
 				 * is to say: not here.
 				 */
-				goto dropwithreset;;
+				goto dropwithreset;
 			}
 			/*
 			 * If window is closed can only take segments at
@@ -1448,7 +1446,7 @@ findpcb:
 			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec4_in_reject(m, inp)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -1491,7 +1489,7 @@ findpcb:
 			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		if (in6p
 		    && (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
 		    && ipsec6_in_reject(m, in6p)) {
@@ -1800,7 +1798,7 @@ findpcb:
 				}
 #endif
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 				switch (af) {
 #ifdef INET
 				case AF_INET:
@@ -2657,12 +2655,8 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		/* XXX: make SACK have his own congestion control
-		 * struct -- rpaulo */
-		if (TCP_SACK_ENABLED(tp))
-			tcp_sack_newack(tp, th);
-		else
-			tp->t_congctl->fast_retransmit_newack(tp, th);
+		tp->t_congctl->fast_retransmit_newack(tp, th);
+
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			TCP_STATINC(TCP_STAT_RCVACKTOOMUCH);
 			goto dropafterack;
@@ -3135,7 +3129,7 @@ struct secasvar *
 tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 {
 	struct secasvar *sav;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	union sockaddr_union dst;
 #endif
 	struct ip *ip;
@@ -3155,7 +3149,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 		return (NULL);
 	}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/* Extract the destination from the IP header in the mbuf. */
 	memset(&dst, 0, sizeof(union sockaddr_union));
 	if (ip !=NULL) {
@@ -3393,7 +3387,9 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		}
 	}
 
-#ifdef TCP_SIGNATURE
+#ifndef TCP_SIGNATURE
+	return 0;
+#else
 	if (tp->t_flags & TF_SIGNATURE) {
 
 		sav = tcp_signature_getsav(m, th);
@@ -3402,16 +3398,8 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 			return (-1);
 	}
 
-	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
-		if (sav == NULL)
-			return (-1);
-#ifdef FAST_IPSEC
-		KEY_FREESAV(&sav);
-#else
-		key_freesav(sav);
-#endif
-		return (-1);
-	}
+	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE))
+		goto out;
 
 	if (sigp) {
 		char sig[TCP_SIGLEN];
@@ -3419,40 +3407,25 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		tcp_fields_to_net(th);
 		if (tcp_signature(m, th, toff, sav, sig) < 0) {
 			tcp_fields_to_host(th);
-			if (sav == NULL)
-				return (-1);
-#ifdef FAST_IPSEC
-			KEY_FREESAV(&sav);
-#else
-			key_freesav(sav);
-#endif
-			return (-1);
+			goto out;
 		}
 		tcp_fields_to_host(th);
 
 		if (memcmp(sig, sigp, TCP_SIGLEN)) {
 			TCP_STATINC(TCP_STAT_BADSIG);
-			if (sav == NULL)
-				return (-1);
-#ifdef FAST_IPSEC
-			KEY_FREESAV(&sav);
-#else
-			key_freesav(sav);
-#endif
-			return (-1);
+			goto out;
 		} else
 			TCP_STATINC(TCP_STAT_GOODSIG);
 
 		key_sa_recordxfer(sav, m);
-#ifdef FAST_IPSEC
 		KEY_FREESAV(&sav);
-#else
-		key_freesav(sav);
-#endif
 	}
+	return 0;
+out:
+	if (sav != NULL)
+		KEY_FREESAV(&sav);
+	return -1;
 #endif
-
-	return (0);
 }
 
 /*
@@ -3988,7 +3961,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * to the new one.
 	 */
 	oso = so;
-	so = sonewconn(so, SS_ISCONNECTED);
+	so = sonewconn(so, true);
 	if (so == NULL)
 		goto resetandabort;
 
@@ -4060,7 +4033,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 #endif
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/*
 	 * we make a copy of policy, instead of sharing the policy,
 	 * for better behavior in terms of SA lookup and dead SA removal.
@@ -4764,11 +4737,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		(void)tcp_signature(m, th, hlen, sav, sigp);
 
 		key_sa_recordxfer(sav, m);
-#ifdef FAST_IPSEC
 		KEY_FREESAV(&sav);
-#else
-		key_freesav(sav);
-#endif
 	}
 #endif
 

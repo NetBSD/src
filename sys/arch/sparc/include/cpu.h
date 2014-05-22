@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92.2.2 2012/05/23 10:07:49 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.92.2.3 2014/05/22 11:40:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,6 +118,7 @@ void	sparc_softintr_init(void);
  * user mode, or after the current trap/syscall if in system mode.
  */
 #define cpu_need_resched(ci, flags) do {				\
+	__USE(flags);							\
 	(ci)->ci_want_resched = 1;					\
 	(ci)->ci_want_ast = 1;						\
 									\

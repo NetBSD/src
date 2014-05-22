@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.h,v 1.5.2.1 2013/01/23 00:06:02 yamt Exp $ */
+/*	$NetBSD: linux_futex.h,v 1.5.2.2 2014/05/22 11:40:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -50,6 +50,8 @@
 
 #define LINUX_FUTEX_PRIVATE_FLAG	128
 #define LINUX_FUTEX_CLOCK_REALTIME	256
+#define LINUX_FUTEX_CMD_MASK		\
+    (~(LINUX_FUTEX_PRIVATE_FLAG|LINUX_FUTEX_CLOCK_REALTIME))
 
 #define FUTEX_OP_SET		0
 #define FUTEX_OP_ADD		1
@@ -78,6 +80,8 @@ struct linux_robust_list_head {
 #define FUTEX_WAITERS		0x80000000
 #define FUTEX_OWNER_DIED	0x40000000
 #define FUTEX_TID_MASK		0x3fffffff
+
+#define FUTEX_BITSET_MATCH_ANY  0xffffffff
 
 void	release_futexes(struct lwp *);
 struct linux_sys_futex_args;

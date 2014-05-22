@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.29.2.4 2012/10/30 17:20:35 yamt Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.29.2.5 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*
  *
@@ -55,6 +55,8 @@ void xen_mcast_tlbflush(kcpuset_t *);
 void xen_bcast_tlbflush(void);
 void xen_mcast_invlpg(vaddr_t, kcpuset_t *);
 void xen_bcast_invlpg(vaddr_t);
+void xen_copy_page(paddr_t, paddr_t);
+void xen_pagezero(paddr_t);
 
 void pmap_xen_resume(void);
 void pmap_xen_suspend(void);

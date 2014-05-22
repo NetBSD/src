@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.11.4.2 2013/01/23 00:06:09 yamt Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.11.4.3 2014/05/22 11:40:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -171,7 +171,7 @@ struct radeonfb_display {
 	uint16_t		rd_xoffset;
 	uint16_t		rd_yoffset;
 
-	int			rd_bg;		/* background */
+	uint32_t		rd_bg;		/* background */
 	bool			rd_console;
 
 	struct callout          rd_bl_lvds_co;  /* delayed lvds operation */
@@ -196,11 +196,9 @@ struct radeonfb_display {
 	void (*rd_putchar)(void *, int, int, u_int, long);
 	glyphcache		rd_gc;
 
-#if 0
 	uint8_t			rd_cmap_red[256];
 	uint8_t			rd_cmap_green[256];
 	uint8_t			rd_cmap_blue[256];
-#endif
 
 #ifdef SPLASHSCREEN
 	struct splash_info	rd_splash;

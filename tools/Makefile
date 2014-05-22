@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.151.2.3 2013/01/16 05:34:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.151.2.4 2014/05/22 11:42:29 yamt Exp $
 
 .include <bsd.own.mk>
+.include <bsd.endian.mk>
 
 # Make sure that the ordered build/install processing applies when using
 # plain make.
@@ -16,6 +17,12 @@
 #.error "TOOLDIR does not exist: ${TOOLDIR}"
 .endif
 .endif # MKTOOLS != no
+
+# TOOLS_BUILDRUMP == yes builds only the subset of the tools required
+# for building rump kernels and the hypervisor.  It is typically used
+# when building rump kernels targeted for non-NetBSD systems (via
+# buildrump.sh), and should not be set for a regular "make build".
+TOOLS_BUILDRUMP?=no
 
 .if ${TOOLCHAIN_MISSING} == "no"
 .if defined(HAVE_GCC)
@@ -38,7 +45,7 @@ TOOLCHAIN_BITS+= binutils .WAIT
 .if defined(HAVE_GCC)
 .if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= gcc
-.  if ${MKCROSSGDB:Uno} != "no"
+.  if ${MKCROSSGDB:Uno} != "no" || make(obj)
 TOOLCHAIN_BITS+= gdb
 .  endif
 TOOLCHAIN_BITS+= .WAIT
@@ -58,10 +65,12 @@ TOOLCHAIN_BITS+= dbsym mdsetimage
 .endif
 
 DTRACE_BITS=
-.if ${MKDTRACE} != "no"
+.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
 DTRACE_BITS+= .WAIT libelf
 DTRACE_BITS+= .WAIT libdwarf
 DTRACE_BITS+= .WAIT libctf
+.endif
+.if ${MKCTF} != "no"
 DTRACE_BITS+= .WAIT ctfconvert ctfmerge
 .endif
 
@@ -91,20 +100,22 @@ dependall-binstall: dependall-compat
 # See above for special treatment for host-mkdep, compat, and binstall.
 #
 SUBDIR=	host-mkdep compat binstall \
-	.WAIT mktemp .WAIT sed .WAIT \
-		cap_mkdb crunchgen ctags genassym gencat hexdump join \
+	.WAIT mktemp .WAIT sed .WAIT
+.if ${TOOLS_BUILDRUMP} == "no"
+SUBDIR+= cap_mkdb crunchgen ctags genassym gencat hexdump \
 		${LINT_BITS} \
-		lorder makewhatis mkdep mtree nbperf .WAIT rpcgen tsort \
-		uudecode m4 \
-	.WAIT texinfo \
-	.WAIT yacc \
-	.WAIT awk \
+		makewhatis mtree nbperf .WAIT rpcgen uudecode
+.endif
+
+SUBDIR+= join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+
+.if ${TOOLS_BUILDRUMP} == "no"
+SUBDIR += .WAIT texinfo \
 	.WAIT tic \
-	.WAIT lex \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
 	${DTRACE_BITS} \
-		asn1_compile cat cksum compile_et config db \
+		asn1_compile cat cksum compile_et db \
 		file lint1 slc \
 		makefs .WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
 		.WAIT disklabel \
@@ -112,6 +123,8 @@ SUBDIR=	host-mkdep compat binstall \
 		.WAIT fdisk \
 		.WAIT installboot \
 		pwd_mkdb stat strfile sunlabel zic
+.endif
+SUBDIR+= .WAIT config
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \
@@ -121,6 +134,12 @@ SUBDIR+= \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang
+.if ${MKLLD} != "no"
+SUBDIR+=	llvm-lld
+.endif
+.if ${MKMCLINKER} != "no"
+SUBDIR+=	llvm-mcld
+.endif
 .endif
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
@@ -130,6 +149,8 @@ SUBDIR+=	groff
 SUBDIR+=	mandoc
 .endif
 
+.if ${TOOLS_BUILDRUMP} == "no"
+
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	autoconf .WAIT gettext
 .endif
@@ -138,8 +159,8 @@ SUBDIR+=	autoconf .WAIT gettext
 SUBDIR+=	pigz
 .endif
 
-.if ${MACHINE} == "hp700"
-SUBDIR+=	hp700-mkboot
+.if ${MACHINE} == "hppa"
+SUBDIR+=	hppa-mkboot
 .endif
 
 .if ${MACHINE} == "ibmnws"
@@ -184,7 +205,9 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.if ${MACHINE} == "evbarm" && ${MACHINE_ARCH} == "arm"
+.if ${MACHINE} == "evbarm" \
+    && ${MACHINE_CPU} == "arm" \
+    && ${TARGET_ENDIANNESS} == "1234"
 SUBDIR+=	elftosb
 .endif
 
@@ -192,6 +215,8 @@ SUBDIR+=	elftosb
     ${MACHINE} == "evbppc" || ${MACHINE} == "sandpoint"
 SUBDIR+=	mkubootimage
 .endif
+
+.endif # TOOLCHAIN_BUILDRUMP
 
 check_MKTOOLS: .PHONY .NOTMAIN
 .if ${MKTOOLS:Uyes} == "no"

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: keywords.sh,v 1.9.6.1 2012/04/17 00:05:42 yamt Exp $
+# $NetBSD: keywords.sh,v 1.9.6.2 2014/05/22 11:37:31 yamt Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
 # WARNING!  If you change this file, re-run it!
@@ -29,7 +29,6 @@ ifa
 ifp
 inet
 inet6
-iso
 link
 llinfo
 lock
@@ -40,7 +39,6 @@ mtu
 net
 netmask
 nostatic
-osi
 prefixlen
 proto1
 proto2

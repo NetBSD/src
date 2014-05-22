@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.h,v 1.2 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: enable.h,v 1.2.34.1 2014/05/22 11:40:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  *  |BT |FPP|DMA| 0 |VID|RES|FPA|DIA| 0 |CCH|IOC|LBK|DCH|  UNUSED   |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---.---.---+
  *
- * 
+ *
  * Bits in the Enable Register defined.
  */
 #define	ENA_DBGCACHE	0x0008	/* Debug mode for system cache              */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10.4.1 2012/10/30 17:19:05 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.10.4.2 2014/05/22 11:39:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -137,6 +137,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * keep the old L2_TABLE_SIZE define lying around. Converted ports
  * should use L2_TABLE_SIZE_REAL until then.
  */
+#define	L1_TABLE_SIZE_REAL	0x4000	/* 16K */
 #define	L2_TABLE_SIZE_REAL	0x400	/* 1K */
 
 /*
@@ -226,6 +227,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_XS_nG	0x00000800	/* ARMv6 Not-Global */
 #define	L2_V6_L_TEX	L2_XS_L_TEX
 #define	L2_V6_XS_TEX	L2_XS_T_TEX
+#define	L2_XS_L_XN	0x00008000	/* ARMv6 eXecute Never */
 
 
 /*
@@ -238,7 +240,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * Access Permissions for L1 and L2 of ARMv6 with XP=1 and ARMv7
  */
 #define	AP_R		0x01		/* readable */
-#define	AP_RO		0x20		/* read-only */
+#define	AP_RO		0x20		/* read-only (L2_XS_APX >> 4) */
 
 /*
  * Short-hand for common AP_* constants.

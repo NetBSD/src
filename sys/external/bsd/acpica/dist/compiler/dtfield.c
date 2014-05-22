@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,14 +104,17 @@ DtCompileOneField (
     switch (Type)
     {
     case DT_FIELD_TYPE_INTEGER:
+
         DtCompileInteger (Buffer, Field, ByteLength, Flags);
         break;
 
     case DT_FIELD_TYPE_STRING:
+
         DtCompileString (Buffer, Field, ByteLength);
         break;
 
     case DT_FIELD_TYPE_UUID:
+
         Status = DtCompileUuid (Buffer, Field, ByteLength);
         if (ACPI_SUCCESS (Status))
         {
@@ -121,17 +124,21 @@ DtCompileOneField (
         /* Fall through. */
 
     case DT_FIELD_TYPE_BUFFER:
+
         DtCompileBuffer (Buffer, Field->Value, Field, ByteLength);
         break;
 
     case DT_FIELD_TYPE_UNICODE:
+
         DtCompileUnicode (Buffer, Field, ByteLength);
         break;
 
     case DT_FIELD_TYPE_DEVICE_PATH:
+
         break;
 
     default:
+
         DtFatal (ASL_MSG_COMPILER_INTERNAL, Field, "Invalid field type");
         break;
     }
@@ -167,7 +174,7 @@ DtCompileString (
 
     if (Length > ByteLength)
     {
-        sprintf (MsgBuffer, "Maximum %u characters", ByteLength);
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "Maximum %u characters", ByteLength);
         DtError (ASL_ERROR, ASL_MSG_STRING_LENGTH, Field, MsgBuffer);
         Length = ByteLength;
     }
@@ -247,7 +254,7 @@ DtCompileUuid (
     Status = AuValidateUuid (InString);
     if (ACPI_FAILURE (Status))
     {
-        sprintf (MsgBuffer, "%s", Field->Value);
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "%s", Field->Value);
         DtNameError (ASL_ERROR, ASL_MSG_INVALID_UUID, Field, MsgBuffer);
     }
     else
@@ -333,7 +340,8 @@ DtCompileInteger (
 
     if (Value > MaxValue)
     {
-        sprintf (MsgBuffer, "%8.8X%8.8X", ACPI_FORMAT_UINT64 (Value));
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "%8.8X%8.8X - max %u bytes",
+            ACPI_FORMAT_UINT64 (Value), ByteLength);
         DtError (ASL_ERROR, ASL_MSG_INTEGER_SIZE, Field, MsgBuffer);
     }
 
@@ -382,10 +390,12 @@ DtNormalizeBuffer (
         case ']':
         case ' ':
         case ',':
+
             Separator = TRUE;
             break;
 
         default:
+
             if (Separator)
             {
                 /* Insert blank as the standard separator */
@@ -458,12 +468,13 @@ DtCompileBuffer (
         if (ACPI_FAILURE (Status))
         {
             DtError (ASL_ERROR, ASL_MSG_BUFFER_ELEMENT, Field, MsgBuffer);
-            return (ByteLength - Count);
+            goto Exit;
         }
 
         Buffer[i] = (UINT8) Value;
     }
 
+Exit:
     ACPI_FREE (StringValue);
     return (ByteLength - Count);
 }
@@ -523,9 +534,22 @@ DtCompileFlag (
         break;
 
 
+    case ACPI_DMT_FLAGS1:
+
+        BitPosition = 1;
+        BitLength = 2;
+        break;
+
+
     case ACPI_DMT_FLAGS2:
 
         BitPosition = 2;
+        BitLength = 2;
+        break;
+
+    case ACPI_DMT_FLAGS4:
+
+        BitPosition = 4;
         BitLength = 2;
         break;
 
@@ -539,7 +563,7 @@ DtCompileFlag (
 
     if (Value >= ((UINT64) 1 << BitLength))
     {
-        sprintf (MsgBuffer, "Maximum %u bit", BitLength);
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "Maximum %u bit", BitLength);
         DtError (ASL_ERROR, ASL_MSG_FLAG_VALUE, Field, MsgBuffer);
         Value = 0;
     }

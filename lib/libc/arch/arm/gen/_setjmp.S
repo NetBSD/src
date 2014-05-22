@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.6.50.2 2013/01/23 00:05:21 yamt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.6.50.3 2014/05/22 11:36:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -32,8 +32,12 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(__SOFTFP__) && !defined(__VFP_FP__)
+#if !defined(__SOFTFP__) && !defined(__VFP_FP__) && !defined(__ARM_PCS)
 #error FPA is not supported anymore
+#endif
+
+#if defined(__ARM_EABI__) && !defined(__ARM_PCS_VFP)
+	.fpu	vfp
 #endif
 
 #include <machine/asm.h>
@@ -49,64 +53,142 @@
  * The previous signal state is NOT restored.
  *
  * Note: r0 is the return value
- *       r1-r3 are scratch registers in functions
+ *       r1-r3,ip are scratch registers in functions
  */
 
 ENTRY(_setjmp)
 	ldr	r1, .L_setjmp_magic
+
+#if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
+	ldr	r2, .Lfpu_present
+#ifdef __PIC__
+	add	r2, r2, pc	/* pc = &.LPIC0 */
+#endif
+	ldr	r2, [r2]
+.LPIC0:
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, 1f
+#else
+	cmp	r2, #0		/* do we have a FPU? */
+	beq	1f		/*   no, don't save VFP registers */
+#endif
+
+	orrs	r1, r1, #(_JB_MAGIC__SETJMP ^ _JB_MAGIC__SETJMP_VFP)
+				/* change magic to VFP magic */
+	adds	r2, r0, #(_JB_REG_D8 * 4)
+	vstmia	r2, {d8-d15}
+	vmrs	r2, fpscr
+	str	r2, [r0, #(_JB_REG_FPSCR * 4)]
+1:
+#endif /* __ARM_EABI__ && (_ARM_ARCH_T2 || !__thumb__) */
+
 	str	r1, [r0]
 
-#ifndef __SOFTFP__
-	add	r1, r0, #(_JB_REG_D8 * 4)
-	vstmia	r1, {d8-d15}
-	vmrs	r1, fpscr
-	str	r1, [r0, #(_JB_REG_FPSCR * 4)]
+	adds	r0, r0, #(_JB_REG_R4 * 4)
+	/* Store integer registers */
+#if !defined(__thumb__) || defined(_ARCH_ARCH_T2)
+        stmia	r0, {r4-r14}
+#else
+        stmia	r0!, {r4-r7}
+	mov	r1, r8
+	mov	r2, r9
+	mov	r3, r10
+	stmia	r0!, {r1-r3}
+	mov	r2, r11
+	mov	r3, r12
+	stmia	r0!, {r2-r3}
+	mov	r2, sp
+	mov	r3, lr
+	stmia	r0!, {r2-r3}
 #endif
 
-	add	r0, r0, #(_JB_REG_R4 * 4)
-	/* Store integer registers */
-        stmia	r0, {r4-r14}
-
-        mov	r0, #0x00000000
+        movs	r0, #0
         RET
 
-.L_setjmp_magic:
-#ifdef __SOFTFP__
-	.word	_JB_MAGIC__SETJMP
-#else
-	.word	_JB_MAGIC__SETJMP_VFP
-#endif
+#if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
+	.align	0
+.Lfpu_present:
+	.word	REL_SYM(_libc_arm_fpu_present, .LPIC0)
+#endif /* __ARM_EABI__ && (_ARM_ARCH_T2 || !__thumb__) */
+END(_setjmp)
 
 ENTRY(_longjmp)
-	ldr	r2, .L_setjmp_magic
-	ldr	r3, [r0]
-	teq	r2, r3
-	bne	botch
-
-#ifndef __SOFTFP__
-	add	r1, r0, #(_JB_REG_D8 * 4)
-	vldmia	r1, {d8-d15}
-	ldr	r1, [r0, #(_JB_REG_FPSCR * 4)]
-	vmsr	fpscr, r1
+	ldr	r2, [r0]			/* get magic from jmp_buf */
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	bics	r3, r2, #(_JB_MAGIC__SETJMP ^ _JB_MAGIC__SETJMP_VFP)
+						/* ignore VFP-ness of magic */
+	ldr	ip, .L_setjmp_magic		/* load magic */
+#else
+	ldr	r3, .L_setjmp_magic		/* load magic */
+	mov	ip, r3
+	movs	r3, #(_JB_MAGIC__SETJMP ^ _JB_MAGIC__SETJMP_VFP)
+	ands	r3, r3, r2
+	eors	r3, r3, r2			/* ignore VFP-ness of magic */
 #endif
+	cmp	ip, r3				/* magic correct? */
+	bne	botch				/*   no, botch */
 
-	add	r0, r0, #(_JB_REG_R4 * 4)
+#if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
+	cmp	r3, r2				/* did magic change? */
+	beq	1f				/*   no, don't restore VFP */
+	adds	r3, r0, #(_JB_REG_D8 * 4)
+	vldmia	r3, {d8-d15}
+	ldr	r3, [r0, #(_JB_REG_FPSCR * 4)]
+	vmsr	fpscr, r3
+1:
+#endif /* __ARM_EABI__ && (_ARM_ARCH_T2 || !__thumb__) */
+
+	adds	r0, r0, #(_JB_REG_R4 * 4)
        	/* Restore integer registers */
-        ldmia	r0, {r4-r14}
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+        ldmia	r0!, {r4-r12}
+#else
+	ldmia	r0!, {r4-r7}
+	ldmia	r0!, {r2-r3}
+	mov	r8, r2
+	mov	r9, r3
+	ldmia	r0!, {r2-r3}
+	mov	r10, r2
+	mov	r1, r3
+	adds	r0, r0, #4		/* skip r12 */
+#endif
+	ldmia	r0!, {r2-r3}		/* r2 = sp, r3 = lr */
 
 	/* Validate sp and r14 */
-	teq	sp, #0
-	teqne	r14, #0
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, botch
+#else
+	cmp	r2, #0
 	beq	botch
+#endif
+	mov	sp, r2
+
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r3, botch
+#else
+	cmp	r3, #0
+	beq	botch
+#endif
+	mov	lr, r3
 
 	/* Set return value */
-	mov	r0, r1
-	teq	r0, #0x00000000
-	moveq	r0, #0x00000001
+	movs	r0, r1
+#ifdef __thumb__
+	bne	1f
+	movs	r0, #1
+1:
+#else
+	moveq	r0, #1
+#endif
 	RET
 
 	/* validation failed, die die die. */
 botch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
-	b	. - 8		/* Cannot get here */
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
+1:	b	1b		/* Cannot get here */
+
+	.align	0
+.L_setjmp_magic:
+	.word	_JB_MAGIC__SETJMP
+END(_longjmp)

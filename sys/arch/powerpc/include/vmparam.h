@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16.4.1 2012/04/17 00:06:47 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16.4.2 2014/05/22 11:40:04 yamt Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -25,8 +25,10 @@
  * top of the next lower segment.
  */
 #define	__USE_TOPDOWN_VM
-#define	VM_DEFAULT_ADDRESS(da, sz) \
-	((VM_MAXUSER_ADDRESS - MAXSSIZ) - round_page(sz))
+#define	VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    ((VM_MAXUSER_ADDRESS - MAXSSIZ) - round_page(sz))
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
 #if defined(_MODULE) || defined(MODULAR)
 /*

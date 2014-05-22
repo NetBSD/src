@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.5.8.1 2012/10/30 17:19:08 yamt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.5.8.2 2014/05/22 11:39:34 yamt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,11 +47,13 @@ struct cpu_info;
 #define	IPI_AST			0	/* just get an interrupt */
 #define	IPI_XCALL		1	/* xcall */
 #define	IPI_NOP			2	/* just get an interrupt (armv6) */
-#ifndef __HAVE_PREEMPTION
-#define	NIPI			3
+#define	IPI_SHOOTDOWN		3	/* cause a tlb shootdown */
+#define	IPI_DDB			4	/* enter DDB */
+#ifdef __HAVE_PREEMPTION
+#define	IPI_KPREEMPT		5	/* cause a preemption */
+#define	NIPI			6
 #else
-#define	IPI_KPREEMPT		4	/* cause a preemption */
-#define	NIPI			4
+#define	NIPI			5
 #endif
 
 int	pic_handle_intr(void *);
@@ -99,6 +101,7 @@ struct intrsource {
 	uint8_t is_ipl;				/* IPL_xxx */
 	uint8_t is_irq;				/* local to pic */
 	uint8_t is_iplidx;
+	bool is_mpsafe;
 	char is_source[16];
 };
 
@@ -157,6 +160,8 @@ void	pic_do_pending_int(void);
 #ifdef MULTIPROCESSOR
 int	pic_ipi_nop(void *);
 int	pic_ipi_xcall(void *);
+int	pic_ipi_shootdown(void *);
+int	pic_ipi_ddb(void *);
 #endif
 #ifdef __HAVE_PIC_FAST_SOFTINTS
 int	pic_handle_softint(void *);

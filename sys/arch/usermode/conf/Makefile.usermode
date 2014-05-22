@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.24.2.2 2012/10/30 17:20:28 yamt Exp $
+# $NetBSD: Makefile.usermode,v 1.24.2.3 2014/05/22 11:40:11 yamt Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -21,7 +21,8 @@ MACHINE_ARCH!=uname -p
 USERMODE_HOSTOS!=uname -s
 USERMODE_HOSTMACHINE!=uname -m
 USERMODE_LIBS= -L${DESTDIR}/usr/lib -lrt
-USERMODE_CPPFLAGS=${DEBUG} -U_KERNEL -I/usr/include
+USERMODE_CPPFLAGS=${DEBUG} -U_KERNEL
+USERMODE_CPPFLAGS+=-I${DESTDIR}/usr/include
 USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 
 ## XXX hack to make it work under build.sh
@@ -58,8 +59,8 @@ MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
 
-MD_OBJS+=	cpu_${MACHINE_ARCH}.o
-MD_CFILES+=	${USERMODE}/target/${MACHINE_ARCH}/cpu_${MACHINE_ARCH}.c
+MD_OBJS+=	cpu_${MACHINE_CPU}.o
+MD_CFILES+=	${USERMODE}/target/${MACHINE_CPU}/cpu_${MACHINE_CPU}.c
 
 ##
 ## (5) link settings
@@ -87,6 +88,8 @@ NVFLAGS=	-n
 		ln -s $S/arch/i386/include i386
 	@rm -f amd64 && \
 		ln -s $S/arch/amd64/include amd64
+	@rm -f arm && \
+		ln -s $S/arch/arm/include arm
 .endif
 
 thunk.d: ${USERMODE}/usermode/thunk.c
@@ -95,6 +98,8 @@ thunk.d: ${USERMODE}/usermode/thunk.c
 
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${COPTS} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
+
+cpu_${MACHINE_CPU}.o:	${USERMODE}/target/${MACHINE_CPU}/cpu_${MACHINE_CPU}.c
 
 ##
 ## (7) misc settings

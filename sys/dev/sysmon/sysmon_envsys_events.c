@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.98.2.3 2013/01/23 00:06:10 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.98.2.4 2014/05/22 11:40:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98.2.3 2013/01/23 00:06:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98.2.4 2014/05/22 11:40:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -409,8 +409,8 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	}
 
 	/*
-	 * Wait for the event to finish its work, remove from the list
-	 * and release resouces.
+	 * Wait for the event to finish its work, remove it from the list
+	 * and release resources.
 	 */
 	while (see->see_flags & SEE_EVENT_WORKING)
 		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
@@ -447,8 +447,8 @@ sme_event_unregister_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 		return EINVAL;
 
 	/*
-	 * Wait for the event to finish its work, remove from the list
-	 * and release resouces.
+	 * Wait for the event to finish its work, remove it from the list
+	 * and release resources.
 	 */
 	while (see->see_flags & SEE_EVENT_WORKING)
 		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
@@ -705,7 +705,6 @@ sme_events_check(void *arg)
 {
 	struct sysmon_envsys *sme = arg;
 	sme_event_t *see;
-	uint64_t timo;
 
 	KASSERT(sme != NULL);
 
@@ -714,10 +713,6 @@ sme_events_check(void *arg)
 		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
 		see->see_edata->flags |= ENVSYS_FNEED_REFRESH;
 	}
-	if (sme->sme_events_timeout)
-		timo = sme->sme_events_timeout * hz;
-	else
-		timo = SME_EVTIMO;
 	if (!sysmon_low_power)
 		sme_schedule_callout(sme);
 	mutex_exit(&sme->sme_callout_mtx);

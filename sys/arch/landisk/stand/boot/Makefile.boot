@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.4.4.1 2012/04/17 00:06:34 yamt Exp $
+# $NetBSD: Makefile.boot,v 1.4.4.2 2014/05/22 11:39:54 yamt Exp $
 
 PROG?=		boot
 
@@ -40,6 +40,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${.CURDIR}/../Makefile.boot
 	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBLIST}
+	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${SECONDARY_LOAD_ADDRESS} \
 		-Map ${PROG}.map -cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}

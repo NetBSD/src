@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.60.8.2 2012/10/30 17:22:09 yamt Exp $	*/
+/*	$NetBSD: umodem.c,v 1.60.8.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.60.8.2 2012/10/30 17:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.60.8.3 2014/05/22 11:40:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,12 +98,17 @@ umodem_match(device_t parent, cfdata_t match, void *aux)
 	usb_interface_descriptor_t *id;
 	int cm, acm;
 
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
+	    (id->bInterfaceClass == UICLASS_CDC_DATA &&
+	     id->bInterfaceSubClass == UISUBCLASS_DATA))
+		return (UMATCH_IFACECLASS_IFACESUBCLASS);
+
 	if (uaa->class != UICLASS_CDC ||
 	    uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
 	    !(uaa->proto == UIPROTO_CDC_NOCLASS || uaa->proto == UIPROTO_CDC_AT))
 		return (UMATCH_NONE);
 
-	id = usbd_get_interface_descriptor(uaa->iface);
 	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
 		return (UMATCH_NONE);
 

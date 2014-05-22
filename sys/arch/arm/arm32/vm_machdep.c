@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55.4.4 2013/01/23 00:05:40 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.4.5 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.4 2013/01/23 00:05:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.5 2014/05/22 11:39:31 yamt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -93,13 +93,17 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 		p2->p_md.pmc_state = NULL;
 	}
 #endif
+	/*
+	 * Copy machine arch string (it's small so just memcpy it).
+	 */
+	memcpy(p2->p_md.md_march, p1->p_md.md_march, sizeof(p2->p_md.md_march));
 }
 
 /*
  * Finish a fork operation, with LWP l2 nearly set up.
  *
  * Copy and update the pcb and trapframe, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * lwp_trampoline() which will call the specified func with the argument arg.
  *
@@ -118,7 +122,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb * const pcb2 = lwp_getpcb(l2);
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
+	if (pmap_debug_level > 0)
 		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
 #endif	/* PMAP_DEBUG */
 
@@ -131,10 +135,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * VFP state is valid.
 	 */
 	pcb2->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
-	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_VFPUSED;
 #endif
 
-	/* 
+	/*
 	 * Set up the kernel stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
@@ -148,7 +151,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #endif	/* STACKCHECKS */
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
+	if (pmap_debug_level > 0) {
 		printf("l1: pcb=%p pid=%d pmap=%p\n",
 		    pcb1, l1->l_lid, l1->l_proc->p_vmspace->vm_map.pmap);
 		printf("l2: pcb=%p pid=%d pmap=%p\n",
@@ -218,11 +221,11 @@ vmapbuf(struct buf *bp, vsize_t len)
 
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
+	if (pmap_debug_level > 0)
 		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
 		    (u_int)bp->b_data, (u_int)len);
 #endif	/* PMAP_DEBUG */
-    
+
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
@@ -241,8 +244,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	while (len) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
-		pmap_enter(pmap_kernel(), taddr, fpa,
-			VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE,
+		    PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -261,7 +264,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	vaddr_t addr, off;
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
+	if (pmap_debug_level > 0)
 		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
 		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
 #endif	/* PMAP_DEBUG */
@@ -276,8 +279,8 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	
-	pmap_remove(pmap_kernel(), addr, addr + len);
+
+	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
 	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.37.2.1 2012/04/17 00:08:46 yamt Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.37.2.2 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.37.2.1 2012/04/17 00:08:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.37.2.2 2014/05/22 11:41:10 yamt Exp $");
 
 /*
  * IPsec output processing.
@@ -72,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.37.2.1 2012/04/17 00:08:46 yamt E
 #ifdef INET6
 #include <netinet/icmp6.h>
 #endif
-#ifdef IPSEC_NAT_T
 #include <netinet/udp.h>
-#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
@@ -121,7 +119,9 @@ static int
 ipsec_reinject_ipstack(struct mbuf *m, int af)
 {
 #ifdef INET
-	struct ip * ip;
+#ifdef __FreeBSD__
+	struct ip *ip;
+#endif /* __FreeBSD_ */
 #endif /* INET */
 #if defined(INET) || defined(INET6)
 	int rv;
@@ -130,8 +130,8 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		ip = mtod(m, struct ip *);
 #ifdef __FreeBSD__
+		ip = mtod(m, struct ip *);
 		/* FreeBSD ip_output() expects ip_len, ip_off in host endian */
 		ip->ip_len = ntohs(ip->ip_len);
 		ip->ip_off = ntohs(ip->ip_off);
@@ -172,12 +172,10 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 #ifdef INET6
 	struct ip6_hdr * ip6;
 #endif /* INET6 */
-#ifdef IPSEC_NAT_T
 	struct mbuf * mo;
 	struct udphdr *udp = NULL;
 	uint64_t * data = NULL;
 	int hlen, roff;
-#endif /* IPSEC_NAT_T */
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
 
@@ -189,7 +187,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 
 	saidx = &sav->sah->saidx;
 
-#ifdef IPSEC_NAT_T
 	if(sav->natt_type != 0) {
 		ip = mtod(m, struct ip *);
 
@@ -222,7 +219,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		udp->uh_sum = 0;
 		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
 	}
-#endif /* IPSEC_NAT_T */
 	
 	switch (saidx->dst.sa.sa_family) {
 #ifdef INET
@@ -230,10 +226,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		/* Fix the header length, for AH processing. */
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
-#ifdef IPSEC_NAT_T
 		if (sav->natt_type != 0)
 			ip->ip_p = IPPROTO_UDP;
-#endif /* IPSEC_NAT_T */
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -250,10 +244,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-#ifdef IPSEC_NAT_T
 		if (sav->natt_type != 0)
 			ip6->ip6_nxt = IPPROTO_UDP;
-#endif /* IPSEC_NAT_T */
 		break;
 #endif /* INET6 */
 	default:

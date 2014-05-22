@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.32.2.1 2012/10/30 17:22:28 yamt Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.32.2.2 2014/05/22 11:41:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.32.2.1 2012/10/30 17:22:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.32.2.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,17 @@ static struct selinfo		drvctl_rdsel;
 dev_type_open(drvctlopen);
 
 const struct cdevsw drvctl_cdevsw = {
-	drvctlopen, nullclose, nullread, nullwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = drvctlopen,
+	.d_close = nullclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 void drvctlattach(int);
@@ -115,6 +124,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	mutex_enter(&drvctl_lock);
 
 	if (drvctl_nopen == 0) {
+		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
 		return;
 	}
@@ -128,6 +138,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 
 	dce = kmem_alloc(sizeof(*dce), KM_SLEEP);
 	if (dce == NULL) {
+		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.98.2.1 2012/04/17 00:06:57 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.98.2.2 2014/05/22 11:40:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98.2.1 2012/04/17 00:06:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98.2.2 2014/05/22 11:40:10 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98.2.1 2012/04/17 00:06:57 yamt Exp
 int
 vmapbuf(struct buf *bp, vsize_t len)
 {
-	struct pmap *upmap, *kpmap;
+	struct pmap *upmap;
 	vaddr_t uva;	/* User VA (map from) */
 	vaddr_t kva;	/* Kernel VA (new to) */
 	paddr_t pa; 	/* physical address */
@@ -96,7 +96,6 @@ vmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = (void *)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-	kpmap = vm_map_pmap(kernel_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");

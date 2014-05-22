@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.8 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: label.c,v 1.8.2.1 2014/05/22 11:37:28 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ static unsigned int entry;
 static uint8_t *name;
 
 const char labelmsg1[] = "label -a <-l label | -f file> device ...";
-const char labelmsg2[] = "label [-b lba] [-i index] [-s lba]";
+const char labelmsg2[] = "label [-b blocknr] [-i index] [-s sectors]";
 const char labelmsg3[] = "      [-t uuid] <-l label | -f file> device ...";
 
 __dead static void
@@ -113,7 +113,7 @@ label(int fd)
 		hdr = gpt->map_data;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		le_uuid_dec(&ent->ent_type, &uuid);
+		le_uuid_dec(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
 			continue;
@@ -133,7 +133,7 @@ label(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Label the secundary entry. */
+		/* Label the secondary entry. */
 		utf8_to_utf16(name, ent->ent_name, 36);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
@@ -144,13 +144,8 @@ label(int fd)
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
 
-#ifdef __FreeBSD__
-		printf("%sp%u labeled\n", device_name, m->map_index);
-#endif
-#ifdef __NetBSD__
 		printf("partition %d on %s labeled %s\n", m->map_index,
 		    device_name, name);
-#endif
 	}
 }
 
@@ -186,6 +181,7 @@ cmd_label(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
+	int64_t human_num;
 
 	/* Get the label options */
 	while ((ch = getopt(argc, argv, "ab:f:i:l:s:t:")) != -1) {
@@ -198,8 +194,10 @@ cmd_label(int argc, char *argv[])
 		case 'b':
 			if (block > 0)
 				usage_label();
-			block = strtoll(optarg, &p, 10);
-			if (*p != 0 || block < 1)
+			if (dehumanize_number(optarg, &human_num) < 0)
+				usage_label();
+			block = human_num;
+			if (block < 1)
 				usage_label();
 			break;
 		case 'f':

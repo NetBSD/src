@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.136.2.1 2012/10/30 17:22:37 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.136.2.2 2014/05/22 11:41:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.2.1 2012/10/30 17:22:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.2.2 2014/05/22 11:41:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.2.1 2012/10/30 17:22:37 yamt E
  *   that had referenced it have also been destroyed.
  */
 const struct sockaddr_un sun_noname = {
-	.sun_len = sizeof(sun_noname),
+	.sun_len = offsetof(struct sockaddr_un, sun_path),
 	.sun_family = AF_LOCAL,
 };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
@@ -369,7 +369,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
-	struct proc *p;
 	u_int newhiwat;
 	int error = 0;
 
@@ -380,7 +379,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("uipc_usrreq: unexpected control mbuf");
 #endif
-	p = l ? l->l_proc : NULL;
 	if (req != PRU_ATTACH) {
 		if (unp == NULL) {
 			error = EINVAL;
@@ -438,8 +436,14 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * after it's been accepted.  This prevents a client from
 		 * overrunning a server and receiving ECONNREFUSED.
 		 */
-		if (unp->unp_conn == NULL)
+		if (unp->unp_conn == NULL) {
+			/*
+			 * This will use the empty socket and will not
+			 * allocate.
+			 */
+			unp_setaddr(so, nam, true);
 			break;
+		}
 		so2 = unp->unp_conn->unp_socket;
 		if (so2->so_state & SS_ISCONNECTING) {
 			KASSERT(solocked2(so, so->so_head));
@@ -561,7 +565,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				m_freem(m);
 				break;
 			}
-			KASSERT(p != NULL);
+			KASSERT(l != NULL);
 			error = unp_output(m, control, unp, l);
 			if (nam)
 				unp_disconnect(unp);
@@ -847,7 +851,8 @@ unp_detach(struct unpcb *unp)
 		/* XXXAD racy */
 		mutex_enter(vp->v_interlock);
 		vp->v_socket = NULL;
-		vrelel(vp, 0);
+		mutex_exit(vp->v_interlock);
+		vrele(vp);
 		solock(so);
 		unp->unp_vnode = NULL;
 	}
@@ -876,6 +881,29 @@ unp_detach(struct unpcb *unp)
 		unp_free(unp);
 }
 
+/*
+ * Allocate the new sockaddr.  We have to allocate one
+ * extra byte so that we can ensure that the pathname
+ * is nul-terminated. Note that unlike linux, we don't
+ * include in the address length the NUL in the path
+ * component, because doing so, would exceed sizeof(sockaddr_un)
+ * for fully occupied pathnames. Linux is also inconsistent,
+ * because it does not include the NUL in the length of
+ * what it calls "abstract" unix sockets.
+ */
+static struct sockaddr_un *
+makeun(struct mbuf *nam, size_t *addrlen) {
+	struct sockaddr_un *sun;
+
+	*addrlen = nam->m_len + 1;
+	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
+	m_copydata(nam, 0, nam->m_len, (void *)sun);
+	*(((char *)sun) + nam->m_len) = '\0';
+	sun->sun_len = strlen(sun->sun_path) +
+	    offsetof(struct sockaddr_un, sun_path);
+	return sun;
+}
+
 int
 unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
@@ -902,16 +930,8 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	/*
-	 * Allocate the new sockaddr.  We have to allocate one
-	 * extra byte so that we can ensure that the pathname
-	 * is nul-terminated.
-	 */
 	p = l->l_proc;
-	addrlen = nam->m_len + 1;
-	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
+	sun = makeun(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
@@ -942,10 +962,12 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error) {
+		vput(nd.ni_dvp);
 		pathbuf_destroy(pb);
 		goto bad;
 	}
 	vp = nd.ni_vp;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	solock(so);
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
@@ -956,6 +978,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
+	vput(nd.ni_dvp);
 	unp->unp_flags &= ~UNP_BUSY;
 	pathbuf_destroy(pb);
 	return (0);
@@ -990,17 +1013,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	/*
-	 * Allocate a temporary sockaddr.  We have to allocate one extra
-	 * byte so that we can ensure that the pathname is nul-terminated.
-	 * When we establish the connection, we copy the other PCB's
-	 * sockaddr to our own.
-	 */
-	addrlen = nam->m_len + 1;
-	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
-
+	sun = makeun(nam, &addrlen);
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
 		error = ENOMEM;
@@ -1046,7 +1059,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		KASSERT((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-		    (so3 = sonewconn(so2, 0)) == NULL) {
+		    (so3 = sonewconn(so2, false)) == NULL) {
 			error = ECONNREFUSED;
 			sounlock(so);
 			goto bad;
@@ -1242,6 +1255,8 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 
 	const size_t nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(file_t *);
+	if (nfds == 0)
+		goto noop;
 
 	int * const fdp = kmem_alloc(nfds * sizeof(int), KM_SLEEP);
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
@@ -1336,16 +1351,26 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	}
  out:
 	if (__predict_false(error != 0)) {
-		rp = (file_t **)CMSG_DATA(cm);
-		for (size_t i = 0; i < nfds; i++) {
-			file_t * const fp = *rp;
-			*rp++ = 0;
-			unp_discard_now(fp);
-		}
+		file_t **const fpp = (file_t **)CMSG_DATA(cm);
+		for (size_t i = 0; i < nfds; i++)
+			unp_discard_now(fpp[i]);
+		/*
+		 * Truncate the array so that nobody will try to interpret
+		 * what is now garbage in it.
+		 */
+		cm->cmsg_len = CMSG_LEN(0);
+		rights->m_len = CMSG_SPACE(0);
 	}
-
 	rw_exit(&p->p_cwdi->cwdi_lock);
 	kmem_free(fdp, nfds * sizeof(int));
+
+ noop:
+	/*
+	 * Don't disclose kernel memory in the alignment space.
+	 */
+	KASSERT(cm->cmsg_len <= rights->m_len);
+	memset(&mtod(rights, char *)[cm->cmsg_len], 0, rights->m_len -
+	    cm->cmsg_len);
 	return error;
 }
 
@@ -1455,52 +1480,26 @@ unp_internalize(struct mbuf **controlp)
 struct mbuf *
 unp_addsockcred(struct lwp *l, struct mbuf *control)
 {
-	struct cmsghdr *cmp;
 	struct sockcred *sc;
-	struct mbuf *m, *n;
-	int len, space, i;
+	struct mbuf *m;
+	void *p;
 
-	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
-	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
-
-	m = m_get(M_WAIT, MT_CONTROL);
-	if (space > MLEN) {
-		if (space > MCLBYTES)
-			MEXTMALLOC(m, space, M_WAITOK);
-		else
-			m_clget(m, M_WAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			return (control);
-		}
-	}
-
-	m->m_len = space;
-	m->m_next = NULL;
-	cmp = mtod(m, struct cmsghdr *);
-	sc = (struct sockcred *)CMSG_DATA(cmp);
-	cmp->cmsg_len = len;
-	cmp->cmsg_level = SOL_SOCKET;
-	cmp->cmsg_type = SCM_CREDS;
+	m = sbcreatecontrol1(&p, SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)),
+		SCM_CREDS, SOL_SOCKET, M_WAITOK);
+	if (m == NULL)
+		return control;
+		
+	sc = p;
 	sc->sc_uid = kauth_cred_getuid(l->l_cred);
 	sc->sc_euid = kauth_cred_geteuid(l->l_cred);
 	sc->sc_gid = kauth_cred_getgid(l->l_cred);
 	sc->sc_egid = kauth_cred_getegid(l->l_cred);
 	sc->sc_ngroups = kauth_cred_ngroups(l->l_cred);
-	for (i = 0; i < sc->sc_ngroups; i++)
+
+	for (int i = 0; i < sc->sc_ngroups; i++)
 		sc->sc_groups[i] = kauth_cred_group(l->l_cred, i);
 
-	/*
-	 * If a control message already exists, append us to the end.
-	 */
-	if (control != NULL) {
-		for (n = control; n->m_next != NULL; n = n->m_next)
-			;
-		n->m_next = m;
-	} else
-		control = m;
-
-	return (control);
+	return m_add(control, m);
 }
 
 /*

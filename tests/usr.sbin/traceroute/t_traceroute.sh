@@ -1,4 +1,4 @@
-#	$NetBSD: t_traceroute.sh,v 1.4 2010/12/31 15:21:49 pooka Exp $
+#	$NetBSD: t_traceroute.sh,v 1.4.6.1 2014/05/22 11:42:24 yamt Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,7 @@ basic_head()
 {
 
 	atf_set "descr" "Does a simple three-hop traceroute"
+	atf_set "require.progs" "rump_server"
 }
 
 cfgendpt ()
@@ -106,6 +107,7 @@ basic_icmp_head()
 {
 
 	atf_set "descr" "Does an ICMP-based three-hop traceroute"
+	atf_set "require.progs" "rump_server"
 }
 
 basic_icmp_body()

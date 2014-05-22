@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.53.2.1 2012/10/30 17:19:12 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.53.2.2 2014/05/22 11:39:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53.2.1 2012/10/30 17:19:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53.2.2 2014/05/22 11:39:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -122,8 +122,17 @@ CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
 
 const struct cdevsw rtc_cdevsw = {
-	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = rtcopen,
+	.d_close = rtcclose,
+	.d_read = rtcread,
+	.d_write = rtcwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 void statintr(struct clockframe);
@@ -502,18 +511,15 @@ rtcclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 rtcread(dev_t dev, struct uio *uio, int flags)
 {
-	struct clock_softc	*sc;
 	mc_todregs		clkregs;
 	int			s, length;
 	char			buffer[16 + 1];
-
-	sc = device_lookup_private(&clock_cd, minor(dev));
 
 	s = splhigh();
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(s);
 
-	sprintf(buffer, "%4d%02d%02d%02d%02d.%02d\n",
+	snprintf(buffer, sizeof(buffer), "%4d%02d%02d%02d%02d.%02d\n",
 	    clkregs[MC_YEAR] + GEMSTARTOFTIME,
 	    clkregs[MC_MONTH], clkregs[MC_DOM],
 	    clkregs[MC_HOUR], clkregs[MC_MIN], clkregs[MC_SEC]);
@@ -552,7 +558,7 @@ rtcwrite(dev_t dev, struct uio *uio, int flags)
 	 */
 	length = uio->uio_resid;
 	if (uio->uio_offset || (length != sizeof(buffer)
-	  && length != sizeof(buffer - 1)))
+	  && length != sizeof(buffer) - 1))
 		return EINVAL;
 	
 	if ((error = uiomove((void *)buffer, sizeof(buffer), uio)))

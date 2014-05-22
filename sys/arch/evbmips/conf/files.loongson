@@ -1,4 +1,4 @@
-#	$NetBSD: files.loongson,v 1.2.2.1 2012/04/17 00:06:17 yamt Exp $
+#	$NetBSD: files.loongson,v 1.2.2.2 2014/05/22 11:39:44 yamt Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -77,7 +77,7 @@ file	arch/evbmips/loongson/dev/kb3310.c	ykbec needs-flag
 # Gdium ST7 controller
 device	stvii
 attach	stvii at iic
-file	arch/evbmips/loongson/dev/stvii.c	stvii
+file	arch/evbmips/loongson/dev/stvii.c			stvii needs-flag
 defflag opt_stvii.h STVII_DEBUG
 
 # SM502 OHCI

@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.h,v 1.2.2.2 2013/01/16 05:32:49 yamt Exp $	*/
+/*	$NetBSD: am335x_prcm.h,v 1.2.2.3 2014/05/22 11:39:33 yamt Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -61,8 +61,32 @@ struct omap_module {
 #define AM335X_PRCM_PRM_GFX	0x1100
 #define AM335X_PRCM_PRM_CEFUSE	0x1200
 
+/* In CM_WKUP */
+#define	AM335X_PRCM_CM_IDLEST_DPLL_MPU	0x20
+#define  AM335X_PRCM_CM_IDLEST_DPLL_ST_DPLL_CLK_MN_BYPASS	__BIT(8)
+#define  AM335X_PRCM_CM_IDLEST_DPLL_ST_DPLL_CLK_LOCKED		__BIT(0)
+#define	AM335X_PRCM_CM_CLKSEL_DPLL_MPU	0x2c
+#define  AM335X_PRCM_CM_CLKSEL_DPLL_BYPASS	__BIT(23)
+#define  AM335X_PRCM_CM_CLKSEL_DPLL_MULT	__BITS(18,8)
+#define  AM335X_PRCM_CM_CLKSEL_DPLL_DIV		__BITS(6,0)
+#define	AM335X_PRCM_CM_CLKMODE_DPLL_MPU	0x88
+#define  AM335X_PRCM_CM_CLKMODE_DPLL_MN_BYP_MODE	4
+#define  AM335X_PRCM_CM_CLKMODE_DPLL_LOCK_MODE		7
+#define	AM335X_PRCM_CM_DIV_M2_DPLL_MPU	0xa8
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_ST_DPLL_CLKOUT	__BIT(9)
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_CLKOUT_GATE_CTRL	__BIT(8)
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_CLKOUT_DIVCHACK	__BIT(5)
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_CLKOUT_DIV		__BITS(4,0)
+
+
 #define PRM_RSTCTRL		0x00	/* offset from AM335X_PRCM_PRM_DEVICE */
 #define RST_GLOBAL_WARM_SW	__BIT(0)
 #define RST_GLOBAL_COLD_SW	__BIT(1)
+
+#ifdef _KERNEL
+void prcm_mpu_pll_config(u_int);
+void am335x_sys_clk(bus_space_handle_t);
+void am335x_cpu_clk(void);
+#endif
 
 #endif  /* _ARM_OMAP_AM335X_PRCM_H_ */

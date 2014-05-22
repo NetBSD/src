@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1.2.2 2013/01/16 05:32:48 yamt Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.2.3 2014/05/22 11:39:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM32_BUS_DEFS_H_
-#define _ARM32_BUS_DEFS_H_
+#ifndef _ARM_BUS_DEFS_H_
+#define _ARM_BUS_DEFS_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_arm_bus_space.h"
@@ -74,11 +74,17 @@
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
 
+#define	PRIxBUSADDR	"lx"
+#define	PRIxBUSSIZE	"lx"
+#define	PRIuBUSSIZE	"lu"
+
 /*
  * Access methods for bus space.
  */
 typedef struct bus_space *bus_space_tag_t;
 typedef u_long bus_space_handle_t;
+
+#define	PRIxBSH		"lx"
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -300,7 +306,8 @@ struct bus_space {
  * Private flags stored in the DMA map.
  */
 #define	_BUS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
-#define	_BUS_DMAMAP_IS_BOUNCING	0x20000	/* is bouncing current xfer */
+#define	_BUS_DMAMAP_IS_BOUNCING	0x20000 /* is bouncing current xfer */
+#define	_BUS_DMAMAP_NOALLOC	0x40000	/* don't alloc memory from this range */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -493,4 +500,4 @@ struct arm32_bus_dma_cookie {
 #endif /* _ARM32_BUS_DMA_PRIVATE */
 #define	_BUS_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
 
-#endif /* _ARM32_BUS_DEFS_H_ */
+#endif /* _ARM_BUS_DEFS_H_ */

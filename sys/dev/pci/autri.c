@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.46.10.1 2012/04/17 00:07:43 yamt Exp $	*/
+/*	$NetBSD: autri.c,v 1.46.10.2 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.46.10.1 2012/04/17 00:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.46.10.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include "midi.h"
 
@@ -522,6 +522,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	int r;
 	uint32_t reg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -549,7 +550,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

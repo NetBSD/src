@@ -1,0 +1,22 @@
+#	$NetBSD: std.playstation2,v 1.9.10.1 2014/05/22 11:40:02 yamt Exp $
+
+machine playstation2 mips
+include		"conf/std"	# MI standard options
+makeoptions	MACHINE_ARCH="mipsel"
+
+options 	MIPS3
+options 	MIPS3_5900
+
+options 	IPL_ICU_MASK
+
+options 	NOFPU		# Don't use FPU (R5900 FPU is single float only)
+options 	SOFTFLOAT	# emulate FPU insn
+
+options 	EXEC_ELF32	# exec ELF32 binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+options 	__NO_LEADING_UNDERSCORES__
+options 	__GP_SUPPORT__
+
+makeoptions	DEFTEXTADDR="0x80010000"
+makeoptions	DEFCOPTS="-Os -mmemcpy"

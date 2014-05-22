@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.11.12.2 2012/10/30 17:20:54 yamt Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.11.12.3 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.11.12.2 2012/10/30 17:20:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.11.12.3 2014/05/22 11:40:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -541,9 +541,11 @@ btkbd_input(struct bthidev *hidev, uint8_t *data, int len)
 	if (sc->sc_rawkbd) {
 		u_char cbuf[MAXKEYS * 2];
 		int c;
-		int npress;
+#ifdef BTKBD_REPEAT
+		int npress = 0;
+#endif
 
-		for (npress = i = j = 0 ; i < nkeys ; i++) {
+		for (i = j = 0 ; i < nkeys ; i++) {
 			key = ibuf[i];
 			c = btkbd_trtab[key & CODEMASK];
 			if (c == NN)

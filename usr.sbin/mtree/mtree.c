@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.37.2.3 2013/01/23 00:06:43 yamt Exp $	*/
+/*	$NetBSD: mtree.c,v 1.37.2.4 2014/05/22 11:43:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.37.2.3 2013/01/23 00:06:43 yamt Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.37.2.4 2014/05/22 11:43:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: mtree.c,v 1.37.2.3 2013/01/23 00:06:43 yamt Exp $");
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;
-int	bflag, cflag, Cflag, dflag, Dflag, eflag, iflag, jflag, lflag, mflag,
-    	nflag, qflag, rflag, sflag, tflag, uflag, Uflag, wflag;
+int	bflag, dflag, eflag, iflag, jflag, lflag, mflag, nflag, qflag, rflag,
+	sflag, tflag, uflag;
 char	fullpath[MAXPATHLEN];
 
 static struct {
@@ -79,18 +79,20 @@ main(int argc, char **argv)
 {
 	int	ch, status;
 	unsigned int	i;
+	int	cflag, Cflag, Dflag, Uflag, wflag;
 	char	*dir, *p;
 	FILE	*spec1, *spec2;
 
 	setprogname(argv[0]);
 
+	cflag = Cflag = Dflag = Uflag = wflag = 0;
 	dir = NULL;
 	init_excludes();
 	spec1 = stdin;
 	spec2 = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "bcCdDeE:f:F:I:ijk:K:lLmMnN:p:PqrR:s:StuUwWxX:"))
+	    "bcCdDeE:f:F:I:ijk:K:lLmMnN:O:p:PqrR:s:StuUwWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'b':
@@ -178,6 +180,9 @@ main(int argc, char **argv)
 				mtree_err(
 			    "Unable to use user and group databases in `%s'",
 				    optarg);
+			break;
+		case 'O':
+			load_only(optarg);
 			break;
 		case 'p':
 			dir = optarg;
@@ -291,11 +296,11 @@ main(int argc, char **argv)
 		mtree_err("-l and -u flags are mutually exclusive");
 
 	if (cflag) {
-		cwalk();
+		cwalk(stdout);
 		exit(0);
 	}
 	if (Cflag || Dflag) {
-		dump_nodes("", spec(spec1), Dflag);
+		dump_nodes(stdout, "", spec(spec1), Dflag);
 		exit(0);
 	}
 	if (spec2 != NULL)

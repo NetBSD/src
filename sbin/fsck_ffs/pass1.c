@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.49.2.1 2013/01/23 00:05:30 yamt Exp $	*/
+/*	$NetBSD: pass1.c,v 1.49.2.2 2014/05/22 11:37:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.49.2.1 2013/01/23 00:05:30 yamt Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.49.2.2 2014/05/22 11:37:28 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,15 +235,11 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	int64_t blocks;
 	char symbuf[MAXBSIZE];
 	struct inostat *info;
-	uid_t uid;
-	gid_t gid;
 
 	dp = getnextinode(inumber);
 	info = inoinfo(inumber);
 	mode = iswap16(DIP(dp, mode)) & IFMT;
 	size = iswap64(DIP(dp, size));
-	uid = iswap32(DIP(dp, uid));
-	gid = iswap32(DIP(dp, gid));
 	if (mode == 0) {
 		if ((is_ufs2 && 
 		    (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
@@ -276,7 +272,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	else
 		kernmaxfilesize = (u_int64_t)0x80000000 * sblock->fs_bsize - 1;
 	if (size > kernmaxfilesize  || size + sblock->fs_bsize - 1 < size ||
-	    (mode == IFDIR && size > MAXDIRSIZE)) {
+	    (mode == IFDIR && size > UFS_MAXDIRSIZE)) {
 		if (debug)
 			printf("bad size %llu:",(unsigned long long)size);
 		goto unknown;
@@ -309,7 +305,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    size > 0 && size < UFS1_MAXSYMLINKLEN &&
 		    DIP(dp, blocks) != 0) {
 			if (bread(fsreadfd, symbuf,
-			    fsbtodb(sblock, iswap32(DIP(dp, db[0]))),
+			    FFS_FSBTODB(sblock, iswap32(DIP(dp, db[0]))),
 			    (long)secsize) != 0)
 				errexit("cannot read symlink");
 			if (debug) {
@@ -339,7 +335,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (ndb > UFS_NDADDR) {
 				j = ndb - UFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
-					ndb *= NINDIR(sblock);
+					ndb *= FFS_NINDIR(sblock);
 				ndb += UFS_NDADDR;
 			}
 		}
@@ -362,7 +358,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 
 	for (j = 0, ndb -= UFS_NDADDR; ndb > 0; j++)
-		ndb /= NINDIR(sblock);
+		ndb /= FFS_NINDIR(sblock);
 
 	for (; j < UFS_NIADDR; j++)
 		if (DIP(dp, ib[j]) != 0) {
@@ -431,9 +427,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		ndb = howmany(iswap32(dp->dp2.di_extsize), sblock->fs_bsize);
 		for (j = 0; j < UFS_NXADDR; j++) {
 			if (--ndb == 0 &&
-			    (offset = blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
-				idesc->id_numfrags = numfrags(sblock,
-				    fragroundup(sblock, offset));
+			    (offset = ffs_blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
+				idesc->id_numfrags = ffs_numfrags(sblock,
+				    ffs_fragroundup(sblock, offset));
 			else
 				idesc->id_numfrags = sblock->fs_frag;
 			if (dp->dp2.di_extb[j] == 0)

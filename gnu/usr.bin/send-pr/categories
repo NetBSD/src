@@ -25,7 +25,6 @@ port-evbmips
 port-evbppc
 port-evbsh3
 port-hp300
-port-hp700
 port-hpcarm
 port-hpcmips
 port-hpcsh
@@ -48,6 +47,7 @@ port-news68k
 port-newsmips
 port-next68k
 port-ofppc
+port-playstation2
 port-pmax
 port-powerpc
 port-prep

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.107.2.3 2013/01/23 00:06:06 yamt Exp $ */
+/* $NetBSD: vga.c,v 1.107.2.4 2014/05/22 11:40:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.107.2.3 2013/01/23 00:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.107.2.4 2014/05/22 11:40:22 yamt Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -445,7 +445,7 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		const struct wsscreen_descr *type, int existing, long *attrp)
 {
 	int cpos;
-	int res;
+	int res __diagused;
 
 	scr->cfg = vc;
 	scr->pcs.hdl = (struct pcdisplay_handle *)&vc->hdl;

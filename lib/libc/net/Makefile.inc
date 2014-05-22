@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.78.6.2 2013/01/23 00:05:22 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.78.6.3 2014/05/22 11:36:53 yamt Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -24,7 +24,7 @@ COPTS.hesiod.c+=	${${ACTIVE_CC} == "gcc" :? -O1 :}
 
 SRCS+=	getaddrinfo.c getnameinfo.c
 .if (${USE_INET6} != "no")
-SRCS+=	ip6opt.c rthdr.c vars6.c
+SRCS+=	ip6opt.c rthdr.c vars6.c inet6_scopeid.c
 .endif
 SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
 
@@ -51,7 +51,7 @@ COPTS.gethnamaddr.c+=	${${ACTIVE_CC} == "gcc" :? -fno-tree-ter :}
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getifaddrs.3 \
 	getnetent.3 getprotoent.3 getpeereid.3 \
-	getservent.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 \
+	getservent.3 inet.3 inet_net.3 linkaddr.3 \
 	nsdispatch.3 rcmd.3 resolver.3 sockatmark.3
 
 .if (${MKHESIOD} != "no")
@@ -120,12 +120,13 @@ MLINKS+=resolver.3 dn_comp.3 \
 # IPv6
 MAN+=	gai_strerror.3 getaddrinfo.3 getnameinfo.3 if_indextoname.3 \
 	inet6_option_space.3 inet6_rthdr_space.3 \
-	inet6_opt_init.3 inet6_rth_space.3
+	inet6_opt_init.3 inet6_rth_space.3 inet6_getscopeid.3
 MLINKS+=getaddrinfo.3 freeaddrinfo.3 \
 	getaddrinfo.3 allocaddrinfo.3 \
 	getifaddrs.3 freeifaddrs.3 \
 	if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3 \
+	inet6_getscopeid.3 inet6_putscopeid.3 \
 	inet6_option_space.3 inet6_option_init.3 \
 	inet6_option_space.3 inet6_option_append.3 \
 	inet6_option_space.3 inet6_option_alloc.3 \

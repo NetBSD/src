@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.47.8.1 2013/01/16 05:33:44 yamt Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.47.8.2 2014/05/22 11:41:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.47.8.1 2013/01/16 05:33:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.47.8.2 2014/05/22 11:41:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	cn.cn_namelen = 2;
 	cn.cn_consume = 0;
 
-	/*
-	 * At this point, lvp is locked.
-	 * On successful return, *uvpp will be locked
-	 */
+	/* At this point, lvp is locked  */
 	error = VOP_LOOKUP(lvp, uvpp, &cn);
 	vput(lvp);
 	if (error) {
@@ -144,6 +141,13 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 		return error;
 	}
 	uvp = *uvpp;
+	/* Now lvp is unlocked, try to lock uvp */
+	error = vn_lock(uvp, LK_EXCLUSIVE);
+	if (error) {
+		*lvpp = NULL;
+		*uvpp = NULL;
+		return error;
+	}
 
 	/* If we don't care about the pathname, we're done */
 	if (bufp == NULL) {
@@ -153,7 +157,8 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 	fileno = va.va_fileid;
 
-	dirbuflen = DIRBLKSIZ;
+	/* I guess UFS_DIRBLKSIZ is a good guess at a good size to use? */
+	dirbuflen = UFS_DIRBLKSIZ;
 	if (dirbuflen < va.va_blocksize)
 		dirbuflen = va.va_blocksize;
 	dirbuf = kmem_alloc(dirbuflen, KM_SLEEP);

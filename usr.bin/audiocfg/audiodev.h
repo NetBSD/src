@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.3 2010/09/02 02:17:35 jmcneill Exp $ */
+/* $NetBSD: audiodev.h,v 1.3.6.1 2014/05/22 11:42:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -45,7 +45,7 @@ struct audiodev {
 	dev_t dev;
 	bool defaultdev;
 
-	int pchan;
+	unsigned pchan;
 
 	audio_device_t audio_device;
 

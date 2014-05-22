@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.45.4.1 2012/04/17 00:07:06 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.45.4.2 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.45.4.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.45.4.2 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -335,7 +335,7 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
 	
-	aprint_verbose(", version %x, %d pins", sc->sc_apic_vers,
+	aprint_verbose(", version 0x%x, %d pins", sc->sc_apic_vers,
 	    sc->sc_apic_sz);
 	aprint_normal("\n");
 

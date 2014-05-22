@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.38.2.2 2012/05/23 10:08:12 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.38.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38.2.2 2012/05/23 10:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -550,11 +550,6 @@ sysctl_sched_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "posix_sched",

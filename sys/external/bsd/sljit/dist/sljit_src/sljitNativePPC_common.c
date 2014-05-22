@@ -37,47 +37,6 @@ typedef sljit_ui sljit_ins;
 #include <sys/cache.h>
 #endif
 
-static void ppc_cache_flush(sljit_ins *from, sljit_ins *to)
-{
-#ifdef _AIX
-	_sync_cache_range((caddr_t)from, (int)((size_t)to - (size_t)from));
-#elif defined(__GNUC__) || (defined(__IBM_GCC_ASM) && __IBM_GCC_ASM)
-#	if defined(_ARCH_PWR) || defined(_ARCH_PWR2)
-	/* Cache flush for POWER architecture. */
-	while (from < to) {
-		__asm__ volatile (
-			"clf 0, %0\n"
-			"dcs\n"
-			: : "r"(from)
-		);
-		from++;
-	}
-	__asm__ volatile ( "ics" );
-#	elif defined(_ARCH_COM) && !defined(_ARCH_PPC)
-#	error "Cache flush is not implemented for PowerPC/POWER common mode."
-#	else
-	/* Cache flush for PowerPC architecture. */
-	while (from < to) {
-		__asm__ volatile (
-			"dcbf 0, %0\n"
-			"sync\n"
-			"icbi 0, %0\n"
-			: : "r"(from)
-		);
-		from++;
-	}
-	__asm__ volatile ( "isync" );
-#	endif
-#	ifdef __xlc__
-#	warning "This file may fail to compile if -qfuncsect is used"
-#	endif
-#elif defined(__xlc__)
-#error "Please enable GCC syntax for inline assembly statements with -qasm=gcc"
-#else
-#error "This platform requires a cache flush implementation."
-#endif /* _AIX */
-}
-
 #define TMP_REG1	(SLJIT_NO_REGISTERS + 1)
 #define TMP_REG2	(SLJIT_NO_REGISTERS + 2)
 #define TMP_REG3	(SLJIT_NO_REGISTERS + 3)

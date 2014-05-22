@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19.2.1 2012/10/30 18:58:50 yamt Exp $	*/
+/*	$NetBSD: extern.h,v 1.19.2.2 2014/05/22 11:36:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -27,12 +27,18 @@
 #include <stdarg.h>
 #include <ucontext.h>
 
+#ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#define __LOCALE_T_DECLARED
+#endif /* __LOCALE_T_DECLARED */
+
 __BEGIN_DECLS
 extern char *__minbrk;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);
 void _resumecontext(void) __dead;
+__dso_hidden int	_strerror_lr(int, char *, size_t, locale_t);
 const char *__strerror(int , char *, size_t);
 const char *__strsignal(int , char *, size_t);
 char *__dtoa(double, int, int, int *, int *, char **);
@@ -60,11 +66,6 @@ void	syslogp_ss(int, struct syslog_data *, const char *, const char *,
 void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
     const char *, va_list) __RENAME(__vsyslogp_ss60) __printflike(5, 0);
 #endif
-
-int	snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
-    __printflike(3, 4);
-int	vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
-    va_list) __printflike(3, 0);
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);

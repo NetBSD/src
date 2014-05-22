@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.41.2.3 2013/01/23 00:06:30 yamt Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.41.2.4 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -317,7 +317,7 @@ int	posix_fadvise(int, off_t, off_t, int);
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
     defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
-int	openat(int, const char *, int oflags, ...);
+int	openat(int, const char *, int, ...);
 #endif
 __END_DECLS
 #endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: efareg.h,v 1.2 2011/10/29 11:16:19 rkujawa Exp $ */
+/*	$NetBSD: efareg.h,v 1.2.2.1 2014/05/22 11:39:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@
 
 #ifndef _AMIGA_EFAREG_H_
 
-#define GAYLE_IDE_BASE		0xDA0000
 #define FATA1_BASE		0xDA2000
 
 /* Offsets. Stride of 4 is used, so multiply any offset by 4. */

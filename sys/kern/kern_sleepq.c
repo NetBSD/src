@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.44.2.2 2012/10/30 17:22:31 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.44.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.44.2.2 2012/10/30 17:22:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.44.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -226,6 +226,8 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
  *	After any intermediate step such as releasing an interlock, switch.
  * 	sleepq_block() may return early under exceptional conditions, for
  * 	example if the LWP's containing process is exiting.
+ *
+ *	timo is a timeout in ticks.  timo = 0 specifies an infinite timeout.
  */
 int
 sleepq_block(int timo, bool catch)
@@ -305,7 +307,7 @@ sleepq_block(int timo, bool catch)
  *
  *	Wake zero or more LWPs blocked on a single wait channel.
  */
-lwp_t *
+void
 sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 {
 	lwp_t *l, *next;
@@ -324,7 +326,6 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 	}
 
 	mutex_spin_exit(mp);
-	return l;
 }
 
 /*

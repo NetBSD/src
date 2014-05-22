@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.13 2011/05/13 22:16:44 rmind Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.13.4.1 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -69,12 +69,12 @@
  *
  *	A low-overhead mechanism for high priority calls (XC_HIGHPRI) is
  *	also provided.  The function to be executed runs on a software
- *	interrupt context, at SOFTINT_CLOCK level, and is expected to be
- *	very lightweight, e.g. avoid blocking.
+ *	interrupt context, at IPL_SOFTSERIAL level, and is expected to
+ *	be very lightweight, e.g. avoid blocking.
  */
- 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.13 2011/05/13 22:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.13.4.1 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,6 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.13 2011/05/13 22:16:44 rmind Exp $"
 #include <sys/evcnt.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
+
+#ifdef _RUMPKERNEL
+#include "rump_private.h"
+#endif
 
 /* Cross-call state box. */
 typedef struct {
@@ -113,7 +117,6 @@ static struct evcnt	xc_broadcast_ev	__cacheline_aligned;
 
 static void		xc_init(void);
 static void		xc_thread(void *);
-static void		xc_highpri_intr(void *);
 
 static inline uint64_t	xc_highpri(xcfunc_t, void *, void *, struct cpu_info *);
 static inline uint64_t	xc_lowpri(xcfunc_t, void *, void *, struct cpu_info *);
@@ -134,10 +137,10 @@ xc_init(void)
 	xc_tailp = 0;
 
 	memset(xchi, 0, sizeof(xc_state_t));
-	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&xchi->xc_busy, "xchicv");
-	xc_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
-	    xc_highpri_intr, NULL);
+	xc_sih = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
+	    xc__highpri_intr, NULL);
 	KASSERT(xc_sih != NULL);
 
 	evcnt_attach_dynamic(&xc_unicast_ev, EVCNT_TYPE_MISC, NULL,
@@ -156,7 +159,7 @@ void
 xc_init_cpu(struct cpu_info *ci)
 {
 	static bool again = false;
-	int error;
+	int error __diagused;
 
 	if (!again) {
 		/* Autoconfiguration will prevent re-entry. */
@@ -329,23 +332,23 @@ xc_thread(void *cookie)
 void
 xc_ipi_handler(void)
 {
-	/* Executes xc_highpri_intr() via software interrupt. */
+	/* Executes xc__highpri_intr() via software interrupt. */
 	softint_schedule(xc_sih);
 }
 
 /*
- * xc_highpri_intr:
+ * xc__highpri_intr:
  *
  *	A software interrupt handler for high priority calls.
  */
-static void
-xc_highpri_intr(void *dummy)
+void
+xc__highpri_intr(void *dummy)
 {
 	xc_state_t *xc = &xc_high_pri;
 	void *arg1, *arg2;
 	xcfunc_t func;
 
-	KASSERT(cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
 	/*
 	 * Lock-less fetch of function and its arguments.
 	 * Safe since it cannot change at this point.
@@ -396,6 +399,9 @@ xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
 	 * Note: it will handle the local CPU case.
 	 */
 
+#ifdef _RUMPKERNEL
+	rump_xc_highpri(ci);
+#else
 #ifdef MULTIPROCESSOR
 	kpreempt_disable();
 	if (curcpu() == ci) {
@@ -411,8 +417,9 @@ xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
 	}
 	kpreempt_enable();
 #else
-	KASSERT(curcpu() == ci);
+	KASSERT(ci == NULL || curcpu() == ci);
 	xc_ipi_handler();
+#endif
 #endif
 
 	/* Indicate a high priority ticket. */

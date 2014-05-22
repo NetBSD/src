@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.20.2.1 2012/05/23 10:07:36 yamt Exp $ */
+/* $NetBSD: ioc.c,v 1.20.2.2 2014/05/22 11:39:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.20.2.1 2012/05/23 10:07:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.20.2.2 2014/05/22 11:39:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,16 +91,13 @@ ioc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ioc_softc *sc = device_private(self);
 	struct iobus_attach_args *ioa = aux;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
 
 	sc->sc_dev = the_ioc = self;
 	sc->sc_bst = ioa->ioa_tag;
 	if (bus_space_map(ioa->ioa_tag, ioa->ioa_base, 0x00200000,
 			  0, &(sc->sc_bsh)) != 0)
 		panic("%s: couldn't map", device_xname(self));
-	bst = sc->sc_bst;
-	bsh = sc->sc_bsh;
+
 	/* Now we need to set up bits of the IOC */
 	/* Control register: All bits high (input) is probably safe */
 	ioc_ctl_write(self, 0xff, 0xff);

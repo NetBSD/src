@@ -1,4 +1,6 @@
-#	$NetBSD: files.rasoc,v 1.2 2011/07/28 15:50:13 matt Exp $
+#	$NetBSD: files.rasoc,v 1.2.2.1 2014/05/22 11:39:44 yamt Exp $
+
+defflag opt_rasoc.h				RT3050 RT3052 RT3883 MT7620
 
 file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/mips3_clock.c

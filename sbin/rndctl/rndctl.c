@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.20.2.2 2012/10/30 18:59:32 yamt Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.20.2.3 2014/05/22 11:37:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.20.2.2 2012/10/30 18:59:32 yamt Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.20.2.3 2014/05/22 11:37:31 yamt Exp $");
 #endif
 
 
@@ -203,9 +203,8 @@ do_load(const char *const filename)
 	}
 
 	memset(&rszero, 0, sizeof(rszero));
-	if (write(fd, &rszero, sizeof(rszero) != sizeof(rszero))) {
+	if (pwrite(fd, &rszero, sizeof(rszero), (off_t)0) != sizeof(rszero))
 		err(1, "overwrite");
-	}
 	fsync_range(fd, FDATASYNC|FDISKSYNC, (off_t)0, (off_t)0);
 	close(fd);
 

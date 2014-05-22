@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccm.c,v 1.1.4.3 2012/10/30 17:19:03 yamt Exp $	*/
+/*	$NetBSD: imx51_ccm.c,v 1.1.4.4 2014/05/22 11:39:32 yamt Exp $	*/
 /*
  * Copyright (c) 2010, 2011, 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.1.4.3 2012/10/30 17:19:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.1.4.4 2014/05/22 11:39:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -146,6 +146,7 @@ imx51_get_clock(enum imx51_clock clk)
 	uint32_t cacrr;	/* ARM clock root register */
 	uint32_t ccsr;
 	uint32_t cscdr1;
+	uint32_t cscdr2;
 	uint32_t cscmr1;
 	uint32_t cbcdr;
 	uint32_t cbcmr;
@@ -292,6 +293,72 @@ imx51_get_clock(enum imx51_clock clk)
 				freq = imx51_get_clock(IMX51CLK_AHB_CLK_ROOT);
 				break;
 			}
+		return freq;
+	case IMX51CLK_ESDHC2_CLK_ROOT:
+	case IMX51CLK_ESDHC4_CLK_ROOT:
+		cscmr1 = bus_space_read_4(iot, ioh, CCMC_CSCMR1);
+
+		sel = 0;
+		if (clk == IMX51CLK_ESDHC2_CLK_ROOT)
+			sel = __SHIFTOUT(cscmr1, CSCMR1_ESDHC2_CLK_SEL);
+		else if (clk == IMX51CLK_ESDHC4_CLK_ROOT)
+			sel = __SHIFTOUT(cscmr1, CSCMR1_ESDHC4_CLK_SEL);
+
+		if (sel == 0)
+			freq = imx51_get_clock(IMX51CLK_ESDHC1_CLK_ROOT);
+		else
+			freq = imx51_get_clock(IMX51CLK_ESDHC3_CLK_ROOT);
+
+		return freq;
+	case IMX51CLK_ESDHC1_CLK_ROOT:
+	case IMX51CLK_ESDHC3_CLK_ROOT:
+
+		cscdr1 = bus_space_read_4(iot, ioh, CCMC_CSCDR1);
+		cscmr1 = bus_space_read_4(iot, ioh, CCMC_CSCMR1);
+
+		sel = 0;
+		if (clk == IMX51CLK_ESDHC1_CLK_ROOT)
+			sel = __SHIFTOUT(cscmr1, CSCMR1_ESDHC1_CLK_SEL);
+		else if (clk == IMX51CLK_ESDHC3_CLK_ROOT)
+			sel = __SHIFTOUT(cscmr1, CSCMR1_ESDHC3_CLK_SEL);
+
+		switch (sel) {
+		case 0:
+		case 1:
+		case 2:
+			freq = imx51_get_clock(IMX51CLK_PLL1SW + sel);
+			break;
+		case 3:
+			freq = imx51_get_clock(IMX51CLK_LP_APM);
+			break;
+		}
+
+		if (clk == IMX51CLK_ESDHC1_CLK_ROOT)
+			freq = freq / (1 + __SHIFTOUT(cscdr1, CSCDR1_ESDHC1_CLK_PRED)) /
+			    (1 + __SHIFTOUT(cscdr1, CSCDR1_ESDHC1_CLK_PODF));
+		else if (clk == IMX51CLK_ESDHC3_CLK_ROOT)
+			freq = freq / (1 + __SHIFTOUT(cscdr1, CSCDR1_ESDHC3_CLK_PRED)) /
+			    (1 + __SHIFTOUT(cscdr1, CSCDR1_ESDHC3_CLK_PODF));
+		return freq;
+	case IMX51CLK_CSPI_CLK_ROOT:
+		cscmr1 = bus_space_read_4(iot, ioh, CCMC_CSCMR1);
+		cscdr2 = bus_space_read_4(iot, ioh, CCMC_CSCDR2);
+
+		sel = __SHIFTOUT(cscmr1, CSCMR1_CSPI_CLK_SEL);
+		switch (sel) {
+		case 0:
+		case 1:
+		case 2:
+			freq = imx51_get_clock(IMX51CLK_PLL1SW + sel);
+			break;
+		case 3:
+			freq = imx51_get_clock(IMX51CLK_LP_APM);
+			break;
+		}
+
+		freq = freq / (1 + __SHIFTOUT(cscdr2, CSCDR2_ECSPI_CLK_PRED)) /
+		    (1 + __SHIFTOUT(cscdr2, CSCDR2_ECSPI_CLK_PODF));
+
 		return freq;
 	default:
 		aprint_error_dev(ccm_softc->sc_dev,

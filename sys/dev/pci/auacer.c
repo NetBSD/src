@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.28.8.2 2012/10/30 17:21:23 yamt Exp $	*/
+/*	$NetBSD: auacer.c,v 1.28.8.3 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.28.8.2 2012/10/30 17:21:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.28.8.3 2014/05/22 11:40:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +258,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	pcireg_t v;
 	const char *intrstr;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -291,7 +292,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
 	    auacer_intr, sc);
 	if (sc->sc_ih == NULL) {

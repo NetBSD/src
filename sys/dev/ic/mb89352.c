@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.52.8.1 2012/04/17 00:07:34 yamt Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.52.8.2 2014/05/22 11:40:22 yamt Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.52.8.1 2012/04/17 00:07:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.52.8.2 2014/05/22 11:40:22 yamt Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -510,7 +510,7 @@ spc_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_periph *periph;
+	struct scsipi_periph *periph __diagused;
 	struct spc_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	struct spc_acb *acb;
 	int s, flags;

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.38.2.2 2012/10/30 17:19:52 yamt Exp $
+#	$NetBSD: GENERIC,v 1.38.2.3 2014/05/22 11:39:54 yamt Exp $
 #
 #
 
@@ -299,7 +299,7 @@ pseudo-device	clockctl
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

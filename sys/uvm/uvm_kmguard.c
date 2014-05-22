@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.5.4.1 2012/04/17 00:08:59 yamt Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.5.4.2 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.5.4.1 2012/04/17 00:08:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.5.4.2 2014/05/22 11:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ uvm_kmguard_free(struct uvm_kmguard *kg, size_t len, void *p)
 {
 	vaddr_t va;
 	u_int rotor;
-	void **c;
+	void **c __diagused;
 
 	if (len > MAXSIZE) {
 		return false;

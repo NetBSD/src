@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.13.8.3 2013/01/23 00:06:19 yamt Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.13.8.4 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.13.8.3 2013/01/23 00:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.13.8.4 2014/05/22 11:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -120,14 +120,13 @@ struct	nchstats filecore_nchstats;
 int
 filecore_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *vdp;		/* vnode for directory being searched */
 	struct filecore_node *dp;	/* inode for directory being searched */
-	struct filecore_mnt *fcmp;	/* file system that directory is in */
 	struct buf *bp;			/* a buffer of directory entries */
 	struct filecore_direntry *de;
 	int numdirpasses;		/* strategy for directory search */
@@ -150,7 +149,6 @@ filecore_lookup(void *v)
 	*vpp = NULL;
 	vdp = ap->a_dvp;
 	dp = VTOI(vdp);
-	fcmp = dp->i_mnt;
 
 	/*
 	 * Check accessiblity of directory.
@@ -318,5 +316,7 @@ found:
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	return 0;
 }

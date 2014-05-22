@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.9.12.1 2012/04/17 00:06:29 yamt Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.9.12.2 2014/05/22 11:39:52 yamt Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.9.12.1 2012/04/17 00:06:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.9.12.2 2014/05/22 11:39:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ glxsb_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_co, 0);
 	callout_setfunc(&sc->sc_co, glxsb_rnd, sc);
 	glxsb_rnd(sc);
-	printf(": RNG");
+	aprint_normal(": RNG");
 
 	/* We don't have an interrupt handler, so disable completion INTs */
 	intr = SB_AI_DISABLE_AES_A | SB_AI_DISABLE_AES_B |
@@ -264,9 +264,9 @@ glxsb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (glxsb_crypto_setup(sc))
-		printf(" AES");
+		aprint_normal(" AES");
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void

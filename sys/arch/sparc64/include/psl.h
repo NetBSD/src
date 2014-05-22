@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.49.2.1 2013/01/16 05:33:06 yamt Exp $ */
+/*	$NetBSD: psl.h,v 1.49.2.2 2014/05/22 11:40:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -486,21 +486,7 @@ SPLHOLD(splfdsoft, PIL_FDSOFT)
  */
 SPLHOLD(splvm, PIL_VM)
 
-/* fd hardware interrupts are at level 11 */
-SPLHOLD(splfd, PIL_FD)
-
-/* zs hardware interrupts are at level 12 */
-SPLHOLD(splzs, PIL_SER)
-SPLHOLD(splserial, PIL_SER)
-
-/* audio hardware interrupts are at level 13 */
-SPLHOLD(splaudio, PIL_AUD)
-
-/* second sparc timer interrupts at level 14 */
-SPLHOLD(splstatclock, PIL_STATCLOCK)
-
 SPLHOLD(splsched, PIL_SCHED)
-SPLHOLD(spllock, PIL_LOCK)
 
 SPLHOLD(splhigh, PIL_HIGH)
 

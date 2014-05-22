@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.2 2012/10/30 19:00:12 yamt Exp $
+#	$NetBSD: Makefile,v 1.11.2.3 2014/05/22 11:42:31 yamt Exp $
 
 .include <bsd.init.mk>
 
@@ -9,12 +9,15 @@
 .include "Makefile.inc"
 .include "${LLVM_TOPLEVEL}/lib/Makefile.inc"
 
-realdepends realall: config/config.status need-dl
+realdepends realall: config/config.status need-dl need-terminfo
 
 config/config.status: ${LLVM_SRCDIR}/configure
 	mkdir -p config
+	printf '#!/bin/sh\necho 2.7.3' > config/python
+	chmod 755 config/python
 	cd config && ${LLVM_SRCDIR}/configure ${LLVM_CONFIGURE_ARGS} \
-	    --enable-optimized CC=${HOST_CC:Q}
+	    --enable-optimized CC=${HOST_CC:Q} CXX=${HOST_CXX:Q} \
+	    --with-python=${.OBJDIR}/config/python
 # --disable-assertions
 
 need-dl:
@@ -27,7 +30,16 @@ need-dl:
 		echo > ${.TARGET}; \
 	fi
 
-CLEANFILES+=	need-dl need-dl.c need-dl.out
+need-terminfo:
+	printf '#include <term.h>\nint main(void){return setupterm(0, 0, 0);}' > need-terminfo.c
+	for lib in tinfo terminfo ncurses curses; do \
+		if ${HOST_CC} -o need-terminfo.out need-terminfo.c -l$$lib > /dev/null 2>&1; then \
+			echo -l$$lib > ${.TARGET}; \
+			break; \
+		fi; \
+	done
+
+CLEANFILES+=	need-dl need-dl.c need-dl.out need-terminfo need-terminfo.c need-terminfo.out
 
 cleandir: cleandir-llvm
 

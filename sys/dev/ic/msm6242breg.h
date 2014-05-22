@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242breg.h,v 1.1.4.2 2013/01/16 05:33:15 yamt Exp $ */
+/*      $NetBSD: msm6242breg.h,v 1.1.4.3 2014/05/22 11:40:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define	MSM6242B_CONTROL_E	0xE
 
 #define	MSM6242B_CONTROL_F	0xF
-#define	MSM6242B_CONTROL_F_24H		__BIT(3)
+#define	MSM6242B_CONTROL_F_24H		__BIT(2)
 
 #define MSM6242B_MASK		0xF	/* 4 significant bits only */
 #define MSM6242B_SIZE		0x10
@@ -67,4 +67,3 @@
 #define MSM6242B_BASE_YEAR	1900
 
 #endif /* _MSM6242BREG_H_ */
-

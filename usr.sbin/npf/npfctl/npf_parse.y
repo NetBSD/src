@@ -1,11 +1,11 @@
-/*	$NetBSD: npf_parse.y,v 1.6.2.4 2013/01/16 05:34:10 yamt Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.6.2.5 2014/05/22 11:43:07 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann and Christos Zoulas.
+ * by Martin Husemann, Christos Zoulas and Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,13 +40,11 @@
 
 #define	YYSTACKSIZE	4096
 
+int			yyparsetarget;
 const char *		yyfilename;
 
 extern int		yylineno, yycolumn;
 extern int		yylex(void);
-
-/* Variable under construction (bottom up). */
-static npfvar_t *	cvar;
 
 void
 yyerror(const char *fmt, ...)
@@ -75,8 +73,18 @@ yyerror(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
+#define	CHECK_PARSER_FILE				\
+	if (yyparsetarget != NPFCTL_PARSE_FILE)		\
+		yyerror("rule must be in the group");
+
+#define	CHECK_PARSER_STRING				\
+	if (yyparsetarget != NPFCTL_PARSE_STRING)	\
+		yyerror("invalid rule syntax");
+
 %}
 
+%token			ALG
+%token			ALGO
 %token			ALL
 %token			ANY
 %token			APPLY
@@ -84,6 +92,7 @@ yyerror(const char *fmt, ...)
 %token			ARROWLEFT
 %token			ARROWRIGHT
 %token			BLOCK
+%token			CDB
 %token			CURLY_CLOSE
 %token			CURLY_OPEN
 %token			CODE
@@ -100,30 +109,34 @@ yyerror(const char *fmt, ...)
 %token			HASH
 %token			ICMPTYPE
 %token			ID
-%token			IFNET
 %token			IN
-%token			INET
+%token			INET4
 %token			INET6
 %token			INTERFACE
 %token			MAP
 %token			MINUS
 %token			NAME
+%token			NPT66
 %token			ON
 %token			OUT
 %token			PAR_CLOSE
 %token			PAR_OPEN
 %token			PASS
+%token			PCAP_FILTER
 %token			PORT
 %token			PROCEDURE
 %token			PROTO
 %token			FAMILY
 %token			FINAL
+%token			FORW
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
+%token			RULESET
 %token			SEPLINE
 %token			SLASH
 %token			STATEFUL
+%token			STATEFUL_ENDS
 %token			TABLE
 %token			TCP
 %token			TO
@@ -142,19 +155,20 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, list_elem, table_store
-%type	<str>		proc_param_val, opt_apply
-%type	<num>		ifindex, port, opt_final, on_ifindex
-%type	<num>		afamily, opt_family
-%type	<num>		block_or_pass, rule_dir, block_opts
-%type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
-%type	<var>		ifnet, addr_or_ifnet, port_range, icmp_type_and_code
+%type	<str>		addr, some_name, table_store
+%type	<str>		proc_param_val, opt_apply, ifname, on_ifname, ifref
+%type	<num>		port, opt_final, number, afamily, opt_family
+%type	<num>		block_or_pass, rule_dir, group_dir, block_opts
+%type	<num>		opt_stateful, icmp_type, table_type
+%type	<num>		map_sd, map_algo, map_type
+%type	<var>		ifaddrs, addr_or_ifaddr, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		procs, proc_call, proc_param_list, proc_param
+%type	<var>		element, list_elems, list, value
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
 %type	<optproto>	opt_proto
-%type	<rulegroup>	group_attr, group_opt
+%type	<rulegroup>	group_opts
 
 %union {
 	char *		str;
@@ -170,88 +184,93 @@ yyerror(const char *fmt, ...)
 %%
 
 input
-	: lines
+	: { CHECK_PARSER_FILE	} lines
+	| { CHECK_PARSER_STRING	} rule
 	;
 
 lines
-	: line SEPLINE lines
+	: lines SEPLINE line
 	| line
 	;
 
 line
-	: def
+	: vardef
 	| table
 	| map
 	| group
 	| rproc
+	| alg
 	|
 	;
 
-def
-	: VAR_ID
+alg
+	: ALG STRING
 	{
-		cvar = npfvar_create($1);
-		npfvar_add(cvar);
-	}
-	  EQ definition
-	{
-		cvar = NULL;
+		npfctl_build_alg($2);
 	}
 	;
 
-definition
-	: list_elem
-	| listdef
+/*
+ * A value - an element or a list of elements.
+ * Can be assigned to a variable or used inline.
+ */
+
+vardef
+	: VAR_ID EQ value
+	{
+		npfvar_add($3, $1);
+	}
 	;
 
-listdef
+value
+	: element
+	| list
+	;
+
+list
 	: CURLY_OPEN list_elems CURLY_CLOSE
+	{
+		$$ = $2;
+	}
 	;
 
 list_elems
-	: list_elem COMMA list_elems
-	| list_elem
+	: list_elems COMMA element
+	{
+		npfvar_add_elements($1, $3);
+	}
+	| element
 	;
 
-list_elem
+element
 	: IDENTIFIER
 	{
-		npfvar_t *vp = npfvar_create(".identifier");
-		npfvar_add_element(vp, NPFVAR_IDENTIFIER, $1, strlen($1) + 1);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_from_string(NPFVAR_IDENTIFIER, $1);
 	}
 	| STRING
 	{
-		npfvar_t *vp = npfvar_create(".string");
-		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_from_string(NPFVAR_STRING, $1);
 	}
-	| NUM MINUS NUM
+	| number MINUS number
 	{
-		npfvar_t *vp = npfctl_parse_port_range($1, $3);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfctl_parse_port_range($1, $3);
 	}
-	| NUM
+	| number
 	{
-		npfvar_t *vp = npfvar_create(".num");
-		npfvar_add_element(vp, NPFVAR_NUM, &$1, sizeof($1));
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_element(NPFVAR_NUM, &$1, sizeof($1));
 	}
 	| VAR_ID
 	{
-		npfvar_t *vp = npfvar_create(".var_id");
-		npfvar_add_element(vp, NPFVAR_VAR_ID, $1, strlen($1) + 1);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_from_string(NPFVAR_VAR_ID, $1);
 	}
-	| ifnet
-	{
-		npfvar_add_elements(cvar, $1);
-	}
-	| addr_and_mask
-	{
-		npfvar_add_elements(cvar, $1);
-	}
+	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
+	| ifaddrs		{ $$ = $1; }
+	| addr_and_mask		{ $$ = $1; }
 	;
+
+/*
+ * Table definition.
+ */
 
 table
 	: TABLE TABLE_ID TYPE table_type table_store
@@ -263,6 +282,7 @@ table
 table_type
 	: HASH		{ $$ = NPF_TABLE_HASH; }
 	| TREE		{ $$ = NPF_TABLE_TREE; }
+	| CDB		{ $$ = NPF_TABLE_CDB; }
 	;
 
 table_store
@@ -270,10 +290,19 @@ table_store
 	| TFILE STRING	{ $$ = $2; }
 	;
 
+/*
+ * Map definition.
+ */
+
 map_sd
 	: TSTATIC	{ $$ = NPFCTL_NAT_STATIC; }
 	| TDYNAMIC	{ $$ = NPFCTL_NAT_DYNAMIC; }
 	|		{ $$ = NPFCTL_NAT_DYNAMIC; }
+	;
+
+map_algo
+	: ALGO NPT66	{ $$ = NPF_ALGO_NPT66; }
+	|		{ $$ = 0; }
 	;
 
 map_type
@@ -283,7 +312,7 @@ map_type
 	;
 
 mapseg
-	: addr_or_ifnet port_range
+	: addr_or_ifaddr port_range
 	{
 		$$.ap_netaddr = $1;
 		$$.ap_portrange = $2;
@@ -291,15 +320,23 @@ mapseg
 	;
 
 map
-	: MAP ifindex map_sd mapseg map_type mapseg PASS filt_opts
+	: MAP ifref map_sd map_algo mapseg map_type mapseg PASS filt_opts
 	{
-		npfctl_build_natseg($3, $5, $2, &$4, &$6, &$8);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, $4);
 	}
-	| MAP ifindex map_sd mapseg map_type mapseg
+	| MAP ifref map_sd map_algo mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, $4);
+	}
+	| MAP RULESET group_opts
+	{
+		npfctl_build_maprset($3.rg_name, $3.rg_attr, $3.rg_ifname);
 	}
 	;
+
+/*
+ * Rule procedure definition and its parameters.
+ */
 
 rproc
 	: PROCEDURE STRING CURLY_OPEN procs CURLY_CLOSE
@@ -309,7 +346,7 @@ rproc
 	;
 
 procs
-	: proc_call SEPLINE procs
+	: procs SEPLINE proc_call
 	{
 		$$ = npfvar_add_elements($1, $3);
 	}
@@ -323,14 +360,14 @@ proc_call
 
 		pc.pc_name = estrdup($1);
 		pc.pc_opts = $3;
-		$$ = npfvar_create(".proc_call");
-		npfvar_add_element($$, NPFVAR_PROC, &pc, sizeof(pc));
+
+		$$ = npfvar_create_element(NPFVAR_PROC, &pc, sizeof(pc));
 	}
-	|	{ $$ = NULL; }
+	|		{ $$ = NULL; }
 	;
 
 proc_param_list
-	: proc_param COMMA proc_param_list
+	: proc_param_list COMMA proc_param
 	{
 		$$ = npfvar_add_elements($1, $3);
 	}
@@ -339,104 +376,105 @@ proc_param_list
 	;
 
 proc_param
-	/* Key and value pair. */
 	: some_name proc_param_val
 	{
 		proc_param_t pp;
 
 		pp.pp_param = estrdup($1);
 		pp.pp_value = $2 ? estrdup($2) : NULL;
-		$$ = npfvar_create(".proc_param");
-		npfvar_add_element($$, NPFVAR_PROC_PARAM, &pp, sizeof(pp));
+
+		$$ = npfvar_create_element(NPFVAR_PROC_PARAM, &pp, sizeof(pp));
 	}
 	;
 
 proc_param_val
 	: some_name	{ $$ = $1; }
-	| NUM		{ (void)asprintf(&$$, "%ld", $1); }
+	| number	{ (void)asprintf(&$$, "%ld", $1); }
 	| FPNUM		{ (void)asprintf(&$$, "%lf", $1); }
 	|		{ $$ = NULL; }
 	;
 
+/*
+ * Group and dynamic ruleset definition.
+ */
+
 group
-	: GROUP PAR_OPEN group_attr PAR_CLOSE
+	: GROUP group_opts
 	{
-		npfctl_build_group($3.rg_name, $3.rg_attr, $3.rg_ifnum);
+		/* Build a group.  Increase the nesting level. */
+		npfctl_build_group($2.rg_name, $2.rg_attr,
+		    $2.rg_ifname, $2.rg_default);
 	}
-	  ruleset
-	;
-
-group_attr
-	: group_opt COMMA group_attr
+	  ruleset_block
 	{
-		$$ = $3;
-
-		if (($1.rg_name && $$.rg_name) ||
-		    ($1.rg_ifnum && $$.rg_ifnum) ||
-		    ($1.rg_attr & $$.rg_attr) != 0)
-			yyerror("duplicate group option");
-
-		if ($1.rg_name) {
-			$$.rg_name = $1.rg_name;
-		}
-		if ($1.rg_attr) {
-			$$.rg_attr |= $1.rg_attr;
-		}
-		if ($1.rg_ifnum) {
-			$$.rg_ifnum = $1.rg_ifnum;
-		}
-	}
-	| group_opt		{ $$ = $1; }
-	;
-
-group_opt
-	: DEFAULT
-	{
-		$$.rg_name = NULL;
-		$$.rg_ifnum = 0;
-		$$.rg_attr = NPF_RULE_DEFAULT;
-	}
-	| NAME STRING
-	{
-		$$.rg_name = $2;
-		$$.rg_ifnum = 0;
-		$$.rg_attr = 0;
-	}
-	| INTERFACE ifindex
-	{
-		$$.rg_name = NULL;
-		$$.rg_ifnum = $2;
-		$$.rg_attr = 0;
-	}
-	| rule_dir
-	{
-		$$.rg_name = NULL;
-		$$.rg_ifnum = 0;
-		$$.rg_attr = $1;
+		/* Decrease the nesting level. */
+		npfctl_build_group_end();
 	}
 	;
 
 ruleset
-	: CURLY_OPEN rules CURLY_CLOSE
+	: RULESET group_opts
+	{
+		/* Ruleset is a dynamic group. */
+		npfctl_build_group($2.rg_name, $2.rg_attr | NPF_RULE_DYNAMIC,
+		    $2.rg_ifname, $2.rg_default);
+		npfctl_build_group_end();
+	}
 	;
 
-rules
-	: rule SEPLINE rules
-	| rule
+group_dir
+	: FORW		{ $$ = NPF_RULE_FORW; }
+	| rule_dir
 	;
+
+group_opts
+	: DEFAULT
+	{
+		memset(&$$, 0, sizeof(rule_group_t));
+		$$.rg_default = true;
+	}
+	| STRING group_dir on_ifname
+	{
+		memset(&$$, 0, sizeof(rule_group_t));
+		$$.rg_name = $1;
+		$$.rg_attr = $2;
+		$$.rg_ifname = $3;
+	}
+	;
+
+ruleset_block
+	: CURLY_OPEN ruleset_def CURLY_CLOSE
+	;
+
+ruleset_def
+	: ruleset_def SEPLINE rule_group
+	| rule_group
+	;
+
+rule_group
+	: rule
+	| group
+	| ruleset
+	|
+	;
+
+/*
+ * Rule and misc.
+ */
 
 rule
-	: block_or_pass opt_stateful rule_dir opt_final on_ifindex
+	: block_or_pass opt_stateful rule_dir opt_final on_ifname
 	  opt_family opt_proto all_or_filt_opts opt_apply
 	{
-		/*
-		 * Arguments: attributes, interface index, address
-		 * family, protocol options, filter options.
-		 */
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
-		    $6, &$7, &$8, $9);
+		    $6, &$7, &$8, NULL, $9);
 	}
-	|
+	| block_or_pass opt_stateful rule_dir opt_final on_ifname
+	  PCAP_FILTER STRING opt_apply
+	{
+		npfctl_build_rule($1 | $2 | $3 | $4, $5,
+		    AF_UNSPEC, NULL, NULL, $7, $8);
+	}
 	;
 
 block_or_pass
@@ -455,13 +493,13 @@ opt_final
 	|			{ $$ = 0; }
 	;
 
-on_ifindex
-	: ON ifindex		{ $$ = $2; }
-	|			{ $$ = 0; }
+on_ifname
+	: ON ifref		{ $$ = $2; }
+	|			{ $$ = NULL; }
 	;
 
 afamily
-	: INET			{ $$ = AF_INET; }
+	: INET4			{ $$ = AF_INET; }
 	| INET6			{ $$ = AF_INET6; }
 	;
 
@@ -491,7 +529,7 @@ opt_proto
 		$$.op_proto = npfctl_protono($2);
 		$$.op_opts = NULL;
 	}
-	| PROTO NUM
+	| PROTO number
 	{
 		$$.op_proto = $2;
 		$$.op_opts = NULL;
@@ -516,6 +554,7 @@ all_or_filt_opts
 
 opt_stateful
 	: STATEFUL	{ $$ = NPF_RULE_STATEFUL; }
+	| STATEFUL_ENDS	{ $$ = NPF_RULE_STATEFUL | NPF_RULE_MULTIENDS; }
 	|		{ $$ = 0; }
 	;
 
@@ -556,17 +595,13 @@ filt_opts
 	;
 
 filt_addr
-	: addr_or_ifnet		{ $$ = $1; }
+	: addr_or_ifaddr	{ $$ = $1; }
 	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| ANY			{ $$ = NULL; }
 	;
 
 addr_and_mask
-	: addr SLASH NUM
-	{
-		$$ = npfctl_parse_fam_addr_mask($1, NULL, &$3);
-	}
-	| addr SLASH HEX
+	: addr SLASH number
 	{
 		$$ = npfctl_parse_fam_addr_mask($1, NULL, &$3);
 	}
@@ -580,13 +615,13 @@ addr_and_mask
 	}
 	;
 
-addr_or_ifnet
+addr_or_ifaddr
 	: addr_and_mask
 	{
 		assert($1 != NULL);
 		$$ = $1;
 	}
-	| ifnet
+	| ifaddrs
 	{
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		$$ = ifna->ifna_addrs;
@@ -594,16 +629,26 @@ addr_or_ifnet
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp, 0);
+		int type = npfvar_get_type(vp, 0);
 		ifnet_addr_t *ifna;
 
+again:
 		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			vp = npfctl_parse_ifnet(npfvar_expand_string(vp),
+			    AF_UNSPEC);
+			type = npfvar_get_type(vp, 0);
+			goto again;
 		case NPFVAR_FAM:
 			$$ = vp;
 			break;
 		case NPFVAR_INTERFACE:
-			ifna = npfvar_get_data(vp, type, 0);
-			$$ = ifna->ifna_addrs;
+			$$ = NULL;
+			for (u_int i = 0; i < npfvar_get_count(vp); i++) {
+				ifna = npfvar_get_data(vp, type, i);
+				$$ = npfvar_add_elements($$, ifna->ifna_addrs);
+			}
 			break;
 		case -1:
 			yyerror("undefined variable '%s'", $1);
@@ -641,8 +686,9 @@ port_range
 	;
 
 port
-	: NUM		{ $$ = $1; }
+	: number	{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_portno($1); }
+	| STRING	{ $$ = npfctl_portno($1); }
 	;
 
 icmp_type_and_code
@@ -650,7 +696,7 @@ icmp_type_and_code
 	{
 		$$ = npfctl_parse_icmp($<num>0, $2, -1);
 	}
-	| ICMPTYPE icmp_type CODE NUM
+	| ICMPTYPE icmp_type CODE number
 	{
 		$$ = npfctl_parse_icmp($<num>0, $2, $4);
 	}
@@ -665,10 +711,7 @@ icmp_type_and_code
 		$$ = npfctl_parse_icmp($<num>0, $2,
 		    npfctl_icmpcode($<num>0, $2, s));
 	}
-	|
-	{
-		$$ = npfctl_parse_icmp($<num>0, -1, -1);
-	}
+	|		{ $$ = NULL; }
 	;
 
 tcp_flags_and_mask
@@ -691,7 +734,7 @@ tcp_flags
 	;
 
 icmp_type
-	: NUM		{ $$ = $1; }
+	: number	{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_icmptype($<num>-1, $1); }
 	| VAR_ID
 	{
@@ -700,25 +743,11 @@ icmp_type
 	}
 	;
 
-ifnet
-	: IFNET PAR_OPEN IDENTIFIER PAR_CLOSE
-	{
-		$$ = npfctl_parse_ifnet($3, AF_UNSPEC);
-	}
-	| afamily PAR_OPEN IDENTIFIER PAR_CLOSE
-	{
-		$$ = npfctl_parse_ifnet($3, $1);
-	}
-
-ifindex
+ifname
 	: some_name
 	{
-		$$ = npfctl_find_ifindex($1);
-	}
-	| ifnet
-	{
-		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
-		$$ = ifna->ifna_index;
+		npfctl_note_interface($1);
+		$$ = $1;
 	}
 	| VAR_ID
 	{
@@ -729,11 +758,11 @@ ifindex
 		switch (type) {
 		case NPFVAR_STRING:
 		case NPFVAR_IDENTIFIER:
-			$$ = npfctl_find_ifindex(npfvar_expand_string(vp));
+			$$ = npfvar_expand_string(vp);
 			break;
 		case NPFVAR_INTERFACE:
 			ifna = npfvar_get_data(vp, type, 0);
-			$$ = ifna->ifna_index;
+			$$ = ifna->ifna_name;
 			break;
 		case -1:
 			yyerror("undefined variable '%s' for interface", $1);
@@ -743,7 +772,30 @@ ifindex
 			    $1, npfvar_type(type));
 			break;
 		}
+		npfctl_note_interface($$);
 	}
+	;
+
+ifaddrs
+	: afamily PAR_OPEN ifname PAR_CLOSE
+	{
+		$$ = npfctl_parse_ifnet($3, $1);
+	}
+	;
+
+ifref
+	: ifname
+	| ifaddrs
+	{
+		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
+		npfctl_note_interface(ifna->ifna_name);
+		$$ = ifna->ifna_name;
+	}
+	;
+
+number
+	: HEX		{ $$ = $1; }
+	| NUM		{ $$ = $1; }
 	;
 
 some_name

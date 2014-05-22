@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.2.10 2012/10/30 17:23:01 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.2.11 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -234,7 +234,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
@@ -634,9 +633,8 @@ void			uvm_proc_fork(struct proc *, struct proc *, bool);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *);
 int			uvm_coredump_walkmap(struct proc *,
-			    void *,
-			    int (*)(struct proc *, void *,
-				    struct uvm_coredump_state *), void *);
+			    int (*)(struct uvm_coredump_state *), void *);
+int			uvm_coredump_count_segs(struct proc *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
@@ -686,11 +684,11 @@ bool			uvm_map_checkprot(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t);
 int			uvm_map_protect(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t, bool);
-struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t);
+struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t, bool);
 void			uvmspace_init(struct vmspace *, struct pmap *,
-			    vaddr_t, vaddr_t);
-void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t);
-void			uvmspace_spawn(struct lwp *, vaddr_t, vaddr_t);
+			    vaddr_t, vaddr_t, bool);
+void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t, bool);
+void			uvmspace_spawn(struct lwp *, vaddr_t, vaddr_t, bool);
 struct vmspace		*uvmspace_fork(struct vmspace *);
 void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);

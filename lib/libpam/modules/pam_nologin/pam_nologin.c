@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_nologin.c,v 1.8 2010/01/17 23:17:08 wiz Exp $	*/
+/*	$NetBSD: pam_nologin.c,v 1.8.6.1 2014/05/22 11:36:58 yamt Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_nologin/pam_nologin.c,v 1.10 2002/04/12 22:27:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_nologin.c,v 1.8 2010/01/17 23:17:08 wiz Exp $");
+__RCSID("$NetBSD: pam_nologin.c,v 1.8.6.1 2014/05/22 11:36:58 yamt Exp $");
 #endif
 
 
@@ -74,7 +74,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	struct stat st;
 	int retval, fd;
 	int ignorenologin = 0;
-	int rootlogin = 0;
+	u_int rootlogin = 0;
 	const char *user, *nologin;
 	char *mtmp;
 	char pwbuf[1024];
@@ -100,7 +100,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 			rootlogin = 1;
 	}
 
-	lc = login_getclass(pwd->pw_class);
+	lc = login_getpwclass(pwd);
 	ignorenologin = login_getcapbool(lc, "ignorenologin", rootlogin);
 	nologin = login_getcapstr(lc, "nologin", nologin_def, nologin_def);
 	login_close(lc);
@@ -132,10 +132,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		return PAM_AUTH_ERR;
 	}
 
-	mtmp = malloc(st.st_size + 1);
+	size_t len = (size_t)st.st_size;
+	mtmp = malloc(len + 1);
 	if (mtmp != NULL) {
-		read(fd, mtmp, st.st_size);
-		mtmp[st.st_size] = '\0';
+		read(fd, mtmp, len);
+		mtmp[len] = '\0';
 		pam_error(pamh, "%s", mtmp);
 		free(mtmp);
 	}

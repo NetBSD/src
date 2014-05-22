@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.12.4.1 2012/10/30 17:22:54 yamt Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.12.4.2 2014/05/22 11:41:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.12.4.1 2012/10/30 17:22:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.12.4.2 2014/05/22 11:41:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -38,22 +38,13 @@ __KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.12.4.1 2012/10/30 17:22:54 yamt Exp $
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 
-int __rumpnet_stub(void);
+int rumpnet_stub(void);
 int
-__rumpnet_stub(void)
+rumpnet_stub(void)
 {
 
 	panic("component not available");
 }
-__weak_alias(rtioctl,__rumpnet_stub);
-__weak_alias(rt_walktree,__rumpnet_stub);
-__weak_alias(rtrequest,__rumpnet_stub);
-__weak_alias(ifioctl,__rumpnet_stub);
-__weak_alias(ifunit,__rumpnet_stub);
-__weak_alias(ifreq_setaddr,__rumpnet_stub);
-__weak_alias(rt_msg1,__rumpnet_stub);
-__weak_alias(route_enqueue,__rumpnet_stub);
-__weak_alias(route_info,__rumpnet_stub);
 
 /*
  * Weak symbols so that we can optionally leave components out.
@@ -61,14 +52,14 @@ __weak_alias(route_info,__rumpnet_stub);
  */
 
 /* bridge */
-__weak_alias(bridge_ifdetach,__rumpnet_stub);
-__weak_alias(bridge_output,__rumpnet_stub);
-__weak_alias(bridge_input,__rumpnet_stub);
+__weak_alias(bridge_ifdetach,rumpnet_stub);
+__weak_alias(bridge_output,rumpnet_stub);
+__weak_alias(bridge_input,rumpnet_stub);
 
 /* agr */
-__weak_alias(agr_input,__rumpnet_stub);
-__weak_alias(ieee8023ad_lacp_input,__rumpnet_stub);
-__weak_alias(ieee8023ad_marker_input,__rumpnet_stub);
+__weak_alias(agr_input,rumpnet_stub);
+__weak_alias(ieee8023ad_lacp_input,rumpnet_stub);
+__weak_alias(ieee8023ad_marker_input,rumpnet_stub);
 
 struct ifnet_head ifnet;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.16.2.1 2012/04/17 00:08:53 yamt Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.16.2.2 2014/05/22 11:41:18 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@ struct statvfs {
 	unsigned long	f_frsize;	/* fundamental file system block size */
 	unsigned long	f_iosize;	/* optimal file system block size */
 
+	/* The following are in units of f_frsize */
 	fsblkcnt_t	f_blocks;	/* number of blocks in file system, */
-					/*   (in units of f_frsize) */
 	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
 	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
 	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */

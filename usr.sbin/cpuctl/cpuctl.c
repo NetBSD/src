@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.19.2.2 2012/10/30 19:00:31 yamt Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.19.2.3 2014/05/22 11:43:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.19.2.2 2012/10/30 19:00:31 yamt Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.19.2.3 2014/05/22 11:43:02 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,26 +82,38 @@ static struct cmdtab {
 };
 
 static int	fd;
+int		verbose;
 
 int
 main(int argc, char **argv)
 {
 	const struct cmdtab *ct;
+	int ch;
 
-	if (argc < 2)
+	while ((ch = getopt(argc, argv, "v")) != -1)
+		switch (ch) {
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+	if (argc < 1)
 		usage();
 
 	if ((fd = open(_PATH_CPUCTL, O_RDWR)) < 0)
 		err(EXIT_FAILURE, _PATH_CPUCTL);
 
 	for (ct = cpu_cmdtab; ct->label != NULL; ct++) {
-		if (strcmp(argv[1], ct->label) == 0) {
+		if (strcmp(argv[0], ct->label) == 0) {
 			if (!ct->argsoptional &&
-			    ((ct->takesargs == 0) ^ (argv[2] == NULL)))
+			    ((ct->takesargs == 0) ^ (argv[1] == NULL)))
 			{
 				usage();
 			}
-			(*ct->func)(argv + 2);
+			(*ct->func)(argv + 1);
 			break;
 		}
 	}
@@ -245,7 +257,7 @@ cpu_identify(char **argv)
 	id = getcpuid(argv);
 	snprintf(name, sizeof(name), "cpu%u", id);
 
-	if (np != 0) {
+	if (np != 1) {
 		cpuset = cpuset_create();
 		if (cpuset == NULL)
 			err(EXIT_FAILURE, "cpuset_create");

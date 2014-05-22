@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.27.8.2 2012/10/30 17:18:35 yamt Exp $ */
+/* $NetBSD: except.c,v 1.27.8.3 2014/05/22 11:39:25 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27.8.2 2012/10/30 17:18:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27.8.3 2014/05/22 11:39:25 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,12 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27.8.2 2012/10/30 17:18:35 yamt Exp $")
 #include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/armreg.h>
-#include <arm/cpuconf.h>
-#include <machine/intr.h>
+#include <arm/locore.h>
+
 #include <machine/machdep.h>
 #include <machine/pcb.h>
 
@@ -141,7 +141,7 @@ data_abort_handler(struct trapframe *tf)
 	vm_prot_t atype;
 	bool usrmode, twopages;
 	struct vm_map *map;
-	vaddr_t pc, va;
+	vaddr_t va;
 	vsize_t asize;
 
 	/*
@@ -163,7 +163,6 @@ data_abort_handler(struct trapframe *tf)
 		lwp_settrapframe(l, tf);
 		LWP_CACHE_CREDS(l, p);
 	}
-	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
 	atype = data_abort_atype(tf);

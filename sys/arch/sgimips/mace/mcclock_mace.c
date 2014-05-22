@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.14 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.14.2.1 2014/05/22 11:40:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.14 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.14.2.1 2014/05/22 11:40:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,13 +226,12 @@ mcclock_mace_settime_ymdhms(todr_chip_handle_t todrch, struct clock_ymdhms *dt)
 void
 mcclock_poweroff(void)
 {
-	int s;
 	uint8_t a, xctl_a, xctl_b;
 
 	if (mace0 == NULL)
 		return;
 
-	s = splhigh();
+	(void)splhigh();
 	a = ds1687_read(mace0, DS1687_CONTROLA);
 	a &= ~DS1687_DV2;
 	a |= DS1687_DV1;

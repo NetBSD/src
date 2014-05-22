@@ -1,5 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.1 2010/08/07 18:01:34 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.1.6.1 2014/05/22 11:36:44 yamt Exp $
 
-CPPFLAGS+=	-DELFSIZE=32
+CPPFLAGS+=	-DELFSIZE=32 -I${ARCHDIR}
 
 

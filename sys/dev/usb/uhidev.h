@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.10.8.2 2012/10/30 17:22:08 yamt Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.10.8.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@ struct uhidev_attach_arg {
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
 void uhidev_close(struct uhidev *);
-usbd_status uhidev_set_report(struct uhidev *scd, int type, void *data,int len);
-void uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len);
-usbd_status uhidev_get_report(struct uhidev *scd, int type, void *data,int len);
+usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
+usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_write(struct uhidev_softc *, void *, int);

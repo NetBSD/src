@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.9.6.1 2012/10/30 17:20:50 yamt Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.9.6.2 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.9.6.1 2012/10/30 17:20:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.9.6.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1111,15 +1111,9 @@ acpidisp_vga_sysctl_setup(struct acpidisp_vga_softc *asc)
 
 	if (asc->sc_caps & ACPI_DISP_VGA_CAP__DOS) {
 		if ((sysctl_createv(&asc->sc_log, 0, NULL, &rnode,
-		    0, CTLTYPE_NODE, "hw", NULL,
-		    NULL, 0, NULL, 0,
-		    CTL_HW, CTL_EOL)) != 0)
-			goto fail;
-
-		if ((sysctl_createv(&asc->sc_log, 0, &rnode, &rnode,
 		    0, CTLTYPE_NODE, "acpi", NULL,
 		    NULL, 0, NULL, 0,
-		    CTL_CREATE, CTL_EOL)) != 0)
+		    CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 			goto fail;
 
 		if ((sysctl_createv(&asc->sc_log, 0, &rnode, &rnode,
@@ -1163,15 +1157,9 @@ acpidisp_out_sysctl_setup(struct acpidisp_out_softc *osc)
 	if (osc->sc_brctl != NULL) {
 #endif
 		if ((sysctl_createv(&osc->sc_log, 0, NULL, &rnode,
-		    0, CTLTYPE_NODE, "hw", NULL,
-		    NULL, 0, NULL, 0,
-		    CTL_HW, CTL_EOL)) != 0)
-			goto fail;
-
-		if ((sysctl_createv(&osc->sc_log, 0, &rnode, &rnode,
 		    0, CTLTYPE_NODE, "acpi", NULL,
 		    NULL, 0, NULL, 0,
-		    CTL_CREATE, CTL_EOL)) != 0)
+		    CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 			goto fail;
 
 		if ((sysctl_createv(&osc->sc_log, 0, &rnode, &rnode,

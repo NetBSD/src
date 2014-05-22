@@ -1,14 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2010/06/09 12:35:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2014/05/22 11:42:23 yamt Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/rump/modautoload
 
 TESTS_C=	t_modautoload
-
-.include <bsd.own.mk>
-.ifdef RUMPKMOD
-CPPFLAGS+=	-DHAVE_HOST_MODULES
-.endif
 
 # Note: we link the rump kernel into the application to make this work
 # on amd64.  This is the reason we keep this test in its own

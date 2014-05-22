@@ -1,4 +1,4 @@
-# $NetBSD: ffs_common.sh,v 1.1.4.2 2012/04/17 00:09:03 yamt Exp $ 
+# $NetBSD: ffs_common.sh,v 1.1.4.3 2014/05/22 11:42:18 yamt Exp $ 
 
 create_ffs()
 {
@@ -72,7 +72,7 @@ test_case_root()
 	eval "${name}_head() { \
 		atf_set "descr" "${descr}"
 		atf_set "require.user" "root"
-		atf_set "timeout" "60"
+		atf_set "timeout" "360"
 	}"
 	eval "${name}_body() { \
 		RUMP_SOCKETS_LIST=\${RUMP_SOCKET}; \

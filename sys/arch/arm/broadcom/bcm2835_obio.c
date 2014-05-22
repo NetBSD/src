@@ -1,7 +1,7 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.5.4.3 2013/01/23 00:05:41 yamt Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.5.4.4 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.4.3 2013/01/23 00:05:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.4.4 2014/05/22 11:39:31 yamt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.4.3 2013/01/23 00:05:41 yamt Ex
 struct obio_softc {
 	device_t		sc_dev;
 	bus_dma_tag_t		sc_dmat;
-	struct arm32_dma_range	sc_dmarange;
+	struct arm32_dma_range	sc_dmarange[1];
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_base;
@@ -91,10 +91,24 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_TIMER3,
 	},
 	{
+		/* VCHIQ */
+		.ad_name = "bcmvchiq",
+		.ad_addr = BCM2835_VCHIQ_BASE,
+		.ad_size = BCM2835_VCHIQ_SIZE,
+		.ad_intr = BCM2835_INT_ARMDOORBELL0,
+	},
+	{
 		/* Power Management, Reset controller and Watchdog registers */
 		.ad_name = "bcmpm",
 		.ad_addr = BCM2835_PM_BASE,
 		.ad_size = BCM2835_PM_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* Random number generator */
+		.ad_name = "bcmrng",
+		.ad_addr = BCM2835_RNG_BASE,
+		.ad_size = BCM2835_RNG_SIZE,
 		.ad_intr = -1,
 	},
 	{
@@ -120,7 +134,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 	},
 	{
 		/* DesignWare_OTG USB controller */
-		.ad_name = "dotg",
+		.ad_name = "dwctwo",
 		.ad_addr = BCM2835_USB_BASE,
 		.ad_size = BCM2835_USB_SIZE,
 		.ad_intr = BCM2835_INT_USB,
@@ -142,6 +156,20 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_addr = BCM2835_BSC1_BASE,
 		.ad_size = BCM2835_BSC_SIZE,
 		.ad_intr = BCM2835_INT_BSC,
+	},
+	{
+		/* gpio */
+		.ad_name = "bcmgpio",
+		.ad_addr = BCM2835_GPIO_BASE,
+		.ad_size = BCM2835_GPIO_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* gpio */
+		.ad_name = "bcmgpio",
+		.ad_addr = BCM2835_GPIO_BASE,
+		.ad_size = BCM2835_GPIO_SIZE,
+		.ad_intr = -1,
 	},
 	{
 		/* Terminator */
@@ -173,11 +201,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = &bcm2835_bus_dma_tag;
 
-	sc->sc_dmarange.dr_sysbase = 0;
-	sc->sc_dmarange.dr_busbase = 0xc0000000;	/* 0x40000000 if L2 */
-	sc->sc_dmarange.dr_len = physmem * PAGE_SIZE;
-	bcm2835_bus_dma_tag._ranges = &sc->sc_dmarange;
-	bcm2835_bus_dma_tag._nranges = 1;
+	sc->sc_dmarange[0].dr_sysbase = 0;
+	sc->sc_dmarange[0].dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT;
+	sc->sc_dmarange[0].dr_len = physmem * PAGE_SIZE;
+	bcm2835_bus_dma_tag._ranges = sc->sc_dmarange;
+	bcm2835_bus_dma_tag._nranges = __arraycount(sc->sc_dmarange);
 
 	aprint_normal("\n");
 

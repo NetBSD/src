@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.10.4.2 2012/10/30 18:58:44 yamt Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.10.4.3 2014/05/22 11:36:52 yamt Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.10.4.2 2012/10/30 18:58:44 yamt Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.10.4.3 2014/05/22 11:36:52 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -152,7 +152,7 @@ arc4_stir(struct arc4_stream *as)
 	as->stirred = 1;
 }
 
-static __always_inline uint8_t
+static __inline uint8_t
 arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
 {
 	uint8_t si, sj;

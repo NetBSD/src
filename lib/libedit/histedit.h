@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.48.2.1 2012/10/30 18:59:09 yamt Exp $	*/
+/*	$NetBSD: histedit.h,v 1.48.2.2 2014/05/22 11:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,6 +84,8 @@ typedef struct lineinfo {
  * Initialization, cleanup, and resetting
  */
 EditLine	*el_init(const char *, FILE *, FILE *, FILE *);
+EditLine	*el_init_fd(const char *, FILE *, FILE *, FILE *,
+    int, int, int);
 void		 el_end(EditLine *);
 void		 el_reset(EditLine *);
 
@@ -222,6 +224,7 @@ int		history(History *, HistEvent *, int, ...);
 #define	H_NEXT_EVDATA	23	/* , const int, histdata_t *);	*/
 #define	H_DELDATA	24	/* , int, histdata_t *);*/
 #define	H_REPLACE	25	/* , const char *, histdata_t);	*/
+#define	H_SAVE_FP	26	/* , FILE *);		*/
 
 
 
@@ -277,6 +280,7 @@ int		 el_wparse(EditLine *, int, const wchar_t **);
 int		 el_wset(EditLine *, int, ...);
 int		 el_wget(EditLine *, int, ...);
 
+int		 el_cursor(EditLine *, int);
 const LineInfoW	*el_wline(EditLine *);
 int		 el_winsertstr(EditLine *, const wchar_t *);
 #define          el_wdeletestr  el_deletestr

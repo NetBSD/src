@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.14 2010/07/23 19:25:23 pooka Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.14.6.1 2014/05/22 11:37:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.14 2010/07/23 19:25:23 pooka Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.14.6.1 2014/05/22 11:37:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,6 @@ __RCSID("$NetBSD: getnfsargs.c,v 1.14 2010/07/23 19:25:23 pooka Exp $");
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
-
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
-
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -80,6 +75,13 @@ __RCSID("$NetBSD: getnfsargs.c,v 1.14 2010/07/23 19:25:23 pooka Exp $");
 #include <util.h>
 
 #include "mount_nfs.h"
+
+int retrycnt = DEF_RETRY; 
+int opflags = 0;
+int force2 = 0;
+int force3 = 0;
+int mnttcp_ok = 1;
+int port = 0;
 
 struct nfhret {
 	u_long		stat;
@@ -106,11 +108,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	static struct sockaddr_storage nfs_ss;
 	struct netconfig *nconf;
 	const char *netid;
-#ifdef ISO
-	static struct sockaddr_iso isoaddr;
-	struct iso_addr *isop;
-	int isoflag = 0;
-#endif
 	struct timeval pertry, try;
 	enum clnt_stat clnt_stat;
 	int i, nfsvers, mntvers;
@@ -130,35 +127,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 		return (0);
 	}
 	*delimp = '\0';
-	/*
-	 * DUMB!! Until the mount protocol works on iso transport, we must
-	 * supply both an iso and an inet address for the host.
-	 */
-#ifdef ISO
-	if (!strncmp(hostp, "iso=", 4)) {
-		u_short isoport;
-
-		hostp += 4;
-		isoflag++;
-		if ((delimp = strchr(hostp, '+')) == NULL) {
-			warnx("no iso+inet address");
-			return (0);
-		}
-		*delimp = '\0';
-		if ((isop = iso_addr(hostp)) == NULL) {
-			warnx("bad ISO address");
-			return (0);
-		}
-		memset(&isoaddr, 0, sizeof (isoaddr));
-		memcpy(&isoaddr.siso_addr, isop, sizeof (struct iso_addr));
-		isoaddr.siso_len = sizeof (isoaddr);
-		isoaddr.siso_family = AF_ISO;
-		isoaddr.siso_tlen = 2;
-		isoport = htons(NFS_PORT);
-		memcpy(TSEL(&isoaddr), &isoport, isoaddr.siso_tlen);
-		hostp = delimp + 1;
-	}
-#endif /* ISO */
 
 	/*
 	 * Handle an internet host address.
@@ -304,14 +272,7 @@ tryagain:
 		errno = nfhret.stat;
 		warnx("can't access %s: %s", spec, strerror(nfhret.stat));
 		return (0);
-	}
-#ifdef ISO
-	if (isoflag) {
-		nfsargsp->addr = (struct sockaddr *) &isoaddr;
-		nfsargsp->addrlen = sizeof (isoaddr);
-	} else
-#endif /* ISO */
-	{
+	} else {
 		nfsargsp->addr = (struct sockaddr *) nfs_nb.buf;
 		nfsargsp->addrlen = nfs_nb.len;
 		if (port != 0) {

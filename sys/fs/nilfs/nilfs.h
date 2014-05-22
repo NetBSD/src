@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs.h,v 1.2.2.1 2012/10/30 17:22:23 yamt Exp $ */
+/* $NetBSD: nilfs.h,v 1.2.2.2 2014/05/22 11:41:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -66,7 +66,7 @@ extern int nilfs_verbose;
 /* initial value of nilfs_verbose */
 #define NILFS_DEBUGGING		0
 
-#ifdef DEBUG
+#ifdef NILFS_DEBUG
 #define DPRINTF(name, arg) { \
 		if (nilfs_verbose & NILFS_DEBUG_##name) {\
 			printf arg;\

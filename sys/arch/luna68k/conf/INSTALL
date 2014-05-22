@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1.2.2 2012/10/30 17:19:53 yamt Exp $
+# $NetBSD: INSTALL,v 1.1.2.3 2014/05/22 11:39:55 yamt Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -15,7 +15,7 @@ options 	FPSP	# on m68040 to emulate some missing FP instructions
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
-options 	MEMORY_DISK_ROOT_SIZE=3200	# 1.60 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3400	# 1.60 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options
@@ -90,19 +90,14 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -169,16 +164,16 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 
 pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-#pseudo-device	ccd		2	# concatenated and striped disks
-#pseudo-device	cgd		2	# cryptographic disks
+#pseudo-device	ccd			# concatenated and striped disks
+#pseudo-device	cgd			# cryptographic disks
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter	1	# ip filter
-pseudo-device	loop		1	# loopback interface; required
+#pseudo-device	ipfilter		# ip filter
+pseudo-device	loop			# loopback interface; required
 pseudo-device	md			# memory disk device
 #pseudo-device	ppp			# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	raid		2	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	sl			# SLIP interfaces
 #pseudo-device	tun			# Network "tunnel" device
@@ -197,7 +192,7 @@ pseudo-device	pty			# pseudo-terminals
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

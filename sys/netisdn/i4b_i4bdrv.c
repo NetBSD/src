@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.36.12.1 2012/10/30 17:22:51 yamt Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.36.12.2 2014/05/22 11:41:10 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.36.12.1 2012/10/30 17:22:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.36.12.2 2014/05/22 11:41:10 yamt Exp $");
 
 #include "isdn.h"
 
@@ -196,8 +196,17 @@ SYSINIT(i4bdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,i4b_drvinit,NULL)
 
 #ifdef __NetBSD__
 const struct cdevsw isdn_cdevsw = {
-	isdnopen, isdnclose, isdnread, nowrite, isdnioctl,
-	nostop, notty, isdnpoll, nommap, isdnkqfilter, D_OTHER
+	.d_open = isdnopen,
+	.d_close = isdnclose,
+	.d_read = isdnread,
+	.d_write = nowrite,
+	.d_ioctl = isdnioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = isdnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = isdnkqfilter,
+	.d_flag = D_OTHER
 };
 #endif /* __NetBSD__ */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.66.2.1 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.66.2.2 2014/05/22 11:37:53 yamt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -21,6 +21,8 @@ LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
 LIBEVENT?=	/usr/lib/libevent.a
+LIBEVENT_OPENSSL?=	/usr/lib/libevent_openssl.a
+LIBEVENT_PTHREADS?=	/usr/lib/libevent_pthreads.a
 LIBEXPAT?=	/usr/lib/libexpat.a
 LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a
@@ -30,6 +32,7 @@ LIBINTL?=	/usr/lib/libintl.a
 LIBIPSEC?=	/usr/lib/libipsec.a
 LIBKVM?=	/usr/lib/libkvm.a
 LIBL?=		/usr/lib/libl.a
+LIBLUTOK?=	/usr/lib/liblutok.a
 LIBLZMA?=	/usr/lib/liblzma.a
 LIBM?=		/usr/lib/libm.a
 LIBMAGIC?=	/usr/lib/libmagic.a
@@ -78,12 +81,12 @@ LIBRUMPFS_TMPFS?=	/usr/lib/librumpfs_tmpfs.a
 LIBRUMPFS_UDF?=		/usr/lib/librumpfs_udf.a
 LIBRUMPFS_UFS?=		/usr/lib/librumpfs_ufs.a
 
-HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
 MKDEP_SUFFIXES?=	.lo .ln
 
 # Override these:
 INSTALL:=	${INSTALL:NSTRIP=*}
 MKDEP:=		${HOST_MKDEP}
+MKDEPCXX:=	${HOST_MKDEPCXX}
 
 .if ${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN)
 OBJHOSTMACHINE=	# set
@@ -113,6 +116,10 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
 ${HOSTPROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
+.if !empty(.MAKE.OS:M*CYGWIN*)
+	${HOST_SH} ${NETBSDSRCDIR}/tools/binstall/mkmanifest ${HOSTPROG}
+.endif
+
 
 .endif	# defined(OBJS) && !empty(OBJS)
 

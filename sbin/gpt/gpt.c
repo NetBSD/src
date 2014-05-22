@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.15.2.2 2013/01/23 00:05:31 yamt Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.15.2.3 2014/05/22 11:37:28 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: gpt.c,v 1.15.2.2 2013/01/23 00:05:31 yamt Exp $");
 #include <sys/disk.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/bootblock.h>
 
 #include <err.h>
 #include <errno.h>
@@ -49,12 +50,10 @@ __RCSID("$NetBSD: gpt.c,v 1.15.2.2 2013/01/23 00:05:31 yamt Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef __NetBSD__
 #include <util.h>
 #include <ctype.h>
 #include <prop/proplib.h>
 #include <sys/drvctlio.h>
-#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -241,38 +240,6 @@ utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 	} while (c != 0);
 }
 
-void
-le_uuid_dec(void const *buf, uuid_t *uuid)
-{
-	u_char const *p;
-	int i;
-
-	p = buf;
-	uuid->time_low = le32dec(p);
-	uuid->time_mid = le16dec(p + 4);
-	uuid->time_hi_and_version = le16dec(p + 6);
-	uuid->clock_seq_hi_and_reserved = p[8];
-	uuid->clock_seq_low = p[9];
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		uuid->node[i] = p[10 + i];
-}
-
-void
-le_uuid_enc(void *buf, uuid_t const *uuid)
-{
-	u_char *p;
-	int i;
-
-	p = buf;
-	le32enc(p, uuid->time_low);
-	le16enc(p + 4, uuid->time_mid);
-	le16enc(p + 6, uuid->time_hi_and_version);
-	p[8] = uuid->clock_seq_hi_and_reserved;
-	p[9] = uuid->clock_seq_low;
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		p[10 + i] = uuid->node[i];
-}
-
 int
 parse_uuid(const char *s, uuid_t *uuid)
 {
@@ -285,78 +252,78 @@ parse_uuid(const char *s, uuid_t *uuid)
 	switch (*s) {
 	case 'b':
 		if (strcmp(s, "bios") == 0) {
-			uuid_t bios = GPT_ENT_TYPE_BIOS;
+			static const uuid_t bios = GPT_ENT_TYPE_BIOS;
 			*uuid = bios;
 			return (0);
 		}
 		break;
 	case 'c':
 		if (strcmp(s, "ccd") == 0) {
-			uuid_t ccd = GPT_ENT_TYPE_NETBSD_CCD;
+			static const uuid_t ccd = GPT_ENT_TYPE_NETBSD_CCD;
 			*uuid = ccd;
 			return (0);
 		} else if (strcmp(s, "cgd") == 0) {
-			uuid_t cgd = GPT_ENT_TYPE_NETBSD_CGD;
+			static const uuid_t cgd = GPT_ENT_TYPE_NETBSD_CGD;
 			*uuid = cgd;
 			return (0);
 		}
 		break;
 	case 'e':
 		if (strcmp(s, "efi") == 0) {
-			uuid_t efi = GPT_ENT_TYPE_EFI;
+			static const uuid_t efi = GPT_ENT_TYPE_EFI;
 			*uuid = efi;
 			return (0);
 		}
 		break;
 	case 'f':
 		if (strcmp(s, "ffs") == 0) {
-			uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
+			static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
 			*uuid = nb_ffs;
 			return (0);
 		}
 		break;
 	case 'h':
 		if (strcmp(s, "hfs") == 0) {
-			uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
+			static const uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
 			*uuid = hfs;
 			return (0);
 		}
 		break;
 	case 'l':
 		if (strcmp(s, "lfs") == 0) {
-			uuid_t lfs = GPT_ENT_TYPE_NETBSD_LFS;
+			static const uuid_t lfs = GPT_ENT_TYPE_NETBSD_LFS;
 			*uuid = lfs;
 			return (0);
 		} else if (strcmp(s, "linux") == 0) {
-			uuid_t lnx = GPT_ENT_TYPE_LINUX_DATA;
+			static const uuid_t lnx = GPT_ENT_TYPE_LINUX_DATA;
 			*uuid = lnx;
 			return (0);
 		}
 		break;
 	case 'r':
 		if (strcmp(s, "raid") == 0) {
-			uuid_t raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
+			static const uuid_t raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
 			*uuid = raid;
 			return (0);
 		}
 		break;
 	case 's':
 		if (strcmp(s, "swap") == 0) {
-			uuid_t sw = GPT_ENT_TYPE_NETBSD_SWAP;
+			static const uuid_t sw = GPT_ENT_TYPE_NETBSD_SWAP;
 			*uuid = sw;
 			return (0);
 		}
 		break;
 	case 'u':
 		if (strcmp(s, "ufs") == 0) {
-			uuid_t ufs = GPT_ENT_TYPE_NETBSD_FFS;
+			static const uuid_t ufs = GPT_ENT_TYPE_NETBSD_FFS;
 			*uuid = ufs;
 			return (0);
 		}
 		break;
 	case 'w':
 		if (strcmp(s, "windows") == 0) {
-			uuid_t win = GPT_ENT_TYPE_MS_BASIC_DATA;
+			static const uuid_t win = GPT_ENT_TYPE_MS_BASIC_DATA;
 			*uuid = win;
 			return (0);
 		}
@@ -426,9 +393,9 @@ gpt_mbr(int fd, off_t lba)
 	 */
 	pmbr = 0;
 	for (i = 0; i < 4; i++) {
-		if (mbr->mbr_part[i].part_typ == 0)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_UNUSED)
 			continue;
-		if (mbr->mbr_part[i].part_typ == 0xee)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
 			pmbr++;
 		else
 			break;
@@ -453,8 +420,8 @@ gpt_mbr(int fd, off_t lba)
 	if (p == NULL)
 		return (-1);
 	for (i = 0; i < 4; i++) {
-		if (mbr->mbr_part[i].part_typ == 0 ||
-		    mbr->mbr_part[i].part_typ == 0xee)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_UNUSED ||
+		    mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
 			continue;
 		start = le16toh(mbr->mbr_part[i].part_start_hi);
 		start = (start << 16) + le16toh(mbr->mbr_part[i].part_start_lo);
@@ -471,7 +438,7 @@ gpt_mbr(int fd, off_t lba)
 			warnx("%s: MBR part: type=%d, start=%llu, size=%llu",
 			    device_name, mbr->mbr_part[i].part_typ,
 			    (long long)start, (long long)size);
-		if (mbr->mbr_part[i].part_typ != 15) {
+		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
 			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
 				return (-1);
@@ -484,7 +451,6 @@ gpt_mbr(int fd, off_t lba)
 	return (0);
 }
 
-#ifdef __NetBSD__
 static int
 drvctl(const char *name, u_int *sector_size, off_t *media_size)
 {
@@ -567,7 +533,6 @@ out:
 	errno = EINVAL;
 	return -1;
 }
-#endif
 
 static int
 gpt_gpt(int fd, off_t lba, int found)
@@ -680,24 +645,13 @@ gpt_open(const char *dev)
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
 	device_arg = dev;
-#ifdef __FreeBSD__
-	strlcpy(device_path, dev, sizeof(device_path));
-	if ((fd = open(device_path, mode)) != -1)
-		goto found;
-
-	snprintf(device_path, sizeof(device_path), "%s%s", _PATH_DEV, dev);
-	device_name = device_path + strlen(_PATH_DEV);
-	if ((fd = open(device_path, mode)) != -1)
-		goto found;
-	return (-1);
- found:
-#endif
-#ifdef __NetBSD__
-	device_name = device_path + strlen(_PATH_DEV);
 	fd = opendisk(dev, mode, device_path, sizeof(device_path), 0);
 	if (fd == -1)
 		return -1;
-#endif
+	if (strncmp(device_path, _PATH_DEV, strlen(_PATH_DEV)) == 0)
+		device_name = device_path + strlen(_PATH_DEV);
+	else
+		device_name = device_path;
 
 	if (fstat(fd, &sb) == -1)
 		goto close;
@@ -708,10 +662,8 @@ gpt_open(const char *dev)
 		    ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1)
 			goto close;
 #endif
-#ifdef __NetBSD__
 		if (drvctl(device_name, &secsz, &mediasz) == -1)
 			goto close;
-#endif
 	} else {
 		secsz = 512;	/* Fixed size for files. */
 		if (sb.st_size % secsz) {
@@ -765,6 +717,7 @@ static struct {
 	const char *name;
 } cmdsw[] = {
 	{ cmd_add, "add" },
+	{ cmd_backup, "backup" },
 	{ cmd_biosboot, "biosboot" },
 	{ cmd_create, "create" },
 	{ cmd_destroy, "destroy" },
@@ -774,7 +727,10 @@ static struct {
 	{ cmd_recover, "recover" },
 	{ cmd_remove, "remove" },
 	{ NULL, "rename" },
+	{ cmd_resize, "resize" },
+	{ cmd_set, "set" },
 	{ cmd_show, "show" },
+	{ cmd_unset, "unset" },
 	{ NULL, "verify" },
 	{ NULL, NULL }
 };
@@ -782,13 +738,16 @@ static struct {
 __dead static void
 usage(void)
 {
-	extern const char addmsg[], biosbootmsg[], createmsg[], destroymsg[];
-	extern const char labelmsg1[], labelmsg2[], labelmsg3[];
-	extern const char migratemsg[], recovermsg[], removemsg1[];
-	extern const char removemsg2[], showmsg[];
+	extern const char addmsg1[], addmsg2[], backupmsg[], biosbootmsg[];
+	extern const char createmsg[], destroymsg[], labelmsg1[], labelmsg2[];
+	extern const char labelmsg3[], migratemsg[], recovermsg[], removemsg1[];
+	extern const char removemsg2[], resizemsg[], setmsg[], showmsg[];
+	extern const char unsetmsg[];
 
 	fprintf(stderr,
 	    "usage: %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
@@ -799,8 +758,13 @@ usage(void)
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
 	    "       %s %s\n",
-	    getprogname(), addmsg,
+	    getprogname(), addmsg1,
+	    getprogname(), addmsg2,
+	    getprogname(), backupmsg,
 	    getprogname(), biosbootmsg,
 	    getprogname(), createmsg,
 	    getprogname(), destroymsg,
@@ -811,7 +775,10 @@ usage(void)
 	    getprogname(), recovermsg,
 	    getprogname(), removemsg1,
 	    getprogname(), removemsg2,
-	    getprogname(), showmsg);
+	    getprogname(), resizemsg,
+	    getprogname(), setmsg,
+	    getprogname(), showmsg,
+	    getprogname(), unsetmsg);
 	exit(1);
 }
 

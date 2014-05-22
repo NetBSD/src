@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.3.10.2 2013/01/23 00:06:12 yamt Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.3.10.3 2014/05/22 11:40:36 yamt Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.10.2 2013/01/23 00:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.10.3 2014/05/22 11:40:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -727,7 +727,7 @@ upgt_fw_verify(struct upgt_softc *sc)
 		if (*uc != 0)
 			break;
 	}
-	if (offset == sc->sc_fw_size) { 
+	if (offset == sc->sc_fw_size) {
 		aprint_error_dev(sc->sc_dev,
 		    "firmware Boot Record Area not found\n");
 		return EIO;
@@ -1137,6 +1137,7 @@ upgt_eeprom_parse_freq3(struct upgt_softc *sc, uint8_t *data, int len)
 
 	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
+	__USE(flags);
 
 	for (i = 0; i < elements; i++) {
 		channel = ieee80211_mhz2ieee(le16toh(freq3[i].freq), 0);
@@ -1171,6 +1172,7 @@ upgt_eeprom_parse_freq4(struct upgt_softc *sc, uint8_t *data, int len)
 	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
 	DPRINTF(2, "%s: settings=%d\n", device_xname(sc->sc_dev), settings);
+	__USE(flags);
 
 	for (i = 0; i < elements; i++) {
 		channel = ieee80211_mhz2ieee(le16toh(freq4_1[i].freq), 0);

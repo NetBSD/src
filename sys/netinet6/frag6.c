@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.49.4.3 2012/10/30 17:22:47 yamt Exp $	*/
+/*	$NetBSD: frag6.c,v 1.49.4.4 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.49.4.3 2012/10/30 17:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.49.4.4 2014/05/22 11:41:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,10 +172,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	offset += sizeof(struct ip6_frag);
 
 	/*
-	 * draft-gont-6man-ipv6-atomic-fragments-00:  A host that receives an
-	 * IPv6 packet which includes a Fragment Header with the "Fragment
-	 * Offset" equal to 0 and the "M" bit equal to 0 MUST process such
-	 * packet in isolation from any other packets/fragments.
+	 * RFC6946:  A host that receives an IPv6 packet which includes 
+	 * a Fragment Header with the "Fragmen Offset" equal to 0 and 
+	 * the "M" bit equal to 0 MUST process such packet in isolation
+	 *  from any other packets/fragments.
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {

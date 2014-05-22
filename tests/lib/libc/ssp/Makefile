@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4.2.2 2012/10/30 19:00:01 yamt Exp $
+# $NetBSD: Makefile,v 1.4.2.3 2014/05/22 11:42:21 yamt Exp $
 
 NOMAN=		# defined
 
@@ -39,6 +39,8 @@ PROGS+=		h_read
 PROGS+=		h_readlink
 PROGS+=		h_snprintf
 PROGS+=		h_sprintf
+PROGS+=		h_stpcpy
+PROGS+=		h_stpncpy
 PROGS+=		h_strcat
 PROGS+=		h_strcpy
 PROGS+=		h_strncat

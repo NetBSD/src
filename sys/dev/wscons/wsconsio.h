@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.100.2.3 2013/01/23 00:06:16 yamt Exp $ */
+/* $NetBSD: wsconsio.h,v 1.100.2.4 2014/05/22 11:40:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -107,6 +107,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_ZAURUS	22	/* Sharp Zaurus keyboard */
 #define	WSKBD_TYPE_LUNA		23	/* OMRON SX-9100 LUNA */
 #define	WSKBD_TYPE_RFB		24	/* Usermode vnc remote keyboard */
+#define	WSKBD_TYPE_EPOC		25	/* Psion EPOC machine keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -331,6 +332,8 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
 #define WSDISPLAY_TYPE_VC4	56	/* Broadcom VideoCore 4 */
 #define WSDISPLAY_TYPE_OMAP3	57	/* OMAP 3530 */
+#define WSDISPLAY_TYPE_WINDERMERE 58	/* SoC for EPOC32 Series 5mx */
+#define WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -602,5 +605,52 @@ struct wsdisplayio_edid_info {
  */
 #define WSDISPLAYIO_SET_POLLING	_IOW('W', 103, int)
 #define WSDISPLAYIOMGWEHITANDKILLEDASKUNK WSDISPLAYIO_SET_POLLING
+
+/*
+ * this is supposed to replace WSDISPLAYIO_GINFO, WSDISPLAYIO_GTYPE,
+ * WSDISPLAYIO_LINEBYTES etc.
+ */
+
+/* format type - colour index, 'true' colour etc. */
+#define WSFB_RGB	0
+#define WSFB_CI		1	/* colour indexed, see subtype */
+#define WSFB_GREYSCALE	2
+#define WSFB_YUV	3
+
+struct wsdisplayio_fbinfo {
+	uint64_t fbi_fbsize;		/* framebuffer size in bytes */
+	uint64_t fbi_fboffset;		/* start of visible fb, in bytes */ 
+	uint32_t fbi_width;		/* in pixels */
+	uint32_t fbi_height;		/* in lines */
+	uint32_t fbi_stride;		/* in bytes */
+	uint32_t fbi_bitsperpixel;
+	uint32_t fbi_pixeltype;		/* see above */
+	union _fbi_subtype {
+		struct _fbi_rgbmasks {
+			/* offsets from the right, size in bits */
+			uint32_t red_offset;
+			uint32_t red_size;
+			uint32_t green_offset;
+			uint32_t green_size;
+			uint32_t blue_offset;
+			uint32_t blue_size;
+			uint32_t alpha_offset;
+			uint32_t alpha_size;
+		} fbi_rgbmasks;
+		struct _fbi_cmapinfo {
+			uint32_t cmap_entries;
+		} fbi_cmapinfo;
+		/* 
+		 * TODO:
+		 * add parameter blocks for greyscale, yuv etc.
+		 */
+	} fbi_subtype;
+	uint32_t fbi_flags;
+};
+
+/* fbi_flags */
+#define WSFB_VRAM_IS_RAM	1	/* hint for wsfb - don't shadow */
+
+#define WSDISPLAYIO_GET_FBINFO	_IOWR('W', 104, struct wsdisplayio_fbinfo)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

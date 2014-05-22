@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.18 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: remote.c,v 1.18.2.1 2014/05/22 11:42:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.18 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: remote.c,v 1.18.2.1 2014/05/22 11:42:50 yamt Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -143,7 +143,7 @@ getremcap(char *host)
 	 *   from the description file
 	 */
 	if (!HW)
-		HW = (CU == NULL) || (DU && equal(DV, CU));
+		HW = (CU == NULL) || (DU && strcmp(DV, CU) == 0);
 	HO = host;
 	/*
 	 * see if uppercase mode should be turned on initially

@@ -1,11 +1,11 @@
-#	$NetBSD: MV2120,v 1.1.2.2 2012/10/30 17:19:20 yamt Exp $
+#	$NetBSD: MV2120,v 1.1.2.3 2014/05/22 11:39:40 yamt Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
 include 	"arch/evbarm/conf/std.mv2120"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options 	SYMTAB_SPACE="(1024 * 1000)"
+options 	SYMTAB_SPACE=1024000
 
 makeoptions	DEBUG="-g"
 
@@ -77,18 +77,13 @@ options UDP_CSUM_COUNTERS
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT	# Compat for IP-Filter
@@ -98,7 +93,7 @@ options 	IPFILTER_COMPAT	# Compat for IP-Filter
 options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_DHCP
-options		NFS_BOOT_TCP
+options 	NFS_BOOT_TCP
 
 # Compatibility options
 
@@ -140,10 +135,10 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	KMEMSTATS	# kernel memory statistics
-options		DDB		# in-kernel debugger
+options 	DDB		# in-kernel debugger
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
-options		SCSIVERBOSE	# human readable SCSI error messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	USERCONF	# userconf(4) support
@@ -222,7 +217,7 @@ makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 
 # ATA (IDE) bus support
 atabus*	at ata?
-#options	ATADEBUG
+#options 	ATADEBUG
 
 # IDE drives
 wd0	at atabus0 drive 0 flags 0x0000
@@ -262,9 +257,9 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	bio			# RAID control device driver
-pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -306,13 +301,13 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester

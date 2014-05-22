@@ -1,4 +1,4 @@
-# $NetBSD: keywords,v 1.1.2.2 2012/04/17 00:09:02 yamt Exp $
+# $NetBSD: keywords,v 1.1.2.3 2014/05/22 11:42:17 yamt Exp $
 #
 # Table of keywords for use with ps "-o" option.
 #
@@ -56,6 +56,7 @@ login		LOGIN		LJUST
 logname		login		ALIAS
 lstart		STARTED		LJUST
 lstate		STAT		LJUST
+ltime		LTIME
 majflt		MAJFLT
 minflt		MINFLT
 msgrcv		MSGRCV

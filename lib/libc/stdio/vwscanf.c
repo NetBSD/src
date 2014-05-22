@@ -1,4 +1,4 @@
-/*	$NetBSD: vwscanf.c,v 1.1.44.1 2012/04/17 00:05:25 yamt Exp $	*/
+/*	$NetBSD: vwscanf.c,v 1.1.44.2 2014/05/22 11:36:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -31,17 +31,28 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vwscanf.c,v 1.1 2002/09/23 12:40:06 tjr Exp $");
 #else
-__RCSID("$NetBSD: vwscanf.c,v 1.1.44.1 2012/04/17 00:05:25 yamt Exp $");
+__RCSID("$NetBSD: vwscanf.c,v 1.1.44.2 2014/05/22 11:36:54 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <wchar.h>
+
+__weak_alias(vwscanf_l, _vwscanf_l)
 
 int
 vwscanf(const wchar_t * __restrict fmt, va_list ap)
 {
 
 	return vfwscanf(stdin, fmt, ap);
+}
+
+int
+vwscanf_l(locale_t loc, const wchar_t * __restrict fmt, va_list ap)
+{
+
+	return vfwscanf_l(stdin, loc, fmt, ap);
 }

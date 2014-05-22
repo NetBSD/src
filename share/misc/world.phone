@@ -1,3 +1,4 @@
+# $NetBSD: world.phone,v 1.1.56.1 2014/05/22 11:37:53 yamt Exp $
 # Country Name:Country code:IDD International prefix:NDD national prefix
 Afghanistan:93:00:0:
 Albania:355:00:0:
@@ -258,4 +259,4 @@ Zimbabwe:263:00:0
 #   is 1; the numbers that follow function similar to area codes in
 #   the U.S. and Canada.
 # ~ Await a second tone at this stage 
-# From: http://kropla.com/dialcode.htm
+# From: http://kropla.com/dialcode.htm (redirects to http://countrycode.org)

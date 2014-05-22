@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.49.4.1 2012/10/30 17:20:20 yamt Exp $	*/
+/*	$NetBSD: kd.c,v 1.49.4.2 2014/05/22 11:40:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.49.4.1 2012/10/30 17:20:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.49.4.2 2014/05/22 11:40:08 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -110,8 +110,17 @@ dev_type_tty(kdtty);
 dev_type_poll(kdpoll);
 
 const struct cdevsw kd_cdevsw = {
-	kdopen, kdclose, kdread, kdwrite, kdioctl,
-	nostop, kdtty, kdpoll, nommap, ttykqfilter, D_TTY
+	.d_open = kdopen,
+	.d_close = kdclose,
+	.d_read = kdread,
+	.d_write = kdwrite,
+	.d_ioctl = kdioctl,
+	.d_stop = nostop,
+	.d_tty = kdtty,
+	.d_poll = kdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*
@@ -334,7 +343,6 @@ kdparam(struct tty *tp, struct termios *t)
 static void
 kdstart(struct tty *tp)
 {
-	struct clist *cl;
 	int s1, s2;
 
 	s1 = splsoftclock();
@@ -342,7 +350,6 @@ kdstart(struct tty *tp)
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
 		goto out;
 
-	cl = &tp->t_outq;
 	if (ttypull(tp)) {
 		tp->t_state |= TS_BUSY;
 		if ((s1 & PSR_PIL) == 0) {
@@ -619,15 +626,20 @@ prom_get_device_args(const char *prop, char *args, unsigned int sz)
 void
 consinit(void)
 {
+#if 0
 	int inSource, outSink;
+#endif
 
 	switch (prom_version()) {
+#if 0
 	case PROM_OLDMON:
 	case PROM_OBP_V0:
 		/* The stdio handles identify the device type */
 		inSource = prom_stdin();
 		outSink  = prom_stdout();
 		break;
+	// XXXMRG  should these just set prom_stdin_node / prom_stdout_node?
+#endif
 
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:

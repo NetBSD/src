@@ -1,4 +1,4 @@
-#	$NetBSD: files.ddb,v 1.7.2.1 2012/10/30 17:20:49 yamt Exp $
+#	$NetBSD: files.ddb,v 1.7.2.2 2014/05/22 11:40:19 yamt Exp $
 
 #
 # DDB options
@@ -19,6 +19,7 @@ file	ddb/db_kernel.c			ddb
 file	ddb/db_lex.c			ddb
 file	ddb/db_lwp.c			ddb
 file	ddb/db_output.c			ddb
+file	ddb/db_panic.c			ddb
 file	ddb/db_proc.c			ddb
 file	ddb/db_print.c			ddb
 file	ddb/db_run.c			ddb | kgdb	# XXX kgdb reference

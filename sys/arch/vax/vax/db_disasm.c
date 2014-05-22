@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19.12.1 2012/04/17 00:07:01 yamt Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.19.12.2 2014/05/22 11:40:12 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.12.1 2012/04/17 00:07:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.12.2 2014/05/22 11:40:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -321,7 +321,7 @@ get_operand(inst_buffer *ib, int size)
 		break;
 
 	case 4:		/* indexed */
-		sprintf(buf, "[%s]", my_db_regs[reg].name);
+		snprintf(buf, sizeof(buf), "[%s]", my_db_regs[reg].name);
 		get_operand(ib, 0);
 		add_str(ib, buf);
 		break;
@@ -477,9 +477,9 @@ add_int(inst_buffer *ib, int i)
 {
 	char buf[32];
 	if (i < 100 && i > -100)
-		sprintf(ib->curp, "%d", i);
+		snprintf(ib->curp, sizeof(buf), "%d", i);
 	else
-		sprintf(buf, "0x%x", i);
+		snprintf(buf, sizeof(buf), "0x%x", i);
 	add_str(ib, buf);
 }
 
@@ -487,7 +487,7 @@ void
 add_xint(inst_buffer *ib, int val)
 {
 	char buf[32];
-	sprintf(buf, "0x%x", val);
+	snprintf(buf, sizeof(buf), "0x%x", val);
 	add_str(ib, buf);
 }
 

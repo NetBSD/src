@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.57.2.3 2013/01/16 05:33:55 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.57.2.4 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57.2.3 2013/01/16 05:33:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57.2.4 2014/05/22 11:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,17 +157,17 @@ ext2fs_read(void *v)
 		bytesinfile = ext2fs_size(ip) - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
-		lbn = lblkno(fs, uio->uio_offset);
+		lbn = ext2_lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
 		size = fs->e2fs_bsize;
-		blkoffset = blkoff(fs, uio->uio_offset);
+		blkoffset = ext2_blkoff(fs, uio->uio_offset);
 		xfersize = fs->e2fs_bsize - blkoffset;
 		if (uio->uio_resid < xfersize)
 			xfersize = uio->uio_resid;
 		if (bytesinfile < xfersize)
 			xfersize = bytesinfile;
 
-		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
+		if (ext2_lblktosize(fs, nextlbn) >= ext2fs_size(ip))
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
 			int nextsize = fs->e2fs_bsize;
@@ -279,7 +279,7 @@ ext2fs_write(void *v)
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
 			oldoff = uio->uio_offset;
-			blkoffset = blkoff(fs, uio->uio_offset);
+			blkoffset = ext2_blkoff(fs, uio->uio_offset);
 			bytelen = MIN(fs->e2fs_bsize - blkoffset,
 			    uio->uio_resid);
 
@@ -320,7 +320,7 @@ ext2fs_write(void *v)
 		if (error == 0 && ioflag & IO_SYNC) {
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(oldoff),
-			    round_page(blkroundup(fs, uio->uio_offset)),
+			    round_page(ext2_blkroundup(fs, uio->uio_offset)),
 			    PGO_CLEANIT | PGO_SYNCIO);
 		}
 
@@ -329,8 +329,8 @@ ext2fs_write(void *v)
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	for (error = 0; uio->uio_resid > 0;) {
-		lbn = lblkno(fs, uio->uio_offset);
-		blkoffset = blkoff(fs, uio->uio_offset);
+		lbn = ext2_lblkno(fs, uio->uio_offset);
+		blkoffset = ext2_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(fs->e2fs_bsize - blkoffset, uio->uio_resid);
 		if (xfersize < fs->e2fs_bsize)
 			flags |= B_CLRBUF;

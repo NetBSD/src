@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.58.2.2 2012/10/30 18:59:23 yamt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.58.2.3 2014/05/22 11:37:13 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.58.2.2 2012/10/30 18:59:23 yamt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.58.2.3 2014/05/22 11:37:13 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -101,6 +101,9 @@ _rtld_is_exported(const Elf_Sym *def)
 		(fptr_t)___tls_get_addr,
 #endif
 #endif
+#ifdef __ARM_EABI__
+		(fptr_t)__gnu_Unwind_Find_exidx,	/* for gcc EHABI */
+#endif
 		NULL
 	};
 	int i;
@@ -146,7 +149,7 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	const Objlist_Entry *elm;
-	
+
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
@@ -257,7 +260,7 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 		rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
 		if (name[1] != strp[1] || strcmp(name, strp))
 			continue;
-#ifdef __mips__
+#if defined(__mips__) || defined(__vax__)
 		if (symp->st_shndx == SHN_UNDEF)
 			continue;
 #else
@@ -430,7 +433,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		def = ref;
 		defobj = refobj;
 	}
-		
+
 	/*
 	 * If we found no definition and the reference is weak, treat the
 	 * symbol as having the value zero.
@@ -543,7 +546,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 			defobj = obj;
 		}
 	}
-	
+
 	/* Search all dlopened DAGs containing the referencing object. */
 	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)

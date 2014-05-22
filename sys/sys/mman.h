@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.42 2008/11/18 22:13:49 ad Exp $	*/
+/*	$NetBSD: mman.h,v 1.42.16.1 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -185,6 +185,8 @@ int	minherit(void *, size_t, int);
 void *	mremap(void *, size_t, void *, size_t, int);
 #endif
 int	posix_madvise(void *, size_t, int);
+int	shm_open(const char *, int, mode_t);
+int	shm_unlink(const char *);
 __END_DECLS
 
 #endif /* !_KERNEL */

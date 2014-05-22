@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.14 2009/11/18 17:06:23 drochner Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.14.6.1 2014/05/22 11:36:59 yamt Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.14 2009/11/18 17:06:23 drochner Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.14.6.1 2014/05/22 11:36:59 yamt Exp $");
 #endif
 
 
@@ -111,12 +111,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 				return (PAM_SUCCESS);
 			realpw = "*";
 		}
-		lc = login_getpwclass(pwd);
 	} else {
 		PAM_LOG("Doing dummy authentication");
 		realpw = "*";
-		lc = login_getclass(NULL);
 	}
+	lc = login_getpwclass(pwd);
 	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, NULL);
 	login_close(lc);
 	if (retval != PAM_SUCCESS)
@@ -300,8 +299,8 @@ yp_set_password(pam_handle_t *pamh, struct passwd *opwd,
 		goto malloc_failure;
 	if ((yppwd.newpw.pw_name = strdup(pwd->pw_name)) == NULL)
 		goto malloc_failure;
-	yppwd.newpw.pw_uid = pwd->pw_uid;
-	yppwd.newpw.pw_gid = pwd->pw_gid;
+	yppwd.newpw.pw_uid = (int)pwd->pw_uid;
+	yppwd.newpw.pw_gid = (int)pwd->pw_gid;
 	if ((yppwd.newpw.pw_gecos = strdup(pwd->pw_gecos)) == NULL)
 		goto malloc_failure;
 	if ((yppwd.newpw.pw_dir = strdup(pwd->pw_dir)) == NULL)
@@ -543,7 +542,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 		PAM_LOG("UPDATE round");
 
-		if ((lc = login_getclass(pwd->pw_class)) != NULL) {
+		if ((lc = login_getpwclass(pwd)) != NULL) {
 			min_pw_len = (int) login_getcapnum(lc,
 			    "minpasswordlen", (quad_t)0, (quad_t)0);
 			pw_expiry = (int) login_getcapnum(lc,

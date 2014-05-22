@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.23 2010/07/06 05:59:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.23.6.1 2014/05/22 11:37:29 yamt Exp $
 
 .include <bsd.own.mk>   # For MKPIC
 .include <bsd.shlib.mk>
+.include <bsd.endian.mk>
 
 .if ${MKPIC} != "no" && \
-    (${MACHINE_ARCH} == "arm" ||	\
+    ((${MACHINE_CPU} == "arm" && ${TARGET_ENDIANNESS} == "1234") || \
      ${MACHINE_ARCH} == "i386" ||	\
-     ${MACHINE_ARCH} == "m68k" ||	\
+     ${MACHINE_CPU} == "m68k" ||	\
      ${MACHINE_ARCH} == "sparc" ||	\
      ${MACHINE_ARCH} == "vax")
 

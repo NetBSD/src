@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.46.2.2 2012/10/30 17:20:28 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.46.2.3 2014/05/22 11:40:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46.2.2 2012/10/30 17:20:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46.2.3 2014/05/22 11:40:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,8 +72,6 @@ struct cpu_info cpu_info_primary = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 };
-
-char cpu_model[48] = "virtual processor";
 
 typedef struct cpu_softc {
 	device_t	sc_dev;
@@ -126,8 +124,10 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 void
 cpu_configure(void)
 {
+	cpu_setmodel("virtual processor");
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
+
 
 	spl0();
 }

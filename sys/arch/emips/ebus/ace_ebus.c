@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.2.2.2 2012/10/30 17:19:17 yamt Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.2.2.3 2014/05/22 11:39:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.2.2.2 2012/10/30 17:19:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.2.2.3 2014/05/22 11:39:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ int	 acedetach(device_t, int);
 int	 aceactivate(device_t, enum devact);
 
 void  acedone(struct ace_softc *);
-static void ace_params_to_properties(struct ace_softc *ace);
+static void ace_set_geometry(struct ace_softc *ace);
 
 CFATTACH_DECL_NEW(ace_ebus, sizeof(struct ace_softc),
     ace_ebus_match, ace_ebus_attach, acedetach, aceactivate);
@@ -242,7 +242,7 @@ ace_ebus_attach(device_t parent, device_t self, void *aux)
 	ebus_intr_establish(parent, (void*)ia->ia_cookie, IPL_BIO,
 	    ace_ebus_intr, ace);
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	error = kthread_create(PRI_NONE, 0, NULL, sysace_thread,
 	    ace, NULL, "%s", device_xname(ace->sc_dev));
@@ -348,7 +348,7 @@ sysace_wedges(void *arg)
 	dkwedge_autodiscover = 1;
 	dkwedge_discover(&sc->sc_dk);
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	DBGME(DEBUG_STATUS, printf("Sysace::thread done for %p\n", sc));
 	kthread_exit(0);
@@ -968,7 +968,7 @@ sysace_identify(struct ace_softc *sc)
 					DBGME(DEBUG_PROBE,
 					    printf("Sysace::sc_capacity x%qx\n",
 					    sc->sc_capacity));
-					ace_params_to_properties(sc);
+					ace_set_geometry(sc);
 				} else {
 					DBGME(DEBUG_ERRORS,
 					    printf("Sysace::Bad card signature?"
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.2.2.2 2012/10/30 17:19:17 yamt Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.2.2.3 2014/05/22 11:39:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1556,12 +1556,27 @@ dev_type_dump(acedump);
 dev_type_size(acesize);
 
 const struct bdevsw ace_bdevsw = {
-	aceopen, aceclose, acestrategy, aceioctl, acedump, acesize, D_DISK
+	.d_open = aceopen,
+	.d_close = aceclose,
+	.d_strategy = acestrategy,
+	.d_ioctl = aceioctl,
+	.d_dump = acedump,
+	.d_psize = acesize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ace_cdevsw = {
-	aceopen, aceclose, aceread, acewrite, aceioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = aceopen,
+	.d_close = aceclose,
+	.d_read = aceread,
+	.d_write = acewrite,
+	.d_ioctl = aceioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void  acegetdefaultlabel(struct ace_softc *, struct disklabel *);
@@ -2431,6 +2446,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	    va, size, blkno);
 	DELAY(500 * 1000);	/* half a second */
 	err = 0;
+	__USE(err);
 #endif
 
 	acedoingadump = 0;
@@ -2464,48 +2480,16 @@ bad144intern(struct ace_softc *ace)
 #endif
 
 static void
-ace_params_to_properties(struct ace_softc *ace)
+ace_set_geometry(struct ace_softc *ace)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
-	const char *cp;
+	struct disk_geom *dg = &ace->sc_dk.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	cp = ST506;
+	dg->dg_secperunit = ace->sc_capacity;
+	dg->dg_secsize = DEV_BSIZE /* XXX 512? */;
+	dg->dg_nsectors = ace->sc_params.CurrentSectorsPerTrack;
+	dg->dg_ntracks = ace->sc_params.CurrentNumberOfHeads;
 
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", cp);
-
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", ace->sc_capacity);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    ace->sc_params.CurrentSectorsPerTrack);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    ace->sc_params.CurrentNumberOfHeads);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    ace->sc_capacity /
-	    (ace->sc_params.CurrentNumberOfHeads *
-	     ace->sc_params.CurrentSectorsPerTrack));
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(ace->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = ace->sc_dk.dk_info;
-	ace->sc_dk.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	disk_set_info(ace->sc_dev, &ace->sc_dk, ST506);
 }

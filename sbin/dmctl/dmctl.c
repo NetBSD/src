@@ -213,16 +213,16 @@ main(int argc, char *argv[])
 static int
 dmctl_get_version(int argc __unused, char *argv[] __unused, libdm_task_t task)
 {
-	uint32_t ver[3], size;
+	uint32_t ver[3];
 
-	size = libdm_task_get_cmd_version(task, ver, sizeof(ver));
+	(void)libdm_task_get_cmd_version(task, ver, sizeof(ver));
 
 	printf("Library protocol version %d:%d:%d\n", ver[0], ver[1], ver[2]);
 
 	if (libdm_task_run(task) != 0)
 		err(EXIT_FAILURE, "dmctl_get_version: libdm_task_run failed.");
 
-	size = libdm_task_get_cmd_version(task, ver, 3);
+	(void)libdm_task_get_cmd_version(task, ver, 3);
 	printf("Kernel protocol version %d:%d:%d\n",ver[0], ver[1], ver[2]);
 
 	libdm_task_destroy(task);

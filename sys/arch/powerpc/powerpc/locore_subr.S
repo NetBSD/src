@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.46.2.2 2012/10/30 17:20:13 yamt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.46.2.3 2014/05/22 11:40:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -360,11 +360,7 @@ _ENTRY(softint_fast_dispatch)
 	streg	%r31, CFRAME_R31(%sp)
 
 	GET_CPUINFO(%r7)
-#ifdef PPC_BOOKE
-	mfsprg2	%r30
-#else
-	ldptr	%r30, CI_CURLWP(%r7)
-#endif /* PPC_BOOKE */
+	mr	%r30, %r13		/* curlwp is now in r13 */
 
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */

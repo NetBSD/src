@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.22.2.4 2013/01/23 00:05:44 yamt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.22.2.5 2014/05/22 11:39:40 yamt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -58,18 +58,10 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -141,7 +133,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=600000
+options 	SYMTAB_SPACE=800000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -228,7 +220,7 @@ omapiic1	at obio0 addr 0x48072000 size 0x80
 omapiic2	at obio0 addr 0x48060000 size 0x80
 iic*		at omapiic?
 
-# Power Managent and System Companion Device
+# Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a
@@ -245,7 +237,6 @@ omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
 omapmputmr1	at obio2 addr 0x49034000 intr 39	# GP Timer 3
 # Microtime Reference Timer
 omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
-options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
 #omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
@@ -256,10 +247,7 @@ omapdma0	at obio0 addr 0x48056000 size 0x1000
 
 # onboard video
 omapfb* 	at obio0 addr 0x48050000 size 0x10000
-
-# make sure the console display is always wsdisplay0
-wsdisplay0	at wsemuldisplaydev? console 1
-wsdisplay*	at wsemuldisplaydev?
+wsdisplay*	at wsemuldisplaydev? console ?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
@@ -268,6 +256,8 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4

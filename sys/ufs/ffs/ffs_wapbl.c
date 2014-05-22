@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.17.8.1 2013/01/23 00:06:33 yamt Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.17.8.2 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.17.8.1 2013/01/23 00:06:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.17.8.2 2014/05/22 11:41:18 yamt Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -165,7 +165,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
-	int i, error;
+	int i, error __diagused;
 
 #ifdef WAPBL_DEBUG_INODES
 	ufs_wapbl_verify_inodes(mp, "ffs_wapbl_sync_metadata");
@@ -177,7 +177,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		 * if it cannot read the cylinder group block
 		 */
 		ffs_blkfree(fs, ump->um_devvp,
-		    dbtofsb(fs, deallocblks[i]), dealloclens[i], -1);
+		    FFS_DBTOFSB(fs, deallocblks[i]), dealloclens[i], -1);
 	}
 
 	fs->fs_fmod = 0;
@@ -201,7 +201,7 @@ ffs_wapbl_abort_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		 * blkfree succeeded above, then this shouldn't fail because
 		 * the buffer will be locked in the current transaction.
 		 */
-		ffs_blkalloc_ump(ump, dbtofsb(fs, deallocblks[i]),
+		ffs_blkalloc_ump(ump, FFS_DBTOFSB(fs, deallocblks[i]),
 		    dealloclens[i]);
 	}
 }
@@ -528,7 +528,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	}
 
 	desired_logsize =
-	    lfragtosize(fs, fs->fs_size) / UFS_WAPBL_JOURNAL_SCALE;
+	    ffs_lfragtosize(fs, fs->fs_size) / UFS_WAPBL_JOURNAL_SCALE;
 	DPRINTF("desired log size = %" PRId64 " kB\n", desired_logsize / 1024);
 	desired_logsize = max(desired_logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
 	desired_logsize = min(desired_logsize, UFS_WAPBL_MAX_JOURNAL_SIZE);
@@ -536,7 +536,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	    desired_logsize / 1024);
 
 	/* Is there space after after filesystem on partition for log? */
-	logstart = fsbtodb(fs, fs->fs_size);
+	logstart = FFS_FSBTODB(fs, fs->fs_size);
 	error = getdisksize(devvp, &numsecs, &secsize);
 	if (error)
 		return error;
@@ -680,11 +680,11 @@ wapbl_allocate_log_file(struct mount *mp, struct vnode *vp,
 	if (addr == 0) {
 		printf("%s: log not allocated, largest extent is "
 		    "%" PRId64 "MB\n", __func__,
-		    lblktosize(fs, size) / (1024 * 1024));
+		    ffs_lblktosize(fs, size) / (1024 * 1024));
 		return ENOSPC;
 	}
 
-	logsize = lblktosize(fs, size);	/* final log size */
+	logsize = ffs_lblktosize(fs, size);	/* final log size */
 
 	VTOI(vp)->i_ffs_first_data_blk = addr;
 	VTOI(vp)->i_ffs_first_indir_blk = indir_addr;
@@ -695,7 +695,7 @@ wapbl_allocate_log_file(struct mount *mp, struct vnode *vp,
 		return error;
 	}
 
-	*startp     = fsbtodb(fs, addr);
+	*startp     = FFS_FSBTODB(fs, addr);
 	*countp     = btodb(logsize);
 	*extradatap = VTOI(vp)->i_number;
 
@@ -731,13 +731,11 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	daddr_t desired_blks, min_desired_blks;
 	daddr_t freeblks, best_blks;
 	int bpcg, cg, error, fixedsize, indir_blks, n, s;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	if (logsize == 0) {
 		fixedsize = 0;	/* We can adjust the size if tight */
-		logsize = lfragtosize(fs, fs->fs_dsize) /
+		logsize = ffs_lfragtosize(fs, fs->fs_dsize) /
 		    UFS_WAPBL_JOURNAL_SCALE;
 		DPRINTF("suggested log size = %" PRId64 "\n", logsize);
 		logsize = max(logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
@@ -793,11 +791,11 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		min_desired_blks = desired_blks / 4;
 
 	/* Look at number of blocks per CG.  If it's too small, bail early. */
-	bpcg = fragstoblks(fs, fs->fs_fpg);
+	bpcg = ffs_fragstoblks(fs, fs->fs_fpg);
 	if (min_desired_blks > bpcg) {
 		printf("ffs_wapbl: cylinder group size of %" PRId64 " MB "
 		    " is not big enough for journal\n",
-		    lblktosize(fs, bpcg) / (1024 * 1024));
+		    ffs_lblktosize(fs, bpcg) / (1024 * 1024));
 		goto bad;
 	}
 
@@ -819,7 +817,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	    best_blks < desired_blks && cg >= 0 && cg < fs->fs_ncg;
 	    s++, n = -n, cg += n * s) {
 		DPRINTF("check cg %d of %d\n", cg, fs->fs_ncg);
-		error = bread(devvp, fsbtodb(fs, cgtod(fs, cg)),
+		error = bread(devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 		    fs->fs_cgsize, FSCRED, 0, &bp);
 		if (error) {
 			continue;
@@ -851,7 +849,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 
 			if (freeblks > best_blks) {
 				best_blks = freeblks;
-				best_addr = blkstofrags(fs, start_addr) +
+				best_addr = ffs_blkstofrags(fs, start_addr) +
 				    cgbase(fs, cg);
 
 				if (freeblks >= desired_blks) {
@@ -872,7 +870,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		*indir_addr = 0;
 	} else {
 		/* put indirect blocks at start, and data blocks after */
-		*addr = best_addr + blkstofrags(fs, indir_blks);
+		*addr = best_addr + ffs_blkstofrags(fs, indir_blks);
 		*indir_addr = best_addr;
 	}
 	*size = min(desired_blks, best_blks) - indir_blks;

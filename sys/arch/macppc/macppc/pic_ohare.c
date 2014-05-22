@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.10.2.1 2012/04/17 00:06:38 yamt Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.10.2.2 2014/05/22 11:39:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.10.2.1 2012/04/17 00:06:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.10.2.2 2014/05/22 11:39:57 yamt Exp $");
 
 #include "opt_interrupt.h"
 
@@ -160,7 +160,7 @@ setup_ohare2(uint32_t addr, int irq)
 
 	pic = setup_ohare(addr, 0);
 	strcpy(pic->pic.pic_name, "ohare2");
-	intr_establish(irq, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
+	intr_establish(irq, IST_LEVEL, IPL_HIGH, pic_handle_intr, pic);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.5.2.1 2013/01/23 00:05:55 yamt Exp $	*/
+/*	$NetBSD: spe.c,v 1.5.2.2 2014/05/22 11:40:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.5.2.1 2013/01/23 00:05:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.5.2.2 2014/05/22 11:40:03 yamt Exp $");
 
 #include "opt_altivec.h"
 
@@ -63,13 +63,13 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return (l->l_md.md_flags & MDLWP_USEDVEC) != 0;
+	return pcu_used_p(&vec_ops);
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	l->l_md.md_flags |= MDLWP_USEDVEC;
+	pcu_discard(&vec_ops, true);
 }
 
 void
@@ -103,9 +103,8 @@ vec_state_load(lwp_t *l, u_int flags)
 	__asm volatile ("isync");
 
 	/*
-	 * Note that vector has now been used.
+	 * Set PSL_SPV so vectors will be enabled on return to user.
 	 */
-	l->l_md.md_flags |= MDLWP_USEDVEC;
 	l->l_md.md_utf->tf_srr1 |= PSL_SPV;
 }
 

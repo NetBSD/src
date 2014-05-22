@@ -1,4 +1,4 @@
-/* $NetBSD: notifications.h,v 1.1.6.1 2013/01/16 05:34:09 yamt Exp $ */
+/* $NetBSD: notifications.h,v 1.1.6.2 2014/05/22 11:43:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ static const char	*NOTIF_STR[] __unused =
 	"Internal error"
 };
 
-struct notification_tlv *	build_notification(uint32_t, uint32_t);
-int		send_notification(struct ldp_peer *, uint32_t, uint32_t);
+struct notification_tlv* build_notification(uint32_t, uint32_t);
+int send_notification(const struct ldp_peer *, uint32_t, uint32_t);
 
 #endif	/* !_NOTIFICATIONS_H_ */

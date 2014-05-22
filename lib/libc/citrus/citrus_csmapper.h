@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.h,v 1.2 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_csmapper.h,v 1.2.28.1 2014/05/22 11:36:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #ifndef _CITRUS_CSMAPPER_H_
-#define _CITRUS_CSMAPPER_H
+#define _CITRUS_CSMAPPER_H_
 
 #define _citrus_csmapper		_citrus_mapper
 #define _citrus_csmapper_close		_citrus_mapper_close

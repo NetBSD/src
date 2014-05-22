@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.70 2011/06/20 19:56:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.70.2.1 2014/05/22 11:39:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,6 +87,11 @@ __start:
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
+#if defined(PMAP_OEA64_BRIDGE)
+	mfmsr	0			/* Clear SF and ISF bits */
+	clrldi	0,0,3
+	mtmsrd	0
+#endif /* PMAP_OEA64_BRIDGE */
 	isync
 
 /* compute end of kernel memory */

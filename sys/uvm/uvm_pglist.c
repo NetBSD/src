@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.62.2.1 2011/11/06 22:05:00 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.62.2.2 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.62.2.1 2011/11/06 22:05:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.62.2.2 2014/05/22 11:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ u_long	uvm_pglistalloc_npages;
 static void
 uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 {
-	int free_list, color, pgflidx;
+	int free_list __unused, color __unused, pgflidx;
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 

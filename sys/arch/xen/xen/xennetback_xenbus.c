@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.47.2.1 2012/10/30 17:20:37 yamt Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.47.2.2 2014/05/22 11:40:14 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.47.2.1 2012/10/30 17:20:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.47.2.2 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -288,6 +288,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
 			aprint_error_ifnet(ifp,
 			    "%s is not a valid mac address\n", val);
+			free(val, M_DEVBUF);
 			err = EINVAL;
 			goto fail;
 		}
@@ -1202,7 +1203,7 @@ xennetback_ifsoftstart_copy(void *arg)
 	gnttab_copy_t *gop;
 	int id, offset;
 
-	XENPRINTF(("xennetback_ifsoftstart_transfer "));
+	XENPRINTF(("xennetback_ifsoftstart_copy "));
 	int s = splnet();
 	if (__predict_false(
 	    (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.21.4.1 2012/10/30 17:21:53 yamt Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.21.4.2 2014/05/22 11:40:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.21.4.1 2012/10/30 17:21:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.21.4.2 2014/05/22 11:40:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ const struct pciide_product_desc pciide_stpc_products[] = {
 };
 
 CFATTACH_DECL_NEW(stpcide, sizeof(struct pciide_softc),
-    stpcide_match, stpcide_attach, NULL, NULL);
+    stpcide_match, stpcide_attach, pciide_detach, NULL);
 
 static int
 stpcide_match(device_t parent, cfdata_t match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.c,v 1.4.2.4 2013/01/16 05:34:10 yamt Exp $	*/
+/*	$NetBSD: npf_var.c,v 1.4.2.5 2014/05/22 11:43:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.4.2.4 2013/01/16 05:34:10 yamt Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.4.2.5 2014/05/22 11:43:07 yamt Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -58,10 +58,9 @@ static npfvar_t *	var_list = NULL;
 static size_t		var_num = 0;
 
 npfvar_t *
-npfvar_create(const char *name)
+npfvar_create(void)
 {
 	npfvar_t *vp = ecalloc(1, sizeof(*vp));
-	vp->v_key = estrdup(name);
 	var_num++;
 	return vp;
 }
@@ -85,10 +84,24 @@ npfvar_type(size_t t)
 }
 
 void
-npfvar_add(npfvar_t *vp)
+npfvar_add(npfvar_t *vp, const char *name)
 {
+	vp->v_key = estrdup(name);
 	vp->v_next = var_list;
 	var_list = vp;
+}
+
+npfvar_t *
+npfvar_create_element(int type, const void *data, size_t len)
+{
+	npfvar_t *vp = npfvar_create();
+	return npfvar_add_element(vp, type, data, len);
+}
+
+npfvar_t *
+npfvar_create_from_string(int type, const char *string)
+{
+	return npfvar_create_element(type, string, strlen(string) + 1);
 }
 
 npfvar_t *

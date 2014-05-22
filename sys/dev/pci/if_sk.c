@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.69.4.2 2012/10/30 17:21:32 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.69.4.3 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.69.4.2 2012/10/30 17:21:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.69.4.3 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,7 +707,7 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	}
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
-		if (sk_newbuf(sc_if, i, NULL, 
+		if (sk_newbuf(sc_if, i, NULL,
 		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
 			aprint_error_dev(sc_if->sk_dev,
 			    "failed alloc of %dth mbuf\n", i);
@@ -1384,7 +1384,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: jumbo buffer allocation failed\n", ifp->if_xname);
 		goto fail;
 	}
-	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU 
+	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU
 		| ETHERCAP_JUMBO_MTU;
 
 	ifp->if_softc = sc_if;
@@ -1513,6 +1513,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 	u_int32_t command;
 	const char *revstr;
 	const struct sysctlnode *node;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sk_dev = self;
 	aprint_naive("\n");
@@ -1626,7 +1627,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sk_intrhand = pci_intr_establish(pc, ih, IPL_NET, sk_intr, sc);
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");
@@ -2219,7 +2220,6 @@ sk_tick(void *xsc_if)
 	SK_XM_CLRBIT_2(sc_if, XM_IMR, XM_IMR_GP0_SET);
 	SK_XM_READ_2(sc_if, XM_ISR);
 	mii_tick(mii);
-	mii_pollstat(mii);
 	callout_stop(&sc_if->sk_tick_ch);
 }
 
@@ -2305,9 +2305,12 @@ sk_intr_xmac(struct sk_if_softc	*sc_if)
 void
 sk_intr_yukon(struct sk_if_softc *sc_if)
 {
+#ifdef SK_DEBUG
 	int status;
 
-	status = SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
+	status = 
+#endif
+		SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
 
 	DPRINTFN(3, ("sk_intr_yukon status=%#x\n", status));
 }
@@ -3102,12 +3105,6 @@ SYSCTL_SETUP(sysctl_sk, "sysctl sk subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "sk",

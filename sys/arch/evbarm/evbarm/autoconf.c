@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.34.3 2013/01/23 00:05:45 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.34.4 2014/05/22 11:39:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.34.3 2013/01/23 00:05:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.34.4 2014/05/22 11:39:40 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.34.3 2013/01/23 00:05:45 yamt Exp 
 #include <machine/bootconfig.h>
 
 void	(*evbarm_device_register)(device_t, void *);
+void	(*evbarm_device_register_post_config)(device_t, void *);
 
 #ifndef MEMORY_DISK_IS_ROOT
 static void get_device(char *name);
@@ -141,7 +142,15 @@ cpu_configure(void)
 void
 device_register(device_t dev, void *aux)
 {
-
 	if (evbarm_device_register != NULL)
 		(*evbarm_device_register)(dev, aux);
 }
+
+
+void
+device_register_post_config(device_t dev, void *aux)
+{
+	if (evbarm_device_register_post_config != NULL)
+		(*evbarm_device_register_post_config)(dev, aux);
+}
+

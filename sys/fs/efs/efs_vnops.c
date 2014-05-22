@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.24.4.4 2013/01/23 00:06:19 yamt Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.24.4.5 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.24.4.4 2013/01/23 00:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.24.4.5 2014/05/22 11:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ MALLOC_DECLARE(M_EFSTMP);
 static int
 efs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -125,6 +125,9 @@ efs_lookup(void *v)
 	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
 
+	if (*ap->a_vpp != ap->a_dvp)
+		VOP_UNLOCK(*ap->a_vpp);
+
 	return 0;
 }
 
@@ -149,7 +152,7 @@ efs_check_permitted(struct vnode *vp, struct efs_inode *eip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, eip->ei_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    eip->ei_mode, eip->ei_uid, eip->ei_gid, mode, cred));
 }

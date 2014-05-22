@@ -1,4 +1,4 @@
-#	$NetBSD: libelf.inc,v 1.1 2009/12/21 18:21:18 thorpej Exp $
+#	$NetBSD: libelf.inc,v 1.1.6.1 2014/05/22 11:42:31 yamt Exp $
 
-LIBELFSRCDIR=	${.CURDIR}/../../external/bsd/libelf/dist
+LIBELFSRCDIR=	${.CURDIR}/../../external/bsd/elftoolchain/dist/libelf
 LIBELFOBJDIR!=	cd ${.CURDIR}/../libelf && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.8.4.1 2012/04/17 00:07:59 yamt Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.8.4.2 2014/05/22 11:40:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.8.4.1 2012/04/17 00:07:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.8.4.2 2014/05/22 11:40:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,6 +108,7 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	const char *intrstr;
 	pcireg_t csr;
 	int err;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
 	aprint_normal(": HD Audio Controller\n");
@@ -143,7 +144,7 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
 	    hdaudio_pci_intr, sc);
 	if (sc->sc_ih == NULL) {

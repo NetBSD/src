@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_handler.c,v 1.7.6.5 2013/01/23 00:06:25 yamt Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.7.6.6 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -31,10 +31,12 @@
 
 /*
  * NPF packet handler.
+ *
+ * Note: pfil(9) hooks are currently locked by softnet_lock and kernel-lock.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.5 2013/01/23 00:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.6 2014/05/22 11:41:09 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,13 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.5 2013/01/23 00:06:25 yamt Exp
 
 #include "npf_impl.h"
 
-/*
- * If npf_ph_if != NULL, pfil hooks are registered.  If NULL, not registered.
- * Used to check the state.  Locked by: softnet_lock + KERNEL_LOCK (XXX).
- */
-static struct pfil_head *	npf_ph_if = NULL;
-static struct pfil_head *	npf_ph_inet = NULL;
-static struct pfil_head *	npf_ph_inet6 = NULL;
+static bool		pfil_registered = false;
+static pfil_head_t *	npf_ph_if = NULL;
+static pfil_head_t *	npf_ph_inet = NULL;
+static pfil_head_t *	npf_ph_inet6 = NULL;
+
+#ifndef INET6
+#define ip6_reass_packet(x, y)	ENOTSUP
+#endif
 
 /*
  * npf_ifhook: hook handling interface changes.
@@ -67,7 +70,18 @@ static struct pfil_head *	npf_ph_inet6 = NULL;
 static int
 npf_ifhook(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
+	u_long cmd = (u_long)mp;
 
+	if (di == PFIL_IFNET) {
+		switch (cmd) {
+		case PFIL_IFNET_ATTACH:
+			npf_ifmap_attach(ifp);
+			break;
+		case PFIL_IFNET_DETACH:
+			npf_ifmap_detach(ifp);
+			break;
+		}
+	}
 	return 0;
 }
 
@@ -84,17 +98,14 @@ npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
 		struct ip *ip = nbuf_dataptr(nbuf);
 		error = ip_reass_packet(mp, ip);
 	} else if (npf_iscached(npc, NPC_IP6)) {
-#ifdef INET6
 		/*
 		 * Note: ip6_reass_packet() offset is the start of
 		 * the fragment header.
 		 */
-		const u_int hlen = npf_cache_hlen(npc);
-		error = ip6_reass_packet(mp, hlen);
+		error = ip6_reass_packet(mp, npc->npc_hlen);
 		if (error && *mp == NULL) {
 			memset(nbuf, 0, sizeof(nbuf_t));
 		}
-#endif
 	}
 	if (error) {
 		npf_stats_inc(NPF_STAT_REASSFAIL);
@@ -131,7 +142,6 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	nbuf_t nbuf;
 	npf_cache_t npc;
 	npf_session_t *se;
-	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int error, retfl;
@@ -165,7 +175,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		}
 	}
 
-	/* Inspect the list of sessions. */
+	/* Inspect the list of sessions (if found, acquires a reference). */
 	se = npf_session_inspect(&npc, &nbuf, di, &error);
 
 	/* If "passing" session found - skip the ruleset inspection. */
@@ -181,14 +191,15 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Acquire the lock, inspect the ruleset using this packet. */
-	npf_core_enter();
-	rlset = npf_core_ruleset();
+	int slock = npf_config_read_enter();
+	npf_ruleset_t *rlset = npf_config_ruleset();
+
 	rl = npf_ruleset_inspect(&npc, &nbuf, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
-		bool default_pass = npf_default_pass();
-		npf_core_exit();
+		const bool pass = npf_default_pass();
+		npf_config_read_exit(slock);
 
-		if (default_pass) {
+		if (pass) {
 			npf_stats_inc(NPF_STAT_PASS_DEFAULT);
 			goto pass;
 		}
@@ -203,8 +214,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
 
-	/* Apply the rule, release the lock. */
-	error = npf_rule_apply(&npc, &nbuf, rl, &retfl);
+	/* Conclude with the rule and release the lock. */
+	error = npf_rule_conclude(rl, &retfl);
+	npf_config_read_exit(slock);
+
 	if (error) {
 		npf_stats_inc(NPF_STAT_BLOCK_RULESET);
 		goto block;
@@ -212,15 +225,18 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_stats_inc(NPF_STAT_PASS_RULESET);
 
 	/*
-	 * Establish a "pass" session, if required.  Just proceed, if session
-	 * creation fails (e.g. due to unsupported protocol).
-	 *
-	 * Note: the reference on the rule procedure is transfered to the
-	 * session.  It will be released on session destruction.
+	 * Establish a "pass" session, if required.  Just proceed,
+	 * if session creation fails (e.g. due to unsupported protocol).
 	 */
 	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
-		se = npf_session_establish(&npc, &nbuf, di);
+		se = npf_session_establish(&npc, &nbuf, di,
+		    (retfl & NPF_RULE_MULTIENDS) == 0);
 		if (se) {
+			/*
+			 * Note: the reference on the rule procedure is
+			 * transfered to the session.  It will be released
+			 * on session destruction.
+			 */
 			npf_session_setpass(se, rp);
 		}
 	}
@@ -289,46 +305,55 @@ out:
  * npf_pfil_register: register pfil(9) hooks.
  */
 int
-npf_pfil_register(void)
+npf_pfil_register(bool init)
 {
-	int error;
+	int error = 0;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
+	/* Init: interface re-config and attach/detach hook. */
+	if (!npf_ph_if) {
+		npf_ph_if = pfil_head_get(PFIL_TYPE_IFNET, 0);
+		if (!npf_ph_if) {
+			error = ENOENT;
+			goto out;
+		}
+		error = pfil_add_hook(npf_ifhook, NULL,
+		    PFIL_IFADDR | PFIL_IFNET, npf_ph_if);
+		KASSERT(error == 0);
+	}
+	if (init) {
+		goto out;
+	}
+
 	/* Check if pfil hooks are not already registered. */
-	if (npf_ph_if) {
+	if (pfil_registered) {
 		error = EEXIST;
-		goto fail;
+		goto out;
 	}
 
-	/* Capture point of any activity in interfaces and IP layer. */
-	npf_ph_if = pfil_head_get(PFIL_TYPE_IFNET, 0);
-	npf_ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
-	npf_ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
-	if (!npf_ph_if || (!npf_ph_inet && !npf_ph_inet6)) {
-		npf_ph_if = NULL;
+	/* Capture points of the activity in the IP layer. */
+	npf_ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
+	npf_ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
+	if (!npf_ph_inet && !npf_ph_inet6) {
 		error = ENOENT;
-		goto fail;
+		goto out;
 	}
 
-	/* Interface re-config or attach/detach hook. */
-	error = pfil_add_hook(npf_ifhook, NULL,
-	    PFIL_WAITOK | PFIL_IFADDR | PFIL_IFNET, npf_ph_if);
-	KASSERT(error == 0);
-
-	/* Packet IN/OUT handler on all interfaces and IP layer. */
+	/* Packet IN/OUT handlers for IP layer. */
 	if (npf_ph_inet) {
 		error = pfil_add_hook(npf_packet_handler, NULL,
-		    PFIL_WAITOK | PFIL_ALL, npf_ph_inet);
+		    PFIL_ALL, npf_ph_inet);
 		KASSERT(error == 0);
 	}
 	if (npf_ph_inet6) {
 		error = pfil_add_hook(npf_packet_handler, NULL,
-		    PFIL_WAITOK | PFIL_ALL, npf_ph_inet6);
+		    PFIL_ALL, npf_ph_inet6);
 		KASSERT(error == 0);
 	}
-fail:
+	pfil_registered = true;
+out:
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 
@@ -339,13 +364,12 @@ fail:
  * npf_pfil_unregister: unregister pfil(9) hooks.
  */
 void
-npf_pfil_unregister(void)
+npf_pfil_unregister(bool fini)
 {
-
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
-	if (npf_ph_if) {
+	if (fini && npf_ph_if) {
 		(void)pfil_remove_hook(npf_ifhook, NULL,
 		    PFIL_IFADDR | PFIL_IFNET, npf_ph_if);
 	}
@@ -357,8 +381,7 @@ npf_pfil_unregister(void)
 		(void)pfil_remove_hook(npf_packet_handler, NULL,
 		    PFIL_ALL, npf_ph_inet6);
 	}
-
-	npf_ph_if = NULL;
+	pfil_registered = false;
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
@@ -367,5 +390,5 @@ npf_pfil_unregister(void)
 bool
 npf_pfil_registered_p(void)
 {
-	return npf_ph_if != NULL;
+	return pfil_registered;
 }

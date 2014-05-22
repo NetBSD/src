@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.40.2.4 2013/01/16 05:32:42 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.40.2.5 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,9 +44,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40.2.4 2013/01/16 05:32:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40.2.5 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/syscallargs.h>
@@ -54,10 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40.2.4 2013/01/16 05:32:42 yamt Ex
 #include <sys/ras.h>
 #include <sys/ucontext.h>
 
-#include <arm/armreg.h>
+#include <arm/locore.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
 #include <machine/pcb.h>
 #ifndef acorn26
 #include <arm/cpufunc.h>
@@ -220,7 +219,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 #ifdef FPU_VFP
 	if ((flags & _UC_FPU)
-	    && (curcpu()->ci_vfp_id || (flags & _UC_ARM_VFP) == 0))
+	    && (curcpu()->ci_vfp_id == 0 || (flags & _UC_ARM_VFP) == 0))
 		return EINVAL;
 #endif
 

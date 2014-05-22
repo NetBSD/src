@@ -1,4 +1,4 @@
-/*	$NetBSD: tsleep.c,v 1.2.2.1 2012/04/17 00:09:15 yamt Exp $	*/
+/*	$NetBSD: tsleep.c,v 1.2.2.2 2014/05/22 11:42:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,14 +29,13 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: tsleep.c,v 1.2.2.1 2012/04/17 00:09:15 yamt Exp $");
+__RCSID("$NetBSD: tsleep.c,v 1.2.2.2 2014/05/22 11:42:23 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
-#include <sys/simplelock.h>
 
 #include "kernspace.h"
 

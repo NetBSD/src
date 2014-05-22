@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.15.8.1 2012/04/17 00:07:31 yamt Exp $ */
+/* $NetBSD: bt485.c,v 1.15.8.2 2014/05/22 11:40:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.15.8.1 2012/04/17 00:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.15.8.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,23 @@ struct bt485data {
 /*
  * Internal functions.
  */
-inline void	bt485_wr_i (struct bt485data *, u_int8_t, u_int8_t);
-inline u_int8_t bt485_rd_i(struct bt485data *, u_int8_t);
+
 void	bt485_update(void *);
 void	bt485_update_curpos(struct bt485data *);
+
+static inline void
+bt485_wr_i(struct bt485data *data, u_int8_t ireg, u_int8_t val)
+{
+	data->ramdac_wr(data->cookie, BT485_REG_PCRAM_WRADDR, ireg);
+	data->ramdac_wr(data->cookie, BT485_REG_EXTENDED, val);
+}
+
+static inline u_int8_t
+bt485_rd_i(struct bt485data *data, u_int8_t ireg)
+{
+	data->ramdac_wr(data->cookie, BT485_REG_PCRAM_WRADDR, ireg);
+	return (data->ramdac_rd(data->cookie, BT485_REG_EXTENDED));
+}
 
 /*****************************************************************************/
 
@@ -460,20 +473,6 @@ bt485_get_curmax(struct ramdac_cookie *rc, struct wsdisplay_curpos *curposp)
 /*
  * Internal functions.
  */
-
-inline void
-bt485_wr_i(struct bt485data *data, u_int8_t ireg, u_int8_t val)
-{
-	data->ramdac_wr(data->cookie, BT485_REG_PCRAM_WRADDR, ireg);
-	data->ramdac_wr(data->cookie, BT485_REG_EXTENDED, val);
-}
-
-inline u_int8_t
-bt485_rd_i(struct bt485data *data, u_int8_t ireg)
-{
-	data->ramdac_wr(data->cookie, BT485_REG_PCRAM_WRADDR, ireg);
-	return (data->ramdac_rd(data->cookie, BT485_REG_EXTENDED));
-}
 
 void
 bt485_update(void *vp)

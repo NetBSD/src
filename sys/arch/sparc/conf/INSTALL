@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.78.4.2 2012/10/30 17:20:20 yamt Exp $
+#	$NetBSD: INSTALL,v 1.78.4.3 2014/05/22 11:40:08 yamt Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -98,7 +98,7 @@ options 	NFS_BOOT_DHCP
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 #options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
@@ -194,12 +194,9 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
@@ -211,6 +208,9 @@ options 	INET		# IP (Internet Protocol) v4
 #### Main bus and CPU .. all systems.
 mainbus0 at root
 cpu0	at mainbus0
+
+#### SX rendering engine found in SS20 and SS10SX
+sx0	at mainbus0
 
 #### Bus types found on SPARC systems.
 
@@ -413,11 +413,11 @@ fd*	at fdc0					# the drive itself
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
-#pseudo-device	ccd	4
+#pseudo-device	ccd
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-#pseudo-device	raid	4
+#pseudo-device	raid
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
@@ -589,7 +589,7 @@ wsdisplay*	at wsemuldisplaydev?
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

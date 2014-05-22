@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.48.2.2 2012/10/30 17:22:42 yamt Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.48.2.3 2014/05/22 11:41:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.48.2.2 2012/10/30 17:22:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.48.2.3 2014/05/22 11:41:08 yamt Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -50,6 +50,42 @@ static const char rcsid[] =
 #include <sys/time.h>
 #include <sys/kmem.h>
 #include <sys/endian.h>
+
+#define	__BPF_PRIVATE
+#include <net/bpf.h>
+
+#ifdef _KERNEL
+
+/* Default BPF context (zeroed). */
+static bpf_ctx_t		bpf_def_ctx;
+
+bpf_ctx_t *
+bpf_create(void)
+{
+	return kmem_zalloc(sizeof(bpf_ctx_t), KM_SLEEP);
+}
+
+void
+bpf_destroy(bpf_ctx_t *bc)
+{
+	kmem_free(bc, sizeof(bpf_ctx_t));
+}
+
+int
+bpf_set_cop(bpf_ctx_t *bc, const bpf_copfunc_t *funcs, size_t n)
+{
+	bc->copfuncs = funcs;
+	bc->nfuncs = n;
+	return 0;
+}
+
+bpf_ctx_t *
+bpf_default_ctx(void)
+{
+	return &bpf_def_ctx;
+}
+
+#endif
 
 #define EXTRACT_SHORT(p)	be16dec(p)
 #define EXTRACT_LONG(p)		be32dec(p)
@@ -143,13 +179,41 @@ m_xbyte(const struct mbuf *m, uint32_t k, int *err)
  * wirelen is the length of the original packet
  * buflen is the amount of data present
  */
+#ifdef _KERNEL
+
 u_int
 bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
     u_int buflen)
 {
-	uint32_t A, X, k;
-	uint32_t mem[BPF_MEMWORDS];
+	bpf_args_t args = {
+		.pkt = (const struct mbuf *)p,
+		.wirelen = wirelen,
+		.buflen = buflen,
+		.arg = NULL
+	};
+	return bpf_filter_ext(&bpf_def_ctx, pc, &args);
+}
 
+u_int
+bpf_filter_ext(bpf_ctx_t *bc, const struct bpf_insn *pc, bpf_args_t *args)
+#else
+u_int
+bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
+    u_int buflen)
+#endif
+{
+	uint32_t A, X, k;
+#ifndef _KERNEL
+	bpf_args_t args_store = {
+		.pkt = (const struct mbuf *)p,
+		.wirelen = wirelen,
+		.buflen = buflen,
+		.arg = NULL
+	};
+	bpf_args_t * const args = &args_store;
+#else
+	const uint8_t * const p = (const uint8_t *)args->pkt;
+#endif
 	if (pc == 0) {
 		/*
 		 * No filter means accept all.
@@ -184,13 +248,14 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_W|BPF_ABS:
 			k = pc->k;
-			if (k > buflen || sizeof(int32_t) > buflen - k) {
+			if (k > args->buflen ||
+			    sizeof(int32_t) > args->buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				A = m_xword((const struct mbuf *)p, k, &merr);
+				A = m_xword(args->pkt, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -203,13 +268,14 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_ABS:
 			k = pc->k;
-			if (k > buflen || sizeof(int16_t) > buflen - k) {
+			if (k > args->buflen ||
+			    sizeof(int16_t) > args->buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				A = m_xhalf((const struct mbuf *)p, k, &merr);
+				A = m_xhalf(args->pkt, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -222,16 +288,13 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_B|BPF_ABS:
 			k = pc->k;
-			if (k >= buflen) {
+			if (k >= args->buflen) {
 #ifdef _KERNEL
-				const struct mbuf *m;
-				int len;
+				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				m = (const struct mbuf *)p;
-				MINDEX(len, m, k);
-				A = mtod(m, u_char *)[k];
+				A = m_xbyte(args->pkt, k, &merr);
 				continue;
 #else
 				return 0;
@@ -241,23 +304,24 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 			continue;
 
 		case BPF_LD|BPF_W|BPF_LEN:
-			A = wirelen;
+			A = args->wirelen;
 			continue;
 
 		case BPF_LDX|BPF_W|BPF_LEN:
-			X = wirelen;
+			X = args->wirelen;
 			continue;
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (pc->k > buflen || X > buflen - pc->k ||
-			    sizeof(int32_t) > buflen - k) {
+			if (pc->k > args->buflen ||
+			    X > args->buflen - pc->k ||
+			    sizeof(int32_t) > args->buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				A = m_xword((const struct mbuf *)p, k, &merr);
+				A = m_xword(args->pkt, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -270,14 +334,15 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (pc->k > buflen || X > buflen - pc->k ||
-			    sizeof(int16_t) > buflen - k) {
+			if (pc->k > args->buflen ||
+			    X > args->buflen - pc->k ||
+			    sizeof(int16_t) > args->buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				A = m_xhalf((const struct mbuf *)p, k, &merr);
+				A = m_xhalf(args->pkt, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -290,16 +355,14 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-			if (pc->k >= buflen || X >= buflen - pc->k) {
+			if (pc->k >= args->buflen ||
+			    X >= args->buflen - pc->k) {
 #ifdef _KERNEL
-				const struct mbuf *m;
-				int len;
+				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				m = (const struct mbuf *)p;
-				MINDEX(len, m, k);
-				A = mtod(m, u_char *)[k];
+				A = m_xbyte(args->pkt, k, &merr);
 				continue;
 #else
 				return 0;
@@ -310,16 +373,13 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LDX|BPF_MSH|BPF_B:
 			k = pc->k;
-			if (k >= buflen) {
+			if (k >= args->buflen) {
 #ifdef _KERNEL
-				const struct mbuf *m;
-				int len;
+				int merr;
 
-				if (buflen != 0)
+				if (args->buflen != 0)
 					return 0;
-				m = (const struct mbuf *)p;
-				MINDEX(len, m, k);
-				X = (mtod(m, char *)[k] & 0xf) << 2;
+				X = (m_xbyte(args->pkt, k, &merr) & 0xf) << 2;
 				continue;
 #else
 				return 0;
@@ -337,19 +397,19 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 			continue;
 
 		case BPF_LD|BPF_MEM:
-			A = mem[pc->k];
+			A = args->mem[pc->k];
 			continue;
 
 		case BPF_LDX|BPF_MEM:
-			X = mem[pc->k];
+			X = args->mem[pc->k];
 			continue;
 
 		case BPF_ST:
-			mem[pc->k] = A;
+			args->mem[pc->k] = A;
 			continue;
 
 		case BPF_STX:
-			mem[pc->k] = X;
+			args->mem[pc->k] = X;
 			continue;
 
 		case BPF_JMP|BPF_JA:
@@ -465,6 +525,26 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 		case BPF_MISC|BPF_TXA:
 			A = X;
 			continue;
+
+		case BPF_MISC|BPF_COP:
+#ifdef _KERNEL
+			if (pc->k < bc->nfuncs) {
+				const bpf_copfunc_t fn = bc->copfuncs[pc->k];
+				A = fn(bc, args, A);
+				continue;
+			}
+#endif
+			return 0;
+
+		case BPF_MISC|BPF_COPX:
+#ifdef _KERNEL
+			if (X < bc->nfuncs) {
+				const bpf_copfunc_t fn = bc->copfuncs[X];
+				A = fn(bc, args, A);
+				continue;
+			}
+#endif
+			return 0;
 		}
 	}
 }
@@ -482,8 +562,20 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
  */
 __CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
 
+#if defined(KERNEL) || defined(_KERNEL)
+
 int
 bpf_validate(const struct bpf_insn *f, int signed_len)
+{
+	return bpf_validate_ext(&bpf_def_ctx, f, signed_len);
+}
+
+int
+bpf_validate_ext(bpf_ctx_t *bc, const struct bpf_insn *f, int signed_len)
+#else
+int
+bpf_validate(const struct bpf_insn *f, int signed_len)
+#endif
 {
 	u_int i, from, len, ok = 0;
 	const struct bpf_insn *p;
@@ -645,6 +737,19 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 		case BPF_RET:
 			break;
 		case BPF_MISC:
+#if defined(KERNEL) || defined(_KERNEL)
+			switch (BPF_MISCOP(p->code)) {
+			case BPF_COP:
+			case BPF_COPX:
+				/* In-kernel COP use only. */
+				if (bc->copfuncs) {
+					invalid = 0;
+				}
+				break;
+			default:
+				break;
+			}
+#endif
 			break;
 		default:
 			goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.13.8.1 2012/04/17 00:05:30 yamt Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.13.8.2 2014/05/22 11:36:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.13.8.1 2012/04/17 00:05:30 yamt Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.13.8.2 2014/05/22 11:36:58 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -95,6 +95,7 @@ static void domsg(pam_handle_t *, time_t, const char *, size_t, const char *,
     size_t);
 #endif
 
+__printflike(2, 3)
 static void
 logit(int level, const char *fmt, ...)
 {

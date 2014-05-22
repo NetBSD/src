@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.17.2.2 2012/10/30 17:18:50 yamt Exp $ */
+/*	$NetBSD: repulse.c,v 1.17.2.3 2014/05/22 11:39:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.17.2.2 2012/10/30 17:18:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.17.2.3 2014/05/22 11:39:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -807,14 +807,14 @@ rep_write_16_stereo(struct repulse_hw *bp, uint8_t *p, int length,
 void
 rep_read_8_mono(struct repulse_hw *bp, uint8_t *p, int length, unsigned flags)
 {
-	uint16_t v;
-	uint16_t xor;
+	uint16_t v, xor;
 
 	xor = flags & 1 ? 0x8000 : 0;
 
 	while (length > 0) {
 		*p++ = (bp->rhw_fifo_lh ^ xor) >> 8;
 		v    = bp->rhw_fifo_rh;
+		__USE(v);
 		length--;
 	}
 }
@@ -833,6 +833,7 @@ rep_read_16_mono(struct	repulse_hw *bp, uint8_t *p, int length, unsigned flags)
 		while (length > 0) {
 			*q++ = bswap16(bp->rhw_fifo_lh ^ xor);
 			v    = bp->rhw_fifo_rh;
+			__USE(v);
 			length -= 2;
 		}
 		return;

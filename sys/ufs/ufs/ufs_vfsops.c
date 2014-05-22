@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.42.4.2 2013/01/23 00:06:35 yamt Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.42.4.3 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42.4.2 2013/01/23 00:06:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42.4.3 2014/05/22 11:41:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -94,6 +94,26 @@ ufs_root(struct mount *mp, struct vnode **vpp)
 		return (error);
 	*vpp = nvp;
 	return (0);
+}
+
+/*
+ * Look up and return a vnode/inode pair by inode number.
+ */
+int
+ufs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+{
+	int error;
+
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
 }
 
 /*
@@ -245,7 +265,6 @@ ufs_init(void)
 	ufs_direct_cache = pool_cache_init(sizeof(struct direct), 0, 0, 0,
 	    "ufsdir", NULL, IPL_NONE, NULL, NULL, NULL);
 
-	ufs_ihashinit();
 #if defined(QUOTA) || defined(QUOTA2)
 	dqinit();
 #endif
@@ -260,7 +279,6 @@ ufs_init(void)
 void
 ufs_reinit(void)
 {
-	ufs_ihashreinit();
 #if defined(QUOTA) || defined(QUOTA2)
 	dqreinit();
 #endif
@@ -275,7 +293,6 @@ ufs_done(void)
 	if (--ufs_initcount > 0)
 		return;
 
-	ufs_ihashdone();
 #if defined(QUOTA) || defined(QUOTA2)
 	dqdone();
 #endif

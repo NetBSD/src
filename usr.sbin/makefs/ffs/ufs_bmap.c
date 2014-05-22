@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.16.42.1 2013/01/23 00:06:42 yamt Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.16.42.2 2014/05/22 11:43:05 yamt Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ufs_bmap.c,v 1.16.42.1 2013/01/23 00:06:42 yamt Exp $");
+__RCSID("$NetBSD: ufs_bmap.c,v 1.16.42.2 2014/05/22 11:43:05 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -80,7 +80,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 	int i, numlevels, off;
 	u_long lognindir;
 
-	lognindir = ffs(NINDIR(ip->i_fs)) - 1;
+	lognindir = ffs(FFS_NINDIR(ip->i_fs)) - 1;
 	if (nump)
 		*nump = 0;
 	numlevels = 0;
@@ -129,7 +129,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 
 		lbc -= lognindir;
 		blockcnt = (int64_t)1 << lbc;
-		off = (bn >> lbc) & (NINDIR(ip->i_fs) - 1);
+		off = (bn >> lbc) & (FFS_NINDIR(ip->i_fs) - 1);
 
 		++numlevels;
 		ap->in_lbn = metalbn;

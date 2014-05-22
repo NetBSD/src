@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.24.4.1 2012/10/30 17:22:32 yamt Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.24.4.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.24.4.1 2012/10/30 17:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.24.4.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -304,6 +304,7 @@ kgdb_recv(u_char *bp, int maxlen)
 			break;
 		}
 		DPRINTF((" Bad(wanted %x, off by %d)- ", tmpcsum, csum));
+		__USE(tmpcsum);
 		PUTC(KGDB_BADP);
 	} while (1);
 	DPRINTF(("kgdb_recv: %s\n", bp));
@@ -345,7 +346,8 @@ kgdb_trap(int type, db_regs_t *regs)
 
 	db_clear_single_step(regs);
 
-	if (db_trap_callback) db_trap_callback(1);
+	if (db_trap_callback)
+		db_trap_callback(1);
 
 	/* Detect and recover from unexpected traps. */
 	if (kgdb_recover != 0) {
@@ -378,7 +380,8 @@ kgdb_trap(int type, db_regs_t *regs)
 	if (kgdb_active == 0) {
 		if (!IS_BREAKPOINT_TRAP(type, 0)) {
 			/* No debugger active -- let trap handle this. */
-			if (db_trap_callback) db_trap_callback(0);
+			if (db_trap_callback)
+				db_trap_callback(0);
 			return (0);
 		}
 		/* Make the PC point at the breakpoint... */
@@ -540,7 +543,8 @@ kgdb_trap(int type, db_regs_t *regs)
 		}
 	}
  out:
-	if (db_trap_callback) db_trap_callback(0);
+	if (db_trap_callback)
+		db_trap_callback(0);
 	kgdb_recover = 0;
 	return (1);
 }

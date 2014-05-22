@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2011/06/20 07:18:06 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.2.1 2014/05/22 11:39:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2011/06/20 07:18:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.2.1 2014/05/22 11:39:45 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2011/06/20 07:18:06 matt Exp $");
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_ccitt.h"
-#include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_ipkdb.h"
 
@@ -398,10 +397,10 @@ gt_bus_space_init(void)
 {
 	const struct gt_decode_info *di;
 	uint32_t datal, datah;
-	int error, bs, i;
+	int bs, i;
 
 	bs = 0;
-	error = bus_space_init(&ev64260_gt_bs_tag, "gt",
+	bus_space_init(&ev64260_gt_bs_tag, "gt",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
@@ -419,7 +418,7 @@ gt_bus_space_init(void)
 		memt->pbs_limit  = GT_HighAddr_GET(datah) + 1 -
 		    memt->pbs_offset;
 
-		error = bus_space_init(memt, "obio2",
+		bus_space_init(memt, "obio2",
 		    ex_storage[bs], sizeof(ex_storage[bs]));
 		bs++;
 	}
@@ -439,7 +438,7 @@ gt_bus_space_init(void)
 	ev64260_pci0_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
 	ev64260_pci0_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
 
-	error = bus_space_init(&ev64260_pci0_mem_bs_tag, "pci0-mem",
+	bus_space_init(&ev64260_pci0_mem_bs_tag, "pci0-mem",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
@@ -473,7 +472,7 @@ gt_bus_space_init(void)
 	ev64260_pci0_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
 	    ev64260_pci0_io_bs_tag.pbs_offset;
 
-	error = bus_space_init(&ev64260_pci0_io_bs_tag, "pci0-ioport",
+	bus_space_init(&ev64260_pci0_io_bs_tag, "pci0-ioport",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
@@ -492,7 +491,7 @@ gt_bus_space_init(void)
 	ev64260_pci1_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
 	ev64260_pci1_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
 
-	error = bus_space_init(&ev64260_pci1_mem_bs_tag, "pci1-mem",
+	bus_space_init(&ev64260_pci1_mem_bs_tag, "pci1-mem",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
@@ -526,7 +525,7 @@ gt_bus_space_init(void)
 	ev64260_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
 	    ev64260_pci1_io_bs_tag.pbs_offset;
 
-	error = bus_space_init(&ev64260_pci1_io_bs_tag, "pci1-ioport",
+	bus_space_init(&ev64260_pci1_io_bs_tag, "pci1-ioport",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 }

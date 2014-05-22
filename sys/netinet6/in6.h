@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.69.4.1 2012/10/30 17:22:48 yamt Exp $	*/
+/*	$NetBSD: in6.h,v 1.69.4.2 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
+
+#include <sys/featuretest.h>
 
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
 #error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
@@ -698,7 +700,10 @@ void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);
 int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
+extern void in6_if_link_up(struct ifnet *);
+extern void in6_if_link_down(struct ifnet *);
 extern void in6_if_up(struct ifnet *);
+extern void in6_if_down(struct ifnet *);
 #ifndef __FreeBSD__
 extern int in6_src_sysctl(void *, size_t *, void *, size_t);
 #endif
@@ -765,6 +770,12 @@ void	in6_sin6_2_sin(struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin_2_v4mapsin6(struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin6_2_sin_in_sock(struct sockaddr *);
 void	in6_sin_2_v4mapsin6_in_sock(struct sockaddr **);
+
+#define INET6_IS_ADDR_LINKLOCAL		1
+#define INET6_IS_ADDR_MC_LINKLOCAL	2
+#define INET6_IS_ADDR_SITELOCAL		4
+void	inet6_getscopeid(struct sockaddr_in6 *, int);
+void	inet6_putscopeid(struct sockaddr_in6 *, int);
 
 extern int inet6_option_space(int);
 extern int inet6_option_init(void *, struct cmsghdr **, int);

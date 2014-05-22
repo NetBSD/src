@@ -1,7 +1,7 @@
-/* $NetBSD: term_private.h,v 1.9.2.1 2012/10/30 18:59:18 yamt Exp $ */
+/* $NetBSD: term_private.h,v 1.9.2.2 2014/05/22 11:37:00 yamt Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2013 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -157,4 +157,7 @@ size_t _ti_store_extra(TIC *, int, char *, char, char, short,
 TIC *_ti_compile(char *, int);
 ssize_t _ti_flatten(uint8_t **, const TIC *);
 void _ti_freetic(TIC *);
+
+#define TPARM_MAX 9	/* not likely to change */
+int _ti_parm_analyse(const char *, int *, int);
 #endif

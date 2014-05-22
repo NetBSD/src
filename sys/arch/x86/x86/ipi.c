@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.18 2010/06/22 18:29:03 rmind Exp $	*/
+/*	$NetBSD: ipi.c,v 1.18.8.1 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18 2010/06/22 18:29:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18.8.1 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_mtrr.h"
 
@@ -56,19 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18 2010/06/22 18:29:03 rmind Exp $");
 
 #include "acpica.h"
 
-#ifdef __x86_64__
-#include <machine/fpu.h>
-static void	x86_ipi_synch_fpu(struct cpu_info *);
-#else
-/* XXXfpu */
-#include "npx.h"
-#if NNPX > 0
-static void	x86_ipi_synch_fpu(struct cpu_info *);
-#define		fpusave_cpu(x)		npxsave_cpu(x)
-#else
-#define		x86_ipi_synch_fpu	NULL
-#endif
-#endif
+#include <x86/fpu.h>
 
 static void	x86_ipi_halt(struct cpu_info *);
 static void	x86_ipi_kpreempt(struct cpu_info *);
@@ -85,6 +73,8 @@ void	acpi_cpu_sleep(struct cpu_info *);
 #else
 #define	acpi_cpu_sleep	NULL
 #endif
+
+static void	x86_ipi_synch_fpu(struct cpu_info *);
 
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
@@ -180,14 +170,12 @@ x86_ipi_halt(struct cpu_info *ci)
 	}
 }
 
-#if defined(__x86_64__) || NNPX > 0	/* XXXfpu */
 static void
 x86_ipi_synch_fpu(struct cpu_info *ci)
 {
 
 	fpusave_cpu(true);
 }
-#endif
 
 #ifdef MTRR
 static void

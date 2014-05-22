@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.67.2.1 2012/10/30 18:59:09 yamt Exp $	*/
+/*	$NetBSD: read.c,v 1.67.2.2 2014/05/22 11:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.67.2.1 2012/10/30 18:59:09 yamt Exp $");
+__RCSID("$NetBSD: read.c,v 1.67.2.2 2014/05/22 11:36:55 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -339,6 +339,13 @@ read_char(EditLine *el, Char *cp)
 			*cp = '\0';
 			return -1;
 		}
+	}
+
+	/* Test for EOF */
+	if (num_read == 0) {
+		errno = 0;
+		*cp = '\0';
+		return 0;
 	}
 
 #ifdef WIDECHAR

@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.36.2.1 2012/10/30 18:59:09 yamt Exp $	*/
+/*	$NetBSD: chared.c,v 1.36.2.2 2014/05/22 11:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.36.2.1 2012/10/30 18:59:09 yamt Exp $");
+__RCSID("$NetBSD: chared.c,v 1.36.2.2 2014/05/22 11:36:55 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -642,6 +642,25 @@ el_deletestr(EditLine *el, int n)
 	el->el_line.cursor -= n;
 	if (el->el_line.cursor < el->el_line.buffer)
 		el->el_line.cursor = el->el_line.buffer;
+}
+
+/* el_cursor():
+ *	Move the cursor to the left or the right of the current position
+ */
+public int
+el_cursor(EditLine *el, int n)
+{
+	if (n == 0)
+		goto out;
+
+	el->el_line.cursor += n;
+
+	if (el->el_line.cursor < el->el_line.buffer)
+		el->el_line.cursor = el->el_line.buffer;
+	if (el->el_line.cursor > el->el_line.lastchar)
+		el->el_line.cursor = el->el_line.lastchar;
+out:
+	return (int)(el->el_line.cursor - el->el_line.buffer);
 }
 
 /* c_gets():

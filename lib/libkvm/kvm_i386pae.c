@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_i386pae.c,v 1.1 2010/10/05 23:48:16 jym Exp $ */
+/* $NetBSD: kvm_i386pae.c,v 1.1.6.1 2014/05/22 11:36:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2010 Jean-Yves Migeon.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kvm_i386pae.c,v 1.1 2010/10/05 23:48:16 jym Exp $");
+__RCSID("$NetBSD: kvm_i386pae.c,v 1.1.6.1 2014/05/22 11:36:56 yamt Exp $");
 
 /*
  * This will expose PAE functions, macros, definitions and constants.
@@ -36,7 +36,6 @@ __RCSID("$NetBSD: kvm_i386pae.c,v 1.1 2010/10/05 23:48:16 jym Exp $");
 #define PAE
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
 #include <sys/types.h>

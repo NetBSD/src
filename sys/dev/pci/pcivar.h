@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.96.2.1 2012/04/17 00:07:57 yamt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.96.2.2 2014/05/22 11:40:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -80,7 +80,7 @@ struct pci_overrides {
 	int (*ov_intr_map)(void *, const struct pci_attach_args *,
 	   pci_intr_handle_t *);
 	const char *(*ov_intr_string)(void *, pci_chipset_tag_t,
-	    pci_intr_handle_t);
+	    pci_intr_handle_t, char *, size_t);
 	const struct evcnt *(*ov_intr_evcnt)(void *, pci_chipset_tag_t,
 	    pci_intr_handle_t);
 	void *(*ov_intr_establish)(void *, pci_chipset_tag_t, pci_intr_handle_t,

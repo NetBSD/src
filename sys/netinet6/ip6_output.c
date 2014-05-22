@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.140.4.3 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,12 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.3 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -82,9 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Ex
 
 #include <net/if.h>
 #include <net/route.h>
-#ifdef PFIL_HOOKS
 #include <net/pfil.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -100,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Ex
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
@@ -110,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Ex
 
 #include <net/net_osdep.h>
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet6_pfil_hook;	/* XXX */
-#endif
+extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
 struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;
@@ -184,7 +179,7 @@ ip6_output(
 	struct route *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	int needipsec = 0;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	struct secpolicy *sp = NULL;
 	int s;
 #endif
@@ -245,7 +240,7 @@ ip6_output(
 	/* NOTE: we don't add AH/ESP length here. do that later. */
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/* Check the security policy (SP) for the packet */
     
 	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
@@ -260,7 +255,7 @@ ip6_output(
 		error = 0;
 	goto freehdrs;
     }
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 	if (needipsec &&
@@ -467,7 +462,7 @@ ip6_output(
 			ip6->ip6_hlim = ip6_defmcasthlim;
 	}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (needipsec) {
 		s = splsoftnet();
 		error = ipsec6_process_packet(m,sp->req);
@@ -483,7 +478,7 @@ ip6_output(
 		splx(s);
 		goto done;
 	}
-#endif /* FAST_IPSEC */    
+#endif /* IPSEC */    
 
 
 
@@ -692,16 +687,15 @@ ip6_output(
 		ip6 = mtod(m, struct ip6_hdr *);
 	}
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
 		goto done;
 	if (m == NULL)
 		goto done;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* PFIL_HOOKS */
+
 	/*
 	 * Send the packet to the outgoing interface.
 	 * If necessary, do IPv6 fragmentation before sending.
@@ -905,6 +899,11 @@ ip6_output(
 			mhip6 = mtod(m, struct ip6_hdr *);
 			*mhip6 = *ip6;
 			m->m_len = sizeof(*mhip6);
+			/*
+			 * ip6f must be valid if error is 0.  But how
+			 * can a compiler be expected to infer this?
+			 */
+			ip6f = NULL;
 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
 			if (error) {
 				IP6_STATINC(IP6_STAT_ODROPPED);
@@ -971,10 +970,10 @@ sendorfree:
 done:
 	rtcache_free(&ip6route);
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 	return (error);
@@ -1595,7 +1594,11 @@ else 					\
 				break;
 			}
 
-			sockopt_get(sopt, optbuf, optbuflen);
+			error = sockopt_get(sopt, optbuf, optbuflen);
+			if (error) {
+				free(optbuf, M_IP6OPT);
+				break;
+			}
 			optp = &in6p->in6p_outputopts;
 			error = ip6_pcbopt(optname, optbuf, optbuflen,
 			    optp, kauth_cred_get(), uproto);
@@ -1647,7 +1650,7 @@ else 					\
 			    (struct inpcb_hdr *)in6p, optval);
 			break;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
 			error = ipsec6_set_policy(in6p, optname,
 			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
@@ -1836,7 +1839,7 @@ else 					\
 			error = sockopt_setint(sopt, optval);
 			break;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
 		    {
 			struct mbuf *m = NULL;
@@ -2554,7 +2557,7 @@ ip6_getmoptions(struct sockopt *sopt, struct ip6_moptions *im6o)
 
 	case IPV6_MULTICAST_LOOP:
 		if (im6o == NULL)
-			optval = ip6_defmcasthlim;
+			optval = IPV6_DEFAULT_MULTICAST_LOOP;
 		else
 			optval = im6o->im6o_multicast_loop;
 

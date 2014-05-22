@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.41.12.1 2012/10/30 17:21:21 yamt Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.41.12.2 2014/05/22 11:40:23 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41.12.1 2012/10/30 17:21:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41.12.2 2014/05/22 11:40:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -451,7 +451,7 @@ mscp_init(struct mscp_softc *mi)
 	    mp->mscp_sccc.sccc_errlgfl = 0;
 	mp->mscp_sccc.sccc_ctlrflags = M_CF_ATTN | M_CF_MISC | M_CF_THIS;
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-	i = READ_IP;
+	READ_IP;
 
 	count = 0;
 	while (count < DELAYTEN) {
@@ -550,7 +550,7 @@ mscp_print(void *aux, const char *name)
 void
 mscp_strategy(struct buf *bp, device_t usc)
 {
-	struct	mscp_softc *mi = (void *)usc;
+	struct	mscp_softc *mi = device_private(usc);
 	int s = spluba();
 
 	bufq_put(mi->mi_resq, bp);
@@ -607,7 +607,6 @@ mscp_kickaway(struct mscp_softc *mi)
 void
 mscp_dgo(struct mscp_softc *mi, struct mscp_xi *mxi)
 {
-	volatile int i;
 	struct	mscp *mp;
 
 	/*
@@ -617,7 +616,7 @@ mscp_dgo(struct mscp_softc *mi, struct mscp_xi *mxi)
 	mp->mscp_seq.seq_buffer = mxi->mxi_dmam->dm_segs[0].ds_addr;
 
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-	i = READ_IP;
+	READ_IP;
 }
 
 #ifdef DIAGNOSTIC

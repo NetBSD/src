@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.110.2.2 2012/10/30 18:59:22 yamt Exp $
+#	$NetBSD: Makefile,v 1.110.2.3 2014/05/22 11:37:13 yamt Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
 WARNS?=4
+
+LDELFSO_MACHINE_ARCH?= ${MACHINE_ARCH}
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -24,24 +26,26 @@ ARCHSUBDIR=	${MACHINE_CPU}
 .endif
 M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
-.if ((${MACHINE_ARCH} == "alpha") ||					\
+.if ((${LDELFSO_MACHINE_ARCH} == "alpha") ||				\
      (${MACHINE_CPU} == "arm") ||					\
-     (${MACHINE_ARCH} == "hppa") ||					\
-     (${MACHINE_ARCH} == "i386") ||					\
-     (${MACHINE_ARCH} == "m68k") ||					\
+     (${LDELFSO_MACHINE_ARCH} == "coldfire") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "hppa") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "i386") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "m68k") ||				\
      (${MACHINE_CPU} == "mips") ||					\
-     (${MACHINE_ARCH} == "powerpc") ||					\
+     (${MACHINE_CPU} == "powerpc") ||					\
      (${MACHINE_CPU} == "sh3") ||					\
-     (${MACHINE_ARCH} == "sparc") ||					\
-     (${MACHINE_ARCH} == "sparc64") ||					\
-     (${MACHINE_ARCH} == "x86_64") ||					\
-     (${MACHINE_ARCH} == "vax")) &&					\
+     (${LDELFSO_MACHINE_ARCH} == "sparc") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "sparc64") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "x86_64") ||				\
+     (${LDELFSO_MACHINE_ARCH} == "vax")) &&				\
     ${MKPIC} != "no"
 
 LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
 		-shared -nostartfiles -nodefaultlibs
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
+LDFLAGS+=	-Wl,-Map=${.TARGET}.map
 
 COPTS+=		-fvisibility=hidden
 
@@ -79,7 +83,7 @@ errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/s
 
 xprintf.c: errlist_concat.h
 
-CLEANFILES+=	errlist_concat.h
+CLEANFILES+=	errlist_concat.h ${PROG}.map
 
 BINDIR=		${SHLINKINSTALLDIR}
 
@@ -91,10 +95,17 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
+.if !empty(LDELFSO_MACHINE_ARCH:Mearm*)
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
+.endif
 #DBG=		-g
-COPTS=		-O3 -fomit-frame-pointer
+COPTS+=		-O3
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_CPU} != "m68k" && ${MACHINE_CPU} != "sh3" && ${MACHINE_ARCH} != "vax"
+COPTS+=		-fomit-frame-pointer
+.endif
+
+.if ${LDELFSO_MACHINE_ARCH} == "i386" || ${LDELFSO_MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
 .endif
 
@@ -129,12 +140,26 @@ STRIPFLAG=
 
 .PATH: $M
 
+
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKMSG_LINK} ${PROG}
 	${CC} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
+.if ${MKDEBUG} != "no"
+	(  ${OBJCOPY} --only-keep-debug ${.TARGET} ${.TARGET}.debug \
+	   && ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	   --add-gnu-debuglink=${.TARGET}.debug ${.TARGET} \
+	) || (rm -f ${.TARGET}.debug; false)
+
+_PROGDEBUG.${PROG} := ${PROG}.debug
+.endif
+
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
+.if ${MKDEBUG} != "no"
+SYMLINKS+=	${DEBUGDIR}${BINDIR}/${PROG}.debug \
+		${DEBUGDIR}/usr${BINDIR}/${PROG}.debug
+.endif
 .endif
 
 .include <bsd.prog.mk>

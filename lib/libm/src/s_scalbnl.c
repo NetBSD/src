@@ -1,4 +1,4 @@
-/*	$NetBSD: s_scalbnl.c,v 1.1 2011/07/26 16:10:16 joerg Exp $	*/
+/*	$NetBSD: s_scalbnl.c,v 1.1.2.1 2014/05/22 11:36:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_scalbnl.c,v 1.1 2011/07/26 16:10:16 joerg Exp $");
+__RCSID("$NetBSD: s_scalbnl.c,v 1.1.2.1 2014/05/22 11:36:57 yamt Exp $");
 
 #include "namespace.h"
 
@@ -40,9 +40,19 @@ __RCSID("$NetBSD: s_scalbnl.c,v 1.1 2011/07/26 16:10:16 joerg Exp $");
 
 #ifdef __HAVE_LONG_DOUBLE
 
-#ifdef __weak_alias
-__weak_alias(scalbnl, _scalbnl)
+#ifdef _LP64
+long double
+scalbnl(long double x, int n)
+{
+	return scalblnl(x, n);
+}
+#else
+__strong_alias(_scalbnl, _scalblnl)
 #endif
+
+__weak_alias(scalbnl, _scalbnl)
+__weak_alias(scalblnl, _scalblnl)
+__weak_alias(ldexpl, _scalbnl)
 
 #if LDBL_MANT_DIG == 64
 #define	FROM_UNDERFLOW	0x1p65L
@@ -55,7 +65,7 @@ __weak_alias(scalbnl, _scalbnl)
 #endif
 
 long double
-scalbnl(long double x, int n)
+scalblnl(long double x, long n)
 {
 	union ieee_ext_u u;
 
@@ -72,7 +82,7 @@ scalbnl(long double x, int n)
 	/* Protect against integer overflow in calculation of new exponent */
 	if (n > LDBL_MAX_EXP - LDBL_MIN_EXP + LDBL_MANT_DIG)
 		goto overflow;
-	if (n < LDBL_MAX_EXP - LDBL_MIN_EXP + LDBL_MANT_DIG)
+	if (n < LDBL_MIN_EXP - LDBL_MAX_EXP - LDBL_MANT_DIG)
 		goto underflow;
 
 	/* Scale denormalized numbers slightly, so that they are normal */

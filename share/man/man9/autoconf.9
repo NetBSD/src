@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.28.6.1 2012/04/17 00:05:49 yamt Exp $
+.\"     $NetBSD: autoconf.9,v 1.28.6.2 2014/05/22 11:37:52 yamt Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -304,7 +304,7 @@ The
 function returns a nonzero integer indicating the confidence of
 supporting this device and a value of 0 if the driver doesn't support
 the device.
-.It Fn config_attach_loc "parent" "locs" "cf" "aux" "print"
+.It Fn config_attach_loc "parent" "cf" "locs" "aux" "print"
 Attach a found device.
 Allocates the memory for the
 .Em softc

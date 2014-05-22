@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.62.2.2 2012/10/30 17:20:55 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.62.2.3 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.62.2.2 2012/10/30 17:20:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.62.2.3 2014/05/22 11:40:20 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -110,12 +110,27 @@ static dev_type_dump(dkdump);
 static dev_type_size(dksize);
 
 const struct bdevsw dk_bdevsw = {
-	dkopen, dkclose, dkstrategy, dkioctl, dkdump, dksize, D_DISK
+	.d_open = dkopen,
+	.d_close = dkclose,
+	.d_strategy = dkstrategy,
+	.d_ioctl = dkioctl,
+	.d_dump = dkdump,
+	.d_psize = dksize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw dk_cdevsw = {
-	dkopen, dkclose, dkread, dkwrite, dkioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = dkopen,
+	.d_close = dkclose,
+	.d_read = dkread,
+	.d_write = dkwrite,
+	.d_ioctl = dkioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkwedge_softc **dkwedges;
@@ -228,35 +243,18 @@ dkwedge_array_expand(void)
 static void
 dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &disk->dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
+	dg->dg_secperunit = dkw->dkw_size >> disk->dk_blkshift;
+	dg->dg_secsize = DEV_BSIZE << disk->dk_blkshift;
+	dg->dg_nsectors = 32;
+	dg->dg_ntracks = 64;
+	/* XXX: why is that dkw->dkw_size instead of secperunit?!?! */
+	dg->dg_ncylinders = dkw->dkw_size / (dg->dg_nsectors * dg->dg_ntracks);
 
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    dkw->dkw_size >> disk->dk_blkshift);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE << disk->dk_blkshift);
-
-	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
-
-	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dkw->dkw_size / 2048);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	odisk_info = disk->dk_info;
-
-	disk->dk_info = disk_info;
-
-	if (odisk_info != NULL)
-		prop_object_release(odisk_info);
+	disk_set_info(NULL, disk, "ESDI");
 }
 
 /*
@@ -863,8 +861,9 @@ dkwedge_discover(struct disk *pdk)
 
 	error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 	if (error) {
-		aprint_error("%s: unable to open device, error = %d\n",
-		    pdk->dk_name, error);
+		if (error != ENODEV)
+			aprint_error("%s: unable to open device, error = %d\n",
+			    pdk->dk_name, error);
 		vput(vp);
 		goto out;
 	}
@@ -1462,3 +1461,16 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 	return wedge;
 }
 
+const char *
+dkwedge_get_parent_name(dev_t dev)
+{
+	/* XXX: perhaps do this in lookup? */
+	int bmaj = bdevsw_lookup_major(&dk_bdevsw);
+	int cmaj = cdevsw_lookup_major(&dk_cdevsw);
+	if (major(dev) != bmaj && major(dev) != cmaj)
+		return NULL;
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	if (sc == NULL)
+		return NULL;
+	return sc->sc_parent->dk_name;
+}

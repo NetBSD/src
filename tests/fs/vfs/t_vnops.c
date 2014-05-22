@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.29.2.1 2012/04/17 00:09:04 yamt Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.29.2.2 2014/05/22 11:42:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ dir_notempty(const atf_tc_t *tc, const char *mountpath)
 	rump_sys_close(fd);
 
 	rv = rump_sys_rmdir(pb);
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rv != -1 || errno != ENOTEMPTY)
 		atf_tc_fail("non-empty directory removed succesfully");
 
@@ -237,6 +239,8 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	md(pb1, mp, "dir3/.");
 	if (rump_sys_rename(pb1, pb3) != -1 || errno != EINVAL)
 		atf_tc_fail_errno("rename 2");
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rump_sys_rename(pb3, pb1) != -1 || errno != EISDIR)
 		atf_tc_fail_errno("rename 3");
 
@@ -329,7 +333,7 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 {
 	bool haslinks;
 	struct stat sb;
-	ino_t f1ino, f2ino;
+	ino_t f1ino;
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
@@ -362,7 +366,6 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_stat("file2", &sb) == -1)
 		atf_tc_fail_errno("stat");
-	f2ino = sb.st_ino;
 
 	if (rump_sys_rename("file1", "file3") == -1)
 		atf_tc_fail_errno("rename 1");
@@ -395,6 +398,9 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 		ATF_REQUIRE_EQ(sb.st_ino, f1ino);
 		ATF_REQUIRE_EQ(sb.st_nlink, 1);
 	}
+
+	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename("file2", NULL) == -1);
+	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename(NULL, "file2") == -1);
 
 	rump_sys_chdir("/");
 }
@@ -563,6 +569,8 @@ attrs(const atf_tc_t *tc, const char *mp)
 
 	RL(rump_sys_stat(TESTFILE, &sb2));
 #define CHECK(a) ATF_REQUIRE_EQ(sb.a, sb2.a)
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
 		CHECK(st_uid);
 		CHECK(st_gid);
@@ -601,6 +609,8 @@ fcntl_lock(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_ftruncate(fd, 8192));
 
 	/* PR kern/43321 */
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	RL(rump_sys_fcntl(fd, F_SETLK, &l));
 
 	/* Next, we fork and try to lock the same area */
@@ -734,6 +744,9 @@ fcntl_getlock_pids(const atf_tc_t *tc, const char *mp)
 
 		RL(rump_sys_ftruncate(fd[i], sz));
 
+		if (FSTYPE_ZFS(tc))
+			atf_tc_expect_fail("PR kern/47656: Test known to be "
+			    "broken");
 		if (i < __arraycount(lock)) {
 			RL(rump_sys_fcntl(fd[i], F_SETLK, &lock[i]));
 			expect[i].l_pid = pid[i];

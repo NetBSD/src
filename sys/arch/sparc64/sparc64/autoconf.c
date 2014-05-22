@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183.2.3 2013/01/16 05:33:06 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183.2.4 2014/05/22 11:40:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.3 2013/01/16 05:33:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.4 2014/05/22 11:40:10 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,9 +138,6 @@ void *bootinfo = 0;
 #ifdef KGDB
 int kgdb_break_at_attach;
 #endif
-
-/* Default to sun4u */
-int cputyp = CPU_SUN4U;
 
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
@@ -344,12 +341,11 @@ die_old_boot_loader:
 #endif
 #endif
 #endif
-
 	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0) {
 		if (strcmp(buf, "sun4us") == 0)
-			cputyp = CPU_SUN4US;
+			setcputyp(CPU_SUN4US);
 		else if (strcmp(buf, "sun4v") == 0)
-			cputyp = CPU_SUN4V;
+			setcputyp(CPU_SUN4V);
 	}
 
 	bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO);
@@ -514,19 +510,10 @@ cpu_rootconf(void)
 char *
 clockfreq(long freq)
 {
-	char *p;
-	static char sbuf[10];
+	static char buf[10];
 
-	freq /= 1000;
-	sprintf(sbuf, "%ld", freq / 1000);
-	freq %= 1000;
-	if (freq) {
-		freq += 1000;	/* now in 1000..1999 */
-		p = sbuf + strlen(sbuf);
-		sprintf(p, "%ld", freq);
-		*p = '.';	/* now sbuf = %d.%3d */
-	}
-	return (sbuf);
+	humanize_number(buf, sizeof(buf), freq / 1000, "", 1000);
+	return buf;
 }
 
 /* ARGSUSED */
@@ -811,10 +798,11 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 		 * what we realy do here is to match "target" and "lun".
 		 */
 		if (wwn)
-			sprintf(buf, "%s@w%016" PRIx64 ",%d", name, wwn,
-			    lun);
+			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",
+			    name, wwn, lun);
 		else
-			sprintf(buf, "%s@%d,%d", name, target, lun);
+			snprintf(buf, sizeof(buf), "%s@%d,%d",
+			    name, target, lun);
 		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
 			booted_device = dev;
 			if (ofbootpartition)
@@ -1087,6 +1075,31 @@ noether:
 				of_enter_i2c_devs(props, busnode,
 				    sizeof(cell_t));
 			}
+		}
+
+		/*
+		 * Add SPARCle spdmem devices (0x50 and 0x51) that the
+		 * firmware does not know about.
+		 */
+		if (!strcmp(machine_model, "TAD,SPARCLE")) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_array_t cfg = prop_array_create();
+			int i;
+
+			DPRINTF(ACDB_PROBE, ("\nAdding spdmem for SPARCle "));
+			for (i = 0x50; i <= 0x51; i++) {
+				prop_dictionary_t spd =
+				    prop_dictionary_create();
+				prop_dictionary_set_cstring(spd, "name",
+				    "dimm-spd");
+				prop_dictionary_set_uint32(spd, "addr", i);
+				prop_dictionary_set_uint64(spd, "cookie", 0);
+				prop_array_add(cfg, spd);
+				prop_object_release(spd);
+			}
+			prop_dictionary_set(props, "i2c-child-devices", cfg);
+			prop_object_release(cfg);
+			
 		}
 	}
 

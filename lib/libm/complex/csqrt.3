@@ -1,11 +1,12 @@
-.\" $NetBSD: csqrt.3,v 1.1.28.1 2013/01/23 00:05:25 yamt Exp $
+.\" $NetBSD: csqrt.3,v 1.1.28.2 2014/05/22 11:36:57 yamt Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
-.Dd December 27, 2012
+.Dd January 29, 2013
 .Dt CSQRT 3
 .Os
 .Sh NAME
 .Nm csqrt ,
-.Nm csqrtf
+.Nm csqrtf ,
+.Nm csqrtl
 .Nd complex square root functions
 .Sh SYNOPSIS
 .In complex.h
@@ -13,6 +14,8 @@
 .Fn csqrt "double complex z"
 .Ft float complex
 .Fn csqrtf "float complex z"
+.Ft long double complex
+.Fn csqrtl "long double complex z"
 .Sh DESCRIPTION
 These functions compute the complex square root of
 .Ar z ,

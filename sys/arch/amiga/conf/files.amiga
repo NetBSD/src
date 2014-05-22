@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.149.2.5 2013/01/23 00:05:39 yamt Exp $
+#	$NetBSD: files.amiga,v 1.149.2.6 2014/05/22 11:39:28 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -57,6 +57,12 @@ file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
 
 define	amibus_b800
 file	arch/amiga/amiga/amiga_bus_simple_0x800.c	amibus_b800
+
+define	amibus_b1000
+file	arch/amiga/amiga/amiga_bus_simple_0x1000.c	amibus_b1000
+
+define	amibus_b4000
+file	arch/amiga/amiga/amiga_bus_simple_0x4000.c	amibus_b4000
 
 define  amibus_empb
 file	arch/amiga/pci/empb_bsm.c	amibus_empb
@@ -234,6 +240,15 @@ file	arch/amiga/dev/if_ne_xsurf.c	ne_xsurf needs-flag
 
 attach	wdc at xsurfbus with wdc_xsurf
 file	arch/amiga/dev/wdc_xsurf.c	wdc_xsurf & xsurf
+
+define	xshbus {}
+
+device	xsh: xshbus
+attach	xsh at zbus
+file	arch/amiga/dev/xsh.c		xsh needs-flag
+
+attach	ne at xshbus with ne_xsh: dp8390nic
+file	arch/amiga/dev/if_ne_xsh.c	ne_xsh needs-flag
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
@@ -471,7 +486,7 @@ include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
 
 # Amiga 4000/1200 IDE using MI wdc
-attach	wdc at mainbus with wdc_amiga: gayle
+attach	wdc at mainbus with wdc_amiga: gayle, amibus_b1000
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 
 # Buddha wdc
@@ -479,7 +494,7 @@ attach	wdc at zbus with wdc_buddha
 file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 
 # FastATA 
-device  efa: ata,wdc_common
+device  efa: ata, wdc_common, amibus_b1000
 attach  efa at mainbus
 file    arch/amiga/dev/efa.c		efa
 
@@ -543,9 +558,18 @@ device	cv3dpb: pcibus
 attach	cv3dpb at zbus
 file	arch/amiga/pci/cv3dpb.c		cv3dpb & pci
 
-device	empb: pcibus, amibus_empb
+define	empmdev { }
+device	empm
+attach	empm at empmdev
+file	arch/amiga/pci/empm.c		empm needs-flag
+
+device	empb: pcibus, amibus_empb, empmdev
 attach	empb at zbus
-file	arch/amiga/pci/empb.c		empb & pci
+file	arch/amiga/pci/empb.c		empb & pci & empm
+
+device	em4k: pcibus
+attach	em4k at zbus
+file	arch/amiga/pci/em4k.c		em4k & pci
 
 device	emmem {}
 attach	emmem at zbus
@@ -557,6 +581,18 @@ include	"dev/pci/files.pci"
 device	z3rambd: altmemdev
 attach	z3rambd at zbus
 file	arch/amiga/dev/z3rambd.c	z3rambd needs-flag
+
+attach	slhci at zbus with slhci_zbus
+file	arch/amiga/dev/slhci_zbus.c	slhci_zbus
+
+define	acafhbus {}
+
+device	acafh: acafhbus, amibus_b4000
+attach	acafh at mainbus 
+file	arch/amiga/dev/acafh.c		acafh needs-count 
+
+attach	wdc at acafhbus with wdc_acafh: gayle, amibus_b1000
+file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh 
 
 include "arch/amiga/clockport/files.clockport"
 

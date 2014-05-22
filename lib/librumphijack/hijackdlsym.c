@@ -1,4 +1,4 @@
-/*      $NetBSD: hijackdlsym.c,v 1.2.6.1 2012/10/30 18:59:17 yamt Exp $	*/
+/*      $NetBSD: hijackdlsym.c,v 1.2.6.2 2014/05/22 11:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -25,10 +25,11 @@
  * SUCH DAMAGE.
  */
 
-#include "rumpuser_port.h"
+#include <rump/rumpuser_port.h>
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: hijackdlsym.c,v 1.2.6.1 2012/10/30 18:59:17 yamt Exp $");
+#if !defined(lint)
+__RCSID("$NetBSD: hijackdlsym.c,v 1.2.6.2 2014/05/22 11:37:00 yamt Exp $");
+#endif
 
 #include <dlfcn.h>
 

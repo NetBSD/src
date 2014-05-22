@@ -1,17 +1,17 @@
-# $NetBSD: Makefile,v 1.4.4.3 2013/01/16 05:34:09 yamt Exp $
+# $NetBSD: Makefile,v 1.4.4.4 2014/05/22 11:43:07 yamt Exp $
 
-BINDIR=/sbin
 PROG=		npfctl
 MAN=		npfctl.8 npf.conf.5
+BINDIR=		/sbin
 
-SRCS=		npfctl.c npf_var.c npf_data.c npf_ncgen.c npf_build.c \
-		npf_extmod.c npf_disassemble.c
+SRCS=		npfctl.c npf_var.c npf_data.c npf_build.c npf_extmod.c
+SRCS+=		npf_bpf_comp.c npf_show.c
 
 CPPFLAGS+=	-I${.CURDIR}
 SRCS+=		npf_scan.l npf_parse.y
 YHEADER=	1
 
-LDADD+=		-lnpf -lprop -lutil -ly
+LDADD+=		-lnpf -lprop -lcrypto -lpcap -lutil -ly
 DPADD+=		${LIBNPF} ${LIBPROP} ${LIBUTIL}
 
 WARNS=		5

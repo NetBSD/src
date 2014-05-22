@@ -1,4 +1,4 @@
-/*	$NetBSD: romcons.c,v 1.1.6.2 2012/04/17 00:06:43 yamt Exp $	*/
+/*	$NetBSD: romcons.c,v 1.1.6.3 2014/05/22 11:40:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: romcons.c,v 1.1.6.2 2012/04/17 00:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: romcons.c,v 1.1.6.3 2014/05/22 11:40:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -82,8 +82,17 @@ dev_type_poll(romcons_poll);
 void romcons_kbdinput(int);
 
 const struct cdevsw romcons_cdevsw = {
-	romcons_open, romcons_close, romcons_read, romcons_write, romcons_ioctl,
-	nostop, romcons_tty, romcons_poll, nommap, ttykqfilter, D_TTY
+	.d_open = romcons_open,
+	.d_close = romcons_close,
+	.d_read = romcons_read,
+	.d_write = romcons_write,
+	.d_ioctl = romcons_ioctl,
+	.d_stop = nostop,
+	.d_tty = romcons_tty,
+	.d_poll = romcons_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 struct consdev consdev_rom = cons_init(romcons_);

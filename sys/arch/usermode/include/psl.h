@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.1 2011/09/13 11:22:07 reinoud Exp $ */
+/* $NetBSD: psl.h,v 1.1.2.1 2014/05/22 11:40:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,9 @@
 
 #define PSL_CLEARSIG    (PSL_T | PSL_VM | PSL_AC | PSL_D)
 
+#elif defined(__arm__)
+
+/* ... */
 
 #else
 #error port me

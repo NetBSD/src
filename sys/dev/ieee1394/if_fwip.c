@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.24.8.1 2012/05/23 10:07:56 yamt Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.24.8.2 2014/05/22 11:40:22 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.24.8.1 2012/05/23 10:07:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.24.8.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,12 +113,6 @@ SYSCTL_SETUP(sysctl_fwip, "sysctl fwip(4) subtree setup")
 {
 	int rc, fwip_node_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "fwip",

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13.2.2 2012/10/30 17:18:57 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.2.3 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.2.2 2012/10/30 17:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.2.3 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.2.2 2012/10/30 17:18:57 yamt Ex
 #include <machine/sysarch.h>
 #include <machine/pcb.h>
 #include <arm/vfpreg.h>
+#include <arm/locore.h>
 
 /* Prototypes */
 static int arm32_sync_icache(struct lwp *, const void *, register_t *);
 static int arm32_drain_writebuf(struct lwp *, const void *, register_t *);
 static int arm32_vfp_fpscr(struct lwp *, const void *, register_t *);
+static int arm32_fpu_used(struct lwp *, const void *, register_t *);
 
 static int
 arm32_sync_icache(struct lwp *l, const void *args, register_t *retval)
@@ -104,16 +106,29 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 
 	retval[0] = pcb->pcb_vfp.vfp_fpscr;
 	if (uap) {
+		extern uint32_t vfp_fpscr_changable;
 		struct arm_vfp_fpscr_args ua;
 		int error;
 		if ((error = copyin(uap, &ua, sizeof(ua))) != 0)
 			return (error);
-		if (((ua.fpscr_clear|ua.fpscr_set) & ~VFP_FPSCR_RMODE) != 0)
+		if ((ua.fpscr_clear|ua.fpscr_set) & ~vfp_fpscr_changable)
 			return EINVAL;
 		pcb->pcb_vfp.vfp_fpscr &= ~ua.fpscr_clear;
 		pcb->pcb_vfp.vfp_fpscr |= ua.fpscr_set;
 	}
 
+	return 0;
+}
+
+static int
+arm32_fpu_used(struct lwp *l, const void *uap, register_t *retval)
+{
+	/* No args */
+#ifdef FPU_VFP
+	retval[0] = vfp_used_p();
+#else
+	retval[0] = false;
+#endif
 	return 0;
 }
 
@@ -137,6 +152,10 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 
 	case ARM_VFP_FPSCR :
 		error = arm32_vfp_fpscr(l, SCARG(uap, parms), retval);
+		break;
+
+	case ARM_FPU_USED :
+		error = arm32_fpu_used(l, SCARG(uap, parms), retval);
 		break;
 
 	default:

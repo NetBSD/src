@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133.2.2 2012/10/30 18:59:32 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.3 2014/05/22 11:37:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.133.2.2 2012/10/30 18:59:32 yamt Exp $");
+__RCSID("$NetBSD: route.c,v 1.133.2.3 2014/05/22 11:37:31 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: route.c,v 1.133.2.2 2012/10/30 18:59:32 yamt Exp $");
 #include <net80211/ieee80211_netbsd.h>
 #include <netinet/in.h>
 #include <netatalk/at.h>
-#include <netiso/iso.h>
 #include <netmpls/mpls.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -84,7 +83,6 @@ union sockunion {
 	struct	sockaddr_at sat;
 	struct	sockaddr_dl sdl;
 #ifndef SMALL
-	struct	sockaddr_iso siso;
 	struct	sockaddr_mpls smpls;
 #endif /* SMALL */
 	struct	sockaddr_storage sstorage;
@@ -540,17 +538,8 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-#ifdef __KAME__
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-#endif
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
 			if (nml == 0)
@@ -574,11 +563,6 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 #endif
 
 #ifndef SMALL
-	case AF_ISO:
-		(void)snprintf(line, sizeof line, "iso %s",
-		    iso_ntoa(&((const struct sockaddr_iso *)sa)->siso_addr));
-		break;
-
 	case AF_APPLETALK:
 		(void)snprintf(line, sizeof(line), "atalk %d.%d",
 		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
@@ -712,17 +696,8 @@ netname(const struct sockaddr *sa, struct sockaddr *nm)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-#ifdef __KAME__
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-#endif
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
 			if (nml == 0)
@@ -739,11 +714,6 @@ netname(const struct sockaddr *sa, struct sockaddr *nm)
 #endif
 
 #ifndef SMALL
-	case AF_ISO:
-		(void)snprintf(line, sizeof line, "iso %s",
-		    iso_ntoa(&((const struct sockaddr_iso *)sa)->siso_addr));
-		break;
-
 	case AF_APPLETALK:
 		(void)snprintf(line, sizeof(line), "atalk %d.%d",
 		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
@@ -863,11 +833,6 @@ newroute(int argc, char *const *argv)
 				break;
 
 #ifndef SMALL
-			case K_OSI:
-			case K_ISO:
-				af = AF_ISO;
-				aflen = sizeof(struct sockaddr_iso);
-				break;
 			case K_MPLS:
 				af = AF_MPLS;
 				aflen = sizeof(struct sockaddr_mpls);
@@ -1272,15 +1237,8 @@ getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 		}
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
-#ifdef __KAME__
-		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr)) &&
-		    su->sin6.sin6_scope_id) {
-			*(u_int16_t *)&su->sin6.sin6_addr.s6_addr[2] =
-				htons(su->sin6.sin6_scope_id);
-			su->sin6.sin6_scope_id = 0;
-		}
-#endif
+		inet6_putscopeid(&su->sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (slash)
 				return prefixlen(slash + 1, soup);
@@ -1291,18 +1249,6 @@ getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 			return 1;
 	    }
 #endif
-
-#ifndef SMALL
-	case AF_OSI:
-		su->siso.siso_addr = *iso_addr(s);
-		if (which == RTA_NETMASK || which == RTA_GENMASK) {
-			const char *cp = TSEL(&su->siso);
-			su->siso.siso_nlen = 0;
-			do {--cp ;} while ((cp > (char *)su) && (*cp == 0));
-			su->siso.siso_len = 1 + cp - (char *)su;
-		}
-		return 1;
-#endif /* SMALL */
 
 	case PF_ROUTE:
 		su->sa.sa_len = sizeof(*su);
@@ -1667,12 +1613,6 @@ mask_addr(struct sou *soup)
 #endif /* SMALL */
 	case 0:
 		return;
-#ifndef SMALL
-	case AF_ISO:
-		olen = MIN(soup->so_dst->siso.siso_nlen,
-			   MAX(soup->so_mask->sa.sa_len - 6, 0));
-		break;
-#endif /* SMALL */
 	}
 	cp1 = soup->so_mask->sa.sa_len + 1 + (char *)soup->so_dst;
 	cp2 = soup->so_dst->sa.sa_len + 1 + (char *)soup->so_dst;
@@ -1681,13 +1621,6 @@ mask_addr(struct sou *soup)
 	cp2 = soup->so_mask->sa.sa_len + 1 + (char *)soup->so_mask;
 	while (cp1 > soup->so_dst->sa.sa_data)
 		*--cp1 &= *--cp2;
-#ifndef SMALL
-	switch (soup->so_dst->sa.sa_family) {
-	case AF_ISO:
-		soup->so_dst->siso.siso_nlen = olen;
-		break;
-	}
-#endif /* SMALL */
 }
 
 const char * const msgtypes[] = {
@@ -2145,10 +2078,6 @@ sodump(sup su, const char *which)
 		break;
 #endif
 #ifndef SMALL
-	case AF_ISO:
-		(void)printf("%s: iso %s; ",
-		    which, iso_ntoa(&su->siso.siso_addr));
-		break;
 	case AF_MPLS:
 	    {
 		union mpls_shim ms;

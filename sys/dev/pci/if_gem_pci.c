@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.43.8.2 2012/10/30 17:21:29 yamt Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.43.8.3 2014/05/22 11:40:25 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.43.8.2 2012/10/30 17:21:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.43.8.3 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 				    gempromvalid(buf + PROMDATA_DATA2) &&
 				    (vpdoff = (buf[PROMDATA_PTR_VPD] |
 					(buf[PROMDATA_PTR_VPD + 1] << 8))) >= 0x1c) {
-	
+
 					/*
 					 * The VPD of gem is not in PCI 2.2 standard
 					 * format.  The length in the resource header
@@ -386,8 +386,9 @@ gem_pci_estintr(struct gem_pci_softc *gsc)
 {
 	struct gem_softc *sc = &gsc->gsc_gem;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
-	intrstr = pci_intr_string(gsc->gsc_pc, gsc->gsc_handle);
+	intrstr = pci_intr_string(gsc->gsc_pc, gsc->gsc_handle, intrbuf, sizeof(intrbuf));
 	gsc->gsc_ih = pci_intr_establish(gsc->gsc_pc, gsc->gsc_handle, IPL_NET,
 	    gem_intr, sc);
 	if (gsc->gsc_ih == NULL) {

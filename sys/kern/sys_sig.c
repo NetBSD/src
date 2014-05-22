@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.35.4.3 2013/01/23 00:06:22 yamt Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.35.4.4 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.35.4.3 2013/01/23 00:06:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.35.4.4 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -389,16 +389,18 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * Trampoline ABI version 0 is reserved for the legacy kernel
 	 * provided on-stack trampoline.  Conversely, if we are using a
 	 * non-0 ABI version, we must have a trampoline.  Only validate the
-	 * vers if a new sigaction was supplied. Emulations use legacy
-	 * kernel trampolines with version 0, alternatively check for that
-	 * too.
+	 * vers if a new sigaction was supplied and there was an actual
+	 * handler specified (not SIG_IGN or SIG_DFL), which don't require
+	 * a trampoline. Emulations use legacy kernel trampolines with
+	 * version 0, alternatively check for that too.
 	 *
 	 * If version < 2, we try to autoload the compat module.  Note
 	 * that we interlock with the unload check in compat_modcmd()
 	 * using kernconfig_lock.  If the autoload fails, we don't try it
 	 * again for this process.
 	 */
-	if (nsa != NULL) {
+	if (nsa != NULL && nsa->sa_handler != SIG_IGN
+	    && nsa->sa_handler != SIG_DFL) {
 		if (__predict_false(vers < 2)) {
 			if (p->p_flag & PK_32)
 				v0v1valid = true;
@@ -715,6 +717,9 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 	/*
 	 * Calculate timeout, if it was specified.
+	 *
+	 * NULL pointer means an infinite timeout.
+	 * {.tv_sec = 0, .tv_nsec = 0} means do not block.
 	 */
 	if (SCARG(uap, timeout)) {
 		error = (*fetchts)(SCARG(uap, timeout), &ts, sizeof(ts));
@@ -725,8 +730,12 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 			return error;
 
 		timo = tstohz(&ts);
-		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec != 0)
-			timo++;
+		if (timo == 0) {
+			if (ts.tv_sec == 0 && ts.tv_nsec == 0)
+				timo = -1; /* do not block */
+			else
+				timo = 1; /* the shortest possible timeout */
+		}
 
 		/*
 		 * Remember current uptime, it would be used in
@@ -735,7 +744,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		getnanouptime(&tsstart);
 	} else {
 		memset(&tsstart, 0, sizeof(tsstart)); /* XXXgcc */
-		timo = 0;
+		timo = 0; /* infinite timeout */
 	}
 
 	error = (*fetchss)(SCARG(uap, set), &l->l_sigwaitset,
@@ -760,6 +769,12 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		/* If found a pending signal, just copy it out to the user. */
 		mutex_exit(p->p_lock);
 		goto out;
+	}
+
+	if (timo < 0) {
+		/* If not allowed to block, return an error */
+		mutex_exit(p->p_lock);
+		return EAGAIN;
 	}
 
 	/*

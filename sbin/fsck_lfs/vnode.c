@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.11 2010/02/16 23:20:30 mlelstv Exp $ */
+/* $NetBSD: vnode.c,v 1.11.6.1 2014/05/22 11:37:28 yamt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,10 +35,10 @@
 #include <sys/mount.h>
 #include <sys/queue.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
+#define VU_DIROP 0x01000000 /* XXX XXX from sys/vnode.h */
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 #undef vnode
 
 #include <assert.h>

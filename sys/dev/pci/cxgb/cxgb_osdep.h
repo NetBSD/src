@@ -47,8 +47,6 @@ typedef char *caddr_t;
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
-#include <sys/simplelock.h>
-
 #include <sys/kthread.h>
 #include <sys/workqueue.h>
 
@@ -69,12 +67,12 @@ void cxgb_make_task(void *);
 
 void m_cljset(struct mbuf *m, void *cl, int type);
 
-#define mtx simplelock
-#define mtx_init(a, b, c, d) { (a)->lock_data = __SIMPLELOCK_UNLOCKED; }
+#define mtx kmutex_t
+#define mtx_init(a, b, c, d) { mutex_init(a, MUTEX_DEFAULT, IPL_HIGH) }
 #define mtx_destroy(a)
-#define mtx_lock(a) simple_lock(a)
-#define mtx_unlock(a) simple_unlock(a)
-#define mtx_trylock(a) simple_lock_try(a)
+#define mtx_lock(a) mutex_spin_enter(a)
+#define mtx_unlock(a) mutex_spin_exit(a)
+#define mtx_trylock(a) mutex_tryenter(a)
 #define MA_OWNED 1
 #define MA_NOTOWNED 0
 #define mtx_assert(a, w) 
@@ -113,10 +111,6 @@ static inline void critical_enter(void)
 }
 
 static inline void critical_exit(void)
-{
-}
-
-static inline void device_printf(device_t d, ...)
 {
 }
 
@@ -174,26 +168,6 @@ struct cxgb_attach_args
 
 #define INT3 __asm("int $3")
 
-static inline struct mbuf *
-m_defrag(struct mbuf *m0, int flags)
-{
-        struct mbuf *m;
-        MGETHDR(m, flags, MT_DATA);
-        if (m == NULL)
-                return NULL;
-
-        M_COPY_PKTHDR(m, m0);
-        MCLGET(m, flags);
-        if ((m->m_flags & M_EXT) == 0) {
-                m_free(m);
-                return NULL;
-        }
-        m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
-        m->m_len = m->m_pkthdr.len;
-        return m;
-}
-
-
 typedef struct adapter adapter_t;
 struct sge_rspq;
 
@@ -214,8 +188,6 @@ struct t3_mbuf_hdr {
 
 #define if_name(ifp) (ifp)->if_xname
 #define M_SANITY(m, n)
-
-#define __read_mostly __section(".data.read_mostly")
 
 /*
  * Workaround for weird Chelsio issue

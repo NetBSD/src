@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.47.2.1 2013/01/16 05:33:41 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.47.2.2 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.47.2.1 2013/01/16 05:33:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.47.2.2 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 	struct vattr vattr;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smbnode_hashhead *nhpp;
-	struct smbnode *np, *np2, *dnp;
+	struct smbnode *np, *np2;
 	struct vnode *vp;
 	u_long hashval;
 	int error;
@@ -121,8 +121,8 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		return (error);
 	}
 
-	dnp = dvp ? VTOSMB(dvp) : NULL;
 #ifdef DIAGNOSTIC
+	struct smbnode *dnp = dvp ? VTOSMB(dvp) : NULL;
 	if (dnp == NULL && dvp != NULL)
 		panic("smbfs_node_alloc: dead parent vnode %p", dvp);
 #endif
@@ -231,7 +231,7 @@ int
 smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp)
 {
-	struct vnode *vp;
+	struct vnode *vp = NULL;	/* XXX gcc 4.8: maybe-uninitialized */
 	int error;
 
 	error = smbfs_node_alloc(mp, dvp, name, nmlen, fap, &vp);

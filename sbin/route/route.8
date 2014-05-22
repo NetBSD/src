@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.45.2.1 2012/04/17 00:05:42 yamt Exp $
+.\"	$NetBSD: route.8,v 1.45.2.2 2014/05/22 11:37:31 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 6, 2006
+.Dd November 5, 2013
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -148,7 +148,6 @@ command is specified,
 .Nm
 will ``flush'' the routing tables of all gateway entries.
 When the address family is specified by any of the
-.Fl osi ,
 .Fl xns ,
 .Fl atalk ,
 .Fl inet ,
@@ -230,13 +229,11 @@ indicating the interface to be used for transmission.
 .Pp
 The optional modifiers
 .Fl xns ,
-.Fl osi ,
 .Fl atalk ,
 and
 .Fl link
 specify that all subsequent addresses are in the
 .Tn XNS ,
-.Tn OSI ,
 or
 .Tn AppleTalk
 address families,
@@ -245,22 +242,26 @@ or are specified as link-level addresses in the form described in
 and the names must be numeric specifications rather than
 symbolic names.
 .Pp
-The optional modifiers
-.Fl mpls
-and
+The optional modifier
 .Fl tag
-specify that all subsequent addresses are in the
+specifies an address associated with the route.
+How the address is used is specific to the address family of
+the destination and the interface used to forward the packet.
+Currently route tags are consumed only by the
+.Xr mpls 4
+stack; therefore
+.Nm
+assumes that the subsequent addresses are in the
 .Tn MPLS
 address family.
 See
 .Xr mpls 4
-for examples about setting routes involving MPLS.
+for examples of setting routes involving MPLS.
 .Pp
 The optional
 .Fl netmask
 qualifier is intended
 to achieve the effect of an
-.Tn OSI
 .Tn ESIS
 redirect with the netmask option,
 or to manually add subnet routes with
@@ -324,10 +325,7 @@ In a
 or
 .Cm add
 command where the destination and gateway are not sufficient to specify
-the route (as in the
-.Tn ISO
-case where several interfaces may have the
-same address), the
+the route the
 .Fl ifp
 or
 .Fl ifa
@@ -403,7 +401,6 @@ Only root may modify the routing tables.
 These privileges are enforced by the kernel.
 .El
 .Sh SEE ALSO
-.Xr esis 4 ,
 .Xr mpls 4 ,
 .Xr netintro 4 ,
 .Xr route 4 ,

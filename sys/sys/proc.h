@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.311.2.4 2013/01/23 00:06:30 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.311.2.5 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -452,8 +452,6 @@ extern struct proc	*initproc;	/* Process slots for init, pager */
 extern const struct proclist_desc proclists[];
 
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
-
-struct simplelock;
 
 proc_t *	proc_find_raw(pid_t);
 proc_t *	proc_find(pid_t);		/* Find process by ID */

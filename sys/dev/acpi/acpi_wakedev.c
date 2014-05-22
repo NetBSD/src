@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.24.4.1 2012/10/30 17:20:51 yamt Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.24.4.2 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.24.4.1 2012/10/30 17:20:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.24.4.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -259,17 +259,9 @@ SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 	int err;
 
 	err = sysctl_createv(NULL, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-	    NULL, NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL);
-
-	if (err != 0)
-		return;
-
-	err = sysctl_createv(NULL, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
 	    NULL, NULL, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL);
+	    CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.36.36.2 2013/01/23 00:05:29 yamt Exp $	*/
+/*	$NetBSD: optr.c,v 1.36.36.3 2014/05/22 11:37:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.36.36.2 2013/01/23 00:05:29 yamt Exp $");
+__RCSID("$NetBSD: optr.c,v 1.36.36.3 2014/05/22 11:37:27 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: optr.c,v 1.36.36.2 2013/01/23 00:05:29 yamt Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
-
-#include <ufs/ufs/dinode.h>
 
 #include "dump.h"
 #include "pathnames.h"
@@ -322,15 +320,11 @@ static struct fstab *
 allocfsent(const struct fstab *fs)
 {
 	struct fstab *new;
-	char buf[MAXPATHLEN];
 
 	new = xmalloc(sizeof (*fs));
 	new->fs_file = xstrdup(fs->fs_file);
 	new->fs_type = xstrdup(fs->fs_type);
-
-	if (getfsspecname(buf, sizeof(buf), fs->fs_spec) == NULL)
-		msg("%s (%s)", buf, strerror(errno));
-	new->fs_spec = xstrdup(buf);
+	new->fs_spec = xstrdup(fs->fs_spec);
 	new->fs_passno = fs->fs_passno;
 	new->fs_freq = fs->fs_freq;
 	return (new);

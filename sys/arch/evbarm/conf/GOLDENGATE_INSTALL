@@ -1,0 +1,11 @@
+#	$NetBSD: GOLDENGATE_INSTALL,v 1.2.2.2 2014/05/22 11:39:40 yamt Exp $
+#
+#	GOLDENGATE_INSTALL -- GOLDENGATE kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/GOLDENGATE"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

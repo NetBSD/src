@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.18.2.1 2012/10/30 17:20:18 yamt Exp $	*/
+/*	$NetBSD: mace.c,v 1.18.2.2 2014/05/22 11:40:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.18.2.1 2012/10/30 17:20:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.18.2.2 2014/05/22 11:40:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,13 +295,11 @@ mace_intr_disestablish(void *cookie)
 void
 mace_intr(int irqs)
 {
-	uint64_t isa_irq, isa_mask;
+	uint64_t isa_irq;
 	int i;
 
 	/* irq 4 is the ISA cascade interrupt.  Must handle with care. */
 	if (irqs & (1 << 4)) {
-		isa_mask = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
-		    + MACE_ISA_INT_MASK));
 		isa_irq = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
 		    + MACE_ISA_INT_STATUS));
 		for (i = 0; i < MACE_NINTR; i++) {

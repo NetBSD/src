@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.1 2006/03/11 18:59:21 christos Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.1.44.1 2014/05/22 11:36:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat_sigprocmask.S,v 1.1 2006/03/11 18:59:21 christos Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.1.44.1 2014/05/22 11:36:51 yamt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -59,7 +59,7 @@ out:
 	xorl	%eax,%eax
 	ret
 err:
-#ifdef PIC
+#ifdef __PIC__
 	movq	PIC_GOT(CERROR), %rcx
 	jmp	*%rcx
 #else

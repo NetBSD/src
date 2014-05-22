@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.37.12.1 2012/10/30 17:18:50 yamt Exp $ */
+/*	$NetBSD: par.c,v 1.37.12.2 2014/05/22 11:39:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.37.12.1 2012/10/30 17:18:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.37.12.2 2014/05/22 11:39:29 yamt Exp $");
 
 /*
  * parallel port interface
@@ -114,8 +114,17 @@ dev_type_write(parwrite);
 dev_type_ioctl(parioctl);
 
 const struct cdevsw par_cdevsw = {
-	paropen, parclose, parread, parwrite, parioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = paropen,
+	.d_close = parclose,
+	.d_read = parread,
+	.d_write = parwrite,
+	.d_ioctl = parioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.11 2011/01/04 09:25:21 wiz Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.11.6.1 2014/05/22 11:43:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,13 +49,13 @@ extern	int verbose;
 
 static	char err_str[BUFSIZE];
 
-static	void op_notsupp (struct extabent *, struct opiocdesc *, char *);
+static	void op_notsupp (const struct extabent *, struct opiocdesc *, char *);
 
 /*
  * There are several known fields that I either don't know how to
  * deal with or require special treatment.
  */
-static	struct extabent opextab[] = {
+static	const struct extabent opextab[] = {
 	{ "security-password",		op_notsupp },
 	{ "security-mode",		op_notsupp },
 	{ "oem-logo",			op_notsupp },
@@ -69,8 +69,7 @@ static	struct extabent opextab[] = {
 };
 
 void
-op_action(keyword, arg)
-	char *keyword, *arg;
+op_action(char *keyword, char *arg)
 {
 	char	*cp;
 
@@ -79,9 +78,8 @@ op_action(keyword, arg)
 	return;
 }
 
-#if defined(__sparc__) && !defined(__arch64__)
 int
-check_for_openprom()
+check_for_openprom(void)
 {
 	int fd, rv, optnode;
 
@@ -95,14 +93,12 @@ check_for_openprom()
 
 	return (rv == 0);
 }
-#endif
 
 char *
-op_handler(keyword, arg)
-	char *keyword, *arg;
+op_handler(char *keyword, char *arg)
 {
 	struct opiocdesc opio;
-	struct extabent *ex;
+	const struct extabent *ex;
 	char opio_buf[BUFSIZE];
 	int fd, optnode;
 
@@ -192,10 +188,7 @@ op_handler(keyword, arg)
 
 /* ARGSUSED */
 static void
-op_notsupp(exent, opiop, arg)
-	struct extabent *exent;
-	struct opiocdesc *opiop;
-	char *arg;
+op_notsupp(const struct extabent *exent, struct opiocdesc *opiop, char *arg)
 {
 
 	warnx("property `%s' not yet supported", exent->ex_keyword);
@@ -206,10 +199,10 @@ op_notsupp(exent, opiop, arg)
  * (Really!  This is the only way I could get it to work!)
  */
 void
-op_dump()
+op_dump(void)
 {
 	struct opiocdesc opio1, opio2;
-	struct extabent *ex;
+	const struct extabent *ex;
 	char buf1[BUFSIZE], buf2[BUFSIZE], buf3[BUFSIZE], buf4[BUFSIZE];
 	int fd, optnode;
 

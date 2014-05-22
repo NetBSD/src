@@ -1,4 +1,5 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $	*/
+
+/*	$NetBSD: mount_tmpfs.c,v 1.24.18.1 2014/05/22 11:37:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -32,12 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.24.18.1 2014/05/22 11:37:30 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include <fs/tmpfs/tmpfs_args.h>
 
@@ -58,6 +60,7 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $");
 /* --------------------------------------------------------------------- */
 
 static const struct mntopt mopts[] = {
+	MOPT_UPDATE,
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
 	MOPT_NULL,
@@ -66,6 +69,63 @@ static const struct mntopt mopts[] = {
 /* --------------------------------------------------------------------- */
 
 static void	usage(void) __dead;
+static int64_t	ram_fract(const char *arg);
+static int64_t	ram_percent(const char *arg);
+static int64_t	ram_factor(float f);
+
+/* --------------------------------------------------------------------- */
+
+/* return f * available system ram */
+static int64_t
+ram_factor(float f)
+{
+	uint64_t ram;
+	size_t len;
+
+	len = sizeof(ram);
+	if (sysctlbyname("hw.physmem64", &ram, &len, NULL, 0))
+		err(EXIT_FAILURE, "can't get \"hw.physmem64\"");
+
+	return (int64_t)((float)ram * f);
+}
+
+/* return fraction of available ram given by arg */
+static int64_t
+ram_fract(const char *arg)
+{
+	char *endp;
+	float f;
+
+	f = strtof(arg, &endp);
+	if (endp && *endp != 0)
+		errx(EXIT_FAILURE, "syntax error in ram fraction: ram/%s"
+		    " at %s", arg, endp);
+	if (f <= 0.0f)
+		errx(EXIT_FAILURE, "ram fraction must be a positive number:"
+		     " ram/%s", arg);
+
+	return ram_factor(1.0f/f);
+}
+
+/* --------------------------------------------------------------------- */
+
+/* return percentage of available ram given by arg */
+static int64_t
+ram_percent(const char *arg)
+{
+	char *endp;
+	float f;
+
+	f = strtof(arg, &endp);
+	if (endp && *endp != 0)
+		errx(EXIT_FAILURE, "syntax error in ram percentage: ram%%%s"
+		    " at %s", arg, endp);
+	if (f <= 0.0f || f >= 100.0f)
+		errx(EXIT_FAILURE, "ram percentage must be a between 0 and 100"
+		     " ram%%%s", arg);
+
+	return ram_factor(f/100.0f);
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -122,7 +182,11 @@ mount_tmpfs_parseargs(int argc, char *argv[],
 			break;
 
 		case 's':
-			if (dehumanize_number(optarg, &tmpnumber) == -1)
+			if (strncmp(optarg, "ram/", 4) == 0)
+				tmpnumber = ram_fract(optarg+4);
+			else if (strncmp(optarg, "ram%", 4) == 0)
+				tmpnumber = ram_percent(optarg+4);
+			else if (dehumanize_number(optarg, &tmpnumber) == -1)
 				err(EXIT_FAILURE, "failed to parse size `%s'",
 				    optarg);
 			args->ta_size_max = tmpnumber;
@@ -161,8 +225,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
-	    "           [-u user] tmpfs mountpoint\n", getprogname());
+	    "usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
+	    "           [-u user] tmpfs mount_point\n", getprogname());
 	exit(1);
 }
 

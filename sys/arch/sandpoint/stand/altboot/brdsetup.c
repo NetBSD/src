@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.20.2.4 2013/01/23 00:05:56 yamt Exp $ */
+/* $NetBSD: brdsetup.c,v 1.20.2.5 2014/05/22 11:40:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -446,6 +446,9 @@ encbrdfix(struct brdprop *brd)
 	val = pcicfgread(ac97, 0x3c) &~ 0xff;
 	val |= 5;
 	pcicfgwrite(ac97, 0x3c, val);
+
+	(void) pcicfgread(ide, 0x08);
+	(void) pcicfgread(pmgt, 0x08);
 }
 
 void

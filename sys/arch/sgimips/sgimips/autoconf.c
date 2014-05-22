@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42.12.1 2012/10/30 17:20:18 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42.12.2 2014/05/22 11:40:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42.12.1 2012/10/30 17:20:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42.12.2 2014/05/22 11:40:07 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -64,9 +64,8 @@ extern struct platform platform;
 void
 cpu_configure(void)
 {
-	int s;
 
-	s = splhigh();
+	(void)splhigh();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 

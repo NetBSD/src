@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.28.12.2 2012/05/23 10:08:14 yamt Exp $	*/
+/*	$NetBSD: genfs.h,v 1.28.12.3 2014/05/22 11:41:05 yamt Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -19,6 +19,10 @@ int	genfs_ebadf(void *);
 int	genfs_nolock(void *);
 int	genfs_noislocked(void *);
 int	genfs_nounlock(void *);
+
+int	genfs_deadlock(void *);
+#define	genfs_deadislocked genfs_islocked
+int	genfs_deadunlock(void *);
 
 int	genfs_poll(void *);
 int	genfs_kqfilter(void *);
@@ -108,7 +112,7 @@ struct genfs_rename_ops {
 	    struct vnode *dvp, struct componentname *cnp, void *de,
 	    struct vnode *vp);
 	int (*gro_lookup)(struct mount *mp, struct vnode *dvp,
-	    struct componentname *cnp, void *fde_ret, struct vnode **vp_ret);
+	    struct componentname *cnp, void *de_ret, struct vnode **vp_ret);
 	int (*gro_genealogy)(struct mount *mp, kauth_cred_t cred,
 	    struct vnode *fdvp, struct vnode *tdvp,
 	    struct vnode **intermediate_node_ret);

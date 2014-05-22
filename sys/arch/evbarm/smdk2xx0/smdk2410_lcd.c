@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.6.2.2 2012/10/30 17:19:26 yamt Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.6.2.3 2014/05/22 11:39:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.6.2.2 2012/10/30 17:19:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.6.2.3 2014/05/22 11:39:42 yamt Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.
@@ -160,8 +160,17 @@ dev_type_close(lcdclose);
 dev_type_ioctl(lcdioctl);
 dev_type_mmap(lcdmmap);
 const struct cdevsw lcd_cdevsw = {
-	lcdopen, lcdclose, noread, nowrite, lcdioctl,
-	nostop, notty, nopoll, lcdmmap, nokqfilter, D_TTY
+	.d_open = lcdopen,
+	.d_close = lcdclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = lcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = lcdmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TTY
 };
 
 #endif /* NWSDISPLAY */

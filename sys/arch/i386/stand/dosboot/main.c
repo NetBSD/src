@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30.8.1 2012/04/17 00:06:30 yamt Exp $	 */
+/*	$NetBSD: main.c,v 1.30.8.2 2014/05/22 11:39:52 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -163,9 +163,9 @@ sprint_bootsel(const char *filename)
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
 		if (!strcmp(fsname, "dos"))
-			sprintf(buf, "dos:%s", file);
+			snprintf(buf, sizeof(buf), "dos:%s", file);
 		else if (!strcmp(fsname, "ufs"))
-			sprintf(buf, "%s%d%c:%s", devname, unit,
+			snprintf(buf, sizeof(buf), "%s%d%c:%s", devname, unit,
 				'a' + partition, file);
 		else goto bad;
 		return (buf);

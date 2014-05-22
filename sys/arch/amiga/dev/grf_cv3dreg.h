@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.9.78.1 2012/04/17 00:06:01 yamt Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.9.78.2 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -544,6 +544,7 @@ static inline unsigned char RGfx(volatile void *, short);
 	do {	\
 		unsigned char tmp;\
 		tmp = vgar(ba, ACT_ADDRESS_RESET);\
+		__USE(tmp);\
 		vgaw(ba, ACT_ADDRESS_W, idx);\
 		vgaw(ba, ACT_ADDRESS_W, val);\
 	} while (0)

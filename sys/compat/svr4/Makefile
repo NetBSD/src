@@ -1,13 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 2005/12/11 12:20:25 christos Exp $
+#	$NetBSD: Makefile,v 1.5.110.1 2014/05/22 11:40:18 yamt Exp $
 
-.include <bsd.sys.mk>		# for HOST_SH
+SYSCALL_PREFIX=svr4
 
-DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
-OBJS=	svr4_sysent.c svr4_syscalls.c svr4_syscall.h svr4_syscallargs.h
-
-${OBJS}: ${DEP}
-	${HOST_SH} ../../kern/makesyscalls.sh syscalls.conf syscalls.master
-
-all: ${OBJS}
-
-.include <bsd.kinc.mk>
+.include <bsd.syscall.mk>

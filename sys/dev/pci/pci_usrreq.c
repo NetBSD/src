@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.23.4.1 2012/04/17 00:07:52 yamt Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.23.4.2 2014/05/22 11:40:26 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.23.4.1 2012/04/17 00:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.23.4.2 2014/05/22 11:40:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -170,8 +170,17 @@ pcimmap(dev_t dev, off_t offset, int prot)
 }
 
 const struct cdevsw pci_cdevsw = {
-	pciopen, nullclose, noread, nowrite, pciioctl,
-	nostop, notty, nopoll, pcimmap, nokqfilter, D_OTHER,
+	.d_open = pciopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = pciioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = pcimmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.18.2.2 2013/01/16 05:32:46 yamt Exp $	*/
+/*	$NetBSD: epclk.c,v 1.18.2.3 2014/05/22 11:39:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18.2.2 2013/01/16 05:32:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18.2.3 2014/05/22 11:39:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,8 @@ epclk_attach(device_t parent, device_t self, void *aux)
 	if (epclk_sc == NULL) {
 		first_run = true;
 		epclk_sc = sc;
-	}
+	} else
+		first_run = false;
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 
 		0, &sc->sc_ioh))

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.70.6.1 2012/04/17 00:06:55 yamt Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.70.6.2 2014/05/22 11:40:09 yamt Exp $
 
 #=========================================================================
 #
@@ -59,10 +59,12 @@ CPPFLAGS+=	-D_LP64 -Wa,-Av9a
 AFLAGS+=	-Wa,-Av9a
 .if defined(PROF)
 # Profiling is only supported in the medium low memory model.
-CFLAGS+=	-mcmodel=medlow
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mcmodel=medlow :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
 .else
 # Since the kernel resides in the lower 32 bits, use medium low for now anyway.
-CFLAGS+=	-mcmodel=medlow
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mcmodel=medlow :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
 .endif
 .else
 # 32-bit kernels
@@ -75,7 +77,12 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
-# KERN_AS=	obj	# memcpy, memset, etc. are in locore.s
+OPT_MODULAR=	%MODULAR%
+.if !empty(OPT_MODULAR)
+KERN_AS=	obj
+.else
+KERN_AS=	library
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -93,6 +100,9 @@ copy.o:	${SPARC64}/sparc64/copy.S assym.h
 
 mp_subr.o:	${SPARC64}/sparc64/mp_subr.S assym.h
 	${NORMAL_S}
+
+# Our libkern needs stuff from assym.h for memcpy and memset.
+dependkernlib:	assym.h
 
 ##
 ## (5) link settings

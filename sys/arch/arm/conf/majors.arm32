@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.33 2011/06/30 20:09:20 wiz Exp $
+#	$NetBSD: majors.arm32,v 1.33.2.1 2014/05/22 11:39:31 yamt Exp $
 #
 # Device majors for arm32
 #
@@ -91,6 +91,7 @@ device-major	clockctl	char 94			clockctl
 device-major	irframe		char 95			irframedrv
 device-major	cir		char 96			cir
 device-major	radio		char 97			radio
+device-major	ctcom		char 98			ctcom
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
 device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power
@@ -104,6 +105,7 @@ device-major	epcom		char 107		epcom
 device-major	tslcd		char 108		tslcd
 device-major	twe		char 109  		twe
 device-major	nsmb		char 110		nsmb
+device-major	vchiq		char 111		vchiq
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

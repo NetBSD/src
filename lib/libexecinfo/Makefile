@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.1.4.2 2012/10/30 18:59:10 yamt Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2014/05/22 11:36:55 yamt Exp $
 
 .include <bsd.own.mk>
 
+LIBEXECINFO_MACHINE_ARCH?= ${MACHINE_ARCH}
 USE_UNWIND=yes
 WARNS?=4
 INCSDIR=/usr/include
@@ -11,7 +12,7 @@ INCS=execinfo.h
 #CPPFLAGS+=-I/usr/include/libelf
 #COPTS+=-std=gnu99
 
-LIBDPLIBS+= elf	${NETBSDSRCDIR}/external/bsd/libelf/lib
+LIBDPLIBS+= elf	${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
 
 LIB=execinfo
 SRCS=symtab.c backtrace.c
@@ -19,6 +20,9 @@ MAN= backtrace.3
 
 .if ${USE_UNWIND} == "yes"
 SRCS+=unwind.c
+.if !empty(LIBEXECINFO_MACHINE_ARCH:Mearm*)
+SRCS+=unwind_arm_ehabi_stub.c
+.endif
 .else
 SRCS+=builtin.c
 .endif

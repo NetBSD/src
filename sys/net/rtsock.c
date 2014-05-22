@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.137.2.1 2012/04/17 00:08:38 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.137.2.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.137.2.1 2012/04/17 00:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.137.2.2 2014/05/22 11:41:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -172,9 +172,6 @@ rt_adjustcount(int af, int cnt)
 		cb->ip6_count += cnt;
 		return;
 #endif
-	case AF_ISO:
-		cb->iso_count += cnt;
-		return;
 	case AF_MPLS:
 		cb->mpls_count += cnt;
 		return;
@@ -1032,6 +1029,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 	info.rti_info[RTAX_DST] = rt_getkey(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_TAG] = rt_gettag(rt);
 	if (rt->rt_ifp) {
 		const struct ifaddr *rtifa;
 		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
@@ -1339,12 +1337,6 @@ static void
 sysctl_net_route_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode = NULL;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,

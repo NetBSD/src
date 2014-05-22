@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.54.12.2 2012/10/30 17:22:56 yamt Exp $	*/
+/*	$NetBSD: disk.h,v 1.54.12.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -421,6 +421,7 @@ struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
 	const char	*dk_name;	/* disk name */
 	prop_dictionary_t dk_info;	/* reference to disk-info dictionary */
+	struct disk_geom dk_geom;	/* cooked version of dk_info */
 	int		dk_bopenmask;	/* block devices open */
 	int		dk_copenmask;	/* character devices open */
 	int		dk_openmask;	/* composite (bopen|copen) */
@@ -523,6 +524,7 @@ bool	disk_isbusy(struct disk *);
 void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
 int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);
+void	disk_set_info(device_t, struct disk *, const char *);
 
 void	dkwedge_init(void);
 int	dkwedge_add(struct dkwedge_info *);
@@ -532,6 +534,7 @@ int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
 device_t dkwedge_find_by_wname(const char *);
+const char *dkwedge_get_parent_name(dev_t);
 void	dkwedge_print_wnames(void);
 device_t dkwedge_find_partition(device_t, daddr_t, uint64_t);
 #endif

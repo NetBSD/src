@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.1.6.4 2012/10/30 17:20:33 yamt Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.1.6.5 2014/05/22 11:40:13 yamt Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.1.6.4 2012/10/30 17:20:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.1.6.5 2014/05/22 11:40:13 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -95,9 +95,7 @@ amd_cpufamily(void)
 	uint32_t family;
 	struct cpu_info *ci = curcpu();
 
-	family = CPUID2FAMILY(ci->ci_signature);
-	if (family == 0xf)
-		family += CPUID2EXTFAMILY(ci->ci_signature);
+	family = CPUID_TO_FAMILY(ci->ci_signature);
 
 	return family;
 }
@@ -129,7 +127,7 @@ compat6_cpu_ucode_amd_get_version(struct compat6_cpu_ucode *ucode)
 	ucode->version = uclevel;
 	return 0;
 }
-#endif
+#endif /* COMPAT60 */
 
 int
 cpu_ucode_amd_firmware_open(firmware_handle_t *fwh, const char *fwname)
@@ -324,4 +322,4 @@ err0:
 	kmem_free(mc.mc_amd, sizeof(*mc.mc_amd));
 	return error;
 }
-#endif
+#endif /* ! XEN */

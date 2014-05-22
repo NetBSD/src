@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.11.8.1 2012/04/17 00:05:59 yamt Exp $	*/
+/*	$NetBSD: limits.h,v 1.11.8.2 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -68,6 +68,7 @@
 #endif
 
 #if defined(_NETBSD_SOURCE)
+#define	SSIZE_MIN	LONG_MIN		/* min value for a ssize_t */
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
@@ -81,13 +82,13 @@
 #define LONG_BIT	64
 #define WORD_BIT	32
 
-#define DBL_DIG		15
-#define DBL_MAX		1.7976931348623157E+308
-#define DBL_MIN		2.2250738585072014E-308
+#define DBL_DIG		__DBL_DIG__
+#define DBL_MAX		__DBL_MAX__
+#define DBL_MIN		__DBL_MIN__
 
-#define FLT_DIG		6
-#define FLT_MAX		3.40282347E+38F
-#define FLT_MIN		1.17549435E-38F
+#define FLT_DIG		__FLT_DIG__
+#define FLT_MAX		__FLT_MAX__
+#define FLT_MIN		__FLT_MIN__
 #endif
 
 #else	/*	__x86_64__	*/

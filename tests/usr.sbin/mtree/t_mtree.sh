@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.4.2.3 2013/01/23 00:06:36 yamt Exp $
+# $NetBSD: t_mtree.sh,v 1.4.2.4 2014/05/22 11:42:24 yamt Exp $
 #
 # Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,8 @@ h_postprocess()
 		/^#	machine: /s/:.*/: x/
 		/^#	   tree: /s/:.*/: x/
 		/^#	   date: /s/:.*/: x/
-		'
+		' \
+	    -e '/type=dir/s/ size=[0-9]*//'
 }
 
 h_check()

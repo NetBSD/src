@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.11.8.1 2012/04/17 00:06:20 yamt Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.11.8.2 2014/05/22 11:39:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.11.8.1 2012/04/17 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.11.8.2 2014/05/22 11:39:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,12 +294,10 @@ _fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		fbinfo->cmsize = 256;
 		return 0;
 
-#if 1
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = ri->ri_stride;
 		return 0;
 
-#endif
 	case WSDISPLAYIO_GETCMAP:
 		if (ri->ri_flg == RI_FORCEMONO)
 			break;

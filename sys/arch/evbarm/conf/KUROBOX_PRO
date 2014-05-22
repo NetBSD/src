@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.2.4.2 2012/10/30 17:19:19 yamt Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.2.4.3 2014/05/22 11:39:40 yamt Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -12,6 +12,9 @@ options 	EVBARM_BOARDTYPE=kurobox_pro
 makeoptions	CPUFLAGS="-mcpu=xscale"	# Xscale instruction set support
 no options	CPU_SHEEVA
 no options	KIRKWOOD
+
+# Also build a kernel with root on wd0, to avoid query for root fs
+config		netbsd-wd0	root on wd0 type ffs
 
 # Development and Debugging options
 

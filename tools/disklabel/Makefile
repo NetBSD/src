@@ -1,18 +1,10 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2012/10/30 19:00:11 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2014/05/22 11:42:30 yamt Exp $
 
-HOSTPROGNAME=	nbdisklabel-${MAKEWRAPPERMACHINE}
+HOSTPROGNAME=	nbdisklabel
 HOST_SRCDIR=	sbin/disklabel
-HOST_SRCS=	disklabel.c bswap.c
+HOST_SRCS=	disklabel.c
 
 NOMAN=	# defined
-
-.include <bsd.endian.mk>
-
-.if   ${TARGET_ENDIANNESS} == "1234"
-CPPFLAGS+= -DTARGET_BYTE_ORDER=LITTLE_ENDIAN
-.elif ${TARGET_ENDIANNESS} == "4321"
-CPPFLAGS+= -DTARGET_BYTE_ORDER=BIG_ENDIAN
-.endif
 
 .include "${.CURDIR}/../Makefile.nbincludes"
 .include "${.CURDIR}/../Makefile.host"

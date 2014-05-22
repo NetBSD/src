@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.83.2.2 2012/10/30 17:20:53 yamt Exp $	*/
+/*	$NetBSD: atavar.h,v 1.83.2.3 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -193,7 +193,7 @@ struct ata_drive_datas {
  */
 struct ata_bio {
 	volatile u_int16_t flags;/* cmd flags */
-#define	ATA_NOSLEEP	0x0001	/* Can't sleep */
+/* 			0x0001	free, was ATA_NOSLEEP */
 #define	ATA_POLL	0x0002	/* poll for completion */
 #define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
 #define	ATA_SINGLE	0x0008	/* transfer must be done in singlesector mode */
@@ -464,6 +464,7 @@ void	ata_probe_caps(struct ata_drive_datas *);
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif
 void	ata_queue_idle(struct ata_queue *);
+void	ata_delay(int, const char *, int);
 #endif /* _KERNEL */
 
 #endif /* _DEV_ATA_ATAVAR_H_ */

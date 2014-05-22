@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.83.2.2 2012/04/17 00:08:25 yamt Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.83.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.83.2.2 2012/04/17 00:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.83.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -99,6 +99,17 @@ static void	module_enqueue(module_t *);
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 static void	sysctl_module_setup(void);
+static int	sysctl_module_autotime(SYSCTLFN_PROTO);
+
+#define MODULE_CLASS_MATCH(mi, class) \
+	((class) == MODULE_CLASS_ANY || (class) == (mi)->mi_class)
+
+static void
+module_incompat(const modinfo_t *mi, int class)
+{
+	module_error("incompatible module class for `%s' (%d != %d)",
+	    mi->mi_name, class, mi->mi_class);
+}
 
 /*
  * module_error:
@@ -396,16 +407,32 @@ module_builtin_require_force(void)
 
 static struct sysctllog *module_sysctllog;
 
+static int
+sysctl_module_autotime(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int t, error;
+
+	t = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < 0)
+		return (EINVAL);
+
+	*(int *)rnode->sysctl_data = t;
+	return (0);
+}
+
 static void
 sysctl_module_setup(void)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(&module_sysctllog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(&module_sysctllog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "module",
@@ -427,6 +454,12 @@ sysctl_module_setup(void)
 		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
 		NULL, 0, &module_verbose_on, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "autotime",
+		SYSCTL_DESCR("Auto-unload delay"),
+		sysctl_module_autotime, 0, &module_autotime, 0,
 		CTL_CREATE, CTL_EOL);
 }
 
@@ -451,7 +484,7 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 			mi = mod->mod_info;
-			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
+			if (!MODULE_CLASS_MATCH(mi, class))
 				continue;
 			/*
 			 * If initializing a builtin module fails, don't try
@@ -478,7 +511,7 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
 			mi = mod->mod_info;
-			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
+			if (!MODULE_CLASS_MATCH(mi, class))
 				continue;
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
 			    class, false);
@@ -764,7 +797,9 @@ module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 			if (buf[0] == '\0')
 				break;
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
-				module_error("too many required modules");
+				module_error("too many required modules "
+				    "%d >= %d", mod->mod_nrequired,
+				    MAXMODDEPS - 1);
 				return EINVAL;
 			}
 			error = module_do_builtin(buf, &mod2, NULL);
@@ -784,7 +819,7 @@ module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 	module_active = prev_active;
 	if (error != 0) {
 		module_error("builtin module `%s' "
-		    "failed to init", mi->mi_name);
+		    "failed to init, error %d", mi->mi_name, error);
 		return error;
 	}
 
@@ -834,7 +869,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * Avoid recursing too far.
 	 */
 	if (++depth > MODULE_MAX_DEPTH) {
-		module_error("recursion too deep");
+		module_error("recursion too deep for `%s' %d > %d", name,
+		    depth, MODULE_MAX_DEPTH);
 		depth--;
 		return EMLINK;
 	}
@@ -865,7 +901,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		    (flags & MODCTL_LOAD_FORCE) == 0) {
 			if (!autoload) {
 				module_error("use -f to reinstate "
-				    "builtin module \"%s\"", name);
+				    "builtin module `%s'", name);
 			}
 			depth--;
 			return EPERM;
@@ -913,6 +949,17 @@ module_do_load(const char *name, bool isdep, int flags,
 		error = module_load_vfs_vec(name, flags, autoload, mod,
 					    &filedict);
 		if (error != 0) {
+#ifdef DEBUG
+			/*
+			 * The exec class of modules contains a list of
+			 * modules that is the union of all the modules
+			 * available for each architecture, so we don't
+			 * print an error if they are missing.
+			 */
+			if (class != MODULE_CLASS_EXEC || error != ENOENT)
+				module_error("vfs load failed for `%s', "
+				    "error %d", name, error);
+#endif
 			kmem_free(mod, sizeof(*mod));
 			depth--;
 			return error;
@@ -921,8 +968,8 @@ module_do_load(const char *name, bool isdep, int flags,
 
 		error = module_fetch_info(mod);
 		if (error != 0) {
-			module_error("cannot fetch module info for `%s'",
-			    name);
+			module_error("cannot fetch info for `%s', error %d",
+			    name, error);
 			goto fail;
 		}
 	}
@@ -933,12 +980,13 @@ module_do_load(const char *name, bool isdep, int flags,
 	mi = mod->mod_info;
 	if (strlen(mi->mi_name) >= MAXMODNAME) {
 		error = EINVAL;
-		module_error("module name `%s' too long", mi->mi_name);
+		module_error("module name `%s' longer than %d", mi->mi_name,
+		    MAXMODNAME);
 		goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		module_error("module built for `%d', system `%d'",
-		    mi->mi_version, __NetBSD_Version__);
+		module_error("module `%s' built for `%d', system `%d'",
+		    mi->mi_name, mi->mi_version, __NetBSD_Version__);
 		if ((flags & MODCTL_LOAD_FORCE) != 0) {
 			module_error("forced load, system may be unstable");
 		} else {
@@ -951,9 +999,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * If a specific kind of module was requested, ensure that we have
 	 * a match.
 	 */
-	if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
-		module_print("incompatible module class for `%s' (%d != %d)",
-		    name, class, mi->mi_class);
+	if (!MODULE_CLASS_MATCH(mi, class)) {
+		module_incompat(mi, class);
 		error = ENOENT;
 		goto fail;
 	}
@@ -1010,8 +1057,9 @@ module_do_load(const char *name, bool isdep, int flags,
 			len = p - s + 1;
 			if (len >= MAXMODNAME) {
 				error = EINVAL;
-				module_error("required module name `%s'"
-				    " too long", mi->mi_required);
+				module_error("required module name `%s' "
+				    "longer than %d", mi->mi_required,
+				    MAXMODNAME);
 				goto fail;
 			}
 			strlcpy(buf, s, len);
@@ -1019,8 +1067,9 @@ module_do_load(const char *name, bool isdep, int flags,
 				break;
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
 				error = EINVAL;
-				module_error("too many required modules (%d)",
-				    mod->mod_nrequired);
+				module_error("too many required modules "
+				    "%d >= %d", mod->mod_nrequired,
+				    MAXMODDEPS - 1);
 				goto fail;
 			}
 			if (strcmp(buf, mi->mi_name) == 0) {
@@ -1031,8 +1080,11 @@ module_do_load(const char *name, bool isdep, int flags,
 			}
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod2, MODULE_CLASS_ANY, true);
-			if (error != 0)
+			if (error != 0) {
+				module_error("recursive load failed for `%s', "
+				    "error %d", mi->mi_name, error);
 				goto fail;
+			}
 			mod->mod_required[mod->mod_nrequired++] = mod2;
 		}
 	}
@@ -1044,13 +1096,14 @@ module_do_load(const char *name, bool isdep, int flags,
 	error = kobj_affix(mod->mod_kobj, mi->mi_name);
 	if (error != 0) {
 		/* Cannot touch 'mi' as the module is now gone. */
-		module_error("unable to affix module `%s'", name);
+		module_error("unable to affix module `%s', error %d", name,
+		    error);
 		goto fail2;
 	}
 
 	if (filedict) {
 		if (!module_merge_dicts(filedict, props)) {
-			module_error("module properties failed");
+			module_error("module properties failed for %s", name);
 			error = EINVAL;
 			goto fail;
 		}
@@ -1064,8 +1117,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		filedict = NULL;
 	}
 	if (error != 0) {
-		module_error("modcmd function returned error %d for `%s'",
-		    error, mi->mi_name);
+		module_error("modcmd function failed for `%s', error %d",
+		    mi->mi_name, error);
 		goto fail;
 	}
 
@@ -1078,10 +1131,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	if (modp != NULL) {
 		*modp = mod;
 	}
-	if (autoload) {
+	if (autoload && module_autotime > 0) {
 		/*
 		 * Arrange to try unloading the module after
-		 * a short delay.
+		 * a short delay unless auto-unload is disabled.
 		 */
 		mod->mod_autotime = time_second + module_autotime;
 		mod->mod_flags |= MODFLG_AUTO_LOADED;
@@ -1188,14 +1241,16 @@ module_prime(const char *name, void *base, size_t size)
 	error = kobj_load_mem(&mod->mod_kobj, name, base, size);
 	if (error != 0) {
 		kmem_free(mod, sizeof(*mod));
-		module_error("unable to load object pushed by boot loader");
+		module_error("unable to load `%s' pushed by boot loader, "
+		    "error %d", name, error);
 		return error;
 	}
 	error = module_fetch_info(mod);
 	if (error != 0) {
 		kobj_unload(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
-		module_error("unable to load object pushed by boot loader");
+		module_error("unable to load `%s' pushed by boot loader, "
+		    "error %d", name, error);
 		return error;
 	}
 
@@ -1222,11 +1277,13 @@ module_fetch_info(module_t *mod)
 	error = kobj_find_section(mod->mod_kobj, "link_set_modules",
 	    &addr, &size);
 	if (error != 0) {
-		module_error("`link_set_modules' section not present");
+		module_error("`link_set_modules' section not present, "
+		    "error %d", error);
 		return error;
 	}
 	if (size != sizeof(modinfo_t **)) {
-		module_error("`link_set_modules' section wrong size");
+		module_error("`link_set_modules' section wrong size %zu != %zu",
+		    size, sizeof(modinfo_t **));
 		return ENOEXEC;
 	}
 	mod->mod_info = *(modinfo_t **)addr;
@@ -1255,7 +1312,9 @@ module_find_section(const char *name, void **addr, size_t *size)
  *
  *	Automatically unload modules.  We try once to unload autoloaded
  *	modules after module_autotime seconds.  If the system is under
- *	severe memory pressure, we'll try unloading all modules.
+ *	severe memory pressure, we'll try unloading all modules, else if
+ *	module_autotime is zero, we don't try to unload, even if the
+ *	module was previously scheduled for unload.
  */
 static void
 module_thread(void *cookie)
@@ -1278,7 +1337,8 @@ module_thread(void *cookie)
 
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
-			} else if (mod->mod_autotime == 0) {
+			} else if (module_autotime == 0 ||
+				   mod->mod_autotime == 0) {
 				continue;
 			} else if (time_second < mod->mod_autotime) {
 				module_thread_ticks = hz;

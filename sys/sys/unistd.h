@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.52.12.2 2013/01/16 05:33:54 yamt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.52.12.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -129,8 +129,8 @@
 #define	_POSIX_REGEXP			1
 					/* semaphores */
 #define	_POSIX_SEMAPHORES		0
-					/* shared memory */
-#undef	_POSIX_SHARED_MEMORY_OBJECTS
+					/* shared memory objects */
+#define	_POSIX_SHARED_MEMORY_OBJECTS	0
 					/* shell */
 #define	_POSIX_SHELL			1
 					/* spin locks */
@@ -303,8 +303,9 @@
 #define	_SC_2_PBS_MESSAGE		84
 #define	_SC_2_PBS_TRACK			85
 
-/* This is implemented */
+/* These are implemented */
 #define	_SC_SPAWN			86
+#define	_SC_SHARED_MEMORY_OBJECTS	87
 
 /* Extensions found in Solaris and Linux. */
 #define	_SC_PHYS_PAGES		121

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.43.8.1 2012/04/17 00:08:01 yamt Exp $ */
+/*	$NetBSD: tcx.c,v 1.43.8.2 2014/05/22 11:40:35 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.43.8.1 2012/04/17 00:08:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.43.8.2 2014/05/22 11:40:35 yamt Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -158,8 +158,17 @@ dev_type_ioctl(tcxioctl);
 dev_type_mmap(tcxmmap);
 
 const struct cdevsw tcx_cdevsw = {
-	tcxopen, tcxclose, noread, nowrite, tcxioctl,
-	nostop, notty, nopoll, tcxmmap, nokqfilter,
+	.d_open = tcxopen,
+	.d_close = tcxclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = tcxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = tcxmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */
@@ -217,7 +226,9 @@ tcxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(sa->sa_name, OBPNAME) == 0);
+	if (strcmp(sa->sa_name, OBPNAME) == 0)
+		return 100;	/* beat genfb */
+	return 0;
 }
 
 /*
@@ -260,7 +271,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
 	if (sc->sc_8bit) {
-		printf(" (8bit only TCX)");
+		printf(" (8-bit only TCX)\n");
 		ramsize = 1024 * 1024;
 		/* XXX - fix THC and TEC offsets */
 		sc->sc_physaddr[TCX_REG_TEC].oa_base += 0x1000;

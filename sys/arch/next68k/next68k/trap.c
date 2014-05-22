@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84.4.1 2012/04/17 00:06:44 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.84.4.2 2014/05/22 11:40:01 yamt Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84.4.1 2012/04/17 00:06:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84.4.2 2014/05/22 11:40:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -270,7 +270,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 	int s;
 	int rv;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
-	static int panicking = 0;
+	static int panicking __diagused;
 
 	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;

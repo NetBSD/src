@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.19.4.3 2013/01/16 05:33:12 yamt Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.19.4.4 2014/05/22 11:40:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.19.4.3 2013/01/16 05:33:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.19.4.4 2014/05/22 11:40:15 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -58,13 +58,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.19.4.3 2013/01/16 05:33:12 yamt E
 #include <sys/aio.h>
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/resource.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 #include <compat/sys/time.h>
 #include <compat/sys/timex.h>
 #include <compat/sys/resource.h>
 #include <compat/sys/clockctl.h>
+
+struct timeval50 boottime50; 
 
 int
 compat_50_sys_clock_gettime(struct lwp *l,
@@ -346,39 +350,6 @@ out:
 }
 
 int
-compat_50_sys__lwp_park(struct lwp *l,
-    const struct compat_50_sys__lwp_park_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const struct timespec50 *)	ts;
-		syscallarg(lwpid_t)			unpark;
-		syscallarg(const void *)		hint;
-		syscallarg(const void *)		unparkhint;
-	} */
-	struct timespec ts, *tsp;
-	struct timespec50 ts50;
-	int error;
-
-	if (SCARG(uap, ts) == NULL)
-		tsp = NULL;
-	else {
-		error = copyin(SCARG(uap, ts), &ts50, sizeof(ts50));
-		if (error != 0)
-			return error;
-		timespec50_to_timespec(&ts50, &ts);
-		tsp = &ts;
-	}
-
-	if (SCARG(uap, unpark) != 0) {
-		error = lwp_unpark(SCARG(uap, unpark), SCARG(uap, unparkhint));
-		if (error != 0)
-			return error;
-	}
-
-	return lwp_park(tsp, SCARG(uap, hint));
-}
-
-int
 compat_50_sys_mq_timedsend(struct lwp *l,
     const struct compat_50_sys_mq_timedsend_args *uap, register_t *retval)
 {
@@ -450,44 +421,6 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 #else
 	return ENOSYS;
 #endif
-}
-
-static int
-tscopyin(const void *u, void *s, size_t len)
-{
-	struct timespec50 ts50;
-	int error;
-
-	KASSERT(len == sizeof(struct timespec));
-	error = copyin(u, &ts50, sizeof(ts50));
-	if (error)
-		return error;
-	timespec50_to_timespec(&ts50, s);
-	return 0;
-}
-
-static int
-tscopyout(const void *s, void *u, size_t len)
-{
-	struct timespec50 ts50;
-
-	KASSERT(len == sizeof(struct timespec));
-	timespec_to_timespec50(s, &ts50);
-	return copyout(&ts50, u, sizeof(ts50));
-}
-
-int
-compat_50_sys___sigtimedwait(struct lwp *l,
-    const struct compat_50_sys___sigtimedwait_args *uap, register_t *retval)
-{
-	int res;
-
-	res = sigtimedwait1(l,
-	    (const struct sys_____sigtimedwait50_args *)uap, retval, copyin,
-	    copyout, tscopyin, tscopyout);
-	if (!res)
-		*retval = 0; /* XXX NetBSD<=5 was not POSIX compliant */
-	return res;
 }
 
 void
@@ -675,34 +608,19 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 
 	return (error);
 }
-int
-compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap,
-    register_t *retval)
+
+void
+compat_sysctl_time(struct sysctllog **clog)
 {
-	/* {
-		syscallarg(int)			pid;
-		syscallarg(int *)		status;
-		syscallarg(int)			options;
-		syscallarg(struct rusage50 *)	rusage;
-	} */
-	int status, error, pid = SCARG(uap, pid);
-	struct rusage50 ru50;
-	struct rusage ru;
+	struct timeval tv;
 
-	error = do_sys_wait(&pid, &status, SCARG(uap, options),
-	    SCARG(uap, rusage) != NULL ? &ru : NULL);
+	TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+	timeval_to_timeval50(&tv, &boottime50);
 
-	retval[0] = pid;
-	if (pid == 0)
-		return error;
-
-	if (SCARG(uap, rusage)) {
-		rusage_to_rusage50(&ru, &ru50);
-		error = copyout(&ru50, SCARG(uap, rusage), sizeof(ru50));
-	}
-
-	if (error == 0 && SCARG(uap, status))
-		error = copyout(&status, SCARG(uap, status), sizeof(status));
-
-	return error;
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT, 
+		CTLTYPE_STRUCT, "oboottime", 
+		SYSCTL_DESCR("System boot time"),
+		NULL, 0, &boottime50, sizeof(boottime50),
+		CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
 }

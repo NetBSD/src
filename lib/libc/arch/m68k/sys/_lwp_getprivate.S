@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp_getprivate.S,v 1.2 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: _lwp_getprivate.S,v 1.2.4.1 2014/05/22 11:36:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,3 +33,4 @@ SYSCALL(_lwp_getprivate)
 	movl	%d0,%a0
 #endif
 	rts
+END(_lwp_getprivate)

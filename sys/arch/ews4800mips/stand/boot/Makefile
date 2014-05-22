@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.1 2012/04/17 00:06:20 yamt Exp $
+#	$NetBSD: Makefile,v 1.14.2.2 2014/05/22 11:39:46 yamt Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -15,6 +15,7 @@ DEVDIR		= ${.CURDIR}/../../dev
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -100,7 +101,7 @@ LIBS		= ${LIBSA} ${LIBZ} ${LIBKERN}
 coffhdrfix:	${COMMON}/coffhdrfix.c
 	${HOST_CC} -o ${COFFHDRFIX} ${COMMON}/coffhdrfix.c
 
-clean cleandir distclean: .WAIT cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
@@ -139,7 +140,7 @@ ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}
 	    ${BINKERNEL_O}
 	mv ${BOOT_KERNEL}.elf ${BOOT_KERNEL}
 	${OBJDUMP} -h ${BOOT_KERNEL}
-	${TOOL_GZIP} -9c ${BOOT_KERNEL} > ${.TARGET}.tmp
+	${TOOL_GZIP} -9nc ${BOOT_KERNEL} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 	ls -al ${.TARGET}
 

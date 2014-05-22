@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.29.4.1 2012/10/30 17:21:51 yamt Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.29.4.2 2014/05/22 11:40:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.29.4.1 2012/10/30 17:21:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.29.4.2 2014/05/22 11:40:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ static int  pdcide_match(device_t, cfdata_t, void *);
 static void pdcide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pdcide, sizeof(struct pciide_softc),
-    pdcide_match, pdcide_attach, NULL, NULL);
+    pdcide_match, pdcide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20246,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.22.8.1 2012/10/30 17:21:29 yamt Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.22.8.2 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.22.8.1 2012/10/30 17:21:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.22.8.2 2014/05/22 11:40:25 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -350,9 +350,10 @@ kse_attach(device_t parent, device_t self, void *aux)
 	struct ifmedia *ifm;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
-	int i, p, error, nseg;
+	int i, error, nseg;
 	pcireg_t pmode;
 	int pmreg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (pci_mapreg_map(pa, 0x10,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
@@ -418,7 +419,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, kse_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
@@ -526,11 +527,12 @@ kse_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-	p = (sc->sc_chip == 0x8842) ? 3 : 1;
 #ifdef KSE_EVENT_COUNTERS
+	int p = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (i = 0; i < p; i++) {
 		struct ksext *ee = &sc->sc_ext;
-		sprintf(ee->evcntname[i], "%s.%d", device_xname(sc->sc_dev), i+1);
+		snprintf(ee->evcntname[i], sizeof(ee->evcntname[i]),
+		    "%s.%d", device_xname(sc->sc_dev), i+1);
 		evcnt_attach_dynamic(&ee->pev[i][0], EVCNT_TYPE_MISC,
 		    NULL, ee->evcntname[i], "RxLoPriotyByte");
 		evcnt_attach_dynamic(&ee->pev[i][1], EVCNT_TYPE_MISC,
@@ -608,7 +610,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_rxsoft[i].rxs_dmamap);
-	}	
+	}
  fail_4:
 	for (i = 0; i < KSE_TXQUEUELEN; i++) {
 		if (sc->sc_txsoft[i].txs_dmamap != NULL)
@@ -847,7 +849,7 @@ kse_watchdog(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
 
-	/*	
+	/*
 	 * Since we're not interrupting every packet, sweep
 	 * up before we report an error.
 	 */
@@ -1147,7 +1149,7 @@ rxintr(struct kse_softc *sc)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		rxstat = sc->sc_rxdescs[i].r0;
-		
+	
 		if (rxstat & R0_OWN) /* desc is left empty */
 			break;
 

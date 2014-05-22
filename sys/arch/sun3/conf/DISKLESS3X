@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.50.2.1 2012/10/30 17:20:26 yamt Exp $
+# $NetBSD: DISKLESS3X,v 1.50.2.2 2014/05/22 11:40:10 yamt Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -82,9 +82,6 @@ file-system	NFS		# Sun NFS client support
 # Networking options
 options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Work-around for root on slow servers (insurance...)
@@ -147,7 +144,7 @@ cgfour0 at obmem0 addr 0x50300000
 # cgnine0 at vme5 addr 0x08000000 ipl 4 vect 0xAA
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP

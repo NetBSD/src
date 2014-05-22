@@ -1,4 +1,4 @@
-/* $NetBSD: __setjmp14.S,v 1.5 2011/06/12 05:44:36 matt Exp $ */
+/* $NetBSD: __setjmp14.S,v 1.5.2.1 2014/05/22 11:36:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -55,6 +55,7 @@ LEAF(__setjmp14, 1)
 	stq	s6, (SC_REGS+_REG_S6)(a0)
 	stq	ra, (SC_REGS+_REG_RA)(a0)
 	stq	sp, (SC_REGS+_REG_SP)(a0)
+	stq	gp, (SC_REGS+_REG_GP)(a0)
 
 	/*
 	 * get signal information
@@ -83,7 +84,7 @@ LEAF(__setjmp14, 1)
 	mov	s0, a0
 	ldq	s0, (SC_REGS+_REG_S0)(a0)
 
-	ldiq	t0, 0xacedbade			/* sigcontext magic number */
+	ldq	t0, magic		 	/* sigcontext magic number */
 	stq	t0, (SC_REGS+_REG_UNIQUE)(a0)	/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
 	ldiq	t0, 1
@@ -117,4 +118,6 @@ LEAF(__setjmp14, 1)
 botch:
 	CALL(abort)
 	RET					/* "can't" get here... */
+magic:
+	.quad	0xacedbade		 	/* sigcontext magic number */
 END(__setjmp14)

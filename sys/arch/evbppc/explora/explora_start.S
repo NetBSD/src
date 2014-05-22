@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.10 2011/06/20 19:56:11 matt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.10.2.1 2014/05/22 11:39:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -126,8 +126,13 @@ _next:
 
 /* Jump into the staging area so we can remap the dram. */
 
+#if 0
 	lis	0,stage1reloc@h
 	ori	0,0,stage1reloc@l
+#else
+	lis	0,((stage1reloc >> 16) & 0xffff)
+	ori	0,0,(stage1reloc & 0xffff)
+#endif
 	mtlr	0
 	blr
 

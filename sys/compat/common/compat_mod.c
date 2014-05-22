@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.14.2.1 2013/01/23 00:06:01 yamt Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.14.2.2 2014/05/22 11:40:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.2.1 2013/01/23 00:06:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.2.2 2014/05/22 11:40:15 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -52,13 +52,19 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.2.1 2013/01/23 00:06:01 yamt Exp
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
-MODULE(MODULE_CLASS_MISC, compat, NULL);
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+static struct sysctllog *compat_clog = NULL;
+#endif
+ 
+MODULE(MODULE_CLASS_EXEC, compat, NULL);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
@@ -237,6 +243,9 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_50_aio_suspend, 0, (sy_call_t *)compat_50_sys_aio_suspend },
 	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
 #endif
+#if defined(COMPAT_60)
+	{ SYS_compat_60__lwp_park, 0, (sy_call_t *)compat_60_sys__lwp_park },
+#endif
 	{ 0, 0, NULL },
 };
 
@@ -270,9 +279,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		sendsig_sigcontext_vec = sendsig_sigcontext;
 #endif
 #endif
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_init();
-#endif
 		return 0;
 
 	case MODULE_CMD_FINI:
@@ -329,12 +336,31 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 #endif
 #endif	/* COMPAT_16 */
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		compat_sysctl_fini();
-#endif
 		return 0;
 
 	default:
 		return ENOTTY;
 	}
+}
+
+void
+compat_sysctl_init(void)
+{
+
+#if defined(COMPAT_09) || defined(COMPAT_43)
+	compat_sysctl_vfs(&compat_clog);
+#endif
+#if defined(COMPAT_50)
+	compat_sysctl_time(&compat_clog);
+#endif
+}
+
+void
+compat_sysctl_fini(void)
+{
+ 
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
+        sysctl_teardown(&compat_clog);
+#endif
 }

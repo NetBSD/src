@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.48.18.1 2013/01/23 00:05:29 yamt Exp $	*/
+/*	$NetBSD: traverse.c,v 1.48.18.2 2014/05/22 11:37:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.48.18.1 2013/01/23 00:05:29 yamt Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.48.18.2 2014/05/22 11:37:27 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,11 +42,8 @@ __RCSID("$NetBSD: traverse.c,v 1.48.18.1 2013/01/23 00:05:29 yamt Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <ufs/ufs/dir.h>
-#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-
-#include <protocols/dumprestore.h>
 
 #include <ctype.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.79.2.2 2012/02/17 08:18:57 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.79.2.3 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79.2.2 2012/02/17 08:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79.2.3 2014/05/22 11:41:19 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -647,7 +647,7 @@ ubc_release(void *va, int flags)
 		mutex_enter(&uvm_pageqlock);
 		for (u_int i = 0; i < npages; i++) {
 			paddr_t pa;
-			bool rv;
+			bool rv __diagused;
 
 			rv = pmap_extract(pmap_kernel(),
 			    umapva + slot_offset + (i << PAGE_SHIFT), &pa);

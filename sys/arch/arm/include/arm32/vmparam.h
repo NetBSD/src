@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25.8.2 2012/10/30 17:19:05 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25.8.3 2014/05/22 11:39:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -44,9 +44,6 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
-#ifndef __ASSEMBLER__
-#include <sys/simplelock.h>	/* struct simplelock */ 
-#endif /* __ASSEMBLER__ */
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -55,37 +52,41 @@
  * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler
  * would have to be changed to not generate "bl" instructions.
  */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #ifndef	DFLDSIZ
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
+#define	MAXDSIZ		(1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
 /*
  * While the ARM architecture defines Section mappings, large pages,
  * and small pages, the standard page size is (and will always be) 4K.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * Mach derived constants
  */
-#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - 0x1000)
+#define	VM_MIN_ADDRESS		((vaddr_t) PAGE_SIZE)
+#ifdef ARM_MMU_EXTENDED
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) 0x80000000 - PAGE_SIZE)
+#else
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - PAGE_SIZE)
+#endif
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffefff)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) -(PAGE_SIZE+1))
 
 #ifndef __ASSEMBLER__
 /* XXX max. amount of KVM to be used by buffers. */

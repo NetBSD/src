@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.182.2.3 2013/01/16 05:33:46 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.182.2.4 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.182.2.3 2013/01/16 05:33:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.182.2.4 2014/05/22 11:41:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,7 +518,7 @@ procfs_link(void *v)
 int
 procfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -527,7 +527,6 @@ procfs_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -955,7 +954,7 @@ procfs_access(void *v)
 		return (error);
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
 	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
@@ -983,7 +982,7 @@ procfs_access(void *v)
 int
 procfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
@@ -1061,16 +1060,9 @@ procfs_lookup(void *v)
 		return (error);
 
 	case PFSproc:
-		/*
-		 * do the .. dance. We unlock the directory, and then
-		 * get the root dir. That will automatically return ..
-		 * locked. Then if the caller wanted dvp locked, we
-		 * re-lock.
-		 */
 		if (cnp->cn_flags & ISDOTDOT) {
-			VOP_UNLOCK(dvp);
-			error = procfs_root(dvp->v_mount, vpp);
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			error = procfs_allocvp(dvp->v_mount, vpp, 0, PFSroot,
+			    -1, NULL);
 			return (error);
 		}
 
@@ -1113,7 +1105,6 @@ procfs_lookup(void *v)
 			/* We already checked that it exists. */
 			vref(fvp);
 			procfs_proc_unlock(p);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
 			return (0);
 		}
@@ -1130,17 +1121,10 @@ procfs_lookup(void *v)
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ENOENT)) != 0)
 			return error;
 
-		/*
-		 * do the .. dance. We unlock the directory, and then
-		 * get the proc dir. That will automatically return ..
-		 * locked. Then re-lock the directory.
-		 */
 		if (cnp->cn_flags & ISDOTDOT) {
-			VOP_UNLOCK(dvp);
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    PFSproc, -1, p);
 			procfs_proc_unlock(p);
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		fd = atoi(pname, cnp->cn_namelen);
@@ -1157,7 +1141,6 @@ procfs_lookup(void *v)
 			vref(fvp);
 			closef(fp);
 			procfs_proc_unlock(p);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
 			return 0;
 		}
@@ -1174,17 +1157,10 @@ procfs_lookup(void *v)
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ENOENT)) != 0)
 			return error;
 
-		/*
-		 * do the .. dance. We unlock the directory, and then
-		 * get the proc dir. That will automatically return ..
-		 * locked. Then re-lock the directory.
-		 */
 		if (cnp->cn_flags & ISDOTDOT) {
-			VOP_UNLOCK(dvp);
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    PFSproc, -1, p);
 			procfs_proc_unlock(p);
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		xpid = atoi(pname, cnp->cn_namelen);

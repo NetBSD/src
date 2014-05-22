@@ -1,4 +1,4 @@
-/* $NetBSD: ldp.h,v 1.3.2.1 2013/01/16 05:34:09 yamt Exp $ */
+/* $NetBSD: ldp.h,v 1.3.2.2 2014/05/22 11:43:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#define	ALL_ROUTERS		"224.0.0.2"
-#define	ALL_ROUTERS6		"FF02::2"
+/* RFC5036 */
 #define	LDP_PORT		646
+
 #define	LDP_COMMAND_PORT	2626
 
 #define	LDPD_VER		"0.4.0"

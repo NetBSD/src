@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.234.2.2 2012/10/30 17:20:22 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.234.2.3 2014/05/22 11:40:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234.2.2 2012/10/30 17:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234.2.3 2014/05/22 11:40:09 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -110,7 +110,6 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
@@ -437,9 +436,8 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	/* Stuff to only run on the boot CPU */
 	cpu_setup();
 	snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
-		cpi->cpu_longname, clockfreq(cpi->hz), cpi->fpu_name);
-	snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
-		machine_model, buf);
+		cpi->cpu_longname, clockfreq(cpi->hz / 1000), cpi->fpu_name);
+	cpu_setmodel("%s (%s)", machine_model, buf);
 	printf(": %s\n", buf);
 	cache_print(sc);
 
@@ -746,6 +744,8 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 			    "xcall(cpu%d,%p) from %p: couldn't ping cpus:",
 			    cpu_number(), fasttrap ? trap : func,
 			    __builtin_return_address(0));
+			if (wrsz > bufsz)
+				break;
 			bufsz -= wrsz;
 			bufp += wrsz;
 		}
@@ -759,11 +759,10 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 				if (i < 0) {
 					wrsz = snprintf(bufp, bufsz,
 							" cpu%d", cpi->ci_cpuid);
+					if (wrsz > bufsz)
+						break;
 					bufsz -= wrsz;
 					bufp += wrsz;
-					/* insanity */
-					if (bufsz < 0)
-						break;
 				} else {
 					done = 0;
 					break;
@@ -956,7 +955,8 @@ fpu_init(struct cpu_info *sc)
 	sc->fpupresent = 1;
 	sc->fpu_name = fsrtoname(sc->cpu_impl, sc->cpu_vers, fpuvers);
 	if (sc->fpu_name == NULL) {
-		sprintf(sc->fpu_namebuf, "version 0x%x", fpuvers);
+		snprintf(sc->fpu_namebuf, sizeof(sc->fpu_namebuf),
+		    "version 0x%x", fpuvers);
 		sc->fpu_name = sc->fpu_namebuf;
 	}
 }
@@ -1823,7 +1823,8 @@ int
 viking_module_error(void)
 {
 	uint64_t v;
-	int n = 0, fatal = 0;
+	int fatal = 0;
+	CPU_INFO_ITERATOR n;
 	struct cpu_info *cpi;
 
 	/* Report on MXCC error registers in each module */

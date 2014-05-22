@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.7.2.3 2013/01/16 05:32:44 yamt Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.7.2.3 2013/01/16 05:32:44 yamt Exp $	*/
+/*	$Id: at91aic.c,v 1.7.2.4 2014/05/22 11:39:31 yamt Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.7.2.4 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -251,7 +251,7 @@ at91aic_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 	}
 
 	/* All interrupts should use IRQ not FIQ */

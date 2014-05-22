@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.59.8.1 2012/04/17 00:08:40 yamt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.59.8.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.59.8.1 2012/04/17 00:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.59.8.2 2014/05/22 11:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,20 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.59.8.1 2012/04/17 00:08:40 yamt Exp $"
 /*
  * Similar code is very well commented in netinet6/ip6_flow.c
  */ 
-
-struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
-	struct in_addr ipf_dst;		/* destination address */
-	struct in_addr ipf_src;		/* source address */
-	uint8_t ipf_tos;		/* type-of-service */
-	struct route ipf_ro;		/* associated route entry */
-	u_long ipf_uses;		/* number of uses in this period */
-	u_long ipf_last_uses;		/* number of uses in last period */
-	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
-	u_long ipf_errors;		/* other errors returned by if_output */
-	u_int ipf_timer;		/* lifetime timer */
-};
 
 #define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
@@ -348,7 +334,7 @@ ipflow_free(struct ipflow *ipf)
 	splx(s);
 }
 
-static struct ipflow *
+struct ipflow *
 ipflow_reap(bool just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
@@ -396,13 +382,6 @@ ipflow_reap(bool just_one)
 }
 
 void
-ipflow_prune(void)
-{
-
-	(void) ipflow_reap(false);
-}
-
-void
 ipflow_slowtimo(void)
 {
 	struct rtentry *rt;
@@ -444,6 +423,9 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	 */
 	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP)
 		return;
+
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * See if an existing flow struct exists.  If so remove it from it's
 	 * list and free the old route.  If not, try to malloc a new one
@@ -458,7 +440,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
 			splx(s);
 			if (ipf == NULL)
-				return;
+				goto out;
 			ipflow_inuse++;
 		}
 		memset(ipf, 0, sizeof(*ipf));
@@ -488,6 +470,9 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
 	splx(s);
+
+ out:
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 int

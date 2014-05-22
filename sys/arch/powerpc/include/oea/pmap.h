@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26.2.1 2012/10/30 17:20:12 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26.2.2 2014/05/22 11:40:04 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -149,6 +149,7 @@ bool pmap_clear_bit(struct vm_page *, int);
 void pmap_real_memory(paddr_t *, psize_t *);
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 int pmap_pte_spill(pmap_t, vaddr_t, bool);
+int pmap_ste_spill(pmap_t, vaddr_t, bool);
 void pmap_pinit(pmap_t);
 
 u_int powerpc_mmap_flags(paddr_t);

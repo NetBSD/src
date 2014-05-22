@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.6 2011/07/01 20:39:34 dyoung Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.6.2.1 2014/05/22 11:39:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -33,6 +33,7 @@
 #define _IFPGAVAR_H_
 
 #include <sys/bus.h>
+#include <sys/evcnt.h>
 
 /* We statically map the UARTS at boot so that we can access the console
    before we've probed for the IFPGA. */
@@ -41,6 +42,9 @@
 
 #define IFPGA_UART0		0x06000000	/* Uart 0 */
 #define IFPGA_UART1		0x07000000	/* Uart 1 */
+
+/* SMC91C111 network module. */
+#define IFPGA_SMC911_BASE	0xb8000000
 
 typedef paddr_t ifpga_addr_t;
 

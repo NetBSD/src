@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.16.2.1 2012/05/23 10:07:56 yamt Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.16.2.2 2014/05/22 11:40:22 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.16.2.1 2012/05/23 10:07:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.16.2.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,12 +72,6 @@ SYSCTL_SETUP(sysctl_fwmem, "sysctl fwmem subtree setup")
 {
 	int rc, fwmem_node_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "fwmem",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.48.2.2 2012/10/30 17:21:19 yamt Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.48.2.3 2014/05/22 11:40:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48.2.2 2012/10/30 17:21:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48.2.3 2014/05/22 11:40:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,13 +96,27 @@ dev_type_dump(edmcadump);
 dev_type_size(edmcasize);
 
 const struct bdevsw ed_bdevsw = {
-	edmcaopen, edmcaclose, edmcastrategy, edmcaioctl,
-	edmcadump, edmcasize, D_DISK
+	.d_open = edmcaopen,
+	.d_close = edmcaclose,
+	.d_strategy = edmcastrategy,
+	.d_ioctl = edmcaioctl,
+	.d_dump = edmcadump,
+	.d_psize = edmcasize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ed_cdevsw = {
-	edmcaopen, edmcaclose, edmcaread, edmcawrite, edmcaioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = edmcaopen,
+	.d_close = edmcaclose,
+	.d_read = edmcaread,
+	.d_write = edmcawrite,
+	.d_ioctl = edmcaioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver eddkdriver = { edmcastrategy, minphys };
@@ -144,7 +158,7 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 	edc_add_disk(sc, ed);
 
 	bufq_alloc(&ed->sc_q, "disksort", BUFQ_SORT_RAWBLOCK);
-	simple_lock_init(&ed->sc_q_lock);
+	mutex_init(&ed->sc_q_lock, MUTEX_DEFAULT, IPL_VM);
 
 	if (ed_get_params(ed, &drv_flags)) {
 		printf(": IDENTIFY failed, no disk found\n");
@@ -243,9 +257,9 @@ edmcastrategy(struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
-	simple_lock(&ed->sc_q_lock);
+	mutex_enter(&ed->sc_q_lock);
 	bufq_put(ed->sc_q, bp);
-	simple_unlock(&ed->sc_q_lock);
+	mutex_exit(&ed->sc_q_lock);
 
 	/* Ring the worker thread */
 	wakeup(ed->edc_softc);

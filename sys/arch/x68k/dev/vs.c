@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.34.2.1 2012/04/17 00:07:02 yamt Exp $	*/
+/*	$NetBSD: vs.c,v 1.34.2.2 2014/05/22 11:40:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.34.2.1 2012/04/17 00:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.34.2.2 2014/05/22 11:40:12 yamt Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -387,8 +387,6 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	struct audio_params *p;
 	int mode;
 	int rate;
-	stream_filter_factory_t *pswcode;
-	stream_filter_factory_t *rswcode;
 	audio_params_t hw;
 	int matched;
 
@@ -408,8 +406,6 @@ vs_set_params(void *hdl, int setmode, int usemode,
 			return EINVAL;
 
 		rate = p->sample_rate;
-		pswcode = NULL;
-		rswcode = NULL;
 		hw = *p;
 		hw.encoding = AUDIO_ENCODING_ADPCM;
 		hw.precision = hw.validbits = 4;

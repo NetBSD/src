@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3.60.1 2012/04/17 00:05:13 yamt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3.60.2 2014/05/22 11:36:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@ ENTRY(__clone)
 	jne	2f		/* we're the parent */
 	call	*%ebp		/* this is the clone, call the function */
 
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	pushl	%eax		/* clone does _exit(func(arg)); */
 	call	PIC_PLT(_C_LABEL(_exit))

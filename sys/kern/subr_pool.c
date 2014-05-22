@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.190.2.3 2012/10/30 17:22:34 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.190.2.4 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190.2.3 2012/10/30 17:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190.2.4 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190.2.3 2012/10/30 17:22:34 yamt Exp
  * an internal pool of page headers (`phpool').
  */
 
-/* List of all pools */
-static TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
+/* List of all pools. Non static as needed by 'vmstat -i' */
+TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
@@ -203,9 +203,9 @@ static void	*pool_allocator_alloc(struct pool *, int);
 static void	pool_allocator_free(struct pool *, void *);
 
 static void pool_print_pagelist(struct pool *, struct pool_pagelist *,
-	void (*)(const char *, ...));
+	void (*)(const char *, ...) __printflike(1, 2));
 static void pool_print1(struct pool *, const char *,
-	void (*)(const char *, ...));
+	void (*)(const char *, ...) __printflike(1, 2));
 
 static int pool_chk_page(struct pool *, const char *,
 			 struct pool_item_header *);
@@ -561,9 +561,10 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	/* See the comment below about reserved bytes. */
 	trysize = palloc->pa_pagesz - ((align - ioff) % align);
 	phsize = ALIGN(sizeof(struct pool_item_header));
-	if ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
+	if (pp->pr_roflags & PR_PHINPAGE ||
+	    ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
 	    (pp->pr_size < MIN(palloc->pa_pagesz / 16, phsize << 3) ||
-	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size)) {
+	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size))) {
 		/* Use the end of the page for the page header */
 		pp->pr_roflags |= PR_PHINPAGE;
 		pp->pr_phoffset = off = palloc->pa_pagesz - phsize;
@@ -2261,6 +2262,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 static bool __noinline
 pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 {
+	struct lwp *l = curlwp;
 	pcg_t *pcg, *cur;
 	uint64_t ncsw;
 	pool_cache_t pc;
@@ -2271,6 +2273,7 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 	pc = cc->cc_cache;
 	pcg = NULL;
 	cc->cc_misses++;
+	ncsw = l->l_ncsw;
 
 	/*
 	 * If there are no empty groups in the cache then allocate one
@@ -2280,6 +2283,16 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 		if (__predict_true(!pool_cache_disable)) {
 			pcg = pool_get(pc->pc_pcgpool, PR_NOWAIT);
 		}
+		/*
+		 * If pool_get() blocked, then our view of
+		 * the per-CPU data is invalid: retry.
+		 */
+		if (__predict_false(l->l_ncsw != ncsw)) {
+			if (pcg != NULL) {
+				pool_put(pc->pc_pcgpool, pcg);
+			}
+			return true;
+		}
 		if (__predict_true(pcg != NULL)) {
 			pcg->pcg_avail = 0;
 			pcg->pcg_size = pc->pc_pcgsize;
@@ -2288,7 +2301,6 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 
 	/* Lock the cache. */
 	if (__predict_false(!mutex_tryenter(&pc->pc_lock))) {
-		ncsw = curlwp->l_ncsw;
 		mutex_enter(&pc->pc_lock);
 		pc->pc_contended++;
 
@@ -2296,7 +2308,7 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 		 * If we context switched while locking, then our view of
 		 * the per-CPU data is invalid: retry.
 		 */
-		if (__predict_false(curlwp->l_ncsw != ncsw)) {
+		if (__predict_false(l->l_ncsw != ncsw)) {
 			mutex_exit(&pc->pc_lock);
 			if (pcg != NULL) {
 				pool_put(pc->pc_pcgpool, pcg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcivar.h,v 1.3.4.1 2012/10/30 17:19:58 yamt Exp $	*/
+/*	$NetBSD: ahcivar.h,v 1.3.4.2 2014/05/22 11:39:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -81,6 +81,8 @@ struct ahci_softc {
 	bus_dma_tag_t		 sc_dmat;
 	void *sc_ih;			/* interrupt cookie */
 
+	kmutex_t		 sc_lock;
+	kmutex_t		 sc_intr_lock;
 
 	void				(*sc_enable_power)(void *, int);
 	void				(*sc_enable_intr)(void *, int);
@@ -112,7 +114,6 @@ struct ahci_softc {
 	int				sc_fullspeed;
 	int				sc_connect;	/* XXX */
 	int				sc_change;
-	int				busy;
 };
 
 int  ahci_intr(void *);

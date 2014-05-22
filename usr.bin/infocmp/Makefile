@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/03 15:16:33 roy Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2014/05/22 11:42:45 yamt Exp $
 
 PROG=		infocmp
-WARNS=		4
 
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libterminfo
 LDADD+=		-lterminfo

@@ -1,15 +1,14 @@
-# $NetBSD: Makefile,v 1.42.2.2 2013/01/16 05:33:59 yamt Exp $
+# $NetBSD: Makefile,v 1.42.2.3 2014/05/22 11:42:20 yamt Exp $
 
 .include "Makefile.inc"
-.include <bsd.sys.mk>
 .include <bsd.own.mk>
 
-SUBDIR+=	tls_dso .WAIT
+SUBDIR+=	tls_dso .WAIT sync
 
 TESTS_SUBDIRS+=	c063 db gen hash inet locale net regex rpc setjmp stdlib
 TESTS_SUBDIRS+=	stdio string sys termios time tls ttyio
 
-.if ${HAS_SSP} == "yes"
+.if ${HAVE_SSP} == "yes"
 TESTS_SUBDIRS+=	ssp
 .endif
 

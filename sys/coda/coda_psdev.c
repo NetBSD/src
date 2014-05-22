@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.47.14.2 2012/10/30 17:20:38 yamt Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.47.14.3 2014/05/22 11:40:15 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.47.14.2 2012/10/30 17:20:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.47.14.3 2014/05/22 11:40:15 yamt Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -111,8 +111,17 @@ dev_type_poll(vc_nb_poll);
 dev_type_kqfilter(vc_nb_kqfilter);
 
 const struct cdevsw vcoda_cdevsw = {
-	vc_nb_open, vc_nb_close, vc_nb_read, vc_nb_write, vc_nb_ioctl,
-	nostop, notty, vc_nb_poll, nommap, vc_nb_kqfilter, D_OTHER,
+	.d_open = vc_nb_open,
+	.d_close = vc_nb_close,
+	.d_read = vc_nb_read,
+	.d_write = vc_nb_write,
+	.d_ioctl = vc_nb_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = vc_nb_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = vc_nb_kqfilter,
+	.d_flag = D_OTHER,
 };
 
 struct vmsg {
@@ -730,17 +739,19 @@ MODULE(MODULE_CLASS_DRIVER, vcoda, NULL);
 static int
 vcoda_modcmd(modcmd_t cmd, void *arg)
 {
-	int cmajor, dmajor, error = 0;
-
-	dmajor = cmajor = -1;
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
+	{
+		int cmajor, dmajor;
 		vcodaattach(NVCODA);
 
+		dmajor = cmajor = -1;
 		return devsw_attach("vcoda", NULL, &dmajor,
 		    &vcoda_cdevsw, &cmajor);
+	}
 #endif
 		break;
 

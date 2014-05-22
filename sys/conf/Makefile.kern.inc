@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.149.2.3 2013/01/16 05:33:12 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.149.2.4 2014/05/22 11:40:18 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -16,6 +16,11 @@
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 #
 # all ports are expected to include bsd.own.mk for toolchain settings
+
+# Default DEBUG to -g if kernel debug info is requested by MKKDEBUG=yes
+.if defined(MKKDEBUG) && ${MKKDEBUG} == "yes"
+DEBUG?=-g
+.endif
 
 ##
 ## (0) toolchain settings for things that aren't part of the standard
@@ -88,6 +93,8 @@ CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
 
 CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":? \
     -Wno-shift-count-negative -Wno-shift-count-overflow:}
+
+CWARNFLAGS.ioconf.c= ${${ACTIVE_CC} == "clang":? -Wno-unused-const-variable :}
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}
@@ -219,12 +226,12 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
+SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 .if defined(KERNLDSCRIPT)
 SYSTEM_DEP+=	${KERNLDSCRIPT}
 .endif
 .if defined(CTFMERGE)
-SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 .else
 SYSTEM_CTFMERGE= ${_MKSHECHO}
 .endif
@@ -262,15 +269,6 @@ SYSTEM_LD_TAIL_DBSYM?=	\
 	fi
 .endif
 
-.if defined(_SYMTAB_SPACE_ADJUSTED)
-SYSTEM_LD_TAIL?=true
-.else
-SYSTEM_LD_TAIL?=@${SYSTEM_LD_TAIL_DBSYM} ; \
-		${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
-		${SIZE} $@; chmod 755 $@; \
-		${SYSTEM_CTFMERGE}
-.endif
-
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
 LINKDATA?=	${DATAADDR:C/.+/-Tdata &/}
@@ -280,10 +278,24 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 		${EXTRA_LINKFLAGS}
 
 LINKFLAGS_DEBUG?=	-X
+
+#
+# If we're relinking due to _SYMTAB_SPACE_ADJUSTED then don't perform
+# SYSTEM_LD_TAIL{,_DEBUG}. They'll be done in the parent invocation.
+#
+.if defined(_SYMTAB_SPACE_ADJUSTED)
+SYSTEM_LD_TAIL?=true
+SYSTEM_LD_TAIL_DEBUG?=true
+.else
+SYSTEM_LD_TAIL?=@${SYSTEM_LD_TAIL_DBSYM} ; \
+		${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
+		${SIZE} $@; chmod 755 $@; \
+		${SYSTEM_CTFMERGE}
 SYSTEM_LD_TAIL_DEBUG?=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+.endif
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
@@ -304,16 +316,20 @@ SYSTEM_LD_TAIL+=; \
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
+#
+# More steps to skip if we're relinking due to _SYMTAB_SPACE_ADJUSTED (see
+# above)
+#
 .if !defined(_SYMTAB_SPACE_ADJUSTED)
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ksyms.h > /dev/null; then \
 		echo "${DBSYM} $@"; \
 		${DBSYM} $@ || (rm -f $@ ; exit 1) || exit 1; \
 	fi
-.endif
 
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
+.endif
 
 ##
 ## (6) port independent targets and dependencies: assym.h, vers.o
@@ -323,7 +339,7 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    > assym.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 .endif
@@ -344,6 +360,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh \
 	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+	${COMPILE_CTFCONVERT}
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)
@@ -429,7 +446,7 @@ assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
-	    ${CFLAGS:N-Wa,*} ${CPPFLAGS}
+	    ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${GENASSYM_CPPFLAGS}
 	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icap_ebus.c,v 1.2.2.1 2012/10/30 17:19:17 yamt Exp $	*/
+/*	$NetBSD: icap_ebus.c,v 1.2.2.2 2014/05/22 11:39:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.2.2.1 2012/10/30 17:19:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.2.2.2 2014/05/22 11:39:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,16 +149,17 @@ icap_ebus_attach(device_t parent, device_t self, void *aux)
 /* The character device handlers
  */
 const struct cdevsw icap_cdevsw = {
-	icapopen,
-	icapclose,
-	icapread,
-	icapwrite,
-	icapioctl,
-	nostop,
-	notty,
-	nopoll,
-	nommap,
-	nokqfilter,
+	.d_open = icapopen,
+	.d_close = icapclose,
+	.d_read = icapread,
+	.d_write = icapwrite,
+	.d_ioctl = icapioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /*
@@ -387,6 +388,8 @@ icap_ebus_intr(void *cookie, void *f)
         saf = sc->sc_dp->SizeAndFlags;
         hi  = sc->sc_dp->BufferAddressHi32; /* BUGBUG 64bit */
         lo  = sc->sc_dp->BufferAddressLo32; /* this pops the fifo */
+	__USE(hi);
+	__USE(lo);
 
         /* Say its done that much (and sanity)
          */

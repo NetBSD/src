@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.179.2.2 2012/10/30 17:21:10 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.179.2.3 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.179.2.2 2012/10/30 17:21:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.179.2.3 2014/05/22 11:40:22 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -76,9 +76,6 @@ static const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
 
 static const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10_100;
-
-static const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] =
-    TLP_TXTHRESH_TAB_WINB;
 
 static const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
     TLP_TXTHRESH_TAB_DM9102;
@@ -5750,12 +5747,13 @@ static void
 tlp_pnic_nway_auto_timeout(void *arg)
 {
 	struct tulip_softc *sc = arg;
-	uint32_t reg;
+	/* uint32_t reg; */
 	int s;
 
 	s = splnet();
 	sc->sc_flags &= ~TULIPF_DOINGAUTO;
-	reg = TULIP_READ(sc, CSR_PNIC_NWAY);
+	/* reg = */
+	TULIP_READ(sc, CSR_PNIC_NWAY);
 #if 0
 	if ((reg & PNIC_NWAY_LPAR_MASK) == 0)
 		aprint_error_dev(sc->sc_dev, "autonegotiation failed to complete\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.23.2.2 2012/10/30 17:22:34 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.23.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23.2.2 2012/10/30 17:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,6 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	file_t *fp;
 	vnode_t	*vp;
 	struct flock lf;
-	proc_t *p;
 
 	fd = SCARG(uap, fd);
 	how = SCARG(uap, how);
@@ -639,7 +638,6 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	}
 
 	atomic_or_uint(&fp->f_flag, FHASLOCK);
-	p = curproc;
 	if (how & LOCK_NB) {
 		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, F_FLOCK);
 	} else {

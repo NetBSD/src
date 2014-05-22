@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpexvar.h,v 1.2.4.1 2012/10/30 17:21:18 yamt Exp $	*/
+/*	$NetBSD: mvpexvar.h,v 1.2.4.2 2014/05/22 11:40:23 yamt Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -27,6 +27,8 @@
 
 #ifndef	_MVPEXVAR_H_
 #define	_MVPEXVAR_H_
+
+extern enum marvell_tags *mvpex_bar2_tags;
 
 struct mvpex_intrhand {
 	LIST_ENTRY(mvpex_intrhand) ih_q;
@@ -68,7 +70,7 @@ void mvpex_conf_write(void *, pcitag_t, int, pcireg_t);
 int mvpex_conf_hook(void *, int, int, int, pcireg_t);
 void mvpex_conf_interrupt(void *, int, int, int, int, int *);
 int mvpex_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *mvpex_intr_string(void *, pci_intr_handle_t);
+const char *mvpex_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *mvpex_intr_evcnt(void *, pci_intr_handle_t);
 void *mvpex_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
 			   void *);

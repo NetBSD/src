@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.buildboot,v 1.12.4.1 2012/10/30 17:18:36 yamt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.12.4.2 2014/05/22 11:39:26 yamt Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
 
+KLINK_MACHINE= acorn26
 SRCS=	${PROGSOURCE}
 NOMAN=# defined
 BINDIR=/usr/mdec
@@ -12,6 +13,7 @@ FILESDIR=/usr/mdec
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -19,6 +21,7 @@ LIBCRTEND=
 RISCOSTYPE ?= ff8
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
@@ -27,21 +30,19 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
+CPUFLAGS=
 CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
-CFLAGS=		-O2
-CFLAGS+=	-ffreestanding
-CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine ${MACHINE_ARCH}
-	ln -s $S/arch/${MACHINE}/include machine
-	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv2
+.if ${HAVE_GCC} < 48
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.else
+CPPFLAGS+=	-marm
 .endif
-
-CLEANFILES+= machine ${MACHINE_ARCH}
+CFLAGS=		-O2
+CFLAGS+=	-ffreestanding -fno-unwind-tables
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 ### find out what to use for libkern
 KERN_AS=	library

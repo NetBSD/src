@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.9.2.2 2013/01/16 05:32:54 yamt Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.9.2.3 2014/05/22 11:39:42 yamt Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.9.2.2 2013/01/16 05:32:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.9.2.3 2014/05/22 11:39:42 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -118,6 +118,7 @@ nppbattach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	char devinfo[256];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -126,7 +127,7 @@ nppbattach(device_t parent, device_t self, void *aux)
 	psc->psc_pc = pc;
 	psc->psc_tag = pa->pa_tag;
 
-	sprintf(devinfo, "21555 Non-Transparent PCI-PCI Bridge");
+	snprintf(devinfo, sizeof(devinfo), "21555 Non-Transparent PCI-PCI Bridge");
 	aprint_normal(": %s, rev %d\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus-mastering is enabled. */
@@ -162,7 +163,7 @@ nppbattach(device_t parent, device_t self, void *aux)
 		printf("%s: couldn't map interrupt\n", device_xname(self));
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, buf, sizeof(buf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nppb_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",

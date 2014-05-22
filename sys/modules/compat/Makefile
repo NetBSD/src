@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.6.1 2013/01/23 00:06:24 yamt Exp $
+#	$NetBSD: Makefile,v 1.6.6.2 2014/05/22 11:41:06 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -34,8 +34,9 @@ SRCS+=	sysv_sem_14.c sysv_shm_14.c tty_43.c uipc_syscalls_30.c
 SRCS+=	uipc_syscalls_43.c vfs_syscalls_12.c kern_sig_16.c
 SRCS+=	vfs_syscalls_20.c vfs_syscalls_30.c vfs_syscalls_40.c
 SRCS+=	vfs_syscalls_43.c vm_12.c vm_43.c compat_mod.c
-SRCS+=	sysv_msg_50.c sysv_sem_50.c kern_time_50.c
+SRCS+=	sysv_msg_50.c sysv_sem_50.c kern_time_50.c kern_50.c
 SRCS+=	sysv_shm_50.c vfs_syscalls_50.c sysv_ipc_50.c
+SRCS+=	tty_60.c kern_time_60.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
 .PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.17.4.1 2012/04/17 00:09:37 yamt Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.17.4.2 2014/05/22 11:42:46 yamt Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.17.4.1 2012/04/17 00:09:37 yamt Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.17.4.2 2014/05/22 11:42:46 yamt Exp $");
 #endif
 #endif /* not lint*/
 
@@ -152,8 +152,12 @@ fast_ipsec_stats(u_long off, const char *name)
 	slen = sizeof(ipsecstats);
 	status = sysctlbyname("net.inet.ipsec.ipsecstats", ipsecstats, &slen,
 			      NULL, 0);
-	if (status < 0 && errno != ENOMEM)
-		err(1, "net.inet.ipsec.ipsecstats");
+	if (status < 0) {
+		if (errno == ENOENT)
+			return;
+		if (errno != ENOMEM)
+			err(1, "net.inet.ipsec.ipsecstats");
+	}
 
 	slen = sizeof (ahstats);
 	status = sysctlbyname("net.inet.ah.ah_stats", ahstats, &slen, NULL, 0);

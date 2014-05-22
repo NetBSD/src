@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.6 2011/08/12 04:14:00 riastradh Exp $
+# $NetBSD: t_psshfs.sh,v 1.6.2.1 2014/05/22 11:42:18 yamt Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -145,7 +145,7 @@ inode_nos_body() {
 	touch root/file4
 
 	cat >ne_inodes.sh <<EOF
-#! $(atf-config -t atf_shell)
+#! /bin/sh
 #
 # Compares the inodes of the two given files and returns true if they are
 # different; false otherwise.

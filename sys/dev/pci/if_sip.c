@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.150.2.2 2012/10/30 17:21:31 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.150.2.3 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.150.2.2 2012/10/30 17:21:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.150.2.3 2014/05/22 11:40:25 yamt Exp $");
 
 
 
@@ -293,7 +293,7 @@ struct sip_softc {
 		/* VLAN_ATTACHED */
 		int		is_vlan;
 	}	sc_prev;
-		
+	
 	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
@@ -994,6 +994,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	bus_size_t tx_dmamap_size;
 	int ntxsegs_alloc;
 	cfdata_t cf = device_cfdata(self);
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -1100,7 +1101,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, sipcom_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
@@ -1397,7 +1398,7 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 	 */
 	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 		sc->sc_txdescs[lasttx].sipd_extsts |=
-		    htole32(EXTSTS_VPKT | 
+		    htole32(EXTSTS_VPKT |
 				(bswap16(VLAN_TAG_VALUE(mtag)) &
 				 EXTSTS_VTCI));
 	}

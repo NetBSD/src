@@ -1,4 +1,4 @@
-/*	$NetBSD: vprintf.c,v 1.11.2.1 2012/04/17 00:05:25 yamt Exp $	*/
+/*	$NetBSD: vprintf.c,v 1.11.2.2 2014/05/22 11:36:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,14 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)vprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vprintf.c,v 1.11.2.1 2012/04/17 00:05:25 yamt Exp $");
+__RCSID("$NetBSD: vprintf.c,v 1.11.2.2 2014/05/22 11:36:54 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+__weak_alias(vprintf_l, _vprintf_l)
 
 int
 vprintf(const char *fmt, va_list ap)
@@ -53,4 +56,11 @@ vprintf(const char *fmt, va_list ap)
 	_DIAGASSERT(fmt != NULL);
 
 	return vfprintf(stdout, fmt, ap);
+}
+
+int
+vprintf_l(locale_t loc, const char *fmt, va_list ap)
+{
+
+	return vfprintf_l(stdout, loc, fmt, ap);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.27.2.1 2012/10/30 17:20:52 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.27.2.2 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.27.2.1 2012/10/30 17:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.27.2.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -114,8 +114,17 @@ dev_type_poll(apmpoll);
 dev_type_kqfilter(apmkqfilter);
 
 const struct cdevsw apm_cdevsw = {
-	apmopen, apmclose, noread, nowrite, apmioctl,
-	nostop, notty, apmpoll, nommap, apmkqfilter, D_OTHER,
+	.d_open = apmopen,
+	.d_close = apmclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = apmioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = apmpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = apmkqfilter,
+	.d_flag = D_OTHER,
 };
 
 /* configurable variables */
@@ -449,6 +458,8 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 		if (error == 0 &&
 		    (sc->sc_flags & (SCFLAG_OREAD|SCFLAG_OWRITE)) == 0)
 			apm_power_print(sc, &pi);
+#else
+		__USE(error);
 #endif
 		apm_record_event(sc, event_code);
 		break;

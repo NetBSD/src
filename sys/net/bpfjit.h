@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.h,v 1.1.2.2 2012/10/30 17:22:42 yamt Exp $	*/
+/*	$NetBSD: bpfjit.h,v 1.1.2.3 2014/05/22 11:41:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 Alexander Nasonov.
@@ -53,17 +53,16 @@
  * SLJIT_MOV_UI is passed to sljit_emit_return() to make sure that the
  * return value is truncated to unsigned int.
  */
-typedef unsigned int (*bpfjit_function_t)(const uint8_t *,
+typedef unsigned int (*bpfjit_func_t)(const uint8_t *,
     unsigned int, unsigned int);
 
-bpfjit_function_t bpfjit_generate_code(struct bpf_insn *, size_t);
-void bpfjit_free_code(bpfjit_function_t);
+bpfjit_func_t bpfjit_generate_code(bpf_ctx_t *, struct bpf_insn *, size_t);
+void bpfjit_free_code(bpfjit_func_t);
 
 #ifdef _KERNEL
-struct bpfjit_ops
-{
-	bpfjit_function_t (*bj_generate_code)(struct bpf_insn *, size_t);
-	void (*bj_free_code)(bpfjit_function_t);
+struct bpfjit_ops {
+	bpfjit_func_t (*bj_generate_code)(bpf_ctx_t *, struct bpf_insn *, size_t);
+	void (*bj_free_code)(bpfjit_func_t);
 };
 
 extern struct bpfjit_ops bpfjit_module_ops;

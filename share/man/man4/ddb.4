@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.147.2.3 2013/01/23 00:05:34 yamt Exp $
+.\"	$NetBSD: ddb.4,v 1.147.2.4 2014/05/22 11:37:50 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd January 5, 2013
+.Dd May 15, 2013
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -119,19 +119,19 @@ from the keyboard:
 \*[Lt]Alt\*[Gt]-\*[Lt]LeftShift\*[Gt]-\*[Lt]F9\*[Gt]
 .It hp300
 \*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
-.It hp700
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
-.It ""
-+++++
-(five plus signs) on PDC console
-.It ""
-\*[Lt]Break\*[Gt] on serial console.
 .It hpcarm
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcmips
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcsh
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+.It hppa
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+.It ""
++++++
+(five plus signs) on PDC console
+.It ""
+\*[Lt]Break\*[Gt] on serial console.
 .It i386
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It ""
@@ -748,9 +748,11 @@ queue, the queue index will be prefixed with a
 .Sq \&! .
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
-.It Ic show uvmhist
-Dumps the UVM histories.
+.It Ic show kernhist
+Dumps the kernel histories.
 This command is available only if a kernel is compiled with
+.Cd options KERNHIST
+or
 .Cd options UVMHIST .
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
 Print the vnode at
@@ -992,7 +994,7 @@ Switch to another cpu.
 .It Ic frame
 Given a trap frame address, print out the trap frame.
 .El
-.Ss HP700
+.Ss HPPA
 .Bl -tag -width "traptrace" -compact
 .It Ic frame
 Without an address the default trap frame is printed.

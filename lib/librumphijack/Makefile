@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.4.2 2012/10/30 18:59:17 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.4.3 2014/05/22 11:37:00 yamt Exp $
 #
 
 LIB=		rumphijack
@@ -10,7 +10,7 @@ MAN=		rumphijack.3
 
 SRCS=		hijack.c hijackdlsym.c
 
-CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT -I${.CURDIR}/../librumpuser
+CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT
 
 WARNS?=		5
 
@@ -19,3 +19,5 @@ WARNS?=		5
 COPTS.hijackdlsym.c+=	-O0
 
 .include <bsd.lib.mk>
+
+CPPFLAGS+=	-U_FORTIFY_SOURCE

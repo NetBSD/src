@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.23.2.1 2012/10/30 17:20:33 yamt Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.23.2.2 2014/05/22 11:40:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.23.2.1 2012/10/30 17:20:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.23.2.2 2014/05/22 11:40:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.23.2.1 2012/10/30 17:20:33 ya
 #include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
+
+#include <machine/i82489reg.h>
 
 #if NIOAPIC > 0 || NACPICA > 0
 #include <machine/i82093reg.h>
@@ -218,17 +220,19 @@ bad:
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
 	pci_chipset_tag_t ipc;
 
 	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
 		if ((ipc->pc_present & PCI_OVERRIDE_INTR_STRING) == 0)
 			continue;
-		return (*ipc->pc_ov->ov_intr_string)(ipc->pc_ctx, pc, ih);
+		return (*ipc->pc_ov->ov_intr_string)(ipc->pc_ctx, pc, ih,
+		    buf, len);
 	}
 
-	return intr_string(ih & ~MPSAFE_MASK);
+	return intr_string(ih & ~MPSAFE_MASK, buf, len);
 }
 
 
@@ -391,8 +395,8 @@ pci_msi_establish(struct pci_attach_args *pa, int level,
 	is = ci->ci_isources[ih->ih_slot];
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_LO,
-		       IOAPIC_MSIADDR_BASE |
-		       __SHIFTIN(ci->ci_cpuid, IOAPIC_MSIADDR_DSTID_MASK));
+		       LAPIC_MSIADDR_BASE |
+		       __SHIFTIN(ci->ci_cpuid, LAPIC_MSIADDR_DSTID_MASK));
 	if (reg & PCI_MSI_CTL_64BIT_ADDR) {
 		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_HI,
 		    0);
@@ -400,17 +404,17 @@ pci_msi_establish(struct pci_attach_args *pa, int level,
 		 * EDGE
 		 */
 		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA64,
-		    __SHIFTIN(is->is_idtvec, IOAPIC_MSIDATA_VECTOR_MASK) |
-		    IOAPIC_MSIDATA_TRGMODE_EDGE | IOAPIC_MSIDATA_LEVEL_ASSERT |
-		    IOAPIC_MSIDATA_DM_FIXED);
+		    __SHIFTIN(is->is_idtvec, LAPIC_MSIDATA_VECTOR_MASK) |
+		    LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_LEVEL_ASSERT |
+		    LAPIC_MSIDATA_DM_FIXED);
 	} else {
 		/* XXX according to the manual, ASSERT is unnecessary if
 		 * EDGE
 		 */
 		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA,
-		    __SHIFTIN(is->is_idtvec, IOAPIC_MSIDATA_VECTOR_MASK) |
-		    IOAPIC_MSIDATA_TRGMODE_EDGE | IOAPIC_MSIDATA_LEVEL_ASSERT |
-		    IOAPIC_MSIDATA_DM_FIXED);
+		    __SHIFTIN(is->is_idtvec, LAPIC_MSIDATA_VECTOR_MASK) |
+		    LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_LEVEL_ASSERT |
+		    LAPIC_MSIDATA_DM_FIXED);
 	}
 	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL,
 	    PCI_MSI_CTL_MSI_ENABLE);

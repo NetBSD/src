@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.13.4.1 2014/05/22 11:41:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13.4.1 2014/05/22 11:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -38,12 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $");
 #include <sys/atomic.h>
 
 #include "rump_private.h"
-
-/*
- * Flimsy and minimalistic sleepq implementation.  This is implemented
- * only for the use of callouts in kern_timeout.c.  locking etc is
- * completely incorrect, horrible, etc etc etc.
- */
 
 syncobj_t sleep_syncobj;
 static kcondvar_t sq_cv;
@@ -60,7 +54,7 @@ sqinit1(void)
 void
 sleepq_init(sleepq_t *sq)
 {
-	ONCE_DECL(sqctl);
+	static ONCE_DECL(sqctl);
 
 	RUN_ONCE(&sqctl, sqinit1);
 
@@ -105,14 +99,11 @@ sleepq_block(int timo, bool catch)
 	return error;
 }
 
-lwp_t *
+void
 sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 {
 	struct lwp *l, *l_next;
 	bool found = false;
-
-	if (__predict_false(expected != -1))
-		panic("sleepq_wake: \"expected\" not supported");
 
 	for (l = TAILQ_FIRST(sq); l; l = l_next) {
 		l_next = TAILQ_NEXT(l, l_sleepchain);
@@ -121,13 +112,14 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 			l->l_wchan = NULL;
 			l->l_wmesg = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
+			if (--expected == 0)
+				break;
 		}
 	}
 	if (found)
 		cv_broadcast(&sq_cv);
 
 	mutex_spin_exit(mp);
-	return NULL;
 }
 
 void

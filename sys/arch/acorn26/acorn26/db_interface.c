@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18.8.1 2013/01/23 00:05:36 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18.8.2 2014/05/22 11:39:25 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18.8.1 2013/01/23 00:05:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18.8.2 2014/05/22 11:39:25 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -169,11 +169,10 @@ volatile bool db_validating, db_faulted;
 int
 db_validate_address(vm_offset_t addr)
 {
-	volatile uint8_t tmp;
 
 	db_faulted = false;
 	db_validating = true;
-	tmp = *(uint8_t *)addr;
+	(void) *(volatile uint8_t *)addr;
 	db_validating = false;
 	return db_faulted;
 }

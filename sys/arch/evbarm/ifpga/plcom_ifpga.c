@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.11.2.2 2012/10/30 17:19:22 yamt Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.11.2.3 2014/05/22 11:39:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.11.2.2 2012/10/30 17:19:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.11.2.3 2014/05/22 11:39:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -77,7 +77,11 @@ plcom_ifpga_attach(device_t parent, device_t self, void *aux)
 	isc->sc_ioh = ifa->ifa_sc_ioh;
 
 	sc->sc_dev = self;
+#if defined(INTEGRATOR_CP)
+	sc->sc_pi.pi_type = PLCOM_TYPE_PL011;
+#else
 	sc->sc_pi.pi_type = PLCOM_TYPE_PL010;
+#endif
 	sc->sc_pi.pi_iot = ifa->ifa_iot;
 	sc->sc_pi.pi_iobase = ifa->ifa_addr;
 	sc->sc_pi.pi_size = IFPGA_UART_SIZE;

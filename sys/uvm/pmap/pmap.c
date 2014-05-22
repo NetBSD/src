@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.2 2012/10/30 17:23:03 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.3 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.2 2012/10/30 17:23:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.3 2014/05/22 11:41:19 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -209,10 +209,6 @@ struct pmap_kernel kernel_pmap_store = {
 		.pm_segtab = PMAP_INVALID_SEGTAB_ADDRESS,
 		.pm_minaddr = VM_MIN_KERNEL_ADDRESS,
 		.pm_maxaddr = VM_MAX_KERNEL_ADDRESS,
-#ifdef MULTIPROCESSOR
-		.pm_active = 1,
-		.pm_onproc = 1,
-#endif
 	},
 };
 
@@ -309,18 +305,24 @@ pmap_page_syncicache(struct vm_page *pg)
 #endif
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv = &mdpg->mdpg_first;
-	__cpuset_t onproc = CPUSET_NULLSET;
+	kcpuset_t *onproc;
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&onproc, true);
+#else
+	onproc = NULL;
+#endif
 	(void)VM_PAGEMD_PVLIST_LOCK(mdpg, false);
+
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
 #ifdef MULTIPROCESSOR
-			CPUSET_MERGE(onproc, pv->pv_pmap->pm_onproc);
-			if (CPUSET_EQUAL_P(onproc, cpuset_info.cpus_running)) {
+			kcpuset_merge(onproc, pv->pv_pmap->pm_onproc);
+			if (kcpuset_match(onproc, kcpuset_running)) {
 				break;
 			}
 #else
 			if (pv->pv_pmap == curpmap) {
-				onproc = CPUSET_SINGLE(0);
+				onproc = curcpu()->ci_data.cpu_kcpuset;
 				break;
 			}
 #endif
@@ -329,6 +331,9 @@ pmap_page_syncicache(struct vm_page *pg)
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_disable();
 	pmap_md_page_syncicache(pg, onproc);
+#ifdef MULTIPROCESSOR
+	kcpuset_destroy(onproc);
+#endif
 	kpreempt_enable();
 }
 
@@ -1474,7 +1479,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, npv, apv;
 	int16_t gen;
-	bool first = false;
+	bool first __unused = false;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	UVMHIST_LOG(pmaphist,

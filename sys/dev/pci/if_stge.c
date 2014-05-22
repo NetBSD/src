@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.53.4.2 2012/10/30 17:21:32 yamt Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.53.4.3 2014/05/22 11:40:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.53.4.2 2012/10/30 17:21:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.53.4.3 2014/05/22 11:40:25 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -386,6 +386,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	int i, rseg, error;
 	const struct stge_product *sp;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -441,7 +442,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, stge_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
@@ -574,7 +575,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 		} else {
 			uint16_t myaddr[ETHER_ADDR_LEN / 2];
 			for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
-				stge_read_eeprom(sc, 
+				stge_read_eeprom(sc,
 				    STGE_EEPROM_StationAddress0 + i,
 				    &myaddr[i]);
 				myaddr[i] = le16toh(myaddr[i]);

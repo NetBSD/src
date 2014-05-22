@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.74.2.3 2013/01/23 00:06:31 yamt Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.74.2.4 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.74.2.3 2013/01/23 00:06:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.74.2.4 2014/05/22 11:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ ext2fs_nblock(struct inode *ip)
 		nblock |= (uint64_t)ip->i_e2fs_nblock_high << 32;
 
 		if ((ip->i_e2fs_flags & EXT2_HUGE_FILE)) {
-			nblock = fsbtodb(fs, nblock);
+			nblock = EXT2_FSBTODB(fs, nblock);
 		}
 	}
 
@@ -174,10 +174,10 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 		return 0;
 	}
 
-	if (dbtofsb(fs, nblock) <= 0xffffffffffffULL) {
+	if (EXT2_DBTOFSB(fs, nblock) <= 0xffffffffffffULL) {
 		SET(ip->i_e2fs_flags, EXT2_HUGE_FILE);
-		ip->i_e2fs_nblock = dbtofsb(fs, nblock) & 0xffffffff;
-		ip->i_e2fs_nblock_high = (dbtofsb(fs, nblock) >> 32) & 0xffff;
+		ip->i_e2fs_nblock = EXT2_DBTOFSB(fs, nblock) & 0xffffffff;
+		ip->i_e2fs_nblock_high = (EXT2_DBTOFSB(fs, nblock) >> 32) & 0xffff;
 		return 0;
 	}
 
@@ -261,7 +261,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	fs = ip->i_e2fs;
 
 	error = bread(ip->i_devvp,
-			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
+			  EXT2_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		return (error);
@@ -361,7 +361,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * zero'ed in case it ever become accessible again because
 	 * of subsequent file growth.
 	 */
-	offset = blkoff(fs, length);
+	offset = ext2_blkoff(fs, length);
 	if (offset != 0) {
 		size = fs->e2fs_bsize;
 
@@ -377,10 +377,10 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
+	lastblock = ext2_lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - EXT2FS_NDADDR;
-	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
-	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
+	lastiblock[DOUBLE] = lastiblock[SINGLE] - EXT2_NINDIR(fs);
+	lastiblock[TRIPLE] = lastiblock[DOUBLE] - EXT2_NINDIR(fs) * EXT2_NINDIR(fs);
 	nblocks = btodb(fs->e2fs_bsize);
 	/*
 	 * Update file and block pointers on disk before we start freeing
@@ -428,14 +428,14 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * Indirect blocks first.
 	 */
 	indir_lbn[SINGLE] = -EXT2FS_NDADDR;
-	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) -1;
-	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
+	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - EXT2_NINDIR(fs) -1;
+	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - EXT2_NINDIR(fs) * EXT2_NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
 		/* XXX ondisk32 */
 		bn = fs2h32(oip->i_e2fs_blocks[EXT2FS_NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
-			    fsbtodb(fs, bn), lastiblock[level], level, &count);
+			    EXT2_FSBTODB(fs, bn), lastiblock[level], level, &count);
 			if (error)
 				allerror = error;
 			blocksreleased += count;
@@ -519,7 +519,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	factor = 1;
 	for (i = SINGLE; i < level; i++)
-		factor *= NINDIR(fs);
+		factor *= EXT2_NINDIR(fs);
 	last = lastbn;
 	if (lastbn > 0)
 		last /= factor;
@@ -559,7 +559,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		copy = kmem_alloc(fs->e2fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, (void *)bap, (u_int)fs->e2fs_bsize);
 		memset((void *)&bap[last + 1], 0,
-			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (uint32_t));
+			(u_int)(EXT2_NINDIR(fs) - (last + 1)) * sizeof (uint32_t));
 		error = bwrite(bp);
 		if (error)
 			allerror = error;
@@ -569,7 +569,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	/*
 	 * Recursively free totally unused blocks.
 	 */
-	for (i = NINDIR(fs) - 1,
+	for (i = EXT2_NINDIR(fs) - 1,
 		nlbn = lbn + 1 - i * factor; i > last;
 		i--, nlbn += factor) {
 		/* XXX ondisk32 */
@@ -577,7 +577,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
-			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
+			error = ext2fs_indirtrunc(ip, nlbn, EXT2_FSBTODB(fs, nb),
 						   (daddr_t)-1, level - 1,
 						   &blkcount);
 			if (error)
@@ -596,7 +596,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		/* XXX ondisk32 */
 		nb = fs2h32(bap[i]);
 		if (nb != 0) {
-			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
+			error = ext2fs_indirtrunc(ip, nlbn, EXT2_FSBTODB(fs, nb),
 						   last, level - 1, &blkcount);
 			if (error)
 				allerror = error;

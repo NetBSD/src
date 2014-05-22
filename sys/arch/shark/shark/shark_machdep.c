@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.39.2.1 2012/10/30 17:20:20 yamt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.39.2.2 2014/05/22 11:40:08 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.39.2.1 2012/10/30 17:20:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.39.2.2 2014/05/22 11:40:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -53,30 +53,29 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.39.2.1 2012/10/30 17:20:20 yamt 
 #include <sys/exec.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/fiq.h>
-
 #include <dev/cons.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/isa/isavar.h>
+#include <dev/ofisa/ofisavar.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <machine/frame.h>
-#include <machine/bootconfig.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/pio.h>
-#include <arm/arm32/machdep.h>
+#include <arm/fiq.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
+#include <arm/arm32/machdep.h>
 
-#include <dev/ofw/openfirm.h>
+#include <machine/bootconfig.h>
+#include <machine/pio.h>
 #include <machine/ofw.h>
 #include <machine/isa_machdep.h>
-#include <dev/isa/isavar.h>
-#include <dev/ofisa/ofisavar.h>
 #include <shark/shark/sequoia.h>
 
 #include "isadma.h"

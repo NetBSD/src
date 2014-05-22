@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.44.2.1 2012/04/17 00:05:43 yamt Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.44.2.2 2014/05/22 11:37:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.44.2.1 2012/04/17 00:05:43 yamt Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.44.2.2 2014/05/22 11:37:32 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,9 @@ __RCSID("$NetBSD: tunefs.c,v 1.44.2.1 2012/04/17 00:05:43 yamt Exp $");
 
 union {
 	struct	fs sb;
-	char pad[MAXBSIZE];
-} sbun;
+	char data[MAXBSIZE];
+} sbun, buf;
 #define	sblock sbun.sb
-char buf[MAXBSIZE];
 
 int	fi;
 long	dev_bsize = 512;
@@ -326,14 +325,14 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	memcpy(buf, (char *)&sblock, SBLOCKSIZE);
+	memcpy(&buf, (char *)&sblock, SBLOCKSIZE);
 	if (needswap)
-		ffs_sb_swap((struct fs*)buf, (struct fs*)buf);
-	bwrite(sblockloc, buf, SBLOCKSIZE, special);
+		ffs_sb_swap((struct fs*)&buf, (struct fs*)&buf);
+	bwrite(sblockloc, buf.data, SBLOCKSIZE, special);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
-			bwrite(fsbtodb(&sblock, cgsblock(&sblock, i)),
-			    buf, SBLOCKSIZE, special);
+			bwrite(FFS_FSBTODB(&sblock, cgsblock(&sblock, i)),
+			    buf.data, SBLOCKSIZE, special);
 	close(fi);
 	exit(0);
 }
@@ -517,7 +516,7 @@ getsb(struct fs *fs, const char *file)
 		break;
 	}
 
-	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
+	dev_bsize = fs->fs_fsize / FFS_FSBTODB(fs, 1);
 	sblockloc = sblock_try[i] / dev_bsize;
 }
 

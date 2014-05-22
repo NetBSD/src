@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.68.2.4 2012/10/30 17:20:36 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.68.2.5 2014/05/22 11:40:14 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68.2.4 2012/10/30 17:20:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68.2.5 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -102,11 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68.2.4 2012/10/30 17:20:36 yamt Exp $");
 #include <machine/mtrr.h>
 #include <machine/pio.h>
 
-#ifdef i386
-#include <machine/npx.h>
-#else
-#include <machine/fpu.h>
-#endif
+#include <x86/fpu.h>
 
 #include <xen/xen.h>
 #include <xen/xen-public/vcpu.h>
@@ -1059,11 +1055,7 @@ cpu_offline_md(void)
         int s;
 
         s = splhigh();
-#ifdef __i386__
-        npxsave_cpu(true);
-#else   
         fpusave_cpu(true);
-#endif
         splx(s);
 }
 

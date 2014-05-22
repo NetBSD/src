@@ -1,4 +1,4 @@
-/*	$NetBSD: scanf.c,v 1.12.56.1 2012/04/17 00:05:24 yamt Exp $	*/
+/*	$NetBSD: scanf.c,v 1.12.56.2 2014/05/22 11:36:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,9 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)scanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: scanf.c,v 1.12.56.1 2012/04/17 00:05:24 yamt Exp $");
+__RCSID("$NetBSD: scanf.c,v 1.12.56.2 2014/05/22 11:36:54 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -48,6 +50,8 @@ __RCSID("$NetBSD: scanf.c,v 1.12.56.1 2012/04/17 00:05:24 yamt Exp $");
 
 #include "reentrant.h"
 #include "local.h"
+
+__weak_alias(scanf_l, _scanf_l)
 
 int
 scanf(char const *fmt, ...)
@@ -59,6 +63,20 @@ scanf(char const *fmt, ...)
 
 	va_start(ap, fmt);
 	ret = __svfscanf(stdin, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+int
+scanf_l(locale_t loc, char const *fmt, ...)
+{
+	int ret;
+	va_list ap;
+
+	_DIAGASSERT(fmt != NULL);
+
+	va_start(ap, fmt);
+	ret = __svfscanf_l(stdin, loc, fmt, ap);
 	va_end(ap);
 	return ret;
 }

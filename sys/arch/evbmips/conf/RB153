@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.9.2.1 2012/04/17 00:06:17 yamt Exp $
+#	$NetBSD: RB153,v 1.9.2.2 2014/05/22 11:39:44 yamt Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.9.2.1 $"
+#ident 		"RB153-$Revision: 1.9.2.2 $"
 
 maxusers	32
 
@@ -69,19 +69,12 @@ options 	GATEWAY		# IP packet forwarding
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
-#options 	NS		# Xerox NS networking
-#options 	NSIP		# Xerox NS tunneling over IP
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.

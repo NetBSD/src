@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,9 @@
 #include "amlcode.h"
 #include "acnamesp.h"
 #include "acdisasm.h"
+#include "aslcompiler.h"
+#include <stdio.h>
+#include <errno.h>
 
 
 /*
@@ -86,6 +89,8 @@ static const char           *AcpiGbl_DmTypeNames[] =
     /* 19 */ ", FieldUnitObj"
 };
 
+#define METHOD_SEPARATORS           " \t,()\n"
+
 
 /* Local prototypes */
 
@@ -97,6 +102,21 @@ static char *
 AcpiDmNormalizeParentPrefix (
     ACPI_PARSE_OBJECT       *Op,
     char                    *Path);
+
+static void
+AcpiDmAddPathToExternalList (
+    char                    *Path,
+    UINT8                   Type,
+    UINT32                  Value,
+    UINT16                  Flags);
+
+static ACPI_STATUS
+AcpiDmCreateNewExternal (
+    char                    *ExternalPath,
+    char                    *InternalPath,
+    UINT8                   Type,
+    UINT32                  Value,
+    UINT16                  Flags);
 
 
 /*******************************************************************************
@@ -153,10 +173,17 @@ AcpiDmNormalizeParentPrefix (
     char                    *Fullpath;
     char                    *ParentPath;
     ACPI_SIZE               Length;
+    UINT32                  Index = 0;
 
 
-    /* Search upwards in the parse tree until we reach a namespace node */
+    if (!Op)
+    {
+        return (NULL);
+    }
 
+    /* Search upwards in the parse tree until we reach the next namespace node */
+
+    Op = Op->Common.Parent;
     while (Op)
     {
         if (Op->Common.Node)
@@ -205,6 +232,13 @@ AcpiDmNormalizeParentPrefix (
          * for the required dot separator (ParentPath.Path)
          */
         Length++;
+
+        /* For External() statements, we do not want a leading '\' */
+
+        if (*ParentPath == AML_ROOT_PREFIX)
+        {
+            Index = 1;
+        }
     }
 
     Fullpath = ACPI_ALLOCATE_ZEROED (Length);
@@ -219,10 +253,12 @@ AcpiDmNormalizeParentPrefix (
      *
      * Copy the parent path
      */
-    ACPI_STRCAT (Fullpath, ParentPath);
+    ACPI_STRCPY (Fullpath, &ParentPath[Index]);
 
-    /* Add dot separator (don't need dot if parent fullpath is a single "\") */
-
+    /*
+     * Add dot separator
+     * (don't need dot if parent fullpath is a single backslash)
+     */
     if (ParentPath[1])
     {
         ACPI_STRCAT (Fullpath, ".");
@@ -252,48 +288,41 @@ Cleanup:
 
 ACPI_STATUS
 AcpiDmAddToExternalFileList (
-    char                    *PathList)
+    char                    *Pathname)
 {
     ACPI_EXTERNAL_FILE      *ExternalFile;
-    char                    *Path;
-    char                    *TmpPath;
+    char                    *LocalPathname;
 
 
-    if (!PathList)
+    if (!Pathname)
     {
         return (AE_OK);
     }
 
-    Path = strtok (PathList, ",");
-
-    while (Path)
+    LocalPathname = ACPI_ALLOCATE (strlen (Pathname) + 1);
+    if (!LocalPathname)
     {
-        TmpPath = ACPI_ALLOCATE_ZEROED (ACPI_STRLEN (Path) + 1);
-        if (!TmpPath)
-        {
-            return (AE_NO_MEMORY);
-        }
-
-        ACPI_STRCPY (TmpPath, Path);
-
-        ExternalFile = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EXTERNAL_FILE));
-        if (!ExternalFile)
-        {
-            ACPI_FREE (TmpPath);
-            return (AE_NO_MEMORY);
-        }
-
-        ExternalFile->Path = TmpPath;
-
-        if (AcpiGbl_ExternalFileList)
-        {
-            ExternalFile->Next = AcpiGbl_ExternalFileList;
-        }
-
-        AcpiGbl_ExternalFileList = ExternalFile;
-        Path = strtok (NULL, ",");
+        return (AE_NO_MEMORY);
     }
 
+    ExternalFile = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EXTERNAL_FILE));
+    if (!ExternalFile)
+    {
+        ACPI_FREE (LocalPathname);
+        return (AE_NO_MEMORY);
+    }
+
+    /* Take a copy of the file pathname */
+
+    strcpy (LocalPathname, Pathname);
+    ExternalFile->Path = LocalPathname;
+
+    if (AcpiGbl_ExternalFileList)
+    {
+        ExternalFile->Next = AcpiGbl_ExternalFileList;
+    }
+
+    AcpiGbl_ExternalFileList = ExternalFile;
     return (AE_OK);
 }
 
@@ -329,12 +358,119 @@ AcpiDmClearExternalFileList (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiDmAddToExternalList
+ * FUNCTION:    AcpiDmGetExternalsFromFile
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Process the optional external reference file.
+ *
+ * Each line in the file should be of the form:
+ *      External (<Method namepath>, MethodObj, <ArgCount>)
+ *
+ * Example:
+ *      External (_SB_.PCI0.XHC_.PS0X, MethodObj, 4)
+ *
+ ******************************************************************************/
+
+void
+AcpiDmGetExternalsFromFile (
+    void)
+{
+    FILE                    *ExternalRefFile;
+    char                    *Token;
+    char                    *MethodName;
+    UINT32                  ArgCount;
+    UINT32                  ImportCount = 0;
+
+
+    if (!Gbl_ExternalRefFilename)
+    {
+        return;
+    }
+
+    /* Open the file */
+
+    ExternalRefFile = fopen (Gbl_ExternalRefFilename, "r");
+    if (!ExternalRefFile)
+    {
+        fprintf (stderr, "Could not open external reference file \"%s\"\n",
+            Gbl_ExternalRefFilename);
+        return;
+    }
+
+    /* Each line defines a method */
+
+    while (fgets (StringBuffer, ASL_MSG_BUFFER_SIZE, ExternalRefFile))
+    {
+        Token = strtok (StringBuffer, METHOD_SEPARATORS);   /* "External" */
+        if (!Token) continue;
+        if (strcmp (Token, "External")) continue;
+
+        MethodName = strtok (NULL, METHOD_SEPARATORS);      /* Method namepath */
+        if (!MethodName) continue;
+
+        Token = strtok (NULL, METHOD_SEPARATORS);           /* "MethodObj" */
+        if (!Token) continue;
+        if (strcmp (Token, "MethodObj")) continue;
+
+        Token = strtok (NULL, METHOD_SEPARATORS);           /* Arg count */
+        if (!Token) continue;
+
+        /* Convert arg count string to an integer */
+
+        errno = 0;
+        ArgCount = strtoul (Token, NULL, 0);
+        if (errno)
+        {
+            fprintf (stderr, "Invalid argument count (%s)\n", Token);
+            continue;
+        }
+        if (ArgCount > 7)
+        {
+            fprintf (stderr, "Invalid argument count (%u)\n", ArgCount);
+            continue;
+        }
+
+        /* Add this external to the global list */
+
+        AcpiOsPrintf ("%s: Importing method external (%u arguments) %s\n",
+            Gbl_ExternalRefFilename, ArgCount, MethodName);
+
+        AcpiDmAddPathToExternalList (MethodName, ACPI_TYPE_METHOD,
+            ArgCount, (ACPI_EXT_RESOLVED_REFERENCE | ACPI_EXT_ORIGIN_FROM_FILE));
+        ImportCount++;
+    }
+
+    if (!ImportCount)
+    {
+        fprintf (stderr, "Did not find any external methods in reference file \"%s\"\n",
+            Gbl_ExternalRefFilename);
+    }
+    else
+    {
+        /* Add the external(s) to the namespace */
+
+        AcpiDmAddExternalsToNamespace ();
+
+        AcpiOsPrintf ("%s: Imported %u external method definitions\n",
+            Gbl_ExternalRefFilename, ImportCount);
+    }
+
+    fclose (ExternalRefFile);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmAddOpToExternalList
  *
  * PARAMETERS:  Op                  - Current parser Op
  *              Path                - Internal (AML) path to the object
  *              Type                - ACPI object type to be added
  *              Value               - Arg count if adding a Method object
+ *              Flags               - To be passed to the external object
  *
  * RETURN:      None
  *
@@ -342,50 +478,308 @@ AcpiDmClearExternalFileList (
  *              will in turn be later emitted as an External() declaration
  *              in the disassembled output.
  *
+ *              This function handles the most common case where the referenced
+ *              name is simply not found in the constructed namespace.
+ *
  ******************************************************************************/
 
 void
-AcpiDmAddToExternalList (
+AcpiDmAddOpToExternalList (
     ACPI_PARSE_OBJECT       *Op,
     char                    *Path,
     UINT8                   Type,
-    UINT32                  Value)
+    UINT32                  Value,
+    UINT16                  Flags)
 {
     char                    *ExternalPath;
-    char                    *Fullpath = NULL;
-    ACPI_EXTERNAL_LIST      *NewExternal;
-    ACPI_EXTERNAL_LIST      *NextExternal;
-    ACPI_EXTERNAL_LIST      *PrevExternal = NULL;
+    char                    *InternalPath = Path;
+    char                    *Temp;
     ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (DmAddOpToExternalList);
 
 
     if (!Path)
     {
-        return;
+        return_VOID;
     }
 
-    /* Externalize the ACPI path */
+    /* Remove a root backslash if present */
+
+    if ((*Path == AML_ROOT_PREFIX) && (Path[1]))
+    {
+        Path++;
+    }
+
+    /* Externalize the pathname */
 
     Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, Path,
-                NULL, &ExternalPath);
+        NULL, &ExternalPath);
     if (ACPI_FAILURE (Status))
     {
-        return;
+        return_VOID;
     }
 
-    /* Get the full pathname from root if "Path" has a parent prefix */
-
+    /*
+     * Get the full pathname from the root if "Path" has one or more
+     * parent prefixes (^). Note: path will not contain a leading '\'.
+     */
     if (*Path == (UINT8) AML_PARENT_PREFIX)
     {
-        Fullpath = AcpiDmNormalizeParentPrefix (Op, ExternalPath);
-        if (Fullpath)
-        {
-            /* Set new external path */
+        Temp = AcpiDmNormalizeParentPrefix (Op, ExternalPath);
 
+        /* Set new external path */
+
+        ACPI_FREE (ExternalPath);
+        ExternalPath = Temp;
+        if (!Temp)
+        {
+            return_VOID;
+        }
+
+        /* Create the new internal pathname */
+
+        Flags |= ACPI_EXT_INTERNAL_PATH_ALLOCATED;
+        Status = AcpiNsInternalizeName (ExternalPath, &InternalPath);
+        if (ACPI_FAILURE (Status))
+        {
             ACPI_FREE (ExternalPath);
-            ExternalPath = Fullpath;
+            return_VOID;
         }
     }
+
+    /* Create the new External() declaration node */
+
+    Status = AcpiDmCreateNewExternal (ExternalPath, InternalPath,
+        Type, Value, Flags);
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_FREE (ExternalPath);
+        if (Flags & ACPI_EXT_INTERNAL_PATH_ALLOCATED)
+        {
+            ACPI_FREE (InternalPath);
+        }
+    }
+
+    return_VOID;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmAddNodeToExternalList
+ *
+ * PARAMETERS:  Node                - Namespace node for object to be added
+ *              Type                - ACPI object type to be added
+ *              Value               - Arg count if adding a Method object
+ *              Flags               - To be passed to the external object
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Insert a new name into the global list of Externals which
+ *              will in turn be later emitted as an External() declaration
+ *              in the disassembled output.
+ *
+ *              This function handles the case where the referenced name has
+ *              been found in the namespace, but the name originated in a
+ *              table other than the one that is being disassembled (such
+ *              as a table that is added via the iASL -e option).
+ *
+ ******************************************************************************/
+
+void
+AcpiDmAddNodeToExternalList (
+    ACPI_NAMESPACE_NODE     *Node,
+    UINT8                   Type,
+    UINT32                  Value,
+    UINT16                  Flags)
+{
+    char                    *ExternalPath;
+    char                    *InternalPath;
+    char                    *Temp;
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (DmAddNodeToExternalList);
+
+
+    if (!Node)
+    {
+        return_VOID;
+    }
+
+    /* Get the full external and internal pathnames to the node */
+
+    ExternalPath = AcpiNsGetExternalPathname (Node);
+    if (!ExternalPath)
+    {
+        return_VOID;
+    }
+
+    Status = AcpiNsInternalizeName (ExternalPath, &InternalPath);
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_FREE (ExternalPath);
+        return_VOID;
+    }
+
+    /* Remove the root backslash */
+
+    if ((*ExternalPath == AML_ROOT_PREFIX) && (ExternalPath[1]))
+    {
+        Temp = ACPI_ALLOCATE_ZEROED (ACPI_STRLEN (ExternalPath) + 1);
+        if (!Temp)
+        {
+            return_VOID;
+        }
+
+        ACPI_STRCPY (Temp, &ExternalPath[1]);
+        ACPI_FREE (ExternalPath);
+        ExternalPath = Temp;
+    }
+
+    /* Create the new External() declaration node */
+
+    Status = AcpiDmCreateNewExternal (ExternalPath, InternalPath, Type,
+        Value, (Flags | ACPI_EXT_INTERNAL_PATH_ALLOCATED));
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_FREE (ExternalPath);
+        ACPI_FREE (InternalPath);
+    }
+
+    return_VOID;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmAddPathToExternalList
+ *
+ * PARAMETERS:  Path                - External name of the object to be added
+ *              Type                - ACPI object type to be added
+ *              Value               - Arg count if adding a Method object
+ *              Flags               - To be passed to the external object
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Insert a new name into the global list of Externals which
+ *              will in turn be later emitted as an External() declaration
+ *              in the disassembled output.
+ *
+ *              This function currently is used to add externals via a
+ *              reference file (via the -fe iASL option).
+ *
+ ******************************************************************************/
+
+static void
+AcpiDmAddPathToExternalList (
+    char                    *Path,
+    UINT8                   Type,
+    UINT32                  Value,
+    UINT16                  Flags)
+{
+    char                    *InternalPath;
+    char                    *ExternalPath;
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (DmAddPathToExternalList);
+
+
+    if (!Path)
+    {
+        return_VOID;
+    }
+
+    /* Remove a root backslash if present */
+
+    if ((*Path == AML_ROOT_PREFIX) && (Path[1]))
+    {
+        Path++;
+    }
+
+    /* Create the internal and external pathnames */
+
+    Status = AcpiNsInternalizeName (Path, &InternalPath);
+    if (ACPI_FAILURE (Status))
+    {
+        return_VOID;
+    }
+
+    Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, InternalPath,
+        NULL, &ExternalPath);
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_FREE (InternalPath);
+        return_VOID;
+    }
+
+    /* Create the new External() declaration node */
+
+    Status = AcpiDmCreateNewExternal (ExternalPath, InternalPath,
+        Type, Value, (Flags | ACPI_EXT_INTERNAL_PATH_ALLOCATED));
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_FREE (ExternalPath);
+        ACPI_FREE (InternalPath);
+    }
+
+    return_VOID;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmCreateNewExternal
+ *
+ * PARAMETERS:  ExternalPath        - External path to the object
+ *              InternalPath        - Internal (AML) path to the object
+ *              Type                - ACPI object type to be added
+ *              Value               - Arg count if adding a Method object
+ *              Flags               - To be passed to the external object
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Common low-level function to insert a new name into the global
+ *              list of Externals which will in turn be later emitted as
+ *              External() declarations in the disassembled output.
+ *
+ *              Note: The external name should not include a root prefix
+ *              (backslash). We do not want External() statements to contain
+ *              a leading '\', as this prevents duplicate external statements
+ *              of the form:
+ *
+ *                  External (\ABCD)
+ *                  External (ABCD)
+ *
+ *              This would cause a compile time error when the disassembled
+ *              output file is recompiled.
+ *
+ *              There are two cases that are handled here. For both, we emit
+ *              an External() statement:
+ *              1) The name was simply not found in the namespace.
+ *              2) The name was found, but it originated in a table other than
+ *              the table that is being disassembled.
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiDmCreateNewExternal (
+    char                    *ExternalPath,
+    char                    *InternalPath,
+    UINT8                   Type,
+    UINT32                  Value,
+    UINT16                  Flags)
+{
+    ACPI_EXTERNAL_LIST      *NewExternal;
+    ACPI_EXTERNAL_LIST      *NextExternal;
+    ACPI_EXTERNAL_LIST      *PrevExternal = NULL;
+
+
+    ACPI_FUNCTION_TRACE (DmCreateNewExternal);
+
 
     /* Check all existing externals to ensure no duplicates */
 
@@ -400,7 +794,7 @@ AcpiDmAddToExternalList (
                 (NextExternal->Value != Value))
             {
                 ACPI_ERROR ((AE_INFO,
-                    "Argument count mismatch for method %s %u %u",
+                    "External method arg count mismatch %s: Current %u, attempted %u",
                     NextExternal->Path, NextExternal->Value, Value));
             }
 
@@ -412,8 +806,7 @@ AcpiDmAddToExternalList (
                 NextExternal->Value = Value;
             }
 
-            ACPI_FREE (ExternalPath);
-            return;
+            return_ACPI_STATUS (AE_ALREADY_EXISTS);
         }
 
         NextExternal = NextExternal->Next;
@@ -424,42 +817,26 @@ AcpiDmAddToExternalList (
     NewExternal = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EXTERNAL_LIST));
     if (!NewExternal)
     {
-        ACPI_FREE (ExternalPath);
-        return;
+        return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
+    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
+        "Adding external reference node (%s) type [%s]\n",
+        ExternalPath, AcpiUtGetTypeName (Type)));
+
+    NewExternal->Flags = Flags;
+    NewExternal->Value = Value;
     NewExternal->Path = ExternalPath;
     NewExternal->Type = Type;
-    NewExternal->Value = Value;
     NewExternal->Length = (UINT16) ACPI_STRLEN (ExternalPath);
+    NewExternal->InternalPath = InternalPath;
 
-    /* Was the external path with parent prefix normalized to a fullpath? */
-
-    if (Fullpath == ExternalPath)
-    {
-        /* Get new internal path */
-
-        Status = AcpiNsInternalizeName (ExternalPath, &Path);
-        if (ACPI_FAILURE (Status))
-        {
-            ACPI_FREE (ExternalPath);
-            ACPI_FREE (NewExternal);
-            return;
-        }
-
-        /* Set flag to indicate External->InternalPath need to be freed */
-
-        NewExternal->Flags |= ACPI_IPATH_ALLOCATED;
-    }
-
-    NewExternal->InternalPath = Path;
-
-    /* Link the new descriptor into the global list, ordered by string length */
+    /* Link the new descriptor into the global list, alphabetically ordered */
 
     NextExternal = AcpiGbl_ExternalList;
     while (NextExternal)
     {
-        if (NewExternal->Length <= NextExternal->Length)
+        if (AcpiUtStricmp (NewExternal->Path, NextExternal->Path) < 0)
         {
             if (PrevExternal)
             {
@@ -471,7 +848,7 @@ AcpiDmAddToExternalList (
             }
 
             NewExternal->Next = NextExternal;
-            return;
+            return_ACPI_STATUS (AE_OK);
         }
 
         PrevExternal = NextExternal;
@@ -486,6 +863,8 @@ AcpiDmAddToExternalList (
     {
         AcpiGbl_ExternalList = NewExternal;
     }
+
+    return_ACPI_STATUS (AE_OK);
 }
 
 
@@ -508,7 +887,7 @@ AcpiDmAddExternalsToNamespace (
 {
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node;
-    ACPI_OPERAND_OBJECT     *MethodDesc;
+    ACPI_OPERAND_OBJECT     *ObjDesc;
     ACPI_EXTERNAL_LIST      *External = AcpiGbl_ExternalList;
 
 
@@ -518,7 +897,7 @@ AcpiDmAddExternalsToNamespace (
 
         Status = AcpiNsLookup (NULL, External->InternalPath, External->Type,
                    ACPI_IMODE_LOAD_PASS1,
-                   ACPI_NS_EXTERNAL | ACPI_NS_DONT_OPEN_SCOPE,
+                   ACPI_NS_ERROR_IF_FOUND | ACPI_NS_EXTERNAL | ACPI_NS_DONT_OPEN_SCOPE,
                    NULL, &Node);
 
         if (ACPI_FAILURE (Status))
@@ -527,13 +906,30 @@ AcpiDmAddExternalsToNamespace (
                 "while adding external to namespace [%s]",
                 External->Path));
         }
-        else if (External->Type == ACPI_TYPE_METHOD)
+
+        else switch (External->Type)
         {
+        case ACPI_TYPE_METHOD:
+
             /* For methods, we need to save the argument count */
 
-            MethodDesc = AcpiUtCreateInternalObject (ACPI_TYPE_METHOD);
-            MethodDesc->Method.ParamCount = (UINT8) External->Value;
-            Node->Object = MethodDesc;
+            ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_METHOD);
+            ObjDesc->Method.ParamCount = (UINT8) External->Value;
+            Node->Object = ObjDesc;
+            break;
+
+        case ACPI_TYPE_REGION:
+
+            /* Regions require a region sub-object */
+
+            ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_REGION);
+            ObjDesc->Region.Node = Node;
+            Node->Object = ObjDesc;
+            break;
+
+        default:
+
+            break;
         }
 
         External = External->Next;
@@ -635,29 +1031,119 @@ AcpiDmEmitExternals (
     }
 
     /*
-     * Walk the list of externals (unresolved references)
-     * found during the AML parsing
+     * Determine the number of control methods in the external list, and
+     * also how many of those externals were resolved via the namespace.
+     */
+    NextExternal = AcpiGbl_ExternalList;
+    while (NextExternal)
+    {
+        if (NextExternal->Type == ACPI_TYPE_METHOD)
+        {
+            AcpiGbl_NumExternalMethods++;
+            if (NextExternal->Flags & ACPI_EXT_RESOLVED_REFERENCE)
+            {
+                AcpiGbl_ResolvedExternalMethods++;
+            }
+        }
+
+        NextExternal = NextExternal->Next;
+    }
+
+    /* Check if any control methods were unresolved */
+
+    AcpiDmUnresolvedWarning (1);
+
+    /* Emit any unresolved method externals in a single text block */
+
+    NextExternal = AcpiGbl_ExternalList;
+    while (NextExternal)
+    {
+        if ((NextExternal->Type == ACPI_TYPE_METHOD) &&
+            (!(NextExternal->Flags & ACPI_EXT_RESOLVED_REFERENCE)))
+        {
+            AcpiOsPrintf ("    External (%s%s",
+                NextExternal->Path,
+                AcpiDmGetObjectTypeName (NextExternal->Type));
+
+            AcpiOsPrintf (
+                ")    // Warning: Unresolved Method, "
+                "guessing %u arguments (may be incorrect, see warning above)\n",
+                NextExternal->Value);
+
+            NextExternal->Flags |= ACPI_EXT_EXTERNAL_EMITTED;
+        }
+
+        NextExternal = NextExternal->Next;
+    }
+
+    AcpiOsPrintf ("\n");
+
+
+    /* Emit externals that were imported from a file */
+
+    if (Gbl_ExternalRefFilename)
+    {
+        AcpiOsPrintf (
+            "    /*\n     * External declarations that were imported from\n"
+            "     * the reference file [%s]\n     */\n",
+            Gbl_ExternalRefFilename);
+
+        NextExternal = AcpiGbl_ExternalList;
+        while (NextExternal)
+        {
+            if (!(NextExternal->Flags & ACPI_EXT_EXTERNAL_EMITTED) &&
+                (NextExternal->Flags & ACPI_EXT_ORIGIN_FROM_FILE))
+            {
+                AcpiOsPrintf ("    External (%s%s",
+                    NextExternal->Path,
+                    AcpiDmGetObjectTypeName (NextExternal->Type));
+
+                if (NextExternal->Type == ACPI_TYPE_METHOD)
+                {
+                    AcpiOsPrintf (")    // %u Arguments\n",
+                        NextExternal->Value);
+                }
+                else
+                {
+                    AcpiOsPrintf (")\n");
+                }
+                NextExternal->Flags |= ACPI_EXT_EXTERNAL_EMITTED;
+            }
+
+            NextExternal = NextExternal->Next;
+        }
+
+        AcpiOsPrintf ("\n");
+    }
+
+    /*
+     * Walk the list of externals found during the AML parsing
      */
     while (AcpiGbl_ExternalList)
     {
-        AcpiOsPrintf ("    External (%s%s",
-            AcpiGbl_ExternalList->Path,
-            AcpiDmGetObjectTypeName (AcpiGbl_ExternalList->Type));
+        if (!(AcpiGbl_ExternalList->Flags & ACPI_EXT_EXTERNAL_EMITTED))
+        {
+            AcpiOsPrintf ("    External (%s%s",
+                AcpiGbl_ExternalList->Path,
+                AcpiDmGetObjectTypeName (AcpiGbl_ExternalList->Type));
 
-        if (AcpiGbl_ExternalList->Type == ACPI_TYPE_METHOD)
-        {
-            AcpiOsPrintf (")    // %u Arguments\n",
-                AcpiGbl_ExternalList->Value);
-        }
-        else
-        {
-            AcpiOsPrintf (")\n");
+            /* For methods, add a comment with the number of arguments */
+
+            if (AcpiGbl_ExternalList->Type == ACPI_TYPE_METHOD)
+            {
+                AcpiOsPrintf (")    // %u Arguments\n",
+                    AcpiGbl_ExternalList->Value);
+            }
+            else
+            {
+                AcpiOsPrintf (")\n");
+            }
         }
 
         /* Free this external info block and move on to next external */
 
         NextExternal = AcpiGbl_ExternalList->Next;
-        if (AcpiGbl_ExternalList->Flags & ACPI_IPATH_ALLOCATED)
+        if (AcpiGbl_ExternalList->Flags & ACPI_EXT_INTERNAL_PATH_ALLOCATED)
         {
             ACPI_FREE (AcpiGbl_ExternalList->InternalPath);
         }
@@ -670,3 +1156,171 @@ AcpiDmEmitExternals (
     AcpiOsPrintf ("\n");
 }
 
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmUnresolvedWarning
+ *
+ * PARAMETERS:  Type                - Where to output the warning.
+ *                                    0 means write to stderr
+ *                                    1 means write to AcpiOsPrintf
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Issue warning message if there are unresolved external control
+ *              methods within the disassembly.
+ *
+ ******************************************************************************/
+
+#if 0
+Summary of the external control method problem:
+
+When the -e option is used with disassembly, the various SSDTs are simply
+loaded into a global namespace for the disassembler to use in order to
+resolve control method references (invocations).
+
+The disassembler tracks any such references, and will emit an External()
+statement for these types of methods, with the proper number of arguments .
+
+Without the SSDTs, the AML does not contain enough information to properly
+disassemble the control method invocation -- because the disassembler does
+not know how many arguments to parse.
+
+An example: Assume we have two control methods. ABCD has one argument, and
+EFGH has zero arguments. Further, we have two additional control methods
+that invoke ABCD and EFGH, named T1 and T2:
+
+    Method (ABCD, 1)
+    {
+    }
+    Method (EFGH, 0)
+    {
+    }
+    Method (T1)
+    {
+        ABCD (Add (2, 7, Local0))
+    }
+    Method (T2)
+    {
+        EFGH ()
+        Add (2, 7, Local0)
+    }
+
+Here is the AML code that is generated for T1 and T2:
+
+     185:      Method (T1)
+
+0000034C:  14 10 54 31 5F 5F 00 ...    "..T1__."
+
+     186:      {
+     187:          ABCD (Add (2, 7, Local0))
+
+00000353:  41 42 43 44 ............    "ABCD"
+00000357:  72 0A 02 0A 07 60 ......    "r....`"
+
+     188:      }
+
+     190:      Method (T2)
+
+0000035D:  14 10 54 32 5F 5F 00 ...    "..T2__."
+
+     191:      {
+     192:          EFGH ()
+
+00000364:  45 46 47 48 ............    "EFGH"
+
+     193:          Add (2, 7, Local0)
+
+00000368:  72 0A 02 0A 07 60 ......    "r....`"
+     194:      }
+
+Note that the AML code for T1 and T2 is essentially identical. When
+disassembling this code, the methods ABCD and EFGH must be known to the
+disassembler, otherwise it does not know how to handle the method invocations.
+
+In other words, if ABCD and EFGH are actually external control methods
+appearing in an SSDT, the disassembler does not know what to do unless
+the owning SSDT has been loaded via the -e option.
+#endif
+
+void
+AcpiDmUnresolvedWarning (
+    UINT8                   Type)
+{
+
+    if (!AcpiGbl_NumExternalMethods)
+    {
+        return;
+    }
+
+    if (Type)
+    {
+        if (!AcpiGbl_ExternalFileList)
+        {
+            /* The -e option was not specified */
+
+           AcpiOsPrintf ("    /*\n"
+                "     * iASL Warning: There were %u external control methods found during\n"
+                "     * disassembly, but additional ACPI tables to resolve these externals\n"
+                "     * were not specified. This resulting disassembler output file may not\n"
+                "     * compile because the disassembler did not know how many arguments\n"
+                "     * to assign to these methods. To specify the tables needed to resolve\n"
+                "     * external control method references, use the one of the following\n"
+                "     * example iASL invocations:\n"
+                "     *     iasl -e <ssdt1.aml,ssdt2.aml...> -d <dsdt.aml>\n"
+                "     *     iasl -e <dsdt.aml,ssdt2.aml...> -d <ssdt1.aml>\n"
+                "     */\n",
+                AcpiGbl_NumExternalMethods);
+        }
+        else if (AcpiGbl_NumExternalMethods != AcpiGbl_ResolvedExternalMethods)
+        {
+            /* The -e option was specified, but there are still some unresolved externals */
+
+            AcpiOsPrintf ("    /*\n"
+                "     * iASL Warning: There were %u external control methods found during\n"
+                "     * disassembly, but only %u %s resolved (%u unresolved). Additional\n"
+                "     * ACPI tables are required to properly disassemble the code. This\n"
+                "     * resulting disassembler output file may not compile because the\n"
+                "     * disassembler did not know how many arguments to assign to the\n"
+                "     * unresolved methods.\n"
+                "     */\n",
+                AcpiGbl_NumExternalMethods, AcpiGbl_ResolvedExternalMethods,
+                (AcpiGbl_ResolvedExternalMethods > 1 ? "were" : "was"),
+                (AcpiGbl_NumExternalMethods - AcpiGbl_ResolvedExternalMethods));
+        }
+    }
+    else
+    {
+        if (!AcpiGbl_ExternalFileList)
+        {
+            /* The -e option was not specified */
+
+            fprintf (stderr, "\n"
+                "iASL Warning: There were %u external control methods found during\n"
+                "disassembly, but additional ACPI tables to resolve these externals\n"
+                "were not specified. The resulting disassembler output file may not\n"
+                "compile because the disassembler did not know how many arguments\n"
+                "to assign to these methods. To specify the tables needed to resolve\n"
+                "external control method references, use the one of the following\n"
+                "example iASL invocations:\n"
+                "    iasl -e <ssdt1.aml,ssdt2.aml...> -d <dsdt.aml>\n"
+                "    iasl -e <dsdt.aml,ssdt2.aml...> -d <ssdt1.aml>\n",
+                AcpiGbl_NumExternalMethods);
+        }
+        else if (AcpiGbl_NumExternalMethods != AcpiGbl_ResolvedExternalMethods)
+        {
+            /* The -e option was specified, but there are still some unresolved externals */
+
+            fprintf (stderr, "\n"
+                "iASL Warning: There were %u external control methods found during\n"
+                "disassembly, but only %u %s resolved (%u unresolved). Additional\n"
+                "ACPI tables are required to properly disassemble the code. The\n"
+                "resulting disassembler output file may not compile because the\n"
+                "disassembler did not know how many arguments to assign to the\n"
+                "unresolved methods.\n",
+                AcpiGbl_NumExternalMethods, AcpiGbl_ResolvedExternalMethods,
+                (AcpiGbl_ResolvedExternalMethods > 1 ? "were" : "was"),
+                (AcpiGbl_NumExternalMethods - AcpiGbl_ResolvedExternalMethods));
+        }
+    }
+}

@@ -38,6 +38,7 @@
 
 #include "drmP.h"
 
+
 #if defined(__NetBSD__)
 # ifdef DRM_NO_AGP
 #  define NAGP_I810 0
@@ -55,6 +56,9 @@
 # endif
 # if NGENFB > 0
 #  include <dev/wsfb/genfbvar.h>
+# endif
+# if defined(_KERNEL_OPT)
+#   include "opt_mtrr.h"
 # endif
 #endif
 
@@ -92,9 +96,8 @@ static void *
 drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 {
 	bus_space_handle_t h;
-	int i, reg, reason;
+	int i, reason;
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
-		reg = PCI_MAPREG_START + i*4;
 
 		/* Does the requested mapping lie within this resource? */
 		if ((dev->pci_map_data[i].maptype == PCI_MAPREG_TYPE_MEM ||
@@ -300,7 +303,7 @@ drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 int
 drm_mtrr_add(unsigned long offset, size_t size, int flags)
 {
-#ifdef MTRR_GETSET_KERNEL
+#if defined(MTRR) && defined(MTRR_GETSET_KERNEL)
 	struct mtrr mtrrmap;
 	int one = 1;
 
@@ -317,7 +320,7 @@ drm_mtrr_add(unsigned long offset, size_t size, int flags)
 int
 drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 {
-#ifdef MTRR_GETSET_KERNEL
+#if defined(MTRR) && defined(MTRR_GETSET_KERNEL)
 	struct mtrr mtrrmap;
 	int one = 1;
 

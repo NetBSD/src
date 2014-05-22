@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.3.2.1 2012/04/17 00:07:05 yamt Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.3.2.2 2014/05/22 11:40:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.3.2.1 2012/04/17 00:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.3.2.2 2014/05/22 11:40:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,7 @@ fwhrng_match(device_t parent, cfdata_t match, void *aux)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
-	int ret;
 	uint8_t id0, id1, data0, data1;
-
-	ret = 0;
 
 	bst = x86_bus_space_mem;
 

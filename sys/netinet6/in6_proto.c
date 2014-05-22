@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.93.2.2 2012/10/30 17:22:48 yamt Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.93.2.3 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,12 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.2.2 2012/10/30 17:22:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.2.3 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
-#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -107,11 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.2.2 2012/10/30 17:22:48 yamt Exp 
 
 #include <netinet6/nd6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 #include "carp.h"
@@ -164,17 +163,26 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 #define	udp6_ctloutput	udp6_ctloutput_wrapper
 #define	icmp6_ctloutput	icmp6_ctloutput_wrapper
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 PR_WRAP_CTLINPUT(ah6_ctlinput)
 
 #define	ah6_ctlinput	ah6_ctlinput_wrapper
 #endif
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
 
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
 #endif
+
+static void
+tcp6_init(void)
+{
+
+	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
+
+	tcp_init_common(sizeof(struct ip6_hdr));
+}
 
 const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,
@@ -202,12 +210,9 @@ const struct ip6protosw inet6sw[] = {
 	.pr_ctlinput = tcp6_ctlinput,
 	.pr_ctloutput = tcp_ctloutput,
 	.pr_usrreq = tcp_usrreq,
-#ifndef INET	/* don't call initialization and timeout routines twice */
-	.pr_init = tcp_init,
+	.pr_init = tcp6_init,
 	.pr_fasttimo = tcp_fasttimo,
-	.pr_slowtimo = tcp_slowtimo,
 	.pr_drain = tcp_drainstub,
-#endif
 },
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
@@ -255,7 +260,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = frag6_input,
 },
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_AH,
@@ -276,7 +281,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipsec6_common_input,
 },
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 #ifdef INET
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
@@ -324,20 +329,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreq = rip6_usrreq,
 },
 #endif /* NCARP */
-#ifdef ISO
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_EON,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = encap6_input,
-	.pr_output = rip6_output,
-	.pr_ctlinput = encap6_ctlinput,
-	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
-	/*XXX*/
-	.pr_init = encap_init,
-},
-#endif
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_PIM,
@@ -369,9 +360,17 @@ static const struct sockaddr_in6 in6_any = {
 	, .sin6_scope_id = 0
 };
 
+bool in6_present = false;
+static void
+in6_init(void)
+{
+
+	in6_present = true;
+}
+
 struct domain inet6domain = {
 	.dom_family = AF_INET6, .dom_name = "internet6",
-	.dom_init = NULL, .dom_externalize = NULL, .dom_dispose = NULL,
+	.dom_init = in6_init, .dom_externalize = NULL, .dom_dispose = NULL,
 	.dom_protosw = (const struct protosw *)inet6sw,
 	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
 	.dom_rtattach = rt_inithead,

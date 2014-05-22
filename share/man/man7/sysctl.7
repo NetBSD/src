@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.67.2.4 2013/01/16 05:32:36 yamt Exp $
+.\"	$NetBSD: sysctl.7,v 1.67.2.5 2014/05/22 11:37:51 yamt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 28, 2012
+.Dd December 14, 2013
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -164,8 +164,8 @@ capabilities with the following third level identifiers:
 .Bl -tag -width "123456"
 .It Li vfs.wapbl.flush_disk_cache
 Controls whether to attempt to flush the disk cache on each commit.
-It defaults to 1 and it should always be on to ensure data integrity in
-case of a crash.
+It defaults to 1 and it should always be on to ensure integrity
+of file system metadata in the event of a power loss.
 For slow disks, turning it off can improve performance.
 .It Li vfs.wapbl.verbose_commit
 For each transaction log commit, print the number of bytes written
@@ -739,6 +739,7 @@ The third level names for the settings are described below.
 .Bl -column "kern.module.autoload" "integer" "Changeable" -offset indent
 .It Sy Third level name	Type	Changeable
 .It kern.module.autoload	integer	yes
+.It kern.module.autotime	integer	yes
 .It kern.module.verbose	integer	yes
 .El
 .Pp
@@ -749,6 +750,10 @@ A boolean that controls whether kernel modules are loaded automatically.
 See
 .Xr module 7
 for additional details.
+.It Li kern.module.autotime
+An integer that controls the delay before an attempt is made to
+automatically unload a module that was auto-loaded.
+Setting this value to zero disables the auto-unload function.
 .It Li kern.module.verbose
 A boolean that enables or disables verbose
 debug messages related to kernel modules.
@@ -1472,9 +1477,9 @@ Number of ticks to delay sending an ACK.
 Perform TCP checksum on loopback.
 .It Li tcp.init_win
 A value indicating the TCP initial congestion window.
-If this value is 0, an auto-tuning algorithm designed to use an initial
-window of approximately 4K bytes is in use.
-Otherwise, this value indicates a fixed number of packets.
+The valid range
+is 0 to 10 (maximum specified by draft-ietf-tcpm-initcwnd-08.txt),
+with a default of 4 (approximately 4K per RFC3390).
 .It Li tcp.init_win_local
 Like
 .Li tcp.init_win ,

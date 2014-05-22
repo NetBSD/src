@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.150.4.2 2013/01/23 00:06:28 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.150.4.3 2014/05/22 11:41:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.4.2 2013/01/23 00:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.4.3 2014/05/22 11:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.4.2 2013/01/23 00:06:28 yamt Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
@@ -48,9 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.4.2 2013/01/23 00:06:28 yamt Exp $");
 #include <sys/module.h>
 #include <sys/tty.h>
 #include <sys/reboot.h>
+#include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
 #include <sys/sleepq.h>
+#include <sys/cprng.h>
 
 #include <dev/cons.h>
 
@@ -59,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.4.2 2013/01/23 00:06:28 yamt Exp $");
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
+
+void (*rump_vfs_fini)(void) = (void *)nullop;
 
 /*
  * physmem is largely unused (except for nmbcluster calculations),
@@ -71,7 +76,11 @@ int physmem = PHYSMEM;
 int nkmempages = PHYSMEM/2; /* from le chapeau */
 #undef PHYSMEM
 
-struct lwp lwp0;
+struct lwp lwp0 = {
+	.l_lid = 1,
+	.l_proc = &proc0,
+	.l_fd = &filedesc0,
+};
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
@@ -128,6 +137,9 @@ struct loadavg averunnable = {
 struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
+#ifndef __HAVE_MINIMAL_EMUL
+	.e_nsysent = SYS_NSYSENT,
+#endif
 	.e_vm_default_addr = uvm_default_mapaddr,
 #ifdef __HAVE_SYSCALL_INTERN
 	.e_syscall_intern = syscall_intern,
@@ -136,11 +148,16 @@ struct emul emul_netbsd = {
 
 u_int nprocs = 1;
 
+cprng_strong_t *kern_cprng;
+
+/* not used, but need the symbols for pointer comparisons */
+syncobj_t mutex_syncobj, rw_syncobj;
+
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
-	int rv, error;
+	int rv;
 	uint64_t sec, nsec;
 
 	if (mtx)
@@ -148,13 +165,11 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 
 	sec = timeo / hz;
 	nsec = (timeo % hz) * (1000000000 / hz);
-	rv = rumpuser_nanosleep(&sec, &nsec, &error);
-	
+	rv = rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, sec, nsec);
+	KASSERT(rv == 0);
+
 	if (mtx)
 		mutex_enter(mtx);
-
-	if (rv)
-		return error;
 
 	return 0;
 }
@@ -188,7 +203,7 @@ lwp_update_creds(struct lwp *l)
 }
 
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct, int va_pct)
+calc_cache_size(vsize_t vasz, int pct, int va_pct)
 {
 	paddr_t t;
 
@@ -221,7 +236,6 @@ static void
 rump_delay(unsigned int us)
 {
 	uint64_t sec, nsec;
-	int error;
 
 	sec = us / 1000000;
 	nsec = (us % 1000000) * 1000;
@@ -229,7 +243,7 @@ rump_delay(unsigned int us)
 	if (__predict_false(sec != 0))
 		printf("WARNING: over 1s delay\n");
 
-	rumpuser_nanosleep(&sec, &nsec, &error);
+	rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, sec, nsec);
 }
 void (*delay_func)(unsigned int) = rump_delay;
 
@@ -260,9 +274,8 @@ __weak_alias(tputchar,rump_tputchar);
 void
 cnputc(int c)
 {
-	int error;
 
-	rumpuser_putchar(c, &error);
+	rumpuser_putchar(c);
 }
 
 void
@@ -272,59 +285,21 @@ cnflush(void)
 	/* done */
 }
 
+void
+resettodr(void)
+{
+
+	/* setting clocks is not in the jurisdiction of rump kernels */
+}
+
 #ifdef __HAVE_SYSCALL_INTERN
 void
 syscall_intern(struct proc *p)
 {
 
-	/* no you don't */
+	p->p_emuldata = NULL;
 }
 #endif
-
-void
-xc_send_ipi(struct cpu_info *ci)
-{
-	const struct cpu_info *curci = curcpu();
-	CPU_INFO_ITERATOR cii;
-
-	/*
-	 * IPI are considered asynchronous, therefore no need to wait for
-	 * unicast call delivery (nor the order of calls matters).  Our LWP
-	 * needs to be bound to the CPU, since xc_unicast(9) may block.
-	 *
-	 * WARNING: These must be low-priority calls, as this routine is
-	 * used to emulate high-priority (XC_HIGHPRI) mechanism.
-	 */
-
-	if (ci) {
-		KASSERT(curci != ci);
-		(void)xc_unicast(0, (xcfunc_t)xc_ipi_handler, NULL, NULL, ci);
-		return;
-	}
-
-	curlwp->l_pflag |= LP_BOUND;
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (curci == ci) {
-			continue;
-		}
-		(void)xc_unicast(0, (xcfunc_t)xc_ipi_handler, NULL, NULL, ci);
-	}
-	curlwp->l_pflag &= ~LP_BOUND;
-}
-
-int
-trace_enter(register_t code, const register_t *args, int narg)
-{
-
-	return 0;
-}
-
-void
-trace_exit(register_t code, register_t rval[], int error)
-{
-
-	/* nada */
-}
 
 #ifdef LOCKDEBUG
 void
@@ -334,3 +309,45 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 	/* nada */
 }
 #endif
+
+void
+cpu_reboot(int howto, char *bootstr)
+{
+	int ruhow = 0;
+	void *finiarg;
+
+	printf("rump kernel halting...\n");
+
+	if (!RUMP_LOCALPROC_P(curproc))
+		finiarg = curproc->p_vmspace->vm_map.pmap;
+	else
+		finiarg = NULL;
+
+	/* dump means we really take the dive here */
+	if ((howto & RB_DUMP) || panicstr) {
+		ruhow = RUMPUSER_PANIC;
+		goto out;
+	}
+
+	/* try to sync */
+	if (!((howto & RB_NOSYNC) || panicstr)) {
+		rump_vfs_fini();
+	}
+
+	doshutdownhooks();
+
+	/* your wish is my command */
+	if (howto & RB_HALT) {
+		printf("rump kernel halted\n");
+		rumpuser_sp_fini(finiarg);
+		for (;;) {
+			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 10, 0);
+		}
+	}
+
+	/* this function is __dead, we must exit */
+ out:
+	printf("halted\n");
+	rumpuser_sp_fini(finiarg);
+	rumpuser_exit(ruhow);
+}

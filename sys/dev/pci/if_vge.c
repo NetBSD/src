@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.51.8.2 2012/10/30 17:21:33 yamt Exp $ */
+/* $NetBSD: if_vge.c,v 1.51.8.3 2014/05/22 11:40:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.51.8.2 2012/10/30 17:21:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.51.8.3 2014/05/22 11:40:25 yamt Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -941,6 +941,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t ih;
 	uint16_t val;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -967,7 +968,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, vge_intr, sc);
 	if (sc->sc_intrhand == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
@@ -1553,7 +1554,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 
 #ifdef DIAGNOSTIC
 	/* If this descriptor is still owned by the chip, bail. */
-	VGE_TXDESCSYNC(sc, idx, 
+	VGE_TXDESCSYNC(sc, idx,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	td_sts = le32toh(txd->td_sts);
 	VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
@@ -1636,7 +1637,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	 */
 	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
 	if (mtag != NULL) {
-		/* 
+		/*
 		 * No need htons() here since vge(4) chip assumes
 		 * that tags are written in little endian and
 		 * we already use htole32() here.
@@ -2027,11 +2028,9 @@ static int
 vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vge_softc *sc;
-	struct ifreq *ifr;
 	int s, error;
 
 	sc = ifp->if_softc;
-	ifr = (struct ifreq *)data;
 	error = 0;
 
 	s = splnet();

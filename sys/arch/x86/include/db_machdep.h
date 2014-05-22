@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 2011/04/30 16:58:35 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3.8.1 2014/05/22 11:40:13 yamt Exp $	*/
 
 #ifndef _X86_DB_MACHDEP_H_
 #define _X86_DB_MACHDEP_H_
@@ -11,6 +11,7 @@
 #define INTERRUPT	3
 #define INTERRUPT_TSS	4
 #define TRAP_TSS	5
+#define SOFTINTR	6
 
 #define MAXNARG		16
 

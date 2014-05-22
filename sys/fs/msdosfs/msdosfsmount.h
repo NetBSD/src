@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.15.30.2 2013/01/16 05:33:39 yamt Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.15.30.3 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -50,6 +50,7 @@
 #ifndef _MSDOSFS_MSDOSFSMOUNT_H_
 #define _MSDOSFS_MSDOSFSMOUNT_H_
 
+#ifndef MAKEFS
 /*
  *  Arguments to mount MSDOS filesystems.
  */
@@ -67,6 +68,7 @@ struct msdosfs_args {
 	mode_t  dirmask;	/* v2: mask to be applied for msdosfs perms */
 	int	gmtoff;		/* v3: offset from UTC in seconds */
 };
+#endif
 
 /*
  * Msdosfs mount options:
@@ -96,7 +98,9 @@ struct msdosfs_args {
 MALLOC_DECLARE(M_MSDOSFSMNT);
 MALLOC_DECLARE(M_MSDOSFSTMP);
 #endif
+#endif
 
+#if defined(_KERNEL) || defined(MAKEFS)
 /*
  * Layout of the mount control block for a MSDOSFS file system.
  */
@@ -247,5 +251,5 @@ void msdosfs_init(void);
 void msdosfs_reinit(void);
 void msdosfs_done(void);
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_MSDOSFSMOUNT_H_ */

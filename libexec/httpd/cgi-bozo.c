@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.19.6.1 2012/04/17 00:05:35 yamt Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.19.6.2 2014/05/22 11:37:13 yamt Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -380,7 +380,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	bozo_setenv(httpd, "PATH", _PATH_DEFPATH, curenvp++);
 	bozo_setenv(httpd, "IFS", " \t\n", curenvp++);
-	bozo_setenv(httpd, "SERVER_NAME", httpd->virthostname, curenvp++);
+	bozo_setenv(httpd, "SERVER_NAME", BOZOHOST(httpd,request), curenvp++);
 	bozo_setenv(httpd, "GATEWAY_INTERFACE", "CGI/1.1", curenvp++);
 	bozo_setenv(httpd, "SERVER_PROTOCOL", request->hr_proto, curenvp++);
 	bozo_setenv(httpd, "REQUEST_METHOD", request->hr_methodstr, curenvp++);
@@ -490,12 +490,9 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	exit(0);
 
  out:
-	if (query)
-		free(query);
-	if (file)
-		free(file);
-	if (url)
-		free(url);
+	free(query);
+	free(file);
+	free(url);
 	return 0;
 }
 

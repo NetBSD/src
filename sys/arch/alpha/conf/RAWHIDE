@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.35 2010/11/23 11:13:53 hannken Exp $
+# $NetBSD: RAWHIDE,v 1.35.8.1 2014/05/22 11:39:27 yamt Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -34,7 +34,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	INET
 options 	GATEWAY
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -106,9 +105,9 @@ st*	at	scsibus? target ? lun ?
 ch*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
-pseudo-device	ccd		16
-pseudo-device	ipfilter	1
-pseudo-device	loop		1
+pseudo-device	ccd
+pseudo-device	ipfilter
+pseudo-device	loop
 pseudo-device	md		
 pseudo-device	ppp		
 pseudo-device	pty

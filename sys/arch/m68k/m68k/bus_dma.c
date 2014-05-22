@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.32.2.1 2012/10/30 17:19:54 yamt Exp $ */
+/* $NetBSD: bus_dma.c,v 1.32.2.2 2014/05/22 11:39:56 yamt Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32.2.1 2012/10/30 17:19:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32.2.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg, cacheable, coherent;
 	pmap_t pmap;
-	bool rv;
+	bool rv __diagused;
 
 	coherent = BUS_DMA_COHERENT;
 	lastaddr = *lastaddrp;

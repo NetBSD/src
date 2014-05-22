@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.5.4.2 2013/01/23 00:06:13 yamt Exp $	*/
+/*	$NetBSD: uhso.c,v 1.5.4.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.5.4.2 2013/01/23 00:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.5.4.3 2014/05/22 11:40:37 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -112,14 +112,6 @@ Static int uhso_autoswitch = 1;
 SYSCTL_SETUP(sysctl_hw_uhso_setup, "uhso sysctl setup")
 {
 	const struct sysctlnode *node = NULL;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
@@ -396,7 +388,7 @@ const struct cdevsw uhso_cdevsw = {
 	.d_poll = uhso_tty_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
-	.d_flag = D_TTY,
+	.d_flag = D_TTY
 };
 
 Static int  uhso_tty_init(struct uhso_port *);

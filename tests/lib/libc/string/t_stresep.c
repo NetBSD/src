@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stresep.c,v 1.2 2011/07/07 08:27:36 jruoho Exp $ */
+/*	$NetBSD: t_stresep.c,v 1.2.2.1 2014/05/22 11:42:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -51,9 +51,9 @@ ATF_TC_HEAD(stresep_basic, tc)
 
 ATF_TC_BODY(stresep_basic, tc)
 {
-	char brk[] = "foo\\ \\ bar baz bar\\ foo\\  bar\\ \\ foo \\ \\ \\ "
+	char brkstr[] = "foo\\ \\ bar baz bar\\ foo\\  bar\\ \\ foo \\ \\ \\ "
 		     "baz bar\\ \\ ";
-	char *p, *q = brk;
+	char *p, *q = brkstr;
 
 	expect("foo  bar");
 	expect("baz");

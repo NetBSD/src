@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.72.8.4 2013/01/16 05:32:59 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.72.8.5 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,12 @@
 #define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(3U*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(3U*1024*1024*1024)	/* 3G max data size */
+#endif
+#ifndef MAXDSIZ_BU
+#define	MAXDSIZ_BU	(2U*1024*1024*1024 +	/* 2.5G max data size for */ \
+			 1U* 512*1024*1024)	/* bottom-up allocation */ \
+						/* could be a bit more */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
@@ -110,8 +115,10 @@
 #include "opt_xen.h"
 #endif
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)MIN(maxdmap, MAXDSIZ_BU))
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF

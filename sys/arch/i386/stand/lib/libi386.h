@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.37.2.1 2012/04/17 00:06:30 yamt Exp $	*/
+/*	$NetBSD: libi386.h,v 1.37.2.2 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -35,7 +35,7 @@ void pbzero(void *, size_t);
 physaddr_t vtophys(void *);
 
 ssize_t pread(int, void *, size_t);
-void startprog(physaddr_t, int, unsigned long *, physaddr_t);
+void startprog(physaddr_t, uint32_t, uint32_t *, physaddr_t);
 void multiboot(physaddr_t, physaddr_t, physaddr_t);
 
 int exec_netbsd(const char *, physaddr_t, int, int, void (*)(void));
@@ -139,6 +139,7 @@ extern int doserrno;	/* in dos_file.S */
 void module_add(char *);
 void splash_add(char *);
 void rnd_add(char *);
+void fs_add(char *);
 void userconf_add(char *);
 
 struct btinfo_framebuffer;

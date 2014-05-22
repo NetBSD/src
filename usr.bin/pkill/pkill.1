@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.23 2010/12/07 09:00:23 enami Exp $
+.\"	$NetBSD: pkill.1,v 1.23.6.1 2014/05/22 11:42:48 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2010
+.Dd November 1, 2013
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -76,6 +76,12 @@ The
 .Nm prenice
 command searches the process table on the running system and sets the
 priority of all processes that match the criteria given on the command line.
+.Pp
+By default, matching applies to any substring of the command name
+.Pq Va argv[0] ,
+but options may be used to change this.
+Patterns are specified using extended regular expressions (see
+.Xr re_format 7 ) .
 .Pp
 The following options are available for
 .Nm pkill
@@ -173,13 +179,14 @@ This option is valid only when given as the first argument to
 .Pp
 The
 .Fl l
-flag is also availale for
+flag is also available for
 .Nm prenice .
 .Pp
 Note that a running
-.Nm pgrep
+.Nm pgrep ,
+.Nm pkill ,
 or
-.Nm pkill
+.Nm prenice
 process will never consider itself or system processes (kernel threads) as
 a potential match.
 .Sh EXIT STATUS

@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.6 2011/06/20 17:07:21 pgoyette Exp $ */
+/* $NetBSD: viac7temp.c,v 1.6.2.1 2014/05/22 11:40:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.6 2011/06/20 17:07:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.6.2.1 2014/05/22 11:40:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,8 +71,8 @@ viac7temp_match(device_t parent, cfdata_t cf, void *aux)
 	if (cpu_vendor != CPUVENDOR_IDT)
 		return 0;
 
-	model = CPUID2MODEL(ci->ci_signature);
-	family = CPUID2FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	family = CPUID_TO_FAMILY(ci->ci_signature);
 
 	if (family != 0x06 || model < 0x09)
 		return 0;

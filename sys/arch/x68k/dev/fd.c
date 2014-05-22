@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.94.4.3 2012/10/30 17:20:30 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.94.4.4 2014/05/22 11:40:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94.4.3 2012/10/30 17:20:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94.4.4 2014/05/22 11:40:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -271,12 +271,27 @@ dev_type_ioctl(fdioctl);
 dev_type_strategy(fdstrategy);
 
 const struct bdevsw fd_bdevsw = {
-	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+	.d_open = fdopen,
+	.d_close = fdclose,
+	.d_strategy = fdstrategy,
+	.d_ioctl = fdioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw fd_cdevsw = {
-	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = fdopen,
+	.d_close = fdclose,
+	.d_read = fdread,
+	.d_write = fdwrite,
+	.d_ioctl = fdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void fdstart(struct fd_softc *);
@@ -296,7 +311,7 @@ void fdctimeout(void *);
 void fdcpseudointr(void *);
 void fdcretry(struct fdc_softc *);
 void fdfinish(struct fd_softc *, struct buf *);
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static int fdcpoll(struct fdc_softc *);
 static int fdgetdisklabel(struct fd_softc *, dev_t);
@@ -508,12 +523,12 @@ fdcreset(struct fdc_softc *fdc)
 static int
 fdcpoll(struct fdc_softc *fdc)
 {
-	int i = 25000, n;
+	int i = 25000;
 
 	while (--i > 0) {
 		if ((intio_get_sicilian_intr() & SICILIAN_STAT_FDC) != 0) {
 			out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
-			n = fdcresult(fdc);
+			fdcresult(fdc);
 			break;
 		}
 		DELAY(100);
@@ -648,12 +663,12 @@ fdattach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_DISK, 0);
 }
 
-inline struct fd_type *
+struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
-	int type = FDTYPE(dev);
+	size_t type = FDTYPE(dev);
 
-	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
+	if (type > __arraycount(fd_types))
 		return NULL;
 	return &fd_types[type];
 }

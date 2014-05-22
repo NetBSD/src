@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.19 2011/05/23 21:49:35 joerg Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.19.4.1 2014/05/22 11:40:35 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 /* error reporting and handling */
 
-#include <sys/systm.h>		/* printf, sprintf, and friends */
+#include <sys/systm.h>		/* printf, snprintf, and friends */
 
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
@@ -65,7 +65,7 @@ extern char rf_panicbuf[];
   } \
 }
 #else /* RAID_DIAGNOSTIC */
-#define RF_ASSERT(x) {/*noop*/}
+#define RF_ASSERT(x) { /*noop*/ (void)(x); }
 #endif /* RAID_DIAGNOSTIC */
 
 /* random stuff */

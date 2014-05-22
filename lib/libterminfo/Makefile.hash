@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.hash,v 1.4.2.3 2012/10/30 18:59:18 yamt Exp $
+#	$NetBSD: Makefile.hash,v 1.4.2.4 2014/05/22 11:37:00 yamt Exp $
 
 SCRIPT_ENV=	\
+	NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	TOOL_AWK=${TOOL_AWK:Q} \
 	TOOL_NBPERF=${TOOL_NBPERF:Q} \
 	TOOL_SED=${TOOL_SED:Q} \

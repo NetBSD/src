@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.31.8.1 2012/10/30 17:18:47 yamt Exp $ */
+/*	$NetBSD: drsc.c,v 1.31.8.2 2014/05/22 11:39:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.31.8.1 2012/10/30 17:18:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.31.8.2 2014/05/22 11:39:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,11 @@ void
 drscattach(device_t parent, device_t self, void *aux)
 {
 	struct siop_softc *sc = device_private(self);
-	struct zbus_args *zap;
 	siop_regmap_p rp;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
 	printf("\n");
-
-	zap = aux;
 
 	sc->sc_dev = self;
 	sc->sc_siopp = rp = (siop_regmap_p)(DRCCADDR+PAGE_SIZE*DRSCSIPG);

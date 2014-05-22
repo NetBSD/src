@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25.8.2 2013/01/16 05:32:43 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.8.3 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -34,15 +34,13 @@
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/param.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.25.8.2 2013/01/16 05:32:43 yamt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.25.8.3 2014/05/22 11:39:31 yamt Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -60,7 +58,6 @@ ASENTRY_NP(start)
 
 	adr	r1, .Lstart
 	ldmia	r1, {r1, r2, r8, sp}	/* Set initial stack and */
-	sub	r2, r2, r1		/* get zero init data and cpu_info_store */
 
 #if defined(TPIDRPRW_IS_CURCPU) || defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r8, c13, c0, 4
@@ -69,11 +66,18 @@ ASENTRY_NP(start)
 	ldr	r8, [r8, #L_CPU]	/* r8 needs curcpu in it */
 #endif
 
-	mov	r3, #0
+	mov	r4, #0
+#ifdef _ARM_ARCH_DWORD_OK
+	mov	r5, #0
+#endif
 .L1:
-	str	r3, [r1], #0x0004	/* Zero the bss */
-	subs	r2, r2, #4
-	bgt	.L1
+#ifdef _ARM_ARCH_DWORD_OK
+	strd	r4, r5, [r1], #0x0008	/* Zero the bss */
+#else
+	str	r4, [r1], #0x0004	/* Zero the bss */
+#endif
+	cmp	r1, r2
+	blt	.L1
 
 	mrc	p15, 0, r3, c0, c0, 0	/* get our cpuid and save it early */
 	str	r3, [r8, #CI_ARM_CPUID]
@@ -86,7 +90,7 @@ ASENTRY_NP(start)
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	push	{fp, ip, lr, pc}
 	sub	fp, ip, #4
 
 	bl	_C_LABEL(main)		/* call main()! */
@@ -108,6 +112,7 @@ ASENTRY_NP(start)
 .Lmainreturned:
 	.asciz	"main() returned"
 	.align	0
+ASEND(start)
 
 	.bss
 svcstk:
@@ -118,8 +123,8 @@ svcstk:
 
 #ifndef OFW
 	/* OFW based systems will used OF_boot() */
-	
-.Lcpufuncs:	
+
+.Lcpufuncs:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
@@ -171,6 +176,7 @@ ENTRY_NP(cpu_reset)
 	.word	_C_LABEL(cpu_reset_address)
 .Lcpu_reset_address_paddr:
 	.word	_C_LABEL(cpu_reset_address_paddr)
+END(cpu_reset)
 #endif	/* OFW */
 
 /*
@@ -179,12 +185,14 @@ ENTRY_NP(cpu_reset)
 ENTRY(setjmp)
 	stmia	r0, {r4-r14}
 	mov	r0, #0x00000000
-	mov	pc, lr
+	RET
+END(setjmp)
 
 ENTRY(longjmp)
 	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
-	mov	pc, lr
+	RET
+END(longjmp)
 
 	.data
 	.global _C_LABEL(esym)
@@ -192,6 +200,7 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
+END(abort)
 
 /*
  * Part of doing a system dump, we need to save a switchframe onto the
@@ -200,7 +209,7 @@ ENTRY_NP(abort)
 ENTRY(dumpsys)
 	/* push registers onto stack */
 	mov	ip, sp
-	stmfd	sp!, {r4-r7, ip, lr}
+	push	{r4-r7, ip, lr}
 
 	/* fill in dumppcb */
 	ldr	r0, .Ldumppcb
@@ -209,17 +218,18 @@ ENTRY(dumpsys)
         add     r2, r0, #(PCB_R8)
         stmia   r2, {r8-r13}
 #else
-        strd    r8, [r0, #(PCB_R8)]
-        strd    r10, [r0, #(PCB_R10)]
-        strd    r12, [r0, #(PCB_R12)]
+        strd    r8, r9, [r0, #(PCB_R8)]
+        strd    r10, r11, [r0, #(PCB_R10)]
+        strd    r12, r13, [r0, #(PCB_R12)]
 #endif
 
 	bl	_C_LABEL(dodumpsys)
 
 	/* unwind the stack */
-	ldmfd	sp, {r4-r7, sp, pc}
+	pop	{r4-r7, ip, pc}
 
 .Ldumppcb:
 	.word	_C_LABEL(dumppcb)
+END(dumpsys)
 
 /* End of locore.S */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.2.4.3 2013/01/23 00:05:41 yamt Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.2.4.4 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.2.4.3 2013/01/23 00:05:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.2.4.4 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,6 @@ create_failed:
 	bus_dmamem_unmap(sc->sc_dmat, dma_buf, buflen);
 map_failed:
 	bus_dmamem_free(sc->sc_dmat, segs, nsegs);
-	
+
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.71.8.1 2012/04/17 00:07:32 yamt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.71.8.2 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_KGDB	0x80
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
+#define	COM_HW_AFE	0x400
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
@@ -91,16 +92,27 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_MCR		9
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
+#ifdef	COM_16750
+#define	COM_REG_USR		31
+#endif
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
 	bus_size_t		cr_nports;
+#ifdef COM_16750
+	bus_size_t		cr_map[32];
+#else
 	bus_size_t		cr_map[16];
+#endif
 };
 
+#ifdef COM_16750
+extern const bus_size_t com_std_map[32];
+#else
 extern const bus_size_t com_std_map[16];
+#endif
 
 #define	COM_INIT_REGS(regs, tag, hdl, addr)				\
 	do {								\
@@ -127,6 +139,9 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_TCR		com_msr
 #define	COM_REG_TLR		com_scratch
 #define	COM_REG_MDR1		8
+#ifdef	COM_16750
+#define COM_REG_USR		com_usr
+#endif
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -224,6 +239,9 @@ struct com_softc {
 	int (*enable)(struct com_softc *);
 	void (*disable)(struct com_softc *);
 	int enabled;
+
+	/* XXXX: vendor workaround functions */
+	int (*sc_vendor_workaround)(struct com_softc *);
 
 	struct pps_state sc_pps_state;	/* pps state */
 

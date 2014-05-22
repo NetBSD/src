@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.2.6.4 2013/01/16 05:33:54 yamt Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.2.6.5 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -507,7 +507,6 @@ no_overlapping_node(struct rb_tree *fragtree,
 		}
 
 		rb_tree_insert_node(fragtree, holefrag);
-		this = holefrag;
 	}
 
 	rb_tree_insert_node(fragtree, newfrag);

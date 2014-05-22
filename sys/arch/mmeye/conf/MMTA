@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.45.4.1 2012/04/17 00:06:41 yamt Exp $
+#	$NetBSD: MMTA,v 1.45.4.2 2014/05/22 11:39:58 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -90,13 +90,10 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -202,7 +199,7 @@ cinclude "arch/mmeye/conf/GENERIC.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

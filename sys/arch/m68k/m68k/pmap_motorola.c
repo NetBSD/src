@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.63.2.3 2012/10/30 17:19:54 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.63.2.4 2014/05/22 11:39:56 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.63.2.3 2012/10/30 17:19:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.63.2.4 2014/05/22 11:39:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -939,7 +939,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	bool firstpage, needtflush;
+	bool firstpage __unused, needtflush;
 	int isro;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_PROTECT,

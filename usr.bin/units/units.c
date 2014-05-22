@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.17.2.2 2013/01/23 00:06:40 yamt Exp $	*/
+/*	$NetBSD: units.c,v 1.17.2.3 2014/05/22 11:42:51 yamt Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -105,7 +105,7 @@ dupstr(const char *str)
 }
 
 
-static void
+static __printflike(1, 2) void
 mywarnx(const char *fmt, ...)
 {
 	va_list args;

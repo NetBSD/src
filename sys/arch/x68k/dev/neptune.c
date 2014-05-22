@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.19 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: neptune.c,v 1.19.14.1 2014/05/22 11:40:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.19 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.19.14.1 2014/05/22 11:40:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ neptune_attach(device_t parent, device_t self, void *aux)
 	struct neptune_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	struct neptune_attach_args na;
-	int r;
+	int r __diagused;
 	cfdata_t cf;
 
 	ia->ia_size = 0x400;

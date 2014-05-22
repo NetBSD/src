@@ -1,4 +1,4 @@
-/* $NetBSD: xs_bee3.c,v 1.2.8.1 2012/04/17 00:06:12 yamt Exp $ */
+/* $NetBSD: xs_bee3.c,v 1.2.8.2 2014/05/22 11:39:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xs_bee3.c,v 1.2.8.1 2012/04/17 00:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xs_bee3.c,v 1.2.8.2 2014/05/22 11:39:38 yamt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -98,7 +98,7 @@ xs_bee3_init(void)
 	/* calibrate cpu_mhz value */
 	//cpu_mhz = 10;
 	cpuspeed  = 8; /* xxx */
-	sprintf(cpu_model, "BeSquare BEE3 (eMIPS)");
+	cpu_setmodel("BeSquare BEE3 (eMIPS)");
 
 	ipl_sr_map = xs_bee3_ipl_sr_map;
 }

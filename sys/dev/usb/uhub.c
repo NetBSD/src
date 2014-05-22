@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.114.2.4 2013/01/23 00:06:13 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.114.2.5 2014/05/22 11:40:37 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.2.4 2013/01/23 00:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.2.5 2014/05/22 11:40:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,8 +259,9 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	sc->sc_explorepending = 1;
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
-		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_statusbuf,
-		  sc->sc_statuslen, uhub_intr, USBD_DEFAULT_INTERVAL);
+		  USBD_SHORT_XFER_OK|USBD_MPSAFE, &sc->sc_ipipe, sc,
+		  sc->sc_statusbuf, sc->sc_statuslen,
+		  uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		aprint_error_dev(self, "cannot open interrupt pipe\n");
 		goto bad;
@@ -273,7 +274,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * To have the best chance of success we do things in the exact same
-	 * order as Windoze98.  This should not be necessary, but some
+	 * order as Windows 98.  This should not be necessary, but some
 	 * devices do not follow the USB specs to the letter.
 	 *
 	 * These are the events on the bus when a hub is attached:
@@ -640,13 +641,13 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	usbd_device_handle dev;
-	int port, err;
+	int port;
 
 	for (port = 0; port < hub->hubdesc.bNbrPorts; port++) {
 		dev = hub->ports[port].device;
 		if (dev == NULL)
 			continue;
-		err = usbd_reattach_device(sc->sc_dev, dev, port, locators);
+		usbd_reattach_device(sc->sc_dev, dev, port, locators);
 	}
 	return 0;
 }

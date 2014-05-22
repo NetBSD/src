@@ -1,4 +1,4 @@
-/* $NetBSD: toaster.c,v 1.10.12.2 2012/10/30 17:21:16 yamt Exp $ */
+/* $NetBSD: toaster.c,v 1.10.12.3 2014/05/22 11:40:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.10.12.2 2012/10/30 17:21:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.10.12.3 2014/05/22 11:40:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,13 +249,6 @@ toaster_attach(device_t parent, device_t self, void *aux)
 	sc->burner = 0;
 	sc->latch = 0;
 
-	if (sysctl_createv(NULL, 0, NULL, NULL,
-				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-				NULL, NULL, 0, NULL, 0,
-				CTL_HW, CTL_EOL) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not create sysctl\n");
-		return;
-	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
         			0, CTLTYPE_NODE, device_xname(sc->sc_dev),
         			NULL,

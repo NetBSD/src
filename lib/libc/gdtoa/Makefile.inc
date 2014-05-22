@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.8 2008/02/09 02:37:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8.28.1 2014/05/22 11:36:52 yamt Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
-CPPFLAGS+=-I${.CURDIR}/gdtoa
+CPPFLAGS+=-I${.CURDIR}/gdtoa -I${.CURDIR}/locale
 
 CPPFLAGS+=-DNO_FENV_H
 
@@ -35,10 +35,6 @@ SRCS+=	dmisc.c \
 	misc.c \
 	smisc.c strtodg.c sum.c \
 	ulp.c
-
-# wrappers
-SRCS+=	_strtof.c _strtold.c
-#SRCS+=	_hdtoa.c _ldtoa.c
 
 # XXX no hexadecimal floating-point string conversion for VAX FP yet
 .if ${MACHINE_ARCH} != "vax"

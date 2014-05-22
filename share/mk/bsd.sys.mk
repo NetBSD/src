@@ -1,9 +1,18 @@
-#	$NetBSD: bsd.sys.mk,v 1.210.2.2 2012/10/30 18:59:47 yamt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.210.2.3 2014/05/22 11:37:53 yamt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
+
+.if !empty(.INCLUDEDFROMFILE:MMakefile*)
+error1:
+	@(echo "bsd.sys.mk should not be included from Makefiles" >& 2; exit 1)
+.endif
+.if !defined(_BSD_OWN_MK_)
+error2:
+	@(echo "bsd.own.mk must be included before bsd.sys.mk" >& 2; exit 1)
+.endif
 
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
@@ -64,21 +73,27 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .if ${WARNS} > 4
 CFLAGS+=	-Wold-style-definition
 .endif
+.if ${WARNS} > 5 && !(defined(HAVE_GCC) && ${HAVE_GCC} <= 45)
+CFLAGS+=	-Wconversion
+.endif
 CFLAGS+=	-Wsign-compare -Wformat=2
-CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-error=format-nonliteral :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
-     && (${MACHINE_ARCH} == "sh3eb" || \
+.if (defined(HAVE_GCC) && ${HAVE_GCC} >= 45 \
+     && (${MACHINE_ARCH} == "coldfire" || \
+	 ${MACHINE_ARCH} == "sh3eb" || \
 	 ${MACHINE_ARCH} == "sh3el" || \
 	 ${MACHINE_ARCH} == "m68k" || \
 	 ${MACHINE_ARCH} == "m68000"))
 # XXX GCC 4.5 for sh3 and m68k (which we compile with -Os) is extra noisy for
 # cases it should be better with
 CFLAGS+=	-Wno-uninitialized
+.if ${HAVE_GCC} >= 48
+CFLAGS+=	-Wno-maybe-uninitialized
+.endif
 .endif
 .endif
 
@@ -89,34 +104,34 @@ _NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGE
 CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "hppa") || \
-    (${MACHINE_ARCH} == "ia64") || \
-    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
-    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
-HAS_SSP=	no
-.else
-HAS_SSP=	yes
-.endif
-
-.if ${USE_FORT:Uno} != "no"
-USE_SSP?=	yes
+.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
+COPTS+=	-fstack-protector -Wstack-protector 
+
+# gcc 4.8 on m68k erroneously does not protect functions with
+# variables needing special alignement, see
+#	http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59674
+# (the underlying issue for sh and vax may be different, needs more
+# investigation, symptoms are similar but for different sources)
+.if "${ACTIVE_CC}" == "gcc" && "${HAVE_GCC}" == "48" && \
+	( ${MACHINE_CPU} == "sh3" || \
+	  ${MACHINE_ARCH} == "vax" || \
+	  ${MACHINE_CPU} == "m68k" )
+COPTS+=	-Wno-error=stack-protector 
 .endif
 
-.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
-.if ${HAS_SSP} == "yes"
-COPTS+=	-fstack-protector -Wstack-protector 
 COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
-.endif
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
+.elif ${MACHINE_ARCH} == "coldfire"
+COPTS+=		-mhard-float
+FOPTS+=		-mhard-float
 .endif
 
 .if ${MKIEEEFP:Uno} != "no"
@@ -149,47 +164,18 @@ AFLAGS+=	${CPUFLAGS}
 
 .if !defined(LDSTATIC) || ${LDSTATIC} != "-static"
 # Position Independent Executable flags
-PIE_CFLAGS?=        -fPIC -DPIC
-PIE_LDFLAGS?=       -Wl,-pie -shared-libgcc
-PIE_AFLAGS?=	    -fPIC -DPIC
+PIE_CFLAGS?=        -fPIC
+PIE_LDFLAGS?=       -Wl,-pie ${${ACTIVE_CC} == "gcc":? -shared-libgcc :}
+PIE_AFLAGS?=	    -fPIC
 .endif
-
-# Helpers for cross-compiling
-HOST_CC?=	cc
-HOST_CFLAGS?=	-O
-HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
-HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
-.if defined(HOSTPROG_CXX) 
-HOST_LINK.c?=	${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
-.else
-HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
-.endif
-
-HOST_CXX?=	c++
-HOST_CXXFLAGS?=	-O
-
-HOST_CPP?=	cpp
-HOST_CPPFLAGS?=
-
-HOST_LD?=	ld
-HOST_LDFLAGS?=
-
-HOST_AR?=	ar
-HOST_RANLIB?=	ranlib
-
-HOST_LN?=	ln
-
-# HOST_SH must be an absolute path
-HOST_SH?=	/bin/sh
 
 ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
+MKDEPCXX?=	mkdep
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
-
-# TOOL_* variables are defined in bsd.own.mk
 
 .SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C .m ${YHEADER:D.h}
 
@@ -275,6 +261,8 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .endif
 
 # Objcopy
-OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x}
+# ARM big endian needs to preserve $a/$d/$t symbols for the linker.
+OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x} \
+	${"${MACHINE_ARCH:M*arm*eb}" != "":?-K '\$a' -K '\$d' -K '\$t':}
 
 .endif	# !defined(_BSD_SYS_MK_)

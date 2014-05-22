@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.17.2.1 2012/10/30 17:19:57 yamt Exp $	*/
+/*	$NetBSD: nvram.c,v 1.17.2.2 2014/05/22 11:39:56 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.17.2.1 2012/10/30 17:19:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.17.2.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,8 +71,17 @@ dev_type_write(nvramwrite);
 dev_type_mmap(nvrammmap);
 
 const struct cdevsw nvram_cdevsw = {
-	nullopen, nullclose, nvramread, nvramwrite, noioctl,
-	nostop, notty, nopoll, nvrammmap, nokqfilter,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = nvramread,
+	.d_write = nvramwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nvrammmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 int

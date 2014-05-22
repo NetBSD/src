@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.20.2.1 2012/10/30 17:20:54 yamt Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.20.2.2 2014/05/22 11:40:20 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.20.2.1 2012/10/30 17:20:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.20.2.2 2014/05/22 11:40:20 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -287,11 +287,6 @@ bcsp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	/* Attach Bluetooth unit */
 	sc->sc_unit = hci_attach(&bcsp_hci, self, 0);
 
-	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(self),
 	    SYSCTL_DESCR("bcsp controls"),
@@ -722,8 +717,12 @@ bcsp_slip_receive(int c, struct tty *tp)
 	}
 	if (discard) {
 discarded:
+#ifdef BCSP_DEBUG
 		DPRINTFN(4, ("%s: receives unexpected byte 0x%02x: %s\n",
 		    device_xname(sc->sc_dev), c, errstr));
+#else
+		__USE(errstr);
+#endif
 	}
 	sc->sc_stats.byte_rx++;
 
@@ -782,7 +781,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 	u_int pldlen;
 	int discard = 0;
 	uint16_t crc = 0xffff;
-	const char *errstr;
+	const char *errstr 
 
 	DPRINTFN(3, ("%s: pi receive\n", device_xname(sc->sc_dev)));
 #ifdef BCSP_DEBUG
@@ -836,8 +835,12 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 
 	if (discard) {
 discarded:
+#ifdef BCSP_DEBUG
 		DPRINTFN(3, ("%s: receives unexpected packet: %s\n",
 		    device_xname(sc->sc_dev), errstr));
+#else
+		__USE(errstr);
+#endif
 		m_freem(m);
 	} else
 		bcsp_mux_receive(sc, m);

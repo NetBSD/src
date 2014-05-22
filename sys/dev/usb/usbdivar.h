@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.4.3 2013/01/23 00:06:16 yamt Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.4.4 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 /*
  * Discussion about locking in the USB code:
  *
- * The host controller presents one lock at IPL_SOFTUSB.
+ * The host controller presents one lock at IPL_SOFTUSB (aka IPL_SOFTNET).
  *
  * List of hardware interface methods, and whether the lock is held
  * when each is called by this module:
@@ -48,6 +48,7 @@
  *	allocx			-
  *	freex			-
  *	get_lock 		-	Called at attach time
+ *	new_device		
  *
  *	PIPE METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
@@ -82,6 +83,7 @@ typedef struct {
 
 struct usbd_xfer;
 struct usbd_pipe;
+struct usbd_port;
 
 struct usbd_endpoint {
 	usb_endpoint_descriptor_t *edesc;
@@ -99,6 +101,8 @@ struct usbd_bus_methods {
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
 	void		      (*get_lock)(struct usbd_bus *, kmutex_t **);
+	usbd_status	      (*new_device)(device_t, usbd_bus_handle, int,
+					    int, int, struct usbd_port *);
 };
 
 struct usbd_pipe_methods {
@@ -191,6 +195,7 @@ struct usbd_device {
 	int			subdevlen;     /* array length of following */
 	device_t	       *subdevs;       /* sub-devices */
 	int			nifaces_claimed; /* number of ifaces in use */
+	void		       *hci_private;
 };
 
 struct usbd_interface {
@@ -264,13 +269,13 @@ struct usbd_xfer {
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 	kcondvar_t		hccv; /* private use by the HC driver */
 
-        struct callout timeout_handle;
+	struct callout timeout_handle;
 };
 
 void usbd_init(void);
 void usbd_finish(void);
 
-#if defined(USB_DEBUG) || defined(EHCI_DEBUG)
+#if defined(USB_DEBUG) || defined(EHCI_DEBUG) || defined(OHCI_DEBUG)
 void usbd_dump_iface(struct usbd_interface *iface);
 void usbd_dump_device(struct usbd_device *dev);
 void usbd_dump_endpoint(struct usbd_endpoint *endp);
@@ -295,9 +300,9 @@ usbd_status	usbd_setup_pipe_flags(usbd_device_handle dev,
 				      usbd_pipe_handle *pipe,
 				      uint8_t flags);
 usbd_status	usbd_new_device(device_t, usbd_bus_handle, int, int, int,
-                                struct usbd_port *);
+				struct usbd_port *);
 usbd_status	usbd_reattach_device(device_t, usbd_device_handle,
-                                     int, const int *);
+				     int, const int *);
 
 void		usbd_remove_device(usbd_device_handle, struct usbd_port *);
 int		usbd_printBCD(char *, size_t, int);
@@ -308,29 +313,20 @@ usbd_status	usb_insert_transfer(usbd_xfer_handle);
 void		usb_transfer_complete(usbd_xfer_handle);
 int		usb_disconnect_port(struct usbd_port *, device_t, int);
 
+void		usbd_kill_pipe(usbd_pipe_handle);
+usbd_status	usbd_attach_roothub(device_t, usbd_device_handle);
+usbd_status	usbd_probe_and_attach(device_t, usbd_device_handle, int, int);
+usbd_status	usbd_get_initial_ddesc(usbd_device_handle,
+				       usb_device_descriptor_t *);
+
 /* Routines from usb.c */
 void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 /*
- * These macros help while not all host controllers are ported to the MP code.
+ * These macros reflect the current locking scheme.  They might change.
  */
-#define usbd_mutex_enter(m)	do { \
-	if (m) { \
-		s = -1; \
-		mutex_enter(m); \
-	} else \
-		s = splusb(); \
-} while (0)
 
-#define usbd_mutex_exit(m)	do { \
-	if (m) { \
-		s = -1; \
-		mutex_exit(m); \
-	} else \
-		splx(s); \
-} while (0)
-
-#define usbd_lock_pipe(p)	usbd_mutex_enter((p)->device->bus->lock)
-#define usbd_unlock_pipe(p)	usbd_mutex_exit((p)->device->bus->lock)
+#define usbd_lock_pipe(p)	mutex_enter((p)->device->bus->lock)
+#define usbd_unlock_pipe(p)	mutex_exit((p)->device->bus->lock)

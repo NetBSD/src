@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.78 2011/09/14 23:33:51 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.78.2.1 2014/05/22 11:36:54 yamt Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -11,7 +11,7 @@ SRCS+=	_env.c _rand48.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
-	radixsort.c rand.c rand_r.c random.c remque.c \
+	quick_exit.c radixsort.c rand.c rand_r.c random.c remque.c \
 	seed48.c setenv.c srand48.c strsuftoll.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
@@ -30,7 +30,6 @@ SRCS+=	jemalloc.c
 SRCS+=	malloc.c
 .endif
 
-CPPFLAGS.strtoimax.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
@@ -38,6 +37,7 @@ CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 .include "${ARCHDIR}/stdlib/Makefile.inc"
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
+	at_quick_exit.3 \
 	bsearch.3 \
 	div.3 \
 	exit.3 \
@@ -48,7 +48,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	lsearch.3 \
 	malloc.3 memory.3 mi_vector_hash.3 \
 	posix_memalign.3 posix_openpt.3 ptsname.3 \
-	qabs.3 qdiv.3 qsort.3 \
+	qabs.3 qdiv.3 quick_exit.3 qsort.3 \
 	radixsort.3 rand48.3 rand.3 random.3 \
 	strfmon.3 strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 \
 	tsearch.3 \
@@ -70,6 +70,7 @@ MLINKS+=insque.3 remque.3
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 calloc.3 malloc.3 realloc.3 malloc.3 free.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
+MLINKS+=ptsname.3 ptsname_r.3
 MLINKS+=rand.3 rand_r.3
 MLINKS+=rand.3 srand.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3

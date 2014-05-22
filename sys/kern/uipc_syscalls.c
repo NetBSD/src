@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.147.2.4 2013/01/23 00:06:22 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.147.2.5 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.147.2.4 2013/01/23 00:06:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.147.2.5 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_pipe.h"
 
@@ -234,6 +234,10 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
+	if (fp2->f_flag & FNONBLOCK)
+		so2->so_state |= SS_NBIO;
+	else
+		so2->so_state &= ~SS_NBIO;
 	error = soaccept(so2, nam);
 	so2->so_cred = kauth_cred_dup(so->so_cred);
 	sounlock(so);
@@ -424,6 +428,8 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
 	(*fp)->f_data = so;
+	if (flags & SOCK_NONBLOCK)
+		so->so_state |= SS_NBIO;
 	return 0;
 }
 
@@ -809,17 +815,21 @@ sys_sendmmsg(struct lwp *l, const struct sys_sendmmsg_args *uap,
 static void
 free_rights(struct mbuf *m)
 {
-	int nfd;
-	int i;
+	struct cmsghdr *cm;
 	int *fdv;
+	unsigned int nfds, i;
 
-	nfd = m->m_len < CMSG_SPACE(sizeof(int)) ? 0
-	    : (m->m_len - CMSG_SPACE(sizeof(int))) / sizeof(int) + 1;
-	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
-	for (i = 0; i < nfd; i++) {
+	KASSERT(sizeof(*cm) <= m->m_len);
+	cm = mtod(m, struct cmsghdr *);
+
+	KASSERT(CMSG_ALIGN(sizeof(*cm)) <= cm->cmsg_len);
+	KASSERT(cm->cmsg_len <= m->m_len);
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
+	fdv = (int *)CMSG_DATA(cm);
+
+	for (i = 0; i < nfds; i++)
 		if (fd_getfile(fdv[i]) != NULL)
 			(void)fd_close(fdv[i]);
-	}
 }
 
 void
@@ -1048,8 +1058,11 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 
 		error = do_sys_recvmsg_so(l, s, so, msg, &from,
 		    msg->msg_control != NULL ? &control : NULL, retval);
-		if (error)
+		if (error) {
+			if (error == EAGAIN && dg > 0)
+				error = 0;
 			break;
+		}
 
 		if (msg->msg_control != NULL)
 			error = copyout_msg_control(l, msg, control);
@@ -1281,7 +1294,6 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 /*
  * Get socket name.
  */
-/* ARGSUSED */
 int
 do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 {
@@ -1296,8 +1308,7 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 	MCLAIM(m, so->so_mowner);
 
 	solock(so);
-	if (which == PRU_PEERADDR
-	    && (so->so_state & (SS_ISCONNECTED | SS_ISCONFIRMING)) == 0) {
+	if (which == PRU_PEERADDR && (so->so_state & SS_ISCONNECTED) == 0) {
 		error = ENOTCONN;
 	} else {
 		*nam = m;
@@ -1338,7 +1349,7 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 		if (len > addr->m_len)
 			len = addr->m_len;
 		/* Maybe this ought to copy a chain ? */
-		ktrkuser("sockname", mtod(addr, void *), len);
+		ktrkuser(mbuftypes[MT_SONAME], mtod(addr, void *), len);
 		error = copyout(mtod(addr, void *), asa, len);
 	}
 

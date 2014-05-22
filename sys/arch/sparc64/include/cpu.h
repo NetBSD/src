@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98.2.1 2013/01/16 05:33:05 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.98.2.2 2014/05/22 11:40:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,8 @@
 #define	CPU_BOOTED_DEVICE	2	/* string: device booted from */
 #define	CPU_BOOT_ARGS		3	/* string: args booted with */
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define CPU_VIS			5	/* 0 - no VIS, 1 - VIS 1.0, etc. */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 /*
@@ -173,6 +174,16 @@ struct cpu_info {
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
 
+	/* MMU Fault Status Area (sun4v).
+	 * Will be initialized to the physical address of the bottom of
+	 * the interrupt stack.
+	 */
+	paddr_t			ci_mmfsa;
+
+	/* probe fault in PCI config space reads */
+	bool			ci_pci_probe;
+	bool			ci_pci_fault;
+
 	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
 
@@ -215,9 +226,8 @@ extern struct pool_cache *fpstate_cache;
 #define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpus; ci != NULL; \
-					ci = ci->ci_next
+#define CPU_INFO_ITERATOR		int __unused
+#define CPU_INFO_FOREACH(cii, ci)	ci = cpus; ci != NULL; ci = ci->ci_next
 
 #define curlwp		curcpu()->ci_curlwp
 #define fplwp		curcpu()->ci_fplwp
@@ -344,6 +354,9 @@ void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);
 
+/* cpu.c */
+int	cpu_myid(void);
+
 /* disksubr.c */
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
@@ -353,11 +366,14 @@ void *	reserve_dumppages(void *);
 struct timeval;
 int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
 int	stickintr(void *);	/* system tick interrupt code */
+int	stick2eintr(void *);	/* system tick interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
 int	schedintr(void *);	/* level 10 (schedclock) interrupt code */
 void	tickintr_establish(int, int (*)(void *));
 void	stickintr_establish(int, int (*)(void *));
+void	stick2eintr_establish(int, int (*)(void *));
+
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
@@ -365,6 +381,7 @@ void	loadfpstate(struct fpstate64 *);
 void	clearfpstate(void);
 uint64_t	probeget(paddr_t, int, int);
 int	probeset(paddr_t, int, int, uint64_t);
+void	setcputyp(int);
 
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )

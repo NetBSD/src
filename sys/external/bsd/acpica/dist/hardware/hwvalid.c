@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: hwvalid - I/O request validation
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -149,6 +148,8 @@ AcpiHwValidateIoRequest (
         (BitWidth != 16) &&
         (BitWidth != 32))
     {
+        ACPI_ERROR ((AE_INFO,
+            "Bad BitWidth parameter: %8.8X", BitWidth));
         return (AE_BAD_PARAMETER);
     }
 
@@ -362,5 +363,3 @@ AcpiHwWritePort (
 
     return (AE_OK);
 }
-
-

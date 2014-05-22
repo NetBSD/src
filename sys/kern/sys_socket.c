@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.64.2.1 2012/04/17 00:08:29 yamt Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.64.2.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.64.2.1 2012/04/17 00:08:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.64.2.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ const struct fileops socketops = {
 	.fo_kqfilter = soo_kqfilter,
 	.fo_restart = soo_restart,
 };
+
+int (*ifioctl)(struct socket *, u_long, void *, struct lwp *) = (void *)eopnotsupp;
 
 /* ARGSUSED */
 int
@@ -198,8 +200,6 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		KERNEL_LOCK(1, NULL);
 		if (IOCGROUP(cmd) == 'i')
 			error = ifioctl(so, cmd, data, curlwp);
-		else if (IOCGROUP(cmd) == 'r')
-			error = rtioctl(cmd, data, curlwp);
 		else {
 			error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			    (struct mbuf *)cmd, (struct mbuf *)data, NULL,

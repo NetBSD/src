@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.65.2.3 2013/01/23 00:06:20 yamt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.65.2.4 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65.2.3 2013/01/23 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65.2.4 2014/05/22 11:41:03 yamt Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -508,7 +508,7 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 		return;
 
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
-	    &kernel_symtab, start, ctfstart, ctfsize, ksyms_nmap);
+	    &kernel_symtab, symstart, ctfstart, ctfsize, ksyms_nmap);
 
 #ifdef DEBUG
 	aprint_normal("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
@@ -1135,6 +1135,15 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 }
 
 const struct cdevsw ksyms_cdevsw = {
-	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
-	nullstop, notty, nopoll, nommap, nullkqfilter, D_OTHER | D_MPSAFE
+	.d_open = ksymsopen,
+	.d_close = ksymsclose,
+	.d_read = ksymsread,
+	.d_write = ksymswrite,
+	.d_ioctl = ksymsioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nullkqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };

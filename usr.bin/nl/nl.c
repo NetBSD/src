@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
+/*	$NetBSD: nl.c,v 1.11.2.1 2014/05/22 11:42:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $");
+__RCSID("$NetBSD: nl.c,v 1.11.2.1 2014/05/22 11:42:47 yamt Exp $");
 #endif    
 
 #include <errno.h>
@@ -240,7 +240,8 @@ main(int argc, char *argv[])
 	case 0:
 		break;
 	case 1:
-		if (freopen(argv[0], "r", stdin) == NULL)
+		if (strcmp(argv[0], "-") != 0 &&
+		    freopen(argv[0], "r", stdin) == NULL)
 			err(EXIT_FAILURE, "Cannot open `%s'", argv[0]);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.109.2.1 2012/04/17 00:08:31 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.109.2.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.109.2.1 2012/04/17 00:08:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.109.2.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -175,7 +175,7 @@ soisconnected(struct socket *so)
 	KASSERT(solocked(so));
 	KASSERT(head == NULL || solocked2(so, head));
 
-	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
+	so->so_state &= ~(SS_ISCONNECTING | SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTED;
 	if (head && so->so_onq == &head->so_q0) {
 		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
@@ -239,21 +239,19 @@ soinit2(void)
  * connection is possible (subject to space constraints, etc.)
  * then we allocate a new structure, propoerly linked into the
  * data structure of the original socket, and return this.
- * Connstatus may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
  */
 struct socket *
-sonewconn(struct socket *head, int connstatus)
+sonewconn(struct socket *head, bool conncomplete)
 {
 	struct socket	*so;
 	int		soqueue, error;
 
-	KASSERT(connstatus == 0 || connstatus == SS_ISCONFIRMING ||
-	    connstatus == SS_ISCONNECTED);
 	KASSERT(solocked(head));
 
 	if ((head->so_options & SO_ACCEPTFILTER) != 0)
-		connstatus = 0;
-	soqueue = connstatus ? 1 : 0;
+		conncomplete = false;
+	soqueue = conncomplete ? 1 : 0;
+
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return NULL;
 	so = soget(false);
@@ -301,10 +299,10 @@ out:
 		soput(so);
 		return NULL;
 	}
-	if (connstatus) {
+	if (conncomplete) {
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
-		so->so_state |= connstatus;
+		so->so_state |= SS_ISCONNECTED;
 	}
 	return so;
 }
@@ -724,7 +722,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 
 	KASSERT(solocked(sb->sb_so));
 
-	if (m == 0)
+	if (m == NULL)
 		return;
 
 #ifdef MBUFTRACE
@@ -821,7 +819,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 
 	KASSERT(solocked(sb->sb_so));
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 #ifdef MBUFTRACE
@@ -856,7 +854,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 
 	KASSERT(solocked(sb->sb_so));
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	SBLASTRECORDCHK(sb, "sbinsertoob 1");
@@ -923,13 +921,13 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 	for (n = control; n; n = n->m_next) {
 		space += n->m_len;
 		MCLAIM(n, sb->sb_mowner);
-		if (n->m_next == 0)	/* keep pointer to last control buf */
+		if (n->m_next == NULL)	/* keep pointer to last control buf */
 			break;
 	}
 	if (space > sbspace(sb))
 		return (0);
-	MGET(m, M_DONTWAIT, MT_SONAME);
-	if (m == 0)
+	m = m_get(M_DONTWAIT, MT_SONAME);
+	if (m == NULL)
 		return (0);
 	MCLAIM(m, sb->sb_mowner);
 	/*
@@ -981,16 +979,16 @@ m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
 	KASSERT(solocked(sb->sb_so));
 
 	/* only the first in each chain need be a pkthdr */
-	MGETHDR(m, M_DONTWAIT, MT_SONAME);
-	if (m == 0)
-		return (0);
+	m = m_gethdr(M_DONTWAIT, MT_SONAME);
+	if (m == NULL)
+		return NULL;
 	MCLAIM(m, sb->sb_mowner);
 #ifdef notyet
 	if (salen > MHLEN) {
 		MEXTMALLOC(m, salen, M_NOWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
-			return (0);
+			return NULL;
 		}
 	}
 #else
@@ -1008,7 +1006,6 @@ int
 sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 		  struct mbuf *m0, int sbprio)
 {
-	int space;
 	struct mbuf *m, *n, *n0, *nlast;
 	int error;
 
@@ -1032,9 +1029,9 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
 		panic("sbappendaddrchain");
 
+#ifdef notyet
 	space = sbspace(sb);
 
-#ifdef notyet
 	/*
 	 * Enforce SB_PRIO_* limits as described above.
 	 */
@@ -1099,7 +1096,7 @@ bad:
 		n0 = n->m_nextpkt;	/* iterate at next prepended address */
 		MFREE(n, np);		/* free prepended address (not data) */
 	}
-	return 0;
+	return error;
 }
 
 
@@ -1112,12 +1109,12 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	KASSERT(solocked(sb->sb_so));
 
 	space = 0;
-	if (control == 0)
+	if (control == NULL)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
 		space += m->m_len;
 		MCLAIM(m, sb->sb_mowner);
-		if (m->m_next == 0)
+		if (m->m_next == NULL)
 			break;
 	}
 	n = m;			/* save pointer to last control buffer */
@@ -1231,11 +1228,12 @@ sbdrop(struct sockbuf *sb, int len)
 
 	KASSERT(solocked(sb->sb_so));
 
-	next = (m = sb->sb_mb) ? m->m_nextpkt : 0;
+	next = (m = sb->sb_mb) ? m->m_nextpkt : NULL;
 	while (len > 0) {
-		if (m == 0) {
-			if (next == 0)
-				panic("sbdrop");
+		if (m == NULL) {
+			if (next == NULL)
+				panic("sbdrop(%p,%d): cc=%lu",
+				    sb, len, sb->sb_cc);
 			m = next;
 			next = m->m_nextpkt;
 			continue;
@@ -1301,32 +1299,49 @@ sbdroprecord(struct sockbuf *sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(void *p, int size, int type, int level)
+sbcreatecontrol1(void **p, int size, int type, int level, int flags)
 {
 	struct cmsghdr	*cp;
 	struct mbuf	*m;
+	int space = CMSG_SPACE(size);
 
-	if (CMSG_SPACE(size) > MCLBYTES) {
-		printf("sbcreatecontrol: message too large %d\n", size);
+	if ((flags & M_DONTWAIT) && space > MCLBYTES) {
+		printf("%s: message too large %d\n", __func__, space);
 		return NULL;
 	}
 
-	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
-		return (NULL);
-	if (CMSG_SPACE(size) > MLEN) {
-		MCLGET(m, M_DONTWAIT);
+	if ((m = m_get(flags, MT_CONTROL)) == NULL)
+		return NULL;
+	if (space > MLEN) {
+		if (space > MCLBYTES)
+			MEXTMALLOC(m, space, M_WAITOK);
+		else
+			MCLGET(m, flags);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
 			return NULL;
 		}
 	}
 	cp = mtod(m, struct cmsghdr *);
-	memcpy(CMSG_DATA(cp), p, size);
-	m->m_len = CMSG_SPACE(size);
+	*p = CMSG_DATA(cp);
+	m->m_len = space;
 	cp->cmsg_len = CMSG_LEN(size);
 	cp->cmsg_level = level;
 	cp->cmsg_type = type;
-	return (m);
+	return m;
+}
+
+struct mbuf *
+sbcreatecontrol(void *p, int size, int type, int level)
+{
+	struct mbuf *m;
+	void *v;
+
+	m = sbcreatecontrol1(&v, size, type, level, M_DONTWAIT);
+	if (m == NULL)
+		return NULL;
+	memcpy(v, p, size);
+	return m;
 }
 
 void

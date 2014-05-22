@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.32.6.1 2012/05/23 10:07:32 yamt Exp $	*/
+/*	$NetBSD: readline.h,v 1.32.6.2 2014/05/22 11:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -125,6 +125,8 @@ extern char		*rl_prompt;
 /*
  * The following is not implemented
  */
+extern int		rl_catch_signals;
+extern int		rl_catch_sigwinch;
 extern KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
 			emacs_meta_keymap,
 			emacs_ctlx_keymap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.18.6.1 2013/01/23 00:05:29 yamt Exp $	*/
+/*	$NetBSD: itime.c,v 1.18.6.2 2014/05/22 11:37:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,16 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.18.6.1 2013/01/23 00:05:29 yamt Exp $");
+__RCSID("$NetBSD: itime.c,v 1.18.6.2 2014/05/22 11:37:27 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
-#include <ufs/ufs/dinode.h>
-
-#include <protocols/dumprestore.h>
 
 #include <errno.h>
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.100.2.3 2013/01/23 00:06:20 yamt Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.100.2.4 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100.2.3 2013/01/23 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100.2.4 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,6 +102,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	int error = 0, i;
 	pid_t mntpid = curlwp->l_proc->p_pid;
 
+	if (data == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -115,12 +117,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	/* update is not supported currently */
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
-
-	/*
-	 * We need the file system name
-	 */
-	if (!data)
-		return EINVAL;
 
 	args = (struct puffs_kargs *)data;
 
@@ -518,14 +514,12 @@ static int
 pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 {
 	struct puffs_node *pn;
-	struct vnode *vp, *mvp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	int error, rv, fsyncwait;
 
 	error = 0;
 	fsyncwait = (waitfor == MNT_WAIT) ? FSYNC_WAIT : 0;
-
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
 
 	/*
 	 * Sync all cached data from regular vnodes (which are not
@@ -533,22 +527,8 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 	 * for the fs server, which should handle data and metadata for
 	 * all the nodes it knows to exist.
 	 */
-	mutex_enter(&mntvnode_lock);
- loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
-			continue;
-
-		mutex_enter(vp->v_interlock);
-		pn = VPTOPP(vp);
-		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-
-		mutex_exit(&mntvnode_lock);
-
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
 		/*
 		 * Here we try to get a reference to the vnode and to
 		 * lock it.  This is mostly cargo-culted, but I will
@@ -564,13 +544,14 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		 * vnodes through other routes in any case.  So there,
 		 * sync() doesn't actually sync.  Happy now?
 		 */
-		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (rv) {
-			mutex_enter(&mntvnode_lock);
-			if (rv == ENOENT) {
-				(void)vunmark(mvp);
-				goto loop;
-			}
+		error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
+		if (error) {
+			vrele(vp);
+			continue;
+		}
+		pn = VPTOPP(vp);
+		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
+			vput(vp);
 			continue;
 		}
 
@@ -589,10 +570,8 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		if (rv)
 			error = rv;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 
 	return error;
 }
@@ -845,31 +824,27 @@ const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 };
 
 struct vfsops puffs_vfsops = {
-	MOUNT_PUFFS,
-	sizeof (struct puffs_kargs),
-	puffs_vfsop_mount,		/* mount	*/
-	puffs_vfsop_start,		/* start	*/
-	puffs_vfsop_unmount,		/* unmount	*/
-	puffs_vfsop_root,		/* root		*/
-	(void *)eopnotsupp,		/* quotactl	*/
-	puffs_vfsop_statvfs,		/* statvfs	*/
-	puffs_vfsop_sync,		/* sync		*/
-	(void *)eopnotsupp,		/* vget		*/
-	puffs_vfsop_fhtovp,		/* fhtovp	*/
-	puffs_vfsop_vptofh,		/* vptofh	*/
-	puffs_vfsop_init,		/* init		*/
-	NULL,				/* reinit	*/
-	puffs_vfsop_done,		/* done		*/
-	NULL,				/* mountroot	*/
-	puffs_vfsop_snapshot,		/* snapshot	*/
-	puffs_vfsop_extattrctl,		/* extattrctl	*/
-	(void *)eopnotsupp,		/* suspendctl	*/
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	puffs_vnodeopv_descs,		/* vnodeops	*/
-	0,				/* refcount	*/
-	{ NULL, NULL }
+	.vfs_name = MOUNT_PUFFS,
+	.vfs_min_mount_data = sizeof (struct puffs_kargs),
+	.vfs_mount = puffs_vfsop_mount,
+	.vfs_start = puffs_vfsop_start,
+	.vfs_unmount = puffs_vfsop_unmount,
+	.vfs_root = puffs_vfsop_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = puffs_vfsop_statvfs,
+	.vfs_sync = puffs_vfsop_sync,
+	.vfs_vget = (void *)eopnotsupp,
+	.vfs_fhtovp = puffs_vfsop_fhtovp,
+	.vfs_vptofh = puffs_vfsop_vptofh,
+	.vfs_init = puffs_vfsop_init,
+	.vfs_done = puffs_vfsop_done,
+	.vfs_snapshot = puffs_vfsop_snapshot,
+	.vfs_extattrctl = puffs_vfsop_extattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = puffs_vnodeopv_descs
 };
 
 static int

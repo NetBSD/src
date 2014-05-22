@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.12 2011/05/21 15:50:42 tsutsui Exp $	*/
+/*	$NetBSD: Locore.c,v 1.12.4.1 2014/05/22 11:40:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -231,7 +231,7 @@ OF_close(int handle)
 	
 	args.name = ADR2CELL("close");
 	args.nargs = 1;
-	args.nreturns = 1;
+	args.nreturns = 0;
 	args.handle = HDL2CELL(handle);
 	openfirmware(&args);
 }

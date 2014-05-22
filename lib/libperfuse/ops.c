@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.43.2.4 2013/01/16 05:32:26 yamt Exp $ */
+/*  $NetBSD: ops.c,v 1.43.2.5 2014/05/22 11:36:59 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -644,13 +644,23 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 */
 		if (fd->ino == PERFUSE_UNKNOWN_INO) {
 			struct puffs_node *pn;
+			struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 
-			if (node_lookup_common(pu, opc, NULL, fd->name,
-					       NULL, &pn) != 0) {
-				DWARNX("node_lookup_common failed");
+			/* 
+			 * Avoid breaking out of fs 
+			 * by lookup to .. on root
+			 */
+			if ((strcmp(fd->name, "..") == 0) && 
+			    (pnd->pnd_nodeid == FUSE_ROOT_ID)) {
+				fd->ino = FUSE_ROOT_ID;
 			} else {
-				fd->ino = pn->pn_va.va_fileid;
-				(void)perfuse_node_reclaim(pu, pn);
+				if (node_lookup_common(pu, opc, NULL, fd->name,
+						       NULL, &pn) != 0) {
+					DWARNX("node_lookup_common failed");
+				} else {
+					fd->ino = pn->pn_va.va_fileid;
+					(void)perfuse_node_reclaim(pu, pn);
+				}
 			}
 		}
 
@@ -1369,10 +1379,33 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 * Do not open twice, and do not reopen for reading
 	 * if we already have write handle.
 	 */
-	if (((mode & FREAD) && (pnd->pnd_flags & PND_RFH)) ||
-	    ((mode & FREAD) && (pnd->pnd_flags & PND_WFH)) ||
-	    ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH)))
+	switch (mode & (FREAD|FWRITE)) {
+	case FREAD:
+		if (pnd->pnd_flags & (PND_RFH|PND_WFH))
+			goto out;
+		break;
+	case FWRITE:
+		if (pnd->pnd_flags & PND_WFH)
+			goto out;
+		break;
+	case FREAD|FWRITE:
+		if (pnd->pnd_flags & PND_WFH)
+			goto out;
+
+		/*
+		 * Corner case: if already open for reading (PND_RFH)
+		 * and re-opening FREAD|FWRITE, we need to reopen, 
+		 * but only for writing. Note the change on mode 
+		 * will only affect perfuse_new_fh()
+		 */
+		if (pnd->pnd_flags & PND_RFH)
+			mode &= ~FREAD;
+		break;
+	default:
+		DWARNX("open without either FREAD nor FWRITE");
+		error = EPERM;
 		goto out;
+	}
 	
 	/*
 	 * Queue open on a node so that we do not open
@@ -2723,8 +2756,8 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 #ifdef PERFUSE_DEBUG
 	if ((pnd->pnd_flags & PND_OPEN) ||
 	       !TAILQ_EMPTY(&pnd->pnd_pcq))
-		DERRX(EX_SOFTWARE, "%s: opc = %p: still open",
-		      __func__, opc);
+		DERRX(EX_SOFTWARE, "%s: opc = %p \"%s\": still open",
+		      __func__, opc, pnd->pnd_name);
 
 	if ((pnd->pnd_flags & PND_BUSY) ||
 	       !TAILQ_EMPTY(&pnd->pnd_pcq))

@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.8 2002/09/18 06:19:27 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.8.54.1 2014/05/22 11:36:46 yamt Exp $
 
-.if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000")
+.if ${MACHINE_CPU} == "m68k"
 NOLINT=		# defined
 SRCS=		m68k_sync_icache.S
 .endif

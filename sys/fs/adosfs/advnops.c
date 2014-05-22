@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.38.4.2 2013/01/23 00:06:18 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.38.4.3 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.38.4.2 2013/01/23 00:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.38.4.3 2014/05/22 11:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ adosfs_link(void *v)
 int
 adosfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -430,7 +430,6 @@ adosfs_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -776,7 +775,7 @@ adosfs_check_permitted(struct vnode *vp, struct anode *ap, mode_t mode,
 {
 	mode_t file_mode = adunixprot(ap->adprot) & ap->amp->mask;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    file_mode, ap->uid, ap->gid, mode, cred));
 }

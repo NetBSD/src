@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.10.2.1 2012/04/17 00:07:00 yamt Exp $ */
+/* $NetBSD: syscall.c,v 1.10.2.2 2014/05/22 11:40:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.1 2012/04/17 00:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.2 2014/05/22 11:40:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,16 +131,7 @@ syscall(void)
 	md_syscall_inc_pc(ucp, opcode);
 
 	if (!error) {
-		if (!__predict_false(p->p_trace_enabled)
-		    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-		    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
-			error = (*callp->sy_call)(l, args, rval);
-		}
-
-		if (__predict_false(p->p_trace_enabled)
-		    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-			trace_exit(code, rval, error);
-		}
+		error = sy_invoke(callp, l, args, rval, code);
 	}
 
 	syscall_retvals_print(l, curlwp, code, nargs, args, error, rval);

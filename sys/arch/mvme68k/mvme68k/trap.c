@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105.4.1 2012/04/17 00:06:42 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.105.4.2 2014/05/22 11:39:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105.4.1 2012/04/17 00:06:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105.4.2 2014/05/22 11:39:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -283,7 +283,7 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 	int s;
 	int rv;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
-	static int panicking = 0;
+	static int panicking __diagused;
 
 	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;

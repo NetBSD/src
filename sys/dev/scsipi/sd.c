@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.294.2.2 2012/05/23 10:08:05 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.294.2.3 2014/05/22 11:40:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.294.2.2 2012/05/23 10:08:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.294.2.3 2014/05/22 11:40:35 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -125,7 +125,7 @@ static int	sd_setcache(struct sd_softc *, int);
 static int	sdmatch(device_t, cfdata_t, void *);
 static void	sdattach(device_t, device_t, void *);
 static int	sddetach(device_t, int);
-static void	sd_set_properties(struct sd_softc *);
+static void	sd_set_geometry(struct sd_softc *);
 
 CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
     NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -157,12 +157,27 @@ static dev_type_dump(sddump);
 static dev_type_size(sdsize);
 
 const struct bdevsw sd_bdevsw = {
-	sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, D_DISK
+	.d_open = sdopen,
+	.d_close = sdclose,
+	.d_strategy = sdstrategy,
+	.d_ioctl = sdioctl,
+	.d_dump = sddump,
+	.d_psize = sdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw sd_cdevsw = {
-	sdopen, sdclose, sdread, sdwrite, sdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = sdopen,
+	.d_close = sdclose,
+	.d_read = sdread,
+	.d_write = sdwrite,
+	.d_ioctl = sdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver sddkdriver = { sdstrategy, sdminphys };
@@ -215,7 +230,7 @@ sdattach(device_t parent, device_t self, void *aux)
 	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
-	int error, result, rndval = cprng_strong32();
+	int error, result;
 	struct disk_parms *dp = &sd->params;
 	char pbuf[9];
 
@@ -328,16 +343,16 @@ sdattach(device_t parent, device_t self, void *aux)
 	 * these bits, on insertion, because the deltas to the
 	 * nonexistent) previous event should never allow it.
 	 */
-	rnd_add_uint32(&sd->rnd_source, rndval);
+	rnd_add_uint32(&sd->rnd_source, 0);
 }
 
 static int
 sddetach(device_t self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
-	int s, bmaj, cmaj, i, mn, rc, rndval = cprng_strong32();
+	int s, bmaj, cmaj, i, mn, rc;
 
-	rnd_add_uint32(&sd->rnd_source, rndval);
+	rnd_add_uint32(&sd->rnd_source, 0);
 
 	if ((rc = disk_begindetach(&sd->sc_dk, sdlastclose, self, flags)) != 0)
 		return rc;
@@ -773,7 +788,7 @@ sdstart(struct scsipi_periph *periph)
 	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
-	int nblks, cmdlen, error, flags;
+	int nblks, cmdlen, error __diagused, flags;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
 	/*
@@ -998,7 +1013,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
-	int error = 0;
+	int error;
 	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
@@ -1040,6 +1055,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
@@ -1202,8 +1218,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				sd->flags &= ~SDF_FLUSHING;
 			else
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
-		} else
-			error = 0;
+		}
 		return (error);
 
 	case DIOCAWEDGE:
@@ -1319,7 +1334,10 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	 */
 	strncpy(lp->d_typename, sd->name, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
-	lp->d_secperunit = sd->params.disksize;
+	if (sd->params.disksize > UINT32_MAX)
+		lp->d_secperunit = UINT32_MAX;
+	else
+		lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
 	lp->d_flags = sd->sc_periph->periph_flags & PERIPH_REMOVABLE ?
@@ -2157,7 +2175,7 @@ page0:
 	dp->rot_rate = 3600;
 
 setprops:
-	sd_set_properties(sd);
+	sd_set_geometry(sd);
 
 	return (SDGP_RESULT_OK);
 }
@@ -2295,42 +2313,17 @@ sd_setcache(struct sd_softc *sd, int bits)
 }
 
 static void
-sd_set_properties(struct sd_softc *sd)
+sd_set_geometry(struct sd_softc *sd)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &sd->sc_dk.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	geom = prop_dictionary_create();
+	dg->dg_secperunit = sd->params.disksize;
+	dg->dg_secsize = sd->params.blksize;
+	dg->dg_nsectors = sd->params.sectors;
+	dg->dg_ntracks = sd->params.heads;
+	dg->dg_ncylinders = sd->params.cyls;
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    sd->params.disksize);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    sd->params.blksize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    sd->params.sectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    sd->params.heads);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    sd->params.cyls);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(sd->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = sd->sc_dk.dk_info;
-	sd->sc_dk.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+	disk_set_info(sd->sc_dev, &sd->sc_dk, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi_ieee754.c,v 1.1.2.1 2012/10/30 18:58:45 yamt Exp $	*/
+/*	$NetBSD: fixunsdfsi_ieee754.c,v 1.1.2.2 2014/05/22 11:36:52 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fixunsdfsi_ieee754.c,v 1.1.2.1 2012/10/30 18:58:45 yamt Exp $");
+__RCSID("$NetBSD: fixunsdfsi_ieee754.c,v 1.1.2.2 2014/05/22 11:36:52 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdbool.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: fixunsdfsi_ieee754.c,v 1.1.2.1 2012/10/30 18:58:45 yamt Exp $"
 #include <float.h>
 #include <machine/ieee.h>
 
-#ifdef SOFTFLOAT
+#if defined(SOFTFLOAT) || defined(__ARM_EABI__)
 #include "softfloat/softfloat-for-gcc.h"
 #endif
 

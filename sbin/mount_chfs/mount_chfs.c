@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_chfs.c,v 1.1.4.2 2012/04/17 00:05:41 yamt Exp $	*/
+/*	$NetBSD: mount_chfs.c,v 1.1.4.3 2014/05/22 11:37:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -52,14 +52,6 @@
 
 #include "mountprog.h"
 #include "mount_chfs.h"
-
-/* --------------------------------------------------------------------- */
-
-static const struct mntopt mopts[] = {
-	MOPT_STDOPTS,
-	MOPT_GETARGS,
-	MOPT_NULL,
-};
 
 /* --------------------------------------------------------------------- */
 

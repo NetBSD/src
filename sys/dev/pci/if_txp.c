@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.38.8.1 2012/10/30 17:21:33 yamt Exp $ */
+/* $NetBSD: if_txp.c,v 1.38.8.2 2014/05/22 11:40:25 yamt Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.8.1 2012/10/30 17:21:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.8.2 2014/05/22 11:40:25 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -197,6 +197,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	u_int16_t subsys;
 	int i, flags;
 	char devinfo[256];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_cold = 1;
@@ -247,7 +248,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, txp_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");

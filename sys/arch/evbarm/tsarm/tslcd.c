@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.14.2.2 2013/01/16 05:32:57 yamt Exp $ */
+/* $NetBSD: tslcd.c,v 1.14.2.3 2014/05/22 11:39:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14.2.2 2013/01/16 05:32:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14.2.3 2014/05/22 11:39:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,17 @@ dev_type_ioctl(tslcdioctl);
 dev_type_poll(tslcdpoll);
 
 const struct cdevsw tslcd_cdevsw = {
-	tslcdopen, tslcdclose, tslcdread, tslcdwrite, tslcdioctl,
-	nostop, notty, tslcdpoll, nommap,
+	.d_open = tslcdopen,
+	.d_close = tslcdclose,
+	.d_read = tslcdread,
+	.d_write = tslcdwrite,
+	.d_ioctl = tslcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tslcdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 extern const struct wsdisplay_emulops hlcd_emulops;

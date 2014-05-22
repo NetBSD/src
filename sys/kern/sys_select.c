@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.36 2011/08/29 00:39:16 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.36.2.1 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.36 2011/08/29 00:39:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.36.2.1 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,7 @@ selrecord(lwp_t *selector, struct selinfo *sip)
 
 	if (other == selector) {
 		/* 1. We (selector) already claimed to be the first LWP. */
-		KASSERT(sip->sel_cluster = sc);
+		KASSERT(sip->sel_cluster == sc);
 	} else if (other == NULL) {
 		/*
 		 * 2. No first LWP, therefore we (selector) are the first.
@@ -875,80 +875,16 @@ seldestroy(struct selinfo *sip)
 	mutex_spin_exit(lock);
 }
 
-int
-pollsock(struct socket *so, const struct timespec *tsp, int events)
-{
-	int		ncoll, error, timo;
-	struct timespec	sleepts, ts;
-	selcluster_t	*sc;
-	lwp_t		*l;
-	kmutex_t	*lock;
-
-	timo = 0;
-	if (tsp != NULL) {
-		ts = *tsp;
-		if (inittimeleft(&ts, &sleepts) == -1)
-			return EINVAL;
-	}
-
-	l = curlwp;
-	sc = curcpu()->ci_data.cpu_selcluster;
-	lock = sc->sc_lock;
-	l->l_selcluster = sc;
-	SLIST_INIT(&l->l_selwait);
-	error = 0;
-	for (;;) {
-		/*
-		 * No need to lock.  If this is overwritten by another
-		 * value while scanning, we will retry below.  We only
-		 * need to see exact state from the descriptors that
-		 * we are about to poll, and lock activity resulting
-		 * from fo_poll is enough to provide an up to date value
-		 * for new polling activity.
-		 */
-		ncoll = sc->sc_ncoll;
-		l->l_selflag = SEL_SCANNING;
-		if (sopoll(so, events) != 0)
-			break;
-		if (tsp && (timo = gettimeleft(&ts, &sleepts)) <= 0)
-			break;
-		mutex_spin_enter(lock);
-		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {
-			mutex_spin_exit(lock);
-			continue;
-		}
-		l->l_selflag = SEL_BLOCKING;
-		sleepq_enter(&sc->sc_sleepq, l, lock);
-		sleepq_enqueue(&sc->sc_sleepq, sc, "pollsock", &select_sobj);
-		error = sleepq_block(timo, true);
-		if (error != 0)
-			break;
-	}
-	selclear();
-	/* poll is not restarted after signals... */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-	return (error);
-}
-
 /*
  * System control nodes.
  */
 SYSCTL_SETUP(sysctl_select_setup, "sysctl select setup")
 {
-	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "direct_select",
 		SYSCTL_DESCR("Enable/disable direct select (for testing)"),
 		NULL, 0, &direct_select, 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_KERN, CTL_CREATE, CTL_EOL);
 }

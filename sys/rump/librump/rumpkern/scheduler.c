@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.27.2.3 2013/01/16 05:33:51 yamt Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.27.2.4 2014/05/22 11:41:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27.2.3 2013/01/16 05:33:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27.2.4 2014/05/22 11:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -158,21 +158,21 @@ rump_scheduler_init(int numcpu)
 	struct cpu_info *ci;
 	int i;
 
-	rumpuser_mutex_init(&lwp0mtx);
+	rumpuser_mutex_init(&lwp0mtx, RUMPUSER_MTX_SPIN);
 	rumpuser_cv_init(&lwp0cv);
 	for (i = 0; i < numcpu; i++) {
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		rcpu->rcpu_ci = ci;
 		ci->ci_schedstate.spc_mutex =
-		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 		ci->ci_schedstate.spc_flags = SPCF_RUNNING;
 		rcpu->rcpu_wanted = 0;
 		rumpuser_cv_init(&rcpu->rcpu_cv);
-		rumpuser_mutex_init(&rcpu->rcpu_mtx);
+		rumpuser_mutex_init(&rcpu->rcpu_mtx, RUMPUSER_MTX_SPIN);
 	}
 
-	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 /*
@@ -225,7 +225,8 @@ lwp0rele(void)
 
 /*
  * rump_schedule: ensure that the calling host thread has a valid lwp context.
- * ie. ensure that rumpuser_get_curlwp() != NULL.
+ * ie. ensure that curlwp != NULL.  Also, ensure that there
+ * a 1:1 mapping between the lwp and rump kernel cpu.
  */
 void
 rump_schedule()
@@ -239,7 +240,7 @@ rump_schedule()
 	 * for this case -- anyone who cares about performance will
 	 * start a real thread.
 	 */
-	if (__predict_true((l = rumpuser_get_curlwp()) != NULL)) {
+	if (__predict_true((l = curlwp) != NULL)) {
 		rump_schedule_cpu(l);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
@@ -247,7 +248,7 @@ rump_schedule()
 
 		/* schedule cpu and use lwp0 */
 		rump_schedule_cpu(&lwp0);
-		rumpuser_set_curlwp(&lwp0);
+		rump_lwproc_curlwp_set(&lwp0);
 
 		/* allocate thread, switch to it, and release lwp0 */
 		l = rump__lwproc_alloclwp(initproc);
@@ -364,7 +365,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 void
 rump_unschedule()
 {
-	struct lwp *l = rumpuser_get_curlwp();
+	struct lwp *l = curlwp;
 #ifdef DIAGNOSTIC
 	int nlock;
 
@@ -398,10 +399,10 @@ rump_unschedule()
 		lwp0.l_mutex = &unruntime_lock;
 		lwp0.l_pflag &= ~LP_RUNNING;
 		lwp0rele();
-		rumpuser_set_curlwp(NULL);
+		rump_lwproc_curlwp_clear(&lwp0);
 
 	} else if (__predict_false(l->l_flag & LW_RUMP_CLEAR)) {
-		rumpuser_set_curlwp(NULL);
+		rump_lwproc_curlwp_clear(l);
 		l->l_flag &= ~LW_RUMP_CLEAR;
 	}
 }
@@ -512,14 +513,14 @@ void
 kpreempt_disable(void)
 {
 
-	//KPREEMPT_DISABLE(curlwp);
+	KPREEMPT_DISABLE(curlwp);
 }
 
 void
 kpreempt_enable(void)
 {
 
-	//KPREEMPT_ENABLE(curlwp);
+	KPREEMPT_ENABLE(curlwp);
 }
 
 bool
@@ -544,4 +545,20 @@ sched_nice(struct proc *p, int level)
 {
 
 	/* nothing to do for now */
+}
+
+void
+sched_enqueue(struct lwp *l, bool swtch)
+{
+
+	if (swtch)
+		panic("sched_enqueue with switcheroo");
+	rump_thread_allow(l);
+}
+
+void
+sched_dequeue(struct lwp *l)
+{
+
+	panic("sched_dequeue not implemented");
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1096.2.4 2013/01/16 05:33:19 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1096.2.5 2014/05/22 11:40:26 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1146 2012/12/06 12:46:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1188 2014/04/26 07:32:26 mrg Exp
  */
 
 /*
@@ -636,10 +636,12 @@
 #define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale Semiconductor */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
+#define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
+#define	PCI_VENDOR_QINHENG2	0x1c00		/* Nanjing QinHeng Electronics (PCIe) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* SUNIX Co */
@@ -941,6 +943,7 @@
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 Gigabit Ethernet */
 #define	PCI_PRODUCT_ALTIMA_AC1001	0x03e9		/* AC1001 Gigabit Ethernet */
 #define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 Gigabit Ethernet */
+#define	PCI_PRODUCT_ALTIMA_AC1003	0x03eb		/* AC1003 Gigabit Ethernet */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_AMD64_HT	0x1100		/* K8 AMD64 HyperTransport Configuration */
@@ -1047,12 +1050,18 @@
 #define	PCI_PRODUCT_AMD_HUDSON_LPC	0x780e		/* Hudson LPC Bridge */
 #define	PCI_PRODUCT_AMD_HUDSON_PCI	0x780f		/* Hudson PCI Bridge */
 #define	PCI_PRODUCT_AMD_HUDSON_XHCI	0x7812		/* Hudson USB xHCI Controller */
-#define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS880 Host Bridge */
-#define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780 PCI-PCI Bridge (int gfx) */
+#define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host Bridge */
+#define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS785/RS880 Host Bridge */
+#define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780/RS880 PCI-PCI Bridge (int gfx) */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX0	0x9603		/* RS780 PCI-PCI Bridge (ext gfx port 0) */
-#define	PCI_PRODUCT_AMD_RS780_PPB0	0x9604		/* RS780 PCI-PCIE Bridge (port 0) */
-#define	PCI_PRODUCT_AMD_RS780_PPB1	0x9605		/* RS780 PCI-PCIE Bridge (port 1) */
+#define	PCI_PRODUCT_AMD_RS780_PPB0	0x9604		/* RS780/RS880 PCI-PCIE Bridge (port 0) */
+#define	PCI_PRODUCT_AMD_RS780_PPB1	0x9605		/* RS780/RS880 PCI-PCIE Bridge (port 1) */
 #define	PCI_PRODUCT_AMD_RS780_PPB2	0x9606		/* RS780 PCI-PCIE Bridge (port 2) */
+#define	PCI_PRODUCT_AMD_RS780_PPB3	0x9607		/* RS780 PCI-PCIE Bridge (port 3) */
+#define	PCI_PRODUCT_AMD_RS780_PPB4	0x9608		/* RS780/RS880 PCI-PCIE Bridge (port 4) */
+#define	PCI_PRODUCT_AMD_RS780_PPB5	0x9609		/* RS780/RS880 PCI-PCIE Bridge (port 5) */
+#define	PCI_PRODUCT_AMD_RS780_PPB6	0x960a		/* RS780 PCI-PCIE Bridge (NB-SB link) */
+#define	PCI_PRODUCT_AMD_RS780_PPB7	0x960b		/* RS780 PCI-PCIE Bridge (ext gfx port 1) */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
@@ -1126,6 +1135,7 @@
 #define	PCI_PRODUCT_APPLE_INTREPID2_ATA	0x0069		/* Intrepid 2 ATA */
 #define	PCI_PRODUCT_APPLE_INTREPID2_FW	0x006a		/* Intrepid 2 FireWire */
 #define	PCI_PRODUCT_APPLE_INTREPID2_GMAC	0x006b		/* Intrepid 2 GMAC */
+#define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -1160,6 +1170,7 @@
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_02	0x0602		/* ASM1061 AHCI SATA III Controller */
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_11	0x0611		/* ASM1061 AHCI SATA III Controller */
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_12	0x0612		/* ASM1061 AHCI SATA III Controller */
+#define	PCI_PRODUCT_ASMEDIA_ASM1042	0x1042		/* ASM1042 xHCI USB 3.0 */
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
@@ -1171,6 +1182,10 @@
 #define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* AR8131 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8151	0x1073		/* AR8151 v1.0 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8151_V2	0x1083		/* AR8151 v2.0 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8162	0x1090		/* AR8162 */
+#define	PCI_PRODUCT_ATTANSIC_AR8161	0x1091		/* AR8161 */
+#define	PCI_PRODUCT_ATTANSIC_AR8172	0x10a0		/* AR8172 */
+#define	PCI_PRODUCT_ATTANSIC_AR8171	0x10a1		/* AR8171 */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8152_B	0x2060		/* AR8152 v1.1 Fast Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8152_B2	0x2062		/* AR8152 v2.0 Fast Ethernet Adapter */
@@ -1235,9 +1250,9 @@
 #define	PCI_PRODUCT_ATI_SB600_SATA_1	0x4380		/* SB600 SATA Controller */
 #define	PCI_PRODUCT_ATI_SB600_SATA_2	0x4381		/* SB600 SATA Controller */
 #define	PCI_PRODUCT_ATI_SB600_AC97_AUDIO	0x4382		/* SB600 AC97 Audio */
-#define	PCI_PRODUCT_ATI_SB600_AZALIA	0x4383		/* SB600 Azalia */
-#define	PCI_PRODUCT_ATI_SB600_PPB_4384	0x4384		/* SB600 PCI to PCI Bridge */
-#define	PCI_PRODUCT_ATI_SB600_SMB	0x4385		/* SB600/SB700/SB800 SMBus Controller */
+#define	PCI_PRODUCT_ATI_SB600_AZALIA	0x4383		/* SBx00 Azalia */
+#define	PCI_PRODUCT_ATI_SB600_PPB	0x4384		/* SBx00 PCI to PCI Bridge */
+#define	PCI_PRODUCT_ATI_SB600_SMB	0x4385		/* SBx00 SMBus Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_EHCI	0x4386		/* SB600 USB EHCI Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI0	0x4387		/* SB600 USB OHCI0 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI1	0x4388		/* SB600 USB OHCI1 Controller */
@@ -1247,19 +1262,23 @@
 #define	PCI_PRODUCT_ATI_SB600_AC97_MODEM	0x438e		/* SB600 AC97 Modem */
 #define	PCI_PRODUCT_ATI_IXP_IDE_600	0x438c		/* SB600 IXP IDE Controller */
 #define	PCI_PRODUCT_ATI_SB600_PLB_438D	0x438d		/* SB600 PCI to LPC Bridge */
-#define	PCI_PRODUCT_ATI_SB700_SATA_IDE	0x4390		/* SB700/SB800 SATA Controller (IDE mode) */
-#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI	0x4391		/* SB700/SB800 SATA Controller (AHCI mode) */
-#define	PCI_PRODUCT_ATI_SB700_SATA_RAID	0x4392		/* SB700/SB800 RAID SATA Controller */
-#define	PCI_PRODUCT_ATI_SB700_SATA_RAID5	0x4393		/* SB700/SB800 RAID5 SATA Controller */
-#define	PCI_PRODUCT_ATI_SB700_SATA_FC	0x4394		/* SB700/SB800 FC SATA Controller */
-#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI2	0x4395		/* SB700/SB800 SATA Controller (AHCI mode) */
-#define	PCI_PRODUCT_ATI_SB700_USB_EHCI	0x4396		/* SB700/SB800 USB EHCI Controller */
-#define	PCI_PRODUCT_ATI_SB800_SATA	0x4395		/* SB800 SATA Controller */
-#define	PCI_PRODUCT_ATI_SB700_USB_OHCI0	0x4397		/* SB700/SB800 USB OHCI Controller */
-#define	PCI_PRODUCT_ATI_SB700_USB_OHCI1	0x4398		/* SB700/SB800 USB OHCI Controller */
-#define	PCI_PRODUCT_ATI_SB700_USB_OHCI2	0x4399		/* SB700/SB800 USB OHCI Controller */
-#define	PCI_PRODUCT_ATI_SB700_IDE	0x439c		/* SB700/SB800 IDE Controller */
-#define	PCI_PRODUCT_ATI_SB700_LPC	0x439d		/* SB700/SB800 LPC Host Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_IDE	0x4390		/* SB700-SB900 SATA Controller (IDE mode) */
+#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI	0x4391		/* SB700-SB900 SATA Controller (AHCI mode) */
+#define	PCI_PRODUCT_ATI_SB700_SATA_RAID	0x4392		/* SB700-SB900 RAID SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_RAID5	0x4393		/* SB700-SB900 RAID5 SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_FC	0x4394		/* SB700-SB900 FC SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI2	0x4395		/* SB700-SB900 SATA Controller (AHCI mode) */
+#define	PCI_PRODUCT_ATI_SB700_USB_EHCI	0x4396		/* SB700-SB900 USB EHCI Controller */
+#define	PCI_PRODUCT_ATI_SB800_SATA	0x4395		/* SB800/SB900 SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_OHCI0	0x4397		/* SB700-SB900 USB OHCI Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_OHCI1	0x4398		/* SB700-SB900 USB OHCI Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_OHCI2	0x4399		/* SB700-SB900 USB OHCI Controller */
+#define	PCI_PRODUCT_ATI_SB700_IDE	0x439c		/* SB700-SB900 IDE Controller */
+#define	PCI_PRODUCT_ATI_SB700_LPC	0x439d		/* SB700-SB900 LPC Host Controller */
+#define	PCI_PRODUCT_ATI_SB700_PCIE0	0x43a0		/* SB700-SB900 PCI to PCI bridge (PCIe 0) */
+#define	PCI_PRODUCT_ATI_SB700_PCIE1	0x43a1		/* SB700-SB900 PCI to PCI bridge (PCIe 1) */
+#define	PCI_PRODUCT_ATI_SB900_PCIE2	0x43a2		/* SB900 PCI to PCI bridge (PCIe 2) */
+#define	PCI_PRODUCT_ATI_SB900_PCIE3	0x43a3		/* SB900 PCI to PCI bridge (PCIe 3) */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_RADEON_RS250_D7	0x4437		/* Radeon Mobility 7000 IGP */
@@ -1504,6 +1523,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
 #define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
+#define	PCI_PRODUCT_ATI_RADEON_HD6320	0x9806		/* Radeon HD6320 Graphics */
+#define	PCI_PRODUCT_ATI_RADEON_HD7340	0x9808		/* Radeon HD7340 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD4350_HD	0xaa38		/* Radeon HD4350 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
@@ -1523,6 +1544,9 @@
 #define	PCI_PRODUCT_AMCIRCUITS_PCISYNC	0x812f		/* FZJ/ZEL Synchronisation Module */
 #define	PCI_PRODUCT_AMCIRCUITS_ADDI7800	0x818e		/* ADDI-DATA APCI-7800 8-port Serial */
 #define	PCI_PRODUCT_AMCIRCUITS_S5920	0x5920		/* S5920 PCI Target */
+
+/* ASPEED Technology products */
+#define	PCI_PRODUCT_ASPEED_AST2000	0x2000		/* ASPEED Graphics Family */
 
 /* Atheros Communications products */
 #define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 Wireless LAN */
@@ -1549,6 +1573,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR9287	0x002e		/* AR9287 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9300	0x0030		/* AR9300 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9485	0x0032		/* AR9485 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR9462	0x0034		/* AR9462 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 Wireless LAN Reference Card (Early AP11) */
 #define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 Wireless LAN (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_DEFAULT	0x1113		/* AR5212 Wireless LAN (no eeprom) */
@@ -1630,17 +1655,23 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5706	0x164a		/* BCM5706 NetXtreme II 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5708	0x164c		/* BCM5708 NetXtreme II 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5702FE	0x164d		/* BCM5702FE 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57710	0x164e		/* BCM57710 NetXtreme II 10Gb Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57711	0x164f		/* BCM57711 NetXtreme II 10Gb Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57711E	0x1650		/* BCM57711E NetXtreme II 10Gb Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705	0x1653		/* BCM5705 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705K	0x1654		/* BCM5705K 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5717	0x1655		/* BCM5717 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5718	0x1656		/* BCM5718 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_BROADCOM_BCM5720	0x1658		/* BCM5720 NetXtreme 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5719	0x1657		/* BCM5719 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5721	0x1659		/* BCM5721 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5722	0x165a		/* BCM5722 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5723	0x165b		/* BCM5723 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5724	0x165c		/* BCM5724 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705M	0x165d		/* BCM5705M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705M_ALT	0x165e		/* BCM5705M 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5720	0x165f		/* BCM5720 NetXtreme 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57712	0x1662		/* BCM57712 NetXtreme II 10Gb Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57712E	0x1663		/* BCM57712E NetXtreme II 10Gb Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5714	0x1668		/* BCM5714 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5714S	0x1669		/* BCM5714S 1000baseSX Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5780	0x166a		/* BCM5780 NetXtreme 1000baseT Ethernet */
@@ -1663,6 +1694,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5761	0x1681		/* BCM5761 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57762	0x1682		/* BCM57762 Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5764	0x1684		/* BCM5764 NetXtreme 1000baseT Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57766	0x1686		/* BCM57766 NetXtreme 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5761S	0x1688		/* BCM5761S 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5761SE	0x1689		/* BCM5761SE 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57760	0x1690		/* BCM57760 NetXtreme 1000baseT Ethernet */
@@ -1677,7 +1709,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5787	0x169b		/* BCM5787 NetLink 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5788	0x169c		/* BCM5788 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5789	0x169d		/* BCM5789 NetLink 1000baseT Ethernet */
-#define	PCI_PRODUCT_BROADCOM_BCM5785F	0x16a0		/* BCM5785F 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5785F	0x16a0		/* BCM5785F 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5702X	0x16a6		/* BCM5702X 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5703X	0x16a7		/* BCM5703X 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5704S	0x16a8		/* BCM5704S 1000baseSX Ethernet */
@@ -1686,9 +1718,11 @@
 #define	PCI_PRODUCT_BROADCOM_BCM57761	0x16b0		/* BCM57761 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57781	0x16b1		/* BCM57781 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57791	0x16b2		/* BCM57791 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57786	0x16b3		/* BCM57786 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57765	0x16b4		/* BCM57765 Integrated Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57785	0x16b5		/* BCM57785 Integrated Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57795	0x16b6		/* BCM57795 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM57782	0x16b7		/* BCM57782 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5702_ALT	0x16c6		/* BCM5702 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5703_ALT	0x16c7		/* BCM5703 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5781	0x16dd		/* BCM5781 Integrated Gigabit Ethernet */
@@ -2042,6 +2076,7 @@
 #define	PCI_PRODUCT_DIGI_ACCELEPORT8R920	0x0027		/* AccelePort 8r 920 8-port serial */
 #define	PCI_PRODUCT_DIGI_NEO4	0x00b0		/* Neo 4-port */
 #define	PCI_PRODUCT_DIGI_NEO8	0x00b1		/* Neo 8-port */
+#define	PCI_PRODUCT_DIGI_NEO8_PCIE	0x00f0		/* Neo 8-port (PCIe) */
 
 /* D-Link Systems products */
 #define	PCI_PRODUCT_DLINK_DL1002	0x1002		/* DL-1002 10/100 Ethernet */
@@ -2302,14 +2337,30 @@
 #define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
 #define	PCI_PRODUCT_MARVELL_MV64360	0x6460		/* MV6436x System Controller */
 #define	PCI_PRODUCT_MARVELL_MV64460	0x6480		/* MV6446x System Controller */
+#define	PCI_PRODUCT_MARVELL_MV6707	0x6707		/* MV6707 SoC Armada 370 */
+#define	PCI_PRODUCT_MARVELL_MV6710	0x6710		/* MV6710 SoC Armada 370 */
+#define	PCI_PRODUCT_MARVELL_MV6W11	0x6711		/* MV6W11 SoC Armada 370 */
 #define	PCI_PRODUCT_MARVELL_88SX7042	0x7042		/* 88SX7042 SATA IIe */
 #define	PCI_PRODUCT_MARVELL_MV78100	0x7810		/* MV78100 SoC Discovery Innovation */
+#define	PCI_PRODUCT_MARVELL_MV78130	0x7813		/* MV78130 SoC Armada XP */
+#define	PCI_PRODUCT_MARVELL_MV78160	0x7816		/* MV78160 SoC Armada XP */
 #define	PCI_PRODUCT_MARVELL_MV78200	0x7820		/* MV78200 SoC Discovery Innovation */
+#define	PCI_PRODUCT_MARVELL_MV78230	0x7823		/* MV78230 SoC Armada XP */
+#define	PCI_PRODUCT_MARVELL_MV78260	0x7826		/* MV78260 SoC Armada XP */
+#define	PCI_PRODUCT_MARVELL_MV78460	0x7846		/* MV78460 SoC Armada XP */
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
 
-#define	PCI_PRODUCT_MARVELL2_88SE9123	0x9123		/* 88SE9123 SATA II PCI-E AHCI Controller */
+#define	PCI_PRODUCT_MARVELL2_88SE9120	0x9120		/* 88SE9120 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE912X	0x9123		/* 88SE912[38] SATA II or III PCI-E AHCI Controller */
 #define	PCI_PRODUCT_MARVELL2_88SE9125	0x9125		/* 88SE9125 SATA III PCI-E AHCI Controller */
-#define	PCI_PRODUCT_MARVELL2_88SE9128	0x91a3		/* 88SE9128 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9172	0x9172		/* 88SE9172 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9182	0x9182		/* 88SE9182 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9183	0x9183		/* 88SE9183 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE91XX	0x91a3		/* 88SE91XX SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9215	0x9215		/* 88SE9215 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9220	0x9220		/* 88SE9220 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9230	0x9230		/* 88SE9230 SATA */
+#define	PCI_PRODUCT_MARVELL2_88SE9235	0x9235		/* 88SE9235 SATA */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
@@ -2369,6 +2420,7 @@
 #define	PCI_PRODUCT_HP_HPSA_11	0x323a		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_12	0x323b		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_13	0x323c		/* Smart Array */
+#define	PCI_PRODUCT_HP_RS780_PPB_GFX	0x9602		/* (AMD) RS780 PCI-PCI Bridge (int gfx) */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
@@ -2503,13 +2555,17 @@
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_S_HB	0x0108		/* Sandy Bridge Host Bridge */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_S_IGD	0x010A		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_HB	0x0150		/* Ivy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE	0x0151		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD	0x0152		/* Ivy Bridge Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1	0x0162		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_HB	0x0154		/* Ivy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_1	0x0155		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD	0x0156		/* Ivy Bridge Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD_1	0x0166		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_HB	0x0158		/* Ivy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_2	0x0159		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD	0x015a		/* Ivy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_3	0x015d		/* Ivy Bridge PCI Express Root Port */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1	0x0162		/* Ivy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD_1	0x0166		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD_1	0x016a		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
@@ -2523,6 +2579,9 @@
 #define	PCI_PRODUCT_INTEL_SRCZCRX	0x0407		/* RAID Controller */
 #define	PCI_PRODUCT_INTEL_SRCU42E	0x0408		/* SCSI RAID Controller */
 #define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_IGD	0x0402		/* Haswell Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_HASWELL_IGD_1	0x0412		/* Haswell Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_I347AT4	0x0438		/* I347-AT4 Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O */
@@ -2532,8 +2591,58 @@
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_1	0x0887		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_2	0x0888		/* Centrino Wireless-N 2230 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6235	0x088e		/* Centrino Advanced-N 6235 */
+#define	PCI_PRODUCT_INTEL_X1000_SDIO_EMMC	0x08a7		/* Quark X1000 SDIO/eMMC */
+#define	PCI_PRODUCT_INTEL_X1000_I2C_GPIO	0x0934		/* Quark X1000 I2C and GPIO */
+#define	PCI_PRODUCT_INTEL_X1000_SPI	0x0935		/* Quark X1000 SPI */
+#define	PCI_PRODUCT_INTEL_X1000_HS_UART	0x0936		/* Quark X1000 HS-UART */
+#define	PCI_PRODUCT_INTEL_X1000_MAC	0x0937		/* Quark X1000 10/100 Ethernet MAC */
+#define	PCI_PRODUCT_INTEL_X1000_EHCI	0x0939		/* Quark X1000 EHCI */
+#define	PCI_PRODUCT_INTEL_X1000_OHCI	0x093a		/* Quark X1000 OHCI */
+#define	PCI_PRODUCT_INTEL_X1000_HB	0x0958		/* Quark X1000 Host Bridge */
+#define	PCI_PRODUCT_INTEL_X1000_LB	0x095e		/* Quark X1000 Legacy Bridge */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
+#define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1	0x0a02		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_HOST_DRAM	0x0a04		/* Core 4G (mobile) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1	0x0a06		/* HD Graphics (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT1	0x0a0a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_1	0x0a0b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_MINI_HDA	0x0a0c		/* Core 4G (mobile) Mini HD audio */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_2	0x0a0e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT2	0x0a12		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT2	0x0a16		/* HD Graphics (GT2) */
+#define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT2	0x0a1a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT2_1	0x0a1b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT2_2	0x0a1e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT3	0x0a22		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT3	0x0a26		/* HD Graphics 5000 (GT3) */
+#define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3	0x0a2a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1	0x0a2b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
+#define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_HASWELL_PCIE16	0x0c01		/* Haswell PCI-E x16 Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_PCIE4	0x0c09		/* Haswell PCI-E x4 Controller */
+#define	PCI_PRODUCT_INTEL_HASWELL_MINI_HDA	0x0c0c		/* Haswell Mini HD Audio Controller */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_1	0x0c46		/* Atom S1200 PCIe Root Port 1 */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_2	0x0c47		/* Atom S1200 PCIe Root Port 2 */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_3	0x0c48		/* Atom S1200 PCIe Root Port 3 */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_4	0x0c49		/* Atom S1200 PCIe Root Port 4 */
+#define	PCI_PRODUCT_INTEL_S1200_INTERNALMNG	0x0c54		/* Atom S1200 Internal management */
+#define	PCI_PRODUCT_INTEL_S1200_DFX1	0x0c55		/* Atom S1200 Debug function 1 */
+#define	PCI_PRODUCT_INTEL_S1200_DFX2	0x0c56		/* Atom S1200 Debug function 2 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_0	0x0c59		/* Atom S1200 SMBus 0 (PCIe mass-storage) */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_1	0x0c5a		/* Atom S1200 SMBus 1 (enclosure maintain) */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_2	0x0c5b		/* Atom S1200 SMBus 2 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_3	0x0c5c		/* Atom S1200 SMBus 3 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_4	0x0c5d		/* Atom S1200 SMBus 4 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_5	0x0c5e		/* Atom S1200 SMBus 5 */
+#define	PCI_PRODUCT_INTEL_S1200_UART	0x0c5f		/* Atom S1200 High-Speed UART */
+#define	PCI_PRODUCT_INTEL_S1200_ILB	0x0c60		/* Atom S1200 LPC bridge */
+#define	PCI_PRODUCT_INTEL_S1200_S1220	0x0c72		/* Atom S1220 Internal */
+#define	PCI_PRODUCT_INTEL_S1200_S1240	0x0c73		/* Atom S1240 Internal */
+#define	PCI_PRODUCT_INTEL_S1200_S1260	0x0c75		/* Atom S1260 Internal */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82543GC_FIBER	0x1001		/* i82453GC 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_MODEM56	0x1002		/* 56k Modem */
@@ -2679,6 +2788,8 @@
 #define	PCI_PRODUCT_INTEL_82815_FULL_GRAPH	0x1132		/* 82815 Graphics */
 #define	PCI_PRODUCT_INTEL_82806AA	0x1161		/* 82806AA PCI64 Hub Advanced Programmable Interrupt Controller */
 #define	PCI_PRODUCT_INTEL_ADI_BECC	0x1162		/* ADI i80200 Big Endian Companion Chip */
+#define	PCI_PRODUCT_INTEL_X1000_PCIE_0	0x11c3		/* Quark X1000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_X1000_PCIE_1	0x11c4		/* Quark X1000 PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_IXP1200	0x1200		/* IXP1200 Network Processor */
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE Controller */
@@ -2720,6 +2831,18 @@
 #define	PCI_PRODUCT_INTEL_I350_SGMII	0x1524		/* I350 Gigabit Connection */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_V	0x1525		/* 82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82580_QUAD_FIBER	0x1527		/* 82580 quad-1000BaseX Ethernet */
+#define	PCI_PRODUCT_INTEL_I210_T1	0x1533		/* I210-T1 Ethernet Server Adapter */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_OEM1	0x1534		/* I210 Ethernet (COPPER OEM) */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_IT	0x1535		/* I210 Ethernet (COPPER IT) */
+#define	PCI_PRODUCT_INTEL_I210_FIBER	0x1536		/* I210 Ethernet (FIBER) */
+#define	PCI_PRODUCT_INTEL_I210_SERDES	0x1537		/* I210 Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_I210_SGMII	0x1538		/* I210 Ethernet (SGMII) */
+#define	PCI_PRODUCT_INTEL_I211_COPPER	0x1539		/* I211 Ethernet (COPPER) */
+#define	PCI_PRODUCT_INTEL_I217_LM	0x153a		/* I217-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I217_V	0x153b		/* I217-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 (SFP+) 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
 #define	PCI_PRODUCT_INTEL_80960RM_2	0x1962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
@@ -2752,6 +2875,7 @@
 #define	PCI_PRODUCT_INTEL_6SERIES_EHCI_2	0x1c2d		/* 6 Series USB */
 #define	PCI_PRODUCT_INTEL_6SERIES_MEI	0x1c3a		/* 6 Series MEI */
 #define	PCI_PRODUCT_INTEL_6SERIES_KT	0x1c3d		/* 6 Series KT */
+#define	PCI_PRODUCT_INTEL_Z68_LPC	0x1c44		/* Z68 LPC */
 #define	PCI_PRODUCT_INTEL_P67_LPC	0x1c46		/* P67 LPC */
 #define	PCI_PRODUCT_INTEL_UM67_LPC	0x1c47		/* UM67 LPC */
 #define	PCI_PRODUCT_INTEL_HM65_LPC	0x1c49		/* HM65 LPC */
@@ -2852,6 +2976,43 @@
 #define	PCI_PRODUCT_INTEL_MOBILE_HM75_LPC	0x1e5d		/* Mobile HM75 LPC */
 #define	PCI_PRODUCT_INTEL_MOBILE_HM70_LPC	0x1e5e		/* Mobile HM70 LPC */
 #define	PCI_PRODUCT_INTEL_NM70_LPC	0x1e5f		/* NM70 LPC */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_0	0x1f00		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_1	0x1f01		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_2	0x1f02		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_3	0x1f03		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_4	0x1f04		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_5	0x1f05		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_6	0x1f06		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_7	0x1f07		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_8	0x1f08		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_9	0x1f09		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_A	0x1f0a		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_B	0x1f0b		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_C	0x1f0c		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_D	0x1f0d		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_E	0x1f0e		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_F	0x1f0f		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_1	0x1f10		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_2	0x1f11		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_3	0x1f12		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_4	0x1f13		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_RAS	0x1f14		/* C2000 RAS */
+#define	PCI_PRODUCT_INTEL_C2000_SMBUS	0x1f15		/* C2000 SMBus 2.0 */
+#define	PCI_PRODUCT_INTEL_C2000_RCEC	0x1f16		/* C2000 RCEC */
+#define	PCI_PRODUCT_INTEL_C2000_IQIA_PHYS	0x1f18		/* C2000 IQIA Physical Function */
+#define	PCI_PRODUCT_INTEL_C2000_IQIA	0x1f19		/* C2000 IQIA */
+#define	PCI_PRODUCT_INTEL_C2000_SATA2	0x1f22		/* C2000 SATA2 */
+#define	PCI_PRODUCT_INTEL_C2000_USB	0x1f2c		/* C2000 USB 2.0 */
+#define	PCI_PRODUCT_INTEL_C2000_SATA3	0x1f32		/* C2000 SATA3 */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_1	0x1f38		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_2	0x1f39		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_3	0x1f3a		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_4	0x1f3b		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_SMBUS	0x1f3c		/* C2000 PCU SMBus */
+#define	PCI_PRODUCT_INTEL_C2000_1000KX	0x1f40		/* C2000 Ethernet(1000BASE-KX) */
+#define	PCI_PRODUCT_INTEL_C2000_SGMII	0x1f41		/* C2000 Ethernet(SGMII) */
+#define	PCI_PRODUCT_INTEL_C2000_DUMMYGBE	0x1f42		/* C2000 Ethernet(Dummy function) */
+#define	PCI_PRODUCT_INTEL_C2000_25GBE	0x1f45		/* C2000 Ethernet(2.5Gbe) */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
@@ -3287,14 +3448,14 @@
 #define	PCI_PRODUCT_INTEL_3400_AHCI_4	0x3b2f		/* 3400 AHCI */
 #define	PCI_PRODUCT_INTEL_3400_SMB	0x3b30		/* 3400 SMBus */
 #define	PCI_PRODUCT_INTEL_3400_THERMAL	0x3b32		/* 3400 Thermal */
-#define	PCI_PRODUCT_INTEL_3400_EHCI_1	0x3b34		/* 3400 USB */
+#define	PCI_PRODUCT_INTEL_3400_EHCI_1	0x3b34		/* 3400 USB EHCI */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_1	0x3b36		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_2	0x3b37		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_3	0x3b38		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_4	0x3b39		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_5	0x3b3a		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_6	0x3b3b		/* 3400 USB */
-#define	PCI_PRODUCT_INTEL_3400_EHCI_2	0x3b3c		/* 3400 USB */
+#define	PCI_PRODUCT_INTEL_3400_EHCI_2	0x3b3c		/* 3400 USB ECHI */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_7	0x3b3e		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_UHCI_8	0x3b3f		/* 3400 USB */
 #define	PCI_PRODUCT_INTEL_3400_PCIE_1	0x3b42		/* 3400 PCIE */
@@ -3351,6 +3512,7 @@
 #define	PCI_PRODUCT_INTEL_5400_IOAPIC	0x4032		/* 5400 IOAPIC */
 #define	PCI_PRODUCT_INTEL_5400_RAS_0	0x4035		/* 5400 RAS */
 #define	PCI_PRODUCT_INTEL_5400_RAS_1	0x4036		/* 5400 RAS */
+#define	PCI_PRODUCT_INTEL_E600_VGA	0x4108		/* E600 Integrated VGA */
 #define	PCI_PRODUCT_INTEL_E600_HB	0x4114		/* E600 Host */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2200BG	0x4220		/* PRO/Wireless LAN 2200BG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2225BG	0x4221		/* PRO/Wireless LAN 2225BG Mini-PCI Adapter */
@@ -3406,6 +3568,12 @@
 #define	PCI_PRODUCT_INTEL_82443GX_NOAGP	0x71a2		/* 82443GX Host Bridge/Controller (AGP disabled) */
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_SCH_IDE	0x811a		/* SCH IDE Controller */
+#define	PCI_PRODUCT_INTEL_E600_HDA	0x811b		/* E600 HD Audio */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_0	0x8180		/* E600 Virtual PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_1	0x8181		/* E600 Virtual PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_E600_GVD	0x8182		/* E600 Integrated Graphic Video Display */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_2	0x8184		/* E600 Virtual PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_3	0x8185		/* E600 Virtual PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_E600_LPC	0x8186		/* Atom Processor E6xx LPC Bridge */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
@@ -3438,6 +3606,83 @@
 #define	PCI_PRODUCT_INTEL_EG20T_I2C	0x8817		/* EG20T PCH I2C Interface */
 #define	PCI_PRODUCT_INTEL_EG20T_CAN	0x8818		/* EG20T PCH CAN Controller */
 #define	PCI_PRODUCT_INTEL_EG20T_IEEE1588	0x8819		/* EG20T PCH IEEE1588 */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA	0x8c00		/* 8 Series (desktop) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA	0x8c01		/* 8 Series (mobile) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_AHCI	0x8c02		/* 8 Series (desktop) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_AHCI	0x8c03		/* 8 Series (mobile) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_RAID	0x8c04		/* 8 Series (desktop) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_RAID	0x8c05		/* 8 Series (mobile) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_RAID_SR	0x8c06		/* 8 Series (desktop) SATA Controller (RAID) + Smart Response */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_RAID_SR	0x8c07		/* 8 Series (mobile) SATA Controller (RAID) + Smart Response */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_2	0x8c08		/* 8 Series (desktop) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_2	0x8c09		/* 8 Series (mobile) SATA Controller */
+#define	PCI_PRODUCT_INTEL_8SER_DT_SATA_RAID1	0x8c0e		/* 8 Series (desktop) SATA Controller (RAID1) */
+#define	PCI_PRODUCT_INTEL_8SER_MO_SATA_RAID1	0x8c0f		/* 8 Series (mobile) SATA Controller (RAID1) */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_1	0x8c10		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_2	0x8c12		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_3	0x8c14		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_4	0x8c16		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_5	0x8c18		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_6	0x8c1a		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_7	0x8c1c		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_PCIE_8	0x8c1e		/* 8 Series PCIE */
+#define	PCI_PRODUCT_INTEL_8SERIES_HDA	0x8c20		/* 8 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_8SERIES_SMB	0x8c22		/* 8 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_8SERIES_THERM	0x8c24		/* 8 Series Thermal */
+#define	PCI_PRODUCT_INTEL_8SERIES_EHCI_1	0x8c26		/* 8 Series USB EHCI */
+#define	PCI_PRODUCT_INTEL_8SERIES_EHCI_2	0x8c2d		/* 8 Series USB EHCI */
+#define	PCI_PRODUCT_INTEL_8SERIES_XHCI	0x8c31		/* 8 Series USB xHCI */
+#define	PCI_PRODUCT_INTEL_8SERIES_LAN	0x8c33		/* 8 Series LAN */
+#define	PCI_PRODUCT_INTEL_8SERIES_MEI_1	0x8c3a		/* 8 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_8SERIES_MEI_2	0x8c3b		/* 8 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_8SERIES_IDE_R	0x8c3c		/* 8 Series IDE-R */
+#define	PCI_PRODUCT_INTEL_8SERIES_KT	0x8c3d		/* 8 Series KT */
+#define	PCI_PRODUCT_INTEL_8SERIES_M_LPC	0x8c41		/* 8 Series Mobile Full Featured ES LPC */
+#define	PCI_PRODUCT_INTEL_8SERIES_D_LPC	0x8c42		/* 8 Series Desktop Full Featured ES LPC */
+#define	PCI_PRODUCT_INTEL_Z87_LPC	0x8c44		/* Z87 LPC */
+#define	PCI_PRODUCT_INTEL_Z85_LPC	0x8c46		/* Z85 LPC */
+#define	PCI_PRODUCT_INTEL_HM86_LPC	0x8c49		/* HM86 LPC */
+#define	PCI_PRODUCT_INTEL_H87_LPC	0x8c4a		/* H87 LPC */
+#define	PCI_PRODUCT_INTEL_HM87_LPC	0x8c4b		/* HM87 LPC */
+#define	PCI_PRODUCT_INTEL_Q85_LPC	0x8c4c		/* Q85 LPC */
+#define	PCI_PRODUCT_INTEL_Q87_LPC	0x8c4e		/* Q87 LPC */
+#define	PCI_PRODUCT_INTEL_QM87_LPC	0x8c4f		/* QM87 LPC */
+#define	PCI_PRODUCT_INTEL_B85_LPC	0x8c50		/* B85 LPC */
+#define	PCI_PRODUCT_INTEL_C222_LPC	0x8c52		/* C222 LPC */
+#define	PCI_PRODUCT_INTEL_C224_LPC	0x8c54		/* C224 LPC */
+#define	PCI_PRODUCT_INTEL_C226_LPC	0x8c56		/* C226 LPC */
+#define	PCI_PRODUCT_INTEL_H81_LPC	0x8c5c		/* H81 LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_AHCI	0x9c03		/* Core 4G (mobile) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_1	0x9c05		/* Core 4G (mobile) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_2	0x9c07		/* Core 4G (mobile) SATA Controller (RAID) Premium */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_3	0x9c0f		/* Core 4G (mobile) SATA Controller (RAID) Premium */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_1	0x9c10		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_2	0x9c12		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_3	0x9c14		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_4	0x9c16		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_5	0x9c18		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_6	0x9c1a		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_HDA	0x9c20		/* Core 4G (mobile) HD Audio */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_SMB	0x9c22		/* Core 4G (mobile) SMBus */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_THERM	0x9c24		/* Core 4G (mobile) Thermal */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_EHCI	0x9c26		/* Core 4G (mobile) USB EHCI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_XHCI	0x9c31		/* Core 4G (mobile) USB xHCI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_SDIO	0x9c35		/* Core 4G (mobile) SDIO */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_SSOUND	0x9c36		/* Core 4G (mobile) Smart Sound */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_MEI_1	0x9c3a		/* Core 4G (mobile) MEI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_MEI_2	0x9c3b		/* Core 4G (mobile) MEI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_IDE_R	0x9c3c		/* Core 4G (mobile) IDE-R */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_KT	0x9c3d		/* Core 4G (mobile) KT */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_LPC_1	0x9c41		/* Core 4G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_LPC_2	0x9c43		/* Core 4G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_LPC_3	0x9c45		/* Core 4G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_DMA	0x9c60		/* Core 4G (mobile) Serial I/O DMA */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_I2C_0	0x9c61		/* Core 4G (mobile) Serial I/O I2C */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_I2C_1	0x9c62		/* Core 4G (mobile) Serial I/O I2C */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_UART_0	0x9c63		/* Core 4G (mobile) Serial I/O UART */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_UART_1	0x9c64		/* Core 4G (mobile) Serial I/O UART */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_0	0x9c65		/* Core 4G (mobile) Serial I/O GSPI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_1	0x9c66		/* Core 4G (mobile) Serial I/O GSPI */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
@@ -3921,8 +4166,10 @@
 #define	PCI_PRODUCT_NETMOS_NM9855	0x9855		/* 9855 Quad UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_NM9865	0x9865		/* 9865 Quad UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_MCS9990	0x9990		/* MCS9990 Quad USB 2.0 Port */
+#define	PCI_PRODUCT_NETMOS_NM9900	0x9900		/* Single PCI-E UART */
 #define	PCI_PRODUCT_NETMOS_NM9901	0x9901		/* Dual PCI-E UART */
 #define	PCI_PRODUCT_NETMOS_NM9904	0x9904		/* Quad PCI-E UART */
+#define	PCI_PRODUCT_NETMOS_NM9912	0x9912		/* Dual PCI-E UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_NM9922	0x9922		/* Dual PCI-E UART */
 
 /* Network Security Technologies */
@@ -4295,6 +4542,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_10	0x0abd		/* nForce MCP79 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_11	0x0abe		/* nForce MCP79 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_12	0x0abf		/* nForce MCP79 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_210_HDA	0x0be3		/* GeForce 210 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_GF116	0x1244		/* GeForce GTX 550 Ti */
 
 /* Nvidia & SGS-Thomson Microelectronics */
@@ -4335,6 +4583,7 @@
 #define	PCI_PRODUCT_OXFORDSEMI_VSCOM_PCI011H	0x8403		/* 011H */
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI954	0x9501		/* OX16PCI954 */
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI954K	0x9504		/* OX16PCI954K */
+#define	PCI_PRODUCT_OXFORDSEMI_OXUPCI952	0x9505		/* OXuPCI952 */
 #define	PCI_PRODUCT_OXFORDSEMI_EXSYS_EX41092	0x950a		/* Exsys EX-41092 */
 #define	PCI_PRODUCT_OXFORDSEMI_OXCB950	0x950b		/* OXCB950 */
 #define	PCI_PRODUCT_OXFORDSEMI_OXMPCI954	0x950c		/* OXmPCI954 */
@@ -4344,7 +4593,15 @@
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI952	0x9521		/* OX16PCI952 */
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI952P	0x9523		/* OX16PCI952 Parallel */
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI958	0x9538		/* OX16PCI958 */
-#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952	0xc120		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_0	0xc101		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_1	0xc105		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952P	0xc110		/* OXPCIe952 Parallel */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_2S	0xc120		/* OXPCIe952 2 Serial */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_2	0xc124		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_3	0xc140		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_4	0xc141		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_5	0xc144		/* OXPCIe952 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952_6	0xc145		/* OXPCIe952 */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_PACKETENGINES_GNICII	0x0911		/* G-NIC II Ethernet */
@@ -4427,8 +4684,27 @@
 #define	PCI_PRODUCT_PROMISE_PDC20277	0x7275		/* PDC20277 Ultra/133 IDE Controller */
 
 /* Nanjing QinHeng Electronics */
-#define	PCI_PRODUCT_QINHENG_CH352	0x3253		/* CH352 */
-#define	PCI_PRODUCT_QINHENG_CH353	0x7053		/* CH353 */
+#define	PCI_PRODUCT_QINHENG_CH352_2S	0x3253		/* CH352 2S */
+#define	PCI_PRODUCT_QINHENG_CH353_4S	0x3453		/* CH353 4S */
+#define	PCI_PRODUCT_QINHENG_CH356_8S	0x3853		/* CH356 8S */
+#define	PCI_PRODUCT_QINHENG_CH356_6S	0x3873		/* CH356 6S */
+#define	PCI_PRODUCT_QINHENG_CH353_2S1PAR	0x5046		/* CH353 2S, 1P (fixed address) */
+#define	PCI_PRODUCT_QINHENG_CH352_1S1P	0x5053		/* CH352 1S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH357_4S	0x5334		/* CH357 4S */
+#define	PCI_PRODUCT_QINHENG_CH358_4S1P	0x5334		/* CH358 4S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH358_8S	0x5338		/* CH358 8S */
+#define	PCI_PRODUCT_QINHENG_CH359_16S	0x5838		/* CH359 16S */
+#define	PCI_PRODUCT_QINHENG_CH353_2S1P	0x7053		/* CH353 2S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH356_4S1P	0x7073		/* CH356 4S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH355_4S	0x7173		/* CH355 4S */
+
+/* Nanjing QinHeng Electronics (PCIe) */
+#define	PCI_PRODUCT_QINHENG2_CH384_4S1P	0x3450		/* CH384 4S, 1P */
+#define	PCI_PRODUCT_QINHENG2_CH384_4S	0x3470		/* CH384 4S */
+#define	PCI_PRODUCT_QINHENG2_CH382_2S1P	0x3250		/* CH382 2S, 1P */
+#define	PCI_PRODUCT_QINHENG2_CH382_2S	0x3253		/* CH382 2S */
+#define	PCI_PRODUCT_QINHENG2_CH384_8S	0x3853		/* CH384 8S */
+#define	PCI_PRODUCT_QINHENG2_CH384_28S	0x4353		/* CH384 28S */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_QLA200	0x0119		/* QLA200 */
@@ -4537,6 +4813,12 @@
 #define	PCI_PRODUCT_RDC_R6040	0x6040		/* RDC R6040 10/100 Ethernet */
 
 /* Realtek products */
+#define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 PCI-E Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTS5227	0x5227		/* RTS5227 PCI-E Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTS5229	0x5229		/* RTS5229 PCI-E Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTS5249	0x5249		/* RTS5249 PCI-E Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTL8411B	0x5287		/* RTL8411B PCI-E Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTL8411	0x5289		/* RTL8411 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139D	0x8039		/* 8139D 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8100	0x8100		/* 8100 10/100 Ethernet */
@@ -4551,11 +4833,16 @@
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 #define	PCI_PRODUCT_REALTEK_RT8185	0x8185		/* 8185 802.11a/b/g */
 
-/* RENESAS products */
+/* Renesas products */
 #define	PCI_PRODUCT_RENESAS_SH7780	0x0002		/* SH7780 PCI Controller */
 #define	PCI_PRODUCT_RENESAS_SH7785	0x0007		/* SH7785 PCI Controller */
+#define	PCI_PRODUCT_RENESAS_SH7757_PBI	0x0011		/* SH7757 PCIe End-Point [PBI] */
+#define	PCI_PRODUCT_RENESAS_SH7757_PPB	0x0012		/* SH7757 PCIe-PCI Bridge [PPB] */
+#define	PCI_PRODUCT_RENESAS_SH7757_PS	0x0013		/* SH7757 PCIe Switch [PS] */
+#define	PCI_PRODUCT_RENESAS_PD720201	0x0014		/* uPD720201 USB 3.0 Host Controller */
+#define	PCI_PRODUCT_RENESAS_PD720202	0x0015		/* uPD720202 USB 3.0 Host Controller */
 
-/* RICOH products */
+/* Ricoh products */
 #define	PCI_PRODUCT_RICOH_Rx5C465	0x0465		/* 5C465 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C466	0x0466		/* 5C466 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C475	0x0475		/* 5C475 PCI-CardBus Bridge */

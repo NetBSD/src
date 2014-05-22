@@ -1,4 +1,4 @@
-#	$NetBSD: std.tisdp24xx,v 1.6.16.2 2013/01/23 00:05:45 yamt Exp $
+#	$NetBSD: std.tisdp24xx,v 1.6.16.3 2014/05/22 11:39:40 yamt Exp $
 #
 # standard NetBSD/evbarm for SDP2430 options
 
@@ -19,7 +19,6 @@ makeoptions	LOADADDRESS="0x80300000"
 #makeoptions	LOADADDRESS="0xc0000000"
 makeoptions	BOARDTYPE="sdp2430"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tisdp24xx"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options		ARM_GENERIC_TODR

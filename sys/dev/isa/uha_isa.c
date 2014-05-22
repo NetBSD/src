@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.38.12.1 2012/10/30 17:21:16 yamt Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.38.12.2 2014/05/22 11:40:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.38.12.1 2012/10/30 17:21:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.38.12.2 2014/05/22 11:40:23 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -363,6 +363,8 @@ u14_intr(void *arg)
 
 #ifdef	UHADEBUG
 		printf("status = 0x%x ", uhastat);
+#else
+		__USE(uhastat);
 #endif /*UHADEBUG*/
 
 		/*

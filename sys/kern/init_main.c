@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.436.2.4 2012/10/30 17:22:26 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.436.2.5 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.4 2012/10/30 17:22:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.5 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -172,7 +172,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.4 2012/10/30 17:22:26 yamt Exp
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
 #ifdef SYSVSHM
@@ -235,11 +235,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.4 2012/10/30 17:22:26 yamt Exp
 #include <net/raw_cb.h>
 
 #include <prop/proplib.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/time.h>
-struct timeval50 boottime50;
-#endif
 
 #include <sys/userconf.h>
 
@@ -446,8 +441,8 @@ main(void)
 	 * 10% of memory for vnodes and associated data structures in the
 	 * assumed worst case.  Do not provide fewer than NVNODE vnodes.
 	 */
-	usevnodes =
-	    calc_cache_size(kernel_map, 10, VNODE_VA_MAXPCT) / VNODE_COST;
+	usevnodes = calc_cache_size(vmem_size(kmem_arena, VMEM_FREE|VMEM_ALLOC),
+	    10, VNODE_KMEM_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -522,6 +517,9 @@ main(void)
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
 
+	/* Enable deferred processing of RNG samples */
+	rnd_init_softint();
+
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -553,7 +551,7 @@ main(void)
 	pax_init();
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
-#ifdef	FAST_IPSEC
+#ifdef	IPSEC
 	/* Attach network crypto subsystem */
 	ipsec_attach();
 #endif
@@ -662,13 +660,7 @@ main(void)
 	 */
 	getnanotime(&time);
 	boottime = time;
-#ifdef COMPAT_50
-	{
-		struct timeval tv;
-		TIMESPEC_TO_TIMEVAL(&tv, &time);
-		timeval_to_timeval50(&tv, &boottime50);
-	}
-#endif
+
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
@@ -908,6 +900,7 @@ static const char * const initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",
+	"/rescue/init",
 	NULL,
 };
 
@@ -1087,20 +1080,17 @@ start_init(void *arg)
 }
 
 /*
- * calculate cache size (in bytes) from physmem and vm_map size.
+ * calculate cache size (in bytes) from physmem and vsize.
  */
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct, int va_pct)
+calc_cache_size(vsize_t vsize, int pct, int va_pct)
 {
 	paddr_t t;
 
 	/* XXX should consider competing cache if any */
 	/* XXX should consider submaps */
 	t = (uintmax_t)physmem * pct / 100 * PAGE_SIZE;
-	if (map != NULL) {
-		vsize_t vsize;
-
-		vsize = vm_map_max(map) - vm_map_min(map);
+	if (vsize != 0) {
 		vsize = (uintmax_t)vsize * va_pct / 100;
 		if (t > vsize) {
 			t = vsize;
@@ -1123,7 +1113,7 @@ banner(void)
 	static char notice[] = " Notice: this software is "
 	    "protected by copyright";
 	char pbuf[81];
-	void (*pr)(const char *, ...);
+	void (*pr)(const char *, ...) __printflike(1, 2);
 	int i;
 
 	if ((boothowto & AB_SILENT) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.30 2011/02/05 17:14:14 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.30.4.1 2014/05/22 11:42:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -68,6 +68,7 @@ extern	int	yyparse(void);
 /*
  * scan.l
  */
+extern  int	attron;
 extern	pos_t	curr_pos;
 extern	pos_t	csrc_pos;
 extern	symt_t	symtyp;
@@ -228,7 +229,7 @@ extern	int	scflstrg;
 extern	pos_t	scflpos;
 extern	int	ccflg;
 extern	int	llibflg;
-extern	int	nowarn;
+extern	int	lwarn;
 extern	int	bitfieldtype_ok;
 extern	int	plibflg;
 extern	int	quadflg;

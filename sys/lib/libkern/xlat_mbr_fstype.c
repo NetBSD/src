@@ -1,4 +1,4 @@
-/*	$NetBSD: xlat_mbr_fstype.c,v 1.7.34.1 2012/04/17 00:08:33 yamt Exp $	*/
+/*	$NetBSD: xlat_mbr_fstype.c,v 1.7.34.2 2014/05/22 11:41:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.7.34.1 2012/04/17 00:08:33 yamt Exp $");
+__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.7.34.2 2014/05/22 11:41:04 yamt Exp $");
 
 
 #include <sys/disklabel.h>
@@ -56,6 +56,7 @@ xlat_mbr_fstype(int mbr_type)
 		{ MBR_PTYPE_NETBSD,	FS_BSDFFS },
 		{ MBR_PTYPE_NTFS,	FS_NTFS },
 		{ MBR_PTYPE_MINIX_14B,	FS_MINIXFS3 },
+		{ MBR_PTYPE_OPENBSD,	FS_BSDFFS },
 		{ 0,			FS_OTHER }
 	};
 	const struct ptn_types *pt;

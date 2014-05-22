@@ -1,7 +1,7 @@
-/*	$NetBSD: sljitarch.h,v 1.1.2.3 2013/01/16 05:32:59 yamt Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.1.2.4 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef I386_SLJITARCH_H
-#define I386_SLJITARCH_H
+#ifndef _I386_SLJITARCH_H
+#define _I386_SLJITARCH_H
 
 #define SLJIT_CONFIG_X86_32 1
 
+/* No call attributes. */
 #define SLJIT_CALL
 #define SLJIT_X86_32_FASTCALL 0
+
+#define SLJIT_CACHE_FLUSH(from, to)
 
 #endif

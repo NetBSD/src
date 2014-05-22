@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.15.8.1 2012/10/30 17:19:09 yamt Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.15.8.2 2014/05/22 11:39:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -40,9 +40,9 @@
 #include "opt_irqstats.h"
 
 #include "assym.h"
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+
+#include <arm/asm.h>
+#include <arm/locore.h>
 #include <arm/sa11x0/sa11x0_reg.h>
 
 
@@ -150,7 +150,7 @@ Lfind_highest_ipl:
 	bl	_C_LABEL(printf)
 	ldmia	sp!, {r0,r1,r2}
 #endif
-        mrs     r0, cpsr_all		/* Enable IRQs */
+        mrs     r0, cpsr		/* Enable IRQs */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
@@ -234,7 +234,7 @@ nextirq:
 #endif
 
 	/* Kill IRQ's in preparation for exit */
-        mrs     r0, cpsr_all
+        mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
@@ -262,7 +262,7 @@ ENTRY(irq_setmasks)
 	stmfd	sp!, {r0, r1, r4, lr}	/* Preserve registers */
 
 	/* Disable interrupts */
-	mrs	r1, cpsr_all
+	mrs	r1, cpsr
 	orr	r3, r1,  #(I32_bit)
 	msr	cpsr_all, r3
 

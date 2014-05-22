@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.13.42.2 2013/01/16 05:34:12 yamt Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.13.42.3 2014/05/22 11:43:10 yamt Exp $	*/
 /*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ do_rr(size_t len, struct icmp6_router_renum *rr)
 		if (len < sizeof(struct rr_pco_match)) {
 		    tooshort:
 			syslog(LOG_ERR, "<%s> pkt too short. left len = %zd. "
-			       "gabage at end of pkt?", __func__, len);
+			       "garbage at end of pkt?", __func__, len);
 			return 1;
 		}
 		rpmlen = rpm->rpm_len << 3;

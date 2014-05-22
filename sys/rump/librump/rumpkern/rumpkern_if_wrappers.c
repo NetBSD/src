@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.12 2011/01/02 12:53:13 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.12.8.1 2014/05/22 11:41:15 yamt Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.10 2011/01/02 12:52:25 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -21,18 +21,6 @@ rump_kern_unavailable(void)
 {
 
 	panic("kern interface unavailable");
-}
-
-int
-rump_pub_getversion(void)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_getversion();
-	rump_unschedule();
-
-	return rv;
 }
 
 int
@@ -195,10 +183,55 @@ rump_pub_lwproc_curlwp(void)
 }
 
 void
+rump_pub_lwproc_sysent_usenative(void)
+{
+
+	rump_schedule();
+	rump_lwproc_sysent_usenative();
+	rump_unschedule();
+}
+
+void
 rump_pub_allbetsareoff_setid(pid_t arg1, int arg2)
 {
 
 	rump_schedule();
 	rump_allbetsareoff_setid(arg1, arg2);
 	rump_unschedule();
+}
+
+int
+rump_pub_etfs_register(const char *arg1, const char *arg2, enum rump_etfs_type arg3)
+{
+	int rv;
+
+	rump_schedule();
+	rv = rump_etfs_register(arg1, arg2, arg3);
+	rump_unschedule();
+
+	return rv;
+}
+
+int
+rump_pub_etfs_register_withsize(const char *arg1, const char *arg2, enum rump_etfs_type arg3, uint64_t arg4, uint64_t arg5)
+{
+	int rv;
+
+	rump_schedule();
+	rv = rump_etfs_register_withsize(arg1, arg2, arg3, arg4, arg5);
+	rump_unschedule();
+
+	return rv;
+}
+
+int
+rump_pub_etfs_remove(const char *arg1)
+{
+	int rv;
+
+	rump_schedule();
+	rv = rump_etfs_remove(arg1);
+	rump_unschedule();
+
+	return rv;
 }

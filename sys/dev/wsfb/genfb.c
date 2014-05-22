@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.42.2.2 2013/01/23 00:06:17 yamt Exp $ */
+/*	$NetBSD: genfb.c,v 1.42.2.3 2014/05/22 11:40:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.2.2 2013/01/23 00:06:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.2.3 2014/05/22 11:40:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.2.2 2013/01/23 00:06:17 yamt Exp $");
 		AB_VERBOSE | AB_DEBUG) )
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_genfb.h"
 #include "opt_wsfb.h"
+#endif
 
 #ifdef GENFB_DEBUG
 #define GPRINTF panic
@@ -68,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.2.2 2013/01/23 00:06:17 yamt Exp $");
 
 static int	genfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	genfb_mmap(void *, void *, off_t, int);
+static void	genfb_pollc(void *, int);
+
 static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
@@ -234,6 +238,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	sc->sc_accessops.ioctl = genfb_ioctl;
 	sc->sc_accessops.mmap = genfb_mmap;
+	sc->sc_accessops.pollc = genfb_pollc;
 
 #ifdef GENFB_SHADOWFB
 	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
@@ -317,7 +322,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 #else
 	genfb_init_palette(sc);
-	vcons_replay_msgbuf(&sc->sc_console_screen);
+	if (console)
+		vcons_replay_msgbuf(&sc->sc_console_screen);
 #endif
 
 	if (genfb_softc == NULL)
@@ -333,7 +339,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 #endif
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found_ia(sc->sc_dev, "wsemuldisplaydev", &aa,
+	    wsemuldisplaydevprint);
 
 	return 0;
 }
@@ -394,6 +401,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+		
 		case WSDISPLAYIO_SSPLASH:
 #if defined(SPLASHSCREEN)
 			if(*(int *)data == 1) {
@@ -452,10 +460,17 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    sc->sc_backlight->gpc_cookie, val);
 			}
 			return EPASSTHROUGH;
+		
 		case WSDISPLAYIO_GET_EDID: {
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
+	
+		case WSDISPLAYIO_GET_FBINFO: {
+			struct wsdisplayio_fbinfo *fbi = data;
+			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+		}
+		
 		default:
 			if (sc->sc_ops.genfb_ioctl)
 				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,
@@ -474,6 +489,21 @@ genfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return sc->sc_ops.genfb_mmap(sc, vs, offset, prot);
 
 	return -1;
+}
+
+static void
+genfb_pollc(void *v, int on)
+{
+	struct vcons_data *vd = v;
+	struct genfb_softc *sc = vd->cookie;
+
+	if (sc == NULL)
+		return;
+
+	if (on)
+		genfb_enable_polling(sc->sc_dev);
+	else
+		genfb_disable_polling(sc->sc_dev);
 }
 
 static void

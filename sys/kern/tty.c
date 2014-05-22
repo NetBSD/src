@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.249.2.2 2012/10/30 17:22:36 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.249.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.2.2 2012/10/30 17:22:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -104,7 +104,7 @@ static void	ttyblock(struct tty *);
 static void	ttyecho(int, struct tty *);
 static void	ttyrubo(struct tty *, int);
 static void	ttyprintf_nolock(struct tty *, const char *fmt, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 static int	proc_compare_wrapper(struct proc *, struct proc *);
 static void	ttysigintr(void *);
 
@@ -295,11 +295,6 @@ sysctl_kern_tty_setup(void)
 	struct sysctllog *kern_tkstat_sysctllog, *kern_tty_sysctllog;
 
 	kern_tkstat_sysctllog = NULL;
-	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat",
@@ -927,12 +922,15 @@ int
 ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p;
 	struct linesw	*lp;
 	int		s, error;
 	struct pathbuf *pb;
 	struct nameidata nd;
 	char		infobuf[200];
+
+	KASSERT(l != NULL);
+	p = l->l_proc;
 
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {

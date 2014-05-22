@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.8.14.1 2012/10/30 17:21:03 yamt Exp $	*/
+/*	$NetBSD: iavc.c,v 1.8.14.2 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.8.14.1 2012/10/30 17:21:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.8.14.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -621,7 +621,7 @@ static int iavc_receive_init(iavc_softc_t *sc, u_int8_t *dmabuf)
 		cardtype, serial, nbch, vers, prot);
 	aprint_verbose_dev(sc->sc_dev, "%s\n", caps);
 
-        capi_ll_control(&sc->sc_capi, CAPI_CTRL_PROFILE, (int) profile);
+        capi_ll_control(&sc->sc_capi, CAPI_CTRL_PROFILE, (intptr_t) profile);
 
     } else {
 	printf("%s: no profile data in info response?\n", device_xname(sc->sc_dev));
@@ -732,14 +732,12 @@ static int iavc_receive_task_ready(iavc_softc_t *sc, u_int8_t *dmabuf)
 static int iavc_receive_debugmsg(iavc_softc_t *sc, u_int8_t *dmabuf)
 {
     u_int32_t Length;
-    u_int8_t *p;
     printf("%s: receive_debugmsg\n", device_xname(sc->sc_dev));
 
     if (sc->sc_dma) {
-	p = amcc_get_word(dmabuf, &Length);
+	amcc_get_word(dmabuf, &Length);
     } else {
 	Length = iavc_get_slice(sc, sc->sc_recvbuf);
-	p = sc->sc_recvbuf;
     }
 
     /* XXX could show the message if trace enabled? XXX */

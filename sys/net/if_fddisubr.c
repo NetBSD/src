@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.81.8.1 2012/10/30 17:22:43 yamt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.81.8.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,12 +96,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.81.8.1 2012/10/30 17:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.81.8.2 2014/05/22 11:41:09 yamt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_iso.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 
@@ -158,14 +157,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.81.8.1 2012/10/30 17:22:43 yamt Ex
 #ifdef DECNET
 #include <netdnet/dn.h>
 #endif
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#include <netiso/iso_snpac.h>
-#endif
-
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -376,41 +367,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		break;
 	}
 #endif /* NETATALK */
-#ifdef	ISO
-	case AF_ISO: {
-		int	snpalen;
-		struct	llc *l;
-		const struct sockaddr_dl *sdl;
-
-		if (rt && (sdl = satocsdl(rt->rt_gateway)) &&
-		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			memcpy(edst, CLLADDR(sdl), sizeof(edst));
-		} else if ((error =
-			    iso_snparesolve(ifp, (const struct sockaddr_iso *)dst,
-					    (char *)edst, &snpalen)) != 0)
-			goto bad; /* Not Resolved */
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if (*edst & 1)
-			m->m_flags |= (M_BCAST|M_MCAST);
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*fh), M_DONTWAIT);
-			if (mcopy) {
-				fh = mtod(mcopy, struct fddi_header *);
-				memcpy(fh->fddi_dhost, edst, sizeof (edst));
-				memcpy(fh->fddi_shost, CFDDIADDR(ifp),
-				    sizeof (edst));
-			}
-		}
-		M_PREPEND(m, 3, M_DONTWAIT);
-		if (m == NULL)
-			return (0);
-		etype = 0;
-		l = mtod(m, struct llc *);
-		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
-		l->llc_control = LLC_UI;
-		} break;
-#endif /* ISO */
 
 	case pseudo_AF_HDRCMPLT:
 	{
@@ -443,39 +399,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		break;
 	}
 
-	case AF_IMPLINK:
-	{
-		fh = mtod(m, struct fddi_header *);
-		error = EPROTONOSUPPORT;
-		switch (fh->fddi_fc & (FDDIFC_C|FDDIFC_L|FDDIFC_F)) {
-			case FDDIFC_LLC_ASYNC: {
-				/* legal priorities are 0 through 7 */
-				if ((fh->fddi_fc & FDDIFC_Z) > 7)
-			        	goto bad;
-				break;
-			}
-			case FDDIFC_LLC_SYNC: {
-				/* FDDIFC_Z bits reserved, must be zero */
-				if (fh->fddi_fc & FDDIFC_Z)
-					goto bad;
-				break;
-			}
-			case FDDIFC_SMT: {
-				/* FDDIFC_Z bits must be non zero */
-				if ((fh->fddi_fc & FDDIFC_Z) == 0)
-					goto bad;
-				break;
-			}
-			default: {
-				/* anything else is too dangerous */
-               	 		goto bad;
-			}
-		}
-		error = 0;
-		if (fh->fddi_dhost[0] & 1)
-			m->m_flags |= (M_BCAST|M_MCAST);
-		goto queue_it;
-	}
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname,
 		       dst->sa_family);
@@ -505,8 +428,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		senderr(ENOBUFS);
 	fh = mtod(m, struct fddi_header *);
 	fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
- 	memcpy(fh->fddi_dhost, edst, sizeof (edst));
-  queue_it:
+	memcpy(fh->fddi_dhost, edst, sizeof (edst));
 	if (hdrcmplt)
 		memcpy(fh->fddi_shost, esrc, sizeof(fh->fddi_shost));
 	else
@@ -679,60 +601,6 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 	}
 #endif /* INET || NS */
-#ifdef	ISO
-	case LLC_ISO_LSAP:
-		switch (l->llc_control) {
-		case LLC_UI:
-			/* LLC_UI_P forbidden in class 1 service */
-			if ((l->llc_dsap == LLC_ISO_LSAP) &&
-			    (l->llc_ssap == LLC_ISO_LSAP)) {
-
-				schednetisr(NETISR_ISO);
-				inq = &clnlintrq;
-				break;
-			}
-			goto dropanyway;
-
-		case LLC_XID:
-		case LLC_XID_P:
-			if(m->m_len <
-			    LLC_XID_BASIC_MINLEN + sizeof(struct fddi_header))
-				goto dropanyway;
-			l->llc_window = 0;
-			l->llc_fid = LLC_XID_FORMAT_BASIC;
-			l->llc_class = LLC_XID_CLASS_I;
-			l->llc_dsap = l->llc_ssap = 0;
-			/* Fall through to */
-		case LLC_TEST:
-		case LLC_TEST_P:
-		{
-			struct sockaddr sa;
-			struct ether_header *eh;
-			int i;
-			u_char c = l->llc_dsap;
-
-			l->llc_dsap = l->llc_ssap;
-			l->llc_ssap = c;
-			eh = (struct ether_header *)sa.sa_data;
-			if (m->m_flags & (M_BCAST | M_MCAST))
-				memcpy(eh->ether_dhost, CFDDIADDR(ifp), 6);
-			sa.sa_family = AF_UNSPEC;
-			sa.sa_len = sizeof(sa);
-			for (i = 0; i < 6; i++) {
-				eh->ether_shost[i] = fh->fddi_dhost[i];
-				eh->ether_dhost[i] = fh->fddi_shost[i];
-			}
-			eh->ether_type = 0;
-			m_adj(m, sizeof(struct fddi_header));
-			ifp->if_output(ifp, m, &sa, NULL);
-			return;
-		}
-		default:
-			m_freem(m);
-			return;
-		}
-		break;
-#endif /* ISO */
 
 	default:
 		ifp->if_noproto++;

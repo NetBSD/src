@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.40.2.1 2012/04/17 00:05:53 yamt Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.40.2.2 2014/05/22 11:39:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.40.2.1 2012/04/17 00:05:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.40.2.2 2014/05/22 11:39:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,6 @@ void
 kn8ae_mcheck(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	struct mchkinfo *mcp;
-	int get_dwlpx_regs;
 	struct tlsb_mchk_fatal mcs[TLSB_NODE_MAX+1], *ptr;
 	mc_hdr_ev5 *hdr;
 	mc_uc_ev5 *mptr;
@@ -484,7 +483,6 @@ kn8ae_mcheck(unsigned long mces, unsigned long type, unsigned long logout, struc
 		return;
 	}
 
-	get_dwlpx_regs = 0;
 	ptr = NULL;
 	memset(mcs, 0, sizeof (mcs));
 

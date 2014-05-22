@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.7.2.1 2012/04/17 00:06:47 yamt Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7.2.2 2014/05/22 11:40:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7.2.1 2012/04/17 00:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7.2.2 2014/05/22 11:40:04 yamt Exp $");
 
 #define ISA_DMA_STATS
 
@@ -245,7 +245,7 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  out:
 	if (error) {
 		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DMAMAP);
+			kmem_intr_free(cookiestore, cookiesize);
 		_bus_dmamap_destroy(t, map);
 	}
 	return (error);

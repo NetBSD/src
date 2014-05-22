@@ -1,5 +1,5 @@
-#	$NetBSD: mk.tisdp24xx,v 1.2.34.2 2013/01/16 05:32:52 yamt Exp $
-CPPFLAGS+= -march=armv6k -mtune=arm1136jf-s -mfpu=vfp
+#	$NetBSD: mk.tisdp24xx,v 1.2.34.3 2014/05/22 11:39:40 yamt Exp $
+CPPFLAGS+= -march=armv6z -mtune=arm1136jf-s -mfpu=vfp
 
 SYSTEM_FIRST_OBJ=	sdp24xx_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/tisdp24xx/sdp24xx_start.S

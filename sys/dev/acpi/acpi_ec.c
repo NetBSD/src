@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.71 2011/07/24 20:15:09 jakllsch Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.71.2.1 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.71 2011/07/24 20:15:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.71.2.1 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -645,7 +645,6 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
     uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
 {
 	device_t dv;
-	struct acpiec_softc *sc;
 	ACPI_STATUS rv;
 	uint8_t addr, reg;
 	unsigned int i;
@@ -656,7 +655,6 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 
 	addr = paddr;
 	dv = arg;
-	sc = device_private(dv);
 
 	rv = AE_OK;
 

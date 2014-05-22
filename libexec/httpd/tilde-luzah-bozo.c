@@ -1,9 +1,9 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.8.6.1 2012/04/17 00:05:35 yamt Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.8.6.2 2014/05/22 11:37:13 yamt Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

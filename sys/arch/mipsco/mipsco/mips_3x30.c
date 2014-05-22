@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.14.4.1 2012/04/17 00:06:41 yamt Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.14.4.2 2014/05/22 11:39:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.14.4.1 2012/04/17 00:06:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.14.4.2 2014/05/22 11:39:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ pizazz_init(void)
 
 	pizazz_intr_establish(SYS_INTR_LEVEL0, pizazz_level0_intr, NULL);
 
-	strcpy(cpu_model, "Mips 3230 Magnum (Pizazz)");
+	cpu_setmodel("Mips 3230 Magnum (Pizazz)");
 	cpuspeed = 25;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.13.2.1 2012/10/30 17:20:22 yamt Exp $	*/
+/*	$NetBSD: memecc.c,v 1.13.2.2 2014/05/22 11:40:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.13.2.1 2012/10/30 17:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.13.2.2 2014/05/22 11:40:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ memecc_attach(device_t parent, device_t self, void *aux)
 {
 	struct memecc_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
-	int node;
 	uint32_t reg;
 
 	if (memerr_handler) {
@@ -86,7 +85,6 @@ memecc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_bt = ma->ma_bustag;
-	node = ma->ma_node;
 
 	/*
 	 * Map registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio_subr.h,v 1.1.2.2 2013/01/23 00:05:41 yamt Exp $	*/
+/*	$NetBSD: bcm2835_gpio_subr.h,v 1.1.2.3 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -31,6 +31,7 @@
 
 #include <arm/broadcom/bcm2835_gpioreg.h>
 
-void bcm2835gpio_function_select(u_int, u_int);
+void  bcm2835gpio_function_select(u_int, u_int);
+u_int bcm2835gpio_function_read(u_int);
 
 #endif /* _BROADCOM_BCM2835_GPIOVAR_H_ */

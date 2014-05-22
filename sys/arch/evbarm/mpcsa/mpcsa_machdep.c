@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.6.2.1 2012/10/30 17:19:25 yamt Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.6.2.1 2012/10/30 17:19:25 yamt Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.6.2.2 2014/05/22 11:39:42 yamt Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.6.2.2 2014/05/22 11:39:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.6.2.1 2012/10/30 17:19:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.6.2.2 2014/05/22 11:39:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,20 +93,21 @@ __KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.6.2.1 2012/10/30 17:19:25 yamt E
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#define	DRAM_BLOCKS	1
-#include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
@@ -114,9 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.6.2.1 2012/10/30 17:19:25 yamt E
 #include <arm/at91/at91reg.h>
 #include <arm/at91/at91var.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
+#define	DRAM_BLOCKS	1
+#include <machine/bootconfig.h>
 #include <machine/autoconf.h>
 
 #include "seeprom.h"

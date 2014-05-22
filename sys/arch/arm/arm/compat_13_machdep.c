@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.16.12.1 2012/10/30 17:18:55 yamt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.16.12.2 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.12.1 2012/10/30 17:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.12.2 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.12.1 2012/10/30 17:18:55 
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
+
+#include <arm/locore.h>
 
 int
 compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)

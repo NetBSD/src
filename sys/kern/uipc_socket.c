@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.205.2.2 2012/10/30 17:22:37 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.205.2.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.205.2.2 2012/10/30 17:22:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.205.2.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -416,7 +416,7 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		/* Normal users can only drop their own connections. */
 		struct socket *so = (struct socket *)arg1;
 
-		if (proc_uidmatch(cred, so->so_cred))
+		if (so->so_cred && proc_uidmatch(cred, so->so_cred) == 0)
 			result = KAUTH_RESULT_ALLOW;
 
 		break;
@@ -538,6 +538,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 		lock = lockso->so_lock;
 		so->so_lock = lock;
 		mutex_obj_hold(lock);
+		/* XXX Why is this not solock, to match sounlock? */
 		mutex_enter(lock);
 	} else {
 		/* Lock assigned and taken during PRU_ATTACH. */
@@ -585,6 +586,8 @@ fsocreate(int domain, struct socket **sop, int type, int protocol,
 		fp->f_data = so;
 		fd_affix(curproc, fp, fd);
 		*fdout = fd;
+		if (flags & SOCK_NONBLOCK)
+			so->so_state |= SS_NBIO;
 	}
 	return error;
 }
@@ -874,12 +877,10 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	struct mbuf *control, int flags, struct lwp *l)
 {
 	struct mbuf	**mp, *m;
-	struct proc	*p;
 	long		space, len, resid, clen, mlen;
 	int		error, s, dontroute, atomic;
 	short		wakeup_state = 0;
 
-	p = l->l_proc;
 	clen = 0;
 
 	/*
@@ -926,8 +927,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-				if ((so->so_state & SS_ISCONFIRMING) == 0 &&
-				    !(resid == 0 && clen != 0)) {
+				if (resid || clen == 0) {
 					error = ENOTCONN;
 					goto release;
 				}
@@ -1184,9 +1184,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 */
 	s = splsoftnet();
 	solock(so);
-	if (so->so_state & SS_ISCONFIRMING && uio->uio_resid)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, l);
-
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0) {
 		sounlock(so);
@@ -1667,7 +1664,8 @@ sorflush(struct socket *so)
 static int
 sosetopt1(struct socket *so, const struct sockopt *sopt)
 {
-	int error = EINVAL, optval, opt;
+	int error = EINVAL, opt;
+	int optval = 0; /* XXX: gcc */
 	struct linger l;
 	struct timeval tv;
 
@@ -1909,6 +1907,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
+	case SO_ACCEPTCONN:
 		error = sockopt_setint(sopt, (so->so_options & opt) ? 1 : 0);
 		break;
 
@@ -2426,11 +2425,6 @@ sysctl_kern_socket_setup(void)
 {
 
 	KASSERT(socket_sysctllog == NULL);
-	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

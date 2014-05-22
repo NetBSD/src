@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.33.2.2 2013/01/16 05:32:24 yamt Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.33.2.3 2014/05/22 11:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.33.2.2 2013/01/16 05:32:24 yamt Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.33.2.3 2014/05/22 11:36:52 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -345,6 +345,8 @@ sysconf(int name)
 		return _PASSWORD_LEN;
 	case _SC_REGEXP:
 		return _POSIX_REGEXP;
+	case _SC_SHARED_MEMORY_OBJECTS:
+		return _POSIX_SHARED_MEMORY_OBJECTS;
 	case _SC_SHELL:
 		return _POSIX_SHELL;
 	case _SC_SPAWN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.46.2.2 2013/01/23 00:06:20 yamt Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.46.2.3 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.46.2.2 2013/01/23 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.46.2.3 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,10 +1795,12 @@ ntfs_readattr(
 	if (vap->va_compression && vap->va_compressalg) {
 		u_int8_t       *cup;
 		u_int8_t       *uup;
-		off_t           off = roff, left = rsize, tocopy;
-		void *        data = rdata;
+		off_t           off, left, tocopy;
+		void	       *data;
 		cn_t            cn;
 
+		left = rsize;
+		data = rdata;
 		ddprintf(("%s: compression: %d\n", __func__,
 			 vap->va_compressalg));
 

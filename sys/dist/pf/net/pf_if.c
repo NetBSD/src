@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.21 2010/04/12 13:57:38 ahoka Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.21.8.1 2014/05/22 11:40:38 yamt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.21 2010/04/12 13:57:38 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.21.8.1 2014/05/22 11:40:38 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 #endif
 
 #include <sys/param.h>
@@ -133,8 +132,8 @@ pfi_initialize(void)
 		}
 	}
 
-	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
-	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
+	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
 #endif /* __NetBSD__ */
 }
 
@@ -145,8 +144,8 @@ pfi_destroy(void)
 	struct pfi_kif *p;
 	int i;
 
-	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
-	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
+	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 
 	for (i = 0; i < if_indexlim; i++) {
 		struct ifnet *ifp = ifindex2ifnet[i];

@@ -1,4 +1,4 @@
-# $NetBSD: t_create.sh,v 1.2.4.2 2012/10/30 19:00:07 yamt Exp $
+# $NetBSD: t_create.sh,v 1.2.4.3 2014/05/22 11:42:23 yamt Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,8 @@ validfat32_body() {
 
 	atf_check -s eq:0 -o ignore -e ignore \
 	    newfs_msdos -b 512 -C 33m -F 32 msdos.img
-	atf_expect_fail "PR bin/46743"
+#	fsck_msdos/newfs_msdos have been fixed
+#	atf_expect_fail "PR bin/46743"
 	atf_check -s eq:0 -o not-match:FIXED -e empty fsck_msdos -p msdos.img
 	atf_expect_pass
 }

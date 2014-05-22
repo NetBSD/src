@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.64.14.1 2012/10/30 17:22:48 yamt Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.64.14.2 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -493,6 +493,7 @@ extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
 extern const struct in6_addr zeroin6_addr;
 extern const u_char inet6ctlerrmap[];
 extern unsigned long in6_maxmtu;
+extern bool in6_present;
 
 /*
  * Macro for finding the internet address structure (in6_ifaddr) corresponding
@@ -693,8 +694,6 @@ void	in6_ifaddloop(struct ifaddr *);
 void	in6_createmkludge(struct ifnet *);
 void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(const struct ifnet *, int);
-struct in6_ifaddr *in6ifa_ifplocaladdr(const struct ifnet *,
-    const struct in6_addr *);
 struct in6_ifaddr *in6ifa_ifpwithaddr(const struct ifnet *,
     const struct in6_addr *);
 char	*ip6_sprintf(const struct in6_addr *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.33.2.1 2012/04/17 00:09:40 yamt Exp $	*/
+/*	$NetBSD: cmds.c,v 1.33.2.2 2014/05/22 11:42:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.33.2.1 2012/04/17 00:09:40 yamt Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.33.2.2 2014/05/22 11:42:50 yamt Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -792,11 +792,11 @@ tandem(const char *option)
 
 	(void)tcgetattr(FD, &rmtty);
 	if (strcmp(option, "on") == 0) {
-		rmtty.c_iflag |= IXOFF;
-		term.c_iflag |= IXOFF;
+		rmtty.c_iflag |= IXON|IXOFF|IXANY;
+		term.c_iflag |= IXON|IXOFF|IXANY;
 	} else {
-		rmtty.c_iflag &= ~IXOFF;
-		term.c_iflag &= ~IXOFF;
+		rmtty.c_iflag &= ~(IXON|IXOFF|IXANY);
+		term.c_iflag &= ~(IXON|IXOFF|IXANY);
 	}
 	(void)tcsetattr(FD, TCSADRAIN, &rmtty);
 	(void)tcsetattr(0, TCSADRAIN, &term);

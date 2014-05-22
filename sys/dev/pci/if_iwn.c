@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwn.c,v 1.61.2.1 2012/04/17 00:07:47 yamt Exp $	*/
-/*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.61.2.2 2014/05/22 11:40:25 yamt Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.61.2.1 2012/04/17 00:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.61.2.2 2014/05/22 11:40:25 yamt Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -35,6 +35,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.61.2.1 2012/04/17 00:07:47 yamt Exp $")
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#ifdef notyetMODULE
+#include <sys/module.h>
+#endif
 #include <sys/mutex.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
@@ -99,6 +102,7 @@ static const pci_product_id_t iwn_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6230_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6230_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_6235,
 };
 
 /*
@@ -108,10 +112,10 @@ static const struct ieee80211_rateset iwn_rateset_11a =
 	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static const struct ieee80211_rateset iwn_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };	
+	{ 4, { 2, 4, 11, 22 } };
 
 static const struct ieee80211_rateset iwn_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };	
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static int	iwn_match(device_t , struct cfdata *, void *);
 static void	iwn_attach(device_t , device_t , void *);
@@ -227,6 +231,11 @@ static void	iwn_tune_sensitivity(struct iwn_softc *,
 static int	iwn_send_sensitivity(struct iwn_softc *);
 static int	iwn_set_pslevel(struct iwn_softc *, int, int, int);
 static int	iwn5000_runtime_calib(struct iwn_softc *);
+
+static int	iwn_config_bt_coex_bluetooth(struct iwn_softc *);
+static int	iwn_config_bt_coex_prio_table(struct iwn_softc *);
+static int	iwn_config_bt_coex_adv1(struct iwn_softc *);
+
 static int	iwn_config(struct iwn_softc *);
 static int	iwn_scan(struct iwn_softc *, uint16_t);
 static int	iwn_auth(struct iwn_softc *);
@@ -342,6 +351,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -393,7 +403,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		aprint_error(": can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": can't establish interrupt");
@@ -413,7 +423,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	if (error != 0) {
 		aprint_error(": could not attach device\n");
 		return;
-	}		
+	}	
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error(": hardware not ready\n");
@@ -618,6 +628,7 @@ iwn4965_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	ops->read_eeprom = iwn4965_read_eeprom;
 	ops->post_alive = iwn4965_post_alive;
 	ops->nic_config = iwn4965_nic_config;
+	ops->config_bt_coex = iwn_config_bt_coex_bluetooth;
 	ops->update_sched = iwn4965_update_sched;
 	ops->get_temperature = iwn4965_get_temperature;
 	ops->get_rssi = iwn4965_get_rssi;
@@ -657,6 +668,7 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	ops->read_eeprom = iwn5000_read_eeprom;
 	ops->post_alive = iwn5000_post_alive;
 	ops->nic_config = iwn5000_nic_config;
+	ops->config_bt_coex = iwn_config_bt_coex_bluetooth;
 	ops->update_sched = iwn5000_update_sched;
 	ops->get_temperature = iwn5000_get_temperature;
 	ops->get_rssi = iwn5000_get_rssi;
@@ -717,7 +729,17 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		break;
 	case IWN_HW_REV_TYPE_6005:
 		sc->limits = &iwn6000_sensitivity_limits;
-		sc->fwname = "iwlwifi-6000g2a-5.ucode";
+		/* Type 6030 cards return IWN_HW_REV_TYPE_6005 */
+		if (pid == PCI_PRODUCT_INTEL_WIFI_LINK_1030_1 ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_1030_2 ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_1 ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_2 ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6235) {
+			sc->fwname = "iwlwifi-6000g2b-6.ucode";
+			ops->config_bt_coex = iwn_config_bt_coex_adv1;
+		}
+		else
+			sc->fwname = "iwlwifi-6000g2a-5.ucode";
 		break;
 	default:
 		aprint_normal(": adapter type %d not supported\n", sc->hw_type);
@@ -897,6 +919,7 @@ iwn_mem_write(struct iwn_softc *sc, uint32_t addr, uint32_t data)
 	IWN_WRITE(sc, IWN_MEM_WDATA, data);
 }
 
+#ifndef IEEE80211_NO_HT
 static __inline void
 iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 {
@@ -909,6 +932,7 @@ iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 		tmp = (tmp & 0xffff0000) | data;
 	iwn_mem_write(sc, addr & ~3, tmp);
 }
+#endif
 
 static __inline void
 iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
@@ -2726,7 +2750,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	hdrlen = ieee80211_anyhdrsize(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	hdrlen2 = (IEEE80211_QOS_HAS_SEQ(wh)) ?
+	hdrlen2 = (ieee80211_has_qos(wh)) ?
 	    sizeof (struct ieee80211_qosframe) :
 	    sizeof (struct ieee80211_frame);
 
@@ -2736,7 +2760,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	/* XXX OpenBSD sets a different tid when using QOS */
 	tid = 0;
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
+	if (ieee80211_has_qos(wh)) {
 		cap = &ic->ic_wme.wme_chanParams;
 		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
 	}
@@ -2814,7 +2838,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	    (IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR))
 		flags |= IWN_TX_IMM_BA;		/* Cannot happen yet. */
-#endif          
+#endif         
 
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */
@@ -3092,7 +3116,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	const struct sockaddr *sa;
 	int s, error = 0;
 
@@ -3100,9 +3123,9 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
+		struct ifaddr *ifa = (struct ifaddr *)data;
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
 #endif
@@ -4067,8 +4090,8 @@ iwn_set_pslevel(struct iwn_softc *sc, int dtim, int level, int async)
 		cmd.flags |= htole16(IWN_PS_FAST_PD);
 	/* Retrieve PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    sc->sc_cap_off + PCI_PCIE_LCSR);
-	if (!(reg & PCI_PCIE_LCSR_ASPM_L0S))	/* L0s Entry disabled. */
+	    sc->sc_cap_off + PCIE_LCSR);
+	if (!(reg & PCIE_LCSR_ASPM_L0S))	/* L0s Entry disabled. */
 		cmd.flags |= htole16(IWN_PS_PCI_PMGT);
 	cmd.rxtimeout = htole32(pmgt->rxtimeout * 1024);
 	cmd.txtimeout = htole32(pmgt->txtimeout * 1024);
@@ -4107,15 +4130,107 @@ iwn5000_runtime_calib(struct iwn_softc *sc)
 }
 
 static int
+iwn_config_bt_coex_bluetooth(struct iwn_softc *sc)
+{
+	struct iwn_bluetooth bluetooth;
+
+	memset(&bluetooth, 0, sizeof bluetooth);
+	bluetooth.flags = IWN_BT_COEX_ENABLE;
+	bluetooth.lead_time = IWN_BT_LEAD_TIME_DEF;
+	bluetooth.max_kill = IWN_BT_MAX_KILL_DEF;
+
+	DPRINTF(("configuring bluetooth coexistence\n"));
+	return iwn_cmd(sc, IWN_CMD_BT_COEX, &bluetooth, sizeof bluetooth, 0);
+}
+
+static int
+iwn_config_bt_coex_prio_table(struct iwn_softc *sc)
+{
+	uint8_t prio_table[16];
+
+	memset(&prio_table, 0, sizeof prio_table);
+	prio_table[ 0] =  6;	/* init calibration 1		*/
+	prio_table[ 1] =  7;	/* init calibration 2		*/
+	prio_table[ 2] =  2;	/* periodic calib low 1		*/
+	prio_table[ 3] =  3;	/* periodic calib low 2		*/
+	prio_table[ 4] =  4;	/* periodic calib high 1	*/
+	prio_table[ 5] =  5;	/* periodic calib high 2	*/
+	prio_table[ 6] =  6;	/* dtim				*/
+	prio_table[ 7] =  8;	/* scan52			*/
+	prio_table[ 8] = 10;	/* scan24			*/
+
+	DPRINTF(("sending priority lookup table\n"));
+	return iwn_cmd(sc, IWN_CMD_BT_COEX_PRIO_TABLE,
+	               &prio_table, sizeof prio_table, 0);
+}
+
+static int
+iwn_config_bt_coex_adv1(struct iwn_softc *sc)
+{
+	int error;
+	struct iwn_bt_adv1 d;
+
+	memset(&d, 0, sizeof d);
+	d.basic.bt.flags = IWN_BT_COEX_ENABLE;
+	d.basic.bt.lead_time = IWN_BT_LEAD_TIME_DEF;
+	d.basic.bt.max_kill = IWN_BT_MAX_KILL_DEF;
+	d.basic.bt.bt3_timer_t7_value = IWN_BT_BT3_T7_DEF;
+	d.basic.bt.kill_ack_mask = IWN_BT_KILL_ACK_MASK_DEF;
+	d.basic.bt.kill_cts_mask = IWN_BT_KILL_CTS_MASK_DEF;
+	d.basic.bt3_prio_sample_time = IWN_BT_BT3_PRIO_SAMPLE_DEF;
+	d.basic.bt3_timer_t2_value = IWN_BT_BT3_T2_DEF;
+	d.basic.bt3_lookup_table[ 0] = htole32(0xaaaaaaaa); /* Normal */
+	d.basic.bt3_lookup_table[ 1] = htole32(0xaaaaaaaa);
+	d.basic.bt3_lookup_table[ 2] = htole32(0xaeaaaaaa);
+	d.basic.bt3_lookup_table[ 3] = htole32(0xaaaaaaaa);
+	d.basic.bt3_lookup_table[ 4] = htole32(0xcc00ff28);
+	d.basic.bt3_lookup_table[ 5] = htole32(0x0000aaaa);
+	d.basic.bt3_lookup_table[ 6] = htole32(0xcc00aaaa);
+	d.basic.bt3_lookup_table[ 7] = htole32(0x0000aaaa);
+	d.basic.bt3_lookup_table[ 8] = htole32(0xc0004000);
+	d.basic.bt3_lookup_table[ 9] = htole32(0x00004000);
+	d.basic.bt3_lookup_table[10] = htole32(0xf0005000);
+	d.basic.bt3_lookup_table[11] = htole32(0xf0005000);
+	d.basic.reduce_txpower = 0; /* as not implemented */
+	d.basic.valid = IWN_BT_ALL_VALID_MASK;
+	d.prio_boost = IWN_BT_PRIO_BOOST_DEF;
+	d.tx_prio_boost = 0;
+	d.rx_prio_boost = 0;
+
+	DPRINTF(("configuring advanced bluetooth coexistence v1\n"));
+	error = iwn_cmd(sc, IWN_CMD_BT_COEX, &d, sizeof d, 0);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+			"could not configure advanced bluetooth coexistence\n");
+		return error;
+	}
+
+	error = iwn_config_bt_coex_prio_table(sc);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+			"could not configure send BT priority table\n");
+		return error;
+	}
+
+	return error;
+}
+
+static int
 iwn_config(struct iwn_softc *sc)
 {
 	struct iwn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = ic->ic_ifp;
-	struct iwn_bluetooth bluetooth;
 	uint32_t txmask;
 	uint16_t rxchain;
 	int error;
+
+	error = ops->config_bt_coex(sc);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+			"could not configure bluetooth coexistence\n");
+		return error;
+	}
 
 	if (sc->hw_type == IWN_HW_REV_TYPE_6050 ||
 	    sc->hw_type == IWN_HW_REV_TYPE_6005) {
@@ -4139,19 +4254,6 @@ iwn_config(struct iwn_softc *sc)
 			    "could not configure valid TX chains\n");
 			return error;
 		}
-	}
-
-	/* Configure bluetooth coexistence. */
-	memset(&bluetooth, 0, sizeof bluetooth);
-	bluetooth.flags = IWN_BT_COEX_CHAN_ANN | IWN_BT_COEX_BT_PRIO;
-	bluetooth.lead_time = IWN_BT_LEAD_TIME_DEF;
-	bluetooth.max_kill = IWN_BT_MAX_KILL_DEF;
-	DPRINTF(("configuring bluetooth coexistence\n"));
-	error = iwn_cmd(sc, IWN_CMD_BT_COEX, &bluetooth, sizeof bluetooth, 0);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not configure bluetooth coexistence\n");
-		return error;
 	}
 
 	/* Set mode, channel, RX filter and enable RX. */
@@ -5475,9 +5577,9 @@ iwn_apm_init(struct iwn_softc *sc)
 
 	/* Retrieve PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    sc->sc_cap_off + PCI_PCIE_LCSR);
+	    sc->sc_cap_off + PCIE_LCSR);
 	/* Workaround for HW instability in PCIe L0->L0s->L1 transition. */
-	if (reg & PCI_PCIE_LCSR_ASPM_L1)	/* L1 Entry enabled. */
+	if (reg & PCIE_LCSR_ASPM_L1)	/* L1 Entry enabled. */
 		IWN_SETBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);
 	else
 		IWN_CLRBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);
@@ -6110,3 +6212,39 @@ iwn_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	}
 }
 
+#ifdef notyetMODULE
+
+MODULE(MODULE_CLASS_DRIVER, if_iwn, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_iwn_modcmd(modcmd_t cmd, void *data)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_iwn,
+			cfattach_ioconf_if_iwn, cfdata_ioconf_if_iwn);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_iwn,
+			cfattach_ioconf_if_iwn, cfdata_ioconf_if_iwn);
+#endif
+		return error;
+	case MODULE_CMD_AUTOUNLOAD:
+#ifdef _MODULE
+		/* XXX This is not optional! */
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
+}
+#endif

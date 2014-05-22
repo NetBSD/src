@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.4.2.2 2012/04/17 00:09:22 yamt Exp $
+# $NetBSD: t_sed.sh,v 1.4.2.3 2014/05/22 11:42:23 yamt Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,8 +36,8 @@ c2048_head() {
 
 c2048_body() {
 
-	atf_check -s exit:0 -o empty -e empty \
-		-x "sed -f $(atf_get_srcdir)/d_c2048.in"
+	atf_check -s exit:0 -o inline:'foo\n' -e empty \
+		-x "echo foo | sed -f $(atf_get_srcdir)/d_c2048.in"
 }
 
 atf_test_case emptybackref

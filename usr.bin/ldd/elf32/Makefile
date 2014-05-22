@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/03/09 23:10:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2014/05/22 11:42:45 yamt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -24,7 +24,7 @@ LIBISPRIVATE=	yes
 CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
 .endif
 
-.if ${MACHINE_ARCH} != "alpha"
+.if ${OBJECT_FMTS:Melf32} != ""
 .include "../Makefile.elf"
 .endif
 

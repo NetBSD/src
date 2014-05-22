@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.219.2.2 2012/10/30 17:20:49 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.219.2.3 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.219.2.2 2012/10/30 17:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.219.2.3 2014/05/22 11:40:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -126,8 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.219.2.2 2012/10/30 17:20:49 yamt Exp $");
 
 #include <dev/dkvar.h>
 #include <dev/vndvar.h>
-
-#include <prop/proplib.h>
 
 #if defined(VNDDEBUG) && !defined(DEBUG)
 #define DEBUG
@@ -187,7 +185,7 @@ static void	handle_with_rdwr(struct vnd_softc *, const struct buf *,
 		    struct buf *);
 static void	handle_with_strategy(struct vnd_softc *, const struct buf *,
 		    struct buf *);
-static void	vnd_set_properties(struct vnd_softc *);
+static void	vnd_set_geometry(struct vnd_softc *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -199,12 +197,27 @@ static dev_type_dump(vnddump);
 static dev_type_size(vndsize);
 
 const struct bdevsw vnd_bdevsw = {
-	vndopen, vndclose, vndstrategy, vndioctl, vnddump, vndsize, D_DISK
+	.d_open = vndopen,
+	.d_close = vndclose,
+	.d_strategy = vndstrategy,
+	.d_ioctl = vndioctl,
+	.d_dump = vnddump,
+	.d_psize = vndsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw vnd_cdevsw = {
-	vndopen, vndclose, vndread, vndwrite, vndioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = vndopen,
+	.d_close = vndclose,
+	.d_read = vndread,
+	.d_write = vndwrite,
+	.d_ioctl = vndioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static int	vnd_match(device_t, cfdata_t, void *);
@@ -603,7 +616,6 @@ vndthread(void *arg)
 	 */
 	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
 		struct vndxfer *vnx;
-		int flags;
 		struct buf *obp;
 		struct buf *bp;
 
@@ -619,7 +631,6 @@ vndthread(void *arg)
 				wakeup(&vnd->sc_pending);
 		}
 		splx(s);
-		flags = obp->b_flags;
 #ifdef DEBUG
 		if (vnddebug & VDB_FOLLOW)
 			printf("vndthread(%p)\n", obp);
@@ -631,7 +642,7 @@ vndthread(void *arg)
 		}
 #ifdef VND_COMPRESSION
 		/* handle a compressed read */
-		if ((flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
+		if ((obp->b_flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
 			off_t bn;
 			
 			/* Convert to a byte offset within the file. */
@@ -955,7 +966,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 	vnd = device_lookup_private(&vnd_cd, *un);
 	if (vnd == NULL)
-		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
+		return -1;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
@@ -1023,7 +1034,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct pathbuf *pb;
 	struct nameidata nd;
 	int error, part, pmask;
-	size_t geomsize;
+	uint64_t geomsize;
 	int fflags;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -1047,6 +1058,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    cmd != VNDIOCGET)
 		return ENXIO;
 	vio = (struct vnd_ioctl *)data;
+
+	error = disk_ioctl(&vnd->sc_dkdev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -1296,7 +1311,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_geom.vng_ncylinders = vnd->sc_size;
 		}
 
-		vnd_set_properties(vnd);
+		vnd_set_geometry(vnd);
 
 		if (vio->vnd_flags & VNDIOF_READONLY) {
 			vnd->sc_flags |= VNF_READONLY;
@@ -1998,52 +2013,33 @@ vnd_free(void *aux, void *ptr)
 #endif /* VND_COMPRESSION */
 
 static void
-vnd_set_properties(struct vnd_softc *vnd)
+vnd_set_geometry(struct vnd_softc *vnd)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &vnd->sc_dkdev.dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	geom = prop_dictionary_create();
+	dg->dg_secperunit = (int64_t)vnd->sc_geom.vng_nsectors *
+	    vnd->sc_geom.vng_ntracks * vnd->sc_geom.vng_ncylinders;
+	dg->dg_secsize = vnd->sc_geom.vng_secsize;
+	dg->dg_nsectors = vnd->sc_geom.vng_nsectors;
+	dg->dg_ntracks = vnd->sc_geom.vng_ntracks;
+	dg->dg_ncylinders = vnd->sc_geom.vng_ncylinders;
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    vnd->sc_geom.vng_nsectors * vnd->sc_geom.vng_ntracks *
-	    vnd->sc_geom.vng_ncylinders);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    vnd->sc_geom.vng_secsize);
-
-	prop_dictionary_set_uint16(geom, "sectors-per-track",
-	    vnd->sc_geom.vng_nsectors);
-
-	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-	    vnd->sc_geom.vng_ntracks);
-
-	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-	    vnd->sc_geom.vng_ncylinders);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	prop_dictionary_set(device_properties(vnd->sc_dev),
-	    "disk-info", disk_info);
-
-	/*
-	 * Don't release disk_info here; we keep a reference to it.
-	 * disk_detach() will release it when we go away.
-	 */
-
-	odisk_info = vnd->sc_dkdev.dk_info;
-	vnd->sc_dkdev.dk_info = disk_info;
-	if (odisk_info)
-		prop_object_release(odisk_info);
+#ifdef DEBUG
+	if (vnddebug & VDB_LABEL) {
+		printf("dg->dg_secperunit: %" PRId64 "\n", dg->dg_secperunit);
+		printf("dg->dg_ncylinders: %u\n", dg->dg_ncylinders);
+	}
+#endif
+	disk_set_info(vnd->sc_dev, &vnd->sc_dkdev, NULL);
 }
 
 #ifdef _MODULE
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, vnd, NULL);
+MODULE(MODULE_CLASS_DRIVER, vnd, "zlib");
 CFDRIVER_DECL(vnd, DV_DISK, NULL);
 
 static int

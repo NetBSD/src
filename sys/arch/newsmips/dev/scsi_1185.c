@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.20 2011/02/20 07:56:31 matt Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.20.4.1 2014/05/22 11:40:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.20 2011/02/20 07:56:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.20.4.1 2014/05/22 11:40:00 yamt Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -568,8 +568,10 @@ scintr_loop:
 			int volatile cmonr;
 
 			statr = sc_statr;
+			__USE(statr);
 			DMAC_WAIT0;
 			cmonr = sc_cmonr;
+			__USE(cmonr);
 			sc->int_stat2 &= ~R3_SPE;
 			sc->perr_flag[sc->ip->chan_num] = 1;
 		}

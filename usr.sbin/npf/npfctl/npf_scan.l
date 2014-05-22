@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.1.4.4 2013/01/16 05:34:10 yamt Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.1.4.5 2014/05/22 11:43:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -41,19 +41,57 @@ int	yycolumn;
 
 #define	YY_USER_ACTION	yycolumn += yyleng;
 
+extern int		yyparsetarget;
+extern int		yylineno;
+extern const char *	yyfilename;
+extern int		yyparse(void);
+extern void		yyrestart(FILE *);
+
+void
+npfctl_parse_file(const char *name)
+{
+	FILE *fp;
+
+	fp = fopen(name, "r");
+	if (fp == NULL) {
+		err(EXIT_FAILURE, "open '%s'", name);
+	}
+	yyparsetarget = NPFCTL_PARSE_FILE;
+	yyrestart(fp);
+	yylineno = 1;
+	yycolumn = 0;
+	yyfilename = name;
+	yyparse();
+	fclose(fp);
+}
+
+void
+npfctl_parse_string(const char *str)
+{
+	YY_BUFFER_STATE bs;
+
+	yyparsetarget = NPFCTL_PARSE_STRING;
+	bs = yy_scan_string(str);
+	yyfilename = "stdin";
+	yyparse();
+	yy_delete_buffer(bs);
+}
+
 %}
 
 %option noyywrap nounput noinput
 
 ID	[a-zA-Z_][a-zA-Z_0-9]*
-NID	[a-zA-Z_0-9]+
+DID	[a-zA-Z_][a-zA-Z_0-9-]*
 NUMBER	[0-9]+
 
 %%
+alg			return ALG;
 table			return TABLE;
 type			return TYPE;
 hash			return HASH;
 tree			return TREE;
+cdb			return CDB;
 static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
@@ -61,6 +99,8 @@ map			return MAP;
 "<->"			return ARROWBOTH;
 "<-"			return ARROWLEFT;
 "->"			return ARROWRIGHT;
+algo			return ALGO;
+npt66			return NPT66;
 "-"			return MINUS;
 procedure		return PROCEDURE;
 \\\n			yylineno++; yycolumn = 0;
@@ -71,19 +111,20 @@ group			return GROUP;
 default			return DEFAULT;
 in			return IN;
 out			return OUT;
+forw			return FORW;
 interface		return INTERFACE;
 all			return ALL;
 block			return BLOCK;
 pass			return PASS;
+pcap-filter		return PCAP_FILTER;
 stateful		return STATEFUL;
+stateful-ends		return STATEFUL_ENDS;
 apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
 on			return ON;
-ifnet			return IFNET;
 inet6			return INET6;
-inet4			return INET;
-inet			return INET;
+inet4			return INET4;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
@@ -93,6 +134,7 @@ ipv6-icmp		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;
+ruleset			return RULESET;
 from			return FROM;
 to			return TO;
 port			return PORT;
@@ -141,12 +183,12 @@ any			return ANY;
 			return NUM;
 		}
 
-"<"{NID}">"	{
+"<"{DID}">"	{
 			yylval.str = estrndup(yytext + 1, yyleng - 2);
 			return TABLE_ID;
 		}
 
-"$"{NID}	{
+"$"{ID}		{
 			yylval.str = estrndup(yytext + 1, yyleng - 1);
 			return VAR_ID;
 		}

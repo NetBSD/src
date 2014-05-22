@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tls_dlopen.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $	*/
+/*	$NetBSD: h_tls_dlopen.c,v 1.1.4.2 2014/05/22 11:42:21 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_tls_dlopen.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $");
+__RCSID("$NetBSD: h_tls_dlopen.c,v 1.1.4.2 2014/05/22 11:42:21 yamt Exp $");
 
 #include <atf-c.h>
 #include <unistd.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: h_tls_dlopen.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $");
 extern __thread int var1;
 extern __thread int var2;
 extern __thread int *var3;
+__thread int var5 = 1;
 static __thread pid_t (*local_var)(void) = getpid;
 
 void testf_dso_helper(int x, int y);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.3 2011/07/12 07:51:34 mrg Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.3.2.1 2014/05/22 11:40:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -345,7 +345,7 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
 	set	FPLWP, %g1
-	CASPTR	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
+	CASPTRA	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
 	membar	#Sync			! Should not be needed due to retry
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
 	ba,a	ret_from_intr_vector
@@ -410,22 +410,4 @@ ENTRY(sparc64_ipi_dcache_flush_page_us)
 	ba,a	ret_from_intr_vector
 	 nop
 
-/*
- * Setup a C compatible environment and call a MI function.
- *
- * On entry:
- *	%g2 = function to call
- *	%g3 = single argument to called function
- */
-ENTRY(sparc64_ipi_ccall)
-	save %sp, -CC64FSZ-16, %sp			! create a stack frame
-	stx %g2, [%fp + BIAS -16 + 0]			! save function pointer
-	stx %g3, [%fp + BIAS -16 + 8]			! and argument
-	wrpr    %g0, PSTATE_KERN, %pstate		! switch globals
-	ldx [%fp + BIAS -16 + 0], %l0			! reload function
-	call %l0					! call function
-	 ldx [%fp + BIAS -16 + 8], %o0			! reload argument 
-	restore						! pop stack frame
-	ba,a	ret_from_intr_vector			! and return from IPI
-	 nop
 #endif

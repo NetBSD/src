@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.72 2011/02/01 20:19:32 chuck Exp $	*/
+/*	$NetBSD: xy.c,v 1.72.4.1 2014/05/22 11:40:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.72 2011/02/01 20:19:32 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.72.4.1 2014/05/22 11:40:10 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -217,12 +217,27 @@ dev_type_dump(xydump);
 dev_type_size(xysize);
 
 const struct bdevsw xy_bdevsw = {
-	xyopen, xyclose, xystrategy, xyioctl, xydump, xysize, D_DISK
+	.d_open = xyopen,
+	.d_close = xyclose,
+	.d_strategy = xystrategy,
+	.d_ioctl = xyioctl,
+	.d_dump = xydump,
+	.d_psize = xysize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xy_cdevsw = {
-	xyopen, xyclose, xyread, xywrite, xyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xyopen,
+	.d_close = xyclose,
+	.d_read = xyread,
+	.d_write = xywrite,
+	.d_ioctl = xyioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 /*
@@ -1241,7 +1256,6 @@ xyc_cmd(struct xyc_softc *xycsc, int cmd, int subfn, int unit, int block,
 int 
 xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 {
-	int partno;
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
 	u_long  block;
@@ -1255,8 +1269,8 @@ xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 	if (bp == NULL)
 		panic("%s null buf", __func__);
 
-	partno = DISKPART(bp->b_dev);
 #ifdef XYC_DEBUG
+	int partno = DISKPART(bp->b_dev);
 	printf("%s: %s%c: %s block %d\n", __func__, device_xname(xysc->sc_dev),
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write",
 	    (int)bp->b_blkno);

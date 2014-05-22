@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.33.4.1 2012/04/17 00:08:29 yamt Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.33.4.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.33.4.1 2012/04/17 00:08:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.33.4.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -655,7 +655,8 @@ mq_recv1(mqd_t mqdes, void *msg_ptr, size_t msg_len, u_int *msg_prio,
 			goto error;
 		}
 		if (ts) {
-			error = abstimeout2timo(ts, &t);
+			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, ts, &t,
+			    NULL);
 			if (error)
 				goto error;
 		} else
@@ -835,7 +836,8 @@ mq_send1(mqd_t mqdes, const char *msg_ptr, size_t msg_len, u_int msg_prio,
 			goto error;
 		}
 		if (ts) {
-			error = abstimeout2timo(ts, &t);
+			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, ts, &t,
+			    NULL);
 			if (error)
 				goto error;
 		} else
@@ -1135,11 +1137,6 @@ mqueue_sysctl_init(void)
 
 	mqsysctl_log = NULL;
 
-	sysctl_createv(&mqsysctl_log, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(&mqsysctl_log, 0, NULL, NULL,
 		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "posix_msg",

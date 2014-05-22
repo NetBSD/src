@@ -13,291 +13,110 @@
 # compile options, and prevents pollution of the source code.
 #
 include ../Makefile.config
-PROG = acpinames
+FINAL_PROG = ../$(BINDIR)/acpinames
+PROG = $(OBJDIR)/acpinames
+
+#
+# Search paths for source files
+#
+vpath %.c \
+    $(ACPINAMES)\
+    $(ACPICA_DEBUGGER)\
+    $(ACPICA_DISPATCHER)\
+    $(ACPICA_EXECUTER)\
+    $(ACPICA_NAMESPACE)\
+    $(ACPICA_PARSER)\
+    $(ACPICA_TABLES)\
+    $(ACPICA_UTILITIES)\
+    $(ACPICA_COMMON)\
+    $(ACPICA_OSL)
+
+HEADERS = \
+    $(wildcard $(ACPINAMES)/*.h)
+
+OBJECTS = \
+	$(OBJDIR)/anmain.o\
+	$(OBJDIR)/anstubs.o\
+	$(OBJDIR)/antables.o\
+	$(OBJDIR)/dbfileio.o\
+	$(OBJDIR)/dsfield.o\
+	$(OBJDIR)/dsmthdat.o\
+	$(OBJDIR)/dsobject.o\
+	$(OBJDIR)/dsutils.o\
+	$(OBJDIR)/dswload.o\
+	$(OBJDIR)/dswload2.o\
+	$(OBJDIR)/dswscope.o\
+	$(OBJDIR)/dswstate.o\
+	$(OBJDIR)/excreate.o\
+	$(OBJDIR)/exnames.o\
+	$(OBJDIR)/exresnte.o\
+	$(OBJDIR)/exresolv.o\
+	$(OBJDIR)/exutils.o\
+	$(OBJDIR)/getopt.o\
+	$(OBJDIR)/nsaccess.o\
+	$(OBJDIR)/nsalloc.o\
+	$(OBJDIR)/nsdump.o\
+	$(OBJDIR)/nsinit.o\
+	$(OBJDIR)/nsload.o\
+	$(OBJDIR)/nsnames.o\
+	$(OBJDIR)/nsobject.o\
+	$(OBJDIR)/nsparse.o\
+	$(OBJDIR)/nssearch.o\
+	$(OBJDIR)/nsutils.o\
+	$(OBJDIR)/nswalk.o\
+	$(OBJDIR)/nsxfeval.o\
+	$(OBJDIR)/nsxfname.o\
+	$(OBJDIR)/nsxfobj.o\
+	$(OBJDIR)/osunixxf.o\
+	$(OBJDIR)/psargs.o\
+	$(OBJDIR)/psloop.o\
+	$(OBJDIR)/psobject.o\
+	$(OBJDIR)/psopcode.o\
+	$(OBJDIR)/psopinfo.o\
+	$(OBJDIR)/psparse.o\
+	$(OBJDIR)/psscope.o\
+	$(OBJDIR)/pstree.o\
+	$(OBJDIR)/psutils.o\
+	$(OBJDIR)/pswalk.o\
+	$(OBJDIR)/psxface.o\
+	$(OBJDIR)/tbfadt.o\
+	$(OBJDIR)/tbfind.o\
+	$(OBJDIR)/tbinstal.o\
+	$(OBJDIR)/tbprint.o\
+	$(OBJDIR)/tbutils.o\
+	$(OBJDIR)/tbxface.o\
+	$(OBJDIR)/tbxfload.o\
+	$(OBJDIR)/tbxfroot.o\
+	$(OBJDIR)/utaddress.o\
+	$(OBJDIR)/utalloc.o\
+	$(OBJDIR)/utcache.o\
+	$(OBJDIR)/utdebug.o\
+	$(OBJDIR)/utdecode.o\
+	$(OBJDIR)/utdelete.o\
+	$(OBJDIR)/uterror.o\
+	$(OBJDIR)/utexcep.o\
+	$(OBJDIR)/utglobal.o\
+	$(OBJDIR)/utlock.o\
+	$(OBJDIR)/utmath.o\
+	$(OBJDIR)/utmisc.o\
+	$(OBJDIR)/utmutex.o\
+	$(OBJDIR)/utobject.o\
+	$(OBJDIR)/utosi.o\
+	$(OBJDIR)/utownerid.o\
+	$(OBJDIR)/utstate.o\
+	$(OBJDIR)/utstring.o\
+	$(OBJDIR)/utxface.o\
+	$(OBJDIR)/utxferror.o\
+	$(OBJDIR)/utxfinit.o
 
 #
 # Flags specific to acpinames utility
 #
-CFLAGS+= \
-    -DACPI_NAMES_APP \
-    -I$(ACPICA_TOOLS)/acpinames
-
-OBJS = \
-	anmain.o \
-	anstubs.o \
-	antables.o \
-	dbfileio.o \
-	dsfield.o \
-	dsmthdat.o \
-	dsobject.o \
-	dsutils.o \
-	dswload.o \
-	dswload2.o \
-	dswscope.o \
-	dswstate.o \
-	excreate.o \
-	exnames.o \
-	exresnte.o \
-	exresolv.o \
-	exutils.o \
-	getopt.o \
-	nsaccess.o \
-	nsalloc.o \
-	nsdump.o \
-	nsinit.o \
-	nsload.o \
-	nsnames.o \
-	nsobject.o \
-	nsparse.o \
-	nssearch.o \
-	nsutils.o \
-	nswalk.o \
-	nsxfeval.o \
-	nsxfname.o \
-	nsxfobj.o \
-	osunixxf.o \
-	psargs.o \
-	psloop.o \
-	psopcode.o \
-	psparse.o \
-	psscope.o \
-	pstree.o \
-	psutils.o \
-	pswalk.o \
-	psxface.o \
-	tbfadt.o \
-	tbfind.o \
-	tbinstal.o \
-	tbutils.o \
-	tbxface.o \
-	tbxfroot.o \
-	utalloc.o \
-	utcache.o \
-	utdebug.o \
-	utdecode.o \
-	utdelete.o \
-	utglobal.o \
-	utlock.o \
-	utmath.o \
-	utmisc.o \
-	utmutex.o \
-	utobject.o \
-	utstate.o \
-	utosi.o \
-	utxferror.o \
-	utxface.o
+CFLAGS += \
+    -DACPI_NAMES_APP\
+    -I$(ACPINAMES)
 
 #
-# Root rule
+# Common Rules
 #
-$(PROG) : $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $(PROG)
-	$(COPYPROG)
-
-#
-# acpinames source
-#
-anmain.o :          $(ACPICA_TOOLS)/acpinames/anmain.c
-	$(COMPILE)
-
-anstubs.o :         $(ACPICA_TOOLS)/acpinames/anstubs.c
-	$(COMPILE)
-
-antables.o :        $(ACPICA_TOOLS)/acpinames/antables.c
-	$(COMPILE)
-
-#
-# ACPICA core source - common
-#
-getopt.o :          $(ACPICA_COMMON)/getopt.c
-	$(COMPILE)
-
-#
-# ACPICA core source
-#
-dbfileio.o :        $(ACPICA_CORE)/debugger/dbfileio.c
-	$(COMPILE)
-
-dsfield.o :         $(ACPICA_CORE)/dispatcher/dsfield.c
-	$(COMPILE)
-
-dsmthdat.o :        $(ACPICA_CORE)/dispatcher/dsmthdat.c
-	$(COMPILE)
-
-dsobject.o :        $(ACPICA_CORE)/dispatcher/dsobject.c
-	$(COMPILE)
-
-dsutils.o :         $(ACPICA_CORE)/dispatcher/dsutils.c
-	$(COMPILE)
-
-dswload.o :         $(ACPICA_CORE)/dispatcher/dswload.c
-	$(COMPILE)
-
-dswload2.o :        $(ACPICA_CORE)/dispatcher/dswload2.c
-	$(COMPILE)
-
-dswscope.o :        $(ACPICA_CORE)/dispatcher/dswscope.c
-	$(COMPILE)
-
-dswstate.o :        $(ACPICA_CORE)/dispatcher/dswstate.c
-	$(COMPILE)
-
-excreate.o :        $(ACPICA_CORE)/executer/excreate.c
-	$(COMPILE)
-
-exnames.o :         $(ACPICA_CORE)/executer/exnames.c
-	$(COMPILE)
-
-exresnte.o :        $(ACPICA_CORE)/executer/exresnte.c
-	$(COMPILE)
-
-exresolv.o :        $(ACPICA_CORE)/executer/exresolv.c
-	$(COMPILE)
-
-exutils.o :         $(ACPICA_CORE)/executer/exutils.c
-	$(COMPILE)
-
-nsaccess.o :        $(ACPICA_CORE)/namespace/nsaccess.c
-	$(COMPILE)
-
-nsalloc.o :         $(ACPICA_CORE)/namespace/nsalloc.c
-	$(COMPILE)
-
-nsdump.o :          $(ACPICA_CORE)/namespace/nsdump.c
-	$(COMPILE)
-
-nsinit.o :          $(ACPICA_CORE)/namespace/nsinit.c
-	$(COMPILE)
-
-nsload.o :          $(ACPICA_CORE)/namespace/nsload.c
-	$(COMPILE)
-
-nsnames.o :         $(ACPICA_CORE)/namespace/nsnames.c
-	$(COMPILE)
-
-nsobject.o :        $(ACPICA_CORE)/namespace/nsobject.c
-	$(COMPILE)
-
-nsparse.o :         $(ACPICA_CORE)/namespace/nsparse.c
-	$(COMPILE)
-
-nssearch.o :        $(ACPICA_CORE)/namespace/nssearch.c
-	$(COMPILE)
-
-nsutils.o :         $(ACPICA_CORE)/namespace/nsutils.c
-	$(COMPILE)
-
-nswalk.o :          $(ACPICA_CORE)/namespace/nswalk.c
-	$(COMPILE)
-
-nsxfeval.o :        $(ACPICA_CORE)/namespace/nsxfeval.c
-	$(COMPILE)
-
-nsxfname.o :        $(ACPICA_CORE)/namespace/nsxfname.c
-	$(COMPILE)
-
-nsxfobj.o :         $(ACPICA_CORE)/namespace/nsxfobj.c
-	$(COMPILE)
-
-psargs.o :          $(ACPICA_CORE)/parser/psargs.c
-	$(COMPILE)
-
-psloop.o :          $(ACPICA_CORE)/parser/psloop.c
-	$(COMPILE)
-
-psopcode.o :        $(ACPICA_CORE)/parser/psopcode.c
-	$(COMPILE)
-
-psparse.o :         $(ACPICA_CORE)/parser/psparse.c
-	$(COMPILE)
-
-psscope.o :         $(ACPICA_CORE)/parser/psscope.c
-	$(COMPILE)
-
-pstree.o :          $(ACPICA_CORE)/parser/pstree.c
-	$(COMPILE)
-
-psutils.o :         $(ACPICA_CORE)/parser/psutils.c
-	$(COMPILE)
-
-pswalk.o :          $(ACPICA_CORE)/parser/pswalk.c
-	$(COMPILE)
-
-psxface.o :         $(ACPICA_CORE)/parser/psxface.c
-	$(COMPILE)
-
-tbfadt.o :          $(ACPICA_CORE)/tables/tbfadt.c
-	$(COMPILE)
-
-tbfind.o :          $(ACPICA_CORE)/tables/tbfind.c
-	$(COMPILE)
-
-tbinstal.o :        $(ACPICA_CORE)/tables/tbinstal.c
-	$(COMPILE)
-
-tbutils.o :         $(ACPICA_CORE)/tables/tbutils.c
-	$(COMPILE)
-
-tbxface.o :         $(ACPICA_CORE)/tables/tbxface.c
-	$(COMPILE)
-
-tbxfroot.o :        $(ACPICA_CORE)/tables/tbxfroot.c
-	$(COMPILE)
-
-utalloc.o :         $(ACPICA_CORE)/utilities/utalloc.c
-	$(COMPILE)
-
-utcache.o :         $(ACPICA_CORE)/utilities/utcache.c
-	$(COMPILE)
-
-utdebug.o :         $(ACPICA_CORE)/utilities/utdebug.c
-	$(COMPILE)
-
-utdecode.o :        $(ACPICA_CORE)/utilities/utdecode.c
-	$(COMPILE)
-
-utdelete.o :        $(ACPICA_CORE)/utilities/utdelete.c
-	$(COMPILE)
-
-utglobal.o :        $(ACPICA_CORE)/utilities/utglobal.c
-	$(COMPILE)
-
-utlock.o :          $(ACPICA_CORE)/utilities/utlock.c
-	$(COMPILE)
-
-utmath.o :          $(ACPICA_CORE)/utilities/utmath.c
-	$(COMPILE)
-
-utmisc.o :          $(ACPICA_CORE)/utilities/utmisc.c
-	$(COMPILE)
-
-utmutex.o :         $(ACPICA_CORE)/utilities/utmutex.c
-	$(COMPILE)
-
-utobject.o :        $(ACPICA_CORE)/utilities/utobject.c
-	$(COMPILE)
-
-utstate.o :         $(ACPICA_CORE)/utilities/utstate.c
-	$(COMPILE)
-
-utosi.o :           $(ACPICA_CORE)/utilities/utosi.c
-	$(COMPILE)
-
-utxferror.o :       $(ACPICA_CORE)/utilities/utxferror.c
-	$(COMPILE)
-
-utxface.o :         $(ACPICA_CORE)/utilities/utxface.c
-	$(COMPILE)
-
-#
-# Unix OS services layer (OSL)
-#
-osunixxf.o :        $(ACPICA_OSL)/osunixxf.c
-	$(COMPILE)
-
-
-clean :
-	rm -f $(PROG) $(PROG).exe $(OBJS)
-
-install :
-	$(INSTALLPROG)
+include ../Makefile.rules
