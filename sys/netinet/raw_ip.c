@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.122 2014/05/20 19:04:00 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.123 2014/05/22 23:42:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.122 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.123 2014/05/22 23:42:53 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -381,8 +381,13 @@ rip_output(struct mbuf *m, ...)
 		flags |= IP_RAWOUTPUT;
 		IP_STATINC(IP_STAT_RAWOUT);
 	}
-	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	     inp->inp_socket, &inp->inp_errormtu));
+
+	/*
+	 * IP output.  Note: if IP_RETURNMTU flag is set, the MTU size
+	 * will be stored in inp_errormtu.
+	 */
+	return ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
+	     inp->inp_socket);
 }
 
 /*
