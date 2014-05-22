@@ -553,9 +553,9 @@ dt_write(dtrace_hdl_t *dtp, int fd, const void *buf, size_t n)
 /*
  * This function handles all output from libdtrace, as well as the
  * dtrace_sprintf() case.  If we're here due to dtrace_sprintf(), then
- * dt_sprintf_buflen will be non-zero; in this case, we sprintf into the
+ * dt_sprintf_buflen will be non-zero; in this case, we snprintf into the
  * specified buffer and return.  Otherwise, if output is buffered (denoted by
- * a NULL fp), we sprintf the desired output into the buffered buffer
+ * a NULL fp), we snprintf the desired output into the buffered buffer
  * (expanding the buffer if required).  If we don't satisfy either of these
  * conditions (that is, if we are to actually generate output), then we call
  * fprintf with the specified fp.  In this case, we need to deal with one of
@@ -888,8 +888,8 @@ dtrace_addr2str(dtrace_hdl_t *dtp, uint64_t addr, char *str, int nbytes)
 	s = alloca(n);
 
 	if (err == 0 && addr != sym.st_value) {
-		(void) snprintf(s, n, "%s`%s+0x%llx", dts.dts_object,
-		    dts.dts_name, (u_longlong_t)addr - sym.st_value);
+		(void) snprintf(s, n, "%s`%s+0x%" PRIx64, dts.dts_object,
+		    dts.dts_name, addr - sym.st_value);
 	} else if (err == 0) {
 		(void) snprintf(s, n, "%s`%s",
 		    dts.dts_object, dts.dts_name);
@@ -900,10 +900,10 @@ dtrace_addr2str(dtrace_hdl_t *dtp, uint64_t addr, char *str, int nbytes)
 		 * containing module.
 		 */
 		if (dtrace_lookup_by_addr(dtp, addr, NULL, &dts) == 0) {
-			(void) snprintf(s, n, "%s`0x%llx", dts.dts_object,
-			    (u_longlong_t)addr);
+			(void) snprintf(s, n, "%s`0x%" PRIx64, dts.dts_object,
+			    addr);
 		} else {
-			(void) snprintf(s, n, "0x%llx", (u_longlong_t)addr);
+			(void) snprintf(s, n, "0x%" PRIx64, addr);
 		}
 	}
 
@@ -924,7 +924,7 @@ dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
 		P = dt_proc_grab(dtp, pid, PGRAB_RDONLY | PGRAB_FORCE, 0);
 
 	if (P == NULL) {
-		(void) snprintf(c, sizeof (c), "0x%llx", addr);
+		(void) snprintf(c, sizeof (c), "0x%" PRIx64, addr);
 		return (dt_string2str(c, str, nbytes));
 	}
 
@@ -941,8 +941,8 @@ dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
 		obj = dt_basename(objname);
 
 		if (addr > sym.st_value) {
-			(void) snprintf(c, sizeof (c), "%s`%s+0x%llx", obj,
-			    name, (u_longlong_t)(addr - sym.st_value));
+			(void) snprintf(c, sizeof (c), "%s`%s+0x%" PRIx64,
+			    obj, name, (addr - sym.st_value));
 		} else {
 			(void) snprintf(c, sizeof (c), "%s`%s", obj, name);
 		}
@@ -951,10 +951,10 @@ dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
 #else
 	} else if (proc_objname(P, addr, objname, sizeof (objname)) != 0) {
 #endif
-		(void) snprintf(c, sizeof (c), "%s`0x%llx",
+		(void) snprintf(c, sizeof (c), "%s`0x%" PRIx64,
 		    dt_basename(objname), addr);
 	} else {
-		(void) snprintf(c, sizeof (c), "0x%llx", addr);
+		(void) snprintf(c, sizeof (c), "0x%" PRIx64, addr);
 	}
 
 	dt_proc_unlock(dtp, P);

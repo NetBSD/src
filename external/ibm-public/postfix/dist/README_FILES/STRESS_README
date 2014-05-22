@@ -383,15 +383,12 @@ accept remote connections.
 
 OOtthheerr mmeeaassuurreess ttoo ooffff--llooaadd zzoommbbiieess
 
-OpenBSD spamd implements a daemon that handles all connections from "new"
-clients. Only well-behaved mail clients are allowed to talk to the mail server.
-Other clients are tarpitted, and will never get a chance to affect mail server
-performance.
-
-At some point in the future, Postfix may come with a simple front-end daemon
-that does basic greylisting and pipelining detection to keep zombies and other
-ratware away from Postfix itself. This would use the "pass" service type which
-has been available in stable Postfix releases since Postfix 2.5.
+The postscreen(8) daemon, introduced with Postfix 2.8, provides additional
+protection against mail server overload. One postscreen(8) process handles
+multiple inbound SMTP connections, and decides which clients may to talk to a
+Postfix SMTP server process. By keeping spambots away, postscreen(8) leaves
+more SMTP server processes available for legitimate clients, and delays the
+onset of server overload conditions.
 
 CCrreeddiittss
 

@@ -1,13 +1,16 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.4.1 2014/05/22 14:09:35 yamt Exp $
 
 .include <bsd.own.mk>
 
 PROG=	appres
 
-LDADD+=	-lXt -lSM -lICE -lXext -lX11 -lXdmcp -lXau
-DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBXDMCP} ${LIBXAU}
+CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include -DHAVE_CONFIG_H
 
-.PATH:	${X11SRCDIR.appres}
+LDADD+=	-lXt -lSM -lICE -lXext -lX11 -lxcb -lXdmcp -lXau
+DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBXCB} ${LIBXDMCP} ${LIBXAU}
+
+.PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

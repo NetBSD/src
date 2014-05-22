@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 #define XCB_SHM_MAJOR_VERSION 1
-#define XCB_SHM_MINOR_VERSION 1
+#define XCB_SHM_MINOR_VERSION 2
   
 extern xcb_extension_t xcb_shm_id;
 
@@ -211,6 +211,55 @@ typedef struct xcb_shm_create_pixmap_request_t {
     uint32_t       offset; /**<  */
 } xcb_shm_create_pixmap_request_t;
 
+/** Opcode for xcb_shm_attach_fd. */
+#define XCB_SHM_ATTACH_FD 6
+
+/**
+ * @brief xcb_shm_attach_fd_request_t
+ **/
+typedef struct xcb_shm_attach_fd_request_t {
+    uint8_t       major_opcode; /**<  */
+    uint8_t       minor_opcode; /**<  */
+    uint16_t      length; /**<  */
+    xcb_shm_seg_t shmseg; /**<  */
+    uint8_t       read_only; /**<  */
+    uint8_t       pad0[3]; /**<  */
+} xcb_shm_attach_fd_request_t;
+
+/**
+ * @brief xcb_shm_create_segment_cookie_t
+ **/
+typedef struct xcb_shm_create_segment_cookie_t {
+    unsigned int sequence; /**<  */
+} xcb_shm_create_segment_cookie_t;
+
+/** Opcode for xcb_shm_create_segment. */
+#define XCB_SHM_CREATE_SEGMENT 7
+
+/**
+ * @brief xcb_shm_create_segment_request_t
+ **/
+typedef struct xcb_shm_create_segment_request_t {
+    uint8_t       major_opcode; /**<  */
+    uint8_t       minor_opcode; /**<  */
+    uint16_t      length; /**<  */
+    xcb_shm_seg_t shmseg; /**<  */
+    uint32_t      size; /**<  */
+    uint8_t       read_only; /**<  */
+    uint8_t       pad0[3]; /**<  */
+} xcb_shm_create_segment_request_t;
+
+/**
+ * @brief xcb_shm_create_segment_reply_t
+ **/
+typedef struct xcb_shm_create_segment_reply_t {
+    uint8_t  response_type; /**<  */
+    uint8_t  nfd; /**<  */
+    uint16_t sequence; /**<  */
+    uint32_t length; /**<  */
+    uint8_t  pad0[24]; /**<  */
+} xcb_shm_create_segment_reply_t;
+
 /**
  * Get the next element of the iterator
  * @param i Pointer to a xcb_shm_seg_iterator_t
@@ -255,7 +304,7 @@ xcb_generic_iterator_t
 xcb_shm_seg_end (xcb_shm_seg_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -276,7 +325,7 @@ xcb_shm_query_version_cookie_t
 xcb_shm_query_version (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -331,7 +380,7 @@ xcb_shm_query_version_reply (xcb_connection_t                *c  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -361,7 +410,7 @@ xcb_shm_attach_checked (xcb_connection_t *c  /**< */,
                         uint8_t           read_only  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -388,7 +437,7 @@ xcb_shm_attach (xcb_connection_t *c  /**< */,
                 uint8_t           read_only  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -414,7 +463,7 @@ xcb_shm_detach_checked (xcb_connection_t *c  /**< */,
                         xcb_shm_seg_t     shmseg  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -437,7 +486,7 @@ xcb_shm_detach (xcb_connection_t *c  /**< */,
                 xcb_shm_seg_t     shmseg  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -491,7 +540,7 @@ xcb_shm_put_image_checked (xcb_connection_t *c  /**< */,
                            uint32_t          offset  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -542,7 +591,7 @@ xcb_shm_put_image (xcb_connection_t *c  /**< */,
                    uint32_t          offset  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -581,7 +630,7 @@ xcb_shm_get_image (xcb_connection_t *c  /**< */,
                    uint32_t          offset  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -654,7 +703,7 @@ xcb_shm_get_image_reply (xcb_connection_t            *c  /**< */,
                          xcb_generic_error_t        **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -692,7 +741,7 @@ xcb_shm_create_pixmap_checked (xcb_connection_t *c  /**< */,
                                uint32_t          offset  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -725,6 +774,175 @@ xcb_shm_create_pixmap (xcb_connection_t *c  /**< */,
                        uint8_t           depth  /**< */,
                        xcb_shm_seg_t     shmseg  /**< */,
                        uint32_t          offset  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_shm_attach_fd_checked
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param int32_t           shm_fd
+ ** @param uint8_t           read_only
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_shm_attach_fd_checked (xcb_connection_t *c  /**< */,
+                           xcb_shm_seg_t     shmseg  /**< */,
+                           int32_t           shm_fd  /**< */,
+                           uint8_t           read_only  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_shm_attach_fd
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param int32_t           shm_fd
+ ** @param uint8_t           read_only
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_shm_attach_fd (xcb_connection_t *c  /**< */,
+                   xcb_shm_seg_t     shmseg  /**< */,
+                   int32_t           shm_fd  /**< */,
+                   uint8_t           read_only  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_shm_create_segment_cookie_t xcb_shm_create_segment
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param uint32_t          size
+ ** @param uint8_t           read_only
+ ** @returns xcb_shm_create_segment_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_shm_create_segment_cookie_t
+xcb_shm_create_segment (xcb_connection_t *c  /**< */,
+                        xcb_shm_seg_t     shmseg  /**< */,
+                        uint32_t          size  /**< */,
+                        uint8_t           read_only  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_shm_create_segment_cookie_t xcb_shm_create_segment_unchecked
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param uint32_t          size
+ ** @param uint8_t           read_only
+ ** @returns xcb_shm_create_segment_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_shm_create_segment_cookie_t
+xcb_shm_create_segment_unchecked (xcb_connection_t *c  /**< */,
+                                  xcb_shm_seg_t     shmseg  /**< */,
+                                  uint32_t          size  /**< */,
+                                  uint8_t           read_only  /**< */);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ * 
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_shm_create_segment_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_shm_create_segment_reply_t * xcb_shm_create_segment_reply
+ ** 
+ ** @param xcb_connection_t                 *c
+ ** @param xcb_shm_create_segment_cookie_t   cookie
+ ** @param xcb_generic_error_t             **e
+ ** @returns xcb_shm_create_segment_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_shm_create_segment_reply_t *
+xcb_shm_create_segment_reply (xcb_connection_t                 *c  /**< */,
+                              xcb_shm_create_segment_cookie_t   cookie  /**< */,
+                              xcb_generic_error_t             **e  /**< */);
+
+/**
+ * Return the reply fds
+ * @param c      The connection
+ * @param reply  The reply
+ *
+ * Returns the array of reply fds of the request asked by
+ * 
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** int * xcb_shm_create_segment_reply_fds
+ ** 
+ ** @param xcb_connection_t                *c
+ ** @param xcb_shm_create_segment_reply_t  *reply
+ ** @returns int *
+ **
+ *****************************************************************************/
+ 
+int *
+xcb_shm_create_segment_reply_fds (xcb_connection_t                *c  /**< */,
+                                  xcb_shm_create_segment_reply_t  *reply  /**< */);
 
 
 #ifdef __cplusplus

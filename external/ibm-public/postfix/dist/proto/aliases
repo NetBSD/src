@@ -18,9 +18,13 @@
 #	\fBnewaliases\fR in order to rebuild the indexed file after
 #	changing the Postfix alias database.
 #
-#	The input and output file formats are expected to be compatible
-#	with Sendmail version 8, and are expected to be suitable for the
-#	use as NIS maps.
+#	When the table is provided via other means such as NIS, LDAP
+#	or SQL, the same lookups are done as for ordinary indexed files.
+#
+#	Alternatively, the table can be provided as a regular-expression
+#	map where patterns are given as regular expressions. In
+#	this case, the lookups are done in a slightly different way
+#	as described below under "REGULAR EXPRESSION TABLES".
 #
 #	Users can control delivery of their own mail by setting
 #	up \fB.forward\fR files in their home directory.
@@ -95,8 +99,28 @@
 # CASE FOLDING
 # .ad
 # .fi
-#       The local(8) delivery agent always folds the search string
-#       to lowercase before database lookup.
+#	The local(8) delivery agent always folds the search string
+#	to lowercase before database lookup.
+# REGULAR EXPRESSION TABLES
+# .ad
+# .fi
+#	This section describes how the table lookups change when the table
+#	is given in the form of regular expressions. For a description of
+#	regular expression lookup table syntax, see \fBregexp_table\fR(5)
+#	or \fBpcre_table\fR(5). NOTE: these formats do not use ":" at the
+#	end of a pattern.
+#
+#	Each regular expression is applied to the entire search
+#	string. Thus, a search string \fIuser+foo\fR is not broken
+#	up into \fIuser\fR and \fIfoo\fR.
+#
+#	Regular expressions are applied in the order as specified
+#	in the table, until a regular expression is found that
+#	matches the search string.
+#
+#	Lookup results are the same as with indexed file lookups.
+#	For security reasons there is no support for \fB$1\fR,
+#	\fB$2\fR etc. substring interpolation.
 # SECURITY
 # .ad
 # .fi

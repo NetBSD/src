@@ -4,7 +4,7 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY'LL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2003, 2004, 2005, 2008 Free Software Foundation, Inc.
+Copyright 2003, 2004, 2005, 2008, 2010, 2011 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,23 +21,55 @@ License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
+#include <stdlib.h>		/* for NULL */
+
 #include "gmp.h"
 #include "gmp-impl.h"
 #include "longlong.h"
 
 /* Used when mpn_hgcd or mpn_hgcd2 has failed. Then either one of a or
    b is small, or the difference is small. Perform one subtraction
-   followed by one division. If the gcd is found, stores it in gp and
-   *gn, and returns zero. Otherwise, compute the reduced a and b, and
-   return the new size. */
+   followed by one division. The normal case is to compute the reduced
+   a and b, and return the new size.
 
-/* FIXME: Check when the smaller number is a single limb, and invoke
- * mpn_gcd_1. */
+   If s == 0 (used for gcd and gcdext), returns zero if the gcd is
+   found.
+
+   If s > 0, don't reduce to size <= s, and return zero if no
+   reduction is possible (if either a, b or |a-b| is of size <= s). */
+
+/* The hook function is called as
+
+     hook(ctx, gp, gn, qp, qn, d)
+
+   in the following cases:
+
+   + If A = B at the start, G is the gcd, Q is NULL, d = -1.
+
+   + If one input is zero at the start, G is the gcd, Q is NULL,
+     d = 0 if A = G and d = 1 if B = G.
+
+   Otherwise, if d = 0 we have just subtracted a multiple of A from B,
+   and if d = 1 we have subtracted a multiple of B from A.
+
+   + If A = B after subtraction, G is the gcd, Q is NULL.
+
+   + If we get a zero remainder after division, G is the gcd, Q is the
+     quotient.
+
+   + Otherwise, G is NULL, Q is the quotient (often 1).
+
+ */
+
 mp_size_t
-mpn_gcd_subdiv_step (mp_ptr gp, mp_size_t *gn,
-		     mp_ptr ap, mp_ptr bp, mp_size_t n, mp_ptr tp)
+mpn_gcd_subdiv_step (mp_ptr ap, mp_ptr bp, mp_size_t n, mp_size_t s,
+		     gcd_subdiv_step_hook *hook, void *ctx,
+		     mp_ptr tp)
 {
-  mp_size_t an, bn;
+  static const mp_limb_t one = CNST_LIMB(1);
+  mp_size_t an, bn, qn;
+
+  int swapped;
 
   ASSERT (n > 0);
   ASSERT (ap[n-1] > 0 || bp[n-1] > 0);
@@ -46,59 +78,117 @@ mpn_gcd_subdiv_step (mp_ptr gp, mp_size_t *gn,
   MPN_NORMALIZE (ap, an);
   MPN_NORMALIZE (bp, bn);
 
-  if (UNLIKELY (an == 0))
-    {
-    return_b:
-      MPN_COPY (gp, bp, bn);
-      *gn = bn;
-      return 0;
-    }
-  else if (UNLIKELY (bn == 0))
-    {
-    return_a:
-      MPN_COPY (gp, ap, an);
-      *gn = an;
-      return 0;
-    }
+  swapped = 0;
 
-  /* Arrange so that a > b, subtract an -= bn, and maintain
+  /* Arrange so that a < b, subtract b -= a, and maintain
      normalization. */
-  if (an < bn)
-    MPN_PTR_SWAP (ap, an, bp, bn);
-  else if (an == bn)
+  if (an == bn)
     {
       int c;
       MPN_CMP (c, ap, bp, an);
       if (UNLIKELY (c == 0))
-	goto return_a;
-      else if (c < 0)
-	MP_PTR_SWAP (ap, bp);
+	{
+	  /* For gcdext, return the smallest of the two cofactors, so
+	     pass d = -1. */
+	  if (s == 0)
+	    hook (ctx, ap, an, NULL, 0, -1);
+	  return 0;
+	}
+      else if (c > 0)
+	{
+	  MP_PTR_SWAP (ap, bp);
+	  swapped ^= 1;
+	}
+    }
+  else
+    {
+      if (an > bn)
+	{
+	  MPN_PTR_SWAP (ap, an, bp, bn);
+	  swapped ^= 1;
+	}
+    }
+  if (an <= s)
+    {
+      if (s == 0)
+	hook (ctx, bp, bn, NULL, 0, swapped ^ 1);
+      return 0;
     }
 
-  ASSERT_NOCARRY (mpn_sub (ap, ap, an, bp, bn));
-  MPN_NORMALIZE (ap, an);
-  ASSERT (an > 0);
+  ASSERT_NOCARRY (mpn_sub (bp, bp, bn, ap, an));
+  MPN_NORMALIZE (bp, bn);
+  ASSERT (bn > 0);
 
-  /* Arrange so that a > b, and divide a = q b + r */
-  /* FIXME: an < bn happens when we have cancellation. If that is the
-     common case, then we could reverse the roles of a and b to avoid
-     the swap. */
-  if (an < bn)
-    MPN_PTR_SWAP (ap, an, bp, bn);
-  else if (an == bn)
+  if (bn <= s)
+    {
+      /* Undo subtraction. */
+      mp_limb_t cy = mpn_add (bp, ap, an, bp, bn);
+      if (cy > 0)
+	bp[an] = cy;
+      return 0;
+    }
+
+  /* Arrange so that a < b */
+  if (an == bn)
     {
       int c;
       MPN_CMP (c, ap, bp, an);
       if (UNLIKELY (c == 0))
-	goto return_a;
-      else if (c < 0)
-	MP_PTR_SWAP (ap, bp);
+	{
+	  if (s > 0)
+	    /* Just record subtraction and return */
+	    hook (ctx, NULL, 0, &one, 1, swapped);
+	  else
+	    /* Found gcd. */
+	    hook (ctx, bp, bn, NULL, 0, swapped);
+	  return 0;
+	}
+
+      hook (ctx, NULL, 0, &one, 1, swapped);
+
+      if (c > 0)
+	{
+	  MP_PTR_SWAP (ap, bp);
+	  swapped ^= 1;
+	}
+    }
+  else
+    {
+      hook (ctx, NULL, 0, &one, 1, swapped);
+
+      if (an > bn)
+	{
+	  MPN_PTR_SWAP (ap, an, bp, bn);
+	  swapped ^= 1;
+	}
     }
 
-  mpn_tdiv_qr (tp, ap, 0, ap, an, bp, bn);
+  mpn_tdiv_qr (tp, bp, 0, bp, bn, ap, an);
+  qn = bn - an + 1;
+  bn = an;
+  MPN_NORMALIZE (bp, bn);
 
-  if (mpn_zero_p (ap, bn))
-    goto return_b;
+  if (UNLIKELY (bn <= s))
+    {
+      if (s == 0)
+	{
+	  hook (ctx, ap, an, tp, qn, swapped);
+	  return 0;
+	}
 
-  return bn;
+      /* Quotient is one too large, so decrement it and add back A. */
+      if (bn > 0)
+	{
+	  mp_limb_t cy = mpn_add (bp, ap, an, bp, bn);
+	  if (cy)
+	    bp[an++] = cy;
+	}
+      else
+	MPN_COPY (bp, ap, an);
+
+      MPN_DECR_U (tp, qn, 1);
+    }
+
+  hook (ctx, NULL, 0, tp, qn, swapped);
+  return an;
 }

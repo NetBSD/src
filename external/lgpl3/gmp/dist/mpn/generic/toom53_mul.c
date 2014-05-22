@@ -10,7 +10,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+Copyright 2006, 2007, 2008, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -96,10 +96,10 @@ mpn_toom53_mul (mp_ptr pp,
   gp = pp;
 
   /* Compute as1 and asm1.  */
-  flags = toom7_w3_neg & mpn_toom_eval_pm1 (as1, asm1, 4, ap, n, s, gp);
+  flags = (enum toom7_flags) (toom7_w3_neg & mpn_toom_eval_pm1 (as1, asm1, 4, ap, n, s, gp));
 
   /* Compute as2 and asm2. */
-  flags |= toom7_w1_neg & mpn_toom_eval_pm2 (as2, asm2, 4, ap, n, s, gp);
+  flags = (enum toom7_flags) (flags | toom7_w1_neg & mpn_toom_eval_pm2 (as2, asm2, 4, ap, n, s, gp));
 
   /* Compute ash = 16 a0 + 8 a1 + 4 a2 + 2 a3 + a4
      = 2*(2*(2*(2*a0 + a1) + a2) + a3) + a4  */
@@ -134,7 +134,7 @@ mpn_toom53_mul (mp_ptr pp,
     {
       bs1[n] = mpn_add_n_sub_n (bs1, bsm1, b1, bs1, n) >> 1;
       bsm1[n] = 0;
-      flags ^= toom7_w3_neg;
+      flags = (enum toom7_flags) (flags ^ toom7_w3_neg);
     }
   else
     {
@@ -147,7 +147,7 @@ mpn_toom53_mul (mp_ptr pp,
     {
       mpn_sub_n (bsm1, b1, bs1, n);
       bsm1[n] = 0;
-      flags ^= toom7_w3_neg;
+      flags = (enum toom7_flags) (flags ^ toom7_w3_neg);
     }
   else
     {
@@ -178,7 +178,7 @@ mpn_toom53_mul (mp_ptr pp,
   if (mpn_cmp (bs2, gp, n+1) < 0)
     {
       ASSERT_NOCARRY (mpn_add_n_sub_n (bs2, bsm2, gp, bs2, n+1));
-      flags ^= toom7_w1_neg;
+      flags = (enum toom7_flags) (flags ^ toom7_w1_neg);
     }
   else
     {
@@ -188,7 +188,7 @@ mpn_toom53_mul (mp_ptr pp,
   if (mpn_cmp (bs2, gp, n+1) < 0)
     {
       ASSERT_NOCARRY (mpn_sub_n (bsm2, gp, bs2, n+1));
-      flags ^= toom7_w1_neg;
+      flags = (enum toom7_flags) (flags ^ toom7_w1_neg);
     }
   else
     {
@@ -197,7 +197,7 @@ mpn_toom53_mul (mp_ptr pp,
   mpn_add_n (bs2, bs2, gp, n+1);
 #endif
 
-  /* Compute bsh = 4 b0 + 2 b1 + b0 = 2*(2*b0 + b1)+b0.  */
+  /* Compute bsh = 4 b0 + 2 b1 + b2 = 2*(2*b0 + b1)+b2.  */
 #if HAVE_NATIVE_mpn_addlsh1_n
   cy = mpn_addlsh1_n (bsh, b1, b0, n);
   if (t < n)

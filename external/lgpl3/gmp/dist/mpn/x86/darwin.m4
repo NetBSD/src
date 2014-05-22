@@ -1,5 +1,5 @@
 divert(-1)
-dnl  Copyright 2007 Free Software Foundation, Inc.
+dnl  Copyright 2007, 2011, 2012 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -18,23 +18,54 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 define(`DARWIN')
 
+
 dnl  Usage LEA(symbol,reg)
 dnl
-dnl  FIXME: Only handles one symbol per assembly file because of the
-dnl  way EPILOGUE_cpu is handled.
+dnl  We maintain lists of stuff to append in load_eip and darwin_bd.  The
+dnl  `index' stuff is needed to suppress repeated definitions.  To avoid
+dnl  getting fooled by "var" and "var1", we add 'bol ' (the end of
+dnl  'indirect_symbol') at the beginning and and a newline at the end.  This
+dnl  might be a bit fragile.
 
-define(`LEA',`
-define(`EPILOGUE_cpu',
-`	L(movl_eip_`'substr($2,1)):
+define(`LEA',
+m4_assert_numargs(2)
+`ifdef(`PIC',`
+ifelse(index(defn(`load_eip'), `$2'),-1,
+`m4append(`load_eip',
+`L(movl_eip_`'substr($2,1)):
 	movl	(%esp), $2
 	ret_internal
-	.section __IMPORT,__pointers,non_lazy_symbol_pointers
+')')
+ifelse(index(defn(`darwin_bd'), `bol $1
+'),-1,
+`m4append(`darwin_bd',
+`	.section __IMPORT,__pointers,non_lazy_symbol_pointers
 L($1`'$non_lazy_ptr):
 	.indirect_symbol $1
 	.long	 0
-')
+')')
 	call	L(movl_eip_`'substr($2,1))
 	movl	L($1`'$non_lazy_ptr)-.($2), $2
-')
+',`
+	movl	`$'$1, $2
+')')
+
+
+dnl EPILOGUE_cpu
+
+define(`EPILOGUE_cpu',`load_eip`'darwin_bd')
+
+define(`load_eip', `')		dnl updated in LEA
+define(`darwin_bd', `')		dnl updated in LEA
+
+
+dnl  Usage: CALL(funcname)
+dnl
+
+define(`CALL',
+m4_assert_numargs(1)
+`call	GSYM_PREFIX`'$1')
+
+undefine(`PIC_WITH_EBX')
 
 divert`'dnl

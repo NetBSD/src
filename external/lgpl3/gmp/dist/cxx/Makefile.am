@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-# Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
+# Copyright 2001, 2002, 2003, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library.
 #
@@ -25,5 +25,5 @@ noinst_LTLIBRARIES = libcxx.la
 endif
 
 libcxx_la_SOURCES = \
-  isfuns.cc ismpf.cc ismpq.cc ismpz.cc ismpznw.cc \
+  isfuns.cc ismpf.cc ismpq.cc ismpz.cc ismpznw.cc limits.cc \
   osdoprnti.cc osfuns.cc osmpf.cc osmpq.cc osmpz.cc

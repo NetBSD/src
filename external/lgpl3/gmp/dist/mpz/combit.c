@@ -1,6 +1,6 @@
 /* mpz_combit -- complement a specified bit.
 
-Copyright 2002, 2003 Free Software Foundation, Inc.
+Copyright 2002, 2003, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -23,58 +23,67 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpz_combit (mpz_ptr d, mp_bitcnt_t bit_index)
 {
-  mp_size_t dsize = ABSIZ(d);
-  mp_ptr dp = LIMBS(d);
+  mp_size_t dsize = SIZ(d);
+  mp_ptr dp = PTR(d);
 
   mp_size_t limb_index = bit_index / GMP_NUMB_BITS;
-  mp_limb_t bit = ((mp_limb_t) 1 << (bit_index % GMP_NUMB_BITS));
+  mp_limb_t bit = (CNST_LIMB (1) << (bit_index % GMP_NUMB_BITS));
 
-  if (limb_index >= dsize)
+  /* Check for the most common case: Positive input, no realloc or
+     normalization needed. */
+  if (limb_index + 1 < dsize)
+    dp[limb_index] ^= bit;
+
+  /* Check for the hairy case. d < 0, and we have all zero bits to the
+     right of the bit to toggle. */
+  else if (limb_index < -dsize && mpn_zero_p (dp, limb_index)
+	   && (dp[limb_index] & (bit - 1)) == 0)
     {
-      MPZ_REALLOC(d, limb_index + 1);
-      dp = LIMBS(d);
+      ASSERT (dsize < 0);
+      dsize = -dsize;
 
-      MPN_ZERO(dp + dsize, limb_index + 1 - dsize);
-      dsize = limb_index + 1;
-    }
-
-  if (SIZ(d) >= 0)
-    {
-      dp[limb_index] ^= bit;
-      MPN_NORMALIZE (dp, dsize);
-      SIZ(d) = dsize;
+      if (dp[limb_index] & bit)
+	{
+	  /* We toggle the least significant one bit. Corresponds to
+	     an add, with potential carry propagation, on the absolute
+	     value. */
+	  dp = MPZ_REALLOC (d, 1 + dsize);
+	  dp[dsize] = 0;
+	  MPN_INCR_U (dp + limb_index, 1 + dsize - limb_index, bit);
+	  SIZ(d) -= dp[dsize];
+	}
+      else
+	{
+	  /* We toggle a zero bit, subtract from the absolute value. */
+	  MPN_DECR_U (dp + limb_index, dsize - limb_index, bit);
+	  MPN_NORMALIZE (dp, dsize);
+	  ASSERT (dsize > 0);
+	  SIZ(d) = -dsize;
+	}
     }
   else
     {
-      mp_limb_t x = -dp[limb_index];
-      mp_size_t i;
-
-      /* non-zero limb below us means ones-complement */
-      for (i = limb_index-1; i >= 0; i--)
-	if (dp[i] != 0)
-	  {
-	    x--;  /* change twos comp to ones comp */
-	    break;
-	  }
-
-      if (x & bit)
+      /* Simple case: Toggle the bit in the absolute value. */
+      dsize = ABS(dsize);
+      if (limb_index < dsize)
 	{
-	  mp_limb_t  c;
+	  dp[limb_index] ^= bit;
 
-	  /* Clearing the bit increases the magitude. We might need a carry. */
-	  MPZ_REALLOC(d, dsize + 1);
-	  dp = LIMBS(d);
-
-	  __GMPN_ADD_1 (c, dp+limb_index, dp+limb_index,
-			dsize - limb_index, bit);
-	  dp[dsize] = c;
-	  dsize += c;
+	  /* Can happen only when limb_index = dsize - 1. Avoid SIZ(d)
+	     bookkeeping in the common case. */
+	  if (dp[dsize-1] == 0)
+	    {
+	      dsize--;
+	      MPN_NORMALIZE (dp, dsize);
+	      SIZ (d) = SIZ (d) >= 0 ? dsize : -dsize;
+	    }
 	}
       else
-	/* Setting the bit decreases the magnitude */
-	mpn_sub_1(dp+limb_index, dp+limb_index, dsize + limb_index, bit);
-
-      MPN_NORMALIZE (dp, dsize);
-      SIZ(d) = -dsize;
+	{
+	  dp = MPZ_REALLOC (d, limb_index + 1);
+	  MPN_ZERO(dp + dsize, limb_index - dsize);
+	  dp[limb_index++] = bit;
+	  SIZ(d) = SIZ(d) >= 0 ? limb_index : -limb_index;
+	}
     }
 }

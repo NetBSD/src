@@ -3,8 +3,8 @@
  */
 
 /*
-Copyright 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -40,7 +40,7 @@ static void failure_test (void)
   mpfr_t x;
 
   mpfr_init2 (x, 128);
-  mpfr_set_str (x, "17", 0, GMP_RNDN);
+  mpfr_set_str (x, "17", 0, MPFR_RNDN);
   if (mpfr_cmp_ui (x, 17) != 0)
     printf ("\nFailure in mpfr_set_str! Probably an unmatched ABI!\n");
   mpfr_clear (x);
@@ -62,6 +62,19 @@ int main (void)
   printf ("MPFR ....  Library: %-12s  Header: %s (based on %d.%d.%d)\n",
           mpfr_get_version (), MPFR_VERSION_STRING, MPFR_VERSION_MAJOR,
           MPFR_VERSION_MINOR, MPFR_VERSION_PATCHLEVEL);
+
+#if MPFR_VERSION_MAJOR >= 3
+  printf ("MPFR features: TLS = %s, decimal = %s",
+          mpfr_buildopt_tls_p () ? "yes" : "no",
+          mpfr_buildopt_decimal_p () ? "yes" : "no");
+# if MPFR_VERSION_MAJOR > 3 || MPFR_VERSION_MINOR >= 1
+  printf (", GMP internals = %s\nMPFR tuning: %s",
+          mpfr_buildopt_gmpinternals_p () ? "yes" : "no",
+          mpfr_buildopt_tune_case ());
+# endif
+  printf ("\n");
+#endif
+
   printf ("MPFR patches: %s\n\n", mpfr_get_patches ());
 
 #ifdef __GMP_CC
@@ -85,6 +98,12 @@ int main (void)
   if (c != GMP_LIMB_BITS)
     printf ("Warning! This is different from GMP_LIMB_BITS!\n"
             "Different ABI caused by a GMP library upgrade?\n");
+
+#if MPFR_VERSION_MAJOR >= 3
+  printf ("\n");
+  printf ("sizeof(mpfr_prec_t) = %d\n", (int) sizeof(mpfr_prec_t));
+  printf ("sizeof(mpfr_exp_t)  = %d\n", (int) sizeof(mpfr_exp_t));
+#endif
 
   failure_test ();
 

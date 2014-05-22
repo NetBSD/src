@@ -13,141 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-
-    Change History (most recent first):
-
-Log: mDNSUNP.c,v $
-Revision 1.40  2009/01/13 05:31:34  mkrochma
-<rdar://problem/6491367> Replace bzero, bcopy with mDNSPlatformMemZero, mDNSPlatformMemCopy, memset, memcpy
-
-Revision 1.39  2009/01/11 03:20:06  mkrochma
-<rdar://problem/5797526> Fixes from Igor Seleznev to get mdnsd working on Solaris
-
-Revision 1.38  2009/01/10 22:54:42  mkrochma
-<rdar://problem/5797544> Fixes from Igor Seleznev to get mdnsd working on Linux
-
-Revision 1.37  2008/10/23 22:33:24  cheshire
-Changed "NOTE:" to "Note:" so that BBEdit 9 stops putting those comment lines into the funtion popup menu
-
-Revision 1.36  2008/04/21 18:21:22  mkrochma
-<rdar://problem/5877307> Need to free ifi_netmask
-Submitted by Igor Seleznev
-
-Revision 1.35  2007/11/15 21:36:19  cheshire
-<rdar://problem/5289340> POSIX: Off by one overflow in get_ifi_info_linuxv6()
-
-Revision 1.34  2006/08/14 23:24:47  cheshire
-Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
-
-Revision 1.33  2006/03/13 23:14:21  cheshire
-<rdar://problem/4427969> Compile problems on FreeBSD
-Use <netinet/in_var.h> instead of <netinet6/in6_var.h>
-
-Revision 1.32  2005/12/21 02:56:43  cheshire
-<rdar://problem/4243433> get_ifi_info() should fake ifi_index when SIOCGIFINDEX undefined
-
-Revision 1.31  2005/12/21 02:46:05  cheshire
-<rdar://problem/4243514> mDNSUNP.c needs to include <sys/param.h> on 4.4BSD Lite
-
-Revision 1.30  2005/11/29 20:03:02  mkrochma
-Wrapped sin_len with #ifndef NOT_HAVE_SA_LEN
-
-Revision 1.29  2005/11/12 02:23:10  cheshire
-<rdar://problem/4317680> mDNSUNP.c needs to deal with lame results from SIOCGIFNETMASK, SIOCGIFBRDADDR and SIOCGIFDSTADDR
-
-Revision 1.28  2005/10/31 22:09:45  cheshire
-Buffer "char addr6[33]" was seven bytes too small
-
-Revision 1.27  2005/06/29 15:54:21  cheshire
-<rdar://problem/4113742> mDNSResponder-107.1 does not work on FreeBSD
-Refine last checkin so that it (hopefully) doesn't break get_ifi_info() for every other OS
-
-Revision 1.26  2005/04/08 21:43:59  ksekar
-<rdar://problem/4083426>  mDNSPosix (v98) retrieve interface list bug on AMD64 architecture
-Submitted by Andrew de Quincey
-
-Revision 1.25  2005/04/08 21:37:57  ksekar
-<rdar://problem/3792767> get_ifi_info doesn't return IPv6 interfaces on Linux
-
-Revision 1.24  2005/04/08 21:30:16  ksekar
-<rdar://problem/4007457> Compiling problems with mDNSResponder-98 on Solaris/Sparc v9
-Patch submitted by Bernd Kuhls
-
-Revision 1.23  2004/12/01 04:25:05  cheshire
-<rdar://problem/3872803> Darwin patches for Solaris and Suse
-Provide daemon() for platforms that don't have it
-
-Revision 1.22  2004/11/30 22:37:01  cheshire
-Update copyright dates and add "Mode: C; tab-width: 4" headers
-
-Revision 1.21  2004/11/08 22:13:59  rpantos
-Create sockf6 lazily when v6 interface found.
-
-Revision 1.20  2004/10/16 00:17:01  cheshire
-<rdar://problem/3770558> Replace IP TTL 255 check with local subnet source address check
-
-Revision 1.19  2004/07/20 01:47:36  rpantos
-NOT_HAVE_SA_LEN applies to v6, too. And use more-portable s6_addr.
-
-Revision 1.18  2004/07/08 21:30:21  rpantos
-
-Revision 1.17  2004/06/25 00:26:27  rpantos
-Changes to fix the Posix build on Solaris.
-
-Revision 1.16  2004/03/20 05:37:09  cheshire
-Fix contributed by Terry Lambert & Alfred Perlstein:
-Don't use uint8_t -- it requires stdint.h, which doesn't exist on FreeBSD 4.x
-
-Revision 1.15  2004/02/14 01:09:45  rpantos
-Just use HAVE_IPV6 rather than defined(HAVE_IPV6).
-
-Revision 1.14  2003/12/11 18:53:40  cheshire
-Fix compiler warning reported by Paul Guyot
-
-Revision 1.13  2003/12/08 20:47:02  rpantos
-Add support for mDNSResponder on Linux.
-
-Revision 1.12  2003/09/02 20:47:13  cheshire
-Fix signed/unsigned warning
-
-Revision 1.11  2003/08/12 19:56:26  cheshire
-Update to APSL 2.0
-
-Revision 1.10  2003/08/06 18:20:51  cheshire
-Makefile cleanup
-
-Revision 1.9  2003/07/14 18:11:54  cheshire
-Fix stricter compiler warnings
-
-Revision 1.8  2003/07/02 21:19:59  cheshire
-<rdar://problem/3313413> Update copyright notices, etc., in source code comments
-
-Revision 1.7  2003/03/20 21:10:31  cheshire
-Fixes done at IETF 56 to make mDNSProxyResponderPosix run on Solaris
-
-Revision 1.6  2003/03/13 03:46:21  cheshire
-Fixes to make the code build on Linux
-
-Revision 1.5  2003/02/07 03:02:02  cheshire
-Submitted by: Mitsutaka Watanabe
-The code saying "index += 1;" was effectively making up random interface index values.
-The right way to find the correct interface index is if_nametoindex();
-
-Revision 1.4  2002/12/23 22:13:31  jgraessl
-
-Reviewed by: Stuart Cheshire
-Initial IPv6 support for mDNSResponder.
-
-Revision 1.3  2002/09/21 20:44:53  zarzycki
-Added APSL info
-
-Revision 1.2  2002/09/19 04:20:44  cheshire
-Remove high-ascii characters that confuse some systems
-
-Revision 1.1  2002/09/17 06:24:34  cheshire
-First checkin
-
-*/
+ */
 
 #include "mDNSUNP.h"
 
@@ -207,8 +73,8 @@ void plen_to_mask(int plen, char *addr) {
 	int bits_in_block=16; /* Bits per IPv6 block */
 	for(i=0;i<=colons;i++) {
 		int block, ones=0xffff, ones_in_block;
-		if(plen>bits_in_block) ones_in_block=bits_in_block;
-		else                   ones_in_block=plen;
+		if (plen>bits_in_block) ones_in_block=bits_in_block;
+		else                    ones_in_block=plen;
 		block = ones & (ones << (bits_in_block-ones_in_block));
 		i==0 ? sprintf(addr, "%x", block) : sprintf(addr, "%s:%x", addr, block);
 		plen -= ones_in_block;
@@ -240,6 +106,8 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
 					  addr[0],addr[1],addr[2],addr[3],
 					  addr[4],addr[5],addr[6],addr[7],
 					  &index, &plen, &scope, &flags, ifname) != EOF) {
+
+			char ipv6addr[INET6_ADDRSTRLEN];
 
 			myflags = 0;
 			if (strncmp(lastname, ifname, IFNAMSIZ) == 0) {
@@ -275,7 +143,6 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
 			memcpy(ifi->ifi_addr, res0->ai_addr, sizeof(struct sockaddr_in6));
 
 			/* Add netmask of the interface */
-			char ipv6addr[INET6_ADDRSTRLEN];
 			plen_to_mask(plen, ipv6addr);
 			ifi->ifi_netmask = calloc(1, sizeof(struct sockaddr_in6));
 			if (ifi->ifi_addr == NULL) {
@@ -338,7 +205,7 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
 #endif
 
 #if defined(AF_INET6) && HAVE_IPV6 && HAVE_LINUX
- if(family == AF_INET6) return get_ifi_info_linuxv6(family, doaliases);
+ if (family == AF_INET6) return get_ifi_info_linuxv6(family, doaliases);
 #endif
 
 	sockfd = -1;
@@ -410,6 +277,24 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
         flags = ifrcopy.ifr_flags;
         if ((flags & IFF_UP) == 0)
             continue;   /* ignore if interface not up */
+
+	/* Skip addresses we can't use */
+#ifdef SIOCGIFAFLAG_IN6
+        if (ifr->ifr_addr.sa_family == AF_INET6) {
+		struct in6_ifreq ifr6;
+
+		if (sockf6 == -1)
+			sockf6 = socket(AF_INET6, SOCK_DGRAM, 0);
+		memset(&ifr6, 0, sizeof(ifr6));
+		memcpy(&ifr6.ifr_name, &ifr->ifr_name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, &ifr->ifr_addr, sizeof(ifr6.ifr_addr));
+		if (ioctl(sockf6, SIOCGIFAFLAG_IN6, &ifr6) < 0)
+			goto gotError;
+		if (ifr6.ifr_ifru.ifru_flags6 &
+		    (IN6_IFF_NOTREADY | IN6_IFF_DETACHED))
+			continue;
+	}
+#endif
 
         ifi = (struct ifi_info*)calloc(1, sizeof(struct ifi_info));
         if (ifi == NULL) {

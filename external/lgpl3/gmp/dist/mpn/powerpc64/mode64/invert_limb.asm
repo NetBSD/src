@@ -1,6 +1,6 @@
 dnl  PowerPC-64 mpn_invert_limb -- Invert a normalized limb.
 
-dnl  Copyright 2004, 2005, 2006, 2008 Free Software Foundation, Inc.
+dnl  Copyright 2004, 2005, 2006, 2008, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -19,91 +19,88 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:     ?
-C POWER4/PPC970:     75 (including call+ret)
-
-C TODO:
-C   * Pair multiply instructions.
+C                  cycles/limb (approximate)
+C POWER3/PPC630         80
+C POWER4/PPC970         86
+C POWER5                86
+C POWER6               170
+C POWER7                66
 
 ASM_START()
 PROLOGUE(mpn_invert_limb)
 	LEAL(	r12, approx_tab)
-
-	srdi	r11, r3, 32		C r11 = d >> 32
-	rlwinm  r9, r11, 10, 23, 30	C r9 = ((d >> 55) & 0xff) << 1
-	lhzx	r0, r12, r9		C load initial approximation
-	rldic	r10, r0, 6, 42
-	mulld	r8, r10, r10
-	sldi	r9, r10, 17
-	mulld	r0, r8, r11
-	srdi	r0, r0, 31
-	subf	r10, r0, r9
-	mulld	r8, r10, r10
-	sldi	r11, r10, 33
-	mulhdu	r0, r8, r3
-	sldi	r9, r0, 1
-	subf	r10, r9, r11
-	sldi	r11, r10, 2
-	mulhdu	r0, r10, r10
-	mulld	r8, r10, r10
-	mulhdu	r10, r8, r3
-	mulld	r9, r0, r3
-	mulhdu	r0, r0, r3
-	addc	r8, r9, r10
-	addze	r10, r0
-	srdi	r0, r8, 62
-	rldimi	r0, r10, 2, 0
-	sldi	r9, r8, 2
-	subfic	r10, r9, 0
-	subfe	r8, r0, r11
-	mulhdu	r10, r3, r8
-	add	r10, r10, r3
-	mulld	r9, r3, r8
-	subf	r11, r10, r8
-	addi	r0, r10, 1
-	addi	r8, r11, -1
-	and	r0, r3, r0
-	addc	r11, r9, r0
-	addze	r10, r10
-	addc	r0, r11, r3
-	addze	r10, r10
-	subf	r3, r10, r8
+	srdi	r9, r3, 32
+	rlwinm	r9, r9, 10, 23, 30	C (d >> 55) & 0x1fe
+	srdi	r10, r3, 24		C d >> 24
+	lis	r11, 0x1000
+	rldicl	r8, r3, 0, 63		C d mod 2
+	addi	r10, r10, 1		C d40
+	sldi	r11, r11, 32		C 2^60
+	srdi	r7, r3, 1		C d/2
+	add	r7, r7, r8		C d63 = ceil(d/2)
+	neg	r8, r8			C mask = -(d mod 2)
+	lhzx	r0, r9, r12
+	mullw	r9, r0, r0		C v0*v0
+	sldi	r6, r0, 11		C v0 << 11
+	addi	r0, r6, -1		C (v0 << 11) - 1
+	mulld	r9, r9, r10		C v0*v0*d40
+	srdi	r9, r9, 40		C v0*v0*d40 >> 40
+	subf	r9, r9, r0		C v1 = (v0 << 11) - (v0*v0*d40 >> 40) - 1
+	mulld	r0, r9, r10		C v1*d40
+	sldi	r6, r9, 13		C v1 << 13
+	subf	r0, r0, r11		C 2^60 - v1*d40
+	mulld	r0, r0, r9		C v1 * (2^60 - v1*d40)
+	srdi	r0, r0, 47		C v1 * (2^60 - v1*d40) >> 47
+	add	r0, r0, r6		C v2 = (v1 << 13) + (v1 * (2^60 - v1*d40) >> 47)
+	mulld	r11, r0, r7		C v2 * d63
+	srdi	r10, r0, 1		C v2 >> 1
+	sldi	r9, r0, 31		C v2 << 31
+	and	r8, r10, r8		C (v2 >> 1) & mask
+	subf	r8, r11, r8		C ((v2 >> 1) & mask) - v2 * d63
+	mulhdu	r0, r8, r0		C p1 = v2 * (((v2 >> 1) & mask) - v2 * d63)
+	srdi	r0, r0, 1		C p1 >> 1
+	add	r0, r0, r9		C v3 = (v2 << 31) + (p1 >> 1)
+	nop
+	mulhdu	r9, r0, r3
+	mulld	r11, r0, r3
+	addc	r10, r11, r3
+	adde	r3, r9, r3
+	subf	r3, r3, r0
 	blr
 EPILOGUE()
 
 DEF_OBJECT(approx_tab)
-	.short	1023,1020,1016,1012,1008,1004,1000,996
-	.short	992,989,985,981,978,974,970,967
-	.short	963,960,956,953,949,946,942,939
-	.short	936,932,929,926,923,919,916,913
-	.short	910,907,903,900,897,894,891,888
-	.short	885,882,879,876,873,870,868,865
-	.short	862,859,856,853,851,848,845,842
-	.short	840,837,834,832,829,826,824,821
-	.short	819,816,814,811,809,806,804,801
-	.short	799,796,794,791,789,787,784,782
-	.short	780,777,775,773,771,768,766,764
-	.short	762,759,757,755,753,751,748,746
-	.short	744,742,740,738,736,734,732,730
-	.short	728,726,724,722,720,718,716,714
-	.short	712,710,708,706,704,702,700,699
-	.short	697,695,693,691,689,688,686,684
-	.short	682,680,679,677,675,673,672,670
-	.short	668,667,665,663,661,660,658,657
-	.short	655,653,652,650,648,647,645,644
-	.short	642,640,639,637,636,634,633,631
-	.short	630,628,627,625,624,622,621,619
-	.short	618,616,615,613,612,611,609,608
-	.short	606,605,604,602,601,599,598,597
-	.short	595,594,593,591,590,589,587,586
-	.short	585,583,582,581,579,578,577,576
-	.short	574,573,572,571,569,568,567,566
-	.short	564,563,562,561,560,558,557,556
-	.short	555,554,553,551,550,549,548,547
-	.short	546,544,543,542,541,540,539,538
-	.short	537,536,534,533,532,531,530,529
-	.short	528,527,526,525,524,523,522,521
-	.short	520,519,518,517,516,515,514,513
+        .short  0x7fd,0x7f5,0x7ed,0x7e5,0x7dd,0x7d5,0x7ce,0x7c6
+        .short  0x7bf,0x7b7,0x7b0,0x7a8,0x7a1,0x79a,0x792,0x78b
+        .short  0x784,0x77d,0x776,0x76f,0x768,0x761,0x75b,0x754
+        .short  0x74d,0x747,0x740,0x739,0x733,0x72c,0x726,0x720
+        .short  0x719,0x713,0x70d,0x707,0x700,0x6fa,0x6f4,0x6ee
+        .short  0x6e8,0x6e2,0x6dc,0x6d6,0x6d1,0x6cb,0x6c5,0x6bf
+        .short  0x6ba,0x6b4,0x6ae,0x6a9,0x6a3,0x69e,0x698,0x693
+        .short  0x68d,0x688,0x683,0x67d,0x678,0x673,0x66e,0x669
+        .short  0x664,0x65e,0x659,0x654,0x64f,0x64a,0x645,0x640
+        .short  0x63c,0x637,0x632,0x62d,0x628,0x624,0x61f,0x61a
+        .short  0x616,0x611,0x60c,0x608,0x603,0x5ff,0x5fa,0x5f6
+        .short  0x5f1,0x5ed,0x5e9,0x5e4,0x5e0,0x5dc,0x5d7,0x5d3
+        .short  0x5cf,0x5cb,0x5c6,0x5c2,0x5be,0x5ba,0x5b6,0x5b2
+        .short  0x5ae,0x5aa,0x5a6,0x5a2,0x59e,0x59a,0x596,0x592
+        .short  0x58e,0x58a,0x586,0x583,0x57f,0x57b,0x577,0x574
+        .short  0x570,0x56c,0x568,0x565,0x561,0x55e,0x55a,0x556
+        .short  0x553,0x54f,0x54c,0x548,0x545,0x541,0x53e,0x53a
+        .short  0x537,0x534,0x530,0x52d,0x52a,0x526,0x523,0x520
+        .short  0x51c,0x519,0x516,0x513,0x50f,0x50c,0x509,0x506
+        .short  0x503,0x500,0x4fc,0x4f9,0x4f6,0x4f3,0x4f0,0x4ed
+        .short  0x4ea,0x4e7,0x4e4,0x4e1,0x4de,0x4db,0x4d8,0x4d5
+        .short  0x4d2,0x4cf,0x4cc,0x4ca,0x4c7,0x4c4,0x4c1,0x4be
+        .short  0x4bb,0x4b9,0x4b6,0x4b3,0x4b0,0x4ad,0x4ab,0x4a8
+        .short  0x4a5,0x4a3,0x4a0,0x49d,0x49b,0x498,0x495,0x493
+        .short  0x490,0x48d,0x48b,0x488,0x486,0x483,0x481,0x47e
+        .short  0x47c,0x479,0x477,0x474,0x472,0x46f,0x46d,0x46a
+        .short  0x468,0x465,0x463,0x461,0x45e,0x45c,0x459,0x457
+        .short  0x455,0x452,0x450,0x44e,0x44b,0x449,0x447,0x444
+        .short  0x442,0x440,0x43e,0x43b,0x439,0x437,0x435,0x432
+        .short  0x430,0x42e,0x42c,0x42a,0x428,0x425,0x423,0x421
+        .short  0x41f,0x41d,0x41b,0x419,0x417,0x414,0x412,0x410
+        .short  0x40e,0x40c,0x40a,0x408,0x406,0x404,0x402,0x400
 END_OBJECT(approx_tab)
 ASM_END()

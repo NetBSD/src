@@ -1,7 +1,7 @@
 /* mpz_init() -- Make a new multiple precision number with value 0.
 
-Copyright 1991, 1993, 1994, 1995, 2000, 2001, 2002 Free Software Foundation,
-Inc.
+Copyright 1991, 1993, 1994, 1995, 2000, 2001, 2002, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -24,12 +24,12 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpz_init (mpz_ptr x)
 {
-  x->_mp_alloc = 1;
-  x->_mp_d = (mp_ptr) (*__gmp_allocate_func) (BYTES_PER_MP_LIMB);
-  x->_mp_size = 0;
+  ALLOC (x) = 1;
+  PTR (x) = (mp_ptr) (*__gmp_allocate_func) (BYTES_PER_MP_LIMB);
+  SIZ (x) = 0;
 
 #ifdef __CHECKER__
   /* let the low limb look initialized, for the benefit of mpz_get_ui etc */
-  x->_mp_d[0] = 0;
+  PTR (x) = 0;
 #endif
 }

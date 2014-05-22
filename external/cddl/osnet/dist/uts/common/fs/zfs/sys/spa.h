@@ -344,11 +344,11 @@ typedef struct blkptr {
  * 'func' is either snprintf() or mdb_snprintf().
  * 'ws' (whitespace) can be ' ' for single-line format, '\n' for multi-line.
  */
-#define	SPRINTF_BLKPTR(func, ws, buf, bp, type, checksum, compress)	\
+#define	SNPRINTF_BLKPTR(func, ws, buf, buflen, bp, type, checksum, compress)	\
 {									\
 	static const char *copyname[] =					\
 	    { "zero", "single", "double", "triple" };			\
-	int size = BP_SPRINTF_LEN;					\
+	int size = buflen;					\
 	int len = 0;							\
 	int copies = 0;							\
 									\
@@ -592,7 +592,7 @@ extern char *spa_strdup(const char *);
 extern void spa_strfree(char *);
 extern uint64_t spa_get_random(uint64_t range);
 extern uint64_t spa_generate_guid(spa_t *spa);
-extern void sprintf_blkptr(char *buf, const blkptr_t *bp);
+extern void snprintf_blkptr(char *buf, size_t buflen, const blkptr_t *bp);
 extern void spa_freeze(spa_t *spa);
 extern void spa_upgrade(spa_t *spa, uint64_t version);
 extern void spa_evict_all(void);
@@ -672,7 +672,7 @@ extern void spa_event_notify(spa_t *spa, vdev_t *vdev, const char *name);
 #define	dprintf_bp(bp, fmt, ...) do {				\
 	if (zfs_flags & ZFS_DEBUG_DPRINTF) { 			\
 	char *__blkbuf = kmem_alloc(BP_SPRINTF_LEN, KM_SLEEP);	\
-	sprintf_blkptr(__blkbuf, (bp));				\
+	snprintf_blkptr(__blkbuf, BP_SPRINTF_LEN, (bp));				\
 	dprintf(fmt " %s\n", __VA_ARGS__, __blkbuf);		\
 	kmem_free(__blkbuf, BP_SPRINTF_LEN);			\
 	} \

@@ -215,6 +215,7 @@ zfs_close(vnode_t *vp, int flag, int count, offset_t offset, cred_t *cr,
 	    zp->z_phys->zp_size > 0)
 		VERIFY(fs_vscan(vp, cr, 1) == 0);
 
+	ZFS_EXIT(zfsvfs);
 	return (0);
 }
 
@@ -4813,7 +4814,7 @@ zfs_netbsd_access(void *v)
 static int
 zfs_netbsd_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -4890,9 +4891,6 @@ zfs_netbsd_lookup(void *v)
 	}
 	KASSERT(*vpp != NULL);	/* XXX Correct?  */
 
-	/*
-	 * Do a locking dance in conformance to the VOP_LOOKUP protocol.
-	 */
 	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
 		KASSERT(!(cnp->cn_flags & ISDOTDOT));
 		KASSERT(dvp == *vpp);
@@ -4900,17 +4898,12 @@ zfs_netbsd_lookup(void *v)
 	    (cnp->cn_nameptr[0] == '.') &&
 	    (cnp->cn_nameptr[1] == '.')) {
 		KASSERT(cnp->cn_flags & ISDOTDOT);
-		VOP_UNLOCK(dvp);
-		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
 		KASSERT(!(cnp->cn_flags & ISDOTDOT));
-		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 out:
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
 
 #if 0				/* Namecache too scary to contemplate.  */
 	/*
@@ -4946,7 +4939,7 @@ out:
 static int
 zfs_netbsd_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -4981,26 +4974,9 @@ zfs_netbsd_create(void *v)
 	/* XXX !EXCL is wrong here...  */
 	error = zfs_create(dvp, __UNCONST(cnp->cn_nameptr), vap, !EXCL, mode,
 	    vpp, cnp->cn_cred);
-	if (error) {
-		KASSERT(*vpp == NULL);
-		goto out;
-	}
-	KASSERT(*vpp != NULL);
 
-	/*
-	 * Lock *vpp in conformance to the VOP_CREATE protocol.
-	 */
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-
-out:
+	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
-
-	/*
-	 * Unlock and release dvp because the VOP_CREATE protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 
 	return (error);
 }
@@ -5057,7 +5033,7 @@ zfs_netbsd_remove(void *v)
 static int
 zfs_netbsd_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -5089,26 +5065,9 @@ zfs_netbsd_mkdir(void *v)
 
 	error = zfs_mkdir(dvp, __UNCONST(cnp->cn_nameptr), vap, vpp,
 	    cnp->cn_cred, NULL, 0, NULL);
-	if (error) {
-		KASSERT(*vpp == NULL);
-		goto out;
-	}
-	KASSERT(*vpp != NULL);
 
-	/*
-	 * Lock *vpp in conformance to the VOP_MKDIR protocol.
-	 */
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-
-out:
+	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
-
-	/*
-	 * Unlock and release dvp because the VOP_MKDIR protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 
 	return (error);
 }
@@ -5373,7 +5332,7 @@ zfs_netbsd_rename(void *v)
 static int
 zfs_netbsd_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -5409,27 +5368,9 @@ zfs_netbsd_symlink(void *v)
 
 	error = zfs_symlink(dvp, vpp, __UNCONST(cnp->cn_nameptr), vap, target,
 	    cnp->cn_cred, 0);
-	if (error) {
-		KASSERT(*vpp == NULL);
-		goto out;
-	}
-	KASSERT(*vpp != NULL);
 
-
-	/*
-	 * Lock *vpp in conformance to the VOP_SYMLINK protocol.
-	 */
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-
-out:
+	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
-
-	/*
-	 * Unlock and release dvp because the VOP_SYMLINK protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 
 	return (error);
 }

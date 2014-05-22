@@ -8,7 +8,7 @@
    GNU MP RELEASE.
 
 Copyright 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002, 2004, 2006, 2007,
-2008 Free Software Foundation, Inc.
+2008, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -350,7 +350,8 @@ mpn_dc_get_str (unsigned char *str, size_t len,
 
 
 /* There are no leading zeros on the digits generated at str, but that's not
-   currently a documented feature.  */
+   currently a documented feature.  The current mpz_out_str and mpz_get_str
+   rely on it.  */
 
 size_t
 mpn_get_str (unsigned char *str, int base, mp_ptr up, mp_size_t un)
@@ -439,9 +440,12 @@ mpn_get_str (unsigned char *str, int base, mp_ptr up, mp_size_t un)
     mp_size_t n_pows, xn, pn, exptab[GMP_LIMB_BITS], bexp;
     mp_limb_t cy;
     mp_size_t shift;
+    size_t ndig;
+
+    DIGITS_IN_BASE_PER_LIMB (ndig, un, base);
+    xn = 1 + ndig / mp_bases[base].chars_per_limb; /* FIXME: scalar integer division */
 
     n_pows = 0;
-    xn = 1 + un*(mp_bases[base].chars_per_bit_exactly*GMP_NUMB_BITS)/mp_bases[base].chars_per_limb;
     for (pn = xn; pn != 1; pn = (pn + 1) >> 1)
       {
 	exptab[n_pows] = pn;

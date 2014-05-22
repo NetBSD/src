@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.3.4.2 2013/01/23 00:05:13 yamt Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.3.4.3 2014/05/22 14:08:03 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -166,8 +166,7 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "503 5.5.1 Error: authentication not enabled");
 	return (-1);
     }
-#define IN_MAIL_TRANSACTION(state) ((state)->sender != 0)
-    if (IN_MAIL_TRANSACTION(state)) {
+    if (SMTPD_IN_MAIL_TRANSACTION(state)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 5.5.1 Error: MAIL transaction in progress");
 	return (-1);

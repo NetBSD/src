@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.1.1.1.10.1 2013/01/23 00:05:13 yamt Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.c,v 1.1.1.1.10.2 2014/05/22 14:08:03 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -216,7 +216,8 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
     if ((state->sasl_server =
 	 XSASL_SERVER_CREATE(smtpd_sasl_impl, &create_args,
 			     stream = state->client,
-			     server_addr = "",	/* need smtpd_peer.c update */
+			     server_addr = (state->dest_addr ?
+					    state->dest_addr : ""),
 			     client_addr = ADDR_OR_EMPTY(state->addr,
 						       CLIENT_ADDR_UNKNOWN),
 			     service = SMTPD_SASL_SERVICE,

@@ -3,7 +3,7 @@
    THE FUNCTIONS IN THIS FILE ARE FOR INTERNAL USE AND ARE ALMOST CERTAIN TO
    BE SUBJECT TO INCOMPATIBLE CHANGES IN FUTURE GNU MP RELEASES.
 
-Copyright 2000, 2005 Free Software Foundation, Inc.
+Copyright 2000, 2005, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -44,28 +44,53 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    implementation.  */
 
 
+#if GMP_NUMB_BITS % 2 == 0
 static void
 mpz_divexact_by3 (mpz_ptr q, mpz_srcptr a)
 {
   mp_size_t  size = SIZ(a);
-  if (size == 0)
-    {
-      SIZ(q) = 0;
-      return;
-    }
-  else
-    {
-      mp_size_t  abs_size = ABS(size);
-      mp_ptr     qp;
+  mp_size_t  abs_size = ABS(size);
+  mp_ptr     qp;
 
-      MPZ_REALLOC (q, abs_size);
+  qp = MPZ_REALLOC (q, abs_size);
 
-      qp = PTR(q);
-      mpn_divexact_by3 (qp, PTR(a), abs_size);
+  mpn_bdiv_dbm1 (qp, PTR(a), abs_size, GMP_NUMB_MASK / 3);
 
-      abs_size -= (qp[abs_size-1] == 0);
-      SIZ(q) = (size>0 ? abs_size : -abs_size);
-    }
+  abs_size -= (qp[abs_size-1] == 0);
+  SIZ(q) = (size>0 ? abs_size : -abs_size);
+}
+#endif
+
+#if GMP_NUMB_BITS % 4 == 0
+static void
+mpz_divexact_by5 (mpz_ptr q, mpz_srcptr a)
+{
+  mp_size_t  size = SIZ(a);
+  mp_size_t  abs_size = ABS(size);
+  mp_ptr     qp;
+
+  qp = MPZ_REALLOC (q, abs_size);
+
+  mpn_bdiv_dbm1 (qp, PTR(a), abs_size, GMP_NUMB_MASK / 5);
+
+  abs_size -= (qp[abs_size-1] == 0);
+  SIZ(q) = (size>0 ? abs_size : -abs_size);
+}
+#endif
+
+static void
+mpz_divexact_limb (mpz_ptr q, mpz_srcptr a, mp_limb_t d)
+{
+  mp_size_t  size = SIZ(a);
+  mp_size_t  abs_size = ABS(size);
+  mp_ptr     qp;
+
+  qp = MPZ_REALLOC (q, abs_size);
+
+  mpn_divexact_1 (qp, PTR(a), abs_size, d);
+
+  abs_size -= (qp[abs_size-1] == 0);
+  SIZ(q) = (size>0 ? abs_size : -abs_size);
 }
 
 void
@@ -73,37 +98,48 @@ mpz_divexact_gcd (mpz_ptr q, mpz_srcptr a, mpz_srcptr d)
 {
   ASSERT (mpz_sgn (d) > 0);
 
+  if (SIZ(a) == 0)
+    {
+      SIZ(q) = 0;
+      return;
+    }
+
   if (SIZ(d) == 1)
     {
       mp_limb_t  dl = PTR(d)[0];
       int        twos;
 
-      if (dl == 1)
-        {
-          if (q != a)
-            mpz_set (q, a);
-          return;
-        }
-      if (dl == 3)
-        {
-          mpz_divexact_by3 (q, a);
-          return;
-        }
-
-      count_trailing_zeros (twos, dl);
-      dl >>= twos;
+      if ((dl & 1) == 0)
+	{
+	  count_trailing_zeros (twos, dl);
+	  dl >>= twos;
+	  mpz_tdiv_q_2exp (q, a, twos);
+	  a = q;
+	}
 
       if (dl == 1)
-        {
-          mpz_tdiv_q_2exp (q, a, twos);
-          return;
-        }
+	{
+	  if (q != a)
+	    mpz_set (q, a);
+	  return;
+	}
+#if GMP_NUMB_BITS % 2 == 0
       if (dl == 3)
-        {
-          mpz_tdiv_q_2exp (q, a, twos);
-          mpz_divexact_by3 (q, q);
-          return;
-        }
+	{
+	  mpz_divexact_by3 (q, a);
+	  return;
+	}
+#endif
+#if GMP_NUMB_BITS % 4 == 0
+      if (dl == 5)
+	{
+	  mpz_divexact_by5 (q, a);
+	  return;
+	}
+#endif
+
+      mpz_divexact_limb (q, a, dl);
+      return;
     }
 
   mpz_divexact (q, a, d);

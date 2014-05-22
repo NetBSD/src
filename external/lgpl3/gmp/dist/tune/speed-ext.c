@@ -57,9 +57,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 #define SPEED_EXTRA_PROTOS                                              \
-  double speed_mean_calls __GMP_PROTO ((struct speed_params *s));       \
-  double speed_mean_open  __GMP_PROTO ((struct speed_params *s));       \
-  double speed_mean_open2 __GMP_PROTO ((struct speed_params *s));
+  double speed_mean_calls (struct speed_params *s);			\
+  double speed_mean_open  (struct speed_params *s);			\
+  double speed_mean_open2 (struct speed_params *s);
 
 #define SPEED_EXTRA_ROUTINES            \
   { "mean_calls",  speed_mean_calls  }, \

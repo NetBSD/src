@@ -1,7 +1,7 @@
 dnl  Alpha mpn_sub_n -- Subtract two limb vectors of the same length > 0
 dnl  and store difference in a third limb vector.
 
-dnl  Copyright 1995, 1999, 2000, 2005 Free Software Foundation, Inc.
+dnl  Copyright 1995, 1999, 2000, 2005, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -32,9 +32,13 @@ dnl  s2_ptr	r18
 dnl  size	r19
 
 ASM_START()
+PROLOGUE(mpn_sub_nc)
+	bis	r31,r20,r25
+	br	L(com)
+EPILOGUE()
 PROLOGUE(mpn_sub_n)
 	bis	r31,r31,r25		C clear cy
-	subq	r19,4,r19		C decr loop cnt
+L(com):	subq	r19,4,r19		C decr loop cnt
 	blt	r19,$Lend2		C if less than 4 limbs, goto 2nd loop
 C Start software pipeline for 1st loop
 	ldq	r0,0(r18)
@@ -42,13 +46,16 @@ C Start software pipeline for 1st loop
 	ldq	r1,8(r18)
 	ldq	r5,8(r17)
 	addq	r17,32,r17		C update s1_ptr
+	subq	r4,r0,r28		C 1st main subtract
 	ldq	r2,16(r18)
-	subq	r4,r0,r20		C 1st main subtract
+	subq	r28,r25,r20		C 1st carry subtract
 	ldq	r3,24(r18)
-	subq	r19,4,r19		C decr loop cnt
+	cmpult	r4,r0,r8		C compute cy from last subtract
 	ldq	r6,-16(r17)
-	cmpult	r4,r0,r25		C compute cy from last subtract
+	cmpult	r28,r25,r25		C compute cy from last subtract
 	ldq	r7,-8(r17)
+	bis	r8,r25,r25		C combine cy from the two subtracts
+	subq	r19,4,r19		C decr loop cnt
 	subq	r5,r1,r28		C 2nd main subtract
 	addq	r18,32,r18		C update s2_ptr
 	subq	r28,r25,r21		C 2nd carry subtract
@@ -142,5 +149,5 @@ $Lend0:	subq	r4,r0,r28		C main subtract
 
 $Lret:	bis	r25,r31,r0		C return cy
 	ret	r31,(r26),1
-EPILOGUE(mpn_sub_n)
+EPILOGUE()
 ASM_END()

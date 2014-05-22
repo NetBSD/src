@@ -1,7 +1,7 @@
 /* mpn_gcdext -- Extended Greatest Common Divisor.
 
-Copyright 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009 Free Software
-Foundation, Inc.
+Copyright 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -85,10 +85,10 @@ hgcd_mul_matrix_vector (struct hgcd_matrix *M,
   return n;
 }
 
-#define COMPUTE_V_ITCH(n) (2*(n) + 1)
+#define COMPUTE_V_ITCH(n) (2*(n))
 
 /* Computes |v| = |(g - u a)| / b, where u may be positive or
-   negative, and v is of the opposite sign. a, b are of size n, u and
+   negative, and v is of the opposite sign. max(a, b) is of size n, u and
    v at most size n, and v must have space for n+1 limbs. */
 static mp_size_t
 compute_v (mp_ptr vp,
@@ -108,9 +108,11 @@ compute_v (mp_ptr vp,
 
   size = ABS (usize);
   ASSERT (size <= n);
+  ASSERT (up[size-1] > 0);
 
   an = n;
   MPN_NORMALIZE (ap, an);
+  ASSERT (gn <= an);
 
   if (an >= size)
     mpn_mul (tp, ap, an, up, size);
@@ -118,9 +120,6 @@ compute_v (mp_ptr vp,
     mpn_mul (tp, up, size, ap, an);
 
   size += an;
-  size -= tp[size - 1] == 0;
-
-  ASSERT (gn <= size);
 
   if (usize > 0)
     {
@@ -132,11 +131,11 @@ compute_v (mp_ptr vp,
 	return 0;
     }
   else
-    { /* usize < 0 */
-      /* |v| = v = (c - u a) / b = (c + |u| a) / b */
-      mp_limb_t cy = mpn_add (tp, tp, size, gp, gn);
-      if (cy)
-	tp[size++] = cy;
+    { /* |v| = v = (g - u a) / b = (g + |u| a) / b. Since g <= a,
+	 (g + |u| a) always fits in (|usize| + an) limbs. */
+
+      ASSERT_NOCARRY (mpn_add (tp, tp, size, gp, gn));
+      size -= (tp[size - 1] == 0);
     }
 
   /* Now divide t / b. There must be no remainder */
@@ -170,7 +169,7 @@ compute_v (mp_ptr vp,
    For the lehmer call after the loop, Let T denote
    GCDEXT_DC_THRESHOLD. For the gcdext_lehmer call, we need T each for
    u, a and b, and 4T+3 scratch space. Next, for compute_v, we need T
-   for u, T+1 for v and 2T + 1 scratch space. In all, 7T + 3 is
+   for u, T+1 for v and 2T scratch space. In all, 7T + 3 is
    sufficient for both operations.
 
 */
@@ -194,6 +193,7 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
   mp_size_t matrix_scratch;
   mp_size_t ualloc = n + 1;
 
+  struct gcdext_ctx ctx;
   mp_size_t un;
   mp_ptr u0;
   mp_ptr u1;
@@ -204,6 +204,7 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
 
   ASSERT (an >= n);
   ASSERT (n > 0);
+  ASSERT (bp[n-1] > 0);
 
   TMP_MARK;
 
@@ -272,6 +273,10 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
   u0 = tp; tp += ualloc;
   u1 = tp; tp += ualloc;
 
+  ctx.gp = gp;
+  ctx.up = up;
+  ctx.usize = usizep;
+
   {
     /* For the first hgcd call, there are no u updates, and it makes
        some sense to use a different choice for p. */
@@ -305,21 +310,22 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
 	/* mpn_hgcd has failed. Then either one of a or b is very
 	   small, or the difference is very small. Perform one
 	   subtraction followed by one division. */
-	mp_size_t gn;
-	mp_size_t updated_un = 1;
-
 	u1[0] = 1;
 
-	/* Temporary storage 2n + 1 */
-	n = mpn_gcdext_subdiv_step (gp, &gn, up, usizep, ap, bp, n,
-				    u0, u1, &updated_un, tp, tp + n);
+	ctx.u0 = u0;
+	ctx.u1 = u1;
+	ctx.tp = tp + n; /* ualloc */
+	ctx.un = 1;
+
+	/* Temporary storage n */
+	n = mpn_gcd_subdiv_step (ap, bp, n, 0, mpn_gcdext_hook, &ctx, tp);
 	if (n == 0)
 	  {
 	    TMP_FREE;
-	    return gn;
+	    return ctx.gn;
 	  }
 
-	un = updated_un;
+	un = ctx.un;
 	ASSERT (un < ualloc);
       }
   }
@@ -361,22 +367,45 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
 	  /* mpn_hgcd has failed. Then either one of a or b is very
 	     small, or the difference is very small. Perform one
 	     subtraction followed by one division. */
-	  mp_size_t gn;
-	  mp_size_t updated_un = un;
+	  ctx.u0 = u0;
+	  ctx.u1 = u1;
+	  ctx.tp = tp + n; /* ualloc */
+	  ctx.un = un;
 
-	  /* Temporary storage 2n + 1 */
-	  n = mpn_gcdext_subdiv_step (gp, &gn, up, usizep, ap, bp, n,
-				      u0, u1, &updated_un, tp, tp + n);
+	  /* Temporary storage n */
+	  n = mpn_gcd_subdiv_step (ap, bp, n, 0, mpn_gcdext_hook, &ctx, tp);
 	  if (n == 0)
 	    {
 	      TMP_FREE;
-	      return gn;
+	      return ctx.gn;
 	    }
 
-	  un = updated_un;
+	  un = ctx.un;
 	  ASSERT (un < ualloc);
 	}
     }
+  /* We have A = ... a + ... b
+	     B =  u0 a +  u1 b
+
+	     a = u1  A + ... B
+	     b = -u0 A + ... B
+
+     with bounds
+
+       |u0|, |u1| <= B / min(a, b)
+
+     We always have u1 > 0, and u0 == 0 is possible only if u1 == 1,
+     in which case the only reduction done so far is a = A - k B for
+     some k.
+
+     Compute g = u a + v b = (u u1 - v u0) A + (...) B
+     Here, u, v are bounded by
+
+       |u| <= b,
+       |v| <= a
+  */
+
+  ASSERT ( (ap[n-1] | bp[n-1]) > 0);
 
   if (UNLIKELY (mpn_cmp (ap, bp, n) == 0))
     {
@@ -386,7 +415,10 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
       MPN_COPY (gp, ap, n);
 
       MPN_CMP (c, u0, u1, un);
-      ASSERT (c != 0);
+      /* c == 0 can happen only when A = (2k+1) G, B = 2 G. And in
+	 this case we choose the cofactor + 1, corresponding to G = A
+	 - k B, rather than -1, corresponding to G = - A + (k+1) B. */
+      ASSERT (c != 0 || (un == 1 && u0[0] == 1 && u1[0] == 1));
       if (c < 0)
 	{
 	  MPN_NORMALIZE (u0, un);
@@ -403,10 +435,9 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
       TMP_FREE;
       return n;
     }
-  else if (mpn_zero_p (u0, un))
+  else if (UNLIKELY (u0[0] == 0) && un == 1)
     {
       mp_size_t gn;
-      ASSERT (un == 1);
       ASSERT (u1[0] == 1);
 
       /* g = u a + v b = (u u1 - v u0) A + (...) B = u A + (...) B */
@@ -417,23 +448,6 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
     }
   else
     {
-      /* We have A = ... a + ... b
-		 B =  u0 a +  u1 b
-
-		 a = u1  A + ... B
-		 b = -u0 A + ... B
-
-	 with bounds
-
-	   |u0|, |u1| <= B / min(a, b)
-
-	 Compute g = u a + v b = (u u1 - v u0) A + (...) B
-	 Here, u, v are bounded by
-
-	 |u| <= b,
-	 |v| <= a
-      */
-
       mp_size_t u0n;
       mp_size_t u1n;
       mp_size_t lehmer_un;
@@ -453,6 +467,8 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
 
       u0n = un;
       MPN_NORMALIZE (u0, u0n);
+      ASSERT (u0n > 0);
+
       if (lehmer_un == 0)
 	{
 	  /* u == 0  ==>  v = g / b == 1  ==> g = - u0 A + (...) B */
@@ -478,25 +494,12 @@ mpn_gcdext (mp_ptr gp, mp_ptr up, mp_size_t *usizep,
 
       u1n = un;
       MPN_NORMALIZE (u1, u1n);
-
-      /* It's possible that u0 = 1, u1 = 0 */
-      if (u1n == 0)
-	{
-	  ASSERT (un == 1);
-	  ASSERT (u0[0] == 1);
-
-	  /* u1 == 0 ==> u u1 + v u0 = v */
-	  MPN_COPY (up, lehmer_vp, lehmer_vn);
-	  *usizep = negate ? lehmer_vn : - lehmer_vn;
-
-	  TMP_FREE;
-	  return gn;
-	}
+      ASSERT (u1n > 0);
 
       ASSERT (lehmer_un + u1n <= ualloc);
       ASSERT (lehmer_vn + u0n <= ualloc);
 
-      /* Now u0, u1, u are non-zero. We may still have v == 0 */
+      /* We may still have v == 0 */
 
       /* Compute u u0 */
       if (lehmer_un <= u1n)

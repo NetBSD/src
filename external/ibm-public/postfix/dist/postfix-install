@@ -104,7 +104,7 @@
 #	users. The built-in default directory name is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP html_directory
-#	The destination directory for the Postfix HTML files.
+#	The final destination directory for the Postfix HTML files.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP queue_directory
 #	The final destination directory for Postfix queues.
@@ -138,14 +138,14 @@
 #	The built-in default group name is postdrop.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP manpage_directory
-#	The destination directory for the Postfix on-line manual pages.
+#	The final destination directory for the Postfix on-line manual pages.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP sample_directory
-#	The destination directory for the Postfix sample configuration files.
-#	This parameter is obsolete as of Postfix version 2.1.
+#	The final destination directory for the Postfix sample configuration
+#	files. This parameter is obsolete as of Postfix version 2.1.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP readme_directory
-#	The destination directory for the Postfix README files.
+#	The final destination directory for the Postfix README files.
 #	This parameter setting is recorded in the installed main.cf file.
 # SEE ALSO
 #	post-install(1) post-installation procedure
@@ -173,6 +173,10 @@ SHELL=/bin/sh
 IFS=" 	
 "
 BACKUP_IFS="$IFS"
+
+# This script uses outputs from Postfix and non-Postfix commands.
+# Override all LC_* settings and LANG for robustness.
+LC_ALL=C; export LC_ALL
 
 USAGE="Usage: $0 [name=value] [option]
     -non-interactive        Do not ask for installation parameters.
@@ -350,13 +354,14 @@ management commands.  Specify a group name with a numerical group
 ID that is not shared with other accounts, not even with the Postfix
 mail_owner account. You can no longer specify \"no\" here."
 
-manpage_directory_prompt="the destination directory for the Postfix on-line
-manual pages. You can no longer specify \"no\" here."
+manpage_directory_prompt="the final destination directory for the
+Postfix on-line manual pages. You can no longer specify \"no\"
+here."
 
-readme_directory_prompt="the destination directory for the Postfix
+readme_directory_prompt="the final destination directory for the Postfix
 README files. Specify \"no\" if you do not want to install these files."
 
-html_directory_prompt="the destination directory for the Postfix
+html_directory_prompt="the final destination directory for the Postfix
 HTML files. Specify \"no\" if you do not want to install these files."
 
 # Default settings, just to get started.

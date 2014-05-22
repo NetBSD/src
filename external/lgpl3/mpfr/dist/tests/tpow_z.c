@@ -1,7 +1,7 @@
 /* Test file for mpfr_pow_z -- power function x^z with z a MPZ
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -172,7 +172,7 @@ check_integer (mpfr_prec_t begin, mpfr_prec_t end, unsigned long max)
               if (mpfr_cmp (y1, y2) != 0)
                 {
                   printf ("Error for p = %lu, z = %lu, rnd = %s and x = ",
-                          p, n, mpfr_print_rnd_mode (rnd));
+                          (unsigned long) p, n, mpfr_print_rnd_mode (rnd));
                   mpfr_dump (x);
                   printf ("Ypowsi = "); mpfr_dump (y1);
                   printf ("Ypowz  = "); mpfr_dump (y2);
@@ -181,7 +181,8 @@ check_integer (mpfr_prec_t begin, mpfr_prec_t end, unsigned long max)
               if (res1 != res2)
                 {
                   printf ("Wrong inexact flags for p = %lu, z = %lu, rnd = %s"
-                          " and x = ", p, n, mpfr_print_rnd_mode (rnd));
+                          " and x = ", (unsigned long) p, n,
+                          mpfr_print_rnd_mode (rnd));
                   mpfr_dump (x);
                   printf ("Ypowsi(inex = %2d) = ", res1); mpfr_dump (y1);
                   printf ("Ypowz (inex = %2d) = ", res2); mpfr_dump (y2);
@@ -269,9 +270,10 @@ check_overflow (void)
   mpfr_set_str_binary (a, "1E10");
   mpz_init_set_ui (z, ULONG_MAX);
   res = mpfr_pow_z (a, a, z, MPFR_RNDN);
-  if (!MPFR_IS_INF (a) || MPFR_SIGN (a) < 0)
+  if (! MPFR_IS_INF (a) || MPFR_SIGN (a) < 0 || res <= 0)
     {
-      printf ("Error for (1e10)^ULONG_MAX\n");
+      printf ("Error for (1e10)^ULONG_MAX, expected +Inf,\ngot ");
+      mpfr_dump (a);
       exit (1);
     }
 
@@ -284,7 +286,7 @@ check_overflow (void)
   n = (ULONG_MAX ^ (ULONG_MAX >> 1)) + 1;
   mpz_set_ui (z, n);
   res = mpfr_pow_z (a, a, z, MPFR_RNDN);
-  if (!MPFR_IS_INF (a) || MPFR_SIGN (a) > 0)
+  if (! MPFR_IS_INF (a) || MPFR_SIGN (a) > 0 || res >= 0)
     {
       printf ("Error for (-1e10)^%lu, expected -Inf,\ngot ", n);
       mpfr_dump (a);
@@ -339,7 +341,17 @@ bug20080904 (void)
   /* The correct result is near 2^(-2^62), so it underflows when
      MPFR_EMIN_MIN > -2^62 (i.e. with 32 and 64 bits machines). */
   mpfr_set_str (a, "AA500C0D7A69275DBp-4632850503556296886", 16, MPFR_RNDN);
-  MPFR_ASSERTN(mpfr_cmp0 (answer, a) == 0);
+  if (! mpfr_equal_p (answer, a))
+    {
+      printf ("Error in bug20080904:\n");
+      printf ("Expected ");
+      mpfr_out_str (stdout, 16, 0, a, MPFR_RNDN);
+      putchar ('\n');
+      printf ("Got      ");
+      mpfr_out_str (stdout, 16, 0, answer, MPFR_RNDN);
+      putchar ('\n');
+      exit (1);
+    }
 
   mpfr_set_emin (emin_default);
 

@@ -1,12 +1,12 @@
-This is ../../gmp/doc/gmp.info, produced by makeinfo version 4.8 from
+This is ../../gmp/doc/gmp.info, produced by makeinfo version 4.13 from
 ../../gmp/doc/gmp.texi.
 
-   This manual describes how to install and use the GNU multiple
-precision arithmetic library, version 5.0.2.
+This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 5.1.3.
 
    Copyright 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free
-Software Foundation, Inc.
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012,
+2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this
 document under the terms of the GNU Free Documentation License, Version
@@ -14,7 +14,7 @@ document under the terms of the GNU Free Documentation License, Version
 with no Invariant Sections, with the Front-Cover Texts being "A GNU
 Manual", and with the Back-Cover Texts being "You have freedom to copy
 and modify this GNU Manual, like GNU software".  A copy of the license
-is included in *Note GNU Free Documentation License::.
+is included in *note GNU Free Documentation License::.
 
 INFO-DIR-SECTION GNU libraries
 START-INFO-DIR-ENTRY
@@ -28,11 +28,11 @@ GNU MP
 ******
 
    This manual describes how to install and use the GNU multiple
-precision arithmetic library, version 5.0.2.
+precision arithmetic library, version 5.1.3.
 
    Copyright 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free
-Software Foundation, Inc.
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012,
+2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this
 document under the terms of the GNU Free Documentation License, Version
@@ -40,7 +40,7 @@ document under the terms of the GNU Free Documentation License, Version
 with no Invariant Sections, with the Front-Cover Texts being "A GNU
 Manual", and with the Back-Cover Texts being "You have freedom to copy
 and modify this GNU Manual, like GNU software".  A copy of the license
-is included in *Note GNU Free Documentation License::.
+is included in *note GNU Free Documentation License::.
 
 
 * Menu:
@@ -58,7 +58,6 @@ is included in *Note GNU Free Documentation License::.
 * Formatted Output::           `printf' style output.
 * Formatted Input::            `scanf' style input.
 * C++ Class Interface::        Class wrappers around GMP types.
-* BSD Compatible Functions::   All functions found in BSD MP.
 * Custom Allocation::          How to customize the internal allocation.
 * Language Bindings::          Using GMP from other languages.
 * Algorithms::                 What happens behind the scenes.
@@ -159,15 +158,15 @@ the GMP library and one for bug reports.  For more information, see
      `http://gmplib.org/mailman/listinfo/'.
 
    The proper place for bug reports is <gmp-bugs@gmplib.org>.  See
-*Note Reporting Bugs:: for information about reporting bugs.
+*note Reporting Bugs:: for information about reporting bugs.
 
 
 1.1 How to use this Manual
 ==========================
 
-Everyone should read *Note GMP Basics::.  If you need to install the
-library yourself, then read *Note Installing GMP::.  If you have a
-system with multiple ABIs, then read *Note ABI and ISA::, for the
+Everyone should read *note GMP Basics::.  If you need to install the
+library yourself, then read *note Installing GMP::.  If you have a
+system with multiple ABIs, then read *note ABI and ISA::, for the
 compiler options that must be used on applications.
 
    The rest of the manual can be used for later reference, although it
@@ -194,7 +193,7 @@ And you can install (under `/usr/local' by default) with
      make install
 
    If you experience problems, please report them to
-<gmp-bugs@gmplib.org>.  See *Note Reporting Bugs::, for information on
+<gmp-bugs@gmplib.org>.  See *note Reporting Bugs::, for information on
 what to include in useful bug reports.
 
 * Menu:
@@ -217,7 +216,7 @@ All the usual autoconf configure options are available, run `./configure
 installation information too.
 
 Tools
-     `configure' requires various Unix-like tools.  See *Note Notes for
+     `configure' requires various Unix-like tools.  See *note Notes for
      Particular Systems::, for some options on non-Unix systems.
 
      It might be possible to build without the help of `configure',
@@ -230,7 +229,7 @@ Build Directory
      directory.  For example
 
           cd /my/build/dir
-          /my/sources/gmp-5.0.2/configure
+          /my/sources/gmp-5.1.3/configure
 
      Not all `make' programs have the necessary features (`VPATH') to
      support this.  In particular, SunOS and Slowaris `make' have bugs
@@ -321,7 +320,7 @@ CPU types
      The best idea is always to build GMP for the exact machine type
      you intend to run it on.
 
-     The following CPUs have specific support.  See `configure.in' for
+     The following CPUs have specific support.  See `configure.ac' for
      details of what code and compiler options they select.
 
         * Alpha: alpha, alphaev5, alphaev56, alphapca56, alphapca57,
@@ -360,10 +359,8 @@ CPU types
 
 Generic C Build
      If some of the assembly code causes problems, or if otherwise
-     desired, the generic C code can be selected with CPU `none'.  For
-     example,
-
-          ./configure --host=none-unknown-freebsd3.5
+     desired, the generic C code can be selected with the configure
+     `--disable-assembly'.
 
      Note that this will run quite slowly, but it should be portable
      and should at least make it possible to get something running if
@@ -384,7 +381,7 @@ Fat binary, `--enable-fat'
 
           ./configure --host=mips64-sgi-irix6 ABI=n32
 
-     See *Note ABI and ISA::, for the available choices on relevant
+     See *note ABI and ISA::, for the available choices on relevant
      CPUs, and what applications need to do.
 
 `CC', `CFLAGS'
@@ -419,8 +416,7 @@ Fat binary, `--enable-fat'
      Compiling is done with both `CPPFLAGS' and `CFLAGS', but
      preprocessing uses just `CPPFLAGS'.  This distinction is because
      most preprocessors won't accept all the flags the compiler does.
-     Preprocessing is done separately in some configure tests, and in
-     the `ansi2knr' support for K&R compilers.
+     Preprocessing is done separately in some configure tests.
 
 `CC_FOR_BUILD'
      Some build-time programs are compiled and run to generate
@@ -524,13 +520,9 @@ Temporary Memory, `--enable-alloca=<choice>'
 
 FFT Multiplication, `--disable-fft'
      By default multiplications are done using Karatsuba, 3-way Toom,
-     and Fermat FFT.  The FFT is only used on large to very large
-     operands and can be disabled to save code size if desired.
-
-Berkeley MP, `--enable-mpbsd'
-     The Berkeley MP compatibility library (`libmp') and header file
-     (`mp.h') are built and installed only if `--enable-mpbsd' is used.
-     *Note BSD Compatible Functions::.
+     higher degree Toom, and Fermat FFT.  The FFT is only used on large
+     to very large operands and can be disabled to save code size if
+     desired.
 
 Assertion Checking, `--enable-assert'
      This option enables some consistency checking within the library.
@@ -554,14 +546,14 @@ Execution Profiling, `--enable-profiling=prof/gprof/instrument'
 
 Documentation
      The source for the document you're now reading is `doc/gmp.texi',
-     in Texinfo format, see *Note Texinfo: (texinfo)Top.
+     in Texinfo format, see *note Texinfo: (texinfo)Top.
 
      Info format `doc/gmp.info' is included in the distribution.  The
      usual automake targets are available to make PostScript, DVI, PDF
      and HTML (these will require various TeX and Texinfo tools).
 
      DocBook and XML can be generated by the Texinfo `makeinfo' program
-     too, see *Note Options for `makeinfo': (texinfo)makeinfo options.
+     too, see *note Options for `makeinfo': (texinfo)makeinfo options.
 
      Some supplementary notes can also be found in the `doc'
      subdirectory.
@@ -735,7 +727,7 @@ MIPS under IRIX 6 (`mips*-*-irix[6789]')
 
 PowerPC 64 (`powerpc64', `powerpc620', `powerpc630', `powerpc970', `power4', `power5')
 
-    `ABI=aix64'
+    `ABI=mode64'
           The AIX 64 ABI uses 64-bit limbs and pointers and is the
           default on PowerPC 64 `*-*-aix*' systems.  Applications must
           be compiled with
@@ -743,10 +735,8 @@ PowerPC 64 (`powerpc64', `powerpc620', `powerpc630', `powerpc970', `power4', `po
                gcc  -maix64
                xlc  -q64
 
-    `ABI=mode64'
-          The `mode64' ABI uses 64-bit limbs and pointers, and is the
-          default on 64-bit GNU/Linux, BSD, and Mac OS X/Darwin
-          systems.  Applications must be compiled with
+          On 64-bit GNU/Linux, BSD, and Mac OS X/Darwin systems, the
+          applications must be compiled with
 
                gcc  -m64
 
@@ -755,16 +745,16 @@ PowerPC 64 (`powerpc64', `powerpc620', `powerpc630', `powerpc970', `power4', `po
           chip still in 32-bit mode and using 32-bit calling
           conventions.  This is the default for systems where the true
           64-bit ABI is unavailable.  No special compiler options are
-          typically needed for applications.
+          typically needed for applications.  This ABI is not available
+          under AIX.
 
     `ABI=32'
           This is the basic 32-bit PowerPC ABI, with a 32-bit limb.  No
           special compiler options are needed for applications.
 
-     GMP's speed is greatest for `aix64' and `mode64'.  In `ABI=32'
-     only the 32-bit ISA is used and this doesn't make full use of a
-     64-bit chip.  On a suitable system we could perhaps use more of
-     the ISA, but there are no plans to do so.
+     GMP's speed is greatest for the `mode64' ABI, the `mode32' ABI is
+     2nd best.  In `ABI=32' only the 32-bit ISA is used and this
+     doesn't make full use of a 64-bit chip.
 
 
 Sparc V9 (`sparc64', `sparcv9', `ultrasparc*')
@@ -864,7 +854,7 @@ as making it possible for a user to omit `--build' (and `--host') so
 `--build' will be wanted for systems where `./config.guess' is inexact.
 
    On systems with multiple ABIs, a packaged build will need to decide
-which among the choices is to be provided, see *Note ABI and ISA::.  A
+which among the choices is to be provided, see *note ABI and ISA::.  A
 given run of `./configure' etc will only build one ABI.  If a second
 ABI is also required then a second run of `./configure' etc must be
 made, starting from a clean directory tree (`make distclean').
@@ -979,10 +969,11 @@ Power CPU Types
      choose the right one for the CPU that will be used.  Currently GMP
      has no assembly code support for using just the common instruction
      subset.  To get executables that run on both, the current
-     suggestion is to use the generic C code (CPU `none'), possibly
-     with appropriate compiler options (like `-mcpu=common' for `gcc').
-     CPU `rs6000' (which is not a CPU but a family of workstations) is
-     accepted by `config.sub', but is currently equivalent to `none'.
+     suggestion is to use the generic C code (`--disable-assembly'),
+     possibly with appropriate compiler options (like `-mcpu=common' for
+     `gcc').  CPU `rs6000' (which is not a CPU but a family of
+     workstations) is accepted by `config.sub', but is currently
+     equivalent to `--disable-assembly'.
 
 Sparc CPU Types
      `sparcv8' or `supersparc' on relevant systems will give a
@@ -999,7 +990,7 @@ Sparc App Regs
      `-mcmodel=embmedany' (which uses `g4' as a data segment pointer),
      and for applications wanting to use those registers for special
      purposes.  In these cases the only suggestion currently is to
-     build GMP with CPU `none' to avoid the assembly code.
+     build GMP with `--disable-assembly' to avoid the assembly code.
 
 SunOS 4
      `/usr/bin/m4' lacks various features needed to process `.asm'
@@ -1119,7 +1110,7 @@ File: gmp.info,  Node: Performance optimization,  Prev: Known Build Problems,  U
 ============================
 
 For optimal performance, build GMP for the exact CPU type of the target
-computer, see *Note Build Options::.
+computer, see *note Build Options::.
 
    Unlike what is the case for most other programs, the compiler
 typically doesn't matter much, since GMP uses assembly language for the
@@ -1255,7 +1246,7 @@ long' in the future.
 
    Counts of bits of a multi-precision number are represented in the C
 type `mp_bitcnt_t'.  Currently this is always an `unsigned long', but on
-some systems it will be an `unsigned long long' in the future .
+some systems it will be an `unsigned long long' in the future.
 
    "Random state" means an algorithm selection and current state data.
 The C data type for such objects is `gmp_randstate_t'.  For example:
@@ -1287,18 +1278,14 @@ There are six classes of functions in the GMP library:
      `mpf_'.  The associated type is `mpf_t'.  There are about 60
      functions is this class.  (*note Floating-point Functions::)
 
-  4. Functions compatible with Berkeley MP, such as `itom', `madd', and
-     `mult'.  The associated type is `MINT'.  (*note BSD Compatible
-     Functions::)
-
-  5. Fast low-level functions that operate on natural numbers.  These
+  4. Fast low-level functions that operate on natural numbers.  These
      are used by the functions in the preceding groups, and you can
      also call them directly from very time-critical user programs.
      These functions' names begin with `mpn_'.  The associated type is
      array of `mp_limb_t'.  There are about 30 (hard-to-use) functions
      in this class.  (*note Low-level Functions::)
 
-  6. Miscellaneous functions.  Functions for setting up custom
+  5. Miscellaneous functions.  Functions for setting up custom
      allocation and functions for generating random numbers.  (*note
      Custom Allocation::, and *note Random Number Functions::)
 
@@ -1425,9 +1412,9 @@ of space, determined by the chosen precision and allocated at
 initialization, so their size doesn't change.
 
    All memory is allocated using `malloc' and friends by default, but
-this can be changed, see *Note Custom Allocation::.  Temporary memory
+this can be changed, see *note Custom Allocation::.  Temporary memory
 on the stack is also used (via `alloca'), but this can be changed at
-build-time if desired, see *Note Build Options::.
+build-time if desired, see *note Build Options::.
 
 
 File: gmp.info,  Node: Reentrancy,  Next: Useful Macros and Constants,  Prev: Memory Management,  Up: GMP Basics
@@ -1491,8 +1478,8 @@ File: gmp.info,  Node: Useful Macros and Constants,  Next: Compatibility with ol
 
  -- Global Constant: const char * const gmp_version
      The GMP version number, as a null-terminated string, in the form
-     "i.j.k".  This release is "5.0.2".  Note that the format "i.j" was
-     used when k was zero was used before version 4.3.0.
+     "i.j.k".  This release is "5.1.3".  Note that the format "i.j" was
+     used, before version 4.3.0, when k was zero.
 
  -- Macro: __GMP_CC
  -- Macro: __GMP_CFLAGS
@@ -1505,9 +1492,9 @@ File: gmp.info,  Node: Compatibility with older versions,  Next: Demonstration P
 3.9 Compatibility with older versions
 =====================================
 
-This version of GMP is upwardly binary compatible with all 4.x and 3.x
-versions, and upwardly compatible at the source level with all 2.x
-versions, with the following exceptions.
+This version of GMP is upwardly binary compatible with all 5.x, 4.x,
+and 3.x versions, and upwardly compatible at the source level with all
+2.x versions, with the following exceptions.
 
    * `mpn_gcd' had its source arguments swapped as of GMP 3.0, for
      consistency with other `mpn' functions.
@@ -1515,12 +1502,12 @@ versions, with the following exceptions.
    * `mpf_get_prec' counted precision slightly differently in GMP 3.0
      and 3.0.1, but in 3.1 reverted to the 2.x style.
 
+   * `mpn_bdivmod', documented as preliminary in GMP 4, has been
+     removed.
+
    There are a number of compatibility issues between GMP 1 and GMP 2
 that of course also apply when porting applications from GMP 1 to GMP
-4.  Please see the GMP 2 manual for details.
-
-   The Berkeley MP compatibility library (*note BSD Compatible
-Functions::) is source and binary compatible with the standard `libmp'.
+5.  Please see the GMP 2 manual for details.
 
 
 File: gmp.info,  Node: Demonstration Programs,  Next: Efficiency,  Prev: Compatibility with older versions,  Up: GMP Basics
@@ -1743,7 +1730,7 @@ File: gmp.info,  Node: Debugging,  Next: Profiling,  Prev: Efficiency,  Up: GMP 
 Stack Overflow
      Depending on the system, a segmentation violation or bus error
      might be the only indication of stack overflow.  See
-     `--enable-alloca' choices in *Note Build Options::, for how to
+     `--enable-alloca' choices in *note Build Options::, for how to
      address this.
 
      In new enough versions of GCC, `-fstack-check' may be able to
@@ -1766,7 +1753,7 @@ Heap Problems
 
      In all such cases a `malloc' debugger is recommended.  On a GNU or
      BSD system the standard C library `malloc' has some diagnostic
-     facilities, see *Note Allocation Debugging: (libc)Allocation
+     facilities, see *note Allocation Debugging: (libc)Allocation
      Debugging, or `man 3 malloc'.  Other possibilities, in no
      particular order, include
 
@@ -1807,14 +1794,14 @@ Source File Paths
      path to the source directory.
 
           cd /my/build/dir
-          /my/source/dir/gmp-5.0.2/configure
+          /my/source/dir/gmp-5.1.3/configure
 
      This works via `VPATH', and might require GNU `make'.  Alternately
      it might be possible to change the `.c.lo' rules appropriately.
 
 Assertion Checking
      The build option `--enable-assert' is available to add some
-     consistency checks to the library (see *Note Build Options::).
+     consistency checks to the library (see *note Build Options::).
      These are likely to be of limited value to most applications.
      Assertion failures are just as likely to indicate memory
      corruption as a library or compiler bug.
@@ -1823,8 +1810,8 @@ Assertion Checking
      benefit from `--enable-assert' since it adds checks on the
      parameters of most such functions, many of which have subtle
      restrictions on their usage.  Note however that only the generic C
-     code has checks, not the assembly code, so CPU `none' should be
-     used for maximum checking.
+     code has checks, not the assembly code, so `--disable-assembly'
+     should be used for maximum checking.
 
 Temporary Memory Checking
      The build option `--enable-alloca=debug' arranges that each block
@@ -1844,7 +1831,7 @@ Maximum Debuggability
      would be
 
           ./configure --disable-shared --enable-assert \
-            --enable-alloca=debug --host=none CFLAGS=-g
+            --enable-alloca=debug --disable-assembly CFLAGS=-g
 
      For C++, add `--enable-cxx CXXFLAGS=-g'.
 
@@ -1856,27 +1843,35 @@ Checker
      A build of GMP with checking within GMP itself can be made.  This
      will run very very slowly.  On GNU/Linux for example,
 
-          ./configure --host=none-pc-linux-gnu CC=checkergcc
+          ./configure --disable-assembly CC=checkergcc
 
-     `--host=none' must be used, since the GMP assembly code doesn't
-     support the checking scheme.  The GMP C++ features cannot be used,
-     since current versions of checker (0.9.9.1) don't yet support the
-     standard C++ library.
+     `--disable-assembly' must be used, since the GMP assembly code
+     doesn't support the checking scheme.  The GMP C++ features cannot
+     be used, since current versions of checker (0.9.9.1) don't yet
+     support the standard C++ library.
 
 Valgrind
-     The valgrind program (`http://valgrind.org/') is a memory checker
-     for x86s.  It translates and emulates machine instructions to do
-     strong checks for uninitialized data (at the level of individual
-     bits), memory accesses through bad pointers, and memory leaks.
+     Valgrind (`http://valgrind.org/') is a memory checker for x86,
+     ARM, MIPS, PowerPC, and S/390.  It translates and emulates machine
+     instructions to do strong checks for uninitialized data (at the
+     level of individual bits), memory accesses through bad pointers,
+     and memory leaks.
 
-     Recent versions of Valgrind are getting support for MMX and
-     SSE/SSE2 instructions, for past versions GMP will need to be
-     configured not to use those, ie. for an x86 without them (for
-     instance plain `i486').
+     Valgrind does not always support every possible instruction, in
+     particular ones recently added to an ISA.  Valgrind might
+     therefore be incompatible with a recent GMP or even a less recent
+     GMP which is compiled using a recent GCC.
+
+     GMP's assembly code sometimes promotes a read of the limbs to some
+     larger size, for efficiency.  GMP will do this even at the start
+     and end of a multilimb operand, using naturally aligned operations
+     on the larger type.  This may lead to benign reads outside of
+     allocated areas, triggering complaints from Valgrind.  Valgrind's
+     option `--partial-loads-ok=yes' should help.
 
 Other Problems
      Any suspected bug in GMP itself should be isolated to make sure
-     it's not an application problem, see *Note Reporting Bugs::.
+     it's not an application problem, see *note Reporting Bugs::.
 
 
 File: gmp.info,  Node: Profiling,  Next: Autoconf,  Prev: Debugging,  Up: GMP Basics
@@ -2046,8 +2041,8 @@ If you think you have found a bug in the GMP library, please
 investigate it and report it.  We have made this library available to
 you, and it is not too much to ask you to report the bugs you find.
 
-   Before you report a bug, check it's not already addressed in *Note
-Known Build Problems::, or perhaps *Note Notes for Particular
+   Before you report a bug, check it's not already addressed in *note
+Known Build Problems::, or perhaps *note Notes for Particular
 Systems::.  You may also want to check `http://gmplib.org/' for patches
 for this release.
 
@@ -2066,7 +2061,10 @@ for this release.
 
    * Please do not send core dumps, executables or `strace's.
 
-   * The configuration options you used when building GMP, if any.
+   * The `configure' options you used when building GMP, if any.
+
+   * The output from `configure', as printed to stdout, with any
+     options used.
 
    * The name of the compiler and its version.  For `gcc', get the
      version with `gcc -v', otherwise perhaps `what `which cc`', or
@@ -2171,10 +2169,15 @@ object is initialized.
      necessary; reallocation is handled automatically by GMP when
      needed.
 
-     N is only the initial space, X will grow automatically in the
+     While N defines the initial space, X will grow automatically in the
      normal way, if necessary, for subsequent values stored.
      `mpz_init2' makes it possible to avoid such reallocations if a
      maximum size is known in advance.
+
+     In preparation for an operation, GMP often allocates one limb more
+     than ultimately needed.  To make sure GMP will not perform
+     reallocation for X, you need to add the number of bits in
+     `mp_limb_t' to N.
 
  -- Function: void mpz_clear (mpz_t X)
      Free the space occupied by X.  Call this function for all `mpz_t'
@@ -2203,18 +2206,18 @@ File: gmp.info,  Node: Assigning Integers,  Next: Simultaneous Integer Init & As
 These functions assign new values to already initialized integers
 (*note Initializing Integers::).
 
- -- Function: void mpz_set (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_set (mpz_t ROP, const mpz_t OP)
  -- Function: void mpz_set_ui (mpz_t ROP, unsigned long int OP)
  -- Function: void mpz_set_si (mpz_t ROP, signed long int OP)
  -- Function: void mpz_set_d (mpz_t ROP, double OP)
- -- Function: void mpz_set_q (mpz_t ROP, mpq_t OP)
- -- Function: void mpz_set_f (mpz_t ROP, mpf_t OP)
+ -- Function: void mpz_set_q (mpz_t ROP, const mpq_t OP)
+ -- Function: void mpz_set_f (mpz_t ROP, const mpf_t OP)
      Set the value of ROP from OP.
 
      `mpz_set_d', `mpz_set_q' and `mpz_set_f' truncate OP to make it an
      integer.
 
- -- Function: int mpz_set_str (mpz_t ROP, char *STR, int BASE)
+ -- Function: int mpz_set_str (mpz_t ROP, const char *STR, int BASE)
      Set the value of ROP from STR, a null-terminated C string in base
      BASE.  White space is allowed in the string, and is simply ignored.
 
@@ -2259,14 +2262,15 @@ functions, it can be used as the source or destination operand for the
 ordinary integer functions.  Don't use an initialize-and-set function
 on a variable already initialized!
 
- -- Function: void mpz_init_set (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_init_set (mpz_t ROP, const mpz_t OP)
  -- Function: void mpz_init_set_ui (mpz_t ROP, unsigned long int OP)
  -- Function: void mpz_init_set_si (mpz_t ROP, signed long int OP)
  -- Function: void mpz_init_set_d (mpz_t ROP, double OP)
      Initialize ROP with limb space and set the initial numeric value
      from OP.
 
- -- Function: int mpz_init_set_str (mpz_t ROP, char *STR, int BASE)
+ -- Function: int mpz_init_set_str (mpz_t ROP, const char *STR, int
+          BASE)
      Initialize ROP and set its value like `mpz_set_str' (see its
      documentation above for details).
 
@@ -2282,16 +2286,16 @@ File: gmp.info,  Node: Converting Integers,  Next: Integer Arithmetic,  Prev: Si
 
 This section describes functions for converting GMP integers to
 standard C types.  Functions for converting _to_ GMP integers are
-described in *Note Assigning Integers:: and *Note I/O of Integers::.
+described in *note Assigning Integers:: and *note I/O of Integers::.
 
- -- Function: unsigned long int mpz_get_ui (mpz_t OP)
+ -- Function: unsigned long int mpz_get_ui (const mpz_t OP)
      Return the value of OP as an `unsigned long'.
 
      If OP is too big to fit an `unsigned long' then just the least
      significant bits that do fit are returned.  The sign of OP is
      ignored, only the absolute value is used.
 
- -- Function: signed long int mpz_get_si (mpz_t OP)
+ -- Function: signed long int mpz_get_si (const mpz_t OP)
      If OP fits into a `signed long int' return the value of OP.
      Otherwise return the least significant part of OP, with the same
      sign as OP.
@@ -2300,16 +2304,17 @@ described in *Note Assigning Integers:: and *Note I/O of Integers::.
      result is probably not very useful.  To find out if the value will
      fit, use the function `mpz_fits_slong_p'.
 
- -- Function: double mpz_get_d (mpz_t OP)
-     Convert OP to a `double', truncating if necessary (ie. rounding
+ -- Function: double mpz_get_d (const mpz_t OP)
+     Convert OP to a `double', truncating if necessary (i.e. rounding
      towards zero).
 
      If the exponent from the conversion is too big, the result is
      system dependent.  An infinity is returned where available.  A
      hardware overflow trap may or may not occur.
 
- -- Function: double mpz_get_d_2exp (signed long int *EXP, mpz_t OP)
-     Convert OP to a `double', truncating if necessary (ie. rounding
+ -- Function: double mpz_get_d_2exp (signed long int *EXP, const mpz_t
+          OP)
+     Convert OP to a `double', truncating if necessary (i.e. rounding
      towards zero), and returning the exponent separately.
 
      The return value is in the range 0.5<=abs(D)<1 and the exponent is
@@ -2319,7 +2324,7 @@ described in *Note Assigning Integers:: and *Note I/O of Integers::.
      This is similar to the standard C `frexp' function (*note
      Normalization Functions: (libc)Normalization Functions.).
 
- -- Function: char * mpz_get_str (char *STR, int BASE, mpz_t OP)
+ -- Function: char * mpz_get_str (char *STR, int BASE, const mpz_t OP)
      Convert OP to a string of digits in base BASE.  The base argument
      may vary from 2 to 62 or from -2 to -36.
 
@@ -2347,42 +2352,45 @@ File: gmp.info,  Node: Integer Arithmetic,  Next: Integer Division,  Prev: Conve
 5.5 Arithmetic Functions
 ========================
 
- -- Function: void mpz_add (mpz_t ROP, mpz_t OP1, mpz_t OP2)
- -- Function: void mpz_add_ui (mpz_t ROP, mpz_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpz_add (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
+ -- Function: void mpz_add_ui (mpz_t ROP, const mpz_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1 + OP2.
 
- -- Function: void mpz_sub (mpz_t ROP, mpz_t OP1, mpz_t OP2)
- -- Function: void mpz_sub_ui (mpz_t ROP, mpz_t OP1, unsigned long int
-          OP2)
- -- Function: void mpz_ui_sub (mpz_t ROP, unsigned long int OP1, mpz_t
-          OP2)
+ -- Function: void mpz_sub (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
+ -- Function: void mpz_sub_ui (mpz_t ROP, const mpz_t OP1, unsigned
+          long int OP2)
+ -- Function: void mpz_ui_sub (mpz_t ROP, unsigned long int OP1, const
+          mpz_t OP2)
      Set ROP to OP1 - OP2.
 
- -- Function: void mpz_mul (mpz_t ROP, mpz_t OP1, mpz_t OP2)
- -- Function: void mpz_mul_si (mpz_t ROP, mpz_t OP1, long int OP2)
- -- Function: void mpz_mul_ui (mpz_t ROP, mpz_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpz_mul (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
+ -- Function: void mpz_mul_si (mpz_t ROP, const mpz_t OP1, long int OP2)
+ -- Function: void mpz_mul_ui (mpz_t ROP, const mpz_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1 times OP2.
 
- -- Function: void mpz_addmul (mpz_t ROP, mpz_t OP1, mpz_t OP2)
- -- Function: void mpz_addmul_ui (mpz_t ROP, mpz_t OP1, unsigned long
-          int OP2)
+ -- Function: void mpz_addmul (mpz_t ROP, const mpz_t OP1, const mpz_t
+          OP2)
+ -- Function: void mpz_addmul_ui (mpz_t ROP, const mpz_t OP1, unsigned
+          long int OP2)
      Set ROP to ROP + OP1 times OP2.
 
- -- Function: void mpz_submul (mpz_t ROP, mpz_t OP1, mpz_t OP2)
- -- Function: void mpz_submul_ui (mpz_t ROP, mpz_t OP1, unsigned long
-          int OP2)
+ -- Function: void mpz_submul (mpz_t ROP, const mpz_t OP1, const mpz_t
+          OP2)
+ -- Function: void mpz_submul_ui (mpz_t ROP, const mpz_t OP1, unsigned
+          long int OP2)
      Set ROP to ROP - OP1 times OP2.
 
- -- Function: void mpz_mul_2exp (mpz_t ROP, mpz_t OP1, mp_bitcnt_t OP2)
+ -- Function: void mpz_mul_2exp (mpz_t ROP, const mpz_t OP1,
+          mp_bitcnt_t OP2)
      Set ROP to OP1 times 2 raised to OP2.  This operation can also be
      defined as a left shift by OP2 bits.
 
- -- Function: void mpz_neg (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_neg (mpz_t ROP, const mpz_t OP)
      Set ROP to -OP.
 
- -- Function: void mpz_abs (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_abs (mpz_t ROP, const mpz_t OP)
      Set ROP to the absolute value of OP.
 
 
@@ -2397,47 +2405,56 @@ functions `mpz_powm' and `mpz_powm_ui'), will cause an intentional
 division by zero.  This lets a program handle arithmetic exceptions in
 these functions the same way as for normal C `int' arithmetic.
 
- -- Function: void mpz_cdiv_q (mpz_t Q, mpz_t N, mpz_t D)
- -- Function: void mpz_cdiv_r (mpz_t R, mpz_t N, mpz_t D)
- -- Function: void mpz_cdiv_qr (mpz_t Q, mpz_t R, mpz_t N, mpz_t D)
- -- Function: unsigned long int mpz_cdiv_q_ui (mpz_t Q, mpz_t N,
+ -- Function: void mpz_cdiv_q (mpz_t Q, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_cdiv_r (mpz_t R, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_cdiv_qr (mpz_t Q, mpz_t R, const mpz_t N, const
+          mpz_t D)
+ -- Function: unsigned long int mpz_cdiv_q_ui (mpz_t Q, const mpz_t N,
           unsigned long int D)
- -- Function: unsigned long int mpz_cdiv_r_ui (mpz_t R, mpz_t N,
+ -- Function: unsigned long int mpz_cdiv_r_ui (mpz_t R, const mpz_t N,
           unsigned long int D)
  -- Function: unsigned long int mpz_cdiv_qr_ui (mpz_t Q, mpz_t R,
-          mpz_t N, unsigned long int D)
- -- Function: unsigned long int mpz_cdiv_ui (mpz_t N,
+          const mpz_t N, unsigned long int D)
+ -- Function: unsigned long int mpz_cdiv_ui (const mpz_t N,
           unsigned long int D)
- -- Function: void mpz_cdiv_q_2exp (mpz_t Q, mpz_t N, mp_bitcnt_t B)
- -- Function: void mpz_cdiv_r_2exp (mpz_t R, mpz_t N, mp_bitcnt_t B)
+ -- Function: void mpz_cdiv_q_2exp (mpz_t Q, const mpz_t N,
+          mp_bitcnt_t B)
+ -- Function: void mpz_cdiv_r_2exp (mpz_t R, const mpz_t N,
+          mp_bitcnt_t B)
 
- -- Function: void mpz_fdiv_q (mpz_t Q, mpz_t N, mpz_t D)
- -- Function: void mpz_fdiv_r (mpz_t R, mpz_t N, mpz_t D)
- -- Function: void mpz_fdiv_qr (mpz_t Q, mpz_t R, mpz_t N, mpz_t D)
- -- Function: unsigned long int mpz_fdiv_q_ui (mpz_t Q, mpz_t N,
+ -- Function: void mpz_fdiv_q (mpz_t Q, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_fdiv_r (mpz_t R, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_fdiv_qr (mpz_t Q, mpz_t R, const mpz_t N, const
+          mpz_t D)
+ -- Function: unsigned long int mpz_fdiv_q_ui (mpz_t Q, const mpz_t N,
           unsigned long int D)
- -- Function: unsigned long int mpz_fdiv_r_ui (mpz_t R, mpz_t N,
+ -- Function: unsigned long int mpz_fdiv_r_ui (mpz_t R, const mpz_t N,
           unsigned long int D)
  -- Function: unsigned long int mpz_fdiv_qr_ui (mpz_t Q, mpz_t R,
-          mpz_t N, unsigned long int D)
- -- Function: unsigned long int mpz_fdiv_ui (mpz_t N,
+          const mpz_t N, unsigned long int D)
+ -- Function: unsigned long int mpz_fdiv_ui (const mpz_t N,
           unsigned long int D)
- -- Function: void mpz_fdiv_q_2exp (mpz_t Q, mpz_t N, mp_bitcnt_t B)
- -- Function: void mpz_fdiv_r_2exp (mpz_t R, mpz_t N, mp_bitcnt_t B)
+ -- Function: void mpz_fdiv_q_2exp (mpz_t Q, const mpz_t N,
+          mp_bitcnt_t B)
+ -- Function: void mpz_fdiv_r_2exp (mpz_t R, const mpz_t N,
+          mp_bitcnt_t B)
 
- -- Function: void mpz_tdiv_q (mpz_t Q, mpz_t N, mpz_t D)
- -- Function: void mpz_tdiv_r (mpz_t R, mpz_t N, mpz_t D)
- -- Function: void mpz_tdiv_qr (mpz_t Q, mpz_t R, mpz_t N, mpz_t D)
- -- Function: unsigned long int mpz_tdiv_q_ui (mpz_t Q, mpz_t N,
+ -- Function: void mpz_tdiv_q (mpz_t Q, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_tdiv_r (mpz_t R, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_tdiv_qr (mpz_t Q, mpz_t R, const mpz_t N, const
+          mpz_t D)
+ -- Function: unsigned long int mpz_tdiv_q_ui (mpz_t Q, const mpz_t N,
           unsigned long int D)
- -- Function: unsigned long int mpz_tdiv_r_ui (mpz_t R, mpz_t N,
+ -- Function: unsigned long int mpz_tdiv_r_ui (mpz_t R, const mpz_t N,
           unsigned long int D)
  -- Function: unsigned long int mpz_tdiv_qr_ui (mpz_t Q, mpz_t R,
-          mpz_t N, unsigned long int D)
- -- Function: unsigned long int mpz_tdiv_ui (mpz_t N,
+          const mpz_t N, unsigned long int D)
+ -- Function: unsigned long int mpz_tdiv_ui (const mpz_t N,
           unsigned long int D)
- -- Function: void mpz_tdiv_q_2exp (mpz_t Q, mpz_t N, mp_bitcnt_t B)
- -- Function: void mpz_tdiv_r_2exp (mpz_t R, mpz_t N, mp_bitcnt_t B)
+ -- Function: void mpz_tdiv_q_2exp (mpz_t Q, const mpz_t N,
+          mp_bitcnt_t B)
+ -- Function: void mpz_tdiv_r_2exp (mpz_t R, const mpz_t N,
+          mp_bitcnt_t B)
 
      Divide N by D, forming a quotient Q and/or remainder R.  For the
      `2exp' functions, D=2^B.  The rounding is in three styles, each
@@ -2475,8 +2492,8 @@ these functions the same way as for normal C `int' arithmetic.
      the same as the bitwise logical functions do, whereas
      `mpz_tdiv_q_2exp' effectively treats N as sign and magnitude.
 
- -- Function: void mpz_mod (mpz_t R, mpz_t N, mpz_t D)
- -- Function: unsigned long int mpz_mod_ui (mpz_t R, mpz_t N,
+ -- Function: void mpz_mod (mpz_t R, const mpz_t N, const mpz_t D)
+ -- Function: unsigned long int mpz_mod_ui (mpz_t R, const mpz_t N,
           unsigned long int D)
      Set R to N `mod' D.  The sign of the divisor is ignored; the
      result is always non-negative.
@@ -2485,8 +2502,9 @@ these functions the same way as for normal C `int' arithmetic.
      remainder as well as setting R.  See `mpz_fdiv_ui' above if only
      the return value is wanted.
 
- -- Function: void mpz_divexact (mpz_t Q, mpz_t N, mpz_t D)
- -- Function: void mpz_divexact_ui (mpz_t Q, mpz_t N, unsigned long D)
+ -- Function: void mpz_divexact (mpz_t Q, const mpz_t N, const mpz_t D)
+ -- Function: void mpz_divexact_ui (mpz_t Q, const mpz_t N, unsigned
+          long D)
      Set Q to N/D.  These functions produce correct results only when
      it is known in advance that D divides N.
 
@@ -2494,9 +2512,10 @@ these functions the same way as for normal C `int' arithmetic.
      and are the best choice when exact division is known to occur, for
      example reducing a rational to lowest terms.
 
- -- Function: int mpz_divisible_p (mpz_t N, mpz_t D)
- -- Function: int mpz_divisible_ui_p (mpz_t N, unsigned long int D)
- -- Function: int mpz_divisible_2exp_p (mpz_t N, mp_bitcnt_t B)
+ -- Function: int mpz_divisible_p (const mpz_t N, const mpz_t D)
+ -- Function: int mpz_divisible_ui_p (const mpz_t N, unsigned long int
+          D)
+ -- Function: int mpz_divisible_2exp_p (const mpz_t N, mp_bitcnt_t B)
      Return non-zero if N is exactly divisible by D, or in the case of
      `mpz_divisible_2exp_p' by 2^B.
 
@@ -2505,10 +2524,12 @@ these functions the same way as for normal C `int' arithmetic.
      following the rule it can be seen that only 0 is considered
      divisible by 0.
 
- -- Function: int mpz_congruent_p (mpz_t N, mpz_t C, mpz_t D)
- -- Function: int mpz_congruent_ui_p (mpz_t N, unsigned long int C,
-          unsigned long int D)
- -- Function: int mpz_congruent_2exp_p (mpz_t N, mpz_t C, mp_bitcnt_t B)
+ -- Function: int mpz_congruent_p (const mpz_t N, const mpz_t C, const
+          mpz_t D)
+ -- Function: int mpz_congruent_ui_p (const mpz_t N, unsigned long int
+          C, unsigned long int D)
+ -- Function: int mpz_congruent_2exp_p (const mpz_t N, const mpz_t C,
+          mp_bitcnt_t B)
      Return non-zero if N is congruent to C modulo D, or in the case of
      `mpz_congruent_2exp_p' modulo 2^B.
 
@@ -2523,18 +2544,18 @@ File: gmp.info,  Node: Integer Exponentiation,  Next: Integer Roots,  Prev: Inte
 5.7 Exponentiation Functions
 ============================
 
- -- Function: void mpz_powm (mpz_t ROP, mpz_t BASE, mpz_t EXP, mpz_t
-          MOD)
- -- Function: void mpz_powm_ui (mpz_t ROP, mpz_t BASE, unsigned long
-          int EXP, mpz_t MOD)
+ -- Function: void mpz_powm (mpz_t ROP, const mpz_t BASE, const mpz_t
+          EXP, const mpz_t MOD)
+ -- Function: void mpz_powm_ui (mpz_t ROP, const mpz_t BASE, unsigned
+          long int EXP, const mpz_t MOD)
      Set ROP to (BASE raised to EXP) modulo MOD.
 
      Negative EXP is supported if an inverse BASE^-1 mod MOD exists
-     (see `mpz_invert' in *Note Number Theoretic Functions::).  If an
+     (see `mpz_invert' in *note Number Theoretic Functions::).  If an
      inverse doesn't exist then a divide by zero is raised.
 
- -- Function: void mpz_powm_sec (mpz_t ROP, mpz_t BASE, mpz_t EXP,
-          mpz_t MOD)
+ -- Function: void mpz_powm_sec (mpz_t ROP, const mpz_t BASE, const
+          mpz_t EXP, const mpz_t MOD)
      Set ROP to (BASE raised to EXP) modulo MOD.
 
      It is required that EXP > 0 and that MOD is odd.
@@ -2546,8 +2567,8 @@ File: gmp.info,  Node: Integer Exponentiation,  Next: Integer Roots,  Prev: Inte
      is intended for cryptographic purposes, where resilience to
      side-channel attacks is desired.
 
- -- Function: void mpz_pow_ui (mpz_t ROP, mpz_t BASE, unsigned long int
-          EXP)
+ -- Function: void mpz_pow_ui (mpz_t ROP, const mpz_t BASE, unsigned
+          long int EXP)
  -- Function: void mpz_ui_pow_ui (mpz_t ROP, unsigned long int BASE,
           unsigned long int EXP)
      Set ROP to BASE raised to EXP.  The case 0^0 yields 1.
@@ -2558,27 +2579,28 @@ File: gmp.info,  Node: Integer Roots,  Next: Number Theoretic Functions,  Prev: 
 5.8 Root Extraction Functions
 =============================
 
- -- Function: int mpz_root (mpz_t ROP, mpz_t OP, unsigned long int N)
+ -- Function: int mpz_root (mpz_t ROP, const mpz_t OP, unsigned long
+          int N)
      Set ROP to  the truncated integer part of the Nth root of OP.
      Return non-zero if the computation was exact, i.e., if OP is ROP
      to the Nth power.
 
- -- Function: void mpz_rootrem (mpz_t ROOT, mpz_t REM, mpz_t U,
+ -- Function: void mpz_rootrem (mpz_t ROOT, mpz_t REM, const mpz_t U,
           unsigned long int N)
      Set ROOT to  the truncated integer part of the Nth root of U.  Set
      REM to the remainder, U-ROOT**N.
 
- -- Function: void mpz_sqrt (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_sqrt (mpz_t ROP, const mpz_t OP)
      Set ROP to  the truncated integer part of the square root of OP.
 
- -- Function: void mpz_sqrtrem (mpz_t ROP1, mpz_t ROP2, mpz_t OP)
+ -- Function: void mpz_sqrtrem (mpz_t ROP1, mpz_t ROP2, const mpz_t OP)
      Set ROP1 to the truncated integer part of the square root of OP,
      like `mpz_sqrt'.  Set ROP2 to the remainder OP-ROP1*ROP1, which
      will be zero if OP is a perfect square.
 
      If ROP1 and ROP2 are the same variable, the results are undefined.
 
- -- Function: int mpz_perfect_power_p (mpz_t OP)
+ -- Function: int mpz_perfect_power_p (const mpz_t OP)
      Return non-zero if OP is a perfect power, i.e., if there exist
      integers A and B, with B>1, such that OP equals A raised to the
      power B.
@@ -2587,7 +2609,7 @@ File: gmp.info,  Node: Integer Roots,  Next: Number Theoretic Functions,  Prev: 
      powers.  Negative values of OP are accepted, but of course can
      only be odd perfect powers.
 
- -- Function: int mpz_perfect_square_p (mpz_t OP)
+ -- Function: int mpz_perfect_square_p (const mpz_t OP)
      Return non-zero if OP is a perfect square, i.e., if the square
      root of OP is an integer.  Under this definition both 0 and 1 are
      considered to be perfect squares.
@@ -2598,15 +2620,17 @@ File: gmp.info,  Node: Number Theoretic Functions,  Next: Integer Comparisons,  
 5.9 Number Theoretic Functions
 ==============================
 
- -- Function: int mpz_probab_prime_p (mpz_t N, int REPS)
+ -- Function: int mpz_probab_prime_p (const mpz_t N, int REPS)
      Determine whether N is prime.  Return 2 if N is definitely prime,
      return 1 if N is probably prime (without being certain), or return
      0 if N is definitely composite.
 
      This function does some trial divisions, then some Miller-Rabin
-     probabilistic primality tests.  REPS controls how many such tests
-     are done, 5 to 10 is a reasonable number, more will reduce the
-     chances of a composite being returned as "probably prime".
+     probabilistic primality tests.  The argument REPS controls how
+     many such tests are done; a higher value will reduce the chances
+     of a composite being returned as "probably prime".  25 is a
+     reasonable number; a composite number will then be identified as a
+     prime with a probability of less than 2^(-50).
 
      Miller-Rabin and similar tests can be more properly called
      compositeness tests.  Numbers which fail are known to be composite
@@ -2614,18 +2638,20 @@ File: gmp.info,  Node: Number Theoretic Functions,  Next: Integer Comparisons,  
      few composites pass, hence those which pass are considered
      probably prime.
 
- -- Function: void mpz_nextprime (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_nextprime (mpz_t ROP, const mpz_t OP)
      Set ROP to the next prime greater than OP.
 
      This function uses a probabilistic algorithm to identify primes.
      For practical purposes it's adequate, the chance of a composite
      passing will be extremely small.
 
- -- Function: void mpz_gcd (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+ -- Function: void mpz_gcd (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
      Set ROP to the greatest common divisor of OP1 and OP2.  The result
      is always positive even if one or both input operands are negative.
+     Except if both inputs are zero; then this function defines
+     gcd(0,0) = 0.
 
- -- Function: unsigned long int mpz_gcd_ui (mpz_t ROP, mpz_t OP1,
+ -- Function: unsigned long int mpz_gcd_ui (mpz_t ROP, const mpz_t OP1,
           unsigned long int OP2)
      Compute the greatest common divisor of OP1 and OP2.  If ROP is not
      `NULL', store the result there.
@@ -2635,41 +2661,54 @@ File: gmp.info,  Node: Number Theoretic Functions,  Next: Integer Comparisons,  
      result is equal to the argument OP1.  Note that the result will
      always fit if OP2 is non-zero.
 
- -- Function: void mpz_gcdext (mpz_t G, mpz_t S, mpz_t T, mpz_t A,
-          mpz_t B)
+ -- Function: void mpz_gcdext (mpz_t G, mpz_t S, mpz_t T, const mpz_t
+          A, const mpz_t B)
      Set G to the greatest common divisor of A and B, and in addition
      set S and T to coefficients satisfying A*S + B*T = G.  The value
      in G is always positive, even if one or both of A and B are
-     negative.  The values in S and T are chosen such that abs(S) <=
-     abs(B) and abs(T) <= abs(A).
+     negative (or zero if both inputs are zero).  The values in S and T
+     are chosen such that normally, abs(S) < abs(B) / (2 G) and abs(T)
+     < abs(A) / (2 G), and these relations define S and T uniquely.
+     There are a few exceptional cases:
+
+     If abs(A) = abs(B), then S = 0, T = sgn(B).
+
+     Otherwise, S = sgn(A) if B = 0 or abs(B) = 2 G, and T = sgn(B) if
+     A = 0 or abs(A) = 2 G.
+
+     In all cases, S = 0 if and only if G = abs(B), i.e., if B divides
+     A or A = B = 0.
 
      If T is `NULL' then that value is not computed.
 
- -- Function: void mpz_lcm (mpz_t ROP, mpz_t OP1, mpz_t OP2)
- -- Function: void mpz_lcm_ui (mpz_t ROP, mpz_t OP1, unsigned long OP2)
+ -- Function: void mpz_lcm (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
+ -- Function: void mpz_lcm_ui (mpz_t ROP, const mpz_t OP1, unsigned
+          long OP2)
      Set ROP to the least common multiple of OP1 and OP2.  ROP is
      always positive, irrespective of the signs of OP1 and OP2.  ROP
      will be zero if either OP1 or OP2 is zero.
 
- -- Function: int mpz_invert (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+ -- Function: int mpz_invert (mpz_t ROP, const mpz_t OP1, const mpz_t
+          OP2)
      Compute the inverse of OP1 modulo OP2 and put the result in ROP.
      If the inverse exists, the return value is non-zero and ROP will
-     satisfy 0 <= ROP < OP2.  If an inverse doesn't exist the return
-     value is zero and ROP is undefined.
+     satisfy 0 < ROP < abs(OP2).  If an inverse doesn't exist the
+     return value is zero and ROP is undefined.  The behaviour of this
+     function is undefined when OP2 is zero.
 
- -- Function: int mpz_jacobi (mpz_t A, mpz_t B)
+ -- Function: int mpz_jacobi (const mpz_t A, const mpz_t B)
      Calculate the Jacobi symbol (A/B).  This is defined only for B odd.
 
- -- Function: int mpz_legendre (mpz_t A, mpz_t P)
+ -- Function: int mpz_legendre (const mpz_t A, const mpz_t P)
      Calculate the Legendre symbol (A/P).  This is defined only for P
      an odd positive prime, and for such P it's identical to the Jacobi
      symbol.
 
- -- Function: int mpz_kronecker (mpz_t A, mpz_t B)
- -- Function: int mpz_kronecker_si (mpz_t A, long B)
- -- Function: int mpz_kronecker_ui (mpz_t A, unsigned long B)
- -- Function: int mpz_si_kronecker (long A, mpz_t B)
- -- Function: int mpz_ui_kronecker (unsigned long A, mpz_t B)
+ -- Function: int mpz_kronecker (const mpz_t A, const mpz_t B)
+ -- Function: int mpz_kronecker_si (const mpz_t A, long B)
+ -- Function: int mpz_kronecker_ui (const mpz_t A, unsigned long B)
+ -- Function: int mpz_si_kronecker (long A, const mpz_t B)
+ -- Function: int mpz_ui_kronecker (unsigned long A, const mpz_t B)
      Calculate the Jacobi symbol (A/B) with the Kronecker extension
      (a/2)=(2/a) when a odd, or (a/2)=0 when a even.
 
@@ -2681,15 +2720,26 @@ File: gmp.info,  Node: Number Theoretic Functions,  Next: Integer Comparisons,  
      References::), or any number theory textbook.  See also the
      example program `demos/qcn.c' which uses `mpz_kronecker_ui'.
 
- -- Function: mp_bitcnt_t mpz_remove (mpz_t ROP, mpz_t OP, mpz_t F)
+ -- Function: mp_bitcnt_t mpz_remove (mpz_t ROP, const mpz_t OP, const
+          mpz_t F)
      Remove all occurrences of the factor F from OP and store the
      result in ROP.  The return value is how many such occurrences were
      removed.
 
- -- Function: void mpz_fac_ui (mpz_t ROP, unsigned long int OP)
-     Set ROP to OP!, the factorial of OP.
+ -- Function: void mpz_fac_ui (mpz_t ROP, unsigned long int N)
+ -- Function: void mpz_2fac_ui (mpz_t ROP, unsigned long int N)
+ -- Function: void mpz_mfac_uiui (mpz_t ROP, unsigned long int N,
+          unsigned long int M)
+     Set ROP to the factorial of N: `mpz_fac_ui' computes the plain
+     factorial N!, `mpz_2fac_ui' computes the double-factorial N!!, and
+     `mpz_mfac_uiui' the M-multi-factorial N!^(M).
 
- -- Function: void mpz_bin_ui (mpz_t ROP, mpz_t N, unsigned long int K)
+ -- Function: void mpz_primorial_ui (mpz_t ROP, unsigned long int N)
+     Set ROP to the primorial of N, i.e. the product of all positive
+     prime numbers <=N.
+
+ -- Function: void mpz_bin_ui (mpz_t ROP, const mpz_t N, unsigned long
+          int K)
  -- Function: void mpz_bin_uiui (mpz_t ROP, unsigned long int N,
           unsigned long int K)
      Compute the binomial coefficient N over K and store the result in
@@ -2722,7 +2772,7 @@ File: gmp.info,  Node: Number Theoretic Functions,  Next: Integer Comparisons,  
      The Fibonacci numbers and Lucas numbers are related sequences, so
      it's never necessary to call both `mpz_fib2_ui' and
      `mpz_lucnum2_ui'.  The formulas for going from Fibonacci to Lucas
-     can be found in *Note Lucas Numbers Algorithm::, the reverse is
+     can be found in *note Lucas Numbers Algorithm::, the reverse is
      straightforward too.
 
 
@@ -2731,10 +2781,10 @@ File: gmp.info,  Node: Integer Comparisons,  Next: Integer Logic and Bit Fiddlin
 5.10 Comparison Functions
 =========================
 
- -- Function: int mpz_cmp (mpz_t OP1, mpz_t OP2)
- -- Function: int mpz_cmp_d (mpz_t OP1, double OP2)
- -- Macro: int mpz_cmp_si (mpz_t OP1, signed long int OP2)
- -- Macro: int mpz_cmp_ui (mpz_t OP1, unsigned long int OP2)
+ -- Function: int mpz_cmp (const mpz_t OP1, const mpz_t OP2)
+ -- Function: int mpz_cmp_d (const mpz_t OP1, double OP2)
+ -- Macro: int mpz_cmp_si (const mpz_t OP1, signed long int OP2)
+ -- Macro: int mpz_cmp_ui (const mpz_t OP1, unsigned long int OP2)
      Compare OP1 and OP2.  Return a positive value if OP1 > OP2, zero
      if OP1 = OP2, or a negative value if OP1 < OP2.
 
@@ -2742,9 +2792,9 @@ File: gmp.info,  Node: Integer Comparisons,  Next: Integer Logic and Bit Fiddlin
      arguments more than once.  `mpz_cmp_d' can be called with an
      infinity, but results are undefined for a NaN.
 
- -- Function: int mpz_cmpabs (mpz_t OP1, mpz_t OP2)
- -- Function: int mpz_cmpabs_d (mpz_t OP1, double OP2)
- -- Function: int mpz_cmpabs_ui (mpz_t OP1, unsigned long int OP2)
+ -- Function: int mpz_cmpabs (const mpz_t OP1, const mpz_t OP2)
+ -- Function: int mpz_cmpabs_d (const mpz_t OP1, double OP2)
+ -- Function: int mpz_cmpabs_ui (const mpz_t OP1, unsigned long int OP2)
      Compare the absolute values of OP1 and OP2.  Return a positive
      value if abs(OP1) > abs(OP2), zero if abs(OP1) = abs(OP2), or a
      negative value if abs(OP1) < abs(OP2).
@@ -2752,7 +2802,7 @@ File: gmp.info,  Node: Integer Comparisons,  Next: Integer Logic and Bit Fiddlin
      `mpz_cmpabs_d' can be called with an infinity, but results are
      undefined for a NaN.
 
- -- Macro: int mpz_sgn (mpz_t OP)
+ -- Macro: int mpz_sgn (const mpz_t OP)
      Return +1 if OP > 0, 0 if OP = 0, and -1 if OP < 0.
 
      This function is actually implemented as a macro.  It evaluates
@@ -2768,25 +2818,25 @@ These functions behave as if twos complement arithmetic were used
 (although sign-magnitude is the actual implementation).  The least
 significant bit is number 0.
 
- -- Function: void mpz_and (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+ -- Function: void mpz_and (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
      Set ROP to OP1 bitwise-and OP2.
 
- -- Function: void mpz_ior (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+ -- Function: void mpz_ior (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
      Set ROP to OP1 bitwise inclusive-or OP2.
 
- -- Function: void mpz_xor (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+ -- Function: void mpz_xor (mpz_t ROP, const mpz_t OP1, const mpz_t OP2)
      Set ROP to OP1 bitwise exclusive-or OP2.
 
- -- Function: void mpz_com (mpz_t ROP, mpz_t OP)
+ -- Function: void mpz_com (mpz_t ROP, const mpz_t OP)
      Set ROP to the one's complement of OP.
 
- -- Function: mp_bitcnt_t mpz_popcount (mpz_t OP)
+ -- Function: mp_bitcnt_t mpz_popcount (const mpz_t OP)
      If OP>=0, return the population count of OP, which is the number
      of 1 bits in the binary representation.  If OP<0, the number of 1s
      is infinite, and the return value is the largest possible
      `mp_bitcnt_t'.
 
- -- Function: mp_bitcnt_t mpz_hamdist (mpz_t OP1, mpz_t OP2)
+ -- Function: mp_bitcnt_t mpz_hamdist (const mpz_t OP1, const mpz_t OP2)
      If OP1 and OP2 are both >=0 or both <0, return the hamming
      distance between the two operands, which is the number of bit
      positions where OP1 and OP2 have different bit values.  If one
@@ -2794,8 +2844,10 @@ significant bit is number 0.
      is infinite, and the return value is the largest possible
      `mp_bitcnt_t'.
 
- -- Function: mp_bitcnt_t mpz_scan0 (mpz_t OP, mp_bitcnt_t STARTING_BIT)
- -- Function: mp_bitcnt_t mpz_scan1 (mpz_t OP, mp_bitcnt_t STARTING_BIT)
+ -- Function: mp_bitcnt_t mpz_scan0 (const mpz_t OP, mp_bitcnt_t
+          STARTING_BIT)
+ -- Function: mp_bitcnt_t mpz_scan1 (const mpz_t OP, mp_bitcnt_t
+          STARTING_BIT)
      Scan OP, starting from bit STARTING_BIT, towards more significant
      bits, until the first 0 or 1 bit (respectively) is found.  Return
      the index of the found bit.
@@ -2817,7 +2869,7 @@ significant bit is number 0.
  -- Function: void mpz_combit (mpz_t ROP, mp_bitcnt_t BIT_INDEX)
      Complement bit BIT_INDEX in ROP.
 
- -- Function: int mpz_tstbit (mpz_t OP, mp_bitcnt_t BIT_INDEX)
+ -- Function: int mpz_tstbit (const mpz_t OP, mp_bitcnt_t BIT_INDEX)
      Test bit BIT_INDEX in OP and return 0 or 1 accordingly.
 
 
@@ -2835,9 +2887,10 @@ for a STREAM argument to any of these functions will make them read from
 `stdio.h' before `gmp.h', since that will allow `gmp.h' to define
 prototypes for these functions.
 
-   See also *Note Formatted Output:: and *Note Formatted Input::.
+   See also *note Formatted Output:: and *note Formatted Input::.
 
- -- Function: size_t mpz_out_str (FILE *STREAM, int BASE, mpz_t OP)
+ -- Function: size_t mpz_out_str (FILE *STREAM, int BASE, const mpz_t
+          OP)
      Output OP on stdio stream STREAM, as a string of digits in base
      BASE.  The base argument may vary from 2 to 62 or from -2 to -36.
 
@@ -2864,7 +2917,7 @@ prototypes for these functions.
 
      Return the number of bytes read, or if an error occurred, return 0.
 
- -- Function: size_t mpz_out_raw (FILE *STREAM, mpz_t OP)
+ -- Function: size_t mpz_out_raw (FILE *STREAM, const mpz_t OP)
      Output OP on stdio stream STREAM, in raw binary format.  The
      integer is written in a portable format, with 4 bytes of size
      information, and that many bytes of limbs.  Both the size and the
@@ -2897,7 +2950,7 @@ File: gmp.info,  Node: Integer Random Numbers,  Next: Integer Import and Export,
 
 The random number functions of GMP come in two groups; older function
 that rely on a global state, and newer functions that accept a state
-parameter that is read and modified.  Please see the *Note Random
+parameter that is read and modified.  Please see the *note Random
 Number Functions:: for more information on how to use and not to use
 random number functions.
 
@@ -2907,15 +2960,15 @@ random number functions.
      2^N-1, inclusive.
 
      The variable STATE must be initialized by calling one of the
-     `gmp_randinit' functions (*Note Random State Initialization::)
+     `gmp_randinit' functions (*note Random State Initialization::)
      before invoking this function.
 
  -- Function: void mpz_urandomm (mpz_t ROP, gmp_randstate_t STATE,
-          mpz_t N)
+          const mpz_t N)
      Generate a uniform random integer in the range 0 to N-1, inclusive.
 
      The variable STATE must be initialized by calling one of the
-     `gmp_randinit' functions (*Note Random State Initialization::)
+     `gmp_randinit' functions (*note Random State Initialization::)
      before invoking this function.
 
  -- Function: void mpz_rrandomb (mpz_t ROP, gmp_randstate_t STATE,
@@ -2927,7 +2980,7 @@ random number functions.
      be in the range 0 to 2^N-1, inclusive.
 
      The variable STATE must be initialized by calling one of the
-     `gmp_randinit' functions (*Note Random State Initialization::)
+     `gmp_randinit' functions (*note Random State Initialization::)
      before invoking this function.
 
  -- Function: void mpz_random (mpz_t ROP, mp_size_t MAX_SIZE)
@@ -2966,8 +3019,8 @@ data with the following functions.
      word first or -1 for least significant first.  Within each word
      ENDIAN can be 1 for most significant byte first, -1 for least
      significant first, or 0 for the native endianness of the host CPU.
-     The most significant NAILS bits of each word are skipped, this
-     can be 0 to use the full words.
+     The most significant NAILS bits of each word are skipped, this can
+     be 0 to use the full words.
 
      There is no sign taken from the data, ROP will simply be a positive
      integer.  An application can handle any sign itself, and apply it
@@ -2992,7 +3045,7 @@ data with the following functions.
      instance `8*sizeof(int)-INT_BIT'.
 
  -- Function: void * mpz_export (void *ROP, size_t *COUNTP, int ORDER,
-          size_t SIZE, int ENDIAN, size_t NAILS, mpz_t OP)
+          size_t SIZE, int ENDIAN, size_t NAILS, const mpz_t OP)
      Fill ROP with word data from OP.
 
      The parameters specify the format of the data produced.  Each word
@@ -3039,23 +3092,23 @@ File: gmp.info,  Node: Miscellaneous Integer Functions,  Next: Integer Special F
 5.15 Miscellaneous Functions
 ============================
 
- -- Function: int mpz_fits_ulong_p (mpz_t OP)
- -- Function: int mpz_fits_slong_p (mpz_t OP)
- -- Function: int mpz_fits_uint_p (mpz_t OP)
- -- Function: int mpz_fits_sint_p (mpz_t OP)
- -- Function: int mpz_fits_ushort_p (mpz_t OP)
- -- Function: int mpz_fits_sshort_p (mpz_t OP)
+ -- Function: int mpz_fits_ulong_p (const mpz_t OP)
+ -- Function: int mpz_fits_slong_p (const mpz_t OP)
+ -- Function: int mpz_fits_uint_p (const mpz_t OP)
+ -- Function: int mpz_fits_sint_p (const mpz_t OP)
+ -- Function: int mpz_fits_ushort_p (const mpz_t OP)
+ -- Function: int mpz_fits_sshort_p (const mpz_t OP)
      Return non-zero iff the value of OP fits in an `unsigned long int',
      `signed long int', `unsigned int', `signed int', `unsigned short
      int', or `signed short int', respectively.  Otherwise, return zero.
 
- -- Macro: int mpz_odd_p (mpz_t OP)
- -- Macro: int mpz_even_p (mpz_t OP)
+ -- Macro: int mpz_odd_p (const mpz_t OP)
+ -- Macro: int mpz_even_p (const mpz_t OP)
      Determine whether OP is odd or even, respectively.  Return
      non-zero if yes, zero if no.  These macros evaluate their argument
      more than once.
 
- -- Function: size_t mpz_sizeinbase (mpz_t OP, int BASE)
+ -- Function: size_t mpz_sizeinbase (const mpz_t OP, int BASE)
      Return the size of OP measured in number of digits in the given
      BASE.  BASE can vary from 2 to 62.  The sign of OP is ignored,
      just the absolute value is used.  The result will be either exact
@@ -3131,7 +3184,7 @@ applications will not need them.
      changes like this.  `mpz_realloc2' and `_mpz_realloc' are the same
      except that `_mpz_realloc' takes its size in limbs.
 
- -- Function: mp_limb_t mpz_getlimbn (mpz_t OP, mp_size_t N)
+ -- Function: mp_limb_t mpz_getlimbn (const mpz_t OP, mp_size_t N)
      Return limb number N from OP.  The sign of OP is ignored, just the
      absolute value is used.  The least significant limb is number 0.
 
@@ -3139,7 +3192,7 @@ applications will not need them.
      `mpz_getlimbn' returns zero if N is outside the range 0 to
      `mpz_size(OP)-1'.
 
- -- Function: size_t mpz_size (mpz_t OP)
+ -- Function: size_t mpz_size (const mpz_t OP)
      Return the size of OP measured in number of limbs.  If OP is zero,
      the returned value will be zero.
 
@@ -3200,8 +3253,8 @@ File: gmp.info,  Node: Initializing Rationals,  Next: Rational Conversions,  Pre
      Free the space occupied by a NULL-terminated list of `mpq_t'
      variables.
 
- -- Function: void mpq_set (mpq_t ROP, mpq_t OP)
- -- Function: void mpq_set_z (mpq_t ROP, mpz_t OP)
+ -- Function: void mpq_set (mpq_t ROP, const mpq_t OP)
+ -- Function: void mpq_set_z (mpq_t ROP, const mpz_t OP)
      Assign ROP from OP.
 
  -- Function: void mpq_set_ui (mpq_t ROP, unsigned long int OP1,
@@ -3212,7 +3265,7 @@ File: gmp.info,  Node: Initializing Rationals,  Next: Rational Conversions,  Pre
      common factors, ROP has to be passed to `mpq_canonicalize' before
      any operations are performed on ROP.
 
- -- Function: int mpq_set_str (mpq_t ROP, char *STR, int BASE)
+ -- Function: int mpq_set_str (mpq_t ROP, const char *STR, int BASE)
      Set ROP from a null-terminated string STR in the given BASE.
 
      The string can be an integer like "41" or a fraction like
@@ -3241,8 +3294,8 @@ File: gmp.info,  Node: Rational Conversions,  Next: Rational Arithmetic,  Prev: 
 6.2 Conversion Functions
 ========================
 
- -- Function: double mpq_get_d (mpq_t OP)
-     Convert OP to a `double', truncating if necessary (ie. rounding
+ -- Function: double mpq_get_d (const mpq_t OP)
+     Convert OP to a `double', truncating if necessary (i.e. rounding
      towards zero).
 
      If the exponent from the conversion is too big or too small to fit
@@ -3252,11 +3305,11 @@ File: gmp.info,  Node: Rational Conversions,  Next: Rational Arithmetic,  Prev: 
      may or may not occur.
 
  -- Function: void mpq_set_d (mpq_t ROP, double OP)
- -- Function: void mpq_set_f (mpq_t ROP, mpf_t OP)
+ -- Function: void mpq_set_f (mpq_t ROP, const mpf_t OP)
      Set ROP to the value of OP.  There is no rounding, this conversion
      is exact.
 
- -- Function: char * mpq_get_str (char *STR, int BASE, mpq_t OP)
+ -- Function: char * mpq_get_str (char *STR, int BASE, const mpq_t OP)
      Convert OP to a string of digits in base BASE.  The base may vary
      from 2 to 36.  The string will be of the form `num/den', or if the
      denominator is 1 then just `num'.
@@ -3284,34 +3337,37 @@ File: gmp.info,  Node: Rational Arithmetic,  Next: Comparing Rationals,  Prev: R
 6.3 Arithmetic Functions
 ========================
 
- -- Function: void mpq_add (mpq_t SUM, mpq_t ADDEND1, mpq_t ADDEND2)
+ -- Function: void mpq_add (mpq_t SUM, const mpq_t ADDEND1, const mpq_t
+          ADDEND2)
      Set SUM to ADDEND1 + ADDEND2.
 
- -- Function: void mpq_sub (mpq_t DIFFERENCE, mpq_t MINUEND, mpq_t
-          SUBTRAHEND)
+ -- Function: void mpq_sub (mpq_t DIFFERENCE, const mpq_t MINUEND,
+          const mpq_t SUBTRAHEND)
      Set DIFFERENCE to MINUEND - SUBTRAHEND.
 
- -- Function: void mpq_mul (mpq_t PRODUCT, mpq_t MULTIPLIER, mpq_t
-          MULTIPLICAND)
+ -- Function: void mpq_mul (mpq_t PRODUCT, const mpq_t MULTIPLIER,
+          const mpq_t MULTIPLICAND)
      Set PRODUCT to MULTIPLIER times MULTIPLICAND.
 
- -- Function: void mpq_mul_2exp (mpq_t ROP, mpq_t OP1, mp_bitcnt_t OP2)
+ -- Function: void mpq_mul_2exp (mpq_t ROP, const mpq_t OP1,
+          mp_bitcnt_t OP2)
      Set ROP to OP1 times 2 raised to OP2.
 
- -- Function: void mpq_div (mpq_t QUOTIENT, mpq_t DIVIDEND, mpq_t
-          DIVISOR)
+ -- Function: void mpq_div (mpq_t QUOTIENT, const mpq_t DIVIDEND, const
+          mpq_t DIVISOR)
      Set QUOTIENT to DIVIDEND/DIVISOR.
 
- -- Function: void mpq_div_2exp (mpq_t ROP, mpq_t OP1, mp_bitcnt_t OP2)
+ -- Function: void mpq_div_2exp (mpq_t ROP, const mpq_t OP1,
+          mp_bitcnt_t OP2)
      Set ROP to OP1 divided by 2 raised to OP2.
 
- -- Function: void mpq_neg (mpq_t NEGATED_OPERAND, mpq_t OPERAND)
+ -- Function: void mpq_neg (mpq_t NEGATED_OPERAND, const mpq_t OPERAND)
      Set NEGATED_OPERAND to -OPERAND.
 
- -- Function: void mpq_abs (mpq_t ROP, mpq_t OP)
+ -- Function: void mpq_abs (mpq_t ROP, const mpq_t OP)
      Set ROP to the absolute value of OP.
 
- -- Function: void mpq_inv (mpq_t INVERTED_NUMBER, mpq_t NUMBER)
+ -- Function: void mpq_inv (mpq_t INVERTED_NUMBER, const mpq_t NUMBER)
      Set INVERTED_NUMBER to 1/NUMBER.  If the new denominator is zero,
      this routine will divide by zero.
 
@@ -3321,17 +3377,17 @@ File: gmp.info,  Node: Comparing Rationals,  Next: Applying Integer Functions,  
 6.4 Comparison Functions
 ========================
 
- -- Function: int mpq_cmp (mpq_t OP1, mpq_t OP2)
+ -- Function: int mpq_cmp (const mpq_t OP1, const mpq_t OP2)
      Compare OP1 and OP2.  Return a positive value if OP1 > OP2, zero
      if OP1 = OP2, and a negative value if OP1 < OP2.
 
      To determine if two rationals are equal, `mpq_equal' is faster than
      `mpq_cmp'.
 
- -- Macro: int mpq_cmp_ui (mpq_t OP1, unsigned long int NUM2, unsigned
+ -- Macro: int mpq_cmp_ui (const mpq_t OP1, unsigned long int NUM2,
+          unsigned long int DEN2)
+ -- Macro: int mpq_cmp_si (const mpq_t OP1, long int NUM2, unsigned
           long int DEN2)
- -- Macro: int mpq_cmp_si (mpq_t OP1, long int NUM2, unsigned long int
-          DEN2)
      Compare OP1 and NUM2/DEN2.  Return a positive value if OP1 >
      NUM2/DEN2, zero if OP1 = NUM2/DEN2, and a negative value if OP1 <
      NUM2/DEN2.
@@ -3341,13 +3397,13 @@ File: gmp.info,  Node: Comparing Rationals,  Next: Applying Integer Functions,  
      These functions are implemented as a macros and evaluate their
      arguments multiple times.
 
- -- Macro: int mpq_sgn (mpq_t OP)
+ -- Macro: int mpq_sgn (const mpq_t OP)
      Return +1 if OP > 0, 0 if OP = 0, and -1 if OP < 0.
 
      This function is actually implemented as a macro.  It evaluates its
-     arguments multiple times.
+     argument multiple times.
 
- -- Function: int mpq_equal (mpq_t OP1, mpq_t OP2)
+ -- Function: int mpq_equal (const mpq_t OP1, const mpq_t OP2)
      Return non-zero if OP1 and OP2 are equal, zero if they are
      non-equal.  Although `mpq_cmp' can be used for the same purpose,
      this function is much faster.
@@ -3368,16 +3424,16 @@ this chapter (*note Rational Number Functions::) then
 `mpq_canonicalize' must be called before any other `mpq' functions are
 applied to that `mpq_t'.
 
- -- Macro: mpz_t mpq_numref (mpq_t OP)
- -- Macro: mpz_t mpq_denref (mpq_t OP)
+ -- Macro: mpz_t mpq_numref (const mpq_t OP)
+ -- Macro: mpz_t mpq_denref (const mpq_t OP)
      Return a reference to the numerator and denominator of OP,
      respectively.  The `mpz' functions can be used on the result of
      these macros.
 
- -- Function: void mpq_get_num (mpz_t NUMERATOR, mpq_t RATIONAL)
- -- Function: void mpq_get_den (mpz_t DENOMINATOR, mpq_t RATIONAL)
- -- Function: void mpq_set_num (mpq_t RATIONAL, mpz_t NUMERATOR)
- -- Function: void mpq_set_den (mpq_t RATIONAL, mpz_t DENOMINATOR)
+ -- Function: void mpq_get_num (mpz_t NUMERATOR, const mpq_t RATIONAL)
+ -- Function: void mpq_get_den (mpz_t DENOMINATOR, const mpq_t RATIONAL)
+ -- Function: void mpq_set_num (mpq_t RATIONAL, const mpz_t NUMERATOR)
+ -- Function: void mpq_set_den (mpq_t RATIONAL, const mpz_t DENOMINATOR)
      Get or set the numerator or denominator of a rational.  These
      functions are equivalent to calling `mpz_set' with an appropriate
      `mpq_numref' or `mpq_denref'.  Direct use of `mpq_numref' or
@@ -3398,9 +3454,10 @@ for a STREAM argument to any of these functions will make them read from
 `stdio.h' before `gmp.h', since that will allow `gmp.h' to define
 prototypes for these functions.
 
-   See also *Note Formatted Output:: and *Note Formatted Input::.
+   See also *note Formatted Output:: and *note Formatted Input::.
 
- -- Function: size_t mpq_out_str (FILE *STREAM, int BASE, mpq_t OP)
+ -- Function: size_t mpq_out_str (FILE *STREAM, int BASE, const mpq_t
+          OP)
      Output OP on stdio stream STREAM, as a string of digits in base
      BASE.  The base may vary from 2 to 36.  Output is in the form
      `num/den' or if the denominator is 1 then just `num'.
@@ -3555,7 +3612,7 @@ precision gradually in iterative algorithms like Newton-Raphson, making
 the computation precision closely match the actual accurate part of the
 numbers.
 
- -- Function: mp_bitcnt_t mpf_get_prec (mpf_t OP)
+ -- Function: mp_bitcnt_t mpf_get_prec (const mpf_t OP)
      Return the current precision of OP, in bits.
 
  -- Function: void mpf_set_prec (mpf_t ROP, mp_bitcnt_t PREC)
@@ -3600,15 +3657,15 @@ File: gmp.info,  Node: Assigning Floats,  Next: Simultaneous Float Init & Assign
 These functions assign new values to already initialized floats (*note
 Initializing Floats::).
 
- -- Function: void mpf_set (mpf_t ROP, mpf_t OP)
+ -- Function: void mpf_set (mpf_t ROP, const mpf_t OP)
  -- Function: void mpf_set_ui (mpf_t ROP, unsigned long int OP)
  -- Function: void mpf_set_si (mpf_t ROP, signed long int OP)
  -- Function: void mpf_set_d (mpf_t ROP, double OP)
- -- Function: void mpf_set_z (mpf_t ROP, mpz_t OP)
- -- Function: void mpf_set_q (mpf_t ROP, mpq_t OP)
+ -- Function: void mpf_set_z (mpf_t ROP, const mpz_t OP)
+ -- Function: void mpf_set_q (mpf_t ROP, const mpq_t OP)
      Set the value of ROP from OP.
 
- -- Function: int mpf_set_str (mpf_t ROP, char *STR, int BASE)
+ -- Function: int mpf_set_str (mpf_t ROP, const char *STR, int BASE)
      Set the value of ROP from the string in STR.  The string is of the
      form `M@N' or, if the base is 10 or less, alternatively `MeN'.
      `M' is the mantissa and `N' is the exponent.  The mantissa is
@@ -3661,7 +3718,7 @@ functions, it can be used as the source or destination operand for the
 ordinary float functions.  Don't use an initialize-and-set function on
 a variable already initialized!
 
- -- Function: void mpf_init_set (mpf_t ROP, mpf_t OP)
+ -- Function: void mpf_init_set (mpf_t ROP, const mpf_t OP)
  -- Function: void mpf_init_set_ui (mpf_t ROP, unsigned long int OP)
  -- Function: void mpf_init_set_si (mpf_t ROP, signed long int OP)
  -- Function: void mpf_init_set_d (mpf_t ROP, double OP)
@@ -3670,7 +3727,8 @@ a variable already initialized!
      The precision of ROP will be taken from the active default
      precision, as set by `mpf_set_default_prec'.
 
- -- Function: int mpf_init_set_str (mpf_t ROP, char *STR, int BASE)
+ -- Function: int mpf_init_set_str (mpf_t ROP, const char *STR, int
+          BASE)
      Initialize ROP and set its value from the string in STR.  See
      `mpf_set_str' above for details on the assignment operation.
 
@@ -3686,8 +3744,8 @@ File: gmp.info,  Node: Converting Floats,  Next: Float Arithmetic,  Prev: Simult
 7.4 Conversion Functions
 ========================
 
- -- Function: double mpf_get_d (mpf_t OP)
-     Convert OP to a `double', truncating if necessary (ie. rounding
+ -- Function: double mpf_get_d (const mpf_t OP)
+     Convert OP to a `double', truncating if necessary (i.e. rounding
      towards zero).
 
      If the exponent in OP is too big or too small to fit a `double'
@@ -3695,8 +3753,9 @@ File: gmp.info,  Node: Converting Floats,  Next: Float Arithmetic,  Prev: Simult
      returned when available.  For too small 0.0 is normally returned.
      Hardware overflow, underflow and denorm traps may or may not occur.
 
- -- Function: double mpf_get_d_2exp (signed long int *EXP, mpf_t OP)
-     Convert OP to a `double', truncating if necessary (ie. rounding
+ -- Function: double mpf_get_d_2exp (signed long int *EXP, const mpf_t
+          OP)
+     Convert OP to a `double', truncating if necessary (i.e. rounding
      towards zero), and with an exponent returned separately.
 
      The return value is in the range 0.5<=abs(D)<1 and the exponent is
@@ -3706,8 +3765,8 @@ File: gmp.info,  Node: Converting Floats,  Next: Float Arithmetic,  Prev: Simult
      This is similar to the standard C `frexp' function (*note
      Normalization Functions: (libc)Normalization Functions.).
 
- -- Function: long mpf_get_si (mpf_t OP)
- -- Function: unsigned long mpf_get_ui (mpf_t OP)
+ -- Function: long mpf_get_si (const mpf_t OP)
+ -- Function: unsigned long mpf_get_ui (const mpf_t OP)
      Convert OP to a `long' or `unsigned long', truncating any fraction
      part.  If OP is too big for the return type, the result is
      undefined.
@@ -3716,7 +3775,7 @@ File: gmp.info,  Node: Converting Floats,  Next: Float Arithmetic,  Prev: Simult
      Miscellaneous Float Functions::).
 
  -- Function: char * mpf_get_str (char *STR, mp_exp_t *EXPPTR, int
-          BASE, size_t N_DIGITS, mpf_t OP)
+          BASE, size_t N_DIGITS, const mpf_t OP)
      Convert OP to a string of digits in base BASE.  The base argument
      may vary from 2 to 62 or from -2 to -36.  Up to N_DIGITS digits
      will be generated.  Trailing zeros are not returned.  No more
@@ -3757,21 +3816,21 @@ File: gmp.info,  Node: Float Arithmetic,  Next: Float Comparison,  Prev: Convert
 7.5 Arithmetic Functions
 ========================
 
- -- Function: void mpf_add (mpf_t ROP, mpf_t OP1, mpf_t OP2)
- -- Function: void mpf_add_ui (mpf_t ROP, mpf_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpf_add (mpf_t ROP, const mpf_t OP1, const mpf_t OP2)
+ -- Function: void mpf_add_ui (mpf_t ROP, const mpf_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1 + OP2.
 
- -- Function: void mpf_sub (mpf_t ROP, mpf_t OP1, mpf_t OP2)
- -- Function: void mpf_ui_sub (mpf_t ROP, unsigned long int OP1, mpf_t
-          OP2)
- -- Function: void mpf_sub_ui (mpf_t ROP, mpf_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpf_sub (mpf_t ROP, const mpf_t OP1, const mpf_t OP2)
+ -- Function: void mpf_ui_sub (mpf_t ROP, unsigned long int OP1, const
+          mpf_t OP2)
+ -- Function: void mpf_sub_ui (mpf_t ROP, const mpf_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1 - OP2.
 
- -- Function: void mpf_mul (mpf_t ROP, mpf_t OP1, mpf_t OP2)
- -- Function: void mpf_mul_ui (mpf_t ROP, mpf_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpf_mul (mpf_t ROP, const mpf_t OP1, const mpf_t OP2)
+ -- Function: void mpf_mul_ui (mpf_t ROP, const mpf_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1 times OP2.
 
    Division is undefined if the divisor is zero, and passing a zero
@@ -3779,31 +3838,33 @@ divisor to the divide functions will make these functions intentionally
 divide by zero.  This lets the user handle arithmetic exceptions in
 these functions in the same manner as other arithmetic exceptions.
 
- -- Function: void mpf_div (mpf_t ROP, mpf_t OP1, mpf_t OP2)
- -- Function: void mpf_ui_div (mpf_t ROP, unsigned long int OP1, mpf_t
-          OP2)
- -- Function: void mpf_div_ui (mpf_t ROP, mpf_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpf_div (mpf_t ROP, const mpf_t OP1, const mpf_t OP2)
+ -- Function: void mpf_ui_div (mpf_t ROP, unsigned long int OP1, const
+          mpf_t OP2)
+ -- Function: void mpf_div_ui (mpf_t ROP, const mpf_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1/OP2.
 
- -- Function: void mpf_sqrt (mpf_t ROP, mpf_t OP)
+ -- Function: void mpf_sqrt (mpf_t ROP, const mpf_t OP)
  -- Function: void mpf_sqrt_ui (mpf_t ROP, unsigned long int OP)
      Set ROP to the square root of OP.
 
- -- Function: void mpf_pow_ui (mpf_t ROP, mpf_t OP1, unsigned long int
-          OP2)
+ -- Function: void mpf_pow_ui (mpf_t ROP, const mpf_t OP1, unsigned
+          long int OP2)
      Set ROP to OP1 raised to the power OP2.
 
- -- Function: void mpf_neg (mpf_t ROP, mpf_t OP)
+ -- Function: void mpf_neg (mpf_t ROP, const mpf_t OP)
      Set ROP to -OP.
 
- -- Function: void mpf_abs (mpf_t ROP, mpf_t OP)
+ -- Function: void mpf_abs (mpf_t ROP, const mpf_t OP)
      Set ROP to the absolute value of OP.
 
- -- Function: void mpf_mul_2exp (mpf_t ROP, mpf_t OP1, mp_bitcnt_t OP2)
+ -- Function: void mpf_mul_2exp (mpf_t ROP, const mpf_t OP1,
+          mp_bitcnt_t OP2)
      Set ROP to OP1 times 2 raised to OP2.
 
- -- Function: void mpf_div_2exp (mpf_t ROP, mpf_t OP1, mp_bitcnt_t OP2)
+ -- Function: void mpf_div_2exp (mpf_t ROP, const mpf_t OP1,
+          mp_bitcnt_t OP2)
      Set ROP to OP1 divided by 2 raised to OP2.
 
 
@@ -3812,17 +3873,18 @@ File: gmp.info,  Node: Float Comparison,  Next: I/O of Floats,  Prev: Float Arit
 7.6 Comparison Functions
 ========================
 
- -- Function: int mpf_cmp (mpf_t OP1, mpf_t OP2)
- -- Function: int mpf_cmp_d (mpf_t OP1, double OP2)
- -- Function: int mpf_cmp_ui (mpf_t OP1, unsigned long int OP2)
- -- Function: int mpf_cmp_si (mpf_t OP1, signed long int OP2)
+ -- Function: int mpf_cmp (const mpf_t OP1, const mpf_t OP2)
+ -- Function: int mpf_cmp_d (const mpf_t OP1, double OP2)
+ -- Function: int mpf_cmp_ui (const mpf_t OP1, unsigned long int OP2)
+ -- Function: int mpf_cmp_si (const mpf_t OP1, signed long int OP2)
      Compare OP1 and OP2.  Return a positive value if OP1 > OP2, zero
      if OP1 = OP2, and a negative value if OP1 < OP2.
 
      `mpf_cmp_d' can be called with an infinity, but results are
      undefined for a NaN.
 
- -- Function: int mpf_eq (mpf_t OP1, mpf_t OP2, mp_bitcnt_t op3)
+ -- Function: int mpf_eq (const mpf_t OP1, const mpf_t OP2, mp_bitcnt_t
+          op3)
      Return non-zero if the first OP3 bits of OP1 and OP2 are equal,
      zero otherwise.  I.e., test if OP1 and OP2 are approximately equal.
 
@@ -3834,15 +3896,16 @@ File: gmp.info,  Node: Float Comparison,  Next: I/O of Floats,  Prev: Float Arit
      bits.  Such numbers are really just one ulp off, and should be
      considered equal.
 
- -- Function: void mpf_reldiff (mpf_t ROP, mpf_t OP1, mpf_t OP2)
+ -- Function: void mpf_reldiff (mpf_t ROP, const mpf_t OP1, const mpf_t
+          OP2)
      Compute the relative difference between OP1 and OP2 and store the
      result in ROP.  This is abs(OP1-OP2)/OP1.
 
- -- Macro: int mpf_sgn (mpf_t OP)
+ -- Macro: int mpf_sgn (const mpf_t OP)
      Return +1 if OP > 0, 0 if OP = 0, and -1 if OP < 0.
 
      This function is actually implemented as a macro.  It evaluates
-     its arguments multiple times.
+     its argument multiple times.
 
 
 File: gmp.info,  Node: I/O of Floats,  Next: Miscellaneous Float Functions,  Prev: Float Comparison,  Up: Floating-point Functions
@@ -3859,10 +3922,10 @@ for a STREAM argument to any of these functions will make them read from
 `stdio.h' before `gmp.h', since that will allow `gmp.h' to define
 prototypes for these functions.
 
-   See also *Note Formatted Output:: and *Note Formatted Input::.
+   See also *note Formatted Output:: and *note Formatted Input::.
 
  -- Function: size_t mpf_out_str (FILE *STREAM, int BASE, size_t
-          N_DIGITS, mpf_t OP)
+          N_DIGITS, const mpf_t OP)
      Print OP to STREAM, as a string of digits.  Return the number of
      bytes written, or if an error occurred, return 0.
 
@@ -3907,22 +3970,22 @@ File: gmp.info,  Node: Miscellaneous Float Functions,  Prev: I/O of Floats,  Up:
 7.8 Miscellaneous Functions
 ===========================
 
- -- Function: void mpf_ceil (mpf_t ROP, mpf_t OP)
- -- Function: void mpf_floor (mpf_t ROP, mpf_t OP)
- -- Function: void mpf_trunc (mpf_t ROP, mpf_t OP)
+ -- Function: void mpf_ceil (mpf_t ROP, const mpf_t OP)
+ -- Function: void mpf_floor (mpf_t ROP, const mpf_t OP)
+ -- Function: void mpf_trunc (mpf_t ROP, const mpf_t OP)
      Set ROP to OP rounded to an integer.  `mpf_ceil' rounds to the
      next higher integer, `mpf_floor' to the next lower, and `mpf_trunc'
      to the integer towards zero.
 
- -- Function: int mpf_integer_p (mpf_t OP)
+ -- Function: int mpf_integer_p (const mpf_t OP)
      Return non-zero if OP is an integer.
 
- -- Function: int mpf_fits_ulong_p (mpf_t OP)
- -- Function: int mpf_fits_slong_p (mpf_t OP)
- -- Function: int mpf_fits_uint_p (mpf_t OP)
- -- Function: int mpf_fits_sint_p (mpf_t OP)
- -- Function: int mpf_fits_ushort_p (mpf_t OP)
- -- Function: int mpf_fits_sshort_p (mpf_t OP)
+ -- Function: int mpf_fits_ulong_p (const mpf_t OP)
+ -- Function: int mpf_fits_slong_p (const mpf_t OP)
+ -- Function: int mpf_fits_uint_p (const mpf_t OP)
+ -- Function: int mpf_fits_sint_p (const mpf_t OP)
+ -- Function: int mpf_fits_ushort_p (const mpf_t OP)
+ -- Function: int mpf_fits_sshort_p (const mpf_t OP)
      Return non-zero if OP would fit in the respective C data type, when
      truncated to an integer.
 
@@ -3933,7 +3996,7 @@ File: gmp.info,  Node: Miscellaneous Float Functions,  Prev: I/O of Floats,  Up:
      the precision of ROP is smaller.
 
      The variable STATE must be initialized by calling one of the
-     `gmp_randinit' functions (*Note Random State Initialization::)
+     `gmp_randinit' functions (*note Random State Initialization::)
      before invoking this function.
 
  -- Function: void mpf_random2 (mpf_t ROP, mp_size_t MAX_SIZE, mp_exp_t
@@ -4042,7 +4105,7 @@ For example, {S1P, S1N}.
 
      This function requires that S1N is greater than or equal to S2N.
 
- -- Function: void mpn_neg (mp_limb_t *RP, const mp_limb_t *SP,
+ -- Function: mp_limb_t mpn_neg (mp_limb_t *RP, const mp_limb_t *SP,
           mp_size_t N)
      Perform the negation of {SP, N}, and write the result to {RP, N}.
      Return carry-out.
@@ -4195,8 +4258,8 @@ For example, {S1P, S1N}.
      c satisfy c*b^n + a-i = 3*q, where b=2^GMP_NUMB_BITS.  The return
      c is always 0, 1 or 2, and the initial carry i must also be 0, 1
      or 2 (these are both borrows really).  When c=0 clearly q=(a-i)/3.
-     When c!=0, the remainder (a-i) mod 3 is given by 3-c, because b
-     == 1 mod 3 (when `mp_bits_per_limb' is even, which is always so
+     When c!=0, the remainder (a-i) mod 3 is given by 3-c, because b ==
+     1 mod 3 (when `mp_bits_per_limb' is even, which is always so
      currently).
 
  -- Function: mp_limb_t mpn_mod_1 (const mp_limb_t *S1P, mp_size_t S1N,
@@ -4239,9 +4302,9 @@ For example, {S1P, S1N}.
      {YP, YN}.  The result can be up to YN limbs, the return value is
      the actual number produced.  Both source operands are destroyed.
 
-     {XP, XN} must have at least as many bits as {YP, YN}.  {YP, YN}
-     must be odd.  Both operands must have non-zero most significant
-     limbs.  No overlap is permitted between {XP, XN} and {YP, YN}.
+     It is required that XN >= YN > 0, and the most significant limb of
+     {YP, YN} must be non-zero.  No overlap is permitted between {XP,
+     XN} and {YP, YN}.
 
  -- Function: mp_limb_t mpn_gcd_1 (const mp_limb_t *XP, mp_size_t XN,
           mp_limb_t YLIMB)
@@ -4249,28 +4312,34 @@ For example, {S1P, S1N}.
      operands must be non-zero.
 
  -- Function: mp_size_t mpn_gcdext (mp_limb_t *GP, mp_limb_t *SP,
-          mp_size_t *SN, mp_limb_t *XP, mp_size_t XN, mp_limb_t *YP,
-          mp_size_t YN)
-     Let U be defined by {XP, XN} and let V be defined by {YP, YN}.
+          mp_size_t *SN, mp_limb_t *UP, mp_size_t UN, mp_limb_t *VP,
+          mp_size_t VN)
+     Let U be defined by {UP, UN} and let V be defined by {VP, VN}.
 
      Compute the greatest common divisor G of U and V.  Compute a
      cofactor S such that G = US + VT.  The second cofactor T is not
      computed but can easily be obtained from (G - U*S) / V (the
-     division will be exact).  It is required that U >= V > 0.
+     division will be exact).  It is required that UN >= VN > 0, and
+     the most significant limb of {VP, VN} must be non-zero.
 
      S satisfies S = 1 or abs(S) < V / (2 G). S = 0 if and only if V
      divides U (i.e., G = V).
 
      Store G at GP and let the return value define its limb count.
      Store S at SP and let |*SN| define its limb count.  S can be
-     negative; when this happens *SN will be negative.  The areas at GP
-     and SP should each have room for XN+1 limbs.
+     negative; when this happens *SN will be negative.  The area at GP
+     should have room for VN limbs and the area at SP should have room
+     for VN+1 limbs.
 
-     The areas {XP, XN+1} and {YP, YN+1} are destroyed (i.e. the input
-     operands plus an extra limb past the end of each).
+     Both source operands are destroyed.
 
-     Compatibility note: GMP 4.3.0 and 4.3.1 defined S less strictly.
+     Compatibility notes: GMP 4.3.0 and 4.3.1 defined S less strictly.
      Earlier as well as later GMP releases define S as described here.
+     GMP releases before GMP 4.3.0 required additional space for both
+     input and output areas. More precisely, the areas {UP, UN+1} and
+     {VP, VN+1} were destroyed (i.e. the operands plus an extra limb
+     past the end of each), and the areas pointed to by GP and SP
+     should each have room for UN+1 limbs.
 
  -- Function: mp_size_t mpn_sqrtrem (mp_limb_t *R1P, mp_limb_t *R2P,
           const mp_limb_t *SP, mp_size_t N)
@@ -4288,7 +4357,7 @@ For example, {S1P, S1N}.
      remainder would have been zero or non-zero.
 
      A return value of zero indicates a perfect square.  See also
-     `mpz_perfect_square_p'.
+     `mpn_perfect_square_p'.
 
  -- Function: mp_size_t mpn_get_str (unsigned char *STR, int BASE,
           mp_limb_t *S1P, mp_size_t S1N)
@@ -4499,7 +4568,7 @@ one of the `gmp_randinit' functions, and can be seeded with one of the
 `gmp_randseed' functions.
 
    The functions actually generating random numbers are described in
-*Note Integer Random Numbers::, and *Note Miscellaneous Float
+*note Integer Random Numbers::, and *note Miscellaneous Float
 Functions::.
 
    The older style random number functions don't accept a
@@ -4531,8 +4600,8 @@ File: gmp.info,  Node: Random State Initialization,  Next: Random State Seeding,
      Initialize STATE for a Mersenne Twister algorithm.  This algorithm
      is fast and has good randomness properties.
 
- -- Function: void gmp_randinit_lc_2exp (gmp_randstate_t STATE, mpz_t
-          A, unsigned long C, mp_bitcnt_t M2EXP)
+ -- Function: void gmp_randinit_lc_2exp (gmp_randstate_t STATE, const
+          mpz_t A, unsigned long C, mp_bitcnt_t M2EXP)
      Initialize STATE with a linear congruential algorithm X = (A*X +
      C) mod 2^M2EXP.
 
@@ -4549,7 +4618,7 @@ File: gmp.info,  Node: Random State Initialization,  Next: Random State Seeding,
           mp_bitcnt_t SIZE)
      Initialize STATE for a linear congruential algorithm as per
      `gmp_randinit_lc_2exp'.  A, C and M2EXP are selected from a table,
-     chosen so that SIZE bits (or more) of each X will be used, ie.
+     chosen so that SIZE bits (or more) of each X will be used, i.e.
      M2EXP/2 >= SIZE.
 
      If successful the return value is non-zero.  If SIZE is bigger
@@ -4585,7 +4654,8 @@ File: gmp.info,  Node: Random State Seeding,  Next: Random State Miscellaneous, 
 9.2 Random State Seeding
 ========================
 
- -- Function: void gmp_randseed (gmp_randstate_t STATE, mpz_t SEED)
+ -- Function: void gmp_randseed (gmp_randstate_t STATE, const mpz_t
+          SEED)
  -- Function: void gmp_randseed_ui (gmp_randstate_t STATE,
           unsigned long int SEED)
      Set an initial seed value into STATE.
@@ -4615,7 +4685,7 @@ File: gmp.info,  Node: Random State Miscellaneous,  Prev: Random State Seeding, 
 
  -- Function: unsigned long gmp_urandomb_ui (gmp_randstate_t STATE,
           unsigned long N)
-     Return a uniformly distributed random number of N bits, ie. in the
+     Return a uniformly distributed random number of N bits, i.e. in the
      range 0 to 2^N-1 inclusive.  N must be less than or equal to the
      number of bits in an `unsigned long'.
 
@@ -4751,7 +4821,7 @@ instance extensions registered with GLIBC `register_printf_function'.
 Also currently there's no support for POSIX `$' style numbered arguments
 (perhaps this will be added in the future).
 
-   The precision field has it's usual meaning for integer `Z' and float
+   The precision field has its usual meaning for integer `Z' and float
 `F' types, but is currently undefined for `Q' and should not be used
 with that.
 
@@ -4762,7 +4832,9 @@ happens even for an `f' conversion of an `mpf_t' which is an integer,
 for instance 2^1024 in an `mpf_t' of 128 bits precision will only
 produce about 40 digits, then pad with zeros to the decimal point.  An
 empty precision field like `%.Fe' or `%.Ff' can be used to specifically
-request just the significant digits.
+request just the significant digits.  Without any dot and thus no
+precision field, a precision value of 6 will be used.  Note that these
+rules mean that `%Ff', `%.Ff', and `%.0Ff' will all be different.
 
    The decimal point character (or string) is taken from the current
 locale settings on systems which provide `localeconv' (*note Locales
@@ -4780,7 +4852,7 @@ File: gmp.info,  Node: Formatted Output Functions,  Next: C++ Formatted Output, 
 
 Each of the following functions is similar to the corresponding C
 library function.  The basic `printf' forms take a variable argument
-list.  The `vprintf' forms take an argument pointer, see *Note Variadic
+list.  The `vprintf' forms take an argument pointer, see *note Variadic
 Functions: (libc)Variadic Functions, or `man 3 va_start'.
 
    It should be emphasised that if a format string is invalid, or the
@@ -4861,7 +4933,7 @@ shouldn't normally occur.
 
      These functions are available only when the C library provides the
      obstack feature, which probably means only on GNU systems, see
-     *Note Obstacks: (libc)Obstacks.
+     *note Obstacks: (libc)Obstacks.
 
 
 File: gmp.info,  Node: C++ Formatted Output,  Prev: Formatted Output Functions,  Up: Formatted Output
@@ -4924,7 +4996,7 @@ way, for example,
    But note that `ostream' output (and `istream' input, *note C++
 Formatted Input::) is the only overloading available for the GMP types
 and that for instance using `+' with an `mpz_t' will have unpredictable
-results.  For classes with overloading, see *Note C++ Class Interface::.
+results.  For classes with overloading, see *note C++ Class Interface::.
 
 
 File: gmp.info,  Node: Formatted Input,  Next: C++ Class Interface,  Prev: Formatted Output,  Up: Top
@@ -5072,7 +5144,7 @@ File: gmp.info,  Node: Formatted Input Functions,  Next: C++ Formatted Input,  P
 
 Each of the following functions is similar to the corresponding C
 library function.  The plain `scanf' forms take a variable argument
-list.  The `vscanf' forms take an argument pointer, see *Note Variadic
+list.  The `vscanf' forms take an argument pointer, see *note Variadic
 Functions: (libc)Variadic Functions, or `man 3 va_start'.
 
    It should be emphasised that if a format string is invalid, or the
@@ -5172,10 +5244,10 @@ way, for example,
    But note that `istream' input (and `ostream' output, *note C++
 Formatted Output::) is the only overloading available for the GMP types
 and that for instance using `+' with an `mpz_t' will have unpredictable
-results.  For classes with overloading, see *Note C++ Class Interface::.
+results.  For classes with overloading, see *note C++ Class Interface::.
 
 
-File: gmp.info,  Node: C++ Class Interface,  Next: BSD Compatible Functions,  Prev: Formatted Input,  Up: Top
+File: gmp.info,  Node: C++ Class Interface,  Next: Custom Allocation,  Prev: Formatted Input,  Up: Top
 
 12 C++ Class Interface
 **********************
@@ -5304,9 +5376,10 @@ File: gmp.info,  Node: C++ Interface Integers,  Next: C++ Interface Rationals,  
  -- Function:  mpz_class::mpz_class (type N)
      Construct an `mpz_class'.  All the standard C++ types may be used,
      except `long long' and `long double', and all the GMP C++ classes
-     can be used.  Any necessary conversion follows the corresponding C
-     function, for example `double' follows `mpz_set_d' (*note
-     Assigning Integers::).
+     can be used, although conversions from `mpq_class' and `mpf_class'
+     are `explicit'.  Any necessary conversion follows the
+     corresponding C function, for example `double' follows `mpz_set_d'
+     (*note Assigning Integers::).
 
  -- Function: explicit mpz_class::mpz_class (mpz_t Z)
      Construct an `mpz_class' from an `mpz_t'.  The value in Z is
@@ -5323,6 +5396,10 @@ File: gmp.info,  Node: C++ Interface Integers,  Next: C++ Interface Rationals,  
      If the string is not a valid integer, an `std::invalid_argument'
      exception is thrown.  The same applies to `operator='.
 
+ -- Function: mpz_class operator"" _mpz (const char *STR)
+     With C++11 compilers, integers can be constructed with the syntax
+     `123_mpz' which is equivalent to `mpz_class("123")'.
+
  -- Function: mpz_class operator/ (mpz_class A, mpz_class D)
  -- Function: mpz_class operator% (mpz_class A, mpz_class D)
      Divisions involving `mpz_class' round towards zero, as per the
@@ -5336,7 +5413,7 @@ File: gmp.info,  Node: C++ Interface Integers,  Next: C++ Interface Rationals,  
           ...
           mpz_fdiv_q (q.get_mpz_t(), a.get_mpz_t(), d.get_mpz_t());
 
- -- Function: mpz_class abs (mpz_class OP1)
+ -- Function: mpz_class abs (mpz_class OP)
  -- Function: int cmp (mpz_class OP1, type OP2)
  -- Function: int cmp (type OP1, mpz_class OP2)
  -- Function: bool mpz_class::fits_sint_p (void)
@@ -5353,6 +5430,8 @@ File: gmp.info,  Node: C++ Interface Integers,  Next: C++ Interface Rationals,  
  -- Function: int mpz_class::set_str (const string& STR, int BASE)
  -- Function: int sgn (mpz_class OP)
  -- Function: mpz_class sqrt (mpz_class OP)
+ -- Function: void mpz_class::swap (mpz_class& OP)
+ -- Function: void swap (mpz_class& OP1, mpz_class& OP2)
      These functions provide a C++ class interface to the corresponding
      GMP C routines.
 
@@ -5384,9 +5463,10 @@ called.
  -- Function:  mpq_class::mpq_class (type OP)
  -- Function:  mpq_class::mpq_class (integer NUM, integer DEN)
      Construct an `mpq_class'.  The initial value can be a single value
-     of any type, or a pair of integers (`mpz_class' or standard C++
-     integer types) representing a fraction, except that `long long'
-     and `long double' are not supported.  For example,
+     of any type (conversion from `mpf_class' is `explicit'), or a pair
+     of integers (`mpz_class' or standard C++ integer types)
+     representing a fraction, except that `long long' and `long double'
+     are not supported.  For example,
 
           mpq_class q (99);
           mpq_class q (1.75);
@@ -5407,8 +5487,13 @@ called.
      If the string is not a valid rational, an `std::invalid_argument'
      exception is thrown.  The same applies to `operator='.
 
+ -- Function: mpq_class operator"" _mpq (const char *STR)
+     With C++11 compilers, integral rationals can be constructed with
+     the syntax `123_mpq' which is equivalent to `mpq_class(123_mpz)'.
+     Other rationals can be built as `-1_mpq/2' or `0xb_mpq/123456_mpz'.
+
  -- Function: void mpq_class::canonicalize ()
-     Put an `mpq_class' into canonical form, as per *Note Rational
+     Put an `mpq_class' into canonical form, as per *note Rational
      Number Functions::.  All arithmetic operators require their
      operands in canonical form, and will return results in canonical
      form.
@@ -5421,6 +5506,8 @@ called.
  -- Function: int mpq_class::set_str (const char *STR, int BASE)
  -- Function: int mpq_class::set_str (const string& STR, int BASE)
  -- Function: int sgn (mpq_class OP)
+ -- Function: void mpq_class::swap (mpq_class& OP)
+ -- Function: void swap (mpq_class& OP1, mpq_class& OP2)
      These functions provide a C++ class interface to the corresponding
      GMP C routines.
 
@@ -5466,7 +5553,7 @@ same precision as the destination `f'.  Explicit constructors can be
 used if this doesn't suit.
 
  -- Function:  mpf_class::mpf_class (type OP)
- -- Function:  mpf_class::mpf_class (type OP, unsigned long PREC)
+ -- Function:  mpf_class::mpf_class (type OP, mp_bitcnt_t PREC)
      Construct an `mpf_class'.  Any standard C++ type can be used,
      except `long long' and `long double', and any of the GMP C++
      classes can be used.
@@ -5487,7 +5574,7 @@ used if this doesn't suit.
           mpf_class f(x+y);        // greater of precisions of x and y
 
  -- Function: explicit mpf_class::mpf_class (mpf_t F)
- -- Function:  mpf_class::mpf_class (mpf_t F, unsigned long PREC)
+ -- Function:  mpf_class::mpf_class (mpf_t F, mp_bitcnt_t PREC)
      Construct an `mpf_class' from an `mpf_t'.  The value in F is
      copied into the new `mpf_class', there won't be any permanent
      association between it and F.
@@ -5496,11 +5583,11 @@ used if this doesn't suit.
      PREC is not given, then the initial precision is that of F.
 
  -- Function: explicit mpf_class::mpf_class (const char *S)
- -- Function:  mpf_class::mpf_class (const char *S, unsigned long PREC,
+ -- Function:  mpf_class::mpf_class (const char *S, mp_bitcnt_t PREC,
           int BASE = 0)
  -- Function: explicit mpf_class::mpf_class (const string& S)
- -- Function:  mpf_class::mpf_class (const string& S, unsigned long
-          PREC, int BASE = 0)
+ -- Function:  mpf_class::mpf_class (const string& S, mp_bitcnt_t PREC,
+          int BASE = 0)
      Construct an `mpf_class' converted from a string using
      `mpf_set_str' (*note Assigning Floats::).  If PREC is given, the
      initial precision is that value, in bits.  If not, the default
@@ -5508,6 +5595,10 @@ used if this doesn't suit.
 
      If the string is not a valid float, an `std::invalid_argument'
      exception is thrown.  The same applies to `operator='.
+
+ -- Function: mpf_class operator"" _mpf (const char *STR)
+     With C++11 compilers, floats can be constructed with the syntax
+     `1.23e-1_mpf' which is equivalent to `mpf_class("1.23e-1")'.
 
  -- Function: mpf_class& mpf_class::operator= (type OP)
      Convert and store the given OP value to an `mpf_class' object.  The
@@ -5553,6 +5644,8 @@ used if this doesn't suit.
  -- Function: int mpf_class::set_str (const string& STR, int BASE)
  -- Function: int sgn (mpf_class OP)
  -- Function: mpf_class sqrt (mpf_class OP)
+ -- Function: void mpf_class::swap (mpf_class& OP)
+ -- Function: void swap (mpf_class& OP1, mpf_class& OP2)
  -- Function: mpf_class trunc (mpf_class OP)
      These functions provide a C++ class interface to the corresponding
      GMP C routines.
@@ -5610,7 +5703,7 @@ File: gmp.info,  Node: C++ Interface Random Numbers,  Next: C++ Interface Limita
      Seed a random number generator.  See *note Random Number
      Functions::, for how to choose a good seed.
 
- -- Function: mpz_class gmp_randclass::get_z_bits (unsigned long BITS)
+ -- Function: mpz_class gmp_randclass::get_z_bits (mp_bitcnt_t BITS)
  -- Function: mpz_class gmp_randclass::get_z_bits (mpz_class BITS)
      Generate a random integer with a specified number of bits.
 
@@ -5618,7 +5711,7 @@ File: gmp.info,  Node: C++ Interface Random Numbers,  Next: C++ Interface Limita
      Generate a random integer in the range 0 to N-1 inclusive.
 
  -- Function: mpf_class gmp_randclass::get_f ()
- -- Function: mpf_class gmp_randclass::get_f (unsigned long PREC)
+ -- Function: mpf_class gmp_randclass::get_f (mp_bitcnt_t PREC)
      Generate a random float F in the range 0 <= F < 1.  F will be to
      PREC bits precision, or if PREC is not given then to the precision
      of the destination.  For example,
@@ -5706,117 +5799,9 @@ Templated Expressions
           }
 
 
-File: gmp.info,  Node: BSD Compatible Functions,  Next: Custom Allocation,  Prev: C++ Class Interface,  Up: Top
+File: gmp.info,  Node: Custom Allocation,  Next: Language Bindings,  Prev: C++ Class Interface,  Up: Top
 
-13 Berkeley MP Compatible Functions
-***********************************
-
-These functions are intended to be fully compatible with the Berkeley MP
-library which is available on many BSD derived U*ix systems.  The
-`--enable-mpbsd' option must be used when building GNU MP to make these
-available (*note Installing GMP::).
-
-   The original Berkeley MP library has a usage restriction: you cannot
-use the same variable as both source and destination in a single
-function call.  The compatible functions in GNU MP do not share this
-restriction--inputs and outputs may overlap.
-
-   It is not recommended that new programs are written using these
-functions.  Apart from the incomplete set of functions, the interface
-for initializing `MINT' objects is more error prone, and the `pow'
-function collides with `pow' in `libm.a'.
-
-   Include the header `mp.h' to get the definition of the necessary
-types and functions.  If you are on a BSD derived system, make sure to
-include GNU `mp.h' if you are going to link the GNU `libmp.a' to your
-program.  This means that you probably need to give the `-I<dir>'
-option to the compiler, where `<dir>' is the directory where you have
-GNU `mp.h'.
-
- -- Function: MINT * itom (signed short int INITIAL_VALUE)
-     Allocate an integer consisting of a `MINT' object and dynamic limb
-     space.  Initialize the integer to INITIAL_VALUE.  Return a pointer
-     to the `MINT' object.
-
- -- Function: MINT * xtom (char *INITIAL_VALUE)
-     Allocate an integer consisting of a `MINT' object and dynamic limb
-     space.  Initialize the integer from INITIAL_VALUE, a hexadecimal,
-     null-terminated C string.  Return a pointer to the `MINT' object.
-
- -- Function: void move (MINT *SRC, MINT *DEST)
-     Set DEST to SRC by copying.  Both variables must be previously
-     initialized.
-
- -- Function: void madd (MINT *SRC_1, MINT *SRC_2, MINT *DESTINATION)
-     Add SRC_1 and SRC_2 and put the sum in DESTINATION.
-
- -- Function: void msub (MINT *SRC_1, MINT *SRC_2, MINT *DESTINATION)
-     Subtract SRC_2 from SRC_1 and put the difference in DESTINATION.
-
- -- Function: void mult (MINT *SRC_1, MINT *SRC_2, MINT *DESTINATION)
-     Multiply SRC_1 and SRC_2 and put the product in DESTINATION.
-
- -- Function: void mdiv (MINT *DIVIDEND, MINT *DIVISOR, MINT *QUOTIENT,
-          MINT *REMAINDER)
- -- Function: void sdiv (MINT *DIVIDEND, signed short int DIVISOR, MINT
-          *QUOTIENT, signed short int *REMAINDER)
-     Set QUOTIENT to DIVIDEND/DIVISOR, and REMAINDER to DIVIDEND mod
-     DIVISOR.  The quotient is rounded towards zero; the remainder has
-     the same sign as the dividend unless it is zero.
-
-     Some implementations of these functions work differently--or not
-     at all--for negative arguments.
-
- -- Function: void msqrt (MINT *OP, MINT *ROOT, MINT *REMAINDER)
-     Set ROOT to the truncated integer part of the square root of OP,
-     like `mpz_sqrt'.  Set REMAINDER to OP-ROOT*ROOT, i.e.  zero if OP
-     is a perfect square.
-
-     If ROOT and REMAINDER are the same variable, the results are
-     undefined.
-
- -- Function: void pow (MINT *BASE, MINT *EXP, MINT *MOD, MINT *DEST)
-     Set DEST to (BASE raised to EXP) modulo MOD.
-
-     Note that the name `pow' clashes with `pow' from the standard C
-     math library (*note Exponentiation and Logarithms: (libc)Exponents
-     and Logarithms.).  An application will only be able to use one or
-     the other.
-
- -- Function: void rpow (MINT *BASE, signed short int EXP, MINT *DEST)
-     Set DEST to BASE raised to EXP.
-
- -- Function: void gcd (MINT *OP1, MINT *OP2, MINT *RES)
-     Set RES to the greatest common divisor of OP1 and OP2.
-
- -- Function: int mcmp (MINT *OP1, MINT *OP2)
-     Compare OP1 and OP2.  Return a positive value if OP1 > OP2, zero
-     if OP1 = OP2, and a negative value if OP1 < OP2.
-
- -- Function: void min (MINT *DEST)
-     Input a decimal string from `stdin', and put the read integer in
-     DEST.  SPC and TAB are allowed in the number string, and are
-     ignored.
-
- -- Function: void mout (MINT *SRC)
-     Output SRC to `stdout', as a decimal string.  Also output a
-     newline.
-
- -- Function: char * mtox (MINT *OP)
-     Convert OP to a hexadecimal string, and return a pointer to the
-     string.  The returned string is allocated using the default memory
-     allocation function, `malloc' by default.  It will be
-     `strlen(str)+1' bytes, that being exactly enough for the string
-     and null-terminator.
-
- -- Function: void mfree (MINT *OP)
-     De-allocate, the space used by OP.  *This function should only be
-     passed a value returned by `itom' or `xtom'.*
-
-
-File: gmp.info,  Node: Custom Allocation,  Next: Language Bindings,  Prev: BSD Compatible Functions,  Up: Top
-
-14 Custom Allocation
+13 Custom Allocation
 ********************
 
 By default GMP uses `malloc', `realloc' and `free' for memory
@@ -5826,9 +5811,6 @@ output and terminates the program.
    Alternate functions can be specified, to allocate memory in a
 different way or to have a different error action on running out of
 memory.
-
-   This feature is available in the Berkeley compatibility library
-(*note BSD Compatible Functions::) as well as the main GMP library.
 
  -- Function: void mp_set_memory_functions (
           void *(*ALLOC_FUNC_PTR) (size_t),
@@ -5872,10 +5854,10 @@ memory.
 
    A "byte" here means the unit used by the `sizeof' operator.
 
-   The OLD_SIZE parameters to REALLOCATE_FUNCTION and FREE_FUNCTION are
-passed for convenience, but of course can be ignored if not needed.
-The default functions using `malloc' and friends for instance don't use
-them.
+   The REALLOCATE_FUNCTION parameter OLD_SIZE and the FREE_FUNCTION
+parameter SIZE are passed for convenience, but of course they can be
+ignored if not needed by an implementation.  The default functions
+using `malloc' and friends for instance don't use them.
 
    No error return is allowed from any of these functions, if they
 return then they must have performed the specified operation.  In
@@ -5919,7 +5901,7 @@ this is a problem.
 
 File: gmp.info,  Node: Language Bindings,  Next: Algorithms,  Prev: Custom Allocation,  Up: Top
 
-15 Language Bindings
+14 Language Bindings
 ********************
 
 The following packages and projects offer access to GMP from languages
@@ -5935,7 +5917,7 @@ C++
         * ALP `http://www-sop.inria.fr/saga/logiciels/ALP/'
           Linear algebra and polynomials using templates.
 
-        * Arithmos `http://www.win.ua.ac.be/~cant/arithmos/'
+        * Arithmos `http://cant.ua.ac.be/old/arithmos/'
           Rationals with infinities and square roots.
 
         * CLN `http://www.ginac.de/CLN/'
@@ -6055,14 +6037,14 @@ Other
         * Regina `http://regina.sourceforge.net/'
           Topological calculator.
 
-        * Yacas `http://www.xs4all.nl/~apinkus/yacas.html'
+        * Yacas `yacas.sourceforge.net'
           Yet another computer algebra system.
 
 
 
 File: gmp.info,  Node: Algorithms,  Next: Internals,  Prev: Language Bindings,  Up: Top
 
-16 Algorithms
+15 Algorithms
 *************
 
 This chapter is an introduction to some of the algorithms used for
@@ -6087,10 +6069,10 @@ documented functions.
 
 File: gmp.info,  Node: Multiplication Algorithms,  Next: Division Algorithms,  Prev: Algorithms,  Up: Algorithms
 
-16.1 Multiplication
+15.1 Multiplication
 ===================
 
-NxN limb multiplications and squares are done using one of five
+NxN limb multiplications and squares are done using one of seven
 algorithms, as the size N increases.
 
      Algorithm      Threshold
@@ -6098,6 +6080,8 @@ algorithms, as the size N increases.
      Karatsuba      `MUL_TOOM22_THRESHOLD'
      Toom-3         `MUL_TOOM33_THRESHOLD'
      Toom-4         `MUL_TOOM44_THRESHOLD'
+     Toom-6.5       `MUL_TOOM6H_THRESHOLD'
+     Toom-8.5       `MUL_TOOM8H_THRESHOLD'
      FFT            `MUL_FFT_THRESHOLD'
 
    Similarly for squaring, with the `SQR' thresholds.
@@ -6113,6 +6097,7 @@ Unbalanced Multiplication::).
 * Karatsuba Multiplication::
 * Toom 3-Way Multiplication::
 * Toom 4-Way Multiplication::
+* Higher degree Toom'n'half::
 * FFT Multiplication::
 * Other Multiplication::
 * Unbalanced Multiplication::
@@ -6120,7 +6105,7 @@ Unbalanced Multiplication::).
 
 File: gmp.info,  Node: Basecase Multiplication,  Next: Karatsuba Multiplication,  Prev: Multiplication Algorithms,  Up: Multiplication Algorithms
 
-16.1.1 Basecase Multiplication
+15.1.1 Basecase Multiplication
 ------------------------------
 
 Basecase NxM multiplication is a straightforward rectangular set of
@@ -6165,7 +6150,7 @@ routine should be used always.
 
 File: gmp.info,  Node: Karatsuba Multiplication,  Next: Toom 3-Way Multiplication,  Prev: Basecase Multiplication,  Up: Multiplication Algorithms
 
-16.1.2 Karatsuba Multiplication
+15.1.2 Karatsuba Multiplication
 -------------------------------
 
 The Karatsuba multiplication algorithm is described in Knuth section
@@ -6184,9 +6169,9 @@ length (or the most significant part one limb shorter if N is odd).
      |    y1    |    y0    |
      +----------+----------+
 
-   Let b be the power of 2 where the split occurs, ie. if x0 is k limbs
-(y0 the same) then b=2^(k*mp_bits_per_limb).  With that x=x1*b+x0 and
-y=y1*b+y0, and the following holds,
+   Let b be the power of 2 where the split occurs, i.e. if x0 is k
+limbs (y0 the same) then b=2^(k*mp_bits_per_limb).  With that x=x1*b+x0
+and y=y1*b+y0, and the following holds,
 
      x*y = (b^2+b)*x1*y1 - b*(x1-x0)*(y1-y0) + (b+1)*x0*y0
 
@@ -6250,7 +6235,7 @@ that sense the algorithm thresholds are merely of academic interest.
 
 File: gmp.info,  Node: Toom 3-Way Multiplication,  Next: Toom 4-Way Multiplication,  Prev: Karatsuba Multiplication,  Up: Multiplication Algorithms
 
-16.1.3 Toom 3-Way Multiplication
+15.1.3 Toom 3-Way Multiplication
 --------------------------------
 
 The Karatsuba formula is the simplest case of a general approach to
@@ -6277,7 +6262,7 @@ These parts are treated as the coefficients of two polynomials
      Y(t) = y2*t^2 + y1*t + y0
 
    Let b equal the power of 2 which is the size of the x0, x1, y0 and
-y1 pieces, ie. if they're k limbs each then b=2^(k*mp_bits_per_limb).
+y1 pieces, i.e. if they're k limbs each then b=2^(k*mp_bits_per_limb).
 With this x=X(b) and y=Y(b).
 
    Let a polynomial W(t)=X(t)*Y(t) and suppose its coefficients are
@@ -6353,8 +6338,8 @@ steps for quickly isolating the w[i].
    Squaring follows the same procedure as multiplication, but there's
 only one X(t) and it's evaluated at the 5 points, and those values
 squared to give values of W(t).  The interpolation is then identical,
-and in fact the same `toom3_interpolate' subroutine is used for both
-squaring and multiplying.
+and in fact the same `toom_interpolate_5pts' subroutine is used for
+both squaring and multiplying.
 
    Toom-3 is asymptotically O(N^1.465), the exponent being
 log(5)/log(3), representing 5 recursive multiplies of 1/3 the original
@@ -6391,9 +6376,9 @@ but again doesn't have to be implemented that way and for example with
 a bit of rearrangement just one division by 6 can be done.
 
 
-File: gmp.info,  Node: Toom 4-Way Multiplication,  Next: FFT Multiplication,  Prev: Toom 3-Way Multiplication,  Up: Multiplication Algorithms
+File: gmp.info,  Node: Toom 4-Way Multiplication,  Next: Higher degree Toom'n'half,  Prev: Toom 3-Way Multiplication,  Up: Multiplication Algorithms
 
-16.1.4 Toom 4-Way Multiplication
+15.1.4 Toom 4-Way Multiplication
 --------------------------------
 
 Karatsuba and Toom-3 split the operands into 2 and 3 coefficients,
@@ -6425,14 +6410,41 @@ log(7)/log(4), representing 7 recursive multiplies of 1/4 the original
 size each.
 
 
-File: gmp.info,  Node: FFT Multiplication,  Next: Other Multiplication,  Prev: Toom 4-Way Multiplication,  Up: Multiplication Algorithms
+File: gmp.info,  Node: Higher degree Toom'n'half,  Next: FFT Multiplication,  Prev: Toom 4-Way Multiplication,  Up: Multiplication Algorithms
 
-16.1.5 FFT Multiplication
+15.1.5 Higher degree Toom'n'half
+--------------------------------
+
+The Toom algorithms described above (*note Toom 3-Way Multiplication::,
+*note Toom 4-Way Multiplication::) generalizes to split into an
+arbitrary number of pieces. In general a split of two equally long
+operands into r pieces leads to evaluations and pointwise
+multiplications done at 2*r-1 points. To fully exploit symmetries it
+would be better to have a multiple of 4 points, that's why for higher
+degree Toom'n'half is used.
+
+   Toom'n'half means that the existence of one more piece is considered
+for a single operand. It can be virtual, i.e. zero, or real, when the
+two operand are not exactly balanced. By chosing an even r, Toom-r+1/2
+requires 2r points, a multiple of four.
+
+   The four-plets of points inlcude 0, inf, +1, -1 and +-2^i, +-2^-i .
+Each of them giving shortcuts for the evaluation phase and for some
+steps in the interpolation phase. Further tricks are used to reduce the
+memory footprint of the whole multiplication algorithm to a memory
+buffer equanl in size to the result of the product.
+
+   Current GMP uses both Toom-6'n'half and Toom-8'n'half.
+
+
+File: gmp.info,  Node: FFT Multiplication,  Next: Other Multiplication,  Prev: Higher degree Toom'n'half,  Up: Multiplication Algorithms
+
+15.1.6 FFT Multiplication
 -------------------------
 
 At large to very large sizes a Fermat style FFT multiplication is used,
-following Scho"nhage and Strassen (*note References::).  Descriptions
-of FFTs in various forms can be found in many textbooks, for instance
+following Schönhage and Strassen (*note References::).  Descriptions of
+FFTs in various forms can be found in many textbooks, for instance
 Knuth section 4.3.3 part C or Lipson chapter IX.  A brief description
 of the form used in GMP is given here.
 
@@ -6531,7 +6543,7 @@ will be needed.
 
 File: gmp.info,  Node: Other Multiplication,  Next: Unbalanced Multiplication,  Prev: FFT Multiplication,  Up: Multiplication Algorithms
 
-16.1.6 Other Multiplication
+15.1.7 Other Multiplication
 ---------------------------
 
 The Toom algorithms described above (*note Toom 3-Way Multiplication::,
@@ -6576,7 +6588,7 @@ is of course of vital importance to GMP.
 
 File: gmp.info,  Node: Unbalanced Multiplication,  Prev: Other Multiplication,  Up: Multiplication Algorithms
 
-16.1.7 Unbalanced Multiplication
+15.1.8 Unbalanced Multiplication
 --------------------------------
 
 Multiplication of operands with different sizes, both below
@@ -6595,7 +6607,7 @@ coefficients, i.e., a polynomial of degree 1 to 3.
 
 File: gmp.info,  Node: Division Algorithms,  Next: Greatest Common Divisor Algorithms,  Prev: Multiplication Algorithms,  Up: Algorithms
 
-16.2 Division Algorithms
+15.2 Division Algorithms
 ========================
 
 * Menu:
@@ -6611,7 +6623,7 @@ File: gmp.info,  Node: Division Algorithms,  Next: Greatest Common Divisor Algor
 
 File: gmp.info,  Node: Single Limb Division,  Next: Basecase Division,  Prev: Division Algorithms,  Up: Division Algorithms
 
-16.2.1 Single Limb Division
+15.2.1 Single Limb Division
 ---------------------------
 
 Nx1 division is implemented using repeated 2x1 divisions from high to
@@ -6619,7 +6631,7 @@ low, either with a hardware divide instruction or a multiplication by
 inverse, whichever is best on a given CPU.
 
    The multiply by inverse follows "Improved division by invariant
-integers" by Mo"ller and Granlund (*note References::) and is
+integers" by Möller and Granlund (*note References::) and is
 implemented as `udiv_qrnnd_preinv' in `gmp-impl.h'.  The idea is to
 have a fixed-point approximation to 1/d (see `invert_limb') and then
 multiply by the high limb (plus one bit) of the dividend to get a
@@ -6665,7 +6677,7 @@ pipelined.
 
 File: gmp.info,  Node: Basecase Division,  Next: Divide and Conquer Division,  Prev: Single Limb Division,  Up: Division Algorithms
 
-16.2.2 Basecase Division
+15.2.2 Basecase Division
 ------------------------
 
 Basecase NxM division is like long division done by hand, but in base
@@ -6678,7 +6690,7 @@ the top end of the dividend.  With a normalized divisor (most
 significant bit set), each quotient limb can be formed with a 2x1
 division and a 1x1 multiplication plus some subtractions.  The 2x1
 division is by the high limb of the divisor and is done either with a
-hardware divide or a multiply by inverse (the same as in *Note Single
+hardware divide or a multiply by inverse (the same as in *note Single
 Limb Division::) whichever is faster.  Such a quotient is sometimes one
 too big, requiring an addback of the divisor, but that happens rarely.
 
@@ -6690,7 +6702,7 @@ for each of the Q quotient limbs.
 
 File: gmp.info,  Node: Divide and Conquer Division,  Next: Block-Wise Barrett Division,  Prev: Basecase Division,  Up: Division Algorithms
 
-16.2.3 Divide and Conquer Division
+15.2.3 Divide and Conquer Division
 ----------------------------------
 
 For divisors larger than `DC_DIV_QR_THRESHOLD', division is done by
@@ -6730,7 +6742,7 @@ In practice, at moderate to large sizes, a 2NxN division is about 2 to
 
 File: gmp.info,  Node: Block-Wise Barrett Division,  Next: Exact Division,  Prev: Divide and Conquer Division,  Up: Division Algorithms
 
-16.2.4 Block-Wise Barrett Division
+15.2.4 Block-Wise Barrett Division
 ----------------------------------
 
 For the largest divisions, a block-wise Barrett division algorithm is
@@ -6746,7 +6758,7 @@ ceil(n/2) limbs.
 
 File: gmp.info,  Node: Exact Division,  Next: Exact Remainder,  Prev: Block-Wise Barrett Division,  Up: Division Algorithms
 
-16.2.5 Exact Division
+15.2.5 Exact Division
 ---------------------
 
 A so-called exact division is when the dividend is known to be an exact
@@ -6805,7 +6817,7 @@ pipelined multipliers.
 
 File: gmp.info,  Node: Exact Remainder,  Next: Small Quotient Division,  Prev: Exact Division,  Up: Division Algorithms
 
-16.2.6 Exact Remainder
+15.2.6 Exact Remainder
 ----------------------
 
 If the exact division algorithm is done with a full subtraction at each
@@ -6827,9 +6839,10 @@ some single limb divisions saved.  When d is a single limb some
 simplifications arise, providing good speedups on a number of
 processors.
 
-   `mpn_divexact_by3', `mpn_modexact_1_odd' and the `mpn_redc_X'
-functions differ subtly in how they return r, leading to some negations
-in the above formula, but all are essentially the same.
+   The functions `mpn_divexact_by3', `mpn_modexact_1_odd' and the
+internal `mpn_redc_X' functions differ subtly in how they return r,
+leading to some negations in the above formula, but all are essentially
+the same.
 
    Clearly r is zero when a is a multiple of d, and this leads to
 divisibility or congruence tests which are potentially more efficient
@@ -6855,7 +6868,7 @@ this.
 
 File: gmp.info,  Node: Small Quotient Division,  Prev: Exact Remainder,  Up: Division Algorithms
 
-16.2.7 Small Quotient Division
+15.2.7 Small Quotient Division
 ------------------------------
 
 An NxM division where the number of quotient limbs Q=N-M is small can
@@ -6887,7 +6900,7 @@ established by following the argument of Knuth section 4.3.1 exercise
 
 File: gmp.info,  Node: Greatest Common Divisor Algorithms,  Next: Powering Algorithms,  Prev: Division Algorithms,  Up: Algorithms
 
-16.3 Greatest Common Divisor
+15.3 Greatest Common Divisor
 ============================
 
 * Menu:
@@ -6901,7 +6914,7 @@ File: gmp.info,  Node: Greatest Common Divisor Algorithms,  Next: Powering Algor
 
 File: gmp.info,  Node: Binary GCD,  Next: Lehmer's Algorithm,  Prev: Greatest Common Divisor Algorithms,  Up: Greatest Common Divisor Algorithms
 
-16.3.1 Binary GCD
+15.3.1 Binary GCD
 -----------------
 
 At small sizes GMP uses an O(N^2) binary style GCD.  This is described
@@ -6963,7 +6976,7 @@ tests into a GCD.
 
 File: gmp.info,  Node: Lehmer's Algorithm,  Next: Subquadratic GCD,  Prev: Binary GCD,  Up: Greatest Common Divisor Algorithms
 
-16.3.2 Lehmer's algorithm
+15.3.2 Lehmer's algorithm
 -------------------------
 
 Lehmer's improvement of the Euclidean algorithms is based on the
@@ -7008,7 +7021,7 @@ optimizations:
 
 File: gmp.info,  Node: Subquadratic GCD,  Next: Extended GCD,  Prev: Lehmer's Algorithm,  Up: Greatest Common Divisor Algorithms
 
-16.3.3 Subquadratic GCD
+15.3.3 Subquadratic GCD
 -----------------------
 
 For inputs larger than `GCD_DC_THRESHOLD', GCD is computed via the HGCD
@@ -7024,8 +7037,8 @@ fit in S limbs. The matrix elements will also be of size roughly N/2.
 condition that returns reduced numbers and the corresponding
 transformation matrix half-way through. For inputs larger than
 `HGCD_THRESHOLD', HGCD is computed recursively, using the divide and
-conquer algorithm in "On Scho"nhage's algorithm and subquadratic
-integer GCD computation" by Mo"ller (*note References::). The recursive
+conquer algorithm in "On Schönhage's algorithm and subquadratic integer
+GCD computation" by Möller (*note References::). The recursive
 algorithm consists of these main steps.
 
    * Call HGCD recursively, on the most significant N/2 limbs. Apply the
@@ -7057,28 +7070,8 @@ Lehmer's algorithm is used for the rest of the work.
    The asymptotic running time of both HGCD and GCD is O(M(N)*log(N)),
 where M(N) is the time for multiplying two N-limb numbers.
 
+
 
-File: gmp.info,  Node: Extended GCD,  Next: Jacobi Symbol,  Prev: Subquadratic GCD,  Up: Greatest Common Divisor Algorithms
-
-16.3.4 Extended GCD
--------------------
-
-The extended GCD function, or GCDEXT, calculates gcd(a,b) and also
-cofactors x and y satisfying a*x+b*y=gcd(a,b). All the algorithms used
-for plain GCD are extended to handle this case. The binary algorithm is
-used only for single-limb GCDEXT.  Lehmer's algorithm is used for sizes
-up to `GCDEXT_DC_THRESHOLD'. Above this threshold, GCDEXT is
-implemented as a loop around HGCD, but with more book-keeping to keep
-track of the cofactors. This gives the same asymptotic running time as
-for GCD and HGCD, O(M(N)*log(N))
-
-   One difference to plain GCD is that while the inputs a and b are
-reduced as the algorithm proceeds, the cofactors x and y grow in size.
-This makes the tuning of the chopping-point more difficult. The current
-code chops off the most significant half of the inputs for the call to
-HGCD in the first iteration, and the most significant two thirds for
-the remaining calls. This strategy could surely be improved. Also the
-stop condition for the loop, where Lehmer's algorithm is invoked once
-the inputs are reduced below `GCDEXT_DC_THRESHOLD', could maybe be
-improved by taking into account the current size of the cofactors.
-
+Local Variables:
+coding: iso-8859-1
+End:

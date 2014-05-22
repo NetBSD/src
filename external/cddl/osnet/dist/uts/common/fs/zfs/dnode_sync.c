@@ -401,7 +401,7 @@ dnode_evict_dbufs(dnode_t *dn)
 		 */
 		mutex_exit(&dn->dn_dbufs_mtx);
 		if (evicting)
-			delay(1);
+			xdelay(1);
 		pass++;
 		ASSERT(pass < 100); /* sanity check */
 	} while (progress);

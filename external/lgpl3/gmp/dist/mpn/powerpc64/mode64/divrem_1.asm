@@ -1,6 +1,7 @@
 dnl  PowerPC-64 mpn_divrem_1 -- Divide an mpn number by an unnormalized limb.
 
-dnl  Copyright 2003, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2004, 2005, 2007, 2008, 2010, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -19,11 +20,13 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C			    cycles/limb
-C			norm	unorm	frac
-C POWER3/PPC630		16-34	16-34	~11
-C POWER4/PPC970		 29		 19
-C POWER5		 29	 29	~20
+C                           cycles/limb
+C                       norm    unorm   frac
+C POWER3/PPC630         16-34   16-34   ~11   outdated figures
+C POWER4/PPC970          28      28      19
+C POWER5                 29      29     ~19
+C POWER6                 49      59     ~42
+C POWER7                 24.5    23     ~14
 
 C INPUT PARAMETERS
 C qp  = r3
@@ -110,23 +113,23 @@ L(71):
 	sldi	r6, r6, 3
 	ALIGN(16)
 L(uloop):
-	addi	r11, r31, 1
 	ldx	r8, r26, r6
+	nop
 	mulld	r0, r31, r3
 	mulhdu	r10, r31, r3
-	addi	r6, r6, -8
+	addi	r11, r31, 1
 	srd	r9, r8, r5
+	addi	r6, r6, -8
 	or	r9, r7, r9
 	addc	r0, r0, r9
 	adde	r10, r10, r11
 	mulld	r31, r10, r30
 	subf	r31, r31, r9
-	subfc	r0, r0, r31	C r >= ql
-	subfe	r0, r0, r0	C r0 = -(r >= ql)
-	not	r7, r0
-	add	r10, r7, r10	C qh -= (r >= ql)
-	andc	r0, r30, r0
-	add	r31, r31, r0
+	subfc	r0, r31, r0	C r <= ql
+	subfe	r0, r0, r0	C r0 = -(r <= ql)
+	and	r9, r30, r0
+	add	r31, r31, r9
+	add	r10, r0, r10	C qh -= (r >= ql)
 	cmpld	cr7, r31, r30
 	bge-	cr7, L(164)
 L(123):
@@ -163,19 +166,19 @@ L(110):
 L(ufloop):
 	addi	r11, r31, 1
 	nop
-	mulld	r7, r3, r31
+	mulld	r0, r3, r31
 	mulhdu	r10, r3, r31
 	add	r10, r10, r11
 	mulld	r31, r9, r10
 ifelse(0,1,`
-	subfc	r0, r7, r31
+	subfc	r0, r0, r31
 	subfe	r0, r0, r0	C r0 = -(r >= ql)
 	not	r7, r0
 	add	r10, r7, r10	C qh -= (r >= ql)
 	andc	r0, r30, r0
 	add	r31, r31, r0
 ',`
-	cmpld	cr7, r31, r7
+	cmpld	cr7, r31, r0
 	blt	cr7, L(29)
 	add	r31, r30, r31
 	addi	r10, r10, -1
@@ -216,12 +219,11 @@ L(162):
 	and	r0, r0, r7
 	subf	r31, r0, r31
 L(8):
-L(10):
 	mr	r3, r30
 	CALL(	mpn_invert_limb)
-	nop
+	li	r27, 0
 	addic.	r6, r28, -1
-	blt-	cr0, L(150)
+	blt-	cr0, L(110)
 	mtctr	r28
 	sldi	r6, r6, 3
 	ALIGN(16)
@@ -229,70 +231,25 @@ L(nloop):
 	addi	r11, r31, 1
 	ldx	r8, r26, r6
 	mulld	r0, r31, r3
-	addi	r6, r6, -8
 	mulhdu	r10, r31, r3
-	addc	r7, r0, r8
+	addi	r6, r6, -8
+	addc	r0, r0, r8
 	adde	r10, r10, r11
 	mulld	r31, r10, r30
 	subf	r31, r31, r8	C r = nl - qh * d
-	subfc	r0, r7, r31	C r >= ql
-	subfe	r0, r0, r0	C r0 = -(r >= ql)
-	not	r7, r0
-	add	r10, r7, r10	C qh -= (r >= ql)
-	andc	r0, r30, r0
-	add	r31, r31, r0
+	subfc	r0, r31, r0	C r <= ql
+	subfe	r0, r0, r0	C r0 = -(r <= ql)
+	and	r9, r30, r0
+	add	r31, r31, r9
+	add	r10, r0, r10	C qh -= (r >= ql)
 	cmpld	cr7, r31, r30
 	bge-	cr7, L(167)
 L(51):
 	std	r10, 0(r29)
 	addi	r29, r29, -8
 	bdnz	L(nloop)
+	b	L(110)
 
-L(150):
-	addic.	r9, r25, -1
-	blt-	cr0, L(152)
-	mtctr	r25
-	neg	r9, r30
-	ALIGN(16)
-L(nfloop):
-	addi	r11, r31, 1
-	nop
-	mulld	r7, r3, r31
-	mulhdu	r10, r3, r31
-	add	r10, r10, r11
-	mulld	r31, r9, r10
-ifelse(0,1,`
-	subfc	r0, r7, r31
-	subfe	r0, r0, r0	C r0 = -(r >= ql)
-	not	r7, r0
-	add	r10, r7, r10	C qh -= (r >= ql)
-	andc	r0, r30, r0
-	add	r31, r31, r0
-',`
-	cmpld	cr7, r31, r7
-	blt	cr7, L(28)
-	add	r31, r30, r31
-	addi	r10, r10, -1
-L(28):
-')
-	std	r10, 0(r29)
-	addi	r29, r29, -8
-	bdnz	L(nfloop)
-L(152):
-	addi	r1, r1, 176
-	mr	r3, r31
-	ld	r0, 16(r1)
-	lwz	r12, 8(r1)
-	mtlr	r0
-	ld	r25, -56(r1)
-	ld	r26, -48(r1)
-	mtcrf	8, r12
-	ld	r27, -40(r1)
-	ld	r28, -32(r1)
-	ld	r29, -24(r1)
-	ld	r30, -16(r1)
-	ld	r31, -8(r1)
-	blr
 L(164):
 	subf	r31, r30, r31
 	addi	r10, r10, 1

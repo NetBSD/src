@@ -3,10 +3,17 @@
  * Edit at your peril.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>  /* for offsetof() */
 #include "xcbext.h"
 #include "composite.h"
+
+#define ALIGNOF(type) offsetof(struct { char dummy; type member; }, member)
 #include "xproto.h"
 #include "render.h"
 #include "shape.h"
@@ -49,6 +56,7 @@ xcb_composite_query_version (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -88,6 +96,7 @@ xcb_composite_query_version_unchecked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -148,6 +157,7 @@ xcb_composite_redirect_window_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -188,6 +198,7 @@ xcb_composite_redirect_window (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -228,6 +239,7 @@ xcb_composite_redirect_subwindows_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -268,6 +280,7 @@ xcb_composite_redirect_subwindows (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -308,6 +321,7 @@ xcb_composite_unredirect_window_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -348,6 +362,7 @@ xcb_composite_unredirect_window (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -388,6 +403,7 @@ xcb_composite_unredirect_subwindows_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -428,6 +444,7 @@ xcb_composite_unredirect_subwindows (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -467,6 +484,7 @@ xcb_composite_create_region_from_border_clip_checked (xcb_connection_t    *c  /*
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -506,6 +524,7 @@ xcb_composite_create_region_from_border_clip (xcb_connection_t    *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -545,6 +564,7 @@ xcb_composite_name_window_pixmap_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -584,6 +604,7 @@ xcb_composite_name_window_pixmap (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -620,6 +641,7 @@ xcb_composite_get_overlay_window (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -656,6 +678,7 @@ xcb_composite_get_overlay_window_unchecked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -712,6 +735,7 @@ xcb_composite_release_overlay_window_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -748,6 +772,7 @@ xcb_composite_release_overlay_window (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }

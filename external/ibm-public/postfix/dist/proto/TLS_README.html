@@ -245,7 +245,7 @@ $smtpd_tls_CAfile or install it in the $smtpd_tls_CApath directory. </p>
 </pre>  
 </blockquote>
 
-<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 0.9.9): </p>
+<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 1.0.0): </p>
 
 <blockquote>
 <pre>
@@ -654,12 +654,25 @@ certificate must no longer be used (e.g. an employee leaving). </p>
  
 <blockquote>
 <pre>
+# With Postfix 2.10 and later, the mail relay policy is
+# preferably specified under smtpd_relay_restrictions.
 /etc/postfix/main.cf:
-    smtpd_recipient_restrictions = 
-        ... 
+    smtpd_relay_restrictions = 
+        permit_mynetworks
         permit_tls_clientcerts 
         reject_unauth_destination
-        ...
+</pre>
+
+<pre>
+# Older configurations combine relay control and spam control under
+# smtpd_recipient_restrictions. To use this example with Postfix &ge;
+# 2.10 specify "smtpd_relay_restrictions=".
+/etc/postfix/main.cf:
+    smtpd_recipient_restrictions = 
+        permit_mynetworks
+        permit_tls_clientcerts 
+        reject_unauth_destination
+        ...other rules...
 </pre>
 </blockquote>
 
@@ -676,6 +689,39 @@ the name of the user or host:</p>
     D7:04:2F:A7:0B:8C:A5:21:FA:31:77:E1:41:8A:EE:80 lutzpc.at.home
 </pre>
 </blockquote>
+
+<p> To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint. </p>
+
+<p> The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used. </p>
+<blockquote>
+<pre>
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+</pre>
+</blockquote>
+<p> Note: Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <h3><a name="server_cipher">Server-side cipher controls</a> </h3>
 
@@ -760,7 +806,7 @@ settings. </p>
 </blockquote>
 
 <p> Support for elliptic curve cryptography is available with Postfix
-2.6 and OpenSSL 0.9.9 or later.  To enable ephemeral elliptic curve
+2.6 and OpenSSL 1.0.0 or later.  To enable ephemeral elliptic curve
 Diffie-Hellman (EECDH) key-exchange, set "smtpd_tls_eecdh_grade =
 strong" or "smtpd_tls_eecdh_grade = ultra". The "ultra" setting is
 substantially more CPU intensive, and "strong" is sufficiently
@@ -787,7 +833,7 @@ chooses the cipher from a list supplied by the server. </p>
 cipher that the server supports. With SSLv3 and later, the server
 may choose its own most preferred cipher that is supported (offered)
 by the client. Setting "tls_preempt_cipherlist = yes" enables server
-cipher preferences. The default OpenSSL behaviour applies with
+cipher preferences. The default OpenSSL behavior applies with
 "tls_preempt_cipherlist = no". </p>
 
 <p> While server cipher selection may in some cases lead to a more secure
@@ -1074,7 +1120,7 @@ required.  The certificate trust chain, expiration date, ... are
 not checked. Instead, the smtp_tls_fingerprint_cert_match parameter
 or the "match" attribute in the <a href="#client_tls_policy">policy</a>
 table lists the remote SMTP server certificate fingerprint or
-public key fingerprint (Postfix 2.9 and later).
+public key fingerprint (Postfix 2.9 and later). </p>
 
 <p> If certificate fingerprints are exchanged securely, this is the
 strongest, and least scalable security level. The administrator needs
@@ -1135,6 +1181,39 @@ As in the example above, we show two matching fingerprints: </p>
         match=EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
 </pre>
 </blockquote>
+
+<p> To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint. </p>
+
+<p> The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used. </p>
+<blockquote>
+<pre>
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+</pre>
+</blockquote>
+<p> Note: Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <h4><a name="client_tls_verify"> Mandatory server certificate verification </a> </h4>
 
@@ -1461,7 +1540,7 @@ $smtp_tls_CAfile or install it in the $smtp_tls_CApath directory. </p>
 </pre>  
 </blockquote>
 
-<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 0.9.9): </p>
+<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 1.0.0): </p>
 
 <blockquote>
 <pre>
@@ -2123,8 +2202,9 @@ font, and a "<tt>#</tt>" prompt indicates a super-user shell. </p>
 
 <li> <p> Become your own Certificate Authority, so that you can
 sign your own public keys. This example uses the CA.pl script that
-ships with OpenSSL.  By default, OpenSSL installs this as
-<tt>/usr/local/ssl/misc/CA.pl</tt>, but your mileage may vary. 
+ships with OpenSSL.  On some systems, OpenSSL installs this as
+<tt>/usr/local/ssl/misc/CA.pl</tt>. Some systems install this as
+part of a package named <tt>openssl-perl</tt> or something similar.
 The script creates a private key in <tt>./demoCA/private/cakey.pem</tt>
 and a public key in <tt>./demoCA/cacert.pem</tt>.</p>
 

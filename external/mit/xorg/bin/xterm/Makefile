@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.6.1 2012/04/17 00:04:47 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.6.2 2014/05/22 14:09:39 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 	fontutils.c input.c linedata.c menu.c misc.c print.c ptydata.c \
 	screen.c scrollback.c scrollbar.c tabs.c util.c xstrings.c \
 	TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c charclass.c precompose.c \
-	wcwidth.c xutf8.c cachedGCs.c xtermcap.c
+	wcwidth.c xutf8.c cachedGCs.c xtermcap.c version.c
 
 CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
@@ -35,6 +35,10 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 SUBDIR=	resize uxterm
 
 .PATH:	${X11SRCDIR.${PROG}}
+
+COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
+
+# XXXMRG should probably build builtin_icons.h
 
 .include "Makefile.inc"
 

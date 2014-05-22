@@ -136,7 +136,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 static int
 lookahead (struct mpexpr_parse_t *p, int prefix)
 {
-  __gmp_const struct mpexpr_operator_t  *op, *op_found;
+  const struct mpexpr_operator_t  *op, *op_found;
   size_t  oplen, oplen_found, wlen;
   int     i;
 
@@ -278,7 +278,7 @@ lookahead (struct mpexpr_parse_t *p, int prefix)
    a reference through CP.  */
 #define CONTROL_PUSH(opptr,args)                        \
   do {                                                  \
-    __gmp_const struct mpexpr_operator_t *op = opptr;   \
+    const struct mpexpr_operator_t *op = opptr;		\
     struct mpexpr_control_t *cp;                        \
     CONTROL_SPACE ();                                   \
     p->control_top++;                                   \
@@ -371,7 +371,7 @@ mpexpr_evaluate (struct mpexpr_parse_t *p)
   /* "done" is a special sentinel at the bottom of the control stack,
      precedence -1 is lower than any normal operator.  */
   {
-    static __gmp_const struct mpexpr_operator_t  operator_done
+    static const struct mpexpr_operator_t  operator_done
       = { "DONE", NULL, MPEXPR_TYPE_DONE, -1 };
 
     p->control_alloc = 20;

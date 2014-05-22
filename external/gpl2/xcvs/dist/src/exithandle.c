@@ -30,7 +30,7 @@ signals_register (RETSIGTYPE (*handler)(int))
 	(void) SIG_register (SIGQUIT, handler);
 #endif
 #ifdef SIGPIPE
-	(void) SIG_register (SIGPIPE, handler);
+	(void) signal (SIGPIPE, SIG_IGN);
 #endif
 #ifdef SIGTERM
 	(void) SIG_register (SIGTERM, handler);

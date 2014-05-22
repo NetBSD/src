@@ -1,4 +1,4 @@
-/* int mpz_fits_sint_p (mpz_t z) -- test whether z fits a int.
+/* int mpz_fits_sint_p (mpz_t z) -- test whether z fits an int.
 
 Copyright 1997, 2000, 2001 Free Software Foundation, Inc.
 

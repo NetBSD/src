@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/11/21 07:20:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2014/05/22 14:09:35 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT}
 
 .PATH:	${X11SRCDIR.fontconfig}/${PROG}
 
-FCARCH_DEPFILE=	fc-cat.c
 .include "../../lib/fontconfig/src/Makefile.fcarch"
 
 .include <bsd.x11.mk>

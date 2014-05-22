@@ -1108,7 +1108,7 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 	static const char dt_prefix[] = "__dtrace";
 	static const char dt_enabled[] = "enabled";
 	static const char dt_symprefix[] = "$dtrace";
-	static const char dt_symfmt[] = "%s%d.%s";
+	static const char dt_symfmt[] = "%s%ld.%s";
 	int fd, i, ndx, eprobe, mod = 0;
 	Elf *elf = NULL;
 	GElf_Ehdr ehdr;
@@ -1496,7 +1496,8 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 				(void) gelf_update_sym(data_sym, isym, &dsym);
 
 				r = (char *)data_str->d_buf + istr;
-				istr += 1 + sprintf(r, dt_symfmt,
+				istr += 1 + snprintf(r, data_str->d_size - 
+				    (istr - (size_t)data_str->d_buf), dt_symfmt,
 				    dt_symprefix, objkey, s);
 				isym++;
 				assert(isym <= nsym);

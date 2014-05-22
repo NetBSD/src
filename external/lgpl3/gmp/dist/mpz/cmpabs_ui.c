@@ -23,7 +23,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 int
-mpz_cmpabs_ui (mpz_srcptr u, unsigned long int v_digit)
+mpz_cmpabs_ui (mpz_srcptr u, unsigned long int v_digit) __GMP_NOTHROW
 {
   mp_ptr up;
   mp_size_t un;

@@ -125,8 +125,8 @@ This is configured by editing the master.cf file:
         smtp      inet  n       -       n       -       20      smtpd
             -o smtpd_proxy_filter=127.0.0.1:10025
             -o smtpd_client_connection_count_limit=10
-    	# Postfix 2.7 and later performance feature.
-    	# -o smtpd_proxy_options=speed_adjust
+            # Postfix 2.7 and later performance feature.
+            # -o smtpd_proxy_options=speed_adjust
         #
         # After-filter SMTP server. Receive mail from the content filter
         # on localhost port 10026.
@@ -136,6 +136,8 @@ This is configured by editing the master.cf file:
             -o smtpd_client_restrictions=
             -o smtpd_helo_restrictions=
             -o smtpd_sender_restrictions=
+            # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+            -o smtpd_relay_restrictions=
             -o smtpd_recipient_restrictions=permit_mynetworks,reject
             -o smtpd_data_restrictions=
             -o mynetworks=127.0.0.0/8

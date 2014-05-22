@@ -132,12 +132,13 @@ aa ""ttyyppee::ttaabbllee"" ppaatttteerrnn..
 
 KKnnoowwnn LLiimmiittaattiioonnss
 
-  * The order of IPv6/IPv4 outgoing connection attempts is not yet
-    configurable. Currently, IPv6 is tried before IPv4.
+  * Postfix SMTP clients before version 2.8 try to connect over IPv6 before
+    trying IPv4. With more recent Postfix versions, the order of IPv6 versus
+    IPv4 outgoing connection attempts is configurable with the
+    smtp_address_preference parameter.
 
-  * Postfix currently does not support DNSBL (real-time blackhole list) lookups
-    for IPv6 client IP addresses; currently there are no blacklists that cover
-    the IPv6 address space.
+  * Postfix versions before 2.6 do not support DNSBL (real-time blackhole list)
+    lookups for IPv6 client IP addresses.
 
   * IPv6 does not have class A, B, C, etc. networks. With IPv6 networks, the
     setting "mynetworks_style = class" has the same effect as the setting

@@ -3,7 +3,7 @@
 Contributed to the GNU project by Niels Möller.
 
 Copyright 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2005,
-2006, 2007, 2009 Free Software Foundation, Inc.
+2006, 2007, 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -47,9 +47,6 @@ mpz_divexact (mpz_ptr quot, mpz_srcptr num, mpz_srcptr den)
   nn = ABSIZ (num);
   dn = ABSIZ (den);
 
-  qn = nn - dn + 1;
-  MPZ_REALLOC (quot, qn);
-
   if (nn < dn)
     {
       /* This special case avoids segfaults below when the function is
@@ -59,12 +56,14 @@ mpz_divexact (mpz_ptr quot, mpz_srcptr num, mpz_srcptr den)
       return;
     }
 
-  TMP_MARK;
+  qn = nn - dn + 1;
 
-  qp = PTR(quot);
+  TMP_MARK;
 
   if (quot == num || quot == den)
     qp = TMP_ALLOC_LIMBS (qn);
+  else
+    qp = MPZ_REALLOC (quot, qn);
 
   np = PTR(num);
   dp = PTR(den);
@@ -72,10 +71,10 @@ mpz_divexact (mpz_ptr quot, mpz_srcptr num, mpz_srcptr den)
   mpn_divexact (qp, np, nn, dp, dn);
   MPN_NORMALIZE (qp, qn);
 
-  SIZ(quot) = (SIZ(num) ^ SIZ(den)) >= 0 ? qn : -qn;
-
   if (qp != PTR(quot))
-    MPN_COPY (PTR(quot), qp, qn);
+    MPN_COPY (MPZ_REALLOC (quot, qn), qp, qn);
+
+  SIZ(quot) = (SIZ(num) ^ SIZ(den)) >= 0 ? qn : -qn;
 
   TMP_FREE;
 }

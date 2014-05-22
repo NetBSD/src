@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/21 02:33:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.6.1 2014/05/22 14:09:37 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ XFSDIR= ${X11SRCDIR.${PROG}}
 .PATH:	${XFSDIR}/man
 
 .PATH:	${XFSDIR}/difs
-SRCS=	atom.c cache.c charinfo.c difsutils.c dispatch.c events.c \
+SRCS=	atom.c charinfo.c difsutils.c dispatch.c events.c \
 	extensions.c fontinfo.c fonts.c globals.c initfonts.c main.c \
 	resource.c swaprep.c swapreq.c tables.c
 

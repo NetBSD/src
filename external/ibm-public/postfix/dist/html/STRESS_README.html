@@ -514,17 +514,13 @@ services that accept remote connections. </p>
 
 <h2><a name="other"> Other measures to off-load zombies </a> </h2>
 
-<p> OpenBSD <a href="http://www.openbsd.org/spamd/">spamd</a>
-implements a daemon that handles all connections from "new" clients.
-Only well-behaved mail clients are allowed to talk to the mail
-server. Other clients are tarpitted, and will never get a chance
-to affect mail server performance. </p>
-
-<p> At some point in the future, Postfix may come with a simple
-front-end daemon that does basic greylisting and pipelining detection
-to keep zombies and other ratware away from Postfix itself. This
-would use the "pass" service type which has been available in
-stable Postfix releases since Postfix 2.5. </p>
+<p> The <a href="postscreen.8.html">postscreen(8)</a> daemon, introduced with Postfix 2.8, provides
+additional protection against mail server overload. One <a href="postscreen.8.html">postscreen(8)</a>
+process handles multiple inbound SMTP connections, and decides which
+clients may to talk to a Postfix SMTP server process.  By keeping
+spambots away, <a href="postscreen.8.html">postscreen(8)</a> leaves more SMTP server processes
+available for legitimate clients, and delays the onset of server
+overload conditions. </p>
 
 <h2><a name="credits"> Credits </a></h2>
 

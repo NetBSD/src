@@ -28,13 +28,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 /* SunOS 4 stdio.h doesn't provide prototypes for these */
 #if ! HAVE_DECL_FGETC
-int fgetc __GMP_PROTO ((FILE *fp));
+int fgetc (FILE *);
 #endif
 #if ! HAVE_DECL_FSCANF
-int fscanf __GMP_PROTO ((FILE *fp, const char *fmt, ...));
+int fscanf (FILE *, const char *, ...);
 #endif
 #if ! HAVE_DECL_UNGETC
-int ungetc __GMP_PROTO ((int c, FILE *fp));
+int ungetc (int, FILE *);
 #endif
 
 

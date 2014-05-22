@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/04/11 22:47:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2014/05/22 14:09:36 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,3 +16,4 @@ X11EXTRAMANDEFS+=	-e 's,__ttys_file__,/etc/ttys,g; \
 .include <bsd.prog.mk>
 
 .PATH:		${X11SRCDIR.${PROG}}
+.PATH:		${X11SRCDIR.${PROG}}/man

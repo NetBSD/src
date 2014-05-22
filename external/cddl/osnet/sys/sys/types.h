@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 2011/07/17 20:54:33 joerg Exp $	*/
+/*	$NetBSD: types.h,v 1.12.2.1 2014/05/22 14:01:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,6 @@ typedef struct vfsops	vfsops_t;
 
 typedef	short		index_t;
 typedef	off_t		offset_t;
-typedef	long		ptrdiff_t;	/* pointer difference */
 typedef	int64_t		rlim64_t;
 typedef __caddr_t	caddr_t;	/* core address */
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.2.4.1 2013/01/23 00:04:50 yamt Exp $
+#	$NetBSD: post-install,v 1.1.1.2.4.2 2014/05/22 14:08:01 yamt Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -466,7 +466,7 @@ test -n "$create" && {
 	case $type in
 	[hl]) continue;;
 	[df]) ;;
-	   *) echo unknown type $type for $path in $daemon_directory/postfix-files1>&2; exit 1;;
+	   *) echo unknown type $type for $path in $daemon_directory/postfix-files 1>&2; exit 1;;
 	esac
 	# Expand $name, and canonicalize null fields.
 	for name in path owner group flags
@@ -801,12 +801,36 @@ EOF
     # when IPv6 support is not compiled in. See util/sys_defs.h.
 
     test "`$POSTCONF -dh inet_protocols`" = "ipv4" ||
-	test -n "`$POSTCONF -c $config_directory -nh inet_protocols`" || {
-	echo COMPATIBILITY: editing main.cf, setting inet_protocols=ipv4.
-	echo Specify inet_protocols explicitly if you want to enable IPv6.
-	echo In a future release IPv6 will be enabled by default.
+	test -n "`$POSTCONF -c $config_directory -n inet_protocols`" || {
+	cat <<EOF | ${FMT}
+    COMPATIBILITY: editing $config_directory/main.cf, setting
+    inet_protocols=ipv4.  Specify inet_protocols explicitly if you
+    want to enable IPv6.
+    In a future release IPv6 will be enabled by default.
+EOF
 	$POSTCONF -c $config_directory inet_protocols=ipv4 || exit 1
     }
+
+# Disabled because unhelpful down-stream maintainers disable the safety net.
+#    # Postfix 2.10.
+#    # Safety net for incompatible changes due to the introduction
+#    # of the smtpd_relay_restrictions feature to separate the
+#    # mail relay policy from the spam blocking policy.
+#    # PLEASE DO NOT REMOVE THIS CODE. ITS PURPOSE IS TO PREVENT
+#    # INBOUND MAIL FROM UNEXPECTEDLY BOUNCING AFTER UPGRADING FROM
+#    # POSTFIX BEFORE 2.10.
+#    test -n "`$POSTCONF -c $config_directory -n smtpd_relay_restrictions`" || {
+#	cat <<EOF | ${FMT}
+#    COMPATIBILITY: editing $config_directory/main.cf, overriding
+#    smtpd_relay_restrictions to prevent inbound mail from
+#    unexpectedly bouncing.
+#    Specify an empty smtpd_relay_restrictions value to keep using 
+#    smtpd_recipient_restrictions as before.
+#EOF
+#	$POSTCONF -c $config_directory "smtpd_relay_restrictions = \
+#	    permit_mynetworks permit_sasl_authenticated \
+#	    defer_unauth_destination" || exit 1
+#    }
 }
 
 # A reminder if this is the first time Postfix is being installed.

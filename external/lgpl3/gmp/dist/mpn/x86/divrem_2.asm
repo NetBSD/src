@@ -81,7 +81,7 @@ PROLOGUE(mpn_divrem_2)
 	seta	%dl
 	cmp	20(%esp), %ebp
 	setae	%al
-	orb	%dl, %al
+	orb	%dl, %al		C "orb" form to placate Sun tools
 	jne	L(35)
 L(8):
 	mov	60(%esp), %esi		C fn
@@ -174,7 +174,7 @@ L(9):	mov	64(%esp), %esi		C up
 L(fix):	seta	%dl
 	cmp	20(%esp), %ebp
 	setae	%al
-	orb	%dl, %al
+	orb	%dl, %al		C "orb" form to placate Sun tools
 	je	L(bck)
 	inc	%edi
 	sub	20(%esp), %ebp

@@ -2,7 +2,7 @@
 
 
 # Copyright 1991, 1993, 1994, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-# 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+# 2006, 2007, 2008, 2009, 2011, 2012, 2013 Free Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library.
 #
@@ -25,7 +25,7 @@
 # Makefiles in subdirectories, but here we must omit it so automake gives
 # the actual ansi2knr build rule, not "cd $(top_builddir) && make ansi2knr".
 #
-AUTOMAKE_OPTIONS = 1.8 gnu no-dependencies ansi2knr
+# AUTOMAKE_OPTIONS = 1.8 gnu no-dependencies
 
 
 # Libtool -version-info for libgmp.la and libmp.la.  See "Versioning" in the
@@ -68,6 +68,13 @@ AUTOMAKE_OPTIONS = 1.8 gnu no-dependencies ansi2knr
 #        5.0.0    9:0:6    6:0:2   4:20:1	Should have been 10:0:0
 #        5.0.1   10:1:0    6:1:2   4:21:1
 #        5.0.2   10:2:0    6:2:2   4:22:1
+#        5.0.3   10:3:0    6:3:2   4:23:1
+#        5.0.4   10:4:0    6:4:2   4:24:1
+#        5.0.5   10:5:0    6:5:2   4:25:1
+#        5.1.0   11:0:1    7:0:3     -
+#        5.1.1   11:1:1    7:1:3     -
+#        5.1.2   11:2:1    7:2:3     -
+#        5.1.3   11:3:1    7:3:3     -
 #
 # Starting at 3:0:0 is a slight abuse of the versioning system, but it
 # ensures we're past soname libgmp.so.2, which was used on Debian GNU/Linux
@@ -80,20 +87,16 @@ AUTOMAKE_OPTIONS = 1.8 gnu no-dependencies ansi2knr
 # it's still good to get the shared library filename (like
 # libgmpxx.so.3.0.4) incrementing, to make it clear which GMP it's from.
 
-LIBGMP_LT_CURRENT =  10
-LIBGMP_LT_REVISION = 2
-LIBGMP_LT_AGE =      0
+LIBGMP_LT_CURRENT    = 11
+LIBGMP_LT_REVISION   = 3
+LIBGMP_LT_AGE        = 1
 
-LIBGMPXX_LT_CURRENT =  6
-LIBGMPXX_LT_REVISION = 2
-LIBGMPXX_LT_AGE =      2
-
-LIBMP_LT_CURRENT =  4
-LIBMP_LT_REVISION = 22
-LIBMP_LT_AGE =      1
+LIBGMPXX_LT_CURRENT  = 7
+LIBGMPXX_LT_REVISION = 3
+LIBGMPXX_LT_AGE      = 3
 
 
-SUBDIRS = tests mpn mpz mpq mpf printf scanf cxx mpbsd demos tune doc
+SUBDIRS = tests mpn mpz mpq mpf printf scanf rand cxx demos tune doc
 
 EXTRA_DIST = configfsf.guess configfsf.sub .gdbinit INSTALL.autoconf
 
@@ -113,8 +116,8 @@ EXTRA_DIST += gmpxx.h
 #
 includeexecdir = $(exec_prefix)/include
 include_HEADERS = $(GMPXX_HEADERS_OPTION)
-nodist_includeexec_HEADERS = gmp.h $(MPBSD_HEADERS_OPTION)
-lib_LTLIBRARIES = libgmp.la $(GMPXX_LTLIBRARIES_OPTION) $(MPBSD_LTLIBRARIES_OPTION)
+nodist_includeexec_HEADERS = gmp.h
+lib_LTLIBRARIES = libgmp.la $(GMPXX_LTLIBRARIES_OPTION)
 
 BUILT_SOURCES = gmp.h
 
@@ -158,16 +161,17 @@ MPZ_OBJECTS = mpz/abs$U.lo mpz/add$U.lo mpz/add_ui$U.lo			\
   mpz/cong$U.lo mpz/cong_2exp$U.lo mpz/cong_ui$U.lo			\
   mpz/divexact$U.lo mpz/divegcd$U.lo mpz/dive_ui$U.lo			\
   mpz/divis$U.lo mpz/divis_ui$U.lo mpz/divis_2exp$U.lo mpz/dump$U.lo	\
-  mpz/export$U.lo mpz/fac_ui$U.lo mpz/fdiv_q$U.lo			\
+  mpz/export$U.lo mpz/mfac_uiui$U.lo					\
+  mpz/2fac_ui$U.lo mpz/fac_ui$U.lo mpz/oddfac_1$U.lo mpz/prodlimbs$U.lo	\
   mpz/fdiv_q_ui$U.lo mpz/fdiv_qr$U.lo mpz/fdiv_qr_ui$U.lo		\
-  mpz/fdiv_r$U.lo mpz/fdiv_r_ui$U.lo					\
+  mpz/fdiv_r$U.lo mpz/fdiv_r_ui$U.lo mpz/fdiv_q$U.lo			\
   mpz/fdiv_ui$U.lo mpz/fib_ui$U.lo mpz/fib2_ui$U.lo mpz/fits_sint$U.lo	\
   mpz/fits_slong$U.lo mpz/fits_sshort$U.lo mpz/fits_uint$U.lo		\
   mpz/fits_ulong$U.lo mpz/fits_ushort$U.lo mpz/gcd$U.lo			\
   mpz/gcd_ui$U.lo mpz/gcdext$U.lo mpz/get_d$U.lo mpz/get_d_2exp$U.lo	\
   mpz/get_si$U.lo mpz/get_str$U.lo mpz/get_ui$U.lo mpz/getlimbn$U.lo	\
   mpz/hamdist$U.lo							\
-  mpz/import$U.lo mpz/init$U.lo mpz/init2$U.lo mpz/inits$U.lo 		\
+  mpz/import$U.lo mpz/init$U.lo mpz/init2$U.lo mpz/inits$U.lo		\
   mpz/inp_raw$U.lo mpz/inp_str$U.lo mpz/invert$U.lo			\
   mpz/ior$U.lo mpz/iset$U.lo mpz/iset_d$U.lo mpz/iset_si$U.lo		\
   mpz/iset_str$U.lo mpz/iset_ui$U.lo mpz/jacobi$U.lo mpz/kronsz$U.lo	\
@@ -178,7 +182,8 @@ MPZ_OBJECTS = mpz/abs$U.lo mpz/add$U.lo mpz/add_ui$U.lo			\
   mpz/n_pow_ui$U.lo mpz/neg$U.lo mpz/nextprime$U.lo			\
   mpz/out_raw$U.lo mpz/out_str$U.lo mpz/perfpow$U.lo mpz/perfsqr$U.lo	\
   mpz/popcount$U.lo mpz/pow_ui$U.lo mpz/powm$U.lo mpz/powm_sec$U.lo	\
-  mpz/powm_ui$U.lo mpz/pprime_p$U.lo mpz/random$U.lo mpz/random2$U.lo	\
+  mpz/powm_ui$U.lo mpz/primorial_ui$U.lo				\
+  mpz/pprime_p$U.lo mpz/random$U.lo mpz/random2$U.lo			\
   mpz/realloc$U.lo mpz/realloc2$U.lo mpz/remove$U.lo			\
   mpz/root$U.lo mpz/rootrem$U.lo mpz/rrandomb$U.lo mpz/scan0$U.lo	\
   mpz/scan1$U.lo mpz/set$U.lo mpz/set_d$U.lo mpz/set_f$U.lo		\
@@ -222,18 +227,17 @@ SCANF_OBJECTS =							\
   scanf/scanf$U.lo scanf/sscanf$U.lo scanf/sscanffuns$U.lo	\
   scanf/vfscanf$U.lo scanf/vscanf$U.lo scanf/vsscanf$U.lo
 
+RANDOM_OBJECTS =							\
+  rand/rand$U.lo rand/randclr$U.lo rand/randdef$U.lo rand/randiset$U.lo	\
+  rand/randlc2s$U.lo rand/randlc2x$U.lo rand/randmt$U.lo		\
+  rand/randmts$U.lo rand/rands$U.lo rand/randsd$U.lo rand/randsdui$U.lo	\
+  rand/randbui$U.lo rand/randmui$U.lo
+
 # no $U for C++ files
 CXX_OBJECTS =								\
   cxx/isfuns.lo cxx/ismpf.lo cxx/ismpq.lo cxx/ismpz.lo cxx/ismpznw.lo	\
-  cxx/osdoprnti.lo cxx/osfuns.lo					\
+  cxx/limits.lo cxx/osdoprnti.lo cxx/osfuns.lo				\
   cxx/osmpf.lo cxx/osmpq.lo cxx/osmpz.lo
-
-MPBSD_OBJECTS = mpbsd/add$U.lo mpbsd/tdiv_qr$U.lo mpbsd/set$U.lo	\
-  mpbsd/powm$U.lo mpbsd/sub$U.lo mpbsd/cmp$U.lo mpbsd/mfree$U.lo	\
-  mpbsd/mtox$U.lo mpbsd/realloc$U.lo mpbsd/gcd$U.lo mpbsd/itom$U.lo	\
-  mpbsd/min$U.lo mpbsd/mul$U.lo mpbsd/mout$U.lo mpbsd/rpow$U.lo		\
-  mpbsd/sdiv$U.lo mpbsd/sqrtrem$U.lo mpbsd/xtom$U.lo
-
 
 # In libtool 1.5 it doesn't work to build libgmp.la from the convenience
 # libraries like mpz/libmpz.la.  Or rather it works, but it ends up putting
@@ -249,17 +253,15 @@ MPBSD_OBJECTS = mpbsd/add$U.lo mpbsd/tdiv_qr$U.lo mpbsd/set$U.lo	\
 # -export-symbols, since the tune and speed programs, and perhaps some of
 # the test programs, want to access undocumented symbols.
 
-libgmp_la_SOURCES = gmp-impl.h longlong.h randmt.h			\
+libgmp_la_SOURCES = gmp-impl.h longlong.h				\
   assert.c compat.c errno.c extract-dbl.c invalid.c memory.c		\
   mp_bpl.c mp_clz_tab.c mp_dv_tab.c mp_minv_tab.c mp_get_fns.c mp_set_fns.c \
-  rand.c randclr.c randdef.c randiset.c randlc2s.c randlc2x.c randmt.c	\
-  randmts.c rands.c randsd.c randsdui.c randbui.c randmui.c version.c	\
-  nextprime.c
+  version.c nextprime.c primesieve.c
 EXTRA_libgmp_la_SOURCES = tal-debug.c tal-notreent.c tal-reent.c
 libgmp_la_DEPENDENCIES = @TAL_OBJECT@		\
   $(MPF_OBJECTS) $(MPZ_OBJECTS) $(MPQ_OBJECTS)	\
   $(MPN_OBJECTS) @mpn_objs_in_libgmp@		\
-  $(PRINTF_OBJECTS)  $(SCANF_OBJECTS)
+  $(PRINTF_OBJECTS)  $(SCANF_OBJECTS) $(RANDOM_OBJECTS)
 libgmp_la_LIBADD = $(libgmp_la_DEPENDENCIES)
 libgmp_la_LDFLAGS = $(GMP_LDFLAGS) $(LIBGMP_LDFLAGS) \
   -version-info $(LIBGMP_LT_CURRENT):$(LIBGMP_LT_REVISION):$(LIBGMP_LT_AGE)
@@ -279,28 +281,6 @@ libgmpxx_la_LDFLAGS = $(GMP_LDFLAGS) $(LIBGMPXX_LDFLAGS) \
   -version-info $(LIBGMPXX_LT_CURRENT):$(LIBGMPXX_LT_REVISION):$(LIBGMPXX_LT_AGE)
 
 
-# The selected mpz objects here support mpz/powm.c (built as mpbsd/powm.lo)
-# and can probably be removed when that switches to an mpn implementation.
-# (Apart from mpz/n_pow_ui$U.lo, which supports mpbsd/rpow.c)
-
-if WANT_MPBSD
-MPBSD_HEADERS_OPTION = mp.h
-MPBSD_LTLIBRARIES_OPTION = libmp.la
-endif
-BUILT_SOURCES += mp.h
-libmp_la_SOURCES = assert.c errno.c memory.c mp_bpl.c mp_clz_tab.c	\
-  mp_dv_tab.c mp_minv_tab.c mp_get_fns.c mp_set_fns.c nextprime.c
-libmp_la_DEPENDENCIES = $(srcdir)/libmp.sym				\
-  @TAL_OBJECT@ $(MPBSD_OBJECTS) $(MPN_OBJECTS) @mpn_objs_in_libmp@	\
-  mpz/add$U.lo mpz/gcdext$U.lo mpz/invert$U.lo mpz/mul$U.lo		\
-  mpz/n_pow_ui$U.lo mpz/realloc$U.lo mpz/set$U.lo mpz/sub$U.lo		\
-  mpz/tdiv_q$U.lo
-libmp_la_LIBADD = $(libmp_la_DEPENDENCIES)
-libmp_la_LDFLAGS = $(GMP_LDFLAGS) \
-  -version-info $(LIBMP_LT_CURRENT):$(LIBMP_LT_REVISION):$(LIBMP_LT_AGE) \
-  -export-symbols $(srcdir)/libmp.sym
-EXTRA_DIST += libmp.sym
-
 
 install-data-hook:
 	@echo ''
@@ -319,9 +299,6 @@ install-data-hook:
 	@echo ''
 
 
-# The ansi2knr setups for the build programs are the same as the normal
-# automake ansi2knr rules, but using $(CC_FOR_BUILD) instead of $(CC).
-#
 # The "test -f" support for srcdir!=builddir is similar to the automake .c.o
 # etc rules, but with each foo.c explicitly, since $< is not portable
 # outside an inference rule.
@@ -338,19 +315,16 @@ install-data-hook:
 # the .h files are not properly expressed for the various objects that use
 # them.
 
-EXTRA_DIST += dumbmp.c
+EXTRA_DIST += bootstrap.c
 
-mpz/fac_ui.h: gen-fac_ui$(EXEEXT_FOR_BUILD)
-	./gen-fac_ui $(GMP_LIMB_BITS) $(GMP_NAIL_BITS) >mpz/fac_ui.h || (rm -f mpz/fac_ui.h; exit 1)
-BUILT_SOURCES += mpz/fac_ui.h
+fac_table.h: gen-fac$(EXEEXT_FOR_BUILD)
+	./gen-fac $(GMP_LIMB_BITS) $(GMP_NAIL_BITS) >fac_table.h || (rm -f fac_table.h; exit 1)
+BUILT_SOURCES += fac_table.h
 
-gen-fac_ui$(EXEEXT_FOR_BUILD): gen-fac_ui$(U_FOR_BUILD).c dumbmp.c
-	$(CC_FOR_BUILD) `test -f 'gen-fac_ui$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-fac_ui$(U_FOR_BUILD).c -o gen-fac_ui$(EXEEXT_FOR_BUILD)
-DISTCLEANFILES += gen-fac_ui$(EXEEXT_FOR_BUILD)
-EXTRA_DIST += gen-fac_ui.c
-
-gen-fac_ui_.c: gen-fac_ui.c $(ANSI2KNR)
-	$(CPP_FOR_BUILD) `if test -f $(srcdir)/gen-fac_ui.c; then echo $(srcdir)/gen-fac_ui.c; else echo gen-fac_ui.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > gen-fac_ui_.c || rm -f gen-fac_ui_.c
+gen-fac$(EXEEXT_FOR_BUILD): gen-fac$(U_FOR_BUILD).c bootstrap.c
+	$(CC_FOR_BUILD) `test -f 'gen-fac$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-fac$(U_FOR_BUILD).c -o gen-fac$(EXEEXT_FOR_BUILD)
+DISTCLEANFILES += gen-fac$(EXEEXT_FOR_BUILD)
+EXTRA_DIST += gen-fac.c
 
 
 fib_table.h: gen-fib$(EXEEXT_FOR_BUILD)
@@ -361,13 +335,10 @@ mpn/fib_table.c: gen-fib$(EXEEXT_FOR_BUILD)
 	./gen-fib table $(GMP_LIMB_BITS) $(GMP_NAIL_BITS) >mpn/fib_table.c || (rm -f mpn/fib_table.c; exit 1)
 BUILT_SOURCES += mpn/fib_table.c
 
-gen-fib$(EXEEXT_FOR_BUILD): gen-fib$(U_FOR_BUILD).c dumbmp.c
+gen-fib$(EXEEXT_FOR_BUILD): gen-fib$(U_FOR_BUILD).c bootstrap.c
 	$(CC_FOR_BUILD) `test -f 'gen-fib$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-fib$(U_FOR_BUILD).c -o gen-fib$(EXEEXT_FOR_BUILD)
 DISTCLEANFILES += gen-fib$(EXEEXT_FOR_BUILD)
 EXTRA_DIST += gen-fib.c
-
-gen-fib_.c: gen-fib.c $(ANSI2KNR)
-	$(CPP_FOR_BUILD) `if test -f $(srcdir)/gen-fib.c; then echo $(srcdir)/gen-fib.c; else echo gen-fib.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > gen-fib_.c || rm -f gen-fib_.c
 
 
 mp_bases.h: gen-bases$(EXEEXT_FOR_BUILD)
@@ -378,43 +349,44 @@ mpn/mp_bases.c: gen-bases$(EXEEXT_FOR_BUILD)
 	./gen-bases table $(GMP_LIMB_BITS) $(GMP_NAIL_BITS) >mpn/mp_bases.c || (rm -f mpn/mp_bases.c; exit 1)
 BUILT_SOURCES += mpn/mp_bases.c
 
-gen-bases$(EXEEXT_FOR_BUILD): gen-bases$(U_FOR_BUILD).c dumbmp.c
+gen-bases$(EXEEXT_FOR_BUILD): gen-bases$(U_FOR_BUILD).c bootstrap.c
 	$(CC_FOR_BUILD) `test -f 'gen-bases$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-bases$(U_FOR_BUILD).c -o gen-bases$(EXEEXT_FOR_BUILD) $(LIBM_FOR_BUILD)
 DISTCLEANFILES += gen-bases$(EXEEXT_FOR_BUILD)
 EXTRA_DIST += gen-bases.c
-
-gen-bases_.c: gen-bases.c $(ANSI2KNR)
-	$(CPP_FOR_BUILD) `if test -f $(srcdir)/gen-bases.c; then echo $(srcdir)/gen-bases.c; else echo gen-bases.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > gen-bases_.c || rm -f gen-bases_.c
-
 
 
 trialdivtab.h: gen-trialdivtab$(EXEEXT_FOR_BUILD)
 	./gen-trialdivtab $(GMP_LIMB_BITS) 8000 >trialdivtab.h || (rm -f trialdivtab.h; exit 1)
 BUILT_SOURCES += trialdivtab.h
 
-gen-trialdivtab$(EXEEXT_FOR_BUILD): gen-trialdivtab$(U_FOR_BUILD).c dumbmp.c
+gen-trialdivtab$(EXEEXT_FOR_BUILD): gen-trialdivtab$(U_FOR_BUILD).c bootstrap.c
 	$(CC_FOR_BUILD) `test -f 'gen-trialdivtab$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-trialdivtab$(U_FOR_BUILD).c -o gen-trialdivtab$(EXEEXT_FOR_BUILD) $(LIBM_FOR_BUILD)
 DISTCLEANFILES += gen-trialdivtab$(EXEEXT_FOR_BUILD)
 EXTRA_DIST += gen-trialdivtab.c
 
-gen-trialdivtab_.c: gen-trialdivtab.c $(ANSI2KNR)
-	$(CPP_FOR_BUILD) `if test -f $(srcdir)/gen-trialdivtab.c; then echo $(srcdir)/gen-trialdivtab.c; else echo gen-trialdivtab.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > gen-trialdivtab_.c || rm -f gen-trialdivtab_.c
 
+mpn/jacobitab.h: gen-jacobitab$(EXEEXT_FOR_BUILD)
+	./gen-jacobitab >mpn/jacobitab.h || (rm -f mpn/jacobitab.h; exit 1)
+BUILT_SOURCES += mpn/jacobitab.h
 
+gen-jacobitab$(EXEEXT_FOR_BUILD): gen-jacobitab$(U_FOR_BUILD).c
+	$(CC_FOR_BUILD) `test -f 'gen-jacobitab$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-jacobitab$(U_FOR_BUILD).c -o gen-jacobitab$(EXEEXT_FOR_BUILD)
+DISTCLEANFILES += gen-jacobitab$(EXEEXT_FOR_BUILD)
+EXTRA_DIST += gen-jacobitab.c
 
 
 mpn/perfsqr.h: gen-psqr$(EXEEXT_FOR_BUILD)
 	./gen-psqr $(GMP_LIMB_BITS) $(GMP_NAIL_BITS) >mpn/perfsqr.h || (rm -f mpn/perfsqr.h; exit 1)
 BUILT_SOURCES += mpn/perfsqr.h
 
-gen-psqr$(EXEEXT_FOR_BUILD): gen-psqr$(U_FOR_BUILD).c dumbmp.c
+gen-psqr$(EXEEXT_FOR_BUILD): gen-psqr$(U_FOR_BUILD).c bootstrap.c
 	$(CC_FOR_BUILD) `test -f 'gen-psqr$(U_FOR_BUILD).c' || echo '$(srcdir)/'`gen-psqr$(U_FOR_BUILD).c -o gen-psqr$(EXEEXT_FOR_BUILD) $(LIBM_FOR_BUILD)
 DISTCLEANFILES += gen-psqr$(EXEEXT_FOR_BUILD)
 EXTRA_DIST += gen-psqr.c
 
-gen-psqr_.c: gen-psqr.c $(ANSI2KNR)
-	$(CPP_FOR_BUILD) `if test -f $(srcdir)/gen-psqr.c; then echo $(srcdir)/gen-psqr.c; else echo gen-psqr.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > gen-psqr_.c || rm -f gen-psqr_.c
-
+# Distribute mini-gmp. Test sources copied by dist-hook.
+EXTRA_DIST += mini-gmp/README mini-gmp/mini-gmp.c mini-gmp/mini-gmp.h \
+	      mini-gmp/tests/Makefile mini-gmp/tests/run-tests
 
 # Avoid: CVS - cvs directories
 #        *~  - emacs backups
@@ -426,6 +398,33 @@ gen-psqr_.c: gen-psqr.c $(ANSI2KNR)
 dist-hook:
 	-find $(distdir) \( -name CVS -type d \) -o -name "*~" -o -name ".#*" \
 		| xargs rm -rf
+	cp "$(srcdir)"/mini-gmp/tests/*.[ch] "$(distdir)/mini-gmp/tests"
 #	grep -F $(VERSION) $(srcdir)/Makefile.am \
-#		| grep -q "^# *$(VERSION) *$(LIBGMP_LT_CURRENT):$(LIBGMP_LT_REVISION):$(LIBGMP_LT_AGE) *$(LIBGMPXX_LT_CURRENT):$(LIBGMPXX_LT_REVISION):$(LIBGMPXX_LT_AGE) *$(LIBMP_LT_CURRENT):$(LIBMP_LT_REVISION):$(LIBMP_LT_AGE)"
+#		| grep -q "^# *$(VERSION) *$(LIBGMP_LT_CURRENT):$(LIBGMP_LT_REVISION):$(LIBGMP_LT_AGE) *$(LIBGMPXX_LT_CURRENT):$(LIBGMPXX_LT_REVISION):$(LIBGMPXX_LT_AGE)"
 #	test -z "`sed -n 's/^# *[0-9]*\.[0-9]*\.[0-9]* *\([0-9]*:[0-9]*:[0-9]*\) *\([0-9]*:[0-9]*:[0-9]*\) *\([0-9]*:[0-9]*:[0-9]*\).*/A\1\nB\2\nC\3/p' $(srcdir)/Makefile.am | grep -v 'A6:3:3\|B3:5:0\|C4:7:1' | sort | uniq -d`"
+
+.PHONY: check-mini-gmp clean-mini-gmp
+
+check-mini-gmp:
+	abs_srcdir="`cd $(srcdir) && pwd`" ; \
+	$(MKDIR_P) mini-gmp/tests \
+	&& cd mini-gmp/tests \
+	&& LD_LIBRARY_PATH="../../.libs:$$LD_LIBRARY_PATH" \
+	   DYLD_LIBRARY_PATH="../../.libs:$$DYLD_LIBRARY_PATH" \
+	   $(MAKE) -f "$$abs_srcdir/mini-gmp/tests/Makefile" \
+		VPATH="$$abs_srcdir/mini-gmp/tests" \
+		srcdir="$$abs_srcdir/mini-gmp/tests" \
+		MINI_GMP_DIR="$$abs_srcdir/mini-gmp" \
+		LDFLAGS="-L../../.libs" \
+		LIBS="-lgmp -lm" \
+		CC="$(CC_FOR_BUILD)" EXTRA_CFLAGS="-g -I../.." check
+
+clean-mini-gmp:
+	if [ -d mini-gmp/tests ] ; then \
+	  abs_srcdir="`cd $(srcdir) && pwd`" ; \
+	  cd mini-gmp/tests \
+	  && $(MAKE) -f "$$abs_srcdir/mini-gmp/tests/Makefile" clean ; \
+	fi
+
+clean-local: clean-mini-gmp
+distclean-local: clean-mini-gmp

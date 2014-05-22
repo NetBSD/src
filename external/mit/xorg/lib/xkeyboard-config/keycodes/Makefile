@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/28 12:38:34 ghen Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2014/05/22 14:09:44 yamt Exp $
 
 .include <bsd.own.mk>
 
 XKBNAME=	keycodes
 FILES=		README aliases amiga ataritt empty evdev fujitsu hp ibm \
-		macintosh sony sun xfree86 xfree98
+		macintosh olpc sony sun xfree86 xfree98
 
 SUBDIR=		digital_vndr sgi_vndr
 

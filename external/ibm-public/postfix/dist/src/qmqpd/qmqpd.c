@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.1.1.2.6.1 2013/01/23 00:05:10 yamt Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.1.1.2.6.2 2014/05/22 14:08:03 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -475,7 +475,7 @@ static void qmqpd_write_content(QMQPD_STATE *state)
 	if (first) {
 	    if (strncmp(start + strspn(start, ">"), "From ", 5) == 0) {
 		rec_fprintf(state->cleanup, rec_type,
-			    "X-Mailbox-Line: %*s", len, start);
+			    "X-Mailbox-Line: %.*s", len, start);
 		continue;
 	    }
 	    first = 0;

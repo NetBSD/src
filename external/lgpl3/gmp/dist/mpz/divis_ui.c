@@ -57,10 +57,10 @@ mpz_divisible_ui_p (mpz_srcptr a, unsigned long d)
   if (! (d & 1))
     {
       /* Strip low zero bits to get odd d required by modexact.  If d==e*2^n
-         and a is divisible by 2^n and by e, then it's divisible by d. */
+	 and a is divisible by 2^n and by e, then it's divisible by d. */
 
       if ((ap[0] & LOW_ZEROS_MASK (d)) != 0)
-        return 0;
+	return 0;
 
       count_trailing_zeros (twos, (mp_limb_t) d);
       d >>= twos;

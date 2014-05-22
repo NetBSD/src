@@ -38,7 +38,7 @@ C cnt	r6
 
 ASM_START()
 PROLOGUE(mpn_lshift)
-	cmpwi	cr0, r5, 12	C more than 12 limbs?
+	cmpwi	cr0, r5, 30	C more than 30 limbs?
 	slwi	r0, r5, 2
 	add	r4, r4, r0	C make r4 point at end of s1
 	add	r7, r3, r0	C make r7 point at end of res
@@ -153,4 +153,4 @@ L(loopU):
 	stw	r12, -20(r7)
 	lmw	r24, -32(r1)	C restore registers
 	blr
-EPILOGUE(mpn_lshift)
+EPILOGUE()

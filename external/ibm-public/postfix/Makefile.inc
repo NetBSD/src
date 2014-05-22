@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13.2.1 2012/04/17 00:04:33 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.2 2014/05/22 14:08:00 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -59,15 +59,11 @@ CPPFLAGS+=	-DHAS_LDAP
 
 # Automatically link in libldap for a program.
 . if defined(PROG)
-LDADD+=		-lldap
-DPADD+=		${LIBLDAP}
-.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
-LDADD+=		-llber
-DPADD+=		${LIBLBER}
-.   if ${MKCRYPTO} != "no" 
+LDADD+=		-lldap -llber
+DPADD+=		${LIBLDAP} ${LIBLBER}
+.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "")) && ${MKCRYPTO} != "no"
 DPADD+=		${LIBSSL} ${LIBCRYPTO}
 LDADD+=		-lssl -lcrypto
-.   endif
 .  endif
 . endif
 .endif # USE_LDAP != no

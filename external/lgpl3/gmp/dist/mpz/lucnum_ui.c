@@ -1,6 +1,6 @@
 /* mpz_lucnum_ui -- calculate Lucas number.
 
-Copyright 2001, 2003, 2005 Free Software Foundation, Inc.
+Copyright 2001, 2003, 2005, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -66,8 +66,7 @@ mpz_lucnum_ui (mpz_ptr ln, unsigned long n)
      since square or mul used below might need an extra limb over the true
      size */
   lalloc = MPN_FIB2_SIZE (n) + 2;
-  MPZ_REALLOC (ln, lalloc);
-  lp = PTR (ln);
+  lp = MPZ_REALLOC (ln, lalloc);
 
   TMP_MARK;
   xalloc = lalloc;
@@ -80,84 +79,85 @@ mpz_lucnum_ui (mpz_ptr ln, unsigned long n)
   for (;;)
     {
       if (n & 1)
-        {
-          /* L[2k+1] = 5*F[k-1]*(2*F[k]+F[k-1]) - 4*(-1)^k */
+	{
+	  /* L[2k+1] = 5*F[k-1]*(2*F[k]+F[k-1]) - 4*(-1)^k */
 
-          mp_size_t  yalloc, ysize;
-          mp_ptr     yp;
+	  mp_size_t  yalloc, ysize;
+	  mp_ptr     yp;
 
-          TRACE (printf ("  initial odd n=%lu\n", n));
+	  TRACE (printf ("  initial odd n=%lu\n", n));
 
-          yalloc = MPN_FIB2_SIZE (n/2);
-          yp = TMP_ALLOC_LIMBS (yalloc);
-          ASSERT (xalloc >= yalloc);
+	  yalloc = MPN_FIB2_SIZE (n/2);
+	  yp = TMP_ALLOC_LIMBS (yalloc);
+	  ASSERT (xalloc >= yalloc);
 
-          xsize = mpn_fib2_ui (xp, yp, n/2);
+	  xsize = mpn_fib2_ui (xp, yp, n/2);
 
-          /* possible high zero on F[k-1] */
-          ysize = xsize;
-          ysize -= (yp[ysize-1] == 0);
-          ASSERT (yp[ysize-1] != 0);
+	  /* possible high zero on F[k-1] */
+	  ysize = xsize;
+	  ysize -= (yp[ysize-1] == 0);
+	  ASSERT (yp[ysize-1] != 0);
 
-          /* xp = 2*F[k] + F[k-1] */
+	  /* xp = 2*F[k] + F[k-1] */
 #if HAVE_NATIVE_mpn_addlsh1_n
-          c = mpn_addlsh1_n (xp, yp, xp, xsize);
+	  c = mpn_addlsh1_n (xp, yp, xp, xsize);
 #else
-          c = mpn_lshift (xp, xp, xsize, 1);
-          c += mpn_add_n (xp, xp, yp, xsize);
+	  c = mpn_lshift (xp, xp, xsize, 1);
+	  c += mpn_add_n (xp, xp, yp, xsize);
 #endif
-          ASSERT (xalloc >= xsize+1);
-          xp[xsize] = c;
-          xsize += (c != 0);
-          ASSERT (xp[xsize-1] != 0);
+	  ASSERT (xalloc >= xsize+1);
+	  xp[xsize] = c;
+	  xsize += (c != 0);
+	  ASSERT (xp[xsize-1] != 0);
 
-          ASSERT (lalloc >= xsize + ysize);
-          c = mpn_mul (lp, xp, xsize, yp, ysize);
-          lsize = xsize + ysize;
-          lsize -= (c == 0);
+	  ASSERT (lalloc >= xsize + ysize);
+	  c = mpn_mul (lp, xp, xsize, yp, ysize);
+	  lsize = xsize + ysize;
+	  lsize -= (c == 0);
 
-          /* lp = 5*lp */
-#if HAVE_NATIVE_mpn_addlshift
-          c = mpn_addlshift (lp, lp, lsize, 2);
+	  /* lp = 5*lp */
+#if HAVE_NATIVE_mpn_addlsh2_n
+	  c = mpn_addlsh2_n (lp, lp, lp, lsize);
 #else
-          c = mpn_lshift (xp, lp, lsize, 2);
-          c += mpn_add_n (lp, lp, xp, lsize);
+	  /* FIXME: Is this faster than mpn_mul_1 ? */
+	  c = mpn_lshift (xp, lp, lsize, 2);
+	  c += mpn_add_n (lp, lp, xp, lsize);
 #endif
-          ASSERT (lalloc >= lsize+1);
-          lp[lsize] = c;
-          lsize += (c != 0);
+	  ASSERT (lalloc >= lsize+1);
+	  lp[lsize] = c;
+	  lsize += (c != 0);
 
-          /* lp = lp - 4*(-1)^k */
-          if (n & 2)
-            {
-              /* no overflow, see comments above */
-              ASSERT (lp[0] <= MP_LIMB_T_MAX-4);
-              lp[0] += 4;
-            }
-          else
-            {
-              /* won't go negative */
-              MPN_DECR_U (lp, lsize, CNST_LIMB(4));
-            }
+	  /* lp = lp - 4*(-1)^k */
+	  if (n & 2)
+	    {
+	      /* no overflow, see comments above */
+	      ASSERT (lp[0] <= MP_LIMB_T_MAX-4);
+	      lp[0] += 4;
+	    }
+	  else
+	    {
+	      /* won't go negative */
+	      MPN_DECR_U (lp, lsize, CNST_LIMB(4));
+	    }
 
-          TRACE (mpn_trace ("  l",lp, lsize));
-          break;
-        }
+	  TRACE (mpn_trace ("  l",lp, lsize));
+	  break;
+	}
 
       MP_PTR_SWAP (xp, lp); /* balance the swaps wanted in the L[2k] below */
       zeros++;
       n /= 2;
 
       if (n <= FIB_TABLE_LUCNUM_LIMIT)
-        {
-          /* L[n] = F[n] + 2F[n-1] */
-          lp[0] = FIB_TABLE (n) + 2 * FIB_TABLE ((int) n - 1);
-          lsize = 1;
+	{
+	  /* L[n] = F[n] + 2F[n-1] */
+	  lp[0] = FIB_TABLE (n) + 2 * FIB_TABLE ((int) n - 1);
+	  lsize = 1;
 
-          TRACE (printf ("  initial small n=%lu\n", n);
-                 mpn_trace ("  l",lp, lsize));
-          break;
-        }
+	  TRACE (printf ("  initial small n=%lu\n", n);
+		 mpn_trace ("  l",lp, lsize));
+	  break;
+	}
     }
 
   for ( ; zeros != 0; zeros--)
@@ -172,19 +172,19 @@ mpz_lucnum_ui (mpz_ptr ln, unsigned long n)
       lsize -= (xp[lsize-1] == 0);
 
       /* First time around the loop k==n determines (-1)^k, after that k is
-         always even and we set n=0 to indicate that.  */
+	 always even and we set n=0 to indicate that.  */
       if (n & 1)
-        {
-          /* L[n]^2 == 0 or 1 mod 4, like all squares, so +2 gives no carry */
-          ASSERT (xp[0] <= MP_LIMB_T_MAX-2);
-          xp[0] += 2;
-          n = 0;
-        }
+	{
+	  /* L[n]^2 == 0 or 1 mod 4, like all squares, so +2 gives no carry */
+	  ASSERT (xp[0] <= MP_LIMB_T_MAX-2);
+	  xp[0] += 2;
+	  n = 0;
+	}
       else
-        {
-          /* won't go negative */
-          MPN_DECR_U (xp, lsize, CNST_LIMB(2));
-        }
+	{
+	  /* won't go negative */
+	  MPN_DECR_U (xp, lsize, CNST_LIMB(2));
+	}
 
       MP_PTR_SWAP (xp, lp);
       ASSERT (lp[lsize-1] != 0);

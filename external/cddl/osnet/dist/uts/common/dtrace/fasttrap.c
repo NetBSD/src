@@ -1578,7 +1578,7 @@ fasttrap_add_probe(fasttrap_probe_spec_t *pdata)
 		for (i = 0; i < pdata->ftps_noffs; i++) {
 			char name_str[17];
 
-			(void) sprintf(name_str, "%llx",
+			(void) snprintf(name_str, sizeof(name_str), "%llx",
 			    (unsigned long long)pdata->ftps_offs[i]);
 
 			if (dtrace_probe_lookup(provider->ftp_provid,

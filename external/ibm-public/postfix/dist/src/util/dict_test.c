@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_test.c,v 1.1.1.1.2.2 2013/01/23 00:05:16 yamt Exp $	*/
+/*	$NetBSD: dict_test.c,v 1.1.1.1.2.3 2014/05/22 14:08:04 yamt Exp $	*/
 
  /*
   * Proof-of-concept test program. Create, update or read a database. When
@@ -75,9 +75,13 @@ void    dict_test(int argc, char **argv)
 	    dict_flags |= DICT_FLAG_FOLD_ANY;
 	else if (strcasecmp(argv[optind + 2], "sync") == 0)
 	    dict_flags |= DICT_FLAG_SYNC_UPDATE;
-	else
+	else if (strcasecmp(argv[optind + 2], "open_lock") == 0) {
+	    dict_flags |= DICT_FLAG_OPEN_LOCK;
+	    dict_flags &= ~DICT_FLAG_LOCK;
+	} else
 	    usage(argv[0]);
     }
+    vstream_fflush(VSTREAM_OUT);
     dict_name = argv[optind];
     dict_allow_surrogate = 1;
     dict = dict_open(dict_name, open_flags, dict_flags);

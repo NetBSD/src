@@ -1,6 +1,6 @@
 /* mpq_abs -- absolute value of a rational.
 
-Copyright 2000, 2001 Free Software Foundation, Inc.
+Copyright 2000, 2001, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -26,21 +26,20 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpq_abs (mpq_ptr dst, mpq_srcptr src)
 {
-  mp_size_t  num_size = src->_mp_num._mp_size;
-  mp_size_t  num_abs_size = ABS (num_size);
+  mp_size_t  num_abs_size = ABSIZ(NUM(src));
 
   if (dst != src)
     {
-      mp_size_t  den_size = src->_mp_den._mp_size;
+      mp_size_t  den_size = SIZ(DEN(src));
+      mp_ptr dp;
 
-      MPZ_REALLOC (mpq_numref(dst), num_abs_size);
-      MPZ_REALLOC (mpq_denref(dst), den_size);
+      dp = MPZ_NEWALLOC (NUM(dst), num_abs_size);
+      MPN_COPY (dp, PTR(NUM(src)), num_abs_size);
 
-      MPN_COPY (dst->_mp_num._mp_d, src->_mp_num._mp_d, num_abs_size);
-      MPN_COPY (dst->_mp_den._mp_d, src->_mp_den._mp_d, den_size);
-
-      dst->_mp_den._mp_size = den_size;
+      dp = MPZ_NEWALLOC (DEN(dst), den_size);
+      SIZ(DEN(dst)) = den_size;
+      MPN_COPY (dp, PTR(DEN(src)), den_size);
     }
 
-  dst->_mp_num._mp_size = num_abs_size;
+  SIZ(NUM(dst)) = num_abs_size;
 }

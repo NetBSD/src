@@ -68,6 +68,7 @@ deliver_attr.o: ../../include/maps.h
 deliver_attr.o: ../../include/mbox_conf.h
 deliver_attr.o: ../../include/msg.h
 deliver_attr.o: ../../include/msg_stats.h
+deliver_attr.o: ../../include/myflock.h
 deliver_attr.o: ../../include/recipient_list.h
 deliver_attr.o: ../../include/sys_defs.h
 deliver_attr.o: ../../include/vbuf.h
@@ -92,6 +93,7 @@ mailbox.o: ../../include/mbox_conf.h
 mailbox.o: ../../include/mbox_open.h
 mailbox.o: ../../include/msg.h
 mailbox.o: ../../include/msg_stats.h
+mailbox.o: ../../include/myflock.h
 mailbox.o: ../../include/mymalloc.h
 mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/safe_open.h
@@ -122,6 +124,7 @@ maildir.o: ../../include/mbox_conf.h
 maildir.o: ../../include/mbox_open.h
 maildir.o: ../../include/msg.h
 maildir.o: ../../include/msg_stats.h
+maildir.o: ../../include/myflock.h
 maildir.o: ../../include/mymalloc.h
 maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/safe_open.h
@@ -147,6 +150,7 @@ recipient.o: ../../include/maps.h
 recipient.o: ../../include/mbox_conf.h
 recipient.o: ../../include/msg.h
 recipient.o: ../../include/msg_stats.h
+recipient.o: ../../include/myflock.h
 recipient.o: ../../include/mymalloc.h
 recipient.o: ../../include/recipient_list.h
 recipient.o: ../../include/stringops.h
@@ -167,6 +171,7 @@ unknown.o: ../../include/maps.h
 unknown.o: ../../include/mbox_conf.h
 unknown.o: ../../include/msg.h
 unknown.o: ../../include/msg_stats.h
+unknown.o: ../../include/myflock.h
 unknown.o: ../../include/recipient_list.h
 unknown.o: ../../include/sys_defs.h
 unknown.o: ../../include/vbuf.h
@@ -193,6 +198,7 @@ virtual.o: ../../include/maps.h
 virtual.o: ../../include/mbox_conf.h
 virtual.o: ../../include/msg.h
 virtual.o: ../../include/msg_stats.h
+virtual.o: ../../include/myflock.h
 virtual.o: ../../include/recipient_list.h
 virtual.o: ../../include/set_eugid.h
 virtual.o: ../../include/sys_defs.h

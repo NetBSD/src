@@ -40,7 +40,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    -0x80000000 instead of the desired 0.  */
 
 long
-mpf_get_si (mpf_srcptr f)
+mpf_get_si (mpf_srcptr f) __GMP_NOTHROW
 {
   mp_exp_t exp;
   mp_size_t size, abs_size;
@@ -72,5 +72,5 @@ mpf_get_si (mpf_srcptr f)
     return fl & LONG_MAX;
   else
     /* this form necessary to correctly handle -0x80..00 */
-    return ~ ((fl - 1) & LONG_MAX);
+    return -1 - (long) ((fl - 1) & LONG_MAX);
 }

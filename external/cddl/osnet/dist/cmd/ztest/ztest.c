@@ -378,17 +378,21 @@ fatal(int do_perror, char *message, ...)
 	va_list args;
 	int save_errno = errno;
 	char buf[FATAL_MSG_SZ];
+	size_t len, blklen = sizeof(buf);
 
 	(void) fflush(stdout);
 
 	va_start(args, message);
-	(void) sprintf(buf, "ztest: ");
+	len = snprintf(buf, blklen, "ztest: ");
+	if (len > blklen)
+		len = blklen;
 	/* LINTED */
-	(void) vsprintf(buf + strlen(buf), message, args);
+	len += vsnprintf(buf + len, blklen - len, message, args);
 	va_end(args);
+	if (len > blklen)
+		len = blklen;
 	if (do_perror) {
-		(void) snprintf(buf + strlen(buf), FATAL_MSG_SZ - strlen(buf),
-		    ": %s", strerror(save_errno));
+		snprintf(buf + len, blklen - len, ": %s", strerror(save_errno));
 	}
 	(void) fprintf(stderr, "%s\n", buf);
 	fatal_msg = buf;			/* to ease debugging */
@@ -460,8 +464,8 @@ usage(boolean_t requested)
 	char nice_gang_bang[10];
 	FILE *fp = requested ? stdout : stderr;
 
-	nicenum(zopt_vdev_size, nice_vdev_size);
-	nicenum(metaslab_gang_bang, nice_gang_bang);
+	nicenum(zopt_vdev_size, nice_vdev_size, sizeof(nice_vdev_size));
+	nicenum(metaslab_gang_bang, nice_gang_bang, sizeof(nice_gang_bang));
 
 	(void) fprintf(fp, "Usage: %s\n"
 	    "\t[-v vdevs (default: %llu)]\n"
@@ -650,11 +654,11 @@ make_vdev_file(char *path, char *aux, size_t size, uint64_t ashift)
 
 		if (aux != NULL) {
 			vdev = ztest_shared->zs_vdev_aux;
-			(void) sprintf(path, ztest_aux_template,
+			(void) snprintf(path, sizeof(pathbuf), ztest_aux_template,
 			    zopt_dir, zopt_pool, aux, vdev);
 		} else {
 			vdev = ztest_shared->zs_vdev_next_leaf++;
-			(void) sprintf(path, ztest_dev_template,
+			(void) snprintf(path, sizeof(pathbuf), ztest_dev_template,
 			    zopt_dir, zopt_pool, vdev);
 		}
 	}
@@ -2235,7 +2239,7 @@ ztest_vdev_aux_add_remove(ztest_ds_t *zd, uint64_t id)
 		for (;;) {
 			char path[MAXPATHLEN];
 			int c;
-			(void) sprintf(path, ztest_aux_template, zopt_dir,
+			(void) snprintf(path, sizeof(path), ztest_aux_template, zopt_dir,
 			    zopt_pool, aux, zs->zs_vdev_aux);
 			for (c = 0; c < sav->sav_count; c++)
 				if (strcmp(sav->sav_vdevs[c]->vdev_path,
@@ -2786,8 +2790,8 @@ ztest_vdev_LUN_growth(ztest_ds_t *zd, uint64_t id)
 	if (zopt_verbose >= 5) {
 		char oldnumbuf[6], newnumbuf[6];
 
-		nicenum(old_class_space, oldnumbuf);
-		nicenum(new_class_space, newnumbuf);
+		nicenum(old_class_space, oldnumbuf, sizeof(oldnumbuf));
+		nicenum(new_class_space, newnumbuf, sizeof(newnumbuf));
 		(void) printf("%s grew from %s to %s\n",
 		    spa->spa_name, oldnumbuf, newnumbuf);
 	}
@@ -3760,8 +3764,8 @@ ztest_zap(ztest_ds_t *zd, uint64_t id)
 	ints = MAX(ZTEST_ZAP_MIN_INTS, object % ZTEST_ZAP_MAX_INTS);
 
 	prop = ztest_random(ZTEST_ZAP_MAX_PROPS);
-	(void) sprintf(propname, "prop_%llu", (u_longlong_t)prop);
-	(void) sprintf(txgname, "txg_%llu", (u_longlong_t)prop);
+	(void) snprintf(propname, sizeof(propname), "prop_%llu", (u_longlong_t)prop);
+	(void) snprintf(txgname, sizeof(txgname), "txg_%llu", (u_longlong_t)prop);
 	bzero(value, sizeof (value));
 	last_txg = 0;
 
@@ -3822,8 +3826,8 @@ ztest_zap(ztest_ds_t *zd, uint64_t id)
 	 * Remove a random pair of entries.
 	 */
 	prop = ztest_random(ZTEST_ZAP_MAX_PROPS);
-	(void) sprintf(propname, "prop_%llu", (u_longlong_t)prop);
-	(void) sprintf(txgname, "txg_%llu", (u_longlong_t)prop);
+	(void) snprintf(propname, sizeof(propname), "prop_%llu", (u_longlong_t)prop);
+	(void) snprintf(txgname, sizeof(txgname), "txg_%llu", (u_longlong_t)prop);
 
 	error = zap_length(os, object, txgname, &zl_intsize, &zl_ints);
 
@@ -4719,7 +4723,7 @@ ztest_run_zdb(char *pool)
 	isalen = ztest - isa;
 	isa = strdup(isa);
 	/* LINTED */
-	(void) sprintf(bin,
+	(void) snprintf(bin, sizeof(zdb) - (bin - zdb),
 	    "/usr/sbin%.*s/zdb -bcc%s%s -U /tmp/zpool.cache %s",
 	    isalen,
 	    isa,
@@ -5292,7 +5296,7 @@ ztest_freeze(ztest_shared_t *zs)
 }
 
 void
-print_time(hrtime_t t, char *timebuf)
+print_time(hrtime_t t, char *timebuf, size_t timelen)
 {
 	hrtime_t s = t / NANOSEC;
 	hrtime_t m = s / 60;
@@ -5306,14 +5310,14 @@ print_time(hrtime_t t, char *timebuf)
 	timebuf[0] = '\0';
 
 	if (d)
-		(void) sprintf(timebuf,
+		(void) snprintf(timebuf, timelen,
 		    "%llud%02lluh%02llum%02llus", d, h, m, s);
 	else if (h)
-		(void) sprintf(timebuf, "%lluh%02llum%02llus", h, m, s);
+		(void) snprintf(timebuf, timelen, "%lluh%02llum%02llus", h, m, s);
 	else if (m)
-		(void) sprintf(timebuf, "%llum%02llus", m, s);
+		(void) snprintf(timebuf, timelen, "%llum%02llus", m, s);
 	else
-		(void) sprintf(timebuf, "%llus", s);
+		(void) snprintf(timebuf, timelen, "%llus", s);
 }
 
 static nvlist_t *
@@ -5503,8 +5507,8 @@ main(int argc, char **argv)
 			hrtime_t now = gethrtime();
 
 			now = MIN(now, zs->zs_proc_stop);
-			print_time(zs->zs_proc_stop - now, timebuf);
-			nicenum(zs->zs_space, numbuf);
+			print_time(zs->zs_proc_stop - now, timebuf, sizeof(timebuf));
+			nicenum(zs->zs_space, numbuf, sizeof(numbuf));
 
 			(void) printf("Pass %3d, %8s, %3llu ENOSPC, "
 			    "%4.1f%% of %5s used, %3.0f%% done, %8s to go\n",
@@ -5527,7 +5531,7 @@ main(int argc, char **argv)
 				Dl_info dli;
 
 				zi = &zs->zs_info[f];
-				print_time(zi->zi_call_time, timebuf);
+				print_time(zi->zi_call_time, timebuf, sizeof(timebuf));
 				(void) dladdr((void *)zi->zi_func, &dli);
 				(void) printf("%7llu %9s   %s\n",
 				    (u_longlong_t)zi->zi_call_count, timebuf,

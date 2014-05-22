@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.3.4.2 2013/01/23 00:05:14 yamt Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.3.4.3 2014/05/22 14:08:03 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -19,6 +19,7 @@
 /*	int	var_tls_daemon_rand_bytes;
 /*	bool    var_tls_append_def_CA;
 /*	bool	var_tls_preempt_clist;
+/*	bool	var_tls_bc_pkey_fprint;
 /*
 /*	TLS_APPL_STATE *tls_alloc_app_context(ssl_ctx, log_mask)
 /*	SSL_CTX	*ssl_ctx;
@@ -207,6 +208,7 @@ char   *var_tls_eecdh_strong;
 char   *var_tls_eecdh_ultra;
 bool    var_tls_append_def_CA;
 char   *var_tls_bug_tweaks;
+bool    var_tls_bc_pkey_fprint;
 
 #ifdef VAR_TLS_PREEMPT_CLIST
 bool    var_tls_preempt_clist;
@@ -241,59 +243,72 @@ static const NAME_CODE protocol_table[] = {
 #define NAMEBUG(x)	#x, SSL_OP_##x
 static const LONG_NAME_MASK ssl_bug_tweaks[] = {
 
-#if defined(SSL_OP_MICROSOFT_SESS_ID_BUG)
-    NAMEBUG(MICROSOFT_SESS_ID_BUG),	/* 0x00000001L */
+#ifndef SSL_OP_MICROSOFT_SESS_ID_BUG
+#define SSL_OP_MICROSOFT_SESS_ID_BUG		0
 #endif
+    NAMEBUG(MICROSOFT_SESS_ID_BUG),
 
-#if defined(SSL_OP_NETSCAPE_CHALLENGE_BUG)
-    NAMEBUG(NETSCAPE_CHALLENGE_BUG),	/* 0x00000002L */
+#ifndef SSL_OP_NETSCAPE_CHALLENGE_BUG
+#define SSL_OP_NETSCAPE_CHALLENGE_BUG		0
 #endif
+    NAMEBUG(NETSCAPE_CHALLENGE_BUG),
 
-#if defined(SSL_OP_LEGACY_SERVER_CONNECT)
-    NAMEBUG(LEGACY_SERVER_CONNECT),	/* 0x00000004L */
+#ifndef SSL_OP_LEGACY_SERVER_CONNECT
+#define SSL_OP_LEGACY_SERVER_CONNECT		0
 #endif
+    NAMEBUG(LEGACY_SERVER_CONNECT),
 
-#if defined(SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG)
-    NAMEBUG(NETSCAPE_REUSE_CIPHER_CHANGE_BUG),	/* 0x00000008L */
+#ifndef SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
+#define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG 0
+#endif
+    NAMEBUG(NETSCAPE_REUSE_CIPHER_CHANGE_BUG),
     "CVE-2010-4180", SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG,
-#endif
 
-#if defined(SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG)
-    NAMEBUG(SSLREF2_REUSE_CERT_TYPE_BUG),	/* 0x00000010L */
+#ifndef SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
+#define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG	0
 #endif
+    NAMEBUG(SSLREF2_REUSE_CERT_TYPE_BUG),
 
-#if defined(SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-    NAMEBUG(MICROSOFT_BIG_SSLV3_BUFFER),/* 0x00000020L	 */
+#ifndef SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
+#define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER	0
 #endif
+    NAMEBUG(MICROSOFT_BIG_SSLV3_BUFFER),
 
-#if defined(SSL_OP_MSIE_SSLV2_RSA_PADDING)
-    NAMEBUG(MSIE_SSLV2_RSA_PADDING),	/* 0x00000040L */
+#ifndef SSL_OP_MSIE_SSLV2_RSA_PADDING
+#define SSL_OP_MSIE_SSLV2_RSA_PADDING		0
+#endif
+    NAMEBUG(MSIE_SSLV2_RSA_PADDING),
     "CVE-2005-2969", SSL_OP_MSIE_SSLV2_RSA_PADDING,
-#endif
 
-#if defined(SSL_OP_SSLEAY_080_CLIENT_DH_BUG)
-    NAMEBUG(SSLEAY_080_CLIENT_DH_BUG),	/* 0x00000080L */
+#ifndef SSL_OP_SSLEAY_080_CLIENT_DH_BUG
+#define SSL_OP_SSLEAY_080_CLIENT_DH_BUG		0
 #endif
+    NAMEBUG(SSLEAY_080_CLIENT_DH_BUG),
 
-#if defined(SSL_OP_TLS_D5_BUG)
-    NAMEBUG(TLS_D5_BUG),		/* 0x00000100L	 */
+#ifndef SSL_OP_TLS_D5_BUG
+#define SSL_OP_TLS_D5_BUG			0
 #endif
+    NAMEBUG(TLS_D5_BUG),
 
-#if defined(SSL_OP_TLS_BLOCK_PADDING_BUG)
-    NAMEBUG(TLS_BLOCK_PADDING_BUG),	/* 0x00000200L */
+#ifndef SSL_OP_TLS_BLOCK_PADDING_BUG
+#define SSL_OP_TLS_BLOCK_PADDING_BUG		0
 #endif
+    NAMEBUG(TLS_BLOCK_PADDING_BUG),
 
-#if defined(SSL_OP_TLS_ROLLBACK_BUG)
-    NAMEBUG(TLS_ROLLBACK_BUG),		/* 0x00000400L */
+#ifndef SSL_OP_TLS_ROLLBACK_BUG
+#define SSL_OP_TLS_ROLLBACK_BUG			0
 #endif
+    NAMEBUG(TLS_ROLLBACK_BUG),
 
-#if defined(SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
-    NAMEBUG(DONT_INSERT_EMPTY_FRAGMENTS),	/* 0x00000800L */
+#ifndef SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS	0
 #endif
+    NAMEBUG(DONT_INSERT_EMPTY_FRAGMENTS),
 
-#if defined(SSL_OP_CRYPTOPRO_TLSEXT_BUG)
-    NAMEBUG(CRYPTOPRO_TLSEXT_BUG),	/* 0x80000000L */
+#ifndef SSL_OP_CRYPTOPRO_TLSEXT_BUG
+#define SSL_OP_CRYPTOPRO_TLSEXT_BUG		0
 #endif
+    NAMEBUG(CRYPTOPRO_TLSEXT_BUG),
     0, 0,
 };
 
@@ -504,6 +519,11 @@ int     tls_protocol_mask(const char *plist)
     int     exclude = 0;
     int     include = 0;
 
+#define FREE_AND_RETURN(ptr, res) do { \
+	myfree(ptr); \
+	return (res); \
+    } while (0)
+
     save = cp = mystrdup(plist);
     while ((tok = mystrtok(&cp, "\t\n\r ,:")) != 0) {
 	if (*tok == '!')
@@ -513,9 +533,8 @@ int     tls_protocol_mask(const char *plist)
 	    include |= code =
 		name_code(protocol_table, NAME_CODE_FLAG_NONE, tok);
 	if (code == TLS_PROTOCOL_INVALID)
-	    return TLS_PROTOCOL_INVALID;
+	    FREE_AND_RETURN(save, TLS_PROTOCOL_INVALID);
     }
-    myfree(save);
 
     /*
      * When the include list is empty, use only the explicit exclusions.
@@ -524,7 +543,8 @@ int     tls_protocol_mask(const char *plist)
      * we don't know about at compile time, and this is unavoidable because
      * the OpenSSL API works with compile-time *exclusion* bit-masks.
      */
-    return (include ? (exclude | (TLS_KNOWN_PROTOCOLS & ~include)) : exclude);
+    FREE_AND_RETURN(save,
+	(include ? (exclude | (TLS_KNOWN_PROTOCOLS & ~include)) : exclude));
 }
 
 /* tls_param_init - Load TLS related config parameters */
@@ -548,6 +568,7 @@ void    tls_param_init(void)
     };
     static const CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_TLS_APPEND_DEF_CA, DEF_TLS_APPEND_DEF_CA, &var_tls_append_def_CA,
+	VAR_TLS_BC_PKEY_FPRINT, DEF_TLS_BC_PKEY_FPRINT, &var_tls_bc_pkey_fprint,
 #if OPENSSL_VERSION_NUMBER >= 0x0090700fL	/* OpenSSL 0.9.7 and later */
 	VAR_TLS_PREEMPT_CLIST, DEF_TLS_PREEMPT_CLIST, &var_tls_preempt_clist,
 #endif
@@ -863,7 +884,8 @@ long    tls_bug_bits(void)
 {
     long    bits = SSL_OP_ALL;		/* Work around all known bugs */
 
-#if OPENSSL_VERSION_NUMBER >= 0x00908000L
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L && \
+	OPENSSL_VERSION_NUMBER < 0x10000000L
     long    lib_version = SSLeay();
 
     /*
@@ -889,6 +911,10 @@ long    tls_bug_bits(void)
 	bits &= ~long_name_mask_opt(VAR_TLS_BUG_TWEAKS, ssl_bug_tweaks,
 				    var_tls_bug_tweaks, NAME_MASK_ANY_CASE |
 				    NAME_MASK_NUMBER | NAME_MASK_WARN);
+#ifdef SSL_OP_SAFARI_ECDHE_ECDSA_BUG
+	/* Not relevant to SMTP */
+	bits &= ~SSL_OP_SAFARI_ECDHE_ECDSA_BUG;
+#endif
     }
     return (bits);
 }

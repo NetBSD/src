@@ -206,8 +206,9 @@ case "$SYSTEM.$RELEASE" in
 		    5.[0-7]|5.[0-7].*) CCARGS="$CCARGS -DNO_IPV6 -DNO_DEVPOLL";;
 		esac
 		# Solaris 9 added closefrom(), futimesat() and /dev/*random
+		# and appears to have solid UNIX-domain sockets.
 		case $RELEASE in
-		    5.[0-8]|5.[0-8].*) CCARGS="$CCARGS -DNO_CLOSEFROM -DNO_DEV_URANDOM -DNO_FUTIMESAT";;
+		    5.[0-8]|5.[0-8].*) CCARGS="$CCARGS -DNO_CLOSEFROM -DNO_DEV_URANDOM -DNO_FUTIMESAT -DSTREAM_CONNECTIONS";;
 		esac
 		# Work around broken str*casecmp(). Do it all here instead
 		# of having half the solution in the sys_defs.h file.
@@ -271,36 +272,31 @@ case "$SYSTEM.$RELEASE" in
 		esac;;
 		# Tested with RedHat 3.03 on 20020729.
     Linux.1*)	SYSTYPE=LINUX1
-		SYSLIBS="-ldb"
+		case "$CCARGS" in
+		 *-DNO_DB*) ;;
+		 *) SYSLIBS="-ldb";;
+		esac
 		;;
     Linux.2*)	SYSTYPE=LINUX2
-		# Postfix no longer needs DB 1.85 compatibility
-		if [ -f /usr/include/db.h ]
-		then
-		    : we are all set
-		elif [ -f /usr/include/db/db.h ]
-		then
-		    CCARGS="$CCARGS -I/usr/include/db"
-		else
-		    # No, we're not going to try db1 db2 db3 etc.
-		    # On a properly installed system, Postfix builds
-		    # by including <db.h> and by linking with -ldb
-		    echo "No <db.h> include file found." 1>&2
-		    echo "Install the appropriate db*-devel package first." 1>&2
-		    echo "See the RELEASE_NOTES file for more information." 1>&2
-		    exit 1
-		fi
-		# GDBM locks the DBM .pag file after open. This breaks postmap.
-		# if [ -f /usr/include/gdbm-ndbm.h ]
-		# then
-		#     CCARGS="$CCARGS -DHAS_DBM -DPATH_NDBM_H='<gdbm-ndbm.h>'"
-		#     GDBM_LIBS=gdbm
-		# elif [ -f /usr/include/gdbm/ndbm.h ]
-		# then
-		#     CCARGS="$CCARGS -DHAS_DBM -DPATH_NDBM_H='<gdbm/ndbm.h>'"
-		#     GDBM_LIBS=gdbm
-		# fi
-		SYSLIBS="-ldb"
+		case "$CCARGS" in
+		 *-DNO_DB*) ;;
+		 *) if [ -f /usr/include/db.h ]
+		    then
+			: we are all set
+		    elif [ -f /usr/include/db/db.h ]
+		    then
+			CCARGS="$CCARGS -I/usr/include/db"
+		    else
+			# No, we're not going to try db1 db2 db3 etc.
+			# On a properly installed system, Postfix builds
+			# by including <db.h> and by linking with -ldb
+			echo "No <db.h> include file found." 1>&2
+			echo "Install the appropriate db*-devel package first." 1>&2
+			exit 1
+		    fi
+		    SYSLIBS="-ldb"
+		    ;;
+		esac
 		for name in nsl resolv $GDBM_LIBS
 		do
 		    for lib in /usr/lib64 /lib64 /usr/lib /lib
@@ -354,24 +350,27 @@ EOF
 		esac
 		;;
     Linux.3*)	SYSTYPE=LINUX3
-		if [ -f /usr/include/db.h ]
-		then
-		    : we are all set
-		elif [ -f /usr/include/db/db.h ]
-		then
-		    CCARGS="$CCARGS -I/usr/include/db"
-		else
-		    # On a properly installed system, Postfix builds
-		    # by including <db.h> and by linking with -ldb
-		    echo "No <db.h> include file found." 1>&2
-		    echo "Install the appropriate db*-devel package first." 1>&2
-		    echo "See the RELEASE_NOTES file for more information." 1>&2
-		    exit 1
-		fi
-		SYSLIBS="-ldb"
+		case "$CCARGS" in
+		 *-DNO_DB*) ;;
+		 *) if [ -f /usr/include/db.h ]
+		    then
+			: we are all set
+		    elif [ -f /usr/include/db/db.h ]
+		    then
+			CCARGS="$CCARGS -I/usr/include/db"
+		    else
+			# On a properly installed system, Postfix builds
+			# by including <db.h> and by linking with -ldb
+			echo "No <db.h> include file found." 1>&2
+			echo "Install the appropriate db*-devel package first." 1>&2
+			exit 1
+		    fi
+		    SYSLIBS="-ldb"
+		    ;;
+		esac
 		for name in nsl resolv
 		do
-		    for lib in /usr/lib64 /lib64 /usr/lib /lib
+		    for lib in /usr/lib64 /lib64 /usr/lib /usr/lib/* /lib /lib/*
 		    do
 			test -e $lib/lib$name.a -o -e $lib/lib$name.so && {
 			    SYSLIBS="$SYSLIBS -l$name"
@@ -382,23 +381,24 @@ EOF
 		;;
      GNU.0*|GNU/kFreeBSD.[567]*)
      		SYSTYPE=GNU0
-		# Postfix no longer needs DB 1.85 compatibility
-		if [ -f /usr/include/db.h ]
-		then
-		    : we are all set
-		elif [ -f /usr/include/db/db.h ]
-		then
-		    CCARGS="$CCARGS -I/usr/include/db"
-		else
-		    # No, we're not going to try db1 db2 db3 etc.
-		    # On a properly installed system, Postfix builds
-		    # by including <db.h> and by linking with -ldb
-		    echo "No <db.h> include file found." 1>&2
-		    echo "Install the appropriate db*-devel package first." 1>&2
-		    echo "See the RELEASE_NOTES file for more information." 1>&2
-		    exit 1
-		fi
-		SYSLIBS="-ldb"
+		case "$CCARGS" in
+		 *-DNO_DB*) ;;
+		 *) if [ -f /usr/include/db.h ]
+		    then
+			: we are all set
+		    elif [ -f /usr/include/db/db.h ]
+		    then
+			CCARGS="$CCARGS -I/usr/include/db"
+		    else
+			# On a properly installed system, Postfix builds
+			# by including <db.h> and by linking with -ldb
+			echo "No <db.h> include file found." 1>&2
+			echo "Install the appropriate db*-devel package first." 1>&2
+			exit 1
+		    fi
+		    SYSLIBS="-ldb"
+		    ;;
+		esac
 		for name in nsl resolv
 		do
 		    for lib in /usr/lib64 /lib64 /usr/lib /lib
@@ -456,6 +456,7 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
     Darwin.*)   SYSTYPE=MACOSX
 		# Use the native compiler by default
 		: ${CC=cc}
+		CCARGS="$CCARGS \$(WARN)"
 		# Darwin > 1.3 uses awk and flat_namespace
 		case $RELEASE in
 		 1.[0-3]) AWK=gawk;;

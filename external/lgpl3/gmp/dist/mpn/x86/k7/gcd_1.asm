@@ -1,369 +1,176 @@
-dnl  AMD K7 mpn_gcd_1 -- mpn by 1 gcd.
+dnl  x86 mpn_gcd_1 optimised for AMD K7.
 
-dnl  Copyright 2000, 2001, 2002, 2009 Free Software Foundation, Inc.
-dnl
+dnl  Contributed to the GNU project by by Kevin Ryde.  Rehacked by Torbjorn
+dnl  Granlund.
+
+dnl  Copyright 2000, 2001, 2002, 2005, 2009, 2011, 2012 Free Software
+dnl  Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
-dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
-dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
-dnl
+
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of the GNU Lesser General Public License as published
+dnl  by the Free Software Foundation; either version 3 of the License, or (at
+dnl  your option) any later version.
+
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+dnl  License for more details.
+
 dnl  You should have received a copy of the GNU Lesser General Public License
 dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
 
-C K7: 6.75 cycles/bit (approx)  1x1 gcd
-C     11.0 cycles/limb          Nx1 reduction (modexact_1_odd)
+C	     cycles/bit (approx)
+C AMD K7	 5.31
+C AMD K8,K9	 5.33
+C AMD K10	 5.30
+C AMD bd1	 ?
+C AMD bobcat	 7.02
+C Intel P4-2	10.1
+C Intel P4-3/4	10.0
+C Intel P6/13	 5.88
+C Intel core2	 6.26
+C Intel NHM	 6.83
+C Intel SBR	 8.50
+C Intel atom	 8.90
+C VIA nano	 ?
+C Numbers measured with: speed -CD -s16-32 -t16 mpn_gcd_1
 
+C TODO
+C  * Tune overhead, this takes 2-3 cycles more than old code when v0 is tiny.
+C  * Stream things better through registers, avoiding some copying.
 
-dnl  Reduce using x%y if x is more than DIV_THRESHOLD bits bigger than y,
-dnl  where x is the larger of the two.  See tune/README for more.
-dnl
-dnl  divl at 40 cycles compared to the gcd at about 7 cycles/bitpair
-dnl  suggests 40/7*2=11.4 but 7 seems to be about right.
-
-deflit(DIV_THRESHOLD, 7)
-
-
-C table[n] is the number of trailing zeros on n, or MAXSHIFT if n==0.
-C
-C This is mixed in with the code, but as per the k7 optimization manual it's
-C a full cache line and suitably aligned so it won't get swapped between
-C code and data.  Having it in TEXT rather than RODATA saves needing a GOT
-C entry when PIC.
-C
-C Actually, there doesn't seem to be a measurable difference between this in
-C it's own cache line or plonked in the middle of the code.  Presumably
-C since TEXT is read-only there's no worries about coherency.
+C ctz_table[n] is the number of trailing zeros on n, or MAXSHIFT if n==0.
 
 deflit(MAXSHIFT, 6)
 deflit(MASK, eval((m4_lshift(1,MAXSHIFT))-1))
 
-	TEXT
-	ALIGN(64)
-L(table):
+DEF_OBJECT(ctz_table,64)
 	.byte	MAXSHIFT
 forloop(i,1,MASK,
 `	.byte	m4_count_trailing_zeros(i)
 ')
+END_OBJECT(ctz_table)
+
+C Threshold of when to call bmod when U is one limb.  Should be about
+C (time_in_cycles(bmod_1,1) + call_overhead) / (cycles/bit).
+define(`DIV_THRES_LOG2', 7)
 
 
-C mp_limb_t mpn_gcd_1 (mp_srcptr src, mp_size_t size, mp_limb_t limb);
-C
+define(`up',    `%edi')
+define(`n',     `%esi')
+define(`v0',    `%edx')
 
-defframe(PARAM_LIMB,   12)
-defframe(PARAM_SIZE,    8)
-defframe(PARAM_SRC,     4)
 
-defframe(SAVE_EBX,     -4)
-defframe(SAVE_ESI,     -8)
-defframe(SAVE_EDI,    -12)
-defframe(SAVE_EBP,    -16)
-defframe(CALL_DIVISOR,-20)
-defframe(CALL_SIZE,   -24)
-defframe(CALL_SRC,    -28)
-
-deflit(STACK_SPACE, 28)
-
+ASM_START()
 	TEXT
 	ALIGN(16)
-
 PROLOGUE(mpn_gcd_1)
-deflit(`FRAME',0)
+	push	%edi
+	push	%esi
 
-	ASSERT(ne, `cmpl $0, PARAM_LIMB')	C y!=0
-	ASSERT(ae, `cmpl $1, PARAM_SIZE')	C size>=1
+	mov	12(%esp), up
+	mov	16(%esp), n
+	mov	20(%esp), v0
 
-	mov	PARAM_SRC, %eax
-	mov	PARAM_LIMB, %edx
-	sub	$STACK_SPACE, %esp	deflit(`FRAME',STACK_SPACE)
-
-	mov	%esi, SAVE_ESI
-	mov	%ebx, SAVE_EBX
-
-	mov	(%eax), %esi		C src low limb
-
-ifdef(`PIC',`
-	mov	%edi, SAVE_EDI
-	call	L(movl_eip_to_edi)
-L(here):
-	add	$L(table)-L(here), %edi
-')
-
-	mov	%esi, %ebx
-	or	%edx, %esi	C x|y
+	mov	(up), %eax		C U low limb
+	or	v0, %eax		C x | y
 	mov	$-1, %ecx
 
 L(twos):
 	inc	%ecx
-	shr	%esi
-	jnc	L(twos)		C 3/4 chance of x or y odd already
+	shr	%eax
+	jnc	L(twos)
 
-	shr	%cl, %ebx
-	shr	%cl, %edx
-	mov	%ecx, %esi	C common twos
-
-	mov	PARAM_SIZE, %ecx
-	cmp	$1, %ecx
-	ja	L(divide)
-
-
-	C eax
-	C ebx	x
-	C ecx
-	C edx	y
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp
-
-	mov	%edx, %eax
-	cmp	%ebx, %edx
-
-	cmovb(	%ebx, %eax)	C swap to make x bigger than y
-	cmovb(	%edx, %ebx)
-
-
-L(strip_y):
-	C eax	x
-	C ebx	y
-	C ecx
-	C edx
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp
-
-	ASSERT(nz,`orl %ebx,%ebx')
-	shr	%ebx
-	jnc	L(strip_y)
-	rcl	%ebx
-
-
-	C eax	x
-	C ebx	y (odd)
-	C ecx
-	C edx
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp
-
-	mov	%eax, %ecx
-	mov	%ebx, %edx
-	shr	$DIV_THRESHOLD, %eax
-
-	cmp	%eax, %ebx
-	mov	%ecx, %eax
-	ja	L(strip_x_entry)	C do x%y if x much bigger than y
-
-
-	xor	%edx, %edx
-
-	div	%ebx
-
-	or	%edx, %edx
-	mov	%edx, %ecx		C remainder -> x
-	mov	%ebx, %edx		C y
-
-	jz	L(done_ebx)
-	jmp	L(strip_x)
-
-
-	C Offset 0x9D here for non-PIC.  About 0.4 cycles/bit is saved by
-	C ensuring the end of the jnz at the end of this loop doesn't cross
-	C into the next cache line at 0xC0.
-	C
-	C PIC on the other hand is offset 0xAC here and extends to 0xC9, so
-	C it crosses but doesn't suffer any measurable slowdown.
-
-L(top):
-	C eax	x
-	C ebx	y-x
-	C ecx	x-y
-	C edx	y
-	C esi	twos, for use at end
-	C edi	[PIC] L(table)
-
-	cmovc(	%ebx, %ecx)		C if x-y gave carry, use x and y-x
-	cmovc(	%eax, %edx)
-
-L(strip_x):
-	mov	%ecx, %eax
-L(strip_x_entry):
-	and	$MASK, %ecx
-
-	ASSERT(nz, `orl %eax, %eax')
-
-ifdef(`PIC',`
-	mov	(%ecx,%edi), %cl
-',`
-	mov	L(table) (%ecx), %cl
-')
-
-	shr	%cl, %eax
-	cmp	$MAXSHIFT, %cl
-
-	mov	%eax, %ecx
-	mov	%edx, %ebx
-	je	L(strip_x)
-
-	ASSERT(nz, `test $1, %eax')	C both odd
-	ASSERT(nz, `test $1, %edx')
-
-	sub	%eax, %ebx
-	sub	%edx, %ecx
-	jnz	L(top)
-
-
-L(done):
-	mov	%esi, %ecx
-	mov	SAVE_ESI, %esi
-ifdef(`PIC',`
-	mov	SAVE_EDI, %edi
-')
-
-	shl	%cl, %eax
-	mov	SAVE_EBX, %ebx
-	add	$FRAME, %esp
-
-	ret
-
-
-
-C -----------------------------------------------------------------------------
-C two or more limbs
-
-dnl  MODEXACT_THRESHOLD is the size at which it's better to call
-dnl  mpn_modexact_1_odd than do an inline loop.
-
-deflit(MODEXACT_THRESHOLD, ifdef(`PIC',6,5))
-
-L(divide):
-	C eax	src
-	C ebx
-	C ecx	size
-	C edx	y
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp
+	shr	%cl, v0
+	mov	%ecx, %eax		C common twos
 
 L(divide_strip_y):
-	ASSERT(nz,`or %edx,%edx')
-	shr	%edx
+	shr	v0
 	jnc	L(divide_strip_y)
-	lea	1(%edx,%edx), %ebx		C y now odd
+	adc	v0, v0
 
-	mov	%ebp, SAVE_EBP
-	mov	%eax, %ebp
-	mov	-4(%eax,%ecx,4), %eax		C src high limb
+	push	%eax
+	push	v0
 
-	cmp	$MODEXACT_THRESHOLD, %ecx
-	jae	L(modexact)
+	cmp	$1, n
+	jnz	L(reduce_nby1)
 
-	cmp	%ebx, %eax			C high cmp divisor
-	mov	$0, %edx
+C Both U and V are single limbs, reduce with bmod if u0 >> v0.
+	mov	(up), %ecx
+	mov	%ecx, %eax
+	shr	$DIV_THRES_LOG2, %ecx
+	cmp	%ecx, v0
+	ja	L(reduced)
 
-	cmovc(	%eax, %edx)			C skip a div if high<divisor
-	sbb	$0, %ecx
-
-
-L(divide_top):
-	C eax	scratch (quotient)
-	C ebx	y
-	C ecx	counter (size to 1, inclusive)
-	C edx	carry (remainder)
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp	src
-
-	mov	-4(%ebp,%ecx,4), %eax
-
-	div	%ebx
-
-	dec	%ecx
-	jnz	L(divide_top)
-
-
-	C eax
-	C ebx	y (odd)
-	C ecx
-	C edx	x
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp
-
-	or	%edx, %edx
-	mov	SAVE_EBP, %ebp
+	mov	v0, %esi
+	xor	%edx, %edx
+	div	%esi
 	mov	%edx, %eax
+	jmp	L(reduced)
 
-	mov	%edx, %ecx
-	mov	%ebx, %edx
-	jnz	L(strip_x_entry)
-
-
-L(done_ebx):
-	mov	%ebx, %eax
-	jmp	L(done)
-
-
-
-L(modexact):
-	C eax
-	C ebx	y
-	C ecx	size
-	C edx
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp	src
-
-ifdef(`PIC',`
-	mov	%ebp, CALL_SRC
-	mov	%ebx, %ebp		C y
-	mov	%edi, %ebx		C L(table)
-
-	add	$_GLOBAL_OFFSET_TABLE_+[.-L(table)], %ebx
-	mov	%ebp, CALL_DIVISOR
-	mov	%ecx, CALL_SIZE
-
-	call	GSYM_PREFIX`'mpn_modexact_1_odd@PLT
-',`
-dnl non-PIC
-	mov	%ebx, CALL_DIVISOR
-	mov	%ebp, CALL_SRC
-	mov	%ecx, CALL_SIZE
-
-	call	GSYM_PREFIX`'mpn_modexact_1_odd
+L(reduce_nby1):
+ifdef(`PIC_WITH_EBX',`
+	push	%ebx
+	call	L(movl_eip_to_ebx)
+	add	$_GLOBAL_OFFSET_TABLE_, %ebx
 ')
+	push	v0			C param 3
+	push	n			C param 2
+	push	up			C param 1
+	cmp	$BMOD_1_TO_MOD_1_THRESHOLD, n
+	jl	L(bmod)
+	CALL(	mpn_mod_1)
+	jmp	L(called)
+L(bmod):
+	CALL(	mpn_modexact_1_odd)
 
-	C eax	x
-	C ebx	[non-PIC] y
-	C ecx
-	C edx
-	C esi	common twos
-	C edi	[PIC] L(table)
-	C ebp	[PIC] y
+L(called):
+	add	$12, %esp		C deallocate params
+ifdef(`PIC_WITH_EBX',`
+	pop	%ebx
+')
+L(reduced):
+	pop	%edx
 
-	or	%eax, %eax
-	mov	ifdef(`PIC',`%ebp',`%ebx'), %edx
-	mov	SAVE_EBP, %ebp
-
+	LEA(	ctz_table, %esi)
+	test	%eax, %eax
 	mov	%eax, %ecx
-	jnz	L(strip_x_entry)
+	jnz	L(mid)
+	jmp	L(end)
 
+	ALIGN(16)			C               K8    BC    P4    NHM   SBR
+L(top):	cmovc(	%ecx, %eax)		C if x-y < 0	0
+	cmovc(	%edi, %edx)		C use x,y-x	0
+L(mid):	and	$MASK, %ecx		C		0
+	movzbl	(%esi,%ecx), %ecx	C		1
+	jz	L(shift_alot)		C		1
+	shr	%cl, %eax		C		3
+	mov	%eax, %edi		C		4
+	mov	%edx, %ecx		C		3
+	sub	%eax, %ecx		C		4
+	sub	%edx, %eax		C		4
+	jnz	L(top)			C		5
+
+L(end):	pop	%ecx
 	mov	%edx, %eax
-	jmp	L(done)
+	shl	%cl, %eax
+	pop	%esi
+	pop	%edi
+	ret
 
+L(shift_alot):
+	shr	$MAXSHIFT, %eax
+	mov	%eax, %ecx
+	jmp	L(mid)
 
-ifdef(`PIC', `
-L(movl_eip_to_edi):
-	mov	(%esp), %edi
-	ret_internal
+ifdef(`PIC_WITH_EBX',`
+L(movl_eip_to_ebx):
+	mov	(%esp), %ebx
+	ret
 ')
-
 EPILOGUE()

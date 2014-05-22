@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:36 darran Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2014/05/22 14:01:24 yamt Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKDTRACE} != "no"
+.if ${MKCTF} != "no"
 SUBDIR+=	ctfconvert ctfmerge ctfdump
 .endif
 

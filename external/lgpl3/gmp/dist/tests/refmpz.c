@@ -2,20 +2,20 @@
 
 Copyright 1997, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 /* always do assertion checking */
 #define WANT_ASSERT  1
@@ -184,17 +184,46 @@ refmpz_kronecker (mpz_srcptr a_orig, mpz_srcptr b_orig)
 int
 refmpz_jacobi (mpz_srcptr a, mpz_srcptr b)
 {
-  mpz_t  b_odd;
-  mpz_init_set (b_odd, b);
-  if (mpz_sgn (b_odd) != 0)
-    mpz_fdiv_q_2exp (b_odd, b_odd, mpz_scan1 (b_odd, 0L));
-  return refmpz_kronecker (a, b_odd);
+  ASSERT_ALWAYS (mpz_sgn (b) > 0);
+  ASSERT_ALWAYS (mpz_odd_p (b));
+
+  return refmpz_kronecker (a, b);
 }
 
+/* Legendre symbol via powm. p must be an odd prime. */
 int
-refmpz_legendre (mpz_srcptr a, mpz_srcptr b)
+refmpz_legendre (mpz_srcptr a, mpz_srcptr p)
 {
-  return refmpz_jacobi (a, b);
+  int res;
+
+  mpz_t r;
+  mpz_t e;
+
+  ASSERT_ALWAYS (mpz_sgn (p) > 0);
+  ASSERT_ALWAYS (mpz_odd_p (p));
+
+  mpz_init (r);
+  mpz_init (e);
+
+  mpz_fdiv_r (r, a, p);
+
+  mpz_set (e, p);
+  mpz_sub_ui (e, e, 1);
+  mpz_fdiv_q_2exp (e, e, 1);
+  mpz_powm (r, r, e, p);
+
+  /* Normalize to a more or less symmetric range around zero */
+  if (mpz_cmp (r, e) > 0)
+    mpz_sub (r, r, p);
+
+  ASSERT_ALWAYS (mpz_cmpabs_ui (r, 1) <= 0);
+
+  res = mpz_sgn (r);
+
+  mpz_clear (r);
+  mpz_clear (e);
+
+  return res;
 }
 
 

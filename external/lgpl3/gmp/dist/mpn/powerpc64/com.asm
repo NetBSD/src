@@ -19,9 +19,12 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:     1?
-C POWER4/PPC970:     1.6
+C                  cycles/limb
+C POWER3/PPC630          1?
+C POWER4/PPC970          1.6
+C POWER5                 ?
+C POWER6                 ?
+C POWER7                 1.45
 
 C TODO
 C  * 8-way unrolling brings timing down to about 1.3 cycles/limb.

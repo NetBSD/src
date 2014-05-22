@@ -21,40 +21,40 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpq_swap (mpq_ptr u, mpq_ptr v)
+mpq_swap (mpq_ptr u, mpq_ptr v) __GMP_NOTHROW
 {
   mp_ptr up, vp;
   mp_size_t usize, vsize;
   mp_size_t ualloc, valloc;
 
-  ualloc = u->_mp_num._mp_alloc;
-  valloc = v->_mp_num._mp_alloc;
-  v->_mp_num._mp_alloc = ualloc;
-  u->_mp_num._mp_alloc = valloc;
+  ualloc = ALLOC(NUM(u));
+  valloc = ALLOC(NUM(v));
+  ALLOC(NUM(v)) = ualloc;
+  ALLOC(NUM(u)) = valloc;
 
-  usize = u->_mp_num._mp_size;
-  vsize = v->_mp_num._mp_size;
-  v->_mp_num._mp_size = usize;
-  u->_mp_num._mp_size = vsize;
+  usize = SIZ(NUM(u));
+  vsize = SIZ(NUM(v));
+  SIZ(NUM(v)) = usize;
+  SIZ(NUM(u)) = vsize;
 
-  up = u->_mp_num._mp_d;
-  vp = v->_mp_num._mp_d;
-  v->_mp_num._mp_d = up;
-  u->_mp_num._mp_d = vp;
+  up = PTR(NUM(u));
+  vp = PTR(NUM(v));
+  PTR(NUM(v)) = up;
+  PTR(NUM(u)) = vp;
 
 
-  ualloc = u->_mp_den._mp_alloc;
-  valloc = v->_mp_den._mp_alloc;
-  v->_mp_den._mp_alloc = ualloc;
-  u->_mp_den._mp_alloc = valloc;
+  ualloc = ALLOC(DEN(u));
+  valloc = ALLOC(DEN(v));
+  ALLOC(DEN(v)) = ualloc;
+  ALLOC(DEN(u)) = valloc;
 
-  usize = u->_mp_den._mp_size;
-  vsize = v->_mp_den._mp_size;
-  v->_mp_den._mp_size = usize;
-  u->_mp_den._mp_size = vsize;
+  usize = SIZ(DEN(u));
+  vsize = SIZ(DEN(v));
+  SIZ(DEN(v)) = usize;
+  SIZ(DEN(u)) = vsize;
 
-  up = u->_mp_den._mp_d;
-  vp = v->_mp_den._mp_d;
-  v->_mp_den._mp_d = up;
-  u->_mp_den._mp_d = vp;
+  up = PTR(DEN(u));
+  vp = PTR(DEN(v));
+  PTR(DEN(v)) = up;
+  PTR(DEN(u)) = vp;
 }

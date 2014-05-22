@@ -47,7 +47,7 @@ print_log_bp(const blkptr_t *bp, const char *prefix)
 {
 	char blkbuf[BP_SPRINTF_LEN];
 
-	sprintf_blkptr(blkbuf, bp);
+	snprintf_blkptr(blkbuf, sizeof(blkbuf), bp);
 	(void) printf("%s%s\n", prefix, blkbuf);
 }
 
@@ -313,7 +313,8 @@ print_log_block(zilog_t *zilog, blkptr_t *bp, void *arg, uint64_t claim_txg)
 
 	if (verbose >= 5) {
 		(void) strcpy(blkbuf, ", ");
-		sprintf_blkptr(blkbuf + strlen(blkbuf), bp);
+		snprintf_blkptr(blkbuf + strlen(blkbuf),
+		    sizeof(blkbuf) - strlen(blkbuf), bp);
 	} else {
 		blkbuf[0] = '\0';
 	}

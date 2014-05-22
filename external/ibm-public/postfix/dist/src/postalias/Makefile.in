@@ -98,6 +98,7 @@ postalias.o: ../../include/mkmap.h
 postalias.o: ../../include/msg.h
 postalias.o: ../../include/msg_syslog.h
 postalias.o: ../../include/msg_vstream.h
+postalias.o: ../../include/myflock.h
 postalias.o: ../../include/mymalloc.h
 postalias.o: ../../include/readlline.h
 postalias.o: ../../include/resolve_clnt.h

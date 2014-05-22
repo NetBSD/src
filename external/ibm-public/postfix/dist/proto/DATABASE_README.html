@@ -370,6 +370,15 @@ created with the postmap(1) or postalias(1) command. The lookup
 table name as used in "sdbm:table" is the database file name without
 the ".dir" or ".pag" suffix.  </dd>
 
+<dt> <b>socketmap</b> (read-only) </dt>
+
+<dd> Query a Sendmail-style socketmap server. The name of the table
+specifies <b>inet</b>:<i>host</i>:<i>port</i>:<i>socketmap-name</i>
+for a TCP-based server, or
+<b>unix</b>:<i>pathname</i>:<i>socketmap-name</i> for a UNIX-domain
+server. In both cases <i>socketmap-name</i> is the name of the
+socketmap. </dd>
+
 <dt> <b>sqlite</b> (read-only) </dt>
 
 <dd> Perform SQLite database lookups. Configuration details are given

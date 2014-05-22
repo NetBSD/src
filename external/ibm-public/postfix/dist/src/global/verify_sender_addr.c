@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_sender_addr.c,v 1.1.1.1.2.2 2013/01/23 00:05:04 yamt Exp $	*/
+/*	$NetBSD: verify_sender_addr.c,v 1.1.1.1.2.3 2014/05/22 14:08:02 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -22,7 +22,7 @@
 /*	specified with the address_verify_sender parameter.
 /*
 /*	When the address_verify_sender parameter is empty or <>,
-/*	the sender address always the empty address (i.e. always
+/*	the sender address is always the empty address (i.e. always
 /*	time-independent).
 /*
 /*	The caller must initialize the address_verify_sender and

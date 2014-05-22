@@ -9,7 +9,7 @@
    GNU MP RELEASE.
 
 
-Copyright 1992, 1994, 1996, 2000 Free Software Foundation, Inc.
+Copyright 1992, 1994, 1996, 2000, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -31,8 +31,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "longlong.h"
 
 mp_limb_t
-mpn_udiv_w_sdiv (rp, a1, a0, d)
-     mp_limb_t *rp, a1, a0, d;
+mpn_udiv_w_sdiv (mp_limb_t *rp, mp_limb_t a1, mp_limb_t a0, mp_limb_t d)
 {
   mp_limb_t q, r;
   mp_limb_t c0, c1, b1;
@@ -116,12 +115,12 @@ mpn_udiv_w_sdiv (rp, a1, a0, d)
 	{				/* Hence a1 = d - 1 = 2*b1 - 1 */
 	  if (a0 >= -d)
 	    {
-	      q = -1;
+	      q = -CNST_LIMB(1);
 	      r = a0 + d;
 	    }
 	  else
 	    {
-	      q = -2;
+	      q = -CNST_LIMB(2);
 	      r = a0 + 2*d;
 	    }
 	}

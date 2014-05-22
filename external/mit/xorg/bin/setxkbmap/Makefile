@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.2.20.1 2014/05/22 14:09:36 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ LDADD+=	-lxkbfile -lXext -lX11
 DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 X11EXTRAMANDEFS+=	-e 's,__xkbconfigroot__,${X11LIBDIR}/xkb,g'
 

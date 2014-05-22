@@ -31,10 +31,11 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
 	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c killme_after.c vstream_tweak.c \
-	unix_pass_listen.c unix_pass_trigger.c edit_file.c inet_windowsize.c \
+	pass_trigger.c edit_file.c inet_windowsize.c \
 	unix_pass_fd_fix.c dict_cache.c valid_utf_8.c dict_thash.c \
-	ip_match.c nbbio.c stream_pass_connect.c base32_code.c dict_test.c \
-	dict_fail.c msg_rate_delay.c dict_surrogate.c warn_stat.c
+	ip_match.c nbbio.c base32_code.c dict_test.c \
+	dict_fail.c msg_rate_delay.c dict_surrogate.c warn_stat.c \
+	dict_sockmap.c line_number.c recv_pass_attr.c pass_accept.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
@@ -67,10 +68,11 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	vstream_popen.o vstring.o vstring_vstream.o watchdog.o writable.o \
 	write_buf.o write_wait.o sane_basename.o format_tv.o allspace.o \
 	allascii.o load_file.o killme_after.o vstream_tweak.o \
-	unix_pass_listen.o unix_pass_trigger.o edit_file.o inet_windowsize.o \
+	pass_trigger.o edit_file.o inet_windowsize.o \
 	unix_pass_fd_fix.o dict_cache.o valid_utf_8.o dict_thash.o \
-	ip_match.o nbbio.o stream_pass_connect.o base32_code.o dict_test.o \
-	dict_fail.o msg_rate_delay.o dict_surrogate.o warn_stat.o
+	ip_match.o nbbio.o base32_code.o dict_test.o \
+	dict_fail.o msg_rate_delay.o dict_surrogate.o warn_stat.o \
+	dict_sockmap.o line_number.o recv_pass_attr.o pass_accept.o
 HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	chroot_uid.h cidr_match.h clean_env.h connect.h ctable.h dict.h \
 	dict_cdb.h dict_cidr.h dict_db.h dict_dbm.h dict_env.h dict_ht.h \
@@ -91,7 +93,7 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	username.h valid_hostname.h vbuf.h vbuf_print.h vstream.h vstring.h \
 	vstring_vstream.h watchdog.h format_tv.h load_file.h killme_after.h \
 	edit_file.h dict_cache.h dict_thash.h ip_match.h nbbio.h base32_code.h \
-	dict_fail.h warn_stat.h
+	dict_fail.h warn_stat.h dict_sockmap.h line_number.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 DEFS	= -I. -D$(SYSTYPE)
@@ -109,7 +111,8 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	attr_scan0 host_port attr_scan_plain attr_print_plain htable \
 	unix_recv_fd unix_send_fd stream_recv_fd stream_send_fd hex_code \
 	myaddrinfo myaddrinfo4 inet_proto sane_basename format_tv \
-	valid_utf_8 ip_match base32_code msg_rate_delay
+	valid_utf_8 ip_match base32_code msg_rate_delay netstring \
+	vstream
 
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
@@ -435,6 +438,16 @@ base32_code: $(LIB)
 	mv junk $@.o
 
 msg_rate_delay: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+netstring: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+vstream: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
@@ -842,9 +855,11 @@ dict.o: dict.h
 dict.o: dict_ht.h
 dict.o: htable.h
 dict.o: iostuff.h
+dict.o: line_number.h
 dict.o: mac_expand.h
 dict.o: mac_parse.h
 dict.o: msg.h
+dict.o: myflock.h
 dict.o: mymalloc.h
 dict.o: name_mask.h
 dict.o: readlline.h
@@ -858,6 +873,7 @@ dict_alloc.o: argv.h
 dict_alloc.o: dict.h
 dict_alloc.o: dict_alloc.c
 dict_alloc.o: msg.h
+dict_alloc.o: myflock.h
 dict_alloc.o: mymalloc.h
 dict_alloc.o: sys_defs.h
 dict_alloc.o: vbuf.h
@@ -869,6 +885,7 @@ dict_cache.o: dict_cache.c
 dict_cache.o: dict_cache.h
 dict_cache.o: events.h
 dict_cache.o: msg.h
+dict_cache.o: myflock.h
 dict_cache.o: mymalloc.h
 dict_cache.o: sys_defs.h
 dict_cache.o: vbuf.h
@@ -895,6 +912,7 @@ dict_cidr.o: dict_cidr.c
 dict_cidr.o: dict_cidr.h
 dict_cidr.o: msg.h
 dict_cidr.o: myaddrinfo.h
+dict_cidr.o: myflock.h
 dict_cidr.o: mymalloc.h
 dict_cidr.o: readlline.h
 dict_cidr.o: stringops.h
@@ -923,6 +941,7 @@ dict_debug.o: argv.h
 dict_debug.o: dict.h
 dict_debug.o: dict_debug.c
 dict_debug.o: msg.h
+dict_debug.o: myflock.h
 dict_debug.o: mymalloc.h
 dict_debug.o: sys_defs.h
 dict_debug.o: vbuf.h
@@ -933,6 +952,7 @@ dict_env.o: dict.h
 dict_env.o: dict_env.c
 dict_env.o: dict_env.h
 dict_env.o: msg.h
+dict_env.o: myflock.h
 dict_env.o: mymalloc.h
 dict_env.o: safe.h
 dict_env.o: stringops.h
@@ -945,6 +965,7 @@ dict_fail.o: dict.h
 dict_fail.o: dict_fail.c
 dict_fail.o: dict_fail.h
 dict_fail.o: msg.h
+dict_fail.o: myflock.h
 dict_fail.o: mymalloc.h
 dict_fail.o: sys_defs.h
 dict_fail.o: vbuf.h
@@ -955,6 +976,7 @@ dict_ht.o: dict.h
 dict_ht.o: dict_ht.c
 dict_ht.o: dict_ht.h
 dict_ht.o: htable.h
+dict_ht.o: myflock.h
 dict_ht.o: mymalloc.h
 dict_ht.o: stringops.h
 dict_ht.o: sys_defs.h
@@ -968,6 +990,7 @@ dict_nis.o: dict.h
 dict_nis.o: dict_nis.c
 dict_nis.o: dict_nis.h
 dict_nis.o: msg.h
+dict_nis.o: myflock.h
 dict_nis.o: mymalloc.h
 dict_nis.o: stringops.h
 dict_nis.o: sys_defs.h
@@ -979,6 +1002,7 @@ dict_nisplus.o: dict.h
 dict_nisplus.o: dict_nisplus.c
 dict_nisplus.o: dict_nisplus.h
 dict_nisplus.o: msg.h
+dict_nisplus.o: myflock.h
 dict_nisplus.o: mymalloc.h
 dict_nisplus.o: stringops.h
 dict_nisplus.o: sys_defs.h
@@ -1001,6 +1025,7 @@ dict_open.o: dict_open.c
 dict_open.o: dict_pcre.h
 dict_open.o: dict_regexp.h
 dict_open.o: dict_sdbm.h
+dict_open.o: dict_sockmap.h
 dict_open.o: dict_static.h
 dict_open.o: dict_tcp.h
 dict_open.o: dict_thash.h
@@ -1021,6 +1046,7 @@ dict_pcre.o: dict_pcre.c
 dict_pcre.o: dict_pcre.h
 dict_pcre.o: mac_parse.h
 dict_pcre.o: msg.h
+dict_pcre.o: myflock.h
 dict_pcre.o: mymalloc.h
 dict_pcre.o: readlline.h
 dict_pcre.o: safe.h
@@ -1036,6 +1062,7 @@ dict_regexp.o: dict_regexp.c
 dict_regexp.o: dict_regexp.h
 dict_regexp.o: mac_parse.h
 dict_regexp.o: msg.h
+dict_regexp.o: myflock.h
 dict_regexp.o: mymalloc.h
 dict_regexp.o: readlline.h
 dict_regexp.o: safe.h
@@ -1060,11 +1087,28 @@ dict_sdbm.o: vbuf.h
 dict_sdbm.o: vstream.h
 dict_sdbm.o: vstring.h
 dict_sdbm.o: warn_stat.h
+dict_sockmap.o: argv.h
+dict_sockmap.o: auto_clnt.h
+dict_sockmap.o: dict.h
+dict_sockmap.o: dict_sockmap.c
+dict_sockmap.o: dict_sockmap.h
+dict_sockmap.o: htable.h
+dict_sockmap.o: msg.h
+dict_sockmap.o: myflock.h
+dict_sockmap.o: mymalloc.h
+dict_sockmap.o: netstring.h
+dict_sockmap.o: split_at.h
+dict_sockmap.o: stringops.h
+dict_sockmap.o: sys_defs.h
+dict_sockmap.o: vbuf.h
+dict_sockmap.o: vstream.h
+dict_sockmap.o: vstring.h
 dict_static.o: argv.h
 dict_static.o: dict.h
 dict_static.o: dict_static.c
 dict_static.o: dict_static.h
 dict_static.o: msg.h
+dict_static.o: myflock.h
 dict_static.o: mymalloc.h
 dict_static.o: sys_defs.h
 dict_static.o: vbuf.h
@@ -1074,6 +1118,7 @@ dict_surrogate.o: argv.h
 dict_surrogate.o: dict.h
 dict_surrogate.o: dict_surrogate.c
 dict_surrogate.o: msg.h
+dict_surrogate.o: myflock.h
 dict_surrogate.o: mymalloc.h
 dict_surrogate.o: sys_defs.h
 dict_surrogate.o: vbuf.h
@@ -1087,6 +1132,7 @@ dict_tcp.o: dict_tcp.h
 dict_tcp.o: hex_quote.h
 dict_tcp.o: iostuff.h
 dict_tcp.o: msg.h
+dict_tcp.o: myflock.h
 dict_tcp.o: mymalloc.h
 dict_tcp.o: stringops.h
 dict_tcp.o: sys_defs.h
@@ -1099,6 +1145,7 @@ dict_test.o: dict.h
 dict_test.o: dict_test.c
 dict_test.o: msg.h
 dict_test.o: msg_vstream.h
+dict_test.o: myflock.h
 dict_test.o: stringops.h
 dict_test.o: sys_defs.h
 dict_test.o: vbuf.h
@@ -1112,6 +1159,7 @@ dict_thash.o: dict_thash.h
 dict_thash.o: htable.h
 dict_thash.o: iostuff.h
 dict_thash.o: msg.h
+dict_thash.o: myflock.h
 dict_thash.o: mymalloc.h
 dict_thash.o: readlline.h
 dict_thash.o: stringops.h
@@ -1125,6 +1173,7 @@ dict_unix.o: dict.h
 dict_unix.o: dict_unix.c
 dict_unix.o: dict_unix.h
 dict_unix.o: msg.h
+dict_unix.o: myflock.h
 dict_unix.o: mymalloc.h
 dict_unix.o: stringops.h
 dict_unix.o: sys_defs.h
@@ -1180,6 +1229,7 @@ exec_command.o: exec_command.h
 exec_command.o: msg.h
 exec_command.o: sys_defs.h
 fifo_listen.o: fifo_listen.c
+fifo_listen.o: htable.h
 fifo_listen.o: iostuff.h
 fifo_listen.o: listen.h
 fifo_listen.o: msg.h
@@ -1306,6 +1356,7 @@ inet_connect.o: sock_addr.h
 inet_connect.o: sys_defs.h
 inet_connect.o: timed_connect.h
 inet_listen.o: host_port.h
+inet_listen.o: htable.h
 inet_listen.o: inet_listen.c
 inet_listen.o: inet_proto.h
 inet_listen.o: iostuff.h
@@ -1347,6 +1398,11 @@ ip_match.o: vstring.h
 killme_after.o: killme_after.c
 killme_after.o: killme_after.h
 killme_after.o: sys_defs.h
+line_number.o: line_number.c
+line_number.o: line_number.h
+line_number.o: sys_defs.h
+line_number.o: vbuf.h
+line_number.o: vstring.h
 line_wrap.o: line_wrap.c
 line_wrap.o: line_wrap.h
 line_wrap.o: sys_defs.h
@@ -1401,6 +1457,7 @@ match_list.o: dict.h
 match_list.o: match_list.c
 match_list.o: match_list.h
 match_list.o: msg.h
+match_list.o: myflock.h
 match_list.o: mymalloc.h
 match_list.o: stringops.h
 match_list.o: sys_defs.h
@@ -1415,6 +1472,7 @@ match_ops.o: match_list.h
 match_ops.o: match_ops.c
 match_ops.o: msg.h
 match_ops.o: myaddrinfo.h
+match_ops.o: myflock.h
 match_ops.o: mymalloc.h
 match_ops.o: split_at.h
 match_ops.o: stringops.h
@@ -1468,6 +1526,7 @@ myaddrinfo.o: myaddrinfo.c
 myaddrinfo.o: myaddrinfo.h
 myaddrinfo.o: mymalloc.h
 myaddrinfo.o: sock_addr.h
+myaddrinfo.o: split_at.h
 myaddrinfo.o: stringops.h
 myaddrinfo.o: sys_defs.h
 myaddrinfo.o: valid_hostname.h
@@ -1544,6 +1603,23 @@ open_lock.o: sys_defs.h
 open_lock.o: vbuf.h
 open_lock.o: vstream.h
 open_lock.o: vstring.h
+pass_accept.o: attr.h
+pass_accept.o: htable.h
+pass_accept.o: iostuff.h
+pass_accept.o: listen.h
+pass_accept.o: msg.h
+pass_accept.o: pass_accept.c
+pass_accept.o: sys_defs.h
+pass_accept.o: vbuf.h
+pass_accept.o: vstream.h
+pass_trigger.o: connect.h
+pass_trigger.o: events.h
+pass_trigger.o: iostuff.h
+pass_trigger.o: msg.h
+pass_trigger.o: mymalloc.h
+pass_trigger.o: pass_trigger.c
+pass_trigger.o: sys_defs.h
+pass_trigger.o: trigger.h
 peekfd.o: iostuff.h
 peekfd.o: peekfd.c
 peekfd.o: sys_defs.h
@@ -1580,6 +1656,15 @@ readlline.o: sys_defs.h
 readlline.o: vbuf.h
 readlline.o: vstream.h
 readlline.o: vstring.h
+recv_pass_attr.o: attr.h
+recv_pass_attr.o: htable.h
+recv_pass_attr.o: iostuff.h
+recv_pass_attr.o: listen.h
+recv_pass_attr.o: mymalloc.h
+recv_pass_attr.o: recv_pass_attr.c
+recv_pass_attr.o: sys_defs.h
+recv_pass_attr.o: vbuf.h
+recv_pass_attr.o: vstream.h
 ring.o: ring.c
 ring.o: ring.h
 safe_getenv.o: safe.h
@@ -1692,16 +1777,12 @@ stream_connect.o: iostuff.h
 stream_connect.o: msg.h
 stream_connect.o: stream_connect.c
 stream_connect.o: sys_defs.h
+stream_listen.o: htable.h
 stream_listen.o: iostuff.h
 stream_listen.o: listen.h
 stream_listen.o: msg.h
 stream_listen.o: stream_listen.c
 stream_listen.o: sys_defs.h
-stream_pass_connect.o: connect.h
-stream_pass_connect.o: iostuff.h
-stream_pass_connect.o: msg.h
-stream_pass_connect.o: stream_pass_connect.c
-stream_pass_connect.o: sys_defs.h
 stream_recv_fd.o: iostuff.h
 stream_recv_fd.o: msg.h
 stream_recv_fd.o: stream_recv_fd.c
@@ -1711,6 +1792,7 @@ stream_send_fd.o: msg.h
 stream_send_fd.o: stream_send_fd.c
 stream_send_fd.o: sys_defs.h
 stream_test.o: connect.h
+stream_test.o: htable.h
 stream_test.o: iostuff.h
 stream_test.o: listen.h
 stream_test.o: msg.h
@@ -1770,6 +1852,7 @@ unix_connect.o: sane_connect.h
 unix_connect.o: sys_defs.h
 unix_connect.o: timed_connect.h
 unix_connect.o: unix_connect.c
+unix_listen.o: htable.h
 unix_listen.o: iostuff.h
 unix_listen.o: listen.h
 unix_listen.o: msg.h
@@ -1782,20 +1865,6 @@ unix_pass_fd_fix.o: sys_defs.h
 unix_pass_fd_fix.o: unix_pass_fd_fix.c
 unix_pass_fd_fix.o: vbuf.h
 unix_pass_fd_fix.o: vstring.h
-unix_pass_listen.o: iostuff.h
-unix_pass_listen.o: listen.h
-unix_pass_listen.o: msg.h
-unix_pass_listen.o: sane_accept.h
-unix_pass_listen.o: sys_defs.h
-unix_pass_listen.o: unix_pass_listen.c
-unix_pass_trigger.o: connect.h
-unix_pass_trigger.o: events.h
-unix_pass_trigger.o: iostuff.h
-unix_pass_trigger.o: msg.h
-unix_pass_trigger.o: mymalloc.h
-unix_pass_trigger.o: sys_defs.h
-unix_pass_trigger.o: trigger.h
-unix_pass_trigger.o: unix_pass_trigger.c
 unix_recv_fd.o: iostuff.h
 unix_recv_fd.o: msg.h
 unix_recv_fd.o: sys_defs.h

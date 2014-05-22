@@ -724,12 +724,12 @@ C q1 is the high word of m*n2+b*n2 and the following shows q1<=b-2 always.
 C rnd() means rounding down to a multiple of d.
 C
 C	m*n2 + b*n2 <= m*(d-1) + b*(d-1)
-C	             = m*d + b*d - m - b
-C	             = floor((b(b-d)-1)/d)*d + b*d - m - b
-C	             = rnd(b(b-d)-1) + b*d - m - b
-C	             = rnd(b(b-d)-1 + b*d) - m - b
-C	             = rnd(b*b-1) - m - b
-C	             <= (b-2)*b
+C		     = m*d + b*d - m - b
+C		     = floor((b(b-d)-1)/d)*d + b*d - m - b
+C		     = rnd(b(b-d)-1) + b*d - m - b
+C		     = rnd(b(b-d)-1 + b*d) - m - b
+C		     = rnd(b*b-1) - m - b
+C		     <= (b-2)*b
 C
 C Unchanged from the general case is that the final quotient limb q can be
 C either q1 or q1+1, and the q1+1 case occurs often.  This can be seen from

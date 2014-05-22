@@ -23,7 +23,7 @@ include(`../config.m4')
 
 C			     popcount	     hamdist
 C P3 generic			6.5		7
-C P3 model 9  (Banias)          ?		?
+C P3 model 9  (Banias)          5.7		6.1
 C P3 model 13 (Dothan)		5.75		6
 C K7				5		6
 

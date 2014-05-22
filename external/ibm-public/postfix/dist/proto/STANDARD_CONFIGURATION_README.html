@@ -102,20 +102,18 @@ mail from the network, and it does not deliver any mail locally. A
 null client typically uses POP, IMAP or NFS for mailbox access. </p>
 
 <p> In this example we assume that the Internet domain name is
-"example.com" and that the machine is named "nullclient.example.com".
+"example.com" and that the machine is named "hostname.example.com".
 As usual, the examples show only parameters that are not left at
 their default settings. </p>
 
 <blockquote>
 <pre>
 1 /etc/postfix/main.cf:
-2     myorigin = $mydomain
-3     relayhost = $mydomain
-4     inet_interfaces = loopback-only
-5     local_transport = error:local delivery is disabled
-6 
-7 /etc/postfix/master.cf:
-8     Comment out the local delivery agent entry
+2     myhostname = hostname.example.com
+3     myorigin = $mydomain
+4     relayhost = $mydomain
+5     inet_interfaces = loopback-only
+6     mydestination =
 </pre>
 </blockquote>
 
@@ -123,19 +121,29 @@ their default settings. </p>
 
 <ul>
 
-<li> <p> Line 2: Send mail as "user@example.com" (instead of
-"user@nullclient.example.com"), so that nothing ever has a reason
-to send mail to "user@nullclient.example.com". </p>
+<li> <p> Line 2: Set myhostname to hostname.example.com, in case
+the machine name isn't set to a fully-qualified domain name (use
+the command "postconf -d myhostname" to find out what the machine
+name is).  </p>
 
-<li> <p> Line 3: Forward all mail to the mail server that is
+<li> <p> Line 2: The myhostname value also provides the default
+value for the mydomain parameter (here, "mydomain = example.com").
+</p>
+
+<li> <p> Line 3: Send mail as "user@example.com" (instead of
+"user@hostname.example.com"), so that nothing ever has a reason
+to send mail to "user@hostname.example.com". </p>
+
+<li> <p> Line 4: Forward all mail to the mail server that is
 responsible for the "example.com" domain. This prevents mail from
 getting stuck on the null client if it is turned off while some
-remote destination is unreachable. </p>
+remote destination is unreachable. Specify a real hostname
+here if your "example.com" domain has no MX record. </p>
 
-<li> <p> Line 4: Do not accept mail from the network. </p>
+<li> <p> Line 5: Do not accept mail from the network. </p>
 
-<li> <p> Lines 5-8: Disable local mail delivery. All mail goes to
-the mail server as specified in line 3.  </p>
+<li> <p> Line 6: Disable local mail delivery. All mail goes to
+the mail server as specified in line 4.  </p>
 
 </ul>
 
@@ -347,31 +355,41 @@ is the real purpose of the firewall email function. </p>
  3     relay_domains = example.com
  4     parent_domain_matches_subdomains = 
  5         debug_peer_list smtpd_access_maps
- 6     smtpd_recipient_restrictions =
- 7         permit_mynetworks reject_unauth_destination
- 8 
- 9     relay_recipient_maps = hash:/etc/postfix/relay_recipients
-10     transport_maps = hash:/etc/postfix/transport
-11 
-12 /etc/postfix/relay_recipients:
-13     user1@example.com   x
-14     user2@example.com   x
-15      . . .
-16 
-17 /etc/postfix/transport:
-18     example.com   smtp:[inside-gateway.example.com]
+<br>
+ 6a    # Postfix 2.10 and later support separate relay control and
+ 7a    # spam control.
+ 8a    smtpd_relay_restrictions =
+ 9a        permit_mynetworks reject_unauth_destination
+10a    smtpd_recipient_restrictions = ...spam blocking rules....
+<br>
+ 6b    # Older configurations combine relay control and spam control. To
+ 7b    # use this with Postfix &ge; 2.10 specify "smtpd_relay_restrictions=".
+ 8b    smtpd_recipient_restrictions =
+ 9b        permit_mynetworks reject_unauth_destination
+10b        ...spam blocking rules....
+<br>
+11     relay_recipient_maps = hash:/etc/postfix/relay_recipients
+12     transport_maps = hash:/etc/postfix/transport
+13 
+14 /etc/postfix/relay_recipients:
+15     user1@example.com   x
+16     user2@example.com   x
+17      . . .
+18 
+19 /etc/postfix/transport:
+20     example.com   smtp:[inside-gateway.example.com]
 </pre>
 </blockquote>
 
 <p> Translation: </p>
 
 <ul>
-
-<li><p> Lines 1-7: Accept mail from local systems in $mynetworks,
+ 
+<li><p> Lines 1-10: Accept mail from local systems in $mynetworks,
 and accept mail from outside for "user@example.com" but not for
 "user@anything.example.com". The magic is in lines 4-5. </p>
 
-<li> <p> Lines 9, 12-14: Define the list of valid addresses in the
+<li> <p> Lines 11, 13-16: Define the list of valid addresses in the
 "example.com" domain that can receive mail from the Internet. This
 prevents the mail queue from filling up with undeliverable
 MAILER-DAEMON messages. If you can't maintain a list of valid
@@ -379,7 +397,7 @@ recipients then you must specify "relay_recipient_maps =" (that
 is, an empty value), or you must specify an "@example.com  x"
 wild-card in the relay_recipients table. </p>
 
-<li> <p> Lines 10, 17-18: Route mail for "example.com" to the inside
+<li> <p> Lines 12, 19-20: Route mail for "example.com" to the inside
 gateway machine. The <tt>[]</tt> forces Postfix to do no MX lookup.
 </p>
 
@@ -521,18 +539,28 @@ is all you need: </p>
  3 
  4 /etc/postfix/main.cf:
  5     relay_domains = . . . the.backed-up.domain.tld
- 6     smtpd_recipient_restrictions = 
- 7         permit_mynetworks reject_unauth_destination
- 8 
- 9     # You must specify your NAT/proxy external address.
-10     #proxy_interfaces = 1.2.3.4
-11 
-12     relay_recipient_maps = hash:/etc/postfix/relay_recipients
+<br>
+ 6a    # Postfix 2.10 and later support separate relay control and
+ 7a    # spam control.
+ 8a    smtpd_relay_restrictions =
+ 9a        permit_mynetworks reject_unauth_destination
+10a    smtpd_recipient_restrictions = ...spam blocking rules....
+<br>
+ 6b    # Older configurations combine relay control and spam control. To
+ 7b    # use this with Postfix &ge; 2.10 specify "smtpd_relay_restrictions=".
+ 8b    smtpd_recipient_restrictions =
+ 9b        permit_mynetworks reject_unauth_destination
+10b        ...spam blocking rules....
+<br>
+11     # You must specify your NAT/proxy external address.
+12     #proxy_interfaces = 1.2.3.4
 13 
-14 /etc/postfix/relay_recipients:
-15     user1@the.backed-up.domain.tld   x
-16     user2@the.backed-up.domain.tld   x
-17      . . .
+14     relay_recipient_maps = hash:/etc/postfix/relay_recipients
+15 
+16 /etc/postfix/relay_recipients:
+17     user1@the.backed-up.domain.tld   x
+18     user2@the.backed-up.domain.tld   x
+19      . . .
 </pre>
 </blockquote>
 
@@ -541,11 +569,11 @@ need the above, plus: </p>
 
 <blockquote>
 <pre>
-18 /etc/postfix/main.cf:
-19     transport_maps = hash:/etc/postfix/transport
-20 
-21 /etc/postfix/transport:
-22     the.backed-up.domain.tld       relay:[their.mail.host.tld]
+20 /etc/postfix/main.cf:
+21     transport_maps = hash:/etc/postfix/transport
+22 
+23 /etc/postfix/transport:
+24     the.backed-up.domain.tld       relay:[their.mail.host.tld]
 </pre>
 </blockquote>
 
@@ -559,15 +587,15 @@ need the above, plus: </p>
 
 <li><p>Do not list the.backed-up.domain.tld in virtual_mailbox_domains.</p>
 
-<li> <p> Lines 1-7: Forward mail from the Internet for
+<li> <p> Lines 1-9: Forward mail from the Internet for
 "the.backed-up.domain.tld" to the primary MX host for that domain.
 </p>
 
-<li> <p> Line 10: This is a must if Postfix receives mail via a
+<li> <p> Line 12: This is a must if Postfix receives mail via a
 NAT relay or proxy that presents a different IP address to the
 world than the local machine. </p>
 
-<li> <p> Lines 12-16: Define the list of valid addresses in the
+<li> <p> Lines 14-18: Define the list of valid addresses in the
 "the.backed-up.domain.tld" domain.  This prevents your mail queue
 from filling up with undeliverable MAILER-DAEMON messages. If you
 can't maintain a list of valid recipients then you must specify
@@ -575,7 +603,7 @@ can't maintain a list of valid recipients then you must specify
 specify an "@the.backed-up.domain.tld  x" wild-card in the
 relay_recipients table. </p>
 
-<li> <p> Line 22: The <tt>[]</tt> forces Postfix to do no MX lookup. </p>
+<li> <p> Line 24: The <tt>[]</tt> forces Postfix to do no MX lookup. </p>
 
 </ul>
 

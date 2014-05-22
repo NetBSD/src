@@ -166,7 +166,7 @@ typedef struct ddt_ops {
 #define	DDT_NAMELEN	80
 
 extern void ddt_object_name(ddt_t *ddt, enum ddt_type type,
-    enum ddt_class class, char *name);
+    enum ddt_class class, char *name, size_t namelen);
 extern int ddt_object_walk(ddt_t *ddt, enum ddt_type type,
     enum ddt_class class, uint64_t *walk, ddt_entry_t *dde);
 extern uint64_t ddt_object_count(ddt_t *ddt, enum ddt_type type,

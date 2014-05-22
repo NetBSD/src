@@ -1,21 +1,21 @@
 /* Test conversion and I/O using mpz_out_str and mpz_inp_str.
 
-Copyright 1993, 1994, 1996, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1993, 1994, 1996, 2000, 2001, 2012 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "config.h"
 
@@ -45,7 +45,7 @@ main (int argc, char **argv)
   int i;
   int reps = 10000;
   FILE *fp;
-  int base;
+  int base, base_out;
   gmp_randstate_ptr rands;
   mpz_t bs;
   unsigned long bsi, size_range;
@@ -79,12 +79,17 @@ main (int argc, char **argv)
 
       mpz_urandomb (bs, rands, 16);
       bsi = mpz_get_ui (bs);
-      base = bsi % 36 + 1;
+      base = bsi % 62 + 1;
       if (base == 1)
 	base = 0;
 
+      if (i % 2 == 0 && base <= 36)
+	base_out = -base;
+      else
+	base_out = base;
+
       rewind (fp);
-      if (mpz_out_str (fp, base, op1) == 0
+      if (mpz_out_str (fp, base_out, op1) == 0
 	  || putc (' ', fp) == EOF
 	  || fflush (fp) != 0)
 	{

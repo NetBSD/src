@@ -1,7 +1,7 @@
 /* Test file for the various power functions
 
-Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -43,7 +43,7 @@ static int all_cmpres_errors;
 /* Non-zero when extended exponent range */
 static int ext = 0;
 
-static char *val[] =
+static const char *val[] =
   { "min", "min+", "max", "@NaN@", "-@Inf@", "-4", "-3", "-2", "-1.5",
     "-1", "-0.5", "-0", "0", "0.5", "1", "1.5", "2", "3", "4", "@Inf@" };
 

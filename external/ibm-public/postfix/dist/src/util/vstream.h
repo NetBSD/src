@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.1.1.2.4.1 2013/01/23 00:05:17 yamt Exp $	*/
+/*	$NetBSD: vstream.h,v 1.1.1.2.4.2 2014/05/22 14:08:04 yamt Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -208,6 +208,8 @@ extern const char *vstream_peek_data(VSTREAM *);
   */
 extern int vstream_tweak_sock(VSTREAM *);
 extern int vstream_tweak_tcp(VSTREAM *);
+
+#define vstream_flags(stream) ((const int) (stream)->buf.flags)
 
 /* LICENSE
 /* .ad

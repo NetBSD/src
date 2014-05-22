@@ -1,6 +1,7 @@
 dnl  AMD64 mpn_divexact_1 -- mpn by limb exact division.
 
-dnl  Copyright 2001, 2002, 2004, 2005, 2006 Free Software Foundation, Inc.
+dnl  Copyright 2001, 2002, 2004, 2005, 2006, 2011, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -21,12 +22,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	10
-C K10:		10
-C P4:		33
-C P6 core2:	13.25
-C P6 corei7:	14
-C P6 atom:	42
+C AMD K8,K9	10
+C AMD K10	10
+C Intel P4	33
+C Intel core2	13.25
+C Intel corei	14
+C Intel atom	42
+C VIA nano	43
 
 C A quick adoption of the 32-bit K7 code.
 
@@ -37,10 +39,14 @@ C up		rsi
 C n		rdx
 C divisor	rcx
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(mpn_divexact_1)
+	FUNC_ENTRY(4)
 	push	%rbx
 
 	mov	%rcx, %rax
@@ -54,11 +60,7 @@ L(odd):	mov	%rax, %rbx
 	shr	R32(%rax)
 	and	$127, R32(%rax)		C d/2, 7 bits
 
-ifdef(`PIC',`
-	mov	binvert_limb_table@GOTPCREL(%rip), %rdx
-',`
-	movabs	$binvert_limb_table, %rdx
-')
+	LEA(	binvert_limb_table, %rdx)
 
 	movzbl	(%rdx,%rax), R32(%rax)	C inv 8 bits
 
@@ -133,12 +135,14 @@ L(ent):	imul	%r10, %rax		C			6
 	imul	%r10, %rax
 	mov	%rax, (%rdi)
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 
 L(one):	shr	R8(%rcx), %rax
 	imul	%r10, %rax
 	mov	%rax, (%rdi)
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 
 EPILOGUE()

@@ -1,21 +1,21 @@
 /* Test mp*_class binary expressions.
 
-Copyright 2001, 2002, 2003, 2008 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2003, 2008, 2012 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "config.h"
 
@@ -94,6 +94,7 @@ check_mpz (void)
   {
     mpz_class a(3), b(4);
     mpz_class c(a * (-b)); ASSERT_ALWAYS(c == -12);
+    c = c * (-b); ASSERT_ALWAYS(c == 48);
   }
 
   // template <class T, class U, class Op>
@@ -102,6 +103,7 @@ check_mpz (void)
     mpz_class a(3), b(2), c(1);
     mpz_class d;
     d = (a % b) + c; ASSERT_ALWAYS(d == 2);
+    d = (a % b) + d; ASSERT_ALWAYS(d == 3);
   }
 
   // template <class T, class U, class V, class Op>
@@ -146,6 +148,8 @@ check_mpz (void)
     mpz_class a(3), b(5), c(7);
     mpz_class d;
     d = (a - b) * (-c); ASSERT_ALWAYS(d == 14);
+    d = (b - d) * (-a); ASSERT_ALWAYS(d == 27);
+    d = (a - b) * (-d); ASSERT_ALWAYS(d == 54);
   }
 
   {
@@ -215,6 +219,7 @@ check_mpq (void)
     double c = 2.0;
     mpq_class d;
     d = a * (b + c); ASSERT_ALWAYS(d == 2);
+    d = d * (b + c); ASSERT_ALWAYS(d == 6);
   }
 
   // template <class T, class U, class V, class Op>
@@ -229,6 +234,7 @@ check_mpq (void)
     mpz_class b(1), c(4);
     mpq_class d;
     d = (b - c) * a; ASSERT_ALWAYS(d == -2);
+    d = (b - c) * d; ASSERT_ALWAYS(d == 6);
   }
 
   // template <class T, class U, class Op>
@@ -237,6 +243,7 @@ check_mpq (void)
     mpq_class a(1, 3), b(3, 4);
     mpq_class c;
     c = a * (-b); ASSERT_ALWAYS(c == -0.25);
+    a = a * (-b); ASSERT_ALWAYS(a == -0.25);
   }
 
   // template <class T, class U, class Op>
@@ -244,6 +251,7 @@ check_mpq (void)
   {
     mpq_class a(1, 3), b(2, 3), c(1, 4);
     mpq_class d((a / b) + c); ASSERT_ALWAYS(d == 0.75);
+    c = (a / b) + c; ASSERT_ALWAYS(c == 0.75);
   }
 
   // template <class T, class U, class V, class Op>
@@ -269,12 +277,17 @@ check_mpq (void)
     mpq_class a(1, 2), b(1, 4);
     mpz_class c(1);
     mpq_class d((a + b) - c); ASSERT_ALWAYS(d == -0.25);
+    d = (a + d) - c; ASSERT_ALWAYS(d == -0.75);
+    d = (a + d) - d.get_num(); ASSERT_ALWAYS(d == 2.75);
+    d = (2 * d) * d.get_den(); ASSERT_ALWAYS(d == 22);
+    d = (b * d) / -d.get_num(); ASSERT_ALWAYS(d == -0.25);
   }
   {
     mpq_class a(1, 3), b(3, 2);
     mpz_class c(2), d(4);
     mpq_class e;
     e = (a * b) / (c - d); ASSERT_ALWAYS(e == -0.25);
+    e = (2 * e) / (c - d); ASSERT_ALWAYS(e ==  0.25);
   }
 
   // template <class T, class U, class V, class W, class Op>
@@ -290,6 +303,7 @@ check_mpq (void)
     signed int d = 4;
     mpq_class e;
     e = (c % d) / (a * b); ASSERT_ALWAYS(e == 10);
+    e = (e.get_num() % d) / (2 / e); ASSERT_ALWAYS(e == 10);
   }
 
   // template <class T, class U, class V, class Op>
@@ -298,6 +312,8 @@ check_mpq (void)
     mpq_class a(1, 3), b(3, 4), c(2, 5);
     mpq_class d;
     d = (a * b) / (-c); ASSERT_ALWAYS(d == -0.625);
+    d = (c * d) / (-b); ASSERT_ALWAYS(3 * d == 1);
+    d = (a * c) / (-d); ASSERT_ALWAYS(5 * d == -2);
   }
 }
 
@@ -350,6 +366,7 @@ check_mpf (void)
     mpz_class b(2), c(1);
     mpf_class d;
     d = a * (b + c); ASSERT_ALWAYS(d == 9);
+    a = a * (b + c); ASSERT_ALWAYS(a == 9);
   }
 
   // template <class T, class U, class V, class Op>
@@ -366,6 +383,7 @@ check_mpf (void)
     mpf_class a(2), b(-3);
     mpf_class c;
     c = a * (-b); ASSERT_ALWAYS(c == 6);
+    c = c * (-b); ASSERT_ALWAYS(c == 18);
   }
 
   // template <class T, class U, class Op>
@@ -374,6 +392,7 @@ check_mpf (void)
     mpf_class a(3), b(4), c(5);
     mpf_class d;
     d = (a / b) - c; ASSERT_ALWAYS(d == -4.25);
+    c = (a / b) - c; ASSERT_ALWAYS(c == -4.25);
   }
 
   // template <class T, class U, class V, class Op>

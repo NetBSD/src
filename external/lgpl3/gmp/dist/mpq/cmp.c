@@ -25,10 +25,10 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 int
 mpq_cmp (const MP_RAT *op1, const MP_RAT *op2)
 {
-  mp_size_t num1_size = op1->_mp_num._mp_size;
-  mp_size_t den1_size = op1->_mp_den._mp_size;
-  mp_size_t num2_size = op2->_mp_num._mp_size;
-  mp_size_t den2_size = op2->_mp_den._mp_size;
+  mp_size_t num1_size = SIZ(NUM(op1));
+  mp_size_t den1_size = SIZ(DEN(op1));
+  mp_size_t num2_size = SIZ(NUM(op2));
+  mp_size_t den2_size = SIZ(DEN(op2));
   mp_size_t tmp1_size, tmp2_size;
   mp_ptr tmp1_ptr, tmp2_ptr;
   mp_size_t num1_sign;
@@ -70,12 +70,12 @@ mpq_cmp (const MP_RAT *op1, const MP_RAT *op2)
     int cnt1, cnt2;
     mp_bitcnt_t bits1, bits2;
 
-    count_leading_zeros (cnt1, op1->_mp_num._mp_d[num1_size - 1]);
-    count_leading_zeros (cnt2, op2->_mp_den._mp_d[den2_size - 1]);
+    count_leading_zeros (cnt1, PTR(NUM(op1))[num1_size - 1]);
+    count_leading_zeros (cnt2, PTR(DEN(op2))[den2_size - 1]);
     bits1 = tmp1_size * GMP_NUMB_BITS - cnt1 - cnt2 + 2 * GMP_NAIL_BITS;
 
-    count_leading_zeros (cnt1, op2->_mp_num._mp_d[num2_size - 1]);
-    count_leading_zeros (cnt2, op1->_mp_den._mp_d[den1_size - 1]);
+    count_leading_zeros (cnt1, PTR(NUM(op2))[num2_size - 1]);
+    count_leading_zeros (cnt2, PTR(DEN(op1))[den1_size - 1]);
     bits2 = tmp2_size * GMP_NUMB_BITS - cnt1 - cnt2 + 2 * GMP_NAIL_BITS;
 
     if (bits1 > bits2 + 1)
@@ -91,21 +91,21 @@ mpq_cmp (const MP_RAT *op1, const MP_RAT *op2)
 
   if (num1_size >= den2_size)
     tmp1_size -= 0 == mpn_mul (tmp1_ptr,
-			       op1->_mp_num._mp_d, num1_size,
-			       op2->_mp_den._mp_d, den2_size);
+			       PTR(NUM(op1)), num1_size,
+			       PTR(DEN(op2)), den2_size);
   else
     tmp1_size -= 0 == mpn_mul (tmp1_ptr,
-			       op2->_mp_den._mp_d, den2_size,
-			       op1->_mp_num._mp_d, num1_size);
+			       PTR(DEN(op2)), den2_size,
+			       PTR(NUM(op1)), num1_size);
 
    if (num2_size >= den1_size)
      tmp2_size -= 0 == mpn_mul (tmp2_ptr,
-				op2->_mp_num._mp_d, num2_size,
-				op1->_mp_den._mp_d, den1_size);
+				PTR(NUM(op2)), num2_size,
+				PTR(DEN(op1)), den1_size);
    else
      tmp2_size -= 0 == mpn_mul (tmp2_ptr,
-				op1->_mp_den._mp_d, den1_size,
-				op2->_mp_num._mp_d, num2_size);
+				PTR(DEN(op1)), den1_size,
+				PTR(NUM(op2)), num2_size);
 
 
   cc = tmp1_size - tmp2_size != 0

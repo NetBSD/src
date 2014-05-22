@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/07/23 23:38:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2014/05/22 14:09:40 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ SUBDIR=	freetype
 .PATH:	${FREETYPE}/src/base
 SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c ftglyph.c \
 	ftinit.c ftlcdfil.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
-	ftsystem.c fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c
+	ftsystem.c fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c ftcid.c \
+	ftgasp.c ftgxval.c ftotval.c ftpatent.c ftpfr.c
 
 .PATH:	${FREETYPE}/src/autofit
 SRCS+=	autofit.c
@@ -53,7 +54,7 @@ SRCS+=	psaux.c
 SRCS+=	pshinter.c
 
 .PATH:	${FREETYPE}/src/psnames
-SRCS+=	psnames.c
+SRCS+=	psmodule.c
 
 .PATH:	${FREETYPE}/src/raster
 SRCS+=	raster.c
@@ -86,7 +87,7 @@ CPPFLAGS+=	-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
 		-DFT2_BUILD_LIBRARY \
 		-DFT_CONFIG_MODULES_H="<ftmodule.h>"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
-		-I${DESTDIR}${X11INCDIR}/freetype2/freetype/config \
+		-I${DESTDIR}${X11INCDIR}/freetype2/config \
 		-I${X11SRCDIR.${LIB}}/include
 
 .if !defined(MKSUBPIXEL) || ${MKSUBPIXEL} != "no"

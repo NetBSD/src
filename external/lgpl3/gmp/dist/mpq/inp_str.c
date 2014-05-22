@@ -32,8 +32,8 @@ mpq_inp_str (mpq_ptr q, FILE *fp, int base)
   if (fp == NULL)
     fp = stdin;
 
-  q->_mp_den._mp_size = 1;
-  q->_mp_den._mp_d[0] = 1;
+  SIZ(DEN(q)) = 1;
+  PTR(DEN(q))[0] = 1;
 
   nread = mpz_inp_str (mpq_numref(q), fp, base);
   if (nread == 0)
@@ -49,11 +49,11 @@ mpq_inp_str (mpq_ptr q, FILE *fp, int base)
 
       nread = mpz_inp_str_nowhite (mpq_denref(q), fp, base, c, nread);
       if (nread == 0)
-        {
-          q->_mp_num._mp_size = 0;
-          q->_mp_den._mp_size = 1;
-          q->_mp_den._mp_d[0] = 1;
-        }
+	{
+	  SIZ(NUM(q)) = 0;
+	  SIZ(DEN(q)) = 1;
+	  PTR(DEN(q))[0] = 1;
+	}
     }
   else
     {

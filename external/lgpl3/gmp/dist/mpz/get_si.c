@@ -1,6 +1,6 @@
 /* mpz_get_si(integer) -- Return the least significant digit from INTEGER.
 
-Copyright 1991, 1993, 1994, 1995, 2000, 2001, 2002, 2006 Free Software
+Copyright 1991, 1993, 1994, 1995, 2000, 2001, 2002, 2006, 2012 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -22,10 +22,10 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 signed long int
-mpz_get_si (mpz_srcptr z)
+mpz_get_si (mpz_srcptr z) __GMP_NOTHROW
 {
-  mp_ptr zp = z->_mp_d;
-  mp_size_t size = z->_mp_size;
+  mp_ptr zp = PTR (z);
+  mp_size_t size = SIZ (z);
   mp_limb_t zl = zp[0];
 
 #if GMP_NAIL_BITS != 0
@@ -34,10 +34,10 @@ mpz_get_si (mpz_srcptr z)
 #endif
 
   if (size > 0)
-    return (long) zl & LONG_MAX;
+    return zl & LONG_MAX;
   else if (size < 0)
     /* This expression is necessary to properly handle 0x80000000 */
-    return ~(((long) zl - 1L) & LONG_MAX);
+    return -1 - (long) ((zl - 1) & LONG_MAX);
   else
     return 0;
 }

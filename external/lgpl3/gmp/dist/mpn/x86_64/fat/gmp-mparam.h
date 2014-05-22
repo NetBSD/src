@@ -1,6 +1,6 @@
 /* Fat binary x86_64 gmp-mparam.h -- Compiler/machine parameter header file.
 
-Copyright 1991, 1993, 1994, 2000, 2001, 2002, 2003, 2009 Free Software
+Copyright 1991, 1993, 1994, 2000, 2001, 2002, 2003, 2009, 2011 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -33,6 +33,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    __gmpn_cpuvec pointer go to plain mpn_divrem_1 if there's not an actual
    preinv.  */
 #define USE_PREINV_DIVREM_1   1
+
+#define BMOD_1_TO_MOD_1_THRESHOLD           20
 
 /* mpn_sqr_basecase is faster than mpn_mul_basecase at all sizes, no need
    for mpn_sqr to call the latter.  */

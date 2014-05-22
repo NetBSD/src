@@ -1,7 +1,7 @@
 /* Test file for mpfr_log1p.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -61,31 +61,45 @@ special (void)
   mpfr_init (x);
 
   mpfr_set_nan (x);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_nan_p (x) && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
 
   mpfr_set_inf (x, -1);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_nan_p (x) && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
 
   mpfr_set_inf (x, 1);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_inf_p (x) && mpfr_sgn (x) > 0 && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 
   mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_cmp_ui (x, 0) == 0 && MPFR_IS_POS (x) && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
   mpfr_neg (x, x, MPFR_RNDN);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_cmp_ui (x, 0) == 0 && MPFR_IS_NEG (x) && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 
   mpfr_set_si (x, -1, MPFR_RNDN);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_inf_p (x) && mpfr_sgn (x) < 0 && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
 
   mpfr_set_si (x, -2, MPFR_RNDN);
+  mpfr_clear_flags ();
   inex = test_log1p (x, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_nan_p (x) && inex == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
 
   mpfr_clear (x);
 }

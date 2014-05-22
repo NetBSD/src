@@ -3,10 +3,17 @@
  * Edit at your peril.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>  /* for offsetof() */
 #include "xcbext.h"
 #include "shm.h"
+
+#define ALIGNOF(type) offsetof(struct { char dummy; type member; }, member)
 #include "xproto.h"
 
 xcb_extension_t xcb_shm_id = { "MIT-SHM", 0 };
@@ -78,6 +85,7 @@ xcb_shm_query_version (xcb_connection_t *c  /**< */)
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -111,6 +119,7 @@ xcb_shm_query_version_unchecked (xcb_connection_t *c  /**< */)
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -174,6 +183,7 @@ xcb_shm_attach_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -217,6 +227,7 @@ xcb_shm_attach (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -253,6 +264,7 @@ xcb_shm_detach_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -289,6 +301,7 @@ xcb_shm_detach (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -368,6 +381,7 @@ xcb_shm_put_image_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -447,6 +461,7 @@ xcb_shm_put_image (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -508,6 +523,7 @@ xcb_shm_get_image (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -569,6 +585,7 @@ xcb_shm_get_image_unchecked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -644,6 +661,7 @@ xcb_shm_create_pixmap_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -699,7 +717,222 @@ xcb_shm_create_pixmap (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
+}
+
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_shm_attach_fd_checked
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param int32_t           shm_fd
+ ** @param uint8_t           read_only
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_shm_attach_fd_checked (xcb_connection_t *c  /**< */,
+                           xcb_shm_seg_t     shmseg  /**< */,
+                           int32_t           shm_fd  /**< */,
+                           uint8_t           read_only  /**< */)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        /* count */ 2,
+        /* ext */ &xcb_shm_id,
+        /* opcode */ XCB_SHM_ATTACH_FD,
+        /* isvoid */ 1
+    };
+    
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_shm_attach_fd_request_t xcb_out;
+    
+    xcb_out.shmseg = shmseg;
+    xcb_out.read_only = read_only;
+    memset(xcb_out.pad0, 0, 3);
+    
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
+    xcb_send_fd(c, shm_fd);
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_shm_attach_fd
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param int32_t           shm_fd
+ ** @param uint8_t           read_only
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_shm_attach_fd (xcb_connection_t *c  /**< */,
+                   xcb_shm_seg_t     shmseg  /**< */,
+                   int32_t           shm_fd  /**< */,
+                   uint8_t           read_only  /**< */)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        /* count */ 2,
+        /* ext */ &xcb_shm_id,
+        /* opcode */ XCB_SHM_ATTACH_FD,
+        /* isvoid */ 1
+    };
+    
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_shm_attach_fd_request_t xcb_out;
+    
+    xcb_out.shmseg = shmseg;
+    xcb_out.read_only = read_only;
+    memset(xcb_out.pad0, 0, 3);
+    
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
+    xcb_send_fd(c, shm_fd);
+    xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+
+/*****************************************************************************
+ **
+ ** xcb_shm_create_segment_cookie_t xcb_shm_create_segment
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param uint32_t          size
+ ** @param uint8_t           read_only
+ ** @returns xcb_shm_create_segment_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_shm_create_segment_cookie_t
+xcb_shm_create_segment (xcb_connection_t *c  /**< */,
+                        xcb_shm_seg_t     shmseg  /**< */,
+                        uint32_t          size  /**< */,
+                        uint8_t           read_only  /**< */)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        /* count */ 2,
+        /* ext */ &xcb_shm_id,
+        /* opcode */ XCB_SHM_CREATE_SEGMENT,
+        /* isvoid */ 0
+    };
+    
+    struct iovec xcb_parts[4];
+    xcb_shm_create_segment_cookie_t xcb_ret;
+    xcb_shm_create_segment_request_t xcb_out;
+    
+    xcb_out.shmseg = shmseg;
+    xcb_out.size = size;
+    xcb_out.read_only = read_only;
+    memset(xcb_out.pad0, 0, 3);
+    
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED|XCB_REQUEST_REPLY_FDS, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+
+/*****************************************************************************
+ **
+ ** xcb_shm_create_segment_cookie_t xcb_shm_create_segment_unchecked
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_shm_seg_t     shmseg
+ ** @param uint32_t          size
+ ** @param uint8_t           read_only
+ ** @returns xcb_shm_create_segment_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_shm_create_segment_cookie_t
+xcb_shm_create_segment_unchecked (xcb_connection_t *c  /**< */,
+                                  xcb_shm_seg_t     shmseg  /**< */,
+                                  uint32_t          size  /**< */,
+                                  uint8_t           read_only  /**< */)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        /* count */ 2,
+        /* ext */ &xcb_shm_id,
+        /* opcode */ XCB_SHM_CREATE_SEGMENT,
+        /* isvoid */ 0
+    };
+    
+    struct iovec xcb_parts[4];
+    xcb_shm_create_segment_cookie_t xcb_ret;
+    xcb_shm_create_segment_request_t xcb_out;
+    
+    xcb_out.shmseg = shmseg;
+    xcb_out.size = size;
+    xcb_out.read_only = read_only;
+    memset(xcb_out.pad0, 0, 3);
+    
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_REPLY_FDS, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+
+/*****************************************************************************
+ **
+ ** xcb_shm_create_segment_reply_t * xcb_shm_create_segment_reply
+ ** 
+ ** @param xcb_connection_t                 *c
+ ** @param xcb_shm_create_segment_cookie_t   cookie
+ ** @param xcb_generic_error_t             **e
+ ** @returns xcb_shm_create_segment_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_shm_create_segment_reply_t *
+xcb_shm_create_segment_reply (xcb_connection_t                 *c  /**< */,
+                              xcb_shm_create_segment_cookie_t   cookie  /**< */,
+                              xcb_generic_error_t             **e  /**< */)
+{
+    return (xcb_shm_create_segment_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
+}
+
+
+/*****************************************************************************
+ **
+ ** int * xcb_shm_create_segment_reply_fds
+ ** 
+ ** @param xcb_connection_t                *c
+ ** @param xcb_shm_create_segment_reply_t  *reply
+ ** @returns int *
+ **
+ *****************************************************************************/
+ 
+int *
+xcb_shm_create_segment_reply_fds (xcb_connection_t                *c  /**< */,
+                                  xcb_shm_create_segment_reply_t  *reply  /**< */)
+{
+    return xcb_get_reply_fds(c, reply, sizeof(xcb_shm_create_segment_reply_t) + 4 * reply->length);
 }
 

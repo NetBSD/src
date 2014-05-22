@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/05/22 02:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2014/05/22 14:09:42 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ LIB=	Xxf86vm
 .PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions
 
 SRCS=	XF86VMode.c
+
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
+
 MAN=	XF86VM.3
 MLINKS=	XF86VM.3 XF86VidModeQueryExtension.3 \
 	XF86VM.3 XF86VidModeQueryVersion.3 \

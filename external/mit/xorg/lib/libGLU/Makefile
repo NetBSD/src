@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/08/11 23:15:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2014/05/22 14:09:41 yamt Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -77,10 +77,8 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		Xxf86vm	${.CURDIR}/../libXxf86vm \
 		Xfixes	${.CURDIR}/../libXfixes \
 		Xdamage	${.CURDIR}/../libXdamage \
-		drm	${.CURDIR}/../libdrm
-
-LDADD+=		-lstdc++ -lm
-DPADD+=		${LIBSTDCXX} ${LIBM}
+		drm	${.CURDIR}/../libdrm \
+		m	${NETBSDSRCDIR}/lib/libm
 
 PKGCONFIG=	glu
 PKGDIST.glu=	${X11SRCDIR.MesaLib}/src/glu
@@ -95,6 +93,10 @@ PKGCONFIG_VERSION.glu=	${MESA_VER}
 COPTS.arcsorter.cc+=	-Wno-error
 COPTS.sorter.cc+=	-Wno-error
 COPTS.tobezier.cc+=	-Wno-error
+.endif
+
+.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
+COPTS.sampleCompTop.cc+=	-O0
 .endif
 
 CWARNFLAGS.clang+=	-Wno-parentheses

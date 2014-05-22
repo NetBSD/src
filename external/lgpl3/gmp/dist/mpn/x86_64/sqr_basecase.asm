@@ -2,7 +2,7 @@ dnl  AMD64 mpn_sqr_basecase.
 
 dnl  Contributed to the GNU project by Torbjorn Granlund.
 
-dnl  Copyright 2008, 2009 Free Software Foundation, Inc.
+dnl  Copyright 2008, 2009, 2011, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -25,14 +25,21 @@ C The inner loops of this code are the result of running a code generation and
 C optimization tool suite written by David Harvey and Torbjorn Granlund.
 
 C NOTES
-C   * This code only handles operands up to SQR_TOOM2_THRESHOLD_MAX.  That
-C     means we can safely use 32-bit operations for all sizes, unlike in e.g.,
-C     mpn_addmul_1.
+C   * There is a major stupidity in that we call mpn_mul_1 initially, for a
+C     large trip count.  Instead, we should follow the generic/sqr_basecase.c
+C     code which uses addmul_2s from the start, conditionally leaving a 1x1
+C     multiply to the end.  (In assembly code, one would stop invoking
+C     addmul_2s loops when perhaps 3x2s respectively a 2x2s remains.)
+C   * Another stupidity is in the sqr_diag_addlsh1 code.  It does not need to
+C     save/restore carry, instead it can propagate into the high product word.
+C   * Align more labels, should shave off a few cycles.
+C   * We can safely use 32-bit size operations, since operands with (2^32)
+C     limbs will lead to non-termination in practice.
 C   * The jump table could probably be optimized, at least for non-pic.
-C   * The special code for n=1,2,3 was quickly written.  It is probably too
+C   * The special code for n <= 4 was quickly written.  It is probably too
 C     large and unnecessarily slow.
-C   * Consider combining small cases code so that the n=k-1 code jumps into
-C     the middle of the n=k code.
+C   * Consider combining small cases code so that the n=k-1 code jumps into the
+C     middle of the n=k code.
 C   * Avoid saving registers for small cases code.
 C   * Needed variables:
 C    n   r11  input size
@@ -57,12 +64,6 @@ define(`rp',	  `%rdi')
 define(`up',	  `%rsi')
 define(`n_param', `%rdx')
 
-C We should really trim this, for better spatial locality.  Alternatively,
-C we could grab the upper part of the stack area, leaving the lower part
-C instead of the upper part unused.
-deflit(SQR_TOOM2_THRESHOLD_MAX, 80)
-define(`STACK_ALLOC', eval(8*2*SQR_TOOM2_THRESHOLD_MAX))
-
 define(`n',	`%r11')
 define(`tp',	`%r12')
 define(`i',	`%r8')
@@ -74,122 +75,137 @@ define(`w1',	`%rcx')
 define(`w2',	`%rbp')
 define(`w3',	`%r10')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
 
 ASM_START()
 	TEXT
 	ALIGN(16)
-
 PROLOGUE(mpn_sqr_basecase)
-	add	$-48, %rsp
-	mov	%rbx, 40(%rsp)
-	mov	%rbp, 32(%rsp)
-	mov	%r12, 24(%rsp)
-	mov	%r13, 16(%rsp)
-	mov	%r14, 8(%rsp)
-
-	mov	R32(n_param), R32(n)		C free original n register (rdx)
+	FUNC_ENTRY(3)
 	mov	R32(n_param), R32(%rcx)
+	mov	R32(n_param), R32(n)		C free original n register (rdx)
+
+	add	$-40, %rsp
+
 	and	$3, R32(%rcx)
-	lea	4(%rcx), %rbx
 	cmp	$4, R32(n_param)
-	cmovg	%rbx, %rcx
-	lea	L(jmptab)(%rip), %rax
+	lea	4(%rcx), %r8
+
+	mov	%rbx, 32(%rsp)
+	mov	%rbp, 24(%rsp)
+	mov	%r12, 16(%rsp)
+	mov	%r13, 8(%rsp)
+	mov	%r14, (%rsp)
+
+	cmovg	%r8, %rcx
+
+	lea	L(tab)(%rip), %rax
+ifdef(`PIC',
+`	movslq	(%rax,%rcx,4), %r10
+	add	%r10, %rax
+	jmp	*%rax
+',`
 	jmp	*(%rax,%rcx,8)
+')
 	JUMPTABSECT
 	ALIGN(8)
-L(jmptab):
-	.quad	L(4)
-	.quad	L(1)
-	.quad	L(2)
-	.quad	L(3)
-	.quad	L(0m4)
-	.quad	L(1m4)
-	.quad	L(2m4)
-	.quad	L(3m4)
+L(tab):	JMPENT(	L(4), L(tab))
+	JMPENT(	L(1), L(tab))
+	JMPENT(	L(2), L(tab))
+	JMPENT(	L(3), L(tab))
+	JMPENT(	L(0m4), L(tab))
+	JMPENT(	L(1m4), L(tab))
+	JMPENT(	L(2m4), L(tab))
+	JMPENT(	L(3m4), L(tab))
 	TEXT
 
 L(1):	mov	(up), %rax
 	mul	%rax
+	add	$40, %rsp
 	mov	%rax, (rp)
 	mov	%rdx, 8(rp)
-	add	$40, %rsp
-	pop	%rbx
+	FUNC_EXIT()
 	ret
 
 L(2):	mov	(up), %rax
+	mov	%rax, %r8
 	mul	%rax
+	mov	8(up), %r11
 	mov	%rax, (rp)
+	mov	%r11, %rax
 	mov	%rdx, %r9
-	mov	8(up), %rax
 	mul	%rax
+	add	$40, %rsp
 	mov	%rax, %r10
+	mov	%r11, %rax
 	mov	%rdx, %r11
-	mov	8(up), %rax
-	mov	(up), %rbx
-	mul	%rbx
+	mul	%r8
+	xor	%r8, %r8
 	add	%rax, %r9
 	adc	%rdx, %r10
-	adc	$0, %r11
+	adc	%r8, %r11
 	add	%rax, %r9
 	mov	%r9, 8(rp)
 	adc	%rdx, %r10
 	mov	%r10, 16(rp)
-	adc	$0, %r11
+	adc	%r8, %r11
 	mov	%r11, 24(rp)
-	add	$40, %rsp
-	pop	%rbx
+	FUNC_EXIT()
 	ret
 
 L(3):	mov	(up), %rax
+	mov	%rax, %r10
 	mul	%rax
+	mov	8(up), %r11
 	mov	%rax, (rp)
+	mov	%r11, %rax
 	mov	%rdx, 8(rp)
-	mov	8(up), %rax
 	mul	%rax
+	mov	16(up), %rcx
 	mov	%rax, 16(rp)
+	mov	%rcx, %rax
 	mov	%rdx, 24(rp)
-	mov	16(up), %rax
 	mul	%rax
 	mov	%rax, 32(rp)
 	mov	%rdx, 40(rp)
 
-	mov	(up), %rbx
-	mov	8(up), %rax
-	mul	%rbx
+	mov	%r11, %rax
+	mul	%r10
 	mov	%rax, %r8
+	mov	%rcx, %rax
 	mov	%rdx, %r9
-	mov	16(up), %rax
-	mul	%rbx
-	xor	R32(%r10), R32(%r10)
+	mul	%r10
+	xor	%r10, %r10
 	add	%rax, %r9
+	mov	%r11, %rax
+	mov	%r10, %r11
 	adc	%rdx, %r10
 
-	mov	8(up), %rbx
-	mov	16(up), %rax
-	mul	%rbx
-	xor	R32(%r11), R32(%r11)
+	mul	%rcx
+	add	$40, %rsp
 	add	%rax, %r10
-	adc	%rdx, %r11
+	adc	%r11, %rdx
 	add	%r8, %r8
 	adc	%r9, %r9
 	adc	%r10, %r10
+	adc	%rdx, %rdx
 	adc	%r11, %r11
-	mov	$0, R32(%rbx)
-	adc	%rbx, %rbx
 	add	%r8, 8(rp)
 	adc	%r9, 16(rp)
 	adc	%r10, 24(rp)
-	adc	%r11, 32(rp)
-	adc	%rbx, 40(rp)
-	add	$40, %rsp
-	pop	%rbx
+	adc	%rdx, 32(rp)
+	adc	%r11, 40(rp)
+	FUNC_EXIT()
 	ret
 
 L(4):	mov	(up), %rax
+	mov	%rax, %r11
 	mul	%rax
+	mov	8(up), %rbx
 	mov	%rax, (rp)
+	mov	%rbx, %rax
 	mov	%rdx, 8(rp)
-	mov	8(up), %rax
 	mul	%rax
 	mov	%rax, 16(rp)
 	mov	%rdx, 24(rp)
@@ -200,66 +216,62 @@ L(4):	mov	(up), %rax
 	mov	24(up), %rax
 	mul	%rax
 	mov	%rax, 48(rp)
+	mov	%rbx, %rax
 	mov	%rdx, 56(rp)
 
-	mov	(up), %rbx
-	mov	8(up), %rax
-	mul	%rbx
+	mul	%r11
+	add	$32, %rsp
 	mov	%rax, %r8
 	mov	%rdx, %r9
 	mov	16(up), %rax
-	mul	%rbx
-	xor	R32(%r10), R32(%r10)
+	mul	%r11
+	xor	%r10, %r10
 	add	%rax, %r9
 	adc	%rdx, %r10
 	mov	24(up), %rax
-	mul	%rbx
-	xor	R32(%r11), R32(%r11)
+	mul	%r11
+	xor	%r11, %r11
 	add	%rax, %r10
 	adc	%rdx, %r11
-	mov	8(up), %rbx
 	mov	16(up), %rax
 	mul	%rbx
-	xor	R32(%r12), R32(%r12)
+	xor	%rcx, %rcx
 	add	%rax, %r10
 	adc	%rdx, %r11
-	adc	$0, %r12
+	adc	$0, %rcx
 	mov	24(up), %rax
 	mul	%rbx
+	pop	%rbx
 	add	%rax, %r11
-	adc	%rdx, %r12
-	mov	16(up), %rbx
+	adc	%rdx, %rcx
+	mov	16(up), %rdx
 	mov	24(up), %rax
-	mul	%rbx
-	xor	R32(%rbp), R32(%rbp)
-	add	%rax, %r12
-	adc	%rdx, %rbp
+	mul	%rdx
+	add	%rax, %rcx
+	adc	$0, %rdx
 
 	add	%r8, %r8
 	adc	%r9, %r9
 	adc	%r10, %r10
 	adc	%r11, %r11
-	adc	%r12, %r12
-	mov	$0, R32(%rbx)
-	adc	%rbp, %rbp
+	adc	%rcx, %rcx
+	mov	$0, R32(%rax)
+	adc	%rdx, %rdx
 
-	adc	%rbx, %rbx
+	adc	%rax, %rax
 	add	%r8, 8(rp)
 	adc	%r9, 16(rp)
 	adc	%r10, 24(rp)
 	adc	%r11, 32(rp)
-	adc	%r12, 40(rp)
-	adc	%rbp, 48(rp)
-	adc	%rbx, 56(rp)
-	add	$24, %rsp
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	adc	%rcx, 40(rp)
+	adc	%rdx, 48(rp)
+	adc	%rax, 56(rp)
+	FUNC_EXIT()
 	ret
 
 
-L(0m4):	add	$-STACK_ALLOC, %rsp
-	lea	-24(%rsp,n,8), tp		C point tp in middle of result operand
+L(0m4):
+	lea	-16(rp,n,8), tp		C point tp in middle of result operand
 	mov	(up), v0
 	mov	8(up), %rax
 	lea	(up,n,8), up		C point up at end of input operand
@@ -316,8 +328,8 @@ L(L3):	xor	R32(w1), R32(w1)
 	jmp	L(dowhile)
 
 
-L(1m4):	add	$-STACK_ALLOC, %rsp
-	lea	(%rsp,n,8), tp		C point tp in middle of result operand
+L(1m4):
+	lea	8(rp,n,8), tp		C point tp in middle of result operand
 	mov	(up), v0		C u0
 	mov	8(up), %rax		C u1
 	lea	8(up,n,8), up		C point up at end of input operand
@@ -331,7 +343,7 @@ C Function mpn_mul_2s_m0(tp, up - i, i, up - i - 1)
 	mul	v0			C u0 * u1
 	mov	%rdx, w1
 	xor	R32(w2), R32(w2)
-	mov	%rax, (%rsp)
+	mov	%rax, 8(rp)
 	jmp	L(m0)
 
 	ALIGN(16)
@@ -394,8 +406,8 @@ L(m2x):	mov	(up,j,8), %rax
 	jmp	L(dowhile_end)
 
 
-L(2m4):	add	$-STACK_ALLOC, %rsp
-	lea	-24(%rsp,n,8), tp	C point tp in middle of result operand
+L(2m4):
+	lea	-16(rp,n,8), tp		C point tp in middle of result operand
 	mov	(up), v0
 	mov	8(up), %rax
 	lea	(up,n,8), up		C point up at end of input operand
@@ -451,8 +463,8 @@ L(L1):	xor	R32(w0), R32(w0)
 	jmp	L(dowhile_mid)
 
 
-L(3m4):	add	$-STACK_ALLOC, %rsp
-	lea	(%rsp,n,8), tp		C point tp in middle of result operand
+L(3m4):
+	lea	8(rp,n,8), tp		C point tp in middle of result operand
 	mov	(up), v0		C u0
 	mov	8(up), %rax		C u1
 	lea	8(up,n,8), up		C point up at end of input operand
@@ -467,7 +479,7 @@ C Function mpn_mul_2s_m2(tp, up - i + 1, i - 1, up - i)
 	mov	%rdx, w3
 	xor	R32(w0), R32(w0)
 	xor	R32(w1), R32(w1)
-	mov	%rax, (%rsp)
+	mov	%rax, 8(rp)
 	jmp	L(m2)
 
 	ALIGN(16)
@@ -704,11 +716,9 @@ C Function mpn_addmul_2s_2
 C Function mpn_sqr_diag_addlsh1
 	lea	-4(n,n), j
 
-	mov	(%rsp), %r11
-
-	lea	(rp,j,8), rp
+	mov	8(rp), %r11
 	lea	-8(up), up
-	lea	8(%rsp,j,8), tp
+	lea	(rp,j,8), rp
 	neg	j
 	mov	(up,j,4), %rax
 	mul	%rax
@@ -736,9 +746,9 @@ L(top):	mov	(up,j,4), %rax
 	adc	%rdx, %r11
 	mov	%r10, (rp,j,8)
 L(d0):	mov	%r11, 8(rp,j,8)
-	mov	(tp,j,8), %r10
+	mov	16(rp,j,8), %r10
 	adc	%r10, %r10
-	mov	8(tp,j,8), %r11
+	mov	24(rp,j,8), %r11
 	adc	%r11, %r11
 	nop
 	sbb	R32(%rbp), R32(%rbp)		C save CF
@@ -749,9 +759,9 @@ L(d0):	mov	%r11, 8(rp,j,8)
 	adc	%rdx, %r11
 	mov	%r10, 16(rp,j,8)
 L(d1):	mov	%r11, 24(rp,j,8)
-	mov	16(tp,j,8), %r10
+	mov	32(rp,j,8), %r10
 	adc	%r10, %r10
-	mov	24(tp,j,8), %r11
+	mov	40(rp,j,8), %r11
 	adc	%r11, %r11
 	sbb	R32(%rbx), R32(%rbx)		C save CF
 	add	$4, j
@@ -764,7 +774,7 @@ L(d1):	mov	%r11, 24(rp,j,8)
 	adc	%rdx, %r11
 	mov	%r10, (rp)
 	mov	%r11, 8(rp)
-	mov	(tp), %r10
+	mov	16(rp), %r10
 	adc	%r10, %r10
 	sbb	R32(%rbp), R32(%rbp)		C save CF
 	neg	R32(%rbp)
@@ -776,11 +786,11 @@ L(d1):	mov	%r11, 24(rp,j,8)
 	mov	%r10, 16(rp)
 	mov	%rdx, 24(rp)
 
-	add	$eval(8+STACK_ALLOC), %rsp
 	pop	%r14
 	pop	%r13
 	pop	%r12
 	pop	%rbp
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 EPILOGUE()

@@ -61,7 +61,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    tested first we ensure MP_EXP_T_MIN doesn't reach exp>1.  */
 
 unsigned long
-mpf_get_ui (mpf_srcptr f)
+mpf_get_ui (mpf_srcptr f) __GMP_NOTHROW
 {
   mp_size_t size;
   mp_exp_t exp;

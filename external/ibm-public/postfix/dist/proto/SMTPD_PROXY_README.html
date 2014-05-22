@@ -40,43 +40,43 @@ except that the latter uses a dedicated protocol instead of SMTP.
 
 <tr>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> Internet </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> Internet </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="smtpd.8.html">Postfix SMTP server</a>
-	</td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="smtpd.8.html">Postfix SMTP server</a>
+        </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <b>Before</b> <b>queue</b> <b>filter</b> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <b>Before</b> <b>queue</b> <b>filter</b> </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="smtpd.8.html">Postfix SMTP server</a>
-	</td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="smtpd.8.html">Postfix SMTP server</a>
+        </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="cleanup.8.html">Postfix cleanup
-	server</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="cleanup.8.html">Postfix cleanup
+        server</a> </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> Postfix queue </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> Postfix queue </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&lt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="smtp.8.html">smtp</a><br> <a
-	href="local.8.html">local</a><br> <a
-	href="virtual.8.html">virtual</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="smtp.8.html">smtp</a><br> <a
+        href="local.8.html">local</a><br> <a
+        href="virtual.8.html">virtual</a> </td>
 
 </tr>
 
@@ -213,26 +213,26 @@ http://bent.latency.net/smtpprox/. </p>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="smtpd.8.html">Postfix SMTP server on
-	port 25</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="smtpd.8.html">Postfix SMTP server on
+        port 25</a> </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> filter on localhost port 10025 </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> filter on localhost port 10025 </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="smtpd.8.html">Postfix SMTP server on
-	localhost port 10026</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="smtpd.8.html">Postfix SMTP server on
+        localhost port 10026</a> </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"
-	width="10%"> <a href="cleanup.8.html">Postfix cleanup
-	server</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle"
+        width="10%"> <a href="cleanup.8.html">Postfix cleanup
+        server</a> </td>
 
     <td align="center" valign="middle" width="5%"> <tt> -&gt; </tt> </td>
 
@@ -261,8 +261,8 @@ http://bent.latency.net/smtpprox/. </p>
     smtp      inet  n       -       n       -       20      smtpd
         -o smtpd_proxy_filter=127.0.0.1:10025
         -o smtpd_client_connection_count_limit=10
-	# Postfix 2.7 and later performance feature.
-	# -o smtpd_proxy_options=speed_adjust
+        # Postfix 2.7 and later performance feature.
+        # -o smtpd_proxy_options=speed_adjust
     #
     # After-filter SMTP server. Receive mail from the content filter
     # on localhost port 10026.
@@ -272,6 +272,8 @@ http://bent.latency.net/smtpprox/. </p>
         -o smtpd_client_restrictions=
         -o smtpd_helo_restrictions=
         -o smtpd_sender_restrictions=
+        # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+        -o smtpd_relay_restrictions=
         -o smtpd_recipient_restrictions=permit_mynetworks,reject
         -o smtpd_data_restrictions=
         -o mynetworks=127.0.0.0/8

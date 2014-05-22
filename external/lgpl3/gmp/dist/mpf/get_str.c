@@ -4,8 +4,8 @@
    example, the number 3.1416 would be returned as "31416" in DIGIT_PTR and
    1 in EXP.
 
-Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002, 2003, 2005, 2006 Free
-Software Foundation, Inc.
+Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002, 2003, 2005, 2006, 2011
+Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -131,7 +131,7 @@ mpf_get_str (char *dbuf, mp_exp_t *exp, int base, size_t n_digits, mpf_srcptr u)
   if (base >= 0)
     {
       num_to_text = "0123456789abcdefghijklmnopqrstuvwxyz";
-      if (base == 0)
+      if (base <= 1)
 	base = 10;
       else if (base > 36)
 	{
@@ -143,6 +143,10 @@ mpf_get_str (char *dbuf, mp_exp_t *exp, int base, size_t n_digits, mpf_srcptr u)
   else
     {
       base = -base;
+      if (base <= 1)
+	base = 10;
+      else if (base > 36)
+	return NULL;
       num_to_text = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     }
 
@@ -174,8 +178,7 @@ mpf_get_str (char *dbuf, mp_exp_t *exp, int base, size_t n_digits, mpf_srcptr u)
      conversion.)  */
   tstr = (unsigned char *) TMP_ALLOC (n_digits + 2 * GMP_LIMB_BITS + 3);
 
-  n_limbs_needed = 2 + (mp_size_t)
-    (n_digits / (GMP_NUMB_BITS * mp_bases[base].chars_per_bit_exactly));
+  LIMBS_PER_DIGIT_IN_BASE (n_limbs_needed, n_digits, base);
 
   if (ue <= n_limbs_needed)
     {
@@ -184,7 +187,7 @@ mpf_get_str (char *dbuf, mp_exp_t *exp, int base, size_t n_digits, mpf_srcptr u)
       unsigned long e;
 
       n_more_limbs_needed = n_limbs_needed - ue;
-      e = (unsigned long) n_more_limbs_needed * (GMP_NUMB_BITS * mp_bases[base].chars_per_bit_exactly);
+      DIGITS_IN_BASE_PER_LIMB (e, n_more_limbs_needed, base);
 
       if (un > n_limbs_needed)
 	{
@@ -221,7 +224,7 @@ mpf_get_str (char *dbuf, mp_exp_t *exp, int base, size_t n_digits, mpf_srcptr u)
       mp_ptr dummyp, xp;
 
       n_less_limbs_needed = ue - n_limbs_needed;
-      e = (unsigned long) n_less_limbs_needed * (GMP_NUMB_BITS * mp_bases[base].chars_per_bit_exactly);
+      DIGITS_IN_BASE_PER_LIMB (e, n_less_limbs_needed, base);
 
       if (un > n_limbs_needed)
 	{

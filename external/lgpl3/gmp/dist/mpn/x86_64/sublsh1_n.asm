@@ -1,6 +1,7 @@
 dnl  AMD64 mpn_sublsh1_n -- rp[] = up[] - (vp[] << 1)
 
-dnl  Copyright 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2005, 2006, 2007, 2011, 2012 Free Software Foundation,
+dnl  Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -21,13 +22,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 2.2
-C K10:		 2.2
-C P4:		12.75
-C P6 core2: 	 3.45
-C P6 corei7:	 3.45
-C P6 atom:	 ?
-
+C AMD K8,K9	 2.2
+C AMD K10	 2.2
+C Intel P4	12.75
+C Intel core2	 3.45
+C Intel corei	 ?
+C Intel atom	 ?
+C VIA nano	 3.25
 
 C Sometimes speed degenerates, supposedly related to that some operand
 C alignments cause cache conflicts.
@@ -41,10 +42,14 @@ define(`up',`%rsi')
 define(`vp',`%rdx')
 define(`n', `%rcx')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(mpn_sublsh1_n)
+	FUNC_ENTRY(4)
 	push	%rbx
 	push	%rbp
 
@@ -140,5 +145,6 @@ L(end):	add	R32(%rbp), R32(%rax)
 
 	pop	%rbp
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 EPILOGUE()

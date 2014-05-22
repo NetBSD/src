@@ -36,7 +36,7 @@ $1:
 	.size	$1, 24
 	.type	.$1, @function
 	.section	".text"
-	.align	4
+	.align	5
 .$1:')
 
 define(`EPILOGUE_cpu',

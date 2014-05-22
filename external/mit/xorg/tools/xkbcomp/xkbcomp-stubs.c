@@ -1,4 +1,4 @@
-/*	$NetBSD: xkbcomp-stubs.c,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $	*/
+/*	$NetBSD: xkbcomp-stubs.c,v 1.1.1.1.4.1 2014/05/22 14:09:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003-2004 The NetBSD Foundation, Inc.
@@ -149,6 +149,12 @@ int
 _XRead(Display *dpy, char *data, long size)
 {
 	return 0;
+}
+
+void *
+_XGetRequest(Display *dpy, CARD8 type, size_t len)
+{
+	return NULL;
 }
 
 void (*_XCreateMutex_fn)(LockInfoPtr) = NULL;

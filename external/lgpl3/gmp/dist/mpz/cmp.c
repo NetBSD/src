@@ -1,7 +1,8 @@
 /* mpz_cmp(u,v) -- Compare U, V.  Return positive, zero, or negative
    based on if U > V, U == V, or U < V.
 
-Copyright 1991, 1993, 1994, 1996, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 2001, 2002, 2011 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -18,18 +19,11 @@ License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
-#ifdef BERKELEY_MP
-#include "mp.h"
-#endif
 #include "gmp.h"
 #include "gmp-impl.h"
 
 int
-#ifdef BERKELEY_MP
-mcmp (mpz_srcptr u, mpz_srcptr v)
-#else
-mpz_cmp (mpz_srcptr u, mpz_srcptr v)
-#endif
+mpz_cmp (mpz_srcptr u, mpz_srcptr v) __GMP_NOTHROW
 {
   mp_size_t  usize, vsize, dsize, asize;
   mp_srcptr  up, vp;

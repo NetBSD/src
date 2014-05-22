@@ -77,11 +77,18 @@
  */
 
 #ifndef _DNS_SD_H
-#define _DNS_SD_H 2120100
+#define _DNS_SD_H 3201600
 
 #ifdef  __cplusplus
     extern "C" {
 #endif
+
+/* Set to 1 if libdispatch is supported
+ * Note: May also be set by project and/or Makefile
+ */
+#ifndef _DNS_SD_LIBDISPATCH
+#define _DNS_SD_LIBDISPATCH 0
+#endif /* ndef _DNS_SD_LIBDISPATCH */
 
 /* standard calling convention under Win32 is __stdcall */
 /* Note: When compiling Intel EFI (Extensible Firmware Interface) under MS Visual Studio, the */
@@ -127,6 +134,10 @@ typedef INT32       int32_t;
 /* All other Posix platforms use stdint.h */
 #else
 #include <stdint.h>
+#endif
+
+#if _DNS_SD_LIBDISPATCH
+#include <dispatch/dispatch.h>
 #endif
 
 /* DNSServiceRef, DNSRecordRef
@@ -330,9 +341,36 @@ enum
      * lock or take similar appropriate precautions to serialize those calls.
      */
 
-    kDNSServiceFlagsSuppressUnusable    = 0x8000
-    /* Placeholder definition, for future use
-     */
+    kDNSServiceFlagsSuppressUnusable    = 0x8000,
+	/*
+	 * This flag is meaningful only in DNSServiceQueryRecord which suppresses unusable queries on the
+	 * wire. If "hostname" is a wide-area unicast DNS hostname (i.e. not a ".local." name)
+	 * but this host has no routable IPv6 address, then the call will not try to look up IPv6 addresses
+	 * for "hostname", since any addresses it found would be unlikely to be of any use anyway. Similarly,
+	 * if this host has no routable IPv4 address, the call will not try to look up IPv4 addresses for
+	 * "hostname".
+	 */
+
+    kDNSServiceFlagsTimeout            = 0x10000,
+	/*
+	 * When kDNServiceFlagsTimeout is passed to DNSServiceQueryRecord or DNSServiceGetAddrInfo, the query is
+	 * stopped after a certain number of seconds have elapsed. The time at which the query will be stopped
+	 * is determined by the system and cannot be configured by the user. The query will be stopped irrespective
+	 * of whether a response was given earlier or not. When the query is stopped, the callback will be called
+	 * with an error code of kDNSServiceErr_Timeout and a NULL sockaddr will be returned for DNSServiceGetAddrInfo
+	 * and zero length rdata will be returned for DNSServiceQueryRecord.
+	 */
+
+    kDNSServiceFlagsIncludeP2P          = 0x20000,
+	/*
+	 * Include P2P interfaces when kDNSServiceInterfaceIndexAny is specified.
+	 * By default, specifying kDNSServiceInterfaceIndexAny does not include P2P interfaces.
+	 */
+	kDNSServiceFlagsWakeOnResolve      = 0x40000
+	/*
+	 * This flag is meaningful only in DNSServiceResolve. When set, it tries to send a magic packet
+	 * to wake up the client.
+	 */
     };
 
 /* Possible protocols for DNSServiceNATPortMappingCreate(). */
@@ -368,73 +406,73 @@ enum
 
 enum
     {
-    kDNSServiceType_A         = 1,      /* Host address. */
-    kDNSServiceType_NS        = 2,      /* Authoritative server. */
-    kDNSServiceType_MD        = 3,      /* Mail destination. */
-    kDNSServiceType_MF        = 4,      /* Mail forwarder. */
-    kDNSServiceType_CNAME     = 5,      /* Canonical name. */
-    kDNSServiceType_SOA       = 6,      /* Start of authority zone. */
-    kDNSServiceType_MB        = 7,      /* Mailbox domain name. */
-    kDNSServiceType_MG        = 8,      /* Mail group member. */
-    kDNSServiceType_MR        = 9,      /* Mail rename name. */
-    kDNSServiceType_NULL      = 10,     /* Null resource record. */
-    kDNSServiceType_WKS       = 11,     /* Well known service. */
-    kDNSServiceType_PTR       = 12,     /* Domain name pointer. */
-    kDNSServiceType_HINFO     = 13,     /* Host information. */
-    kDNSServiceType_MINFO     = 14,     /* Mailbox information. */
-    kDNSServiceType_MX        = 15,     /* Mail routing information. */
-    kDNSServiceType_TXT       = 16,     /* One or more text strings (NOT "zero or more..."). */
-    kDNSServiceType_RP        = 17,     /* Responsible person. */
-    kDNSServiceType_AFSDB     = 18,     /* AFS cell database. */
-    kDNSServiceType_X25       = 19,     /* X_25 calling address. */
-    kDNSServiceType_ISDN      = 20,     /* ISDN calling address. */
-    kDNSServiceType_RT        = 21,     /* Router. */
-    kDNSServiceType_NSAP      = 22,     /* NSAP address. */
-    kDNSServiceType_NSAP_PTR  = 23,     /* Reverse NSAP lookup (deprecated). */
-    kDNSServiceType_SIG       = 24,     /* Security signature. */
-    kDNSServiceType_KEY       = 25,     /* Security key. */
-    kDNSServiceType_PX        = 26,     /* X.400 mail mapping. */
-    kDNSServiceType_GPOS      = 27,     /* Geographical position (withdrawn). */
-    kDNSServiceType_AAAA      = 28,     /* IPv6 Address. */
-    kDNSServiceType_LOC       = 29,     /* Location Information. */
-    kDNSServiceType_NXT       = 30,     /* Next domain (security). */
-    kDNSServiceType_EID       = 31,     /* Endpoint identifier. */
-    kDNSServiceType_NIMLOC    = 32,     /* Nimrod Locator. */
-    kDNSServiceType_SRV       = 33,     /* Server Selection. */
-    kDNSServiceType_ATMA      = 34,     /* ATM Address */
-    kDNSServiceType_NAPTR     = 35,     /* Naming Authority PoinTeR */
-    kDNSServiceType_KX        = 36,     /* Key Exchange */
-    kDNSServiceType_CERT      = 37,     /* Certification record */
-    kDNSServiceType_A6        = 38,     /* IPv6 Address (deprecated) */
-    kDNSServiceType_DNAME     = 39,     /* Non-terminal DNAME (for IPv6) */
-    kDNSServiceType_SINK      = 40,     /* Kitchen sink (experimental) */
-    kDNSServiceType_OPT       = 41,     /* EDNS0 option (meta-RR) */
-    kDNSServiceType_APL       = 42,     /* Address Prefix List */
-    kDNSServiceType_DS        = 43,     /* Delegation Signer */
-    kDNSServiceType_SSHFP     = 44,     /* SSH Key Fingerprint */
-    kDNSServiceType_IPSECKEY  = 45,     /* IPSECKEY */
-    kDNSServiceType_RRSIG     = 46,     /* RRSIG */
-    kDNSServiceType_NSEC      = 47,     /* Denial of Existence */
-    kDNSServiceType_DNSKEY    = 48,     /* DNSKEY */
-    kDNSServiceType_DHCID     = 49,     /* DHCP Client Identifier */
-    kDNSServiceType_NSEC3     = 50,     /* Hashed Authenticated Denial of Existence */
-    kDNSServiceType_NSEC3PARAM= 51,     /* Hashed Authenticated Denial of Existence */
+    kDNSServiceType_A          = 1,      /* Host address. */
+    kDNSServiceType_NS         = 2,      /* Authoritative server. */
+    kDNSServiceType_MD         = 3,      /* Mail destination. */
+    kDNSServiceType_MF         = 4,      /* Mail forwarder. */
+    kDNSServiceType_CNAME      = 5,      /* Canonical name. */
+    kDNSServiceType_SOA        = 6,      /* Start of authority zone. */
+    kDNSServiceType_MB         = 7,      /* Mailbox domain name. */
+    kDNSServiceType_MG         = 8,      /* Mail group member. */
+    kDNSServiceType_MR         = 9,      /* Mail rename name. */
+    kDNSServiceType_NULL       = 10,     /* Null resource record. */
+    kDNSServiceType_WKS        = 11,     /* Well known service. */
+    kDNSServiceType_PTR        = 12,     /* Domain name pointer. */
+    kDNSServiceType_HINFO      = 13,     /* Host information. */
+    kDNSServiceType_MINFO      = 14,     /* Mailbox information. */
+    kDNSServiceType_MX         = 15,     /* Mail routing information. */
+    kDNSServiceType_TXT        = 16,     /* One or more text strings (NOT "zero or more..."). */
+    kDNSServiceType_RP         = 17,     /* Responsible person. */
+    kDNSServiceType_AFSDB      = 18,     /* AFS cell database. */
+    kDNSServiceType_X25        = 19,     /* X_25 calling address. */
+    kDNSServiceType_ISDN       = 20,     /* ISDN calling address. */
+    kDNSServiceType_RT         = 21,     /* Router. */
+    kDNSServiceType_NSAP       = 22,     /* NSAP address. */
+    kDNSServiceType_NSAP_PTR   = 23,     /* Reverse NSAP lookup (deprecated). */
+    kDNSServiceType_SIG        = 24,     /* Security signature. */
+    kDNSServiceType_KEY        = 25,     /* Security key. */
+    kDNSServiceType_PX         = 26,     /* X.400 mail mapping. */
+    kDNSServiceType_GPOS       = 27,     /* Geographical position (withdrawn). */
+    kDNSServiceType_AAAA       = 28,     /* IPv6 Address. */
+    kDNSServiceType_LOC        = 29,     /* Location Information. */
+    kDNSServiceType_NXT        = 30,     /* Next domain (security). */
+    kDNSServiceType_EID        = 31,     /* Endpoint identifier. */
+    kDNSServiceType_NIMLOC     = 32,     /* Nimrod Locator. */
+    kDNSServiceType_SRV        = 33,     /* Server Selection. */
+    kDNSServiceType_ATMA       = 34,     /* ATM Address */
+    kDNSServiceType_NAPTR      = 35,     /* Naming Authority PoinTeR */
+    kDNSServiceType_KX         = 36,     /* Key Exchange */
+    kDNSServiceType_CERT       = 37,     /* Certification record */
+    kDNSServiceType_A6         = 38,     /* IPv6 Address (deprecated) */
+    kDNSServiceType_DNAME      = 39,     /* Non-terminal DNAME (for IPv6) */
+    kDNSServiceType_SINK       = 40,     /* Kitchen sink (experimental) */
+    kDNSServiceType_OPT        = 41,     /* EDNS0 option (meta-RR) */
+    kDNSServiceType_APL        = 42,     /* Address Prefix List */
+    kDNSServiceType_DS         = 43,     /* Delegation Signer */
+    kDNSServiceType_SSHFP      = 44,     /* SSH Key Fingerprint */
+    kDNSServiceType_IPSECKEY   = 45,     /* IPSECKEY */
+    kDNSServiceType_RRSIG      = 46,     /* RRSIG */
+    kDNSServiceType_NSEC       = 47,     /* Denial of Existence */
+    kDNSServiceType_DNSKEY     = 48,     /* DNSKEY */
+    kDNSServiceType_DHCID      = 49,     /* DHCP Client Identifier */
+    kDNSServiceType_NSEC3      = 50,     /* Hashed Authenticated Denial of Existence */
+    kDNSServiceType_NSEC3PARAM = 51,     /* Hashed Authenticated Denial of Existence */
 
-    kDNSServiceType_HIP       = 55,     /* Host Identity Protocol */
+    kDNSServiceType_HIP        = 55,     /* Host Identity Protocol */
 
-    kDNSServiceType_SPF       = 99,     /* Sender Policy Framework for E-Mail */
-    kDNSServiceType_UINFO     = 100,    /* IANA-Reserved */
-    kDNSServiceType_UID       = 101,    /* IANA-Reserved */
-    kDNSServiceType_GID       = 102,    /* IANA-Reserved */
-    kDNSServiceType_UNSPEC    = 103,    /* IANA-Reserved */
+    kDNSServiceType_SPF        = 99,     /* Sender Policy Framework for E-Mail */
+    kDNSServiceType_UINFO      = 100,    /* IANA-Reserved */
+    kDNSServiceType_UID        = 101,    /* IANA-Reserved */
+    kDNSServiceType_GID        = 102,    /* IANA-Reserved */
+    kDNSServiceType_UNSPEC     = 103,    /* IANA-Reserved */
 
-    kDNSServiceType_TKEY      = 249,    /* Transaction key */
-    kDNSServiceType_TSIG      = 250,    /* Transaction signature. */
-    kDNSServiceType_IXFR      = 251,    /* Incremental zone transfer. */
-    kDNSServiceType_AXFR      = 252,    /* Transfer zone of authority. */
-    kDNSServiceType_MAILB     = 253,    /* Transfer mailbox records. */
-    kDNSServiceType_MAILA     = 254,    /* Transfer mail agent records. */
-    kDNSServiceType_ANY       = 255     /* Wildcard match. */
+    kDNSServiceType_TKEY       = 249,    /* Transaction key */
+    kDNSServiceType_TSIG       = 250,    /* Transaction signature. */
+    kDNSServiceType_IXFR       = 251,    /* Incremental zone transfer. */
+    kDNSServiceType_AXFR       = 252,    /* Transfer zone of authority. */
+    kDNSServiceType_MAILB      = 253,    /* Transfer mailbox records. */
+    kDNSServiceType_MAILA      = 254,    /* Transfer mail agent records. */
+    kDNSServiceType_ANY        = 255     /* Wildcard match. */
     };
 
 /* possible error code values */
@@ -470,7 +508,8 @@ enum
     kDNSServiceErr_NATPortMappingUnsupported = -65564,  /* NAT doesn't support NAT-PMP or UPnP */
     kDNSServiceErr_NATPortMappingDisabled    = -65565,  /* NAT supports NAT-PMP or UPnP but it's disabled by the administrator */
     kDNSServiceErr_NoRouter                  = -65566,  /* No router currently configured (probably no network connectivity) */
-    kDNSServiceErr_PollingMode               = -65567
+    kDNSServiceErr_PollingMode               = -65567,
+    kDNSServiceErr_Timeout                   = -65568
 
     /* mDNS Error codes are in the range
      * FFFE FF00 (-65792) to FFFE FFFF (-65537) */
@@ -514,7 +553,7 @@ enum
  *
  * The servicename may be up to 63 bytes of UTF-8 text (not counting the C-String
  * terminating NULL at the end). The regtype is of the form _service._tcp or
- * _service._udp, where the "service" part is 1-14 characters, which may be
+ * _service._udp, where the "service" part is 1-15 characters, which may be
  * letters, digits, or hyphens. The domain part of the three-part name may be
  * any legal domain, providing that the resulting servicename+regtype+domain
  * name does not exceed 256 bytes.
@@ -567,11 +606,30 @@ enum
  * accomplish this by inspecting the interfaceIndex of each service reported
  * to their DNSServiceBrowseReply() callback function, and discarding those
  * where the interface index is not kDNSServiceInterfaceIndexLocalOnly.
+ *
+ * kDNSServiceInterfaceIndexP2P is meaningful only in Browse, QueryRecord,
+ * and Resolve operations. It should not be used in other DNSService APIs.
+ *
+ * - If kDNSServiceInterfaceIndexP2P is passed to DNSServiceBrowse or
+ *   DNSServiceQueryRecord, it restricts the operation to P2P.
+ *
+ * - If kDNSServiceInterfaceIndexP2P is passed to DNSServiceResolve, it is
+ *   mapped internally to kDNSServiceInterfaceIndexAny, because resolving
+ *   a P2P service may create and/or enable an interface whose index is not
+ *   known a priori. The resolve callback will indicate the index of the
+ *   interface via which the service can be accessed.
+ *
+ * If applications pass kDNSServiceInterfaceIndexAny to DNSServiceBrowse
+ * or DNSServiceQueryRecord, they must set the kDNSServiceFlagsIncludeP2P flag
+ * to include P2P. In this case, if a service instance or the record being queried 
+ * is found over P2P, the resulting ADD event will indicate kDNSServiceInterfaceIndexP2P 
+ * as the interface index.
  */
 
 #define kDNSServiceInterfaceIndexAny 0
 #define kDNSServiceInterfaceIndexLocalOnly ((uint32_t)-1)
 #define kDNSServiceInterfaceIndexUnicast   ((uint32_t)-2)
+#define kDNSServiceInterfaceIndexP2P       ((uint32_t)-3)
 
 typedef uint32_t DNSServiceFlags;
 typedef uint32_t DNSServiceProtocol;
@@ -886,7 +944,7 @@ typedef void (DNSSD_API *DNSServiceRegisterReply)
  *
  * regtype:         The service type followed by the protocol, separated by a dot
  *                  (e.g. "_ftp._tcp"). The service type must be an underscore, followed
- *                  by 1-14 characters, which may be letters, digits, or hyphens.
+ *                  by 1-15 characters, which may be letters, digits, or hyphens.
  *                  The transport protocol must be "_tcp" or "_udp". New service types
  *                  should be registered at <http://www.dns-sd.org/ServiceTypes.html>.
  *
@@ -911,6 +969,13 @@ typedef void (DNSSD_API *DNSServiceRegisterReply)
  *                  % dns-sd -B _test._tcp             # will find all three services
  *                  % dns-sd -B _test._tcp,HasFeatureA # finds "Better" and "Best"
  *                  % dns-sd -B _test._tcp,HasFeatureB # finds only "Best"
+ *
+ *                  Subtype labels may be up to 63 bytes long, and may contain any eight-
+ *                  bit byte values, including zero bytes. However, due to the nature of
+ *                  using a C-string-based API, conventional DNS escaping must be used for
+ *                  dots ('.'), commas (','), backslashes ('\') and zero bytes, as shown below:
+ *                  
+ *                  % dns-sd -R Test '_test._tcp,s\.one,s\,two,s\\three,s\000four' local 123
  *
  * domain:          If non-NULL, specifies the domain on which to advertise the service.
  *                  Most applications will not specify a domain, instead automatically
@@ -965,7 +1030,7 @@ DNSServiceErrorType DNSSD_API DNSServiceRegister
     const char                          *regtype,
     const char                          *domain,       /* may be NULL */
     const char                          *host,         /* may be NULL */
-    uint16_t                            port,
+    uint16_t                            port,          /* In network byte order */
     uint16_t                            txtLen,
     const void                          *txtRecord,    /* may be NULL */
     DNSServiceRegisterReply             callBack,      /* may be NULL */
@@ -1267,7 +1332,7 @@ typedef void (DNSSD_API *DNSServiceResolveReply)
     DNSServiceErrorType                 errorCode,
     const char                          *fullname,
     const char                          *hosttarget,
-    uint16_t                            port,
+    uint16_t                            port,        /* In network byte order */
     uint16_t                            txtLen,
     const unsigned char                 *txtRecord,
     void                                *context
@@ -1528,11 +1593,6 @@ typedef void (DNSSD_API *DNSServiceGetAddrInfoReply)
  *                     unlikely to be of any use anyway. Similarly, if this host has no routable
  *                     IPv4 address, the call will not try to look up IPv4 addresses for "hostname".
  *
- *                   * If "hostname" is a link-local multicast DNS hostname (i.e. a ".local." name)
- *                     but this host has no IPv6 address of any kind, then it will not try to look
- *                     up IPv6 addresses for "hostname". Similarly, if this host has no IPv4 address
- *                     of any kind, the call will not try to look up IPv4 addresses for "hostname".
- *
  * hostname:        The fully qualified domain name of the host to be queried for.
  *
  * callBack:        The function to be called when the query succeeds or fails asynchronously.
@@ -1735,7 +1795,8 @@ DNSServiceErrorType DNSSD_API DNSServiceReconfirmRecord
 /* DNSServiceNATPortMappingCreate
  *
  * Request a port mapping in the NAT gateway, which maps a port on the local machine
- * to an external port on the NAT.
+ * to an external port on the NAT. The NAT should support either the NAT-PMP or the UPnP IGD
+ * protocol for this API to create a successful mapping.
  *
  * The port mapping will be renewed indefinitely until the client process exits, or
  * explicitly terminates the port mapping request by calling DNSServiceRefDeallocate().
@@ -1836,9 +1897,9 @@ typedef void (DNSSD_API *DNSServiceNATPortMappingReply)
     DNSServiceErrorType              errorCode,
     uint32_t                         externalAddress,   /* four byte IPv4 address in network byte order */
     DNSServiceProtocol               protocol,
-    uint16_t                         internalPort,
-    uint16_t                         externalPort,      /* may be different than the requested port     */
-    uint32_t                         ttl,               /* may be different than the requested ttl      */
+    uint16_t                         internalPort,      /* In network byte order */
+    uint16_t                         externalPort,      /* In network byte order and may be different than the requested port */
+    uint32_t                         ttl,               /* may be different than the requested ttl */
     void                             *context
     );
 
@@ -1940,10 +2001,10 @@ DNSServiceErrorType DNSSD_API DNSServiceNATPortMappingCreate
 
 DNSServiceErrorType DNSSD_API DNSServiceConstructFullName
     (
-    char                            *fullName,
-    const char                      *service,      /* may be NULL */
-    const char                      *regtype,
-    const char                      *domain
+    char                            * const fullName,
+    const char                      * const service,      /* may be NULL */
+    const char                      * const regtype,
+    const char                      * const domain
     );
 
 
@@ -2299,41 +2360,56 @@ DNSServiceErrorType DNSSD_API TXTRecordGetItemAtIndex
     const void       **value
     );
 
+#if _DNS_SD_LIBDISPATCH
+/*
+* DNSServiceSetDispatchQueue
+*
+* Allows you to schedule a DNSServiceRef on a serial dispatch queue for receiving asynchronous
+* callbacks.  It's the clients responsibility to ensure that the provided dispatch queue is running.
+*
+* A typical application that uses CFRunLoopRun or dispatch_main on its main thread will
+* usually schedule DNSServiceRefs on its main queue (which is always a serial queue)
+* using "DNSServiceSetDispatchQueue(sdref, dispatch_get_main_queue());"
+*
+* If there is any error during the processing of events, the application callback will
+* be called with an error code. For shared connections, each subordinate DNSServiceRef
+* will get its own error callback. Currently these error callbacks only happen
+* if the mDNSResponder daemon is manually terminated or crashes, and the error
+* code in this case is kDNSServiceErr_ServiceNotRunning. The application must call
+* DNSServiceRefDeallocate to free the DNSServiceRef when it gets such an error code.
+* These error callbacks are rare and should not normally happen on customer machines,
+* but application code should be written defensively to handle such error callbacks
+* gracefully if they occur.
+*
+* After using DNSServiceSetDispatchQueue on a DNSServiceRef, calling DNSServiceProcessResult
+* on the same DNSServiceRef will result in undefined behavior and should be avoided.
+*
+* Once the application successfully schedules a DNSServiceRef on a serial dispatch queue using
+* DNSServiceSetDispatchQueue, it cannot remove the DNSServiceRef from the dispatch queue, or use
+* DNSServiceSetDispatchQueue a second time to schedule the DNSServiceRef onto a different serial dispatch
+* queue. Once scheduled onto a dispatch queue a DNSServiceRef will deliver events to that queue until
+* the application no longer requires that operation and terminates it using DNSServiceRefDeallocate.
+*
+* service:         DNSServiceRef that was allocated and returned to the application, when the
+*                  application calls one of the DNSService API.
+*
+* queue:           dispatch queue where the application callback will be scheduled
+*
+* return value:    Returns kDNSServiceErr_NoError on success.
+*                  Returns kDNSServiceErr_NoMemory if it cannot create a dispatch source
+*                  Returns kDNSServiceErr_BadParam if the service param is invalid or the
+*                  queue param is invalid
+*/
+
+DNSServiceErrorType DNSSD_API DNSServiceSetDispatchQueue
+  (
+  DNSServiceRef service,
+  dispatch_queue_t queue
+  );
+#endif //_DNS_SD_LIBDISPATCH
+
 #ifdef __APPLE_API_PRIVATE
 
-/*
- * Mac OS X specific functionality
- * 3rd party clients of this API should not depend on future support or availability of this routine
- */
-
-/* DNSServiceSetDefaultDomainForUser()
- *
- * Set the default domain for the caller's UID. Future browse and registration
- * calls by this user that do not specify an explicit domain will browse and
- * register in this wide-area domain in addition to .local. In addition, this
- * domain will be returned as a Browse domain via domain enumeration calls.
- *
- * Parameters:
- *
- * flags:           Pass kDNSServiceFlagsAdd to add a domain for a user. Call without
- *                  this flag set to clear a previously added domain.
- *
- * domain:          The domain to be used for the caller's UID.
- *
- * return value:    Returns kDNSServiceErr_NoError on success, otherwise returns
- *                  an error code indicating the error that occurred.
- */
-
-DNSServiceErrorType DNSSD_API DNSServiceSetDefaultDomainForUser
-    (
-    DNSServiceFlags                    flags,
-    const char                         *domain
-    );
-
-/* Symbol defined to tell System Configuration Framework where to look in the Dynamic Store
- * for the list of PrivateDNS domains that need to be handed off to mDNSResponder
- * (the complete key is "State:/Network/PrivateDNS")
- */
 #define kDNSServiceCompPrivateDNS   "PrivateDNS"
 #define kDNSServiceCompMulticastDNS "MulticastDNS"
 

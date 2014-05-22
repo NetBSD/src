@@ -1,6 +1,7 @@
 /* mpn_popcount, mpn_hamdist -- mpn bit population count/hamming distance.
 
-Copyright 1994, 1996, 2000, 2001, 2002, 2005 Free Software Foundation, Inc.
+Copyright 1994, 1996, 2000, 2001, 2002, 2005, 2011, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -35,7 +36,7 @@ FNAME (mp_srcptr up,
 #if OPERATION_hamdist
        mp_srcptr vp,
 #endif
-       mp_size_t n)
+       mp_size_t n) __GMP_NOTHROW
 {
   mp_bitcnt_t result = 0;
   mp_limb_t p0, p1, p2, p3, x, p01, p23;

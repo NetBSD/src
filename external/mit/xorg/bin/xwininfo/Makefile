@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/08/11 23:15:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2014/05/22 14:09:39 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=	xwininfo
 SRCS=	xwininfo.c clientwin.c dsimple.c
 
 XWININFODIR=	${X11SRCDIR.${PROG}}
-CPPFLAGS+=-I${XWININFODIR} -I${XWININFODIR}/../include
+CPPFLAGS+=-I${XWININFODIR} -I${XWININFODIR}/../include -DICONV_CONST=const
 
 .PATH:	${XWININFODIR} ${XWININFODIR}/man
 

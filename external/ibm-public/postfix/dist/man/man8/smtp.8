@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.1.1.3.4.2 2013/01/23 00:04:57 yamt Exp $
+.\"	$NetBSD: smtp.8,v 1.1.1.3.4.3 2014/05/22 14:08:01 yamt Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -111,6 +111,7 @@ RFC 3207 (STARTTLS command)
 RFC 3461 (SMTP DSN Extension)
 RFC 3463 (Enhanced Status Codes)
 RFC 4954 (AUTH command)
+RFC 5321 (SMTP protocol)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -187,7 +188,7 @@ per-destination workarounds for CISCO PIX firewall bugs.
 .IP "\fBsmtp_quote_rfc821_envelope (yes)\fR"
 Quote addresses in Postfix SMTP client MAIL FROM and RCPT TO commands
 as required
-by RFC 2821.
+by RFC 5321.
 .IP "\fBsmtp_reply_filter (empty)\fR"
 A mechanism to transform replies from remote SMTP servers one
 line at a time.

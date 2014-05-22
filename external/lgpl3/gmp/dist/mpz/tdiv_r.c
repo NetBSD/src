@@ -1,6 +1,7 @@
 /* mpz_tdiv_r(rem, dividend, divisor) -- Set REM to DIVIDEND mod DIVISOR.
 
-Copyright 1991, 1993, 1994, 2000, 2001, 2005 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 2000, 2001, 2005, 2012 Free Software Foundation,
+Inc.
 
 This file is part of the GNU MP Library.
 
@@ -35,18 +36,16 @@ mpz_tdiv_r (mpz_ptr rem, mpz_srcptr num, mpz_srcptr den)
   dl = ABS (ds);
   ql = nl - dl + 1;
 
-  if (dl == 0)
+  if (UNLIKELY (dl == 0))
     DIVIDE_BY_ZERO;
 
-  MPZ_REALLOC (rem, dl);
+  rp = MPZ_REALLOC (rem, dl);
 
   if (ql <= 0)
     {
       if (num != rem)
 	{
-	  mp_ptr np, rp;
 	  np = PTR (num);
-	  rp = PTR (rem);
 	  MPN_COPY (rp, np, nl);
 	  SIZ (rem) = SIZ (num);
 	}
@@ -55,7 +54,6 @@ mpz_tdiv_r (mpz_ptr rem, mpz_srcptr num, mpz_srcptr den)
 
   TMP_MARK;
   qp = TMP_ALLOC_LIMBS (ql);
-  rp = PTR (rem);
   np = PTR (num);
   dp = PTR (den);
 

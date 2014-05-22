@@ -1,6 +1,6 @@
 /* mpz_nextprime(p,t) - compute the next prime > t and store that in p.
 
-Copyright 1999, 2000, 2001, 2008, 2009 Free Software Foundation, Inc.
+Copyright 1999, 2000, 2001, 2008, 2009, 2012 Free Software Foundation, Inc.
 
 Contributed to the GNU project by Niels Möller and Torbjorn Granlund.
 
@@ -43,7 +43,6 @@ mpz_nextprime (mpz_ptr p, mpz_srcptr n)
   int i;
   unsigned prime_limit;
   unsigned long prime;
-  int cnt;
   mp_size_t pn;
   mp_bitcnt_t nbits;
   unsigned incr;
@@ -62,8 +61,7 @@ mpz_nextprime (mpz_ptr p, mpz_srcptr n)
     return;
 
   pn = SIZ(p);
-  count_leading_zeros (cnt, PTR(p)[pn - 1]);
-  nbits = pn * GMP_NUMB_BITS - (cnt - GMP_NAIL_BITS);
+  MPN_SIZEINBASE_2EXP(nbits, PTR(p), pn, 1);
   if (nbits / 2 >= NUMBER_OF_PRIMES)
     prime_limit = NUMBER_OF_PRIMES - 1;
   else
@@ -107,7 +105,7 @@ mpz_nextprime (mpz_ptr p, mpz_srcptr n)
 	  difference = 0;
 
 	  /* Miller-Rabin test */
-	  if (mpz_millerrabin (p, 10))
+	  if (mpz_millerrabin (p, 25))
 	    goto done;
 	next:;
 	  incr += 2;

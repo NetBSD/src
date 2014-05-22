@@ -7,7 +7,7 @@
    IT IS ONLY SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS
    ALMOST GUARANTEED THAT THEY'LL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright 2006, 2009 Free Software Foundation, Inc.
+Copyright 2006, 2009, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -53,6 +53,8 @@ mpn_sbpi1_bdiv_qr (mp_ptr qp,
   ASSERT (dn > 0);
   ASSERT (nn > dn);
   ASSERT ((dp[0] & 1) != 0);
+  /* FIXME: Add ASSERTs for allowable overlapping; i.e., that qp = np is OK,
+     but some over N/Q overlaps will not work.  */
 
   qn = nn - dn;
 
@@ -67,9 +69,8 @@ mpn_sbpi1_bdiv_qr (mp_ptr qp,
 	  mp_limb_t q;
 
 	  q = dinv * np[i];
-	  qp[i] = ~q;
-
 	  np[i] = mpn_addmul_1 (np + i, dp, dn, q);
+	  qp[i] = ~q;
 	}
       rh += mpn_add (np + dn, np + dn, qn, np, dn);
       ql = mpn_add_1 (qp, qp, dn, ql);
@@ -83,9 +84,8 @@ mpn_sbpi1_bdiv_qr (mp_ptr qp,
       mp_limb_t q;
 
       q = dinv * np[i];
-      qp[i] = ~q;
-
       np[i] = mpn_addmul_1 (np + i, dp, dn, q);
+      qp[i] = ~q;
     }
 
   rh += mpn_add_n (np + dn, np + dn, np, qn);

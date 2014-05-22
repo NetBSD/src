@@ -259,7 +259,10 @@ More details about the virtual mailbox delivery agent are given in the virtual
 NNoonn--PPoossttffiixx mmaaiillbbooxx ssttoorree:: sseeppaarraattee ddoommaaiinnss,, nnoonn--UUNNIIXX aaccccoouunnttss
 
 This is a variation on the Postfix virtual mailbox example. Again, every hosted
-address can have its own mailbox.
+address can have its own mailbox. However, most parameters that control the
+virtual(8) delivery agent are no longer applicable: only
+virtual_mailbox_domains and virtual_mailbox_maps stay in effect. These
+parameters are needed to reject mail for unknown recipients.
 
 While non-Postfix software is being used for final delivery, some Postfix
 concepts are still needed in order to glue everything together. For additional

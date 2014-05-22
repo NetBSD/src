@@ -37,7 +37,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 /* SunOS 4 stdio.h doesn't provide a prototype for this */
 #if ! HAVE_DECL_VFPRINTF
-int vfprintf __GMP_PROTO ((FILE *, const char *, va_list));
+int vfprintf (FILE *, const char *, va_list);
 #endif
 
 

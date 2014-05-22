@@ -21,7 +21,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpf_swap (mpf_ptr u, mpf_ptr v)
+mpf_swap (mpf_ptr u, mpf_ptr v) __GMP_NOTHROW
 {
   mp_ptr up, vp;
   mp_size_t usize, vsize;

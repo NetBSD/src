@@ -22,7 +22,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 int
-FUNCTION (mpz_srcptr z)
+FUNCTION (mpz_srcptr z) __GMP_NOTHROW
 {
   mp_size_t n = SIZ(z);
   mp_ptr p = PTR(z);

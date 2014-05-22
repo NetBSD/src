@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.2.6.1 2014/05/22 14:01:22 yamt Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -47,7 +47,7 @@
 #include <sys/dtrace.h>
 #include <sys/lockstat.h>
 
-#if defined(__i386__) || defined(__amd64__)
+#if defined(__i386__) || defined(__amd64__) || defined(__arm__)
 #define LOCKSTAT_AFRAMES 1
 #else
 #error "architecture not supported"

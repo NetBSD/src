@@ -1,6 +1,6 @@
 /* mpz_abs(dst, src) -- Assign the absolute value of SRC to DST.
 
-Copyright 1991, 1993, 1994, 1995, 2001 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1995, 2001, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -25,21 +25,20 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpz_abs (mpz_ptr w, mpz_srcptr u)
 {
-  mp_ptr wp, up;
+  mp_ptr wp;
+  mp_srcptr up;
   mp_size_t size;
 
-  size = ABS (u->_mp_size);
+  size = ABSIZ (u);
 
   if (u != w)
     {
-      if (w->_mp_alloc < size)
-	_mpz_realloc (w, size);
+      wp = MPZ_NEWALLOC (w, size);
 
-      wp = w->_mp_d;
-      up = u->_mp_d;
+      up = PTR (u);
 
       MPN_COPY (wp, up, size);
     }
 
-  w->_mp_size = size;
+  SIZ (w) = size;
 }

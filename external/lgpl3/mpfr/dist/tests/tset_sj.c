@@ -1,8 +1,8 @@
 /* Test file for
    mpfr_set_sj, mpfr_set_uj, mpfr_set_sj_2exp and mpfr_set_uj_2exp.
 
-Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -29,29 +29,17 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <stdlib.h>
 #include <limits.h>
 
-/* The ISO C99 standard specifies that in C++ implementations the
-   INTMAX_MAX, ... macros should only be defined if explicitly requested.  */
-#if defined __cplusplus
-# define __STDC_LIMIT_MACROS
-# define __STDC_CONSTANT_MACROS
-#endif
-
-#if HAVE_INTTYPES_H
-# include <inttypes.h> /* for intmax_t */
-#else
-# if HAVE_STDINT_H
-#  include <stdint.h>
-# endif
-#endif
-
+#include "mpfr-intmax.h"
 #include "mpfr-test.h"
 
 #ifndef _MPFR_H_HAVE_INTMAX_T
+
 int
 main (void)
 {
-  return 0;
+  return 77;
 }
+
 #else
 
 #define ERROR(str) {printf("Error for "str"\n"); exit(1);}
@@ -85,7 +73,7 @@ check_set_uj (mpfr_prec_t pmin, mpfr_prec_t pmax, int N)
           if (mpfr_cmp (x, y))
             {
               printf ("ERROR for mpfr_set_uj and j=%lu and p=%lu\n",
-                      (unsigned long) limb, p);
+                      (unsigned long) limb, (unsigned long) p);
               printf ("X="); mpfr_dump (x);
               printf ("Y="); mpfr_dump (y);
               exit (1);
@@ -94,7 +82,7 @@ check_set_uj (mpfr_prec_t pmin, mpfr_prec_t pmax, int N)
             {
               printf ("ERROR for inexact(set_uj): j=%lu p=%lu\n"
                       "Inexact1= %d Inexact2= %d\n",
-                      (unsigned long) limb, p, inex1, inex2);
+                      (unsigned long) limb, (unsigned long) p, inex1, inex2);
               exit (1);
             }
         }
