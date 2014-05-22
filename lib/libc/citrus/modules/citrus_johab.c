@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_johab.c,v 1.4 2008/06/14 16:01:07 tnozaki Exp $ */
+/* $NetBSD: citrus_johab.c,v 1.4.2.1 2014/05/22 11:36:50 yamt Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_johab.c,v 1.4 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_johab.c,v 1.4.2.1 2014/05/22 11:36:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -71,8 +71,10 @@ typedef struct {
 		_JOHABState	s_mbrtowc;
 		_JOHABState	s_mbtowc;
 		_JOHABState	s_mbsrtowcs;
+		_JOHABState	s_mbsnrtowcs;
 		_JOHABState	s_wcrtomb;
 		_JOHABState	s_wcsrtombs;
+		_JOHABState	s_wcsnrtombs;
 		_JOHABState	s_wctomb;
 	} states;
 } _JOHABCTypeInfo;

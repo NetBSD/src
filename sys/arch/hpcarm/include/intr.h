@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.15.8.1 2012/10/30 17:19:40 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.15.8.2 2014/05/22 11:39:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -77,7 +77,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #else	/* _LKM */
 

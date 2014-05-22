@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.52.12.1 2012/04/17 00:07:26 yamt Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.52.12.2 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.12.1 2012/04/17 00:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.12.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -117,8 +117,6 @@ typedef union sequencer_pcqitem {
 	char	qi_msg[4];
 } sequencer_pcqitem_t;
 
-struct sequencer_softc seqdevs[NSEQUENCER];
-
 void sequencerattach(int);
 static void seq_reset(struct sequencer_softc *);
 static int seq_do_command(struct sequencer_softc *, seq_event_t *);
@@ -159,30 +157,98 @@ static dev_type_poll(sequencerpoll);
 static dev_type_kqfilter(sequencerkqfilter);
 
 const struct cdevsw sequencer_cdevsw = {
-	sequenceropen, sequencerclose, sequencerread, sequencerwrite,
-	sequencerioctl, nostop, notty, sequencerpoll, nommap,
-	sequencerkqfilter, D_OTHER | D_MPSAFE
+	.d_open = sequenceropen,
+	.d_close = sequencerclose,
+	.d_read = sequencerread,
+	.d_write = sequencerwrite,
+	.d_ioctl = sequencerioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = sequencerpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = sequencerkqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
+static LIST_HEAD(, sequencer_softc) sequencers = LIST_HEAD_INITIALIZER(sequencers);
+static kmutex_t sequencer_lock;
+
+static void
+sequencerdestroy(struct sequencer_softc *sc) {
+	callout_destroy(&sc->sc_callout);
+	softint_disestablish(sc->sih);
+	cv_destroy(&sc->rchan);
+	cv_destroy(&sc->wchan);
+	cv_destroy(&sc->lchan);
+	if (sc->pcq)
+		pcq_destroy(sc->pcq);
+	kmem_free(sc, sizeof(*sc));
+}
+
+static struct sequencer_softc *
+sequencercreate(int unit) {
+	struct sequencer_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
+	if (sc == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: out of memory\n", __func__);
+#endif
+		return NULL;
+	}
+	sc->sc_unit = unit;
+	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
+	sc->sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    seq_softintr, sc);
+	mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->rchan, "midiseqr");
+	cv_init(&sc->wchan, "midiseqw");
+	cv_init(&sc->lchan, "midiseql");
+	sc->pcq = pcq_create(SEQ_MAXQ, KM_SLEEP);
+	if (sc->pcq == NULL) {
+		sequencerdestroy(sc);
+		return NULL;
+	}
+	return sc;
+}
+
+
+static struct sequencer_softc *
+sequencerget(int unit) {
+	struct sequencer_softc *sc;
+	if (unit < 0) {
+#ifdef DIAGNOSTIC
+		panic("%s: unit %d!", __func__, unit);
+#endif
+		return NULL;
+	}
+	mutex_enter(&sequencer_lock);
+	LIST_FOREACH(sc, &sequencers, sc_link) {
+		if (sc->sc_unit == unit) {
+			mutex_exit(&sequencer_lock);
+			return sc;
+		}
+	}
+	mutex_exit(&sequencer_lock);
+	if ((sc = sequencercreate(unit)) == NULL)
+		return NULL;
+	mutex_enter(&sequencer_lock);
+	LIST_INSERT_HEAD(&sequencers, sc, sc_link);
+	mutex_exit(&sequencer_lock);
+	return sc;
+}
+
+#ifdef notyet
+static void 
+sequencerput(struct sequencer_softc *sc) {
+	mutex_enter(&sequencer_lock);
+	LIST_REMOVE(sc, sc_link);
+	mutex_exit(&sequencer_lock);
+	sequencerdestroy(sc);
+}
+#endif
 
 void
 sequencerattach(int n)
 {
-	struct sequencer_softc *sc;
-
-	for (n = 0; n < NSEQUENCER; n++) {
-		sc = &seqdevs[n];
-		callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
-		sc->sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-		    seq_softintr, sc);
-		mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&sc->rchan, "midiseqr");
-		cv_init(&sc->wchan, "midiseqw");
-		cv_init(&sc->lchan, "midiseql");
-		sc->pcq = pcq_create(SEQ_MAXQ, KM_SLEEP);
-		if (sc->pcq == NULL) {
-			panic("sequencerattach");
-		}
-	}
+	mutex_init(&sequencer_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -204,14 +270,9 @@ static int
 sequencer_enter(dev_t dev, struct sequencer_softc **scp)
 {
 	struct sequencer_softc *sc;
-	int unit;
 
 	/* First, find the device and take sc_lock. */
-	unit = SEQUENCERUNIT(dev);
-	if (unit >= NSEQUENCER)
-		return (ENXIO);
-	sc = &seqdevs[unit];
-	if (sc == NULL)
+	if ((sc = sequencerget(SEQUENCERUNIT(dev))) == NULL)
 		return ENXIO;
 	mutex_enter(&sc->lock);
 	while (sc->dvlock) {
@@ -229,23 +290,21 @@ sequencer_enter(dev_t dev, struct sequencer_softc **scp)
 static int
 sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
-	int unit = SEQUENCERUNIT(dev);
 	struct sequencer_softc *sc;
 	struct midi_dev *md;
 	struct midi_softc *msc;
-	int error;
+	int error, unit;
 
 	DPRINTF(("sequenceropen\n"));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
-	KASSERT(sc == &seqdevs[unit]);
 	if (sc->isopen != 0) {
 		sequencer_exit(sc);
 		return EBUSY;
 	}
 
-	if (SEQ_IS_OLD(unit))
+	if (SEQ_IS_OLD(SEQUENCERUNIT(dev)))
 		sc->mode = SEQ_OLD;
 	else
 		sc->mode = SEQ_NEW;
@@ -775,8 +834,10 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 static int
 sequencerpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc;
 	int revents = 0;
+	if ((sc = sequencerget(SEQUENCERUNIT(dev))) == NULL)
+		return ENXIO;
 
 	DPRINTF(("sequencerpoll: %p events=0x%x\n", sc, events));
 
@@ -872,8 +933,10 @@ static const struct filterops sequencerwrite_filtops =
 static int
 sequencerkqfilter(dev_t dev, struct knote *kn)
 {
-	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct sequencer_softc *sc;
 	struct klist *klist;
+	if ((sc = sequencerget(SEQUENCERUNIT(dev))) == NULL)
+		return ENXIO;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -1372,12 +1435,6 @@ midiseq_open(int unit, int flags)
 static void
 midiseq_close(struct midi_dev *md)
 {
-	int major;
-	dev_t dev;
-	
-	major = devsw_name2chr("midi", NULL, 0);
-	dev = makedev(major, md->unit);
-
 	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
 	(void)vn_close(md->vp, 0, kauth_cred_get());
 	kmem_free(md, sizeof(*md));
@@ -1538,8 +1595,17 @@ static dev_type_open(midiopen);
 static dev_type_close(midiclose);
 
 const struct cdevsw midi_cdevsw = {
-	midiopen, midiclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
+	.d_open = midiopen,
+	.d_close = midiclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /*

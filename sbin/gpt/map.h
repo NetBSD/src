@@ -51,10 +51,11 @@ typedef struct map {
 extern int lbawidth;
 
 map_t *map_add(off_t, off_t, int, void*);
-map_t *map_alloc(off_t, off_t);
+map_t *map_alloc(off_t, off_t, off_t);
 map_t *map_find(int);
 map_t *map_first(void);
 map_t *map_last(void);
+off_t map_resize(map_t *, off_t, off_t);
 
 off_t map_free(off_t, off_t);
 

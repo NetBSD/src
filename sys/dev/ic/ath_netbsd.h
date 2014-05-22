@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.12.2.2 2013/01/16 05:33:15 yamt Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.12.2.3 2014/05/22 11:40:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -61,9 +61,6 @@ typedef kmutex_t ath_txbuf_lock_t;
 
 #define	NET_LOCK_GIANT()
 #define	NET_UNLOCK_GIANT()
-
-#define	IF_LOCK(__q)
-#define	IF_UNLOCK(__q)
 
 #define	SYSCTL_INT_SUBR(__rw, __name, __descr)				     \
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_PERMANENT|(__rw),     \

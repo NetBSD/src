@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75.8.1 2012/10/30 17:19:47 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75.8.2 2014/05/22 11:39:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.8.1 2012/10/30 17:19:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.8.2 2014/05/22 11:39:49 yamt Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.8.1 2012/10/30 17:19:47 yamt Exp $"
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -327,7 +328,7 @@ void
 cpu_startup(void)
 {
 
-	sprintf(cpu_model, "%s\n", platid_name(&platid));
+	cpu_setmodel("%s", platid_name(&platid));
 
 	sh_startup();
 }

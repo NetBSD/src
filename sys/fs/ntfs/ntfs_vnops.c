@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.49.4.4 2013/01/16 05:33:40 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.49.4.5 2014/05/22 11:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.4 2013/01/16 05:33:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.5 2014/05/22 11:41:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ ntfs_check_permitted(struct vnode *vp, struct ntnode *ip, mode_t mode,
 
 	file_mode = ip->i_mp->ntm_mode | (S_IXUSR|S_IXGRP|S_IXOTH);
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    file_mode), vp, NULL, genfs_can_access(vp->v_type, file_mode,
 	    ip->i_mp->ntm_uid, ip->i_mp->ntm_gid, mode, cred));
 }
@@ -649,7 +649,7 @@ ntfs_readdir(void *v)
 int
 ntfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -729,6 +729,9 @@ ntfs_lookup(void *v)
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+
+	if (*ap->a_vpp != dvp)
+		VOP_UNLOCK(*ap->a_vpp);
 
 	return error;
 }

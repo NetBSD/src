@@ -1,4 +1,4 @@
-/*	$NetBSD: stdbool.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: stdbool.h,v 1.3.6.1 2014/05/22 11:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,7 @@
 
 #define	true	1
 #define	false	0
-#else
-#define	bool	bool
 
-#define	true	true
-#define	false	false
 #endif /* __cplusplus */
 
 #define	__bool_true_false_are_defined	1

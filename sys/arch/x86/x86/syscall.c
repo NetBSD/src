@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5.2.2 2012/10/30 17:20:35 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.2.3 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.2.2 2012/10/30 17:20:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.2.3 2014/05/22 11:40:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,18 +153,7 @@ syscall(struct trapframe *frame)
 			goto bad;
 	}
 #endif
-	if (!__predict_false(p->p_trace_enabled)
-	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
-		rval[0] = 0;
-		rval[1] = 0;
-		error = sy_call(callp, l, args, rval);
-	}
-
-	if (__predict_false(p->p_trace_enabled)
-	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-		trace_exit(code, rval, error);
-	}
+	error = sy_invoke(callp, l, args, rval, code);
 
 	if (__predict_true(error == 0)) {
 		X86_TF_RAX(frame) = rval[0];

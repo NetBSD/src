@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.292.2.4 2013/01/16 05:33:50 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.292.2.5 2014/05/22 11:41:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292.2.4 2013/01/16 05:33:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292.2.5 2014/05/22 11:41:11 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -290,7 +290,7 @@ nfs_null(struct vnode *vp, kauth_cred_t cred, struct lwp *l)
 {
 	char *bpos, *dpos;
 	int error = 0;
-	struct mbuf *mreq, *mrep, *md, *mb;
+	struct mbuf *mreq, *mrep, *md, *mb __unused;
 	struct nfsnode *np = VTONFS(vp);
 
 	nfsm_reqhead(np, NFSPROC_NULL, 0);
@@ -761,7 +761,7 @@ nfs_setattrrpc(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, struct lw
 int
 nfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -859,7 +859,7 @@ nfs_lookup(void *v)
 		if ((flags & ISDOTDOT) != 0) {
 			VOP_UNLOCK(dvp);
 		}
-		error = vn_lock(newvp, LK_EXCLUSIVE);
+		error = vn_lock(newvp, LK_SHARED);
 		if ((flags & ISDOTDOT) != 0) {
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		}
@@ -873,6 +873,7 @@ nfs_lookup(void *v)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
 			KASSERT(newvp->v_type != VNON);
+			VOP_UNLOCK(newvp);
 			return (0);
 		}
 		cache_purge1(newvp, NULL, 0, PURGE_PARENTS);
@@ -1048,8 +1049,11 @@ validate:
 			*vpp = NULL;
 		}
 	}
-
-	return error;
+	if (error)
+		return error;
+	if (newvp != dvp)
+		VOP_UNLOCK(newvp);
+	return 0;
 }
 
 /*
@@ -1164,7 +1168,7 @@ nfs_readrpc(struct vnode *vp, struct uio *uiop)
 	char *bpos, *dpos, *cp2;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp;
-	int error = 0, len, retlen, tsiz, eof, byte_count;
+	int error = 0, len, retlen, tsiz, eof __unused, byte_count;
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
 #ifndef NFS_V2_ONLY
@@ -1499,7 +1503,6 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 		rdev = nfs_xdrneg1;
 	else {
 		VOP_ABORTOP(dvp, cnp);
-		vput(dvp);
 		return (EOPNOTSUPP);
 	}
 	nfsstats.rpccnt[NFSPROC_MKNOD]++;
@@ -1550,11 +1553,11 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 	} else {
 		nfs_cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
+		VOP_UNLOCK(newvp);
 	}
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
-	vput(dvp);
 	return (error);
 }
 
@@ -1566,7 +1569,7 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 int
 nfs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1589,7 +1592,7 @@ nfs_mknod(void *v)
 int
 nfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1708,6 +1711,7 @@ again:
 		else
 			cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 		*ap->a_vpp = newvp;
+		VOP_UNLOCK(newvp);
 	} else {
 		if (newvp)
 			vput(newvp);
@@ -1718,7 +1722,6 @@ again:
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 
@@ -2084,7 +2087,7 @@ nfs_link(void *v)
 int
 nfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -2159,12 +2162,12 @@ nfs_symlink(void *v)
 			vput(newvp);
 	} else {
 		*ap->a_vpp = newvp;
+		VOP_UNLOCK(newvp);
 	}
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 
@@ -2174,7 +2177,7 @@ nfs_symlink(void *v)
 int
 nfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -2254,8 +2257,8 @@ nfs_mkdir(void *v)
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
+		VOP_UNLOCK(newvp);
 	}
-	vput(dvp);
 	return (error);
 }
 
@@ -3366,7 +3369,7 @@ nfsspec_access(void *v)
 		}
 	}
 
-	return kauth_authorize_vnode(ap->a_cred, kauth_access_action(ap->a_mode,
+	return kauth_authorize_vnode(ap->a_cred, KAUTH_ACCESS_ACTION(ap->a_mode,
 	    va.va_type, va.va_mode), vp, NULL, genfs_can_access(va.va_type,
 	    va.va_mode, va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }

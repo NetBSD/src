@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25.2.2 2012/10/30 17:18:51 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.25.2.3 2014/05/22 11:39:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -279,6 +279,8 @@ extern const struct amiga_bus_space_methods amiga_bus_stride_2;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4swap;
 extern const struct amiga_bus_space_methods amiga_bus_stride_16;
+extern const struct amiga_bus_space_methods amiga_bus_stride_0x1000;
+extern const struct amiga_bus_space_methods amiga_bus_stride_0x4000;
 extern const struct amiga_bus_space_methods empb_bus_swap;
 
 /*

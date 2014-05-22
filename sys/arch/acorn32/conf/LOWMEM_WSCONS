@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.56.4.3 2013/01/16 05:32:39 yamt Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.56.4.4 2014/05/22 11:39:26 yamt Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -60,15 +60,10 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -278,7 +273,7 @@ pseudo-device	ppp			# PPP
 #pseudo-device	strip			# STRIP
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem

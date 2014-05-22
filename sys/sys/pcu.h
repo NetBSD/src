@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.8.2.2 2013/01/23 00:06:30 yamt Exp $	*/
+/*	$NetBSD: pcu.h,v 1.8.2.3 2014/05/22 11:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ void	pcu_save_all(lwp_t *);
 
 void	pcu_load(const pcu_ops_t *);
 void	pcu_save(const pcu_ops_t *);
-void	pcu_discard(const pcu_ops_t *);
+void	pcu_save_all_on_cpu(void);
+void	pcu_discard(const pcu_ops_t *, bool);
 void	pcu_kernel_acquire(const pcu_ops_t *);
 void	pcu_kernel_release(const pcu_ops_t *);
 bool	pcu_used_p(const pcu_ops_t *);

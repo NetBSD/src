@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellreg.h,v 1.1 2010/10/03 06:03:10 kiyohara Exp $  */
+/*	$NetBSD: marvellreg.h,v 1.1.14.1 2014/05/22 11:39:42 yamt Exp $  */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,14 +27,19 @@
 #ifndef _EVBARM_MARVELLREG_H_
 #define _EVBARM_MARVELLREG_H_
 
+#include "opt_mvsoc.h"
 
 /*
  * Logical mapping for onboard/integrated peripherals
  * that are used while bootstrapping.
  */
 #define MARVELL_PEXMEM_PBASE			0xe0000000
-#define MARVELL_PEXMEM_SIZE			0x08000000
+#define MARVELL_PEXMEM_SIZE			0x01000000
+#if defined(MVSOC_INTERREGS_PBASE)
+#define MARVELL_INTERREGS_PBASE			MVSOC_INTERREGS_PBASE
+#else
 #define MARVELL_INTERREGS_PBASE			0xf1000000
+#endif
 #define MARVELL_INTERREGS_SIZE			0x00100000
 #define MARVELL_PEXIO_PBASE			0xf2000000
 #define MARVELL_PEXIO_SIZE			0x00100000

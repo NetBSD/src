@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.17 2010/02/03 15:34:43 roy Exp $	*/
+/*	$NetBSD: driver.c,v 1.17.6.1 2014/05/22 11:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: driver.c,v 1.17 2010/02/03 15:34:43 roy Exp $");
+__RCSID("$NetBSD: driver.c,v 1.17.6.1 2014/05/22 11:36:55 yamt Exp $");
 
 #include <ctype.h>
 #include "form.h"
@@ -284,13 +284,14 @@ form_driver(FORM *form, int c)
 			break;
 		
 		case REQ_SFIRST_FIELD:
-			fieldp = CIRCLEQ_FIRST(&form->sorted_fields);
+			fieldp = TAILQ_FIRST(&form->sorted_fields);
 			form->cur_field = fieldp->index;
 			update_field = 1;
 			break;
 		
 		case REQ_SLAST_FIELD:
-			fieldp = CIRCLEQ_LAST(&form->sorted_fields);
+			fieldp = TAILQ_LAST(&form->sorted_fields,
+			    _formi_sort_head);
 			form->cur_field = fieldp->index;
 			update_field = 1;
 			break;

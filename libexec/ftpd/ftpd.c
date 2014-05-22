@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.197.2.1 2012/10/30 18:59:21 yamt Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.197.2.2 2014/05/22 11:37:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.197.2.1 2012/10/30 18:59:21 yamt Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.197.2.2 2014/05/22 11:37:13 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -2149,7 +2149,7 @@ send_data_with_read(int filefd, int netfd, const struct stat *st, int isdata)
 		(void)gettimeofday(&then, NULL);
 	} else
 		bufrem = readsize;
-	while (1) {
+	for (;;) {
 		(void) alarm(curclass.timeout);
 		c = read(filefd, buf, readsize);
 		if (c == 0)
@@ -2392,7 +2392,7 @@ receive_data(FILE *instr, FILE *outstr)
 		(void) alarm(curclass.timeout);
 		if (curclass.readsize)
 			readsize = curclass.readsize;
-		else if (fstat(filefd, &st))
+		else if (fstat(filefd, &st) != -1)
 			readsize = (ssize_t)st.st_blksize;
 		else
 			readsize = BUFSIZ;
@@ -2830,7 +2830,6 @@ reply(int n, const char *fmt, ...)
 	size_t	b;
 	va_list	ap;
 
-	b = 0;
 	if (n == 0)
 		b = snprintf(msg, sizeof(msg), "    ");
 	else if (n < 0)

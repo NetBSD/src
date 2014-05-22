@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.14.8.1 2012/04/17 00:07:50 yamt Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.14.8.2 2014/05/22 11:40:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.14.8.1 2012/04/17 00:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.14.8.2 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,11 +200,9 @@ ld_twa_handler(struct twa_request *tr)
 	uint8_t	status;
 	struct buf *bp;
 	struct ld_twa_softc *sc;
-	struct twa_softc *twa;
 
 	bp = tr->bp;
 	sc = (struct ld_twa_softc *)tr->tr_ld_sc;
-	twa = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	status = tr->tr_command->command.cmd_pkt_9k.status;
 

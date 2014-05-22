@@ -29,16 +29,26 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crtn.S,v 1.1 2011/02/08 02:02:25 matt Exp $")
+RCSID("$NetBSD: crtn.S,v 1.1.6.1 2014/05/22 11:36:44 yamt Exp $")
 
 	.section ".init", "ax", @progbits
+#ifdef _LP64
+	ldreg	%r0, (2*SZREG)(%r1)
+	addi	%r1, %r1, (6*SZREG)
+#else
 	addi	%r1, %r1, (4*SZREG)
 	lwz	%r0, (1*SZREG)(%r1)
+#endif
 	mtlr	%r0
 	blr
 
 	.section ".fini", "ax", @progbits
+#ifdef _LP64
+	ldreg	%r0, (2*SZREG)(%r1)
+	addi	%r1, %r1, (6*SZREG)
+#else
 	addi	%r1, %r1, (4*SZREG)
 	lwz	%r0, (1*SZREG)(%r1)
+#endif
 	mtlr	%r0
 	blr

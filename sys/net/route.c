@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.125.4.1 2012/04/17 00:08:38 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.125.4.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.125.4.1 2012/04/17 00:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.125.4.2 2014/05/22 11:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -151,14 +151,10 @@ sysctl_net_rtcache_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
-	/* XXX do not duplicate */
 	if (sysctl_createv(clog, 0, NULL, &rnode, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "net", NULL, NULL, 0, NULL, 0, CTL_NET, CTL_EOL) != 0)
-		return;
-	if (sysctl_createv(clog, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE,
 	    "rtcache", SYSCTL_DESCR("Route cache related settings"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL) != 0)
 		return;
 	if (sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
@@ -345,7 +341,8 @@ rtalloc1(const struct sockaddr *dst, int report)
 				goto miss;
 			}
 			KASSERT(newrt != NULL);
-			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
+			rt = newrt;
+			if (rt->rt_flags & RTF_XRESOLVE) {
 				msgtype = RTM_RESOLVE;
 				goto miss;
 			}
@@ -571,15 +568,6 @@ rtflushclone(sa_family_t family, struct rtentry *parent)
 	rt_walktree(family, rtflushclone1, (void *)parent);
 }
 
-/*
- * Routing table ioctl interface.
- */
-int
-rtioctl(u_long req, void *data, struct lwp *l)
-{
-	return EOPNOTSUPP;
-}
-
 struct ifaddr *
 ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	const struct sockaddr *gateway)
@@ -594,7 +582,7 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 		 * we can use the local address.
 		 */
 		ifa = NULL;
-		if (flags & RTF_HOST)
+		if ((flags & RTF_HOST) && gateway->sa_family != AF_LINK)
 			ifa = ifa_ifwithdstaddr(dst);
 		if (ifa == NULL)
 			ifa = ifa_ifwithaddr(gateway);
@@ -619,7 +607,7 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
 		struct ifaddr *oifa = ifa;
 		ifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
-		if (ifa == 0)
+		if (ifa == NULL)
 			ifa = oifa;
 	}
 	return ifa;

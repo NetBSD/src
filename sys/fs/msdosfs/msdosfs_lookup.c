@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.23.8.3 2013/01/23 00:06:19 yamt Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.23.8.4 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -47,17 +47,26 @@
  * October 1992
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.8.3 2013/01/23 00:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.8.4 2014/05/22 11:41:00 yamt Exp $");
 
 #include <sys/param.h>
+
+#ifdef _KERNEL
 #include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/kauth.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/dirent.h>
-#include <sys/kauth.h>
+#else
+#include <ffs/buf.h>
+#endif /* _KERNEL */
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/direntry.h>
@@ -65,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.8.3 2013/01/23 00:06:19 yamt
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
 
+
+#ifdef _KERNEL
 /*
  * When we search a directory the blocks containing directory entries are
  * read and examined.  The directory entries contain information that would
@@ -83,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.8.3 2013/01/23 00:06:19 yamt
 int
 msdosfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -289,8 +300,10 @@ msdosfs_lookup(void *v)
 				 * Check for a checksum or name match
 				 */
 				chksum_ok = (chksum == winChksum(dep->deName));
-				if (!chksum_ok
-				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
+				if (!chksum_ok && (
+					!olddos ||
+					memcmp(&dosfilename[0],dep->deName,8) ||
+					memcmp(&dosfilename[8],dep->deExtension,3))) {
 					chksum = -1;
 					continue;
 				}
@@ -481,6 +494,7 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
+		VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -512,6 +526,7 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
+		VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -557,8 +572,12 @@ foundroot:
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
+
 	return 0;
 }
+#endif /* _KERNEL */
 
 /*
  * dep  - directory entry to copy into the directory
@@ -572,13 +591,17 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 {
 	int error, rberror;
 	u_long dirclust, clusoffset;
-	u_long fndoffset, havecnt=0, wcnt=1;
+	u_long fndoffset, havecnt = 0, wcnt = 1, i;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
 	daddr_t bn;
-	int blsize, i;
+	int blsize;
+#ifdef _KERNEL
 	int async = ddep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
+#else
+#define async 0
+#endif
 
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
@@ -693,7 +716,12 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 			else
 				diroffset = 0;
 		}
-		return deget(pmp, dirclust, diroffset, depp);
+		error = deget(pmp, dirclust, diroffset, depp);
+#ifndef MAKEFS
+		if (error == 0)
+			VOP_UNLOCK(DETOV(*depp));
+#endif
+		return error;
 	}
 
 	return 0;
@@ -716,7 +744,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	ndep = bptoep(pmp, bp, clusoffset);
 
 	havecnt = ddep->de_fndcnt + 1;
-	for(i=wcnt; i <= havecnt; i++) {
+	for(i = wcnt; i <= havecnt; i++) {
 		/* mark entry as deleted */
 		ndep->deName[0] = SLOT_DELETED;
 
@@ -980,7 +1008,11 @@ removede(struct denode *pdep, struct denode *dep)
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	u_long offset = pdep->de_fndoffset;
+#ifdef _KERNEL
 	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
+#else
+#define async 0
+#endif
 
 #ifdef MSDOSFS_DEBUG
 	printf("removede(): filename %s, dep %p, offset %08lx\n",

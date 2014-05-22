@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.143.8.1 2012/04/17 00:08:34 yamt Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.143.8.2 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143.8.1 2012/04/17 00:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143.8.2 2014/05/22 11:41:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143.8.1 2012/04/17 00:08:34 yamt 
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -468,7 +469,7 @@ kernfs_xwrite(const struct kernfs_node *kfs, char *bf, size_t len)
 int
 kernfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
@@ -520,7 +521,10 @@ kernfs_lookup(void *v)
 
 	found:
 		error = kernfs_allocvp(dvp->v_mount, vpp, kt->kt_tag, kt, 0);
-		return (error);
+		if (error)
+			return error;
+		VOP_UNLOCK(*vpp);
+		return 0;
 
 	case KFSsubdir:
 		ks = (struct kernfs_subdir *)kfs->kfs_kt->kt_data;
@@ -586,7 +590,7 @@ kernfs_access(void *v)
 		return (error);
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
 	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
@@ -650,6 +654,11 @@ kernfs_getattr(void *v)
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
+	case KFSdevice:
+		vap->va_nlink = 1;
+		vap->va_rdev = ap->a_vp->v_rdev;
+		break;
+
 	case KFSroot:
 		vap->va_nlink = 1;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
@@ -667,7 +676,6 @@ kernfs_getattr(void *v)
 	case KFSstring:
 	case KFShostname:
 	case KFSavenrun:
-	case KFSdevice:
 	case KFSmsgbuf:
 		vap->va_nlink = 1;
 		total = 0;
@@ -829,18 +837,8 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 	if ((error = kernfs_allocvp(ap->a_vp->v_mount, &vp, kt->kt_tag, kt,
 	    value)) != 0)
 		return error;
-	if (kt->kt_tag == KFSdevice) {
-		struct vattr va;
-
-		error = VOP_GETATTR(vp, &va, ap->a_cred);
-		if (error != 0) {
-			return error;
-		}
-		d->d_fileno = va.va_fileid;
-	} else {
-		kfs = VTOKERN(vp);
-		d->d_fileno = kfs->kfs_fileno;
-	}
+	kfs = VTOKERN(vp);
+	d->d_fileno = kfs->kfs_fileno;
 	vput(vp);
 	return 0;
 }
@@ -1155,7 +1153,7 @@ kernfs_link(void *v)
 int
 kernfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1164,6 +1162,5 @@ kernfs_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }

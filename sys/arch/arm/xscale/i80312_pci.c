@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.10.2.2 2012/10/30 17:19:10 yamt Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.10.2.3 2014/05/22 11:39:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,26 +40,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.10.2.2 2012/10/30 17:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.10.2.3 2014/05/22 11:39:34 yamt Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
+#include <dev/pci/ppbreg.h>
+
+#include <arm/locore.h>
 
 #include <arm/xscale/i80312reg.h>
 #include <arm/xscale/i80312var.h>
-
-#include <dev/pci/ppbreg.h>
-#include <dev/pci/pciconf.h>
-
-#include "opt_pci.h"
-#include "pci.h"
 
 void		i80312_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
@@ -81,7 +83,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	struct i80312_softc *sc = cookie;
 	struct extent *ioext, *memext;
 	pcireg_t binfo;
-	int pbus, sbus;
+	int sbus;
 #endif
 
 	pc->pc_conf_v = cookie;
@@ -105,7 +107,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	 */
 
 	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pbus = PPB_BUSINFO_PRIMARY(binfo);
+	/* pbus = PPB_BUSINFO_PRIMARY(binfo); */
 	sbus = PPB_BUSINFO_SECONDARY(binfo);
 
 	ioext  = extent_create("pciio", sc->sc_sioout_base,

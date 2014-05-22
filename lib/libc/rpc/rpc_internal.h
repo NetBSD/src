@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_internal.h,v 1.6 2009/04/04 15:31:08 christos Exp $	*/
+/*	$NetBSD: rpc_internal.h,v 1.6.6.1 2014/05/22 11:36:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -63,3 +63,5 @@ u_int32_t __rpc_getxid(void);
 
 extern SVCXPRT **__svc_xports;
 extern int __svc_maxrec;
+
+int __clnt_sigfillset(sigset_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.226.2.2 2013/01/16 05:32:33 yamt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.226.2.3 2014/05/22 11:37:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.226.2.2 2013/01/16 05:32:33 yamt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.226.2.3 2014/05/22 11:37:28 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -621,7 +621,6 @@ main(int argc, char **argv)
 
 		case 'L':
 		case 'm':
-		case 'v':
 		case 'z':
 			if (start != &opt_family_only.pb_parser)
 				start = &iface_opt_family_only.pif_parser;
@@ -681,8 +680,12 @@ main(int argc, char **argv)
 	env = (nmatch > 0) ? match[(int)nmatch - 1].m_env : NULL;
 	if (env == NULL)
 		env = oenv;
-	else
+	else {
 		env = prop_dictionary_augment(env, oenv);
+		if (env == NULL)
+			err(EXIT_FAILURE, "%s: prop_dictionary_augment",
+			    __func__);
+	}
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands(env);
@@ -898,12 +901,10 @@ setifaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 setifnetmask(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	const struct paddr_prefix *pfx;
 	prop_data_t d;
 
 	d = (prop_data_t)prop_dictionary_get(env, "dstormask");
 	assert(d != NULL);
-	pfx = prop_data_data_nocopy(d);
 
 	if (!prop_dictionary_set(oenv, "netmask", (prop_object_t)d))
 		return -1;
@@ -914,7 +915,6 @@ setifnetmask(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 setifbroadaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	const struct paddr_prefix *pfx;
 	prop_data_t d;
 	unsigned short flags;
 
@@ -926,7 +926,6 @@ setifbroadaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	d = (prop_data_t)prop_dictionary_get(env, "broadcast");
 	assert(d != NULL);
-	pfx = prop_data_data_nocopy(d);
 
 	if (!prop_dictionary_set(oenv, "broadcast", (prop_object_t)d))
 		return -1;
@@ -947,7 +946,6 @@ static int
 setifdstormask(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *key;
-	const struct paddr_prefix *pfx;
 	prop_data_t d;
 	unsigned short flags;
 
@@ -956,7 +954,6 @@ setifdstormask(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	d = (prop_data_t)prop_dictionary_get(env, "dstormask");
 	assert(d != NULL);
-	pfx = prop_data_data_nocopy(d);
 
 	if ((flags & IFF_BROADCAST) == 0) {
 		key = "dst";
@@ -1027,12 +1024,9 @@ static int
 setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int64_t ifcap;
-	int s;
 	bool rc;
 	prop_data_t capdata;
 	struct ifcapreq ifcr;
-
-	s = getsock(AF_INET);
 
 	rc = prop_dictionary_get_int64(env, "ifcap", &ifcap);
 	assert(rc);

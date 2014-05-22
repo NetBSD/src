@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: kcore.h,v 1.2.38.1 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
  * Wasabi Systems, Inc.
  */
 
-#ifndef _AMD64KCORE_H_
+#ifndef _AMD64_KCORE_H_
 #define _AMD64_KCORE_H_
 
 typedef struct cpu_kcore_hdr {

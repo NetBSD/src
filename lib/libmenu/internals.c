@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.13.40.2 2013/01/23 00:05:25 yamt Exp $	*/
+/*	$NetBSD: internals.c,v 1.13.40.3 2014/05/22 11:36:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.13.40.2 2013/01/23 00:05:25 yamt Exp $");
+__RCSID("$NetBSD: internals.c,v 1.13.40.3 2014/05/22 11:36:57 yamt Exp $");
 
 #include <menu.h>
 #include <ctype.h>
@@ -517,7 +517,7 @@ _menui_draw_item(MENU *menu, int item)
 int
 _menui_draw_menu(MENU *menu)
 {
-	int rowmajor, i, j, k, row = -1, col = -1, stride;
+	int rowmajor, i, j, k, row = -1, stride;
 	int incr, cur_row, offset, row_count;
 
 	rowmajor = ((menu->opts & O_ROWMAJOR) == O_ROWMAJOR);
@@ -555,7 +555,6 @@ _menui_draw_menu(MENU *menu)
 				wattrset(menu->scrwin, menu->back);
 				if (row < 0) {
 					row = menu->items[menu->item_count - 1]->row;
-					col = menu->items[menu->item_count - 1]->col;
 				}
 
 				wmove(menu->scrwin, cur_row,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.35.8.1 2012/04/17 00:08:38 yamt Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.35.8.2 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,10 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.35.8.1 2012/04/17 00:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.35.8.2 2014/05/22 11:41:09 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -320,12 +319,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		erp->erp_count = retry_count;
 	}
 
-#ifdef PFIL_HOOKS
-	if ((error = pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		return (error);
 	if (m == NULL)
 		return (0);
-#endif
 
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
@@ -358,20 +355,19 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
-	int s, i;
+	int s;
 #ifdef INET
+	int i;
 	struct arphdr *ah;
 	struct eco_arp *ecah;
 	struct mbuf *m1;
 	void *tha;
 #endif
 
-#ifdef PFIL_HOOKS
-	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
+	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
 		return;
 	if (m == NULL)
 		return;
-#endif
 
 	/* Copy the mbuf header and trim it off. */
 	/* XXX use m_split? */
@@ -469,7 +465,9 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		printf("%s: unknown port stn %s port 0x%02x ctl 0x%02x\n",
 		    ifp->if_xname, eco_sprintf(eh->eco_shost),
 		    eh->eco_port, eh->eco_control);
+#ifdef INET
 	drop:
+#endif
 		m_freem(m);
 		return;
 	}

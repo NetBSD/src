@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.6.44.1 2013/01/23 00:05:21 yamt Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.6.44.2 2014/05/22 11:36:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,13 +35,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetround.c,v 1.6.44.1 2013/01/23 00:05:21 yamt Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.6.44.2 2014/05/22 11:36:46 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <sys/types.h>
 #include <ieeefp.h>
+
+#include <arm/vfpreg.h>
 
 #ifdef __weak_alias
 __weak_alias(fpsetround,_fpsetround)

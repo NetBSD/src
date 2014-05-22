@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.17.2.1 2012/04/17 00:08:33 yamt Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.17.2.2 2014/05/22 11:41:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -406,11 +406,11 @@ dosfs_stat(struct open_file *fd, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
 dosfs_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by dosfs\n");
-	return;
+	lsunsup("dosfs");
 }
 #endif
 
@@ -570,7 +570,7 @@ lookup(DOS_FS *fs, u_int clus, const char *name, const struct direntry **dep)
 							for (x = 0, i = 0;
 							     i < 11; i++)
 								x = ((((x & 1) << 7) | (x >> 1)) +
-								    dir[ent].de.deName[i]) & 0xff;
+								    msdos_dirchar(&dir[ent].de,i)) & 0xff;
 							ok = chk == x &&
 							    !strcasecmp(name, (const char *)lfn);
 						}

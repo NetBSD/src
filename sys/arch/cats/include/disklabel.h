@@ -1,6 +1,5 @@
-/*	$NetBSD: disklabel.h,v 1.6 2011/08/30 12:39:53 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6.2.1 2014/05/22 11:39:36 yamt Exp $	*/
 
-#define LABELUSESMBR 1
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/arm/disklabel.h>
 #else

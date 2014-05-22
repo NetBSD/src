@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.13 2010/08/31 21:14:57 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.13.8.1 2014/05/22 11:40:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -74,9 +74,6 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
 struct cgfourteen_softc {
 	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
-#ifdef RASTERCONSOLE
-	struct fbdevice	sc_rcfb;	/* sc_fb variant for rcons */
-#endif
 	bus_space_tag_t	sc_bustag;
 	struct sbus_reg	sc_physadr[2];	/* phys addrs of h/w */
 	bus_space_handle_t sc_regh;	/* register space */
@@ -95,6 +92,10 @@ struct cgfourteen_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct 	wsscreen_list sc_screenlist;
 	int 	sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
+#if NSX > 0
+	struct sx_softc *sc_sx;
+	uint32_t sc_fb_paddr;
+#endif /* NSX > 0 */
 #endif
 
 	uint8_t	sc_savexlut[256];
@@ -119,6 +120,7 @@ struct cgfourteen_softc {
 #define CG14_CLUT1_VOFF		0x00004000	/* Color Look Up Table */
 #define CG14_CLUT2_VOFF		0x00005000	/* Color Look Up Table */
 #define CG14_CLUT3_VOFF		0x00006000	/* Color Look Up Table */
+#define CG14_SXREG_VOFF		0x00010000	/* SX userspace registers */
 #define CG14_DIRECT_VOFF	0x10000000
 #define CG14_CTLREG_VOFF	0x20000000
 #define CG14_CURSOR_VOFF	0x30000000
@@ -131,3 +133,4 @@ struct cgfourteen_softc {
 #define CG14_B32_VOFF		0xa0000000
 #define CG14_G32_VOFF		0xb0000000
 #define CG14_R32_VOFF		0xc0000000
+#define CG14_SXIO_VOFF		0xd0000000

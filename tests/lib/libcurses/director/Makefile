@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/10/30 19:00:02 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2014/05/22 11:42:21 yamt Exp $
 #
 .include <bsd.own.mk>
 
@@ -12,11 +12,11 @@ NOMAN=	"true"
 SRCS=	testlang_parse.y testlang_conf.l director.c
 
 YHEADER=	1
-CPPFLAGS+=	-O0 -g -I${.CURDIR} -I.
-LDFLAGS+=	-g
+CPPFLAGS+=	-I${.CURDIR} -I.
 DPADD+=		${LIBL}
 LDADD+=		-ll -lutil -lc
 
+COPTS.testlang_parse.c += -Wno-uninitialized
 CWARNFLAGS.clang+=	-Wno-format -Wno-conversion
 
 .include <bsd.test.mk>

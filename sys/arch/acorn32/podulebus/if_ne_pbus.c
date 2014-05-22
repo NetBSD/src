@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.16.2.1 2012/05/23 10:07:38 yamt Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.16.2.2 2014/05/22 11:39:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.16.2.1 2012/05/23 10:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.16.2.2 2014/05/22 11:39:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,16 +233,12 @@ ne_pbus_attach(device_t parent, device_t self, void *aux)
 	struct ne_pbus_softc *npsc = device_private(self);
 	struct ne2000_softc *nsc = &npsc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
-
- 	int *media, nmedia, defmedia;
 	struct ne_clone *ne = NULL;
 	uint8_t buffer[6];
 	uint8_t *myea;
 	int loop;
 
 	dsc->sc_dev = self;
-	media = NULL;
-	nmedia = defmedia = 0;
 	/* Check a few things about the attach args */
 
 	if (pa->pa_podule_number == -1)
@@ -368,7 +364,10 @@ ne_pbus_attach(device_t parent, device_t self, void *aux)
 		dsc->sc_mediastatus = ne->mediastatus;
 		dsc->init_card = ne->init_card;
 		dsc->sc_media_init = ne->init_media;
-/*		ne->init_media(dsc,&media,&nmedia,&defmedia); */
+#if 0
+		int *media = NULL, nmedia = 0, defmedia = 0;
+		ne->init_media(dsc, &media, &nmedia, &defmedia);
+#endif
 	}
 
 	/*

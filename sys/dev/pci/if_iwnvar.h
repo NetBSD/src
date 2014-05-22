@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwnvar.h,v 1.13 2011/05/15 13:56:20 christos Exp $	*/
-/*	$OpenBSD: if_iwnvar.h,v 1.19 2010/05/05 19:47:43 damien Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.13.4.1 2014/05/22 11:40:25 yamt Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.24 2012/11/17 14:02:51 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -179,6 +179,7 @@ struct iwn_ops {
 	void		(*read_eeprom)(struct iwn_softc *);
 	int		(*post_alive)(struct iwn_softc *);
 	int		(*nic_config)(struct iwn_softc *);
+	int		(*config_bt_coex)(struct iwn_softc *);
 	void		(*update_sched)(struct iwn_softc *, int, int, uint8_t,
 			    uint16_t);
 	int		(*get_temperature)(struct iwn_softc *);

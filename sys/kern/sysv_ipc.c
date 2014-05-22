@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.23.12.1 2012/04/17 00:08:30 yamt Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.23.12.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.23.12.1 2012/04/17 00:08:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.23.12.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -301,11 +301,6 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_ipc_setup, "sysctl kern.ipc subtree setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,

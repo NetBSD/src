@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.68.12.1 2012/04/17 00:08:43 yamt Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.68.12.2 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68.12.1 2012/04/17 00:08:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68.12.2 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68.12.1 2012/04/17 00:08:43 yamt E
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -62,24 +62,18 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68.12.1 2012/04/17 00:08:43 yamt E
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #include <netipsec/xform.h>
-#endif /* FAST_IPSEC */
-
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif
+#endif /* IPSEC */
 
 #include <net/net_osdep.h>
 
 struct	route ip6_forward_rt;
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet6_pfil_hook;	/* XXX */
-#endif
+extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -105,10 +99,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct ifnet *origifp;	/* maybe unnecessary */
 	u_int32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
-#ifdef FAST_IPSEC
-    struct secpolicy *sp = NULL;
-    int needipsec = 0;
-    int s;
+#ifdef IPSEC
+	struct secpolicy *sp = NULL;
+	int needipsec = 0;
+	int s;
 #endif
 
 	/*
@@ -160,7 +154,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/* Check the security policy (SP) for the packet */
 
 	sp = ipsec6_check_policy(m,NULL,0,&needipsec,&error);
@@ -175,7 +169,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		error = 0;
 	goto freecopy;
 	}
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 	if (srcrt) {
 		union {
@@ -261,21 +255,19 @@ ip6_forward(struct mbuf *m, int srcrt)
 		m_freem(m);
 		return;
 	}
-#ifdef FAST_IPSEC
-    /*
-     * If we need to encapsulate the packet, do it here
-     * ipsec6_proces_packet will send the packet using ip6_output 
-     */
+#ifdef IPSEC
+	/*
+	 * If we need to encapsulate the packet, do it here
+	 * ipsec6_proces_packet will send the packet using ip6_output 
+	 */
 	if (needipsec) {
 		s = splsoftnet();
 		error = ipsec6_process_packet(m,sp->req);
 		splx(s);
 		if (mcopy)
 			goto freecopy;
-    }
+	}
 #endif   
-
-
 
 	/*
 	 * Destination scope check: if a packet is going to break the scope
@@ -393,17 +385,15 @@ ip6_forward(struct mbuf *m, int srcrt)
 	in6_clearscope(&ip6->ip6_src);
 	in6_clearscope(&ip6->ip6_dst);
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, rt->rt_ifp,
+	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, rt->rt_ifp,
 	    PFIL_OUT)) != 0)
 		goto senderr;
 	if (m == NULL)
 		goto freecopy;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* PFIL_HOOKS */
 
 	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
 	if (error) {
@@ -424,9 +414,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
-#ifdef PFIL_HOOKS
  senderr:
-#endif
 	if (mcopy == NULL)
 		return;
 	switch (error) {

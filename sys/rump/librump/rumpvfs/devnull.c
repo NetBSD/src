@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.3 2011/02/10 11:01:31 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.3.4.1 2014/05/22 11:41:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.3 2011/02/10 11:01:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.3.4.1 2014/05/22 11:41:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,8 +46,17 @@ static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);
 
 static struct cdevsw null_cdevsw = {
-	rump_devnullopen, nullclose, rump_devnullrw, rump_devnullrw, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE,
+	.d_open = rump_devnullopen,
+	.d_close = nullclose,
+	.d_read = rump_devnullrw,
+	.d_write = rump_devnullrw,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 int
@@ -60,7 +69,12 @@ rump_devnull_init()
 	error = devsw_attach("null", NULL, &null_bmaj, &null_cdevsw,&null_cmaj);
 	KASSERT(error || null_cmaj == 2);
 
-	return error;
+	error = rump_vfs_makeonedevnode(S_IFCHR,
+	    "/dev/null", null_cmaj, DEV_NULL);
+	if (error)
+		return error;
+	return rump_vfs_makeonedevnode(S_IFCHR,
+	    "/dev/zero", null_cmaj, DEV_ZERO);
 }
 
 static int

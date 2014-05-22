@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.33.8.1 2012/10/30 17:20:30 yamt Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.33.8.2 2014/05/22 11:40:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.33.8.1 2012/10/30 17:20:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.33.8.2 2014/05/22 11:40:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ dmac_attach(device_t parent, device_t self, void *aux)
 	struct dmac_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	struct intio_softc *intio;
-	int r;
+	int r __diagused;
 
 	sc->sc_dev = self;
 	dmac_attached = 1;

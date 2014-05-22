@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.55.2.2 2012/10/30 17:19:51 yamt Exp $	*/
+/*	$NetBSD: boot2.c,v 1.55.2.3 2014/05/22 11:39:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -115,28 +115,39 @@ void print_banner(void);
 void boot2(int, uint64_t);
 
 void	command_help(char *);
+#if LIBSA_ENABLE_LS_OP
 void	command_ls(char *);
+#endif
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
+#ifndef SMALL
+void	command_menu(char *);
+#endif
 void	command_modules(char *);
 void	command_multiboot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
+#if LIBSA_ENABLE_LS_OP
 	{ "ls",		command_ls },
+#endif
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
+#ifndef SMALL
+	{ "menu",	command_menu },
+#endif
 	{ "modules",	command_modules },
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
 	{ "rndseed",	rnd_add },
+	{ "fs",		fs_add },
 	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
@@ -217,7 +228,8 @@ sprint_bootsel(const char *filename)
 
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
-		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+		snprintf(buf, sizeof(buf), "%s%d%c:%s", devname, unit,
+		    'a' + partition, file);
 		return buf;
 	}
 	return "(invalid)";
@@ -390,10 +402,15 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+#if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
+#endif
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
+#ifndef SMALL
+	       "menu (reenters boot menu, if defined in boot.cfg)\n"
+#endif
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
@@ -403,6 +420,7 @@ command_help(char *arg)
 	       "quit\n");
 }
 
+#if LIBSA_ENABLE_LS_OP
 void
 command_ls(char *arg)
 {
@@ -412,6 +430,7 @@ command_ls(char *arg)
 	ls(arg);
 	default_filename = save;
 }
+#endif
 
 /* ARGSUSED */
 void
@@ -439,6 +458,10 @@ command_boot(char *arg)
 		bootit(filename, howto, tell);
 	} else {
 		int i;
+
+#ifndef SMALL
+		bootdefault();
+#endif
 		for (i = 0; i < NUMNAMES; i++) {
 			bootit(names[i][0], howto, tell);
 			bootit(names[i][1], howto, tell);
@@ -503,6 +526,21 @@ command_consdev(char *arg)
 	}
 	printf("invalid console device.\n");
 }
+
+#ifndef SMALL
+/* ARGSUSED */
+void
+command_menu(char *arg)
+{
+
+	if (bootconf.nummenu > 0) {
+		/* Does not return */
+		doboottypemenu();
+	} else {
+		printf("No menu defined in boot.cfg\n");
+	}
+}
+#endif /* !SMALL */
 
 void
 command_modules(char *arg)

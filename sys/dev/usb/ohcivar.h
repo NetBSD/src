@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.51.4.2 2012/10/30 17:22:07 yamt Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.51.4.3 2014/05/22 11:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,6 +29,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _OHCIVAR_H_
+#define _OHCIVAR_H_
+
+#include <sys/pool.h>
 
 typedef struct ohci_soft_ed {
 	ohci_ed_t ed;
@@ -112,6 +117,9 @@ typedef struct ohci_softc {
 #define	OHCI_BIG_ENDIAN		1	/* big endian OHCI? never seen it */
 #define	OHCI_HOST_ENDIAN	2	/* if OHCI always matches CPU */
 
+	int sc_flags;
+#define OHCIF_SUPERIO		0x0001
+
 	char sc_softwake;
 	kcondvar_t sc_softwake_cv;
 
@@ -119,7 +127,7 @@ typedef struct ohci_softc {
 	ohci_soft_td_t *sc_freetds;
 	ohci_soft_itd_t *sc_freeitds;
 
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+	pool_cache_t sc_xferpool;	/* free xfer pool */
 
 	usbd_xfer_handle sc_intrxfer;
 
@@ -151,3 +159,5 @@ void		ohci_childdet(device_t, device_t);
 int		ohci_activate(device_t, enum devact);
 bool		ohci_resume(device_t, const pmf_qual_t *);
 bool		ohci_suspend(device_t, const pmf_qual_t *);
+
+#endif /* _OHCIVAR_H_ */

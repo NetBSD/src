@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.30.2.1 2012/05/23 10:07:55 yamt Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.30.2.2 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.30.2.1 2012/05/23 10:07:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.30.2.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -329,9 +329,14 @@ acpicpu_tstate_tss_add(struct acpicpu_tstate *ts, ACPI_OBJECT *obj)
 		*p = val[i];
 
 	/*
-	 * The minimum should be around 100 / 8 = 12.5 %.
+	 * The minimum should be either 12.5 % or 6.5 %,
+	 * the latter 4-bit dynamic range being available
+	 * in some newer models; see Section 14.5.3.1 in
+	 *
+	 *	Intel 64 and IA-32 Architectures Software
+	 *	Developer's Manual. Volume 3B, Part 2. 2013.
 	 */
-        if (ts->ts_percent < 10 || ts->ts_percent > 100)
+        if (ts->ts_percent < 6 || ts->ts_percent > 100)
 		return AE_BAD_DECIMAL_CONSTANT;
 
 	if (ts->ts_latency == 0 || ts->ts_latency > 1000)

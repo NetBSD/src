@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.6.4.1 2012/04/17 00:05:10 yamt Exp $	*/
+/*	$NetBSD: fenv.h,v 1.6.4.2 2014/05/22 11:36:35 yamt Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,13 +25,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(__i386__) && !defined(__amd64__) && !defined(__sparc__)
+#if !defined(__arm__) && !defined(__i386__) \
+    && !defined(__sparc__) && !defined(__x86_64__)
 #error	"fenv.h is currently not supported for this architecture"
 #endif
 
 #ifndef _FENV_H_
 #define _FENV_H_
 
+#include <sys/featuretest.h>
 #include <machine/fenv.h>
 
 __BEGIN_DECLS

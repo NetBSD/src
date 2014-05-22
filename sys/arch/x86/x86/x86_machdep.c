@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.56.2.1 2012/04/17 00:07:06 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.56.2.2 2014/05/22 11:40:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56.2.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56.2.2 2014/05/22 11:40:14 yamt Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -71,6 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56.2.1 2012/04/17 00:07:06 yamt Ex
 #include "acpica.h"
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
+#endif
+
+#include "opt_md.h"
+#if defined(MEMORY_DISK_HOOKS) && defined(MEMORY_DISK_DYNAMIC)
+#include <dev/md.h>
 #endif
 
 void (*x86_cpu_idle)(void);
@@ -182,6 +187,15 @@ module_init_md(void)
 			    (void *)((uintptr_t)bi->base + KERNBASE),
 			     bi->len);
 			break;
+		case BI_MODULE_FS:
+			aprint_debug("File-system image path=%s len=%d pa=%x\n",
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+#if defined(MEMORY_DISK_HOOKS) && defined(MEMORY_DISK_DYNAMIC)
+			md_root_setconf((void *)((uintptr_t)bi->base + KERNBASE),
+			    bi->len);
+#endif
+			break;		
 		default:
 			aprint_debug("Skipping non-ELF module\n");
 			break;
@@ -281,14 +295,11 @@ cpu_intr_p(void)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
-	struct cpu_info *ci;
 	struct pcb *pcb;
 	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
-
 	l = curlwp;
-	ci = curcpu();
 
 	/*
 	 * If SPL raised, can't go.  Note this implies that spin
@@ -1006,4 +1017,124 @@ x86_startup(void)
 #if !defined(XEN)
 	nmi_init();
 #endif /* !defined(XEN) */
+}
+
+/*  
+ * machine dependent system variables.
+ */ 
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct btinfo_bootpath *bibp;
+	struct sysctlnode node;
+
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return ENOENT; /* ??? */
+
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
+{
+        struct sysctlnode node;
+	extern struct bi_devmatch *x86_alldisks;
+	extern int x86_ndisks;
+
+	if (x86_alldisks == NULL)
+		return EOPNOTSUPP;
+
+        node = *rnode;
+        node.sysctl_data = x86_alldisks;
+        node.sysctl_size = sizeof(struct disklist) +
+	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
+        return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static void
+const_sysctl(struct sysctllog **clog, const char *name, int type,
+    u_quad_t value, int tag)
+{
+	(sysctl_createv)(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       type, name, NULL, NULL, value, NULL, 0,
+		       CTL_MACHDEP, tag, CTL_EOL);
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+	extern uint64_t tsc_freq;
+	extern int sparse_dump;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "diskinfo", NULL,
+		       sysctl_machdep_diskinfo, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL, 
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "cpu_brand", NULL,
+		       NULL, 0, cpu_brand_string, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sparse_dump", NULL,
+		       NULL, 0, &sparse_dump, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "pae",
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
+		       NULL, 0, &use_pae, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	/* None of these can ever change once the system has booted */
+	const_sysctl(clog, "fpu_present", CTLTYPE_INT, i386_fpu_present,
+	    CPU_FPU_PRESENT);
+	const_sysctl(clog, "osfxsr", CTLTYPE_INT, i386_use_fxsave,
+	    CPU_OSFXSR);
+	const_sysctl(clog, "sse", CTLTYPE_INT, i386_has_sse,
+	    CPU_SSE);
+	const_sysctl(clog, "sse2", CTLTYPE_INT, i386_has_sse2,
+	    CPU_SSE2);
+
+	const_sysctl(clog, "fpu_save", CTLTYPE_INT, x86_fpu_save,
+	    CTL_CREATE);
+	const_sysctl(clog, "fpu_save_size", CTLTYPE_INT, x86_fpu_save_size,
+	    CTL_CREATE);
+	const_sysctl(clog, "xsave_features", CTLTYPE_QUAD, x86_xsave_features,
+	    CTL_CREATE);
+
+#ifndef XEN
+	const_sysctl(clog, "biosbasemem", CTLTYPE_INT, biosbasemem,
+	    CPU_BIOSBASEMEM);
+	const_sysctl(clog, "biosextmem", CTLTYPE_INT, biosextmem,
+	    CPU_BIOSEXTMEM);
+#endif
 }

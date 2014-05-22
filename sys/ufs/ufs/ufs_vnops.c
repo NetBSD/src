@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.205.2.4 2013/01/23 00:06:35 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.205.2.5 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.205.2.4 2013/01/23 00:06:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.205.2.5 2014/05/22 11:41:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,8 +124,8 @@ static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
  * A virgin directory (no blushing please).
  */
 static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+	0,	12,			DT_DIR,	1,	".",
+	0,	UFS_DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
 
 /*
@@ -134,7 +134,7 @@ static const struct dirtemplate mastertemplate = {
 int
 ufs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -163,6 +163,7 @@ ufs_create(void *v)
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
+	VOP_UNLOCK(*ap->a_vpp);
 	return (0);
 }
 
@@ -173,7 +174,7 @@ ufs_create(void *v)
 int
 ufs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -238,6 +239,7 @@ out:
 		*vpp = NULL;
 		return (error);
 	}
+	VOP_UNLOCK(*vpp);
 	return (0);
 }
 
@@ -280,10 +282,8 @@ ufs_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
@@ -345,7 +345,7 @@ ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->i_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
 }
@@ -503,7 +503,8 @@ ufs_setattr(void *v)
 			action |= KAUTH_VNODE_HAS_SYSFLAGS;
 		}
 
-		if ((vap->va_flags & UF_SETTABLE) != vap->va_flags) {
+		if ((vap->va_flags & SF_SETTABLE) !=
+		    (ip->i_flags & SF_SETTABLE)) {
 			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
 			changing_sysflags = true;
 		}
@@ -970,7 +971,7 @@ ufs_whiteout(void *v)
 int
 ufs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1027,7 +1028,6 @@ ufs_mkdir(void *v)
 		UFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1103,6 +1103,7 @@ ufs_mkdir(void *v)
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+		VOP_UNLOCK(tvp);
 		UFS_WAPBL_END(dvp->v_mount);
 	} else {
 		dp->i_nlink--;
@@ -1116,15 +1117,12 @@ ufs_mkdir(void *v)
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
-		/* If IN_ADIROP, account for it */
-		UFS_UNMARK_VNODE(tvp);
 		UFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
 		UFS_WAPBL_END(dvp->v_mount);
 		vput(tvp);
 	}
  out:
 	fstrans_done(dvp->v_mount);
-	vput(dvp);
 	return (error);
 }
 
@@ -1235,7 +1233,7 @@ ufs_rmdir(void *v)
 int
 ufs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1266,6 +1264,13 @@ ufs_symlink(void *v)
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	ip = VTOI(vp);
+	/*
+	 * This test is off by one. um_maxsymlinklen contains the
+	 * number of bytes available, and we aren't storing a \0, so
+	 * the test should properly be <=. However, it cannot be
+	 * changed as this would break compatibility with existing fs
+	 * images -- see the way ufs_readlink() works.
+	 */
 	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
 		ip->i_size = len;
@@ -1280,8 +1285,9 @@ ufs_symlink(void *v)
 		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
 		    ap->a_cnp->cn_cred, NULL, NULL);
 	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
+	VOP_UNLOCK(vp);
 	if (error)
-		vput(vp);
+		vrele(vp);
 out:
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);
@@ -1452,6 +1458,12 @@ ufs_readlink(void *v)
 	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int		isize;
 
+	/*
+	 * The test against um_maxsymlinklen is off by one; it should
+	 * theoretically be <=, not <. However, it cannot be changed
+	 * as that would break compatibility with existing fs images.
+	 */
+
 	isize = ip->i_size;
 	if (isize < ump->um_maxsymlinklen ||
 	    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
@@ -1612,10 +1624,8 @@ ufsspec_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
@@ -1675,10 +1685,8 @@ ufsfifo_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	if (ap->a_vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
@@ -1823,7 +1831,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		mode |= IFREG;
 
 	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		vput(dvp);
 		return (error);
 	}
 	tvp = *vpp;
@@ -1840,7 +1847,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		 * the vnode dangling from the journal.
 		 */
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #if defined(QUOTA) || defined(QUOTA2)
@@ -1848,7 +1854,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1886,7 +1891,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1898,13 +1902,10 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	ip->i_nlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
-	/* If IN_ADIROP, account for it */
-	UFS_UNMARK_VNODE(tvp);
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
-	vput(dvp);
 	return (error);
 }
 

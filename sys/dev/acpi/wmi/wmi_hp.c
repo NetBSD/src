@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.6.4.1 2012/10/30 17:20:52 yamt Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.6.4.2 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6.4.1 2012/10/30 17:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6.4.2 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -747,15 +747,8 @@ sysctl_wmi_hp_setup(struct wmi_hp_softc *sc)
 	int err;
 
 	err = sysctl_createv(&wmihp_sysctllog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-
-	if (err != 0)
-		return;
-
-	err = sysctl_createv(&wmihp_sysctllog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		return;

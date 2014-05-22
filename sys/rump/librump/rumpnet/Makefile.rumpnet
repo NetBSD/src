@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile.rumpnet,v 1.12 2011/03/31 19:40:53 dyoung Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.12.4.1 2014/05/22 11:41:16 yamt Exp $
 #
-
-.include "${RUMPTOP}/Makefile.rump"
 
 LIB=		rumpnet
 
@@ -13,6 +11,8 @@ LIB=		rumpnet
 SRCS=	net_stub.c netisr.c rump_net.c
 
 SRCS+=	rumpnet_if_wrappers.c
+
+SRCS+=	rumpnet_syscalls.c
 
 # sys/kern networking (sockets, mbufs, etc.)
 SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
@@ -33,6 +33,8 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
+
+.include "${RUMPTOP}/Makefile.rump"
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

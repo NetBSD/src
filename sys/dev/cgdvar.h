@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.14.12.2 2013/01/16 05:33:13 yamt Exp $ */
+/* $NetBSD: cgdvar.h,v 1.14.12.3 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #ifndef _DEV_CGDVAR_H_
 #define	_DEV_CGDVAR_H_
-
-#include <sys/simplelock.h>
 
 /* ioctl(2) code: used by CGDIOCSET and CGDIOCCLR */
 struct cgd_ioctl {
@@ -90,7 +88,7 @@ struct cgd_softc {
 	size_t			 sc_tpathlen;	/* length of prior string */
 	struct cryptdata	 sc_cdata;	/* crypto data */
 	const struct cryptfuncs	*sc_cfuncs;	/* encryption functions */
-	struct simplelock	 sc_slock;	/* our lock */
+	kmutex_t		 sc_lock;	/* our lock */
 };
 #endif
 

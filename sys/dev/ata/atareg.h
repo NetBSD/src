@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.40.2.2 2013/01/23 00:06:04 yamt Exp $	*/
+/*	$NetBSD: atareg.h,v 1.40.2.3 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -284,7 +284,7 @@ atacmd_tostatq(int cmd32)
 struct ataparams {
     /* drive info */
     uint16_t	atap_config;		/* 0: general configuration */
-#define WDC_CFG_ATAPI_MASK    	0xc000
+#define WDC_CFG_CFA_MAGIC	0x848a
 #define WDC_CFG_ATAPI    	0x8000
 #define	ATA_CFG_REMOVABLE	0x0080
 #define	ATA_CFG_FIXED		0x0040

@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.21.2.2 2012/10/30 17:19:39 yamt Exp $
+#	$NetBSD: WZERO3,v 1.21.2.3 2014/05/22 11:39:48 yamt Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.2.2 $"
+#ident 		"GENERIC-$Revision: 1.21.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -69,15 +69,10 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -301,9 +296,9 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	cgd	2		# cryptographic disk devices
-#pseudo-device	raid	4		# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 

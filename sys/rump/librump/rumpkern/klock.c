@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.3.8.2 2012/10/30 17:22:53 yamt Exp $	*/
+/*	$NetBSD: klock.c,v 1.3.8.3 2014/05/22 11:41:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.3.8.2 2012/10/30 17:22:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.3.8.3 2014/05/22 11:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ _kernel_lock(int nlocks)
 			nlocks = 0;
 			ev_biglock_recurse.ev_count++;
 		} else {
-			if (!rumpuser_mutex_tryenter(rump_giantlock)) {
+			if (rumpuser_mutex_tryenter(rump_giantlock) != 0) {
 				rump_unschedule_cpu1(l, NULL);
 				rumpuser_mutex_enter_nowrap(rump_giantlock);
 				rump_schedule_cpu(l);

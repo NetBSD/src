@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.28.12.2 2012/10/30 17:20:49 yamt Exp $ */
+/*      $NetBSD: clockctl.c,v 1.28.12.3 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.28.12.2 2012/10/30 17:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.28.12.3 2014/05/22 11:40:19 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -57,8 +57,17 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.28.12.2 2012/10/30 17:20:49 yamt Exp 
 dev_type_ioctl(clockctlioctl);
 
 const struct cdevsw clockctl_cdevsw = {
-	nullopen, nullclose, noread, nowrite, clockctlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = clockctlioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 static kauth_listener_t clockctl_listener;

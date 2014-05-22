@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.23.38.1 2012/10/30 17:19:56 yamt Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.23.38.2 2014/05/22 11:39:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.23.38.1 2012/10/30 17:19:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.23.38.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,7 +91,6 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 	struct ata_channel ch;
 	struct wdc_softc wdc;
 	struct wdc_regs wdr;
-	static int wdc_matched = 0;
 	int i, result = 0;
 
 	memset(&wdc, 0, sizeof(wdc));
@@ -132,8 +131,6 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 
 		bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_OBIO_REG_NPORTS);
 
-		if (result)
-			wdc_matched = 1;
 		return (result);
 	}
 	return 0;

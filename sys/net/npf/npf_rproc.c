@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_rproc.c,v 1.2.2.4 2013/01/23 00:06:25 yamt Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.2.2.5 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include "npf_impl.h"
 
@@ -54,18 +55,26 @@ typedef struct npf_ext {
 	unsigned		ext_refcnt;
 } npf_ext_t;
 
+struct npf_rprocset {
+	LIST_HEAD(, npf_rproc)	rps_list;
+};
+
 #define	RPROC_NAME_LEN		32
 #define	RPROC_EXT_COUNT		16
 
 struct npf_rproc {
-	/* Name, reference count and flags. */
-	char			rp_name[RPROC_NAME_LEN];
-	u_int			rp_refcnt;
+	/* Flags and reference count. */
 	uint32_t		rp_flags;
+	u_int			rp_refcnt;
+
 	/* Associated extensions and their metadata . */
 	unsigned		rp_ext_count;
 	npf_ext_t *		rp_ext[RPROC_EXT_COUNT];
 	void *			rp_ext_meta[RPROC_EXT_COUNT];
+
+	/* Name of the procedure and list entry. */
+	char			rp_name[RPROC_NAME_LEN];
+	LIST_ENTRY(npf_rproc)	rp_entry;
 };
 
 static LIST_HEAD(, npf_ext)	ext_list	__cacheline_aligned;
@@ -89,17 +98,35 @@ npf_ext_sysfini(void)
  * NPF extension management for the rule procedures.
  */
 
+static const char npf_ext_prefix[] = "npf_ext_";
+#define NPF_EXT_PREFLEN (sizeof(npf_ext_prefix) - 1)
+
 static npf_ext_t *
-npf_ext_lookup(const char *name)
+npf_ext_lookup(const char *name, bool autoload)
 {
-	npf_ext_t *ext = NULL;
+	npf_ext_t *ext;
+	char modname[RPROC_NAME_LEN + NPF_EXT_PREFLEN];
+	int error;
 
 	KASSERT(mutex_owned(&ext_lock));
 
+again:
 	LIST_FOREACH(ext, &ext_list, ext_entry)
 		if (strcmp(ext->ext_callname, name) == 0)
 			break;
-	return ext;
+
+	if (ext != NULL || !autoload)
+		return ext;
+
+	mutex_exit(&ext_lock);
+	autoload = false;
+	snprintf(modname, sizeof(modname), "%s%s", npf_ext_prefix, name);
+	error = module_autoload(modname, MODULE_CLASS_MISC);
+	mutex_enter(&ext_lock);
+
+	if (error)
+		return NULL;
+	goto again;
 }
 
 void *
@@ -112,7 +139,7 @@ npf_ext_register(const char *name, const npf_ext_ops_t *ops)
 	ext->ext_ops = ops;
 
 	mutex_enter(&ext_lock);
-	if (npf_ext_lookup(name)) {
+	if (npf_ext_lookup(name, false)) {
 		mutex_exit(&ext_lock);
 		kmem_free(ext, sizeof(npf_ext_t));
 		return NULL;
@@ -140,7 +167,7 @@ npf_ext_unregister(void *extid)
 		mutex_exit(&ext_lock);
 		return EBUSY;
 	}
-	KASSERT(npf_ext_lookup(ext->ext_callname));
+	KASSERT(npf_ext_lookup(ext->ext_callname, false));
 	LIST_REMOVE(ext, ext_entry);
 	mutex_exit(&ext_lock);
 
@@ -161,7 +188,7 @@ npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
 	}
 
 	mutex_enter(&ext_lock);
-	ext = npf_ext_lookup(name);
+	ext = npf_ext_lookup(name, true);
 	if (ext) {
 		atomic_inc_uint(&ext->ext_refcnt);
 	}
@@ -187,6 +214,52 @@ npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
 /*
  * Rule procedure management.
  */
+
+npf_rprocset_t *
+npf_rprocset_create(void)
+{
+	npf_rprocset_t *rpset;
+
+	rpset = kmem_zalloc(sizeof(npf_rprocset_t), KM_SLEEP);
+	LIST_INIT(&rpset->rps_list);
+	return rpset;
+}
+
+void
+npf_rprocset_destroy(npf_rprocset_t *rpset)
+{
+	npf_rproc_t *rp;
+
+	while ((rp = LIST_FIRST(&rpset->rps_list)) != NULL) {
+		LIST_REMOVE(rp, rp_entry);
+		npf_rproc_release(rp);
+	}
+	kmem_free(rpset, sizeof(npf_rprocset_t));
+}
+
+/*
+ * npf_rproc_lookup: find a rule procedure by the name.
+ */
+npf_rproc_t *
+npf_rprocset_lookup(npf_rprocset_t *rpset, const char *name)
+{
+	npf_rproc_t *rp;
+
+	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
+		if (strncmp(rp->rp_name, name, RPROC_NAME_LEN) == 0)
+			break;
+	}
+	return rp;
+}
+
+/*
+ * npf_rproc_insert: insert a new rule procedure into the set.
+ */
+void
+npf_rprocset_insert(npf_rprocset_t *rpset, npf_rproc_t *rp)
+{
+	LIST_INSERT_HEAD(&rpset->rps_list, rp, rp_entry);
+}
 
 /*
  * npf_rproc_create: construct a new rule procedure, lookup and associate
@@ -216,7 +289,6 @@ npf_rproc_create(prop_dictionary_t rpdict)
 void
 npf_rproc_acquire(npf_rproc_t *rp)
 {
-
 	atomic_inc_uint(&rp->rp_refcnt);
 }
 

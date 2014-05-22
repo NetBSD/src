@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.19.2.3 2013/01/23 00:06:18 yamt Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.19.2.4 2014/05/22 11:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.19.2.3 2013/01/23 00:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.19.2.4 2014/05/22 11:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -94,7 +94,7 @@ struct	nchstats iso_nchstats;
 int
 cd9660_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -306,8 +306,8 @@ searchloop:
 foundino:
 		dp->i_ino = ino;
 		if (saveoffset != dp->i_offset) {
-			if (lblkno(imp, dp->i_offset) !=
-			    lblkno(imp, saveoffset)) {
+			if (cd9660_lblkno(imp, dp->i_offset) !=
+			    cd9660_lblkno(imp, saveoffset)) {
 				if (bp != NULL)
 					brelse(bp, 0);
 				if ((error = cd9660_blkatoff(vdp,
@@ -402,6 +402,9 @@ found:
 	 * Insert name into cache if appropriate.
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	return 0;
 }
 
@@ -421,15 +424,15 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 
 	ip = VTOI(vp);
 	imp = ip->i_mnt;
-	lbn = lblkno(imp, offset);
-	bsize = blksize(imp, ip, lbn);
+	lbn = cd9660_lblkno(imp, offset);
+	bsize = cd9660_blksize(imp, ip, lbn);
 
 	if ((error = bread(vp, lbn, bsize, NOCRED, 0, &bp)) != 0) {
 		*bpp = NULL;
 		return (error);
 	}
 	if (res)
-		*res = (char *)bp->b_data + blkoff(imp, offset);
+		*res = (char *)bp->b_data + cd9660_blkoff(imp, offset);
 	*bpp = bp;
 	return (0);
 }

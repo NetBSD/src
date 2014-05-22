@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.209.2.3 2013/01/16 05:32:25 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.209.2.4 2014/05/22 11:36:54 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -31,7 +31,7 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
-	pwritev.c truncate.c ntp_adjtime.c
+	pwritev.c truncate.c ntp_adjtime.c mknodat.c
 
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
@@ -69,9 +69,6 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 . endif
 .endfor
 
-# namespace purity wrappers
-SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
-
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
 	bind.S \
@@ -103,12 +100,12 @@ ASM=	access.S acct.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
-		___lwp_park50.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
+		___lwp_park60.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
 		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
 		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
 	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
-		__mknod50.S mknodat.S mlock.S mlockall.S modctl.S __mount50.S \
+		__mknod50.S mlock.S mlockall.S modctl.S __mount50.S \
 		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
@@ -334,7 +331,8 @@ MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
-MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
+MLINKS+=utimes.2 utimens.2 utimes.2 futimens.2 utimes.2 lutimens.2
+MLINKS+=utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.28.4.1 2012/04/17 00:08:46 yamt Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.28.4.2 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.28.4.1 2012/04/17 00:08:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.28.4.2 2014/05/22 11:41:10 yamt Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -233,38 +233,25 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 static int
 ipcomp_input_cb(struct cryptop *crp)
 {
-	struct cryptodesc *crd;
 	struct tdb_crypto *tc;
 	int skip, protoff;
-	struct mtag *mtag;
 	struct mbuf *m;
 	struct secasvar *sav;
-	struct secasindex *saidx;
+	struct secasindex *saidx __diagused;
 	int s, hlen = IPCOMP_HLENGTH, error, clen;
 	u_int8_t nproto;
 	void *addr;
-	u_int16_t dport = 0;
-	u_int16_t sport = 0;
-#ifdef IPSEC_NAT_T
-	struct m_tag * tag = NULL;
-#endif
-
-	crd = crp->crp_desc;
+	u_int16_t dport;
+	u_int16_t sport;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	IPSEC_ASSERT(tc != NULL, ("ipcomp_input_cb: null opaque crypto data area!"));
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
-	mtag = (struct mtag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
-#ifdef IPSEC_NAT_T
 	/* find the source port for NAT-T */
-	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
-		sport = ((u_int16_t *)(tag + 1))[0];
-		dport = ((u_int16_t *)(tag + 1))[1];
-	}
-#endif
+	nat_t_ports_get(m, &dport, &sport);
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);

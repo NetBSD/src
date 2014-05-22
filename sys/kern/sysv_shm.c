@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.122.2.1 2012/04/17 00:08:30 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.122.2.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.122.2.1 2012/04/17 00:08:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.122.2.2 2014/05/22 11:41:03 yamt Exp $");
 
 #define SYSVSHM
 
@@ -1053,11 +1053,6 @@ sysctl_ipc_shmmax(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_ipc_shm_setup, "sysctl kern.ipc subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipc",

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.64.4.2 2012/10/30 17:18:35 yamt Exp $
+# $NetBSD: GENERIC,v 1.64.4.3 2014/05/22 11:39:25 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -82,15 +82,10 @@ options 	GATEWAY		# packet forwarding
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -196,6 +191,9 @@ scsibus*	at hcsc?
 oak*		at podulebus0 slot ?	# Oak Solutions 16-bit SCSI interface
 scsibus*	at oak?
 
+esp*		at podulebus0 slot ?	# Castle SCSI interface
+scsibus*	at esp?
+
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 com0		at upc0			# Serial port
 lpt0		at upc0			# Parallel port
@@ -226,9 +224,9 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ccd		4
-#pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd
+#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
@@ -258,7 +256,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -269,7 +267,7 @@ pseudo-device	putter		# for puffs and pud
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

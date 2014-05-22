@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.34.2.1 2012/10/30 17:19:01 yamt Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.34.2.2 2014/05/22 11:39:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.34.2.1 2012/10/30 17:19:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.34.2.2 2014/05/22 11:39:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -128,8 +128,17 @@ dev_type_tty(fcomtty);
 dev_type_poll(fcompoll);
 
 const struct cdevsw fcom_cdevsw = {
-	fcomopen, fcomclose, fcomread, fcomwrite, fcomioctl,
-	nostop, fcomtty, fcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = fcomopen,
+	.d_close = fcomclose,
+	.d_read = fcomread,
+	.d_write = fcomwrite,
+	.d_ioctl = fcomioctl,
+	.d_stop = nostop,
+	.d_tty = fcomtty,
+	.d_poll = fcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 void fcominit(bus_space_tag_t, bus_space_handle_t, int, int);
@@ -742,12 +751,12 @@ fcomcngetc(dev_t dev)
 	int s = splserial();
 	bus_space_tag_t iot = fcomconstag;
 	bus_space_handle_t ioh = fcomconsioh;
-	u_char stat, c;
+	u_char c;
 
 	while ((bus_space_read_4(iot, ioh, UART_FLAGS) & UART_RX_FULL) != 0)
 		;
 	c = bus_space_read_4(iot, ioh, UART_DATA);
-	stat = bus_space_read_4(iot, ioh, UART_RX_STAT);
+	(void)bus_space_read_4(iot, ioh, UART_RX_STAT);
 	(void)splx(s);
 #if defined(DDB) && DDB_KEYCODE > 0
 		/*

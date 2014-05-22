@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.51.4.1 2012/04/17 00:08:25 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.51.4.2 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.51.4.1 2012/04/17 00:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.51.4.2 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.51.4.1 2012/04/17 00:08:25 yamt Exp
 
 #define	MUTEX_WANTLOCK(mtx)					\
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
-        (uintptr_t)__builtin_return_address(0), false, false)
+        (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_LOCKED(mtx)					\
     LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx), NULL,		\
         (uintptr_t)__builtin_return_address(0), 0)
@@ -217,12 +217,6 @@ MUTEX_RELEASE(kmutex_t *mtx)
 	new = 0;
 	MUTEX_INHERITDEBUG(new, mtx->mtx_owner);
 	mtx->mtx_owner = new;
-}
-
-static inline void
-MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
-{
-	/* nothing */
 }
 #endif	/* __HAVE_SIMPLE_MUTEXES */
 
@@ -717,6 +711,9 @@ mutex_vector_exit(kmutex_t *mtx)
 	MUTEX_DASSERT(mtx, curthread != 0);
 	MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == curthread);
 	MUTEX_UNLOCKED(mtx);
+#if !defined(LOCKDEBUG)
+	__USE(curthread);
+#endif
 
 #ifdef LOCKDEBUG
 	/*

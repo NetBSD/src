@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.53.2.2 2012/10/30 17:19:19 yamt Exp $
+#	$NetBSD: IQ31244,v 1.53.2.3 2014/05/22 11:39:40 yamt Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -59,15 +59,10 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

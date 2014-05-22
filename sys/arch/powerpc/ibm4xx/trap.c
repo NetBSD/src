@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62.2.2 2012/10/30 17:20:11 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.62.2.3 2014/05/22 11:40:04 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62.2.2 2012/10/30 17:20:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62.2.3 2014/05/22 11:40:04 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -298,9 +298,9 @@ trap(struct trapframe *tf)
 		curcpu()->ci_data.cpu_ntrap++;
 		pcb = lwp_getpcb(l);
 
-		if (!(l->l_md.md_flags & MDLWP_USEDFPU)) {
+		if (__predict_false(!fpu_used_p(l))) {
 			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-			l->l_md.md_flags |= MDLWP_USEDFPU;
+			fpu_mark_used(l);
 		}
 
 		if (fpu_emulate(tf, &pcb->pcb_fpu, &ksi)) {

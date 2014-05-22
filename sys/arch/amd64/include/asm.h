@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14.8.1 2012/10/30 17:18:45 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.14.8.2 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifdef __x86_64__
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_PLT(x)	x@PLT
 #define PIC_GOT(x)	x@GOTPCREL(%rip)
 #else
@@ -79,9 +79,13 @@
 #ifdef __STDC__
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl X ## name; .type X ## name,@function; X ## name:
+#define	IDTVEC_END(name) \
+	.size X ## name, . - X ## name
 #else 
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl X/**/name; .type X/**/name,@function; X/**/name:
+#define	IDTVEC_END(name) \
+	.size X/**/name, . - X/**/name
 #endif /* __STDC__ */ 
 #endif /* _KERNEL */
 
@@ -104,6 +108,7 @@
 #define	ALTENTRY(x)	NENTRY(x)
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	LABEL(y)	_LABEL(_C_LABEL(y))
+#define	END(y)		.size y, . - y
 
 #define	ASMSTR		.asciz
 

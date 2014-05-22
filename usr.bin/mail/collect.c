@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.44.2.2 2012/10/30 19:00:20 yamt Exp $	*/
+/*	$NetBSD: collect.c,v 1.44.2.3 2014/05/22 11:42:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.44.2.2 2012/10/30 19:00:20 yamt Exp $");
+__RCSID("$NetBSD: collect.c,v 1.44.2.3 2014/05/22 11:42:45 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,6 +304,7 @@ savedeadletter(FILE *fp)
 static void
 coll_int(int signo)
 {
+	sig_t o = signal(SIGINT, SIG_IGN);
 
 	/*
 	 * the control flow is subtle, because we can be called from ~q.
@@ -318,9 +319,12 @@ coll_int(int signo)
 		hadintr = 1;
 		longjmp(reset_jmpbuf, signo);
 	}
-	rewind(collf);
-	if (value(ENAME_NOSAVE) == NULL)
-		savedeadletter(collf);
+	if (collf) {
+		rewind(collf);
+		if (value(ENAME_NOSAVE) == NULL)
+			savedeadletter(collf);
+	}
+	signal(SIGINT, o);
 	longjmp(abort_jmpbuf, signo);
 }
 

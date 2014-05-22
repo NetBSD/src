@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.18 2010/09/20 23:23:16 jym Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.18.6.1 2014/05/22 11:36:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -60,6 +59,7 @@
 
 #include "kvm_private.h"
 
+__RCSID("$NetBSD: kvm_vax.c,v 1.18.6.1 2014/05/22 11:36:56 yamt Exp $");
 
 struct vmstate {
 	u_long end;

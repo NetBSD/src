@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.101.2.2 2013/01/16 05:33:06 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.101.2.3 2014/05/22 11:40:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101.2.2 2013/01/16 05:33:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101.2.3 2014/05/22 11:40:10 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101.2.2 2013/01/16 05:33:06 yamt Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -73,6 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101.2.2 2013/01/16 05:33:06 yamt Exp $");
 #include <machine/openfirm.h>
 
 #include <sparc64/sparc64/cache.h>
+#ifdef SUN4V
+#include <sparc64/hypervisor.h>
+#endif
 
 int ecache_min_line_size;
 
@@ -91,8 +95,6 @@ static struct cpu_info *alloc_cpuinfo(u_int);
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];			/* machine model (primary CPU) */
-extern char machine_model[];
 
 /* These are used in locore.s, and are maximums */
 int	dcache_line_size;
@@ -177,6 +179,10 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_spinup = NULL;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
+#ifdef SUN4V
+	if (CPU_ISSUN4V)
+		cpi->ci_mmfsa = pa0;
+#endif
 	cpi->ci_node = cpu_node;
 	cpi->ci_idepth = -1;
 	memset(cpi->ci_intrpending, -1, sizeof(cpi->ci_intrpending));
@@ -299,15 +305,14 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		ci->ci_cpu_clockrate[1] = clk / 1000000;
 	}
 
-	if (!CPU_IS_HUMMINGBIRD()) {
-		sclk = prom_getpropint(findroot(), "stick-frequency", 0);
-	}
+	sclk = prom_getpropint(findroot(), "stick-frequency", 0);
+
 	ci->ci_system_clockrate[0] = sclk;
 	ci->ci_system_clockrate[1] = sclk / 1000000;
 
 	snprintf(buf, sizeof buf, "%s @ %s MHz",
-		prom_getpropstring(node, "name"), clockfreq(clk));
-	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
+		prom_getpropstring(node, "name"), clockfreq(clk / 1000));
+	cpu_setmodel("%s (%s)", machine_model, buf);
 
 	aprint_normal(": %s, UPA id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
@@ -412,6 +417,37 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	 */
 	uvm_page_recolor(atop(bigcache)); /* XXX */
 
+}
+
+int
+cpu_myid(void)
+{
+	char buf[32];
+	int impl;
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		uint64_t myid;
+		hv_cpu_myid(&myid);
+		return myid;
+	}
+#endif
+	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
+		return lduwa(0x1fff40000d0UL, ASI_PHYS_NON_CACHED);
+	impl = (getver() & VER_IMPL) >> VER_IMPL_SHIFT;
+	switch (impl) {
+		case IMPL_OLYMPUS_C:
+		case IMPL_JUPITER:
+			return CPU_JUPITERID;
+		case IMPL_CHEETAH:
+		case IMPL_CHEETAH_PLUS:
+		case IMPL_JAGUAR:
+		case IMPL_PANTHER:
+			return CPU_FIREPLANEID;
+		default:
+			return CPU_UPAID;
+	}
 }
 
 #if defined(MULTIPROCESSOR)

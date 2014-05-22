@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.86 2011/09/27 01:22:12 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.86.2.1 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86 2011/09/27 01:22:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86.2.1 2014/05/22 11:41:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -182,31 +182,27 @@ const struct vnodeopv_desc * const fdesc_vnodeopv_descs[] = {
 };
 
 struct vfsops fdesc_vfsops = {
-	MOUNT_FDESC,
-	0,
-	fdesc_mount,
-	fdesc_start,
-	fdesc_unmount,
-	fdesc_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	genfs_statvfs,
-	fdesc_sync,
-	fdesc_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	fdesc_init,
-	NULL,
-	fdesc_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	fdesc_vnodeopv_descs,
-	0,
-	{ NULL, NULL},
+	.vfs_name = MOUNT_FDESC,
+	.vfs_min_mount_data = 0,
+	.vfs_mount = fdesc_mount,
+	.vfs_start = fdesc_start,
+	.vfs_unmount = fdesc_unmount,
+	.vfs_root = fdesc_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = genfs_statvfs,
+	.vfs_sync = fdesc_sync,
+	.vfs_vget = fdesc_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = fdesc_init,
+	.vfs_done = fdesc_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = fdesc_vnodeopv_descs
 };
 
 static int
@@ -219,11 +215,6 @@ fdesc_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&fdesc_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "fdesc",

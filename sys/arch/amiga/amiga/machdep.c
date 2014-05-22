@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234.2.2 2012/10/30 17:18:46 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234.2.3 2014/05/22 11:39:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,8 +47,10 @@
 #include "opt_panicbutton.h"
 #include "opt_m68k_arch.h"
 
+#include "empm.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234.2.2 2012/10/30 17:18:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234.2.3 2014/05/22 11:39:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +110,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234.2.2 2012/10/30 17:18:46 yamt Exp $
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/amiga/device.h>
+#if NEMPM > 0
+#include <amiga/pci/empmvar.h>
+#endif /* NEMPM > 0 */
 
 #include "fd.h"
 #include "ser.h"
@@ -281,8 +286,6 @@ cpu_startup(void)
 /*
  * Info for CTL_HW
  */
-char cpu_model[120];
-
 #if defined(M68060)
 int m68060_pcr_init = 0x21;	/* make this patchable */
 #endif
@@ -303,7 +306,7 @@ identifycpu(void)
 	char machbuf[16];
 
 	if (is_draco()) {
-		sprintf(machbuf, "DraCo rev.%d", is_draco());
+		snprintf(machbuf, sizeof(machbuf), "DraCo rev.%d", is_draco());
 		mach = machbuf;
 	} else
 #endif
@@ -322,7 +325,7 @@ identifycpu(void)
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
 		__asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
-		sprintf(cpubuf, "68%s060 rev.%d",
+		snprintf(cpubuf, sizeof(cpubuf), "68%s060 rev.%d",
 		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 		cpu_type = cpubuf;
 		mmu = "/MMU";
@@ -362,8 +365,8 @@ identifycpu(void)
 			fputype = FPU_NONE;
 		}
 	}
-	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
-	printf("%s\n", cpu_model);
+	cpu_setmodel("%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -406,6 +409,9 @@ void
 cpu_reboot(register int howto, char *bootstr)
 {
 	struct pcb *pcb = lwp_getpcb(curlwp);
+#if NEMPM > 0
+	device_t empmdev;
+#endif /* NEMPM > 0 */
 
 	/* take a snap shot before clobbering any registers */
 	if (pcb != NULL)
@@ -421,6 +427,15 @@ cpu_reboot(register int howto, char *bootstr)
 	/* If rebooting and a dump is requested do it. */
 	if (howto & RB_DUMP)
 		dumpsys();
+
+#if NEMPM > 0
+	if (howto & RB_POWERDOWN) {
+		empmdev = device_find_by_xname("empm0");
+		if (empmdev != NULL) {
+			empm_power_off(device_private(empmdev));
+		}	
+	}
+#endif /* NEMPM > 0 */
 
 	if (howto & RB_HALT) {
 		printf("\n");
@@ -803,39 +818,35 @@ int	*nofault;
 int
 badaddr(register void *addr)
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+		nofault = NULL;
+		return 1;
 	}
 	i = *(volatile short *)addr;
-	nofault = (int *) 0;
-	return(0);
+	__USE(i);
+	nofault = NULL;
+	return 0;
 }
 
 int
 badbaddr(register void *addr)
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+		nofault = NULL;
+		return 1;
 	}
 	i = *(volatile char *)addr;
-	nofault = (int *) 0;
-	return(0);
+	__USE(i);
+	nofault = NULL;
+	return 0;
 }
 
 struct isr *isr_ports;

@@ -1,21 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.3 2013/01/16 05:32:29 yamt Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2014/05/22 11:37:01 yamt Exp $
 
-.include <bsd.own.mk>
-
-LIBISMODULE= yes
-.if defined(MLIBDIR)
-LIBDIR=         /usr/lib/${MLIBDIR}/npf
-SHLIBDIR=       /usr/lib/${MLIBDIR}/npf
-SHLIBINSTALLDIR=/usr/lib/${MLIBDIR}/npf
-.else
-LIBDIR=         /usr/lib/npf
-SHLIBDIR=       /usr/lib/npf
-SHLIBINSTALLDIR=/usr/lib/npf
-.endif
-
-LIB=	ext_log
-
-SRCS=	npfext_log.c
-WARNS=	5
-
-.include <bsd.lib.mk>
+MOD=	ext_log
+.include "${.CURDIR}/../mod.mk"

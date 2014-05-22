@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 2011/07/17 20:54:49 joerg Exp $	*/
+/*	$NetBSD: fd.c,v 1.7.2.1 2014/05/22 11:40:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -40,7 +40,8 @@ fdopen(struct open_file *f, ...)
 	int error;
 	struct fd_softc *sc;
 	struct fdfmt fdfmt;
-	int id, part;
+	int id;
+	int part __unused;
 	va_list ap;
 
 	va_start(ap, f);

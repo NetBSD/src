@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.12 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.12.2.1 2014/05/22 11:40:25 yamt Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12.2.1 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -111,6 +111,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int error = 0;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
 	aprint_normal(": Broadcom Wireless\n");
@@ -121,7 +122,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	psc->psc_pcitag = pa->pa_tag;
 
 	/* map control / status registers */
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
@@ -146,7 +147,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* establish interrupt */
-	intrstr = pci_intr_string(psc->psc_pc, ih);
+	intrstr = pci_intr_string(psc->psc_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_NET, bwi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");

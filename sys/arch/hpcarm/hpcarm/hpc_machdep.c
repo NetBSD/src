@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.99.8.2 2012/10/30 17:19:40 yamt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.99.8.3 2014/05/22 11:39:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.99.8.2 2012/10/30 17:19:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.99.8.3 2014/05/22 11:39:48 yamt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -54,10 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.99.8.2 2012/10/30 17:19:40 yamt Ex
 #include <sys/mount.h>
 #include <sys/pmf.h>
 #include <sys/reboot.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
-#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
@@ -100,7 +101,7 @@ void dumpsys(void);
 void (*__sleep_func)(void *);
 void *__sleep_ctx;
 
-void (*__cpu_reset)(void) = cpu_reset;
+void (*__cpu_reset)(void) __dead = cpu_reset;
 
 u_int initarm(int, char **, struct bootinfo *);
 #if defined(CPU_SA1100) || defined(CPU_SA1110)

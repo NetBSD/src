@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.5 2011/06/12 05:22:30 tsutsui Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.5.2.1 2014/05/22 11:39:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.5 2011/06/12 05:22:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.5.2.1 2014/05/22 11:39:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,8 +111,17 @@ dev_type_tty(dztty);
 dev_type_poll(dzpoll);
 
 const struct cdevsw dz_cdevsw = {
-	dzopen, dzclose, dzread, dzwrite, dzioctl,
-	dzstop, dztty, dzpoll, nommap, ttykqfilter, D_TTY
+	.d_open = dzopen,
+	.d_close = dzclose,
+	.d_read = dzread,
+	.d_write = dzwrite,
+	.d_ioctl = dzioctl,
+	.d_stop = dzstop,
+	.d_tty = dztty,
+	.d_poll = dzpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 int
@@ -514,7 +523,7 @@ void
 dzrint(struct dz_softc *sc, uint32_t csr)
 {
 	struct tty *tp;
-	int cc, mcc;
+	int cc;
 	struct _Usart *dzr;
 
 	sc->sc_rxint++;
@@ -522,11 +531,6 @@ dzrint(struct dz_softc *sc, uint32_t csr)
 
 	cc = dzr->RxData;
 	tp = sc->sc_dz.dz_tty;
-
-	if (csr & USI_RXBRK)
-		mcc = CNC_BREAK;
-	else
-		mcc = cc;
 
 	/* clear errors before we print or bail out */
 	if (csr & (USI_OVRE|USI_FRAME|USI_PARE))

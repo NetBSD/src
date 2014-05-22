@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.16.8.1 2012/04/17 00:07:42 yamt Exp $ */
+/* $NetBSD: pad.c,v 1.16.8.2 2014/05/22 11:40:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.16.8.1 2012/04/17 00:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.16.8.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -401,7 +401,7 @@ pad_set_params(void *opaque, int setmode, int usemode,
     audio_params_t *play, audio_params_t *rec,
     stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc __diagused;
 
 	sc = (pad_softc_t *)opaque;
 
@@ -458,7 +458,7 @@ static int
 pad_start_input(void *opaque, void *block, int blksize,
     void (*intr)(void *), void *intrarg)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc __diagused;
 
 	sc = (pad_softc_t *)opaque;
 
@@ -487,7 +487,7 @@ pad_halt_output(void *opaque)
 static int
 pad_halt_input(void *opaque)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc __diagused;
 
 	sc = (pad_softc_t *)opaque;
 
@@ -547,7 +547,7 @@ pad_get_port(void *opaque, mixer_ctrl_t *mc)
 static int
 pad_query_devinfo(void *opaque, mixer_devinfo_t *di)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc __diagused;
 
 	sc = (pad_softc_t *)opaque;
 
@@ -590,7 +590,7 @@ pad_query_devinfo(void *opaque, mixer_devinfo_t *di)
 static int
 pad_get_props(void *opaque)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc __diagused;
 
 	sc = (pad_softc_t *)opaque;
 
@@ -603,7 +603,7 @@ static int
 pad_round_blocksize(void *opaque, int blksize, int mode,
     const audio_params_t *p)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc __diagused;
 
 	sc = (pad_softc_t *)opaque;
 	KASSERT(mutex_owned(&sc->sc_lock));

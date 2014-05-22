@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acevents.h"
@@ -50,6 +49,7 @@
         ACPI_MODULE_NAME    ("evgpeutil")
 
 
+#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    AcpiEvWalkGpeList
@@ -216,9 +216,10 @@ AcpiEvGetGpeDevice (
  *
  * FUNCTION:    AcpiEvGetGpeXruptBlock
  *
- * PARAMETERS:  InterruptNumber      - Interrupt for a GPE block
+ * PARAMETERS:  InterruptNumber             - Interrupt for a GPE block
+ *              GpeXruptBlock               - Where the block is returned
  *
- * RETURN:      A GPE interrupt block
+ * RETURN:      Status
  *
  * DESCRIPTION: Get or Create a GPE interrupt block. There is one interrupt
  *              block per unique interrupt level used for GPEs. Should be
@@ -227,9 +228,10 @@ AcpiEvGetGpeDevice (
  *
  ******************************************************************************/
 
-ACPI_GPE_XRUPT_INFO *
+ACPI_STATUS
 AcpiEvGetGpeXruptBlock (
-    UINT32                  InterruptNumber)
+    UINT32                  InterruptNumber,
+    ACPI_GPE_XRUPT_INFO     **GpeXruptBlock)
 {
     ACPI_GPE_XRUPT_INFO     *NextGpeXrupt;
     ACPI_GPE_XRUPT_INFO     *GpeXrupt;
@@ -247,7 +249,8 @@ AcpiEvGetGpeXruptBlock (
     {
         if (NextGpeXrupt->InterruptNumber == InterruptNumber)
         {
-            return_PTR (NextGpeXrupt);
+            *GpeXruptBlock = NextGpeXrupt;
+            return_ACPI_STATUS (AE_OK);
         }
 
         NextGpeXrupt = NextGpeXrupt->Next;
@@ -258,7 +261,7 @@ AcpiEvGetGpeXruptBlock (
     GpeXrupt = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_GPE_XRUPT_INFO));
     if (!GpeXrupt)
     {
-        return_PTR (NULL);
+        return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
     GpeXrupt->InterruptNumber = InterruptNumber;
@@ -281,6 +284,7 @@ AcpiEvGetGpeXruptBlock (
     {
         AcpiGbl_GpeXruptListHead = GpeXrupt;
     }
+
     AcpiOsReleaseLock (AcpiGbl_GpeLock, Flags);
 
     /* Install new interrupt handler if not SCI_INT */
@@ -291,14 +295,15 @@ AcpiEvGetGpeXruptBlock (
                     AcpiEvGpeXruptHandler, GpeXrupt);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_ERROR ((AE_INFO,
+            ACPI_EXCEPTION ((AE_INFO, Status,
                 "Could not install GPE interrupt handler at level 0x%X",
                 InterruptNumber));
-            return_PTR (NULL);
+            return_ACPI_STATUS (Status);
         }
     }
 
-    return_PTR (GpeXrupt);
+    *GpeXruptBlock = GpeXrupt;
+    return_ACPI_STATUS (AE_OK);
 }
 
 
@@ -391,6 +396,8 @@ AcpiEvDeleteGpeHandlers (
     void                    *Context)
 {
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
+    ACPI_GPE_NOTIFY_INFO    *Notify;
+    ACPI_GPE_NOTIFY_INFO    *Next;
     UINT32                  i;
     UINT32                  j;
 
@@ -412,8 +419,25 @@ AcpiEvDeleteGpeHandlers (
             if ((GpeEventInfo->Flags & ACPI_GPE_DISPATCH_MASK) ==
                     ACPI_GPE_DISPATCH_HANDLER)
             {
+                /* Delete an installed handler block */
+
                 ACPI_FREE (GpeEventInfo->Dispatch.Handler);
                 GpeEventInfo->Dispatch.Handler = NULL;
+                GpeEventInfo->Flags &= ~ACPI_GPE_DISPATCH_MASK;
+            }
+            else if ((GpeEventInfo->Flags & ACPI_GPE_DISPATCH_MASK) ==
+                    ACPI_GPE_DISPATCH_NOTIFY)
+            {
+                /* Delete the implicit notification device list */
+
+                Notify = GpeEventInfo->Dispatch.NotifyList;
+                while (Notify)
+                {
+                    Next = Notify->Next;
+                    ACPI_FREE (Notify);
+                    Notify = Next;
+                }
+                GpeEventInfo->Dispatch.NotifyList = NULL;
                 GpeEventInfo->Flags &= ~ACPI_GPE_DISPATCH_MASK;
             }
         }
@@ -422,3 +446,4 @@ AcpiEvDeleteGpeHandlers (
     return_ACPI_STATUS (AE_OK);
 }
 
+#endif /* !ACPI_REDUCED_HARDWARE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.87.4.3 2013/01/23 00:06:13 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.87.4.4 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.87.4.3 2013/01/23 00:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.87.4.4 2014/05/22 11:40:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,17 @@ dev_type_tty(ucomtty);
 dev_type_poll(ucompoll);
 
 const struct cdevsw ucom_cdevsw = {
-	ucomopen, ucomclose, ucomread, ucomwrite, ucomioctl,
-	ucomstop, ucomtty, ucompoll, nommap, ttykqfilter, D_TTY
+	.d_open = ucomopen,
+	.d_close = ucomclose,
+	.d_read = ucomread,
+	.d_write = ucomwrite,
+	.d_ioctl = ucomioctl,
+	.d_stop = ucomstop,
+	.d_tty = ucomtty,
+	.d_poll = ucompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 static void	ucom_cleanup(struct ucom_softc *);
@@ -358,10 +367,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int s, i;
 	int error;
-
-	/* XXX This is a hopefully temporary stopgap for kern/42848. */
-	if ((flag & (FREAD|FWRITE)) != (FREAD|FWRITE))
-		return (EINVAL);
 
 	if (sc == NULL)
 		return (ENXIO);

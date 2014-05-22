@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.3.2.1 2012/04/17 00:09:10 yamt Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.3.2.2 2014/05/22 11:42:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -26,6 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+
 #include <atf-c.h>
 #include <atf-c/config.h>
 
@@ -35,6 +37,8 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "isqemu.h"
 
 #ifndef _FLOAT_IEEE754
 
@@ -293,10 +297,10 @@ sigfpe(int s, siginfo_t *si, void *c)
 									\
 	ATF_TC_BODY(m##_##t, tc)					\
 	{								\
-		if (strcmp(atf_config_get("atf_arch"), "macppc") == 0)	\
+		if (strcmp(MACHINE, "macppc") == 0)			\
 			atf_tc_expect_fail("PR port-macppc/46319");	\
 									\
-		if (system("cpuctl identify 0 | grep -q QEMU") == 0)	\
+		if (isQEMU())						\
 			atf_tc_expect_fail("PR misc/44767");		\
 									\
 		m(t##_ops);						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.5.2.3 2012/10/30 17:21:56 yamt Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.5.2.4 2014/05/22 11:40:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.5.2.3 2012/10/30 17:21:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.5.2.4 2014/05/22 11:40:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	/* ok, let's see how far the cycle counter gets between interrupts */
 	DPRINTF("calibrating CPU timer...\n");
 	for (clk = 1; clk < 8; clk++) {
+
 		REGVAL(LS2F_CHIPCFG0) =
 		    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | clk;
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM1,
@@ -292,6 +293,7 @@ pwmclock_intr(void *cookie)
 	 *   we only change sc_step after doing that
 	 */
 	if (sc->sc_step_wanted != sc->sc_step) {
+
 		REGVAL(LS2F_CHIPCFG0) =
 		    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) |
 		     sc->sc_step_wanted;
@@ -304,6 +306,7 @@ pwmclock_intr(void *cookie)
 	if (sc->sc_step_wanted != sc->sc_step) {
 		sc->sc_step = sc->sc_step_wanted;
 	}
+		 
 	hardclock(&cf);
 
 	return 1;

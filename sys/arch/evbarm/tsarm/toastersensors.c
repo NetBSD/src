@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.9.2.2 2013/01/16 05:32:57 yamt Exp $ */
+/* $NetBSD: toastersensors.c,v 1.9.2.3 2014/05/22 11:39:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9.2.2 2013/01/16 05:32:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9.2.3 2014/05/22 11:39:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -179,14 +179,6 @@ toastersensors_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "using signals DIO_1-DIO_5 for panel buttons\n");
 	aprint_normal_dev(self, "using 12-bit MAX197-ADC channel 0 for burnlevel knob\n");
 
-	if (sysctl_createv(NULL, 0, NULL, NULL,
-				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-				NULL, NULL, 0, NULL, 0,
-				CTL_HW, CTL_EOL) != 0) {
-		printf("%s: could not create sysctl\n",
-			device_xname(self));
-		return;
-	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
         			0, CTLTYPE_NODE, device_xname(self),
         			NULL,

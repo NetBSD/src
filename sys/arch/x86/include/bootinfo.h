@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.18.4.1 2012/04/17 00:07:05 yamt Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.18.4.2 2014/05/22 11:40:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -157,7 +157,7 @@ struct bi_biosgeom_entry {
 	unsigned int	cksum;			/* MBR checksum */
 	int		res0, res1, res2, res3;	/* future expansion; 0 now */
 #endif
-	struct mbr_partition dosparts[MBR_PART_COUNT]; /* MBR itself */
+	struct mbr_partition mbrparts[MBR_PART_COUNT]; /* MBR itself */
 } __packed;
 
 struct btinfo_biosgeom {
@@ -176,6 +176,7 @@ struct bi_modulelist_entry {
 #define	BI_MODULE_ELF		0x01
 #define	BI_MODULE_IMAGE		0x02
 #define BI_MODULE_RND		0x03
+#define BI_MODULE_FS		0x04
 
 struct btinfo_modulelist {
 	struct btinfo_common common;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4.2.2 2013/01/23 00:05:54 yamt Exp $	*/
+/*	$NetBSD: parse.c,v 1.4.2.3 2014/05/22 11:39:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -86,22 +86,24 @@ check_args(int argc, char *argv[])
 {
 	int i;
 
-	for ( i = 0; i < argc; i++)
+	for (i = 0; i < argc; i++)
 		printf("argv[%d] = \"%s\"\n", i, argv[i]);
 
-	return(ST_NORMAL);
+	return ST_NORMAL;
 }
 
 int
 exit_program(int argc, char *argv[])
 {
-	return(ST_EXIT);
+
+	return ST_EXIT;
 }
 
 static const char helpmsg[] =
 	"commands are:\n"
-	"boot [device(unit,part)filename]\n"
-	" (ex. \"boot sd(0,0)netbsd\", \"boot le(0,0)netbsd.old\" etc.)\n"
+	"boot [device(unit,part)filename] [-ads]\n"
+	" (ex. \"boot sd(6,0)netbsd\", \"boot le()netbsd.old\" etc.)\n"
+	"  Note unit number for SCSI device is (ctlr) * 10 + (id)."
 	"ls [device(unit, part)[path]]\n"
 	" (ex. \"ls sd(0,0)/bin\")\n"
 	"help\n"
@@ -139,7 +141,6 @@ struct command_entry entries[] = {
 	{ "fsrestore",	fsrestore    },
 #endif
 	{ "help",	cmd_help     },
-	{ "howto",	how_to_boot  },
 	{ "ls",		cmd_ls       },
 	{ "screen",	screen	     },
 #ifdef notyet
@@ -148,23 +149,23 @@ struct command_entry entries[] = {
 #endif
 	{ "scsi",	scsi         },
 	{ "quit",	exit_program },
-	{ 0, 0 }
+	{ NULL, NULL }
 };
 
 
-int 
+int
 parse(int argc, char *argv[])
 {
 	int i, status = ST_NOTFOUND;
 
-	for (i = 0; entries[i].name != (char *) 0; i++) {
+	for (i = 0; entries[i].name != NULL; i++) {
 		if (!strcmp(argv[0], entries[i].name)) {
 			status = (*entries[i].func)(argc, argv);
 			break;
 		}
 	}
 
-	return(status);
+	return status;
 }
 
 
@@ -181,14 +182,14 @@ getargs(char buffer[], char *argv[], int maxargs)
 
 	argv[n++] = p;
 	while (*p != '\0') {
-		if ( *p == ' ' ) {
+		if (*p == ' ') {
 			*p = '\0';
-		} else if (p != buffer && *(p-1) == '\0') {
-			if ( n < maxargs )
+		} else if (p != buffer && *(p - 1) == '\0') {
+			if (n < maxargs)
 				argv[n++] = p;
 		}
 		p++;
 	}
 
-	return(n);
+	return n;
 }

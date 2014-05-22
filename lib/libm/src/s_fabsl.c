@@ -1,4 +1,4 @@
-/*	$NetBSD: s_fabsl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
+/*	$NetBSD: s_fabsl.c,v 1.2.6.1 2014/05/22 11:36:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_fabsl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
+__RCSID("$NetBSD: s_fabsl.c,v 1.2.6.1 2014/05/22 11:36:57 yamt Exp $");
 
 #include <math.h>
 #include <machine/ieee.h>
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: s_fabsl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
  * fabsl(long double x)
  * This function returns the absolute value of its argumetn x, |x|.
  */
-#ifdef EXT_EXP_INFNAN
+#ifdef __HAVE_LONG_DOUBLE
 long double
 fabsl(long double x)
 {

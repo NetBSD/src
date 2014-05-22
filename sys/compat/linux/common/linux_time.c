@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.34.8.2 2012/10/30 17:20:44 yamt Exp $ */
+/*	$NetBSD: linux_time.c,v 1.34.8.3 2014/05/22 11:40:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.34.8.2 2012/10/30 17:20:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.34.8.3 2014/05/22 11:40:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -55,13 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.34.8.2 2012/10/30 17:20:44 yamt Exp
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/common/compat_util.h>
-
-/*
- * This is not implemented for alpha yet
- */
-#if defined (__i386__) || defined (__m68k__) || \
-    defined (__powerpc__) || defined (__mips__) || \
-    defined(__arm__) || defined(__amd64__)
 
 /*
  * Linux keeps track of a system timezone in the kernel. It is readen
@@ -121,8 +114,6 @@ linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *
 
 	return (0);
 }
-
-#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ || __arm__ */
 
 void
 native_to_linux_timespec(struct linux_timespec *ltp, struct timespec *ntp)

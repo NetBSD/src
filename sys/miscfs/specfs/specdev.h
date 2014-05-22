@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.39 2009/11/14 18:36:57 elad Exp $	*/
+/*	$NetBSD: specdev.h,v 1.39.12.1 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -86,22 +86,16 @@ typedef struct specdev {
 #define v_specnext	v_specnode->sn_next
 #define v_rdev		v_specnode->sn_rdev
 #define v_speclockf	v_specnode->sn_dev->sd_lockf
-#define v_specmountpoint v_specnode->sn_dev->sd_mountpoint
 
 /*
  * Special device management
  */
-#define	SPECHSZ	64
-#if	((SPECHSZ&(SPECHSZ-1)) == 0)
-#define	SPECHASH(rdev)	(((rdev>>5)+(rdev))&(SPECHSZ-1))
-#else
-#define	SPECHASH(rdev)	(((unsigned)((rdev>>5)+(rdev)))%SPECHSZ)
-#endif
-
-extern vnode_t	*specfs_hash[SPECHSZ];
-
 void	spec_node_init(vnode_t *, dev_t);
 void	spec_node_destroy(vnode_t *);
+int	spec_node_lookup_by_dev(enum vtype, dev_t, vnode_t **);
+int	spec_node_lookup_by_mount(struct mount *, vnode_t **);
+struct mount *spec_node_getmountedfs(vnode_t *);
+void	spec_node_setmountedfs(vnode_t *, struct mount *);
 void	spec_node_revoke(vnode_t *);
 
 /*
@@ -116,6 +110,7 @@ struct	uio;
 
 int	spec_lookup(void *);
 #define	spec_create	genfs_badop
+#define	spec_whiteout	genfs_badop
 #define	spec_mknod	genfs_badop
 int	spec_open(void *);
 int	spec_close(void *);

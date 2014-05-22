@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pci.c,v 1.3.4.2 2012/10/30 17:21:30 yamt Exp $	*/
+/*	$NetBSD: if_malo_pci.c,v 1.3.4.3 2014/05/22 11:40:25 yamt Exp $	*/
 /*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.3.4.2 2012/10/30 17:21:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.3.4.3 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -103,6 +103,7 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype1, memtype2;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -123,7 +124,7 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = pci_mapreg_map(pa, MALO_PCI_BAR1,
-	    memtype1, 0, &sc->sc_mem1_bt, &sc->sc_mem1_bh, 
+	    memtype1, 0, &sc->sc_mem1_bt, &sc->sc_mem1_bh,
 		NULL, &psc->sc_mapsize1);
 	if (error != 0) {
 		aprint_error_dev(self, "can't map 1st mem space\n");
@@ -142,7 +143,7 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = pci_mapreg_map(pa, MALO_PCI_BAR2,
-	    memtype2, 0, &sc->sc_mem2_bt, &sc->sc_mem2_bh, 
+	    memtype2, 0, &sc->sc_mem2_bt, &sc->sc_mem2_bh,
 		NULL, &psc->sc_mapsize2);
 	if (error != 0) {
 		aprint_error_dev(self, "can't map 2nd mem space\n");
@@ -156,7 +157,7 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* establish interrupt */
-	intrstr = pci_intr_string(psc->sc_pc, ih);
+	intrstr = pci_intr_string(psc->sc_pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET, malo_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
@@ -187,7 +188,7 @@ malo_pci_detach(device_t self, int flags)
 	return (0);
 }
 
-static bool 
+static bool
 malo_pci_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct malo_pci_softc *psc = device_private(self);
@@ -199,7 +200,7 @@ malo_pci_suspend(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-static bool 
+static bool
 malo_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct malo_pci_softc *psc = device_private(self);

@@ -33,8 +33,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.3.2.2 2012/10/30 17:18:59 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.3.2.3 2014/05/22 11:39:31 yamt Exp $");
 
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -91,6 +92,13 @@ bcmrng_read_4(struct bcmrng_softc *sc, bus_size_t o)
 }
 
 static inline void
+bcmrng_read_multi_4(struct bcmrng_softc *sc, bus_size_t o, uint32_t *p,
+    size_t c)
+{
+	return bus_space_read_multi_4(sc->sc_bst, sc->sc_bsh, o, p, c);
+}
+
+__unused static inline void
 bcmrng_write_4(struct bcmrng_softc *sc, bus_size_t o, uint32_t v)
 {
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, o, v);
@@ -162,16 +170,13 @@ bcmrng_empty(struct bcmrng_softc *sc)
 	}
 
 	uint32_t data[nwords];
-	while (nwords-- > 0) {
-		/*
-		 * It's random data, who cares what order we load it in?
-		 */
-		data[nwords] = bcmrng_read_4(sc, RNG_DATA);
-	}
+
+	bcmrng_read_multi_4(sc, RNG_DATA, data, nwords);
+
 	rnd_add_data(&sc->sc_rnd_source, data, sizeof(data), sizeof(data) * 8);
 	mutex_exit(sc->sc_lock);
-	//aprint_debug_dev(sc->sc_dev, "added %zu words\n", __arraycount(data));
-	return __arraycount(data);
+	//aprint_debug_dev(sc->sc_dev, "added %zu words\n", nwords);
+	return nwords;
 }
 
 void

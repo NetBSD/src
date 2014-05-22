@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.2.4.4 2013/01/23 00:06:17 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.2.4.5 2014/05/22 11:40:58 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.2.4.4 2013/01/23 00:06:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.2.4.5 2014/05/22 11:40:58 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -23,7 +23,6 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM)
-# include "opt_pfil_hooks.h"
 # include "opt_ipsec.h"
 #endif
 #include <sys/errno.h>
@@ -129,13 +128,22 @@ static  int     ipfpoll(dev_t, int events, PROC_T *);
 static	void	ipf_timer_func(void *ptr);
 
 const struct cdevsw ipl_cdevsw = {
-	ipfopen, ipfclose, ipfread, ipfwrite, ipfioctl,
-	nostop, notty, ipfpoll, nommap,
+	.d_open = ipfopen,
+	.d_close = ipfclose,
+	.d_read = ipfread,
+	.d_write = ipfwrite,
+	.d_ioctl = ipfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = ipfpoll,
+	.d_mmap = nommap,
 #if  (__NetBSD_Version__ >= 200000000)
-	nokqfilter,
+	.d_kqfilter = nokqfilter,
 #endif
 #ifdef D_OTHER
-	D_OTHER,
+	.d_flag = D_OTHER
+#else
+	.d_flag = 0
 #endif
 };
 
@@ -326,12 +334,12 @@ ipfattach(ipf_main_softc_t *softc)
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
-        struct pfil_head *ph_inet;
+        pfil_head_t *ph_inet;
 #  ifdef USE_INET6
-        struct pfil_head *ph_inet6;
+        pfil_head_t *ph_inet6;
 #  endif
 #  if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
-        struct pfil_head *ph_ifsync;
+        pfil_head_t *ph_ifsync;
 #  endif
 # endif
 #endif
@@ -353,9 +361,9 @@ ipfattach(ipf_main_softc_t *softc)
 #ifdef NETBSD_PF
 # if (__NetBSD_Version__ >= 104200000)
 #  if __NetBSD_Version__ >= 105110000
-	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
 #   ifdef USE_INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 #   endif
 #   if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 	ph_ifsync = pfil_head_get(PFIL_TYPE_IFNET, 0);
@@ -503,9 +511,9 @@ ipfdetach(ipf_main_softc_t *softc)
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
-	struct pfil_head *ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	pfil_head_t *ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
 #  ifdef USE_INET6
-	struct pfil_head *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	pfil_head_t *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 #  endif
 #  if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 	struct pfil_head *ph_ifsync = pfil_head_get(PFIL_TYPE_IFNET, 0);
@@ -844,13 +852,14 @@ ipf_send_ip(fr_info_t *fin, mb_t *m)
 int
 ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 {
-	int err, hlen, xtra, iclen, ohlen, avail, code;
+	int err, hlen, xtra, iclen, ohlen, avail;
 	struct in_addr dst4;
 	struct icmp *icmp;
 	struct mbuf *m;
 	i6addr_t dst6;
 	void *ifp;
 #ifdef USE_INET6
+	int code;
 	ip6_t *ip6;
 #endif
 	ip_t *ip, *ip2;
@@ -858,8 +867,8 @@ ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 	if ((type < 0) || (type > ICMP_MAXTYPE))
 		return -1;
 
-	code = fin->fin_icode;
 #ifdef USE_INET6
+	code = fin->fin_icode;
 	if ((code < 0) || (code >= sizeof(icmptoicmp6unreach)/sizeof(int)))
 		return -1;
 #endif
@@ -1348,13 +1357,11 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 	struct rtentry *rt;
 	struct ifnet *ifp;
-	frentry_t *fr;
 	u_long mtu;
 	int error;
 
 	error = 0;
 	ro = &ip6route;
-	fr = fin->fin_fr;
 
 	if (fdp != NULL)
 		ifp = fdp->fd_ptr;
@@ -1405,7 +1412,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 
 	{
-# if (__NetBSD_Version__ >= 106010000)
+# if (__NetBSD_Version__ >= 106010000) && !defined(IN6_LINKMTU)
 		struct in6_ifextra *ife;
 # endif
 		if (rt->rt_flags & RTF_GATEWAY)
@@ -1420,10 +1427,10 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # if (__NetBSD_Version__ <= 106009999)
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 # else
-		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
 #  ifdef IN6_LINKMTU
 		mtu = IN6_LINKMTU(ifp);
 #  else
+		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
 		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
 #  endif
 # endif

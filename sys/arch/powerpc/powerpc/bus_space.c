@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.28.2.2 2012/10/30 17:20:13 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.28.2.3 2014/05/22 11:40:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28.2.2 2012/10/30 17:20:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28.2.3 2014/05/22 11:40:05 yamt Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -598,20 +598,6 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	}
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 
-	if (t->pbs_extent != NULL) {
-#if !defined(PPC_IBM4XX)
-		if (extent_flags == 0) {
-			extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
-#ifdef DEBUG
-			printf("bus_space_map(%p[%x:%x], %#x, %#x)"
-			    " failed: ENOMEM\n",
-			    t, t->pbs_base, t->pbs_limit, bpa, size);
-#endif
-			return (ENOMEM);
-		}
-#endif
-	}
-
 	/*
 	 * Map this into the kernel pmap.
 	 */
@@ -653,8 +639,8 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601) {
 		register_t sr = iosrtable[va >> ADDR_SR_SHFT];
-		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
-		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
+		if (SR601_VALID_P(sr) && ((va >> ADDR_SR_SHFT) ==
+		    ((va + size - 1) >> ADDR_SR_SHFT))) {
 			pa = va;
 			va = 0;
 		} else {

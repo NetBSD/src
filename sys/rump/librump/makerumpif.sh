@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.5.8.1 2014/05/22 11:41:15 yamt Exp $
 #
 # Copyright (c) 2009 Antti Kantee.  All rights reserved.
 #
@@ -47,14 +47,25 @@ boom ()
 	exit 1
 }
 
-[ $# != 1 ] && usage
+unset TOPDIR
+if [ $# -eq 3 ]; then
+	if [ $1 = '-R' ]; then
+		TOPDIR=$2
+	else
+		usage
+	fi
+	shift; shift
+fi
+[ $# -ne 1 ] && usage
 
 MYDIR=`pwd`
-while [ ! -f Makefile.rump  ]; do
-	[ `pwd` = '/' ] && boom Could not find rump topdir.
-	cd ..
-done
-RUMPTOP="`pwd`"
+if [ -z "${TOPDIR}" ]; then
+	while [ ! -f Makefile.rump  ]; do
+		[ `pwd` = '/' ] && boom Could not find rump topdir.
+		cd ..
+	done
+	TOPDIR="`pwd`"
+fi
 cd ${MYDIR}
 
 sed -e '
@@ -64,12 +75,12 @@ sed -e '
 		s/[ 	]*\\\n[ 	]*/ /
 		b again
 	}
-' ${1} | awk -F\| -v rumptop=${RUMPTOP} '
+' ${1} | awk -F\| -v topdir=${TOPDIR} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.5.8.1 2014/05/22 11:41:15 yamt Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.5.8.1 2014/05/22 11:41:15 yamt Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -91,9 +102,9 @@ NR == 1 {
 }
 
 $1 == "NAME"{myname = $2;next}
-$1 == "PUBHDR"{pubhdr = rumptop "/" $2;print pubhdr;next}
-$1 == "PRIVHDR"{privhdr = rumptop "/" $2;print privhdr;next}
-$1 == "WRAPPERS"{gencalls = rumptop "/" $2;print gencalls;next}
+$1 == "PUBHDR"{pubhdr = topdir "/" $2;print pubhdr;next}
+$1 == "PRIVHDR"{privhdr = topdir "/" $2;print privhdr;next}
+$1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 
 /^;/{next}
 /\\$/{sub("\\\n", "");getline nextline;$0 = $0 nextline}
@@ -134,6 +145,10 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;print gencalls;next}
 		printf("\n") > pubhdr
 		printf("\n") > privhdr
 
+		printf("#ifndef _RUMP_PRIF_%s_H_\n", toupper(myname)) > privhdr
+		printf("#define _RUMP_PRIF_%s_H_\n", toupper(myname)) > privhdr
+		printf("\n") > privhdr
+
 		printf("\n#include <sys/cdefs.h>\n") > gencalls
 		printf("#include <sys/systm.h>\n") > gencalls
 		printf("\n#include <rump/rump.h>\n") > gencalls
@@ -157,6 +172,8 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;print gencalls;next}
 
 	printf("%s rump_pub_%s(%s);\n", funtype, funname, funargs) > pubhdr
 	printf("%s rump_%s(%s);\n", funtype, funname, funargs) > privhdr
+	printf("typedef %s (*rump_%s_fn)(%s);\n",	\
+	    funtype, funname, funargs) > privhdr
 
 	if (funtype == "void")
 		voidret = 1
@@ -204,4 +221,6 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;print gencalls;next}
 	if (isweak)
 		printf("__weak_alias(rump_%s,rump_%s_unavailable);\n", \
 		    funname, myname) > gencalls
-}'
+}
+
+END { printf("\n#endif /* _RUMP_PRIF_%s_H_ */\n", toupper(myname)) > privhdr }'

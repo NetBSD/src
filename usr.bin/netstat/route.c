@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.78.2.1 2012/04/17 00:09:37 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.78.2.2 2014/05/22 11:42:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.78.2.1 2012/04/17 00:09:37 yamt Exp $");
+__RCSID("$NetBSD: route.c,v 1.78.2.2 2014/05/22 11:42:46 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: route.c,v 1.78.2.1 2012/04/17 00:09:37 yamt Exp $");
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netatalk/at.h>
-#include <netiso/iso.h>
 #include <netmpls/mpls.h>
 
 #include <sys/sysctl.h>
@@ -78,7 +77,6 @@ static union sockaddr_union {
 	struct	sockaddr u_sa;
 	struct	sockaddr_in u_in;
 	struct	sockaddr_un u_un;
-	struct	sockaddr_iso u_iso;
 	struct	sockaddr_at u_at;
 	struct	sockaddr_dl u_dl;
 	u_short	u_data[128];
@@ -288,27 +286,26 @@ p_krtentry(struct rtentry *rt)
 			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
 	putchar('\n');
- 	if (vflag) {
- 		printf("\texpire   %10"PRId64"%c  recvpipe %10"PRIu64"%c  "
-		       "sendpipe %10"PRIu64"%c\n",
- 			(int64_t)rt->rt_rmx.rmx_expire, 
- 			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_recvpipe,
- 			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_sendpipe,
- 			(rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
- 		printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRIu64"%c  "
-		       "rttvar   %10"PRIu64"%c\n",
- 			rt->rt_rmx.rmx_ssthresh, 
- 			(rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_rtt, 
- 			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_rttvar, 
-			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
- 		printf("\thopcount %10"PRIu64"%c\n",
- 			rt->rt_rmx.rmx_hopcount, 
-			(rt->rt_rmx.rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
- 	}
+	if (vflag)
+		pr_rtrmx(&rt->rt_rmx);
+}
+
+void
+pr_rtrmx(struct rt_metrics *rmx)
+{
+	printf("\texpire   %10"PRId64"%c  recvpipe %10"PRIu64"%c  "
+	    "sendpipe %10"PRIu64"%c\n",
+	    (int64_t)rmx->rmx_expire, 
+	    (rmx->rmx_locks & RTV_EXPIRE) ? 'L' : ' ', rmx->rmx_recvpipe,
+	    (rmx->rmx_locks & RTV_RPIPE) ? 'L' : ' ', rmx->rmx_sendpipe,
+	    (rmx->rmx_locks & RTV_SPIPE) ? 'L' : ' ');
+	printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRIu64"%c  "
+	    "rttvar   %10"PRIu64"%c\n", rmx->rmx_ssthresh, 
+	    (rmx->rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
+	    rmx->rmx_rtt, (rmx->rmx_locks & RTV_RTT) ? 'L' : ' ',
+	    rmx->rmx_rttvar, (rmx->rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
+	printf("\thopcount %10"PRIu64"%c\n",
+	    rmx->rmx_hopcount, (rmx->rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
 }
 
 /*
@@ -347,21 +344,4 @@ rt_stats(u_long off)
 	printf("\t%llu use%s of a wildcard route\n",
 		(unsigned long long)rtstats.rts_wildcard,
 		plural(rtstats.rts_wildcard));
-}
-
-void
-upHex(char *p0)
-{
-	char *p = p0;
-
-	for (; *p; p++)
-		switch (*p) {
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		case 'e':
-		case 'f':
-			*p += ('A' - 'a');
-		}
 }

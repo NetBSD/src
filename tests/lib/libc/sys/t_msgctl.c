@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgctl.c,v 1.2.2.3 2012/04/17 00:09:12 yamt Exp $ */
+/* $NetBSD: t_msgctl.c,v 1.2.2.4 2014/05/22 11:42:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgctl.c,v 1.2.2.3 2012/04/17 00:09:12 yamt Exp $");
+__RCSID("$NetBSD: t_msgctl.c,v 1.2.2.4 2014/05/22 11:42:21 yamt Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -316,7 +316,7 @@ ATF_TC_BODY(msgctl_time, tc)
 	(void)msgsnd(id, &msg, sizeof(struct msg), IPC_NOWAIT);
 	(void)msgctl(id, IPC_STAT, &msgds);
 
-	if (abs(t - msgds.msg_stime) > 1)
+	if (llabs(t - msgds.msg_stime) > 1)
 		atf_tc_fail("time of last msgsnd(2) was not updated");
 
 	if (msgds.msg_rtime != 0)
@@ -328,7 +328,7 @@ ATF_TC_BODY(msgctl_time, tc)
 	(void)msgrcv(id, &msg, sizeof(struct msg), MSG_MTYPE_1, IPC_NOWAIT);
 	(void)msgctl(id, IPC_STAT, &msgds);
 
-	if (abs(t - msgds.msg_rtime) > 1)
+	if (llabs(t - msgds.msg_rtime) > 1)
 		atf_tc_fail("time of last msgrcv(2) was not updated");
 
 	/*

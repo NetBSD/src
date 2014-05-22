@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.233.2.1 2012/04/17 00:06:40 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.233.2.2 2014/05/22 11:39:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233.2.1 2012/04/17 00:06:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233.2.2 2014/05/22 11:39:57 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -1192,7 +1192,7 @@ fn_name(vaddr_t addr)
 	for (i = 0; names[i].name; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	sprintf(buf, "%#"PRIxVADDR, addr);
+	snprintf(buf, sizeof(buf), "%#"PRIxVADDR, addr);
 	return (buf);
 }
 

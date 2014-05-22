@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.250.2.1 2012/04/17 00:06:40 yamt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.250.2.2 2014/05/22 11:39:57 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250.2.1 2012/04/17 00:06:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250.2.2 2014/05/22 11:39:57 yamt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -260,14 +260,11 @@ struct mips_options mips_options = {
 	.mips_fpu_id = 0xffffffff,
 };
 
-struct	user *proc0paddr;
-
 void *	msgbufaddr;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];
 
 
 /*
@@ -1656,6 +1653,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
                        CTLTYPE_INT, "llsc", NULL,
                        NULL, MIPS_HAS_LLSC, NULL, 0,
                        CTL_MACHDEP, CPU_LLSC, CTL_EOL);
+#ifdef MIPS3_LOONGSON2
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "loongson-mmi", NULL,
+		       NULL, MIPS_HAS_LMMI, NULL, 0,
+		       CTL_MACHDEP, CPU_LMMI, CTL_EOL);
+#endif
 }
 
 /*
@@ -2169,7 +2173,7 @@ startlwp(void *arg)
 {
 	ucontext_t * const uc = arg;
 	lwp_t * const l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.95.2.3 2013/01/16 05:33:14 yamt Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.95.2.4 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.95.2.3 2013/01/16 05:33:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.95.2.4 2014/05/22 11:40:20 yamt Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -453,7 +453,7 @@ again:
 			}
 			if (ata_bio->flags & ATA_LBA48) {
 			    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-				(u_int64_t)ata_bio->blkno, nblks, 0);
+				ata_bio->blkno, nblks, 0, WDSD_LBA);
 			} else {
 			    wdccommand(chp, xfer->c_drive, cmd, cyl,
 				head, sect, nblks, 0);
@@ -527,7 +527,7 @@ again:
 		}
 		if (ata_bio->flags & ATA_LBA48) {
 		    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-			(u_int64_t)ata_bio->blkno, nblks, 0);
+			ata_bio->blkno, nblks, 0, WDSD_LBA);
 		} else {
 		    wdccommand(chp, xfer->c_drive, cmd, cyl,
 			head, sect, nblks,

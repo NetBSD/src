@@ -45,6 +45,4 @@ typedef struct {
 	int mediatype;		/* type of the media, 0 (nor) or 1 (nand) */
 } chfs_opt_t;
 
-extern chfs_opt_t chfs_opts;
-
 #endif

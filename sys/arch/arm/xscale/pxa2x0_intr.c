@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.19.2.1 2012/10/30 17:19:11 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.19.2.2 2014/05/22 11:39:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.19.2.1 2012/10/30 17:19:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.19.2.2 2014/05/22 11:39:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,14 +144,6 @@ pxa2x0_intr_bootstrap(vaddr_t addr)
 {
 
 	pxaic_base = addr;
-}
-
-static inline void
-__raise(int ipl)
-{
-
-	if (curcpu()->ci_cpl < ipl)
-		pxa2x0_setipl(ipl);
 }
 
 /*

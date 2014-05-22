@@ -1,4 +1,4 @@
-/* $NetBSD: arm-gcc.h,v 1.3 2005/12/24 21:11:16 perry Exp $ */
+/* $NetBSD: arm-gcc.h,v 1.3.44.1 2014/05/22 11:36:46 yamt Exp $ */
 
 /*
 -------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ name for the 64-bit integer type.  Some compilers may allow `LIT64' to be
 defined as the identity macro:  `#define LIT64( a ) a'.
 -------------------------------------------------------------------------------
 */
-#define LIT64( a ) a##LL
+#define LIT64( a ) a##ULL
 #endif
 
 /*

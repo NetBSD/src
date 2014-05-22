@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.21.2.2 2012/10/30 17:22:09 yamt Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.21.2.3 2014/05/22 11:40:37 yamt Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.21.2.2 2012/10/30 17:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.21.2.3 2014/05/22 11:40:37 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -288,8 +288,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	DPRINTF(("%s\n", __func__));
 	/* XXX */
 
-	if (ata_bio->flags & ATA_NOSLEEP) {
-		printf("%s: ATA_NOSLEEP not supported\n", __func__);
+	if (ata_bio->flags & ATA_POLL) {
+		printf("%s: ATA_POLL not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
 		return (ATACMD_COMPLETE);
@@ -546,8 +546,8 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		 * Shuffle string byte order.
 		 * ATAPI Mitsumi and NEC drives don't need this.
 		 */
-		if ((prms->atap_config & WDC_CFG_ATAPI_MASK) ==
-		    WDC_CFG_ATAPI &&
+		if (prms->atap_config != WDC_CFG_CFA_MAGIC &&
+		    (prms->atap_config & WDC_CFG_ATAPI) &&
 		    ((prms->atap_model[0] == 'N' &&
 			prms->atap_model[1] == 'E') ||
 		     (prms->atap_model[0] == 'F' &&

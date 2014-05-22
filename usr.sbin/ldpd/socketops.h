@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.2.2.1 2013/01/16 05:34:09 yamt Exp $ */
+/* $NetBSD: socketops.h,v 1.2.2.2 2014/05/22 11:43:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,18 +48,26 @@ void	send_hello(void);
 int	get_message_id(void);
 int	the_big_loop(void);
 void	new_peer_connection(void);
-void	send_initialize(struct ldp_peer *);
-void	keep_alive(struct ldp_peer *);
+void	send_initialize(const struct ldp_peer *);
+void	keep_alive(const struct ldp_peer *);
 void	recv_session_pdu(struct ldp_peer *);
-int	send_message(struct ldp_peer *, struct ldp_pdu *, struct tlv *);
-int	send_tlv(struct ldp_peer *, struct tlv *);
-int	send_addresses(struct ldp_peer *);
+int	send_message(const struct ldp_peer *, const struct ldp_pdu *,
+	const struct tlv *);
+int	send_tlv(const struct ldp_peer *, const struct tlv *);
+int	send_addresses(const struct ldp_peer *);
 
 struct	hello_info {
-	struct in_addr address, transport_address, ldp_id;
+	union sockunion transport_address;
+	struct in_addr ldp_id;
 	int keepalive;
 	SLIST_ENTRY(hello_info) infos;
 };
 SLIST_HEAD(,hello_info) hello_info_head;
+
+struct	hello_socket {
+	int type, socket;
+	SLIST_ENTRY(hello_socket) listentry;
+};
+SLIST_HEAD(,hello_socket) hello_socket_head;
 
 #endif	/* !_SOCKETOPS_H_ */

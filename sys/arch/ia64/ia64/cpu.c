@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2011/10/01 15:59:27 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.2.1 2014/05/22 11:39:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/10/01 15:59:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.1 2014/05/22 11:39:53 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -51,8 +52,6 @@ struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
-
-char cpu_model[64];
 
 static int cpu_match(device_t, cfdata_t, void *);
 static void cpu_attach(device_t, device_t, void *);
@@ -117,7 +116,8 @@ identifycpu(struct cpu_softc *sc)
 	uint64_t vendor[3];
 	const char *family_name, *model_name;
 	uint64_t features, tmp;
-	int number, revision, model, family, archrev;
+	int revision, model, family;
+	char bitbuf[32];
 	extern uint64_t processor_frequency;
 
 	/*
@@ -128,11 +128,11 @@ identifycpu(struct cpu_softc *sc)
 	vendor[2] = '\0';
 
 	tmp = ia64_get_cpuid(3);
-	number = (tmp >> 0) & 0xff;
+	/* number = (tmp >> 0) & 0xff; */
 	revision = (tmp >> 8) & 0xff;
 	model = (tmp >> 16) & 0xff;
 	family = (tmp >> 24) & 0xff;
-	archrev = (tmp >> 32) & 0xff;
+	/* archrev = (tmp >> 32) & 0xff; */
 
 	family_name = model_name = "unknown";
 	switch (family) {
@@ -166,7 +166,7 @@ identifycpu(struct cpu_softc *sc)
 		}
 		break;
 	}
-	snprintf(cpu_model, sizeof(cpu_model), "%s", model_name);
+	cpu_setmodel("%s", model_name);
 
 	features = ia64_get_cpuid(4);
 
@@ -179,5 +179,12 @@ identifycpu(struct cpu_softc *sc)
 	aprint_normal("%s)\n", family_name);
 	aprint_normal_dev(sc->sc_dev, "Origin \"%s\",  Revision %d\n",
 	    (char *)vendor, revision);
-	aprint_normal_dev(sc->sc_dev, "Features 0x%x\n", (uint32_t)features);
+
+#define IA64_FEATURES_BITMASK "\177\020"				\
+    "b\0LB\0"	/* 'brl' instruction is implemented */			\
+    "b\1SD\0"	/* Processor implements sportaneous deferral */		\
+    "b\2AO\0"	/* Processor implements 16-byte atomic operations */	\
+    "\0"
+	snprintb(bitbuf, sizeof(bitbuf), IA64_FEATURES_BITMASK, features);
+	aprint_normal_dev(sc->sc_dev, "Features %s\n", bitbuf);
 }

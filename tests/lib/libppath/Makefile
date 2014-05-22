@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2.2.1 2012/04/17 00:09:13 yamt Exp $
+# $Id: Makefile,v 1.2.2.2 2014/05/22 11:42:22 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ CPPFLAGS+=-I$(.OBJDIR)
 .plist.c:
 	AWK=${TOOL_AWK:Q} ${HOST_SH} ${.CURDIR}/plist_to_c ${.TARGET:S,.c$,,} < ${.IMPSRC} > ${.TARGET}
 
+t_ppath.o: personnel.h
 CLEANFILES+=personnel.c personnel.h
 
 #LDADD+=-L$(LIBPPATH)

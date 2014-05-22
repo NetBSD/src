@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.S,v 1.1.4.2 2012/10/30 18:58:36 yamt Exp $	*/
+/*	$NetBSD: crt0.S,v 1.1.4.3 2014/05/22 11:36:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1.4.2 2012/10/30 18:58:36 yamt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.1.4.3 2014/05/22 11:36:43 yamt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -44,7 +44,14 @@ _ENTRY(__start)
 	mov	r2, ip		/* tmp -> ps_strings */
 
 	/* Ensure the stack is properly aligned before calling C code. */
+#if !defined(__thumb__)
 	bic	sp, sp, #7
+#else
+	movs	r6, #7
+	mov	r7, sp
+	bics	r7, r7, r6
+	mov	sp, r7
+#endif
 
 	/*
 	 * void ___start(void (*cleanup)(void),

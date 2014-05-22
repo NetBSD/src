@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.21.8.1 2012/04/17 00:07:23 yamt Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.21.8.2 2014/05/22 11:40:18 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.21.8.1 2012/04/17 00:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.21.8.2 2014/05/22 11:40:18 yamt Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -244,7 +244,7 @@ svr4_32_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *ar
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
-	if (copyout(ai, *stackp, len))
+	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
 	*stackp += len;
 

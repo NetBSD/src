@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_session.c,v 1.8.6.4 2013/01/23 00:06:25 yamt Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.8.6.5 2014/05/22 11:41:09 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -65,22 +65,34 @@
  *	and should be released by the caller.  Reference guarantees that the
  *	session will not be destroyed, although it may be expired.
  *
- * Querying ALGs
+ * Synchronisation
  *
- *	Application-level gateways (ALGs) can inspect the packet and
- *	determine whether the packet matches an ALG case.  An ALG may
- *	also lookup a session using different identifiers and return.
- *	the packet cache (npf_cache_t) representing the IDs.
+ *	Session hash table is accessed in a lock-less manner by the main
+ *	operations: npf_session_inspect() and npf_session_establish().
+ *	Since they are always called from a software interrupt, the hash
+ *	table is protected using passive serialisation.  The main place
+ *	which can destroy the hash table is npf_session_reload().  It has
+ *	to synchronise with other readers and writers using sess_lock,
+ *	primarily the G/C thread.
+ *
+ * ALG support
+ *
+ *	Application-level gateways (ALGs) can override generic session
+ *	inspection (npf_alg_session() in npf_session_inspect() function)
+ *	by performing their own lookup using different identifiers.
+ *	Recursive call to npf_session_inspect() is not allowed, they
+ *	ought to use npf_session_lookup() for this purpose.
  *
  * Lock order
  *
- *	[ sess_lock -> ]
- *		npf_sehash_t::sh_lock ->
- *			npf_state_t::nst_lock
+ *	sess_lock ->
+ *		[ npf_config_lock -> ]
+ *			npf_sehash_t::sh_lock ->
+ *				npf_state_t::nst_lock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.8.6.4 2013/01/23 00:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.8.6.5 2014/05/22 11:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.8.6.4 2013/01/23 00:06:25 yamt Exp
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
+#include <sys/cprng.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -137,10 +150,10 @@ struct npf_session {
 	/* Protocol and interface (common IDs). */
 	struct npf_secomid {
 		uint16_t	proto;
-		uint16_t	if_idx;
+		uint16_t	ifid;
 	} s_common_id;
 	/* Flags and the protocol state. */
-	int			s_flags;
+	u_int			s_flags;
 	npf_state_t		s_state;
 	/* Association of rule procedure data. */
 	npf_rproc_t *		s_rproc;
@@ -163,77 +176,74 @@ struct npf_sehash {
 };
 
 /*
- * Session flags:
- * - PFIL_IN and PFIL_OUT values are reserved for direction.
- * - SE_ACTIVE: session is active i.e. visible on inspection.
- * - SE_PASS: a "pass" session.
- * - SE_EXPIRE: explicitly expire the session.
- * - SE_REMOVING: session is being removed (indicate need to enter G/C list).
+ * Session flags: PFIL_IN and PFIL_OUT values are reserved for direction.
  */
 CTASSERT(PFIL_ALL == (0x001 | 0x002));
-#define	SE_ACTIVE		0x004
-#define	SE_PASS			0x008
-#define	SE_EXPIRE		0x010
-#define	SE_REMOVING		0x020
+#define	SE_ACTIVE		0x004	/* visible on inspection */
+#define	SE_PASS			0x008	/* perform implicit passing */
+#define	SE_EXPIRE		0x010	/* explicitly expire */
+
+/*
+ * Flags to indicate removal of forwards/backwards session entries or
+ * completion of session removal itself (i.e. both entries).
+ */
+#define	SE_REMFORW		0x020
+#define	SE_REMBACK		0x040
+#define	SE_REMOVED		(SE_REMFORW | SE_REMBACK)
 
 /*
  * Session tracking state: disabled (off), enabled (on) or flush request.
  */
 enum { SESS_TRACKING_OFF, SESS_TRACKING_ON, SESS_TRACKING_FLUSH };
-static int			sess_tracking	__cacheline_aligned;
+static volatile int		sess_tracking	__cacheline_aligned;
 
-/* Session hash table, lock and session cache. */
+/* Session hash table, session cache and the lock. */
 static npf_sehash_t *		sess_hashtbl	__read_mostly;
 static pool_cache_t		sess_cache	__read_mostly;
+static kmutex_t			sess_lock	__cacheline_aligned;
+static kcondvar_t		sess_cv		__cacheline_aligned;
+static struct npf_sesslist	sess_gc_list	__cacheline_aligned;
+static uint32_t			sess_hash_seed	__read_mostly;
 
-static kmutex_t			sess_lock;
-static kcondvar_t		sess_cv;
-static lwp_t *			sess_gc_lwp;
-
-#define	SESS_GC_INTERVAL	5		/* 5 sec */
-
-static void	sess_tracking_stop(void);
+static void	npf_session_worker(void);
 static void	npf_session_destroy(npf_session_t *);
-static void	npf_session_worker(void *) __dead;
 
 /*
  * npf_session_sys{init,fini}: initialise/destroy session handling structures.
  *
- * Session table and G/C thread are initialised when session tracking gets
- * actually enabled via npf_session_tracking() interface.
+ * Session table is initialised when session tracking gets enabled via
+ * npf_session_tracking() interface.
  */
 
 void
 npf_session_sysinit(void)
 {
-
 	sess_cache = pool_cache_init(sizeof(npf_session_t), coherency_unit,
 	    0, 0, "npfsespl", NULL, IPL_NET, NULL, NULL, NULL);
 	mutex_init(&sess_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sess_cv, "npfgccv");
-	sess_hashtbl = NULL;
-	sess_gc_lwp = NULL;
-
+	cv_init(&sess_cv, "npfsecv");
 	sess_tracking = SESS_TRACKING_OFF;
+	LIST_INIT(&sess_gc_list);
+	sess_hashtbl = NULL;
+
+	sess_hash_seed = cprng_fast32();
+	npf_worker_register(npf_session_worker);
 }
 
 void
 npf_session_sysfini(void)
 {
-
 	/* Disable tracking, flush all sessions. */
 	npf_session_tracking(false);
-	KASSERT(sess_tracking == SESS_TRACKING_OFF);
-	KASSERT(sess_gc_lwp == NULL);
+	npf_worker_unregister(npf_session_worker);
 
-	/* Sessions might have been restored while the tracking is off. */
-	if (sess_hashtbl) {
-		sess_htable_destroy(sess_hashtbl);
-	}
+	KASSERT(sess_tracking == SESS_TRACKING_OFF);
+	KASSERT(LIST_EMPTY(&sess_gc_list));
+	KASSERT(sess_hashtbl == NULL);
 
 	pool_cache_destroy(sess_cache);
-	cv_destroy(&sess_cv);
 	mutex_destroy(&sess_lock);
+	cv_destroy(&sess_cv);
 }
 
 /*
@@ -250,19 +260,12 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	const int sz = sen1->se_alen;
 	int ret;
 
-	/*
-	 * Ports are expected to vary most, therefore they are first.
-	 */
 	if (sen1->se_src_id != sen2->se_src_id) {
 		return (sen1->se_src_id < sen2->se_src_id) ? -1 : 1;
 	}
 	if (sen1->se_dst_id != sen2->se_dst_id) {
 		return (sen1->se_dst_id < sen2->se_dst_id) ? -1 : 1;
 	}
-
-	/*
-	 * Note that hash should minimise differentiation on addresses.
-	 */
 	if (sen1->se_alen != sen2->se_alen) {
 		return (sen1->se_alen < sen2->se_alen) ? -1 : 1;
 	}
@@ -275,7 +278,19 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 
 	const npf_secomid_t *id1 = &sen1->se_backptr->s_common_id;
 	const npf_secomid_t *id2 = ctx ? ctx : &sen2->se_backptr->s_common_id;
-	return memcmp(id1, id2, sizeof(npf_secomid_t));
+
+	if (id1->proto != id2->proto) {
+		return (id1->proto < id2->proto) ? -1 : 1;
+	}
+
+	/*
+	 * Zero interface ID is a special case indicating a global state,
+	 * in which case we match straight away.
+	 */
+	if (id1->ifid && id1->ifid != id2->ifid) {
+		return (id1->ifid < id2->ifid) ? -1 : 1;
+	}
+	return 0;
 }
 
 static signed int
@@ -300,156 +315,169 @@ sess_hash_bucket(npf_sehash_t *stbl, const npf_secomid_t *scid,
     const npf_sentry_t *sen)
 {
 	const int sz = sen->se_alen;
-	uint32_t hash, mix;
+	uint32_t hash, mix[2];
 
-	/*
-	 * Sum protocol, interface and both addresses (for both directions).
-	 */
-	mix = scid->proto + scid->if_idx;
-	mix += npf_addr_sum(sz, &sen->se_src_addr, &sen->se_dst_addr);
-	hash = hash32_buf(&mix, sizeof(uint32_t), HASH32_BUF_INIT);
+	mix[0] = (scid->proto << 16) | (sen->se_src_id ^ sen->se_dst_id);
+	mix[1] = npf_addr_mix(sz, &sen->se_src_addr, &sen->se_dst_addr);
+	hash = murmurhash2(mix, sizeof(mix), sess_hash_seed);
+
 	return &stbl[hash & SESS_HASH_MASK];
 }
 
 npf_sehash_t *
 sess_htable_create(void)
 {
-	npf_sehash_t *stbl, *sh;
-	u_int i;
+	npf_sehash_t *tbl;
 
-	stbl = kmem_zalloc(SESS_HASH_BUCKETS * sizeof(*sh), KM_SLEEP);
-	if (stbl == NULL) {
-		return NULL;
-	}
-	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
-		sh = &stbl[i];
+	tbl = kmem_zalloc(SESS_HASH_BUCKETS * sizeof(npf_sehash_t), KM_SLEEP);
+	for (u_int i = 0; i < SESS_HASH_BUCKETS; i++) {
+		npf_sehash_t *sh = &tbl[i];
+
 		LIST_INIT(&sh->sh_list);
 		rb_tree_init(&sh->sh_tree, &sess_rbtree_ops);
 		rw_init(&sh->sh_lock);
 		sh->sh_count = 0;
 	}
-	return stbl;
+	return tbl;
 }
 
 void
-sess_htable_destroy(npf_sehash_t *stbl)
+sess_htable_destroy(npf_sehash_t *tbl)
 {
-	npf_sehash_t *sh;
-	u_int i;
+	for (u_int i = 0; i < SESS_HASH_BUCKETS; i++) {
+		npf_sehash_t *sh = &tbl[i];
 
-	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
-		sh = &stbl[i];
 		KASSERT(sh->sh_count == 0);
 		KASSERT(LIST_EMPTY(&sh->sh_list));
 		KASSERT(!rb_tree_iterate(&sh->sh_tree, NULL, RB_DIR_LEFT));
 		rw_destroy(&sh->sh_lock);
 	}
-	kmem_free(stbl, SESS_HASH_BUCKETS * sizeof(*sh));
+	kmem_free(tbl, SESS_HASH_BUCKETS * sizeof(npf_sehash_t));
 }
 
-void
-sess_htable_reload(npf_sehash_t *stbl)
+/*
+ * npf_session_reload: perform reload by flushing the current hash table
+ * of the sessions and replacing with the new one or just destroying.
+ *
+ * Key routine synchronising with all other readers and writers.
+ */
+static void
+npf_session_reload(npf_sehash_t *newtbl, int tracking)
 {
-	npf_sehash_t *oldstbl;
+	npf_sehash_t *oldtbl;
 
-	/* Flush all existing entries. */
+	/* Must synchronise with G/C thread and session saving/restoring. */
 	mutex_enter(&sess_lock);
-	if (sess_gc_lwp) {
-		sess_tracking = SESS_TRACKING_FLUSH;
-		cv_broadcast(&sess_cv);
-	}
 	while (sess_tracking == SESS_TRACKING_FLUSH) {
 		cv_wait(&sess_cv, &sess_lock);
 	}
 
-	/* Set a new session table. */
-	oldstbl = sess_hashtbl;
-	sess_hashtbl = stbl;
-	mutex_exit(&sess_lock);
+	/*
+	 * Set the flush status.  It disables session inspection as well as
+	 * creation.  There may be some operations in-flight, drain them.
+	 */
+	npf_config_enter();
+	sess_tracking = SESS_TRACKING_FLUSH;
+	npf_config_sync();
+	npf_config_exit();
 
-	/* Destroy the old table. */
-	if (oldstbl) {
-		sess_htable_destroy(oldstbl);
-	}
-}
-
-/*
- * Session tracking routines.  Note: manages tracking structures.
- */
-
-static int
-sess_tracking_start(void)
-{
-	npf_sehash_t *nstbl;
-
-	nstbl = sess_htable_create();
-	if (nstbl == NULL) {
-		return ENOMEM;
-	}
-
-	/* Note: should be visible before thread start. */
-	mutex_enter(&sess_lock);
-	if (sess_tracking != SESS_TRACKING_OFF) {
-		mutex_exit(&sess_lock);
-		sess_htable_destroy(nstbl);
-		return EEXIST;
-	}
-	sess_hashtbl = nstbl;
-	sess_tracking = SESS_TRACKING_ON;
-	mutex_exit(&sess_lock);
-
-	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-	    npf_session_worker, NULL, &sess_gc_lwp, "npfgc")) {
-		sess_tracking_stop();
-		return ENOMEM;
-	}
-	return 0;
-}
-
-static void
-sess_tracking_stop(void)
-{
-	npf_sehash_t *stbl;
-
-	mutex_enter(&sess_lock);
-	if (sess_tracking == SESS_TRACKING_OFF) {
-		mutex_exit(&sess_lock);
-		return;
-	}
-
-	/* Notify G/C thread to flush all sessions. */
-	sess_tracking = SESS_TRACKING_OFF;
-	cv_broadcast(&sess_cv);
-
-	/* Wait for the exit. */
-	while (sess_gc_lwp != NULL) {
+	/* Notify the worker to G/C all sessions. */
+	npf_worker_signal();
+	while (sess_tracking == SESS_TRACKING_FLUSH) {
 		cv_wait(&sess_cv, &sess_lock);
 	}
-	stbl = sess_hashtbl;
-	sess_hashtbl = NULL;
-	mutex_exit(&sess_lock);
 
-	sess_htable_destroy(stbl);
-	pool_cache_invalidate(sess_cache);
+	/* Install the new hash table, make it visible. */
+	oldtbl = atomic_swap_ptr(&sess_hashtbl, newtbl);
+	membar_sync();
+	sess_tracking = tracking;
+
+	/* Done.  Destroy the old table, if any. */
+	mutex_exit(&sess_lock);
+	if (oldtbl) {
+		sess_htable_destroy(oldtbl);
+	}
 }
 
 /*
  * npf_session_tracking: enable/disable session tracking.
  */
-int
+void
 npf_session_tracking(bool track)
 {
-
 	if (sess_tracking == SESS_TRACKING_OFF && track) {
 		/* Disabled -> Enable. */
-		return sess_tracking_start();
+		npf_sehash_t *newtbl = sess_htable_create();
+		npf_session_reload(newtbl, SESS_TRACKING_ON);
+		return;
 	}
 	if (sess_tracking == SESS_TRACKING_ON && !track) {
 		/* Enabled -> Disable. */
-		sess_tracking_stop();
-		return 0;
+		npf_session_reload(NULL, SESS_TRACKING_OFF);
+		pool_cache_invalidate(sess_cache);
+		return;
 	}
-	return 0;
+}
+
+static bool
+npf_session_trackable_p(const npf_cache_t *npc)
+{
+	/*
+	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
+	 * cached - protocol is not supported or packet is invalid.
+	 */
+	if (sess_tracking != SESS_TRACKING_ON) {
+		return false;
+	}
+	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+		return false;
+	}
+	return true;
+}
+
+/*
+ * npf_session_fillent: fill a session entry with the protocol data.
+ */
+static bool
+npf_session_fillent(const npf_cache_t *npc, npf_sentry_t *sen)
+{
+	const struct tcphdr *th;
+	const struct udphdr *uh;
+
+	switch (npc->npc_proto) {
+	case IPPROTO_TCP:
+		KASSERT(npf_iscached(npc, NPC_TCP));
+		th = npc->npc_l4.tcp;
+		sen->se_src_id = th->th_sport;
+		sen->se_dst_id = th->th_dport;
+		break;
+	case IPPROTO_UDP:
+		KASSERT(npf_iscached(npc, NPC_UDP));
+		uh = npc->npc_l4.udp;
+		sen->se_src_id = uh->uh_sport;
+		sen->se_dst_id = uh->uh_dport;
+		break;
+	case IPPROTO_ICMP:
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			const struct icmp *ic = npc->npc_l4.icmp;
+			sen->se_src_id = ic->icmp_id;
+			sen->se_dst_id = ic->icmp_id;
+			break;
+		}
+		return false;
+	case IPPROTO_ICMPV6:
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
+			sen->se_src_id = ic6->icmp6_id;
+			sen->se_dst_id = ic6->icmp6_id;
+			break;
+		}
+		return false;
+	default:
+		/* Unsupported protocol. */
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -461,59 +489,28 @@ npf_session_t *
 npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
     const int di, bool *forw)
 {
-	const u_int proto = npf_cache_ipproto(npc);
-	const ifnet_t *ifp = nbuf->nb_ifp;
+	const u_int proto = npc->npc_proto;
+	const u_int ifid = nbuf->nb_ifid;
 	npf_sentry_t senkey, *sen;
 	npf_session_t *se;
 	npf_sehash_t *sh;
-	int flags;
+	u_int flags;
 
-	switch (proto) {
-	case IPPROTO_TCP: {
-		const struct tcphdr *th = npc->npc_l4.tcp;
-		senkey.se_src_id = th->th_sport;
-		senkey.se_dst_id = th->th_dport;
-		break;
-	}
-	case IPPROTO_UDP: {
-		const struct udphdr *uh = npc->npc_l4.udp;
-		senkey.se_src_id = uh->uh_sport;
-		senkey.se_dst_id = uh->uh_dport;
-		break;
-	}
-	case IPPROTO_ICMP:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			const struct icmp *ic = npc->npc_l4.icmp;
-			senkey.se_src_id = ic->icmp_id;
-			senkey.se_dst_id = ic->icmp_id;
-			break;
-		}
-		return NULL;
-	case IPPROTO_ICMPV6:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-			senkey.se_src_id = ic6->icmp6_id;
-			senkey.se_dst_id = ic6->icmp6_id;
-			break;
-		}
-		return NULL;
-	default:
-		/* Unsupported protocol. */
+	if (!npf_session_fillent(npc, &senkey)) {
 		return NULL;
 	}
+	KASSERT(npc->npc_ips[NPF_SRC] && npc->npc_ips[NPF_DST]);
+	KASSERT(npc->npc_alen > 0);
 
-	KASSERT(npc->npc_srcip && npc->npc_dstip && npc->npc_alen > 0);
-	memcpy(&senkey.se_src_addr, npc->npc_srcip, npc->npc_alen);
-	memcpy(&senkey.se_dst_addr, npc->npc_dstip, npc->npc_alen);
+	memcpy(&senkey.se_src_addr, npc->npc_ips[NPF_SRC], npc->npc_alen);
+	memcpy(&senkey.se_dst_addr, npc->npc_ips[NPF_DST], npc->npc_alen);
 	senkey.se_alen = npc->npc_alen;
 
 	/*
 	 * Note: this is a special case where we use common ID pointer
 	 * to pass the structure for the key comparator.
 	 */
-	npf_secomid_t scid;
-	memset(&scid, 0, sizeof(npf_secomid_t));
-	scid = (npf_secomid_t){ .proto = proto, .if_idx = ifp->if_index };
+	npf_secomid_t scid = { .proto = proto, .ifid = ifid };
 	senkey.se_common_id = &scid;
 
 	/*
@@ -534,7 +531,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	}
 	se = sen->se_backptr;
 	KASSERT(se->s_common_id.proto == proto);
-	KASSERT(se->s_common_id.if_idx == ifp->if_index);
+	KASSERT(se->s_common_id.ifid == 0 || se->s_common_id.ifid == ifid);
 	flags = se->s_flags;
 
 	/* Check if session is active and not expired. */
@@ -571,15 +568,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	bool forw;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
-
-	/*
-	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
-	 * cached - protocol is not supported or packet is invalid.
-	 */
-	if (sess_tracking == SESS_TRACKING_OFF) {
-		return NULL;
-	}
-	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+	if (!npf_session_trackable_p(npc)) {
 		return NULL;
 	}
 
@@ -611,33 +600,23 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 }
 
 /*
- * npf_establish_session: create a new session, insert into the global list.
+ * npf_session_establish: create a new session, insert into the global list.
  *
  * => Session is created with the reference held for the caller.
  * => Session will be activated on the first reference release.
  */
 npf_session_t *
-npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
+npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, int di, bool per_if)
 {
-	const ifnet_t *ifp = nbuf->nb_ifp;
-	const struct tcphdr *th;
-	const struct udphdr *uh;
 	npf_sentry_t *fw, *bk;
 	npf_sehash_t *sh;
 	npf_session_t *se;
-	u_int proto, alen;
+	u_int alen;
 	bool ok;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
-	/*
-	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
-	 * cached - protocol is not supported or packet is invalid.
-	 */
-	if (sess_tracking == SESS_TRACKING_OFF) {
-		return NULL;
-	}
-	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
+	if (!npf_session_trackable_p(npc)) {
 		return NULL;
 	}
 
@@ -665,58 +644,18 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	alen = npc->npc_alen;
 	fw = &se->s_forw_entry;
-	memcpy(&fw->se_src_addr, npc->npc_srcip, alen);
-	memcpy(&fw->se_dst_addr, npc->npc_dstip, alen);
+	memcpy(&fw->se_src_addr, npc->npc_ips[NPF_SRC], alen);
+	memcpy(&fw->se_dst_addr, npc->npc_ips[NPF_DST], alen);
 
 	/* Protocol and interface. */
-	proto = npf_cache_ipproto(npc);
-	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
-	se->s_common_id.proto = proto;
-	se->s_common_id.if_idx = ifp->if_index;
+	se->s_common_id.proto = npc->npc_proto;
+	se->s_common_id.ifid = per_if ? nbuf->nb_ifid : 0;
 
-	switch (proto) {
-	case IPPROTO_TCP:
-		KASSERT(npf_iscached(npc, NPC_TCP));
-		th = npc->npc_l4.tcp;
-		/* Additional IDs: ports. */
-		fw->se_src_id = th->th_sport;
-		fw->se_dst_id = th->th_dport;
-		break;
-	case IPPROTO_UDP:
-		KASSERT(npf_iscached(npc, NPC_UDP));
-		/* Additional IDs: ports. */
-		uh = npc->npc_l4.udp;
-		fw->se_src_id = uh->uh_sport;
-		fw->se_dst_id = uh->uh_dport;
-		break;
-	case IPPROTO_ICMP:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			/* ICMP query ID. */
-			const struct icmp *ic = npc->npc_l4.icmp;
-			fw->se_src_id = ic->icmp_id;
-			fw->se_dst_id = ic->icmp_id;
-			break;
-		}
-		ok = false;
-		goto out;
-	case IPPROTO_ICMPV6:
-		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			/* ICMP query ID. */
-			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-			fw->se_src_id = ic6->icmp6_id;
-			fw->se_dst_id = ic6->icmp6_id;
-			break;
-		}
-		ok = false;
-		goto out;
-	default:
-		/* Unsupported. */
+	/* Setup "forwards" entry. */
+	if (!npf_session_fillent(npc, fw)) {
 		ok = false;
 		goto out;
 	}
-
-	/* Set last activity time for a new session. */
-	getnanouptime(&se->s_atime);
 
 	/* Setup inverted "backwards". */
 	bk = &se->s_back_entry;
@@ -728,6 +667,9 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	/* Finish the setup of entries. */
 	fw->se_backptr = bk->se_backptr = se;
 	fw->se_alen = bk->se_alen = alen;
+
+	/* Set last activity time for a new session. */
+	getnanouptime(&se->s_atime);
 
 	/*
 	 * Insert the session and both entries into the tree.
@@ -762,10 +704,9 @@ out:
 static void
 npf_session_destroy(npf_session_t *se)
 {
-
 	if (se->s_nat) {
 		/* Release any NAT related structures. */
-		npf_nat_expire(se->s_nat);
+		npf_nat_destroy(se->s_nat);
 	}
 	if (se->s_rproc) {
 		/* Release rule procedure. */
@@ -786,7 +727,7 @@ npf_session_destroy(npf_session_t *se)
  * and re-insert session entry accordingly.
  */
 int
-npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
+npf_session_setnat(npf_session_t *se, npf_nat_t *nt, u_int ntype)
 {
 	npf_sehash_t *sh;
 	npf_sentry_t *sen;
@@ -798,56 +739,61 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 
 	/* First, atomically check and associate NAT entry. */
 	if (atomic_cas_ptr(&se->s_nat, NULL, nt) != NULL) {
-		/* Race: see below for description. */
+		/* Race with a duplicate packet. */
 		npf_stats_inc(NPF_STAT_RACE_NAT);
 		return EISCONN;
 	}
 
-	/*
-	 * Update, re-hash and re-insert "backwards" entry, according to
-	 * the translation.  First, remove the entry from tree.  Note that
-	 * a duplicate packet may establish a duplicate session while lock
-	 * will be released.  In such case, caller will drop this packet
-	 * and structures associated with it.  Such race condition should
-	 * never happen in practice, though.
-	 */
 	sen = &se->s_back_entry;
 	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, sen);
 
+	/*
+	 * Note: once the lock is release, the session might be a G/C
+	 * target, therefore keep SE_REMBACK bit set until re-insert.
+	 */
 	rw_enter(&sh->sh_lock, RW_WRITER);
 	rb_tree_remove_node(&sh->sh_tree, sen);
 	sh->sh_count--;
 	rw_exit(&sh->sh_lock);
 
 	/*
-	 * New source/destination and hash.  Note that source/destination
-	 * are inverted, since we are handling "backwards" entry.
+	 * Update the source/destination IDs and rehash.  Note that we are
+	 * handling the "backwards" entry, therefore the opposite mapping.
 	 */
 	npf_nat_gettrans(nt, &taddr, &tport);
-	if (di == PFIL_OUT) {
-		/* NPF_NATOUT: source in "forwards" = destination. */
+	switch (ntype) {
+	case NPF_NATOUT:
+		/* Source in "forwards" => destination. */
 		memcpy(&sen->se_dst_addr, taddr, sen->se_alen);
-		if (tport) {
+		if (tport)
 			sen->se_dst_id = tport;
-		}
-	} else {
-		/* NPF_NATIN: destination in "forwards" = source. */
+		break;
+	case NPF_NATIN:
+		/* Destination in "forwards" => source. */
 		memcpy(&sen->se_src_addr, taddr, sen->se_alen);
-		if (tport) {
+		if (tport)
 			sen->se_src_id = tport;
-		}
+		break;
 	}
 	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, sen);
 
-	/* Insert into the new bucket. */
+	/*
+	 * Insert the entry back into a potentially new bucket.
+	 *
+	 * Note: synchronise with the G/C thread here for a case when the
+	 * old session is still being expired while a duplicate is being
+	 * created here.  This race condition is rare.
+	 */
 	rw_enter(&sh->sh_lock, RW_WRITER);
-	ok = (rb_tree_insert_node(&sh->sh_tree, sen) == sen);
+	ok = rb_tree_insert_node(&sh->sh_tree, sen) == sen;
 	if (__predict_true(ok)) {
 		sh->sh_count++;
 		NPF_PRINTF(("NPF: se %p assoc with nat %p\n", se, se->s_nat));
 	} else {
-		/* FIXMEgc */
-		printf("npf_session_setnat: Houston, we've had a problem.\n");
+		/* Race: mark a removed entry and explicitly expire. */
+		atomic_or_uint(&se->s_flags, SE_REMBACK | SE_EXPIRE);
+		npf_stats_inc(NPF_STAT_RACE_NAT);
+		se->s_nat = NULL;
 	}
 	rw_exit(&sh->sh_lock);
 	return ok ? 0 : EISCONN;
@@ -859,7 +805,6 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 void
 npf_session_expire(npf_session_t *se)
 {
-
 	/* KASSERT(se->s_refcnt > 0); XXX: npf_nat_freepolicy() */
 	atomic_or_uint(&se->s_flags, SE_EXPIRE);
 }
@@ -870,7 +815,6 @@ npf_session_expire(npf_session_t *se)
 bool
 npf_session_pass(const npf_session_t *se, npf_rproc_t **rp)
 {
-
 	KASSERT(se->s_refcnt > 0);
 	if ((se->s_flags & SE_PASS) != 0) {
 		*rp = se->s_rproc;
@@ -886,12 +830,15 @@ npf_session_pass(const npf_session_t *se, npf_rproc_t **rp)
 void
 npf_session_setpass(npf_session_t *se, npf_rproc_t *rp)
 {
-
 	KASSERT((se->s_flags & SE_ACTIVE) == 0);
 	KASSERT(se->s_refcnt > 0);
 	KASSERT(se->s_rproc == NULL);
 
-	/* No need for atomic since the session is not yet active. */
+	/*
+	 * No need for atomic since the session is not yet active.
+	 * If rproc is set, the caller transfers its reference to us,
+	 * which will be released on npf_session_destroy().
+	 */
 	se->s_flags |= SE_PASS;
 	se->s_rproc = rp;
 }
@@ -903,9 +850,8 @@ npf_session_setpass(npf_session_t *se, npf_rproc_t *rp)
 void
 npf_session_release(npf_session_t *se)
 {
-
 	KASSERT(se->s_refcnt > 0);
-	if ((se->s_flags & SE_ACTIVE) == 0) {
+	if ((se->s_flags & (SE_ACTIVE | SE_EXPIRE)) == 0) {
 		/* Activate: after this point, session is globally visible. */
 		se->s_flags |= SE_ACTIVE;
 	}
@@ -919,7 +865,6 @@ npf_session_release(npf_session_t *se)
 npf_nat_t *
 npf_session_retnat(npf_session_t *se, const int di, bool *forw)
 {
-
 	KASSERT(se->s_refcnt > 0);
 	*forw = (se->s_flags & PFIL_ALL) == di;
 	return se->s_nat;
@@ -950,47 +895,52 @@ static void
 npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 {
 	struct timespec tsnow;
-	npf_sentry_t *sen, *nsen;
-	npf_session_t *se;
 	u_int i;
 
+	KASSERT(mutex_owned(&sess_lock));
 	getnanouptime(&tsnow);
 
 	/* Scan each session entry in the hash table. */
 	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
+		npf_sentry_t *sen, *nsen;
 		npf_sehash_t *sh;
 
 		sh = &sess_hashtbl[i];
 		if (sh->sh_count == 0) {
 			continue;
 		}
+
 		rw_enter(&sh->sh_lock, RW_WRITER);
 		/* For each (left -> right) ... */
 		sen = rb_tree_iterate(&sh->sh_tree, NULL, RB_DIR_LEFT);
 		while (sen != NULL) {
+			npf_session_t *se;
+
 			/* Get session, pre-iterate, skip if not expired. */
 			se = sen->se_backptr;
 			nsen = rb_tree_iterate(&sh->sh_tree, sen, RB_DIR_RIGHT);
 			if (!npf_session_expired(se, &tsnow) && !flushall) {
-				KASSERT((se->s_flags & SE_REMOVING) == 0);
+				KASSERT((se->s_flags & SE_REMOVED) == 0);
 				sen = nsen;
 				continue;
 			}
 
-			/* Expired - remove from the tree. */
+			/* Expired: remove from the tree. */
+			atomic_or_uint(&se->s_flags, SE_EXPIRE);
 			rb_tree_remove_node(&sh->sh_tree, sen);
 			sh->sh_count--;
 
 			/*
-			 * Set removal bit when the first entry is removed.
-			 * If already set, then second entry has been removed,
-			 * therefore move the session into the G/C list.
+			 * Remove the session and move it to the G/C list,
+			 * if we are removing the forwards entry.  The list
+			 * is protected by its bucket lock.
 			 */
-			if (se->s_flags & SE_REMOVING) {
+			if (&se->s_forw_entry == sen) {
+				atomic_or_uint(&se->s_flags, SE_REMFORW);
 				LIST_REMOVE(se, s_list);
 				LIST_INSERT_HEAD(gc_list, se, s_list);
 			} else {
-				atomic_or_uint(&se->s_flags, SE_REMOVING);
+				atomic_or_uint(&se->s_flags, SE_REMBACK);
 			}
 
 			/* Next.. */
@@ -1002,66 +952,56 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 }
 
 /*
- * npf_session_freelist: destroy all sessions, which have no references,
- * in the given G/C list.  Return true, if the list is empty.
+ * npf_session_worker: G/C to run from a worker thread.
  */
 static void
-npf_session_freelist(struct npf_sesslist *gc_list)
+npf_session_worker(void)
 {
 	npf_session_t *se, *nse;
 
-	se = LIST_FIRST(gc_list);
+	/*
+	 * Garbage collect expired sessions.
+	 */
+	mutex_enter(&sess_lock);
+	if (sess_hashtbl) {
+		bool flush = (sess_tracking != SESS_TRACKING_ON);
+		npf_session_gc(&sess_gc_list, flush);
+	}
+	if (sess_tracking == SESS_TRACKING_FLUSH) {
+		/* Flush was requested - indicate we are done. */
+		sess_tracking = SESS_TRACKING_OFF;
+		cv_broadcast(&sess_cv);
+	}
+	mutex_exit(&sess_lock);
+again:
+	/*
+	 * Destroy all sessions in the G/C list.
+	 * May need to wait for the references to drain.
+	 */
+	se = LIST_FIRST(&sess_gc_list);
 	while (se != NULL) {
+		bool removed = (se->s_flags & SE_REMOVED) == SE_REMOVED;
+
 		nse = LIST_NEXT(se, s_list);
-		if (se->s_refcnt == 0) {
-			/* Destroy only if no references. */
+		KASSERT((se->s_flags & SE_EXPIRE) != 0);
+		if (removed && se->s_refcnt == 0) {
+			/* Destroy only if removed and no references. */
 			LIST_REMOVE(se, s_list);
 			npf_session_destroy(se);
 		}
 		se = nse;
 	}
+	if (!LIST_EMPTY(&sess_gc_list)) {
+		kpause("npfcongc", false, 1, NULL);
+		goto again;
+	}
 }
 
-/*
- * npf_session_worker: G/C worker thread.
- */
-static void
-npf_session_worker(void *arg)
+void
+npf_session_load(npf_sehash_t *newtbl)
 {
-	struct npf_sesslist gc_list;
-	bool flushreq = false;
-
-	LIST_INIT(&gc_list);
-	do {
-		/* Periodically wake up, unless get notified. */
-		mutex_enter(&sess_lock);
-		(void)cv_timedwait(&sess_cv, &sess_lock, SESS_GC_INTERVAL);
-		flushreq = (sess_tracking != SESS_TRACKING_ON);
-		npf_session_gc(&gc_list, flushreq);
-		if (sess_tracking == SESS_TRACKING_FLUSH) {
-			/* Flush was requested - on again, notify waiter. */
-			sess_tracking = SESS_TRACKING_ON;
-			cv_broadcast(&sess_cv);
-		}
-		mutex_exit(&sess_lock);
-
-		npf_session_freelist(&gc_list);
-
-	} while (sess_tracking != SESS_TRACKING_OFF);
-
-	/* Wait for any referenced sessions to be released. */
-	while (!LIST_EMPTY(&gc_list)) {
-		kpause("npfgcfr", false, 1, NULL);
-		npf_session_freelist(&gc_list);
-	}
-
-	/* Notify that we are done. */
-	mutex_enter(&sess_lock);
-	sess_gc_lwp = NULL;
-	cv_broadcast(&sess_cv);
-	mutex_exit(&sess_lock);
-
-	kthread_exit(0);
+	KASSERT(newtbl != NULL);
+	npf_session_reload(newtbl, SESS_TRACKING_ON);
 }
 
 /*
@@ -1075,18 +1015,16 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 	npf_session_t *se;
 	int error = 0, i;
 
-	/* If not tracking - empty. */
+	/*
+	 * If not tracking - empty.  Note: must acquire sess_lock to
+	 * prevent from hash table destruction as well as expiring or
+	 * removing of sessions by the G/C thread.
+	 */
 	mutex_enter(&sess_lock);
-	if (sess_tracking == SESS_TRACKING_OFF) {
+	if (sess_tracking != SESS_TRACKING_ON) {
 		mutex_exit(&sess_lock);
 		return 0;
 	}
-
-	/*
-	 * Note: hold the session lock to prevent G/C thread from session
-	 * expiring and removing.  Therefore, no need to exclusively lock
-	 * the entire hash table.
-	 */
 	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
 		sh = &sess_hashtbl[i];
 		if (sh->sh_count == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.h,v 1.1.6.2 2012/04/17 00:08:33 yamt Exp $ */
+/*	$NetBSD: minixfs3.h,v 1.1.6.3 2014/05/22 11:41:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012
@@ -111,13 +111,13 @@ struct mfs_sblock {
 #define ZONE_NUM_SIZE		sizeof(zone_t) /* # bytes in zone  */
 #define INODE_SIZE		sizeof(struct mfs_dinode) /* bytes in dsk ino */
 /* # zones/indir block */
-#define NINDIR(fs)		((fs)->mfs_block_size/ZONE_NUM_SIZE)
+#define MFS_NINDIR(fs)		((fs)->mfs_block_size/ZONE_NUM_SIZE)
 
 #define NO_ZONE			((zone_t) 0)	/* absence of a zone number */
 #define NO_BLOCK		((block_t) 0)	/* absence of a block number */
 
 /* Turn file system block numbers into disk block addresses */
-#define fsbtodb(fs, b)	((b) << (fs)->mfs_fsbtodb)
+#define MFS_FSBTODB(fs, b)	((b) << (fs)->mfs_fsbtodb)
 
 #define	ino_to_fsba(fs, x)						\
 	(((x) - 1) / (fs)->mfs_inodes_per_block +			\
@@ -149,9 +149,9 @@ void minixfs3_i_bswap(struct mfs_dinode *, struct mfs_dinode *);
  * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#define blkoff(fs, loc)		/* calculates (loc % fs->mfs_bsize) */ \
+#define mfs_blkoff(fs, loc)	/* calculates (loc % fs->mfs_bsize) */ \
 	((loc) & (fs)->mfs_qbmask)
-#define lblkno(fs, loc)		/* calculates (loc / fs->mfs_bsize) */ \
+#define mfs_lblkno(fs, loc)	/* calculates (loc / fs->mfs_bsize) */ \
 	((loc) >> (fs)->mfs_bshift)
 
 /* Flag bits for i_mode in the inode. */

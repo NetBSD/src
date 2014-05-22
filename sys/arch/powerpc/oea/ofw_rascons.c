@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.6.2.1 2012/04/17 00:06:47 yamt Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.6.2.2 2014/05/22 11:40:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.6.2.1 2012/04/17 00:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.6.2.2 2014/05/22 11:40:04 yamt Exp $");
 
 #include "wsdisplay.h"
 
@@ -98,7 +98,9 @@ rascons_cnattach(void)
 
 	wsfont_init();
 	if (copy_rom_font() == 0) {
+#if !defined(OFWOEA_WSCONS_NO_ROM_FONT)
 		romfont_loaded = 1;
+#endif /* !OFWOEA_WSCONS_NO_ROM_FONT */
 	}
 
 	/* set up rasops */

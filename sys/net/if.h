@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.154.2.1 2012/10/30 17:22:42 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.154.2.2 2014/05/22 11:41:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -284,7 +284,7 @@ typedef struct ifnet {
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
-	struct pfil_head if_pfil;	/* filtering point */
+	pfil_head_t *	if_pfil;	/* filtering point */
 	uint64_t if_capabilities;	/* interface capabilities */
 	uint64_t if_capenable;		/* capabilities enabled */
 	union {
@@ -388,6 +388,7 @@ typedef struct ifnet {
 #define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
 
 /* Capabilities that interfaces can advertise. */
+					/* 0x01 .. 0x40 were previously used */
 #define	IFCAP_TSOv4		0x00080	/* can do TCPv4 segmentation offload */
 #define	IFCAP_CSUM_IPv4_Rx	0x00100	/* can do IPv4 header checksums (Rx) */
 #define	IFCAP_CSUM_IPv4_Tx	0x00200	/* can do IPv4 header checksums (Tx) */
@@ -400,6 +401,8 @@ typedef struct ifnet {
 #define	IFCAP_CSUM_UDPv6_Rx	0x10000	/* can do IPv6/UDP checksums (Rx) */
 #define	IFCAP_CSUM_UDPv6_Tx	0x20000	/* can do IPv6/UDP checksums (Tx) */
 #define	IFCAP_TSOv6		0x40000	/* can do TCPv6 segmentation offload */
+#define	IFCAP_LRO		0x80000	/* can do Large Receive Offload */
+#define	IFCAP_MASK		0xfff80 /* currently valid capabilities */
 
 #define	IFCAPBITS		\
 	"\020"			\
@@ -414,7 +417,8 @@ typedef struct ifnet {
 	"\20TCP6CSUM_Tx"	\
 	"\21UDP6CSUM_Rx"	\
 	"\22UDP6CSUM_Tx"	\
-	"\23TSO6"
+	"\23TSO6"		\
+	"\24LRO"		\
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -598,6 +602,8 @@ struct	ifreq {
 						 */
 #define	ifr_buf		ifr_ifru.ifru_b.b_buf	/* new interface ioctls */
 #define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
+#define	ifr_index	ifr_ifru.ifru_value	/* interface index, BSD */
+#define	ifr_ifindex	ifr_index		/* interface index, linux */
 };
 
 #ifdef _KERNEL
@@ -607,6 +613,7 @@ struct	ifreq {
 #define	ifreq_getbroadaddr	ifreq_getaddr
 
 static inline const struct sockaddr *
+/*ARGSUSED*/
 ifreq_getaddr(u_long cmd, const struct ifreq *ifr)
 {
 	return &ifr->ifr_addr;
@@ -878,7 +885,7 @@ void	ifinit(void);
 void	ifinit1(void);
 int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *,
     lwp_t *);
-int	ifioctl(struct socket *, u_long, void *, struct lwp *);
+extern int (*ifioctl)(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);

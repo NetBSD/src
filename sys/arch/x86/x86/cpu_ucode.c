@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.1.6.3 2012/10/30 17:20:33 yamt Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.1.6.4 2014/05/22 11:40:13 yamt Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.1.6.3 2012/10/30 17:20:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.1.6.4 2014/05/22 11:40:13 yamt Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -77,7 +77,7 @@ compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
 
 	return 0;
 }
-#endif
+#endif /* COMPAT60 */
 
 int
 cpu_ucode_md_open(firmware_handle_t *fwh, int loader_version, const char *fwname)
@@ -145,4 +145,4 @@ compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data)
 	sc->sc_blobsize = 0;
 	return error;
 }
-#endif
+#endif /* COMPAT60 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cd.c,v 1.3.4.1 2012/05/23 10:08:21 yamt Exp $	*/
+/*	$NetBSD: t_cd.c,v 1.3.4.2 2014/05/22 11:42:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -30,12 +30,14 @@
 
 #include <atf-c.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <util.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-#include <rump/scsitest.h>
+
+#include "scsitest.h"
 
 #include "../../h_macros.h"
 
@@ -55,6 +57,12 @@ ATF_TC_BODY(noisyeject, tc)
 	RL(part = getrawpartition());
 	fname[strlen(fname)-1] = 'a' + part;
 	rump_init();
+	/*
+	 * Rump CD emulation has been fixed, so no longer a problem.
+	 *
+	atf_tc_expect_signal(SIGSEGV, "PR kern/47646: Broken test or "
+	    "a real problem in rump or the driver");
+	 */
 	RL(fd = rump_sys_open(fname, O_RDWR));
 	RL(rump_sys_ioctl(fd, DIOCEJECT, &arg));
 

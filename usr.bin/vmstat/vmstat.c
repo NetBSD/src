@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.186.2.5 2012/05/23 10:08:28 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.186.2.6 2014/05/22 11:42:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.186.2.5 2012/05/23 10:08:28 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.186.2.6 2014/05/22 11:42:51 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.186.2.5 2012/05/23 10:08:28 yamt Exp $");
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kernhist.h>
 
@@ -139,15 +138,12 @@ __RCSID("$NetBSD: vmstat.c,v 1.186.2.5 2012/05/23 10:08:28 yamt Exp $");
 struct cpu_info {
 	struct cpu_data ci_data;
 };
-CIRCLEQ_HEAD(cpuqueue, cpu_info);
-struct  cpuqueue cpu_queue;
-
 #else
-
 # include <sys/cpu.h>
-struct  cpuqueue cpu_queue;
-
 #endif
+
+struct cpu_info **cpu_infos;
+
 /*
  * General namelist
  */
@@ -171,8 +167,8 @@ struct nlist namelist[] =
 	{ .n_name = "_time_second" },
 #define X_TIME		8
 	{ .n_name = "_time" },
-#define X_CPU_QUEUE	9
-	{ .n_name = "_cpu_queue" },
+#define X_CPU_INFOS	9
+	{ .n_name = "_cpu_infos" },
 #define	X_NL_SIZE	10
 	{ .n_name = NULL },
 };
@@ -733,7 +729,7 @@ dovmstat(struct timespec *interval, int reps)
 	if (!hz)
 		kread(namelist, X_HZ, &hz, sizeof(hz));
 
-	kread(namelist, X_CPU_QUEUE, &cpu_queue, sizeof(cpu_queue));
+	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt)
@@ -969,8 +965,9 @@ dosum(void)
 	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
 	(void)printf("%9u swap allocations\n", uvmexp.nswget);
 
-	kread(namelist, X_CPU_QUEUE, &cpu_queue, sizeof(cpu_queue));
+	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 	cpucounters(&cc);
+
 	(void)printf("%9" PRIu64 " total faults taken\n", cc.nfault);
 	(void)printf("%9" PRIu64 " traps\n", cc.ntrap);
 	(void)printf("%9" PRIu64 " device interrupts\n", cc.nintr);
@@ -1091,28 +1088,31 @@ drvstats(int *ovflwp)
 void
 cpucounters(struct cpu_counter *cc)
 {
-	struct cpu_info *ci, *first = NULL;
-	(void)memset(cc, 0, sizeof(*cc));
-	CIRCLEQ_FOREACH(ci, &cpu_queue, ci_data.cpu_qchain) {
-		struct cpu_info tci;
+	struct cpu_info **slot = cpu_infos;
+
+	memset(cc, 0, sizeof(*cc));
+
+	for (;;) {
+		struct cpu_info tci, *ci = NULL;
+
+		deref_kptr(slot++, &ci, sizeof(ci), "CPU array trashed");
+		if (!ci) {
+			break;
+		}
+
 		if ((size_t)kvm_read(kd, (u_long)ci, &tci, sizeof(tci))
 		    != sizeof(tci)) {
-		    warnx("Can't read cpu info from %p (%s)",
-			ci, kvm_geterr(kd));
-		    (void)memset(cc, 0, sizeof(*cc));
-		    return;
+			warnx("Can't read cpu info from %p (%s)",
+			    ci, kvm_geterr(kd));
+			memset(cc, 0, sizeof(*cc));
+			return;
 		}
-		if (first == NULL)
-			first = tci.ci_data.cpu_qchain.cqe_prev;
 		cc->nintr += tci.ci_data.cpu_nintr;
 		cc->nsyscall += tci.ci_data.cpu_nsyscall;
 		cc->nswtch = tci.ci_data.cpu_nswtch;
 		cc->nfault = tci.ci_data.cpu_nfault;
 		cc->ntrap = tci.ci_data.cpu_ntrap;
 		cc->nsoft = tci.ci_data.cpu_nsoft;
-		ci = &tci;
-		if (tci.ci_data.cpu_qchain.cqe_next == first)
-			break;
 	}
 }
 
@@ -1289,11 +1289,24 @@ dopool(int verbose, int wide)
 	int first, ovflw;
 	void *addr;
 	long total, inuse, this_total, this_inuse;
+	struct {
+		uint64_t pt_nget;
+		uint64_t pt_nfail;
+		uint64_t pt_nput;
+		uint64_t pt_nout;
+		uint64_t pt_nitems;
+		uint64_t pt_npagealloc;
+		uint64_t pt_npagefree;
+		uint64_t pt_npages;
+	} pool_totals;
+	char in_use[8];
+	char avail[8];
 	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	struct pool_allocator pa;
 	char name[32], maxp[32];
 
+	memset(&pool_totals, 0, sizeof pool_totals);
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
 
@@ -1341,15 +1354,25 @@ dopool(int verbose, int wide)
 		PRWORD(ovflw, "%-*s", wide ? 16 : 11, 0, name);
 		PRWORD(ovflw, " %*u", wide ? 6 : 5, 1, pp->pr_size);
 		PRWORD(ovflw, " %*lu", wide ? 12 : 9, 1, pp->pr_nget);
+		pool_totals.pt_nget += pp->pr_nget;
 		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
+		pool_totals.pt_nfail += pp->pr_nfail;
 		PRWORD(ovflw, " %*lu", wide ? 12 : 9, 1, pp->pr_nput);
-		if (wide)
+		pool_totals.pt_nput += pp->pr_nput;
+		if (wide) {
 			PRWORD(ovflw, " %*u", 7, 1, pp->pr_nout);
-		if (wide)
+			pool_totals.pt_nout += pp->pr_nout;
+		}
+		if (wide) {
 			PRWORD(ovflw, " %*u", 6, 1, pp->pr_nitems);
+			pool_totals.pt_nitems += pp->pr_nitems;
+		}
 		PRWORD(ovflw, " %*lu", wide ? 7 : 6, 1, pp->pr_npagealloc);
+		pool_totals.pt_npagealloc += pp->pr_npagealloc;
 		PRWORD(ovflw, " %*lu", wide ? 7 : 6, 1, pp->pr_npagefree);
+		pool_totals.pt_npagefree += pp->pr_npagefree;
 		PRWORD(ovflw, " %*u", 6, 1, pp->pr_npages);
+		pool_totals.pt_npages += pp->pr_npages;
 		if (wide)
 			PRWORD(ovflw, " %*u", 7, 1, pa.pa_pagesz);
 		PRWORD(ovflw, " %*u", 6, 1, pp->pr_hiwat);
@@ -1382,6 +1405,25 @@ dopool(int verbose, int wide)
 		}
 		(void)printf("\n");
 	}
+	if (wide) {
+		snprintf(in_use, sizeof in_use, "%7"PRId64, pool_totals.pt_nout);
+		snprintf(avail, sizeof avail, "%6"PRId64, pool_totals.pt_nitems);
+	} else {
+		in_use[0] = '\0';
+		avail[0] = '\0';
+	}
+	(void)printf(
+	    "%-*s%*s%*"PRId64"%5"PRId64"%*"PRId64"%s%s%*"PRId64"%*"PRId64"%6"PRId64"\n",
+	    wide ? 16 : 11, "Totals",
+	    wide ? 6 : 5, "",
+	    wide ? 12 : 9, pool_totals.pt_nget,
+	    pool_totals.pt_nfail,
+	    wide ? 12 : 9, pool_totals.pt_nput,
+	    in_use,
+	    avail,
+	    wide ? 7 : 6, pool_totals.pt_npagealloc,
+	    wide ? 7 : 6, pool_totals.pt_npagefree,
+	    pool_totals.pt_npages);
 
 	inuse /= KILO;
 	total /= KILO;
@@ -1490,10 +1532,6 @@ struct kernel_hash {
 		"buffer hash",
 		X_BUFHASH, X_BUFHASHTBL,
 		HASH_LIST, offsetof(struct buf, b_hash)
-	}, {
-		"inode cache (ihash)",
-		X_IHASH, X_IHASHTBL,
-		HASH_LIST, offsetof(struct inode, i_hash)
 	}, {
 		"ipv4 address -> interface hash",
 		X_IFADDRHASH, X_IFADDRHASHTBL,

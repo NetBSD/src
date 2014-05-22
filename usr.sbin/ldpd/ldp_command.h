@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.h,v 1.2 2011/06/16 08:27:28 kefren Exp $ */
+/* $NetBSD: ldp_command.h,v 1.2.2.1 2014/05/22 11:43:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,5 +52,10 @@ void	command_accept(int);
 int	add_command_socket(int);
 void	command_dispatch(struct com_sock *);
 void	command_close(int);
+
+/* Used by SIGINFO handler */
+int show_bindings(int, char *);
+int show_labels(int, char *);
+int show_neighbours(int, char *);
 
 #endif	/* !_LDP_COMMAND_H_ */

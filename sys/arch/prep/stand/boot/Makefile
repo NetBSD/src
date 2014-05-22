@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25.4.1 2012/05/23 10:07:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.25.4.2 2014/05/22 11:40:05 yamt Exp $
 
 NOMAN= # defined
 
@@ -46,6 +46,7 @@ BINMODE= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -56,26 +57,15 @@ CLEANFILES+= vers.c machine powerpc ${PROG}.elf
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine powerpc
-.NOPATH: machine powerpc
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-powerpc::
-	-rm -f $@
-	ln -s ${S}/arch/powerpc/include $@
-.endif
-
 vers.c: ${.CURDIR}/../boot/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 	${STRIP} -o ${PROG} ${PROG}.elf
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.16 2010/07/01 16:44:05 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.16.6.1 2014/05/22 11:37:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.16 2010/07/01 16:44:05 dyoung Exp $");
+__RCSID("$NetBSD: parse.c,v 1.16.6.1 2014/05/22 11:37:28 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -44,13 +44,16 @@ __RCSID("$NetBSD: parse.c,v 1.16 2010/07/01 16:44:05 dyoung Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <netatalk/at.h>
-#include <netiso/iso.h>
 
 #include "env.h"
 #include "parse.h"
 #include "util.h"
 
+#ifdef DEBUG
+#define dbg_warnx(__fmt, ...)	warnx(__fmt, __VA_ARGS__)
+#else
 #define dbg_warnx(__fmt, ...)	/* empty */
+#endif
 
 static int parser_default_init(struct parser *);
 static int pbranch_init(struct parser *);
@@ -301,7 +304,6 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	union {
 		struct sockaddr sa;
 		struct sockaddr_at sat;
-		struct sockaddr_iso siso;
 		struct sockaddr_in sin;
 		struct sockaddr_storage ss;
 	} u;
@@ -410,13 +412,6 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 			u.sat.sat_addr.s_node = node;
 			sa = &u.sa;
 		}
-		break;
-	case AF_ISO:
-		u.siso.siso_len = sizeof(u.siso);
-		u.siso.siso_family = AF_ISO;
-		/* XXX iso_addr(3) matches ANYTHING! */
-		u.siso.siso_addr = *iso_addr(arg0);
-		sa = &u.sa;
 		break;
 	case AF_LINK:
 		if (parse_linkaddr(arg0, &u.ss) == -1)
@@ -577,9 +572,9 @@ pbranch_match(const struct parser *p, const struct match *im,
 	memset(&tmpm, 0, sizeof(tmpm));
 
 	SIMPLEQ_FOREACH(b, &pb->pb_branches, b_next) {
-		dbg_warnx("%s: b->b_nextparser %p", __func__,
-		    (const void *)b->b_nextparser);
 		nextp = b->b_nextparser;
+		dbg_warnx("%s: b->b_nextparser %p [%s]", __func__,
+		    nextp, nextp ? nextp->p_name : "(null)");
 		if (nextp == NULL) {
 			if (arg == NULL) {
 				nmatch++;
@@ -775,8 +770,9 @@ pbranch_setbranches(struct pbranch *pb, const struct branch *brs, size_t nbr)
 		if ((b = malloc(sizeof(*b))) == NULL)
 			goto err;
 		*b = brs[i];
-		dbg_warnx("%s: b->b_nextparser %p", __func__,
-		    (const void *)b->b_nextparser);
+		dbg_warnx("%s: b->b_nextparser %p [%s]", __func__,
+		    b->b_nextparser, b->b_nextparser ? b->b_nextparser->p_name
+		    : "(null)");
 		SIMPLEQ_INSERT_TAIL(&pb->pb_branches, b, b_next);
 	}
 

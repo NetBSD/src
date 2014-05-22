@@ -1,12 +1,12 @@
-#	$NetBSD: std.n900,v 1.2.2.3 2013/01/23 00:05:45 yamt Exp $
+#	$NetBSD: std.n900,v 1.2.2.4 2014/05/22 11:39:40 yamt Exp $
 #
 # standard NetBSD/evbarm for N900 options
 
 machine	evbarm arm
 include 	"arch/evbarm/conf/std.evbarm"
 
-# Pull in BEAGLEBOARD config definitions.
-include		"arch/evbarm/conf/files.beagle"
+# Pull in N900 config definitions.
+include		"arch/evbarm/conf/files.n900"
 
 # To support easy transit to ../arch/arm/arm32
 options 	__HAVE_CPU_COUNTER
@@ -19,7 +19,6 @@ options 	FPU_VFP
 makeoptions	LOADADDRESS="0x80300000"
 makeoptions	BOARDTYPE="n900"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.beagle"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options		ARM_GENERIC_TODR

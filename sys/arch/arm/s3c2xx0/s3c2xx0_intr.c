@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.15.2.1 2012/04/17 00:06:07 yamt Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.15.2.2 2014/05/22 11:39:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.15.2.1 2012/04/17 00:06:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.15.2.2 2014/05/22 11:39:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,13 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.15.2.1 2012/04/17 00:06:07 yamt E
 
 volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-static inline void
-__raise(int ipl)
-{
-	if (curcpl() < ipl) {
-		s3c2xx0_setipl(ipl);
-	}
-}
 /*
  * modify interrupt mask table for SPL levels
  */
@@ -150,7 +143,8 @@ s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch * dispatch_table, int icu_len)
 		dispatch_table[i].func = stray_interrupt;
 		dispatch_table[i].cookie = (void *) (i);
 		dispatch_table[i].level = IPL_VM;
-		sprintf(dispatch_table[i].name, "irq %d", i);
+		snprintf(dispatch_table[i].name,
+		    sizeof(dispatch_table[i].name), "irq %d", i);
 		evcnt_attach_dynamic(&dispatch_table[i].ev, EVCNT_TYPE_INTR,
 				     NULL, "s3c2xx0", dispatch_table[i].name);
 	}

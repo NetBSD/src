@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.132.2.3 2013/01/16 05:33:50 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.132.2.4 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,13 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.132.2.3 2013/01/16 05:33:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.132.2.4 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -92,9 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.132.2.3 2013/01/16 05:33:50 yamt Exp
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#ifdef PFIL_HOOKS
 #include <net/pfil.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -113,11 +110,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.132.2.3 2013/01/16 05:33:50 yamt Exp
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
@@ -148,9 +145,7 @@ int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
 
-#ifdef PFIL_HOOKS
-struct pfil_head inet6_pfil_hook;
-#endif
+pfil_head_t *inet6_pfil_hook;
 
 percpu_t *ip6stat_percpu;
 
@@ -194,16 +189,9 @@ ip6_init(void)
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
-
-#ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet6_pfil_hook.ph_type = PFIL_TYPE_AF;
-	inet6_pfil_hook.ph_af   = AF_INET6;
-	i = pfil_head_register(&inet6_pfil_hook);
-	if (i != 0)
-		printf("ip6_init: WARNING: unable to register pfil hook, "
-		    "error %d\n", i);
-#endif /* PFIL_HOOKS */
+	inet6_pfil_hook = pfil_head_create(PFIL_TYPE_AF, (void *)AF_INET6);
+	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
 }
@@ -269,7 +257,7 @@ ip6_input(struct mbuf *m)
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secpolicy *sp;
@@ -345,7 +333,6 @@ ip6_input(struct mbuf *m)
 	 */
 	m->m_flags |= M_CANFASTFWD;
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for input packets.  If there are any
 	 * filters which require that additional packets in the flow are
@@ -357,7 +344,7 @@ ip6_input(struct mbuf *m)
 	 * let ipfilter look at packet on the wire,
 	 * not the decapsulated packet.
 	 */
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	if (!ipsec_indone(m))
 #else
 	if (1)
@@ -366,7 +353,7 @@ ip6_input(struct mbuf *m)
 		struct in6_addr odst;
 
 		odst = ip6->ip6_dst;
-		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+		if (pfil_run_hooks(inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
 				   PFIL_IN) != 0)
 			return;
 		if (m == NULL)
@@ -374,7 +361,6 @@ ip6_input(struct mbuf *m)
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 	}
-#endif /* PFIL_HOOKS */
 
 	IP6_STATINC(IP6_STAT_NXTHIST + ip6->ip6_nxt);
 
@@ -766,7 +752,7 @@ ip6_input(struct mbuf *m)
 			}
 		}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer
@@ -803,7 +789,7 @@ ip6_input(struct mbuf *m)
 		if (error)
 			goto bad;
 	}
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
@@ -820,17 +806,21 @@ static struct m_tag *
 ip6_setdstifaddr(struct mbuf *m, const struct in6_ifaddr *ia)
 {
 	struct m_tag *mtag;
+	struct ip6aux *ip6a;
 
 	mtag = ip6_addaux(m);
-	if (mtag != NULL) {
-		struct ip6aux *ip6a;
+	if (mtag == NULL)
+		return NULL;
 
-		ip6a = (struct ip6aux *)(mtag + 1);
-		in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id);
-		ip6a->ip6a_src = ia->ia_addr.sin6_addr;
-		ip6a->ip6a_flags = ia->ia6_flags;
+	ip6a = (struct ip6aux *)(mtag + 1);
+	if (in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id)) {
+		IP6_STATINC(IP6_STAT_BADSCOPE);
+		return NULL;
 	}
-	return mtag;	/* NULL if failed to set */
+
+	ip6a->ip6a_src = ia->ia_addr.sin6_addr;
+	ip6a->ip6a_flags = ia->ia6_flags;
+	return mtag;
 }
 
 const struct ip6aux *
@@ -1665,11 +1655,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 #define IS2292(x, y)	(y)
 #endif
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6",

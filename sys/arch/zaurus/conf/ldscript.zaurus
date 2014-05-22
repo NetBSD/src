@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.zaurus,v 1.2.60.1 2012/04/17 00:07:12 yamt Exp $	*/
+/*	$NetBSD: ldscript.zaurus,v 1.2.60.2 2014/05/22 11:40:14 yamt Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
@@ -23,6 +23,10 @@ SECTIONS
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
   } =0
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
+  PROVIDE (__exidx_start = .);
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
+  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -75,5 +79,11 @@ SECTIONS
   .note.netbsd.ident :
   {
     KEEP(*(.note.netbsd.ident));
+  }
+  /DISCARD/ : {
+    *(.eh_frame_hdr)
+    *(.eh_frame)
+    *(.rel.eh_frame)
+    *(.rela.eh_frame)
   }
 }

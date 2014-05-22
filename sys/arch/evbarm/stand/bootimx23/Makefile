@@ -1,20 +1,29 @@
-# $Id: Makefile,v 1.1.2.2 2013/01/16 05:32:56 yamt Exp $
+# $Id: Makefile,v 1.1.2.3 2014/05/22 11:39:43 yamt Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
-SRCS=		boot_prep.c power_prep.c clock_prep.c emi_prep.c \
-		pinctrl_prep.c common.c
+SRCS=		bootimx23.c power_prep.c clock_prep.c emi_prep.c pinctrl_prep.c common.c args_prep.c
 
 .include <bsd.own.mk>
 
 CLEANFILES+=	${PROG}
-CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv5te -mtune=arm926ej-s
-CPPFLAGS+=	-D_STANDALONE
+CFLAGS+=	-Wall -Wno-main -ffreestanding -fno-unwind-tables
+CFLAGS+=	-march=armv5te -mtune=arm926ej-s
+CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
+CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
+CPPFLAGS+=	${ARM_APCS_FLAGS}
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
+CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.endif
 #CPPFLAGS+=	-DDEBUG
-#DBG=		-g
+#CPPFLAGS+=	-DDIAGNOSTIC
+DBG=		-g
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -38,6 +47,7 @@ SA_AS=		library
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
+	${MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET} \
 	    ${OBJS} ${LIBSA} ${LIBKERN}
 

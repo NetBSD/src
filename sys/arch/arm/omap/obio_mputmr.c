@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.5.2.2 2013/01/23 00:05:42 yamt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.5.2.3 2014/05/22 11:39:33 yamt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5.2.2 2013/01/23 00:05:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5.2.3 2014/05/22 11:39:33 yamt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -127,10 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5.2.2 2013/01/23 00:05:42 yamt Exp
 #endif
 
 #include <arm/omap/omap2_reg.h>
-
-#ifndef OMAP_MPU_TIMER_CLOCK_FREQ
-#error Specify the timer frequency in Hz with the OMAP_MPU_TIMER_CLOCK_FREQ option.
-#endif
 
 typedef struct {
 	uint       gptn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.59.8.1 2012/10/30 17:21:06 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.59.8.2 2014/05/22 11:40:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.59.8.1 2012/10/30 17:21:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.59.8.2 2014/05/22 11:40:22 yamt Exp $");
 
 #include "ld.h"
 
@@ -131,8 +131,17 @@ dev_type_close(mlxclose);
 dev_type_ioctl(mlxioctl);
 
 const struct cdevsw mlx_cdevsw = {
-	mlxopen, mlxclose, noread, nowrite, mlxioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = mlxopen,
+	.d_close = mlxclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mlxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 extern struct	cfdriver mlx_cd;

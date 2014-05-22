@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.33.8.2 2012/10/30 17:21:26 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.33.8.3 2014/05/22 11:40:24 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.33.8.2 2012/10/30 17:21:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.33.8.3 2014/05/22 11:40:24 yamt Exp $");
 
 #include "vlan.h"
 
@@ -251,6 +251,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t seg;
 	int             error, i, pmreg, rseg;
 	struct ifnet   *ifp;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->bce_dev = self;
 
@@ -317,7 +318,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	sc->bce_intrhand = pci_intr_establish(pc, ih, IPL_NET, bce_intr, sc);
 

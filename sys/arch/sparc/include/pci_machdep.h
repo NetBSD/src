@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8.4.1 2012/10/30 17:20:21 yamt Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.8.4.2 2014/05/22 11:40:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -55,6 +55,10 @@ struct sparc_pci_chipset {
 	void		*cookie;	/* msiiep_softc, but sssh! */
 };
 
+#define IS_PCI_BRIDGE(class) \
+	(((class >> 16) & 0xff) == PCI_CLASS_BRIDGE && \
+	    ((class >> 8) & 0xff) == PCI_SUBCLASS_BRIDGE_PCI)
+
 /* 
  * The MI PCI code expects pcitag_t to be a scalar type.  But besides
  * the bus/device/function we need to store the OFW node as well.  We
@@ -63,7 +67,7 @@ struct sparc_pci_chipset {
  * form directly suitable for pci mode1 configuration address port.
  */
 #define	PCITAG_CREATE(n,b,d,f)	\
-	(((uint64_t)(n)<<32)|0x80000000U|((b)<<16)|((d)<<11)|((f)<<8))
+	(((uint64_t)(n)<<32)|0x80000000U|((b)<<16)|((d)<<11)|((f)<<8)|(b?1:0))
 
 #define	PCITAG_NODE(t)		((uint32_t)(((t)>>32)&0xffffffff))
 #define	PCITAG_OFFSET(t)	((uint32_t)((t)&0xffffffff))
@@ -85,7 +89,8 @@ pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		pci_intr_map(const struct pci_attach_args *,
 		             pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+				 char *, size_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 				    int, int (*)(void *), void *);

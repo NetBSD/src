@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.5 2013/01/16 05:33:10 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.6 2014/05/22 11:40:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -137,10 +137,9 @@ extern struct pool_cache pmap_pdp_cache;
  * note that the pm_obj contains the lock pointer, the reference count,
  * page list, and number of PTPs within the pmap.
  *
- * pm_lock is shared among vm objects.
- *
- * XXX If we ever support processor numbers higher than 31, we'll have
- * XXX to rethink the CPU mask.
+ * pm_lock is the same as the lock for vm object 0.  Changes to
+ * the other objects may only be made if that lock has been taken
+ * (the other object locks are only used when uvm_pagealloc is called)
  */
 
 struct pmap {
@@ -219,7 +218,7 @@ extern long nkptp[PTP_LEVELS];
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)
+#define pmap_copy(DP,SP,D,L,S)		__USE(L)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)

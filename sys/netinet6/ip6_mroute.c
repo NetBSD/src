@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.102.2.1 2012/04/17 00:08:44 yamt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.102.2.2 2014/05/22 11:41:10 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.102.2.1 2012/04/17 00:08:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.102.2.2 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -188,6 +188,9 @@ u_int		mrt6debug = 0;	  /* debug level 	*/
 #define DEBUG_XMIT	0x10
 #define DEBUG_REG	0x20
 #define DEBUG_PIM	0x40
+#define __mrt6debugused     /* empty */
+#else
+#define __mrt6debugused     __unused
 #endif
 
 static void	expire_upcalls(void *);
@@ -1531,7 +1534,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
-	int error = 0;
+	int error __mrt6debugused = 0;
 	int s;
 	static struct route ro;
 	struct in6_multi *in6m;
@@ -1712,7 +1715,7 @@ int
 pim6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct pim *pim; /* pointer to a pim struct */
-	struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6 __mrt6debugused;
 	int pimlen;
 	struct mbuf *m = *mp;
 	int minlen;
@@ -1938,11 +1941,7 @@ sysctl_net_inet6_pim6_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet6_pim6_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,

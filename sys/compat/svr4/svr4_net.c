@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.58 2009/12/20 09:36:05 dsl Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.58.12.1 2014/05/22 11:40:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.58 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.58.12.1 2014/05/22 11:40:18 yamt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -76,8 +76,17 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.58 2009/12/20 09:36:05 dsl Exp $");
 dev_type_open(svr4_netopen);
 
 const struct cdevsw svr4_net_cdevsw = {
-	svr4_netopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = svr4_netopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 /*

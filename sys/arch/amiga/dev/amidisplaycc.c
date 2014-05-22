@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.23.2.2 2012/10/30 17:18:47 yamt Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.23.2.3 2014/05/22 11:39:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.23.2.2 2012/10/30 17:18:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.23.2.3 2014/05/22 11:39:28 yamt Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1448,8 +1448,8 @@ amidisplaycc_show_screen(void *dp, void *screen, int waitok,
 int
 amidisplaycc_load_font(void *dp, void *cookie, struct wsdisplay_font *font)
 {
-	struct amidisplaycc_softc   * adp;
-	struct amidisplaycc_screen  * scr;
+	struct amidisplaycc_softc   * adp __diagused;
+	struct amidisplaycc_screen  * scr __diagused;
 
 	adp = dp;
 	scr = cookie;

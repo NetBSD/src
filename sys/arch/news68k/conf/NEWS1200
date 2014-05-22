@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.50.4.2 2012/10/30 17:20:05 yamt Exp $
+# 	$NetBSD: NEWS1200,v 1.50.4.3 2014/05/22 11:40:00 yamt Exp $
 
 #	news1200 config file
 #
@@ -28,7 +28,7 @@ options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	SCSIDEBUG		# extra SCSI debugging support
 #makeoptions	DEBUG="-g"		# compile full symbol table
@@ -82,19 +82,14 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -140,8 +135,8 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated and striped disks
+#pseudo-device	raid			# RAIDframe disk driver
 pseudo-device	sl			# SLIP interfaces
 pseudo-device	ppp			# PPP interfaces
 pseudo-device	tun			# Network "tunnel" device
@@ -151,5 +146,5 @@ pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

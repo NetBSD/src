@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.29 2011/08/27 17:36:05 joerg Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.29.2.1 2014/05/22 11:37:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.29 2011/08/27 17:36:05 joerg Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.29.2.1 2014/05/22 11:37:28 yamt Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ getsblock(int fd, const char *name, struct fs *fs)
 static void
 fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 {
-	int inopb = INOPB(fs);
+	int inopb = FFS_INOPB(fs);
 	int size;
 	caddr_t buf;
 	struct ufs1_dinode *dp1 = NULL;
@@ -150,7 +150,7 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
 		off_t sp;
-		sp = (off_t) fsbtodb(fs, ino_to_fsba(fs, ino)) *
+		sp = (off_t) FFS_FSBTODB(fs, ino_to_fsba(fs, ino)) *
 		     (off_t) lab->d_secsize;
 
 		if (lseek(fd, sp, SEEK_SET) == (off_t) -1)
@@ -204,10 +204,9 @@ statussig(int dummy)
 {
 	char	msgbuf[256];
 	int	len, deltat;
-	time_t	tnow, elapsed;
+	time_t	tnow;
 
 	(void)time(&tnow);
-	elapsed = tnow - tstart;
 	len = snprintf(msgbuf, sizeof(msgbuf),
 	    "fsirand: completed inode %d of %d (%3.2f%%)",
 	    ino, imax, (ino * 100.0) / imax);

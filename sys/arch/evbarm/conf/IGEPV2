@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.6.2.3 2013/01/23 00:05:44 yamt Exp $
+#	$NetBSD: IGEPV2,v 1.6.2.4 2014/05/22 11:39:40 yamt Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -58,18 +58,10 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -219,14 +211,10 @@ omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# I2C Controller
+omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
+omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
+iic*		at omapiic?
 
 # On-board 16550 UARTs
 #com0		at obio0 addr 0x4806a000 intr 72 mult 4 # UART1
@@ -271,7 +259,7 @@ options		OMAP_CK_REF_SPEED=12000000
 # disk/mass storage pseudo-devices
 pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices

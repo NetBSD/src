@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.256.2.2 2013/01/16 05:33:48 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.256.2.3 2014/05/22 11:41:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,13 +90,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.256.2.2 2013/01/16 05:33:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.256.2.3 2014/05/22 11:41:08 yamt Exp $");
 
 #include "opt_inet.h"
 
 #include "opt_atalk.h"
 #include "opt_natm.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -124,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.256.2.2 2013/01/16 05:33:48 yamt Exp $");
 #include <net/radix.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <sys/module.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #include <netatalk/at.h>
@@ -163,12 +163,12 @@ static int if_cloners_count;
 static uint64_t index_gen;
 static kmutex_t index_gen_mtx;
 
-#ifdef PFIL_HOOKS
-struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
-#endif
+/* Packet filtering hook for interfaces. */
+pfil_head_t *	if_pfil;
 
 static kauth_listener_t if_listener;
 
+static int doifioctl(struct socket *, u_long, void *, struct lwp *);
 static int ifioctl_attach(struct ifnet *);
 static void ifioctl_detach(struct ifnet *);
 static void ifnet_lock_enter(struct ifnet_lock *);
@@ -227,6 +227,9 @@ ifinit(void)
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    if_listener_cb, NULL);
+
+	/* interfaces are available, inform socket code */
+	ifioctl = doifioctl;
 }
 
 /*
@@ -236,15 +239,9 @@ ifinit(void)
 void
 ifinit1(void)
 {
-
 	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
-
-#ifdef PFIL_HOOKS
-	if_pfil.ph_type = PFIL_TYPE_IFNET;
-	if_pfil.ph_ifnet = NULL;
-	if (pfil_head_register(&if_pfil) != 0)
-		printf("WARNING: unable to register pfil hook\n");
-#endif
+	if_pfil = pfil_head_create(PFIL_TYPE_IFNET, NULL);
+	KASSERT(if_pfil != NULL);
 }
 
 struct ifnet *
@@ -610,15 +607,9 @@ if_attach(struct ifnet *ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
-#ifdef PFIL_HOOKS
-	ifp->if_pfil.ph_type = PFIL_TYPE_IFNET;
-	ifp->if_pfil.ph_ifnet = ifp;
-	if (pfil_head_register(&ifp->if_pfil) != 0)
-		printf("%s: WARNING: unable to register pfil hook\n",
-		    ifp->if_xname);
-	(void)pfil_run_hooks(&if_pfil,
+	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
+	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
-#endif
 
 	if (!STAILQ_EMPTY(&domains))
 		if_attachdomain1(ifp);
@@ -844,11 +835,9 @@ again:
 		}
 	}
 
-#ifdef PFIL_HOOKS
-	(void)pfil_run_hooks(&if_pfil,
+	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
-	(void)pfil_head_unregister(&ifp->if_pfil);
-#endif
+	(void)pfil_head_destroy(ifp->if_pfil);
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
@@ -984,25 +973,32 @@ if_clone_lookup(const char *name, int *unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
+	char *dp, ifname[IFNAMSIZ + 3];
 	int unit;
 
+	strcpy(ifname, "if_");
 	/* separate interface name from unit */
-	for (cp = name;
-	    cp - name < IFNAMSIZ && *cp && (*cp < '0' || *cp > '9');
-	    cp++)
-		continue;
+	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
+	    *cp && (*cp < '0' || *cp > '9');)
+		*dp++ = *cp++;
 
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
 		return NULL;	/* No name or unit number */
+	*dp++ = '\0';
 
+again:
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
-		if (strlen(ifc->ifc_name) == cp - name &&
-		    strncmp(name, ifc->ifc_name, cp - name) == 0)
+		if (strcmp(ifname + 3, ifc->ifc_name) == 0)
 			break;
 	}
 
-	if (ifc == NULL)
-		return NULL;
+	if (ifc == NULL) {
+		if (*ifname == '\0' ||
+		    module_autoload(ifname, MODULE_CLASS_DRIVER))
+			return NULL;
+		*ifname = '\0';
+		goto again;
+	}
 
 	unit = 0;
 	while (cp - name < IFNAMSIZ && *cp) {
@@ -1325,19 +1321,70 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 
 /*
  * Handle a change in the interface link state.
+ * XXX: We should listen to the routing socket in-kernel rather
+ * than calling in6_if_link_* functions directly from here.
  */
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	if (ifp->if_link_state == link_state)
+	int s;
+#if defined(DEBUG) || defined(INET6)
+	int old_link_state;
+#endif
+
+	s = splnet();
+	if (ifp->if_link_state == link_state) {
+		splx(s);
 		return;
+	}
+
+#if defined(DEBUG) || defined(INET6)
+	old_link_state = ifp->if_link_state;
+#endif
 	ifp->if_link_state = link_state;
+#ifdef DEBUG
+	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
+		link_state == LINK_STATE_UP ? "UP" :
+		link_state == LINK_STATE_DOWN ? "DOWN" :
+		"UNKNOWN",
+		 old_link_state == LINK_STATE_UP ? "UP" :
+		old_link_state == LINK_STATE_DOWN ? "DOWN" :
+		"UNKNOWN");
+#endif
+
+#ifdef INET6
+	/*
+	 * When going from UNKNOWN to UP, we need to mark existing
+	 * IPv6 addresses as tentative and restart DAD as we may have
+	 * erroneously not found a duplicate.
+	 *
+	 * This needs to happen before rt_ifmsg to avoid a race where
+	 * listeners would have an address and expect it to work right
+	 * away.
+	 */
+	if (in6_present && link_state == LINK_STATE_UP &&
+	    old_link_state == LINK_STATE_UNKNOWN)
+		in6_if_link_down(ifp);
+#endif
+
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
+
 #if NCARP > 0
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
 #endif
+
+#ifdef INET6
+	if (in6_present) {
+		if (link_state == LINK_STATE_DOWN)
+			in6_if_link_down(ifp);
+		else if (link_state == LINK_STATE_UP)
+			in6_if_link_up(ifp);
+	}
+#endif
+
+	splx(s);
 }
 
 /*
@@ -1360,6 +1407,10 @@ if_down(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
+#ifdef INET6
+	if (in6_present)
+		in6_if_down(ifp);
+#endif
 }
 
 /*
@@ -1387,7 +1438,8 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	in6_if_up(ifp);
+	if (in6_present)
+		in6_if_up(ifp);
 #endif
 }
 
@@ -1605,6 +1657,11 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		ifdr->ifdr_data = ifp->if_data;
 		break;
 
+	case SIOCGIFINDEX:
+		ifr = data;
+		ifr->ifr_index = ifp->if_index;
+		break;
+
 	case SIOCZIFDATA:
 		ifdr = data;
 		ifdr->ifdr_data = ifp->if_data;
@@ -1632,7 +1689,8 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		 * If the link MTU changed, do network layer specific procedure.
 		 */
 #ifdef INET6
-		nd6_setmtu(ifp);
+		if (in6_present)
+			nd6_setmtu(ifp);
 #endif
 		return ENETRESET;
 	default:
@@ -1734,8 +1792,8 @@ ifnet_lock_exit(struct ifnet_lock *il)
 /*
  * Interface ioctls.
  */
-int
-ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
+static int
+doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1857,7 +1915,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if (in6_present && (ifp->if_flags & IFF_UP) != 0) {
 			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
@@ -2216,17 +2274,10 @@ sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
 
 	if (sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL) != 0)
-		goto bad;
-
-	if (sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "interfaces",
 		       SYSCTL_DESCR("Per-interface controls"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL) != 0)
+		       CTL_NET, CTL_CREATE, CTL_EOL) != 0)
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &rnode,
@@ -2283,11 +2334,6 @@ sysctl_net_ifq_setup(struct sysctllog **clog,
 		     int qid, struct ifqueue *ifq)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, pfname, NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.24.2.1 2012/10/30 17:19:57 yamt Exp $	*/
+/*	$NetBSD: apm.c,v 1.24.2.2 2014/05/22 11:39:56 yamt Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24.2.1 2012/10/30 17:19:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24.2.2 2014/05/22 11:39:56 yamt Exp $");
 
 #include "apm.h"
 
@@ -127,8 +127,17 @@ dev_type_poll(apmpoll);
 dev_type_kqfilter(apmkqfilter);
 
 const struct cdevsw apm_cdevsw = {
-	apmopen, apmclose, noread, nowrite, apmioctl,
-	nostop, notty, apmpoll, nommap, apmkqfilter,
+	.d_open = apmopen,
+	.d_close = apmclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = apmioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = apmpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = apmkqfilter,
+	.d_flag = 0
 };
 #endif
 

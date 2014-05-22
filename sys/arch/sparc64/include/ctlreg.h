@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.56.2.1 2013/01/16 05:33:05 yamt Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.56.2.2 2014/05/22 11:40:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -663,6 +663,8 @@ SPARC64_LD_DEF(lduba, uint8_t, uint32_t)
 SPARC64_LD_DEF(lduha, uint16_t, uint32_t)
 /* load unsigned int from alternate address space */
 SPARC64_LD_DEF(lda, uint32_t, uint32_t)
+/* load unsigned word from alternate address space */
+SPARC64_LD_DEF(lduwa, uint32_t, uint32_t)
 /* load signed int from alternate address space */
 SPARC64_LD_DEF(ldswa, int, int)
 /* load 64-bit unsigned int from alternate address space */

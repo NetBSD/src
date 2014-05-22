@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.56.6.2 2013/01/16 05:32:26 yamt Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.56.6.3 2014/05/22 11:36:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,15 +46,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.56.6.2 2013/01/16 05:32:26 yamt Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.56.6.3 2014/05/22 11:36:59 yamt Exp $");
 
+#include <stdlib.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <stdlib.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 
@@ -74,9 +75,18 @@ __strong_alias(__libc_cond_wait,pthread_cond_wait)
 __strong_alias(__libc_cond_timedwait,pthread_cond_timedwait)
 __strong_alias(__libc_cond_destroy,pthread_cond_destroy)
 
+static clockid_t
+pthread_cond_getclock(const pthread_cond_t *cond)
+{
+	return cond->ptc_private ? 
+	    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
+}
+
 int
 pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_cond_init_stub(cond, attr);
 
 	pthread__error(EINVAL, "Invalid condition variable attribute",
 	    (attr == NULL) || (attr->ptca_magic == _PT_CONDATTR_MAGIC));
@@ -101,6 +111,8 @@ pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 int
 pthread_cond_destroy(pthread_cond_t *cond)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_cond_destroy_stub(cond);
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
@@ -119,6 +131,10 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 {
 	pthread_t self;
 	int retval;
+	clockid_t clkid = pthread_cond_getclock(cond);
+
+	if (__predict_false(__uselibcstub))
+		return __libc_cond_timedwait_stub(cond, mutex, abstime);
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
@@ -126,12 +142,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EPERM, "Mutex not locked in condition wait",
 	    mutex->ptm_owner != NULL);
-	if (abstime != NULL) {
-		pthread__error(EINVAL, "Invalid wait time", 
-		    (abstime->tv_sec >= 0) &&
-		    (abstime->tv_nsec >= 0) &&
-		    (abstime->tv_nsec < 1000000000));
-	}
 
 	self = pthread__self();
 
@@ -155,10 +165,12 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		pthread_mutex_unlock(mutex);
 		self->pt_willpark = 0;
 		self->pt_blocking++;
-		retval = _lwp_park(abstime, self->pt_unpark,
-		    __UNVOLATILE(&mutex->ptm_waiters),
-		    __UNVOLATILE(&mutex->ptm_waiters));
-		self->pt_unpark = 0;
+		do {
+			retval = _lwp_park(clkid, TIMER_ABSTIME, abstime,
+			    self->pt_unpark, __UNVOLATILE(&mutex->ptm_waiters),
+			    __UNVOLATILE(&mutex->ptm_waiters));
+			self->pt_unpark = 0;
+		} while (retval == -1 && errno == ESRCH);
 		self->pt_blocking--;
 		membar_sync();
 		pthread_mutex_lock(mutex);
@@ -199,6 +211,8 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 int
 pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_cond_wait_stub(cond, mutex);
 
 	return pthread_cond_timedwait(cond, mutex, NULL);
 }
@@ -263,6 +277,9 @@ int
 pthread_cond_signal(pthread_cond_t *cond)
 {
 
+	if (__predict_false(__uselibcstub))
+		return __libc_cond_signal_stub(cond);
+
 	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
 		return 0;
 	return pthread__cond_wake_one(cond);
@@ -310,6 +327,8 @@ pthread__cond_wake_all(pthread_cond_t *cond)
 int
 pthread_cond_broadcast(pthread_cond_t *cond)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_cond_broadcast_stub(cond);
 
 	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
 		return 0;
@@ -375,8 +394,7 @@ pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
 		diff.tv_sec = 99999999;
 		diff.tv_nsec = 0;
 	} else {
-		clockid_t clck = cond->ptc_private ?
-		    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
+		clockid_t clck = pthread_cond_getclock(cond);
 		clock_gettime(clck, &now);
 		if  (timespeccmp(abstime, &now, <))
 			timespecclear(&diff);

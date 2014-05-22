@@ -1,4 +1,4 @@
-/*	$NetBSD: fujbp_acpi.c,v 1.1.10.2 2012/10/30 17:20:51 yamt Exp $ */
+/*	$NetBSD: fujbp_acpi.c,v 1.1.10.3 2014/05/22 11:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.1.10.2 2012/10/30 17:20:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.1.10.3 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -373,15 +373,9 @@ fujitsu_bp_sysctl_setup(struct fujitsu_bp_softc *sc)
 
 	if (brightness || pointer) {
 		if ((sysctl_createv(&sc->sc_log, 0, NULL, &rnode,
-		    0, CTLTYPE_NODE, "hw", NULL,
-		    NULL, 0, NULL, 0,
-		    CTL_HW, CTL_EOL)) != 0)
-			goto fail;
-
-		if ((sysctl_createv(&sc->sc_log, 0, &rnode, &rnode,
 		    0, CTLTYPE_NODE, "acpi", NULL,
 		    NULL, 0, NULL, 0,
-		    CTL_CREATE, CTL_EOL)) != 0)
+		    CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 			goto fail;
 
 		if ((sysctl_createv(&sc->sc_log, 0, &rnode, &rnode,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.1.2.2 2012/10/30 17:21:17 yamt Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.1.2.3 2014/05/22 11:40:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -683,6 +683,8 @@ put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 	}
 
 	cc = snprintf(buf, len, "%s=", entries[par->key].name);
+	if (cc >= len)
+		return len;
 
 	for (i = 0; i < par->list_num; i++) {
 		switch (entries[par->key].val) {
@@ -759,11 +761,17 @@ put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 		DEB(10, ("put_par: value '%s'\n",&buf[cc]));
 
 		cc += cl;
+		if (cc >= len)
+			return len;
 		if ((i + 1) < par->list_num) {
+			if (cc >= len)
+				return len;
 			buf[cc++] = ',';
 		}
 	}
 
+	if (cc >= len)
+		return len;
 	buf[cc] = 0x0;				/* make sure it's terminated */
 	return cc + 1;				/* return next place in list */
 }

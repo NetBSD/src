@@ -1,46 +1,20 @@
-#	$NetBSD: Makefile,v 1.29.4.1 2012/10/30 18:58:34 yamt Exp $
+#	$NetBSD: Makefile,v 1.29.4.2 2014/05/22 11:36:43 yamt Exp $
 
 .include <bsd.own.mk>
 
-.if ${USE_COMPILERCRTSTUFF} != "yes"
-
-.if defined(CSU_MACHINE_ARCH)
-.  if !exists(${.CURDIR}/arch/${CSU_MACHINE_ARCH}/Makefile.inc)
-.  error CSU_MACHINE_ARCH (${CSU_MACHINE_ARCH}) is unsupported
-.  endif
-.elif exists(${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-CSU_MACHINE_ARCH=	${MACHINE_ARCH}
-.elif exists(${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
-CSU_MACHINE_ARCH=	${MACHINE_CPU}
-.else
-.error Architecture (${MACHINE_ARCH} or ${MACHINE_CPU}) unsupported
-.endif
-
-ARCHDIR:=	${.CURDIR}/arch/${CSU_MACHINE_ARCH}
-
-.PATH:	${ARCHDIR}
-.  include "${ARCHDIR}/Makefile.inc"
-
-.  include "${.CURDIR}/common/Makefile.inc"
-
-.else
-
 CSU_MACHINE_ARCH?=	${MACHINE_ARCH}
 
-.  if exists(${CSU_MACHINE_ARCH}_elf/Makefile)
-SUBDIR=	${CSU_MACHINE_ARCH}_elf
-.  elif exists(${CSU_MACHINE_ARCH}/Makefile)
-SUBDIR=	${CSU_MACHINE_ARCH}
-.  elif exists(${MACHINE_CPU}_elf/Makefile)
-SUBDIR=	${MACHINE_CPU}_elf
-.  elif exists(${MACHINE_CPU}/Makefile)
-SUBDIR=	${MACHINE_CPU}
-.  else
-.BEGIN:
-	@echo no SUBDIR for ${MACHINE_ARCH}_elf, ${MACHINE_ARCH} nor \
-	    ${MACHINE_CPU}
-	@false
-.  endif
-
-.  include <bsd.subdir.mk>
+.if !empty(CSU_MACHINE_ARCH:Mearm*)
+ARCHDIR:=	${.CURDIR}/arch/earm
+.elif exists(${.CURDIR}/arch/${CSU_MACHINE_ARCH}/Makefile.inc)
+ARCHDIR:=	${.CURDIR}/arch/${CSU_MACHINE_ARCH}
+.elif exists(${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
+ARCHDIR:=	${.CURDIR}/arch/${MACHINE_CPU}
+.else
+.error Architecture (${CSU_MACHINE_ARCH} or ${MACHINE_CPU}) unsupported
 .endif
+
+
+.PATH:	${ARCHDIR}
+.include "${ARCHDIR}/Makefile.inc"
+.include "${.CURDIR}/common/Makefile.inc"

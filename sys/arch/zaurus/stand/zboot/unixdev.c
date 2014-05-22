@@ -1,4 +1,4 @@
-/*	$NetBSD: unixdev.c,v 1.2.2.1 2012/04/17 00:07:13 yamt Exp $	*/
+/*	$NetBSD: unixdev.c,v 1.2.2.2 2014/05/22 11:40:15 yamt Exp $	*/
 /*	$OpenBSD: unixdev.c,v 1.6 2007/06/16 00:26:33 deraadt Exp $	*/
 
 /*
@@ -86,6 +86,8 @@ unixopen(struct open_file *f, ...)
 #ifdef UNIX_DEBUG
 	printf("%s: devname=%s, unit=%d, partition=%d, fname=%s\n",
 	    __func__, devname, unit, partition, fname);
+#else
+	__USE(fname);
 #endif
 
 	f->f_devdata = NULL;
@@ -146,6 +148,8 @@ unixpathopen(struct open_file *f, ...)
 #ifdef UNIX_DEBUG
 	printf("%s: devname=%s, unit=%d, partition=%d, fname=%s\n",
 	    __func__, devname, unit, partition, fname);
+#else
+	__USE(devname); __USE(partition); __USE(unit);
 #endif
 
 	if (fname == NULL || fname[0] == '\0')

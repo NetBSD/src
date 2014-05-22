@@ -1,7 +1,9 @@
-/*	$NetBSD: float.h,v 1.5 2003/10/23 23:26:06 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.5.140.1 2014/05/22 11:40:13 yamt Exp $	*/
 
 #ifndef _X86_FLOAT_H_
 #define _X86_FLOAT_H_
+
+#include <sys/featuretest.h>
 
 #define	LDBL_MANT_DIG	64
 #define LDBL_EPSILON	1.0842021724855044340E-19L

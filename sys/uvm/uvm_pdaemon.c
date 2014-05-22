@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.103.2.5 2012/10/30 17:23:03 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.103.2.6 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.2.5 2012/10/30 17:23:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.2.6 2014/05/22 11:41:19 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -493,7 +493,7 @@ swapcluster_flush(struct swapcluster *swc, bool now)
 	int slot;
 	int nused;
 	int nallocated;
-	int error;
+	int error __diagused;
 
 	if (swc->swc_slot == 0) {
 		return;

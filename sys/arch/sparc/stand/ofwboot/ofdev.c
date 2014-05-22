@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.32.4.1 2012/10/30 17:20:23 yamt Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.32.4.2 2014/05/22 11:40:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -353,7 +353,7 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 		return (disklabel_sun_to_bsd(buf, lp));
 
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, DEV_BSIZE);
 	return ("no disk label");
 }
 
@@ -374,7 +374,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	int error = 0;
 
 	if (ofdev.handle != -1)
-		panic("devopen");
+		panic("devopen: ofdev already in use");
 	if (of->f_flags != F_READ)
 		return EPERM;
 	DPRINTF(("devopen: you want %s\n", name));

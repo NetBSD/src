@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.122 2011/02/28 17:17:55 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.122.4.1 2014/05/22 11:40:22 yamt Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.122 2011/02/28 17:17:55 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.122.4.1 2014/05/22 11:40:22 yamt Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -76,7 +76,6 @@ __FBSDID("$FreeBSD$");
 static const char fconf[] = "Chan %d PortDB[%d] changed:\n current =(0x%x@0x%06x 0x%08x%08x 0x%08x%08x)\n database=(0x%x@0x%06x 0x%08x%08x 0x%08x%08x)";
 static const char notresp[] = "Not RESPONSE in RESPONSE Queue (type 0x%x) @ idx %d (next %d) nlooked %d";
 static const char topology[] = "Chan %d WWPN 0x%08x%08x PortID 0x%06x N-Port Handle %d, Connection '%s'";
-static const char sc4[] = "NVRAM";
 static const char bun[] = "bad underrun (count %d, resid %d, status %s)";
 static const char lipd[] = "Chan %d LIP destroyed %d active commands";
 static const char sacq[] = "unable to acquire scratch area";
@@ -1580,7 +1579,13 @@ isp_fibre_init(ispsoftc_t *isp)
 	 *
 	 * NB: for the 2300, ICBOPT_EXTENDED is required.
 	 */
-	if (IS_2200(isp) || IS_23XX(isp)) {
+	if (IS_2100(isp)) {
+		/*
+		 * We can't have Fast Posting any more- we now
+		 * have 32 bit handles.
+		 */
+		icbp->icb_fwoptions &= ~ICBOPT_FAST_POST;
+	} else if (IS_2200(isp) || IS_23XX(isp)) {
 		icbp->icb_fwoptions |= ICBOPT_EXTENDED;
 		/*
 		 * Prefer or force Point-To-Point instead Loop?
@@ -2080,7 +2085,7 @@ isp_plogx(ispsoftc_t *isp, int chan, uint16_t handle, uint32_t portid, int flags
 	fcparam *fcp;
 	uint8_t *scp;
 	uint32_t sst, parm1;
-	int rval, lev;
+	int rval;
 	const char *msg;
 	char buf[64];
 
@@ -2154,7 +2159,6 @@ isp_plogx(ispsoftc_t *isp, int chan, uint16_t handle, uint32_t portid, int flags
 	parm1 = plp->plogx_ioparm[1].lo16 | (plp->plogx_ioparm[1].hi16 << 16);
 
 	rval = -1;
-	lev = ISP_LOGERR;
 	msg = NULL;
 
 	switch (sst) {
@@ -2194,13 +2198,11 @@ isp_plogx(ispsoftc_t *isp, int chan, uint16_t handle, uint32_t portid, int flags
 		msg = buf;
 		break;
 	case PLOGX_IOCBERR_PORTUSED:
-		lev = ISP_LOGSANCFG|ISP_LOGDEBUG0;
 		ISP_SNPRINTF(buf, sizeof (buf), "already logged in with N-Port handle 0x%x", parm1);
 		msg = buf;
 		rval = MBOX_PORT_ID_USED | (parm1 << 16);
 		break;
 	case PLOGX_IOCBERR_HNDLUSED:
-		lev = ISP_LOGSANCFG|ISP_LOGDEBUG0;
 		ISP_SNPRINTF(buf, sizeof (buf), "handle already used for PortID 0x%06x", parm1);
 		msg = buf;
 		rval = MBOX_LOOP_ID_USED;
@@ -7812,7 +7814,7 @@ static void
 isp_rdnvram_word(ispsoftc_t *isp, int wo, uint16_t *rp)
 {
 	int i, cbits;
-	uint16_t bit, rqst, junk;
+	uint16_t bit, rqst;
 
 	ISP_WRITE(isp, BIU_NVRAM, BIU_NVRAM_SELECT);
 	ISP_DELAY(10);
@@ -7847,13 +7849,13 @@ isp_rdnvram_word(ispsoftc_t *isp, int wo, uint16_t *rp)
 		}
 		ISP_WRITE(isp, BIU_NVRAM, bit);
 		ISP_DELAY(10);
-		junk = ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
+		(void)ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
 		ISP_WRITE(isp, BIU_NVRAM, bit | BIU_NVRAM_CLOCK);
 		ISP_DELAY(10);
-		junk = ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
+		(void)ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
 		ISP_WRITE(isp, BIU_NVRAM, bit);
 		ISP_DELAY(10);
-		junk = ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
+		(void)ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
 	}
 	/*
 	 * Now read the result back in (bits come back in MSB format).
@@ -7871,11 +7873,11 @@ isp_rdnvram_word(ispsoftc_t *isp, int wo, uint16_t *rp)
 		ISP_DELAY(10);
 		ISP_WRITE(isp, BIU_NVRAM, BIU_NVRAM_SELECT);
 		ISP_DELAY(10);
-		junk = ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
+		(void)ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
 	}
 	ISP_WRITE(isp, BIU_NVRAM, 0);
 	ISP_DELAY(10);
-	junk = ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
+	(void)ISP_READ(isp, BIU_NVRAM);	/* force PCI flush */
 	ISP_SWIZZLE_NVRAM_WORD(isp, rp);
 }
 

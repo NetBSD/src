@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic_common.c,v 1.5.2.1 2012/04/17 00:06:48 yamt Exp $ */
+/*	$NetBSD: openpic_common.c,v 1.5.2.2 2014/05/22 11:40:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.5.2.1 2012/04/17 00:06:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.5.2.2 2014/05/22 11:40:04 yamt Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
@@ -52,7 +52,7 @@ opic_finish_setup(struct pic_ops *pic)
 
 #ifdef OPENPIC_DISTRIBUTE
 	for (i = 0; i < ncpu; i++)
-		cpumask |= (1 << cpu_info[i].ci_cpuid);
+		cpumask |= (1 << cpu_info[i].ci_index);
 #else
 	cpumask = 1;
 #endif

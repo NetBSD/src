@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.1.16.3 2013/01/23 00:06:05 yamt Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.1.16.4 2014/05/22 11:40:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.1.16.3 2013/01/23 00:06:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.1.16.4 2014/05/22 11:40:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -320,14 +320,6 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_firm = 6;
 	sc->sc_dist = 130;
 	sc->sc_scale = 20;
-
-	sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
 
 	sysctl_createv(&sc->sc_log, 0, NULL, &node,
 		0,

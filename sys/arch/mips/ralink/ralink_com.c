@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_com.c,v 1.2.2.1 2012/04/17 00:06:40 yamt Exp $	*/
+/*	$NetBSD: ralink_com.c,v 1.2.2.2 2014/05/22 11:39:58 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -130,7 +130,7 @@
 /* ralink_com.c -- Ralink 3052 uart console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.2.2.1 2012/04/17 00:06:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.2.2.2 2014/05/22 11:39:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -232,7 +232,7 @@ ralink_console_early(void)
 {
 	cn_tab = &ralink_earlycons;
 }
-#endif
+#endif /* RALINK_CONSOLE_EARLY */
 
 
 int

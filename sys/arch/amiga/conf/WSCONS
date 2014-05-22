@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.62.54.2 2012/10/30 17:18:46 yamt Exp $
+# $NetBSD: WSCONS,v 1.62.54.3 2014/05/22 11:39:28 yamt Exp $
 
 # GENERIC with wscons(4)
 #
@@ -15,7 +15,13 @@ options 	FONT_VT220ISO8x16
 
 wskbd0		at kbd0 console ?
 
+ukbd*		at uhidev? reportid ?  
+wskbd*		at ukbd? console ?
+
 wsmouse*	at ms?
+
+ums*		at uhidev? reportid ? 
+wsmouse*	at ums?
 
 no grfcc0	at mainbus0
 no grfrt0	at zbus0

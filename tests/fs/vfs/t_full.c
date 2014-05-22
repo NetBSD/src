@@ -1,4 +1,4 @@
-/*	$NetBSD: t_full.c,v 1.7 2011/03/17 19:48:37 jmmv Exp $	*/
+/*	$NetBSD: t_full.c,v 1.7.4.1 2014/05/22 11:42:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@ fillfs(const atf_tc_t *tc, const char *mp)
 		if (n == -1)
 			break;
 	}
+	if (FSTYPE_ZFS(tc))
+		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (n == -1) {
 		if (errno != ENOSPC)
 			atf_tc_fail_errno("write");

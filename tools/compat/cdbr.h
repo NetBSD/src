@@ -1,5 +1,5 @@
-/*	$NetBSD: cdbr.h,v 1.1.6.2 2012/10/30 19:00:11 yamt Exp $	*/
+/*	$NetBSD: cdbr.h,v 1.1.6.3 2014/05/22 11:42:30 yamt Exp $	*/
 
 /* We unconditionally use the NetBSD cdbr(3) in libnbcompat. */
 #include "nbtool_config.h"
-#include "../../include/cdbr.h"
+#include "../../sys/sys/cdbr.h"

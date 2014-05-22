@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.90 2010/03/02 23:19:09 pooka Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.90.10.1 2014/05/22 11:41:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -349,4 +349,5 @@ void netexport_rdlock(void);
 void netexport_rdunlock(void);
 void netexport_init(void);
 void netexport_fini(void);
+bool netexport_hasexports(void);
 #endif /* _KERNEL */

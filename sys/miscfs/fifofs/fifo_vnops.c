@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.70.2.1 2012/04/17 00:08:34 yamt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.70.2.2 2014/05/22 11:41:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.70.2.1 2012/04/17 00:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.70.2.2 2014/05/22 11:41:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ struct fifoinfo {
 static int
 fifo_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -128,12 +128,10 @@ fifo_open(void *v)
 	struct lwp	*l = curlwp;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
-	struct proc	*p;
 	struct socket	*rso, *wso;
 	int		error;
 
 	vp = ap->a_vp;
-	p = l->l_proc;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = kmem_alloc(sizeof(*fip), KM_SLEEP);

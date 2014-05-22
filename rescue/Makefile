@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2010/03/10 23:13:10 abs Exp $
+#	$NetBSD: Makefile,v 1.27.6.1 2014/05/22 11:37:21 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 WARNS=		1
 # XXX
 .if ${MACHINE_ARCH} != "m68000"
-DBG=		-Os
+DBG+=		-Os
 .endif
 
 CRUNCHGEN_FLAGS=-d "${DBG}"
@@ -19,8 +19,15 @@ LISTS=		${.CURDIR}/list
 TARGETDIR=	${DESTDIR}/rescue
 PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
 
-.for f in ldconfig pdisk
+.for f in ldconfig
 PROG_${f}!=	cd ${NETBSDSRCDIR}/sbin/${f} && ${MAKE} -V PROG
+.if (${PROG_${f}} != "")
+LISTS+=		${.CURDIR}/list.${f}
+.endif
+.endfor
+
+.for f in pdisk
+PROG_${f}!=	cd ${NETBSDSRCDIR}/external/bsd/${f}/bin && ${MAKE} -V PROG
 .if (${PROG_${f}} != "")
 LISTS+=		${.CURDIR}/list.${f}
 .endif
@@ -39,6 +46,9 @@ LISTS+=		${.CURDIR}/list.ldd
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}
 LDD_ELF64DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf64 && ${PRINTOBJDIR}
 PARSELISTENV+=	LDD_ELF32DIR=${LDD_ELF32DIR} LDD_ELF64DIR=${LDD_ELF64DIR}
+
+SMB_LIBDIR!=	cd ${NETBSDSRCDIR}/external/bsd/smbfs/lib/libsmb && ${PRINTOBJDIR}
+PARSELISTENV+=	SMB_LIBDIR=${SMB_LIBDIR}
 
 #	Specially built objects to override the behaviour of
 #	various library functions

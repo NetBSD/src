@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.30.2.1 2012/04/17 00:05:58 yamt Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.30.2.2 2014/05/22 11:39:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.30.2.1 2012/04/17 00:05:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.30.2.2 2014/05/22 11:39:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,13 +131,14 @@ tc_3000_500_intr_setup(void)
 	 * Set up interrupt handlers.
 	 */
 	for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
+		static const size_t len = 12;
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
 
-		cp = malloc(12, M_DEVBUF, M_NOWAIT);
+		cp = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (cp == NULL)
 			panic("tc_3000_500_intr_setup");
-		sprintf(cp, "slot %lu", i);
+		snprintf(cp, len, "slot %lu", i);
 		evcnt_attach_dynamic(&tc_3000_500_intr[i].tci_evcnt,
 		    EVCNT_TYPE_INTR, NULL, "tc", cp);
 	}

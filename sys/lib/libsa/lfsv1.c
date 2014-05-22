@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv1.c,v 1.3.16.2 2012/05/23 10:08:13 yamt Exp $ */
+/* $NetBSD: lfsv1.c,v 1.3.16.3 2014/05/22 11:41:04 yamt Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	1
@@ -13,11 +13,18 @@
 #define	ufs_ls			lfsv1_ls
 #endif
 
+#define ufs_dinode		ulfs1_dinode
+
 #define	fs_bsize		lfs_ibsize
 #define	IFILE_Vx		IFILE_V1
 
+#define	INOPBx(fs) LFS_INOPB(fs)
+
+#define UFS_NINDIR		LFS_NINDIR
+#define ufs_blkoff(a, b)	lfs_blkoff((a), (b))
+#define ufs_lblkno(a, b)	lfs_lblkno((a), (b))
+#define dblksize(a, b, c)	lfs_dblksize((a), (b), (c))
 #define	FSBTODB(fs, daddr)	(daddr)		/* LFSv1 uses sectors for addresses */
-#define	INOPBx(fs) INOPB(fs)
 
 #define	FSMOD			"lfs"
 

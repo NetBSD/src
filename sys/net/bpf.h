@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.58.2.1 2012/04/17 00:08:37 yamt Exp $	*/
+/*	$NetBSD: bpf.h,v 1.58.2.2 2014/05/22 11:41:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -254,6 +254,8 @@ struct bpf_hdr32 {
 /* misc */
 #define BPF_MISCOP(code) ((code) & 0xf8)
 #define		BPF_TAX		0x00
+#define		BPF_COP		0x20
+#define		BPF_COPX	0x40
 #define		BPF_TXA		0x80
 
 /*
@@ -273,6 +275,11 @@ struct bpf_insn {
 #define BPF_JUMP(code, k, jt, jf) { (uint16_t)(code), jt, jf, k }
 
 /*
+ * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
+ */
+#define	BPF_MEMWORDS	16
+
+/*
  * Structure to retrieve available DLTs for the interface.
  */
 struct bpf_dltlist {
@@ -280,8 +287,33 @@ struct bpf_dltlist {
 	u_int	*bfl_list;	/* array of DLTs */
 };
 
+struct bpf_ctx;
+typedef struct bpf_ctx bpf_ctx_t;
+
+struct bpf_args;
+typedef struct bpf_args bpf_args_t;
+
+#if defined(_KERNEL) || defined(__BPF_PRIVATE)
+typedef uint32_t (*bpf_copfunc_t)(bpf_ctx_t *, bpf_args_t *, uint32_t);
+
+struct bpf_args {
+	const struct mbuf *	pkt;
+	size_t			wirelen;
+	size_t			buflen;
+	uint32_t		mem[BPF_MEMWORDS];
+	void *			arg;
+};
+
+struct bpf_ctx {
+	const bpf_copfunc_t *	copfuncs;
+	size_t			nfuncs;
+};
+#endif
+
 #ifdef _KERNEL
+#include <net/bpfjit.h>
 #include <net/if.h>
+
 struct bpf_if;
 
 struct bpf_ops {
@@ -378,16 +410,22 @@ void     bpf_ops_handover_exit(void);
 
 void	 bpfilterattach(int);
 
+bpf_ctx_t *bpf_create(void);
+bpf_ctx_t *bpf_default_ctx(void);
+void	bpf_destroy(bpf_ctx_t *);
+
+int	bpf_set_cop(bpf_ctx_t *, const bpf_copfunc_t *, size_t);
+u_int	bpf_filter_ext(bpf_ctx_t *, const struct bpf_insn *, bpf_args_t *);
+int	bpf_validate_ext(bpf_ctx_t *, const struct bpf_insn *, int);
+
+bpfjit_func_t bpf_jit_generate(bpf_ctx_t *, void *, size_t);
+void	bpf_jit_freecode(bpfjit_func_t);
+
 #endif
 
-int	 bpf_validate(const struct bpf_insn *, int);
-u_int	 bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+int	bpf_validate(const struct bpf_insn *, int);
+u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
 
 __END_DECLS
-
-/*
- * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
- */
-#define BPF_MEMWORDS 16
 
 #endif /* !_NET_BPF_H_ */

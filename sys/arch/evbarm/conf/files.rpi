@@ -1,6 +1,6 @@
-#	$NetBSD: files.rpi,v 1.2.4.3 2013/01/23 00:05:45 yamt Exp $
+#	$NetBSD: files.rpi,v 1.2.4.4 2014/05/22 11:39:40 yamt Exp $
 #
-# Raspberry Pi 
+# Raspberry Pi
 #
 
 file   arch/arm/arm32/arm32_boot.c

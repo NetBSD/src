@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.16.2.1 2012/04/17 00:08:53 yamt Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.16.2.2 2014/05/22 11:41:18 yamt Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct quotactl_args;
 
 /* Status functions to kernel 'struct stat' buffers */
 int do_sys_stat(const char *, unsigned int, struct stat *);
+int do_sys_statat(struct lwp *, int, const char *, unsigned int, struct stat *);
 int do_fhstat(struct lwp *, const void *, size_t, struct stat *);
 int do_fhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int);
 
@@ -53,18 +54,27 @@ int do_sys_getvfsstat(struct lwp *, void *, size_t, int, int (*)(const void *, v
 
 int do_sys_utimes(struct lwp *, struct vnode *, const char *, int,
     const struct timeval *, enum uio_seg);
-int do_sys_utimens(struct lwp *, struct vnode *, const char *, int flag,
+int do_sys_utimens(struct lwp *, struct vnode *, const char *, int,
     const struct timespec *, enum uio_seg);
+int do_sys_utimensat(struct lwp *, int, struct vnode *, const char *, int,
+    const struct timespec *, enum uio_seg);
+
+struct pathbuf;
+int do_open(struct lwp *, struct vnode *, struct pathbuf *, int, int, int *);
 
 int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);
 
 int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
 
+int	do_sys_linkat(struct lwp *, int, const char *, int, const char *, int, register_t *);
 int	do_sys_unlink(const char *, enum uio_seg);
 int	do_sys_rename(const char *, const char *, enum uio_seg, int);
-int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, register_t *,
-    enum uio_seg);
+int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, register_t *, enum uio_seg);
+int	do_sys_mknodat(struct lwp *, int, const char *, mode_t, dev_t, register_t *, enum uio_seg);
+int	do_sys_chmodat(struct lwp *, int, const char *, int, int);
+int	do_sys_chownat(struct lwp *, int, const char *, uid_t, gid_t, int);
+int	do_sys_accessat(struct lwp *, int, const char *, int ,int);
 int	do_sys_mkdir(const char *, mode_t, enum uio_seg);
 int	do_sys_symlink(const char *, const char *, enum uio_seg);
 int	do_sys_quotactl(const char *, const struct quotactl_args *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.58.2.1 2012/10/30 17:19:58 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.58.2.2 2014/05/22 11:39:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58.2.1 2012/10/30 17:19:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58.2.2 2014/05/22 11:39:57 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -221,7 +221,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 		h->hatch_running = -1;
 
 		/* see if there's an OF property for the reset register */
-		sprintf(cpupath, "/cpus/@%x", ci->ci_cpuid);
+		snprintf(cpupath, sizeof(cpupath), "/cpus/@%x", ci->ci_cpuid);
 		node = OF_finddevice(cpupath);
 		if (node == -1) {
 			printf(": no OF node for CPU %d?\n", ci->ci_cpuid);

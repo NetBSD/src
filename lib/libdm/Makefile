@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.6.1 2012/04/17 00:05:27 yamt Exp $
+# $NetBSD: Makefile,v 1.1.6.2 2014/05/22 11:36:55 yamt Exp $
 USE_FORT?= no  # network protocol library
 
 LIB=    dm
@@ -13,8 +13,7 @@ CPPFLAGS+= -I${.CURDIR}
 INCS= dm.h
 INCSDIR= /usr/include
 
-#LDADD+= -lprop
-#DPADD+= ${LIBPROP}
+LIBDPLIBS+=	prop		${NETBSDSRCDIR}/lib/libprop
 
 .ifdef RUMP_ACTION
 CPPFLAGS+= -DRUMP_ACTION

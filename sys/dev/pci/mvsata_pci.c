@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.6.4.1 2012/04/17 00:07:51 yamt Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.6.4.2 2014/05/22 11:40:25 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.6.4.1 2012/04/17 00:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.6.4.2 2014/05/22 11:40:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,6 +156,7 @@ mvsata_pci_attach(device_t parent, device_t self, void *aux)
 	uint32_t reg, mask;
 	int read_pre_amps, hc, port, rv, i;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_model = PCI_PRODUCT(pa->pa_id);
@@ -192,7 +193,7 @@ mvsata_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(psc->psc_pc, intrhandle);
+	intrstr = pci_intr_string(psc->psc_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, intrhandle, IPL_BIO,
 	    mvsata_pci_intr, sc);
 	if (psc->psc_ih == NULL) {

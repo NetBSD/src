@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.78.2.2 2012/10/30 17:20:49 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.78.2.3 2014/05/22 11:40:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.78.2.2 2012/10/30 17:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.78.2.3 2014/05/22 11:40:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.78.2.2 2012/10/30 17:20:49 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
-#include <sys/simplelock.h>
 #include <sys/vfs_syscalls.h>		/* For do_sys_unlink(). */
 
 #include <miscfs/specfs/specdev.h>
@@ -100,13 +99,26 @@ static struct vfs_hooks fss_vfs_hooks = {
 };
 
 const struct bdevsw fss_bdevsw = {
-	fss_open, fss_close, fss_strategy, fss_ioctl,
-	fss_dump, fss_size, D_DISK | D_MPSAFE
+	.d_open = fss_open,
+	.d_close = fss_close,
+	.d_strategy = fss_strategy, fss_ioctl,
+	.d_dump = fss_dump,
+	.d_psize = fss_size,
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw fss_cdevsw = {
-	fss_open, fss_close, fss_read, fss_write, fss_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK | D_MPSAFE
+	.d_open = fss_open,
+	.d_close = fss_close,
+	.d_read = fss_read,
+	.d_write = fss_write,
+	.d_ioctl = fss_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 static int fss_match(device_t, cfdata_t, void *);
@@ -223,11 +235,13 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 	error = 0;
 
+	mutex_enter(&fss_device_lock);
 restart:
 	mutex_enter(&sc->sc_slock);
 	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != mflag) {
 		sc->sc_flags &= ~mflag;
 		mutex_exit(&sc->sc_slock);
+		mutex_exit(&fss_device_lock);
 		return 0;
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
@@ -239,11 +253,8 @@ restart:
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0) {
 		mutex_exit(&sc->sc_slock);
+		mutex_exit(&fss_device_lock);
 		return error;
-	}
-	if (! mutex_tryenter(&fss_device_lock)) {
-		mutex_exit(&sc->sc_slock);
-		goto restart;
 	}
 
 	KASSERT((sc->sc_flags & FSS_ACTIVE) == 0);
@@ -692,24 +703,13 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	vrele(vp);
 
 	/*
-	 * Get the block device it is mounted on.
+	 * Get the block device it is mounted on and its size.
 	 */
 
-	error = namei_simple_kernel(sc->sc_mount->mnt_stat.f_mntfromname,
-				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error != 0)
+	error = spec_node_lookup_by_mount(sc->sc_mount, &vp);
+	if (error)
 		return error;
-
-	if (vp->v_type != VBLK) {
-		vrele(vp);
-		return EINVAL;
-	}
-
 	sc->sc_bdev = vp->v_rdev;
-
-	/*
-	 * Get the block device size.
-	 */
 
 	error = getdisksize(vp, &numsec, &secsize);
 	vrele(vp);

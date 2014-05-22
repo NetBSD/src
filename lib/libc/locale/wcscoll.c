@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscoll.c,v 1.1.56.1 2012/10/30 18:58:51 yamt Exp $	*/
+/*	$NetBSD: wcscoll.c,v 1.1.56.2 2014/05/22 11:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,20 +28,29 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscoll.c,v 1.1.56.1 2012/10/30 18:58:51 yamt Exp $");
+__RCSID("$NetBSD: wcscoll.c,v 1.1.56.2 2014/05/22 11:36:52 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <assert.h>
 #include <wchar.h>
+#include <locale.h>
+#include "setlocale_local.h"
 
 /*
  * Compare strings with using collating information.
  */
 int
-wcscoll(const wchar_t *s1, const wchar_t *s2)
+wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
 {
 	/* XXX: LC_COLLATE should be implemented. */
+	/* LINTED */ (void)loc;
 	return (wcscmp(s1, s2));
+}
+
+int
+wcscoll(const wchar_t *s1, const wchar_t *s2)
+{
+	return wcscoll_l(s1, s2, _current_locale());
 }

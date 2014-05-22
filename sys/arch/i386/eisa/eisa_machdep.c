@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.37 2011/09/01 15:10:31 christos Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.37.2.1 2014/05/22 11:39:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.37 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.37.2.1 2014/05/22 11:39:51 yamt Exp $");
 
 #include "ioapic.h"
 
@@ -106,7 +106,7 @@ void
 eisa_attach_hook(device_t parent, device_t self,
     struct eisabus_attach_args *eba)
 {
-	extern int eisa_has_been_seen; 
+	extern int eisa_has_been_seen;
 
 	/*
 	 * Notify others that might need to know that the EISA bus
@@ -157,26 +157,24 @@ eisa_intr_map(eisa_chipset_tag_t ec, u_int irq,
 }
 
 const char *
-eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
 	if (ih == 0 || (ih & 0xff) >= NUM_LEGACY_IRQS || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC)
-		snprintf(irqstr, sizeof(irqstr), "apic %d int %d (irq %d)",
+		snprintf(buf, len, "apic %d int %d (irq %d)",
 		    APIC_IRQ_APIC(ih),
 		    APIC_IRQ_PIN(ih),
 		    ih&0xff);
 	else
-		snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
+		snprintf(buf, len, "irq %d", ih&0xff);
 #else
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
+	snprintf(buf, len, "irq %d", ih);
 #endif
-	return (irqstr);
-	
+	return buf;
 }
 
 const struct evcnt *
@@ -199,12 +197,13 @@ eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
-		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
-		if (pic == NULL) {
-			aprint_error("eisa_intr_establish: bad ioapic %d\n",
+		struct ioapic_softc * const ioapic = ioapic_find(APIC_IRQ_APIC(ih));
+		if (ioapic == NULL) {
+			aprint_normal("eisa_intr_establish: bad ioapic %d\n",
 			    APIC_IRQ_APIC(ih));
 			return NULL;
 		}
+		pic = &ioapic->sc_pic;
 		pin = APIC_IRQ_PIN(ih);
 		irq = APIC_IRQ_LEGACY_IRQ(ih);
 		if (irq < 0 || irq >= NUM_LEGACY_IRQS)

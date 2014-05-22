@@ -1,10 +1,11 @@
-/*	$NetBSD: linux32_machdep.h,v 1.1.114.1 2012/04/17 00:05:59 yamt Exp $ */
+/*	$NetBSD: linux32_machdep.h,v 1.1.114.2 2014/05/22 11:39:28 yamt Exp $ */
 
 #ifndef _MACHINE_LINUX32_H_
 #define _MACHINE_LINUX32_H_
 
 #include <compat/netbsd32/netbsd32.h>
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux32/common/linux32_types.h>
 
 #include <compat/linux32/arch/amd64/linux32_siginfo.h>

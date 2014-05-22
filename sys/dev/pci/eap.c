@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.92.34.1 2012/04/17 00:07:44 yamt Exp $	*/
+/*	$NetBSD: eap.c,v 1.92.34.2 2014/05/22 11:40:24 yamt Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.34.1 2012/04/17 00:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.34.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -533,6 +533,7 @@ eap_attach(device_t parent, device_t self, void *aux)
 #if NJOY_EAP > 0
 	struct eap_gameport_args gpargs;
 #endif
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -599,7 +600,7 @@ eap_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, eap_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

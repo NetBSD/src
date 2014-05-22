@@ -1,33 +1,40 @@
-# $NetBSD: Makefile,v 1.33.2.2 2012/10/30 18:59:50 yamt Exp $
+# $NetBSD: Makefile,v 1.33.2.3 2014/05/22 11:42:17 yamt Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKATF} != "no"
 
 TESTSDIR=	${TESTSBASE}
-ATFFILE=	yes
 
-SUBDIR=		bin dev examples games include kernel lib libexec net
-SUBDIR+=	sbin sys usr.bin usr.sbin
+TESTS_SUBDIRS=		bin dev games include kernel lib libexec net
+TESTS_SUBDIRS+=		sbin sys usr.bin usr.sbin
 
 . if (${MKRUMP} != "no")
-SUBDIR+= fs rump
+TESTS_SUBDIRS+=		fs rump
 
 . if ${MKKMOD} != "no"
-SUBDIR+= modules
+TESTS_SUBDIRS+=		modules
 . endif
 . endif
 
 . if ${MKCRYPTO} != "no"
-SUBDIR+=	crypto
+TESTS_SUBDIRS+=		crypto
 . endif
 
 . if ${MKIPFILTER} != "no"
-SUBDIR+=	ipf
+TESTS_SUBDIRS+=		ipf
 . endif
 
 . if ${MKSHARE} != "no"
-SUBDIR+=	share
+TESTS_SUBDIRS+=		share
+. endif
+
+. if ${MKATF} != "no"
+ATFFILE_EXTRA_SUBDIRS+=	atf
+. endif
+
+. if ${MKKYUA} != "no"
+ATFFILE_EXTRA_SUBDIRS+=	kyua-atf-compat kyua-cli kyua-testers
 . endif
 
 .include <bsd.test.mk>

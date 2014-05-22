@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.19.4.1 2013/01/23 00:05:21 yamt Exp $	*/
+/*	$NetBSD: vis.h,v 1.19.4.2 2014/05/22 11:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,9 +95,12 @@ int	strsnvis(char *, size_t, const char *, int, const char *);
 
 int	strvisx(char *, const char *, size_t, int);
 int	strnvisx(char *, size_t, const char *, size_t, int);
+int 	strenvisx(char *, size_t, const char *, size_t, int, int *);
 
 int	strsvisx(char *, const char *, size_t, int, const char *);
 int	strsnvisx(char *, size_t, const char *, size_t, int, const char *);
+int	strsenvisx(char *, size_t, const char *, size_t , int, const char *,
+    int *);
 
 int	strunvis(char *, const char *);
 int	strnunvis(char *, size_t, const char *);

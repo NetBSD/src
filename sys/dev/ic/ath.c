@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.112.2.2 2013/01/16 05:33:14 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.112.2.3 2014/05/22 11:40:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112.2.2 2013/01/16 05:33:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112.2.3 2014/05/22 11:40:21 yamt Exp $");
 #endif
 
 /*
@@ -1278,6 +1278,10 @@ ath_start(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
 	    !device_is_active(sc->sc_dev))
 		return;
+
+	if (sc->sc_flags & ATH_KEY_UPDATING)
+		return;
+
 	for (;;) {
 		/*
 		 * Grab a TX buffer and associated resources.
@@ -1887,7 +1891,7 @@ ath_key_update_begin(struct ieee80211com *ic)
 #if 0
 	tasklet_disable(&sc->sc_rxtq);
 #endif
-	IF_LOCK(&ifp->if_snd);		/* NB: doesn't block mgmt frames */
+	sc->sc_flags |= ATH_KEY_UPDATING;
 }
 
 static void
@@ -1897,7 +1901,7 @@ ath_key_update_end(struct ieee80211com *ic)
 	struct ath_softc *sc = ifp->if_softc;
 
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s:\n", __func__);
-	IF_UNLOCK(&ifp->if_snd);
+	sc->sc_flags &= ~ATH_KEY_UPDATING;
 #if 0
 	tasklet_enable(&sc->sc_rxtq);
 #endif
@@ -4349,7 +4353,6 @@ ath_stoprecv(struct ath_softc *sc)
 	((struct ath_desc *)((char *)(_sc)->sc_rxdma.dd_desc + \
 		((_pa) - (_sc)->sc_rxdma.dd_desc_paddr)))
 	struct ath_hal *ah = sc->sc_ah;
-	u_int64_t tsf;
 
 	ath_hal_stoppcurecv(ah);	/* disable PCU */
 	ath_hal_setrxfilter(ah, 0);	/* clear recv filter */
@@ -4362,7 +4365,6 @@ ath_stoprecv(struct ath_softc *sc)
 			(void *)(uintptr_t) ath_hal_getrxbuf(ah), sc->sc_rxlink);
 		STAILQ_FOREACH(bf, &sc->sc_rxbuf, bf_list) {
 			struct ath_desc *ds = bf->bf_desc;
-			tsf = ath_hal_gettsf64(sc->sc_ah);
 			HAL_STATUS status = ath_hal_rxprocdesc(ah, ds,
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link),
 				&ds->ds_rxstat);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.242.2.2 2012/10/30 17:22:46 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.242.2.3 2014/05/22 11:41:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242.2.2 2012/10/30 17:22:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242.2.3 2014/05/22 11:41:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -100,10 +100,12 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242.2.2 2012/10/30 17:22:46 yamt Exp 
 #include "opt_mbuftrace.h"
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/once.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -146,14 +148,14 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242.2.2 2012/10/30 17:22:46 yamt Exp 
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/xform.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
  #include <netipsec/key.h>
-#endif	/* FAST_IPSEC*/
+#endif	/* IPSEC*/
 
 
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
@@ -173,11 +175,28 @@ int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* Explicit Congestion Notification */
 #ifndef TCP_INIT_WIN
-#define	TCP_INIT_WIN	0	/* initial slow start window */
+#define	TCP_INIT_WIN	4	/* initial slow start window */
 #endif
 #ifndef TCP_INIT_WIN_LOCAL
 #define	TCP_INIT_WIN_LOCAL 4	/* initial slow start window for local nets */
 #endif
+/*
+ * Up to 5 we scale linearly, to reach 3 * 1460; then (iw) * 1460.
+ * This is to simulate current behavior for iw == 4
+ */
+int tcp_init_win_max[] = {
+	 1 * 1460,
+	 1 * 1460,
+	 2 * 1460,
+	 2 * 1460,
+	 3 * 1460,
+	 5 * 1460,
+	 6 * 1460,
+	 7 * 1460,
+	 8 * 1460,
+	 9 * 1460,
+	10 * 1460
+};
 int	tcp_init_win = TCP_INIT_WIN;
 int	tcp_init_win_local = TCP_INIT_WIN_LOCAL;
 int	tcp_mss_ifmtu = 0;
@@ -205,7 +224,7 @@ int	tcp_rttlocal = 0;		/* Use RTT to decide who's 'local' */
 int	tcp4_vtw_enable = 0;		/* 1 to enable */
 int	tcp6_vtw_enable = 0;		/* 1 to enable */
 int	tcp_vtw_was_enabled = 0;
-int	tcp_vtw_entries = 1 << 16;	/* 64K vestigial TIME_WAIT entries */
+int	tcp_vtw_entries = 1 << 4;	/* 16 vestigial TIME_WAIT entries */
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
@@ -224,10 +243,7 @@ struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 int	tcp_freeq(struct tcpcb *);
 
 #ifdef INET
-void	tcp_mtudisc_callback(struct in_addr);
-#endif
-#ifdef INET6
-void	tcp6_mtudisc_callback(struct in6_addr *);
+static void	tcp_mtudisc_callback(struct in_addr);
 #endif
 
 #ifdef INET6
@@ -370,34 +386,15 @@ struct mowner tcp_sock_rx_mowner = MOWNER_INIT("tcp", "sock rx");
 struct mowner tcp_sock_tx_mowner = MOWNER_INIT("tcp", "sock tx");
 #endif
 
-/*
- * Tcp initialization
- */
-void
-tcp_init(void)
+callout_t tcp_slowtimo_ch;
+
+static int
+do_tcpinit(void)
 {
-	int hlen;
 
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL, IPL_SOFTNET);
-
-	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
-#ifdef INET6
-	if (sizeof(struct ip) < sizeof(struct ip6_hdr))
-		hlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
-#endif
-	if (max_protohdr < hlen)
-		max_protohdr = hlen;
-	if (max_linkhdr + hlen > MHLEN)
-		panic("tcp_init");
-
-#ifdef INET
-	icmp_mtudisc_callback_register(tcp_mtudisc_callback);
-#endif
-#ifdef INET6
-	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
-#endif
 
 	tcp_usrreq_init();
 
@@ -430,6 +427,38 @@ tcp_init(void)
 	tcpstat_percpu = percpu_alloc(sizeof(uint64_t) * TCP_NSTATS);
 
 	vtw_earlyinit();
+
+	callout_init(&tcp_slowtimo_ch, CALLOUT_MPSAFE);
+	callout_reset(&tcp_slowtimo_ch, 1, tcp_slowtimo, NULL);
+
+	return 0;
+}
+
+void
+tcp_init_common(unsigned basehlen)
+{
+	static ONCE_DECL(dotcpinit);
+	unsigned hlen = basehlen + sizeof(struct tcphdr);
+	unsigned oldhlen;
+
+	if (max_linkhdr + hlen > MHLEN)
+		panic("tcp_init");
+	while ((oldhlen = max_protohdr) < hlen)
+		atomic_cas_uint(&max_protohdr, oldhlen, hlen);
+
+	RUN_ONCE(&dotcpinit, do_tcpinit);
+}
+
+/*
+ * Tcp initialization
+ */
+void
+tcp_init(void)
+{
+
+	icmp_mtudisc_callback_register(tcp_mtudisc_callback);
+
+	tcp_init_common(sizeof(struct ip));
 }
 
 /*
@@ -946,6 +975,9 @@ static struct tcpcb tcpcb_template = {
 	.snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_numholes = 0,
+	.snd_cubic_wmax = 0,
+	.snd_cubic_wmax_last = 0,
+	.snd_cubic_ctime = 0,
 
 	.t_partialacks = -1,
 	.t_bytes_acked = 0,
@@ -1331,7 +1363,7 @@ tcp_drain(void)
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	CIRCLEQ_FOREACH(inph, &tcbtable.inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &tcbtable.inpt_queue, inph_queue) {
 		switch (inph->inph_af) {
 		case AF_INET:
 			tp = intotcpcb((struct inpcb *)inph);
@@ -2303,7 +2335,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	return (tcp_iss);
 }
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 /* compute ESP/AH header size for TCP, including outer IP header. */
 size_t
 ipsec4_hdrsiz_tcp(struct tcpcb *tp)

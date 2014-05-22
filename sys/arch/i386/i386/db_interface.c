@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.67.2.2 2013/01/16 05:32:59 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.67.2.3 2014/05/22 11:39:51 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67.2.2 2013/01/16 05:32:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67.2.3 2014/05/22 11:39:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67.2.2 2013/01/16 05:32:59 yamt E
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
-#include <sys/simplelock.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>

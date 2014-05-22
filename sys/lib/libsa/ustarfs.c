@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.33.2.1 2012/04/17 00:08:34 yamt Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.33.2.2 2014/05/22 11:41:04 yamt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -539,10 +539,11 @@ ustarfs_stat(struct open_file *f, struct stat *sb)
 
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
 ustarfs_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by ustarfs\n");
+	lsunsup("ustarfs");
 	return;
 }
 #endif

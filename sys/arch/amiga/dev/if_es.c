@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.50.8.1 2012/10/30 17:18:49 yamt Exp $ */
+/*	$NetBSD: if_es.c,v 1.50.8.2 2014/05/22 11:39:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.50.8.1 2012/10/30 17:18:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.50.8.2 2014/05/22 11:39:28 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -448,6 +448,7 @@ zzzz:
 #endif
 		smc->b0.bsr = BSR_BANK0;
 		ephsr = smc->b0.ephsr;		/* get EPHSR */
+		__USE(ephsr);
 		tcr = smc->b0.tcr;		/* and TCR */
 		smc->b2.bsr = BSR_BANK2;
 		save_ptr = smc->b2.ptr;

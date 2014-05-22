@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.25 2010/12/20 00:25:43 matt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.25.8.1 2014/05/22 11:40:08 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,16 +75,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.25 2010/12/20 00:25:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.25.8.1 2014/05/22 11:40:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
+#include <arm/locore.h>
+
 #include <machine/irqhandler.h>
-#include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
 

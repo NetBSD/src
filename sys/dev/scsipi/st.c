@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.217.8.2 2012/05/23 10:08:05 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.217.8.3 2014/05/22 11:40:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.217.8.2 2012/05/23 10:08:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.217.8.3 2014/05/22 11:40:35 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -105,12 +105,27 @@ static dev_type_strategy(ststrategy);
 static dev_type_dump(stdump);
 
 const struct bdevsw st_bdevsw = {
-	stopen, stclose, ststrategy, stioctl, stdump, nosize, D_TAPE
+	.d_open = stopen,
+	.d_close = stclose,
+	.d_strategy = ststrategy,
+	.d_ioctl = stioctl,
+	.d_dump = stdump,
+	.d_psize = nosize,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw st_cdevsw = {
-	stopen, stclose, stread, stwrite, stioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = stopen,
+	.d_close = stclose,
+	.d_read = stread,
+	.d_write = stwrite,
+	.d_ioctl = stioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TAPE
 };
 
 /*
@@ -1104,7 +1119,7 @@ ststart(struct scsipi_periph *periph)
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
 	struct scsipi_xfer *xs;
-	int flags, error;
+	int flags, error __diagused;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
 	/* See if there is a buf to do and we are not already  doing one */

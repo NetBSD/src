@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.2.4.5 2013/01/23 00:06:43 yamt Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.2.4.6 2014/05/22 11:43:06 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -74,6 +74,7 @@ typedef struct query_args {
 	int *sec_nums;		// Section in which to do the search
 	int nrec;			// number of records to fetch
 	int offset;		//From which position to start processing the records
+	int legacy;
 	const char *machine;
 	int (*callback) (void *, const char *, const char *, const char *,
 		const char *, size_t);	// The callback function
@@ -81,14 +82,18 @@ typedef struct query_args {
 	char **errmsg;		// buffer for storing the error msg
 } query_args;
 
+typedef enum query_format {
+    APROPOS_NONE,
+    APROPOS_PAGER,
+    APROPOS_TERM,
+    APROPOS_HTML
+} query_format;
+
 char *lower(char *);
 void concat(char **, const char *);
 void concat2(char **, const char *, size_t);
 sqlite3 *init_db(int, const char *);
 void close_db(sqlite3 *);
 char *get_dbpath(const char *);
-int run_query(sqlite3 *, const char *[3], query_args *);
-int run_query_html(sqlite3 *, query_args *);
-int run_query_pager(sqlite3 *, query_args *);
-int run_query_term(sqlite3 *, query_args *);
-#endif 
+int run_query(sqlite3 *, query_format, query_args *);
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.50.8.1 2012/04/17 00:07:06 yamt Exp $ */
+/*	$NetBSD: ipmi.c,v 1.50.8.2 2014/05/22 11:40:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50.8.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50.8.2 2014/05/22 11:40:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,11 @@ int	ipmi_enabled = 0;
 
 #define IPMI_ENTITY_PWRSUPPLY		0x0A
 
-#define IPMI_INVALID_SENSOR		(1L << 5)
+#define IPMI_SENSOR_SCANNING_ENABLED	(1L << 6)
+#define IPMI_SENSOR_UNAVAILABLE		(1L << 5)
+#define IPMI_INVALID_SENSOR_P(x) \
+	(((x) & (IPMI_SENSOR_SCANNING_ENABLED|IPMI_SENSOR_UNAVAILABLE)) \
+	!= IPMI_SENSOR_SCANNING_ENABLED)
 
 #define IPMI_SDR_TYPEFULL		1
 #define IPMI_SDR_TYPECOMPACT		2
@@ -208,9 +212,9 @@ int	getbits(uint8_t *, int, int);
 int	ipmi_sensor_type(int, int, int);
 
 void	ipmi_smbios_probe(struct smbios_ipmi *, struct ipmi_attach_args *);
-void	ipmi_refresh_sensors(struct ipmi_softc *sc);
-int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
-void	ipmi_unmap_regs(struct ipmi_softc *sc);
+void	ipmi_refresh_sensors(struct ipmi_softc *);
+int	ipmi_map_regs(struct ipmi_softc *, struct ipmi_attach_args *);
+void	ipmi_unmap_regs(struct ipmi_softc *);
 
 void	*scan_sig(long, long, int, int, const void *);
 
@@ -408,8 +412,7 @@ bt_sendmsg(struct ipmi_softc *sc, int len, const uint8_t *data)
 }
 
 int
-bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen,
-    uint8_t *data)
+bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, uint8_t *data)
 {
 	uint8_t len, v, i;
 
@@ -503,8 +506,7 @@ int	smic_write_cmd_data(struct ipmi_softc *, uint8_t, const uint8_t *);
 int	smic_read_data(struct ipmi_softc *, uint8_t *);
 
 int
-smic_wait(struct ipmi_softc *sc, uint8_t mask, uint8_t val,
-    const char *lbl)
+smic_wait(struct ipmi_softc *sc, uint8_t mask, uint8_t val, const char *lbl)
 {
 	int v;
 
@@ -786,6 +788,8 @@ kcs_probe(struct ipmi_softc *sc)
 	printf(" C/D: %2x\n", v & KCS_CD);
 	printf(" IBF: %2x\n", v & KCS_IBF);
 	printf(" OBF: %2x\n", v & KCS_OBF);
+#else
+	__USE(v);
 #endif
 	return (0);
 }
@@ -1718,7 +1722,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	    s1->m, s1->m_tolerance, s1->b, s1->b_accuracy, s1->rbexp, s1->linear);
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], edata->desc);
-	if (data[1] & IPMI_INVALID_SENSOR) {
+	if (IPMI_INVALID_SENSOR_P(data[1])) {
 		/* Check if sensor is valid */
 		edata->state = ENVSYS_SINVALID;
 	} else {

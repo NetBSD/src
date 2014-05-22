@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.18.8.1 2012/10/30 17:18:35 yamt Exp $ */
+/* $NetBSD: start.c,v 1.18.8.2 2014/05/22 11:39:25 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18.8.1 2012/10/30 17:18:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18.8.2 2014/05/22 11:39:25 yamt Exp $");
 
 #include "opt_modular.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18.8.1 2012/10/30 17:18:35 yamt Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <acorn26/ioc/iociicvar.h>
 
-#include <arm/armreg.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 #include <machine/boot.h>
 #include <machine/machdep.h>

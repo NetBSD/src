@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.14.12.1 2012/05/23 10:07:43 yamt Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.14.12.2 2014/05/22 11:39:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ wakeup_32:
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
 	movl	%cr0,%eax
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
 
 	/* Flush the prefetch queue */

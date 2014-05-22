@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3.4.1 2012/10/30 18:58:41 yamt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3.4.2 2014/05/22 11:36:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3.4.1 2012/10/30 18:58:41 yamt Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3.4.2 2014/05/22 11:36:49 yamt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -49,7 +49,7 @@ ENTRY(swapcontext)
 	add	%o7, 8, %o1
 	st	%o1, [%o2 + 40 + 1 * 4]		! gr[_REG_PC] = retaddr
 
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%g1, %g2)			! %g1 = _GLOBAL_OFFSET_TABLE
 	set	_C_LABEL(setcontext), %g2
 	ld	[%g1 + %g2], %g1

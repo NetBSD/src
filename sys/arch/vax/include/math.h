@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.5.112.1 2012/04/17 00:07:01 yamt Exp $	*/
+/*	$NetBSD: math.h,v 1.5.112.2 2014/05/22 11:40:12 yamt Exp $	*/
 
 #ifndef _VAX_MATH_H_
 #define _VAX_MATH_H_
@@ -11,8 +11,10 @@
 #define	__INFINITY	1.0E+39F
 #endif
 
-#define	__isinf(__x)	(0)
-#define	__isnan(__x)	(0)
+static inline int __isinf(double __x) { return 0; }
+static inline int __isnan(double __x) { return 0; }
+#define	__HAVE_INLINE___ISINF
+#define	__HAVE_INLINE___ISNAN
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE) || \

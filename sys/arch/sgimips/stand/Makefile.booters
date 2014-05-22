@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.21 2011/02/26 16:26:58 matt Exp $
+# $NetBSD: Makefile.booters,v 1.21.4.1 2014/05/22 11:40:07 yamt Exp $
 
 # PROG set by parent.
 NOMAN=		# defined
@@ -13,6 +13,7 @@ BINMODE?=	444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

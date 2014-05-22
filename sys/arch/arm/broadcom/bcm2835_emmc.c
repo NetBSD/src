@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.1.6.4 2013/01/23 00:05:41 yamt Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.1.6.5 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.1.6.4 2013/01/23 00:05:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.1.6.5 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	frequency = prop_dictionary_get(dict, "frequency");
 	if (frequency != NULL) {
 		sc->sc.sc_clkbase = prop_number_integer_value(frequency) / 1000;
-	}    
-	
+	}
+
 	error = bus_space_map(sc->sc_iot, aaa->aaa_addr, aaa->aaa_size, 0,
 	    &sc->sc_ioh);
 	if (error) {
@@ -126,7 +126,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
 
 	error = sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh,
- 	    aaa->aaa_size);
+	    aaa->aaa_size);
 	if (error != 0) {
 		aprint_error_dev(self, "couldn't initialize host, error=%d\n",
 		    error);

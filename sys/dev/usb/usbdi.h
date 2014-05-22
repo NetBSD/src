@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.79.12.4 2013/01/23 00:06:16 yamt Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.79.12.5 2014/05/22 11:40:37 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
 
 /* Used to clear endpoint stalls from the softint */
-void usbd_clear_endpoint_stall_async_cb(void *);
+void usbd_clear_endpoint_stall_task(void *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event
@@ -278,9 +278,16 @@ struct usbif_attach_arg {
 /* No match */
 #define UMATCH_NONE					 0
 
+
+/*
+ * IPL_USB is defined as IPL_VM for drivers that have not been made MP safe.
+ * IPL_VM (currently) takes the kernel lock.
+ *
+ * Eventually, IPL_USB can/should be changed
+ */
 #define splusb splsoftnet
-#define splhardusb splbio
-#define IPL_USB IPL_BIO
+#define splhardusb splvm
 #define IPL_SOFTUSB IPL_SOFTNET
+#define IPL_USB IPL_VM
 
 #endif /* _USBDI_H_ */

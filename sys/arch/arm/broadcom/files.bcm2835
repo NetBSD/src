@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.5.4.3 2013/01/23 00:05:41 yamt Exp $
+#	$NetBSD: files.bcm2835,v 1.5.4.4 2014/05/22 11:39:31 yamt Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -12,7 +12,6 @@ file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c
 
 # OBIO just an attach point
-#, [mult=1], [intrbase=-1], [nobyteacc=0]
 device	obio { [addr=-1], [size=0], [intr=-1]
 	     } : bus_space_generic, pic, pic_splfuncs
 attach	obio at mainbus
@@ -42,6 +41,11 @@ device	bcmpm: sysmon_wdog
 attach	bcmpm at obio with bcmpm_amba
 file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
 
+# Random number generator (BCM2835_RNG_BASE)
+device	bcmrng
+attach	bcmrng at obio with bcmrng_amba
+file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
+
 # UART Interface (BCM2835_UART0_BASE)
 attach	plcom at obio with bcmplcom
 file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
@@ -51,8 +55,8 @@ attach	sdhc at obio with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 
 # USB (BCM2835_USB_BASE)
-attach dotg at obio with dotg_amba
-file	arch/arm/broadcom/bcm2835_dotg.c	dotg	needs-flag
+attach dwctwo at obio with bcmdwctwo
+file	arch/arm/broadcom/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 
 # GPIO misc. functions
 define	bcm2835_gpio_subr
@@ -71,3 +75,16 @@ file	arch/arm/broadcom/bcm2835_bsc.c		bsciic	needs-flag
 # Generic framebuffer console driver
 attach	genfb at obio with bcmgenfb: edid
 file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag
+
+# VCHIQ
+include "external/bsd/vchiq/conf/files.vchiq"
+
+# VC audio
+device	vcaudio: audiobus, auconv, mulaw, aurateconv
+attach	vcaudio at vchiqbus
+file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
+
+# GPIO
+device	bcmgpio: gpiobus
+attach	bcmgpio at obio
+file	arch/arm/broadcom/bcm2835_gpio.c

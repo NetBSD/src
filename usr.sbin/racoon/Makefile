@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23.4.2 2012/10/30 19:00:51 yamt Exp $
+# $NetBSD: Makefile,v 1.23.4.3 2014/05/22 11:43:09 yamt Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -27,7 +27,7 @@ DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/racoon/missing
 CPPFLAGS+= -I${DIST}/src/libipsec
 CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
-CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
+CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H -DENABLE_WILDCARD_MATCH
 CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
 
@@ -72,4 +72,9 @@ prsa_tok.c: ${DIST}/src/racoon/prsa_tok.l
 prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
 
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 48
+.if ${MACHINE_ARCH} == "sh3el"
+COPTS.ipsec_doi.c=	-O0
+.endif
+.endif
 .include <bsd.prog.mk>

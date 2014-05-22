@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.35.4.2 2013/01/16 05:33:44 yamt Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.35.4.3 2014/05/22 11:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35.4.2 2013/01/16 05:33:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35.4.3 2014/05/22 11:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -686,7 +686,8 @@ do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
 		if (!try && abstime != NULL) {
-			error = abstimeout2timo(abstime, &timeo);
+			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, abstime,
+			    &timeo, NULL);
 			if (error != 0)
 				goto out;
 		} else {

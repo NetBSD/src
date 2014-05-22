@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.28 2011/09/10 18:38:20 jakllsch Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.28.2.1 2014/05/22 11:40:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.28 2011/09/10 18:38:20 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.28.2.1 2014/05/22 11:40:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,11 +330,6 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 {
 	int rc, root_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "synaptics",

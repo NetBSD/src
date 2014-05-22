@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.32.2.3 2012/11/02 08:19:23 yamt Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.32.2.4 2014/05/22 11:41:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.32.2.3 2012/11/02 08:19:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.32.2.4 2014/05/22 11:41:16 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -110,7 +110,7 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 {
 	struct vm_page **pgs;
 	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
-	int rv, npages, i;
+	int npages, i;
 
 	if (maxpages == 0)
 		return;
@@ -120,7 +120,7 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
-		rv = uobj->pgops->pgo_get(uobj, trunc_page(off),
+		(void)uobj->pgops->pgo_get(uobj, trunc_page(off),
 		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE,
 		    0, PAGERFLAGS | PGO_PASTEOF);
 		KASSERT(npages > 0);

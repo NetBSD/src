@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.1 2010/03/21 21:11:13 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.1.14.1 2014/05/22 11:40:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 {
     struct l2t_entry *e;
     struct l2t_data *d = L2DATA(dev);
-    u32 addr = *(u32 *)neigh->_rt_key;
+    u32 addr = ((struct sockaddr_in *)rt_getkey(neigh))->sin_addr.s_addr;
     int ifidx = neigh->rt_ifp->if_index;
     int hash = arp_hash(addr, ifidx, d);
 
@@ -427,7 +427,7 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
     struct l2t_entry *e;
     struct mbuf *arpq = NULL;
     struct l2t_data *d = L2DATA(dev);
-    u32 addr = *(u32 *)neigh->_rt_key;
+    u32 addr = ((struct sockaddr_in *)rt_getkey(neigh))->sin_addr.s_addr;
     int ifidx = neigh->rt_ifp->if_index;
     int hash = arp_hash(addr, ifidx, d);
     struct llinfo_arp *la;
@@ -635,7 +635,7 @@ l2t_seq_show(struct seq_file *seq, void *v)
         struct l2t_entry *e = v;
 
         mtx_lock(&e->lock);
-        sprintf(ip, "%u.%u.%u.%u", NIPQUAD(e->addr));
+        snprintf(ip, sizeof(ip), "%u.%u.%u.%u", NIPQUAD(e->addr));
         seq_printf(seq, "%-5u %-15s %02x:%02x:%02x:%02x:%02x:%02x  %4d"
                "  %3u     %c   %7u   %4u %s\n",
                e->idx, ip, e->dmac[0], e->dmac[1], e->dmac[2],

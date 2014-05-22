@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.126.2.1 2012/04/17 00:05:54 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.126.2.2 2014/05/22 11:39:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.2.1 2012/04/17 00:05:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.2.2 2014/05/22 11:39:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 		entryname = "system call";
 		break;
 	default:
-		sprintf(ubuf, "type %lx", entry);
+		snprintf(ubuf, sizeof(ubuf), "type %lx", entry);
 		entryname = (const char *) ubuf;
 		break;
 	}
@@ -1127,7 +1127,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

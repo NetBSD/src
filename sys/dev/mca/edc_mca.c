@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.45.2.2 2012/10/30 17:21:19 yamt Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.45.2.3 2014/05/22 11:40:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.45.2.2 2012/10/30 17:21:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.45.2.3 2014/05/22 11:40:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Run the worker thread.
 	 */
-	config_pending_incr();
+	config_pending_incr(self);
 	if ((error = kthread_create(PRI_NONE, 0, NULL, edcworker, sc, NULL,
 	    "%s", device_xname(sc->sc_dev)))) {
 		aprint_error_dev(sc->sc_dev, "cannot spawn worker thread: errno=%d\n", error);
@@ -802,7 +802,7 @@ edcworker(void *arg)
 	struct buf *bp;
 	int i, error;
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	for(;;) {
 		/* Wait until awakened */
@@ -815,13 +815,13 @@ edcworker(void *arg)
 			}
 
 			/* Is there a buf for us ? */
-			simple_lock(&ed->sc_q_lock);
+			mutex_enter(&ed->sc_q_lock);
 			if ((bp = bufq_get(ed->sc_q)) == NULL) {
-				simple_unlock(&ed->sc_q_lock);
+				mutex_exit(&ed->sc_q_lock);
 				i++;
 				continue;
 			}
-			simple_unlock(&ed->sc_q_lock);
+			mutex_exit(&ed->sc_q_lock);
 
 			/* Instrumentation. */
 			disk_busy(&ed->sc_dk);

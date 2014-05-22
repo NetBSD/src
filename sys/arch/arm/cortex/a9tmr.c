@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.3.2.3 2013/01/16 05:32:46 yamt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.3.2.4 2014/05/22 11:39:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.3.2.3 2013/01/16 05:32:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.3.2.4 2014/05/22 11:39:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,9 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 	if (a9tmr_sc.sc_dev != NULL)
 		return 0;
 
+	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0)
+		return 0;
+
 	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
@@ -120,9 +123,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
 	 * The MD code should have setup our frequency for us.
 	 */
-	prop_number_t pn = prop_dictionary_get(dict, "frequency");
-	KASSERT(pn != NULL);
-	sc->sc_freq = prop_number_unsigned_integer_value(pn);
+	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
@@ -145,7 +146,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
 
 	sc->sc_global_ih = intr_establish(IRQ_A9TMR_PPI_GTIMER, IPL_CLOCK,
-	    IST_EDGE, clockhandler, NULL);
+	    IST_EDGE | IST_MPSAFE, clockhandler, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",

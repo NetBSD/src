@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.24.4.1 2012/10/30 17:21:24 yamt Exp $	*/
+/*	$NetBSD: cypide.c,v 1.24.4.2 2014/05/22 11:40:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.24.4.1 2012/10/30 17:21:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.24.4.2 2014/05/22 11:40:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ static int  cypide_match(device_t, cfdata_t, void *);
 static void cypide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(cypide, sizeof(struct pciide_softc),
-    cypide_match, cypide_attach, NULL, NULL);
+    cypide_match, cypide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,

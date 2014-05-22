@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.121.8.3 2013/01/23 00:06:11 yamt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.121.8.4 2014/05/22 11:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121.8.3 2013/01/23 00:06:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121.8.4 2014/05/22 11:40:36 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1074,7 +1074,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		}
 		sc->aue_intr_errs++;
 		if (usbd_ratecheck(&sc->aue_rx_notice)) {
-			aprint_error_dev(sc->aue_dev,
+			aprint_debug_dev(sc->aue_dev,
 			    "%u usb errors on intr: %s\n", sc->aue_intr_errs,
 			    usbd_errstr(status));
 			sc->aue_intr_errs = 0;

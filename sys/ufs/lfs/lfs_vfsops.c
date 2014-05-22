@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.290.2.4 2013/01/23 00:06:34 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.290.2.5 2014/05/22 11:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.4 2013/01/23 00:06:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.5 2014/05/22 11:41:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -98,10 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.4 2013/01/23 00:06:34 yamt Ex
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_stat.h>
@@ -109,18 +109,18 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.4 2013/01/23 00:06:34 yamt Ex
 #include <uvm/uvm_pdaemon.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 
-MODULE(MODULE_CLASS_VFS, lfs, "ffs");
+MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
-static bool lfs_issequential_hole(const struct ufsmount *,
-    daddr_t, daddr_t);
-
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
+static int lfs_extattrctl(struct mount *, int, struct vnode *, int,
+			  const char *);
 
 static struct sysctllog *lfs_sysctl_log;
 
@@ -143,48 +143,36 @@ const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 };
 
 struct vfsops lfs_vfsops = {
-	MOUNT_LFS,
-	sizeof (struct ufs_args),
-	lfs_mount,
-	ufs_start,
-	lfs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	lfs_statvfs,
-	lfs_sync,
-	lfs_vget,
-	lfs_fhtovp,
-	lfs_vptofh,
-	lfs_init,
-	lfs_reinit,
-	lfs_done,
-	lfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	lfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_LFS,
+	.vfs_min_mount_data = sizeof (struct ulfs_args),
+	.vfs_mount = lfs_mount,
+	.vfs_start = ulfs_start,
+	.vfs_unmount = lfs_unmount,
+	.vfs_root = ulfs_root,
+	.vfs_quotactl = ulfs_quotactl,
+	.vfs_statvfs = lfs_statvfs,
+	.vfs_sync = lfs_sync,
+	.vfs_vget = lfs_vget,
+	.vfs_fhtovp = lfs_fhtovp,
+	.vfs_vptofh = lfs_vptofh,
+	.vfs_init = lfs_init,
+	.vfs_reinit = lfs_reinit,
+	.vfs_done = lfs_done,
+	.vfs_mountroot = lfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = lfs_extattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = lfs_vnodeopv_descs
 };
 
 const struct genfs_ops lfs_genfsops = {
 	.gop_size = lfs_gop_size,
-	.gop_alloc = ufs_gop_alloc,
+	.gop_alloc = ulfs_gop_alloc,
 	.gop_write = lfs_gop_write,
-	.gop_markupdate = ufs_gop_markupdate,
-};
-
-static const struct ufs_ops lfs_ufsops = {
-	.uo_itimes = NULL,
-	.uo_update = lfs_update,
-	.uo_truncate = lfs_truncate,
-	.uo_valloc = lfs_valloc,
-	.uo_vfree = lfs_vfree,
-	.uo_balloc = lfs_balloc,
-	.uo_unmark_vnode = lfs_unmark_vnode,
+	.gop_markupdate = ulfs_gop_markupdate,
 };
 
 struct shortlong {
@@ -251,16 +239,11 @@ lfs_sysctl_setup(struct sysctllog **clog)
 		{ "write_exceeded", "Number of times writer invoked flush" },
 		{ "flush_invoked",  "Number of times flush was invoked" },
 		{ "vflush_invoked", "Number of time vflush was called" },
-		{ "clean_inlocked", "Number of vnodes skipped for VI_XLOCK" },
+		{ "clean_inlocked", "Number of vnodes skipped for being dead" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lfs",
@@ -404,7 +387,6 @@ lfs_writerd(void *arg)
  	struct lfs *fs;
 	struct vfsops *vfs = NULL;
  	int fsflags;
- 	int loopcount;
 	int skipc;
 	int lfsc;
 	int wrote_something = 0;
@@ -425,7 +407,6 @@ lfs_writerd(void *arg)
 				&lfs_lock);
 
 		KASSERT(mutex_owned(&lfs_lock));
-		loopcount = 0;
 		wrote_something = 0;
 
 		/*
@@ -466,8 +447,7 @@ lfs_writerd(void *arg)
  		mutex_enter(&mountlist_lock);
 		lfsc = 0;
 		skipc = 0;
- 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
- 		     mp = nmp) {
+ 		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
  			if (vfs_busy(mp, &nmp)) {
 				++skipc;
  				continue;
@@ -476,7 +456,7 @@ lfs_writerd(void *arg)
  			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
  			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				++lfsc;
- 				fs = VFSTOUFS(mp)->um_lfs;
+ 				fs = VFSTOULFS(mp)->um_lfs;
 				int32_t ooffset = 0;
 				fsflags = SEGM_SINGLE;
 
@@ -549,7 +529,7 @@ lfs_writerd(void *arg)
 }
 
 /*
- * Initialize the filesystem, most work done by ufs_init.
+ * Initialize the filesystem, most work done by ulfs_init.
  */
 void
 lfs_init(void)
@@ -558,13 +538,13 @@ lfs_init(void)
 	malloc_type_attach(M_SEGMENT);
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "lfsinopl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
+	pool_init(&lfs_dinode_pool, sizeof(struct ulfs1_dinode), 0, 0, 0,
 	    "lfsdinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0,
 	    "lfsinoextpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_lbnentry_pool, sizeof(struct lbnentry), 0, 0, 0,
 	    "lfslbnpool", &pool_allocator_nointr, IPL_NONE);
-	ufs_init();
+	ulfs_init();
 
 #ifdef DEBUG
 	memset(lfs_log, 0, sizeof(lfs_log));
@@ -577,13 +557,13 @@ lfs_init(void)
 void
 lfs_reinit(void)
 {
-	ufs_reinit();
+	ulfs_reinit();
 }
 
 void
 lfs_done(void)
 {
-	ufs_done();
+	ulfs_done();
 	mutex_destroy(&lfs_lock);
 	cv_destroy(&locked_queue_cv);
 	cv_destroy(&lfs_writing_cv);
@@ -595,7 +575,7 @@ lfs_done(void)
 }
 
 /*
- * Called by main() when ufs is going to be mounted as root.
+ * Called by main() when ulfs is going to be mounted as root.
  */
 int
 lfs_mountroot(void)
@@ -604,7 +584,7 @@ lfs_mountroot(void)
 	struct lfs *fs = NULL;				/* LFS */
 	struct mount *mp;
 	struct lwp *l = curlwp;
-	struct ufsmount *ump;
+	struct ulfsmount *ump;
 	int error;
 
 	if (device_class(root_device) != DV_DISK)
@@ -621,16 +601,14 @@ lfs_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
-	ump = VFSTOUFS(mp);
+	mountlist_append(mp);
+	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_fsmnt, MNAMELEN - 1, 0);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
-	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
+	setrootfstime((time_t)(VFSTOULFS(mp)->um_lfs->lfs_tstamp));
 	return (0);
 }
 
@@ -644,17 +622,19 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct vnode *devvp;
-	struct ufs_args *args = data;
-	struct ufsmount *ump = NULL;
+	struct ulfs_args *args = data;
+	struct ulfsmount *ump = NULL;
 	struct lfs *fs = NULL;				/* LFS */
 	int error = 0, update;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
-		ump = VFSTOUFS(mp);
+		ump = VFSTOULFS(mp);
 		if (ump == NULL)
 			return EIO;
 		args->fspec = NULL;
@@ -687,7 +667,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
-			ump = VFSTOUFS(mp);
+			ump = VFSTOULFS(mp);
 			if (devvp != ump->um_devvp) {
 				if (devvp->v_rdev != ump->um_devvp->v_rdev)
 					error = EINVAL;
@@ -704,7 +684,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return (EINVAL);
 		} else {
 			/* Use the extant mount */
-			ump = VFSTOUFS(mp);
+			ump = VFSTOULFS(mp);
 			devvp = ump->um_devvp;
 			vref(devvp);
 		}
@@ -753,7 +733,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			goto fail;
 		}
 
-		ump = VFSTOUFS(mp);
+		ump = VFSTOULFS(mp);
 		fs = ump->um_lfs;
 	} else {
 		/*
@@ -767,13 +747,52 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		 */
 		vrele(devvp);
 
-		ump = VFSTOUFS(mp);
+		ump = VFSTOULFS(mp);
 		fs = ump->um_lfs;
+
+		if (fs->lfs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+			/*
+			 * Changing from read/write to read-only.
+			 * XXX: shouldn't we sync here? or does vfs do that?
+			 */
+#ifdef LFS_QUOTA2
+			/* XXX: quotas should remain on when readonly */
+			if (fs->lfs_use_quota2) {
+				error = lfsquota2_umount(mp, 0);
+				if (error) {
+					return error;
+				}
+			}
+#endif
+		}
+
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write.
 			 * Note in the superblocks that we're writing.
 			 */
+
+			/* XXX: quotas should have been on even if readonly */
+			if (fs->lfs_use_quota2) {
+#ifdef LFS_QUOTA2
+				error = lfs_quota2_mount(mp);
+#else
+				uprintf("%s: no kernel support for this "
+					"filesystem's quotas\n",
+					mp->mnt_stat.f_mntonname);
+				if (mp->mnt_flag & MNT_FORCE) {
+					uprintf("%s: mounting anyway; "
+						"fsck afterwards\n",
+						mp->mnt_stat.f_mntonname);
+				} else {
+					error = EINVAL;
+				}
+#endif
+				if (error) {
+					return error;
+				}
+			}
+
 			fs->lfs_ronly = 0;
 			if (fs->lfs_pflags & LFS_PF_CLEAN) {
 				fs->lfs_pflags &= ~LFS_PF_CLEAN;
@@ -807,7 +826,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
 	struct dlfs *tdfs, *dfs, *adfs;
 	struct lfs *fs;
-	struct ufsmount *ump;
+	struct ulfsmount *ump;
 	struct vnode *vp;
 	struct buf *bp, *abp;
 	dev_t dev;
@@ -946,12 +965,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * If we aren't going to be able to write meaningfully to this
 	 * filesystem, and were not mounted readonly, bomb out now.
 	 */
-	if (fsbtob(fs, LFS_NRESERVE(fs)) > LFS_MAX_BYTES && !ronly) {
+	if (lfs_fsbtob(fs, LFS_NRESERVE(fs)) > LFS_MAX_BYTES && !ronly) {
 		DLOG((DLOG_MOUNT, "lfs_mount: to mount this filesystem read/write,"
 		      " we need BUFPAGES >= %lld\n",
 		      (long long)((bufmem_hiwater / bufmem_lowater) *
 				  LFS_INVERSE_MAX_BYTES(
-					  fsbtob(fs, LFS_NRESERVE(fs))) >> PAGE_SHIFT)));
+					  lfs_fsbtob(fs, LFS_NRESERVE(fs))) >> PAGE_SHIFT)));
 		kmem_free(fs, sizeof(struct lfs));
 		error = EFBIG; /* XXX needs translation */
 		goto out;
@@ -965,8 +984,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_lfs = fs;
-	ump->um_ops = &lfs_ufsops;
-	ump->um_fstype = UFS1;
+	ump->um_fstype = ULFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		brelse(bp, BC_INVAL);
 		brelse(abp, BC_INVAL);
@@ -1006,6 +1024,24 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (ronly == 0)
 		fs->lfs_fmod = 1;
 
+	/* ulfs-level information */
+	fs->um_flags = 0;
+	fs->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
+	fs->um_seqinc = fs->lfs_frag;
+	fs->um_nindir = fs->lfs_nindir;
+	fs->um_lognindir = ffs(fs->lfs_nindir) - 1;
+	fs->um_maxsymlinklen = fs->lfs_maxsymlinklen;
+	fs->um_dirblksiz = LFS_DIRBLKSIZ;
+	fs->um_maxfilesize = fs->lfs_maxfilesize;
+
+	/* quota stuff */
+	/* XXX: these need to come from the on-disk superblock to be used */
+	fs->lfs_use_quota2 = 0;
+	fs->lfs_quota_magic = 0;
+	fs->lfs_quota_flags = 0;
+	fs->lfs_quotaino[0] = 0;
+	fs->lfs_quotaino[1] = 0;
+
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;
 	mp->mnt_data = ump;
@@ -1016,22 +1052,15 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = fs->lfs_bshift;
-	ump->um_flags = 0;
+	if (fs->um_maxsymlinklen > 0)
+		mp->mnt_iflag |= IMNT_DTYPE;
+
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
-	ump->um_seqinc = fs->lfs_frag;
-	ump->um_nindir = fs->lfs_nindir;
-	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
-	for (i = 0; i < MAXQUOTAS; i++)
+	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
-	ump->um_dirblksiz = DIRBLKSIZ;
-	ump->um_maxfilesize = fs->lfs_maxfilesize;
-	if (ump->um_maxsymlinklen > 0)
-		mp->mnt_iflag |= IMNT_DTYPE;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* Set up reserved memory for pageout */
 	lfs_setup_resblks(fs);
@@ -1094,6 +1123,58 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			brelse(bp, 0);
 	}
 
+	/*
+	 * XXX: if the fs has quotas, quotas should be on even if
+	 * readonly. Otherwise you can't query the quota info!
+	 * However, that's not how the quota2 code got written and I
+	 * don't know if it'll behave itself if enabled while
+	 * readonly, so for now use the same enable logic as ffs.
+	 *
+	 * XXX: also, if you use the -f behavior allowed here (and
+	 * equivalently above for remount) it will corrupt the fs. It
+	 * ought not to allow that. It should allow mounting readonly
+	 * if there are quotas and the kernel doesn't have the quota
+	 * code, but only readonly.
+	 *
+	 * XXX: and if you use the -f behavior allowed here it will
+	 * likely crash at unmount time (or remount time) because we
+	 * think quotas are active.
+	 *
+	 * Although none of this applies until there's a way to set
+	 * lfs_use_quota2 and have quotas in the fs at all.
+	 */
+	if (!ronly && fs->lfs_use_quota2) {
+#ifdef LFS_QUOTA2
+		error = lfs_quota2_mount(mp);
+#else
+		uprintf("%s: no kernel support for this filesystem's quotas\n",
+			mp->mnt_stat.f_mntonname);
+		if (mp->mnt_flag & MNT_FORCE) {
+			uprintf("%s: mounting anyway; fsck afterwards\n",
+				mp->mnt_stat.f_mntonname);
+		} else {
+			error = EINVAL;
+		}
+#endif
+		if (error) {
+			/* XXX XXX must clean up the stuff immediately above */
+			printf("lfs_mountfs: sorry, leaking some memory\n");
+			goto out;
+		}
+	}
+
+#ifdef LFS_EXTATTR
+	/*
+	 * Initialize file-backed extended attributes for ULFS1 file
+	 * systems.
+	 *
+	 * XXX: why is this limited to ULFS1?
+	 */
+	if (ump->um_fstype == ULFS1) {
+		ulfs_extattr_uepm_init(&ump->um_extattr);
+	}
+#endif
+
 #ifdef LFS_KERNEL_RFW
 	lfs_roll_forward(fs, mp, l);
 #endif
@@ -1124,10 +1205,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * Mark the current segment as ACTIVE, since we're going to
 	 * be writing to it.
 	 */
-	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);
+	LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, fs->lfs_offset), bp);
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 	fs->lfs_nactive++;
-	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
+	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
 
 	/* Now that roll-forward is done, unlock the Ifile */
 	vput(vp);
@@ -1166,7 +1247,7 @@ int
 lfs_unmount(struct mount *mp, int mntflags)
 {
 	struct lwp *l = curlwp;
-	struct ufsmount *ump;
+	struct ulfsmount *ump;
 	struct lfs *fs;
 	int error, flags, ronly;
 	vnode_t *vp;
@@ -1175,7 +1256,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	ump = VFSTOUFS(mp);
+	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 
 	/* Two checkpoints */
@@ -1183,6 +1264,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
+	/* XXX: shouldn't this be *after* the error cases below? */
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_sleepers)
@@ -1190,8 +1272,22 @@ lfs_unmount(struct mount *mp, int mntflags)
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
-#ifdef QUOTA
-        if ((error = quota1_umount(mp, flags)) != 0)
+#ifdef LFS_EXTATTR
+	if (ump->um_fstype == ULFS1) {
+		if (ump->um_extattr.uepm_flags & ULFS_EXTATTR_UEPM_STARTED) {
+			ulfs_extattr_stop(mp, curlwp);
+		}
+		if (ump->um_extattr.uepm_flags & ULFS_EXTATTR_UEPM_INITIALIZED) {
+			ulfs_extattr_uepm_destroy(&ump->um_extattr);
+		}
+	}
+#endif
+#ifdef LFS_QUOTA
+        if ((error = lfsquota1_umount(mp, flags)) != 0)
+		return (error);
+#endif
+#ifdef LFS_QUOTA2
+        if ((error = lfsquota2_umount(mp, flags)) != 0)
 		return (error);
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
@@ -1219,7 +1315,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED);
@@ -1258,9 +1354,9 @@ int
 lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct lfs *fs;
-	struct ufsmount *ump;
+	struct ulfsmount *ump;
 
-	ump = VFSTOUFS(mp);
+	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 	if (fs->lfs_magic != LFS_MAGIC)
 		panic("lfs_statvfs: magic");
@@ -1283,7 +1379,8 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	else
 		sbp->f_bavail = 0;
 
-	sbp->f_files = fs->lfs_bfree / btofsb(fs, fs->lfs_ibsize) * INOPB(fs);
+	sbp->f_files = fs->lfs_bfree / lfs_btofsb(fs, fs->lfs_ibsize)
+	    * LFS_INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	sbp->f_favail = sbp->f_ffree;
 	sbp->f_fresvd = 0;
@@ -1304,7 +1401,7 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	int error;
 	struct lfs *fs;
 
-	fs = VFSTOUFS(mp)->um_lfs;
+	fs = VFSTOULFS(mp)->um_lfs;
 	if (fs->lfs_ronly)
 		return 0;
 
@@ -1328,8 +1425,8 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	DLOG((DLOG_FLUSH, "lfs_sync at 0x%x\n", fs->lfs_offset));
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
-#ifdef QUOTA
-	qsync(mp);
+#ifdef LFS_QUOTA
+	lfs_qsync(mp);
 #endif
 	return (error);
 }
@@ -1343,12 +1440,12 @@ int
 lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct lfs *fs;
-	struct ufs1_dinode *dip;
+	struct ulfs1_dinode *dip;
 	struct inode *ip;
 	struct buf *bp;
 	struct ifile *ifp;
 	struct vnode *vp;
-	struct ufsmount *ump;
+	struct ulfsmount *ump;
 	daddr_t daddr;
 	dev_t dev;
 	int error, retries;
@@ -1356,7 +1453,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	memset(&ts, 0, sizeof ts);	/* XXX gcc */
 
-	ump = VFSTOUFS(mp);
+	ump = VFSTOULFS(mp);
 	dev = ump->um_dev;
 	fs = ump->um_lfs;
 
@@ -1371,7 +1468,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	mutex_exit(&lfs_lock);
 
 retry:
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+	if ((*vpp = ulfs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
 	error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, NULL, &vp);
@@ -1380,9 +1477,9 @@ retry:
 		 return (error);
 	}
 
-	mutex_enter(&ufs_hashlock);
-	if (ufs_ihashget(dev, ino, 0) != NULL) {
-		mutex_exit(&ufs_hashlock);
+	mutex_enter(&ulfs_hashlock);
+	if (ulfs_ihashget(dev, ino, 0) != NULL) {
+		mutex_exit(&ulfs_hashlock);
 		ungetnewvnode(vp);
 		goto retry;
 	}
@@ -1402,7 +1499,7 @@ retry:
 		brelse(bp, 0);
 		if (daddr == LFS_UNUSED_DADDR) {
 			*vpp = NULLVP;
-			mutex_exit(&ufs_hashlock);
+			mutex_exit(&ulfs_hashlock);
 			ungetnewvnode(vp);
 			return (ENOENT);
 		}
@@ -1418,8 +1515,8 @@ retry:
 	 * disk portion of this inode to be read.
 	 */
 	ip = VTOI(vp);
-	ufs_ihashins(ip);
-	mutex_exit(&ufs_hashlock);
+	ulfs_ihashins(ip);
+	mutex_exit(&ulfs_hashlock);
 
 	/*
 	 * XXX
@@ -1432,7 +1529,7 @@ retry:
 	/* Read in the disk contents for the inode, copy into the inode. */
 	retries = 0;
     again:
-	error = bread(ump->um_devvp, fsbtodb(fs, daddr),
+	error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr),
 		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
 		NOCRED, 0, &bp);
 	if (error) {
@@ -1459,7 +1556,7 @@ retry:
 			mutex_enter(&lfs_lock);
 			if (fs->lfs_seglock > 0) {
 				struct buf **bpp;
-				struct ufs1_dinode *dp;
+				struct ulfs1_dinode *dp;
 				int i;
 
 				for (bpp = fs->lfs_sp->bpp;
@@ -1469,10 +1566,10 @@ retry:
 						/* Inode block */
 						printf("lfs_vget: block 0x%" PRIx64 ": ",
 						       (*bpp)->b_blkno);
-						dp = (struct ufs1_dinode *)(*bpp)->b_data;
-						for (i = 0; i < INOPB(fs); i++)
-							if (dp[i].di_u.inumber)
-								printf("%d ", dp[i].di_u.inumber);
+						dp = (struct ulfs1_dinode *)(*bpp)->b_data;
+						for (i = 0; i < LFS_INOPB(fs); i++)
+							if (dp[i].di_inumber)
+								printf("%d ", dp[i].di_inumber);
 						printf("\n");
 					}
 				}
@@ -1528,7 +1625,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if (lfh.lfid_ino < LFS_IFILE_INUM)
 		return ESTALE;
 
-	fs = VFSTOUFS(mp)->um_lfs;
+	fs = VFSTOULFS(mp)->um_lfs;
 	if (lfh.lfid_ident != fs->lfs_ident)
 		return ESTALE;
 
@@ -1537,9 +1634,9 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	     fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb)
 		return ESTALE;
 
-	mutex_enter(&ufs_ihash_lock);
-	vp = ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfh.lfid_ino);
-	mutex_exit(&ufs_ihash_lock);
+	mutex_enter(&ulfs_ihash_lock);
+	vp = ulfs_ihashlookup(VFSTOULFS(mp)->um_dev, lfh.lfid_ino);
+	mutex_exit(&ulfs_ihash_lock);
 	if (vp == NULL) {
 		LFS_IENTRY(ifp, fs, lfh.lfid_ino, bp);
 		daddr = ifp->if_daddr;
@@ -1548,7 +1645,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 			return ESTALE;
 	}
 
-	return (ufs_fhtovp(mp, &lfh.lfid_ufid, vpp));
+	return (ulfs_fhtovp(mp, &lfh.lfid_ufid, vpp));
 }
 
 /*
@@ -1577,15 +1674,17 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 }
 
 /*
- * ufs_bmaparray callback function for writing.
+ * ulfs_bmaparray callback function for writing.
  *
  * Since blocks will be written to the new segment anyway,
  * we don't care about current daddr of them.
  */
 static bool
-lfs_issequential_hole(const struct ufsmount *ump,
+lfs_issequential_hole(const struct lfs *fs,
     daddr_t daddr0, daddr_t daddr1)
 {
+	(void)fs; /* not used */
+
 	daddr0 = (daddr_t)((int32_t)daddr0); /* XXX ondisk32 */
 	daddr1 = (daddr_t)((int32_t)daddr1); /* XXX ondisk32 */
 
@@ -1595,7 +1694,7 @@ lfs_issequential_hole(const struct ufsmount *ump,
 	    (0 <= daddr1 && daddr1 <= LFS_MAX_DADDR));
 
 	/* NOTE: all we want to know here is 'hole or not'. */
-	/* NOTE: UNASSIGNED is converted to 0 by ufs_bmaparray. */
+	/* NOTE: UNASSIGNED is converted to 0 by ulfs_bmaparray. */
 
 	/*
 	 * treat UNWRITTENs and all resident blocks as 'contiguous'
@@ -1658,10 +1757,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We must write everything, however, if our vnode is being
 	 * reclaimed.
 	 */
-	if (LFS_STARVED_FOR_SEGS(fs) && !(vp->v_iflag & VI_XLOCK)) {
+	mutex_enter(vp->v_interlock);
+	if (LFS_STARVED_FOR_SEGS(fs) && vdead_check(vp, VDEAD_NOWAIT) == 0) {
+		mutex_exit(vp->v_interlock);
 		failreason = "Starved for segs and not flushing vp";
  		goto tryagain;
 	}
+	mutex_exit(vp->v_interlock);
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
@@ -1789,10 +1891,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
 		lbn = offset >> fs_bshift;
-		error = ufs_bmaparray(vp, lbn, &blkno, NULL, NULL, &run,
+		error = ulfs_bmaparray(vp, lbn, &blkno, NULL, NULL, &run,
 		    lfs_issequential_hole);
 		if (error) {
-			UVMHIST_LOG(ubchist, "ufs_bmaparray() -> %d",
+			UVMHIST_LOG(ubchist, "ulfs_bmaparray() -> %d",
 			    error,0,0,0);
 			skipbytes += bytes;
 			bytes = 0;
@@ -1861,7 +1963,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		mutex_exit(vp->v_interlock);
 		mutex_exit(&bufcache_lock);
 
-		bp->b_lblkno = lblkno(fs, offset);
+		bp->b_lblkno = lfs_lblkno(fs, offset);
 		bp->b_private = mbp;
 		if (devvp->v_type == VBLK) {
 			bp->b_dev = devvp->v_rdev;
@@ -1946,7 +2048,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *vp = *vpp;
 	struct inode *ip = VTOI(vp);
-	struct ufsmount *ump = VFSTOUFS(mp);
+	struct ulfsmount *ump = VFSTOULFS(mp);
 	struct lfs *fs = ump->um_lfs;
 	int i;
 
@@ -1965,14 +2067,14 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	 * Initialize the vnode from the inode, check for aliases.  In all
 	 * cases re-init ip, the underlying vnode/inode may have changed.
 	 */
-	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
+	ulfs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
 
-	memset(ip->i_lfs_fragsize, 0, UFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
-	if (vp->v_type != VLNK || ip->i_size >= ip->i_ump->um_maxsymlinklen) {
+	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
+	if (vp->v_type != VLNK || ip->i_size >= ip->i_lfs->um_maxsymlinklen) {
 #ifdef DEBUG
 		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
-		    i < UFS_NDADDR; i++) {
+		    i < ULFS_NDADDR; i++) {
 			if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 			    i == 0)
 				continue;
@@ -1981,16 +2083,16 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 				panic("inconsistent inode (direct)");
 			}
 		}
-		for ( ; i < UFS_NDADDR + UFS_NIADDR; i++) {
-			if (ip->i_ffs1_ib[i - UFS_NDADDR] != 0) {
+		for ( ; i < ULFS_NDADDR + ULFS_NIADDR; i++) {
+			if (ip->i_ffs1_ib[i - ULFS_NDADDR] != 0) {
 				lfs_dump_dinode(ip->i_din.ffs1_din);
 				panic("inconsistent inode (indirect)");
 			}
 		}
 #endif /* DEBUG */
-		for (i = 0; i < UFS_NDADDR; i++)
+		for (i = 0; i < ULFS_NDADDR; i++)
 			if (ip->i_ffs1_db[i] != 0)
-				ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+				ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 	}
 
 #ifdef DIAGNOSTIC
@@ -2000,7 +2102,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 # endif
 		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
 		      (unsigned long long)ip->i_number,
-		      (ip->i_mode & IFMT) >> 12);
+		      (ip->i_mode & LFS_IFMT) >> 12);
 	}
 #endif /* DIAGNOSTIC */
 
@@ -2010,11 +2112,14 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 
 	ip->i_devvp = ump->um_devvp;
 	vref(ip->i_devvp);
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+	ulfsquota_init(ip);
+#endif
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
 
 	/* Initialize hiblk from file size */
-	ip->i_lfs_hiblk = lblkno(ip->i_lfs, ip->i_size + ip->i_lfs->lfs_bsize - 1) - 1;
+	ip->i_lfs_hiblk = lfs_lblkno(ip->i_lfs, ip->i_size + ip->i_lfs->lfs_bsize - 1) - 1;
 
 	*vpp = vp;
 }
@@ -2044,7 +2149,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		return 0;
 
 	/* We always have to have two superblocks */
-	if (newnsegs <= dtosn(fs, fs->lfs_sboffs[1]))
+	if (newnsegs <= lfs_dtosn(fs, fs->lfs_sboffs[1]))
 		return EFBIG;
 
 	ivp = fs->lfs_ivnode;
@@ -2154,45 +2259,43 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Zero out unused superblock offsets */
 	for (i = 2; i < LFS_MAXNUMSB; i++)
-		if (dtosn(fs, fs->lfs_sboffs[i]) >= newnsegs)
+		if (lfs_dtosn(fs, fs->lfs_sboffs[i]) >= newnsegs)
 			fs->lfs_sboffs[i] = 0x0;
 
 	/*
 	 * Correct superblock entries that depend on fs size.
 	 * The computations of these are as follows:
 	 *
-	 * size  = segtod(fs, nseg)
-	 * dsize = segtod(fs, nseg - minfreeseg) - btofsb(#super * LFS_SBPAD)
-	 * bfree = dsize - btofsb(fs, bsize * nseg / 2) - blocks_actually_used
-	 * avail = segtod(fs, nclean) - btofsb(#clean_super * LFS_SBPAD)
-	 *         + (segtod(fs, 1) - (offset - curseg))
-	 *	   - segtod(fs, minfreeseg - (minfreeseg / 2))
+	 * size  = lfs_segtod(fs, nseg)
+	 * dsize = lfs_segtod(fs, nseg - minfreeseg) - lfs_btofsb(#super * LFS_SBPAD)
+	 * bfree = dsize - lfs_btofsb(fs, bsize * nseg / 2) - blocks_actually_used
+	 * avail = lfs_segtod(fs, nclean) - lfs_btofsb(#clean_super * LFS_SBPAD)
+	 *         + (lfs_segtod(fs, 1) - (offset - curseg))
+	 *	   - lfs_segtod(fs, minfreeseg - (minfreeseg / 2))
 	 *
 	 * XXX - we should probably adjust minfreeseg as well.
 	 */
 	gain = (newnsegs - oldnsegs);
 	fs->lfs_nseg = newnsegs;
 	fs->lfs_segtabsz = nlast - fs->lfs_cleansz;
-	fs->lfs_size += gain * btofsb(fs, fs->lfs_ssize);
-	fs->lfs_dsize += gain * btofsb(fs, fs->lfs_ssize) - btofsb(fs, sbbytes);
-	fs->lfs_bfree += gain * btofsb(fs, fs->lfs_ssize) - btofsb(fs, sbbytes)
-		       - gain * btofsb(fs, fs->lfs_bsize / 2);
+	fs->lfs_size += gain * lfs_btofsb(fs, fs->lfs_ssize);
+	fs->lfs_dsize += gain * lfs_btofsb(fs, fs->lfs_ssize) - lfs_btofsb(fs, sbbytes);
+	fs->lfs_bfree += gain * lfs_btofsb(fs, fs->lfs_ssize) - lfs_btofsb(fs, sbbytes)
+		       - gain * lfs_btofsb(fs, fs->lfs_bsize / 2);
 	if (gain > 0) {
 		fs->lfs_nclean += gain;
-		fs->lfs_avail += gain * btofsb(fs, fs->lfs_ssize);
+		fs->lfs_avail += gain * lfs_btofsb(fs, fs->lfs_ssize);
 	} else {
 		fs->lfs_nclean -= cgain;
-		fs->lfs_avail -= cgain * btofsb(fs, fs->lfs_ssize) -
-				 btofsb(fs, csbbytes);
+		fs->lfs_avail -= cgain * lfs_btofsb(fs, fs->lfs_ssize) -
+				 lfs_btofsb(fs, csbbytes);
 	}
 
 	/* Resize segment flag cache */
-	fs->lfs_suflags[0] = (u_int32_t *)realloc(fs->lfs_suflags[0],
-						  fs->lfs_nseg * sizeof(u_int32_t),
-						  M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = (u_int32_t *)realloc(fs->lfs_suflags[1],
-						  fs->lfs_nseg * sizeof(u_int32_t),
-						  M_SEGMENT, M_WAITOK);
+	fs->lfs_suflags[0] = realloc(fs->lfs_suflags[0],
+	    fs->lfs_nseg * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
+	fs->lfs_suflags[1] = realloc(fs->lfs_suflags[1],
+	    fs->lfs_nseg * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
 	for (i = oldnsegs; i < newnsegs; i++)
 		fs->lfs_suflags[0][i] = fs->lfs_suflags[1][i] = 0x0;
 
@@ -2214,4 +2317,22 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
     out:
 	lfs_segunlock(fs);
 	return error;
+}
+
+/*
+ * Extended attribute dispatch
+ */
+static int
+lfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	       int attrnamespace, const char *attrname)
+{
+#ifdef LFS_EXTATTR
+	struct ulfsmount *ump;
+
+	ump = VFSTOULFS(mp);
+	if (ump->um_fstype == ULFS1) {
+		return ulfs_extattrctl(mp, cmd, vp, attrnamespace, attrname);
+	}
+#endif
+	return vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname);
 }

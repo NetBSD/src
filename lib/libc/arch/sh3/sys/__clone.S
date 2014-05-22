@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.6 2006/01/06 03:58:31 uwe Exp $	*/
+/*	$NetBSD: __clone.S,v 1.6.44.1 2014/05/22 11:36:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -59,7 +59,7 @@ ENTRY(__clone)
 	 mov	r7, r4
 
 	mov.l	.L__exit, r1
-#ifdef PIC
+#ifdef __PIC__
 	mov	r0, r4
 	mov.l	.L_got, r12	/* PIC_PROLOGUE_NOSAVE(.L_got) */
 	mova	.L_got, r0	/*  expanded to fill the delay slot */

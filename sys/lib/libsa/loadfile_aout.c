@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.14 2009/08/16 13:26:16 matt Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.14.12.1 2014/05/22 11:41:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -96,8 +96,8 @@ loadfile_aout(int fd, struct exec *x, u_long *marks, int flags)
 	int sub;
 	ssize_t nr;
 
-	/* some ports dont use the offset */
-	offset = offset;
+	/* some ports don't use the offset */
+	(void)offset;
 
 	/* In OMAGIC and NMAGIC, exec header isn't part of text segment */
 	if (magic == OMAGIC || magic == NMAGIC)

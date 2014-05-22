@@ -1,32 +1,34 @@
-/*	$NetBSD: compat_defs.h,v 1.81.2.3 2012/10/30 19:00:11 yamt Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.81.2.4 2014/05/22 11:42:30 yamt Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
 
-
-/* Work around some complete brain damage. */
 /*
- * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
- * program (not the OS) should do that.  Preload <features.h> to keep any
- * of this crap from being pulled in, and undefine _POSIX_SOURCE.
+ * On NetBSD, ensure that _NETBSD_SOURCE does not get defined, so that
+ * accidental attempts to use NetBSD-specific features instead of more
+ * portable features is likely to be noticed when the tools are built
+ * on NetBSD.  Define enough other feature test macros to expose the
+ * features we need.
  */
-
-#if defined(__linux__) && HAVE_FEATURES_H
-#include <features.h>
-#define __USE_ISOC99 1
-#endif
-
-/* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
-   defs. Other platforms may need similiar defines. */
 #ifdef __NetBSD__
 #define	_ISOC99_SOURCE
 #define _POSIX_SOURCE	1
 #define _POSIX_C_SOURCE	200112L
 #define _XOPEN_SOURCE 600
-#else
+#endif /* __NetBSD__ */
+
+/*
+ * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
+ * program (not the OS) should do that.  Preload <features.h> and
+ * then override some of the feature test macros.
+ */
+
+#if defined(__linux__) && HAVE_FEATURES_H
+#include <features.h>
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
-#endif
+#define __USE_ISOC99 1
+#endif	/* __linux__ && HAVE_FEATURES_H */
 
 /* System headers needed for (re)definitions below. */
 
@@ -60,6 +62,10 @@
 #endif
 #if HAVE_STDDEF_H
 #include <stddef.h>
+#endif
+
+#if HAVE_RPC_TYPES_H
+#include <rpc/types.h>
 #endif
 
 #ifdef _NETBSD_SOURCE
@@ -121,12 +127,16 @@ struct group;
 #define __dead
 #undef __printflike
 #define __printflike(x,y)
+#undef __format_arg
+#define __format_arg(x)
 #undef __restrict
 #define __restrict
 #undef __unused
 #define __unused
 #undef __arraycount
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+#undef __USE
+#define __USE(a) ((void)(a))
 
 /* Dirent support. */
 
@@ -164,6 +174,11 @@ typedef unsigned int id_t;
 #endif
 
 #if !HAVE_SOCKLEN_T
+/*
+ * This is defined as int for compatibility with legacy systems (and not
+ * unsigned int), since universally it was int in most systems that did not
+ * define it.
+ */
 typedef int socklen_t;
 #endif
 
@@ -262,6 +277,9 @@ int evasprintf(char **, const char *, va_list);
 
 #if !HAVE_FGETLN || defined(__NetBSD__)
 char *fgetln(FILE *, size_t *);
+#endif
+#if !HAVE_DPRINTF
+int dprintf(int, const char *, ...);
 #endif
 
 #if !HAVE_FLOCK
@@ -399,6 +417,9 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
 #if !HAVE_DECL_STRNDUP
 char		*strndup(const char *, size_t);
 #endif
+#if !HAVE_DECL_STRNLEN
+size_t		strnlen(const char *, size_t);
+#endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);
 #endif
@@ -432,6 +453,11 @@ int setpassent(int);
 #if !HAVE_SETPROGNAME || defined(__NetBSD__)
 const char *getprogname(void);
 void setprogname(const char *);
+#endif
+
+#if !HAVE_SNPRINTB_M
+int snprintb(char *, size_t, const char *, uint64_t);
+int snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 #endif
 
 #if !HAVE_SNPRINTF

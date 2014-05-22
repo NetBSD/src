@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -173,30 +173,39 @@ AcpiRsMoveData (
          * since there are no alignment or endian issues
          */
         case ACPI_RSC_MOVE8:
+        case ACPI_RSC_MOVE_GPIO_RES:
+        case ACPI_RSC_MOVE_SERIAL_VEN:
+        case ACPI_RSC_MOVE_SERIAL_RES:
+
             ACPI_MEMCPY (Destination, Source, ItemCount);
             return;
 
         /*
          * 16-, 32-, and 64-bit cases must use the move macros that perform
-         * endian conversion and/or accomodate hardware that cannot perform
+         * endian conversion and/or accommodate hardware that cannot perform
          * misaligned memory transfers
          */
         case ACPI_RSC_MOVE16:
+        case ACPI_RSC_MOVE_GPIO_PIN:
+
             ACPI_MOVE_16_TO_16 (&ACPI_CAST_PTR (UINT16, Destination)[i],
                                 &ACPI_CAST_PTR (UINT16, Source)[i]);
             break;
 
         case ACPI_RSC_MOVE32:
+
             ACPI_MOVE_32_TO_32 (&ACPI_CAST_PTR (UINT32, Destination)[i],
                                 &ACPI_CAST_PTR (UINT32, Source)[i]);
             break;
 
         case ACPI_RSC_MOVE64:
+
             ACPI_MOVE_64_TO_64 (&ACPI_CAST_PTR (UINT64, Destination)[i],
                                 &ACPI_CAST_PTR (UINT64, Source)[i]);
             break;
 
         default:
+
             return;
         }
     }
@@ -653,6 +662,61 @@ AcpiRsGetPrsMethodData (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiRsGetAeiMethodData
+ *
+ * PARAMETERS:  Node            - Device node
+ *              RetBuffer       - Pointer to a buffer structure for the
+ *                                results
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: This function is called to get the _AEI value of an object
+ *              contained in an object specified by the handle passed in
+ *
+ *              If the function fails an appropriate status will be returned
+ *              and the contents of the callers buffer is undefined.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiRsGetAeiMethodData (
+    ACPI_NAMESPACE_NODE     *Node,
+    ACPI_BUFFER             *RetBuffer)
+{
+    ACPI_OPERAND_OBJECT     *ObjDesc;
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (RsGetAeiMethodData);
+
+
+    /* Parameters guaranteed valid by caller */
+
+    /* Execute the method, no parameters */
+
+    Status = AcpiUtEvaluateObject (Node, METHOD_NAME__AEI,
+                ACPI_BTYPE_BUFFER, &ObjDesc);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    /*
+     * Make the call to create a resource linked list from the
+     * byte stream buffer that comes back from the _CRS method
+     * execution.
+     */
+    Status = AcpiRsCreateResourceList (ObjDesc, RetBuffer);
+
+    /* On exit, we must delete the object returned by evaluateObject */
+
+    AcpiUtRemoveReference (ObjDesc);
+    return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiRsGetMethodData
  *
  * PARAMETERS:  Handle          - Handle to the containing object
@@ -687,7 +751,8 @@ AcpiRsGetMethodData (
 
     /* Execute the method, no parameters */
 
-    Status = AcpiUtEvaluateObject (Handle, Path, ACPI_BTYPE_BUFFER, &ObjDesc);
+    Status = AcpiUtEvaluateObject (ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, Handle),
+        Path, ACPI_BTYPE_BUFFER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -750,7 +815,7 @@ AcpiRsSetSrsMethodData (
     }
 
     Info->PrefixNode = Node;
-    Info->Pathname = __UNCONST(METHOD_NAME__SRS);
+    Info->RelativePathname = __UNCONST(METHOD_NAME__SRS);
     Info->Parameters = Args;
     Info->Flags = ACPI_IGNORE_RETURN_VALUE;
 
@@ -762,7 +827,7 @@ AcpiRsSetSrsMethodData (
      * Convert the linked list into a byte stream
      */
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-    Status = AcpiRsCreateAmlResources (InBuffer->Pointer, &Buffer);
+    Status = AcpiRsCreateAmlResources (InBuffer, &Buffer);
     if (ACPI_FAILURE (Status))
     {
         goto Cleanup;
@@ -799,4 +864,3 @@ Cleanup:
     ACPI_FREE (Info);
     return_ACPI_STATUS (Status);
 }
-

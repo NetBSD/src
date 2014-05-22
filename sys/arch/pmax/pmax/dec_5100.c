@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.46.2.1 2012/10/30 17:20:08 yamt Exp $ */
+/* $NetBSD: dec_5100.c,v 1.46.2.2 2014/05/22 11:40:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.46.2.1 2012/10/30 17:20:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.46.2.2 2014/05/22 11:40:03 yamt Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -99,7 +99,7 @@ dec_5100_init(void)
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_2);
 
-	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
+	cpu_setmodel("DECsystem 5100 (MIPSMATE)");
 }
 
 /*

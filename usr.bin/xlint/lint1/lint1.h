@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.25 2011/06/24 01:10:31 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.25.2.1 2014/05/22 11:42:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -49,6 +49,10 @@
 #endif
 #define WORST_ALIGN(x) (((x) + AVAL) & ~AVAL)
 #endif
+
+#define LWARN_BAD	-3
+#define LWARN_ALL	-2
+#define LWARN_NONE	-1
 
 /*
  * Describes the position of a declaration or anything else.
@@ -137,7 +141,7 @@ typedef	struct {
 	struct	sym *elem;	/* list of enumerators */
 	struct	sym *etag;	/* symbol table entry of tag */
 	struct	sym *etdef;	/* symbol table entry of first typename */
-} enum_t;
+} tenum_t;
 
 /*
  * Types are represented by concatenation of structures of type type_t
@@ -157,7 +161,7 @@ struct type {
 	union {
 		int	_t_dim;		/* dimension */
 		str_t	*_t_str;	/* struct/union tag */
-		enum_t	*_t_enum;	/* enum tag */
+		tenum_t	*_t_enum;	/* enum tag */
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
 	struct {
@@ -222,7 +226,7 @@ typedef	struct sym {
 	pos_t	s_spos;		/* position of first initialisation */
 	pos_t	s_upos;		/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
-	u_int	s_keyw : 1;	/* keyword */
+	void   *s_keyw;		/* keyword */
 	u_int	s_field : 1;	/* bit-field */
 	u_int	s_set : 1;	/* variable set, label defined */
 	u_int	s_used : 1;	/* variable/label used */
@@ -243,7 +247,7 @@ typedef	struct sym {
 	val_t	s_value;	/* value (if enumcon) */
 	union {
 		str_t	*_s_st;	/* tag, if it is a struct/union member */
-		enum_t	*_s_et;	/* tag, if it is a enumerator */
+		tenum_t	*_s_et;	/* tag, if it is a enumerator */
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
@@ -431,5 +435,11 @@ typedef	struct err_set {
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
 
 #define LERROR(fmt, args...)	lerror(__FILE__, __LINE__, fmt, ##args)
+
+#ifdef BLKDEBUG
+#define ZERO	0xa5
+#else
+#define	ZERO	0
+#endif
 
 extern err_set	msgset;

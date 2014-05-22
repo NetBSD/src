@@ -1,4 +1,4 @@
-#	$NetBSD: BEAGLEBOARD_INSTALL,v 1.1.4.2 2012/10/30 17:19:19 yamt Exp $
+#	$NetBSD: BEAGLEBOARD_INSTALL,v 1.1.4.3 2014/05/22 11:39:40 yamt Exp $
 #
 #	BEAGLEBOARD_INSTALL -- BEAGLEBOARD kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,4 @@ include "arch/evbarm/conf/BEAGLEBOARD"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

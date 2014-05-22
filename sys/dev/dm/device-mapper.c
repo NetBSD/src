@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.28.8.1 2012/04/17 00:07:30 yamt Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.28.8.2 2014/05/22 11:40:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ static const struct cmd_function cmd_fn[] = {
 /* Autoconf defines */
 CFDRIVER_DECL(dm, DV_DISK, NULL);
 
-MODULE(MODULE_CLASS_DRIVER, dm, NULL);
+MODULE(MODULE_CLASS_DRIVER, dm, "dk_subr");
 
 /* New module handle routine */
 static int
@@ -487,7 +487,6 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	{
 		dm_table_entry_t *table_en;
 		dm_table_t *tbl;
-		int err;
 		
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -501,7 +500,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		 */
 		SLIST_FOREACH(table_en, tbl, next)
 		{
-			err = table_en->target->sync(table_en);
+			(void)table_en->target->sync(table_en);
 		}
 		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 		dm_dev_unbusy(dmv);
@@ -529,8 +528,6 @@ dmstrategy(struct buf *bp)
 	dm_table_entry_t *table_en;
 	struct buf *nestbuf;
 
-	uint32_t dev_type;
-
 	uint64_t buf_start, buf_len, issued_len;
 	uint64_t table_start, table_end;
 	uint64_t start, end;
@@ -541,7 +538,6 @@ dmstrategy(struct buf *bp)
 	tbl = NULL; 
 
 	table_end = 0;
-	dev_type = 0;
 	issued_len = 0;
 
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(bp->b_dev))) == NULL) {
@@ -673,28 +669,20 @@ dmminphys(struct buf *bp)
 void
 dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
 	uint64_t numsec;
 	unsigned secsize;
 
 	dm_table_disksize(head, &numsec, &secsize);
-	disk_info = prop_dictionary_create();
-	geom = prop_dictionary_create();
 
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", numsec);
-	prop_dictionary_set_uint32(geom, "sector-size", secsize);
-	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
-	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", numsec / 2048);
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
+	struct disk_geom *dg = &disk->dk_geom;
 
-	odisk_info = disk->dk_info;
-	disk->dk_info = disk_info;
+	memset(dg, 0, sizeof(*dg));
+	dg->dg_secperunit = numsec;
+	dg->dg_secsize = secsize;
+	dg->dg_nsectors = 32;
+	dg->dg_ntracks = 64;
 
-	if (odisk_info != NULL)
-		prop_object_release(odisk_info);
+	disk_set_info(NULL, disk, "ESDI");
 
 	disk_blocksize(disk, secsize);
 }
