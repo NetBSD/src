@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.78 2014/04/25 18:31:35 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.79 2014/05/22 12:31:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.78 2014/04/25 18:31:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.79 2014/05/22 12:31:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -135,8 +135,9 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	vfs_attach(&rumpfs_vfsops);
 	vfs_mountroot();
 
-	/* "mtree": create /dev */
+	/* "mtree": create /dev and /tmp */
 	do_sys_mkdir("/dev", 0755, UIO_SYSSPACE);
+	do_sys_mkdir("/tmp", 1777, UIO_SYSSPACE);
 
 	rump_proc_vfs_init = pvfs_init;
 	rump_proc_vfs_release = pvfs_rele;
