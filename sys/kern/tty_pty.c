@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.138 2014/04/04 18:11:58 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.139 2014/05/22 16:28:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.138 2014/04/04 18:11:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.139 2014/05/22 16:28:06 dholland Exp $");
 
 #include "opt_ptm.h"
+
+#define TTY_ALLOW_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
