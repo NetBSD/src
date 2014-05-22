@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.11 2014/05/22 11:40:14 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.12 2014/05/22 19:10:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.11 2014/05/22 11:40:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.12 2014/05/22 19:10:31 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1860,14 +1860,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
 	lwp_t *l;
 	int lidx;
-	struct uvm_object *obj;
 
 	KASSERT(ptp->wire_count == 1);
-
-	lidx = level - 1;
-
-	obj = &pmap->pm_obj[lidx];
 	pmap_stats_update(pmap, -1, 0);
+	lidx = level - 1;
 	if (pmap->pm_ptphint[lidx] == ptp)
 		pmap->pm_ptphint[lidx] = NULL;
 	ptp->wire_count = 0;
