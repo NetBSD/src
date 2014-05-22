@@ -35,13 +35,13 @@ Disassembly of section .text:
 			44: R_SPARC_LO10	.text
   48:	01 00 00 00 	nop 
   4c:	03 00 00 00 	sethi  %hi\((0x|)0\), %g1
-			4c: R_SPARC_HH22	.text\+0xfedcba9876543210
+			4c: R_SPARC_HH22	.text\-0x123456789abcdf0
   50:	82 10 60 00 	mov  %g1, %g1	! 0 <foo>
-			50: R_SPARC_HM10	.text\+0xfedcba9876543210
+			50: R_SPARC_HM10	.text\-0x123456789abcdf0
   54:	05 00 00 00 	sethi  %hi\((0x|)0\), %g2
-			54: R_SPARC_LM22	.text\+0xfedcba9876543210
+			54: R_SPARC_LM22	.text\-0x123456789abcdf0
   58:	84 10 60 00 	mov  %g1, %g2
-			58: R_SPARC_LO10	.text\+0xfedcba9876543210
+			58: R_SPARC_LO10	.text\-0x123456789abcdf0
   5c:	01 00 00 00 	nop 
   60:	03 2a 61 d9 	sethi  %hi\(0xa9876400\), %g1
   64:	82 10 61 43 	or  %g1, 0x143, %g1.*
@@ -70,7 +70,13 @@ Disassembly of section .text:
 			a0: R_SPARC_LOX10	.text
   a4:	01 00 00 00 	nop 
   a8:	03 00 00 00 	sethi  %hi\((0x|)0\), %g1
-			a8: R_SPARC_HIX22	.text\+0xffffffff76543210
+			a8: R_SPARC_HIX22	.text-0x89abcdf0
   ac:	82 18 60 00 	xor  %g1, 0, %g1
-			ac: R_SPARC_LOX10	.text\+0xffffffff76543210
+			ac: R_SPARC_LOX10	.text-0x89abcdf0
   b0:	01 00 00 00 	nop 
+  b4:	03 00 00 00 	sethi  %hi\((0x|)0\), %g1
+			b4: R_SPARC_H34	.text\+0xa9876543210
+  b8:	83 28 70 02 	sllx  %g1, 2, %g1
+  bc:	82 10 60 00 	mov  %g1, %g1
+			bc: R_SPARC_L44	.text\+0xa9876543210
+  c0:	01 00 00 00 	nop 

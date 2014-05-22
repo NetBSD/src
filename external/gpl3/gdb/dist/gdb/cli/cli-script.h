@@ -1,6 +1,5 @@
 /* Header file for GDB CLI command implementation library.
-   Copyright (c) 2000, 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,14 +25,6 @@ struct cmd_list_element;
 
 extern void script_from_file (FILE *stream, const char *file);
 
-extern void document_command (char *, int);
-
-extern void define_command (char *, int);
-
-extern void while_command (char *arg, int from_tty);
-
-extern void if_command (char *arg, int from_tty);
-
 extern void show_user_1 (struct cmd_list_element *c, char *prefix,
 			 char *name, struct ui_file *stream);
 
@@ -53,7 +44,8 @@ extern void print_command_lines (struct ui_out *,
 
 extern struct command_line * copy_command_lines (struct command_line *cmds);
 
-struct cleanup *make_cleanup_free_command_lines (struct command_line **arg);
+extern struct cleanup *
+  make_cleanup_free_command_lines (struct command_line **arg);
 
 /* Exported to gdb/infrun.c */
 

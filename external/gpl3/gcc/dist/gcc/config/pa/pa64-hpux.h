@@ -1,7 +1,6 @@
 /* Definitions of target machine for GNU compiler, for HPs running
    HPUX using the 64bit runtime model.
-   Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -27,10 +26,10 @@ along with GCC; see the file COPYING3.  If not see
 #if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & MASK_GNU_LD)
 #define LINK_SPEC \
   "%{!shared:%{p:-L/lib/pa20_64/libp -L/usr/lib/pa20_64/libp %{!static:\
-     %nWarning: consider linking with `-static' as system libraries with\n\
+     %nwarning: consider linking with '-static' as system libraries with\n\
      %n  profiling support are only provided in archive format}}}\
    %{!shared:%{pg:-L/lib/pa20_64/libp -L/usr/lib/pa20_64/libp %{!static:\
-     %nWarning: consider linking with `-static' as system libraries with\n\
+     %nwarning: consider linking with '-static' as system libraries with\n\
      %n  profiling support are only provided in archive format}}}\
    %{!shared:%{!static:%{rdynamic:-E}}}\
    %{mhp-ld:+Accept TypeMismatch -z} %{mlinker-opt:-O}\
@@ -39,10 +38,10 @@ along with GCC; see the file COPYING3.  If not see
 #else
 #define LINK_SPEC \
   "%{!shared:%{p:-L/lib/pa20_64/libp -L/usr/lib/pa20_64/libp %{!static:\
-     %nWarning: consider linking with `-static' as system libraries with\n\
+     %nwarning: consider linking with '-static' as system libraries with\n\
      %n  profiling support are only provided in archive format}}}\
    %{!shared:%{pg:-L/lib/pa20_64/libp -L/usr/lib/pa20_64/libp %{!static:\
-     %nWarning: consider linking with `-static' as system libraries with\n\
+     %nwarning: consider linking with '-static' as system libraries with\n\
      %n  profiling support are only provided in archive format}}}\
    %{!shared:%{!static:%{rdynamic:-E}}}\
    %{!mgnu-ld:+Accept TypeMismatch -z} %{mlinker-opt:-O}\
@@ -236,7 +235,7 @@ do {								\
 #define ASM_OUTPUT_EXTERNAL_LIBCALL(FILE, FUN)			\
 do {								\
   if (!FUNCTION_NAME_P (XSTR (FUN, 0)))				\
-    hppa_encode_label (FUN);					\
+    pa_encode_label (FUN);					\
   ASM_OUTPUT_TYPE_DIRECTIVE (FILE, XSTR (FUN, 0), "function");	\
 } while (0)
 
@@ -304,7 +303,14 @@ do {								\
 /* The following STARTFILE_SPEC and ENDFILE_SPEC defines provide the
    magic needed to run initializers and finalizers.  */
 #undef STARTFILE_SPEC
-#if TARGET_HPUX_11_11
+#if TARGET_HPUX_11_31
+#define STARTFILE_SPEC \
+  "%{!shared: %{!symbolic: crt0%O%s} \
+     %{munix=95:unix95.o%s} %{munix=98:unix98.o%s} \
+     %{!munix=93:%{!munix=95:%{!munix=98:unix2003%O%s}}}} \
+     %{static:crtbeginT%O%s} \
+   %{!static:%{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}}"
+#elif TARGET_HPUX_11_11
 #define STARTFILE_SPEC \
   "%{!shared: %{!symbolic: crt0%O%s} %{munix=95:unix95.o%s} \
      %{!munix=93:%{!munix=95:unix98%O%s}}} %{static:crtbeginT%O%s} \

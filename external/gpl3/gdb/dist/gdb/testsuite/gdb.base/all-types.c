@@ -28,10 +28,6 @@ double		v_double;
 int main ()
 {
     extern void dummy();
-#ifdef usestubs
-    set_debug_traps();
-    breakpoint();
-#endif
     dummy();
     return 0;
     

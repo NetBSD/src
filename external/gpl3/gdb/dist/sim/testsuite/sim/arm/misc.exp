@@ -1,6 +1,6 @@
 # Miscellaneous ARM simulator testcases
 
-if { [istarget arm*-*-*] || [istarget thumb*-*-*] || [istarget xscale*-*-*] } {
+if { [istarget arm*-*-*] } {
     # load support procs
     # load_lib cgen.exp
 

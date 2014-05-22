@@ -1,6 +1,6 @@
 /* Sysroff object format dumper.
-   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
+   2009, 2011  Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -63,7 +63,7 @@ getCHARS (unsigned char *ptr, int *idx, int size, int max)
   int b = size;
 
   if (b >= max)
-    return "*undefined*";
+    return _("*undefined*");
 
   if (b == 0)
     {
@@ -134,7 +134,7 @@ fillup (unsigned char *ptr)
     sum += ptr[i];
 
   if ((sum & 0xff) != 0xff)
-    printf ("SUM IS %x\n", sum);
+    printf (_("SUM IS %x\n"), sum);
 
   if (dump)
     dh (ptr, size);
@@ -500,7 +500,7 @@ getone (int type)
       break;
 
     default:
-      printf ("GOT A %x\n", c);
+      printf (_("GOT A %x\n"), c);
       return 0;
       break;
     }
@@ -518,7 +518,7 @@ static void
 must (int x)
 {
   if (!getone (x))
-    printf ("WANTED %x!!\n", x);
+    printf (_("WANTED %x!!\n"), x);
 }
 
 static void
@@ -536,7 +536,7 @@ tab (int i, char *s)
 static void
 dump_symbol_info (void)
 {
-  tab (1, "SYMBOL INFO");
+  tab (1, _("SYMBOL INFO"));
 
   while (opt (IT_dsy_CODE))
     {
@@ -554,7 +554,7 @@ dump_symbol_info (void)
 static void
 derived_type (void)
 {
-  tab (1, "DERIVED TYPE");
+  tab (1, _("DERIVED TYPE"));
 
   while (1)
     {
@@ -611,7 +611,7 @@ module (void)
   int c = 0;
   int l = 0;
 
-  tab (1, "MODULE***\n");
+  tab (1, _("MODULE***\n"));
 
   do
     {

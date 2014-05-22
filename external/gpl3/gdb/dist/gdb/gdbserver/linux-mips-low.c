@@ -1,6 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,8 +26,17 @@
 
 /* Defined in auto-generated file mips-linux.c.  */
 void init_registers_mips_linux (void);
+/* Defined in auto-generated file mips-dsp-linux.c.  */
+void init_registers_mips_dsp_linux (void);
 /* Defined in auto-generated file mips64-linux.c.  */
 void init_registers_mips64_linux (void);
+/* Defined in auto-generated file mips64-dsp-linux.c.  */
+void init_registers_mips64_dsp_linux (void);
+
+#ifdef __mips64
+#define init_registers_mips_linux init_registers_mips64_linux
+#define init_registers_mips_dsp_linux init_registers_mips64_dsp_linux
+#endif
 
 #ifndef PTRACE_GET_THREAD_AREA
 #define PTRACE_GET_THREAD_AREA 25
@@ -39,8 +47,14 @@ void init_registers_mips64_linux (void);
 #endif
 
 #define mips_num_regs 73
+#define mips_dsp_num_regs 80
 
 #include <asm/ptrace.h>
+
+#ifndef DSP_BASE
+#define DSP_BASE 71
+#define DSP_CONTROL 77
+#endif
 
 union mips_register
 {
@@ -53,26 +67,83 @@ union mips_register
 
 /* Return the ptrace ``address'' of register REGNO. */
 
-static int mips_regmap[] = {
-  -1,  1,  2,  3,  4,  5,  6,  7,
-  8,  9,  10, 11, 12, 13, 14, 15,
-  16, 17, 18, 19, 20, 21, 22, 23,
-  24, 25, 26, 27, 28, 29, 30, 31,
+#define mips_base_regs							\
+  -1,  1,  2,  3,  4,  5,  6,  7,					\
+  8,  9,  10, 11, 12, 13, 14, 15,					\
+  16, 17, 18, 19, 20, 21, 22, 23,					\
+  24, 25, 26, 27, 28, 29, 30, 31,					\
+									\
+  -1, MMLO, MMHI, BADVADDR, CAUSE, PC,					\
+									\
+  FPR_BASE,      FPR_BASE + 1,  FPR_BASE + 2,  FPR_BASE + 3,		\
+  FPR_BASE + 4,  FPR_BASE + 5,  FPR_BASE + 6,  FPR_BASE + 7,		\
+  FPR_BASE + 8,  FPR_BASE + 9,  FPR_BASE + 10, FPR_BASE + 11,		\
+  FPR_BASE + 12, FPR_BASE + 13, FPR_BASE + 14, FPR_BASE + 15,		\
+  FPR_BASE + 16, FPR_BASE + 17, FPR_BASE + 18, FPR_BASE + 19,		\
+  FPR_BASE + 20, FPR_BASE + 21, FPR_BASE + 22, FPR_BASE + 23,		\
+  FPR_BASE + 24, FPR_BASE + 25, FPR_BASE + 26, FPR_BASE + 27,		\
+  FPR_BASE + 28, FPR_BASE + 29, FPR_BASE + 30, FPR_BASE + 31,		\
+  FPC_CSR, FPC_EIR
 
-  -1, MMLO, MMHI, BADVADDR, CAUSE, PC,
+#define mips_dsp_regs							\
+  DSP_BASE,      DSP_BASE + 1,  DSP_BASE + 2,  DSP_BASE + 3,		\
+  DSP_BASE + 4,  DSP_BASE + 5,						\
+  DSP_CONTROL
 
-  FPR_BASE,      FPR_BASE + 1,  FPR_BASE + 2,  FPR_BASE + 3,
-  FPR_BASE + 4,  FPR_BASE + 5,  FPR_BASE + 6,  FPR_BASE + 7,
-  FPR_BASE + 8,  FPR_BASE + 8,  FPR_BASE + 10, FPR_BASE + 11,
-  FPR_BASE + 12, FPR_BASE + 13, FPR_BASE + 14, FPR_BASE + 15,
-  FPR_BASE + 16, FPR_BASE + 17, FPR_BASE + 18, FPR_BASE + 19,
-  FPR_BASE + 20, FPR_BASE + 21, FPR_BASE + 22, FPR_BASE + 23,
-  FPR_BASE + 24, FPR_BASE + 25, FPR_BASE + 26, FPR_BASE + 27,
-  FPR_BASE + 28, FPR_BASE + 29, FPR_BASE + 30, FPR_BASE + 31,
-  FPC_CSR, FPC_EIR,
-
+static int mips_regmap[mips_num_regs] = {
+  mips_base_regs,
   0
 };
+
+static int mips_dsp_regmap[mips_dsp_num_regs] = {
+  mips_base_regs,
+  mips_dsp_regs,
+  0
+};
+
+/* DSP registers are not in any regset and can only be accessed
+   individually.  */
+
+static unsigned char mips_dsp_regset_bitmap[(mips_dsp_num_regs + 7) / 8] = {
+  0xfe, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff, 0x80
+};
+
+/* Try peeking at an arbitrarily chosen DSP register and pick the available
+   user register set accordingly.  */
+
+static void
+mips_arch_setup (void)
+{
+  static void (*init_registers) (void);
+
+  gdb_assert (current_inferior);
+
+  if (init_registers == NULL)
+    {
+      int pid = lwpid_of (get_thread_lwp (current_inferior));
+
+      ptrace (PTRACE_PEEKUSER, pid, DSP_CONTROL, 0);
+      switch (errno)
+	{
+	case 0:
+	  the_low_target.num_regs = mips_dsp_num_regs;
+	  the_low_target.regmap = mips_dsp_regmap;
+	  the_low_target.regset_bitmap = mips_dsp_regset_bitmap;
+	  init_registers = init_registers_mips_dsp_linux;
+	  break;
+	case EIO:
+	  the_low_target.num_regs = mips_num_regs;
+	  the_low_target.regmap = mips_regmap;
+	  the_low_target.regset_bitmap = NULL;
+	  init_registers = init_registers_mips_linux;
+	  break;
+	default:
+	  perror_with_name ("ptrace");
+	  break;
+	}
+    }
+  init_registers ();
+}
 
 /* From mips-linux-nat.c.  */
 
@@ -84,7 +155,7 @@ static int mips_regmap[] = {
 static int
 mips_cannot_fetch_register (int regno)
 {
-  if (mips_regmap[regno] == -1)
+  if (the_low_target.regmap[regno] == -1)
     return 1;
 
   if (find_regno ("r0") == regno)
@@ -96,7 +167,7 @@ mips_cannot_fetch_register (int regno)
 static int
 mips_cannot_store_register (int regno)
 {
-  if (mips_regmap[regno] == -1)
+  if (the_low_target.regmap[regno] == -1)
     return 1;
 
   if (find_regno ("r0") == regno)
@@ -352,15 +423,13 @@ struct regset_info target_regsets[] = {
 };
 
 struct linux_target_ops the_low_target = {
-#ifdef __mips64
-  init_registers_mips64_linux,
-#else
-  init_registers_mips_linux,
-#endif
-  mips_num_regs,
-  mips_regmap,
+  mips_arch_setup,
+  -1,
+  NULL,
+  NULL,
   mips_cannot_fetch_register,
   mips_cannot_store_register,
+  NULL, /* fetch_register */
   mips_get_pc,
   mips_set_pc,
   (const unsigned char *) &mips_breakpoint,

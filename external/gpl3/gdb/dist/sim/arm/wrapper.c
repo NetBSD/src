@@ -1,6 +1,5 @@
 /* run front end support for arm
-   Copyright (C) 1995, 1996, 1997, 2000, 2001, 2002, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
 
    This file is part of ARM SIM.
 
@@ -21,6 +20,7 @@
    run.c and gdb (when the simulator is linked with gdb).
    All simulator interaction should go through this file.  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -36,6 +36,7 @@
 #include "run-sim.h"
 #include "gdb/sim-arm.h"
 #include "gdb/signals.h"
+#include "libiberty.h"
 
 host_callback *sim_callback;
 
@@ -269,6 +270,7 @@ sim_create_inferior (sd, abfd, argv, env)
       ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop | ARM_XScale_Prop | ARM_v6_Prop);
       break;
 
+    case bfd_mach_arm_iWMMXt2:
     case bfd_mach_arm_iWMMXt:
       {
 	extern int SWI_vector_installed;
@@ -441,7 +443,7 @@ sim_store_register (sd, rn, memory, length)
      SIM_DESC sd ATTRIBUTE_UNUSED;
      int rn;
      unsigned char *memory;
-     int length ATTRIBUTE_UNUSED;
+     int length;
 {
   init ();
 
@@ -542,7 +544,7 @@ sim_store_register (sd, rn, memory, length)
       return 0;
     }
 
-  return -1;
+  return length;
 }
 
 int
@@ -550,9 +552,10 @@ sim_fetch_register (sd, rn, memory, length)
      SIM_DESC sd ATTRIBUTE_UNUSED;
      int rn;
      unsigned char *memory;
-     int length ATTRIBUTE_UNUSED;
+     int length;
 {
   ARMword regval;
+  int len = length;
 
   init ();
 
@@ -655,16 +658,16 @@ sim_fetch_register (sd, rn, memory, length)
       return 0;
     }
 
-  while (length)
+  while (len)
     {
       tomem (state, memory, regval);
 
-      length -= 4;
+      len -= 4;
       memory += 4;
       regval = 0;
     }  
 
-  return -1;
+  return length;
 }
 
 #ifdef SIM_TARGET_SWITCHES
@@ -904,7 +907,7 @@ sim_stop_reason (sd, reason, sigrc)
   if (stop_simulator)
     {
       *reason = sim_stopped;
-      *sigrc = TARGET_SIGNAL_INT;
+      *sigrc = GDB_SIGNAL_INT;
     }
   else if (state->EndCondition == 0)
     {
@@ -915,10 +918,10 @@ sim_stop_reason (sd, reason, sigrc)
     {
       *reason = sim_stopped;
       if (state->EndCondition == RDIError_BreakpointReached)
-	*sigrc = TARGET_SIGNAL_TRAP;
+	*sigrc = GDB_SIGNAL_TRAP;
       else if (   state->EndCondition == RDIError_DataAbort
 	       || state->EndCondition == RDIError_AddressException)
-	*sigrc = TARGET_SIGNAL_BUS;
+	*sigrc = GDB_SIGNAL_BUS;
       else
 	*sigrc = 0;
     }
@@ -939,4 +942,10 @@ sim_set_callbacks (ptr)
      host_callback *ptr;
 {
   sim_callback = ptr;
+}
+
+char **
+sim_complete_command (SIM_DESC sd, char *text, char *word)
+{
+  return NULL;
 }

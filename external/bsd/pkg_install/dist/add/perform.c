@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.18.4.1 2012/04/17 00:04:06 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.18.4.2 2014/05/22 15:51:03 yamt Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.18.4.1 2012/04/17 00:04:06 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.18.4.2 2014/05/22 15:51:03 yamt Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -154,6 +154,10 @@ compatible_platform(const char *opsys, const char *host, const char *package)
 
     /* returns 1 if host and package operating system match */
     if (strcmp(host, package) == 0)
+	return 1;
+
+    /* accept, if host version is a minor release of package version */
+    if (strncmp(host, package, strlen(package)) == 0)
 	return 1;
 
     /* find offset of first difference */

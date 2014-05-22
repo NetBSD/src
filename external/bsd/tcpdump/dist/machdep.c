@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/machdep.c,v 1.13 2003-12-15 03:53:21 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/machdep.c,v 1.13 2003-12-15 03:53:21 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -51,7 +51,10 @@ __RCSID("$NetBSD: machdep.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 
 #if !defined(HAVE_SNPRINTF)
 int snprintf(char *, size_t, const char *, ...)
-     __attribute__((format(printf, 3, 4)));
+#ifdef __ATTRIBUTE___FORMAT_OK
+     __attribute__((format(printf, 3, 4)))
+#endif /* __ATTRIBUTE___FORMAT_OK */
+     ;
 #endif /* !defined(HAVE_SNPRINTF) */
 #endif /* __osf__ */
 

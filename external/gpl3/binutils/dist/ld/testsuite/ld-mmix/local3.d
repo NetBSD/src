@@ -21,22 +21,25 @@ Section Headers:
  +0+10 +0+ +W +0 +0 +1
  +\[ 3\] \.shstrtab +STRTAB +0+ +0+90
  +0+34 +0+ +0 +0 +1
- +\[ 4\] \.symtab +SYMTAB +0+ +0+248
- +0+108 +0+18 +5 +5 +8
- +\[ 5\] \.strtab +STRTAB +0+ +0+350
- +0+32 +0+ +0 +0 +1
+ +\[ 4\] \.symtab +SYMTAB +0+ +[0-9a-f]+
+ +[0-9a-f]+ +0+18 +5 +[0-9] +8
+ +\[ 5\] \.strtab +STRTAB +0+ +[0-9a-f]+
+ +[0-9a-f]+ +0+ +0 +0 +1
 Key to Flags:
 #...
 
-Symbol table '\.symtab' contains 11 entries:
+Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
- +0: 0+ +0 +NOTYPE +LOCAL +DEFAULT +UND 
- +1: 0+ +0 +SECTION +LOCAL +DEFAULT +1 
- +2: 0+7e8 +0 +SECTION +LOCAL +DEFAULT +2 
- +3: 0+fd +0 +NOTYPE +LOCAL +DEFAULT +PRC\[0xff00\] lsym
- +4: 0+fe +0 +NOTYPE +LOCAL +DEFAULT +PRC\[0xff00\] lsym
- +5: 0+fc +0 +NOTYPE +GLOBAL +DEFAULT +ABS ext1
- +6: 0+4 +0 +NOTYPE +GLOBAL +DEFAULT +1 _start
+.* 0+ +0 +NOTYPE +LOCAL +DEFAULT +UND 
+.* 0+ +0 +SECTION +LOCAL +DEFAULT +1 
+.* 0+7e8 +0 +SECTION +LOCAL +DEFAULT +2 
+.* 0+ +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 0+fd +0 +NOTYPE +LOCAL +DEFAULT +PRC\[0xff00\] lsym
+.* 0+ +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 0+fe +0 +NOTYPE +LOCAL +DEFAULT +PRC\[0xff00\] lsym
+.* 0+ +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 0+fc +0 +NOTYPE +GLOBAL +DEFAULT +ABS ext1
+.* 0+4 +0 +NOTYPE +GLOBAL +DEFAULT +1 _start
 #...
 
 Hex dump of section '\.text':

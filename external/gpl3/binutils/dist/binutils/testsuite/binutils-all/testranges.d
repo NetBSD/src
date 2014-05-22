@@ -4,7 +4,7 @@
 #name: unordered .debug_info references to .debug_ranges
 #not-target: ia64-*-*
 
-Contents of the .debug_ranges section:
+Contents of the \.z?debug_ranges section:
 
     Offset   Begin    End
     00000000 00000001 00000002 

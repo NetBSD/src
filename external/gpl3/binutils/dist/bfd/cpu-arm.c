@@ -124,7 +124,8 @@ scan (const struct bfd_arch_info *info, const char *string)
 }
 
 #define N(number, print, default, next)  \
-{  32, 32, 8, bfd_arch_arm, number, "arm", print, 4, default, compatible, scan, next }
+{  32, 32, 8, bfd_arch_arm, number, "arm", print, 4, default, compatible, \
+   scan, bfd_arch_default_fill, next }
 
 static const bfd_arch_info_type arch_info_struct[] =
 {

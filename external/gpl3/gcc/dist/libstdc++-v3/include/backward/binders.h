@@ -1,7 +1,6 @@
 // Functor implementations -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -51,13 +50,15 @@
 
 /** @file backward/binders.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{functional}
  */
 
 #ifndef _BACKWARD_BINDERS_H
 #define _BACKWARD_BINDERS_H 1
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // 20.3.6 binders
   /** @defgroup binders Binder Classes
@@ -78,7 +79,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
    *
    *  The type @c binder2nd and its creator function @c bind2nd do the same
    *  thing, but the stored argument is passed as the second parameter instead
-   *  of the first, e.g., @c bind2nd(std::minus<float>,1.3) will create a
+   *  of the first, e.g., @c bind2nd(std::minus<float>(),1.3) will create a
    *  functor whose @c operator() accepts a floating-point number, subtracts
    *  1.3 from it, and returns the result. (If @c bind1st had been used,
    *  the functor would perform <em>1.3 - x</em> instead.
@@ -87,10 +88,15 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
    *  calling algorithms. Their return values will be temporary objects.
    *  (The goal is to not require you to type names like
    *  @c std::binder1st<std::plus<int>> for declaring a variable to hold the
-   *  return value from @c bind1st(std::plus<int>,5).
+   *  return value from @c bind1st(std::plus<int>(),5).
    *
    *  These become more useful when combined with the composition functions.
    *
+   *  These functions are deprecated in C++11 and can be replaced by
+   *  @c std::bind (or @c std::tr1::bind) which is more powerful and flexible,
+   *  supporting functions with any number of arguments.  Uses of @c bind1st
+   *  can be replaced by @c std::bind(f, x, std::placeholders::_1) and
+   *  @c bind2nd by @c std::bind(f, std::placeholders::_1, x).
    *  @{
    */
   /// One of the @link binders binder functors@endlink.
@@ -117,7 +123,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       typename _Operation::result_type
       operator()(typename _Operation::second_argument_type& __x) const
       { return op(value, __x); }
-    } _GLIBCXX_DEPRECATED_ATTR;
+    } _GLIBCXX_DEPRECATED;
 
   /// One of the @link binders binder functors@endlink.
   template<typename _Operation, typename _Tp>
@@ -152,7 +158,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       typename _Operation::result_type
       operator()(typename _Operation::first_argument_type& __x) const
       { return op(__x, value); }
-    } _GLIBCXX_DEPRECATED_ATTR;
+    } _GLIBCXX_DEPRECATED;
 
   /// One of the @link binders binder functors@endlink.
   template<typename _Operation, typename _Tp>
@@ -164,6 +170,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     } 
   /** @}  */
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif /* _BACKWARD_BINDERS_H */

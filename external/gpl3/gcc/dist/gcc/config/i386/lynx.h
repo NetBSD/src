@@ -1,6 +1,5 @@
 /* Definitions for LynxOS on i386.
-   Copyright (C) 1993, 1995, 1996, 2002, 2004, 2005, 2007
-   Free Software Foundation, Inc. 
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -17,8 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
-
-#define TARGET_VERSION fputs (" (i386/LynxOS)", stderr);
 
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
@@ -51,7 +48,7 @@ along with GCC; see the file COPYING3.  If not see
    : (n) == 5 ? 7							\
    : (n) == 6 ? 5							\
    : (n) == 7 ? 4							\
-   : ((n) >= FIRST_STACK_REG && (n) <= LAST_STACK_REG) ? (n) + 8	\
+   : ((n) >= FIRST_STACK_REG && (n) <= LAST_STACK_REG) ? (int) (n) + 8	\
    : (-1))
   
 /* A C statement to output to the stdio stream FILE an assembler

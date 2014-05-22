@@ -131,6 +131,7 @@ class Plugin_manager
     : plugins_(), objects_(), deferred_layout_objects_(), input_file_(NULL),
       plugin_input_file_(), rescannable_(), undefined_symbols_(),
       any_claimed_(false), in_replacement_phase_(false), any_added_(false),
+      in_claim_file_handler_(false),
       options_(options), workqueue_(NULL), task_(NULL), input_objects_(NULL),
       symtab_(NULL), layout_(NULL), dirpath_(NULL), mapfile_(NULL),
       this_blocker_(NULL), extra_search_path_()
@@ -153,11 +154,22 @@ class Plugin_manager
 
   // Load all plugin libraries.
   void
-  load_plugins();
+  load_plugins(Layout* layout);
 
   // Call the plugin claim-file handlers in turn to see if any claim the file.
   Pluginobj*
-  claim_file(Input_file* input_file, off_t offset, off_t filesize);
+  claim_file(Input_file* input_file, off_t offset, off_t filesize,
+             Object* elf_object);
+
+  // Get the object associated with the handle and check if it is an elf object.
+  // If it is not a Pluginobj, it is an elf object.
+  Object*
+  get_elf_object(const void* handle);
+
+  // True if the claim_file handler of the plugins is being called.
+  bool
+  in_claim_file_handler()
+  { return in_claim_file_handler_; }
 
   // Let the plugin manager save an archive for later rescanning.
   // This takes ownership of the Archive pointer.
@@ -173,7 +185,7 @@ class Plugin_manager
   void
   all_symbols_read(Workqueue* workqueue, Task* task,
                    Input_objects* input_objects, Symbol_table* symtab,
-                   Layout* layout, Dirsearch* dirpath, Mapfile* mapfile,
+                   Dirsearch* dirpath, Mapfile* mapfile,
                    Task_token** last_blocker);
 
   // Tell the plugin manager that we've a new undefined symbol which
@@ -218,8 +230,8 @@ class Plugin_manager
   Pluginobj*
   make_plugin_object(unsigned int handle);
 
-  // Return the Pluginobj associated with the given HANDLE.
-  Pluginobj*
+  // Return the object associated with the given HANDLE.
+  Object*
   object(unsigned int handle) const
   {
     if (handle >= this->objects_.size())
@@ -231,7 +243,7 @@ class Plugin_manager
   // and we are still in the initial input phase.
   bool
   should_defer_layout() const
-  { return !this->objects_.empty() && !this->in_replacement_phase_; }
+  { return this->any_claimed_ && !this->in_replacement_phase_; }
 
   // Add a regular object to the deferred layout list.  These are
   // objects whose layout has been deferred until after the
@@ -244,6 +256,9 @@ class Plugin_manager
   // file descriptor.
   ld_plugin_status
   get_input_file(unsigned int handle, struct ld_plugin_input_file* file);
+
+  ld_plugin_status
+  get_view(unsigned int handle, const void **viewp);
 
   // Release an input file.
   ld_plugin_status
@@ -261,6 +276,14 @@ class Plugin_manager
   bool
   in_replacement_phase() const
   { return this->in_replacement_phase_; }
+
+  Input_objects*
+  input_objects() const
+  { return this->input_objects_; }
+
+  Layout*
+  layout()
+  { return this->layout_; }
 
  private:
   Plugin_manager(const Plugin_manager&);
@@ -290,7 +313,7 @@ class Plugin_manager
   };
 
   typedef std::list<Plugin*> Plugin_list;
-  typedef std::vector<Pluginobj*> Object_list;
+  typedef std::vector<Object*> Object_list;
   typedef std::vector<Relobj*> Deferred_layout_list;
   typedef std::vector<Rescannable> Rescannable_list;
   typedef std::vector<Symbol*> Undefined_symbol_list;
@@ -337,6 +360,9 @@ class Plugin_manager
   // Whether any input files or libraries were added by a plugin.
   bool any_added_;
 
+  // Set to true when the claim_file handler of a plugin is called.
+  bool in_claim_file_handler_;
+
   const General_options& options_;
   Workqueue* workqueue_;
   Task* task_;
@@ -367,7 +393,9 @@ class Pluginobj : public Object
 
   // Fill in the symbol resolution status for the given plugin symbols.
   ld_plugin_status
-  get_symbol_resolution_info(int nsyms, ld_plugin_symbol* syms) const;
+  get_symbol_resolution_info(int nsyms,
+			     ld_plugin_symbol* syms,
+			     int version) const;
 
   // Store the incoming symbols from the plugin for later processing.
   void
@@ -446,6 +474,16 @@ class Sized_pluginobj : public Pluginobj
   do_should_include_member(Symbol_table* symtab, Layout*, Read_symbols_data*,
                            std::string* why);
 
+  // Iterate over global symbols, calling a visitor class V for each.
+  void
+  do_for_all_global_symbols(Read_symbols_data* sd,
+			    Library_base::Symbol_visitor_base* v);
+
+  // Iterate over local symbols, calling a visitor class V for each GOT offset
+  // associated with a local symbol.
+  void
+  do_for_all_local_got_entries(Got_offset_list::Visitor* v) const;
+
   // Get the size of a section.
   uint64_t
   do_section_size(unsigned int shndx);
@@ -455,8 +493,9 @@ class Sized_pluginobj : public Pluginobj
   do_section_name(unsigned int shndx);
 
   // Return a view of the contents of a section.
-  Object::Location
-  do_section_contents(unsigned int shndx);
+  const unsigned char*
+  do_section_contents(unsigned int shndx, section_size_type* plen,
+		      bool cache);
 
   // Return section flags.
   uint64_t

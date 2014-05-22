@@ -1,7 +1,6 @@
 /* Pascal language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2000, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,7 +98,7 @@ int
 is_pascal_string_type (struct type *type,int *length_pos,
                        int *length_size, int *string_pos,
 		       struct type **char_type,
-		       char **arrayname)
+		       const char **arrayname)
 {
   if (type != NULL && TYPE_CODE (type) == TYPE_CODE_STRUCT)
     {
@@ -280,10 +279,7 @@ pascal_printstr (struct ui_file *stream, struct type *type,
 	{
 	  if (in_quotes)
 	    {
-	      if (options->inspect_it)
-		fputs_filtered ("\\', ", stream);
-	      else
-		fputs_filtered ("', ", stream);
+	      fputs_filtered ("', ", stream);
 	      in_quotes = 0;
 	    }
 	  pascal_printchar (current_char, type, stream);
@@ -296,10 +292,7 @@ pascal_printstr (struct ui_file *stream, struct type *type,
 	{
 	  if ((!in_quotes) && (PRINT_LITERAL_FORM (current_char)))
 	    {
-	      if (options->inspect_it)
-		fputs_filtered ("\\'", stream);
-	      else
-		fputs_filtered ("'", stream);
+	      fputs_filtered ("'", stream);
 	      in_quotes = 1;
 	    }
 	  pascal_one_char (current_char, stream, &in_quotes);
@@ -309,12 +302,7 @@ pascal_printstr (struct ui_file *stream, struct type *type,
 
   /* Terminate the quotes if necessary.  */
   if (in_quotes)
-    {
-      if (options->inspect_it)
-	fputs_filtered ("\\'", stream);
-      else
-	fputs_filtered ("'", stream);
-    }
+    fputs_filtered ("'", stream);
 
   if (force_ellipses || i < length)
     fputs_filtered ("...", stream);
@@ -429,7 +417,6 @@ const struct language_defn pascal_language_defn =
   "pascal",			/* Language name */
   language_pascal,
   range_check_on,
-  type_check_on,
   case_sensitive_on,
   array_row_major,
   macro_expansion_no,
@@ -444,6 +431,7 @@ const struct language_defn pascal_language_defn =
   pascal_print_typedef,		/* Print a typedef using appropriate syntax */
   pascal_val_print,		/* Print a value using appropriate syntax */
   pascal_value_print,		/* Print a top-level value */
+  default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline */
   "this",		        /* name_of_this */
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
@@ -459,6 +447,8 @@ const struct language_defn pascal_language_defn =
   default_print_array_index,
   default_pass_by_reference,
   default_get_string,
+  NULL,				/* la_get_symbol_name_cmp */
+  iterate_over_symbols,
   LANG_MAGIC
 };
 

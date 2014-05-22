@@ -169,6 +169,7 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 # mach: [all | machine names]
 # as[(mach-list)]: <assembler options>
 # ld[(mach-list)]: <linker options>
+# cc[(mach-list)]: <compiler options>
 # sim[(mach-list)]: <simulator options>
 # progopts: <arguments to the program being simulated>
 # output: program output pattern to match with string-match
@@ -190,6 +191,7 @@ proc run_sim_test { name requested_machs } {
     global cpu_option
     global global_as_options
     global global_ld_options
+    global global_cc_options
     global global_sim_options
 
     if [string match "*/*" $name] {
@@ -207,6 +209,7 @@ proc run_sim_test { name requested_machs } {
     # Clear default options
     set opts(as) ""
     set opts(ld) ""
+    set opts(cc) ""
     set opts(progopts) ""
     set opts(sim) ""
     set opts(output) ""
@@ -222,6 +225,9 @@ proc run_sim_test { name requested_machs } {
     if ![info exists global_ld_options] {
         set global_ld_options ""
     }
+    if ![info exists global_cc_options] {
+        set global_cc_options ""
+    }
     if ![info exists global_sim_options] {
         set global_sim_options ""
     }
@@ -233,6 +239,9 @@ proc run_sim_test { name requested_machs } {
 	}
 	if [info exists opts(ld,$m)] {
 	    unset opts(ld,$m)
+	}
+	if [info exists opts(cc,$m)] {
+	    unset opts(cc,$m)
 	}
 	if [info exists opts(sim,$m)] {
 	    unset opts(sim,$m)
@@ -310,23 +319,44 @@ proc run_sim_test { name requested_machs } {
 	if [info exists cpu_option] {
 	    set as_options "$as_options $cpu_option=$mach"
 	}
-	set comp_output [target_assemble $sourcefile ${name}.o "$as_options $global_as_options"]
-
-	if ![string match "" $comp_output] {
-	    verbose -log "$comp_output" 3
-	    fail "$mach $testname (assembling)"
-	    continue
-	}
+	regsub {(^ *| +)([^ ]+)} "$as_options $global_as_options" { -Wa,\2} c_as_options
 
 	if ![info exists opts(ld,$mach)] {
 	    set opts(ld,$mach) $opts(ld)
 	}
+	regsub {(^ *| +)([^ ]+)} "$opts(ld,$mach) $global_ld_options" { -Wl,\2} c_ld_options
 
-	set comp_output [target_link ${name}.o ${name}.x "$opts(ld,$mach) $global_ld_options"]
+	if ![info exists opts(cc,$mach)] {
+	    set opts(cc,$mach) $opts(cc)
+	}
+
+	if [string match "*.c" $sourcefile] {
+	    set comp_output [target_compile $sourcefile ${name}.x "executable" \
+		[list "incdir=$srcdir/$subdir" "additional_flags=$c_as_options $c_ld_options $opts(cc,$mach) $global_cc_options"]]
+	    set method "compiling/linking"
+	} else {
+	    if [string match "*.S" $sourcefile] {
+		set comp_output [target_compile $sourcefile ${name}.o "object" \
+		    [list "incdir=$srcdir/$subdir" "additional_flags=$c_as_options"]]
+		set method "compiling"
+	    } else {
+		set comp_output [target_assemble $sourcefile ${name}.o "$as_options $global_as_options"]
+		set method "assembling"
+	    }
+
+	    if ![string match "" $comp_output] {
+		verbose -log "$comp_output" 3
+		fail "$mach $testname (${method})"
+		continue
+	    }
+
+	    set comp_output [target_link ${name}.o ${name}.x "$opts(ld,$mach) $global_ld_options"]
+	    set method "linking"
+	}
 
 	if ![string match "" $comp_output] {
 	    verbose -log "$comp_output" 3
-	    fail "$mach $testname (linking)"
+	    fail "$mach $testname (${method})"
 	    continue
 	}
 

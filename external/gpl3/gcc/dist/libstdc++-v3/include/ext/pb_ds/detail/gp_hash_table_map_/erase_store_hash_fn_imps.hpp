@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file erase_store_hash_fn_imps.hpp
+ * @file gp_hash_table_map_/erase_store_hash_fn_imps.hpp
  * Contains implementations of gp_ht_map_'s erase related functions,
  * when the hash value is stored.
  */
@@ -42,7 +42,7 @@
 PB_DS_CLASS_T_DEC
 inline bool
 PB_DS_CLASS_C_DEC::
-erase_imp(const_key_reference r_key, true_type)
+erase_imp(key_const_reference r_key, true_type)
 {
   const comp_hash pos_hash_pair = ranged_probe_fn_base::operator()(r_key);
   size_type i;
@@ -57,8 +57,7 @@ erase_imp(const_key_reference r_key, true_type)
         case empty_entry_status:
 	  {
 	    resize_base::notify_erase_search_end();
-	    _GLIBCXX_DEBUG_ONLY(debug_base::check_key_does_not_exist(
-								    r_key));
+	    PB_DS_CHECK_KEY_DOES_NOT_EXIST(r_key)
 	    return false;
 	  }
 	  break;

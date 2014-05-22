@@ -1,5 +1,5 @@
 
-.*thumb1-bl:     file format elf32-.*arm
+.*thumb1-bl:     file format elf32-.*arm.*
 
 Disassembly of section .text:
 

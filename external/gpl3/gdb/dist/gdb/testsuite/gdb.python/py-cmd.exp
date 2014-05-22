@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,6 @@
 
 # This file is part of the GDB testsuite.  It tests the mechanism
 # for defining new GDB commands in Python.
-
-if $tracelevel then {
-    strace $tracelevel
-}
 
 load_lib gdb-python.exp
 
@@ -39,7 +35,7 @@ gdb_py_test_multiple "input simple command" \
   "  def __init__ (self):" "" \
   "    super (test_cmd, self).__init__ (\"test_cmd\", gdb.COMMAND_OBSCURE)" "" \
   "  def invoke (self, arg, from_tty):" "" \
-  "    print \"test_cmd output, arg = %s\" % arg" "" \
+  "    print (\"test_cmd output, arg = %s\" % arg)" "" \
   "test_cmd ()" "" \
   "end" ""
 
@@ -53,7 +49,7 @@ gdb_py_test_multiple "input prefix command" \
   "  def __init__ (self):" "" \
   "    super (prefix_cmd, self).__init__ (\"prefix_cmd\", gdb.COMMAND_OBSCURE, gdb.COMPLETE_NONE, True)" "" \
   "  def invoke (self, arg, from_tty):" "" \
-  "    print \"prefix_cmd output, arg = %s\" % arg" "" \
+  "    print (\"prefix_cmd output, arg = %s\" % arg)" "" \
   "prefix_cmd ()" "" \
   "end" ""
 
@@ -65,7 +61,7 @@ gdb_py_test_multiple "input subcommand" \
   "  def __init__ (self):" "" \
   "    super (subcmd, self).__init__ (\"prefix_cmd subcmd\", gdb.COMMAND_OBSCURE)" "" \
   "  def invoke (self, arg, from_tty):" "" \
-  "    print \"subcmd output, arg = %s\" % arg" "" \
+  "    print (\"subcmd output, arg = %s\" % arg)" "" \
   "subcmd ()" "" \
   "end" ""
 
@@ -79,7 +75,7 @@ gdb_py_test_multiple "input prefix command, keyword arguments" \
   "  def __init__ (self):" "" \
   "    super (prefix_cmd2, self).__init__ (\"prefix_cmd2\", gdb.COMMAND_OBSCURE, prefix = True, completer_class = gdb.COMPLETE_FILENAME)" "" \
   "  def invoke (self, arg, from_tty):" "" \
-  "    print \"prefix_cmd2 output, arg = %s\" % arg" "" \
+  "    print (\"prefix_cmd2 output, arg = %s\" % arg)" "" \
   "prefix_cmd2 ()" "" \
   "end" ""
 
@@ -91,7 +87,7 @@ gdb_py_test_multiple "input subcommand under prefix_cmd2" \
   "  def __init__ (self):" "" \
   "    super (subcmd, self).__init__ (\"prefix_cmd2 subcmd\", gdb.COMMAND_OBSCURE)" "" \
   "  def invoke (self, arg, from_tty):" "" \
-  "    print \"subcmd output, arg = %s\" % arg" "" \
+  "    print (\"subcmd output, arg = %s\" % arg)" "" \
   "subcmd ()" "" \
   "end" ""
 
@@ -105,7 +101,7 @@ gdb_py_test_multiple "input new subcommand" \
   "  def __init__ (self):" "" \
   "    super (newsubcmd, self).__init__ (\"info newsubcmd\", gdb.COMMAND_OBSCURE)" "" \
   "  def invoke (self, arg, from_tty):" "" \
-  "    print \"newsubcmd output, arg = %s\" % arg" "" \
+  "    print (\"newsubcmd output, arg = %s\" % arg)" "" \
   "newsubcmd ()" "" \
   "end" ""
 
@@ -127,18 +123,35 @@ gdb_test "test_error_cmd ugh" "you lose!" "call error command"
 
 # Test gdb.string_to_argv.
 
-gdb_test "python print gdb.string_to_argv (\"1 2 3\")" \
+gdb_test "python print (gdb.string_to_argv (\"1 2 3\"))" \
   {\['1', '2', '3'\]} \
   "string_to_argv (\"1 2 3\")"
 
-gdb_test "python print gdb.string_to_argv (\"'1 2' 3\")" \
+gdb_test "python print (gdb.string_to_argv (\"'1 2' 3\"))" \
   {\['1 2', '3'\]} \
   "string_to_argv (\"'1 2' 3\")"
 
-gdb_test "python print gdb.string_to_argv ('\"1 2\" 3')" \
+gdb_test "python print (gdb.string_to_argv ('\"1 2\" 3'))" \
   {\['1 2', '3'\]} \
   "string_to_argv ('\"1 2\" 3')"
 
-gdb_test "python print gdb.string_to_argv ('1\\ 2 3')" \
+gdb_test "python print (gdb.string_to_argv ('1\\ 2 3'))" \
   {\['1 2', '3'\]} \
     "string_to_argv ('1\\ 2 3')"
+
+# Test user-defined python commands.
+gdb_py_test_multiple "input simple user-defined command" \
+  "python" "" \
+  "class test_help (gdb.Command):" "" \
+  "  \"\"\"Docstring\"\"\"" "" \
+  "  def __init__ (self):" "" \
+  "    super (test_help, self).__init__ (\"test_help\", gdb.COMMAND_USER)" "" \
+  "  def invoke (self, arg, from_tty):" "" \
+  "    print (\"test_cmd output, arg = %s\" % arg)" "" \
+  "test_help ()" "" \
+  "end" ""
+
+gdb_test "test_help ugh" "test_cmd output, arg = ugh" "call simple user-defined command"
+
+# Make sure the command shows up in `help user-defined`.
+gdb_test "help user-defined" "User-defined commands.\[\r\n\]+The commands in this class are those defined by the user.\[\r\n\]+Use the \"define\" command to define a command.\[\r\n\]+\[\r\n\]+List of commands:\[\r\n\]+\[\r\n\]+test_help -- Docstring\[\r\n\]+\[\r\n\]+Type \"help\" followed by command name for full documentation.\[\r\n\]+Type \"apropos word\" to search for commands related to \"word\".\[\r\n\]+Command name abbreviations are allowed if unambiguous.\[\r\n\]+" "see user-defined command in `help user-defined`"

@@ -1,6 +1,6 @@
 // copy-relocs.cc -- handle COPY relocations for gold.
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -41,10 +41,10 @@ Copy_relocs<sh_type, size, big_endian>::Copy_reloc_entry::emit(
   // emitted a COPY relocation, and we do not want to emit this
   // dynamic relocation.
   if (this->sym_->is_from_dynobj())
-    reloc_section->add_global(this->sym_, this->reloc_type_,
-			      this->output_section_, this->relobj_,
-			      this->shndx_, this->address_,
-			      this->addend_);
+    reloc_section->add_global_generic(this->sym_, this->reloc_type_,
+				      this->output_section_, this->relobj_,
+				      this->shndx_, this->address_,
+				      this->addend_);
 }
 
 // Copy_relocs methods.
@@ -58,14 +58,14 @@ Copy_relocs<sh_type, size, big_endian>::copy_reloc(
     Symbol_table* symtab,
     Layout* layout,
     Sized_symbol<size>* sym,
-    Sized_relobj<size, big_endian>* object,
+    Sized_relobj_file<size, big_endian>* object,
     unsigned int shndx,
     Output_section* output_section,
     const Reloc& rel,
     Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
 {
   if (this->need_copy_reloc(sym, object, shndx))
-    this->emit_copy_reloc(symtab, layout, sym, reloc_section);
+    this->make_copy_reloc(symtab, layout, sym, reloc_section);
   else
     {
       // We may not need a COPY relocation.  Save this relocation to
@@ -81,7 +81,7 @@ template<int sh_type, int size, bool big_endian>
 bool
 Copy_relocs<sh_type, size, big_endian>::need_copy_reloc(
     Sized_symbol<size>* sym,
-    Sized_relobj<size, big_endian>* object,
+    Sized_relobj_file<size, big_endian>* object,
     unsigned int shndx) const
 {
   if (!parameters->options().copyreloc())
@@ -105,6 +105,25 @@ Copy_relocs<sh_type, size, big_endian>::need_copy_reloc(
 template<int sh_type, int size, bool big_endian>
 void
 Copy_relocs<sh_type, size, big_endian>::emit_copy_reloc(
+    Symbol_table* symtab,
+    Sized_symbol<size>* sym,
+    Output_data* posd,
+    off_t offset,
+    Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
+{
+  // Define the symbol as being copied.
+  symtab->define_with_copy_reloc(sym, posd, offset);
+
+  // Add the COPY relocation to the dynamic reloc section.
+  reloc_section->add_global_generic(sym, this->copy_reloc_type_, posd,
+				    offset, 0);
+}
+
+// Make a COPY relocation for SYM and emit it.
+
+template<int sh_type, int size, bool big_endian>
+void
+Copy_relocs<sh_type, size, big_endian>::make_copy_reloc(
     Symbol_table* symtab,
     Layout* layout,
     Sized_symbol<size>* sym,
@@ -164,24 +183,7 @@ Copy_relocs<sh_type, size, big_endian>::emit_copy_reloc(
   section_size_type offset = dynbss_size;
   dynbss->set_current_data_size(dynbss_size + symsize);
 
-  // Define the symbol as being copied.
-  symtab->define_with_copy_reloc(sym, dynbss, offset);
-
-  // Add the COPY relocation to the dynamic reloc section.
-  this->add_copy_reloc(sym, offset, reloc_section);
-}
-
-// Add a COPY relocation for SYM to RELOC_SECTION.
-
-template<int sh_type, int size, bool big_endian>
-void
-Copy_relocs<sh_type, size, big_endian>::add_copy_reloc(
-    Symbol* sym,
-    section_size_type offset,
-    Output_data_reloc<sh_type, true, size, big_endian>* reloc_section)
-{
-  reloc_section->add_global(sym, this->copy_reloc_type_, this->dynbss_,
-			    offset, 0);
+  this->emit_copy_reloc(symtab, sym, dynbss, offset, reloc_section);
 }
 
 // Save a relocation to possibly be emitted later.
@@ -190,7 +192,7 @@ template<int sh_type, int size, bool big_endian>
 void
 Copy_relocs<sh_type, size, big_endian>::save(
     Symbol* sym,
-    Sized_relobj<size, big_endian>* object,
+    Sized_relobj_file<size, big_endian>* object,
     unsigned int shndx,
     Output_section* output_section,
     const Reloc& rel)

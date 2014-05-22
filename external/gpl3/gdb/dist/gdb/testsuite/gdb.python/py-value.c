@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2008-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,6 +66,8 @@ int func2 (int arg1, int arg2)
   return arg1 + arg2;
 }
 
+char **save_argv;
+
 int
 main (int argc, char *argv[])
 {
@@ -94,5 +96,6 @@ main (int argc, char *argv[])
   ptr_ref(ptr_i);
 #endif
 
-  return 0;      /* break to inspect struct and union */
+  save_argv = argv;      /* break to inspect struct and union */
+  return 0;
 }

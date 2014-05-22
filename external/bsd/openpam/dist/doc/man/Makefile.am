@@ -1,4 +1,4 @@
-# Id: Makefile.am 455 2011-10-29 18:31:11Z des
+# Id: Makefile.am 720 2013-08-19 16:02:10Z des 
 
 NULL =
 
@@ -38,12 +38,17 @@ OMAN = \
 	openpam_borrow_cred.3 \
 	openpam_free_data.3 \
 	openpam_free_envlist.3 \
+	openpam_get_feature.3 \
 	openpam_get_option.3 \
 	openpam_log.3 \
 	openpam_nullconv.3 \
 	openpam_readline.3 \
+	openpam_readlinev.3 \
+	openpam_readword.3 \
 	openpam_restore_cred.3 \
+	openpam_set_feature.3 \
 	openpam_set_option.3 \
+	openpam_straddch.3 \
 	openpam_subst.3 \
 	openpam_ttyconv.3 \
 	pam_error.3 \
@@ -59,26 +64,29 @@ OMAN = \
 EXTRA_DIST = openpam.man pam.man
 
 ALLCMAN = $(PMAN) $(MMAN) $(OMAN)
+GENMAN = $(ALLCMAN) openpam.3 pam.3
 
-dist_man3_MANS = $(ALLCMAN) openpam.3 pam.3 pam_conv.3
+dist_man3_MANS = $(GENMAN) pam_conv.3
 
 dist_man5_MANS = pam.conf.5
 
-CLEANFILES = $(ALLCMAN) openpam.3 pam.3
+CLEANFILES = $(GENMAN)
 
 GENDOC = $(top_srcdir)/misc/gendoc.pl
 
-SRCDIR = $(top_srcdir)/lib
+LIBSRCDIR = $(top_srcdir)/lib/libpam
 
-VPATH = $(SRCDIR)
+VPATH = $(LIBSRCDIR) $(srcdir)
 
 SUFFIXES = .3
 
 .c.3: $(GENDOC)
-	perl -w $(GENDOC) $<
+	perl -w $(GENDOC) $< || rm $@
 
-openpam.3: $(OMAN) $(GENDOC) openpam.man
-	perl -w $(GENDOC) -o $(abs_srcdir)/$(OMAN) <$(srcdir)/openpam.man
+openpam.3: $(OPENPAM_MAN) $(GENDOC) $(srcdir)/openpam.man
+	perl -w $(GENDOC) -o $(OPENPAM_MAN) <$(srcdir)/openpam.man || rm $@
 
-pam.3: $(PMAN) $(GENDOC) pam.man
-	perl -w $(GENDOC) -p $(abs_srcdir)/$(PMAN) <$(srcdir)/pam.man
+pam.3: $(PAM_MAN) $(GENDOC) $(srcdir)/pam.man
+	perl -w $(GENDOC) -p $(PAM_MAN) <$(srcdir)/pam.man || rm $@
+
+$(GENMAN): $(GENDOC)

@@ -7,6 +7,9 @@ MEMORY
   text   (rx)   : ORIGIN = 0, LENGTH = $TEXT_LENGTH
   data   (rw!x) : ORIGIN = $DATA_ORIGIN, LENGTH = $DATA_LENGTH
   eeprom (rw!x) : ORIGIN = 0x810000, LENGTH = 64K
+  fuse      (rw!x) : ORIGIN = 0x820000, LENGTH = 1K
+  lock      (rw!x) : ORIGIN = 0x830000, LENGTH = 1K
+  signature (rw!x) : ORIGIN = 0x840000, LENGTH = 1K
 }
 
 SECTIONS
@@ -158,7 +161,10 @@ SECTIONS
   .data	${RELOCATING-0} : ${RELOCATING+AT (ADDR (.text) + SIZEOF (.text))}
   {
     ${RELOCATING+ PROVIDE (__data_start = .) ; }
-    *(.data)
+    /* --gc-sections will delete empty .data. This leads to wrong start
+       addresses for subsequent sections because -Tdata= from the command
+       line will have no effect, see PR13697.  Thus, keep .data  */
+    KEEP (*(.data))    
     *(.data*)
     *(.rodata)  /* We need to include .rodata here if gcc is used */
     *(.rodata*) /* with -fdata-sections.  */
@@ -196,6 +202,24 @@ SECTIONS
     ${RELOCATING+ __eeprom_end = . ; }
   } ${RELOCATING+ > eeprom}
 
+  .fuse ${RELOCATING-0}:
+  {
+    KEEP(*(.fuse))
+    KEEP(*(.lfuse))
+    KEEP(*(.hfuse))
+    KEEP(*(.efuse))
+  } ${RELOCATING+ > fuse}
+
+  .lock ${RELOCATING-0}:
+  {
+    KEEP(*(.lock*))
+  } ${RELOCATING+ > lock}
+
+  .signature ${RELOCATING-0}:
+  {
+    KEEP(*(.signature*))
+  } ${RELOCATING+ > signature}
+
   /* Stabs debugging sections.  */
   .stab 0 : { *(.stab) }
   .stabstr 0 : { *(.stabstr) }
@@ -229,6 +253,13 @@ SECTIONS
   .debug_str      0 : { *(.debug_str) }
   .debug_loc      0 : { *(.debug_loc) }
   .debug_macinfo  0 : { *(.debug_macinfo) }
+
+  /* DWARF 3 */
+  .debug_pubtypes 0 : { *(.debug_pubtypes) }
+  .debug_ranges   0 : { *(.debug_ranges) }
+
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) } 
 }
 EOF
 

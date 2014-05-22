@@ -1,21 +1,20 @@
 ## -*- text -*- ##
 # Makefile for the GNU readline library shared library support.
 #
-# Copyright (C) 1998-2003 Free Software Foundation, Inc.
+# Copyright (C) 1998-2009 Free Software Foundation, Inc.
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 PACKAGE = @PACKAGE_NAME@
 VERSION = @PACKAGE_VERSION@
@@ -31,7 +30,7 @@ RL_LIBRARY_NAME = readline
 datarootdir = @datarootdir@
 
 srcdir = @srcdir@
-VPATH = .:@top_srcdir@
+VPATH = @top_srcdir@
 topdir = @top_srcdir@
 BUILD_DIR = @BUILD_DIR@
 
@@ -51,6 +50,7 @@ LN = ln
 SHELL = @MAKE_SHELL@
 
 host_os = @host_os@
+host_vendor = @host_vendor@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -58,7 +58,7 @@ includedir = @includedir@
 bindir = @bindir@
 libdir = @libdir@
 datadir = @datadir@
-localedir = $(datadir)/locale
+localedir = @localedir@
 
 # Support an alternate destination root directory for package building
 DESTDIR =
@@ -122,8 +122,6 @@ SHARED_READLINE = $(SHLIB_LIBPREF)readline$(SHLIB_DOT)$(SHLIB_LIBVERSION)
 SHARED_HISTORY = $(SHLIB_LIBPREF)history$(SHLIB_DOT)$(SHLIB_LIBVERSION)
 SHARED_LIBS = $(SHARED_READLINE) $(SHARED_HISTORY)
 
-WCWIDTH_OBJ = @WCWIDTH_OBJ@
-
 # The C code source files for this library.
 CSOURCES = $(topdir)/readline.c $(topdir)/funmap.c $(topdir)/keymaps.c \
 	   $(topdir)/vi_mode.c $(topdir)/parens.c $(topdir)/rltty.c \
@@ -131,12 +129,12 @@ CSOURCES = $(topdir)/readline.c $(topdir)/funmap.c $(topdir)/keymaps.c \
 	   $(topdir)/display.c $(topdir)/signals.c $(topdir)/emacs_keymap.c \
 	   $(topdir)/vi_keymap.c $(topdir)/util.c $(topdir)/kill.c \
 	   $(topdir)/undo.c $(topdir)/macro.c $(topdir)/input.c \
-	   $(topdir)/callback.c $(topdir)/terminal.c $(topdir)/xmalloc.c \
+	   $(topdir)/callback.c $(topdir)/terminal.c $(topdir)/xmalloc.c $(topdir)/xfree.c \
 	   $(topdir)/history.c $(topdir)/histsearch.c $(topdir)/histexpand.c \
 	   $(topdir)/histfile.c $(topdir)/nls.c $(topdir)/search.c \
 	   $(topdir)/shell.c $(topdir)/savestring.c $(topdir)/tilde.c \
 	   $(topdir)/text.c $(topdir)/misc.c $(topdir)/compat.c \
-	   $(topdir)/mbutil.c $(topdir)/support/wcwidth.c
+	   $(topdir)/mbutil.c
 
 # The header files for this library.
 HSOURCES = readline.h rldefs.h chardefs.h keymaps.h history.h histlib.h \
@@ -149,8 +147,8 @@ SHARED_TILDEOBJ = tilde.so
 SHARED_OBJ = readline.so vi_mode.so funmap.so keymaps.so parens.so search.so \
 	  rltty.so complete.so bind.so isearch.so display.so signals.so \
 	  util.so kill.so undo.so macro.so input.so callback.so terminal.so \
-	  text.so nls.so misc.so xmalloc.so $(SHARED_HISTOBJ) $(SHARED_TILDEOBJ) \
-	  compat.so $(WCWIDTH_OBJ)
+	  text.so nls.so misc.so xmalloc.so xfree.so $(SHARED_HISTOBJ) $(SHARED_TILDEOBJ) \
+	  compat.so
 
 ##########################################################################
 
@@ -170,13 +168,9 @@ $(SHARED_READLINE):	$(SHARED_OBJ)
 	$(RM) $@
 	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_OBJ) $(SHLIB_LIBS)
 
-$(SHARED_HISTORY):	$(SHARED_HISTOBJ) xmalloc.so
+$(SHARED_HISTORY):	$(SHARED_HISTOBJ) xmalloc.so xfree.so
 	$(RM) $@
-	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_HISTOBJ) xmalloc.so $(SHLIB_LIBS)
-
-wcwidth.o: $(srcdir)/support/wcwidth.c
-	$(RM) $@
-	$(SHOBJ_CC) -c $(CCFLAGS) $(SHOBJ_FLAGS) $(srcdir)/support/wcwidth.c
+	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_HISTOBJ) xmalloc.so xfree.so $(SHLIB_LIBS)
 
 # Since tilde.c is shared between readline and bash, make sure we compile 
 # it with the right flags when it's built as part of readline
@@ -187,15 +181,16 @@ tilde.so:        tilde.c
 
 installdirs: $(topdir)/support/mkdirs
 	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(libdir)
+	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(bindir)
 
 install: installdirs $(SHLIB_STATUS)
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_HISTORY)
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_READLINE)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_HISTORY)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -i "$(INSTALL_DATA)" $(SHARED_READLINE)
 	@echo install: you may need to run ldconfig
 
 uninstall:
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_HISTORY)
-	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_READLINE)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_HISTORY)
+	$(SHELL) $(topdir)/support/shlib-install -O $(host_os) -V $(host_vendor) -d $(DESTDIR)$(libdir) -b $(DESTDIR)$(bindir) -U $(SHARED_READLINE)
 	@echo uninstall: you may need to run ldconfig
 
 clean mostlyclean:	force
@@ -322,6 +317,8 @@ vi_mode.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 vi_mode.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 vi_mode.so: $(topdir)/history.h $(topdir)/ansi_stdlib.h $(topdir)/tilde.h
 vi_mode.so: $(topdir)/rltypedefs.h
+xfree.so: ${BUILD_DIR}/config.h
+xfree.so: $(topdir)/ansi_stdlib.h
 xmalloc.so: ${BUILD_DIR}/config.h
 xmalloc.so: $(topdir)/ansi_stdlib.h
 
@@ -379,6 +376,7 @@ tilde.so: $(topdir)/xmalloc.h
 undo.so: $(topdir)/xmalloc.h
 util.so: $(topdir)/xmalloc.h
 vi_mode.so: $(topdir)/xmalloc.h
+xfree.so: $(topdir)/xmalloc.h
 xmalloc.so: $(topdir)/xmalloc.h
 
 complete.o: $(topdir)/rlmbutil.h
@@ -420,6 +418,7 @@ tilde.so: $(topdir)/tilde.c
 undo.so: $(topdir)/undo.c
 util.so: $(topdir)/util.c
 vi_mode.so: $(topdir)/vi_mode.c
+xfree.so: $(topdir)/xfree.c
 xmalloc.so: $(topdir)/xmalloc.c
 
 histexpand.so: $(topdir)/histexpand.c
@@ -454,6 +453,7 @@ tilde.so: tilde.c
 undo.so: undo.c
 util.so: util.c
 vi_mode.so: vi_mode.c
+xfree.so: xfree.c
 xmalloc.so: xmalloc.c
 
 histexpand.so: histexpand.c

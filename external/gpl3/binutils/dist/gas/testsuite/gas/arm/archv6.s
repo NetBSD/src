@@ -35,14 +35,16 @@ label:
 	revne   r3, r5
 	revsh	r2, r4
 	revshne   r3, r5
-	rfeda	r2
-	rfedb	r2!
-	rfeea	r2
-	rfeed	r2!
-	rfefa	r2!
-	rfefd	r2
-	rfeia	r2
-	rfeib	r2!
+        rfeda   r2
+        rfefa   r2!
+        rfedb   r2
+        rfeea   r2!
+        rfeia   r2
+        rfefd   r2!
+        rfeib   r2
+        rfeed   r2!
+        rfe     r2
+        rfe     r2!
 	sadd16	 r2, r4, r7
 	sadd16ne r2, r4, r7
 	sxtah r2, r4, r5

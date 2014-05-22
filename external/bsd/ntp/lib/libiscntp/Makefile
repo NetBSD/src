@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/25 16:29:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2014/05/22 15:50:17 yamt Exp $
 
 LIBISPRIVATE=yes
 
@@ -13,6 +13,8 @@ DIST=	${IDIST}/lib/isc
 .PATH.c::  ${DIST} ${DIST}/nls ${DIST}/unix ${DIST}/nothreads
 
 SRCS=   assertions.c               \
+	backtrace.c		   \
+	backtrace-emptytbl.c	   \
         buffer.c                   \
         condition.c                \
         dir.c                      \
@@ -41,6 +43,8 @@ SRCS=   assertions.c               \
         time.c                     \
         sockaddr.c
 
-COPTS.log.c+=	-Wno-format-nonliteral
+.if !defined(HAVE_GCC) || ${HAVE_GCC} >= 45
+COPTS.log.c+=	-Wno-error=format-nonliteral
+.endif
 
 .include <bsd.lib.mk>

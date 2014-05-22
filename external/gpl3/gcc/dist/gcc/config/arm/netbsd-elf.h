@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
-   Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -19,8 +19,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/arm ELF)", stderr);
 
 /* arm.h defaults to ARM6 CPU.  */
 
@@ -29,7 +27,8 @@
    SUBTARGET_CPU_DEFAULT to achieve this.  */
 
 #define SUBTARGET_CPU_DEFAULT \
-	(TARGET_AAPCS_BASED ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
+	(ARM_DEFAULT_ABI != ARM_ABI_APCS && ARM_DEFAULT_ABI != ARM_ABI_ATPCS \
+	    ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
 
 /* This defaults us to little-endian.  */
 #ifndef TARGET_ENDIAN_DEFAULT
@@ -60,9 +59,9 @@
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{mabi=aapcs*:-meabi=4} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
+  "-matpcs %{mabi=aapcs*:-meabi=5} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
 
-/* Default to full VFP if -mhard-float is specified.  */
+/* Default to full VFP if -mfloat-abi=hard is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #define SUBTARGET_ASM_FLOAT_SPEC	\
   "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
@@ -91,6 +90,12 @@
 
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
+
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
 
 /* We don't have any limit on the length as out debugger is GDB.  */
 #undef DBX_CONTIN_LENGTH

@@ -50,13 +50,13 @@ Program Headers:
 
 Relocation section '\.rela\.dyn' at offset 0x[0-9a-f]+ contains 10 entries:
  Offset +Info +Type +Sym\.Value +Sym\. Name \+ Addend
-[0-9a-f ]+R_SH_TLS_DTPMOD32 +0+00
-[0-9a-f ]+R_SH_TLS_TPOFF32 +0+0c
-[0-9a-f ]+R_SH_TLS_DTPMOD32 +0+00
-[0-9a-f ]+R_SH_TLS_DTPMOD32 +0+00
-[0-9a-f ]+R_SH_TLS_TPOFF32 +0+1c
-[0-9a-f ]+R_SH_TLS_DTPMOD32 +0+00
-[0-9a-f ]+R_SH_TLS_TPOFF32 +0+14
+[0-9a-f ]+R_SH_TLS_DTPMOD32 +0
+[0-9a-f ]+R_SH_TLS_TPOFF32 +c
+[0-9a-f ]+R_SH_TLS_DTPMOD32 +0
+[0-9a-f ]+R_SH_TLS_DTPMOD32 +0
+[0-9a-f ]+R_SH_TLS_TPOFF32 +1c
+[0-9a-f ]+R_SH_TLS_DTPMOD32 +0
+[0-9a-f ]+R_SH_TLS_TPOFF32 +14
 [0-9a-f ]+R_SH_TLS_DTPMOD32 +0+ +sg1 \+ 0
 [0-9a-f ]+R_SH_TLS_DTPOFF32 +0+ +sg1 \+ 0
 [0-9a-f ]+R_SH_TLS_TPOFF32 +0+04 +sg2 \+ 0

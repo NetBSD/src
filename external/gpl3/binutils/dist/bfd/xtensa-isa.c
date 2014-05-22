@@ -1364,7 +1364,7 @@ xtensa_regfile_lookup (xtensa_isa isa, const char *name)
   /* The expected number of regfiles is small; use a linear search.  */
   for (n = 0; n < intisa->num_regfiles; n++)
     {
-      if (!strcmp (intisa->regfiles[n].name, name))
+      if (!filename_cmp (intisa->regfiles[n].name, name))
 	return n;
     }
 
@@ -1394,7 +1394,7 @@ xtensa_regfile_lookup_shortname (xtensa_isa isa, const char *shortname)
 	 as their parents.  */
       if (intisa->regfiles[n].parent != n)
 	continue;
-      if (!strcmp (intisa->regfiles[n].shortname, shortname))
+      if (!filename_cmp (intisa->regfiles[n].shortname, shortname))
 	return n;
     }
 

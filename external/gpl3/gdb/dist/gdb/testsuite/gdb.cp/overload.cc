@@ -135,11 +135,6 @@ int main ()
     N::nsoverload(2);
     N::nsoverload(2, 3);
 
-    #ifdef usestubs
-       set_debug_traps();
-       breakpoint();
-    #endif
-
     overloadNamespace (1);
     overloadNamespace (dummyInstance);
     XXX::overloadNamespace ('a');

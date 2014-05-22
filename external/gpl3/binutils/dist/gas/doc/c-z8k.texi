@@ -1,4 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 2003
+@c Copyright 1991, 1992, 1993, 1994, 1995, 2003, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -60,6 +60,11 @@ Generate unsegmented code by default.
 @cindex line comment character, Z8000
 @cindex Z8000 line comment character
 @samp{!} is the line comment character.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
 
 @cindex line separator, Z8000
 @cindex statement separator, Z8000

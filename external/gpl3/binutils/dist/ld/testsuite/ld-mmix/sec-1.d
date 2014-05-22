@@ -1,8 +1,8 @@
 #source: sec-1.s
 #source: start.s
-#ld: -m elf64mmix
+#ld: -m elf64mmix -u _etext -u _edata -u _end
 #objcopy_linked_file: -O mmo
-#objdump: -sh
+#objdump: -sht
 
 # Test conversion from ELF to mmo with non-mmo-sections present,
 # testing that support.
@@ -21,6 +21,15 @@ Idx Name          Size      VMA               LMA               File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   4 thirdsec      0+a  0+  0+  0+  2\*\*2
                   CONTENTS, READONLY
+
+SYMBOL TABLE:
+#...
+0+1d g +\*ABS\* _etext
+#...
+2000000000000013 g +\*ABS\* __bss_start
+2000000000000013 g +\*ABS\* _edata
+2000000000000018 g +\*ABS\* _end
+
 Contents of section \.text:
  0000 e3fd0001                             .*
 Contents of section secname:

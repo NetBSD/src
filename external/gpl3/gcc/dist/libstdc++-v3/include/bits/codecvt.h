@@ -1,7 +1,6 @@
 // Locale support (codecvt) -*- C++ -*-
 
-// Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-// 2009, 2010  Free Software Foundation, Inc.
+// Copyright (C) 2000-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,7 +24,7 @@
 
 /** @file bits/codecvt.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{locale}
  */
 
 //
@@ -39,7 +38,9 @@
 
 #pragma GCC system_header
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// Empty base class for codecvt facet [22.2.1.5].
   class codecvt_base
@@ -102,13 +103,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
        *  output, returns codecvt_base::partial.  Otherwise the
        *  conversion failed and codecvt_base::error is returned.
        *
-       *  @param  state  Persistent conversion state data.
-       *  @param  from  Start of input.
-       *  @param  from_end  End of input.
-       *  @param  from_next  Returns start of unconverted data.
-       *  @param  to  Start of output buffer.
-       *  @param  to_end  End of output buffer.
-       *  @param  to_next  Returns start of unused output area.
+       *  @param  __state  Persistent conversion state data.
+       *  @param  __from  Start of input.
+       *  @param  __from_end  End of input.
+       *  @param  __from_next  Returns start of unconverted data.
+       *  @param  __to  Start of output buffer.
+       *  @param  __to_end  End of output buffer.
+       *  @param  __to_next  Returns start of unused output area.
        *  @return  codecvt_base::result.
       */
       result
@@ -144,10 +145,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
        *  output has insufficient space, returns codecvt_base::partial.
        *  Otherwise the reset failed and codecvt_base::error is returned.
        *
-       *  @param  state  Persistent conversion state data.
-       *  @param  to  Start of output buffer.
-       *  @param  to_end  End of output buffer.
-       *  @param  to_next  Returns start of unused output area.
+       *  @param  __state  Persistent conversion state data.
+       *  @param  __to  Start of output buffer.
+       *  @param  __to_end  End of output buffer.
+       *  @param  __to_next  Returns start of unused output area.
        *  @return  codecvt_base::result.
       */
       result
@@ -182,13 +183,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
        *  output, returns codecvt_base::partial.  Otherwise the
        *  conversion failed and codecvt_base::error is returned.
        *
-       *  @param  state  Persistent conversion state data.
-       *  @param  from  Start of input.
-       *  @param  from_end  End of input.
-       *  @param  from_next  Returns start of unconverted data.
-       *  @param  to  Start of output buffer.
-       *  @param  to_end  End of output buffer.
-       *  @param  to_next  Returns start of unused output area.
+       *  @param  __state  Persistent conversion state data.
+       *  @param  __from  Start of input.
+       *  @param  __from_end  End of input.
+       *  @param  __from_next  Returns start of unconverted data.
+       *  @param  __to  Start of output buffer.
+       *  @param  __to_end  End of output buffer.
+       *  @param  __to_next  Returns start of unused output area.
        *  @return  codecvt_base::result.
       */
       result
@@ -290,7 +291,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       explicit
       codecvt(size_t __refs = 0)
-      : __codecvt_abstract_base<_InternT, _ExternT, _StateT> (__refs) { }
+      : __codecvt_abstract_base<_InternT, _ExternT, _StateT> (__refs),
+	_M_c_locale_codecvt(0)
+      { }
 
       explicit
       codecvt(__c_locale __cloc, size_t __refs = 0);
@@ -474,7 +477,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
-  // NB: This syntax is a GNU extension.
 #if _GLIBCXX_EXTERN_TEMPLATE
   extern template class codecvt_byname<char, char, mbstate_t>;
 
@@ -499,6 +501,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 #endif
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif // _CODECVT_H

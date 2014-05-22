@@ -1173,11 +1173,11 @@
 
 	* elf64-x86-64.c (elf64_x86_64_grok_prstatus): Write the LWPID to
 	elf_tdata's core_lwpid instead of to core_pid.
-	(elf64_x86_64_grok_psinfo): Extract the the main process's PID,
+	(elf64_x86_64_grok_psinfo): Extract the main process's PID,
 	and store it in elf_tdata's core_pid field.
 	* elf32-i386.c (elf_i386_grok_prstatus): Write the LWPID to
 	elf_tdata's core_lwpid instead of to core_pid.
-	(elf_i386_grok_psinfo): Extract the the main process's PID, and
+	(elf_i386_grok_psinfo): Extract the main process's PID, and
 	store it in elf_tdata's core_pid field.
 
 	* elf32-am33lin.c (elf32_am33lin_grok_prstatus): Write the LWPID
@@ -3554,6 +3554,12 @@
 
 For older changes see ChangeLog-2009
 
+Copyright (C) 2010 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

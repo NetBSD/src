@@ -1,0 +1,7 @@
+$(srcdir)/config/m68k/m68k-tables.opt: $(srcdir)/config/m68k/genopt.sh \
+  $(srcdir)/config/m68k/m68k-devices.def $(srcdir)/config/m68k/m68k-isas.def \
+  $(srcdir)/config/m68k/m68k-microarchs.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_m68k-tables.opt:
+	$(SHELL) $(srcdir)/config/m68k/genopt.sh $(srcdir)/config/m68k > \
+		$(srcdir)/config/m68k/m68k-tables.opt

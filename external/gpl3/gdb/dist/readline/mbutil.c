@@ -1,24 +1,24 @@
 /* mbutil.c -- readline multibyte character utility functions */
 
-/* Copyright (C) 2001-2005 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2009 Free Software Foundation, Inc.
 
-   This file is part of the GNU Readline Library, a library for
-   reading lines of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   The GNU Readline Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2, or
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
-   The GNU Readline Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #define READLINE_LIBRARY
 
 #if defined (HAVE_CONFIG_H)
@@ -77,7 +77,7 @@ _rl_find_next_mbchar_internal (string, seed, count, find_non_zero)
      char *string;
      int seed, count, find_non_zero;
 {
-  size_t tmp;
+  size_t tmp, len;
   mbstate_t ps;
   int point;
   wchar_t wc;
@@ -91,17 +91,21 @@ _rl_find_next_mbchar_internal (string, seed, count, find_non_zero)
     return seed;
 
   point = seed + _rl_adjust_point (string, seed, &ps);
-  /* if this is true, means that seed was not pointed character
-     started byte.  So correct the point and consume count */
+  /* if this is true, means that seed was not pointing to a byte indicating
+     the beginning of a multibyte character.  Correct the point and consume
+     one char. */
   if (seed < point)
     count--;
 
   while (count > 0)  
     {
-      tmp = mbrtowc (&wc, string+point, strlen(string + point), &ps);
+      len = strlen (string + point);
+      if (len == 0)
+	break;
+      tmp = mbrtowc (&wc, string+point, len, &ps);
       if (MB_INVALIDCH ((size_t)tmp))
 	{
-	  /* invalid bytes. asume a byte represents a character */
+	  /* invalid bytes. assume a byte represents a character */
 	  point++;
 	  count--;
 	  /* reset states. */
@@ -128,12 +132,10 @@ _rl_find_next_mbchar_internal (string, seed, count, find_non_zero)
   if (find_non_zero)
     {
       tmp = mbrtowc (&wc, string + point, strlen (string + point), &ps);
-      while (tmp > 0 && wcwidth (wc) == 0)
+      while (MB_NULLWCH (tmp) == 0 && MB_INVALIDCH (tmp) == 0 && wcwidth (wc) == 0)
 	{
 	  point += tmp;
 	  tmp = mbrtowc (&wc, string + point, strlen (string + point), &ps);
-	  if (MB_NULLWCH (tmp) || MB_INVALIDCH (tmp))
-	    break;
 	}
     }
 

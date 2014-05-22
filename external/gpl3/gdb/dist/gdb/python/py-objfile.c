@@ -1,6 +1,6 @@
 /* Python interface to objfiles.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,9 @@ typedef struct
 
   /* The pretty-printer list of functions.  */
   PyObject *printers;
+
+  /* The type-printer list.  */
+  PyObject *type_printers;
 } objfile_object;
 
 static PyTypeObject objfile_object_type;
@@ -58,7 +61,8 @@ objfpy_dealloc (PyObject *o)
   objfile_object *self = (objfile_object *) o;
 
   Py_XDECREF (self->printers);
-  self->ob_type->tp_free ((PyObject *) self);
+  Py_XDECREF (self->type_printers);
+  Py_TYPE (self)->tp_free (self);
 }
 
 static PyObject *
@@ -72,6 +76,13 @@ objfpy_new (PyTypeObject *type, PyObject *args, PyObject *keywords)
 
       self->printers = PyList_New (0);
       if (!self->printers)
+	{
+	  Py_DECREF (self);
+	  return NULL;
+	}
+
+      self->type_printers = PyList_New (0);
+      if (!self->type_printers)
 	{
 	  Py_DECREF (self);
 	  return NULL;
@@ -113,6 +124,48 @@ objfpy_set_printers (PyObject *o, PyObject *value, void *ignore)
   tmp = self->printers;
   Py_INCREF (value);
   self->printers = value;
+  Py_XDECREF (tmp);
+
+  return 0;
+}
+
+/* Get the 'type_printers' attribute.  */
+
+static PyObject *
+objfpy_get_type_printers (PyObject *o, void *ignore)
+{
+  objfile_object *self = (objfile_object *) o;
+
+  Py_INCREF (self->type_printers);
+  return self->type_printers;
+}
+
+/* Set the 'type_printers' attribute.  */
+
+static int
+objfpy_set_type_printers (PyObject *o, PyObject *value, void *ignore)
+{
+  PyObject *tmp;
+  objfile_object *self = (objfile_object *) o;
+
+  if (! value)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("Cannot delete the type_printers attribute."));
+      return -1;
+    }
+
+  if (! PyList_Check (value))
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("The type_printers attribute must be a list."));
+      return -1;
+    }
+
+  /* Take care in case the LHS and RHS are related somehow.  */
+  tmp = self->type_printers;
+  Py_INCREF (value);
+  self->type_printers = value;
   Py_XDECREF (tmp);
 
   return 0;
@@ -172,6 +225,13 @@ objfile_to_objfile_object (struct objfile *objfile)
 	      return NULL;
 	    }
 
+	  object->type_printers = PyList_New (0);
+	  if (!object->type_printers)
+	    {
+	      Py_DECREF (object);
+	      return NULL;
+	    }
+
 	  set_objfile_data (objfile, objfpy_objfile_data_key, object);
 	}
     }
@@ -210,13 +270,14 @@ static PyGetSetDef objfile_getset[] =
     "The objfile's filename, or None.", NULL },
   { "pretty_printers", objfpy_get_printers, objfpy_set_printers,
     "Pretty printers.", NULL },
+  { "type_printers", objfpy_get_type_printers, objfpy_set_type_printers,
+    "Type printers.", NULL },
   { NULL }
 };
 
 static PyTypeObject objfile_object_type =
 {
-  PyObject_HEAD_INIT (NULL)
-  0,				  /*ob_size*/
+  PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Objfile",		  /*tp_name*/
   sizeof (objfile_object),	  /*tp_basicsize*/
   0,				  /*tp_itemsize*/

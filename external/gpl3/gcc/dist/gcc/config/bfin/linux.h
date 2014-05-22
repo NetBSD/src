@@ -1,4 +1,4 @@
-/* Copyright (C) 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,7 +26,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
   "%{!mno-fdpic:-mfdpic} -micplb",
 
 #undef TARGET_OS_CPP_BUILTINS
-#define TARGET_OS_CPP_BUILTINS() LINUX_TARGET_OS_CPP_BUILTINS()
+#define TARGET_OS_CPP_BUILTINS() GNU_USER_TARGET_OS_CPP_BUILTINS()
 
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC \
@@ -45,10 +45,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
   %{shared:-G -Bdynamic} \
   %{!shared: %{!static: \
    %{rdynamic:-export-dynamic} \
-   %{!dynamic-linker:-dynamic-linker /lib/ld-uClibc.so.0}} \
+   -dynamic-linker /lib/ld-uClibc.so.0} \
    %{static}} -init __init -fini __fini"
-
-#define MD_UNWIND_SUPPORT "config/bfin/linux-unwind.h"
 
 #undef TARGET_SUPPORTS_SYNC_CALLS
 #define TARGET_SUPPORTS_SYNC_CALLS 1

@@ -1,6 +1,6 @@
 // Low-level type for atomic operations -*- C++ -*-
 
-// Copyright (C) 2004, 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2004-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -29,7 +29,7 @@
 
 typedef int _Atomic_word;
 
-namespace __gnu_cxx
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
   // Test the first byte of __g and ensure that no loads are hoisted across
   // the test.

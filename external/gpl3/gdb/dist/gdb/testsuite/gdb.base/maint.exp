@@ -1,5 +1,4 @@
-# Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1998-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,12 +47,6 @@
 
 
 
-if $tracelevel then {
-        strace $tracelevel
-        }
-
-global usestubs
-
 set testfile "break"
 set srcfile ${testfile}.c
 set srcfile1 ${testfile}1.c
@@ -99,6 +92,16 @@ if ![runto_main] then {
         perror "tests suppressed"
 }
 
+# If we're using .gdb_index there will be no psymtabs.
+set have_gdb_index 0
+gdb_test_multiple "maint info sections .gdb_index" "check for .gdb_index" {
+    -re ": .gdb_index.*$gdb_prompt $" {
+	set have_gdb_index 1
+    }
+    -re ".*$gdb_prompt $" {
+	;# Nothing to do, present to avoid a FAIL.
+    }
+}
 
 #
 # this command does not produce any output
@@ -157,7 +160,7 @@ if [istarget "*-*-cygwin*"] {
 
 send_gdb "maint print statistics\n"
 gdb_expect  {
-    -re "Statistics for\[^\n\r\]*break\[^\n\r\]*:\r\n  Number of \"minimal\" symbols read: $decimal\r\n  Number of \"partial\" symbols read: $decimal\r\n  Number of \"full\" symbols read: $decimal\r\n  Number of \"types\" defined: $decimal\r\n  Number of psym tables \\(not yet expanded\\): $decimal\r\n  Number of symbol tables: $decimal\r\n  Number of symbol tables with line tables: $decimal\r\n  Number of symbol tables with blockvectors: $decimal\r\n  Total memory used for objfile obstack: $decimal\r\n  Total memory used for psymbol cache: $decimal\r\n  Total memory used for macro cache: $decimal\r\n  Total memory used for file name cache: $decimal\r\n" {
+    -re "Statistics for\[^\n\r\]*break\[^\n\r\]*:\r\n  Number of \"minimal\" symbols read: $decimal\r\n(  Number of \"partial\" symbols read: $decimal\r\n)?  Number of \"full\" symbols read: $decimal\r\n  Number of \"types\" defined: $decimal\r\n(  Number of psym tables \\(not yet expanded\\): $decimal\r\n)?(  Number of unread CUs: $decimal\r\n)?  Number of symbol tables: $decimal\r\n  Number of symbol tables with line tables: $decimal\r\n  Number of symbol tables with blockvectors: $decimal\r\n  Total memory used for objfile obstack: $decimal\r\n  Total memory used for BFD obstack: $decimal\r\n  Total memory used for psymbol cache: $decimal\r\n  Total memory used for macro cache: $decimal\r\n  Total memory used for file name cache: $decimal\r\n" {
 	gdb_expect {
 	    -re "$gdb_prompt $" {
 		pass "maint print statistics"
@@ -205,45 +208,47 @@ proc maint_pass_if {val name} {
 }
 
 maint_pass_if $header   "maint print objfiles: header"
-maint_pass_if $psymtabs "maint print objfiles: psymtabs"
+if { ! $have_gdb_index } {
+    maint_pass_if $psymtabs "maint print objfiles: psymtabs"
+}
 maint_pass_if $symtabs  "maint print objfiles: symtabs"
 
 gdb_test "maint print psymbols" \
     "print-psymbols takes an output file name and optional symbol file name" \
     "maint print psymbols w/o args"
 
-
-
-send_gdb "maint print psymbols psymbols_output ${srcdir}/${subdir}/${srcfile}\n"
-gdb_expect  {
-    -re "^maint print psymbols psymbols_output \[^\n\]*\r\n$gdb_prompt $" {
-	send_gdb "shell ls psymbols_output\n"
-	gdb_expect {
-	    -re "psymbols_output\r\n$gdb_prompt $" {
-		# We want this grep to be as specific as possible,
-		# so it's less likely to match symbol file names in
-		# psymbols_output.  Yes, this actually happened;
-		# poor expect got tons of output, and timed out
-		# trying to match it.   --- Jim Blandy <jimb@cygnus.com>
-		send_gdb "shell grep 'main.*function' psymbols_output\n"
-		gdb_expect {
-		    -re ".main., function, $hex.*$gdb_prompt $" {
-			pass "maint print psymbols 1"
+if { ! $have_gdb_index } {
+    send_gdb "maint print psymbols psymbols_output ${srcdir}/${subdir}/${srcfile}\n"
+    gdb_expect  {
+	-re "^maint print psymbols psymbols_output \[^\n\]*\r\n$gdb_prompt $" {
+	    send_gdb "shell ls psymbols_output\n"
+	    gdb_expect {
+		-re "psymbols_output\r\n$gdb_prompt $" {
+		    # We want this grep to be as specific as possible,
+		    # so it's less likely to match symbol file names in
+		    # psymbols_output.  Yes, this actually happened;
+		    # poor expect got tons of output, and timed out
+		    # trying to match it.   --- Jim Blandy <jimb@cygnus.com>
+		    send_gdb "shell grep 'main.*function' psymbols_output\n"
+		    gdb_expect {
+			-re ".main., function, $hex.*$gdb_prompt $" {
+			    pass "maint print psymbols 1"
+			}
+			-re ".*main.  .., function, $hex.*$gdb_prompt $" {
+			    pass "maint print psymbols 2"
+			}
+			-re ".*$gdb_prompt $" { fail "maint print psymbols" }
+			timeout     { fail "(timeout) maint print psymbols" }
 		    }
-		    -re ".*main.  .., function, $hex.*$gdb_prompt $" {
-			pass "maint print psymbols 2"
-		    }
-		    -re ".*$gdb_prompt $" { fail "maint print psymbols" }
-		    timeout     { fail "(timeout) maint print psymbols" }
+		    gdb_test "shell rm -f psymbols_output" ".*"
 		}
-		gdb_test "shell rm -f psymbols_output" ".*"
+		-re ".*$gdb_prompt $"       { fail "maint print psymbols" }
+		timeout           { fail "(timeout) maint print psymbols" }
 	    }
-	    -re ".*$gdb_prompt $"       { fail "maint print psymbols" }
-	    timeout           { fail "(timeout) maint print psymbols" }
 	}
+	-re ".*$gdb_prompt $"       { fail "maint print psymbols" }
+	timeout           { fail "(timeout) maint print psymbols" }
     }
-    -re ".*$gdb_prompt $"       { fail "maint print psymbols" }
-    timeout           { fail "(timeout) maint print psymbols" }
 }
 
 gdb_test "maint print msymbols" \
@@ -394,6 +399,11 @@ gdb_test_multiple "maint info sections" "maint info sections" {
 	set data_section ER_RW
 	pass "maint info sections"
     }
+    -re "Exec file:\r\n.*break($EXEEXT)?., file type.*neardata.*$gdb_prompt $" {
+	# c6x doesn't have .data section.  It has .neardata and .fardata section.
+	set data_section ".neardata"
+	pass "maint info sections"
+    }
     -re "Exec file:\r\n.*break($EXEEXT)?., file type.*$gdb_prompt $" {
 	pass "maint info sections"
     }
@@ -426,9 +436,10 @@ gdb_test_multiple "maint info sections CODE" "maint info sections CODE" {
 # Test for new option: DATA section flag
 # If your text section is tagged DATA, xfail this test.
 #
-# The "maint info sections DATA" test is marked for XFAIL on Cygwin,
+# The "maint info sections DATA" test is marked for XFAIL on Windows,
 # because Windows has text sections marked DATA.
 setup_xfail "*-*-*cygwin*"
+setup_xfail "*-*-*mingw*"
 
 gdb_test_multiple "maint info sections DATA" "maint info sections DATA" {
     -re ".* $text_section .*$gdb_prompt $" { fail "maint info sections DATA" }

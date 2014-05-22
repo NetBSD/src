@@ -501,8 +501,6 @@ parse_op_no_deferred (char *str, struct pdp11_code *operand)
       /* label, d(rn), -(rn)  */
     default:
       {
-	char *old = str;
-
 	if (strncmp (str, "-(", 2) == 0)	/* -(rn) */
 	  {
 	    str = parse_reg (str + 2, operand);
@@ -527,11 +525,6 @@ parse_op_no_deferred (char *str, struct pdp11_code *operand)
 
 	if (*str != '(')
 	  {
-	    if (operand->reloc.exp.X_op != O_symbol)
-	      {
-		operand->error = _("Label expected");
-		return old;
-	      }
 	    operand->code = 067;
 	    operand->additional = 1;
 	    operand->word = 0;

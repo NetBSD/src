@@ -37,6 +37,7 @@ static const bfd_arch_info_type d10v_ts3_info =
   FALSE,
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_default_fill,
   0,
 };
 
@@ -53,6 +54,7 @@ static const bfd_arch_info_type d10v_ts2_info =
   FALSE,
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_default_fill,
   & d10v_ts3_info,
 };
 
@@ -69,5 +71,6 @@ const bfd_arch_info_type bfd_d10v_arch =
   TRUE,
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_default_fill,
   & d10v_ts2_info,
 };

@@ -1,6 +1,6 @@
 // options.c -- handle command line options for gold
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -50,7 +50,7 @@ namespace options
 {
 
 // This flag is TRUE if we should register the command-line options as they
-// are constructed.  It is set after contruction of the options within
+// are constructed.  It is set after construction of the options within
 // class Position_dependent_options.
 static bool ready_to_register = false;
 
@@ -59,7 +59,7 @@ static std::vector<const One_option*> registered_options;
 
 // These are set up at the same time -- the variables that accept one
 // dash, two, or require -z.  A single variable may be in more than
-// one of thes data structures.
+// one of these data structures.
 typedef Unordered_map<std::string, One_option*> Option_map;
 static Option_map* long_options = NULL;
 static One_option* short_options[128];
@@ -170,6 +170,15 @@ help()
     printf(" %s", *p);
   printf("\n");
 
+  printf(_("%s: supported emulations:"), gold::program_name);
+  supported_names.clear();
+  gold::supported_emulation_names(&supported_names);
+  for (std::vector<const char*>::const_iterator p = supported_names.begin();
+       p != supported_names.end();
+       ++p)
+    printf(" %s", *p);
+  printf("\n");
+
   // REPORT_BUGS_TO is defined in bfd/bfdver.h.
   const char* report = REPORT_BUGS_TO;
   if (*report != '\0')
@@ -189,7 +198,7 @@ parse_uint(const char* option_name, const char* arg, int* retval)
 {
   char* endptr;
   *retval = strtol(arg, &endptr, 0);
-  if (*endptr != '\0' || retval < 0)
+  if (*endptr != '\0' || *retval < 0)
     gold_fatal(_("%s: invalid option value (expected an integer): %s"),
                option_name, arg);
 }
@@ -219,6 +228,17 @@ parse_double(const char* option_name, const char* arg, double* retval)
 {
   char* endptr;
   *retval = strtod(arg, &endptr);
+  if (*endptr != '\0')
+    gold_fatal(_("%s: invalid option value "
+		 "(expected a floating point number): %s"),
+	       option_name, arg);
+}
+
+void
+parse_percent(const char* option_name, const char* arg, double* retval)
+{
+  char* endptr;
+  *retval = strtod(arg, &endptr) / 100.0;
   if (*endptr != '\0')
     gold_fatal(_("%s: invalid option value "
 		 "(expected a floating point number): %s"),
@@ -300,9 +320,18 @@ General_options::parse_V(const char*, const char*, Command_line*)
 {
   gold::print_version(true);
   this->printed_version_ = true;
+
   printf(_("  Supported targets:\n"));
   std::vector<const char*> supported_names;
   gold::supported_target_names(&supported_names);
+  for (std::vector<const char*>::const_iterator p = supported_names.begin();
+       p != supported_names.end();
+       ++p)
+    printf("   %s\n", *p);
+
+  printf(_("  Supported emulations:\n"));
+  supported_names.clear();
+  gold::supported_emulation_names(&supported_names);
   for (std::vector<const char*>::const_iterator p = supported_names.begin();
        p != supported_names.end();
        ++p)
@@ -366,6 +395,14 @@ General_options::parse_incremental_unknown(const char*, const char*,
 {
   this->implicit_incremental_ = true;
   this->incremental_disposition_ = INCREMENTAL_CHECK;
+}
+
+void
+General_options::parse_incremental_startup_unchanged(const char*, const char*,
+						     Command_line*)
+{
+  this->implicit_incremental_ = true;
+  this->incremental_startup_disposition_ = INCREMENTAL_UNCHANGED;
 }
 
 void
@@ -542,7 +579,7 @@ General_options::parse_end_lib(const char*, const char*,
 }
 
 // The function add_excluded_libs() in ld/ldlang.c of GNU ld breaks up a list
-// of names seperated by commas or colons and puts them in a linked list.
+// of names separated by commas or colons and puts them in a linked list.
 // We implement the same parsing of names here but store names in an unordered
 // map to speed up searching of names.
 
@@ -881,7 +918,8 @@ General_options::General_options()
     plugins_(NULL),
     dynamic_list_(),
     incremental_mode_(INCREMENTAL_OFF),
-    incremental_disposition_(INCREMENTAL_CHECK),
+    incremental_disposition_(INCREMENTAL_STARTUP),
+    incremental_startup_disposition_(INCREMENTAL_CHECK),
     implicit_incremental_(false),
     excluded_libs_(),
     symbols_to_retain_(),
@@ -1083,32 +1121,47 @@ General_options::finalize()
                  program_name);
 #endif
 
+  std::string libpath;
   if (this->user_set_Y())
     {
-      std::string s = this->Y();
-      if (s.compare(0, 2, "P,") == 0)
-	s.erase(0, 2);
+      libpath = this->Y();
+      if (libpath.compare(0, 2, "P,") == 0)
+	libpath.erase(0, 2);
+    }
+  else if (!this->nostdlib())
+    {
+#ifndef NATIVE_LINKER
+#define NATIVE_LINKER 0
+#endif
+      const char* p = LIB_PATH;
+      if (strcmp(p, "::DEFAULT::") != 0)
+	libpath = p;
+      else if (NATIVE_LINKER
+	       || this->user_set_sysroot()
+	       || *TARGET_SYSTEM_ROOT != '\0')
+	{
+	  this->add_to_library_path_with_sysroot("/lib");
+	  this->add_to_library_path_with_sysroot("/usr/lib");
+	}
+      else
+	this->add_to_library_path_with_sysroot(TOOLLIBDIR);
+    }
 
+  if (!libpath.empty())
+    {
       size_t pos = 0;
       size_t next_pos;
       do
 	{
-	  next_pos = s.find(':', pos);
+	  next_pos = libpath.find(':', pos);
 	  size_t len = (next_pos == std::string::npos
 			? next_pos
 			: next_pos - pos);
 	  if (len != 0)
-	    this->add_to_library_path_with_sysroot(s.substr(pos, len).c_str());
+	    this->add_to_library_path_with_sysroot(libpath.substr(pos, len));
 	  pos = next_pos + 1;
 	}
       while (next_pos != std::string::npos);
-    }
-  else if (!this->nostdlib())
-    {
-      // Even if they don't specify it, we add -L /lib and -L /usr/lib.
-      // FIXME: We should only do this when configured in native mode.
-      this->add_to_library_path_with_sysroot("/lib");
-      this->add_to_library_path_with_sysroot("/usr/lib");
     }
 
   // Parse the contents of -retain-symbols-file into a set.
@@ -1130,6 +1183,14 @@ General_options::finalize()
         }
     }
 
+  // -Bgroup implies --unresolved-symbols=report-all.
+  if (this->Bgroup() && !this->user_set_unresolved_symbols())
+    this->set_unresolved_symbols("report-all");
+
+  // -shared implies --allow-shlib-undefined.  Currently
+  // ---allow-shlib-undefined controls warnings issued based on the
+  // -symbol table.  --unresolved-symbols controls warnings issued
+  // -based on relocations.
   if (this->shared() && !this->user_set_allow_shlib_undefined())
     this->set_allow_shlib_undefined(true);
 
@@ -1142,11 +1203,21 @@ General_options::finalize()
     gold_fatal(_("-shared and -static are incompatible"));
   if (this->shared() && this->pie())
     gold_fatal(_("-shared and -pie are incompatible"));
+  if (this->pie() && this->is_static())
+    gold_fatal(_("-pie and -static are incompatible"));
 
   if (this->shared() && this->relocatable())
     gold_fatal(_("-shared and -r are incompatible"));
   if (this->pie() && this->relocatable())
     gold_fatal(_("-pie and -r are incompatible"));
+
+  if (!this->shared())
+    {
+      if (this->filter() != NULL)
+	gold_fatal(_("-F/--filter may not used without -shared"));
+      if (this->any_auxiliary())
+	gold_fatal(_("-f/--auxiliary may not be used without -shared"));
+    }
 
   // TODO: implement support for -retain-symbols-file with -r, if needed.
   if (this->relocatable() && this->retain_symbols_file())
@@ -1169,6 +1240,37 @@ General_options::finalize()
   if (this->implicit_incremental_ && this->incremental_mode_ == INCREMENTAL_OFF)
     gold_fatal(_("Options --incremental-changed, --incremental-unchanged, "
                  "--incremental-unknown require the use of --incremental"));
+
+  // Check for options that are not compatible with incremental linking.
+  // Where an option can be disabled without seriously changing the semantics
+  // of the link, we turn the option off; otherwise, we issue a fatal error.
+
+  if (this->incremental_mode_ != INCREMENTAL_OFF)
+    {
+      if (this->relocatable())
+	gold_fatal(_("incremental linking is not compatible with -r"));
+      if (this->emit_relocs())
+	gold_fatal(_("incremental linking is not compatible with "
+		     "--emit-relocs"));
+      if (this->has_plugins())
+	gold_fatal(_("incremental linking is not compatible with --plugin"));
+      if (this->gc_sections())
+	{
+	  gold_warning(_("ignoring --gc-sections for an incremental link"));
+	  this->set_gc_sections(false);
+	}
+      if (this->icf_enabled())
+	{
+	  gold_warning(_("ignoring --icf for an incremental link"));
+	  this->set_icf_status(ICF_NONE);
+	}
+      if (strcmp(this->compress_debug_sections(), "none") != 0)
+	{
+	  gold_warning(_("ignoring --compress-debug-sections for an "
+			 "incremental link"));
+	  this->set_compress_debug_sections("none");
+	}
+    }
 
   // FIXME: we can/should be doing a lot more sanity checking here.
 }
@@ -1214,23 +1316,24 @@ Search_directory::add_sysroot(const char* sysroot,
 
 // Add a file to the list.
 
-void
-Input_arguments::add_file(const Input_file_argument& file)
+Input_argument&
+Input_arguments::add_file(Input_file_argument& file)
 {
+  file.set_arg_serial(++this->file_count_);
   if (this->in_group_)
     {
       gold_assert(!this->input_argument_list_.empty());
       gold_assert(this->input_argument_list_.back().is_group());
-      this->input_argument_list_.back().group()->add_file(file);
+      return this->input_argument_list_.back().group()->add_file(file);
     }
-  else if (this->in_lib_)
+  if (this->in_lib_)
     {
       gold_assert(!this->input_argument_list_.empty());
       gold_assert(this->input_argument_list_.back().is_lib());
-      this->input_argument_list_.back().lib()->add_file(file);
+      return this->input_argument_list_.back().lib()->add_file(file);
     }
-  else
-    this->input_argument_list_.push_back(Input_argument(file));
+  this->input_argument_list_.push_back(Input_argument(file));
+  return this->input_argument_list_.back();
 }
 
 // Start a group.

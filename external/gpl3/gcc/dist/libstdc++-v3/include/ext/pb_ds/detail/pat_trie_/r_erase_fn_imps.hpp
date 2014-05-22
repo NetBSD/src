@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,8 +34,8 @@
 // warranty.
 
 /**
- * @file r_erase_fn_imps.hpp
- * Contains an implementation class for bin_search_tree_.
+ * @file pat_trie_/r_erase_fn_imps.hpp
+ * Contains an implementation class for pat_trie.
  */
 
 PB_DS_CLASS_T_DEC
@@ -45,7 +45,7 @@ actual_erase_node(node_pointer p_z)
 {
   _GLIBCXX_DEBUG_ASSERT(m_size > 0);
   --m_size;
-  _GLIBCXX_DEBUG_ONLY(erase_existing(PB_DS_V2F(p_z->m_value)));
+  _GLIBCXX_DEBUG_ONLY(debug_base::erase_existing(PB_DS_V2F(p_z->m_value)));
   p_z->~node();
   s_node_allocator.deallocate(p_z, 1);
 }
@@ -93,7 +93,7 @@ void
 PB_DS_CLASS_C_DEC::
 clear_imp(node_pointer p_nd)
 {
-  if (p_nd == NULL)
+  if (p_nd == 0)
     return;
   clear_imp(p_nd->m_p_left);
   clear_imp(p_nd->m_p_right);

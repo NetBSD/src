@@ -1,7 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 1993, 1994, 1997, 1998, 1999, 2003, 2004,
-   Free Software Foundation, Inc.
+   Copyright 1993-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -111,6 +110,7 @@ D   d;
 E   e;
 V   v;
 VB  vb;
+VA  va;
 
 
 A* 	pAa	= 	&a;
@@ -182,19 +182,9 @@ void test_calls()
         TEST(pEe->D::vg(), 102);
 	printf("Did %d tests, of which %d failed.\n", all_count, failed_count);
 }
-#ifdef usestubs
-extern "C" {
-  void set_debug_traps();
-  void breakpoint();
-};
-#endif
 
 int main()
 {
-#ifdef usestubs
-   set_debug_traps();
-   breakpoint();
-#endif
     init();
 
     e.w = 7;

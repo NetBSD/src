@@ -1,5 +1,5 @@
 /*      Id: gcc_compat.c,v 1.81 2011/07/27 13:41:44 ragge Exp      */	
-/*      $NetBSD: gcc_compat.c,v 1.1.1.4.2.1 2012/04/17 00:04:04 yamt Exp $     */
+/*      $NetBSD: gcc_compat.c,v 1.1.1.4.2.2 2014/05/22 15:50:55 yamt Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -551,6 +551,7 @@ pragmas_gcc(char *t)
 			return 0;
 		}
 		*t = u;
+		__USE(ign);
 	} else if (strcmp(t, "poison") == 0) {
 		/* currently ignore */;
 	} else if (strcmp(t, "visibility") == 0) {

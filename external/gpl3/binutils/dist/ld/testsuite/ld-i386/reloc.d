@@ -5,7 +5,7 @@
 #ld: -shared -melf_i386 -z nocombreloc
 #objdump: -hw
 
-.*: +file format elf32-i386
+.*: +file format elf32-i386.*
 #...
 .*\.relplatypus.*
 #...

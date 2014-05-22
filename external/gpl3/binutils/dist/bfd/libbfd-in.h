@@ -3,7 +3,7 @@
 
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
    1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010
+   2010, 2011, 2012
    Free Software Foundation, Inc.
 
    Written by Cygnus Support.
@@ -64,16 +64,17 @@ struct section_hash_entry
 /* tdata for an archive.  For an input archive, cache
    needs to be free()'d.  For an output archive, symdefs do.  */
 
-struct artdata {
+struct artdata
+{
   file_ptr first_file_filepos;
   /* Speed up searching the armap */
   htab_t cache;
-  bfd *archive_head;		/* Only interesting in output routines */
-  carsym *symdefs;		/* the symdef entries */
-  symindex symdef_count;	/* how many there are */
-  char *extended_names;		/* clever intel extension */
-  bfd_size_type extended_names_size; /* Size of extended names */
-  /* when more compilers are standard C, this can be a time_t */
+  bfd *archive_head;		/* Only interesting in output routines.  */
+  carsym *symdefs;		/* The symdef entries.  */
+  symindex symdef_count;	/* How many there are.  */
+  char *extended_names;		/* Clever intel extension.  */
+  bfd_size_type extended_names_size; /* Size of extended names.  */
+  /* When more compilers are standard C, this can be a time_t.  */
   long  armap_timestamp;	/* Timestamp value written into armap.
 				   This is used for BSD archives to check
 				   that the timestamp is recent enough
@@ -88,12 +89,13 @@ struct artdata {
 #define bfd_ardata(bfd) ((bfd)->tdata.aout_ar_data)
 
 /* Goes in bfd's arelt_data slot */
-struct areltdata {
-  char * arch_header;		/* it's actually a string */
-  unsigned int parsed_size;	/* octets of filesize not including ar_hdr */
-  unsigned int extra_size;	/* BSD4.4: extra bytes after the header.  */
-  char *filename;		/* null-terminated */
-  file_ptr origin;		/* for element of a thin archive */
+struct areltdata
+{
+  char * arch_header;		/* It's actually a string.  */
+  bfd_size_type parsed_size;	/* Octets of filesize not including ar_hdr.  */
+  bfd_size_type extra_size;	/* BSD4.4: extra bytes after the header.  */
+  char *filename;		/* Null-terminated.  */
+  file_ptr origin;		/* For element of a thin archive.  */
 };
 
 #define arelt_size(bfd) (((struct areltdata *)((bfd)->arelt_data))->parsed_size)
@@ -115,6 +117,7 @@ extern void *bfd_zmalloc2
 
 extern void _bfd_default_error_handler (const char *s, ...);
 extern bfd_error_handler_type _bfd_error_handler;
+extern bfd_assert_handler_type _bfd_assert_handler;
 
 /* These routines allocate and free things on the BFD's objalloc.  */
 
@@ -203,6 +206,8 @@ extern void *_bfd_generic_read_ar_hdr
   (bfd *);
 extern void _bfd_ar_spacepad
   (char *, size_t, const char *, long);
+extern bfd_boolean _bfd_ar_sizepad
+  (char *, size_t, bfd_size_type);
 
 extern void *_bfd_generic_read_ar_hdr_mag
   (bfd *, const char *);
@@ -453,6 +458,9 @@ extern bfd_boolean _bfd_generic_set_section_contents
 #define _bfd_nolink_bfd_gc_sections \
   ((bfd_boolean (*) (bfd *, struct bfd_link_info *)) \
    bfd_false)
+#define _bfd_nolink_bfd_lookup_section_flags \
+  ((bfd_boolean (*) (struct bfd_link_info *, struct flag_info *, asection *)) \
+   bfd_0)
 #define _bfd_nolink_bfd_merge_sections \
   ((bfd_boolean (*) (bfd *, struct bfd_link_info *)) \
    bfd_false)
@@ -478,7 +486,8 @@ extern bfd_boolean _bfd_generic_set_section_contents
 #define _bfd_nolink_bfd_link_split_section \
   ((bfd_boolean (*) (bfd *, struct bfd_section *)) bfd_false)
 #define _bfd_nolink_section_already_linked \
-  ((void (*) (bfd *, struct bfd_section *, struct bfd_link_info *)) bfd_void)
+  ((bfd_boolean (*) (bfd *, asection *, \
+		     struct bfd_link_info *)) bfd_false)
 #define _bfd_nolink_bfd_define_common_symbol \
   ((bfd_boolean (*) (bfd *, struct bfd_link_info *, \
 		     struct bfd_link_hash_entry *)) bfd_false)
@@ -517,23 +526,47 @@ extern bfd_boolean _bfd_dwarf1_find_nearest_line
   (bfd *, asection *, asymbol **, bfd_vma, const char **,
    const char **, unsigned int *);
 
+struct dwarf_debug_section
+{
+  const char *uncompressed_name;
+  const char *compressed_name;
+};
+
+/* Map of uncompressed DWARF debug section name to compressed one.  It
+   is terminated by NULL uncompressed_name.  */
+
+extern const struct dwarf_debug_section dwarf_debug_sections[];
+
 /* Find the nearest line using DWARF 2 debugging information.  */
 extern bfd_boolean _bfd_dwarf2_find_nearest_line
-  (bfd *, asection *, asymbol **, bfd_vma, const char **, const char **,
-   unsigned int *, unsigned int, void **);
+  (bfd *, const struct dwarf_debug_section *, asection *, asymbol **, bfd_vma,
+   const char **, const char **, unsigned int *, unsigned int *, unsigned int,
+   void **);
 
 /* Find the line using DWARF 2 debugging information.  */
 extern bfd_boolean _bfd_dwarf2_find_line
   (bfd *, asymbol **, asymbol *, const char **,
-   unsigned int *, unsigned int, void **);
+   unsigned int *, unsigned int *, unsigned int, void **);
 
 bfd_boolean _bfd_generic_find_line
   (bfd *, asymbol **, asymbol *, const char **, unsigned int *);
 
+bfd_boolean _bfd_generic_find_nearest_line_discriminator
+  (bfd *, asection *, asymbol **, bfd_vma, const char **, const char **,
+   unsigned int *, unsigned int *);
+
 /* Find inliner info after calling bfd_find_nearest_line. */
 extern bfd_boolean _bfd_dwarf2_find_inliner_info
   (bfd *, const char **, const char **, unsigned int *, void **);
-  
+
+/* Read DWARF 2 debugging information. */
+extern bfd_boolean _bfd_dwarf2_slurp_debug_info
+  (bfd *, bfd *, const struct dwarf_debug_section *, asymbol **, void **);
+
+/* Clean up the data used to handle DWARF 2 debugging information. */
+extern void _bfd_dwarf2_cleanup_debug_info
+  (bfd *, void **);
+
 /* Create a new section entry.  */
 extern struct bfd_hash_entry *bfd_section_hash_newfunc
   (struct bfd_hash_entry *, struct bfd_hash_table *, const char *);
@@ -598,8 +631,8 @@ extern bfd_boolean _bfd_generic_final_link
 extern bfd_boolean _bfd_generic_link_split_section
   (bfd *, struct bfd_section *);
 
-extern void _bfd_generic_section_already_linked
-  (bfd *, struct bfd_section *, struct bfd_link_info *);
+extern bfd_boolean _bfd_generic_section_already_linked
+  (bfd *, asection *, struct bfd_link_info *);
 
 /* Generic reloc_link_order processing routine.  */
 extern bfd_boolean _bfd_generic_reloc_link_order
@@ -807,14 +840,3 @@ extern void bfd_section_already_linked_table_traverse
 
 extern bfd_vma read_unsigned_leb128 (bfd *, bfd_byte *, unsigned int *);
 extern bfd_signed_vma read_signed_leb128 (bfd *, bfd_byte *, unsigned int *);
-
-struct dwarf_debug_section
-{
-  const char *uncompressed_name;
-  const char *compressed_name;
-};
-
-/* Map of uncompressed DWARF debug section name to compressed one.  It
-   is terminated by NULL uncompressed_name.  */
-
-extern struct dwarf_debug_section dwarf_debug_sections[];

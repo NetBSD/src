@@ -1,5 +1,5 @@
 /* Various declarations for language-independent pretty-print subroutines.
-   Copyright (C) 2003, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -19,21 +19,14 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#undef FLOAT /* This is for hpux. They should change hpux.  */
-#undef FFS  /* Some systems define this in param.h.  */
 #include "system.h"
 #include "coretypes.h"
 #include "intl.h"
 #include "pretty-print.h"
-#include "tree.h"
-#include "ggc.h"
 
 #if HAVE_ICONV
 #include <iconv.h>
 #endif
-
-#define obstack_chunk_alloc xmalloc
-#define obstack_chunk_free  free
 
 /* A pointer to the formatted diagnostic message.  */
 #define pp_formatted_text_data(PP) \
@@ -102,6 +95,58 @@ pp_write_text_to_stream (pretty_printer *pp)
 {
   const char *text = pp_formatted_text (pp);
   fputs (text, pp->buffer->stream);
+  pp_clear_output_area (pp);
+}
+
+/* As pp_write_text_to_stream, but for GraphViz label output.
+
+   Flush the formatted text of pretty-printer PP onto the attached stream.
+   Replace characters in PPF that have special meaning in a GraphViz .dot
+   file.
+   
+   This routine is not very fast, but it doesn't have to be as this is only
+   be used by routines dumping intermediate representations in graph form.  */
+
+void
+pp_write_text_as_dot_label_to_stream (pretty_printer *pp, bool for_record)
+{
+  const char *text = pp_formatted_text (pp);
+  const char *p = text;
+  FILE *fp = pp->buffer->stream;
+
+  while (*p)
+    {
+      switch (*p)
+	{
+	/* Print newlines as a left-aligned newline.  */
+	case '\n':
+	  fputs ("\\l\\\n", fp);
+	  break;
+
+	/* A pipe is only special for record-shape nodes.  */
+	case '|':
+	  if (for_record)
+	    fputc ('\\', fp);
+	  fputc (*p, fp);
+	  break;
+
+	/* The following characters always have to be escaped
+	   for use in labels.  */
+	case '{':
+	case '}':
+	case '<':
+	case '>':
+	case '"':
+	case ' ':
+	  fputc ('\\', fp);
+	  /* fall through */
+	default:
+	  fputc (*p, fp);
+	  break;
+	}
+      p++;
+    }
+
   pp_clear_output_area (pp);
 }
 
@@ -190,7 +235,6 @@ pp_base_indent (pretty_printer *pp)
    %.*s: a substring the length of which is specified by an argument
 	 integer.
    %Ns: likewise, but length specified as constant in the format string.
-   %K: a statement, from which EXPR_LOCATION and TREE_BLOCK will be recorded.
    Flag 'q': quote formatted text (must come immediately after '%').
 
    Arguments can be used sequentially, or through %N$ resp. *N$
@@ -474,35 +518,6 @@ pp_base_format (pretty_printer *pp, text_info *text)
 	      (pp, *text->args_ptr, precision, unsigned, "x");
 	  break;
 
-	case 'K':
-	  {
-	    tree t = va_arg (*text->args_ptr, tree), block;
-	    gcc_assert (text->locus != NULL);
-	    *text->locus = EXPR_LOCATION (t);
-	    gcc_assert (text->abstract_origin != NULL);
-	    block = TREE_BLOCK (t);
-	    *text->abstract_origin = NULL;
-	    while (block
-		   && TREE_CODE (block) == BLOCK
-		   && BLOCK_ABSTRACT_ORIGIN (block))
-	      {
-		tree ao = BLOCK_ABSTRACT_ORIGIN (block);
-
-		while (TREE_CODE (ao) == BLOCK
-		       && BLOCK_ABSTRACT_ORIGIN (ao)
-		       && BLOCK_ABSTRACT_ORIGIN (ao) != ao)
-		  ao = BLOCK_ABSTRACT_ORIGIN (ao);
-
-		if (TREE_CODE (ao) == FUNCTION_DECL)
-		  {
-		    *text->abstract_origin = block;
-		    break;
-		  }
-		block = BLOCK_SUPERCONTEXT (block);
-	      }
-	  }
-	  break;
-
 	case '.':
 	  {
 	    int n;
@@ -611,9 +626,7 @@ pp_base_flush (pretty_printer *pp)
 {
   pp_write_text_to_stream (pp);
   pp_clear_state (pp);
-  fputc ('\n', pp->buffer->stream);
   fflush (pp->buffer->stream);
-  pp_needs_newline (pp) = false;
 }
 
 /* Sets the number of maximum characters per line PRETTY-PRINTER can
@@ -795,6 +808,7 @@ void
 pp_base_newline (pretty_printer *pp)
 {
   obstack_1grow (pp->buffer->obstack, '\n');
+  pp_needs_newline (pp) = false;
   pp->buffer->line_length = 0;
 }
 
@@ -831,21 +845,6 @@ pp_base_maybe_space (pretty_printer *pp)
       pp_space (pp);
       pp_base (pp)->padding = pp_none;
     }
-}
-
-/* Print the identifier ID to PRETTY-PRINTER.  */
-
-void
-pp_base_tree_identifier (pretty_printer *pp, tree id)
-{
-  if (pp_translate_identifiers (pp))
-    {
-      const char *text = identifier_to_locale (IDENTIFIER_POINTER (id));
-      pp_append_text (pp, text, text + strlen (text));
-    }
-  else
-    pp_append_text (pp, IDENTIFIER_POINTER (id),
-		    IDENTIFIER_POINTER (id) + IDENTIFIER_LENGTH (id));
 }
 
 /* The string starting at P has LEN (at least 1) bytes left; if they
@@ -904,14 +903,21 @@ decode_utf8_char (const unsigned char *p, size_t len, unsigned int *value)
     }
 }
 
+/* Allocator for identifier_to_locale and corresponding function to
+   free memory.  */
+
+void *(*identifier_to_locale_alloc) (size_t) = xmalloc;
+void (*identifier_to_locale_free) (void *) = free;
+
 /* Given IDENT, an identifier in the internal encoding, return a
    version of IDENT suitable for diagnostics in the locale character
-   set: either IDENT itself, or a garbage-collected string converted
-   to the locale character set and using escape sequences if not
-   representable in the locale character set or containing control
-   characters or invalid byte sequences.  Existing backslashes in
-   IDENT are not doubled, so the result may not uniquely specify the
-   contents of an arbitrary byte sequence identifier.  */
+   set: either IDENT itself, or a string, allocated using
+   identifier_to_locale_alloc, converted to the locale character set
+   and using escape sequences if not representable in the locale
+   character set or containing control characters or invalid byte
+   sequences.  Existing backslashes in IDENT are not doubled, so the
+   result may not uniquely specify the contents of an arbitrary byte
+   sequence identifier.  */
 
 const char *
 identifier_to_locale (const char *ident)
@@ -942,7 +948,7 @@ identifier_to_locale (const char *ident)
      outside printable ASCII.  */
   if (!valid_printable_utf8)
     {
-      char *ret = GGC_NEWVEC (char, 4 * idlen + 1);
+      char *ret = (char *) identifier_to_locale_alloc (4 * idlen + 1);
       char *p = ret;
       for (i = 0; i < idlen; i++)
 	{
@@ -985,7 +991,7 @@ identifier_to_locale (const char *ident)
 	      size_t outbytesleft = ret_alloc - 1;
 	      size_t iconv_ret;
 
-	      ret = GGC_NEWVEC (char, ret_alloc);
+	      ret = (char *) identifier_to_locale_alloc (ret_alloc);
 	      outbuf = ret;
 
 	      if (iconv (cd, 0, 0, 0, 0) == (size_t) -1)
@@ -1001,7 +1007,7 @@ identifier_to_locale (const char *ident)
 		  if (errno == E2BIG)
 		    {
 		      ret_alloc *= 2;
-		      ggc_free (ret);
+		      identifier_to_locale_free (ret);
 		      ret = NULL;
 		      continue;
 		    }
@@ -1022,7 +1028,7 @@ identifier_to_locale (const char *ident)
 		  if (errno == E2BIG)
 		    {
 		      ret_alloc *= 2;
-		      ggc_free (ret);
+		      identifier_to_locale_free (ret);
 		      ret = NULL;
 		      continue;
 		    }
@@ -1044,7 +1050,7 @@ identifier_to_locale (const char *ident)
 
   /* Otherwise, convert non-ASCII characters in IDENT to UCNs.  */
   {
-    char *ret = GGC_NEWVEC (char, 10 * idlen + 1);
+    char *ret = (char *) identifier_to_locale_alloc (10 * idlen + 1);
     char *p = ret;
     for (i = 0; i < idlen;)
       {

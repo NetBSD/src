@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,22 +34,22 @@
 // warranty.
 
 /**
- * @file update_fn_imps.hpp
+ * @file pat_trie_/update_fn_imps.hpp
  * Contains an implementation class for pat_trie_.
  */
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
-apply_update(node_pointer /*p_nd*/, null_node_update_pointer)
+apply_update(node_pointer, null_node_update_pointer)
 { }
 
 PB_DS_CLASS_T_DEC
 template<typename Node_Update_>
 inline void
 PB_DS_CLASS_C_DEC::
-apply_update(node_pointer p_nd, Node_Update_*  /*p_update*/)
+apply_update(node_pointer p_nd, Node_Update_*)
 {
   Node_Update_::operator()(node_iterator(p_nd, this),
-			   const_node_iterator(NULL, this));
+			   node_const_iterator(0, this));
 }

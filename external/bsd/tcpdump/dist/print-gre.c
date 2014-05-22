@@ -40,9 +40,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-gre.c,v 1.28 2005-04-06 21:32:39 mcr Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-gre.c,v 1.28 2005-04-06 21:32:39 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-gre.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-gre.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: print-gre.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 #define	GRE_RECRS	0x0700		/* recursion count */
 #define	GRE_AP		0x0080		/* acknowledgment# present */
 
-struct tok gre_flag_values[] = {
+static const struct tok gre_flag_values[] = {
     { GRE_CP, "checksum present"},
     { GRE_RP, "routing present"}, 
     { GRE_KP, "key present"}, 
@@ -215,7 +215,7 @@ gre_print_0(const u_char *bp, u_int length)
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		ip6_print(bp, len);
+		ip6_print(gndo, bp, len);
 		break;
 #endif
 	case ETHERTYPE_MPLS:
@@ -231,7 +231,7 @@ gre_print_0(const u_char *bp, u_int length)
 		isoclns_print(bp, len, len);
 		break;
 	case ETHERTYPE_TEB:
-		ether_print(bp, len, len, NULL, NULL);
+		ether_print(gndo, bp, len, len, NULL, NULL);
 		break;
 	default:
 		printf("gre-proto-0x%x", prot);

@@ -1,6 +1,6 @@
 /* Convenience functions implemented in Python.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,6 +38,9 @@ convert_values_to_python (int argc, struct value **argv)
 {
   int i;
   PyObject *result = PyTuple_New (argc);
+  
+  if (! result)
+    return NULL;
 
   for (i = 0; i < argc; ++i)
     {
@@ -45,7 +48,7 @@ convert_values_to_python (int argc, struct value **argv)
       if (! elt)
 	{
 	  Py_DECREF (result);
-	  error (_("Could not convert value to Python object."));
+	  return NULL;
 	}
       PyTuple_SetItem (result, i, elt);
     }
@@ -59,23 +62,34 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
 	   void *cookie, int argc, struct value **argv)
 {
   struct value *value = NULL;
-  PyObject *result, *callable, *args;
+  /* 'result' must be set to NULL, this initially indicates whether
+     the function was called, or not.  */
+  PyObject *result = NULL;
+  PyObject *callable, *args;
   struct cleanup *cleanup;
 
   cleanup = ensure_python_env (gdbarch, language);
 
   args = convert_values_to_python (argc, argv);
+  /* convert_values_to_python can return NULL on error.  If we
+     encounter this, do not call the function, but allow the Python ->
+     error code conversion below to deal with the Python exception.
+     Note, that this is different if the function simply does not
+     have arguments.  */
 
-  callable = PyObject_GetAttrString ((PyObject *) cookie, "invoke");
-  if (! callable)
+  if (args)
     {
-      Py_DECREF (args);
-      error (_("No method named 'invoke' in object."));
-    }
+      callable = PyObject_GetAttrString ((PyObject *) cookie, "invoke");
+      if (! callable)
+	{
+	  Py_DECREF (args);
+	  error (_("No method named 'invoke' in object."));
+	}
 
-  result = PyObject_Call (callable, args, NULL);
-  Py_DECREF (callable);
-  Py_DECREF (args);
+      result = PyObject_Call (callable, args, NULL);
+      Py_DECREF (callable);
+      Py_DECREF (args);
+    }
 
   if (!result)
     {
@@ -150,7 +164,8 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
 static int
 fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
-  char *name, *docstring = NULL;
+  const char *name;
+  char *docstring = NULL;
 
   if (! PyArg_ParseTuple (args, "s", &name))
     return -1;
@@ -181,6 +196,7 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 void
 gdbpy_initialize_functions (void)
 {
+  fnpy_object_type.tp_new = PyType_GenericNew;
   if (PyType_Ready (&fnpy_object_type) < 0)
     return;
 
@@ -192,8 +208,7 @@ gdbpy_initialize_functions (void)
 
 static PyTypeObject fnpy_object_type =
 {
-  PyObject_HEAD_INIT (NULL)
-  0,				  /*ob_size*/
+  PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Function",		  /*tp_name*/
   sizeof (PyObject),		  /*tp_basicsize*/
   0,				  /*tp_itemsize*/
@@ -230,5 +245,4 @@ static PyTypeObject fnpy_object_type =
   0,				  /* tp_dictoffset */
   fnpy_init,			  /* tp_init */
   0,				  /* tp_alloc */
-  PyType_GenericNew		  /* tp_new */
 };

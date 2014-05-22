@@ -1,6 +1,6 @@
 #name: GOT page test 2
 #source: got-page-2.s
-#as: -EB -n32
+#as: -march=from-abi -EB -n32
 #ld: -T got-page-1.ld -shared -melf32btsmipn32
 #readelf: -d
 #

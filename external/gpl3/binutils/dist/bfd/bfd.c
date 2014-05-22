@@ -797,6 +797,88 @@ bfd_get_error_handler (void)
 {
   return _bfd_error_handler;
 }
+
+/*
+SUBSECTION
+	BFD assert handler
+
+	If BFD finds an internal inconsistency, the bfd assert
+	handler is called with information on the BFD version, BFD
+	source file and line.  If this happens, most programs linked
+	against BFD are expected to want to exit with an error, or mark
+	the current BFD operation as failed, so it is recommended to
+	override the default handler, which just calls
+	_bfd_error_handler and continues.
+
+CODE_FRAGMENT
+.
+.typedef void (*bfd_assert_handler_type) (const char *bfd_formatmsg,
+.                                         const char *bfd_version,
+.                                         const char *bfd_file,
+.                                         int bfd_line);
+.
+*/
+
+/* Note the use of bfd_ prefix on the parameter names above: we want to
+   show which one is the message and which is the version by naming the
+   parameters, but avoid polluting the program-using-bfd namespace as
+   the typedef is visible in the exported headers that the program
+   includes.  Below, it's just for consistency.  */
+
+static void
+_bfd_default_assert_handler (const char *bfd_formatmsg,
+			     const char *bfd_version,
+			     const char *bfd_file,
+			     int bfd_line)
+
+{
+  (*_bfd_error_handler) (bfd_formatmsg, bfd_version, bfd_file, bfd_line);
+}
+
+/* Similar to _bfd_error_handler, a program can decide to exit on an
+   internal BFD error.  We use a non-variadic type to simplify passing
+   on parameters to other functions, e.g. _bfd_error_handler.  */
+
+bfd_assert_handler_type _bfd_assert_handler = _bfd_default_assert_handler;
+
+/*
+FUNCTION
+	bfd_set_assert_handler
+
+SYNOPSIS
+	bfd_assert_handler_type bfd_set_assert_handler (bfd_assert_handler_type);
+
+DESCRIPTION
+	Set the BFD assert handler function.  Returns the previous
+	function.
+*/
+
+bfd_assert_handler_type
+bfd_set_assert_handler (bfd_assert_handler_type pnew)
+{
+  bfd_assert_handler_type pold;
+
+  pold = _bfd_assert_handler;
+  _bfd_assert_handler = pnew;
+  return pold;
+}
+
+/*
+FUNCTION
+	bfd_get_assert_handler
+
+SYNOPSIS
+	bfd_assert_handler_type bfd_get_assert_handler (void);
+
+DESCRIPTION
+	Return the BFD assert handler function.
+*/
+
+bfd_assert_handler_type
+bfd_get_assert_handler (void)
+{
+  return _bfd_assert_handler;
+}
 
 /*
 SECTION
@@ -942,8 +1024,8 @@ bfd_set_file_flags (bfd *abfd, flagword flags)
 void
 bfd_assert (const char *file, int line)
 {
-  (*_bfd_error_handler) (_("BFD %s assertion fail %s:%d"),
-			 BFD_VERSION_STRING, file, line);
+  (*_bfd_assert_handler) (_("BFD %s assertion fail %s:%d"),
+			  BFD_VERSION_STRING, file, line);
 }
 
 /* A more or less friendly abort message.  In libbfd.h abort is
@@ -1031,7 +1113,8 @@ bfd_get_sign_extend_vma (bfd *abfd)
       || strcmp (name, "pe-x86-64") == 0
       || strcmp (name, "pei-x86-64") == 0
       || strcmp (name, "pe-arm-wince-little") == 0
-      || strcmp (name, "pei-arm-wince-little") == 0)
+      || strcmp (name, "pei-arm-wince-little") == 0
+      || strcmp (name, "aixcoff-rs6000") == 0)
     return 1;
 
   if (CONST_STRNEQ (name, "mach-o"))
@@ -1341,6 +1424,11 @@ DESCRIPTION
 .       BFD_SEND (abfd, _bfd_find_nearest_line, \
 .                 (abfd, sec, syms, off, file, func, line))
 .
+.#define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
+.                                            line, disc) \
+.       BFD_SEND (abfd, _bfd_find_nearest_line_discriminator, \
+.                 (abfd, sec, syms, off, file, func, line, disc))
+.
 .#define bfd_find_line(abfd, syms, sym, file, line) \
 .       BFD_SEND (abfd, _bfd_find_line, \
 .                 (abfd, syms, sym, file, line))
@@ -1372,6 +1460,9 @@ DESCRIPTION
 .
 .#define bfd_gc_sections(abfd, link_info) \
 .	BFD_SEND (abfd, _bfd_gc_sections, (abfd, link_info))
+.
+.#define bfd_lookup_section_flags(link_info, flag_info, section) \
+.	BFD_SEND (abfd, _bfd_lookup_section_flags, (link_info, flag_info, section))
 .
 .#define bfd_merge_sections(abfd, link_info) \
 .	BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))

@@ -49,7 +49,7 @@ SECTIONS
     /* This should match the remaining sections.  */
     *(.gold_test)
 
-    . = . + 4;
+    . = 60;
     start_data = .;
     BYTE(1)
     SHORT(2)

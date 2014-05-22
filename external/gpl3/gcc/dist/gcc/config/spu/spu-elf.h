@@ -1,4 +1,4 @@
-/* Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -34,10 +34,6 @@
    STANDARD_STARTFILE_PREFIX_2 is "/usr/lib" -- we remove this.  */
 #undef STANDARD_STARTFILE_PREFIX_2
 #define STANDARD_STARTFILE_PREFIX_2 ""
-
-/* Use "/include" instead of "/usr/include".  */
-#undef STANDARD_INCLUDE_DIR
-#define STANDARD_INCLUDE_DIR "/include"
 
 /* We do not provide any "/usr/local/include" directory on SPU.  */
 #undef LOCAL_INCLUDE_DIR
@@ -77,8 +73,3 @@
       mcache-size=16 :-lgcc_cache16k; \
       mcache-size=8  :-lgcc_cache8k; \
                      :-lgcc_cache64k}"
-
-/* Turn off warnings in the assembler too. */
-#undef ASM_SPEC
-#define ASM_SPEC  "%{w:-W}"
-

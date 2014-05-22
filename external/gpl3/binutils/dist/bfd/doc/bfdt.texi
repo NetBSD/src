@@ -419,6 +419,43 @@ bfd_error_handler_type bfd_get_error_handler (void);
 @strong{Description}@*
 Return the BFD error handler function.
 
+@subsection BFD assert handler
+If BFD finds an internal inconsistency, the bfd assert
+handler is called with information on the BFD version, BFD
+source file and line.  If this happens, most programs linked
+against BFD are expected to want to exit with an error, or mark
+the current BFD operation as failed, so it is recommended to
+override the default handler, which just calls
+_bfd_error_handler and continues.
+
+
+@example
+
+typedef void (*bfd_assert_handler_type) (const char *bfd_formatmsg,
+                                         const char *bfd_version,
+                                         const char *bfd_file,
+                                         int bfd_line);
+
+@end example
+@findex bfd_set_assert_handler
+@subsubsection @code{bfd_set_assert_handler}
+@strong{Synopsis}
+@example
+bfd_assert_handler_type bfd_set_assert_handler (bfd_assert_handler_type);
+@end example
+@strong{Description}@*
+Set the BFD assert handler function.  Returns the previous
+function.
+
+@findex bfd_get_assert_handler
+@subsubsection @code{bfd_get_assert_handler}
+@strong{Synopsis}
+@example
+bfd_assert_handler_type bfd_get_assert_handler (void);
+@end example
+@strong{Description}@*
+Return the BFD assert handler function.
+
 @section Miscellaneous
 
 
@@ -681,6 +718,11 @@ The following functions exist but have not yet been documented.
        BFD_SEND (abfd, _bfd_find_nearest_line, \
                  (abfd, sec, syms, off, file, func, line))
 
+#define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
+                                            line, disc) \
+       BFD_SEND (abfd, _bfd_find_nearest_line_discriminator, \
+                 (abfd, sec, syms, off, file, func, line, disc))
+
 #define bfd_find_line(abfd, syms, sym, file, line) \
        BFD_SEND (abfd, _bfd_find_line, \
                  (abfd, syms, sym, file, line))
@@ -712,6 +754,9 @@ The following functions exist but have not yet been documented.
 
 #define bfd_gc_sections(abfd, link_info) \
        BFD_SEND (abfd, _bfd_gc_sections, (abfd, link_info))
+
+#define bfd_lookup_section_flags(link_info, flag_info, section) \
+       BFD_SEND (abfd, _bfd_lookup_section_flags, (link_info, flag_info, section))
 
 #define bfd_merge_sections(abfd, link_info) \
        BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))

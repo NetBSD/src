@@ -1,11 +1,36 @@
-2011-06-27  Jan Kratochvil  <jan.kratochvil@redhat.com>
+2012-10-18  Joel Brobecker  <brobecker@adacore.com>
+
+	* terminal.c: Remove duplicate includes of windows.h and
+	wincon.h.
+	(_rl_get_screen_size): Remove redundant code for MinGW getting
+	the console size from the Windows API.
+
+2012-02-24  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* signals.c (_rl_block_sigwinch, _rl_release_sigwinch): Add
+	conditional SIGWINCH around functions.
+
+2011-05-11  Sterling Augustine  <saugustine@google.com>
+
+	* complete.c (rl_completion_matches): Undo inadvertant checkin.
+
+2011-06-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Avoid free from a signal handler.
-	* Makefile.in (xmalloc.o): Add readline.h.
-	* xmalloc.c: Include readline.h.
-	(xmalloc, xrealloc): Disable them by #if 0.
-	(xfree): Return on RL_STATE_SIGHANDLER, #undef free.
-	* xmalloc.h (xfree, free): New definition.
+	* Makefile.in (xfree.o): Add readline.h.
+	* xfree.c: Include stdio.h and readline.h.
+	(xfree): Return on RL_STATE_SIGHANDLER.
+	* xmalloc.h (xfree): New definition.
+
+2011-05-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Workaround gdb.base/completion.exp regression on readline-6.2.
+	* complete.c (get_y_or_n): Disable the return on RL_STATE_CALLBACK.
+
+2011-05-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Imported readline 6.2, and upstream patch 001.
+	* configure: Regenerate.
 
 2011-03-04  Michael Snyder  <msnyder@vmware.com>
 

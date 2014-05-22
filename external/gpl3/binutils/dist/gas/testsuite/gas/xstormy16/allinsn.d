@@ -1237,33 +1237,33 @@ Disassembly of section \.text:
  9d0:	08 70 00 00 	mov\.b r0,\(r0,0\)
 			9d2: R_XSTORMY16_12	extsym
  9d4:	ff 71 00 00 	mov\.w r7,\(r15,0\)
-			9d6: R_XSTORMY16_12	extsym\+0xffffffff
+			9d6: R_XSTORMY16_12	extsym-0x1
  9d8:	8c 71 00 00 	mov\.w r4,\(r8,0\)
-			9da: R_XSTORMY16_12	extsym\+0xfffff800
+			9da: R_XSTORMY16_12	extsym-0x800
  9dc:	7b 70 00 00 	mov\.b r3,\(r7,0\)
 			9de: R_XSTORMY16_12	extsym\+0x7ff
  9e0:	19 71 00 00 	mov\.w r1,\(r1,0\)
 			9e2: R_XSTORMY16_12	extsym\+0x1
  9e4:	8e 71 00 00 	mov\.w r6,\(r8,0\)
-			9e6: R_XSTORMY16_12	extsym\+0xfffffe3c
+			9e6: R_XSTORMY16_12	extsym-0x1c4
  9e8:	bc 71 00 00 	mov\.w r4,\(r11,0\)
 			9ea: R_XSTORMY16_12	extsym\+0x23c
  9ec:	19 70 00 00 	mov\.b r1,\(r1,0\)
-			9ee: R_XSTORMY16_12	extsym\+0xfffff94a
+			9ee: R_XSTORMY16_12	extsym-0x6b6
 
 000009f0 <movgrgrsipostinc>:
  9f0:	08 60 00 00 	mov\.b r0,\(r0\+\+,0\)
 			9f2: R_XSTORMY16_12	extsym
  9f4:	ff 61 00 00 	mov\.w r7,\(r15\+\+,0\)
-			9f6: R_XSTORMY16_12	extsym\+0xffffffff
+			9f6: R_XSTORMY16_12	extsym-0x1
  9f8:	8c 61 00 00 	mov\.w r4,\(r8\+\+,0\)
-			9fa: R_XSTORMY16_12	extsym\+0xfffff800
+			9fa: R_XSTORMY16_12	extsym-0x800
  9fc:	7b 60 00 00 	mov\.b r3,\(r7\+\+,0\)
 			9fe: R_XSTORMY16_12	extsym\+0x7ff
  a00:	19 61 00 00 	mov\.w r1,\(r1\+\+,0\)
 			a02: R_XSTORMY16_12	extsym\+0x1
  a04:	0e 61 00 00 	mov\.w r6,\(r0\+\+,0\)
-			a06: R_XSTORMY16_12	extsym\+0xffffffc0
+			a06: R_XSTORMY16_12	extsym-0x40
  a08:	ff 60 00 00 	mov\.b r7,\(r15\+\+,0\)
 			a0a: R_XSTORMY16_12	extsym\+0x424
  a0c:	78 60 00 00 	mov\.b r0,\(r7\+\+,0\)
@@ -1273,9 +1273,9 @@ Disassembly of section \.text:
  a10:	08 68 00 00 	mov\.b r0,\(--r0,0\)
 			a12: R_XSTORMY16_12	extsym
  a14:	ff 69 00 00 	mov\.w r7,\(--r15,0\)
-			a16: R_XSTORMY16_12	extsym\+0xffffffff
+			a16: R_XSTORMY16_12	extsym-0x1
  a18:	8c 69 00 00 	mov\.w r4,\(--r8,0\)
-			a1a: R_XSTORMY16_12	extsym\+0xfffff800
+			a1a: R_XSTORMY16_12	extsym-0x800
  a1c:	7b 68 00 00 	mov\.b r3,\(--r7,0\)
 			a1e: R_XSTORMY16_12	extsym\+0x7ff
  a20:	19 69 00 00 	mov\.w r1,\(--r1,0\)
@@ -1285,15 +1285,15 @@ Disassembly of section \.text:
  a28:	1e 69 00 00 	mov\.w r6,\(--r1,0\)
 			a2a: R_XSTORMY16_12	extsym\+0x5e2
  a2c:	3f 69 00 00 	mov\.w r7,\(--r3,0\)
-			a2e: R_XSTORMY16_12	extsym\+0xfffff80f
+			a2e: R_XSTORMY16_12	extsym-0x7f1
 
 00000a30 <movgrsigr>:
  a30:	08 72 00 00 	mov\.b \(r0,0\),r0
 			a32: R_XSTORMY16_12	extsym
  a34:	ff 73 00 00 	mov\.w \(r15,0\),r7
-			a36: R_XSTORMY16_12	extsym\+0xffffffff
+			a36: R_XSTORMY16_12	extsym-0x1
  a38:	8c 73 00 00 	mov\.w \(r8,0\),r4
-			a3a: R_XSTORMY16_12	extsym\+0xfffff800
+			a3a: R_XSTORMY16_12	extsym-0x800
  a3c:	7b 72 00 00 	mov\.b \(r7,0\),r3
 			a3e: R_XSTORMY16_12	extsym\+0x7ff
  a40:	19 73 00 00 	mov\.w \(r1,0\),r1
@@ -1301,7 +1301,7 @@ Disassembly of section \.text:
  a44:	7d 73 00 00 	mov\.w \(r7,0\),r5
 			a46: R_XSTORMY16_12	extsym\+0x79c
  a48:	3c 72 00 00 	mov\.b \(r3,0\),r4
-			a4a: R_XSTORMY16_12	extsym\+0xfffffcb4
+			a4a: R_XSTORMY16_12	extsym-0x34c
  a4c:	f8 73 00 00 	mov\.w \(r15,0\),r0
 			a4e: R_XSTORMY16_12	extsym\+0x6a8
 
@@ -1309,15 +1309,15 @@ Disassembly of section \.text:
  a50:	08 62 00 00 	mov\.b \(r0\+\+,0\),r0
 			a52: R_XSTORMY16_12	extsym
  a54:	ff 63 00 00 	mov\.w \(r15\+\+,0\),r7
-			a56: R_XSTORMY16_12	extsym\+0xffffffff
+			a56: R_XSTORMY16_12	extsym-0x1
  a58:	8c 63 00 00 	mov\.w \(r8\+\+,0\),r4
-			a5a: R_XSTORMY16_12	extsym\+0xfffff800
+			a5a: R_XSTORMY16_12	extsym-0x800
  a5c:	7b 62 00 00 	mov\.b \(r7\+\+,0\),r3
 			a5e: R_XSTORMY16_12	extsym\+0x7ff
  a60:	19 63 00 00 	mov\.w \(r1\+\+,0\),r1
 			a62: R_XSTORMY16_12	extsym\+0x1
  a64:	2f 63 00 00 	mov\.w \(r2\+\+,0\),r7
-			a66: R_XSTORMY16_12	extsym\+0xffffff50
+			a66: R_XSTORMY16_12	extsym-0xb0
  a68:	8c 63 00 00 	mov\.w \(r8\+\+,0\),r4
 			a6a: R_XSTORMY16_12	extsym\+0x56d
  a6c:	38 62 00 00 	mov\.b \(r3\+\+,0\),r0
@@ -1327,9 +1327,9 @@ Disassembly of section \.text:
  a70:	08 6a 00 00 	mov\.b \(--r0,0\),r0
 			a72: R_XSTORMY16_12	extsym
  a74:	ff 6b 00 00 	mov\.w \(--r15,0\),r7
-			a76: R_XSTORMY16_12	extsym\+0xffffffff
+			a76: R_XSTORMY16_12	extsym-0x1
  a78:	8c 6b 00 00 	mov\.w \(--r8,0\),r4
-			a7a: R_XSTORMY16_12	extsym\+0xfffff800
+			a7a: R_XSTORMY16_12	extsym-0x800
  a7c:	7b 6a 00 00 	mov\.b \(--r7,0\),r3
 			a7e: R_XSTORMY16_12	extsym\+0x7ff
  a80:	19 6b 00 00 	mov\.w \(--r1,0\),r1
@@ -1337,6 +1337,6 @@ Disassembly of section \.text:
  a84:	8c 6a 00 00 	mov\.b \(--r8,0\),r4
 			a86: R_XSTORMY16_12	extsym\+0x3ec
  a88:	ea 6b 00 00 	mov\.w \(--r14,0\),r2
-			a8a: R_XSTORMY16_12	extsym\+0xfffffa5c
+			a8a: R_XSTORMY16_12	extsym-0x5a4
  a8c:	5c 6a 00 00 	mov\.b \(--r5,0\),r4
-			a8e: R_XSTORMY16_12	extsym\+0xfffffc61
+			a8e: R_XSTORMY16_12	extsym-0x39f

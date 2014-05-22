@@ -1,8 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB.
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
-   2001, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -115,6 +113,7 @@ escape_bang_in_quoted_argument (const char *shell_file)
    pid.  EXEC_FILE is the file to run.  ALLARGS is a string containing
    the arguments to the program.  ENV is the environment vector to
    pass.  SHELL_FILE is the shell file, or NULL if we should pick
+   one.  EXEC_FUN is the exec(2) function to use, or NULL for the default
    one.  */
 
 /* This function is NOT reentrant.  Some of the variables have been
@@ -123,12 +122,12 @@ escape_bang_in_quoted_argument (const char *shell_file)
 int
 fork_inferior (char *exec_file_arg, char *allargs, char **env,
 	       void (*traceme_fun) (void), void (*init_trace_fun) (int),
-	       void (*pre_trace_fun) (void), char *shell_file_arg)
+	       void (*pre_trace_fun) (void), char *shell_file_arg,
+               void (*exec_fun)(const char *file, char * const *argv,
+                                char * const *env))
 {
   int pid;
-  char *shell_command;
   static char default_shell_file[] = SHELL_FILE;
-  int len;
   /* Set debug_fork then attach to the child while it sleeps, to debug.  */
   static int debug_fork = 0;
   /* This is set to the result of setpgrp, which if vforked, will be visible
@@ -141,6 +140,8 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
   static char **argv;
   const char *inferior_io_terminal = get_inferior_io_terminal ();
   struct inferior *inf;
+  int i;
+  int save_errno;
 
   /* If no exec file handed to us, get it from the exec-file command
      -- with a good, common error message if none is specified.  */
@@ -162,16 +163,6 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
       shell = 1;
     }
 
-  /* Multiplying the length of exec_file by 4 is to account for the
-     fact that it may expand when quoted; it is a worst-case number
-     based on every character being '.  */
-  len = 5 + 4 * strlen (exec_file) + 1 + strlen (allargs) + 1 + /*slop */ 12;
-  if (exec_wrapper)
-    len += strlen (exec_wrapper) + 1;
-
-  shell_command = (char *) alloca (len);
-  shell_command[0] = '\0';
-
   if (!shell)
     {
       /* We're going to call execvp.  Create argument vector.
@@ -180,17 +171,28 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
 	 argument.  */
       int argc = (strlen (allargs) + 1) / 2 + 2;
 
-      argv = (char **) xmalloc (argc * sizeof (*argv));
+      argv = (char **) alloca (argc * sizeof (*argv));
       argv[0] = exec_file;
       breakup_args (allargs, &argv[1]);
     }
   else
     {
       /* We're going to call a shell.  */
-
+      char *shell_command;
+      int len;
       char *p;
       int need_to_quote;
       const int escape_bang = escape_bang_in_quoted_argument (shell_file);
+
+      /* Multiplying the length of exec_file by 4 is to account for the
+         fact that it may expand when quoted; it is a worst-case number
+         based on every character being '.  */
+      len = 5 + 4 * strlen (exec_file) + 1 + strlen (allargs) + 1 + /*slop */ 12;
+      if (exec_wrapper)
+        len += strlen (exec_wrapper) + 1;
+
+      shell_command = (char *) alloca (len);
+      shell_command[0] = '\0';
 
       strcat (shell_command, "exec ");
 
@@ -257,10 +259,17 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
 
       strcat (shell_command, " ");
       strcat (shell_command, allargs);
-    }
 
-  /* On some systems an exec will fail if the executable is open.  */
-  close_exec_file ();
+      /* If we decided above to start up with a shell, we exec the
+	 shell, "-c" says to interpret the next arg as a shell command
+	 to execute, and this command is "exec <target-program>
+	 <args>".  */
+      argv = (char **) alloca (4 * sizeof (char *));
+      argv[0] = shell_file;
+      argv[1] = "-c";
+      argv[2] = shell_command;
+      argv[3] = (char *) 0;
+    }
 
   /* Retain a copy of our environment variables, since the child will
      replace the value of environ and if we're vforked, we have to
@@ -348,44 +357,21 @@ fork_inferior (char *exec_file_arg, char *allargs, char **env,
          path to find $SHELL.  Rich Pixley says so, and I agree.  */
       environ = env;
 
-      /* If we decided above to start up with a shell, we exec the
-	 shell, "-c" says to interpret the next arg as a shell command
-	 to execute, and this command is "exec <target-program>
-	 <args>".  */
-      if (shell)
-	{
-	  execlp (shell_file, shell_file, "-c", shell_command, (char *) 0);
-
-	  /* If we get here, it's an error.  */
-	  fprintf_unfiltered (gdb_stderr, "Cannot exec %s: %s.\n", shell_file,
-			      safe_strerror (errno));
-	  gdb_flush (gdb_stderr);
-	  _exit (0177);
-	}
+      if (exec_fun != NULL)
+        (*exec_fun) (argv[0], argv, env);
       else
-	{
-	  /* Otherwise, we directly exec the target program with
-	     execvp.  */
-	  int i;
+        execvp (argv[0], argv);
 
-	  execvp (exec_file, argv);
-
-	  /* If we get here, it's an error.  */
-	  safe_strerror (errno);
-	  fprintf_unfiltered (gdb_stderr, "Cannot exec %s ", exec_file);
-
-	  i = 1;
-	  while (argv[i] != NULL)
-	    {
-	      if (i != 1)
-		fprintf_unfiltered (gdb_stderr, " ");
-	      fprintf_unfiltered (gdb_stderr, "%s", argv[i]);
-	      i++;
-	    }
-	  fprintf_unfiltered (gdb_stderr, ".\n");
-	  gdb_flush (gdb_stderr);
-	  _exit (0177);
-	}
+      /* If we get here, it's an error.  */
+      save_errno = errno;
+      fprintf_unfiltered (gdb_stderr, "Cannot exec %s", exec_file);
+      for (i = 1; argv[i] != NULL; i++)
+	fprintf_unfiltered (gdb_stderr, " %s", argv[i]);
+      fprintf_unfiltered (gdb_stderr, ".\n");
+      fprintf_unfiltered (gdb_stderr, "Error: %s\n",
+			  safe_strerror (save_errno));
+      gdb_flush (gdb_stderr);
+      _exit (0177);
     }
 
   /* Restore our environment in case a vforked child clob'd it.  */
@@ -444,7 +430,7 @@ startup_inferior (int ntraps)
 
   while (1)
     {
-      enum target_signal resume_signal = TARGET_SIGNAL_0;
+      enum gdb_signal resume_signal = GDB_SIGNAL_0;
       ptid_t event_ptid;
 
       struct target_waitstatus ws;
@@ -471,8 +457,8 @@ startup_inferior (int ntraps)
 	    target_terminal_ours ();
 	    target_mourn_inferior ();
 	    error (_("During startup program terminated with signal %s, %s."),
-		   target_signal_to_name (ws.value.sig),
-		   target_signal_to_string (ws.value.sig));
+		   gdb_signal_to_name (ws.value.sig),
+		   gdb_signal_to_string (ws.value.sig));
 	    return;
 
 	  case TARGET_WAITKIND_EXITED:
@@ -488,7 +474,7 @@ startup_inferior (int ntraps)
 	  case TARGET_WAITKIND_EXECD:
 	    /* Handle EXEC signals as if they were SIGTRAP signals.  */
 	    xfree (ws.value.execd_pathname);
-	    resume_signal = TARGET_SIGNAL_TRAP;
+	    resume_signal = GDB_SIGNAL_TRAP;
 	    switch_to_thread (event_ptid);
 	    break;
 
@@ -498,7 +484,7 @@ startup_inferior (int ntraps)
 	    break;
 	}
 
-      if (resume_signal != TARGET_SIGNAL_TRAP)
+      if (resume_signal != GDB_SIGNAL_TRAP)
 	{
 	  /* Let shell child handle its own signals in its own way.  */
 	  target_resume (resume_ptid, 0, resume_signal);
@@ -527,7 +513,7 @@ startup_inferior (int ntraps)
 	    break;
 
 	  /* Just make it go on.  */
-	  target_resume (resume_ptid, 0, TARGET_SIGNAL_0);
+	  target_resume (resume_ptid, 0, GDB_SIGNAL_0);
 	}
     }
 

@@ -1,5 +1,6 @@
 /* Disassemble SH64 instructions.
-   Copyright 2000, 2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2005, 2007, 2012
+   Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -18,10 +19,9 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include <stdio.h>
-
-#include "dis-asm.h"
 #include "sysdep.h"
+#include <stdio.h>
+#include "dis-asm.h"
 #include "sh64-opc.h"
 #include "libiberty.h"
 /* We need to refer to the ELF header structure.  */

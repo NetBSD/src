@@ -1,23 +1,24 @@
 /* keymaps.c -- Functions and keymaps for the GNU Readline library. */
 
-/* Copyright (C) 1988,1989 Free Software Foundation, Inc.
+/* Copyright (C) 1988,1989-2009 Free Software Foundation, Inc.
 
-   This file is part of GNU Readline, a library for reading lines
-   of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   Readline is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 2, or (at your option) any
-   later version.
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-   Readline is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Readline; see the file COPYING.  If not, write to the Free
-   Software Foundation, 59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #define READLINE_LIBRARY
 
 #if defined (HAVE_CONFIG_H)
@@ -56,8 +57,9 @@ Keymap
 rl_make_bare_keymap ()
 {
   register int i;
-  Keymap keymap = (Keymap)xmalloc (KEYMAP_SIZE * sizeof (KEYMAP_ENTRY));
+  Keymap keymap;
 
+  keymap = (Keymap)xmalloc (KEYMAP_SIZE * sizeof (KEYMAP_ENTRY));
   for (i = 0; i < KEYMAP_SIZE; i++)
     {
       keymap[i].type = ISFUNC;
@@ -75,7 +77,8 @@ rl_make_bare_keymap ()
   return (keymap);
 }
 
-/* Return a new keymap which is a copy of MAP. */
+/* Return a new keymap which is a copy of MAP.  Just copies pointers, does
+   not copy text of macros or descend into child keymaps. */
 Keymap
 rl_copy_keymap (map)
      Keymap map;
@@ -127,7 +130,7 @@ rl_discard_keymap (map)
 {
   int i;
 
-  if (!map)
+  if (map == 0)
     return;
 
   for (i = 0; i < KEYMAP_SIZE; i++)
@@ -139,11 +142,21 @@ rl_discard_keymap (map)
 
 	case ISKMAP:
 	  rl_discard_keymap ((Keymap)map[i].function);
+	  xfree ((char *)map[i].function);
 	  break;
 
 	case ISMACR:
-	  free ((char *)map[i].function);
+	  xfree ((char *)map[i].function);
 	  break;
 	}
     }
+}
+
+/* Convenience function that discards, then frees, MAP. */
+void
+rl_free_keymap (map)
+     Keymap map;
+{
+  rl_discard_keymap (map);
+  xfree ((char *)map);
 }

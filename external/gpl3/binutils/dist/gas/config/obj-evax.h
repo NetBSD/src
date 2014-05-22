@@ -38,11 +38,18 @@
 
 struct fix;
 
+/* Simply linked list of .linkage.  */
 struct alpha_linkage_fixups
 {
+  /* Next entry.  */
   struct alpha_linkage_fixups *next;
+
+  /* Corresponding fixup.  */
   struct fix *fixp;
-  segT seg;
+
+  /* Label that designates this entry.
+     Note that a linkage entry can only be designated by one label.
+     Also, s_alpha_linkage force the creation of a label.  */
   symbolS *label;
 };
 
@@ -60,19 +67,7 @@ struct alpha_linkage_fixups
 
 /* #define SYMBOLS_NEED_PACKPOINTERS */
 
-/*  */
-typedef struct
-  {
-    void *nothing;
-  }
-obj_symbol_type;		/* should be the format's symbol structure */
-
-typedef void *object_headers;
-
 #define OBJ_EMIT_LINENO(a,b,c)	/* must be *something*.  This no-op's it out.  */
-
-/* This field keeps the symbols position in the link section.  */
-#define OBJ_SYMFIELD_TYPE valueT
 
 #define obj_symbol_new_hook(s)       evax_symbol_new_hook (s)
 #define obj_frob_symbol(s,p)         evax_frob_symbol (s, &p)

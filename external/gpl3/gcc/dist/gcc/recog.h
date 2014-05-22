@@ -1,6 +1,5 @@
 /* Declarations for interface to insn recognizer and insn-output.c.
-   Copyright (C) 1987, 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -17,6 +16,9 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+#ifndef GCC_RECOG_H
+#define GCC_RECOG_H
 
 /* Random number that should be large enough for all purposes.  */
 #define MAX_RECOG_ALTERNATIVES 30
@@ -76,7 +78,7 @@ extern int asm_operand_ok (rtx, const char *, const char **);
 extern bool validate_change (rtx, rtx *, rtx, bool);
 extern bool validate_unshare_change (rtx, rtx *, rtx, bool);
 extern bool canonicalize_change_group (rtx insn, rtx x);
-extern int insn_invalid_p (rtx);
+extern int insn_invalid_p (rtx, bool);
 extern int verify_changes (int);
 extern void confirm_change_group (void);
 extern int apply_change_group (void);
@@ -102,7 +104,7 @@ extern int num_changes_pending (void);
 #ifdef HAVE_cc0
 extern int next_insn_tests_no_inequality (rtx);
 #endif
-extern int reg_fits_class_p (rtx, enum reg_class, int, enum machine_mode);
+extern bool reg_fits_class_p (const_rtx, reg_class_t, int, enum machine_mode);
 
 extern int offsettable_memref_p (rtx);
 extern int offsettable_nonstrict_memref_p (rtx);
@@ -111,7 +113,7 @@ extern int offsettable_address_addr_space_p (int, enum machine_mode, rtx,
 #define offsettable_address_p(strict,mode,addr) \
 	offsettable_address_addr_space_p ((strict), (mode), (addr), \
 					  ADDR_SPACE_GENERIC)
-extern int mode_dependent_address_p (rtx);
+extern bool mode_dependent_address_p (rtx, addr_space_t);
 
 extern int recog (rtx, rtx, int *);
 #ifndef GENERATOR_FILE
@@ -194,6 +196,9 @@ struct recog_data
   /* Gives the constraint string for operand N.  */
   const char *constraints[MAX_RECOG_OPERANDS];
 
+  /* Nonzero if operand N is a match_operator or a match_parallel.  */
+  char is_operator[MAX_RECOG_OPERANDS];
+
   /* Gives the mode of operand N.  */
   enum machine_mode operand_mode[MAX_RECOG_OPERANDS];
 
@@ -227,6 +232,9 @@ struct recog_data
   /* The number of alternatives in the constraints for the insn.  */
   char n_alternatives;
 
+  /* True if insn is ASM_OPERANDS.  */
+  bool is_asm;
+
   /* Specifies whether an insn alternative is enabled using the
      `enabled' attribute in the insn pattern definition.  For back
      ends not using the `enabled' attribute the array fields are
@@ -248,7 +256,57 @@ extern struct operand_alternative recog_op_alt[MAX_RECOG_OPERANDS][MAX_RECOG_ALT
 
 typedef int (*insn_operand_predicate_fn) (rtx, enum machine_mode);
 typedef const char * (*insn_output_fn) (rtx *, rtx);
-typedef rtx (*insn_gen_fn) (rtx, ...);
+
+struct insn_gen_fn
+{
+  typedef rtx (*f0) (void);
+  typedef rtx (*f1) (rtx);
+  typedef rtx (*f2) (rtx, rtx);
+  typedef rtx (*f3) (rtx, rtx, rtx);
+  typedef rtx (*f4) (rtx, rtx, rtx, rtx);
+  typedef rtx (*f5) (rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f6) (rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f7) (rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f8) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f9) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f10) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f11) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f12) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f13) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f14) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f15) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+  typedef rtx (*f16) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+
+  typedef f0 stored_funcptr;
+
+  rtx operator () (void) const { return ((f0)func) (); }
+  rtx operator () (rtx a0) const { return ((f1)func) (a0); }
+  rtx operator () (rtx a0, rtx a1) const { return ((f2)func) (a0, a1); }
+  rtx operator () (rtx a0, rtx a1, rtx a2) const { return ((f3)func) (a0, a1, a2); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3) const { return ((f4)func) (a0, a1, a2, a3); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4) const { return ((f5)func) (a0, a1, a2, a3, a4); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5) const { return ((f6)func) (a0, a1, a2, a3, a4, a5); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6) const { return ((f7)func) (a0, a1, a2, a3, a4, a5, a6); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7) const { return ((f8)func) (a0, a1, a2, a3, a4, a5, a6, a7); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8) const { return ((f9)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9) const { return ((f10)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10) const { return ((f11)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11) const { return ((f12)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12) const { return ((f13)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12, rtx a13) const { return ((f14)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12, rtx a13, rtx a14) const { return ((f15)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14); }
+  rtx operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12, rtx a13, rtx a14, rtx a15) const { return ((f16)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15); }
+
+  // This is for compatibility of code that invokes functions like
+  //   (*funcptr) (arg)
+  insn_gen_fn operator * (void) const { return *this; }
+
+  // The wrapped function pointer must be public and there must not be any
+  // constructors.  Otherwise the insn_data_d struct initializers generated
+  // by genoutput.c will result in static initializer functions, which defeats
+  // the purpose of the generated insn_data_d array.
+  stored_funcptr func;
+};
 
 struct insn_operand_data
 {
@@ -260,7 +318,11 @@ struct insn_operand_data
 
   const char strict_low;
 
+  const char is_operator;
+
   const char eliminable;
+
+  const char allows_mem;
 };
 
 /* Legal values for insn_data.output_format.  Indicate what type of data
@@ -270,10 +332,10 @@ struct insn_operand_data
 #define INSN_OUTPUT_FORMAT_MULTI	2	/* const char * const * */
 #define INSN_OUTPUT_FORMAT_FUNCTION	3	/* const char * (*)(...) */
 
-struct insn_data
+struct insn_data_d
 {
   const char *const name;
-#if HAVE_DESIGNATED_INITIALIZERS
+#if HAVE_DESIGNATED_UNION_INITIALIZERS
   union {
     const char *single;
     const char *const *multi;
@@ -289,11 +351,14 @@ struct insn_data
   const insn_gen_fn genfun;
   const struct insn_operand_data *const operand;
 
+  const char n_generator_args;
   const char n_operands;
   const char n_dups;
   const char n_alternatives;
   const char output_format;
 };
 
-extern const struct insn_data insn_data[];
+extern const struct insn_data_d insn_data[];
 extern int peep2_current_count;
+
+#endif /* GCC_RECOG_H */

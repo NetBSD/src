@@ -1,13 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.59)dnl
+AC_PREREQ(2.64)dnl
 AC_INIT(Makefile.in)
-AC_CONFIG_HEADER(config.h:config.in)
+sinclude(../common/acinclude.m4)
 
-sinclude(../common/aclocal.m4)
-
-# Bugs in autoconf 2.59 break the call to SIM_AC_COMMON, hack around
-# it by inlining the macro's contents.
-sinclude(../common/common.m4)
+SIM_AC_COMMON
 
 SIM_AC_OPTION_ENDIAN(BIG_ENDIAN)
 SIM_AC_OPTION_ALIGNMENT(STRICT_ALIGNMENT)
@@ -31,5 +27,8 @@ SIM_AC_OPTION_CGEN_MAINT
 AC_SUBST(traps_obj)
 AC_SUBST(sim_extra_cflags)
 
+SIM_AC_OPTION_HARDWARE(yes,"","")
+m32r_extra_objs="$SIM_DV_SOCKSER_O"
+AC_SUBST(m32r_extra_objs)
 
 SIM_AC_OUTPUT

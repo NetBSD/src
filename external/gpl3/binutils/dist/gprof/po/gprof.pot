@@ -8,10 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2010-11-05 11:34+0100\n"
+"POT-Creation-Date: 2011-10-18 14:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -35,27 +36,27 @@ msgstr ""
 msgid "[find_call] 0x%lx: bsr"
 msgstr ""
 
-#: basic_blocks.c:128 call_graph.c:89 hist.c:107
+#: basic_blocks.c:129 call_graph.c:89 hist.c:107
 #, c-format
 msgid "%s: %s: unexpected end of file\n"
 msgstr ""
 
-#: basic_blocks.c:196
+#: basic_blocks.c:197
 #, c-format
 msgid "%s: warning: ignoring basic-block exec counts (use -l or --line)\n"
 msgstr ""
 
 #. FIXME: This only works if bfd_vma is unsigned long.
-#: basic_blocks.c:289 basic_blocks.c:299
+#: basic_blocks.c:290 basic_blocks.c:300
 #, c-format
 msgid "%s:%d: (%s:0x%lx) %lu executions\n"
 msgstr ""
 
-#: basic_blocks.c:290 basic_blocks.c:300
+#: basic_blocks.c:291 basic_blocks.c:301
 msgid "<unknown>"
 msgstr ""
 
-#: basic_blocks.c:543
+#: basic_blocks.c:544
 #, c-format
 msgid ""
 "\n"
@@ -66,7 +67,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: basic_blocks.c:567
+#: basic_blocks.c:568
 #, c-format
 msgid ""
 "\n"
@@ -74,29 +75,29 @@ msgid ""
 "\n"
 msgstr ""
 
-#: basic_blocks.c:568
+#: basic_blocks.c:569
 #, c-format
 msgid "%9ld   Executable lines in this file\n"
 msgstr ""
 
-#: basic_blocks.c:570
+#: basic_blocks.c:571
 #, c-format
 msgid "%9ld   Lines executed\n"
 msgstr ""
 
-#: basic_blocks.c:571
+#: basic_blocks.c:572
 #, c-format
 msgid "%9.2f   Percent of the file executed\n"
 msgstr ""
 
-#: basic_blocks.c:575
+#: basic_blocks.c:576
 #, c-format
 msgid ""
 "\n"
 "%9lu   Total number of line executions\n"
 msgstr ""
 
-#: basic_blocks.c:577
+#: basic_blocks.c:578
 #, c-format
 msgid "%9.2f   Average executions per line\n"
 msgstr ""
@@ -106,151 +107,151 @@ msgstr ""
 msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
 msgstr ""
 
-#: cg_print.c:74
+#: cg_print.c:75
 #, c-format
 msgid ""
 "\t\t     Call graph (explanation follows)\n"
 "\n"
 msgstr ""
 
-#: cg_print.c:76
+#: cg_print.c:77
 #, c-format
 msgid ""
 "\t\t\tCall graph\n"
 "\n"
 msgstr ""
 
-#: cg_print.c:79 hist.c:468
+#: cg_print.c:80 hist.c:468
 #, c-format
 msgid ""
 "\n"
 "granularity: each sample hit covers %ld byte(s)"
 msgstr ""
 
-#: cg_print.c:83
+#: cg_print.c:84
 #, c-format
 msgid ""
 " for %.2f%% of %.2f seconds\n"
 "\n"
 msgstr ""
 
-#: cg_print.c:87
+#: cg_print.c:88
 #, c-format
 msgid ""
 " no time propagated\n"
 "\n"
 msgstr ""
 
-#: cg_print.c:96 cg_print.c:99 cg_print.c:101
+#: cg_print.c:97 cg_print.c:102 cg_print.c:105
 msgid "called"
 msgstr ""
 
-#: cg_print.c:96 cg_print.c:101
+#: cg_print.c:97 cg_print.c:105
 msgid "total"
 msgstr ""
 
-#: cg_print.c:96
+#: cg_print.c:97
 msgid "parents"
 msgstr ""
 
-#: cg_print.c:98 cg_print.c:99
+#: cg_print.c:99 cg_print.c:103
 msgid "index"
 msgstr ""
 
-#: cg_print.c:98
-#, c-format
+#: cg_print.c:101
+#, no-c-format
 msgid "%time"
 msgstr ""
 
-#: cg_print.c:98 cg_print.c:99
+#: cg_print.c:102
 msgid "self"
 msgstr ""
 
-#: cg_print.c:98
+#: cg_print.c:102
 msgid "descendants"
 msgstr ""
 
-#: cg_print.c:99 hist.c:494
+#: cg_print.c:103 hist.c:494
 msgid "name"
 msgstr ""
 
-#: cg_print.c:101
+#: cg_print.c:105
 msgid "children"
 msgstr ""
 
-#: cg_print.c:106
+#: cg_print.c:110
 #, c-format
 msgid "index %% time    self  children    called     name\n"
 msgstr ""
 
-#: cg_print.c:129
+#: cg_print.c:133
 #, c-format
 msgid " <cycle %d as a whole> [%d]\n"
 msgstr ""
 
-#: cg_print.c:355
+#: cg_print.c:359
 #, c-format
 msgid "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
 msgstr ""
 
-#: cg_print.c:356
+#: cg_print.c:360
 #, c-format
 msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
 msgstr ""
 
-#: cg_print.c:590
+#: cg_print.c:594
 #, c-format
 msgid ""
 "Index by function name\n"
 "\n"
 msgstr ""
 
-#: cg_print.c:647 cg_print.c:656
+#: cg_print.c:651 cg_print.c:660
 #, c-format
 msgid "<cycle %d>"
 msgstr ""
 
-#: corefile.c:60
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr ""
 
-#: corefile.c:84 corefile.c:504
+#: corefile.c:85 corefile.c:514
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr ""
 
-#: corefile.c:183
+#: corefile.c:185
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr ""
 
-#: corefile.c:194
+#: corefile.c:196
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr ""
 
-#: corefile.c:269
+#: corefile.c:271
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr ""
 
-#: corefile.c:283
+#: corefile.c:285
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr ""
 
-#: corefile.c:322
+#: corefile.c:324
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr ""
 
-#: corefile.c:513 corefile.c:598
+#: corefile.c:523 corefile.c:622
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr ""
 
-#: corefile.c:859
+#: corefile.c:884
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr ""

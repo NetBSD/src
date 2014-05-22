@@ -4,6 +4,7 @@
 	.global t1
 	.global t2
 	.global t5
+	.type arm, %function
 arm:
 	bx lr
 	.thumb

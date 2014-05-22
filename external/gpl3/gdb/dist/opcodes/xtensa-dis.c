@@ -1,5 +1,5 @@
 /* xtensa-dis.c.  Disassembly functions for Xtensa.
-   Copyright 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2007, 2012 Free Software Foundation, Inc.
    Contributed by Bob Wilson at Tensilica, Inc. (bwilson@tensilica.com)
 
    This file is part of the GNU opcodes library.
@@ -19,6 +19,7 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -26,7 +27,6 @@
 #include "xtensa-isa.h"
 #include "ansidecl.h"
 #include "libiberty.h"
-#include "sysdep.h"
 #include "dis-asm.h"
 
 #include <setjmp.h>

@@ -1,8 +1,6 @@
 // File based streams -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,7 +22,7 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file fstream
+/** @file include/fstream
  *  This is a Standard C++ Library header.
  */
 
@@ -42,27 +40,34 @@
 #include <bits/codecvt.h>
 #include <cstdio>             // For BUFSIZ
 #include <bits/basic_file.h>  // For __basic_file, __c_lock
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
 #include <string>             // For std::string overloads.
 #endif
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // [27.8.1.1] template class basic_filebuf
   /**
    *  @brief  The actual work of input and output (for files).
    *  @ingroup io
    *
+   *  @tparam _CharT  Type of character stream.
+   *  @tparam _Traits  Traits for character type, defaults to
+   *                   char_traits<_CharT>.
+   *
    *  This class associates both its input and output sequence with an
    *  external disk file, and maintains a joint file position for both
    *  sequences.  Many of its semantics are described in terms of similar
    *  behavior in the Standard C Library's @c FILE streams.
+   *
+   *  Requirements on traits_type, specific to this class:
+   *  - traits_type::pos_type must be fpos<traits_type::state_type>
+   *  - traits_type::off_type must be streamoff
+   *  - traits_type::state_type must be Assignable and DefaultConstructible,
+   *  - traits_type::state_type() must be the initial state for codecvt.
    */
-  // Requirements on traits_type, specific to this class:
-  // traits_type::pos_type must be fpos<traits_type::state_type>
-  // traits_type::off_type must be streamoff
-  // traits_type::state_type must be Assignable and DefaultConstructible,
-  // and traits_type::state_type() must be the initial state for codecvt.
   template<typename _CharT, typename _Traits>
     class basic_filebuf : public basic_streambuf<_CharT, _Traits>
     {
@@ -224,13 +229,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *  @return  @c this on success, NULL on failure
        *
        *  If a file is already open, this function immediately fails.
-       *  Otherwise it tries to open the file named @a s using the flags
-       *  given in @a mode.
+       *  Otherwise it tries to open the file named @a __s using the flags
+       *  given in @a __mode.
        *
        *  Table 92, adapted here, gives the relation between openmode
        *  combinations and the equivalent fopen() flags.
@@ -264,11 +269,11 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       __filebuf_type*
       open(const char* __s, ios_base::openmode __mode);
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *  @return  @c this on success, NULL on failure
        */
       __filebuf_type*
@@ -330,12 +335,12 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Manipulates the buffer.
-       *  @param  s  Pointer to a buffer area.
-       *  @param  n  Size of @a s.
+       *  @param  __s  Pointer to a buffer area.
+       *  @param  __n  Size of @a __s.
        *  @return  @c this
        *
-       *  If no file has been opened, and both @a s and @a n are zero, then
-       *  the stream becomes unbuffered.  Otherwise, @c s is used as a
+       *  If no file has been opened, and both @a __s and @a __n are zero, then
+       *  the stream becomes unbuffered.  Otherwise, @c __s is used as a
        *  buffer; see
        *  http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt11ch25s02.html
        *  for more.
@@ -351,9 +356,12 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       seekpos(pos_type __pos,
 	      ios_base::openmode __mode = ios_base::in | ios_base::out);
 
-      // Common code for seekoff and seekpos
+      // Common code for seekoff, seekpos, and overflow
       pos_type
       _M_seek(off_type __off, ios_base::seekdir __way, __state_type __state);
+      
+      int
+      _M_get_ext_pos(__state_type &__state);
 
       virtual int
       sync();
@@ -397,7 +405,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	if (__testout && __off == 0 && _M_buf_size > 1 )
 	  this->setp(_M_buf, _M_buf + _M_buf_size - 1);
 	else
-	  this->setp(NULL, NULL);
+	  this->setp(0, 0);
       }
     };
 
@@ -405,6 +413,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   /**
    *  @brief  Controlling input for files.
    *  @ingroup io
+   *
+   *  @tparam _CharT  Type of character stream.
+   *  @tparam _Traits  Traits for character type, defaults to
+   *                   char_traits<_CharT>.
    *
    *  This class supports reading from named files, using the inherited
    *  functions from std::basic_istream.  To control the associated
@@ -443,10 +455,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Create an input file stream.
-       *  @param  s  Null terminated string specifying the filename.
-       *  @param  mode  Open file in specified mode (see std::ios_base).
+       *  @param  __s  Null terminated string specifying the filename.
+       *  @param  __mode  Open file in specified mode (see std::ios_base).
        *
-       *  @c ios_base::in is automatically included in @a mode.
+       *  @c ios_base::in is automatically included in @a __mode.
        *
        *  Tip:  When using std::string to hold the filename, you must use
        *  .c_str() before passing it to this constructor.
@@ -459,13 +471,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	this->open(__s, __mode);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Create an input file stream.
-       *  @param  s  std::string specifying the filename.
-       *  @param  mode  Open file in specified mode (see std::ios_base).
+       *  @param  __s  std::string specifying the filename.
+       *  @param  __mode  Open file in specified mode (see std::ios_base).
        *
-       *  @c ios_base::in is automatically included in @a mode.
+       *  @c ios_base::in is automatically included in @a __mode.
        */
       explicit
       basic_ifstream(const std::string& __s,
@@ -513,10 +525,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *
-       *  Calls @c std::basic_filebuf::open(s,mode|in).  If that function
+       *  Calls @c std::basic_filebuf::open(s,__mode|in).  If that function
        *  fails, @c failbit is set in the stream's error state.
        *
        *  Tip:  When using std::string to hold the filename, you must use
@@ -533,13 +545,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	  this->clear();
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *
-       *  Calls @c std::basic_filebuf::open(s,mode|in).  If that function
+       *  Calls @c std::basic_filebuf::open(__s,__mode|in).  If that function
        *  fails, @c failbit is set in the stream's error state.
        */
       void
@@ -573,6 +585,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   /**
    *  @brief  Controlling output for files.
    *  @ingroup io
+   *
+   *  @tparam _CharT  Type of character stream.
+   *  @tparam _Traits  Traits for character type, defaults to
+   *                   char_traits<_CharT>.
    *
    *  This class supports reading from named files, using the inherited
    *  functions from std::basic_ostream.  To control the associated
@@ -611,11 +627,11 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Create an output file stream.
-       *  @param  s  Null terminated string specifying the filename.
-       *  @param  mode  Open file in specified mode (see std::ios_base).
+       *  @param  __s  Null terminated string specifying the filename.
+       *  @param  __mode  Open file in specified mode (see std::ios_base).
        *
-       *  @c ios_base::out|ios_base::trunc is automatically included in
-       *  @a mode.
+       *  @c ios_base::out | @c ios_base::trunc is automatically included in
+       *  @a __mode.
        *
        *  Tip:  When using std::string to hold the filename, you must use
        *  .c_str() before passing it to this constructor.
@@ -629,14 +645,14 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	this->open(__s, __mode);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Create an output file stream.
-       *  @param  s  std::string specifying the filename.
-       *  @param  mode  Open file in specified mode (see std::ios_base).
+       *  @param  __s  std::string specifying the filename.
+       *  @param  __mode  Open file in specified mode (see std::ios_base).
        *
-       *  @c ios_base::out|ios_base::trunc is automatically included in
-       *  @a mode.
+       *  @c ios_base::out | @c ios_base::trunc is automatically included in
+       *  @a __mode.
        */
       explicit
       basic_ofstream(const std::string& __s,
@@ -684,10 +700,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *
-       *  Calls @c std::basic_filebuf::open(s,mode|out|trunc).  If that
+       *  Calls @c std::basic_filebuf::open(__s,__mode|out|trunc).  If that
        *  function fails, @c failbit is set in the stream's error state.
        *
        *  Tip:  When using std::string to hold the filename, you must use
@@ -705,11 +721,11 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	  this->clear();
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *
        *  Calls @c std::basic_filebuf::open(s,mode|out|trunc).  If that
        *  function fails, @c failbit is set in the stream's error state.
@@ -746,6 +762,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   /**
    *  @brief  Controlling input and output for files.
    *  @ingroup io
+   *
+   *  @tparam _CharT  Type of character stream.
+   *  @tparam _Traits  Traits for character type, defaults to
+   *                   char_traits<_CharT>.
    *
    *  This class supports reading from and writing to named files, using
    *  the inherited functions from std::basic_iostream.  To control the
@@ -786,8 +806,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Create an input/output file stream.
-       *  @param  s  Null terminated string specifying the filename.
-       *  @param  mode  Open file in specified mode (see std::ios_base).
+       *  @param  __s  Null terminated string specifying the filename.
+       *  @param  __mode  Open file in specified mode (see std::ios_base).
        *
        *  Tip:  When using std::string to hold the filename, you must use
        *  .c_str() before passing it to this constructor.
@@ -795,22 +815,22 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       explicit
       basic_fstream(const char* __s,
 		    ios_base::openmode __mode = ios_base::in | ios_base::out)
-      : __iostream_type(NULL), _M_filebuf()
+      : __iostream_type(0), _M_filebuf()
       {
 	this->init(&_M_filebuf);
 	this->open(__s, __mode);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Create an input/output file stream.
-       *  @param  s  Null terminated string specifying the filename.
-       *  @param  mode  Open file in specified mode (see std::ios_base).
+       *  @param  __s  Null terminated string specifying the filename.
+       *  @param  __mode  Open file in specified mode (see std::ios_base).
        */
       explicit
       basic_fstream(const std::string& __s,
 		    ios_base::openmode __mode = ios_base::in | ios_base::out)
-      : __iostream_type(NULL), _M_filebuf()
+      : __iostream_type(0), _M_filebuf()
       {
 	this->init(&_M_filebuf);
 	this->open(__s, __mode);
@@ -853,10 +873,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *
-       *  Calls @c std::basic_filebuf::open(s,mode).  If that
+       *  Calls @c std::basic_filebuf::open(__s,__mode).  If that
        *  function fails, @c failbit is set in the stream's error state.
        *
        *  Tip:  When using std::string to hold the filename, you must use
@@ -874,13 +894,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	  this->clear();
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       /**
        *  @brief  Opens an external file.
-       *  @param  s  The name of the file.
-       *  @param  mode  The open mode flags.
+       *  @param  __s  The name of the file.
+       *  @param  __mode  The open mode flags.
        *
-       *  Calls @c std::basic_filebuf::open(s,mode).  If that
+       *  Calls @c std::basic_filebuf::open(__s,__mode).  If that
        *  function fails, @c failbit is set in the stream's error state.
        */
       void
@@ -910,10 +930,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       }
     };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
-#ifndef _GLIBCXX_EXPORT_TEMPLATE
-# include <bits/fstream.tcc>
-#endif
+#include <bits/fstream.tcc>
 
 #endif /* _GLIBCXX_FSTREAM */

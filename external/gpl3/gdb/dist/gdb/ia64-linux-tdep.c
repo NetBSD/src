@@ -1,7 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2000, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,7 +46,7 @@ ia64_linux_pc_in_sigtramp (CORE_ADDR pc)
 
 /* IA-64 GNU/Linux specific function which, given a frame address and
    a register number, returns the address at which that register may be
-   found.  0 is returned for registers which aren't stored in the the
+   found.  0 is returned for registers which aren't stored in the
    sigcontext structure.  */
 
 static CORE_ADDR
@@ -55,7 +54,7 @@ ia64_linux_sigcontext_register_address (struct gdbarch *gdbarch,
 					CORE_ADDR sp, int regno)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  char buf[8];
+  gdb_byte buf[8];
   CORE_ADDR sigcontext_addr = 0;
 
   /* The address of the sigcontext area is found at offset 16 in the

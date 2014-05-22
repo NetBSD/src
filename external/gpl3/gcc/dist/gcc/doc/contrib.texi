@@ -1,6 +1,4 @@
-@c Copyright (C) 1988,1989,1992,1993,1994,1995,1996,1997,1998,1999,2000,
-@c 2001,2002,2003,2004,2005,2006,2007,2008,2009, 2010
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1988-2013 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -66,6 +64,10 @@ improved alias analysis, plus migrating GCC to Bugzilla.
 Geoff Berry for his Java object serialization work and various patches.
 
 @item
+David Binderman tests weekly snapshots of GCC trunk against Fedora Rawhide
+for several architectures.
+
+@item
 Uros Bizjak for the implementation of x87 math built-in functions and
 for various middle end and i386 back end improvements and bug fixes.
 
@@ -80,7 +82,7 @@ Janne Blomqvist for contributions to GNU Fortran.
 Segher Boessenkool for various fixes.
 
 @item
-Hans-J. Boehm for his @uref{http://www.hpl.hp.com/personal/Hans_Boehm/gc/,,
+Hans-J. Boehm for his @uref{http://www.hpl.hp.com/@/personal/@/Hans_Boehm/@/gc/,,
 garbage collector}, IA-64 libffi port, and other Java work.
 
 @item
@@ -216,7 +218,7 @@ Mo DeJong for GCJ and libgcj bug fixes.
 
 @item
 DJ Delorie for the DJGPP port, build and libiberty maintenance,
-various bug fixes, and the M32C and MeP ports.
+various bug fixes, and the M32C, MeP, and RL78 ports.
 
 @item
 Arnaud Desitter for helping to debug GNU Fortran.
@@ -237,6 +239,9 @@ architecture, libio maintenance, and early math work.
 
 @item
 Zdenek Dvorak for a new loop unroller and various fixes.
+
+@item
+Michael Eager for his work on the Xilinx MicroBlaze port.
 
 @item
 Richard Earnshaw for his ongoing work with the ARM@.
@@ -298,11 +303,10 @@ Peter Gerwinski for various bug fixes and the Pascal front end.
 
 @item
 Kaveh R.@: Ghazi for his direction via the steering committee, amazing
-work to make @samp{-W -Wall -W* -Werror} useful, and continuously
+work to make @samp{-W -Wall -W* -Werror} useful, and 
 testing GCC on a plethora of platforms.  Kaveh extends his gratitude to
-the @uref{http://www.caip.rutgers.edu,,CAIP Center} at Rutgers
-University for providing him with computing resources to work on Free
-Software since the late 1980s.
+the CAIP Center at Rutgers University for providing him with computing
+resources to work on Free Software from the late 1980s to 2010.
 
 @item
 John Gilmore for a donation to the FSF earmarked improving GNU Java.
@@ -335,6 +339,9 @@ Ron Guilmette implemented the @command{protoize} and @command{unprotoize}
 tools, the support for Dwarf symbolic debugging information, and much of
 the support for System V Release 4.  He has also worked heavily on the
 Intel 386 and 860 support.
+
+@item
+Sumanth Gundapaneni for contributing the CR16 port.
 
 @item
 Mostafa Hagog for Swing Modulo Scheduling (SMS) and post reload GCSE@.
@@ -386,6 +393,9 @@ of testing and bug fixing, particularly of GCC configury code.
 
 @item
 Steve Holmgren for MachTen patches.
+
+@item
+Mat Hostetter for work on the TILE-Gx and TILEPro ports.
 
 @item
 Jan Hubicka for his x86 port improvements.
@@ -499,6 +509,9 @@ handling merges from GCC2, reviewing tons of patches that might have
 fallen through the cracks else, and random but extensive hacking.
 
 @item
+Walter Lee for work on the TILE-Gx and TILEPro ports.
+
+@item
 Marc Lehmann for his direction via the steering committee and helping
 with analysis and improvements of x86 performance.
 
@@ -608,7 +621,8 @@ entire libstdc++ testsuite namespace-compatible.
 @item
 Mark Mitchell for his direction via the steering committee, mountains of
 C++ work, load/store hoisting out of loops, alias analysis improvements,
-ISO C @code{restrict} support, and serving as release manager for GCC 3.x.
+ISO C @code{restrict} support, and serving as release manager from 2000
+to 2011.
 
 @item
 Alan Modra for various GNU/Linux bits and testing.
@@ -743,7 +757,7 @@ Volker Reichelt for keeping up with the problem reports.
 
 @item
 Joern Rennecke for maintaining the sh port, loop, regmove & reload
-hacking.
+hacking and developing and maintaining the Epiphany port.
 
 @item
 Loren J. Rittle for improvements to libstdc++-v3 including the FreeBSD
@@ -803,8 +817,8 @@ Tobias Schl@"uter for work on GNU Fortran.
 
 @item
 Bernd Schmidt for various code generation improvements and major
-work in the reload pass as well a serving as release manager for
-GCC 2.95.3.
+work in the reload pass, serving as release manager for
+GCC 2.95.3, and work on the Blackfin and C6X ports.
 
 @item
 Peter Schmid for constant testing of libstdc++---especially application
@@ -819,6 +833,9 @@ Andreas Schwab for his work on the m68k port.
 
 @item
 Lars Segerlund for work on GNU Fortran.
+
+@item
+Dodji Seketeli for numerous C++ bug fixes and debug info improvements.
 
 @item
 Joel Sherrill for his direction via the steering committee, RTEMS
@@ -862,6 +879,13 @@ rudimentary support for @code{INTEGER*1}, @code{INTEGER*2}, and
 @code{LOGICAL*1}.
 
 @item
+Zdenek Sojka for running automated regression testing of GCC and reporting
+numerous bugs.
+
+@item
+Jayant Sonar for contributing the CR16 port.
+
+@item
 Brad Spencer for contributions to the GLIBCPP_FORCE_NEW technique.
 
 @item
@@ -894,8 +918,8 @@ Jeff Sturm for Java porting help, bug fixes, and encouragement.
 Shigeya Suzuki for this fixes for the bsdi platforms.
 
 @item
-Ian Lance Taylor for his mips16 work, general configury hacking,
-fixincludes, etc.
+Ian Lance Taylor for the Go frontend, the initial mips16 and mips64
+support, general configury hacking, fixincludes, etc.
 
 @item
 Holger Teutsch provided the support for the Clipper CPU@.
@@ -928,8 +952,8 @@ Teemu Torma for thread safe exception handling support.
 Leonard Tower wrote parts of the parser, RTL generator, and RTL
 definitions, and of the VAX machine description.
 
-@item 
-Daniel Towner and Hariharan Sandanagobalane contributed and 
+@item
+Daniel Towner and Hariharan Sandanagobalane contributed and
 maintain the picoChip port.
 
 @item

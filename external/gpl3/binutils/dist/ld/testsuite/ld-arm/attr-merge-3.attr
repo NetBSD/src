@@ -27,5 +27,6 @@ File Attributes
   Tag_CPU_unaligned_access: v6
   Tag_FP_HP_extension: Allowed
   Tag_MPextension_use: Allowed
+  Tag_DIV_use: Not allowed
   Tag_T2EE_use: Allowed
   Tag_Virtualization_use: TrustZone

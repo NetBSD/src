@@ -205,6 +205,7 @@ if [istarget sh*-*-elf] then {
     close $outfile
 }
 
+return
 
 #########################################################################
 # Generate one sh*.s file for each architecture defined in sh-opc.h

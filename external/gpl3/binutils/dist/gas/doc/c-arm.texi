@@ -1,5 +1,5 @@
 @c Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-@c 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+@c 2006, 2007, 2008, 2009, 2010, 2011  Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -102,7 +102,10 @@ recognized:
 @code{arm1020e},
 @code{arm1022e},
 @code{arm1026ej-s},
+@code{fa606te} (Faraday FA606TE processor),
+@code{fa616te} (Faraday FA616TE processor),
 @code{fa626te} (Faraday FA626TE processor),
+@code{fmp626} (Faraday FMP626 processor),
 @code{fa726te} (Faraday FA726TE processor),
 @code{arm1136j-s},
 @code{arm1136jf-s},
@@ -113,15 +116,19 @@ recognized:
 @code{mpcore},
 @code{mpcorenovfp},
 @code{cortex-a5},
+@code{cortex-a7},
 @code{cortex-a8},
 @code{cortex-a9},
 @code{cortex-a15},
 @code{cortex-r4},
 @code{cortex-r4f},
+@code{cortex-r5},
+@code{cortex-r7},
 @code{cortex-m4},
 @code{cortex-m3},
 @code{cortex-m1},
 @code{cortex-m0},
+@code{cortex-m0plus},
 @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
 @code{i80200} (Intel XScale processor)
 @code{iwmmxt} (Intel(r) XScale processor with Wireless MMX(tm) technology coprocessor)
@@ -149,13 +156,16 @@ been added, again in ascending alphabetical order.  For example,
 
 
 The following extensions are currently supported:
-@code{idiv}, (Integer Divide Extensions for v7-A architecture),
+@code{crypto} (Cryptography Extensions for v8-A architecture, implies @code{fp+simd}),
+@code{fp} (Floating Point Extensions for v8-A architecture),
+@code{idiv} (Integer Divide Extensions for v7-A and v7-R architectures),
 @code{iwmmxt},
 @code{iwmmxt2},
 @code{maverick},
 @code{mp} (Multiprocessing Extensions for v7-A and v7-R architectures),
 @code{os} (Operating System for v6M architecture),
 @code{sec} (Security Extensions for v6K and v7-A architectures),
+@code{simd} (Advanced SIMD Extensions for v8-A architecture, implies @code{fp}),
 @code{virt} (Virtualization Extensions for v7-A architecture, implies 
 @code{idiv}),
 and
@@ -194,6 +204,7 @@ names are recognized:
 @code{armv7-r},
 @code{armv7-m},
 @code{armv7e-m},
+@code{armv8-a},
 @code{iwmmxt}
 and
 @code{xscale}.
@@ -236,13 +247,16 @@ The following format options are recognized:
 @code{vfpv4},
 @code{vfpv4-d16},
 @code{fpv4-sp-d16},
+@code{fp-armv8},
 @code{arm1020t},
 @code{arm1020e},
 @code{arm1136jf-s},
 @code{maverick},
 @code{neon},
+@code{neon-vfpv4},
+@code{neon-fp-armv8},
 and
-@code{neon-vfpv4}.
+@code{crypto-neon-fp-armv8}.
 
 In addition to determining which instructions are assembled, this option
 also affects the way in which the @code{.double} assembler directive behaves
@@ -408,9 +422,13 @@ affix.
 
 @cindex line comment character, ARM
 @cindex ARM line comment character
-The presence of a @samp{@@} on a line indicates the start of a comment
-that extends to the end of the current line.  If a @samp{#} appears as
-the first character of a line, the whole line is treated as a comment.
+The presence of a @samp{@@} anywhere on a line indicates the start of
+a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
 
 @cindex line separator, ARM
 @cindex statement separator, ARM
@@ -478,14 +496,18 @@ The following relocations are supported:
 @code{TLSGD},
 @code{TLSLDM},
 @code{TLSLDO},
+@code{TLSDESC},
+@code{TLSCALL},
 @code{GOTTPOFF},
 @code{GOT_PREL}
 and
 @code{TPOFF}.
 
 For compatibility with older toolchains the assembler also accepts
-@code{(PLT)} after branch targets.  This will generate the deprecated
-@samp{R_ARM_PLT32} relocation.
+@code{(PLT)} after branch targets.  On legacy targets this will
+generate the deprecated @samp{R_ARM_PLT32} relocation.  On EABI
+targets it will encode either the @samp{R_ARM_CALL} or
+@samp{R_ARM_JUMP24} relocation, as appropriate.
 
 @cindex MOVW and MOVT relocations, ARM
 Relocations for @samp{MOVW} and @samp{MOVT} instructions can be generated
@@ -863,6 +885,12 @@ creates a symbol which is an alias for another symbol (possibly not yet
 defined).  This directive also has the added property in that it marks
 the aliased symbol as being a thumb function entry point, in the same
 way that the @code{.thumb_func} directive does.
+
+@cindex @code{.tlsdescseq} directive, ARM
+@item .tlsdescseq @var{tls-variable}
+This directive is used to annotate parts of an inlined TLS descriptor
+trampoline.  Normally the trampoline is provided by the linker, and
+this directive is not needed.
 
 @c UUUUUUUUUUUUUUUUUUUUUUUUUU
 

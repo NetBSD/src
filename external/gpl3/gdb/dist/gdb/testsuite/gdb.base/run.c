@@ -49,10 +49,6 @@ int argc;
 char *argv[], **envp;
 #endif
 {
-#ifdef usestubs
-    set_debug_traps();
-    breakpoint();
-#endif
 #ifdef FAKEARGV
     printf ("%d\n", factorial (1));
 #else    

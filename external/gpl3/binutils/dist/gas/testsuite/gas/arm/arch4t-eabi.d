@@ -2,7 +2,7 @@
 # as: -march=armv4t
 # objdump: -dr --prefix-addresses --show-raw-insn
 # source: arch4t.s
-# target: *-*-*eabi *-*-symbianelf
+# target: *-*-*eabi *-*-symbianelf *-*-nacl*
 
 .*: +file format .*arm.*
 

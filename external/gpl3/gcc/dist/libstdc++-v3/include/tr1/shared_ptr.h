@@ -1,6 +1,6 @@
 // <tr1/shared_ptr.h> -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -43,20 +43,206 @@
 
 /** @file tr1/shared_ptr.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{tr1/memory}
  */
 
 #ifndef _TR1_SHARED_PTR_H
 #define _TR1_SHARED_PTR_H 1
 
-#if defined(_GLIBCXX_INCLUDE_AS_CXX0X)
-#  error TR1 header cannot be included from C++0x header
-#endif
-
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
 namespace tr1
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+ /**
+   *  @brief  Exception possibly thrown by @c shared_ptr.
+   *  @ingroup exceptions
+   */
+  class bad_weak_ptr : public std::exception
+  {
+  public:
+    virtual char const*
+    what() const throw()
+    { return "tr1::bad_weak_ptr"; }
+  };
+
+  // Substitute for bad_weak_ptr object in the case of -fno-exceptions.
+  inline void
+  __throw_bad_weak_ptr()
+  { _GLIBCXX_THROW_OR_ABORT(bad_weak_ptr()); }
+
+  using __gnu_cxx::_Lock_policy;
+  using __gnu_cxx::__default_lock_policy;
+  using __gnu_cxx::_S_single;
+  using __gnu_cxx::_S_mutex;
+  using __gnu_cxx::_S_atomic;
+
+  // Empty helper class except when the template argument is _S_mutex.
+  template<_Lock_policy _Lp>
+    class _Mutex_base
+    {
+    protected:
+      // The atomic policy uses fully-fenced builtins, single doesn't care.
+      enum { _S_need_barriers = 0 };
+    };
+
+  template<>
+    class _Mutex_base<_S_mutex>
+    : public __gnu_cxx::__mutex
+    {
+    protected:
+      // This policy is used when atomic builtins are not available.
+      // The replacement atomic operations might not have the necessary
+      // memory barriers.
+      enum { _S_need_barriers = 1 };
+    };
+
+  template<_Lock_policy _Lp = __default_lock_policy>
+    class _Sp_counted_base
+    : public _Mutex_base<_Lp>
+    {
+    public:  
+      _Sp_counted_base()
+      : _M_use_count(1), _M_weak_count(1) { }
+      
+      virtual
+      ~_Sp_counted_base() // nothrow 
+      { }
+  
+      // Called when _M_use_count drops to zero, to release the resources
+      // managed by *this.
+      virtual void
+      _M_dispose() = 0; // nothrow
+      
+      // Called when _M_weak_count drops to zero.
+      virtual void
+      _M_destroy() // nothrow
+      { delete this; }
+      
+      virtual void*
+      _M_get_deleter(const std::type_info&) = 0;
+
+      void
+      _M_add_ref_copy()
+      { __gnu_cxx::__atomic_add_dispatch(&_M_use_count, 1); }
+  
+      void
+      _M_add_ref_lock();
+      
+      void
+      _M_release() // nothrow
+      {
+        // Be race-detector-friendly.  For more info see bits/c++config.
+        _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&_M_use_count);
+	if (__gnu_cxx::__exchange_and_add_dispatch(&_M_use_count, -1) == 1)
+	  {
+            _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&_M_use_count);
+	    _M_dispose();
+	    // There must be a memory barrier between dispose() and destroy()
+	    // to ensure that the effects of dispose() are observed in the
+	    // thread that runs destroy().
+	    // See http://gcc.gnu.org/ml/libstdc++/2005-11/msg00136.html
+	    if (_Mutex_base<_Lp>::_S_need_barriers)
+	      {
+	        _GLIBCXX_READ_MEM_BARRIER;
+	        _GLIBCXX_WRITE_MEM_BARRIER;
+	      }
+
+            // Be race-detector-friendly.  For more info see bits/c++config.
+            _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&_M_weak_count);
+	    if (__gnu_cxx::__exchange_and_add_dispatch(&_M_weak_count,
+						       -1) == 1)
+              {
+                _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&_M_weak_count);
+	        _M_destroy();
+              }
+	  }
+      }
+  
+      void
+      _M_weak_add_ref() // nothrow
+      { __gnu_cxx::__atomic_add_dispatch(&_M_weak_count, 1); }
+
+      void
+      _M_weak_release() // nothrow
+      {
+        // Be race-detector-friendly. For more info see bits/c++config.
+        _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&_M_weak_count);
+	if (__gnu_cxx::__exchange_and_add_dispatch(&_M_weak_count, -1) == 1)
+	  {
+            _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&_M_weak_count);
+	    if (_Mutex_base<_Lp>::_S_need_barriers)
+	      {
+	        // See _M_release(),
+	        // destroy() must observe results of dispose()
+	        _GLIBCXX_READ_MEM_BARRIER;
+	        _GLIBCXX_WRITE_MEM_BARRIER;
+	      }
+	    _M_destroy();
+	  }
+      }
+  
+      long
+      _M_get_use_count() const // nothrow
+      {
+        // No memory barrier is used here so there is no synchronization
+        // with other threads.
+        return const_cast<const volatile _Atomic_word&>(_M_use_count);
+      }
+
+    private:  
+      _Sp_counted_base(_Sp_counted_base const&);
+      _Sp_counted_base& operator=(_Sp_counted_base const&);
+
+      _Atomic_word  _M_use_count;     // #shared
+      _Atomic_word  _M_weak_count;    // #weak + (#shared != 0)
+    };
+
+  template<>
+    inline void
+    _Sp_counted_base<_S_single>::
+    _M_add_ref_lock()
+    {
+      if (__gnu_cxx::__exchange_and_add_dispatch(&_M_use_count, 1) == 0)
+	{
+	  _M_use_count = 0;
+	  __throw_bad_weak_ptr();
+	}
+    }
+
+  template<>
+    inline void
+    _Sp_counted_base<_S_mutex>::
+    _M_add_ref_lock()
+    {
+      __gnu_cxx::__scoped_lock sentry(*this);
+      if (__gnu_cxx::__exchange_and_add_dispatch(&_M_use_count, 1) == 0)
+	{
+	  _M_use_count = 0;
+	  __throw_bad_weak_ptr();
+	}
+    }
+
+  template<> 
+    inline void
+    _Sp_counted_base<_S_atomic>::
+    _M_add_ref_lock()
+    {
+      // Perform lock-free add-if-not-zero operation.
+      _Atomic_word __count = _M_use_count;
+      do
+	{
+	  if (__count == 0)
+	    __throw_bad_weak_ptr();
+	  // Replace the current counter value with the old value + 1, as
+	  // long as it's not changed meanwhile. 
+	}
+      while (!__atomic_compare_exchange_n(&_M_use_count, &__count, __count + 1,
+					  true, __ATOMIC_ACQ_REL, 
+					  __ATOMIC_RELAXED));
+     }
+
   template<typename _Ptr, typename _Deleter, _Lock_policy _Lp>
     class _Sp_counted_base_impl
     : public _Sp_counted_base<_Lp>
@@ -367,7 +553,7 @@ namespace tr1
 	: _M_ptr(__p), _M_refcount(__p)
         {
 	  __glibcxx_function_requires(_ConvertibleConcept<_Tp1*, _Tp*>)
-	  // __glibcxx_function_requires(_CompleteConcept<_Tp1*>)
+	  typedef int _IsComplete[sizeof(_Tp1)];
 	  __enable_shared_from_this_helper(_M_refcount, __p, __p);
 	}
 
@@ -398,15 +584,15 @@ namespace tr1
 	  _M_ptr = __r._M_ptr;
 	}
 
-#if !defined(__GXX_EXPERIMENTAL_CXX0X__) || _GLIBCXX_DEPRECATED
+#if (__cplusplus < 201103L) || _GLIBCXX_USE_DEPRECATED
       // Postcondition: use_count() == 1 and __r.get() == 0
       template<typename _Tp1>
         explicit
         __shared_ptr(std::auto_ptr<_Tp1>& __r)
 	: _M_ptr(__r.get()), _M_refcount()
-        {
+        { // TODO requries delete __r.release() well-formed
 	  __glibcxx_function_requires(_ConvertibleConcept<_Tp1*, _Tp*>)
-	  // TODO requires _Tp1 is complete, delete __r.release() well-formed
+	  typedef int _IsComplete[sizeof(_Tp1)];
 	  _Tp1* __tmp = __r.get();
 	  _M_refcount = __shared_count<_Lp>(__r);
 	  __enable_shared_from_this_helper(_M_refcount, __tmp, __tmp);
@@ -444,7 +630,7 @@ namespace tr1
 	  return *this;
 	}
 
-#if !defined(__GXX_EXPERIMENTAL_CXX0X__) || _GLIBCXX_DEPRECATED
+#if (__cplusplus < 201103L) || _GLIBCXX_USE_DEPRECATED
       template<typename _Tp1>
         __shared_ptr&
         operator=(std::auto_ptr<_Tp1>& __r)
@@ -821,7 +1007,7 @@ namespace tr1
         shared_ptr(const weak_ptr<_Tp1>& __r)
 	: __shared_ptr<_Tp>(__r) { }
 
-#if !defined(__GXX_EXPERIMENTAL_CXX0X__) || _GLIBCXX_DEPRECATED
+#if (__cplusplus < 201103L) || _GLIBCXX_USE_DEPRECATED
       template<typename _Tp1>
         explicit
         shared_ptr(std::auto_ptr<_Tp1>& __r)
@@ -848,7 +1034,7 @@ namespace tr1
 	  return *this;
 	}
 
-#if !defined(__GXX_EXPERIMENTAL_CXX0X__) || _GLIBCXX_DEPRECATED
+#if (__cplusplus < 201103L) || _GLIBCXX_USE_DEPRECATED
       template<typename _Tp1>
         shared_ptr&
         operator=(std::auto_ptr<_Tp1>& __r)
@@ -978,6 +1164,8 @@ namespace tr1
 
       mutable weak_ptr<_Tp>  _M_weak_this;
     };
+
+_GLIBCXX_END_NAMESPACE_VERSION
 }
 }
 

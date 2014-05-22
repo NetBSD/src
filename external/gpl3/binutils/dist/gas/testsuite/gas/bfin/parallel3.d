@@ -47,9 +47,9 @@ Disassembly of section .text:
   9c:	58 93 00 00 
   a0:	04 cc 39 a6 	R0 = R7 \+ R1, R3 = R7 - R1 \(S\) \|\| \[P3\+\+\] = P0 \|\| NOP;
   a4:	58 92 00 00 
-  a8:	11 cc c0 0b 	R7 = A1 \+ A0, R5 = A1 - A0 \(NS\) \|\| \[P3--\] = P0 \|\| NOP;
+  a8:	11 cc ff 0b 	R7 = A1 \+ A0, R5 = A1 - A0 \(NS\) \|\| \[P3--\] = P0 \|\| NOP;
   ac:	d8 92 00 00 
-  b0:	11 cc c0 6c 	R3 = A0 \+ A1, R6 = A0 - A1 \(S\) \|\| \[P3 \+ 0x1c\] = P0 \|\| NOP;
+  b0:	11 cc ff 6c 	R3 = A0 \+ A1, R6 = A0 - A1 \(S\) \|\| \[P3 \+ 0x1c\] = P0 \|\| NOP;
   b4:	d8 bd 00 00 
   b8:	81 ce 8b 03 	R1 = R3 >>> 0xf \(V\) \|\| \[P3 \+ 0x18\] = P0 \|\| NOP;
   bc:	98 bd 00 00 
@@ -73,21 +73,21 @@ Disassembly of section .text:
  104:	68 92 00 00 
  108:	06 cc 17 40 	R0 = MIN \(R2, R7\) \(V\) \|\| \[P5--\] = P0 \|\| NOP;
  10c:	e8 92 00 00 
- 110:	04 ca be 66 	R2.H = R7.L \* R6.H, R2 = R7.H \* R6.H \|\| \[P5 \+ 0x8\] = P0 \|\| NOP;
+ 110:	04 ca be 66 	R2.H = R7.L \* R6.H, R2.L = R7.H \* R6.H \|\| \[P5 \+ 0x8\] = P0 \|\| NOP;
  114:	a8 bc 00 00 
- 118:	04 ca 08 e1 	R4.H = R1.H \* R0.H, R4 = R1.L \* R0.L \|\| \[P5 \+ 0x4\] = P0 \|\| NOP;
+ 118:	04 ca 08 e1 	R4.H = R1.H \* R0.H, R4.L = R1.L \* R0.L \|\| \[P5 \+ 0x4\] = P0 \|\| NOP;
  11c:	68 bc 00 00 
- 120:	04 ca 1a a0 	R0.H = R3.H \* R2.L, R0 = R3.L \* R2.L \|\| \[P5\] = P0 \|\| NOP;
+ 120:	04 ca 1a a0 	R0.H = R3.H \* R2.L, R0.L = R3.L \* R2.L \|\| \[P5\] = P0 \|\| NOP;
  124:	68 93 00 00 
- 128:	94 ca 5a e1 	R5.H = R3.H \* R2.H \(M\), R5 = R3.L \* R2.L \(FU\) \|\| \[SP\] = P0 \|\| NOP;
+ 128:	94 ca 5a e1 	R5.H = R3.H \* R2.H \(M\), R5.L = R3.L \* R2.L \(FU\) \|\| \[SP\] = P0 \|\| NOP;
  12c:	70 93 00 00 
  130:	2c ca 27 e0 	R1 = R4.H \* R7.H, R0 = R4.L \* R7.L \(S2RND\) \|\| \[SP\+\+\] = P0 \|\| NOP;
  134:	70 92 00 00 
  138:	0c ca 95 27 	R7 = R2.L \* R5.L, R6 = R2.H \* R5.H \|\| \[SP--\] = P0 \|\| NOP;
  13c:	f0 92 00 00 
- 140:	24 cb 3e e0 	R0.H = R7.H \* R6.H, R0 = R7.L \* R6.L \(ISS2\) \|\| \[SP \+ 0x3c\] = P0 \|\| NOP;
+ 140:	24 cb 3e e0 	R0.H = R7.H \* R6.H, R0.L = R7.L \* R6.L \(ISS2\) \|\| \[SP \+ 0x3c\] = P0 \|\| NOP;
  144:	f0 bf 00 00 
- 148:	04 cb c1 e0 	R3.H = R0.H \* R1.H, R3 = R0.L \* R1.L \(IS\) \|\| \[FP\] = P0 \|\| NOP;
+ 148:	04 cb c1 e0 	R3.H = R0.H \* R1.H, R3.L = R0.L \* R1.L \(IS\) \|\| \[FP\] = P0 \|\| NOP;
  14c:	78 93 00 00 
  150:	00 c8 13 46 	A1 = R2.L \* R3.H, A0 = R2.H \* R3.H \|\| \[FP\+\+\] = P0 \|\| NOP;
  154:	78 92 00 00 

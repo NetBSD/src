@@ -8,32 +8,32 @@
 .*:18: Error: Improper size \(25\)
 .*:20: Error: Improper position \(64\)
 .*:21: Error: Improper size \(14\)
-.*:23: Error: opcode not supported on this processor.*
-.*:24: Error: opcode not supported on this processor.*
-.*:25: Error: opcode not supported on this processor.*
-.*:26: Error: opcode not supported on this processor.*
-.*:27: Error: opcode not supported on this processor.*
-.*:28: Error: opcode not supported on this processor.*
-.*:29: Error: opcode not supported on this processor.*
-.*:30: Error: opcode not supported on this processor.*
-.*:31: Error: opcode not supported on this processor.*
-.*:32: Error: opcode not supported on this processor.*
-.*:33: Error: opcode not supported on this processor.*
-.*:34: Error: opcode not supported on this processor.*
-.*:35: Error: opcode not supported on this processor.*
-.*:36: Error: opcode not supported on this processor.*
-.*:37: Error: opcode not supported on this processor.*
-.*:39: Error: opcode not supported on this processor.*
-.*:40: Error: opcode not supported on this processor.*
-.*:41: Error: opcode not supported on this processor.*
-.*:42: Error: opcode not supported on this processor.*
-.*:43: Error: opcode not supported on this processor.*
-.*:45: Error: illegal operands `dmfc2 \$2,0x10000'
-.*:46: Error: illegal operands `dmtc2 \$2,0x12345'
-.*:47: Error: illegal operands `dmfc2 \$9,\$12'
-.*:48: Error: illegal operands `dmfc2 \$4,\$15,4'
-.*:49: Error: illegal operands `dmtc2 \$16,\$8'
-.*:50: Error: illegal operands `dmtc2 \$22,\$7,\$4'
+.*:23: Error: Opcode not supported on this processor.*
+.*:24: Error: Opcode not supported on this processor.*
+.*:25: Error: Opcode not supported on this processor.*
+.*:26: Error: Opcode not supported on this processor.*
+.*:27: Error: Opcode not supported on this processor.*
+.*:28: Error: Opcode not supported on this processor.*
+.*:29: Error: Opcode not supported on this processor.*
+.*:30: Error: Opcode not supported on this processor.*
+.*:31: Error: Opcode not supported on this processor.*
+.*:32: Error: Opcode not supported on this processor.*
+.*:33: Error: Opcode not supported on this processor.*
+.*:34: Error: Opcode not supported on this processor.*
+.*:35: Error: Opcode not supported on this processor.*
+.*:36: Error: Opcode not supported on this processor.*
+.*:37: Error: Opcode not supported on this processor.*
+.*:39: Error: Opcode not supported on this processor.*
+.*:40: Error: Opcode not supported on this processor.*
+.*:41: Error: Opcode not supported on this processor.*
+.*:42: Error: Opcode not supported on this processor.*
+.*:43: Error: Opcode not supported on this processor.*
+.*:45: Error: Illegal operands `dmfc2 \$2,0x10000'
+.*:46: Error: Illegal operands `dmtc2 \$2,0x12345'
+.*:47: Error: Illegal operands `dmfc2 \$9,\$12'
+.*:48: Error: Illegal operands `dmfc2 \$4,\$15,4'
+.*:49: Error: Illegal operands `dmtc2 \$16,\$8'
+.*:50: Error: Illegal operands `dmtc2 \$22,\$7,\$4'
 .*:52: Error: Improper size \(32\)
 .*:54: Error: Improper position \(32\)
 .*:55: Error: Improper size \(29\)

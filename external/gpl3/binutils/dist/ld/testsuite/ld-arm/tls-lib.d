@@ -1,6 +1,6 @@
 
-.*:     file format elf32-.*arm
-architecture: arm, flags 0x00000150:
+.*:     file format elf32-.*arm.*
+architecture: armv4, flags 0x00000150:
 HAS_SYMS, DYNAMIC, D_PAGED
 start address 0x.*
 

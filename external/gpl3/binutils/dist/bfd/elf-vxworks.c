@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
+   Copyright 2005, 2006, 2007, 2009, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -91,12 +91,13 @@ elf_vxworks_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info,
 
   if (!info->shared)
     {
-      s = bfd_make_section_with_flags (dynobj,
-				       bed->default_use_rela_p
-				       ? ".rela.plt.unloaded"
-				       : ".rel.plt.unloaded",
-				       SEC_HAS_CONTENTS | SEC_IN_MEMORY
-				       | SEC_READONLY | SEC_LINKER_CREATED);
+      s = bfd_make_section_anyway_with_flags (dynobj,
+					      bed->default_use_rela_p
+					      ? ".rela.plt.unloaded"
+					      : ".rel.plt.unloaded",
+					      SEC_HAS_CONTENTS | SEC_IN_MEMORY
+					      | SEC_READONLY
+					      | SEC_LINKER_CREATED);
       if (s == NULL
 	  || !bfd_set_section_alignment (dynobj, s, bed->s->log_file_align))
 	return FALSE;
@@ -280,7 +281,8 @@ elf_vxworks_finish_dynamic_entry (bfd *output_bfd, Elf_Internal_Dyn *dyn)
     case DT_VX_WRS_TLS_DATA_ALIGN:
       sec = bfd_get_section_by_name (output_bfd, ".tls_data");
       dyn->d_un.d_val
-	= (bfd_size_type)1 << bfd_get_section_alignment (abfd, sec);
+	= (bfd_size_type)1 << bfd_get_section_alignment (output_bfd,
+							 sec);
       break;
       
     case DT_VX_WRS_TLS_VARS_START:

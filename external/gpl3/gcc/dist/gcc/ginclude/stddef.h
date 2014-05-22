@@ -1,5 +1,4 @@
-/* Copyright (C) 1989, 1997, 1998, 1999, 2000, 2002, 2004, 2009
-   Free Software Foundation, Inc.
+/* Copyright (C) 1989-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -41,8 +40,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define _STDDEF_H_
 /* snaroff@next.com says the NeXT needs this.  */
 #define _ANSI_STDDEF_H
-/* Irix 5.1 needs this.  */
-#define __STDDEF_H__
 #endif
 
 #ifndef __sys_stdtypes_h
@@ -63,8 +60,9 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* In 4.3bsd-net2, machine/ansi.h defines these symbols, which are
    defined if the corresponding type is *not* defined.
-   FreeBSD-2.1 defines _MACHINE_ANSI_H_ instead of _ANSI_H_ */
-#if defined(_ANSI_H_) || defined(_MACHINE_ANSI_H_)
+   FreeBSD-2.1 defines _MACHINE_ANSI_H_ instead of _ANSI_H_.
+   NetBSD defines _I386_ANSI_H_ and _X86_64_ANSI_H_ instead of _ANSI_H_ */
+#if defined(_ANSI_H_) || defined(_MACHINE_ANSI_H_) || defined(_X86_64_ANSI_H_)  || defined(_I386_ANSI_H_)
 #if !defined(_SIZE_T_) && !defined(_BSD_SIZE_T_)
 #define _SIZE_T
 #endif
@@ -91,7 +89,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #undef _WCHAR_T_
 #undef _BSD_WCHAR_T_
 #endif
-#endif /* defined(_ANSI_H_) || defined(_MACHINE_ANSI_H_) */
+#endif /* defined(_ANSI_H_) || defined(_MACHINE_ANSI_H_) || defined(_X86_64_ANSI_H_) || defined(_I386_ANSI_H_) */
 
 /* Sequent's header files use _PTRDIFF_T_ in some conflicting way.
    Just ignore it.  */
@@ -201,8 +199,11 @@ typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #define ___int_size_t_h
 #define _GCC_SIZE_T
 #define _SIZET_
-#if defined (__FreeBSD__) && (__FreeBSD__ >= 5)
-/* __size_t is a typedef on FreeBSD 5!, must not trash it. */
+#if (defined (__FreeBSD__) && (__FreeBSD__ >= 5)) \
+  || defined(__FreeBSD_kernel__)
+/* __size_t is a typedef on FreeBSD 5, must not trash it. */
+#elif defined (__VMS__)
+/* __size_t is also a typedef on VMS.  */
 #else
 #define __size_t
 #endif
@@ -359,7 +360,8 @@ typedef __WINT_TYPE__ wint_t;
 /*  In 4.3bsd-net2, leave these undefined to indicate that size_t, etc.
     are already defined.  */
 /*  BSD/OS 3.1 and FreeBSD [23].x require the MACHINE_ANSI_H check here.  */
-#if defined(_ANSI_H_) || defined(_MACHINE_ANSI_H_)
+/*  NetBSD 5 requires the I386_ANSI_H and X86_64_ANSI_H checks here.  */
+#if defined(_ANSI_H_) || defined(_MACHINE_ANSI_H_) || defined(_X86_64_ANSI_H_) || defined(_I386_ANSI_H_)
 /*  The references to _GCC_PTRDIFF_T_, _GCC_SIZE_T_, and _GCC_WCHAR_T_
     are probably typos and should be removed before 2.8 is released.  */
 #ifdef _GCC_PTRDIFF_T_
@@ -387,7 +389,7 @@ typedef __WINT_TYPE__ wint_t;
 #undef _WCHAR_T_
 #undef _BSD_WCHAR_T_
 #endif
-#endif /* _ANSI_H_ || _MACHINE_ANSI_H_ */
+#endif /* _ANSI_H_ || _MACHINE_ANSI_H_ || _X86_64_ANSI_H_ || _I386_ANSI_H_ */
 
 #endif /* __sys_stdtypes_h */
 
@@ -411,6 +413,27 @@ typedef __WINT_TYPE__ wint_t;
 
 /* Offset of member MEMBER in a struct of type TYPE. */
 #define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+
+#if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) \
+  || (defined(__cplusplus) && __cplusplus >= 201103L)
+#ifndef _GCC_MAX_ALIGN_T
+#define _GCC_MAX_ALIGN_T
+/* Type whose alignment is supported in every context and is at least
+   as great as that of any standard type not using alignment
+   specifiers.  */
+typedef struct {
+  long long __max_align_ll __attribute__((__aligned__(__alignof__(long long))));
+  long double __max_align_ld __attribute__((__aligned__(__alignof__(long double))));
+} max_align_t;
+#endif
+#endif /* C11 or C++11.  */
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifndef _GXX_NULLPTR_T
+#define _GXX_NULLPTR_T
+  typedef decltype(nullptr) nullptr_t;
+#endif
+#endif /* C++11.  */
 
 #endif /* _STDDEF_H was defined this time */
 

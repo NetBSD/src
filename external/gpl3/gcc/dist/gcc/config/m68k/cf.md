@@ -1,5 +1,5 @@
 ;; ColdFire V1, V2, V3 and V4/V4e DFA description.
-;; Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 ;; Contributed by CodeSourcery Inc., www.codesourcery.com
 ;;
 ;; This file is part of GCC.
@@ -52,7 +52,7 @@
 
 (define_cpu_unit "cf_dsoc,cf_agex" "cfv123_oep")
 
-;; A memory unit that is reffered to as 'certain hardware resources' in
+;; A memory unit that is referred to as 'certain hardware resources' in
 ;; ColdFire reference manuals.  This unit remains occupied for two cycles
 ;; after last dsoc cycle of a store - hence there is a 2 cycle delay between
 ;; two consecutive stores.

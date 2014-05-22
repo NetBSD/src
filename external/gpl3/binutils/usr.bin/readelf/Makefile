@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/18 20:22:20 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2014/05/22 15:54:56 yamt Exp $
 
 PROG=		readelf
-
-DPADD=		${LIBZ}
-LDADD=		-lz
 
 .include <bsd.own.mk>
 

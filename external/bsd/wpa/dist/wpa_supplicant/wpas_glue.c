@@ -1,15 +1,9 @@
 /*
  * WPA Supplicant - Glue code to setup EAPOL and RSN modules
- * Copyright (c) 2003-2008, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2012, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -412,14 +406,6 @@ static enum wpa_states _wpa_supplicant_get_state(void *wpa_s)
 }
 
 
-static void _wpa_supplicant_disassociate(void *wpa_s, int reason_code)
-{
-	wpa_supplicant_disassociate(wpa_s, reason_code);
-	/* Schedule a scan to make sure we continue looking for networks */
-	wpa_supplicant_req_scan(wpa_s, 5, 0);
-}
-
-
 static void _wpa_supplicant_deauthenticate(void *wpa_s, int reason_code)
 {
 	wpa_supplicant_deauthenticate(wpa_s, reason_code);
@@ -726,6 +712,53 @@ static void wpa_supplicant_cert_cb(void *ctx, int depth, const char *subject,
 
 	wpas_notify_certification(wpa_s, depth, subject, cert_hash, cert);
 }
+
+
+static void wpa_supplicant_status_cb(void *ctx, const char *status,
+				     const char *parameter)
+{
+	struct wpa_supplicant *wpa_s = ctx;
+
+	wpas_notify_eap_status(wpa_s, status, parameter);
+}
+
+
+static void wpa_supplicant_set_anon_id(void *ctx, const u8 *id, size_t len)
+{
+	struct wpa_supplicant *wpa_s = ctx;
+	char *str;
+	int res;
+
+	wpa_hexdump_ascii(MSG_DEBUG, "EAP method updated anonymous_identity",
+			  id, len);
+
+	if (wpa_s->current_ssid == NULL)
+		return;
+
+	if (id == NULL) {
+		if (wpa_config_set(wpa_s->current_ssid, "anonymous_identity",
+				   "NULL", 0) < 0)
+			return;
+	} else {
+		str = os_malloc(len * 2 + 1);
+		if (str == NULL)
+			return;
+		wpa_snprintf_hex(str, len * 2 + 1, id, len);
+		res = wpa_config_set(wpa_s->current_ssid, "anonymous_identity",
+				     str, 0);
+		os_free(str);
+		if (res < 0)
+			return;
+	}
+
+	if (wpa_s->conf->update_config) {
+		res = wpa_config_write(wpa_s->confname, wpa_s->conf);
+		if (res) {
+			wpa_printf(MSG_DEBUG, "Failed to update config after "
+				   "anonymous_id update");
+		}
+	}
+}
 #endif /* IEEE8021X_EAPOL */
 
 
@@ -757,6 +790,8 @@ int wpa_supplicant_init_eapol(struct wpa_supplicant *wpa_s)
 	ctx->port_cb = wpa_supplicant_port_cb;
 	ctx->cb = wpa_supplicant_eapol_cb;
 	ctx->cert_cb = wpa_supplicant_cert_cb;
+	ctx->status_cb = wpa_supplicant_status_cb;
+	ctx->set_anon_id = wpa_supplicant_set_anon_id;
 	ctx->cb_ctx = wpa_s;
 	wpa_s->eapol = eapol_sm_init(ctx);
 	if (wpa_s->eapol == NULL) {
@@ -771,6 +806,7 @@ int wpa_supplicant_init_eapol(struct wpa_supplicant *wpa_s)
 }
 
 
+#ifndef CONFIG_NO_WPA
 static void wpa_supplicant_set_rekey_offload(void *ctx, const u8 *kek,
 					     const u8 *kck,
 					     const u8 *replay_ctr)
@@ -779,6 +815,7 @@ static void wpa_supplicant_set_rekey_offload(void *ctx, const u8 *kek,
 
 	wpa_drv_set_rekey_info(wpa_s, kek, kck, replay_ctr);
 }
+#endif /* CONFIG_NO_WPA */
 
 
 int wpa_supplicant_init_wpa(struct wpa_supplicant *wpa_s)
@@ -796,7 +833,6 @@ int wpa_supplicant_init_wpa(struct wpa_supplicant *wpa_s)
 	ctx->set_state = _wpa_supplicant_set_state;
 	ctx->get_state = _wpa_supplicant_get_state;
 	ctx->deauthenticate = _wpa_supplicant_deauthenticate;
-	ctx->disassociate = _wpa_supplicant_disassociate;
 	ctx->set_key = wpa_supplicant_set_key;
 	ctx->get_network_ctx = wpa_supplicant_get_network_ctx;
 	ctx->get_bssid = wpa_supplicant_get_bssid;
@@ -846,7 +882,8 @@ void wpa_supplicant_rsn_supp_set_config(struct wpa_supplicant *wpa_s,
 		conf.peerkey_enabled = ssid->peerkey;
 		conf.allowed_pairwise_cipher = ssid->pairwise_cipher;
 #ifdef IEEE8021X_EAPOL
-		conf.proactive_key_caching = ssid->proactive_key_caching;
+		conf.proactive_key_caching = ssid->proactive_key_caching < 0 ?
+			wpa_s->conf->okc : ssid->proactive_key_caching;
 		conf.eap_workaround = ssid->eap_workaround;
 		conf.eap_conf_ctx = &ssid->eap;
 #endif /* IEEE8021X_EAPOL */

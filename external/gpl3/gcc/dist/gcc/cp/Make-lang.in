@@ -1,7 +1,5 @@
 # Top level -*- makefile -*- fragment for GNU C++.
-#   Copyright (C) 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-#   2005, 2007, 2008, 2009, 2010
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1994-2013 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -53,28 +51,28 @@ c++: cc1plus$(exeext)
 # Tell GNU make to ignore these if they exist.
 .PHONY: c++
 
-g++spec.o: $(srcdir)/cp/g++spec.c $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) $(CONFIG_H)
-	(SHLIB_LINK='$(SHLIB_LINK)'; \
+g++spec.o: $(srcdir)/cp/g++spec.c $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) \
+    $(CONFIG_H) $(OPTS_H)
+	(SHLIB='$(SHLIB)'; \
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(DRIVER_DEFINES) \
 		$(INCLUDES) $(srcdir)/cp/g++spec.c)
 
 # Create the compiler driver for g++.
-GXX_OBJS = $(GCC_OBJS) g++spec.o intl.o prefix.o version.o
-g++$(exeext): $(GXX_OBJS) $(EXTRA_GCC_OBJS) $(LIBDEPS)
-	$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
-	  $(GXX_OBJS) $(EXTRA_GCC_OBJS) $(LIBS)
+GXX_OBJS = $(GCC_OBJS) g++spec.o
+xg++$(exeext): $(GXX_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a $(LIBDEPS)
+	+$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	  $(GXX_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a \
+	  $(EXTRA_GCC_LIBS) $(LIBS)
 
 # Create a version of the g++ driver which calls the cross-compiler.
-g++-cross$(exeext): g++$(exeext)
+g++-cross$(exeext): xg++$(exeext)
 	-rm -f g++-cross$(exeext)
-	cp g++$(exeext) g++-cross$(exeext)
+	cp xg++$(exeext) g++-cross$(exeext)
 
 # The compiler itself.
 # Shared with C front end:
-CXX_C_OBJS = attribs.o c-common.o c-format.o c-pragma.o c-semantics.o c-lex.o \
-	c-dump.o $(CXX_TARGET_OBJS) c-pretty-print.o c-opts.o c-pch.o \
-	incpath.o c-ppoutput.o c-cppbuiltin.o prefix.o \
-	c-gimplify.o c-omp.o
+CXX_C_OBJS = attribs.o incpath.o \
+	$(C_COMMON_OBJS) $(CXX_TARGET_OBJS)
 
 # Language-specific object files for C++ and Objective C++.
 CXX_AND_OBJCXX_OBJS = cp/call.o cp/decl.o cp/expr.o cp/pt.o cp/typeck2.o \
@@ -82,41 +80,51 @@ CXX_AND_OBJCXX_OBJS = cp/call.o cp/decl.o cp/expr.o cp/pt.o cp/typeck2.o \
  cp/typeck.o cp/cvt.o cp/except.o cp/friend.o cp/init.o cp/method.o \
  cp/search.o cp/semantics.o cp/tree.o cp/repo.o cp/dump.o cp/optimize.o \
  cp/mangle.o cp/cp-objcp-common.o cp/name-lookup.o cp/cxx-pretty-print.o \
- cp/cp-gimplify.o tree-mudflap.o $(CXX_C_OBJS)
+ cp/cp-gimplify.o $(CXX_C_OBJS)
 
 # Language-specific object files for C++.
-CXX_OBJS = cp/cp-lang.o stub-objc.o $(CXX_AND_OBJCXX_OBJS)
+CXX_OBJS = cp/cp-lang.o c-family/stub-objc.o $(CXX_AND_OBJCXX_OBJS)
 
-c++_OBJS = $(CXX_OBJS) dummy-checksum.o cc1plus-checksum.o cp/g++spec.o
+c++_OBJS = $(CXX_OBJS) cc1plus-checksum.o cp/g++spec.o
 
 # Use strict warnings for this front end.
 cp-warn = $(STRICT_WARN)
 
-cc1plus-dummy$(exeext): $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
-	$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
-	      $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBS) $(BACKENDLIBS)
-
-cc1plus-checksum.c : cc1plus-dummy$(exeext) build/genchecksum$(build_exeext)
-	build/genchecksum$(build_exeext) cc1plus-dummy$(exeext) > $@
+# compute checksum over all object files and the options
+cc1plus-checksum.c : build/genchecksum$(build_exeext) checksum-options \
+	$(CXX_OBJS) $(BACKEND) $(LIBDEPS) 
+	build/genchecksum$(build_exeext) $(CXX_OBJS) $(BACKEND) $(LIBDEPS) \
+                     checksum-options > cc1plus-checksum.c.tmp &&	   \
+	$(SHELL) $(srcdir)/../move-if-change cc1plus-checksum.c.tmp cc1plus-checksum.c
 
 cc1plus-checksum.o : cc1plus-checksum.c $(CONFIG_H) $(SYSTEM_H)
 
 cc1plus$(exeext): $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBDEPS)
-	$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	+$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
 	      $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBS) $(BACKENDLIBS)
 
-# Special build rules.
+ifeq ($(ENABLE_MAINTAINER_RULES), true)
+# Special build rule.  This is a maintainer rule, that is only
+# available when GCC is configured with --enable-maintainer-mode.  In
+# other cases, it is not available to avoid triggering rebuilds if a
+# user has the source checked out with unusual timestamps.
 $(srcdir)/cp/cfns.h: $(srcdir)/cp/cfns.gperf
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_cfns.h:
+else
+# We keep the rule so that you can still force a rebuild, even if you
+# didn't configure GCC with --enable-maintainer-mode, by manually
+# deleting the $(srcdir)/cp/cfns.h file.
+$(srcdir)/cp/cfns.h:
+endif
 	gperf -o -C -E -k '1-6,$$' -j1 -D -N 'libc_name_p' -L ANSI-C \
-		$(srcdir)/cp/cfns.gperf > $(srcdir)/cp/cfns.h
+		$(srcdir)/cp/cfns.gperf --output-file $(srcdir)/cp/cfns.h
 
 #
 # Build hooks:
 
 c++.all.cross: g++-cross$(exeext)
-c++.start.encap: g++$(exeext)
+c++.start.encap: xg++$(exeext)
 c++.rest.encap:
 c++.info:
 c++.install-info:
@@ -142,12 +150,19 @@ c++.srcman: doc/g++.1
 # check targets.  However, our DejaGNU framework requires 'check-g++' as its
 # entry point.  We feed the former to the latter here.
 check-c++ : check-g++
+# Run the testsute in C++0x mode.
+check-c++0x:
+	@echo Normal 'make check' now runs the testsuite in C++11 mode as well as C++98.
+# Run the testsuite with garbage collection at every opportunity.
+check-g++-strict-gc:
+	$(MAKE) RUNTESTFLAGS="$(RUNTESTFLAGS) --extra_opts,--param,ggc-min-heapsize=0,--param,ggc-min-expand=0" \
+	  TESTSUITEDIR="$(TESTSUITEDIR).gc" check-g++
 check-c++-subtargets : check-g++-subtargets
 # List of targets that can use the generic check- rule and its // variant.
 lang_checks += check-g++
 lang_checks_parallelized += check-g++
 # For description see comment above check_gcc_parallelize in gcc/Makefile.in.
-check_g++_parallelize = old-deja.exp dg.exp
+check_g++_parallelize = old-deja.exp dg.exp dg-torture.exp
 
 #
 # Install hooks:
@@ -157,7 +172,7 @@ check_g++_parallelize = old-deja.exp dg.exp
 # and also as either g++ (if native) or $(tooldir)/bin/g++.
 c++.install-common: installdirs
 	-rm -f $(DESTDIR)$(bindir)/$(GXX_INSTALL_NAME)$(exeext)
-	-$(INSTALL_PROGRAM) g++$(exeext) $(DESTDIR)$(bindir)/$(GXX_INSTALL_NAME)$(exeext)
+	-$(INSTALL_PROGRAM) xg++$(exeext) $(DESTDIR)$(bindir)/$(GXX_INSTALL_NAME)$(exeext)
 	-chmod a+x $(DESTDIR)$(bindir)/$(GXX_INSTALL_NAME)$(exeext)
 	-rm -f $(DESTDIR)$(bindir)/$(CXX_INSTALL_NAME)$(exeext)
 	-( cd $(DESTDIR)$(bindir) && \
@@ -181,8 +196,8 @@ c++.install-common: installdirs
 	  fi ; \
 	fi
 
-# We can't use links because not everyone supports them, and we can't use
-# .so because Irix 6.5 doesn't support them.  So just copy the manpage.
+# We can't use links because not everyone supports them.  So just copy the
+# manpage.
 doc/g++.1: doc/gcc.1
 	cp $< doc/g++.1
 
@@ -222,6 +237,7 @@ c++.mostlyclean:
 c++.clean:
 c++.distclean:
 	-rm -f cp/config.status cp/Makefile
+	-rm -f cxxmain.c
 c++.maintainer-clean:
 #
 # Stage hooks:
@@ -243,82 +259,91 @@ c++.stagefeedback: stagefeedback-start
 #
 # .o: .h dependencies.
 CXX_TREE_H = $(TREE_H) cp/name-lookup.h cp/cp-tree.h $(C_COMMON_H) \
-	$(FUNCTION_H) $(VARRAY_H) \
+	$(FUNCTION_H) \
 	$(SYSTEM_H) coretypes.h $(CONFIG_H) $(TARGET_H) $(GGC_H) \
-	$(srcdir)/../include/hashtab.h $(srcdir)/../include/splay-tree.h
-
+	$(srcdir)/../include/hashtab.h
+CXX_PARSER_H = tree.h c-family/c-pragma.h cp/parser.h
 CXX_PRETTY_PRINT_H = cp/cxx-pretty-print.h $(C_PRETTY_PRINT_H)
 
 cp/lex.o: cp/lex.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) \
-  $(C_PRAGMA_H) toplev.h output.h input.h cp/operators.def $(TM_P_H)
-cp/cp-lang.o: cp/cp-lang.c $(CXX_TREE_H) $(TM_H) toplev.h debug.h langhooks.h \
+  $(C_PRAGMA_H) input.h cp/operators.def $(TM_P_H) \
+  c-family/c-objc.h
+cp/cp-lang.o: cp/cp-lang.c $(CXX_TREE_H) $(TM_H) debug.h langhooks.h \
   $(LANGHOOKS_DEF_H) $(C_COMMON_H) gtype-cp.h gt-cp-cp-lang.h \
-  $(DIAGNOSTIC_H) cp/cp-objcp-common.h $(EXPR_H) $(EXCEPT_H)
+  cp/cp-objcp-common.h $(EXPR_H) $(TARGET_H) $(CXX_PARSER_H)
 cp/decl.o: cp/decl.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) cp/decl.h \
-  output.h $(EXPR_H) except.h toplev.h $(HASHTAB_H) $(RTL_H) \
+  output.h toplev.h $(HASHTAB_H) $(RTL_H) \
   cp/operators.def $(TM_P_H) $(TREE_INLINE_H) $(DIAGNOSTIC_H) $(C_PRAGMA_H) \
-  debug.h gt-cp-decl.h $(TIMEVAR_H) $(TREE_FLOW_H) $(TARGET_H) $(PLUGIN_H) \
-  intl.h
-cp/decl2.o: cp/decl2.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) cp/decl.h $(EXPR_H) \
-  output.h except.h toplev.h $(RTL_H) $(C_COMMON_H) gt-cp-decl2.h $(CGRAPH_H) \
-  $(C_PRAGMA_H) $(TREE_DUMP_H) intl.h $(TARGET_H) $(GIMPLE_H) $(POINTER_SET_H)
+  debug.h gt-cp-decl.h $(TIMEVAR_H) $(TARGET_H) $(PLUGIN_H) \
+  intl.h tree-iterator.h pointer-set.h $(SPLAY_TREE_H) \
+  c-family/c-objc.h
+cp/decl2.o: cp/decl2.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) cp/decl.h \
+  toplev.h $(C_COMMON_H) gt-cp-decl2.h $(CGRAPH_H) \
+  $(C_PRAGMA_H) dumpfile.h intl.h $(TARGET_H) $(GIMPLE_H) pointer-set.h \
+  $(SPLAY_TREE_H) c-family/c-ada-spec.h \
+  c-family/c-objc.h
 cp/cp-objcp-common.o : cp/cp-objcp-common.c $(CONFIG_H) $(SYSTEM_H) \
-  coretypes.h $(TM_H) $(TREE_H) $(CXX_TREE_H) $(C_COMMON_H) toplev.h \
+  coretypes.h $(TM_H) $(TREE_H) $(CXX_TREE_H) $(C_COMMON_H) \
   langhooks.h $(LANGHOOKS_DEF_H) $(DIAGNOSTIC_H) debug.h \
   $(CXX_PRETTY_PRINT_H) cp/cp-objcp-common.h gt-cp-cp-objcp-common.h
-cp/typeck2.o: cp/typeck2.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h output.h \
-  $(TM_P_H) $(DIAGNOSTIC_H) gt-cp-typeck2.h $(REAL_H) intl.h
-cp/typeck.o: cp/typeck.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) $(RTL_H) $(EXPR_H) \
-  toplev.h $(DIAGNOSTIC_H) convert.h $(C_COMMON_H) $(TARGET_H)
-cp/class.o: cp/class.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h $(RTL_H) \
-  $(TARGET_H) convert.h $(CGRAPH_H) $(TREE_DUMP_H) gt-cp-class.h
-cp/call.o: cp/call.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h $(RTL_H) \
-  $(EXPR_H) $(DIAGNOSTIC_H) intl.h gt-cp-call.h convert.h $(TARGET_H) langhooks.h
-cp/friend.o: cp/friend.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) $(RTL_H) toplev.h \
-  $(EXPR_H)
-cp/init.o: cp/init.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) $(RTL_H) $(EXPR_H) \
-  toplev.h except.h $(TARGET_H)
-cp/method.o: cp/method.c $(CXX_TREE_H) $(TM_H) toplev.h $(RTL_H) $(EXPR_H) \
-  $(TM_P_H) $(TARGET_H) $(DIAGNOSTIC_H) gt-cp-method.h $(GIMPLE_H)
-cp/cvt.o: cp/cvt.c $(CXX_TREE_H) $(TM_H) cp/decl.h $(FLAGS_H) toplev.h \
+cp/typeck2.o: cp/typeck2.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) \
+  $(TM_P_H) $(DIAGNOSTIC_CORE_H) gt-cp-typeck2.h $(REAL_H) intl.h
+cp/typeck.o: cp/typeck.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) $(PARAMS_H) \
+  toplev.h $(DIAGNOSTIC_H) convert.h $(C_COMMON_H) $(TARGET_H) \
+  c-family/c-objc.h
+cp/class.o: cp/class.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h \
+  $(TARGET_H) convert.h $(CGRAPH_H) dumpfile.h gt-cp-class.h \
+  $(SPLAY_TREE_H) pointer-set.h $(HASH_TABLE_H)
+cp/call.o: cp/call.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h \
+  $(DIAGNOSTIC_CORE_H) intl.h gt-cp-call.h convert.h $(TARGET_H) langhooks.h \
+  $(TIMEVAR_H) c-family/c-objc.h
+cp/friend.o: cp/friend.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H)
+cp/init.o: cp/init.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) \
+  $(EXCEPT_H) $(TARGET_H)
+cp/method.o: cp/method.c $(CXX_TREE_H) $(TM_H) toplev.h \
+  $(TM_P_H) $(TARGET_H) $(DIAGNOSTIC_H) gt-cp-method.h $(GIMPLE_H) \
+  $(COMMON_TARGET_H)
+cp/cvt.o: cp/cvt.c $(CXX_TREE_H) $(TM_H) cp/decl.h $(FLAGS_H) \
   convert.h $(TARGET_H) intl.h
-cp/search.o: cp/search.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h $(RTL_H) \
+cp/search.o: cp/search.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h \
   intl.h
-cp/tree.o: cp/tree.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h $(RTL_H) \
-  insn-config.h $(INTEGRATE_H) $(TREE_INLINE_H) $(REAL_H) gt-cp-tree.h \
-  $(TARGET_H) debug.h $(TREE_FLOW_H) $(CGRAPH_H)
+cp/tree.o: cp/tree.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) \
+  $(TREE_INLINE_H) $(REAL_H) gt-cp-tree.h \
+  $(TARGET_H) debug.h $(CGRAPH_H) $(SPLAY_TREE_H) $(GIMPLE_H) $(HASH_TABLE_H)
 cp/ptree.o: cp/ptree.c $(CXX_TREE_H) $(TM_H)
-cp/rtti.o: cp/rtti.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) toplev.h convert.h \
+cp/rtti.o: cp/rtti.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) convert.h \
   $(TARGET_H) $(C_PRAGMA_H) gt-cp-rtti.h intl.h
-cp/except.o: cp/except.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) $(RTL_H) except.h \
-  toplev.h cp/cfns.h $(EXPR_H) libfuncs.h $(TREE_INLINE_H) $(TARGET_H)
-cp/expr.o: cp/expr.c $(CXX_TREE_H) $(TM_H) $(RTL_H) $(FLAGS_H) $(EXPR_H) \
-  toplev.h except.h $(TM_P_H)
+cp/except.o: cp/except.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) \
+  cp/cfns.h $(TREE_INLINE_H) $(TARGET_H) gt-cp-except.h
+cp/expr.o: cp/expr.c $(CXX_TREE_H) $(TM_H) $(FLAGS_H) $(TM_P_H)
 cp/pt.o: cp/pt.c $(CXX_TREE_H) $(TM_H) cp/decl.h cp/cp-objcp-common.h \
-  toplev.h $(RTL_H) except.h $(TREE_INLINE_H) pointer-set.h gt-cp-pt.h \
-  vecprim.h intl.h
-cp/error.o: cp/error.c $(CXX_TREE_H) $(TM_H) toplev.h $(DIAGNOSTIC_H) \
-  $(FLAGS_H) $(REAL_H) $(LANGHOOKS_DEF_H) $(CXX_PRETTY_PRINT_H)
-cp/repo.o: cp/repo.c $(CXX_TREE_H) $(TM_H) toplev.h $(DIAGNOSTIC_H) \
+  toplev.h $(TREE_INLINE_H) pointer-set.h gt-cp-pt.h intl.h \
+  c-family/c-objc.h
+cp/error.o: cp/error.c $(CXX_TREE_H) $(TM_H) $(DIAGNOSTIC_H) \
+  $(FLAGS_H) $(REAL_H) $(LANGHOOKS_DEF_H) $(CXX_PRETTY_PRINT_H) \
+  tree-diagnostic.h tree-pretty-print.h pointer-set.h c-family/c-objc.h
+cp/repo.o: cp/repo.c $(CXX_TREE_H) $(TM_H) toplev.h $(DIAGNOSTIC_CORE_H) \
   gt-cp-repo.h
-cp/semantics.o: cp/semantics.c $(CXX_TREE_H) $(TM_H) except.h toplev.h \
-  $(FLAGS_H) debug.h output.h $(RTL_H) $(TIMEVAR_H) $(EXPR_H) \
+cp/semantics.o: cp/semantics.c $(CXX_TREE_H) $(TM_H) toplev.h \
+  $(FLAGS_H) $(RTL_H) $(TIMEVAR_H) \
   $(TREE_INLINE_H) $(CGRAPH_H) $(TARGET_H) $(C_COMMON_H) $(GIMPLE_H) \
-  gt-cp-semantics.h
+  bitmap.h gt-cp-semantics.h c-family/c-objc.h $(HASH_TABLE_H)
 cp/dump.o: cp/dump.c $(CXX_TREE_H) $(TM_H) $(TREE_DUMP_H)
-cp/optimize.o: cp/optimize.c $(CXX_TREE_H) $(TM_H) rtl.h $(INTEGRATE_H) \
-  insn-config.h input.h $(PARAMS_H) debug.h $(TREE_INLINE_H) $(GIMPLE_H) \
-  $(TARGET_H) tree-iterator.h $(CGRAPH_H)
-cp/mangle.o: cp/mangle.c $(CXX_TREE_H) $(TM_H) toplev.h $(REAL_H) \
+cp/optimize.o: cp/optimize.c $(CXX_TREE_H) $(TM_H) \
+  input.h $(PARAMS_H) debug.h $(TREE_INLINE_H) $(GIMPLE_H) \
+  $(TARGET_H) tree-iterator.h $(CGRAPH_H) $(DIAGNOSTIC_CORE_H) \
+  dumpfile.h
+cp/mangle.o: cp/mangle.c $(CXX_TREE_H) $(TM_H) $(REAL_H) \
   gt-cp-mangle.h $(TARGET_H) $(TM_P_H) $(CGRAPH_H)
-cp/parser.o: cp/parser.c $(CXX_TREE_H) $(TM_H) $(DIAGNOSTIC_H) gt-cp-parser.h \
-  output.h $(TARGET_H) $(PLUGIN_H) intl.h
-cp/cp-gimplify.o: cp/cp-gimplify.c $(CXX_TREE_H) toplev.h $(C_COMMON_H) \
-	$(TM_H) coretypes.h pointer-set.h tree-iterator.h
+cp/parser.o: cp/parser.c $(CXX_TREE_H) $(TM_H) $(DIAGNOSTIC_CORE_H) \
+  gt-cp-parser.h $(TARGET_H) $(PLUGIN_H) intl.h cp/decl.h \
+  c-family/c-objc.h tree-pretty-print.h $(CXX_PARSER_H) $(TIMEVAR_H)
+cp/cp-gimplify.o: cp/cp-gimplify.c $(CXX_TREE_H) $(C_COMMON_H) \
+	$(TM_H) coretypes.h pointer-set.h tree-iterator.h $(SPLAY_TREE_H)
 
 cp/name-lookup.o: cp/name-lookup.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
-	$(TM_H) $(CXX_TREE_H) $(TIMEVAR_H) gt-cp-name-lookup.h toplev.h \
-	$(DIAGNOSTIC_H) $(FLAGS_H) debug.h
+	$(TM_H) $(CXX_TREE_H) $(TIMEVAR_H) gt-cp-name-lookup.h $(PARAMS_H) \
+	$(DIAGNOSTIC_CORE_H) $(FLAGS_H) debug.h pointer-set.h
 
 cp/cxx-pretty-print.o: cp/cxx-pretty-print.c $(CXX_PRETTY_PRINT_H) \
-  $(CONFIG_H) $(SYSTEM_H) $(TM_H) coretypes.h $(CXX_TREE_H)
+  $(CONFIG_H) $(SYSTEM_H) $(TM_H) coretypes.h $(CXX_TREE_H) tree-pretty-print.h

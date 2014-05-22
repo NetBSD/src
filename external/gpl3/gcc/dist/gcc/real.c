@@ -1,6 +1,5 @@
 /* real.c - software floating point emulation.
-   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
    Contributed by Stephen L. Moshier (moshier@world.std.com).
    Re-written by Richard Henderson <rth@redhat.com>
 
@@ -25,8 +24,9 @@
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "real.h"
+#include "realmpfr.h"
 #include "tm_p.h"
 #include "dfp.h"
 
@@ -1067,14 +1067,19 @@ real_arithmetic (REAL_VALUE_TYPE *r, int icode, const REAL_VALUE_TYPE *op0,
   return false;
 }
 
-/* Legacy.  Similar, but return the result directly.  */
-
 REAL_VALUE_TYPE
-real_arithmetic2 (int icode, const REAL_VALUE_TYPE *op0,
-		  const REAL_VALUE_TYPE *op1)
+real_value_negate (const REAL_VALUE_TYPE *op0)
 {
   REAL_VALUE_TYPE r;
-  real_arithmetic (&r, icode, op0, op1);
+  real_arithmetic (&r, NEGATE_EXPR, op0, NULL);
+  return r;
+}
+
+REAL_VALUE_TYPE
+real_value_abs (const REAL_VALUE_TYPE *op0)
+{
+  REAL_VALUE_TYPE r;
+  real_arithmetic (&r, ABS_EXPR, op0, NULL);
   return r;
 }
 
@@ -1416,10 +1421,10 @@ real_to_integer2 (HOST_WIDE_INT *plow, HOST_WIDE_INT *phigh,
 	 undefined, so it doesn't matter what we return, and some callers
 	 expect to be able to use this routine for both signed and
 	 unsigned conversions.  */
-      if (exp > 2*HOST_BITS_PER_WIDE_INT)
+      if (exp > HOST_BITS_PER_DOUBLE_INT)
 	goto overflow;
 
-      rshift_significand (&t, r, 2*HOST_BITS_PER_WIDE_INT - exp);
+      rshift_significand (&t, r, HOST_BITS_PER_DOUBLE_INT - exp);
       if (HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_LONG)
 	{
 	  high = t.sig[SIGSZ-1];
@@ -2153,7 +2158,7 @@ real_from_integer (REAL_VALUE_TYPE *r, enum machine_mode mode,
       memset (r, 0, sizeof (*r));
       r->cl = rvc_normal;
       r->sign = high < 0 && !unsigned_p;
-      SET_REAL_EXP (r, 2 * HOST_BITS_PER_WIDE_INT);
+      SET_REAL_EXP (r, HOST_BITS_PER_DOUBLE_INT);
 
       if (r->sign)
 	{
@@ -4990,82 +4995,6 @@ void
 real_copysign (REAL_VALUE_TYPE *r, const REAL_VALUE_TYPE *x)
 {
   r->sign = x->sign;
-}
-
-/* Convert from REAL_VALUE_TYPE to MPFR.  The caller is responsible
-   for initializing and clearing the MPFR parameter.  */
-
-void
-mpfr_from_real (mpfr_ptr m, const REAL_VALUE_TYPE *r, mp_rnd_t rndmode)
-{
-  /* We use a string as an intermediate type.  */
-  char buf[128];
-  int ret;
-
-  /* Take care of Infinity and NaN.  */
-  if (r->cl == rvc_inf)
-    {
-      mpfr_set_inf (m, r->sign == 1 ? -1 : 1);
-      return;
-    }
-
-  if (r->cl == rvc_nan)
-    {
-      mpfr_set_nan (m);
-      return;
-    }
-
-  real_to_hexadecimal (buf, r, sizeof (buf), 0, 1);
-  /* mpfr_set_str() parses hexadecimal floats from strings in the same
-     format that GCC will output them.  Nothing extra is needed.  */
-  ret = mpfr_set_str (m, buf, 16, rndmode);
-  gcc_assert (ret == 0);
-}
-
-/* Convert from MPFR to REAL_VALUE_TYPE, for a given type TYPE and rounding
-   mode RNDMODE.  TYPE is only relevant if M is a NaN.  */
-
-void
-real_from_mpfr (REAL_VALUE_TYPE *r, mpfr_srcptr m, tree type, mp_rnd_t rndmode)
-{
-  /* We use a string as an intermediate type.  */
-  char buf[128], *rstr;
-  mp_exp_t exp;
-
-  /* Take care of Infinity and NaN.  */
-  if (mpfr_inf_p (m))
-    {
-      real_inf (r);
-      if (mpfr_sgn (m) < 0)
-	*r = REAL_VALUE_NEGATE (*r);
-      return;
-    }
-
-  if (mpfr_nan_p (m))
-    {
-      real_nan (r, "", 1, TYPE_MODE (type));
-      return;
-    }
-
-  rstr = mpfr_get_str (NULL, &exp, 16, 0, m, rndmode);
-
-  /* The additional 12 chars add space for the sprintf below.  This
-     leaves 6 digits for the exponent which is supposedly enough.  */
-  gcc_assert (rstr != NULL && strlen (rstr) < sizeof (buf) - 12);
-
-  /* REAL_VALUE_ATOF expects the exponent for mantissa * 2**exp,
-     mpfr_get_str returns the exponent for mantissa * 16**exp, adjust
-     for that.  */
-  exp *= 4;
-
-  if (rstr[0] == '-')
-    sprintf (buf, "-0x.%sp%d", &rstr[1], (int) exp);
-  else
-    sprintf (buf, "0x.%sp%d", rstr, (int) exp);
-
-  mpfr_free_str (rstr);
-
-  real_from_string (r, buf);
 }
 
 /* Check whether the real constant value given is an integer.  */

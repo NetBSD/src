@@ -1,5 +1,5 @@
 /* bfin-parse.y  ADI Blackfin parser
-   Copyright 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -165,6 +165,9 @@ static void notethat (char *, ...);
 char *current_inputline;
 extern char *yytext;
 int yyerror (char *);
+
+/* Used to set SRCx fields to all 1s as described in the PRM.  */
+static Register reg7 = {REG_R7, 0};
 
 void error (char *format, ...)
 {
@@ -336,11 +339,15 @@ check_macfuncs (Macfunc *aa, Opt_mode *opa,
       aa->s1.regno |= (ab->s1.regno & CODE_MASK);
     }
 
-  if (aa->w == ab->w  && aa->P != ab->P)
+  if (aa->w == ab->w && aa->P != ab->P)
+    return yyerror ("Destination Dreg sizes (full or half) must match");
+
+  if (aa->w && ab->w)
     {
-      return yyerror ("macfuncs must differ");
-      if (aa->w && (aa->dst.regno - ab->dst.regno != 1))
-	return yyerror ("Destination Dregs must differ by one");
+      if (aa->P && (aa->dst.regno - ab->dst.regno) != 1)
+	return yyerror ("Destination Dregs (full) must differ by one");
+      if (!aa->P && aa->dst.regno != ab->dst.regno)
+	return yyerror ("Destination Dregs (half) must match");
     }
 
   /* Make sure mod flags get ORed, too.  */
@@ -455,7 +462,7 @@ dsp32shiftimm in slot1 and P-reg Store in slot2 Not Supported");
 
 /* Vector Specific.  */
 %token BYTEOP16P BYTEOP16M
-%token BYTEOP1P BYTEOP2P BYTEOP2M BYTEOP3P
+%token BYTEOP1P BYTEOP2P BYTEOP3P
 %token BYTEUNPACK BYTEPACK
 %token PACK
 %token SAA
@@ -797,7 +804,7 @@ asm_1:
 	  if (IS_DREG ($1) && !IS_A1 ($4) && IS_A1 ($5))
 	    {
 	      notethat ("dsp32alu: dregs = ( A0 += A1 )\n");
-	      $$ = DSP32ALU (11, 0, 0, &$1, 0, 0, 0, 0, 0);
+	      $$ = DSP32ALU (11, 0, 0, &$1, &reg7, &reg7, 0, 0, 0);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -807,7 +814,7 @@ asm_1:
 	  if (!IS_A1 ($4) && IS_A1 ($5))
 	    {
 	      notethat ("dsp32alu: dregs_half = ( A0 += A1 )\n");
-	      $$ = DSP32ALU (11, IS_H ($1), 0, &$1, 0, 0, 0, 0, 1);
+	      $$ = DSP32ALU (11, IS_H ($1), 0, &$1, &reg7, &reg7, 0, 0, 1);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -827,6 +834,8 @@ asm_1:
 	{
 	  if (!IS_DREG ($2) || !IS_DREG ($4))
 	    return yyerror ("Dregs expected");
+	  else if (REG_SAME ($2, $4))
+	    return yyerror ("Illegal dest register combination");
 	  else if (!valid_dreg_pair (&$9, $11))
 	    return yyerror ("Bad dreg pair");
 	  else if (!valid_dreg_pair (&$13, $15))
@@ -843,6 +852,8 @@ asm_1:
 	{
 	  if (!IS_DREG ($2) || !IS_DREG ($4))
 	    return yyerror ("Dregs expected");
+	  else if (REG_SAME ($2, $4))
+	    return yyerror ("Illegal dest register combination");
 	  else if (!valid_dreg_pair (&$9, $11))
 	    return yyerror ("Bad dreg pair");
 	  else if (!valid_dreg_pair (&$13, $15))
@@ -858,6 +869,8 @@ asm_1:
 	{
 	  if (!IS_DREG ($2) || !IS_DREG ($4))
 	    return yyerror ("Dregs expected");
+	  else if (REG_SAME ($2, $4))
+	    return yyerror ("Illegal dest register combination");
 	  else if (!valid_dreg_pair (&$8, $10))
 	    return yyerror ("Bad dreg pair");
 	  else
@@ -868,6 +881,9 @@ asm_1:
 	}
 	| LPAREN REG COMMA REG RPAREN ASSIGN SEARCH REG LPAREN searchmod RPAREN
 	{
+	  if (REG_SAME ($2, $4))
+	    return yyerror ("Illegal dest register combination");
+
 	  if (IS_DREG ($2) && IS_DREG ($4) && IS_DREG ($8))
 	    {
 	      notethat ("dsp32alu: (dregs , dregs ) = SEARCH dregs (searchmod)\n");
@@ -879,10 +895,13 @@ asm_1:
 	| REG ASSIGN A_ONE_DOT_L PLUS A_ONE_DOT_H COMMA
 	  REG ASSIGN A_ZERO_DOT_L PLUS A_ZERO_DOT_H
 	{
+	  if (REG_SAME ($1, $7))
+	    return yyerror ("Illegal dest register combination");
+
 	  if (IS_DREG ($1) && IS_DREG ($7))
 	    {
 	      notethat ("dsp32alu: dregs = A1.l + A1.h, dregs = A0.l + A0.h  \n");
-	      $$ = DSP32ALU (12, 0, &$1, &$7, 0, 0, 0, 0, 1);
+	      $$ = DSP32ALU (12, 0, &$1, &$7, &reg7, &reg7, 0, 0, 1);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -891,18 +910,21 @@ asm_1:
 
 	| REG ASSIGN REG_A PLUS REG_A COMMA REG ASSIGN REG_A MINUS REG_A amod1
 	{
+	  if (REG_SAME ($1, $7))
+	    return yyerror ("Resource conflict in dest reg");
+
 	  if (IS_DREG ($1) && IS_DREG ($7) && !REG_SAME ($3, $5)
 	      && IS_A1 ($9) && !IS_A1 ($11))
 	    {
 	      notethat ("dsp32alu: dregs = A1 + A0 , dregs = A1 - A0 (amod1)\n");
-	      $$ = DSP32ALU (17, 0, &$1, &$7, 0, 0, $12.s0, $12.x0, 0);
+	      $$ = DSP32ALU (17, 0, &$1, &$7, &reg7, &reg7, $12.s0, $12.x0, 0);
 
 	    }
 	  else if (IS_DREG ($1) && IS_DREG ($7) && !REG_SAME ($3, $5)
 		   && !IS_A1 ($9) && IS_A1 ($11))
 	    {
 	      notethat ("dsp32alu: dregs = A0 + A1 , dregs = A0 - A1 (amod1)\n");
-	      $$ = DSP32ALU (17, 0, &$1, &$7, 0, 0, $12.s0, $12.x0, 1);
+	      $$ = DSP32ALU (17, 0, &$1, &$7, &reg7, &reg7, $12.s0, $12.x0, 1);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -934,6 +956,8 @@ asm_1:
 	  if (!IS_DREG ($1) || !IS_DREG ($3) || !IS_DREG ($5) || !IS_DREG ($7))
 	    return yyerror ("Dregs expected");
 
+	  if (REG_SAME ($1, $7))
+	    return yyerror ("Resource conflict in dest reg");
 
 	  if ($4.r0 == 1 && $10.r0 == 2)
 	    {
@@ -974,7 +998,7 @@ asm_1:
 	| a_assign ABS REG_A
 	{
 	  notethat ("dsp32alu: Ax = ABS Ax\n");
-	  $$ = DSP32ALU (16, IS_A1 ($1), 0, 0, 0, 0, 0, 0, IS_A1 ($3));
+	  $$ = DSP32ALU (16, IS_A1 ($1), 0, 0, &reg7, &reg7, 0, 0, IS_A1 ($3));
 	}
 	| A_ZERO_DOT_L ASSIGN HALF_REG
 	{
@@ -1050,22 +1074,6 @@ asm_1:
 	    {
 	      notethat ("dsp32alu: dregs = BYTEOP2P (dregs_pair , dregs_pair ) (rnd_op)\n");
 	      $$ = DSP32ALU (22, $13.r0, 0, &$1, &$5, &$9, $13.s0, $13.x0, $13.aop);
-	    }
-	}
-
-	| REG ASSIGN BYTEOP2M LPAREN REG COLON expr COMMA REG COLON expr RPAREN
-	  rnd_op
-	{
-	  if (!IS_DREG ($1))
-	    return yyerror ("Dregs expected");
-	  else if (!valid_dreg_pair (&$5, $7))
-	    return yyerror ("Bad dreg pair");
-	  else if (!valid_dreg_pair (&$9, $11))
-	    return yyerror ("Bad dreg pair");
-	  else
-	    {
-	      notethat ("dsp32alu: dregs = BYTEOP2M (dregs_pair , dregs_pair ) (rnd_op)\n");
-	      $$ = DSP32ALU (22, $13.r0, 0, &$1, &$5, &$9, $13.s0, $13.x0, $13.aop + 2);
 	    }
 	}
 
@@ -1157,7 +1165,7 @@ asm_1:
 	| a_assign MINUS REG_A
 	{
 	  notethat ("dsp32alu: Ax = - Ax\n");
-	  $$ = DSP32ALU (14, IS_A1 ($1), 0, 0, 0, 0, 0, 0, IS_A1 ($3));
+	  $$ = DSP32ALU (14, IS_A1 ($1), 0, 0, &reg7, &reg7, 0, 0, IS_A1 ($3));
 	}
 	| HALF_REG ASSIGN HALF_REG plus_minus HALF_REG amod1
 	{
@@ -1170,7 +1178,7 @@ asm_1:
 	  if (EXPR_VALUE ($3) == 0 && !REG_SAME ($1, $2))
 	    {
 	      notethat ("dsp32alu: A1 = A0 = 0\n");
-	      $$ = DSP32ALU (8, 0, 0, 0, 0, 0, 0, 0, 2);
+	      $$ = DSP32ALU (8, 0, 0, 0, &reg7, &reg7, 0, 0, 2);
 	    }
 	  else
 	    return yyerror ("Bad value, 0 expected");
@@ -1182,7 +1190,7 @@ asm_1:
 	  if (REG_SAME ($1, $2))
 	    {
 	      notethat ("dsp32alu: Ax = Ax (S)\n");
-	      $$ = DSP32ALU (8, 0, 0, 0, 0, 0, 1, 0, IS_A1 ($1));
+	      $$ = DSP32ALU (8, 0, 0, 0, &reg7, &reg7, 1, 0, IS_A1 ($1));
 	    }
 	  else
 	    return yyerror ("Registers must be equal");
@@ -1226,7 +1234,7 @@ asm_1:
 	  if (!REG_SAME ($1, $2))
 	    {
 	      notethat ("dsp32alu: An = Am\n");
-	      $$ = DSP32ALU (8, 0, 0, 0, 0, 0, IS_A1 ($1), 0, 3);
+	      $$ = DSP32ALU (8, 0, 0, 0, &reg7, &reg7, IS_A1 ($1), 0, 3);
 	    }
 	  else
 	    return yyerror ("Accu reg arguments must differ");
@@ -1346,12 +1354,12 @@ asm_1:
 	  if (IS_DREG ($1) && $3.regno == REG_A0x)
 	    {
 	      notethat ("dsp32alu: dregs_lo = A0.x\n");
-	      $$ = DSP32ALU (10, 0, 0, &$1, 0, 0, 0, 0, 0);
+	      $$ = DSP32ALU (10, 0, 0, &$1, &reg7, &reg7, 0, 0, 0);
 	    }
 	  else if (IS_DREG ($1) && $3.regno == REG_A1x)
 	    {
 	      notethat ("dsp32alu: dregs_lo = A1.x\n");
-	      $$ = DSP32ALU (10, 0, 0, &$1, 0, 0, 0, 0, 1);
+	      $$ = DSP32ALU (10, 0, 0, &$1, &reg7, &reg7, 0, 0, 1);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -1384,7 +1392,7 @@ asm_1:
 	  if (REG_SAME ($1, $3) && REG_SAME ($5, $7) && !REG_SAME ($1, $5))
 	    {
 	      notethat ("dsp32alu: A1 = ABS A1 , A0 = ABS A0\n");
-	      $$ = DSP32ALU (16, 0, 0, 0, 0, 0, 0, 0, 3);
+	      $$ = DSP32ALU (16, 0, 0, 0, &reg7, &reg7, 0, 0, 3);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -1395,7 +1403,7 @@ asm_1:
 	  if (REG_SAME ($1, $3) && REG_SAME ($5, $7) && !REG_SAME ($1, $5))
 	    {
 	      notethat ("dsp32alu: A1 = - A1 , A0 = - A0\n");
-	      $$ = DSP32ALU (14, 0, 0, 0, 0, 0, 0, 0, 3);
+	      $$ = DSP32ALU (14, 0, 0, 0, &reg7, &reg7, 0, 0, 3);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -1406,7 +1414,7 @@ asm_1:
 	  if (!IS_A1 ($1) && IS_A1 ($2))
 	    {
 	      notethat ("dsp32alu: A0 -= A1\n");
-	      $$ = DSP32ALU (11, 0, 0, 0, 0, 0, $3.r0, 0, 3);
+	      $$ = DSP32ALU (11, 0, 0, 0, &reg7, &reg7, $3.r0, 0, 3);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -1466,7 +1474,7 @@ asm_1:
 	  if (!IS_A1 ($1) && IS_A1 ($3))
 	    {
 	      notethat ("dsp32alu: A0 += A1 (W32)\n");
-	      $$ = DSP32ALU (11, 0, 0, 0, 0, 0, $4.r0, 0, 2);
+	      $$ = DSP32ALU (11, 0, 0, 0, &reg7, &reg7, $4.r0, 0, 2);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -1545,7 +1553,7 @@ asm_1:
 	  if (REG_SAME ($1, $2) && REG_SAME ($7, $8) && !REG_SAME ($1, $7))
 	    {
 	      notethat ("dsp32alu: A1 = A1 (S) , A0 = A0 (S)\n");
-	      $$ = DSP32ALU (8, 0, 0, 0, 0, 0, 1, 0, 2);
+	      $$ = DSP32ALU (8, 0, 0, 0, &reg7, &reg7, 1, 0, 2);
 	    }
 	  else
 	    return yyerror ("Register mismatch");
@@ -2404,6 +2412,9 @@ asm_1:
 
 	| BITMUX LPAREN REG COMMA REG COMMA REG_A RPAREN asr_asl
 	{
+	  if (REG_SAME ($3, $5))
+	    return yyerror ("Illegal source register combination");
+
 	  if (IS_DREG ($3) && IS_DREG ($5) && !IS_A1 ($7))
 	    {
 	      notethat ("dsp32shift: BITMUX (dregs , dregs , A0) (ASR)\n");
@@ -2697,6 +2708,9 @@ asm_1:
 	{
 	  if (IS_PREG ($3))
 	    {
+	      if ($3.regno == REG_SP || $3.regno == REG_FP)
+		return yyerror ("Bad register for TESTSET");
+
 	      notethat ("ProgCtrl: TESTSET (pregs )\n");
 	      $$ = PROGCTRL (11, $3.regno & CODE_MASK);
 	    }

@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2011 Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -82,7 +82,7 @@ struct sim_state {
 #define TRACE_INSN(cpu, fmt, ...) MAYBE_TRACE (INSN, cpu, fmt, ## __VA_ARGS__)
 #define TRACE_DECODE(cpu, fmt, ...) MAYBE_TRACE (DECODE, cpu, fmt, ## __VA_ARGS__)
 #define TRACE_EXTRACT(cpu, fmt, ...) MAYBE_TRACE (EXTRACT, cpu, fmt, ## __VA_ARGS__)
-#define TRACE_SYSCALL(cpu, fmt, ...) MAYBE_TRACE (EVENTS, cpu, fmt, ## __VA_ARGS__)
+#define TRACE_SYSCALL(cpu, fmt, ...) MAYBE_TRACE (SYSCALL, cpu, fmt, ## __VA_ARGS__)
 #define TRACE_CORE(cpu, addr, size, map, val) \
   do { \
     MAYBE_TRACE (CORE, cpu, "%cBUS %s %i bytes @ 0x%08x: 0x%0*x", \

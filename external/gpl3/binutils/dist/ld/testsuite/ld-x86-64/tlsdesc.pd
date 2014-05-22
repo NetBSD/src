@@ -1,7 +1,7 @@
 #source: tlsdesc.s
 #source: tlspic2.s
 #as: --64
-#ld: -shared -melf_x86_64
+#ld: -shared -melf_x86_64 --no-ld-generated-unwind-info
 #objdump: -drj.plt
 #target: x86_64-*-*
 

@@ -13,4 +13,4 @@ Disassembly of section \.text:
 			.*: R_MIPS_HI16	__gnu_local_gp
 .*:	279c0000 	addiu	\$28,\$28,0
 			.*: R_MIPS_LO16	__gnu_local_gp
-.*:	00000000 	nop
+	\.\.\.

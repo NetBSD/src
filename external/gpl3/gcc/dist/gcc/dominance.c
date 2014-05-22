@@ -1,6 +1,5 @@
 /* Calculate (post)dominators in slightly super-linear time.
-   Copyright (C) 2000, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Michael Matz (matz@ifh.de).
 
    This file is part of GCC.
@@ -41,12 +40,12 @@
 #include "hard-reg-set.h"
 #include "obstack.h"
 #include "basic-block.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "et-forest.h"
 #include "timevar.h"
-#include "vecprim.h"
 #include "pointer-set.h"
 #include "graphds.h"
+#include "bitmap.h"
 
 /* We name our nodes with integers, beginning with 1.  Zero is reserved for
    'undefined' or 'end of list'.  The name of each node is given by the dfs
@@ -190,7 +189,7 @@ init_dom_info (struct dom_info *di, enum cdi_direction dir)
 static unsigned int
 dom_convert_dir_to_idx (enum cdi_direction dir)
 {
-  gcc_assert (dir == CDI_DOMINATORS || dir == CDI_POST_DOMINATORS);
+  gcc_checking_assert (dir == CDI_DOMINATORS || dir == CDI_POST_DOMINATORS);
   return dir - 1;
 }
 
@@ -376,14 +375,18 @@ calc_dfs_tree (struct dom_info *di, bool reverse)
 	{
 	  FOR_EACH_BB_REVERSE (b)
 	    {
+	      basic_block b2;
 	      if (di->dfs_order[b->index])
 		continue;
-	      bitmap_set_bit (di->fake_exit_edge, b->index);
-	      di->dfs_order[b->index] = di->dfsnum;
-	      di->dfs_to_bb[di->dfsnum] = b;
+	      b2 = dfs_find_deadend (b);
+	      gcc_checking_assert (di->dfs_order[b2->index] == 0);
+	      bitmap_set_bit (di->fake_exit_edge, b2->index);
+	      di->dfs_order[b2->index] = di->dfsnum;
+	      di->dfs_to_bb[di->dfsnum] = b2;
 	      di->dfs_parent[di->dfsnum] = di->dfs_order[last_basic_block];
 	      di->dfsnum++;
-	      calc_dfs_tree_nonrec (di, b, reverse);
+	      calc_dfs_tree_nonrec (di, b2, reverse);
+	      gcc_checking_assert (di->dfs_order[b->index]);
 	    }
 	}
     }
@@ -612,7 +615,7 @@ compute_dom_fast_query (enum cdi_direction dir)
   basic_block bb;
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
 
-  gcc_assert (dom_info_available_p (dir));
+  gcc_checking_assert (dom_info_available_p (dir));
 
   if (dom_computed[dir_index] == DOM_OK)
     return;
@@ -701,7 +704,7 @@ get_immediate_dominator (enum cdi_direction dir, basic_block bb)
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
   struct et_node *node = bb->dom[dir_index];
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (!node->father)
     return NULL;
@@ -718,7 +721,7 @@ set_immediate_dominator (enum cdi_direction dir, basic_block bb,
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
   struct et_node *node = bb->dom[dir_index];
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (node->father)
     {
@@ -736,21 +739,21 @@ set_immediate_dominator (enum cdi_direction dir, basic_block bb,
 
 /* Returns the list of basic blocks immediately dominated by BB, in the
    direction DIR.  */
-VEC (basic_block, heap) *
+vec<basic_block> 
 get_dominated_by (enum cdi_direction dir, basic_block bb)
 {
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
   struct et_node *node = bb->dom[dir_index], *son = node->son, *ason;
-  VEC (basic_block, heap) *bbs = NULL;
+  vec<basic_block> bbs = vNULL;
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (!son)
-    return NULL;
+    return vNULL;
 
-  VEC_safe_push (basic_block, heap, bbs, (basic_block) son->data);
+  bbs.safe_push ((basic_block) son->data);
   for (ason = son->right; ason != son; ason = ason->right)
-    VEC_safe_push (basic_block, heap, bbs, (basic_block) ason->data);
+    bbs.safe_push ((basic_block) ason->data);
 
   return bbs;
 }
@@ -759,13 +762,13 @@ get_dominated_by (enum cdi_direction dir, basic_block bb)
    direction DIR) by some block between N_REGION ones stored in REGION,
    except for blocks in the REGION itself.  */
 
-VEC (basic_block, heap) *
+vec<basic_block> 
 get_dominated_by_region (enum cdi_direction dir, basic_block *region,
 			 unsigned n_region)
 {
   unsigned i;
   basic_block dom;
-  VEC (basic_block, heap) *doms = NULL;
+  vec<basic_block> doms = vNULL;
 
   for (i = 0; i < n_region; i++)
     region[i]->flags |= BB_DUPLICATED;
@@ -774,7 +777,7 @@ get_dominated_by_region (enum cdi_direction dir, basic_block *region,
 	 dom;
 	 dom = next_dom_son (dir, dom))
       if (!(dom->flags & BB_DUPLICATED))
-	VEC_safe_push (basic_block, heap, doms, dom);
+	doms.safe_push (dom);
   for (i = 0; i < n_region; i++)
     region[i]->flags &= ~BB_DUPLICATED;
 
@@ -782,30 +785,46 @@ get_dominated_by_region (enum cdi_direction dir, basic_block *region,
 }
 
 /* Returns the list of basic blocks including BB dominated by BB, in the
-   direction DIR.  The vector will be sorted in preorder.  */
+   direction DIR up to DEPTH in the dominator tree.  The DEPTH of zero will
+   produce a vector containing all dominated blocks.  The vector will be sorted
+   in preorder.  */
 
-VEC (basic_block, heap) *
-get_all_dominated_blocks (enum cdi_direction dir, basic_block bb)
+vec<basic_block> 
+get_dominated_to_depth (enum cdi_direction dir, basic_block bb, int depth)
 {
-  VEC(basic_block, heap) *bbs = NULL;
+  vec<basic_block> bbs = vNULL;
   unsigned i;
+  unsigned next_level_start;
 
   i = 0;
-  VEC_safe_push (basic_block, heap, bbs, bb);
+  bbs.safe_push (bb);
+  next_level_start = 1; /* = bbs.length (); */
 
   do
     {
       basic_block son;
 
-      bb = VEC_index (basic_block, bbs, i++);
+      bb = bbs[i++];
       for (son = first_dom_son (dir, bb);
 	   son;
 	   son = next_dom_son (dir, son))
-	VEC_safe_push (basic_block, heap, bbs, son);
+	bbs.safe_push (son);
+
+      if (i == next_level_start && --depth)
+	next_level_start = bbs.length ();
     }
-  while (i < VEC_length (basic_block, bbs));
+  while (i < next_level_start);
 
   return bbs;
+}
+
+/* Returns the list of basic blocks including BB dominated by BB, in the
+   direction DIR.  The vector will be sorted in preorder.  */
+
+vec<basic_block> 
+get_all_dominated_blocks (enum cdi_direction dir, basic_block bb)
+{
+  return get_dominated_to_depth (dir, bb, 0);
 }
 
 /* Redirect all edges pointing to BB to TO.  */
@@ -819,7 +838,7 @@ redirect_immediate_dominators (enum cdi_direction dir, basic_block bb,
   bb_node = bb->dom[dir_index];
   to_node = to->dom[dir_index];
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (!bb_node->son)
     return;
@@ -842,7 +861,7 @@ nearest_common_dominator (enum cdi_direction dir, basic_block bb1, basic_block b
 {
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (!bb1)
     return bb2;
@@ -954,7 +973,7 @@ dominated_by_p (enum cdi_direction dir, const_basic_block bb1, const_basic_block
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
   struct et_node *n1 = bb1->dom[dir_index], *n2 = bb2->dom[dir_index];
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (dom_computed[dir_index] == DOM_OK)
     return (n1->dfs_num_in >= n2->dfs_num_in
@@ -971,7 +990,7 @@ bb_dom_dfs_in (enum cdi_direction dir, basic_block bb)
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
   struct et_node *n = bb->dom[dir_index];
 
-  gcc_assert (dom_computed[dir_index] == DOM_OK);
+  gcc_checking_assert (dom_computed[dir_index] == DOM_OK);
   return n->dfs_num_in;
 }
 
@@ -983,12 +1002,12 @@ bb_dom_dfs_out (enum cdi_direction dir, basic_block bb)
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
   struct et_node *n = bb->dom[dir_index];
 
-  gcc_assert (dom_computed[dir_index] == DOM_OK);
+  gcc_checking_assert (dom_computed[dir_index] == DOM_OK);
   return n->dfs_num_out;
 }
 
 /* Verify invariants of dominator structure.  */
-void
+DEBUG_FUNCTION void
 verify_dominators (enum cdi_direction dir)
 {
   int err = 0;
@@ -1037,7 +1056,7 @@ recompute_dominator (enum cdi_direction dir, basic_block bb)
   edge e;
   edge_iterator ei;
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   if (dir == CDI_DOMINATORS)
     {
@@ -1067,7 +1086,7 @@ recompute_dominator (enum cdi_direction dir, basic_block bb)
    from BBS.  */
 
 static void
-prune_bbs_to_update_dominators (VEC (basic_block, heap) *bbs,
+prune_bbs_to_update_dominators (vec<basic_block> bbs,
 				bool conservative)
 {
   unsigned i;
@@ -1076,7 +1095,7 @@ prune_bbs_to_update_dominators (VEC (basic_block, heap) *bbs,
   edge_iterator ei;
   edge e;
 
-  for (i = 0; VEC_iterate (basic_block, bbs, i, bb);)
+  for (i = 0; bbs.iterate (i, &bb);)
     {
       if (bb == ENTRY_BLOCK_PTR)
 	goto succeed;
@@ -1119,7 +1138,7 @@ fail:
       continue;
 
 succeed:
-      VEC_unordered_remove (basic_block, bbs, i);
+      bbs.unordered_remove (i);
     }
 }
 
@@ -1138,12 +1157,12 @@ root_of_dom_tree (enum cdi_direction dir, basic_block bb)
    blocks.  */
 
 static void
-determine_dominators_for_sons (struct graph *g, VEC (basic_block, heap) *bbs,
+determine_dominators_for_sons (struct graph *g, vec<basic_block> bbs,
 			       int y, int *son, int *brother)
 {
   bitmap gprime;
   int i, a, nc;
-  VEC (int, heap) **sccs;
+  vec<int> *sccs;
   basic_block bb, dom, ybb;
   unsigned si;
   edge e;
@@ -1151,15 +1170,15 @@ determine_dominators_for_sons (struct graph *g, VEC (basic_block, heap) *bbs,
 
   if (son[y] == -1)
     return;
-  if (y == (int) VEC_length (basic_block, bbs))
+  if (y == (int) bbs.length ())
     ybb = ENTRY_BLOCK_PTR;
   else
-    ybb = VEC_index (basic_block, bbs, y);
+    ybb = bbs[y];
 
   if (brother[son[y]] == -1)
     {
       /* Handle the common case Y has just one son specially.  */
-      bb = VEC_index (basic_block, bbs, son[y]);
+      bb = bbs[son[y]];
       set_immediate_dominator (CDI_DOMINATORS, bb,
 			       recompute_dominator (CDI_DOMINATORS, bb));
       identify_vertices (g, y, son[y]);
@@ -1173,16 +1192,19 @@ determine_dominators_for_sons (struct graph *g, VEC (basic_block, heap) *bbs,
   nc = graphds_scc (g, gprime);
   BITMAP_FREE (gprime);
 
-  sccs = XCNEWVEC (VEC (int, heap) *, nc);
+  /* ???  Needed to work around the pre-processor confusion with
+     using a multi-argument template type as macro argument.  */
+  typedef vec<int> vec_int_heap;
+  sccs = XCNEWVEC (vec_int_heap, nc);
   for (a = son[y]; a != -1; a = brother[a])
-    VEC_safe_push (int, heap, sccs[g->vertices[a].component], a);
+    sccs[g->vertices[a].component].safe_push (a);
 
   for (i = nc - 1; i >= 0; i--)
     {
       dom = NULL;
-      for (si = 0; VEC_iterate (int, sccs[i], si, a); si++)
+      FOR_EACH_VEC_ELT (sccs[i], si, a)
 	{
-	  bb = VEC_index (basic_block, bbs, a);
+	  bb = bbs[a];
 	  FOR_EACH_EDGE (e, ei, bb->preds)
 	    {
 	      if (root_of_dom_tree (CDI_DOMINATORS, e->src) != ybb)
@@ -1193,15 +1215,15 @@ determine_dominators_for_sons (struct graph *g, VEC (basic_block, heap) *bbs,
 	}
 
       gcc_assert (dom != NULL);
-      for (si = 0; VEC_iterate (int, sccs[i], si, a); si++)
+      FOR_EACH_VEC_ELT (sccs[i], si, a)
 	{
-	  bb = VEC_index (basic_block, bbs, a);
+	  bb = bbs[a];
 	  set_immediate_dominator (CDI_DOMINATORS, bb, dom);
 	}
     }
 
   for (i = 0; i < nc; i++)
-    VEC_free (int, heap, sccs[i]);
+    sccs[i].release ();
   free (sccs);
 
   for (a = son[y]; a != -1; a = brother[a])
@@ -1216,7 +1238,7 @@ determine_dominators_for_sons (struct graph *g, VEC (basic_block, heap) *bbs,
    a block of BBS in the current dominance tree dominate it.  */
 
 void
-iterate_fix_dominators (enum cdi_direction dir, VEC (basic_block, heap) *bbs,
+iterate_fix_dominators (enum cdi_direction dir, vec<basic_block> bbs,
 			bool conservative)
 {
   unsigned i;
@@ -1237,8 +1259,7 @@ iterate_fix_dominators (enum cdi_direction dir, VEC (basic_block, heap) *bbs,
      problems would be unused, untested, and almost surely buggy.  We keep
      the DIR argument for consistency with the rest of the dominator analysis
      interface.  */
-  gcc_assert (dir == CDI_DOMINATORS);
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dir == CDI_DOMINATORS && dom_computed[dir_index]);
 
   /* The algorithm we use takes inspiration from the following papers, although
      the details are quite different from any of them:
@@ -1296,19 +1317,19 @@ iterate_fix_dominators (enum cdi_direction dir, VEC (basic_block, heap) *bbs,
 	 conservatively correct, setting the dominators using the
 	 heuristics in prune_bbs_to_update_dominators could
 	 create cycles in the dominance "tree", and cause ICE.  */
-      for (i = 0; VEC_iterate (basic_block, bbs, i, bb); i++)
+      FOR_EACH_VEC_ELT (bbs, i, bb)
 	set_immediate_dominator (CDI_DOMINATORS, bb, NULL);
     }
 
   prune_bbs_to_update_dominators (bbs, conservative);
-  n = VEC_length (basic_block, bbs);
+  n = bbs.length ();
 
   if (n == 0)
     return;
 
   if (n == 1)
     {
-      bb = VEC_index (basic_block, bbs, 0);
+      bb = bbs[0];
       set_immediate_dominator (CDI_DOMINATORS, bb,
 			       recompute_dominator (CDI_DOMINATORS, bb));
       return;
@@ -1316,7 +1337,7 @@ iterate_fix_dominators (enum cdi_direction dir, VEC (basic_block, heap) *bbs,
 
   /* Construct the graph G.  */
   map = pointer_map_create ();
-  for (i = 0; VEC_iterate (basic_block, bbs, i, bb); i++)
+  FOR_EACH_VEC_ELT (bbs, i, bb)
     {
       /* If the dominance tree is conservatively correct, split it now.  */
       if (conservative)
@@ -1328,7 +1349,7 @@ iterate_fix_dominators (enum cdi_direction dir, VEC (basic_block, heap) *bbs,
   g = new_graph (n + 1);
   for (y = 0; y < g->n_vertices; y++)
     g->vertices[y].data = BITMAP_ALLOC (NULL);
-  for (i = 0; VEC_iterate (basic_block, bbs, i, bb); i++)
+  FOR_EACH_VEC_ELT (bbs, i, bb)
     {
       FOR_EACH_EDGE (e, ei, bb->preds)
 	{
@@ -1339,10 +1360,9 @@ iterate_fix_dominators (enum cdi_direction dir, VEC (basic_block, heap) *bbs,
 	  dom_i = (size_t) *pointer_map_contains (map, dom);
 
 	  /* Do not include parallel edges to G.  */
-	  if (bitmap_bit_p ((bitmap) g->vertices[dom_i].data, i))
+	  if (!bitmap_set_bit ((bitmap) g->vertices[dom_i].data, i))
 	    continue;
 
-	  bitmap_set_bit ((bitmap) g->vertices[dom_i].data, i);
 	  add_edge (g, dom_i, i);
 	}
     }
@@ -1385,8 +1405,7 @@ add_to_dominance_info (enum cdi_direction dir, basic_block bb)
 {
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
 
-  gcc_assert (dom_computed[dir_index]);
-  gcc_assert (!bb->dom[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index] && !bb->dom[dir_index]);
 
   n_bbs_in_dom_tree[dir_index]++;
 
@@ -1401,7 +1420,7 @@ delete_from_dominance_info (enum cdi_direction dir, basic_block bb)
 {
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
 
-  gcc_assert (dom_computed[dir_index]);
+  gcc_checking_assert (dom_computed[dir_index]);
 
   et_free_tree (bb->dom[dir_index]);
   bb->dom[dir_index] = NULL;
@@ -1465,7 +1484,7 @@ dom_info_available_p (enum cdi_direction dir)
   return dom_computed[dir_index] != DOM_NONE;
 }
 
-void
+DEBUG_FUNCTION void
 debug_dominance_info (enum cdi_direction dir)
 {
   basic_block bb, bb2;
@@ -1506,7 +1525,7 @@ debug_dominance_tree_1 (enum cdi_direction dir, basic_block root,
 /* Prints to stderr representation of the dominance tree (for direction DIR)
    rooted in ROOT.  */
 
-void
+DEBUG_FUNCTION void
 debug_dominance_tree (enum cdi_direction dir, basic_block root)
 {
   debug_dominance_tree_1 (dir, root, 0, false);

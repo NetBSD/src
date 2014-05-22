@@ -1,5 +1,5 @@
 # Expect script for run_dump_test based ld-m68k tests.
-#   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -85,7 +85,7 @@ if { [istarget m68k-*-linux*] } then {
 	    {{nm -ngD tls-gd-1.d2} {readelf -d tls-gd-1.d3}}
 	    "tls-gd-1.so"}
 	{"TLS indirect symbol use"
-	    "tmpdir/tls-gd-1.so -rpath-link ./" "" {tls-main-1.s}
+	    "--copy-dt-needed-entries tmpdir/tls-gd-1.so -rpath-link ./" "" {tls-main-1.s}
 	    {{readelf -d tls-main-1.d}}
 	    "tls-main-1"}}
 

@@ -1,5 +1,5 @@
 ;; Generic DFA-based pipeline description for MIPS targets
-;;   Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
+;;   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 
@@ -43,7 +43,7 @@
   "alu")
 
 (define_insn_reservation "generic_hilo" 1
-  (eq_attr "type" "mfhilo,mthilo")
+  (eq_attr "type" "mfhi,mflo,mthi,mtlo")
   "imuldiv*3")
 
 (define_insn_reservation "generic_imul" 17
@@ -103,3 +103,19 @@
 (define_insn_reservation "generic_frecip_fsqrt_step" 5
   (eq_attr "type" "frdiv1,frdiv2,frsqrt1,frsqrt2")
   "alu")
+
+(define_insn_reservation "generic_atomic" 10
+  (eq_attr "type" "atomic")
+  "alu")
+
+;; Sync loop consists of (in order)
+;; (1) optional sync,
+;; (2) LL instruction,
+;; (3) branch and 1-2 ALU instructions,
+;; (4) SC instruction,
+;; (5) branch and ALU instruction.
+;; The net result of this reservation is a big delay with a flush of
+;; ALU pipeline.
+(define_insn_reservation "generic_sync_loop" 40
+  (eq_attr "type" "syncloop")
+  "alu*39")

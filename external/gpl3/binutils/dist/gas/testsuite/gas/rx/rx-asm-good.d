@@ -1,11 +1,10 @@
 # name: Compatibility with Renesas's own assembler
 # objdump: -D --prefix-addresses --show-raw-insn 
-# section-subst: no
 
 .*: +file format elf32-rx-.*
 
 
-Disassembly of section .text:
+Disassembly of section P:
 .*
 .*
 0+0108 <mem\+0x8> 66 20[ 	]+mov.l[ 	]+#2, r0
@@ -18,7 +17,7 @@ Disassembly of section .text:
 0+011c <mem\+0x1c> ff 2e 00[ 	]+add[ 	]+r0, r0, r14
 .*
 
-Disassembly of section .data:
+Disassembly of section D_1:
 0+0000 <dmem> 01.*
 0+0001 <dmem\+0x1> 00.*
 0+0002 <dmem\+0x2> 00.*

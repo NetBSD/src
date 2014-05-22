@@ -1896,7 +1896,7 @@ md_begin (void)
 {
   /* Build a hashtable of the instructions.  */
   const struct ns32k_opcode *ptr;
-  const char *stat;
+  const char *status;
   const struct ns32k_opcode *endop;
 
   inst_hash_handle = hash_new ();
@@ -1904,9 +1904,9 @@ md_begin (void)
   endop = ns32k_opcodes + sizeof (ns32k_opcodes) / sizeof (ns32k_opcodes[0]);
   for (ptr = ns32k_opcodes; ptr < endop; ptr++)
     {
-      if ((stat = hash_insert (inst_hash_handle, ptr->name, (char *) ptr)))
+      if ((status = hash_insert (inst_hash_handle, ptr->name, (char *) ptr)))
 	/* Fatal.  */
-	as_fatal (_("Can't hash %s: %s"), ptr->name, stat);
+	as_fatal (_("Can't hash %s: %s"), ptr->name, status);
     }
 
   /* Some private space please!  */

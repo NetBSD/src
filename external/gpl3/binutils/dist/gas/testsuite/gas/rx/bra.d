@@ -24,7 +24,7 @@ Disassembly of section \.text:
 			1b: R_RX_DIR24S_PCREL	foo
   1e:	04 00 00 80                   	bra\.a	0xff80001e
   22:	04 ff ff 7f                   	bra\.a	0x800021
-  26:	04 fb ff 7f                   	bra\.a	0x800021
+  26:	04 00 00 00                   	bra\.a	0x26
 			27: R_RX_DIR24S_PCREL	foo
   2a:	7f 40                         	bra\.l	r0
   2c:	7f 4f                         	bra\.l	r15

@@ -1,5 +1,5 @@
 # Expect script for ld-powerpc tests
-#   Copyright 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+#   Copyright 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
 #   Free Software Foundation
 #
 # This file is part of the GNU Binutils.
@@ -113,11 +113,11 @@ set ppcelftests {
      "tls32"}
     {"TLS32 helper shared library" "-shared -melf32ppc tmpdir/tlslib32.o" "" {}
      {} "libtlslib32.so"}
-    {"TLS32 dynamic exec" "-melf32ppc tmpdir/tls32.o tmpdir/libtlslib32.so" "" {}
+    {"TLS32 dynamic exec" "-melf32ppc --no-ld-generated-unwind-info tmpdir/tls32.o tmpdir/libtlslib32.so" "" {}
      {{readelf -WSsrl tlsexe32.r} {objdump -dr tlsexe32.d}
       {objdump -sj.got tlsexe32.g} {objdump -sj.tdata tlsexe32.t}}
       "tlsexe32"}
-    {"TLS32 shared" "-shared -melf32ppc tmpdir/tls32.o" "" {}
+    {"TLS32 shared" "-shared -melf32ppc --no-ld-generated-unwind-info tmpdir/tls32.o" "" {}
      {{readelf -WSsrl tlsso32.r} {objdump -dr tlsso32.d}
       {objdump -sj.got tlsso32.g} {objdump -sj.tdata tlsso32.t}}
       "tls32.so"}
@@ -156,15 +156,15 @@ set ppc64elftests {
      {} "libtlslib.so"}
     {"TLS helper old shared lib" "-shared -melf64ppc" "-a64" {oldtlslib.s}
      {} "liboldlib.so"}
-    {"TLS dynamic exec" "-melf64ppc tmpdir/tls.o tmpdir/libtlslib.so" "" {}
+    {"TLS dynamic exec" "-melf64ppc --no-ld-generated-unwind-info tmpdir/tls.o tmpdir/libtlslib.so" "" {}
      {{readelf -WSsrl tlsexe.r} {objdump -dr tlsexe.d}
       {objdump -sj.got tlsexe.g} {objdump -sj.tdata tlsexe.t}}
       "tlsexe"}
-    {"TLS dynamic old" "-melf64ppc tmpdir/tls.o tmpdir/liboldlib.so" "" {}
+    {"TLS dynamic old" "-melf64ppc --no-ld-generated-unwind-info tmpdir/tls.o tmpdir/liboldlib.so" "" {}
      {{readelf -WSsrl tlsexe.r} {objdump -dr tlsexe.d}
       {objdump -sj.got tlsexe.g} {objdump -sj.tdata tlsexe.t}}
       "tlsexeold"}
-    {"TLS shared" "-shared -melf64ppc tmpdir/tls.o" "" {}
+    {"TLS shared" "-shared -melf64ppc --no-ld-generated-unwind-info tmpdir/tls.o" "" {}
      {{readelf -WSsrl tlsso.r} {objdump -dr tlsso.d}
       {objdump -sj.got tlsso.g} {objdump -sj.tdata tlsso.t}}
       "tls.so"}
@@ -172,17 +172,17 @@ set ppc64elftests {
      {{objdump -dr tlstoc.d} {objdump -sj.got tlstoc.g}
       {objdump -sj.tdata tlstoc.t}}
       "tlstoc"}
-    {"TLSTOC dynamic exec" "-melf64ppc tmpdir/tlstoc.o tmpdir/libtlslib.so"
+    {"TLSTOC dynamic exec" "-melf64ppc --no-ld-generated-unwind-info tmpdir/tlstoc.o tmpdir/libtlslib.so"
      "" {}
      {{readelf -WSsrl tlsexetoc.r} {objdump -dr tlsexetoc.d}
       {objdump -sj.got tlsexetoc.g} {objdump -sj.tdata tlsexetoc.t}}
       "tlsexetoc"}
-    {"TLSTOC dynamic old" "-melf64ppc tmpdir/tlstoc.o tmpdir/liboldlib.so"
+    {"TLSTOC dynamic old" "-melf64ppc --no-ld-generated-unwind-info tmpdir/tlstoc.o tmpdir/liboldlib.so"
      "" {}
      {{readelf -WSsrl tlsexetoc.r} {objdump -dr tlsexetoc.d}
       {objdump -sj.got tlsexetoc.g} {objdump -sj.tdata tlsexetoc.t}}
       "tlsexetocold"}
-    {"TLSTOC shared" "-shared -melf64ppc tmpdir/tlstoc.o" "" {}
+    {"TLSTOC shared" "-shared -melf64ppc --no-ld-generated-unwind-info tmpdir/tlstoc.o" "" {}
      {{readelf -WSsrl tlstocso.r} {objdump -dr tlstocso.d}
       {objdump -sj.got tlstocso.g} {objdump -sj.tdata tlstocso.t}}
       "tlstoc.so"}
@@ -204,15 +204,75 @@ set ppc64elftests {
     {"sym@tocbase" "-shared -melf64ppc" "-a64" {symtocbase-1.s symtocbase-2.s}
 	{{objdump -dj.data symtocbase.d}} "symtocbase.so"}
     {"TOC opt" "-melf64ppc" "-a64"  {tocopt.s}
-     {{objdump -s tocopt.d}} "tocopt"}
+	{{ld tocopt.out} {objdump -s tocopt.d}} "tocopt"}
+    {"TOC opt2" "-melf64ppc --defsym x=2" "-a64"  {tocopt2.s}
+	{{ld tocopt2.out} {objdump -s tocopt2.d}} "tocopt2"}
+    {"TOC opt3" "-melf64ppc -no-keep-memory --defsym x=2" "-a64"  {tocopt3.s}
+	{{objdump -s tocopt3.d}} "tocopt3"}
+    {"TOC opt4" "-melf64ppc -no-keep-memory --defsym x=2" "-a64"
+        {tocopt4a.s tocopt4b.s} {{objdump -s tocopt4.d}} "tocopt4"}
+    {"TOC opt5" "-melf64ppc" "-a64"  {tocopt5.s}
+	{{objdump -s tocopt5.d}} "tocopt5"}
 }
 
+set ppceabitests {
+    {"VLE multiple segments 1" "-T vle-multiseg-1.ld"
+     "-mregnames -mvle" {vle-multiseg.s}
+    {{readelf "-l" vle-multiseg-1.d}} "vle-multiseg-1"}
+    {"VLE multiple segments 2" "-T vle-multiseg-2.ld"
+     "-mregnames -mvle" {vle-multiseg.s}
+    {{readelf "-l" vle-multiseg-2.d}} "vle-multiseg-2"}
+    {"VLE multiple segments 3" "-T vle-multiseg-3.ld"
+     "-mregnames -mvle" {vle-multiseg.s}
+    {{readelf "-l" vle-multiseg-3.d}} "vle-multiseg-3"}
+    {"VLE multiple segments 4" "-T vle-multiseg-4.ld"
+     "-mregnames -mvle" {vle-multiseg.s}
+    {{readelf "-l" vle-multiseg-4.d}} "vle-multiseg-4"}
+    {"VLE multiple segments 5" "-T vle-multiseg-5.ld"
+     "-mregnames -mvle" {vle-multiseg.s}
+    {{readelf "-l" vle-multiseg-5.d}} "vle-multiseg-5"}
+    {"VLE relocations 1" "-T vle.ld"
+     "-mvle" {vle-reloc-1.s vle-reloc-def-1.s}
+    {{objdump "-Mvle -d" vle-reloc-1.d}} "vle-reloc-1"}
+    {"VLE relocations 2" "-T vle.ld"
+     "-mvle" {vle-reloc-2.s vle-reloc-def-2.s}
+    {{objdump "-Mvle -d" vle-reloc-2.d}} "vle-reloc-2"}
+    {"VLE relocations 3" "-T vle.ld"
+     "-mvle" {vle-reloc-3.s vle-reloc-def-3.s}
+    {{objdump "-Mvle -d" vle-reloc-3.d}} "vle-reloc-3"}
+}
+
+if [istarget "powerpc*le*-*-*"] then {
+    set options_regsub(ld) {-melf32ppc -melf32lppc}
+
+    for {set i 0} {$i < [llength $ppcelftests]} {incr i} {
+	set line [lindex $ppcelftests $i]
+	set ld_options [lindex $line 1]
+	regsub -all elf32ppc $ld_options elf32lppc ld_options
+	set line [lreplace $line 1 1 $ld_options]
+	set ppcelftests [lreplace $ppcelftests $i $i $line]
+    }
+
+    if [ supports_ppc64 ] then {
+	for {set i 0} {$i < [llength $ppc64elftests]} {incr i} {
+	    set line [lindex $ppcelftests $i]
+	    set ld_options [lindex $line 1]
+	    regsub -all elf64ppc $ld_options elf64lppc ld_options
+	    set line [lreplace $line 1 1 $ld_options]
+	    set ppc64elftests [lreplace $ppc64elftests $i $i $line]
+	}
+    }
+}
 
 run_ld_link_tests $ppcelftests
 
 if [ supports_ppc64 ] then {
     run_ld_link_tests $ppc64elftests
     run_dump_test "relbrlt"
+}
+
+if { [istarget "powerpc*-eabi*"] } {
+    run_ld_link_tests $ppceabitests
 }
 
 run_dump_test "plt1"
@@ -243,3 +303,5 @@ run_dump_test "attr-gnu-8-31"
 
 run_dump_test "attr-gnu-12-11"
 run_dump_test "attr-gnu-12-21"
+
+run_dump_test "vle-multiseg-6"

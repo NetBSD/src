@@ -1,6 +1,5 @@
 ;; AltiVec patterns.
-;; Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-;; Free Software Foundation, Inc.
+;; Copyright (C) 2002-2013 Free Software Foundation, Inc.
 ;; Contributed by Aldy Hernandez (aldy@quesejoda.com)
 
 ;; This file is part of GCC.
@@ -19,140 +18,130 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
-(define_constants
-   ;; 51-62 deleted
-  [(UNSPEC_VCMPBFP       64)
-   (UNSPEC_VMSUMU        65)
-   (UNSPEC_VMSUMM        66)
-   (UNSPEC_VMSUMSHM      68)
-   (UNSPEC_VMSUMUHS      69)
-   (UNSPEC_VMSUMSHS      70)
-   (UNSPEC_VMHADDSHS     71)
-   (UNSPEC_VMHRADDSHS    72)
-   (UNSPEC_VMLADDUHM     73)
-   (UNSPEC_VADDCUW       75)
-   (UNSPEC_VADDU         76)
-   (UNSPEC_VADDS         77)
-   (UNSPEC_VAVGU         80)
-   (UNSPEC_VAVGS         81)
-   (UNSPEC_VMULEUB       83)
-   (UNSPEC_VMULESB       84)
-   (UNSPEC_VMULEUH       85)
-   (UNSPEC_VMULESH       86)
-   (UNSPEC_VMULOUB       87)
-   (UNSPEC_VMULOSB       88)
-   (UNSPEC_VMULOUH       89)
-   (UNSPEC_VMULOSH       90)
-   (UNSPEC_VPKUHUM       93)
-   (UNSPEC_VPKUWUM       94)
-   (UNSPEC_VPKPX         95)
-   (UNSPEC_VPKSHSS       97)
-   (UNSPEC_VPKSWSS       99)
-   (UNSPEC_VPKUHUS      100)
-   (UNSPEC_VPKSHUS      101)
-   (UNSPEC_VPKUWUS      102)
-   (UNSPEC_VPKSWUS      103)
-   ;; 104 deleted
-   (UNSPEC_VSLV4SI      110)
-   (UNSPEC_VSLO         111)
-   (UNSPEC_VSR          118)
-   (UNSPEC_VSRO         119)
-   (UNSPEC_VSUBCUW      124)
-   (UNSPEC_VSUBU        125)
-   (UNSPEC_VSUBS        126)
-   (UNSPEC_VSUM4UBS     131)
-   (UNSPEC_VSUM4S       132)
-   (UNSPEC_VSUM2SWS     134)
-   (UNSPEC_VSUMSWS      135)
-   (UNSPEC_VPERM        144)
-   (UNSPEC_VPERM_UNS    145)
-   ;; 148 deleted
-   (UNSPEC_VRFIN        149)
-   ;; 150 deleted
-   (UNSPEC_VCFUX        151)
-   (UNSPEC_VCFSX        152)
-   (UNSPEC_VCTUXS       153)
-   (UNSPEC_VCTSXS       154)
-   (UNSPEC_VLOGEFP      155)
-   (UNSPEC_VEXPTEFP     156)
-   (UNSPEC_VRSQRTEFP    157)
-   (UNSPEC_VREFP        158)
-   ;; 159-162 deleted
-   (UNSPEC_VLSDOI       163)
-   (UNSPEC_VUPKHSB      167)
-   (UNSPEC_VUPKHPX      168)
-   (UNSPEC_VUPKHSH      169)
-   (UNSPEC_VUPKLSB      170)
-   (UNSPEC_VUPKLPX      171)
-   (UNSPEC_VUPKLSH      172)
-   ;; 173 deleted
-   (UNSPEC_DST          190)
-   (UNSPEC_DSTT         191)
-   (UNSPEC_DSTST        192)
-   (UNSPEC_DSTSTT       193)
-   (UNSPEC_LVSL         194)
-   (UNSPEC_LVSR         195)
-   (UNSPEC_LVE          196)
-   (UNSPEC_STVX         201)
-   (UNSPEC_STVXL        202)
-   (UNSPEC_STVE         203)
-   (UNSPEC_SET_VSCR     213)
-   (UNSPEC_GET_VRSAVE   214)
-   (UNSPEC_LVX		215)
-   (UNSPEC_REDUC_PLUS   217)
-   (UNSPEC_VECSH        219)
-   (UNSPEC_EXTEVEN_V4SI 220)
-   (UNSPEC_EXTEVEN_V8HI 221)
-   (UNSPEC_EXTEVEN_V16QI 222)
-   (UNSPEC_EXTEVEN_V4SF 223)
-   (UNSPEC_EXTODD_V4SI  224)
-   (UNSPEC_EXTODD_V8HI  225)
-   (UNSPEC_EXTODD_V16QI 226)
-   (UNSPEC_EXTODD_V4SF  227)
-   (UNSPEC_INTERHI_V4SI 228)
-   (UNSPEC_INTERHI_V8HI 229)
-   (UNSPEC_INTERHI_V16QI 230)
-   ;; delete 231
-   (UNSPEC_INTERLO_V4SI 232)
-   (UNSPEC_INTERLO_V8HI 233)
-   (UNSPEC_INTERLO_V16QI 234)
-   ;; delete 235
-   (UNSPEC_LVLX         236)
-   (UNSPEC_LVLXL        237)
-   (UNSPEC_LVRX         238)
-   (UNSPEC_LVRXL        239)
-   (UNSPEC_STVLX        240)
-   (UNSPEC_STVLXL       241)
-   (UNSPEC_STVRX        242)
-   (UNSPEC_STVRXL       243)
-   (UNSPEC_VMULWHUB     308)
-   (UNSPEC_VMULWLUB     309)
-   (UNSPEC_VMULWHSB     310)
-   (UNSPEC_VMULWLSB     311)
-   (UNSPEC_VMULWHUH     312)
-   (UNSPEC_VMULWLUH     313)
-   (UNSPEC_VMULWHSH     314)
-   (UNSPEC_VMULWLSH     315)
-   (UNSPEC_VUPKHUB      316)
-   (UNSPEC_VUPKHUH      317)
-   (UNSPEC_VUPKLUB      318)
-   (UNSPEC_VUPKLUH      319)
-   (UNSPEC_VPERMSI	320)
-   (UNSPEC_VPERMHI	321)
-   (UNSPEC_INTERHI      322)
-   (UNSPEC_INTERLO      323)
-   (UNSPEC_VUPKHS_V4SF   324)
-   (UNSPEC_VUPKLS_V4SF   325)
-   (UNSPEC_VUPKHU_V4SF   326)
-   (UNSPEC_VUPKLU_V4SF   327)
+(define_c_enum "unspec"
+  [UNSPEC_VCMPBFP
+   UNSPEC_VMSUMU
+   UNSPEC_VMSUMM
+   UNSPEC_VMSUMSHM
+   UNSPEC_VMSUMUHS
+   UNSPEC_VMSUMSHS
+   UNSPEC_VMHADDSHS
+   UNSPEC_VMHRADDSHS
+   UNSPEC_VMLADDUHM
+   UNSPEC_VADDCUW
+   UNSPEC_VADDU
+   UNSPEC_VADDS
+   UNSPEC_VAVGU
+   UNSPEC_VAVGS
+   UNSPEC_VMULEUB
+   UNSPEC_VMULESB
+   UNSPEC_VMULEUH
+   UNSPEC_VMULESH
+   UNSPEC_VMULOUB
+   UNSPEC_VMULOSB
+   UNSPEC_VMULOUH
+   UNSPEC_VMULOSH
+   UNSPEC_VPKUHUM
+   UNSPEC_VPKUWUM
+   UNSPEC_VPKPX
+   UNSPEC_VPKSHSS
+   UNSPEC_VPKSWSS
+   UNSPEC_VPKUHUS
+   UNSPEC_VPKSHUS
+   UNSPEC_VPKUWUS
+   UNSPEC_VPKSWUS
+   UNSPEC_VSLV4SI
+   UNSPEC_VSLO
+   UNSPEC_VSR
+   UNSPEC_VSRO
+   UNSPEC_VSUBCUW
+   UNSPEC_VSUBU
+   UNSPEC_VSUBS
+   UNSPEC_VSUM4UBS
+   UNSPEC_VSUM4S
+   UNSPEC_VSUM2SWS
+   UNSPEC_VSUMSWS
+   UNSPEC_VPERM
+   UNSPEC_VPERM_UNS
+   UNSPEC_VRFIN
+   UNSPEC_VCFUX
+   UNSPEC_VCFSX
+   UNSPEC_VCTUXS
+   UNSPEC_VCTSXS
+   UNSPEC_VLOGEFP
+   UNSPEC_VEXPTEFP
+   UNSPEC_VLSDOI
+   UNSPEC_VUPKHSB
+   UNSPEC_VUPKHPX
+   UNSPEC_VUPKHSH
+   UNSPEC_VUPKLSB
+   UNSPEC_VUPKLPX
+   UNSPEC_VUPKLSH
+   UNSPEC_DST
+   UNSPEC_DSTT
+   UNSPEC_DSTST
+   UNSPEC_DSTSTT
+   UNSPEC_LVSL
+   UNSPEC_LVSR
+   UNSPEC_LVE
+   UNSPEC_STVX
+   UNSPEC_STVXL
+   UNSPEC_STVE
+   UNSPEC_SET_VSCR
+   UNSPEC_GET_VRSAVE
+   UNSPEC_LVX
+   UNSPEC_REDUC_PLUS
+   UNSPEC_VECSH
+   UNSPEC_EXTEVEN_V4SI
+   UNSPEC_EXTEVEN_V8HI
+   UNSPEC_EXTEVEN_V16QI
+   UNSPEC_EXTEVEN_V4SF
+   UNSPEC_EXTODD_V4SI
+   UNSPEC_EXTODD_V8HI
+   UNSPEC_EXTODD_V16QI
+   UNSPEC_EXTODD_V4SF
+   UNSPEC_INTERHI_V4SI
+   UNSPEC_INTERHI_V8HI
+   UNSPEC_INTERHI_V16QI
+   UNSPEC_INTERLO_V4SI
+   UNSPEC_INTERLO_V8HI
+   UNSPEC_INTERLO_V16QI
+   UNSPEC_LVLX
+   UNSPEC_LVLXL
+   UNSPEC_LVRX
+   UNSPEC_LVRXL
+   UNSPEC_STVLX
+   UNSPEC_STVLXL
+   UNSPEC_STVRX
+   UNSPEC_STVRXL
+   UNSPEC_VMULWHUB
+   UNSPEC_VMULWLUB
+   UNSPEC_VMULWHSB
+   UNSPEC_VMULWLSB
+   UNSPEC_VMULWHUH
+   UNSPEC_VMULWLUH
+   UNSPEC_VMULWHSH
+   UNSPEC_VMULWLSH
+   UNSPEC_VUPKHUB
+   UNSPEC_VUPKHUH
+   UNSPEC_VUPKLUB
+   UNSPEC_VUPKLUH
+   UNSPEC_VPERMSI
+   UNSPEC_VPERMHI
+   UNSPEC_INTERHI
+   UNSPEC_INTERLO
+   UNSPEC_VUPKHS_V4SF
+   UNSPEC_VUPKLS_V4SF
+   UNSPEC_VUPKHU_V4SF
+   UNSPEC_VUPKLU_V4SF
 ])
 
-(define_constants
-  [(UNSPECV_SET_VRSAVE   30)
-   (UNSPECV_MTVSCR      186)
-   (UNSPECV_MFVSCR      187)
-   (UNSPECV_DSSALL      188)
-   (UNSPECV_DSS         189)
+(define_c_enum "unspecv"
+  [UNSPECV_SET_VRSAVE
+   UNSPECV_MTVSCR
+   UNSPECV_MFVSCR
+   UNSPECV_DSSALL
+   UNSPECV_DSS
   ])
 
 ;; Vec int modes
@@ -175,8 +164,8 @@
 
 ;; Vector move instructions.
 (define_insn "*altivec_mov<mode>"
-  [(set (match_operand:VM2 0 "nonimmediate_operand" "=Z,v,v,*o,*r,*r,v,v")
-	(match_operand:VM2 1 "input_operand" "v,Z,v,r,o,r,j,W"))]
+  [(set (match_operand:VM2 0 "nonimmediate_operand" "=Z,v,v,*Y,*r,*r,v,v")
+	(match_operand:VM2 1 "input_operand" "v,Z,v,r,Y,r,j,W"))]
   "VECTOR_MEM_ALTIVEC_P (<MODE>mode)
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
@@ -200,8 +189,8 @@
 ;; is for unions.  However for plain data movement, slightly favor the vector
 ;; loads
 (define_insn "*altivec_movti"
-  [(set (match_operand:TI 0 "nonimmediate_operand" "=Z,v,v,?o,?r,?r,v,v")
-	(match_operand:TI 1 "input_operand" "v,Z,v,r,o,r,j,W"))]
+  [(set (match_operand:TI 0 "nonimmediate_operand" "=Z,v,v,?Y,?r,?r,v,v")
+	(match_operand:TI 1 "input_operand" "v,Z,v,r,Y,r,j,W"))]
   "VECTOR_MEM_ALTIVEC_P (TImode)
    && (register_operand (operands[0], TImode) 
        || register_operand (operands[1], TImode))"
@@ -226,7 +215,7 @@
 (define_split
   [(set (match_operand:VM 0 "altivec_register_operand" "")
 	(match_operand:VM 1 "easy_vector_constant_msb" ""))]
-  "VECTOR_UNIT_ALTIVEC_P (<MODE>mode) && reload_completed"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) && reload_completed"
   [(const_int 0)]
 {
   rtx dest = operands[0];
@@ -253,7 +242,7 @@
 (define_split
   [(set (match_operand:VM 0 "altivec_register_operand" "")
 	(match_operand:VM 1 "easy_vector_constant_add_self" ""))]
-  "VECTOR_UNIT_ALTIVEC_P (<MODE>mode) && reload_completed"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) && reload_completed"
   [(set (match_dup 0) (match_dup 3))
    (set (match_dup 0) (match_dup 4))]
 {
@@ -323,6 +312,68 @@
  "TARGET_MACHO && (DEFAULT_ABI == ABI_DARWIN) && TARGET_32BIT"
  "b %z1")
 
+;; The save_vregs and restore_vregs patterns don't use memory_operand
+;; because (plus (reg) (const_int)) is not a valid vector address.
+;; This way is more compact than describing exactly what happens in
+;; the out-of-line functions, ie. loading the constant into r11/r12
+;; then using indexed addressing, and requires less editing of rtl
+;; to describe the operation to dwarf2out_frame_debug_expr.
+(define_insn "*save_vregs_<mode>_r11"
+  [(match_parallel 0 "any_parallel_operand"
+     [(clobber (reg:P 65))
+      (use (match_operand:P 1 "symbol_ref_operand" "s"))
+      (clobber (reg:P 11))
+      (use (reg:P 0))
+      (set (mem:V4SI (plus:P (match_operand:P 2 "gpc_reg_operand" "b")
+			     (match_operand:P 3 "short_cint_operand" "I")))
+	   (match_operand:V4SI 4 "gpc_reg_operand" "v"))])]
+  ""
+  "bl %1"
+  [(set_attr "type" "branch")
+   (set_attr "length" "4")])
+
+(define_insn "*save_vregs_<mode>_r12"
+  [(match_parallel 0 "any_parallel_operand"
+     [(clobber (reg:P 65))
+      (use (match_operand:P 1 "symbol_ref_operand" "s"))
+      (clobber (reg:P 12))
+      (use (reg:P 0))
+      (set (mem:V4SI (plus:P (match_operand:P 2 "gpc_reg_operand" "b")
+			     (match_operand:P 3 "short_cint_operand" "I")))
+	   (match_operand:V4SI 4 "gpc_reg_operand" "v"))])]
+  ""
+  "bl %1"
+  [(set_attr "type" "branch")
+   (set_attr "length" "4")])
+
+(define_insn "*restore_vregs_<mode>_r11"
+  [(match_parallel 0 "any_parallel_operand"
+     [(clobber (reg:P 65))
+      (use (match_operand:P 1 "symbol_ref_operand" "s"))
+      (clobber (reg:P 11))
+      (use (reg:P 0))
+      (set (match_operand:V4SI 2 "gpc_reg_operand" "=v")
+	   (mem:V4SI (plus:P (match_operand:P 3 "gpc_reg_operand" "b")
+			     (match_operand:P 4 "short_cint_operand" "I"))))])]
+  ""
+  "bl %1"
+  [(set_attr "type" "branch")
+   (set_attr "length" "4")])
+
+(define_insn "*restore_vregs_<mode>_r12"
+  [(match_parallel 0 "any_parallel_operand"
+     [(clobber (reg:P 65))
+      (use (match_operand:P 1 "symbol_ref_operand" "s"))
+      (clobber (reg:P 12))
+      (use (reg:P 0))
+      (set (match_operand:V4SI 2 "gpc_reg_operand" "=v")
+	   (mem:V4SI (plus:P (match_operand:P 3 "gpc_reg_operand" "b")
+			     (match_operand:P 4 "short_cint_operand" "I"))))])]
+  ""
+  "bl %1"
+  [(set_attr "type" "branch")
+   (set_attr "length" "4")])
+
 ;; Simple binary operations.
 
 ;; add
@@ -337,7 +388,7 @@
 (define_insn "*altivec_addv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
         (plus:V4SF (match_operand:V4SF 1 "register_operand" "v")
-	 	   (match_operand:V4SF 2 "register_operand" "v")))]
+		   (match_operand:V4SF 2 "register_operand" "v")))]
   "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
   "vaddfp %0,%1,%2"
   [(set_attr "type" "vecfloat")])
@@ -515,12 +566,13 @@
   "vsel %0,%3,%2,%1"
   [(set_attr "type" "vecperm")])
 
-;; Fused multiply add
-(define_insn "altivec_vmaddfp"
+;; Fused multiply add.
+
+(define_insn "*altivec_fmav4sf4"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
-	(plus:V4SF (mult:V4SF (match_operand:V4SF 1 "register_operand" "v")
-			      (match_operand:V4SF 2 "register_operand" "v"))
-	  	   (match_operand:V4SF 3 "register_operand" "v")))]
+	(fma:V4SF (match_operand:V4SF 1 "register_operand" "v")
+		  (match_operand:V4SF 2 "register_operand" "v")
+		  (match_operand:V4SF 3 "register_operand" "v")))]
   "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
   "vmaddfp %0,%1,%2,%3"
   [(set_attr "type" "vecfloat")])
@@ -528,11 +580,11 @@
 ;; We do multiply as a fused multiply-add with an add of a -0.0 vector.
 
 (define_expand "altivec_mulv4sf3"
-  [(use (match_operand:V4SF 0 "register_operand" ""))
-   (use (match_operand:V4SF 1 "register_operand" ""))
-   (use (match_operand:V4SF 2 "register_operand" ""))]
-  "VECTOR_UNIT_ALTIVEC_P (V4SFmode) && TARGET_FUSED_MADD"
-  "
+  [(set (match_operand:V4SF 0 "register_operand" "")
+	(fma:V4SF (match_operand:V4SF 1 "register_operand" "")
+		  (match_operand:V4SF 2 "register_operand" "")
+		  (match_dup 3)))]
+  "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
 {
   rtx neg0;
 
@@ -541,11 +593,8 @@
   emit_insn (gen_altivec_vspltisw (neg0, constm1_rtx));
   emit_insn (gen_vashlv4si3 (neg0, neg0, neg0));
 
-  /* Use the multiply-add.  */
-  emit_insn (gen_altivec_vmaddfp (operands[0], operands[1], operands[2],
-				  gen_lowpart (V4SFmode, neg0)));
-  DONE;
-}")
+  operands[3] = gen_lowpart (V4SFmode, neg0);
+})
 
 ;; 32-bit integer multiplication
 ;; A_high = Operand_0 & 0xFFFF0000 >> 16
@@ -593,7 +642,7 @@
    convert_move (small_swap, swap, 0);
  
    low_product = gen_reg_rtx (V4SImode);
-   emit_insn (gen_altivec_vmulouh (low_product, one, two));
+   emit_insn (gen_vec_widen_umult_odd_v8hi (low_product, one, two));
  
    high_product = gen_reg_rtx (V4SImode);
    emit_insn (gen_altivec_vmsumuhm (high_product, one, small_swap, zero));
@@ -617,8 +666,8 @@
    rtx high = gen_reg_rtx (V4SImode);
    rtx low = gen_reg_rtx (V4SImode);
 
-   emit_insn (gen_altivec_vmulesh (even, operands[1], operands[2]));
-   emit_insn (gen_altivec_vmulosh (odd, operands[1], operands[2]));
+   emit_insn (gen_vec_widen_smult_even_v8hi (even, operands[1], operands[2]));
+   emit_insn (gen_vec_widen_smult_odd_v8hi (odd, operands[1], operands[2]));
 
    emit_insn (gen_altivec_vmrghw (high, even, odd));
    emit_insn (gen_altivec_vmrglw (low, even, odd));
@@ -629,11 +678,13 @@
 }")
 
 ;; Fused multiply subtract 
-(define_insn "altivec_vnmsubfp"
+(define_insn "*altivec_vnmsubfp"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
-	(neg:V4SF (minus:V4SF (mult:V4SF (match_operand:V4SF 1 "register_operand" "v")
-			       (match_operand:V4SF 2 "register_operand" "v"))
-	  	    (match_operand:V4SF 3 "register_operand" "v"))))]
+	(neg:V4SF
+	 (fma:V4SF (match_operand:V4SF 1 "register_operand" "v")
+		   (match_operand:V4SF 2 "register_operand" "v")
+		   (neg:V4SF
+		    (match_operand:V4SF 3 "register_operand" "v")))))]
   "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
   "vnmsubfp %0,%1,%2,%3"
   [(set_attr "type" "vecfloat")])
@@ -774,207 +825,117 @@
 
 (define_insn "altivec_vmrghb"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (vec_merge:V16QI (vec_select:V16QI (match_operand:V16QI 1 "register_operand" "v")
-					   (parallel [(const_int 0)
-					   	      (const_int 8)
-					   	      (const_int 1)
-					   	      (const_int 9)
-					   	      (const_int 2)
-					   	      (const_int 10)
-						      (const_int 3)
-						      (const_int 11)
-					   	      (const_int 4)
-					   	      (const_int 12)
-					   	      (const_int 5)
-					   	      (const_int 13)
-					   	      (const_int 6)
-					   	      (const_int 14)
-					   	      (const_int 7)
-						      (const_int 15)]))
-                        (vec_select:V16QI (match_operand:V16QI 2 "register_operand" "v")
-					   (parallel [(const_int 8)
-					   	      (const_int 0)
-					   	      (const_int 9)
-					   	      (const_int 1)
-					   	      (const_int 10)
-					   	      (const_int 2)
-						      (const_int 11)
-						      (const_int 3)
-					   	      (const_int 12)
-					   	      (const_int 4)
-					   	      (const_int 13)
-					   	      (const_int 5)
-					   	      (const_int 14)
-					   	      (const_int 6)
-					   	      (const_int 15)
-						      (const_int 7)]))
-		      (const_int 21845)))]
+	(vec_select:V16QI
+	  (vec_concat:V32QI
+	    (match_operand:V16QI 1 "register_operand" "v")
+	    (match_operand:V16QI 2 "register_operand" "v"))
+	  (parallel [(const_int 0) (const_int 16)
+		     (const_int 1) (const_int 17)
+		     (const_int 2) (const_int 18)
+		     (const_int 3) (const_int 19)
+		     (const_int 4) (const_int 20)
+		     (const_int 5) (const_int 21)
+		     (const_int 6) (const_int 22)
+		     (const_int 7) (const_int 23)])))]
   "TARGET_ALTIVEC"
   "vmrghb %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "altivec_vmrghh"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
-        (vec_merge:V8HI (vec_select:V8HI (match_operand:V8HI 1 "register_operand" "v")
-					   (parallel [(const_int 0)
-					   	      (const_int 4)
-					   	      (const_int 1)
-					   	      (const_int 5)
-					   	      (const_int 2)
-					   	      (const_int 6)
-					   	      (const_int 3)
-					   	      (const_int 7)]))
-                        (vec_select:V8HI (match_operand:V8HI 2 "register_operand" "v")
-					   (parallel [(const_int 4)
-					   	      (const_int 0)
-					   	      (const_int 5)
-					   	      (const_int 1)
-					   	      (const_int 6)
-					   	      (const_int 2)
-					   	      (const_int 7)
-					   	      (const_int 3)]))
-		      (const_int 85)))]
+	(vec_select:V8HI
+	  (vec_concat:V16HI
+	    (match_operand:V8HI 1 "register_operand" "v")
+	    (match_operand:V8HI 2 "register_operand" "v"))
+	  (parallel [(const_int 0) (const_int 8)
+		     (const_int 1) (const_int 9)
+		     (const_int 2) (const_int 10)
+		     (const_int 3) (const_int 11)])))]
   "TARGET_ALTIVEC"
   "vmrghh %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "altivec_vmrghw"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
-        (vec_merge:V4SI (vec_select:V4SI (match_operand:V4SI 1 "register_operand" "v")
-					 (parallel [(const_int 0)
-					 	    (const_int 2)
-						    (const_int 1)
-						    (const_int 3)]))
-                        (vec_select:V4SI (match_operand:V4SI 2 "register_operand" "v")
-					 (parallel [(const_int 2)
-					 	    (const_int 0)
-						    (const_int 3)
-						    (const_int 1)]))
-		      (const_int 5)))]
+        (vec_select:V4SI
+	  (vec_concat:V8SI
+	    (match_operand:V4SI 1 "register_operand" "v")
+	    (match_operand:V4SI 2 "register_operand" "v"))
+	  (parallel [(const_int 0) (const_int 4)
+		     (const_int 1) (const_int 5)])))]
   "VECTOR_MEM_ALTIVEC_P (V4SImode)"
   "vmrghw %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "*altivec_vmrghsf"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
-        (vec_merge:V4SF (vec_select:V4SF (match_operand:V4SF 1 "register_operand" "v")
-                                         (parallel [(const_int 0)
-                                                    (const_int 2)
-                                                    (const_int 1)
-                                                    (const_int 3)]))
-                        (vec_select:V4SF (match_operand:V4SF 2 "register_operand" "v")
-                                         (parallel [(const_int 2)
-                                                    (const_int 0)
-                                                    (const_int 3)
-                                                    (const_int 1)]))
-                      (const_int 5)))]
+        (vec_select:V4SF
+	  (vec_concat:V8SF
+	    (match_operand:V4SF 1 "register_operand" "v")
+	    (match_operand:V4SF 2 "register_operand" "v"))
+	  (parallel [(const_int 0) (const_int 4)
+		     (const_int 1) (const_int 5)])))]
   "VECTOR_MEM_ALTIVEC_P (V4SFmode)"
   "vmrghw %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "altivec_vmrglb"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (vec_merge:V16QI (vec_select:V16QI (match_operand:V16QI 1 "register_operand" "v")
-					   (parallel [(const_int 8)
-					   	      (const_int 0)
-					   	      (const_int 9)
-					   	      (const_int 1)
-					   	      (const_int 10)
-					   	      (const_int 2)
-						      (const_int 11)
-						      (const_int 3)
-					   	      (const_int 12)
-					   	      (const_int 4)
-					   	      (const_int 13)
-					   	      (const_int 5)
-					   	      (const_int 14)
-					   	      (const_int 6)
-					   	      (const_int 15)
-						      (const_int 7)]))
-                      (vec_select:V16QI (match_operand:V16QI 2 "register_operand" "v")
-					   (parallel [(const_int 0)
-					   	      (const_int 8)
-					   	      (const_int 1)
-					   	      (const_int 9)
-					   	      (const_int 2)
-					   	      (const_int 10)
-						      (const_int 3)
-						      (const_int 11)
-					   	      (const_int 4)
-					   	      (const_int 12)
-					   	      (const_int 5)
-					   	      (const_int 13)
-					   	      (const_int 6)
-					   	      (const_int 14)
-					   	      (const_int 7)
-						      (const_int 15)]))
-		      (const_int 21845)))]
+        (vec_select:V16QI
+	  (vec_concat:V32QI
+	    (match_operand:V16QI 1 "register_operand" "v")
+	    (match_operand:V16QI 2 "register_operand" "v"))
+	  (parallel [(const_int  8) (const_int 24)
+		     (const_int  9) (const_int 25)
+		     (const_int 10) (const_int 26)
+		     (const_int 11) (const_int 27)
+		     (const_int 12) (const_int 28)
+		     (const_int 13) (const_int 29)
+		     (const_int 14) (const_int 30)
+		     (const_int 15) (const_int 31)])))]
   "TARGET_ALTIVEC"
   "vmrglb %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "altivec_vmrglh"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
-        (vec_merge:V8HI (vec_select:V8HI (match_operand:V8HI 1 "register_operand" "v")
-					   (parallel [(const_int 4)
-					   	      (const_int 0)
-					   	      (const_int 5)
-					   	      (const_int 1)
-					   	      (const_int 6)
-					   	      (const_int 2)
-					   	      (const_int 7)
-					   	      (const_int 3)]))
-                        (vec_select:V8HI (match_operand:V8HI 2 "register_operand" "v")
-					   (parallel [(const_int 0)
-					   	      (const_int 4)
-					   	      (const_int 1)
-					   	      (const_int 5)
-					   	      (const_int 2)
-					   	      (const_int 6)
-					   	      (const_int 3)
-					   	      (const_int 7)]))
-		      (const_int 85)))]
+        (vec_select:V8HI
+	  (vec_concat:V16HI
+	    (match_operand:V8HI 1 "register_operand" "v")
+	    (match_operand:V8HI 2 "register_operand" "v"))
+	  (parallel [(const_int 4) (const_int 12)
+		     (const_int 5) (const_int 13)
+		     (const_int 6) (const_int 14)
+		     (const_int 7) (const_int 15)])))]
   "TARGET_ALTIVEC"
   "vmrglh %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "altivec_vmrglw"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
-        (vec_merge:V4SI
-	 (vec_select:V4SI (match_operand:V4SI 1 "register_operand" "v")
-			  (parallel [(const_int 2)
-				     (const_int 0)
-				     (const_int 3)
-				     (const_int 1)]))
-	 (vec_select:V4SI (match_operand:V4SI 2 "register_operand" "v")
-			  (parallel [(const_int 0)
-				     (const_int 2)
-				     (const_int 1)
-				     (const_int 3)]))
-	 (const_int 5)))]
+        (vec_select:V4SI
+	  (vec_concat:V8SI
+	    (match_operand:V4SI 1 "register_operand" "v")
+	    (match_operand:V4SI 2 "register_operand" "v"))
+	  (parallel [(const_int 2) (const_int 6)
+		     (const_int 3) (const_int 7)])))]
   "VECTOR_MEM_ALTIVEC_P (V4SImode)"
   "vmrglw %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "*altivec_vmrglsf"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
-        (vec_merge:V4SF
-	 (vec_select:V4SF (match_operand:V4SF 1 "register_operand" "v")
-			  (parallel [(const_int 2)
-				     (const_int 0)
-				     (const_int 3)
-				     (const_int 1)]))
-	 (vec_select:V4SF (match_operand:V4SF 2 "register_operand" "v")
-			  (parallel [(const_int 0)
-				     (const_int 2)
-				     (const_int 1)
-				     (const_int 3)]))
-	 (const_int 5)))]
+        (vec_select:V4SF
+	 (vec_concat:V8SF
+	   (match_operand:V4SF 1 "register_operand" "v")
+	   (match_operand:V4SF 2 "register_operand" "v"))
+	 (parallel [(const_int 2) (const_int 6)
+		    (const_int 3) (const_int 7)])))]
   "VECTOR_MEM_ALTIVEC_P (V4SFmode)"
   "vmrglw %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
-(define_insn "altivec_vmuleub"
+(define_insn "vec_widen_umult_even_v16qi"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
         (unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")
                       (match_operand:V16QI 2 "register_operand" "v")]
@@ -983,7 +944,7 @@
   "vmuleub %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmulesb"
+(define_insn "vec_widen_smult_even_v16qi"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
         (unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")
                       (match_operand:V16QI 2 "register_operand" "v")]
@@ -992,7 +953,7 @@
   "vmulesb %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmuleuh"
+(define_insn "vec_widen_umult_even_v8hi"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
         (unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")
                       (match_operand:V8HI 2 "register_operand" "v")]
@@ -1001,7 +962,7 @@
   "vmuleuh %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmulesh"
+(define_insn "vec_widen_smult_even_v8hi"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
         (unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")
                       (match_operand:V8HI 2 "register_operand" "v")]
@@ -1010,7 +971,7 @@
   "vmulesh %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmuloub"
+(define_insn "vec_widen_umult_odd_v16qi"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
         (unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")
                       (match_operand:V16QI 2 "register_operand" "v")]
@@ -1019,7 +980,7 @@
   "vmuloub %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmulosb"
+(define_insn "vec_widen_smult_odd_v16qi"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
         (unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")
                       (match_operand:V16QI 2 "register_operand" "v")]
@@ -1028,7 +989,7 @@
   "vmulosb %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmulouh"
+(define_insn "vec_widen_umult_odd_v8hi"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
         (unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")
                       (match_operand:V8HI 2 "register_operand" "v")]
@@ -1037,7 +998,7 @@
   "vmulouh %0,%1,%2"
   [(set_attr "type" "veccomplex")])
 
-(define_insn "altivec_vmulosh"
+(define_insn "vec_widen_smult_odd_v8hi"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
         (unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")
                       (match_operand:V8HI 2 "register_operand" "v")]
@@ -1342,7 +1303,7 @@
 
 (define_insn "*altivec_vrfiz"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
-  	(fix:V4SF (match_operand:V4SF 1 "register_operand" "v")))]
+	(fix:V4SF (match_operand:V4SF 1 "register_operand" "v")))]
   "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
   "vrfiz %0,%1"
   [(set_attr "type" "vecfloat")])
@@ -1366,6 +1327,28 @@
   "TARGET_ALTIVEC"
   "vperm %0,%1,%2,%3"
   [(set_attr "type" "vecperm")])
+
+(define_expand "vec_permv16qi"
+  [(set (match_operand:V16QI 0 "register_operand" "")
+	(unspec:V16QI [(match_operand:V16QI 1 "register_operand" "")
+		       (match_operand:V16QI 2 "register_operand" "")
+		       (match_operand:V16QI 3 "register_operand" "")]
+		      UNSPEC_VPERM))]
+  "TARGET_ALTIVEC"
+  "")
+
+(define_expand "vec_perm_constv16qi"
+  [(match_operand:V16QI 0 "register_operand" "")
+   (match_operand:V16QI 1 "register_operand" "")
+   (match_operand:V16QI 2 "register_operand" "")
+   (match_operand:V16QI 3 "" "")]
+  "TARGET_ALTIVEC"
+{
+  if (altivec_expand_vec_perm_const (operands))
+    DONE;
+  else
+    FAIL;
+})
 
 (define_insn "altivec_vrfip"		; ceil
   [(set (match_operand:V4SF 0 "register_operand" "=v")
@@ -1445,19 +1428,19 @@
   "vexptefp %0,%1"
   [(set_attr "type" "vecfloat")])
 
-(define_insn "altivec_vrsqrtefp"
+(define_insn "*altivec_vrsqrtefp"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
         (unspec:V4SF [(match_operand:V4SF 1 "register_operand" "v")]
-		     UNSPEC_VRSQRTEFP))]
-  "TARGET_ALTIVEC"
+		     UNSPEC_RSQRT))]
+  "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
   "vrsqrtefp %0,%1"
   [(set_attr "type" "vecfloat")])
 
 (define_insn "altivec_vrefp"
   [(set (match_operand:V4SF 0 "register_operand" "=v")
         (unspec:V4SF [(match_operand:V4SF 1 "register_operand" "v")]
-		     UNSPEC_VREFP))]
-  "TARGET_ALTIVEC"
+		     UNSPEC_FRES))]
+  "VECTOR_UNIT_ALTIVEC_P (V4SFmode)"
   "vrefp %0,%1"
   [(set_attr "type" "vecfloat")])
 
@@ -1495,7 +1478,7 @@
 
 (define_insn "altivec_vupkhsb"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
-  	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")]
+	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")]
 		     UNSPEC_VUPKHSB))]
   "TARGET_ALTIVEC"
   "vupkhsb %0,%1"
@@ -1503,7 +1486,7 @@
 
 (define_insn "altivec_vupkhpx"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
-  	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
+	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
 		     UNSPEC_VUPKHPX))]
   "TARGET_ALTIVEC"
   "vupkhpx %0,%1"
@@ -1511,7 +1494,7 @@
 
 (define_insn "altivec_vupkhsh"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
-  	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
+	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
 		     UNSPEC_VUPKHSH))]
   "TARGET_ALTIVEC"
   "vupkhsh %0,%1"
@@ -1519,7 +1502,7 @@
 
 (define_insn "altivec_vupklsb"
   [(set (match_operand:V8HI 0 "register_operand" "=v")
-  	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")]
+	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "v")]
 		     UNSPEC_VUPKLSB))]
   "TARGET_ALTIVEC"
   "vupklsb %0,%1"
@@ -1527,7 +1510,7 @@
 
 (define_insn "altivec_vupklpx"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
-  	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
+	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
 		     UNSPEC_VUPKLPX))]
   "TARGET_ALTIVEC"
   "vupklpx %0,%1"
@@ -1535,7 +1518,7 @@
 
 (define_insn "altivec_vupklsh"
   [(set (match_operand:V4SI 0 "register_operand" "=v")
-  	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
+	(unspec:V4SI [(match_operand:V8HI 1 "register_operand" "v")]
 		     UNSPEC_VUPKLSH))]
   "TARGET_ALTIVEC"
   "vupklsh %0,%1"
@@ -1690,14 +1673,16 @@
 
 (define_insn "altivec_lvsl"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-	(unspec:V16QI [(match_operand 1 "memory_operand" "Z")] UNSPEC_LVSL))]
+	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
+		      UNSPEC_LVSL))]
   "TARGET_ALTIVEC"
   "lvsl %0,%y1"
   [(set_attr "type" "vecload")])
 
 (define_insn "altivec_lvsr"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-	(unspec:V16QI [(match_operand 1 "memory_operand" "Z")] UNSPEC_LVSR))]
+	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
+		      UNSPEC_LVSR))]
   "TARGET_ALTIVEC"
   "lvsr %0,%y1"
   [(set_attr "type" "vecload")])
@@ -1847,47 +1832,37 @@
   operands[3] = gen_reg_rtx (GET_MODE (operands[0]));
 })
 
-(define_insn "altivec_vsumsws_nomode"
-  [(set (match_operand 0 "register_operand" "=v")
-        (unspec:V4SI [(match_operand:V4SI 1 "register_operand" "v")
-                      (match_operand:V4SI 2 "register_operand" "v")]
-		     UNSPEC_VSUMSWS))
-   (set (reg:SI 110) (unspec:SI [(const_int 0)] UNSPEC_SET_VSCR))]
-  "TARGET_ALTIVEC"
-  "vsumsws %0,%1,%2"
-  [(set_attr "type" "veccomplex")])
-
 (define_expand "reduc_splus_<mode>"
   [(set (match_operand:VIshort 0 "register_operand" "=v")
         (unspec:VIshort [(match_operand:VIshort 1 "register_operand" "v")]
 			UNSPEC_REDUC_PLUS))]
   "TARGET_ALTIVEC"
-  "
-{ 
+{
   rtx vzero = gen_reg_rtx (V4SImode);
   rtx vtmp1 = gen_reg_rtx (V4SImode);
+  rtx dest = gen_lowpart (V4SImode, operands[0]);
 
   emit_insn (gen_altivec_vspltisw (vzero, const0_rtx));
   emit_insn (gen_altivec_vsum4s<VI_char>s (vtmp1, operands[1], vzero));
-  emit_insn (gen_altivec_vsumsws_nomode (operands[0], vtmp1, vzero));
+  emit_insn (gen_altivec_vsumsws (dest, vtmp1, vzero));
   DONE;
-}")
+})
 
 (define_expand "reduc_uplus_v16qi"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
         (unspec:V16QI [(match_operand:V16QI 1 "register_operand" "v")]
 		      UNSPEC_REDUC_PLUS))]
   "TARGET_ALTIVEC"
-  "
 {
   rtx vzero = gen_reg_rtx (V4SImode);
   rtx vtmp1 = gen_reg_rtx (V4SImode);
+  rtx dest = gen_lowpart (V4SImode, operands[0]);
 
   emit_insn (gen_altivec_vspltisw (vzero, const0_rtx));
   emit_insn (gen_altivec_vsum4ubs (vtmp1, operands[1], vzero));
-  emit_insn (gen_altivec_vsumsws_nomode (operands[0], vtmp1, vzero));
+  emit_insn (gen_altivec_vsumsws (dest, vtmp1, vzero));
   DONE;
-}")
+})
 
 (define_expand "neg<mode>2"
   [(use (match_operand:VI 0 "register_operand" ""))
@@ -2191,8 +2166,8 @@
   rtx ve = gen_reg_rtx (V8HImode);
   rtx vo = gen_reg_rtx (V8HImode);
   
-  emit_insn (gen_altivec_vmuleub (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmuloub (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_even_v16qi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_odd_v16qi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrghh (operands[0], ve, vo));
   DONE;
 }")
@@ -2208,8 +2183,8 @@
   rtx ve = gen_reg_rtx (V8HImode);
   rtx vo = gen_reg_rtx (V8HImode);
   
-  emit_insn (gen_altivec_vmuleub (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmuloub (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_even_v16qi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_odd_v16qi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrglh (operands[0], ve, vo));
   DONE;
 }")
@@ -2225,8 +2200,8 @@
   rtx ve = gen_reg_rtx (V8HImode);
   rtx vo = gen_reg_rtx (V8HImode);
   
-  emit_insn (gen_altivec_vmulesb (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmulosb (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_even_v16qi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_odd_v16qi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrghh (operands[0], ve, vo));
   DONE;
 }")
@@ -2242,8 +2217,8 @@
   rtx ve = gen_reg_rtx (V8HImode);
   rtx vo = gen_reg_rtx (V8HImode);
   
-  emit_insn (gen_altivec_vmulesb (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmulosb (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_even_v16qi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_odd_v16qi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrglh (operands[0], ve, vo));
   DONE;
 }")
@@ -2259,8 +2234,8 @@
   rtx ve = gen_reg_rtx (V4SImode);
   rtx vo = gen_reg_rtx (V4SImode);
   
-  emit_insn (gen_altivec_vmuleuh (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmulouh (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_even_v8hi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_odd_v8hi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrghw (operands[0], ve, vo));
   DONE;
 }")
@@ -2276,8 +2251,8 @@
   rtx ve = gen_reg_rtx (V4SImode);
   rtx vo = gen_reg_rtx (V4SImode);
   
-  emit_insn (gen_altivec_vmuleuh (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmulouh (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_even_v8hi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_umult_odd_v8hi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrglw (operands[0], ve, vo));
   DONE;
 }")
@@ -2293,8 +2268,8 @@
   rtx ve = gen_reg_rtx (V4SImode);
   rtx vo = gen_reg_rtx (V4SImode);
   
-  emit_insn (gen_altivec_vmulesh (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmulosh (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_even_v8hi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_odd_v8hi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrghw (operands[0], ve, vo));
   DONE;
 }")
@@ -2310,8 +2285,8 @@
   rtx ve = gen_reg_rtx (V4SImode);
   rtx vo = gen_reg_rtx (V4SImode);
   
-  emit_insn (gen_altivec_vmulesh (ve, operands[1], operands[2]));
-  emit_insn (gen_altivec_vmulosh (vo, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_even_v8hi (ve, operands[1], operands[2]));
+  emit_insn (gen_vec_widen_smult_odd_v8hi (vo, operands[1], operands[2]));
   emit_insn (gen_altivec_vmrglw (operands[0], ve, vo));
   DONE;
 }")
@@ -2364,7 +2339,7 @@
 ;; STVLX, STVLXL, STVVRX, STVRXL are available only on Cell.
 (define_insn "altivec_lvlx"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (unspec:V16QI [(match_operand 1 "memory_operand" "Z")] 
+        (unspec:V16QI [(match_operand:BLK 1 "memory_operand" "Z")]
 		      UNSPEC_LVLX))]
   "TARGET_ALTIVEC && rs6000_cpu == PROCESSOR_CELL"
   "lvlx %0,%y1"
@@ -2372,7 +2347,7 @@
 
 (define_insn "altivec_lvlxl"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (unspec:V16QI [(match_operand 1 "memory_operand" "Z")] 
+        (unspec:V16QI [(match_operand:BLK 1 "memory_operand" "Z")]
 		      UNSPEC_LVLXL))]
   "TARGET_ALTIVEC && rs6000_cpu == PROCESSOR_CELL"
   "lvlxl %0,%y1"
@@ -2380,7 +2355,7 @@
 
 (define_insn "altivec_lvrx"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (unspec:V16QI [(match_operand 1 "memory_operand" "Z")] 
+        (unspec:V16QI [(match_operand:BLK 1 "memory_operand" "Z")]
 		      UNSPEC_LVRX))]
   "TARGET_ALTIVEC && rs6000_cpu == PROCESSOR_CELL"
   "lvrx %0,%y1"
@@ -2388,7 +2363,7 @@
 
 (define_insn "altivec_lvrxl"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (unspec:V16QI [(match_operand 1 "memory_operand" "Z")] 
+        (unspec:V16QI [(match_operand:BLK 1 "memory_operand" "Z")]
 		      UNSPEC_LVRXL))]
   "TARGET_ALTIVEC && rs6000_cpu == PROCESSOR_CELL"
   "lvrxl %0,%y1"
@@ -2429,270 +2404,6 @@
   "TARGET_ALTIVEC && rs6000_cpu == PROCESSOR_CELL"
   "stvrxl %1,%y0"
   [(set_attr "type" "vecstore")])
-
-(define_expand "vec_extract_evenv4si"
- [(set (match_operand:V4SI 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V4SI 1 "register_operand" "")
-                      (match_operand:V4SI 2 "register_operand" "")]
-		      UNSPEC_EXTEVEN_V4SI))]
-  "TARGET_ALTIVEC"
-  "
-{
-  rtx mask = gen_reg_rtx (V16QImode);
-  rtvec v = rtvec_alloc (16);
-
-  RTVEC_ELT (v, 0) = gen_rtx_CONST_INT (QImode, 0);
-  RTVEC_ELT (v, 1) = gen_rtx_CONST_INT (QImode, 1);
-  RTVEC_ELT (v, 2) = gen_rtx_CONST_INT (QImode, 2);
-  RTVEC_ELT (v, 3) = gen_rtx_CONST_INT (QImode, 3);
-  RTVEC_ELT (v, 4) = gen_rtx_CONST_INT (QImode, 8);
-  RTVEC_ELT (v, 5) = gen_rtx_CONST_INT (QImode, 9);
-  RTVEC_ELT (v, 6) = gen_rtx_CONST_INT (QImode, 10);
-  RTVEC_ELT (v, 7) = gen_rtx_CONST_INT (QImode, 11);
-  RTVEC_ELT (v, 8) = gen_rtx_CONST_INT (QImode, 16);
-  RTVEC_ELT (v, 9) = gen_rtx_CONST_INT (QImode, 17);
-  RTVEC_ELT (v, 10) = gen_rtx_CONST_INT (QImode, 18);
-  RTVEC_ELT (v, 11) = gen_rtx_CONST_INT (QImode, 19);
-  RTVEC_ELT (v, 12) = gen_rtx_CONST_INT (QImode, 24);
-  RTVEC_ELT (v, 13) = gen_rtx_CONST_INT (QImode, 25);
-  RTVEC_ELT (v, 14) = gen_rtx_CONST_INT (QImode, 26);
-  RTVEC_ELT (v, 15) = gen_rtx_CONST_INT (QImode, 27);
-  emit_insn (gen_vec_initv16qi (mask, gen_rtx_PARALLEL (V16QImode, v)));
-  emit_insn (gen_altivec_vperm_v4si (operands[0], operands[1], operands[2], mask));
-  
-  DONE;
-}")
-
-(define_expand "vec_extract_evenv4sf"
- [(set (match_operand:V4SF 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V4SF 1 "register_operand" "")
-                      (match_operand:V4SF 2 "register_operand" "")]
-                      UNSPEC_EXTEVEN_V4SF))]
-  "TARGET_ALTIVEC"
-  "
-{ 
-  rtx mask = gen_reg_rtx (V16QImode);
-  rtvec v = rtvec_alloc (16);
-  
-  RTVEC_ELT (v, 0) = gen_rtx_CONST_INT (QImode, 0);
-  RTVEC_ELT (v, 1) = gen_rtx_CONST_INT (QImode, 1);
-  RTVEC_ELT (v, 2) = gen_rtx_CONST_INT (QImode, 2);
-  RTVEC_ELT (v, 3) = gen_rtx_CONST_INT (QImode, 3);
-  RTVEC_ELT (v, 4) = gen_rtx_CONST_INT (QImode, 8);
-  RTVEC_ELT (v, 5) = gen_rtx_CONST_INT (QImode, 9);
-  RTVEC_ELT (v, 6) = gen_rtx_CONST_INT (QImode, 10);
-  RTVEC_ELT (v, 7) = gen_rtx_CONST_INT (QImode, 11);
-  RTVEC_ELT (v, 8) = gen_rtx_CONST_INT (QImode, 16);
-  RTVEC_ELT (v, 9) = gen_rtx_CONST_INT (QImode, 17);
-  RTVEC_ELT (v, 10) = gen_rtx_CONST_INT (QImode, 18);
-  RTVEC_ELT (v, 11) = gen_rtx_CONST_INT (QImode, 19);
-  RTVEC_ELT (v, 12) = gen_rtx_CONST_INT (QImode, 24);
-  RTVEC_ELT (v, 13) = gen_rtx_CONST_INT (QImode, 25);
-  RTVEC_ELT (v, 14) = gen_rtx_CONST_INT (QImode, 26);
-  RTVEC_ELT (v, 15) = gen_rtx_CONST_INT (QImode, 27);
-  emit_insn (gen_vec_initv16qi (mask, gen_rtx_PARALLEL (V16QImode, v)));
-  emit_insn (gen_altivec_vperm_v4sf (operands[0], operands[1], operands[2], mask));
-  
-  DONE;
-}")
-
-(define_expand "vec_extract_evenv8hi"
- [(set (match_operand:V4SI 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V8HI 1 "register_operand" "")
-                      (match_operand:V8HI 2 "register_operand" "")]
-                      UNSPEC_EXTEVEN_V8HI))]
-  "TARGET_ALTIVEC"
-  "
-{ 
-  rtx mask = gen_reg_rtx (V16QImode);
-  rtvec v = rtvec_alloc (16);
-  
-  RTVEC_ELT (v, 0) = gen_rtx_CONST_INT (QImode, 0);
-  RTVEC_ELT (v, 1) = gen_rtx_CONST_INT (QImode, 1);
-  RTVEC_ELT (v, 2) = gen_rtx_CONST_INT (QImode, 4);
-  RTVEC_ELT (v, 3) = gen_rtx_CONST_INT (QImode, 5);
-  RTVEC_ELT (v, 4) = gen_rtx_CONST_INT (QImode, 8);
-  RTVEC_ELT (v, 5) = gen_rtx_CONST_INT (QImode, 9);
-  RTVEC_ELT (v, 6) = gen_rtx_CONST_INT (QImode, 12);
-  RTVEC_ELT (v, 7) = gen_rtx_CONST_INT (QImode, 13);
-  RTVEC_ELT (v, 8) = gen_rtx_CONST_INT (QImode, 16);
-  RTVEC_ELT (v, 9) = gen_rtx_CONST_INT (QImode, 17);
-  RTVEC_ELT (v, 10) = gen_rtx_CONST_INT (QImode, 20);
-  RTVEC_ELT (v, 11) = gen_rtx_CONST_INT (QImode, 21);
-  RTVEC_ELT (v, 12) = gen_rtx_CONST_INT (QImode, 24);
-  RTVEC_ELT (v, 13) = gen_rtx_CONST_INT (QImode, 25);
-  RTVEC_ELT (v, 14) = gen_rtx_CONST_INT (QImode, 28);
-  RTVEC_ELT (v, 15) = gen_rtx_CONST_INT (QImode, 29);
-  emit_insn (gen_vec_initv16qi (mask, gen_rtx_PARALLEL (V16QImode, v)));
-  emit_insn (gen_altivec_vperm_v8hi (operands[0], operands[1], operands[2], mask));
-  
-  DONE;
-}")
-
-(define_expand "vec_extract_evenv16qi"
- [(set (match_operand:V4SI 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V16QI 1 "register_operand" "")
-                      (match_operand:V16QI 2 "register_operand" "")]
-                      UNSPEC_EXTEVEN_V16QI))]
-  "TARGET_ALTIVEC"
-  "
-{ 
-  rtx mask = gen_reg_rtx (V16QImode);
-  rtvec v = rtvec_alloc (16);
-  
-  RTVEC_ELT (v, 0) = gen_rtx_CONST_INT (QImode, 0);
-  RTVEC_ELT (v, 1) = gen_rtx_CONST_INT (QImode, 2);
-  RTVEC_ELT (v, 2) = gen_rtx_CONST_INT (QImode, 4);
-  RTVEC_ELT (v, 3) = gen_rtx_CONST_INT (QImode, 6);
-  RTVEC_ELT (v, 4) = gen_rtx_CONST_INT (QImode, 8);
-  RTVEC_ELT (v, 5) = gen_rtx_CONST_INT (QImode, 10);
-  RTVEC_ELT (v, 6) = gen_rtx_CONST_INT (QImode, 12);
-  RTVEC_ELT (v, 7) = gen_rtx_CONST_INT (QImode, 14);
-  RTVEC_ELT (v, 8) = gen_rtx_CONST_INT (QImode, 16);
-  RTVEC_ELT (v, 9) = gen_rtx_CONST_INT (QImode, 18);
-  RTVEC_ELT (v, 10) = gen_rtx_CONST_INT (QImode, 20);
-  RTVEC_ELT (v, 11) = gen_rtx_CONST_INT (QImode, 22);
-  RTVEC_ELT (v, 12) = gen_rtx_CONST_INT (QImode, 24);
-  RTVEC_ELT (v, 13) = gen_rtx_CONST_INT (QImode, 26);
-  RTVEC_ELT (v, 14) = gen_rtx_CONST_INT (QImode, 28);
-  RTVEC_ELT (v, 15) = gen_rtx_CONST_INT (QImode, 30);
-  emit_insn (gen_vec_initv16qi (mask, gen_rtx_PARALLEL (V16QImode, v)));
-  emit_insn (gen_altivec_vperm_v16qi (operands[0], operands[1], operands[2], mask));
-  
-  DONE;
-}")
-
-(define_expand "vec_extract_oddv4si"
- [(set (match_operand:V4SI 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V4SI 1 "register_operand" "")
-                      (match_operand:V4SI 2 "register_operand" "")]
-                      UNSPEC_EXTODD_V4SI))]
-  "TARGET_ALTIVEC"
-  "
-{
-  rtx mask = gen_reg_rtx (V16QImode);
-  rtvec v = rtvec_alloc (16);
-
-  RTVEC_ELT (v, 0) = gen_rtx_CONST_INT (QImode, 4);
-  RTVEC_ELT (v, 1) = gen_rtx_CONST_INT (QImode, 5);
-  RTVEC_ELT (v, 2) = gen_rtx_CONST_INT (QImode, 6);
-  RTVEC_ELT (v, 3) = gen_rtx_CONST_INT (QImode, 7);
-  RTVEC_ELT (v, 4) = gen_rtx_CONST_INT (QImode, 12);
-  RTVEC_ELT (v, 5) = gen_rtx_CONST_INT (QImode, 13);
-  RTVEC_ELT (v, 6) = gen_rtx_CONST_INT (QImode, 14);
-  RTVEC_ELT (v, 7) = gen_rtx_CONST_INT (QImode, 15);
-  RTVEC_ELT (v, 8) = gen_rtx_CONST_INT (QImode, 20);
-  RTVEC_ELT (v, 9) = gen_rtx_CONST_INT (QImode, 21);
-  RTVEC_ELT (v, 10) = gen_rtx_CONST_INT (QImode, 22);
-  RTVEC_ELT (v, 11) = gen_rtx_CONST_INT (QImode, 23);
-  RTVEC_ELT (v, 12) = gen_rtx_CONST_INT (QImode, 28);
-  RTVEC_ELT (v, 13) = gen_rtx_CONST_INT (QImode, 29);
-  RTVEC_ELT (v, 14) = gen_rtx_CONST_INT (QImode, 30);
-  RTVEC_ELT (v, 15) = gen_rtx_CONST_INT (QImode, 31);
-  emit_insn (gen_vec_initv16qi (mask, gen_rtx_PARALLEL (V16QImode, v)));
-  emit_insn (gen_altivec_vperm_v4si (operands[0], operands[1], operands[2], mask));
-  
-  DONE;
-}")
-
-(define_expand "vec_extract_oddv4sf"
- [(set (match_operand:V4SF 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V4SF 1 "register_operand" "")
-                      (match_operand:V4SF 2 "register_operand" "")]
-                      UNSPEC_EXTODD_V4SF))]
-  "TARGET_ALTIVEC"
-  "
-{
-  rtx mask = gen_reg_rtx (V16QImode);
-  rtvec v = rtvec_alloc (16);
-
-  RTVEC_ELT (v, 0) = gen_rtx_CONST_INT (QImode, 4);
-  RTVEC_ELT (v, 1) = gen_rtx_CONST_INT (QImode, 5);
-  RTVEC_ELT (v, 2) = gen_rtx_CONST_INT (QImode, 6);
-  RTVEC_ELT (v, 3) = gen_rtx_CONST_INT (QImode, 7);
-  RTVEC_ELT (v, 4) = gen_rtx_CONST_INT (QImode, 12);
-  RTVEC_ELT (v, 5) = gen_rtx_CONST_INT (QImode, 13);
-  RTVEC_ELT (v, 6) = gen_rtx_CONST_INT (QImode, 14);
-  RTVEC_ELT (v, 7) = gen_rtx_CONST_INT (QImode, 15);
-  RTVEC_ELT (v, 8) = gen_rtx_CONST_INT (QImode, 20);
-  RTVEC_ELT (v, 9) = gen_rtx_CONST_INT (QImode, 21);
-  RTVEC_ELT (v, 10) = gen_rtx_CONST_INT (QImode, 22);
-  RTVEC_ELT (v, 11) = gen_rtx_CONST_INT (QImode, 23);
-  RTVEC_ELT (v, 12) = gen_rtx_CONST_INT (QImode, 28);
-  RTVEC_ELT (v, 13) = gen_rtx_CONST_INT (QImode, 29);
-  RTVEC_ELT (v, 14) = gen_rtx_CONST_INT (QImode, 30);
-  RTVEC_ELT (v, 15) = gen_rtx_CONST_INT (QImode, 31);
-  emit_insn (gen_vec_initv16qi (mask, gen_rtx_PARALLEL (V16QImode, v)));
-  emit_insn (gen_altivec_vperm_v4sf (operands[0], operands[1], operands[2], mask));
-
-  DONE;
-}")
-
-(define_insn "vpkuhum_nomode"
-  [(set (match_operand:V16QI 0 "register_operand" "=v")
-        (unspec:V16QI [(match_operand 1 "register_operand" "v")
-                       (match_operand 2 "register_operand" "v")]
-                      UNSPEC_VPKUHUM))] 
-  "TARGET_ALTIVEC"
-  "vpkuhum %0,%1,%2"
-  [(set_attr "type" "vecperm")])
-
-(define_insn "vpkuwum_nomode"
-  [(set (match_operand:V8HI 0 "register_operand" "=v")
-        (unspec:V8HI [(match_operand 1 "register_operand" "v")
-                      (match_operand 2 "register_operand" "v")]
-                     UNSPEC_VPKUWUM))]
-  "TARGET_ALTIVEC"
-  "vpkuwum %0,%1,%2"
-  [(set_attr "type" "vecperm")])
-
-(define_expand "vec_extract_oddv8hi"
- [(set (match_operand:V8HI 0 "register_operand" "")
-        (unspec:V8HI [(match_operand:V8HI 1 "register_operand" "")
-                      (match_operand:V8HI 2 "register_operand" "")]
-                      UNSPEC_EXTODD_V8HI))]
-  "TARGET_ALTIVEC"
-  "
-{
-  emit_insn (gen_vpkuwum_nomode (operands[0], operands[1], operands[2]));
-  DONE;
-}")
-
-(define_expand "vec_extract_oddv16qi"
- [(set (match_operand:V16QI 0 "register_operand" "")
-        (unspec:V16QI [(match_operand:V16QI 1 "register_operand" "")
-                      (match_operand:V16QI 2 "register_operand" "")]
-                      UNSPEC_EXTODD_V16QI))]
-  "TARGET_ALTIVEC"
-  "
-{
-  emit_insn (gen_vpkuhum_nomode (operands[0], operands[1], operands[2]));
-  DONE;
-}")
-
-(define_expand "vec_interleave_high<mode>"
- [(set (match_operand:VI 0 "register_operand" "")
-        (unspec:VI [(match_operand:VI 1 "register_operand" "")
-                    (match_operand:VI 2 "register_operand" "")]
-                     UNSPEC_INTERHI))]
-  "TARGET_ALTIVEC"
-  "
-{
-  emit_insn (gen_altivec_vmrgh<VI_char> (operands[0], operands[1], operands[2]));
-  DONE;
-}")
-
-(define_expand "vec_interleave_low<mode>"
- [(set (match_operand:VI 0 "register_operand" "")
-        (unspec:VI [(match_operand:VI 1 "register_operand" "")
-                    (match_operand:VI 2 "register_operand" "")]
-                     UNSPEC_INTERLO))]
-  "TARGET_ALTIVEC"
-  "
-{
-  emit_insn (gen_altivec_vmrgl<VI_char> (operands[0], operands[1], operands[2]));
-  DONE;
-}")
 
 (define_expand "vec_unpacks_float_hi_v8hi"
  [(set (match_operand:V4SF 0 "register_operand" "")

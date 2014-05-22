@@ -1,4 +1,4 @@
-#objdump: -rst -mips16
+#objdump: -rst --special-syms -mips16
 #name: MIPS16 reloc
 #as: -32 -mips16
 #source: mips16-e.s
@@ -32,7 +32,7 @@ OFFSET [ ]+ TYPE              VALUE
 Contents of section \.text:
  0000 65006500 65006500 65006500 65006500  .*
 Contents of section \.reginfo:
- 0000 00000001 00000000 00000000 00000000  .*
+ 0000 00010000 00000000 00000000 00000000  .*
  0010 00000000 00000000                    .*
 Contents of section foo:
  0000 00000000 00000008 00000000 00000003  .*

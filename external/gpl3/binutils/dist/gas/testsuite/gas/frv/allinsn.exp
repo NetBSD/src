@@ -17,4 +17,6 @@ if [istarget frv*-*-*] {
     run_list_test "fr450-media-issue" "-mcpu=fr450"
 
     run_dump_test "fr550-pack1"
+
+    run_dump_test "immediates"
 }

@@ -4,7 +4,7 @@
 
    This file is part of BFD, the Binary File Descriptor library.
 
-   This program is free software; you can redistribute it and/or modify 
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
@@ -50,12 +50,12 @@ HOWTO (R_IMM8, 0, 0, 8, FALSE, 0,
        FALSE);
 
 static reloc_howto_type r_jr =
-HOWTO (R_JR, 0, 0, 8, TRUE, 0, 
+HOWTO (R_JR, 0, 0, 8, TRUE, 0,
        complain_overflow_signed, 0, "r_jr", FALSE, 0, 0xFF,
        FALSE);
 
 static reloc_howto_type r_off8 =
-HOWTO (R_OFF8, 0, 0, 8, FALSE, 0, 
+HOWTO (R_OFF8, 0, 0, 8, FALSE, 0,
        complain_overflow_signed, 0,"r_off8", FALSE, 0, 0xff,
        FALSE);
 
@@ -284,6 +284,6 @@ extra_case (bfd *in_abfd,
 #define coff_bfd_relax_section bfd_coff_reloc16_relax_section
 
 CREATE_LITTLE_COFF_TARGET_VEC (z80coff_vec, "coff-z80", 0,
-			       SEC_CODE | SEC_DATA, '\0', NULL, 
+			       SEC_CODE | SEC_DATA, '\0', NULL,
 			       COFF_SWAP_TABLE)
 

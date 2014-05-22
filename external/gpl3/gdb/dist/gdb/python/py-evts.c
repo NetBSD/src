@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,23 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "defs.h"
 #include "py-events.h"
+
+#ifdef IS_PY3K
+static struct PyModuleDef EventModuleDef =
+{
+  PyModuleDef_HEAD_INIT,
+  "gdb.events",
+  NULL,
+  -1, 
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+#endif
 
 /* Initialize python events.  */
 
@@ -44,7 +60,11 @@ add_new_registry (eventregistry_object **registryp, char *name)
 void
 gdbpy_initialize_py_events (void)
 {
+#ifdef IS_PY3K
+  gdb_py_events.module = PyModule_Create (&EventModuleDef);
+#else
   gdb_py_events.module = Py_InitModule ("events", NULL);
+#endif
 
   if (!gdb_py_events.module)
     goto fail;
@@ -58,7 +78,12 @@ gdbpy_initialize_py_events (void)
   if (add_new_registry (&gdb_py_events.exited, "exited") < 0)
     goto fail;
 
+  if (add_new_registry (&gdb_py_events.new_objfile, "new_objfile") < 0)
+    goto fail;
+
+#ifndef IS_PY3K
   Py_INCREF (gdb_py_events.module);
+#endif
   if (PyModule_AddObject (gdb_module,
                           "events",
                           (PyObject *) gdb_py_events.module) < 0)

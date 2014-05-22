@@ -1,5 +1,4 @@
-# Copyright 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +16,6 @@
 # This file was written by Joel Brobecker. (brobecker@gnat.com), derived
 # from selftest.exp, written by Rob Savoye.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 
 # are we on a target board
 if { [is_remote target] || ![isnative] } then {
@@ -30,6 +25,7 @@ if { [is_remote target] || ![isnative] } then {
 proc setup_test { executable } {
     global gdb_prompt
     global timeout
+    global INTERNAL_GDBFLAGS
 
     # load yourself into the debugger
     # This can take a relatively long time, particularly for testing where
@@ -72,7 +68,7 @@ proc setup_test { executable } {
     set timeout 600
 
     set description "run until breakpoint at captured_main"
-    gdb_test_multiple "run -nw" "$description" {
+    gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
         -re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.* at .*main.c:.*$gdb_prompt $" {
             pass "$description"
         }
@@ -107,37 +103,37 @@ proc test_with_self { executable } {
     }
 
     # A file which contains a directory prefix
-    gdb_test "print xfullpath (\"./xfullpath.exp\")" \
+    gdb_test "print gdb_realpath (\"./xfullpath.exp\")" \
              ".\[0-9\]+ =.*\".*/xfullpath.exp\"" \
              "A filename with ./ as the directory prefix"
 
     # A file which contains a directory prefix
-    gdb_test "print xfullpath (\"../../defs.h\")" \
+    gdb_test "print gdb_realpath (\"../../defs.h\")" \
              ".\[0-9\]+ =.*\".*/defs.h\"" \
              "A filename with ../ in the directory prefix"
 
     # A one-character filename
-    gdb_test "print xfullpath (\"./a\")" \
+    gdb_test "print gdb_realpath (\"./a\")" \
              ".\[0-9\]+ =.*\".*/a\"" \
              "A one-char filename in the current directory"
           
     # A file in the root directory
-    gdb_test "print xfullpath (\"/root_file_which_should_exist\")" \
+    gdb_test "print gdb_realpath (\"/root_file_which_should_exist\")" \
              ".\[0-9\]+ =.*\"/root_file_which_should_exist\"" \
              "A filename in the root directory"
           
     # A file which does not have a directory prefix
-    gdb_test "print xfullpath (\"xfullpath.exp\")" \
+    gdb_test "print gdb_realpath (\"xfullpath.exp\")" \
              ".\[0-9\]+ =.*\"xfullpath.exp\"" \
              "A filename without any directory prefix"
 
     # A one-char filename without any directory prefix
-    gdb_test "print xfullpath (\"a\")" \
+    gdb_test "print gdb_realpath (\"a\")" \
              ".\[0-9\]+ =.*\"a\"" \
              "A one-char filename without any directory prefix"
 
     # An empty filename
-    gdb_test "print xfullpath (\"\")" \
+    gdb_test "print gdb_realpath (\"\")" \
              ".\[0-9\]+ =.*\"\"" \
              "An empty filename"
 

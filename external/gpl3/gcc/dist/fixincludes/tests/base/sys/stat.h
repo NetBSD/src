@@ -9,11 +9,6 @@
 
 
 
-#if defined( ALPHA___EXTERN_PREFIX_SYS_STAT_CHECK )
-#   if defined(__DECC) || defined(__PRAGMA_EXTERN_PREFIX)
-#endif  /* ALPHA___EXTERN_PREFIX_SYS_STAT_CHECK */
-
-
 #if defined( GLIBC_C99_INLINE_2_CHECK )
 #ifdef __GNUC_GNU_INLINE__
 extern
@@ -31,6 +26,13 @@ __NTH (fstat64 (int __fd, struct stat64 *__statbuf))
 #if defined( RS6000_FCHMOD_CHECK )
 extern int fchmod(int, mode_t);
 #endif  /* RS6000_FCHMOD_CHECK */
+
+
+#if defined( VXWORKS_MKDIR_MACRO_CHECK )
+extern STATUS mkdir (const char * _qwerty) ;
+#define mkdir(dir, ...) ((void)0, ##__VA_ARGS__, (mkdir)(dir))
+
+#endif  /* VXWORKS_MKDIR_MACRO_CHECK */
 
 
 #if defined( VXWORKS_NEEDS_VXWORKS_CHECK )

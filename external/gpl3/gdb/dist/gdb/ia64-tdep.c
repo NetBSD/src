@@ -1,7 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,8 +42,7 @@
 
 #ifdef HAVE_LIBUNWIND_IA64_H
 #include "elf/ia64.h"           /* for PT_IA_64_UNWIND value */
-#include "libunwind-frame.h"
-#include "libunwind-ia64.h"
+#include "ia64-libunwind-tdep.h"
 
 /* Note: KERNEL_START is supposed to be an address which is not going
          to ever contain any valid unwind info.  For ia64 linux, the choice
@@ -811,7 +809,7 @@ ia64_memory_remove_breakpoint (struct gdbarch *gdbarch,
   /* In BUNDLE_MEM, be careful to modify only the bits belonging to SLOTNUM
      and not any of the other ones that are stored in SHADOW_CONTENTS.  */
   replace_slotN_contents (bundle_mem, instr_saved, slotnum);
-  val = target_write_memory (addr, bundle_mem, BUNDLE_LEN);
+  val = target_write_raw_memory (addr, bundle_mem, BUNDLE_LEN);
 
   do_cleanups (cleanup);
   return val;
@@ -1043,7 +1041,6 @@ ia64_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
          It can be calculated as the bsp - sof (sizeof frame).  */
       ULONGEST bsp, vbsp;
       ULONGEST cfm;
-      CORE_ADDR reg;
       status = regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
       if (status != REG_VALID)
 	return status;
@@ -1062,7 +1059,6 @@ ia64_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
       ULONGEST pr;
       ULONGEST cfm;
       ULONGEST prN_val;
-      CORE_ADDR reg;
       status = regcache_cooked_read_unsigned (regcache, IA64_PR_REGNUM, &pr);
       if (status != REG_VALID)
 	return status;
@@ -1100,7 +1096,6 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     {
       ULONGEST bsp;
       ULONGEST cfm;
-      CORE_ADDR reg;
       regcache_cooked_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
       regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
 
@@ -1385,7 +1380,7 @@ examine_prologue (CORE_ADDR pc, CORE_ADDR lim_pc,
   int frameless = 1;
   int i;
   CORE_ADDR addr;
-  char buf[8];
+  gdb_byte buf[8];
   CORE_ADDR bof, sor, sol, sof, cfm, rrb_gr;
 
   memset (instores, 0, sizeof instores);
@@ -1519,7 +1514,7 @@ examine_prologue (CORE_ADDR pc, CORE_ADDR lim_pc,
 	  else if (qp == 0 && rN == 2 
 	        && ((rM == fp_reg && fp_reg != 0) || rM == 12))
 	    {
-	      char buf[MAX_REGISTER_SIZE];
+	      gdb_byte buf[MAX_REGISTER_SIZE];
 	      CORE_ADDR saved_sp = 0;
 	      /* adds r2, spilloffset, rFramePointer 
 	           or
@@ -1855,9 +1850,8 @@ ia64_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct ia64_frame_cache *cache;
-  char buf[8];
-  CORE_ADDR cfm, sof, sol, bsp, psr;
-  int i;
+  gdb_byte buf[8];
+  CORE_ADDR cfm, psr;
 
   if (*this_cache)
     return *this_cache;
@@ -1924,7 +1918,7 @@ ia64_frame_prev_register (struct frame_info *this_frame, void **this_cache,
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct ia64_frame_cache *cache = ia64_frame_cache (this_frame, this_cache);
-  char buf[8];
+  gdb_byte buf[8];
 
   gdb_assert (regnum >= 0);
 
@@ -2244,9 +2238,7 @@ ia64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct ia64_frame_cache *cache;
-  CORE_ADDR addr;
-  char buf[8];
-  int i;
+  gdb_byte buf[8];
 
   if (*this_cache)
     return *this_cache;
@@ -2296,7 +2288,7 @@ static struct value *
 ia64_sigtramp_frame_prev_register (struct frame_info *this_frame,
 				   void **this_cache, int regnum)
 {
-  char buf[MAX_REGISTER_SIZE];
+  gdb_byte buf[MAX_REGISTER_SIZE];
 
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -2419,8 +2411,8 @@ ia64_rse_skip_regs (uint64_t addr, long num_regs)
   return addr + ((num_regs + delta/0x3f) << 3);
 }
   
-/* Gdb libunwind-frame callback function to convert from an ia64 gdb register 
-   number to a libunwind register number.  */
+/* Gdb ia64-libunwind-tdep callback function to convert from an ia64 gdb
+   register number to a libunwind register number.  */
 static int
 ia64_gdb2uw_regnum (int regnum)
 {
@@ -2452,8 +2444,8 @@ ia64_gdb2uw_regnum (int regnum)
     return -1;
 }
   
-/* Gdb libunwind-frame callback function to convert from a libunwind register 
-   number to a ia64 gdb register number.  */
+/* Gdb ia64-libunwind-tdep callback function to convert from a libunwind
+   register number to a ia64 gdb register number.  */
 static int
 ia64_uw2gdb_regnum (int uw_regnum)
 {
@@ -2483,8 +2475,8 @@ ia64_uw2gdb_regnum (int uw_regnum)
     return -1;
 }
 
-/* Gdb libunwind-frame callback function to reveal if register is a float 
-   register or not.  */
+/* Gdb ia64-libunwind-tdep callback function to reveal if register is
+   a float register or not.  */
 static int
 ia64_is_fpreg (int uw_regnum)
 {
@@ -2502,7 +2494,7 @@ ia64_access_reg (unw_addr_space_t as, unw_regnum_t uw_regnum, unw_word_t *val,
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   long new_sof, old_sof;
-  char buf[MAX_REGISTER_SIZE];
+  gdb_byte buf[MAX_REGISTER_SIZE];
   
   /* We never call any libunwind routines that need to write registers.  */
   gdb_assert (!write);
@@ -2582,7 +2574,7 @@ ia64_access_rse_reg (unw_addr_space_t as, unw_regnum_t uw_regnum,
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   long new_sof, old_sof;
-  char buf[MAX_REGISTER_SIZE];
+  gdb_byte buf[MAX_REGISTER_SIZE];
   
   /* We never call any libunwind routines that need to write registers.  */
   gdb_assert (!write);
@@ -2937,7 +2929,7 @@ ia64_libunwind_frame_this_id (struct frame_info *this_frame, void **this_cache,
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct frame_id id = outer_frame_id;
-  char buf[8];
+  gdb_byte buf[8];
   CORE_ADDR bsp;
 
   libunwind_frame_this_id (this_frame, this_cache, &id);
@@ -2989,7 +2981,7 @@ ia64_libunwind_frame_prev_register (struct frame_info *this_frame,
 	{
 	  int rrb_pr = 0;
 	  ULONGEST cfm;
-	  unsigned char buf[MAX_REGISTER_SIZE];
+	  gdb_byte buf[MAX_REGISTER_SIZE];
 
 	  /* Fetch predicate register rename base from current frame
 	     marker for this frame.  */
@@ -3068,7 +3060,7 @@ ia64_libunwind_sigtramp_frame_this_id (struct frame_info *this_frame,
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  char buf[8];
+  gdb_byte buf[8];
   CORE_ADDR bsp;
   struct frame_id id = outer_frame_id;
   CORE_ADDR prev_ip;
@@ -3150,7 +3142,7 @@ static const struct frame_unwind ia64_libunwind_sigtramp_frame_unwind =
 };
 
 /* Set of libunwind callback acccessor functions.  */
-static unw_accessors_t ia64_unw_accessors =
+unw_accessors_t ia64_unw_accessors =
 {
   ia64_find_proc_info_x,
   ia64_put_unwind_info,
@@ -3166,7 +3158,7 @@ static unw_accessors_t ia64_unw_accessors =
    the rse registers.  At the top of the stack, we want libunwind to figure out
    how to read r32 - r127.  Though usually they are found sequentially in
    memory starting from $bof, this is not always true.  */
-static unw_accessors_t ia64_unw_rse_accessors =
+unw_accessors_t ia64_unw_rse_accessors =
 {
   ia64_find_proc_info_x,
   ia64_put_unwind_info,
@@ -3178,9 +3170,9 @@ static unw_accessors_t ia64_unw_rse_accessors =
   /* get_proc_name */
 };
 
-/* Set of ia64 gdb libunwind-frame callbacks and data for generic
-   libunwind-frame code to use.  */
-static struct libunwind_descr ia64_libunwind_descr =
+/* Set of ia64-libunwind-tdep gdb callbacks and data for generic
+   ia64-libunwind-tdep code to use.  */
+struct libunwind_descr ia64_libunwind_descr =
 {
   ia64_gdb2uw_regnum, 
   ia64_uw2gdb_regnum, 
@@ -3342,7 +3334,7 @@ ia64_store_return_value (struct type *type, struct regcache *regcache,
 }
   
 static enum return_value_convention
-ia64_return_value (struct gdbarch *gdbarch, struct type *func_type,
+ia64_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *valtype, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -3488,7 +3480,7 @@ ia64_find_global_pointer_from_dynamic_section (struct gdbarch *gdbarch,
 	    {
 	      int status;
 	      LONGEST tag;
-	      char buf[8];
+	      gdb_byte buf[8];
 
 	      status = target_read_memory (addr, buf, sizeof (buf));
 	      if (status != 0)
@@ -3571,7 +3563,7 @@ find_extant_func_descr (struct gdbarch *gdbarch, CORE_ADDR faddr)
 	    {
 	      int status;
 	      LONGEST faddr2;
-	      char buf[8];
+	      gdb_byte buf[8];
 
 	      status = target_read_memory (addr, buf, sizeof (buf));
 	      if (status != 0)
@@ -3604,7 +3596,7 @@ find_func_descr (struct regcache *regcache, CORE_ADDR faddr, CORE_ADDR *fdaptr)
   if (fdesc == 0)
     {
       ULONGEST global_pointer;
-      char buf[16];
+      gdb_byte buf[16];
 
       fdesc = *fdaptr;
       *fdaptr += 16;
@@ -3911,7 +3903,7 @@ static struct frame_id
 ia64_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  char buf[8];
+  gdb_byte buf[8];
   CORE_ADDR sp, bsp;
 
   get_frame_register (this_frame, sp_regnum, buf);
@@ -3933,7 +3925,7 @@ static CORE_ADDR
 ia64_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  char buf[8];
+  gdb_byte buf[8];
   CORE_ADDR ip, psr, pc;
 
   frame_unwind_register (next_frame, IA64_IP_REGNUM, buf);

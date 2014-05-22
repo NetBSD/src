@@ -1,4 +1,4 @@
-	.section	".text"
+	.text
 	lvlx %r0, %r1, %r2
 	lvlx %r0, 0, %r2
 	lvlxl %r0, %r1, %r2

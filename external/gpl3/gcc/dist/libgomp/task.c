@@ -1,4 +1,4 @@
-/* Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2013 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU OpenMP Library (libgomp).
@@ -41,6 +41,7 @@ gomp_init_task (struct gomp_task *task, struct gomp_task *parent_task,
   task->kind = GOMP_TASK_IMPLICIT;
   task->in_taskwait = false;
   task->in_tied_task = false;
+  task->final_task = false;
   task->children = NULL;
   gomp_sem_init (&task->taskwait_sem, 0);
 }
@@ -77,8 +78,7 @@ gomp_clear_parent (struct gomp_task *children)
 
 void
 GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
-	   long arg_size, long arg_align, bool if_clause,
-	   unsigned flags __attribute__((unused)))
+	   long arg_size, long arg_align, bool if_clause, unsigned flags)
 {
   struct gomp_thread *thr = gomp_thread ();
   struct gomp_team *team = thr->ts.team;
@@ -95,12 +95,14 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 #endif
 
   if (!if_clause || team == NULL
+      || (thr->task && thr->task->final_task)
       || team->task_count > 64 * team->nthreads)
     {
       struct gomp_task task;
 
       gomp_init_task (&task, thr->task, gomp_icv (false));
       task.kind = GOMP_TASK_IFFALSE;
+      task.final_task = (thr->task && thr->task->final_task) || (flags & 2);
       if (thr->task)
 	task.in_tied_task = thr->task->in_tied_task;
       thr->task = &task;
@@ -114,7 +116,16 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	}
       else
 	fn (data);
-      if (task.children)
+      /* Access to "children" is normally done inside a task_lock
+	 mutex region, but the only way this particular task.children
+	 can be set is if this thread's task work function (fn)
+	 creates children.  So since the setter is *this* thread, we
+	 need no barriers here when testing for non-NULL.  We can have
+	 task.children set by the current thread then changed by a
+	 child thread, but seeing a stale non-NULL value is not a
+	 problem.  Once past the task_lock acquisition, this thread
+	 will see the real value of task.children.  */
+      if (task.children != NULL)
 	{
 	  gomp_mutex_lock (&team->task_lock);
 	  gomp_clear_parent (task.children);
@@ -145,6 +156,7 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
       task->fn = fn;
       task->fn_data = arg;
       task->in_tied_task = true;
+      task->final_task = (flags & 2) >> 1;
       gomp_mutex_lock (&team->task_lock);
       if (parent->children)
 	{
@@ -254,7 +266,13 @@ gomp_barrier_handle_tasks (gomp_barrier_state_t state)
 		    parent->children = child_task->next_child;
 		  else
 		    {
-		      parent->children = NULL;
+		      /* We access task->children in GOMP_taskwait
+			 outside of the task lock mutex region, so
+			 need a release barrier here to ensure memory
+			 written by child_task->fn above is flushed
+			 before the NULL is written.  */
+		      __atomic_store_n (&parent->children, NULL,
+					MEMMODEL_RELEASE);
 		      if (parent->in_taskwait)
 			gomp_sem_post (&parent->taskwait_sem);
 		    }
@@ -270,6 +288,7 @@ gomp_barrier_handle_tasks (gomp_barrier_state_t state)
 	      gomp_team_barrier_done (&team->barrier, state);
 	      gomp_mutex_unlock (&team->task_lock);
 	      gomp_team_barrier_wake (&team->barrier, 0);
+	      gomp_mutex_lock (&team->task_lock);
 	    }
 	}
     }
@@ -286,8 +305,16 @@ GOMP_taskwait (void)
   struct gomp_task *child_task = NULL;
   struct gomp_task *to_free = NULL;
 
-  if (task == NULL || task->children == NULL)
+  /* The acquire barrier on load of task->children here synchronizes
+     with the write of a NULL in gomp_barrier_handle_tasks.  It is
+     not necessary that we synchronize with other non-NULL writes at
+     this point, but we must ensure that all writes to memory by a
+     child thread task work function are seen before we exit from
+     GOMP_taskwait.  */
+  if (task == NULL
+      || __atomic_load_n (&task->children, MEMMODEL_ACQUIRE) == NULL)
     return;
+
   gomp_mutex_lock (&team->task_lock);
   while (1)
     {
@@ -362,3 +389,20 @@ GOMP_taskwait (void)
 	}
     }
 }
+
+/* Called when encountering a taskyield directive.  */
+
+void
+GOMP_taskyield (void)
+{
+  /* Nothing at the moment.  */
+}
+
+int
+omp_in_final (void)
+{
+  struct gomp_thread *thr = gomp_thread ();
+  return thr->task && thr->task->final_task;
+}
+
+ialias (omp_in_final)

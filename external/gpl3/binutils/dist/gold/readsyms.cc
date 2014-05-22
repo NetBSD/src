@@ -161,13 +161,15 @@ void
 Read_symbols::run(Workqueue* workqueue)
 {
   // If we didn't queue a new task, then we need to explicitly unblock
-  // the token.
-  if (!this->do_read_symbols(workqueue))
+  // the token. If the object is a member of a lib group, however,
+  // the token was already added to the list of locks for the task,
+  // and it will be unblocked automatically at the end of the task.
+  if (!this->do_read_symbols(workqueue) && this->member_ == NULL)
     workqueue->queue_soon(new Unblock_token(this->this_blocker_,
 					    this->next_blocker_));
 }
 
-// Handle a whole lib group. Other then collecting statisticts, this just
+// Handle a whole lib group. Other than collecting statistics, this just
 // mimics what we do for regular object files in the command line.
 
 bool
@@ -320,12 +322,33 @@ Read_symbols::do_read_symbols(Workqueue* workqueue)
 	}
     }
 
+  Object* elf_obj = NULL;
+  bool unconfigured;
+  bool* punconfigured = NULL;
+  if (is_elf)
+    {
+      // This is an ELF object.
+
+      unconfigured = false;
+      punconfigured = (input_file->will_search_for()
+		       ? &unconfigured
+		       : NULL);
+      elf_obj = make_elf_object(input_file->filename(),
+				input_file, 0, ehdr, read_size,
+				punconfigured);
+    }
+
   if (parameters->options().has_plugins())
     {
       Pluginobj* obj = parameters->options().plugins()->claim_file(input_file,
-                                                                   0, filesize);
+                                                                   0, filesize,
+								   elf_obj);
       if (obj != NULL)
         {
+	  // Delete the elf_obj, this file has been claimed.
+	  if (elf_obj != NULL)
+	    delete elf_obj;
+
           // The input file was claimed by a plugin, and its symbols
           // have been provided by the plugin.
 
@@ -347,6 +370,7 @@ Read_symbols::do_read_symbols(Workqueue* workqueue)
 						this->mapfile_,
 						this->input_argument_,
                                                 obj,
+                                                NULL,
 						NULL,
                                                 this->this_blocker_,
                                                 this->next_blocker_));
@@ -358,14 +382,7 @@ Read_symbols::do_read_symbols(Workqueue* workqueue)
     {
       // This is an ELF object.
 
-      bool unconfigured = false;
-      bool* punconfigured = (input_file->will_search_for()
-			     ? &unconfigured
-			     : NULL);
-      Object* obj = make_elf_object(input_file->filename(),
-				    input_file, 0, ehdr, read_size,
-				    punconfigured);
-      if (obj == NULL)
+      if (elf_obj == NULL)
 	{
 	  if (unconfigured)
 	    {
@@ -381,7 +398,7 @@ Read_symbols::do_read_symbols(Workqueue* workqueue)
 	}
 
       Read_symbols_data* sd = new Read_symbols_data;
-      obj->read_symbols(sd);
+      elf_obj->read_symbols(sd);
 
       // Opening the file locked it, so now we need to unlock it.  We
       // need to unlock it before queuing the Add_symbols task,
@@ -396,7 +413,9 @@ Read_symbols::do_read_symbols(Workqueue* workqueue)
       if (this->member_ != NULL)
         {
           this->member_->sd_ = sd;
-          this->member_->obj_ = obj;
+          this->member_->obj_ = elf_obj;
+          this->member_->arg_serial_ =
+              this->input_argument_->file().arg_serial();
           return true;
         }
 
@@ -409,7 +428,8 @@ Read_symbols::do_read_symbols(Workqueue* workqueue)
 					    this->dirindex_,
 					    this->mapfile_,
 					    this->input_argument_,
-					    obj,
+					    elf_obj,
+					    NULL,
 					    sd,
 					    this->this_blocker_,
 					    this->next_blocker_));
@@ -563,7 +583,9 @@ void
 Add_symbols::locks(Task_locker* tl)
 {
   tl->add(this, this->next_blocker_);
-  tl->add(this, this->object_->token());
+  Task_token* token = this->object_->token();
+  if (token != NULL)
+    tl->add(this, token);
 }
 
 // Add the symbols in the object to the symbol table.
@@ -580,6 +602,8 @@ Add_symbols::run(Workqueue*)
 
   if (!this->input_objects_->add_object(this->object_))
     {
+      this->object_->discard_decompressed_sections();
+      gold_assert(this->sd_ != NULL);
       delete this->sd_;
       this->sd_ = NULL;
       this->object_->release();
@@ -590,13 +614,153 @@ Add_symbols::run(Workqueue*)
       Incremental_inputs* incremental_inputs =
           this->layout_->incremental_inputs();
       if (incremental_inputs != NULL)
-	incremental_inputs->report_object(this->object_, NULL);
+	{
+          if (this->library_ != NULL && !this->library_->is_reported())
+            {
+              Incremental_binary* ibase = this->layout_->incremental_base();
+              gold_assert(ibase != NULL);
+              unsigned int lib_serial = this->library_->arg_serial();
+              unsigned int lib_index = this->library_->input_file_index();
+	      Script_info* lib_script_info = ibase->get_script_info(lib_index);
+	      incremental_inputs->report_archive_begin(this->library_,
+						       lib_serial,
+						       lib_script_info);
+	    }
+	  unsigned int arg_serial = this->input_argument_->file().arg_serial();
+	  Script_info* script_info = this->input_argument_->script_info();
+	  incremental_inputs->report_object(this->object_, arg_serial,
+					    this->library_, script_info);
+	}
       this->object_->layout(this->symtab_, this->layout_, this->sd_);
       this->object_->add_symbols(this->symtab_, this->sd_, this->layout_);
+      this->object_->discard_decompressed_sections();
       delete this->sd_;
       this->sd_ = NULL;
       this->object_->release();
     }
+}
+
+// Class Read_member.
+
+Read_member::~Read_member()
+{
+  if (this->this_blocker_ != NULL)
+    delete this->this_blocker_;
+  // next_blocker_ is deleted by the task associated with the next
+  // input file.
+}
+
+// Return whether a Read_member task is runnable.
+
+Task_token*
+Read_member::is_runnable()
+{
+  if (this->this_blocker_ != NULL && this->this_blocker_->is_blocked())
+    return this->this_blocker_;
+  return NULL;
+}
+
+void
+Read_member::locks(Task_locker* tl)
+{
+  tl->add(this, this->next_blocker_);
+}
+
+// Run a Read_member task.
+
+void
+Read_member::run(Workqueue*)
+{
+  // This task doesn't need to do anything for now.  The Read_symbols task
+  // that is queued for the archive library will cause the archive to be
+  // processed from scratch.
+}
+
+// Class Check_script.
+
+Check_script::~Check_script()
+{
+  if (this->this_blocker_ != NULL)
+    delete this->this_blocker_;
+  // next_blocker_ is deleted by the task associated with the next
+  // input file.
+}
+
+// Return whether a Check_script task is runnable.
+
+Task_token*
+Check_script::is_runnable()
+{
+  if (this->this_blocker_ != NULL && this->this_blocker_->is_blocked())
+    return this->this_blocker_;
+  return NULL;
+}
+
+void
+Check_script::locks(Task_locker* tl)
+{
+  tl->add(this, this->next_blocker_);
+}
+
+// Run a Check_script task.
+
+void
+Check_script::run(Workqueue*)
+{
+  Incremental_inputs* incremental_inputs = this->layout_->incremental_inputs();
+  gold_assert(incremental_inputs != NULL);
+  unsigned int arg_serial = this->input_reader_->arg_serial();
+  Script_info* script_info =
+      this->ibase_->get_script_info(this->input_file_index_);
+  Timespec mtime = this->input_reader_->get_mtime();
+  incremental_inputs->report_script(script_info, arg_serial, mtime);
+}
+
+// Class Check_library.
+
+Check_library::~Check_library()
+{
+  if (this->this_blocker_ != NULL)
+    delete this->this_blocker_;
+  // next_blocker_ is deleted by the task associated with the next
+  // input file.
+}
+
+// Return whether a Check_library task is runnable.
+
+Task_token*
+Check_library::is_runnable()
+{
+  if (this->this_blocker_ != NULL && this->this_blocker_->is_blocked())
+    return this->this_blocker_;
+  return NULL;
+}
+
+void
+Check_library::locks(Task_locker* tl)
+{
+  tl->add(this, this->next_blocker_);
+}
+
+// Run a Check_library task.
+
+void
+Check_library::run(Workqueue*)
+{
+  Incremental_inputs* incremental_inputs = this->layout_->incremental_inputs();
+  gold_assert(incremental_inputs != NULL);
+  Incremental_library* lib = this->ibase_->get_library(this->input_file_index_);
+  gold_assert(lib != NULL);
+  lib->copy_unused_symbols();
+  // FIXME: Check that unused symbols remain unused.
+  if (!lib->is_reported())
+    {
+      unsigned int lib_serial = lib->arg_serial();
+      unsigned int lib_index = lib->input_file_index();
+      Script_info* script_info = this->ibase_->get_script_info(lib_index);
+      incremental_inputs->report_archive_begin(lib, lib_serial, script_info);
+    }
+  incremental_inputs->report_archive_end(lib);
 }
 
 // Class Input_group.

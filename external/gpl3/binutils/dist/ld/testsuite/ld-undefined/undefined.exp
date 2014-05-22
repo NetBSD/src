@@ -2,7 +2,7 @@
 # By Ian Lance Taylor, Cygnus Support
 #
 #   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-#   2005, 2007, 2008  Free Software Foundation, Inc.
+#   2005, 2007, 2008, 2010, 2011  Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -69,7 +69,6 @@ checkund $mu $testund
 # ARM PE defaults to using stabs debugging, which we can't handle for
 # a COFF file.
 #setup_xfail "arm*-*-pe*"
-#setup_xfail "thumb*-*-pe*"
 
 # For Xtensa on GNU Linux systems (or any other system where PIC code is
 # always used), the address of the undefined function is in a literal pool
@@ -89,12 +88,11 @@ if ![is_elf_format] {
     # ARM PE defaults to using stabs debugging, which we can't handle for
     # a COFF file.
     #setup_xfail "arm*-*-pe*"
-    #setup_xfail "thumb*-*-pe*"
 }
 
 set ml "undefined.c:9: undefined reference to `*this_function_is_not_defined'"
-# With targets that use elf/dwarf2, such as the arm-elf and thumb-elf
-# toolchains, the code in bfd/elf.c:_bfd_elf_find_nearest_line() is called
+# With targets that use elf/dwarf2, such as the arm-elf
+# toolchain, the code in bfd/elf.c:_bfd_elf_find_nearest_line() is called
 # in order to locate the file name/line number where the undefined
 # reference occurs.  Unfortunately this tries to use the dwarf2 debug
 # information held in the .debug_info section.  This section contains a series
@@ -140,5 +138,6 @@ setup_xfail s390-*-*
 
 # See comments above for Xtensa.
 setup_xfail xtensa*-*-linux*
+setup_xfail hppa*64*-*-*
 
 checkund $ml $testline

@@ -1,6 +1,6 @@
 /* Common code for i386 XSAVE extended state.
 
-   Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

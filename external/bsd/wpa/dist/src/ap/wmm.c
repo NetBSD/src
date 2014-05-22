@@ -72,7 +72,8 @@ u8 * hostapd_eid_wmm(struct hostapd_data *hapd, u8 *eid)
 	wmm->version = WMM_VERSION;
 	wmm->qos_info = hapd->parameter_set_count & 0xf;
 
-	if (hapd->conf->wmm_uapsd)
+	if (hapd->conf->wmm_uapsd &&
+	    (hapd->iface->drv_flags & WPA_DRIVER_FLAGS_AP_UAPSD))
 		wmm->qos_info |= 0x80;
 
 	wmm->reserved = 0;
@@ -155,7 +156,7 @@ static void wmm_send_action(struct hostapd_data *hapd, const u8 *addr,
 	os_memcpy(t, tspec, sizeof(struct wmm_tspec_element));
 	len = ((u8 *) (t + 1)) - buf;
 
-	if (hostapd_drv_send_mlme(hapd, m, len) < 0)
+	if (hostapd_drv_send_mlme(hapd, m, len, 0) < 0)
 		perror("wmm_send_action: send");
 }
 

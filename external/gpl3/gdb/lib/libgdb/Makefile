@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2012/04/17 00:04:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2014/05/22 16:01:19 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 LIBISPRIVATE=	yes
 LIB=		gdb
-GDBARCHDIR=	${.CURDIR}/arch/${MACHINE_ARCH}
+GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
 
@@ -22,8 +22,8 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/include/opcode \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
-		-I${.CURDIR}/../libbfd/arch/${MACHINE_ARCH} \
-		-I${.CURDIR}/../libdecnumber/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		-DTARGET_SYSTEM_ROOT=\"\" \
@@ -47,8 +47,7 @@ CWARNFLAGS.clang+=	-Wno-switch
 #
 COPTS+=	-Wno-stack-protector
 
-# Don't run yacc/bison or lex
-.y.c .y.h .l.c:
+ada-exp.c: ada-lex.c
 
 .if ${MACHINE} == "amiga"
 COPTS.dwarf2-frame.c+=-O1

@@ -1,6 +1,5 @@
 /* Configuration file for ARM BPABI targets.
-   Copyright (C) 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC   
 
    This file is part of GCC.
@@ -28,10 +27,10 @@
 #define TARGET_BPABI (TARGET_AAPCS_BASED)
 
 /* BPABI targets use EABI frame unwinding tables.  */
-#undef MUST_USE_SJLJ_EXCEPTIONS
-#define TARGET_UNWIND_INFO 1
 #undef ARM_EABI_UNWIND_TABLES
 #define ARM_EABI_UNWIND_TABLES 1
+#undef ARM_UNWIND_INFO
+#define ARM_UNWIND_INFO 1
 
 /* Section 4.1 of the AAPCS requires the use of VFP format.  */
 #undef  FPUTYPE_DEFAULT
@@ -56,13 +55,39 @@
 /* The BPABI integer comparison routines return { -1, 0, 1 }.  */
 #define TARGET_LIB_INT_CMP_BIASED !TARGET_BPABI
 
-#define TARGET_FIX_V4BX_SPEC " %{mcpu=arm8|mcpu=arm810|mcpu=strongarm*|march=armv4:--fix-v4bx}"
+#define TARGET_FIX_V4BX_SPEC " %{mcpu=arm8|mcpu=arm810|mcpu=strongarm*"\
+  "|march=armv4|mcpu=fa526|mcpu=fa626:--fix-v4bx}"
 
-#define BE8_LINK_SPEC " %{mbig-endian:%{march=armv7-a|mcpu=cortex-a5|mcpu=cortex-a8|mcpu=cortex-a9:%{!r:--be8}}}"
+#if TARGET_BIG_ENDIAN_DEFAULT
+#define BE8_LINK_SPEC \
+  " %{!mlittle-endian:%{march=armv7-a|mcpu=cortex-a5    \
+   |mcpu=cortex-a7                                      \
+   |mcpu=cortex-a8|mcpu=cortex-a9|mcpu=cortex-a15       \
+   |mcpu=marvell-pj4					\
+   |mcpu=generic-armv7-a                                \
+   |march=armv7-m|mcpu=cortex-m3                        \
+   |march=armv7e-m|mcpu=cortex-m4                       \
+   |march=armv6-m|mcpu=cortex-m0                        \
+   |march=armv8-a					\
+   :%{!r:--be8}}}"
+#else
+#define BE8_LINK_SPEC \
+  " %{mbig-endian:%{march=armv7-a|mcpu=cortex-a5        \
+   |mcpu=cortex-a7                                      \
+   |mcpu=cortex-a8|mcpu=cortex-a9|mcpu=cortex-a15       \
+   |mcpu=marvell-pj4					\
+   |mcpu=generic-armv7-a                                \
+   |march=armv7-m|mcpu=cortex-m3                        \
+   |march=armv7e-m|mcpu=cortex-m4                       \
+   |march=armv6-m|mcpu=cortex-m0                        \
+   |march=armv8-a					\
+   :%{!r:--be8}}}"
+#endif
 
 /* Tell the assembler to build BPABI binaries.  */
 #undef  SUBTARGET_EXTRA_ASM_SPEC
-#define SUBTARGET_EXTRA_ASM_SPEC "%{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu;:-meabi=5}" TARGET_FIX_V4BX_SPEC
+#define SUBTARGET_EXTRA_ASM_SPEC \
+  "%{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu;:-meabi=5}" TARGET_FIX_V4BX_SPEC
 
 #ifndef SUBTARGET_EXTRA_LINK_SPEC
 #define SUBTARGET_EXTRA_LINK_SPEC ""
@@ -76,58 +101,6 @@
 
 #undef  LINK_SPEC
 #define LINK_SPEC BPABI_LINK_SPEC
-
-/* Make __aeabi_AEABI_NAME an alias for __GCC_NAME.  */
-#define RENAME_LIBRARY(GCC_NAME, AEABI_NAME)		\
-  typeof (__##GCC_NAME) __aeabi_##AEABI_NAME \
-    __attribute__((alias ("__" #GCC_NAME)));
-
-/* Give some libgcc functions an additional __aeabi name.  */
-#ifdef L_muldi3
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (muldi3, lmul)
-#endif
-#ifdef L_muldi3
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (muldi3, lmul)
-#endif
-#ifdef L_fixdfdi
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (fixdfdi, d2lz) \
-  extern DWtype __fixdfdi (DFtype) __attribute__((pcs("aapcs"))); \
-  extern UDWtype __fixunsdfdi (DFtype) __asm__("__aeabi_d2ulz") __attribute__((pcs("aapcs")));
-#endif
-#ifdef L_fixunsdfdi
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (fixunsdfdi, d2ulz) \
-  extern UDWtype __fixunsdfdi (DFtype) __attribute__((pcs("aapcs")));
-#endif
-#ifdef L_fixsfdi
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (fixsfdi, f2lz) \
-  extern DWtype __fixsfdi (SFtype) __attribute__((pcs("aapcs"))); \
-  extern UDWtype __fixunssfdi (SFtype) __asm__("__aeabi_f2ulz") __attribute__((pcs("aapcs")));
-#endif
-#ifdef L_fixunssfdi
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (fixunssfdi, f2ulz) \
-  extern UDWtype __fixunssfdi (SFtype) __attribute__((pcs("aapcs")));
-#endif
-#ifdef L_floatdidf
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatdidf, l2d)
-#endif
-#ifdef L_floatdisf
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatdisf, l2f)
-#endif
-
-/* These renames are needed on ARMv6M.  Other targets get them from
-   assembly routines.  */
-#ifdef L_fixunsdfsi
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (fixunsdfsi, d2uiz)
-#endif
-#ifdef L_fixunssfsi
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (fixunssfsi, f2uiz)
-#endif
-#ifdef L_floatundidf
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatundidf, ul2d)
-#endif
-#ifdef L_floatundisf
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatundisf, ul2f)
-#endif
 
 /* The BPABI requires that we always use an out-of-line implementation
    of RTTI comparison, even if the target supports weak symbols,

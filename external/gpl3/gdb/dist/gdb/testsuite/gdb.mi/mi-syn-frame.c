@@ -25,9 +25,18 @@ foo (void)
 void 
 bar (void)
 {
-  char *nuller = 0;
+  *(char *)0 = 0;    /* try to cause a segfault */
 
-  *nuller = 'a';      /* try to cause a segfault */
+  /* On MMU-less system, previous memory access to address zero doesn't
+     trigger a SIGSEGV.  Trigger a SIGILL.  Each arch should define its
+     own illegal instruction here.  */
+#if defined(__arm__)
+  asm(".word 0xf8f00000");
+#elif defined(__TMS320C6X__)
+  asm(".word 0x56454313");
+#else
+#endif
+
 }
 
 void

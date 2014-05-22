@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.4 2012/10/30 18:55:54 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.5 2014/05/22 16:14:46 yamt Exp $
 
 LIB=	clangSema
 
@@ -38,6 +38,7 @@ SRCS+=	AnalysisBasedWarnings.cpp \
 	SemaLambda.cpp \
 	SemaLookup.cpp \
 	SemaObjCProperty.cpp \
+	SemaOpenMP.cpp \
 	SemaOverload.cpp \
 	SemaPseudoObject.cpp \
 	SemaStmt.cpp \
@@ -49,7 +50,7 @@ SRCS+=	AnalysisBasedWarnings.cpp \
 	SemaTemplateInstantiateDecl.cpp \
 	SemaTemplateVariadic.cpp \
 	SemaType.cpp \
-	TargetAttributesSema.cpp
+	TypeLocBuilder.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,7 +1,6 @@
 // Memory extensions -*- C++ -*-
 
-// Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2002-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -62,7 +61,9 @@
 #include <memory>
 #include <bits/stl_tempbuf.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   using std::ptrdiff_t;
   using std::pair;
@@ -108,10 +109,10 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 
   /**
    *  @brief Copies the range [first,last) into result.
-   *  @param  first  An input iterator.
-   *  @param  last   An input iterator.
-   *  @param  result An output iterator.
-   *  @return   result + (first - last)
+   *  @param  __first  An input iterator.
+   *  @param  __count  Length
+   *  @param  __result An output iterator.
+   *  @return   __result + (__first + __count)
    *  @ingroup SGIextensions
    *
    *  Like copy(), but does not require an initialized output range.
@@ -189,7 +190,8 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       ~temporary_buffer() { }
     };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif
 

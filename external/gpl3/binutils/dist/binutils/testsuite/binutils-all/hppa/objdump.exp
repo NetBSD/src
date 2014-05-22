@@ -57,9 +57,9 @@ if [is_remote host] {
 set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -r $objfile"]
 
 if [istarget hppa*-*-*elf*] then {
-  set want "00000000 R_PARISC_DPREL21L\[ 	\]+is_idchar\\+0xffffffe0.*"
+  set want "00000000 R_PARISC_DPREL21L\[ 	\]+is_idchar-0x00000020.*"
 } else {
-  set want "00000000 R_DP_RELATIVE\[ 	\]+is_idchar\\+0xffffffe0.*"
+  set want "00000000 R_DP_RELATIVE\[ 	\]+is_idchar-0x00000020.*"
 }
 
 

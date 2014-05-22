@@ -1,5 +1,5 @@
 /* ELF attributes support (based on ARM EABI attributes).
-   Copyright 2005, 2006, 2007, 2009, 2010
+   Copyright 2005, 2006, 2007, 2009, 2010, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -347,6 +347,10 @@ _bfd_elf_copy_obj_attributes (bfd *ibfd, bfd *obfd)
   int i;
   int vendor;
 
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return;
+
   for (vendor = OBJ_ATTR_FIRST; vendor <= OBJ_ATTR_LAST; vendor++)
     {
       in_attr
@@ -428,7 +432,7 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
   bfd_byte *contents;
   bfd_byte *p;
   bfd_vma len;
-  const char *std_section;
+  const char *std_sec;
 
   contents = (bfd_byte *) bfd_malloc (hdr->sh_size);
   if (!contents)
@@ -440,7 +444,7 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
       return;
     }
   p = contents;
-  std_section = get_elf_backend_data (abfd)->obj_attrs_vendor;
+  std_sec = get_elf_backend_data (abfd)->obj_attrs_vendor;
   if (*(p++) == 'A')
     {
       len = hdr->sh_size - 1;
@@ -455,11 +459,11 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 	  if (section_len > len)
 	    section_len = len;
 	  len -= section_len;
-	  namelen = strlen ((char *)p) + 1;
+	  namelen = strlen ((char *) p) + 1;
 	  section_len -= namelen + 4;
-	  if (std_section && strcmp ((char *)p, std_section) == 0)
+	  if (std_sec && strcmp ((char *) p, std_sec) == 0)
 	    vendor = OBJ_ATTR_PROC;
-	  else if (strcmp ((char *)p, "gnu") == 0)
+	  else if (strcmp ((char *) p, "gnu") == 0)
 	    vendor = OBJ_ATTR_GNU;
 	  else
 	    {

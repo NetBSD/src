@@ -1,8 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,6 +83,13 @@ enum errors {
      traceframe.  */
   NOT_AVAILABLE_ERROR,
 
+  /* DW_OP_GNU_entry_value resolving failed.  */
+  NO_ENTRY_VALUE_ERROR,
+
+  /* Target throwing an error has been closed.  Current command should be
+     aborted as the inferior state is no longer valid.  */
+  TARGET_CLOSE_ERROR,
+
   /* Add more errors here.  */
   NR_ERRORS
 };
@@ -114,8 +119,7 @@ extern const struct gdb_exception exception_none;
 
 /* Functions to drive the exceptions state m/c (internal to
    exceptions).  */
-EXCEPTIONS_SIGJMP_BUF *exceptions_state_mc_init (struct ui_out *func_uiout,
-						 volatile struct
+EXCEPTIONS_SIGJMP_BUF *exceptions_state_mc_init (volatile struct
 						 gdb_exception *exception,
 						 return_mask mask);
 int exceptions_state_mc_action_iter (void);
@@ -146,7 +150,7 @@ int exceptions_state_mc_action_iter_1 (void);
 #define TRY_CATCH(EXCEPTION,MASK) \
      { \
        EXCEPTIONS_SIGJMP_BUF *buf = \
-	 exceptions_state_mc_init (uiout, &(EXCEPTION), (MASK)); \
+	 exceptions_state_mc_init (&(EXCEPTION), (MASK)); \
        EXCEPTIONS_SIGSETJMP (*buf); \
      } \
      while (exceptions_state_mc_action_iter ()) \
@@ -182,8 +186,8 @@ extern void throw_vfatal (const char *fmt, va_list ap)
 extern void throw_error (enum errors error, const char *fmt, ...)
      ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
 
-/* Instead of deprecated_throw_reason, code should use catch_exception
-   and throw_exception.  */
+/* Instead of deprecated_throw_reason, code should use
+   throw_exception.  */
 extern void deprecated_throw_reason (enum return_reason reason)
      ATTRIBUTE_NORETURN;
 
@@ -233,14 +237,6 @@ extern int catch_exceptions_with_msg (struct ui_out *uiout,
 			     	      void *func_args,
 			     	      char **gdberrmsg,
 				      return_mask mask);
-
-/* This function, in addition, suppresses the printing of the captured
-   error message.  It's up to the client to print it.  */
-
-extern struct gdb_exception catch_exception (struct ui_out *uiout,
-					     catch_exception_ftype *func,
-					     void *func_args,
-					     return_mask mask);
 
 /* If CATCH_ERRORS_FTYPE throws an error, catch_errors() returns zero
    otherwize the result from CATCH_ERRORS_FTYPE is returned.  It is

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2014/05/22 16:13:23 yamt Exp $
 
 PROG_CXX=	llvm-ranlib
 NOMAN=		yes
@@ -12,7 +12,7 @@ SRCS=	llvm-ranlib.cpp
 LLVM_LIBS+= \
 	Archive \
 	BitReader \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

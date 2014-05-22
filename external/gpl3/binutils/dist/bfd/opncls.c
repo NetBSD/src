@@ -1,6 +1,6 @@
 /* opncls.c -- open and close a BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
    Free Software Foundation, Inc.
 
    Written by Cygnus Support.
@@ -107,6 +107,8 @@ _bfd_new_bfd (void)
   return nbfd;
 }
 
+static const struct bfd_iovec opncls_iovec;
+
 /* Allocate a new BFD as a member of archive OBFD.  */
 
 bfd *
@@ -119,6 +121,8 @@ _bfd_new_bfd_contained_in (bfd *obfd)
     return NULL;
   nbfd->xvec = obfd->xvec;
   nbfd->iovec = obfd->iovec;
+  if (obfd->iovec == &opncls_iovec)
+    nbfd->iostream = obfd->iostream;
   nbfd->my_archive = obfd;
   nbfd->direction = read_direction;
   nbfd->target_defaulted = obfd->target_defaulted;
@@ -190,6 +194,8 @@ DESCRIPTION
 	If <<NULL>> is returned then an error has occured.   Possible errors
 	are <<bfd_error_no_memory>>, <<bfd_error_invalid_target>> or
 	<<system_call>> error.
+
+	On error, @var{fd} is always closed.
 */
 
 bfd *
@@ -200,11 +206,17 @@ bfd_fopen (const char *filename, const char *target, const char *mode, int fd)
 
   nbfd = _bfd_new_bfd ();
   if (nbfd == NULL)
-    return NULL;
+    {
+      if (fd != -1)
+	close (fd);
+      return NULL;
+    }
 
   target_vec = bfd_find_target (target, nbfd);
   if (target_vec == NULL)
     {
+      if (fd != -1)
+	close (fd);
       _bfd_delete_bfd (nbfd);
       return NULL;
     }
@@ -307,6 +319,8 @@ DESCRIPTION
 
 	Possible errors are <<bfd_error_no_memory>>,
 	<<bfd_error_invalid_target>> and <<bfd_error_system_call>>.
+
+	On error, @var{fd} is closed.
 */
 
 bfd *
@@ -323,6 +337,10 @@ bfd_fdopenr (const char *filename, const char *target, int fd)
   fdflags = fcntl (fd, F_GETFL, NULL);
   if (fdflags == -1)
     {
+      int save = errno;
+
+      close (fd);
+      errno = save;
       bfd_set_error (bfd_error_system_call);
       return NULL;
     }
@@ -525,7 +543,9 @@ opncls_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 	      bfd_size_type len ATTRIBUTE_UNUSED,
 	      int prot ATTRIBUTE_UNUSED,
 	      int flags ATTRIBUTE_UNUSED,
-	      file_ptr offset ATTRIBUTE_UNUSED)
+	      file_ptr offset ATTRIBUTE_UNUSED,
+              void **map_addr ATTRIBUTE_UNUSED,
+              bfd_size_type *map_len ATTRIBUTE_UNUSED)
 {
   return (void *) -1;
 }
@@ -710,7 +730,7 @@ bfd_close (bfd *abfd)
   if (! BFD_SEND (abfd, _close_and_cleanup, (abfd)))
     return FALSE;
 
-  ret = abfd->iovec->bclose (abfd);
+  ret = abfd->iovec->bclose (abfd) == 0;
 
   if (ret)
     _maybe_make_executable (abfd);

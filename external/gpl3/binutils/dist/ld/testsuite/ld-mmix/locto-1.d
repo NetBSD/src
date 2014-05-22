@@ -10,9 +10,9 @@ SYMBOL TABLE:
 0+1008 g       \.text	0+ od
 0+1010 g       \.text	0+ _start
 0+1008 g       \*ABS\*	0+ __\.MMIX\.start\.\.text
-2000000000000000 g       \*ABS\*	0+ __bss_start
-2000000000000000 g       \*ABS\*	0+ _edata
-2000000000000000 g       \*ABS\*	0+ _end
+2000000000000000 g       \.text	0+ __bss_start
+2000000000000000 g       \.text	0+ _edata
+2000000000000000 g       \.text	0+ _end
 0+1010 g       \.text	0+ _start\.
 
 Contents of section \.text:

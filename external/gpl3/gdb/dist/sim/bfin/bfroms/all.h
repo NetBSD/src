@@ -6,6 +6,7 @@
 
 #include "bf526-0.0.h"
 #include "bf526-0.1.h"
+#include "bf526-0.2.h"
 #include "bf527-0.0.h"
 #include "bf527-0.1.h"
 #include "bf527-0.2.h"
@@ -32,9 +33,11 @@
 #include "bf54x-0.0.h"
 #include "bf54x-0.1.h"
 #include "bf54x-0.2.h"
+#include "bf54x-0.4.h"
 #include "bf54x_l1-0.0.h"
 #include "bf54x_l1-0.1.h"
 #include "bf54x_l1-0.2.h"
+#include "bf54x_l1-0.4.h"
 
 #include "bf561-0.5.h"
 

@@ -1,6 +1,6 @@
 /* ldexp.h -
    Copyright 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2011 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2007, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -46,6 +46,7 @@ enum node_tree_enum {
 typedef struct {
   int node_code;
   unsigned int lineno;
+  const char *filename;
   enum node_tree_enum node_class;
 } node_type;
 
@@ -66,6 +67,7 @@ typedef union etree_union {
     node_type type;
     const char *dst;
     union etree_union *src;
+    bfd_boolean defsym;
     bfd_boolean hidden;
   } assign;
   struct {
@@ -93,11 +95,19 @@ typedef union etree_union {
   } assert_s;
 } etree_type;
 
-typedef enum {
+/* Expression evaluation control.  */
+typedef enum
+{
+  /* Parsing linker script.  Will only return "valid" for expressions
+     that evaluate to a constant.  */
   lang_first_phase_enum,
+  /* Prior to section sizing.  */
   lang_mark_phase_enum,
+  /* During section sizing.  */
   lang_allocating_phase_enum,
+  /* During assignment of symbol values when relaxation in progress.  */
   lang_assigning_phase_enum,
+  /* Final assignment of symbol values.  */
   lang_final_phase_enum
 } lang_phase_type;
 
@@ -129,6 +139,11 @@ struct ldexp_control {
 
   /* Principally used for diagnostics.  */
   bfd_boolean assigning_to_dot;
+  /* If evaluating an assignment, the destination.  Cleared if an
+     etree_name NAME matches this, to signal a self-assignment.
+     Note that an etree_name DEFINED does not clear this field, nor
+     does the false branch of a trinary expression.  */
+  const char *assign_name;
 
   /* Working results.  */
   etree_value_type result;
@@ -190,7 +205,7 @@ etree_type *exp_unop
 etree_type *exp_nameop
   (int, const char *);
 etree_type *exp_assign
-  (const char *, etree_type *);
+  (const char *, etree_type *, bfd_boolean);
 etree_type *exp_defsym
   (const char *, etree_type *);
 etree_type *exp_provide

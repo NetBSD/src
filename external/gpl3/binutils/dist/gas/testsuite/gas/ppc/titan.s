@@ -1,5 +1,5 @@
 # AppliedMicro Titan tests 
-	.section ".text"
+	.text
 start:
 	blr
 	tweqi		1, 0

@@ -1,7 +1,7 @@
 /* Make configure files to produce biarch compiler defaulting to 64bit mode.
    This file must be included very first, while the OS specific file later
    to overwrite otherwise wrong defaults. 
-   Copyright (C) 2001, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Bo Thorsen <bo@suse.de>.
 
 This file is part of GCC.
@@ -25,5 +25,5 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
-#define TARGET_64BIT_DEFAULT OPTION_MASK_ISA_64BIT
+#define TARGET_64BIT_DEFAULT (OPTION_MASK_ISA_64BIT | OPTION_MASK_ABI_64)
 #define TARGET_BI_ARCH 1

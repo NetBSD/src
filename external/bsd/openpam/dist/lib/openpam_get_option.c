@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_get_option.c,v 1.2.4.2 2012/04/17 00:03:59 yamt Exp $	*/
+/*	$NetBSD: openpam_get_option.c,v 1.2.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_get_option.c 482 2011-11-03 16:33:02Z des
+ * Id: openpam_get_option.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -46,7 +46,6 @@
 #include <string.h>
 
 #include <security/pam_appl.h>
-#include <security/openpam.h>
 
 #include "openpam_impl.h"
 

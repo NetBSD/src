@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +18,8 @@
 
 # This file is part of the gdb testsuite.
 
-if $tracelevel {
-    strace $tracelevel
-}
 
-
-if {(![istarget "x86_64-*-*"] && ![istarget "i?86-*-*"]) || ![is_ilp32_target] } then {
+if {(![istarget "x86_64-*-*"] && ![istarget "i?86-*-*"])} then {
     verbose "Skipping i386 word register tests."
     return
 }
@@ -32,7 +28,7 @@ set testfile "i386-word"
 set srcfile i386-pseudo.c
 set binfile ${objdir}/${subdir}/${testfile}
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 

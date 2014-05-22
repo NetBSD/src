@@ -58,6 +58,10 @@ class Derived : public Base
 // This tests One Definition Rule (ODR) violations.
 void SortAscending(int array[], int size);   // in odr_violation1.cc
 void SortDescending(int array[], int size);  // in odr_violation2.cc
+// This tests One Definition Rule (ODR) non-violations.
+#include "odr_header2.h"
+OdrBase* CreateOdrDerived1();  // in odr_violation1.cc
+OdrBase* CreateOdrDerived2();  // in odr_violation2.cc
 
 extern "C" int OverriddenCFunction(int i);  // in odr_violation*.cc
 
@@ -84,6 +88,9 @@ int main()
 
   OverriddenCFunction(3);
   SometimesInlineFunction(3);
+
+  delete CreateOdrDerived1();
+  delete CreateOdrDerived2();
 
   return 0;
 }

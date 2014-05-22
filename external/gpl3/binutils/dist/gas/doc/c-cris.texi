@@ -67,7 +67,8 @@ order to recognize the symbol syntax used for ELF (SVR4 PIC)
 position-independent-code (@pxref{crispic}).  This will also
 affect expansion of instructions.  The expansion with
 @option{--pic} will use PC-relative rather than (slightly
-faster) absolute addresses in those expansions.
+faster) absolute addresses in those expansions.  This option is only
+valid when generating ELF format object files.
 
 @cindex @option{--march=@var{architecture}} command line option, CRIS
 @cindex CRIS @option{--march=@var{architecture}} command line option

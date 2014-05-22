@@ -1,4 +1,4 @@
-/* $Id: log.c,v 1.2 2011/08/25 16:41:51 joerg Exp $ */
+/* $Id: log.c,v 1.2.2.1 2014/05/22 15:51:25 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -39,7 +39,7 @@ FILE   *log_file;
 /* Debug level. */
 int	log_level;
 
-void		 log_vwrite(int, const char *, va_list);
+void		 log_vwrite(int, const char *, va_list) __printflike(2, 0);
 __dead void	 log_vfatal(const char *, va_list);
 
 /* Open logging to tty. */
@@ -105,6 +105,12 @@ log_vwrite(int pri, const char *msg, va_list ap)
 }
 
 /* Log a warning with error string. */
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#pragma GCC diagnostic push
+#endif
+#if __GNUC_PREREQ__(4, 5) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 void printflike1
 log_warn(const char *msg, ...)
 {
@@ -118,6 +124,9 @@ log_warn(const char *msg, ...)
 	free(fmt);
 	va_end(ap);
 }
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#pragma GCC diagnostic push
+#endif
 
 /* Log a warning. */
 void printflike1

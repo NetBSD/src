@@ -14,7 +14,7 @@
 
 #ifdef DLT_IPNET
 
-const struct tok ipnet_values[] = {
+static const struct tok ipnet_values[] = {
 	{ IPH_AF_INET,		"IPv4" },
 	{ IPH_AF_INET6,		"IPv6" },
 	{ 0,			NULL }
@@ -69,7 +69,7 @@ ipnet_print(struct netdissect_options *ndo, const u_char *p, u_int length, u_int
 
 #ifdef INET6
 	case IPH_AF_INET6:
-		ip6_print(p, length);
+		ip6_print(ndo, p, length);
 		break;
 #endif /*INET6*/
 

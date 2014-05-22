@@ -1,6 +1,6 @@
 /* BFD back-end for ARM COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -599,7 +599,7 @@ aoutarm_fix_pcrel_26 (bfd *abfd,
   bfd_reloc_status_type flag = bfd_reloc_ok;
 
   /* If this is an undefined symbol, return error.  */
-  if (symbol->section == &bfd_und_section
+  if (bfd_is_und_section (symbol->section)
       && (symbol->flags & BSF_WEAK) == 0)
     return output_bfd ? bfd_reloc_continue : bfd_reloc_undefined;
 
@@ -687,7 +687,7 @@ coff_thumb_pcrel_common (bfd *abfd,
     }
 
   /* If this is an undefined symbol, return error.  */
-  if (symbol->section == &bfd_und_section
+  if (bfd_is_und_section (symbol->section)
       && (symbol->flags & BSF_WEAK) == 0)
     return output_bfd ? bfd_reloc_continue : bfd_reloc_undefined;
 

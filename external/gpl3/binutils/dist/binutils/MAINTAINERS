@@ -40,7 +40,7 @@ repository without obtaining approval first:
   DJ Delorie <dj@redhat.com>
   Alan Modra <amodra@gmail.com>
   Michael Meissner <gnu@the-meissners.org>
-  Daniel Jacobowitz <dan@codesourcery.com>
+  Daniel Jacobowitz <drow@false.org>
   Richard Sandiford <rdsandiford@googlemail.com>
 
       --------- Maintainers ---------
@@ -57,21 +57,24 @@ maintainer.  The first maintainer is free to devolve that
 responsibility among the other maintainers.
 
   ALPHA            Richard Henderson <rth@redhat.com>
+  AARCH64	   Richard Earnshaw <rearnsha@arm.com>
   ARM		   Nick Clifton <nickc@redhat.com>
   ARM		   Richard Earnshaw <rearnsha@arm.com>
   ARM		   Paul Brook <paul@codesourcery.com>
   ARM (Symbian)	   Mark Mitchell <mark@codesourcery.com>
   AVR		   Denis Chertykov <denisc@overta.ru>
   AVR		   Marek Michalkiewicz <marekm@amelek.gda.pl>
-  BFIN		   Jie Zhang <jie@codesourcery.com>
+  BFIN		   Jie Zhang <jzhang918@gmail.com>
   BFIN		   Bernd Schmidt <bernd.schmidt@analog.com>
   BFIN		   Mike Frysinger <michael.frysinger@analog.com>
-  BUILD SYSTEM	   Daniel Jacobowitz <dan@codesourcery.com>
+  BUILD SYSTEM	   Daniel Jacobowitz <drow@false.org>
   CR16		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
   CRIS		   Hans-Peter Nilsson <hp@axis.com>
   CRX		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
   DLX              Nikolaos Kavvadias <nkavv@physics.auth.gr>
   DWARF2	   Jason Merrill <jason@redhat.com>
+  DWARF2	   Jakub Jelinek <jakub@redhat.com>
+  EPIPHANY	   Joern Rennecke <joern.rennecke@embecosm.com>
   FR30		   Dave Brolley <brolley@redhat.com>
   FRV		   Dave Brolley <brolley@redhat.com>
   FRV		   Alexandre Oliva <aoliva@redhat.com>
@@ -90,6 +93,7 @@ responsibility among the other maintainers.
   LM32             Jon Beniston <jon@beniston.com>
   M32R             Doug Evans <dje@sebabeach.org>
   M68HC11 M68HC12  Stephane Carrez <stcarrez@nerim.fr>
+  M68HC11 M68HC12  Sean Keys <skeys@ipdatasys.com>
   M88k		   Mark Kettenis <kettenis@gnu.org>
   MACH-O           Tristan Gingold <gingold@adacore.com>
   MAXQ		   Inderpreet Singh <inderpreetb@noida.hcltech.com>
@@ -105,17 +109,20 @@ responsibility among the other maintainers.
   PPC		   Geoff Keating <geoffk@geoffk.org>
   PPC		   Alan Modra <amodra@gmail.com>
   PPC vector ext   Aldy Hernandez <aldyh@redhat.com>
+  RL78             DJ Delorie <dj@redhat.com>
   RX               DJ Delorie <dj@redhat.com>
   RX               Nick Clifton <nickc@redhat.com>
   s390, s390x	   Martin Schwidefsky <schwidefsky@de.ibm.com>
   SCORE		   Mei Ligang <ligang@sunnorth.com.cn>
   SH		   Alexandre Oliva <aoliva@redhat.com>
   SH		   Kaz Kojima <kkojima@rr.iij4u.or.jp>
-  SPARC		   Jakub Jelinek <jakub@redhat.com>
+  SPARC		   David S. Miller <davem@davemloft.net>
   SPU		   Alan Modra <amodra@gmail.com>
   TIC4X            Svein Seldal <svein@dev.seldal.com>
   TIC54X           Timothy Wall <twall@alum.mit.edu>
   TIC6X            Joseph Myers <joseph@codesourcery.com>
+  TILE-Gx          Walter Lee <walt@tilera.com>
+  TILEPro          Walter Lee <walt@tilera.com>
   VAX		   Matt Thomas <matt@netbsd.org>
   VAX		   Jan-Benedict Glaw <jbglaw@lug-owl.de>
   VMS		   Tristan Gingold <gingold@adacore.com>
@@ -123,7 +130,8 @@ responsibility among the other maintainers.
   x86_64	   Andreas Jaeger <aj@suse.de>
   x86_64	   H.J. Lu <hjl.tools@gmail.com>
   XCOFF 	   Richard Sandiford <r.sandiford@uk.ibm.com>
-  Xtensa	   Sterling Augustine <sterling@tensilica.com> 
+  XGATE            Sean Keys <skeys@ipdatasys.com>
+  Xtensa	   Sterling Augustine <augustine.sterling@gmail.com> 
   z80		   Arnold Metselaar <arnold.metselaar@planet.nl>
   z8k		   Christian Groessler <chris@groessler.org>
 

@@ -1,6 +1,5 @@
 /* Definitions for LM32 running Linux-based GNU systems using ELF
-   Copyright (C) 1993, 1994, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2009 Free Software Foundation, Inc.
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
    Contributed by Philip Blundell <philb@gnu.org>
 
    This file is part of GCC.
@@ -21,10 +20,6 @@
 
 /* elfos.h should have already been included.  Now just override
    any conflicting definitions and add any extras.  */
-
-/* Run-time Target Specification.  */
-#undef  TARGET_VERSION
-#define TARGET_VERSION  fputs (" (LM32 GNU/Linux with ELF)", stderr);
 
 /* Do not assume anything about header files.  */
 #undef NO_IMPLICIT_EXTERN_C
@@ -67,15 +62,14 @@
   "%{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
 
 #undef  LINK_SPEC
-#define LINK_SPEC "%{h*} %{version:-v} \
-   %{b} %{Wl,*:%*} \
+#define LINK_SPEC "%{h*} \
    %{static:-Bstatic} \
    %{shared:-shared} \
    %{symbolic:-Bsymbolic} \
    %{rdynamic:-export-dynamic} \
-   %{!dynamic-linker:-dynamic-linker /lib/ld-linux.so.2}"
+   -dynamic-linker /lib/ld-linux.so.2"
 
-#define TARGET_OS_CPP_BUILTINS() LINUX_TARGET_OS_CPP_BUILTINS()
+#define TARGET_OS_CPP_BUILTINS() GNU_USER_TARGET_OS_CPP_BUILTINS()
 
 #define LINK_GCC_C_SEQUENCE_SPEC \
   "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"

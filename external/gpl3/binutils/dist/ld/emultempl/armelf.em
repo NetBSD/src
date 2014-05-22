@@ -1,6 +1,6 @@
 # This shell script emits a C file. -*- C -*-
 #   Copyright 1991, 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2005, 2006, 2007, 2008, 2009
+#   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -42,6 +42,7 @@ static int no_enum_size_warning = 0;
 static int no_wchar_size_warning = 0;
 static int pic_veneer = 0;
 static int merge_exidx_entries = -1;
+static int fix_arm1176 = 1;
 
 static void
 gld${EMULATION_NAME}_before_parse (void)
@@ -49,8 +50,9 @@ gld${EMULATION_NAME}_before_parse (void)
 #ifndef TARGET_			/* I.e., if not generic.  */
   ldfile_set_output_arch ("`echo ${ARCH}`", bfd_arch_unknown);
 #endif /* not TARGET_ */
-  config.dynamic_link = ${DYNAMIC_LINK-TRUE};
+  input_flags.dynamic = ${DYNAMIC_LINK-TRUE};
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
+  config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
 }
 
 static void
@@ -67,7 +69,7 @@ arm_elf_before_allocation (void)
 
   /* We should be able to set the size of the interworking stub section.  We
      can't do it until later if we have dynamic sections, though.  */
-  if (! elf_hash_table (&link_info)->dynamic_sections_created)
+  if (elf_hash_table (&link_info)->dynobj == NULL)
     {
       /* Here we rummage through the found bfds to collect glue information.  */
       LANG_FOR_EACH_INPUT_STATEMENT (is)
@@ -207,7 +209,7 @@ elf32_arm_add_stub_section (const char *stub_sec_name,
 
   info.input_section = input_section;
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, os);
+  lang_add_section (&info.add, stub_sec, NULL, os);
 
   if (info.add.head == NULL)
     goto err_ret;
@@ -239,7 +241,7 @@ build_section_lists (lang_statement_union_type *statement)
     {
       asection *i = statement->input_section.section;
 
-      if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
+      if (i->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
 	  && (i->flags & SEC_EXCLUDE) == 0
 	  && i->output_section != NULL
 	  && i->output_section->owner == link_info.output_bfd)
@@ -253,19 +255,19 @@ compare_output_sec_vma (const void *a, const void *b)
   asection *asec = *(asection **) a, *bsec = *(asection **) b;
   asection *aout = asec->output_section, *bout = bsec->output_section;
   bfd_vma avma, bvma;
-  
+
   /* If there's no output section for some reason, compare equal.  */
   if (!aout || !bout)
     return 0;
-  
+
   avma = aout->vma + asec->output_offset;
   bvma = bout->vma + bsec->output_offset;
-  
+
   if (avma > bvma)
     return 1;
   else if (avma < bvma)
     return -1;
-  
+
   return 0;
 }
 
@@ -285,10 +287,10 @@ gld${EMULATION_NAME}_after_allocation (void)
 	{
 	  bfd *abfd = is->the_bfd;
 	  asection *sec;
-	  
+
 	  if ((abfd->flags & (EXEC_P | DYNAMIC)) != 0)
 	    continue;
-	  
+
 	  for (sec = abfd->sections; sec != NULL; sec = sec->next)
 	    {
 	      asection *out_sec = sec->output_section;
@@ -298,13 +300,13 @@ gld${EMULATION_NAME}_after_allocation (void)
 		  && elf_section_type (sec) == SHT_PROGBITS
 		  && (elf_section_flags (sec) & SHF_EXECINSTR) != 0
 		  && (sec->flags & SEC_EXCLUDE) == 0
-		  && sec->sec_info_type != ELF_INFO_TYPE_JUST_SYMS
+		  && sec->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
 		  && out_sec != bfd_abs_section_ptr)
 		{
 		  if (sec_count == list_size)
 		    {
 		      list_size *= 2;
-		      sec_list = (asection **) 
+		      sec_list = (asection **)
                           xrealloc (sec_list, list_size * sizeof (asection *));
 		    }
 
@@ -312,13 +314,13 @@ gld${EMULATION_NAME}_after_allocation (void)
 		}
 	    }
 	}
-	
+
       qsort (sec_list, sec_count, sizeof (asection *), &compare_output_sec_vma);
-      
+
       if (elf32_arm_fix_exidx_coverage (sec_list, sec_count, &link_info,
 					   merge_exidx_entries))
 	need_laying_out = 1;
-      
+
       free (sec_list);
     }
 
@@ -404,7 +406,7 @@ gld${EMULATION_NAME}_finish (void)
       h = bfd_link_hash_lookup (link_info.hash, entry_symbol.name,
 				FALSE, FALSE, TRUE);
       eh = (struct elf_link_hash_entry *)h;
-      if (!h || ELF_ST_TYPE(eh->type) != STT_ARM_TFUNC)
+      if (!h || eh->target_internal != ST_BRANCH_TO_THUMB)
 	return;
     }
 
@@ -464,7 +466,8 @@ arm_elf_create_output_section_statements (void)
 				   target2_type, fix_v4bx, use_blx,
 				   vfp11_denorm_fix, no_enum_size_warning,
 				   no_wchar_size_warning,
-				   pic_veneer, fix_cortex_a8);
+				   pic_veneer, fix_cortex_a8,
+				   fix_arm1176);
 
   stub_file = lang_add_input_file ("linker stubs",
  				   lang_input_file_is_fake_enum,
@@ -478,7 +481,7 @@ arm_elf_create_output_section_statements (void)
       einfo ("%X%P: can not create BFD %E\n");
       return;
     }
- 
+
   stub_file->the_bfd->flags |= BFD_LINKER_CREATED;
   ldlang_add_file (stub_file);
 
@@ -529,6 +532,8 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_FIX_CORTEX_A8		314
 #define OPTION_NO_FIX_CORTEX_A8		315
 #define OPTION_NO_MERGE_EXIDX_ENTRIES   316
+#define OPTION_FIX_ARM1176		317
+#define OPTION_NO_FIX_ARM1176		318
 '
 
 PARSE_AND_LIST_SHORTOPTS=p
@@ -551,6 +556,8 @@ PARSE_AND_LIST_LONGOPTS='
   { "fix-cortex-a8", no_argument, NULL, OPTION_FIX_CORTEX_A8 },
   { "no-fix-cortex-a8", no_argument, NULL, OPTION_NO_FIX_CORTEX_A8 },
   { "no-merge-exidx-entries", no_argument, NULL, OPTION_NO_MERGE_EXIDX_ENTRIES },
+  { "fix-arm1176", no_argument, NULL, OPTION_FIX_ARM1176 },
+  { "no-fix-arm1176", no_argument, NULL, OPTION_NO_FIX_ARM1176 },
 '
 
 PARSE_AND_LIST_OPTIONS='
@@ -565,21 +572,21 @@ PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("  --vfp11-denorm-fix          Specify how to fix VFP11 denorm erratum\n"));
   fprintf (file, _("  --no-enum-size-warning      Don'\''t warn about objects with incompatible\n"
 		   "                                enum sizes\n"));
-  fprintf (file, _("  --no-wchar-size-warning     Don'\''t warn about objects with incompatible"
+  fprintf (file, _("  --no-wchar-size-warning     Don'\''t warn about objects with incompatible\n"
 		   "                                wchar_t sizes\n"));
   fprintf (file, _("  --pic-veneer                Always generate PIC interworking veneers\n"));
   fprintf (file, _("\
-   --stub-group-size=N   Maximum size of a group of input sections that can be\n\
-                           handled by one stub section.  A negative value\n\
-                           locates all stubs after their branches (with a\n\
-                           group size of -N), while a positive value allows\n\
-                           two groups of input sections, one before, and one\n\
-                           after each stub section.  Values of +/-1 indicate\n\
-                           the linker should choose suitable defaults.\n"
- 		   ));
+  --stub-group-size=N         Maximum size of a group of input sections that\n\
+                               can be handled by one stub section.  A negative\n\
+                               value locates all stubs after their branches\n\
+                               (with a group size of -N), while a positive\n\
+                               value allows two groups of input sections, one\n\
+                               before, and one after each stub section.\n\
+                               Values of +/-1 indicate the linker should\n\
+                               choose suitable defaults.\n"));
   fprintf (file, _("  --[no-]fix-cortex-a8        Disable/enable Cortex-A8 Thumb-2 branch erratum fix\n"));
   fprintf (file, _("  --no-merge-exidx-entries    Disable merging exidx entries\n"));
- 
+  fprintf (file, _("  --[no-]fix-arm1176          Disable/enable ARM1176 BLX immediate erratum fix\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='
@@ -662,7 +669,15 @@ PARSE_AND_LIST_ARGS_CASES='
 
    case OPTION_NO_MERGE_EXIDX_ENTRIES:
       merge_exidx_entries = 0;
+      break;
 
+   case OPTION_FIX_ARM1176:
+      fix_arm1176 = 1;
+      break;
+
+   case OPTION_NO_FIX_ARM1176:
+      fix_arm1176 = 0;
+      break;
 '
 
 # We have our own before_allocation etc. functions, but they call

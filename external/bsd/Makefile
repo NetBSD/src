@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30.2.4 2013/01/16 05:26:14 yamt Exp $
+#	$NetBSD: Makefile,v 1.30.2.5 2014/05/22 16:30:25 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SUBDIR=	acpica am-utils bind byacc cron dhcpcd elftosb fetch file flex less \
 SUBDIR+= atf
 .endif
 .if (${MKCRYPTO} != "no")
-SUBDIR+= pkg_install ../../crypto/external/bsd
+SUBDIR+= pkg_install
 .endif
 # IP Filter
 .if (${MKIPFILTER} != "no")
@@ -19,8 +19,14 @@ SUBDIR+=ipf
 .if (${MKISCSI} != "no")
 SUBDIR+= iscsi 
 .endif
+.if (${MKKYUA} != "no")
+SUBDIR+= lutok kyua-testers kyua-cli kyua-atf-compat
+.endif
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
+.endif
+.if (${MKLIBCXX} != "no")
+SUBDIR+= libc++
 .endif
 .if (${MKLLVM} != "no")
 SUBDIR+= llvm
@@ -28,5 +34,7 @@ SUBDIR+= llvm
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
+
+SUBDIR+= pdisk dhcp nvi ppp smbfs
 
 .include <bsd.subdir.mk>

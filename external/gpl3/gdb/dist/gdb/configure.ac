@@ -1,7 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-dnl 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-dnl Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2013 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl 
@@ -25,14 +23,19 @@ AC_INIT(main.c)
 AC_CONFIG_HEADER(config.h:config.in)
 AM_MAINTAINER_MODE
 
+# Provide more thorough testing by -lmcheck.
+# Set it to 'true' for development snapshots, 'false' for releases or
+# pre-releases.
+development=false
+
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
-gl_EARLY
 ACX_LARGEFILE
 AM_PROG_CC_STDC
 
 AC_CONFIG_AUX_DIR(..)
 AC_CANONICAL_SYSTEM
+AC_ARG_PROGRAM
 
 # Dependency checking.
 ZW_CREATE_DEPDIR
@@ -48,6 +51,12 @@ case "`$MAKE --version 2>&1 | sed 1q`" in
 esac
 AM_CONDITIONAL(GMAKE, test "$MAKE_IS_GNU" = yes)
 AC_PROG_MAKE_SET
+
+# Configure gnulib.  We need to build gnulib under some other
+# directory not "gnulib", to avoid the problem of both GDB and
+# GDBserver wanting to build it in the same directory, when building
+# in the source dir.
+ACX_CONFIGURE_DIR(["gnulib"], ["build-gnulib"])
 
 dnl List of object files and targets accumulated by configure.
 
@@ -74,12 +83,12 @@ if test x"$USE_NLS" = xyes; then
    CONFIG_UNINSTALL="$CONFIG_UNINSTALL uninstall-po"
 fi
 
-gl_INIT
+GNULIB=build-gnulib/import
 
 # For Makefile dependencies.
 GNULIB_STDINT_H=
 if test x"$STDINT_H" != x; then
-  GNULIB_STDINT_H=gnulib/$STDINT_H
+  GNULIB_STDINT_H=$GNULIB/$STDINT_H
 fi
 AC_SUBST(GNULIB_STDINT_H)
 
@@ -87,13 +96,37 @@ PACKAGE=gdb
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of this package. ])
 AC_SUBST(PACKAGE)
 
-# GDB does not use automake, but gnulib does.  This line lets us
-# generate its Makefile.in.
-AM_INIT_AUTOMAKE(gdb, UNUSED-VERSION, [no-define])
+# We never need to detect it in this sub-configure.
+# But preserve it for config.status --recheck.
+AC_ARG_VAR(MAKEINFO,
+  [Parent configure detects if it is of sufficient version.])
+AC_ARG_VAR(MAKEINFOFLAGS,
+  [Parameters for MAKEINFO.])
+
+MAKEINFO_EXTRA_FLAGS=""
+AC_CACHE_CHECK([whether $MAKEINFO supports @click], gdb_cv_have_makeinfo_click,
+  [echo '@clicksequence{a @click{} b}' >conftest.texinfo
+  if eval "$MAKEINFO conftest.texinfo >&5 2>&5"; then
+    gdb_cv_have_makeinfo_click=yes
+  else
+    gdb_cv_have_makeinfo_click=no
+  fi])
+if test x"$gdb_cv_have_makeinfo_click" = xyes; then
+  MAKEINFO_EXTRA_FLAGS="$MAKEINFO_EXTRA_FLAGS -DHAVE_MAKEINFO_CLICK"
+fi
+AC_SUBST(MAKEINFO_EXTRA_FLAGS)
 
 GDB_AC_WITH_DIR(DEBUGDIR, separate-debug-dir,
     [look for global separate debug info in this path @<:@LIBDIR/debug@:>@],
     [${libdir}/debug])
+
+# We can't pass paths as command line arguments.
+# Mingw32 tries to be clever and will convert the paths for us.
+# For example -DBINDIR="/usr/local/bin" passed on the command line may get
+# converted to -DBINDIR="E:/msys/mingw32/msys/1.0/local/bin".
+# This breaks GDB's relocatable path conversions since paths passed in
+# config.h would not get so translated, the path prefixes no longer match.
+AC_DEFINE_DIR(BINDIR, bindir, [Directory of programs.])
 
 # GDB's datadir relocation
 
@@ -107,6 +140,31 @@ AS_HELP_STRING([--with-relocated-sources=PATH], [automatically relocate this pat
  AC_DEFINE_DIR(RELOC_SRCDIR, reloc_srcdir,
               [Relocated directory for source files. ])
 ])
+
+AC_MSG_CHECKING([for default auto-load directory])
+AC_ARG_WITH(auto-load-dir,
+AS_HELP_STRING([--with-auto-load-dir=PATH],
+  [directories from which to load auto-loaded scripts @<:@$debugdir:$datadir/auto-load@:>@]),,
+  [with_auto_load_dir='$debugdir:$datadir/auto-load'])
+escape_dir=`echo $with_auto_load_dir | sed 's/[[$]]\(datadir\|debugdir\)\>/\\\\\\\\\\\\&/g'`
+AC_DEFINE_DIR(AUTO_LOAD_DIR, escape_dir,
+	      [Directories from which to load auto-loaded scripts.])
+AC_MSG_RESULT([$with_auto_load_dir])
+
+AC_MSG_CHECKING([for default auto-load safe-path])
+AC_ARG_WITH(auto-load-safe-path,
+AS_HELP_STRING([--with-auto-load-safe-path=PATH],
+  [directories safe to hold auto-loaded files @<:@--with-auto-load-dir@:>@])
+AS_HELP_STRING([--without-auto-load-safe-path],
+               [do not restrict auto-loaded files locations]),
+    [if test "$with_auto_load_safe_path" = "no"; then
+     with_auto_load_safe_path="/"
+     fi],
+[with_auto_load_safe_path="$with_auto_load_dir"])
+escape_dir=`echo $with_auto_load_safe_path | sed 's/[[$]]\(datadir\|debugdir\)\>/\\\\\\\\\\\\&/g'`
+AC_DEFINE_DIR(AUTO_LOAD_SAFE_PATH, escape_dir,
+	      [Directories safe to hold auto-loaded files.])
+AC_MSG_RESULT([$with_auto_load_safe_path])
 
 AC_CONFIG_SUBDIRS(testsuite)
 
@@ -302,26 +360,44 @@ case $host_os in
     enable_gdbtk=no ;;
 esac
 
-# Libunwind support.
-AC_ARG_WITH(libunwind,
-AS_HELP_STRING([--with-libunwind], [use libunwind frame unwinding support]),
-[case "${withval}" in
-  yes)  enable_libunwind=yes ;;
-  no)   enable_libunwind=no ;;
-  *)    AC_MSG_ERROR(bad value ${withval} for GDB with-libunwind option) ;;
-esac],[
-  AC_CHECK_HEADERS(libunwind.h libunwind-ia64.h)
-  if test x"$ac_cv_header_libunwind_h" = xyes -a x"$ac_cv_header_libunwind_ia64_h" = xyes; then
-    enable_libunwind=yes;
+# Libunwind support for ia64.
+
+AC_ARG_WITH(libunwind-ia64,
+AS_HELP_STRING([--with-libunwind-ia64],
+	       [use libunwind frame unwinding for ia64 targets]),,
+	    [with_libunwind_ia64=auto])
+
+# Backward compatibility option.
+if test "${with_libunwind+set}" = set; then
+  if test x"$with_libunwind_ia64" != xauto; then
+    AC_MSG_ERROR(
+      [option --with-libunwind is deprecated, use --with-libunwind-ia64])
   fi
-])
-   
-if test x"$enable_libunwind" = xyes; then
-  AC_CHECK_HEADERS(libunwind.h libunwind-ia64.h)
-  AC_DEFINE(HAVE_LIBUNWIND, 1, [Define if libunwind library is being used.])
-  CONFIG_OBS="$CONFIG_OBS libunwind-frame.o"
-  CONFIG_DEPS="$CONFIG_DEPS libunwind-frame.o"
-  CONFIG_SRCS="$CONFIG_SRCS libunwind-frame.c"
+  AC_MSG_WARN([option --with-libunwind is deprecated, use --with-libunwind-ia64])
+  with_libunwind_ia64="$with_libunwind"
+fi
+
+case "$with_libunwind_ia64" in
+  yes | no)
+    ;;
+  auto)
+    AC_CHECK_HEADERS(libunwind-ia64.h)
+    with_libunwind_ia64=$ac_cv_header_libunwind_ia64_h
+    ;;
+  *)
+    AC_MSG_ERROR(
+      [bad value $with_libunwind_ia64 for GDB --with-libunwind-ia64 option])
+    ;;
+esac
+
+if test x"$with_libunwind_ia64" = xyes; then
+  AC_CHECK_HEADERS(libunwind-ia64.h)
+  if test x"$ac_cv_header_libunwind_ia64_h" != xyes; then
+    AC_MSG_ERROR([GDB option --with-libunwind-ia64 requires libunwind-ia64.h])
+  fi
+  CONFIG_OBS="$CONFIG_OBS ia64-libunwind-tdep.o"
+  CONFIG_DEPS="$CONFIG_DEPS ia64-libunwind-tdep.o"
+  CONFIG_SRCS="$CONFIG_SRCS ia64-libunwind-tdep.c"
 fi
 
 opt_curses=no
@@ -433,6 +509,29 @@ AC_SEARCH_LIBS(dlgetmodinfo, [dl xpdl])
 
 AM_ICONV
 
+# GDB may fork/exec the iconv program to get the list of supported character
+# sets.  Allow the user to specify where to find it.
+# There are several factors affecting the choice of option name:
+# - There is already --with-libiconv-prefix but we can't use it, it specifies
+#   the build-time location of libiconv files.
+# - The program we need to find is iconv, which comes with glibc.  The user
+#   doesn't necessarily have libiconv installed.  Therefore naming this
+#   --with-libiconv-foo feels wrong.
+# - We want the path to be relocatable, but GDB_AC_DEFINE_RELOCATABLE is
+#   defined to work on directories not files (though it really doesn't know
+#   the difference).
+# - Calling this --with-iconv-prefix is perceived to cause too much confusion
+#   with --with-libiconv-prefix.
+# Putting these together is why the option name is --with-iconv-bin.
+
+AC_ARG_WITH(iconv-bin,
+AS_HELP_STRING([--with-iconv-bin=PATH], [specify where to find the iconv program]),
+[iconv_bin="${withval}"
+ AC_DEFINE_UNQUOTED([ICONV_BIN], ["${iconv_bin}"],
+                    [Path of directory of iconv program.])
+ GDB_AC_DEFINE_RELOCATABLE(ICONV_BIN, iconv, ${iconv_bin})
+])
+
 # On alpha-osf, it appears that libtermcap and libcurses are not compatible.
 # There is a very specific comment in /usr/include/curses.h explaining that
 # termcap routines built into libcurses must not be used.
@@ -490,10 +589,6 @@ if test x"$enable_tui" != xno; then
       CONFIG_DEPS="$CONFIG_DEPS \$(SUBDIR_TUI_DEPS)"
       CONFIG_SRCS="$CONFIG_SRCS \$(SUBDIR_TUI_SRCS)"
       ENABLE_CFLAGS="$ENABLE_CFLAGS \$(SUBDIR_TUI_CFLAGS)"
-      CONFIG_ALL="${CONFIG_ALL} all-tui"
-      CONFIG_CLEAN="${CONFIG_CLEAN} clean-tui"
-      CONFIG_INSTALL="${CONFIG_INSTALL} install-tui"
-      CONFIG_UNINSTALL="${CONFIG_UNINSTALL} uninstall-tui"
     else
       if test x"$enable_tui" = xyes; then
 	AC_MSG_ERROR([no enhanced curses library found; disable TUI])
@@ -539,21 +634,6 @@ if test "$with_system_readline" = yes; then
   READLINE_DEPS=
   READLINE_CFLAGS=
   READLINE_TEXI_INCFLAG=
-
-  # readline-6.0 started to use the name `_rl_echoing_p'.
-  # `$(READLINE_DIR)/' of bundled readline would not resolve in configure.
-
-  AC_MSG_CHECKING([for readline_echoing_p])
-  save_LIBS=$LIBS
-  LIBS="$LIBS $READLINE"
-  AC_LINK_IFELSE(AC_LANG_PROGRAM(,[[extern int readline_echoing_p;
-				    return readline_echoing_p;]]),
-		 [READLINE_ECHOING_P=yes],
-		 [READLINE_ECHOING_P=no
-		  AC_DEFINE([readline_echoing_p], [_rl_echoing_p],
-			    [readline-6.0 started to use different name.])])
-  LIBS="$save_LIBS"
-  AC_MSG_RESULT([$READLINE_ECHOING_P])
 else
   READLINE='$(READLINE_DIR)/libreadline.a'
   READLINE_DEPS='$(READLINE)'
@@ -564,6 +644,34 @@ AC_SUBST(READLINE)
 AC_SUBST(READLINE_DEPS)
 AC_SUBST(READLINE_CFLAGS)
 AC_SUBST(READLINE_TEXI_INCFLAG)
+
+# Generate jit-reader.h
+
+# This is typedeffed to GDB_CORE_ADDR in jit-reader.h
+TARGET_PTR=
+
+AC_CHECK_SIZEOF(unsigned long long)
+AC_CHECK_SIZEOF(unsigned long)
+AC_CHECK_SIZEOF(unsigned __int128)
+
+if test "x${ac_cv_sizeof_unsigned_long}" = "x8"; then
+  TARGET_PTR="unsigned long"
+elif test "x${ac_cv_sizeof_unsigned_long_long}" = "x8"; then
+  TARGET_PTR="unsigned long long"
+elif test "x${ac_cv_sizeof_unsigned___int128}" = "x16"; then
+  TARGET_PTR="unsigned __int128"
+else
+  TARGET_PTR="unsigned long"
+fi
+
+AC_SUBST(TARGET_PTR)
+AC_CONFIG_FILES([jit-reader.h:jit-reader.in])
+
+AC_SEARCH_LIBS(dlopen, dl)
+
+GDB_AC_WITH_DIR([JIT_READER_DIR], [jit-reader-dir],
+                [directory to load the JIT readers from],
+                [${libdir}/gdb])
 
 AC_ARG_WITH(expat,
   AS_HELP_STRING([--with-expat], [include expat support (auto/yes/no)]),
@@ -664,7 +772,7 @@ if test "${with_python}" = no; then
   have_libpython=no
 else
   case "${with_python}" in
-  /*)
+  [[\\/]]* | ?:[[\\/]]*)
     if test -d ${with_python}; then
       # Assume the python binary is ${with_python}/bin/python.
       python_prog="${with_python}/bin/python"
@@ -881,12 +989,43 @@ if test "${have_libpython}" != no; then
   # unilaterally defined, and that in turn causes _SGIAPI to evaluate
   # to false.  So, we work around this issue by defining siginfo ourself
   # though the command-line.
+  #
+  # On x64 Windows, Python's include headers, and pyconfig.h in
+  # particular, rely on MS_WIN64 macro to detect that it's a 64bit
+  # version of Windows.  Unfortunately, MS_WIN64 is only defined if
+  # _MSC_VER, a Microsoft-specific macro, is defined.  So, when
+  # building on x64 Windows with GCC, we define MS_WIN64 ourselves.
+  # The issue was reported to the Python community, but still isn't
+  # solved as of 2012-10-02 (http://bugs.python.org/issue4709).
+
   case "$gdb_host" in
     irix*) if test "${GCC}" = yes; then
              CPPFLAGS="$CPPFLAGS -Dsiginfo=__siginfo"
            fi
            ;;
+    mingw64)
+           if test "${GCC}" = yes; then
+             CPPFLAGS="$CPPFLAGS -DMS_WIN64"
+           fi
+           ;;
   esac
+
+  # Note that "python -m threading" cannot be used to check for
+  # threading support due to a bug in Python 2.7.3
+  # (http://bugs.python.org/issue15567).
+  AC_MSG_CHECKING(whether python supports threads)
+  saved_CPPFLAGS="${CPPFLAGS}"
+  CPPFLAGS="${PYTHON_CPPFLAGS}"
+  # Note that the test is reversed so that python_has_threads=yes on
+  # unexpected failures.
+  AC_PREPROC_IFELSE(AC_LANG_SOURCE([[
+#include <Python.h>
+#ifdef WITH_THREAD
+# error
+#endif
+  ]]), [python_has_threads=no], [python_has_threads=yes])
+  AC_MSG_RESULT(${python_has_threads})
+  CPPFLAGS="${saved_CPPFLAGS}"
 else
   # Even if Python support is not compiled in, we need to have these files
   # included.
@@ -898,24 +1037,52 @@ AC_SUBST(PYTHON_CFLAGS)
 AC_SUBST(PYTHON_CPPFLAGS)
 AC_SUBST(PYTHON_LIBS)
 
+# Provide a --enable-libmcheck/--disable-libmcheck set of options
+# allowing a user to enable this option even when building releases,
+# or to disable it when building a snapshot.
+AC_ARG_ENABLE(libmcheck,
+  AS_HELP_STRING([--enable-libmcheck],
+                 [Try building GDB with -lmcheck if available]),
+  [case "${enableval}" in
+     yes | y) ENABLE_LIBMCHECK="yes" ;;
+     no | n)  ENABLE_LIBMCHECK="no" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-libmcheck) ;;
+   esac])
+
+# Enable -lmcheck by default (it provides cheap-enough memory mangling),
+# but turn it off if Python is enabled with threads, since -lmcheck is
+# not thread safe (http://sourceware.org/bugzilla/show_bug.cgi?id=9939),
+# and for releases.
+if test -z "${ENABLE_LIBMCHECK}" \
+        -a \( "${have_libpython}" = "no" \
+	     -o "${python_has_threads}" = "no" \) \
+    && $development; then
+  ENABLE_LIBMCHECK=yes
+fi
+
+if test "$ENABLE_LIBMCHECK" = "yes" ; then
+  if test "${have_libpython}" != "no" -a "${python_has_threads}" = "yes" ; then
+    AC_MSG_WARN(--enable-libmcheck may lead to spurious crashes if threads are used in python)
+  fi
+  AC_CHECK_LIB(mcheck, main)
+fi
+
 # ------------------------- #
 # Checks for header files.  #
 # ------------------------- #
 
 AC_HEADER_DIRENT
-AC_HEADER_STAT
 AC_HEADER_STDC
 # elf_hp.h is for HP/UX 64-bit shared library support.
-# FIXME: kettenis/20030102: In most cases we include these (ctype.h, time.h)
-# unconditionally, so what's the point in checking these?
 AC_CHECK_HEADERS([nlist.h machine/reg.h poll.h sys/poll.h proc_service.h \
-                  thread_db.h gnu/libc-version.h signal.h stddef.h \
+                  thread_db.h signal.h stddef.h \
 		  stdlib.h string.h memory.h strings.h sys/fault.h \
 		  sys/file.h sys/filio.h sys/ioctl.h sys/param.h \
 		  sys/resource.h sys/procfs.h sys/ptrace.h ptrace.h \
 		  sys/reg.h sys/debugreg.h sys/select.h sys/syscall.h \
 		  sys/types.h sys/wait.h wait.h termios.h termio.h \
-		  sgtty.h unistd.h elf_hp.h ctype.h time.h locale.h])
+		  sgtty.h unistd.h elf_hp.h locale.h \
+		  dlfcn.h sys/socket.h sys/un.h linux/perf_event.h])
 AC_CHECK_HEADERS(link.h, [], [],
 [#if HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -992,11 +1159,12 @@ AC_C_BIGENDIAN
 AC_FUNC_ALLOCA
 AC_FUNC_MMAP
 AC_FUNC_VFORK
-AC_CHECK_FUNCS([canonicalize_file_name realpath getrusage getuid \
-		getgid pipe poll pread64 resize_term sbrk setpgid setpgrp setsid \
+AC_CHECK_FUNCS([canonicalize_file_name realpath getrusage getuid getgid \
+		pipe poll pread pread64 pwrite readlink resize_term \
+		sbrk setpgid setpgrp setsid \
 		sigaction sigprocmask sigsetmask socketpair syscall \
 		ttrace wborder wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise waitpid])
+		setrlimit getrlimit posix_madvise waitpid lstat])
 AM_LANGINFO_CODESET
 
 # Check the return and argument types of ptrace.  No canned test for
@@ -1160,6 +1328,12 @@ fi
 AC_CHECK_MEMBERS([struct reg.r_fs, struct reg.r_gs], [], [],
                  [#include <machine/reg.h>])
 
+# See if <sys/user.h> supports the %fs_base and %gs_bas amd64 segment registers.
+# Older amd64 Linux's don't have the fs_base and gs_base members of
+# `struct user_regs_struct'.
+AC_CHECK_MEMBERS([struct user_regs_struct.fs_base, struct user_regs_struct.gs_base],
+		 [], [], [#include <sys/user.h>])
+
 # See if <sys/ptrace.h> provides the PTRACE_GETREGS request.
 AC_MSG_CHECKING(for PTRACE_GETREGS)
 AC_CACHE_VAL(gdb_cv_have_ptrace_getregs,
@@ -1214,11 +1388,11 @@ if test $gdb_cv_have_pt_getxmmregs = yes; then
   [Define if sys/ptrace.h defines the PT_GETXMMREGS request.])
 fi
 
-# Detect which type of /proc is in use, such as for Unixware or Solaris.
+# Detect which type of /proc is in use, such as for Solaris.
 
 if test "${target}" = "${host}"; then
   case "${host}" in
-  *-*-unixware* | *-*-sysv4.2* | *-*-sysv5* | *-*-interix* )
+  *-*-sysv4.2* | *-*-sysv5* | *-*-interix* )
       AC_DEFINE(NEW_PROC_API, 1,
       [Define if you want to use new multi-fd /proc interface
        (replaces HAVE_MULTIPLE_PROC_FDS as well as other macros).])
@@ -1383,9 +1557,9 @@ AC_CACHE_CHECK([for long long support in compiler], gdb_cv_c_long_long,
 [[switch (foo & 2) { case 0: return 1; }]])],
                                   gdb_cv_c_long_long=yes,
                                   gdb_cv_c_long_long=no)])
-if test $gdb_cv_c_long_long = yes; then
-  AC_DEFINE(CC_HAS_LONG_LONG, 1,
-            [Define to 1 if the compiler supports long long.])
+if test $gdb_cv_c_long_long != yes; then
+  # libdecnumber requires long long.
+  AC_MSG_ERROR([Compiler must support long long for GDB.])
 fi
 
 # Check if the compiler and runtime support printing long longs.
@@ -1514,6 +1688,8 @@ if test "${gdb_native}" = yes; then
      # Problem does not happen for the recommended libpythonX.Y.so linkage.
      old_CFLAGS="$CFLAGS"
      CFLAGS="$CFLAGS $PYTHON_CFLAGS"
+     old_LIBS="$LIBS"
+     LIBS="$LIBS $PYTHON_LIBS"
      AC_RUN_IFELSE(
        AC_LANG_PROGRAM(
          [#include "]${have_libpython}[/Python.h"],
@@ -1523,6 +1699,7 @@ if test "${gdb_native}" = yes; then
           Py_Finalize ();
           return err == 0 ? 0 : 1;]),
        [dynamic_list=true], [], [true])
+     LIBS="$old_LIBS"
      CFLAGS="$old_CFLAGS"
    fi
    LDFLAGS="$old_LDFLAGS"
@@ -1593,7 +1770,7 @@ if test ${build} = ${host} -a ${host} = ${target} ; then
       if test $gdb_cv_have_aix_thread_debug = yes; then
          CONFIG_SRCS="${CONFIG_SRCS} aix-thread.c"
          CONFIG_OBS="${CONFIG_OBS} aix-thread.o"
-         CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -lpthdebug"
+         LIBS="$LIBS -lpthdebug"
 
          # Older versions of AIX do not provide the declaration for
          # the getthrds function (it appears that it was introduced
@@ -1691,42 +1868,20 @@ fi
 
 dnl Handle optional features that can be enabled.
 
-target_sysroot_reloc=0
+# Support for --with-sysroot is a copy of GDB_AC_WITH_DIR,
+# except that the argument to --with-sysroot is optional.
+# --with-sysroot (or --with-sysroot=yes) sets the default sysroot path.
+if test "x$with_sysroot" = xyes; then
+  with_sysroot="${exec_prefix}/${target_alias}/sys-root"
+fi
 AC_ARG_WITH(sysroot,
-AS_HELP_STRING([--with-sysroot@<:@=DIR@:>@], [search for usr/lib et al within DIR]),
-[
- case ${with_sysroot} in
- yes) TARGET_SYSTEM_ROOT='${exec_prefix}/${target_alias}/sys-root' ;;
- *) TARGET_SYSTEM_ROOT=$with_sysroot ;;
- esac
-
- TARGET_SYSTEM_ROOT_DEFINE='-DTARGET_SYSTEM_ROOT=\"$(TARGET_SYSTEM_ROOT)\"'
-
- if test "x$prefix" = xNONE; then
-  test_prefix=/usr/local
- else
-  test_prefix=$prefix
- fi
- if test "x$exec_prefix" = xNONE || test "x$exec_prefix" = 'x${prefix}'; then
-  test_exec_prefix=$test_prefix
- else
-  test_exec_prefix=$exec_prefix
- fi
- case ${TARGET_SYSTEM_ROOT} in
- "${test_prefix}"|"${test_prefix}/"*|\
- "${test_exec_prefix}"|"${test_exec_prefix}/"*|\
- '${prefix}'|'${prefix}/'*|\
- '${exec_prefix}'|'${exec_prefix}/'*)
-   target_sysroot_reloc=1
-   ;;
- esac
-], [
- TARGET_SYSTEM_ROOT=
- TARGET_SYSTEM_ROOT_DEFINE='-DTARGET_SYSTEM_ROOT=\"\"'
-])
-TARGET_SYSTEM_ROOT_DEFINE="$TARGET_SYSTEM_ROOT_DEFINE -DTARGET_SYSTEM_ROOT_RELOCATABLE=$target_sysroot_reloc"
+  AS_HELP_STRING([--with-sysroot@<:@=DIR@:>@],
+                 [search for usr/lib et al within DIR]),
+  [TARGET_SYSTEM_ROOT=$withval], [TARGET_SYSTEM_ROOT=])
+AC_DEFINE_DIR(TARGET_SYSTEM_ROOT, TARGET_SYSTEM_ROOT,
+              [search for usr/lib et al within DIR])
 AC_SUBST(TARGET_SYSTEM_ROOT)
-AC_SUBST(TARGET_SYSTEM_ROOT_DEFINE)
+GDB_AC_DEFINE_RELOCATABLE(TARGET_SYSTEM_ROOT, sysroot, ${ac_define_dir})
 
 GDB_AC_WITH_DIR(SYSTEM_GDBINIT, system-gdbinit,
     [automatically load a system-wide gdbinit file],
@@ -1739,6 +1894,11 @@ AC_ARG_ENABLE(werror,
      no | n)  ERROR_ON_WARNING="no" ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --enable-werror) ;;
    esac])
+
+# Enable -Werror by default when using gcc.  Turn it off for releases.
+if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" && $development; then
+    ERROR_ON_WARNING=yes
+fi
 
 WERROR_CFLAGS=""
 if test "${ERROR_ON_WARNING}" = yes ; then
@@ -1753,7 +1913,8 @@ fi
 build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
 -Wformat-nonliteral -Wno-pointer-sign \
 -Wno-unused -Wunused-value -Wunused-function \
--Wno-switch -Wno-char-subscripts"
+-Wno-switch -Wno-char-subscripts -Wmissing-prototypes \
+-Wdeclaration-after-statement -Wempty-body"
 
 # Enable -Wno-format by default when using gcc on mingw since many
 # GCC versions complain about %I64.
@@ -1851,40 +2012,55 @@ esac
 AC_SUBST(WIN32LIBS)
 
 # Add ELF support to GDB, but only if BFD includes ELF support.
-OLD_CFLAGS=$CFLAGS
-OLD_LDFLAGS=$LDFLAGS
-OLD_LIBS=$LIBS
-CFLAGS="$CFLAGS -I${srcdir}/../include -I../bfd -I${srcdir}/../bfd"
-LDFLAGS="$LDFLAGS -L../bfd -L../libiberty"
-intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
-# -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
-if test "$plugins" = "yes"; then
-  LIBS="-ldl $LIBS"
-fi
-LIBS="-lbfd -liberty $intl $LIBS"
-AC_CACHE_CHECK([for ELF support in BFD], gdb_cv_var_elf,
-[AC_TRY_LINK(
-[#include <stdlib.h>
-#include "bfd.h"
-#include "elf-bfd.h"
-],
-[bfd *abfd = NULL; bfd_get_elf_phdr_upper_bound (abfd); ],
-gdb_cv_var_elf=yes, gdb_cv_var_elf=no)])
+GDB_AC_CHECK_BFD([for ELF support in BFD], gdb_cv_var_elf,
+                 [bfd_get_elf_phdr_upper_bound (NULL)], elf-bfd.h)
 if test $gdb_cv_var_elf = yes; then
-  CONFIG_OBS="$CONFIG_OBS elfread.o"
+  CONFIG_OBS="$CONFIG_OBS elfread.o stap-probe.o"
   AC_DEFINE(HAVE_ELF, 1,
 	    [Define if ELF support should be included.])
   # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
   if test "$plugins" = "yes"; then
-    OLD_LIBS="-ldl $OLD_LIBS"
+    LIBS="-ldl $LIBS"
   fi
 fi
-CFLAGS=$OLD_CFLAGS
-LDFLAGS=$OLD_LDFLAGS
-LIBS=$OLD_LIBS
+
+# Add macho support to GDB, but only if BFD includes it.
+GDB_AC_CHECK_BFD([for Mach-O support in BFD], gdb_cv_var_macho,
+                 [bfd_mach_o_lookup_command (NULL, 0, NULL)], mach-o.h)
+if test $gdb_cv_var_macho = yes; then
+  CONFIG_OBS="$CONFIG_OBS machoread.o"
+fi
+
+# Add SOM support to GDB, but only if BFD includes it.
+GDB_AC_CHECK_BFD([for SOM support in BFD], gdb_cv_var_som,
+                 [bfd_som_attach_aux_hdr (NULL, 0, NULL)], som.h)
+if test $gdb_cv_var_som = yes; then
+  CONFIG_OBS="$CONFIG_OBS somread.o"
+fi
 
 # Add any host-specific objects to GDB.
 CONFIG_OBS="${CONFIG_OBS} ${gdb_host_obs}"
+
+# If building on ELF, look for lzma support for embedded compressed debug info.
+if test $gdb_cv_var_elf = yes; then
+  AC_ARG_WITH(lzma,
+    AS_HELP_STRING([--with-lzma], [support lzma compression (auto/yes/no)]),
+    [], [with_lzma=auto])
+  AC_MSG_CHECKING([whether to use lzma])
+  AC_MSG_RESULT([$with_lzma])
+
+  if test "${with_lzma}" != no; then
+    AC_LIB_HAVE_LINKFLAGS([lzma], [], [#include "lzma.h"],
+			  [lzma_index_iter iter;
+			   lzma_index_iter_init (&iter, 0);
+			   lzma_mf_is_supported (LZMA_MF_HC3);])
+    if test "$HAVE_LIBLZMA" != yes; then
+      if test "$with_lzma" = yes; then
+        AC_MSG_ERROR([missing liblzma for --with-lzma])
+      fi
+    fi
+  fi
+fi
 
 LIBGUI="../libgui/src/libgui.a"
 GUI_CFLAGS_X="-I${srcdir}/../libgui/src"
@@ -2167,7 +2343,7 @@ dnl  At the moment, we just assume it's UTF-8.
 AC_DEFINE(GDB_DEFAULT_HOST_CHARSET, "UTF-8",
           [Define to be a string naming the default host character set.])
 
-AC_OUTPUT(Makefile .gdbinit:gdbinit.in doc/Makefile gnulib/Makefile data-directory/Makefile,
+AC_OUTPUT(Makefile gdb-gdb.gdb doc/Makefile data-directory/Makefile,
 [
 case x$CONFIG_HEADERS in
 xconfig.h:config.in)

@@ -1,5 +1,5 @@
 # Expect script for .tls_common tests
-#   Copyright 2006, 2007, 2010 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2010, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,6 +24,7 @@
 # Make sure that binutils can correctly handle ld output in ELF.
 
 if { ![istarget *-*-linux*]
+     && ![istarget *-*-nacl*]
      && ![istarget *-*-gnu*] } {
     return
 }
@@ -60,7 +61,7 @@ if { ![ld_simple_link $ld tmpdir/tls_common "tmpdir/tls_common1.o"] } {
 	unresolved "tls_common"
     }
     return
-} 
+}
 
 set readelf_output [run_host_cmd "$READELF" "-l --wide tmpdir/tls_common"]
 if ![regexp ".*TLS.*0x0+ 0x0+4 R .*" $readelf_output] then {

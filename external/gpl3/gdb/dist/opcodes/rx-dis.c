@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RX.
-   Copyright 2008, 2009 Free Software Foundation, Inc.
+   Copyright 2008, 2009, 2012 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -20,6 +20,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 
 #include "bfd.h"

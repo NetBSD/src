@@ -204,9 +204,9 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 
 	case lang_input_section_enum:
 	  if (l->input_section.section == info->input_section
-	      || strcmp (bfd_get_section_name (output_section,
+	      || strcmp (bfd_get_section_name (l->input_section.section->owner,
 					       l->input_section.section),
-			 bfd_get_section_name (output_section,
+			 bfd_get_section_name (info->input_section->owner,
 					       info->input_section)) == 0)
 	    {
 	      /* We've found our section.  Insert the stub immediately
@@ -271,7 +271,7 @@ m68hc11elf_add_stub_section (const char *stub_sec_name,
      at the correct place.  */
   info.input_section = tramp_section;
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, os);
+  lang_add_section (&info.add, stub_sec, NULL, os);
 
   if (info.add.head == NULL)
     goto err_ret;

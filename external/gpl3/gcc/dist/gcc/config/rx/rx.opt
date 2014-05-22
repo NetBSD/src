@@ -1,5 +1,5 @@
 ; Command line options for the Renesas RX port of GCC.
-; Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+; Copyright (C) 2008-2013 Free Software Foundation, Inc.
 ; Contributed by Red Hat.
 ;
 ; This file is part of GCC.
@@ -19,6 +19,9 @@
 ; <http://www.gnu.org/licenses/>.
 ;---------------------------------------------------
 
+HeaderInclude
+config/rx/rx-opts.h
+
 ; The default is -fpu -m32bit-doubles.
 
 m64bit-doubles
@@ -30,11 +33,11 @@ Target RejectNegative InverseMask(64BIT_DOUBLES) Report
 Stores doubles in 32 bits.  This is the default.
 
 nofpu
-Target RejectNegative Mask(NO_USE_FPU) Report
+Target RejectNegative Alias(mnofpu)
 Disable the use of RX FPU instructions.  
 
 mnofpu
-Target RejectNegative Mask(NO_USE_FPU) MaskExists Undocumented
+Target RejectNegative Mask(NO_USE_FPU) Report Undocumented
 
 fpu
 Target RejectNegative InverseMask(NO_USE_FPU) Report
@@ -43,12 +46,20 @@ Enable the use of RX FPU instructions.  This is the default.
 ;---------------------------------------------------
 
 mcpu=
-Target RejectNegative Joined Var(rx_cpu_name) Report
+Target RejectNegative Joined Var(rx_cpu_type) Report ToLower Enum(rx_cpu_types) Init(RX600)
 Specify the target RX cpu type.
 
-patch=
-Target RejectNegative Joined Var(rx_cpu_name)
-Alias for -mcpu.
+Enum
+Name(rx_cpu_types) Type(enum rx_cpu_types)
+
+EnumValue
+Enum(rx_cpu_types) String(rx610) Value(RX610)
+
+EnumValue
+Enum(rx_cpu_types) String(rx200) Value(RX200)
+
+EnumValue
+Enum(rx_cpu_types) String(rx600) Value(RX600)
 
 ;---------------------------------------------------
 
@@ -76,7 +87,7 @@ Use the simulator runtime.
 
 mas100-syntax
 Target Mask(AS100_SYNTAX) Report
-Generate assembler output that is compatible with the Renesas AS100 assembler.  This may restrict some of the compiler's capabilities.  The default is to generate GAS compatable syntax.
+Generate assembler output that is compatible with the Renesas AS100 assembler.  This may restrict some of the compiler's capabilities.  The default is to generate GAS compatible syntax.
 
 ;---------------------------------------------------
 
@@ -93,7 +104,7 @@ Maximum size in bytes of constant values allowed as operands.
 ;---------------------------------------------------
 
 mint-register=
-Target RejectNegative Joined UInteger Var(rx_interrupt_registers) Init(0)
+Target RejectNegative Joined UInteger Var(rx_deferred_options) Defer
 Specifies the number of registers to reserve for interrupt handlers.
 
 ;---------------------------------------------------
@@ -101,3 +112,23 @@ Specifies the number of registers to reserve for interrupt handlers.
 msave-acc-in-interrupts
 Target Mask(SAVE_ACC_REGISTER)
 Specifies whether interrupt functions should save and restore the accumulator register.
+
+;---------------------------------------------------
+
+mpid
+Target Mask(PID)
+Enables Position-Independent-Data (PID) mode.
+
+;---------------------------------------------------
+
+mwarn-multiple-fast-interrupts
+Target Report Var(rx_warn_multiple_fast_interrupts) Init(1) Warning
+Warn when multiple, different, fast interrupt handlers are in the compilation unit.
+
+mgcc-abi
+Target RejectNegative Report Mask(GCC_ABI)
+Enable the use of the old, broken, ABI where all stacked function arguments are aligned to 32-bits.
+
+mrx-abi
+Target RejectNegative Report InverseMask(GCC_ABI)
+Enable the use the standard RX ABI where all stacked function arguments are naturally aligned.  This is the default.

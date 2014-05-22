@@ -101,7 +101,6 @@
 
 Yacc grammar for instruction table entries.
 
-=======================================================================
 Original Instruction table specification document:
 
 	    MIPS Coprocessor Table Specification
@@ -138,7 +137,6 @@ the assembler.
 
 
 Instruction classes
-===================
 
 Below is a list of the valid coprocessor instruction classes for
 any given coprocessor "z".  These instructions are already recognized
@@ -191,7 +189,6 @@ register mnemonics must be specified in the coprocessor table.
 
 
 Table Grammar
-=============
 
 Here is the grammar for the coprocessor table:
 
@@ -233,7 +230,6 @@ Here is the grammar for the coprocessor table:
 
 
 Examples
-========
 
 Example 1:
 
@@ -301,7 +297,6 @@ and will emit the object code:
 In this way, the programmer can force arbitrary bits of an instruction
 to have predefined values.
 
-=======================================================================
 Additional notes:
 
 Encoding of ranges:

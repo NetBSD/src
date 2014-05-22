@@ -1,4 +1,4 @@
-// Copyright (C) 2007, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -20,17 +20,18 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file c++0x_warning.h
- *  This is a Standard C++ Library header.
+/** @file bits/c++0x_warning.h
+ *  This is an internal header file, included by other library headers.
+ *  Do not attempt to use it directly. @headername{iosfwd}
  */
 
 #ifndef _CXX0X_WARNING_H
 #define _CXX0X_WARNING_H 1
 
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
-#error This file requires compiler and library support for the upcoming \
-ISO C++ standard, C++0x. This support is currently experimental, and must be \
-enabled with the -std=c++0x or -std=gnu++0x compiler options.
+#if __cplusplus < 201103L
+#error This file requires compiler and library support for the \
+ISO C++ 2011 standard. This support is currently experimental, and must be \
+enabled with the -std=c++11 or -std=gnu++11 compiler options.
 #endif
 
 #endif

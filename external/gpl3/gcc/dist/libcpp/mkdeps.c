@@ -1,6 +1,5 @@
 /* Dependency generator for Makefile fragments.
-   Copyright (C) 2000, 2001, 2003, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Zack Weinberg, Mar 2000
 
 This program is free software; you can redistribute it and/or modify it
@@ -130,7 +129,7 @@ apply_vpath (struct deps *d, const char *t)
       unsigned int i;
       for (i = 0; i < d->nvpaths; i++)
 	{
-	  if (!strncmp (d->vpathv[i], t, d->vpathlv[i]))
+	  if (!filename_ncmp (d->vpathv[i], t, d->vpathlv[i]))
 	    {
 	      const char *p = t + d->vpathlv[i];
 	      if (!IS_DIR_SEPARATOR (*p))
@@ -399,29 +398,37 @@ deps_restore (struct deps *deps, FILE *fd, const char *self)
   unsigned int i, count;
   size_t num_to_read;
   size_t buf_size = 512;
-  char *buf = XNEWVEC (char, buf_size);
+  char *buf;
 
   /* Number of dependences.  */
   if (fread (&count, 1, sizeof (count), fd) != sizeof (count))
     return -1;
+
+  buf = XNEWVEC (char, buf_size);
 
   /* The length of each dependence string, followed by the string.  */
   for (i = 0; i < count; i++)
     {
       /* Read in # bytes in string.  */
       if (fread (&num_to_read, 1, sizeof (size_t), fd) != sizeof (size_t))
-	return -1;
+	{
+	  free (buf);
+	  return -1;
+	}
       if (buf_size < num_to_read + 1)
 	{
 	  buf_size = num_to_read + 1 + 127;
 	  buf = XRESIZEVEC (char, buf, buf_size);
 	}
       if (fread (buf, 1, num_to_read, fd) != num_to_read)
-	return -1;
+	{
+	  free (buf);
+	  return -1;
+	}
       buf[num_to_read] = '\0';
 
       /* Generate makefile dependencies from .pch if -nopch-deps.  */
-      if (self != NULL && strcmp (buf, self) != 0)
+      if (self != NULL && filename_cmp (buf, self) != 0)
         deps_add_dep (deps, buf);
     }
 

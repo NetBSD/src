@@ -1,4 +1,4 @@
-/*	$NetBSD: sht.c,v 1.1.1.1 2009/12/13 16:57:31 kardel Exp $	*/
+/*	$NetBSD: sht.c,v 1.1.1.1.6.1 2014/05/22 15:50:16 yamt Exp $	*/
 
 /* 
  * sht.c - Testprogram for shared memory refclock
@@ -64,7 +64,7 @@ getShmTime (
 #else
 	char buf[10];
 	LPSECURITY_ATTRIBUTES psec=0;
-	sprintf (buf,"NTP%d",unit);
+	snprintf (buf, sizeof(buf), "NTP%d", unit);
 	SECURITY_DESCRIPTOR sd;
 	SECURITY_ATTRIBUTES sa;
 	HANDLE shmid;

@@ -1,5 +1,5 @@
 #   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2006, 2007, 2009, 2010
+#   2004, 2006, 2007, 2009, 2010, 2011
 #   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -87,8 +87,8 @@ proc objcopy_test {testname srcfile} {
 	setup_xfail "m68*-*-sysv*" "m68*-apple-aux*"
 	setup_xfail "m8*-*"
 	setup_xfail "or32-*-rtems*" "or32-*-coff"
-	setup_xfail "sh-*-coff*" "sh-*-rtems*" 
-	setup_xfail "tic4x-*-*" "tic80-*-*" "w65-*"
+	setup_xfail "sh-*-coff*"
+	setup_xfail "tic80-*-*" "w65-*"
 
 	clear_xfail "hppa*64*-*-hpux*" "hppa*-*-linux*" "hppa*-*-lites*"
 	clear_xfail "hppa*-*-*n*bsd*" "hppa*-*-rtems*" "*-*-*elf*"
@@ -131,6 +131,10 @@ if ![string match "" $got] then {
     set found_rev [regexp -lineanchor $want $revdata -> revdata]
 
     if {$found_orig == 0 || $found_rev == 0} then {
+	# som doesn't have a .data section
+	setup_xfail "hppa*-*-hpux*"
+	clear_xfail "hppa*64*-*-hpux*"
+
         fail "objcopy --reverse-bytes"
     } else {
         scan $origdata "%2x%2x%2x%2x" b1 b2 b3 b4
@@ -402,12 +406,26 @@ proc strip_test { } {
     global NMFLAGS
     global srcdir
     global subdir
+    global READELF
 
     set test "strip"
 
     if { [target_compile $srcdir/$subdir/testprog.c tmpdir/testprog.o object debug] != "" } {
 	untested $test
 	return
+    }
+
+    set osabi_fail "false"
+    if [is_elf_format] {
+	verbose -log "$READELF -a tmpdir/testprog.o > tmpdir/osabi.in"
+	set exec_output [remote_exec host "$READELF -h tmpdir/testprog.o" "" "/dev/null" "tmpdir/osabi.in"]
+	if { [lindex $exec_output 0] != 0 } then {
+	    unresolved "$test preserving OS/ABI"	
+	    set osabi_fail "true"
+	} else {
+	    verbose -log "grep OS/ABI tmpdir/osabi.in"
+	    catch "exec grep OS/ABI tmpdir/osabi.in" osabi_in
+	}
     }
 
     if [is_remote host] {
@@ -424,19 +442,38 @@ proc strip_test { } {
     set exec_output [binutils_run $AR "rc $archive ${objfile}"]
     if ![string match "" $exec_output] {
 	fail $test
+	unresolved "$test preserving OS/ABI"	
 	return
     }
 
     set exec_output [binutils_run $STRIP "-g $archive"]
     if ![string match "" $exec_output] {
 	fail $test
+	unresolved "$test preserving OS/ABI"	
 	return
     }
 
     set exec_output [binutils_run $STRIP "$STRIPFLAGS $archive"]
     if ![string match "" $exec_output] {
 	fail $test
+	unresolved "$test preserving OS/ABI"	
 	return
+    }
+
+    if { $osabi_fail != "true" && [is_elf_format] } {
+	verbose -log "$READELF -a tmpdir/testprog.o > tmpdir/osabi.out"
+	set exec_output [remote_exec host "$READELF -h tmpdir/testprog.o" "" "/dev/null" "tmpdir/osabi.out"]
+	if { [lindex $exec_output 0] != 0 } then {
+	    unresolved "$test preserving OS/ABI"	
+	} else {
+	    verbose -log "grep OS/ABI tmpdir/osabi.out"
+	    catch "exec grep OS/ABI tmpdir/osabi.out" osabi_out
+	    if { "$osabi_in" == "$osabi_out" } {
+		pass "$test preserving OS/ABI"
+	    } else {
+		fail "$test preserving OS/ABI"
+	    }
+	}
     }
 
     if { [target_compile $srcdir/$subdir/testprog.c tmpdir/testprog.o object debug] != "" } {
@@ -527,7 +564,7 @@ proc copy_setup { } {
     set res [build_wrapper testglue.o]
     set flags { debug }
     
-    if { [istarget *-*-uclinux*] } {
+    if { [istarget *-*-uclinux*] && ![istarget tic6x-*-*] } {
 	return 1
     }
     
@@ -616,11 +653,8 @@ proc copy_executable { prog flags test1 test2 } {
 	# mips_elf_sym_is_global.
 	setup_xfail "mips*-*-elf"
 
-	setup_xfail "*arm*-*-coff"
-	setup_xfail "xscale-*-coff"
+	setup_xfail "arm*-*-coff"
 	setup_xfail "arm*-*-pe"
-	setup_xfail "thumb*-*-coff"
-	setup_xfail "thumb*-*-pe"
 	setup_xfail "*-*-mingw*"
 	setup_xfail "*-*-cygwin*"
     
@@ -648,6 +682,7 @@ proc copy_executable { prog flags test1 test2 } {
 proc strip_executable { prog flags test } {
     global NM
     global NMFLAGS
+    global READELF
     global host_triplet
 
     remote_file build delete tmpdir/striprog
@@ -657,6 +692,19 @@ proc strip_executable { prog flags test } {
     } else {
 	set copyfile tmpdir/striprog
     }
+
+    set osabi_fail "false"
+    if [is_elf_format] {
+	verbose -log "$READELF -a ${copyfile} > tmpdir/osabi.in"
+	set exec_output [remote_exec host "$READELF -h ${copyfile}" "" "/dev/null" "tmpdir/osabi.in"]
+	if { [lindex $exec_output 0] != 0 } then {
+	    unresolved "$test preserving OS/ABI"	
+	    set osabi_fail "true"
+	} else {
+	    verbose -log "grep OS/ABI tmpdir/osabi.in"
+	    catch "exec grep OS/ABI tmpdir/osabi.in" osabi_in
+	}
+     }
 
     set exec_output [binutils_run $prog "$flags ${copyfile}"]
     if ![string match "" $exec_output] {
@@ -676,6 +724,22 @@ proc strip_executable { prog flags test } {
     if { $status != "pass" } {
 	fail $test
         return
+    }
+
+    if { $osabi_fail != "true" && [is_elf_format] } {
+	verbose -log "$READELF -a ${copyfile} > tmpdir/osabi.out"
+	set exec_output [remote_exec host "$READELF -h ${copyfile}" "" "/dev/null" "tmpdir/osabi.out"]
+	if { [lindex $exec_output 0] != 0 } then {
+	    unresolved "$test preserving OS/ABI"	
+	} else {
+	    verbose -log "grep OS/ABI tmpdir/osabi.out"
+	    catch "exec grep OS/ABI tmpdir/osabi.out" osabi_out
+	    if { "$osabi_in" == "$osabi_out" } {
+		pass "$test preserving OS/ABI"
+	    } else {
+		fail "$test preserving OS/ABI"
+	    }
+	}
     }
 
     set exec_output [binutils_run $NM "$NMFLAGS ${copyfile}"]
@@ -873,6 +937,7 @@ if [is_elf_format] {
     objcopy_test_readelf "ELF group" group-3.s
     objcopy_test_readelf "ELF group" group-4.s
     run_dump_test "group-5"
+    run_dump_test "group-6"
     run_dump_test "copy-1"
     run_dump_test "note-1"
 }
@@ -915,6 +980,19 @@ if [is_elf_format] {
 	}
     }
 
+    # The symbol table for some MIPS targets is sorted differently than
+    # the ELF canonical order, so the regexps in localize-hidden-1.d fail
+    # to match.  These tests must be matched to targets for which
+    # targ_defvec=bfd_elf32_bigmips_vec,
+    # targ_defvec=bfd_elf32_littlemips_vec,
+    # targ_defvec=bfd_elf32_nbigmips_vec or
+    # targ_defvec=bfd_elf32_nlittlemips_vec in config.bfd.  When syncing,
+    # don't forget that earlier case-matches trump later ones.
+    if { ![istarget "mips*-sde-elf*"] && ![istarget "mips64*-*-openbsd*"] } {
+	setup_xfail "mips*-*-irix5*" "mips*-*-irix6*" "mips*-*-elf*" \
+	    "mips*-*-rtems*" "mips*-*-windiss" "mips*-*-none" \
+	    "mips*-*-openbsd*" "mips*-*-chorus*"
+    }
     run_dump_test "localize-hidden-1"
     run_dump_test "testranges"
     run_dump_test "testranges-ia64"

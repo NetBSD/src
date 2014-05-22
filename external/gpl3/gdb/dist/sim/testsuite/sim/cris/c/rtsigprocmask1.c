@@ -3,7 +3,7 @@
 #cc: additional_flags=-pthread
 #xerror:
 #output: Unimplemented rt_sigprocmask syscall (0x3, 0x0, 0x3dff*\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 
    Testing a signal handler corner case.  */
 

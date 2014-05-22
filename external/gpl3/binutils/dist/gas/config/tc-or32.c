@@ -1,5 +1,5 @@
 /* Assembly backend for the OpenRISC 1000.
-   Copyright (C) 2002, 2003, 2005, 2007, 2009, 2010
+   Copyright (C) 2002, 2003, 2005, 2007, 2009, 2010, 2012
    Free Software Foundation, Inc.
    Contributed by Damjan Lampret <lampret@opencores.org>.
    Modified bu Johan Rydberg, <johan.rydberg@netinsight.se>.
@@ -24,8 +24,8 @@
 
 /* tc-a29k.c used as a template.  */
 
-#include "safe-ctype.h"
 #include "as.h"
+#include "safe-ctype.h"
 #include "opcode/or32.h"
 #include "elf/or32.h"
 

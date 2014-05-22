@@ -1,8 +1,9 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.1 2009/12/13 16:57:25 kardel Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.1.1.1.6.1 2014/05/22 15:50:15 yamt Exp $	*/
 
 
 #ifndef HAVE_VPRINTF
 #include "choke-me: no vprintf and no snprintf"
+  choke me.
 #endif
 
 #if defined(HAVE_STDARG_H)
@@ -23,6 +24,7 @@
 
 #else
 #  include "must-have-stdarg-or-varargs"
+  choke me.
 #endif
 
 static int

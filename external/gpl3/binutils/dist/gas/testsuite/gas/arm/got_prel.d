@@ -2,7 +2,7 @@
 # source: got_prel.s
 # as: -march=armv5te -meabi=5
 # readelf: -x 4 -r
-# target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf
+# target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf *-*-nacl*
 
 Relocation section '.rel.text.foo' at offset 0x3f0 contains 1 entries:
  Offset     Info    Type            Sym.Value  Sym. Name

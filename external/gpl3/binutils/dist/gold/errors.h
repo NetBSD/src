@@ -49,6 +49,12 @@ class Errors
   void
   fatal(const char* format, va_list) ATTRIBUTE_NORETURN;
 
+  // Report a fallback error.  After printing the error, this must exit
+  // with a special status code indicating that fallback to
+  // --incremental-full is required.
+  void
+  fallback(const char* format, va_list) ATTRIBUTE_NORETURN;
+
   // Report an error and continue.
   void
   error(const char* format, va_list);

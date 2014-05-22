@@ -1,6 +1,5 @@
 /* Tree-dumping functionality for intermediate representation.
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Written by Mark Mitchell <mark@codesourcery.com>
 
 This file is part of GCC.
@@ -200,6 +199,15 @@ dump_op (dump_info_p di, tree t)
     default:
       break;
   }
+}
+
+/* Dump information common to statements from STMT.  */
+
+static void
+dump_stmt (dump_info_p di, const_tree t)
+{
+  if (EXPR_HAS_LOCATION (t))
+    dump_int (di, "line", EXPR_LINENO (t));
 }
 
 bool
@@ -413,6 +421,7 @@ cp_dump_tree (void* dump_info, tree t)
     case MUST_NOT_THROW_EXPR:
       dump_stmt (di, t);
       dump_child ("body", TREE_OPERAND (t, 0));
+      dump_child ("cond", MUST_NOT_THROW_COND (t));
       break;
 
     case USING_STMT:
@@ -451,6 +460,13 @@ cp_dump_tree (void* dump_info, tree t)
       dump_child ("cond", FOR_COND (t));
       dump_child ("expr", FOR_EXPR (t));
       dump_child ("body", FOR_BODY (t));
+      break;
+
+    case RANGE_FOR_STMT:
+      dump_stmt (di, t);
+      dump_child ("decl", RANGE_FOR_DECL (t));
+      dump_child ("expr", RANGE_FOR_EXPR (t));
+      dump_child ("body", RANGE_FOR_BODY (t));
       break;
 
     case SWITCH_STMT:

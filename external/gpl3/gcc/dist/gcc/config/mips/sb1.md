@@ -1,4 +1,4 @@
-;; Copyright (C) 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -76,8 +76,8 @@
 ;; disabled.
 
 (define_attr "sb1_fp_pipes" "one,two"
-  (cond [(and (ne (symbol_ref "TARGET_FLOAT64") (const_int 0))
-	      (eq (symbol_ref "TARGET_FP_EXCEPTIONS") (const_int 0)))
+  (cond [(and (match_test "TARGET_FLOAT64")
+	      (not (match_test "TARGET_FP_EXCEPTIONS")))
 	 (const_string "two")]
 	(const_string "one")))
 
@@ -108,7 +108,7 @@
 
 (define_insn_reservation "ir_sb1_unknown" 1
   (and (eq_attr "cpu" "sb1,sb1a")
-       (eq_attr "type" "unknown,multi"))
+       (eq_attr "type" "unknown,multi,atomic,syncloop"))
   "sb1_ls0+sb1_ls1+sb1_ex0+sb1_ex1+sb1_fp0+sb1_fp1")
 
 ;; predicted taken branch causes 2 cycle ifetch bubble.  predicted not
@@ -149,15 +149,13 @@
 (define_insn_reservation "ir_sb1_fpload" 0
   (and (eq_attr "cpu" "sb1,sb1a")
        (and (eq_attr "type" "fpload")
-	    (ne (symbol_ref "TARGET_FLOAT64")
-		(const_int 0))))
+	    (match_test "TARGET_FLOAT64")))
   "sb1_ls0 | sb1_ls1")
 
 (define_insn_reservation "ir_sb1_fpload_32bitfp" 1
   (and (eq_attr "cpu" "sb1,sb1a")
        (and (eq_attr "type" "fpload")
-	    (eq (symbol_ref "TARGET_FLOAT64")
-		(const_int 0))))
+	    (not (match_test "TARGET_FLOAT64"))))
   "sb1_ls0 | sb1_ls1")
 
 ;; Indexed loads can only execute on LS1 pipe.
@@ -165,15 +163,13 @@
 (define_insn_reservation "ir_sb1_fpidxload" 0
   (and (eq_attr "cpu" "sb1,sb1a")
        (and (eq_attr "type" "fpidxload")
-	    (ne (symbol_ref "TARGET_FLOAT64")
-		(const_int 0))))
+	    (match_test "TARGET_FLOAT64")))
   "sb1_ls1")
 
 (define_insn_reservation "ir_sb1_fpidxload_32bitfp" 1
   (and (eq_attr "cpu" "sb1,sb1a")
        (and (eq_attr "type" "fpidxload")
-	    (eq (symbol_ref "TARGET_FLOAT64")
-		(const_int 0))))
+	    (not (match_test "TARGET_FLOAT64"))))
   "sb1_ls1")
 
 ;; prefx can only execute on the ls1 pipe.
@@ -299,21 +295,19 @@
 
 (define_insn_reservation "ir_sb1_mfhi" 1
   (and (eq_attr "cpu" "sb1,sb1a")
-       (and (eq_attr "type" "mfhilo")
-	    (not (match_operand 1 "lo_operand"))))
+       (eq_attr "type" "mfhi"))
   "sb1_ex1")
 
 (define_insn_reservation "ir_sb1_mflo" 1
   (and (eq_attr "cpu" "sb1,sb1a")
-       (and (eq_attr "type" "mfhilo")
-	    (match_operand 1 "lo_operand")))
+       (eq_attr "type" "mflo"))
   "sb1_ex1")
 
 ;; mt{hi,lo} to mul/div is 4 cycles.
 
 (define_insn_reservation "ir_sb1_mthilo" 4
   (and (eq_attr "cpu" "sb1,sb1a")
-       (eq_attr "type" "mthilo"))
+       (eq_attr "type" "mthi,mtlo"))
   "sb1_ex1")
 
 ;; mt{hi,lo} to mf{hi,lo} is 3 cycles.

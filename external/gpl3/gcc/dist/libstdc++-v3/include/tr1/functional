@@ -1,7 +1,6 @@
 // TR1 functional header -*- C++ -*-
 
-// Copyright (C) 2004, 2005, 2006, 2007, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2004-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -42,13 +41,30 @@
 #include <bits/stringfwd.h>
 #include <tr1/functional_hash.h>
 #include <ext/type_traits.h>
+#include <bits/move.h> // for std::__addressof
+#if __cplusplus >= 201103L
+#  include <type_traits> // for integral_constant, true_type, false_type
+#endif
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
+#if __cplusplus >= 201103L
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+  template<int> struct _Placeholder;
+  template<typename> class _Bind;
+  template<typename, typename> class _Bind_result;
+_GLIBCXX_END_NAMESPACE_VERSION
+#endif
+
 namespace tr1
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
   template<typename _MemberPointer>
     class _Mem_fn;
+  template<typename _Tp, typename _Class>
+    _Mem_fn<_Tp _Class::*>
+    mem_fn(_Tp _Class::*);
 
   /**
    *  Actual implementation of _Has_result_type, which uses SFINAE to
@@ -452,7 +468,8 @@ namespace tr1
       typedef _Tp type;
 
       explicit
-      reference_wrapper(_Tp& __indata): _M_data(&__indata)
+      reference_wrapper(_Tp& __indata)
+      : _M_data(std::__addressof(__indata))
       { }
 
       reference_wrapper(const reference_wrapper<_Tp>& __inref):
@@ -838,15 +855,18 @@ namespace tr1
   /// The type of placeholder objects defined by libstdc++.
   template<int _Num> struct _Placeholder { };
 
-  /** @namespace std::placeholders
-   *  @brief ISO C++ 0x entities sub namespace for functional.
-   *
-   *  Define a large number of placeholders. There is no way to
-   *  simplify this with variadic templates, because we're introducing
-   *  unique names for each.
+_GLIBCXX_END_NAMESPACE_VERSION
+
+  /** @namespace std::tr1::placeholders
+   *  @brief Sub-namespace for tr1/functional.
    */
   namespace placeholders 
   { 
+  _GLIBCXX_BEGIN_NAMESPACE_VERSION
+    /*  Define a large number of placeholders. There is no way to
+     *  simplify this with variadic templates, because we're introducing
+     *  unique names for each.
+     */
     namespace 
     {
       _Placeholder<1> _1;
@@ -879,8 +899,10 @@ namespace tr1
       _Placeholder<28> _28;
       _Placeholder<29> _29;
     } 
+  _GLIBCXX_END_NAMESPACE_VERSION
   }
 
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
   /**
    *  Partial specialization of is_placeholder that provides the placeholder
    *  number for the placeholder objects defined by libstdc++.
@@ -891,6 +913,18 @@ namespace tr1
 
   template<int _Num>
     const int is_placeholder<_Placeholder<_Num> >::value;
+
+#if __cplusplus >= 201103L
+  template<int _Num>
+    struct is_placeholder<std::_Placeholder<_Num>>
+    : std::integral_constant<int, _Num>
+    { };
+
+  template<int _Num>
+    struct is_placeholder<const std::_Placeholder<_Num>>
+    : std::integral_constant<int, _Num>
+    { };
+#endif
 
   /**
    * Stores a tuple of indices. Used by bind() to extract the elements
@@ -1335,6 +1369,30 @@ namespace tr1
   template<typename _Signature>
     const bool is_bind_expression<_Bind<_Signature> >::value;
 
+  /// Class template _Bind is always a bind expression.
+  template<typename _Signature>
+    struct is_bind_expression<const _Bind<_Signature> >
+    { static const bool value = true; };
+
+  template<typename _Signature>
+    const bool is_bind_expression<const _Bind<_Signature> >::value;
+
+  /// Class template _Bind is always a bind expression.
+  template<typename _Signature>
+    struct is_bind_expression<volatile _Bind<_Signature> >
+    { static const bool value = true; };
+
+  template<typename _Signature>
+    const bool is_bind_expression<volatile _Bind<_Signature> >::value;
+
+  /// Class template _Bind is always a bind expression.
+  template<typename _Signature>
+    struct is_bind_expression<const volatile _Bind<_Signature> >
+    { static const bool value = true; };
+
+  template<typename _Signature>
+    const bool is_bind_expression<const volatile _Bind<_Signature> >::value;
+
   /// Class template _Bind_result is always a bind expression.
   template<typename _Result, typename _Signature>
     struct is_bind_expression<_Bind_result<_Result, _Signature> >
@@ -1342,6 +1400,70 @@ namespace tr1
 
   template<typename _Result, typename _Signature>
     const bool is_bind_expression<_Bind_result<_Result, _Signature> >::value;
+
+  /// Class template _Bind_result is always a bind expression.
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<const _Bind_result<_Result, _Signature> >
+    { static const bool value = true; };
+
+  template<typename _Result, typename _Signature>
+    const bool
+    is_bind_expression<const _Bind_result<_Result, _Signature> >::value;
+
+  /// Class template _Bind_result is always a bind expression.
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<volatile _Bind_result<_Result, _Signature> >
+    { static const bool value = true; };
+
+  template<typename _Result, typename _Signature>
+    const bool
+    is_bind_expression<volatile _Bind_result<_Result, _Signature> >::value;
+
+  /// Class template _Bind_result is always a bind expression.
+  template<typename _Result, typename _Signature>
+    struct
+    is_bind_expression<const volatile _Bind_result<_Result, _Signature> >
+    { static const bool value = true; };
+
+  template<typename _Result, typename _Signature>
+    const bool
+    is_bind_expression<const volatile _Bind_result<_Result,
+                                                   _Signature> >::value;
+
+#if __cplusplus >= 201103L
+  template<typename _Signature>
+    struct is_bind_expression<std::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Signature>
+    struct is_bind_expression<const std::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Signature>
+    struct is_bind_expression<volatile std::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Signature>
+    struct is_bind_expression<const volatile std::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<std::_Bind_result<_Result, _Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<const std::_Bind_result<_Result, _Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<volatile std::_Bind_result<_Result, _Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<const volatile std::_Bind_result<_Result,
+                                                               _Signature>>
+    : true_type { };
+#endif
 
   /// bind
   template<typename _Functor, typename... _ArgTypes>
@@ -1493,7 +1615,7 @@ namespace tr1
 	_M_get_pointer(const _Any_data& __source)
 	{
 	  const _Functor* __ptr =
-	    __stored_locally? &__source._M_access<_Functor>()
+	    __stored_locally? std::__addressof(__source._M_access<_Functor>())
 	    /* have stored a pointer */ : __source._M_access<_Functor*>();
 	  return const_cast<_Functor*>(__ptr);
 	}
@@ -1622,8 +1744,7 @@ namespace tr1
 	static void
 	_M_init_functor(_Any_data& __functor, reference_wrapper<_Functor> __f)
 	{
-	  // TBD: Use address_of function instead.
-	  _Base::_M_init_functor(__functor, &__f.get());
+	  _Base::_M_init_functor(__functor, std::__addressof(__f.get()));
 	}
       };
 
@@ -1767,7 +1888,7 @@ namespace tr1
     : public _Maybe_unary_or_binary_function<_Res, _ArgTypes...>,
       private _Function_base
     {
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus < 201103L
       /// This class is used to implement the safe_bool idiom.
       struct _Hidden_type
       {
@@ -1905,22 +2026,9 @@ namespace tr1
        */
       void swap(function& __x)
       {
-        /* We cannot perform direct assignments of the _M_functor
-	   parts as they are of type _Any_data and have a different
-	   dynamic type.  Doing so would violate type-based aliasing
-	   rules and lead to spurious miscompilations.
-	   Instead perform a bytewise exchange of the memory of
-	   both POD objects.
-	   ???  A wordwise exchange honoring alignment of _M_functor
-	   would be more efficient.  See PR42845.  */
-	for (unsigned i = 0; i < sizeof (_M_functor._M_pod_data); ++i)
-	  std::swap (_M_functor._M_pod_data[i], __x._M_functor._M_pod_data[i]);
-	_Manager_type __old_manager = _M_manager;
-	_M_manager = __x._M_manager;
-	__x._M_manager = __old_manager;
-	_Invoker_type __old_invoker = _M_invoker;
-	_M_invoker = __x._M_invoker;
-	__x._M_invoker = __old_invoker;
+	std::swap(_M_functor, __x._M_functor);
+	std::swap(_M_manager, __x._M_manager);
+	std::swap(_M_invoker, __x._M_invoker);
       }
 
       // [3.7.2.3] function capacity
@@ -1933,7 +2041,7 @@ namespace tr1
        *
        *  This function will not throw an %exception.
        */
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       explicit operator bool() const
       { return !_M_empty(); }
 #else
@@ -2034,13 +2142,7 @@ namespace tr1
     operator()(_ArgTypes... __args) const
     {
       if (_M_empty())
-        {
-#if __EXCEPTIONS
-          throw bad_function_call();
-#else
-          __builtin_abort();
-#endif
-        }
+	_GLIBCXX_THROW_OR_ABORT(bad_function_call());
       return _M_invoker(_M_functor, __args...);
     }
 
@@ -2145,7 +2247,62 @@ namespace tr1
     inline void
     swap(function<_Signature>& __x, function<_Signature>& __y)
     { __x.swap(__y); }
+
+_GLIBCXX_END_NAMESPACE_VERSION
 }
+
+#if __cplusplus >= 201103L
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+  template<typename> struct is_placeholder;
+
+  template<int _Num>
+    struct is_placeholder<tr1::_Placeholder<_Num>>
+    : integral_constant<int, _Num>
+    { };
+
+  template<int _Num>
+    struct is_placeholder<const tr1::_Placeholder<_Num>>
+    : integral_constant<int, _Num>
+    { };
+
+  template<typename> struct is_bind_expression;
+
+  template<typename _Signature>
+    struct is_bind_expression<tr1::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Signature>
+    struct is_bind_expression<const tr1::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Signature>
+    struct is_bind_expression<volatile tr1::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Signature>
+    struct is_bind_expression<const volatile tr1::_Bind<_Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<tr1::_Bind_result<_Result, _Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<const tr1::_Bind_result<_Result, _Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<volatile tr1::_Bind_result<_Result, _Signature>>
+    : true_type { };
+
+  template<typename _Result, typename _Signature>
+    struct is_bind_expression<const volatile tr1::_Bind_result<_Result,
+                                                               _Signature>>
+    : true_type { };
+
+_GLIBCXX_END_NAMESPACE_VERSION
+#endif
 }
 
 #endif // _GLIBCXX_TR1_FUNCTIONAL

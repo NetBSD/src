@@ -2,6 +2,8 @@
  * Test program for trace action commands
  */
 
+#include <string.h>
+
 static char   gdb_char_test;
 static short  gdb_short_test;
 static long   gdb_long_test;
@@ -116,11 +118,6 @@ main (argc, argv, envp)
 {
   int i;
   unsigned long myparms[10];
-
-#ifdef usestubs
-  set_debug_traps ();
-  breakpoint ();
-#endif
 
   begin ();
   for (i = 0; i < sizeof (myparms) / sizeof (myparms[0]); i++)

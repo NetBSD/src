@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,8 +34,7 @@
 // warranty.
 
 /**
- * @file constructor_destructor_fn_imps.hpp
- * Contains implementations of PB_DS_CLASS_NAME.
+ * @file list_update_map_/constructor_destructor_fn_imps.hpp
  */
 
 PB_DS_CLASS_T_DEC
@@ -46,7 +45,7 @@ PB_DS_CLASS_T_DEC
 Eq_Fn PB_DS_CLASS_C_DEC::s_eq_fn;
 
 PB_DS_CLASS_T_DEC
-null_lu_metadata PB_DS_CLASS_C_DEC::s_null_lu_metadata;
+null_type PB_DS_CLASS_C_DEC::s_null_type;
 
 PB_DS_CLASS_T_DEC
 Update_Policy PB_DS_CLASS_C_DEC::s_update_policy;
@@ -67,43 +66,40 @@ copy_from_range(It first_it, It last_it)
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME() : m_p_l(NULL)
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+PB_DS_LU_NAME() : m_p_l(0)
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 template<typename It>
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(It first_it, It last_it) : m_p_l(NULL)
+PB_DS_LU_NAME(It first_it, It last_it) : m_p_l(0)
 {
   copy_from_range(first_it, last_it);
-  _GLIBCXX_DEBUG_ONLY(assert_valid(););
+  PB_DS_ASSERT_VALID((*this));
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) : 
-#ifdef _GLIBCXX_DEBUG
-  debug_base(),
-#endif
-m_p_l(NULL)
+PB_DS_LU_NAME(const PB_DS_CLASS_C_DEC& other) :
+m_p_l(0)
 {
   __try
     {
       for (const_iterator it = other.begin(); it != other.end(); ++it)
-        {
-	  entry_pointer p_l = allocate_new_entry(*it, 
-			PB_DS_TYPES_TRAITS_C_DEC::m_no_throw_copies_indicator);
+	{
+	  entry_pointer p_l = allocate_new_entry(*it,
+				      traits_base::m_no_throw_copies_indicator);
 
 	  p_l->m_p_next = m_p_l;
 	  m_p_l = p_l;
-        }
+	}
     }
   __catch(...)
     {
       deallocate_all();
       __throw_exception_again;
     }
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -111,12 +107,12 @@ void
 PB_DS_CLASS_C_DEC::
 swap(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
   _GLIBCXX_DEBUG_ONLY(debug_base::swap(other);)
   std::swap(m_p_l, other.m_p_l);
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC
@@ -125,17 +121,16 @@ PB_DS_CLASS_C_DEC::
 deallocate_all()
 {
   entry_pointer p_l = m_p_l;
-  while (p_l != NULL)
+  while (p_l != 0)
     {
       entry_pointer p_next_l = p_l->m_p_next;
       actual_erase_entry(p_l);
       p_l = p_next_l;
     }
-  m_p_l = NULL;
+  m_p_l = 0;
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-~PB_DS_CLASS_NAME()
+~PB_DS_LU_NAME()
 { deallocate_all(); }
-

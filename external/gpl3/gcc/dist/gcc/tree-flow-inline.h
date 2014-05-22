@@ -1,6 +1,5 @@
 /* Inline functions for tree-flow.h
-   Copyright (C) 2001, 2003, 2005, 2006, 2007, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -35,20 +34,11 @@ gimple_in_ssa_p (const struct function *fun)
   return fun && fun->gimple_df && fun->gimple_df->in_ssa_p;
 }
 
-/* Array of all variables referenced in the function.  */
-static inline htab_t
-gimple_referenced_vars (const struct function *fun)
-{
-  if (!fun->gimple_df)
-    return NULL;
-  return fun->gimple_df->referenced_vars;
-}
-
 /* Artificial variable used for the virtual operand FUD chain.  */
 static inline tree
 gimple_vop (const struct function *fun)
 {
-  gcc_assert (fun && fun->gimple_df);
+  gcc_checking_assert (fun && fun->gimple_df);
   return fun->gimple_df->vop;
 }
 
@@ -96,53 +86,6 @@ next_htab_element (htab_iterator *hti)
 	return x;
     };
   return NULL;
-}
-
-/* Initialize ITER to point to the first referenced variable in the
-   referenced_vars hashtable, and return that variable.  */
-
-static inline tree
-first_referenced_var (referenced_var_iterator *iter)
-{
-  return (tree) first_htab_element (&iter->hti,
-				    gimple_referenced_vars (cfun));
-}
-
-/* Return true if we have hit the end of the referenced variables ITER is
-   iterating through.  */
-
-static inline bool
-end_referenced_vars_p (const referenced_var_iterator *iter)
-{
-  return end_htab_p (&iter->hti);
-}
-
-/* Make ITER point to the next referenced_var in the referenced_var hashtable,
-   and return that variable.  */
-
-static inline tree
-next_referenced_var (referenced_var_iterator *iter)
-{
-  return (tree) next_htab_element (&iter->hti);
-}
-
-/* Return the variable annotation for T, which must be a _DECL node.
-   Return NULL if the variable annotation doesn't already exist.  */
-static inline var_ann_t
-var_ann (const_tree t)
-{
-  const var_ann_t *p = DECL_VAR_ANN_PTR (t);
-  return p ? *p : NULL;
-}
-
-/* Return the variable annotation for T, which must be a _DECL node.
-   Create the variable annotation if it doesn't exist.  */
-static inline var_ann_t
-get_var_ann (tree var)
-{
-  var_ann_t *p = DECL_VAR_ANN_PTR (var);
-  gcc_assert (p);
-  return *p ? *p : create_var_ann (var);
 }
 
 /* Get the number of the next statement uid to be allocated.  */
@@ -220,10 +163,8 @@ link_imm_use (ssa_use_operand_t *linknode, tree def)
   else
     {
       root = &(SSA_NAME_IMM_USE_NODE (def));
-#ifdef ENABLE_CHECKING
       if (linknode->use)
-        gcc_assert (*(linknode->use) == def);
-#endif
+        gcc_checking_assert (*(linknode->use) == def);
       link_imm_use_to_list (linknode, root);
     }
 }
@@ -254,7 +195,7 @@ static inline void
 relink_imm_use (ssa_use_operand_t *node, ssa_use_operand_t *old)
 {
   /* The node one had better be in the same list.  */
-  gcc_assert (*(old->use) == *(node->use));
+  gcc_checking_assert (*(old->use) == *(node->use));
   node->prev = old->prev;
   node->next = old->next;
   if (old->prev)
@@ -507,10 +448,15 @@ gimple_phi_arg_has_location (gimple gs, size_t i)
 static inline gimple_seq
 phi_nodes (const_basic_block bb)
 {
-  gcc_assert (!(bb->flags & BB_RTL));
-  if (!bb->il.gimple)
-    return NULL;
-  return bb->il.gimple->phi_nodes;
+  gcc_checking_assert (!(bb->flags & BB_RTL));
+  return bb->il.gimple.phi_nodes;
+}
+
+static inline gimple_seq *
+phi_nodes_ptr (basic_block bb)
+{
+  gcc_checking_assert (!(bb->flags & BB_RTL));
+  return &bb->il.gimple.phi_nodes;
 }
 
 /* Set PHI nodes of a basic block BB to SEQ.  */
@@ -520,8 +466,8 @@ set_phi_nodes (basic_block bb, gimple_seq seq)
 {
   gimple_stmt_iterator i;
 
-  gcc_assert (!(bb->flags & BB_RTL));
-  bb->il.gimple->phi_nodes = seq;
+  gcc_checking_assert (!(bb->flags & BB_RTL));
+  bb->il.gimple.phi_nodes = seq;
   if (seq)
     for (i = gsi_start (seq); !gsi_end_p (i); gsi_next (&i))
       gimple_set_bb (gsi_stmt (i), bb);
@@ -541,32 +487,19 @@ phi_arg_index_from_use (use_operand_p use)
      pointer arithmetic.  */
 
   phi = USE_STMT (use);
-  gcc_assert (gimple_code (phi) == GIMPLE_PHI);
 
   element = (struct phi_arg_d *)use;
   root = gimple_phi_arg (phi, 0);
   index = element - root;
 
-#ifdef ENABLE_CHECKING
   /* Make sure the calculation doesn't have any leftover bytes.  If it does,
      then imm_use is likely not the first element in phi_arg_d.  */
-  gcc_assert ((((char *)element - (char *)root)
-	       % sizeof (struct phi_arg_d)) == 0
-	      && index < gimple_phi_capacity (phi));
-#endif
+  gcc_checking_assert ((((char *)element - (char *)root)
+			% sizeof (struct phi_arg_d)) == 0
+		       && index < gimple_phi_capacity (phi));
 
  return index;
 }
-
-/* Mark VAR as used, so that it'll be preserved during rtl expansion.  */
-
-static inline void
-set_is_used (tree var)
-{
-  var_ann_t ann = get_var_ann (var);
-  ann->used = 1;
-}
-
 
 /* Return true if T (assumed to be a DECL) is a global variable.
    A variable is considered global if its storage is not automatic.  */
@@ -604,9 +537,7 @@ phi_ssa_name_p (const_tree t)
 {
   if (TREE_CODE (t) == SSA_NAME)
     return true;
-#ifdef ENABLE_CHECKING
-  gcc_assert (is_gimple_min_invariant (t));
-#endif
+  gcc_checking_assert (is_gimple_min_invariant (t));
   return false;
 }
 
@@ -623,24 +554,6 @@ loop_containing_stmt (gimple stmt)
   return bb->loop_father;
 }
 
-
-/* Return true if VAR is clobbered by function calls.  */
-static inline bool
-is_call_clobbered (const_tree var)
-{
-  return (is_global_var (var)
-	  || (may_be_aliased (var)
-	      && pt_solution_includes (&cfun->gimple_df->escaped, var)));
-}
-
-/* Return true if VAR is used by function calls.  */
-static inline bool
-is_call_used (const_tree var)
-{
-  return (is_call_clobbered (var)
-	  || (may_be_aliased (var)
-	      && pt_solution_includes (&cfun->gimple_df->callused, var)));
-}
 
 /*  -----------------------------------------------------------------------  */
 
@@ -659,18 +572,16 @@ static inline use_operand_p
 op_iter_next_use (ssa_op_iter *ptr)
 {
   use_operand_p use_p;
-#ifdef ENABLE_CHECKING
-  gcc_assert (ptr->iter_type == ssa_op_iter_use);
-#endif
+  gcc_checking_assert (ptr->iter_type == ssa_op_iter_use);
   if (ptr->uses)
     {
       use_p = USE_OP_PTR (ptr->uses);
       ptr->uses = ptr->uses->next;
       return use_p;
     }
-  if (ptr->phi_i < ptr->num_phi)
+  if (ptr->i < ptr->numops)
     {
-      return PHI_ARG_DEF_PTR (ptr->phi_stmt, (ptr->phi_i)++);
+      return PHI_ARG_DEF_PTR (ptr->stmt, (ptr->i)++);
     }
   ptr->done = true;
   return NULL_USE_OPERAND_P;
@@ -680,16 +591,33 @@ op_iter_next_use (ssa_op_iter *ptr)
 static inline def_operand_p
 op_iter_next_def (ssa_op_iter *ptr)
 {
-  def_operand_p def_p;
-#ifdef ENABLE_CHECKING
-  gcc_assert (ptr->iter_type == ssa_op_iter_def);
-#endif
-  if (ptr->defs)
+  gcc_checking_assert (ptr->iter_type == ssa_op_iter_def);
+  if (ptr->flags & SSA_OP_VDEF)
     {
-      def_p = DEF_OP_PTR (ptr->defs);
-      ptr->defs = ptr->defs->next;
-      return def_p;
+      tree *p;
+      ptr->flags &= ~SSA_OP_VDEF;
+      p = gimple_vdef_ptr (ptr->stmt);
+      if (p && *p)
+	return p;
     }
+  if (ptr->flags & SSA_OP_DEF)
+    {
+      while (ptr->i < ptr->numops)
+	{
+	  tree *val = gimple_op_ptr (ptr->stmt, ptr->i);
+	  ptr->i++;
+	  if (*val)
+	    {
+	      if (TREE_CODE (*val) == TREE_LIST)
+		val = &TREE_VALUE (*val);
+	      if (TREE_CODE (*val) == SSA_NAME
+		  || is_gimple_reg (*val))
+		return val;
+	    }
+	}
+      ptr->flags &= ~SSA_OP_DEF;
+    }
+
   ptr->done = true;
   return NULL_DEF_OPERAND_P;
 }
@@ -699,25 +627,39 @@ static inline tree
 op_iter_next_tree (ssa_op_iter *ptr)
 {
   tree val;
-#ifdef ENABLE_CHECKING
-  gcc_assert (ptr->iter_type == ssa_op_iter_tree);
-#endif
+  gcc_checking_assert (ptr->iter_type == ssa_op_iter_tree);
   if (ptr->uses)
     {
       val = USE_OP (ptr->uses);
       ptr->uses = ptr->uses->next;
       return val;
     }
-  if (ptr->defs)
+  if (ptr->flags & SSA_OP_VDEF)
     {
-      val = DEF_OP (ptr->defs);
-      ptr->defs = ptr->defs->next;
-      return val;
+      ptr->flags &= ~SSA_OP_VDEF;
+      if ((val = gimple_vdef (ptr->stmt)))
+	return val;
+    }
+  if (ptr->flags & SSA_OP_DEF)
+    {
+      while (ptr->i < ptr->numops)
+	{
+	  val = gimple_op (ptr->stmt, ptr->i);
+	  ptr->i++;
+	  if (val)
+	    {
+	      if (TREE_CODE (val) == TREE_LIST)
+		val = TREE_VALUE (val);
+	      if (TREE_CODE (val) == SSA_NAME
+		  || is_gimple_reg (val))
+		return val;
+	    }
+	}
+      ptr->flags &= ~SSA_OP_DEF;
     }
 
   ptr->done = true;
   return NULL_TREE;
-
 }
 
 
@@ -728,38 +670,53 @@ op_iter_next_tree (ssa_op_iter *ptr)
 static inline void
 clear_and_done_ssa_iter (ssa_op_iter *ptr)
 {
-  ptr->defs = NULL;
+  ptr->i = 0;
+  ptr->numops = 0;
   ptr->uses = NULL;
   ptr->iter_type = ssa_op_iter_none;
-  ptr->phi_i = 0;
-  ptr->num_phi = 0;
-  ptr->phi_stmt = NULL;
+  ptr->stmt = NULL;
   ptr->done = true;
+  ptr->flags = 0;
 }
 
 /* Initialize the iterator PTR to the virtual defs in STMT.  */
 static inline void
 op_iter_init (ssa_op_iter *ptr, gimple stmt, int flags)
 {
-  /* We do not support iterating over virtual defs or uses without
+  /* PHI nodes require a different iterator initialization path.  We
+     do not support iterating over virtual defs or uses without
      iterating over defs or uses at the same time.  */
-  gcc_assert ((!(flags & SSA_OP_VDEF) || (flags & SSA_OP_DEF))
-	      && (!(flags & SSA_OP_VUSE) || (flags & SSA_OP_USE)));
-  ptr->defs = (flags & (SSA_OP_DEF|SSA_OP_VDEF)) ? gimple_def_ops (stmt) : NULL;
-  if (!(flags & SSA_OP_VDEF)
-      && ptr->defs
-      && gimple_vdef (stmt) != NULL_TREE)
-    ptr->defs = ptr->defs->next;
+  gcc_checking_assert (gimple_code (stmt) != GIMPLE_PHI
+		       && (!(flags & SSA_OP_VDEF) || (flags & SSA_OP_DEF))
+		       && (!(flags & SSA_OP_VUSE) || (flags & SSA_OP_USE)));
+  ptr->numops = 0;
+  if (flags & (SSA_OP_DEF | SSA_OP_VDEF))
+    {
+      switch (gimple_code (stmt))
+	{
+	  case GIMPLE_ASSIGN:
+	  case GIMPLE_CALL:
+	    ptr->numops = 1;
+	    break;
+	  case GIMPLE_ASM:
+	    ptr->numops = gimple_asm_noutputs (stmt);
+	    break;
+	  default:
+	    ptr->numops = 0;
+	    flags &= ~(SSA_OP_DEF | SSA_OP_VDEF);
+	    break;
+	}
+    }
   ptr->uses = (flags & (SSA_OP_USE|SSA_OP_VUSE)) ? gimple_use_ops (stmt) : NULL;
   if (!(flags & SSA_OP_VUSE)
       && ptr->uses
       && gimple_vuse (stmt) != NULL_TREE)
     ptr->uses = ptr->uses->next;
   ptr->done = false;
+  ptr->i = 0;
 
-  ptr->phi_i = 0;
-  ptr->num_phi = 0;
-  ptr->phi_stmt = NULL;
+  ptr->stmt = stmt;
+  ptr->flags = flags;
 }
 
 /* Initialize iterator PTR to the use operands in STMT based on FLAGS. Return
@@ -767,8 +724,8 @@ op_iter_init (ssa_op_iter *ptr, gimple stmt, int flags)
 static inline use_operand_p
 op_iter_init_use (ssa_op_iter *ptr, gimple stmt, int flags)
 {
-  gcc_assert ((flags & SSA_OP_ALL_DEFS) == 0
-	      && (flags & SSA_OP_USE));
+  gcc_checking_assert ((flags & SSA_OP_ALL_DEFS) == 0
+		       && (flags & SSA_OP_USE));
   op_iter_init (ptr, stmt, flags);
   ptr->iter_type = ssa_op_iter_use;
   return op_iter_next_use (ptr);
@@ -779,8 +736,8 @@ op_iter_init_use (ssa_op_iter *ptr, gimple stmt, int flags)
 static inline def_operand_p
 op_iter_init_def (ssa_op_iter *ptr, gimple stmt, int flags)
 {
-  gcc_assert ((flags & SSA_OP_ALL_USES) == 0
-	      && (flags & SSA_OP_DEF));
+  gcc_checking_assert ((flags & SSA_OP_ALL_USES) == 0
+		       && (flags & SSA_OP_DEF));
   op_iter_init (ptr, stmt, flags);
   ptr->iter_type = ssa_op_iter_def;
   return op_iter_next_def (ptr);
@@ -872,11 +829,14 @@ num_ssa_operands (gimple stmt, int flags)
   tree t;
   int num = 0;
 
+  gcc_checking_assert (gimple_code (stmt) != GIMPLE_PHI);
   FOR_EACH_SSA_TREE_OPERAND (t, stmt, iter, flags)
     num++;
   return num;
 }
 
+static inline use_operand_p
+op_iter_init_phiuse (ssa_op_iter *ptr, gimple phi, int flags);
 
 /* Delink all immediate_use information for STMT.  */
 static inline void
@@ -885,8 +845,8 @@ delink_stmt_imm_use (gimple stmt)
    ssa_op_iter iter;
    use_operand_p use_p;
 
-   if (ssa_operands_active ())
-     FOR_EACH_SSA_USE_OPERAND (use_p, stmt, iter, SSA_OP_ALL_USES)
+   if (ssa_operands_active (cfun))
+     FOR_EACH_PHI_OR_STMT_USE (use_p, stmt, iter, SSA_OP_ALL_USES)
        delink_imm_use (use_p);
 }
 
@@ -915,7 +875,7 @@ op_iter_init_phiuse (ssa_op_iter *ptr, gimple phi, int flags)
   clear_and_done_ssa_iter (ptr);
   ptr->done = false;
 
-  gcc_assert ((flags & (SSA_OP_USE | SSA_OP_VIRTUAL_USES)) != 0);
+  gcc_checking_assert ((flags & (SSA_OP_USE | SSA_OP_VIRTUAL_USES)) != 0);
 
   comp = (is_gimple_reg (phi_def) ? SSA_OP_USE : SSA_OP_VIRTUAL_USES);
 
@@ -926,9 +886,10 @@ op_iter_init_phiuse (ssa_op_iter *ptr, gimple phi, int flags)
       return NULL_USE_OPERAND_P;
     }
 
-  ptr->phi_stmt = phi;
-  ptr->num_phi = gimple_phi_num_args (phi);
+  ptr->stmt = phi;
+  ptr->numops = gimple_phi_num_args (phi);
   ptr->iter_type = ssa_op_iter_use;
+  ptr->flags = flags;
   return op_iter_next_use (ptr);
 }
 
@@ -944,7 +905,7 @@ op_iter_init_phidef (ssa_op_iter *ptr, gimple phi, int flags)
   clear_and_done_ssa_iter (ptr);
   ptr->done = false;
 
-  gcc_assert ((flags & (SSA_OP_DEF | SSA_OP_VIRTUAL_DEFS)) != 0);
+  gcc_checking_assert ((flags & (SSA_OP_DEF | SSA_OP_VIRTUAL_DEFS)) != 0);
 
   comp = (is_gimple_reg (phi_def) ? SSA_OP_DEF : SSA_OP_VIRTUAL_DEFS);
 
@@ -990,9 +951,7 @@ static inline use_operand_p
 move_use_after_head (use_operand_p use_p, use_operand_p head,
 		      use_operand_p last_p)
 {
-#ifdef ENABLE_CHECKING
-  gcc_assert (USE_FROM_PTR (use_p) == USE_FROM_PTR (head));
-#endif
+  gcc_checking_assert (USE_FROM_PTR (use_p) == USE_FROM_PTR (head));
   /* Skip head when we find it.  */
   if (use_p != head)
     {
@@ -1138,27 +1097,13 @@ unmodifiable_var_p (const_tree var)
   return TREE_READONLY (var) && (TREE_STATIC (var) || DECL_EXTERNAL (var));
 }
 
-/* Return true if REF, an ARRAY_REF, has an INDIRECT_REF somewhere in it.  */
-
-static inline bool
-array_ref_contains_indirect_ref (const_tree ref)
-{
-  gcc_assert (TREE_CODE (ref) == ARRAY_REF);
-
-  do {
-    ref = TREE_OPERAND (ref, 0);
-  } while (handled_component_p (ref));
-
-  return TREE_CODE (ref) == INDIRECT_REF;
-}
-
 /* Return true if REF, a handled component reference, has an ARRAY_REF
    somewhere in it.  */
 
 static inline bool
 ref_contains_array_ref (const_tree ref)
 {
-  gcc_assert (handled_component_p (ref));
+  gcc_checking_assert (handled_component_p (ref));
 
   do {
     if (TREE_CODE (ref) == ARRAY_REF)
@@ -1245,6 +1190,175 @@ static inline tree
 make_ssa_name (tree var, gimple stmt)
 {
   return make_ssa_name_fn (cfun, var, stmt);
+}
+
+/* Return an SSA_NAME node using the template SSA name NAME defined in
+   statement STMT in function cfun.  */
+
+static inline tree
+copy_ssa_name (tree var, gimple stmt)
+{
+  return copy_ssa_name_fn (cfun, var, stmt);
+}
+
+/*  Creates a duplicate of a SSA name NAME tobe defined by statement STMT
+    in function cfun.  */
+
+static inline tree
+duplicate_ssa_name (tree var, gimple stmt)
+{
+  return duplicate_ssa_name_fn (cfun, var, stmt);
+}
+
+/* Return an anonymous SSA_NAME node for type TYPE defined in statement STMT
+   in function cfun.  Arrange so that it uses NAME in dumps.  */
+
+static inline tree
+make_temp_ssa_name (tree type, gimple stmt, const char *name)
+{
+  tree ssa_name;
+  gcc_checking_assert (TYPE_P (type));
+  ssa_name = make_ssa_name_fn (cfun, type, stmt);
+  SET_SSA_NAME_VAR_OR_IDENTIFIER (ssa_name, get_identifier (name));
+  return ssa_name;
+}
+
+/* Returns the base object and a constant BITS_PER_UNIT offset in *POFFSET that
+   denotes the starting address of the memory access EXP.
+   Returns NULL_TREE if the offset is not constant or any component
+   is not BITS_PER_UNIT-aligned.
+   VALUEIZE if non-NULL is used to valueize SSA names.  It should return
+   its argument or a constant if the argument is known to be constant.  */
+/* ??? This is a static inline here to avoid the overhead of the indirect calls
+   to VALUEIZE.  But is this overhead really that significant?  And should we
+   perhaps just rely on WHOPR to specialize the function?  */
+
+static inline tree
+get_addr_base_and_unit_offset_1 (tree exp, HOST_WIDE_INT *poffset,
+				 tree (*valueize) (tree))
+{
+  HOST_WIDE_INT byte_offset = 0;
+
+  /* Compute cumulative byte-offset for nested component-refs and array-refs,
+     and find the ultimate containing object.  */
+  while (1)
+    {
+      switch (TREE_CODE (exp))
+	{
+	case BIT_FIELD_REF:
+	  return NULL_TREE;
+
+	case COMPONENT_REF:
+	  {
+	    tree field = TREE_OPERAND (exp, 1);
+	    tree this_offset = component_ref_field_offset (exp);
+	    HOST_WIDE_INT hthis_offset;
+
+	    if (!this_offset
+		|| TREE_CODE (this_offset) != INTEGER_CST
+		|| (TREE_INT_CST_LOW (DECL_FIELD_BIT_OFFSET (field))
+		    % BITS_PER_UNIT))
+	      return NULL_TREE;
+
+	    hthis_offset = TREE_INT_CST_LOW (this_offset);
+	    hthis_offset += (TREE_INT_CST_LOW (DECL_FIELD_BIT_OFFSET (field))
+			     / BITS_PER_UNIT);
+	    byte_offset += hthis_offset;
+	  }
+	  break;
+
+	case ARRAY_REF:
+	case ARRAY_RANGE_REF:
+	  {
+	    tree index = TREE_OPERAND (exp, 1);
+	    tree low_bound, unit_size;
+
+	    if (valueize
+		&& TREE_CODE (index) == SSA_NAME)
+	      index = (*valueize) (index);
+
+	    /* If the resulting bit-offset is constant, track it.  */
+	    if (TREE_CODE (index) == INTEGER_CST
+		&& (low_bound = array_ref_low_bound (exp),
+		    TREE_CODE (low_bound) == INTEGER_CST)
+		&& (unit_size = array_ref_element_size (exp),
+		    TREE_CODE (unit_size) == INTEGER_CST))
+	      {
+		HOST_WIDE_INT hindex = TREE_INT_CST_LOW (index);
+
+		hindex -= TREE_INT_CST_LOW (low_bound);
+		hindex *= TREE_INT_CST_LOW (unit_size);
+		byte_offset += hindex;
+	      }
+	    else
+	      return NULL_TREE;
+	  }
+	  break;
+
+	case REALPART_EXPR:
+	  break;
+
+	case IMAGPART_EXPR:
+	  byte_offset += TREE_INT_CST_LOW (TYPE_SIZE_UNIT (TREE_TYPE (exp)));
+	  break;
+
+	case VIEW_CONVERT_EXPR:
+	  break;
+
+	case MEM_REF:
+	  {
+	    tree base = TREE_OPERAND (exp, 0);
+	    if (valueize
+		&& TREE_CODE (base) == SSA_NAME)
+	      base = (*valueize) (base);
+
+	    /* Hand back the decl for MEM[&decl, off].  */
+	    if (TREE_CODE (base) == ADDR_EXPR)
+	      {
+		if (!integer_zerop (TREE_OPERAND (exp, 1)))
+		  {
+		    double_int off = mem_ref_offset (exp);
+		    gcc_assert (off.high == -1 || off.high == 0);
+		    byte_offset += off.to_shwi ();
+		  }
+		exp = TREE_OPERAND (base, 0);
+	      }
+	    goto done;
+	  }
+
+	case TARGET_MEM_REF:
+	  {
+	    tree base = TREE_OPERAND (exp, 0);
+	    if (valueize
+		&& TREE_CODE (base) == SSA_NAME)
+	      base = (*valueize) (base);
+
+	    /* Hand back the decl for MEM[&decl, off].  */
+	    if (TREE_CODE (base) == ADDR_EXPR)
+	      {
+		if (TMR_INDEX (exp) || TMR_INDEX2 (exp))
+		  return NULL_TREE;
+		if (!integer_zerop (TMR_OFFSET (exp)))
+		  {
+		    double_int off = mem_ref_offset (exp);
+		    gcc_assert (off.high == -1 || off.high == 0);
+		    byte_offset += off.to_shwi ();
+		  }
+		exp = TREE_OPERAND (base, 0);
+	      }
+	    goto done;
+	  }
+
+	default:
+	  goto done;
+	}
+
+      exp = TREE_OPERAND (exp, 0);
+    }
+done:
+
+  *poffset = byte_offset;
+  return exp;
 }
 
 #endif /* _TREE_FLOW_INLINE_H  */

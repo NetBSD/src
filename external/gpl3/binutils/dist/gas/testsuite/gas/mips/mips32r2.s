@@ -63,5 +63,7 @@ text_label:
 
 	wrpgpr	$10, $25
 
+	pause
+
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.space  8

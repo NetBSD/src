@@ -17,9 +17,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-pgm.c,v 1.5 2005-06-07 22:05:58 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-pgm.c,v 1.5 2005-06-07 22:05:58 guy Exp ";
 #else
-__RCSID("$NetBSD: print-pgm.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-pgm.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -74,6 +74,12 @@ struct pgm_nak {
     /* ... u_int16_t	pgmn_group_afi */
     /* ... u_int16_t	pgmn_reserved2; */
     /* ... u_int8_t	pgmn_group[0]; */
+    /* ... options */
+};
+
+struct pgm_ack {
+    u_int32_t	pgma_rx_max_seq;
+    u_int32_t	pgma_bitmap;
     /* ... options */
 };
 
@@ -138,6 +144,9 @@ typedef enum _pgm_type {
 #define PGM_OPT_RST             0x0F
 #define PGM_OPT_CR		0x10
 #define PGM_OPT_CRQST		0x11
+
+#define PGM_OPT_PGMCC_DATA	0x12
+#define PGM_OPT_PGMCC_FEEDBACK	0x13
      
 #define PGM_OPT_MASK		0x7f
 
@@ -167,7 +176,7 @@ pgm_print(register const u_char *bp, register u_int length,
 #else
 	char nla_buf[INET_ADDRSTRLEN];
 #endif
-	u_int8_t opt_type, opt_len, flags1, flags2;
+	u_int8_t opt_type, opt_len;
 	u_int32_t seq, opts_len, len, offset;
 
 	pgm = (struct pgm_header *)bp;
@@ -233,13 +242,10 @@ pgm_print(register const u_char *bp, register u_int length,
 
 	TCHECK(*pgm);
 
-        (void)printf("PGM, length %u", pgm->pgm_length);
+        (void)printf("PGM, length %u", EXTRACT_16BITS(&pgm->pgm_length));
 
         if (!vflag)
             return;
-
-        if (length > pgm->pgm_length)
-            length = pgm->pgm_length;
 
 	(void)printf(" 0x%02x%02x%02x%02x%02x%02x ",
 		     pgm->pgm_gsid[0],
@@ -451,12 +457,23 @@ pgm_print(register const u_char *bp, register u_int length,
 	    break;
 	}
 
+	case PGM_ACK: {
+	    struct pgm_ack *ack;
+
+	    ack = (struct pgm_ack *)(pgm + 1);
+	    TCHECK(*ack);
+	    (void)printf("ACK seq %u",
+			 EXTRACT_32BITS(&ack->pgma_rx_max_seq));
+	    bp = (u_char *) (ack + 1);
+	    break;
+	}
+
 	case PGM_SPMR:
 	    (void)printf("SPMR");
 	    break;
 
 	default:
-	    (void)printf("UNKNOWN type %0x02x", pgm->pgm_type);
+	    (void)printf("UNKNOWN type 0x%02x", pgm->pgm_type);
 	    break;
 
 	}
@@ -530,8 +547,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_FRAGMENT option, length %u != 16]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    seq = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    offset = EXTRACT_32BITS(bp);
@@ -543,8 +559,7 @@ pgm_print(register const u_char *bp, register u_int length,
 		    break;
 
 		case PGM_OPT_NAK_LIST:
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    opt_len -= sizeof(u_int32_t);	/* option header */
 		    (void)printf(" NAK LIST");
 		    while (opt_len) {
@@ -565,8 +580,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_JOIN option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    seq = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" JOIN %u", seq);
@@ -578,8 +592,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_NAK_BO_IVL option, length %u != 12]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    offset = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    seq = EXTRACT_32BITS(bp);
@@ -593,8 +606,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_NAK_BO_RNG option, length %u != 12]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    offset = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    seq = EXTRACT_32BITS(bp);
@@ -604,8 +616,7 @@ pgm_print(register const u_char *bp, register u_int length,
 		    break;
 
 		case PGM_OPT_REDIRECT:
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    switch (EXTRACT_16BITS(bp)) {
 		    case AFI_IP:
 			addr_size = sizeof(struct in_addr);
@@ -640,8 +651,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_PARITY_PRM option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    len = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" PARITY MAXTGS %u", len);
@@ -653,8 +663,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_PARITY_GRP option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    seq = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" PARITY GROUP %u", seq);
@@ -666,8 +675,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_CURR_TGSIZE option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    len = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" PARITY ATGS %u", len);
@@ -679,8 +687,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_NBR_UNREACH option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" NBR_UNREACH");
 		    opts_len -= 4;
 		    break;
@@ -696,8 +703,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_SYN option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" SYN");
 		    opts_len -= 4;
 		    break;
@@ -707,8 +713,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_FIN option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" FIN");
 		    opts_len -= 4;
 		    break;
@@ -718,8 +723,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_RST option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" RST");
 		    opts_len -= 4;
 		    break;
@@ -735,10 +739,75 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_CRQST option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" CRQST");
 		    opts_len -= 4;
+		    break;
+
+		case PGM_OPT_PGMCC_DATA:
+		    bp += 2;	/* skip flags */
+		    offset = EXTRACT_32BITS(bp);
+		    bp += sizeof(u_int32_t);
+		    switch (EXTRACT_16BITS(bp)) {
+		    case AFI_IP:
+			addr_size = sizeof(struct in_addr);
+			nla_af = AF_INET;
+			break;
+#ifdef INET6
+		    case AFI_IP6:
+			addr_size = sizeof(struct in6_addr);
+			nla_af = AF_INET6;
+			break;
+#endif
+		    default:
+			goto trunc;
+			break;
+		    }
+		    bp += (2 * sizeof(u_int16_t));
+		    if (opt_len != 12 + addr_size) {
+			(void)printf("[Bad OPT_PGMCC_DATA option, length %u != 12 + address size]", opt_len);
+			return;
+		    }
+		    TCHECK2(*bp, addr_size);
+		    nla = bp;
+		    bp += addr_size;
+
+		    inet_ntop(nla_af, nla, nla_buf, sizeof(nla_buf));
+		    (void)printf(" PGMCC DATA %u %s", offset, (char*)nla);
+		    opts_len -= 16;
+		    break;
+
+		case PGM_OPT_PGMCC_FEEDBACK:
+		    bp += 2;	/* skip flags */
+		    offset = EXTRACT_32BITS(bp);
+		    bp += sizeof(u_int32_t);
+		    switch (EXTRACT_16BITS(bp)) {
+		    case AFI_IP:
+			addr_size = sizeof(struct in_addr);
+			nla_af = AF_INET;
+			break;
+#ifdef INET6
+		    case AFI_IP6:
+			addr_size = sizeof(struct in6_addr);
+			nla_af = AF_INET6;
+			break;
+#endif
+		    default:
+			goto trunc;
+			break;
+		    }
+		    bp += (2 * sizeof(u_int16_t));
+		    if (opt_len != 12 + addr_size) {
+			(void)printf("[Bad OPT_PGMCC_FEEDBACK option, length %u != 12 + address size]", opt_len);
+			return;
+		    }
+		    TCHECK2(*bp, addr_size);
+		    nla = bp;
+		    bp += addr_size;
+
+		    inet_ntop(nla_af, nla, nla_buf, sizeof(nla_buf));
+		    (void)printf(" PGMCC FEEDBACK %u %s", offset, (char*)nla);
+		    opts_len -= 16;
 		    break;
 
 		default:
@@ -753,7 +822,10 @@ pgm_print(register const u_char *bp, register u_int length,
 	     }
 	}
 
-	(void)printf(" [%u]", EXTRACT_16BITS(&pgm->pgm_length));
+	(void)printf(" [%u]", length);
+	if (packettype == PT_PGM_ZMTP1 &&
+	    (pgm->pgm_type == PGM_ODATA || pgm->pgm_type == PGM_RDATA))
+		zmtp1_print_datagram(bp, EXTRACT_16BITS(&pgm->pgm_length));
 
 	return;
 

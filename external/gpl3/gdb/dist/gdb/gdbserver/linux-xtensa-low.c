@@ -1,5 +1,5 @@
 /* GNU/Linux/Xtensa specific low level interface, for the remote server for GDB.
-   Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -180,8 +180,10 @@ struct linux_target_ops the_low_target = {
   init_registers_xtensa,
   0,
   0,
+  NULL,
   0,
   0,
+  NULL, /* fetch_register */
   xtensa_get_pc,
   xtensa_set_pc,
   xtensa_breakpoint,

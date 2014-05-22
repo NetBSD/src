@@ -1,0 +1,52 @@
+# Copyright 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test "set debug expr 1" on c expressions.
+
+standard_testfile .c
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug}]} {
+    return -1
+}
+
+if ![runto_main] {
+    fail "run to main"
+    return -1
+}
+
+# Test whether the expression debug machinery accepts the expression.
+
+proc test_debug_expr { cmd output } {
+    global gdb_prompt
+
+    gdb_test_multiple $cmd "" {
+	-re ".*Invalid expression.*\r\n$gdb_prompt $" {
+	    fail $cmd
+	}
+	-re ".*\[\r\n\]$output\r\n$gdb_prompt $" {
+	    pass $cmd
+	}
+    }
+}
+
+for { set i 0 } { $i < 4 } { incr i } {
+    gdb_test_no_output "set variable array\[$i\] = $i"
+}
+
+gdb_test_no_output "set debug expression 1"
+
+# This caused gdb to segfault.
+test_debug_expr "print /x {char\[4\]} array" \
+    "\[$\]$decimal = \\{0x0, 0x1, 0x2, 0x3\\}"

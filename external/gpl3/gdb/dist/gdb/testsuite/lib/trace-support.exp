@@ -1,5 +1,4 @@
-# Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,23 +86,23 @@ proc gdb_delete_tracepoints {} {
     }
 }
 
-#
-# Procedure: gdb_trace_setactions
 #   Define actions for a tracepoint.
 #   Arguments:
+#       actions_command -- the command used to create the actions.
+#                          either "actions" or "commands".
 #	testname   -- identifying string for pass/fail output
-#	tracepoint -- to which tracepoint do these actions apply? (optional)
+#	tracepoint -- to which tracepoint(s) do these actions apply? (optional)
 #	args       -- list of actions to be defined.
 #   Returns:
 #	zero       -- success
 #	non-zero   -- failure
 
-proc gdb_trace_setactions { testname tracepoint args } {
+proc gdb_trace_setactions_command { actions_command testname tracepoint args } {
     global gdb_prompt;
 
     set state 0;
     set passfail "pass";
-    send_gdb "actions $tracepoint\n";
+    send_gdb "$actions_command $tracepoint\n";
     set expected_result "";
     gdb_expect 5 {
 	-re "No tracepoint number .*$gdb_prompt $" {
@@ -164,6 +163,20 @@ proc gdb_trace_setactions { testname tracepoint args } {
     } else {
 	return 1;
     }
+}
+
+# Define actions for a tracepoint, using the "actions" command.  See
+# gdb_trace_setactions_command.
+#
+proc gdb_trace_setactions { testname tracepoint args } {
+    eval gdb_trace_setactions_command "actions" {$testname} {$tracepoint} $args
+}
+
+# Define actions for a tracepoint, using the "commands" command.  See
+# gdb_trace_setactions_command.
+#
+proc gdb_trace_setcommands { testname tracepoint args } {
+    eval gdb_trace_setactions_command "commands" {$testname} {$tracepoint} $args
 }
 
 #
@@ -301,4 +314,16 @@ proc gdb_find_recursion_test_baseline { filename } {
 	default { }
     }
     return $baseline;
+}
+
+# Return the location of the IPA library.
+
+proc get_in_proc_agent {} {
+    global objdir
+
+    if [target_info exists in_proc_agent] {
+	return [target_info in_proc_agent]
+    } else {
+	return $objdir/../gdbserver/libinproctrace.so
+    }
 }

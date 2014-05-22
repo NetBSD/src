@@ -48,21 +48,118 @@ class Incremental_archive_entry;
 struct Archive_member
 {
   Archive_member()
-      : obj_(NULL), sd_(NULL)
+      : obj_(NULL), sd_(NULL), arg_serial_(0)
   { }
   Archive_member(Object* obj, Read_symbols_data* sd)
-      : obj_(obj), sd_(sd)
+      : obj_(obj), sd_(sd), arg_serial_(0)
   { }
   // The object file.
   Object* obj_;
   // The data to pass from read_symbols() to add_symbols().
   Read_symbols_data* sd_;
+  // The serial number of the file in the argument list.
+  unsigned int arg_serial_;
+};
+
+// This class serves as a base class for Archive and Lib_group objects.
+
+class Library_base
+{
+ public:
+  Library_base(Task* task)
+    : task_(task), incremental_info_(NULL)
+  { }
+
+  virtual
+  ~Library_base()
+  { }
+
+  // The file name.
+  const std::string&
+  filename() const
+  { return this->do_filename(); }
+
+  // The modification time of the archive file.
+  Timespec
+  get_mtime()
+  { return this->do_get_mtime(); }
+
+  // When we see a symbol in an archive we might decide to include the member,
+  // not include the member or be undecided. This enum represents these
+  // possibilities.
+
+  enum Should_include
+  {
+    SHOULD_INCLUDE_NO,
+    SHOULD_INCLUDE_YES,
+    SHOULD_INCLUDE_UNKNOWN
+  };
+
+  static Should_include
+  should_include_member(Symbol_table* symtab, Layout*, const char* sym_name,
+                        Symbol** symp, std::string* why, char** tmpbufp,
+                        size_t* tmpbuflen);
+
+  // Store a pointer to the incremental link info for the library.
+  void
+  set_incremental_info(Incremental_archive_entry* info)
+  { this->incremental_info_ = info; }
+
+  // Return the pointer to the incremental link info for the library.
+  Incremental_archive_entry*
+  incremental_info() const
+  { return this->incremental_info_; }
+
+  // Abstract base class for processing unused symbols.
+  class Symbol_visitor_base
+  {
+   public:
+    Symbol_visitor_base()
+    { }
+
+    virtual
+    ~Symbol_visitor_base()
+    { }
+
+    // This function will be called for each unused global
+    // symbol in a library, with a pointer to the symbol name.
+    virtual void
+    visit(const char* /* name */) = 0;
+  };
+
+  // Iterator for unused global symbols in the library.
+  // Calls v->visit() for each global symbol defined
+  // in each unused library member, passing a pointer to
+  // the symbol name.
+  void
+  for_all_unused_symbols(Symbol_visitor_base* v) const
+  { this->do_for_all_unused_symbols(v); }
+
+ protected:
+  // The task reading this archive.
+  Task *task_;
+
+ private:
+  // The file name.
+  virtual const std::string&
+  do_filename() const = 0;
+
+  // Return the modification time of the archive file.
+  virtual Timespec
+  do_get_mtime() = 0;
+
+  // Iterator for unused global symbols in the library.
+  virtual void
+  do_for_all_unused_symbols(Symbol_visitor_base* v) const = 0;
+
+  // The incremental link information for this archive.
+  Incremental_archive_entry* incremental_info_;
 };
 
 // This class represents an archive--generally a libNAME.a file.
 // Archives have a symbol table and a list of objects.
 
-class Archive
+class Archive : public Library_base
 {
  public:
   Archive(const std::string& name, Input_file* input_file,
@@ -89,11 +186,6 @@ class Archive
   const Input_file*
   input_file() const
   { return this->input_file_; }
-
-  // The file name.
-  const std::string&
-  filename() const
-  { return this->input_file_->filename(); }
 
   // Set up the archive: read the symbol map.
   void
@@ -169,98 +261,19 @@ class Archive
   no_export()
   { return this->no_export_; }
 
-  // Store a pointer to the incremental link info for the archive.
-  void
-  set_incremental_info(Incremental_archive_entry* info)
-  { this->incremental_info_ = info; }
-
-  // Return the pointer to the incremental link info for the archive.
-  Incremental_archive_entry*
-  incremental_info() const
-  { return this->incremental_info_; }
-
-  // When we see a symbol in an archive we might decide to include the member,
-  // not include the member or be undecided. This enum represents these
-  // possibilities.
-
-  enum Should_include
-  {
-    SHOULD_INCLUDE_NO,
-    SHOULD_INCLUDE_YES,
-    SHOULD_INCLUDE_UNKNOWN
-  };
-
-  static Should_include
-  should_include_member(Symbol_table* symtab, Layout*, const char* sym_name,
-                        Symbol** symp, std::string* why, char** tmpbufp,
-                        size_t* tmpbuflen);
-
- private:
-  struct Armap_entry;
-
- public:
-  // Iterator class for unused global symbols.  This iterator is used
-  // for incremental links.
-
-  class Unused_symbol_iterator
-  {
-   public:
-    Unused_symbol_iterator(Archive* arch,
-                           std::vector<Armap_entry>::const_iterator it)
-      : arch_(arch), it_(it)
-    { this->skip_used_symbols(); }
-
-    const char*
-    operator*() const
-    { return this->arch_->armap_names_.data() + this->it_->name_offset; }
-
-    Unused_symbol_iterator&
-    operator++()
-    {
-      ++this->it_;
-      this->skip_used_symbols();
-      return *this;
-    }
-
-    bool
-    operator==(const Unused_symbol_iterator p) const
-    { return this->it_ == p.it_; }
-
-    bool
-    operator!=(const Unused_symbol_iterator p) const
-    { return this->it_ != p.it_; }
-
-   private:
-    // Skip over symbols defined by members that have been included.
-    void
-    skip_used_symbols()
-    {
-      while (this->it_ != this->arch_->armap_.end()
-	     && (this->arch_->seen_offsets_.find(this->it_->file_offset)
-		 != this->arch_->seen_offsets_.end()))
-	++it_;
-    }
-
-    // The underlying archive.
-    Archive* arch_;
-
-    // The underlying iterator over all entries in the archive map.
-    std::vector<Armap_entry>::const_iterator it_;
-  };
-
-  // Return an iterator referring to the first unused symbol.
-  Unused_symbol_iterator
-  unused_symbols_begin()
-  { return Unused_symbol_iterator(this, this->armap_.begin()); }
-
-  // Return an iterator referring to the end of the unused symbols.
-  Unused_symbol_iterator
-  unused_symbols_end()
-  { return Unused_symbol_iterator(this, this->armap_.end()); }
-
  private:
   Archive(const Archive&);
   Archive& operator=(const Archive&);
+
+  // The file name.
+  const std::string&
+  do_filename() const
+  { return this->input_file_->filename(); }
+
+  // The modification time of the archive file.
+  Timespec
+  do_get_mtime()
+  { return this->file().get_mtime(); }
 
   struct Archive_header;
 
@@ -339,6 +352,10 @@ class Archive
 
   friend class const_iterator;
 
+  // Iterator for unused global symbols in the library.
+  void
+  do_for_all_unused_symbols(Symbol_visitor_base* v) const;
+
   // An entry in the archive map of symbols to object files.
   struct Armap_entry
   {
@@ -384,14 +401,12 @@ class Archive
   Nested_archive_table nested_archives_;
   // The directory search path.
   Dirsearch* dirpath_;
-  // The task reading this archive.
-  Task* task_;
   // Number of members in this archive;
   unsigned int num_members_;
   // True if we exclude this library archive from automatic export.
   bool no_export_;
-  // The incremental link information for this archive.
-  Incremental_archive_entry* incremental_info_;
+  // True if this library has been included as a --whole-archive.
+  bool included_all_members_;
 };
 
 // This class is used to read an archive and pick out the desired
@@ -449,9 +464,9 @@ class Add_archive_symbols : public Task
   Task_token* next_blocker_;
 };
 
-// This class represents the files surrunded by a --start-lib ... --end-lib.
+// This class represents the files surrounded by a --start-lib ... --end-lib.
 
-class Lib_group
+class Lib_group : public Library_base
 {
  public:
   Lib_group(const Input_file_lib* lib, Task* task);
@@ -470,10 +485,6 @@ class Lib_group
     return &this->members_[i];
   }
 
-  // Dump statistical information to stderr.
-  static void
-  print_stats();
-
   // Total number of archives seen.
   static unsigned int total_lib_groups;
   // Total number of archive members seen.
@@ -481,11 +492,27 @@ class Lib_group
   // Number of archive members loaded.
   static unsigned int total_members_loaded;
 
+  // Dump statistical information to stderr.
+  static void
+  print_stats();
+
  private:
+  // The file name.
+  const std::string&
+  do_filename() const;
+
+  // A Lib_group does not have a modification time, since there is no
+  // real library file.
+  Timespec
+  do_get_mtime()
+  { return Timespec(0, 0); }
+
+  // Iterator for unused global symbols in the library.
+  void
+  do_for_all_unused_symbols(Symbol_visitor_base*) const;
+
   // For reading the files.
   const Input_file_lib* lib_;
-  // The task reading this lib group.
-  Task* task_;
   // Table of the objects in the group.
   std::vector<Archive_member> members_;
 };

@@ -9,9 +9,9 @@
 
 Disassembly of section .text:
 00+0 <[^>]*> eb000000 	bl	.*
-			0: R_ARM_PC24	foo\+0xfffffff8
+			0: R_ARM_PC24	foo-0x8
 00+4 <[^>]*> eb000000 	bl	.*
-			4: R_ARM_PLT32	foo\+0xfffffff8
+			4: R_ARM_PLT32	foo-0x8
 	\.\.\.
 			8: R_ARM_ABS32	sym
 			c: R_ARM_GOT32	sym

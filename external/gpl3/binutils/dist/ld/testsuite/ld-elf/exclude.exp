@@ -31,6 +31,14 @@ if { [istarget "mcore-*-*"] } {
     return
 }
 
+set as_opt ""
+
+# This target requires extra as options when building code for shared
+# libraries.
+if { [istarget "tic6x-*-*"] } {
+    set as_opt "-mpic -mpid=near"
+}
+
 global ar
 global as
 global ld
@@ -47,8 +55,8 @@ set test7 "ld exclude symbols from archive - --exclude-libs foo:libexclude.a"
 set test8 "ld exclude symbols from archive - --exclude-libs foo,libexclude.a"
 set test9 "ld don't exclude symbols from archive - --exclude-libs foo:bar"
 
-if { ![ld_assemble $as $srcdir/$subdir/exclude1.s tmpdir/exclude1.o ]
-     || ![ld_assemble $as $srcdir/$subdir/exclude2.s tmpdir/exclude2.o] } {
+if { ![ld_assemble_flags $as $as_opt $srcdir/$subdir/exclude1.s tmpdir/exclude1.o ]
+     || ![ld_assemble_flags $as $as_opt $srcdir/$subdir/exclude2.s tmpdir/exclude2.o] } {
     unresolved $test1
     return
 }

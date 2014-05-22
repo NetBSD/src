@@ -1,6 +1,5 @@
 /* Low level interface to SPUs, for the remote server for GDB.
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -21,7 +20,7 @@
 
 #include "server.h"
 
-#include <sys/wait.h>
+#include "gdb_wait.h"
 #include <stdio.h>
 #include <sys/ptrace.h>
 #include <fcntl.h>
@@ -51,9 +50,6 @@
 /* PPU side system calls.  */
 #define INSTR_SC	0x44000002
 #define NR_spu_run	0x0116
-
-/* Get current thread ID (Linux task ID).  */
-#define current_ptid ((struct inferior_list_entry *)current_inferior)->id
 
 /* These are used in remote-utils.c.  */
 int using_threads = 0;
@@ -207,14 +203,14 @@ store_ppc_memory (CORE_ADDR memaddr, char *myaddr, int len)
 static int
 parse_spufs_run (int *fd, CORE_ADDR *addr)
 {
-  char buf[4];
+  unsigned int insn;
   CORE_ADDR pc = fetch_ppc_register (32);  /* nip */
 
   /* Fetch instruction preceding current NIP.  */
-  if (fetch_ppc_memory (pc-4, buf, 4) != 0)
+  if (fetch_ppc_memory (pc-4, (char *) &insn, 4) != 0)
     return 0;
   /* It should be a "sc" instruction.  */
-  if (*(unsigned int *)buf != INSTR_SC)
+  if (insn != INSTR_SC)
     return 0;
   /* System call number should be NR_spu_run.  */
   if (fetch_ppc_register (0) != NR_spu_run)
@@ -277,6 +273,12 @@ spu_create_inferior (char *program, char **allargs)
 
   if (pid == 0)
     {
+      if (!remote_connection_is_stdio ())
+	{
+	  close (listen_desc);
+	  if (gdb_connected ())
+	    close (remote_desc);
+	}
       ptrace (PTRACE_TRACEME, 0, 0, 0);
 
       setpgid (0, 0);
@@ -365,11 +367,6 @@ static void
 spu_join (int pid)
 {
   int status, ret;
-  struct process_info *process;
-
-  process = find_process_pid (pid);
-  if (process == NULL)
-    return;
 
   do {
     ret = waitpid (pid, &status, 0);
@@ -461,7 +458,7 @@ spu_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
     {
       fprintf (stderr, "\nChild terminated with signal = %x \n", WTERMSIG (w));
       ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-      ourstatus->value.sig = target_signal_from_host (WTERMSIG (w));
+      ourstatus->value.sig = gdb_signal_from_host (WTERMSIG (w));
       clear_inferiors ();
       return pid_to_ptid (ret);
     }
@@ -471,12 +468,12 @@ spu_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
   if (!server_waiting)
     {
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_0;
+      ourstatus->value.sig = GDB_SIGNAL_0;
       return ptid_build (ret, ret, 0);
     }
 
   ourstatus->kind = TARGET_WAITKIND_STOPPED;
-  ourstatus->value.sig = target_signal_from_host (WSTOPSIG (w));
+  ourstatus->value.sig = gdb_signal_from_host (WSTOPSIG (w));
   return ptid_build (ret, ret, 0);
 }
 

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file split_join_fn_imps.hpp
+ * @file splay_tree_/split_join_fn_imps.hpp
  * Contains an implementation class for splay_tree_.
  */
 
@@ -43,70 +43,70 @@ inline void
 PB_DS_CLASS_C_DEC::
 join(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
   if (base_type::join_prep(other) == false)
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
       return;
     }
 
   node_pointer p_target_r = other.leftmost(other.m_p_head);
-  _GLIBCXX_DEBUG_ASSERT(p_target_r != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_target_r != 0);
   other.splay(p_target_r);
 
   _GLIBCXX_DEBUG_ASSERT(p_target_r == other.m_p_head->m_p_parent);
-  _GLIBCXX_DEBUG_ASSERT(p_target_r->m_p_left == NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_target_r->m_p_left == 0);
 
   p_target_r->m_p_left = base_type::m_p_head->m_p_parent;
 
-  _GLIBCXX_DEBUG_ASSERT(p_target_r->m_p_left != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_target_r->m_p_left != 0);
   p_target_r->m_p_left->m_p_parent = p_target_r;
 
   base_type::m_p_head->m_p_parent = p_target_r;
   p_target_r->m_p_parent = base_type::m_p_head;
-  apply_update(p_target_r, (node_update* )this);
 
+  this->apply_update(p_target_r, (node_update*)this);
   base_type::join_finish(other);
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC
 void
 PB_DS_CLASS_C_DEC::
-split(const_key_reference r_key, PB_DS_CLASS_C_DEC& other)
+split(key_const_reference r_key, PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid());
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid());
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 
   if (base_type::split_prep(r_key, other) == false)
     {
-      _GLIBCXX_DEBUG_ONLY(assert_valid());
-      _GLIBCXX_DEBUG_ONLY(other.assert_valid());
+      PB_DS_ASSERT_VALID((*this))
+      PB_DS_ASSERT_VALID(other)
       return;
     }
 
-  node_pointer p_upper_bound = upper_bound(r_key).m_p_nd;
-  _GLIBCXX_DEBUG_ASSERT(p_upper_bound != NULL);
+  node_pointer p_upper_bound = this->upper_bound(r_key).m_p_nd;
+  _GLIBCXX_DEBUG_ASSERT(p_upper_bound != 0);
 
   splay(p_upper_bound);
   _GLIBCXX_DEBUG_ASSERT(p_upper_bound->m_p_parent == this->m_p_head);
 
   node_pointer p_new_root = p_upper_bound->m_p_left;
-  _GLIBCXX_DEBUG_ASSERT(p_new_root != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_new_root != 0);
 
   base_type::m_p_head->m_p_parent = p_new_root;
   p_new_root->m_p_parent = base_type::m_p_head;
   other.m_p_head->m_p_parent = p_upper_bound;
   p_upper_bound->m_p_parent = other.m_p_head;
-  p_upper_bound->m_p_left = NULL;
-  apply_update(p_upper_bound, (node_update* )this);
+  p_upper_bound->m_p_left = 0;
+  this->apply_update(p_upper_bound, (node_update*)this);
   base_type::split_finish(other);
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid());
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid());
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 

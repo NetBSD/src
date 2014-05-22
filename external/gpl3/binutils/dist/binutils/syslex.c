@@ -152,12 +152,7 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
-
-extern yy_size_t yyleng;
+extern int yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -183,6 +178,11 @@ extern FILE *yyin, *yyout;
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -200,7 +200,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -270,8 +270,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t yyleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -299,7 +299,7 @@ static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len  );
 
 void *yyalloc (yy_size_t  );
 void *yyrealloc (void *,yy_size_t  );
@@ -499,7 +499,7 @@ char *yytext;
 #line 1 "syslex.l"
 #define YY_NO_INPUT 1
 #line 4 "syslex.l"
-/* Copyright 2001, 2003, 2005, 2007 Free Software Foundation, Inc.
+/* Copyright 2001, 2003, 2005, 2007, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -518,7 +518,8 @@ char *yytext;
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-#include "config.h"
+/* Note: config.h is #included via syslex_wrap.c.  */
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -526,16 +527,19 @@ char *yytext;
 #include <strings.h>
 #endif
 #endif
+
 #include "sysinfo.h"
 
+#ifndef YY_NO_UNPUT
 #define YY_NO_UNPUT
+#endif
 
 #ifndef yywrap
 static int yywrap (void) { return 1; }
 #endif
 
 extern int yylex (void);
-#line 539 "syslex.c"
+#line 543 "syslex.c"
 
 #define INITIAL 0
 
@@ -574,7 +578,7 @@ FILE *yyget_out (void );
 
 void yyset_out  (FILE * out_str  );
 
-yy_size_t yyget_leng (void );
+int yyget_leng (void );
 
 char *yyget_text (void );
 
@@ -715,9 +719,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 41 "syslex.l"
+#line 45 "syslex.l"
 
-#line 721 "syslex.c"
+#line 725 "syslex.c"
 
 	if ( !(yy_init) )
 		{
@@ -802,49 +806,49 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 42 "syslex.l"
+#line 46 "syslex.l"
 { return '(';}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 43 "syslex.l"
+#line 47 "syslex.l"
 { return ')';}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 44 "syslex.l"
+#line 48 "syslex.l"
 { return '[';}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 45 "syslex.l"
+#line 49 "syslex.l"
 { return ']';}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 46 "syslex.l"
+#line 50 "syslex.l"
 { ; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 47 "syslex.l"
+#line 51 "syslex.l"
 { ; } 
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 48 "syslex.l"
+#line 52 "syslex.l"
 { ; }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 49 "syslex.l"
+#line 53 "syslex.l"
 { ; }
 	YY_BREAK
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 50 "syslex.l"
+#line 54 "syslex.l"
 {
 	yylval.s = malloc (yyleng - 1);
 	memcpy (yylval.s, yytext + 1, yyleng - 2);
@@ -854,7 +858,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 57 "syslex.l"
+#line 61 "syslex.l"
 {
         yylval.i = strtol(yytext,0,16);
 	return  NUMBER;
@@ -862,7 +866,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 62 "syslex.l"
+#line 66 "syslex.l"
 {
         yylval.i = atoi(yytext);
 	return  NUMBER;
@@ -870,75 +874,75 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 68 "syslex.l"
+#line 72 "syslex.l"
 { yylval.i =1 ;return UNIT;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 69 "syslex.l"
+#line 73 "syslex.l"
 { yylval.i = 1; return UNIT;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 70 "syslex.l"
+#line 74 "syslex.l"
 { yylval.i= 8; return UNIT;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 71 "syslex.l"
+#line 75 "syslex.l"
 { yylval.i = 8; return UNIT;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 73 "syslex.l"
+#line 77 "syslex.l"
 { yylval.s = "INT"; return TYPE;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 74 "syslex.l"
+#line 78 "syslex.l"
 { yylval.s = "BARRAY"; return TYPE;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 75 "syslex.l"
+#line 79 "syslex.l"
 { yylval.s = "CHARS"; return TYPE;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 76 "syslex.l"
+#line 80 "syslex.l"
 { yylval.i = 0; return NUMBER;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 77 "syslex.l"
+#line 81 "syslex.l"
 { yylval.i = -4; return NUMBER;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 78 "syslex.l"
+#line 82 "syslex.l"
 { yylval.i = -2; return NUMBER; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 79 "syslex.l"
+#line 83 "syslex.l"
 { yylval.i = -1; return NUMBER; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 80 "syslex.l"
+#line 84 "syslex.l"
 { return COND;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 81 "syslex.l"
+#line 85 "syslex.l"
 { return REPEAT;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 82 "syslex.l"
+#line 86 "syslex.l"
 ECHO;
 	YY_BREAK
-#line 942 "syslex.c"
+#line 946 "syslex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1124,7 +1128,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1138,7 +1142,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1169,7 +1173,7 @@ static int yy_get_next_buffer (void)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), num_to_read );
+			(yy_n_chars), (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -1291,7 +1295,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1315,7 +1319,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap( ) )
-						return 0;
+						return EOF;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -1567,7 +1571,7 @@ void yypop_buffer_state (void)
  */
 static void yyensure_buffer_stack (void)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -1664,11 +1668,12 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -1750,7 +1755,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t yyget_leng  (void)
+int yyget_leng  (void)
 {
         return yyleng;
 }
@@ -1898,4 +1903,4 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 82 "syslex.l"
+#line 86 "syslex.l"

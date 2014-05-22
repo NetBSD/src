@@ -1,6 +1,6 @@
 /* Definitions for targets which report shared library events.
 
-   Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,8 +27,6 @@
 #include "solib-target.h"
 
 #include "gdb_string.h"
-
-DEF_VEC_O(CORE_ADDR);
 
 /* Private data for each loaded library.  */
 struct lm_info
@@ -93,7 +91,7 @@ library_list_start_segment (struct gdb_xml_parser *parser,
     gdb_xml_error (parser,
 		   _("Library list with both segments and sections"));
 
-  VEC_safe_push (CORE_ADDR, last->segment_bases, &address);
+  VEC_safe_push (CORE_ADDR, last->segment_bases, address);
 }
 
 static void
@@ -110,7 +108,7 @@ library_list_start_section (struct gdb_xml_parser *parser,
     gdb_xml_error (parser,
 		   _("Library list with both segments and sections"));
 
-  VEC_safe_push (CORE_ADDR, last->section_bases, &address);
+  VEC_safe_push (CORE_ADDR, last->section_bases, address);
 }
 
 /* Handle the start of a <library> element.  */
@@ -181,17 +179,17 @@ solib_target_free_library_list (void *p)
 /* The allowed elements and attributes for an XML library list.
    The root element is a <library-list>.  */
 
-const struct gdb_xml_attribute segment_attributes[] = {
+static const struct gdb_xml_attribute segment_attributes[] = {
   { "address", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
   { NULL, GDB_XML_AF_NONE, NULL, NULL }
 };
 
-const struct gdb_xml_attribute section_attributes[] = {
+static const struct gdb_xml_attribute section_attributes[] = {
   { "address", GDB_XML_AF_NONE, gdb_xml_parse_attr_ulongest, NULL },
   { NULL, GDB_XML_AF_NONE, NULL, NULL }
 };
 
-const struct gdb_xml_element library_children[] = {
+static const struct gdb_xml_element library_children[] = {
   { "segment", segment_attributes, NULL,
     GDB_XML_EF_REPEATABLE | GDB_XML_EF_OPTIONAL,
     library_list_start_segment, NULL },
@@ -201,24 +199,24 @@ const struct gdb_xml_element library_children[] = {
   { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
 };
 
-const struct gdb_xml_attribute library_attributes[] = {
+static const struct gdb_xml_attribute library_attributes[] = {
   { "name", GDB_XML_AF_NONE, NULL, NULL },
   { NULL, GDB_XML_AF_NONE, NULL, NULL }
 };
 
-const struct gdb_xml_element library_list_children[] = {
+static const struct gdb_xml_element library_list_children[] = {
   { "library", library_attributes, library_children,
     GDB_XML_EF_REPEATABLE | GDB_XML_EF_OPTIONAL,
     library_list_start_library, library_list_end_library },
   { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
 };
 
-const struct gdb_xml_attribute library_list_attributes[] = {
+static const struct gdb_xml_attribute library_list_attributes[] = {
   { "version", GDB_XML_AF_NONE, NULL, NULL },
   { NULL, GDB_XML_AF_NONE, NULL, NULL }
 };
 
-const struct gdb_xml_element library_list_elements[] = {
+static const struct gdb_xml_element library_list_elements[] = {
   { "library-list", library_list_attributes, library_list_children,
     GDB_XML_EF_NONE, library_list_start_list, NULL },
   { NULL, NULL, NULL, GDB_XML_EF_NONE, NULL, NULL }
@@ -248,7 +246,8 @@ static struct so_list *
 solib_target_current_sos (void)
 {
   struct so_list *new_solib, *start = NULL, *last = NULL;
-  const char *library_document;
+  char *library_document;
+  struct cleanup *old_chain;
   VEC(lm_info_p) *library_list;
   struct lm_info *info;
   int ix;
@@ -260,8 +259,15 @@ solib_target_current_sos (void)
   if (library_document == NULL)
     return NULL;
 
+  /* solib_target_parse_libraries may throw, so we use a cleanup.  */
+  old_chain = make_cleanup (xfree, library_document);
+
   /* Parse the list.  */
   library_list = solib_target_parse_libraries (library_document);
+
+  /* library_document string is not needed behind this point.  */
+  do_cleanups (old_chain);
+
   if (library_list == NULL)
     return NULL;
 
@@ -327,7 +333,6 @@ static void
 solib_target_relocate_section_addresses (struct so_list *so,
 					 struct target_section *sec)
 {
-  int flags = bfd_get_section_flags (sec->bfd, sec->the_bfd_section);
   CORE_ADDR offset;
 
   /* Build the offset table only once per object file.  We can not do

@@ -220,4 +220,4 @@ bar:
 	mov r1, r2, ROR #31
 	mov r1, r2, ROR r3
 	mov r1, r2, RRX
-	
+	ldralt r1, [r2], r3

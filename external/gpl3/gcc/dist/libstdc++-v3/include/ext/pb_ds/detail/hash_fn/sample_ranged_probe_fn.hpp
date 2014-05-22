@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -41,37 +41,37 @@
 #ifndef PB_DS_SAMPLE_RANGED_PROBE_FN_HPP
 #define PB_DS_SAMPLE_RANGED_PROBE_FN_HPP
 
-// A sample ranged-probe functor.
-class sample_ranged_probe_fn
+namespace __gnu_pbds
 {
+  /// A sample ranged-probe functor.
+  class sample_ranged_probe_fn
+  {
+  public:
+    typedef std::size_t 	size_type;
 
-public:
+    // Default constructor.
+    sample_ranged_probe_fn();
 
-  // Size type.
-  typedef size_t size_type;
+    // Copy constructor.
+    sample_ranged_probe_fn(const sample_ranged_probe_fn&);
 
-public:
+    // Swaps content.
+    inline void
+    swap(sample_ranged_probe_fn&);
 
-  // Default constructor.
-  sample_ranged_probe_fn();
+  protected:
 
-  // Copy constructor.
-  sample_ranged_probe_fn(const sample_ranged_probe_fn& other);
+    // Notifies the policy object that the container's __size has
+    // changed to size.
+    void
+    notify_resized(size_type);
 
-  // Swaps content.
-  inline void
-  swap(sample_ranged_probe_fn& other);
+    // Transforms the const key reference r_key into the i-th position
+    // within the table. This method is called for each collision within
+    // the probe sequence.
+    inline size_type
+    operator()(key_const_reference, std::size_t, size_type) const;
 
-protected:
-
-  // Notifies the policy object that the container's __size has changed to size.
-  void
-  notify_resized(size_type size);
-
-  // Transforms the const key reference r_key into the i-th position within the table. This method is called for each collision within the probe sequence.
-  inline size_type
-  operator()(const_key_reference r_key, size_t hash, size_type i) const;
-
-};
-
+  };
+}
 #endif // #ifndef PB_DS_SAMPLE_RANGED_PROBE_FN_HPP

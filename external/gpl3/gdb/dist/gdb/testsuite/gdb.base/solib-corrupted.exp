@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if {[skip_shlib_tests]} {
+    return 0
+}
+
+if {[is_remote target]} {
+    # gdbserver prints the warning message but expect is parsing only the GDB
+    # output, not the gdbserver output.
     return 0
 }
 
@@ -38,13 +44,12 @@ gdb_test_multiple "p/x _r_debug->r_map->l_next = _r_debug->r_map" $test {
     -re "(No symbol \"_r_debug\" in current context\\.|Attempt to extract a component of a value that is not a structure pointer\\.)\r\n$gdb_prompt $" {
 	# glibc debug info is not available and it is too difficult to find and
 	# parse it from this testcase without the gdb supporting functions.
-	verbose -log "no _r_debug symbol has been found"
 	xfail $test
-	untested ${testfile}.exp
+	untested "no _r_debug symbol has been found"
 	return
     }
     -re " = 0x\[0-9a-f\]+\r\n$gdb_prompt $" {
 	pass $test
     }
 }
-gdb_test "info sharedlibrary" "warning: Corrupted shared library list\r\n.*" "corrupted list"
+gdb_test "info sharedlibrary" "warning: Corrupted shared library list: .*" "corrupted list"

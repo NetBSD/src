@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/11 13:53:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2014/05/22 16:13:22 yamt Exp $
 
 PROG_CXX=	llvm-cov
 NOMAN=		yes
@@ -10,7 +10,7 @@ NOMAN=		yes
 SRCS=	llvm-cov.cpp
 
 LLVM_LIBS+= \
-	Core \
+	IR \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

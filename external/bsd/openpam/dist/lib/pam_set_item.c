@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_set_item.c,v 1.3.4.2 2012/04/17 00:04:00 yamt Exp $	*/
+/*	$NetBSD: pam_set_item.c,v 1.3.4.3 2014/05/22 15:50:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_set_item.c 496 2011-11-21 16:20:45Z des
+ * Id: pam_set_item.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H

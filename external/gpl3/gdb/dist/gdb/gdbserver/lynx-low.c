@@ -1,4 +1,4 @@
-/* Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+#include "gdb_wait.h"
 #include <signal.h>
 
 int using_threads = 1;
@@ -96,169 +96,79 @@ lynx_ptrace_pid_from_ptid (ptid_t ptid)
 static char *
 ptrace_request_to_str (int request)
 {
+#define CASE(X) case X: return #X
   switch (request)
     {
-      case PTRACE_TRACEME:
-        return "PTRACE_TRACEME";
-        break;
-      case PTRACE_PEEKTEXT:
-        return "PTRACE_PEEKTEXT";
-        break;
-      case PTRACE_PEEKDATA:
-        return "PTRACE_PEEKDATA";
-        break;
-      case PTRACE_PEEKUSER:
-        return "PTRACE_PEEKUSER";
-        break;
-      case PTRACE_POKETEXT:
-        return "PTRACE_POKETEXT";
-        break;
-      case PTRACE_POKEDATA:
-        return "PTRACE_POKEDATA";
-        break;
-      case PTRACE_POKEUSER:
-        return "PTRACE_POKEUSER";
-        break;
-      case PTRACE_CONT:
-        return "PTRACE_CONT";
-        break;
-      case PTRACE_KILL:
-        return "PTRACE_KILL";
-        break;
-      case PTRACE_SINGLESTEP:
-        return "PTRACE_SINGLESTEP";
-        break;
-      case PTRACE_ATTACH:
-        return "PTRACE_ATTACH";
-        break;
-      case PTRACE_DETACH:
-        return "PTRACE_DETACH";
-        break;
-      case PTRACE_GETREGS:
-        return "PTRACE_GETREGS";
-        break;
-      case PTRACE_SETREGS:
-        return "PTRACE_SETREGS";
-        break;
-      case PTRACE_GETFPREGS:
-        return "PTRACE_GETFPREGS";
-        break;
-      case PTRACE_SETFPREGS:
-        return "PTRACE_SETFPREGS";
-        break;
-      case PTRACE_READDATA:
-        return "PTRACE_READDATA";
-        break;
-      case PTRACE_WRITEDATA:
-        return "PTRACE_WRITEDATA";
-        break;
-      case PTRACE_READTEXT:
-        return "PTRACE_READTEXT";
-        break;
-      case PTRACE_WRITETEXT:
-        return "PTRACE_WRITETEXT";
-        break;
-      case PTRACE_GETFPAREGS:
-        return "PTRACE_GETFPAREGS";
-        break;
-      case PTRACE_SETFPAREGS:
-        return "PTRACE_SETFPAREGS";
-        break;
-      case PTRACE_GETWINDOW:
-        return "PTRACE_GETWINDOW";
-        break;
-      case PTRACE_SETWINDOW:
-        return "PTRACE_SETWINDOW";
-        break;
-      case PTRACE_SYSCALL:
-        return "PTRACE_SYSCALL";
-        break;
-      case PTRACE_DUMPCORE:
-        return "PTRACE_DUMPCORE";
-        break;
-      case PTRACE_SETWRBKPT:
-        return "PTRACE_SETWRBKPT";
-        break;
-      case PTRACE_SETACBKPT:
-        return "PTRACE_SETACBKPT";
-        break;
-      case PTRACE_CLRBKPT:
-        return "PTRACE_CLRBKPT";
-        break;
-      case PTRACE_GET_UCODE:
-        return "PTRACE_GET_UCODE";
-        break;
+      CASE(PTRACE_TRACEME);
+      CASE(PTRACE_PEEKTEXT);
+      CASE(PTRACE_PEEKDATA);
+      CASE(PTRACE_PEEKUSER);
+      CASE(PTRACE_POKETEXT);
+      CASE(PTRACE_POKEDATA);
+      CASE(PTRACE_POKEUSER);
+      CASE(PTRACE_CONT);
+      CASE(PTRACE_KILL);
+      CASE(PTRACE_SINGLESTEP);
+      CASE(PTRACE_ATTACH);
+      CASE(PTRACE_DETACH);
+      CASE(PTRACE_GETREGS);
+      CASE(PTRACE_SETREGS);
+      CASE(PTRACE_GETFPREGS);
+      CASE(PTRACE_SETFPREGS);
+      CASE(PTRACE_READDATA);
+      CASE(PTRACE_WRITEDATA);
+      CASE(PTRACE_READTEXT);
+      CASE(PTRACE_WRITETEXT);
+      CASE(PTRACE_GETFPAREGS);
+      CASE(PTRACE_SETFPAREGS);
+      CASE(PTRACE_GETWINDOW);
+      CASE(PTRACE_SETWINDOW);
+      CASE(PTRACE_SYSCALL);
+      CASE(PTRACE_DUMPCORE);
+      CASE(PTRACE_SETWRBKPT);
+      CASE(PTRACE_SETACBKPT);
+      CASE(PTRACE_CLRBKPT);
+      CASE(PTRACE_GET_UCODE);
 #ifdef PT_READ_GPR
-      case PT_READ_GPR:
-        return "PT_READ_GPR";
-        break;
+      CASE(PT_READ_GPR);
 #endif
 #ifdef PT_WRITE_GPR
-      case PT_WRITE_GPR:
-        return "PT_WRITE_GPR";
-        break;
+      CASE(PT_WRITE_GPR);
 #endif
 #ifdef PT_READ_FPR
-      case PT_READ_FPR:
-        return "PT_READ_FPR";
-        break;
+      CASE(PT_READ_FPR);
 #endif
 #ifdef PT_WRITE_FPR
-      case PT_WRITE_FPR:
-        return "PT_WRITE_FPR";
-        break;
+      CASE(PT_WRITE_FPR);
 #endif
 #ifdef PT_READ_VPR
-      case PT_READ_VPR:
-        return "PT_READ_VPR";
-        break;
+      CASE(PT_READ_VPR);
 #endif
 #ifdef PT_WRITE_VPR
-      case PT_WRITE_VPR:
-        return "PT_WRITE_VPR";
-        break;
+      CASE(PT_WRITE_VPR);
 #endif
 #ifdef PTRACE_PEEKUSP
-      case PTRACE_PEEKUSP:
-        return "PTRACE_PEEKUSP";
-        break;
+      CASE(PTRACE_PEEKUSP);
 #endif
 #ifdef PTRACE_POKEUSP
-      case PTRACE_POKEUSP:
-        return "PTRACE_POKEUSP";
-        break;
+      CASE(PTRACE_POKEUSP);
 #endif
-      case PTRACE_PEEKTHREAD:
-        return "PTRACE_PEEKTHREAD";
-        break;
-      case PTRACE_THREADUSER:
-        return "PTRACE_THREADUSER";
-        break;
-      case PTRACE_FPREAD:
-        return "PTRACE_FPREAD";
-        break;
-      case PTRACE_FPWRITE:
-        return "PTRACE_FPWRITE";
-        break;
-      case PTRACE_SETSIG:
-        return "PTRACE_SETSIG";
-        break;
-      case PTRACE_CONT_ONE:
-        return "PTRACE_CONT_ONE";
-        break;
-      case PTRACE_KILL_ONE:
-        return "PTRACE_KILL_ONE";
-        break;
-      case PTRACE_SINGLESTEP_ONE:
-        return "PTRACE_SINGLESTEP_ONE";
-        break;
-      case PTRACE_GETLOADINFO:
-        return "PTRACE_GETLOADINFO";
-        break;
-      case PTRACE_GETTHREADLIST:
-        return "PTRACE_GETTHREADLIST";
-        break;
+      CASE(PTRACE_PEEKTHREAD);
+      CASE(PTRACE_THREADUSER);
+      CASE(PTRACE_FPREAD);
+      CASE(PTRACE_FPWRITE);
+      CASE(PTRACE_SETSIG);
+      CASE(PTRACE_CONT_ONE);
+      CASE(PTRACE_KILL_ONE);
+      CASE(PTRACE_SINGLESTEP_ONE);
+      CASE(PTRACE_GETLOADINFO);
+      CASE(PTRACE_GETTRACESIG);
+#ifdef PTRACE_GETTHREADLIST
+      CASE(PTRACE_GETTHREADLIST);
+#endif
     }
+#undef CASE
+
   return "<unknown-request>";
 }
 
@@ -291,7 +201,6 @@ lynx_ptrace (int request, ptid_t ptid, int addr, int data, int addr2)
 static int
 lynx_create_inferior (char *program, char **allargs)
 {
-  struct process_info *new_process;
   int pid;
 
   lynx_debug ("lynx_create_inferior ()");
@@ -309,6 +218,12 @@ lynx_create_inferior (char *program, char **allargs)
       pgrp = getpid();
       setpgid (0, pgrp);
       ioctl (0, TIOCSPGRP, &pgrp);
+      if (!remote_connection_is_stdio ())
+	{
+	  close (listen_desc);
+	  if (gdb_connected ())
+	    close (remote_desc);
+	}
       lynx_ptrace (PTRACE_TRACEME, null_ptid, 0, 0, 0);
       execv (program, allargs);
       fprintf (stderr, "Cannot exec %s: %s.\n", program, strerror (errno));
@@ -316,7 +231,7 @@ lynx_create_inferior (char *program, char **allargs)
       _exit (0177);
     }
 
-  new_process = add_process (pid, 0);
+  add_process (pid, 0);
   /* Do not add the process thread just yet, as we do not know its tid.
      We will add it later, during the wait for the STOP event corresponding
      to the lynx_ptrace (PTRACE_TRACEME) call above.  */
@@ -328,14 +243,13 @@ lynx_create_inferior (char *program, char **allargs)
 static int
 lynx_attach (unsigned long pid)
 {
-  struct process_info *new_process;
   ptid_t ptid = lynx_ptid_build (pid, 0);
 
   if (lynx_ptrace (PTRACE_ATTACH, ptid, 0, 0, 0) != 0)
     error ("Cannot attach to process %lu: %s (%d)\n", pid,
 	   strerror (errno), errno);
 
-  new_process = add_process (pid, 1);
+  add_process (pid, 1);
   add_thread (ptid, NULL);
 
   return 0;
@@ -346,15 +260,21 @@ lynx_attach (unsigned long pid)
 static void
 lynx_resume (struct thread_resume *resume_info, size_t n)
 {
-  ptid_t inferior_ptid = thread_to_gdb_id (current_inferior);
   /* FIXME: Assume for now that n == 1.  */
+  ptid_t ptid = resume_info[0].thread;
   const int request = (resume_info[0].kind == resume_step
                        ? PTRACE_SINGLESTEP : PTRACE_CONT);
   const int signal = resume_info[0].sig;
-  int ret;
+
+  if (ptid_equal (ptid, minus_one_ptid))
+    ptid = thread_to_gdb_id (current_inferior);
 
   regcache_invalidate ();
-  ret = lynx_ptrace (request, inferior_ptid, 1, signal, 0);
+
+  errno = 0;
+  lynx_ptrace (request, ptid, 1, signal, 0);
+  if (errno)
+    perror_with_name ("ptrace");
 }
 
 /* Resume the execution of the given PTID.  */
@@ -445,12 +365,16 @@ retry:
      for non-threaded applications where the new-thread events are not
      generated.  */
   if (!find_thread_ptid (new_ptid))
-    add_thread (new_ptid, NULL);
+    {
+      lynx_debug ("New thread: (pid = %d, tid = %d)",
+		  lynx_ptid_get_pid (new_ptid), lynx_ptid_get_tid (new_ptid));
+      add_thread (new_ptid, NULL);
+    }
 
   if (WIFSTOPPED (wstat))
     {
       status->kind = TARGET_WAITKIND_STOPPED;
-      status->value.integer = target_signal_from_host (WSTOPSIG (wstat));
+      status->value.integer = gdb_signal_from_host (WSTOPSIG (wstat));
       lynx_debug ("process stopped with signal: %d",
                   status->value.integer);
     }
@@ -463,7 +387,7 @@ retry:
   else if (WIFSIGNALED (wstat))
     {
       status->kind = TARGET_WAITKIND_SIGNALLED;
-      status->value.integer = target_signal_from_host (WTERMSIG (wstat));
+      status->value.integer = gdb_signal_from_host (WTERMSIG (wstat));
       lynx_debug ("process terminated with code: %d",
                   status->value.integer);
     }
@@ -473,7 +397,7 @@ retry:
 	 in fact get here.  But if we do, handle the event the best
 	 we can.  */
       status->kind = TARGET_WAITKIND_STOPPED;
-      status->value.integer = target_signal_from_host (0);
+      status->value.integer = gdb_signal_from_host (0);
       lynx_debug ("unknown event ????");
     }
 
@@ -481,7 +405,7 @@ retry:
      breakpoint events (Eg. new-thread events).  Handle those other types
      of events, and resume the execution if necessary.  */
   if (status->kind == TARGET_WAITKIND_STOPPED
-      && status->value.integer == TARGET_SIGNAL_TRAP)
+      && status->value.integer == GDB_SIGNAL_TRAP)
     {
       const int realsig = lynx_ptrace (PTRACE_GETTRACESIG, new_ptid, 0, 0, 0);
 
@@ -491,12 +415,12 @@ retry:
 	  case SIGNEWTHREAD:
 	    /* We just added the new thread above.  No need to do anything
 	       further.  Just resume the execution again.  */
-	    lynx_continue (ptid);
+	    lynx_continue (new_ptid);
 	    goto retry;
 
 	  case SIGTHREADEXIT:
 	    remove_thread (find_thread_ptid (new_ptid));
-	    lynx_continue (ptid);
+	    lynx_continue (new_ptid);
 	    goto retry;
 	}
     }

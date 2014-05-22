@@ -46,3 +46,7 @@ foo:
 	sethi %hix(foo+0xffffffff76543210),%g1
 	xor %g1,%lox(foo+0xffffffff76543210),%g1
 	nop
+	sethi %h34(foo+0xa9876543210),%g1
+	sllx %g1, 2, %g1
+	or %g1,%l34(foo+0xa9876543210),%g1
+	nop

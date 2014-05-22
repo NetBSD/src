@@ -14,14 +14,15 @@ SYMBOL TABLE:
 0+ l    d  \.init	0+ (|\.init)
 0+10 l    d  \.text	0+ (|\.text)
 0+7e8 l    d  \.MMIX\.reg_contents	0+ (|\.MMIX\.reg_contents)
+0+ l    df \*ABS\*	0+ .*
 0+ l       \.init	0+ _start
+0+ l    df \*ABS\*	0+ .*
+2000000000000000 l       \.text	0+ __bss_start
+2000000000000000 l       \.text	0+ _edata
+2000000000000000 l       \.text	0+ _end
+0+10 l       \.text	0+ _start\.
 0+14 g       \.text	0+ x
 0+10 g       \.text	0+ x2
-2000000000000000 g       \*ABS\*	0+ __bss_start
-2000000000000000 g       \*ABS\*	0+ _edata
-2000000000000000 g       \*ABS\*	0+ _end
-0+10 g       \.text	0+ _start\.
-
 
 Contents of section \.init:
  0000 00000000 0000003d 00000000 0000003a  .*

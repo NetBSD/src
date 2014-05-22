@@ -1,5 +1,7 @@
-/* Target-dependent code for SuperH running NetBSD, for GDB.
-   Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+/* Target-dependent code for NetBSD/sh.
+
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.

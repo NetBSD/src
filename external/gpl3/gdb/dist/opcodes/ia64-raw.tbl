@@ -76,6 +76,7 @@ CR[TPR];	IC:mov-to-CR-TPR;	IC:mov-from-CR-TPR, IC:mov-from-CR-IVR;	data
 CR[TPR];	IC:mov-to-CR-TPR;	IC:mov-to-PSR-l+17, ssm+17;	SC Section 5.8.3.3, "Task Priority Register (TPR Ð CR66)" on page 2:119
 CR[TPR];	IC:mov-to-CR-TPR;	rfi;	implied
 CR%, % in 3-7, 10-15, 18, 28-63, 75-79, 82-127;	IC:none;	IC:mov-from-CR-rv+1;	none
+DAHR%, % in 0-7;	br.call, brl.call, br.ret, IC:mov-to-DAHR;	br.call, IC:mem-readers, IC:mem-writers, IC:mov-from-DAHR;	implied
 DBR#;	IC:mov-to-IND-DBR+3;	IC:mov-from-IND-DBR+3;	impliedF
 DBR#;	IC:mov-to-IND-DBR+3;	IC:probe-all, IC:lfetch-all, IC:mem-readers, IC:mem-writers;	data
 DTC;	ptc.e, ptc.g, ptc.ga, ptc.l, ptr.i, ptr.d, itc.i, itc.d, itr.i, itr.d;	IC:mem-readers, IC:mem-writers, IC:non-access;	data

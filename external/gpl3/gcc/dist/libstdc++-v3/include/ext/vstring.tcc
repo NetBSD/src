@@ -1,6 +1,6 @@
 // Versatile string -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,9 +23,8 @@
 // <http://www.gnu.org/licenses/>.
 
 /** @file ext/vstring.tcc
- *  This file is a GNU extension to the Standard C++ Library.
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{ext/vstring.h}
  */
 
 #ifndef _VSTRING_TCC
@@ -33,9 +32,11 @@
 
 #pragma GCC system_header
 
-#include <cxxabi-forced.h>
+#include <bits/cxxabi_forced.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _CharT, typename _Traits, typename _Alloc,
 	   template <typename, typename, typename> class _Base>
@@ -289,7 +290,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	   template <typename, typename, typename> class _Base>
     typename __versa_string<_CharT, _Traits, _Alloc, _Base>::size_type
     __versa_string<_CharT, _Traits, _Alloc, _Base>::
-    find(_CharT __c, size_type __pos) const
+    find(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       size_type __ret = npos;
       const size_type __size = this->size();
@@ -330,7 +331,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	   template <typename, typename, typename> class _Base>
     typename __versa_string<_CharT, _Traits, _Alloc, _Base>::size_type
     __versa_string<_CharT, _Traits, _Alloc, _Base>::
-    rfind(_CharT __c, size_type __pos) const
+    rfind(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       size_type __size = this->size();
       if (__size)
@@ -400,7 +401,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	   template <typename, typename, typename> class _Base>
     typename __versa_string<_CharT, _Traits, _Alloc, _Base>::size_type
     __versa_string<_CharT, _Traits, _Alloc, _Base>::
-    find_first_not_of(_CharT __c, size_type __pos) const
+    find_first_not_of(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       for (; __pos < this->size(); ++__pos)
 	if (!traits_type::eq(this->_M_data()[__pos], __c))
@@ -434,7 +435,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	   template <typename, typename, typename> class _Base>
     typename __versa_string<_CharT, _Traits, _Alloc, _Base>::size_type
     __versa_string<_CharT, _Traits, _Alloc, _Base>::
-    find_last_not_of(_CharT __c, size_type __pos) const
+    find_last_not_of(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       size_type __size = this->size();
       if (__size)
@@ -464,7 +465,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       int __r = traits_type::compare(this->_M_data() + __pos,
 				     __str.data(), __len);
       if (!__r)
-	__r = _S_compare(__n, __osize);
+	__r = this->_S_compare(__n, __osize);
       return __r;
     }
 
@@ -483,7 +484,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       int __r = traits_type::compare(this->_M_data() + __pos1,
 				     __str.data() + __pos2, __len);
       if (!__r)
-	__r = _S_compare(__n1, __n2);
+	__r = this->_S_compare(__n1, __n2);
       return __r;
     }
 
@@ -499,7 +500,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       const size_type __len = std::min(__size, __osize);
       int __r = traits_type::compare(this->_M_data(), __s, __len);
       if (!__r)
-	__r = _S_compare(__size, __osize);
+	__r = this->_S_compare(__size, __osize);
       return __r;
     }
 
@@ -516,7 +517,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       const size_type __len = std::min(__n1, __osize);
       int __r = traits_type::compare(this->_M_data() + __pos, __s, __len);
       if (!__r)
-	__r = _S_compare(__n1, __osize);
+	__r = this->_S_compare(__n1, __osize);
       return __r;
     }
 
@@ -533,13 +534,16 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       const size_type __len = std::min(__n1, __n2);
       int __r = traits_type::compare(this->_M_data() + __pos, __s, __len);
       if (!__r)
-	__r = _S_compare(__n1, __n2);
+	__r = this->_S_compare(__n1, __n2);
       return __r;
     }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _CharT, typename _Traits, typename _Alloc,
            template <typename, typename, typename> class _Base>
@@ -691,6 +695,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       return __in;
     }      
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif // _VSTRING_TCC

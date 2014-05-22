@@ -1,6 +1,6 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2001, 2002, 2003, 2005, 2007,
+   2012  Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -51,9 +51,11 @@
 #define MY(OP) CONCAT2 (i386mach3_,OP)
 #define TARGETNAME "a.out-mach3"
 
-static bfd_boolean MY (set_sizes) PARAMS ((bfd *));
+static bfd_boolean MY (set_sizes) (bfd *);
 #define MY_backend_data &MY(backend_data)
-static const struct aout_backend_data MY(backend_data) = {
+
+static const struct aout_backend_data MY(backend_data) =
+{
   0,				/* zmagic contiguous */
   1,				/* text incl header */
   0,				/* entry is text address */

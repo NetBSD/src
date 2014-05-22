@@ -3,6 +3,6 @@
 #dest: ./readlink5.c.x
 #xerror:
 #output: Unimplemented readlink syscall (*)\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 #include "readlink2.c"

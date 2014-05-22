@@ -21,9 +21,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cfm.c,v 1.5 2007-07-24 16:01:42 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-cfm.c,v 1.5 2007-07-24 16:01:42 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-cfm.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-cfm.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -287,7 +287,7 @@ cfm_egress_id_string(register const u_char *tptr) {
     static char egress_id_buffer[80];
     
     snprintf(egress_id_buffer, sizeof(egress_id_buffer),
-             "MAC %0x4x-%s",
+             "MAC 0x%4x-%s",
              EXTRACT_16BITS(tptr),
              etheraddr_string(tptr+2));
 

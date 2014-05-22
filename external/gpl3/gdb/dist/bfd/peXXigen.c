@@ -591,9 +591,6 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 
   extra->NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
 
-  /* First null out all data directory entries.  */
-  memset (extra->DataDirectory, 0, sizeof (extra->DataDirectory));
-
   add_data_entry (abfd, extra, 0, ".edata", ib);
   add_data_entry (abfd, extra, 2, ".rsrc", ib);
   add_data_entry (abfd, extra, 3, ".pdata", ib);
@@ -2442,7 +2439,7 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
      /* According to PECOFF sepcifications by Microsoft version 8.2
 	the TLS data directory consists of 4 pointers, followed
 	by two 4-byte integer. This implies that the total size
-	is different for 32-bit and 64-bit executables.  */ 
+	is different for 32-bit and 64-bit executables.  */
 #if !defined(COFF_WITH_pep) && !defined(COFF_WITH_pex64)
       pe_data (abfd)->pe_opthdr.DataDirectory[PE_TLS_TABLE].Size = 0x18;
 #else
@@ -2458,15 +2455,23 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
 
     if (sec)
       {
-	bfd_size_type x = sec->rawsize ? sec->rawsize : sec->size;
+	bfd_size_type x = sec->rawsize;
+	bfd_byte *tmp_data = NULL;
 
-	if (x && bfd_get_section_contents (abfd, sec, pfinfo->contents, 0, x))
+	if (x)
+	  tmp_data = bfd_malloc (x);
+
+	if (tmp_data != NULL)
 	  {
-	    qsort (pfinfo->contents,
-	    	   (size_t) ((sec->size <x ? sec->size : x) / 12),
-	    	   12, sort_x64_pdata);
-	    bfd_set_section_contents (pfinfo->output_bfd, sec,
-	    			      pfinfo->contents, 0, x);
+	    if (bfd_get_section_contents (abfd, sec, tmp_data, 0, x))
+	      {
+		qsort (tmp_data,
+		       (size_t) (x / 12),
+		       12, sort_x64_pdata);
+		bfd_set_section_contents (pfinfo->output_bfd, sec,
+					  tmp_data, 0, x);
+	      }
+	    free (tmp_data);
 	  }
       }
   }

@@ -191,10 +191,6 @@ main (void)
   const char           & radiation = laconic;
   volatile signed char & remuneration = lemonade;
   */
-#ifdef usestubs
-  set_debug_traps ();
-  breakpoint ();
-#endif
   marker1 ();
     
 

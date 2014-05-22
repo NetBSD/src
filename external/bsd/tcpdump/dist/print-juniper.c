@@ -19,9 +19,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-juniper.c,v 1.34 2007-08-29 02:31:44 mcr Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-juniper.c,v 1.34 2007-08-29 02:31:44 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-juniper.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-juniper.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: print-juniper.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 #define JUNIPER_IPSEC_O_AH_AUTHENTICATION_TYPE 4
 #define JUNIPER_IPSEC_O_ESP_ENCRYPTION_TYPE 5
 
-static struct tok juniper_ipsec_type_values[] = {
+static const struct tok juniper_ipsec_type_values[] = {
     { JUNIPER_IPSEC_O_ESP_ENCRYPT_ESP_AUTHEN_TYPE, "ESP ENCR-AUTH" },
     { JUNIPER_IPSEC_O_ESP_ENCRYPT_AH_AUTHEN_TYPE, "ESP ENCR-AH AUTH" },
     { JUNIPER_IPSEC_O_ESP_AUTHENTICATION_TYPE, "ESP AUTH" },
@@ -77,7 +77,7 @@ static struct tok juniper_ipsec_type_values[] = {
     { 0, NULL}
 };
 
-static struct tok juniper_direction_values[] = {
+static const struct tok juniper_direction_values[] = {
     { JUNIPER_BPF_IN,  "In"},
     { JUNIPER_BPF_OUT, "Out"},
     { 0, NULL}
@@ -98,7 +98,7 @@ enum {
 /* 1 byte type and 1-byte length */
 #define JUNIPER_EXT_TLV_OVERHEAD 2
 
-struct tok jnx_ext_tlv_values[] = {
+static const struct tok jnx_ext_tlv_values[] = {
     { JUNIPER_EXT_TLV_IFD_IDX, "Device Interface Index" },
     { JUNIPER_EXT_TLV_IFD_NAME,"Device Interface Name" },
     { JUNIPER_EXT_TLV_IFD_MEDIATYPE, "Device Media Type" },
@@ -110,7 +110,7 @@ struct tok jnx_ext_tlv_values[] = {
     { 0, NULL }
 };
 
-struct tok jnx_flag_values[] = {
+static const struct tok jnx_flag_values[] = {
     { JUNIPER_BPF_EXT, "Ext" },
     { JUNIPER_BPF_FILTER, "Filter" },
     { JUNIPER_BPF_IIF, "IIF" },
@@ -180,7 +180,7 @@ struct tok jnx_flag_values[] = {
 #define JUNIPER_IFML_DFC                59
 #define JUNIPER_IFML_PICPEER            60
 
-struct tok juniper_ifmt_values[] = {
+static const struct tok juniper_ifmt_values[] = {
     { JUNIPER_IFML_ETHER, "Ethernet" },
     { JUNIPER_IFML_FDDI, "FDDI" },
     { JUNIPER_IFML_TOKENRING, "Token-Ring" },
@@ -303,7 +303,7 @@ struct tok juniper_ifmt_values[] = {
 #define JUNIPER_IFLE_DFC                    66
 #define JUNIPER_IFLE_PICPEER                67
 
-struct tok juniper_ifle_values[] = {
+static const struct tok juniper_ifle_values[] = {
     { JUNIPER_IFLE_AGGREGATOR, "Aggregator" },
     { JUNIPER_IFLE_ATM_CCC, "CCC over ATM" },
     { JUNIPER_IFLE_ATM_CELLRELAY_CCC, "ATM CCC Cell Relay" },
@@ -442,7 +442,7 @@ struct juniper_l2info_t {
 
 #define MFR_BE_MASK 0xc0
 
-static struct tok juniper_protocol_values[] = {
+static const struct tok juniper_protocol_values[] = {
     { JUNIPER_PROTO_NULL, "Null" },
     { JUNIPER_PROTO_IPV4, "IPv4" },
     { JUNIPER_PROTO_IPV6, "IPv6" },
@@ -489,7 +489,7 @@ juniper_ggsn_print(const struct pcap_pkthdr *h, register const u_char *p)
             break;
 #ifdef INET6
         case JUNIPER_PROTO_IPV6:
-            ip6_print(p, l2info.length);
+            ip6_print(gndo, p, l2info.length);
             break;
 #endif /* INET6 */
         default:
@@ -650,7 +650,7 @@ juniper_pppoe_print(const struct pcap_pkthdr *h, register const u_char *p)
 
         p+=l2info.header_len;
         /* this DLT contains nothing but raw ethernet frames */
-        ether_print(p, l2info.length, l2info.caplen, NULL, NULL);
+        ether_print(gndo, p, l2info.length, l2info.caplen, NULL, NULL);
         return l2info.header_len;
 }
 #endif
@@ -667,7 +667,7 @@ juniper_ether_print(const struct pcap_pkthdr *h, register const u_char *p)
 
         p+=l2info.header_len;
         /* this DLT contains nothing but raw Ethernet frames */
-        ether_print(p, l2info.length, l2info.caplen, NULL, NULL);
+        ether_print(gndo, p, l2info.length, l2info.caplen, NULL, NULL);
         return l2info.header_len;
 }
 #endif
@@ -739,7 +739,7 @@ juniper_pppoe_atm_print(const struct pcap_pkthdr *h, register const u_char *p)
         extracted_ethertype = EXTRACT_16BITS(p);
         /* this DLT contains nothing but raw PPPoE frames,
          * prepended with a type field*/
-        if (ethertype_print(extracted_ethertype,
+        if (ethertype_print(gndo, extracted_ethertype,
                               p+ETHERTYPE_LEN,
                               l2info.length-ETHERTYPE_LEN,
                               l2info.caplen-ETHERTYPE_LEN) == 0)
@@ -782,7 +782,7 @@ juniper_mlppp_print(const struct pcap_pkthdr *h, register const u_char *p)
             return l2info.header_len;
 #ifdef INET6
         case JUNIPER_LSQ_L3_PROTO_IPV6:
-            ip6_print(p,l2info.length);
+            ip6_print(gndo, p,l2info.length);
             return l2info.header_len;
 #endif
         case JUNIPER_LSQ_L3_PROTO_MPLS:
@@ -837,7 +837,7 @@ juniper_mfr_print(const struct pcap_pkthdr *h, register const u_char *p)
                 return l2info.header_len;
 #ifdef INET6
             case JUNIPER_LSQ_L3_PROTO_IPV6:
-                ip6_print(p,l2info.length);
+                ip6_print(gndo, p,l2info.length);
                 return l2info.header_len;
 #endif
             case JUNIPER_LSQ_L3_PROTO_MPLS:
@@ -990,7 +990,7 @@ juniper_atm2_print(const struct pcap_pkthdr *h, register const u_char *p)
 
         if (l2info.direction != JUNIPER_BPF_PKT_IN && /* ether-over-1483 encaps ? */
             (EXTRACT_32BITS(l2info.cookie) & ATM2_GAP_COUNT_MASK)) {
-            ether_print(p, l2info.length, l2info.caplen, NULL, NULL);
+            ether_print(gndo, p, l2info.length, l2info.caplen, NULL, NULL);
             return l2info.header_len;
         }
 
@@ -1076,7 +1076,7 @@ ip_heuristic_guess(register const u_char *p, u_int length) {
     case 0x6d:
     case 0x6e:
     case 0x6f:
-        ip6_print(p, length);
+        ip6_print(gndo, p, length);
         break;
 #endif
     default:

@@ -49,7 +49,7 @@ excerpt from an application which reads the symbol table:
 
          if (storage_needed == 0)
            return;
-         
+
          symbol_table = xmalloc (storage_needed);
            ...
          number_of_symbols =
@@ -78,6 +78,7 @@ which has been created using @code{bfd_make_empty_symbol}.  Here is an
 example showing the creation of a symbol table with only one element:
 
 @example
+       #include "sysdep.h"
        #include "bfd.h"
        int main (void)
        @{

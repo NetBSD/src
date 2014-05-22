@@ -5,5 +5,4 @@ File Attributes
   Tag_CPU_arch_profile: Microcontroller
   Tag_ARM_ISA_use: Yes
   Tag_THUMB_ISA_use: Thumb-1
-  Tag_DIV_use: Not allowed
   Tag_also_compatible_with: v6-M

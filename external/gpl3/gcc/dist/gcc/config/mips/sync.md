@@ -1,7 +1,6 @@
 ;;  Machine Description for MIPS based processor synchronization
 ;;  instructions.
-;;  Copyright (C) 2007, 2008, 2009
-;;  Free Software Foundation, Inc.
+;;  Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
 ;; This file is part of GCC.
 
@@ -18,6 +17,21 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
+
+(define_c_enum "unspec" [
+  UNSPEC_COMPARE_AND_SWAP
+  UNSPEC_COMPARE_AND_SWAP_12
+  UNSPEC_SYNC_OLD_OP
+  UNSPEC_SYNC_NEW_OP
+  UNSPEC_SYNC_NEW_OP_12
+  UNSPEC_SYNC_OLD_OP_12
+  UNSPEC_SYNC_EXCHANGE
+  UNSPEC_SYNC_EXCHANGE_12
+  UNSPEC_MEMORY_BARRIER
+  UNSPEC_ATOMIC_COMPARE_AND_SWAP
+  UNSPEC_ATOMIC_EXCHANGE
+  UNSPEC_ATOMIC_FETCH_OP
+])
 
 ;; Atomic fetch bitwise operations.
 (define_code_iterator fetchop_bit [ior xor and])
@@ -42,6 +56,7 @@
   "GENERATE_SYNC"
   { return mips_output_sync (); })
 
+;; Can be removed in favor of atomic_compare_and_swap below.
 (define_insn "sync_compare_and_swap<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=&d,&d")
 	(match_operand:GPR 1 "memory_operand" "+R,R"))
@@ -124,7 +139,7 @@
           [(match_operand:SI 1 "register_operand" "d")
 	   (match_operand:SI 2 "register_operand" "d")
 	   (atomic_hiqi_op:SI (match_dup 0)
-			      (match_operand:SI 3 "register_operand" "dJ"))]
+			      (match_operand:SI 3 "reg_or_0_operand" "dJ"))]
 	  UNSPEC_SYNC_OLD_OP_12))
    (clobber (match_scratch:SI 4 "=&d"))]
   "GENERATE_LL_SC"
@@ -165,7 +180,7 @@
           [(match_operand:SI 2 "register_operand" "d")
 	   (match_operand:SI 3 "register_operand" "d")
 	   (atomic_hiqi_op:SI (match_dup 0)
-			      (match_operand:SI 4 "register_operand" "dJ"))]
+			      (match_operand:SI 4 "reg_or_0_operand" "dJ"))]
 	  UNSPEC_SYNC_OLD_OP_12))
    (clobber (match_scratch:SI 5 "=&d"))]
   "GENERATE_LL_SC"
@@ -206,7 +221,7 @@
 	   (match_operand:SI 2 "register_operand" "d")
 	   (match_operand:SI 3 "register_operand" "d")
 	   (atomic_hiqi_op:SI (match_dup 0)
-			      (match_operand:SI 4 "register_operand" "dJ"))]
+			      (match_operand:SI 4 "reg_or_0_operand" "dJ"))]
 	  UNSPEC_SYNC_NEW_OP_12))
    (set (match_dup 1)
 	(unspec_volatile:SI
@@ -247,7 +262,7 @@
           [(match_operand:SI 1 "register_operand" "d")
 	   (match_operand:SI 2 "register_operand" "d")
 	   (match_dup 0)
-	   (match_operand:SI 3 "register_operand" "dJ")]
+	   (match_operand:SI 3 "reg_or_0_operand" "dJ")]
 	  UNSPEC_SYNC_OLD_OP_12))
    (clobber (match_scratch:SI 4 "=&d"))]
   "GENERATE_LL_SC"
@@ -286,7 +301,7 @@
 	(unspec_volatile:SI
           [(match_operand:SI 2 "register_operand" "d")
 	   (match_operand:SI 3 "register_operand" "d")
-	   (match_operand:SI 4 "register_operand" "dJ")]
+	   (match_operand:SI 4 "reg_or_0_operand" "dJ")]
 	  UNSPEC_SYNC_OLD_OP_12))
    (clobber (match_scratch:SI 5 "=&d"))]
   "GENERATE_LL_SC"
@@ -325,7 +340,7 @@
           [(match_operand:SI 1 "memory_operand" "+R")
 	   (match_operand:SI 2 "register_operand" "d")
 	   (match_operand:SI 3 "register_operand" "d")
-	   (match_operand:SI 4 "register_operand" "dJ")]
+	   (match_operand:SI 4 "reg_or_0_operand" "dJ")]
 	  UNSPEC_SYNC_NEW_OP_12))
    (set (match_dup 1)
 	(unspec_volatile:SI
@@ -356,6 +371,7 @@
    (set_attr "sync_mem" "0")
    (set_attr "sync_insn1_op2" "1")])
 
+;; Can be removed in favor of atomic_fetch_add below.
 (define_insn "sync_old_add<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=&d,&d")
 	(match_operand:GPR 1 "memory_operand" "+R,R"))
@@ -509,7 +525,7 @@
 	 UNSPEC_SYNC_EXCHANGE))]
   "GENERATE_LL_SC"
   { return mips_output_sync_loop (insn, operands); }
-  [(set_attr "sync_release_barrier" "no")
+  [(set_attr "sync_memmodel" "11")
    (set_attr "sync_insn1" "li,move")
    (set_attr "sync_oldval" "0")
    (set_attr "sync_mem" "1")
@@ -534,11 +550,11 @@
    (set (match_dup 1)
 	(unspec_volatile:SI [(match_operand:SI 2 "register_operand" "d")
 			     (match_operand:SI 3 "register_operand" "d")
-			     (match_operand:SI 4 "arith_operand" "dJ")]
+			     (match_operand:SI 4 "reg_or_0_operand" "dJ")]
 	  UNSPEC_SYNC_EXCHANGE_12))]
   "GENERATE_LL_SC"
   { return mips_output_sync_loop (insn, operands); }
-  [(set_attr "sync_release_barrier" "no")
+  [(set_attr "sync_memmodel" "11")
    (set_attr "sync_oldval" "0")
    (set_attr "sync_mem" "1")
    ;; Unused, but needed to give the number of operands expected by
@@ -546,3 +562,155 @@
    (set_attr "sync_inclusive_mask" "2")
    (set_attr "sync_exclusive_mask" "3")
    (set_attr "sync_insn1_op2" "4")])
+
+(define_insn "atomic_compare_and_swap<mode>"
+  [(set (match_operand:GPR 0 "register_operand" "=&d,&d")
+	;; Logically this unspec is an "eq" operator, but we need to obscure
+	;; reads and writes from/to memory with an unspec to prevent
+	;; optimizations on shared memory locations.  Otherwise, comparison in
+	;; { mem = 2; if (atomic_cmp_swap(mem,...) == 2) ...; }
+	;; would be optimized away.  In addition to that we need to use
+	;; unspec_volatile, not just plain unspec -- for the sake of other
+	;; threads -- to make sure we don't remove the entirety of the pattern
+	;; just because current thread doesn't observe any effect from it.
+	;; TODO: the obscuring unspec can be relaxed for permissive memory
+	;; models.
+	;; Same applies to other atomic_* patterns.
+	(unspec_volatile:GPR [(match_operand:GPR 2 "memory_operand" "+R,R")
+			      (match_operand:GPR 3 "reg_or_0_operand" "dJ,dJ")]
+	 UNSPEC_ATOMIC_COMPARE_AND_SWAP))
+   (set (match_operand:GPR 1 "register_operand" "=&d,&d")
+	(unspec_volatile:GPR [(match_dup 2)]
+	 UNSPEC_ATOMIC_COMPARE_AND_SWAP))
+   (set (match_dup 2)
+	(unspec_volatile:GPR [(match_dup 2)
+			      (match_dup 3)
+			      (match_operand:GPR 4 "arith_operand" "I,d")]
+	 UNSPEC_ATOMIC_COMPARE_AND_SWAP))
+   (unspec_volatile:GPR [(match_operand:SI 5 "const_int_operand")
+			 (match_operand:SI 6 "const_int_operand")
+			 (match_operand:SI 7 "const_int_operand")]
+    UNSPEC_ATOMIC_COMPARE_AND_SWAP)]
+  "GENERATE_LL_SC"
+  { return mips_output_sync_loop (insn, operands); }
+  [(set_attr "sync_insn1" "li,move")
+   (set_attr "sync_oldval" "1")
+   (set_attr "sync_cmp" "0")
+   (set_attr "sync_mem" "2")
+   (set_attr "sync_required_oldval" "3")
+   (set_attr "sync_insn1_op2" "4")
+   (set_attr "sync_memmodel" "6")])
+
+(define_expand "atomic_exchange<mode>"
+  [(match_operand:GPR 0 "register_operand")
+   (match_operand:GPR 1 "memory_operand")
+   (match_operand:GPR 2 "arith_operand")
+   (match_operand:SI 3 "const_int_operand")]
+  "GENERATE_LL_SC || ISA_HAS_SWAP"
+{
+  if (ISA_HAS_SWAP)
+    {
+      if (!mem_noofs_operand (operands[1], <MODE>mode))
+        {
+	  rtx addr;
+
+	  addr = force_reg (Pmode, XEXP (operands[1], 0));
+	  operands[1] = replace_equiv_address (operands[1], addr);
+	}
+      operands[2] = force_reg (<MODE>mode, operands[2]);
+      emit_insn (gen_atomic_exchange<mode>_swap (operands[0], operands[1],
+						 operands[2]));
+    }
+  else
+    emit_insn (gen_atomic_exchange<mode>_llsc (operands[0], operands[1],
+					       operands[2], operands[3]));
+  DONE;
+})
+
+(define_insn "atomic_exchange<mode>_llsc"
+  [(set (match_operand:GPR 0 "register_operand" "=&d,&d")
+	(unspec_volatile:GPR [(match_operand:GPR 1 "memory_operand" "+R,R")]
+	 UNSPEC_ATOMIC_EXCHANGE))
+   (set (match_dup 1)
+	(unspec_volatile:GPR [(match_operand:GPR 2 "arith_operand" "I,d")]
+	 UNSPEC_ATOMIC_EXCHANGE))
+   (unspec_volatile:GPR [(match_operand:SI 3 "const_int_operand")]
+    UNSPEC_ATOMIC_EXCHANGE)]
+  "GENERATE_LL_SC && !ISA_HAS_SWAP"
+  { return mips_output_sync_loop (insn, operands); }
+  [(set_attr "sync_insn1" "li,move")
+   (set_attr "sync_oldval" "0")
+   (set_attr "sync_mem" "1")
+   (set_attr "sync_insn1_op2" "2")
+   (set_attr "sync_memmodel" "3")])
+
+;; XLP issues implicit sync for SWAP/LDADD, so no need for an explicit one.
+(define_insn "atomic_exchange<mode>_swap"
+  [(set (match_operand:GPR 0 "register_operand" "=d")
+	(unspec_volatile:GPR [(match_operand:GPR 1 "mem_noofs_operand" "+ZR")]
+	 UNSPEC_ATOMIC_EXCHANGE))
+   (set (match_dup 1)
+	(unspec_volatile:GPR [(match_operand:GPR 2 "register_operand" "0")]
+	 UNSPEC_ATOMIC_EXCHANGE))]
+  "ISA_HAS_SWAP"
+  "swap<size>\t%0,%b1"
+  [(set_attr "type" "atomic")])
+
+(define_expand "atomic_fetch_add<mode>"
+  [(match_operand:GPR 0 "register_operand")
+   (match_operand:GPR 1 "memory_operand")
+   (match_operand:GPR 2 "arith_operand")
+   (match_operand:SI 3 "const_int_operand")]
+  "GENERATE_LL_SC || ISA_HAS_LDADD"
+{
+  if (ISA_HAS_LDADD)
+    {
+      if (!mem_noofs_operand (operands[1], <MODE>mode))
+        {
+	  rtx addr;
+
+	  addr = force_reg (Pmode, XEXP (operands[1], 0));
+	  operands[1] = replace_equiv_address (operands[1], addr);
+	}
+      operands[2] = force_reg (<MODE>mode, operands[2]);
+      emit_insn (gen_atomic_fetch_add<mode>_ldadd (operands[0], operands[1],
+						   operands[2]));
+    }
+  else
+    emit_insn (gen_atomic_fetch_add<mode>_llsc (operands[0], operands[1],
+						operands[2], operands[3]));
+  DONE;
+})
+
+(define_insn "atomic_fetch_add<mode>_llsc"
+  [(set (match_operand:GPR 0 "register_operand" "=&d,&d")
+	(unspec_volatile:GPR [(match_operand:GPR 1 "memory_operand" "+R,R")]
+	 UNSPEC_ATOMIC_FETCH_OP))
+   (set (match_dup 1)
+	(unspec_volatile:GPR
+	 [(plus:GPR (match_dup 1)
+		    (match_operand:GPR 2 "arith_operand" "I,d"))]
+	 UNSPEC_ATOMIC_FETCH_OP))
+   (unspec_volatile:GPR [(match_operand:SI 3 "const_int_operand")]
+    UNSPEC_ATOMIC_FETCH_OP)]
+  "GENERATE_LL_SC && !ISA_HAS_LDADD"
+  { return mips_output_sync_loop (insn, operands); }
+  [(set_attr "sync_insn1" "addiu,addu")
+   (set_attr "sync_oldval" "0")
+   (set_attr "sync_mem" "1")
+   (set_attr "sync_insn1_op2" "2")
+   (set_attr "sync_memmodel" "3")])
+
+;; XLP issues implicit sync for SWAP/LDADD, so no need for an explicit one.
+(define_insn "atomic_fetch_add<mode>_ldadd"
+  [(set (match_operand:GPR 0 "register_operand" "=d")
+	(unspec_volatile:GPR [(match_operand:GPR 1 "mem_noofs_operand" "+ZR")]
+	 UNSPEC_ATOMIC_FETCH_OP))
+   (set (match_dup 1)
+	(unspec_volatile:GPR
+	 [(plus:GPR (match_dup 1)
+		    (match_operand:GPR 2 "register_operand" "0"))]
+	 UNSPEC_ATOMIC_FETCH_OP))]
+  "ISA_HAS_LDADD"
+  "ldadd<size>\t%0,%b1"
+  [(set_attr "type" "atomic")])

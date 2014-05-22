@@ -38,5 +38,6 @@ const bfd_arch_info_type bfd_i860_arch =
     TRUE,			/* Is this the default architecture? */
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     0,				/* Next in list */
   };

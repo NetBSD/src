@@ -9,6 +9,7 @@ C:	.4byte	0x300
 D:	.4byte	0x200
 
 	.data
+	.align	4
 E:	.4byte	E
 	.4byte	E + 0x1000
 	.4byte	A

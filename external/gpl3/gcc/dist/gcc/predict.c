@@ -1,6 +1,5 @@
 /* Branch prediction routines for the GNU compiler.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -40,10 +39,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "insn-config.h"
 #include "regs.h"
 #include "flags.h"
-#include "output.h"
 #include "function.h"
 #include "except.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "recog.h"
 #include "expr.h"
 #include "predict.h"
@@ -54,9 +52,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgloop.h"
 #include "tree-flow.h"
 #include "ggc.h"
-#include "tree-dump.h"
 #include "tree-pass.h"
-#include "timevar.h"
 #include "tree-scalar-evolution.h"
 #include "cfgloop.h"
 #include "pointer-set.h"
@@ -77,7 +73,7 @@ static sreal real_zero, real_one, real_almost_one, real_br_prob_base,
 static void combine_predictions_for_insn (rtx, basic_block);
 static void dump_prediction (FILE *, enum br_predictor, int, basic_block, int);
 static void predict_paths_leading_to (basic_block, enum br_predictor, enum prediction);
-static void choose_function_section (void);
+static void predict_paths_leading_to_edge (edge, enum br_predictor, enum prediction);
 static bool can_predict_insn_p (const_rtx);
 
 /* Information we hold about each branch predictor.
@@ -111,18 +107,25 @@ static const struct predictor_info predictor_info[]= {
 /* Return TRUE if frequency FREQ is considered to be hot.  */
 
 static inline bool
-maybe_hot_frequency_p (int freq)
+maybe_hot_frequency_p (struct function *fun, int freq)
 {
+  struct cgraph_node *node = cgraph_get_node (fun->decl);
   if (!profile_info || !flag_branch_probabilities)
     {
-      if (cfun->function_frequency == FUNCTION_FREQUENCY_UNLIKELY_EXECUTED)
+      if (node->frequency == NODE_FREQUENCY_UNLIKELY_EXECUTED)
         return false;
-      if (cfun->function_frequency == FUNCTION_FREQUENCY_HOT)
+      if (node->frequency == NODE_FREQUENCY_HOT)
         return true;
     }
-  if (profile_status == PROFILE_ABSENT)
+  if (profile_status_for_function (fun) == PROFILE_ABSENT)
     return true;
-  if (freq < BB_FREQ_MAX / PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION))
+  if (node->frequency == NODE_FREQUENCY_EXECUTED_ONCE
+      && freq < (ENTRY_BLOCK_PTR_FOR_FUNCTION (fun)->frequency * 2 / 3))
+    return false;
+  if (PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION) == 0)
+    return false;
+  if (freq < (ENTRY_BLOCK_PTR_FOR_FUNCTION (fun)->frequency
+	      / PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION)))
     return false;
   return true;
 }
@@ -130,26 +133,34 @@ maybe_hot_frequency_p (int freq)
 /* Return TRUE if frequency FREQ is considered to be hot.  */
 
 static inline bool
-maybe_hot_count_p (gcov_type count)
+maybe_hot_count_p (struct function *fun, gcov_type count)
 {
-  if (profile_status != PROFILE_READ)
+  gcov_working_set_t *ws;
+  static gcov_type min_count = -1;
+  if (fun && profile_status_for_function (fun) != PROFILE_READ)
     return true;
   /* Code executed at most once is not hot.  */
   if (profile_info->runs >= count)
     return false;
-  return (count
-	  > profile_info->sum_max / PARAM_VALUE (HOT_BB_COUNT_FRACTION));
+  if (min_count == -1)
+    {
+      ws = find_working_set (PARAM_VALUE (HOT_BB_COUNT_WS_PERMILLE));
+      gcc_assert (ws);
+      min_count = ws->min_counter;
+    }
+  return (count >= min_count);
 }
 
 /* Return true in case BB can be CPU intensive and should be optimized
    for maximal performance.  */
 
 bool
-maybe_hot_bb_p (const_basic_block bb)
+maybe_hot_bb_p (struct function *fun, const_basic_block bb)
 {
-  if (profile_status == PROFILE_READ)
-    return maybe_hot_count_p (bb->count);
-  return maybe_hot_frequency_p (bb->frequency);
+  gcc_checking_assert (fun);
+  if (profile_status_for_function (fun) == PROFILE_READ)
+    return maybe_hot_count_p (fun, bb->count);
+  return maybe_hot_frequency_p (fun, bb->frequency);
 }
 
 /* Return true if the call can be hot.  */
@@ -158,18 +169,31 @@ bool
 cgraph_maybe_hot_edge_p (struct cgraph_edge *edge)
 {
   if (profile_info && flag_branch_probabilities
-      && (edge->count
-	  <= profile_info->sum_max / PARAM_VALUE (HOT_BB_COUNT_FRACTION)))
+      && !maybe_hot_count_p (NULL,
+                             edge->count))
     return false;
-  if (lookup_attribute ("cold", DECL_ATTRIBUTES (edge->callee->decl))
-      || lookup_attribute ("cold", DECL_ATTRIBUTES (edge->caller->decl)))
+  if (edge->caller->frequency == NODE_FREQUENCY_UNLIKELY_EXECUTED
+      || (edge->callee
+	  && edge->callee->frequency == NODE_FREQUENCY_UNLIKELY_EXECUTED))
     return false;
-  if (lookup_attribute ("hot", DECL_ATTRIBUTES (edge->caller->decl)))
+  if (edge->caller->frequency > NODE_FREQUENCY_UNLIKELY_EXECUTED
+      && (edge->callee
+	  && edge->callee->frequency <= NODE_FREQUENCY_EXECUTED_ONCE))
+    return false;
+  if (optimize_size)
+    return false;
+  if (edge->caller->frequency == NODE_FREQUENCY_HOT)
     return true;
-  if (flag_guess_branch_prob
-      && edge->frequency <= (CGRAPH_FREQ_BASE
-      			     / PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION)))
+  if (edge->caller->frequency == NODE_FREQUENCY_EXECUTED_ONCE
+      && edge->frequency < CGRAPH_FREQ_BASE * 3 / 2)
     return false;
+  if (flag_guess_branch_prob)
+    {
+      if (PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION) == 0
+	  || edge->frequency <= (CGRAPH_FREQ_BASE
+				 / PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION)))
+        return false;
+    }
   return true;
 }
 
@@ -180,20 +204,37 @@ bool
 maybe_hot_edge_p (edge e)
 {
   if (profile_status == PROFILE_READ)
-    return maybe_hot_count_p (e->count);
-  return maybe_hot_frequency_p (EDGE_FREQUENCY (e));
+    return maybe_hot_count_p (cfun, e->count);
+  return maybe_hot_frequency_p (cfun, EDGE_FREQUENCY (e));
 }
 
+
 /* Return true in case BB is probably never executed.  */
+
 bool
-probably_never_executed_bb_p (const_basic_block bb)
+probably_never_executed_bb_p (struct function *fun, const_basic_block bb)
 {
+  gcc_checking_assert (fun);
   if (profile_info && flag_branch_probabilities)
     return ((bb->count + profile_info->runs / 2) / profile_info->runs) == 0;
   if ((!profile_info || !flag_branch_probabilities)
-      && cfun->function_frequency == FUNCTION_FREQUENCY_UNLIKELY_EXECUTED)
+      && (cgraph_get_node (fun->decl)->frequency
+	  == NODE_FREQUENCY_UNLIKELY_EXECUTED))
     return true;
   return false;
+}
+
+/* Return true if NODE should be optimized for size.  */
+
+bool
+cgraph_optimize_for_size_p (struct cgraph_node *node)
+{
+  if (optimize_size)
+    return true;
+  if (node && (node->frequency == NODE_FREQUENCY_UNLIKELY_EXECUTED))
+    return true;
+  else
+    return false;
 }
 
 /* Return true when current function should always be optimized for size.  */
@@ -201,9 +242,11 @@ probably_never_executed_bb_p (const_basic_block bb)
 bool
 optimize_function_for_size_p (struct function *fun)
 {
-  return (optimize_size
-	  || (fun && (fun->function_frequency
-		      == FUNCTION_FREQUENCY_UNLIKELY_EXECUTED)));
+  if (optimize_size)
+    return true;
+  if (!fun || !fun->decl)
+    return false;
+  return cgraph_optimize_for_size_p (cgraph_get_node (fun->decl));
 }
 
 /* Return true when current function should always be optimized for speed.  */
@@ -219,7 +262,7 @@ optimize_function_for_speed_p (struct function *fun)
 bool
 optimize_bb_for_size_p (const_basic_block bb)
 {
-  return optimize_function_for_size_p (cfun) || !maybe_hot_bb_p (bb);
+  return optimize_function_for_size_p (cfun) || !maybe_hot_bb_p (cfun, bb);
 }
 
 /* Return TRUE when BB should be optimized for speed.  */
@@ -336,7 +379,7 @@ predictable_edge_p (edge e)
 void
 rtl_profile_for_bb (basic_block bb)
 {
-  crtl->maybe_hot_insn_p = maybe_hot_bb_p (bb);
+  crtl->maybe_hot_insn_p = maybe_hot_bb_p (cfun, bb);
 }
 
 /* Set RTL expansion for edge profile.  */
@@ -374,6 +417,15 @@ rtl_predicted_by_p (const_basic_block bb, enum br_predictor predictor)
    outgoing edges.  */
 
 static struct pointer_map_t *bb_predictions;
+
+/*  Structure representing predictions in tree level. */
+
+struct edge_prediction {
+    struct edge_prediction *ep_next;
+    edge ep_edge;
+    enum br_predictor ep_predictor;
+    int ep_probability;
+};
 
 /* Return true if the one of outgoing edges is already predicted by
    PREDICTOR.  */
@@ -907,6 +959,479 @@ combine_predictions_for_bb (basic_block bb)
     }
 }
 
+/* Check if T1 and T2 satisfy the IV_COMPARE condition.
+   Return the SSA_NAME if the condition satisfies, NULL otherwise.
+
+   T1 and T2 should be one of the following cases:
+     1. T1 is SSA_NAME, T2 is NULL
+     2. T1 is SSA_NAME, T2 is INTEGER_CST between [-4, 4]
+     3. T2 is SSA_NAME, T1 is INTEGER_CST between [-4, 4]  */
+
+static tree
+strips_small_constant (tree t1, tree t2)
+{
+  tree ret = NULL;
+  int value = 0;
+
+  if (!t1)
+    return NULL;
+  else if (TREE_CODE (t1) == SSA_NAME)
+    ret = t1;
+  else if (host_integerp (t1, 0))
+    value = tree_low_cst (t1, 0);
+  else
+    return NULL;
+
+  if (!t2)
+    return ret;
+  else if (host_integerp (t2, 0))
+    value = tree_low_cst (t2, 0);
+  else if (TREE_CODE (t2) == SSA_NAME)
+    {
+      if (ret)
+        return NULL;
+      else
+        ret = t2;
+    }
+
+  if (value <= 4 && value >= -4)
+    return ret;
+  else
+    return NULL;
+}
+
+/* Return the SSA_NAME in T or T's operands.
+   Return NULL if SSA_NAME cannot be found.  */
+
+static tree
+get_base_value (tree t)
+{
+  if (TREE_CODE (t) == SSA_NAME)
+    return t;
+
+  if (!BINARY_CLASS_P (t))
+    return NULL;
+
+  switch (TREE_OPERAND_LENGTH (t))
+    {
+    case 1:
+      return strips_small_constant (TREE_OPERAND (t, 0), NULL);
+    case 2:
+      return strips_small_constant (TREE_OPERAND (t, 0),
+				    TREE_OPERAND (t, 1));
+    default:
+      return NULL;
+    }
+}
+
+/* Check the compare STMT in LOOP. If it compares an induction
+   variable to a loop invariant, return true, and save
+   LOOP_INVARIANT, COMPARE_CODE and LOOP_STEP.
+   Otherwise return false and set LOOP_INVAIANT to NULL.  */
+
+static bool
+is_comparison_with_loop_invariant_p (gimple stmt, struct loop *loop,
+				     tree *loop_invariant,
+				     enum tree_code *compare_code,
+				     tree *loop_step,
+				     tree *loop_iv_base)
+{
+  tree op0, op1, bound, base;
+  affine_iv iv0, iv1;
+  enum tree_code code;
+  tree step;
+
+  code = gimple_cond_code (stmt);
+  *loop_invariant = NULL;
+
+  switch (code)
+    {
+    case GT_EXPR:
+    case GE_EXPR:
+    case NE_EXPR:
+    case LT_EXPR:
+    case LE_EXPR:
+    case EQ_EXPR:
+      break;
+
+    default:
+      return false;
+    }
+
+  op0 = gimple_cond_lhs (stmt);
+  op1 = gimple_cond_rhs (stmt);
+
+  if ((TREE_CODE (op0) != SSA_NAME && TREE_CODE (op0) != INTEGER_CST) 
+       || (TREE_CODE (op1) != SSA_NAME && TREE_CODE (op1) != INTEGER_CST))
+    return false;
+  if (!simple_iv (loop, loop_containing_stmt (stmt), op0, &iv0, true))
+    return false;
+  if (!simple_iv (loop, loop_containing_stmt (stmt), op1, &iv1, true))
+    return false;
+  if (TREE_CODE (iv0.step) != INTEGER_CST
+      || TREE_CODE (iv1.step) != INTEGER_CST)
+    return false;
+  if ((integer_zerop (iv0.step) && integer_zerop (iv1.step))
+      || (!integer_zerop (iv0.step) && !integer_zerop (iv1.step)))
+    return false;
+
+  if (integer_zerop (iv0.step))
+    {
+      if (code != NE_EXPR && code != EQ_EXPR)
+	code = invert_tree_comparison (code, false);
+      bound = iv0.base;
+      base = iv1.base;
+      if (host_integerp (iv1.step, 0))
+	step = iv1.step;
+      else
+	return false;
+    }
+  else
+    {
+      bound = iv1.base;
+      base = iv0.base;
+      if (host_integerp (iv0.step, 0))
+	step = iv0.step;
+      else
+	return false;
+    }
+
+  if (TREE_CODE (bound) != INTEGER_CST)
+    bound = get_base_value (bound);
+  if (!bound)
+    return false;
+  if (TREE_CODE (base) != INTEGER_CST)
+    base = get_base_value (base);
+  if (!base)
+    return false;
+
+  *loop_invariant = bound;
+  *compare_code = code;
+  *loop_step = step;
+  *loop_iv_base = base;
+  return true;
+}
+
+/* Compare two SSA_NAMEs: returns TRUE if T1 and T2 are value coherent.  */
+
+static bool
+expr_coherent_p (tree t1, tree t2)
+{
+  gimple stmt;
+  tree ssa_name_1 = NULL;
+  tree ssa_name_2 = NULL;
+
+  gcc_assert (TREE_CODE (t1) == SSA_NAME || TREE_CODE (t1) == INTEGER_CST);
+  gcc_assert (TREE_CODE (t2) == SSA_NAME || TREE_CODE (t2) == INTEGER_CST);
+
+  if (t1 == t2)
+    return true;
+
+  if (TREE_CODE (t1) == INTEGER_CST && TREE_CODE (t2) == INTEGER_CST)
+    return true;
+  if (TREE_CODE (t1) == INTEGER_CST || TREE_CODE (t2) == INTEGER_CST)
+    return false;
+
+  /* Check to see if t1 is expressed/defined with t2.  */
+  stmt = SSA_NAME_DEF_STMT (t1);
+  gcc_assert (stmt != NULL);
+  if (is_gimple_assign (stmt))
+    {
+      ssa_name_1 = SINGLE_SSA_TREE_OPERAND (stmt, SSA_OP_USE);
+      if (ssa_name_1 && ssa_name_1 == t2)
+	return true;
+    }
+
+  /* Check to see if t2 is expressed/defined with t1.  */
+  stmt = SSA_NAME_DEF_STMT (t2);
+  gcc_assert (stmt != NULL);
+  if (is_gimple_assign (stmt))
+    {
+      ssa_name_2 = SINGLE_SSA_TREE_OPERAND (stmt, SSA_OP_USE);
+      if (ssa_name_2 && ssa_name_2 == t1)
+	return true;
+    }
+
+  /* Compare if t1 and t2's def_stmts are identical.  */
+  if (ssa_name_2 != NULL && ssa_name_1 == ssa_name_2)
+    return true;
+  else
+    return false;
+}
+
+/* Predict branch probability of BB when BB contains a branch that compares
+   an induction variable in LOOP with LOOP_IV_BASE_VAR to LOOP_BOUND_VAR. The
+   loop exit is compared using LOOP_BOUND_CODE, with step of LOOP_BOUND_STEP.
+
+   E.g.
+     for (int i = 0; i < bound; i++) {
+       if (i < bound - 2)
+	 computation_1();
+       else
+	 computation_2();
+     }
+
+  In this loop, we will predict the branch inside the loop to be taken.  */
+
+static void
+predict_iv_comparison (struct loop *loop, basic_block bb,
+		       tree loop_bound_var,
+		       tree loop_iv_base_var,
+		       enum tree_code loop_bound_code,
+		       int loop_bound_step)
+{
+  gimple stmt;
+  tree compare_var, compare_base;
+  enum tree_code compare_code;
+  tree compare_step_var;
+  edge then_edge;
+  edge_iterator ei;
+
+  if (predicted_by_p (bb, PRED_LOOP_ITERATIONS_GUESSED)
+      || predicted_by_p (bb, PRED_LOOP_ITERATIONS)
+      || predicted_by_p (bb, PRED_LOOP_EXIT))
+    return;
+
+  stmt = last_stmt (bb);
+  if (!stmt || gimple_code (stmt) != GIMPLE_COND)
+    return;
+  if (!is_comparison_with_loop_invariant_p (stmt, loop, &compare_var,
+					    &compare_code,
+					    &compare_step_var,
+					    &compare_base))
+    return;
+
+  /* Find the taken edge.  */
+  FOR_EACH_EDGE (then_edge, ei, bb->succs)
+    if (then_edge->flags & EDGE_TRUE_VALUE)
+      break;
+
+  /* When comparing an IV to a loop invariant, NE is more likely to be
+     taken while EQ is more likely to be not-taken.  */
+  if (compare_code == NE_EXPR)
+    {
+      predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+      return;
+    }
+  else if (compare_code == EQ_EXPR)
+    {
+      predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, NOT_TAKEN);
+      return;
+    }
+
+  if (!expr_coherent_p (loop_iv_base_var, compare_base))
+    return;
+
+  /* If loop bound, base and compare bound are all constants, we can
+     calculate the probability directly.  */
+  if (host_integerp (loop_bound_var, 0)
+      && host_integerp (compare_var, 0)
+      && host_integerp (compare_base, 0))
+    {
+      int probability;
+      bool of, overflow = false;
+      double_int mod, compare_count, tem, loop_count;
+
+      double_int loop_bound = tree_to_double_int (loop_bound_var);
+      double_int compare_bound = tree_to_double_int (compare_var);
+      double_int base = tree_to_double_int (compare_base);
+      double_int compare_step = tree_to_double_int (compare_step_var);
+
+      /* (loop_bound - base) / compare_step */
+      tem = loop_bound.sub_with_overflow (base, &of);
+      overflow |= of;
+      loop_count = tem.divmod_with_overflow (compare_step,
+					      0, TRUNC_DIV_EXPR,
+					      &mod, &of);
+      overflow |= of;
+
+      if ((!compare_step.is_negative ())
+          ^ (compare_code == LT_EXPR || compare_code == LE_EXPR))
+	{
+	  /* (loop_bound - compare_bound) / compare_step */
+	  tem = loop_bound.sub_with_overflow (compare_bound, &of);
+	  overflow |= of;
+	  compare_count = tem.divmod_with_overflow (compare_step,
+						     0, TRUNC_DIV_EXPR,
+						     &mod, &of);
+	  overflow |= of;
+	}
+      else
+        {
+	  /* (compare_bound - base) / compare_step */
+	  tem = compare_bound.sub_with_overflow (base, &of);
+	  overflow |= of;
+          compare_count = tem.divmod_with_overflow (compare_step,
+						     0, TRUNC_DIV_EXPR,
+						     &mod, &of);
+	  overflow |= of;
+	}
+      if (compare_code == LE_EXPR || compare_code == GE_EXPR)
+	++compare_count;
+      if (loop_bound_code == LE_EXPR || loop_bound_code == GE_EXPR)
+	++loop_count;
+      if (compare_count.is_negative ())
+        compare_count = double_int_zero;
+      if (loop_count.is_negative ())
+        loop_count = double_int_zero;
+      if (loop_count.is_zero ())
+	probability = 0;
+      else if (compare_count.scmp (loop_count) == 1)
+	probability = REG_BR_PROB_BASE;
+      else
+        {
+	  /* If loop_count is too big, such that REG_BR_PROB_BASE * loop_count
+	     could overflow, shift both loop_count and compare_count right
+	     a bit so that it doesn't overflow.  Note both counts are known not
+	     to be negative at this point.  */
+	  int clz_bits = clz_hwi (loop_count.high);
+	  gcc_assert (REG_BR_PROB_BASE < 32768);
+	  if (clz_bits < 16)
+	    {
+	      loop_count.arshift (16 - clz_bits, HOST_BITS_PER_DOUBLE_INT);
+	      compare_count.arshift (16 - clz_bits, HOST_BITS_PER_DOUBLE_INT);
+	    }
+	  tem = compare_count.mul_with_sign (double_int::from_shwi
+					    (REG_BR_PROB_BASE), true, &of);
+	  gcc_assert (!of);
+	  tem = tem.divmod (loop_count, true, TRUNC_DIV_EXPR, &mod);
+	  probability = tem.to_uhwi ();
+	}
+
+      if (!overflow)
+        predict_edge (then_edge, PRED_LOOP_IV_COMPARE, probability);
+
+      return;
+    }
+
+  if (expr_coherent_p (loop_bound_var, compare_var))
+    {
+      if ((loop_bound_code == LT_EXPR || loop_bound_code == LE_EXPR)
+	  && (compare_code == LT_EXPR || compare_code == LE_EXPR))
+	predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+      else if ((loop_bound_code == GT_EXPR || loop_bound_code == GE_EXPR)
+	       && (compare_code == GT_EXPR || compare_code == GE_EXPR))
+	predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+      else if (loop_bound_code == NE_EXPR)
+	{
+	  /* If the loop backedge condition is "(i != bound)", we do
+	     the comparison based on the step of IV:
+	     * step < 0 : backedge condition is like (i > bound)
+	     * step > 0 : backedge condition is like (i < bound)  */
+	  gcc_assert (loop_bound_step != 0);
+	  if (loop_bound_step > 0
+	      && (compare_code == LT_EXPR
+		  || compare_code == LE_EXPR))
+	    predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+	  else if (loop_bound_step < 0
+		   && (compare_code == GT_EXPR
+		       || compare_code == GE_EXPR))
+	    predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+	  else
+	    predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, NOT_TAKEN);
+	}
+      else
+	/* The branch is predicted not-taken if loop_bound_code is
+	   opposite with compare_code.  */
+	predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, NOT_TAKEN);
+    }
+  else if (expr_coherent_p (loop_iv_base_var, compare_var))
+    {
+      /* For cases like:
+	   for (i = s; i < h; i++)
+	     if (i > s + 2) ....
+	 The branch should be predicted taken.  */
+      if (loop_bound_step > 0
+	  && (compare_code == GT_EXPR || compare_code == GE_EXPR))
+	predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+      else if (loop_bound_step < 0
+	       && (compare_code == LT_EXPR || compare_code == LE_EXPR))
+	predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, TAKEN);
+      else
+	predict_edge_def (then_edge, PRED_LOOP_IV_COMPARE_GUESS, NOT_TAKEN);
+    }
+}
+
+/* Predict for extra loop exits that will lead to EXIT_EDGE. The extra loop
+   exits are resulted from short-circuit conditions that will generate an
+   if_tmp. E.g.:
+
+   if (foo() || global > 10)
+     break;
+
+   This will be translated into:
+
+   BB3:
+     loop header...
+   BB4:
+     if foo() goto BB6 else goto BB5
+   BB5:
+     if global > 10 goto BB6 else goto BB7
+   BB6:
+     goto BB7
+   BB7:
+     iftmp = (PHI 0(BB5), 1(BB6))
+     if iftmp == 1 goto BB8 else goto BB3
+   BB8:
+     outside of the loop...
+
+   The edge BB7->BB8 is loop exit because BB8 is outside of the loop.
+   From the dataflow, we can infer that BB4->BB6 and BB5->BB6 are also loop
+   exits. This function takes BB7->BB8 as input, and finds out the extra loop
+   exits to predict them using PRED_LOOP_EXIT.  */
+
+static void
+predict_extra_loop_exits (edge exit_edge)
+{
+  unsigned i;
+  bool check_value_one;
+  gimple phi_stmt;
+  tree cmp_rhs, cmp_lhs;
+  gimple cmp_stmt = last_stmt (exit_edge->src);
+
+  if (!cmp_stmt || gimple_code (cmp_stmt) != GIMPLE_COND)
+    return;
+  cmp_rhs = gimple_cond_rhs (cmp_stmt);
+  cmp_lhs = gimple_cond_lhs (cmp_stmt);
+  if (!TREE_CONSTANT (cmp_rhs)
+      || !(integer_zerop (cmp_rhs) || integer_onep (cmp_rhs)))
+    return;
+  if (TREE_CODE (cmp_lhs) != SSA_NAME)
+    return;
+
+  /* If check_value_one is true, only the phi_args with value '1' will lead
+     to loop exit. Otherwise, only the phi_args with value '0' will lead to
+     loop exit.  */
+  check_value_one = (((integer_onep (cmp_rhs))
+		    ^ (gimple_cond_code (cmp_stmt) == EQ_EXPR))
+		    ^ ((exit_edge->flags & EDGE_TRUE_VALUE) != 0));
+
+  phi_stmt = SSA_NAME_DEF_STMT (cmp_lhs);
+  if (!phi_stmt || gimple_code (phi_stmt) != GIMPLE_PHI)
+    return;
+
+  for (i = 0; i < gimple_phi_num_args (phi_stmt); i++)
+    {
+      edge e1;
+      edge_iterator ei;
+      tree val = gimple_phi_arg_def (phi_stmt, i);
+      edge e = gimple_phi_arg_edge (phi_stmt, i);
+
+      if (!TREE_CONSTANT (val) || !(integer_zerop (val) || integer_onep (val)))
+	continue;
+      if ((check_value_one ^ integer_onep (val)) == 1)
+	continue;
+      if (EDGE_COUNT (e->src->succs) != 1)
+	{
+	  predict_paths_leading_to_edge (e, PRED_LOOP_EXIT, NOT_TAKEN);
+	  continue;
+	}
+
+      FOR_EACH_EDGE (e1, ei, e->src->preds)
+	predict_paths_leading_to_edge (e1, PRED_LOOP_EXIT, NOT_TAKEN);
+    }
+}
+
 /* Predict edge probabilities by exploiting loop structure.  */
 
 static void
@@ -921,14 +1446,25 @@ predict_loops (void)
     {
       basic_block bb, *bbs;
       unsigned j, n_exits;
-      VEC (edge, heap) *exits;
+      vec<edge> exits;
       struct tree_niter_desc niter_desc;
       edge ex;
+      struct nb_iter_bound *nb_iter;
+      enum tree_code loop_bound_code = ERROR_MARK;
+      tree loop_bound_step = NULL;
+      tree loop_bound_var = NULL;
+      tree loop_iv_base = NULL;
+      gimple stmt = NULL;
 
       exits = get_loop_exit_edges (loop);
-      n_exits = VEC_length (edge, exits);
+      n_exits = exits.length ();
+      if (!n_exits)
+	{
+          exits.release ();
+	  continue;
+	}
 
-      for (j = 0; VEC_iterate (edge, exits, j, ex); j++)
+      FOR_EACH_VEC_ELT (exits, j, ex)
 	{
 	  tree niter = NULL;
 	  HOST_WIDE_INT nitercst;
@@ -936,7 +1472,9 @@ predict_loops (void)
 	  int probability;
 	  enum br_predictor predictor;
 
-	  if (number_of_iterations_exit (loop, ex, &niter_desc, false))
+	  predict_extra_loop_exits (ex);
+
+	  if (number_of_iterations_exit (loop, ex, &niter_desc, false, false))
 	    niter = niter_desc.niter;
 	  if (!niter || TREE_CODE (niter_desc.niter) != INTEGER_CST)
 	    niter = loop_niter_by_eval (loop, ex);
@@ -944,7 +1482,8 @@ predict_loops (void)
 	  if (TREE_CODE (niter) == INTEGER_CST)
 	    {
 	      if (host_integerp (niter, 1)
-		  && compare_tree_int (niter, max-1) == -1)
+		  && max
+		  && compare_tree_int (niter, max - 1) == -1)
 		nitercst = tree_low_cst (niter, 1) + 1;
 	      else
 		nitercst = max;
@@ -955,7 +1494,7 @@ predict_loops (void)
 	     the loop, use it to predict this exit.  */
 	  else if (n_exits == 1)
 	    {
-	      nitercst = estimated_loop_iterations_int (loop, false);
+	      nitercst = estimated_stmt_executions_int (loop);
 	      if (nitercst < 0)
 		continue;
 	      if (nitercst > max)
@@ -966,10 +1505,34 @@ predict_loops (void)
 	  else
 	    continue;
 
+	  /* If the prediction for number of iterations is zero, do not
+	     predict the exit edges.  */
+	  if (nitercst == 0)
+	    continue;
+
 	  probability = ((REG_BR_PROB_BASE + nitercst / 2) / nitercst);
 	  predict_edge (ex, predictor, probability);
 	}
-      VEC_free (edge, heap, exits);
+      exits.release ();
+
+      /* Find information about loop bound variables.  */
+      for (nb_iter = loop->bounds; nb_iter;
+	   nb_iter = nb_iter->next)
+	if (nb_iter->stmt
+	    && gimple_code (nb_iter->stmt) == GIMPLE_COND)
+	  {
+	    stmt = nb_iter->stmt;
+	    break;
+	  }
+      if (!stmt && last_stmt (loop->header)
+	  && gimple_code (last_stmt (loop->header)) == GIMPLE_COND)
+	stmt = last_stmt (loop->header);
+      if (stmt)
+	is_comparison_with_loop_invariant_p (stmt, loop,
+					     &loop_bound_var,
+					     &loop_bound_code,
+					     &loop_bound_step,
+					     &loop_iv_base);
 
       bbs = get_loop_body (loop);
 
@@ -1032,6 +1595,10 @@ predict_loops (void)
 		    || !flow_bb_inside_loop_p (loop, e->dest))
 		  predict_edge (e, PRED_LOOP_EXIT, probability);
 	    }
+	  if (loop_bound_var)
+	    predict_iv_comparison (loop, bb, loop_bound_var, loop_iv_base,
+				   loop_bound_code,
+				   tree_low_cst (loop_bound_step, 0));
 	}
 
       /* Free basic blocks from get_loop_body.  */
@@ -1151,7 +1718,8 @@ static tree expr_expected_value (tree, bitmap);
 /* Helper function for expr_expected_value.  */
 
 static tree
-expr_expected_value_1 (tree type, tree op0, enum tree_code code, tree op1, bitmap visited)
+expr_expected_value_1 (tree type, tree op0, enum tree_code code,
+		       tree op1, bitmap visited)
 {
   gimple def;
 
@@ -1166,9 +1734,8 @@ expr_expected_value_1 (tree type, tree op0, enum tree_code code, tree op1, bitma
       def = SSA_NAME_DEF_STMT (op0);
 
       /* If we were already here, break the infinite cycle.  */
-      if (bitmap_bit_p (visited, SSA_NAME_VERSION (op0)))
+      if (!bitmap_set_bit (visited, SSA_NAME_VERSION (op0)))
 	return NULL;
-      bitmap_set_bit (visited, SSA_NAME_VERSION (op0));
 
       if (gimple_code (def) == GIMPLE_PHI)
 	{
@@ -1217,17 +1784,36 @@ expr_expected_value_1 (tree type, tree op0, enum tree_code code, tree op1, bitma
 	  tree decl = gimple_call_fndecl (def);
 	  if (!decl)
 	    return NULL;
-	  if (DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
-	      && DECL_FUNCTION_CODE (decl) == BUILT_IN_EXPECT)
-	    {
-	      tree val;
+	  if (DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL)
+	    switch (DECL_FUNCTION_CODE (decl))
+	      {
+	      case BUILT_IN_EXPECT:
+		{
+		  tree val;
+		  if (gimple_call_num_args (def) != 2)
+		    return NULL;
+		  val = gimple_call_arg (def, 0);
+		  if (TREE_CONSTANT (val))
+		    return val;
+		  return gimple_call_arg (def, 1);
+		}
 
-	      if (gimple_call_num_args (def) != 2)
-		return NULL;
-	      val = gimple_call_arg (def, 0);
-	      if (TREE_CONSTANT (val))
-		return val;
-	      return gimple_call_arg (def, 1);
+	      case BUILT_IN_SYNC_BOOL_COMPARE_AND_SWAP_N:
+	      case BUILT_IN_SYNC_BOOL_COMPARE_AND_SWAP_1:
+	      case BUILT_IN_SYNC_BOOL_COMPARE_AND_SWAP_2:
+	      case BUILT_IN_SYNC_BOOL_COMPARE_AND_SWAP_4:
+	      case BUILT_IN_SYNC_BOOL_COMPARE_AND_SWAP_8:
+	      case BUILT_IN_SYNC_BOOL_COMPARE_AND_SWAP_16:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE_N:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE_1:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE_2:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE_4:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE_8:
+	      case BUILT_IN_ATOMIC_COMPARE_EXCHANGE_16:
+		/* Assume that any given atomic operation has low contention,
+		   and thus the compare-and-swap operation succeeds.  */
+		return boolean_true_node;
 	    }
 	}
 
@@ -1316,9 +1902,17 @@ strip_predict_hints (void)
 		  && gimple_call_num_args (stmt) == 2)
 		{
 		  var = gimple_call_lhs (stmt);
-		  ass_stmt = gimple_build_assign (var, gimple_call_arg (stmt, 0));
-
-		  gsi_replace (&bi, ass_stmt, true);
+		  if (var)
+		    {
+		      ass_stmt
+			= gimple_build_assign (var, gimple_call_arg (stmt, 0));
+		      gsi_replace (&bi, ass_stmt, true);
+		    }
+		  else
+		    {
+		      gsi_remove (&bi, true);
+		      continue;
+		    }
 		}
 	    }
 	  gsi_next (&bi);
@@ -1530,8 +2124,8 @@ apply_return_prediction (void)
       {
 	pred = return_prediction (PHI_ARG_DEF (phi, i), &direction);
 	if (pred != PRED_NO_PREDICTION)
-	  predict_paths_leading_to (gimple_phi_arg_edge (phi, i)->src, pred,
-				    direction);
+	  predict_paths_leading_to_edge (gimple_phi_arg_edge (phi, i), pred,
+				         direction);
       }
 }
 
@@ -1614,6 +2208,29 @@ tree_estimate_probability_bb (basic_block bb)
 
   FOR_EACH_EDGE (e, ei, bb->succs)
     {
+      /* Predict edges to user labels with attributes.  */
+      if (e->dest != EXIT_BLOCK_PTR)
+	{
+	  gimple_stmt_iterator gi;
+	  for (gi = gsi_start_bb (e->dest); !gsi_end_p (gi); gsi_next (&gi))
+	    {
+	      gimple stmt = gsi_stmt (gi);
+	      tree decl;
+
+	      if (gimple_code (stmt) != GIMPLE_LABEL)
+		break;
+	      decl = gimple_label_label (stmt);
+	      if (DECL_ARTIFICIAL (decl))
+		continue;
+
+	      /* Finally, we have a user-defined label.  */
+	      if (lookup_attribute ("cold", DECL_ATTRIBUTES (decl)))
+		predict_edge_def (e, PRED_COLD_LABEL, NOT_TAKEN);
+	      else if (lookup_attribute ("hot", DECL_ATTRIBUTES (decl)))
+		predict_edge_def (e, PRED_HOT_LABEL, TAKEN);
+	    }
+	}
+
       /* Predict early returns to be probable, as we've already taken
 	 care for error returns and other cases are often used for
 	 fast paths through function.
@@ -1732,7 +2349,7 @@ tree_estimate_probability_driver (void)
 {
   unsigned nb_loops;
 
-  loop_optimizer_init (0);
+  loop_optimizer_init (LOOPS_NORMAL);
   if (dump_file && (dump_flags & TDF_DETAILS))
     flow_loops_dump (dump_file, NULL, 0);
 
@@ -1761,7 +2378,8 @@ tree_estimate_probability_driver (void)
 static void
 predict_paths_for_bb (basic_block cur, basic_block bb,
 		      enum br_predictor pred,
-		      enum prediction taken)
+		      enum prediction taken,
+		      bitmap visited)
 {
   edge e;
   edge_iterator ei;
@@ -1773,13 +2391,42 @@ predict_paths_for_bb (basic_block cur, basic_block bb,
     if (e->src->index >= NUM_FIXED_BLOCKS
 	&& !dominated_by_p (CDI_POST_DOMINATORS, e->src, bb))
     {
+      edge e2;
+      edge_iterator ei2;
+      bool found = false;
+
+      /* Ignore fake edges and eh, we predict them as not taken anyway.  */
+      if (e->flags & (EDGE_EH | EDGE_FAKE))
+	continue;
       gcc_assert (bb == cur || dominated_by_p (CDI_POST_DOMINATORS, cur, bb));
-      predict_edge_def (e, pred, taken);
+
+      /* See if there is an edge from e->src that is not abnormal
+	 and does not lead to BB.  */
+      FOR_EACH_EDGE (e2, ei2, e->src->succs)
+	if (e2 != e
+	    && !(e2->flags & (EDGE_EH | EDGE_FAKE))
+	    && !dominated_by_p (CDI_POST_DOMINATORS, e2->dest, bb))
+	  {
+	    found = true;
+	    break;
+	  }
+
+      /* If there is non-abnormal path leaving e->src, predict edge
+	 using predictor.  Otherwise we need to look for paths
+	 leading to e->src.
+
+	 The second may lead to infinite loop in the case we are predicitng
+	 regions that are only reachable by abnormal edges.  We simply
+	 prevent visiting given BB twice.  */
+      if (found)
+        predict_edge_def (e, pred, taken);
+      else if (bitmap_set_bit (visited, e->src->index))
+	predict_paths_for_bb (e->src, e->src, pred, taken, visited);
     }
   for (son = first_dom_son (CDI_POST_DOMINATORS, cur);
        son;
        son = next_dom_son (CDI_POST_DOMINATORS, son))
-    predict_paths_for_bb (son, bb, pred, taken);
+    predict_paths_for_bb (son, bb, pred, taken, visited);
 }
 
 /* Sets branch probabilities according to PREDiction and
@@ -1789,7 +2436,38 @@ static void
 predict_paths_leading_to (basic_block bb, enum br_predictor pred,
 			  enum prediction taken)
 {
-  predict_paths_for_bb (bb, bb, pred, taken);
+  bitmap visited = BITMAP_ALLOC (NULL);
+  predict_paths_for_bb (bb, bb, pred, taken, visited);
+  BITMAP_FREE (visited);
+}
+
+/* Like predict_paths_leading_to but take edge instead of basic block.  */
+
+static void
+predict_paths_leading_to_edge (edge e, enum br_predictor pred,
+			       enum prediction taken)
+{
+  bool has_nonloop_edge = false;
+  edge_iterator ei;
+  edge e2;
+
+  basic_block bb = e->src;
+  FOR_EACH_EDGE (e2, ei, bb->succs)
+    if (e2->dest != e->src && e2->dest != e->dest
+	&& !(e->flags & (EDGE_EH | EDGE_FAKE))
+	&& !dominated_by_p (CDI_POST_DOMINATORS, e->src, e2->dest))
+      {
+	has_nonloop_edge = true;
+	break;
+      }
+  if (!has_nonloop_edge)
+    {
+      bitmap visited = BITMAP_ALLOC (NULL);
+      predict_paths_for_bb (bb, bb, pred, taken, visited);
+      BITMAP_FREE (visited);
+    }
+  else
+    predict_edge_def (e, pred, taken);
 }
 
 /* This is used to carry information about basic blocks.  It is
@@ -1842,9 +2520,6 @@ propagate_freq (basic_block head, bitmap tovisit)
       edge_iterator ei;
       int count = 0;
 
-       /* The outermost "loop" includes the exit block, which we can not
-	  look up via BASIC_BLOCK.  Detect this and use EXIT_BLOCK_PTR
-	  directly.  Do the same for the entry block.  */
       bb = BASIC_BLOCK (i);
 
       FOR_EACH_EDGE (e, ei, bb->preds)
@@ -1859,6 +2534,9 @@ propagate_freq (basic_block head, bitmap tovisit)
 		     e->src->index, bb->index);
 	}
       BLOCK_INFO (bb)->npredecessors = count;
+      /* When function never returns, we will never process exit block.  */
+      if (!count && bb == EXIT_BLOCK_PTR)
+	bb->count = bb->frequency = 0;
     }
 
   memcpy (&BLOCK_INFO (head)->frequency, &real_one, sizeof (real_one));
@@ -2139,8 +2817,6 @@ estimate_bb_frequencies (void)
       free_aux_for_edges ();
     }
   compute_function_frequency ();
-  if (flag_reorder_functions)
-    choose_function_section ();
 }
 
 /* Decide whether function is hot, cold or unlikely executed.  */
@@ -2148,56 +2824,42 @@ void
 compute_function_frequency (void)
 {
   basic_block bb;
+  struct cgraph_node *node = cgraph_get_node (current_function_decl);
+  if (DECL_STATIC_CONSTRUCTOR (current_function_decl)
+      || MAIN_NAME_P (DECL_NAME (current_function_decl)))
+    node->only_called_at_startup = true;
+  if (DECL_STATIC_DESTRUCTOR (current_function_decl))
+    node->only_called_at_exit = true;
 
   if (!profile_info || !flag_branch_probabilities)
     {
+      int flags = flags_from_decl_or_type (current_function_decl);
       if (lookup_attribute ("cold", DECL_ATTRIBUTES (current_function_decl))
 	  != NULL)
-        cfun->function_frequency = FUNCTION_FREQUENCY_UNLIKELY_EXECUTED;
+        node->frequency = NODE_FREQUENCY_UNLIKELY_EXECUTED;
       else if (lookup_attribute ("hot", DECL_ATTRIBUTES (current_function_decl))
 	       != NULL)
-        cfun->function_frequency = FUNCTION_FREQUENCY_HOT;
+        node->frequency = NODE_FREQUENCY_HOT;
+      else if (flags & ECF_NORETURN)
+        node->frequency = NODE_FREQUENCY_EXECUTED_ONCE;
+      else if (MAIN_NAME_P (DECL_NAME (current_function_decl)))
+        node->frequency = NODE_FREQUENCY_EXECUTED_ONCE;
+      else if (DECL_STATIC_CONSTRUCTOR (current_function_decl)
+	       || DECL_STATIC_DESTRUCTOR (current_function_decl))
+        node->frequency = NODE_FREQUENCY_EXECUTED_ONCE;
       return;
     }
-  cfun->function_frequency = FUNCTION_FREQUENCY_UNLIKELY_EXECUTED;
+  node->frequency = NODE_FREQUENCY_UNLIKELY_EXECUTED;
   FOR_EACH_BB (bb)
     {
-      if (maybe_hot_bb_p (bb))
+      if (maybe_hot_bb_p (cfun, bb))
 	{
-	  cfun->function_frequency = FUNCTION_FREQUENCY_HOT;
+	  node->frequency = NODE_FREQUENCY_HOT;
 	  return;
 	}
-      if (!probably_never_executed_bb_p (bb))
-	cfun->function_frequency = FUNCTION_FREQUENCY_NORMAL;
+      if (!probably_never_executed_bb_p (cfun, bb))
+	node->frequency = NODE_FREQUENCY_NORMAL;
     }
-}
-
-/* Choose appropriate section for the function.  */
-static void
-choose_function_section (void)
-{
-  if (DECL_SECTION_NAME (current_function_decl)
-      || !targetm.have_named_sections
-      /* Theoretically we can split the gnu.linkonce text section too,
-	 but this requires more work as the frequency needs to match
-	 for all generated objects so we need to merge the frequency
-	 of all instances.  For now just never set frequency for these.  */
-      || DECL_ONE_ONLY (current_function_decl))
-    return;
-
-  /* If we are doing the partitioning optimization, let the optimization
-     choose the correct section into which to put things.  */
-
-  if (flag_reorder_blocks_and_partition)
-    return;
-
-  if (cfun->function_frequency == FUNCTION_FREQUENCY_HOT)
-    DECL_SECTION_NAME (current_function_decl) =
-      build_string (strlen (HOT_TEXT_SECTION_NAME), HOT_TEXT_SECTION_NAME);
-  if (cfun->function_frequency == FUNCTION_FREQUENCY_UNLIKELY_EXECUTED)
-    DECL_SECTION_NAME (current_function_decl) =
-      build_string (strlen (UNLIKELY_EXECUTED_TEXT_SECTION_NAME),
-		    UNLIKELY_EXECUTED_TEXT_SECTION_NAME);
 }
 
 static bool
@@ -2211,7 +2873,7 @@ tree
 build_predict_expr (enum br_predictor predictor, enum prediction taken)
 {
   tree t = build1 (PREDICT_EXPR, void_type_node,
-		   build_int_cst (NULL, predictor));
+		   build_int_cst (integer_type_node, predictor));
   SET_PREDICT_EXPR_OUTCOME (t, taken);
   return t;
 }
@@ -2226,7 +2888,8 @@ struct gimple_opt_pass pass_profile =
 {
  {
   GIMPLE_PASS,
-  "profile",				/* name */
+  "profile_estimate",			/* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_estimate_probability,		/* gate */
   tree_estimate_probability_driver,	/* execute */
   NULL,					/* sub */
@@ -2246,6 +2909,7 @@ struct gimple_opt_pass pass_strip_predict_hints =
  {
   GIMPLE_PASS,
   "*strip_predict_hints",		/* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   NULL,					/* gate */
   strip_predict_hints,			/* execute */
   NULL,					/* sub */
@@ -2259,3 +2923,29 @@ struct gimple_opt_pass pass_strip_predict_hints =
   TODO_ggc_collect | TODO_verify_ssa			/* todo_flags_finish */
  }
 };
+
+/* Rebuild function frequencies.  Passes are in general expected to
+   maintain profile by hand, however in some cases this is not possible:
+   for example when inlining several functions with loops freuqencies might run
+   out of scale and thus needs to be recomputed.  */
+
+void
+rebuild_frequencies (void)
+{
+  timevar_push (TV_REBUILD_FREQUENCIES);
+  if (profile_status == PROFILE_GUESSED)
+    {
+      loop_optimizer_init (0);
+      add_noreturn_fake_exit_edges ();
+      mark_irreducible_loops ();
+      connect_infinite_loops_to_exit ();
+      estimate_bb_frequencies ();
+      remove_fake_exit_edges ();
+      loop_optimizer_finalize ();
+    }
+  else if (profile_status == PROFILE_READ)
+    counts_to_freqs ();
+  else
+    gcc_unreachable ();
+  timevar_pop (TV_REBUILD_FREQUENCIES);
+}

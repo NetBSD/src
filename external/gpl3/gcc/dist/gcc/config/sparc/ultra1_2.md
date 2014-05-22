@@ -1,5 +1,5 @@
 ;; Scheduling description for UltraSPARC-I/II.
-;;   Copyright (C) 2002, 2004, 2007 Free Software Foundation, Inc.
+;;   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -79,7 +79,7 @@
 
 (define_insn_reservation "us1_single" 1
   (and (eq_attr "cpu" "ultrasparc")
-    (eq_attr "type" "multi,savew,flushw,iflush,trap"))
+    (eq_attr "type" "multi,savew,flushw,iflush,trap,gsr"))
   "us1_single_issue")
 
 (define_insn_reservation "us1_simple_ieuN" 1
@@ -94,7 +94,7 @@
 
 (define_insn_reservation "us1_simple_ieu1" 1
   (and (eq_attr "cpu" "ultrasparc")
-    (eq_attr "type" "compare"))
+    (eq_attr "type" "compare,edge,edgen,array"))
   "us1_ieu1 + us1_slot012")
 
 (define_insn_reservation "us1_ialuX" 1
@@ -255,7 +255,7 @@
   2
   (and (and
          (eq_attr "cpu" "ultrasparc")
-         (eq_attr "type" "fga"))
+         (eq_attr "type" "fga,visl,vismv"))
        (eq_attr "fptype" "single"))
   "us1_fpa + us1_fp_single + us1_slotany, nothing")
 
@@ -265,7 +265,7 @@
   2
   (and (and
          (eq_attr "cpu" "ultrasparc")
-         (eq_attr "type" "fga"))
+         (eq_attr "type" "fga,visl,vismv"))
        (eq_attr "fptype" "double"))
   "us1_fpa + us1_fp_double + us1_slotany, nothing")
 
@@ -275,7 +275,7 @@
   4
   (and (and
          (eq_attr "cpu" "ultrasparc")
-         (eq_attr "type" "fgm_pack,fgm_mul,fgm_cmp"))
+         (eq_attr "type" "fgm_pack,fgm_mul"))
        (eq_attr "fptype" "single"))
   "us1_fpm + us1_fp_single + us1_slotany, nothing*3")
 
@@ -285,7 +285,7 @@
   4
   (and (and
          (eq_attr "cpu" "ultrasparc")
-         (eq_attr "type" "fgm_pack,fgm_mul,fgm_cmp"))
+         (eq_attr "type" "fgm_pack,fgm_mul"))
        (eq_attr "fptype" "double"))
   "us1_fpm + us1_fp_double + us1_slotany, nothing*3")
 
@@ -294,7 +294,7 @@
 (define_insn_reservation "us1_pdist"
   4
   (and (eq_attr "cpu" "ultrasparc")
-       (eq_attr "type" "fgm_pdist"))
+       (eq_attr "type" "pdist"))
   "us1_fpm + us1_fp_double + us1_slotany, nothing*3")
 
 (define_bypass 3 "us1_pdist" "us1_fga_double,us1_fga_single")

@@ -1,6 +1,6 @@
 // merge.h -- handle section merging for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -152,7 +152,7 @@ class Object_merge_map
   Input_merge_map*
   get_input_merge_map(unsigned int shndx);
 
-  // Get or make the the Input_merge_map to use for the section SHNDX
+  // Get or make the Input_merge_map to use for the section SHNDX
   // with MERGE_MAP.
   Input_merge_map*
   get_or_make_input_merge_map(const Merge_map* merge_map, unsigned int shndx);
@@ -300,7 +300,7 @@ class Output_merge_base : public Output_section_data
     this->merge_map_.add_mapping(object, shndx, offset, length, output_offset);
   }
 
-  // This may be overriden by the child class.
+  // This may be overridden by the child class.
   virtual bool
   do_is_string()
   { return false; }

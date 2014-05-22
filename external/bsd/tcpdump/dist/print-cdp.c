@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-cdp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-cdp.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: print-cdp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 
 #define CDP_HEADER_LEN  4
 
-static struct tok cdp_tlv_values[] = {
+static const struct tok cdp_tlv_values[] = {
     { 0x01,             "Device-ID"},
     { 0x02,             "Address"},
     { 0x03,             "Port-ID"},
@@ -75,7 +75,7 @@ static struct tok cdp_tlv_values[] = {
     { 0, NULL}
 };
 
-static struct tok cdp_capability_values[] = {
+static const struct tok cdp_capability_values[] = {
     { 0x01,             "Router" },
     { 0x02,             "Transparent Bridge" },
     { 0x04,             "Source Route Bridge" },
@@ -129,7 +129,7 @@ cdp_print(const u_char *pptr, u_int length, u_int caplen)
                                tok2str(cdp_tlv_values,"unknown field type", type),
                                type,
                                len,
-                               len>1 ? "s" : ""); /* plural */
+                               PLURAL_SUFFIX(len)); /* plural */
 
                     switch (type) {
 

@@ -1,18 +1,22 @@
-/*	$NetBSD: log.c,v 1.3.2.1 2012/04/17 00:03:50 yamt Exp $	*/
+/*	$NetBSD: log.c,v 1.3.2.2 2014/05/22 15:50:12 yamt Exp $	*/
 
 #include <config.h>
 
 #include "log.h"
 
-const char *progname = "sntp";	/* for msyslog use too */
+char *progname;		/* for msyslog use too */
 
 static void cleanup_log(void);
 
 void
-init_logging(void)
+sntp_init_logging(
+	const char *prog
+	)
 {
-	openlog(progname, LOG_PID | LOG_CONS, OPENLOG_FAC);
 	msyslog_term = TRUE;
+	init_logging(prog, 0, FALSE);
+	msyslog_term_pid = FALSE;
+	msyslog_include_timestamp = FALSE;
 }
 
 void
@@ -20,13 +24,7 @@ open_logfile(
 	const char *logfile
 	)
 {
-	syslog_file = fopen(logfile, "a");	
-	if (syslog_file == NULL) {
-		msyslog(LOG_ERR, "sntp: Cannot open logfile %s",
-			logfile);
-		return;
-	}
-	syslogit = FALSE;
+	change_logfile(logfile, FALSE);
 	atexit(cleanup_log);
 }
 

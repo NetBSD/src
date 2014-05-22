@@ -1,5 +1,5 @@
 /* Discovery of auto-inc and auto-dec instructions.
-   Copyright (C) 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -30,13 +30,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "insn-config.h"
 #include "regs.h"
 #include "flags.h"
-#include "output.h"
 #include "function.h"
 #include "except.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "recog.h"
 #include "expr.h"
-#include "timevar.h"
 #include "tree-pass.h"
 #include "df.h"
 #include "dbgcnt.h"
@@ -483,9 +481,9 @@ attempt_change (rtx new_addr, rtx inc_reg)
   PUT_MODE (mem_tmp, mode);
   XEXP (mem_tmp, 0) = new_addr;
 
-  old_cost = (rtx_cost (mem, SET, speed)
-	      + rtx_cost (PATTERN (inc_insn.insn), SET, speed));
-  new_cost = rtx_cost (mem_tmp, SET, speed);
+  old_cost = (set_src_cost (mem, speed)
+	      + set_rtx_cost (PATTERN (inc_insn.insn), speed));
+  new_cost = set_src_cost (mem_tmp, speed);
 
   /* The first item of business is to see if this is profitable.  */
   if (old_cost < new_cost)
@@ -495,7 +493,7 @@ attempt_change (rtx new_addr, rtx inc_reg)
       return false;
     }
 
-  /* Jump thru a lot of hoops to keep the attributes up to date.  We
+  /* Jump through a lot of hoops to keep the attributes up to date.  We
      do not want to call one of the change address variants that take
      an offset even though we know the offset in many cases.  These
      assume you are changing where the address is pointing by the
@@ -1068,7 +1066,7 @@ find_inc (bool first_try)
       /* For the post_add to work, the result_reg of the inc must not be
 	 used in the mem insn since this will become the new index
 	 register.  */
-      if (count_occurrences (PATTERN (mem_insn.insn), inc_insn.reg_res, 1) != 0)
+      if (reg_overlap_mentioned_p (inc_insn.reg_res, PATTERN (mem_insn.insn)))
 	{
 	  if (dump_file)
 	    fprintf (dump_file, "base reg replacement failure.\n");
@@ -1513,6 +1511,7 @@ struct rtl_opt_pass pass_inc_dec =
  {
   RTL_PASS,
   "auto_inc_dec",                       /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_auto_inc_dec,                    /* gate */
   rest_of_handle_auto_inc_dec,          /* execute */
   NULL,                                 /* sub */
@@ -1523,7 +1522,6 @@ struct rtl_opt_pass pass_inc_dec =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
-  TODO_dump_func |
   TODO_df_finish,                       /* todo_flags_finish */
  }
 };

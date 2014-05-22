@@ -1,9 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.3.2.2 2012/10/30 18:57:55 yamt Exp $
+# $NetBSD: Makefile.inc,v 1.3.2.3 2014/05/22 16:00:27 yamt Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
 BINDIR=/usr/bin
 WARNS?=		0
+
+GDB_MACHINE_ARCH=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
 			-Wno-switch-enum -Wno-parentheses -Wno-comment \

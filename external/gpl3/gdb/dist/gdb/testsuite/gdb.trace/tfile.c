@@ -49,13 +49,13 @@ void
 add_memory_block (char *addr, int size)
 {
   short short_x;
-  long long ll_x;
+  unsigned long long ll_x;
 
   *((char *) trptr) = 'M';
   trptr += 1;
-  ll_x = (long) addr;
-  memcpy (trptr, &ll_x, sizeof (long long));
-  trptr += sizeof (long long);
+  ll_x = (unsigned long) addr;
+  memcpy (trptr, &ll_x, sizeof (unsigned long long));
+  trptr += sizeof (unsigned long long);
   short_x = size;
   memcpy (trptr, &short_x, 2);
   trptr += 2;

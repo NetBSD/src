@@ -44,7 +44,7 @@ if  { [istarget "i*86-*-*"] || [istarget "x86_64-*-*"] } then {
     run_dump_test "cfi-alpha-2"
     run_dump_test "cfi-alpha-3"
 
-} elseif { [istarget ppc*-*-*] || [istarget powerpc*-*-*] } then {
+} elseif { [istarget powerpc*-*-*] } then {
     run_dump_test "cfi-ppc-1"
 
 } elseif { [istarget s390*-*-*] } then {
@@ -72,7 +72,7 @@ if  { [istarget "i*86-*-*"] || [istarget "x86_64-*-*"] } then {
 	run_dump_test "cfi-sh-1"
     }
 
-} elseif { [istarget "arm*-*"] || [istarget "xscale*-*"] } then {
+} elseif { [istarget "arm*-*"] } then {
     # Only ELF based ARM targets support CFI.
     if { [is_pecoff_format] } then {
 	return
@@ -100,10 +100,10 @@ if { ![istarget "hppa64*-*"] } then {
     # This test uses .subsection/.previous which are elf-specific.
     run_dump_test "cfi-common-5"
   }
-  run_dump_test "cfi-common-7"
-}
-
-# MIPS doesn't support PC relative cfi directives.
-if { ![istarget "mips*-*"] } then {
+  # Some targets don't support PC relative cfi directives
+  if { ![istarget "mips*-*"] &&
+       !([istarget powerpc*-*-*] && [is_pecoff_format]) } then {
     run_dump_test "cfi-common-6"
+  }
+  run_dump_test "cfi-common-7"
 }

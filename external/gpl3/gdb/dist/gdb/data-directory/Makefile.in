@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2010-2013 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.
@@ -55,8 +55,14 @@ PYTHON_FILES = \
 	gdb/__init__.py \
 	gdb/types.py \
 	gdb/printing.py \
+	gdb/prompt.py \
 	gdb/command/__init__.py \
-	gdb/command/pretty_printers.py
+	gdb/command/type_printers.py \
+	gdb/command/pretty_printers.py \
+	gdb/command/prompt.py \
+	gdb/command/explore.py \
+	gdb/function/__init__.py \
+	gdb/function/strfns.py
 
 FLAGS_TO_PASS = \
 	"prefix=$(prefix)" \

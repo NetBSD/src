@@ -14,7 +14,7 @@ SECTIONS
   .rel.plt : { *(.rel.plt) }
   .rel.dyn : { *(.rel.dyn) }
   . = 0x50000;
-  _gp = . + 0x7ff0;
+  HIDDEN (_gp = . + 0x7ff0);
   .got : { *(.got) }
   . = 0x50400;
   .data : { *(.data) }

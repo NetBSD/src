@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.2.6.1 2012/04/17 00:03:50 yamt Exp $	*/
+/*	$NetBSD: crypto.c,v 1.2.6.2 2014/05/22 15:50:12 yamt Exp $	*/
 
 #include <config.h>
 #include "crypto.h"
@@ -101,12 +101,12 @@ auth_init(
 	char keystring[129];
 
 	if (keyf == NULL) {
-		if (ENABLED_OPT(NORMALVERBOSE))
+		if (debug)
 			printf("sntp auth_init: Couldn't open key file %s for reading!\n", keyfile);
 		return -1;
 	}
 	if (feof(keyf)) {
-		if (ENABLED_OPT(NORMALVERBOSE))
+		if (debug)
 			printf("sntp auth_init: Key file %s is empty!\n", keyfile);
 		fclose(keyf);
 		return -1;
@@ -114,7 +114,7 @@ auth_init(
 	key_cnt = 0;
 	while (!feof(keyf)) {
 		char * octothorpe;
-		struct key *act = emalloc(sizeof(struct key));
+		struct key *act;
 		int goodline = 0;
 
 		if (NULL == fgets(kbuf, sizeof(kbuf), keyf))
@@ -124,6 +124,7 @@ auth_init(
 		octothorpe = strchr(kbuf, '#');
 		if (octothorpe)
 			*octothorpe = '\0';
+		act = emalloc(sizeof(*act));
 		scan_cnt = sscanf(kbuf, "%d %9s %128s", &act->key_id, act->type, keystring);
 		if (scan_cnt == 3) {
 			int len = strlen(keystring);

@@ -1,5 +1,5 @@
 
-[^:]*:     file format elf32-littlearm
+[^:]*:     file format elf32-littlearm.*
 
 
 Disassembly of section \.text:

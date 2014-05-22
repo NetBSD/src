@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-null.c,v 1.57 2006-03-23 14:58:44 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-null.c,v 1.57 2006-03-23 14:58:44 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-null.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-null.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -130,7 +130,7 @@ null_if_print(const struct pcap_pkthdr *h, const u_char *p)
 	case BSD_AFNUM_INET6_BSD:
 	case BSD_AFNUM_INET6_FREEBSD:
 	case BSD_AFNUM_INET6_DARWIN:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		break;
 #endif
 

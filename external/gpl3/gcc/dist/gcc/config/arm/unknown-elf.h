@@ -1,6 +1,5 @@
 /* Definitions for non-Linux based ARM systems using ELF
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
    Contributed by Catherine Moore <clm@cygnus.com>
 
    This file is part of GCC.
@@ -23,9 +22,6 @@
    any conflicting definitions and add any extras.  */
 
 /* Run-time Target Specification.  */
-#ifndef TARGET_VERSION
-#define TARGET_VERSION	fputs (" (ARM/ELF)", stderr);
-#endif
 
 /* Default to using software floating point.  */
 #ifndef TARGET_DEFAULT
@@ -52,7 +48,7 @@
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
 /* Return a nonzero value if DECL has a section attribute.  */
-#define IN_NAMED_SECTION(DECL)						\
+#define IN_NAMED_SECTION_P(DECL)					\
   ((TREE_CODE (DECL) == FUNCTION_DECL || TREE_CODE (DECL) == VAR_DECL)	\
    && DECL_SECTION_NAME (DECL) != NULL_TREE)
 
@@ -60,7 +56,7 @@
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN)   	\
   do									\
     {									\
-      if (IN_NAMED_SECTION (DECL))					\
+      if (IN_NAMED_SECTION_P (DECL))					\
 	switch_to_section (get_named_section (DECL, NULL, 0));		\
       else								\
 	switch_to_section (bss_section);				\
@@ -77,7 +73,7 @@
 #define ASM_OUTPUT_ALIGNED_DECL_LOCAL(FILE, DECL, NAME, SIZE, ALIGN)	\
   do									\
     {									\
-      if ((DECL) != NULL && IN_NAMED_SECTION (DECL))			\
+      if ((DECL) != NULL && IN_NAMED_SECTION_P (DECL))			\
 	switch_to_section (get_named_section (DECL, NULL, 0));		\
       else								\
 	switch_to_section (bss_section);				\

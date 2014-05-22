@@ -49,4 +49,84 @@ extern void cfi_add_CFA_same_value (unsigned);
 extern void cfi_add_CFA_remember_state (void);
 extern void cfi_add_CFA_restore_state (void);
 
+/* Structures for md_cfi_end.  */
+
+#if defined (TE_PE) || defined (TE_PEP)
+#define SUPPORT_FRAME_LINKONCE 1
+#else
+#define SUPPORT_FRAME_LINKONCE 0
+#endif
+
+struct cfi_insn_data
+{
+  struct cfi_insn_data *next;
+#if SUPPORT_FRAME_LINKONCE
+  segT cur_seg;
+#endif
+  int insn;
+  union
+  {
+    struct
+    {
+      unsigned reg;
+      offsetT offset;
+    } ri;
+
+    struct
+    {
+      unsigned reg1;
+      unsigned reg2;
+    } rr;
+
+    unsigned r;
+    offsetT i;
+
+    struct
+    {
+      symbolS *lab1;
+      symbolS *lab2;
+    } ll;
+
+    struct cfi_escape_data *esc;
+
+    struct
+    {
+      unsigned reg, encoding;
+      expressionS exp;
+    } ea;
+  } u;
+};
+
+struct fde_entry
+{
+  struct fde_entry *next;
+#if SUPPORT_FRAME_LINKONCE
+  segT cur_seg;
+#endif
+  symbolS *start_address;
+  symbolS *end_address;
+  struct cfi_insn_data *data;
+  struct cfi_insn_data **last;
+  unsigned char per_encoding;
+  unsigned char lsda_encoding;
+  expressionS personality;
+  expressionS lsda;
+  unsigned int return_column;
+  unsigned int signal_frame;
+#if SUPPORT_FRAME_LINKONCE
+  int handled;
+#endif
+};
+
+/* The list of all FDEs that have been collected.  */
+extern struct fde_entry *all_fde_data;
+
+/* Fake CFI type; outside the byte range of any real CFI insn.  */
+#define CFI_adjust_cfa_offset	0x100
+#define CFI_return_column	0x101
+#define CFI_rel_offset		0x102
+#define CFI_escape		0x103
+#define CFI_signal_frame	0x104
+#define CFI_val_encoded_addr	0x105
+
 #endif /* DW2GENCFI_H */

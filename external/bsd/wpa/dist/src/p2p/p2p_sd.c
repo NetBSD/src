@@ -2,14 +2,8 @@
  * Wi-Fi Direct - P2P service discovery
  * Copyright (c) 2009, Atheros Communications
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -21,15 +15,55 @@
 #include "p2p.h"
 
 
+#ifdef CONFIG_WIFI_DISPLAY
+static int wfd_wsd_supported(struct wpabuf *wfd)
+{
+	const u8 *pos, *end;
+	u8 subelem;
+	u16 len;
+
+	if (wfd == NULL)
+		return 0;
+
+	pos = wpabuf_head(wfd);
+	end = pos + wpabuf_len(wfd);
+
+	while (pos + 3 <= end) {
+		subelem = *pos++;
+		len = WPA_GET_BE16(pos);
+		pos += 2;
+		if (pos + len > end)
+			break;
+
+		if (subelem == WFD_SUBELEM_DEVICE_INFO && len >= 6) {
+			u16 info = WPA_GET_BE16(pos);
+			return !!(info & 0x0040);
+		}
+
+		pos += len;
+	}
+
+	return 0;
+}
+#endif /* CONFIG_WIFI_DISPLAY */
+
 struct p2p_sd_query * p2p_pending_sd_req(struct p2p_data *p2p,
 					 struct p2p_device *dev)
 {
 	struct p2p_sd_query *q;
+	int wsd = 0;
 
 	if (!(dev->info.dev_capab & P2P_DEV_CAPAB_SERVICE_DISCOVERY))
-		return 0; /* peer does not support SD */
+		return NULL; /* peer does not support SD */
+#ifdef CONFIG_WIFI_DISPLAY
+	if (wfd_wsd_supported(dev->info.wfd_subelems))
+		wsd = 1;
+#endif /* CONFIG_WIFI_DISPLAY */
 
 	for (q = p2p->sd_queries; q; q = q->next) {
+		/* Use WSD only if the peer indicates support or it */
+		if (q->wsd && !wsd)
+			continue;
 		if (q->for_all_peers && !(dev->flags & P2P_DEV_SD_INFO))
 			return q;
 		if (!q->for_all_peers &&
@@ -370,9 +404,14 @@ void p2p_sd_response(struct p2p_data *p2p, int freq, const u8 *dst,
 				"previous SD response");
 			wpabuf_free(p2p->sd_resp);
 		}
+		p2p->sd_resp = wpabuf_dup(resp_tlvs);
+		if (p2p->sd_resp == NULL) {
+			wpa_msg(p2p->cfg->msg_ctx, MSG_ERROR, "P2P: Failed to "
+				"allocate SD response fragmentation area");
+			return;
+		}
 		os_memcpy(p2p->sd_resp_addr, dst, ETH_ALEN);
 		p2p->sd_resp_dialog_token = dialog_token;
-		p2p->sd_resp = wpabuf_dup(resp_tlvs);
 		p2p->sd_resp_pos = 0;
 		p2p->sd_frag_id = 0;
 		resp = p2p_build_sd_response(dialog_token, WLAN_STATUS_SUCCESS,
@@ -867,8 +906,27 @@ void * p2p_sd_request(struct p2p_data *p2p, const u8 *dst,
 	p2p->sd_queries = q;
 	wpa_msg(p2p->cfg->msg_ctx, MSG_DEBUG, "P2P: Added SD Query %p", q);
 
+	if (dst == NULL) {
+		struct p2p_device *dev;
+		dl_list_for_each(dev, &p2p->devices, struct p2p_device, list)
+			dev->flags &= ~P2P_DEV_SD_INFO;
+	}
+
 	return q;
 }
+
+
+#ifdef CONFIG_WIFI_DISPLAY
+void * p2p_sd_request_wfd(struct p2p_data *p2p, const u8 *dst,
+			  const struct wpabuf *tlvs)
+{
+	struct p2p_sd_query *q;
+	q = p2p_sd_request(p2p, dst, tlvs);
+	if (q)
+		q->wsd = 1;
+	return q;
+}
+#endif /* CONFIG_WIFI_DISPLAY */
 
 
 void p2p_sd_service_update(struct p2p_data *p2p)

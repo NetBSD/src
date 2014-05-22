@@ -71,9 +71,17 @@ extern const struct relax_type md_relax_table[];
 		     == S_GET_SEGMENT ((FIX)->fx_addsy)))	\
 	     || S_IS_LOCAL ((FIX)->fx_addsy)))
 
-/*
- * Local Variables:
- * comment-column: 0
- * fill-column: 131
- * End:
- */
+#define TARGET_USE_CFIPOP 1
+
+#define tc_cfi_frame_initial_instructions vax_cfi_frame_initial_instructions
+extern void vax_cfi_frame_initial_instructions (void);
+
+#define tc_regname_to_dw2regnum tc_vax_regname_to_dw2regnum
+extern int tc_vax_regname_to_dw2regnum (char *);
+
+#define tc_cfi_emit_pcrel_expr vax_cfi_emit_pcrel_expr
+extern void vax_cfi_emit_pcrel_expr (expressionS *, unsigned int);
+
+#define DWARF2_LINE_MIN_INSN_LENGTH     1
+#define DWARF2_DEFAULT_RETURN_COLUMN    15
+#define DWARF2_CIE_DATA_ALIGNMENT       -4

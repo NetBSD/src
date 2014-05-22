@@ -1,5 +1,5 @@
 /* BFD library support routines for the WDC 65816 architecture.
-   Copyright 1995, 1999, 2000, 2001, 2002, 2005, 2007
+   Copyright 1995, 1999, 2000, 2001, 2002, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
@@ -24,13 +24,9 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-static bfd_boolean scan_mach
-  PARAMS ((const struct bfd_arch_info *, const char *));
-
 static bfd_boolean
-scan_mach (info, string)
-     const struct bfd_arch_info *info ATTRIBUTE_UNUSED;
-     const char *string;
+scan_mach (const struct bfd_arch_info *info ATTRIBUTE_UNUSED,
+	   const char *string)
 {
   if (strcmp(string,"w65") == 0)
     return TRUE;
@@ -52,5 +48,6 @@ const bfd_arch_info_type bfd_w65_arch =
   TRUE,				/* the default machine */
   bfd_default_compatible,
   scan_mach,
+  bfd_arch_default_fill,
   0,
 };

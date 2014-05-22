@@ -67,4 +67,7 @@ if [istarget powerpc-ibm-aix*] then {
     run_dump_test "xcoff-branch-1-64"
 
     run_list_test "xcoff-ref-1"
+
+    run_dump_test "xcoff-dwsect-1-32"
+    run_dump_test "xcoff-dwsect-1-64"
 }

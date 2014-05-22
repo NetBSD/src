@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.h,v 1.1.1.1.6.1 2012/04/17 00:03:51 yamt Exp $	*/
+/*	$NetBSD: utilities.h,v 1.1.1.1.6.2 2014/05/22 15:50:12 yamt Exp $	*/
 
 #ifndef UTILITIES_H
 #define UTILITIES_H
@@ -6,22 +6,24 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ntp_stdlib.h>
-#include <ntp_fp.h>
-#include <ntp.h>
+
+#include "ntp.h"
+#include "ntp_stdlib.h"
+#include "lib_strbuf.h"
 
 #define HLINE "--------------------------------------------------------------------------------\n"
 #define PHLINE fprintf(output, HLINE);
 #define STDLINE printf(HLINE);
 
 
-void pkt_output (struct pkt *dpkg, int pkt_length, FILE *output);
-void l_fp_output (l_fp *ts, FILE *output);
-void l_fp_output_bin (l_fp *ts, FILE *output);
-void l_fp_output_dec (l_fp *ts, FILE *output);
+void pkt_output(struct pkt *dpkg, int pkt_length, FILE *output);
+void l_fp_output(l_fp *ts, FILE *output);
+void l_fp_output_bin(l_fp *ts, FILE *output);
+void l_fp_output_dec(l_fp *ts, FILE *output);
 
-char *addrinfo_to_str (struct addrinfo *addr);
-char *ss_to_str (sockaddr_u *saddr);
-char *tv_to_str (const struct timeval *tv);
+char *addrinfo_to_str(const struct addrinfo *addr);
+char *ss_to_str(sockaddr_u *saddr);
+char *tv_to_str(const struct timeval *tv);
+const char * hostnameaddr(const char *, const sockaddr_u *);
 
-#endif
+#endif	/* UTILITIES_H */

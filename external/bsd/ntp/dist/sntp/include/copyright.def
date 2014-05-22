@@ -1,0 +1,26 @@
+/* -*- Mode: Text -*- */
+
+copyright = {
+    date  = "1970-2013";
+    owner = "The University of Delaware";
+    eaddr = "http://bugs.ntp.org, bugs@ntp.org";
+    type  = ntp;
+};
+
+long-opts;
+config-header  = config.h;
+environrc;
+no-misuse-usage;
+version-proc = ntpOptionPrintVersion;
+
+version         = `
+eval VERSION=\`sed -e 's/.*,\\[//' -e 's/\\].*//' < ../sntp/m4/version.m4\`
+[ -z "${VERSION}" ] && echo "Cannot determine VERSION" && kill -TERM $AG_pid
+echo $VERSION`;
+
+version-value = '';	/* Don't use -v as a shortcut for --version */
+
+doc-sub = {
+    sub-name = version;
+    sub-text = 's/#VERSION#/<<version>>/g';
+};

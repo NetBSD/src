@@ -1,8 +1,10 @@
 @c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000,
-@c 2001, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+@c 2001, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
+@c man end
+
 @ifset GENERIC
 @page
 @node i386-Dependent
@@ -24,7 +26,7 @@ extending the Intel architecture to 64-bits.
 @menu
 * i386-Options::                Options
 * i386-Directives::             X86 specific directives
-* i386-Syntax::                 AT&T Syntax versus Intel Syntax
+* i386-Syntax::                 Syntactical considerations
 * i386-Mnemonics::              Instruction Naming
 * i386-Regs::                   Register Naming
 * i386-Prefixes::               Instruction Prefixes
@@ -33,6 +35,8 @@ extending the Intel architecture to 64-bits.
 * i386-Float::                  Floating Point
 * i386-SIMD::                   Intel's MMX and AMD's 3DNow! SIMD Operations
 * i386-LWP::                    AMD's Lightweight Profiling Instructions
+* i386-BMI::                    Bit Manipulation Instruction
+* i386-TBM::                    AMD's Trailing Bit Manipulation Instructions
 * i386-16bit::                  Writing 16-bit Code
 * i386-Arch::                   Specifying an x86 CPU architecture
 * i386-Bugs::                   AT&T Syntax bugs
@@ -50,15 +54,19 @@ extending the Intel architecture to 64-bits.
 The i386 version of @code{@value{AS}} has a few machine
 dependent options:
 
-@table @code
+@c man begin OPTIONS
+@table @gcctabopt
 @cindex @samp{--32} option, i386
 @cindex @samp{--32} option, x86-64
+@cindex @samp{--x32} option, i386
+@cindex @samp{--x32} option, x86-64
 @cindex @samp{--64} option, i386
 @cindex @samp{--64} option, x86-64
-@item --32 | --64
-Select the word size, either 32 bits or 64 bits. Selecting 32-bit
-implies Intel i386 architecture, while 64-bit implies AMD x86-64
-architecture.
+@item --32 | --x32 | --64
+Select the word size, either 32 bits or 64 bits.  @samp{--32}
+implies Intel i386 architecture, while @samp{--x32} and @samp{--64}
+imply AMD x86-64 architecture with 32-bit or 64-bit word-size
+respectively.
 
 These options are only available with the ELF object file format, and
 require that the necessary BFD support has been included (on a 32-bit
@@ -103,6 +111,7 @@ processor names are recognized:
 @code{core2},
 @code{corei7},
 @code{l1om},
+@code{k1om},
 @code{k6},
 @code{k6_2},
 @code{athlon},
@@ -110,6 +119,10 @@ processor names are recognized:
 @code{k8},
 @code{amdfam10},
 @code{bdver1},
+@code{bdver2},
+@code{bdver3},
+@code{btver1},
+@code{btver2},
 @code{generic32} and
 @code{generic64}.
 
@@ -132,8 +145,13 @@ accept various extension mnemonics.  For example,
 @code{sse4},
 @code{nosse},
 @code{avx},
+@code{avx2},
+@code{adx},
+@code{rdseed},
+@code{prfchw},
 @code{noavx},
 @code{vmx},
+@code{vmfunc},
 @code{smx},
 @code{xsave},
 @code{xsaveopt},
@@ -142,9 +160,14 @@ accept various extension mnemonics.  For example,
 @code{fsgsbase},
 @code{rdrnd},
 @code{f16c},
+@code{bmi2},
 @code{fma},
 @code{movbe},
 @code{ept},
+@code{lzcnt},
+@code{hle},
+@code{rtm},
+@code{invpcid},
 @code{clflush},
 @code{lwp},
 @code{fma4},
@@ -197,7 +220,7 @@ for any SSE intruction.
 @cindex @samp{-mavxscalar=} option, x86-64
 @item -mavxscalar=@var{128}
 @itemx -mavxscalar=@var{256}
-This options control how the assembler should encode scalar AVX
+These options control how the assembler should encode scalar AVX
 instructions.  @option{-mavxscalar=@var{128}} will encode scalar
 AVX instructions with 128bit vector length, which is the default.
 @option{-mavxscalar=@var{256}} will encode scalar AVX instructions
@@ -226,6 +249,7 @@ This opetion specifies that registers don't require a @samp{%} prefix.
 The @code{.att_syntax} and @code{.intel_syntax} directives will take precedent.
 
 @end table
+@c man end
 
 @node i386-Directives
 @section x86 specific Directives
@@ -252,7 +276,14 @@ This directive is only available for COFF based x86 targets.
 @end table
 
 @node i386-Syntax
-@section AT&T Syntax versus Intel Syntax
+@section i386 Syntactical Considerations
+@menu
+* i386-Variations::           AT&T Syntax versus Intel Syntax
+* i386-Chars::                Special Characters
+@end menu
+
+@node i386-Variations
+@subsection AT&T Syntax versus Intel Syntax
 
 @cindex i386 intel_syntax pseudo op
 @cindex intel_syntax pseudo op, i386
@@ -353,6 +384,29 @@ The AT&T assembler does not provide support for multiple section
 programs.  Unix style systems expect all programs to be single sections.
 @end itemize
 
+@node i386-Chars
+@subsection Special Characters
+
+@cindex line comment character, i386
+@cindex i386 line comment character
+The presence of a @samp{#} appearing anywhere on a line indicates the
+start of a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+If the @option{--divide} command line option has not been specified
+then the @samp{/} character appearing anywhere on a line also
+introduces a line comment.
+
+@cindex line separator, i386
+@cindex statement separator, i386
+@cindex i386 line separator
+The @samp{;} character can be used to separate statements on the same
+line.
+
 @node i386-Mnemonics
 @section Instruction Naming
 
@@ -394,8 +448,8 @@ quadruple word).
 
 Different encoding options can be specified via optional mnemonic
 suffix.  @samp{.s} suffix swaps 2 register operands in encoding when
-moving from one register to another.  @samp{.d32} suffix forces 32bit
-displacement in encoding.
+moving from one register to another.  @samp{.d8} or @samp{.d32} suffix
+prefers 8bit or 32bit displacement in encoding.
 
 @cindex conversion instructions, i386
 @cindex i386 conversion instructions
@@ -838,6 +892,36 @@ For detailed information on the LWP instruction set, see the
 @cite{AMD Lightweight Profiling Specification} available at
 @uref{http://developer.amd.com/cpu/LWP,Lightweight Profiling Specification}.
 
+@node i386-BMI
+@section Bit Manipulation Instructions
+
+@cindex BMI, i386
+@cindex BMI, x86-64
+
+@code{@value{AS}} supports the Bit Manipulation (BMI) instruction set.
+
+BMI instructions provide several instructions implementing individual
+bit manipulation operations such as isolation, masking, setting, or
+resetting.  
+
+@c Need to add a specification citation here when available.
+
+@node i386-TBM
+@section AMD's Trailing Bit Manipulation Instructions
+
+@cindex TBM, i386
+@cindex TBM, x86-64
+
+@code{@value{AS}} supports AMD's Trailing Bit Manipulation (TBM)
+instruction set, available on AMD's BDVER2 processors (Trinity and
+Viperfish).
+
+TBM instructions provide instructions implementing individual bit
+manipulation operations such as isolating, masking, setting, resetting,
+complementing, and operations on trailing zeros and ones.
+
+@c Need to add a specification citation here when available.
+
 @node i386-16bit
 @section Writing 16-bit Code
 
@@ -929,16 +1013,19 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{i486} @tab @samp{i586} @tab @samp{i686} @tab @samp{pentium}
 @item @samp{pentiumpro} @tab @samp{pentiumii} @tab @samp{pentiumiii} @tab @samp{pentium4}
 @item @samp{prescott} @tab @samp{nocona} @tab @samp{core} @tab @samp{core2}
-@item @samp{corei7} @tab @samp{l1om}
+@item @samp{corei7} @tab @samp{l1om} @tab @samp{k1om}
 @item @samp{k6} @tab @samp{k6_2} @tab @samp{athlon} @tab @samp{k8}
-@item @samp{amdfam10} @tab @samp{bdver1}
+@item @samp{amdfam10} @tab @samp{bdver1} @tab @samp{bdver2} @tab @samp{bdver3}
+@item @samp{btver1} @tab @samp{btver2}
 @item @samp{generic32} @tab @samp{generic64}
 @item @samp{.mmx} @tab @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3}
 @item @samp{.ssse3} @tab @samp{.sse4.1} @tab @samp{.sse4.2} @tab @samp{.sse4}
 @item @samp{.avx} @tab @samp{.vmx} @tab @samp{.smx} @tab @samp{.ept}
 @item @samp{.clflush} @tab @samp{.movbe} @tab @samp{.xsave} @tab @samp{.xsaveopt}
 @item @samp{.aes} @tab @samp{.pclmul} @tab @samp{.fma} @tab @samp{.fsgsbase}
-@item @samp{.rdrnd} @tab @samp{.f16c}
+@item @samp{.rdrnd} @tab @samp{.f16c} @tab @samp{.avx2} @tab @samp{.bmi2}
+@item @samp{.lzcnt} @tab @samp{.invpcid} @tab @samp{.vmfunc} @tab @samp{.hle}
+@item @samp{.rtm} @tab @samp{.adx} @tab @samp{.rdseed} @tab @samp{.prfchw}
 @item @samp{.3dnow} @tab @samp{.3dnowa} @tab @samp{.sse4a} @tab @samp{.sse5}
 @item @samp{.syscall} @tab @samp{.rdtscp} @tab @samp{.svme} @tab @samp{.abm}
 @item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop}

@@ -83,7 +83,7 @@ h8300_scan (const struct bfd_arch_info *info, const char *string)
 
 	  return (info->mach == bfd_mach_h8300sx);
 	}
-      
+
       return (info->mach == bfd_mach_h8300s);
     }
   else
@@ -127,6 +127,7 @@ static const bfd_arch_info_type h8300sxn_info_struct =
   FALSE,			/* the default machine */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   0
 };
 
@@ -143,6 +144,7 @@ static const bfd_arch_info_type h8300sx_info_struct =
   FALSE,			/* the default machine */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   &h8300sxn_info_struct
 };
 
@@ -159,6 +161,7 @@ static const bfd_arch_info_type h8300sn_info_struct =
   FALSE,			/* The default machine.  */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   &h8300sx_info_struct
 };
 
@@ -175,6 +178,7 @@ static const bfd_arch_info_type h8300hn_info_struct =
   FALSE,			/* The default machine.  */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   &h8300sn_info_struct
 };
 
@@ -191,6 +195,7 @@ static const bfd_arch_info_type h8300s_info_struct =
   FALSE,			/* The default machine.  */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   & h8300hn_info_struct
 };
 
@@ -207,6 +212,7 @@ static const bfd_arch_info_type h8300h_info_struct =
   FALSE,			/* The default machine.  */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   &h8300s_info_struct
 };
 
@@ -223,6 +229,7 @@ const bfd_arch_info_type bfd_h8300_arch =
   TRUE,				/* The default machine.  */
   compatible,
   h8300_scan,
+  bfd_arch_default_fill,
   &h8300h_info_struct
 };
 

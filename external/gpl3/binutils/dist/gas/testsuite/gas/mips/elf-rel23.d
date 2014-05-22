@@ -17,3 +17,4 @@ Disassembly of section \.text:
 			.*: R_MIPS_SUB	\*ABS\*
 			.*: R_MIPS_LO16	\*ABS\*
 .*:	0384e02d 	daddu	\$28,\$28,\$4
+	\.\.\.

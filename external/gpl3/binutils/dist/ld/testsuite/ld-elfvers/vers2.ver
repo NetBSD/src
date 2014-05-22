@@ -4,5 +4,5 @@ Version definitions:
 
 Version References:
   required from tmpdir/vers1.so:
-    0x0a7922b0 0x00 03 VERS_2.0
+    0x0a7922b0 0x00 ?? VERS_2.0
 

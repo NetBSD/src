@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.3 2013/01/16 05:27:59 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.4 2014/05/22 16:14:43 yamt Exp $
 
 LIB=	LLVMTarget
 
@@ -6,18 +6,14 @@ LIB=	LLVMTarget
 
 .PATH: ${LLVM_SRCDIR}/lib/Target
 
-SRCS+=	Mangler.cpp \
-	Target.cpp \
-	TargetInstrInfo.cpp \
+SRCS+=	Target.cpp \
 	TargetIntrinsicInfo.cpp \
 	TargetJITInfo.cpp \
 	TargetLibraryInfo.cpp \
 	TargetLoweringObjectFile.cpp \
 	TargetMachine.cpp \
 	TargetMachineC.cpp \
-	TargetRegisterInfo.cpp \
-	TargetSubtargetInfo.cpp \
-	TargetTransformImpl.cpp
+	TargetSubtargetInfo.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

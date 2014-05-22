@@ -23,9 +23,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.66 2006-03-03 22:53:21 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.66 2006-03-03 22:53:21 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-arp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-arp.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -104,7 +104,7 @@ struct  arp_pkthdr {
 #define TPA(ap) (ar_tpa(ap))
 
 
-struct tok arpop_values[] = {
+static const struct tok arpop_values[] = {
     { ARPOP_REQUEST, "Request" },
     { ARPOP_REPLY, "Reply" },
     { ARPOP_REVREQUEST, "Reverse Request" },
@@ -115,7 +115,7 @@ struct tok arpop_values[] = {
     { 0, NULL }
 };
 
-struct tok arphrd_values[] = {
+static const struct tok arphrd_values[] = {
     { ARPHRD_ETHER, "Ethernet" },
     { ARPHRD_IEEE802, "TokenRing" },
     { ARPHRD_ARCNET, "ArcNet" },
@@ -323,6 +323,7 @@ arp_print(netdissect_options *ndo,
             return;
         case ARPHRD_FRELAY:
             linkaddr = LINKADDR_FRELAY;
+            break;
         default:
             linkaddr = LINKADDR_ETHER;
             break;

@@ -1,5 +1,5 @@
 @c Copyright 1992, 1993, 1994, 1996, 1997, 1999, 2000, 2001, 2002,
-@c 2003, 2005, 2006, 2007, 2008, 2009, 2010
+@c 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
 @c Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
@@ -26,6 +26,7 @@
 
 @c CPUs of interest
 @c ================
+@set AARCH64
 @set ALPHA
 @set ARC
 @set ARM
@@ -35,6 +36,7 @@
 @set CRIS
 @set D10V
 @set D30V
+@set EPIPHANY
 @set H8/300
 @set HPPA
 @set I370
@@ -55,9 +57,11 @@
 @set MMIX
 @set MS1
 @set MSP430
+@set NS32K
 @set PDP11
 @set PJ
 @set PPC
+@set RL78
 @set RX
 @set S390
 @set SCORE
@@ -65,8 +69,12 @@
 @set SPARC
 @set TIC54X
 @set TIC6X
+@set TILEGX
+@set TILEPRO
 @set V850
 @set VAX
+@set XGATE
+@set XSTORMY16
 @set XTENSA
 @set Z80
 @set Z8000

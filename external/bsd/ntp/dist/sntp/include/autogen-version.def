@@ -1,0 +1,4 @@
+#assert (version-compare > autogen-version "5.18.2")
+// running 5.18.3pre5 right now...
+// >= is usually what we want.
+guard-option-names;

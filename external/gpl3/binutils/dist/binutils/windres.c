@@ -1,6 +1,6 @@
 /* windres.c -- a program to manipulate Windows resources
    Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
-   2009 Free Software Foundation, Inc.
+   2009, 2011, 2012 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -45,7 +45,6 @@
 #include "safe-ctype.h"
 #include "obstack.h"
 #include "windres.h"
-#include <sys/stat.h>
 
 /* Used by resrc.c at least.  */
 
@@ -54,7 +53,7 @@ int verbose = 0;
 int target_is_bigendian = 0;
 const char *def_target_arch;
 
-static void set_endianess (bfd *, const char *);
+static void set_endianness (bfd *, const char *);
 
 /* An enumeration of format types.  */
 
@@ -665,6 +664,7 @@ usage (FILE *stream, int status)
   -O --output-format=<format>  Specify output format\n\
   -F --target=<target>         Specify COFF target\n\
      --preprocessor=<program>  Program to use to preprocess rc file\n\
+     --preprocessor-arg=<arg>  Additional preprocessor argument\n\
   -I --include-dir=<dir>       Include directory when preprocessing rc file\n\
   -D --define <sym>[=<val>]    Define SYM when preprocessing rc file\n\
   -U --undefine <sym>          Undefine SYM when preprocessing rc file\n\
@@ -734,7 +734,8 @@ enum option_values
   OPTION_USE_TEMP_FILE,
   OPTION_NO_USE_TEMP_FILE,
   OPTION_YYDEBUG,
-  OPTION_INCLUDE_DIR
+  OPTION_INCLUDE_DIR,
+  OPTION_PREPROCESSOR_ARG
 };
 
 static const struct option long_options[] =
@@ -745,6 +746,7 @@ static const struct option long_options[] =
   {"output-format", required_argument, 0, 'O'},
   {"target", required_argument, 0, 'F'},
   {"preprocessor", required_argument, 0, OPTION_PREPROCESSOR},
+  {"preprocessor-arg", required_argument, 0, OPTION_PREPROCESSOR_ARG},
   {"include-dir", required_argument, 0, OPTION_INCLUDE_DIR},
   {"define", required_argument, 0, 'D'},
   {"undefine", required_argument, 0, 'U'},
@@ -889,6 +891,24 @@ main (int argc, char **argv)
 	  preprocessor = optarg;
 	  break;
 
+	case OPTION_PREPROCESSOR_ARG:
+	  if (preprocargs == NULL)
+	    {
+	      quotedarg = quot (optarg);
+	      preprocargs = xstrdup (quotedarg);
+	    }
+	  else
+	    {
+	      char *n;
+
+	      quotedarg = quot (optarg);
+	      n = xmalloc (strlen (preprocargs) + strlen (quotedarg) + 2);
+	      sprintf (n, "%s %s", preprocargs, quotedarg);
+	      free (preprocargs);
+	      preprocargs = n;
+	    }
+	  break;
+
 	case 'D':
 	case 'U':
 	  if (preprocargs == NULL)
@@ -1028,7 +1048,7 @@ main (int argc, char **argv)
 	output_format = format_from_filename (output_filename, 0);
     }
 
-  set_endianess (NULL, target);
+  set_endianness (NULL, target);
 
   /* Read the input file.  */
   switch (input_format)
@@ -1077,7 +1097,7 @@ main (int argc, char **argv)
 }
 
 static void
-set_endianess (bfd *abfd, const char *target)
+set_endianness (bfd *abfd, const char *target)
 {
   const bfd_target *target_vec;
 
@@ -1085,7 +1105,7 @@ set_endianess (bfd *abfd, const char *target)
   target_vec = bfd_get_target_info (target, abfd, &target_is_bigendian, NULL,
                                    &def_target_arch);
   if (! target_vec)
-    fatal ("Can't detect target endianess and architecture.");
+    fatal ("Can't detect target endianness and architecture.");
   if (! def_target_arch)
     fatal ("Can't detect architecture.");
 }
@@ -1106,7 +1126,7 @@ windres_open_as_binary (const char *filename, int rdmode)
 }
 
 void
-set_windres_bfd_endianess (windres_bfd *wrbfd, int is_bigendian)
+set_windres_bfd_endianness (windres_bfd *wrbfd, int is_bigendian)
 {
   assert (!! wrbfd);
   switch (WR_KIND(wrbfd))

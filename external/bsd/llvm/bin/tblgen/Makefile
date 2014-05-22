@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.2 2012/10/30 18:55:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.2.3 2014/05/22 16:13:23 yamt Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -10,6 +10,7 @@ NOMAN=		yes
 SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
 	AsmWriterInst.cpp \
+	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenDAGPatterns.cpp \
@@ -25,16 +26,15 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DAGISelMatcherOpt.cpp \
 	DFAPacketizerEmitter.cpp \
 	DisassemblerEmitter.cpp \
-	EDEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
+	OptParserEmitter.cpp \
 	PseudoLoweringEmitter.cpp \
 	RegisterInfoEmitter.cpp \
 	SetTheory.cpp \
 	SubtargetEmitter.cpp \
-	TGValueTypes.cpp \
 	TableGen.cpp \
 	X86DisassemblerTables.cpp \
 	X86ModRMFilters.cpp \

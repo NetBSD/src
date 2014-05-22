@@ -1,5 +1,6 @@
 /* BFD back-end for i386 a.out binaries under dynix.
-   Copyright 1994, 1995, 2001, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 2001, 2003, 2005, 2007, 2012
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,10 +56,9 @@
 #define a_shdrsize a_dload
 
 void
-i386dynix_32_swap_exec_header_in (abfd, raw_bytes, execp)
-     bfd *abfd;
-     struct external_exec *raw_bytes;
-     struct internal_exec *execp;
+i386dynix_32_swap_exec_header_in (bfd *abfd,
+				  struct external_exec *raw_bytes,
+				  struct internal_exec *execp)
 {
   struct external_exec *bytes = (struct external_exec *)raw_bytes;
 
@@ -66,7 +66,7 @@ i386dynix_32_swap_exec_header_in (abfd, raw_bytes, execp)
      configuration (IE for i960), so ensure that all such uninitialized
      fields are zero'd out.  There are places where two of these structs
      are memcmp'd, and thus the contents do matter. */
-  memset ((PTR) execp, 0, sizeof (struct internal_exec));
+  memset (execp, 0, sizeof (struct internal_exec));
   /* Now fill in fields in the execp, from the bytes in the raw data.  */
   execp->a_info   = H_GET_32 (abfd, bytes->e_info);
   execp->a_text   = GET_WORD (abfd, bytes->e_text);

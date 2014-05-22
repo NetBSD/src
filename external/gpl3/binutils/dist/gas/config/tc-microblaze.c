@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright 2009, 2010 Free Software Foundation.
+   Copyright 2009, 2010, 2012 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,8 +19,8 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-#include <stdio.h>
 #include "as.h"
+#include <stdio.h>
 #include "bfd.h"
 #include "subsegs.h"
 #define DEFINE_TABLE
@@ -2101,7 +2101,7 @@ md_estimate_size_before_relax (fragS * fragP,
 	  else if (streq (fragP->fr_opcode, str_microblaze_ro_anchor))
 	    {
               /* It is accessed using the small data read only anchor.  */
-              if ((S_GET_SEGMENT (fragP->fr_symbol) == &bfd_com_section)
+              if ((S_GET_SEGMENT (fragP->fr_symbol) == bfd_com_section_ptr)
 		  || (S_GET_SEGMENT (fragP->fr_symbol) == sdata2_segment)
 		  || (S_GET_SEGMENT (fragP->fr_symbol) == sbss2_segment)
 		  || (! S_IS_DEFINED (fragP->fr_symbol)))
@@ -2125,7 +2125,7 @@ md_estimate_size_before_relax (fragS * fragP,
             }
 	  else if (streq (fragP->fr_opcode, str_microblaze_rw_anchor))
 	    {
-              if ((S_GET_SEGMENT (fragP->fr_symbol) == &bfd_com_section)
+              if ((S_GET_SEGMENT (fragP->fr_symbol) == bfd_com_section_ptr)
 		  || (S_GET_SEGMENT (fragP->fr_symbol) == sdata_segment)
 		  || (S_GET_SEGMENT (fragP->fr_symbol) == sbss_segment)
 		  || (!S_IS_DEFINED (fragP->fr_symbol)))

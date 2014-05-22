@@ -10,8 +10,9 @@
 
 @copying
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+2010, 2011, 2012
 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -176,7 +177,7 @@ in the section entitled ``GNU Free Documentation License''.
 @c man title ar create, modify, and extract from archives
 
 @smallexample
-ar [@option{--plugin} @var{name}] [-]@var{p}[@var{mod} [@var{relpos}] [@var{count}]] @var{archive} [@var{member}@dots{}]
+ar [@option{--plugin} @var{name}] [-]@var{p}[@var{mod} [@var{relpos}] [@var{count}]] [@option{--target} @var{bfdname}] @var{archive} [@var{member}@dots{}]
 ar -M [ <mri-script ]
 @end smallexample
 
@@ -251,7 +252,7 @@ program.
 
 @smallexample
 @c man begin SYNOPSIS ar
-ar [@option{--plugin} @var{name}] [@option{-X32_64}] [@option{-}]@var{p}[@var{mod} [@var{relpos}] [@var{count}]] @var{archive} [@var{member}@dots{}]
+ar [@option{--plugin} @var{name}] [@option{-X32_64}] [@option{-}]@var{p}[@var{mod} [@var{relpos}] [@var{count}]] [@option{--target} @var{bfdname}] @var{archive} [@var{member}@dots{}]
 @c man end
 @end smallexample
 
@@ -383,6 +384,13 @@ are extracted.
 
 Files cannot be extracted from a thin archive.
 
+@item --help
+Displays the list of command line options supported by @command{ar}
+and then exits.
+
+@item --version
+Displays the version information of @command{ar} and then exits.
+
 @end table
 
 A number of modifiers (@var{mod}) may immediately follow the @var{p}
@@ -411,12 +419,17 @@ using this modifier.
 
 @item D
 @cindex deterministic archives
+@kindex --enable-deterministic-archives
 Operate in @emph{deterministic} mode.  When adding files and the archive
 index use zero for UIDs, GIDs, timestamps, and use consistent file modes
 for all files.  When this option is used, if @command{ar} is used with
 identical options and identical input files, multiple runs will create
 identical output files regardless of the input files' owners, groups,
 file modes, or modification times.
+
+If @file{binutils} was configured with
+@option{--enable-deterministic-archives}, then this mode is on by default.
+It can be disabled with the @samp{U} modifier, below.
 
 @item f
 Truncate names in the archive.  @sc{gnu} @command{ar} will normally permit file
@@ -486,6 +499,16 @@ operation @samp{r} (replace).  In particular, the combination @samp{qu} is
 not allowed, since checking the timestamps would lose any speed
 advantage from the operation @samp{q}.
 
+@item U
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Do @emph{not} operate in @emph{deterministic} mode.  This is the inverse
+of the @samp{D} modifier, above: added files and the archive index will
+get their actual UID, GID, timestamp, and file mode values.
+
+This is the default unless @file{binutils} was configured with
+@option{--enable-deterministic-archives}.
+
 @item v
 This modifier requests the @emph{verbose} version of an operation.  Many
 operations display additional information, such as filenames processed,
@@ -505,6 +528,11 @@ The optional command line switch @option{--plugin} @var{name} causes
 @command{ar} to load the plugin called @var{name} which adds support
 for more file formats.  This option is only available if the toolchain
 has been built with plugin support enabled.
+
+The optional command line switch @option{--target} @var{bfdname}
+specifies that the archive members are in an object code format
+different from your system's default format.  See
+@xref{Target Selection}, for more information.
 
 @c man end
 
@@ -1031,6 +1059,8 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{-j} @var{sectionname}|@option{--only-section=}@var{sectionname}]
         [@option{-R} @var{sectionname}|@option{--remove-section=}@var{sectionname}]
         [@option{-p}|@option{--preserve-dates}]
+        [@option{-D}|@option{--enable-deterministic-archives}]
+        [@option{-U}|@option{--disable-deterministic-archives}]
         [@option{--debugging}]
         [@option{--gap-fill=}@var{val}]
         [@option{--pad-to=}@var{address}]
@@ -1065,6 +1095,8 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--add-gnu-debuglink=}@var{path-to-file}]
         [@option{--keep-file-symbols}]
         [@option{--only-keep-debug}]
+        [@option{--strip-dwo}]
+        [@option{--extract-dwo}]
         [@option{--extract-symbol}]
         [@option{--writable-text}]
         [@option{--readonly-text}]
@@ -1078,6 +1110,8 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--subsystem=}@var{which}:@var{major}.@var{minor}]
         [@option{--compress-debug-sections}]
         [@option{--decompress-debug-sections}]
+        [@option{--dwarf-depth=@var{n}}]
+        [@option{--dwarf-start=@var{n}}]
         [@option{-v}|@option{--verbose}]
         [@option{-V}|@option{--version}]
         [@option{--help}] [@option{--info}]
@@ -1293,6 +1327,30 @@ commands.  If the input was '12345678' then the outputs would be
 Set the access and modification dates of the output file to be the same
 as those of the input file.
 
+@item -D
+@itemx --enable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Operate in @emph{deterministic} mode.  When copying archive members
+and writing the archive index, use zero for UIDs, GIDs, timestamps,
+and use consistent file modes for all files.
+
+If @file{binutils} was configured with
+@option{--enable-deterministic-archives}, then this mode is on by default.
+It can be disabled with the @samp{-U} option, below.
+
+@item -U
+@itemx --disable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Do @emph{not} operate in @emph{deterministic} mode.  This is the
+inverse of the @option{-D} option, above: when copying archive members
+and writing the archive index, use their actual UID, GID, timestamp,
+and file mode values.
+
+This is the default unless @file{binutils} was configured with
+@option{--enable-deterministic-archives}.
+
 @item --debugging
 Convert debugging information, if possible.  This is not the default
 because only certain debugging formats are supported, and the
@@ -1422,7 +1480,7 @@ the use of long section names in the output object; when @samp{disable}
 is in effect, any long section names in the input object will be truncated.
 The @samp{enable} option will only emit long section names if any are
 present in the inputs; this is mostly the same as @samp{keep}, but it
-is left undefined whether the @samp{enable} option might force the 
+is left undefined whether the @samp{enable} option might force the
 creation of an empty string table in the output file.
 
 @item --change-leading-char
@@ -1627,6 +1685,21 @@ currently only supports the presence of one filename containing
 debugging information, not multiple filenames on a one-per-object-file
 basis.
 
+@item --strip-dwo
+Remove the contents of all DWARF .dwo sections, leaving the
+remaining debugging sections and all symbols intact.
+This option is intended for use by the compiler as part of
+the @option{-gsplit-dwarf} option, which splits debug information
+between the .o file and a separate .dwo file.  The compiler
+generates all debug information in the same file, then uses
+the @option{--extract-dwo} option to copy the .dwo sections to
+the .dwo file, then the @option{--strip-dwo} option to remove
+those sections from the original .o file.
+
+@item --extract-dwo
+Extract the contents of all DWARF .dwo sections.  See the
+@option{--strip-dwo} option for more information.
+
 @item --file-alignment @var{num}
 Specify the file alignment.  Sections in the file will always begin at
 file offsets which are multiples of this number.  This defaults to
@@ -1744,6 +1817,7 @@ objdump [@option{-a}|@option{--archive-headers}]
         [@option{-m} @var{machine}|@option{--architecture=}@var{machine}]
         [@option{-M} @var{options}|@option{--disassembler-options=}@var{options}]
         [@option{-p}|@option{--private-headers}]
+        [@option{-P} @var{options}|@option{--private=}@var{options}]
         [@option{-r}|@option{--reloc}]
         [@option{-R}|@option{--dynamic-reloc}]
         [@option{-s}|@option{--full-contents}]
@@ -1787,7 +1861,7 @@ object files.
 
 The long and short forms of options, shown here as alternatives, are
 equivalent.  At least one option from the list
-@option{-a,-d,-D,-e,-f,-g,-G,-h,-H,-p,-r,-R,-s,-S,-t,-T,-V,-x} must be given.
+@option{-a,-d,-D,-e,-f,-g,-G,-h,-H,-p,-P,-r,-R,-s,-S,-t,-T,-V,-x} must be given.
 
 @table @env
 @item -a
@@ -2066,6 +2140,17 @@ Print information that is specific to the object file format.  The exact
 information printed depends upon the object file format.  For some
 object file formats, no additional information is printed.
 
+@item -P @var{options}
+@itemx --private=@var{options}
+Print information that is specific to the object file format.  The
+argument @var{options} is a comma separated list that depends on the
+format (the lists of options is displayed with the help).
+
+For XCOFF, the available options are: @option{header}, @option{aout},
+@option{sections}, @option{syms}, @option{relocs}, @option{lineno},
+@option{loader}, @option{except}, @option{typchk}, @option{traceback}
+and @option{toc}.
+
 @item -r
 @itemx --reloc
 @cindex relocation entries, in object file
@@ -2099,7 +2184,7 @@ Display source code intermixed with disassembly, if possible.  Implies
 @item --prefix=@var{prefix}
 @cindex Add prefix to absolute paths
 Specify @var{prefix} to add to the absolute paths when used with
-@option{-S}. 
+@option{-S}.
 
 @item --prefix-strip=@var{level}
 @cindex Strip absolute paths
@@ -2116,7 +2201,7 @@ When disassembling instructions, do not print the instruction bytes.
 This is the default when @option{--prefix-addresses} is used.
 
 @item --insn-width=@var{width}
-@cindex Instruction width 
+@cindex Instruction width
 Display @var{width} bytes on a single line when disassembling
 instructions.
 
@@ -2130,6 +2215,32 @@ then only data found in those specific sections will be dumped.
 
 Note that there is no single letter option to display the content of
 trace sections or .gdb_index.
+
+Note: the output from the @option{=info} option can also be affected
+by the options @option{--dwarf-depth}, the @option{--dwarf-start} and
+the @option{--dwarf-check}.
+
+@item --dwarf-depth=@var{n}
+Limit the dump of the @code{.debug_info} section to @var{n} children.
+This is only useful with @option{--dwarf=info}.  The default is
+to print all DIEs; the special value 0 for @var{n} will also have this
+effect.
+
+With a non-zero value for @var{n}, DIEs at or deeper than @var{n}
+levels will not be printed.  The range for @var{n} is zero-based.
+
+@item --dwarf-start=@var{n}
+Print only DIEs beginning with the DIE numbered @var{n}.  This is only
+useful with @option{--dwarf=info}.
+
+If specified, this option will suppress printing of any header
+information and all DIEs before the DIE numbered @var{n}.  Only
+siblings and children of the specified DIE will be printed.
+
+This can be used in conjunction with @option{--dwarf-depth}.
+
+@item --dwarf-check
+Enable additional checks for consistency of Dwarf information.
 
 @item -G
 @itemx --stabs
@@ -2301,7 +2412,7 @@ nm(1), readelf(1), and the Info entries for @file{binutils}.
 
 @smallexample
 @c man begin SYNOPSIS ranlib
-ranlib [@option{-vVt}] @var{archive}
+ranlib [@option{--plugin} @var{name}] [@option{-DhHvVt}] @var{archive}
 @c man end
 @end smallexample
 
@@ -2326,13 +2437,38 @@ The @sc{gnu} @command{ranlib} program is another form of @sc{gnu} @command{ar}; 
 @c man begin OPTIONS ranlib
 
 @table @env
+@item -h
+@itemx -H
+@itemx --help
+Show usage information for @command{ranlib}.
+
 @item -v
 @itemx -V
 @itemx --version
 Show the version number of @command{ranlib}.
 
+@item -D
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Operate in @emph{deterministic} mode.  The symbol map archive member's
+header will show zero for the UID, GID, and timestamp.  When this
+option is used, multiple runs will produce identical output files.
+
+This is the default unless @file{binutils} was configured with
+@option{--enable-deterministic-archives}.
+
 @item -t
 Update the timestamp of the symbol map of an archive.
+
+@item -U
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Do @emph{not} operate in @emph{deterministic} mode.  This is the
+inverse of the @samp{-D} option, above: the archive index will get
+actual UID, GID, timestamp, and file mode values.
+
+This is the default unless @file{binutils} was configured with
+@option{--enable-deterministic-archives}.
 @end table
 
 @c man end
@@ -2584,12 +2720,15 @@ strip [@option{-F} @var{bfdname} |@option{--target=}@var{bfdname}]
       [@option{-O} @var{bfdname} |@option{--output-target=}@var{bfdname}]
       [@option{-s}|@option{--strip-all}]
       [@option{-S}|@option{-g}|@option{-d}|@option{--strip-debug}]
+      [@option{--strip-dwo}]
       [@option{-K} @var{symbolname} |@option{--keep-symbol=}@var{symbolname}]
       [@option{-N} @var{symbolname} |@option{--strip-symbol=}@var{symbolname}]
       [@option{-w}|@option{--wildcard}]
       [@option{-x}|@option{--discard-all}] [@option{-X} |@option{--discard-locals}]
       [@option{-R} @var{sectionname} |@option{--remove-section=}@var{sectionname}]
       [@option{-o} @var{file}] [@option{-p}|@option{--preserve-dates}]
+      [@option{-D}|@option{--enable-deterministic-archives}]
+      [@option{-U}|@option{--disable-deterministic-archives}]
       [@option{--keep-file-symbols}]
       [@option{--only-keep-debug}]
       [@option{-v} |@option{--verbose}] [@option{-V}|@option{--version}]
@@ -2651,6 +2790,12 @@ Remove all symbols.
 @itemx --strip-debug
 Remove debugging symbols only.
 
+@item --strip-dwo
+Remove the contents of all DWARF .dwo sections, leaving the
+remaining debugging sections and all symbols intact.
+See the description of this option in the @command{objcopy} section
+for more information.
+
 @item --strip-unneeded
 Remove all symbols that are not needed for relocation processing.
 
@@ -2673,6 +2818,30 @@ argument may be specified.
 @item -p
 @itemx --preserve-dates
 Preserve the access and modification dates of the file.
+
+@item -D
+@itemx --enable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Operate in @emph{deterministic} mode.  When copying archive members
+and writing the archive index, use zero for UIDs, GIDs, timestamps,
+and use consistent file modes for all files.
+
+If @file{binutils} was configured with
+@option{--enable-deterministic-archives}, then this mode is on by default.
+It can be disabled with the @samp{-U} option, below.
+
+@item -U
+@itemx --disable-deterministic-archives
+@cindex deterministic archives
+@kindex --enable-deterministic-archives
+Do @emph{not} operate in @emph{deterministic} mode.  This is the
+inverse of the @option{-D} option, above: when copying archive members
+and writing the archive index, use their actual UID, GID, timestamp,
+and file mode values.
+
+This is the default unless @file{binutils} was configured with
+@option{--enable-deterministic-archives}.
 
 @item -w
 @itemx --wildcard
@@ -2777,8 +2946,8 @@ the Info entries for @file{binutils}.
 
 @smallexample
 @c man begin SYNOPSIS cxxfilt
-c++filt [@option{-_}|@option{--strip-underscores}]
-        [@option{-n}|@option{--no-strip-underscores}]
+c++filt [@option{-_}|@option{--strip-underscore}]
+        [@option{-n}|@option{--no-strip-underscore}]
         [@option{-p}|@option{--no-params}]
         [@option{-t}|@option{--types}]
         [@option{-i}|@option{--no-verbose}]
@@ -2858,14 +3027,14 @@ characters trailing after a mangled name.  For example:
 
 @table @env
 @item -_
-@itemx --strip-underscores
+@itemx --strip-underscore
 On some systems, both the C and C++ compilers put an underscore in front
 of every name.  For example, the C name @code{foo} gets the low-level
 name @code{_foo}.  This option removes the initial underscore.  Whether
 @command{c++filt} removes the underscore by default is target dependent.
 
 @item -n
-@itemx --no-strip-underscores
+@itemx --no-strip-underscore
 Do not remove the initial underscore.
 
 @item -p
@@ -2992,11 +3161,25 @@ address on standard output.  In this mode, @command{addr2line} may be used
 in a pipe to convert dynamically chosen addresses.
 
 The format of the output is @samp{FILENAME:LINENO}.  The file name and
-line number for each address is printed on a separate line.  If the
-@command{-f} option is used, then each @samp{FILENAME:LINENO} line is
-preceded by a @samp{FUNCTIONNAME} line which is the name of the function
-containing the address.  If the @command{-a} option is used, then the
-address read is first printed.
+line number for each input address is printed on separate lines.
+
+If the @option{-f} option is used, then each @samp{FILENAME:LINENO}
+line is preceded by @samp{FUNCTIONNAME} which is the name of the
+function containing the address.
+
+If the @option{-i} option is used and the code at the given address is
+present there because of inlining by the compiler then the
+@samp{@{FUNCTIONNAME@} FILENAME:LINENO} information for the inlining
+function will be displayed afterwards.  This continues recursively
+until there is no more inlining to report.
+
+If the @option{-a} option is used then the output is prefixed by the
+input address.
+
+If the @option{-p} option is used then the output for each input
+address is displayed on one, possibly quite long, line.  If
+@option{-p} is not used then the output is broken up into multiple
+lines, based on the paragraphs above.
 
 If the file name or function name can not be determined,
 @command{addr2line} will print two question marks in their place.  If the
@@ -3012,7 +3195,7 @@ equivalent.
 @table @env
 @item -a
 @itemx --addresses
-Display address before function names or file and line number
+Display the address before the function name, file and line number
 information.  The address is printed with a @samp{0x} prefix to easily
 identify it.
 
@@ -3452,6 +3635,13 @@ preprocessor first.  This option may be used to specify the preprocessor
 to use, including any leading arguments.  The default preprocessor
 argument is @code{gcc -E -xc-header -DRC_INVOKED}.
 
+@item --preprocessor-arg @var{option}
+When @command{windres} reads an @code{rc} file, it runs it through
+the C preprocessor first.  This option may be used to specify additional
+text to be passed to preprocessor on its command line.
+This option can be used multiple times to add multiple options to the
+preprocessor command line.
+
 @item -I @var{directory}
 @itemx --include-dir @var{directory}
 Specify an include directory to use when reading an @code{rc} file.
@@ -3655,9 +3845,9 @@ that uses that DLL:
 
 
 @command{dlltool} may also be used to query an existing import library
-to determine the name of the DLL to which it is associated.  See the 
+to determine the name of the DLL to which it is associated.  See the
 description of the @option{-I} or @option{--identify} option.
- 
+
 @c man end
 
 @c man begin OPTIONS dlltool
@@ -3877,6 +4067,9 @@ The result is going to be named @var{name}@code{.exe}.
 
 @item @code{LIBRARY} @var{name} @code{[ ,} @var{base} @code{]}
 The result is going to be named @var{name}@code{.dll}.
+Note: If you want to use LIBRARY as name then you need to quote.  Otherwise
+this will fail due a necessary hack for libtool (see PR binutils/13710 for more
+details).
 
 @item @code{EXPORTS ( ( (} @var{name1} @code{[ = } @var{name2} @code{] ) | ( } @var{name1} @code{=} @var{module-name} @code{.} @var{external-name} @code{) ) [ == } @var{its_name} @code{]}
 @item @code{[} @var{integer} @code{] [ NONAME ] [ CONSTANT ] [ DATA ] [ PRIVATE ] ) *}
@@ -3885,6 +4078,9 @@ ordinal number @var{integer}, or declares @var{name1} as an alias
 (forward) of the function @var{external-name} in the DLL.
 If @var{its_name} is specified, this name is used as string in export table.
 @var{module-name}.
+Note: The @code{EXPORTS} has to be the last command in .def file, as keywords
+are treated - beside @code{LIBRARY} - as simple name-identifiers.
+If you want to use LIBRARY as name then you need to quote it.
 
 @item @code{IMPORTS ( (} @var{internal-name} @code{=} @var{module-name} @code{.} @var{integer} @code{) | [} @var{internal-name} @code{= ]} @var{module-name} @code{.} @var{external-name} @code{) [ == ) @var{its_name} @code{]} *}
 Declares that @var{external-name} or the exported function whose
@@ -3893,6 +4089,9 @@ ordinal number is @var{integer} is to be imported from the file
 the name that the imported function will be referred to in the body of
 the DLL.
 If @var{its_name} is specified, this name is used as string in import table.
+Note: The @code{IMPORTS} has to be the last command in .def file, as keywords
+are treated - beside @code{LIBRARY} - as simple name-identifiers.
+If you want to use LIBRARY as name then you need to quote it.
 
 @item @code{DESCRIPTION} @var{string}
 Puts @var{string} into the output @file{.exp} file in the
@@ -3952,6 +4151,8 @@ readelf [@option{-a}|@option{--all}]
         [@option{-c}|@option{--archive-index}]
         [@option{-w[lLiaprmfFsoRt]}|
          @option{--debug-dump}[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index]]
+        [@option{--dwarf-depth=@var{n}}]
+        [@option{--dwarf-start=@var{n}}]
         [@option{-I}|@option{--histogram}]
         [@option{-v}|@option{--version}]
         [@option{-W}|@option{--wide}]
@@ -4119,6 +4320,28 @@ Note: the @option{=frames-interp} option will display the interpreted
 contents of a .debug_frame section whereas the @option{=frames} option
 dumps the contents in a raw format.
 
+Note: the output from the @option{=info} option can also be affected
+by the options @option{--dwarf-depth} and @option{--dwarf-start}.
+
+@item --dwarf-depth=@var{n}
+Limit the dump of the @code{.debug_info} section to @var{n} children.
+This is only useful with @option{--debug-dump=info}.  The default is
+to print all DIEs; the special value 0 for @var{n} will also have this
+effect.
+
+With a non-zero value for @var{n}, DIEs at or deeper than @var{n}
+levels will not be printed.  The range for @var{n} is zero-based.
+
+@item --dwarf-start=@var{n}
+Print only DIEs beginning with the DIE numbered @var{n}.  This is only
+useful with @option{--debug-dump=info}.
+
+If specified, this option will suppress printing of any header
+information and all DIEs before the DIE numbered @var{n}.  Only
+siblings and children of the specified DIE will be printed.
+
+This can be used in conjunction with @option{--dwarf-depth}.
+
 @item -I
 @itemx --histogram
 Display a histogram of bucket list lengths when displaying the contents
@@ -4162,10 +4385,10 @@ objdump(1), and the Info entries for @file{binutils}.
 @c man begin SYNOPSIS elfedit
 elfedit [@option{--input-mach=}@var{machine}]
         [@option{--input-type=}@var{type}]
-        [@option{--input-osabi=}@var{osbi}]
+        [@option{--input-osabi=}@var{osabi}]
         @option{--output-mach=}@var{machine}
         @option{--output-type=}@var{type}
-        @option{--output-osabi=}@var{osbi}
+        @option{--output-osabi=}@var{osabi}
         [@option{-v}|@option{--version}]
         [@option{-h}|@option{--help}]
         @var{elffile}@dots{}
@@ -4195,7 +4418,8 @@ Set the matching input ELF machine type to @var{machine}.  If
 @option{--input-mach} isn't specified, it will match any ELF
 machine types.
 
-The supported ELF machine types are, @var{L1OM} and @var{x86-64}.
+The supported ELF machine types are, @var{L1OM}, @var{K1OM} and
+@var{x86-64}.
 
 @itemx --output-mach=@var{machine}
 Change the ELF machine type in the ELF header to @var{machine}.  The
@@ -4212,16 +4436,17 @@ Change the ELF file type in the ELF header to @var{type}.  The
 supported ELF types are the same as @option{--input-type}.
 
 @itemx --input-osabi=@var{osabi}
-Set the matching input ELF file OSABI to @var{osbi}.  If
+Set the matching input ELF file OSABI to @var{osabi}.  If
 @option{--input-osabi} isn't specified, it will match any ELF OSABIs.
 
 The supported ELF OSABIs are, @var{none}, @var{HPUX}, @var{NetBSD},
-@var{Linux}, @var{Hurd}, @var{Solaris}, @var{AIX}, @var{Irix},
+@var{GNU}, @var{Linux} (alias for @var{GNU}),
+@var{Solaris}, @var{AIX}, @var{Irix},
 @var{FreeBSD}, @var{TRU64}, @var{Modesto}, @var{OpenBSD}, @var{OpenVMS},
 @var{NSK}, @var{AROS} and @var{FenixOS}.
 
 @itemx --output-osabi=@var{osabi}
-Change the ELF OSABI in the ELF header to @var{type}.  The
+Change the ELF OSABI in the ELF header to @var{osabi}.  The
 supported ELF OSABI are the same as @option{--input-osabi}.
 
 @item -v
@@ -4621,7 +4846,7 @@ things without first using the debugger to find the facts.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License
- 
+
 @include fdl.texi
 
 @node Binutils Index

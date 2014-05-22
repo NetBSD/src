@@ -33,9 +33,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.114 2005-12-05 11:35:58 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.114 2005-12-05 11:35:58 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: print-ppp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 
 /* Protocol Codes defined in ppp.h */
 
-struct tok ppptype2str[] = {
+static const struct tok ppptype2str[] = {
         { PPP_IP,	  "IP" },
         { PPP_OSI,	  "OSI" },
         { PPP_NS,	  "NS" },
@@ -134,7 +134,7 @@ struct tok ppptype2str[] = {
 #define CPCODES_RESET_REQ	14	/* Reset-Request (CCP only) RFC1962 */
 #define CPCODES_RESET_REP	15	/* Reset-Reply (CCP only) */
 
-struct tok cpcodes[] = {
+static const struct tok cpcodes[] = {
 	{CPCODES_VEXT,      "Vendor-Extension"}, /* RFC2153 */
 	{CPCODES_CONF_REQ,  "Conf-Request"},
         {CPCODES_CONF_ACK,  "Conf-Ack"},
@@ -248,7 +248,7 @@ static const char *lcpconfopts[] = {
 /* 27-254 unassigned */
 #define CCPOPT_RESV	255	/* RFC1962 */
 
-const struct tok ccpconfopts_values[] = {
+static const struct tok ccpconfopts_values[] = {
         { CCPOPT_OUI, "OUI" },
         { CCPOPT_PRED1, "Pred-1" },
         { CCPOPT_PRED2, "Pred-2" },
@@ -271,7 +271,7 @@ const struct tok ccpconfopts_values[] = {
 
 #define BACPOPT_FPEER	1	/* RFC2125 */
 
-const struct tok bacconfopts_values[] = {
+static const struct tok bacconfopts_values[] = {
         { BACPOPT_FPEER, "Favored-Peer" },
         {0,                 NULL}
 };
@@ -289,7 +289,7 @@ const struct tok bacconfopts_values[] = {
 #define IPCPOPT_SECDNS	131	/* RFC1877 */
 #define IPCPOPT_SECNBNS	132	/* RFC1877 */
 
-struct tok ipcpopt_values[] = {
+static const struct tok ipcpopt_values[] = {
         { IPCPOPT_2ADDR, "IP-Addrs" },
         { IPCPOPT_IPCOMP, "IP-Comp" },
         { IPCPOPT_ADDR, "IP-Addr" },
@@ -304,13 +304,13 @@ struct tok ipcpopt_values[] = {
 #define IPCPOPT_IPCOMP_HDRCOMP 0x61  /* rfc3544 */
 #define IPCPOPT_IPCOMP_MINLEN    14
 
-struct tok ipcpopt_compproto_values[] = {
+static const struct tok ipcpopt_compproto_values[] = {
         { PPP_VJC, "VJ-Comp" },
         { IPCPOPT_IPCOMP_HDRCOMP, "IP Header Compression" },
 	{ 0,		  NULL }
 };
 
-struct tok ipcpopt_compproto_subopt_values[] = {
+static const struct tok ipcpopt_compproto_subopt_values[] = {
         { 1, "RTP-Compression" },
         { 2, "Enhanced RTP-Compression" },
 	{ 0,		  NULL }
@@ -319,7 +319,7 @@ struct tok ipcpopt_compproto_subopt_values[] = {
 /* IP6CP Config Options */
 #define IP6CP_IFID      1
 
-struct tok ip6cpopt_values[] = {
+static const struct tok ip6cpopt_values[] = {
         { IP6CP_IFID, "Interface-ID" },
 	{ 0,		  NULL }
 };
@@ -338,7 +338,7 @@ struct tok ip6cpopt_values[] = {
 #define AUTHALG_MSCHAP1	128	/* RFC2433 */
 #define AUTHALG_MSCHAP2	129	/* RFC2795 */
 
-struct tok authalg_values[] = {
+static const struct tok authalg_values[] = {
         { AUTHALG_CHAPMD5, "MD5" },
         { AUTHALG_MSCHAP1, "MS-CHAPv1" },
         { AUTHALG_MSCHAP2, "MS-CHAPv2" },
@@ -363,7 +363,7 @@ struct tok authalg_values[] = {
 #define CALLBACK_X500	4	/* X.500 distinguished name */
 #define CALLBACK_CBCP	6	/* Location is determined during CBCP nego */
 
-struct tok ppp_callback_values[] = {
+static const struct tok ppp_callback_values[] = {
         { CALLBACK_AUTH, "UserAuth" },
         { CALLBACK_DSTR, "DialString" },
         { CALLBACK_LID, "LocalID" },
@@ -380,7 +380,7 @@ struct tok ppp_callback_values[] = {
 #define CHAP_SUCC	3
 #define CHAP_FAIL	4
 
-struct tok chapcode_values[] = {
+static const struct tok chapcode_values[] = {
 	{ CHAP_CHAL, "Challenge" },
 	{ CHAP_RESP, "Response" },
 	{ CHAP_SUCC, "Success" },
@@ -394,7 +394,7 @@ struct tok chapcode_values[] = {
 #define PAP_AACK	2
 #define PAP_ANAK	3
 
-struct tok papcode_values[] = {
+static const struct tok papcode_values[] = {
         { PAP_AREQ, "Auth-Req" },
         { PAP_AACK, "Auth-ACK" },
         { PAP_ANAK, "Auth-NACK" },
@@ -778,7 +778,7 @@ trunc:
 }
 
 /* ML-PPP*/
-struct tok ppp_ml_flag_values[] = {
+static const struct tok ppp_ml_flag_values[] = {
     { 0x80, "begin" },
     { 0x40, "end" },
     { 0, NULL }
@@ -1308,11 +1308,11 @@ ppp_hdlc(const u_char *p, int length)
 		goto cleanup;
 #ifdef INET6
         case PPP_IPV6:
-            ip6_print(b+1, t - b - 1);
-            goto cleanup;
+		ip6_print(gndo, b+1, t - b - 1);
+		goto cleanup;
 #endif
         default: /* no luck - try next guess */
-            break;
+		break;
         }
 
         proto = EXTRACT_16BITS(b); /* next guess - load two octets */
@@ -1373,7 +1373,7 @@ handle_ppp(u_int proto, const u_char *p, int length)
 #ifdef INET6
 	case ETHERTYPE_IPV6:	/*XXX*/
 	case PPP_IPV6:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		break;
 #endif
 	case ETHERTYPE_IPX:	/*XXX*/
@@ -1680,11 +1680,11 @@ ppp_bsdos_if_print(const struct pcap_pkthdr *h _U_, register const u_char *p _U_
 			p += hdrlength;
 			switch (ptype) {
 			case PPP_IP:
-				ip_print(p, length);
+				ip_print(gndo, p, length);
 				break;
 #ifdef INET6
 			case PPP_IPV6:
-				ip6_print(p, length);
+				ip6_print(gndo, p, length);
 				break;
 #endif
 			case PPP_MPLS_UCAST:
@@ -1699,11 +1699,11 @@ ppp_bsdos_if_print(const struct pcap_pkthdr *h _U_, register const u_char *p _U_
 			p += hdrlength;
 			switch (ptype) {
 			case PPP_IP:
-				ip_print(p, length);
+				ip_print(gndo, p, length);
 				break;
 #ifdef INET6
 			case PPP_IPV6:
-				ip6_print(p, length);
+				ip6_print(gndo, p, length);
 				break;
 #endif
 			case PPP_MPLS_UCAST:
@@ -1735,12 +1735,12 @@ ppp_bsdos_if_print(const struct pcap_pkthdr *h _U_, register const u_char *p _U_
 		break;
 #ifdef INET6
 	case PPP_IPV6:
-		ip6_print(p, length);
+		ip6_print(gndo, p, length);
 		break;
 #endif
         case PPP_MPLS_UCAST:
         case PPP_MPLS_MCAST:
-                mpls_print(p, length);
+                mpls_print(gndo, p, length);
                 break;
 	default:
 		printf("%s ", tok2str(ppptype2str, "unknown PPP protocol (0x%04x)", ptype));

@@ -1,6 +1,6 @@
 // POD character, std::char_traits specialization -*- C++ -*-
 
-// Copyright (C) 2002, 2003, 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2002-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,9 +32,13 @@
 #ifndef _POD_CHAR_TRAITS_H
 #define _POD_CHAR_TRAITS_H 1
 
+#pragma GCC system_header
+
 #include <string>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // POD character abstraction.
   // NB: The char_type parameter is a subset of int_type, as to allow
@@ -79,9 +83,12 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     operator<(const character<V, I, S>& lhs, const character<V, I, S>& rhs)
     { return lhs.value < rhs.value; }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// char_traits<__gnu_cxx::character> specialization.
   template<typename V, typename I, typename S>
@@ -177,6 +184,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       { return eq_int_type(__c, eof()) ? int_type() : __c; }
     };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif

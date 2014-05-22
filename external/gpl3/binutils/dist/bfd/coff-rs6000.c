@@ -1,6 +1,6 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
    Copyright 1990-1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010
+   2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
@@ -33,46 +33,30 @@
 #include "libcoff.h"
 #include "libxcoff.h"
 
-extern bfd_boolean _bfd_xcoff_mkobject
-  PARAMS ((bfd *));
-extern bfd_boolean _bfd_xcoff_copy_private_bfd_data
-  PARAMS ((bfd *, bfd *));
-extern bfd_boolean _bfd_xcoff_is_local_label_name
-  PARAMS ((bfd *, const char *));
+extern bfd_boolean _bfd_xcoff_mkobject (bfd *);
+extern bfd_boolean _bfd_xcoff_copy_private_bfd_data (bfd *, bfd *);
+extern bfd_boolean _bfd_xcoff_is_local_label_name (bfd *, const char *);
 extern reloc_howto_type *_bfd_xcoff_reloc_type_lookup
-  PARAMS ((bfd *, bfd_reloc_code_real_type));
-extern bfd_boolean _bfd_xcoff_slurp_armap
-  PARAMS ((bfd *));
-extern const bfd_target *_bfd_xcoff_archive_p
-  PARAMS ((bfd *));
-extern PTR _bfd_xcoff_read_ar_hdr
-  PARAMS ((bfd *));
-extern bfd *_bfd_xcoff_openr_next_archived_file
-  PARAMS ((bfd *, bfd *));
-extern int _bfd_xcoff_stat_arch_elt
-  PARAMS ((bfd *, struct stat *));
+  (bfd *, bfd_reloc_code_real_type);
+extern bfd_boolean _bfd_xcoff_slurp_armap (bfd *);
+extern const bfd_target *_bfd_xcoff_archive_p (bfd *);
+extern void * _bfd_xcoff_read_ar_hdr (bfd *);
+extern bfd *_bfd_xcoff_openr_next_archived_file (bfd *, bfd *);
+extern int _bfd_xcoff_stat_arch_elt (bfd *, struct stat *);
 extern bfd_boolean _bfd_xcoff_write_armap
-  PARAMS ((bfd *, unsigned int, struct orl *, unsigned int, int));
-extern bfd_boolean _bfd_xcoff_write_archive_contents
-  PARAMS ((bfd *));
-extern int _bfd_xcoff_sizeof_headers
-  PARAMS ((bfd *, struct bfd_link_info *));
-extern void _bfd_xcoff_swap_sym_in
-  PARAMS ((bfd *, PTR, PTR));
-extern unsigned int _bfd_xcoff_swap_sym_out
-  PARAMS ((bfd *, PTR, PTR));
-extern void _bfd_xcoff_swap_aux_in
-  PARAMS ((bfd *, PTR, int, int, int, int, PTR));
+  (bfd *, unsigned int, struct orl *, unsigned int, int);
+extern bfd_boolean _bfd_xcoff_write_archive_contents (bfd *);
+extern int _bfd_xcoff_sizeof_headers (bfd *, struct bfd_link_info *);
+extern void _bfd_xcoff_swap_sym_in (bfd *, void *, void *);
+extern unsigned int _bfd_xcoff_swap_sym_out (bfd *, void *, void *);
+extern void _bfd_xcoff_swap_aux_in (bfd *, void *, int, int, int, int, void *);
 extern unsigned int _bfd_xcoff_swap_aux_out
-  PARAMS ((bfd *, PTR, int, int, int, int, PTR));
-static void xcoff_swap_reloc_in
-  PARAMS ((bfd *, PTR, PTR));
-static unsigned int xcoff_swap_reloc_out
-  PARAMS ((bfd *, PTR, PTR));
+  (bfd *, void *, int, int, int, int, void *);
+static void xcoff_swap_reloc_in (bfd *, void *, void *);
+static unsigned int xcoff_swap_reloc_out (bfd *, void *, void *);
 
 /* Forward declare xcoff_rtype2howto for coffcode.h macro.  */
-void xcoff_rtype2howto
-  PARAMS ((arelent *, struct internal_reloc *));
+void xcoff_rtype2howto (arelent *, struct internal_reloc *);
 
 /* coffcode.h needs these to be defined.  */
 #define RS6000COFF_C 1
@@ -97,14 +81,11 @@ void xcoff_rtype2howto
 #define coff_bfd_reloc_type_lookup _bfd_xcoff_reloc_type_lookup
 #define coff_bfd_reloc_name_lookup _bfd_xcoff_reloc_name_lookup
 #ifdef AIX_CORE
-extern const bfd_target * rs6000coff_core_p
-  PARAMS ((bfd *abfd));
+extern const bfd_target * rs6000coff_core_p (bfd *abfd);
 extern bfd_boolean rs6000coff_core_file_matches_executable_p
-  PARAMS ((bfd *cbfd, bfd *ebfd));
-extern char *rs6000coff_core_file_failing_command
-  PARAMS ((bfd *abfd));
-extern int rs6000coff_core_file_failing_signal
-  PARAMS ((bfd *abfd));
+  (bfd *cbfd, bfd *ebfd);
+extern char *rs6000coff_core_file_failing_command (bfd *abfd);
+extern int rs6000coff_core_file_failing_signal (bfd *abfd);
 #define CORE_FILE_P rs6000coff_core_p
 #define coff_core_file_failing_command \
   rs6000coff_core_file_failing_command
@@ -141,66 +122,49 @@ extern int rs6000coff_core_file_failing_signal
 
 /* The main body of code is in coffcode.h.  */
 
-static const char *normalize_filename
-  PARAMS ((bfd *));
+static const char *normalize_filename (bfd *);
 static bfd_boolean xcoff_write_armap_old
-  PARAMS ((bfd *, unsigned int, struct orl *, unsigned int, int));
+  (bfd *, unsigned int, struct orl *, unsigned int, int);
 static bfd_boolean xcoff_write_armap_big
-  PARAMS ((bfd *, unsigned int, struct orl *, unsigned int, int));
-static bfd_boolean xcoff_write_archive_contents_old
-  PARAMS ((bfd *));
-static bfd_boolean xcoff_write_archive_contents_big
-  PARAMS ((bfd *));
-static void xcoff_swap_ldhdr_in
-  PARAMS ((bfd *, const PTR, struct internal_ldhdr *));
-static void xcoff_swap_ldhdr_out
-  PARAMS ((bfd *, const struct internal_ldhdr *, PTR));
-static void xcoff_swap_ldsym_in
-  PARAMS ((bfd *, const PTR, struct internal_ldsym *));
-static void xcoff_swap_ldsym_out
-  PARAMS ((bfd *, const struct internal_ldsym *, PTR));
-static void xcoff_swap_ldrel_in
-  PARAMS ((bfd *, const PTR, struct internal_ldrel *));
-static void xcoff_swap_ldrel_out
-  PARAMS ((bfd *, const struct internal_ldrel *, PTR));
+  (bfd *, unsigned int, struct orl *, unsigned int, int);
+static bfd_boolean xcoff_write_archive_contents_old (bfd *);
+static bfd_boolean xcoff_write_archive_contents_big (bfd *);
+static void xcoff_swap_ldhdr_in (bfd *, const void *, struct internal_ldhdr *);
+static void xcoff_swap_ldhdr_out (bfd *, const struct internal_ldhdr *, void *);
+static void xcoff_swap_ldsym_in (bfd *, const void *, struct internal_ldsym *);
+static void xcoff_swap_ldsym_out (bfd *, const struct internal_ldsym *, void *);
+static void xcoff_swap_ldrel_in (bfd *, const void *, struct internal_ldrel *);
+static void xcoff_swap_ldrel_out (bfd *, const struct internal_ldrel *, void *);
 static bfd_boolean xcoff_ppc_relocate_section
-  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-	   struct internal_reloc *, struct internal_syment *, asection **));
+  (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
+   struct internal_reloc *, struct internal_syment *, asection **);
 static bfd_boolean _bfd_xcoff_put_ldsymbol_name
-  PARAMS ((bfd *, struct xcoff_loader_info *, struct internal_ldsym *,
-	   const char *));
+  (bfd *, struct xcoff_loader_info *, struct internal_ldsym *, const char *);
 static asection *xcoff_create_csect_from_smclas
-  PARAMS ((bfd *, union internal_auxent *, const char *));
-static bfd_boolean xcoff_is_lineno_count_overflow
-  PARAMS ((bfd *, bfd_vma));
-static bfd_boolean xcoff_is_reloc_count_overflow
-  PARAMS ((bfd *, bfd_vma));
-static bfd_vma xcoff_loader_symbol_offset
-  PARAMS ((bfd *, struct internal_ldhdr *));
-static bfd_vma xcoff_loader_reloc_offset
-  PARAMS ((bfd *, struct internal_ldhdr *));
+  (bfd *, union internal_auxent *, const char *);
+static bfd_boolean xcoff_is_lineno_count_overflow (bfd *, bfd_vma);
+static bfd_boolean xcoff_is_reloc_count_overflow (bfd *, bfd_vma);
+static bfd_vma xcoff_loader_symbol_offset (bfd *, struct internal_ldhdr *);
+static bfd_vma xcoff_loader_reloc_offset (bfd *, struct internal_ldhdr *);
 static bfd_boolean xcoff_generate_rtinit
-  PARAMS ((bfd *, const char *, const char *, bfd_boolean));
-static bfd_boolean do_pad
-  PARAMS ((bfd *, unsigned int));
-static bfd_boolean do_copy
-  PARAMS ((bfd *, bfd *));
+  (bfd *, const char *, const char *, bfd_boolean);
+static bfd_boolean do_pad (bfd *, unsigned int);
+static bfd_boolean do_copy (bfd *, bfd *);
 
 /* Relocation functions */
-static bfd_boolean xcoff_reloc_type_br
-  PARAMS ((XCOFF_RELOC_FUNCTION_ARGS));
+static bfd_boolean xcoff_reloc_type_br (XCOFF_RELOC_FUNCTION_ARGS);
 
 static bfd_boolean xcoff_complain_overflow_dont_func
-  PARAMS ((XCOFF_COMPLAIN_FUNCTION_ARGS));
+  (XCOFF_COMPLAIN_FUNCTION_ARGS);
 static bfd_boolean xcoff_complain_overflow_bitfield_func
-  PARAMS ((XCOFF_COMPLAIN_FUNCTION_ARGS));
+  (XCOFF_COMPLAIN_FUNCTION_ARGS);
 static bfd_boolean xcoff_complain_overflow_signed_func
-  PARAMS ((XCOFF_COMPLAIN_FUNCTION_ARGS));
+  (XCOFF_COMPLAIN_FUNCTION_ARGS);
 static bfd_boolean xcoff_complain_overflow_unsigned_func
-  PARAMS ((XCOFF_COMPLAIN_FUNCTION_ARGS));
+  (XCOFF_COMPLAIN_FUNCTION_ARGS);
 
 bfd_boolean (*xcoff_calculate_relocation[XCOFF_MAX_CALCULATE_RELOCATION])
-  PARAMS ((XCOFF_RELOC_FUNCTION_ARGS)) =
+  (XCOFF_RELOC_FUNCTION_ARGS) =
 {
   xcoff_reloc_type_pos,	 /* R_POS   (0x00) */
   xcoff_reloc_type_neg,	 /* R_NEG   (0x01) */
@@ -233,7 +197,7 @@ bfd_boolean (*xcoff_calculate_relocation[XCOFF_MAX_CALCULATE_RELOCATION])
 };
 
 bfd_boolean (*xcoff_complain_overflow[XCOFF_MAX_COMPLAIN_OVERFLOW])
-  PARAMS ((XCOFF_COMPLAIN_FUNCTION_ARGS)) =
+  (XCOFF_COMPLAIN_FUNCTION_ARGS) =
 {
   xcoff_complain_overflow_dont_func,
   xcoff_complain_overflow_bitfield_func,
@@ -358,8 +322,7 @@ archive_iterator_next (struct archive_iterator *iterator)
    so the COFF routines are compatible.  */
 
 bfd_boolean
-_bfd_xcoff_mkobject (abfd)
-     bfd *abfd;
+_bfd_xcoff_mkobject (bfd *abfd)
 {
   coff_data_type *coff;
   bfd_size_type amt = sizeof (struct xcoff_tdata);
@@ -391,9 +354,7 @@ _bfd_xcoff_mkobject (abfd)
 /* Copy XCOFF data from one BFD to another.  */
 
 bfd_boolean
-_bfd_xcoff_copy_private_bfd_data (ibfd, obfd)
-     bfd *ibfd;
-     bfd *obfd;
+_bfd_xcoff_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   struct xcoff_tdata *ix, *ox;
   asection *sec;
@@ -439,18 +400,58 @@ _bfd_xcoff_copy_private_bfd_data (ibfd, obfd)
    -x option.  */
 
 bfd_boolean
-_bfd_xcoff_is_local_label_name (abfd, name)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     const char *name ATTRIBUTE_UNUSED;
+_bfd_xcoff_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
+                                const char *name ATTRIBUTE_UNUSED)
 {
   return FALSE;
 }
+
+static const struct dwarf_debug_section xcoff_debug_sections[] =
+{
+  { ".dwabrev",		NULL },
+  { ".dwarnge",		NULL },
+  { NULL,	NULL }, /* .debug_frame */
+  { ".dwinfo",		NULL },
+  { ".dwline",		NULL },
+  { NULL,	NULL }, /* .debug_loc */
+  { NULL,	NULL }, /* .debug_macinfo */
+  { NULL,	NULL }, /* .debug_macro */
+  { ".dwpbnms",		NULL },
+  { ".dwpbtyp",		NULL },
+  { ".dwrnges",		NULL },
+  { NULL,	NULL }, /* .debug_static_func */
+  { NULL,	NULL }, /* .debug_static_vars */
+  { ".dwstr",	NULL },
+  { NULL,	NULL }, /* .debug_types */
+  /* GNU DWARF 1 extensions */
+  { NULL,	NULL }, /* .debug_sfnames */
+  { NULL,	NULL }, /* .debug_srcinfo */
+  /* SGI/MIPS DWARF 2 extensions */
+  { NULL,	NULL }, /* .debug_funcnames */
+  { NULL,	NULL }, /* .debug_typenames */
+  { NULL,	NULL }, /* .debug_varnames */
+  { NULL,	NULL }, /* .debug_weaknames */
+  { NULL,	NULL },
+};
+
+static bfd_boolean
+xcoff_find_nearest_line (bfd *abfd,
+                         asection *section,
+                         asymbol **symbols,
+                         bfd_vma offset,
+                         const char **filename_ptr,
+                         const char **functionname_ptr,
+                         unsigned int *line_ptr)
+{
+  return coff_find_nearest_line_with_names (abfd, xcoff_debug_sections,
+                                            section, symbols, offset,
+                                            filename_ptr, functionname_ptr,
+                                            line_ptr);
+}
+
 
 void
-_bfd_xcoff_swap_sym_in (abfd, ext1, in1)
-     bfd *abfd;
-     PTR ext1;
-     PTR in1;
+_bfd_xcoff_swap_sym_in (bfd *abfd, void * ext1, void * in1)
 {
   SYMENT *ext = (SYMENT *)ext1;
   struct internal_syment * in = (struct internal_syment *)in1;
@@ -473,10 +474,7 @@ _bfd_xcoff_swap_sym_in (abfd, ext1, in1)
 }
 
 unsigned int
-_bfd_xcoff_swap_sym_out (abfd, inp, extp)
-     bfd *abfd;
-     PTR inp;
-     PTR extp;
+_bfd_xcoff_swap_sym_out (bfd *abfd, void * inp, void * extp)
 {
   struct internal_syment *in = (struct internal_syment *)inp;
   SYMENT *ext =(SYMENT *)extp;
@@ -500,14 +498,8 @@ _bfd_xcoff_swap_sym_out (abfd, inp, extp)
 }
 
 void
-_bfd_xcoff_swap_aux_in (abfd, ext1, type, in_class, indx, numaux, in1)
-     bfd *abfd;
-     PTR ext1;
-     int type;
-     int in_class;
-     int indx;
-     int numaux;
-     PTR in1;
+_bfd_xcoff_swap_aux_in (bfd *abfd, void * ext1, int type, int in_class,
+                        int indx, int numaux, void * in1)
 {
   AUXENT * ext = (AUXENT *)ext1;
   union internal_auxent *in = (union internal_auxent *)in1;
@@ -515,23 +507,23 @@ _bfd_xcoff_swap_aux_in (abfd, ext1, type, in_class, indx, numaux, in1)
   switch (in_class)
     {
     case C_FILE:
-      if (ext->x_file.x_fname[0] == 0)
+      if (ext->x_file.x_n.x_fname[0] == 0)
 	{
 	  in->x_file.x_n.x_zeroes = 0;
 	  in->x_file.x_n.x_offset =
-	    H_GET_32 (abfd, ext->x_file.x_n.x_offset);
+	    H_GET_32 (abfd, ext->x_file.x_n.x_n.x_offset);
 	}
       else
 	{
 	  if (numaux > 1)
 	    {
 	      if (indx == 0)
-		memcpy (in->x_file.x_fname, ext->x_file.x_fname,
+		memcpy (in->x_file.x_fname, ext->x_file.x_n.x_fname,
 			numaux * sizeof (AUXENT));
 	    }
 	  else
 	    {
-	      memcpy (in->x_file.x_fname, ext->x_file.x_fname, FILNMLEN);
+	      memcpy (in->x_file.x_fname, ext->x_file.x_n.x_fname, FILNMLEN);
 	    }
 	}
       goto end;
@@ -615,35 +607,28 @@ _bfd_xcoff_swap_aux_in (abfd, ext1, type, in_class, indx, numaux, in1)
      end of block.  */
 }
 
-
-unsigned int _bfd_xcoff_swap_aux_out
-  PARAMS ((bfd *, PTR, int, int, int, int, PTR));
-
 unsigned int
-_bfd_xcoff_swap_aux_out (abfd, inp, type, in_class, indx, numaux, extp)
-     bfd * abfd;
-     PTR   inp;
-     int   type;
-     int   in_class;
-     int   indx ATTRIBUTE_UNUSED;
-     int   numaux ATTRIBUTE_UNUSED;
-     PTR   extp;
+_bfd_xcoff_swap_aux_out (bfd *abfd, void * inp, int type, int in_class,
+                         int indx ATTRIBUTE_UNUSED,
+                         int numaux ATTRIBUTE_UNUSED,
+                         void * extp)
 {
   union internal_auxent *in = (union internal_auxent *)inp;
   AUXENT *ext = (AUXENT *)extp;
 
-  memset ((PTR)ext, 0, bfd_coff_auxesz (abfd));
+  memset (ext, 0, bfd_coff_auxesz (abfd));
   switch (in_class)
     {
     case C_FILE:
       if (in->x_file.x_fname[0] == 0)
 	{
-	  H_PUT_32 (abfd, 0, ext->x_file.x_n.x_zeroes);
-	  H_PUT_32 (abfd, in->x_file.x_n.x_offset, ext->x_file.x_n.x_offset);
+	  H_PUT_32 (abfd, 0, ext->x_file.x_n.x_n.x_zeroes);
+	  H_PUT_32 (abfd, in->x_file.x_n.x_offset,
+                    ext->x_file.x_n.x_n.x_offset);
 	}
       else
 	{
-	  memcpy (ext->x_file.x_fname, in->x_file.x_fname, FILNMLEN);
+	  memcpy (ext->x_file.x_n.x_fname, in->x_file.x_fname, FILNMLEN);
 	}
       goto end;
 
@@ -1117,9 +1102,7 @@ reloc_howto_type xcoff_howto_table[] =
 };
 
 void
-xcoff_rtype2howto (relent, internal)
-     arelent *relent;
-     struct internal_reloc *internal;
+xcoff_rtype2howto (arelent *relent, struct internal_reloc *internal)
 {
   if (internal->r_type > R_RBRC)
     abort ();
@@ -1150,9 +1133,8 @@ xcoff_rtype2howto (relent, internal)
 }
 
 reloc_howto_type *
-_bfd_xcoff_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+_bfd_xcoff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+                              bfd_reloc_code_real_type code)
 {
   switch (code)
     {
@@ -1238,9 +1220,8 @@ _bfd_xcoff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* Set the magic for archive.  */
 
 bfd_boolean
-bfd_xcoff_ar_archive_set_magic (abfd, magic)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     char *magic ATTRIBUTE_UNUSED;
+bfd_xcoff_ar_archive_set_magic (bfd *abfd ATTRIBUTE_UNUSED,
+                                char *magic ATTRIBUTE_UNUSED)
 {
   /* Not supported yet.  */
   return FALSE;
@@ -1250,8 +1231,7 @@ bfd_xcoff_ar_archive_set_magic (abfd, magic)
 /* Read in the armap of an XCOFF archive.  */
 
 bfd_boolean
-_bfd_xcoff_slurp_armap (abfd)
-     bfd *abfd;
+_bfd_xcoff_slurp_armap (bfd *abfd)
 {
   file_ptr off;
   size_t namlen;
@@ -1283,7 +1263,7 @@ _bfd_xcoff_slurp_armap (abfd)
 	return FALSE;
 
       /* The symbol table starts with a normal archive header.  */
-      if (bfd_bread ((PTR) &hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
+      if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
 	  != SIZEOF_AR_HDR)
 	return FALSE;
 
@@ -1299,7 +1279,7 @@ _bfd_xcoff_slurp_armap (abfd)
       contents = (bfd_byte *) bfd_alloc (abfd, sz);
       if (contents == NULL)
 	return FALSE;
-      if (bfd_bread ((PTR) contents, sz, abfd) != sz)
+      if (bfd_bread (contents, sz, abfd) != sz)
 	return FALSE;
 
       /* The symbol table starts with a four byte count.  */
@@ -1338,7 +1318,7 @@ _bfd_xcoff_slurp_armap (abfd)
 	return FALSE;
 
       /* The symbol table starts with a normal archive header.  */
-      if (bfd_bread ((PTR) &hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
+      if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
 	  != SIZEOF_AR_HDR_BIG)
 	return FALSE;
 
@@ -1357,7 +1337,7 @@ _bfd_xcoff_slurp_armap (abfd)
       contents = (bfd_byte *) bfd_alloc (abfd, sz);
       if (contents == NULL)
 	return FALSE;
-      if (bfd_bread ((PTR) contents, sz, abfd) != sz)
+      if (bfd_bread (contents, sz, abfd) != sz)
 	return FALSE;
 
       /* The symbol table starts with an eight byte count.  */
@@ -1404,14 +1384,13 @@ _bfd_xcoff_slurp_armap (abfd)
 /* See if this is an XCOFF archive.  */
 
 const bfd_target *
-_bfd_xcoff_archive_p (abfd)
-     bfd *abfd;
+_bfd_xcoff_archive_p (bfd *abfd)
 {
   struct artdata *tdata_hold;
   char magic[SXCOFFARMAG];
   bfd_size_type amt = SXCOFFARMAG;
 
-  if (bfd_bread ((PTR) magic, amt, abfd) != amt)
+  if (bfd_bread (magic, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -1450,7 +1429,7 @@ _bfd_xcoff_archive_p (abfd)
 
       /* Now read the rest of the file header.  */
       amt = SIZEOF_AR_FILE_HDR - SXCOFFARMAG;
-      if (bfd_bread ((PTR) &hdr.memoff, amt, abfd) != amt)
+      if (bfd_bread (&hdr.memoff, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -1477,7 +1456,7 @@ _bfd_xcoff_archive_p (abfd)
 
       /* Now read the rest of the file header.  */
       amt = SIZEOF_AR_FILE_HDR_BIG - SXCOFFARMAG;
-      if (bfd_bread ((PTR) &hdr.memoff, amt, abfd) != amt)
+      if (bfd_bread (&hdr.memoff, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -1510,9 +1489,8 @@ _bfd_xcoff_archive_p (abfd)
 
 /* Read the archive header in an XCOFF archive.  */
 
-PTR
-_bfd_xcoff_read_ar_hdr (abfd)
-     bfd *abfd;
+void *
+_bfd_xcoff_read_ar_hdr (bfd *abfd)
 {
   bfd_size_type namlen;
   struct areltdata *ret;
@@ -1527,7 +1505,7 @@ _bfd_xcoff_read_ar_hdr (abfd)
       struct xcoff_ar_hdr hdr;
       struct xcoff_ar_hdr *hdrp;
 
-      if (bfd_bread ((PTR) &hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
+      if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
 	  != SIZEOF_AR_HDR)
 	{
 	  free (ret);
@@ -1559,7 +1537,7 @@ _bfd_xcoff_read_ar_hdr (abfd)
       struct xcoff_ar_hdr_big hdr;
       struct xcoff_ar_hdr_big *hdrp;
 
-      if (bfd_bread ((PTR) &hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
+      if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
 	  != SIZEOF_AR_HDR_BIG)
 	{
 	  free (ret);
@@ -1594,15 +1572,13 @@ _bfd_xcoff_read_ar_hdr (abfd)
   if (bfd_seek (abfd, (file_ptr) ((namlen & 1) + SXCOFFARFMAG), SEEK_CUR) != 0)
     return NULL;
 
-  return (PTR) ret;
+  return ret;
 }
 
 /* Open the next element in an XCOFF archive.  */
 
 bfd *
-_bfd_xcoff_openr_next_archived_file (archive, last_file)
-     bfd *archive;
-     bfd *last_file;
+_bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
 {
   file_ptr filestart;
 
@@ -1661,9 +1637,7 @@ _bfd_xcoff_openr_next_archived_file (archive, last_file)
 /* Stat an element in an XCOFF archive.  */
 
 int
-_bfd_xcoff_stat_arch_elt (abfd, s)
-     bfd *abfd;
-     struct stat *s;
+_bfd_xcoff_stat_arch_elt (bfd *abfd, struct stat *s)
 {
   if (abfd->arelt_data == NULL)
     {
@@ -1698,8 +1672,7 @@ _bfd_xcoff_stat_arch_elt (abfd, s)
 /* Normalize a file name for inclusion in an archive.  */
 
 static const char *
-normalize_filename (abfd)
-     bfd *abfd;
+normalize_filename (bfd *abfd)
 {
   const char *file;
   const char *filename;
@@ -1716,12 +1689,8 @@ normalize_filename (abfd)
 /* Write out an XCOFF armap.  */
 
 static bfd_boolean
-xcoff_write_armap_old (abfd, elength, map, orl_count, stridx)
-     bfd *abfd;
-     unsigned int elength ATTRIBUTE_UNUSED;
-     struct orl *map;
-     unsigned int orl_count;
-     int stridx;
+xcoff_write_armap_old (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
+                       struct orl *map, unsigned int orl_count, int stridx)
 {
   struct archive_iterator iterator;
   struct xcoff_ar_hdr hdr;
@@ -1744,7 +1713,7 @@ xcoff_write_armap_old (abfd, elength, map, orl_count, stridx)
     if (*p == '\0')
       *p = ' ';
 
-  if (bfd_bwrite ((PTR) &hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
+  if (bfd_bwrite (&hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
       != SIZEOF_AR_HDR
       || (bfd_bwrite (XCOFFARFMAG, (bfd_size_type) SXCOFFARFMAG, abfd)
 	  != SXCOFFARFMAG))
@@ -1815,9 +1784,7 @@ static char buff20[XCOFFARMAGBIG_ELEMENT_SIZE + 1];
   (v) = bfd_scan_vma (buff20, (const char **) NULL, 10)
 
 static bfd_boolean
-do_pad (abfd, number)
-     bfd *abfd;
-     unsigned int number;
+do_pad (bfd *abfd, unsigned int number)
 {
   bfd_byte b = 0;
 
@@ -1833,9 +1800,7 @@ do_pad (abfd, number)
 }
 
 static bfd_boolean
-do_copy (out_bfd, in_bfd)
-     bfd *out_bfd;
-     bfd *in_bfd;
+do_copy (bfd *out_bfd, bfd *in_bfd)
 {
   bfd_size_type remaining;
   bfd_byte buffer[DEFAULT_BUFFERSIZE];
@@ -1865,12 +1830,8 @@ do_copy (out_bfd, in_bfd)
 }
 
 static bfd_boolean
-xcoff_write_armap_big (abfd, elength, map, orl_count, stridx)
-     bfd *abfd;
-     unsigned int elength ATTRIBUTE_UNUSED;
-     struct orl *map;
-     unsigned int orl_count;
-     int stridx;
+xcoff_write_armap_big (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
+                       struct orl *map, unsigned int orl_count, int stridx)
 {
   struct archive_iterator iterator;
   struct xcoff_ar_file_hdr_big *fhdr;
@@ -2109,12 +2070,8 @@ xcoff_write_armap_big (abfd, elength, map, orl_count, stridx)
 }
 
 bfd_boolean
-_bfd_xcoff_write_armap (abfd, elength, map, orl_count, stridx)
-     bfd *abfd;
-     unsigned int elength ATTRIBUTE_UNUSED;
-     struct orl *map;
-     unsigned int orl_count;
-     int stridx;
+_bfd_xcoff_write_armap (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
+                        struct orl *map, unsigned int orl_count, int stridx)
 {
   if (! xcoff_big_format_p (abfd))
     return xcoff_write_armap_old (abfd, elength, map, orl_count, stridx);
@@ -2126,8 +2083,7 @@ _bfd_xcoff_write_armap (abfd, elength, map, orl_count, stridx)
    rather than fussing with the freelist and so forth.  */
 
 static bfd_boolean
-xcoff_write_archive_contents_old (abfd)
-     bfd *abfd;
+xcoff_write_archive_contents_old (bfd *abfd)
 {
   struct archive_iterator iterator;
   struct xcoff_ar_file_hdr fhdr;
@@ -2274,20 +2230,20 @@ xcoff_write_archive_contents_old (abfd)
     if (*p == '\0')
       *p = ' ';
 
-  if ((bfd_bwrite ((PTR) &ahdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
+  if ((bfd_bwrite (&ahdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
        != SIZEOF_AR_HDR)
-      || (bfd_bwrite ((PTR) XCOFFARFMAG, (bfd_size_type) SXCOFFARFMAG, abfd)
+      || (bfd_bwrite (XCOFFARFMAG, (bfd_size_type) SXCOFFARFMAG, abfd)
 	  != SXCOFFARFMAG))
     return FALSE;
 
   sprintf (decbuf, "%-12ld", (long) count);
-  if (bfd_bwrite ((PTR) decbuf, (bfd_size_type) XCOFFARMAG_ELEMENT_SIZE, abfd)
+  if (bfd_bwrite (decbuf, (bfd_size_type) XCOFFARMAG_ELEMENT_SIZE, abfd)
       != XCOFFARMAG_ELEMENT_SIZE)
     return FALSE;
   for (i = 0; i < (size_t) count; i++)
     {
       sprintf (decbuf, "%-12ld", (long) offsets[i]);
-      if (bfd_bwrite ((PTR) decbuf, (bfd_size_type) XCOFFARMAG_ELEMENT_SIZE,
+      if (bfd_bwrite (decbuf, (bfd_size_type) XCOFFARMAG_ELEMENT_SIZE,
 		      abfd) != XCOFFARMAG_ELEMENT_SIZE)
 	return FALSE;
     }
@@ -2298,7 +2254,7 @@ xcoff_write_archive_contents_old (abfd)
 
       name = normalize_filename (sub);
       namlen = strlen (name);
-      if (bfd_bwrite ((PTR) name, namlen + 1, abfd) != namlen + 1)
+      if (bfd_bwrite (name, namlen + 1, abfd) != namlen + 1)
 	return FALSE;
     }
 
@@ -2312,7 +2268,7 @@ xcoff_write_archive_contents_old (abfd)
     {
       BFD_ASSERT (nextoff == bfd_tell (abfd));
       sprintf (fhdr.symoff, "%ld", (long) nextoff);
-      bfd_ardata (abfd)->tdata = (PTR) &fhdr;
+      bfd_ardata (abfd)->tdata = &fhdr;
       if (! _bfd_compute_and_write_armap (abfd, 0))
 	return FALSE;
     }
@@ -2325,7 +2281,7 @@ xcoff_write_archive_contents_old (abfd)
       *p = ' ';
 
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || (bfd_bwrite ((PTR) &fhdr, (bfd_size_type) SIZEOF_AR_FILE_HDR, abfd)
+      || (bfd_bwrite (&fhdr, (bfd_size_type) SIZEOF_AR_FILE_HDR, abfd)
 	  != SIZEOF_AR_FILE_HDR))
     return FALSE;
 
@@ -2333,8 +2289,7 @@ xcoff_write_archive_contents_old (abfd)
 }
 
 static bfd_boolean
-xcoff_write_archive_contents_big (abfd)
-     bfd *abfd;
+xcoff_write_archive_contents_big (bfd *abfd)
 {
   struct xcoff_ar_file_hdr_big fhdr;
   bfd_size_type count;
@@ -2554,7 +2509,7 @@ xcoff_write_archive_contents_big (abfd)
       /* Save nextoff in fhdr.symoff so the armap routine can use it.  */
       PRINT20 (fhdr.symoff, nextoff);
 
-      bfd_ardata (abfd)->tdata = (PTR) &fhdr;
+      bfd_ardata (abfd)->tdata = &fhdr;
       if (! _bfd_compute_and_write_armap (abfd, 0))
 	return FALSE;
     }
@@ -2562,7 +2517,7 @@ xcoff_write_archive_contents_big (abfd)
   /* Write out the archive file header.  */
 
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || (bfd_bwrite ((PTR) &fhdr, (bfd_size_type) SIZEOF_AR_FILE_HDR_BIG,
+      || (bfd_bwrite (&fhdr, (bfd_size_type) SIZEOF_AR_FILE_HDR_BIG,
 		      abfd) != SIZEOF_AR_FILE_HDR_BIG))
     return FALSE;
 
@@ -2570,8 +2525,7 @@ xcoff_write_archive_contents_big (abfd)
 }
 
 bfd_boolean
-_bfd_xcoff_write_archive_contents (abfd)
-     bfd *abfd;
+_bfd_xcoff_write_archive_contents (bfd *abfd)
 {
   if (! xcoff_big_format_p (abfd))
     return xcoff_write_archive_contents_old (abfd);
@@ -2605,10 +2559,7 @@ _bfd_xcoff_sizeof_headers (bfd *abfd,
 /* Swap in the ldhdr structure.  */
 
 static void
-xcoff_swap_ldhdr_in (abfd, s, dst)
-     bfd *abfd;
-     const PTR s;
-     struct internal_ldhdr *dst;
+xcoff_swap_ldhdr_in (bfd *abfd, const void * s, struct internal_ldhdr *dst)
 {
   const struct external_ldhdr *src = (const struct external_ldhdr *) s;
 
@@ -2625,10 +2576,7 @@ xcoff_swap_ldhdr_in (abfd, s, dst)
 /* Swap out the ldhdr structure.  */
 
 static void
-xcoff_swap_ldhdr_out (abfd, src, d)
-     bfd *abfd;
-     const struct internal_ldhdr *src;
-     PTR d;
+xcoff_swap_ldhdr_out (bfd *abfd, const struct internal_ldhdr *src, void * d)
 {
   struct external_ldhdr *dst = (struct external_ldhdr *) d;
 
@@ -2645,10 +2593,7 @@ xcoff_swap_ldhdr_out (abfd, src, d)
 /* Swap in the ldsym structure.  */
 
 static void
-xcoff_swap_ldsym_in (abfd, s, dst)
-     bfd *abfd;
-     const PTR s;
-     struct internal_ldsym *dst;
+xcoff_swap_ldsym_in (bfd *abfd, const void * s, struct internal_ldsym *dst)
 {
   const struct external_ldsym *src = (const struct external_ldsym *) s;
 
@@ -2669,10 +2614,7 @@ xcoff_swap_ldsym_in (abfd, s, dst)
 /* Swap out the ldsym structure.  */
 
 static void
-xcoff_swap_ldsym_out (abfd, src, d)
-     bfd *abfd;
-     const struct internal_ldsym *src;
-     PTR d;
+xcoff_swap_ldsym_out (bfd *abfd, const struct internal_ldsym *src, void * d)
 {
   struct external_ldsym *dst = (struct external_ldsym *) d;
 
@@ -2693,10 +2635,7 @@ xcoff_swap_ldsym_out (abfd, src, d)
 }
 
 static void
-xcoff_swap_reloc_in (abfd, s, d)
-     bfd *abfd;
-     PTR s;
-     PTR d;
+xcoff_swap_reloc_in (bfd *abfd, void * s, void * d)
 {
   struct external_reloc *src = (struct external_reloc *) s;
   struct internal_reloc *dst = (struct internal_reloc *) d;
@@ -2710,10 +2649,7 @@ xcoff_swap_reloc_in (abfd, s, d)
 }
 
 static unsigned int
-xcoff_swap_reloc_out (abfd, s, d)
-     bfd *abfd;
-     PTR s;
-     PTR d;
+xcoff_swap_reloc_out (bfd *abfd, void * s, void * d)
 {
   struct internal_reloc *src = (struct internal_reloc *) s;
   struct external_reloc *dst = (struct external_reloc *) d;
@@ -2729,10 +2665,7 @@ xcoff_swap_reloc_out (abfd, s, d)
 /* Swap in the ldrel structure.  */
 
 static void
-xcoff_swap_ldrel_in (abfd, s, dst)
-     bfd *abfd;
-     const PTR s;
-     struct internal_ldrel *dst;
+xcoff_swap_ldrel_in (bfd *abfd, const void * s, struct internal_ldrel *dst)
 {
   const struct external_ldrel *src = (const struct external_ldrel *) s;
 
@@ -2745,10 +2678,7 @@ xcoff_swap_ldrel_in (abfd, s, dst)
 /* Swap out the ldrel structure.  */
 
 static void
-xcoff_swap_ldrel_out (abfd, src, d)
-     bfd *abfd;
-     const struct internal_ldrel *src;
-     PTR d;
+xcoff_swap_ldrel_out (bfd *abfd, const struct internal_ldrel *src, void * d)
 {
   struct external_ldrel *dst = (struct external_ldrel *) d;
 
@@ -2760,35 +2690,31 @@ xcoff_swap_ldrel_out (abfd, src, d)
 
 
 bfd_boolean
-xcoff_reloc_type_noop (input_bfd, input_section, output_bfd, rel, sym, howto,
-		       val, addend, relocation, contents)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto ATTRIBUTE_UNUSED;
-     bfd_vma val ATTRIBUTE_UNUSED;
-     bfd_vma addend ATTRIBUTE_UNUSED;
-     bfd_vma *relocation ATTRIBUTE_UNUSED;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_noop (bfd *input_bfd ATTRIBUTE_UNUSED,
+                       asection *input_section ATTRIBUTE_UNUSED,
+                       bfd *output_bfd ATTRIBUTE_UNUSED,
+                       struct internal_reloc *rel ATTRIBUTE_UNUSED,
+                       struct internal_syment *sym ATTRIBUTE_UNUSED,
+                       struct reloc_howto_struct *howto ATTRIBUTE_UNUSED,
+                       bfd_vma val ATTRIBUTE_UNUSED,
+                       bfd_vma addend ATTRIBUTE_UNUSED,
+                       bfd_vma *relocation ATTRIBUTE_UNUSED,
+                       bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   return TRUE;
 }
 
 bfd_boolean
-xcoff_reloc_type_fail (input_bfd, input_section, output_bfd, rel, sym, howto,
-		       val, addend, relocation, contents)
-     bfd *input_bfd;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto ATTRIBUTE_UNUSED;
-     bfd_vma val ATTRIBUTE_UNUSED;
-     bfd_vma addend ATTRIBUTE_UNUSED;
-     bfd_vma *relocation ATTRIBUTE_UNUSED;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_fail (bfd *input_bfd,
+                       asection *input_section ATTRIBUTE_UNUSED,
+                       bfd *output_bfd ATTRIBUTE_UNUSED,
+                       struct internal_reloc *rel,
+                       struct internal_syment *sym ATTRIBUTE_UNUSED,
+                       struct reloc_howto_struct *howto ATTRIBUTE_UNUSED,
+                       bfd_vma val ATTRIBUTE_UNUSED,
+                       bfd_vma addend ATTRIBUTE_UNUSED,
+                       bfd_vma *relocation ATTRIBUTE_UNUSED,
+                       bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   (*_bfd_error_handler)
     (_("%s: unsupported relocation type 0x%02x"),
@@ -2798,54 +2724,48 @@ xcoff_reloc_type_fail (input_bfd, input_section, output_bfd, rel, sym, howto,
 }
 
 bfd_boolean
-xcoff_reloc_type_pos (input_bfd, input_section, output_bfd, rel, sym, howto,
-		      val, addend, relocation, contents)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto ATTRIBUTE_UNUSED;
-     bfd_vma val;
-     bfd_vma addend;
-     bfd_vma *relocation;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_pos (bfd *input_bfd ATTRIBUTE_UNUSED,
+                      asection *input_section ATTRIBUTE_UNUSED,
+                      bfd *output_bfd ATTRIBUTE_UNUSED,
+                      struct internal_reloc *rel ATTRIBUTE_UNUSED,
+                      struct internal_syment *sym ATTRIBUTE_UNUSED,
+                      struct reloc_howto_struct *howto ATTRIBUTE_UNUSED,
+                      bfd_vma val,
+                      bfd_vma addend,
+                      bfd_vma *relocation,
+                      bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   *relocation = val + addend;
   return TRUE;
 }
 
 bfd_boolean
-xcoff_reloc_type_neg (input_bfd, input_section, output_bfd, rel, sym, howto,
-		      val, addend, relocation, contents)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto ATTRIBUTE_UNUSED;
-     bfd_vma val;
-     bfd_vma addend;
-     bfd_vma *relocation;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_neg (bfd *input_bfd ATTRIBUTE_UNUSED,
+                      asection *input_section ATTRIBUTE_UNUSED,
+                      bfd *output_bfd ATTRIBUTE_UNUSED,
+                      struct internal_reloc *rel ATTRIBUTE_UNUSED,
+                      struct internal_syment *sym ATTRIBUTE_UNUSED,
+                      struct reloc_howto_struct *howto ATTRIBUTE_UNUSED,
+                      bfd_vma val,
+                      bfd_vma addend,
+                      bfd_vma *relocation,
+                      bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   *relocation = addend - val;
   return TRUE;
 }
 
 bfd_boolean
-xcoff_reloc_type_rel (input_bfd, input_section, output_bfd, rel, sym, howto,
-		      val, addend, relocation, contents)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     asection *input_section;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto;
-     bfd_vma val;
-     bfd_vma addend;
-     bfd_vma *relocation;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_rel (bfd *input_bfd ATTRIBUTE_UNUSED,
+                      asection *input_section,
+                      bfd *output_bfd ATTRIBUTE_UNUSED,
+                      struct internal_reloc *rel ATTRIBUTE_UNUSED,
+                      struct internal_syment *sym ATTRIBUTE_UNUSED,
+                      struct reloc_howto_struct *howto,
+                      bfd_vma val,
+                      bfd_vma addend,
+                      bfd_vma *relocation,
+                      bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   howto->pc_relative = TRUE;
 
@@ -2859,18 +2779,16 @@ xcoff_reloc_type_rel (input_bfd, input_section, output_bfd, rel, sym, howto,
 }
 
 bfd_boolean
-xcoff_reloc_type_toc (input_bfd, input_section, output_bfd, rel, sym, howto,
-		      val, addend, relocation, contents)
-     bfd *input_bfd;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd;
-     struct internal_reloc *rel;
-     struct internal_syment *sym;
-     struct reloc_howto_struct *howto ATTRIBUTE_UNUSED;
-     bfd_vma val;
-     bfd_vma addend ATTRIBUTE_UNUSED;
-     bfd_vma *relocation;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_toc (bfd *input_bfd,
+                      asection *input_section ATTRIBUTE_UNUSED,
+                      bfd *output_bfd,
+                      struct internal_reloc *rel,
+                      struct internal_syment *sym,
+                      struct reloc_howto_struct *howto ATTRIBUTE_UNUSED,
+                      bfd_vma val,
+                      bfd_vma addend ATTRIBUTE_UNUSED,
+                      bfd_vma *relocation,
+                      bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   struct xcoff_link_hash_entry *h;
 
@@ -2902,18 +2820,16 @@ xcoff_reloc_type_toc (input_bfd, input_section, output_bfd, rel, sym, howto,
 }
 
 bfd_boolean
-xcoff_reloc_type_ba (input_bfd, input_section, output_bfd, rel, sym, howto,
-		     val, addend, relocation, contents)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto;
-     bfd_vma val;
-     bfd_vma addend;
-     bfd_vma *relocation;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_ba (bfd *input_bfd ATTRIBUTE_UNUSED,
+                     asection *input_section ATTRIBUTE_UNUSED,
+                     bfd *output_bfd ATTRIBUTE_UNUSED,
+                     struct internal_reloc *rel ATTRIBUTE_UNUSED,
+                     struct internal_syment *sym ATTRIBUTE_UNUSED,
+                     struct reloc_howto_struct *howto,
+                     bfd_vma val,
+                     bfd_vma addend,
+                     bfd_vma *relocation,
+                     bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   howto->src_mask &= ~3;
   howto->dst_mask = howto->src_mask;
@@ -2924,18 +2840,16 @@ xcoff_reloc_type_ba (input_bfd, input_section, output_bfd, rel, sym, howto,
 }
 
 static bfd_boolean
-xcoff_reloc_type_br (input_bfd, input_section, output_bfd, rel, sym, howto,
-		     val, addend, relocation, contents)
-     bfd *input_bfd;
-     asection *input_section;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto;
-     bfd_vma val;
-     bfd_vma addend;
-     bfd_vma *relocation;
-     bfd_byte *contents;
+xcoff_reloc_type_br (bfd *input_bfd,
+                     asection *input_section,
+                     bfd *output_bfd ATTRIBUTE_UNUSED,
+                     struct internal_reloc *rel,
+                     struct internal_syment *sym ATTRIBUTE_UNUSED,
+                     struct reloc_howto_struct *howto,
+                     bfd_vma val,
+                     bfd_vma addend,
+                     bfd_vma *relocation,
+                     bfd_byte *contents)
 {
   struct xcoff_link_hash_entry *h;
   bfd_vma section_offset;
@@ -3032,18 +2946,16 @@ xcoff_reloc_type_br (input_bfd, input_section, output_bfd, rel, sym, howto,
 }
 
 bfd_boolean
-xcoff_reloc_type_crel (input_bfd, input_section, output_bfd, rel, sym, howto,
-		       val, addend, relocation, contents)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     asection *input_section;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct internal_reloc *rel ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto;
-     bfd_vma val ATTRIBUTE_UNUSED;
-     bfd_vma addend;
-     bfd_vma *relocation;
-     bfd_byte *contents ATTRIBUTE_UNUSED;
+xcoff_reloc_type_crel (bfd *input_bfd ATTRIBUTE_UNUSED,
+                       asection *input_section,
+                       bfd *output_bfd ATTRIBUTE_UNUSED,
+                       struct internal_reloc *rel ATTRIBUTE_UNUSED,
+                       struct internal_syment *sym ATTRIBUTE_UNUSED,
+                       struct reloc_howto_struct *howto,
+                       bfd_vma val ATTRIBUTE_UNUSED,
+                       bfd_vma addend,
+                       bfd_vma *relocation,
+                       bfd_byte *contents ATTRIBUTE_UNUSED)
 {
   howto->pc_relative = TRUE;
   howto->src_mask &= ~3;
@@ -3059,21 +2971,20 @@ xcoff_reloc_type_crel (input_bfd, input_section, output_bfd, rel, sym, howto,
 }
 
 static bfd_boolean
-xcoff_complain_overflow_dont_func (input_bfd, val, relocation, howto)
-     bfd *input_bfd ATTRIBUTE_UNUSED;
-     bfd_vma val ATTRIBUTE_UNUSED;
-     bfd_vma relocation ATTRIBUTE_UNUSED;
-     struct reloc_howto_struct *howto ATTRIBUTE_UNUSED;
+xcoff_complain_overflow_dont_func (bfd *input_bfd ATTRIBUTE_UNUSED,
+                                   bfd_vma val ATTRIBUTE_UNUSED,
+                                   bfd_vma relocation ATTRIBUTE_UNUSED,
+                                   struct reloc_howto_struct *
+                                      howto ATTRIBUTE_UNUSED)
 {
   return FALSE;
 }
 
 static bfd_boolean
-xcoff_complain_overflow_bitfield_func (input_bfd, val, relocation, howto)
-     bfd *input_bfd;
-     bfd_vma val;
-     bfd_vma relocation;
-     struct reloc_howto_struct *howto;
+xcoff_complain_overflow_bitfield_func (bfd *input_bfd,
+                                       bfd_vma val,
+                                       bfd_vma relocation,
+                                       struct reloc_howto_struct *howto)
 {
   bfd_vma fieldmask, signmask, ss;
   bfd_vma a, b, sum;
@@ -3144,11 +3055,10 @@ xcoff_complain_overflow_bitfield_func (input_bfd, val, relocation, howto)
 }
 
 static bfd_boolean
-xcoff_complain_overflow_signed_func (input_bfd, val, relocation, howto)
-     bfd *input_bfd;
-     bfd_vma val;
-     bfd_vma relocation;
-     struct reloc_howto_struct *howto;
+xcoff_complain_overflow_signed_func (bfd *input_bfd,
+                                     bfd_vma val,
+                                     bfd_vma relocation,
+                                     struct reloc_howto_struct *howto)
 {
   bfd_vma addrmask, fieldmask, signmask, ss;
   bfd_vma a, b, sum;
@@ -3206,11 +3116,10 @@ xcoff_complain_overflow_signed_func (input_bfd, val, relocation, howto)
 }
 
 static bfd_boolean
-xcoff_complain_overflow_unsigned_func (input_bfd, val, relocation, howto)
-     bfd *input_bfd;
-     bfd_vma val;
-     bfd_vma relocation;
-     struct reloc_howto_struct *howto;
+xcoff_complain_overflow_unsigned_func (bfd *input_bfd,
+                                       bfd_vma val,
+                                       bfd_vma relocation,
+                                       struct reloc_howto_struct *howto)
 {
   bfd_vma addrmask, fieldmask;
   bfd_vma a, b, sum;
@@ -3356,17 +3265,14 @@ xcoff_complain_overflow_unsigned_func (input_bfd, val, relocation, howto)
 */
 
 bfd_boolean
-xcoff_ppc_relocate_section (output_bfd, info, input_bfd,
-			    input_section, contents, relocs, syms,
-			    sections)
-     bfd *output_bfd;
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     struct internal_reloc *relocs;
-     struct internal_syment *syms;
-     asection **sections;
+xcoff_ppc_relocate_section (bfd *output_bfd,
+                            struct bfd_link_info *info,
+                            bfd *input_bfd,
+                            asection *input_section,
+                            bfd_byte *contents,
+                            struct internal_reloc *relocs,
+                            struct internal_syment *syms,
+                            asection **sections)
 {
   struct internal_reloc *rel;
   struct internal_reloc *relend;
@@ -3552,11 +3458,10 @@ xcoff_ppc_relocate_section (output_bfd, info, input_bfd,
 }
 
 static bfd_boolean
-_bfd_xcoff_put_ldsymbol_name (abfd, ldinfo, ldsym, name)
-     bfd *abfd ATTRIBUTE_UNUSED;
-	 struct xcoff_loader_info *ldinfo;
-	 struct internal_ldsym *ldsym;
-	 const char *name;
+_bfd_xcoff_put_ldsymbol_name (bfd *abfd ATTRIBUTE_UNUSED,
+                              struct xcoff_loader_info *ldinfo,
+                              struct internal_ldsym *ldsym,
+                              const char *name)
 {
   size_t len;
   len = strlen (name);
@@ -3624,10 +3529,9 @@ _bfd_xcoff_put_symbol_name (bfd *abfd, struct bfd_strtab_hash *strtab,
 }
 
 static asection *
-xcoff_create_csect_from_smclas (abfd, aux, symbol_name)
-     bfd *abfd;
-     union internal_auxent *aux;
-     const char *symbol_name;
+xcoff_create_csect_from_smclas (bfd *abfd,
+                                union internal_auxent *aux,
+                                const char *symbol_name)
 {
   asection *return_value = NULL;
 
@@ -3658,9 +3562,7 @@ xcoff_create_csect_from_smclas (abfd, aux, symbol_name)
 }
 
 static bfd_boolean
-xcoff_is_lineno_count_overflow (abfd, value)
-    bfd *abfd ATTRIBUTE_UNUSED;
-	bfd_vma value;
+xcoff_is_lineno_count_overflow (bfd *abfd ATTRIBUTE_UNUSED, bfd_vma value)
 {
   if (0xffff <= value)
     return TRUE;
@@ -3669,9 +3571,7 @@ xcoff_is_lineno_count_overflow (abfd, value)
 }
 
 static bfd_boolean
-xcoff_is_reloc_count_overflow (abfd, value)
-    bfd *abfd ATTRIBUTE_UNUSED;
-	bfd_vma value;
+xcoff_is_reloc_count_overflow (bfd *abfd ATTRIBUTE_UNUSED, bfd_vma value)
 {
   if (0xffff <= value)
     return TRUE;
@@ -3680,27 +3580,21 @@ xcoff_is_reloc_count_overflow (abfd, value)
 }
 
 static bfd_vma
-xcoff_loader_symbol_offset (abfd, ldhdr)
-    bfd *abfd;
-    struct internal_ldhdr *ldhdr ATTRIBUTE_UNUSED;
+xcoff_loader_symbol_offset (bfd *abfd,
+                            struct internal_ldhdr *ldhdr ATTRIBUTE_UNUSED)
 {
   return bfd_xcoff_ldhdrsz (abfd);
 }
 
 static bfd_vma
-xcoff_loader_reloc_offset (abfd, ldhdr)
-    bfd *abfd;
-    struct internal_ldhdr *ldhdr;
+xcoff_loader_reloc_offset (bfd *abfd, struct internal_ldhdr *ldhdr)
 {
   return bfd_xcoff_ldhdrsz (abfd) + ldhdr->l_nsyms * bfd_xcoff_ldsymsz (abfd);
 }
 
 static bfd_boolean
-xcoff_generate_rtinit  (abfd, init, fini, rtld)
-     bfd *abfd;
-     const char *init;
-     const char *fini;
-     bfd_boolean rtld;
+xcoff_generate_rtinit  (bfd *abfd, const char *init, const char *fini,
+                        bfd_boolean rtld)
 {
   bfd_byte filehdr_ext[FILHSZ];
   bfd_byte scnhdr_ext[SCNHSZ];
@@ -4012,6 +3906,18 @@ static unsigned long xcoff_glink_code[9] =
     0x00000000,	/* traceback table */
   };
 
+/* Table to convert DWARF flags to section names.  */
+
+const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
+  { SSUBTYP_DWINFO,  ".dwinfo",   TRUE },
+  { SSUBTYP_DWLINE,  ".dwline",   TRUE },
+  { SSUBTYP_DWPBNMS, ".dwpbnms",  TRUE },
+  { SSUBTYP_DWPBTYP, ".dwpbtyp",  TRUE },
+  { SSUBTYP_DWARNGE, ".dwarnge",  TRUE },
+  { SSUBTYP_DWABREV, ".dwabrev",  FALSE },
+  { SSUBTYP_DWSTR,   ".dwstr",    TRUE },
+  { SSUBTYP_DWRNGES, ".dwrnges",  TRUE }
+};
 
 static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
   {
@@ -4124,6 +4030,7 @@ const bfd_target rs6000coff_vec =
     0,				/* leading char */
     '/',			/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
 
     /* data */
     bfd_getb64,
@@ -4210,7 +4117,8 @@ const bfd_target rs6000coff_vec =
     _bfd_xcoff_is_local_label_name,
     coff_bfd_is_target_special_symbol,
     coff_get_lineno,
-    coff_find_nearest_line,
+    xcoff_find_nearest_line,
+    _bfd_generic_find_nearest_line_discriminator,
     _bfd_generic_find_line,
     coff_find_inliner_info,
     coff_bfd_make_debug_symbol,
@@ -4239,6 +4147,7 @@ const bfd_target rs6000coff_vec =
     _bfd_xcoff_bfd_final_link,
     _bfd_generic_link_split_section,
     bfd_generic_gc_sections,
+    bfd_generic_lookup_section_flags,
     bfd_generic_merge_sections,
     bfd_generic_is_group_section,
     bfd_generic_discard_group,
@@ -4255,7 +4164,7 @@ const bfd_target rs6000coff_vec =
     /* Opposite endian version, none exists */
     NULL,
 
-    (void *) &bfd_xcoff_backend_data,
+    & bfd_xcoff_backend_data,
   };
 
 /* xcoff-powermac target
@@ -4377,6 +4286,7 @@ const bfd_target pmac_xcoff_vec =
     0,				/* leading char */
     '/',			/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
 
     /* data */
     bfd_getb64,
@@ -4463,7 +4373,8 @@ const bfd_target pmac_xcoff_vec =
     _bfd_xcoff_is_local_label_name,
     coff_bfd_is_target_special_symbol,
     coff_get_lineno,
-    coff_find_nearest_line,
+    xcoff_find_nearest_line,
+    _bfd_generic_find_nearest_line_discriminator,
     _bfd_generic_find_line,
     coff_find_inliner_info,
     coff_bfd_make_debug_symbol,
@@ -4492,6 +4403,7 @@ const bfd_target pmac_xcoff_vec =
     _bfd_xcoff_bfd_final_link,
     _bfd_generic_link_split_section,
     bfd_generic_gc_sections,
+    bfd_generic_lookup_section_flags,
     bfd_generic_merge_sections,
     bfd_generic_is_group_section,
     bfd_generic_discard_group,
@@ -4508,5 +4420,5 @@ const bfd_target pmac_xcoff_vec =
     /* Opposite endian version, none exists */
     NULL,
 
-    (void *) &bfd_pmac_xcoff_backend_data,
+    & bfd_pmac_xcoff_backend_data,
   };

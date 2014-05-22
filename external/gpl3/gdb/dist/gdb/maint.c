@@ -1,7 +1,6 @@
 /* Support for GDB maintenance commands.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002,
-   2003, 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -39,6 +38,7 @@
 #include "gdb_assert.h"
 
 #include "cli/cli-decode.h"
+#include "cli/cli-utils.h"
 
 extern void _initialize_maint_cmds (void);
 
@@ -74,19 +74,7 @@ show_watchdog (struct ui_file *file, int from_tty,
   fprintf_filtered (file, _("Watchdog timer is %s.\n"), value);
 }
 
-/*
-
-   LOCAL FUNCTION
-
-   maintenance_command -- access the maintenance subcommands
-
-   SYNOPSIS
-
-   void maintenance_command (char *args, int from_tty)
-
-   DESCRIPTION
-
- */
+/* Access the maintenance subcommands.  */
 
 static void
 maintenance_command (char *args, int from_tty)
@@ -407,7 +395,7 @@ maintenance_info_sections (char *arg, int from_tty)
     }
 }
 
-void
+static void
 maintenance_print_statistics (char *args, int from_tty)
 {
   print_objfile_statistics ();
@@ -473,8 +461,7 @@ maintenance_translate_address (char *arg, int from_tty)
       if (*p == '\000')		/* End of command?  */
 	error (_("Need to specify <section-name> and <address>"));
       *p++ = '\000';
-      while (isspace (*p))
-	p++;			/* Skip whitespace.  */
+      p = skip_spaces (p);
 
       ALL_OBJSECTIONS (objfile, sect)
       {
@@ -833,41 +820,6 @@ For each node in a type chain, print the raw data for each member of\n\
 the type structure, and the interpretation of the data."),
 	   &maintenanceprintlist);
 
-  add_cmd ("symbols", class_maintenance, maintenance_print_symbols, _("\
-Print dump of current symbol definitions.\n\
-Entries in the full symbol table are dumped to file OUTFILE.\n\
-If a SOURCE file is specified, dump only that file's symbols."),
-	   &maintenanceprintlist);
-
-  add_cmd ("msymbols", class_maintenance, maintenance_print_msymbols, _("\
-Print dump of current minimal symbol definitions.\n\
-Entries in the minimal symbol table are dumped to file OUTFILE.\n\
-If a SOURCE file is specified, dump only that file's minimal symbols."),
-	   &maintenanceprintlist);
-
-  add_cmd ("psymbols", class_maintenance, maintenance_print_psymbols, _("\
-Print dump of current partial symbol definitions.\n\
-Entries in the partial symbol table are dumped to file OUTFILE.\n\
-If a SOURCE file is specified, dump only that file's partial symbols."),
-	   &maintenanceprintlist);
-
-  add_cmd ("objfiles", class_maintenance, maintenance_print_objfiles,
-	   _("Print dump of current object file definitions."),
-	   &maintenanceprintlist);
-
-  add_cmd ("symtabs", class_maintenance, maintenance_info_symtabs, _("\
-List the full symbol tables for all object files.\n\
-This does not include information about individual symbols, blocks, or\n\
-linetables --- just the symbol table structures themselves.\n\
-With an argument REGEXP, list the symbol tables whose names that match that."),
-	   &maintenanceinfolist);
-
-  add_cmd ("psymtabs", class_maintenance, maintenance_info_psymtabs, _("\
-List the partial symbol tables for all object files.\n\
-This does not include information about individual partial symbols,\n\
-just the symbol table structures themselves."),
-	   &maintenanceinfolist);
-
   add_cmd ("statistics", class_maintenance, maintenance_print_statistics,
 	   _("Print statistics about internal gdb state."),
 	   &maintenanceprintlist);
@@ -877,10 +829,6 @@ just the symbol table structures themselves."),
 Print the internal architecture configuration.\n\
 Takes an optional file parameter."),
 	   &maintenanceprintlist);
-
-  add_cmd ("check-symtabs", class_maintenance, maintenance_check_symtabs,
-	   _("Check consistency of psymtabs and symtabs."),
-	   &maintenancelist);
 
   add_cmd ("translate-address", class_maintenance,
 	   maintenance_translate_address,

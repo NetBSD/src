@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2004-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,6 @@
 
 # Test "return", "finish", and "call" of functions that a scalar (int,
 # float, enum) and/or take a single scalar parameter.
-
-if $tracelevel then {
-	strace $tracelevel
-}
 
 
 # Some targets can't call functions, so don't even bother with this
@@ -39,7 +35,7 @@ set binfile ${objdir}/${subdir}/${testfile}
 # Create and source the file that provides information about the
 # compiler used to compile the test case.
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1;
 }
 
@@ -93,13 +89,13 @@ proc start_scalars_test { type } {
     # check that type matches what was passed in
     set test "ptype; ${testfile}"
     set foo_t "xxx"
-    gdb_test_multiple "ptype ${type}" "${test}" {
+    gdb_test_multiple "ptype/r ${type}" "${test}" {
 	-re "type = (\[^\r\n\]*)\r\n$gdb_prompt $" {
 	    set foo_t "$expect_out(1,string)"
 	    pass "$test (${foo_t})"
 	}
     }
-    gdb_test "ptype foo" "type = ${foo_t}" "ptype foo; ${testfile} $expect_out(1,string)"
+    gdb_test "ptype/r foo" "type = ${foo_t}" "ptype foo; ${testfile} $expect_out(1,string)"
 }
 
 
@@ -189,7 +185,7 @@ proc test_scalar_returns { } {
 
     # The relevant code looks like "L{n} = fun{n}()".  The test forces
     # "fun{n}" to "return" with an explicit value.  Since that code
-    # snippet will store the the returned value in "L{n}" the return
+    # snippet will store the returned value in "L{n}" the return
     # is tested by examining "L{n}".  This assumes that the
     # compiler implemented this as fun{n}(&L{n}) and hence that when
     # the value isn't stored "L{n}" remains unchanged.  Also check for

@@ -1,5 +1,6 @@
 # Expect script for ld-x86_64 tests
-#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009 Free Software Foundation
+#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
+#   Free Software Foundation
 #
 # This file is part of the GNU Binutils.
 #
@@ -23,8 +24,15 @@
 # tools like objdump as well as the linker.
 
 if { !([istarget "x86_64-*-elf*"]
+       || [istarget "x86_64-*-nacl*"]
        || [istarget "x86_64-*-linux*"]) } {
     return
+}
+
+if [istarget "*-*-nacl*"] {
+    set emul "elf_x86_64_nacl"
+} else {
+    set emul "elf_x86_64"
 }
 
 # List contains test-items with 3 items followed by 2 lists:
@@ -37,12 +45,19 @@ if { !([istarget "x86_64-*-elf*"]
 # readelf: Apply readelf options on result.  Compare with regex (last arg).
 
 set x86_64tests {
-    {"TLS -fpic -shared transitions" "-shared -melf_x86_64"
+    {"Helper shared library (basic PLT test)"
+      "-shared -melf_x86_64" "--64" {pltlib.s} {} "libpltlib.so"}
+    {"basic PLT generation"
+     "-melf_x86_64 tmpdir/libpltlib.so" "--64" {plt.s}
+     {{objdump -drj.plt plt.pd}} "plt"}
+    {"TLS -fpic -shared transitions"
+     "-shared -melf_x86_64 --no-ld-generated-unwind-info"
      "--64" {tlspic1.s tlspic2.s}
      {{readelf -WSsrl tlspic.rd} {objdump -drj.text tlspic.dd}
       {objdump -sj.got tlspic.sd} {objdump -sj.tdata tlspic.td}}
       "libtlspic.so"}
-    {"TLS descriptor -fpic -shared transitions" "-shared -melf_x86_64"
+    {"TLS descriptor -fpic -shared transitions"
+     "-shared -melf_x86_64 --no-ld-generated-unwind-info"
      "--64" {tlsdesc.s tlspic2.s}
      {{readelf -WSsrld tlsdesc.rd} {objdump -drj.text tlsdesc.dd}
       {objdump "-s -j.got -j.got.plt" tlsdesc.sd} {objdump -sj.tdata tlsdesc.td}
@@ -50,17 +65,20 @@ set x86_64tests {
     {"Helper shared library" "-shared -melf_x86_64"
      "--64" {tlslib.s} {} "libtlslib.so"}
     {"TLS -fpic and -fno-pic exec transitions"
-     "-melf_x86_64 tmpdir/libtlslib.so" "--64" {tlsbinpic.s tlsbin.s}
+     "-melf_x86_64 tmpdir/libtlslib.so --no-ld-generated-unwind-info"
+     "--64" {tlsbinpic.s tlsbin.s}
      {{readelf -WSsrl tlsbin.rd} {objdump -drj.text tlsbin.dd}
       {objdump -sj.got tlsbin.sd} {objdump -sj.tdata tlsbin.td}}
       "tlsbin"}
     {"TLS descriptor -fpic and -fno-pic exec transitions"
-     "-melf_x86_64 tmpdir/libtlslib.so" "--64" {tlsbindesc.s tlsbin.s}
+     "-melf_x86_64 tmpdir/libtlslib.so --no-ld-generated-unwind-info"
+     "--64" {tlsbindesc.s tlsbin.s}
      {{readelf -WSsrl tlsbindesc.rd} {objdump -drj.text tlsbindesc.dd}
       {objdump -sj.got tlsbindesc.sd} {objdump -sj.tdata tlsbindesc.td}}
       "tlsbindesc"}
     {"TLS with global dynamic and descriptors"
-	"-shared -melf_x86_64" "--64" {tlsgdesc.s}
+     "-shared -melf_x86_64 --no-ld-generated-unwind-info"
+     "--64" {tlsgdesc.s}
      {{readelf -WSsrl tlsgdesc.rd} {objdump -drj.text tlsgdesc.dd}}
       "libtlsgdesc.so"}
     {"TLS in debug sections" "-melf_x86_64"
@@ -83,9 +101,57 @@ set x86_64tests {
      "--64" {mixed2a.s} {} "libmixe2a.o"}
     {"Helper 32bit object 2" "-r -melf_i386"
      "--32" {mixed2b.s} {} "libmixe2b.o"}
-    {"Split by file with 'l' flag on section." "-split-by-file -r"
+    {"Split by file with 'l' flag on section." "-split-by-file -r -melf_x86_64"
      "--64" {split-by-file1.s split-by-file2.s}
      {{readelf -SW split-by-file.rd}} "split-by-file.o"}
+    {"TLS X32 IE->LE transition" "-melf32_x86_64"
+     "--x32" {tlsie4.s}
+     {{objdump -dwr tlsie4.dd}} "tlsie4"}
+    {"TLS X32 GD->LE transition" "-melf32_x86_64"
+     "--x32" {tlsgd4.s}
+     {{objdump -dwr tlsgd4.dd}} "tlsgd4"}
+    {"Helper TLS GD->IE transition DSO" "-shared -melf_x86_64"
+     "--64" {tlsgd5b.s} {} "libtlsgd5.so"}
+    {"TLS GD->IE transition" "-melf_x86_64 tmpdir/libtlsgd5.so"
+     "--64" {tlsgd5a.s}
+     {{objdump -dwr tlsgd5.dd}} "tlsgd5"}
+    {"Helper TLS X32 GD->IE transition DSO" "-shared -melf32_x86_64"
+     "--x32" {tlsgd6b.s} {} "libtlsgd6.so"}
+    {"TLS X32 GD->IE transition" "-melf32_x86_64 tmpdir/libtlsgd6.so"
+     "--x32" {tlsgd6a.s}
+     {{objdump -dwr tlsgd6.dd}} "tlsgd6"}
+    {"TLS X32 LD->LE transition" "-melf32_x86_64"
+     "--x32" {tlsld2.s}
+     {{objdump -dwr tlsld2.dd}} "tlsld2"}
+
+     {"build 32-bit object with 33 locals" "-melf_x86_64 -e 0" "--32" {32bit.s} {{ ld incompatible.l }} "dummy" }
+     {"build 64-bit object" "-melf_x86_64 -e 0 --defsym foo=1" "--64" {64bit.s} {} "dummy" }
+     {"link mixed objects"  "-melf_x86_64 -e 0 tmpdir/32bit.o tmpdir/64bit.o" "" {} { { ld incompatible.l } } "mixed"}
+}
+
+# So as to avoid rewriting every last test case here in a nacl variant,
+# we use black magic to massage the generic cases into nacl-variant cases.
+if [istarget "*-*-nacl*"] {
+    set emul elf_x86_64_nacl
+
+    set lhs {elf(32)?_(i386|x86_64)[[:>:]]}
+    set rhs {&_nacl}
+
+    # Change all the -melf_x86_64 to -melf_x86_64_nacl so linking can succeed.
+    regsub -all -- $lhs $x86_64tests $rhs x86_64tests
+
+    # Same, applied to all the run_dump_test cases.
+    set options_regsub(ld) [list $lhs $rhs]
+
+    # The section/segment layout differs too much for the vanilla
+    # readelf output files to match.  So massage the cases so that
+    # they refer to a foo-nacl.rd file instead of a foo.rd file.
+    regsub -all -- {([a-z0-9]+)\.rd} $x86_64tests {\1-nacl.rd} x86_64tests
+
+    # Likewise for PLTs.
+    regsub -all -- {([a-z0-9]+)\.pd} $x86_64tests {\1-nacl.pd} x86_64tests
+} else {
+    set emul elf_x86_64
 }
 
 run_ld_link_tests $x86_64tests
@@ -95,21 +161,21 @@ global ld
 
 set test_name "Mixed x86_64 and i386 input test 1"
 set test mixed1
-if { ![ld_simple_link $ld tmpdir/$test "-melf_x86_64 tmpdir/${test}a.o tmpdir/${test}b.o"] } {
+if { ![ld_simple_link $ld tmpdir/$test "-m$emul tmpdir/${test}a.o tmpdir/${test}b.o"] } {
     if [string match "*i386 architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64 output*" $link_output] {
-	pass "$test_name" 
+	pass "$test_name"
     } {
-	fail "$test_name" 
+	fail "$test_name"
     }
 }
 
 set test_name "Mixed x86_64 and i386 input test 2"
 set test mixed2
-if { ![ld_simple_link $ld tmpdir/$test "-melf_x86_64 tmpdir/${test}a.o tmpdir/${test}b.o"] } {
+if { ![ld_simple_link $ld tmpdir/$test "-m$emul tmpdir/${test}a.o tmpdir/${test}b.o"] } {
     if [string match "*i386 architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64 output*" $link_output] {
-	pass "$test_name" 
+	pass "$test_name"
     } {
-	fail "$test_name" 
+	fail "$test_name"
     }
 }
 
@@ -129,15 +195,107 @@ run_dump_test "protected2"
 run_dump_test "protected2-l1om"
 run_dump_test "protected3"
 run_dump_test "protected3-l1om"
+run_dump_test "protected4"
+run_dump_test "protected5"
 run_dump_test "tlsle1"
 run_dump_test "tlspie1"
 run_dump_test "unique1"
 run_dump_test "nogot1"
 run_dump_test "nogot2"
 run_dump_test "discarded1"
+run_dump_test "pr12718"
+run_dump_test "pr12921"
+run_dump_test "pr13947"
+run_dump_test "pr12570a"
+run_dump_test "pr12570b"
+run_dump_test "pr14215"
+run_dump_test "pr14207"
 
-if { ![istarget "x86_64-*-linux*"] } {
+if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
+    return
+}
+
+if ![ld_assemble $as "--x32 $srcdir/$subdir/start.s" tmpdir/startx32.o] {
+    unresolved "Build ILP32 start.o"
+    return
+}
+
+if ![ld_assemble $as "--32 $srcdir/$subdir/start.s" tmpdir/start32.o] {
+    unresolved "Build ia32 start.o"
+    return
+}
+
+if ![ld_assemble $as "--64 $srcdir/$subdir/start.s" tmpdir/start64.o] {
+    unresolved "Build LP64 start.o"
+    return
+}
+
+if ![ld_assemble $as "--x32 $srcdir/$subdir/foo.s" tmpdir/foox32.o] {
+    unresolved "Build ILP32 foo.o"
+    return
+}
+
+if ![ld_assemble $as "--32 $srcdir/$subdir/foo.s" tmpdir/foo32.o] {
+    unresolved "Build ia32 foo.o"
+    return
+}
+
+if ![ld_assemble $as "--64 $srcdir/$subdir/foo.s" tmpdir/foo64.o] {
+    unresolved "Build LP64 foo.o"
     return
 }
 
 run_dump_test "compressed1"
+run_dump_test "ilp32-1"
+run_dump_test "ilp32-2"
+run_dump_test "ilp32-3"
+run_dump_test "ilp32-4"
+run_dump_test "ilp32-4-nacl"
+run_dump_test "ilp32-5"
+run_dump_test "ilp32-6"
+run_dump_test "ilp32-7"
+run_dump_test "ilp32-8"
+run_dump_test "ilp32-9"
+run_dump_test "ilp32-10"
+run_dump_test "ilp32-11"
+run_dump_test "ia32-1"
+run_dump_test "ia32-2"
+run_dump_test "ia32-3"
+run_dump_test "lp64-1"
+run_dump_test "lp64-2"
+run_dump_test "lp64-3"
+run_dump_test "pr13082-1a"
+run_dump_test "pr13082-1b"
+run_dump_test "pr13082-2a"
+run_dump_test "pr13082-2b"
+run_dump_test "pr13082-3a"
+run_dump_test "pr13082-3b"
+run_dump_test "pr13082-4a"
+run_dump_test "pr13082-4b"
+run_dump_test "pr13082-5a"
+run_dump_test "pr13082-5b"
+run_dump_test "pr13082-6a"
+run_dump_test "pr13082-6b"
+
+# Must be native with the C compiler
+if { [isnative] && [which $CC] != 0 } {
+    run_cc_link_tests {
+	{"Helper X32 DSO from x86-64 object" "" "-m64 -fPIC -g"
+	 {simple.c} {} "libsimple.a"}
+    }
+
+    set convertx32 "$objcopy -O elf32-x86-64 tmpdir/simple.o tmpdir/simple-x32.o"
+    send_log "$convertx32\n"
+    set got [remote_exec host "$convertx32"]
+    if { [lindex $got 0] != 0 || ![string match "" [lindex $got 1]] } then {
+	send_log "$got\n"
+	fail "Convert x86-64 object to x32"
+	return
+    }
+
+    run_ld_link_tests {
+	{"X32 DSO from x86-64 object"
+	 "-shared -melf32_x86_64 tmpdir/simple-x32.o" "--x32"
+	{dummy.s} {{readelf {-s --wide} x86-64-x32.rd}} "x86-64-x32"}
+    }
+}

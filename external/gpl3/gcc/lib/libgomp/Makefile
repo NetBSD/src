@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/04/17 00:04:17 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2014/05/22 16:53:22 yamt Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -39,7 +39,7 @@ SRCS= \
 	fortran.c \
 	affinity.c
 
-GOMP_MACHINE_ARCH?=	${MACHINE_ARCH}
+GOMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
 ARCHDIR=		${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
 
 CPPFLAGS+= \
@@ -52,21 +52,21 @@ CFLAGS+=-pthread
 
 CWARNFLAGS.clang+=	-Wno-conversion
 
-# libgomp.so.1.0 is in GCC 4.5.
+# libgomp is 1.0 is in GCC 4.5, and 1.1 in 4.8 since it added more symbols
 SHLIB_MAJOR=	1
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
 .PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
 
-.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH}
+.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH:S/earmv5/earm/}
 # This is where GCC looks for it.
 FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}
 
 INCS=		omp.h
-INCSDIR=	/usr/include/gcc-4.5
+INCSDIR=	/usr/include/gcc-4.8
 .endif
 
 .else			# } else {

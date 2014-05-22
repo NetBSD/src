@@ -1,4 +1,4 @@
-#objdump: -dr --prefix-addresses -mmips:3000
+#objdump: -drz --prefix-addresses -mmips:3000
 #name: MIPS trunc
 #as: -32 -mips1 -mtune=r3000
 
@@ -27,3 +27,5 @@ Disassembly of section .text:
 0+0044 <[^>]*> cvt.w.s	\$f4,\$f6
 0+0048 <[^>]*> ctc1	a0,\$31
 0+004c <[^>]*> nop
+0+0050 <[^>]*> nop
+#pass

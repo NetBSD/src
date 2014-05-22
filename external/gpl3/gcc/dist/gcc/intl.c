@@ -1,6 +1,5 @@
 /* Message translation utilities.
-   Copyright (C) 2001, 2003, 2004, 2005, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,7 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
 #include "intl.h"
 
 #ifdef HAVE_LANGINFO_CODESET

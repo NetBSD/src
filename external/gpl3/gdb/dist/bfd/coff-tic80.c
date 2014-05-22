@@ -1,6 +1,6 @@
 /* BFD back-end for Texas Instruments TMS320C80 Multimedia Video Processor (MVP).
-   Copyright 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
+   2012  Free Software Foundation, Inc.
 
    Written by Fred Fish (fnf@cygnus.com)
 
@@ -32,7 +32,7 @@
 /* Newlib-based hosts define _CONST as a STDC-safe alias for const,
   but to the tic80 toolchain it means something altogether different.
   Since sysdep.h will have pulled in stdio.h and hence _ansi.h which
-  contains this definition, we must undef it before including the 
+  contains this definition, we must undef it before including the
   tic80-specific definition. */
 #undef _CONST
 #endif /* _CONST */
@@ -47,23 +47,15 @@
 #define GET_SCNHDR_FLAGS H_GET_16
 #define PUT_SCNHDR_FLAGS H_PUT_16
 
-static void rtype2howto
-  PARAMS ((arelent *cache_ptr, struct internal_reloc *dst));
 static bfd_reloc_status_type ppbase_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 static bfd_reloc_status_type glob15_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 static bfd_reloc_status_type glob16_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 static bfd_reloc_status_type local16_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static bfd_boolean coff_tic80_relocate_section
-  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-	   struct internal_reloc *, struct internal_syment *, asection **));
-static reloc_howto_type * coff_tic80_rtype_to_howto
-  PARAMS ((bfd *, asection *, struct internal_reloc *,
-	   struct coff_link_hash_entry *, struct internal_syment *,
-	   bfd_vma *));
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+
 
 static reloc_howto_type tic80_howto_table[] =
 {
@@ -370,15 +362,13 @@ static reloc_howto_type tic80_howto_table[] =
    relocations.  */
 
 static bfd_reloc_status_type
-ppbase_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
-	      error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry ATTRIBUTE_UNUSED;
-     asymbol *symbol_in ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     char **error_message ATTRIBUTE_UNUSED;
+ppbase_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+	      arelent *reloc_entry ATTRIBUTE_UNUSED,
+	      asymbol *symbol_in ATTRIBUTE_UNUSED,
+	      void * data ATTRIBUTE_UNUSED,
+	      asection *input_section ATTRIBUTE_UNUSED,
+	      bfd *output_bfd ATTRIBUTE_UNUSED,
+	      char **error_message ATTRIBUTE_UNUSED)
 {
   /* FIXME.  */
   abort ();
@@ -387,15 +377,13 @@ ppbase_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
 /* This special function is used for the global 15 bit relocations.  */
 
 static bfd_reloc_status_type
-glob15_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
-	      error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry ATTRIBUTE_UNUSED;
-     asymbol *symbol_in ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     char **error_message ATTRIBUTE_UNUSED;
+glob15_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+	      arelent *reloc_entry ATTRIBUTE_UNUSED,
+	      asymbol *symbol_in ATTRIBUTE_UNUSED,
+	      void * data ATTRIBUTE_UNUSED,
+	      asection *input_section ATTRIBUTE_UNUSED,
+	      bfd *output_bfd ATTRIBUTE_UNUSED,
+	      char **error_message ATTRIBUTE_UNUSED)
 {
   /* FIXME.  */
   abort ();
@@ -404,15 +392,13 @@ glob15_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
 /* This special function is used for the global 16 bit relocations.  */
 
 static bfd_reloc_status_type
-glob16_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
-	      error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry ATTRIBUTE_UNUSED;
-     asymbol *symbol_in ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     char **error_message ATTRIBUTE_UNUSED;
+glob16_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+	      arelent *reloc_entry ATTRIBUTE_UNUSED,
+	      asymbol *symbol_in ATTRIBUTE_UNUSED,
+	      void * data ATTRIBUTE_UNUSED,
+	      asection *input_section ATTRIBUTE_UNUSED,
+	      bfd *output_bfd ATTRIBUTE_UNUSED,
+	      char **error_message ATTRIBUTE_UNUSED)
 {
   /* FIXME.  */
   abort ();
@@ -421,15 +407,13 @@ glob16_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
 /* This special function is used for the local 16 bit relocations.  */
 
 static bfd_reloc_status_type
-local16_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
-	      error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry ATTRIBUTE_UNUSED;
-     asymbol *symbol_in ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     char **error_message ATTRIBUTE_UNUSED;
+local16_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+	       arelent *reloc_entry ATTRIBUTE_UNUSED,
+	       asymbol *symbol_in ATTRIBUTE_UNUSED,
+	       void * data ATTRIBUTE_UNUSED,
+	       asection *input_section ATTRIBUTE_UNUSED,
+	       bfd *output_bfd ATTRIBUTE_UNUSED,
+	       char **error_message ATTRIBUTE_UNUSED)
 {
   /* FIXME.  */
   abort ();
@@ -440,9 +424,7 @@ local16_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
    to generate an output file.  */
 
 static void
-rtype2howto (cache_ptr, dst)
-     arelent *cache_ptr;
-     struct internal_reloc *dst;
+rtype2howto (arelent *cache_ptr, struct internal_reloc *dst)
 {
   unsigned int i;
 
@@ -464,13 +446,12 @@ rtype2howto (cache_ptr, dst)
 #define coff_rtype_to_howto coff_tic80_rtype_to_howto
 
 static reloc_howto_type *
-coff_tic80_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     asection *sec;
-     struct internal_reloc *rel;
-     struct coff_link_hash_entry *h ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     bfd_vma *addendp;
+coff_tic80_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+			   asection *sec,
+			   struct internal_reloc *rel,
+			   struct coff_link_hash_entry *h ATTRIBUTE_UNUSED,
+			   struct internal_syment *sym ATTRIBUTE_UNUSED,
+			   bfd_vma *addendp)
 {
   arelent genrel;
 
@@ -495,17 +476,14 @@ coff_tic80_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
    of this is a copy of _bfd_coff_generic_relocate_section.  */
 
 static bfd_boolean
-coff_tic80_relocate_section (output_bfd, info, input_bfd,
-			     input_section, contents, relocs, syms,
-			     sections)
-     bfd *output_bfd;
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     struct internal_reloc *relocs;
-     struct internal_syment *syms;
-     asection **sections;
+coff_tic80_relocate_section (bfd *output_bfd,
+			     struct bfd_link_info *info,
+			     bfd *input_bfd,
+			     asection *input_section,
+			     bfd_byte *contents,
+			     struct internal_reloc *relocs,
+			     struct internal_syment *syms,
+			     asection **sections)
 {
   struct internal_reloc *rel;
   struct internal_reloc *relend;
@@ -722,15 +700,6 @@ coff_tic80_relocate_section (output_bfd, info, input_bfd,
   return TRUE;
 }
 
-/* Clear the r_reserved field in relocs.  */
-#define SWAP_OUT_RELOC_EXTRA(abfd,src,dst) \
-  do \
-    { \
-      dst->r_reserved[0] = 0; \
-      dst->r_reserved[1] = 0; \
-    } \
-  while (0)
-
 #define TIC80COFF 1		/* Customize coffcode.h */
 #undef C_AUTOARG		/* Clashes with TIc80's C_UEXT */
 #undef C_LASTENT		/* Clashes with TIc80's C_STATLAB */

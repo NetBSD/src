@@ -1,6 +1,5 @@
 # Test Framework Driver for GDB driving a ROM monitor (via monitor.c).
-#   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1995-2013 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -160,7 +159,7 @@ proc gdb_load { arg } {
 
     set last_gdb_file $arg;
 
-    for { set j 1; } { $j <= 2 } {incr j; } {
+    for { set j 1 } { $j <= 2 } {incr j } {
 	if [target_info exists gdb,use_standard_load] {
 	    gdb_target_exec;
 	    if ![target_info exists gdb,no_push_conn] {
@@ -226,6 +225,12 @@ proc gdb_load { arg } {
 		set loadtimeout 1600
 	    }
 
+	    if [is_remote target] {
+		set oldremotetimeout [get_remotetimeout]
+		set_remotetimeout $loadtimeout
+	    }
+
+	    set load_ok 0
 	    send_gdb $command;
 	    gdb_expect $loadtimeout {
 		-re "\[Ff\]ailed.*$gdb_prompt $" {
@@ -235,13 +240,21 @@ proc gdb_load { arg } {
 		}
 		-re "$gdb_prompt $" {
 		    verbose "Loaded $farg into $GDB\n"
-		    return 0;
+		    set load_ok 1
 		}
 		timeout {
 		    if { $verbose > 1 } {
 			perror "Timed out trying to load $farg."
 		    }
 		}
+	    }
+
+	    if [is_remote target] {
+		set_remotetimeout $oldremotetimeout
+	    }
+
+	    if { $load_ok == 1 } {
+		return 0;
 	    }
 	}
 

@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.11 2011/09/25 04:32:47 christos Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2014/05/22 15:54:53 yamt Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
 
 .include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
 SCRIPTSDIR=	/usr/libdata
 
 PROG=		ld
 SRCS=		${G_OFILES:.o=.c}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
 		-DDEFAULT_EMULATION=\"${G_EMUL}\" \
 		-DSCRIPTDIR=\"${SCRIPTSDIR}\" \
@@ -20,22 +20,10 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
 		-DTOOLBINDIR=\"/usr/bin\" \
 		-DENABLE_PLUGINS
 
-LDADD=		-lintl
-DPADD=		${LIBINTL}
-
 COPTS.ldgram.c = -Wno-stack-protector
 
-BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
-LDADD+=		-L${BFDOBJ} -lbfd
-.if ${MKPICLIB} != "no"
-DPADD+=		${BFDOBJ}/libbfd_pic.a
-.else
-DPADD+=		${BFDOBJ}/libbfd.a
-.endif
-
-IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
-LDADD+=		-L${IBERTYOBJ} -liberty
-DPADD+=		${IBERTYOBJ}/libiberty.a
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	iberty 	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	${G_TEXINFOS}
 COMMONOBJDIR!=	cd ${TOP}/usr.bin/common && ${PRINTOBJDIR}
@@ -76,13 +64,13 @@ DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
 # XXX super hack
-. if (${MACHINE_ARCH} == "x86_64" && \
+. if (${BINUTILS_MACHINE_ARCH} == "x86_64" && \
       ("${f}" == "elf_i386" || "${f}" == "i386nbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/i386
-. elif (${MACHINE_ARCH} == "sparc64" && \
+. elif (${BINUTILS_MACHINE_ARCH} == "sparc64" && \
       ("${f}" == "elf32_sparc" || "${f}" == "sparcnbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/sparc
-. elif ${MACHINE_ARCH} == "mips64el"
+. elif ${BINUTILS_MACHINE_ARCH} == "mips64el"
 .  if "${f}" == "elf32ltsmip" || "${f}" == "elf32btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/o32
 .  elif "${f}" == "elf64ltsmip" || "${f}" == "elf64btsmip"
@@ -102,10 +90,11 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	LIB_PATH=${EMUL_LIB_PATH.${f}} NATIVE=yes \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} yes ${f} "${G_target_alias}"
+		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array}  ${f} "${G_target_alias}"
 
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.if ${BINUTILS_MACHINE_ARCH} == "x86_64" \
+    || ${BINUTILS_MACHINE_ARCH} == "sparc64" \
+    || !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
 # XXX hack to find out if .xs/.xc exists - slow!
@@ -115,7 +104,7 @@ HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
 .if !empty(HAS_XS)
 FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 # only do this if we don't have GENERATE_SHLIB_SCRIPT
-.elif ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.elif !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .endif
 .endif	# x64_64 || sparc64 || mips64
@@ -130,6 +119,9 @@ FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .l.c .y.c .y.h:
 	@true
 
-cleanprog: __cleanldscripts 
+cleandir: __cleanldscripts 
 __cleanldscripts:
 	-rm -rf ldscripts tmpdir
+
+LDADD+=		-lintl -lz
+DPADD+=		${LIBINTL} ${LIBZ}

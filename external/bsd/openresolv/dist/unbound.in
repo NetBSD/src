@@ -29,7 +29,7 @@
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
 [ -z "$unbound_conf" ] && exit 0
-[ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
+[ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
 NL="
 "
 
@@ -60,7 +60,7 @@ fi
 if type config_mkdirs >/dev/null 2>&1; then
 	config_mkdirs "$unbound_conf"
 else
-	@PREFIX@/sbin/resolvconf -D "$unbound_conf"
+	@SBINDIR@/resolvconf -D "$unbound_conf"
 fi
 
 if [ ! -f "$unbound_conf" ] || \

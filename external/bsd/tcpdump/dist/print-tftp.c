@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.39 2008-04-11 16:47:38 gianluca Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.39 2008-04-11 16:47:38 gianluca Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tftp.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+__RCSID("$NetBSD: print-tftp.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: print-tftp.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
 #include "tftp.h"
 
 /* op code to string mapping */
-static struct tok op2str[] = {
+static const struct tok op2str[] = {
 	{ RRQ,		"RRQ" },	/* read request */
 	{ WRQ,		"WRQ" },	/* write request */
 	{ DATA,		"DATA" },	/* data packet */
@@ -61,7 +61,7 @@ static struct tok op2str[] = {
 };
 
 /* error code to string mapping */
-static struct tok err2str[] = {
+static const struct tok err2str[] = {
 	{ EUNDEF,	"EUNDEF" },	/* not defined */
 	{ ENOTFOUND,	"ENOTFOUND" },	/* file not found */
 	{ EACCESS,	"EACCESS" },	/* access violation */
@@ -104,15 +104,7 @@ tftp_print(register const u_char *bp, u_int length)
 	case RRQ:
 	case WRQ:
 	case OACK:
-		/*
-		 * XXX Not all arpa/tftp.h's specify th_stuff as any
-		 * array; use address of th_block instead
-		 */
-#ifdef notdef
 		p = (u_char *)tp->th_stuff;
-#else
-		p = (u_char *)&tp->th_block;
-#endif
 		putchar(' ');
 		/* Print filename or first option */
 		if (opcode != OACK)

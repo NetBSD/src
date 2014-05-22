@@ -1,6 +1,6 @@
 /* BFD back-end for oasys objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
@@ -906,9 +906,11 @@ oasys_write_header (bfd *abfd)
 
   if (length > (size_t) sizeof (r.module_name))
     length = sizeof (r.module_name);
+  else if (length < (size_t) sizeof (r.module_name))
+    (void) memset (r.module_name + length, ' ',
+		   sizeof (r.module_name) - length);
 
   (void) memcpy (r.module_name, abfd->filename, length);
-  (void) memset (r.module_name + length, ' ', sizeof (r.module_name) - length);
 
   r.version_number = OASYS_VERSION_NUMBER;
   r.rev_number = OASYS_REV_NUMBER;
@@ -1196,6 +1198,7 @@ oasys_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define oasys_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
 #define oasys_bfd_relax_section                    bfd_generic_relax_section
 #define oasys_bfd_gc_sections                      bfd_generic_gc_sections
+#define oasys_bfd_lookup_section_flags             bfd_generic_lookup_section_flags
 #define oasys_bfd_merge_sections                   bfd_generic_merge_sections
 #define oasys_bfd_is_group_section                 bfd_generic_is_group_section
 #define oasys_bfd_discard_group                    bfd_generic_discard_group
@@ -1224,6 +1227,7 @@ const bfd_target oasys_vec =
   0,				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

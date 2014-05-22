@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.3 2013/01/16 05:27:58 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.4 2014/05/22 16:13:21 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,25 @@ SUBDIR=	clang \
 	clang-tblgen \
 	tblgen
 
+.if ${MKLLD} != "no"
+SUBDIR+=	\
+	lld
+.endif
+
+.if ${MKLLDB} != "no"
+SUBDIR+=	\
+	lldb
+.endif
+
+.if ${MKMCLINKER} != "no"
+SUBDIR+=	\
+	llvm-mcld
+.endif
+
 .if defined(LLVM_DEVELOPER)
 SUBDIR+= \
 	bugpoint \
+	clang-format \
 	llc \
 	lli \
 	llvm-ar \
@@ -22,8 +38,8 @@ SUBDIR+= \
 	llvm-link \
 	llvm-mc \
 	llvm-nm \
-	llvm-prof \
-	llvm-ranlib \
+	llvm-objdump \
+	llvm-profdata \
 	llvm-readobj \
 	llvm-size \
 	llvm-symbolizer \

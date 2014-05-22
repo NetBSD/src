@@ -374,4 +374,15 @@ Disassembly of section .text:
 .*:	b9 bf 00 67 [ 	]*trte	%r6,%r7,0
 .*:	b9 bd a0 67 [ 	]*trtre	%r6,%r7,10
 .*:	b9 bd 00 67 [ 	]*trtre	%r6,%r7,0
+.*:	b2 ed 00 67 [ 	]*ecpga	%r6,%r7
+.*:	b2 e4 00 67 [ 	]*ecctr	%r6,%r7
+.*:	b2 e5 00 67 [ 	]*epctr	%r6,%r7
+.*:	b2 84 6d 05 [ 	]*lcctl	3333\(%r6\)
+.*:	b2 85 6d 05 [ 	]*lpctl	3333\(%r6\)
+.*:	b2 87 6d 05 [ 	]*lsctl	3333\(%r6\)
+.*:	b2 8e 6d 05 [ 	]*qctri	3333\(%r6\)
+.*:	b2 86 6d 05 [ 	]*qsi	3333\(%r6\)
+.*:	b2 e0 00 67 [ 	]*scctr	%r6,%r7
+.*:	b2 e1 00 67 [ 	]*spctr	%r6,%r7
+.*:	b2 80 6d 05 [ 	]*lpp	3333\(%r6\)
 .*:	07 07 [ 	]*nopr	%r7

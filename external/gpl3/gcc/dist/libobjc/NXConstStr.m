@@ -1,5 +1,5 @@
 /* Implementation of the NXConstantString class for Objective-C.
-   Copyright (C) 1995, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
    Contributed by Pieter J. Schoenmakers <tiggr@es.ele.tue.nl>
 
 This file is part of GCC.
@@ -23,6 +23,7 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */ 
 
+#include "objc-private/common.h"
 #include "objc/NXConstStr.h"
 
 @implementation NXConstantString

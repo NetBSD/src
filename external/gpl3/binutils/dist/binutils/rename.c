@@ -22,8 +22,6 @@
 #include "bfd.h"
 #include "bucomm.h"
 
-#include <sys/stat.h>
-
 #ifdef HAVE_GOOD_UTIME_H
 #include <utime.h>
 #else /* ! HAVE_GOOD_UTIME_H */

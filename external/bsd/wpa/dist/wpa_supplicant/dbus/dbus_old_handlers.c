@@ -2,14 +2,8 @@
  * WPA Supplicant / dbus-based control interface
  * Copyright (c) 2006, Dan Williams <dcbw@redhat.com> and Red Hat, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -229,7 +223,7 @@ DBusMessage * wpas_dbus_global_remove_interface(DBusMessage *message,
 		goto out;
 	}
 
-	if (!wpa_supplicant_remove_iface(global, wpa_s)) {
+	if (!wpa_supplicant_remove_iface(global, wpa_s, 0)) {
 		reply = wpas_dbus_new_success_reply(message);
 	} else {
 		reply = dbus_message_new_error(message,
@@ -337,7 +331,7 @@ DBusMessage * wpas_dbus_global_set_debugparams(DBusMessage *message,
 DBusMessage * wpas_dbus_iface_scan(DBusMessage *message,
 				   struct wpa_supplicant *wpa_s)
 {
-	wpa_s->scan_req = 2;
+	wpa_s->scan_req = MANUAL_SCAN_REQ;
 	wpa_supplicant_req_scan(wpa_s, 0, 0);
 	return wpas_dbus_new_success_reply(message);
 }

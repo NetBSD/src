@@ -1,4 +1,4 @@
-#objdump: -dr --prefix-addresses -mmips:3000
+#objdump: -drz --prefix-addresses -mmips:3000
 #name: MIPS lifloat
 #as: -32 -mips1
 
@@ -21,3 +21,5 @@ Disassembly of section .text:
 0+0018 <[^>]*> ori	a0,a0,0xcd36
 0+001c <[^>]*> lwc1	\$f4,[-0-9]+\(gp\)
 [ 	]*1c: [A-Z0-9_]*LITERAL[A-Z0-9_]*	.lit4.*
+0+0020 <[^>]*> nop
+#pass

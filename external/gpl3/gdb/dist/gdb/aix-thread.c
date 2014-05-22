@@ -1,7 +1,6 @@
 /* Low level interface for debugging AIX 4.3+ pthreads.
 
-   Copyright (C) 1999, 2000, 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Written by Nick Duffek <nsd@redhat.com>.
 
    This file is part of GDB.
@@ -59,7 +58,7 @@
 #include <sys/pthdebug.h>
 
 #if !HAVE_DECL_GETTHRDS
-extern int getthrds (pid_t, struct thrdsinfo64 *, int, pthdb_tid_t *, int);
+extern int getthrds (pid_t, struct thrdsinfo64 *, int, tid_t *, int);
 #endif
 
 /* Whether to emit debugging output.  */
@@ -648,7 +647,7 @@ static pthdb_tid_t
 get_signaled_thread (void)
 {
   struct thrdsinfo64 thrinf;
-  pthdb_tid_t ktid = 0;
+  tid_t ktid = 0;
   int result = 0;
 
   while (1)
@@ -887,7 +886,7 @@ pd_enable (void)
     return;
 
   /* Check application word size.  */
-  arch64 = register_size (target_gdbarch, 0) == 8;
+  arch64 = register_size (target_gdbarch (), 0) == 8;
 
   /* Check whether the application is pthreaded.  */
   stub_name = NULL;
@@ -901,7 +900,7 @@ pd_enable (void)
   if (!(ms = lookup_minimal_symbol (stub_name, NULL, NULL)))
     return;
   pd_brk_addr = SYMBOL_VALUE_ADDRESS (ms);
-  if (!create_thread_event_breakpoint (target_gdbarch, pd_brk_addr))
+  if (!create_thread_event_breakpoint (target_gdbarch (), pd_brk_addr))
     return;
 
   /* Prepare for thread debugging.  */
@@ -970,7 +969,7 @@ aix_thread_detach (struct target_ops *ops, char *args, int from_tty)
 
 static void
 aix_thread_resume (struct target_ops *ops,
-                   ptid_t ptid, int step, enum target_signal sig)
+                   ptid_t ptid, int step, enum gdb_signal sig)
 {
   struct thread_info *thread;
   pthdb_tid_t tid[2];
@@ -999,10 +998,10 @@ aix_thread_resume (struct target_ops *ops,
 
       if (arch64)
 	ptrace64aix (PTT_CONTINUE, tid[0], 1, 
-		     target_signal_to_host (sig), (void *) tid);
+		     gdb_signal_to_host (sig), (void *) tid);
       else
 	ptrace32 (PTT_CONTINUE, tid[0], (int *) 1,
-		  target_signal_to_host (sig), (void *) tid);
+		  gdb_signal_to_host (sig), (void *) tid);
     }
 }
 
@@ -1028,7 +1027,7 @@ aix_thread_wait (struct target_ops *ops,
 
   /* Check whether libpthdebug might be ready to be initialized.  */
   if (!pd_active && status->kind == TARGET_WAITKIND_STOPPED
-      && status->value.sig == TARGET_SIGNAL_TRAP)
+      && status->value.sig == GDB_SIGNAL_TRAP)
     {
       struct regcache *regcache = get_thread_regcache (ptid);
       struct gdbarch *gdbarch = get_regcache_arch (regcache);
@@ -1075,9 +1074,11 @@ supply_fprs (struct regcache *regcache, double *vals)
      floating-point registers.  */
   gdb_assert (ppc_floating_point_unit_p (gdbarch));
 
-  for (regno = 0; regno < ppc_num_fprs; regno++)
-    regcache_raw_supply (regcache, regno + tdep->ppc_fp0_regnum,
-			 (char *) (vals + regno));
+  for (regno = tdep->ppc_fp0_regnum;
+       regno < tdep->ppc_fp0_regnum + ppc_num_fprs;
+       regno++)
+    regcache_raw_supply (regcache, regno,
+			 (char *) (vals + regno - tdep->ppc_fp0_regnum));
 }
 
 /* Predicate to test whether given register number is a "special" register.  */
@@ -1356,7 +1357,8 @@ fill_fprs (const struct regcache *regcache, double *vals)
        regno < tdep->ppc_fp0_regnum + ppc_num_fprs;
        regno++)
     if (REG_VALID == regcache_register_status (regcache, regno))
-      regcache_raw_collect (regcache, regno, vals + regno);
+      regcache_raw_collect (regcache, regno,
+			    vals + regno - tdep->ppc_fp0_regnum);
 }
 
 /* Store the special registers into the specified 64-bit and 32-bit
@@ -1828,6 +1830,8 @@ init_aix_thread_ops (void)
 
 /* Module startup initialization function, automagically called by
    init.c.  */
+
+void _initialize_aix_thread (void);
 
 void
 _initialize_aix_thread (void)

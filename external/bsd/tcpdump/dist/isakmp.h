@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* YIPS @(#)Id: isakmp.h,v 1.12 2007-11-24 18:13:33 mcr Exp */
+/* YIPS @(#)Id: isakmp.h,v 1.12 2007-11-24 18:13:33 mcr Exp  */
 
 /* refer to RFC 2408 */
 

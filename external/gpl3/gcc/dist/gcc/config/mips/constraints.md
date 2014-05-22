@@ -1,5 +1,5 @@
 ;; Constraint definitions for MIPS.
-;; Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -86,8 +86,8 @@
 
 ;; Registers that can be used as the target of multiply-accumulate
 ;; instructions.  The core MIPS32 ISA provides a hi/lo madd,
-;; but the DSPr2 version allows any accumulator target.
-(define_register_constraint "ka" "ISA_HAS_DSPR2 ? ACC_REGS : MD_REGS")
+;; but the DSP version allows any accumulator target.
+(define_register_constraint "ka" "ISA_HAS_DSP_MULT ? ACC_REGS : MD_REGS")
 
 (define_constraint "kf"
   "@internal"
@@ -127,9 +127,9 @@
   "A constant that cannot be loaded using @code{lui}, @code{addiu}
    or @code{ori}."
   (and (match_code "const_int")
-       (match_test "!SMALL_OPERAND (ival)")
-       (match_test "!SMALL_OPERAND_UNSIGNED (ival)")
-       (match_test "!LUI_OPERAND (ival)")))
+       (not (match_test "SMALL_OPERAND (ival)"))
+       (not (match_test "SMALL_OPERAND_UNSIGNED (ival)"))
+       (not (match_test "LUI_OPERAND (ival)"))))
 
 (define_constraint "N"
   "A constant in the range -65535 to -1 (inclusive)."
@@ -184,7 +184,7 @@
    using @code{la}."
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")
-       (match_test "!mips_dangerous_for_la25_p (op)")))
+       (not (match_test "mips_dangerous_for_la25_p (op)"))))
 
 (define_memory_constraint "W"
   "@internal
@@ -194,7 +194,7 @@
    constant-pool references."
   (and (match_code "mem")
        (match_operand 0 "memory_operand")
-       (ior (match_test "!TARGET_MIPS16")
+       (ior (not (match_test "TARGET_MIPS16"))
 	    (and (not (match_operand 0 "stack_operand"))
 		 (not (match_test "CONSTANT_P (XEXP (op, 0))"))))))
 
@@ -231,3 +231,8 @@
 (define_constraint "Yx"
    "@internal"
    (match_operand 0 "low_bitmask_operand"))
+
+(define_memory_constraint "ZR"
+ "@internal
+  An address valid for loading/storing register exclusive"
+ (match_operand 0 "mem_noofs_operand"))

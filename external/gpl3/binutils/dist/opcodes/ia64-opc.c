@@ -1,5 +1,6 @@
 /* ia64-opc.c -- Functions to access the compacted opcode table
-   Copyright 1999, 2000, 2001, 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2003, 2005, 2007, 2009, 2012
+   Free Software Foundation, Inc.
    Written by Bob Manson of Cygnus Solutions, <manson@cygnus.com>
 
    This file is part of the GNU opcodes library.
@@ -19,7 +20,6 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "ansidecl.h"
 #include "sysdep.h"
 #include "libiberty.h"
 #include "ia64-asmtab.h"

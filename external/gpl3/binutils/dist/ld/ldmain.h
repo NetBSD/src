@@ -1,6 +1,6 @@
 /* ldmain.h -
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2002, 2003, 2004,
-   2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   2005, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -31,11 +31,8 @@ extern FILE *previous_script_handle;
 extern bfd_boolean force_make_executable;
 extern char *default_target;
 extern bfd_boolean trace_files;
-extern bfd_boolean trace_file_tries;
+extern bfd_boolean verbose;
 extern bfd_boolean version_printed;
-extern bfd_boolean whole_archive;
-extern bfd_boolean add_DT_NEEDED_for_regular;
-extern bfd_boolean add_DT_NEEDED_for_dynamic;
 extern bfd_boolean demangling;
 extern int g_switch_value;
 extern const char *output_filename;

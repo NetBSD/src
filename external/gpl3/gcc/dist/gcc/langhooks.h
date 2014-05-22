@@ -1,6 +1,5 @@
 /* The lang_hooks data structure.
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,9 +20,8 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_LANG_HOOKS_H
 #define GCC_LANG_HOOKS_H
 
-/* This file should be #include-d after tree.h.  */
+/* FIXME: This file should be #include-d after tree.h (for enum tree_code).  */
 
-struct diagnostic_context;
 struct diagnostic_info;
 
 struct gimplify_omp_ctx;
@@ -42,13 +40,6 @@ enum classify_record
 struct lang_hooks_for_tree_inlining
 {
   bool (*var_mod_type_p) (tree, tree);
-};
-
-struct lang_hooks_for_callgraph
-{
-  /* The node passed is a language-specific tree node.  If its contents
-     are relevant to use of other declarations, mark them.  */
-  tree (*analyze_expr) (tree *, int *);
 };
 
 /* The following hooks are used by tree-dump.c.  */
@@ -133,25 +124,26 @@ struct lang_hooks_for_types
   /* Fill in information for the debugger about the bounds of TYPE.  */
   void (*get_subrange_bounds) (const_tree, tree *, tree *);
 
+  /* A type descriptive of TYPE's complex layout generated to help the
+     debugger to decode variable-length or self-referential constructs.
+     This is only used for the AT_GNAT_descriptive_type DWARF attribute.  */
+  tree (*descriptive_type) (const_tree);
+
   /* If we requested a pointer to a vector, build up the pointers that
      we stripped off while looking for the inner type.  Similarly for
      return values from functions.  The argument TYPE is the top of the
      chain, and BOTTOM is the new type which we will point to.  */
   tree (*reconstruct_complex_type) (tree, tree);
-
-  /* Nonzero if types that are identical are to be hashed so that only
-     one copy is kept.  If a language requires unique types for each
-     user-specified type, such as Ada, this should be set to TRUE.  */
-  bool hash_types;
 };
 
 /* Language hooks related to decls and the symbol table.  */
 
 struct lang_hooks_for_decls
 {
-  /* Returns nonzero if we are in the global binding level.  Ada
-     returns -1 for an undocumented reason used in stor-layout.c.  */
-  int (*global_bindings_p) (void);
+  /* Return true if we are in the global binding level.  This hook is really
+     needed only if the language supports variable-sized types at the global
+     level, i.e. declared outside subprograms.  */
+  bool (*global_bindings_p) (void);
 
   /* Function to add a decl to the current scope level.  Takes one
      argument, a decl to add.  Returns that decl, or, if the same
@@ -269,29 +261,41 @@ struct lang_hooks
      on unrecognized codes.  */
   size_t (*tree_size) (enum tree_code);
 
-  /* The first callback made to the front end, for simple
-     initialization needed before any calls to handle_option.  Return
-     the language mask to filter the switch array with.  */
-  unsigned int (*init_options) (unsigned int argc, const char **argv);
+  /* Return the language mask used for converting argv into a sequence
+     of options.  */
+  unsigned int (*option_lang_mask) (void);
+
+  /* Initialize variables in an options structure.  */
+  void (*init_options_struct) (struct gcc_options *opts);
+
+  /* After the initialize_diagnostics hook is called, do any simple
+     initialization needed before any calls to handle_option, other
+     than that done by the init_options_struct hook.  */
+  void (*init_options) (unsigned int decoded_options_count,
+			struct cl_decoded_option *decoded_options);
 
   /* Callback used to perform language-specific initialization for the
      global diagnostic context structure.  */
-  void (*initialize_diagnostics) (struct diagnostic_context *);
+  void (*initialize_diagnostics) (diagnostic_context *);
+
+  /* Return true if a warning should be given about option OPTION,
+     which is for the wrong language, false if it should be quietly
+     ignored.  */
+  bool (*complain_wrong_lang_p) (const struct cl_option *option);
 
   /* Handle the switch CODE, which has real type enum opt_code from
      options.h.  If the switch takes an argument, it is passed in ARG
      which points to permanent storage.  The handler is responsible for
      checking whether ARG is NULL, which indicates that no argument
      was in fact supplied.  For -f and -W switches, VALUE is 1 or 0
-     for the positive and negative forms respectively.
+     for the positive and negative forms respectively.  HANDLERS should
+     be passed to any recursive handle_option calls.  LOC is the
+     location of the option.
 
-     Return 1 if the switch is valid, 0 if invalid, and -1 if it's
-     valid and should not be treated as language-independent too.  */
-  int (*handle_option) (size_t code, const char *arg, int value);
-
-  /* Return false to use the default complaint about a missing
-     argument, otherwise output a complaint and return true.  */
-  bool (*missing_argument) (const char *opt, size_t code);
+     Return true if the switch is valid, false if invalid.  */
+  bool (*handle_option) (size_t code, const char *arg, int value, int kind,
+			 location_t loc,
+			 const struct cl_option_handlers *handlers);
 
   /* Called when all command line options have been parsed to allow
      further processing and initialization
@@ -311,9 +315,8 @@ struct lang_hooks
   /* Called at the end of compilation, as a finalizer.  */
   void (*finish) (void);
 
-  /* Parses the entire file.  The argument is nonzero to cause bison
-     parsers to dump debugging information during parsing.  */
-  void (*parse_file) (int);
+  /* Parses the entire file.  */
+  void (*parse_file) (void);
 
   /* Determines if it's ok for a function to have no noreturn attribute.  */
   bool (*missing_noreturn_ok_p) (tree);
@@ -373,7 +376,7 @@ struct lang_hooks
   int (*types_compatible_p) (tree x, tree y);
 
   /* Called by report_error_function to print out function name.  */
-  void (*print_error_function) (struct diagnostic_context *, const char *,
+  void (*print_error_function) (diagnostic_context *, const char *,
 				struct diagnostic_info *);
 
   /* Convert a character from the host's to the target's character
@@ -395,8 +398,6 @@ struct lang_hooks
   const struct attribute_spec *format_attribute_table;
 
   struct lang_hooks_for_tree_inlining tree_inlining;
-
-  struct lang_hooks_for_callgraph callgraph;
 
   struct lang_hooks_for_tree_dump tree_dump;
 
@@ -420,10 +421,6 @@ struct lang_hooks
   /* Perform language-specific gimplification on the argument.  Returns an
      enum gimplify_status, though we can't see that type here.  */
   int (*gimplify_expr) (tree *, gimple_seq *, gimple_seq *);
-
-  /* Fold an OBJ_TYPE_REF expression to the address of a function.
-     KNOWN_TYPE carries the true type of the OBJ_TYPE_REF_OBJECT.  */
-  tree (*fold_obj_type_ref) (tree, tree);
 
   /* Do language specific processing in the builtin function DECL  */
   tree (*builtin_function) (tree decl);
@@ -450,9 +447,25 @@ struct lang_hooks
   /* Map a type to a runtime object to match type.  */
   tree (*eh_runtime_type) (tree);
 
+  /* If non-NULL, this is a function that returns a function decl to be
+     executed if an unhandled exception is propagated out of a cleanup
+     region.  For example, in C++, an exception thrown by a destructor
+     during stack unwinding is required to result in a call to
+     `std::terminate', so the C++ version of this function returns a
+     FUNCTION_DECL for `std::terminate'.  */
+  tree (*eh_protect_cleanup_actions) (void);
+
+  /* Return true if a stmt can fallthru.  Used by block_may_fallthru
+     to possibly handle language trees.  */
+  bool (*block_may_fallthru) (const_tree);
+
   /* True if this language uses __cxa_end_cleanup when the ARM EABI
      is enabled.  */
   bool eh_use_cxa_end_cleanup;
+
+  /* True if this language requires deep unsharing of tree nodes prior to
+     gimplification.  */
+  bool deep_unsharing;
 
   /* Whenever you add entries here, make sure you adjust langhooks-def.h
      and langhooks.c accordingly.  */
@@ -460,6 +473,7 @@ struct lang_hooks
 
 /* Each front end provides its own.  */
 extern struct lang_hooks lang_hooks;
+
 extern tree add_builtin_function (const char *name, tree type,
 				  int function_code, enum built_in_class cl,
 				  const char *library_name,
@@ -470,5 +484,6 @@ extern tree add_builtin_function_ext_scope (const char *name, tree type,
 					    enum built_in_class cl,
 					    const char *library_name,
 					    tree attrs);
-
+extern tree add_builtin_type (const char *name, tree type);
+ 
 #endif /* GCC_LANG_HOOKS_H */

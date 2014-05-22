@@ -2,7 +2,7 @@
 #notarget: cris*-*-elf
 #xerror:
 #output: Unimplemented mprotect call (0x0, 0x2001, 0x4)\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
  */
 #include <stdlib.h>
 #include <stdio.h>

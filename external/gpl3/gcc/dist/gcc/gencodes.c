@@ -1,8 +1,7 @@
 /* Generate from machine description:
    - some macros CODE_FOR_... giving the insn_code_number value
    for each of the defined standard insn names.
-   Copyright (C) 1987, 1991, 1995, 1998, 1999, 2000, 2001, 2003,
-   2004, 2007  Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -58,7 +57,7 @@ main (int argc, char **argv)
      direct references to CODE_FOR_xxx in C code.  */
   insn_elision = 0;
 
-  if (init_md_reader_args (argc, argv) != SUCCESS_EXIT_CODE)
+  if (!init_rtx_reader_args (argc, argv))
     return (FATAL_EXIT_CODE);
 
   puts ("\
@@ -68,7 +67,8 @@ main (int argc, char **argv)
 #ifndef GCC_INSN_CODES_H\n\
 #define GCC_INSN_CODES_H\n\
 \n\
-enum insn_code {");
+enum insn_code {\n\
+  CODE_FOR_nothing = 0,\n");
 
   /* Read the machine description.  */
 
@@ -85,7 +85,7 @@ enum insn_code {");
 	gen_insn (desc, insn_code_number);
     }
 
-  puts ("  CODE_FOR_nothing\n\
+  puts ("  LAST_INSN_CODE\n\
 };\n\
 \n\
 #endif /* GCC_INSN_CODES_H */");

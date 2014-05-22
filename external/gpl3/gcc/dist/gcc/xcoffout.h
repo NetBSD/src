@@ -1,7 +1,6 @@
 /* XCOFF definitions.  These are needed in dbxout.c, final.c,
    and xcoffout.h.
-   Copyright (C) 1998, 2000, 2002, 2003, 2004, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -126,6 +125,8 @@ extern const char *xcoff_current_include_file;
 
 extern char *xcoff_bss_section_name;
 extern char *xcoff_private_data_section_name;
+extern char *xcoff_tls_data_section_name;
+extern char *xcoff_tbss_section_name;
 extern char *xcoff_read_only_section_name;
 
 /* Last source file name mentioned in a NOTE insn.  */

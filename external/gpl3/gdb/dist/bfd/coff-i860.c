@@ -131,7 +131,7 @@ coff_i860_reloc (bfd *abfd,
   return bfd_reloc_continue;
 }
 
-/* This is just a temporary measure until we teach bfd to generate 
+/* This is just a temporary measure until we teach bfd to generate
    these relocations.  */
 
 static bfd_reloc_status_type
@@ -677,6 +677,7 @@ const bfd_target
   '_',				/* leading underscore */
   '/',				/* ar_pad_char */
   15,				/* ar_max_namelen */
+  0,				/* match priority.  */
 
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,

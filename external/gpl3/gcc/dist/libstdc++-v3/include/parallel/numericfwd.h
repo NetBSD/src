@@ -1,6 +1,6 @@
-// <numeric> parallel extensions -*- C++ -*-
+// <parallel/numeric> Forward declarations -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 #include <parallel/tags.h>
 #include <parallel/settings.h>
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
 namespace __parallel
 {

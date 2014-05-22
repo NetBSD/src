@@ -1,14 +1,18 @@
 AC_PREREQ(2.64)
 AC_INIT([LTO plugin for ld], 0.1,,[lto-plugin])
+AC_CANONICAL_SYSTEM
 GCC_TOPLEV_SUBDIRS
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign no-dist])
 AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_SYS_LARGEFILE
-AC_ARG_VAR(LIBELFLIBS,[How to link libelf])
-AC_ARG_VAR(LIBELFINC,[How to find libelf include files])
+ACX_PROG_CC_WARNING_OPTS([-Wall], [ac_lto_plugin_warn_cflags])
 AM_PROG_LIBTOOL
+ACX_LT_HOST_FLAGS
 AC_SUBST(target_noncanonical)
+AC_TYPE_INT64_T
 AC_TYPE_UINT64_T
+AC_HEADER_SYS_WAIT
 AC_CONFIG_FILES(Makefile)
+AC_CONFIG_HEADERS(config.h)
 AC_OUTPUT

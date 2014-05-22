@@ -1,6 +1,6 @@
 // expression.cc -- expressions in linker scripts for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -77,7 +77,7 @@ Expression::eval(const Symbol_table* symtab, const Layout* layout,
 		 bool check_assertions)
 {
   return this->eval_maybe_dot(symtab, layout, check_assertions,
-			      false, 0, NULL, NULL, NULL);
+			      false, 0, NULL, NULL, NULL, false);
 }
 
 // Evaluate an expression which may refer to the dot symbol.
@@ -87,11 +87,13 @@ Expression::eval_with_dot(const Symbol_table* symtab, const Layout* layout,
 			  bool check_assertions, uint64_t dot_value,
 			  Output_section* dot_section,
 			  Output_section** result_section_pointer,
-			  uint64_t* result_alignment_pointer)
+			  uint64_t* result_alignment_pointer,
+			  bool is_section_dot_assignment)
 {
   return this->eval_maybe_dot(symtab, layout, check_assertions, true,
 			      dot_value, dot_section, result_section_pointer,
-			      result_alignment_pointer);
+			      result_alignment_pointer,
+			      is_section_dot_assignment);
 }
 
 // Evaluate an expression which may or may not refer to the dot
@@ -102,7 +104,8 @@ Expression::eval_maybe_dot(const Symbol_table* symtab, const Layout* layout,
 			   bool check_assertions, bool is_dot_available,
 			   uint64_t dot_value, Output_section* dot_section,
 			   Output_section** result_section_pointer,
-			   uint64_t* result_alignment_pointer)
+			   uint64_t* result_alignment_pointer,
+			   bool is_section_dot_assignment)
 {
   Expression_eval_info eei;
   eei.symtab = symtab;
@@ -113,14 +116,24 @@ Expression::eval_maybe_dot(const Symbol_table* symtab, const Layout* layout,
   eei.dot_section = dot_section;
 
   // We assume the value is absolute, and only set this to a section
-  // if we find a section relative reference.
+  // if we find a section-relative reference.
   if (result_section_pointer != NULL)
     *result_section_pointer = NULL;
   eei.result_section_pointer = result_section_pointer;
 
   eei.result_alignment_pointer = result_alignment_pointer;
 
-  return this->value(&eei);
+  uint64_t val = this->value(&eei);
+
+  // If this is an assignment to dot within a section, and the value
+  // is absolute, treat it as a section-relative offset.
+  if (is_section_dot_assignment && *result_section_pointer == NULL)
+    {
+      gold_assert(dot_section != NULL);
+      val += dot_section->address();
+      *result_section_pointer = dot_section;
+    }
+  return val;
 }
 
 // A number.
@@ -257,7 +270,8 @@ class Unary_expression : public Expression
 				      eei->dot_value,
 				      eei->dot_section,
 				      arg_section_pointer,
-				      eei->result_alignment_pointer);
+				      eei->result_alignment_pointer,
+				      false);
   }
 
   void
@@ -336,7 +350,8 @@ class Binary_expression : public Expression
 				       eei->dot_value,
 				       eei->dot_section,
 				       section_pointer,
-				       alignment_pointer);
+				       alignment_pointer,
+				       false);
   }
 
   uint64_t
@@ -350,7 +365,8 @@ class Binary_expression : public Expression
 					eei->dot_value,
 					eei->dot_section,
 					section_pointer,
-					alignment_pointer);
+					alignment_pointer,
+					false);
   }
 
   void
@@ -500,7 +516,8 @@ class Trinary_expression : public Expression
 				       eei->dot_value,
 				       eei->dot_section,
 				       section_pointer,
-				       NULL);
+				       NULL,
+				       false);
   }
 
   uint64_t
@@ -514,7 +531,8 @@ class Trinary_expression : public Expression
 				       eei->dot_value,
 				       eei->dot_section,
 				       section_pointer,
-				       alignment_pointer);
+				       alignment_pointer,
+				       false);
   }
 
   uint64_t
@@ -528,7 +546,8 @@ class Trinary_expression : public Expression
 				       eei->dot_value,
 				       eei->dot_section,
 				       section_pointer,
-				       alignment_pointer);
+				       alignment_pointer,
+				       false);
   }
 
   void

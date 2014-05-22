@@ -85,7 +85,6 @@ info all-registers
 info args
 info bogus-gdb-command
 info breakpoints
-info catch
 info copying
 info display
 info f
@@ -177,7 +176,6 @@ set print sevenbit-strings
 set print union
 set print vtbl
 set radix
-set symbol-reloading
 set variable
 set verbose
 set width
@@ -221,7 +219,6 @@ show print union
 show print vtbl
 show prompt
 show radix
-show symbol-reloading
 show user
 show values
 show verbose

@@ -1,8 +1,6 @@
 /* Core dump and executable file functions above target vector, for GDB.
 
-   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1996, 1997, 1998,
-   1999, 2000, 2001, 2003, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +33,8 @@
 #include "gdb_stat.h"
 #include "completer.h"
 #include "exceptions.h"
+#include "observer.h"
+#include "cli/cli-utils.h"
 
 /* Local function declarations.  */
 
@@ -61,7 +61,7 @@ static int exec_file_hook_count = 0;		/* Size of array.  */
 
 bfd *core_bfd = NULL;
 
-/* corelow.c target (if included for this gdb target).  */
+/* corelow.c target.  It is never NULL after GDB initialization.  */
 
 struct target_ops *core_target;
 
@@ -73,8 +73,7 @@ core_file_command (char *filename, int from_tty)
 {
   dont_repeat ();		/* Either way, seems bogus.  */
 
-  if (core_target == NULL)
-    error (_("GDB can't read core files on this machine."));
+  gdb_assert (core_target != NULL);
 
   if (!filename)
     (core_target->to_detach) (core_target, filename, from_tty);
@@ -133,26 +132,9 @@ specify_exec_file_hook (void (*hook) (char *))
     deprecated_exec_file_display_hook = hook;
 }
 
-/* The exec file must be closed before running an inferior.
-   If it is needed again after the inferior dies, it must
-   be reopened.  */
-
-void
-close_exec_file (void)
-{
-#if 0				/* FIXME */
-  if (exec_bfd)
-    bfd_tempclose (exec_bfd);
-#endif
-}
-
 void
 reopen_exec_file (void)
 {
-#if 0				/* FIXME */
-  if (exec_bfd)
-    bfd_reopen (exec_bfd);
-#else
   char *filename;
   int res;
   struct stat st;
@@ -176,7 +158,6 @@ reopen_exec_file (void)
     bfd_cache_close_all ();
 
   do_cleanups (cleanups);
-#endif
 }
 
 /* If we have both a core file and an exec file,
@@ -201,8 +182,8 @@ validate_files (void)
 char *
 get_exec_file (int err)
 {
-  if (exec_bfd)
-    return bfd_get_filename (exec_bfd);
+  if (exec_filename)
+    return exec_filename;
   if (!err)
     return NULL;
 
@@ -222,18 +203,18 @@ memory_error (int status, CORE_ADDR memaddr)
        bounds.  */
     throw_error (MEMORY_ERROR,
 		 _("Cannot access memory at address %s"),
-		 paddress (target_gdbarch, memaddr));
+		 paddress (target_gdbarch (), memaddr));
   else
     throw_error (MEMORY_ERROR,
 		 _("Error accessing memory address %s: %s."),
-		 paddress (target_gdbarch, memaddr),
+		 paddress (target_gdbarch (), memaddr),
 		 safe_strerror (status));
 }
 
 /* Same as target_read_memory, but report an error if can't read.  */
 
 void
-read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
+read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
   int status;
 
@@ -245,7 +226,7 @@ read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
 /* Same as target_read_stack, but report an error if can't read.  */
 
 void
-read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
+read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
   int status;
 
@@ -350,7 +331,7 @@ read_memory_string (CORE_ADDR memaddr, char *buffer, int max_len)
       cnt = max_len - (cp - buffer);
       if (cnt > 8)
 	cnt = 8;
-      read_memory (memaddr + (int) (cp - buffer), cp, cnt);
+      read_memory (memaddr + (int) (cp - buffer), (gdb_byte *) cp, cnt);
       for (i = 0; i < cnt && *cp; i++, cp++)
 	;			/* null body */
 
@@ -372,13 +353,23 @@ read_memory_typed_address (CORE_ADDR addr, struct type *type)
    write.  */
 void
 write_memory (CORE_ADDR memaddr, 
-	      const bfd_byte *myaddr, int len)
+	      const bfd_byte *myaddr, ssize_t len)
 {
   int status;
 
   status = target_write_memory (memaddr, myaddr, len);
   if (status != 0)
     memory_error (status, memaddr);
+}
+
+/* Same as write_memory, but notify 'memory_changed' observers.  */
+
+void
+write_memory_with_notification (CORE_ADDR memaddr, const bfd_byte *myaddr,
+				ssize_t len)
+{
+  write_memory (memaddr, myaddr, len);
+  observer_notify_memory_changed (current_inferior (), memaddr, len, myaddr);
 }
 
 /* Store VALUE at ADDR in the inferior as a LEN-byte unsigned
@@ -429,10 +420,38 @@ static void
 set_gnutarget_command (char *ignore, int from_tty,
 		       struct cmd_list_element *c)
 {
+  char *gend = gnutarget_string + strlen (gnutarget_string);
+
+  gend = remove_trailing_whitespace (gnutarget_string, gend);
+  *gend = '\0';
+
   if (strcmp (gnutarget_string, "auto") == 0)
     gnutarget = NULL;
   else
     gnutarget = gnutarget_string;
+}
+
+/* A completion function for "set gnutarget".  */
+
+static VEC (char_ptr) *
+complete_set_gnutarget (struct cmd_list_element *cmd, char *text, char *word)
+{
+  static const char **bfd_targets;
+
+  if (bfd_targets == NULL)
+    {
+      int last;
+
+      bfd_targets = bfd_target_list ();
+      for (last = 0; bfd_targets[last] != NULL; ++last)
+	;
+
+      bfd_targets = xrealloc (bfd_targets, (last + 2) * sizeof (const char **));
+      bfd_targets[last] = "auto";
+      bfd_targets[last + 1] = NULL;
+    }
+
+  return complete_on_enum (bfd_targets, text, word);
 }
 
 /* Set the gnutarget.  */
@@ -457,14 +476,17 @@ No arg means have no core file.  This command has been superseded by the\n\
   set_cmd_completer (c, filename_completer);
 
   
-  add_setshow_string_noescape_cmd ("gnutarget", class_files,
-				   &gnutarget_string, _("\
+  c = add_setshow_string_noescape_cmd ("gnutarget", class_files,
+				       &gnutarget_string, _("\
 Set the current BFD target."), _("\
 Show the current BFD target."), _("\
 Use `set gnutarget auto' to specify automatic detection."),
-				   set_gnutarget_command,
-				   show_gnutarget_string,
-				   &setlist, &showlist);
+				       set_gnutarget_command,
+				       show_gnutarget_string,
+				       &setlist, &showlist);
+  set_cmd_completer (c, complete_set_gnutarget);
+
+  add_alias_cmd ("g", "gnutarget", class_files, 1, &setlist);
 
   if (getenv ("GNUTARGET"))
     set_gnutarget (getenv ("GNUTARGET"));

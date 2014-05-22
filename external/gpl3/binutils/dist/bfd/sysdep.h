@@ -23,6 +23,10 @@
 #ifndef BFD_SYSDEP_H
 #define BFD_SYSDEP_H
 
+#ifdef PACKAGE
+#error sysdep.h must be included in lieu of config.h
+#endif
+
 #include "config.h"
 
 #include "ansidecl.h"

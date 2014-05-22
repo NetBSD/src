@@ -1,4 +1,4 @@
-#as: -march=octeon -64
+#as: -64
 #objdump: -M reg-names=numeric -dr
 #name: MIPS octeon instructions
 

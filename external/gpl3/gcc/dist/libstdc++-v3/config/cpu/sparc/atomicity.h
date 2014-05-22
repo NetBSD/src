@@ -1,7 +1,6 @@
 // Low-level functions for atomic operations: Sparc version  -*- C++ -*-
 
-// Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 1999-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,7 +24,9 @@
 
 #include <ext/atomicity.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 #ifdef __arch64__
   _Atomic_word
@@ -119,4 +120,5 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
   }  
 #endif /* __arch32__ */
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

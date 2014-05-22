@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.31 2005-04-26 19:48:38 guy Exp (LBL)";
+"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.31 2005-04-26 19:48:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.2.6.1 2014/05/22 15:51:20 yamt Exp $");
 #endif
 #endif
 
@@ -56,7 +56,7 @@ enum {
 	PPPOE_PADT = 0xa7
 };
 
-static struct tok pppoecode2str[] = {
+static const struct tok pppoecode2str[] = {
 	{ PPPOE_PADI, "PADI" },
 	{ PPPOE_PADO, "PADO" },
 	{ PPPOE_PADR, "PADR" },
@@ -75,12 +75,13 @@ enum {
 	PPPOE_AC_COOKIE = 0x0104,
 	PPPOE_VENDOR = 0x0105,
 	PPPOE_RELAY_SID = 0x0110,
+	PPPOE_MAX_PAYLOAD = 0x0120,
 	PPPOE_SERVICE_NAME_ERROR = 0x0201,
 	PPPOE_AC_SYSTEM_ERROR = 0x0202,
 	PPPOE_GENERIC_ERROR = 0x0203
 };
 
-static struct tok pppoetag2str[] = {
+static const struct tok pppoetag2str[] = {
 	{ PPPOE_EOL, "EOL" },
 	{ PPPOE_SERVICE_NAME, "Service-Name" },
 	{ PPPOE_AC_NAME, "AC-Name" },
@@ -88,6 +89,7 @@ static struct tok pppoetag2str[] = {
 	{ PPPOE_AC_COOKIE, "AC-Cookie" },
 	{ PPPOE_VENDOR, "Vendor-Specific" },
 	{ PPPOE_RELAY_SID, "Relay-Session-ID" },
+	{ PPPOE_MAX_PAYLOAD, "PPP-Max-Payload" },
 	{ PPPOE_SERVICE_NAME_ERROR, "Service-Name-Error" },
 	{ PPPOE_AC_SYSTEM_ERROR, "AC-System-Error" },
 	{ PPPOE_GENERIC_ERROR, "Generic-Error" },
@@ -162,7 +164,7 @@ pppoe_print(register const u_char *bp, u_int length)
 
 			if (tag_len) {
 				unsigned isascii = 0, isgarbage = 0;
-				const u_char *v = p;
+				const u_char *v;
 				char tag_str[MAXTAGPRINT];
 				unsigned tag_str_len = 0;
 

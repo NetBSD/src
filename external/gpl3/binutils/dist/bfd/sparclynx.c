@@ -1,6 +1,6 @@
 /* BFD support for Sparc binaries under LynxOS.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000,
-   2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2005, 2007, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -37,15 +37,15 @@
 #include "aout/stab_gnu.h"
 #include "aout/ar.h"
 
-void NAME (lynx,set_arch_mach) PARAMS ((bfd *, unsigned long));
-static void choose_reloc_size PARAMS ((bfd *));
-static bfd_boolean NAME (aout,sparclynx_write_object_contents) PARAMS ((bfd *));
+void NAME (lynx,set_arch_mach) (bfd *, unsigned long);
+static void choose_reloc_size (bfd *);
+static bfd_boolean NAME (aout,sparclynx_write_object_contents) (bfd *);
 
 /* This is needed to reject a NewsOS file, e.g. in
    gdb/testsuite/gdb.t10/crossload.exp. <kingdon@cygnus.com>
    I needed to add M_UNKNOWN to recognize a 68000 object, so this will
    probably no longer reject a NewsOS object.  <ian@cygnus.com>.  */
-#define MACHTYPE_OK(mtype) ((mtype) == M_UNKNOWN \
+#define MACHTYPE_OK(mtype) (   (mtype) == M_UNKNOWN \
 			    || (mtype) == M_68010 \
 			    || (mtype) == M_68020 \
 			    || (mtype) == M_SPARC)
@@ -70,9 +70,7 @@ static bfd_boolean NAME (aout,sparclynx_write_object_contents) PARAMS ((bfd *));
    @end table  */
 
 void
-NAME(lynx,set_arch_mach) (abfd, machtype)
-     bfd *abfd;
-     unsigned long machtype;
+NAME(lynx,set_arch_mach) (bfd *abfd, unsigned long machtype)
 {
   /* Determine the architecture and machine type of the object file.  */
   enum bfd_architecture arch;
@@ -130,8 +128,7 @@ NAME(lynx,set_arch_mach) (abfd, machtype)
 /* Determine the size of a relocation entry, based on the architecture.  */
 
 static void
-choose_reloc_size (abfd)
-     bfd *abfd;
+choose_reloc_size (bfd *abfd)
 {
   switch (bfd_get_arch (abfd))
     {
@@ -149,8 +146,7 @@ choose_reloc_size (abfd)
   file header, symbols, and relocation.  */
 
 static bfd_boolean
-NAME(aout,sparclynx_write_object_contents) (abfd)
-     bfd *abfd;
+NAME(aout,sparclynx_write_object_contents) (bfd *abfd)
 {
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
@@ -190,11 +186,10 @@ NAME(aout,sparclynx_write_object_contents) (abfd)
 }
 
 #define MY_set_sizes sparclynx_set_sizes
-static bfd_boolean sparclynx_set_sizes PARAMS ((bfd *));
+static bfd_boolean sparclynx_set_sizes (bfd *);
 
 static bfd_boolean
-sparclynx_set_sizes (abfd)
-     bfd *abfd;
+sparclynx_set_sizes (bfd *abfd)
 {
   switch (bfd_get_arch (abfd))
     {
@@ -228,7 +223,7 @@ static const struct aout_backend_data sparclynx_aout_backend =
 #define MY_bfd_debug_info_start		bfd_void
 #define MY_bfd_debug_info_end		bfd_void
 #define MY_bfd_debug_info_accumulate	\
-		(void (*) PARAMS ((bfd *, struct bfd_section *))) bfd_void
+		(void (*) (bfd *, struct bfd_section *)) bfd_void
 
 #define MY_write_object_contents	NAME(aout,sparclynx_write_object_contents)
 #define MY_backend_data			&sparclynx_aout_backend

@@ -1,6 +1,6 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
    Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2005, 2007, 2009 Free Software Foundation, Inc.
+   2005, 2007, 2009, 2011, 2012 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -49,11 +49,11 @@
 #define SET_ARCH_MACH(ABFD, EXEC) \
   MY(set_arch_mach) (ABFD, N_MACHTYPE (EXEC)); \
   MY(choose_reloc_size) (ABFD);
-static void MY(set_arch_mach) PARAMS ((bfd *abfd, unsigned long machtype));
-static void MY(choose_reloc_size) PARAMS ((bfd *abfd));
+static void MY(set_arch_mach) (bfd *, unsigned long);
+static void MY(choose_reloc_size) (bfd *);
 
 #define MY_write_object_contents MY(write_object_contents)
-static bfd_boolean MY(write_object_contents) PARAMS ((bfd *abfd));
+static bfd_boolean MY(write_object_contents) (bfd *);
 
 /* We can't use MY(x) here because it leads to a recursive call to CONCAT2
    when expanded inside JUMP_TABLE.  */
@@ -72,15 +72,13 @@ static bfd_boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 #include "aout-target.h"
 
 static bfd_reloc_status_type mips_fix_jmp_addr
-  PARAMS ((bfd *, arelent *, struct bfd_symbol *, PTR, asection *,
-	   bfd *, char **));
+  (bfd *, arelent *, struct bfd_symbol *, void *, asection *,
+   bfd *, char **);
 
-long MY(canonicalize_reloc) PARAMS ((bfd *, sec_ptr, arelent **, asymbol **));
+long MY(canonicalize_reloc) (bfd *, sec_ptr, arelent **, asymbol **);
 
 static void
-MY(set_arch_mach) (abfd, machtype)
-     bfd *abfd;
-     unsigned long machtype;
+MY(set_arch_mach) (bfd *abfd, unsigned long machtype)
 {
   enum bfd_architecture arch;
   unsigned int machine;
@@ -109,8 +107,7 @@ MY(set_arch_mach) (abfd, machtype)
 
 /* Determine the size of a relocation entry, based on the architecture */
 static void
-MY (choose_reloc_size) (abfd)
-     bfd *abfd;
+MY (choose_reloc_size) (bfd *abfd)
 {
   switch (bfd_get_arch (abfd))
     {
@@ -129,8 +126,7 @@ MY (choose_reloc_size) (abfd)
   file header, symbols, and relocation.  */
 
 static bfd_boolean
-MY (write_object_contents) (abfd)
-     bfd *abfd;
+MY (write_object_contents) (bfd *abfd)
 {
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
@@ -195,20 +191,18 @@ MY (write_object_contents) (abfd)
    program counter, then we need to signal an error.  */
 
 static bfd_reloc_status_type
-mips_fix_jmp_addr (abfd, reloc_entry, symbol, data, input_section, output_bfd,
-		   error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry;
-     struct bfd_symbol *symbol;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+mips_fix_jmp_addr (bfd *abfd ATTRIBUTE_UNUSED,
+		   arelent *reloc_entry,
+		   struct bfd_symbol *symbol,
+		   void * data ATTRIBUTE_UNUSED,
+		   asection *input_section,
+		   bfd *output_bfd,
+		   char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma relocation, pc;
 
   /* If this is a partial relocation, just continue.  */
-  if (output_bfd != (bfd *)NULL)
+  if (output_bfd != (bfd *) NULL)
     return bfd_reloc_continue;
 
   /* If this is an undefined symbol, return error */
@@ -242,19 +236,13 @@ mips_fix_jmp_addr (abfd, reloc_entry, symbol, data, input_section, output_bfd,
    when the low bits are added at run time.  */
 
 static bfd_reloc_status_type
-mips_fix_hi16_s PARAMS ((bfd *, arelent *, asymbol *, PTR,
-			 asection *, bfd *, char **));
-
-static bfd_reloc_status_type
-mips_fix_hi16_s (abfd, reloc_entry, symbol, data, input_section,
-		 output_bfd, error_message)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data ATTRIBUTE_UNUSED;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+mips_fix_hi16_s (bfd *abfd ATTRIBUTE_UNUSED,
+		 arelent *reloc_entry,
+		 asymbol *symbol,
+		 void * data ATTRIBUTE_UNUSED,
+		 asection *input_section ATTRIBUTE_UNUSED,
+		 bfd *output_bfd,
+		 char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma relocation;
 
@@ -284,7 +272,8 @@ mips_fix_hi16_s (abfd, reloc_entry, symbol, data, input_section,
   return bfd_reloc_continue;
 }
 
-static reloc_howto_type mips_howto_table_ext[] = {
+static reloc_howto_type mips_howto_table_ext[] =
+{
   {MIPS_RELOC_32,      0, 2, 32, FALSE, 0,  complain_overflow_bitfield, 0,
 	"32",       FALSE, 0, 0xffffffff, FALSE},
   {MIPS_RELOC_JMP,     2, 2, 26, FALSE, 0, complain_overflow_dont,
@@ -304,9 +293,8 @@ static reloc_howto_type mips_howto_table_ext[] = {
 static reloc_howto_type *
 MY(reloc_type_lookup) (bfd *abfd, bfd_reloc_code_real_type code)
 {
-
   if (bfd_get_arch (abfd) != bfd_arch_mips)
-    return 0;
+    return NULL;
 
   switch (code)
     {
@@ -324,13 +312,13 @@ MY(reloc_type_lookup) (bfd *abfd, bfd_reloc_code_real_type code)
     case BFD_RELOC_LO16:
       return (&mips_howto_table_ext[MIPS_RELOC_LO16]);
     default:
-      return 0;
+      return NULL;
     }
 }
 
 static reloc_howto_type *
 MY(reloc_name_lookup) (bfd *abfd ATTRIBUTE_UNUSED,
-			     const char *r_name)
+		       const char *r_name)
 {
   unsigned int i;
 
@@ -347,11 +335,10 @@ MY(reloc_name_lookup) (bfd *abfd ATTRIBUTE_UNUSED,
 /* This is just like the standard aoutx.h version but we need to do our
    own mapping of external reloc type values to howto entries.  */
 long
-MY(canonicalize_reloc) (abfd, section, relptr, symbols)
-      bfd *abfd;
-      sec_ptr section;
-      arelent **relptr;
-      asymbol **symbols;
+MY(canonicalize_reloc) (bfd *abfd,
+			sec_ptr section,
+			arelent **relptr,
+			asymbol **symbols)
 {
   arelent *tblptr = section->relocation;
   unsigned int count, c;
@@ -395,7 +382,8 @@ MY(canonicalize_reloc) (abfd, section, relptr, symbols)
   return section->reloc_count;
 }
 
-static const struct aout_backend_data MY(backend_data) = {
+static const struct aout_backend_data MY(backend_data) =
+{
   0,				/* zmagic contiguous */
   1,				/* text incl header */
   0,				/* entry is text address */
@@ -414,7 +402,7 @@ static const struct aout_backend_data MY(backend_data) = {
 extern const bfd_target aout_mips_big_vec;
 
 const bfd_target aout_mips_little_vec =
-  {
+{
     "a.out-mips-little",		/* name */
     bfd_target_aout_flavour,
     BFD_ENDIAN_LITTLE,		/* target byte order (little) */
@@ -426,6 +414,7 @@ const bfd_target aout_mips_little_vec =
     MY_symbol_leading_char,
     ' ',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */
@@ -451,7 +440,7 @@ const bfd_target aout_mips_little_vec =
 
     & aout_mips_big_vec,
 
-    (PTR) MY_backend_data
+    MY_backend_data
   };
 
 const bfd_target aout_mips_big_vec =
@@ -467,6 +456,7 @@ const bfd_target aout_mips_big_vec =
     MY_symbol_leading_char,
     ' ',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getb64, bfd_getb_signed_64, bfd_putb64,
     bfd_getb32, bfd_getb_signed_32, bfd_putb32,
     bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */
@@ -492,5 +482,5 @@ const bfd_target aout_mips_big_vec =
 
     & aout_mips_little_vec,
 
-    (PTR) MY_backend_data
+    MY_backend_data
   };

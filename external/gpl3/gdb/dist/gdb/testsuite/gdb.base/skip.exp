@@ -1,0 +1,180 @@
+#   Copyright 2011-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Justin Lebar. (justin.lebar@gmail.com)
+
+if { [prepare_for_testing skip.exp "skip" \
+                          {skip.c skip1.c } \
+                          {debug nowarnings}] } {
+    return -1
+}
+
+set srcfile skip.c
+set srcfile1 skip1.c
+
+#
+# Right after we start gdb, there's no default file or function to skip.
+#
+gdb_test "skip file" "No default file now." "skip file (no default file)"
+gdb_test "skip function" "No default function now."
+gdb_test "skip" "No default function now." "skip (no default function)"
+
+if ![runto_main] { fail "skip tests suppressed" }
+
+#
+# Test |info skip| with an empty skiplist.
+#
+gdb_test "info skip" "Not skipping any files or functions\." "info skip empty"
+
+#
+# Create a skiplist entry for the current file and function.
+#
+gdb_test "skip file" "File .*$srcfile will be skipped when stepping\." "skip file ($srcfile)"
+gdb_test "skip" "Function main will be skipped when stepping\." "skip (main)"
+
+#
+# Create a skiplist entry for a specified file and function.
+#
+gdb_test "skip file skip1.c" "File .*$srcfile1 will be skipped when stepping\."
+gdb_test "skip function baz" "Function baz will be skipped when stepping\."
+
+#
+# Test bad skiplist entry modification commands
+#
+gdb_test "skip enable 999" "No skiplist entries found with number 999."
+gdb_test "skip disable 999" "No skiplist entries found with number 999."
+gdb_test "skip delete 999" "No skiplist entries found with number 999."
+gdb_test "skip enable a" "Args must be numbers or '\\$' variables."
+gdb_test "skip disable a" "Args must be numbers or '\\$' variables."
+gdb_test "skip delete a" "Args must be numbers or '\\$' variables."
+
+#
+# Ask for info on a skiplist entry which doesn't exist.
+#
+gdb_test "info skip 999" "No skiplist entries found with number 999."
+
+#
+# Does |info skip| look right?
+#
+gdb_test "info skip" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+1\\s+file\\s+y\\s+.*$srcfile\\s*
+2\\s+function\\s+y\\s+main\\s*
+3\\s+file\\s+y\\s+$srcfile1\\s*
+4\\s+function\\s+y\\s+baz\\s*"
+
+#
+# Right now, we have an outstanding skiplist entry on both source
+# files, so when we step into the first line in main(), we should step
+# right over it and go to the second line of main().
+#
+
+if ![runto_main] { fail "skip tests suppressed" }
+gdb_test "step" ".*" "step in the main"
+gdb_test "bt" "\\s*\\#0\\s+main.*" "step after all ignored"
+
+#
+# Now remove skip.c from the skiplist.  Our first step should take us
+# into foo(), and our second step should take us to the next line in
+# main().
+#
+gdb_test "skip delete 1"
+# Check that entry 1 is missing from |info skip|
+gdb_test "info skip" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+2\\s+function\\s+y\\s+main\\s*
+3\\s+file\\s+y\\s+$srcfile1\\s*
+4\\s+function\\s+y\\s+baz\\s*" \
+    "info skip (delete 1)"
+
+if ![runto_main] { fail "skip tests suppressed" }
+gdb_test "step" "foo \\(\\) at.*" "step after deleting 1 (1)"
+gdb_test "step" ".*" "step after deleting 1 (2)" ; # Return from foo()
+gdb_test "step" "main \\(\\) at.*" "step after deleting 1 (3)"
+
+#
+# Now disable the skiplist entry for  skip1.c.  We should now
+# step into foo(), then into bar(), but not into baz().
+#
+gdb_test "skip disable 3"
+# Is entry 3 disabled in |info skip|?
+gdb_test "info skip 3" ".*\\n3\\s+file\\s+n.*" \
+  "info skip shows entry as disabled"
+
+if ![runto_main] { fail "skip tests suppressed" }
+gdb_test "step" "bar \\(\\) at.*" "step after disabling 3 (1)"
+gdb_test "step" ".*" "step after disabling 3 (2)"; # Return from foo()
+gdb_test "step" "foo \\(\\) at.*" "step after disabling 3 (3)"
+gdb_test "step" ".*" "step after disabling 3 (4)"; # Return from bar()
+gdb_test "step" "main \\(\\) at.*" "step after disabling 3 (5)"
+
+#
+# Enable skiplist entry 3 and make sure we step over it like before.
+#
+gdb_test "skip enable 3"
+# Is entry 3 enabled in |info skip|?
+gdb_test "info skip 3" ".*\\n3\\s+file\\s+y.*" \
+  "info skip shows entry as enabled"
+if ![runto_main] { fail "skip tests suppressed" }
+gdb_test "step" "foo \\(\\) at.*" "step after enable 3 (1)"
+gdb_test "step" ".*" "step after enable 3 (2)"; # Return from foo()
+gdb_test "step" "main \\(\\) at.*" "step after enable 3 (3)"
+
+gdb_test "skip disable"
+gdb_test "info skip" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+2\\s+function\\s+n\\s+main\\s*
+3\\s+file\\s+n\\s+$srcfile1\\s*
+4\\s+function\\s+n\\s+baz\\s*" \
+  "info skip after disabling all"
+
+gdb_test "skip enable"
+gdb_test "info skip" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+2\\s+function\\s+y\\s+main\\s*
+3\\s+file\\s+y\\s+$srcfile1\\s*
+4\\s+function\\s+y\\s+baz\\s*" \
+  "info skip after enabling all"
+
+gdb_test "skip disable 4 2-3"
+gdb_test "info skip" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+2\\s+function\\s+n\\s+main\\s*
+3\\s+file\\s+n\\s+$srcfile1\\s*
+4\\s+function\\s+n\\s+baz\\s*" \
+  "info skip after disabling 4 2-3"
+
+gdb_test "skip enable 2-3"
+gdb_test "info skip" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+2\\s+function\\s+y\\s+main\\s*
+3\\s+file\\s+y\\s+$srcfile1\\s*
+4\\s+function\\s+n\\s+baz\\s*" \
+  "info skip after enabling 2-3"
+
+gdb_test "info skip 2-3" \
+  "Num\\s+Type\\s+Enb\\s+What\\s*
+2\\s+function\\s+y\\s+main\\s*
+3\\s+file\\s+y\\s+$srcfile1\\s*" \
+  "info skip 2-3"
+
+gdb_test "skip delete 2 3"
+gdb_test "info skip" \
+  "4\\s+function\\s+n\\s+baz\\s*" \
+  "info skip after deleting 2 3"
+
+gdb_test "skip delete"
+gdb_test "info skip" "Not skipping any files or functions\." \
+  "info skip after deleting all"

@@ -21,7 +21,7 @@ change the default to the M32C microprocessor.
 
 @menu
 * M32C-Opts::                   M32C Options
-* M32C-Modifiers::              Symbolic Operand Modifiers
+* M32C-Syntax::                 M32C Syntax
 @end menu
  
 @node M32C-Opts
@@ -55,11 +55,18 @@ Support H'00 style hex constants in addition to 0x00 style.
  
 @end table
 
+@node M32C-Syntax
+@section M32C Syntax
+@menu
+* M32C-Modifiers::              Symbolic Operand Modifiers
+* M32C-Chars::                  Special Characters
+@end menu
+
 @node M32C-Modifiers
-@section Symbolic Operand Modifiers
+@subsection Symbolic Operand Modifiers
 
 @cindex M32C modifiers
-@cindex syntax, M32C
+@cindex modifiers, M32C
 
 The assembler supports several modifiers when using symbol addresses
 in M32C instruction operands.  The general syntax is the following:
@@ -121,3 +128,22 @@ lde.w [a1a0],r1
 @end smallexample
 
 @end table
+
+@node M32C-Chars
+@subsection Special Characters
+
+@cindex line comment character, M32C
+@cindex M32C line comment character
+The presence of a @samp{;} character on a line indicates the start of
+a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line, the whole line
+is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a
+preprocessor control command (@pxref{Preprocessing}).
+
+@cindex line separator, M32C
+@cindex statement separator, M32C
+@cindex M32C line separator
+The @samp{|} character can be used to separate statements on the same
+line.

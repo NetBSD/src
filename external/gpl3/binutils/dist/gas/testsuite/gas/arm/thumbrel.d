@@ -1,6 +1,6 @@
 #objdump: -sr
 # This test is only valid on EABI based ports.
-#target: *-*-*eabi *-*-symbianelf
+#target: *-*-*eabi *-*-symbianelf *-*-nacl*
 
 .*:     file format.*
 
