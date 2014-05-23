@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.112 2014/05/15 06:58:19 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.113 2014/05/23 17:54:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.112 2014/05/15 06:58:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.113 2014/05/23 17:54:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1411,7 +1411,7 @@ pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 	printf("    Capabilities register: 0x%04x\n", caps);
 	printf("      Version: %s\n",
 	    pci_conf_print_pcipm_cap_pmrev(caps & 0x3));
-	onoff("PME# clock", caps, 0x4);
+	onoff("PME# clock", caps, PCI_PMCR_PME_CLOCK);
 	onoff("Device specific initialization", caps, 0x20);
 	printf("      3.3V auxiliary current: %s\n",
 	    pci_conf_print_pcipm_cap_aux(caps));

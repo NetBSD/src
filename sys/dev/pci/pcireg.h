@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.87 2014/05/23 06:18:54 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.88 2014/05/23 17:54:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -479,6 +479,7 @@ typedef u_int8_t pci_revision_t;
 /* Power Management Capability Register */
 #define PCI_PMCR_SHIFT		16
 #define PCI_PMCR		0x02
+#define PCI_PMCR_PME_CLOCK	0x0008
 #define PCI_PMCR_D1SUPP		0x0200
 #define PCI_PMCR_D2SUPP		0x0400
 /* Power Management Control Status Register */
