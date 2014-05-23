@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.20 2014/05/09 20:10:49 jakllsch Exp $ */
+/* $NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.20 2014/05/09 20:10:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3593,6 +3593,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	int err, i;
 	bool rv;
 
+	aprint_naive("\n");
 	sc->sc_dev = self;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
