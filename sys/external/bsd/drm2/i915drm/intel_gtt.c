@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.3 2014/05/23 22:59:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.3 2014/05/23 22:59:23 riastradh Exp $");
 
 #include <sys/types.h>			/* XXX pcivar.h needs...@!&#^  */
 
@@ -59,9 +59,6 @@ void
 intel_gtt_chipset_flush(void)
 {
 
-	/*
-	 * XXX If the Linux code is any indication, this is not
-	 * sufficient...but it'll probably do for now.
-	 */
-	agp_flush_cache();
+	KASSERT(agp_i810_sc != NULL);
+	agp_i810_chipset_flush(agp_i810_sc->as_chipc);
 }
