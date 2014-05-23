@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.41 2013/06/09 13:25:40 christos Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.42 2014/05/23 20:50:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -318,9 +318,10 @@ config(char *dev, char *file, char *geom, int action)
 		int	ffd;
 
 		ffd = open(file, readonly ? O_RDONLY : O_RDWR);
-		if (ffd < 0)
+		if (ffd < 0) {
 			warn("%s", file);
-		else {
+			rv = -1;
+		} else {
 			(void) close(ffd);
 
 			rv = ioctl(fd, VNDIOCSET, &vndio);
