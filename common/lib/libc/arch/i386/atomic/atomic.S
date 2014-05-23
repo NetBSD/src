@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.21 2014/04/22 19:27:17 christos Exp $	*/
+/*	$NetBSD: atomic.S,v 1.22 2014/05/23 03:17:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ ENTRY(_atomic_add_32)
 	LOCK(1)
 	addl	%eax, (%edx)
 	ret
+END(_atomic_add_32)
 
 ENTRY(_atomic_add_32_nv)
 	movl	4(%esp), %edx
@@ -67,6 +68,7 @@ ENTRY(_atomic_add_32_nv)
 	xaddl	%eax, (%edx)
 	addl	%ecx, %eax
 	ret
+END(_atomic_add_32_nv)
 
 ENTRY(_atomic_and_32)
 	movl	4(%esp), %edx
@@ -74,6 +76,7 @@ ENTRY(_atomic_and_32)
 	LOCK(3)
 	andl	%eax, (%edx)
 	ret
+END(_atomic_and_32)
 
 ENTRY(_atomic_and_32_nv)
 	movl	4(%esp), %edx
@@ -88,12 +91,14 @@ ENTRY(_atomic_and_32_nv)
 	ret
 1:
 	jmp	0b
+END(_atomic_and_32_nv)
 
 ENTRY(_atomic_dec_32)
 	movl	4(%esp), %edx
 	LOCK(5)
 	decl	(%edx)
 	ret
+END(_atomic_dec_32)
 
 ENTRY(_atomic_dec_32_nv)
 	movl	4(%esp), %edx
@@ -102,12 +107,14 @@ ENTRY(_atomic_dec_32_nv)
 	xaddl	%eax, (%edx)
 	decl	%eax
 	ret
+END(_atomic_dec_32_nv)
 
 ENTRY(_atomic_inc_32)
 	movl	4(%esp), %edx
 	LOCK(7)
 	incl	(%edx)
 	ret
+END(_atomic_inc_32)
 
 ENTRY(_atomic_inc_32_nv)
 	movl	4(%esp), %edx
@@ -116,6 +123,7 @@ ENTRY(_atomic_inc_32_nv)
 	xaddl	%eax, (%edx)
 	incl	%eax
 	ret
+END(_atomic_inc_32_nv)
 
 ENTRY(_atomic_or_32)
 	movl	4(%esp), %edx
@@ -123,6 +131,7 @@ ENTRY(_atomic_or_32)
 	LOCK(9)
 	orl	%eax, (%edx)
 	ret
+END(_atomic_or_32)
 
 ENTRY(_atomic_or_32_nv)
 	movl	4(%esp), %edx
@@ -137,12 +146,14 @@ ENTRY(_atomic_or_32_nv)
 	ret
 1:
 	jmp	0b
+END(_atomic_or_32_nv)
 
 ENTRY(_atomic_swap_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	xchgl	%eax, (%edx)
 	ret
+END(_atomic_swap_32)
 
 ENTRY(_atomic_cas_32)
 	movl	4(%esp), %edx
@@ -152,6 +163,7 @@ ENTRY(_atomic_cas_32)
 	cmpxchgl %ecx, (%edx)
 	/* %eax now contains the old value */
 	ret
+END(_atomic_cas_32)
 
 ENTRY(_atomic_cas_32_ni)
 	movl	4(%esp), %edx
@@ -160,23 +172,27 @@ ENTRY(_atomic_cas_32_ni)
 	cmpxchgl %ecx, (%edx)
 	/* %eax now contains the old value */
 	ret
+END(_atomic_cas_32_ni)
 
 ENTRY(_membar_consumer)
 	LOCK(13)
 	addl	$0, -4(%esp)
 	ret
+END(_membar_consumer)
 ENDLABEL(membar_consumer_end)
 
 ENTRY(_membar_producer)
 	/* A store is enough */
 	movl	$0, -4(%esp)
 	ret
+END(_membar_producer)
 ENDLABEL(membar_producer_end)
 
 ENTRY(_membar_sync)
 	LOCK(14)
 	addl	$0, -4(%esp)
 	ret
+END(_membar_sync)
 ENDLABEL(membar_sync_end)
 
 #if defined(__HAVE_ATOMIC64_OPS) || defined(_KERNEL)
@@ -209,6 +225,7 @@ ENTRY(_atomic_cas_64)
 	movl	0(%edi), %eax
 	movl	4(%edi), %edx
 	jmp	1b
+END(_atomic_cas_64)
 ENDLABEL(_atomic_cas_64_end)
 
 ENTRY(_atomic_cas_cx8)
@@ -231,6 +248,7 @@ ENTRY(_atomic_cas_cx8)
 	.space	32, 0x90
 #endif
 #endif /* _HARDKERNEL */
+END(_atomic_cas_cx8)
 ENDLABEL(_atomic_cas_cx8_end)
 #endif /* __HAVE_ATOMIC64_OPS || _KERNEL */
 
@@ -238,11 +256,13 @@ ENDLABEL(_atomic_cas_cx8_end)
 ENTRY(sse2_lfence)
 	lfence
 	ret
+END(sse2_lfence)
 ENDLABEL(sse2_lfence_end)
 
 ENTRY(sse2_mfence)
 	mfence
 	ret
+END(sse2_mfence)
 ENDLABEL(sse2_mfence_end)
 
 atomic_lockpatch:
