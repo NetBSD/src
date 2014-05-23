@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.10 2014/05/23 19:51:16 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.10 2014/05/23 19:51:16 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.10 2014/05/23 19:51:16 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1146,7 +1146,27 @@ optimize_pass2(const struct bpf_insn *insns,
 
 		switch (BPF_CLASS(pc->code)) {
 		case BPF_RET:
-			abc_length = 0;
+			/*
+			 * It's quite common for bpf programs to
+			 * check packet bytes in increasing order
+			 * and return zero if bytes don't match
+			 * specified critetion. Such programs disable
+			 * ABC optimization completely because for
+			 * every jump there is a branch with no read
+			 * instruction.
+			 * With no side effects, BPF_RET+BPF_K 0 is
+			 * indistinguishable from out-of-bound load.
+			 * Therefore, abc_length can be set to
+			 * MAX_ABC_LENGTH and enable ABC for many
+			 * bpf programs.
+			 * If this optimization pass encounters any
+			 * instruction with a side effect, it will
+			 * reset abc_length.
+			 */
+			if (BPF_RVAL(pc->code) == BPF_K && pc->k == 0)
+				abc_length = MAX_ABC_LENGTH;
+			else
+				abc_length = 0;
 			break;
 
 		case BPF_JMP:
