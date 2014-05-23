@@ -373,6 +373,10 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 					RETURN_ADDRESS_OFFSET))		\
    : (rtx) 0)
 
+/* A C expression that is nonzero if X is a legitimate immediate operand
+   on the target machine when generating position independent code.  */
+
+#define LEGITIMATE_PIC_OPERAND_P(X) legitimate_pic_operand_p (X)
 
 /* Addressing modes, and classification of registers for them.  */
 
