@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.313 2014/05/23 19:35:24 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.314 2014/05/23 23:38:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.313 2014/05/23 19:35:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.314 2014/05/23 23:38:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -385,9 +385,11 @@ ip_input(struct mbuf *m)
 	int downmatch;
 	int checkif;
 	int srcrt = 0;
+	ifnet_t *ifp;
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	ifp = m->m_pkthdr.rcvif;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -445,14 +447,14 @@ ip_input(struct mbuf *m)
 	/* 127/8 must not appear on wire - RFC1122 */
 	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
 	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
-		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 			IP_STATINC(IP_STAT_BADADDR);
 			goto bad;
 		}
 	}
 
 	switch (m->m_pkthdr.csum_flags &
-		((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
+		((ifp->if_csum_flags_rx & M_CSUM_IPv4) |
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);
@@ -468,8 +470,8 @@ ip_input(struct mbuf *m)
 		 * Must compute it ourselves.  Maybe skip checksum on
 		 * loopback interfaces.
 		 */
-		if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
-				     IFF_LOOPBACK) || ip_do_loopback_cksum)) {
+		if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
+		    ip_do_loopback_cksum)) {
 			INET_CSUM_COUNTER_INCR(&ip_swcsum);
 			if (in_cksum(m, hlen) != 0)
 				goto badcsum;
@@ -519,21 +521,15 @@ ip_input(struct mbuf *m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	/*
-	 * let ipfilter look at packet on the wire,
-	 * not the decapsulated packet.
-	 */
 #if defined(IPSEC)
 	if (!ipsec_indone(m))
 #else
 	if (1)
 #endif
 	{
-		struct in_addr odst;
+		struct in_addr odst = ip->ip_dst;
 
-		odst = ip->ip_dst;
-		if (pfil_run_hooks(inet_pfil_hook, &m, m->m_pkthdr.rcvif,
-		    PFIL_IN) != 0)
+		if (pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0)
 			return;
 		if (m == NULL)
 			return;
@@ -591,8 +587,7 @@ ip_input(struct mbuf *m)
 	 * we get finer grain control.
 	 */
 	checkif = ip_checkinterface && (ipforwarding == 0) &&
-	    (m->m_pkthdr.rcvif != NULL) &&
-	    ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0);
+	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0;
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -604,7 +599,7 @@ ip_input(struct mbuf *m)
 	downmatch = 0;
 	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
-			if (checkif && ia->ia_ifp != m->m_pkthdr.rcvif)
+			if (checkif && ia->ia_ifp != ifp)
 				continue;
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
@@ -614,8 +609,8 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
-		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
+	if (ifp && ifp->if_flags & IFF_BROADCAST) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			ia = ifatoia(ifa);
@@ -654,7 +649,7 @@ ip_input(struct mbuf *m)
 			 * as expected when ip_mforward() is called from
 			 * ip_output().)
 			 */
-			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
+			if (ip_mforward(m, ifp) != 0) {
 				IP_STATINC(IP_STAT_CANTFORWARD);
 				m_freem(m);
 				return;
@@ -674,7 +669,7 @@ ip_input(struct mbuf *m)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN_LOOKUP_MULTI(ip->ip_dst, m->m_pkthdr.rcvif, inm);
+		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
 		if (inm == NULL) {
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			m_freem(m);
@@ -1320,6 +1315,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 	struct socket *so = inp->inp_socket;
+	ifnet_t *ifp = m->m_pkthdr.rcvif;
 	int inpflags = inp->inp_flags;
 
 	if (so->so_options & SO_TIMESTAMP
@@ -1352,7 +1348,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inpflags & INP_RECVPKTINFO) {
 		struct in_pktinfo ipi;
 		ipi.ipi_addr = ip->ip_src;
-		ipi.ipi_ifindex = m->m_pkthdr.rcvif->if_index;
+		ipi.ipi_ifindex = ifp->if_index;
 		*mp = sbcreatecontrol((void *) &ipi,
 		    sizeof(ipi), IP_RECVPKTINFO, IPPROTO_IP);
 		if (*mp)
@@ -1361,7 +1357,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inpflags & INP_PKTINFO) {
 		struct in_pktinfo ipi;
 		ipi.ipi_addr = ip->ip_dst;
-		ipi.ipi_ifindex = m->m_pkthdr.rcvif->if_index;
+		ipi.ipi_ifindex = ifp->if_index;
 		*mp = sbcreatecontrol((void *) &ipi,
 		    sizeof(ipi), IP_PKTINFO, IPPROTO_IP);
 		if (*mp)
@@ -1370,8 +1366,8 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inpflags & INP_RECVIF) {
 		struct sockaddr_dl sdl;
 
-		sockaddr_dl_init(&sdl, sizeof(sdl), m->m_pkthdr.rcvif ?
-		    m->m_pkthdr.rcvif->if_index : 0, 0, NULL, 0, NULL, 0);
+		sockaddr_dl_init(&sdl, sizeof(sdl), ifp ?
+		    ifp->if_index : 0, 0, NULL, 0, NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
