@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.9 2014/05/23 19:11:22 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.10 2014/05/23 19:51:16 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.9 2014/05/23 19:11:22 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.10 2014/05/23 19:51:16 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.9 2014/05/23 19:11:22 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.10 2014/05/23 19:51:16 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -945,6 +945,7 @@ optimize_pass1(const struct bpf_insn *insns,
 	struct bpfjit_jump *jtf;
 	size_t i;
 	uint32_t jt, jf;
+	bpfjit_abc_length_t length;
 	bpfjit_init_mask_t invalid; /* borrowed from bpf_filter() */
 	bool unreachable;
 
@@ -963,6 +964,9 @@ optimize_pass1(const struct bpf_insn *insns,
 			continue;
 
 		invalid |= insn_dat[i].invalid;
+
+		if (read_pkt_insn(&insns[i], &length) && length > UINT32_MAX)
+			unreachable = true;
 
 		switch (BPF_CLASS(insns[i].code)) {
 		case BPF_RET:
