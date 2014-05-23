@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.3 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.4 2014/05/23 08:17:08 skrll Exp $	*/
 /*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ xc_send_ipi(struct cpu_info *ci)
 }
 
 void
-cpu_ipi(struct cpu_info *)
+cpu_ipi(struct cpu_info *ci)
 {
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
