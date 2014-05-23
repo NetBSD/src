@@ -1,4 +1,4 @@
-# $NetBSD: etc.rc,v 1.1 2014/05/21 14:21:35 martin Exp $
+# $NetBSD: etc.rc,v 1.2 2014/05/23 12:25:46 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -39,10 +39,22 @@ export PATH
 # hack to get around bugs in kernfs's rootdev/rrootdev lookup.
 ls -l /dev/* > /dev/null 2>&1
 
+lowmemfail()
+{
+	cat << "EOM"
+This machine seems to not have enough memory for this install method.
+Please refer to the installation documentation on how to create and
+boot a custom kernel and how to install with that.
+
+Please use the 'halt' command to stop the machine.
+EOM
+	exec sh
+}
+
 # mount a few tempfs to allow modifications over the CD contents
-mount -t tmpfs tmpfs /tmp
-mount -t tmpfs tmpfs /var
-mount -t tmpfs -o union tmpfs /etc
+mount -t tmpfs tmpfs /tmp || lowmemfail
+mount -t tmpfs tmpfs /var || lowmemfail
+mount -t tmpfs -o union tmpfs /etc || lowmemfail
 
 # prepare important directories in the tmpfses, so dhcpcd and vi will work
 mkdir -p /var/run /var/db /var/tmp
