@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.15 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.16 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.15 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.16 2014/05/23 02:34:19 uebayasi Exp $")
 #endif
 
 /*
@@ -107,3 +107,4 @@ ENTRY(__longjmp14)
 	incl	%eax
 1:	movl	%ecx,0(%esp)
 	ret
+END(__setjmp14)
