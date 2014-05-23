@@ -1,7 +1,7 @@
-/*	$NetBSD: t_bpfjit.c,v 1.3 2014/05/23 11:47:59 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.4 2014/05/23 11:48:26 alnsn Exp $ */
 
 /*-
- * Copyright (c) 2011-2012 Alexander Nasonov.
+ * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.3 2014/05/23 11:47:59 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.4 2014/05/23 11:48:26 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
