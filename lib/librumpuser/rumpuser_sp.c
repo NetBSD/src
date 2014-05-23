@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.64 2014/05/23 11:04:03 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.65 2014/05/23 16:57:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.64 2014/05/23 11:04:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.65 2014/05/23 16:57:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1380,13 +1380,13 @@ rumpuser_sp_init(const char *url,
 	 * close fd's.  The assumption is that people who
 	 * write servers (i.e. "kernels") know what they're doing.
 	 */
-	calllwp = rump_pub_lwproc_curlwp();
-	if ((error = rump_pub_lwproc_rfork(RUMP_RFFDG)) != 0) {
+	calllwp = lwproc_curlwp();
+	if ((error = lwproc_rfork(NULL, RUMP_RFFDG, "spserver")) != 0) {
 		fprintf(stderr, "rump_sp: rfork failed");
 		goto out;
 	}
-	sarg->sps_l = rump_pub_lwproc_curlwp();
-	rump_pub_lwproc_switch(calllwp);
+	sarg->sps_l = lwproc_curlwp();
+	lwproc_switch(calllwp);
 	if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
 		fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
 		goto out;
