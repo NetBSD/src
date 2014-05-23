@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.8 2014/05/22 13:35:45 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.9 2014/05/23 19:11:22 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.8 2014/05/22 13:35:45 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.9 2014/05/23 19:11:22 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.8 2014/05/22 13:35:45 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.9 2014/05/23 19:11:22 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,8 +94,11 @@ typedef unsigned int bpfjit_init_mask_t;
 #define BJ_INIT_ABIT    BJ_INIT_MBIT(BPF_MEMWORDS)
 #define BJ_INIT_XBIT    BJ_INIT_MBIT(BPF_MEMWORDS + 1)
 
-typedef uint32_t bpfjit_abc_length_t;
-#define MAX_ABC_LENGTH UINT32_MAX
+/*
+ * Datatype for Array Bounds Check Elimination (ABC) pass.
+ */
+typedef uint64_t bpfjit_abc_length_t;
+#define MAX_ABC_LENGTH (UINT32_MAX + UINT64_C(4)) /* max. width is 4 */
 
 struct bpfjit_stack
 {
@@ -152,8 +155,7 @@ struct bpfjit_read_pkt_data {
 	/*
 	 * If positive, emit "if (buflen < check_length) return 0"
 	 * out-of-bounds check.
-	 * We assume that buflen is never equal to UINT32_MAX (otherwise,
-	 * we'd need a special bool variable to emit unconditional "return 0").
+	 * Values greater than UINT32_MAX generate unconditional "return 0".
 	 */
 	bpfjit_abc_length_t check_length;
 };
@@ -903,8 +905,11 @@ read_pkt_insn(const struct bpf_insn *pc, bpfjit_abc_length_t *length)
 	}
 
 	if (rv && length != NULL) {
-		*length = (pc->k > UINT32_MAX - width) ?
-		    UINT32_MAX : pc->k + width;
+		/*
+		 * Values greater than UINT32_MAX will generate
+		 * unconditional "return 0".
+		 */
+		*length = (uint32_t)pc->k + width;
 	}
 
 	return rv;
@@ -1324,6 +1329,7 @@ bpfjit_generate_code(bpf_ctx_t *bc, struct bpf_insn *insns, size_t insn_count)
 	struct bpfjit_jump *bjump, *jtf;
 
 	struct sljit_jump *to_mchain_jump;
+	bool unconditional_ret;
 
 	uint32_t jt, jf;
 
@@ -1405,8 +1411,6 @@ bpfjit_generate_code(bpf_ctx_t *bc, struct bpf_insn *insns, size_t insn_count)
 		if (insn_dat[i].unreachable)
 			continue;
 
-		to_mchain_jump = NULL;
-
 		/*
 		 * Resolve jumps to the current insn.
 		 */
@@ -1421,23 +1425,36 @@ bpfjit_generate_code(bpf_ctx_t *bc, struct bpf_insn *insns, size_t insn_count)
 			}
 		}
 
-		if (read_pkt_insn(&insns[i], NULL) &&
-		    insn_dat[i].u.rdata.check_length > 0) {
-			/* if (buflen < check_length) return 0; */
-			jump = sljit_emit_cmp(compiler,
-			    SLJIT_C_LESS,
-			    BJ_BUFLEN, 0,
-			    SLJIT_IMM,
-			    insn_dat[i].u.rdata.check_length);
-			if (jump == NULL)
-				goto fail;
+		to_mchain_jump = NULL;
+		unconditional_ret = false;
+
+		if (read_pkt_insn(&insns[i], NULL)) {
+			if (insn_dat[i].u.rdata.check_length > UINT32_MAX) {
+				/* Jump to "return 0" unconditionally. */
+				unconditional_ret = true;
+				jump = sljit_emit_jump(compiler, SLJIT_JUMP);
+				if (jump == NULL)
+					goto fail;
+				if (!append_jump(jump, &ret0,
+				    &ret0_size, &ret0_maxsize))
+					goto fail;
+			} else if (insn_dat[i].u.rdata.check_length > 0) {
+				/* if (buflen < check_length) return 0; */
+				jump = sljit_emit_cmp(compiler,
+				    SLJIT_C_LESS,
+				    BJ_BUFLEN, 0,
+				    SLJIT_IMM,
+				    insn_dat[i].u.rdata.check_length);
+				if (jump == NULL)
+					goto fail;
 #ifdef _KERNEL
-			to_mchain_jump = jump;
+				to_mchain_jump = jump;
 #else
-			if (!append_jump(jump, &ret0,
-			    &ret0_size, &ret0_maxsize))
-				goto fail;
+				if (!append_jump(jump, &ret0,
+				    &ret0_size, &ret0_maxsize))
+					goto fail;
 #endif
+			}
 		}
 
 		pc = &insns[i];
@@ -1490,6 +1507,9 @@ bpfjit_generate_code(bpf_ctx_t *bc, struct bpf_insn *insns, size_t insn_count)
 			mode = BPF_MODE(pc->code);
 			if (mode != BPF_ABS && mode != BPF_IND)
 				goto fail;
+
+			if (unconditional_ret)
+				continue;
 
 			status = emit_pkt_read(compiler, pc,
 			    to_mchain_jump, &ret0, &ret0_size, &ret0_maxsize);
@@ -1550,6 +1570,9 @@ bpfjit_generate_code(bpf_ctx_t *bc, struct bpf_insn *insns, size_t insn_count)
 			/* BPF_LDX+BPF_B+BPF_MSH    X <- 4*(P[k:1]&0xf) */
 			if (mode != BPF_MSH || BPF_SIZE(pc->code) != BPF_B)
 				goto fail;
+
+			if (unconditional_ret)
+				continue;
 
 			status = emit_msh(compiler, pc,
 			    to_mchain_jump, &ret0, &ret0_size, &ret0_maxsize);
