@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.86 2014/05/09 14:51:26 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.87 2014/05/23 06:18:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -472,6 +472,32 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_PCIAF		0x13
 
 /*
+ * Capability ID: 0x01
+ * Power Management Capability; access via capability pointer.
+ */
+
+/* Power Management Capability Register */
+#define PCI_PMCR_SHIFT		16
+#define PCI_PMCR		0x02
+#define PCI_PMCR_D1SUPP		0x0200
+#define PCI_PMCR_D2SUPP		0x0400
+/* Power Management Control Status Register */
+#define PCI_PMCSR		0x04
+#define	PCI_PMCSR_PME_EN	0x100
+#define PCI_PMCSR_STATE_MASK	0x03
+#define PCI_PMCSR_STATE_D0      0x00
+#define PCI_PMCSR_STATE_D1      0x01
+#define PCI_PMCSR_STATE_D2      0x02
+#define PCI_PMCSR_STATE_D3      0x03
+#define PCI_PMCSR_PME_STS       0x8000
+
+/*
+ * Capability ID: 0x02
+ * AGP
+ */
+
+/*
+ * Capability ID: 0x03
  * Vital Product Data; access via capability pointer (PCI rev 2.2).
  */
 #define	PCI_VPD_ADDRESS_MASK	0x7fff
@@ -480,6 +506,16 @@ typedef u_int8_t pci_revision_t;
 	(((ofs) & PCI_VPD_ADDRESS_MASK) << PCI_VPD_ADDRESS_SHIFT)
 #define	PCI_VPD_DATAREG(ofs)	((ofs) + 4)
 #define	PCI_VPD_OPFLAG		0x80000000
+
+/*
+ * Capability ID: 0x04
+ * Slot ID
+ */
+
+/*
+ * Capability ID: 0x05
+ * MSI
+ */
 
 #define	PCI_MSI_CTL		0x0	/* Message Control Register offset */
 #define	PCI_MSI_MADDR		0x4	/* Message Address Register (least
@@ -512,51 +548,8 @@ typedef u_int8_t pci_revision_t;
  * MSI Pending Bits (32 bit field)
  */
 
-#define	PCI_MSIX_CTL_ENABLE	0x80000000
-#define	PCI_MSIX_CTL_FUNCMASK	0x40000000
-#define	PCI_MSIX_CTL_TBLSIZE_MASK 0x07ff0000
-#define	PCI_MSIX_CTL_TBLSIZE_SHIFT 16
-#define	PCI_MSIX_CTL_TBLSIZE(ofs)	(((ofs) >> PCI_MSIX_CTL_TBLSIZE_SHIFT) & PCI_MSIX_CTL_TBLSIZE_MASK)
 /*
- * 2nd DWORD is the Table Offset
- */
-#define	PCI_MSIX_TBLOFFSET_MASK	0xfffffff8
-#define	PCI_MSIX_TBLBIR_MASK	0x00000007
-/*
- * 3rd DWORD is the Pending Bitmap Array Offset
- */
-#define	PCI_MSIX_PBAOFFSET_MASK	0xfffffff8
-#define	PCI_MSIX_PBABIR_MASK	0x00000007
-
-struct pci_msix_table_entry {
-	uint32_t pci_msix_addr_lo;
-	uint32_t pci_msix_addr_hi;
-	uint32_t pci_msix_value;
-	uint32_t pci_msix_vendor_control;
-};
-#define	PCI_MSIX_VENDCTL_MASK	0x00000001
-
-
-/*
- * Power Management Capability; access via capability pointer.
- */
-
-/* Power Management Capability Register */
-#define PCI_PMCR_SHIFT		16
-#define PCI_PMCR		0x02
-#define PCI_PMCR_D1SUPP		0x0200
-#define PCI_PMCR_D2SUPP		0x0400
-/* Power Management Control Status Register */
-#define PCI_PMCSR		0x04
-#define	PCI_PMCSR_PME_EN	0x100
-#define PCI_PMCSR_STATE_MASK	0x03
-#define PCI_PMCSR_STATE_D0      0x00
-#define PCI_PMCSR_STATE_D1      0x01
-#define PCI_PMCSR_STATE_D2      0x02
-#define PCI_PMCSR_STATE_D3      0x03
-#define PCI_PMCSR_PME_STS       0x8000
-
-/*
+ * Capability ID: 0x07
  * PCI-X capability.
  */
 
@@ -627,6 +620,47 @@ struct pci_msix_table_entry {
 #define PCIX_STATUS_SCERR			0x20000000
 
 /*
+ * Capability ID: 0x08
+ * HyperTransport
+ */
+
+/*
+ * Capability ID: 0x09
+ * Vendor Specific
+ */
+
+/*
+ * Capability ID: 0x0a
+ * Debug Port
+ */
+
+/*
+ * Capability ID: 0x0b
+ * Compact PCI
+ */
+
+/*
+ * Capability ID: 0x0c
+ * Hotplug
+ */
+
+/*
+ * Capability ID: 0x0d
+ * Subvendor
+ */
+
+/*
+ * Capability ID: 0x0e
+ * AGP8
+ */
+
+/*
+ * Capability ID: 0x0f
+ * Secure
+ */
+
+/*
+ * Capability ID: 0x10
  * PCI Express; access via capability pointer.
  */
 #define PCIE_XCAP	0x00	/* Capability List & Capabilities Register */
@@ -803,6 +837,47 @@ struct pci_msix_table_entry {
 
 #define PCIE_SLCAP2	0x34	/* Slot Capabilities 2 Register */
 #define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
+
+/*
+ * Capability ID: 0x11
+ * MSIX
+ */
+
+#define	PCI_MSIX_CTL_ENABLE	0x80000000
+#define	PCI_MSIX_CTL_FUNCMASK	0x40000000
+#define	PCI_MSIX_CTL_TBLSIZE_MASK 0x07ff0000
+#define	PCI_MSIX_CTL_TBLSIZE_SHIFT 16
+#define	PCI_MSIX_CTL_TBLSIZE(ofs)	(((ofs) >> PCI_MSIX_CTL_TBLSIZE_SHIFT) & PCI_MSIX_CTL_TBLSIZE_MASK)
+/*
+ * 2nd DWORD is the Table Offset
+ */
+#define	PCI_MSIX_TBLOFFSET_MASK	0xfffffff8
+#define	PCI_MSIX_TBLBIR_MASK	0x00000007
+/*
+ * 3rd DWORD is the Pending Bitmap Array Offset
+ */
+#define	PCI_MSIX_PBAOFFSET_MASK	0xfffffff8
+#define	PCI_MSIX_PBABIR_MASK	0x00000007
+
+struct pci_msix_table_entry {
+	uint32_t pci_msix_addr_lo;
+	uint32_t pci_msix_addr_hi;
+	uint32_t pci_msix_value;
+	uint32_t pci_msix_vendor_control;
+};
+#define	PCI_MSIX_VENDCTL_MASK	0x00000001
+
+
+/*
+ * Capability ID: 0x12
+ * SATA
+ */
+
+/*
+ * Capability ID: 0x13
+ * Advanced Feature
+ */
+
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
