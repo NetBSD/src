@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.66 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: in_var.h,v 1.67 2014/05/23 19:27:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -296,9 +296,7 @@ int	in_control(struct socket *, u_long, void *, struct ifnet *,
 	    struct lwp *);
 void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);
-void	ip_input(struct mbuf *);
 int	ipflow_fastforward(struct mbuf *);
-
 
 struct ipid_state;
 typedef struct ipid_state ipid_state_t;
