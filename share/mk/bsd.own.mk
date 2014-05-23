@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.808 2014/05/23 18:35:36 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.809 2014/05/23 18:51:31 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -57,22 +57,17 @@ TOOLCHAIN_MISSING?=	no
 .if ${MACHINE_CPU}  == "vax"
 HAVE_GCC?=    4
 
-# Platforms switched to GCC 4.8
+# Platforms still using GCC 4.5
 .elif \
-      ${MACHINE_CPU} == "alpha" || \
-      ${MACHINE_CPU} == "arm" || \
-      ${MACHINE_CPU} == "hppa" || \
-      ${MACHINE_CPU} == "mips" || \
-      ${MACHINE_CPU} == "sparc" || \
-      ${MACHINE_CPU} == "sparc64" || \
-      ${MACHINE_CPU} == "x86_64" || \
-      ${MACHINE_CPU} == "i386" || \
-      ${MACHINE_ARCH} == "powerpc64"
-HAVE_GCC?=    48
+      ${MACHINE_CPU} == "ia64" || \
+      ${MACHINE_CPU} == "m68k" || \
+      ${MACHINE_CPU} == "sh3" || \
+      ${MACHINE_ARCH} == "powerpc"
+HAVE_GCC?=    45
 
 .else
-# Otherwise, default to GCC4.5
-HAVE_GCC?=    45
+# Otherwise, default to GCC4.8
+HAVE_GCC?=    48
 .endif
 
 #
