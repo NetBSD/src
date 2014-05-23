@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.3 2014/05/23 22:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -48,9 +48,14 @@ struct agp_i810_softc {
 	struct pci_attach_args vga_pa;
 
 	u_int32_t pgtblctl;
+
+	bus_space_tag_t flush_bst;	/* flush page bus_space tag */
+	bus_space_handle_t flush_bsh;	/* flush page bus_space handle */
+	bus_addr_t flush_addr;		/* flush page bus address */
 };
 
 extern struct agp_softc	*agp_i810_sc;
 
 int	agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t, bus_addr_t);
 void	agp_i810_post_gtt_entry(struct agp_i810_softc *, off_t);
+void	agp_i810_chipset_flush(struct agp_i810_softc *);

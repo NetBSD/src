@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.74 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.75 2014/05/23 22:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.74 2014/03/18 18:20:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.75 2014/05/23 22:58:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.74 2014/03/18 18:20:41 riastradh Exp 
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/xcall.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -86,6 +87,7 @@ static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 static bool agp_i810_resume(device_t, const pmf_qual_t *);
 static int agp_i810_init(struct agp_softc *);
 
+static int agp_i810_setup_chipset_flush_page(struct agp_softc *);
 static int agp_i810_init(struct agp_softc *);
 
 static struct agp_methods agp_i810_methods = {
@@ -182,6 +184,40 @@ agp_i810_post_gtt_entry(struct agp_i810_softc *isc, off_t off)
 	}
 
 	(void)READ4(base_off + wroff);
+}
+
+static void
+agp_flush_cache_xc(void *a __unused, void *b __unused)
+{
+
+	agp_flush_cache();
+}
+
+void
+agp_i810_chipset_flush(struct agp_i810_softc *isc)
+{
+	unsigned int timo = 20000; /* * 50 us = 1 s */
+
+	switch (isc->chiptype) {
+	case CHIP_I810:
+		break;
+	case CHIP_I830:
+	case CHIP_I855:
+		xc_wait(xc_broadcast(0, &agp_flush_cache_xc, NULL, NULL));
+		WRITE4(AGP_I830_HIC, READ4(AGP_I830_HIC) | __BIT(31));
+		while (ISSET(READ4(AGP_I830_HIC), __BIT(31))) {
+			if (timo-- == 0)
+				break;
+			DELAY(50);
+		}
+		break;
+	case CHIP_I915:
+	case CHIP_I965:
+	case CHIP_G33:
+	case CHIP_G4X:
+		bus_space_write_4(isc->flush_bst, isc->flush_bsh, 0, 1);
+		break;
+	}
 }
 
 /* XXXthorpej -- duplicated code (see arch/x86/pci/pchb.c) */
@@ -441,7 +477,86 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	agp_i810_vga_regbase = mmadr;
 	agp_i810_vga_bsh = isc->bsh;
 
+	/* Set up a chipset flush page if necessary.  */
+	switch (isc->chiptype) {
+	case CHIP_I915:
+	case CHIP_I965:
+	case CHIP_G33:
+	case CHIP_G4X:
+		error = agp_i810_setup_chipset_flush_page(sc);
+		if (error) {
+			aprint_error_dev(self,
+			    "failed to set up chipset flush page: %d\n",
+			    error);
+			agp_generic_detach(sc);
+			return error;
+		}
+		break;
+	}
+
 	return agp_i810_init(sc);
+}
+
+static int
+agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
+{
+	struct agp_i810_softc *const isc = sc->as_chipc;
+	pcireg_t reg, lo, hi;
+	bus_addr_t addr, minaddr, maxaddr;
+	int error;
+
+	/* We always use memory-mapped I/O.  */
+	isc->flush_bst = isc->vga_pa.pa_memt;
+
+	/* No page allocated yet.  */
+	isc->flush_addr = 0;
+
+	/* Read the PCI config register: 4-byte on gen3, 8-byte on gen>=4.  */
+	if (isc->chiptype == CHIP_I915) {
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I915_IFPADDR);
+		addr = reg;
+		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
+		maxaddr = UINT32_MAX;
+	} else {
+		hi = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I965_IFPADDR+4);
+		lo = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I965_IFPADDR);
+		addr = ((bus_addr_t)hi << 32) | lo;
+		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
+		maxaddr = UINT64_MAX;
+	}
+
+	/* Allocate or map a pre-allocated a page for it.  */
+	if (ISSET(addr, 1)) {
+		/* BIOS allocated it for us.  Use that.  */
+		error = bus_space_map(isc->flush_bst, addr & ~1, PAGE_SIZE, 0,
+		    &isc->flush_bsh);
+		if (error)
+			return error;
+	} else {
+		/* None allocated.  Allocate one.  */
+		error = bus_space_alloc(isc->flush_bst, minaddr, maxaddr,
+		    PAGE_SIZE, PAGE_SIZE, 0, 0,
+		    &isc->flush_addr, &isc->flush_bsh);
+		if (error)
+			return error;
+		KASSERT(isc->flush_addr != 0);
+		/* Write it into the PCI config register.  */
+		addr = isc->flush_addr | 1;
+		if (isc->chiptype == CHIP_I915) {
+			pci_conf_write(sc->as_pc, sc->as_tag, AGP_I915_IFPADDR,
+			    addr);
+		} else {
+			pci_conf_write(sc->as_pc, sc->as_tag,
+			    AGP_I965_IFPADDR + 4,
+			    __SHIFTOUT(addr, __BITS(63, 32)));
+			pci_conf_write(sc->as_pc, sc->as_tag,
+			    AGP_I965_IFPADDR,
+			    __SHIFTOUT(addr, __BITS(31, 0)));
+		}
+	}
+
+	/* Success!  */
+	return 0;
 }
 
 /*
@@ -713,6 +828,33 @@ agp_i810_detach(struct agp_softc *sc)
 	if (error)
 		return error;
 
+	switch (isc->chiptype) {
+	case CHIP_I915:
+	case CHIP_I965:
+	case CHIP_G33:
+	case CHIP_G4X:
+		if (isc->flush_addr) {
+			/* If we allocated a page, clear it.  */
+			if (isc->chiptype == CHIP_I915) {
+				pci_conf_write(sc->as_pc, sc->as_tag,
+				    AGP_I915_IFPADDR, 0);
+			} else {
+				pci_conf_write(sc->as_pc, sc->as_tag,
+				    AGP_I915_IFPADDR, 0);
+				pci_conf_write(sc->as_pc, sc->as_tag,
+				    AGP_I915_IFPADDR + 4, 0);
+			}
+			isc->flush_addr = 0;
+			bus_space_free(isc->flush_bst, isc->flush_bsh,
+			    PAGE_SIZE);
+		} else {
+			/* Otherwise, just unmap the pre-allocated page.  */
+			bus_space_unmap(isc->flush_bst, isc->flush_bsh,
+			    PAGE_SIZE);
+		}
+		break;
+	}
+
 	/* Clear the GATT base. */
 	if (sc->chiptype == CHIP_I810) {
 		WRITE4(AGP_I810_PGTBL_CTL, 0);
@@ -770,7 +912,8 @@ agp_i810_get_aperture(struct agp_softc *sc)
 	case CHIP_I915:
 	case CHIP_G33:
 	case CHIP_G4X:
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I915_MSAC);
+		reg = pci_conf_read(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+		    AGP_I915_MSAC);
 		msac = (u_int16_t)(reg >> 16);
 		if (msac & AGP_I915_MSAC_APER_128M)
 			size = 128 * 1024 * 1024;

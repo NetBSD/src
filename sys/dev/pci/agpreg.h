@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.20 2008/11/29 23:48:12 christos Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.21 2014/05/23 22:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -206,6 +206,10 @@
 #define AGP_I830_GCC1_GMASIZE_64	0x01
 #define AGP_I830_GCC1_GMASIZE_128	0x00
 
+/*
+ * Memory mapped register offsets for i830 chipset.
+ */
+#define	AGP_I830_HIC			0x70
 
 /*
  * Config registers for 852GM/855GM/865G device 0
@@ -228,6 +232,12 @@
 #define AGP_I915_MMADR			0x10
 #define AGP_I915_GMADR			0x18
 #define AGP_I915_GTTADR			0x1c
+#define AGP_I915_MSAC			0x60 /* upper word */
+#define AGP_I915_MSAC_APER_128M		0x02
+
+/*
+ * Config registers for 915G/915GM device 0
+ */
 #define AGP_I915_GCC1			0x52
 #define AGP_I915_GCC1_GMS		0x70
 #define AGP_I915_GCC1_GMS_STOLEN_0M	0x00
@@ -237,8 +247,7 @@
 #define AGP_I915_GCC1_GMS_STOLEN_32M	0x50
 #define AGP_I915_GCC1_GMS_STOLEN_48M	0x60
 #define AGP_I915_GCC1_GMS_STOLEN_64M	0x70
-#define AGP_I915_MSAC			0x60 /* upper word */
-#define AGP_I915_MSAC_APER_128M		0x02
+#define AGP_I915_IFPADDR		0x60
 
 /*
  * Config registers for 965G/965Q
@@ -252,6 +261,10 @@
 #define AGP_I965_PGTBL_SIZE_2MB		(4 << 1)
 #define AGP_I965_PGTBL_SIZE_1_5MB	(5 << 1)
 
+/*
+ * Config registers for 965G/965Q device 0
+ */
+#define AGP_I965_IFPADDR		0x70
 
 /*
  * Config registers for G33
