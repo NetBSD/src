@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.311 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.312 2014/05/23 19:27:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.311 2014/05/22 22:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.312 2014/05/23 19:27:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -271,6 +271,7 @@ struct mowner ip_rx_mowner = MOWNER_INIT("internet", "rx");
 struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 #endif
 
+static void		ip_input(struct mbuf *);
 static bool		ip_dooptions(struct mbuf *);
 static struct in_ifaddr *ip_rtaddr(struct in_addr);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
@@ -373,7 +374,7 @@ ipintr(void)
  * Ip input routine.  Checksum and byte swap header.  If fragmented
  * try to reassemble.  Process options.  Pass to next level.
  */
-void
+static void
 ip_input(struct mbuf *m)
 {
 	struct ip *ip = NULL;
