@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.29 2014/04/13 02:24:16 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.30 2014/05/23 13:24:15 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.29 2014/04/13 02:24:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.30 2014/05/23 13:24:15 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -608,7 +608,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
 #endif          
-		valloc_pages(bmi, extrapv, nextrapages,
+		valloc_pages(bmi, &minidataclean, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, true);
 #endif
 
@@ -855,7 +855,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
 #endif          
-		xscale_setup_minidata(l1_va, minidataclean.pv_va,
+		xscale_setup_minidata(l1pt_va, minidataclean.pv_va,
 		    minidataclean.pv_pa);      
 #endif
 
