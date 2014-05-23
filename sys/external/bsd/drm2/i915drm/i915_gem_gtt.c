@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.11 2014/05/20 15:50:11 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.12 2014/05/23 23:02:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.11 2014/05/20 15:50:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.12 2014/05/23 23:02:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,6 +89,8 @@ i915_gem_gtt_init(struct drm_device *dev)
 	 * physical addresses.
 	 *
 	 * XXX pci_set_dma_mask?  pci_set_consistent_dma_mask?
+	 *
+	 * XXX DMA limits
 	 */
 	if (INTEL_INFO(dev)->gen < 4)
 		drm_limit_dma_space(dev, 0,
@@ -504,11 +506,11 @@ agp_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
 
 typedef uint32_t gtt_pte_t;
 
-#define	GEN6_PTE_VALID		__BIT(0)
-#define	GEN6_PTE_UNCACHED	__BIT(1)
-#define	HSW_PTE_UNCACHED	(0)
-#define	GEN6_PTE_CACHE_LLC	__BIT(2)
-#define	GEN6_PTE_CACHE_LLC_MLC	__BIT(3)
+#define	GEN6_PTE_VALID		0x01
+#define	GEN6_PTE_UNCACHED	0x02
+#define	HSW_PTE_UNCACHED	0x00
+#define	GEN6_PTE_CACHE_LLC	0x04
+#define	GEN6_PTE_CACHE_LLC_MLC	0x06
 
 static uint32_t
 gen6_pte_addr_encode(bus_addr_t addr)
