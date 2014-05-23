@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.114 2014/05/23 18:32:13 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.115 2014/05/23 19:31:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.114 2014/05/23 18:32:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.115 2014/05/23 19:31:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -148,14 +148,14 @@ static const struct pci_class pci_subclass_bridge[] = {
 };
 
 static const struct pci_class pci_subclass_communications[] = {
-	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	NULL, },
-	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	NULL, },
-	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	NULL, },
-	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	NULL, },
-	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	NULL, },
-	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	NULL, },
-	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	NULL, },
-	{ NULL,			0,					NULL, },
+	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	NULL,},
+	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	NULL,},
+	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	NULL,},
+	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	NULL,},
+	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	NULL,},
+	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	NULL,},
+	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	NULL,},
+	{ NULL,			0,					NULL,},
 };
 
 static const struct pci_class pci_subclass_system[] = {
@@ -326,14 +326,18 @@ int pciverbose_loaded = 0;
 /*
  * Routine to load the pciverbose kernel module as needed
  */
-void pci_load_verbose(void)
+void
+pci_load_verbose(void)
 {
+
 	if (pciverbose_loaded == 0)
 		module_autoload("pciverbose", MODULE_CLASS_MISC);
 }
 
-const char *pci_findvendor_stub(pcireg_t id_reg)
+const char *
+pci_findvendor_stub(pcireg_t id_reg)
 {
+
 	pci_load_verbose();
 	if (pciverbose_loaded)
 		return pci_findvendor(id_reg);
@@ -341,8 +345,10 @@ const char *pci_findvendor_stub(pcireg_t id_reg)
 		return NULL;
 }
 
-const char *pci_findproduct_stub(pcireg_t id_reg)
+const char *
+pci_findproduct_stub(pcireg_t id_reg)
 {
+
 	pci_load_verbose();
 	if (pciverbose_loaded)
 		return pci_findproduct(id_reg);
@@ -505,15 +511,19 @@ pci_conf_print_common(
 	onoff("Parity error checking", rval, PCI_COMMAND_PARITY_ENABLE);
 	onoff("Address/data stepping", rval, PCI_COMMAND_STEPPING_ENABLE);
 	onoff("System error (SERR)", rval, PCI_COMMAND_SERR_ENABLE);
-	onoff("Fast back-to-back transactions", rval, PCI_COMMAND_BACKTOBACK_ENABLE);
+	onoff("Fast back-to-back transactions", rval,
+	    PCI_COMMAND_BACKTOBACK_ENABLE);
 	onoff("Interrupt disable", rval, PCI_COMMAND_INTERRUPT_DISABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
-	onoff2("Interrupt status", rval, PCI_STATUS_INT_STATUS, "active", "inactive");
+	onoff2("Interrupt status", rval, PCI_STATUS_INT_STATUS, "active",
+	    "inactive");
 	onoff("Capability List support", rval, PCI_STATUS_CAPLIST_SUPPORT);
 	onoff("66 MHz capable", rval, PCI_STATUS_66MHZ_SUPPORT);
-	onoff("User Definable Features (UDF) support", rval, PCI_STATUS_UDF_SUPPORT);
-	onoff("Fast back-to-back capable", rval, PCI_STATUS_BACKTOBACK_SUPPORT);
+	onoff("User Definable Features (UDF) support", rval,
+	    PCI_STATUS_UDF_SUPPORT);
+	onoff("Fast back-to-back capable", rval,
+	    PCI_STATUS_BACKTOBACK_SUPPORT);
 	onoff("Data parity error detected", rval, PCI_STATUS_PARITY_ERROR);
 
 	printf("      DEVSEL timing: ");
@@ -533,8 +543,10 @@ pci_conf_print_common(
 	}
 	printf(" (0x%x)\n", (rval & PCI_STATUS_DEVSEL_MASK) >> 25);
 
-	onoff("Slave signaled Target Abort", rval, PCI_STATUS_TARGET_TARGET_ABORT);
-	onoff("Master received Target Abort", rval, PCI_STATUS_MASTER_TARGET_ABORT);
+	onoff("Slave signaled Target Abort", rval,
+	    PCI_STATUS_TARGET_TARGET_ABORT);
+	onoff("Master received Target Abort", rval,
+	    PCI_STATUS_MASTER_TARGET_ABORT);
 	onoff("Master received Master Abort", rval, PCI_STATUS_MASTER_ABORT);
 	onoff("Asserted System Error (SERR)", rval, PCI_STATUS_SPECIAL_ERROR);
 	onoff("Parity error detected", rval, PCI_STATUS_PARITY_DETECT);
@@ -557,7 +569,8 @@ pci_conf_print_common(
 			printf("    Subclass Name: %s (0x%02x)\n",
 			    subclassp->name, PCI_SUBCLASS(rval));
 		else
-			printf("    Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+			printf("    Subclass ID: 0x%02x\n",
+			    PCI_SUBCLASS(rval));
 	} else {
 		printf("    Class ID: 0x%02x\n", PCI_CLASS(rval));
 		printf("    Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
@@ -744,72 +757,119 @@ pci_conf_print_regs(const pcireg_t *regs, int first, int pastlast)
 		printf("\n");
 }
 
-static void
-pci_conf_print_type0(
-#ifdef _KERNEL
-    pci_chipset_tag_t pc, pcitag_t tag,
-#endif
-    const pcireg_t *regs
-#ifdef _KERNEL
-    , int sizebars
-#endif
-    )
+static const char *
+pci_conf_print_pcipm_cap_aux(uint16_t caps)
 {
-	int off, width;
-	pcireg_t rval;
 
-	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width) {
-#ifdef _KERNEL
-		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
-#else
-		width = pci_conf_print_bar(regs, off, NULL);
-#endif
+	switch ((caps >> 6) & 7) {
+	case 0:	return "self-powered";
+	case 1: return "55 mA";
+	case 2: return "100 mA";
+	case 3: return "160 mA";
+	case 4: return "220 mA";
+	case 5: return "270 mA";
+	case 6: return "320 mA";
+	case 7:
+	default: return "375 mA";
 	}
-
-	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
-
-	rval = regs[o2i(PCI_SUBSYS_ID_REG)];
-	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
-	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
-
-	/* XXX */
-	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
-
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
-		printf("    Capability list pointer: 0x%02x\n",
-		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
-	else
-		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
-
-	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
-
-	rval = regs[o2i(PCI_INTERRUPT_REG)];
-	printf("    Maximum Latency: 0x%02x\n", (rval >> 24) & 0xff);
-	printf("    Minimum Grant: 0x%02x\n", (rval >> 16) & 0xff);
-	printf("    Interrupt pin: 0x%02x ", PCI_INTERRUPT_PIN(rval));
-	switch (PCI_INTERRUPT_PIN(rval)) {
-	case PCI_INTERRUPT_PIN_NONE:
-		printf("(none)");
-		break;
-	case PCI_INTERRUPT_PIN_A:
-		printf("(pin A)");
-		break;
-	case PCI_INTERRUPT_PIN_B:
-		printf("(pin B)");
-		break;
-	case PCI_INTERRUPT_PIN_C:
-		printf("(pin C)");
-		break;
-	case PCI_INTERRUPT_PIN_D:
-		printf("(pin D)");
-		break;
-	default:
-		printf("(? ? ?)");
-		break;
-	}
-	printf("\n");
-	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
 }
+
+static const char *
+pci_conf_print_pcipm_cap_pmrev(uint8_t val)
+{
+	static const char unk[] = "unknown";
+	static const char *pmrev[8] = {
+		unk, "1.0", "1.1", "1.2", unk, unk, unk, unk
+	};
+	if (val > 7)
+		return unk;
+	return pmrev[val];
+}
+
+static void
+pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
+{
+	uint16_t caps, pmcsr;
+	pcireg_t reg;
+
+	caps = regs[o2i(capoff)] >> PCI_PMCR_SHIFT;
+	reg = regs[o2i(capoff + PCI_PMCSR)];
+	pmcsr = reg & 0xffff;
+
+	printf("\n  PCI Power Management Capabilities Register\n");
+
+	printf("    Capabilities register: 0x%04x\n", caps);
+	printf("      Version: %s\n",
+	    pci_conf_print_pcipm_cap_pmrev(caps & PCI_PMCR_VERSION_MASK));
+	onoff("PME# clock", caps, PCI_PMCR_PME_CLOCK);
+	onoff("Device specific initialization", caps, PCI_PMCR_DSI);
+	printf("      3.3V auxiliary current: %s\n",
+	    pci_conf_print_pcipm_cap_aux(caps));
+	onoff("D1 power management state support", caps, PCI_PMCR_D1SUPP);
+	onoff("D2 power management state support", caps, PCI_PMCR_D2SUPP);
+	printf("      PME# support: 0x%02x\n", caps >> 11);
+
+	printf("    Control/status register: 0x%04x\n", pmcsr);
+	printf("      Power state: D%d\n", pmcsr & PCI_PMCSR_STATE_MASK);
+	onoff("PCI Express reserved", (pmcsr >> 2), 1);
+	onoff("No soft reset", (pmcsr >> 3), 1);
+	printf("      PME# assertion: %sabled\n",
+	    (pmcsr & PCI_PMCSR_PME_EN) ? "en" : "dis");
+	onoff("PME# status", pmcsr, PCI_PMCSR_PME_STS);
+	printf("    Bridge Support Extensions register: 0x%02x\n",
+	    (reg >> 16) & 0xff);
+	onoff("B2/B3 support", reg, PCI_PMCSR_B2B3_SUPPORT);
+	onoff("Bus Power/Clock Control Enable", reg, PCI_PMCSR_BPCC_EN);
+	printf("    Data register: 0x%02x\n", (reg >> 24) & 0xff);
+	
+}
+
+/* XXX pci_conf_print_vpd_cap */
+/* XXX pci_conf_print_slotid_cap */
+
+static void
+pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
+{
+	uint32_t ctl, mmc, mme;
+
+	regs += o2i(capoff);
+	ctl = *regs++;
+	mmc = __SHIFTOUT(ctl, PCI_MSI_CTL_MMC_MASK);
+	mme = __SHIFTOUT(ctl, PCI_MSI_CTL_MME_MASK);
+
+	printf("\n  PCI Message Signaled Interrupt\n");
+
+	printf("    Message Control register: 0x%04x\n", ctl >> 16);
+	onoff("MSI Enabled", ctl, PCI_MSI_CTL_MSI_ENABLE);
+	printf("      Multiple Message Capable: %s (%d vector%s)\n",
+	    mmc > 0 ? "yes" : "no", 1 << mmc, mmc > 0 ? "s" : "");
+	printf("      Multiple Message Enabled: %s (%d vector%s)\n",
+	    mme > 0 ? "on" : "off", 1 << mme, mme > 0 ? "s" : "");
+	onoff("64 Bit Address Capable", ctl, PCI_MSI_CTL_64BIT_ADDR);
+	onoff("Per-Vector Masking Capable", ctl, PCI_MSI_CTL_PERVEC_MASK);
+	printf("    Message Address %sregister: 0x%08x\n",
+	    ctl & PCI_MSI_CTL_64BIT_ADDR ? "(lower) " : "", *regs++);
+	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
+		printf("    Message Address %sregister: 0x%08x\n",
+		    "(upper) ", *regs++);
+	}
+	printf("    Message Data register: 0x%08x\n", *regs++);
+	if (ctl & PCI_MSI_CTL_PERVEC_MASK) {
+		printf("    Vector Mask register: 0x%08x\n", *regs++);
+		printf("    Vector Pending register: 0x%08x\n", *regs++);
+	}
+}
+
+/* XXX pci_conf_print_cpci_hostwap_cap */
+/* XXX pci_conf_print_pcix_cap */
+/* XXX pci_conf_print_ldt_cap */
+/* XXX pci_conf_print_vendspec_cap */
+/* XXX pci_conf_print_debugport_cap */
+/* XXX pci_conf_print_cpci_rsrcctl_cap */
+/* XXX pci_conf_print_hotplug_cap */
+/* XXX pci_conf_print_subvendor_cap */
+/* XXX pci_conf_print_agp8_cap */
+/* XXX pci_conf_print_secure_cap */
 
 static void
 pci_print_pcie_L0s_latency(uint32_t val)
@@ -1373,104 +1433,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	/* Slot Status 2 */
 }
 
-static const char *
-pci_conf_print_pcipm_cap_aux(uint16_t caps)
-{
-	switch ((caps >> 6) & 7) {
-	case 0:	return "self-powered";
-	case 1: return "55 mA";
-	case 2: return "100 mA";
-	case 3: return "160 mA";
-	case 4: return "220 mA";
-	case 5: return "270 mA";
-	case 6: return "320 mA";
-	case 7:
-	default: return "375 mA";
-	}
-}
+/* XXX pci_conf_print_msix_cap */
+/* XXX pci_conf_print_sata_cap */
+/* XXX pci_conf_print_pciaf_cap */
 
-static const char *
-pci_conf_print_pcipm_cap_pmrev(uint8_t val)
-{
-	static const char unk[] = "unknown";
-	static const char *pmrev[8] = {
-		unk, "1.0", "1.1", "1.2", unk, unk, unk, unk
-	};
-	if (val > 7)
-		return unk;
-	return pmrev[val];
-}
-
-static void
-pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
-{
-	uint16_t caps, pmcsr;
-	pcireg_t reg;
-
-	caps = regs[o2i(capoff)] >> PCI_PMCR_SHIFT;
-	reg = regs[o2i(capoff + PCI_PMCSR)];
-	pmcsr = reg & 0xffff;
-
-	printf("\n  PCI Power Management Capabilities Register\n");
-
-	printf("    Capabilities register: 0x%04x\n", caps);
-	printf("      Version: %s\n",
-	    pci_conf_print_pcipm_cap_pmrev(caps & PCI_PMCR_VERSION_MASK));
-	onoff("PME# clock", caps, PCI_PMCR_PME_CLOCK);
-	onoff("Device specific initialization", caps, PCI_PMCR_DSI);
-	printf("      3.3V auxiliary current: %s\n",
-	    pci_conf_print_pcipm_cap_aux(caps));
-	onoff("D1 power management state support", caps, PCI_PMCR_D1SUPP);
-	onoff("D2 power management state support", caps, PCI_PMCR_D2SUPP);
-	printf("      PME# support: 0x%02x\n", caps >> 11);
-
-	printf("    Control/status register: 0x%04x\n", pmcsr);
-	printf("      Power state: D%d\n", pmcsr & PCI_PMCSR_STATE_MASK);
-	onoff("PCI Express reserved", (pmcsr >> 2), 1);
-	onoff("No soft reset", (pmcsr >> 3), 1);
-	printf("      PME# assertion: %sabled\n",
-	    (pmcsr & PCI_PMCSR_PME_EN) ? "en" : "dis");
-	onoff("PME# status", pmcsr, PCI_PMCSR_PME_STS);
-	printf("    Bridge Support Extensions register: 0x%02x\n",
-	    (reg >> 16) & 0xff);
-	onoff("B2/B3 support", reg, PCI_PMCSR_B2B3_SUPPORT);
-	onoff("Bus Power/Clock Control Enable", reg, PCI_PMCSR_BPCC_EN);
-	printf("    Data register: 0x%02x\n", (reg >> 24) & 0xff);
-	
-}
-
-static void
-pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
-{
-	uint32_t ctl, mmc, mme;
-
-	regs += o2i(capoff);
-	ctl = *regs++;
-	mmc = __SHIFTOUT(ctl, PCI_MSI_CTL_MMC_MASK);
-	mme = __SHIFTOUT(ctl, PCI_MSI_CTL_MME_MASK);
-
-	printf("\n  PCI Message Signaled Interrupt\n");
-
-	printf("    Message Control register: 0x%04x\n", ctl >> 16);
-	onoff("MSI Enabled", ctl, PCI_MSI_CTL_MSI_ENABLE);
-	printf("      Multiple Message Capable: %s (%d vector%s)\n",
-	    mmc > 0 ? "yes" : "no", 1 << mmc, mmc > 0 ? "s" : "");
-	printf("      Multiple Message Enabled: %s (%d vector%s)\n",
-	    mme > 0 ? "on" : "off", 1 << mme, mme > 0 ? "s" : "");
-	onoff("64 Bit Address Capable", ctl, PCI_MSI_CTL_64BIT_ADDR);
-	onoff("Per-Vector Masking Capable", ctl, PCI_MSI_CTL_PERVEC_MASK);
-	printf("    Message Address %sregister: 0x%08x\n",
-	    ctl & PCI_MSI_CTL_64BIT_ADDR ? "(lower) " : "", *regs++);
-	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
-		printf("    Message Address %sregister: 0x%08x\n",
-		    "(upper) ", *regs++);
-	}
-	printf("    Message Data register: 0x%08x\n", *regs++);
-	if (ctl & PCI_MSI_CTL_PERVEC_MASK) {
-		printf("    Vector Mask register: 0x%08x\n", *regs++);
-		printf("    Vector Pending register: 0x%08x\n", *regs++);
-	}
-}
 static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
@@ -1561,12 +1527,28 @@ pci_conf_print_caplist(
 		}
 		printf(")\n");
 	}
-	if (msi_off != -1)
-		pci_conf_print_msi_cap(regs, msi_off);
 	if (pcipm_off != -1)
 		pci_conf_print_pcipm_cap(regs, pcipm_off);
+	/* XXX AGP */
+	/* XXX VPD */
+	/* XXX SLOTID */
+	if (msi_off != -1)
+		pci_conf_print_msi_cap(regs, msi_off);
+	/* XXX CPCI_HOTSWAP */
+	/* XXX PCIX */
+	/* XXX LDT */
+	/* XXX VENDSPEC */
+	/* XXX DEBUGPORT */
+	/* XXX CPCI_RSRCCTL */
+	/* XXX HOTPLUG */
+	/* XXX SUBVENDOR */
+	/* XXX AGP8 */
+	/* XXX SECURE */
 	if (pcie_off != -1)
 		pci_conf_print_pcie_cap(regs, pcie_off);
+	/* XXX MSIX */
+	/* XXX SATA */
+	/* XXX PCIAF */
 }
 
 /* Print the Secondary Status Register. */
@@ -1604,6 +1586,73 @@ pci_conf_print_ssr(pcireg_t rval)
 	onoff("Received master abort", rval, __BIT(13));
 	onoff("Received system error", rval, __BIT(14));
 	onoff("Detected parity error", rval, __BIT(15));
+}
+
+static void
+pci_conf_print_type0(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs
+#ifdef _KERNEL
+    , int sizebars
+#endif
+    )
+{
+	int off, width;
+	pcireg_t rval;
+
+	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width) {
+#ifdef _KERNEL
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
+#else
+		width = pci_conf_print_bar(regs, off, NULL);
+#endif
+	}
+
+	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
+
+	rval = regs[o2i(PCI_SUBSYS_ID_REG)];
+	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
+	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
+
+	/* XXX */
+	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
+
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		printf("    Capability list pointer: 0x%02x\n",
+		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
+	else
+		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+
+	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
+
+	rval = regs[o2i(PCI_INTERRUPT_REG)];
+	printf("    Maximum Latency: 0x%02x\n", (rval >> 24) & 0xff);
+	printf("    Minimum Grant: 0x%02x\n", (rval >> 16) & 0xff);
+	printf("    Interrupt pin: 0x%02x ", PCI_INTERRUPT_PIN(rval));
+	switch (PCI_INTERRUPT_PIN(rval)) {
+	case PCI_INTERRUPT_PIN_NONE:
+		printf("(none)");
+		break;
+	case PCI_INTERRUPT_PIN_A:
+		printf("(pin A)");
+		break;
+	case PCI_INTERRUPT_PIN_B:
+		printf("(pin B)");
+		break;
+	case PCI_INTERRUPT_PIN_C:
+		printf("(pin C)");
+		break;
+	case PCI_INTERRUPT_PIN_D:
+		printf("(pin D)");
+		break;
+	default:
+		printf("(? ? ?)");
+		break;
+	}
+	printf("\n");
+	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
 }
 
 static void
@@ -1727,8 +1776,8 @@ pci_conf_print_type1(
 	}
 	if (pbase < plimit) {
 		if (use_upper == 1)
-			printf("      range:  0x%016" PRIx64 "-0x%016" PRIx64 "\n",
-			    pbase, plimit);
+			printf("      range:  0x%016" PRIx64 "-0x%016" PRIx64
+			    "\n", pbase, plimit);
 		else
 			printf("      range:  0x%08x-0x%08x\n",
 			    (uint32_t)pbase, (uint32_t)plimit);
@@ -1878,7 +1927,8 @@ pci_conf_print_type2(
 	onoff("VGA enable", rval, __BIT(3));
 	onoff("Master abort mode", rval, __BIT(5));
 	onoff("Secondary (CardBus) bus reset", rval, __BIT(6));
-	onoff("Functional interrupts routed by ExCA registers", rval, __BIT(7));
+	onoff("Functional interrupts routed by ExCA registers", rval,
+	    __BIT(7));
 	onoff("Memory window 0 prefetchable", rval, __BIT(8));
 	onoff("Memory window 1 prefetchable", rval, __BIT(9));
 	onoff("Write posting enable", rval, __BIT(10));
