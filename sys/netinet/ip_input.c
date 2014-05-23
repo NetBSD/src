@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.312 2014/05/23 19:27:48 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.313 2014/05/23 19:35:24 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.312 2014/05/23 19:27:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.313 2014/05/23 19:35:24 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -272,6 +272,7 @@ struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 #endif
 
 static void		ip_input(struct mbuf *);
+static void		ip_forward(struct mbuf *, int);
 static bool		ip_dooptions(struct mbuf *);
 static struct in_ifaddr *ip_rtaddr(struct in_addr);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
@@ -1167,7 +1168,7 @@ ip_drainstub(void)
  * The srcrt parameter indicates whether the packet is being forwarded
  * via a source route.
  */
-void
+static void
 ip_forward(struct mbuf *m, int srcrt)
 {
 	struct ip *ip = mtod(m, struct ip *);

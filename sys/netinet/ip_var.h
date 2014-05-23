@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.102 2014/05/22 23:42:53 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.103 2014/05/23 19:35:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -201,7 +201,6 @@ void	in_init(void);
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
-void	 ip_forward(struct mbuf *, int);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
