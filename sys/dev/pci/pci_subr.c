@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.113 2014/05/23 17:54:08 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.114 2014/05/23 18:32:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.113 2014/05/23 17:54:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.114 2014/05/23 18:32:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -208,6 +208,7 @@ static const struct pci_class pci_subclass_serialbus[] = {
 	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,	NULL,	},
 	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,	NULL,	},
 	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_SERIALBUS_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -225,6 +226,7 @@ static const struct pci_class pci_subclass_wireless[] = {
 
 static const struct pci_class pci_subclass_i2o[] = {
 	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_I2O_MISC,		NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -233,6 +235,7 @@ static const struct pci_class pci_subclass_satcom[] = {
 	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO, 	NULL,	},
 	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE, 	NULL,	},
 	{ "data",		PCI_SUBCLASS_SATCOM_DATA,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_SATCOM_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -1402,30 +1405,38 @@ static void
 pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 {
 	uint16_t caps, pmcsr;
+	pcireg_t reg;
 
-	caps = regs[o2i(capoff)] >> 16;
-	pmcsr = regs[o2i(capoff + 0x04)] & 0xffff;
+	caps = regs[o2i(capoff)] >> PCI_PMCR_SHIFT;
+	reg = regs[o2i(capoff + PCI_PMCSR)];
+	pmcsr = reg & 0xffff;
 
 	printf("\n  PCI Power Management Capabilities Register\n");
 
 	printf("    Capabilities register: 0x%04x\n", caps);
 	printf("      Version: %s\n",
-	    pci_conf_print_pcipm_cap_pmrev(caps & 0x3));
+	    pci_conf_print_pcipm_cap_pmrev(caps & PCI_PMCR_VERSION_MASK));
 	onoff("PME# clock", caps, PCI_PMCR_PME_CLOCK);
-	onoff("Device specific initialization", caps, 0x20);
+	onoff("Device specific initialization", caps, PCI_PMCR_DSI);
 	printf("      3.3V auxiliary current: %s\n",
 	    pci_conf_print_pcipm_cap_aux(caps));
-	onoff("D1 power management state support", (caps >> 9), 1);
-	onoff("D2 power management state support", (caps >> 10), 1);
+	onoff("D1 power management state support", caps, PCI_PMCR_D1SUPP);
+	onoff("D2 power management state support", caps, PCI_PMCR_D2SUPP);
 	printf("      PME# support: 0x%02x\n", caps >> 11);
 
 	printf("    Control/status register: 0x%04x\n", pmcsr);
-	printf("      Power state: D%d\n", pmcsr & 3);
+	printf("      Power state: D%d\n", pmcsr & PCI_PMCSR_STATE_MASK);
 	onoff("PCI Express reserved", (pmcsr >> 2), 1);
 	onoff("No soft reset", (pmcsr >> 3), 1);
-	printf("      PME# assertion %sabled\n",
-	    (pmcsr >> 8) & 1 ? "en" : "dis");
-	printf("      PME# status: %s\n", (pmcsr >> 15) ? "on" : "off");
+	printf("      PME# assertion: %sabled\n",
+	    (pmcsr & PCI_PMCSR_PME_EN) ? "en" : "dis");
+	onoff("PME# status", pmcsr, PCI_PMCSR_PME_STS);
+	printf("    Bridge Support Extensions register: 0x%02x\n",
+	    (reg >> 16) & 0xff);
+	onoff("B2/B3 support", reg, PCI_PMCSR_B2B3_SUPPORT);
+	onoff("Bus Power/Clock Control Enable", reg, PCI_PMCSR_BPCC_EN);
+	printf("    Data register: 0x%02x\n", (reg >> 24) & 0xff);
+	
 }
 
 static void
@@ -1632,13 +1643,13 @@ pci_conf_print_type1(
 
 	rval = regs[o2i(PCI_BRIDGE_BUS_REG)];
 	printf("    Primary bus number: 0x%02x\n",
-	    (rval >> 0) & 0xff);
+	    PCI_BRIDGE_BUS_PRIMARY(rval));
 	printf("    Secondary bus number: 0x%02x\n",
-	    (rval >> 8) & 0xff);
+	    PCI_BRIDGE_BUS_SECONDARY(rval));
 	printf("    Subordinate bus number: 0x%02x\n",
-	    (rval >> 16) & 0xff);
+	    PCI_BRIDGE_BUS_SUBORDINATE(rval));
 	printf("    Secondary bus latency timer: 0x%02x\n",
-	    (rval >> 24) & 0xff);
+	    PCI_BRIDGE_BUS_SEC_LATTIMER(rval));
 
 	rval = regs[o2i(PCI_BRIDGE_STATIO_REG)];
 	pci_conf_print_ssr(__SHIFTOUT(rval, __BITS(31, 16)));

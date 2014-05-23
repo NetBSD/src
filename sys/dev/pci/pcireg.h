@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.88 2014/05/23 17:54:08 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.89 2014/05/23 18:32:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -274,6 +274,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SERIALBUS_IPMI		0x07
 #define	PCI_SUBCLASS_SERIALBUS_SERCOS		0x08
 #define	PCI_SUBCLASS_SERIALBUS_CANBUS		0x09
+#define	PCI_SUBCLASS_SERIALBUS_MISC		0x80
 
 /* 0x0d wireless subclasses */
 #define	PCI_SUBCLASS_WIRELESS_IRDA		0x00
@@ -287,6 +288,7 @@ typedef u_int8_t pci_revision_t;
 
 /* 0x0e I2O (Intelligent I/O) subclasses */
 #define	PCI_SUBCLASS_I2O_STANDARD		0x00
+#define	PCI_SUBCLASS_I2O_MISC			0x80
 
 /* 0x0f satellite communication subclasses */
 /*	PCI_SUBCLASS_SATCOM_???			0x00	/ * XXX ??? */
@@ -294,6 +296,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SATCOM_AUDIO		0x02
 #define	PCI_SUBCLASS_SATCOM_VOICE		0x03
 #define	PCI_SUBCLASS_SATCOM_DATA		0x04
+#define	PCI_SUBCLASS_SATCOM_MISC		0x80
 
 /* 0x10 encryption/decryption subclasses */
 #define	PCI_SUBCLASS_CRYPTO_NETCOMP		0x00
@@ -479,18 +482,45 @@ typedef u_int8_t pci_revision_t;
 /* Power Management Capability Register */
 #define PCI_PMCR_SHIFT		16
 #define PCI_PMCR		0x02
+#define PCI_PMCR_VERSION_MASK	0x0007
+#define PCI_PMCR_VERSION_10	0x0001
+#define PCI_PMCR_VERSION_11	0x0002
+#define PCI_PMCR_VERSION_12	0x0003
 #define PCI_PMCR_PME_CLOCK	0x0008
+#define PCI_PMCR_DSI		0x0020
+#define PCI_PMCR_AUXCUR_MASK	0x01c0
+#define PCI_PMCR_AUXCUR_0	0x0000
+#define PCI_PMCR_AUXCUR_55	0x0040
+#define PCI_PMCR_AUXCUR_100	0x0080
+#define PCI_PMCR_AUXCUR_160	0x00c0
+#define PCI_PMCR_AUXCUR_220	0x0100
+#define PCI_PMCR_AUXCUR_270	0x0140
+#define PCI_PMCR_AUXCUR_320	0x0180
+#define PCI_PMCR_AUXCUR_375	0x01c0
 #define PCI_PMCR_D1SUPP		0x0200
 #define PCI_PMCR_D2SUPP		0x0400
-/* Power Management Control Status Register */
+#define PCI_PMCR_PME_D0		0x0800
+#define PCI_PMCR_PME_D1		0x1000
+#define PCI_PMCR_PME_D2		0x2000
+#define PCI_PMCR_PME_D3HOT	0x4000
+#define PCI_PMCR_PME_D3COLD	0x8000
+/*
+ * Power Management Control Status Register, Bridge Support Extensions Register
+ * and Data Register.
+ */
 #define PCI_PMCSR		0x04
-#define	PCI_PMCSR_PME_EN	0x100
-#define PCI_PMCSR_STATE_MASK	0x03
-#define PCI_PMCSR_STATE_D0      0x00
-#define PCI_PMCSR_STATE_D1      0x01
-#define PCI_PMCSR_STATE_D2      0x02
-#define PCI_PMCSR_STATE_D3      0x03
-#define PCI_PMCSR_PME_STS       0x8000
+#define PCI_PMCSR_STATE_MASK	0x00000003
+#define PCI_PMCSR_STATE_D0	0x00000000
+#define PCI_PMCSR_STATE_D1	0x00000001
+#define PCI_PMCSR_STATE_D2	0x00000002
+#define PCI_PMCSR_STATE_D3	0x00000003
+#define	PCI_PMCSR_PME_EN	0x00000100
+#define PCI_PMCSR_DATASEL_MASK	0x00001e00
+#define PCI_PMCSR_DATASCL_MASK	0x00006000
+#define PCI_PMCSR_PME_STS	0x00008000
+#define PCI_PMCSR_B2B3_SUPPORT	0x00400000
+#define PCI_PMCSR_BPCC_EN	0x00800000
+
 
 /*
  * Capability ID: 0x02
@@ -935,9 +965,20 @@ typedef u_int8_t pci_intr_line_t;
 
 /* Header Type 1 (Bridge) configuration registers */
 #define PCI_BRIDGE_BUS_REG		0x18
+#define   PCI_BRIDGE_BUS_EACH_MASK		0xff
 #define   PCI_BRIDGE_BUS_PRIMARY_SHIFT		0
 #define   PCI_BRIDGE_BUS_SECONDARY_SHIFT	8
 #define   PCI_BRIDGE_BUS_SUBORDINATE_SHIFT	16
+#define   PCI_BRIDGE_BUS_SEC_LATTIMER_SHIFT	24
+#define   PCI_BRIDGE_BUS_PRIMARY(reg) \
+	(((reg) >> PCI_BRIDGE_BUS_PRIMARY_SHIFT) & PCI_BRIDGE_BUS_EACH_MASK)
+#define   PCI_BRIDGE_BUS_SECONDARY(reg) \
+	(((reg) >> PCI_BRIDGE_BUS_SECONDARY_SHIFT) & PCI_BRIDGE_BUS_EACH_MASK)
+#define   PCI_BRIDGE_BUS_SUBORDINATE(reg) \
+	(((reg) >> PCI_BRIDGE_BUS_SUBORDINATE_SHIFT) &PCI_BRIDGE_BUS_EACH_MASK)
+#define   PCI_BRIDGE_BUS_SEC_LATTIMER(reg) \
+	(((reg) >> PCI_BRIDGE_BUS_SEC_LATTIMER_SHIFT)&PCI_BRIDGE_BUS_EACH_MASK)
+
 
 #define PCI_BRIDGE_STATIO_REG		0x1C
 #define	  PCI_BRIDGE_STATIO_IOBASE_SHIFT	0
