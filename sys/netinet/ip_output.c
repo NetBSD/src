@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.226 2014/05/22 23:42:53 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.227 2014/05/23 00:02:14 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.226 2014/05/22 23:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.227 2014/05/23 00:02:14 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -191,7 +191,6 @@ ip_output(struct mbuf *m0, ...)
 
 	MCLAIM(m, &ip_tx_mowner);
 
-	KASSERT(solocked(so));
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) == 0);
 	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) !=
@@ -571,7 +570,10 @@ sendit:
 	 */
 	if (ntohs(ip->ip_off) & IP_DF) {
 		if (flags & IP_RETURNMTU) {
-			struct inpcb *inp = sotoinpcb(so);
+			struct inpcb *inp;
+
+			KASSERT(so && solocked(so));
+			inp = sotoinpcb(so);
 			inp->inp_errormtu = mtu;
 		}
 		error = EMSGSIZE;
