@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.2 2013/11/15 00:12:45 rmind Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.3 2014/05/23 11:47:59 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.2 2013/11/15 00:12:45 rmind Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.3 2014/05/23 11:47:59 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -3290,6 +3290,540 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_4, tc)
 	bpfjit_free_code(code);
 }
 
+ATF_TC(bpfjit_abc_ja);
+ATF_TC_HEAD(bpfjit_abc_ja, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test ABC optimization with a single BPF_JMP+BPF_JA");
+}
+
+ATF_TC_BODY(bpfjit_abc_ja, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 3), /* min. length 4 */
+		BPF_STMT(BPF_JMP+BPF_JA, 2),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, UINT32_MAX - 1),
+		BPF_STMT(BPF_RET+BPF_K, 0),
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 2), /* min. length 6 */
+		BPF_STMT(BPF_RET+BPF_A, 0),
+		BPF_STMT(BPF_RET+BPF_K, 1),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 6),
+		BPF_STMT(BPF_RET+BPF_K, 2),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 7),
+		BPF_STMT(BPF_RET+BPF_K, 3),
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[6] = {0, 0, /* UINT32_MAX: */ 255, 255, 255, 255};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(bc, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(code(pkt, 0, 0) == 0);
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == UINT32_MAX);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(bpfjit_abc_ja_over);
+ATF_TC_HEAD(bpfjit_abc_ja_over, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test ABC optimization when BPF_JMP+BPF_JA jumps over all loads");
+}
+
+ATF_TC_BODY(bpfjit_abc_ja_over, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_JMP+BPF_JA, 2),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 3),
+		BPF_STMT(BPF_RET+BPF_K, 0),
+		BPF_STMT(BPF_RET+BPF_K, UINT32_MAX),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 4),
+		BPF_STMT(BPF_RET+BPF_K, 1),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 5),
+		BPF_STMT(BPF_RET+BPF_K, 2),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 6),
+		BPF_STMT(BPF_RET+BPF_K, 3),
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(bc, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(bpfjit_abc_ld_chain);
+ATF_TC_HEAD(bpfjit_abc_ld_chain, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test ABC optimization of a chain of BPF_LD instructions "
+	    "with exits leading to a single BPF_RET");
+}
+
+ATF_TC_BODY(bpfjit_abc_ld_chain, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 3), /* min. length 4 */
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 8, 0, 4),
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 4), /* min. length 6 */
+		BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, 7, 0, 2),
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 6), /* min. length 10 */
+		BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, 6, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 123456789),
+		BPF_STMT(BPF_RET+BPF_K, 987654321),
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[10] = {};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(bc, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+
+	/* !(pkt[3] == 8) => return 123456789 */
+	ATF_CHECK(code(pkt, 4, 4) == 123456789);
+	ATF_CHECK(code(pkt, 5, 5) == 123456789);
+	ATF_CHECK(code(pkt, 6, 6) == 123456789);
+	ATF_CHECK(code(pkt, 7, 7) == 123456789);
+	ATF_CHECK(code(pkt, 8, 8) == 123456789);
+	ATF_CHECK(code(pkt, 9, 9) == 123456789);
+
+	/* !(pkt[4:2] >= 7) => too short or return 123456789 */
+	pkt[3] = 8;
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 123456789);
+	ATF_CHECK(code(pkt, 9, 9) == 123456789);
+
+	/* !(pkt[6:4] > 6) => too short or return 987654321 */
+	pkt[4] = pkt[5] = 1;
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 987654321);
+
+	/* (pkt[6:4] > 6) => too short or return 123456789 */
+	pkt[6] = pkt[7] = pkt[8] = pkt[9] = 1;
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 123456789);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(bpfjit_examples_1);
+ATF_TC_HEAD(bpfjit_examples_1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the first example from bpf(4) - "
+	    "accept Reverse ARP requests");
+}
+
+ATF_TC_BODY(bpfjit_examples_1, tc)
+{
+	/*
+	 * The following filter is taken from the Reverse ARP
+	 * Daemon. It accepts only Reverse ARP requests.
+	 */
+	struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x8035, 0, 3),
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 20),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 3, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 42),
+		BPF_STMT(BPF_RET+BPF_K, 0),
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[22] = {};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(bc, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 0);
+	ATF_CHECK(code(pkt, 11, 11) == 0);
+	ATF_CHECK(code(pkt, 12, 12) == 0);
+	ATF_CHECK(code(pkt, 13, 13) == 0);
+	ATF_CHECK(code(pkt, 14, 14) == 0);
+	ATF_CHECK(code(pkt, 15, 15) == 0);
+	ATF_CHECK(code(pkt, 16, 16) == 0);
+	ATF_CHECK(code(pkt, 17, 17) == 0);
+	ATF_CHECK(code(pkt, 18, 18) == 0);
+	ATF_CHECK(code(pkt, 19, 19) == 0);
+	ATF_CHECK(code(pkt, 20, 20) == 0);
+	ATF_CHECK(code(pkt, 21, 21) == 0);
+
+	/* The packet doesn't match. */
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+
+	/* Still no match after setting the protocol field. */
+	pkt[12] = 0x80; pkt[13] = 0x35;
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+
+	/* Set RARP message type. */
+	pkt[21] = 3;
+	ATF_CHECK(code(pkt, 22, 22) == 42);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 0);
+	ATF_CHECK(code(pkt, 11, 11) == 0);
+	ATF_CHECK(code(pkt, 12, 12) == 0);
+	ATF_CHECK(code(pkt, 13, 13) == 0);
+	ATF_CHECK(code(pkt, 14, 14) == 0);
+	ATF_CHECK(code(pkt, 15, 15) == 0);
+	ATF_CHECK(code(pkt, 16, 16) == 0);
+	ATF_CHECK(code(pkt, 17, 17) == 0);
+	ATF_CHECK(code(pkt, 18, 18) == 0);
+	ATF_CHECK(code(pkt, 19, 19) == 0);
+	ATF_CHECK(code(pkt, 20, 20) == 0);
+	ATF_CHECK(code(pkt, 21, 21) == 0);
+
+	/* Change RARP message type. */
+	pkt[20] = 3;
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(bpfjit_examples_2);
+ATF_TC_HEAD(bpfjit_examples_2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the second example from bpf(4) - "
+	    "accept IP packets between two specified hosts");
+}
+
+ATF_TC_BODY(bpfjit_examples_2, tc)
+{
+	/*
+	 * This filter accepts only IP packets between host 128.3.112.15
+	 * and 128.3.112.35.
+	 */
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x0800, 0, 8),
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 26),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x8003700f, 0, 2),
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 30),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x80037023, 3, 4),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x80037023, 0, 3),
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 30),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x8003700f, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, UINT32_MAX),
+		BPF_STMT(BPF_RET+BPF_K, 0),
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[34] = {};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(bc, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 0);
+	ATF_CHECK(code(pkt, 11, 11) == 0);
+	ATF_CHECK(code(pkt, 12, 12) == 0);
+	ATF_CHECK(code(pkt, 13, 13) == 0);
+	ATF_CHECK(code(pkt, 14, 14) == 0);
+	ATF_CHECK(code(pkt, 15, 15) == 0);
+	ATF_CHECK(code(pkt, 16, 16) == 0);
+	ATF_CHECK(code(pkt, 17, 17) == 0);
+	ATF_CHECK(code(pkt, 18, 18) == 0);
+	ATF_CHECK(code(pkt, 19, 19) == 0);
+	ATF_CHECK(code(pkt, 20, 20) == 0);
+	ATF_CHECK(code(pkt, 21, 21) == 0);
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(code(pkt, 23, 23) == 0);
+	ATF_CHECK(code(pkt, 24, 24) == 0);
+	ATF_CHECK(code(pkt, 25, 25) == 0);
+	ATF_CHECK(code(pkt, 26, 26) == 0);
+	ATF_CHECK(code(pkt, 27, 27) == 0);
+	ATF_CHECK(code(pkt, 28, 28) == 0);
+	ATF_CHECK(code(pkt, 29, 29) == 0);
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(code(pkt, 31, 31) == 0);
+	ATF_CHECK(code(pkt, 32, 32) == 0);
+	ATF_CHECK(code(pkt, 33, 33) == 0);
+
+	/* The packet doesn't match. */
+	ATF_CHECK(code(pkt, 34, 34) == 0);
+
+	/* Still no match after setting the protocol field. */
+	pkt[12] = 8;
+	ATF_CHECK(code(pkt, 34, 34) == 0);
+
+	pkt[26] = 128; pkt[27] = 3; pkt[28] = 112; pkt[29] = 15;
+	ATF_CHECK(code(pkt, 34, 34) == 0);
+
+	pkt[30] = 128; pkt[31] = 3; pkt[32] = 112; pkt[33] = 35;
+	ATF_CHECK(code(pkt, 34, 34) == UINT32_MAX);
+
+	/* Swap the ip addresses. */
+	pkt[26] = 128; pkt[27] = 3; pkt[28] = 112; pkt[29] = 35;
+	ATF_CHECK(code(pkt, 34, 34) == 0);
+
+	pkt[30] = 128; pkt[31] = 3; pkt[32] = 112; pkt[33] = 15;
+	ATF_CHECK(code(pkt, 34, 34) == UINT32_MAX);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 0);
+	ATF_CHECK(code(pkt, 11, 11) == 0);
+	ATF_CHECK(code(pkt, 12, 12) == 0);
+	ATF_CHECK(code(pkt, 13, 13) == 0);
+	ATF_CHECK(code(pkt, 14, 14) == 0);
+	ATF_CHECK(code(pkt, 15, 15) == 0);
+	ATF_CHECK(code(pkt, 16, 16) == 0);
+	ATF_CHECK(code(pkt, 17, 17) == 0);
+	ATF_CHECK(code(pkt, 18, 18) == 0);
+	ATF_CHECK(code(pkt, 19, 19) == 0);
+	ATF_CHECK(code(pkt, 20, 20) == 0);
+	ATF_CHECK(code(pkt, 21, 21) == 0);
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(code(pkt, 23, 23) == 0);
+	ATF_CHECK(code(pkt, 24, 24) == 0);
+	ATF_CHECK(code(pkt, 25, 25) == 0);
+	ATF_CHECK(code(pkt, 26, 26) == 0);
+	ATF_CHECK(code(pkt, 27, 27) == 0);
+	ATF_CHECK(code(pkt, 28, 28) == 0);
+	ATF_CHECK(code(pkt, 29, 29) == 0);
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(code(pkt, 31, 31) == 0);
+	ATF_CHECK(code(pkt, 32, 32) == 0);
+	ATF_CHECK(code(pkt, 33, 33) == 0);
+
+	/* Change the protocol field. */
+	pkt[13] = 8;
+	ATF_CHECK(code(pkt, 34, 34) == 0);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(bpfjit_examples_3);
+ATF_TC_HEAD(bpfjit_examples_3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the third example from bpf(4) - "
+	    "accept TCP finger packets");
+}
+
+ATF_TC_BODY(bpfjit_examples_3, tc)
+{
+	/*
+	 * This filter returns only TCP finger packets.
+	 */
+	struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0x0800, 0, 10),
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 23),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 6, 0, 8),
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 20),
+		BPF_JUMP(BPF_JMP+BPF_JSET+BPF_K, 0x1fff, 6, 0),
+		BPF_STMT(BPF_LDX+BPF_B+BPF_MSH, 14),
+		BPF_STMT(BPF_LD+BPF_H+BPF_IND, 14),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 79, 2, 0),
+		BPF_STMT(BPF_LD+BPF_H+BPF_IND, 16),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 79, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, UINT32_MAX),
+		BPF_STMT(BPF_RET+BPF_K, 0),
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[30] = {};
+
+	/* Set IP fragment offset to non-zero. */
+	pkt[20] = 1; pkt[21] = 1;
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(bc, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 0);
+	ATF_CHECK(code(pkt, 11, 11) == 0);
+	ATF_CHECK(code(pkt, 12, 12) == 0);
+	ATF_CHECK(code(pkt, 13, 13) == 0);
+	ATF_CHECK(code(pkt, 14, 14) == 0);
+	ATF_CHECK(code(pkt, 15, 15) == 0);
+	ATF_CHECK(code(pkt, 16, 16) == 0);
+	ATF_CHECK(code(pkt, 17, 17) == 0);
+	ATF_CHECK(code(pkt, 18, 18) == 0);
+	ATF_CHECK(code(pkt, 19, 19) == 0);
+	ATF_CHECK(code(pkt, 20, 20) == 0);
+	ATF_CHECK(code(pkt, 21, 21) == 0);
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(code(pkt, 23, 23) == 0);
+	ATF_CHECK(code(pkt, 24, 24) == 0);
+	ATF_CHECK(code(pkt, 25, 25) == 0);
+	ATF_CHECK(code(pkt, 26, 26) == 0);
+	ATF_CHECK(code(pkt, 27, 27) == 0);
+	ATF_CHECK(code(pkt, 28, 28) == 0);
+	ATF_CHECK(code(pkt, 29, 29) == 0);
+
+	/* The packet doesn't match. */
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+
+	/* Still no match after setting the protocol field. */
+	pkt[12] = 8;
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+
+	/* Get one step closer to the match. */
+	pkt[23] = 6;
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+
+	/* Set IP fragment offset to zero. */
+	pkt[20] = 0x20; pkt[21] = 0;
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+
+	/* Set IP header length to 12. */
+	pkt[14] = 0xd3;
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+
+	/* Match one branch of the program. */
+	pkt[27] = 79;
+	ATF_CHECK(code(pkt, 30, 30) == UINT32_MAX);
+
+	/* Match the other branch of the program. */
+	pkt[29] = 79; pkt[27] = 0;
+	ATF_CHECK(code(pkt, 30, 30) == UINT32_MAX);
+
+	/* Packet is too short. */
+	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(code(pkt, 2, 2) == 0);
+	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(code(pkt, 4, 4) == 0);
+	ATF_CHECK(code(pkt, 5, 5) == 0);
+	ATF_CHECK(code(pkt, 6, 6) == 0);
+	ATF_CHECK(code(pkt, 7, 7) == 0);
+	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(code(pkt, 9, 9) == 0);
+	ATF_CHECK(code(pkt, 10, 10) == 0);
+	ATF_CHECK(code(pkt, 11, 11) == 0);
+	ATF_CHECK(code(pkt, 12, 12) == 0);
+	ATF_CHECK(code(pkt, 13, 13) == 0);
+	ATF_CHECK(code(pkt, 14, 14) == 0);
+	ATF_CHECK(code(pkt, 15, 15) == 0);
+	ATF_CHECK(code(pkt, 16, 16) == 0);
+	ATF_CHECK(code(pkt, 17, 17) == 0);
+	ATF_CHECK(code(pkt, 18, 18) == 0);
+	ATF_CHECK(code(pkt, 19, 19) == 0);
+	ATF_CHECK(code(pkt, 20, 20) == 0);
+	ATF_CHECK(code(pkt, 21, 21) == 0);
+	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(code(pkt, 23, 23) == 0);
+	ATF_CHECK(code(pkt, 24, 24) == 0);
+	ATF_CHECK(code(pkt, 25, 25) == 0);
+	ATF_CHECK(code(pkt, 26, 26) == 0);
+	ATF_CHECK(code(pkt, 27, 27) == 0);
+	ATF_CHECK(code(pkt, 28, 28) == 0);
+	ATF_CHECK(code(pkt, 29, 29) == 0);
+
+	/* Set IP header length to 16. Packet is too short. */
+	pkt[14] = 4;
+	ATF_CHECK(code(pkt, 30, 30) == 0);
+
+	bpfjit_free_code(code);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -3373,7 +3907,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_2);
 	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_3);
 	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_4);
-	/* XXX: bpfjit_opt_ldx_msh */
+	ATF_TP_ADD_TC(tp, bpfjit_abc_ja);
+	ATF_TP_ADD_TC(tp, bpfjit_abc_ja_over);
+	ATF_TP_ADD_TC(tp, bpfjit_abc_ld_chain);
+	ATF_TP_ADD_TC(tp, bpfjit_examples_1);
+	ATF_TP_ADD_TC(tp, bpfjit_examples_2);
+	ATF_TP_ADD_TC(tp, bpfjit_examples_3);
 
 	return atf_no_error();
 }
