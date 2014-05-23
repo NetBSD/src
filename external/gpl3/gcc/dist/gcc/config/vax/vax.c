@@ -572,6 +572,11 @@ print_operand (FILE *file, rtx x, int code)
 		       sizeof (dstr), 0, 1);
       fprintf (file, "$0%c%s", ASM_DOUBLE_CHAR, dstr);
     }
+  else if (GET_CODE (x) == SUBREG)
+    {
+      debug_rtx (x);
+      output_operand_lossage ("SUBREG operand");
+    }
   else
     {
       if (flag_pic > 1 && symbolic_operand (x, SImode))
@@ -1775,6 +1780,19 @@ legitimate_constant_address_p (rtx x)
 #endif
    gcc_assert (! REG_P (x));
    return true;
+}
+
+bool
+legitimate_pic_operand_p (rtx x)
+{
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+  if (GET_CODE (x) != CONST)
+    return true;
+  if (GET_CODE (XEXP (XEXP (x, 0), 0)) == SYMBOL_REF
+      && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (x, 0), 0)))
+    return false;
+#endif
+  return true;
 }
 
 /* The other macros defined here are used only in legitimate_address_p ().  */
