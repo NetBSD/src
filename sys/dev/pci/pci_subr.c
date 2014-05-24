@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.117 2014/05/24 15:20:32 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.118 2014/05/24 18:06:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.117 2014/05/24 15:20:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.118 2014/05/24 18:06:21 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1119,10 +1119,48 @@ pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
 /* XXX pci_conf_print_pcix_cap */
 /* XXX pci_conf_print_ldt_cap */
 /* XXX pci_conf_print_vendspec_cap */
-/* XXX pci_conf_print_debugport_cap */
+
+static void
+pci_conf_print_vendspec_cap(const pcireg_t *regs, int capoff)
+{
+	uint16_t caps;
+
+	caps = regs[o2i(capoff)] >> PCI_VENDORSPECIFIC_SHIFT;
+
+	printf("\n  PCI Vendor Specific Capabilities Register\n");
+	printf("    Capabilities length: 0x%02x\n", caps & 0xff);
+}
+
+static void
+pci_conf_print_debugport_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t val;
+
+	val = regs[o2i(capoff + PCI_DEBUG_BASER)];
+
+	printf("\n  Debugport Capability Register\n");
+	printf("    Debug base Register: 0x%04x\n",
+	    val >> PCI_DEBUG_BASER_SHIFT);
+	printf("      port offset: 0x%04x\n",
+	    (val & PCI_DEBUG_PORTOFF_MASK) >> PCI_DEBUG_PORTOFF_SHIFT);
+	printf("      BAR number: %u\n",
+	    (val & PCI_DEBUG_BARNUM_MASK) >> PCI_DEBUG_BARNUM_SHIFT);
+}
+
 /* XXX pci_conf_print_cpci_rsrcctl_cap */
 /* XXX pci_conf_print_hotplug_cap */
-/* XXX pci_conf_print_subvendor_cap */
+
+static void
+pci_conf_print_subsystem_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg;
+
+	reg = regs[o2i(capoff + PCI_CAP_SUBSYS_ID)];
+
+	printf("\n  Subsystem ID Capability Register\n");
+	printf("    Subsystem ID : 0x%08x\n", reg);
+}
+
 /* XXX pci_conf_print_agp8_cap */
 /* XXX pci_conf_print_secure_cap */
 
@@ -1653,7 +1691,26 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 
 /* XXX pci_conf_print_msix_cap */
 /* XXX pci_conf_print_sata_cap */
-/* XXX pci_conf_print_pciaf_cap */
+static void
+pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg;
+
+	printf("\n  Advanced Features Capability Register\n");
+
+	reg = regs[o2i(capoff + PCI_AFCAPR)];
+	printf("    AF Capabilities register: 0x%02x\n", (reg >> 24) & 0xff);
+	onoff("Transaction Pending", reg, PCI_AF_TP_CAP);
+	onoff("Function Level Reset", reg, PCI_AF_FLR_CAP);
+	reg = regs[o2i(capoff + PCI_AFCSR)];
+	printf("    AF Control register: 0x%02x\n", reg & 0xff);
+	/*
+	 * Only PCI_AFCR_INITIATE_FLR is a member of the AF control register
+	 * and it's always 0 on read
+	 */
+	printf("    AF Status register: 0x%02x\n", (reg >> 8) & 0xff);
+	onoff("Transaction Pending", reg, PCI_AFSR_TP);
+}
 
 static void
 pci_conf_print_caplist(
@@ -1664,7 +1721,8 @@ pci_conf_print_caplist(
 {
 	int off;
 	pcireg_t rval;
-	int pcie_off = -1, pcipm_off = -1, msi_off = -1;
+	int pcie_off = -1, pcipm_off = -1, msi_off = -1, vendspec_off = -1;
+	int debugport_off = -1, subsystem_off = -1, pciaf_off = -1;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 	     off != 0;
@@ -1707,10 +1765,12 @@ pci_conf_print_caplist(
 			printf("LDT");
 			break;
 		case PCI_CAP_VENDSPEC:
+			vendspec_off = off;
 			printf("Vendor-specific");
 			break;
 		case PCI_CAP_DEBUGPORT:
 			printf("Debug Port");
+			debugport_off = off;
 			break;
 		case PCI_CAP_CPCI_RSRCCTL:
 			printf("CompactPCI Resource Control");
@@ -1719,7 +1779,8 @@ pci_conf_print_caplist(
 			printf("Hot-Plug");
 			break;
 		case PCI_CAP_SUBVENDOR:
-			printf("Sub Vendor ID");
+			printf("Subsystem ID");
+			subsystem_off = off;
 			break;
 		case PCI_CAP_AGP8:
 			printf("AGP 8x");
@@ -1739,6 +1800,7 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_PCIAF:
 			printf("Advanced Features");
+			pciaf_off = off;
 			break;
 		default:
 			printf("unknown");
@@ -1755,18 +1817,22 @@ pci_conf_print_caplist(
 	/* XXX CPCI_HOTSWAP */
 	/* XXX PCIX */
 	/* XXX LDT */
-	/* XXX VENDSPEC */
-	/* XXX DEBUGPORT */
+	if (vendspec_off != -1)
+		pci_conf_print_vendspec_cap(regs, vendspec_off);
+	if (debugport_off != -1)
+		pci_conf_print_debugport_cap(regs, debugport_off);
 	/* XXX CPCI_RSRCCTL */
 	/* XXX HOTPLUG */
-	/* XXX SUBVENDOR */
+	if (subsystem_off != -1)
+		pci_conf_print_subsystem_cap(regs, subsystem_off);
 	/* XXX AGP8 */
 	/* XXX SECURE */
 	if (pcie_off != -1)
 		pci_conf_print_pcie_cap(regs, pcie_off);
 	/* XXX MSIX */
 	/* XXX SATA */
-	/* XXX PCIAF */
+	if (pciaf_off != -1)
+		pci_conf_print_pciaf_cap(regs, pciaf_off);
 }
 
 /* Print the Secondary Status Register. */
