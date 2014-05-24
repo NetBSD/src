@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.116 2014/05/24 15:09:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.117 2014/05/24 15:20:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.116 2014/05/24 15:09:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.117 2014/05/24 15:20:32 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.116 2014/05/24 15:09:31 msaitoh Exp $
 #include <pci.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -75,26 +76,55 @@ struct pci_class {
 	const struct pci_class *subclasses;
 };
 
+/*
+ * Class 0x00.
+ * Before rev. 2.0.
+ */
 static const struct pci_class pci_subclass_prehistoric[] = {
 	{ "miscellaneous",	PCI_SUBCLASS_PREHISTORIC_MISC,	NULL,	},
 	{ "VGA",		PCI_SUBCLASS_PREHISTORIC_VGA,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x01.
+ * Mass strage controller
+ */
+
+/* ATA programming interface */
+static const struct pci_class pci_interface_ata[] = {
+	{ "with single DMA",	PCI_INTERFACE_ATA_SINGLEDMA,	NULL,	},
+	{ "with chained DMA",	PCI_INTERFACE_ATA_CHAINEDDMA,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* SATA programming interface */
+static const struct pci_class pci_interface_sata[] = {
+	{ "AHCI 1.0",		PCI_INTERFACE_SATA_AHCI10,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,	NULL,	},
 	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,	NULL,	},
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY, NULL, },
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,	NULL,	},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,	NULL,	},
-	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,	NULL,	},
-	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,	NULL,	},
+	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,
+	  pci_interface_ata, },
+	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,
+	  pci_interface_sata, },
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
 	{ "NVM",		PCI_SUBCLASS_MASS_STORAGE_NVM,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x02.
+ * Network controller.
+ */
 static const struct pci_class pci_subclass_network[] = {
 	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,	NULL,	},
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,	NULL,	},
@@ -107,14 +137,30 @@ static const struct pci_class pci_subclass_network[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x03.
+ * Display controller.
+ */
+
+/* VGA programming interface */
+static const struct pci_class pci_interface_vga[] = {
+	{ "",			PCI_INTERFACE_VGA_VGA,		NULL,	},
+	{ "8514-compat",	PCI_INTERFACE_VGA_8514,		NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+/* Subclasses */
 static const struct pci_class pci_subclass_display[] = {
-	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,	NULL,	},
+	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,  pci_interface_vga,},
 	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,	NULL,	},
 	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_DISPLAY_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x04.
+ * Multimedia device.
+ */
 static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
@@ -124,6 +170,10 @@ static const struct pci_class pci_subclass_multimedia[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x05.
+ * Memory controller.
+ */
 static const struct pci_class pci_subclass_memory[] = {
 	{ "RAM",		PCI_SUBCLASS_MEMORY_RAM,	NULL,	},
 	{ "flash",		PCI_SUBCLASS_MEMORY_FLASH,	NULL,	},
@@ -131,60 +181,184 @@ static const struct pci_class pci_subclass_memory[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x06.
+ * Bridge device.
+ */
+
+/* PCI bridge programming interface */
+static const struct pci_class pci_interface_pcibridge[] = {
+	{ "",			PCI_INTERFACE_BRIDGE_PCI_PCI, NULL,	},
+	{ "subtractive decode",	PCI_INTERFACE_BRIDGE_PCI_SUBDEC, NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* Semi-transparent PCI-toPCI bridge programming interface */
+static const struct pci_class pci_interface_stpci[] = {
+	{ "primary side facing host",	PCI_INTERFACE_STPCI_PRIMARY, NULL, },
+	{ "secondary side facing host",	PCI_INTERFACE_STPCI_SECONDARY, NULL, },
+	{ NULL,			0,				NULL,	},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_bridge[] = {
 	{ "host",		PCI_SUBCLASS_BRIDGE_HOST,	NULL,	},
 	{ "ISA",		PCI_SUBCLASS_BRIDGE_ISA,	NULL,	},
 	{ "EISA",		PCI_SUBCLASS_BRIDGE_EISA,	NULL,	},
 	{ "MicroChannel",	PCI_SUBCLASS_BRIDGE_MC,		NULL,	},
-	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,	NULL,	},
+	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,
+	  pci_interface_pcibridge,	},
 	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,	NULL,	},
 	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,	NULL,	},
 	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,	NULL,	},
 	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,	NULL,	},
-	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,	NULL,	},
+	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,
+	  pci_interface_stpci,	},
 	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x07.
+ * Simple communications controller.
+ */
+
+/* Serial controller programming interface */
+static const struct pci_class pci_interface_serial[] = {
+	{ "genric XT-compat",	PCI_INTERFACE_SERIAL_XT,	NULL,	},
+	{ "16450-compat",	PCI_INTERFACE_SERIAL_16450,	NULL,	},
+	{ "16550-compat",	PCI_INTERFACE_SERIAL_16550,	NULL,	},
+	{ "16650-compat",	PCI_INTERFACE_SERIAL_16650,	NULL,	},
+	{ "16750-compat",	PCI_INTERFACE_SERIAL_16750,	NULL,	},
+	{ "16850-compat",	PCI_INTERFACE_SERIAL_16850,	NULL,	},
+	{ "16950-compat",	PCI_INTERFACE_SERIAL_16950,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* Parallel controller programming interface */
+static const struct pci_class pci_interface_parallel[] = {
+	{ "",			PCI_INTERFACE_PARALLEL,			NULL,},
+	{ "bi-directional",	PCI_INTERFACE_PARALLEL_BIDIRECTIONAL,	NULL,},
+	{ "ECP 1.X-compat",	PCI_INTERFACE_PARALLEL_ECP1X,		NULL,},
+	{ "IEEE1284",		PCI_INTERFACE_PARALLEL_IEEE1284,	NULL,},
+	{ "IEE1284 target",	PCI_INTERFACE_PARALLEL_IEEE1284_TGT,	NULL,},
+	{ NULL,			0,					NULL,},
+};
+
+/* Modem programming interface */
+static const struct pci_class pci_interface_modem[] = {
+	{ "",			PCI_INTERFACE_MODEM,			NULL,},
+	{ "Hayes&16450-compat",	PCI_INTERFACE_MODEM_HAYES16450,		NULL,},
+	{ "Hayes&16550-compat",	PCI_INTERFACE_MODEM_HAYES16550,		NULL,},
+	{ "Hayes&16650-compat",	PCI_INTERFACE_MODEM_HAYES16650,		NULL,},
+	{ "Hayes&16750-compat",	PCI_INTERFACE_MODEM_HAYES16750,		NULL,},
+	{ NULL,			0,					NULL,},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_communications[] = {
-	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	NULL,},
-	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	NULL,},
+	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,
+	  pci_interface_serial, },
+	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,
+	  pci_interface_parallel, },
 	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	NULL,},
-	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	NULL,},
+	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,
+	  pci_interface_modem, },
 	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	NULL,},
 	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	NULL,},
 	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	NULL,},
 	{ NULL,			0,					NULL,},
 };
 
+/*
+ * Class 0x08.
+ * Base system peripheral.
+ */ 
+
+/* PIC programming interface */
+static const struct pci_class pci_interface_pic[] = {
+	{ "genric 8259",	PCI_INTERFACE_PIC_8259,		NULL,	},
+	{ "ISA PIC",		PCI_INTERFACE_PIC_ISA,		NULL,	},
+	{ "EISA PIC",		PCI_INTERFACE_PIC_EISA,		NULL,	},
+	{ "IO APIC",		PCI_INTERFACE_PIC_IOAPIC,	NULL,	},
+	{ "IO(x) APIC",		PCI_INTERFACE_PIC_IOXAPIC,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* DMA programming interface */
+static const struct pci_class pci_interface_dma[] = {
+	{ "genric 8237",	PCI_INTERFACE_DMA_8237,		NULL,	},
+	{ "ISA",		PCI_INTERFACE_DMA_ISA,		NULL,	},
+	{ "EISA",		PCI_INTERFACE_DMA_EISA,		NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* Timer programming interface */
+static const struct pci_class pci_interface_tmr[] = {
+	{ "genric 8254",	PCI_INTERFACE_TIMER_8254,	NULL,	},
+	{ "ISA",		PCI_INTERFACE_TIMER_ISA,	NULL,	},
+	{ "EISA",		PCI_INTERFACE_TIMER_EISA,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* RTC programming interface */
+static const struct pci_class pci_interface_rtc[] = {
+	{ "generic",		PCI_INTERFACE_RTC_GENERIC,	NULL,	},
+	{ "ISA",		PCI_INTERFACE_RTC_ISA,		NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_system[] = {
-	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,	NULL,	},
-	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,	NULL,	},
-	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,	NULL,	},
-	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,	NULL,	},
+	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,   pci_interface_pic,},
+	{ "DMA",		PCI_SUBCLASS_SYSTEM_DMA,   pci_interface_dma,},
+	{ "timer",		PCI_SUBCLASS_SYSTEM_TIMER, pci_interface_tmr,},
+	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,   pci_interface_rtc,},
 	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG, NULL,	},
 	{ "SD Host Controller",	PCI_SUBCLASS_SYSTEM_SDHC,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x09.
+ * Input device.
+ */
+
+/* Gameport programming interface */
+static const struct pci_class pci_interface_game[] = {
+	{ "generic",		PCI_INTERFACE_GAMEPORT_GENERIC,	NULL,	},
+	{ "legacy",		PCI_INTERFACE_GAMEPORT_LEGACY,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_input[] = {
 	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,	NULL,	},
 	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,	NULL,	},
 	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,	NULL,	},
 	{ "scanner",		PCI_SUBCLASS_INPUT_SCANNER,	NULL,	},
-	{ "game port",		PCI_SUBCLASS_INPUT_GAMEPORT,	NULL,	},
+	{ "game port",		PCI_SUBCLASS_INPUT_GAMEPORT,
+	  pci_interface_game, },
 	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x0a.
+ * Docking station.
+ */
 static const struct pci_class pci_subclass_dock[] = {
 	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,		NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x0b.
+ * Processor.
+ */
 static const struct pci_class pci_subclass_processor[] = {
 	{ "386",		PCI_SUBCLASS_PROCESSOR_386,	NULL,	},
 	{ "486",		PCI_SUBCLASS_PROCESSOR_486,	NULL,	},
@@ -196,22 +370,61 @@ static const struct pci_class pci_subclass_processor[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x0c.
+ * Serial bus controller.
+ */
+
+/* IEEE1394 programming interface */
+static const struct pci_class pci_interface_ieee1394[] = {
+	{ "Firewire",		PCI_INTERFACE_IEEE1394_FIREWIRE,	NULL,},
+	{ "OpenHCI",		PCI_INTERFACE_IEEE1394_OPENHCI,		NULL,},
+	{ NULL,			0,					NULL,},
+};
+
+/* USB programming interface */
+static const struct pci_class pci_interface_usb[] = {
+	{ "UHCI",		PCI_INTERFACE_USB_UHCI,		NULL,	},
+	{ "OHCI",		PCI_INTERFACE_USB_OHCI,		NULL,	},
+	{ "EHCI",		PCI_INTERFACE_USB_EHCI,		NULL,	},
+	{ "xHCI",		PCI_INTERFACE_USB_XHCI,		NULL,	},
+	{ "other HC",		PCI_INTERFACE_USB_OTHERHC,	NULL,	},
+	{ "device",		PCI_INTERFACE_USB_DEVICE,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* IPMI programming interface */
+static const struct pci_class pci_interface_ipmi[] = {
+	{ "SMIC",		PCI_INTERFACE_IPMI_SMIC,		NULL,},
+	{ "keyboard",		PCI_INTERFACE_IPMI_KBD,			NULL,},
+	{ "block transfer",	PCI_INTERFACE_IPMI_BLOCKXFER,		NULL,},
+	{ NULL,			0,					NULL,},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_serialbus[] = {
-	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE, NULL,	},
+	{ "IEEE1394",		PCI_SUBCLASS_SERIALBUS_FIREWIRE,
+	  pci_interface_ieee1394, },
 	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,	NULL,	},
 	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,	NULL,	},
-	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,	NULL,	},
+	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,
+	  pci_interface_usb, },
 	/* XXX Fiber Channel/_FIBRECHANNEL */
 	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,	NULL,	},
 	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,	NULL,	},
 	{ "InfiniBand",		PCI_SUBCLASS_SERIALBUS_INFINIBAND, NULL,},
-	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,	NULL,	},
+	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,
+	  pci_interface_ipmi, },
 	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,	NULL,	},
 	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_SERIALBUS_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x0d.
+ * Wireless Controller.
+ */
 static const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,	NULL,	},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR, NULL,	},
@@ -224,12 +437,28 @@ static const struct pci_class pci_subclass_wireless[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x0e.
+ * Intelligent IO controller.
+ */
+
+/* Intelligent IO programming interface */
+static const struct pci_class pci_interface_i2o[] = {
+	{ "FIFO at offset 0x40", PCI_INTERFACE_I2O_FIFOAT40,		NULL,},
+	{ NULL,			0,					NULL,},
+};
+
+/* Subclasses */
 static const struct pci_class pci_subclass_i2o[] = {
-	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,	NULL,	},
+	{ "standard",		PCI_SUBCLASS_I2O_STANDARD, pci_interface_i2o,},
 	{ "miscellaneous",	PCI_SUBCLASS_I2O_MISC,		NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x0f.
+ * Satellite communication controller.
+ */
 static const struct pci_class pci_subclass_satcom[] = {
 	{ "TV",			PCI_SUBCLASS_SATCOM_TV,	 	NULL,	},
 	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO, 	NULL,	},
@@ -239,6 +468,10 @@ static const struct pci_class pci_subclass_satcom[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x10.
+ * Encryption/Decryption controller.
+ */
 static const struct pci_class pci_subclass_crypto[] = {
 	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP, 	NULL,	},
 	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT, NULL,},
@@ -246,6 +479,10 @@ static const struct pci_class pci_subclass_crypto[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/*
+ * Class 0x11.
+ * Data aquuisition and signal processing controller.
+ */
 static const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,		NULL,	},
 	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,	NULL,	},
@@ -255,6 +492,7 @@ static const struct pci_class pci_subclass_dasp[] = {
 	{ NULL,			0,				NULL,	},
 };
 
+/* List of classes */
 static const struct pci_class pci_class[] = {
 	{ "prehistoric",	PCI_CLASS_PREHISTORIC,
 	    pci_subclass_prehistoric,				},
@@ -369,7 +607,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	pci_revision_t revision;
 	const char *unmatched = pci_unmatched;
 	const char *vendor_namep, *product_namep;
-	const struct pci_class *classp, *subclassp;
+	const struct pci_class *classp, *subclassp, *interfacep;
 	char *ep;
 
 	ep = cp + l;
@@ -399,6 +637,13 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		subclassp++;
 	}
 
+	interfacep = (subclassp->name != NULL) ? subclassp->subclasses : NULL;
+	while (interfacep && interfacep->name != NULL) {
+		if (interface == interfacep->val)
+			break;
+		interfacep++;
+	}
+
 	if (vendor_namep == NULL)
 		cp += snprintf(cp, ep - cp, "%svendor 0x%04x product 0x%04x",
 		    unmatched, vendor, product);
@@ -422,9 +667,13 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 				cp += snprintf(cp, ep - cp, "%s %s",
 				    subclassp->name, classp->name);
 		}
-		if (interface != 0)
-			cp += snprintf(cp, ep - cp, ", interface 0x%02x",
-			    interface);
+		if ((interfacep == NULL) || (interfacep->name == NULL)) {
+			if (interface != 0)
+				cp += snprintf(cp, ep - cp,
+				    ", interface 0x%02x", interface);
+		} else if (strncmp(interfacep->name, "", 1) != 0)
+			cp += snprintf(cp, ep - cp, ", %s",
+			    interfacep->name);
 		if (revision != 0)
 			cp += snprintf(cp, ep - cp, ", revision 0x%02x",
 			    revision);
@@ -484,6 +733,7 @@ pci_conf_print_common(
 	const char *name;
 	const struct pci_class *classp, *subclassp;
 	pcireg_t rval;
+	unsigned int num;
 
 	rval = regs[o2i(PCI_ID_REG)];
 	name = pci_findvendor(rval);
@@ -584,7 +834,8 @@ pci_conf_print_common(
 	    PCI_HDRTYPE_MULTIFN(rval) ? "+multifunction" : "",
 	    PCI_HDRTYPE(rval));
 	printf("    Latency Timer: 0x%02x\n", PCI_LATTIMER(rval));
-	printf("    Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
+	num = PCI_CACHELINE(rval);
+	printf("    Cache Line Size: %ubytes (0x%02x)\n", num * 4, num);
 }
 
 static int
@@ -807,12 +1058,16 @@ pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 	    pci_conf_print_pcipm_cap_aux(caps));
 	onoff("D1 power management state support", caps, PCI_PMCR_D1SUPP);
 	onoff("D2 power management state support", caps, PCI_PMCR_D2SUPP);
-	printf("      PME# support: 0x%02x\n", caps >> 11);
+	onoff("PME# support D0", caps, PCI_PMCR_PME_D0);
+	onoff("PME# support D1", caps, PCI_PMCR_PME_D1);
+	onoff("PME# support D2", caps, PCI_PMCR_PME_D2);
+	onoff("PME# support D3 hot", caps, PCI_PMCR_PME_D3HOT);
+	onoff("PME# support D3 cold", caps, PCI_PMCR_PME_D3COLD);
 
 	printf("    Control/status register: 0x%04x\n", pmcsr);
 	printf("      Power state: D%d\n", pmcsr & PCI_PMCSR_STATE_MASK);
 	onoff("PCI Express reserved", (pmcsr >> 2), 1);
-	onoff("No soft reset", (pmcsr >> 3), 1);
+	onoff("No soft reset", pmcsr, PCI_PMCSR_NO_SOFTRST);
 	printf("      PME# assertion: %sabled\n",
 	    (pmcsr & PCI_PMCSR_PME_EN) ? "en" : "dis");
 	onoff("PME# status", pmcsr, PCI_PMCSR_PME_STS);
@@ -1104,6 +1359,14 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("      L1 Exit Latency: ");
 		pci_print_pcie_L1_latency((reg & PCIE_LCAP_L1_EXIT) >> 15);
 		printf("      Port Number: %u\n", reg >> 24);
+		onoff("Clock Power Management", reg, PCIE_LCAP_CLOCK_PM);
+		onoff("Surprise Down Error Report", reg,
+		    PCIE_LCAP_SURPRISE_DOWN);
+		onoff("Data Link Layer Link Active", reg, PCIE_LCAP_DL_ACTIVE);
+		onoff("Link BW Notification Capable", reg,
+			PCIE_LCAP_LINK_BW_NOTIFY);
+		onoff("ASPM Optionally Compliance", reg,
+		    PCIE_LCAP_ASPM_COMPLIANCE);
 
 		/* Link Control Register */
 		reg = regs[o2i(capoff + PCIE_LCSR)];
@@ -1166,46 +1429,33 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		/* Slot Capability Register */
 		reg = regs[o2i(capoff + PCIE_SLCAP)];
 		printf("    Slot Capability Register: %08x\n", reg);
-		if ((reg & PCIE_SLCAP_ABP) != 0)
-			printf("      Attention Button Present\n");
-		if ((reg & PCIE_SLCAP_PCP) != 0)
-			printf("      Power Controller Present\n");
-		if ((reg & PCIE_SLCAP_MSP) != 0)
-			printf("      MRL Sensor Present\n");
-		if ((reg & PCIE_SLCAP_AIP) != 0)
-			printf("      Attention Indicator Present\n");
-		if ((reg & PCIE_SLCAP_PIP) != 0)
-			printf("      Power Indicator Present\n");
-		if ((reg & PCIE_SLCAP_HPS) != 0)
-			printf("      Hot-Plug Surprise\n");
-		if ((reg & PCIE_SLCAP_HPC) != 0)
-			printf("      Hot-Plug Capable\n");
+		onoff("Attention Button Present", reg, PCIE_SLCAP_ABP);
+		onoff("Power Controller Present", reg, PCIE_SLCAP_PCP);
+		onoff("MRL Sensor Present", reg, PCIE_SLCAP_MSP);
+		onoff("Attention Indicator Present", reg, PCIE_SLCAP_AIP);
+		onoff("Power Indicator Present", reg, PCIE_SLCAP_PIP);
+		onoff("Hot-Plug Surprise", reg, PCIE_SLCAP_HPS);
+		onoff("Hot-Plug Capable", reg, PCIE_SLCAP_HPC);
 		printf("      Slot Power Limit Value: %d\n",
 		    (unsigned int)(reg & PCIE_SLCAP_SPLV) >> 7);
 		printf("      Slot Power Limit Scale: %d\n",
 		    (unsigned int)(reg & PCIE_SLCAP_SPLS) >> 15);
-		if ((reg & PCIE_SLCAP_EIP) != 0)
-			printf("      Electromechanical Interlock Present\n");
-		if ((reg & PCIE_SLCAP_NCCS) != 0)
-			printf("      No Command Completed Support\n");
+		onoff("Electromechanical Interlock Present", reg,
+		    PCIE_SLCAP_EIP);
+		onoff("No Command Completed Support", reg, PCIE_SLCAP_NCCS);
 		printf("      Physical Slot Number: %d\n",
 		    (unsigned int)(reg & PCIE_SLCAP_PSN) >> 19);
 
 		/* Slot Control Register */
 		reg = regs[o2i(capoff + PCIE_SLCSR)];
 		printf("    Slot Control Register: %04x\n", reg & 0xffff);
-		if ((reg & PCIE_SLCSR_ABE) != 0)
-			printf("      Attention Button Pressed Enabled\n");
-		if ((reg & PCIE_SLCSR_PFE) != 0)
-			printf("      Power Fault Detected Enabled\n");
-		if ((reg & PCIE_SLCSR_MSE) != 0)
-			printf("      MRL Sensor Changed Enabled\n");
-		if ((reg & PCIE_SLCSR_PDE) != 0)
-			printf("      Presense Detect Changed Enabled\n");
-		if ((reg & PCIE_SLCSR_CCE) != 0)
-			printf("      Command Completed Interrupt Enabled\n");
-		if ((reg & PCIE_SLCSR_HPE) != 0)
-			printf("      Hot-Plug Interrupt Enabled\n");
+		onoff("Attention Button Pressed Enabled", reg, PCIE_SLCSR_ABE);
+		onoff("Power Fault Detected Enabled", reg, PCIE_SLCSR_PFE);
+		onoff("MRL Sensor Changed Enabled", reg, PCIE_SLCSR_MSE);
+		onoff("Presense Detect Changed Enabled", reg, PCIE_SLCSR_PDE);
+		onoff("Command Completed Interrupt Enabled", reg,
+		    PCIE_SLCSR_CCE);
+		onoff("Hot-Plug Interrupt Enabled", reg, PCIE_SLCSR_HPE);
 		printf("      Attention Indicator Control: ");
 		switch ((reg & PCIE_SLCSR_AIC) >> 6) {
 		case 0x0:
@@ -1236,49 +1486,37 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("off\n");
 			break;
 		}
-		printf("      Power Controller Control: ");
 		onoff("Power Controller Control", reg, PCIE_SLCSR_PCC);
-		if ((reg & PCIE_SLCSR_EIC) != 0)
-			printf("      Electromechanical Interlock Control\n");
+		onoff("Electromechanical Interlock Control",
+		    reg, PCIE_SLCSR_EIC);
 		onoff("Data Link Layer State Changed Enable", reg,
 		    PCIE_SLCSR_DLLSCE);
 
 		/* Slot Status Register */
 		printf("    Slot Status Register: %04x\n", reg >> 16);
-		if ((reg & PCIE_SLCSR_ABP) != 0)
-			printf("      Attention Button Pressed\n");
-		if ((reg & PCIE_SLCSR_PFD) != 0)
-			printf("      Power Fault Detected\n");
-		if ((reg & PCIE_SLCSR_MSC) != 0)
-			printf("      MRL Sensor Changed\n");
-		if ((reg & PCIE_SLCSR_PDC) != 0)
-			printf("      Presense Detect Changed\n");
-		if ((reg & PCIE_SLCSR_CC) != 0)
-			printf("      Command Completed\n");
-		if ((reg & PCIE_SLCSR_MS) != 0)
-			printf("      MRL Open\n");
-		if ((reg & PCIE_SLCSR_PDS) != 0)
-			printf("      Card Present in slot\n");
-		if ((reg & PCIE_SLCSR_EIS) != 0)
-			printf("      Electromechanical Interlock engaged\n");
-		if ((reg & PCIE_SLCSR_LACS) != 0)
-			printf("      Data Link Layer State Changed\n");
+		onoff("Attention Button Pressed", reg, PCIE_SLCSR_ABP);
+		onoff("Power Fault Detected", reg, PCIE_SLCSR_PFD);
+		onoff("MRL Sensor Changed", reg, PCIE_SLCSR_MSC);
+		onoff("Presense Detect Changed", reg, PCIE_SLCSR_PDC);
+		onoff("Command Completed", reg, PCIE_SLCSR_CC);
+		onoff("MRL Open", reg, PCIE_SLCSR_MS);
+		onoff("Card Present in slot", reg, PCIE_SLCSR_PDS);
+		onoff("Electromechanical Interlock engaged", reg,
+		    PCIE_SLCSR_EIS);
+		onoff("Data Link Layer State Changed", reg, PCIE_SLCSR_LACS);
 	}
 
 	if (check_rootport == true) {
 		/* Root Control Register */
 		reg = regs[o2i(capoff + PCIE_RCR)];
 		printf("    Root Control Register: %04x\n", reg & 0xffff);
-		if ((reg & PCIE_RCR_SERR_CER) != 0)
-			printf("      SERR on Correctable Error Enable\n");
-		if ((reg & PCIE_RCR_SERR_NFER) != 0)
-			printf("      SERR on Non-Fatal Error Enable\n");
-		if ((reg & PCIE_RCR_SERR_FER) != 0)
-			printf("      SERR on Fatal Error Enable\n");
-		if ((reg & PCIE_RCR_PME_IE) != 0)
-			printf("      PME Interrupt Enable\n");
-		if ((reg & PCIE_RCR_CRS_SVE) != 0)
-			printf("      CRS Software Visibility Enable\n");
+		onoff("SERR on Correctable Error Enable", reg,
+		    PCIE_RCR_SERR_CER);
+		onoff("SERR on Non-Fatal Error Enable", reg,
+		    PCIE_RCR_SERR_NFER);
+		onoff("SERR on Fatal Error Enable", reg, PCIE_RCR_SERR_FER);
+		onoff("PME Interrupt Enable", reg, PCIE_RCR_PME_IE);
+		onoff("CRS Software Visibility Enable", reg, PCIE_RCR_CRS_SVE);
 
 		/* Root Capability Register */
 		printf("    Root Capability Register: %04x\n",
@@ -1289,10 +1527,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("    Root Status Register: %08x\n", reg);
 		printf("      PME Requester ID: %04x\n",
 		    (unsigned int)(reg & PCIE_RSR_PME_REQESTER));
-		if ((reg & PCIE_RSR_PME_STAT) != 0)
-			printf("      PME was asserted\n");
-		if ((reg & PCIE_RSR_PME_PEND) != 0)
-			printf("      another PME is pending\n");
+		onoff("PME was asserted", reg, PCIE_RSR_PME_STAT);
+		onoff("another PME is pending", reg, PCIE_RSR_PME_PEND);
 	}
 
 	/* PCIe DW9 to DW14 is for PCIe 2.0 and newer */
@@ -1340,20 +1576,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("    Device Control 2: 0x%04x\n", reg & 0xffff);
 	printf("      Completion Timeout Value: ");
 	pci_print_pcie_compl_timeout(reg & PCIE_DCSR2_COMPT_VAL);
-	if ((reg & PCIE_DCSR2_COMPT_DIS) != 0)
-		printf("      Completion Timeout Disabled\n");
-	if ((reg & PCIE_DCSR2_ARI_FWD) != 0)
-		printf("      ARI Forwarding Enabled\n");
-	if ((reg & PCIE_DCSR2_ATOM_REQ) != 0)
-		printf("      AtomicOp Rquester Enabled\n");
-	if ((reg & PCIE_DCSR2_ATOM_EBLK) != 0)
-		printf("      AtomicOp Egress Blocking on\n");
-	if ((reg & PCIE_DCSR2_IDO_REQ) != 0)
-		printf("      IDO Request Enabled\n");
-	if ((reg & PCIE_DCSR2_IDO_COMP) != 0)
-		printf("      IDO Completion Enabled\n");
-	if ((reg & PCIE_DCSR2_LTR_MEC) != 0)
-		printf("      LTR Mechanism Enabled\n");
+	onoff("Completion Timeout Disabled", reg, PCIE_DCSR2_COMPT_DIS);
+	onoff("ARI Forwarding Enabled", reg, PCIE_DCSR2_ARI_FWD);
+	onoff("AtomicOp Rquester Enabled", reg, PCIE_DCSR2_ATOM_REQ);
+	onoff("AtomicOp Egress Blocking", reg, PCIE_DCSR2_ATOM_EBLK);
+	onoff("IDO Request Enabled", reg, PCIE_DCSR2_IDO_REQ);
+	onoff("IDO Completion Enabled", reg, PCIE_DCSR2_IDO_COMP);
+	onoff("LTR Mechanism Enabled", reg, PCIE_DCSR2_LTR_MEC);
 	printf("      OBFF: ");
 	switch ((reg & PCIE_DCSR2_OBFF_EN) >> 13) {
 	case 0x0:
@@ -1369,8 +1598,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("Enabled using WAKE# signaling\n");
 		break;
 	}
-	if ((reg & PCIE_DCSR2_EETLP) != 0)
-		printf("      End-End TLP Prefix Blocking on\n");
+	onoff("End-End TLP Prefix Blocking on", reg, PCIE_DCSR2_EETLP);
 
 	if (check_link) {
 		/* Link Capability 2 */
@@ -1390,39 +1618,32 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("    Link Control 2: 0x%04x\n", reg & 0xffff);
 		printf("      Target Link Speed: ");
 		val = reg & PCIE_LCSR2_TGT_LSPEED;
-		if (val < 1 || val > 3) {
+		if (val < 1 || val > 3)
 			printf("unknown %u value\n", val);
-		} else {
+		else
 			printf("%sGT/s\n", linkspeeds[val - 1]);
-		}
-		if ((reg & PCIE_LCSR2_ENT_COMPL) != 0)
-			printf("      Enter Compliance Enabled\n");
-		if ((reg & PCIE_LCSR2_HW_AS_DIS) != 0)
-			printf("      HW Autonomous Speed Disabled\n");
-		if ((reg & PCIE_LCSR2_SEL_DEEMP) != 0)
-			printf("      Selectable De-emphasis\n");
+		onoff("Enter Compliance Enabled", reg, PCIE_LCSR2_ENT_COMPL);
+		onoff("HW Autonomous Speed Disabled", reg,
+		    PCIE_LCSR2_HW_AS_DIS);
+		onoff("Selectable De-emphasis", reg, PCIE_LCSR2_SEL_DEEMP);
 		printf("      Transmit Margin: %u\n",
 		    (unsigned int)(reg & PCIE_LCSR2_TX_MARGIN) >> 7);
-		if ((reg & PCIE_LCSR2_EN_MCOMP) != 0)
-			printf("      Enter Modified Compliance\n");
-		if ((reg & PCIE_LCSR2_COMP_SOS) != 0)
-			printf("      Compliance SOS\n");
+		onoff("Enter Modified Compliance", reg, PCIE_LCSR2_EN_MCOMP);
+		onoff("Compliance SOS", reg, PCIE_LCSR2_COMP_SOS);
 		printf("      Compliance Present/De-emphasis: %u\n",
 		    (unsigned int)(reg & PCIE_LCSR2_COMP_DEEMP) >> 12);
 
 		/* Link Status 2 */
-		if ((reg & PCIE_LCSR2_DEEMP_LVL) != 0)
-			printf("      Current De-emphasis Level\n");
-		if ((reg & PCIE_LCSR2_EQ_COMPL) != 0)
-			printf("      Equalization Complete\n");
-		if ((reg & PCIE_LCSR2_EQP1_SUC) != 0)
-			printf("      Equalization Phase 1 Successful\n");
-		if ((reg & PCIE_LCSR2_EQP2_SUC) != 0)
-			printf("      Equalization Phase 2 Successful\n");
-		if ((reg & PCIE_LCSR2_EQP3_SUC) != 0)
-			printf("      Equalization Phase 3 Successful\n");
-		if ((reg & PCIE_LCSR2_LNKEQ_REQ) != 0)
-			printf("      Link Equalization Request\n");
+		printf("    Link Status 2: 0x%04x\n", (reg >> 16) & 0xffff);
+		onoff("Current De-emphasis Level", reg, PCIE_LCSR2_DEEMP_LVL);
+		onoff("Equalization Complete", reg, PCIE_LCSR2_EQ_COMPL);
+		onoff("Equalization Phase 1 Successful", reg,
+		    PCIE_LCSR2_EQP1_SUC);
+		onoff("Equalization Phase 2 Successful", reg,
+		    PCIE_LCSR2_EQP2_SUC);
+		onoff("Equalization Phase 3 Successful", reg,
+		    PCIE_LCSR2_EQP3_SUC);
+		onoff("Link Equalization Request", reg, PCIE_LCSR2_LNKEQ_REQ);
 	}
 
 	/* Slot Capability 2 */
