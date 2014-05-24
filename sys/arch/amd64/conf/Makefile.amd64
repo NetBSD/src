@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.44 2014/02/05 23:10:41 dsl Exp $
+#	$NetBSD: Makefile.amd64,v 1.45 2014/05/24 18:41:46 jakllsch Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,7 @@ GENASSYM_CONF=	${AMD64}/amd64/genassym.cf
 ##
 ## (2) compile settings
 ##
-DEFCOPTS=	-O2
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Damd64 -Dx86_64
 CFLAGS+=	-mcmodel=kernel
 # -mno-sse implies -mno-sse2 (etc), explicitly disable avx to be extra sure
