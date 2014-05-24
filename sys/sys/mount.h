@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.213 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.214 2014/05/24 16:34:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -442,7 +442,8 @@ int	vfs_quotactl_quotaoff(struct mount *, int);
 struct vnode_iterator; /* Opaque. */
 void	vfs_vnode_iterator_init(struct mount *, struct vnode_iterator **);
 void	vfs_vnode_iterator_destroy(struct vnode_iterator *);
-bool	vfs_vnode_iterator_next(struct vnode_iterator *, struct vnode **);
+struct vnode *vfs_vnode_iterator_next(struct vnode_iterator *,
+    bool (*)(void *, struct vnode *), void *);
 
 extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */

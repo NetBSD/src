@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.443 2014/03/17 09:28:37 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.444 2014/05/24 16:34:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.443 2014/03/17 09:28:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.444 2014/05/24 16:34:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -637,7 +637,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			continue;
 		}
 		vfs_vnode_iterator_init(mp, &marker);
-		while (vfs_vnode_iterator_next(marker, &vp)) {
+		while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				vrele(vp);
 				vfs_vnode_iterator_destroy(marker);

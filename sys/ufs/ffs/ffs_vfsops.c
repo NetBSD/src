@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.298 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.299 2014/05/24 16:34:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.298 2014/05/08 08:21:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.299 2014/05/24 16:34:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -808,7 +808,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	}
 
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
@@ -1594,6 +1594,51 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 	return (0);
 }
 
+struct ffs_sync_ctx {
+	int waitfor;
+	bool is_suspending;
+};
+
+static bool
+ffs_sync_selector(void *cl, struct vnode *vp)
+{
+	struct ffs_sync_ctx *c = cl;
+	struct inode *ip;
+
+	ip = VTOI(vp);
+	/*
+	 * Skip the vnode/inode if inaccessible.
+	 */
+	if (ip == NULL || vp->v_type == VNON)
+		return false;
+
+	/*
+	 * We deliberately update inode times here.  This will
+	 * prevent a massive queue of updates accumulating, only
+	 * to be handled by a call to unmount.
+	 *
+	 * XXX It would be better to have the syncer trickle these
+	 * out.  Adjustment needed to allow registering vnodes for
+	 * sync when the vnode is clean, but the inode dirty.  Or
+	 * have ufs itself trickle out inode updates.
+	 *
+	 * If doing a lazy sync, we don't care about metadata or
+	 * data updates, because they are handled by each vnode's
+	 * synclist entry.  In this case we are only interested in
+	 * writing back modified inodes.
+	 */
+	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
+	    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+	    (c->waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
+	    UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+		return false;
+
+	if (vp->v_type == VBLK && c->is_suspending)
+		return false;
+
+	return true;
+}
+
 /*
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
@@ -1605,12 +1650,12 @@ int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp;
-	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
 	struct vnode_iterator *marker;
 	int error, allerror = 0;
 	bool is_suspending;
+	struct ffs_sync_ctx ctx;
 
 	fs = ump->um_fs;
 	if (fs->fs_fmod != 0 && fs->fs_ronly != 0) {		/* XXX */
@@ -1624,45 +1669,14 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * Write back each (modified) inode.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+
+	ctx.waitfor = waitfor;
+	ctx.is_suspending = is_suspending;
+	while ((vp = vfs_vnode_iterator_next(marker, ffs_sync_selector, &ctx)))
+	{
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
-			continue;
-		}
-		ip = VTOI(vp);
-		/*
-		 * Skip the vnode/inode if inaccessible.
-		 */
-		if (ip == NULL || vp->v_type == VNON) {
-			vput(vp);
-			continue;
-		}
-
-		/*
-		 * We deliberately update inode times here.  This will
-		 * prevent a massive queue of updates accumulating, only
-		 * to be handled by a call to unmount.
-		 *
-		 * XXX It would be better to have the syncer trickle these
-		 * out.  Adjustment needed to allow registering vnodes for
-		 * sync when the vnode is clean, but the inode dirty.  Or
-		 * have ufs itself trickle out inode updates.
-		 *
-		 * If doing a lazy sync, we don't care about metadata or
-		 * data updates, because they are handled by each vnode's
-		 * synclist entry.  In this case we are only interested in
-		 * writing back modified inodes.
-		 */
-		if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
-		    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
-		    (waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			vput(vp);
-			continue;
-		}
-		if (vp->v_type == VBLK && is_suspending) {
-			vput(vp);
 			continue;
 		}
 		if (waitfor == MNT_LAZY) {
