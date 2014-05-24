@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.107 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.108 2014/05/24 16:34:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.107 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.108 2014/05/24 16:34:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -943,14 +943,34 @@ msdosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	return (0);
 }
 
+struct msdosfs_sync_ctx {
+	int waitfor;
+};
+
+static bool
+msdosfs_sync_selector(void *cl, struct vnode *vp)
+{
+	struct msdosfs_sync_ctx *c = cl;
+	struct denode *dep;
+
+	dep = VTODE(vp);
+	if (c->waitfor == MNT_LAZY || vp->v_type == VNON ||
+	    dep == NULL || (((dep->de_flag &
+	    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
+	     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
+	      UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+		return false;
+	return true;
+}
+
 int
 msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp;
 	struct vnode_iterator *marker;
-	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
+	struct msdosfs_sync_ctx ctx;
 
 	/*
 	 * If we ever switch to not updating all of the FATs all the time,
@@ -968,19 +988,13 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * Write back each (modified) denode.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	ctx.waitfor = waitfor;
+	while ((vp = vfs_vnode_iterator_next(marker, msdosfs_sync_selector,
+	    &ctx)))
+	{
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
-			continue;
-		}
-		dep = VTODE(vp);
-		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
-		    dep == NULL || (((dep->de_flag &
-		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
-		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		      UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			vput(vp);
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
