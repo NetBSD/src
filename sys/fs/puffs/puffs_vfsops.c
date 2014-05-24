@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.110 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.111 2014/05/24 16:34:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.110 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.111 2014/05/24 16:34:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -510,6 +510,18 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 	return error;
 }
 
+static bool
+pageflush_selector(void *cl, struct vnode *vp)
+{
+	bool rv;
+
+	mutex_enter(vp->v_interlock);
+	rv = vp->v_type == VREG && !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
+	mutex_exit(vp->v_interlock);
+
+	return rv;
+}
+
 static int
 pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 {
@@ -528,7 +540,9 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 	 * all the nodes it knows to exist.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, pageflush_selector,
+	    NULL)))
+	{
 		/*
 		 * Here we try to get a reference to the vnode and to
 		 * lock it.  This is mostly cargo-culted, but I will
@@ -550,11 +564,6 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 			continue;
 		}
 		pn = VPTOPP(vp);
-		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			vput(vp);
-			continue;
-		}
-
 		/* hmm.. is the FAF thing entirely sensible? */
 		if (waitfor == MNT_LAZY) {
 			mutex_enter(vp->v_interlock);
