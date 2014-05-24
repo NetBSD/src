@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.90 2014/05/24 15:20:32 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.91 2014/05/24 18:06:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -715,11 +715,19 @@ typedef u_int8_t pci_revision_t;
  * Capability ID: 0x09
  * Vendor Specific
  */
+#define PCI_VENDORSPECIFIC_SHIFT	16
+#define PCI_VENDORSPECIFIC		0x02
 
 /*
  * Capability ID: 0x0a
  * Debug Port
  */
+#define PCI_DEBUG_BASER		0x00	/* Debug Base Register */
+#define PCI_DEBUG_BASER_SHIFT	16
+#define PCI_DEBUG_PORTOFF_SHIFT	16
+#define	PCI_DEBUG_PORTOFF_MASK	0x1fff0000	/* Debug port offset */
+#define PCI_DEBUG_BARNUM_SHIFT	29
+#define	PCI_DEBUG_BARNUM_MASK	0xe0000000	/* BAR number */
 
 /*
  * Capability ID: 0x0b
@@ -733,8 +741,10 @@ typedef u_int8_t pci_revision_t;
 
 /*
  * Capability ID: 0x0d
- * Subvendor
+ * Subsystem
  */
+#define PCI_CAP_SUBSYS_ID 0x04
+/* bit field layout is the same as PCI_SUBSYS_ID_REG's one */
 
 /*
  * Capability ID: 0x0e
@@ -964,6 +974,13 @@ struct pci_msix_table_entry {
  * Capability ID: 0x13
  * Advanced Feature
  */
+#define PCI_AFCAPR		0x00	/* Capabilities */
+#define	PCI_AFCAPR_MASK		__BITS(31, 24)
+#define	PCI_AF_TP_CAP		__BIT(24)	/* Transaction Pending */
+#define	PCI_AF_FLR_CAP		__BIT(25)	/* Function Level Reset */
+#define PCI_AFCSR		0x04	/* Control & Status register */
+#define PCI_AFCR_INITIATE_FLR	__BIT(0)	/* Initiate Function LVL RST */
+#define PCI_AFSR_TP		__BIT(8)	/* Transaction Pending */
 
 
 /*
