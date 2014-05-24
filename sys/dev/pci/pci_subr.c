@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.115 2014/05/23 19:31:23 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.116 2014/05/24 15:09:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.115 2014/05/23 19:31:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.116 2014/05/24 15:09:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1013,7 +1013,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	reg = regs[o2i(capoff + PCIE_DCAP)];
 	printf("    Device Capabilities Register: 0x%08x\n", reg);
 	printf("      Max Payload Size Supported: %u bytes max\n",
-	    (unsigned int)(reg & PCIE_DCAP_MAX_PAYLOAD) * 256);
+	    128 << (unsigned int)(reg & PCIE_DCAP_MAX_PAYLOAD));
 	printf("      Phantom Functions Supported: ");
 	switch ((reg & PCIE_DCAP_PHANTOM_FUNCS) >> 3) {
 	case 0x0:
@@ -1237,14 +1237,11 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			break;
 		}
 		printf("      Power Controller Control: ");
-		if ((reg & PCIE_SLCSR_PCC) != 0)
-			printf("off\n");
-		else
-			printf("on\n");
+		onoff("Power Controller Control", reg, PCIE_SLCSR_PCC);
 		if ((reg & PCIE_SLCSR_EIC) != 0)
 			printf("      Electromechanical Interlock Control\n");
-		if ((reg & PCIE_SLCSR_LACS) != 0)
-			printf("      Data Link Layer State Changed Enable\n");
+		onoff("Data Link Layer State Changed Enable", reg,
+		    PCIE_SLCSR_DLLSCE);
 
 		/* Slot Status Register */
 		printf("    Slot Status Register: %04x\n", reg >> 16);
