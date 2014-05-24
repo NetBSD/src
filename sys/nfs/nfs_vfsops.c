@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.227 2014/04/16 18:55:17 maxv Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.228 2014/05/24 16:34:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.227 2014/04/16 18:55:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.228 2014/05/24 16:34:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -937,6 +937,13 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 
 extern int syncprt;
 
+static bool
+nfs_sync_selector(void *cl, struct vnode *vp)
+{
+
+	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
+}
+
 /*
  * Flush out the buffer cache
  */
@@ -952,15 +959,12 @@ nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * Force stale buffer cache information to be flushed.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
-	while (vfs_vnode_iterator_next(marker, &vp)) {
+	while ((vp = vfs_vnode_iterator_next(marker, nfs_sync_selector,
+	    NULL)))
+	{
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
 			vrele(vp);
-			continue;
-		}
-		if (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			vput(vp);
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
