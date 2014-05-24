@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.75 2014/05/23 22:58:56 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.76 2014/05/24 14:17:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.75 2014/05/23 22:58:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.76 2014/05/24 14:17:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,9 +520,25 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 	} else {
 		hi = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I965_IFPADDR+4);
 		lo = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I965_IFPADDR);
-		addr = ((bus_addr_t)hi << 32) | lo;
+		/*
+		 * Convert to uint64_t, rather than bus_addr_t which
+		 * may be 32-bit, to avoid undefined behaviour with a
+		 * too-wide shift.  Since the BIOS doesn't know whether
+		 * the OS will run 64-bit or with PAE, it ought to
+		 * configure at most a 32-bit physical address, so
+		 * let's print a warning in case that happens.
+		 */
+		addr = ((uint64_t)hi << 32) | lo;
+		if (hi) {
+			aprint_error_dev(sc->as_dev,
+			    "BIOS configured >32-bit flush page address"
+			    ": %"PRIx64"\n", ((uint64_t)hi << 32) | lo);
+#if __i386__ && !PAE
+			return EIO;
+#endif
+		}
 		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
-		maxaddr = UINT64_MAX;
+		maxaddr = MIN(UINT64_MAX, ~(bus_addr_t)0);
 	}
 
 	/* Allocate or map a pre-allocated a page for it.  */
