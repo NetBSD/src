@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.24 2014/05/24 16:34:03 christos Exp $
+.\"     $NetBSD: vfssubr.9,v 1.25 2014/05/24 17:14:02 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -247,9 +247,8 @@ Free all resources associated with an iterator
 Return the next vnode from iterator
 .Fa vi .
 If the operation is successful the vnode has a reference added to it
-and it is returned
-If the iterator is exhausted
-the function returns
+and it is returned.
+If the iterator is exhausted the function returns
 .Dv NULL .
 If an optional
 .Fa selector
