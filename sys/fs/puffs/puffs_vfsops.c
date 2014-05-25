@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.112 2014/05/25 17:43:47 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.113 2014/05/25 19:32:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.112 2014/05/25 17:43:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.113 2014/05/25 19:32:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -513,8 +513,8 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 static bool
 pageflush_selector(void *cl, struct vnode *vp)
 {
-
-	return vp->v_type == VREG && !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
+	return vp->v_type == VREG &&
+	    !(LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj));
 }
 
 static int
