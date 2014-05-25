@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.12 2014/05/17 07:09:59 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.13 2014/05/25 13:49:13 hannken Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -131,9 +131,6 @@ int	ulfs_dirremove(struct vnode *, const struct ulfs_lookup_results *,
 int	ulfs_dirrewrite(struct inode *, off_t,
 		       struct inode *, ino_t, int, int, int);
 int	ulfs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int	ulfs_checkpath(struct inode *, struct inode *, kauth_cred_t);
-int	ulfs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
-			int *, struct vnode **);
 int	ulfs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
 /* ulfs_quota.c */
