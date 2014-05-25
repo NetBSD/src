@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1181 2014/04/26 07:32:56 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1182 2014/05/25 16:19:08 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1188 2014/04/26 07:32:26 mrg Exp
+ *	NetBSD: pcidevs,v 1.1189 2014/05/25 16:17:41 njoly Exp
  */
 
 /*
@@ -4543,6 +4543,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_11	0x0abe		/* nForce MCP79 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_AHCI_12	0x0abf		/* nForce MCP79 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_210_HDA	0x0be3		/* GeForce 210 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_GF_GT640M	0x0fd2		/* GeForce GT 640M */
 #define	PCI_PRODUCT_NVIDIA_GF116	0x1244		/* GeForce GTX 550 Ti */
 
 /* Nvidia & SGS-Thomson Microelectronics */
