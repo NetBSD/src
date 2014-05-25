@@ -1,4 +1,4 @@
-.\" $NetBSD: ipi.9,v 1.1 2014/05/25 15:34:20 rmind Exp $
+.\" $NetBSD: ipi.9,v 1.2 2014/05/25 15:51:26 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,8 @@ The interface has two mechanisms: asynchronous IPI to invoke functions
 with a constant argument and synchronous IPIs with the cross-call support.
 .Pp
 Other synchronization interfaces are built using the MI IPI interface.
-For a general purpose inter-processor cross-calls or remote interrupts, use
+For a general purpose inter-processor cross-calls or remote
+interrupts, use the
 .Xr xcall 9
 or
 .Xr softint 9
@@ -71,28 +72,27 @@ interfaces.
 The primary use cases of the MI IPIs include the following:
 .Bl -hyphen -compact
 .It
-provide a facility for
+provide a facility for the
 .Xr softint 9
-subsystem to schedule software interrupts on the remote CPUs
+subsystem to schedule software interrupts on remote CPUs
 .It
-provide a facility for
+provide a facility for the
 .Xr xcall 9
 subsystem
 .It
-abstract IPI handling and facilitate the machine-dependent code
+abstract IPI handling and facilitate machine-dependent code
 .El
-.Pp
 .\" -----
 .Ss Asynchronous IPI interface
 This interface allows dynamic registration of IPI handlers with a constant
-argument and asynchronous triggering of the interrupts.
+argument and asynchronous triggering of interrupts.
 .Bl -tag -width compact
 .It Fn ipi_register "func" "arg"
 Register an IPI handler
 .Fa func
 with an arbitrary argument
 .Fa arg .
-Returns non-zero IPI identifier on success and zero on failure.
+Returns a non-zero IPI identifier on success and zero on failure.
 .It Fn ipi_unregister "ipi_id"
 Unregister the IPI handler identified by the
 .Fa ipi_id .
@@ -104,7 +104,6 @@ on a remote CPU specified by
 This function must be called with the kernel preemption disabled and
 the target CPU must be remote.
 .El
-.Pp
 .\" -----
 .Ss Synchronous IPI interface
 This interface provides capability to perform cross-calls, i.e. invoke
@@ -112,7 +111,7 @@ an arbitrary function on a remote CPU.
 The invocations are performed synchronously and the caller must wait
 for completion.
 The cross-call is described by an IPI "message".
-The caller has to fill
+The caller has to fill in an
 .Vt ipi_msg_t
 structure which has the following public members:
 .Bd -literal
@@ -131,7 +130,7 @@ is the argument to be passed to the function.
 Send an IPI to a remote CPU specified by
 .Fa ci .
 .It Fn ipi_multicast "msg" "target"
-Send IPIs to a CPU set specified by the
+Send IPIs to a CPU set specified by
 .Fa target .
 .It Fn ipi_broadcast "msg"
 Send IPIs to all CPUs.
@@ -142,16 +141,16 @@ Wait until all IPIs complete.
 All described functions, except
 .Fn ipi_wait ,
 must be called with the kernel preemption disabled.
-All synchronous IPI invocations must be awaited for completion with
+All synchronous IPI invocations must be completed (wait for them with the
 .Fn ipi_wait
-function, before IPI message structure can be destroyed or new
-cross-call requests performed.
+function) before the IPI message structure can be destroyed or new
+cross-call requests can be performed.
 .\" -----
 .Sh NOTES
 Functions being called must be lightweight.
 They run at
-.Em IPL_HIGH
-and should generally not use any other synchronization interfaces,
+.Dv IPL_HIGH
+and should generally not use any other synchronization interfaces
 such as
 .Xr mutex 9 .
 If spin-locks are used, they must be used carefully and have no contention.
@@ -163,10 +162,10 @@ interface is implemented within the file
 .Pa sys/kern/subr_ipi.c .
 .\" -----
 .Sh SEE ALSO
-.Xr softint 9 ,
-.Xr spl 9 ,
 .Xr kcpuset 9 ,
 .Xr kpreempt 9 ,
+.Xr softint 9 ,
+.Xr spl 9 ,
 .Xr xcall 9
 .Sh HISTORY
 The
