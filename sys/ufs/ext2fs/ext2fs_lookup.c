@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.75 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.76 2014/05/25 14:07:19 hannken Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.75 2014/05/08 08:21:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.76 2014/05/25 14:07:19 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,71 +984,4 @@ ext2fs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		return (0);
 	}
 	return (1);
-}
-
-/*
- * Check if source directory is in the path of the target directory.
- * Target is supplied locked, source is unlocked.
- * The target is always vput before returning.
- */
-int
-ext2fs_checkpath(struct inode *source, struct inode *target,
-	kauth_cred_t cred)
-{
-	struct vnode *vp;
-	int error, rootino, namlen;
-	struct ext2fs_dirtemplate dirbuf;
-	uint32_t ino;
-
-	vp = ITOV(target);
-	if (target->i_number == source->i_number) {
-		error = EEXIST;
-		goto out;
-	}
-	rootino = UFS_ROOTINO;
-	error = 0;
-	if (target->i_number == rootino)
-		goto out;
-
-	for (;;) {
-		if (vp->v_type != VDIR) {
-			error = ENOTDIR;
-			break;
-		}
-		error = vn_rdwr(UIO_READ, vp, (void *)&dirbuf,
-			sizeof (struct ext2fs_dirtemplate), (off_t)0,
-			UIO_SYSSPACE, IO_NODELOCKED, cred, (size_t *)0,
-			NULL);
-		if (error != 0)
-			break;
-		namlen = dirbuf.dotdot_namlen;
-		if (namlen != 2 ||
-			dirbuf.dotdot_name[0] != '.' ||
-			dirbuf.dotdot_name[1] != '.') {
-			error = ENOTDIR;
-			break;
-		}
-		ino = fs2h32(dirbuf.dotdot_ino);
-		if (ino == source->i_number) {
-			error = EINVAL;
-			break;
-		}
-		if (ino == rootino)
-			break;
-		vput(vp);
-		error = VFS_VGET(vp->v_mount, ino, &vp);
-		if (error != 0) {
-			vp = NULL;
-			break;
-		}
-	}
-
-out:
-	if (error == ENOTDIR) {
-		printf("checkpath: .. not a directory\n");
-		panic("checkpath");
-	}
-	if (vp != NULL)
-		vput(vp);
-	return (error);
 }
