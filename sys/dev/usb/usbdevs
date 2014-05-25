@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.669 2014/05/20 09:55:06 zafer Exp $
+$NetBSD: usbdevs,v 1.670 2014/05/25 06:10:25 ryoon Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -180,11 +180,12 @@ vendor MUSTEK		0x055f	Mustek Systems
 vendor TELEX		0x0562	Telex Communications
 vendor PERACOM		0x0565	Peracom Networks
 vendor ALCOR2		0x0566	Alcor Micro
+vendor XYRATEX		0x0567	Xyratex
 vendor WACOM		0x056a	WACOM
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom
-vendor XYRATEX		0x0572	Xyratex
+vendor CONEXANT		0x0572	Conexant
 vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
