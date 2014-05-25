@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.88 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: fss.c,v 1.89 2014/05/25 13:52:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.88 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.89 2014/05/25 13:52:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1154,7 +1154,7 @@ fss_bs_thread(void *arg)
 				fss_error(sc, "write error on backing store");
 
 			scp->fc_type = FSS_CACHE_FREE;
-			cv_signal(&sc->sc_cache_cv);
+			cv_broadcast(&sc->sc_cache_cv);
 			break;
 		}
 
