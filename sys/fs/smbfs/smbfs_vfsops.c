@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.101 2014/05/24 16:34:03 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.102 2014/05/25 19:33:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.101 2014/05/24 16:34:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.102 2014/05/25 19:33:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,8 +410,8 @@ smbfs_sync_selector(void *cl, struct vnode *vp)
 		return false;
 
 	if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
-	    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	     vp->v_uobj.uo_npages == 0)
+	     LIST_EMPTY(&vp->v_dirtyblkhd) &&
+	     UVM_OBJ_IS_CLEAN(&vp->v_uobj))
 		return false;
 
 	return true;
