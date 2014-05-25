@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.18 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.19 2014/05/25 14:53:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,13 +52,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.18 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.19 2014/05/25 14:53:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/pcu.h>
-#include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #if PCU_UNIT_COUNT > 0
 
@@ -72,28 +72,31 @@ static void pcu_lwp_op(const pcu_ops_t *, lwp_t *, const int);
 #define	PCU_CMD_RELEASE		0x02	/* release PCU state on the CPU */
 
 /*
- * Message structure for another CPU passed via xcall(9).
+ * Message structure for another CPU passed via ipi(9).
  */
 typedef struct {
 	const pcu_ops_t *pcu;
 	lwp_t *		owner;
 	const int	flags;
-} pcu_xcall_msg_t;
+} pcu_ipi_msg_t;
+
+/*
+ * PCU IPIs run at IPL_HIGH (aka IPL_PCU in this code).
+ */
+#define	splpcu		splhigh
 
 /* PCU operations structure provided by the MD code. */
 extern const pcu_ops_t * const pcu_ops_md_defs[];
 
 /*
  * pcu_switchpoint: release PCU state if the LWP is being run on another CPU.
- *
- * On each context switches, called by mi_switch() with IPL_SCHED.
- * 'l' is an LWP which is just we switched to.  (the new curlwp)
+ * This routine is called on each context switch by by mi_switch().
  */
 void
 pcu_switchpoint(lwp_t *l)
 {
 	const uint32_t pcu_valid = l->l_pcu_valid;
-	/* int s; */
+	int s;
 
 	KASSERTMSG(l == curlwp, "l %p != curlwp %p", l, curlwp);
 
@@ -101,8 +104,7 @@ pcu_switchpoint(lwp_t *l)
 		/* PCUs are not in use. */
 		return;
 	}
-	/* commented out as we know we are already at IPL_SCHED */
-	/* s = splsoftserial(); */
+	s = splpcu();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_valid & (1U << id)) == 0) {
 			continue;
@@ -114,7 +116,7 @@ pcu_switchpoint(lwp_t *l)
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
 		pcu->pcu_state_release(l);
 	}
-	/* splx(s); */
+	splx(s);
 }
 
 /*
@@ -133,7 +135,6 @@ pcu_discard_all(lwp_t *l)
 		/* PCUs are not in use. */
 		return;
 	}
-	const int s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_valid & (1U << id)) == 0) {
 			continue;
@@ -145,7 +146,6 @@ pcu_discard_all(lwp_t *l)
 		pcu_lwp_op(pcu, l, PCU_CMD_RELEASE);
 	}
 	l->l_pcu_valid = 0;
-	splx(s);
 }
 
 /*
@@ -176,7 +176,6 @@ pcu_save_all(lwp_t *l)
 		/* PCUs are not in use. */
 		return;
 	}
-	const int s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_valid & (1U << id)) == 0) {
 			continue;
@@ -187,13 +186,12 @@ pcu_save_all(lwp_t *l)
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
 		pcu_lwp_op(pcu, l, flags);
 	}
-	splx(s);
 }
 
 /*
  * pcu_do_op: save/release PCU state on the current CPU.
  *
- * => Must be called at IPL_SOFTSERIAL or from the soft-interrupt.
+ * => Must be called at IPL_PCU or from the interrupt.
  */
 static inline void
 pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
@@ -214,17 +212,16 @@ pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
 }
 
 /*
- * pcu_cpu_xcall: helper routine to call pcu_do_op() via xcall(9).
+ * pcu_cpu_ipi: helper routine to call pcu_do_op() via ipi(9).
  */
 static void
-pcu_cpu_xcall(void *arg1, void *arg2 __unused)
+pcu_cpu_ipi(void *arg)
 {
-	const pcu_xcall_msg_t *pcu_msg = arg1;
+	const pcu_ipi_msg_t *pcu_msg = arg;
 	const pcu_ops_t *pcu = pcu_msg->pcu;
 	const u_int id = pcu->pcu_id;
 	lwp_t *l = pcu_msg->owner;
 
-	KASSERT(cpu_softintr_p());
 	KASSERT(pcu_msg->owner != NULL);
 
 	if (curcpu()->ci_pcu_curlwp[id] != l) {
@@ -246,7 +243,6 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 {
 	const u_int id = pcu->pcu_id;
 	struct cpu_info *ci;
-	uint64_t where;
 	int s;
 
 	/*
@@ -254,7 +250,7 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 	 * Block the interrupts and inspect again, since cross-call sent
 	 * by remote CPU could have changed the state.
 	 */
-	s = splsoftserial();
+	s = splpcu();
 	ci = l->l_pcu_cpu[id];
 	if (ci == curcpu()) {
 		/*
@@ -267,19 +263,22 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 		splx(s);
 		return;
 	}
-	splx(s);
-
 	if (__predict_false(ci == NULL)) {
 		/* Cross-call has won the race - no state to manage. */
+		splx(s);
 		return;
 	}
 
 	/*
 	 * The state is on the remote CPU: perform the operation(s) there.
 	 */
-	pcu_xcall_msg_t pcu_msg = { .pcu = pcu, .owner = l, .flags = flags };
-	where = xc_unicast(XC_HIGHPRI, pcu_cpu_xcall, &pcu_msg, NULL, ci);
-	xc_wait(where);
+	pcu_ipi_msg_t pcu_msg = { .pcu = pcu, .owner = l, .flags = flags };
+	ipi_msg_t ipi_msg = { .func = pcu_cpu_ipi, .arg = &pcu_msg };
+	ipi_unicast(&ipi_msg, ci);
+	splx(s);
+
+	/* Wait for completion. */
+	ipi_wait(&ipi_msg);
 
 	KASSERT((flags & PCU_CMD_RELEASE) == 0 || l->l_pcu_cpu[id] == NULL);
 }
@@ -293,18 +292,26 @@ pcu_load(const pcu_ops_t *pcu)
 	lwp_t *oncpu_lwp, * const l = curlwp;
 	const u_int id = pcu->pcu_id;
 	struct cpu_info *ci, *curci;
-	uint64_t where;
 	int s;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
-	s = splsoftserial();
+	s = splpcu();
 	curci = curcpu();
 	ci = l->l_pcu_cpu[id];
 
 	/* Does this CPU already have our PCU state loaded? */
 	if (ci == curci) {
-		/* Fault happen: indicate re-enable. */
+		/*
+		 * Fault reoccurred while the PCU state is loaded and
+		 * therefore PCU should be re‐enabled.  This happens
+		 * if LWP is context switched to another CPU and then
+		 * switched back to the original CPU while the state
+		 * on that CPU has not been changed by other LWPs.
+		 *
+		 * It may also happen due to instruction "bouncing" on
+		 * some architectures.
+		 */
 		KASSERT(curci->ci_pcu_curlwp[id] == l);
 		KASSERT(pcu_valid_p(pcu));
 		pcu->pcu_state_load(l, PCU_VALID | PCU_REENABLE);
@@ -314,16 +321,18 @@ pcu_load(const pcu_ops_t *pcu)
 
 	/* If PCU state of this LWP is on the remote CPU - save it there. */
 	if (ci) {
+		pcu_ipi_msg_t pcu_msg = { .pcu = pcu, .owner = l,
+		    .flags = PCU_CMD_SAVE | PCU_CMD_RELEASE };
+		ipi_msg_t ipi_msg = { .func = pcu_cpu_ipi, .arg = &pcu_msg };
+		ipi_unicast(&ipi_msg, ci);
 		splx(s);
 
-		pcu_xcall_msg_t pcu_msg = { .pcu = pcu, .owner = l,
-		    .flags = PCU_CMD_SAVE | PCU_CMD_RELEASE };
-		where = xc_unicast(XC_HIGHPRI, pcu_cpu_xcall,
-		    &pcu_msg, NULL, ci);
-		xc_wait(where);
-
-		/* Enter IPL_SOFTSERIAL and re-fetch the current CPU. */
-		s = splsoftserial();
+		/*
+		 * Wait for completion, re-enter IPL_PCU and re-fetch
+		 * the current CPU.
+		 */
+		ipi_wait(&ipi_msg);
+		s = splpcu();
 		curci = curcpu();
 	}
 	KASSERT(l->l_pcu_cpu[id] == NULL);
@@ -394,7 +403,7 @@ pcu_save_all_on_cpu(void)
 {
 	int s;
 
-	s = splsoftserial();
+	s = splpcu();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
 		lwp_t *l;
