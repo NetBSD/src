@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.121 2014/05/22 14:01:46 riastradh Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.122 2014/05/25 18:55:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.121 2014/05/22 14:01:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.122 2014/05/25 18:55:11 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -502,6 +502,7 @@ uao_create(vsize_t size, int flags)
  * uao_set_pgfl: allocate pages only from the specified freelist.
  *
  * => must be called before any pages are allocated for the object.
+ * => reset by setting it to VM_NFREELIST, meaning any freelist.
  */
 
 void
@@ -510,7 +511,8 @@ uao_set_pgfl(struct uvm_object *uobj, int freelist)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 
 	KASSERTMSG((0 <= freelist), "invalid freelist %d", freelist);
-	KASSERTMSG((freelist < VM_NFREELIST), "invalid freelist %d", freelist);
+	KASSERTMSG((freelist <= VM_NFREELIST), "invalid freelist %d",
+	    freelist);
 
 	aobj->u_freelist = freelist;
 }
