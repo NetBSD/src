@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.1 2014/05/19 22:47:54 rmind Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.2 2014/05/25 15:34:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 /*
- * Inter-processor interrupt (IPI) interface with cross-call support.
+ * Inter-processor interrupt (IPI) interface: asynchronous IPIs to
+ * invoke functions with a constant argument and synchronous IPIs
+ * with the cross-call support.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.1 2014/05/19 22:47:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.2 2014/05/25 15:34:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,10 +48,25 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.1 2014/05/19 22:47:54 rmind Exp $");
 #include <sys/kcpuset.h>
 #include <sys/kmem.h>
 #include <sys/lock.h>
+#include <sys/mutex.h>
+
+/*
+ * An array of the IPI handlers used for asynchronous invocation.
+ * The lock protects the slot allocation.
+ */
+
+typedef struct {
+	ipi_func_t	func;
+	void *		arg;
+} ipi_intr_t;
+
+static kmutex_t		ipi_mngmt_lock;
+static ipi_intr_t	ipi_intrs[IPI_MAXREG]	__cacheline_aligned;
 
 /*
  * Per-CPU mailbox for IPI messages: it is a single cache line storing
- * up to IPI_MSG_MAX messages.
+ * up to IPI_MSG_MAX messages.  This interface is built on top of the
+ * synchronous IPIs.
  */
 
 #define	IPI_MSG_SLOTS	(CACHE_LINE_SIZE / sizeof(ipi_msg_t *))
@@ -59,8 +76,14 @@ typedef struct {
 	ipi_msg_t *	msg[IPI_MSG_SLOTS];
 } ipi_mbox_t;
 
+
+/* Mailboxes for the synchronous IPIs. */
 static ipi_mbox_t *	ipi_mboxes	__read_mostly;
 static struct evcnt	ipi_mboxfull_ev	__cacheline_aligned;
+static void		ipi_msg_cpu_handler(void *);
+
+/* Handler for the synchronous IPIs - it must be zero. */
+#define	IPI_SYNCH_ID	0
 
 #ifndef MULTIPROCESSOR
 #define	cpu_ipi(ci)	KASSERT(ci == NULL)
@@ -71,12 +94,97 @@ ipi_sysinit(void)
 {
 	const size_t len = ncpu * sizeof(ipi_mbox_t);
 
+	/* Initialise the per-CPU bit fields. */
+	for (u_int i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+		memset(&ci->ci_ipipend, 0, sizeof(ci->ci_ipipend));
+	}
+	mutex_init(&ipi_mngmt_lock, MUTEX_DEFAULT, IPL_NONE);
+	memset(ipi_intrs, 0, sizeof(ipi_intrs));
+
 	/* Allocate per-CPU IPI mailboxes. */
 	ipi_mboxes = kmem_zalloc(len, KM_SLEEP);
 	KASSERT(ipi_mboxes != NULL);
 
+	/*
+	 * Register the handler for synchronous IPIs.  This mechanism
+	 * is built on top of the asynchronous interface.  Slot zero is
+	 * reserved permanently; it is also handy to use zero as a failure
+	 * for other registers (as it is potentially less error-prone).
+	 */
+	ipi_intrs[IPI_SYNCH_ID].func = ipi_msg_cpu_handler;
+
 	evcnt_attach_dynamic(&ipi_mboxfull_ev, EVCNT_TYPE_MISC, NULL,
 	   "ipi", "full");
+}
+
+/*
+ * ipi_register: register an asynchronous IPI handler.
+ *
+ * => Returns IPI ID which is greater than zero; on failure - zero.
+ */
+u_int
+ipi_register(ipi_func_t func, void *arg)
+{
+	mutex_enter(&ipi_mngmt_lock);
+	for (u_int i = 0; i < IPI_MAXREG; i++) {
+		if (ipi_intrs[i].func == NULL) {
+			/* Register the function. */
+			ipi_intrs[i].func = func;
+			ipi_intrs[i].arg = arg;
+			mutex_exit(&ipi_mngmt_lock);
+
+			KASSERT(i != IPI_SYNCH_ID);
+			return i;
+		}
+	}
+	mutex_exit(&ipi_mngmt_lock);
+	printf("WARNING: ipi_register: table full, increase IPI_MAXREG\n");
+	return 0;
+}
+
+/*
+ * ipi_unregister: release the IPI handler given the ID.
+ */
+void
+ipi_unregister(u_int ipi_id)
+{
+	ipi_msg_t ipimsg = { .func = (ipi_func_t)nullop };
+
+	KASSERT(ipi_id != IPI_SYNCH_ID);
+	KASSERT(ipi_id < IPI_MAXREG);
+
+	/* Release the slot. */
+	mutex_enter(&ipi_mngmt_lock);
+	KASSERT(ipi_intrs[ipi_id].func != NULL);
+	ipi_intrs[ipi_id].func = NULL;
+
+	/* Ensure that there are no IPIs in flight. */
+	kpreempt_disable();
+	ipi_broadcast(&ipimsg);
+	ipi_wait(&ipimsg);
+	kpreempt_enable();
+	mutex_exit(&ipi_mngmt_lock);
+}
+
+/*
+ * ipi_trigger: asynchronously send an IPI to the specified CPU.
+ */
+void
+ipi_trigger(u_int ipi_id, struct cpu_info *ci)
+{
+	const u_int i = ipi_id >> IPI_BITW_SHIFT;
+	const uint32_t bitm = 1U << (ipi_id & IPI_BITW_MASK);
+
+	KASSERT(ipi_id < IPI_MAXREG);
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	/* Mark as pending and send an IPI. */
+	if (membar_consumer(), (ci->ci_ipipend[i] & bitm) == 0) {
+		atomic_or_32(&ci->ci_ipipend[i], bitm);
+		cpu_ipi(ci);
+	}
 }
 
 /*
@@ -106,10 +214,42 @@ again:
 void
 ipi_cpu_handler(void)
 {
+	struct cpu_info * const ci = curcpu();
+
+	/*
+	 * Handle asynchronous IPIs: inspect per-CPU bit field, extract
+	 * IPI ID numbers and execute functions in those slots.
+	 */
+	for (u_int i = 0; i < IPI_BITWORDS; i++) {
+		uint32_t pending, bit;
+
+		if (ci->ci_ipipend[i] == 0) {
+			continue;
+		}
+		pending = atomic_swap_32(&ci->ci_ipipend[i], 0);
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_producer();
+#endif
+		while ((bit = ffs(pending)) != 0) {
+			const u_int ipi_id = (i << IPI_BITW_SHIFT) | --bit;
+			ipi_intr_t *ipi_hdl = &ipi_intrs[ipi_id];
+
+			pending &= ~(1U << bit);
+			KASSERT(ipi_hdl->func != NULL);
+			ipi_hdl->func(ipi_hdl->arg);
+		}
+	}
+}
+
+/*
+ * ipi_msg_cpu_handler: handle synchronous IPIs - iterate mailbox,
+ * execute the passed functions and acknowledge the messages.
+ */
+static void
+ipi_msg_cpu_handler(void *arg __unused)
+{
 	const struct cpu_info * const ci = curcpu();
 	ipi_mbox_t *mbox = &ipi_mboxes[cpu_index(ci)];
-
-	KASSERT(curcpu() == ci);
 
 	for (u_int i = 0; i < IPI_MSG_MAX; i++) {
 		ipi_msg_t *msg;
@@ -148,7 +288,7 @@ ipi_unicast(ipi_msg_t *msg, struct cpu_info *ci)
 	membar_producer();
 
 	put_msg(&ipi_mboxes[id], msg);
-	cpu_ipi(ci);
+	ipi_trigger(IPI_SYNCH_ID, ci);
 }
 
 /*
@@ -182,7 +322,7 @@ ipi_multicast(ipi_msg_t *msg, const kcpuset_t *target)
 			continue;
 		}
 		put_msg(&ipi_mboxes[id], msg);
-		cpu_ipi(ci);
+		ipi_trigger(IPI_SYNCH_ID, ci);
 	}
 	if (local) {
 		msg->func(msg->arg);
@@ -216,8 +356,8 @@ ipi_broadcast(ipi_msg_t *msg)
 		}
 		id = cpu_index(ci);
 		put_msg(&ipi_mboxes[id], msg);
+		ipi_trigger(IPI_SYNCH_ID, ci);
 	}
-	cpu_ipi(NULL);
 
 	/* Finally, execute locally. */
 	msg->func(msg->arg);
