@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcu.9,v 1.9 2014/05/16 08:29:18 wiz Exp $
+.\"	$NetBSD: pcu.9,v 1.10 2014/05/25 14:56:23 rmind Exp $
 .\"
 .\" Copyright (c) 2012-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 15, 2014
+.Dd May 25, 2014
 .Dt PCU 9
 .Os
 .Sh NAME
@@ -43,6 +43,8 @@
 .Fn pcu_save_all "lwp_t *l"
 .Ft void
 .Fn pcu_discard "const pcu_ops_t *pcu" "bool valid"
+.Ft void
+.Fn pcu_discard_all "lwp_t *l"
 .Ft bool
 .Fn pcu_valid_p "const pcu_ops_t *pcu"
 .\" -----
@@ -80,7 +82,10 @@ and has not been discarded since.
 .It Dv PCU_REENABLE
 Indicate that a fault reoccurred while the PCU state is loaded,
 therefore PCU should be re-enabled.
-This is applicable only in some cases, e.g. ARM NEON extensions.
+This happens if LWP is context switched to another CPU and then switched
+back to the original CPU while the state on that CPU has not been changed
+by other LWPs.
+It may also happen due to instruction "bouncing" on some architectures.
 .El
 .It Fn pcu_state_release
 Indicate to MD code that the PCU ownership by the LWP was released,
@@ -90,6 +95,7 @@ be called to reacquire the ownership.
 For example, this would normally be the changing of a bit for a CPU to
 trap on the execution of one of the PCU's instructions.
 .El
+.\" -----
 .Sh FUNCTIONS
 .Bl -tag -width pcu_save_allXXX
 .It Fn pcu_load
@@ -106,8 +112,11 @@ Generally, it always becomes "valid" when
 .Fn pcu_load
 is called by the LWP.
 Otherwise, return false.
+.It Fn pcu_discard_all
+Discard all PCU states of the given LWP; generally used by exec and exit.
 .It Fn pcu_save_all
-Save all PCU states of the given LWP, so that they could be used later.
+Save all PCU states of the given LWP; generally used during new LWP
+creation so that the PCU state of the parent could be copied.
 .El
 .\" -----
 .Sh CODE REFERENCES
@@ -117,3 +126,5 @@ is implemented within the file
 .Sh HISTORY
 PCU first appeared in
 .Nx 6.0 .
+.Sh AUTHORS
+.An Mindaugas Rasiukevicius Aq Mt rmind@NetBSD.org
