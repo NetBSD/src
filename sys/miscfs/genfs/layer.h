@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.14 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: layer.h,v 1.15 2014/05/25 13:51:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -78,10 +78,6 @@ struct layer_args {
 
 #ifdef _KERNEL
 
-struct layer_node;
-
-LIST_HEAD(layer_node_hashhead, layer_node);
-
 struct layer_mount {
 	struct mount		*layerm_vfs;
 	struct vnode		*layerm_rootvp;	/* Ref to root layer_node */
@@ -90,15 +86,8 @@ struct layer_mount {
 	enum vtype		layerm_tag;	/* vtag of our vnodes */
 	int				/* bypass routine for this mount */
 				(*layerm_bypass)(void *);
-	int			(*layerm_alloc)	/* alloc a new layer node */
-				(struct mount *, struct vnode *,
-						struct vnode **);
 	int			(**layerm_vnodeop_p)	/* ops for our nodes */
 				(void *);
-	struct layer_node_hashhead	/* head of hash list for layer_nodes */
-				*layerm_node_hashtbl;
-	u_long			layerm_node_hash; /* hash mask for hash chain */
-	kmutex_t		layerm_hashlock; /* interlock for hash chain. */
 };
 
 #define	LAYERFS_MFLAGS		0x00000fff	/* reserved layer mount flags */
@@ -108,7 +97,6 @@ struct layer_mount {
  * A cache of vnode references
  */
 struct layer_node {
-	LIST_ENTRY(layer_node)	layer_hash;	/* Hash list */
 	struct vnode	        *layer_lowervp;	/* VREFed once */
 	struct vnode		*layer_vnode;	/* Back pointer */
 	unsigned int		layer_flags;	/* locking, etc. */
