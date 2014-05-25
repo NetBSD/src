@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.247 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.248 2014/05/25 13:51:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -207,8 +207,8 @@ typedef struct vnode vnode_t;
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #endif	/* _VFS_VNODE_PRIVATE */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
-#ifdef _VFS_VNODE_PRIVATE
 #define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
+#ifdef _VFS_VNODE_PRIVATE
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_CHANGING	0x00100000	/* vnode changes state */
 #endif	/* _VFS_VNODE_PRIVATE */
