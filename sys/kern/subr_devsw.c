@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.30 2012/02/18 06:29:10 mrg Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.31 2014/05/25 16:31:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.30 2012/02/18 06:29:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.31 2014/05/25 16:31:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -103,6 +103,8 @@ static int cdevsw_attach(const struct cdevsw *, devmajor_t *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
 kmutex_t device_lock;
+
+void (*biodone_vfs)(buf_t *) = (void *)nullop;
 
 void
 devsw_init(void)
@@ -737,7 +739,7 @@ bdev_strategy(struct buf *bp)
 	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+		biodone_vfs(bp); /* biodone() iff vfs present */
 		return;
 	}
 
