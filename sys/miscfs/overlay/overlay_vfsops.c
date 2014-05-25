@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.61 2014/04/16 18:55:19 maxv Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.62 2014/05/25 13:51:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.61 2014/04/16 18:55:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.62 2014/05/25 13:51:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,11 +163,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	nmp->ovm_size = sizeof (struct overlay_node);
 	nmp->ovm_tag = VT_OVERLAY;
 	nmp->ovm_bypass = layer_bypass;
-	nmp->ovm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->ovm_vnodeop_p = overlay_vnodeop_p;
-	mutex_init(&nmp->ovm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	nmp->ovm_node_hashtbl = hashinit(NOVERLAYNODECACHE, HASH_LIST, true,
-	     &nmp->ovm_node_hash);
 
 	/*
 	 * Fix up overlay node for root vnode
@@ -179,7 +175,6 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 */
 	if (error) {
 		vrele(lowerrootvp);
-		hashdone(nmp->ovm_node_hashtbl, HASH_LIST, nmp->ovm_node_hash);
 		kmem_free(nmp, sizeof(struct overlay_mount));
 		return error;
 	}
@@ -236,8 +231,6 @@ ov_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the overlay_mount structure
 	 */
 	omp = mp->mnt_data;
-	mutex_destroy(&omp->ovm_hashlock);
-	hashdone(omp->ovm_node_hashtbl, HASH_LIST, omp->ovm_node_hash);
 	kmem_free(omp, sizeof(struct overlay_mount));
 	mp->mnt_data = NULL;
 	return 0;
@@ -260,6 +253,7 @@ struct vfsops overlay_vfsops = {
 	.vfs_quotactl = layerfs_quotactl,
 	.vfs_statvfs = layerfs_statvfs,
 	.vfs_sync = layerfs_sync,
+	.vfs_loadvnode = layerfs_loadvnode,
 	.vfs_vget = layerfs_vget,
 	.vfs_fhtovp = layerfs_fhtovp,
 	.vfs_vptofh = layerfs_vptofh,
