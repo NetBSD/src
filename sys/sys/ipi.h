@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.h,v 1.1 2014/05/19 22:47:54 rmind Exp $	*/
+/*	$NetBSD: ipi.h,v 1.2 2014/05/25 15:34:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,13 +47,28 @@ typedef struct {
 	volatile u_int	_pending;
 } ipi_msg_t;
 
+/*
+ * Internal constants and implementation hooks.
+ *
+ * IPI_MAXREG: the maximum number of asynchronous handlers which can
+ * be registered on the system (normally, this should not be high).
+ */
+#define	IPI_MAXREG	32
+
+#define	IPI_BITW_SHIFT	5
+#define	IPI_BITW_MASK	(32 - 1)
+#define	IPI_BITWORDS	(IPI_MAXREG >> IPI_BITW_SHIFT)
+
 void	ipi_sysinit(void);
 void	ipi_cpu_handler(void);
 void	cpu_ipi(struct cpu_info *);
 
-/*
- * Public ipi(9) API.
- */
+/* Public interface: asynchronous IPIs. */
+u_int	ipi_register(ipi_func_t, void *);
+void	ipi_unregister(u_int);
+void	ipi_trigger(u_int, struct cpu_info *);
+
+/* Public interface: synchronous IPIs. */
 void	ipi_unicast(ipi_msg_t *, struct cpu_info *);
 void	ipi_multicast(ipi_msg_t *, const kcpuset_t *);
 void	ipi_broadcast(ipi_msg_t *);

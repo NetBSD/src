@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1892 2014/05/15 16:32:28 apb Exp $
+#	$NetBSD: mi,v 1.1893 2014/05/25 15:34:19 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10273,6 +10273,7 @@
 ./usr/share/man/cat9/ioctl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ioctl_copyin.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ioctl_copyout.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ipi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ipkdb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ipkdb_connect.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ipkdb_init.0		comp-sys-catman		.cat
@@ -16970,6 +16971,7 @@
 ./usr/share/man/html9/ioctl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioctl_copyin.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioctl_copyout.html	comp-sys-htmlman	html
+./usr/share/man/html9/ipi.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ipkdb.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ipkdb_connect.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ipkdb_init.html		comp-sys-htmlman	html
@@ -23820,6 +23822,7 @@
 ./usr/share/man/man9/ioctl.9			comp-sys-man		.man
 ./usr/share/man/man9/ioctl_copyin.9		comp-sys-man		.man
 ./usr/share/man/man9/ioctl_copyout.9		comp-sys-man		.man
+./usr/share/man/man9/ipi.9			comp-sys-man		.man
 ./usr/share/man/man9/ipkdb.9			comp-sys-man		.man
 ./usr/share/man/man9/ipkdb_connect.9		comp-sys-man		.man
 ./usr/share/man/man9/ipkdb_init.9		comp-sys-man		.man
