@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.86 2014/05/25 19:15:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.86 2014/05/25 19:15:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,6 +226,7 @@ cgd_detach(device_t self, int flags)
 		return ret;
 
 	disk_destroy(&dksc->sc_dkdev);
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }
