@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.118 2014/05/24 18:06:21 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.119 2014/05/25 14:56:46 njoly Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.118 2014/05/24 18:06:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.119 2014/05/25 14:56:46 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -637,7 +637,8 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		subclassp++;
 	}
 
-	interfacep = (subclassp->name != NULL) ? subclassp->subclasses : NULL;
+	interfacep = (subclassp && subclassp->name != NULL) ?
+	    subclassp->subclasses : NULL;
 	while (interfacep && interfacep->name != NULL) {
 		if (interface == interfacep->val)
 			break;
