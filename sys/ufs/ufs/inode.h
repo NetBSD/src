@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.69 2014/05/26 18:52:50 dholland Exp $	*/
+/*	$NetBSD: inode.h,v 1.70 2014/05/26 19:12:43 ryoon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -242,10 +242,10 @@ struct inode {
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	   unused	0x0100		/* was LFS-only IN_CLEANING */
-/*	   unused	0x0200		/* was LFS-only IN_ADIROP */
+/*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-/*	   unused       0x1000		/* was LFS-only IN_PAGING */
-/*	   unused	0x4000          /* was LFS-only IN_CDIROP */
+/*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
+/*	   unused	0x4000 */       /* was LFS-only IN_CDIROP */
 #if defined(_KERNEL)
 
 /*
