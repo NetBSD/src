@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.8 2014/05/26 18:52:50 dholland Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.9 2014/05/26 19:16:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -121,13 +121,13 @@ struct chfs_inode
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/*	   unused	0x0020		/* was IN_RENAME */
+/*	   unused	0x0020 */	/* was IN_RENAME */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-/*	   unused	0x0100		/* was LFS-only IN_CLEANING */
-/*	   unused	0x0200		/* was LFS-only IN_ADIROP */
+/*	   unused	0x0100 */	/* was LFS-only IN_CLEANING */
+/*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-/*	   unused       0x1000		/* was LFS-only IN_PAGING */
+/*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
 
 
 #ifdef VTOI
