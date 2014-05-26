@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.6 2014/05/26 18:58:32 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.7 2014/05/26 19:12:43 ryoon Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -212,7 +212,7 @@ struct inode {
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-/* 	   unused	0x0400		/* was FFS-only IN_SPACECOUNTED */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 
