@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.76 2014/05/24 14:17:29 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.77 2014/05/26 19:13:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.76 2014/05/24 14:17:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.77 2014/05/26 19:13:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,19 @@ agp_i810_chipset_flush(struct agp_i810_softc *isc)
 		break;
 	case CHIP_I830:
 	case CHIP_I855:
-		xc_wait(xc_broadcast(0, &agp_flush_cache_xc, NULL, NULL));
+		/*
+		 * Flush all CPU caches.  If we're cold, we can't run
+		 * xcalls, but there should be only one CPU up, so
+		 * flushing only the local CPU's cache should suffice.
+		 *
+		 * XXX Come to think of it, do these chipsets appear in
+		 * any multi-CPU systems?
+		 */
+		if (cold)
+			agp_flush_cache();
+		else
+			xc_wait(xc_broadcast(0, &agp_flush_cache_xc,
+				NULL, NULL));
 		WRITE4(AGP_I830_HIC, READ4(AGP_I830_HIC) | __BIT(31));
 		while (ISSET(READ4(AGP_I830_HIC), __BIT(31))) {
 			if (timo-- == 0)
