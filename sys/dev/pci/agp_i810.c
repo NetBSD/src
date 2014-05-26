@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.77 2014/05/26 19:13:20 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.78 2014/05/26 19:15:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.77 2014/05/26 19:13:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.78 2014/05/26 19:15:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -868,9 +868,9 @@ agp_i810_detach(struct agp_softc *sc)
 				    AGP_I915_IFPADDR, 0);
 			} else {
 				pci_conf_write(sc->as_pc, sc->as_tag,
-				    AGP_I915_IFPADDR, 0);
+				    AGP_I965_IFPADDR, 0);
 				pci_conf_write(sc->as_pc, sc->as_tag,
-				    AGP_I915_IFPADDR + 4, 0);
+				    AGP_I965_IFPADDR + 4, 0);
 			}
 			isc->flush_addr = 0;
 			bus_space_free(isc->flush_bst, isc->flush_bsh,
