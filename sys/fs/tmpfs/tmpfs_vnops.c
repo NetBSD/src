@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.119 2014/05/26 19:12:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.119 2014/05/26 19:12:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -343,7 +343,7 @@ tmpfs_mknod(void *v)
 	enum vtype vt = vap->va_type;
 
 	if (vt != VBLK && vt != VCHR && vt != VFIFO) {
-		vput(dvp);
+		*vpp = NULL;
 		return EINVAL;
 	}
 	return tmpfs_construct_node(dvp, vpp, vap, cnp, NULL);
