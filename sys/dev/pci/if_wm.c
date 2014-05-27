@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.268 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.269 2014/05/27 02:21:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.268 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.269 2014/05/27 02:21:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
 
-#define	WM_MAXTXDMA		round_page(IP_MAXPACKET) /* for TSO */
+#define	WM_MAXTXDMA		 (2 * round_page(IP_MAXPACKET)) /* for TSO */
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
