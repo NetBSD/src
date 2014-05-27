@@ -7,12 +7,10 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
-1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, the Front-Cover texts being (a) (see below), and
 with the Back-Cover Texts being (b) (see below).  A copy of the
@@ -85,9 +83,9 @@ scripts may fail.
 
    <p>To configure GCC:
 
-<pre class="smallexample">        % mkdir <var>objdir</var>
-        % cd <var>objdir</var>
-        % <var>srcdir</var>/configure [<var>options</var>] [<var>target</var>]
+<pre class="smallexample">     % mkdir <var>objdir</var>
+     % cd <var>objdir</var>
+     % <var>srcdir</var>/configure [<var>options</var>] [<var>target</var>]
 </pre>
    <h3 class="heading"><a name="TOC0"></a>Distributor options</h3>
 
@@ -196,6 +194,12 @@ manual.)
 the installation directory for G++ header files.  The default depends
 on other configuration options, and differs between cross and native
 configurations.
+
+          <br><dt><code>--with-specs=</code><var>specs</var><dd>Specify additional command line driver SPECS. 
+This can be useful if you need to turn on a non-standard feature by
+default without modifying the compiler's source code, for instance
+<samp><span class="option">--with-specs=%{!fcommon:%{!fno-common:-fno-common}}</span></samp>. 
+See &ldquo;Spec Files&rdquo; in the main manual
 
      </dl>
 
@@ -312,6 +316,13 @@ ideas of what it is for.  People use it as if it specified where to
 install part of GCC.  Perhaps they make this assumption because
 installing GCC creates the directory.
 
+     <br><dt><code>--with-native-system-header-dir=</code><var>dirname</var><dd>Specifies that <var>dirname</var> is the directory that contains native system
+header files, rather than <samp><span class="file">/usr/include</span></samp>.  This option is most useful
+if you are creating a compiler that should be isolated from the system
+as much as possible.  It is most commonly used with the
+<samp><span class="option">--with-sysroot</span></samp> option and will cause GCC to search
+<var>dirname</var> inside the system root specified by that option.
+
      <br><dt><code>--enable-shared[=</code><var>package</var><code>[,...]]</code><dd>Build shared versions of libraries, if shared libraries are supported on
 the target platform.  Unlike GCC 2.95.x and earlier, shared libraries
 are enabled by default on all platforms that support shared libraries.
@@ -321,7 +332,7 @@ only for the listed packages.  For other packages, only static libraries
 will be built.  Package names currently recognized in the GCC tree are
 &lsquo;<samp><span class="samp">libgcc</span></samp>&rsquo; (also known as &lsquo;<samp><span class="samp">gcc</span></samp>&rsquo;), &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo; (not
 &lsquo;<samp><span class="samp">libstdc++-v3</span></samp>&rsquo;), &lsquo;<samp><span class="samp">libffi</span></samp>&rsquo;, &lsquo;<samp><span class="samp">zlib</span></samp>&rsquo;, &lsquo;<samp><span class="samp">boehm-gc</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">ada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libjava</span></samp>&rsquo; and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;. 
+&lsquo;<samp><span class="samp">ada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libjava</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libgo</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;. 
 Note &lsquo;<samp><span class="samp">libiberty</span></samp>&rsquo; does not support shared libraries at all.
 
      <p>Use <samp><span class="option">--disable-shared</span></samp> to build only static libraries.  Note that
@@ -415,6 +426,19 @@ information normally used on 386 SVR4 platforms; stabs provide a
 workable alternative.  This requires gas and gdb, as the normal SVR4
 tools can not generate or interpret stabs.
 
+     <br><dt><code>--with-tls=</code><var>dialect</var><dd>Specify the default TLS dialect, for systems were there is a choice. 
+For ARM targets, possible values for <var>dialect</var> are <code>gnu</code> or
+<code>gnu2</code>, which select between the original GNU dialect and the GNU TLS
+descriptor-based dialect.
+
+     <br><dt><code>--enable-multiarch</code><dd>Specify whether to enable or disable multiarch support.  The default is
+to check for glibc start files in a multiarch location, and enable it
+if the files are found.  The auto detection is enabled for native builds,
+and for cross builds configured with <samp><span class="option">--with-sysroot</span></samp>, and without
+<samp><span class="option">--with-native-system-header-dir</span></samp>. 
+More documentation about multiarch can be found at
+<a href="http://wiki.debian.org/Multiarch">http://wiki.debian.org/Multiarch</a>.
+
      <br><dt><code>--disable-multilib</code><dd>Specify that multiple target
 libraries to support different target variants, calling
 conventions, etc. should not be built.  The default is to build a
@@ -423,9 +447,7 @@ predefined set of them.
      <p>Some targets provide finer-grained control over which multilibs are built
 (e.g., <samp><span class="option">--disable-softfloat</span></samp>):
           <dl>
-<dt><code>arc-*-elf*</code><dd>biendian.
-
-          <br><dt><code>arm-*-*</code><dd>fpu, 26bit, underscore, interwork, biendian, nofmult.
+<dt><code>arm-*-*</code><dd>fpu, 26bit, underscore, interwork, biendian, nofmult.
 
           <br><dt><code>m68*-*-*</code><dd>softfloat, m68881, m68000, m68020.
 
@@ -437,34 +459,45 @@ sysv, aix.
      </dl>
 
      <br><dt><code>--with-multilib-list=</code><var>list</var><dt><code>--without-multilib-list</code><dd>Specify what multilibs to build. 
-Currently only implemented for sh*-*-*.
+Currently only implemented for sh*-*-* and x86-64-*-linux*.
 
-     <p><var>list</var> is a comma separated list of CPU names.  These must be of the
+          <dl>
+<dt><code>sh*-*-*</code><dd><var>list</var> is a comma separated list of CPU names.  These must be of the
 form <code>sh*</code> or <code>m*</code> (in which case they match the compiler option
 for that processor).  The list should not contain any endian options -
 these are handled by <samp><span class="option">--with-endian</span></samp>.
 
-     <p>If <var>list</var> is empty, then there will be no multilibs for extra
+          <p>If <var>list</var> is empty, then there will be no multilibs for extra
 processors.  The multilib for the secondary endian remains enabled.
 
-     <p>As a special case, if an entry in the list starts with a <code>!</code>
+          <p>As a special case, if an entry in the list starts with a <code>!</code>
 (exclamation point), then it is added to the list of excluded multilibs. 
 Entries of this sort should be compatible with &lsquo;<samp><span class="samp">MULTILIB_EXCLUDES</span></samp>&rsquo;
 (once the leading <code>!</code> has been stripped).
 
-     <p>If <samp><span class="option">--with-multilib-list</span></samp> is not given, then a default set of
+          <p>If <samp><span class="option">--with-multilib-list</span></samp> is not given, then a default set of
 multilibs is selected based on the value of <samp><span class="option">--target</span></samp>.  This is
 usually the complete set of libraries, but some targets imply a more
 specialized subset.
 
-     <p>Example 1: to configure a compiler for SH4A only, but supporting both
+          <p>Example 1: to configure a compiler for SH4A only, but supporting both
 endians, with little endian being the default:
-     <pre class="smallexample">          --with-cpu=sh4a --with-endian=little,big --with-multilib-list=
+          <pre class="smallexample">               --with-cpu=sh4a --with-endian=little,big --with-multilib-list=
 </pre>
-     <p>Example 2: to configure a compiler for both SH4A and SH4AL-DSP, but with
+          <p>Example 2: to configure a compiler for both SH4A and SH4AL-DSP, but with
 only little endian SH4AL:
-     <pre class="smallexample">          --with-cpu=sh4a --with-endian=little,big --with-multilib-list=sh4al,!mb/m4al
+          <pre class="smallexample">               --with-cpu=sh4a --with-endian=little,big \
+               --with-multilib-list=sh4al,!mb/m4al
 </pre>
+          <br><dt><code>x86-64-*-linux*</code><dd><var>list</var> is a comma separated list of <code>m32</code>, <code>m64</code> and
+<code>mx32</code> to enable 32-bit, 64-bit and x32 run-time libraries,
+respectively.  If <var>list</var> is empty, then there will be no multilibs
+and only the default run-time library will be enabled.
+
+          <p>If <samp><span class="option">--with-multilib-list</span></samp> is not given, then only 32-bit and
+64-bit run-time libraries will be enabled. 
+</dl>
+
      <br><dt><code>--with-endian=</code><var>endians</var><dd>Specify what endians to use. 
 Currently only implemented for sh*-*-*.
 
@@ -498,24 +531,15 @@ like C++ and Java.  The possibilities for <var>lib</var> are:
           <dl>
 <dt><code>aix</code><dd>AIX thread support. 
 <br><dt><code>dce</code><dd>DCE thread support. 
-<br><dt><code>gnat</code><dd>Ada tasking support.  For non-Ada programs, this setting is equivalent
-to &lsquo;<samp><span class="samp">single</span></samp>&rsquo;.  When used in conjunction with the Ada run time, it
-causes GCC to use the same thread primitives as Ada uses.  This option
-is necessary when using both Ada and the back end exception handling,
-which is the default for most Ada targets. 
-<br><dt><code>mach</code><dd>Generic MACH thread support, known to work on NeXTSTEP.  (Please note
-that the file needed to support this configuration, <samp><span class="file">gthr-mach.h</span></samp>, is
-missing and thus this setting will cause a known bootstrap failure.) 
+<br><dt><code>lynx</code><dd>LynxOS thread support. 
+<br><dt><code>mipssde</code><dd>MIPS SDE thread support. 
 <br><dt><code>no</code><dd>This is an alias for &lsquo;<samp><span class="samp">single</span></samp>&rsquo;. 
 <br><dt><code>posix</code><dd>Generic POSIX/Unix98 thread support. 
-<br><dt><code>posix95</code><dd>Generic POSIX/Unix95 thread support. 
 <br><dt><code>rtems</code><dd>RTEMS thread support. 
 <br><dt><code>single</code><dd>Disable thread support, should work for all platforms. 
-<br><dt><code>solaris</code><dd>Sun Solaris 2/Unix International thread support.  Only use this if you
-really need to use this legacy API instead of the default, &lsquo;<samp><span class="samp">posix</span></samp>&rsquo;. 
+<br><dt><code>tpf</code><dd>TPF thread support. 
 <br><dt><code>vxworks</code><dd>VxWorks thread support. 
 <br><dt><code>win32</code><dd>Microsoft Win32 API thread support. 
-<br><dt><code>nks</code><dd>Novell Kernel Services thread support. 
 </dl>
 
      <br><dt><code>--enable-tls</code><dd>Specify that the target supports TLS (Thread Local Storage).  Usually
@@ -545,9 +569,14 @@ of the arguments depend on the target.
      <br><dt><code>--with-mode=</code><var>mode</var><dd>Specify if the compiler should default to <samp><span class="option">-marm</span></samp> or <samp><span class="option">-mthumb</span></samp>. 
 This option is only supported on ARM targets.
 
-     <br><dt><code>--with-fpmath=sse</code><dd>Specify if the compiler should default to <samp><span class="option">-msse2</span></samp> and
-<samp><span class="option">-mfpmath=sse</span></samp>.  This option is only supported on i386 and
-x86-64 targets.
+     <br><dt><code>--with-stack-offset=</code><var>num</var><dd>This option sets the default for the -mstack-offset=<var>num</var> option,
+and will thus generally also control the setting of this option for
+libraries.  This option is only supported on Epiphany targets.
+
+     <br><dt><code>--with-fpmath=</code><var>isa</var><dd>This options sets <samp><span class="option">-mfpmath=sse</span></samp> by default and specifies the default
+ISA for floating-point arithmetics.  You can select either &lsquo;<samp><span class="samp">sse</span></samp>&rsquo; which
+enables <samp><span class="option">-msse2</span></samp> or &lsquo;<samp><span class="samp">avx</span></samp>&rsquo; which enables <samp><span class="option">-mavx</span></samp> by default. 
+This option is only supported on i386 and x86-64 targets.
 
      <br><dt><code>--with-divide=</code><var>type</var><dd>Specify how the compiler should generate code for checking for
 division by zero.  This option is only supported on the MIPS target. 
@@ -586,6 +615,9 @@ destructors, but requires __cxa_atexit in libc.  This option is currently
 only available on systems with GNU libc.  When enabled, this will cause
 <samp><span class="option">-fuse-cxa-atexit</span></samp> to be passed by default.
 
+     <br><dt><code>--enable-gnu-indirect-function</code><dd>Define if you want to enable the <code>ifunc</code> attribute.  This option is
+currently only available on systems with GNU libc on certain targets.
+
      <br><dt><code>--enable-target-optspace</code><dd>Specify that target
 libraries should be optimized for code space instead of code speed. 
 This is the default for the m32r platform.
@@ -602,9 +634,6 @@ destructors.  Option <samp><span class="option">--disable-initfini-array</span><
 opposite effect.  If neither option is specified, the configure script
 will try to guess whether the <code>.init_array</code> and
 <code>.fini_array</code> sections are supported and, if they are, use them.
-
-     <br><dt><code>--enable-build-with-cxx</code><dd>Build GCC using a C++ compiler rather than a C compiler.  This is an
-experimental option which may become the default in a later release.
 
      <br><dt><code>--enable-maintainer-mode</code><dd>The build rules that regenerate the Autoconf and Automake output files as
 well as the GCC master message catalog <samp><span class="file">gcc.pot</span></samp> are normally
@@ -656,15 +685,12 @@ their runtime libraries should be built.  For a list of valid values for
      <pre class="smallexample">          grep language= */config-lang.in
 </pre>
      <p>Currently, you can use any of the following:
-<code>all</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>fortran</code>, <code>java</code>,
-<code>objc</code>, <code>obj-c++</code>. 
+<code>all</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>fortran</code>,
+<code>go</code>, <code>java</code>, <code>objc</code>, <code>obj-c++</code>. 
 Building the Ada compiler has special requirements, see below. 
 If you do not pass this flag, or specify the option <code>all</code>, then all
 default languages available in the <samp><span class="file">gcc</span></samp> sub-tree will be configured. 
-Ada and Objective-C++ are not default languages; the rest are. 
-Re-defining <code>LANGUAGES</code> when calling &lsquo;<samp><span class="samp">make</span></samp>&rsquo; <strong>does not</strong>
-work anymore, as those language sub-directories might not have been
-configured!
+Ada, Go and Objective-C++ are not default languages; the rest are.
 
      <br><dt><code>--enable-stage1-languages=</code><var>lang1</var><code>,</code><var>lang2</var><code>,...</code><dd>Specify that a particular subset of compilers and their runtime
 libraries should be built with the system C compiler during stage 1 of
@@ -688,6 +714,14 @@ do a &lsquo;<samp><span class="samp">make -C gcc gnatlib_and_tools</span></samp>
      <br><dt><code>--disable-libssp</code><dd>Specify that the run-time libraries for stack smashing protection
 should not be built.
 
+     <br><dt><code>--disable-libquadmath</code><dd>Specify that the GCC quad-precision math library should not be built. 
+On some systems, the library is required to be linkable when building
+the Fortran front end, unless <samp><span class="option">--disable-libquadmath-support</span></samp>
+is used.
+
+     <br><dt><code>--disable-libquadmath-support</code><dd>Specify that the Fortran front end and <code>libgfortran</code> do not add
+support for <code>libquadmath</code> on systems supporting it.
+
      <br><dt><code>--disable-libgomp</code><dd>Specify that the run-time libraries used by GOMP should not be built.
 
      <br><dt><code>--with-dwarf2</code><dd>Specify that the compiler should
@@ -702,8 +736,8 @@ useful when you want a bi-arch compiler that defaults to 32-bit, and
 you are building a bi-arch or multi-arch binutils in a combined tree. 
 On mips-linux, this will build a tri-arch compiler (ABI o32/n32/64),
 defaulted to o32. 
-Currently, this option only affects sparc-linux, powerpc-linux, x86-linux
-and mips-linux.
+Currently, this option only affects sparc-linux, powerpc-linux, x86-linux,
+mips-linux and s390-linux.
 
      <br><dt><code>--enable-secureplt</code><dd>This option enables <samp><span class="option">-msecure-plt</span></samp> by default for powerpc-linux. 
 See &ldquo;RS/6000 and PowerPC Options&rdquo; in the main manual
@@ -783,10 +817,6 @@ without optimization.
 allocation is gathered.  This information is printed when using
 <samp><span class="option">-fmem-report</span></samp>.
 
-     <br><dt><code>--with-gc</code><dt><code>--with-gc=</code><var>choice</var><dd>With this option you can specify the garbage collector implementation
-used during the compilation process.  <var>choice</var> can be one of
-&lsquo;<samp><span class="samp">page</span></samp>&rsquo; and &lsquo;<samp><span class="samp">zone</span></samp>&rsquo;, where &lsquo;<samp><span class="samp">page</span></samp>&rsquo; is the default.
-
      <br><dt><code>--enable-nls</code><dt><code>--disable-nls</code><dd>The <samp><span class="option">--enable-nls</span></samp> option enables Native Language Support (NLS),
 which lets GCC output diagnostics in languages other than American
 English.  Native Language Support is enabled by default if not doing a
@@ -834,10 +864,11 @@ When neither of these configure options are used, the default will be
 128-bit <code>long double</code> when built against GNU C Library 2.4 and later,
 64-bit <code>long double</code> otherwise.
 
-     <br><dt><code>--with-gmp=</code><var>pathname</var><dt><code>--with-gmp-include=</code><var>pathname</var><dt><code>--with-gmp-lib=</code><var>pathname</var><dt><code>--with-mpfr=</code><var>pathname</var><dt><code>--with-mpfr-include=</code><var>pathname</var><dt><code>--with-mpfr-lib=</code><var>pathname</var><dt><code>--with-mpc=</code><var>pathname</var><dt><code>--with-mpc-include=</code><var>pathname</var><dt><code>--with-mpc-lib=</code><var>pathname</var><dd>If you do not have GMP (the GNU Multiple Precision library), the MPFR
+     <br><dt><code>--with-gmp=</code><var>pathname</var><dt><code>--with-gmp-include=</code><var>pathname</var><dt><code>--with-gmp-lib=</code><var>pathname</var><dt><code>--with-mpfr=</code><var>pathname</var><dt><code>--with-mpfr-include=</code><var>pathname</var><dt><code>--with-mpfr-lib=</code><var>pathname</var><dt><code>--with-mpc=</code><var>pathname</var><dt><code>--with-mpc-include=</code><var>pathname</var><dt><code>--with-mpc-lib=</code><var>pathname</var><dd>If you want to build GCC but do not have the GMP library, the MPFR
 library and/or the MPC library installed in a standard location and
-you want to build GCC, you can explicitly specify the directory where
-they are installed (&lsquo;<samp><span class="samp">--with-gmp=</span><var>gmpinstalldir</var></samp>&rsquo;,
+do not have their sources present in the GCC source tree then you
+can explicitly specify the directory where they are installed
+(&lsquo;<samp><span class="samp">--with-gmp=</span><var>gmpinstalldir</var></samp>&rsquo;,
 &lsquo;<samp><span class="samp">--with-mpfr=</span><var>mpfrinstalldir</var></samp>&rsquo;,
 &lsquo;<samp><span class="samp">--with-mpc=</span><var>mpcinstalldir</var></samp>&rsquo;).  The
 <samp><span class="option">--with-gmp=</span><var>gmpinstalldir</var></samp> option is shorthand for
@@ -850,21 +881,30 @@ they are installed (&lsquo;<samp><span class="samp">--with-gmp=</span><var>gmpin
 <samp><span class="option">--with-mpc-lib=</span><var>mpcinstalldir</var><span class="option">/lib</span></samp> and
 <samp><span class="option">--with-mpc-include=</span><var>mpcinstalldir</var><span class="option">/include</span></samp>.  If these
 shorthand assumptions are not correct, you can use the explicit
-include and lib options directly.
+include and lib options directly.  You might also need to ensure the
+shared libraries can be found by the dynamic linker when building and
+using GCC, for example by setting the runtime shared library path
+variable (<samp><span class="env">LD_LIBRARY_PATH</span></samp> on GNU/Linux and Solaris systems).
 
-     <br><dt><code>--with-ppl=</code><var>pathname</var><dt><code>--with-ppl-include=</code><var>pathname</var><dt><code>--with-ppl-lib=</code><var>pathname</var><dt><code>--with-cloog=</code><var>pathname</var><dt><code>--with-cloog-include=</code><var>pathname</var><dt><code>--with-cloog-lib=</code><var>pathname</var><dd>If you do not have PPL (the Parma Polyhedra Library) and the CLooG
+     <p>These flags are applicable to the host platform only.  When building
+a cross compiler, they will not be used to configure target libraries.
+
+     <br><dt><code>--with-isl=</code><var>pathname</var><dt><code>--with-isl-include=</code><var>pathname</var><dt><code>--with-isl-lib=</code><var>pathname</var><dt><code>--with-cloog=</code><var>pathname</var><dt><code>--with-cloog-include=</code><var>pathname</var><dt><code>--with-cloog-lib=</code><var>pathname</var><dd>If you do not have ISL and the CLooG
 libraries installed in a standard location and you want to build GCC,
 you can explicitly specify the directory where they are installed
-(&lsquo;<samp><span class="samp">--with-ppl=</span><var>pplinstalldir</var></samp>&rsquo;,
+(&lsquo;<samp><span class="samp">--with-isl=</span><var>islinstalldir</var></samp>&rsquo;,
 &lsquo;<samp><span class="samp">--with-cloog=</span><var>clooginstalldir</var></samp>&rsquo;). The
-<samp><span class="option">--with-ppl=</span><var>pplinstalldir</var></samp> option is shorthand for
-<samp><span class="option">--with-ppl-lib=</span><var>pplinstalldir</var><span class="option">/lib</span></samp> and
-<samp><span class="option">--with-ppl-include=</span><var>pplinstalldir</var><span class="option">/include</span></samp>.  Likewise the
+<samp><span class="option">--with-isl=</span><var>islinstalldir</var></samp> option is shorthand for
+<samp><span class="option">--with-isl-lib=</span><var>islinstalldir</var><span class="option">/lib</span></samp> and
+<samp><span class="option">--with-isl-include=</span><var>islinstalldir</var><span class="option">/include</span></samp>.  Likewise the
 <samp><span class="option">--with-cloog=</span><var>clooginstalldir</var></samp> option is shorthand for
 <samp><span class="option">--with-cloog-lib=</span><var>clooginstalldir</var><span class="option">/lib</span></samp> and
 <samp><span class="option">--with-cloog-include=</span><var>clooginstalldir</var><span class="option">/include</span></samp>.  If these
 shorthand assumptions are not correct, you can use the explicit
 include and lib options directly.
+
+     <p>These flags are applicable to the host platform only.  When building
+a cross compiler, they will not be used to configure target libraries.
 
      <br><dt><code>--with-host-libstdcxx=</code><var>linker-args</var><dd>If you are linking with a static copy of PPL, you can use this option
 to specify how the linker should find the standard C++ library used
@@ -884,8 +924,9 @@ of GCC.  These are also used when linking GCC if configured with
 <samp><span class="option">--with-host-libstdcxx</span></samp>, if specified.
 
      <br><dt><code>--with-boot-ldflags=</code><var>flags</var><dd>This option may be used to set linker flags to be used when linking
-stage 2 and later when bootstrapping GCC.  By default no special flags
-are used.
+stage 2 and later when bootstrapping GCC.  If neither &ndash;with-boot-libs
+nor &ndash;with-host-libstdcxx is set to a value, then the default is
+&lsquo;<samp><span class="samp">-static-libstdc++ -static-libgcc</span></samp>&rsquo;.
 
      <br><dt><code>--with-boot-libs=</code><var>libs</var><dd>This option may be used to set libraries to be used when linking stage 2
 and later when bootstrapping GCC.  The default is the argument to
@@ -902,29 +943,29 @@ option), if the linker supports it.  If you specify
 support <samp><span class="option">--build-id</span></samp> option, a warning is issued and the
 <samp><span class="option">--enable-linker-build-id</span></samp> option is ignored.  The default is off.
 
+     <br><dt><code>--with-linker-hash-style=</code><var>choice</var><dd>Tells GCC to pass <samp><span class="option">--hash-style=</span><var>choice</var></samp> option to the
+linker for all final links. <var>choice</var> can be one of
+&lsquo;<samp><span class="samp">sysv</span></samp>&rsquo;, &lsquo;<samp><span class="samp">gnu</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">both</span></samp>&rsquo; where &lsquo;<samp><span class="samp">sysv</span></samp>&rsquo; is the default.
+
      <br><dt><code>--enable-gnu-unique-object</code><dt><code>--disable-gnu-unique-object</code><dd>Tells GCC to use the gnu_unique_object relocation for C++ template
 static data members and inline function local statics.  Enabled by
 default for a native toolchain with an assembler that accepts it and
 GLIBC 2.11 or above, otherwise disabled.
 
-     <br><dt><code>--enable-lto</code><dd>Enable support for link-time optimization (LTO).  This is enabled by
-default if a working libelf implementation is found (see
-<samp><span class="option">--with-libelf</span></samp>).
+     <br><dt><code>--enable-lto</code><dt><code>--disable-lto</code><dd>Enable support for link-time optimization (LTO).  This is enabled by
+default, and may be disabled using <samp><span class="option">--disable-lto</span></samp>.
 
-     <br><dt><code>--with-libelf=</code><var>pathname</var><dt><code>--with-libelf-include=</code><var>pathname</var><dt><code>--with-libelf-lib=</code><var>pathname</var><dd>If you do not have libelf installed in a standard location and you
-want to enable support for link-time optimization (LTO), you can
-explicitly specify the directory where libelf is installed
-(&lsquo;<samp><span class="samp">--with-libelf=</span><var>libelfinstalldir</var></samp>&rsquo;).  The
-<samp><span class="option">--with-libelf=</span><var>libelfinstalldir</var></samp> option is shorthand for
-<samp><span class="option">--with-libelf-include=</span><var>libelfinstalldir</var><span class="option">/include</span></samp>
-<samp><span class="option">--with-libelf-lib=</span><var>libelfinstalldir</var><span class="option">/lib</span></samp>.
+     <br><dt><code>--with-plugin-ld=</code><var>pathname</var><dd>Enable an alternate linker to be used at link-time optimization (LTO)
+link time when <samp><span class="option">-fuse-linker-plugin</span></samp> is enabled. 
+This linker should have plugin support such as gold starting with
+version 2.20 or GNU ld starting with version 2.21. 
+See <samp><span class="option">-fuse-linker-plugin</span></samp> for details.
 
-     <br><dt><code>--enable-gold</code><dd>Enable support for using <samp><span class="command">gold</span></samp> as the linker.  If gold support is
-enabled together with <samp><span class="option">--enable-lto</span></samp>, an additional directory
-<samp><span class="file">lto-plugin</span></samp> will be built.  The code in this directory is a
-plugin for gold that allows the link-time optimizer to extract object
-files with LTO information out of library archives.  See
-<samp><span class="option">-flto</span></samp> and <samp><span class="option">-fwhopr</span></samp> for details. 
+     <br><dt><code>--enable-canonical-system-headers</code><dt><code>--disable-canonical-system-headers</code><dd>Enable system header path canonicalization for <samp><span class="file">libcpp</span></samp>.  This can
+produce shorter header file paths in diagnostics and dependency output
+files, but these changed header paths may conflict with some compilation
+environments.  Enabled by default, and may be disabled using
+<samp><span class="option">--disable-canonical-system-headers</span></samp>. 
 </dl>
 
 <h4 class="subheading"><a name="TOC3"></a>Cross-Compiler-Specific Options</h4>
@@ -932,10 +973,10 @@ files with LTO information out of library archives.  See
 <p>The following options only apply to building cross compilers.
 
      <dl>
-<dt><code>--with-sysroot</code><dt><code>--with-sysroot=</code><var>dir</var><dd>Tells GCC to consider <var>dir</var> as the root of a tree that contains a
-(subset of) the root filesystem of the target operating system. 
+<dt><code>--with-sysroot</code><dt><code>--with-sysroot=</code><var>dir</var><dd>Tells GCC to consider <var>dir</var> as the root of a tree that contains
+(a subset of) the root filesystem of the target operating system. 
 Target system headers, libraries and run-time object files will be
-searched in there.  More specifically, this acts as if
+searched for in there.  More specifically, this acts as if
 <samp><span class="option">--sysroot=</span><var>dir</var></samp> was added to the default options of the built
 compiler.  The specified directory is not copied into the
 install tree, unlike the options <samp><span class="option">--with-headers</span></samp> and
@@ -950,6 +991,10 @@ target libraries (which runs on the build system) and the compiler newly
 installed with <code>make install</code>; it does not affect the compiler which is
 used to build GCC itself.
 
+     <p>If you specify the <samp><span class="option">--with-native-system-header-dir=</span><var>dirname</var></samp>
+option then the compiler will search that directory within <var>dirname</var> for
+native system headers rather than the default <samp><span class="file">/usr/include</span></samp>.
+
      <br><dt><code>--with-build-sysroot</code><dt><code>--with-build-sysroot=</code><var>dir</var><dd>Tells GCC to consider <var>dir</var> as the system root (see
 <samp><span class="option">--with-sysroot</span></samp>) while building target libraries, instead of
 the directory specified with <samp><span class="option">--with-sysroot</span></samp>.  This option is
@@ -961,6 +1006,10 @@ which you are installing GCC and your target libraries.
      <p>This option affects the system root for the compiler used to build
 target libraries (which runs on the build system); it does not affect
 the compiler which is used to build GCC itself.
+
+     <p>If you specify the <samp><span class="option">--with-native-system-header-dir=</span><var>dirname</var></samp>
+option then the compiler will search that directory within <var>dirname</var> for
+native system headers rather than the default <samp><span class="file">/usr/include</span></samp>.
 
      <br><dt><code>--with-headers</code><dt><code>--with-headers=</code><var>dir</var><dd>Deprecated in favor of <samp><span class="option">--with-sysroot</span></samp>. 
 Specifies that target headers are available when building a cross compiler. 
@@ -986,6 +1035,15 @@ effect.
 being used as the target C library.  This causes <code>__eprintf</code> to be
 omitted from <samp><span class="file">libgcc.a</span></samp> on the assumption that it will be provided by
 &lsquo;<samp><span class="samp">newlib</span></samp>&rsquo;.
+
+     <br><dt><code>--with-avrlibc</code><dd>Specifies that &lsquo;<samp><span class="samp">AVR-Libc</span></samp>&rsquo; is
+being used as the target C library.  This causes float support
+functions like <code>__addsf3</code> to be omitted from <samp><span class="file">libgcc.a</span></samp> on
+the assumption that it will be provided by <samp><span class="file">libm.a</span></samp>.  For more
+technical details, cf. <a href="http://gcc.gnu.org/PR54461">PR54461</a>. 
+This option is only supported for the AVR target.  It is not supported for
+RTEMS configurations, which currently use newlib.  The option is
+supported since version 4.7.2 and is the default in 4.8.0 and newer.
 
      <br><dt><code>--with-build-time-tools=</code><var>dir</var><dd>Specifies where to find the set of target tools (assembler, linker, etc.) 
 that will be used while building GCC itself.  This option can be useful
@@ -1147,6 +1205,9 @@ not specified, then the Python modules are installed in $(prefix)/share/python.
 
      <br><dt><code>--enable-browser-plugin</code><dd>Build the gcjwebplugin web browser plugin.
 
+     <br><dt><code>--enable-static-libjava</code><dd>Build static libraries in libjava. The default is to only build shared
+libraries.
+
           <dl>
 <dt><code>ansi</code><dd>Use the single-byte <code>char</code> and the Win32 A functions natively,
 translating to and from UNICODE when using these functions.  If
@@ -1192,6 +1253,29 @@ comma (i.e. <samp><span class="option">--enable-java-awt=gtk,xlib</span></samp>)
      <br><dt><code>--disable-libarttest</code><dd>Do not try to compile and run a test libart program.
 
 </dl>
+
+<h5 class="subsubheading"><a name="TOC7"></a>Overriding <samp><span class="command">configure</span></samp> test results</h5>
+
+<p>Sometimes, it might be necessary to override the result of some
+<samp><span class="command">configure</span></samp> test, for example in order to ease porting to a new
+system or work around a bug in a test.  The toplevel <samp><span class="command">configure</span></samp>
+script provides three variables for this:
+
+     <dl>
+<dt><code>build_configargs</code><dd><a name="index-g_t_0040code_007bbuild_005fconfigargs_007d-3"></a>The contents of this variable is passed to all build <samp><span class="command">configure</span></samp>
+scripts.
+
+     <br><dt><code>host_configargs</code><dd><a name="index-g_t_0040code_007bhost_005fconfigargs_007d-4"></a>The contents of this variable is passed to all host <samp><span class="command">configure</span></samp>
+scripts.
+
+     <br><dt><code>target_configargs</code><dd><a name="index-g_t_0040code_007btarget_005fconfigargs_007d-5"></a>The contents of this variable is passed to all target <samp><span class="command">configure</span></samp>
+scripts.
+
+   </dl>
+
+   <p>In order to avoid shell and <samp><span class="command">make</span></samp> quoting issues for complex
+overrides, you can pass a setting for <samp><span class="env">CONFIG_SITE</span></samp> and set
+variables in the site file.
 
    <p><hr />
 <p><a href="./index.html">Return to the GCC Installation page</a>

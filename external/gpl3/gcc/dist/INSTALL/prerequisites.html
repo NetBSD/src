@@ -7,12 +7,10 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997,
-1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, the Front-Cover texts being (a) (see below), and
 with the Back-Cover Texts being (b) (see below).  A copy of the
@@ -50,13 +48,20 @@ described below.
 <h3 class="heading"><a name="TOC0"></a>Tools/packages necessary for building GCC</h3>
 
      <dl>
-<dt>ISO C90 compiler<dd>Necessary to bootstrap GCC, although versions of GCC prior
-to 3.4 also allow bootstrapping with a traditional (K&amp;R) C compiler.
+<dt>ISO C++98 compiler<dd>Necessary to bootstrap GCC, although versions of GCC prior
+to 4.8 also allow bootstrapping with a ISO C89 compiler and versions
+of GCC prior to 3.4 also allow bootstrapping with a traditional
+(K&amp;R) C compiler.
 
      <p>To build all languages in a cross-compiler or other configuration where
 3-stage bootstrap is not performed, you need to start with an existing
-GCC binary (version 2.95 or later) because source code for language
+GCC binary (version 3.4 or later) because source code for language
 frontends other than C might use GCC extensions.
+
+     <p>Note that to bootstrap GCC with versions of GCC earlier than 3.4, you
+may need to use <samp><span class="option">--disable-stage1-checking</span></samp>, though
+bootstrapping the compiler with such earlier compilers is strongly
+discouraged.
 
      <br><dt>GNAT<dd>
 In order to build the Ada compiler (GNAT) you must already have GNAT
@@ -103,63 +108,79 @@ Necessary (only on some platforms) to untar the source code.  Many
 systems' <samp><span class="command">tar</span></samp> programs will also work, only try GNU
 <samp><span class="command">tar</span></samp> if you have problems.
 
-     <br><dt>GNU Multiple Precision Library (GMP) version 4.3.2 (or later)<dd>
-Necessary to build GCC.  If you do not have it installed in your
-library search path, you will have to configure with the
-<samp><span class="option">--with-gmp</span></samp> configure option.  See also <samp><span class="option">--with-gmp-lib</span></samp>
-and <samp><span class="option">--with-gmp-include</span></samp>.  Alternatively, if a GMP source
-distribution is found in a subdirectory of your GCC sources named
-<samp><span class="file">gmp</span></samp>, it will be built together with GCC.
+     <br><dt>Perl version 5.6.1 (or later)<dd>
+Necessary when targeting Darwin, building &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;,
+and not using <samp><span class="option">--disable-symvers</span></samp>. 
+Necessary when targeting Solaris 2 with Sun <samp><span class="command">ld</span></samp> and not using
+<samp><span class="option">--disable-symvers</span></samp>.  The bundled <samp><span class="command">perl</span></samp> in Solaris&nbsp;8
+and up works.
 
-     <br><dt>MPFR Library version 2.4.2 (or later)<dd>
-Necessary to build GCC.  It can be downloaded from
-<a href="http://www.mpfr.org/">http://www.mpfr.org/</a>.  The <samp><span class="option">--with-mpfr</span></samp> configure
-option should be used if your MPFR Library is not installed in your
-default library search path.  See also <samp><span class="option">--with-mpfr-lib</span></samp> and
-<samp><span class="option">--with-mpfr-include</span></samp>.  Alternatively, if a MPFR source
-distribution is found in a subdirectory of your GCC sources named
-<samp><span class="file">mpfr</span></samp>, it will be built together with GCC.
-
-     <br><dt>MPC Library version 0.8.1 (or later)<dd>
-Necessary to build GCC.  It can be downloaded from
-<a href="http://www.multiprecision.org/">http://www.multiprecision.org/</a>.  The <samp><span class="option">--with-mpc</span></samp>
-configure option should be used if your MPC Library is not installed
-in your default library search path.  See also <samp><span class="option">--with-mpc-lib</span></samp>
-and <samp><span class="option">--with-mpc-include</span></samp>.  Alternatively, if an MPC source
-distribution is found in a subdirectory of your GCC sources named
-<samp><span class="file">mpc</span></samp>, it will be built together with GCC.
-
-     <br><dt>Parma Polyhedra Library (PPL) version 0.10<dd>
-Necessary to build GCC with the Graphite loop optimizations. 
-It can be downloaded from <a href="http://www.cs.unipr.it/ppl/Download/">http://www.cs.unipr.it/ppl/Download/</a>.
-
-     <p>The <samp><span class="option">--with-ppl</span></samp> configure option should be used if PPL is not
-installed in your default library search path.
-
-     <br><dt>CLooG-PPL version 0.15<dd>
-Necessary to build GCC with the Graphite loop optimizations.  It can
-be downloaded from <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a>. 
-The code in <samp><span class="file">cloog-ppl-0.15.tar.gz</span></samp> comes from a branch of CLooG
-available from <a href="http://repo.or.cz/w/cloog-ppl.git">http://repo.or.cz/w/cloog-ppl.git</a>.  CLooG-PPL
-should be configured with <samp><span class="option">--with-ppl</span></samp>.
-
-     <p>The <samp><span class="option">--with-cloog</span></samp> configure option should be used if CLooG is
-not installed in your default library search path.
+     <p>Necessary when regenerating <samp><span class="file">Makefile</span></samp> dependencies in libiberty. 
+Necessary when regenerating <samp><span class="file">libiberty/functions.texi</span></samp>. 
+Necessary when generating manpages from Texinfo manuals. 
+Used by various scripts to generate some files included in SVN (mainly
+Unicode-related and rarely changing) from source tables.
 
      <br><dt><samp><span class="command">jar</span></samp>, or InfoZIP (<samp><span class="command">zip</span></samp> and <samp><span class="command">unzip</span></samp>)<dd>
 Necessary to build libgcj, the GCJ runtime.
 
-     <br><dt>libelf version 0.8.12 (or later)<dd>
-Necessary to build link-time optimization (LTO) support.  It can be
-downloaded from <a href="http://www.mr511.de/software/libelf-0.8.12.tar.gz">http://www.mr511.de/software/libelf-0.8.12.tar.gz</a>,
-though it is commonly available in several systems.  The versions in
-IRIX 5 and 6 don't work since they lack <samp><span class="file">gelf.h</span></samp>.  The version in
-Solaris 2 does work.
-
-     <p>The <samp><span class="option">--with-libelf</span></samp> configure option should be used if libelf is
-not installed in your default library search patch.
-
 </dl>
+
+   <p>Several support libraries are necessary to build GCC, some are required,
+others optional.  While any sufficiently new version of required tools
+usually work, library requirements are generally stricter.  Newer
+versions may work in some cases, but it's safer to use the exact
+versions documented.  We appreciate bug reports about problems with
+newer versions, though.  If your OS vendor provides packages for the
+support libraries then using those packages may be the simplest way to
+install the libraries.
+
+     <dl>
+<dt>GNU Multiple Precision Library (GMP) version 4.3.2 (or later)<dd>
+Necessary to build GCC.  If a GMP source distribution is found in a
+subdirectory of your GCC sources named <samp><span class="file">gmp</span></samp>, it will be built
+together with GCC.  Alternatively, if GMP is already installed but it
+is not in your library search path, you will have to configure with the
+<samp><span class="option">--with-gmp</span></samp> configure option.  See also <samp><span class="option">--with-gmp-lib</span></samp>
+and <samp><span class="option">--with-gmp-include</span></samp>.
+
+     <br><dt>MPFR Library version 2.4.2 (or later)<dd>
+Necessary to build GCC.  It can be downloaded from
+<a href="http://www.mpfr.org/">http://www.mpfr.org/</a>.  If an MPFR source distribution is found
+in a subdirectory of your GCC sources named <samp><span class="file">mpfr</span></samp>, it will be
+built together with GCC.  Alternatively, if MPFR is already installed
+but it is not in your default library search path, the
+<samp><span class="option">--with-mpfr</span></samp> configure option should be used.  See also
+<samp><span class="option">--with-mpfr-lib</span></samp> and <samp><span class="option">--with-mpfr-include</span></samp>.
+
+     <br><dt>MPC Library version 0.8.1 (or later)<dd>
+Necessary to build GCC.  It can be downloaded from
+<a href="http://www.multiprecision.org/">http://www.multiprecision.org/</a>.  If an MPC source distribution
+is found in a subdirectory of your GCC sources named <samp><span class="file">mpc</span></samp>, it
+will be built together with GCC.  Alternatively, if MPC is already
+installed but it is not in your default library search path, the
+<samp><span class="option">--with-mpc</span></samp> configure option should be used.  See also
+<samp><span class="option">--with-mpc-lib</span></samp> and <samp><span class="option">--with-mpc-include</span></samp>.
+
+     <br><dt>ISL Library version 0.11.1<dd>
+Necessary to build GCC with the Graphite loop optimizations. 
+It can be downloaded from <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a>
+as <samp><span class="file">isl-0.11.1.tar.bz2</span></samp>.
+
+     <p>The <samp><span class="option">--with-isl</span></samp> configure option should be used if ISL is not
+installed in your default library search path.
+
+     <br><dt>CLooG 0.18.0<dd>
+Necessary to build GCC with the Graphite loop optimizations.  It can be
+downloaded from <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a> as
+<samp><span class="file">cloog-0.18.0.tar.gz</span></samp>.  The <samp><span class="option">--with-cloog</span></samp> configure option should
+be used if CLooG is not installed in your default library search path. 
+CLooG needs to be built against ISL 0.11.1.  Use <samp><span class="option">--with-isl=system</span></samp>
+to direct CLooG to pick up an already installed ISL, otherwise it will use
+ISL 0.11.1 as bundled with CLooG.  CLooG needs to be configured to use GMP
+internally, use <samp><span class="option">--with-bits=gmp</span></samp> to direct it to do that.
+
+   </dl>
 
 <h3 class="heading"><a name="TOC1"></a>Tools/packages necessary for modifying GCC</h3>
 
@@ -230,15 +251,6 @@ DVI or PDF files, respectively.
 Necessary to access the SVN repository.  Public releases and weekly
 snapshots of the development sources are also available via FTP.
 
-     <br><dt>Perl version 5.6.1 (or later)<dd>
-Necessary when regenerating <samp><span class="file">Makefile</span></samp> dependencies in libiberty. 
-Necessary when regenerating <samp><span class="file">libiberty/functions.texi</span></samp>. 
-Necessary when generating manpages from Texinfo manuals. 
-Necessary when targetting Darwin, building libstdc++,
-and not using <samp><span class="option">--disable-symvers</span></samp>. 
-Used by various scripts to generate some files included in SVN (mainly
-Unicode-related and rarely changing) from source tables.
-
      <br><dt>GNU diffutils version 2.7 (or later)<dd>
 Useful when submitting patches for the GCC source code.
 
@@ -258,7 +270,7 @@ the GCC-specific entry point.  You can download a suitable jar from
      <br><dt>antlr.jar version 2.7.1 (or later)<dt>antlr binary<dd>
 If you wish to build the <samp><span class="command">gjdoc</span></samp> binary in libjava, you will
 need to have an <samp><span class="file">antlr.jar</span></samp> library available. The library is
-searched in system locations but can be configured with
+searched for in system locations but can be specified with
 <samp><span class="option">--with-antlr-jar=</span></samp> instead.  When configuring with
 <samp><span class="option">--enable-java-maintainer-mode</span></samp>, you will need to have one of
 the executables named <samp><span class="command">cantlr</span></samp>, <samp><span class="command">runantlr</span></samp> or
