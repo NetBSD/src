@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.11 2014/05/20 10:04:38 zafer Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12 2014/05/27 13:44:25 ryoon Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.11 2014/05/20 10:04:38 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12 2014/05/27 13:44:25 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -175,8 +175,8 @@ static const struct usb_devno upgt_devs_2[] = {
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG },
 	{ USB_VENDOR_USR,		USB_PRODUCT_USR_USR5422 },
 	{ USB_VENDOR_WISTRONNEWEB,	USB_PRODUCT_WISTRONNEWEB_UR045G },
-	{ USB_VENDOR_XYRATEX,		USB_PRODUCT_XYRATEX_PRISM_GT_1 },
-	{ USB_VENDOR_XYRATEX,		USB_PRODUCT_XYRATEX_PRISM_GT_2 },
+	{ USB_VENDOR_CONEXANT,		USB_PRODUCT_CONEXANT_PRISM_GT_1 },
+	{ USB_VENDOR_CONEXANT,		USB_PRODUCT_CONEXANT_PRISM_GT_2 },
 	{ USB_VENDOR_ZCOM,		USB_PRODUCT_ZCOM_MD40900 },
 	{ USB_VENDOR_ZCOM,		USB_PRODUCT_ZCOM_XG703A }
 };
