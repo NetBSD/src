@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.92 2014/05/27 16:10:33 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.93 2014/05/27 16:26:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -618,6 +618,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSI_MDATA64		0xC	/* 64-bit Message Data Register
 					 * offset
 					 */
+#define	PCI_MSI_MASK		0x10	/* Vector Mask register */
+#define	PCI_MSI_PENDING		0x14	/* Vector Pending register */
 
 #define	PCI_MSI_CTL_MASK	__BITS(31, 16)
 #define	PCI_MSI_CTL_PERVEC_MASK	__SHIFTIN(__BIT(8), PCI_MSI_CTL_MASK)
@@ -940,6 +942,7 @@ typedef u_int8_t pci_revision_t;
  * MSIX
  */
 
+#define PCI_MSIX_CTL	0x00
 #define	PCI_MSIX_CTL_ENABLE	0x80000000
 #define	PCI_MSIX_CTL_FUNCMASK	0x40000000
 #define	PCI_MSIX_CTL_TBLSIZE_MASK 0x07ff0000
@@ -949,11 +952,13 @@ typedef u_int8_t pci_revision_t;
 /*
  * 2nd DWORD is the Table Offset
  */
+#define	PCI_MSIX_TBLOFFSET	0x04
 #define	PCI_MSIX_TBLOFFSET_MASK	0xfffffff8
 #define	PCI_MSIX_TBLBIR_MASK	0x00000007
 /*
  * 3rd DWORD is the Pending Bitmap Array Offset
  */
+#define	PCI_MSIX_PBAOFFSET	0x08
 #define	PCI_MSIX_PBAOFFSET_MASK	0xfffffff8
 #define	PCI_MSIX_PBABIR_MASK	0x00000007
 

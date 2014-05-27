@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.119 2014/05/25 14:56:46 njoly Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.120 2014/05/27 16:26:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.119 2014/05/25 14:56:46 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.120 2014/05/27 16:26:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1690,7 +1690,30 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	/* Slot Status 2 */
 }
 
-/* XXX pci_conf_print_msix_cap */
+static void
+pci_conf_print_msix_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg;
+
+	printf("\n  MSI-X Capability Register\n");
+
+	reg = regs[o2i(capoff + PCI_MSIX_CTL)];
+	printf("    Message Control register: 0x%04x\n",
+	    (reg >> 16) & 0xff);
+	printf("      Table Size: %d\n",PCI_MSIX_CTL_TBLSIZE(reg));
+	onoff("Function Mask", reg, PCI_MSIX_CTL_FUNCMASK);
+	onoff("MSI-X Enable", reg, PCI_MSIX_CTL_ENABLE);
+	reg = regs[o2i(capoff + PCI_MSIX_TBLOFFSET)];
+	printf("    Table offset register: 0x%08x\n", reg);
+	printf("      Table offset: %08x\n", reg & PCI_MSIX_TBLOFFSET_MASK);
+	printf("      BIR: 0x%x\n", reg & PCI_MSIX_TBLBIR_MASK);
+	reg = regs[o2i(capoff + PCI_MSIX_PBAOFFSET)];
+	printf("    Pending bit array register: 0x%08x\n", reg);
+	printf("      Pending bit array offset: %08x\n",
+	    reg & PCI_MSIX_PBAOFFSET_MASK);
+	printf("      BIR: 0x%x\n", reg & PCI_MSIX_PBABIR_MASK);
+}
+
 /* XXX pci_conf_print_sata_cap */
 static void
 pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
@@ -1723,6 +1746,7 @@ pci_conf_print_caplist(
 	int off;
 	pcireg_t rval;
 	int pcie_off = -1, pcipm_off = -1, msi_off = -1, vendspec_off = -1;
+	int msix_off = -1;
 	int debugport_off = -1, subsystem_off = -1, pciaf_off = -1;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
@@ -1795,6 +1819,7 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_MSIX:
 			printf("MSI-X");
+			msix_off = off;
 			break;
 		case PCI_CAP_SATA:
 			printf("SATA");
@@ -1830,7 +1855,8 @@ pci_conf_print_caplist(
 	/* XXX SECURE */
 	if (pcie_off != -1)
 		pci_conf_print_pcie_cap(regs, pcie_off);
-	/* XXX MSIX */
+	if (msix_off != -1)
+		pci_conf_print_msix_cap(regs, msix_off);
 	/* XXX SATA */
 	if (pciaf_off != -1)
 		pci_conf_print_pciaf_cap(regs, pciaf_off);
