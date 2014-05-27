@@ -905,9 +905,24 @@ expand_builtin_setjmp_receiver (rtx receiver_label ATTRIBUTE_UNUSED)
   if (! HAVE_nonlocal_goto)
 #endif
     {
+      /* First adjust our frame pointer to its actual value.  It was
+	 previously set to the start of the virtual area corresponding to
+	 the stacked variables when we branched here and now needs to be
+	 adjusted to the actual hardware fp value.
+
+	 Assignments to virtual registers are converted by
+	 instantiate_virtual_regs into the corresponding assignment
+	 to the underlying register (fp in this case) that makes
+	 the original assignment true.
+	 So the following insn will actually be decrementing fp by
+	 STARTING_FRAME_OFFSET.  */
       emit_move_insn (virtual_stack_vars_rtx, hard_frame_pointer_rtx);
-      /* This might change the hard frame pointer in ways that aren't
-	 apparent to early optimization passes, so force a clobber.  */
+
+      /* Restoring the frame pointer also modifies the hard frame pointer.
+	 Mark it used (so that the previous assignment remains live once
+	 the frame pointer is eliminated) and clobbered (to represent the
+	 implicit update from the assignment).  */
+      emit_use (hard_frame_pointer_rtx);
       emit_clobber (hard_frame_pointer_rtx);
     }
 
@@ -948,8 +963,7 @@ expand_builtin_setjmp_receiver (rtx receiver_label ATTRIBUTE_UNUSED)
 
   /* We must not allow the code we just generated to be reordered by
      scheduling.  Specifically, the update of the frame pointer must
-     happen immediately, not later.  Similarly, we must block
-     (frame-related) register values to be used across this code.  */
+     happen immediately, not later.  */
   emit_insn (gen_blockage ());
 }
 
@@ -5861,6 +5875,9 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
   switch (fcode)
     {
     CASE_FLT_FN (BUILT_IN_FABS):
+    case BUILT_IN_FABSD32:
+    case BUILT_IN_FABSD64:
+    case BUILT_IN_FABSD128:
       target = expand_builtin_fabs (exp, target, subtarget);
       if (target)
 	return target;
@@ -10313,6 +10330,9 @@ fold_builtin_1 (location_t loc, tree fndecl, tree arg0, bool ignore)
       return fold_builtin_strlen (loc, type, arg0);
 
     CASE_FLT_FN (BUILT_IN_FABS):
+    case BUILT_IN_FABSD32:
+    case BUILT_IN_FABSD64:
+    case BUILT_IN_FABSD128:
       return fold_builtin_fabs (loc, arg0, type);
 
     case BUILT_IN_ABS:
