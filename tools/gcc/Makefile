@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2014/02/27 20:15:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.67 2014/05/27 09:19:30 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -39,7 +39,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
-			--with-pkgversion="NetBSD nb1 20120916" \
+			--with-pkgversion="NetBSD nb1 20140527" \
 			--with-system-zlib \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
