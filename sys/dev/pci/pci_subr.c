@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.120 2014/05/27 16:26:15 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.121 2014/05/27 16:50:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.120 2014/05/27 16:26:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.121 2014/05/27 16:50:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2043,7 +2043,8 @@ pci_conf_print_type1(
 			printf("      range:  0x%08x-0x%08x\n", base, limit);
 		else
 			printf("      range:  0x%04x-0x%04x\n", base, limit);
-	}
+	} else
+		printf("      range:  not set\n");
 
 	/* Non-prefetchable memory region */
 	rval = regs[o2i(PCI_BRIDGE_MEMORY_REG)];
@@ -2058,6 +2059,8 @@ pci_conf_print_type1(
 		& PCI_BRIDGE_MEMORY_LIMIT_MASK) << 20) | 0x000fffff;
 	if (base < limit)
 		printf("      range:  0x%08x-0x%08x\n", base, limit);
+	else
+		printf("      range:  not set\n");
 
 	/* Prefetchable memory region */
 	rval = regs[o2i(PCI_BRIDGE_PREFETCHMEM_REG)];
@@ -2092,7 +2095,8 @@ pci_conf_print_type1(
 		else
 			printf("      range:  0x%08x-0x%08x\n",
 			    (uint32_t)pbase, (uint32_t)plimit);
-	}
+	} else
+		printf("      range:  not set\n");
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
