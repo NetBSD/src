@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.238 2014/05/27 16:14:03 plunky Exp $
+#	$NetBSD: bsd.sys.mk,v 1.239 2014/05/27 16:16:01 plunky Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -37,7 +37,7 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare
-CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
 CFLAGS+=	-Wa,--fatal-warnings
