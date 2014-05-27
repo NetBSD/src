@@ -1,3 +1,132 @@
+2014-05-22  Release Manager
+
+	* GCC 4.8.3 released.
+
+2014-05-08  Joshua Gay  <jgay@gnu.org>
+
+	PR libstdc++/61117
+	* doc/xml/faq.xml (faq.license.what_restrictions): Replace "open
+	source" with "free software".
+	* doc/html/faq.html: Likewise.
+
+2014-05-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/iostream: Fix URL in comment.
+	* src/c++98/ios_init.cc: Fix path in comment.
+
+2014-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2014-04-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60594
+	* include/std/functional (function::_Callable): Exclude own type
+	from the callable checks.
+	* testsuite/20_util/function/60594.cc: New.
+
+2014-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60497
+	* include/std/tuple (get): Qualify calls to prevent ADL.
+	* testsuite/20_util/tuple/60497.cc: New.
+
+2012-04-05  Dominique d'Humieres  <dominiq@lps.ens.fr>
+	    Jack Howarth <howarth@bromo.med.uc.edu>
+
+	PR target/54407
+	* 30_threads/condition_variable/54185.cc: Skip for darwin < 11.
+
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline
+	2013-11-15  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* configure: Regenerate.
+
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline r204808:
+
+	2013-11-14  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* scripts/extract_symvers.in: Ignore <localentry: > fields
+	in readelf --symbols output.
+
+2014-03-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/59548
+	* include/debug/safe_unordered_base.h (_Safe_unordered_container_base):
+	Define copy and move constructors that handle iterators correctly.
+	* testsuite/23_containers/unordered_map/59548.cc: New.
+
+2014-03-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60658
+	* include/bits/atomic_base.h (__atomic_base<_PTp*>::is_lock_free()):
+	Use sizeof pointer type not the element type.
+	* testsuite/29_atomics/atomic/60658.cc: New.
+
+2014-03-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60564
+	* include/std/future (__future_base::_Task_state<>): Change
+	constructors to template functions using perfect forwarding.
+	(__create_task_state): Use decayed type as stored task.
+	(packaged_task::packaged_task(_Fn&&)): Forward instead of moving.
+	* testsuite/30_threads/packaged_task/60564.cc: New.
+
+2014-03-12  Roland McGrath  <mcgrathr@google.com>
+	    Mark Seaborn  <mseaborn@google.com>
+
+	PR libstdc++/59392
+	* libsupc++/eh_call.cc (__cxa_call_unexpected): Call __do_catch with
+	the address of a null pointer, not with a null pointer to pointer.
+	Copy comment for this case from eh_personality.cc:__cxa_call_unexpected.
+	* testsuite/18_support/bad_exception/59392.cc: New file.
+
+2014-03-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline.
+	2014-01-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/59680
+	* src/c++11/thread.cc (__sleep_for): Fix call to ::sleep.
+
+2014-03-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline.
+	2014-01-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/59215
+	* include/bits/shared_ptr_base.h
+	(_Sp_counted_base<_S_atomic>::_M_add_ref_lock()): Use relaxed atomic
+	load.
+
+2014-03-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline.
+
+	2014-01-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/59738
+	* include/bits/stl_vector.h (vector<>::_M_move_assign): Restore
+	support for non-Movable types.
+
+	2014-01-08  François Dumont  <fdumont@gcc.gnu.org>
+
+	* include/bits/stl_vector.h (std::vector<>::_M_move_assign): Pass
+	*this allocator instance when building temporary vector instance
+	so that *this allocator does not get moved.
+	* testsuite/23_containers/vector/allocator/move.cc (test01): Add
+	check on a vector iterator.
+	* testsuite/23_containers/vector/allocator/move_assign.cc
+	(test02): Likewise.
+	(test03): New, test with a non-propagating allocator.
+
+	2013-11-15  Jonathan Wakely  <jwakely.gcc@gmail.com>
+
+	* testsuite/23_containers/vector/allocator/move.cc: New
+
 2014-01-27  Jason Merrill  <jason@redhat.com>
 
 	Core DR 475
