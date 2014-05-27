@@ -2260,8 +2260,8 @@ cselib_invalidate_mem (rtx mem_rtx)
 	      continue;
 	    }
 	  if (num_mems < PARAM_VALUE (PARAM_MAX_CSELIB_MEMORY_LOCATIONS)
-	      && ! canon_true_dependence (mem_rtx, GET_MODE (mem_rtx),
-					  mem_addr, x, NULL_RTX))
+	      && ! canon_anti_dependence (x, false, mem_rtx,
+					  GET_MODE (mem_rtx), mem_addr))
 	    {
 	      has_mem = true;
 	      num_mems++;
@@ -2623,12 +2623,13 @@ cselib_process_insn (rtx insn)
 
   cselib_current_insn = insn;
 
-  /* Forget everything at a CODE_LABEL, a volatile insn, or a setjmp.  */
+  /* Forget everything at a CODE_LABEL, a volatile asm, or a setjmp.  */
   if ((LABEL_P (insn)
        || (CALL_P (insn)
 	   && find_reg_note (insn, REG_SETJMP, NULL))
        || (NONJUMP_INSN_P (insn)
-	   && volatile_insn_p (PATTERN (insn))))
+	   && GET_CODE (PATTERN (insn)) == ASM_OPERANDS
+	   && MEM_VOLATILE_P (PATTERN (insn))))
       && !cselib_preserve_constants)
     {
       cselib_reset_table (next_uid);

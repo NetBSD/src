@@ -2097,6 +2097,12 @@ vect_is_simple_reduction_1 (loop_vec_info loop_info, gimple phi,
               || (!check_reduction && flow_loop_nested_p (vect_loop, loop)));
 
   name = PHI_RESULT (phi);
+  /* ???  If there are no uses of the PHI result the inner loop reduction
+     won't be detected as possibly double-reduction by vectorizable_reduction
+     because that tries to walk the PHI arg from the preheader edge which
+     can be constant.  See PR60382.  */
+  if (has_zero_uses (name))
+    return NULL;
   nloop_uses = 0;
   FOR_EACH_IMM_USE_FAST (use_p, imm_iter, name)
     {
@@ -3785,8 +3791,12 @@ vect_create_epilog_for_reduction (vec<tree> vect_defs, gimple stmt,
   /* Set phi nodes arguments.  */
   FOR_EACH_VEC_ELT (reduction_phis, i, phi)
     {
-      tree vec_init_def = vec_initial_defs[i];
-      tree def = vect_defs[i];
+      tree vec_init_def, def;
+      gimple_seq stmts;
+      vec_init_def = force_gimple_operand (vec_initial_defs[i], &stmts,
+					   true, NULL_TREE);
+      gsi_insert_seq_on_edge_immediate (loop_preheader_edge (loop), stmts);
+      def = vect_defs[i];
       for (j = 0; j < ncopies; j++)
         {
           /* Set the loop-entry arg of the reduction-phi.  */
