@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.91 2014/05/24 18:06:21 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.92 2014/05/27 16:10:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -944,7 +944,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSIX_CTL_FUNCMASK	0x40000000
 #define	PCI_MSIX_CTL_TBLSIZE_MASK 0x07ff0000
 #define	PCI_MSIX_CTL_TBLSIZE_SHIFT 16
-#define	PCI_MSIX_CTL_TBLSIZE(ofs)	(((ofs) >> PCI_MSIX_CTL_TBLSIZE_SHIFT) & PCI_MSIX_CTL_TBLSIZE_MASK)
+#define	PCI_MSIX_CTL_TBLSIZE(ofs)	((((ofs) & PCI_MSIX_CTL_TBLSIZE_MASK) \
+		>> PCI_MSIX_CTL_TBLSIZE_SHIFT) + 1)
 /*
  * 2nd DWORD is the Table Offset
  */
