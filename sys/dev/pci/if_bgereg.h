@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.86 2013/10/31 06:01:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.87 2014/05/27 16:17:55 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2607,7 +2607,7 @@ struct vpd_key {
 #define VPD_RES_WRITE	0x81	/* start of read/write area */
 #define VPD_RES_END	0x78	/* end tag */
 
-/* Flags for bge_lags  */
+/* Flags for bge_flags  */
 #define BGEF_FIBER_TBI		0x00000001
 #define BGEF_JUMBO_CAPABLE	0x00000002
 #define BGEF_FIBER_MII		0x00000004
