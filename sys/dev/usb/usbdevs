@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.670 2014/05/25 06:10:25 ryoon Exp $
+$NetBSD: usbdevs,v 1.671 2014/05/27 13:41:01 ryoon Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3280,9 +3280,9 @@ product WISTRONNEWEB AR5523_2_NF 0x0829	AR5523
 product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
 
-/* Xyratex */
-product XYRATEX PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
-product XYRATEX PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
+/* Conexant */
+product CONEXANT PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
+product CONEXANT PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
 
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
