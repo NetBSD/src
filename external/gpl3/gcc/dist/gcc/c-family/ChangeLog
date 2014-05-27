@@ -1,3 +1,67 @@
+2014-05-22  Release Manager
+
+	* GCC 4.8.3 released.
+
+2014-05-06  Richard Biener  <rguenther@suse.de>
+
+	* c-opts.c (c_common_post_options): For -freestanding,
+	-fno-hosted and -fno-builtin disable pattern recognition
+	if not enabled explicitely.
+
+2014-04-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backport from mainline
+	2014-03-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/60689
+	* c-common.c (add_atomic_size_parameter): When creating new
+	params vector, push the size argument first.
+
+	2014-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR debug/60603
+	* c-opts.c (c_finish_options): Restore cb_file_change call to
+	<built-in>.
+
+	2014-03-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/36282
+	* c-pragma.c (apply_pragma_weak): Only look at
+	TREE_SYMBOL_REFERENCED (DECL_ASSEMBLER_NAME (decl)) if
+	DECL_ASSEMBLER_NAME_SET_P (decl).
+	(maybe_apply_pending_pragma_weaks): Exit early if
+	vec_safe_is_empty (pending_weaks) rather than only when
+	!pending_weaks.
+	(maybe_apply_pragma_weak): Likewise.  If !DECL_ASSEMBLER_NAME_SET_P,
+	set assembler name back to NULL afterwards.
+
+2014-04-07  Dominique d'Humieres <dominiq@lps.ens.fr>    
+
+	Backport from mainline
+	2013-09-14  Iain Sandoe <iains@gcc.gnu.org>
+
+	PR target/48094
+	* c.opt (fgnu-runtime, fnext-runtime, fobjc-abi-version,
+	fobjc-gc, freplace-objc-classes): Accept for LTO.
+
+2014-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	Backport from mainline
+	2014-02-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/37743
+	* c-common.c (c_common_nodes_and_builtins): When initializing
+	c_uint{16,32,64}_type_node, also set corresponding
+	uint{16,32,64}_type_node to the same value.
+
+	2014-02-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/60101
+	* c-common.c (merge_tlist): If copy is true, call new_tlist,
+	if false, add ADD itself, rather than vice versa.
+	(verify_tree): For COND_EXPR, don't call merge_tlist with non-zero
+	copy.  For SAVE_EXPR, only call merge_tlist once.
+
 2013-11-29  Jakub Jelinek  <jakub@redhat.com>
 
 	PR c/59280
