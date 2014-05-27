@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.48 2014/05/27 17:05:44 christos Exp $
+.\"	$NetBSD: malloc.9,v 1.49 2014/05/27 17:12:22 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,10 +72,9 @@
 These interfaces are being obsoleted and their new use is discouraged.
 For new code, use
 .Xr kmem 9
-for variable-sized or one-time allocations
+for variable-sized or one-time allocations and
 .Xr pool_cache 9
-for frequent fixed-size allocations
-instead.
+for frequent fixed-size allocations instead.
 .Ef
 .Pp
 The
