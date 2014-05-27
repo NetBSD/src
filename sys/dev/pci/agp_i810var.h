@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.3 2014/05/23 22:58:56 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.4 2014/05/27 03:17:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,23 +35,30 @@
 #include <dev/pci/agpvar.h>
 
 struct agp_i810_softc {
-	u_int32_t initial_aperture;	/* aperture size at startup */
-	struct agp_gatt *gatt;
-	int chiptype;			/* i810-like or i830 */
-	u_int32_t dcache_size;		/* i810 only */
-	u_int32_t stolen;		/* number of i830/845 gtt entries
-					   for stolen memory */
-	bus_space_tag_t bst;		/* register bus_space tag */
-	bus_space_handle_t bsh;		/* register bus_space handle */
-	bus_space_tag_t gtt_bst;	/* GTT bus_space tag */
-	bus_space_handle_t gtt_bsh;	/* GTT bus_space handle */
-	struct pci_attach_args vga_pa;
+	struct pci_attach_args vga_pa;	/* integrated graphics device args */
+	int chiptype;			/* chipset family: i810, i830, &c. */
 
-	u_int32_t pgtblctl;
+	/* Memory-mapped I/O for device registers.  */
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t size;
 
-	bus_space_tag_t flush_bst;	/* flush page bus_space tag */
-	bus_space_handle_t flush_bsh;	/* flush page bus_space handle */
-	bus_addr_t flush_addr;		/* flush page bus address */
+	/* Graphics translation table.  */
+	bus_space_tag_t gtt_bst;
+	bus_space_handle_t gtt_bsh;
+	bus_size_t gtt_size;
+
+	/* Chipset flush page.  */
+	bus_space_tag_t flush_bst;
+	bus_space_handle_t flush_bsh;
+	bus_addr_t flush_addr;
+
+	uint32_t initial_aperture;	/* aperture size at startup */
+	struct agp_gatt *gatt;		/* AGP graphics addr. trans. tbl. */
+	uint32_t dcache_size;		/* i810-only on-chip memory size */
+	uint32_t stolen;		/* num. GTT entries for stolen mem. */
+
+	uint32_t pgtblctl;		/* saved PGTBL_CTL?  XXX unused */
 };
 
 extern struct agp_softc	*agp_i810_sc;
