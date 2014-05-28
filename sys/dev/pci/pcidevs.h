@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1183 2014/05/28 09:06:46 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1184 2014/05/28 13:59:38 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1190 2014/05/28 09:06:24 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1191 2014/05/28 13:59:06 msaitoh Exp
  */
 
 /*
@@ -2545,7 +2545,10 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6230_1	0x0090		/* Centrino Advanced-N 6230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6230_2	0x0091		/* Centrino Advanced-N 6230 */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_HB	0x0100		/* Sandy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_PCIE	0x0101		/* Sandy Bridge PCIe Root port */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD	0x0102		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_PCIE_1	0x0105		/* Sandy Bridge PCIe Root port */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_PCIE_2	0x0109		/* Sandy Bridge PCIe Root port */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD_1	0x0112		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD_2	0x0122		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_HB	0x0104		/* Sandy Bridge Host Bridge */
@@ -2569,8 +2572,10 @@
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD_1	0x016a		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
+#define	PCI_PRODUCT_INTEL_6700PXH_IOXAPIC	0x0326		/* 6700PXH IOxAPIC */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE0	0x0329		/* 6700PXH PCI Express-to-PCI Bridge #0 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE1	0x032a		/* 6700PXH PCI Express-to-PCI Bridge #1 */
+#define	PCI_PRODUCT_INTEL_6702PXH_PCIX	0x032c		/* 6702PXH PCI Express-to-PCIX */
 #define	PCI_PRODUCT_INTEL_80331	0x0335		/* Lindsay I/O Processor PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_41210A	0x0340		/* Serial to Parallel PCI Bridge A */
 #define	PCI_PRODUCT_INTEL_41210B	0x0341		/* Serial to Parallel PCI Bridge B */
@@ -3323,6 +3328,7 @@
 #define	PCI_PRODUCT_INTEL_82Q33_IGD	0x29d2		/* 82Q35 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82Q33_IGD_1	0x29d3		/* 82Q35 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82Q33_KT	0x29d7		/* 82Q33 KT */
+#define	PCI_PRODUCT_INTEL_82X38_HB	0x29e0		/* 82X38 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82X38_KT	0x29e7		/* 82X38 KT */
 #define	PCI_PRODUCT_INTEL_3200_KT	0x29f7		/* 3200 KT */
 #define	PCI_PRODUCT_INTEL_82965PM_HB	0x2a00		/* 82965PM Host Bridge */
@@ -3686,6 +3692,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_1	0x9c66		/* Core 4G (mobile) Serial I/O GSPI */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_IGD_1	0xa002		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGD	0xa011		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI Bridge */
@@ -3722,6 +3729,7 @@
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
 #define	PCI_PRODUCT_ITE_IT8211	0x8211		/* IT8211 IDE Controller */
 #define	PCI_PRODUCT_ITE_IT8212	0x8212		/* IT8212 IDE Controller */
+#define	PCI_PRODUCT_ITE_IT8213	0x8213		/* IT8213 IDE Controller */
 #define	PCI_PRODUCT_ITE_IT8888	0x8888		/* PCI-ISA Bridge */
 #define	PCI_PRODUCT_ITE_IT8892	0x8892		/* PCIe-PCI Bridge */
 
