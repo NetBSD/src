@@ -1,4 +1,4 @@
-/*	$NetBSD: intel-gtt.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: intel-gtt.h,v 1.3 2014/05/28 16:13:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,13 +41,47 @@
 #include <drm/drm_agp_netbsd.h>
 
 struct intel_gtt {
+	/*
+	 * GMADR, graphics memory address, a.k.a. the `aperture'.
+	 * Access to bus addresses in the region starting here are
+	 * remapped to physical system memory addresses programmed into
+	 * the GTT (or GPU-local memory, for i810 chipsets, depending
+	 * on the GTT entries).  This corresponds to a prefix of the
+	 * GPU's virtual address space.  The virtual address space may
+	 * be larger: in that case, there will be more GTT entries than
+	 * pages in the aperture.
+	 */
 	paddr_t			gma_bus_addr;
+
+	/*
+	 * Number of bytes of system memory stolen by the graphics
+	 * device for frame buffer memory (but not for the GTT).  These
+	 * pages in memory -- if you know where they are -- can't be
+	 * used by the CPU, but they can be programmed into the GTT for
+	 * access from the GPU.
+	 */
 	unsigned int		stolen_size;
+
+	/*
+	 * Total number of GTT entries, including entries for the GPU's
+	 * virtual address space beyond the aperture.
+	 */
 	unsigned int		gtt_total_entries;
+
+	/*
+	 * Number of GTT entries for pages that we can actually map
+	 * into the aperture.
+	 */
 	unsigned int		gtt_mappable_entries;
+
+	/* Scratch page for unbound GTT entries.  */
 	bus_dma_segment_t	gtt_scratch_seg;
 	bus_dmamap_t		gtt_scratch_map;
+
+	/* Bus space handle for the GTT itself.  */
 	bus_space_handle_t	gtt_bsh;
+
+	/* IOMMU-related quirk for certain chipsets.  */
 	bool			do_idle_maps;
 };
 
