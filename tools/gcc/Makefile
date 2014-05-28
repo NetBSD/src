@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2014/05/27 09:19:30 skrll Exp $
+#	$NetBSD: Makefile,v 1.68 2014/05/28 07:32:22 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,8 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD nb1 20140527" \
 			--with-system-zlib \
-			--enable-__cxa_atexit
+			--enable-__cxa_atexit \
+			--enable-libstdcxx-threads
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
@@ -85,22 +86,22 @@ BUILD_MAKE=${TOOL_GMAKE}
 # mknative-gcc specific stuff
 #
 
-MKNATIVE_CONFIG_TARGET_LIBS= \
-	configure-target-libstdc++-v3 \
-	configure-target-libobjc
+MKNATIVE_CONFIG_TARGET_LIBS=
 
 .if ${HAVE_GCC} == 48
-MKNATIVE_CONFIG_TARGET_LIBS += configure-target-libgcc
+MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
+MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
 MKNATIVE_TARGET=	gcc48
-MKNATIVE_CONFIG_TARGET_LIBS+= \
-	configure-target-libgomp
 .elif ${HAVE_GCC} == 45
+MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
 MKNATIVE_TARGET=	gcc45
-MKNATIVE_CONFIG_TARGET_LIBS+= \
-	configure-target-libgomp
 .else
 MKNATIVE_TARGET=	gcc4
 .endif
+
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libstdc++-v3 \
+	configure-target-libobjc
 
 BINENV=		/usr/bin/env -i
 
