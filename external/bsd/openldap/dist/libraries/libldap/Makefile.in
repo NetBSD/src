@@ -1,8 +1,8 @@
 # Makefile.in for LDAP -lldap
-# OpenLDAP: pkg/ldap/libraries/libldap/Makefile.in,v 1.79.2.10 2010/04/13 20:22:55 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@ SRCS	= bind.c open.c result.c error.c compare.c search.c \
 	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
 	tls2.c tls_o.c tls_g.c tls_m.c \
 	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
-	assertion.c deref.c
+	assertion.c deref.c ldif.c fetch.c
 
 OBJS	= bind.lo open.lo result.lo error.lo compare.lo search.lo \
 	controls.lo messages.lo references.lo extended.lo cyrus.lo \
@@ -41,7 +41,7 @@ OBJS	= bind.lo open.lo result.lo error.lo compare.lo search.lo \
 	charray.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
 	tls2.lo tls_o.lo tls_g.lo tls_m.lo \
 	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
-	assertion.lo deref.lo
+	assertion.lo deref.lo ldif.lo fetch.lo
 
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries

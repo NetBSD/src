@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.5 2010/04/13 20:22:30 kurt Exp
+# $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2010 The OpenLDAP Foundation.
+# Copyright 1998-2014 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,22 +12,28 @@
 # top-level directory of the distribution or, alternatively, at
 # <http://www.OpenLDAP.org/license.html>.
 
-LIBTOOL=../../../libtool
-OPT=-g -O2
-CC=gcc
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-# Omit DO_KRB5 or DO_SAMBA if you don't want to support it.
-DEFS=-DDO_KRB5 -DDO_SAMBA
+SSL_INC = 
+SSL_LIB = -lcrypto
 
-HEIMDAL_INC=-I/usr/heimdal/include
-SSL_INC=
-LDAP_INC=-I../../../include -I../../../servers/slapd
-INCS=$(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
+HEIMDAL_INC = -I/usr/heimdal/include
+HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
 
-HEIMDAL_LIB=-L/usr/heimdal/lib -lkrb5 -lkadm5srv
-SSL_LIB=-lcrypto
-LDAP_LIB=-lldap_r -llber
-LIBS=$(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+# Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
+DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
+INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
+LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
+
+PROGRAMS = smbk5pwd.la
+LTVER = 0:0:0
 
 prefix=/usr/local
 exec_prefix=$(prefix)
@@ -37,19 +43,23 @@ libdir=$(exec_prefix)/lib
 libexecdir=$(exec_prefix)/libexec
 moduledir = $(libexecdir)$(ldap_subdir)
 
-all:	smbk5pwd.la
+.SUFFIXES: .c .o .lo
 
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
 
-smbk5pwd.lo:	smbk5pwd.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $?
+all: $(PROGRAMS)
 
 smbk5pwd.la:	smbk5pwd.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info 0:0:0 \
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	rm -f smbk5pwd.lo smbk5pwd.la
+	rm -rf *.o *.lo *.la .libs
 
-install: smbk5pwd.la
+install: $(PROGRAMS)
 	mkdir -p $(DESTDIR)$(moduledir)
-	$(LIBTOOL) --mode=install cp smbk5pwd.la $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+
