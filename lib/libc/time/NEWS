@@ -1,11 +1,27 @@
 News for the tz database
 
 
+Release 2014d - 2014-05-27 21:34:40 -0700
+
+  Changes affecting code
+
+    zic no longer generates files containing time stamps before the Big Bang.
+    This works around GNOME bug 730332
+    <https://bugzilla.gnome.org/show_bug.cgi?id=730332>.
+    (Thanks to Leonardo Chiquitto for reporting the bug, and to
+    Arthur David Olson and James Cloos for suggesting improvements to the fix.)
+
+  Changes affecting documentation
+
+    tz-link.htm now mentions GNOME.
+
+
 Release 2014c - 2014-05-13 07:44:13 -0700
 
   Changes affecting near-future time stamps
 
-    Egypt observes DST starting May 15.  (Thanks to Ahmad El-Dardiry.)
+    Egypt observes DST starting 2014-05-15 at 24:00.
+    (Thanks to Ahmad El-Dardiry and Gunther Vermier.)
     Details have not been announced, except that DST will not be observed
     during Ramadan.  Guess that DST will stop during the same Ramadan dates as
     Morocco, and that Egypt's future spring and fall transitions will be the

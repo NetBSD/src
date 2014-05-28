@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.45 2014/05/13 16:33:56 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.46 2014/05/28 19:13:27 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.45 2014/05/13 16:33:56 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.46 2014/05/28 19:13:27 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -737,6 +737,36 @@ warning(_("hard link failed, symbolic link used"));
 static const zic_t min_time = (zic_t) -1 << (TIME_T_BITS_IN_FILE - 1);
 static const zic_t max_time = -1 - ((zic_t) -1 << (TIME_T_BITS_IN_FILE - 1));
 
+/* Estimated time of the Big Bang, in seconds since the POSIX epoch.
+   rounded downward to the negation of a power of two that is
+   comfortably outside the error bounds.
+
+   zic does not output time stamps before this, partly because they
+   are physically suspect, and partly because GNOME mishandles them; see
+   GNOME bug 730332 <https://bugzilla.gnome.org/show_bug.cgi?id=730332>.
+
+   For the time of the Big Bang, see:
+
+   Ade PAR, Aghanim N, Armitage-Caplan C et al.  Planck 2013 results.
+   I. Overview of products and scientific results.
+   arXiv:1303.5062 2013-03-20 20:10:01 UTC
+   <http://arxiv.org/pdf/1303.5062v1> [PDF]
+
+   Page 36, Table 9, row Age/Gyr, column Planck+WP+highL+BAO 68% limits
+   gives the value 13.798 plus-or-minus 0.037 billion years.
+   Multiplying this by 1000000000 and then by 31557600 (the number of
+   seconds in an astronomical year) gives a value that is comfortably
+   less than 2**59, so BIG_BANG is - 2**59.
+
+   BIG_BANG is approximate, and may change in future versions.
+   Please do not rely on its exact value.  */
+
+#ifndef BIG_BANG
+#define BIG_BANG (- (1LL << 59))
+#endif
+
+static const zic_t big_bang_time = BIG_BANG;
+
 static int
 itsdir(const char *const name)
 {
@@ -1188,10 +1218,6 @@ inleap(char **const fields, const int nfields)
 			return;
 	}
 	dayoff = oadd(dayoff, day - 1);
-	if (dayoff < 0 && !TYPE_SIGNED(zic_t)) {
-		error(_("time before zero"));
-		return;
-	}
 	if (dayoff < min_time / SECSPERDAY) {
 		error(_("time too small"));
 		return;
@@ -1200,7 +1226,7 @@ inleap(char **const fields, const int nfields)
 		error(_("time too large"));
 		return;
 	}
-	t = (zic_t) dayoff * SECSPERDAY;
+	t = dayoff * SECSPERDAY;
 	tod = gethms(fields[LP_TIME], _("invalid time of day"), FALSE);
 	cp = fields[LP_CORR];
 	{
@@ -1229,7 +1255,12 @@ inleap(char **const fields, const int nfields)
 				));
 			return;
 		}
-		leapadd(tadd(t, tod), positive, lp->l_value, count);
+		t = tadd(t, tod);
+		if (t < big_bang_time) {
+			error(_("leap second precedes Big Bang"));
+			return;
+		}
+		leapadd(t, positive, lp->l_value, count);
 	}
 }
 
@@ -1489,7 +1520,7 @@ writezone(const char *const name, const char *const string, char version)
 
 		toi = 0;
 		fromi = 0;
-		while (fromi < timecnt && attypes[fromi].at < min_time)
+		while (fromi < timecnt && attypes[fromi].at < big_bang_time)
 			++fromi;
 		for ( ; fromi < timecnt; ++fromi) {
 			if (toi > 1 && ((attypes[fromi].at +
@@ -2184,9 +2215,9 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 		*/
 		stdoff = 0;
 		zp = &zpfirst[i];
-		usestart = i > 0 && (zp - 1)->z_untiltime > min_time;
+		usestart = i > 0 && (zp - 1)->z_untiltime > big_bang_time;
 		useuntil = i < (zonecount - 1);
-		if (useuntil && zp->z_untiltime <= min_time)
+		if (useuntil && zp->z_untiltime <= big_bang_time)
 			continue;
 		gmtoff = zp->z_gmtoff;
 		eat(zp->z_filename, zp->z_linenum);
@@ -2202,7 +2233,7 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 			if (usestart) {
 				addtt(starttime, type);
 				usestart = FALSE;
-			} else	addtt(min_time, type);
+			} else	addtt(big_bang_time, type);
 		} else for (year = min_year; year <= max_year; ++year) {
 			if (useuntil && year > zp->z_untilrule.r_hiyear)
 				break;
@@ -2383,8 +2414,8 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 static void
 addtt(const zic_t starttime, int type)
 {
-	if (starttime <= min_time ||
-		(timecnt == 1 && attypes[0].at < min_time)) {
+	if (starttime <= big_bang_time ||
+		(timecnt == 1 && attypes[0].at < big_bang_time)) {
 		gmtoffs[0] = gmtoffs[type];
 		isdsts[0] = isdsts[type];
 		ttisstds[0] = ttisstds[type];
