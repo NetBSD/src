@@ -5,7 +5,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation
+ * Copyright 1998-2014 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -200,10 +200,10 @@
 #define HAVE_GETGRGID 1
 
 /* Define to 1 if you have the `gethostbyaddr_r' function. */
-/* #undef HAVE_GETHOSTBYADDR_R */
+#define HAVE_GETHOSTBYADDR_R 1
 
 /* Define to 1 if you have the `gethostbyname_r' function. */
-/* #undef HAVE_GETHOSTBYNAME_R */
+#define HAVE_GETHOSTBYNAME_R 1
 
 /* Define to 1 if you have the `gethostname' function. */
 #define HAVE_GETHOSTNAME 1
@@ -334,12 +334,6 @@
 /* Define to 1 if you have the <ltdl.h> header file. */
 /* #undef HAVE_LTDL_H */
 
-/* if you have SunOS LWP package */
-/* #undef HAVE_LWP */
-
-/* Define to 1 if you have the <lwp/lwp.h> header file. */
-/* #undef HAVE_LWP_LWP_H */
-
 /* define if you have Mach Cthreads */
 /* #undef HAVE_MACH_CTHREADS */
 
@@ -370,6 +364,9 @@
 /* define this if you have mkversion */
 #define HAVE_MKVERSION 1
 
+/* define if you have MozNSS */
+/* #undef HAVE_MOZNSS */
+
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
 
@@ -378,6 +375,9 @@
 
 /* define if strerror_r returns char* instead of int */
 /* #undef HAVE_NONPOSIX_STRERROR_R */
+
+/* Define to 1 if you have the <nssutil.h> header file. */
+/* #undef HAVE_NSSUTIL_H */
 
 /* if you have NT Event Log */
 /* #undef HAVE_NT_EVENT_LOG */
@@ -606,6 +606,9 @@
 
 /* Define to 1 if you have the `strtoul' function. */
 #define HAVE_STRTOUL 1
+
+/* Define to 1 if you have the `strtoull' function. */
+#define HAVE_STRTOULL 1
 
 /* Define to 1 if you have the `strtouq' function. */
 #define HAVE_STRTOUQ 1
@@ -849,7 +852,7 @@
 #define LDAP_SYSLOG 1
 
 /* Version */
-#define LDAP_VENDOR_VERSION 20423
+#define LDAP_VENDOR_VERSION 20439
 
 /* Major */
 #define LDAP_VENDOR_VERSION_MAJOR 2
@@ -858,7 +861,7 @@
 #define LDAP_VENDOR_VERSION_MINOR 4
 
 /* Patch */
-#define LDAP_VENDOR_VERSION_PATCH 23
+#define LDAP_VENDOR_VERSION_PATCH 39
 
 /* define if memcmp is not 8-bit clean or is otherwise broken */
 /* #undef NEED_MEMCMP_REPLACEMENT */
@@ -873,7 +876,7 @@
 #define OPENLDAP_PACKAGE "OpenLDAP"
 
 /* Version */
-#define OPENLDAP_VERSION "2.4.23"
+#define OPENLDAP_VERSION "2.4.39"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
@@ -943,6 +946,9 @@
 
 /* define to support LAN Manager passwords */
 /* #undef SLAPD_LMHASH */
+
+/* define to support MDB backend */
+/* #undef SLAPD_MDB */
 
 /* define to support LDAP Metadirectory backend */
 /* #undef SLAPD_META */
