@@ -38,6 +38,9 @@ if test "$build" != "$host"; then
   # We are being configured with some form of cross compiler.
   GLIBCXX_IS_NATIVE=false
   case "$host","$target" in
+      *-*-netbsd*,*-*-netbsd*)
+        GLIBCXX_IS_NATIVE=true
+        ;;
     # Darwin crosses can use the host system's libraries and headers,
     # because of the fat library support.  Of course, it must be the
     # same version of Darwin on both sides.  Allow the user to
