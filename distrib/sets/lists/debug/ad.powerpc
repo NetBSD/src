@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.8 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: ad.powerpc,v 1.9 2014/05/28 11:32:50 tron Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -196,9 +196,9 @@
 ./usr/libdata/debug/usr/lib/powerpc/libkdc.so.2.0.debug	comp-compat-shlib	compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libkvm.so.6.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/liblber.so.3.2.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
-./usr/libdata/debug/usr/lib/powerpc/libldap.so.4.2.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
-./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.4.2.debug		comp-compat-shlib	compat,arch64,debug,pic,ldap
+./usr/libdata/debug/usr/lib/powerpc/liblber.so.3.3.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
+./usr/libdata/debug/usr/lib/powerpc/libldap.so.4.3.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
+./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.4.3.debug		comp-compat-shlib	compat,arch64,debug,pic,ldap
 ./usr/libdata/debug/usr/lib/powerpc/liblua.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/liblutok.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,kyua
 ./usr/libdata/debug/usr/lib/powerpc/liblwres.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
