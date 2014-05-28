@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.15 2014/05/25 13:51:25 hannken Exp $	*/
+/*	$NetBSD: layer.h,v 1.16 2014/05/28 10:51:20 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -83,7 +83,7 @@ struct layer_mount {
 	struct vnode		*layerm_rootvp;	/* Ref to root layer_node */
 	u_int			layerm_flags;	/* mount point layer flags */
 	u_int			layerm_size;	/* size of fs's struct node */
-	enum vtype		layerm_tag;	/* vtag of our vnodes */
+	enum vtagtype		layerm_tag;	/* vtag of our vnodes */
 	int				/* bypass routine for this mount */
 				(*layerm_bypass)(void *);
 	int			(**layerm_vnodeop_p)	/* ops for our nodes */
