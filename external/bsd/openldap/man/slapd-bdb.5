@@ -1,7 +1,8 @@
-.TH SLAPD-BDB 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPD-BDB 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-bdb.5,v 1.31.2.13 2010/04/13 20:22:41 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd\-bdb, slapd\-hdb \- Berkeley DB backends to slapd
 .SH SYNOPSIS
@@ -9,16 +10,14 @@ slapd\-bdb, slapd\-hdb \- Berkeley DB backends to slapd
 .SH DESCRIPTION
 The \fBbdb\fP backend to
 .BR slapd (8)
-is the recommended primary backend for a normal 
-.B slapd 
-database.
-It uses the Oracle Berkeley DB (BDB) package to store data.
+uses the Oracle Berkeley DB (BDB) package to store data.
 It makes extensive use of indexing and caching to speed data access.
 .LP
-\fBhdb\fP is a variant of the \fBbdb\fP backend that uses a 
-hierarchical database
-layout which supports subtree renames. It is otherwise identical to
-the \fBbdb\fP behavior, and all the same configuration options apply.
+\fBhdb\fP is the recommended primary database backend.  It is a variant of
+the \fBbdb\fP backend that uses a hierarchical database layout which
+supports subtree renames. It is both more space-efficient and more
+execution-efficient than the \fBbdb\fP backend.  It is otherwise identical
+to the \fBbdb\fP behavior, and all the same configuration options apply.
 .LP
 It is noted that these options are intended to complement
 Berkeley DB configuration options set in the environment's
@@ -277,11 +276,13 @@ Berkeley DB configuration file
 .BR slapindex (8),
 Berkeley DB documentation.
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 279 stdin
 Originally begun by Kurt Zeilenga. Caching mechanisms originally designed
 by Jong-Hyuk Choi. Completion and subsequent work, as well as
 back-hdb, by Howard Chu.
