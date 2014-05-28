@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2014/05/16 09:36:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2014/05/28 16:41:06 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -11,6 +11,9 @@ LIB=		stdc++
 LDADD=		-lgcc_s
 
 LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
+
+COPTS+=		-pthread
+LDFLAGS+=	-pthread
 
 UNSUPPORTED_COMPILER.clang=	# defined
 CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
