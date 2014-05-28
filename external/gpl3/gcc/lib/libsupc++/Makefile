@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/05/15 14:37:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2014/05/28 17:09:18 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -39,10 +39,6 @@ DPSRCS+=       ${_dst}
 .endfor
 .endif
 .endif
-
-.for f in eh_ptr eh_throw guard atexit_thread nested_exception
-COPTS.${f}.cc+=	-std=gnu++0x
-.endfor
 
 .include <bsd.lib.mk>
 
