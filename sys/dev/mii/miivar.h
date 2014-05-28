@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.61 2013/03/15 06:18:13 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.62 2014/05/28 09:49:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <dev/mii/mii_verbose.h>
 
 /*
- * Media Independent Interface datat structure definitions.
+ * Media Independent Interface data structure definitions.
  */
 
 struct ifnet;
