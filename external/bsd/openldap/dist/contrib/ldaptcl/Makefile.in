@@ -140,7 +140,7 @@ all:	@NEO_LIB_FILE@ ldaptclsh @LDAPWISH@
 	$(RANLIB) @NEO_LIB_FILE@
 
 neoXldap.o: neoXldap.c ldaptclerr.h
-	$(CC) -c $(LDAP_CFLAGS) $(CC_SWITCHES) $<
+	$(CC) -c $(LDAP_CFLAGS) $(CC_SWITCHES) neoXldap.c
 
 ldaptclerr.h: ldaperr.tcl
 	tcl ldaperr.tcl $(LDAP_INCDIR)/ldap.h > ldaptclerr.h
