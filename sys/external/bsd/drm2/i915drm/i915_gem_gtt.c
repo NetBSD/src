@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.12 2014/05/23 23:02:47 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.13 2014/05/28 15:44:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.12 2014/05/23 23:02:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.13 2014/05/28 15:44:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -405,9 +405,7 @@ agp_gtt_init(struct drm_device *dev)
 	gtt->gma_bus_addr = agp_i810_sc->as_apaddr;
 	gtt->gtt_mappable_entries = (agp_i810_sc->as_apsize >> AGP_PAGE_SHIFT);
 	gtt->stolen_size = (isc->stolen << AGP_PAGE_SHIFT);
-	gtt->gtt_total_entries =
-	    (gtt->gtt_mappable_entries + (gtt->stolen_size >> AGP_PAGE_SHIFT));
-	gtt->gtt_bsh = isc->gtt_bsh;
+	gtt->gtt_total_entries = isc->gtt_size/4;
 
 	product = PCI_PRODUCT(dev->pdev->pd_pa.pa_id);
 	if (((product == PCI_PRODUCT_INTEL_IRONLAKE_M_HB) ||
