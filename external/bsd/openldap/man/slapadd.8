@@ -1,7 +1,8 @@
-.TH SLAPADD 8C "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPADD 8C "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.34.2.14 2010/04/13 20:22:46 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapadd \- Add entries to a SLAPD database
 .SH SYNOPSIS
@@ -147,7 +148,13 @@ Possible generic options/values are:
               syslog\-level=<level> (see `\-S' in slapd(8))
               syslog\-user=<user>   (see `\-l' in slapd(8))
 
-.fi
+              schema-check={yes|no}
+              value-check={yes|no}
+
+.in
+The \fIschema\-check\fR option toggles schema checking (default on);
+the \fIvalue\-check\fR option toggles value checking (default off).
+The latter is incompatible with \fB-q\fR.
 .TP
 .B \-q
 enable quick (fewer integrity checks) mode.  Does fewer consistency checks
@@ -208,8 +215,10 @@ database give the command:
 .LP
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
 .SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 218 stdin
