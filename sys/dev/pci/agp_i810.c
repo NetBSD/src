@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.82 2014/05/28 03:17:42 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.83 2014/05/28 15:34:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.82 2014/05/28 03:17:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.83 2014/05/28 15:34:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 			return agp_intel_attach(parent, self, aux);
 		}
 #endif
-		aprint_error(": can't find internal VGA device config space\n");
+		aprint_error(": can't find internal VGA"
+		    " config space\n");
 		error = ENOENT;
 		goto fail1;
 	}
@@ -441,7 +442,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_map(isc->bst, mmadr, isc->size, mmadr_flags,
 	    &isc->bsh);
 	if (error) {
-		aprint_error_dev(self, "can't map MMIO registers: %d\n", error);
+		aprint_error_dev(self, "can't map MMIO registers: %d\n",
+		    error);
 		error = ENXIO;
 		goto fail1;
 	}
@@ -481,8 +483,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case CHIP_G4X:
 		error = agp_i810_setup_chipset_flush_page(sc);
 		if (error) {
-			aprint_error_dev(self, "can't set up chipset flush page: %d\n",
-			    error);
+			aprint_error_dev(self,
+			    "can't set up chipset flush page: %d\n", error);
 			goto fail3;
 		}
 		break;
@@ -550,7 +552,9 @@ static int
 agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 {
 	struct agp_i810_softc *const isc = sc->as_chipc;
-	pcireg_t reg, lo, hi;
+	const pci_chipset_tag_t pc = isc->as_pc;
+	const pcitag_t tag = isc->as_tag;
+	pcireg_t lo, hi;
 	bus_addr_t addr, minaddr, maxaddr;
 	int error;
 
@@ -562,13 +566,12 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 
 	/* Read the PCI config register: 4-byte on gen3, 8-byte on gen>=4.  */
 	if (isc->chiptype == CHIP_I915) {
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I915_IFPADDR);
-		addr = reg;
+		addr = pci_conf_read(pc, tag, AGP_I915_IFPADDR);
 		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
 		maxaddr = UINT32_MAX;
 	} else {
-		hi = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I965_IFPADDR+4);
-		lo = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I965_IFPADDR);
+		hi = pci_conf_read(pc, tag, AGP_I965_IFPADDR+4);
+		lo = pci_conf_read(pc, tag, AGP_I965_IFPADDR);
 		/*
 		 * Convert to uint64_t, rather than bus_addr_t which
 		 * may be 32-bit, to avoid undefined behaviour with a
@@ -608,15 +611,12 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 		/* Write it into the PCI config register.  */
 		addr = isc->flush_addr | 1;
 		if (isc->chiptype == CHIP_I915) {
-			pci_conf_write(sc->as_pc, sc->as_tag, AGP_I915_IFPADDR,
-			    addr);
+			pci_conf_write(pc, tag, AGP_I915_IFPADDR, addr);
 		} else {
-			pci_conf_write(sc->as_pc, sc->as_tag,
-			    AGP_I965_IFPADDR + 4,
-			    __SHIFTOUT(addr, __BITS(63, 32)));
-			pci_conf_write(sc->as_pc, sc->as_tag,
-			    AGP_I965_IFPADDR,
-			    __SHIFTOUT(addr, __BITS(31, 0)));
+			hi = __SHIFTOUT(addr, __BITS(63, 32));
+			lo = __SHIFTOUT(addr, __BITS(31, 0))
+			pci_conf_write(pc, tag, AGP_I965_IFPADDR+4, hi);
+			pci_conf_write(pc, tag, AGP_I965_IFPADDR, lo);
 		}
 	}
 
