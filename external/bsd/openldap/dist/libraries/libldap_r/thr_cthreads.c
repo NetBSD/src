@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_cthreads.c,v 1.1.1.3 2010/12/12 15:21:42 adam Exp $	*/
+/*	$NetBSD: thr_cthreads.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
 
 /* thr_cthreads.c - wrapper for mach cthreads */
-/* OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.20.2.6 2010/04/13 20:23:02 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

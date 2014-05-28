@@ -1,4 +1,4 @@
-# OpenLDAP: pkg/ldap/servers/slapd/DB_CONFIG,v 1.3.2.4 2007/12/18 11:53:27 ghenry Exp
+# $OpenLDAP$
 # Example DB_CONFIG file for use with slapd(8) BDB/HDB databases.
 #
 # See the Oracle Berkeley DB documentation

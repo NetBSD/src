@@ -1,8 +1,8 @@
 /* bind.cpp - ndb backend bind routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ndb/bind.cpp,v 1.3.2.3 2010/04/13 20:23:34 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,13 @@ ndb_back_bind( Operation *op, SlapReply *rs )
 
 	/* allow noauth binds */
 	switch ( be_rootdn_bind( op, NULL ) ) {
-	case SLAP_CB_CONTINUE:
-		break;
+	case LDAP_SUCCESS:
+		/* frontend will send result */
+		return rs->sr_err = LDAP_SUCCESS;
 
 	default:
-		return rs->sr_err;
+		/* give the database a chance */
+		break;
 	}
 
 	/* Get our NDB handle */
