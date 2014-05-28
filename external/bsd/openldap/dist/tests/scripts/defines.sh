@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.25 2010/04/19 19:14:31 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ BACKSQL=${AC_sql-sqlno}
 
 # overlays
 ACCESSLOG=${AC_accesslog-accesslogno}
+CONSTRAINT=${AC_constraint-constraintno}
 DDS=${AC_dds-ddsno}
 DYNLIST=${AC_dynlist-dynlistno}
 MEMBEROF=${AC_memberof-memberofno}
@@ -46,6 +47,7 @@ WITH_SASL=${AC_WITH_SASL-no}
 USE_SASL=${SLAPD_USE_SASL-no}
 ACI=${AC_ACI_ENABLED-acino}
 THREADS=${AC_THREADS-threadsno}
+SLEEP0=${SLEEP0-1}
 SLEEP1=${SLEEP1-7}
 SLEEP2=${SLEEP2-15}
 
@@ -192,6 +194,7 @@ LDAPCOMPARE="$CLIENTDIR/ldapcompare $TOOLARGS"
 LDAPEXOP="$CLIENTDIR/ldapexop $TOOLARGS"
 SLAPDTESTER=$PROGDIR/slapd-tester
 LDIFFILTER=$PROGDIR/ldif-filter
+SLAPDMTREAD=$PROGDIR/slapd-mtread
 LVL=${SLAPD_DEBUG-0x4105}
 LOCALHOST=localhost
 BASEPORT=${SLAPD_BASEPORT-9010}
@@ -244,6 +247,8 @@ LDIFTRANSLUCENTMERGED=$DATADIR/test-translucent-merged.ldif
 LDIFMETA=$DATADIR/test-meta.ldif
 LDIFVALSORT=$DATADIR/test-valsort.ldif
 SQLADD=$DATADIR/sql-add.ldif
+LDIFUNORDERED=$DATADIR/test-unordered.ldif
+LDIFREORDERED=$DATADIR/test-reordered.ldif
 
 # strings
 MONITOR=""
@@ -310,6 +315,8 @@ SLAVEOUT=$SERVER2OUT
 SLAVE2OUT=$SERVER3OUT
 SLAVEFLT=$SERVER2FLT
 SLAVE2FLT=$SERVER3FLT
+
+MTREADOUT=$TESTDIR/mtread.out
 
 # original outputs for cmp
 PROXYCACHEOUT=$DATADIR/proxycache.out

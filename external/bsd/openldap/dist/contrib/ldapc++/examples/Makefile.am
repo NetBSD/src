@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/ldapc++/examples/Makefile.am,v 1.2.4.4 2010/04/14 23:50:43 quanah Exp
+# $OpenLDAP$
 
 ##
-# Copyright 2003, OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2003-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 AM_CPPFLAGS = -I$(top_srcdir)/src

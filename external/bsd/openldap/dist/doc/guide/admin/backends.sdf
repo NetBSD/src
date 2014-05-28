@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.9 2010/04/15 18:25:42 quanah Exp
-# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Backends
@@ -23,17 +23,21 @@ H2: Berkeley DB Backends
 
 H3: Overview
 
-The {{bdb}} backend to {{slapd}}(8) is the recommended primary backend for a 
+The {{hdb}} backend to {{slapd}}(8) is the recommended primary backend for a 
 normal {{slapd}} database.  It uses the Oracle Berkeley DB ({{TERM:BDB}}) 
 package to store data. It makes extensive use of indexing and caching 
 (see the {{SECT:Tuning}} section) to speed data access.
 
-{{hdb}} is a variant of the {{bdb}} backend that uses a hierarchical database 
-layout which supports subtree renames. It is otherwise identical to the {{bdb}}
- behavior, and all the same configuration options apply.
+{{hdb}} is a variant of the original {{bdb}} backend which was first written for use with BDB.
+{{hdb}} uses a hierarchical database layout which supports subtree renames.
+It is otherwise identical to the {{bdb}}
+behavior, and all the same configuration options apply.
 
 Note: An {{hdb}} database needs a large {{idlcachesize}} for good search performance, 
 typically three times the {{cachesize}} (entry cache size) or larger.
+
+Note: The {{hdb}} backend has superseded the {{bdb}} backend, and both will
+soon be deprecated in favor of the new {{mdb}} backend. See below.
 
 H3: back-bdb/back-hdb Configuration
 
@@ -139,7 +143,7 @@ configuration lines:
 >	include ./schema/core.schema
 >	
 >	database  ldif
->	directory "./ldif"
+>	directory ./ldif
 >	suffix    "dc=suretecsystems,dc=com"
 >	rootdn    "cn=LDIF,dc=suretecsystems,dc=com"
 >	rootpw    LDIF
@@ -186,6 +190,43 @@ This is the complete format you would get when exporting your directory using
 H3: Further Information
 
 {{slapd-ldif}}(5)
+
+H2: LMDB
+
+
+H3: Overview
+
+The {{mdb}} backend to {{slapd}}(8) is the upcoming primary backend for a
+normal {{slapd}} database.  It uses OpenLDAP's own
+Lightning Memory-Mapped Database ({{TERM:LMDB}})
+library to store data and is intended to replace the Berkeley DB backends.
+
+It supports indexing like the BDB backends, but it uses no caching and requires
+no tuning to deliver maximum search performance.  Like {{hdb}}, it is also
+fully hierarchical and supports subtree renames in constant time.
+
+H3: back-mdb Configuration
+
+Unlike the BDB backends, the {{mdb}} backend can be instantiated with very few
+configuration lines:
+
+>	include ./schema/core.schema
+>
+>	database  mdb
+>	directory ./mdb
+>	suffix    "dc=suretecsystems,dc=com"
+>	rootdn    "cn=mdb,dc=suretecsystems,dc=com"
+>	rootpw    mdb
+>	maxsize   1073741824
+
+In addition to the usual parameters that a minimal configuration requires, the {{mdb}}
+backend requires a maximum size to be set. This should be the largest that
+the database is ever anticipated to grow (in bytes). The filesystem must also
+provide enough free space to accommodate this size.
+
+H3: Further Information
+
+{{slapd-mdb}}(5)
 
 H2: Metadirectory
 

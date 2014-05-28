@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test052-memberof,v 1.4.2.6 2010/04/19 19:14:36 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ fi
 cat /dev/null > $TESTOUT
 
 if [ "$MEMBEROF" = memberofmod ]; then
-	echo "Inserting memberof overlay on producer..."
+	echo "Inserting memberof overlay on provider..."
 	$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
 dn: cn=module,cn=config
 objectClass: olcModuleList
@@ -72,7 +72,9 @@ EOF
 	fi
 fi
 
-bdbInclude="# " nullExclude=""
+indexInclude="" mainInclude="" bdbInclude="# " nullExclude=""
+test $INDEXDB = indexdb	|| indexInclude="# "
+test $MAINDB  = maindb	|| mainInclude="# "
 case $BACKEND in
 bdb | hdb) bdbInclude="" ;;
 null) nullExclude="# " ;;
@@ -111,11 +113,11 @@ olcRootPW:: c2VjcmV0
 olcMonitoring: TRUE
 ${nullExclude}olcDbDirectory: $TESTDIR/db.1.a/
 ${bdbInclude}olcDbCacheSize: 1000
-${bdbInclude}olcDbIndex: objectClass eq
-${bdbInclude}olcDbIndex: cn pres,eq,sub
-${bdbInclude}olcDbIndex: uid pres,eq,sub
-${bdbInclude}olcDbIndex: sn pres,eq,sub
-${bdbInclude}olcDbMode: 384"
+${indexInclude}olcDbIndex: objectClass eq
+${indexInclude}olcDbIndex: cn pres,eq,sub
+${indexInclude}olcDbIndex: uid pres,eq,sub
+${indexInclude}olcDbIndex: sn pres,eq,sub
+${mainInclude}olcDbMode: 384"
 
 dn: olcOverlay={0}memberof,olcDatabase={1}$BACKEND,cn=config
 objectClass: olcOverlayConfig
@@ -221,7 +223,49 @@ member: cn=Jessica Rabbit,ou=People,$BASEDN
 EOF
 
 echo "Re-search the entire database..."
-echo "# Re-search the entire database..." >> $SEARCHOUT
+echo "# Re-search the entire database after adding Jessica Rabbit and Cartoonia..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to rename a member..."
+$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 << EOF
+dn: cn=Baby Herman,ou=People,$BASEDN
+changetype: modrdn
+newrdn: cn=Baby Herman Jr
+deleteoldrdn: 1
+EOF
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database after renaming Baby Herman..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to rename a group..."
+$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 << EOF
+dn: cn=Cartoonia,ou=Groups,$BASEDN
+changetype: modrdn
+newrdn: cn=Toon Town
+deleteoldrdn: 1
+EOF
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database after renaming Cartoonia..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
@@ -235,14 +279,14 @@ echo "Running ldapmodify to add self..."
 $LDAPMODIFY -h $LOCALHOST -p $PORT1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
-dn: cn=Cartoonia,ou=Groups,$BASEDN
+dn: cn=Toon Town,ou=Groups,$BASEDN
 changetype: modify
 add: member
-member: cn=Cartoonia,ou=Groups,$BASEDN
+member: cn=Toon Town,ou=Groups,$BASEDN
 EOF
 
 echo "Re-search the entire database..."
-echo "# Re-search the entire database..." >> $SEARCHOUT
+echo "# Re-search the entire database after adding Toon Town to self..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
@@ -256,12 +300,31 @@ echo "Running ldapdelete to remove a member..."
 $LDAPMODIFY -h $LOCALHOST -p $PORT1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
-dn: cn=Baby Herman,ou=People,$BASEDN
+dn: cn=Baby Herman Jr,ou=People,$BASEDN
 changetype: delete
 EOF
 
 echo "Re-search the entire database..."
-echo "# Re-search the entire database..." >> $SEARCHOUT
+echo "# Re-search the entire database after deleting Baby Herman..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapdelete to remove a group..."
+$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 << EOF
+dn: cn=Toon Town,ou=Groups,$BASEDN
+changetype: delete
+EOF
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database after deleting Toon Town..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
@@ -279,9 +342,6 @@ dn: cn=Roger Rabbit,ou=People,$BASEDN
 changetype: delete
 
 dn: cn=Jessica Rabbit,ou=People,$BASEDN
-changetype: delete
-
-dn: cn=Cartoonia,ou=Groups,$BASEDN
 changetype: delete
 
 dn: cn=person1,ou=People,$BASEDN
@@ -321,7 +381,7 @@ delete: memberA
 EOF
 
 echo "Re-search the entire database..."
-echo "# Re-search the entire database..." >> $SEARCHOUT
+echo "# Re-search the entire database after adding groups with MAY member type schemas..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?

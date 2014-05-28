@@ -1,9 +1,10 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/README,v 1.2.2.3 2010/06/10 17:44:02 quanah Exp
+# $OpenLDAP$
 
 This directory contains slapd overlays specific to samba4 LDAP backend:
 
 	- pguid (not used)
 	- rdnval (under evaluation)
+	- vernum (under evaluation)
 
 
   - PGUID
@@ -59,7 +60,7 @@ to reference them.
 
 ---
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
-Copyright 2009-2010 The OpenLDAP Foundation.
+Copyright 2009-2014 The OpenLDAP Foundation.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP

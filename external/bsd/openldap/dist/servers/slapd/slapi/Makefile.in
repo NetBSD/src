@@ -1,8 +1,8 @@
 # Makefile.in for SLAPI
-# OpenLDAP: pkg/ldap/servers/slapd/slapi/Makefile.in,v 1.18.2.5 2010/04/13 20:23:50 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## Portions Copyright IBM Corp. 1997,2002,2003
 ## All rights reserved.
 ##
