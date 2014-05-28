@@ -40,8 +40,8 @@ All modules compiled in (i.e. krb5 and samba) are enabled; the statement
 	smbk5pwd-enable		<module>
 
 can be used to enable only the desired one(s); legal values for <module>
-are "krb5" and "samba", if they are respectively enabled by defining
-DO_KRB5 and DO_SAMBA.
+are "krb5", "samba" and "shadow", if they are respectively enabled by defining
+DO_KRB5, DO_SAMBA and DO_SHADOW.
 
 The samba module also supports the
 
@@ -81,7 +81,7 @@ and add the relevant libraries to the main slapd link command.
 
 ---
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
-Copyright 2004-2010 The OpenLDAP Foundation.
+Copyright 2004-2014 The OpenLDAP Foundation.
 Portions Copyright 2004-2005 Howard Chu, Symas Corp. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

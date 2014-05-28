@@ -1,37 +1,58 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/Makefile,v 1.2.2.2 2009/04/28 01:06:14 quanah Exp
-CPPFLAGS+=-I../../../include -I../../../servers/slapd
+# $OpenLDAP$
 
-all: kerberos.la netscape.la radius.la
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-kerberos.lo:	kerberos.c
-	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -DHAVE_KRB5 -Wall -c $?
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = 
+INCS = $(LDAP_INC)
+LIBS = $(LDAP_LIB)
 
-kerberos.la:	kerberos.lo
-	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
+PROGRAMS = pw-kerberos.la pw-netscape.la pw-radius.la pw-apr1.la
+LTVER = 0:0:0
+
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
+
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
+
+.SUFFIXES: .c .o .lo
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+
+all: $(PROGRAMS)
+
+pw-kerberos.la:	kerberos.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(PREFIX)/lib -module -o $@ $? -lkrb5
 
-netscape.lo:	netscape.c
-	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -Wall -c $?
-
-netscape.la:	netscape.lo
-	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
+pw-netscape.la:	netscape.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(PREFIX)/lib -module -o $@ $? 
 
-radius.lo:	radius.c
-	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -Wall -c $?
-
-radius.la:	radius.lo
-	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
+pw-radius.la:	radius.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(PREFIX)/lib -module -o $@ $? -lradius
 
-clean:
-	rm -f kerberos.lo kerberos.la
-	rm -f netscape.lo netscape.la
-	rm -f radius.lo radius.la
+pw-apr1.la:	apr1.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	-rpath $(PREFIX)/lib -module -o $@ $?
 
-install: kerberos.la netscape.la radius.la
-	mkdir -p $(PREFIX)/lib/openldap
-	$(LIBTOOL) --mode=install cp kerberos.la $(PREFIX)/lib/openldap
-	$(LIBTOOL) --mode=install cp netscape.la $(PREFIX)/lib/openldap
-	$(LIBTOOL) --mode=install cp radius.la $(PREFIX)/lib/openldap
-	$(LIBTOOL) --finish $(PREFIX)/lib
+clean:
+	rm -rf *.o *.lo *.la .libs
+
+install: $(PROGRAMS)
+	mkdir -p $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+

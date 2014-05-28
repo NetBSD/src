@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPControl.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: LDAPControl.h,v 1.1.1.3 2014/05/28 09:58:26 tron Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPControl.h,v 1.5.10.2 2008/09/03 18:03:43 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

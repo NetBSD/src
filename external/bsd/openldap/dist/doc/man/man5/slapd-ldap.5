@@ -1,7 +1,7 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.17 2010/04/19 19:28:14 quanah Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd\-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ for details.
 The proxy instance of
 .BR slapd (8)
 must contain schema information for the attributes and objectClasses
-used in filters, request DN and request-related data in general.
+used in filters, request DNs and request-related data in general.
 It should also contain schema information for the data returned
 by the proxied server.
 It is the responsibility of the proxy administrator to keep the schema
@@ -92,7 +92,7 @@ so its use is redundant and should be omitted.
 LDAP server to use.  Multiple URIs can be set in a single
 .B ldapurl
 argument, resulting in the underlying library automatically 
-call the first server of the list that responds, e.g. 
+calling the first server of the list that responds, e.g.
 
 \fBuri "ldap://host/ ldap://backup\-host/"\fP
 
@@ -100,7 +100,7 @@ The URI list is space- or comma-separated.
 Whenever the server that responds is not the first one in the list,
 the list is rearranged and the responsive server is moved to the head,
 so that it will be first contacted the next time a connection
-needs be created.
+needs to be created.
 .HP
 .hy 0
 .B acl\-bind
@@ -114,7 +114,7 @@ needs be created.
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
 .B [tls_ciphersuite=<ciphers>]
-.B [tls_protocol_min=<version>]
+.B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
 Allows to define the parameters of the authentication method that is 
@@ -138,7 +138,7 @@ The connection between the proxy database and the remote server
 associated to this identity is cached regardless of the lifespan
 of the client-proxy connection that first established it.
 
-.B This identity is by no means implicitly used by the proxy 
+.B This identity is not implicitly used by the proxy
 .B when the client connects anonymously.
 The
 .B idassert\-bind
@@ -193,7 +193,7 @@ underlying libldap, with rebinding eventually performed if the
 
 .TP
 .B conn\-ttl <time>
-This directive causes a cached connection to be dropped an recreated
+This directive causes a cached connection to be dropped and recreated
 after a given ttl, regardless of being idle or not.
 
 .TP
@@ -232,6 +232,8 @@ for details on the syntax of this field.
 Allows to define the parameters of the authentication method that is 
 internally used by the proxy to authorize connections that are 
 authenticated by other databases.
+Direct binds are always proxied without any idassert handling.
+
 The identity defined by this directive, according to the properties
 associated to the authentication method, is supposed to have auth access 
 on the target server to attributes used on the proxy for authentication
@@ -303,7 +305,6 @@ which implies that the proxy will either perform a simple bind as the
 or a SASL bind as the
 .I authcID
 and assert the client's identity when it is not anonymous.
-Direct binds are always proxied.
 The other modes imply that the proxy will always either perform a simple bind 
 as the
 .IR authcDN
@@ -413,6 +414,25 @@ This directive causes a cached connection to be dropped an recreated
 after it has been idle for the specified time.
 
 .TP
+.B keepalive  <idle>:<probes>:<interval>
+The
+.B keepalive
+parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
+used to check whether a socket is alive;
+.I idle
+is the number of seconds a connection needs to remain idle before TCP
+starts sending keepalive probes;
+.I probes
+is the maximum number of keepalive probes TCP should send before dropping
+the connection;
+.I interval
+is interval in seconds between individual keepalive probes.
+Only some systems support the customization of these values;
+the
+.B keepalive
+parameter is ignored otherwise, and system-wide settings are used.
+
+.TP
 .B network\-timeout <time>
 Sets the network timeout value after which
 .BR poll (2)/ select (2) 
@@ -439,6 +459,13 @@ By default, the search is propagated after replacing undefined portions
 with
 .BR (!(objectClass=*)) ,
 which corresponds to the empty result set.
+
+.TP
+.B onerr {CONTINUE|stop}
+This directive allows to select the behavior in case an error is returned
+by the remote server during a search.
+The default, \fBcontinue\fP, consists in returning success.
+If the value is set to \fBstop\fP, the error is returned to the client.
 
 .TP
 .B protocol\-version {0,2,3}
@@ -499,7 +526,7 @@ Discards current cached connection when the client rebinds.
 .TP
 .B t\-f\-support {NO|yes|discover}
 enable if the remote server supports absolute filters
-(see \fIdraft-zeilenga-ldap-t-f\fP for details).
+(see \fIRFC 4526\fP for details).
 If set to
 .BR discover ,
 support is detected by reading the remote server's root DSE.

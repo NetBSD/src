@@ -1,5 +1,5 @@
 .\"
-.\" Id: ucdata.man,v 1.5 2001/01/02 18:46:20 mleisher Exp
+.\" Id: ucdata.man,v 1.5 2001/01/02 18:46:20 mleisher Exp 
 .\"
 .TH ucdata 3 "03 January 2001"
 .SH NAME 

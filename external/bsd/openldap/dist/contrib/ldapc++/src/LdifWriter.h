@@ -1,8 +1,8 @@
-/*	$NetBSD: LdifWriter.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: LdifWriter.h,v 1.1.1.3 2014/05/28 09:58:27 tron Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifWriter.h,v 1.2.2.1 2008/04/14 22:58:58 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2008-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

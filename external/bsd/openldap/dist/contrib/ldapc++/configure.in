@@ -1,13 +1,13 @@
-dnl OpenLDAP: pkg/ldap/contrib/ldapc++/configure.in,v 1.8.2.9 2010/04/13 20:22:24 kurt Exp
+dnl $OpenLDAP$
 
-dnl Copyright 2000-2008, OpenLDAP Foundation, All Rights Reserved.
+dnl Copyright 2000-2014 The OpenLDAP Foundation. All Rights Reserved.
 dnl COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_COPYRIGHT([[Copyright 2000-2010 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 2000-2014 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([OpenLDAP: pkg/ldap/contrib/ldapc++/configure.in,v 1.8.2.9 2010/04/13 20:22:24 kurt Exp])
+AC_REVISION([Id: 73be60f7277f53358ce10305a55938bdf7a0d602 ])
 AC_INIT(ldapcpplib, [] , [http://www.openldap.org/its/] )
 AC_CONFIG_SRCDIR(src/LDAPConnection.h)
 AM_INIT_AUTOMAKE(foreign)

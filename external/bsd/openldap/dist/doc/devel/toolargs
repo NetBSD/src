@@ -26,4 +26,4 @@ slaptest             F          Q            d f       no     uv
 	-v verbose
 
 ---
-OpenLDAP: pkg/ldap/doc/devel/toolargs,v 1.1.6.3 2010/04/14 22:59:08 quanah Exp
+$OpenLDAP$
