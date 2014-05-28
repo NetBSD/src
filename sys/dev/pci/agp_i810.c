@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.83 2014/05/28 15:34:32 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.84 2014/05/28 16:07:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.83 2014/05/28 15:34:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.84 2014/05/28 16:07:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,8 +552,8 @@ static int
 agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 {
 	struct agp_i810_softc *const isc = sc->as_chipc;
-	const pci_chipset_tag_t pc = isc->as_pc;
-	const pcitag_t tag = isc->as_tag;
+	const pci_chipset_tag_t pc = sc->as_pc;
+	const pcitag_t tag = sc->as_tag;
 	pcireg_t lo, hi;
 	bus_addr_t addr, minaddr, maxaddr;
 	int error;
@@ -614,7 +614,7 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 			pci_conf_write(pc, tag, AGP_I915_IFPADDR, addr);
 		} else {
 			hi = __SHIFTOUT(addr, __BITS(63, 32));
-			lo = __SHIFTOUT(addr, __BITS(31, 0))
+			lo = __SHIFTOUT(addr, __BITS(31, 0));
 			pci_conf_write(pc, tag, AGP_I965_IFPADDR+4, hi);
 			pci_conf_write(pc, tag, AGP_I965_IFPADDR, lo);
 		}
