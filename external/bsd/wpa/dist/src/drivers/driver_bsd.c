@@ -853,12 +853,13 @@ bsd_init(struct hostapd_data *hapd, struct wpa_init_params *params)
 
 	return drv;
 bad:
-	if (drv->sock_xmit != NULL)
-		l2_packet_deinit(drv->sock_xmit);
-	if (drv->sock >= 0)
-		close(drv->sock);
-	if (drv != NULL)
+	if (drv != NULL) {
+		if (drv->sock_xmit != NULL)
+			l2_packet_deinit(drv->sock_xmit);
+		if (drv->sock >= 0)
+			close(drv->sock);
 		os_free(drv);
+	}
 	return NULL;
 }
 
