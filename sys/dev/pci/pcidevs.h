@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1182 2014/05/25 16:19:08 njoly Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1183 2014/05/28 09:06:46 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1189 2014/05/25 16:17:41 njoly Exp
+ *	NetBSD: pcidevs,v 1.1190 2014/05/28 09:06:24 msaitoh Exp
  */
 
 /*
@@ -2831,6 +2831,7 @@
 #define	PCI_PRODUCT_INTEL_I350_SGMII	0x1524		/* I350 Gigabit Connection */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_V	0x1525		/* 82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82580_QUAD_FIBER	0x1527		/* 82580 quad-1000BaseX Ethernet */
+#define	PCI_PRODUCT_INTEL_X540_AT2	0x1528		/* X540-AT2 10Gbase-T Ethernet */
 #define	PCI_PRODUCT_INTEL_I210_T1	0x1533		/* I210-T1 Ethernet Server Adapter */
 #define	PCI_PRODUCT_INTEL_I210_COPPER_OEM1	0x1534		/* I210 Ethernet (COPPER OEM) */
 #define	PCI_PRODUCT_INTEL_I210_COPPER_IT	0x1535		/* I210 Ethernet (COPPER IT) */
