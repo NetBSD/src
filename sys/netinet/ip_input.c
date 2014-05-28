@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.314 2014/05/23 23:38:48 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.315 2014/05/28 19:19:33 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.314 2014/05/23 23:38:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.315 2014/05/28 19:19:33 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -587,7 +587,7 @@ ip_input(struct mbuf *m)
 	 * we get finer grain control.
 	 */
 	checkif = ip_checkinterface && (ipforwarding == 0) &&
-	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0;
+	    (ifp->if_flags & IFF_LOOPBACK) == 0;
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -609,7 +609,7 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (ifp && ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST) {
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
