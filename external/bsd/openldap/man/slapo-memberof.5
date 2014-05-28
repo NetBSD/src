@@ -1,7 +1,8 @@
-.TH SLAPO-MEMBEROF 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO-MEMBEROF 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-memberof.5,v 1.1.2.7 2010/04/13 20:22:44 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-memberof \- Reverse Group Membership overlay to slapd
 .SH SYNOPSIS
@@ -33,7 +34,7 @@ for details.
 .LP
 The following
 .B slapd.conf
-configuration options are defined for the memberofoverlay.
+configuration options are defined for the memberof overlay.
 
 .TP
 .BI memberof\-group\-oc \ <group-oc>
@@ -105,7 +106,11 @@ the corresponding groups are modified as well.
 .LP
 The memberof overlay may be used with any backend that provides full 
 read-write functionality, but it is mainly intended for use 
-with local storage backends.
+with local storage backends. The maintenance operations it performs
+are internal to the server on which the overlay is configured and
+are never replicated. Replica servers should be configured with their
+own instances of the memberOf overlay if it is desired to maintain
+these memberOf attributes on the replicas.
 
 .SH FILES
 .TP

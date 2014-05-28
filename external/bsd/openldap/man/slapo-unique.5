@@ -1,7 +1,8 @@
-.TH SLAPO-UNIQUE 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 2004-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO-UNIQUE 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 2004-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-unique.5,v 1.6.2.8 2010/04/13 20:22:45 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-unique \- Attribute Uniqueness overlay to slapd
 .SH SYNOPSIS
@@ -48,6 +49,12 @@ statements or
 .B olcUniqueURI
 attributes will create independent domains, each with their own
 independent lists of URIs and ignore/strict settings.
+
+Keywords
+.B strict
+and
+.B ignore
+have to be enclosed in quotes (") together with the URI.
 
 The LDAP URI syntax is a subset of
 .B RFC-4516,
@@ -137,7 +144,7 @@ This legacy configuration parameter should be converted to a
 .B unique_uri
 parameter, as described above.
 .TP
-.B unique_strict
+.B unique_strict <attribute...>
 This legacy configuration parameter should be converted to a
 .B strict
 keyword prepended to a
@@ -154,6 +161,12 @@ Typical attributes for the
 .B ignore ldap:///...
 URIs are intentionally not hardcoded into the overlay to allow for
 maximum flexibility in meeting site-specific requirements.
+.LP
+Replication and operations with
+.B manageDsaIt
+control are allowed to bypass this enforcement. It is therefore important that
+all servers accepting writes have this overlay configured in order to maintain
+uniqueness in a replicated DIT.
 .SH FILES
 .TP
 /etc/openldap/slapd.conf

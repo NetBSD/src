@@ -1,8 +1,8 @@
-/* Generated from /dist/src/external/bsd/openldap/dist/include/ldap_config.hin */
-/* OpenLDAP: pkg/ldap/include/ldap_config.hin,v 1.3.2.5 2010/04/13 20:22:48 kurt Exp */
+/* Generated from /usr/src/external/bsd/openldap/dist/include/ldap_config.hin */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

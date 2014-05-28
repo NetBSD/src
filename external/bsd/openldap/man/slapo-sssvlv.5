@@ -1,8 +1,9 @@
-.TH SLAPO-SSSVLV 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 2009-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO-SSSVLV 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 2009-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copyright 2009 Symas Corporation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-sssvlv.5,v 1.1.2.3 2010/04/13 20:22:45 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-sssvlv \- Server Side Sorting and Virtual List View overlay to slapd
 .SH SYNOPSIS
@@ -17,8 +18,8 @@ or globally for all backends.
 Since a complete result set must be generated in memory before sorting can
 be performed, processing sort requests can have a large impact on the
 server's memory use. As such, any connection is limited to having only
-one sort request active at a time. Additional limits may be configured
-as described below.
+a limited number of sort requests active at a time. Additional limits may
+be configured as described below.
 
 .SH CONFIGURATION
 These
@@ -34,6 +35,10 @@ connections. The default is one half of the number of server threads.
 .TP
 .B sssvlv\-maxkeys <num>
 Set the maximum number of keys allowed in a sort request. The default is 5.
+.TP
+.B sssvlv\-maxperconn <num>
+Set the maximum number of concurrent paged search requests per connection. The default is 5. The number of concurrent requests remains limited by
+.B sssvlv-max.
 .SH FILES
 .TP
 /etc/openldap/slapd.conf
