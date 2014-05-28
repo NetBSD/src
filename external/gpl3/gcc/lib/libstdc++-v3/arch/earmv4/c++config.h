@@ -35,7 +35,7 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20140116
+#define __GLIBCXX__ 20140522
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -1239,12 +1239,12 @@ namespace std
 
 /* Define if C99 functions or macros from <wchar.h>, <math.h>, <complex.h>,
    <stdio.h>, and <stdlib.h> can be used or exposed. */
-#define _GLIBCXX_USE_C99 1
+/* #undef _GLIBCXX_USE_C99 */
 
 /* Define if C99 functions in <complex.h> should be used in <complex>. Using
    compiler builtins for these functions requires corresponding C99 library
    functions to be present. */
-#define _GLIBCXX_USE_C99_COMPLEX 1
+/* #undef _GLIBCXX_USE_C99_COMPLEX */
 
 /* Define if C99 functions in <complex.h> should be used in <tr1/complex>.
    Using compiler builtins for these functions requires corresponding C99
@@ -1327,13 +1327,13 @@ namespace std
 /* #undef _GLIBCXX_USE_SCHED_YIELD */
 
 /* Define if _SC_NPROCESSORS_ONLN is available in <unistd.h>. */
-/* #undef _GLIBCXX_USE_SC_NPROCESSORS_ONLN */
+#define _GLIBCXX_USE_SC_NPROCESSORS_ONLN 1
 
 /* Define if _SC_NPROC_ONLN is available in <unistd.h>. */
 /* #undef _GLIBCXX_USE_SC_NPROC_ONLN */
 
 /* Define if sysctl(), CTL_HW and HW_NCPU are available in <sys/sysctl.h>. */
-/* #undef _GLIBCXX_USE_SYSCTL_HW_NCPU */
+#define _GLIBCXX_USE_SYSCTL_HW_NCPU 1
 
 /* Define if code specialized for wchar_t should be used. */
 #define _GLIBCXX_USE_WCHAR_T 1

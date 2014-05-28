@@ -300,7 +300,7 @@
 /* #undef HAVE_NAN_H */
 
 /* Define if poll is available in <poll.h>. */
-/* #undef HAVE_POLL */
+#define HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
 /* #undef HAVE_POWF */
@@ -430,7 +430,7 @@
 /* #undef HAVE_S_IFREG */
 
 /* Define if S_IFREG is available in <sys/stat.h>. */
-/* #undef HAVE_S_ISREG */
+#define HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
 /* #undef HAVE_TANF */
@@ -478,7 +478,7 @@
 /* #undef HAVE_WIN32_SLEEP */
 
 /* Define if writev is available in <sys/uio.h>. */
-/* #undef HAVE_WRITEV */
+#define HAVE_WRITEV 1
 
 /* Define to 1 if you have the `_acosf' function. */
 /* #undef HAVE__ACOSF */
@@ -832,7 +832,7 @@
 /* #undef _GLIBCXX_USE_FLOAT128 */
 
 /* Defined if gettimeofday is available. */
-/* #undef _GLIBCXX_USE_GETTIMEOFDAY */
+#define _GLIBCXX_USE_GETTIMEOFDAY 1
 
 /* Define if get_nprocs is available in <sys/sysinfo.h>. */
 /* #undef _GLIBCXX_USE_GET_NPROCS */
@@ -863,13 +863,13 @@
 /* #undef _GLIBCXX_USE_SCHED_YIELD */
 
 /* Define if _SC_NPROCESSORS_ONLN is available in <unistd.h>. */
-/* #undef _GLIBCXX_USE_SC_NPROCESSORS_ONLN */
+#define _GLIBCXX_USE_SC_NPROCESSORS_ONLN 1
 
 /* Define if _SC_NPROC_ONLN is available in <unistd.h>. */
 /* #undef _GLIBCXX_USE_SC_NPROC_ONLN */
 
 /* Define if sysctl(), CTL_HW and HW_NCPU are available in <sys/sysctl.h>. */
-/* #undef _GLIBCXX_USE_SYSCTL_HW_NCPU */
+#define _GLIBCXX_USE_SYSCTL_HW_NCPU 1
 
 /* Define if code specialized for wchar_t should be used. */
 #define _GLIBCXX_USE_WCHAR_T 1

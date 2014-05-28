@@ -10,10 +10,10 @@ SRCDIR/gcc/config/rs6000/secureplt.h
 SRCDIR/gcc/config/rs6000/rs6000.h
 SRCDIR/gcc/config/dbxelf.h
 SRCDIR/gcc/config/elfos.h
-SRCDIR/gcc/config/netbsd.h
-SRCDIR/gcc/config/netbsd-elf.h
 SRCDIR/gcc/config/freebsd-spec.h
 SRCDIR/gcc/config/rs6000/sysv4.h
+SRCDIR/gcc/config/netbsd.h
+SRCDIR/gcc/config/netbsd-elf.h
 SRCDIR/gcc/config/rs6000/netbsd.h
 SRCDIR/gcc/config/rs6000/option-defaults.h
 SRCDIR/gcc/config/initfini-array.h
