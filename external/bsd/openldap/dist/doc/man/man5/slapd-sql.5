@@ -1,5 +1,5 @@
 .TH SLAPD-SQL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.26.4.3 2009/06/03 01:41:57 quanah Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd\-sql \- SQL backend to slapd
 .SH SYNOPSIS
@@ -335,6 +335,10 @@ to map DNs from LDAP to SQL representation and vice-versa.
 Subsequent args are passed to the layer configuration routine.
 This is \fIhighly experimental\fP and should be used with extreme care.
 The API of the layers is not frozen yet, so it is unpublished.
+
+.TP
+.B autocommit { NO | yes }
+Activates autocommit; by default, it is off.
 
 .SH METAINFORMATION USED
 .LP

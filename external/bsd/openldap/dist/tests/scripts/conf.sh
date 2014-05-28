@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.49.2.12 2010/04/19 19:14:31 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,8 @@ sed -e "s/@BACKEND@/${BACKEND}/"			\
 	-e "s/^#${AC_translucent}#//"			\
 	-e "s/^#${AC_unique}#//"			\
 	-e "s/^#${AC_valsort}#//"			\
+	-e "s/^#${INDEXDB}#//"				\
+	-e "s/^#${MAINDB}#//"				\
 	-e "s/^#${MON}#//"				\
 	-e "s/^#${MONMOD}#//"				\
 	-e "s/^#${SASL}#//"				\

@@ -1,6 +1,6 @@
-// OpenLDAP: pkg/ldap/contrib/ldapc++/examples/startTls.cpp,v 1.1.2.2 2010/04/14 23:50:43 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2010, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2010-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -27,7 +27,7 @@ int main( int argc, char* argv[]){
     tls.setOption( TlsOptions::REQUIRE_CERT, TlsOptions::DEMAND );
     std::cout << "    CaCertfile: " << tls.getStringOption( TlsOptions::CACERTFILE ) << std::endl;
     std::cout << "    Require Cert: " << tls.getIntOption( TlsOptions::REQUIRE_CERT ) << std::endl;
-    
+
     try {
         // 1. connect using global options
         LDAPAsynConnection l(uri);
@@ -40,8 +40,8 @@ int main( int argc, char* argv[]){
         }
 
         // 2. connect using connection specific option
-        l = LDAPAsynConnection(uri);
-        tls=l.getTlsOptions();
+        LDAPAsynConnection l1(uri);
+        tls=l1.getTlsOptions();
         std::cout << "Current connection specific settings:" << std::endl;
         std::cout << "    CaCertfile: " << tls.getStringOption( TlsOptions::CACERTFILE) << std::endl;
         std::cout << "    CaCertDir: " << tls.getStringOption( TlsOptions::CACERTDIR ) << std::endl;
@@ -52,13 +52,13 @@ int main( int argc, char* argv[]){
         std::cout << "    CaCertDir: " << tls.getStringOption( TlsOptions::CACERTDIR ) << std::endl;
         std::cout << "    Require Cert: " << tls.getIntOption( TlsOptions::REQUIRE_CERT ) << std::endl;
         try {
-            l.start_tls();
+            l1.start_tls();
             std::cout << "StartTLS successful." << std::endl;
-            l.unbind();
+            l1.unbind();
         } catch ( LDAPException e ) {
             std::cerr << e << std::endl;
         }
-        
+
         // 3. and once again using the globals
         try {
             LDAPAsynConnection l2(uri);
@@ -76,4 +76,4 @@ int main( int argc, char* argv[]){
     } catch ( LDAPException e ) {
         std::cerr << e << std::endl;
     }
-}    
+}

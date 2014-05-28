@@ -1,6 +1,6 @@
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPControl.cpp,v 1.4.10.2 2008/09/03 18:03:43 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -19,6 +19,7 @@ LDAPCtrl::LDAPCtrl(const char *oid, bool critical, const char* data,
     m_isCritical=critical;
     if (data != 0 && length !=0){
         m_data.assign(data,length);
+        m_noData=false;
     }else{
         m_data=string();
         m_noData=true;

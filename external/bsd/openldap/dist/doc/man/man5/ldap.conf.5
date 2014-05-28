@@ -1,6 +1,6 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.33.2.14 2010/04/13 20:22:41 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap.conf, .ldaprc \- LDAP configuration file/environment variables
@@ -297,7 +297,7 @@ Specifies if GSSAPI encryption (GSS_C_INTEG_FLAG and GSS_C_CONF_FLAG)
 should be used. The default is off.
 .TP
 .B GSSAPI_ALLOW_REMOTE_PRINCIPAL <on/true/yes/off/false/no>
-Specifies if GSSAPI based authentification should try to form the
+Specifies if GSSAPI based authentication should try to form the
 target principal name out of the ldapServiceName or dnsHostName
 attribute of the targets RootDSE entry. The default is off.
 .SH TLS OPTIONS
@@ -317,11 +317,31 @@ certificates in separate individual files. The
 .B TLS_CACERT
 is always used before
 .B TLS_CACERTDIR.
-This parameter is ignored with GNUtls.
+This parameter is ignored with GnuTLS.
+
+When using Mozilla NSS, <path> may contain a Mozilla NSS cert/key
+database.  If <path> contains a Mozilla NSS cert/key database and
+CA cert files, OpenLDAP will use the cert/key database and will
+ignore the CA cert files.
 .TP
 .B TLS_CERT <filename>
 Specifies the file that contains the client certificate.
 .B This is a user-only option.
+
+When using Mozilla NSS, if using a cert/key database (specified with
+TLS_CACERTDIR), TLS_CERT specifies the name of the certificate to use:
+.nf
+	TLS_CERT Certificate for Sam Carter
+.fi
+If using a token other than the internal built in token, specify the
+token name first, followed by a colon:
+.nf
+	TLS_CERT my hardware device:Certificate for Sam Carter
+.fi
+Use certutil -L to list the certificates by name:
+.nf
+	certutil -d /path/to/certdbdir -L
+.fi
 .TP
 .B TLS_KEY <filename>
 Specifies the file that contains the private key that matches the certificate
@@ -330,29 +350,85 @@ stored in the
 file. Currently, the private key must not be protected with a password, so
 it is of critical importance that the key file is protected carefully.
 .B This is a user-only option.
+
+When using Mozilla NSS, TLS_KEY specifies the name of a file that contains
+the password for the key for the certificate specified with TLS_CERT.  The
+modutil command can be used to turn off password protection for the cert/key
+database.  For example, if TLS_CACERTDIR specifies /home/scarter/.moznss as
+the location of the cert/key database, use modutil to change the password
+to the empty string:
+.nf
+	modutil -dbdir ~/.moznss -changepw 'NSS Certificate DB'
+.fi
+You must have the old password, if any.  Ignore the WARNING about the running
+browser.  Press 'Enter' for the new password.
+
 .TP
 .B TLS_CIPHER_SUITE <cipher-suite-spec>
 Specifies acceptable cipher suite and preference order.
-<cipher-suite-spec> should be a cipher specification for OpenSSL,
-e.g., HIGH:MEDIUM:+SSLv2.
+<cipher-suite-spec> should be a cipher specification for 
+the TLS library in use (OpenSSL, GnuTLS, or Mozilla NSS).
+Example:
+.RS
+.RS
+.TP
+.I OpenSSL:
+TLS_CIPHER_SUITE HIGH:MEDIUM:+SSLv2
+.TP
+.I GnuTLS:
+TLS_CIPHER_SUITE SECURE256:!AES-128-CBC
+.RE
 
-To check what ciphers a given spec selects, use:
+To check what ciphers a given spec selects in OpenSSL, use:
 
 .nf
 	openssl ciphers \-v <cipher-suite-spec>
 .fi
 
-To obtain the list of ciphers in GNUtls use:
+With GnuTLS the available specs can be found in the manual page of 
+.BR gnutls\-cli (1)
+(see the description of the 
+option
+.BR \-\-priority ).
+
+In older versions of GnuTLS, where gnutls\-cli does not support the option
+\-\-priority, you can obtain the \(em more limited \(em list of ciphers by calling:
 
 .nf
-	gnutls-cli \-l
+	gnutls\-cli \-l
 .fi
+
+When using Mozilla NSS, the OpenSSL cipher suite specifications are used and
+translated into the format used internally by Mozilla NSS.  There isn't an easy
+way to list the cipher suites from the command line.  The authoritative list
+is in the source code for Mozilla NSS in the file sslinfo.c in the structure
+.nf
+        static const SSLCipherSuiteInfo suiteInfo[]
+.fi
+.RE
+.TP
+.B TLS_PROTOCOL_MIN <major>[.<minor>]
+Specifies minimum SSL/TLS protocol version that will be negotiated.
+If the server doesn't support at least that version,
+the SSL handshake will fail.
+To require TLS 1.x or higher, set this option to 3.(x+1),
+e.g.,
+
+.nf
+	TLS_PROTOCOL_MIN 3.2
+.fi
+
+would require TLS 1.1.
+Specifying a minimum that is higher than that supported by the
+OpenLDAP implementation will result in it requiring the
+highest level that it does support.
+This parameter is ignored with GnuTLS.
 .TP
 .B TLS_RANDFILE <filename>
 Specifies the file to obtain random bits from when /dev/[u]random is
 not available. Generally set to the name of the EGD/PRNGD socket.
 The environment variable RANDFILE can also be used to specify the filename.
-This parameter is ignored with GNUtls.
+This parameter is ignored with GnuTLS and Mozilla NSS.
 .TP
 .B TLS_REQCERT <level>
 Specifies what checks to perform on server certificates in a TLS session,
@@ -385,7 +461,7 @@ Specifies if the Certificate Revocation List (CRL) of the CA should be
 used to verify if the server certificates have not been revoked. This
 requires
 .B TLS_CACERTDIR
-parameter to be set. This parameter is ignored with GNUtls.
+parameter to be set. This parameter is ignored with GnuTLS and Mozilla NSS.
 .B <level>
 can be specified as one of the following keywords:
 .RS
@@ -403,7 +479,7 @@ Check the CRL for a whole certificate chain
 .B TLS_CRLFILE <filename>
 Specifies the file containing a Certificate Revocation List to be used
 to verify if the server certificates have not been revoked. This
-parameter is only supported with GNUtls.
+parameter is only supported with GnuTLS and Mozilla NSS.
 .SH "ENVIRONMENT VARIABLES"
 .TP
 LDAPNOINIT

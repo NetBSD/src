@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/slapdconf2.sdf,v 1.20.2.21 2010/04/13 20:22:35 kurt Exp
-# Copyright 2005-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2005-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd
@@ -7,32 +7,41 @@ H1: Configuring slapd
 Once the software has been built and installed, you are ready
 to configure {{slapd}}(8) for use at your site.
 
-Unlike previous
-OpenLDAP releases, the slapd(8) runtime configuration in 2.3 (and later)
-is fully LDAP-enabled and can be managed using the standard LDAP
-operations with data in {{TERM:LDIF}}. The LDAP configuration engine
-allows all of slapd's configuration options to be changed on the fly,
+OpenLDAP 2.3 and later have transitioned to using a dynamic runtime
+configuration engine, {{slapd-config}}(5).  {{slapd-config}}(5)
+* is fully LDAP-enabled
+* is managed using the standard LDAP operations
+* stores its configuration data in an {{TERM:LDIF}} database, generally
+in the {{F:/usr/local/etc/openldap/slapd.d}} directory.
+* allows all of slapd's configuration options to be changed on the fly,
 generally without requiring a server restart for the changes
 to take effect.
 
-The old style {{slapd.conf}}(5) file is still
-supported, but must be converted to the new {{slapd-config}}(5) format
-to allow runtime changes to be saved. While the old style
-configuration uses a single file, normally installed as
-{{F:/usr/local/etc/openldap/slapd.conf}}, the new style
-uses a slapd backend database to store the configuration. The
-configuration database normally resides in the
-{{F:/usr/local/etc/openldap/slapd.d}} directory. An alternate configuration
-directory (or file) can be specified via a command-line option to
-{{slapd}}(8).
+This chapter describes the general format of the {{slapd-config}}(5)
+configuration system, followed by a detailed description of commonly used
+settings.
 
-This chapter briefly discusses converting to the new style configuration,
-then describes the general format of the configuration system, followed by
-a detailed description of commonly used config settings.
+The older style {{slapd.conf}}(5) file is still supported, but its use
+is deprecated and support for it will be withdrawn in a future OpenLDAP
+release.  Configuring {{slapd}}(8) via {{slapd.conf}}(5) is described in
+the next chapter.
 
-Note: some of the backends and of the distributed overlays
-do not support runtime configuration yet.  In those cases,
-the old style {{slapd.conf}}(5) file must be used.
+Refer to {{slapd}}(8) for information on how to have slapd automatically
+convert from {{slapd.conf}}(5) to {{slapd-config}}(5).
+
+
+Note: Although the {{slapd-config}}(5) system stores its configuration
+as (text-based) LDIF files, you should {{1:never}} edit any of
+the LDIF files directly.  Configuration changes should be performed via LDAP
+operations, e.g. {{ldapadd}}(1), {{ldapdelete}}(1), or {{ldapmodify}}(1).
+
+
+Note: You will need to continue to use the older {{slapd.conf}}(5)
+configuration system if your OpenLDAP installation requires the use of one
+or more backends or overlays that have not been updated to use the
+{{slapd-config}}(5) system.  As of OpenLDAP 2.4.33, all of the official
+backends have been updated.  There may be additional contributed or experimental
+overlays that also have not been updated.
 
 
 H2: Configuration Layout
@@ -181,7 +190,7 @@ or consult the table below. The possible values for <level> are:
 Level	Keyword		Description
 -1	any		enable all debugging
 0			no debugging
-1	(0x1 trace)	trace function callss
+1	(0x1 trace)	trace function calls
 2	(0x2 packets)	debug packet handling
 4	(0x4 args)	heavy trace debugging
 8	(0x8 conns)	connection management
@@ -1033,83 +1042,131 @@ E: 20.
 Line 15 is a comment. Lines 16-18 identify this entry as the global
 database entry. Line 19 is a global access control. It applies to all
 entries (after any applicable database-specific access controls).
+Line 20 is a blank line.
+
+The next entry defines the config backend.
+
+E: 21.    # set a rootpw for the config database so we can bind.
+E: 22.    # deny access to everyone else.
+E: 23.    dn: olcDatabase=config,cn=config
+E: 24.    objectClass: olcDatabaseConfig
+E: 25.    olcDatabase: config
+E: 26.    olcRootPW: {SSHA}XKYnrjvGT3wZFQrDD5040US592LxsdLy
+E: 27.    olcAccess: to * by * none
+E: 28.
+
+Lines 21-22 are comments. Lines 23-25 identify this entry as the config
+database entry. Line 26 defines the {{super-user}} password for this
+database. (The DN defaults to {{"cn=config"}}.) Line 27 denies all access
+to this database, so only the super-user will be able to access it. (This
+is already the default access on the config database. It is just listed
+here for illustration, and to reiterate that unless a means to authenticate
+as the super-user is explicitly configured, the config database will be
+inaccessible.)
+
+Line 28 is a blank line.
 
 The next entry defines a BDB backend that will handle queries for things
 in the "dc=example,dc=com" portion of the tree. Indices are to be maintained
 for several attributes, and the {{EX:userPassword}} attribute is to be
 protected from unauthorized access.
 
-E: 21.    # BDB definition for example.com
-E: 22.    dn: olcDatabase=bdb,cn=config
-E: 23.    objectClass: olcDatabaseConfig
-E: 24.    objectClass: olcBdbConfig
-E: 25.    olcDatabase: bdb
-E: 26.    olcSuffix: "dc=example,dc=com"
-E: 27.    olcDbDirectory: /usr/local/var/openldap-data
-E: 28.    olcRootDN: "cn=Manager,dc=example,dc=com"
-E: 29.    olcRootPW: secret
-E: 30.    olcDbIndex: uid pres,eq
-E: 31.    olcDbIndex: cn,sn,uid pres,eq,approx,sub
-E: 32.    olcDbIndex: objectClass eq
-E: 33.    olcAccess: to attrs=userPassword
-E: 34.      by self write
-E: 35.      by anonymous auth
-E: 36.      by dn.base="cn=Admin,dc=example,dc=com" write
-E: 37.      by * none
-E: 38.    olcAccess: to *
-E: 39.      by self write
-E: 40.      by dn.base="cn=Admin,dc=example,dc=com" write
-E: 41.      by * read
-E: 42.    
+E: 29.    # BDB definition for example.com
+E: 30.    dn: olcDatabase=bdb,cn=config
+E: 31.    objectClass: olcDatabaseConfig
+E: 32.    objectClass: olcBdbConfig
+E: 33.    olcDatabase: bdb
+E: 34.    olcSuffix: dc=example,dc=com
+E: 35.    olcDbDirectory: /usr/local/var/openldap-data
+E: 36.    olcRootDN: cn=Manager,dc=example,dc=com
+E: 37.    olcRootPW: secret
+E: 38.    olcDbIndex: uid pres,eq
+E: 39.    olcDbIndex: cn,sn pres,eq,approx,sub
+E: 40.    olcDbIndex: objectClass eq
+E: 41.    olcAccess: to attrs=userPassword
+E: 42.      by self write
+E: 43.      by anonymous auth
+E: 44.      by dn.base="cn=Admin,dc=example,dc=com" write
+E: 45.      by * none
+E: 46.    olcAccess: to *
+E: 47.      by self write
+E: 48.      by dn.base="cn=Admin,dc=example,dc=com" write
+E: 49.      by * read
+E: 50.    
 
-Line 21 is a comment. Lines 22-25 identify this entry as a BDB database
-configuration entry.  Line 26 specifies the DN suffix
-for queries to pass to this database. Line 27 specifies the directory
+Line 29 is a comment. Lines 30-33 identify this entry as a BDB database
+configuration entry.  Line 34 specifies the DN suffix
+for queries to pass to this database. Line 35 specifies the directory
 in which the database files will live.
 
-Lines 28 and 29 identify the database {{super-user}} entry and associated
+Lines 36 and 37 identify the database {{super-user}} entry and associated
 password. This entry is not subject to access control or size or
 time limit restrictions.
 
-Lines 30 through 32 indicate the indices to maintain for various
+Lines 38 through 40 indicate the indices to maintain for various
 attributes.
 
-Lines 33 through 41 specify access control for entries in this
+Lines 41 through 49 specify access control for entries in this
 database. For all applicable entries, the {{EX:userPassword}} attribute is writable
 by the entry itself and by the "admin" entry.  It may be used for
 authentication/authorization purposes, but is otherwise not readable.
 All other attributes are writable by the entry and the "admin"
 entry, but may be read by all users (authenticated or not).
 
-Line 42 is a blank line, indicating the end of this entry.
+Line 50 is a blank line, indicating the end of this entry.
 
-The next section of the example configuration file defines another
+The next entry defines another
 BDB database. This one handles queries involving the
 {{EX:dc=example,dc=net}} subtree but is managed by the same entity
-as the first database.  Note that without line 52, the read access
+as the first database.  Note that without line 60, the read access
 would be allowed due to the global access rule at line 19.
 
-E: 43.    # BDB definition for example.net
-E: 44.    dn: olcDatabase=bdb,cn=config
-E: 45.    objectClass: olcDatabaseConfig
-E: 46.    objectClass: olcBdbConfig
-E: 47.    olcDatabase: bdb
-E: 48.    olcSuffix: "dc=example,dc=net"
-E: 49.    olcDbDirectory: /usr/local/var/openldap-data-net
-E: 50.    olcRootDN: "cn=Manager,dc=example,dc=com"
-E: 51.    olcDbIndex: objectClass eq
-E: 52.    olcAccess: to * by users read
+E: 51.    # BDB definition for example.net
+E: 52.    dn: olcDatabase=bdb,cn=config
+E: 53.    objectClass: olcDatabaseConfig
+E: 54.    objectClass: olcBdbConfig
+E: 55.    olcDatabase: bdb
+E: 56.    olcSuffix: "dc=example,dc=net"
+E: 57.    olcDbDirectory: /usr/local/var/openldap-data-net
+E: 58.    olcRootDN: "cn=Manager,dc=example,dc=com"
+E: 59.    olcDbIndex: objectClass eq
+E: 60.    olcAccess: to * by users read
 
 
 H2: Converting old style {{slapd.conf}}(5) file to {{cn=config}} format
+
+Before converting to the {{cn=config}} format you should make sure that the
+config backend is properly configured in your existing config file. While
+the config backend is always present inside slapd, by default it is only
+accessible by its rootDN, and there are no default credentials assigned
+so unless you explicitly configure a means to authenticate to it, it will be
+unusable.
+
+If you do not already have a {{EX:database config}} section, add something
+like this to the end of {{EX:slapd.conf}}
+
+> database config
+> rootpw VerySecret
+
+Note: Since the config backend can be used to load arbitrary code into the
+slapd process, it is extremely important to carefully guard whatever
+credentials are used to access it. Since simple passwords are vulnerable to
+password guessing attacks, it is usually better to omit the rootpw and only
+use SASL authentication for the config rootDN.
 
 An existing {{slapd.conf}}(5) file can be converted to the new format using
 {{slaptest}}(8) or any of the slap tools:
 
 >	slaptest -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d
 
+Test that you can access entries under {{EX:cn=config}} using the
+default {{rootdn}} and the {{rootpw}} configured above:
+
+>	ldapsearch -x -D cn=config -w VerySecret -b cn=config
+
 You can then discard the old {{slapd.conf}}(5) file. Make sure to launch
-{{slapd}}(8) with the {{-F}} option to specify the configuration directory.
+{{slapd}}(8) with the {{-F}} option to specify the configuration directory
+if you are not using the default directory path.
 
 Note: When converting from the slapd.conf format to slapd.d format, any
 included files will also be integrated into the resulting configuration

@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/ldapc++/src/Makefile.am,v 1.10.2.8 2010/04/14 23:50:44 quanah Exp
+# $OpenLDAP$
 
 ###
-# Copyright 2000-2008, OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 

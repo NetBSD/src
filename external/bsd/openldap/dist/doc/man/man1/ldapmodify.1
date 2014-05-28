@@ -1,25 +1,31 @@
 .TH LDAPMODIFY 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man1/ldapmodify.1,v 1.49.2.12 2010/04/13 20:22:36 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 .SH SYNOPSIS
 .B ldapmodify
 [\c
-.BR \-a ]
+.BR \-V [ V ]]
 [\c
-.BR \-c ]
-[\c
-.BI \-S \ file\fR]
+.BI \-d \ debuglevel\fR]
 [\c
 .BR \-n ]
 [\c
 .BR \-v ]
 [\c
+.BR \-a ]
+[\c
+.BR \-c ]
+[\c
+.BI \-f \ file\fR]
+[\c
+.BI \-S \ file\fR]
+[\c
 .BR \-M [ M ]]
 [\c
-.BI \-d \ debuglevel\fR]
+.BR \-x ]
 [\c
 .BI \-D \ binddn\fR]
 [\c
@@ -41,39 +47,45 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 [\c
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
 [\c
+.BI \-o \ opt \fR[= optparam \fR]]
+[\c
 .BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
 .BR \-Q ]
 [\c
+.BR \-N ]
+[\c
 .BI \-U \ authcid\fR]
 [\c
 .BI \-R \ realm\fR]
-[\c
-.BR \-x ]
 [\c
 .BI \-X \ authzid\fR]
 [\c
 .BI \-Y \ mech\fR]
 [\c
 .BR \-Z [ Z ]]
-[\c
-.BI \-f \ file\fR]
 .LP
 .B ldapadd
 [\c
-.BR \-c ]
+.BR \-V [ V ]]
 [\c
-.BI \-S \ file\fR]
+.BI \-d \ debuglevel\fR]
 [\c
 .BR \-n ]
 [\c
 .BR \-v ]
 [\c
+.BR \-c ]
+[\c
+.BI \-f \ file\fR]
+[\c
+.BI \-S \ file\fR]
+[\c
 .BR \-M [ M ]]
 [\c
-.BI \-d \ debuglevel\fR]
+.BR \-x ]
 [\c
 .BI \-D \ binddn\fR]
 [\c
@@ -91,25 +103,29 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 [\c
 .BR \-P \ { 2 \||\| 3 }]
 [\c
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BI \-o \ opt \fR[= optparam \fR]]
+[\c
 .BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
 .BR \-Q ]
 [\c
+.BR \-N ]
+[\c
 .BI \-U \ authcid\fR]
 [\c
 .BI \-R \ realm\fR]
-[\c
-.BR \-x ]
 [\c
 .BI \-X \ authzid\fR]
 [\c
 .BI \-Y \ mech\fR]
 [\c
 .BR \-Z [ Z ]]
-[\c
-.BI \-f \ file\fR]
 .SH DESCRIPTION
 .B ldapmodify
 is a shell-accessible interface to the
@@ -130,6 +146,22 @@ The entry information is read from standard input or from \fIfile\fP through
 the use of the \fB\-f\fP option.
 .SH OPTIONS
 .TP
+.BR \-V [ V ]
+Print version info.
+If \fB\-VV\fP is given, only the version information is printed.
+.TP
+.BI \-d \ debuglevel
+Set the LDAP debugging level to \fIdebuglevel\fP.
+.B ldapmodify
+must be compiled with LDAP_DEBUG defined for this option to have any effect.
+.TP
+.B \-n
+Show what would be done, but don't actually modify entries.  Useful for
+debugging in conjunction with \fB\-v\fP.
+.TP
+.B \-v
+Use verbose mode, with many diagnostics written to standard output.
+.TP
 .B \-a
 Add new entries.  The default for
 .B ldapmodify
@@ -143,31 +175,19 @@ Continuous operation mode.  Errors are reported, but
 will continue with modifications.  The default is to exit after
 reporting an error.
 .TP
+.BI \-f \ file
+Read the entry modification information from \fIfile\fP instead of from
+standard input.
+.TP
 .BI \-S \ file
-Add or change records which where skipped due to an error are written to \fIfile\fP 
+Add or change records which were skipped due to an error are written to \fIfile\fP 
 and the error message returned by the server is added as a comment. Most useful in 
 conjunction with \fB\-c\fP.
-.TP
-.B \-n
-Show what would be done, but don't actually modify entries.  Useful for
-debugging in conjunction with \fB\-v\fP.
-.TP
-.B \-v
-Use verbose mode, with many diagnostics written to standard output.
 .TP
 .BR \-M [ M ]
 Enable manage DSA IT control.
 .B \-MM
 makes control critical.
-.TP
-.BI \-d \ debuglevel
-Set the LDAP debugging level to \fIdebuglevel\fP.
-.B ldapmodify
-must be compiled with LDAP_DEBUG defined for this option to have any effect.
-.TP
-.BI \-f \ file
-Read the entry modification information from \fIfile\fP instead of from
-standard input.
 .TP
 .B \-x 
 Use simple authentication instead of SASL.
@@ -203,38 +223,48 @@ Deprecated in favor of \fB\-H\fP.
 .BR \-P \ { 2 \||\| 3 }
 Specify the LDAP protocol version to use.
 .TP
-.BI \-O \ security-properties
-Specify SASL security properties.
-.TP
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 .TP
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 
-Specify general extensions with \fB\-e\fP and search extensions with \fB\-E\fP.
+Specify general extensions with \fB\-e\fP and modify extensions with \fB\-E\fP.
 \'\fB!\fP\' indicates criticality.
 
 General extensions:
 .nf
-  [!]assert=<filter>   (an RFC 4515 Filter)
-  [!]authzid=<authzid> ("dn:<dn>" or "u:<user>")
+  [!]assert=<filter>    (an RFC 4515 Filter)
+  !authzid=<authzid>    ("dn:<dn>" or "u:<user>")
+  [!]bauthzid           (RFC 3829 authzid control)
+  [!]chaining[=<resolve>[/<cont>]]
   [!]manageDSAit
   [!]noop
   ppolicy
-  [!]postread[=<attrs>]        (a comma-separated attribute list)
-  [!]preread[=<attrs>] (a comma-separated attribute list)
-  abandon, cancel (SIGINT sends abandon/cancel; not really controls)
+  [!]postread[=<attrs>] (a comma-separated attribute list)
+  [!]preread[=<attrs>]  (a comma-separated attribute list)
+  [!]relax
+  sessiontracking
+  abandon,cancel,ignore (SIGINT sends abandon/cancel,
+  or ignores response; if critical, doesn't wait for SIGINT.
+  not really controls)
 .fi
 
-Search extensions:
+Modify extensions:
 .nf
-  [!]domainScope                               (domain scope)
-  [!]mv=<filter>                               (matched values filter)
-  [!]pr=<size>[/prompt|noprompt]       (paged results/prompt)
-  [!]sss=[\-]<attr[:OID]>[/[\-]<attr[:OID]>...]  (server side sorting)
-  [!]subentries[=true|false]           (subentries)
-  [!]sync=ro[/<cookie>]                        (LDAP Sync refreshOnly)
-          rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)
+  [!]txn[=abort|commit]
 .fi
+.TP
+.BI \-o \ opt \fR[= optparam \fR]]
+
+Specify general options.
+
+General options:
+.nf
+  nettimeout=<timeout>  (in seconds, or "none" or "max")
+  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+.fi
+.TP
+.BI \-O \ security-properties
+Specify SASL security properties.
 .TP
 .B \-I
 Enable SASL Interactive mode.  Always prompt.  Default is to prompt
@@ -242,6 +272,9 @@ only as needed.
 .TP
 .B \-Q
 Enable SASL Quiet mode.  Never prompt.
+.TP
+.B \-N
+Do not use reverse DNS to canonicalize SASL host name.
 .TP
 .BI \-U \ authcid
 Specify the authentication ID for SASL bind. The form of the ID
@@ -365,8 +398,7 @@ exit status and a diagnostic message being written to standard error.
 .BR ldap_delete_ext (3),
 .BR ldap_modify_ext (3),
 .BR ldap_modrdn_ext (3),
-.BR ldif (5),
-.BR slapd.replog (5)
+.BR ldif (5).
 .SH AUTHOR
 The OpenLDAP Project <http://www.openldap.org/>
 .SH ACKNOWLEDGEMENTS

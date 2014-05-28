@@ -1,8 +1,8 @@
 ## Makefile for OpenLDAP Administrator's Guide
-# OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.5.2.12 2010/04/13 20:22:32 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2010 The OpenLDAP Foundation.
+## Copyright 2005-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -63,9 +63,13 @@ sdf-img: \
 	config_local.png \
 	config_ref.png \
 	config_repl.png \
+	delta-syncrepl.png \
 	dual_dc.png \
 	intro_dctree.png \
 	intro_tree.png \
+	ldap-sync-refreshandpersist.png \
+	ldap-sync-refreshonly.png \
+	n-way-multi-master.png \
 	push-based-complete.png \
 	push-based-standalone.png \
 	refint.png \

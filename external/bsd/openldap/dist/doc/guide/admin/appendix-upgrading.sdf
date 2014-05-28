@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/appendix-upgrading.sdf,v 1.1.2.8 2010/04/13 20:22:33 kurt Exp
-# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Upgrading from 2.3.x

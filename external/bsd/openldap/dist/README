@@ -19,8 +19,8 @@ REQUIRED SOFTWARE
         Reentrant POSIX REGEX software (required)
 
     SLAPD:
-        BDB and HDB backends require Oracle Berkeley DB 4.4, 4.5,
-        4.6, 4.7, or 4.8.  It is highly recommended to apply the
+        BDB and HDB backends require Oracle Berkeley DB 4.4 - 4.8,
+	or 5.0 - 5.1.  It is highly recommended to apply the
         patches from Oracle for a given release.
 
     CLIENTS/CONTRIB ware:
@@ -57,7 +57,7 @@ SUPPORT / FEEDBACK / PROBLEM REPORTS / DISCUSSIONS
     <http://www.openldap.org/lists/>.  If you cannot find the answer,
     please enquire on the OpenLDAP-software list.
 
-    Issues, such as bug reports, should be reported using our our
+    Issues, such as bug reports, should be reported using our
     Issue Tracking System <http://www.OpenLDAP.org/its/>.  Do not
     use this system for software enquiries.  Please direct these
     to an appropriate mailing list.
@@ -74,11 +74,11 @@ CONTRIBUTING
     <http://www.openldap.org/its/> to be considered.
 
 ---
-OpenLDAP: pkg/ldap/README,v 1.40.2.14 2010/04/13 20:22:14 kurt Exp
+$OpenLDAP$
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2010 The OpenLDAP Foundation.
+Copyright 1998-2014 The OpenLDAP Foundation.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

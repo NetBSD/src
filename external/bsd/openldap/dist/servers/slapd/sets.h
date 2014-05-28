@@ -1,9 +1,9 @@
-/*	$NetBSD: sets.h,v 1.1.1.4 2010/12/12 15:22:45 adam Exp $	*/
+/*	$NetBSD: sets.h,v 1.1.1.5 2014/05/28 09:58:47 tron Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/sets.h,v 1.21.2.6 2010/04/13 20:23:20 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

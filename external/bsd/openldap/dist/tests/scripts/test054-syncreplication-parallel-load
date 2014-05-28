@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test054-syncreplication-parallel-load,v 1.1.2.5 2010/04/19 19:14:36 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@ mkdir -p $TESTDIR $DBDIR1 $DBDIR4
 
 #
 # Test replication:
-# - start producer
+# - start provider
 # - start consumer
 # - populate over ldap
 # - perform some modifies and deleted
@@ -33,7 +33,7 @@ mkdir -p $TESTDIR $DBDIR1 $DBDIR4
 # - retrieve database over ldap and compare against expected results
 #
 
-echo "Starting producer slapd on TCP/IP port $PORT1..."
+echo "Starting provider slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND $MONITORDB < $SRMASTERCONF > $CONF1
 $SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
 PID=$!
@@ -45,7 +45,7 @@ KILLPIDS="$PID"
 
 sleep 1
 
-echo "Using ldapsearch to check that producer slapd is running..."
+echo "Using ldapsearch to check that provider slapd is running..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
 		'objectclass=*' > /dev/null 2>&1
@@ -63,7 +63,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Using ldapadd to create the context prefix entry in the producer..."
+echo "Using ldapadd to create the context prefix entry in the provider..."
 $LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
 	$LDIFORDEREDCP > /dev/null 2>&1
 RC=$?
@@ -111,7 +111,7 @@ sed -e 's/[Oo][Uu]=/ou=More /g' -e 's/^[Oo][Uu]: /ou: More /' \
 	-e 's/^cn: Manager/cn: More Manager/' \
 	$LDIFORDEREDNOCP > $MORELDIF
 
-echo "Using ldapadd to populate the producer directory..."
+echo "Using ldapadd to populate the provider directory..."
 $LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
 	$LDIFORDEREDNOCP > $TESTOUT1 2>&1  &
 C1PID=$!
@@ -138,7 +138,7 @@ KILLPIDS="$PID $SLAVEPID"
 
 sleep 1
 
-echo "Using ldapsearch to check that producer slapd is running..."
+echo "Using ldapsearch to check that provider slapd is running..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
 		'objectclass=*' > /dev/null 2>&1
@@ -159,7 +159,7 @@ fi
 echo "Waiting 10 seconds to let the system catch up"
 sleep 10
 
-echo "Using ldapmodify to modify producer directory..."
+echo "Using ldapmodify to modify provider directory..."
 
 #
 # Do some modifications
@@ -263,7 +263,7 @@ echo "Stopping consumer to test recovery..."
 kill -HUP $SLAVEPID
 wait $SLAVEPID
 
-echo "Modifying more entries on the producer..."
+echo "Modifying more entries on the provider..."
 $LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=Rosco P. Coltrane, ou=Retired, ou=People, dc=example,dc=com
@@ -333,13 +333,13 @@ fi
 
 OPATTRS="entryUUID creatorsName createTimestamp modifiersName modifyTimestamp"
 
-echo "Using ldapsearch to read all the entries from the producer..."
+echo "Using ldapsearch to read all the entries from the provider..."
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectclass=*)' '*' $OPATTRS > $MASTEROUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at producer ($RC)!"
+	echo "ldapsearch failed at provider ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
@@ -357,16 +357,16 @@ fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
-echo "Filtering producer results..."
+echo "Filtering provider results..."
 $LDIFFILTER < $MASTEROUT > $MASTERFLT
 echo "Filtering consumer results..."
 $LDIFFILTER < $SLAVEOUT > $SLAVEFLT
 
-echo "Comparing retrieved entries from producer and consumer..."
+echo "Comparing retrieved entries from provider and consumer..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
 
 if test $? != 0 ; then
-	echo "test failed - producer and consumer databases differ"
+	echo "test failed - provider and consumer databases differ"
 	exit 1
 fi
 

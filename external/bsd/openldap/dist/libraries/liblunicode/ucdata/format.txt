@@ -1,5 +1,5 @@
 #
-# Id: format.txt,v 1.2 2001/01/02 18:46:20 mleisher Exp
+# Id: format.txt,v 1.2 2001/01/02 18:46:20 mleisher Exp 
 #
 
 CHARACTER DATA

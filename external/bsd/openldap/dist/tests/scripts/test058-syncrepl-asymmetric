@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test058-syncrepl-asymmetric,v 1.1.2.6 2010/04/19 19:14:36 quanah Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -112,9 +112,12 @@
 # iterations the script should perform.
 
 if test "$BACKEND" = ldif ; then
-	echo "$backend backend does not support access controls, test skipped"
+	echo "$BACKEND backend does not support access controls, test skipped"
 	exit 0
 fi
+
+#echo "Test 058 is currently disabled"
+#exit 0
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -130,6 +133,8 @@ SM2_DIR=$TESTDIR/sm2
 SS1_DIR=$TESTDIR/ss1
 SS2_DIR=$TESTDIR/ss2
 SSC_DIR=$TESTDIR/ssc
+
+MNUM=1
 
 mkdir -p $TESTDIR
 
@@ -373,7 +378,7 @@ EOF
 dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
-olcModulePath: ../../../servers/slapd/back-$BACKEND
+olcModulePath: $TESTWD/../servers/slapd/back-$BACKEND
 olcModuleLoad: back_$BACKEND.la
 EOF
 	RC=$?
@@ -390,7 +395,7 @@ if [ "$SYNCPROV" = syncprovmod ]; then
 dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
-olcModulePath: ../../../servers/slapd/overlays
+olcModulePath: $TESTWD/../servers/slapd/overlays
 olcModuleLoad: syncprov.la
 
 EOF
@@ -484,7 +489,7 @@ if [ "$SYNCPROV" = syncprovmod ]; then
 dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
-olcModulePath: ../../../servers/slapd/overlays
+olcModulePath: $TESTWD/../servers/slapd/overlays
 olcModuleLoad: syncprov.la
 
 EOF
@@ -557,7 +562,7 @@ if [ "$SYNCPROV" = syncprovmod ]; then
 dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
-olcModulePath: ../../../servers/slapd/overlays
+olcModulePath: $TESTWD/../servers/slapd/overlays
 olcModuleLoad: syncprov.la
 
 EOF
@@ -976,6 +981,29 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
+# Test for ITS#6716, modify on central master to ensure that the CSN
+# order is "sid2 < sid3 < sid1".  When site1 master starts it is likely
+# to sync with central master before it syncs with site1 master. When
+# central master syncs with site1 master they will share the sid1 and
+# sid3 CSNs, the additonal sid2 CSN hold by site1 master will be the
+# oldest. Central master will not receive the changes made on site1
+# master unless it completely ignores the CSNs presented by central
+# master.
+echo "Using ldapmodify to modify central master..."
+$LDAPMODIFY -D "$MANAGERDN" -H $URI1 -w $PASSWD <<EOF >> $TESTOUT 2>&1
+dn: dc=example,dc=com
+changetype: modify
+add: description
+description: Modify$MNUM
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
 if test -z "$SM1_PID" ; then
 	echo "Restarting site1 master slapd on TCP/IP port $PORT2..."
 	cd $SM1_DIR
@@ -1011,6 +1039,44 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI1 \
 		-s base -b "ou=sm1ou1,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
+	if test "x$RESULT$nullOK" = "xOK" ; then
+		RC=0
+		break
+	fi
+	echo "Waiting $i seconds for syncrepl to receive changes..."
+	sleep $i
+done
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Using ldapsearch to check that site1 master received central master update..."
+RC=32
+for i in 1 2 3 4 5; do
+	RESULT=`$LDAPSEARCH -H $URI2 \
+		-s base -b "$BASEDN" \
+		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
+	if test "x$RESULT$nullOK" = "xOK" ; then
+		RC=0
+		break
+	fi
+	echo "Waiting $i seconds for syncrepl to receive changes..."
+	sleep $i
+done
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Using ldapsearch to check that site2 master received central master update..."
+RC=32
+for i in 1 2 3 4 5; do
+	RESULT=`$LDAPSEARCH -H $URI3 \
+		-s base -b "$BASEDN" \
+		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
 	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
@@ -1515,8 +1581,6 @@ chmod +x $TESTDIR/checkcsn.sh
 
 echo "Checking contextCSN after initial replication..."
 . $TESTDIR/checkcsn.sh
-
-MNUM=1
 
 # TEST:
 # Test that updates to the first backend on central master, which should
@@ -2259,7 +2323,7 @@ fi
 
 # TEST:
 # Run race tests when more than one backend is replicated from the same
-# producer.  This will usually fail long before 100 iterations unless
+# provider.  This will usually fail long before 100 iterations unless
 # syncrepl stores the contextCSN in the suffix of its own database, and
 # that syncprov follows these rules before updating its own CSN when it
 # detects updates from syncrepl:

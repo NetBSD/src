@@ -1,13 +1,46 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/addpartial/Makefile,v 1.1.2.4 2009/01/21 00:18:19 quanah Exp
-OPENLDAP_SRC=../../..
-OPENLDAP_BLD=../../..
-CPPFLAGS+=-I${OPENLDAP_SRC}/include -I${OPENLDAP_SRC}/servers/slapd -I${OPENLDAP_BLD}/include
-CC=gcc
+# $OpenLDAP$
 
-all: addpartial-overlay.so
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-addpartial-overlay.so: addpartial-overlay.c
-	$(CC) -shared $(CPPFLAGS) $(LDFLAGS) -Wall -o $@ $?
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = 
+INCS = $(LDAP_INC)
+LIBS = $(LDAP_LIB)
+
+PROGRAMS = addpartial.la
+LTVER = 0:0:0
+
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
+
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
+
+.SUFFIXES: .c .o .lo
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+
+all: $(PROGRAMS)
+
+addpartial.la: addpartial-overlay.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	rm addpartial-overlay.so
+	rm -rf *.o *.lo *.la .libs
+
+install: $(PROGRAMS)
+	mkdir -p $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+

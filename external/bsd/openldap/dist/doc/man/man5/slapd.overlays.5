@@ -1,7 +1,7 @@
 .TH SLAPD.OVERLAYS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2006-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2006-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.overlays.5,v 1.4.2.6 2010/04/13 20:22:43 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd.overlays \- overlays for slapd, the stand-alone LDAP daemon
 .SH DESCRIPTION
@@ -36,6 +36,12 @@ This overlay allows automatic referral chasing when a referral would
 have been returned, either when configured by the server or when 
 requested by the client.
 .TP
+.B collect
+Collective Attributes.
+This overlay implements RFC 3671 collective attributes; these
+attributes share common values over all the members of the collection
+as inherited from an ancestor entry.
+.TP
 .B constraint
 Constraint.
 This overlay enforces a regular expression constraint on all values
@@ -56,6 +62,16 @@ It has no effect on any other operations.
 .B dynlist
 Dynamic List.
 This overlay allows expansion of dynamic groups and more.
+.TP
+.B memberof
+MemberOf.
+This overlay maintains automatic reverse group membership values,
+typically stored in an attribute called memberOf.
+.TP
+.B pbind
+Proxybind.
+This overlay forwards simple bind requests on a local database to a
+remote LDAP server.
 .TP
 .B pcache
 Proxycache.
@@ -89,6 +105,12 @@ Rewrite/remap.
 This overlay is experimental.
 It performs basic DN/data rewrite and
 objectClass/attributeType mapping.
+.TP
+.B sssvlv
+Server Side Sorting and Virtual List Views.
+This overlay implements the RFC2891 server-side sorting control and
+virtual list view controls, and replaces the RFC2696 paged-results
+implementation to ensure it works with the sorting technique.
 .TP
 .B syncprov
 Syncrepl Provider.
@@ -126,15 +148,19 @@ default slapd configuration directory
 .BR slapo\-accesslog (5),
 .BR slapo\-auditlog (5),
 .BR slapo\-chain (5),
+.BR slapo\-collect (5),
 .BR slapo\-constraint (5),
 .BR slapo\-dds (5),
 .BR slapo\-dyngroup (5),
 .BR slapo\-dynlist (5),
+.BR slapo\-memberof (5),
+.BR slapo\-pbind (5),
 .BR slapo\-pcache (5),
 .BR slapo\-ppolicy (5),
 .BR slapo\-refint (5),
 .BR slapo\-retcode (5),
 .BR slapo\-rwm (5),
+.BR slapo\-sssvlv (5),
 .BR slapo\-syncprov (5),
 .BR slapo\-translucent (5),
 .BR slapo\-unique (5).

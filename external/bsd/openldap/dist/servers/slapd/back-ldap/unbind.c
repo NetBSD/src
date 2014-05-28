@@ -1,10 +1,10 @@
-/*	$NetBSD: unbind.c,v 1.1.1.3 2010/12/12 15:23:07 adam Exp $	*/
+/*	$NetBSD: unbind.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
 
 /* unbind.c - ldap backend unbind function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/unbind.c,v 1.33.2.7 2010/04/13 20:23:29 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.

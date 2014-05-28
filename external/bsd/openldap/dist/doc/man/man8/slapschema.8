@@ -1,7 +1,7 @@
 .TH SLAPSCHEMA 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slapschema.8,v 1.1.2.5 2010/04/14 22:59:08 quanah Exp
+.\" $OpenLDAP$
 .SH NAME
 slapschema \- SLAPD in-database schema checking utility
 .SH SYNOPSIS
@@ -27,7 +27,7 @@ slapschema \- SLAPD in-database schema checking utility
 [\c
 .BI \-n dbnum\fR]
 [\c
-.BI \-o option\fR[ = value\FR]]
+.BI \-o option\fR[ = value\fR]]
 [\c
 .BI \-s subtree-dn\fR]
 [\c
@@ -53,7 +53,8 @@ entirely removing objectClasses,
 or any other change that may result in making perfectly valid entries
 no longer compliant with the modified schema.
 The execution of the
-.B slapschema tool after modifying the schema can point out
+.B slapschema
+tool after modifying the schema can point out
 inconsistencies that would otherwise surface only when
 inconsistent entries need to be modified.
 
@@ -180,7 +181,7 @@ give the command:
 .LP
 .nf
 .ft tt
-	SBINDIR/slapcat \-l errors.ldif
+	SBINDIR/slapschema \-l errors.ldif
 .ft
 .fi
 .SH "SEE ALSO"

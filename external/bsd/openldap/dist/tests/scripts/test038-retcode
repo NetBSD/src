@@ -1,8 +1,8 @@
 #! /bin/sh
-# $Header: /cvsroot/src/external/bsd/openldap/dist/tests/scripts/test038-retcode,v 1.1.1.3 2010/12/12 15:24:24 adam Exp $
+# Header
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ RC=$?
 if test $RC != 3 ; then
 	echo "ldapsearch failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing modify for unwillingToPerform..."
@@ -90,7 +90,7 @@ RC=$?
 if test $RC != 53 ; then
 	echo "ldapmodify failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing compare for success after sleep (2 s)..."

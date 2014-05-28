@@ -1,10 +1,10 @@
-/*	$NetBSD: encode.c,v 1.1.1.3 2010/12/12 15:21:28 adam Exp $	*/
+/*	$NetBSD: encode.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
 
 /* encode.c - ber output encoding routines */
-/* OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.64.2.9 2010/04/13 20:22:53 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

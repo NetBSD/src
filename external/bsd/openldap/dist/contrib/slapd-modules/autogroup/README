@@ -3,10 +3,12 @@ autogroup overlay Readme
 DESCRIPTION
     The autogroup overlay allows automated updates of group memberships which
     meet the requirements of any filter contained in the group definition.
-	The filters are built from LDAP URI-valued attributes. Any time an object
-	is added/deleted/updated, it is tested for compliance with the filters,
+    The filters are built from LDAP URI-valued attributes. Any time an object
+    is added/deleted/updated, it is tested for compliance with the filters,
     and its membership is accordingly updated. For searches and compares
     it behaves like a static group.
+    If the attribute part of the URI is filled, the group entry is populated
+    by the values of this attribute in the entries resulting from the search.
 
 BUILDING
     A Makefile is included.
@@ -49,6 +51,14 @@ CONFIGURATION
         specifies the member attribute. User modification of this attribute 
         is disabled for consistency.
 
+    autogroup-memberof-ad <memberof-ad>
+        This configuration option is defined for the autogroup overlay.
+
+        It defines the attribute that is used by the memberOf overlay
+        to store the names of groups that an entry is member of; it must be
+        DN-valued. It should be set to the same value as
+        memberof-memberof-ad. It defaults to 'memberOf'.
+
 
 EXAMPLE
     ### slapd.conf
@@ -64,15 +74,40 @@ EXAMPLE
     autogroup-attrset groupOfURLs memberURL member
     ### end slapd.conf
 
+    ### slapd.conf
+    include /path/to/dyngroup.schema
+    # ...
+    moduleload /path/to/autogroup.so
+    moduleload /path/to/memberof.so
+    # ...
+
+    database <database>
+    #...
+
+    overlay memberof
+    memberof-memberof-ad foo
+
+    overlay autogroup
+    autogroup-attrset groupOfURLs memberURL member
+    autogroup-memberof-ad foo
+    ### end slapd.conf
+
 CAVEATS
     As with static groups, update operations on groups with a large number
     of members may be slow.
+    If the attribute part of the URI is specified, modify and delete operations
+    are more difficult to handle. In these cases the overlay will try to detect
+    if groups have been modified and then simply refresh them. This can cause
+    performance hits if the search specified by the URI deals with a significant
+    number of entries.
 
 ACKNOWLEDGEMENTS
-    This module was originally written in 2007 by Michał Szulczyński.
+    This module was originally written in 2007 by Michał Szulczyński. Further
+	enhancements were contributed by Howard Chu, Raphael Ouazana,
+	Norbert Pueschel, and Christian Manal.
 
 ---
-Copyright 1998-2010 The OpenLDAP Foundation.
+Copyright 1998-2014 The OpenLDAP Foundation.
 Portions Copyright (C) 2007 Michał Szulczyński.
 All rights reserved.
 

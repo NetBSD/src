@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/overlays.sdf,v 1.8.2.30 2010/04/15 18:25:42 quanah Exp
-# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Overlays
@@ -326,7 +326,7 @@ H3: Read-Back of Chained Modifications
 
 Occasionally, applications want to read back the data that they just wrote.
 If a modification requested to a shadow server was silently chained to its 
-producer, an immediate read could result in receiving data not yet synchronized.  
+provider, an immediate read could result in receiving data not yet synchronized.  
 In those cases, clients should use the {{B:dontusecopy}} control to ensure 
 they are directed to the authoritative source for that piece of data.
 
@@ -724,13 +724,13 @@ design and implementation details.
 H3: Proxy Cache Configuration
 
 The cache configuration specific directives described below must
-appear after a {{EX:overlay proxycache}} directive within a
-{{EX:"database meta"}} or {{EX:database ldap}} section of
+appear after a {{EX:overlay pcache}} directive within a
+{{EX:"database meta"}} or {{EX:"database ldap"}} section of
 the server's {{slapd.conf}}(5) file.
 
 H4: Setting cache parameters
 
-> proxyCache <DB> <maxentries> <nattrsets> <entrylimit> <period>
+> pcache <DB> <maxentries> <nattrsets> <entrylimit> <period>
 
 This directive enables proxy caching and sets general cache
 parameters.  The <DB> parameter specifies which underlying database
@@ -738,7 +738,7 @@ is to be used to hold cached entries.  It should be set to
 {{EX:bdb}} or {{EX:hdb}}.  The <maxentries> parameter specifies the
 total number of entries which may be held in the cache.  The
 <nattrsets> parameter specifies the total number of attribute sets
-(as specified by the {{EX:proxyAttrSet}} directive) that may be
+(as specified by the {{EX:pcacheAttrset}} directive) that may be
 defined.  The <entrylimit> parameter specifies the maximum number of
 entries in a cacheable query.  The <period> specifies the consistency
 check period (in seconds).  In each period, queries with expired
@@ -746,16 +746,16 @@ TTLs are removed.
 
 H4: Defining attribute sets
 
-> proxyAttrset <index> <attrs...>
+> pcacheAttrset <index> <attrs...>
 
 Used to associate a set of attributes to an index. Each attribute
 set is associated with an index number from 0 to <numattrsets>-1.
-These indices are used by the proxyTemplate directive to define
+These indices are used by the pcacheTemplate directive to define
 cacheable templates.
 
 H4: Specifying cacheable templates 
 
-> proxyTemplate <prototype_string> <attrset_index> <TTL>
+> pcacheTemplate <prototype_string> <attrset_index> <TTL>
 
 Specifies a cacheable template and the "time to live" (in sec) <TTL>
 for queries belonging to the template. A template is described by
@@ -763,7 +763,7 @@ its prototype filter string and set of required attributes identified
 by <attrset_index>.
 
 
-H4: Example
+H4: Example for slapd.conf
 
 An example {{slapd.conf}}(5) database section for a caching server
 which proxies for the {{EX:"dc=example,dc=com"}} subtree held
@@ -773,27 +773,60 @@ at server {{EX:ldap.example.com}}.
 >	suffix 		"dc=example,dc=com" 
 >	rootdn 		"dc=example,dc=com" 
 >	uri    		ldap://ldap.example.com/
->	overlay proxycache
->	proxycache    bdb 100000 1 1000 100
->	proxyAttrset  0 mail postaladdress telephonenumber 
->	proxyTemplate (sn=) 0 3600
->	proxyTemplate (&(sn=)(givenName=)) 0 3600
->	proxyTemplate (&(departmentNumber=)(secretary=*)) 0 3600
+>	overlay pcache
+>	pcache         hdb 100000 1 1000 100
+>	pcacheAttrset  0 mail postaladdress telephonenumber 
+>	pcacheTemplate (sn=) 0 3600
+>	pcacheTemplate (&(sn=)(givenName=)) 0 3600
+>	pcacheTemplate (&(departmentNumber=)(secretary=*)) 0 3600
 >
 >	cachesize 20
 >	directory ./testrun/db.2.a
 >	index       objectClass eq
 >	index       cn,sn,uid,mail  pres,eq,sub
 
+H4: Example for slapd-config
+
+The same example as a LDIF file for back-config for a caching server
+which proxies for the {{EX:"dc=example,dc=com"}} subtree held
+at server {{EX:ldap.example.com}}.
+
+>   dn: olcDatabase={2}ldap,cn=config
+>   objectClass: olcDatabaseConfig
+>   objectClass: olcLDAPConfig
+>   olcDatabase: {2}ldap
+>   olcSuffix: dc=example,dc=com
+>   olcRootDN: dc=example,dc=com
+>   olcDbURI: "ldap://ldap.example.com"
+>   
+>   dn: olcOverlay={0}pcache,olcDatabase={2}ldap,cn=config
+>   objectClass: olcOverlayConfig
+>   objectClass: olcPcacheConfig
+>   olcOverlay: {0}pcache
+>   olcPcache: hdb 100000 1 1000 100
+>   olcPcacheAttrset: 0 mail postalAddress telephoneNumber
+>   olcPcacheTemplate: "(sn=)" 0 3600 0 0 0
+>   olcPcacheTemplate: "(&(sn=)(givenName=))" 0 3600 0 0 0
+>   olcPcacheTemplate: "(&(departmentNumber=)(secretary=))" 0 3600
+>   
+>   dn: olcDatabase={0}hdb,olcOverlay={0}pcache,olcDatabase={2}ldap,cn=config
+>   objectClass: olcHdbConfig
+>   objectClass: olcPcacheDatabase
+>   olcDatabase: {0}hdb
+>   olcDbDirectory: ./testrun/db.2.a
+>   olcDbCacheSize: 20
+>   olcDbIndex: objectClass eq
+>   olcDbIndex: cn,sn,uid,mail  pres,eq,sub
+
 
 H5: Cacheable Queries
 
 A LDAP search query is cacheable when its filter matches one of the
-templates as defined in the "proxyTemplate" statements and when it references
+templates as defined in the "pcacheTemplate" statements and when it references
 only the attributes specified in the corresponding attribute set. 
 In the example above the attribute set number 0 defines that only the
 attributes: {{EX:mail postaladdress telephonenumber}} are cached for the following
-proxyTemplates.
+pcacheTemplates.
 
 H5: Examples:
 
@@ -801,7 +834,7 @@ H5: Examples:
 >	Attrs: mail telephoneNumber
 
     is cacheable, because it matches the template {{EX:(&(sn=)(givenName=))}} and its
-    attributes are contained in proxyAttrset 0.
+    attributes are contained in pcacheAttrset 0.
 
 >	Filter: (&(sn=Richard*)(telephoneNumber))
 >	Attrs: givenName 
@@ -1009,6 +1042,8 @@ If we removed all users from the directory who are a member of this group, then 
 would be a single member in the group: {{F:cn=admin,dc=example,dc=com}}. This is the
 {{F:refint_nothing}} parameter kicking into action so that the schema is not violated.
 
+The {{rootdn}} must be set for the database as refint runs as the {{rootdn}} to gain access to
+make its updates.  The {{rootpw}} does not need to be set.
 
 H3: Further Information
 

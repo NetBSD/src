@@ -1,7 +1,7 @@
 .TH SLAPD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slapd.8,v 1.64.2.12 2010/04/13 20:22:46 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd \- Stand-alone LDAP Daemon
 .SH SYNOPSIS
@@ -192,6 +192,22 @@ Support for the latter two schemes depends on selected configuration
 options.  Hosts may be specified by name or IPv4 and IPv6 address formats.
 Ports, if specified, must be numeric.  The default ldap:// port is \fB389\fP
 and the default ldaps:// port is \fB636\fP.
+
+For LDAP over IPC,
+.B name 
+is the name of the socket, and no
+.B port
+is required, nor allowed; note that directory separators must be 
+URL-encoded, like any other characters that are special to URLs; 
+so the socket
+
+        /usr/local/var/ldapi
+
+must be specified as
+
+        ldapi://%2Fusr%2Flocal%2Fvar%2Fldapi
+
+The default location for the IPC socket is LOCALSTATEDIR/run/ldapi
 
 The listener permissions are indicated by
 "x\-mod=\-rwxrwxrwx", "x\-mod=0777" or "x\-mod=777", where any 

@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/sasl.sdf,v 1.34.2.11 2010/04/13 20:22:34 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using SASL
@@ -72,10 +72,13 @@ and large enterprises.  Use of {{SECT:GSSAPI}} and {{SECT:KERBEROS_V4}}
 are discussed below.
 
 The EXTERNAL mechanism utilizes authentication services provided
-by lower level network services such as {{TERM:TLS}} (TLS).  When
+by lower level network services such as {{TERM[expand]TLS}} ({{TERM:TLS}}).  When
 used in conjunction with {{TERM:TLS}} {{TERM:X.509}}-based public
-key technology, EXTERNAL offers strong authentication.  Use of
-EXTERNAL is discussed in the {{SECT:Using TLS}} chapter.
+key technology, EXTERNAL offers strong authentication.
+TLS is discussed in the {{SECT:Using TLS}} chapter.
+
+EXTERNAL can also be used with the {{EX:ldapi:///}} transport, as
+Unix-domain sockets can report the UID and GID of the client process.
 
 There are other strong authentication mechanisms to choose from,
 including {{TERM:OTP}} (one time passwords) and {{TERM:SRP}} (secure
@@ -287,6 +290,41 @@ Note: in each of the above cases, no authorization identity (e.g.
 Proxy Authorization}}, no authorization identity should be specified.
 The server will infer an authorization identity from authentication
 identity (as described below).
+
+
+H3: EXTERNAL
+
+The SASL EXTERNAL mechanism makes use of an authentication performed
+by a lower-level protocol: usually {{TERM:TLS}} or Unix {{TERM:IPC}}
+
+Each transport protocol returns Authentication Identities in its own
+format:
+
+H4: TLS Authentication Identity Format
+
+This is the Subject DN from the client-side certificate.
+Note that DNs are displayed differently by LDAP and by X.509, so
+a certificate issued to
+>	C=gb, O=The Example Organisation, CN=A Person
+
+will produce an authentication identity of:
+
+>	cn=A Person,o=The Example Organisation,c=gb
+
+Note that you must set a suitable value for TLSVerifyClient to make the server
+request the use of a client-side certificate. Without this, the SASL EXTERNAL
+mechanism will not be offered.
+Refer to the {{SECT:Using TLS}} chapter for details.
+
+H4: IPC (ldapi:///) Identity Format
+
+This is formed from the Unix UID and GID of the client process:
+
+>	gidNumber=<number>+uidNumber=<number>,cn=peercred,cn=external,cn=auth
+
+Thus, a client process running as {{EX:root}} will be:
+
+>	gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
 
 
 H3: Mapping Authentication Identities

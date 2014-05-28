@@ -1,8 +1,8 @@
 ## Makefile.in for slapd
-# OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.186.2.9 2010/04/13 20:23:09 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -259,11 +259,8 @@ slapd.exp: libslapd.a
 	dlltool --dllname slapd.exe --input-def slapd.def \
 		--base-file slapd.base --output-exp $@
 
-slapi/.libs/libslapi.a: FORCE
+slapi/libslapi.la: FORCE
 	(cd slapi; $(MAKE) $(MFLAGS) all)
-
-libslapi.a: slapi/.libs/libslapi.a
-	cp slapi/.libs/libslapi.a .
 
 slapd: $(SLAPD_DEPENDS) @LIBSLAPI@
 	$(LTLINK) -o $@ $(SLAPD_OBJECTS) $(LIBS) \
@@ -369,8 +366,14 @@ veryclean-local-srv: FORCE
 		fi; \
 	done
 
+install-dbc-maybe: install-dbc-@BUILD_BDB@ install-dbc-@BUILD_HDB@
+
+install-dbc-yes:	install-db-config
+install-dbc-mod:	install-db-config
+install-dbc-no:
+
 install-local-srv: install-slapd install-tools \
-	install-conf install-db-config install-schema install-tools
+	install-conf install-dbc-maybe install-schema install-tools
 
 install-slapd: FORCE
 	-$(MKDIR) $(DESTDIR)$(libexecdir)
@@ -402,6 +405,10 @@ all-cffiles: slapd $(SLAPD_DYNAMIC_BACKENDS) dynamic_overlays
 		-e "s;%LOCALSTATEDIR%;$$localstatedir;" \
 		-e "s;%MODULEDIR%;$$moduledir;" \
 		$(srcdir)/slapd.conf > slapd.conf.tmp ; \
+	$(SED) -e "s;%SYSCONFDIR%;$$sysconfdir;" \
+		-e "s;%LOCALSTATEDIR%;$$localstatedir;" \
+		-e "s;%MODULEDIR%;$$moduledir;" \
+		$(srcdir)/slapd.ldif > slapd.ldif.tmp ; \
 	touch all-cffiles
 
 install-schema: FORCE
@@ -426,6 +433,14 @@ install-conf: FORCE
 		$(INSTALL) $(INSTALLFLAGS) -m 600 slapd.conf.tmp $(DESTDIR)$(sysconfdir)/slapd.conf; \
 	else \
 		echo "PRESERVING EXISTING CONFIGURATION FILE $(DESTDIR)$(sysconfdir)/slapd.conf" ; \
+	fi
+	$(INSTALL) $(INSTALLFLAGS) -m 600 slapd.ldif.tmp $(DESTDIR)$(sysconfdir)/slapd.ldif.default
+	if test ! -f $(DESTDIR)$(sysconfdir)/slapd.ldif; then \
+		echo "installing slapd.ldif in $(sysconfdir)"; \
+		echo "$(INSTALL) $(INSTALLFLAGS) -m 600 slapd.ldif.tmp $(DESTDIR)$(sysconfdir)/slapd.ldif"; \
+		$(INSTALL) $(INSTALLFLAGS) -m 600 slapd.ldif.tmp $(DESTDIR)$(sysconfdir)/slapd.ldif; \
+	else \
+		echo "PRESERVING EXISTING CONFIGURATION FILE $(DESTDIR)$(sysconfdir)/slapd.ldif" ; \
 	fi
 
 install-db-config: FORCE

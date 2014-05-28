@@ -1,9 +1,16 @@
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/TlsOptions.cpp,v 1.5.2.2 2010/04/14 23:50:44 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2010, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2010-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
+#include <fstream>
+#include <sstream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <unistd.h>
+#include <cstring>
 #include "TlsOptions.h"
 #include "LDAPException.h"
 
@@ -54,6 +61,41 @@ TlsOptions::TlsOptions( LDAP* ld ): m_ld(ld) { }
 
 void TlsOptions::setOption( tls_option opt, const std::string& value ) const {
     checkOpt(opt, STRING);
+    switch(opt) {
+        case TlsOptions::CACERTFILE :
+        case TlsOptions::CERTFILE :
+        case TlsOptions::KEYFILE :
+        {
+            // check if the supplied file is actually readable
+            std::ifstream ifile(value.c_str());
+            if ( !ifile ) {
+                throw( LDAPException( LDAP_LOCAL_ERROR, "Unable to open the supplied file for reading" ) );
+            }
+        }
+        break;
+        case TlsOptions::CACERTDIR :
+        {
+            struct stat st;
+            std::ostringstream msg;
+            bool fail=false;
+            int err = stat(value.c_str(),&st);
+            if ( err ) {
+                msg << strerror(errno);
+                fail = true;
+            } else {
+                if ( !S_ISDIR(st.st_mode) ){
+                    msg << "The supplied path is not a directory.";
+                    fail = true;
+                }
+            }
+            if ( fail ) {
+                std::ostringstream errstr;
+                errstr << "Error while setting Certificate Directory (" << value << "): " << msg.str();
+                throw( LDAPException( LDAP_LOCAL_ERROR, errstr.str() ) );
+            }
+        }
+        break;
+    }
     this->setOption( opt, value.empty() ? NULL : (void*) value.c_str() );
 }
 
@@ -72,9 +114,7 @@ void TlsOptions::setOption( tls_option opt, void *value ) const {
             throw( LDAPException( LDAP_PARAM_ERROR, "error while setting TLS option" ) );
         }
     }
-    if ( m_ld ){
-        this->newCtx();
-    }
+    this->newCtx();
 }
 
 void TlsOptions::getOption( tls_option opt, void* value ) const {
@@ -110,7 +150,8 @@ std::string TlsOptions::getStringOption( tls_option opt ) const {
 }
 
 void TlsOptions::newCtx() const {
-    int ret = ldap_set_option( m_ld, LDAP_OPT_X_TLS_NEWCTX, LDAP_OPT_ON);
+    int val = 0;
+    int ret = ldap_set_option( m_ld, LDAP_OPT_X_TLS_NEWCTX, &val);
     if ( ret != LDAP_OPT_SUCCESS )
     {
         if ( ret != LDAP_OPT_ERROR ){
