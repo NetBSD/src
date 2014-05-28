@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.31 2013/05/07 21:08:45 christos Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.32 2014/05/28 14:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.31 2013/05/07 21:08:45 christos Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.32 2014/05/28 14:41:47 christos Exp $");
 #endif
 #endif
 
@@ -321,7 +321,7 @@ clnt_tli_create(
 		if (!__rpc_fd2sockinfo(fd, &si))
 			goto err;
 
-		bindresvport(fd, NULL);
+		(void)bindresvport(fd, NULL);
 	} else {
 		if (!__rpc_fd2sockinfo(fd, &si))
 			goto err;
