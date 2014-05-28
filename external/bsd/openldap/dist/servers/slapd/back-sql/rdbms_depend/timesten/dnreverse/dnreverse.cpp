@@ -1,4 +1,4 @@
-// Copyright 1997-2010 The OpenLDAP Foundation, All Rights Reserved.
+// Copyright 1997-2014 The OpenLDAP Foundation, All Rights Reserved.
 //  COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 
 // (c) Copyright 1999-2001 TimesTen Performance Software. All rights reserved.

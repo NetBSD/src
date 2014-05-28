@@ -189,7 +189,11 @@ dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,
  dc=com
 mail: bjensen@mailgw.example.com
 
-# Query 10: filter:(|(cn=*Jones)(sn=Jones)) attrs:cn sn title uid
+# Query 10: filter:(|(cn=All Staff)(sn=All Staff)) attrs:sn cn title uid undefinedAttr
+dn: cn=All Staff,ou=Groups,dc=example,dc=com
+cn: All Staff
+
+# Query 11: filter:(|(cn=*Jones)(sn=Jones)) attrs:cn sn title uid
 dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
 cn: James A Jones 1
 cn: James Jones
@@ -207,7 +211,7 @@ sn: Doe
 uid: jjones
 title: Senior Manager, Information Technology Division
 
-# Query 11: filter:(sn=Smith) attrs:cn sn title uid
+# Query 12: filter:(sn=Smith) attrs:cn sn title uid
 dn: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
 cn: Jennifer Smith
 cn: Jen Smith
@@ -215,7 +219,7 @@ sn: Smith
 uid: jen
 title: Telemarketer, UM Alumni Association
 
-# Query 12: filter:(uid=bjorn) attrs:mail postaladdress telephonenumber cn uid
+# Query 13: filter:(uid=bjorn) attrs:mail postaladdress telephonenumber cn uid
 dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
  =com
 cn: Bjorn Jensen
@@ -225,7 +229,7 @@ postalAddress: Info Tech Division $ 535 W. William St. $ Anytown, MI 48103
 mail: bjorn@mailgw.example.com
 telephoneNumber: +1 313 555 0355
 
-# Query 13: filter:(mail=jaj@mail.alumni.example.com) attrs:cn sn title uid
+# Query 14: filter:(mail=jaj@mail.alumni.example.com) attrs:cn sn title uid
 dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
 cn: James A Jones 1
 cn: James Jones
@@ -234,7 +238,7 @@ sn: Jones
 uid: jaj
 title: Mad Cow Researcher, UM Alumni Association
 
-# Query 14: filter:(mail=*example.com) attrs:cn sn title uid
+# Query 15: filter:(mail=*example.com) attrs:cn sn title uid
 dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,
  dc=com
 cn: Barbara Jensen
@@ -243,8 +247,12 @@ sn:: IEplbnNlbiA=
 uid: bjensen
 title: Mythical Manager, Research Systems
 
-# Query 15: filter:(uid=b*) attrs:mail
+# Query 16: filter:(uid=b*) attrs:mail
 dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,
  dc=com
 mail: bjensen@mailgw.example.com
+
+# Query 17: filter:(|(cn=All Staff)(sn=All Staff)) attrs:sn cn title uid undefinedAttr
+dn: cn=All Staff,ou=Groups,dc=example,dc=com
+cn: All Staff
 

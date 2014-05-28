@@ -1,10 +1,10 @@
-/*	$NetBSD: md5.c,v 1.1.1.3 2010/12/12 15:22:09 adam Exp $	*/
+/*	$NetBSD: md5.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
 
 /* md5.c -- MD5 message-digest algorithm */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/md5.c,v 1.19.2.5 2010/04/13 20:23:06 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -187,7 +187,7 @@ lutil_MD5Final( unsigned char *digest, struct lutil_MD5Context *ctx )
 	putu32(ctx->buf[1], digest + 4);
 	putu32(ctx->buf[2], digest + 8);
 	putu32(ctx->buf[3], digest + 12);
-	memset(ctx, '\0', sizeof(ctx));	/* In case it's sensitive */
+	memset(ctx, '\0', sizeof(*ctx));	/* In case it's sensitive */
 }
 
 #ifndef ASM_MD5

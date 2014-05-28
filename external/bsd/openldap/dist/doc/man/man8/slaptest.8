@@ -1,9 +1,9 @@
 .TH SLAPTEST 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slaptest.8,v 1.7.2.12 2010/04/13 20:22:46 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
-slaptest \- Check the suitability of the OpenLDAP slapd.conf file
+slaptest \- Check the suitability of the OpenLDAP slapd configuration
 .SH SYNOPSIS
 .B SBINDIR/slaptest
 [\c
@@ -27,8 +27,8 @@ slaptest \- Check the suitability of the OpenLDAP slapd.conf file
 .LP
 .B Slaptest
 is used to check the conformance of the
-.BR slapd.conf (5)
-configuration file.
+.BR slapd (8)
+configuration.
 It opens the
 .BR slapd.conf (5)
 configuration file or the 
@@ -95,7 +95,7 @@ Be extremely quiet: only the exit code indicates success (0) or not
 enable dry-run mode (i.e. don't fail if databases cannot be opened,
 but config is fine).
 .TP
-.BI \-v
+.B \-v
 enable verbose mode.
 .SH EXAMPLES
 To check a 

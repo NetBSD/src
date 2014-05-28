@@ -1,9 +1,9 @@
-/*	$NetBSD: lber-int.h,v 1.1.1.3 2010/12/12 15:21:28 adam Exp $	*/
+/*	$NetBSD: lber-int.h,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.7 2010/04/13 20:22:54 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,16 +1,46 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/Makefile,v 1.2.2.1 2009/02/02 22:48:36 quanah Exp
-CPPFLAGS+=-I../../../include -I../../../servers/slapd 
-CPPFLAGS+=-DSLAPD_OVER_CLOAK=SLAPD_MOD_DYNAMIC
-LIBS=-lldap_r -llber -lcrypto
+# $OpenLDAP$
 
-all: cloak.la
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-cloak.lo:    cloak.c
-	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -c $?
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = -DSLAPD_OVER_CLOAK=SLAPD_MOD_DYNAMIC
+INCS = $(LDAP_INC)
+LIBS = $(LDAP_LIB)
 
-cloak.la:    cloak.lo
-	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
-		   -rpath $(PREFIX)/lib -module -o $@ $? $(LIBS)
+PROGRAMS = cloak.la
+LTVER = 0:0:0
+
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
+
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
+
+.SUFFIXES: .c .o .lo
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
+
+all: $(PROGRAMS)
+
+cloak.la: cloak.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
+	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	rm cloak.lo cloak.la
+	rm -rf *.o *.lo *.la .libs
+
+install: $(PROGRAMS)
+	mkdir -p $(DESTDIR)$(moduledir)
+	for p in $(PROGRAMS) ; do \
+		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)$(moduledir) ; \
+	done
+

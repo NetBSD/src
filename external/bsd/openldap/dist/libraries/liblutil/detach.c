@@ -1,10 +1,10 @@
-/*	$NetBSD: detach.c,v 1.1.1.3 2010/12/12 15:22:08 adam Exp $	*/
+/*	$NetBSD: detach.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
 
 /* detach.c -- routines to daemonize a process */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/detach.c,v 1.18.2.5 2010/04/13 20:23:05 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,10 +51,10 @@
 
 #include "lutil.h"
 
-void
+int
 lutil_detach( int debug, int do_close )
 {
-	int		i, sd, nbits;
+	int		i, sd, nbits, pid;
 
 #ifdef HAVE_SYSCONF
 	nbits = sysconf( _SC_OPEN_MAX );
@@ -73,10 +73,11 @@ lutil_detach( int debug, int do_close )
 	if ( debug == 0 ) {
 		for ( i = 0; i < 5; i++ ) {
 #ifdef HAVE_THR
-			switch ( fork1() )
+			pid = fork1();
 #else
-			switch ( fork() )
+			pid = fork();
 #endif
+			switch ( pid )
 			{
 			case -1:
 				sleep( 5 );
@@ -86,7 +87,7 @@ lutil_detach( int debug, int do_close )
 				break;
 
 			default:
-				_exit( EXIT_SUCCESS );
+				return pid;
 			}
 			break;
 		}
@@ -130,7 +131,7 @@ lutil_detach( int debug, int do_close )
 
 #ifdef HAVE_SETSID
 		(void) setsid();
-#elif TIOCNOTTY
+#elif defined(TIOCNOTTY)
 		if ( (sd = open( "/dev/tty", O_RDWR )) != -1 ) {
 			(void) ioctl( sd, TIOCNOTTY, NULL );
 			(void) close( sd );
@@ -141,4 +142,5 @@ lutil_detach( int debug, int do_close )
 #ifdef SIGPIPE
 	(void) SIGNAL( SIGPIPE, SIG_IGN );
 #endif
+	return 0;
 }
