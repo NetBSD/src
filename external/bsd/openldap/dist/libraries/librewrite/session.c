@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: session.c,v 1.2 2014/05/28 10:14:13 tron Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -163,6 +163,7 @@ rewrite_session_find(
 #ifdef USE_REWRITE_LDAP_PVT_THREADS
 	if ( session ) {
 		ldap_pvt_thread_mutex_lock( &session->ls_mutex );
+		session->ls_count++;
 	}
 	ldap_pvt_thread_rdwr_runlock( &info->li_cookies_mutex );
 #endif /* USE_REWRITE_LDAP_PVT_THREADS */
@@ -180,6 +181,7 @@ rewrite_session_return(
 )
 {
 	assert( session != NULL );
+	session->ls_count--;
 	ldap_pvt_thread_mutex_unlock( &session->ls_mutex );
 }
 
