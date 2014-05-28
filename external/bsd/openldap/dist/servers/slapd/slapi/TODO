@@ -13,4 +13,4 @@
   and longjump to next plugin execution? Brrr). 
 
 ---
-OpenLDAP: pkg/ldap/servers/slapd/slapi/TODO,v 1.4 2005/07/25 11:17:15 lukeh Exp
+$OpenLDAP$

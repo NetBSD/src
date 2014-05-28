@@ -1,5 +1,5 @@
 .TH SLAPD-PERL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-perl.5,v 1.7.4.1 2009/06/03 01:41:57 quanah Exp
+.\" $OpenLDAP$
 .SH NAME
 slapd\-perl \- Perl backend to slapd
 .SH SYNOPSIS
@@ -29,7 +29,7 @@ following actions:
   * add        # adds an entry to backend,
   * modrdn     # modifies an entry's rdn,
   * delete     # deletes an ldap entry,
-  * config     # process unknown config file lines,
+  * config     # module-specific config directives,
   * init       # called after backend is initialized.
 .fi
 .LP
@@ -120,9 +120,9 @@ Its arguments are as follows.
 .LP
 .TP
 .B config
-This method is called with unknown
+This method is called once for each perlModuleConfig line in the
 .BR slapd.conf (5)
-configuration file lines.
+configuration file.
 Its arguments are as follows.
 .nf
   * object reference
@@ -159,12 +159,15 @@ Add the path to the @INC variable.
 Search results are candidates that need to be filtered (with the
 filter in the search request), rather than search results to be
 returned directly to the client.
+.TP
+.B perlModuleConfig <arguments>
+Invoke the module's config method with the given arguments.
 .SH EXAMPLE
 There is an example Perl module `SampleLDAP' in the slapd/back\-perl/
 directory in the OpenLDAP source tree.
 .SH ACCESS CONTROL
 The
-.B passwd
+.B perl
 backend does not honor any of the access control semantics described in
 .BR slapd.access (5);
 all access control is delegated to the underlying PERL scripting.
@@ -179,6 +182,13 @@ operation is honored, which is performed by the frontend.
 .SH WARNING
 The interface of this backend to the perl module MAY change.
 Any suggestions would greatly be appreciated.
+
+Note: in previous versions, any unrecognized lines in the slapd.conf
+file were passed to the perl module's config method. This behavior is
+deprecated (but still allowed for backward compatibility), and the
+perlModuleConfig directive should instead be used to invoke the
+module's config method. This compatibility feature will be removed at
+some future date.
 .SH FILES
 .TP
 ETCDIR/slapd.conf

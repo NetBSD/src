@@ -1,25 +1,31 @@
 .TH LDAPMODRDN 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" OpenLDAP: pkg/ldap/doc/man/man1/ldapmodrdn.1,v 1.38.2.9 2010/04/13 20:22:36 kurt Exp
-.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapmodrdn \- LDAP rename entry tool
 .SH SYNOPSIS
 .B ldapmodrdn
 [\c
-.BR \-r ]
+.BR \-V [ V ]]
 [\c
-.BI \-s \ newsup\fR]
+.BI \-d \ debuglevel\fR]
 [\c
 .BR \-n ]
 [\c
 .BR \-v ]
 [\c
+.BR \-r ]
+[\c
+.BI \-s \ newsup\fR]
+[\c
 .BR \-c ]
+[\c
+.BI \-f \ file\fR]
 [\c
 .BR \-M [ M ]]
 [\c
-.BI \-d \ debuglevel\fR]
+.BR \-x ]
 [\c
 .BI \-D \ binddn\fR]
 [\c
@@ -41,25 +47,25 @@ ldapmodrdn \- LDAP rename entry tool
 [\c
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
 [\c
+.BI \-o \ opt \fR[= optparam \fR]]
+[\c
 .BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
 .BR \-Q ]
 [\c
+.BR \-N ]
+[\c
 .BI \-U \ authcid\fR]
 [\c
 .BI \-R \ realm\fR]
-[\c
-.BR \-x ]
 [\c
 .BI \-X \ authzid\fR]
 [\c
 .BI \-Y \ mech\fR]
 [\c
 .BR \-Z [ Z ]]
-[\c
-.BI \-f \ file\fR]
 [\c
 .I dn  rdn\fR]
 .SH DESCRIPTION
@@ -77,12 +83,14 @@ option, or from the command-line pair \fIdn\fP and
 \fIrdn\fP.
 .SH OPTIONS
 .TP
-.B \-r
-Remove old RDN values from the entry.  Default is to keep old values.
+.BR \-V [ V ]
+Print version info.
+If \fB\-VV\fP is given, only the version information is printed.
 .TP
-.BI \-s \ newsup
-Specify a new superior entry. (I.e., move the target entry and make it a
-child of the new superior.)  This option is not supported in LDAPv2.
+.BI \-d \ debuglevel
+Set the LDAP debugging level to \fIdebuglevel\fP.
+.B ldapmodrdn
+must be compiled with LDAP_DEBUG defined for this option to have any effect.
 .TP
 .B \-n
 Show what would be done, but don't actually change entries.  Useful for
@@ -91,25 +99,26 @@ debugging in conjunction with \fB\-v\fP.
 .B \-v
 Use verbose mode, with many diagnostics written to standard output.
 .TP
+.B \-r
+Remove old RDN values from the entry.  Default is to keep old values.
+.TP
+.BI \-s \ newsup
+Specify a new superior entry. (I.e., move the target entry and make it a
+child of the new superior.)  This option is not supported in LDAPv2.
+.TP
 .B \-c
 Continuous operation mode.  Errors  are  reported,  but ldapmodrdn
 will  continue  with  modifications.   The default is to exit after
 reporting an error.
 .TP
+.BI \-f \ file
+Read the entry modification information from \fIfile\fP instead of from
+standard input or the command-line.
+.TP
 .BR \-M [ M ]
 Enable manage DSA IT control.
 .B \-MM
 makes control critical.
-.TP
-.BI \-d \ debuglevel
-Set the LDAP debugging level to \fIdebuglevel\fP.
-.B ldapmodrdn
-must be
-compiled with LDAP_DEBUG defined for this option to have any effect.
-.TP
-.BI \-f \ file
-Read the entry modification information from \fIfile\fP instead of from
-standard input or the command-line.
 .TP
 .B \-x 
 Use simple authentication instead of SASL.
@@ -145,38 +154,48 @@ Deprecated in favor of \fB\-H\fP.
 .BR \-P \ { 2 \||\| 3 }
 Specify the LDAP protocol version to use.
 .TP
-.BI \-O \ security-properties
-Specify SASL security properties.
-.TP
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 .TP
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 
-Specify general extensions with \fB\-e\fP and search extensions with \fB\-E\fP.
+Specify general extensions with \fB\-e\fP and modrdn extensions with \fB\-E\fP.
 \'\fB!\fP\' indicates criticality.
 
 General extensions:
 .nf
-  [!]assert=<filter>   (an RFC 4515 Filter)
-  [!]authzid=<authzid> ("dn:<dn>" or "u:<user>")
+  [!]assert=<filter>    (an RFC 4515 Filter)
+  !authzid=<authzid>    ("dn:<dn>" or "u:<user>")
+  [!]bauthzid           (RFC 3829 authzid control)
+  [!]chaining[=<resolve>[/<cont>]]
   [!]manageDSAit
   [!]noop
   ppolicy
-  [!]postread[=<attrs>]        (a comma-separated attribute list)
-  [!]preread[=<attrs>] (a comma-separated attribute list)
-  abandon, cancel (SIGINT sends abandon/cancel; not really controls)
+  [!]postread[=<attrs>] (a comma-separated attribute list)
+  [!]preread[=<attrs>]  (a comma-separated attribute list)
+  [!]relax
+  sessiontracking
+  abandon,cancel,ignore (SIGINT sends abandon/cancel,
+  or ignores response; if critical, doesn't wait for SIGINT.
+  not really controls)
 .fi
 
-Search extensions:
+Modrdn extensions:
 .nf
-  [!]domainScope                               (domain scope)
-  [!]mv=<filter>                               (matched values filter)
-  [!]pr=<size>[/prompt|noprompt]       (paged results/prompt)
-  [!]sss=[\-]<attr[:OID]>[/[\-]<attr[:OID]>...]  (server side sorting)
-  [!]subentries[=true|false]           (subentries)
-  [!]sync=ro[/<cookie>]                        (LDAP Sync refreshOnly)
-          rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)
+  (none)
 .fi
+.TP
+.BI \-o \ opt \fR[= optparam \fR]
+
+Specify general options.
+
+General options:
+.nf
+  nettimeout=<timeout>  (in seconds, or "none" or "max")
+  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+.fi
+.TP
+.BI \-O \ security-properties
+Specify SASL security properties.
 .TP
 .B \-I
 Enable SASL Interactive mode.  Always prompt.  Default is to prompt
@@ -184,6 +203,9 @@ only as needed.
 .TP
 .B \-Q
 Enable SASL Quiet mode.  Never prompt.
+.TP
+.B \-N
+Do not use reverse DNS to canonicalize SASL host name.
 .TP
 .BI \-U \ authcid
 Specify the authentication ID for SASL bind. The form of the ID

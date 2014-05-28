@@ -1,7 +1,7 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/contrib/ldapc++/version.sh,v 1.1.2.1 2008/07/09 21:59:44 quanah Exp
+# $OpenLDAP$
 #
-# Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2008-2014 The OpenLDAP Foundation. All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 DIR=`dirname $0`
 . $DIR/version.var

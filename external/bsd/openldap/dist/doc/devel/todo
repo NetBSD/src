@@ -67,7 +67,7 @@ For additional TODO items, see:
 
 
 JLDAP TODO items, see:
-  http://www.openldap.org/devel/cvsweb.cgi/~checkout~/design/todo.txt?rev=1&cvsroot=JLDAP
+  http://www.openldap.org/devel/gitweb.cgi?p=openldap-jldap.git;a=blob_plain;f=design/todo.txt
 
 ---
-OpenLDAP: pkg/ldap/doc/devel/todo,v 1.138.2.3 2007/08/31 23:13:52 quanah Exp
+$OpenLDAP$

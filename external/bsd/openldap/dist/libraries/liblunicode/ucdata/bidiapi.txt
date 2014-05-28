@@ -1,5 +1,5 @@
 #
-# Id: bidiapi.txt,v 1.2 1999/11/19 15:24:29 mleisher Exp
+# Id: bidiapi.txt,v 1.2 1999/11/19 15:24:29 mleisher Exp 
 #
 
                        "Pretty Good Bidi Algorithm" API
