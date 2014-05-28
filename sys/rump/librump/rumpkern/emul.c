@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.165 2014/04/25 19:56:01 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.166 2014/05/28 20:57:22 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.165 2014/04/25 19:56:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.166 2014/05/28 20:57:22 justin Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -157,7 +157,7 @@ int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
-	int rv;
+	int rv __diagused;
 	uint64_t sec, nsec;
 
 	if (mtx)

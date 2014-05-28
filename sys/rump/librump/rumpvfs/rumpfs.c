@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.127 2014/04/25 13:10:42 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.128 2014/05/28 20:57:22 justin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.127 2014/04/25 13:10:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.128 2014/05/28 20:57:22 justin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -428,7 +428,7 @@ etfsremove(const char *key)
 {
 	struct etfs *et;
 	size_t keylen;
-	int rv;
+	int rv __diagused;
 
 	if (key[0] != '/') {
 		return EINVAL;
