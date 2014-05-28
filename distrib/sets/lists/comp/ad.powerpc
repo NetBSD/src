@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.67 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: ad.powerpc,v 1.68 2014/05/28 09:38:46 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -24,6 +24,8 @@
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/vec_types.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/altivec.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/htmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/htmxlintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/paired.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/ppc-asm.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=48
