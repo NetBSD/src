@@ -4,7 +4,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation
+ * Copyright 1998-2014 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -333,12 +333,6 @@
 /* Define to 1 if you have the <ltdl.h> header file. */
 #undef HAVE_LTDL_H
 
-/* if you have SunOS LWP package */
-#undef HAVE_LWP
-
-/* Define to 1 if you have the <lwp/lwp.h> header file. */
-#undef HAVE_LWP_LWP_H
-
 /* define if you have Mach Cthreads */
 #undef HAVE_MACH_CTHREADS
 
@@ -369,6 +363,9 @@
 /* define this if you have mkversion */
 #undef HAVE_MKVERSION
 
+/* define if you have MozNSS */
+#undef HAVE_MOZNSS
+
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
@@ -377,6 +374,9 @@
 
 /* define if strerror_r returns char* instead of int */
 #undef HAVE_NONPOSIX_STRERROR_R
+
+/* Define to 1 if you have the <nssutil.h> header file. */
+#undef HAVE_NSSUTIL_H
 
 /* if you have NT Event Log */
 #undef HAVE_NT_EVENT_LOG
@@ -605,6 +605,9 @@
 
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
+
+/* Define to 1 if you have the `strtoull' function. */
+#undef HAVE_STRTOULL
 
 /* Define to 1 if you have the `strtouq' function. */
 #undef HAVE_STRTOUQ
@@ -942,6 +945,9 @@
 
 /* define to support LAN Manager passwords */
 #undef SLAPD_LMHASH
+
+/* define to support MDB backend */
+#undef SLAPD_MDB
 
 /* define to support LDAP Metadirectory backend */
 #undef SLAPD_META
