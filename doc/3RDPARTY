@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1116 2014/05/28 16:05:04 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.1117 2014/05/28 19:14:17 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1271,7 +1271,7 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2014c / tzdata2014c
+Version:	tzcode2014d / tzdata2014c
 Current Vers:	tzcode2014d / tzdata2014d
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
