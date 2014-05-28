@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.81 2014/05/28 02:08:52 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.82 2014/05/28 03:17:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.81 2014/05/28 02:08:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.82 2014/05/28 03:17:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,14 +316,17 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82810E_GC:
 	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
 		isc->chiptype = CHIP_I810;
+		aprint_normal(": i810-family chipset\n");
 		break;
 	case PCI_PRODUCT_INTEL_82830MP_IV:
 	case PCI_PRODUCT_INTEL_82845G_IGD:
 		isc->chiptype = CHIP_I830;
+		aprint_normal(": i830-family chipset\n");
 		break;
 	case PCI_PRODUCT_INTEL_82855GM_IGD:
 	case PCI_PRODUCT_INTEL_82865_IGD:
 		isc->chiptype = CHIP_I855;
+		aprint_normal(": i855-family chipset\n");
 		break;
 	case PCI_PRODUCT_INTEL_82915G_IGD:
 	case PCI_PRODUCT_INTEL_82915GM_IGD:
@@ -335,6 +338,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_PINEVIEW_IGD:
 	case PCI_PRODUCT_INTEL_PINEVIEW_M_IGD:
 		isc->chiptype = CHIP_I915;
+		aprint_normal(": i915-family chipset\n");
 		break;
 	case PCI_PRODUCT_INTEL_82965Q_IGD:
 	case PCI_PRODUCT_INTEL_82965Q_IGD_1:
@@ -347,6 +351,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82G35_IGD:
 	case PCI_PRODUCT_INTEL_82G35_IGD_1:
 		isc->chiptype = CHIP_I965;
+		aprint_normal(": i965-family chipset\n");
 		break;
 	case PCI_PRODUCT_INTEL_82Q35_IGD:
 	case PCI_PRODUCT_INTEL_82Q35_IGD_1:
@@ -355,6 +360,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82Q33_IGD:
 	case PCI_PRODUCT_INTEL_82Q33_IGD_1:
 		isc->chiptype = CHIP_G33;
+		aprint_normal(": G33-family chipset\n");
 		break;
 	case PCI_PRODUCT_INTEL_82GM45_IGD:
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
@@ -366,8 +372,10 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_IRONLAKE_D_IGD:
 	case PCI_PRODUCT_INTEL_IRONLAKE_M_IGD:
 		isc->chiptype = CHIP_G4X;
+		aprint_normal(": G4X-family chipset\n");
 		break;
 	}
+	aprint_naive("\n");
 
 	mmadr_type = PCI_MAPREG_TYPE_MEM;
 	switch (isc->chiptype) {
@@ -406,7 +414,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	else
 		error = agp_map_aperture(&isc->vga_pa, sc, apbase);
 	if (error) {
-		aprint_error(": can't map aperture\n");
+		aprint_error_dev(self, "can't map aperture: %d\n", error);
 		goto fail1;
 	}
 
@@ -433,8 +441,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_map(isc->bst, mmadr, isc->size, mmadr_flags,
 	    &isc->bsh);
 	if (error) {
-		aprint_error_dev(self, "can't map MMIO registers: %d\n",
-		    error);
+		aprint_error_dev(self, "can't map MMIO registers: %d\n", error);
 		error = ENXIO;
 		goto fail1;
 	}
@@ -474,8 +481,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case CHIP_G4X:
 		error = agp_i810_setup_chipset_flush_page(sc);
 		if (error) {
-			aprint_error_dev(self,
-			    "failed to set up chipset flush page: %d\n",
+			aprint_error_dev(self, "can't set up chipset flush page: %d\n",
 			    error);
 			goto fail3;
 		}
@@ -494,7 +500,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 
 	/* Power management.  (XXX Nothing to save on suspend?  Fishy...)  */
 	if (!pmf_device_register(self, NULL, agp_i810_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+		aprint_error_dev(self, "can't establish power handler\n");
 
 	/*
 	 * XXX horrible hack to allow drm code to use our mapping
@@ -507,6 +513,9 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	error = agp_i810_init(sc);
 	if (error)
 		goto fail5;
+
+	/* Match the generic AGP code's autoconf output format.  */
+	aprint_normal("%s", device_xname(self));
 
 	/* Success!  */
 	return 0;
@@ -654,10 +663,12 @@ agp_i810_borrow(bus_addr_t base, bus_space_handle_t *hdlp)
 	return 1;
 }
 
-static int agp_i810_init(struct agp_softc *sc)
+static int
+agp_i810_init(struct agp_softc *sc)
 {
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
+	int error;
 
 	isc = sc->as_chipc;
 	gatt = isc->gatt;
@@ -673,13 +684,15 @@ static int agp_i810_init(struct agp_softc *sc)
 			isc->dcache_size = 0;
 
 		/* According to the specs the gatt on the i810 must be 64k */
-		if (agp_alloc_dmamem(sc->as_dmat, 64 * 1024,
+		error = agp_alloc_dmamem(sc->as_dmat, 64 * 1024,
 		    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
-		    &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
-			free(gatt, M_AGP);
-			agp_generic_detach(sc);
-			return ENOMEM;
+		    &gatt->ag_dmaseg, 1, &dummyseg);
+		if (error) {
+			aprint_error_dev(sc->as_dev,
+			    "can't allocate memory for GTT: %d\n", error);
+			goto fail0;
 		}
+
 		gatt->ag_virtual = (uint32_t *)virtual;
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
 		memset(gatt->ag_virtual, 0, gatt->ag_size);
@@ -707,15 +720,16 @@ static int agp_i810_init(struct agp_softc *sc)
 			break;
 		default:
 			isc->stolen = 0;
-			aprint_error(
-			    ": unknown memory configuration, disabling\n");
-			agp_generic_detach(sc);
-			return EINVAL;
+			aprint_error_dev(sc->as_dev,
+			    "unknown memory configuration, disabling\n");
+			error = ENXIO;
+			goto fail0;
 		}
 
 		if (isc->stolen > 0) {
-			aprint_normal(": detected %dk stolen memory\n%s",
-			    isc->stolen * 4, device_xname(sc->as_dev));
+			aprint_normal_dev(sc->as_dev,
+			    "detected %dk stolen memory\n",
+			    isc->stolen * 4);
 		}
 
 		/* GATT address is already in there, make sure it's enabled */
@@ -763,9 +777,10 @@ static int agp_i810_init(struct agp_softc *sc)
 				gtt_size = 1024 + 512;
 				break;
 			default:
-				aprint_error("Bad PGTBL size\n");
-				agp_generic_detach(sc);
-				return EINVAL;
+				aprint_error_dev(sc->as_dev,
+				    "bad PGTBL size\n");
+				error = ENXIO;
+				goto fail0;
 			}
 			break;
 		case CHIP_G33:
@@ -777,18 +792,17 @@ static int agp_i810_init(struct agp_softc *sc)
 				gtt_size = 2048;
 				break;
 			default:
-				aprint_error(": Bad PGTBL size\n");
-				agp_generic_detach(sc);
-				return EINVAL;
+				aprint_error_dev(sc->as_dev,
+				    "bad PGTBL size\n");
+				error = ENXIO;
+				goto fail0;
 			}
 			break;
 		case CHIP_G4X:
 			gtt_size = 0;
 			break;
 		default:
-			aprint_error(": bad chiptype\n");
-			agp_generic_detach(sc);
-			return EINVAL;
+			panic("impossible chiptype %d", isc->chiptype);
 		}
 
 		switch (gcc1 & AGP_I855_GCC1_GMS) {
@@ -832,10 +846,10 @@ static int agp_i810_init(struct agp_softc *sc)
 			stolen = 352 * 1024;
 			break;
 		default:
-			aprint_error(
-			    ": unknown memory configuration, disabling\n");
-			agp_generic_detach(sc);
-			return EINVAL;
+			aprint_error_dev(sc->as_dev,
+			    "unknown memory configuration, disabling\n");
+			error = ENXIO;
+			goto fail0;
 		}
 
 		switch (gcc1 & AGP_I855_GCC1_GMS) {
@@ -870,8 +884,9 @@ static int agp_i810_init(struct agp_softc *sc)
 		isc->stolen = (stolen - gtt_size) * 1024 / 4096;
 
 		if (isc->stolen > 0) {
-			aprint_normal(": detected %dk stolen memory\n%s",
-			    isc->stolen * 4, device_xname(sc->as_dev));
+			aprint_normal_dev(sc->as_dev,
+			    "detected %dk stolen memory\n",
+			    isc->stolen * 4);
 		}
 
 		/* GATT address is already in there, make sure it's enabled */
@@ -893,9 +908,13 @@ static int agp_i810_init(struct agp_softc *sc)
 	if (agp_i810_sc == NULL)
 		agp_i810_sc = sc;
 	else
-		aprint_error_dev(sc->as_dev, "i810 agp already attached\n");
+		aprint_error_dev(sc->as_dev, "agp already attached\n");
 
+	/* Success!  */
 	return 0;
+
+fail0:	KASSERT(error);
+	return error;
 }
 
 #if 0
