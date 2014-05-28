@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.43 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: ad.arm,v 1.44 2014/05/28 11:32:50 tron Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -186,11 +186,11 @@
 ./usr/lib/oabi/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblber.so.3			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/liblber.so.3.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/oabi/liblber.so.3.3			base-compat-shlib	compat,pic,ldap
 ./usr/lib/oabi/libldap.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/oabi/libldap.so.4.3			base-compat-shlib	compat,pic,ldap
 ./usr/lib/oabi/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/oabi/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/oabi/libldap_r.so.4.3			base-compat-shlib	compat,pic,ldap
 ./usr/lib/oabi/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblutok.so.1			base-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.52 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: md.amd64,v 1.53 2014/05/28 11:32:50 tron Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -255,9 +255,9 @@
 ./usr/libdata/debug/usr/lib/i386/libkrb5.so.24.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libkrb5.so.26.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkvm.so.6.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/liblber.so.3.2.debug	comp-compat-shlib	compat,pic,ldap,debug
-./usr/libdata/debug/usr/lib/i386/libldap.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
-./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/liblber.so.3.3.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/libldap.so.4.3.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.3.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblutok.so.1.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/i386/liblutok.so.2.0.debug	comp-compat-shlib	compat,pic,debug,kyua

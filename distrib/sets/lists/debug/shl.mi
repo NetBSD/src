@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.62 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: shl.mi,v 1.63 2014/05/28 11:32:50 tron Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -112,9 +112,9 @@
 ./usr/libdata/debug/usr/lib/libkdc.so.2.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libkrb5.so.26.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libkvm.so.6.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug
-./usr/libdata/debug/usr/lib/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug
-./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
+./usr/libdata/debug/usr/lib/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug
+./usr/libdata/debug/usr/lib/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug
+./usr/libdata/debug/usr/lib/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/liblutok.so.2.0.debug	comp-kyua-debug	kyua,debug

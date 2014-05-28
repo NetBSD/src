@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.29 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: ad.mips,v 1.30 2014/05/28 11:32:50 tron Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -129,9 +129,9 @@
 ./usr/libdata/debug/usr/lib/64/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/64/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libkvm.so.6.0.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/liblua.so.1.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/64/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat,arch64
@@ -305,9 +305,9 @@
 ./usr/libdata/debug/usr/lib/o32/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libkvm.so.6.0.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/liblua.so.1.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/o32/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat,arch64

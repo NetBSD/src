@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.33 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: ad.arm,v 1.34 2014/05/28 11:32:50 tron Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -124,9 +124,9 @@
 ./usr/libdata/debug/usr/lib/oabi/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblua.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat

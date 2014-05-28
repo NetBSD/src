@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1893 2014/05/25 15:34:19 rmind Exp $
+#	$NetBSD: mi,v 1.1894 2014/05/28 11:32:50 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7708,6 +7708,7 @@
 ./usr/share/man/cat3/ldap_dn2dcedn.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_dn2str.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_dn2ufn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_dup.0			comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_err2string.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_errlist.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldap_error.0		comp-ldap-catman	ldap,.cat
@@ -14506,6 +14507,7 @@
 ./usr/share/man/html3/ldap_dn2dcedn.html	comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_dn2str.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_dn2ufn.html		comp-ldap-htmlman	ldap,html
+./usr/share/man/html3/ldap_dup.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_err2string.html	comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_errlist.html		comp-ldap-htmlman	ldap,html
 ./usr/share/man/html3/ldap_error.html		comp-ldap-htmlman	ldap,html
@@ -21262,6 +21264,7 @@
 ./usr/share/man/man3/ldap_dn2dcedn.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_dn2str.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_dn2ufn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_dup.3			comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_err2string.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_errlist.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldap_error.3		comp-ldap-man		ldap,.man
