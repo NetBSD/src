@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1190 2014/05/28 09:06:24 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1191 2014/05/28 13:59:06 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2538,7 +2538,10 @@ product INTEL WIFI_LINK_1030_2	0x008b	Centrino Wireless-N 1030
 product INTEL WIFI_LINK_6230_1	0x0090	Centrino Advanced-N 6230
 product INTEL WIFI_LINK_6230_2	0x0091	Centrino Advanced-N 6230
 product INTEL SANDYBRIDGE_HB	0x0100	Sandy Bridge Host Bridge
+product INTEL SANDYBRIDGE_PCIE	0x0101	Sandy Bridge PCIe Root port
 product INTEL SANDYBRIDGE_IGD	0x0102	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_PCIE_1 0x0105	Sandy Bridge PCIe Root port
+product INTEL SANDYBRIDGE_PCIE_2 0x0109	Sandy Bridge PCIe Root port
 product INTEL SANDYBRIDGE_IGD_1	0x0112	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_IGD_2	0x0122	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_M_HB	0x0104	Sandy Bridge Host Bridge
@@ -2562,8 +2565,10 @@ product INTEL IVYBRIDGE_M_IGD_1	0x0166	Ivy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_S_IGD_1	0x016a	Ivy Bridge Integrated Graphics Device
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
+product INTEL 6700PXH_IOXAPIC	0x0326	6700PXH IOxAPIC
 product INTEL 6700PXH_PCIE0	0x0329	6700PXH PCI Express-to-PCI Bridge #0
 product INTEL 6700PXH_PCIE1	0x032a	6700PXH PCI Express-to-PCI Bridge #1
+product INTEL 6702PXH_PCIX	0x032c	6702PXH PCI Express-to-PCIX
 product INTEL 80331		0x0335	Lindsay I/O Processor PCI-X Bridge
 product INTEL 41210A		0x0340	Serial to Parallel PCI Bridge A
 product INTEL 41210B		0x0341	Serial to Parallel PCI Bridge B
@@ -3316,6 +3321,7 @@ product INTEL 82Q33_EXP		0x29d1  82Q35 PCI Express Bridge
 product INTEL 82Q33_IGD		0x29d2  82Q35 Integrated Graphics Device
 product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
 product INTEL 82Q33_KT		0x29d7  82Q33 KT
+product INTEL 82X38_HB		0x29e0	82X38 Host Bridge
 product INTEL 82X38_KT		0x29e7  82X38 KT
 product INTEL 3200_KT		0x29f7  3200 KT
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
@@ -3679,6 +3685,7 @@ product INTEL CORE4G_M_S_GSPI_0 0x9c65	Core 4G (mobile) Serial I/O GSPI
 product INTEL CORE4G_M_S_GSPI_1 0x9c66	Core 4G (mobile) Serial I/O GSPI
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
+product INTEL PINEVIEW_IGD_1	0xa002	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_M_HB	0xa010	Pineview Host Bridge
 product INTEL PINEVIEW_M_IGD	0xa011	Pineview Integrated Graphics Device
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
@@ -3715,6 +3722,7 @@ product IODATA GVBCTV5DL	0xd012	GV-BCTV5DL/PCI TV tuner
 product ITE IT8152		0x8152	IT8152 Host Bridge
 product ITE IT8211		0x8211	IT8211 IDE Controller
 product ITE IT8212		0x8212	IT8212 IDE Controller
+product ITE IT8213		0x8213	IT8213 IDE Controller
 product ITE IT8888		0x8888	PCI-ISA Bridge
 product ITE IT8892		0x8892	PCIe-PCI Bridge
 
