@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.80 2014/05/27 12:51:04 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.81 2014/05/28 02:08:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.80 2014/05/27 12:51:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.81 2014/05/28 02:08:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,8 +443,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	if (gtt_bar == 0) {
 		isc->gtt_bst = isc->bst;
 		isc->gtt_size = (mmadr_size - gtt_off);
-		error = bus_space_map(isc->gtt_bst, gtt_off, isc->gtt_size,
-		    mmadr_flags, &isc->gtt_bsh);
+		error = bus_space_map(isc->gtt_bst, (mmadr + gtt_off),
+		    isc->gtt_size, mmadr_flags, &isc->gtt_bsh);
 		if (error) {
 			aprint_error_dev(self, "can't map GTT: %d\n", error);
 			error = ENXIO;
