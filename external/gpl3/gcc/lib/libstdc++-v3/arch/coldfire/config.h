@@ -6,58 +6,58 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the `acosf' function. */
-/* #undef HAVE_ACOSF */
+#define HAVE_ACOSF 1
 
 /* Define to 1 if you have the `acosl' function. */
-/* #undef HAVE_ACOSL */
+#define HAVE_ACOSL 1
 
 /* Define to 1 if you have the `asinf' function. */
-/* #undef HAVE_ASINF */
+#define HAVE_ASINF 1
 
 /* Define to 1 if you have the `asinl' function. */
-/* #undef HAVE_ASINL */
+#define HAVE_ASINL 1
 
 /* Define to 1 if the target assembler supports .symver directive. */
 #define HAVE_AS_SYMVER_DIRECTIVE 1
 
 /* Define to 1 if you have the `atan2f' function. */
-/* #undef HAVE_ATAN2F */
+#define HAVE_ATAN2F 1
 
 /* Define to 1 if you have the `atan2l' function. */
-/* #undef HAVE_ATAN2L */
+#define HAVE_ATAN2L 1
 
 /* Define to 1 if you have the `atanf' function. */
-/* #undef HAVE_ATANF */
+#define HAVE_ATANF 1
 
 /* Define to 1 if you have the `atanl' function. */
-/* #undef HAVE_ATANL */
+#define HAVE_ATANL 1
 
 /* Define to 1 if you have the `at_quick_exit' function. */
-/* #undef HAVE_AT_QUICK_EXIT */
+#define HAVE_AT_QUICK_EXIT 1
 
 /* Define to 1 if the target assembler supports thread-local storage. */
 /* #undef HAVE_CC_TLS */
 
 /* Define to 1 if you have the `ceilf' function. */
-/* #undef HAVE_CEILF */
+#define HAVE_CEILF 1
 
 /* Define to 1 if you have the `ceill' function. */
-/* #undef HAVE_CEILL */
+#define HAVE_CEILL 1
 
 /* Define to 1 if you have the <complex.h> header file. */
 #define HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the `cosf' function. */
-/* #undef HAVE_COSF */
+#define HAVE_COSF 1
 
 /* Define to 1 if you have the `coshf' function. */
-/* #undef HAVE_COSHF */
+#define HAVE_COSHF 1
 
 /* Define to 1 if you have the `coshl' function. */
-/* #undef HAVE_COSHL */
+#define HAVE_COSHL 1
 
 /* Define to 1 if you have the `cosl' function. */
-/* #undef HAVE_COSL */
+#define HAVE_COSL 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -126,13 +126,13 @@
 #define HAVE_EXECINFO_H 1
 
 /* Define to 1 if you have the `expf' function. */
-/* #undef HAVE_EXPF */
+#define HAVE_EXPF 1
 
 /* Define to 1 if you have the `expl' function. */
-/* #undef HAVE_EXPL */
+#define HAVE_EXPL 1
 
 /* Define to 1 if you have the `fabsf' function. */
-/* #undef HAVE_FABSF */
+#define HAVE_FABSF 1
 
 /* Define to 1 if you have the `fabsl' function. */
 /* #undef HAVE_FABSL */
@@ -153,16 +153,16 @@
 #define HAVE_FLOAT_H 1
 
 /* Define to 1 if you have the `floorf' function. */
-/* #undef HAVE_FLOORF */
+#define HAVE_FLOORF 1
 
 /* Define to 1 if you have the `floorl' function. */
-/* #undef HAVE_FLOORL */
+#define HAVE_FLOORL 1
 
 /* Define to 1 if you have the `fmodf' function. */
-/* #undef HAVE_FMODF */
+#define HAVE_FMODF 1
 
 /* Define to 1 if you have the `fmodl' function. */
-/* #undef HAVE_FMODL */
+#define HAVE_FMODL 1
 
 /* Define to 1 if you have the `fpclass' function. */
 /* #undef HAVE_FPCLASS */
@@ -183,16 +183,16 @@
 #define HAVE_GETS 1
 
 /* Define to 1 if you have the `hypot' function. */
-/* #undef HAVE_HYPOT */
+#define HAVE_HYPOT 1
 
 /* Define to 1 if you have the `hypotf' function. */
 #define HAVE_HYPOTF 1
 
 /* Define to 1 if you have the `hypotl' function. */
-/* #undef HAVE_HYPOTL */
+#define HAVE_HYPOTL 1
 
 /* Define if you have the iconv() function. */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #define HAVE_IEEEFP_H 1
@@ -234,7 +234,7 @@
 #define HAVE_LC_MESSAGES 1
 
 /* Define to 1 if you have the `ldexpf' function. */
-/* #undef HAVE_LDEXPF */
+#define HAVE_LDEXPF 1
 
 /* Define to 1 if you have the `ldexpl' function. */
 /* #undef HAVE_LDEXPL */
@@ -243,19 +243,19 @@
 /* #undef HAVE_LIBINTL_H */
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef HAVE_LIMIT_AS */
+#define HAVE_LIMIT_AS 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef HAVE_LIMIT_DATA */
+#define HAVE_LIMIT_DATA 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef HAVE_LIMIT_FSIZE */
+#define HAVE_LIMIT_FSIZE 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef HAVE_LIMIT_RSS */
+#define HAVE_LIMIT_RSS 1
 
 /* Only used in build directory testsuite_hooks.h. */
-/* #undef HAVE_LIMIT_VMEM */
+#define HAVE_LIMIT_VMEM 1
 
 /* Define if futex syscall is available. */
 /* #undef HAVE_LINUX_FUTEX */
@@ -264,16 +264,16 @@
 #define HAVE_LOCALE_H 1
 
 /* Define to 1 if you have the `log10f' function. */
-/* #undef HAVE_LOG10F */
+#define HAVE_LOG10F 1
 
 /* Define to 1 if you have the `log10l' function. */
-/* #undef HAVE_LOG10L */
+#define HAVE_LOG10L 1
 
 /* Define to 1 if you have the `logf' function. */
-/* #undef HAVE_LOGF */
+#define HAVE_LOGF 1
 
 /* Define to 1 if you have the `logl' function. */
-/* #undef HAVE_LOGL */
+#define HAVE_LOGL 1
 
 /* Define to 1 if you have the <machine/endian.h> header file. */
 #define HAVE_MACHINE_ENDIAN_H 1
@@ -288,10 +288,10 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `modf' function. */
-/* #undef HAVE_MODF */
+#define HAVE_MODF 1
 
 /* Define to 1 if you have the `modff' function. */
-/* #undef HAVE_MODFF */
+#define HAVE_MODFF 1
 
 /* Define to 1 if you have the `modfl' function. */
 /* #undef HAVE_MODFL */
@@ -303,19 +303,19 @@
 #define HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
-/* #undef HAVE_POWF */
+#define HAVE_POWF 1
 
 /* Define to 1 if you have the `powl' function. */
-/* #undef HAVE_POWL */
+#define HAVE_POWL 1
 
 /* Define to 1 if you have the `qfpclass' function. */
 /* #undef HAVE_QFPCLASS */
 
 /* Define to 1 if you have the `quick_exit' function. */
-/* #undef HAVE_QUICK_EXIT */
+#define HAVE_QUICK_EXIT 1
 
 /* Define to 1 if you have the `setenv' function. */
-/* #undef HAVE_SETENV */
+#define HAVE_SETENV 1
 
 /* Define to 1 if you have the `sincos' function. */
 /* #undef HAVE_SINCOS */
@@ -327,25 +327,25 @@
 /* #undef HAVE_SINCOSL */
 
 /* Define to 1 if you have the `sinf' function. */
-/* #undef HAVE_SINF */
+#define HAVE_SINF 1
 
 /* Define to 1 if you have the `sinhf' function. */
-/* #undef HAVE_SINHF */
+#define HAVE_SINHF 1
 
 /* Define to 1 if you have the `sinhl' function. */
-/* #undef HAVE_SINHL */
+#define HAVE_SINHL 1
 
 /* Define to 1 if you have the `sinl' function. */
-/* #undef HAVE_SINL */
+#define HAVE_SINL 1
 
 /* Defined if sleep exists. */
 #define HAVE_SLEEP 1
 
 /* Define to 1 if you have the `sqrtf' function. */
-/* #undef HAVE_SQRTF */
+#define HAVE_SQRTF 1
 
 /* Define to 1 if you have the `sqrtl' function. */
-/* #undef HAVE_SQRTL */
+#define HAVE_SQRTL 1
 
 /* Define to 1 if you have the <stdalign.h> header file. */
 /* #undef HAVE_STDALIGN_H */
@@ -372,10 +372,10 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strtof' function. */
-/* #undef HAVE_STRTOF */
+#define HAVE_STRTOF 1
 
 /* Define to 1 if you have the `strtold' function. */
-/* #undef HAVE_STRTOLD */
+#define HAVE_STRTOLD 1
 
 /* Define if strxfrm_l is available in <string.h>. */
 /* #undef HAVE_STRXFRM_L */
@@ -433,22 +433,22 @@
 #define HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
-/* #undef HAVE_TANF */
+#define HAVE_TANF 1
 
 /* Define to 1 if you have the `tanhf' function. */
-/* #undef HAVE_TANHF */
+#define HAVE_TANHF 1
 
 /* Define to 1 if you have the `tanhl' function. */
-/* #undef HAVE_TANHL */
+#define HAVE_TANHL 1
 
 /* Define to 1 if you have the `tanl' function. */
-/* #undef HAVE_TANL */
+#define HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
 #define HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
-/* #undef HAVE_TLS */
+#define HAVE_TLS 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
@@ -670,7 +670,7 @@
 /* #undef HAVE___CXA_THREAD_ATEXIT_IMPL */
 
 /* Define as const if the declaration of iconv() needs const. */
-/* #undef ICONV_CONST */
+#define ICONV_CONST const
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -729,7 +729,7 @@
 #define _GLIBCXX_FULLY_DYNAMIC_STRING 0
 
 /* Define if gthreads library is available. */
-/* #undef _GLIBCXX_HAS_GTHREADS */
+#define _GLIBCXX_HAS_GTHREADS 1
 
 /* Define to 1 if a full hosted library is built, or 0 if freestanding. */
 #define _GLIBCXX_HOSTED 1
@@ -741,7 +741,7 @@
 #define _GLIBCXX_PTRDIFF_T_IS_INT 1
 
 /* Define if using setrlimit to set resource limits during "make check" */
-/* #undef _GLIBCXX_RES_LIMITS */
+#define _GLIBCXX_RES_LIMITS 1
 
 /* Define if size_t is unsigned int. */
 #define _GLIBCXX_SIZE_T_IS_UINT 1
@@ -775,12 +775,12 @@
 
 /* Define if C99 functions or macros from <wchar.h>, <math.h>, <complex.h>,
    <stdio.h>, and <stdlib.h> can be used or exposed. */
-#define _GLIBCXX_USE_C99 1
+/* #undef _GLIBCXX_USE_C99 */
 
 /* Define if C99 functions in <complex.h> should be used in <complex>. Using
    compiler builtins for these functions requires corresponding C99 library
    functions to be present. */
-#define _GLIBCXX_USE_C99_COMPLEX 1
+/* #undef _GLIBCXX_USE_C99_COMPLEX */
 
 /* Define if C99 functions in <complex.h> should be used in <tr1/complex>.
    Using compiler builtins for these functions requires corresponding C99
@@ -857,7 +857,7 @@
 
 /* Define if /dev/random and /dev/urandom are available for the random_device
    of TR1 (Chapter 5.1). */
-/* #undef _GLIBCXX_USE_RANDOM_TR1 */
+#define _GLIBCXX_USE_RANDOM_TR1 1
 
 /* Defined if sched_yield is available. */
 /* #undef _GLIBCXX_USE_SCHED_YIELD */
