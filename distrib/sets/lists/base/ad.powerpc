@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.8 2014/05/18 10:36:34 nat Exp $
+# $NetBSD: ad.powerpc,v 1.9 2014/05/28 11:32:50 tron Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -169,11 +169,11 @@
 ./usr/lib/powerpc/libkvm.so.6			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libkvm.so.6.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblber.so.3			base-compat-shlib	compat,arch64,pic,ldap
-./usr/lib/powerpc/liblber.so.3.2		base-compat-shlib	compat,arch64,pic,ldap
+./usr/lib/powerpc/liblber.so.3.3		base-compat-shlib	compat,arch64,pic,ldap
 ./usr/lib/powerpc/libldap.so.4			base-compat-shlib	compat,arch64,pic,ldap
-./usr/lib/powerpc/libldap.so.4.2		base-compat-shlib	compat,arch64,pic,ldap
+./usr/lib/powerpc/libldap.so.4.3		base-compat-shlib	compat,arch64,pic,ldap
 ./usr/lib/powerpc/libldap_r.so.4		base-compat-shlib	compat,arch64,pic,ldap
-./usr/lib/powerpc/libldap_r.so.4.2		base-compat-shlib	compat,arch64,pic,ldap
+./usr/lib/powerpc/libldap_r.so.4.3		base-compat-shlib	compat,arch64,pic,ldap
 ./usr/lib/powerpc/liblua.so			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblua.so.1			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblua.so.1.0			base-compat-shlib	compat,arch64,pic
