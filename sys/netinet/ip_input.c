@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.315 2014/05/28 19:19:33 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.316 2014/05/29 23:02:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.315 2014/05/28 19:19:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.316 2014/05/29 23:02:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -632,7 +632,6 @@ ip_input(struct mbuf *m)
 		}
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
-		struct in_multi *inm;
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
 
@@ -669,8 +668,7 @@ ip_input(struct mbuf *m)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
-		if (inm == NULL) {
+		if (!in_multi_group(ip->ip_dst, ifp, 0)) {
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			m_freem(m);
 			return;
