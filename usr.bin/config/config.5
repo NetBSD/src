@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.22 2014/02/13 22:36:28 wiz Exp $
+.\" $NetBSD: config.5,v 1.23 2014/05/29 07:47:45 mrg Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -587,6 +587,8 @@ prefix
 Defines the indentification string of the kernel.
 This statement is optional, and the name of the main configuration file will be
 used as a default value.
+.It Ic no ident
+Deletes any pre-existing indentification string of the kernel.
 .It Ic maxusers Ar number
 Despite its name, this statement does not limit the maximum number of users on
 the system.
