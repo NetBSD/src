@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.227 2014/05/23 00:02:14 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.228 2014/05/29 23:02:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.227 2014/05/23 00:02:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.228 2014/05/29 23:02:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -278,7 +278,7 @@ ip_output(struct mbuf *m0, ...)
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
-		struct in_multi *inm;
+		bool inmgroup;
 
 		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
 			M_BCAST : M_MCAST;
@@ -331,9 +331,8 @@ ip_output(struct mbuf *m0, ...)
 			ip->ip_src = xia->ia_addr.sin_addr;
 		}
 
-		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
-		if (inm != NULL &&
-		   (imo == NULL || imo->imo_multicast_loop)) {
+		inmgroup = in_multi_group(ip->ip_dst, ifp, flags);
+		if (inmgroup && (imo == NULL || imo->imo_multicast_loop)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
