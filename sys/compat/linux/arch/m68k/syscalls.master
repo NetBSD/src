@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.86 2014/05/20 17:24:49 njoly Exp $
+	$NetBSD: syscalls.master,v 1.87 2014/05/29 10:35:27 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -462,7 +462,8 @@
 264	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
 265	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-266	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
+266	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 267	STD		{ int|linux_sys||fadvise64_64(int fd, off_t offset, \
 			    off_t len, int advice); }
 268	UNIMPL		mbind

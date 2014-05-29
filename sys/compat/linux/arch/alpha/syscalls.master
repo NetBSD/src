@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.87 2014/05/17 09:23:51 njoly Exp $
+	$NetBSD: syscalls.master,v 1.88 2014/05/29 10:35:26 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -590,8 +590,8 @@
 362	NOARGS		{ int|compat_50_sys||setitimer(int which, \
 			    const struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
-363	STD		{ int|linux_sys||utimes(char *path, \
-			    struct linux_timeval *times); }
+363	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 364	NOARGS		{ int|compat_50_sys||getrusage(int who, \
 			    struct rusage50 *rusage); }
 365	STD		{ int|linux_sys||wait4(int pid, int *status, \

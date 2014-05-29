@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54 2014/05/20 17:24:49 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.55 2014/05/29 10:35:27 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -453,7 +453,8 @@
 			    int flags, struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
 266	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-267	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
+267	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 268	UNIMPL		mbind
 269	UNIMPL		get_mempolicy
 270	UNIMPL		set_mempolicy

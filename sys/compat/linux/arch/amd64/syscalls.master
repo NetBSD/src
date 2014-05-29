@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2014/05/20 17:24:49 njoly Exp $
+	$NetBSD: syscalls.master,v 1.51 2014/05/29 10:35:26 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -441,7 +441,8 @@
 232	UNIMPL		epoll_wait
 233	UNIMPL		epoll_ctl
 234	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-235	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
+235	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 236	UNIMPL		vserver
 237	UNIMPL		mbind
 238	UNIMPL		set_mempolicy
