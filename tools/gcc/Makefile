@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2014/05/28 07:32:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.69 2014/05/29 07:40:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,11 +35,13 @@ MULTILIB_ARGS= --disable-multilib
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
+.include "gcc-version.mk"
+
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
-			--with-pkgversion="NetBSD nb1 20140527" \
+			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-threads
