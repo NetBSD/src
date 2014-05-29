@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.145 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: in.c,v 1.146 2014/05/29 23:02:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.145 2014/05/22 22:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.146 2014/05/29 23:02:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -149,6 +149,11 @@ static void	in_sysctl_init(struct sysctllog **);
 #define HOSTZEROBROADCAST 1
 #endif
 
+/* Note: 61, 127, 251, 509, 1021, 2039 are good. */
+#ifndef IN_MULTI_HASH_SIZE
+#define IN_MULTI_HASH_SIZE	509
+#endif
+
 static int			subnetsarelocal = SUBNETSARELOCAL;
 static int			hostzeroisbroadcast = HOSTZEROBROADCAST;
 
@@ -157,13 +162,18 @@ static int			hostzeroisbroadcast = HOSTZEROBROADCAST;
  * deleted interface addresses.  We use in_ifaddr so that a chain head
  * won't be deallocated until all multicast address record are deleted.
  */
-static TAILQ_HEAD(, in_ifaddr)	in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
+
+LIST_HEAD(in_multihashhead, in_multi);		/* Type of the hash head */
 
 static struct pool		inmulti_pool;
 static u_int			in_multientries;
-struct in_multihashhead *	in_multihashtbl;
+static struct in_multihashhead *in_multihashtbl;
+static u_long			in_multihash;
+static krwlock_t		in_multilock;
 
-u_long				in_multihash;
+#define IN_MULTI_HASH(x, ifp) \
+    (in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
+
 struct in_ifaddrhashhead *	in_ifaddrhashtbl;
 u_long				in_ifaddrhash;
 struct in_ifaddrhead		in_ifaddrhead;
@@ -179,6 +189,7 @@ in_init(void)
 	    &in_ifaddrhash);
 	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
 	    &in_multihash);
+	rw_init(&in_multilock);
 
 	in_sysctl_init(NULL);
 }
@@ -1067,64 +1078,106 @@ in_broadcast(struct in_addr in, struct ifnet *ifp)
 }
 
 /*
+ * in_lookup_multi: look up the in_multi record for a given IP
+ * multicast address on a given interface.  If no matching record is
+ * found, return NULL.
+ */
+struct in_multi *
+in_lookup_multi(struct in_addr addr, ifnet_t *ifp)
+{
+	struct in_multi *inm;
+
+	KASSERT(rw_lock_held(&in_multilock));
+
+	LIST_FOREACH(inm, &IN_MULTI_HASH(addr.s_addr, ifp), inm_list) {
+		if (in_hosteq(inm->inm_addr, addr) && inm->inm_ifp == ifp)
+			break;
+	}
+	return inm;
+}
+
+/*
+ * in_multi_group: check whether the address belongs to an IP multicast
+ * group we are joined on this interface.  Returns true or false.
+ */
+bool
+in_multi_group(struct in_addr addr, ifnet_t *ifp, int flags)
+{
+	bool ingroup;
+
+	if (__predict_true(flags & IP_IGMP_MCAST) == 0) {
+		rw_enter(&in_multilock, RW_READER);
+		ingroup = in_lookup_multi(addr, ifp) != NULL;
+		rw_exit(&in_multilock);
+	} else {
+		/* XXX Recursive call from ip_output(). */
+		KASSERT(rw_lock_held(&in_multilock));
+		ingroup = in_lookup_multi(addr, ifp) != NULL;
+	}
+	return ingroup;
+}
+
+/*
  * Add an address to the list of IP multicast addresses for a given interface.
  */
 struct in_multi *
-in_addmulti(struct in_addr *ap, struct ifnet *ifp)
+in_addmulti(struct in_addr *ap, ifnet_t *ifp)
 {
 	struct sockaddr_in sin;
 	struct in_multi *inm;
-	int s = splsoftnet();
 
 	/*
 	 * See if address already in list.
 	 */
-	IN_LOOKUP_MULTI(*ap, ifp, inm);
+	rw_enter(&in_multilock, RW_WRITER);
+	inm = in_lookup_multi(*ap, ifp);
 	if (inm != NULL) {
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		++inm->inm_refcount;
-	} else {
-		/*
-		 * New address; allocate a new multicast record
-		 * and link it into the interface's multicast list.
-		 */
-		inm = pool_get(&inmulti_pool, PR_NOWAIT);
-		if (inm == NULL) {
-			splx(s);
-			return (NULL);
-		}
-		inm->inm_addr = *ap;
-		inm->inm_ifp = ifp;
-		inm->inm_refcount = 1;
-		LIST_INSERT_HEAD(
-		    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
-		    inm, inm_list);
-		/*
-		 * Ask the network driver to update its multicast reception
-		 * filter appropriately for the new address.
-		 */
-		sockaddr_in_init(&sin, ap, 0);
-		if (if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin)) != 0) {
-			LIST_REMOVE(inm, inm_list);
-			pool_put(&inmulti_pool, inm);
-			splx(s);
-			return (NULL);
-		}
-		/*
-		 * Let IGMP know that we have joined a new IP multicast group.
-		 */
-		if (igmp_joingroup(inm) != 0) {
-			LIST_REMOVE(inm, inm_list);
-			pool_put(&inmulti_pool, inm);
-			splx(s);
-			return (NULL);
-		}
-		in_multientries++;
+		inm->inm_refcount++;
+		rw_exit(&in_multilock);
+		return inm;
 	}
-	splx(s);
-	return (inm);
+
+	/*
+	 * New address; allocate a new multicast record.
+	 */
+	inm = pool_get(&inmulti_pool, PR_NOWAIT);
+	if (inm == NULL) {
+		rw_exit(&in_multilock);
+		return NULL;
+	}
+	inm->inm_addr = *ap;
+	inm->inm_ifp = ifp;
+	inm->inm_refcount = 1;
+
+	/*
+	 * Ask the network driver to update its multicast reception
+	 * filter appropriately for the new address.
+	 */
+	sockaddr_in_init(&sin, ap, 0);
+	if (if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin)) != 0) {
+		rw_exit(&in_multilock);
+		pool_put(&inmulti_pool, inm);
+		return NULL;
+	}
+
+	/*
+	 * Let IGMP know that we have joined a new IP multicast group.
+	 */
+	if (igmp_joingroup(inm) != 0) {
+		rw_exit(&in_multilock);
+		pool_put(&inmulti_pool, inm);
+		return NULL;
+	}
+	LIST_INSERT_HEAD(
+	    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
+	    inm, inm_list);
+	in_multientries++;
+	rw_exit(&in_multilock);
+
+	return inm;
 }
 
 /*
@@ -1134,28 +1187,85 @@ void
 in_delmulti(struct in_multi *inm)
 {
 	struct sockaddr_in sin;
-	int s = splsoftnet();
 
-	if (--inm->inm_refcount == 0) {
-		/*
-		 * No remaining claims to this record; let IGMP know that
-		 * we are leaving the multicast group.
-		 */
-		igmp_leavegroup(inm);
-		/*
-		 * Unlink from list.
-		 */
-		LIST_REMOVE(inm, inm_list);
-		in_multientries--;
-		/*
-		 * Notify the network driver to update its multicast reception
-		 * filter.
-		 */
-		sockaddr_in_init(&sin, &inm->inm_addr, 0);
-		if_mcast_op(inm->inm_ifp, SIOCDELMULTI, sintosa(&sin));
-		pool_put(&inmulti_pool, inm);
+	rw_enter(&in_multilock, RW_WRITER);
+	if (--inm->inm_refcount > 0) {
+		rw_exit(&in_multilock);
+		return;
 	}
-	splx(s);
+
+	/*
+	 * No remaining claims to this record; let IGMP know that
+	 * we are leaving the multicast group.
+	 */
+	igmp_leavegroup(inm);
+
+	/*
+	 * Notify the network driver to update its multicast reception
+	 * filter.
+	 */
+	sockaddr_in_init(&sin, &inm->inm_addr, 0);
+	if_mcast_op(inm->inm_ifp, SIOCDELMULTI, sintosa(&sin));
+
+	/*
+	 * Unlink from list.
+	 */
+	LIST_REMOVE(inm, inm_list);
+	in_multientries--;
+	rw_exit(&in_multilock);
+
+	pool_put(&inmulti_pool, inm);
+}
+
+/*
+ * in_next_multi: step through all of the in_multi records, one at a time.
+ * The current position is remembered in "step", which the caller must
+ * provide.  in_first_multi(), below, must be called to initialize "step"
+ * and get the first record.  Both macros return a NULL "inm" when there
+ * are no remaining records.
+ */
+struct in_multi *
+in_next_multi(struct in_multistep *step)
+{
+	struct in_multi *inm;
+
+	KASSERT(rw_lock_held(&in_multilock));
+
+	while (step->i_inm == NULL && step->i_n < IN_MULTI_HASH_SIZE) {
+		step->i_inm = LIST_FIRST(&in_multihashtbl[++step->i_n]);
+	}
+	if ((inm = step->i_inm) != NULL) {
+		step->i_inm = LIST_NEXT(inm, inm_list);
+	}
+	return inm;
+}
+
+struct in_multi *
+in_first_multi(struct in_multistep *step)
+{
+	KASSERT(rw_lock_held(&in_multilock));
+
+	step->i_n = 0;
+	step->i_inm = LIST_FIRST(&in_multihashtbl[0]);
+	return in_next_multi(step);
+}
+
+void
+in_multi_lock(int op)
+{
+	rw_enter(&in_multilock, op);
+}
+
+void
+in_multi_unlock(void)
+{
+	rw_exit(&in_multilock);
+}
+
+int
+in_multi_lock_held(void)
+{
+	return rw_lock_held(&in_multilock);
 }
 
 struct sockaddr_in *

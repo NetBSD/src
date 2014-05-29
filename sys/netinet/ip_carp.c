@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.55 2014/05/17 20:44:24 rmind Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.56 2014/05/29 23:02:48 rmind Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.55 2014/05/17 20:44:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.56 2014/05/29 23:02:48 rmind Exp $");
 
 /*
  * TODO:
@@ -1670,15 +1670,13 @@ carp_addr_updated(void *v)
 	/* Handle a callback after SIOCDIFADDR */
 	if (new_naddrs < sc->sc_naddrs || new_naddrs6 < sc->sc_naddrs6) {
 		struct in_addr mc_addr;
-		struct in_multi *inm;
 
 		sc->sc_naddrs = new_naddrs;
 		sc->sc_naddrs6 = new_naddrs6;
 
 		/* Re-establish multicast membership removed by in_control */
 		mc_addr.s_addr = INADDR_CARP_GROUP;
-		IN_LOOKUP_MULTI(mc_addr, &sc->sc_if, inm);
-		if (inm == NULL) {
+		if (!in_multi_group(mc_addr, &sc->sc_if, 0)) {
 			memset(&sc->sc_imo, 0, sizeof(sc->sc_imo));
 
 			if (sc->sc_carpdev != NULL && sc->sc_naddrs > 0)
