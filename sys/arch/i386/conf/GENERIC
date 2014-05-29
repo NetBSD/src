@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1103 2014/04/21 16:35:38 chs Exp $
+# $NetBSD: GENERIC,v 1.1104 2014/05/29 14:48:40 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1103 $"
+#ident 		"GENERIC-$Revision: 1.1104 $"
 
 maxusers	64		# estimated number of users
 
@@ -199,7 +199,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
-#options 	IPSEC		# IP security
+options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
