@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.14 2014/05/30 02:28:07 joerg Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.15 2014/05/30 02:31:40 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -59,14 +59,13 @@ struct	nlist nl[] = {
 	{ "", 0, 0, 0, 0 },
 };
 
-const char *inet6_n2a __P((struct in6_addr *));
-int main __P((void));
-char *ifname __P((struct ifnet *));
-void kread __P((u_long, void *, int));
-void acmc __P((struct ether_multi *));
-void if6_addrlist __P((struct ifaddr *));
-void in6_multilist __P((struct in6_multi *));
-struct in6_multi * in6_multientry __P((struct in6_multi *));
+static const char *inet6_n2a(struct in6_addr *);
+static char *ifname(struct ifnet *);
+static void kread(u_long, void *, int);
+static void acmc(struct ether_multi *);
+static void if6_addrlist(struct ifaddr *);
+static void in6_multilist(struct in6_multi *);
+static struct in6_multi * in6_multientry(struct in6_multi *);
 
 #define	KREAD(addr, buf, type) \
 	kread((u_long)addr, (void *)buf, sizeof(type))
@@ -77,8 +76,8 @@ struct multi6_kludge {
 	struct in6_multihead mk_head;
 };
 
-const char *inet6_n2a(p)
-	struct in6_addr *p;
+static const char *
+inet6_n2a(struct in6_addr *p)
 {
 	static char buf[NI_MAXHOST];
 	struct sockaddr_in6 sin6;
@@ -97,7 +96,8 @@ const char *inet6_n2a(p)
 		return "(invalid)";
 }
 
-int main()
+int
+main(void)
 {
 	char	buf[_POSIX2_LINE_MAX], ifnam[IFNAMSIZ];
 	struct	ifnet	*ifp, *nifp, ifnet;
@@ -149,8 +149,8 @@ int main()
 	/*NOTREACHED*/
 }
 
-char *ifname(ifp)
-	struct ifnet *ifp;
+static char *
+ifname(struct ifnet *ifp)
 {
 	static char buf[BUFSIZ];
 	struct ifnet ifnet;
@@ -160,10 +160,8 @@ char *ifname(ifp)
 	return buf;
 }
 
-void kread(addr, buf, len)
-	u_long addr;
-	void *buf;
-	int len;
+static void
+kread(u_long addr, void *buf, int len)
 {
 	if (kvm_read(kvmd, addr, buf, len) != len) {
 		perror("kvm_read");
@@ -171,8 +169,8 @@ void kread(addr, buf, len)
 	}
 }
 
-void acmc(am)
-	struct ether_multi *am;
+static void
+acmc(struct ether_multi *am)
 {
 	struct ether_multi em;
 
@@ -187,9 +185,8 @@ void acmc(am)
 	}
 }
 
-void
-if6_addrlist(ifap)
-	struct ifaddr *ifap;
+static void
+if6_addrlist(struct ifaddr *ifap)
 {
 	struct ifaddr ifa;
 	struct sockaddr sa;
@@ -236,9 +233,8 @@ if6_addrlist(ifap)
 	}
 }
 
-struct in6_multi *
-in6_multientry(mc)
-	struct in6_multi *mc;
+static struct in6_multi *
+in6_multientry(struct in6_multi *mc)
 {
 	struct in6_multi multi;
 
@@ -248,9 +244,8 @@ in6_multientry(mc)
 	return(multi.in6m_entry.le_next);
 }
 
-void
-in6_multilist(mc)
-	struct in6_multi *mc;
+static void
+in6_multilist(struct in6_multi *mc)
 {
 	while (mc)
 		mc = in6_multientry(mc);
