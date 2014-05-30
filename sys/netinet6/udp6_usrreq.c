@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.97 2014/05/22 22:56:53 rmind Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.98 2014/05/30 01:39:03 christos Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.97 2014/05/22 22:56:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.98 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -341,7 +341,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (so != NULL && ipsec6_in_reject_so(m, so)) {
+	if (ipsec_used && so != NULL && ipsec6_in_reject_so(m, so)) {
 		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp6_error(n, ICMP6_DST_UNREACH,
