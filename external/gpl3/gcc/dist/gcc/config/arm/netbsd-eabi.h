@@ -45,6 +45,13 @@
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES 0
+#undef ARM_UNWIND_INFO
+#define ARM_UNWIND_INFO 0
+#undef ARM_DWARF_UNWIND_TABLES
+#define ARM_DWARF_UNWIND_TABLES 1
+
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
@@ -52,6 +59,8 @@
       if (TARGET_AAPCS_BASED)			\
 	TARGET_BPABI_CPP_BUILTINS();		\
       NETBSD_OS_CPP_BUILTINS_ELF();		\
+      if (ARM_DWARF_UNWIND_TABLES)		\
+	builtin_define ("__ARM_DWARF_EH__");	\
       if (ARM_EABI_UNWIND_TABLES)		\
 	builtin_define ("__UNWIND_TABLES__");	\
     }						\
