@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/05/30 13:23:05 martin Exp $
+#	$NetBSD: Makefile,v 1.5 2014/05/30 13:24:22 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -29,6 +29,7 @@ image_md_pre:
 		${INSTALL} ${COPY} $$f cdrom; \
 	done
 	${TOOL_GZIP} -d cdrom/netbsd.gz
+	(cd cdrom/dev && ${HOST_SH} ./MAKEDEV all)
 	${MKDIR} cdrom/var
 	${MKDIR} cdrom/kern
 
