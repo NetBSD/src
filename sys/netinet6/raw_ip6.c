@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.117 2014/05/20 19:04:00 rmind Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.118 2014/05/30 01:39:03 christos Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.117 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.118 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -204,7 +204,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			/*
 			 * Check AH/ESP integrity
 			 */
-			if (!ipsec6_in_reject(m,last)) 
+			if (ipsec_used && !ipsec6_in_reject(m, last)) 
 #endif /* IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
@@ -226,7 +226,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		last = in6p;
 	}
 #ifdef IPSEC
-	if (last && ipsec6_in_reject(m, last)) {
+	if (ipsec_used && last && ipsec6_in_reject(m, last)) {
 		m_freem(m);
 		/*
 		 * XXX ipsec6_in_reject update stat if there is an error

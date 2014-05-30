@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.228 2014/05/29 23:02:48 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.229 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.228 2014/05/29 23:02:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.229 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -169,7 +169,9 @@ ip_output(struct mbuf *m0, ...)
 	struct ip_moptions *imo;
 	struct socket *so;
 	va_list ap;
+#ifdef IPSEC
 	struct secpolicy *sp = NULL;
+#endif
 	bool natt_frag = false;
 	bool __unused done = false;
 	union {
@@ -457,10 +459,12 @@ sendit:
 		ip->ip_off |= htons(IP_DF);
 
 #ifdef IPSEC
-	/* Perform IPsec processing, if any. */
-	error = ipsec4_output(m, so, flags, &sp, &mtu, &natt_frag, &done);
-	if (error || done) {
-		goto done;
+	if (ipsec_used) {
+		/* Perform IPsec processing, if any. */
+		error = ipsec4_output(m, so, flags, &sp, &mtu, &natt_frag,
+		    &done);
+		if (error || done)
+			goto done;
 	}
 #endif
 
@@ -622,11 +626,11 @@ sendit:
 		IP_STATINC(IP_STAT_FRAGMENTED);
 done:
 	rtcache_free(&iproute);
-	if (sp) {
 #ifdef IPSEC
+	if (sp) {
 		KEY_FREESP(&sp);
-#endif
 	}
+#endif
 	return error;
 bad:
 	m_freem(m);
@@ -1030,10 +1034,14 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 #if defined(IPSEC)
 		case IP_IPSEC_POLICY:
-			error = ipsec4_set_policy(inp, sopt->sopt_name,
-			    sopt->sopt_data, sopt->sopt_size, curlwp->l_cred);
-			break;
-#endif /*IPSEC*/
+			if (ipsec_enabled) {
+				error = ipsec4_set_policy(inp, sopt->sopt_name,
+				    sopt->sopt_data, sopt->sopt_size,
+				    curlwp->l_cred);
+				break;
+			}
+			/*FALLTHROUGH*/
+#endif /* IPSEC */
 
 		default:
 			error = ENOPROTOOPT;

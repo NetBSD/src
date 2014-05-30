@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.123 2014/05/22 23:42:53 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.124 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.123 2014/05/22 23:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.124 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -212,7 +212,8 @@ rip_input(struct mbuf *m, ...)
 			;
 #if defined(IPSEC)
 		/* check AH/ESP integrity. */
-		else if (ipsec4_in_reject_so(m, last->inp_socket)) {
+		else if (ipsec_used &&
+		    ipsec4_in_reject_so(m, last->inp_socket)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			/* do not inject data to pcb */
 		}
@@ -226,7 +227,8 @@ rip_input(struct mbuf *m, ...)
 	}
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
+	if (ipsec_used && last != NULL
+	    && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		IP_STATDEC(IP_STAT_DELIVERED);

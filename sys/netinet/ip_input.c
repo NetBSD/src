@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.316 2014/05/29 23:02:48 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.317 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.316 2014/05/29 23:02:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.317 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -522,7 +522,7 @@ ip_input(struct mbuf *m)
 	 * in the list may have previously cleared it.
 	 */
 #if defined(IPSEC)
-	if (!ipsec_indone(m))
+	if (!ipsec_used || !ipsec_indone(m))
 #else
 	if (1)
 #endif
@@ -699,7 +699,8 @@ ip_input(struct mbuf *m)
 		}
 #ifdef IPSEC
 		/* Perform IPsec, if any. */
-		if (ipsec4_input(m, IP_FORWARDING | (ip_directedbcast ?
+		if (ipsec_used &&
+		    ipsec4_input(m, IP_FORWARDING | (ip_directedbcast ?
 		    IP_ALLOWBROADCAST : 0)) != 0) {
 			goto bad;
 		}
@@ -738,7 +739,8 @@ ours:
 	 * Note that we do not visit this with protocols with PCB layer
 	 * code - like UDP/TCP/raw IP.
 	 */
-	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
+	if (ipsec_used &&
+	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
 		if (ipsec4_input(m, 0) != 0) {
 			goto bad;
 		}
@@ -1289,7 +1291,8 @@ ip_forward(struct mbuf *m, int srcrt)
 		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
 			destmtu = rt->rt_ifp->if_mtu;
 #ifdef IPSEC
-		(void)ipsec4_forward(mcopy, &destmtu);
+		if (ipsec_used)
+			(void)ipsec4_forward(mcopy, &destmtu);
 #endif
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
