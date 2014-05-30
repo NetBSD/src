@@ -17,6 +17,7 @@
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/TypeLoc.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
@@ -91,7 +92,7 @@ private:
 
   FriendDecl *getNextFriend() {
     if (!NextFriend.isOffset())
-      return cast_or_null<FriendDecl>(NextFriend.get(0));
+      return cast_or_null<FriendDecl>(NextFriend.get(nullptr));
     return getNextFriendSlowCase();
   }
   FriendDecl *getNextFriendSlowCase();
@@ -132,7 +133,7 @@ public:
   }
 
   /// Retrieves the source range for the friend declaration.
-  SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     if (NamedDecl *ND = getFriendDecl()) {
       if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
         return FTD->getSourceRange();
@@ -224,7 +225,11 @@ inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_begin() const {
 }
 
 inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_end() const {
-  return friend_iterator(0);
+  return friend_iterator(nullptr);
+}
+
+inline CXXRecordDecl::friend_range CXXRecordDecl::friends() const {
+  return friend_range(friend_begin(), friend_end());
 }
 
 inline void CXXRecordDecl::pushFriendDecl(FriendDecl *FD) {

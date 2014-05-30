@@ -82,6 +82,9 @@ def err_drv_invalid_libcxx_deployment : Error<
 def err_drv_malformed_sanitizer_blacklist : Error<
   "malformed sanitizer blacklist: '%0'">;
 
+def err_target_unsupported_arch
+  : Error<"the target architecture '%0' is not supported by the target '%1'">;
+
 def err_drv_I_dash_not_supported : Error<
   "'%0' not supported, please use -iquote instead">;
 def err_drv_unknown_argument : Error<"unknown argument: '%0'">;
@@ -111,6 +114,8 @@ def err_drv_unknown_objc_runtime : Error<
   "unknown or ill-formed Objective-C runtime '%0'">;
 def err_drv_emit_llvm_link : Error<
    "-emit-llvm cannot be used when linking">;
+def err_drv_optimization_remark_pattern : Error<
+  "%0 in '%1'">;
 
 def warn_O4_is_O3 : Warning<"-O4 is equivalent to -O3">, InGroup<Deprecated>;
 def warn_drv_optimization_value : Warning<"optimization level '%0' is unsupported; using '%1%2' instead">,
@@ -136,8 +141,6 @@ def warn_drv_unused_sanitizer : Warning<"'%0' is ignored in absence of '%1'">,
   InGroup<UnusedSanitizeArgument>;
 def warn_drv_clang_unsupported : Warning<
   "the clang compiler does not support '%0'">;
-def warn_drv_deprecated_arg : Warning<
-  "argument '%0' is deprecated, use '%1' instead">, InGroup<Deprecated>;
 def warn_drv_assuming_mfloat_abi_is : Warning<
   "unknown platform, assuming -mfloat-abi=%0">;
 def warn_ignoring_ftabstop_value : Warning<
@@ -154,8 +157,8 @@ def warn_drv_pch_not_first_include : Warning<
   "precompiled header '%0' was ignored because '%1' is not first '-include'">;
 def warn_missing_sysroot : Warning<"no such sysroot directory: '%0'">,
   InGroup<DiagGroup<"missing-sysroot">>;
-def warn_missing_debug_compression : Warning<"DWARF compression is not implemented">,
-  InGroup<DiagGroup<"missing-debug-compression">>;
+def warn_debug_compression_unavailable : Warning<"cannot compress debug sections (zlib not installed)">,
+  InGroup<DiagGroup<"debug-compression-unavailable">>;
 
 def note_drv_command_failed_diag_msg : Note<
   "diagnostic msg: %0">;
@@ -172,5 +175,8 @@ def err_drv_modules_validate_once_requires_timestamp : Error<
   "'-fbuild-session-timestamp=<seconds since Epoch>'">;
 
 def warn_drv_invoking_fallback : Warning<"falling back to %0">,
-  InGroup<DiagGroup<"fallback">>;
+  InGroup<Fallback>;
+def warn_drv_rtti_fallback :
+  Warning<"cannot compile RTTI yet, falling back to %0">,
+  InGroup<Fallback>;
 }

@@ -30,6 +30,7 @@ class ArgList;
 
 namespace clang {
 class ASTConsumer;
+class ASTReader;
 class CompilerInstance;
 class CompilerInvocation;
 class Decl;
@@ -62,20 +63,22 @@ void InitializePreprocessor(Preprocessor &PP,
                             const HeaderSearchOptions &HSOpts,
                             const FrontendOptions &FEOpts);
 
-/// ProcessWarningOptions - Initialize the diagnostic client and process the
-/// warning options specified on the command line.
-void ProcessWarningOptions(DiagnosticsEngine &Diags,
-                           const DiagnosticOptions &Opts,
-                           bool ReportDiags = true);
-
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream* OS,
                               const PreprocessorOutputOptions &Opts);
 
-/// AttachDependencyFileGen - Create a dependency file generator, and attach
-/// it to the given preprocessor.  This takes ownership of the output stream.
-void AttachDependencyFileGen(Preprocessor &PP,
-                             const DependencyOutputOptions &Opts);
+/// Builds a depdenency file when attached to a Preprocessor (for includes) and
+/// ASTReader (for module imports), and writes it out at the end of processing
+/// a source file.  Users should attach to the ast reader whenever a module is
+/// loaded.
+class DependencyFileGenerator {
+  void *Impl; // Opaque implementation
+  DependencyFileGenerator(void *Impl);
+public:
+  static DependencyFileGenerator *CreateAndAttachToPreprocessor(
+    Preprocessor &PP, const DependencyOutputOptions &Opts);
+  void AttachToASTReader(ASTReader &R);
+};
 
 /// AttachDependencyGraphGen - Create a dependency graph generator, and attach
 /// it to the given preprocessor.
@@ -115,7 +118,7 @@ createInvocationFromCommandLine(ArrayRef<const char *> Args,
 /// is non-null, emits an error if the argument is given, but non-integral.
 int getLastArgIntValue(const llvm::opt::ArgList &Args,
                        llvm::opt::OptSpecifier Id, int Default,
-                       DiagnosticsEngine *Diags = 0);
+                       DiagnosticsEngine *Diags = nullptr);
 
 inline int getLastArgIntValue(const llvm::opt::ArgList &Args,
                               llvm::opt::OptSpecifier Id, int Default,
@@ -125,7 +128,7 @@ inline int getLastArgIntValue(const llvm::opt::ArgList &Args,
 
 uint64_t getLastArgUInt64Value(const llvm::opt::ArgList &Args,
                                llvm::opt::OptSpecifier Id, uint64_t Default,
-                               DiagnosticsEngine *Diags = 0);
+                               DiagnosticsEngine *Diags = nullptr);
 
 inline uint64_t getLastArgUInt64Value(const llvm::opt::ArgList &Args,
                                       llvm::opt::OptSpecifier Id,

@@ -144,7 +144,7 @@ public:
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,
                       ArrayRef<FixItHint> FixItHints,
                       const SourceManager *SM,
-                      DiagOrStoredDiag D = (Diagnostic *)0);
+                      DiagOrStoredDiag D = (Diagnostic *)nullptr);
 
   void emitStoredDiagnostic(StoredDiagnostic &Diag);
 };
@@ -158,20 +158,19 @@ public:
     : DiagnosticRenderer(LangOpts, DiagOpts) {}
   
   virtual ~DiagnosticNoteRenderer();
-  
-  virtual void emitBasicNote(StringRef Message);
-    
-  virtual void emitIncludeLocation(SourceLocation Loc,
-                                   PresumedLoc PLoc,
-                                   const SourceManager &SM);
 
-  virtual void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+  void emitBasicNote(StringRef Message) override;
+
+  void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                           const SourceManager &SM) override;
+
+  void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                          StringRef ModuleName,
+                          const SourceManager &SM) override;
+
+  void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
                                   StringRef ModuleName,
-                                  const SourceManager &SM);
-
-  virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
-                                          StringRef ModuleName,
-                                          const SourceManager &SM);
+                                  const SourceManager &SM) override;
 
   virtual void emitNote(SourceLocation Loc, StringRef Message,
                         const SourceManager *SM) = 0;

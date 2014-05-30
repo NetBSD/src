@@ -20,10 +20,10 @@
 #include "clang/Edit/Commit.h"
 #include "clang/Edit/EditsReceiver.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
+#include <memory>
 
 using namespace clang;
 
@@ -62,10 +62,10 @@ class RewritesReceiver : public edit::EditsReceiver {
 public:
   RewritesReceiver(Rewriter &Rewrite) : Rewrite(Rewrite) { }
 
-  virtual void insert(SourceLocation loc, StringRef text) {
+  void insert(SourceLocation loc, StringRef text) override {
     Rewrite.InsertText(loc, text);
   }
-  virtual void replace(CharSourceRange range, StringRef text) {
+  void replace(CharSourceRange range, StringRef text) override {
     Rewrite.ReplaceText(range.getBegin(), Rewrite.getRangeSize(range), text);
   }
 };
@@ -87,7 +87,7 @@ bool FixItRewriter::WriteFixedFiles(
     int fd;
     std::string Filename = FixItOpts->RewriteFilename(Entry->getName(), fd);
     std::string Err;
-    OwningPtr<llvm::raw_fd_ostream> OS;
+    std::unique_ptr<llvm::raw_fd_ostream> OS;
     if (fd != -1) {
       OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
     } else {

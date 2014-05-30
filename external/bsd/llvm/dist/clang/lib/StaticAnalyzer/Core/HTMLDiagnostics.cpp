@@ -42,12 +42,12 @@ class HTMLDiagnostics : public PathDiagnosticConsumer {
 public:
   HTMLDiagnostics(const std::string& prefix, const Preprocessor &pp);
 
-  virtual ~HTMLDiagnostics() { FlushDiagnostics(NULL); }
+  virtual ~HTMLDiagnostics() { FlushDiagnostics(nullptr); }
 
-  virtual void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                                    FilesMade *filesMade);
+  void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
+                            FilesMade *filesMade) override;
 
-  virtual StringRef getName() const {
+  StringRef getName() const override {
     return "HTMLDiagnostics";
   }
 
@@ -307,7 +307,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
   // Create the html for the message.
 
-  const char *Kind = 0;
+  const char *Kind = nullptr;
   switch (P.getKind()) {
   case PathDiagnosticPiece::Call:
       llvm_unreachable("Calls should already be handled");

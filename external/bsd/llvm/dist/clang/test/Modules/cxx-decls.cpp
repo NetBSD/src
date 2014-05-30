@@ -3,6 +3,8 @@
 
 // expected-no-diagnostics
 
+void use_implicit_new() { operator new[](3); }
+
 @import dummy;
 @import cxx_decls.imported;
 
@@ -19,3 +21,8 @@ void test_friends(HasFriends s) {
   friend_1(s);
   friend_2(s);
 }
+
+static_assert(!__is_trivial(HasNontrivialDefaultConstructor), "");
+static_assert(!__has_trivial_constructor(HasNontrivialDefaultConstructor), "");
+
+void use_implicit_new_again() { operator new[](3); }

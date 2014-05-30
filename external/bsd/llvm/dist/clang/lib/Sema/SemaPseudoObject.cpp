@@ -31,6 +31,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -235,7 +236,10 @@ namespace {
     }
 
     /// Return true if assignments have a non-void result.
-    bool CanCaptureValueOfType(QualType ty) {
+    bool CanCaptureValue(Expr *exp) {
+      if (exp->isGLValue())
+        return true;
+      QualType ty = exp->getType();
       assert(!ty->isIncompleteType());
       assert(!ty->isDependentType());
 
@@ -264,7 +268,8 @@ namespace {
   public:
     ObjCPropertyOpBuilder(Sema &S, ObjCPropertyRefExpr *refExpr) :
       PseudoOpBuilder(S, refExpr->getLocation()), RefExpr(refExpr),
-      SyntacticRefExpr(0), InstanceReceiver(0), Getter(0), Setter(0) {
+      SyntacticRefExpr(nullptr), InstanceReceiver(nullptr), Getter(nullptr),
+      Setter(nullptr) {
     }
 
     ExprResult buildRValueOperation(Expr *op);
@@ -279,11 +284,12 @@ namespace {
     bool tryBuildGetOfReference(Expr *op, ExprResult &result);
     bool findSetter(bool warn=true);
     bool findGetter();
+    bool DiagnoseUnsupportedPropertyUse();
 
-    Expr *rebuildAndCaptureObject(Expr *syntacticBase);
-    ExprResult buildGet();
-    ExprResult buildSet(Expr *op, SourceLocation, bool);
-    ExprResult complete(Expr *SyntacticForm);
+    Expr *rebuildAndCaptureObject(Expr *syntacticBase) override;
+    ExprResult buildGet() override;
+    ExprResult buildSet(Expr *op, SourceLocation, bool) override;
+    ExprResult complete(Expr *SyntacticForm) override;
 
     bool isWeakProperty() const;
   };
@@ -303,21 +309,21 @@ namespace {
     ObjCSubscriptOpBuilder(Sema &S, ObjCSubscriptRefExpr *refExpr) :
       PseudoOpBuilder(S, refExpr->getSourceRange().getBegin()), 
       RefExpr(refExpr),
-    InstanceBase(0), InstanceKey(0), 
-    AtIndexGetter(0), AtIndexSetter(0) { }
-  
+      InstanceBase(nullptr), InstanceKey(nullptr),
+      AtIndexGetter(nullptr), AtIndexSetter(nullptr) {}
+
    ExprResult buildRValueOperation(Expr *op);
    ExprResult buildAssignmentOperation(Scope *Sc,
                                        SourceLocation opLoc,
                                        BinaryOperatorKind opcode,
                                        Expr *LHS, Expr *RHS);
-   Expr *rebuildAndCaptureObject(Expr *syntacticBase);
-   
+   Expr *rebuildAndCaptureObject(Expr *syntacticBase) override;
+
    bool findAtIndexGetter();
    bool findAtIndexSetter();
-  
-   ExprResult buildGet();
-   ExprResult buildSet(Expr *op, SourceLocation, bool);
+
+   ExprResult buildGet() override;
+   ExprResult buildSet(Expr *op, SourceLocation, bool) override;
  };
 
  class MSPropertyOpBuilder : public PseudoOpBuilder {
@@ -328,9 +334,9 @@ namespace {
      PseudoOpBuilder(S, refExpr->getSourceRange().getBegin()),
      RefExpr(refExpr) {}
 
-   Expr *rebuildAndCaptureObject(Expr *);
-   ExprResult buildGet();
-   ExprResult buildSet(Expr *op, SourceLocation, bool);
+   Expr *rebuildAndCaptureObject(Expr *) override;
+   ExprResult buildGet() override;
+   ExprResult buildSet(Expr *op, SourceLocation, bool) override;
  };
 }
 
@@ -388,7 +394,7 @@ ExprResult PseudoOpBuilder::buildRValueOperation(Expr *op) {
 
   ExprResult getExpr = buildGet();
   if (getExpr.isInvalid()) return ExprError();
-  addResultSemanticExpr(getExpr.take());
+  addResultSemanticExpr(getExpr.get());
 
   return complete(syntacticBase);
 }
@@ -421,7 +427,7 @@ PseudoOpBuilder::buildAssignmentOperation(Scope *Sc, SourceLocation opcLoc,
     BinaryOperatorKind nonCompound =
       BinaryOperator::getOpForCompoundAssignment(opcode);
     result = S.BuildBinOp(Sc, opcLoc, nonCompound,
-                          opLHS.take(), capturedRHS);
+                          opLHS.get(), capturedRHS);
     if (result.isInvalid()) return ExprError();
 
     syntactic =
@@ -436,9 +442,9 @@ PseudoOpBuilder::buildAssignmentOperation(Scope *Sc, SourceLocation opcLoc,
 
   // The result of the assignment, if not void, is the value set into
   // the l-value.
-  result = buildSet(result.take(), opcLoc, /*captureSetValueAsResult*/ true);
+  result = buildSet(result.get(), opcLoc, /*captureSetValueAsResult*/ true);
   if (result.isInvalid()) return ExprError();
-  addSemanticExpr(result.take());
+  addSemanticExpr(result.get());
 
   return complete(syntactic);
 }
@@ -461,8 +467,8 @@ PseudoOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
 
   // That's the postfix result.
   if (UnaryOperator::isPostfix(opcode) &&
-      (result.get()->isTypeDependent() || CanCaptureValueOfType(resultType))) {
-    result = capture(result.take());
+      (result.get()->isTypeDependent() || CanCaptureValue(result.get()))) {
+    result = capture(result.get());
     setResultToLastSemantic();
   }
 
@@ -472,17 +478,17 @@ PseudoOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
                                      GenericLoc);
 
   if (UnaryOperator::isIncrementOp(opcode)) {
-    result = S.BuildBinOp(Sc, opcLoc, BO_Add, result.take(), one);
+    result = S.BuildBinOp(Sc, opcLoc, BO_Add, result.get(), one);
   } else {
-    result = S.BuildBinOp(Sc, opcLoc, BO_Sub, result.take(), one);
+    result = S.BuildBinOp(Sc, opcLoc, BO_Sub, result.get(), one);
   }
   if (result.isInvalid()) return ExprError();
 
   // Store that back into the result.  The value stored is the result
   // of a prefix operation.
-  result = buildSet(result.take(), opcLoc, UnaryOperator::isPrefix(opcode));
+  result = buildSet(result.get(), opcLoc, UnaryOperator::isPrefix(opcode));
   if (result.isInvalid()) return ExprError();
-  addSemanticExpr(result.take());
+  addSemanticExpr(result.get());
 
   UnaryOperator *syntactic =
     new (S.Context) UnaryOperator(syntacticOp, opcode, resultType,
@@ -575,7 +581,7 @@ bool ObjCPropertyOpBuilder::findGetter() {
 
   ObjCPropertyDecl *prop = RefExpr->getExplicitProperty();
   Getter = LookupMethodInReceiverType(S, prop->getGetterName(), RefExpr);
-  return (Getter != 0);
+  return (Getter != nullptr);
 }
 
 /// Try to find the most accurate setter declaration for the property
@@ -638,9 +644,23 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
   return false;
 }
 
+bool ObjCPropertyOpBuilder::DiagnoseUnsupportedPropertyUse() {
+  if (S.getCurLexicalContext()->isObjCContainer() &&
+      S.getCurLexicalContext()->getDeclKind() != Decl::ObjCCategoryImpl &&
+      S.getCurLexicalContext()->getDeclKind() != Decl::ObjCImplementation) {
+    if (ObjCPropertyDecl *prop = RefExpr->getExplicitProperty()) {
+        S.Diag(RefExpr->getLocation(),
+               diag::err_property_function_in_objc_container);
+        S.Diag(prop->getLocation(), diag::note_property_declare);
+        return true;
+    }
+  }
+  return false;
+}
+
 /// Capture the base object of an Objective-C property expression.
 Expr *ObjCPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
-  assert(InstanceReceiver == 0);
+  assert(InstanceReceiver == nullptr);
 
   // If we have a base, capture it in an OVE and rebuild the syntactic
   // form to use the OVE as its base.
@@ -661,6 +681,9 @@ Expr *ObjCPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
 /// Load from an Objective-C property reference.
 ExprResult ObjCPropertyOpBuilder::buildGet() {
   findGetter();
+  if (!Getter && DiagnoseUnsupportedPropertyUse())
+      return ExprError();
+
   assert(Getter);
 
   if (SyntacticRefExpr)
@@ -678,7 +701,8 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
 
   // Build a message-send.
   ExprResult msg;
-  if (Getter->isInstanceMethod() || RefExpr->isObjectReceiver()) {
+  if ((Getter->isInstanceMethod() && !RefExpr->isClassReceiver()) ||
+      RefExpr->isObjectReceiver()) {
     assert(InstanceReceiver || RefExpr->isSuperReceiver());
     msg = S.BuildInstanceMessageImplicit(InstanceReceiver, receiverType,
                                          GenericLoc, Getter->getSelector(),
@@ -698,6 +722,8 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
 ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
                                            bool captureSetValueAsResult) {
   bool hasSetter = findSetter(false);
+  if (!hasSetter && DiagnoseUnsupportedPropertyUse())
+      return ExprError();
   assert(hasSetter); (void) hasSetter;
 
   if (SyntacticRefExpr)
@@ -727,7 +753,7 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
                                      Sema::AA_Assigning))
         return ExprError();
 
-      op = opResult.take();
+      op = opResult.get();
       assert(op && "successful assignment left argument invalid?");
     }
     else if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(op)) {
@@ -747,7 +773,8 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
 
   // Build a message-send.
   ExprResult msg;
-  if (Setter->isInstanceMethod() || RefExpr->isObjectReceiver()) {
+  if ((Setter->isInstanceMethod() && !RefExpr->isClassReceiver()) ||
+      RefExpr->isObjectReceiver()) {
     msg = S.BuildInstanceMessageImplicit(InstanceReceiver, receiverType,
                                          GenericLoc, SetterSelector, Setter,
                                          MultiExprArg(args, 1));
@@ -762,7 +789,7 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
     ObjCMessageExpr *msgExpr =
       cast<ObjCMessageExpr>(msg.get()->IgnoreImplicit());
     Expr *arg = msgExpr->getArg(0);
-    if (CanCaptureValueOfType(arg->getType()))
+    if (CanCaptureValue(arg))
       msgExpr->setArg(0, captureValueAsResult(arg));
   }
 
@@ -834,7 +861,7 @@ ObjCPropertyOpBuilder::buildAssignmentOperation(Scope *Sc,
     ExprResult result;
     if (tryBuildGetOfReference(LHS, result)) {
       if (result.isInvalid()) return ExprError();
-      return S.BuildBinOp(Sc, opcLoc, opcode, result.take(), RHS);
+      return S.BuildBinOp(Sc, opcLoc, opcode, result.get(), RHS);
     }
 
     // Otherwise, it's an error.
@@ -878,7 +905,7 @@ ObjCPropertyOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
     ExprResult result;
     if (tryBuildGetOfReference(op, result)) {
       if (result.isInvalid()) return ExprError();
-      return S.BuildUnaryOp(Sc, opcLoc, opcode, result.take());
+      return S.BuildUnaryOp(Sc, opcLoc, opcode, result.get());
     }
 
     // Otherwise, it's an error.
@@ -961,8 +988,8 @@ ObjCSubscriptOpBuilder::buildAssignmentOperation(Scope *Sc,
 
 /// Capture the base object of an Objective-C Index'ed expression.
 Expr *ObjCSubscriptOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
-  assert(InstanceBase == 0);
-  
+  assert(InstanceBase == nullptr);
+
   // Capture base expression in an OVE and rebuild the syntactic
   // form to use the OVE as its base expression.
   InstanceBase = capture(RefExpr->getBaseExpr());
@@ -1128,7 +1155,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
     AtIndexGetter = ObjCMethodDecl::Create(S.Context, SourceLocation(), 
                            SourceLocation(), AtIndexGetterSelector,
                            S.Context.getObjCIdType() /*ReturnType*/,
-                           0 /*TypeSourceInfo */,
+                           nullptr /*TypeSourceInfo */,
                            S.Context.getTranslationUnitDecl(),
                            true /*Instance*/, false/*isVariadic*/,
                            /*isPropertyAccessor=*/false,
@@ -1141,9 +1168,9 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
                                                          : &S.Context.Idents.get("key"),
                                                 arrayRef ? S.Context.UnsignedLongTy
                                                          : S.Context.getObjCIdType(),
-                                                /*TInfo=*/0,
+                                                /*TInfo=*/nullptr,
                                                 SC_None,
-                                                0);
+                                                nullptr);
     AtIndexGetter->setMethodParams(S.Context, Argument, None);
   }
 
@@ -1237,7 +1264,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                          BaseT->isObjCQualifiedIdType());
 
   if (!AtIndexSetter && S.getLangOpts().DebuggerObjCLiteral) {
-    TypeSourceInfo *ReturnTInfo = 0;
+    TypeSourceInfo *ReturnTInfo = nullptr;
     QualType ReturnType = S.Context.VoidTy;
     AtIndexSetter = ObjCMethodDecl::Create(
         S.Context, SourceLocation(), SourceLocation(), AtIndexSetterSelector,
@@ -1251,9 +1278,9 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                                                 SourceLocation(), SourceLocation(),
                                                 &S.Context.Idents.get("object"),
                                                 S.Context.getObjCIdType(),
-                                                /*TInfo=*/0,
+                                                /*TInfo=*/nullptr,
                                                 SC_None,
-                                                0);
+                                                nullptr);
     Params.push_back(object);
     ParmVarDecl *key = ParmVarDecl::Create(S.Context, AtIndexSetter,
                                                 SourceLocation(), SourceLocation(),
@@ -1261,9 +1288,9 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
                                                          :  &S.Context.Idents.get("key"),
                                                 arrayRef ? S.Context.UnsignedLongTy
                                                          : S.Context.getObjCIdType(),
-                                                /*TInfo=*/0,
+                                                /*TInfo=*/nullptr,
                                                 SC_None,
-                                                0);
+                                                nullptr);
     Params.push_back(key);
     AtIndexSetter->setMethodParams(S.Context, Params, None);
   }
@@ -1368,7 +1395,7 @@ ExprResult ObjCSubscriptOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
     ObjCMessageExpr *msgExpr =
       cast<ObjCMessageExpr>(msg.get()->IgnoreImplicit());
     Expr *arg = msgExpr->getArg(0);
-    if (CanCaptureValueOfType(arg->getType()))
+    if (CanCaptureValue(arg))
       msgExpr->setArg(0, captureValueAsResult(arg));
   }
   
@@ -1403,7 +1430,7 @@ ExprResult MSPropertyOpBuilder::buildGet() {
   ExprResult GetterExpr = S.ActOnMemberAccessExpr(
     S.getCurScope(), RefExpr->getBaseExpr(), SourceLocation(),
     RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
-    GetterName, 0, true);
+    GetterName, nullptr, true);
   if (GetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
            diag::error_cannot_find_suitable_accessor) << 0 /* getter */
@@ -1412,7 +1439,7 @@ ExprResult MSPropertyOpBuilder::buildGet() {
   }
 
   MultiExprArg ArgExprs;
-  return S.ActOnCallExpr(S.getCurScope(), GetterExpr.take(),
+  return S.ActOnCallExpr(S.getCurScope(), GetterExpr.get(),
                          RefExpr->getSourceRange().getBegin(), ArgExprs,
                          RefExpr->getSourceRange().getEnd());
 }
@@ -1433,7 +1460,7 @@ ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
   ExprResult SetterExpr = S.ActOnMemberAccessExpr(
     S.getCurScope(), RefExpr->getBaseExpr(), SourceLocation(),
     RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
-    SetterName, 0, true);
+    SetterName, nullptr, true);
   if (SetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
            diag::error_cannot_find_suitable_accessor) << 1 /* setter */
@@ -1443,7 +1470,7 @@ ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
 
   SmallVector<Expr*, 1> ArgExprs;
   ArgExprs.push_back(op);
-  return S.ActOnCallExpr(S.getCurScope(), SetterExpr.take(),
+  return S.ActOnCallExpr(S.getCurScope(), SetterExpr.get(),
                          RefExpr->getSourceRange().getBegin(), ArgExprs,
                          op->getSourceRange().getEnd());
 }
@@ -1510,7 +1537,7 @@ ExprResult Sema::checkPseudoObjectAssignment(Scope *S, SourceLocation opcLoc,
   if (RHS->getType()->isNonOverloadPlaceholderType()) {
     ExprResult result = CheckPlaceholderExpr(RHS);
     if (result.isInvalid()) return ExprError();
-    RHS = result.take();
+    RHS = result.get();
   }
 
   Expr *opaqueRef = LHS->IgnoreParens();

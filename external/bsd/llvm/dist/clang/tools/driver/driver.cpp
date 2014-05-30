@@ -22,10 +22,10 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Config/config.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
@@ -46,6 +46,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include <memory>
 using namespace clang;
 using namespace clang::driver;
 using namespace llvm::opt;
@@ -227,8 +228,11 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     { "++",        "--driver-mode=g++" },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
+#ifdef LLVM_ON_WIN32
+  // Transform to lowercase for case insensitive file systems.
   std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(),
                  toLowercase);
+#endif
   StringRef ProgNameRef(ProgName);
   StringRef Prefix;
 
@@ -281,7 +285,7 @@ namespace {
   class StringSetSaver : public llvm::cl::StringSaver {
   public:
     StringSetSaver(std::set<std::string> &Storage) : Storage(Storage) {}
-    const char *SaveString(const char *Str) LLVM_OVERRIDE {
+    const char *SaveString(const char *Str) override {
       return SaveStringInSet(Storage, Str);
     }
   private:
@@ -341,11 +345,10 @@ int main(int argc_, const char **argv_) {
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
   {
-    OwningPtr<OptTable> Opts(createDriverOptTable());
+    std::unique_ptr<OptTable> Opts(createDriverOptTable());
     unsigned MissingArgIndex, MissingArgCount;
-    OwningPtr<InputArgList> Args(Opts->ParseArgs(argv.begin()+1, argv.end(),
-                                                 MissingArgIndex,
-                                                 MissingArgCount));
+    std::unique_ptr<InputArgList> Args(Opts->ParseArgs(
+        argv.begin() + 1, argv.end(), MissingArgIndex, MissingArgCount));
     // We ignore MissingArgCount and the return value of ParseDiagnosticArgs.
     // Any errors that would be diagnosed here will also be diagnosed later,
     // when the DiagnosticsEngine actually exists.
@@ -368,7 +371,7 @@ int main(int argc_, const char **argv_) {
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
   ProcessWarningOptions(Diags, *DiagOpts, /*ReportDiags=*/false);
 
-  Driver TheDriver(Path, llvm::sys::getDefaultTargetTriple(), "a.out", Diags);
+  Driver TheDriver(Path, llvm::sys::getDefaultTargetTriple(), Diags);
 
   // Attempt to find the original path used to invoke the driver, to determine
   // the installed path. We do this manually, because we want to support that
@@ -408,7 +411,7 @@ int main(int argc_, const char **argv_) {
   if (TheDriver.CCLogDiagnostics)
     TheDriver.CCLogDiagnosticsFilename = ::getenv("CC_LOG_DIAGNOSTICS_FILE");
 
-  OwningPtr<Compilation> C(TheDriver.BuildCompilation(argv));
+  std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(argv));
   int Res = 0;
   SmallVector<std::pair<int, const Command *>, 4> FailingCommands;
   if (C.get())
@@ -443,7 +446,7 @@ int main(int argc_, const char **argv_) {
   
   llvm::llvm_shutdown();
 
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
   // Exit status should not be negative on Win32, unless abnormal termination.
   // Once abnormal termiation was caught, negative status should not be
   // propagated.

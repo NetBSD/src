@@ -83,7 +83,17 @@ def mrelax_all : Flag<["-"], "mrelax-all">,
 def mno_exec_stack : Flag<["-"], "mnoexecstack">,
     HelpText<"Mark the file as not needing an executable stack">;
 
+def compress_debug_sections : Flag<["-"], "compress-debug-sections">,
+    HelpText<"Compress DWARF debug sections using zlib">;
+
 def g : Flag<["-"], "g">, HelpText<"Generate source level debug information">;
+
+def gdwarf_2 : Flag<["-"], "gdwarf-2">,
+  HelpText<"Generate source level debug information with dwarf version 2">;
+def gdwarf_3 : Flag<["-"], "gdwarf-3">,
+  HelpText<"Generate source level debug information with dwarf version 3">;
+def gdwarf_4 : Flag<["-"], "gdwarf-4">,
+  HelpText<"Generate source level debug information with dwarf version 4">;
 
 def fdebug_compilation_dir : Separate<["-"], "fdebug-compilation-dir">,
   HelpText<"The compilation directory to embed in the debug info.">;

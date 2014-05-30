@@ -190,6 +190,8 @@ def mlimit_float_precision : Separate<["-"], "mlimit-float-precision">,
   HelpText<"Limit float precision to the given value">;
 def mno_exec_stack : Flag<["-"], "mnoexecstack">,
   HelpText<"Mark the file as not needing an executable stack">;
+def compress_debug_sections : Flag<["-"], "compress-debug-sections">,
+    HelpText<"Compress DWARF debug sections using zlib">;
 def split_stacks : Flag<["-"], "split-stacks">,
   HelpText<"Try to use a split stack if possible.">;
 def mno_zero_initialized_in_bss : Flag<["-"], "mno-zero-initialized-in-bss">,
@@ -223,6 +225,8 @@ def dependent_lib : Joined<["--"], "dependent-lib=">,
 
 def sys_header_deps : Flag<["-"], "sys-header-deps">,
   HelpText<"Include system headers in dependency output">;
+def module_file_deps : Flag<["-"], "module-file-deps">,
+  HelpText<"Include module files in dependency output">;
 def header_include_file : Separate<["-"], "header-include-file">,
   HelpText<"Filename (or -) to write header include output to">;
 def show_includes : Flag<["--"], "show-includes">,
@@ -310,6 +314,8 @@ def ast_dump_lookups : Flag<["-"], "ast-dump-lookups">,
   HelpText<"Include name lookup table dumps in AST dumps">;
 def fno_modules_global_index : Flag<["-"], "fno-modules-global-index">,
   HelpText<"Do not automatically generate or update the global module index">;
+def fno_modules_error_recovery : Flag<["-"], "fno-modules-error-recovery">,
+  HelpText<"Do not automatically import modules for error recovery">;
 
 let Group = Action_Group in {
 
@@ -506,14 +512,6 @@ def internal_externc_isystem : JoinedOrSeparate<["-"], "internal-externc-isystem
            "implicit extern \"C\" semantics; these are assumed to not be "
            "user-provided and are used to model system and standard headers' "
            "paths.">;
-def isystem_prefix : JoinedOrSeparate<["-"], "isystem-prefix">,
-  MetaVarName<"<prefix>">,
-  HelpText<"Treat all #include paths starting with <prefix> as including a "
-           "system header.">;
-def ino_system_prefix : JoinedOrSeparate<["-"], "ino-system-prefix">,
-  MetaVarName<"<prefix>">,
-  HelpText<"Treat all #include paths starting with <prefix> as not including a "
-           "system header.">;
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Options
