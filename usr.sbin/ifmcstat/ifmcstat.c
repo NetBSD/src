@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.12 2013/10/19 17:16:25 christos Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.13 2014/05/30 01:44:21 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,8 +65,8 @@
 kvm_t	*kvmd;
 
 struct	nlist nl[] = {
-#define	N_IFNET	0
-	{ "_ifnet", 0, 0, 0, 0 },
+#define	N_IFNET_LIST	0
+	{ "_ifnet_list", 0, 0, 0, 0 },
 #if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #define N_IN6_MK 1
 	{ "_in6_mk", 0, 0, 0, 0 },
@@ -149,11 +149,11 @@ int main()
 		perror("kvm_nlist");
 		exit(1);
 	}
-	if (nl[N_IFNET].n_value == 0) {
-		printf("symbol %s not found\n", nl[N_IFNET].n_name);
+	if (nl[N_IFNET_LIST].n_value == 0) {
+		printf("symbol %s not found\n", nl[N_IFNET_LIST].n_name);
 		exit(1);
 	}
-	KREAD(nl[N_IFNET].n_value, &ifp, struct ifnet *);
+	KREAD(nl[N_IFNET_LIST].n_value, &ifp, struct ifnet *);
 	while (ifp) {
 		KREAD(ifp, &ifnet, struct ifnet);
 		printf("%s:\n", if_indextoname(ifnet.if_index, ifnam));
