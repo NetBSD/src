@@ -18,6 +18,7 @@
 
 namespace clang {
   class ASTContext;
+  class CXXMethodDecl;
   class CXXRecordDecl;
   class Decl;
   class DeclGroupRef;
@@ -55,6 +56,10 @@ public:
   ///
   /// \returns true to continue parsing, or false to abort parsing.
   virtual bool HandleTopLevelDecl(DeclGroupRef D);
+
+  /// \brief This callback is invoked each time an inline method definition is
+  /// completed.
+  virtual void HandleInlineMethodDefinition(CXXMethodDecl *D) {}
 
   /// HandleInterestingDecl - Handle the specified interesting declaration. This
   /// is called by the AST reader when deserializing things that might interest
@@ -135,12 +140,12 @@ public:
   /// \brief If the consumer is interested in entities getting modified after
   /// their initial creation, it should return a pointer to
   /// an ASTMutationListener here.
-  virtual ASTMutationListener *GetASTMutationListener() { return 0; }
+  virtual ASTMutationListener *GetASTMutationListener() { return nullptr; }
 
   /// \brief If the consumer is interested in entities being deserialized from
   /// AST files, it should return a pointer to a ASTDeserializationListener here
   virtual ASTDeserializationListener *GetASTDeserializationListener() {
-    return 0;
+    return nullptr;
   }
 
   /// PrintStats - If desired, print any statistics.

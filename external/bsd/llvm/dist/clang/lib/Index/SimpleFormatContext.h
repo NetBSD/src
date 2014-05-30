@@ -51,8 +51,8 @@ public:
         llvm::MemoryBuffer::getMemBuffer(Content);
     const FileEntry *Entry =
         Files.getVirtualFile(Name, Source->getBufferSize(), 0);
-    Sources.overrideFileContents(Entry, Source, true);
-    assert(Entry != NULL);
+    Sources.overrideFileContents(Entry, Source);
+    assert(Entry != nullptr);
     return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
   }
 

@@ -29,8 +29,8 @@ class DereferenceChecker
     : public Checker< check::Location,
                       check::Bind,
                       EventDispatcher<ImplicitNullDerefEvent> > {
-  mutable OwningPtr<BuiltinBug> BT_null;
-  mutable OwningPtr<BuiltinBug> BT_undef;
+  mutable std::unique_ptr<BuiltinBug> BT_null;
+  mutable std::unique_ptr<BuiltinBug> BT_undef;
 
   void reportBug(ProgramStateRef State, const Stmt *S, CheckerContext &C,
                  bool IsBind = false) const;
@@ -201,7 +201,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
   ProgramStateRef state = C.getState();
 
   ProgramStateRef notNullState, nullState;
-  llvm::tie(notNullState, nullState) = state->assume(location);
+  std::tie(notNullState, nullState) = state->assume(location);
 
   // The explicit NULL case.
   if (nullState) {
@@ -240,8 +240,7 @@ void DereferenceChecker::checkBind(SVal L, SVal V, const Stmt *S,
   ProgramStateRef State = C.getState();
 
   ProgramStateRef StNonNull, StNull;
-  llvm::tie(StNonNull, StNull) =
-      State->assume(V.castAs<DefinedOrUnknownSVal>());
+  std::tie(StNonNull, StNull) = State->assume(V.castAs<DefinedOrUnknownSVal>());
 
   if (StNull) {
     if (!StNonNull) {
