@@ -445,3 +445,27 @@ void cpuid() {
 // CHECK-LABEL: define void @cpuid
 // CHECK: call void asm sideeffect inteldialect "cpuid", "~{eax},~{ebx},~{ecx},~{edx},~{dirflag},~{fpsr},~{flags}"()
 }
+
+typedef struct {
+  int a;
+  int b;
+} A;
+
+void t39() {
+  __asm mov eax, [eax].A.b
+  __asm mov eax, [eax] A.b
+  __asm mov eax, fs:[0] A.b
+  // CHECK-LABEL: define void @t39
+  // CHECK: call void asm sideeffect inteldialect "mov eax, [eax].4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+  // CHECK: call void asm sideeffect inteldialect "mov eax, [eax] .4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+  // CHECK: call void asm sideeffect inteldialect "mov eax, fs:[$$0] .4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+}
+
+void t40(float a) {
+  int i;
+  __asm fld a
+  __asm fistp i
+  // CHECK-LABEL: define void @t40
+  // CHECK: call void asm sideeffect inteldialect "fld dword ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(float* {{.*}})
+  // CHECK: call void asm sideeffect inteldialect "fistp dword ptr $0", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* {{.*}})
+}

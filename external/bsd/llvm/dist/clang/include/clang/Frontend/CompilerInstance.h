@@ -18,10 +18,10 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -91,19 +91,22 @@ class CompilerInstance : public ModuleLoader {
   IntrusiveRefCntPtr<ASTContext> Context;
 
   /// The AST consumer.
-  OwningPtr<ASTConsumer> Consumer;
+  std::unique_ptr<ASTConsumer> Consumer;
 
   /// The code completion consumer.
-  OwningPtr<CodeCompleteConsumer> CompletionConsumer;
+  std::unique_ptr<CodeCompleteConsumer> CompletionConsumer;
 
   /// \brief The semantic analysis object.
-  OwningPtr<Sema> TheSema;
+  std::unique_ptr<Sema> TheSema;
 
   /// \brief The frontend timer
-  OwningPtr<llvm::Timer> FrontendTimer;
+  std::unique_ptr<llvm::Timer> FrontendTimer;
 
   /// \brief The ASTReader, if one exists.
   IntrusiveRefCntPtr<ASTReader> ModuleManager;
+
+  /// \brief The dependency file generator.
+  std::unique_ptr<DependencyFileGenerator> TheDependencyFileGenerator;
 
   /// \brief The set of top-level modules that has already been loaded,
   /// along with the module map
@@ -120,6 +123,9 @@ class CompilerInstance : public ModuleLoader {
   /// \brief Whether we should (re)build the global module index once we
   /// have finished with this translation unit.
   bool BuildGlobalModuleIndex;
+
+  /// \brief We have a full global module index, with all modules.
+  bool HaveFullGlobalModuleIndex;
 
   /// \brief One or more modules failed to build.
   bool ModuleBuildFailed;
@@ -145,7 +151,7 @@ class CompilerInstance : public ModuleLoader {
   CompilerInstance(const CompilerInstance &) LLVM_DELETED_FUNCTION;
   void operator=(const CompilerInstance &) LLVM_DELETED_FUNCTION;
 public:
-  CompilerInstance();
+  explicit CompilerInstance(bool BuildingModule = false);
   ~CompilerInstance();
 
   /// @name High-Level Operations
@@ -187,7 +193,7 @@ public:
   /// @name Compiler Invocation and Options
   /// {
 
-  bool hasInvocation() const { return Invocation != 0; }
+  bool hasInvocation() const { return Invocation != nullptr; }
 
   CompilerInvocation &getInvocation() {
     assert(Invocation && "Compiler instance has no invocation!");
@@ -285,7 +291,7 @@ public:
   /// @name Diagnostics Engine
   /// {
 
-  bool hasDiagnostics() const { return Diagnostics != 0; }
+  bool hasDiagnostics() const { return Diagnostics != nullptr; }
 
   /// Get the current diagnostics engine.
   DiagnosticsEngine &getDiagnostics() const {
@@ -306,7 +312,7 @@ public:
   /// @name Target Info
   /// {
 
-  bool hasTarget() const { return Target != 0; }
+  bool hasTarget() const { return Target != nullptr; }
 
   TargetInfo &getTarget() const {
     assert(Target && "Compiler instance has no target!");
@@ -320,7 +326,7 @@ public:
   /// @name Virtual File System
   /// {
 
-  bool hasVirtualFileSystem() const { return VirtualFileSystem != 0; }
+  bool hasVirtualFileSystem() const { return VirtualFileSystem != nullptr; }
 
   vfs::FileSystem &getVirtualFileSystem() const {
     assert(hasVirtualFileSystem() &&
@@ -340,7 +346,7 @@ public:
   /// @name File Manager
   /// {
 
-  bool hasFileManager() const { return FileMgr != 0; }
+  bool hasFileManager() const { return FileMgr != nullptr; }
 
   /// Return the current file manager to the caller.
   FileManager &getFileManager() const {
@@ -360,7 +366,7 @@ public:
   /// @name Source Manager
   /// {
 
-  bool hasSourceManager() const { return SourceMgr != 0; }
+  bool hasSourceManager() const { return SourceMgr != nullptr; }
 
   /// Return the current source manager.
   SourceManager &getSourceManager() const {
@@ -380,7 +386,7 @@ public:
   /// @name Preprocessor
   /// {
 
-  bool hasPreprocessor() const { return PP != 0; }
+  bool hasPreprocessor() const { return PP != nullptr; }
 
   /// Return the current preprocessor.
   Preprocessor &getPreprocessor() const {
@@ -400,7 +406,7 @@ public:
   /// @name ASTContext
   /// {
 
-  bool hasASTContext() const { return Context != 0; }
+  bool hasASTContext() const { return Context != nullptr; }
 
   ASTContext &getASTContext() const {
     assert(Context && "Compiler instance has no AST context!");
@@ -423,7 +429,7 @@ public:
   /// @name ASTConsumer
   /// {
 
-  bool hasASTConsumer() const { return Consumer.isValid(); }
+  bool hasASTConsumer() const { return (bool)Consumer; }
 
   ASTConsumer &getASTConsumer() const {
     assert(Consumer && "Compiler instance has no AST consumer!");
@@ -432,7 +438,7 @@ public:
 
   /// takeASTConsumer - Remove the current AST consumer and give ownership to
   /// the caller.
-  ASTConsumer *takeASTConsumer() { return Consumer.take(); }
+  ASTConsumer *takeASTConsumer() { return Consumer.release(); }
 
   /// setASTConsumer - Replace the current AST consumer; the compiler instance
   /// takes ownership of \p Value.
@@ -441,15 +447,16 @@ public:
   /// }
   /// @name Semantic analysis
   /// {
-  bool hasSema() const { return TheSema.isValid(); }
-  
+  bool hasSema() const { return (bool)TheSema; }
+
   Sema &getSema() const { 
     assert(TheSema && "Compiler instance has no Sema object!");
     return *TheSema;
   }
-  
-  Sema *takeSema() { return TheSema.take(); }
-  
+
+  Sema *takeSema() { return TheSema.release(); }
+  void resetAndLeakSema() { BuryPointer(TheSema.release()); }
+
   /// }
   /// @name Module Management
   /// {
@@ -461,9 +468,7 @@ public:
   /// @name Code Completion
   /// {
 
-  bool hasCodeCompletionConsumer() const {
-    return CompletionConsumer.isValid();
-  }
+  bool hasCodeCompletionConsumer() const { return (bool)CompletionConsumer; }
 
   CodeCompleteConsumer &getCodeCompletionConsumer() const {
     assert(CompletionConsumer &&
@@ -474,7 +479,7 @@ public:
   /// takeCodeCompletionConsumer - Remove the current code completion consumer
   /// and give ownership to the caller.
   CodeCompleteConsumer *takeCodeCompletionConsumer() {
-    return CompletionConsumer.take();
+    return CompletionConsumer.release();
   }
 
   /// setCodeCompletionConsumer - Replace the current code completion consumer;
@@ -485,7 +490,7 @@ public:
   /// @name Frontend timer
   /// {
 
-  bool hasFrontendTimer() const { return FrontendTimer.isValid(); }
+  bool hasFrontendTimer() const { return (bool)FrontendTimer; }
 
   llvm::Timer &getFrontendTimer() const {
     assert(FrontendTimer && "Compiler instance has no frontend timer!");
@@ -523,7 +528,7 @@ public:
   ///
   /// \param ShouldOwnClient If Client is non-NULL, specifies whether 
   /// the diagnostic object should take ownership of the client.
-  void createDiagnostics(DiagnosticConsumer *Client = 0,
+  void createDiagnostics(DiagnosticConsumer *Client = nullptr,
                          bool ShouldOwnClient = true);
 
   /// Create a DiagnosticsEngine object with a the TextDiagnosticPrinter.
@@ -546,9 +551,9 @@ public:
   /// \return The new object on success, or null on failure.
   static IntrusiveRefCntPtr<DiagnosticsEngine>
   createDiagnostics(DiagnosticOptions *Opts,
-                    DiagnosticConsumer *Client = 0,
+                    DiagnosticConsumer *Client = nullptr,
                     bool ShouldOwnClient = true,
-                    const CodeGenOptions *CodeGenOpts = 0);
+                    const CodeGenOptions *CodeGenOpts = nullptr);
 
   /// Create the file manager and replace any existing one with it.
   void createFileManager();
@@ -558,28 +563,26 @@ public:
 
   /// Create the preprocessor, using the invocation, file, and source managers,
   /// and replace any existing one with it.
-  void createPreprocessor();
+  void createPreprocessor(TranslationUnitKind TUKind);
 
   /// Create the AST context.
   void createASTContext();
 
   /// Create an external AST source to read a PCH file and attach it to the AST
   /// context.
-  void createPCHExternalASTSource(StringRef Path,
-                                  bool DisablePCHValidation,
+  void createPCHExternalASTSource(StringRef Path, bool DisablePCHValidation,
                                   bool AllowPCHWithCompilerErrors,
-                                  void *DeserializationListener);
+                                  void *DeserializationListener,
+                                  bool OwnDeserializationListener);
 
   /// Create an external AST source to read a PCH file.
   ///
   /// \return - The new object on success, or null on failure.
-  static ExternalASTSource *
-  createPCHExternalASTSource(StringRef Path, const std::string &Sysroot,
-                             bool DisablePCHValidation,
-                             bool AllowPCHWithCompilerErrors,
-                             Preprocessor &PP, ASTContext &Context,
-                             void *DeserializationListener, bool Preamble,
-                             bool UseGlobalModuleIndex);
+  static ExternalASTSource *createPCHExternalASTSource(
+      StringRef Path, const std::string &Sysroot, bool DisablePCHValidation,
+      bool AllowPCHWithCompilerErrors, Preprocessor &PP, ASTContext &Context,
+      void *DeserializationListener, bool OwnDeserializationListener,
+      bool Preamble, bool UseGlobalModuleIndex);
 
   /// Create a code completion consumer using the invocation; note that this
   /// will cause the source manager to truncate the input source file at the
@@ -681,21 +684,24 @@ public:
                 const FrontendOptions &Opts);
 
   /// }
-  
-  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc,
-                                      ModuleIdPath Path,
-                                      Module::NameVisibilityKind Visibility,
-                                      bool IsInclusionDirective);
 
-  virtual void makeModuleVisible(Module *Mod,
-                                 Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc,
-                                 bool Complain);
+  // Create module manager.
+  void createModuleManager();
+
+  ModuleLoadResult loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
+                              Module::NameVisibilityKind Visibility,
+                              bool IsInclusionDirective) override;
+
+  void makeModuleVisible(Module *Mod, Module::NameVisibilityKind Visibility,
+                         SourceLocation ImportLoc, bool Complain) override;
 
   bool hadModuleLoaderFatalFailure() const {
     return ModuleLoader::HadFatalFailure;
   }
 
+  GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override;
+
+  bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override;
 };
 
 } // end namespace clang
