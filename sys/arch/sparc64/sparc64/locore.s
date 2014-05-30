@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.358 2014/05/05 19:04:47 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.359 2014/05/30 21:55:32 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4402,12 +4402,12 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	wrpr	%g0, 0, %tl
 #endif
 
-#if 1
-!	set	_C_LABEL(pmapdebug), %o1
-!	ld	[%o1], %o1
-!	sethi	%hi(0x40000), %o2
-!	btst	%o2, %o1
-!	bz	0f
+#ifdef DEBUG
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
 
 	LDPTR	[%l7 + CI_SPINUP], %o1
 	set	1f, %o0		! Debug printf
