@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.254 2014/02/01 13:29:45 skrll Exp $
+$NetBSD: UPDATING,v 1.255 2014/05/30 18:33:30 joerg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20140530:
+	ARM eABI switched to DWARF based exception handling. This requires
+	rebuilding all C++ code. It is strongly advised to do a clean build.
 
 20140131:
 	The new compiler_rt/libc integration moved a few things. It is strongly
