@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.104 2014/05/29 23:02:48 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.105 2014/05/30 02:17:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -173,9 +173,8 @@ struct ip_moptions {
 #define	IP_RAWOUTPUT		0x0002		/* raw ip header exists */
 #define	IP_RETURNMTU		0x0004		/* pass back mtu on EMSGSIZE */
 #define	IP_NOIPNEWID		0x0008		/* don't fill in ip_id */
-
-CTASSERT(SO_DONTROUTE ==	0x0010);
-CTASSERT(SO_BROADCAST ==	0x0020);
+__CTASSERT(SO_DONTROUTE ==	0x0010);
+__CTASSERT(SO_BROADCAST ==	0x0020);
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
