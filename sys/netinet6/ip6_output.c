@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.156 2014/05/17 21:26:20 rmind Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.157 2014/05/30 01:39:03 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.156 2014/05/17 21:26:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.157 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -181,7 +181,6 @@ ip6_output(
 	int needipsec = 0;
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
-	int s;
 #endif
 
 	memset(&ip6route, 0, sizeof(ip6route));
@@ -241,20 +240,22 @@ ip6_output(
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
 
 #ifdef IPSEC
-	/* Check the security policy (SP) for the packet */
-    
-	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
-	if (error != 0) {
-		/*
-		 * Hack: -EINVAL is used to signal that a packet
-		 * should be silently discarded.  This is typically
-		 * because we asked key management for an SA and
-		 * it was delayed (e.g. kicked up to IKE).
-		 */
-	if (error == -EINVAL) 
-		error = 0;
-	goto freehdrs;
-    }
+	if (ipsec_used) {
+		/* Check the security policy (SP) for the packet */
+	    
+		sp = ipsec6_check_policy(m, so, flags, &needipsec, &error);
+		if (error != 0) {
+			/*
+			 * Hack: -EINVAL is used to signal that a packet
+			 * should be silently discarded.  This is typically
+			 * because we asked key management for an SA and
+			 * it was delayed (e.g. kicked up to IKE).
+			 */
+			if (error == -EINVAL) 
+				error = 0;
+			goto freehdrs;
+		}
+	}
 #endif /* IPSEC */
 
 
@@ -464,8 +465,8 @@ ip6_output(
 
 #ifdef IPSEC
 	if (needipsec) {
-		s = splsoftnet();
-		error = ipsec6_process_packet(m,sp->req);
+		int s = splsoftnet();
+		error = ipsec6_process_packet(m, sp->req);
 
 		/*
 		 * Preserve KAME behaviour: ENOENT can be returned
@@ -479,8 +480,6 @@ ip6_output(
 		goto done;
 	}
 #endif /* IPSEC */    
-
-
 
 	/* adjust pointer */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -1652,9 +1651,13 @@ else 					\
 
 #if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
-			error = ipsec6_set_policy(in6p, optname,
-			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
-			break;
+			if (ipsec_enabled) {
+				error = ipsec6_set_policy(in6p, optname,
+				    sopt->sopt_data, sopt->sopt_size,
+				    kauth_cred_get());
+				break;
+			}
+			/*FALLTHROUGH*/
 #endif /* IPSEC */
 
 		default:
@@ -1841,17 +1844,20 @@ else 					\
 
 #if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
-		    {
-			struct mbuf *m = NULL;
+			if (ipsec_used) {
+				struct mbuf *m = NULL;
 
-			/* XXX this will return EINVAL as sopt is empty */
-			error = ipsec6_get_policy(in6p, sopt->sopt_data,
-			    sopt->sopt_size, &m);
-			if (!error)
-				error = sockopt_setmbuf(sopt, m);
-
-			break;
-		    }
+				/*
+				 * XXX: this will return EINVAL as sopt is
+				 * empty
+				 */
+				error = ipsec6_get_policy(in6p, sopt->sopt_data,
+				    sopt->sopt_size, &m);
+				if (!error)
+					error = sockopt_setmbuf(sopt, m);
+				break;
+			}
+			/*FALLTHROUGH*/
 #endif /* IPSEC */
 
 		default:
