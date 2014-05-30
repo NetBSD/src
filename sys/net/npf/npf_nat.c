@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.27 2014/03/14 11:29:44 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.28 2014/05/30 23:26:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.27 2014/03/14 11:29:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.28 2014/05/30 23:26:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -115,7 +115,6 @@ struct npf_natpolicy {
 	LIST_HEAD(, npf_nat)	n_nat_list;
 	volatile u_int		n_refcnt;
 	kmutex_t		n_lock;
-	kcondvar_t		n_cv;
 	npf_portmap_t *		n_portmap;
 	/* NPF_NP_CMP_START */
 	int			n_type;
@@ -137,18 +136,23 @@ struct npf_natpolicy {
  * NAT translation entry for a session.
  */
 struct npf_nat {
-	/* Association (list entry and a link pointer) with NAT policy. */
-	LIST_ENTRY(npf_nat)	nt_entry;
+	/* Associated NAT policy. */
 	npf_natpolicy_t *	nt_natpolicy;
-	npf_session_t *		nt_session;
-	/* Original address and port (for backwards translation). */
+
+	/*
+	 * Original address and port (for backwards translation).
+	 * Translation port (for redirects).
+	 */
 	npf_addr_t		nt_oaddr;
 	in_port_t		nt_oport;
-	/* Translation port (for redirects). */
 	in_port_t		nt_tport;
+
 	/* ALG (if any) associated with this NAT entry. */
 	npf_alg_t *		nt_alg;
 	uintptr_t		nt_alg_arg;
+
+	LIST_ENTRY(npf_nat)	nt_entry;
+	npf_session_t *		nt_session;
 };
 
 static pool_cache_t		nat_cache	__read_mostly;
@@ -195,7 +199,6 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 		goto err;
 	}
 	mutex_init(&np->n_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	cv_init(&np->n_cv, "npfnatcv");
 	LIST_INIT(&np->n_nat_list);
 
 	/* Translation IP, mask and port (if applicable). */
@@ -262,20 +265,17 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 	 * Disassociate all entries from the policy.  At this point,
 	 * new entries can no longer be created for this policy.
 	 */
-	mutex_enter(&np->n_lock);
-	LIST_FOREACH(nt, &np->n_nat_list, nt_entry) {
-		se = nt->nt_session;
-		KASSERT(se != NULL);
-		npf_session_expire(se);
-	}
-	while (!LIST_EMPTY(&np->n_nat_list)) {
-		cv_wait(&np->n_cv, &np->n_lock);
-	}
-	mutex_exit(&np->n_lock);
-
-	/* Kick the worker - all references should be going away. */
-	npf_worker_signal();
 	while (np->n_refcnt) {
+		mutex_enter(&np->n_lock);
+		LIST_FOREACH(nt, &np->n_nat_list, nt_entry) {
+			se = nt->nt_session;
+			KASSERT(se != NULL);
+			npf_session_expire(se);
+		}
+		mutex_exit(&np->n_lock);
+
+		/* Kick the worker - all references should be going away. */
+		npf_worker_signal();
 		kpause("npfgcnat", false, 1, NULL);
 	}
 	KASSERT(LIST_EMPTY(&np->n_nat_list));
@@ -285,7 +285,6 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 		KASSERT((np->n_flags & NPF_NAT_PORTMAP) != 0);
 		kmem_free(pm, PORTMAP_MEM_SIZE);
 	}
-	cv_destroy(&np->n_cv);
 	mutex_destroy(&np->n_lock);
 	kmem_free(np, sizeof(npf_natpolicy_t));
 }
@@ -767,10 +766,6 @@ npf_nat_destroy(npf_nat_t *nt)
 
 	mutex_enter(&np->n_lock);
 	LIST_REMOVE(nt, nt_entry);
-	if (LIST_EMPTY(&np->n_nat_list)) {
-		/* Notify any waiters if empty. */
-		cv_broadcast(&np->n_cv);
-	}
 	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
 

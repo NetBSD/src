@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.39 2014/05/19 18:45:51 jakllsch Exp $	*/
+/*	$NetBSD: npf.h,v 1.40 2014/05/30 23:26:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -203,14 +203,14 @@ bool		npf_autounload_p(void);
 #endif	/* _KERNEL */
 
 /* Rule attributes. */
-#define	NPF_RULE_PASS			0x0001
-#define	NPF_RULE_GROUP			0x0002
-#define	NPF_RULE_FINAL			0x0004
-#define	NPF_RULE_STATEFUL		0x0008
-#define	NPF_RULE_RETRST			0x0010
-#define	NPF_RULE_RETICMP		0x0020
-#define	NPF_RULE_DYNAMIC		0x0040
-#define	NPF_RULE_MULTIENDS		0x0080
+#define	NPF_RULE_PASS			0x00000001
+#define	NPF_RULE_GROUP			0x00000002
+#define	NPF_RULE_FINAL			0x00000004
+#define	NPF_RULE_STATEFUL		0x00000008
+#define	NPF_RULE_RETRST			0x00000010
+#define	NPF_RULE_RETICMP		0x00000020
+#define	NPF_RULE_DYNAMIC		0x00000040
+#define	NPF_RULE_MULTIENDS		0x00000080
 
 #define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 
@@ -218,6 +218,9 @@ bool		npf_autounload_p(void);
 #define	NPF_RULE_OUT			0x20000000
 #define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
 #define	NPF_RULE_FORW			0x40000000
+
+/* Private range of rule attributes (not public and should not be set). */
+#define	NPF_RULE_PRIVMASK		0x0f000000
 
 #define	NPF_RULE_MAXNAMELEN		64
 #define	NPF_RULE_MAXKEYLEN		32
