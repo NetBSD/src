@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "ARMAsmPrinter.h"
 #include "ARM.h"
 #include "ARMConstantPoolValue.h"
@@ -28,9 +27,9 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
@@ -45,6 +44,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ARMBuildAttributes.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
@@ -54,6 +54,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include <cctype>
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 void ARMAsmPrinter::EmitFunctionBodyEnd() {
   // Make sure to terminate any constant pools that were at the end
@@ -85,7 +87,7 @@ void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
                                              ? MCSymbolRefExpr::VK_ARM_TARGET1
                                              : MCSymbolRefExpr::VK_None),
                                             OutContext);
-  
+
   OutStreamer.EmitValue(E, Size);
 }
 
@@ -96,7 +98,28 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
   MCP = MF.getConstantPool();
 
-  return AsmPrinter::runOnMachineFunction(MF);
+  SetupMachineFunction(MF);
+
+  if (Subtarget->isTargetCOFF()) {
+    bool Internal = MF.getFunction()->hasInternalLinkage();
+    COFF::SymbolStorageClass Scl = Internal ? COFF::IMAGE_SYM_CLASS_STATIC
+                                            : COFF::IMAGE_SYM_CLASS_EXTERNAL;
+    int Type = COFF::IMAGE_SYM_DTYPE_FUNCTION << COFF::SCT_COMPLEX_TYPE_SHIFT;
+
+    OutStreamer.BeginCOFFSymbolDef(CurrentFnSym);
+    OutStreamer.EmitCOFFSymbolStorageClass(Scl);
+    OutStreamer.EmitCOFFSymbolType(Type);
+    OutStreamer.EndCOFFSymbolDef();
+  }
+
+  // Have common code print out the function header with linkage info etc.
+  EmitFunctionHeader();
+
+  // Emit the rest of the function body.
+  EmitFunctionBody();
+
+  // We didn't modify anything.
+  return false;
 }
 
 void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
@@ -239,7 +262,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       if (ARM::GPRPairRegClass.contains(RegBegin)) {
         const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
         unsigned Reg0 = TRI->getSubReg(RegBegin, ARM::gsub_0);
-        O << ARMInstPrinter::getRegisterName(Reg0) << ", ";;
+        O << ARMInstPrinter::getRegisterName(Reg0) << ", ";
         RegBegin = TRI->getSubReg(RegBegin, ARM::gsub_1);
       }
       O << ARMInstPrinter::getRegisterName(RegBegin);
@@ -383,7 +406,7 @@ void ARMAsmPrinter::emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
   // If either end mode is unknown (EndInfo == NULL) or different than
   // the start mode, then restore the start mode.
   const bool WasThumb = isThumb(StartInfo);
-  if (EndInfo == NULL || WasThumb != isThumb(*EndInfo)) {
+  if (!EndInfo || WasThumb != isThumb(*EndInfo)) {
     OutStreamer.EmitAssemblerFlag(WasThumb ? MCAF_Code16 : MCAF_Code32);
   }
 }
@@ -422,20 +445,20 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       if (RelocM == Reloc::DynamicNoPIC) {
         const MCSection *sect =
           OutContext.getMachOSection("__TEXT", "__symbol_stub4",
-                                     MCSectionMachO::S_SYMBOL_STUBS,
+                                     MachO::S_SYMBOL_STUBS,
                                      12, SectionKind::getText());
         OutStreamer.SwitchSection(sect);
       } else {
         const MCSection *sect =
           OutContext.getMachOSection("__TEXT", "__picsymbolstub4",
-                                     MCSectionMachO::S_SYMBOL_STUBS,
+                                     MachO::S_SYMBOL_STUBS,
                                      16, SectionKind::getText());
         OutStreamer.SwitchSection(sect);
       }
       const MCSection *StaticInitSect =
         OutContext.getMachOSection("__TEXT", "__StaticInit",
-                                   MCSectionMachO::S_REGULAR |
-                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                   MachO::S_REGULAR |
+                                   MachO::S_ATTR_PURE_INSTRUCTIONS,
                                    SectionKind::getText());
       OutStreamer.SwitchSection(StaticInitSect);
     }
@@ -456,6 +479,29 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
     emitAttributes();
 }
 
+static void
+emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
+                         MachineModuleInfoImpl::StubValueTy &MCSym) {
+  // L_foo$stub:
+  OutStreamer.EmitLabel(StubLabel);
+  //   .indirect_symbol _foo
+  OutStreamer.EmitSymbolAttribute(MCSym.getPointer(), MCSA_IndirectSymbol);
+
+  if (MCSym.getInt())
+    // External to current translation unit.
+    OutStreamer.EmitIntValue(0, 4/*size*/);
+  else
+    // Internal to current translation unit.
+    //
+    // When we place the LSDA into the TEXT section, the type info
+    // pointers need to be indirect and pc-rel. We accomplish this by
+    // using NLPs; however, sometimes the types are local to the file.
+    // We need to fill in the value for the NLP in those cases.
+    OutStreamer.EmitValue(
+        MCSymbolRefExpr::Create(MCSym.getPointer(), OutStreamer.getContext()),
+        4 /*size*/);
+}
+
 
 void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetMachO()) {
@@ -472,27 +518,9 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
       // Switch with ".non_lazy_symbol_pointer" directive.
       OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
       EmitAlignment(2);
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        // L_foo$stub:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        //   .indirect_symbol _foo
-        MachineModuleInfoImpl::StubValueTy &MCSym = Stubs[i].second;
-        OutStreamer.EmitSymbolAttribute(MCSym.getPointer(),MCSA_IndirectSymbol);
 
-        if (MCSym.getInt())
-          // External to current translation unit.
-          OutStreamer.EmitIntValue(0, 4/*size*/);
-        else
-          // Internal to current translation unit.
-          //
-          // When we place the LSDA into the TEXT section, the type info
-          // pointers need to be indirect and pc-rel. We accomplish this by
-          // using NLPs; however, sometimes the types are local to the file.
-          // We need to fill in the value for the NLP in those cases.
-          OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
-                                                        OutContext),
-                                4/*size*/);
-      }
+      for (auto &Stub : Stubs)
+        emitNonLazySymbolPointer(OutStreamer, Stub.first, Stub.second);
 
       Stubs.clear();
       OutStreamer.AddBlankLine();
@@ -500,17 +528,11 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
     Stubs = MMIMacho.GetHiddenGVStubList();
     if (!Stubs.empty()) {
-      OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
+      OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
       EmitAlignment(2);
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        // L_foo$stub:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        //   .long _foo
-        OutStreamer.EmitValue(MCSymbolRefExpr::
-                              Create(Stubs[i].second.getPointer(),
-                                     OutContext),
-                              4/*size*/);
-      }
+
+      for (auto &Stub : Stubs)
+        emitNonLazySymbolPointer(OutStreamer, Stub.first, Stub.second);
 
       Stubs.clear();
       OutStreamer.AddBlankLine();
@@ -522,6 +544,28 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
+  }
+
+  // Emit a .data.rel section containing any stubs that were created.
+  if (Subtarget->isTargetELF()) {
+    const TargetLoweringObjectFileELF &TLOFELF =
+      static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
+
+    MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
+
+    // Output stubs for external and common global variables.
+    MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
+    if (!Stubs.empty()) {
+      OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
+      const DataLayout *TD = TM.getDataLayout();
+
+      for (auto &stub: Stubs) {
+        OutStreamer.EmitLabel(stub.first);
+        OutStreamer.EmitSymbolValue(stub.second.getPointer(),
+                                    TD->getPointerSize(0));
+      }
+      Stubs.clear();
+    }
   }
 }
 
@@ -575,7 +619,7 @@ void ARMAsmPrinter::emitAttributes() {
                     getArchForCPU(CPUString, Subtarget));
 
   // Tag_CPU_arch_profile must have the default value of 0 when "Architecture
-  // profile is not applicable (e.g. pre v7, or cross-profile code)". 
+  // profile is not applicable (e.g. pre v7, or cross-profile code)".
   if (Subtarget->hasV7Ops()) {
     if (Subtarget->isAClass()) {
       ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,
@@ -625,6 +669,20 @@ void ARMAsmPrinter::emitAttributes() {
       ATS.emitFPU(Subtarget->hasD16() ? ARM::VFPV3_D16 : ARM::VFPV3);
     else if (Subtarget->hasVFP2())
       ATS.emitFPU(ARM::VFPV2);
+  }
+
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    // PIC specific attributes.
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_RW_data,
+                      ARMBuildAttrs::AddressRWPCRel);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_RO_data,
+                      ARMBuildAttrs::AddressROPCRel);
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_GOT_use,
+                      ARMBuildAttrs::AddressGOT);
+  } else {
+    // Allow direct addressing of imported data for all other relocation models.
+    ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_GOT_use,
+                      ARMBuildAttrs::AddressDirect);
   }
 
   // Signal various FP modes.
@@ -723,7 +781,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
   MachineModuleInfoImpl::StubValueTy &StubSym =
     GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
     MMIMachO.getGVStubEntry(MCSym);
-  if (StubSym.getPointer() == 0)
+  if (!StubSym.getPointer())
     StubSym = MachineModuleInfoImpl::
       StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
   return MCSym;
@@ -971,7 +1029,8 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       RegList.push_back(SrcReg);
       break;
     }
-    ATS.emitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
+    if (MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
+      ATS.emitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
   } else {
     // Changes of stack / frame pointer.
     if (SrcReg == ARM::SP) {
@@ -1016,18 +1075,20 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       }
       }
 
-      if (DstReg == FramePtr && FramePtr != ARM::SP)
-        // Set-up of the frame pointer. Positive values correspond to "add"
-        // instruction.
-        ATS.emitSetFP(FramePtr, ARM::SP, -Offset);
-      else if (DstReg == ARM::SP) {
-        // Change of SP by an offset. Positive values correspond to "sub"
-        // instruction.
-        ATS.emitPad(Offset);
-      } else {
-        // Move of SP to a register.  Positive values correspond to an "add"
-        // instruction.
-        ATS.emitMovSP(DstReg, -Offset);
+      if (MAI->getExceptionHandlingType() == ExceptionHandling::ARM) {
+        if (DstReg == FramePtr && FramePtr != ARM::SP)
+          // Set-up of the frame pointer. Positive values correspond to "add"
+          // instruction.
+          ATS.emitSetFP(FramePtr, ARM::SP, -Offset);
+        else if (DstReg == ARM::SP) {
+          // Change of SP by an offset. Positive values correspond to "sub"
+          // instruction.
+          ATS.emitPad(Offset);
+        } else {
+          // Move of SP to a register.  Positive values correspond to an "add"
+          // instruction.
+          ATS.emitMovSP(DstReg, -Offset);
+        }
       }
     } else if (DstReg == ARM::SP) {
       MI->dump();
@@ -1719,6 +1780,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMAsmPrinter() {
-  RegisterAsmPrinter<ARMAsmPrinter> X(TheARMTarget);
-  RegisterAsmPrinter<ARMAsmPrinter> Y(TheThumbTarget);
+  RegisterAsmPrinter<ARMAsmPrinter> X(TheARMLETarget);
+  RegisterAsmPrinter<ARMAsmPrinter> Y(TheARMBETarget);
+  RegisterAsmPrinter<ARMAsmPrinter> A(TheThumbLETarget);
+  RegisterAsmPrinter<ARMAsmPrinter> B(TheThumbBETarget);
 }

@@ -26,6 +26,10 @@ static cl::
 opt<bool> DisableCTRLoops("disable-ppc-ctrloops", cl::Hidden,
                         cl::desc("Disable CTR loops for PPC"));
 
+static cl::opt<bool>
+VSXFMAMutateEarly("schedule-ppc-vsx-fma-mutation-early",
+  cl::Hidden, cl::desc("Schedule VSX FMA instruction mutation early"));
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
@@ -37,8 +41,13 @@ extern "C" void LLVMInitializePowerPCTarget() {
 static std::string getDataLayoutString(const PPCSubtarget &ST) {
   const Triple &T = ST.getTargetTriple();
 
-  // PPC is big endian.
-  std::string Ret = "E";
+  std::string Ret;
+
+  // Most PPC* platforms are big endian, PPC64LE is little endian.
+  if (ST.isLittleEndian())
+    Ret = "e";
+  else
+    Ret = "E";
 
   Ret += DataLayout::getManglingComponent(T);
 
@@ -75,10 +84,6 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
     FrameLowering(Subtarget), JITInfo(*this, is64Bit),
     TLInfo(*this), TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
-
-  // The binutils for the BG/P are too old for CFI.
-  if (Subtarget.isBGP())
-    setMCUseCFI(false);
   initAsmInfo();
 }
 
@@ -122,11 +127,12 @@ public:
     return *getPPCTargetMachine().getSubtargetImpl();
   }
 
-  virtual bool addPreISel();
-  virtual bool addILPOpts();
-  virtual bool addInstSelector();
-  virtual bool addPreSched2();
-  virtual bool addPreEmitPass();
+  bool addPreISel() override;
+  bool addILPOpts() override;
+  bool addInstSelector() override;
+  bool addPreRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -142,12 +148,8 @@ bool PPCPassConfig::addPreISel() {
 }
 
 bool PPCPassConfig::addILPOpts() {
-  if (getPPCSubtarget().hasISEL()) {
-    addPass(&EarlyIfConverterID);
-    return true;
-  }
-
-  return false;
+  addPass(&EarlyIfConverterID);
+  return true;
 }
 
 bool PPCPassConfig::addInstSelector() {
@@ -159,10 +161,20 @@ bool PPCPassConfig::addInstSelector() {
     addPass(createPPCCTRLoopsVerify());
 #endif
 
+  addPass(createPPCVSXCopyPass());
+  return false;
+}
+
+bool PPCPassConfig::addPreRegAlloc() {
+  initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
+  insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
+             &PPCVSXFMAMutateID);
   return false;
 }
 
 bool PPCPassConfig::addPreSched2() {
+  addPass(createPPCVSXCopyCleanupPass());
+
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
 
