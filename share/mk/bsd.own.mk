@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.811 2014/05/30 18:31:58 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.812 2014/05/30 18:39:29 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1081,6 +1081,16 @@ MKINFO:=	no
 MKHTML:=	no
 MKMAN:=		no
 MKNLS:=		no
+.endif
+
+.if !empty(MACHINE_ARCH:Mearm*)
+_NEEDS_LIBCXX.${MACHINE_ARCH}=	yes
+.endif
+_NEEDS_LIBCXX.i386=	yes
+_NEEDS_LIBCXX.x86_64=	yes
+
+.if ${MKLLVM} == "yes" && ${_NEEDS_LIBCXX.${MACHINE_ARCH}:Uno} == "yes"
+MKLIBCXX:=	yes
 .endif
 
 #
