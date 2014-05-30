@@ -29,10 +29,10 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
+#include <memory>
 #include <vector>
 
 namespace llvm {
@@ -65,7 +65,7 @@ class TokenValue {
   IdentifierInfo *II;
 
 public:
-  TokenValue(tok::TokenKind Kind) : Kind(Kind), II(0) {
+  TokenValue(tok::TokenKind Kind) : Kind(Kind), II(nullptr) {
     assert(Kind != tok::raw_identifier && "Raw identifiers are not supported.");
     assert(Kind != tok::identifier &&
            "Identifiers should be created by TokenValue(IdentifierInfo *)");
@@ -102,7 +102,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   /// An optional PTHManager object used for getting tokens from
   /// a token cache rather than lexing the original source file.
-  OwningPtr<PTHManager> PTH;
+  std::unique_ptr<PTHManager> PTH;
 
   /// A BumpPtrAllocator object used to quickly allocate and release
   /// objects internal to the Preprocessor.
@@ -116,6 +116,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident__TIMESTAMP__;              // __TIMESTAMP__
   IdentifierInfo *Ident__COUNTER__;                // __COUNTER__
   IdentifierInfo *Ident_Pragma, *Ident__pragma;    // _Pragma, __pragma
+  IdentifierInfo *Ident__identifier;               // __identifier
   IdentifierInfo *Ident__VA_ARGS__;                // __VA_ARGS__
   IdentifierInfo *Ident__has_feature;              // __has_feature
   IdentifierInfo *Ident__has_extension;            // __has_extension
@@ -124,6 +125,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident__has_include;              // __has_include
   IdentifierInfo *Ident__has_include_next;         // __has_include_next
   IdentifierInfo *Ident__has_warning;              // __has_warning
+  IdentifierInfo *Ident__is_identifier;            // __is_identifier
   IdentifierInfo *Ident__building_module;          // __building_module
   IdentifierInfo *Ident__MODULE__;                 // __MODULE__
 
@@ -200,6 +202,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// avoid tearing the Lexer and etc. down).
   bool IncrementalProcessing;
 
+  /// The kind of translation unit we are processing.
+  TranslationUnitKind TUKind;
+
   /// \brief The code-completion handler.
   CodeCompletionHandler *CodeComplete;
 
@@ -251,13 +256,13 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// not expanding a macro and we are lexing directly from source code.
   ///
   /// Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
-  OwningPtr<Lexer> CurLexer;
+  std::unique_ptr<Lexer> CurLexer;
 
   /// \brief The current top of stack that we're lexing from if
   /// not expanding from a macro and we are lexing from a PTH cache.
   ///
   /// Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
-  OwningPtr<PTHLexer> CurPTHLexer;
+  std::unique_ptr<PTHLexer> CurPTHLexer;
 
   /// \brief The current top of the stack what we're lexing from
   /// if not expanding a macro.
@@ -275,7 +280,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief The current macro we are expanding, if we are expanding a macro.
   ///
   /// One of CurLexer and CurTokenLexer must be null.
-  OwningPtr<TokenLexer> CurTokenLexer;
+  std::unique_ptr<TokenLexer> CurTokenLexer;
 
   /// \brief The kind of lexer we're currently working with.
   enum CurLexerKind {
@@ -294,19 +299,36 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \#included, and macros currently being expanded from, not counting
   /// CurLexer/CurTokenLexer.
   struct IncludeStackInfo {
-    enum CurLexerKind     CurLexerKind;
-    Module                *TheSubmodule;
-    Lexer                 *TheLexer;
-    PTHLexer              *ThePTHLexer;
-    PreprocessorLexer     *ThePPLexer;
-    TokenLexer            *TheTokenLexer;
-    const DirectoryLookup *TheDirLookup;
+    enum CurLexerKind           CurLexerKind;
+    Module                     *TheSubmodule;
+    std::unique_ptr<Lexer>      TheLexer;
+    std::unique_ptr<PTHLexer>   ThePTHLexer;
+    PreprocessorLexer          *ThePPLexer;
+    std::unique_ptr<TokenLexer> TheTokenLexer;
+    const DirectoryLookup      *TheDirLookup;
 
-    IncludeStackInfo(enum CurLexerKind K, Module *M, Lexer *L, PTHLexer *P,
-                     PreprocessorLexer *PPL, TokenLexer *TL,
-                     const DirectoryLookup *D)
-        : CurLexerKind(K), TheSubmodule(M), TheLexer(L), ThePTHLexer(P),
-          ThePPLexer(PPL), TheTokenLexer(TL), TheDirLookup(D) {}
+    // The following constructors are completely useless copies of the default
+    // versions, only needed to pacify MSVC.
+    IncludeStackInfo(enum CurLexerKind CurLexerKind, Module *TheSubmodule,
+                     std::unique_ptr<Lexer> &&TheLexer,
+                     std::unique_ptr<PTHLexer> &&ThePTHLexer,
+                     PreprocessorLexer *ThePPLexer,
+                     std::unique_ptr<TokenLexer> &&TheTokenLexer,
+                     const DirectoryLookup *TheDirLookup)
+        : CurLexerKind(std::move(CurLexerKind)),
+          TheSubmodule(std::move(TheSubmodule)), TheLexer(std::move(TheLexer)),
+          ThePTHLexer(std::move(ThePTHLexer)),
+          ThePPLexer(std::move(ThePPLexer)),
+          TheTokenLexer(std::move(TheTokenLexer)),
+          TheDirLookup(std::move(TheDirLookup)) {}
+    IncludeStackInfo(IncludeStackInfo &&RHS)
+        : CurLexerKind(std::move(RHS.CurLexerKind)),
+          TheSubmodule(std::move(RHS.TheSubmodule)),
+          TheLexer(std::move(RHS.TheLexer)),
+          ThePTHLexer(std::move(RHS.ThePTHLexer)),
+          ThePPLexer(std::move(RHS.ThePPLexer)),
+          TheTokenLexer(std::move(RHS.TheTokenLexer)),
+          TheDirLookup(std::move(RHS.TheDirLookup)) {}
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
 
@@ -351,7 +373,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> > PragmaPushMacroInfo;
 
   // Various statistics we track for performance analysis.
-  unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
+  unsigned NumDirectives, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
   unsigned NumEnteredSourceFiles, MaxIncludeStackDepth;
   unsigned NumMacroExpanded, NumFnMacroExpanded, NumBuiltinMacroExpanded;
@@ -433,20 +455,18 @@ private:  // Cached tokens state.
 public:
   Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                DiagnosticsEngine &diags, LangOptions &opts,
-               const TargetInfo *target,
                SourceManager &SM, HeaderSearch &Headers,
                ModuleLoader &TheModuleLoader,
-               IdentifierInfoLookup *IILookup = 0,
+               IdentifierInfoLookup *IILookup = nullptr,
                bool OwnsHeaderSearch = false,
-               bool DelayInitialization = false,
-               bool IncrProcessing = false);
+               TranslationUnitKind TUKind = TU_Complete);
 
   ~Preprocessor();
 
-  /// \brief Initialize the preprocessor, if the constructor did not already
-  /// perform the initialization.
+  /// \brief Initialize the preprocessor using information about the target.
   ///
-  /// \param Target Information about the target.
+  /// \param Target is owned by the caller and must remain valid for the
+  /// lifetime of the preprocessor.
   void Initialize(const TargetInfo &Target);
 
   /// \brief Retrieve the preprocessor options used to initialize this
@@ -557,7 +577,7 @@ public:
   /// \#defined or null if it isn't \#define'd.
   MacroDirective *getMacroDirective(IdentifierInfo *II) const {
     if (!II->hasMacroDefinition())
-      return 0;
+      return nullptr;
 
     MacroDirective *MD = getMacroDirectiveHistory(II);
     assert(MD->isDefined() && "Macro is undefined!");
@@ -571,7 +591,7 @@ public:
   MacroInfo *getMacroInfo(IdentifierInfo *II) {
     if (MacroDirective *MD = getMacroDirective(II))
       return MD->getMacroInfo();
-    return 0;
+    return nullptr;
   }
 
   /// \brief Given an identifier, return the (probably #undef'd) MacroInfo
@@ -644,6 +664,9 @@ public:
     RemovePragmaHandler(StringRef(), Handler);
   }
 
+  /// Install empty handlers for all pragmas (making them ignored).
+  void IgnorePragmas();
+
   /// \brief Add the specified comment handler to the preprocessor.
   void addCommentHandler(CommentHandler *Handler);
 
@@ -664,7 +687,7 @@ public:
 
   /// \brief Clear out the code completion handler.
   void clearCodeCompletionHandler() {
-    CodeComplete = 0;
+    CodeComplete = nullptr;
   }
 
   /// \brief Hook used by the lexer to invoke the "natural language" code
@@ -925,7 +948,7 @@ public:
                               unsigned Line, unsigned Column);
 
   /// \brief Determine if we are performing code completion.
-  bool isCodeCompletionEnabled() const { return CodeCompletionFile != 0; }
+  bool isCodeCompletionEnabled() const { return CodeCompletionFile != nullptr; }
 
   /// \brief Returns the location of the code-completion point.
   ///
@@ -998,7 +1021,7 @@ public:
   /// \param invalid If non-null, will be set \c true if an error occurs.
   StringRef getSpelling(SourceLocation loc,
                         SmallVectorImpl<char> &buffer,
-                        bool *invalid = 0) const {
+                        bool *invalid = nullptr) const {
     return Lexer::getSpelling(loc, buffer, SourceMgr, LangOpts, invalid);
   }
 
@@ -1010,7 +1033,7 @@ public:
   /// things like digraphs, UCNs, etc.
   ///
   /// \param Invalid If non-null, will be set \c true if an error occurs.
-  std::string getSpelling(const Token &Tok, bool *Invalid = 0) const {
+  std::string getSpelling(const Token &Tok, bool *Invalid = nullptr) const {
     return Lexer::getSpelling(Tok, SourceMgr, LangOpts, Invalid);
   }
 
@@ -1027,7 +1050,7 @@ public:
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer,
-                       bool *Invalid = 0) const {
+                       bool *Invalid = nullptr) const {
     return Lexer::getSpelling(Tok, Buffer, SourceMgr, LangOpts, Invalid);
   }
 
@@ -1037,7 +1060,7 @@ public:
   /// supplied buffer if a copy can be avoided.
   StringRef getSpelling(const Token &Tok,
                         SmallVectorImpl<char> &Buffer,
-                        bool *Invalid = 0) const;
+                        bool *Invalid = nullptr) const;
 
   /// \brief Relex the token at the specified location.
   /// \returns true if there was a failure, false on success.
@@ -1048,8 +1071,9 @@ public:
 
   /// \brief Given a Token \p Tok that is a numeric constant with length 1,
   /// return the character.
-  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok,
-                                                   bool *Invalid = 0) const {
+  char
+  getSpellingOfSingleCharacterNumericConstant(const Token &Tok,
+                                              bool *Invalid = nullptr) const {
     assert(Tok.is(tok::numeric_constant) &&
            Tok.getLength() == 1 && "Called on unsupported token");
     assert(!Tok.needsCleaning() && "Token can't need cleaning with length 1");
@@ -1109,7 +1133,7 @@ public:
   /// \param MacroBegin If non-null and function returns true, it is set to
   /// begin location of the macro.
   bool isAtStartOfMacroExpansion(SourceLocation loc,
-                                 SourceLocation *MacroBegin = 0) const {
+                                 SourceLocation *MacroBegin = nullptr) const {
     return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, LangOpts,
                                             MacroBegin);
   }
@@ -1120,7 +1144,7 @@ public:
   /// \param MacroEnd If non-null and function returns true, it is set to
   /// end location of the macro.
   bool isAtEndOfMacroExpansion(SourceLocation loc,
-                               SourceLocation *MacroEnd = 0) const {
+                               SourceLocation *MacroEnd = nullptr) const {
     return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, LangOpts, MacroEnd);
   }
 
@@ -1319,24 +1343,22 @@ public:
   /// followed by EOD.  Return true if the token is not a valid on-off-switch.
   bool LexOnOffSwitch(tok::OnOffSwitch &OOS);
 
+  bool CheckMacroName(Token &MacroNameTok, char isDefineUndef);
+
 private:
 
   void PushIncludeMacroStack() {
-    IncludeMacroStack.push_back(IncludeStackInfo(CurLexerKind,
-                                                 CurSubmodule,
-                                                 CurLexer.take(),
-                                                 CurPTHLexer.take(),
-                                                 CurPPLexer,
-                                                 CurTokenLexer.take(),
-                                                 CurDirLookup));
-    CurPPLexer = 0;
+    IncludeMacroStack.push_back(IncludeStackInfo(
+        CurLexerKind, CurSubmodule, std::move(CurLexer), std::move(CurPTHLexer),
+        CurPPLexer, std::move(CurTokenLexer), CurDirLookup));
+    CurPPLexer = nullptr;
   }
 
   void PopIncludeMacroStack() {
-    CurLexer.reset(IncludeMacroStack.back().TheLexer);
-    CurPTHLexer.reset(IncludeMacroStack.back().ThePTHLexer);
+    CurLexer = std::move(IncludeMacroStack.back().TheLexer);
+    CurPTHLexer = std::move(IncludeMacroStack.back().ThePTHLexer);
     CurPPLexer = IncludeMacroStack.back().ThePPLexer;
-    CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
+    CurTokenLexer = std::move(IncludeMacroStack.back().TheTokenLexer);
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
     CurSubmodule = IncludeMacroStack.back().TheSubmodule;
     CurLexerKind = IncludeMacroStack.back().CurLexerKind;
@@ -1456,11 +1478,11 @@ private:
   /// \brief Returns true if we are lexing from a file and not a
   /// pragma or a macro.
   static bool IsFileLexer(const Lexer* L, const PreprocessorLexer* P) {
-    return L ? !L->isPragmaLexer() : P != 0;
+    return L ? !L->isPragmaLexer() : P != nullptr;
   }
 
   static bool IsFileLexer(const IncludeStackInfo& I) {
-    return IsFileLexer(I.TheLexer, I.ThePPLexer);
+    return IsFileLexer(I.TheLexer.get(), I.ThePPLexer);
   }
 
   bool IsFileLexer() const {
@@ -1498,7 +1520,7 @@ private:
   // File inclusion.
   void HandleIncludeDirective(SourceLocation HashLoc,
                               Token &Tok,
-                              const DirectoryLookup *LookupFrom = 0,
+                              const DirectoryLookup *LookupFrom = nullptr,
                               bool isImport = false);
   void HandleIncludeNextDirective(SourceLocation HashLoc, Token &Tok);
   void HandleIncludeMacrosDirective(SourceLocation HashLoc, Token &Tok);
