@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.219 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: md.amd64,v 1.220 2014/05/30 18:28:13 joerg Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -183,6 +183,7 @@
 ./usr/include/clang-3.5/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/fma4intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/fmaintrin.h		comp-c-include		llvm
+./usr/include/clang-3.5/ia32intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/immintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/lzcntintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/mm3dnow.h		comp-c-include		llvm

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/02/14 20:23:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/05/30 18:28:13 joerg Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -14,7 +14,8 @@ SRCS=	llvm-readobj.cpp \
 	Error.cpp \
 	MachODumper.cpp \
 	ObjDumper.cpp \
-	StreamWriter.cpp
+	StreamWriter.cpp \
+	Win64EHDumper.cpp
 
 LLVM_LIBS+= \
 	AArch64TargetInfo \
