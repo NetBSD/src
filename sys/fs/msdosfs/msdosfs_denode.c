@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.48 2012/12/20 08:03:42 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.49 2014/05/30 08:42:35 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.48 2012/12/20 08:03:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.49 2014/05/30 08:42:35 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -671,8 +671,10 @@ msdosfs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 	struct denode *dep = VTODE(vp);
 
+	fstrans_start(mp, FSTRANS_LAZY);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %p, file %s, refcnt %ld\n",
 	    dep, dep->de_Name, dep->de_refcnt);
@@ -694,9 +696,15 @@ msdosfs_reclaim(void *v)
 #if 0 /* XXX */
 	dep->de_flag = 0;
 #endif
+	/*
+	 * To interlock with msdosfs_sync().
+	 */
 	genfs_node_destroy(vp);
-	pool_put(&msdosfs_denode_pool, dep);
+	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
+	mutex_exit(vp->v_interlock);
+	pool_put(&msdosfs_denode_pool, dep);
+	fstrans_done(mp);
 	return (0);
 }
 
