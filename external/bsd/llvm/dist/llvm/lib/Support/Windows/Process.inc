@@ -82,16 +82,14 @@ TimeValue self_process::get_system_time() const {
   return getTimeValueFromFILETIME(KernelTime);
 }
 
-// This function retrieves the page size using GetSystemInfo and is present
-// solely so it can be called once to initialize the self_process member below.
+// This function retrieves the page size using GetNativeSystemInfo() and is
+// present solely so it can be called once to initialize the self_process member
+// below.
 static unsigned getPageSize() {
-  // NOTE: A 32-bit application running under WOW64 is supposed to use
-  // GetNativeSystemInfo.  However, this interface is not present prior
-  // to Windows XP so to use it requires dynamic linking.  It is not clear
-  // how this affects the reported page size, if at all.  One could argue
-  // that LLVM ought to run as 64-bits on a 64-bit system, anyway.
+  // GetNativeSystemInfo() provides the physical page size which may differ
+  // from GetSystemInfo() in 32-bit applications running under WOW64.
   SYSTEM_INFO info;
-  GetSystemInfo(&info);
+  GetNativeSystemInfo(&info);
   // FIXME: FileOffset in MapViewOfFile() should be aligned to not dwPageSize,
   // but dwAllocationGranularity.
   return static_cast<unsigned>(info.dwPageSize);
@@ -154,7 +152,7 @@ void Process::PreventCoreFiles() {
 Optional<std::string> Process::GetEnv(StringRef Name) {
   // Convert the argument to UTF-16 to pass it to _wgetenv().
   SmallVector<wchar_t, 128> NameUTF16;
-  if (error_code ec = windows::UTF8ToUTF16(Name, NameUTF16))
+  if (windows::UTF8ToUTF16(Name, NameUTF16))
     return None;
 
   // Environment variable can be encoded in non-UTF8 encoding, and there's no
@@ -175,7 +173,7 @@ Optional<std::string> Process::GetEnv(StringRef Name) {
 
   // Convert the result from UTF-16 to UTF-8.
   SmallVector<char, MAX_PATH> Res;
-  if (error_code ec = windows::UTF16ToUTF8(Buf.data(), Size, Res))
+  if (windows::UTF16ToUTF8(Buf.data(), Size, Res))
     return None;
   return std::string(Res.data());
 }

@@ -79,7 +79,7 @@ ExecutionEngine *JIT::createJIT(Module *M,
   // Try to register the program as a source of symbols to resolve against.
   //
   // FIXME: Don't do this here.
-  sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
+  sys::DynamicLibrary::LoadLibraryPermanently(nullptr, nullptr);
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo()) {
@@ -87,7 +87,7 @@ ExecutionEngine *JIT::createJIT(Module *M,
   } else {
     if (ErrorStr)
       *ErrorStr = "target does not support JIT code generation";
-    return 0;
+    return nullptr;
   }
 }
 
@@ -157,7 +157,7 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
-  if (TM.addPassesToEmitMachineCode(PM, *JCE)) {
+  if (TM.addPassesToEmitMachineCode(PM, *JCE, !getVerifyModules())) {
     report_fatal_error("Target does not support machine code emission!");
   }
 
@@ -190,7 +190,7 @@ void JIT::addModule(Module *M) {
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *JCE)) {
+    if (TM.addPassesToEmitMachineCode(PM, *JCE, !getVerifyModules())) {
       report_fatal_error("Target does not support machine code emission!");
     }
 
@@ -210,7 +210,7 @@ bool JIT::removeModule(Module *M) {
 
   if (jitstate && jitstate->getModule() == M) {
     delete jitstate;
-    jitstate = 0;
+    jitstate = nullptr;
   }
 
   if (!jitstate && !Modules.empty()) {
@@ -222,7 +222,7 @@ bool JIT::removeModule(Module *M) {
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *JCE)) {
+    if (TM.addPassesToEmitMachineCode(PM, *JCE, !getVerifyModules())) {
       report_fatal_error("Target does not support machine code emission!");
     }
 
@@ -353,7 +353,7 @@ GenericValue JIT::runFunction(Function *F,
   // currently don't support varargs.
   SmallVector<Value*, 8> Args;
   for (unsigned i = 0, e = ArgValues.size(); i != e; ++i) {
-    Constant *C = 0;
+    Constant *C = nullptr;
     Type *ArgTy = FTy->getParamType(i);
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
@@ -406,13 +406,13 @@ GenericValue JIT::runFunction(Function *F,
 }
 
 void JIT::RegisterJITEventListener(JITEventListener *L) {
-  if (L == NULL)
+  if (!L)
     return;
   MutexGuard locked(lock);
   EventListeners.push_back(L);
 }
 void JIT::UnregisterJITEventListener(JITEventListener *L) {
-  if (L == NULL)
+  if (!L)
     return;
   MutexGuard locked(lock);
   std::vector<JITEventListener*>::reverse_iterator I=
@@ -450,9 +450,8 @@ void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
     MachineCodeInfo *const MCI;
    public:
     MCIListener(MachineCodeInfo *mci) : MCI(mci) {}
-    virtual void NotifyFunctionEmitted(const Function &,
-                                       void *Code, size_t Size,
-                                       const EmittedFunctionDetails &) {
+    void NotifyFunctionEmitted(const Function &, void *Code, size_t Size,
+                               const EmittedFunctionDetails &) override {
       MCI->setAddress(Code);
       MCI->setSize(Size);
     }
@@ -585,7 +584,7 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
     report_fatal_error("Program used external function '"+Name+
                       "' which could not be resolved!");
   }
-  return 0;
+  return nullptr;
 }
 
 
@@ -605,7 +604,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
       return (void*)&__dso_handle;
 #endif
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName());
-    if (Ptr == 0) {
+    if (!Ptr) {
       report_fatal_error("Could not resolve external global address: "
                         +GV->getName());
     }
@@ -630,10 +629,10 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
   void *OldAddr = getPointerToGlobalIfAvailable(F);
 
   // If it's not already compiled there is no reason to patch it up.
-  if (OldAddr == 0) { return getPointerToFunction(F); }
+  if (!OldAddr) return getPointerToFunction(F);
 
   // Delete the old function mapping.
-  addGlobalMapping(F, 0);
+  addGlobalMapping(F, nullptr);
 
   // Recodegen the function
   runJITOnFunction(F);

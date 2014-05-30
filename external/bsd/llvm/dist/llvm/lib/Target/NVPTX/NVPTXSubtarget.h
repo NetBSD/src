@@ -16,11 +16,10 @@
 
 #include "NVPTX.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include <string>
 
 #define GET_SUBTARGETINFO_HEADER
 #include "NVPTXGenSubtargetInfo.inc"
-
-#include <string>
 
 namespace llvm {
 
@@ -65,6 +64,10 @@ public:
   inline bool hasROT32() const { return hasHWROT32() || hasSWROT32(); }
   inline bool hasROT64() const { return SmVersion >= 20; }
 
+  bool hasImageHandles() const {
+    // Currently disabled
+    return false;
+  }
   bool is64Bit() const { return Is64Bit; }
 
   unsigned int getSmVersion() const { return SmVersion; }

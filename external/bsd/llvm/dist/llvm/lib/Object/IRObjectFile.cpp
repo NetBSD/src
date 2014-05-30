@@ -110,8 +110,7 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   uint32_t Res = BasicSymbolRef::SF_None;
   if (GV.isDeclaration() || GV.hasAvailableExternallyLinkage())
     Res |= BasicSymbolRef::SF_Undefined;
-  if (GV.hasPrivateLinkage() || GV.hasLinkerPrivateLinkage() ||
-      GV.hasLinkerPrivateWeakLinkage())
+  if (GV.hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;
   if (!GV.hasLocalLinkage())
     Res |= BasicSymbolRef::SF_Global;
@@ -144,9 +143,9 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
 ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
     MemoryBuffer *Object, LLVMContext &Context, bool BufferOwned) {
   error_code EC;
-  OwningPtr<IRObjectFile> Ret(
+  std::unique_ptr<IRObjectFile> Ret(
       new IRObjectFile(Object, EC, Context, BufferOwned));
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }

@@ -338,7 +338,7 @@ AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc) {
   // Acquire/Release cmpxchg has properties that matter for arbitrary addresses.
-  if (CX->getOrdering() > Monotonic)
+  if (CX->getSuccessOrdering() > Monotonic)
     return ModRef;
 
   // If the cmpxchg address does not alias the location, it does not access it.
@@ -370,9 +370,9 @@ namespace {
     CapturesBefore(const Instruction *I, DominatorTree *DT)
       : BeforeHere(I), DT(DT), Captured(false) {}
 
-    void tooManyUses() { Captured = true; }
+    void tooManyUses() override { Captured = true; }
 
-    bool shouldExplore(Use *U) {
+    bool shouldExplore(const Use *U) override {
       Instruction *I = cast<Instruction>(U->getUser());
       BasicBlock *BB = I->getParent();
       // We explore this usage only if the usage can reach "BeforeHere".
@@ -388,7 +388,7 @@ namespace {
       return true;
     }
 
-    bool captured(Use *U) {
+    bool captured(const Use *U) override {
       Instruction *I = cast<Instruction>(U->getUser());
       BasicBlock *BB = I->getParent();
       // Same logic as in shouldExplore.
@@ -473,7 +473,7 @@ AliasAnalysis::~AliasAnalysis() {}
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
   DataLayoutPass *DLP = P->getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = P->getAnalysisIfAvailable<TargetLibraryInfo>();
   AA = &P->getAnalysis<AliasAnalysis>();
 }
