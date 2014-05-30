@@ -1,4 +1,4 @@
-# $NetBSD: etc.rc,v 1.2 2014/05/23 12:25:46 martin Exp $
+# $NetBSD: etc.rc,v 1.3 2014/05/30 13:19:42 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -50,6 +50,16 @@ Please use the 'halt' command to stop the machine.
 EOM
 	exec sh
 }
+
+# if /dev has not been populated by init, it may be a stock "MAKEDEV all"
+# variant without "opty" - in which case we need to mount a ptyfs
+if [ ! -r /dev/ttypf ]; then
+	if mount | grep '^ptyfs on /dev/pts' >/dev/null 2>&1; then
+		# do not mount it again
+	else
+		mount -t ptyfs ptyfs /dev/pts
+	fi
+fi
 
 # mount a few tempfs to allow modifications over the CD contents
 mount -t tmpfs tmpfs /tmp || lowmemfail
