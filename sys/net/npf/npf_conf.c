@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.6 2014/05/30 23:26:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.6 2014/05/30 23:26:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,7 +146,7 @@ npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	if ((onc = npf_config) != NULL) {
 		npf_ruleset_reload(rset, onc->n_rules);
 		npf_tableset_reload(tset, onc->n_tables);
-		npf_ruleset_natreload(nset, onc->n_nat_rules);
+		npf_ruleset_reload(nset, onc->n_nat_rules);
 	}
 
 	/*
