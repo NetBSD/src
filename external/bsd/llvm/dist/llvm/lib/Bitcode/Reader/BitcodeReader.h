@@ -17,11 +17,11 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
-#include "llvm/GVMaterializer.h"
 #include "llvm/IR/Attributes.h"
+#include "llvm/IR/GVMaterializer.h"
 #include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Support/ValueHandle.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/system_error.h"
 #include <vector>
 
@@ -127,7 +127,7 @@ class BitcodeReader : public GVMaterializer {
   Module *TheModule;
   MemoryBuffer *Buffer;
   bool BufferOwned;
-  OwningPtr<BitstreamReader> StreamFile;
+  std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
   DataStreamer *LazyStreamer;
   uint64_t NextUnreadBit;
@@ -224,13 +224,13 @@ public:
   }
 
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
-    : Context(C), TheModule(0), Buffer(buffer), BufferOwned(false),
-      LazyStreamer(0), NextUnreadBit(0), SeenValueSymbolTable(false),
+    : Context(C), TheModule(nullptr), Buffer(buffer), BufferOwned(false),
+      LazyStreamer(nullptr), NextUnreadBit(0), SeenValueSymbolTable(false),
       ValueList(C), MDValueList(C),
       SeenFirstFunctionBody(false), UseRelativeIDs(false) {
   }
   explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C)
-    : Context(C), TheModule(0), Buffer(0), BufferOwned(false),
+    : Context(C), TheModule(nullptr), Buffer(nullptr), BufferOwned(false),
       LazyStreamer(streamer), NextUnreadBit(0), SeenValueSymbolTable(false),
       ValueList(C), MDValueList(C),
       SeenFirstFunctionBody(false), UseRelativeIDs(false) {
@@ -247,11 +247,11 @@ public:
   /// when the reader is destroyed.
   void setBufferOwned(bool Owned) { BufferOwned = Owned; }
 
-  virtual bool isMaterializable(const GlobalValue *GV) const;
-  virtual bool isDematerializable(const GlobalValue *GV) const;
-  virtual error_code Materialize(GlobalValue *GV);
-  virtual error_code MaterializeModule(Module *M);
-  virtual void Dematerialize(GlobalValue *GV);
+  bool isMaterializable(const GlobalValue *GV) const override;
+  bool isDematerializable(const GlobalValue *GV) const override;
+  error_code Materialize(GlobalValue *GV) override;
+  error_code MaterializeModule(Module *M) override;
+  void Dematerialize(GlobalValue *GV) override;
 
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
@@ -271,7 +271,7 @@ private:
     return ValueList.getValueFwdRef(ID, Ty);
   }
   BasicBlock *getBasicBlock(unsigned ID) const {
-    if (ID >= FunctionBBs.size()) return 0; // Invalid ID
+    if (ID >= FunctionBBs.size()) return nullptr; // Invalid ID
     return FunctionBBs[ID];
   }
   AttributeSet getAttributes(unsigned i) const {
@@ -293,15 +293,15 @@ private:
     if (ValNo < InstNum) {
       // If this is not a forward reference, just return the value we already
       // have.
-      ResVal = getFnValueByID(ValNo, 0);
-      return ResVal == 0;
+      ResVal = getFnValueByID(ValNo, nullptr);
+      return ResVal == nullptr;
     } else if (Slot == Record.size()) {
       return true;
     }
 
     unsigned TypeNo = (unsigned)Record[Slot++];
     ResVal = getFnValueByID(ValNo, getTypeByID(TypeNo));
-    return ResVal == 0;
+    return ResVal == nullptr;
   }
 
   /// popValue - Read a value out of the specified record from slot 'Slot'.
@@ -320,14 +320,14 @@ private:
   bool getValue(SmallVectorImpl<uint64_t> &Record, unsigned Slot,
                 unsigned InstNum, Type *Ty, Value *&ResVal) {
     ResVal = getValue(Record, Slot, InstNum, Ty);
-    return ResVal == 0;
+    return ResVal == nullptr;
   }
 
   /// getValue -- Version of getValue that returns ResVal directly,
   /// or 0 if there is an error.
   Value *getValue(SmallVectorImpl<uint64_t> &Record, unsigned Slot,
                   unsigned InstNum, Type *Ty) {
-    if (Slot == Record.size()) return 0;
+    if (Slot == Record.size()) return nullptr;
     unsigned ValNo = (unsigned)Record[Slot];
     // Adjust the ValNo, if it was encoded relative to the InstNum.
     if (UseRelativeIDs)
@@ -338,7 +338,7 @@ private:
   /// getValueSigned -- Like getValue, but decodes signed VBRs.
   Value *getValueSigned(SmallVectorImpl<uint64_t> &Record, unsigned Slot,
                         unsigned InstNum, Type *Ty) {
-    if (Slot == Record.size()) return 0;
+    if (Slot == Record.size()) return nullptr;
     unsigned ValNo = (unsigned)decodeSignRotatedValue(Record[Slot]);
     // Adjust the ValNo, if it was encoded relative to the InstNum.
     if (UseRelativeIDs)

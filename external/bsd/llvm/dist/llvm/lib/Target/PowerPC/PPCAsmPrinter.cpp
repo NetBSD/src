@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asmprinter"
 #include "PPC.h"
 #include "InstPrinter/PPCInstPrinter.h"
 #include "MCTargetDesc/PPCMCExpr.h"
@@ -33,8 +32,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
@@ -59,6 +58,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "asmprinter"
+
 namespace {
   class PPCAsmPrinter : public AsmPrinter {
   protected:
@@ -70,22 +71,22 @@ namespace {
       : AsmPrinter(TM, Streamer),
         Subtarget(TM.getSubtarget<PPCSubtarget>()), TOCLabelID(0) {}
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "PowerPC Assembly Printer";
     }
 
     MCSymbol *lookUpOrCreateTOCEntry(MCSymbol *Sym);
 
-    virtual void EmitInstruction(const MachineInstr *MI);
+    void EmitInstruction(const MachineInstr *MI) override;
 
     void printOperand(const MachineInstr *MI, unsigned OpNo, raw_ostream &O);
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
-                         raw_ostream &O);
+                         raw_ostream &O) override;
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &O);
+                               raw_ostream &O) override;
   };
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
@@ -94,15 +95,15 @@ namespace {
     explicit PPCLinuxAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : PPCAsmPrinter(TM, Streamer) {}
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Linux PPC Assembly Printer";
     }
 
-    bool doFinalization(Module &M);
+    bool doFinalization(Module &M) override;
 
-    virtual void EmitFunctionEntryLabel();
+    void EmitFunctionEntryLabel() override;
 
-    void EmitFunctionBodyEnd();
+    void EmitFunctionBodyEnd() override;
   };
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
@@ -112,12 +113,12 @@ namespace {
     explicit PPCDarwinAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : PPCAsmPrinter(TM, Streamer) {}
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Darwin PPC Assembly Printer";
     }
 
-    bool doFinalization(Module &M);
-    void EmitStartOfAsmFile(Module &M);
+    bool doFinalization(Module &M) override;
+    void EmitStartOfAsmFile(Module &M) override;
 
     void EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs);
   };
@@ -129,7 +130,10 @@ static const char *stripRegisterPrefix(const char *RegName) {
   switch (RegName[0]) {
     case 'r':
     case 'f':
-    case 'v': return RegName + 1;
+    case 'v':
+      if (RegName[1] == 's')
+        return RegName + 2;
+      return RegName + 1;
     case 'c': if (RegName[1] == 'r') return RegName + 2;
   }
   
@@ -177,7 +181,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         MachineModuleInfoImpl::StubValueTy &StubSym = 
           MMI->getObjFileInfo<MachineModuleInfoMachO>()
             .getGVStubEntry(SymToPrint);
-        if (StubSym.getPointer() == 0)
+        if (!StubSym.getPointer())
           StubSym = MachineModuleInfoImpl::
             StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
@@ -187,7 +191,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         MachineModuleInfoImpl::StubValueTy &StubSym = 
           MMI->getObjFileInfo<MachineModuleInfoMachO>().
                     getHiddenGVStubEntry(SymToPrint);
-        if (StubSym.getPointer() == 0)
+        if (!StubSym.getPointer())
           StubSym = MachineModuleInfoImpl::
             StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
       } else {
@@ -204,7 +208,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
 
   default:
-    O << "<unknown operand type: " << MO.getType() << ">";
+    O << "<unknown operand type: " << (unsigned)MO.getType() << ">";
     return;
   }
 }
@@ -285,9 +289,9 @@ MCSymbol *PPCAsmPrinter::lookUpOrCreateTOCEntry(MCSymbol *Sym) {
   MCSymbol *&TOCEntry = TOC[Sym];
 
   // To avoid name clash check if the name already exists.
-  while (TOCEntry == 0) {
+  while (!TOCEntry) {
     if (OutContext.LookupSymbol(Twine(DL->getPrivateGlobalPrefix()) +
-                                "C" + Twine(TOCLabelID++)) == 0) {
+                                "C" + Twine(TOCLabelID++)) == nullptr) {
       TOCEntry = GetTempSymbol("C", TOCLabelID);
     }
   }
@@ -339,7 +343,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     // Map symbol -> label of TOC entry
     assert(MO.isGlobal() || MO.isCPI() || MO.isJTI());
-    MCSymbol *MOSymbol = 0;
+    MCSymbol *MOSymbol = nullptr;
     if (MO.isGlobal())
       MOSymbol = getSymbol(MO.getGlobal());
     else if (MO.isCPI())
@@ -369,23 +373,19 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineOperand &MO = MI->getOperand(2);
     assert((MO.isGlobal() || MO.isCPI() || MO.isJTI()) &&
            "Invalid operand for ADDIStocHA!");
-    MCSymbol *MOSymbol = 0;
+    MCSymbol *MOSymbol = nullptr;
     bool IsExternal = false;
     bool IsFunction = false;
     bool IsCommon = false;
     bool IsAvailExt = false;
 
     if (MO.isGlobal()) {
-      const GlobalValue *GValue = MO.getGlobal();
-      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue = GAlias ?
-        GAlias->resolveAliasedGlobal(false) : GValue;
-      MOSymbol = getSymbol(RealGValue);
-      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
-      IsExternal = GVar && !GVar->hasInitializer();
-      IsCommon = GVar && RealGValue->hasCommonLinkage();
-      IsFunction = !GVar;
-      IsAvailExt = GVar && RealGValue->hasAvailableExternallyLinkage();
+      const GlobalValue *GV = MO.getGlobal();
+      MOSymbol = getSymbol(GV);
+      IsExternal = GV->isDeclaration();
+      IsCommon = GV->hasCommonLinkage();
+      IsFunction = GV->getType()->getElementType()->isFunctionTy();
+      IsAvailExt = GV->hasAvailableExternallyLinkage();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
     else if (MO.isJTI())
@@ -413,7 +413,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineOperand &MO = MI->getOperand(1);
     assert((MO.isGlobal() || MO.isJTI() || MO.isCPI()) &&
            "Invalid operand for LDtocL!");
-    MCSymbol *MOSymbol = 0;
+    MCSymbol *MOSymbol = nullptr;
 
     if (MO.isJTI())
       MOSymbol = lookUpOrCreateTOCEntry(GetJTISymbol(MO.getIndex()));
@@ -424,14 +424,10 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     else if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
-      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue = GAlias ?
-        GAlias->resolveAliasedGlobal(false) : GValue;
-      MOSymbol = getSymbol(RealGValue);
-      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
-    
-      if (!GVar || !GVar->hasInitializer() || RealGValue->hasCommonLinkage() ||
-          RealGValue->hasAvailableExternallyLinkage() ||
+      MOSymbol = getSymbol(GValue);
+      if (GValue->getType()->getElementType()->isFunctionTy() ||
+          GValue->isDeclaration() || GValue->hasCommonLinkage() ||
+          GValue->hasAvailableExternallyLinkage() ||
           TM.getCodeModel() == CodeModel::Large)
         MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
     }
@@ -453,19 +449,15 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.setOpcode(PPC::ADDI8);
     const MachineOperand &MO = MI->getOperand(2);
     assert((MO.isGlobal() || MO.isCPI()) && "Invalid operand for ADDItocL");
-    MCSymbol *MOSymbol = 0;
+    MCSymbol *MOSymbol = nullptr;
     bool IsExternal = false;
     bool IsFunction = false;
 
     if (MO.isGlobal()) {
-      const GlobalValue *GValue = MO.getGlobal();
-      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue = GAlias ?
-        GAlias->resolveAliasedGlobal(false) : GValue;
-      MOSymbol = getSymbol(RealGValue);
-      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
-      IsExternal = GVar && !GVar->hasInitializer();
-      IsFunction = !GVar;
+      const GlobalValue *GV = MO.getGlobal();
+      MOSymbol = getSymbol(GV);
+      IsExternal = GV->isDeclaration();
+      IsFunction = GV->getType()->getElementType()->isFunctionTy();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
 
@@ -865,14 +857,14 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (TM.getRelocationModel() == Reloc::PIC_) {
     OutStreamer.SwitchSection(
            OutContext.getMachOSection("__TEXT", "__picsymbolstub1",
-                                      MCSectionMachO::S_SYMBOL_STUBS |
-                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                      MachO::S_SYMBOL_STUBS |
+                                      MachO::S_ATTR_PURE_INSTRUCTIONS,
                                       32, SectionKind::getText()));
   } else if (TM.getRelocationModel() == Reloc::DynamicNoPIC) {
     OutStreamer.SwitchSection(
            OutContext.getMachOSection("__TEXT","__symbol_stub1",
-                                      MCSectionMachO::S_SYMBOL_STUBS |
-                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                      MachO::S_SYMBOL_STUBS |
+                                      MachO::S_ATTR_PURE_INSTRUCTIONS,
                                       16, SectionKind::getText()));
   }
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
@@ -904,8 +896,8 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   if (TM.getRelocationModel() == Reloc::PIC_) {
     const MCSection *StubSection = 
     OutContext.getMachOSection("__TEXT", "__picsymbolstub1",
-                               MCSectionMachO::S_SYMBOL_STUBS |
-                               MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                               MachO::S_SYMBOL_STUBS |
+                               MachO::S_ATTR_PURE_INSTRUCTIONS,
                                32, SectionKind::getText());
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       OutStreamer.SwitchSection(StubSection);
@@ -972,8 +964,8 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   
   const MCSection *StubSection =
     OutContext.getMachOSection("__TEXT","__symbol_stub1",
-                               MCSectionMachO::S_SYMBOL_STUBS |
-                               MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                               MachO::S_SYMBOL_STUBS |
+                               MachO::S_ATTR_PURE_INSTRUCTIONS,
                                16, SectionKind::getText());
   for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
     MCSymbol *Stub = Stubs[i].first;
@@ -1135,4 +1127,5 @@ static AsmPrinter *createPPCAsmPrinterPass(TargetMachine &tm,
 extern "C" void LLVMInitializePowerPCAsmPrinter() { 
   TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
   TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
+  TargetRegistry::RegisterAsmPrinter(ThePPC64LETarget, createPPCAsmPrinterPass);
 }

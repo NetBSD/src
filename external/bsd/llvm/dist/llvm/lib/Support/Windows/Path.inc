@@ -158,7 +158,13 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
   return error_code::success();
 }
 
-error_code create_hard_link(const Twine &to, const Twine &from) {
+error_code normalize_separators(SmallVectorImpl<char> &Path) {
+  (void) Path;
+  return error_code::success();
+}
+
+// We can't use symbolic links for windows.
+error_code create_link(const Twine &to, const Twine &from) {
   // Get arguments.
   SmallString<128> from_storage;
   SmallString<128> to_storage;
@@ -659,7 +665,6 @@ mapped_file_region::~mapped_file_region() {
     ::UnmapViewOfFile(Mapping);
 }
 
-#if LLVM_HAS_RVALUE_REFERENCES
 mapped_file_region::mapped_file_region(mapped_file_region &&other)
   : Mode(other.Mode)
   , Size(other.Size)
@@ -671,7 +676,6 @@ mapped_file_region::mapped_file_region(mapped_file_region &&other)
   other.FileHandle = INVALID_HANDLE_VALUE;
   other.FileDescriptor = 0;
 }
-#endif
 
 mapped_file_region::mapmode mapped_file_region::flags() const {
   assert(Mapping && "Mapping failed but used anyway!");
