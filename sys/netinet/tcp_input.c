@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.332 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.333 2014/05/30 02:27:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.332 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.333 2014/05/30 02:27:29 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3170,6 +3170,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 		 */
 		return KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 	}
+	return NULL;
 #else
 	if (ip)
 		return key_allocsa(AF_INET, (void *)&ip->ip_src,
