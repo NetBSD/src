@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.79 2013/12/16 00:59:37 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.80 2014/05/30 01:34:32 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 14, 2013
+.Dd May 29, 2014
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1889,6 +1889,8 @@ The currently defined variable and names are:
 .Bl -column "blockacq_lifetime" "integer" "Changeable" -offset indent
 .It Sy Variable name	Type	Changeable
 .It debug	integer	yes
+.It enabled	integer	yes
+.It used	integer	no
 .It spi_try	integer	yes
 .It spi_min_value	integer	yes
 .It spi_max_value	integer	yes
@@ -1906,6 +1908,12 @@ The variables are as follows:
 Turn on debugging message from within the kernel.
 The value is a bitmap, as defined in
 .In netkey/key_debug.h .
+.It Li enabled
+Turn on and off IPsec processing.
+.It Li used
+Based on if IPsec is enabled, and SPD rule existance, show if
+IPsec is being used.
+Note that currenly once IPsec is being used, it cannot be disabled.
 .It Li spi_try
 The number of times the kernel will try to obtain an unique SPI
 when it generates it from random number generator.
