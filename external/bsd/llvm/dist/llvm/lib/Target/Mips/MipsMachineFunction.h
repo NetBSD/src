@@ -17,12 +17,12 @@
 #include "Mips16HardFloatInfo.h"
 #include "MipsSubtarget.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/ValueMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/ValueMap.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include <map>
@@ -37,12 +37,12 @@ class MipsCallEntry : public PseudoSourceValue {
 public:
   explicit MipsCallEntry(const StringRef &N);
   explicit MipsCallEntry(const GlobalValue *V);
-  virtual bool isConstant(const MachineFrameInfo *) const;
-  virtual bool isAliased(const MachineFrameInfo *) const;
-  virtual bool mayAlias(const MachineFrameInfo *) const;
+  bool isConstant(const MachineFrameInfo *) const override;
+  bool isAliased(const MachineFrameInfo *) const override;
+  bool mayAlias(const MachineFrameInfo *) const override;
 
 private:
-  virtual void printCustom(raw_ostream &O) const;
+  void printCustom(raw_ostream &O) const override;
 #ifndef NDEBUG
   std::string Name;
   const GlobalValue *Val;

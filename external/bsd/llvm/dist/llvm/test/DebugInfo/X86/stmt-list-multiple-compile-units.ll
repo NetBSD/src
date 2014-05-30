@@ -8,13 +8,20 @@
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
-; CHECK: DW_AT_ranges [DW_FORM_sec_offset]      (0x00000000)
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000000)
+; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000010)
+; CHECK: DW_TAG_subprogram
+; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000000)
+; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000010)
 
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x0000003c)
-; CHECK: DW_AT_ranges [DW_FORM_sec_offset]      (0x00000020)
-; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000000)
+; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000010)
+; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000009)
+; CHECK: DW_TAG_subprogram
+; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000010)
+; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000009)
+
 
 ; CHECK: .debug_line contents:
 ; CHECK-NEXT: Line table prologue:
@@ -28,13 +35,10 @@
 ; DWARF3: .debug_info contents:
 ; DWARF3: DW_TAG_compile_unit
 ; DWARF3: DW_AT_stmt_list [DW_FORM_data4]    (0x00000000)
-; DWARF3: DW_AT_ranges [DW_FORM_data4]       (0x00000000)
-; DWARF3: DW_AT_low_pc [DW_FORM_addr]        (0x0000000000000000)
 
 ; DWARF3: DW_TAG_compile_unit
 ; DWARF3: DW_AT_stmt_list [DW_FORM_data4]   (0x0000003c)
-; DWARF3: DW_AT_ranges [DW_FORM_data4]      (0x00000020)
-; DWARF3: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
+
 
 ; DWARF3: .debug_line contents:
 ; DWARF3-NEXT: Line table prologue:
@@ -47,9 +51,11 @@
 
 ; PR15408
 ; ASM: L__DWARF__debug_info_begin0:
-; ASM: .long   0                       ## DW_AT_stmt_list
+; ASM: Lset3 = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
+; ASM-NEXT: .long   Lset3
 ; ASM: L__DWARF__debug_info_begin1:
-; ASM: .long   0                       ## DW_AT_stmt_list
+; ASM: Lset13 = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
+; ASM-NEXT: .long   Lset13
 define i32 @test(i32 %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca i32, align 4

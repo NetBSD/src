@@ -45,14 +45,14 @@ namespace llvm {
   class MCSymbolizer;
   class MCRelocationInfo;
   class MCTargetAsmParser;
+  class MCTargetOptions;
   class TargetMachine;
   class TargetOptions;
   class raw_ostream;
   class formatted_raw_ostream;
 
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                bool isVerboseAsm, bool useCFI,
-                                bool useDwarfDirectory,
+                                bool isVerboseAsm, bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
 
@@ -104,11 +104,14 @@ namespace llvm {
                                                 const MCRegisterInfo &MRI,
                                                 StringRef TT,
                                                 StringRef CPU);
-    typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
-                                                    MCAsmParser &P,
-                                                    const MCInstrInfo &MII);
+    typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(
+        MCSubtargetInfo &STI,
+        MCAsmParser &P,
+        const MCInstrInfo &MII,
+        const MCTargetOptions &Options);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T,
-                                                    const MCSubtargetInfo &STI);
+                                                    const MCSubtargetInfo &STI,
+                                                    MCContext &Ctx);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
                                                   const MCAsmInfo &MAI,
@@ -131,7 +134,6 @@ namespace llvm {
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
-                                             bool useCFI,
                                              bool useDwarfDirectory,
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
@@ -233,8 +235,8 @@ namespace llvm {
 
   public:
     Target()
-        : AsmStreamerCtorFn(0), MCRelocationInfoCtorFn(0),
-          MCSymbolizerCtorFn(0) {}
+        : AsmStreamerCtorFn(nullptr), MCRelocationInfoCtorFn(nullptr),
+          MCSymbolizerCtorFn(nullptr) {}
 
     /// @name Target Information
     /// @{
@@ -256,10 +258,10 @@ namespace llvm {
     bool hasJIT() const { return HasJIT; }
 
     /// hasTargetMachine - Check if this target supports code generation.
-    bool hasTargetMachine() const { return TargetMachineCtorFn != 0; }
+    bool hasTargetMachine() const { return TargetMachineCtorFn != nullptr; }
 
     /// hasMCAsmBackend - Check if this target supports .o generation.
-    bool hasMCAsmBackend() const { return MCAsmBackendCtorFn != 0; }
+    bool hasMCAsmBackend() const { return MCAsmBackendCtorFn != nullptr; }
 
     /// @}
     /// @name Feature Constructors
@@ -275,7 +277,7 @@ namespace llvm {
     MCAsmInfo *createMCAsmInfo(const MCRegisterInfo &MRI,
                                StringRef Triple) const {
       if (!MCAsmInfoCtorFn)
-        return 0;
+        return nullptr;
       return MCAsmInfoCtorFn(MRI, Triple);
     }
 
@@ -285,7 +287,7 @@ namespace llvm {
                                        CodeModel::Model CM,
                                        CodeGenOpt::Level OL) const {
       if (!MCCodeGenInfoCtorFn)
-        return 0;
+        return nullptr;
       return MCCodeGenInfoCtorFn(Triple, RM, CM, OL);
     }
 
@@ -293,7 +295,7 @@ namespace llvm {
     ///
     MCInstrInfo *createMCInstrInfo() const {
       if (!MCInstrInfoCtorFn)
-        return 0;
+        return nullptr;
       return MCInstrInfoCtorFn();
     }
 
@@ -301,7 +303,7 @@ namespace llvm {
     ///
     MCInstrAnalysis *createMCInstrAnalysis(const MCInstrInfo *Info) const {
       if (!MCInstrAnalysisCtorFn)
-        return 0;
+        return nullptr;
       return MCInstrAnalysisCtorFn(Info);
     }
 
@@ -309,7 +311,7 @@ namespace llvm {
     ///
     MCRegisterInfo *createMCRegInfo(StringRef Triple) const {
       if (!MCRegInfoCtorFn)
-        return 0;
+        return nullptr;
       return MCRegInfoCtorFn(Triple);
     }
 
@@ -325,7 +327,7 @@ namespace llvm {
     MCSubtargetInfo *createMCSubtargetInfo(StringRef Triple, StringRef CPU,
                                            StringRef Features) const {
       if (!MCSubtargetInfoCtorFn)
-        return 0;
+        return nullptr;
       return MCSubtargetInfoCtorFn(Triple, CPU, Features);
     }
 
@@ -342,7 +344,7 @@ namespace llvm {
                              CodeModel::Model CM = CodeModel::Default,
                              CodeGenOpt::Level OL = CodeGenOpt::Default) const {
       if (!TargetMachineCtorFn)
-        return 0;
+        return nullptr;
       return TargetMachineCtorFn(*this, Triple, CPU, Features, Options,
                                  RM, CM, OL);
     }
@@ -353,7 +355,7 @@ namespace llvm {
     MCAsmBackend *createMCAsmBackend(const MCRegisterInfo &MRI,
                                      StringRef Triple, StringRef CPU) const {
       if (!MCAsmBackendCtorFn)
-        return 0;
+        return nullptr;
       return MCAsmBackendCtorFn(*this, MRI, Triple, CPU);
     }
 
@@ -361,26 +363,29 @@ namespace llvm {
     ///
     /// \param Parser The target independent parser implementation to use for
     /// parsing and lexing.
-    MCTargetAsmParser *createMCAsmParser(MCSubtargetInfo &STI,
-                                         MCAsmParser &Parser,
-                                         const MCInstrInfo &MII) const {
+    MCTargetAsmParser *createMCAsmParser(
+        MCSubtargetInfo &STI,
+        MCAsmParser &Parser,
+        const MCInstrInfo &MII,
+        const MCTargetOptions &Options) const {
       if (!MCAsmParserCtorFn)
-        return 0;
-      return MCAsmParserCtorFn(STI, Parser, MII);
+        return nullptr;
+      return MCAsmParserCtorFn(STI, Parser, MII, Options);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
     /// takes ownership of the MCStreamer object.
     AsmPrinter *createAsmPrinter(TargetMachine &TM, MCStreamer &Streamer) const{
       if (!AsmPrinterCtorFn)
-        return 0;
+        return nullptr;
       return AsmPrinterCtorFn(TM, Streamer);
     }
 
-    MCDisassembler *createMCDisassembler(const MCSubtargetInfo &STI) const {
+    MCDisassembler *createMCDisassembler(const MCSubtargetInfo &STI,
+                                         MCContext &Ctx) const {
       if (!MCDisassemblerCtorFn)
-        return 0;
-      return MCDisassemblerCtorFn(*this, STI);
+        return nullptr;
+      return MCDisassemblerCtorFn(*this, STI, Ctx);
     }
 
     MCInstPrinter *createMCInstPrinter(unsigned SyntaxVariant,
@@ -389,7 +394,7 @@ namespace llvm {
                                        const MCRegisterInfo &MRI,
                                        const MCSubtargetInfo &STI) const {
       if (!MCInstPrinterCtorFn)
-        return 0;
+        return nullptr;
       return MCInstPrinterCtorFn(*this, SyntaxVariant, MAI, MII, MRI, STI);
     }
 
@@ -400,7 +405,7 @@ namespace llvm {
                                        const MCSubtargetInfo &STI,
                                        MCContext &Ctx) const {
       if (!MCCodeEmitterCtorFn)
-        return 0;
+        return nullptr;
       return MCCodeEmitterCtorFn(II, MRI, STI, Ctx);
     }
 
@@ -421,7 +426,7 @@ namespace llvm {
                                        bool RelaxAll,
                                        bool NoExecStack) const {
       if (!MCObjectStreamerCtorFn)
-        return 0;
+        return nullptr;
       return MCObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, STI,
                                     RelaxAll, NoExecStack);
     }
@@ -430,19 +435,16 @@ namespace llvm {
     MCStreamer *createAsmStreamer(MCContext &Ctx,
                                   formatted_raw_ostream &OS,
                                   bool isVerboseAsm,
-                                  bool useCFI,
                                   bool useDwarfDirectory,
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
                                   MCAsmBackend *TAB,
                                   bool ShowInst) const {
       if (AsmStreamerCtorFn)
-        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useCFI,
-                                 useDwarfDirectory, InstPrint, CE, TAB,
-                                 ShowInst);
-      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useCFI,
-                                     useDwarfDirectory, InstPrint, CE, TAB,
-                                     ShowInst);
+        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useDwarfDirectory,
+                                 InstPrint, CE, TAB, ShowInst);
+      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useDwarfDirectory,
+                                     InstPrint, CE, TAB, ShowInst);
     }
 
     /// createMCRelocationInfo - Create a target specific MCRelocationInfo.
@@ -486,8 +488,7 @@ namespace llvm {
       explicit iterator(Target *T) : Current(T) {}
       friend struct TargetRegistry;
     public:
-      iterator(const iterator &I) : Current(I.Current) {}
-      iterator() : Current(0) {}
+      iterator() : Current(nullptr) {}
 
       bool operator==(const iterator &x) const {
         return Current == x.Current;
@@ -1098,8 +1099,9 @@ namespace llvm {
 
   private:
     static MCTargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P,
-                                        const MCInstrInfo &MII) {
-      return new MCAsmParserImpl(STI, P, MII);
+                                        const MCInstrInfo &MII,
+                                        const MCTargetOptions &Options) {
+      return new MCAsmParserImpl(STI, P, MII, Options);
     }
   };
 

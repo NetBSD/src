@@ -162,7 +162,7 @@ TEST(ConstantsTest, PointerCast) {
   }
 
 TEST(ConstantsTest, AsInstructionsTest) {
-  OwningPtr<Module> M(new Module("MyModule", getGlobalContext()));
+  std::unique_ptr<Module> M(new Module("MyModule", getGlobalContext()));
 
   Type *Int64Ty = Type::getInt64Ty(getGlobalContext());
   Type *Int32Ty = Type::getInt32Ty(getGlobalContext());
@@ -253,6 +253,34 @@ TEST(ConstantsTest, AsInstructionsTest) {
   CHECK(ConstantExpr::getExtractElement(P6, One), "extractelement <2 x i16> "
         P6STR ", i32 1");
 }
+
+#ifdef GTEST_HAS_DEATH_TEST
+#ifndef NDEBUG
+TEST(ConstantsTest, ReplaceWithConstantTest) {
+  std::unique_ptr<Module> M(new Module("MyModule", getGlobalContext()));
+
+  Type *Int32Ty = Type::getInt32Ty(getGlobalContext());
+  Constant *One = ConstantInt::get(Int32Ty, 1);
+
+  Constant *Global =
+      M->getOrInsertGlobal("dummy", PointerType::getUnqual(Int32Ty));
+  Constant *GEP = ConstantExpr::getGetElementPtr(Global, One);
+  EXPECT_DEATH(Global->replaceAllUsesWith(GEP),
+               "this->replaceAllUsesWith\\(expr\\(this\\)\\) is NOT valid!");
+}
+
+TEST(ConstantsTest, ReplaceInAliasTest) {
+  std::unique_ptr<Module> M(new Module("MyModule", getGlobalContext()));
+
+  Type *Int32Ty = Type::getInt32Ty(getGlobalContext());
+  auto *Global = cast<GlobalObject>(M->getOrInsertGlobal("dummy", Int32Ty));
+  auto *GA = GlobalAlias::create(GlobalValue::ExternalLinkage, "alias", Global);
+  EXPECT_DEATH(Global->replaceAllUsesWith(GA),
+               "replaceAliasUseWith cannot form an alias cycle");
+}
+
+#endif
+#endif
 
 #undef CHECK
 

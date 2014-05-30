@@ -144,14 +144,14 @@ bool HexagonFrameLowering::hasTailCall(MachineBasicBlock &MBB) const {
 
 void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = std::prev(MBB.end());
   DebugLoc dl = MBBI->getDebugLoc();
   //
   // Only insert deallocframe if we need to.  Also at -O0.  See comment
   // in emitPrologue above.
   //
   if (hasFP(MF) || MF.getTarget().getOptLevel() == CodeGenOpt::None) {
-    MachineBasicBlock::iterator MBBI = prior(MBB.end());
+    MachineBasicBlock::iterator MBBI = std::prev(MBB.end());
     MachineBasicBlock::iterator MBBI_end = MBB.end();
 
     const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
@@ -170,7 +170,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
       // Check for RESTORE_DEALLOC_RET_JMP_V4 call. Don't emit an extra DEALLOC
       // instruction if we encounter it.
       MachineBasicBlock::iterator BeforeJMPR =
-        MBB.begin() == MBBI ? MBBI : prior(MBBI);
+        MBB.begin() == MBBI ? MBBI : std::prev(MBBI);
       if (BeforeJMPR != MBBI &&
           BeforeJMPR->getOpcode() == Hexagon::RESTORE_DEALLOC_RET_JMP_V4) {
         // Remove the JMPR node.
@@ -190,7 +190,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
       // DEALLOCFRAME instruction after it.
       MachineBasicBlock::iterator Term = MBB.getFirstTerminator();
       MachineBasicBlock::iterator I =
-        Term == MBB.begin() ?  MBB.end() : prior(Term);
+        Term == MBB.begin() ?  MBB.end() : std::prev(Term);
       if (I != MBB.end() &&
           I->getOpcode() == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4)
         return;
@@ -246,7 +246,7 @@ HexagonFrameLowering::spillCalleeSavedRegisters(
     //
     unsigned SuperReg = uniqueSuperReg(Reg, TRI);
     bool CanUseDblStore = false;
-    const TargetRegisterClass* SuperRegClass = 0;
+    const TargetRegisterClass* SuperRegClass = nullptr;
 
     if (ContiguousRegs && (i < CSI.size()-1)) {
       unsigned SuperRegNext = uniqueSuperReg(CSI[i+1].getReg(), TRI);
@@ -300,7 +300,7 @@ bool HexagonFrameLowering::restoreCalleeSavedRegisters(
     // Check if we can use a double-word load.
     //
     unsigned SuperReg = uniqueSuperReg(Reg, TRI);
-    const TargetRegisterClass* SuperRegClass = 0;
+    const TargetRegisterClass* SuperRegClass = nullptr;
     bool CanUseDblLoad = false;
     if (ContiguousRegs && (i < CSI.size()-1)) {
       unsigned SuperRegNext = uniqueSuperReg(CSI[i+1].getReg(), TRI);

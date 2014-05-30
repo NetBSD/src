@@ -86,3 +86,24 @@ def AMDGPUstore_mskor : SDNode<"AMDGPUISD::STORE_MSKOR",
 
 def AMDGPUround : SDNode<"ISD::FROUND",
                          SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisSameAs<0,1>]>>;
+
+def AMDGPUbfe_u32 : SDNode<"AMDGPUISD::BFE_U32", AMDGPUDTIntTernaryOp>;
+def AMDGPUbfe_i32 : SDNode<"AMDGPUISD::BFE_I32", AMDGPUDTIntTernaryOp>;
+def AMDGPUbfi : SDNode<"AMDGPUISD::BFI", AMDGPUDTIntTernaryOp>;
+def AMDGPUbfm : SDNode<"AMDGPUISD::BFM", SDTIntBinOp>;
+
+// Signed and unsigned 24-bit mulitply.  The highest 8-bits are ignore when
+// performing the mulitply.  The result is a 32-bit value.
+def AMDGPUmul_u24 : SDNode<"AMDGPUISD::MUL_U24", SDTIntBinOp,
+  [SDNPCommutative]
+>;
+def AMDGPUmul_i24 : SDNode<"AMDGPUISD::MUL_I24", SDTIntBinOp,
+  [SDNPCommutative]
+>;
+
+def AMDGPUmad_u24 : SDNode<"AMDGPUISD::MAD_U24", AMDGPUDTIntTernaryOp,
+  []
+>;
+def AMDGPUmad_i24 : SDNode<"AMDGPUISD::MAD_I24", AMDGPUDTIntTernaryOp,
+  []
+>;
