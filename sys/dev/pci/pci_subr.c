@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.121 2014/05/27 16:50:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.122 2014/05/30 03:42:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.121 2014/05/27 16:50:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.122 2014/05/30 03:42:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1117,7 +1117,109 @@ pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
 }
 
 /* XXX pci_conf_print_cpci_hostwap_cap */
-/* XXX pci_conf_print_pcix_cap */
+
+/*
+ * For both command register and status register.
+ * The argument "idx" is index number (0 to 7).
+ */
+static int
+pcix_split_trans(unsigned int idx)
+{
+	static int table[8] = {
+		1, 2, 3, 4, 8, 12, 16, 32
+	};
+
+	if (idx >= __arraycount(table))
+		return -1;
+	return table[idx];
+}
+
+static void
+pci_conf_print_pcix_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg;
+	int isbridge;
+	int i;
+
+	isbridge = (PCI_HDRTYPE_TYPE(regs[o2i(PCI_BHLC_REG)])
+	    & PCI_HDRTYPE_PPB) != 0 ? 1 : 0;
+	printf("\n  PCI-X %s Capabilities Register\n",
+	    isbridge ? "Bridge" : "Non-bridge");
+
+	reg = regs[o2i(capoff)];
+	if (isbridge != 0) {
+		printf("    Secondary status register: 0x%04x\n",
+		    (reg & 0xffff0000) >> 16);
+		onoff("64bit device", reg, PCIX_STATUS_64BIT);
+		onoff("133MHz capable", reg, PCIX_STATUS_133);
+		onoff("Split completion discarded", reg, PCIX_STATUS_SPLDISC);
+		onoff("Unexpected split completion", reg, PCIX_STATUS_SPLUNEX);
+		onoff("Split completion overrun", reg, PCIX_BRIDGE_ST_SPLOVRN);
+		onoff("Split request delayed", reg, PCIX_BRIDGE_ST_SPLRQDL);
+		printf("      Secondary clock frequency: 0x%x\n",
+		    (reg & PCIX_BRIDGE_2NDST_CLKF)
+		    >> PCIX_BRIDGE_2NDST_CLKF_SHIFT);
+		printf("      Version: 0x%x\n",
+		    (reg & PCIX_BRIDGE_2NDST_VER_MASK)
+		    >> PCIX_BRIDGE_2NDST_VER_SHIFT);
+		onoff("266MHz capable", reg, PCIX_BRIDGE_ST_266);
+		onoff("533MHz capable", reg, PCIX_BRIDGE_ST_533);
+	} else {
+		printf("    Command register: 0x%04x\n",
+		    (reg & 0xffff0000) >> 16);
+		onoff("Data Parity Error Recovery", reg,
+		    PCIX_CMD_PERR_RECOVER);
+		onoff("Enable Relaxed Ordering", reg, PCIX_CMD_RELAXED_ORDER);
+		printf("      Maximum Burst Read Count: %u\n",
+		    PCIX_CMD_BYTECNT(reg));
+		printf("      Maximum Split Transactions: %d\n",
+		    pcix_split_trans((reg & PCIX_CMD_SPLTRANS_MASK)
+			>> PCIX_CMD_SPLTRANS_SHIFT));
+	}
+	reg = regs[o2i(capoff+PCIX_STATUS)]; /* Or PCIX_BRIDGE_PRI_STATUS */
+	printf("    %sStatus register: 0x%08x\n",
+	    isbridge ? "Bridge " : "", reg);
+	printf("      Function: %d\n", PCIX_STATUS_FN(reg));
+	printf("      Device: %d\n", PCIX_STATUS_DEV(reg));
+	printf("      Bus: %d\n", PCIX_STATUS_BUS(reg));
+	onoff("64bit device", reg, PCIX_STATUS_64BIT);
+	onoff("133MHz capable", reg, PCIX_STATUS_133);
+	onoff("Split completion discarded", reg, PCIX_STATUS_SPLDISC);
+	onoff("Unexpected split completion", reg, PCIX_STATUS_SPLUNEX);
+	if (isbridge != 0) {
+		onoff("Split completion overrun", reg, PCIX_BRIDGE_ST_SPLOVRN);
+		onoff("Split request delayed", reg, PCIX_BRIDGE_ST_SPLRQDL);
+	} else {
+		onoff2("Device Complexity", reg, PCIX_STATUS_DEVCPLX,
+		    "bridge device", "simple device");
+		printf("      Designed max memory read byte count: %d\n",
+		    512 << ((reg & PCIX_STATUS_MAXB_MASK)
+			>> PCIX_STATUS_MAXB_SHIFT));
+		printf("      Designed max outstanding split transaction: %d\n",
+		    pcix_split_trans((reg & PCIX_STATUS_MAXST_MASK)
+			>> PCIX_STATUS_MAXST_SHIFT));
+		printf("      MAX cumulative Read Size: %u\n",
+		    8 << ((reg & 0x1c000000) >> PCIX_STATUS_MAXRS_SHIFT));
+		onoff("Received split completion error", reg,
+		    PCIX_STATUS_SCERR);
+	}
+	onoff("266MHz capable", reg, PCIX_STATUS_266);
+	onoff("533MHz capable", reg, PCIX_STATUS_533);
+
+	if (isbridge == 0)
+		return;
+
+	/* Only for bridge */
+	for (i = 0; i < 2; i++) {
+		reg = regs[o2i(capoff+PCIX_BRIDGE_UP_STCR + (4 * i))];
+		printf("    %s split transaction control register: 0x%08x\n",
+		    (i == 0) ? "Upstream" : "Downstream", reg);
+		printf("      Capacity: %d\n", reg & PCIX_BRIDGE_STCAP);
+		printf("      Commitment Limit: %d\n",
+		    (reg & PCIX_BRIDGE_STCLIM) >> PCIX_BRIDGE_STCLIM_SHIFT);
+	}
+}
+
 /* XXX pci_conf_print_ldt_cap */
 /* XXX pci_conf_print_vendspec_cap */
 
@@ -1329,8 +1431,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	pci_print_pcie_L0s_latency((reg & PCIE_DCAP_L0S_LATENCY) >> 6);
 	printf("      Endpoint L1 Acceptable Latency: ");
 	pci_print_pcie_L1_latency((reg & PCIE_DCAP_L1_LATENCY) >> 9);
-	onoff("Attention Button Present:", reg, PCIE_DCAP_ATTN_BUTTON);
-	onoff("Attention Indicator Present:", reg, PCIE_DCAP_ATTN_IND);
+	onoff("Attention Button Present", reg, PCIE_DCAP_ATTN_BUTTON);
+	onoff("Attention Indicator Present", reg, PCIE_DCAP_ATTN_IND);
 	onoff("Power Indicator Present", reg, PCIE_DCAP_PWR_IND);
 	onoff("Role-Based Error Report", reg, PCIE_DCAP_ROLE_ERR_RPT);
 	printf("      Captured Slot Power Limit Value: %d\n",
@@ -1745,8 +1847,8 @@ pci_conf_print_caplist(
 {
 	int off;
 	pcireg_t rval;
-	int pcie_off = -1, pcipm_off = -1, msi_off = -1, vendspec_off = -1;
-	int msix_off = -1;
+	int pcie_off = -1, pcipm_off = -1, msi_off = -1, pcix_off = -1;
+	int vendspec_off = -1, msix_off = -1;
 	int debugport_off = -1, subsystem_off = -1, pciaf_off = -1;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
@@ -1784,6 +1886,7 @@ pci_conf_print_caplist(
 			printf("CompactPCI Hot-swapping");
 			break;
 		case PCI_CAP_PCIX:
+			pcix_off = off;
 			printf("PCI-X");
 			break;
 		case PCI_CAP_LDT:
@@ -1841,7 +1944,8 @@ pci_conf_print_caplist(
 	if (msi_off != -1)
 		pci_conf_print_msi_cap(regs, msi_off);
 	/* XXX CPCI_HOTSWAP */
-	/* XXX PCIX */
+	if (pcix_off != -1)
+		pci_conf_print_pcix_cap(regs, pcix_off);
 	/* XXX LDT */
 	if (vendspec_off != -1)
 		pci_conf_print_vendspec_cap(regs, vendspec_off);

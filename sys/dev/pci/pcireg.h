@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.93 2014/05/27 16:26:15 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.94 2014/05/30 03:42:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -640,7 +640,13 @@ typedef u_int8_t pci_revision_t;
 /*
  * Capability ID: 0x07
  * PCI-X capability.
+ *
+ * PCI-X capability register has two different layouts. One is for bridge
+ * function. Another is for non-bridge functions.
  */
+
+
+/* For non-bridge functions */
 
 /*
  * Command. 16 bits at offset 2 (e.g. upper 16 bits of the first 32-bit
@@ -651,21 +657,24 @@ typedef u_int8_t pci_revision_t;
  * as 32-bit values, offset and shifted appropriately.  Make sure you perform
  * the appropriate R/M/W cycles!
  */
-#define PCIX_CMD			0x00
+#define PCIX_CMD		0x00
 #define PCIX_CMD_PERR_RECOVER	0x00010000
 #define PCIX_CMD_RELAXED_ORDER	0x00020000
 #define PCIX_CMD_BYTECNT_MASK	0x000c0000
 #define	PCIX_CMD_BYTECNT_SHIFT	18
-#define		PCIX_CMD_BCNT_512		0x00000000
-#define		PCIX_CMD_BCNT_1024		0x00040000
-#define		PCIX_CMD_BCNT_2048		0x00080000
-#define		PCIX_CMD_BCNT_4096		0x000c0000
+#define	PCIX_CMD_BYTECNT(reg)	\
+	(512 << (((reg) & PCIX_CMD_BYTECNT_MASK) >> PCIX_CMD_BYTECNT_SHIFT))
+#define		PCIX_CMD_BCNT_512	0x00000000
+#define		PCIX_CMD_BCNT_1024	0x00040000
+#define		PCIX_CMD_BCNT_2048	0x00080000
+#define		PCIX_CMD_BCNT_4096	0x000c0000
 #define PCIX_CMD_SPLTRANS_MASK	0x00700000
-#define		PCIX_CMD_SPLTRANS_1		0x00000000
-#define		PCIX_CMD_SPLTRANS_2		0x00100000
-#define		PCIX_CMD_SPLTRANS_3		0x00200000
-#define		PCIX_CMD_SPLTRANS_4		0x00300000
-#define		PCIX_CMD_SPLTRANS_8		0x00400000
+#define	PCIX_CMD_SPLTRANS_SHIFT	20
+#define		PCIX_CMD_SPLTRANS_1	0x00000000
+#define		PCIX_CMD_SPLTRANS_2	0x00100000
+#define		PCIX_CMD_SPLTRANS_3	0x00200000
+#define		PCIX_CMD_SPLTRANS_4	0x00300000
+#define		PCIX_CMD_SPLTRANS_8	0x00400000
 #define		PCIX_CMD_SPLTRANS_12	0x00500000
 #define		PCIX_CMD_SPLTRANS_16	0x00600000
 #define		PCIX_CMD_SPLTRANS_32	0x00700000
@@ -673,31 +682,40 @@ typedef u_int8_t pci_revision_t;
 /*
  * Status. 32 bits at offset 4.
  */
-#define PCIX_STATUS			0x04
-#define PCIX_STATUS_FN_MASK		0x00000007
+#define PCIX_STATUS		0x04
+#define PCIX_STATUS_FN_MASK	0x00000007
 #define PCIX_STATUS_DEV_MASK	0x000000f8
+#define PCIX_STATUS_DEV_SHIFT	3
 #define PCIX_STATUS_BUS_MASK	0x0000ff00
-#define PCIX_STATUS_64BIT		0x00010000
-#define PCIX_STATUS_133		0x00020000
-#define PCIX_STATUS_SPLDISC		0x00040000
-#define PCIX_STATUS_SPLUNEX		0x00080000
-#define PCIX_STATUS_DEVCPLX		0x00100000
-#define PCIX_STATUS_MAXB_MASK	0x00600000
+#define PCIX_STATUS_BUS_SHIFT	8
+#define PCIX_STATUS_FN(val)	((val) & PCIX_STATUS_FN_MASK)
+#define PCIX_STATUS_DEV(val)	\
+	(((val) & PCIX_STATUS_DEV_MASK) >> PCIX_STATUS_DEV_SHIFT)
+#define PCIX_STATUS_BUS(val)	\
+	(((val) & PCIX_STATUS_BUS_MASK) >> PCIX_STATUS_BUS_SHIFT)
+#define PCIX_STATUS_64BIT	0x00010000	/* 64bit device */
+#define PCIX_STATUS_133		0x00020000	/* 133MHz capable */
+#define PCIX_STATUS_SPLDISC	0x00040000	/* Split completion discarded*/
+#define PCIX_STATUS_SPLUNEX	0x00080000	/* Unexpected split complet. */
+#define PCIX_STATUS_DEVCPLX	0x00100000	/* Device Complexity */
+#define PCIX_STATUS_MAXB_MASK	0x00600000	/* MAX memory read Byte count*/
 #define	PCIX_STATUS_MAXB_SHIFT	21
 #define		PCIX_STATUS_MAXB_512	0x00000000
 #define		PCIX_STATUS_MAXB_1024	0x00200000
 #define		PCIX_STATUS_MAXB_2048	0x00400000
 #define		PCIX_STATUS_MAXB_4096	0x00600000
-#define PCIX_STATUS_MAXST_MASK	0x03800000
-#define		PCIX_STATUS_MAXST_1		0x00000000
-#define		PCIX_STATUS_MAXST_2		0x00800000
-#define		PCIX_STATUS_MAXST_3		0x01000000
-#define		PCIX_STATUS_MAXST_4		0x01800000
-#define		PCIX_STATUS_MAXST_8		0x02000000
+#define PCIX_STATUS_MAXST_MASK	0x03800000	/* MAX outstand. Split Trans.*/
+#define	PCIX_STATUS_MAXST_SHIFT	23
+#define		PCIX_STATUS_MAXST_1	0x00000000
+#define		PCIX_STATUS_MAXST_2	0x00800000
+#define		PCIX_STATUS_MAXST_3	0x01000000
+#define		PCIX_STATUS_MAXST_4	0x01800000
+#define		PCIX_STATUS_MAXST_8	0x02000000
 #define		PCIX_STATUS_MAXST_12	0x02800000
 #define		PCIX_STATUS_MAXST_16	0x03000000
 #define		PCIX_STATUS_MAXST_32	0x03800000
-#define PCIX_STATUS_MAXRS_MASK	0x1c000000
+#define PCIX_STATUS_MAXRS_MASK	0x1c000000	/* MAX cumulative Read Size */
+#define PCIX_STATUS_MAXRS_SHIFT	26
 #define		PCIX_STATUS_MAXRS_1K	0x00000000
 #define		PCIX_STATUS_MAXRS_2K	0x04000000
 #define		PCIX_STATUS_MAXRS_4K	0x08000000
@@ -706,7 +724,37 @@ typedef u_int8_t pci_revision_t;
 #define		PCIX_STATUS_MAXRS_32K	0x14000000
 #define		PCIX_STATUS_MAXRS_64K	0x18000000
 #define		PCIX_STATUS_MAXRS_128K	0x1c000000
-#define PCIX_STATUS_SCERR			0x20000000
+#define PCIX_STATUS_SCERR	0x20000000	/* rcv. Split Completion ERR.*/
+#define PCIX_STATUS_266		0x40000000	/* 266MHz capable */
+#define PCIX_STATUS_533		0x80000000	/* 533MHz capable */
+
+/* For bridge function */
+
+#define PCIX_BRIDGE_2ND_STATUS	0x00
+#define PCIX_BRIDGE_ST_64BIT	0x00010000	/* Same as PCIX_STATUS (nonb)*/
+#define PCIX_BRIDGE_ST_133	0x00020000	/* Same as PCIX_STATUS (nonb)*/
+#define PCIX_BRIDGE_ST_SPLDISC	0x00040000	/* Same as PCIX_STATUS (nonb)*/
+#define PCIX_BRIDGE_ST_SPLUNEX	0x00080000	/* Same as PCIX_STATUS (nonb)*/
+#define PCIX_BRIDGE_ST_SPLOVRN	0x00100000	/* Split completion overrun */
+#define PCIX_BRIDGE_ST_SPLRQDL	0x00200000	/* Split request delayed */
+#define PCIX_BRIDGE_2NDST_CLKF	0x03c00000	/* Secondary clock frequency */
+#define PCIX_BRIDGE_2NDST_CLKF_SHIFT 22
+#define PCIX_BRIDGE_2NDST_VER_MASK 0x30000000	/* Version */
+#define PCIX_BRIDGE_2NDST_VER_SHIFT 28
+#define PCIX_BRIDGE_ST_266	0x40000000	/* Same as PCIX_STATUS (nonb)*/
+#define PCIX_BRIDGE_ST_533	0x80000000	/* Same as PCIX_STATUS (nonb)*/
+
+#define PCIX_BRIDGE_PRI_STATUS	0x04
+/* Bit 0 to 15 are the same as PCIX_STATUS */
+/* Bit 16 to 21 are the same as PCIX_BRIDGE_2ND_STATUS */
+/* Bit 30 and 31 are the same as PCIX_BRIDGE_2ND_STATUS */
+
+#define PCIX_BRIDGE_UP_STCR	0x08 /* Upstream Split Transaction Control */
+#define PCIX_BRIDGE_DOWN_STCR	0x0c /* Downstream Split Transaction Control */
+/* The layouts of above two registers are the same */
+#define PCIX_BRIDGE_STCAP	0x0000ffff	/* Sp. Tr. Capacity */
+#define PCIX_BRIDGE_STCLIM	0xffff0000	/* Sp. Tr. Commitment Limit */
+#define PCIX_BRIDGE_STCLIM_SHIFT 16
 
 /*
  * Capability ID: 0x08
