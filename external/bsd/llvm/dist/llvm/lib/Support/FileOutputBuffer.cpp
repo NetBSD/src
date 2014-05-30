@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileOutputBuffer.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
@@ -33,7 +32,7 @@ FileOutputBuffer::~FileOutputBuffer() {
 
 error_code FileOutputBuffer::create(StringRef FilePath,
                                     size_t Size,
-                                    OwningPtr<FileOutputBuffer> &Result,
+                                    std::unique_ptr<FileOutputBuffer> &Result,
                                     unsigned Flags) {
   // If file already exists, it must be a regular file (to be mappable).
   sys::fs::file_status Stat;
@@ -73,21 +72,21 @@ error_code FileOutputBuffer::create(StringRef FilePath,
   if (EC)
     return EC;
 
-  OwningPtr<mapped_file_region> MappedFile(new mapped_file_region(
+  std::unique_ptr<mapped_file_region> MappedFile(new mapped_file_region(
       FD, true, mapped_file_region::readwrite, Size, 0, EC));
   if (EC)
     return EC;
 
   Result.reset(new FileOutputBuffer(MappedFile.get(), FilePath, TempFilePath));
   if (Result)
-    MappedFile.take();
+    MappedFile.release();
 
   return error_code::success();
 }
 
 error_code FileOutputBuffer::commit(int64_t NewSmallerSize) {
   // Unmap buffer, letting OS flush dirty pages to file on disk.
-  Region.reset(0);
+  Region.reset(nullptr);
 
   // If requested, resize file as part of commit.
   if ( NewSmallerSize != -1 ) {

@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "pei"
 #include "PrologEpilogInserter.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -45,6 +44,8 @@
 #include <climits>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "pei"
 
 char PEI::ID = 0;
 char &llvm::PrologEpilogCodeInserterID = PEI::ID;
@@ -114,7 +115,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   assert(!Fn.getRegInfo().getNumVirtRegs() && "Regalloc must assign all vregs");
 
-  RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
+  RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : nullptr;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
 
   // Calculate the MaxCallFrameSize and AdjustsStack variables for the
@@ -243,14 +244,14 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
   MachineFrameInfo *MFI = F.getFrameInfo();
 
   // Get the callee saved register list...
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&F);
+  const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs(&F);
 
   // These are used to keep track the callee-save area. Initialize them.
   MinCSFrameIndex = INT_MAX;
   MaxCSFrameIndex = 0;
 
   // Early exit for targets which have no callee saved registers.
-  if (CSRegs == 0 || CSRegs[0] == 0)
+  if (!CSRegs || CSRegs[0] == 0)
     return;
 
   // In Naked functions we aren't going to save any registers.
@@ -680,7 +681,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   // we've been asked for it.  This, when linked with a runtime with support
   // for segmented stacks (libgcc is one), will result in allocating stack
   // space in small chunks instead of one large contiguous block.
-  if (Fn.getTarget().Options.EnableSegmentedStacks)
+  if (Fn.shouldSplitStack())
     TFI.adjustForSegmentedStacks(Fn);
 
   // Emit additional code that is required to explicitly handle the stack in
@@ -759,14 +760,14 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
       SPAdj += Size;
 
       MachineBasicBlock::iterator PrevI = BB->end();
-      if (I != BB->begin()) PrevI = prior(I);
+      if (I != BB->begin()) PrevI = std::prev(I);
       TFI->eliminateCallFramePseudoInstr(Fn, *BB, I);
 
       // Visit the instructions created by eliminateCallFramePseudoInstr().
       if (PrevI == BB->end())
         I = BB->begin();     // The replaced instr was the first in the block.
       else
-        I = llvm::next(PrevI);
+        I = std::next(PrevI);
       continue;
     }
 
@@ -805,7 +806,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
       // use that target machine register info object to eliminate
       // it.
       TRI.eliminateFrameIndex(MI, SPAdj, i,
-                              FrameIndexVirtualScavenging ?  NULL : RS);
+                              FrameIndexVirtualScavenging ?  nullptr : RS);
 
       // Reset the iterator if we were at the beginning of the BB.
       if (AtBeginning) {
@@ -813,7 +814,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         DoIncr = false;
       }
 
-      MI = 0;
+      MI = nullptr;
       break;
     }
 
@@ -845,13 +846,14 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
       // We might end up here again with a NULL iterator if we scavenged a
       // register for which we inserted spill code for definition by what was
       // originally the first instruction in BB.
-      if (I == MachineBasicBlock::iterator(NULL))
+      if (I == MachineBasicBlock::iterator(nullptr))
         I = BB->begin();
 
       MachineInstr *MI = I;
-      MachineBasicBlock::iterator J = llvm::next(I);
-      MachineBasicBlock::iterator P = I == BB->begin() ?
-        MachineBasicBlock::iterator(NULL) : llvm::prior(I);
+      MachineBasicBlock::iterator J = std::next(I);
+      MachineBasicBlock::iterator P =
+                         I == BB->begin() ? MachineBasicBlock::iterator(nullptr)
+                                          : std::prev(I);
 
       // RS should process this instruction before we might scavenge at this
       // location. This is because we might be replacing a virtual register
@@ -894,7 +896,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
       // spill code will have been inserted in between I and J. This is a
       // problem because we need the spill code before I: Move I to just
       // prior to J.
-      if (I != llvm::prior(J)) {
+      if (I != std::prev(J)) {
         BB->splice(J, BB, I);
 
         // Before we move I, we need to prepare the RS to visit I again.

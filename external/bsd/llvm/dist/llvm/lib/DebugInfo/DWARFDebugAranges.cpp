@@ -10,6 +10,7 @@
 #include "DWARFDebugAranges.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFContext.h"
+#include "DWARFDebugArangeSet.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -20,28 +21,13 @@ void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
   if (!DebugArangesData.isValidOffset(0))
     return;
   uint32_t Offset = 0;
-  typedef std::vector<DWARFDebugArangeSet> RangeSetColl;
-  RangeSetColl Sets;
   DWARFDebugArangeSet Set;
-  uint32_t TotalRanges = 0;
 
   while (Set.extract(DebugArangesData, &Offset)) {
-    Sets.push_back(Set);
-    TotalRanges += Set.getNumDescriptors();
-  }
-  if (TotalRanges == 0)
-    return;
-
-  Aranges.reserve(TotalRanges);
-  for (RangeSetColl::const_iterator I = Sets.begin(), E = Sets.end(); I != E;
-       ++I) {
-    uint32_t CUOffset = I->getCompileUnitDIEOffset();
-
-    for (uint32_t i = 0, n = I->getNumDescriptors(); i < n; ++i) {
-      const DWARFDebugArangeSet::Descriptor *ArangeDescPtr =
-          I->getDescriptor(i);
-      uint64_t LowPC = ArangeDescPtr->Address;
-      uint64_t HighPC = LowPC + ArangeDescPtr->Length;
+    uint32_t CUOffset = Set.getCompileUnitDIEOffset();
+    for (const auto &Desc : Set.descriptors()) {
+      uint64_t LowPC = Desc.Address;
+      uint64_t HighPC = Desc.getEndAddress();
       appendRange(CUOffset, LowPC, HighPC);
     }
   }
@@ -59,15 +45,23 @@ void DWARFDebugAranges::generate(DWARFContext *CTX) {
   // Generate aranges from DIEs: even if .debug_aranges section is present,
   // it may describe only a small subset of compilation units, so we need to
   // manually build aranges for the rest of them.
-  for (uint32_t i = 0, n = CTX->getNumCompileUnits(); i < n; ++i) {
-    if (DWARFCompileUnit *CU = CTX->getCompileUnitAtIndex(i)) {
-      uint32_t CUOffset = CU->getOffset();
-      if (ParsedCUOffsets.insert(CUOffset).second)
-        CU->buildAddressRangeTable(this, true, CUOffset);
+  for (const auto &CU : CTX->compile_units()) {
+    uint32_t CUOffset = CU->getOffset();
+    if (ParsedCUOffsets.insert(CUOffset).second) {
+      DWARFAddressRangesVector CURanges;
+      CU->collectAddressRanges(CURanges);
+      for (const auto &R : CURanges) {
+        appendRange(CUOffset, R.first, R.second);
+      }
     }
   }
 
   sortAndMinimize();
+}
+
+void DWARFDebugAranges::clear() {
+  Aranges.clear();
+  ParsedCUOffsets.clear();
 }
 
 void DWARFDebugAranges::appendRange(uint32_t CUOffset, uint64_t LowPC,
@@ -105,11 +99,6 @@ void DWARFDebugAranges::sortAndMinimize() {
     if (!Range::SortedOverlapCheck(Aranges[i-1], Aranges[i]))
       ++minimal_size;
   }
-
-  // If the sizes are the same, then no consecutive aranges can be
-  // combined, we are done.
-  if (minimal_size == orig_arange_size)
-    return;
 
   // Else, make a new RangeColl that _only_ contains what we need.
   RangeColl minimal_aranges;

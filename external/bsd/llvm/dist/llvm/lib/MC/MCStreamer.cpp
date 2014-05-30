@@ -34,9 +34,10 @@ void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 
 void MCTargetStreamer::finish() {}
 
+void MCTargetStreamer::emitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
+
 MCStreamer::MCStreamer(MCContext &Ctx)
-    : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
-      CurrentW64UnwindInfo(0), LastSymbol(0) {
+    : Context(Ctx), CurrentW64UnwindInfo(nullptr), LastSymbol(nullptr) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 
@@ -49,10 +50,8 @@ void MCStreamer::reset() {
   for (unsigned i = 0; i < getNumW64UnwindInfos(); ++i)
     delete W64UnwindInfos[i];
   W64UnwindInfos.clear();
-  EmitEHFrame = true;
-  EmitDebugFrame = false;
-  CurrentW64UnwindInfo = 0;
-  LastSymbol = 0;
+  CurrentW64UnwindInfo = nullptr;
+  LastSymbol = nullptr;
   SectionStack.clear();
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
@@ -71,8 +70,8 @@ const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
 }
 
 const MCExpr *MCStreamer::ForceExpAbs(const MCExpr* Expr) {
-  if (Context.getAsmInfo()->hasAggressiveSymbolFolding() ||
-      isa<MCSymbolRefExpr>(Expr))
+  assert(!isa<MCSymbolRefExpr>(Expr));
+  if (Context.getAsmInfo()->hasAggressiveSymbolFolding())
     return Expr;
 
   MCSymbol *ABS = Context.CreateTempSymbol();
@@ -145,8 +144,9 @@ void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size) {
 }
 
 
-void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
-  EmitValueImpl(Value, Size);
+void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size,
+                           const SMLoc &Loc) {
+  EmitValueImpl(Value, Size, Loc);
 }
 
 void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size) {
@@ -174,10 +174,10 @@ void MCStreamer::EmitZeros(uint64_t NumBytes) {
   EmitFill(NumBytes, 0);
 }
 
-bool MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
-                                        StringRef Directory,
-                                        StringRef Filename, unsigned CUID) {
-  return getContext().GetDwarfFile(Directory, Filename, FileNo, CUID) == 0;
+unsigned MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
+                                            StringRef Directory,
+                                            StringRef Filename, unsigned CUID) {
+  return getContext().GetDwarfFile(Directory, Filename, FileNo, CUID);
 }
 
 void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
@@ -189,9 +189,19 @@ void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                   Discriminator);
 }
 
+MCSymbol *MCStreamer::getDwarfLineTableSymbol(unsigned CUID) {
+  MCDwarfLineTable &Table = getContext().getMCDwarfLineTable(CUID);
+  if (!Table.getLabel()) {
+    StringRef Prefix = Context.getAsmInfo()->getPrivateGlobalPrefix();
+    Table.setLabel(
+        Context.GetOrCreateSymbol(Prefix + "line_table_start" + Twine(CUID)));
+  }
+  return Table.getLabel();
+}
+
 MCDwarfFrameInfo *MCStreamer::getCurrentFrameInfo() {
   if (FrameInfos.empty())
-    return 0;
+    return nullptr;
   return &FrameInfos.back();
 }
 
@@ -205,7 +215,7 @@ void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol) {
 }
 
-void MCStreamer::InitSections(bool Force) {
+void MCStreamer::InitSections() {
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
@@ -246,8 +256,6 @@ void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
 
 void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   assert(EH || Debug);
-  EmitEHFrame = EH;
-  EmitDebugFrame = Debug;
 }
 
 void MCStreamer::EmitCFIStartProc(bool IsSimple) {
@@ -266,6 +274,10 @@ void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
 }
 
 void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
+  // Report an error if we haven't seen a symbol yet where we'd bind
+  // .cfi_startproc.
+  if (!LastSymbol)
+    report_fatal_error("No symbol to start a frame");
   Frame.Function = LastSymbol;
   // We need to create a local symbol to avoid relocations.
   Frame.Begin = getContext().CreateTempSymbol();
@@ -598,17 +610,6 @@ void MCStreamer::EmitRawText(const Twine &T) {
   EmitRawTextImpl(T.toStringRef(Str));
 }
 
-void MCStreamer::EmitFrames(MCAsmBackend *MAB, bool usingCFI) {
-  if (!getNumFrameInfos())
-    return;
-
-  if (EmitEHFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, usingCFI, true);
-
-  if (EmitDebugFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, usingCFI, false);
-}
-
 void MCStreamer::EmitW64Tables() {
   if (!getNumW64UnwindInfos())
     return;
@@ -627,7 +628,10 @@ void MCStreamer::Finish() {
   FinishImpl();
 }
 
-MCSymbolData &MCStreamer::getOrCreateSymbolData(MCSymbol *Symbol) {
-  report_fatal_error("Not supported!");
-  return *(static_cast<MCSymbolData*>(0));
+void MCStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+  Symbol->setVariableValue(Value);
+
+  MCTargetStreamer *TS = getTargetStreamer();
+  if (TS)
+    TS->emitAssignment(Symbol, Value);
 }

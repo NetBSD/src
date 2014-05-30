@@ -249,13 +249,16 @@ entry:
 }
 
 ; CHECK: @Select
-; CHECK: select
-; CHECK-NEXT: sext i1 {{.*}} to i32
-; CHECK-NEXT: or i32
-; CHECK-NEXT: select
-; CHECK-ORIGINS: select
-; CHECK-ORIGINS: select
-; CHECK: select
+; CHECK: select i1
+; CHECK-DAG: or i32
+; CHECK-DAG: xor i32
+; CHECK: or i32
+; CHECK-DAG: select i1
+; CHECK-ORIGINS-DAG: select
+; CHECK-ORIGINS-DAG: select
+; CHECK-DAG: select i1
+; CHECK: store i32{{.*}}@__msan_retval_tls
+; CHECK-ORIGINS: store i32{{.*}}@__msan_retval_origin_tls
 ; CHECK: ret i32
 
 
@@ -271,17 +274,16 @@ entry:
 
 ; CHECK: @SelectVector
 ; CHECK: select <8 x i1>
-; CHECK-NEXT: sext <8 x i1> {{.*}} to <8 x i16>
-; CHECK-NEXT: or <8 x i16>
-; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
-; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
-; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
-; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
-; CHECK-ORIGINS: select i1
-; CHECK-ORIGINS: select i1
-; CHECK: select <8 x i1>
+; CHECK-DAG: or <8 x i16>
+; CHECK-DAG: xor <8 x i16>
+; CHECK: or <8 x i16>
+; CHECK-DAG: select <8 x i1>
+; CHECK-ORIGINS-DAG: select
+; CHECK-ORIGINS-DAG: select
+; CHECK-DAG: select <8 x i1>
+; CHECK: store <8 x i16>{{.*}}@__msan_retval_tls
+; CHECK-ORIGINS: store i32{{.*}}@__msan_retval_origin_tls
 ; CHECK: ret <8 x i16>
-
 
 
 ; Check that we propagate origin for "select" with scalar condition and vector
@@ -296,12 +298,13 @@ entry:
 
 ; CHECK: @SelectVector2
 ; CHECK: select i1
-; CHECK: sext i1 {{.*}} to i128
-; CHECK: bitcast i128 {{.*}} to <8 x i16>
+; CHECK-DAG: or <8 x i16>
+; CHECK-DAG: xor <8 x i16>
 ; CHECK: or <8 x i16>
-; CHECK-ORIGINS: select i1
-; CHECK-ORIGINS: select i1
-; CHECK: select i1
+; CHECK-DAG: select i1
+; CHECK-ORIGINS-DAG: select i1
+; CHECK-ORIGINS-DAG: select i1
+; CHECK-DAG: select i1
 ; CHECK: ret <8 x i16>
 
 
@@ -318,6 +321,21 @@ entry:
 ; CHECK-ORIGINS: select i1
 ; CHECK-NEXT: select i1 {{.*}}, { i64, i64 }
 ; CHECK: ret { i64, i64 }
+
+
+define { i64*, double } @SelectStruct2(i1 zeroext %x, { i64*, double } %a, { i64*, double } %b) readnone sanitize_memory {
+entry:
+  %c = select i1 %x, { i64*, double } %a, { i64*, double } %b
+  ret { i64*, double } %c
+}
+
+; CHECK: @SelectStruct2
+; CHECK: select i1 {{.*}}, { i64, i64 }
+; CHECK-NEXT: select i1 {{.*}}, { i64, i64 } { i64 -1, i64 -1 }, { i64, i64 }
+; CHECK-ORIGINS: select i1
+; CHECK-ORIGINS: select i1
+; CHECK-NEXT: select i1 {{.*}}, { i64*, double }
+; CHECK: ret { i64*, double }
 
 
 define i8* @IntToPtr(i64 %x) nounwind uwtable readnone sanitize_memory {
@@ -765,3 +783,45 @@ entry:
 ; Second element app value
 ; CHECK-ORIGINS: insertvalue { i64, i32 } {{.*}}, i32 {{.*}}, 1
 ; CHECK-ORIGINS: ret { i64, i32 }
+
+
+; Test shadow propagation for aggregates passed through ellipsis.
+
+%struct.StructByVal = type { i32, i32, i32, i32 }
+
+declare void @VAArgStructFn(i32 %guard, ...)
+
+define void @VAArgStruct(%struct.StructByVal* nocapture %s) sanitize_memory {
+entry:
+  %agg.tmp2 = alloca %struct.StructByVal, align 8
+  %0 = bitcast %struct.StructByVal* %s to i8*
+  %agg.tmp.sroa.0.0..sroa_cast = bitcast %struct.StructByVal* %s to i64*
+  %agg.tmp.sroa.0.0.copyload = load i64* %agg.tmp.sroa.0.0..sroa_cast, align 4
+  %agg.tmp.sroa.2.0..sroa_idx = getelementptr inbounds %struct.StructByVal* %s, i64 0, i32 2
+  %agg.tmp.sroa.2.0..sroa_cast = bitcast i32* %agg.tmp.sroa.2.0..sroa_idx to i64*
+  %agg.tmp.sroa.2.0.copyload = load i64* %agg.tmp.sroa.2.0..sroa_cast, align 4
+  %1 = bitcast %struct.StructByVal* %agg.tmp2 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %0, i64 16, i32 4, i1 false)
+  call void (i32, ...)* @VAArgStructFn(i32 undef, i64 %agg.tmp.sroa.0.0.copyload, i64 %agg.tmp.sroa.2.0.copyload, i64 %agg.tmp.sroa.0.0.copyload, i64 %agg.tmp.sroa.2.0.copyload, %struct.StructByVal* byval align 8 %agg.tmp2)
+  ret void
+}
+
+; "undef" and the first 2 structs go to general purpose registers;
+; the third struct goes to the overflow area byval
+
+; CHECK: @VAArgStruct
+; undef
+; CHECK: store i32 -1, i32* {{.*}}@__msan_va_arg_tls {{.*}}, align 8
+; first struct through general purpose registers
+; CHECK: store i64 {{.*}}, i64* {{.*}}@__msan_va_arg_tls{{.*}}, i64 8){{.*}}, align 8
+; CHECK: store i64 {{.*}}, i64* {{.*}}@__msan_va_arg_tls{{.*}}, i64 16){{.*}}, align 8
+; second struct through general purpose registers
+; CHECK: store i64 {{.*}}, i64* {{.*}}@__msan_va_arg_tls{{.*}}, i64 24){{.*}}, align 8
+; CHECK: store i64 {{.*}}, i64* {{.*}}@__msan_va_arg_tls{{.*}}, i64 32){{.*}}, align 8
+; third struct through the overflow area byval
+; CHECK: ptrtoint %struct.StructByVal* {{.*}} to i64
+; CHECK: bitcast { i32, i32, i32, i32 }* {{.*}}@__msan_va_arg_tls {{.*}}, i64 176
+; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+; CHECK: store i64 16, i64* @__msan_va_arg_overflow_size_tls
+; CHECK: call void (i32, ...)* @VAArgStructFn
+; CHECK: ret void

@@ -95,6 +95,44 @@ static unsigned VRegs[32] = {
   PPC::V24, PPC::V25, PPC::V26, PPC::V27,
   PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
+static unsigned VSRegs[64] = {
+  PPC::VSL0,  PPC::VSL1,  PPC::VSL2,  PPC::VSL3,
+  PPC::VSL4,  PPC::VSL5,  PPC::VSL6,  PPC::VSL7,
+  PPC::VSL8,  PPC::VSL9,  PPC::VSL10, PPC::VSL11,
+  PPC::VSL12, PPC::VSL13, PPC::VSL14, PPC::VSL15,
+  PPC::VSL16, PPC::VSL17, PPC::VSL18, PPC::VSL19,
+  PPC::VSL20, PPC::VSL21, PPC::VSL22, PPC::VSL23,
+  PPC::VSL24, PPC::VSL25, PPC::VSL26, PPC::VSL27,
+  PPC::VSL28, PPC::VSL29, PPC::VSL30, PPC::VSL31,
+
+  PPC::VSH0,  PPC::VSH1,  PPC::VSH2,  PPC::VSH3,
+  PPC::VSH4,  PPC::VSH5,  PPC::VSH6,  PPC::VSH7,
+  PPC::VSH8,  PPC::VSH9,  PPC::VSH10, PPC::VSH11,
+  PPC::VSH12, PPC::VSH13, PPC::VSH14, PPC::VSH15,
+  PPC::VSH16, PPC::VSH17, PPC::VSH18, PPC::VSH19,
+  PPC::VSH20, PPC::VSH21, PPC::VSH22, PPC::VSH23,
+  PPC::VSH24, PPC::VSH25, PPC::VSH26, PPC::VSH27,
+  PPC::VSH28, PPC::VSH29, PPC::VSH30, PPC::VSH31
+};
+static unsigned VSFRegs[64] = {
+  PPC::F0,  PPC::F1,  PPC::F2,  PPC::F3,
+  PPC::F4,  PPC::F5,  PPC::F6,  PPC::F7,
+  PPC::F8,  PPC::F9,  PPC::F10, PPC::F11,
+  PPC::F12, PPC::F13, PPC::F14, PPC::F15,
+  PPC::F16, PPC::F17, PPC::F18, PPC::F19,
+  PPC::F20, PPC::F21, PPC::F22, PPC::F23,
+  PPC::F24, PPC::F25, PPC::F26, PPC::F27,
+  PPC::F28, PPC::F29, PPC::F30, PPC::F31,
+
+  PPC::VF0,  PPC::VF1,  PPC::VF2,  PPC::VF3,
+  PPC::VF4,  PPC::VF5,  PPC::VF6,  PPC::VF7,
+  PPC::VF8,  PPC::VF9,  PPC::VF10, PPC::VF11,
+  PPC::VF12, PPC::VF13, PPC::VF14, PPC::VF15,
+  PPC::VF16, PPC::VF17, PPC::VF18, PPC::VF19,
+  PPC::VF20, PPC::VF21, PPC::VF22, PPC::VF23,
+  PPC::VF24, PPC::VF25, PPC::VF26, PPC::VF27,
+  PPC::VF28, PPC::VF29, PPC::VF30, PPC::VF31
+};
 static unsigned CRBITRegs[32] = {
   PPC::CR0LT, PPC::CR0GT, PPC::CR0EQ, PPC::CR0UN,
   PPC::CR1LT, PPC::CR1GT, PPC::CR1EQ, PPC::CR1UN,
@@ -192,7 +230,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool MatchRegisterName(const AsmToken &Tok,
                          unsigned &RegNo, int64_t &IntVal);
 
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
   const MCExpr *ExtractModifierFromExpr(const MCExpr *E,
                                         PPCMCExpr::VariantKind &Variant);
@@ -210,7 +248,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out, unsigned &ErrorInfo,
-                               bool MatchingInlineAsm);
+                               bool MatchingInlineAsm) override;
 
   void ProcessInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -226,7 +264,8 @@ class PPCAsmParser : public MCTargetAsmParser {
 
 public:
   PPCAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &_MII)
+               const MCInstrInfo &_MII,
+               const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(_MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
     Triple TheTriple(STI.getTargetTriple());
@@ -237,17 +276,18 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 
-  virtual bool ParseInstruction(ParseInstructionInfo &Info,
-                                StringRef Name, SMLoc NameLoc,
-                                SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  bool ParseInstruction(ParseInstructionInfo &Info,
+                        StringRef Name, SMLoc NameLoc,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;
 
-  virtual bool ParseDirective(AsmToken DirectiveID);
+  bool ParseDirective(AsmToken DirectiveID) override;
 
-  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op, unsigned Kind);
+  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+                                      unsigned Kind) override;
 
-  virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
-                                            MCSymbolRefExpr::VariantKind,
-                                            MCContext &Ctx);
+  const MCExpr *applyModifierToExpr(const MCExpr *E,
+                                    MCSymbolRefExpr::VariantKind,
+                                    MCContext &Ctx) override;
 };
 
 /// PPCOperand - Instances of this class represent a parsed PowerPC machine
@@ -312,10 +352,10 @@ public:
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
-  SMLoc getStartLoc() const { return StartLoc; }
+  SMLoc getStartLoc() const override { return StartLoc; }
 
   /// getEndLoc - Get the location of the last token of this operand.
-  SMLoc getEndLoc() const { return EndLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
 
   /// isPPC64 - True if this operand is for an instruction in 64-bit mode.
   bool isPPC64() const { return IsPPC64; }
@@ -340,8 +380,13 @@ public:
     return TLSReg.Sym;
   }
 
-  unsigned getReg() const {
+  unsigned getReg() const override {
     assert(isRegNumber() && "Invalid access!");
+    return (unsigned) Imm.Val;
+  }
+
+  unsigned getVSReg() const {
+    assert(isVSRegNumber() && "Invalid access!");
     return (unsigned) Imm.Val;
   }
 
@@ -360,8 +405,9 @@ public:
     return 7 - countTrailingZeros<uint64_t>(Imm.Val);
   }
 
-  bool isToken() const { return Kind == Token; }
-  bool isImm() const { return Kind == Immediate || Kind == Expression; }
+  bool isToken() const override { return Kind == Token; }
+  bool isImm() const override { return Kind == Immediate || Kind == Expression; }
+  bool isU2Imm() const { return Kind == Immediate && isUInt<2>(getImm()); }
   bool isU5Imm() const { return Kind == Immediate && isUInt<5>(getImm()); }
   bool isS5Imm() const { return Kind == Immediate && isInt<5>(getImm()); }
   bool isU6Imm() const { return Kind == Immediate && isUInt<6>(getImm()); }
@@ -382,6 +428,7 @@ public:
                                  (Kind == Immediate && isInt<16>(getImm()) &&
                                   (getImm() & 3) == 0); }
   bool isRegNumber() const { return Kind == Immediate && isUInt<5>(getImm()); }
+  bool isVSRegNumber() const { return Kind == Immediate && isUInt<6>(getImm()); }
   bool isCCRegNumber() const { return (Kind == Expression
                                        && isUInt<3>(getExprCRVal())) ||
                                       (Kind == Immediate
@@ -392,8 +439,8 @@ public:
                                        && isUInt<5>(getImm())); }
   bool isCRBitMask() const { return Kind == Immediate && isUInt<8>(getImm()) &&
                                     isPowerOf2_32(getImm()); }
-  bool isMem() const { return false; }
-  bool isReg() const { return false; }
+  bool isMem() const override { return false; }
+  bool isReg() const override { return false; }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
     llvm_unreachable("addRegOperands");
@@ -448,6 +495,16 @@ public:
     Inst.addOperand(MCOperand::CreateReg(VRegs[getReg()]));
   }
 
+  void addRegVSRCOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VSRegs[getVSReg()]));
+  }
+
+  void addRegVSFRCOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VSFRegs[getVSReg()]));
+  }
+
   void addRegCRBITRCOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(CRBITRegs[getCRBit()]));
@@ -489,7 +546,7 @@ public:
     return StringRef(Tok.Data, Tok.Length);
   }
 
-  virtual void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const override;
 
   static PPCOperand *CreateToken(StringRef Str, SMLoc S, bool IsPPC64) {
     PPCOperand *Op = new PPCOperand(Token);
@@ -966,7 +1023,7 @@ ExtractModifierFromExpr(const MCExpr *E,
   switch (E->getKind()) {
   case MCExpr::Target:
   case MCExpr::Constant:
-    return 0;
+    return nullptr;
 
   case MCExpr::SymbolRef: {
     const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
@@ -994,7 +1051,7 @@ ExtractModifierFromExpr(const MCExpr *E,
       Variant = PPCMCExpr::VK_PPC_HIGHESTA;
       break;
     default:
-      return 0;
+      return nullptr;
     }
 
     return MCSymbolRefExpr::Create(&SRE->getSymbol(), Context);
@@ -1004,7 +1061,7 @@ ExtractModifierFromExpr(const MCExpr *E,
     const MCUnaryExpr *UE = cast<MCUnaryExpr>(E);
     const MCExpr *Sub = ExtractModifierFromExpr(UE->getSubExpr(), Variant);
     if (!Sub)
-      return 0;
+      return nullptr;
     return MCUnaryExpr::Create(UE->getOpcode(), Sub, Context);
   }
 
@@ -1015,7 +1072,7 @@ ExtractModifierFromExpr(const MCExpr *E,
     const MCExpr *RHS = ExtractModifierFromExpr(BE->getRHS(), RHSVariant);
 
     if (!LHS && !RHS)
-      return 0;
+      return nullptr;
 
     if (!LHS) LHS = BE->getLHS();
     if (!RHS) RHS = BE->getRHS();
@@ -1027,7 +1084,7 @@ ExtractModifierFromExpr(const MCExpr *E,
     else if (LHSVariant == RHSVariant)
       Variant = LHSVariant;
     else
-      return 0;
+      return nullptr;
 
     return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, Context);
   }
@@ -1205,6 +1262,8 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   case AsmToken::Integer:
   case AsmToken::Dot:
   case AsmToken::Dollar:
+  case AsmToken::Exclaim:
+  case AsmToken::Tilde:
     if (!ParseExpression(EVal))
       break;
     /* fall through */
@@ -1536,6 +1595,6 @@ PPCAsmParser::applyModifierToExpr(const MCExpr *E,
   case MCSymbolRefExpr::VK_PPC_HIGHESTA:
     return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHESTA, E, false, Ctx);
   default:
-    return 0;
+    return nullptr;
   }
 }

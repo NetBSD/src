@@ -35,7 +35,7 @@
 #include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
-
+#define DEBUG_TYPE "mips"
 
 extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
@@ -171,10 +171,13 @@ public:
     return *getMipsTargetMachine().getSubtargetImpl();
   }
 
-  virtual void addIRPasses();
-  virtual bool addInstSelector();
-  virtual void addMachineSSAOptimization();
-  virtual bool addPreEmitPass();
+  void addIRPasses() override;
+  bool addInstSelector() override;
+  void addMachineSSAOptimization() override;
+  bool addPreEmitPass() override;
+
+  bool addPreRegAlloc() override;
+
 };
 } // namespace
 
@@ -206,6 +209,15 @@ bool MipsPassConfig::addInstSelector() {
 void MipsPassConfig::addMachineSSAOptimization() {
   addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
   TargetPassConfig::addMachineSSAOptimization();
+}
+
+bool MipsPassConfig::addPreRegAlloc() {
+  if (getOptLevel() == CodeGenOpt::None) {
+    addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
+    return true;
+  }
+  else
+    return false;
 }
 
 void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {

@@ -30,6 +30,9 @@
 namespace llvm {
 namespace COFF {
 
+  // The maximum number of sections that a COFF object can have (inclusive).
+  const int MaxNumberOfSections = 65299;
+
   // The PE signature bytes that follows the DOS stub header.
   static const char PEMagic[] = { 'P', 'E', '\0', '\0' };
 
@@ -59,7 +62,7 @@ namespace COFF {
     IMAGE_FILE_MACHINE_AM33      = 0x13,
     IMAGE_FILE_MACHINE_AMD64     = 0x8664,
     IMAGE_FILE_MACHINE_ARM       = 0x1C0,
-    IMAGE_FILE_MACHINE_ARMV7     = 0x1C4,
+    IMAGE_FILE_MACHINE_ARMNT     = 0x1C4,
     IMAGE_FILE_MACHINE_EBC       = 0xEBC,
     IMAGE_FILE_MACHINE_I386      = 0x14C,
     IMAGE_FILE_MACHINE_IA64      = 0x200,
@@ -138,8 +141,8 @@ namespace COFF {
   };
 
   enum SymbolSectionNumber {
-    IMAGE_SYM_DEBUG     = -2,
-    IMAGE_SYM_ABSOLUTE  = -1,
+    IMAGE_SYM_DEBUG     = 0xFFFE,
+    IMAGE_SYM_ABSOLUTE  = 0xFFFF,
     IMAGE_SYM_UNDEFINED = 0
   };
 
@@ -209,6 +212,10 @@ namespace COFF {
     SCT_COMPLEX_TYPE_SHIFT   = 4
   };
 
+  enum AuxSymbolType {
+    IMAGE_AUX_SYMBOL_TYPE_TOKEN_DEF = 1
+  };
+
   struct section {
     char     Name[NameSize];
     uint32_t VirtualSize;
@@ -222,7 +229,7 @@ namespace COFF {
     uint32_t Characteristics;
   };
 
-  enum SectionCharacteristics LLVM_ENUM_INT_TYPE(uint32_t) {
+  enum SectionCharacteristics : uint32_t {
     SC_Invalid = 0xffffffff,
 
     IMAGE_SCN_TYPE_NO_PAD            = 0x00000008,
@@ -268,7 +275,7 @@ namespace COFF {
     uint16_t Type;
   };
 
-  enum RelocationTypeX86 {
+  enum RelocationTypeI386 {
     IMAGE_REL_I386_ABSOLUTE = 0x0000,
     IMAGE_REL_I386_DIR16    = 0x0001,
     IMAGE_REL_I386_REL16    = 0x0002,
@@ -279,8 +286,10 @@ namespace COFF {
     IMAGE_REL_I386_SECREL   = 0x000B,
     IMAGE_REL_I386_TOKEN    = 0x000C,
     IMAGE_REL_I386_SECREL7  = 0x000D,
-    IMAGE_REL_I386_REL32    = 0x0014,
+    IMAGE_REL_I386_REL32    = 0x0014
+  };
 
+  enum RelocationTypeAMD64 {
     IMAGE_REL_AMD64_ABSOLUTE  = 0x0000,
     IMAGE_REL_AMD64_ADDR64    = 0x0001,
     IMAGE_REL_AMD64_ADDR32    = 0x0002,
@@ -334,7 +343,7 @@ namespace COFF {
     uint32_t TotalSize;
     uint32_t PointerToLinenumber;
     uint32_t PointerToNextFunction;
-    uint8_t  unused[2];
+    char     unused[2];
   };
 
   struct AuxiliarybfAndefSymbol {
@@ -369,7 +378,14 @@ namespace COFF {
     uint32_t CheckSum;
     uint16_t Number;
     uint8_t  Selection;
-    uint8_t  unused[3];
+    char     unused[3];
+  };
+
+  struct AuxiliaryCLRToken {
+    uint8_t  AuxType;
+    uint8_t  unused1;
+    uint32_t SymbolTableIndex;
+    char     unused2[12];
   };
 
   union Auxiliary {
@@ -624,6 +640,10 @@ namespace COFF {
     DEBUG_STRING_TABLE_SUBSECTION = 0xF3,
     DEBUG_INDEX_SUBSECTION        = 0xF4
   };
+
+  inline bool isReservedSectionNumber(int N) {
+    return N == IMAGE_SYM_UNDEFINED || N > MaxNumberOfSections;
+  }
 
 } // End namespace COFF.
 } // End namespace llvm.
