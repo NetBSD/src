@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2014/03/04 21:05:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.28 2014/05/30 18:28:14 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -9,6 +9,7 @@ LIB=	LLVMCodeGen
 SRCS+=	AggressiveAntiDepBreaker.cpp \
 	AllocationOrder.cpp \
 	Analysis.cpp \
+	AtomicExpandLoadLinkedPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
 	CalcSpillWeights.cpp \

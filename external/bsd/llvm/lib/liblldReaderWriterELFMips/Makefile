@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/01/05 16:38:07 joerg Exp $
+    #	$NetBSD: Makefile,v 1.2 2014/05/30 18:28:15 joerg Exp $
 
 LIB=	lldReaderWriterELFMips
 
@@ -10,6 +10,7 @@ CPPFLAGS+=	-I${LLD_SRCDIR}/lib/ReaderWriter/ELF
 
 SRCS+=	MipsLinkingContext.cpp \
 	MipsRelocationHandler.cpp \
+	MipsRelocationPass.cpp \
 	MipsTargetHandler.cpp
 
 .if defined(HOSTLIB)
