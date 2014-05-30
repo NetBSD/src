@@ -62,6 +62,14 @@ def _SLASH_GR : CLFlag<"GR">, HelpText<"Enable RTTI">, Alias<frtti>;
 def _SLASH_GR_ : CLFlag<"GR-">, HelpText<"Disable RTTI">, Alias<fno_rtti>;
 def _SLASH_GF_ : CLFlag<"GF-">, HelpText<"Disable string pooling">,
   Alias<fwritable_strings>;
+def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in its own section">,
+  Alias<ffunction_sections>;
+def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in its own section">,
+  Alias<fno_function_sections>;
+def _SLASH_Gw : CLFlag<"Gw">, HelpText<"Put each data item in its own section">,
+  Alias<fdata_sections>;
+def _SLASH_Gw_ : CLFlag<"Gw-">, HelpText<"Don't put each data item in its own section">,
+  Alias<fno_data_sections>;
 def _SLASH_help : CLFlag<"help">, Alias<help>,
   HelpText<"Display available options">;
 def _SLASH_HELP : CLFlag<"HELP">, Alias<help>;
@@ -117,6 +125,8 @@ def _SLASH_WX : CLFlag<"WX">, HelpText<"Treat warnings as errors">,
 def _SLASH_WX_ : CLFlag<"WX-">, HelpText<"Do not treat warnings as errors">,
   Alias<W_Joined>, AliasArgs<["no-error"]>;
 def _SLASH_w_flag : CLFlag<"w">, HelpText<"Disable all warnings">, Alias<w>;
+def _SLASH_wd4005 : CLFlag<"wd4005">, Alias<W_Joined>,
+  AliasArgs<["no-macro-redefined"]>;
 def _SLASH_vd : CLJoined<"vd">, HelpText<"Control vtordisp placement">,
   Alias<vtordisp_mode_EQ>;
 def _SLASH_Z7 : CLFlag<"Z7">, Alias<gline_tables_only>;
@@ -225,8 +235,6 @@ def _SLASH_GS : CLFlag<"GS">;
 def _SLASH_Gs : CLJoined<"Gs">;
 def _SLASH_GT : CLFlag<"GT">;
 def _SLASH_GX : CLFlag<"GX">;
-def _SLASH_Gy : CLFlag<"Gy">;
-def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_Gz : CLFlag<"Gz">;
 def _SLASH_GZ : CLFlag<"GZ">;
 def _SLASH_H : CLFlag<"H">;

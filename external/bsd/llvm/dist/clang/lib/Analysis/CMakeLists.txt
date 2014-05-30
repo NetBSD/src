@@ -23,6 +23,9 @@ add_clang_library(clangAnalysis
   ReachableCode.cpp
   ScanfFormatString.cpp
   ThreadSafety.cpp
+  ThreadSafetyCommon.cpp
+  ThreadSafetyLogical.cpp
+  ThreadSafetyTIL.cpp
   UninitializedValues.cpp
 
   LINK_LIBS

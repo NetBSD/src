@@ -13,9 +13,9 @@
 
 #include "clang/Driver/Multilib.h"
 #include "clang/Basic/LLVM.h"
-#include "gtest/gtest.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "gtest/gtest.h"
 
 using namespace clang::driver;
 using namespace clang;
@@ -256,7 +256,7 @@ TEST(MultilibTest, SetRegexFilter) {
 TEST(MultilibTest, SetFilterObject) {
   // Filter object
   struct StartsWithP : public MultilibSet::FilterCallback {
-    bool operator()(const Multilib &M) const LLVM_OVERRIDE {
+    bool operator()(const Multilib &M) const override {
       return StringRef(M.gccSuffix()).startswith("/p");
     }
   };
