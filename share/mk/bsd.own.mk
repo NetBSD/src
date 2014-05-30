@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.809 2014/05/23 18:51:31 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.810 2014/05/30 18:30:32 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -86,7 +86,6 @@ EXTERNAL_GCC_SUBDIR=	/does/not/exist
 
 .if !empty(MACHINE_ARCH:Mearm*)
 _LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
-_LIBC_UNWIND_SUPPORT.${MACHINE_ARCH}=	yes
 .endif
 
 _LIBC_COMPILER_RT.i386=		yes
@@ -98,22 +97,8 @@ HAVE_LIBGCC?=	no
 HAVE_LIBGCC?=	yes
 .endif
 
-_LIBC_UNWIND_SUPPORT.alpha=	yes
-_LIBC_UNWIND_SUPPORT.hppa=	yes
-_LIBC_UNWIND_SUPPORT.i386=	yes
-_LIBC_UNWIND_SUPPORT.m68k=	yes
-_LIBC_UNWIND_SUPPORT.mipseb=	yes
-_LIBC_UNWIND_SUPPORT.mipsel=	yes
-_LIBC_UNWIND_SUPPORT.mips64eb=	yes
-_LIBC_UNWIND_SUPPORT.mips64el=	yes
-_LIBC_UNWIND_SUPPORT.powerpc=	yes
-_LIBC_UNWIND_SUPPORT.sh3el=	yes
-_LIBC_UNWIND_SUPPORT.sh3eb=	yes
-_LIBC_UNWIND_SUPPORT.sparc=	yes
-_LIBC_UNWIND_SUPPORT.sparc64=	yes
-_LIBC_UNWIND_SUPPORT.vax=	yes
-_LIBC_UNWIND_SUPPORT.x86_64=	yes
-.if ${MKLLVM:Uno} == "yes" && ${_LIBC_UNWIND_SUPPORT.${MACHINE_ARCH}:Uno} == "yes"
+# ia64 is not support
+.if ${MKLLVM:Uno} == "yes"
 HAVE_LIBGCC_EH?=	no
 .else
 HAVE_LIBGCC_EH?=	yes
