@@ -35,6 +35,10 @@ inline bool operator==(const DataRefImpl &a, const DataRefImpl &b) {
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
+inline bool operator!=(const DataRefImpl &a, const DataRefImpl &b) {
+  return !operator==(a, b);
+}
+
 inline bool operator<(const DataRefImpl &a, const DataRefImpl &b) {
   // Check bitwise identical. This is the only legal way to compare a union w/o
   // knowing which member is in use.
@@ -75,7 +79,7 @@ class BasicSymbolRef {
 
 public:
   // FIXME: should we add a SF_Text?
-  enum Flags LLVM_ENUM_INT_TYPE(unsigned) {
+  enum Flags : unsigned {
     SF_None = 0,
     SF_Undefined = 1U << 0,      // Symbol is defined in another object file
     SF_Global = 1U << 1,         // Global symbol
@@ -86,7 +90,7 @@ public:
                                  // (e.g. section symbols)
   };
 
-  BasicSymbolRef() : OwningObject(NULL) { }
+  BasicSymbolRef() : OwningObject(nullptr) { }
   BasicSymbolRef(DataRefImpl SymbolP, const SymbolicFile *Owner);
 
   bool operator==(const BasicSymbolRef &Other) const;
@@ -143,7 +147,8 @@ public:
                                                     LLVMContext *Context);
 
   static ErrorOr<SymbolicFile *> createSymbolicFile(MemoryBuffer *Object) {
-    return createSymbolicFile(Object, true, sys::fs::file_magic::unknown, 0);
+    return createSymbolicFile(Object, true, sys::fs::file_magic::unknown,
+                              nullptr);
   }
   static ErrorOr<SymbolicFile *> createSymbolicFile(StringRef ObjectPath);
 

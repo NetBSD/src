@@ -202,9 +202,8 @@ static int DumpSymtabCommand(const MachOObjectFile &Obj) {
   // Dump the symbol table.
   outs() << "  ('_symbols', [\n";
   unsigned SymNum = 0;
-  for (symbol_iterator I = Obj.symbol_begin(), E = Obj.symbol_end(); I != E;
-       ++I, ++SymNum) {
-    DataRefImpl DRI = I->getRawDataRefImpl();
+  for (const SymbolRef &Symbol : Obj.symbols()) {
+    DataRefImpl DRI = Symbol.getRawDataRefImpl();
     if (Obj.is64Bit()) {
       MachO::nlist_64 STE = Obj.getSymbol64TableEntry(DRI);
       DumpSymbolTableEntryData(Obj, SymNum, STE.n_strx, STE.n_type,
@@ -216,6 +215,7 @@ static int DumpSymtabCommand(const MachOObjectFile &Obj) {
                                STE.n_sect, STE.n_desc, STE.n_value,
                                StringTable);
     }
+    SymNum++;
   }
   outs() << "  ])\n";
 
@@ -319,6 +319,15 @@ DumpLinkerOptionsCommand(const MachOObjectFile &Obj,
   return 0;
 }
 
+static int
+DumpVersionMin(const MachOObjectFile &Obj,
+               const MachOObjectFile::LoadCommandInfo &LCI) {
+  MachO::version_min_command VMLC = Obj.getVersionMinLoadCommand(LCI);
+  outs() << "  ('version, " << VMLC.version << ")\n"
+         << "  ('reserved, " << VMLC.reserved << ")\n";
+  return 0;
+}
+
 static int DumpLoadCommand(const MachOObjectFile &Obj,
                            MachOObjectFile::LoadCommandInfo &LCI) {
   switch (LCI.C.cmd) {
@@ -338,6 +347,9 @@ static int DumpLoadCommand(const MachOObjectFile &Obj,
     return DumpDataInCodeDataCommand(Obj, LCI);
   case MachO::LC_LINKER_OPTIONS:
     return DumpLinkerOptionsCommand(Obj, LCI);
+  case MachO::LC_VERSION_MIN_IPHONEOS:
+  case MachO::LC_VERSION_MIN_MACOSX:
+    return DumpVersionMin(Obj, LCI);
   default:
     Warning("unknown load command: " + Twine(LCI.C.cmd));
     return 0;
@@ -381,7 +393,7 @@ int main(int argc, char **argv) {
   ErrorOr<Binary *> BinaryOrErr = createBinary(InputFile);
   if (error_code EC = BinaryOrErr.getError())
     return Error("unable to read input: '" + EC.message() + "'");
-  OwningPtr<Binary> Binary(BinaryOrErr.get());
+  std::unique_ptr<Binary> Binary(BinaryOrErr.get());
 
   const MachOObjectFile *InputObject = dyn_cast<MachOObjectFile>(Binary.get());
   if (!InputObject)

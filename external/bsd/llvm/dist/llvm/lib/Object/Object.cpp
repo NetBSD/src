@@ -60,7 +60,7 @@ wrap(const relocation_iterator *SI) {
 // ObjectFile creation
 LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf) {
   ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(unwrap(MemBuf)));
-  ObjectFile *Obj = ObjOrErr ? ObjOrErr.get() : 0;
+  ObjectFile *Obj = ObjOrErr ? ObjOrErr.get() : nullptr;
   return wrap(Obj);
 }
 
@@ -180,13 +180,6 @@ const char *LLVMGetSymbolName(LLVMSymbolIteratorRef SI) {
 uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI) {
   uint64_t ret;
   if (error_code ec = (*unwrap(SI))->getAddress(ret))
-    report_fatal_error(ec.message());
-  return ret;
-}
-
-uint64_t LLVMGetSymbolFileOffset(LLVMSymbolIteratorRef SI) {
-  uint64_t ret;
-  if (error_code ec = (*unwrap(SI))->getFileOffset(ret))
     report_fatal_error(ec.message());
   return ret;
 }

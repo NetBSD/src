@@ -99,6 +99,9 @@ protected:
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
+  /// OptLevel - What default optimization level we're emitting code for.
+  CodeGenOpt::Level OptLevel;
+
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
@@ -129,7 +132,7 @@ public:
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 
   /// \brief Reset the features for the PowerPC target.
-  virtual void resetSubtargetFeatures(const MachineFunction *MF);
+  void resetSubtargetFeatures(const MachineFunction *MF) override;
 private:
   void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
@@ -178,6 +181,7 @@ public:
   bool hasFPCVT() const { return HasFPCVT; }
   bool hasAltivec() const { return HasAltivec; }
   bool hasQPX() const { return HasQPX; }
+  bool hasVSX() const { return HasVSX; }
   bool hasMFOCRF() const { return HasMFOCRF; }
   bool hasISEL() const { return HasISEL; }
   bool hasPOPCNTD() const { return HasPOPCNTD; }
@@ -190,8 +194,6 @@ public:
 
   /// isDarwin - True if this is any darwin platform.
   bool isDarwin() const { return TargetTriple.isMacOSX(); }
-  /// isBGP - True if this is a BG/P platform.
-  bool isBGP() const { return TargetTriple.getVendor() == Triple::BGP; }
   /// isBGQ - True if this is a BG/Q platform.
   bool isBGQ() const { return TargetTriple.getVendor() == Triple::BGQ; }
 
@@ -201,15 +203,17 @@ public:
   /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,
-                             RegClassVector& CriticalPathRCs) const;
+                             RegClassVector& CriticalPathRCs) const override;
+
+  bool enableEarlyIfConversion() const override { return hasISEL(); }
 
   // Scheduling customization.
-  bool enableMachineScheduler() const;
+  bool enableMachineScheduler() const override;
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            MachineInstr *begin,
                            MachineInstr *end,
-                           unsigned NumRegionInstrs) const;
-  bool useAA() const;
+                           unsigned NumRegionInstrs) const override;
+  bool useAA() const override;
 };
 } // End llvm namespace
 

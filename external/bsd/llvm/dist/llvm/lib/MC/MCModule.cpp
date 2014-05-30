@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCModule.h"
 #include "llvm/MC/MCAtom.h"
 #include "llvm/MC/MCFunction.h"
@@ -77,7 +78,7 @@ const MCAtom *MCModule::findAtomContaining(uint64_t Addr) const {
                                                   Addr, AtomComp);
   if (I != atom_end() && (*I)->getBeginAddr() <= Addr)
     return *I;
-  return 0;
+  return nullptr;
 }
 
 MCAtom *MCModule::findAtomContaining(uint64_t Addr) {
@@ -90,7 +91,7 @@ const MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) const {
                                                   Addr, AtomCompInv);
   if (I != atom_end())
     return *I;
-  return 0;
+  return nullptr;
 }
 
 MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) {
@@ -99,8 +100,9 @@ MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) {
 }
 
 MCFunction *MCModule::createFunction(StringRef Name) {
-  Functions.push_back(new MCFunction(Name, this));
-  return Functions.back();
+  std::unique_ptr<MCFunction> MCF(new MCFunction(Name, this));
+  Functions.push_back(std::move(MCF));
+  return Functions.back().get();
 }
 
 static bool CompBBToAtom(MCBasicBlock *BB, const MCTextAtom *Atom) {
@@ -130,13 +132,11 @@ void MCModule::trackBBForAtom(const MCTextAtom *Atom, MCBasicBlock *BB) {
   BBsByAtom.insert(I, BB);
 }
 
+MCModule::MCModule() : Entrypoint(0) { }
+
 MCModule::~MCModule() {
   for (AtomListTy::iterator AI = atom_begin(),
                             AE = atom_end();
                             AI != AE; ++AI)
     delete *AI;
-  for (FunctionListTy::iterator FI = func_begin(),
-                                FE = func_end();
-                                FI != FE; ++FI)
-    delete *FI;
 }

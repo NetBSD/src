@@ -56,7 +56,7 @@ public:
   void RecordRelocation(MachObjectWriter *Writer,
                         const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
-                        MCValue Target, uint64_t &FixedValue);
+                        MCValue Target, uint64_t &FixedValue) override;
 };
 }
 
@@ -123,23 +123,19 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
   //      0 - arm instructions
   //      1 - thumb instructions
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 1;
     return true;
   case ARM::fixup_t2_movt_hi16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 3;
     return true;
 
   case ARM::fixup_arm_movw_lo16:
-  case ARM::fixup_arm_movw_lo16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 0;
     return true;
   case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movw_lo16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 2;
     return true;
@@ -160,7 +156,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
     Asm.getContext().FatalError(Fixup.getLoc(),
@@ -174,7 +170,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
   FixedValue += SecAddr;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
       Asm.getContext().FatalError(Fixup.getLoc(),
@@ -206,22 +202,19 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
   switch ((unsigned)Fixup.getKind()) {
   default: break;
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
     MovtBit = 1;
     // The thumb bit shouldn't be set in the 'other-half' bit of the
     // relocation, but it will be set in FixedValue if the base symbol
     // is a thumb function. Clear it out here.
-    if (A_SD->getFlags() & SF_ThumbFunc)
+    if (Asm.isThumbFunc(A))
       FixedValue &= 0xfffffffe;
     break;
   case ARM::fixup_t2_movt_hi16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
-    if (A_SD->getFlags() & SF_ThumbFunc)
+    if (Asm.isThumbFunc(A))
       FixedValue &= 0xfffffffe;
     MovtBit = 1;
     // Fallthrough
   case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movw_lo16_pcrel:
     ThumbBit = 1;
     break;
   }
@@ -266,7 +259,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
     Asm.getContext().FatalError(Fixup.getLoc(),
@@ -279,7 +272,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
       Asm.getContext().FatalError(Fixup.getLoc(),
@@ -385,7 +378,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
   }
 
   // Get the symbol data, if any.
-  MCSymbolData *SD = 0;
+  const MCSymbolData *SD = nullptr;
   if (Target.getSymA())
     SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
 
@@ -465,15 +458,11 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
     switch ((unsigned)Fixup.getKind()) {
     default: break;
     case ARM::fixup_arm_movw_lo16:
-    case ARM::fixup_arm_movw_lo16_pcrel:
     case ARM::fixup_t2_movw_lo16:
-    case ARM::fixup_t2_movw_lo16_pcrel:
       Value = (FixedValue >> 16) & 0xffff;
       break;
     case ARM::fixup_arm_movt_hi16:
-    case ARM::fixup_arm_movt_hi16_pcrel:
     case ARM::fixup_t2_movt_hi16:
-    case ARM::fixup_t2_movt_hi16_pcrel:
       Value = FixedValue & 0xffff;
       break;
     }

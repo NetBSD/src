@@ -84,9 +84,6 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
       PrefixTy = Mangler::LinkerPrivate;
     else
       PrefixTy = Mangler::Private;
-  } else if (GV->hasLinkerPrivateLinkage() ||
-             GV->hasLinkerPrivateWeakLinkage()) {
-    PrefixTy = Mangler::LinkerPrivate;
   }
 
   if (!GV->hasName()) {
@@ -111,7 +108,7 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
   }
 
   bool UseAt = false;
-  const Function *MSFunc = NULL;
+  const Function *MSFunc = nullptr;
   CallingConv::ID CC;
   if (DL->hasMicrosoftFastStdCallMangling()) {
     if ((MSFunc = dyn_cast<Function>(GV))) {

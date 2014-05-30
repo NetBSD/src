@@ -13,7 +13,6 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
@@ -40,7 +39,7 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
     Ret += "-p:32:32";
 
   // Some ABIs align 64 bit integers and doubles to 64 bits, others to 32.
-  if (ST.is64Bit() || ST.isTargetCygMing() || ST.isTargetWindows() ||
+  if (ST.is64Bit() || ST.isTargetCygMing() || ST.isTargetKnownWindowsMSVC() ||
       ST.isTargetNaCl())
     Ret += "-i64:64";
   else
@@ -61,7 +60,7 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
     Ret += "-n8:16:32";
 
   // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
-  if (!ST.is64Bit() && (ST.isTargetCygMing() || ST.isTargetWindows()))
+  if (!ST.is64Bit() && (ST.isTargetCygMing() || ST.isTargetKnownWindowsMSVC()))
     Ret += "-S32";
   else
     Ret += "-S128";
@@ -109,6 +108,13 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
   if (Options.FloatABIType == FloatABI::Default)
     this->Options.FloatABIType = FloatABI::Hard;
 
+  // Windows stack unwinder gets confused when execution flow "falls through"
+  // after a call to 'noreturn' function.
+  // To prevent that, we emit a trap for 'unreachable' IR instructions.
+  // (which on X86, happens to be the 'ud2' instruction)
+  if (Subtarget.isTargetWin64())
+    this->Options.TrapUnreachable = true;
+
   initAsmInfo();
 }
 
@@ -119,12 +125,6 @@ static cl::opt<bool>
 UseVZeroUpper("x86-use-vzeroupper", cl::Hidden,
   cl::desc("Minimize AVX to SSE transition penalty"),
   cl::init(true));
-
-// Temporary option to control early if-conversion for x86 while adding machine
-// models.
-static cl::opt<bool>
-X86EarlyIfConv("x86-early-ifcvt", cl::Hidden,
-	       cl::desc("Enable early if-conversion on X86"));
 
 //===----------------------------------------------------------------------===//
 // X86 Analysis Pass Setup
@@ -158,11 +158,11 @@ public:
     return *getX86TargetMachine().getSubtargetImpl();
   }
 
-  virtual bool addInstSelector();
-  virtual bool addILPOpts();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
-  virtual bool addPreEmitPass();
+  bool addInstSelector() override;
+  bool addILPOpts() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -178,19 +178,14 @@ bool X86PassConfig::addInstSelector() {
   if (getX86Subtarget().isTargetELF() && getOptLevel() != CodeGenOpt::None)
     addPass(createCleanupLocalDynamicTLSPass());
 
-  // For 32-bit, prepend instructions to set the "global base reg" for PIC.
-  if (!getX86Subtarget().is64Bit())
-    addPass(createGlobalBaseRegPass());
+  addPass(createX86GlobalBaseRegPass());
 
   return false;
 }
 
 bool X86PassConfig::addILPOpts() {
-  if (X86EarlyIfConv && getX86Subtarget().hasCMov()) {
-    addPass(&EarlyIfConverterID);
-    return true;
-  }
-  return false;
+  addPass(&EarlyIfConverterID);
+  return true;
 }
 
 bool X86PassConfig::addPreRegAlloc() {
@@ -209,18 +204,13 @@ bool X86PassConfig::addPreEmitPass() {
     ShouldPrint = true;
   }
 
-  if (getX86Subtarget().hasAVX() && UseVZeroUpper) {
+  if (UseVZeroUpper) {
     addPass(createX86IssueVZeroUpperPass());
     ShouldPrint = true;
   }
 
-  if (getOptLevel() != CodeGenOpt::None &&
-      getX86Subtarget().padShortFunctions()) {
+  if (getOptLevel() != CodeGenOpt::None) {
     addPass(createX86PadShortFunctions());
-    ShouldPrint = true;
-  }
-  if (getOptLevel() != CodeGenOpt::None &&
-      getX86Subtarget().LEAusesAG()){
     addPass(createX86FixupLEAs());
     ShouldPrint = true;
   }

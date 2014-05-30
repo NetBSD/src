@@ -683,6 +683,20 @@ APFloat::operator=(const APFloat &rhs)
   return *this;
 }
 
+APFloat &
+APFloat::operator=(APFloat &&rhs) {
+  freeSignificand();
+
+  semantics = rhs.semantics;
+  significand = rhs.significand;
+  exponent = rhs.exponent;
+  category = rhs.category;
+  sign = rhs.sign;
+
+  rhs.semantics = &Bogus;
+  return *this;
+}
+
 bool
 APFloat::isDenormal() const {
   return isFiniteNonZero() && (exponent == semantics->minExponent) &&
@@ -804,6 +818,10 @@ APFloat::APFloat(const fltSemantics &ourSemantics, StringRef text) {
 APFloat::APFloat(const APFloat &rhs) {
   initialize(rhs.semantics);
   assign(rhs);
+}
+
+APFloat::APFloat(APFloat &&rhs) : semantics(&Bogus) {
+  *this = std::move(rhs);
 }
 
 APFloat::~APFloat()
@@ -1340,7 +1358,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -1467,7 +1485,7 @@ APFloat::multiplySpecials(const APFloat &rhs)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -1511,7 +1529,7 @@ APFloat::divideSpecials(const APFloat &rhs)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
@@ -1552,7 +1570,7 @@ APFloat::modSpecials(const APFloat &rhs)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -1661,7 +1679,7 @@ APFloat::multiply(const APFloat &rhs, roundingMode rounding_mode)
   fs = multiplySpecials(rhs);
 
   if (isFiniteNonZero()) {
-    lostFraction lost_fraction = multiplySignificand(rhs, 0);
+    lostFraction lost_fraction = multiplySignificand(rhs, nullptr);
     fs = normalize(rounding_mode, lost_fraction);
     if (lost_fraction != lfExactlyZero)
       fs = (opStatus) (fs | opInexact);
@@ -1864,7 +1882,7 @@ APFloat::compare(const APFloat &rhs) const
 
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -2421,7 +2439,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
 
     if (exp >= 0) {
       /* multiplySignificand leaves the precision-th bit set to 1.  */
-      calcLostFraction = decSig.multiplySignificand(pow5, NULL);
+      calcLostFraction = decSig.multiplySignificand(pow5, nullptr);
       powHUerr = powStatus != opOK;
     } else {
       calcLostFraction = decSig.divideSignificand(pow5);
@@ -3313,7 +3331,7 @@ APFloat::initFromAPInt(const fltSemantics* Sem, const APInt& api)
   if (Sem == &PPCDoubleDouble)
     return initFromPPCDoubleDoubleAPInt(api);
 
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 APFloat
@@ -3777,7 +3795,7 @@ APFloat::opStatus APFloat::next(bool nextDown) {
     if (isSignaling()) {
       result = opInvalidOp;
       // For consistency, propagate the sign of the sNaN to the qNaN.
-      makeNaN(false, isNegative(), 0);
+      makeNaN(false, isNegative(), nullptr);
     }
     break;
   case fcZero:

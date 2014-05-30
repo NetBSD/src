@@ -37,6 +37,18 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
 def InstFlag : OperandWithDefaultOps <i32, (ops (i32 0))>;
 def ADDRIndirect : ComplexPattern<iPTR, 2, "SelectADDRIndirect", [], []>;
 
+def u32imm : Operand<i32> {
+  let PrintMethod = "printU32ImmOperand";
+}
+
+def u16imm : Operand<i16> {
+  let PrintMethod = "printU16ImmOperand";
+}
+
+def u8imm : Operand<i8> {
+  let PrintMethod = "printU8ImmOperand";
+}
+
 //===----------------------------------------------------------------------===//
 // PatLeafs for floating-point comparisons
 //===----------------------------------------------------------------------===//
@@ -253,9 +265,6 @@ def FP_ONE : PatLeaf <
   [{return N->isExactlyValue(1.0);}]
 >;
 
-def U24 : ComplexPattern<i32, 1, "SelectU24", [], []>;
-def I24 : ComplexPattern<i32, 1, "SelectI24", [], []>;
-
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
 let usesCustomInserter = 1  in {
@@ -414,7 +423,44 @@ class UMUL24Pattern <Instruction UMUL24> : Pat <
 >;
 */
 
+class IMad24Pat<Instruction Inst> : Pat <
+  (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2),
+  (Inst $src0, $src1, $src2)
+>;
+
+class UMad24Pat<Instruction Inst> : Pat <
+  (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2),
+  (Inst $src0, $src1, $src2)
+>;
+
+multiclass Expand24IBitOps<Instruction MulInst, Instruction AddInst> {
+  def _expand_imad24 : Pat <
+    (AMDGPUmad_i24 i32:$src0, i32:$src1, i32:$src2),
+    (AddInst (MulInst $src0, $src1), $src2)
+  >;
+
+  def _expand_imul24 : Pat <
+    (AMDGPUmul_i24 i32:$src0, i32:$src1),
+    (MulInst $src0, $src1)
+  >;
+}
+
+multiclass Expand24UBitOps<Instruction MulInst, Instruction AddInst> {
+  def _expand_umad24 : Pat <
+    (AMDGPUmad_u24 i32:$src0, i32:$src1, i32:$src2),
+    (AddInst (MulInst $src0, $src1), $src2)
+  >;
+
+  def _expand_umul24 : Pat <
+    (AMDGPUmul_u24 i32:$src0, i32:$src1),
+    (MulInst $src0, $src1)
+  >;
+}
+
 include "R600Instructions.td"
+include "R700Instructions.td"
+include "EvergreenInstructions.td"
+include "CaymanInstructions.td"
 
 include "SIInstrInfo.td"
 

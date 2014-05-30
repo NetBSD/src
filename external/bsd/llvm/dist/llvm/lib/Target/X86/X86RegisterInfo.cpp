@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86RegisterInfo.h"
-#include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
@@ -27,7 +26,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
@@ -39,10 +38,10 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "X86GenRegisterInfo.inc"
-
-using namespace llvm;
 
 cl::opt<bool>
 ForceStackAlign("force-align-stack",
@@ -130,7 +129,7 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   if (!Is64Bit && SubIdx == X86::sub_8bit) {
     A = X86GenRegisterInfo::getSubClassWithSubReg(A, X86::sub_8bit_hi);
     if (!A)
-      return 0;
+      return nullptr;
   }
   return X86GenRegisterInfo::getMatchingSuperRegClass(A, B, SubIdx);
 }
@@ -232,11 +231,12 @@ X86RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   }
 }
 
-const uint16_t *
+const MCPhysReg *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();
 
+  assert(MF && "MachineFunction required");
   switch (MF->getFunction()->getCallingConv()) {
   case CallingConv::GHC:
   case CallingConv::HiPE:
@@ -305,16 +305,17 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
       return CSR_64_RT_AllRegs_AVX_RegMask;
     return CSR_64_RT_AllRegs_RegMask;
   case CallingConv::Intel_OCL_BI: {
-    if (IsWin64 && HasAVX512)
+    if (HasAVX512 && IsWin64)
       return CSR_Win64_Intel_OCL_BI_AVX512_RegMask;
-    if (Is64Bit && HasAVX512)
+    if (HasAVX512 && Is64Bit)
       return CSR_64_Intel_OCL_BI_AVX512_RegMask;
-    if (IsWin64 && HasAVX)
+    if (HasAVX && IsWin64)
       return CSR_Win64_Intel_OCL_BI_AVX_RegMask;
-    if (Is64Bit && HasAVX)
+    if (HasAVX && Is64Bit)
       return CSR_64_Intel_OCL_BI_AVX_RegMask;
     if (!HasAVX && !IsWin64 && Is64Bit)
       return CSR_64_Intel_OCL_BI_RegMask;
+    break;
   }
   case CallingConv::Cold:
     if (Is64Bit)
@@ -324,6 +325,8 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
     break;
   }
 
+  // Unlike getCalleeSavedRegs(), we don't have MMI so we can't check
+  // callsEHReturn().
   if (Is64Bit) {
     if (IsWin64)
       return CSR_Win64_RegMask;

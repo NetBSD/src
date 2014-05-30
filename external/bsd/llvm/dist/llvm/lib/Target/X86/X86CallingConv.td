@@ -485,15 +485,6 @@ def CC_X86_32_ThisCall_Win : CallingConv<[
   CCDelegateTo<CC_X86_32_ThisCall_Common>
 ]>;
 
-def CC_X86_CDeclMethod : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
-
-  CCCustom<"CC_X86_CDeclMethod_SRet">,
-
-  CCDelegateTo<CC_X86_32_Common>
-]>;
-
 def CC_X86_32_ThisCall : CallingConv<[
   CCIfSubtarget<"isTargetCygMing()", CCDelegateTo<CC_X86_32_ThisCall_Mingw>>,
   CCDelegateTo<CC_X86_32_ThisCall_Win>
@@ -583,7 +574,6 @@ def CC_Intel_OCL_BI : CallingConv<[
 def CC_X86_32 : CallingConv<[
   CCIfCC<"CallingConv::X86_FastCall", CCDelegateTo<CC_X86_32_FastCall>>,
   CCIfCC<"CallingConv::X86_ThisCall", CCDelegateTo<CC_X86_32_ThisCall>>,
-  CCIfCC<"CallingConv::X86_CDeclMethod", CCDelegateTo<CC_X86_CDeclMethod>>,
   CCIfCC<"CallingConv::Fast", CCDelegateTo<CC_X86_32_FastCC>>,
   CCIfCC<"CallingConv::GHC", CCDelegateTo<CC_X86_32_GHC>>,
   CCIfCC<"CallingConv::HiPE", CCDelegateTo<CC_X86_32_HiPE>>,
@@ -667,6 +657,6 @@ def CSR_64_Intel_OCL_BI       : CalleeSavedRegs<(add CSR_64,
 def CSR_64_Intel_OCL_BI_AVX    : CalleeSavedRegs<(add CSR_64,
                                                   (sequence "YMM%u", 8, 15))>;
 
-def CSR_64_Intel_OCL_BI_AVX512    : CalleeSavedRegs<(add CSR_64,
+def CSR_64_Intel_OCL_BI_AVX512 : CalleeSavedRegs<(add RBX, RDI, RSI, R14, R15,
                                                   (sequence "ZMM%u", 16, 31),
                                                   K4, K5, K6, K7)>;

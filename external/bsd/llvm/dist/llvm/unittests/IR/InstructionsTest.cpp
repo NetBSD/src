@@ -14,11 +14,14 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "gtest/gtest.h"
+#include <memory>
 
 namespace llvm {
 namespace {
@@ -47,6 +50,58 @@ TEST(InstructionsTest, ReturnInst) {
   delete r1;
 }
 
+// Test fixture that provides a module and a single function within it. Useful
+// for tests that need to refer to the function in some way.
+class ModuleWithFunctionTest : public testing::Test {
+protected:
+  ModuleWithFunctionTest() : M(new Module("MyModule", Ctx)) {
+    FArgTypes.push_back(Type::getInt8Ty(Ctx));
+    FArgTypes.push_back(Type::getInt32Ty(Ctx));
+    FArgTypes.push_back(Type::getInt64Ty(Ctx));
+    FunctionType *FTy =
+        FunctionType::get(Type::getVoidTy(Ctx), FArgTypes, false);
+    F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
+  }
+
+  LLVMContext Ctx;
+  std::unique_ptr<Module> M;
+  SmallVector<Type *, 3> FArgTypes;
+  Function *F;
+};
+
+TEST_F(ModuleWithFunctionTest, CallInst) {
+  Value *Args[] = {ConstantInt::get(Type::getInt8Ty(Ctx), 20),
+                   ConstantInt::get(Type::getInt32Ty(Ctx), 9999),
+                   ConstantInt::get(Type::getInt64Ty(Ctx), 42)};
+  std::unique_ptr<CallInst> Call(CallInst::Create(F, Args));
+
+  // Make sure iteration over a call's arguments works as expected.
+  unsigned Idx = 0;
+  for (Value *Arg : Call->arg_operands()) {
+    EXPECT_EQ(FArgTypes[Idx], Arg->getType());
+    EXPECT_EQ(Call->getArgOperand(Idx)->getType(), Arg->getType());
+    Idx++;
+  }
+}
+
+TEST_F(ModuleWithFunctionTest, InvokeInst) {
+  BasicBlock *BB1 = BasicBlock::Create(Ctx, "", F);
+  BasicBlock *BB2 = BasicBlock::Create(Ctx, "", F);
+
+  Value *Args[] = {ConstantInt::get(Type::getInt8Ty(Ctx), 20),
+                   ConstantInt::get(Type::getInt32Ty(Ctx), 9999),
+                   ConstantInt::get(Type::getInt64Ty(Ctx), 42)};
+  std::unique_ptr<InvokeInst> Invoke(InvokeInst::Create(F, BB1, BB2, Args));
+
+  // Make sure iteration over invoke's arguments works as expected.
+  unsigned Idx = 0;
+  for (Value *Arg : Invoke->arg_operands()) {
+    EXPECT_EQ(FArgTypes[Idx], Arg->getType());
+    EXPECT_EQ(Invoke->getArgOperand(Idx)->getType(), Arg->getType());
+    Idx++;
+  }
+}
+
 TEST(InstructionsTest, BranchInst) {
   LLVMContext &C(getGlobalContext());
 
@@ -65,9 +120,9 @@ TEST(InstructionsTest, BranchInst) {
   EXPECT_EQ(1U, b0->getNumOperands());
 
   EXPECT_NE(b0->op_begin(), b0->op_end());
-  EXPECT_EQ(b0->op_end(), llvm::next(b0->op_begin()));
+  EXPECT_EQ(b0->op_end(), std::next(b0->op_begin()));
 
-  EXPECT_EQ(b0->op_end(), llvm::next(b0->op_begin()));
+  EXPECT_EQ(b0->op_end(), std::next(b0->op_begin()));
 
   IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
@@ -426,6 +481,39 @@ TEST(InstructionsTest, isEliminableCastPair) {
                                            0, 0, 0),
             CastInst::IntToPtr);
 
+}
+
+TEST(InstructionsTest, CloneCall) {
+  LLVMContext &C(getGlobalContext());
+  Type *Int32Ty = Type::getInt32Ty(C);
+  Type *ArgTys[] = {Int32Ty, Int32Ty, Int32Ty};
+  Type *FnTy = FunctionType::get(Int32Ty, ArgTys, /*isVarArg=*/false);
+  Value *Callee = Constant::getNullValue(FnTy->getPointerTo());
+  Value *Args[] = {
+    ConstantInt::get(Int32Ty, 1),
+    ConstantInt::get(Int32Ty, 2),
+    ConstantInt::get(Int32Ty, 3)
+  };
+  std::unique_ptr<CallInst> Call(CallInst::Create(Callee, Args, "result"));
+
+  // Test cloning the tail call kind.
+  CallInst::TailCallKind Kinds[] = {CallInst::TCK_None, CallInst::TCK_Tail,
+                                    CallInst::TCK_MustTail};
+  for (CallInst::TailCallKind TCK : Kinds) {
+    Call->setTailCallKind(TCK);
+    std::unique_ptr<CallInst> Clone(cast<CallInst>(Call->clone()));
+    EXPECT_EQ(Call->getTailCallKind(), Clone->getTailCallKind());
+  }
+  Call->setTailCallKind(CallInst::TCK_None);
+
+  // Test cloning an attribute.
+  {
+    AttrBuilder AB;
+    AB.addAttribute(Attribute::ReadOnly);
+    Call->setAttributes(AttributeSet::get(C, AttributeSet::FunctionIndex, AB));
+    std::unique_ptr<CallInst> Clone(cast<CallInst>(Call->clone()));
+    EXPECT_TRUE(Clone->onlyReadsMemory());
+  }
 }
 
 }  // end anonymous namespace

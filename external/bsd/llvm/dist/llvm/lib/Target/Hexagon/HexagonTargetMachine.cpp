@@ -52,7 +52,7 @@ extern "C" void LLVMInitializeHexagonTarget() {
 }
 
 static ScheduleDAGInstrs *createVLIWMachineSched(MachineSchedContext *C) {
-  return new VLIWMachineScheduler(C, new ConvergingVLIWScheduler());
+  return new VLIWMachineScheduler(C, make_unique<ConvergingVLIWScheduler>());
 }
 
 static MachineSchedRegistry
@@ -76,22 +76,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     TSInfo(*this),
     FrameLowering(Subtarget),
     InstrItins(&Subtarget.getInstrItineraryData()) {
-    setMCUseCFI(false);
     initAsmInfo();
-}
-
-// addPassesForOptimizations - Allow the backend (target) to add Target
-// Independent Optimization passes to the Pass Manager.
-bool HexagonTargetMachine::addPassesForOptimizations(PassManagerBase &PM) {
-  if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createConstantPropagationPass());
-    PM.add(createLoopSimplifyPass());
-    PM.add(createDeadCodeEliminationPass());
-    PM.add(createConstantPropagationPass());
-    PM.add(createLoopUnrollPass());
-    PM.add(createLoopStrengthReducePass());
-  }
-  return true;
 }
 
 namespace {
@@ -114,16 +99,16 @@ public:
     return getTM<HexagonTargetMachine>();
   }
 
-  virtual ScheduleDAGInstrs *
-  createMachineScheduler(MachineSchedContext *C) const {
+  ScheduleDAGInstrs *
+  createMachineScheduler(MachineSchedContext *C) const override {
     return createVLIWMachineSched(C);
   }
 
-  virtual bool addInstSelector();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
-  virtual bool addPreSched2();
-  virtual bool addPreEmitPass();
+  bool addInstSelector() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
@@ -165,16 +150,12 @@ bool HexagonPassConfig::addPostRegAlloc() {
 
 bool HexagonPassConfig::addPreSched2() {
   const HexagonTargetMachine &TM = getHexagonTargetMachine();
-  const HexagonTargetObjectFile &TLOF =
-    (const HexagonTargetObjectFile &)getTargetLowering()->getObjFileLowering();
 
   addPass(createHexagonCopyToCombine());
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
-  if (!TLOF.IsSmallDataEnabled()) {
-    addPass(createHexagonSplitConst32AndConst64(TM));
-    printAndVerify("After hexagon split const32/64 pass");
-  }
+  addPass(createHexagonSplitConst32AndConst64(TM));
+  printAndVerify("After hexagon split const32/64 pass");
   return true;
 }
 

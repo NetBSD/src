@@ -58,7 +58,7 @@ public:
     int FunctionCount;
   };
 
-  static void *ID() { return (void * )&PassID; }
+  static void *ID() { return (void *)&PassID; }
 
   TestModuleAnalysis(int &Runs) : Runs(Runs) {}
 
@@ -92,9 +92,7 @@ struct TestModulePass {
 };
 
 struct TestPreservingModulePass {
-  PreservedAnalyses run(Module *M) {
-    return PreservedAnalyses::all();
-  }
+  PreservedAnalyses run(Module *M) { return PreservedAnalyses::all(); }
 
   static StringRef name() { return "TestPreservingModulePass"; }
 };
@@ -175,7 +173,7 @@ Module *parseIR(const char *IR) {
 
 class PassManagerTest : public ::testing::Test {
 protected:
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
 
 public:
   PassManagerTest()
@@ -193,6 +191,39 @@ public:
                   "}\n")) {}
 };
 
+TEST_F(PassManagerTest, BasicPreservedAnalyses) {
+  PreservedAnalyses PA1 = PreservedAnalyses();
+  EXPECT_FALSE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA1.preserved<TestModuleAnalysis>());
+  PreservedAnalyses PA2 = PreservedAnalyses::none();
+  EXPECT_FALSE(PA2.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA2.preserved<TestModuleAnalysis>());
+  PreservedAnalyses PA3 = PreservedAnalyses::all();
+  EXPECT_TRUE(PA3.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA3.preserved<TestModuleAnalysis>());
+  PreservedAnalyses PA4 = PA1;
+  EXPECT_FALSE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA4.preserved<TestModuleAnalysis>());
+  PA4 = PA3;
+  EXPECT_TRUE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA4.preserved<TestModuleAnalysis>());
+  PA4 = std::move(PA2);
+  EXPECT_FALSE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA4.preserved<TestModuleAnalysis>());
+  PA4.preserve<TestFunctionAnalysis>();
+  EXPECT_TRUE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA4.preserved<TestModuleAnalysis>());
+  PA1.preserve<TestModuleAnalysis>();
+  EXPECT_FALSE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA1.preserved<TestModuleAnalysis>());
+  PA1.preserve<TestFunctionAnalysis>();
+  EXPECT_TRUE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA1.preserved<TestModuleAnalysis>());
+  PA1.intersect(PA4);
+  EXPECT_TRUE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA1.preserved<TestModuleAnalysis>());
+}
+
 TEST_F(PassManagerTest, Basic) {
   FunctionAnalysisManager FAM;
   int FunctionAnalysisRuns = 0;
@@ -207,59 +238,77 @@ TEST_F(PassManagerTest, Basic) {
   ModulePassManager MPM;
 
   // Count the runs over a Function.
-  FunctionPassManager FPM1;
   int FunctionPassRunCount1 = 0;
   int AnalyzedInstrCount1 = 0;
   int AnalyzedFunctionCount1 = 0;
-  FPM1.addPass(TestFunctionPass(FunctionPassRunCount1, AnalyzedInstrCount1,
-                                AnalyzedFunctionCount1));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM1));
+  {
+    // Pointless scoped copy to test move assignment.
+    ModulePassManager NestedMPM;
+    FunctionPassManager FPM;
+    {
+      // Pointless scope to test move assignment.
+      FunctionPassManager NestedFPM;
+      NestedFPM.addPass(TestFunctionPass(FunctionPassRunCount1, AnalyzedInstrCount1,
+                                   AnalyzedFunctionCount1));
+      FPM = std::move(NestedFPM);
+    }
+    NestedMPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    MPM = std::move(NestedMPM);
+  }
 
   // Count the runs over a module.
   int ModulePassRunCount = 0;
   MPM.addPass(TestModulePass(ModulePassRunCount));
 
   // Count the runs over a Function in a separate manager.
-  FunctionPassManager FPM2;
   int FunctionPassRunCount2 = 0;
   int AnalyzedInstrCount2 = 0;
   int AnalyzedFunctionCount2 = 0;
-  FPM2.addPass(TestFunctionPass(FunctionPassRunCount2, AnalyzedInstrCount2,
-                                AnalyzedFunctionCount2));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM2));
+  {
+    FunctionPassManager FPM;
+    FPM.addPass(TestFunctionPass(FunctionPassRunCount2, AnalyzedInstrCount2,
+                                 AnalyzedFunctionCount2));
+    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+  }
 
   // A third function pass manager but with only preserving intervening passes
   // and with a function pass that invalidates exactly one analysis.
   MPM.addPass(TestPreservingModulePass());
-  FunctionPassManager FPM3;
   int FunctionPassRunCount3 = 0;
   int AnalyzedInstrCount3 = 0;
   int AnalyzedFunctionCount3 = 0;
-  FPM3.addPass(TestFunctionPass(FunctionPassRunCount3, AnalyzedInstrCount3,
-                                AnalyzedFunctionCount3));
-  FPM3.addPass(TestInvalidationFunctionPass("f"));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM3));
+  {
+    FunctionPassManager FPM;
+    FPM.addPass(TestFunctionPass(FunctionPassRunCount3, AnalyzedInstrCount3,
+                                 AnalyzedFunctionCount3));
+    FPM.addPass(TestInvalidationFunctionPass("f"));
+    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+  }
 
   // A fourth function pass manager but with a minimal intervening passes.
   MPM.addPass(TestMinPreservingModulePass());
-  FunctionPassManager FPM4;
   int FunctionPassRunCount4 = 0;
   int AnalyzedInstrCount4 = 0;
   int AnalyzedFunctionCount4 = 0;
-  FPM4.addPass(TestFunctionPass(FunctionPassRunCount4, AnalyzedInstrCount4,
-                                AnalyzedFunctionCount4));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM4));
+  {
+    FunctionPassManager FPM;
+    FPM.addPass(TestFunctionPass(FunctionPassRunCount4, AnalyzedInstrCount4,
+                                 AnalyzedFunctionCount4));
+    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+  }
 
   // A fifth function pass manager but which uses only cached results.
-  FunctionPassManager FPM5;
   int FunctionPassRunCount5 = 0;
   int AnalyzedInstrCount5 = 0;
   int AnalyzedFunctionCount5 = 0;
-  FPM5.addPass(TestInvalidationFunctionPass("f"));
-  FPM5.addPass(TestFunctionPass(FunctionPassRunCount5, AnalyzedInstrCount5,
-                                AnalyzedFunctionCount5,
-                                /*OnlyUseCachedResults=*/true));
-  MPM.addPass(createModuleToFunctionPassAdaptor(FPM5));
+  {
+    FunctionPassManager FPM;
+    FPM.addPass(TestInvalidationFunctionPass("f"));
+    FPM.addPass(TestFunctionPass(FunctionPassRunCount5, AnalyzedInstrCount5,
+                                 AnalyzedFunctionCount5,
+                                 /*OnlyUseCachedResults=*/true));
+    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+  }
 
   MPM.run(M.get(), &MAM);
 

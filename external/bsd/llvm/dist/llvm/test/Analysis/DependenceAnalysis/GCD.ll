@@ -24,10 +24,10 @@ entry:
 ; CHECK: da analyze - none!
 
 ; DELIN: 'Dependence Analysis' for function 'gcd0'
-; DELIN: da analyze - none!
+; DELIN: da analyze - output [* *]!
 ; DELIN: da analyze - flow [=> *|<]!
 ; DELIN: da analyze - confused!
-; DELIN: da analyze - none!
+; DELIN: da analyze - input [* *]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 
@@ -85,10 +85,10 @@ entry:
 ; CHECK: da analyze - none!
 
 ; DELIN: 'Dependence Analysis' for function 'gcd1'
-; DELIN: da analyze - none!
+; DELIN: da analyze - output [* *]!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
-; DELIN: da analyze - none!
+; DELIN: da analyze - input [* *]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 
@@ -147,10 +147,10 @@ entry:
 ; CHECK: da analyze - none!
 
 ; DELIN: 'Dependence Analysis' for function 'gcd2'
-; DELIN: da analyze - none!
+; DELIN: da analyze - output [* *]!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
-; DELIN: da analyze - none!
+; DELIN: da analyze - input [* *]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 
@@ -410,10 +410,10 @@ entry:
 ; CHECK: da analyze - output [* *]!
 
 ; DELIN: 'Dependence Analysis' for function 'gcd6'
-; DELIN: da analyze - none!
+; DELIN: da analyze - output [* *]!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
-; DELIN: da analyze - none!
+; DELIN: da analyze - input [* *]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - output [* *]!
 

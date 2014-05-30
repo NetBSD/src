@@ -182,7 +182,7 @@ Package                                                     Version      Notes
    #. If you want to make changes to the configure scripts, you will need GNU
       autoconf (2.60), and consequently, GNU M4 (version 1.4 or higher). You
       will also need automake (1.9.6). We only use aclocal from that package.
-#.Optional, adds compression / uncompression capabilities to selected LLVM
+   #. Optional, adds compression / uncompression capabilities to selected LLVM
       tools.
 
 Additionally, your compilation host is expected to have the usual plethora of
@@ -561,8 +561,9 @@ Then, your .git/config should have [imap] sections.
         pass = himitsu!
         port = 993
         sslverify = false
-  ;
-in English folder = "[Gmail]/Drafts"; example for Japanese, "Modified UTF-7" encoded.
+  ; in English
+        folder = "[Gmail]/Drafts"
+  ; example for Japanese, "Modified UTF-7" encoded.
         folder = "[Gmail]/&Tgtm+DBN-"
   ; example for Traditional Chinese
         folder = "[Gmail]/&g0l6Pw-"
@@ -697,14 +698,12 @@ The following options can be used to set or enable LLVM specific options:
 
   Controls which targets will be built and linked into llc. The default value
   for ``target_options`` is "all" which builds and links all available targets.
-  The value "host-only" can be specified to build only a native compiler (no
-  cross-compiler targets available). The "native" target is selected as the
-  target of the build host. You can also specify a comma separated list of
-  target names that you want available in llc. The target names use all lower
-  case. The current set of targets is:
+  The "host" target is selected as the target of the build host. You can also
+  specify a comma separated list of target names that you want available in llc.
+  The target names use all lower case. The current set of targets is:
 
-    ``arm, cpp, hexagon, mips, mipsel, msp430, powerpc, ptx, sparc, spu,
-    systemz, x86, x86_64, xcore``.
+    ``aarch64, arm, arm64, cpp, hexagon, mips, mipsel, mips64, mips64el, msp430,
+    powerpc, nvptx, r600, sparc, systemz, x86, x86_64, xcore``.
 
 ``--enable-doxygen``
 
@@ -1077,8 +1076,7 @@ different `tools`_.
 
 This directory contains projects that are not strictly part of LLVM but are
 shipped with LLVM. This is also the directory where you should create your own
-LLVM-based projects. See ``llvm/projects/sample`` for an example of how to set
-up your own project.
+LLVM-based projects.
 
 ``llvm/runtime``
 ----------------

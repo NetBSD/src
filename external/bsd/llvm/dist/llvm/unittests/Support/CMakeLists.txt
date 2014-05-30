@@ -1,6 +1,5 @@
 set(LLVM_LINK_COMPONENTS
   Support
-  Core
   )
 
 add_llvm_unittest(SupportTests
@@ -8,22 +7,22 @@ add_llvm_unittest(SupportTests
   AllocatorTest.cpp
   ArrayRecyclerTest.cpp
   BlockFrequencyTest.cpp
+  BranchProbabilityTest.cpp
   Casting.cpp
   CommandLineTest.cpp
   CompressionTest.cpp
-  ConstantRangeTest.cpp
   ConvertUTFTest.cpp
   DataExtractorTest.cpp
   EndianTest.cpp
   ErrorOrTest.cpp
   FileOutputBufferTest.cpp
+  IteratorTest.cpp
   LEB128Test.cpp
-  LeakDetectorTest.cpp
   LineIteratorTest.cpp
   LockFileManagerTest.cpp
+  MD5Test.cpp
   ManagedStatic.cpp
   MathExtrasTest.cpp
-  MD5Test.cpp
   MemoryBufferTest.cpp
   MemoryTest.cpp
   Path.cpp
@@ -35,7 +34,6 @@ add_llvm_unittest(SupportTests
   ThreadLocalTest.cpp
   TimeValueTest.cpp
   UnicodeTest.cpp
-  ValueHandleTest.cpp
   YAMLIOTest.cpp
   YAMLParserTest.cpp
   formatted_raw_ostream_test.cpp

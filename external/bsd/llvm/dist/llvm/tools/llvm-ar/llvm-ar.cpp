@@ -475,16 +475,6 @@ void addMember(std::vector<NewArchiveIterator> &Members, T I, StringRef Name,
     Members[Pos] = NI;
 }
 
-namespace {
-class HasName {
-  StringRef Name;
-
-public:
-  HasName(StringRef Name) : Name(Name) {}
-  bool operator()(StringRef Path) { return Name == sys::path::filename(Path); }
-};
-}
-
 enum InsertAction {
   IA_AddOldMember,
   IA_AddNewMeber,
@@ -500,8 +490,9 @@ computeInsertAction(ArchiveOperation Operation,
   if (Operation == QuickAppend || Members.empty())
     return IA_AddOldMember;
 
-  std::vector<std::string>::iterator MI =
-      std::find_if(Members.begin(), Members.end(), HasName(Name));
+  std::vector<std::string>::iterator MI = std::find_if(
+      Members.begin(), Members.end(),
+      [Name](StringRef Path) { return Name == sys::path::filename(Path); });
 
   if (MI == Members.end())
     return IA_AddOldMember;
@@ -525,7 +516,7 @@ computeInsertAction(ArchiveOperation Operation,
     // We could try to optimize this to a fstat, but it is not a common
     // operation.
     sys::fs::file_status Status;
-    failIfError(sys::fs::status(*MI, Status));
+    failIfError(sys::fs::status(*MI, Status), *MI);
     if (Status.getLastModificationTime() < I->getLastModified()) {
       if (PosName.empty())
         return IA_AddOldMember;
@@ -779,7 +770,7 @@ static void performWriteOperation(ArchiveOperation Operation,
   MemberBuffers.resize(NewMembers.size());
 
   for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
-    OwningPtr<MemoryBuffer> MemberBuffer;
+    std::unique_ptr<MemoryBuffer> MemberBuffer;
     NewArchiveIterator &Member = NewMembers[I];
 
     if (Member.isNewMember()) {
@@ -794,7 +785,7 @@ static void performWriteOperation(ArchiveOperation Operation,
       object::Archive::child_iterator OldMember = Member.getOld();
       failIfError(OldMember->getMemoryBuffer(MemberBuffer));
     }
-    MemberBuffers[I] = MemberBuffer.take();
+    MemberBuffers[I] = MemberBuffer.release();
   }
 
   if (Symtab) {
@@ -865,7 +856,7 @@ static void performWriteOperation(ArchiveOperation Operation,
   Output.keep();
   Out.close();
   sys::fs::rename(TemporaryOutput, ArchiveName);
-  TemporaryOutput = NULL;
+  TemporaryOutput = nullptr;
 }
 
 static void createSymbolTable(object::Archive *OldArchive) {
@@ -947,7 +938,7 @@ int ar_main(char **argv) {
 
 static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
-  OwningPtr<MemoryBuffer> Buf;
+  std::unique_ptr<MemoryBuffer> Buf;
   error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
   if (EC && EC != llvm::errc::no_such_file_or_directory) {
     errs() << ToolName << ": error opening '" << ArchiveName
@@ -956,7 +947,7 @@ static int performOperation(ArchiveOperation Operation) {
   }
 
   if (!EC) {
-    object::Archive Archive(Buf.take(), EC);
+    object::Archive Archive(Buf.release(), EC);
 
     if (EC) {
       errs() << ToolName << ": error loading '" << ArchiveName
@@ -978,6 +969,6 @@ static int performOperation(ArchiveOperation Operation) {
     }
   }
 
-  performOperation(Operation, NULL);
+  performOperation(Operation, nullptr);
   return 0;
 }

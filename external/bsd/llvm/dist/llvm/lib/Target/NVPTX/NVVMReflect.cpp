@@ -38,6 +38,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "nvptx-reflect"
+
 namespace llvm { void initializeNVVMReflectPass(PassRegistry &); }
 
 namespace {
@@ -49,13 +51,13 @@ private:
 
 public:
   static char ID;
-  NVVMReflect() : ModulePass(ID), ReflectFunction(0) {
+  NVVMReflect() : ModulePass(ID), ReflectFunction(nullptr) {
     initializeNVVMReflectPass(*PassRegistry::getPassRegistry());
     VarMap.clear();
   }
 
   NVVMReflect(const StringMap<int> &Mapping)
-  : ModulePass(ID), ReflectFunction(0) {
+  : ModulePass(ID), ReflectFunction(nullptr) {
     initializeNVVMReflectPass(*PassRegistry::getPassRegistry());
     for (StringMap<int>::const_iterator I = Mapping.begin(), E = Mapping.end();
          I != E; ++I) {
@@ -63,8 +65,10 @@ public:
     }
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const { AU.setPreservesAll(); }
-  virtual bool runOnModule(Module &);
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+  }
+  bool runOnModule(Module &) override;
 
   void setVarMap();
 };
@@ -126,7 +130,7 @@ bool NVVMReflect::runOnModule(Module &M) {
 
   // If reflect function is not used, then there will be
   // no entry in the module.
-  if (ReflectFunction == 0)
+  if (!ReflectFunction)
     return false;
 
   // Validate _reflect function
@@ -143,11 +147,9 @@ bool NVVMReflect::runOnModule(Module &M) {
   // ConstantArray can be found successfully, see if it can be
   // found in VarMap. If so, replace the uses of CallInst with the
   // value found in VarMap. If not, replace the use  with value 0.
-  for (Value::use_iterator I = ReflectFunction->use_begin(),
-                           E = ReflectFunction->use_end();
-       I != E; ++I) {
-    assert(isa<CallInst>(*I) && "Only a call instruction can use _reflect");
-    CallInst *Reflect = cast<CallInst>(*I);
+  for (User *U : ReflectFunction->users()) {
+    assert(isa<CallInst>(U) && "Only a call instruction can use _reflect");
+    CallInst *Reflect = cast<CallInst>(U);
 
     assert((Reflect->getNumOperands() == 2) &&
            "Only one operand expect for _reflect function");
