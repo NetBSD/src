@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/04/28 00:41:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/05/30 18:28:15 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -7,7 +7,6 @@ LIB=	LLVMX86CodeGen
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86
 
 SRCS+=	X86AsmPrinter.cpp \
-	X86COFFMachineModuleInfo.cpp \
 	X86CodeEmitter.cpp \
 	X86FastISel.cpp \
 	X86FixupLEAs.cpp \
