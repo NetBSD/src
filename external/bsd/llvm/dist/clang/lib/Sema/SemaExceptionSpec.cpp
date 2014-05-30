@@ -12,13 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 
@@ -130,6 +130,25 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
     InstantiateExceptionSpec(Loc, SourceDecl);
 
   return SourceDecl->getType()->castAs<FunctionProtoType>();
+}
+
+void Sema::UpdateExceptionSpec(FunctionDecl *FD,
+                               const FunctionProtoType::ExtProtoInfo &EPI) {
+  const FunctionProtoType *Proto = FD->getType()->castAs<FunctionProtoType>();
+
+  // Overwrite the exception spec and rebuild the function type.
+  FunctionProtoType::ExtProtoInfo NewEPI = Proto->getExtProtoInfo();
+  NewEPI.ExceptionSpecType = EPI.ExceptionSpecType;
+  NewEPI.NumExceptions = EPI.NumExceptions;
+  NewEPI.Exceptions = EPI.Exceptions;
+  NewEPI.NoexceptExpr = EPI.NoexceptExpr;
+  FD->setType(Context.getFunctionType(Proto->getReturnType(),
+                                      Proto->getParamTypes(), NewEPI));
+
+  // If we've fully resolved the exception specification, notify listeners.
+  if (!isUnresolvedExceptionSpec(EPI.ExceptionSpecType))
+    if (auto *Listener = getASTMutationListener())
+      Listener->ResolvedExceptionSpec(FD);
 }
 
 /// Determine whether a function has an implicitly-generated exception
@@ -246,16 +265,13 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   case EST_Dynamic: {
     OS << "throw(";
     bool OnFirstException = true;
-    for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
-                                            EEnd = OldProto->exception_end();
-         E != EEnd;
-         ++E) {
+    for (const auto &E : OldProto->exceptions()) {
       if (OnFirstException)
         OnFirstException = false;
       else
         OS << ", ";
       
-      OS << E->getAsString(getPrintingPolicy());
+      OS << E.getAsString(getPrintingPolicy());
     }
     OS << ")";
     break;
@@ -267,7 +283,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
   case EST_ComputedNoexcept:
     OS << "noexcept(";
-    OldProto->getNoexceptExpr()->printPretty(OS, 0, getPrintingPolicy());
+    OldProto->getNoexceptExpr()->printPretty(OS, nullptr, getPrintingPolicy());
     OS << ")";
     break;
 
@@ -280,7 +296,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
     TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
     if (FunctionTypeLoc FTLoc = TL.getAs<FunctionTypeLoc>())
-      FixItLoc = PP.getLocForEndOfToken(FTLoc.getLocalRangeEnd());
+      FixItLoc = getLocForEndOfToken(FTLoc.getLocalRangeEnd());
   }
 
   if (FixItLoc.isInvalid())
@@ -439,7 +455,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   // throw(std::bad_alloc) as equivalent for operator new and operator new[].
   // This is because the implicit declaration changed, but old code would break.
   if (getLangOpts().CPlusPlus11 && IsOperatorNew) {
-    const FunctionProtoType *WithExceptions = 0;
+    const FunctionProtoType *WithExceptions = nullptr;
     if (OldEST == EST_None && NewEST == EST_Dynamic)
       WithExceptions = New;
     else if (OldEST == EST_Dynamic && NewEST == EST_None)
@@ -452,15 +468,8 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
         IdentifierInfo* Name = ExRecord->getIdentifier();
         if (Name && Name->getName() == "bad_alloc") {
           // It's called bad_alloc, but is it in std?
-          DeclContext* DC = ExRecord->getDeclContext();
-          DC = DC->getEnclosingNamespaceContext();
-          if (NamespaceDecl* NS = dyn_cast<NamespaceDecl>(DC)) {
-            IdentifierInfo* NSName = NS->getIdentifier();
-            DC = DC->getParent();
-            if (NSName && NSName->getName() == "std" &&
-                DC->getEnclosingNamespaceContext()->isTranslationUnit()) {
-              return false;
-            }
+          if (ExRecord->isInStdNamespace()) {
+            return false;
           }
         }
       }
@@ -499,13 +508,11 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   // Both have a dynamic exception spec. Collect the first set, then compare
   // to the second.
   llvm::SmallPtrSet<CanQualType, 8> OldTypes, NewTypes;
-  for (FunctionProtoType::exception_iterator I = Old->exception_begin(),
-       E = Old->exception_end(); I != E; ++I)
-    OldTypes.insert(Context.getCanonicalType(*I).getUnqualifiedType());
+  for (const auto &I : Old->exceptions())
+    OldTypes.insert(Context.getCanonicalType(I).getUnqualifiedType());
 
-  for (FunctionProtoType::exception_iterator I = New->exception_begin(),
-       E = New->exception_end(); I != E && Success; ++I) {
-    CanQualType TypePtr = Context.getCanonicalType(*I).getUnqualifiedType();
+  for (const auto &I : New->exceptions()) {
+    CanQualType TypePtr = Context.getCanonicalType(I).getUnqualifiedType();
     if(OldTypes.count(TypePtr))
       NewTypes.insert(TypePtr);
     else
@@ -613,10 +620,9 @@ bool Sema::CheckExceptionSpecSubset(
          "Exception spec subset: non-dynamic case slipped through.");
 
   // Neither contains everything or nothing. Do a proper comparison.
-  for (FunctionProtoType::exception_iterator SubI = Subset->exception_begin(),
-       SubE = Subset->exception_end(); SubI != SubE; ++SubI) {
+  for (const auto &SubI : Subset->exceptions()) {
     // Take one type from the subset.
-    QualType CanonicalSubT = Context.getCanonicalType(*SubI);
+    QualType CanonicalSubT = Context.getCanonicalType(SubI);
     // Unwrap pointers and references so that we can do checks within a class
     // hierarchy. Don't unwrap member pointers; they don't have hierarchy
     // conversions on the pointee.
@@ -635,10 +641,8 @@ bool Sema::CheckExceptionSpecSubset(
 
     bool Contained = false;
     // Make sure it's in the superset.
-    for (FunctionProtoType::exception_iterator SuperI =
-           Superset->exception_begin(), SuperE = Superset->exception_end();
-         SuperI != SuperE; ++SuperI) {
-      QualType CanonicalSuperT = Context.getCanonicalType(*SuperI);
+    for (const auto &SuperI : Superset->exceptions()) {
+      QualType CanonicalSuperT = Context.getCanonicalType(SuperI);
       // SubT must be SuperT or derived from it, or pointer or reference to
       // such types.
       if (const ReferenceType *RefTy = CanonicalSuperT->getAs<ReferenceType>())
