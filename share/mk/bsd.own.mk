@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.810 2014/05/30 18:30:32 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.811 2014/05/30 18:31:58 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -98,7 +98,7 @@ HAVE_LIBGCC?=	yes
 .endif
 
 # ia64 is not support
-.if ${MKLLVM:Uno} == "yes"
+.if ${MKLLVM:Uno} == "yes" || !empty(MACHINE_ARCH:Mearm*)
 HAVE_LIBGCC_EH?=	no
 .else
 HAVE_LIBGCC_EH?=	yes
