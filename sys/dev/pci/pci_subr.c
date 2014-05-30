@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.122 2014/05/30 03:42:38 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.123 2014/05/30 05:04:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.122 2014/05/30 03:42:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.123 2014/05/30 05:04:21 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1221,7 +1221,6 @@ pci_conf_print_pcix_cap(const pcireg_t *regs, int capoff)
 }
 
 /* XXX pci_conf_print_ldt_cap */
-/* XXX pci_conf_print_vendspec_cap */
 
 static void
 pci_conf_print_vendspec_cap(const pcireg_t *regs, int capoff)
@@ -1552,7 +1551,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			    (unsigned int)(reg & PCIE_LCSR_LINKSPEED) >> 16);
 		} else {
 			printf("%sGT/s\n",
-			    linkspeeds[((reg & PCIE_LCSR_LINKSPEED) >> 16) - 1]);
+			    linkspeeds[((reg & PCIE_LCSR_LINKSPEED) >> 16)-1]);
 		}
 		printf("      Negotiated Link Width: x%u lanes\n",
 		    (reg >> 20) & 0x003f);
@@ -1864,7 +1863,8 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_PWRMGMT:
 			printf("Power Management, rev. %s",
-			    pci_conf_print_pcipm_cap_pmrev((rval >> 0) & 0x07));
+			    pci_conf_print_pcipm_cap_pmrev(
+				    (rval >> 0) & 0x07));
 			pcipm_off = off;
 			break;
 		case PCI_CAP_AGP:
@@ -2089,9 +2089,6 @@ pci_conf_print_type1(
 	int use_upper;
 
 	/*
-	 * XXX these need to be printed in more detail, need to be
-	 * XXX checked against specs/docs, etc.
-	 *
 	 * This layout was cribbed from the TI PCI2030 PCI-to-PCI
 	 * Bridge chip documentation, and may not be correct with
 	 * respect to various standards. (XXX)
@@ -2378,7 +2375,8 @@ pci_conf_print(
 	int off, capoff, endoff, hdrtype;
 	const char *typename;
 #ifdef _KERNEL
-	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *, int);
+	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *,
+	    int);
 	int sizebars;
 #else
 	void (*typeprintfn)(const pcireg_t *);
