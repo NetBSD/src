@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/05/30 18:28:15 joerg Exp $
 
 LIB=	lldbHostCommon
 
@@ -8,6 +8,7 @@ LIB=	lldbHostCommon
 
 SRCS+=	Condition.cpp \
 	DynamicLibrary.cpp \
+	Editline.cpp \
 	File.cpp \
 	FileSpec.cpp \
 	Host.cpp \
