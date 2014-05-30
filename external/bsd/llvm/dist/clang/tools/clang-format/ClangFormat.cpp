@@ -68,7 +68,8 @@ FallbackStyle("fallback-style",
               cl::desc("The name of the predefined style used as a\n"
                        "fallback in case clang-format is invoked with\n"
                        "-style=file, but can not find the .clang-format\n"
-                       "file to use."),
+                       "file to use.\n"
+                       "Use -fallback-style=none to skip formatting."),
               cl::init("LLVM"), cl::cat(ClangFormatCategory));
 
 static cl::opt<std::string>
@@ -208,7 +209,7 @@ static bool format(StringRef FileName) {
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
       new DiagnosticOptions);
   SourceManager Sources(Diagnostics, Files);
-  OwningPtr<MemoryBuffer> Code;
+  std::unique_ptr<MemoryBuffer> Code;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
     llvm::errs() << ec.message() << "\n";
     return true;
@@ -246,8 +247,8 @@ static bool format(StringRef FileName) {
         return true;
     } else {
       if (Cursor.getNumOccurrences() != 0)
-        outs() << "{ \"Cursor\": " << tooling::shiftedCodePosition(
-                                          Replaces, Cursor) << " }\n";
+        outs() << "{ \"Cursor\": "
+               << tooling::shiftedCodePosition(Replaces, Cursor) << " }\n";
       Rewrite.getEditBuffer(ID).write(outs());
     }
   }

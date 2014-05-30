@@ -89,7 +89,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
                                                   bool *Invalid) const {
   // Lazily create the Buffer for ContentCaches that wrap files.  If we already
   // computed it, just return what we have.
-  if (Buffer.getPointer() || ContentsEntry == 0) {
+  if (Buffer.getPointer() || !ContentsEntry) {
     if (Invalid)
       *Invalid = isBufferInvalid();
     
@@ -163,7 +163,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
     .StartsWith("\x0E\xFE\xFF", "SDSU")
     .StartsWith("\xFB\xEE\x28", "BOCU-1")
     .StartsWith("\x84\x31\x95\x33", "GB-18030")
-    .Default(0);
+    .Default(nullptr);
 
   if (InvalidBOM) {
     Diag.Report(Loc, diag::err_unsupported_bom)
@@ -272,7 +272,7 @@ const LineEntry *LineTableInfo::FindNearestLineEntry(FileID FID,
   // Do a binary search to find the maximal element that is still before Offset.
   std::vector<LineEntry>::const_iterator I =
     std::upper_bound(Entries.begin(), Entries.end(), Offset);
-  if (I == Entries.begin()) return 0;
+  if (I == Entries.begin()) return nullptr;
   return &*--I;
 }
 
@@ -286,7 +286,7 @@ void LineTableInfo::AddEntry(FileID FID,
 /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
 ///
 unsigned SourceManager::getLineTableFilenameID(StringRef Name) {
-  if (LineTable == 0)
+  if (!LineTable)
     LineTable = new LineTableInfo();
   return LineTable->getLineTableFilenameID(Name);
 }
@@ -309,7 +309,7 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
   // Remember that this file has #line directives now if it doesn't already.
   const_cast<SrcMgr::FileInfo&>(FileInfo).setHasLineDirectives();
 
-  if (LineTable == 0)
+  if (!LineTable)
     LineTable = new LineTableInfo();
   LineTable->AddLineNote(LocInfo.first, LocInfo.second, LineNo, FilenameID);
 }
@@ -339,7 +339,7 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
   // Remember that this file has #line directives now if it doesn't already.
   const_cast<SrcMgr::FileInfo&>(FileInfo).setHasLineDirectives();
 
-  if (LineTable == 0)
+  if (!LineTable)
     LineTable = new LineTableInfo();
 
   SrcMgr::CharacteristicKind FileKind;
@@ -361,7 +361,7 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
 }
 
 LineTableInfo &SourceManager::getLineTable() {
-  if (LineTable == 0)
+  if (!LineTable)
     LineTable = new LineTableInfo();
   return *LineTable;
 }
@@ -374,9 +374,9 @@ SourceManager::SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr,
                              bool UserFilesAreVolatile)
   : Diag(Diag), FileMgr(FileMgr), OverridenFilesKeepOriginalName(true),
     UserFilesAreVolatile(UserFilesAreVolatile),
-    ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
-    NumBinaryProbes(0), FakeBufferForRecovery(0),
-    FakeContentCacheForRecovery(0) {
+    ExternalSLocEntries(nullptr), LineTable(nullptr), NumLinearScans(0),
+    NumBinaryProbes(0), FakeBufferForRecovery(nullptr),
+    FakeContentCacheForRecovery(nullptr) {
   clearIDTables();
   Diag.setSourceManager(this);
 }
@@ -413,7 +413,7 @@ void SourceManager::clearIDTables() {
   LoadedSLocEntryTable.clear();
   SLocEntryLoaded.clear();
   LastLineNoFileIDQuery = FileID();
-  LastLineNoContentCache = 0;
+  LastLineNoContentCache = nullptr;
   LastFileIDLookup = FileID();
 
   if (LineTable)
@@ -436,12 +436,8 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt,
   ContentCache *&Entry = FileInfos[FileEnt];
   if (Entry) return Entry;
 
-  // Nope, create a new Cache entry.  Make sure it is at least 8-byte aligned
-  // so that FileInfo can use the low 3 bits of the pointer for its own
-  // nefarious purposes.
-  unsigned EntryAlign = llvm::AlignOf<ContentCache>::Alignment;
-  EntryAlign = std::max(8U, EntryAlign);
-  Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
+  // Nope, create a new Cache entry.
+  Entry = ContentCacheAlloc.Allocate<ContentCache>();
 
   if (OverriddenFilesInfo) {
     // If the file contents are overridden with contents from another file,
@@ -468,12 +464,8 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt,
 ///  memory buffer.  This does no caching.
 const ContentCache*
 SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
-  // Add a new ContentCache to the MemBufferInfos list and return it.  Make sure
-  // it is at least 8-byte aligned so that FileInfo can use the low 3 bits of
-  // the pointer for its own nefarious purposes.
-  unsigned EntryAlign = llvm::AlignOf<ContentCache>::Alignment;
-  EntryAlign = std::max(8U, EntryAlign);
-  ContentCache *Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
+  // Add a new ContentCache to the MemBufferInfos list and return it.
+  ContentCache *Entry = ContentCacheAlloc.Allocate<ContentCache>();
   new (Entry) ContentCache();
   MemBufferInfos.push_back(Entry);
   Entry->setBuffer(Buffer);
@@ -688,7 +680,7 @@ void SourceManager::disableFileContentsOverride(const FileEntry *File) {
     return;
 
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(File);
-  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(0);
+  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(nullptr);
   const_cast<SrcMgr::ContentCache *>(IR)->ContentsEntry = IR->OrigEntry;
 
   assert(OverriddenFilesInfo);
@@ -1156,7 +1148,7 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
   // See if we just calculated the line number for this FilePos and can use
   // that to lookup the start of the line instead of searching for it.
   if (LastLineNoFileIDQuery == FID &&
-      LastLineNoContentCache->SourceLineCache != 0 &&
+      LastLineNoContentCache->SourceLineCache != nullptr &&
       LastLineNoResult < LastLineNoContentCache->NumLines) {
     unsigned *SourceLineCache = LastLineNoContentCache->SourceLineCache;
     unsigned LineStart = SourceLineCache[LastLineNoResult - 1];
@@ -1320,7 +1312,7 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos,
   
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
-  if (Content->SourceLineCache == 0) {
+  if (!Content->SourceLineCache) {
     bool MyInvalid = false;
     ComputeLineNumbers(Diag, Content, ContentCacheAlloc, *this, MyInvalid);
     if (Invalid)
@@ -1376,31 +1368,6 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos,
       if (LastLineNoResult < Content->NumLines)
         SourceLineCacheEnd = SourceLineCache+LastLineNoResult+1;
     }
-  }
-
-  // If the spread is large, do a "radix" test as our initial guess, based on
-  // the assumption that lines average to approximately the same length.
-  // NOTE: This is currently disabled, as it does not appear to be profitable in
-  // initial measurements.
-  if (0 && SourceLineCacheEnd-SourceLineCache > 20) {
-    unsigned FileLen = Content->SourceLineCache[Content->NumLines-1];
-
-    // Take a stab at guessing where it is.
-    unsigned ApproxPos = Content->NumLines*QueriedFilePos / FileLen;
-
-    // Check for -10 and +10 lines.
-    unsigned LowerBound = std::max(int(ApproxPos-10), 0);
-    unsigned UpperBound = std::min(ApproxPos+10, FileLen);
-
-    // If the computed lower bound is less than the query location, move it in.
-    if (SourceLineCache < SourceLineCacheStart+LowerBound &&
-        SourceLineCacheStart[LowerBound] < QueriedFilePos)
-      SourceLineCache = SourceLineCacheStart+LowerBound;
-
-    // If the computed upper bound is greater than the query location, move it.
-    if (SourceLineCacheEnd > SourceLineCacheStart+UpperBound &&
-        SourceLineCacheStart[UpperBound] >= QueriedFilePos)
-      SourceLineCacheEnd = SourceLineCacheStart+UpperBound;
   }
 
   unsigned *Pos
@@ -1729,7 +1696,8 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
       if (SLoc.isFile()) { 
         const ContentCache *FileContentCache 
           = SLoc.getFile().getContentCache();
-      const FileEntry *Entry =FileContentCache? FileContentCache->OrigEntry : 0;
+        const FileEntry *Entry = FileContentCache ? FileContentCache->OrigEntry
+                                                  : nullptr;
         if (Entry && 
             *SourceFileName == llvm::sys::path::filename(Entry->getName())) {
           if (Optional<llvm::sys::fs::UniqueID> EntryUID =
@@ -1781,7 +1749,7 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
 
   // If this is the first use of line information for this buffer, compute the
   // SourceLineCache for it on demand.
-  if (Content->SourceLineCache == 0) {
+  if (!Content->SourceLineCache) {
     bool MyInvalid = false;
     ComputeLineNumbers(Diag, Content, ContentCacheAlloc, *this, MyInvalid);
     if (MyInvalid)
@@ -1890,7 +1858,7 @@ void SourceManager::associateFileChunkWithMacroArgExp(
 
     FileID SpellFID; // Current FileID in the spelling range.
     unsigned SpellRelativeOffs;
-    llvm::tie(SpellFID, SpellRelativeOffs) = getDecomposedLoc(SpellLoc);
+    std::tie(SpellFID, SpellRelativeOffs) = getDecomposedLoc(SpellLoc);
     while (1) {
       const SLocEntry &Entry = getSLocEntry(SpellFID);
       unsigned SpellFIDBeginOffs = Entry.getOffset();
@@ -1969,7 +1937,7 @@ SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) const {
 
   FileID FID;
   unsigned Offset;
-  llvm::tie(FID, Offset) = getDecomposedLoc(Loc);
+  std::tie(FID, Offset) = getDecomposedLoc(Loc);
   if (FID.isInvalid())
     return Loc;
 
@@ -2157,7 +2125,7 @@ void SourceManager::PrintStats() const {
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
   for (fileinfo_iterator I = fileinfo_begin(), E = fileinfo_end(); I != E; ++I){
-    NumLineNumsComputed += I->second->SourceLineCache != 0;
+    NumLineNumsComputed += I->second->SourceLineCache != nullptr;
     NumFileBytesMapped  += I->second->getSizeBytesMapped();
   }
   unsigned NumMacroArgsComputed = MacroArgsCacheMap.size();
