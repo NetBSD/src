@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.228 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.229 2014/05/30 08:47:45 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.228 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.229 2014/05/30 08:47:45 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -113,6 +113,7 @@ struct vfsops nfs_vfsops = {
 	.vfs_quotactl = (void *)eopnotsupp,
 	.vfs_statvfs = nfs_statvfs,
 	.vfs_sync = nfs_sync,
+	.vfs_loadvnode = nfs_loadvnode,
 	.vfs_vget = nfs_vget,
 	.vfs_fhtovp = nfs_fhtovp,
 	.vfs_vptofh = nfs_vptofh,
@@ -721,12 +722,10 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 		TAILQ_INIT(&nmp->nm_bufq);
 		rw_init(&nmp->nm_writeverflock);
 		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
-		rw_init(&nmp->nm_rbtlock);
 		cv_init(&nmp->nm_rcvcv, "nfsrcv");
 		cv_init(&nmp->nm_sndcv, "nfssnd");
 		cv_init(&nmp->nm_aiocv, "nfsaio");
 		cv_init(&nmp->nm_disconcv, "nfsdis");
-		nfs_rbtinit(nmp);
 	}
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
@@ -826,7 +825,6 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 bad:
 	nfs_disconnect(nmp);
 	rw_destroy(&nmp->nm_writeverflock);
-	rw_destroy(&nmp->nm_rbtlock);
 	mutex_destroy(&nmp->nm_lock);
 	cv_destroy(&nmp->nm_rcvcv);
 	cv_destroy(&nmp->nm_sndcv);
@@ -903,7 +901,6 @@ nfs_unmount(struct mount *mp, int mntflags)
 	m_freem(nmp->nm_nam);
 
 	rw_destroy(&nmp->nm_writeverflock);
-	rw_destroy(&nmp->nm_rbtlock);
 	mutex_destroy(&nmp->nm_lock);
 	cv_destroy(&nmp->nm_rcvcv);
 	cv_destroy(&nmp->nm_sndcv);
