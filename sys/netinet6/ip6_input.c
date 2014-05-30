@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.145 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.146 2014/05/30 01:39:03 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.145 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.146 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -257,12 +257,6 @@ ip6_input(struct mbuf *m)
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-#ifdef IPSEC
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
-	struct secpolicy *sp;
-	int s, error;
-#endif
 
 	/*
 	 * make sure we don't have onion peering information into m_tag.
@@ -345,7 +339,7 @@ ip6_input(struct mbuf *m)
 	 * not the decapsulated packet.
 	 */
 #if defined(IPSEC)
-	if (!ipsec_indone(m))
+	if (!ipsec_used || !ipsec_indone(m))
 #else
 	if (1)
 #endif
@@ -753,44 +747,57 @@ ip6_input(struct mbuf *m)
 		}
 
 #ifdef IPSEC
-	/*
-	 * enforce IPsec policy checking if we are seeing last header.
-	 * note that we do not visit this with protocols with pcb layer
-	 * code - like udp/tcp/raw ip.
-	 */
-	if ((inet6sw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0) {
-		/*
-		 * Check if the packet has already had IPsec processing
-		 * done.  If so, then just pass it along.  This tag gets
-		 * set during AH, ESP, etc. input handling, before the
-		 * packet is returned to the ip input queue for delivery.
-		 */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-		s = splsoftnet();
-		if (mtag != NULL) {
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
-		} else {
-			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-									IP_FORWARDING, &error);
-		}
-		if (sp != NULL) {
-			/*
-			 * Check security policy against packet attributes.
-			 */
-			error = ipsec_in_reject(sp, m);
-			KEY_FREESP(&sp);
-		} else {
-			/* XXX error stat??? */
-			error = EINVAL;
-			DPRINTF(("ip6_input: no SP, packet discarded\n"));/*XXX*/
-		}
-		splx(s);
-		if (error)
-			goto bad;
-	}
-#endif /* IPSEC */
+		if (ipsec_used) {
+			struct m_tag *mtag;
+			struct tdb_ident *tdbi;
+			struct secpolicy *sp;
+			int s, error;
 
+			/*
+			 * enforce IPsec policy checking if we are seeing last
+			 * header. note that we do not visit this with
+			 * protocols with pcb layer code - like udp/tcp/raw ip.
+			 */
+			if ((inet6sw[ip_protox[nxt]].pr_flags
+			    & PR_LASTHDR) != 0) {
+				/*
+				 * Check if the packet has already had IPsec
+				 * processing done. If so, then just pass it
+				 * along. This tag gets set during AH, ESP,
+				 * etc. input handling, before the packet is
+				 * returned to the ip input queue for delivery.
+				 */
+				mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE,
+				    NULL);
+				s = splsoftnet();
+				if (mtag != NULL) {
+					tdbi = (struct tdb_ident *)(mtag + 1);
+					sp = ipsec_getpolicy(tdbi,
+					    IPSEC_DIR_INBOUND);
+				} else {
+					sp = ipsec_getpolicybyaddr(m,
+					    IPSEC_DIR_INBOUND, IP_FORWARDING,
+					    &error);
+				}
+				if (sp != NULL) {
+					/*
+					 * Check security policy against packet
+					 * attributes.
+					 */
+					error = ipsec_in_reject(sp, m);
+					KEY_FREESP(&sp);
+				} else {
+					/* XXX error stat??? */
+					error = EINVAL;
+					DPRINTF(("ip6_input: no SP, packet"
+					    " discarded\n"));/*XXX*/
+				}
+				splx(s);
+				if (error)
+					goto bad;
+			}
+		}
+#endif /* IPSEC */
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
