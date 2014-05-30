@@ -69,7 +69,7 @@ def err_invalid_short_spec : Error<"'short %0' is invalid">;
 def err_invalid_long_spec : Error<"'long %0' is invalid">;
 def err_invalid_longlong_spec : Error<"'long long %0' is invalid">;
 def err_invalid_complex_spec : Error<"'_Complex %0' is invalid">;
-def err_friend_storage_spec : Error<"'%0' is invalid in friend declarations">;
+def err_friend_decl_spec : Error<"'%0' is invalid in friend declarations">;
 
 def ext_ident_list_in_param : Extension<
   "type-less parameter names in function declaration">;
@@ -193,7 +193,7 @@ def err_expected_semi_after_method_proto : Error<
 def err_expected_semi_after_namespace_name : Error<
   "expected ';' after namespace name">;
 def err_unexpected_namespace_attributes_alias : Error<
-  "attributes can not be specified on namespace alias">;
+  "attributes cannot be specified on namespace alias">;
 def err_inline_namespace_alias : Error<"namespace alias cannot be inline">;
 def err_namespace_nonnamespace_scope : Error<
   "namespaces can only be defined in global or namespace scope">;
@@ -204,6 +204,8 @@ def err_expected_semi_after_attribute_list : Error<
 def err_expected_semi_after_static_assert : Error<
   "expected ';' after static_assert">;
 def err_expected_semi_for : Error<"expected ';' in 'for' statement specifier">;
+def err_single_decl_assign_in_for_range : Error<
+  "range-based 'for' statement uses ':', not '='">;
 def warn_missing_selector_name : Warning<
   "%0 used as the name of the previous parameter rather than as part "
   "of the selector">,
@@ -224,6 +226,8 @@ def err_expected_selector_for_method : Error<
 def err_expected_property_name : Error<"expected property name">;
 
 def err_unexpected_at : Error<"unexpected '@' in program">;
+def err_atimport : Error<
+"use of '@import' when modules are disabled">;
 
 def err_invalid_reference_qualifier_application : Error<
   "'%0' qualifier may not be applied to a reference">;
@@ -337,8 +341,10 @@ def err_templated_using_directive : Error<
   "cannot template a using directive">;
 def err_templated_using_declaration : Error<
   "cannot template a using declaration">;
-def err_unexected_colon_in_nested_name_spec : Error<
+def err_unexpected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier; did you mean '::'?">;
+def err_unexpected_token_in_nested_name_spec : Error<
+  "'%0' cannot be a part of nested name specifier; did you mean ':'?">;
 def err_bool_redeclaration : Error<
   "redeclaration of C++ built-in type 'bool'">;
 def ext_c11_static_assert : Extension<
@@ -412,7 +418,7 @@ def err_objc_concat_string : Error<"unexpected token after Objective-C string">;
 def err_expected_objc_container : Error<
   "'@end' must appear in an Objective-C context">;
 def err_unexpected_protocol_qualifier : Error<
-  "@implementation declaration can not be protocol qualified">;
+  "@implementation declaration cannot be protocol qualified">;
 def err_objc_unexpected_atend : Error<
   "'@end' appears where closing brace '}' is expected">;
 def error_property_ivar_decl : Error<
@@ -522,7 +528,9 @@ def warn_cxx98_compat_attribute : Warning<
   "C++11 attribute syntax is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_cxx11_attribute_forbids_arguments : Error<
-  "attribute '%0' cannot have an argument list">;
+  "attribute %0 cannot have an argument list">;
+def err_attribute_requires_arguments : Error<
+  "parentheses must be omitted if %0 attribute's argument list is empty">;
 def err_cxx11_attribute_forbids_ellipsis : Error<
   "attribute '%0' cannot be used as an attribute pack">;
 def err_cxx11_attribute_repeated : Error<
@@ -533,8 +541,6 @@ def err_l_square_l_square_not_attribute : Error<
   "introducing an attribute">;
 def err_ms_declspec_type : Error<
   "__declspec attributes must be an identifier or string literal">;
-def warn_ms_declspec_unknown : Warning<
-  "unknown __declspec attribute %0 ignored">, InGroup<UnknownAttributes>;
 def err_ms_property_no_getter_or_putter : Error<
   "property does not specify a getter or a putter">;
 def err_ms_property_unknown_accessor : Error<
@@ -725,7 +731,8 @@ def warn_cxx98_compat_lambda : Warning<
   "lambda expressions are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_lambda_missing_parens : Error<
-  "lambda requires '()' before %select{'mutable'|return type}0">;
+  "lambda requires '()' before %select{'mutable'|return type|"
+  "attribute specifier}0">;
 
 // Availability attribute
 def err_expected_version : Error<
@@ -770,6 +777,15 @@ def warn_pragma_expected_rparen : Warning<
   "missing ')' after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_expected_identifier : Warning<
   "expected identifier in '#pragma %0' - ignored">, InGroup<IgnoredPragmas>;
+def warn_pragma_expected_section_name : Warning<
+  "expected a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_section_push_pop_or_name : Warning<
+  "expected push, pop or a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_section_label_or_name : Warning<
+  "expected a stack label or a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_expected_integer : Warning<
   "expected integer between %0 and %1 inclusive in '#pragma %2' - ignored">,
   InGroup<IgnoredPragmas>;
@@ -792,6 +808,15 @@ def warn_pragma_align_invalid_option : Warning<
   "invalid alignment option in '#pragma %select{align|options align}0' - ignored">,
   InGroup<IgnoredPragmas>;
 // - #pragma pack
+def warn_pragma_unsupported_action : Warning<
+  "known but unsupported action '%1' for '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_invalid_specific_action : Warning<
+  "unknown action '%1' for '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_action_or_r_paren : Warning<
+  "expected action or ')' in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_invalid_action : Warning<
   "unknown action for '#pragma %0' - ignored">,
   InGroup<IgnoredPragmas>;
@@ -818,6 +843,14 @@ def err_pragma_detect_mismatch_malformed : Error<
 def err_pragma_pointers_to_members_unknown_kind : Error<
   "unexpected %0, expected to see one of %select{|'best_case', 'full_generality', }1"
   "'single_inheritance', 'multiple_inheritance', or 'virtual_inheritance'">;
+// - #pragma clang optimize on/off
+def err_pragma_optimize_missing_argument : Error<
+  "missing argument to '#pragma clang optimize'; expected 'on' or 'off'">;
+def err_pragma_optimize_invalid_argument : Error<
+  "unexpected argument '%0' to '#pragma clang optimize'; "
+  "expected 'on' or 'off'">;
+def err_pragma_optimize_extra_argument : Error<
+  "unexpected extra argument '%0' to '#pragma clang optimize'">;
 
 // OpenCL Section 6.8.g
 def err_not_opencl_storage_class_specifier : Error<
@@ -844,20 +877,20 @@ def err_seh___finally_block : Error<
   "%0 only allowed in __finally block">;
 
 // OpenMP support.
-def warn_pragma_omp_ignored : Warning <
+def warn_pragma_omp_ignored : Warning<
   "unexpected '#pragma omp ...' in program">, InGroup<SourceUsesOpenMP>, DefaultIgnore;
-def warn_omp_extra_tokens_at_eol : Warning <
+def warn_omp_extra_tokens_at_eol : Warning<
   "extra tokens at the end of '#pragma omp %0' are ignored">,
   InGroup<ExtraTokens>;
-def err_omp_unknown_directive : Error <
+def err_omp_unknown_directive : Error<
   "expected an OpenMP directive">;
-def err_omp_unexpected_directive : Error <
+def err_omp_unexpected_directive : Error<
   "unexpected OpenMP directive '#pragma omp %0'">;
-def err_omp_expected_punc : Error <
+def err_omp_expected_punc : Error<
   "expected ',' or ')' in '%0' clause">;
-def err_omp_unexpected_clause : Error <
+def err_omp_unexpected_clause : Error<
   "unexpected OpenMP clause '%0' in directive '#pragma omp %1'">;
-def err_omp_more_one_clause : Error <
+def err_omp_more_one_clause : Error<
   "directive '#pragma omp %0' cannot contain more than one '%1' clause">;
 } // end of Parse Issue category.
 

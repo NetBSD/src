@@ -67,9 +67,7 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
   if (!D->hasAttrs())
     return;
 
-  for (AttrVec::const_iterator AttrI = D->attr_begin(), AttrE = D->attr_end();
-         AttrI != AttrE; ++AttrI) {
-    const Attr *A = *AttrI;
+  for (const auto *A : D->attrs()) {
     CXCursor C = MakeCXCursor(A, D, IdxCtx.CXTU);
     CXIdxLoc Loc =  IdxCtx.getIndexLoc(A->getLocation());
     switch (C.kind) {
@@ -125,9 +123,7 @@ AttrListInfo::create(const Decl *D, IndexingContext &IdxCtx) {
 IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
                                    IndexingContext &IdxCtx,
                                    ScratchAlloc &SA) {
-  for (CXXRecordDecl::base_class_const_iterator
-         I = D->bases_begin(), E = D->bases_end(); I != E; ++I) {
-    const CXXBaseSpecifier &Base = *I;
+  for (const auto &Base : D->bases()) {
     BaseEntities.push_back(EntityInfo());
     const NamedDecl *BaseD = 0;
     QualType T = Base.getType();

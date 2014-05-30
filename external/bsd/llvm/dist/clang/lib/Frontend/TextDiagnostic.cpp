@@ -314,14 +314,6 @@ private:
   SmallVector<int,200> m_byteToColumn;
   SmallVector<int,200> m_columnToByte;
 };
-
-// used in assert in selectInterestingSourceRegion()
-struct char_out_of_range {
-  const char lower,upper;
-  char_out_of_range(char lower, char upper) :
-    lower(lower), upper(upper) {}
-  bool operator()(char c) { return c < lower || upper < c; }
-};
 } // end anonymous namespace
 
 /// \brief When the source code line we want to print is too long for
@@ -341,7 +333,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
   // No special characters are allowed in CaretLine.
   assert(CaretLine.end() ==
          std::find_if(CaretLine.begin(), CaretLine.end(),
-         char_out_of_range(' ','~')));
+                      [](char c) { return c < ' ' || '~' < c; }));
 
   // Find the slice that we need to display the full caret line
   // correctly.
@@ -820,7 +812,9 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
     if (unsigned ColNo = PLoc.getColumn()) {
       if (DiagOpts->getFormat() == DiagnosticOptions::Msvc) {
         OS << ',';
-        ColNo--;
+        // Visual Studio 2010 or earlier expects column number to be off by one
+        if (LangOpts.MSCVersion && LangOpts.MSCVersion < 1700)
+          ColNo--;
       } else
         OS << ':';
       OS << ColNo;
