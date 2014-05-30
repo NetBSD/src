@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
+; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
 ; This test checks that uses and defs of the AR register happen in the same
 ; instruction clause.
@@ -13,10 +13,10 @@
 ; R600-CHECK-NOT: ALU clause
 ; R600-CHECK: 0 + AR.x
 
-; SI-CHECK: V_READFIRSTLANE
+; SI-CHECK: V_READFIRSTLANE_B32 vcc_lo
 ; SI-CHECK: V_MOVRELD
 ; SI-CHECK: S_CBRANCH
-; SI-CHECK: V_READFIRSTLANE
+; SI-CHECK: V_READFIRSTLANE_B32 vcc_lo
 ; SI-CHECK: V_MOVRELD
 ; SI-CHECK: S_CBRANCH
 define void @mova_same_clause(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* nocapture %in) {
@@ -119,7 +119,7 @@ for.end:
 ; R600-CHECK: *
 ; R600-CHECK: MOVA_INT
 
-; SI-CHECK: V_MOV_B32_e32 v{{[0-9]}}, 65536
+; SI-CHECK: V_MOV_B32_e32 v{{[0-9]}}, 0x10000
 ; SI-CHECK: V_MOVRELS_B32_e32
 define void @short_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
@@ -142,7 +142,7 @@ entry:
 ; R600-CHECK: *
 ; R600-CHECK-NEXT: MOVA_INT
 
-; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}, 256
+; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}, 0x100
 ; SI-CHECK: V_MOVRELS_B32_e32
 define void @char_array(i32 addrspace(1)* %out, i32 %index) {
 entry:

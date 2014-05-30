@@ -39,64 +39,55 @@ using namespace llvm;
 // TargetLowering Class Implementation Begins
 //===----------------------------------------------------------------------===//
 void AMDGPUTargetLowering::InitAMDILLowering() {
-  static const int types[] = {
-    (int)MVT::i8,
-    (int)MVT::i16,
-    (int)MVT::i32,
-    (int)MVT::f32,
-    (int)MVT::f64,
-    (int)MVT::i64,
-    (int)MVT::v2i8,
-    (int)MVT::v4i8,
-    (int)MVT::v2i16,
-    (int)MVT::v4i16,
-    (int)MVT::v4f32,
-    (int)MVT::v4i32,
-    (int)MVT::v2f32,
-    (int)MVT::v2i32,
-    (int)MVT::v2f64,
-    (int)MVT::v2i64
+  static const MVT::SimpleValueType types[] = {
+    MVT::i8,
+    MVT::i16,
+    MVT::i32,
+    MVT::f32,
+    MVT::f64,
+    MVT::i64,
+    MVT::v2i8,
+    MVT::v4i8,
+    MVT::v2i16,
+    MVT::v4i16,
+    MVT::v4f32,
+    MVT::v4i32,
+    MVT::v2f32,
+    MVT::v2i32,
+    MVT::v2f64,
+    MVT::v2i64
   };
 
-  static const int IntTypes[] = {
-    (int)MVT::i8,
-    (int)MVT::i16,
-    (int)MVT::i32,
-    (int)MVT::i64
+  static const MVT::SimpleValueType IntTypes[] = {
+    MVT::i8,
+    MVT::i16,
+    MVT::i32,
+    MVT::i64
   };
 
-  static const int FloatTypes[] = {
-    (int)MVT::f32,
-    (int)MVT::f64
+  static const MVT::SimpleValueType FloatTypes[] = {
+    MVT::f32,
+    MVT::f64
   };
 
-  static const int VectorTypes[] = {
-    (int)MVT::v2i8,
-    (int)MVT::v4i8,
-    (int)MVT::v2i16,
-    (int)MVT::v4i16,
-    (int)MVT::v4f32,
-    (int)MVT::v4i32,
-    (int)MVT::v2f32,
-    (int)MVT::v2i32,
-    (int)MVT::v2f64,
-    (int)MVT::v2i64
+  static const MVT::SimpleValueType VectorTypes[] = {
+    MVT::v2i8,
+    MVT::v4i8,
+    MVT::v2i16,
+    MVT::v4i16,
+    MVT::v4f32,
+    MVT::v4i32,
+    MVT::v2f32,
+    MVT::v2i32,
+    MVT::v2f64,
+    MVT::v2i64
   };
-  const size_t NumTypes = array_lengthof(types);
-  const size_t NumFloatTypes = array_lengthof(FloatTypes);
-  const size_t NumIntTypes = array_lengthof(IntTypes);
-  const size_t NumVectorTypes = array_lengthof(VectorTypes);
 
   const AMDGPUSubtarget &STM = getTargetMachine().getSubtarget<AMDGPUSubtarget>();
   // These are the current register classes that are
   // supported
 
-  for (unsigned int x  = 0; x < NumTypes; ++x) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)types[x];
-
-    //FIXME: SIGN_EXTEND_INREG is not meaningful for floating point types
-    // We cannot sextinreg, expand to shifts
-    setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
+  for (MVT VT : types) {
     setOperationAction(ISD::SUBE, VT, Expand);
     setOperationAction(ISD::SUBC, VT, Expand);
     setOperationAction(ISD::ADDE, VT, Expand);
@@ -112,9 +103,7 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
       setOperationAction(ISD::SDIV, VT, Custom);
     }
   }
-  for (unsigned int x = 0; x < NumFloatTypes; ++x) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)FloatTypes[x];
-
+  for (MVT VT : FloatTypes) {
     // IL does not have these operations for floating point types
     setOperationAction(ISD::FP_ROUND_INREG, VT, Expand);
     setOperationAction(ISD::SETOLT, VT, Expand);
@@ -127,9 +116,7 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::SETULE, VT, Expand);
   }
 
-  for (unsigned int x = 0; x < NumIntTypes; ++x) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)IntTypes[x];
-
+  for (MVT VT : IntTypes) {
     // GPU also does not have divrem function for signed or unsigned
     setOperationAction(ISD::SDIVREM, VT, Expand);
 
@@ -145,9 +132,7 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::CTLZ, VT, Expand);
   }
 
-  for (unsigned int ii = 0; ii < NumVectorTypes; ++ii) {
-    MVT::SimpleValueType VT = (MVT::SimpleValueType)VectorTypes[ii];
-
+  for (MVT VT : VectorTypes) {
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
@@ -191,14 +176,12 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   setOperationAction(ISD::UDIV, MVT::v4i8, Expand);
   setOperationAction(ISD::UDIV, MVT::v2i16, Expand);
   setOperationAction(ISD::UDIV, MVT::v4i16, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   setOperationAction(ISD::SUBC, MVT::Other, Expand);
   setOperationAction(ISD::ADDE, MVT::Other, Expand);
   setOperationAction(ISD::ADDC, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
 
 
   // Use the default implementation.
@@ -248,41 +231,6 @@ AMDGPUTargetLowering::ShouldShrinkFPConstant(EVT VT) const {
 // be zero. Op is expected to be a target specific node. Used by DAG
 // combiner.
 
-void
-AMDGPUTargetLowering::computeMaskedBitsForTargetNode(
-    const SDValue Op,
-    APInt &KnownZero,
-    APInt &KnownOne,
-    const SelectionDAG &DAG,
-    unsigned Depth) const {
-  APInt KnownZero2;
-  APInt KnownOne2;
-  KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0); // Don't know anything
-  switch (Op.getOpcode()) {
-    default: break;
-    case ISD::SELECT_CC:
-             DAG.ComputeMaskedBits(
-                 Op.getOperand(1),
-                 KnownZero,
-                 KnownOne,
-                 Depth + 1
-                 );
-             DAG.ComputeMaskedBits(
-                 Op.getOperand(0),
-                 KnownZero2,
-                 KnownOne2
-                 );
-             assert((KnownZero & KnownOne) == 0
-                 && "Bits known to be one AND zero?");
-             assert((KnownZero2 & KnownOne2) == 0
-                 && "Bits known to be one AND zero?");
-             // Only known if known in both the LHS and RHS
-             KnownOne &= KnownOne2;
-             KnownZero &= KnownZero2;
-             break;
-  };
-}
-
 //===----------------------------------------------------------------------===//
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
@@ -322,36 +270,6 @@ AMDGPUTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const {
   return DST;
 }
 
-SDValue
-AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Data = Op.getOperand(0);
-  VTSDNode *BaseType = cast<VTSDNode>(Op.getOperand(1));
-  SDLoc DL(Op);
-  EVT DVT = Data.getValueType();
-  EVT BVT = BaseType->getVT();
-  unsigned baseBits = BVT.getScalarType().getSizeInBits();
-  unsigned srcBits = DVT.isSimple() ? DVT.getScalarType().getSizeInBits() : 1;
-  unsigned shiftBits = srcBits - baseBits;
-  if (srcBits < 32) {
-    // If the op is less than 32 bits, then it needs to extend to 32bits
-    // so it can properly keep the upper bits valid.
-    EVT IVT = genIntType(32, DVT.isVector() ? DVT.getVectorNumElements() : 1);
-    Data = DAG.getNode(ISD::ZERO_EXTEND, DL, IVT, Data);
-    shiftBits = 32 - baseBits;
-    DVT = IVT;
-  }
-  SDValue Shift = DAG.getConstant(shiftBits, DVT);
-  // Shift left by 'Shift' bits.
-  Data = DAG.getNode(ISD::SHL, DL, DVT, Data, Shift);
-  // Signed shift Right by 'Shift' bits.
-  Data = DAG.getNode(ISD::SRA, DL, DVT, Data, Shift);
-  if (srcBits < 32) {
-    // Once the sign extension is done, the op needs to be converted to
-    // its original type.
-    Data = DAG.getSExtOrTrunc(Data, DL, Op.getOperand(0).getValueType());
-  }
-  return Data;
-}
 EVT
 AMDGPUTargetLowering::genIntType(uint32_t size, uint32_t numEle) const {
   int iSize = (size * numEle);

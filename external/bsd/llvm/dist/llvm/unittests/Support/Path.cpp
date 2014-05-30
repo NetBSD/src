@@ -210,6 +210,35 @@ TEST(Support, AbsolutePathIteratorWin32) {
 }
 #endif // LLVM_ON_WIN32
 
+TEST(Support, AbsolutePathIteratorEnd) {
+  // Trailing slashes are converted to '.' unless they are part of the root path.
+  SmallVector<StringRef, 4> Paths;
+  Paths.push_back("/foo/");
+  Paths.push_back("/foo//");
+  Paths.push_back("//net//");
+#ifdef LLVM_ON_WIN32
+  Paths.push_back("c:\\\\");
+#endif
+
+  for (StringRef Path : Paths) {
+    StringRef LastComponent = *--path::end(Path);
+    EXPECT_EQ(".", LastComponent);
+  }
+
+  SmallVector<StringRef, 3> RootPaths;
+  RootPaths.push_back("/");
+  RootPaths.push_back("//net/");
+#ifdef LLVM_ON_WIN32
+  RootPaths.push_back("c:\\");
+#endif
+
+  for (StringRef Path : RootPaths) {
+    StringRef LastComponent = *--path::end(Path);
+    EXPECT_EQ(1u, LastComponent.size());
+    EXPECT_TRUE(path::is_separator(LastComponent[0]));
+  }
+}
+
 TEST(Support, HomeDirectory) {
 #ifdef LLVM_ON_UNIX
   // This test only makes sense on Unix if $HOME is set.
@@ -270,7 +299,7 @@ TEST_F(FileSystemTest, Unique) {
 
   // Two paths representing the same file on disk should still provide the
   // same unique id.  We can test this by making a hard link.
-  ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  ASSERT_NO_ERROR(fs::create_link(Twine(TempPath), Twine(TempPath2)));
   fs::UniqueID D2;
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath2), D2));
   ASSERT_EQ(D2, F1);
@@ -336,7 +365,7 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_FALSE(TempPath3.endswith("."));
 
   // Create a hard link to Temp1.
-  ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  ASSERT_NO_ERROR(fs::create_link(Twine(TempPath), Twine(TempPath2)));
   bool equal;
   ASSERT_NO_ERROR(fs::equivalent(Twine(TempPath), Twine(TempPath2), equal));
   EXPECT_TRUE(equal);
@@ -526,7 +555,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    OwningPtr<MemoryBuffer> Buf;
+    std::unique_ptr<MemoryBuffer> Buf;
     MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\r\n");
   }
@@ -537,7 +566,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    OwningPtr<MemoryBuffer> Buf;
+    std::unique_ptr<MemoryBuffer> Buf;
     MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\n");
   }
@@ -581,7 +610,6 @@ TEST_F(FileSystemTest, FileMapping) {
 
   // Unmap temp file
 
-#if LLVM_HAS_RVALUE_REFERENCES
   fs::mapped_file_region m(Twine(TempPath),
                              fs::mapped_file_region::readonly,
                              0,
@@ -589,8 +617,44 @@ TEST_F(FileSystemTest, FileMapping) {
                              EC);
   ASSERT_NO_ERROR(EC);
   const char *Data = m.const_data();
-  fs::mapped_file_region mfrrv(llvm_move(m));
+  fs::mapped_file_region mfrrv(std::move(m));
   EXPECT_EQ(mfrrv.const_data(), Data);
+}
+
+TEST(Support, NormalizePath) {
+#if defined(LLVM_ON_WIN32)
+#define EXPECT_PATH_IS(path__, windows__, not_windows__)                        \
+  EXPECT_EQ(path__, windows__);
+#else
+#define EXPECT_PATH_IS(path__, windows__, not_windows__)                        \
+  EXPECT_EQ(path__, not_windows__);
 #endif
+
+  SmallString<64> Path1("a");
+  SmallString<64> Path2("a/b");
+  SmallString<64> Path3("a\\b");
+  SmallString<64> Path4("a\\\\b");
+  SmallString<64> Path5("\\a");
+  SmallString<64> Path6("a\\");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path1));
+  EXPECT_PATH_IS(Path1, "a", "a");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path2));
+  EXPECT_PATH_IS(Path2, "a/b", "a/b");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path3));
+  EXPECT_PATH_IS(Path3, "a\\b", "a/b");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path4));
+  EXPECT_PATH_IS(Path4, "a\\\\b", "a\\\\b");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path5));
+  EXPECT_PATH_IS(Path5, "\\a", "/a");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path6));
+  EXPECT_PATH_IS(Path6, "a\\", "a/");
+
+#undef EXPECT_PATH_IS
 }
 } // anonymous namespace

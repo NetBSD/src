@@ -68,10 +68,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
 let TargetPrefix = "AMDIL", isTarget = 1 in {
   def int_AMDIL_abs : GCCBuiltin<"__amdil_abs">, UnaryIntInt;
 
-  def int_AMDIL_bit_extract_i32 : GCCBuiltin<"__amdil_ibit_extract">,
-          TernaryIntInt;
-  def int_AMDIL_bit_extract_u32 : GCCBuiltin<"__amdil_ubit_extract">,
-          TernaryIntInt;
   def int_AMDIL_bit_reverse_u32 : GCCBuiltin<"__amdil_ubit_reverse">,
           UnaryIntInt;
   def int_AMDIL_bit_count_i32 : GCCBuiltin<"__amdil_count_bits">,
@@ -95,10 +91,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
   def int_AMDIL_mulhi_i32 : GCCBuiltin<"__amdil_imul_high">,
           BinaryIntInt;
   def int_AMDIL_mulhi_u32 : GCCBuiltin<"__amdil_umul_high">,
-          BinaryIntInt;
-  def int_AMDIL_mul24_i32 : GCCBuiltin<"__amdil_imul24">,
-          BinaryIntInt;
-  def int_AMDIL_mul24_u32 : GCCBuiltin<"__amdil_umul24">,
           BinaryIntInt;
   def int_AMDIL_mulhi24_i32 : GCCBuiltin<"__amdil_imul24_high">,
           BinaryIntInt;

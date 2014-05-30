@@ -69,6 +69,10 @@ class ReadNone<int argNo> : IntrinsicProperty {
 
 def IntrNoReturn : IntrinsicProperty;
 
+// IntrNoduplicate - Calls to this intrinsic cannot be duplicated.
+// Parallels the noduplicate attribute on LLVM IR functions.
+def IntrNoDuplicate : IntrinsicProperty;
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//
@@ -102,12 +106,16 @@ class LLVMMatchType<int num>
   int Number = num;
 }
 
-// Match the type of another intrinsic parameter that is expected to be
-// an integral vector type, but change the element size to be twice as wide
-// or half as wide as the other type.  This is only useful when the intrinsic
-// is overloaded, so the matched type should be declared as iAny.
-class LLVMExtendedElementVectorType<int num> : LLVMMatchType<num>;
-class LLVMTruncatedElementVectorType<int num> : LLVMMatchType<num>;
+// Match the type of another intrinsic parameter that is expected to be based on
+// an integral type (i.e. either iN or <N x iM>), but change the scalar size to
+// be twice as wide or half as wide as the other type.  This is only useful when
+// the intrinsic is overloaded, so the matched type should be declared as iAny.
+class LLVMExtendedType<int num> : LLVMMatchType<num>;
+class LLVMTruncatedType<int num> : LLVMMatchType<num>;
+
+// Match the type of another intrinsic parameter that is expected to be a
+// vector type, but change the element count to be half as many
+class LLVMHalfElementsVectorType<int num> : LLVMMatchType<num>;
 
 def llvm_void_ty       : LLVMType<isVoid>;
 def llvm_anyint_ty     : LLVMType<iAny>;
@@ -242,6 +250,10 @@ def int_gcwrite : Intrinsic<[],
 //
 def int_returnaddress : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
 def int_frameaddress  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
+def int_read_register  : Intrinsic<[llvm_anyint_ty], [llvm_metadata_ty],
+                                   [IntrNoMem], "llvm.read_register">;
+def int_write_register : Intrinsic<[], [llvm_metadata_ty, llvm_anyint_ty],
+                                   [], "llvm.write_register">;
 
 // Note: we treat stacksave/stackrestore as writemem because we don't otherwise
 // model their dependencies on allocas.
@@ -285,10 +297,17 @@ def int_memset  : Intrinsic<[],
                              llvm_i32_ty, llvm_i1_ty],
                             [IntrReadWriteArgMem, NoCapture<0>]>;
 
-// These functions do not actually read memory, but they are sensitive to the
-// rounding mode.  This needs to be modelled separately; in the meantime
-// declaring them as reading memory is conservatively correct.
-let Properties = [IntrReadMem] in {
+let Properties = [IntrNoMem] in {
+  def int_fma  : Intrinsic<[llvm_anyfloat_ty],
+                           [LLVMMatchType<0>, LLVMMatchType<0>,
+                            LLVMMatchType<0>]>;
+  def int_fmuladd : Intrinsic<[llvm_anyfloat_ty],
+                              [LLVMMatchType<0>, LLVMMatchType<0>,
+                               LLVMMatchType<0>]>;
+
+  // These functions do not read memory, but are sensitive to the
+  // rounding mode. LLVM purposely does not model changes to the FP
+  // environment so they can be treated as readnone.
   def int_sqrt : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_powi : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty]>;
   def int_sin  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
@@ -309,16 +328,6 @@ let Properties = [IntrReadMem] in {
   def int_rint  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_nearbyint : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_round : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-}
-
-let Properties = [IntrNoMem] in {
-  def int_fma  : Intrinsic<[llvm_anyfloat_ty],
-                         [LLVMMatchType<0>, LLVMMatchType<0>,
-                          LLVMMatchType<0>]>;
-
-  def int_fmuladd : Intrinsic<[llvm_anyfloat_ty],
-                              [LLVMMatchType<0>, LLVMMatchType<0>,
-                               LLVMMatchType<0>]>;
 }
 
 // NOTE: these are internal interfaces.
@@ -511,6 +520,11 @@ def int_convertus  : Intrinsic<[llvm_anyint_ty],
                                [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty]>;
 def int_convertuu  : Intrinsic<[llvm_anyint_ty],
                                [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty]>;
+
+// Clear cache intrinsic, default to ignore (ie. emit nothing)
+// maps to void __clear_cache() on supporting platforms
+def int_clear_cache : Intrinsic<[], [llvm_ptr_ty, llvm_ptr_ty],
+                                [], "llvm.clear_cache">;
 
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics
