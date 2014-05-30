@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1184 2014/05/28 13:59:38 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1185 2014/05/30 03:02:32 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1191 2014/05/28 13:59:06 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1192 2014/05/30 03:01:58 msaitoh Exp
  */
 
 /*
@@ -3330,6 +3330,8 @@
 #define	PCI_PRODUCT_INTEL_82Q33_KT	0x29d7		/* 82Q33 KT */
 #define	PCI_PRODUCT_INTEL_82X38_HB	0x29e0		/* 82X38 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82X38_KT	0x29e7		/* 82X38 KT */
+#define	PCI_PRODUCT_INTEL_3200_HB	0x29f0		/* 3200/3210 Host */
+#define	PCI_PRODUCT_INTEL_3200_PCIE	0x29f1		/* 3200/3210 PCIE */
 #define	PCI_PRODUCT_INTEL_3200_KT	0x29f7		/* 3200 KT */
 #define	PCI_PRODUCT_INTEL_82965PM_HB	0x2a00		/* 82965PM Host Bridge */
 #define	PCI_PRODUCT_INTEL_80862A01	0x2a01		/* 80862A01 Mobile PCI Express Root Port */
