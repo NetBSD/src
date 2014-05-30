@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/02/28 17:09:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2014/05/30 18:28:15 joerg Exp $
 
 LIB=	clangFrontend
 
@@ -33,8 +33,7 @@ SRCS+=	ASTConsumers.cpp \
 	TextDiagnostic.cpp \
 	TextDiagnosticBuffer.cpp \
 	TextDiagnosticPrinter.cpp \
-	VerifyDiagnosticConsumer.cpp \
-	Warnings.cpp
+	VerifyDiagnosticConsumer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

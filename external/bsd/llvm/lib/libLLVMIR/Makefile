@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/01/15 22:21:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/05/30 18:28:14 joerg Exp $
 
 LIB=	LLVMIR
 
@@ -11,6 +11,7 @@ SRCS+=	AsmWriter.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
 	ConstantFold.cpp \
+	ConstantRange.cpp \
 	Constants.cpp \
 	Core.cpp \
 	DIBuilder.cpp \
@@ -34,6 +35,7 @@ SRCS+=	AsmWriter.cpp \
 	LLVMContextImpl.cpp \
 	LeakDetector.cpp \
 	LegacyPassManager.cpp \
+	MDBuilder.cpp \
 	Mangler.cpp \
 	Metadata.cpp \
 	Module.cpp \
