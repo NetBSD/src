@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1191 2014/05/28 13:59:06 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1192 2014/05/30 03:01:58 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3323,6 +3323,8 @@ product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
 product INTEL 82Q33_KT		0x29d7  82Q33 KT
 product INTEL 82X38_HB		0x29e0	82X38 Host Bridge
 product INTEL 82X38_KT		0x29e7  82X38 KT
+product INTEL 3200_HB		0x29f0	3200/3210 Host
+product INTEL 3200_PCIE		0x29f1	3200/3210 PCIE
 product INTEL 3200_KT		0x29f7  3200 KT
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
 product INTEL 80862A01		0x2a01  80862A01 Mobile PCI Express Root Port
