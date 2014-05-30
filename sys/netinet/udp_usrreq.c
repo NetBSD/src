@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.198 2014/05/22 22:56:53 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.199 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.198 2014/05/22 22:56:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.199 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -475,7 +475,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (so != NULL && ipsec4_in_reject_so(m, so)) {
+	if (ipsec_used && so != NULL && ipsec4_in_reject_so(m, so)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
@@ -1244,7 +1244,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	m_tag_prepend(m, tag);
 
 #ifdef IPSEC
-	ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
+	if (ipsec_used)
+		ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
+	/* XXX: else */
 #else
 	esp4_input(m, iphdrlen);
 #endif

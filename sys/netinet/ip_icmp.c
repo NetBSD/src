@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.133 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.134 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.133 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -638,7 +638,8 @@ reflect:
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
 #if defined(IPSEC)
-		key_sa_routechange((struct sockaddr *)&icmpsrc);
+		if (ipsec_used)
+			key_sa_routechange((struct sockaddr *)&icmpsrc);
 #endif
 		break;
 

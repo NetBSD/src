@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.147 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.148 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.147 2014/05/22 22:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.148 2014/05/30 01:39:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -191,9 +191,6 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
-#if defined(IPSEC)
-	int error;
-#endif
 
 	s = splnet();
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
@@ -208,12 +205,14 @@ in_pcballoc(struct socket *so, void *v)
 	inp->inp_portalgo = PORTALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
 #if defined(IPSEC)
-	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
-	if (error != 0) {
-		s = splnet();
-		pool_put(&inpcb_pool, inp);
-		splx(s);
-		return error;
+	if (ipsec_enabled) {
+		int error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
+		if (error != 0) {
+			s = splnet();
+			pool_put(&inpcb_pool, inp);
+			splx(s);
+			return error;
+		}
 	}
 #endif
 	so->so_pcb = inp;
@@ -556,7 +555,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 
 	in_pcbstate(inp, INP_CONNECTED);
 #if defined(IPSEC)
-	if (inp->inp_socket->so_type == SOCK_STREAM)
+	if (ipsec_enabled && inp->inp_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(inp->inp_sp);
 #endif
 	return (0);
@@ -574,7 +573,8 @@ in_pcbdisconnect(void *v)
 	inp->inp_fport = 0;
 	in_pcbstate(inp, INP_BOUND);
 #if defined(IPSEC)
-	ipsec_pcbdisconn(inp->inp_sp);
+	if (ipsec_enabled)
+		ipsec_pcbdisconn(inp->inp_sp);
 #endif
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);
@@ -591,8 +591,9 @@ in_pcbdetach(void *v)
 		return;
 
 #if defined(IPSEC)
-	ipsec4_delete_pcbpolicy(inp);
-#endif /*IPSEC*/
+	if (ipsec_enabled)
+		ipsec4_delete_pcbpolicy(inp);
+#endif /* IPSEC */
 	so->so_pcb = 0;
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);

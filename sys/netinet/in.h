@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.90 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: in.h,v 1.91 2014/05/30 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -282,9 +282,7 @@ struct ip_opts {
 #define	IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
-#if 1 /*IPSEC*/
-#define	IP_IPSEC_POLICY		22 /* struct; get/set security policy */
-#endif
+#define	IP_IPSEC_POLICY		22   /* struct; get/set security policy */
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
 #define	IP_PKTINFO		25   /* int; send interface and src addr */
