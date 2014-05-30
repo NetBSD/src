@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2014/05/21 14:21:35 martin Exp $
+#	$NetBSD: Makefile,v 1.4 2014/05/30 13:23:05 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
-CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd
+CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
 CDRELEASE_NOISOS=true
 
 # for PRINTOBJDIR
@@ -28,6 +28,7 @@ image_md_pre:
 	for f in ${SYSINSTDIR}/sysinstmsgs.??; do \
 		${INSTALL} ${COPY} $$f cdrom; \
 	done
+	${TOOL_GZIP} -d cdrom/netbsd.gz
 	${MKDIR} cdrom/var
 	${MKDIR} cdrom/kern
 
