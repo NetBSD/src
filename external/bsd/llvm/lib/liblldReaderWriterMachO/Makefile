@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/01/05 16:38:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/05/30 18:28:15 joerg Exp $
 
 LIB=	lldReaderWriterMachO
 
@@ -10,6 +10,7 @@ SRCS+=	MachOLinkingContext.cpp \
 	MachONormalizedFileBinaryReader.cpp \
 	MachONormalizedFileBinaryWriter.cpp \
 	MachONormalizedFileFromAtoms.cpp \
+	MachONormalizedFileToAtoms.cpp \
 	MachONormalizedFileYAML.cpp \
 	ReferenceKinds.cpp \
 	WriterMachO.cpp

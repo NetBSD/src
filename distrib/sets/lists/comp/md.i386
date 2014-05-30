@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.145 2014/02/12 23:24:09 dsl Exp $
+# $NetBSD: md.i386,v 1.146 2014/05/30 18:28:13 joerg Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -113,6 +113,7 @@
 ./usr/include/clang-3.5/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/fma4intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/fmaintrin.h		comp-c-include		llvm
+./usr/include/clang-3.5/ia32intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/immintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/lzcntintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/mm3dnow.h		comp-c-include		llvm
