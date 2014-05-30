@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.134 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.135 2014/05/30 08:40:09 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.134 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.135 2014/05/30 08:40:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -423,11 +423,11 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 
 	/*
-	 * Check mount, exclusive reference and owner.
+	 * Check mount, readonly reference and owner.
 	 */
 	if (vp->v_mount != mp)
 		return EXDEV;
-	if (vp->v_usecount != 1 || vp->v_writecount != 0)
+	if (vp->v_writecount != 0)
 		return EBUSY;
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_SNAPSHOT,
 	    0, mp, vp, NULL);
