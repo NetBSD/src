@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.15 2014/05/30 02:31:40 joerg Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.16 2014/05/30 22:20:48 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,6 @@ static void kread(u_long, void *, int);
 static void acmc(struct ether_multi *);
 static void if6_addrlist(struct ifaddr *);
 static void in6_multilist(struct in6_multi *);
-static struct in6_multi * in6_multientry(struct in6_multi *);
 
 #define	KREAD(addr, buf, type) \
 	kread((u_long)addr, (void *)buf, sizeof(type))
@@ -233,20 +232,15 @@ if6_addrlist(struct ifaddr *ifap)
 	}
 }
 
-static struct in6_multi *
-in6_multientry(struct in6_multi *mc)
-{
-	struct in6_multi multi;
-
-	KREAD(mc, &multi, struct in6_multi);
-	printf("\t\tgroup %s", inet6_n2a(&multi.in6m_addr));
-	printf(" refcnt %u\n", multi.in6m_refcount);
-	return(multi.in6m_entry.le_next);
-}
-
 static void
 in6_multilist(struct in6_multi *mc)
 {
-	while (mc)
-		mc = in6_multientry(mc);
+	struct in6_multi multi;
+
+	while (mc) {
+		KREAD(mc, &multi, struct in6_multi);
+		printf("\t\tgroup %s", inet6_n2a(&multi.in6m_addr));
+		printf(" refcnt %u\n", multi.in6m_refcount);
+		mc = multi.in6m_entry.le_next;
+	}
 }
