@@ -28,7 +28,6 @@
 #define LLVM_SUPPORT_FILESYSTEM_H
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
@@ -39,6 +38,7 @@
 #include <iterator>
 #include <stack>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #ifdef HAVE_SYS_STAT_H
@@ -135,8 +135,7 @@ public:
   }
   bool operator!=(const UniqueID &Other) const { return !(*this == Other); }
   bool operator<(const UniqueID &Other) const {
-    return Device < Other.Device ||
-           (Device == Other.Device && File < Other.File);
+    return std::tie(Device, File) < std::tie(Other.Device, Other.File);
   }
   uint64_t getDevice() const { return Device; }
   uint64_t getFile() const { return File; }
@@ -166,15 +165,30 @@ class file_status
   file_type Type;
   perms Perms;
 public:
-  file_status() : Type(file_type::status_error) {}
-  file_status(file_type Type) : Type(Type) {}
-
   #if defined(LLVM_ON_UNIX)
+    file_status() : fs_st_dev(0), fs_st_ino(0), fs_st_mtime(0),
+        fs_st_uid(0), fs_st_gid(0), fs_st_size(0),
+        Type(file_type::status_error), Perms(perms_not_known) {}
+
+    file_status(file_type Type) : fs_st_dev(0), fs_st_ino(0), fs_st_mtime(0),
+        fs_st_uid(0), fs_st_gid(0), fs_st_size(0), Type(Type),
+        Perms(perms_not_known) {}
+
     file_status(file_type Type, perms Perms, dev_t Dev, ino_t Ino, time_t MTime,
                 uid_t UID, gid_t GID, off_t Size)
         : fs_st_dev(Dev), fs_st_ino(Ino), fs_st_mtime(MTime), fs_st_uid(UID),
           fs_st_gid(GID), fs_st_size(Size), Type(Type), Perms(Perms) {}
   #elif defined(LLVM_ON_WIN32)
+    file_status() : LastWriteTimeHigh(0), LastWriteTimeLow(0),
+        VolumeSerialNumber(0), FileSizeHigh(0), FileSizeLow(0),
+        FileIndexHigh(0), FileIndexLow(0), Type(file_type::status_error),
+        Perms(perms_not_known) {}
+
+    file_status(file_type Type) : LastWriteTimeHigh(0), LastWriteTimeLow(0),
+        VolumeSerialNumber(0), FileSizeHigh(0), FileSizeLow(0),
+        FileIndexHigh(0), FileIndexLow(0), Type(Type),
+        Perms(perms_not_known) {}
+
     file_status(file_type Type, uint32_t LastWriteTimeHigh,
                 uint32_t LastWriteTimeLow, uint32_t VolumeSerialNumber,
                 uint32_t FileSizeHigh, uint32_t FileSizeLow,
@@ -270,6 +284,14 @@ private:
 ///          platform specific error_code.
 error_code make_absolute(SmallVectorImpl<char> &path);
 
+/// @brief Normalize path separators in \a Path
+///
+/// If the path contains any '\' separators, they are transformed into '/'.
+/// This is particularly useful when cross-compiling Windows on Linux, but is
+/// safe to invoke on Windows, which accepts both characters as a path
+/// separator.
+error_code normalize_separators(SmallVectorImpl<char> &Path);
+
 /// @brief Create all the non-existent directories in path.
 ///
 /// @param path Directories to create.
@@ -286,13 +308,18 @@ error_code create_directories(const Twine &path, bool IgnoreExisting = true);
 ///          error if the directory already existed.
 error_code create_directory(const Twine &path, bool IgnoreExisting = true);
 
-/// @brief Create a hard link from \a from to \a to.
+/// @brief Create a link from \a from to \a to.
+///
+/// The link may be a soft or a hard link, depending on the platform. The caller
+/// may not assume which one. Currently on windows it creates a hard link since
+/// soft links require extra privileges. On unix, it creates a soft link since
+/// hard links don't work on SMB file systems.
 ///
 /// @param to The path to hard link to.
 /// @param from The path to hard link from. This is created.
-/// @returns errc::success if exists(to) && exists(from) && equivalent(to, from)
-///          , otherwise a platform specific error_code.
-error_code create_hard_link(const Twine &to, const Twine &from);
+/// @returns errc::success if the link was created, otherwise a platform
+/// specific error_code.
+error_code create_link(const Twine &to, const Twine &from);
 
 /// @brief Get the current path.
 ///
@@ -442,8 +469,7 @@ inline bool is_regular_file(const Twine &Path) {
 ///        directory, regular file, or symlink?
 ///
 /// @param status A file_status previously returned from status.
-/// @returns exists(s) && !is_regular_file(s) && !is_directory(s) &&
-///          !is_symlink(s)
+/// @returns exists(s) && !is_regular_file(s) && !is_directory(s)
 bool is_other(file_status status);
 
 /// @brief Is path something that exists but is not a directory,
@@ -455,21 +481,6 @@ bool is_other(file_status status);
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code is_other(const Twine &path, bool &result);
-
-/// @brief Does status represent a symlink?
-///
-/// @param status A file_status previously returned from stat.
-/// @returns status.type() == symlink_file.
-bool is_symlink(file_status status);
-
-/// @brief Is path a symlink?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is a symlink, false if it is not.
-///               Undefined otherwise.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_symlink(const Twine &path, bool &result);
 
 /// @brief Get file status as if by POSIX stat().
 ///
@@ -566,7 +577,7 @@ error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
 error_code createUniqueDirectory(const Twine &Prefix,
                                  SmallVectorImpl<char> &ResultPath);
 
-enum OpenFlags {
+enum OpenFlags : unsigned {
   F_None = 0,
 
   /// F_Excl - When opening a file, this flag makes raw_fd_ostream
@@ -664,10 +675,8 @@ private:
 public:
   typedef char char_type;
 
-#if LLVM_HAS_RVALUE_REFERENCES
   mapped_file_region(mapped_file_region&&);
   mapped_file_region &operator =(mapped_file_region&&);
-#endif
 
   /// Construct a mapped_file_region at \a path starting at \a offset of length
   /// \a length and with access \a mode.
@@ -820,7 +829,7 @@ public:
   }
 
   /// Construct end iterator.
-  directory_iterator() : State(0) {}
+  directory_iterator() : State(nullptr) {}
 
   // No operator++ because we need error_code.
   directory_iterator &increment(error_code &ec) {
@@ -834,9 +843,9 @@ public:
   bool operator==(const directory_iterator &RHS) const {
     if (State == RHS.State)
       return true;
-    if (RHS.State == 0)
+    if (!RHS.State)
       return State->CurrentEntry == directory_entry();
-    if (State == 0)
+    if (!State)
       return RHS.State->CurrentEntry == directory_entry();
     return State->CurrentEntry == RHS.State->CurrentEntry;
   }

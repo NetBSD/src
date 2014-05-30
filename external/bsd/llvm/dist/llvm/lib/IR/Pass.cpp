@@ -16,11 +16,13 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRPrintingPasses.h"
+#include "llvm/IR/LegacyPassNameParser.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "ir"
 
 //===----------------------------------------------------------------------===//
 // Pass Implementation
@@ -44,7 +46,7 @@ PassManagerType ModulePass::getPotentialPassManagerType() const {
 }
 
 bool Pass::mustPreserveAnalysisID(char &AID) const {
-  return Resolver->getAnalysisIfAvailable(&AID, true) != 0;
+  return Resolver->getAnalysisIfAvailable(&AID, true) != nullptr;
 }
 
 // dumpPassStructure - Implement the -debug-pass=Structure option
@@ -90,11 +92,11 @@ void *Pass::getAdjustedAnalysisPointer(AnalysisID AID) {
 }
 
 ImmutablePass *Pass::getAsImmutablePass() {
-  return 0;
+  return nullptr;
 }
 
 PMDataManager *Pass::getAsPMDataManager() {
-  return 0;
+  return nullptr;
 }
 
 void Pass::setResolver(AnalysisResolver *AR) {
@@ -112,7 +114,7 @@ void Pass::print(raw_ostream &O,const Module*) const {
 
 // dump - call print(cerr);
 void Pass::dump() const {
-  print(dbgs(), 0);
+  print(dbgs(), nullptr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -193,7 +195,7 @@ const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
 Pass *Pass::createPass(AnalysisID ID) {
   const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
   if (!PI)
-    return NULL;
+    return nullptr;
   return PI->createPass();
 }
 
@@ -252,7 +254,7 @@ namespace {
     VectorType &CFGOnlyList;
     GetCFGOnlyPasses(VectorType &L) : CFGOnlyList(L) {}
 
-    void passEnumerate(const PassInfo *P) {
+    void passEnumerate(const PassInfo *P) override {
       if (P->isCFGOnlyPass())
         CFGOnlyList.push_back(P->getTypeInfo());
     }

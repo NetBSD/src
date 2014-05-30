@@ -28,10 +28,12 @@
 #define LLVM_ANALYSIS_REGIONINFO_H
 
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Support/Allocator.h"
 #include <map>
+#include <memory>
 
 namespace llvm {
 
@@ -212,7 +214,7 @@ class Region : public RegionNode {
   // (The entry BasicBlock is part of RegionNode)
   BasicBlock *exit;
 
-  typedef std::vector<Region*> RegionSet;
+  typedef std::vector<std::unique_ptr<Region>> RegionSet;
 
   // The subregions of this region.
   RegionSet children;
@@ -245,7 +247,7 @@ public:
   /// @param Parent The surrounding region or NULL if this is a top level
   ///               region.
   Region(BasicBlock *Entry, BasicBlock *Exit, RegionInfo* RI,
-         DominatorTree *DT, Region *Parent = 0);
+         DominatorTree *DT, Region *Parent = nullptr);
 
   /// Delete the Region and all its subregions.
   ~Region();
@@ -310,7 +312,7 @@ public:
   /// @brief Check if a Region is the TopLevel region.
   ///
   /// The toplevel region represents the whole function.
-  bool isTopLevelRegion() const { return exit == NULL; }
+  bool isTopLevelRegion() const { return exit == nullptr; }
 
   /// @brief Return a new (non-canonical) region, that is obtained by joining
   ///        this region with its predecessors.
@@ -495,13 +497,11 @@ public:
   //@{
   template <bool IsConst>
   class block_iterator_wrapper
-    : public df_iterator<typename conditional<IsConst,
-                                              const BasicBlock,
-                                              BasicBlock>::type*> {
-    typedef df_iterator<typename conditional<IsConst,
-                                             const BasicBlock,
-                                             BasicBlock>::type*>
-      super;
+      : public df_iterator<typename std::conditional<IsConst, const BasicBlock,
+                                                     BasicBlock>::type *> {
+    typedef df_iterator<typename std::conditional<IsConst, const BasicBlock,
+                                                  BasicBlock>::type *> super;
+
   public:
     typedef block_iterator_wrapper<IsConst> Self;
     typedef typename super::pointer pointer;
@@ -516,7 +516,7 @@ public:
     }
 
     // Construct the end iterator.
-    block_iterator_wrapper() : super(df_end<pointer>((BasicBlock *)0)) {}
+    block_iterator_wrapper() : super(df_end<pointer>((BasicBlock *)nullptr)) {}
 
     /*implicit*/ block_iterator_wrapper(super I) : super(I) {}
 
@@ -544,6 +544,21 @@ public:
   }
   const_block_iterator block_end() const {
     return const_block_iterator();
+  }
+
+  typedef iterator_range<block_iterator> block_range;
+  typedef iterator_range<const_block_iterator> const_block_range;
+
+  /// @brief Returns a range view of the basic blocks in the region.
+  inline block_range blocks() {
+    return block_range(block_begin(), block_end());
+  }
+
+  /// @brief Returns a range view of the basic blocks in the region.
+  ///
+  /// This is the 'const' version of the range view.
+  inline const_block_range blocks() const {
+    return const_block_range(block_begin(), block_end());
   }
   //@}
 
@@ -632,7 +647,7 @@ class RegionInfo : public FunctionPass {
   // Calculate - detecte all regions in function and build the region tree.
   void Calculate(Function& F);
 
-  void releaseMemory();
+  void releaseMemory() override;
 
   // updateStatistics - Update statistic about created regions.
   void updateStatistics(Region *R);
@@ -649,10 +664,10 @@ public:
 
   /// @name FunctionPass interface
   //@{
-  virtual bool runOnFunction(Function &F);
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void print(raw_ostream &OS, const Module *) const;
-  virtual void verifyAnalysis() const;
+  bool runOnFunction(Function &F) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void print(raw_ostream &OS, const Module *) const override;
+  void verifyAnalysis() const override;
   //@}
 
   /// @brief Get the smallest region that contains a BasicBlock.

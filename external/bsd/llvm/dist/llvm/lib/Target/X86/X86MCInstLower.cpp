@@ -14,12 +14,14 @@
 
 #include "X86AsmPrinter.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
-#include "X86COFFMachineModuleInfo.h"
+#include "MCTargetDesc/X86BaseInfo.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Mangler.h"
-#include "llvm/IR/Type.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -27,7 +29,6 @@
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 namespace {
@@ -119,7 +120,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getGVStubEntry(Sym);
-    if (StubSym.getPointer() == 0) {
+    if (!StubSym.getPointer()) {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
@@ -131,7 +132,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getHiddenGVStubEntry(Sym);
-    if (StubSym.getPointer() == 0) {
+    if (!StubSym.getPointer()) {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
@@ -167,7 +168,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                              MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
-  const MCExpr *Expr = 0;
+  const MCExpr *Expr = nullptr;
   MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
 
   switch (MO.getTargetFlags()) {
@@ -222,7 +223,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     break;
   }
 
-  if (Expr == 0)
+  if (!Expr)
     Expr = MCSymbolRefExpr::Create(Sym, RefKind, Ctx);
 
   if (!MO.isJTI() && !MO.isMBB() && MO.getOffset())
@@ -296,12 +297,12 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   unsigned RegOp = IsStore ? 0 : 5;
   unsigned AddrOp = AddrBase + 3;
   assert(Inst.getNumOperands() == 6 && Inst.getOperand(RegOp).isReg() &&
-         Inst.getOperand(AddrBase + 0).isReg() && // base
-         Inst.getOperand(AddrBase + 1).isImm() && // scale
-         Inst.getOperand(AddrBase + 2).isReg() && // index register
-         (Inst.getOperand(AddrOp).isExpr() ||     // address
-          Inst.getOperand(AddrOp).isImm())&&
-         Inst.getOperand(AddrBase + 4).isReg() && // segment
+         Inst.getOperand(AddrBase + X86::AddrBaseReg).isReg() &&
+         Inst.getOperand(AddrBase + X86::AddrScaleAmt).isImm() &&
+         Inst.getOperand(AddrBase + X86::AddrIndexReg).isReg() &&
+         Inst.getOperand(AddrBase + X86::AddrSegmentReg).isReg() &&
+         (Inst.getOperand(AddrOp).isExpr() ||
+          Inst.getOperand(AddrOp).isImm()) &&
          "Unexpected instruction!");
 
   // Check whether the destination register can be fixed.
@@ -321,14 +322,14 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   }
 
   if (Absolute &&
-      (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
-       Inst.getOperand(AddrBase + 2).getReg() != 0 ||
-       Inst.getOperand(AddrBase + 1).getImm() != 1))
+      (Inst.getOperand(AddrBase + X86::AddrBaseReg).getReg() != 0 ||
+       Inst.getOperand(AddrBase + X86::AddrScaleAmt).getImm() != 1 ||
+       Inst.getOperand(AddrBase + X86::AddrIndexReg).getReg() != 0))
     return;
 
   // If so, rewrite the instruction.
   MCOperand Saved = Inst.getOperand(AddrOp);
-  MCOperand Seg = Inst.getOperand(AddrBase + 4);
+  MCOperand Seg = Inst.getOperand(AddrBase + X86::AddrSegmentReg);
   Inst = MCInst();
   Inst.setOpcode(Opcode);
   Inst.addOperand(Saved);

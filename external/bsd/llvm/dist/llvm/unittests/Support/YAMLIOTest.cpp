@@ -302,11 +302,23 @@ struct StringTypes {
   llvm::StringRef str3;
   llvm::StringRef str4;
   llvm::StringRef str5;
+  llvm::StringRef str6;
+  llvm::StringRef str7;
+  llvm::StringRef str8;
+  llvm::StringRef str9;
+  llvm::StringRef str10;
+  llvm::StringRef str11;
   std::string stdstr1;
   std::string stdstr2;
   std::string stdstr3;
   std::string stdstr4;
   std::string stdstr5;
+  std::string stdstr6;
+  std::string stdstr7;
+  std::string stdstr8;
+  std::string stdstr9;
+  std::string stdstr10;
+  std::string stdstr11;
 };
 
 namespace llvm {
@@ -319,11 +331,23 @@ namespace yaml {
       io.mapRequired("str3",      st.str3);
       io.mapRequired("str4",      st.str4);
       io.mapRequired("str5",      st.str5);
+      io.mapRequired("str6",      st.str6);
+      io.mapRequired("str7",      st.str7);
+      io.mapRequired("str8",      st.str8);
+      io.mapRequired("str9",      st.str9);
+      io.mapRequired("str10",     st.str10);
+      io.mapRequired("str11",     st.str11);
       io.mapRequired("stdstr1",   st.stdstr1);
       io.mapRequired("stdstr2",   st.stdstr2);
       io.mapRequired("stdstr3",   st.stdstr3);
       io.mapRequired("stdstr4",   st.stdstr4);
       io.mapRequired("stdstr5",   st.stdstr5);
+      io.mapRequired("stdstr6",   st.stdstr6);
+      io.mapRequired("stdstr7",   st.stdstr7);
+      io.mapRequired("stdstr8",   st.stdstr8);
+      io.mapRequired("stdstr9",   st.stdstr9);
+      io.mapRequired("stdstr10",  st.stdstr10);
+      io.mapRequired("stdstr11",  st.stdstr11);
     }
   };
 }
@@ -338,11 +362,23 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     map.str3 = "`ccc";
     map.str4 = "@ddd";
     map.str5 = "";
+    map.str6 = "0000000004000000";
+    map.str7 = "true";
+    map.str8 = "FALSE";
+    map.str9 = "~";
+    map.str10 = "0.2e20";
+    map.str11 = "0x30";
     map.stdstr1 = "'eee";
     map.stdstr2 = "\"fff";
     map.stdstr3 = "`ggg";
     map.stdstr4 = "@hhh";
     map.stdstr5 = "";
+    map.stdstr6 = "0000000004000000";
+    map.stdstr7 = "true";
+    map.stdstr8 = "FALSE";
+    map.stdstr9 = "~";
+    map.stdstr10 = "0.2e20";
+    map.stdstr11 = "0x30";
 
     llvm::raw_string_ostream ostr(intermediate);
     Output yout(ostr);
@@ -355,11 +391,18 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'`ccc'"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'@ddd'"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("''\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'0000000004000000'\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'true'\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'FALSE'\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'~'\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'0.2e20'\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'0x30'\n"));
   EXPECT_NE(std::string::npos, flowOut.find("'''eee"));
   EXPECT_NE(std::string::npos, flowOut.find("'\"fff'"));
   EXPECT_NE(std::string::npos, flowOut.find("'`ggg'"));
   EXPECT_NE(std::string::npos, flowOut.find("'@hhh'"));
   EXPECT_NE(std::string::npos, flowOut.find("''\n"));
+  EXPECT_NE(std::string::npos, flowOut.find("'0000000004000000'\n"));
 
   {
     Input yin(intermediate);
@@ -372,11 +415,13 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     EXPECT_TRUE(map.str3.equals("`ccc"));
     EXPECT_TRUE(map.str4.equals("@ddd"));
     EXPECT_TRUE(map.str5.equals(""));
+    EXPECT_TRUE(map.str6.equals("0000000004000000"));
     EXPECT_TRUE(map.stdstr1 == "'eee");
     EXPECT_TRUE(map.stdstr2 == "\"fff");
     EXPECT_TRUE(map.stdstr3 == "`ggg");
     EXPECT_TRUE(map.stdstr4 == "@hhh");
     EXPECT_TRUE(map.stdstr5 == "");
+    EXPECT_TRUE(map.stdstr6 == "0000000004000000");
   }
 }
 
@@ -602,6 +647,7 @@ namespace yaml {
           return "malformed by";
       }
     }
+    static bool mustQuote(StringRef) { return true; }
   };
 }
 }
@@ -663,6 +709,8 @@ namespace yaml {
       value = n;
       return StringRef();
     }
+
+    static bool mustQuote(StringRef) { return false; }
   };
 }
 }

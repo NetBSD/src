@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -821,7 +820,7 @@ static StringRef FindFirstMatchingPrefix(StringRef &Buffer,
 /// Returns true in case of an error, false otherwise.
 static bool ReadCheckFile(SourceMgr &SM,
                           std::vector<CheckString> &CheckStrings) {
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code ec =
         MemoryBuffer::getFileOrSTDIN(CheckFilename, File)) {
     errs() << "Could not open check file '" << CheckFilename << "': "
@@ -832,7 +831,7 @@ static bool ReadCheckFile(SourceMgr &SM,
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines. Remove DOS style line endings.
   MemoryBuffer *F =
-    CanonicalizeInputFile(File.take(), NoCanonicalizeWhiteSpace);
+    CanonicalizeInputFile(File.release(), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
@@ -966,7 +965,8 @@ static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
 
 /// CountNumNewlinesBetween - Count the number of newlines in the specified
 /// range.
-static unsigned CountNumNewlinesBetween(StringRef Range) {
+static unsigned CountNumNewlinesBetween(StringRef Range,
+                                        const char *&FirstNewLine) {
   unsigned NumNewLines = 0;
   while (1) {
     // Scan for newline.
@@ -981,6 +981,9 @@ static unsigned CountNumNewlinesBetween(StringRef Range) {
         (Range[0] != Range[1]))
       Range = Range.substr(1);
     Range = Range.substr(1);
+
+    if (NumNewLines == 1)
+      FirstNewLine = Range.begin();
   }
 }
 
@@ -1040,7 +1043,8 @@ bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
              SMLoc::getFromPointer(Buffer.data())))->getBufferStart() &&
          "CHECK-NEXT can't be the first check in a file");
 
-  unsigned NumNewLines = CountNumNewlinesBetween(Buffer);
+  const char *FirstNewLine = 0;
+  unsigned NumNewLines = CountNumNewlinesBetween(Buffer, FirstNewLine);
 
   if (NumNewLines == 0) {
     SM.PrintMessage(Loc, SourceMgr::DK_Error, Prefix +
@@ -1059,6 +1063,8 @@ bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
                     SourceMgr::DK_Note, "'next' match was here");
     SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
                     "previous match ended here");
+    SM.PrintMessage(SMLoc::getFromPointer(FirstNewLine), SourceMgr::DK_Note,
+                    "non-matching line after previous match is here");
     return true;
   }
 
@@ -1218,7 +1224,7 @@ int main(int argc, char **argv) {
     return 2;
 
   // Open the file to check and add it to SourceMgr.
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code ec =
         MemoryBuffer::getFileOrSTDIN(InputFilename, File)) {
     errs() << "Could not open input file '" << InputFilename << "': "
@@ -1234,7 +1240,7 @@ int main(int argc, char **argv) {
   // Remove duplicate spaces in the input file if requested.
   // Remove DOS style line endings.
   MemoryBuffer *F =
-    CanonicalizeInputFile(File.take(), NoCanonicalizeWhiteSpace);
+    CanonicalizeInputFile(File.release(), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 

@@ -64,20 +64,20 @@ struct X86Operand : public MCParsedAsmOperand {
   X86Operand(KindTy K, SMLoc Start, SMLoc End)
     : Kind(K), StartLoc(Start), EndLoc(End) {}
 
-  StringRef getSymName() { return SymName; }
-  void *getOpDecl() { return OpDecl; }
+  StringRef getSymName() override { return SymName; }
+  void *getOpDecl() override { return OpDecl; }
 
   /// getStartLoc - Get the location of the first token of this operand.
-  SMLoc getStartLoc() const { return StartLoc; }
+  SMLoc getStartLoc() const override { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
-  SMLoc getEndLoc() const { return EndLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
   /// getLocRange - Get the range between the first and last token of this
   /// operand.
   SMRange getLocRange() const { return SMRange(StartLoc, EndLoc); }
   /// getOffsetOfLoc - Get the location of the offset operator.
-  SMLoc getOffsetOfLoc() const { return OffsetOfLoc; }
+  SMLoc getOffsetOfLoc() const override { return OffsetOfLoc; }
 
-  virtual void print(raw_ostream &OS) const {}
+  void print(raw_ostream &OS) const override {}
 
   StringRef getToken() const {
     assert(Kind == Token && "Invalid access!");
@@ -89,7 +89,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Tok.Length = Value.size();
   }
 
-  unsigned getReg() const {
+  unsigned getReg() const override {
     assert(Kind == Register && "Invalid access!");
     return Reg.RegNo;
   }
@@ -120,9 +120,9 @@ struct X86Operand : public MCParsedAsmOperand {
     return Mem.Scale;
   }
 
-  bool isToken() const {return Kind == Token; }
+  bool isToken() const override {return Kind == Token; }
 
-  bool isImm() const { return Kind == Immediate; }
+  bool isImm() const override { return Kind == Immediate; }
 
   bool isImmSExti16i8() const {
     if (!isImm())
@@ -195,15 +195,15 @@ struct X86Operand : public MCParsedAsmOperand {
     return isImmSExti64i32Value(CE->getValue());
   }
 
-  bool isOffsetOf() const {
+  bool isOffsetOf() const override {
     return OffsetOfLoc.getPointer();
   }
 
-  bool needAddressOf() const {
+  bool needAddressOf() const override {
     return AddressOf;
   }
 
-  bool isMem() const { return Kind == Memory; }
+  bool isMem() const override { return Kind == Memory; }
   bool isMem8() const {
     return Kind == Memory && (!Mem.Size || Mem.Size == 8);
   }
@@ -315,7 +315,7 @@ struct X86Operand : public MCParsedAsmOperand {
       !getMemIndexReg() && getMemScale() == 1 && (!Mem.Size || Mem.Size == 64);
   }
 
-  bool isReg() const { return Kind == Register; }
+  bool isReg() const override { return Kind == Register; }
 
   bool isGR32orGR64() const {
     return Kind == Register &&
@@ -422,7 +422,7 @@ struct X86Operand : public MCParsedAsmOperand {
                                bool AddressOf = false,
                                SMLoc OffsetOfLoc = SMLoc(),
                                StringRef SymName = StringRef(),
-                               void *OpDecl = 0) {
+                               void *OpDecl = nullptr) {
     X86Operand *Res = new X86Operand(Register, StartLoc, EndLoc);
     Res->Reg.RegNo = RegNo;
     Res->AddressOf = AddressOf;
@@ -441,7 +441,7 @@ struct X86Operand : public MCParsedAsmOperand {
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc, SMLoc EndLoc,
                                unsigned Size = 0, StringRef SymName = StringRef(),
-                               void *OpDecl = 0) {
+                               void *OpDecl = nullptr) {
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -461,7 +461,7 @@ struct X86Operand : public MCParsedAsmOperand {
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
                                unsigned Size = 0,
                                StringRef SymName = StringRef(),
-                               void *OpDecl = 0) {
+                               void *OpDecl = nullptr) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
