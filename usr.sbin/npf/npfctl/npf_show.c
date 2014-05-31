@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.13 2014/03/14 11:29:45 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.14 2014/05/31 22:41:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.13 2014/03/14 11:29:45 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.14 2014/05/31 22:41:37 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -248,7 +248,7 @@ static const struct mark_keyword_mapent {
 	u_int		fwords;
 } mark_keyword_map[] = {
 	{ BM_IPVER,	"family %s",	NULL,		print_family,	1 },
-	{ BM_PROTO,	"proto %s",	NULL,		print_proto,	1 },
+	{ BM_PROTO,	"proto %s",	", ",		print_proto,	1 },
 	{ BM_TCPFL,	"flags %s",	NULL,		print_tcpflags,	2 },
 	{ BM_ICMP_TYPE,	"icmp-type %s",	NULL,		print_number,	1 },
 	{ BM_ICMP_CODE,	"code %s",	NULL,		print_number,	1 },
