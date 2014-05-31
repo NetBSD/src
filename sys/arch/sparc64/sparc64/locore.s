@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.359 2014/05/30 21:55:32 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.360 2014/05/31 18:22:29 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -893,7 +893,7 @@ TABLE(syscall):
 
 	.macro	sun4v_trap_entry count
 	.rept	\count
-	ba,a,pt	%xcc, slowtrap
+	ba	slowtrap
 	 nop
 	.align	32
 	.endr
@@ -921,7 +921,7 @@ _C_LABEL(trapbase_sun4v):
 	! trap level 0
 	!
 	sun4v_trap_entry 49				! 0x000-0x030
-	VTRAP(T_DATA_MMU_MISS, sun4v_tl0_dtsb_miss)	! 0x031 = data MMU miss
+	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)		! 0x031 = data MMU miss
 	sun4v_trap_entry 78				! 0x032-0x07f
 	SPILL64(uspill8_sun4v,ASI_AIUS)			! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32(uspill4_sun4v,ASI_AIUS)			! 0x084 spill_1_normal
@@ -959,7 +959,9 @@ _C_LABEL(trapbase_sun4v):
 	!
 	! trap level 1
 	!
-	sun4v_trap_entry_fail 512			! 0x000-0x1ff
+	sun4v_trap_entry_fail 49			! 0x000-0x030
+	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)		! 0x031 = data MMU miss
+	sun4v_trap_entry_fail 462			! 0x032-0x1ff
 
 #endif
 		
@@ -2562,13 +2564,13 @@ text_error:
  * Traps for sun4v.
  */
 
-sun4v_tl0_dtsb_miss:
+sun4v_dtsb_miss:
 	GET_MMFSA %g1				! MMU Fault status area
-	add	%g1, 0x48, %g3			
+	add	%g1, 0x48, %g3
 	LDPTRA	[%g3] ASI_PHYS_CACHED, %g3	! Data fault address
-	add	%g1, 0x50, %g6			
+	add	%g1, 0x50, %g6
 	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
-	
+
 	GET_CTXBUSY %g4
 	sllx	%g6, 3, %g6			! Make it into an offset into ctxbusy
 	LDPTR	[%g4 + %g6], %g4		! Load up our page table.
@@ -2628,17 +2630,27 @@ sun4v_tl0_dtsb_miss:
 	add	%g2, %g3, %g2			! location of TTE in ci_tsb_dmmu
 
 	membar	#StoreStore
-	
+
 	STPTR	%g4, [%g2 + 8]		! store TTE data
 	STPTR	%g1, [%g2]		! store TTE tag
 
 	retry
 	NOTREACHED
 
-sun4v_datatrap:
+sun4v_datatrap:			! branch further based on trap level
+	rdpr	%tl, %g1
+	dec	%g1
+	beq	sun4v_datatrap_tl0
+	 nop
+	ba	sun4v_datatrap_tl1
+	 nop
+sun4v_datatrap_tl0:
 	/* XXX missing implementaion */
 	sir
-
+sun4v_datatrap_tl1:
+	/* XXX missing implementaion */
+	sir
+			
 /*
  * End of traps for sun4v.
  */
