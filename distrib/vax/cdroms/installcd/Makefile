@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2014/05/30 13:24:22 martin Exp $
+#	$NetBSD: Makefile,v 1.6 2014/05/31 10:43:00 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
 CDRELEASE_NOISOS=true
+CDMAKEFSEXTRAOPTS+=-F ./fs.spec
+
+CLEANFILES+= fs.spec
 
 # for PRINTOBJDIR
 .include <bsd.own.mk>
@@ -29,7 +32,9 @@ image_md_pre:
 		${INSTALL} ${COPY} $$f cdrom; \
 	done
 	${TOOL_GZIP} -d cdrom/netbsd.gz
-	(cd cdrom/dev && ${HOST_SH} ./MAKEDEV all)
+	echo '. type=dir optional' > ./fs.spec
+	echo './dev type=dir optional' >> ./fs.spec
+	${HOST_SH} cdrom/dev/MAKEDEV -s all | ${TOOL_SED} -e '1d' -e 's:^\./:./dev/:' >> ./fs.spec
 	${MKDIR} cdrom/var
 	${MKDIR} cdrom/kern
 
