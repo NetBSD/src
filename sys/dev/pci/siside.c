@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.35 2014/05/24 22:14:26 abs Exp $	*/
+/*	$NetBSD: siside.c,v 1.36 2014/05/31 16:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.35 2014/05/24 22:14:26 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.36 2014/05/31 16:25:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_740,   0x00, 5, "740", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_741,   0x00, 5, "741", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_745,   0x00, 5, "745", SIS_TYPE_100NEW},
-	{PCI_PRODUCT_SIS_746,   0x00, 6, "746", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_746,   0x00, 6, "746", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_748,   0x00, 6, "748", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_750,   0x00, 6, "750", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_751,   0x00, 6, "751", SIS_TYPE_SOUTH},
