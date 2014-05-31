@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/05/28 16:41:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2014/05/31 14:03:08 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -12,8 +12,8 @@ LDADD=		-lgcc_s
 
 LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 
-COPTS+=		-pthread
-LDFLAGS+=	-pthread
+#COPTS+=		-pthread
+#LDFLAGS+=	-pthread
 
 UNSUPPORTED_COMPILER.clang=	# defined
 CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
@@ -37,7 +37,7 @@ CXXFLAGS+=	-fno-implicit-templates -fdiagnostics-show-location=once
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 # include backwards compatible code
-CPPFLAGS+=     -D_GLIBCXX_SHARED
+CPPFLAGS+=     -D_GLIBCXX_SHARED -D_GLIBCXX_GTHREAD_USE_WEAK
 
 CONF=		${DIST}/libstdc++-v3/config
 
