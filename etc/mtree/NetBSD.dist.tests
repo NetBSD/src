@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.106 2014/05/31 14:31:01 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.107 2014/05/31 14:36:53 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -167,6 +167,7 @@
 ./usr/tests/bin/sleep
 ./usr/tests/bin/sh
 ./usr/tests/bin/sh/dotcmd
+./usr/tests/bin/sh/dotcmd/out
 ./usr/tests/bin/tar
 ./usr/tests/crypto
 ./usr/tests/crypto/libcrypto
