@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2014/05/29 07:40:37 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2014/05/31 22:55:16 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -79,6 +79,7 @@ VER_CPPFLAGS=	-DBASEVER="\"${BASEVER}"\" \
 		-DBUGURL=$(G_BUGURL_s)
 
 CPPFLAGS.version.c+=	${VER_CPPFLAGS}
+version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 .include "${GCCARCH}/defs.mk"
 

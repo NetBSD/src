@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/15 23:12:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/05/31 22:55:17 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -26,6 +26,8 @@ GENPROG_ERROR_DEPENDS=errors.lo
 
 .include "../Makefile.options"
 .include "../../Makefile.hooks"
+
+${SRCS}: ${GCCARCH}/defs.mk
 
 ${G_common_out_file:T:R}.o:  common/common-target-hooks-def.h
 
