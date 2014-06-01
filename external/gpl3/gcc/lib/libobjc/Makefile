@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2014/05/15 14:37:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2014/06/01 19:51:01 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIB=		objc
 GCC_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
@@ -28,11 +28,11 @@ EXTRA_FAKEHEADERS=
 
 LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc/libgcc && ${PRINTOBJDIR}
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
-GNUHOSTDIST=	${NETBSDSRCDIR}/external/gpl3/gcc/dist
-GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
-LIBOBJCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libobjc/arch/${GCC_MACHINE_ARCH}
-GCCLIBXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${GCC_MACHINE_ARCH}
+DIST=		${GCCDIST}
+GNUHOSTDIST=	${DIST}
+GCCARCH=	${GCC_SUBDIR}/usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
+LIBOBJCARCH=	${GCC_SUBDIR}/lib/libobjc/arch/${GCC_MACHINE_ARCH}
+GCCLIBXX=	${GCC_SUBDIR}/lib/libstdc++-v3/arch/${GCC_MACHINE_ARCH}
 
 SRCS=		${G_OBJC_SOURCE_FILES} ${G_C_SOURCE_FILES}
 
@@ -69,8 +69,6 @@ runtime-info.h:
 	${_MKTARGET_CREATE}
 	touch rtscratch
 	`${OBJC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@
-
-.PATH: ${DIST}/libobjc ${DIST}/libobjc/objc ${DIST}/libobjc/objc-private
 
 ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
@@ -114,6 +112,8 @@ CLEANFILES+=	options.h optionlist
 .endif
 
 .include <bsd.lib.mk>
+
+.PATH: ${DIST}/libobjc ${DIST}/libobjc/objc ${DIST}/libobjc/objc-private
 
 .else
 .include <bsd.prog.mk>	# do nothing
