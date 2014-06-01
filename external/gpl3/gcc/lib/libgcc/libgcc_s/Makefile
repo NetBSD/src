@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/03/05 21:38:59 tron Exp $
+#	$NetBSD: Makefile,v 1.10 2014/06/01 19:51:01 mrg Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -9,6 +9,7 @@ NOSTATICLIB=	# defined
 NOPROFILE=	# defined
 NOPICINSTALL=	# defined
 
+.include "../../../Makefile.gcc_path"
 .include <bsd.own.mk>
 
 .if ${MKGCC} != "no"
