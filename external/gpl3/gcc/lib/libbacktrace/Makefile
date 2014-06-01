@@ -1,13 +1,13 @@
 #	$NetBSD
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
-GNUHOSTDIST=    ${DIST}
-
 LIBISPRIVATE=   yes
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIB=		backtrace
+
+DIST=		${GCCDIST}
+GNUHOSTDIST=    ${DIST}
 
 SRCS=		dwarf.c elf.c fileline.c mmap.c mmapio.c nounwind.c \
 		posix.c print.c state.c
