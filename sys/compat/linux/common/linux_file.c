@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.111 2014/05/18 09:30:00 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.112 2014/06/01 13:42:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.111 2014/05/18 09:30:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.112 2014/06/01 13:42:12 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.111 2014/05/18 09:30:00 njoly Exp $
 
 #include <compat/linux/linux_syscallargs.h>
 
-static int linux_to_bsd_ioflags(int);
 static int bsd_to_linux_ioflags(int);
 #ifndef __amd64__
 static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
@@ -86,7 +85,7 @@ conv_linux_flock(linux, flock)
  * The next two functions convert between the Linux and NetBSD values
  * of the flags used in open(2) and fcntl(2).
  */
-static int
+int
 linux_to_bsd_ioflags(int lflags)
 {
 	int res = 0;

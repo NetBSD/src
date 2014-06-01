@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.38 2014/05/18 09:30:00 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.39 2014/06/01 13:42:12 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.38 2014/05/18 09:30:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.39 2014/06/01 13:42:12 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,7 +226,7 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 }
 
 static int
-linux32_pipe(struct lwp *l, int *fd, register_t *retval, int flags)
+linux32_pipe(struct lwp *l, int *fd, register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_intp) fd;
@@ -240,10 +240,6 @@ linux32_pipe(struct lwp *l, int *fd, register_t *retval, int flags)
 	if ((error = copyout(pfds, fd, 2 * sizeof(*fd))) != 0)
 		return error;
 
-	if (flags & LINUX_O_CLOEXEC) {
-		fd_set_exclose(l, retval[0], true);
-		fd_set_exclose(l, retval[1], true);
-	}
 	retval[0] = 0;
 	retval[1] = 0;
 
@@ -257,31 +253,23 @@ linux32_sys_pipe(struct lwp *l, const struct linux32_sys_pipe_args *uap,
 	int error;
 	if ((error = pipe1(l, retval, 0)))
 		return error;
-	return linux32_pipe(l, SCARG_P32(uap, fd), retval, 0);
+	return linux32_pipe(l, SCARG_P32(uap, fd), retval);
 }
 
 int
 linux32_sys_pipe2(struct lwp *l, const struct linux32_sys_pipe2_args *uap,
     register_t *retval)
 {
-	int flag = 0;
-	int error;
+	int flags, error;
 
-	switch (SCARG(uap, flags)) {
-	case LINUX_O_CLOEXEC:
-		break;
-	case LINUX_O_NONBLOCK:
-	case LINUX_O_NONBLOCK|LINUX_O_CLOEXEC:
-		flag = O_NONBLOCK;
-		break;
-	default:
+	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
+	if ((flags & ~(O_CLOEXEC|O_NONBLOCK)) != 0)
 		return EINVAL;
-	}
 
-	if ((error = pipe1(l, retval, flag)))
+	if ((error = pipe1(l, retval, flags)))
 		return error;
 
-	return linux32_pipe(l, SCARG_P32(uap, fd), retval, SCARG(uap, flags));
+	return linux32_pipe(l, SCARG_P32(uap, fd), retval);
 }
 
 int
