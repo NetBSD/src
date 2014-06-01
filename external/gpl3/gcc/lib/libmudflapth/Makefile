@@ -1,14 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2014/03/01 10:00:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/06/01 19:51:01 mrg Exp $
 
 NOLINT=yes			# core dumps
 UNSUPPORTED_COMPILER.clang=     # defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
-DIST=           ${NETBSDSRCDIR}/external/gpl3/gcc/dist/libmudflap
+DIST=		${GCCDIST}/libmudflap
 CPPFLAGS+=	-I${.CURDIR}/../libmudflap -DLIBMUDFLAPTH
-
-.PATH: ${DIST}
 
 SHLIB_MAJOR=	0
 SHLIB_MINOR=	0
@@ -18,3 +16,5 @@ LIB=mudflapth
 SRCS=mf-runtime.c mf-heuristics.c mf-hooks1.c mf-hooks2.c mf-hooks3.c
 
 .include <bsd.lib.mk>
+
+.PATH: ${DIST}
