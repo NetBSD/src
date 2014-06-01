@@ -1,19 +1,21 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/01 10:00:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/06/01 20:24:45 mrg Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 .include <bsd.shlib.mk>
 
-NOLINT=		# defined
+LIB=		liblto_plugin
+
+DIST=		${GCCDIST}
+GNUHOSTDIST=	${DIST}
+
+SRCS=		lto-plugin.c
+
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${DIST}/include -I.
 
 LIBISMODULE=	1
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
-GNUHOSTDIST=	${DIST}
-LIB=		liblto_plugin
-SRCS=		lto-plugin.c
-.PATH:	${DIST}/lto-plugin
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${DIST}/include -I.
+NOLINT=		# defined
 
 # make this /usr/lib/gcc?
 LIBDIR=		/usr/libexec
@@ -44,6 +46,8 @@ config.h: Makefile
 	rm -rf .ab
 
 .include <bsd.lib.mk>
+
+.PATH:	${DIST}/lto-plugin
 
 .else
 .include <bsd.prog.mk> # do nothing
