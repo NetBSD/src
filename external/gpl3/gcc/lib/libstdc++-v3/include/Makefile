@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/01 10:00:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2014/06/01 19:51:01 mrg Exp $
 
 SUBDIR=		backward ext bits debug decimal parallel pb profile
 SUBDIR+=	tr1 tr2
@@ -10,7 +10,7 @@ SUBDIR+=	tr1 tr2
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 # libsupc++

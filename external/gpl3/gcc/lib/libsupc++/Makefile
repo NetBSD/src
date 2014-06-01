@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/05/28 17:09:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/06/01 19:51:02 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -8,7 +8,7 @@ NOPROFILE=	# defined
 CWARNFLAGS.clang+=	-Wno-parentheses
 UNSUPPORTED_COMPILER.clang=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
