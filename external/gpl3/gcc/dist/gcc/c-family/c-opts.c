@@ -284,6 +284,10 @@ c_common_handle_option (size_t scode, const char *arg, int value,
       cpp_opts->discard_comments_in_macro_exp = 0;
       break;
 
+    case OPT_cxx_isystem:
+      add_path (xstrdup (arg), SYSTEM, 1, true);
+      break;
+
     case OPT_D:
       defer_opt (code, arg);
       break;
@@ -604,6 +608,10 @@ c_common_handle_option (size_t scode, const char *arg, int value,
 
     case OPT_iquote:
       add_path (xstrdup (arg), QUOTE, 0, true);
+      break;
+
+    case OPT_iremap:
+      add_cpp_remap_path (arg);
       break;
 
     case OPT_isysroot:
