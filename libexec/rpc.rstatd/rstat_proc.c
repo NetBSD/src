@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.49 2014/06/02 18:17:51 joerg Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.50 2014/06/02 19:29:58 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rstat_proc.c,v 1.49 2014/06/02 18:17:51 joerg Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.50 2014/06/02 19:29:58 joerg Exp $");
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.49 2014/06/02 18:17:51 joerg Exp $");
 #include <signal.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <nlist.h>
 #include <syslog.h>
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
@@ -80,14 +79,7 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.49 2014/06/02 18:17:51 joerg Exp $");
 #define BSD_CPUSTATES	5	/* Use protocol's idea of CPU states */
 int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
 
-struct nlist nl[] = {
-#define	X_IFNET		0
-	{ "_ifnet", 0, 0, 0, 0 },
-	{ NULL, 0, 0, 0, 0 },
-};
-
 int hz;
-char *memf = NULL, *nlistf = NULL;
 
 extern int from_inetd;
 int sincelastreq = 0;		/* number of alarms since last request */
