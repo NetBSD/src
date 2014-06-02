@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.7 2014/06/02 19:29:00 joerg Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.8 2014/06/02 22:57:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -54,8 +54,6 @@ struct _drive	cur, last;
 
 extern int	hz;
 
-/* Pointer to list of drives. */
-static struct io_stats	*iostathead = NULL;
 /* sysctl hw.drivestats buffer. */
 static struct io_sysctl	*drives = NULL;
 
@@ -148,11 +146,8 @@ cpuswap(void)
 void
 drvreadstats(void)
 {
-	struct io_stats	*p;
 	size_t		size, i;
 	int		mib[3];
-
-	p = iostathead;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_IOSTATS;
