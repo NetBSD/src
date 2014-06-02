@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.55 2011/11/19 22:51:29 tls Exp $	*/
+/*	$NetBSD: mld6.c,v 1.56 2014/06/02 11:02:20 joerg Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.55 2011/11/19 22:51:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.56 2014/06/02 11:02:20 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -137,7 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.55 2011/11/19 22:51:29 tls Exp $");
  * This structure is used to keep track of in6_multi chains which belong to
  * deleted interface addresses.
  */
-static LIST_HEAD(, multi6_kludge) in6_mk; /* XXX BSS initialization */
+static LIST_HEAD(, multi6_kludge) in6_mk = LIST_HEAD_INITIALIZER(in6_mk);
 
 struct multi6_kludge {
 	LIST_ENTRY(multi6_kludge) mk_entry;
