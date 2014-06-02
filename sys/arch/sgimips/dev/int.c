@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.25 2012/10/27 17:18:09 chs Exp $	*/
+/*	$NetBSD: int.c,v 1.26 2014/06/02 15:07:24 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.25 2012/10/27 17:18:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.26 2014/06/02 15:07:24 macallan Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -479,7 +479,7 @@ int2_cal_timer(void)
 	int s;
 	int roundtime;
 	int sampletime;
-	int startmsb, lsb, msb;
+	int __unused(startmsb), __unused(lsb), msb;
 	unsigned long startctr, endctr;
 
 	/*
