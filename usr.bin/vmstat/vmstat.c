@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.192 2014/05/08 08:21:53 hannken Exp $ */
+/* $NetBSD: vmstat.c,v 1.193 2014/06/02 19:16:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.192 2014/05/08 08:21:53 hannken Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.193 2014/06/02 19:16:10 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1144,10 +1144,7 @@ doevcnt(int verbose, int type)
 			error = sysctl(mib, __arraycount(mib),
 			    buf, &newlen, NULL, 0);
 			if (error) {
-				/* if the sysctl is unknown, try groveling */
-				if (error == ENOENT)
-					break;
-				warn("kern.evcnt");
+				err(1, "kern.evcnt");
 				if (buf)
 					free(buf);
 				return;
