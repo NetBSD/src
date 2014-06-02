@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.48 2014/06/02 17:40:05 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,14 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
-static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
-#else
-__RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: rstat_proc.c,v 1.48 2014/06/02 17:40:05 joerg Exp $");
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
@@ -59,14 +52,9 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
 #include <limits.h>
 #include <nlist.h>
 #include <syslog.h>
-#ifdef BSD
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
 #include "drvstats.h"
-#else
-#include <sys/dk.h>
-#endif
-
 #include <net/if.h>
 
 /*
@@ -89,10 +77,8 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
 #undef if_collisions
 #include <rpcsvc/rstat.h>
 
-#ifdef BSD
 #define BSD_CPUSTATES	5	/* Use protocol's idea of CPU states */
 int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
-#endif
 
 struct nlist nl[] = {
 #define	X_IFNET		0
@@ -230,21 +216,9 @@ updatestat(int dummy)
 	for (i = 0; i < ndrive && i < DK_NDRIVE; i++)
 		stats_all.s3.dk_xfer[i] = cur.rxfer[i] + cur.wxfer[i];
 
-#ifdef BSD
 	for (i = 0; i < CPUSTATES; i++)
 		stats_all.s3.cp_time[i] = cur.cp_time[cp_xlat[i]];
-#else
- 	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
-		     (char *)stats_all.s3.cp_time,
-		     sizeof (stats_all.s3.cp_time))
-	    != sizeof (stats_all.s3.cp_time)) {
-		syslog(LOG_ERR, "can't read cp_time from kmem");
-		exit(1);
-	}
-#endif
-#ifdef BSD
         (void)getloadavg(avrun, sizeof(avrun) / sizeof(avrun[0]));
-#endif
 	stats_all.s3.avenrun[0] = avrun[0] * FSCALE;
 	stats_all.s3.avenrun[1] = avrun[1] * FSCALE;
 	stats_all.s3.avenrun[2] = avrun[2] * FSCALE;
