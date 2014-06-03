@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.196 2014/06/03 21:41:56 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.197 2014/06/03 21:45:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.196 2014/06/03 21:41:56 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.197 2014/06/03 21:45:41 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,6 +322,7 @@ char	*nlistf, *memf;
 /* allow old usage [vmstat 1] */
 #define	BACKWARD_COMPATIBILITY
 
+static const int clockrate_mib[] = { CTL_KERN, KERN_CLOCKRATE };
 static const int vmmeter_mib[] = { CTL_VM, VM_METER };
 static const int uvmexp2_mib[] = { CTL_VM, VM_UVMEXP2 };
 static const int boottime_mib[] = { CTL_KERN, KERN_BOOTTIME };
@@ -724,10 +725,20 @@ dovmstat(struct timespec *interval, int reps)
 	halfuptime = uptime / 2;
 	(void)signal(SIGCONT, needhdr);
 
-	if (namelist[X_STATHZ].n_type != 0 && namelist[X_STATHZ].n_value != 0)
-		kread(namelist, X_STATHZ, &hz, sizeof(hz));
-	if (!hz)
-		kread(namelist, X_HZ, &hz, sizeof(hz));
+	if (memf != NULL) {
+		if (namelist[X_STATHZ].n_type != 0 && namelist[X_STATHZ].n_value != 0)
+			kread(namelist, X_STATHZ, &hz, sizeof(hz));
+		if (!hz)
+			kread(namelist, X_HZ, &hz, sizeof(hz));
+	} else {
+		struct clockinfo clockinfo;
+		size = sizeof(clockinfo);
+		if (sysctl(clockrate_mib, 2, &clockinfo, &size, NULL, 0) == -1)
+			err(1, "sysctl kern.clockrate failed");
+		hz = clockinfo.stathz;
+		if (!hz)
+			hz = clockinfo.hz;
+	}
 
 	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 
