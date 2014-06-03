@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.14 2014/05/29 22:05:24 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.15 2014/06/03 19:49:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.14 2014/05/29 22:05:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.15 2014/06/03 19:49:37 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -447,8 +447,8 @@ static void
 agp_ggtt_bind_object(struct drm_i915_gem_object *obj,
     enum i915_cache_level cache_level)
 {
-	struct drm_device *const dev = obj->base.dev;
-	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct drm_device *const dev __diagused = obj->base.dev;
+	struct drm_i915_private *const dev_priv __diagused = dev->dev_private;
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	const off_t start = obj->gtt_space->start;
 	bus_addr_t addr;
@@ -504,10 +504,6 @@ agp_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
 /*
  * Gen6+ GTT
  */
-
-#define	SNB_GMCH_GGMS	(SNB_GMCH_GGMS_MASK << SNB_GMCH_GGMS_SHIFT)
-#define	SNB_GMCH_GMS	(SNB_GMCH_GMS_MASK << SNB_GMCH_GMS_SHIFT)
-#define	IVB_GMCH_GMS	(IVB_GMCH_GMS_MASK << IVB_GMCH_GMS_SHIFT)
 
 typedef uint32_t gtt_pte_t;
 
@@ -570,6 +566,15 @@ gen6_pte_decode(gtt_pte_t pte)
 	return ((bus_addr_t)(addr & 0xff0) << 28) | (addr & ~(uint32_t)0xff0);
 }
 
+#define	GEN6_PCI_MGGC	0x50
+#define		GEN6_PCI_MGGC_GGMS	__BITS(9,8)
+#define			GEN6_PCI_MGGC_GGMS_NONE	0x0
+#define			GEN6_PCI_MGGC_GGMS_1MB	0x1
+#define			GEN6_PCI_MGGC_GGMS_2MB	0x2
+#define		GEN6_PCI_MGGC_GMS	__BITS(7,3)
+#define			GEN6_PCI_MGGC_GMS_MAX	0xa
+#define			GEN6_PCI_MGGC_GMS_IVB_1GB	0xb /* IVB-specific */
+
 static int
 gen6_gtt_init(struct drm_device *dev)
 {
@@ -578,29 +583,44 @@ gen6_gtt_init(struct drm_device *dev)
 	struct intel_gtt *gtt = dev_priv->mm.gtt;
 	bus_addr_t gtt_addr;
 	bus_size_t gtt_size;
-	uint16_t snb_gmch_ctl, ggms, gms;
+	pcireg_t mggc;
+	unsigned ggms, gms;
 	int ret;
 
 	gtt->do_idle_maps = false;
 
-	snb_gmch_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag, SNB_GMCH_CTRL);
+	/* MGGC: Mirror of GMCH Graphics Control */
+	mggc = pci_conf_read(pa->pa_pc, pa->pa_tag, GEN6_PCI_MGGC);
 
-	/* GMS: Graphics Mode Select.  */
-	if (INTEL_INFO(dev)->gen < 7) {
-		gms = __SHIFTOUT(snb_gmch_ctl, SNB_GMCH_GMS);
-		gtt->stolen_size = (gms << 25);
-	} else {
-		gms = __SHIFTOUT(snb_gmch_ctl, IVB_GMCH_GMS);
-		static const unsigned sizes[] = {
-			0, 0, 0, 0, 0, 32, 48, 64, 128, 256, 96, 160, 224, 352
-		};
-		gtt->stolen_size = sizes[gms] << 20;
+	/* GGMS: GTT Graphics Memory Size */
+	ggms = __SHIFTOUT(mggc, GEN6_PCI_MGGC_GGMS);
+	switch (ggms) {
+	case GEN6_PCI_MGGC_GGMS_NONE:
+		gtt->gtt_total_entries = 0;
+		break;
+	case GEN6_PCI_MGGC_GGMS_1MB:
+		gtt->gtt_total_entries = (1*1024*1024) / 4;
+		break;
+	case GEN6_PCI_MGGC_GGMS_2MB:
+		gtt->gtt_total_entries = (2*1024*1024) / 4;
+		break;
+	default:
+		DRM_ERROR("unknown GTT Graphics Memory Size: %u\n", ggms);
+		gtt->gtt_total_entries = 0;
+		break;
 	}
 
-	/* GGMS: GTT Graphics Memory Size, in megabytes.  */
-	ggms = __SHIFTOUT(snb_gmch_ctl, SNB_GMCH_GGMS);
-	CTASSERT(SNB_GMCH_GGMS_MASK <= (INT_MAX >> 20));
-	gtt->gtt_total_entries = (ggms << 20) / sizeof(gtt_pte_t);
+	/* GMS: Graphics Mode Select */
+	gms = __SHIFTOUT(mggc, GEN6_PCI_MGGC_GMS);
+	if (gms <= GEN6_PCI_MGGC_GMS_MAX) {
+		gtt->stolen_size = gms * 32*1024*1024;
+	} else if ((INTEL_INFO(dev)->gen == 7) &&
+	    (gms == GEN6_PCI_MGGC_GMS_IVB_1GB)) {
+		gtt->stolen_size = 1*1024*1024*1024;
+	} else {
+		DRM_ERROR("unknown Graphics Mode Select: %u\n", gms);
+		gtt->stolen_size = 0;
+	}
 
 	/* Linux sez:  For GEN6+ the PTEs for the ggtt live at 2MB + BAR0 */
 	gtt_addr = (2<<20);
