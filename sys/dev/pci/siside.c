@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.28 2011/05/24 16:42:10 joerg Exp $	*/
+/*	$NetBSD: siside.c,v 1.28.10.1 2014/06/03 14:31:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.28 2011/05/24 16:42:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.28.10.1 2014/06/03 14:31:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ sis_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			    SIS_REG_57) & 0x7f);
 			if (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    PCI_ID_REG)) == SIS_PRODUCT_5518) {
-				aprint_normal("96X UDMA%d",
+				aprint_normal("96X UDMA%d ",
 				    sis_hostbr_type_match->udma_mode);
 				sc->sis_type = SIS_TYPE_133NEW;
 				sc->sc_wdcdev.sc_atac.atac_udma_cap =
