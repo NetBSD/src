@@ -1,4 +1,4 @@
-/*	$NetBSD: bebox_bootrec.h,v 1.2 2008/05/24 17:34:03 kiyohara Exp $	*/
+/*	$NetBSD: bebox_bootrec.h,v 1.2.38.1 2014/06/03 15:26:34 msaitoh Exp $	*/
 
 #define	BEBOX_HEADER_SIZE		0x6400
 #define	BEBOX_BLOCK_SIZE		0x200
@@ -136,9 +136,9 @@ u_char bebox_image_data12[] = {
 };
 
 struct bebox_image_block {
-	long offset;
+	int32_t offset;
 	u_char *data;
-	int size;
+	int32_t size;
 };
 
 #define	BEBOX_IMG(x)		__CONCAT(bebox_image_data,x)
@@ -162,7 +162,7 @@ struct bebox_image_block bebox_image_block[] = {
 	{ -1 }
 };
 
-long bebox_mtime_offset[] = {
+int32_t bebox_mtime_offset[] = {
 	0x00000004,
 	0x0000048c,
 	0x00000490,
