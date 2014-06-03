@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.194 2014/06/03 21:16:15 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.195 2014/06/03 21:31:54 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.194 2014/06/03 21:16:15 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.195 2014/06/03 21:31:54 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -850,7 +850,7 @@ dosum(void)
 {
 	struct nchstats_sysctl nch_stats;
 	uint64_t nchtotal;
-	struct uvmexp_sysctl uvmexp2;
+	struct uvmexp_sysctl uvmexp;
 	size_t ssize;
 	int active_kernel;
 	struct cpu_counter cc;
@@ -860,47 +860,112 @@ dosum(void)
 	 * are now estimated by the kernel and sadly
 	 * can not easily be dug out of a crash dump.
 	 */
-	ssize = sizeof(uvmexp2);
-	memset(&uvmexp2, 0, ssize);
+	ssize = sizeof(uvmexp);
+	memset(&uvmexp, 0, ssize);
 	active_kernel = (memf == NULL);
 	if (active_kernel) {
 		/* only on active kernel */
-		if (sysctl(uvmexp2_mib, __arraycount(uvmexp2_mib), &uvmexp2,
+		if (sysctl(uvmexp2_mib, __arraycount(uvmexp2_mib), &uvmexp,
 		    &ssize, NULL, 0) == -1)
 			warn("sysctl vm.uvmexp2 failed");
+	} else {
+		struct uvmexp uvmexp_kernel;
+		kread(namelist, X_UVMEXP, &uvmexp_kernel, sizeof(uvmexp_kernel));
+#define COPY(field) uvmexp.field = uvmexp_kernel.field
+		COPY(pagesize);
+		COPY(ncolors);
+		COPY(npages);
+		COPY(free);
+		COPY(paging);
+		COPY(wired);
+		COPY(zeropages);
+		COPY(reserve_pagedaemon);
+		COPY(reserve_kernel);
+		COPY(anonpages);
+		COPY(filepages);
+		COPY(execpages);
+		COPY(freemin);
+		COPY(freetarg);
+		COPY(wiredmax);
+		COPY(nswapdev);
+		COPY(swpages);
+		COPY(swpginuse);
+		COPY(nswget);
+		COPY(pageins);
+		COPY(pdpageouts);
+		COPY(pgswapin);
+		COPY(pgswapout);
+		COPY(forks);
+		COPY(forks_ppwait);
+		COPY(forks_sharevm);
+		COPY(pga_zerohit);
+		COPY(pga_zeromiss);
+		COPY(zeroaborts);
+		COPY(colorhit);
+		COPY(colormiss);
+		COPY(cpuhit);
+		COPY(cpumiss);
+		COPY(fltnoram);
+		COPY(fltnoanon);
+		COPY(fltpgwait);
+		COPY(fltpgrele);
+		COPY(fltrelck);
+		COPY(fltrelckok);
+		COPY(fltanget);
+		COPY(fltanretry);
+		COPY(fltamcopy);
+		COPY(fltamcopy);
+		COPY(fltnomap);
+		COPY(fltlget);
+		COPY(fltget);
+		COPY(flt_anon);
+		COPY(flt_acow);
+		COPY(flt_obj);
+		COPY(flt_prcopy);
+		COPY(flt_przero);
+		COPY(pdwoke);
+		COPY(pdrevs);
+		COPY(pdfreed);
+		COPY(pdscans);
+		COPY(pdanscan);
+		COPY(pdobscan);
+		COPY(pdreact);
+		COPY(pdbusy);
+		COPY(pdpending);
+		COPY(pddeact);
+#undef COPY
 	}
 
-	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 
-	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+	(void)printf("%9" PRIu64 " bytes per page\n", uvmexp.pagesize);
 
-	(void)printf("%9u page color%s\n",
+	(void)printf("%9" PRIu64 " page color%s\n",
 	    uvmexp.ncolors, uvmexp.ncolors == 1 ? "" : "s");
 
-	(void)printf("%9u pages managed\n", uvmexp.npages);
-	(void)printf("%9u pages free\n", uvmexp.free);
+	(void)printf("%9" PRIu64 " pages managed\n", uvmexp.npages);
+	(void)printf("%9" PRIu64 " pages free\n", uvmexp.free);
 	if (active_kernel) {
-		(void)printf("%9" PRIu64 " pages active\n", uvmexp2.active);
-		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp2.inactive);
+		(void)printf("%9" PRIu64 " pages active\n", uvmexp.active);
+		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp.inactive);
 	}
-	(void)printf("%9u pages paging\n", uvmexp.paging);
-	(void)printf("%9u pages wired\n", uvmexp.wired);
-	(void)printf("%9u zero pages\n", uvmexp.zeropages);
-	(void)printf("%9u reserve pagedaemon pages\n",
+	(void)printf("%9" PRIu64 " pages paging\n", uvmexp.paging);
+	(void)printf("%9" PRIu64 " pages wired\n", uvmexp.wired);
+	(void)printf("%9" PRIu64 " zero pages\n", uvmexp.zeropages);
+	(void)printf("%9" PRIu64 " reserve pagedaemon pages\n",
 	    uvmexp.reserve_pagedaemon);
-	(void)printf("%9u reserve kernel pages\n", uvmexp.reserve_kernel);
-	(void)printf("%9u anonymous pages\n", uvmexp.anonpages);
-	(void)printf("%9u cached file pages\n", uvmexp.filepages);
-	(void)printf("%9u cached executable pages\n", uvmexp.execpages);
+	(void)printf("%9" PRIu64 " reserve kernel pages\n", uvmexp.reserve_kernel);
+	(void)printf("%9" PRIu64 " anonymous pages\n", uvmexp.anonpages);
+	(void)printf("%9" PRIu64 " cached file pages\n", uvmexp.filepages);
+	(void)printf("%9" PRIu64 " cached executable pages\n", uvmexp.execpages);
 
-	(void)printf("%9u minimum free pages\n", uvmexp.freemin);
-	(void)printf("%9u target free pages\n", uvmexp.freetarg);
-	(void)printf("%9u maximum wired pages\n", uvmexp.wiredmax);
+	(void)printf("%9" PRIu64 " minimum free pages\n", uvmexp.freemin);
+	(void)printf("%9" PRIu64 " target free pages\n", uvmexp.freetarg);
+	(void)printf("%9" PRIu64 " maximum wired pages\n", uvmexp.wiredmax);
 
-	(void)printf("%9u swap devices\n", uvmexp.nswapdev);
-	(void)printf("%9u swap pages\n", uvmexp.swpages);
-	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
-	(void)printf("%9u swap allocations\n", uvmexp.nswget);
+	(void)printf("%9" PRIu64 " swap devices\n", uvmexp.nswapdev);
+	(void)printf("%9" PRIu64 " swap pages\n", uvmexp.swpages);
+	(void)printf("%9" PRIu64 " swap pages in use\n", uvmexp.swpginuse);
+	(void)printf("%9" PRIu64 " swap allocations\n", uvmexp.nswget);
 
 	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 	cpucounters(&cc);
@@ -911,59 +976,59 @@ dosum(void)
 	(void)printf("%9" PRIu64 " CPU context switches\n", cc.nswtch);
 	(void)printf("%9" PRIu64 " software interrupts\n", cc.nsoft);
 	(void)printf("%9" PRIu64 " system calls\n", cc.nsyscall);
-	(void)printf("%9u pagein requests\n", uvmexp.pageins);
-	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts);
-	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
-	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
-	(void)printf("%9u forks total\n", uvmexp.forks);
-	(void)printf("%9u forks blocked parent\n", uvmexp.forks_ppwait);
-	(void)printf("%9u forks shared address space with parent\n",
+	(void)printf("%9" PRIu64 " pagein requests\n", uvmexp.pageins);
+	(void)printf("%9" PRIu64 " pageout requests\n", uvmexp.pdpageouts);
+	(void)printf("%9" PRIu64 " pages swapped in\n", uvmexp.pgswapin);
+	(void)printf("%9" PRIu64 " pages swapped out\n", uvmexp.pgswapout);
+	(void)printf("%9" PRIu64 " forks total\n", uvmexp.forks);
+	(void)printf("%9" PRIu64 " forks blocked parent\n", uvmexp.forks_ppwait);
+	(void)printf("%9" PRIu64 " forks shared address space with parent\n",
 	    uvmexp.forks_sharevm);
-	(void)printf("%9u pagealloc zero wanted and avail\n",
+	(void)printf("%9" PRIu64 " pagealloc zero wanted and avail\n",
 	    uvmexp.pga_zerohit);
-	(void)printf("%9u pagealloc zero wanted and not avail\n",
+	(void)printf("%9" PRIu64 " pagealloc zero wanted and not avail\n",
 	    uvmexp.pga_zeromiss);
-	(void)printf("%9u aborts of idle page zeroing\n",
+	(void)printf("%9" PRIu64 " aborts of idle page zeroing\n",
 	    uvmexp.zeroaborts);
-	(void)printf("%9u pagealloc desired color avail\n",
+	(void)printf("%9" PRIu64 " pagealloc desired color avail\n",
 	    uvmexp.colorhit);
-	(void)printf("%9u pagealloc desired color not avail\n",
+	(void)printf("%9" PRIu64 " pagealloc desired color not avail\n",
 	    uvmexp.colormiss);
-	(void)printf("%9u pagealloc local cpu avail\n",
+	(void)printf("%9" PRIu64 " pagealloc local cpu avail\n",
 	    uvmexp.cpuhit);
-	(void)printf("%9u pagealloc local cpu not avail\n",
+	(void)printf("%9" PRIu64 " pagealloc local cpu not avail\n",
 	    uvmexp.cpumiss);
 
-	(void)printf("%9u faults with no memory\n", uvmexp.fltnoram);
-	(void)printf("%9u faults with no anons\n", uvmexp.fltnoanon);
-	(void)printf("%9u faults had to wait on pages\n", uvmexp.fltpgwait);
-	(void)printf("%9u faults found released page\n", uvmexp.fltpgrele);
-	(void)printf("%9u faults relock (%u ok)\n", uvmexp.fltrelck,
+	(void)printf("%9" PRIu64 " faults with no memory\n", uvmexp.fltnoram);
+	(void)printf("%9" PRIu64 " faults with no anons\n", uvmexp.fltnoanon);
+	(void)printf("%9" PRIu64 " faults had to wait on pages\n", uvmexp.fltpgwait);
+	(void)printf("%9" PRIu64 " faults found released page\n", uvmexp.fltpgrele);
+	(void)printf("%9" PRIu64 " faults relock (%" PRIu64 " ok)\n", uvmexp.fltrelck,
 	    uvmexp.fltrelckok);
-	(void)printf("%9u anon page faults\n", uvmexp.fltanget);
-	(void)printf("%9u anon retry faults\n", uvmexp.fltanretry);
-	(void)printf("%9u amap copy faults\n", uvmexp.fltamcopy);
-	(void)printf("%9u neighbour anon page faults\n", uvmexp.fltnamap);
-	(void)printf("%9u neighbour object page faults\n", uvmexp.fltnomap);
-	(void)printf("%9u locked pager get faults\n", uvmexp.fltlget);
-	(void)printf("%9u unlocked pager get faults\n", uvmexp.fltget);
-	(void)printf("%9u anon faults\n", uvmexp.flt_anon);
-	(void)printf("%9u anon copy on write faults\n", uvmexp.flt_acow);
-	(void)printf("%9u object faults\n", uvmexp.flt_obj);
-	(void)printf("%9u promote copy faults\n", uvmexp.flt_prcopy);
-	(void)printf("%9u promote zero fill faults\n", uvmexp.flt_przero);
+	(void)printf("%9" PRIu64 " anon page faults\n", uvmexp.fltanget);
+	(void)printf("%9" PRIu64 " anon retry faults\n", uvmexp.fltanretry);
+	(void)printf("%9" PRIu64 " amap copy faults\n", uvmexp.fltamcopy);
+	(void)printf("%9" PRIu64 " neighbour anon page faults\n", uvmexp.fltnamap);
+	(void)printf("%9" PRIu64 " neighbour object page faults\n", uvmexp.fltnomap);
+	(void)printf("%9" PRIu64 " locked pager get faults\n", uvmexp.fltlget);
+	(void)printf("%9" PRIu64 " unlocked pager get faults\n", uvmexp.fltget);
+	(void)printf("%9" PRIu64 " anon faults\n", uvmexp.flt_anon);
+	(void)printf("%9" PRIu64 " anon copy on write faults\n", uvmexp.flt_acow);
+	(void)printf("%9" PRIu64 " object faults\n", uvmexp.flt_obj);
+	(void)printf("%9" PRIu64 " promote copy faults\n", uvmexp.flt_prcopy);
+	(void)printf("%9" PRIu64 " promote zero fill faults\n", uvmexp.flt_przero);
 
-	(void)printf("%9u times daemon wokeup\n",uvmexp.pdwoke);
-	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
-	(void)printf("%9u pages freed by daemon\n", uvmexp.pdfreed);
-	(void)printf("%9u pages scanned by daemon\n", uvmexp.pdscans);
-	(void)printf("%9u anonymous pages scanned by daemon\n",
+	(void)printf("%9" PRIu64 " times daemon wokeup\n",uvmexp.pdwoke);
+	(void)printf("%9" PRIu64 " revolutions of the clock hand\n", uvmexp.pdrevs);
+	(void)printf("%9" PRIu64 " pages freed by daemon\n", uvmexp.pdfreed);
+	(void)printf("%9" PRIu64 " pages scanned by daemon\n", uvmexp.pdscans);
+	(void)printf("%9" PRIu64 " anonymous pages scanned by daemon\n",
 	    uvmexp.pdanscan);
-	(void)printf("%9u object pages scanned by daemon\n", uvmexp.pdobscan);
-	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
-	(void)printf("%9u pages found busy by daemon\n", uvmexp.pdbusy);
-	(void)printf("%9u total pending pageouts\n", uvmexp.pdpending);
-	(void)printf("%9u pages deactivated\n", uvmexp.pddeact);
+	(void)printf("%9" PRIu64 " object pages scanned by daemon\n", uvmexp.pdobscan);
+	(void)printf("%9" PRIu64 " pages reactivated\n", uvmexp.pdreact);
+	(void)printf("%9" PRIu64 " pages found busy by daemon\n", uvmexp.pdbusy);
+	(void)printf("%9" PRIu64 " total pending pageouts\n", uvmexp.pdpending);
+	(void)printf("%9" PRIu64 " pages deactivated\n", uvmexp.pddeact);
 
 	if (active_kernel) {
 		ssize = sizeof(nch_stats);
