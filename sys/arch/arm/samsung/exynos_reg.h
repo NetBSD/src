@@ -150,4 +150,41 @@
 #define EXYNOS_GPIO_PIN_PULL_UP		3
 
 
+/* used PMU registers */
+/* Exynos 4210 or Exynos 5 */
+#define EXYNOS_PMU_USBDEV_PHY_CTRL	0x704
+#define EXYNOS_PMU_USBHOST_PHY_CTRL	0x708
+/* Exynos 4x12 */
+#define EXYNOS_PMU_USB_PHY_CTRL		0x704
+#define EXYNOS_PMU_USB_HSIC_1_PHY_CTRL	0x708
+#define EXYNOS_PMU_USB_HSIC_2_PHY_CTRL	0x70C
+
+#define PMU_PHY_ENABLE			(1<< 0)
+#define PMU_PHY_DISABLE			(0)
+
+
+/* used SYSREG registers */
+#define EXYNOS5_SYSREG_USB20_PHY_TYPE	0x230
+
+
+/* used USB PHY registers */
+#define USB_PHYPWR			0x00
+#define   PHYPWR_FORCE_SUSPEND		__BIT(1)
+#define   PHYPWR_ANALOG_POWERDOWN	__BIT(3)
+#define   PHYPWR_OTG_DISABLE		__BIT(4)
+#define   PHYPWR_SLEEP_PHY0		__BIT(5)
+#define   PHYPWR_NORMAL_MASK		0x19
+#define   PHYPWR_NORMAL_MASK_PHY0	(__BITS(3,3) | 1)
+#define   PHYPWR_NORMAL_MASK_PHY1	__BITS(6,3)
+#define   PHYPWR_NORMAL_MASK_HSIC0	__BITS(9,3)
+#define   PHYPWR_NORMAL_MASK_HSIC1	__BITS(12,3)
+#define USB_PHYCLK			0x04
+#define USB_RSTCON			0x08
+#define   RSTCON_SWRST			__BIT(0)
+#define   RSTCON_HLINK_RWRST		__BIT(1)
+#define   RSTCON_DEVPHYLINK_SWRST	__BIT(2)
+#define   RSTCON_DEVPHY_SWRST		__BITS(0,3)
+#define   RSTCON_HOSTPHY_SWRST		__BITS(3,4)
+#define   RSTCON_HOSTPHYLINK_SWRST	__BITS(7,4)
+
 #endif /* _ARM_SAMSUNG_EXYNOS_REG_H_ */
