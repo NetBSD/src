@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.96 2014/06/03 19:42:17 joerg Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.97 2014/06/03 21:16:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,13 +58,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.96 2014/06/03 19:42:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.97 2014/06/03 21:16:15 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -1097,4 +1098,50 @@ namecache_count_2passes(void)
 	mutex_enter(&cpup->cpu_lock);
 	COUNT(cpup->cpu_stats, ncs_2passes);
 	mutex_exit(&cpup->cpu_lock);
+}
+
+static int
+cache_stat_sysctl(SYSCTLFN_ARGS)
+{
+	struct nchstats_sysctl stats;
+
+	if (oldp == NULL) {
+		*oldlenp = sizeof(stats);
+		return 0;
+	}
+
+	if (*oldlenp < sizeof(stats)) {
+		*oldlenp = 0;
+		return 0;
+	}
+
+	memset(&stats, 0, sizeof(stats));
+
+	sysctl_unlock();
+	cache_lock_cpus();
+	stats.ncs_goodhits = nchstats.ncs_goodhits;
+	stats.ncs_neghits = nchstats.ncs_neghits;
+	stats.ncs_badhits = nchstats.ncs_badhits;
+	stats.ncs_falsehits = nchstats.ncs_falsehits;
+	stats.ncs_miss = nchstats.ncs_miss;
+	stats.ncs_long = nchstats.ncs_long;
+	stats.ncs_pass2 = nchstats.ncs_pass2;
+	stats.ncs_2passes = nchstats.ncs_2passes;
+	stats.ncs_revhits = nchstats.ncs_revhits;
+	stats.ncs_revmiss = nchstats.ncs_revmiss;
+	cache_unlock_cpus();
+	sysctl_relock();
+
+	*oldlenp = sizeof(stats);
+	return sysctl_copyout(l, &stats, oldp, sizeof(stats));
+}
+
+SYSCTL_SETUP(sysctl_cache_stat_setup, "vfs.namecache_stats subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "namecache_stats",
+		       SYSCTL_DESCR("namecache statistics"),
+		       cache_stat_sysctl, 0, NULL, 0,
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 }

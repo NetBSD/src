@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.78 2014/06/03 21:16:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.78 2014/06/03 21:16:15 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $");
 static struct Info {
 	struct	uvmexp_sysctl uvmexp;
 	struct	vmtotal Total;
-	struct	nchstats nchstats;
+	struct	nchstats_sysctl nchstats;
 	long	nchcount;
 	long	*intrcnt;
 	u_int64_t	*evcnt;
@@ -776,7 +776,12 @@ getinfo(struct Info *stats)
 
 	cpureadstats();
 	drvreadstats();
-	NREAD(X_NCHSTATS, &stats->nchstats, sizeof stats->nchstats);
+	size = sizeof(stats->nchstats);
+	if (sysctlbyname("vfs.namecache_stats", &stats->nchstats, &size,
+	    NULL, 0) < 0) {
+		error("can't get namecache statistics: %s\n", strerror(errno));
+		memset(&stats->nchstats, 0, sizeof(stats->nchstats));
+	}
 	if (nintr)
 		NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
 	for (i = 0; i < nevcnt; i++)
