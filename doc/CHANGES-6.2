@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.115 2014/06/03 09:18:57 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.116 2014/06/03 15:48:10 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2384,3 +2384,58 @@ sys/dev/dkvar.h					1.19 via patch
 	can give up to a 5x performance gain in sequencial writes.
 	[bouyer, ticket #1075]
 
+include/stdio.h					1.89-1.90
+
+	Move declarations of getdelim() and getline() from the (incorrect)
+	ANSI C section to POSIX-2008.  From Jarmo Jaakkola in
+	PR standards/48788.
+	[kleink, ticket #1066]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.9 via patch
+sys/net/if_ethersubr.c				1.197 via patch
+sys/net/if_loop.c				1.77 via patch
+sys/net/if_vlan.c				1.70 via patch
+sys/netinet/if_arp.c				1.158
+sys/netinet/ip_carp.c				1.54 via patch
+sys/netinet6/ip6_flow.c				1.23 via patch
+sys/netinet6/nd6.c				1.150 via patch
+sys/rump/librump/rumpkern/klock.c		1.4
+
+	Make sure *(if_output)() is called with KERNEL_LOCK held to avoid
+	mbuf leak. See
+	http://mail-index.netbsd.org/tech-net/2014/04/09/msg004511.html
+	for details. For netinet6, the problem report, fix and test were done
+	by njoly@ on current-users@
+	[bouyer, ticket #1067]
+
+sys/dev/pci/siside.c				1.35
+
+	Add in missing space after "96X UDMA%d". Changes "96X UDMA6746" to
+	"96X UDMA6 746"
+	[abs, ticket #1069]
+
+sys/dev/pci/if_wm.c				1.269
+
+	Bump max TX DMA size to avoid pathological condition with TSO.
+	From David Young.
+	[tls, ticket #1070]
+
+sys/net/if_tap.c				1.76
+
+	Prevent a race between tap_dev_poll() and tap_start() by making sure
+	the call to selrecord() happens at splnet(). 
+	Fixes kern/47506 and kern/46199.
+	[cube, ticket #1071]
+
+sys/fs/cd9660/cd9660_util.c			1.11
+
+	PR kern/48815: Fix version comparison. Patch from Thomas Schmitt.
+	[martin, ticket #1073]
+
+sys/arch/powerpc/stand/mkbootimage/bebox_bootrec.h 1.4
+sys/arch/powerpc/stand/mkbootimage/mkbootimage.c 1.18
+sys/arch/powerpc/stand/mkbootimage/pef.h	1.3
+
+	Fixed mkbootimage for 64-bit architectures. Now I can create a working
+	BeBox boot.fs under NetBSD/amd64.
+	[phx, ticket #1074]
