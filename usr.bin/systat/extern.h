@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.42 2012/01/06 14:08:08 drochner Exp $	*/
+/*	$NetBSD: extern.h,v 1.43 2014/06/03 22:22:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,7 +60,6 @@ extern char	*memf;
 extern int	allflag;
 extern int	turns;
 extern gid_t	egid;
-extern int	use_sysctl;
 
 struct inpcb;
 #ifdef INET6
