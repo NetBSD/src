@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.3 2014/04/01 15:28:52 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.4 2014/06/03 14:59:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ atomic_dec_return(atomic_t *atomic)
 static inline int
 atomic_dec_and_test(atomic_t *atomic)
 {
-	return (-1 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
+	return (0 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
 }
 
 static inline void
