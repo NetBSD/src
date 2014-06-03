@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.76 2014/05/25 14:07:19 hannken Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.77 2014/06/03 19:30:29 joerg Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.76 2014/05/25 14:07:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.77 2014/06/03 19:30:29 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ ext2fs_lookup(void *v)
 		    (error = ext2fs_blkatoff(vdp, (off_t)results->ulr_offset, NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
-		nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	prevoff = results->ulr_offset;
 	endsearch = roundup(ext2fs_size(dp), dirblksiz);
@@ -547,7 +547,7 @@ searchloop:
 
 found:
 	if (numdirpasses == 2)
-		nchstats.ncs_pass2++;
+		namecache_count_pass2();
 	/*
 	 * Check that directory length properly reflects presence
 	 * of this entry.

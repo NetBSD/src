@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.31 2012/11/18 18:25:08 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.32 2014/06/03 19:30:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -278,6 +278,8 @@ void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
 void	nchinit(void);
 void	nchreinit(void);
+void	namecache_count_pass2(void);
+void	namecache_count_2passes(void);
 void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...)

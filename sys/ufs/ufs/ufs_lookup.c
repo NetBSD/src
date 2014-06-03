@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.131 2014/05/25 13:48:40 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.132 2014/06/03 19:30:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.131 2014/05/25 13:48:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.132 2014/06/03 19:30:30 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -286,7 +286,7 @@ ufs_lookup(void *v)
 		    NULL, &bp, false)))
 			goto out;
 		numdirpasses = 2;
-		nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	prevoff = results->ulr_offset;
 	endsearch = roundup(dp->i_size, dirblksiz);
@@ -522,7 +522,7 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		nchstats.ncs_pass2++;
+		namecache_count_pass2();
 	/*
 	 * Check that directory length properly reflects presence
 	 * of this entry.

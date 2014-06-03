@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.26 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.27 2014/06/03 19:30:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.26 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.27 2014/06/03 19:30:30 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.26 2014/02/07 15:29:21 hannken E
 #include <fs/cd9660/iso_rrip.h>
 #include <fs/cd9660/cd9660_rrip.h>
 #include <fs/cd9660/cd9660_mount.h>
-
-struct	nchstats iso_nchstats;
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -191,7 +189,7 @@ cd9660_lookup(void *v)
 		    &bp)))
 				return (error);
 		numdirpasses = 2;
-		iso_nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	endsearch = dp->i_size;
 
@@ -343,7 +341,7 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		iso_nchstats.ncs_pass2++;
+		namecache_count_pass2();
 
 	/*
 	 * Found component in pathname.

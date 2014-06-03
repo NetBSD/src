@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.94 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.95 2014/06/03 19:30:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.94 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.95 2014/06/03 19:30:30 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -565,6 +565,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 {
 	struct namecache *ncp;
 	struct vnode *dvp;
+	struct nchcpu *cpup;
 	struct ncvhashhead *nvcpp;
 	char *bp;
 	int error, nlen;
@@ -573,6 +574,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 		goto out;
 
 	nvcpp = &ncvhashtbl[NCVHASH(vp)];
+	cpup = curcpu()->ci_data.cpu_nch;
 
 	mutex_enter(namecache_lock);
 	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
@@ -591,7 +593,9 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 			    ncp->nc_name[1] == '.')
 				panic("cache_revlookup: found entry for ..");
 #endif
-			COUNT(nchstats, ncs_revhits);
+			mutex_enter(&cpup->cpu_lock);
+			COUNT(cpup->cpu_stats, ncs_revhits);
+			mutex_exit(&cpup->cpu_lock);
 			nlen = ncp->nc_nlen;
 
 			if (bufp) {
@@ -623,7 +627,9 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 		}
 		mutex_exit(&ncp->nc_lock);
 	}
-	COUNT(nchstats, ncs_revmiss);
+	mutex_enter(&cpup->cpu_lock);
+	COUNT(cpup->cpu_stats, ncs_revmiss);
+	mutex_exit(&cpup->cpu_lock);
 	mutex_exit(namecache_lock);
  out:
 	*dvpp = NULL;
@@ -1065,3 +1071,23 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 	}
 }
 #endif
+
+void
+namecache_count_pass2(void)
+{
+	struct nchcpu *cpup = curcpu()->ci_data.cpu_nch;
+
+	mutex_enter(&cpup->cpu_lock);
+	COUNT(cpup->cpu_stats, ncs_pass2);
+	mutex_exit(&cpup->cpu_lock);
+}
+
+void
+namecache_count_2passes(void)
+{
+	struct nchcpu *cpup = curcpu()->ci_data.cpu_nch;
+
+	mutex_enter(&cpup->cpu_lock);
+	COUNT(cpup->cpu_stats, ncs_2passes);
+	mutex_exit(&cpup->cpu_lock);
+}
