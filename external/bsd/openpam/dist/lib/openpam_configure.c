@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.8 2014/06/03 20:21:32 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.9 2014/06/03 20:22:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -470,18 +470,19 @@ openpam_configure(pam_handle_t *pamh,
 	}
 #ifdef __NetBSD__
 	/*
-	 * On NetBSD we require the AUTH chain to have a binding
-	 * or a required module.
+	 * On NetBSD we require the AUTH chain to have a binding,
+	 * a required, or requisite module.
 	 */
 	{
 		pam_chain_t *this = pamh->chains[PAM_AUTH];
 		for (; this != NULL; this = this->next)
 			if (this->flag == PAM_BINDING ||
-			    this->flag == PAM_REQUIRED)
+			    this->flag == PAM_REQUIRED ||
+			    this->flag == PAM_REQUISITE)
 				break;
 		if (this == NULL) {
 			openpam_log(PAM_LOG_ERROR,
-			    "No required or binding component "
+			    "No required, requisite, or binding component "
 			    "in service %s, facility %s",
 			    service, pam_facility_name[PAM_AUTH]);
 			goto load_err;
