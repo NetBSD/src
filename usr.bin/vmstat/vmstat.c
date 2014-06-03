@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.198 2014/06/03 21:56:03 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.199 2014/06/03 21:56:30 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.198 2014/06/03 21:56:03 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.199 2014/06/03 21:56:30 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1097,7 +1097,6 @@ dosum(void)
 void
 doforkst(void)
 {
-	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 	if (memf != NULL) {
 		struct uvmexp uvmexp_kernel;
 		kread(namelist, X_UVMEXP, &uvmexp_kernel, sizeof(uvmexp_kernel));
