@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.114 2014/05/21 21:43:22 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.115 2014/06/03 09:18:57 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2374,4 +2374,13 @@ external/ibm-public/postfix/dist/src/util/dict_pcre.c			patch
 	- Correct an error in SASL_README PostgreSQL example.
 	[tron, ticket #1024]
 
+sys/arch/xen/xen/xbd_xenbus.c			1.63 via patch
+sys/dev/cgd.c					1.87 via patch
+sys/dev/dksubr.c				1.50 via patch
+sys/dev/dkvar.h					1.19 via patch
+
+	Avoid xbd(4) reordering requests, which, depending on the
+	underlying hardware, can badly affect write performances. This
+	can give up to a 5x performance gain in sequencial writes.
+	[bouyer, ticket #1075]
 
