@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.23 2014/05/24 21:01:58 wiz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.24 2014/06/03 14:42:41 wiz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.23 2014/05/24 21:01:58 wiz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.24 2014/06/03 14:42:41 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1718,7 +1718,7 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 
 	rc = sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
-	if (rc == SQLITE_CONSTRAINT) {
+	if (rc == SQLITE_CONSTRAINT_UNIQUE) {
 		/* The *most* probable reason for reaching here is that
 		 * the UNIQUE contraint on the file column of the mandb_meta
 		 * table was violated.
