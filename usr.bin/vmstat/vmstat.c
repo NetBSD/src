@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.197 2014/06/03 21:45:41 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.198 2014/06/03 21:56:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.197 2014/06/03 21:45:41 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.198 2014/06/03 21:56:03 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,8 +141,6 @@ struct cpu_info {
 #else
 # include <sys/cpu.h>
 #endif
-
-struct cpu_info **cpu_infos;
 
 /*
  * General namelist
@@ -740,8 +738,6 @@ dovmstat(struct timespec *interval, int reps)
 			hz = clockinfo.hz;
 	}
 
-	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
-
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt)
 			printhdr();
@@ -989,7 +985,6 @@ dosum(void)
 	(void)printf("%9" PRIu64 " swap pages in use\n", uvmexp.swpginuse);
 	(void)printf("%9" PRIu64 " swap allocations\n", uvmexp.nswget);
 
-	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 	cpucounters(&cc);
 
 	(void)printf("%9" PRIu64 " total faults taken\n", cc.nfault);
@@ -1149,7 +1144,26 @@ drvstats(int *ovflwp)
 void
 cpucounters(struct cpu_counter *cc)
 {
-	struct cpu_info **slot = cpu_infos;
+	static struct cpu_info **cpu_infos;
+	static int initialised;
+	struct cpu_info **slot;
+
+	if (memf == NULL) {
+		cc->nintr = uvmexp.intrs;
+		cc->nsyscall = uvmexp.syscalls;
+		cc->nswtch = uvmexp.swtch;
+		cc->nfault = uvmexp.faults;
+		cc->ntrap = uvmexp.traps;
+		cc->nsoft = uvmexp.softs;
+		return;
+	}
+
+	if (!initialised) {
+		kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
+		initialised = 1;
+	}
+
+	slot = cpu_infos;
 
 	memset(cc, 0, sizeof(*cc));
 
