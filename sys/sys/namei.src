@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.32 2014/06/03 19:30:29 joerg Exp $	*/
+/*	$NetBSD: namei.src,v 1.33 2014/06/03 21:16:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -302,6 +302,19 @@ struct	nchstats {
 	long	ncs_2passes;		/* number of times we attempt it */
 	long	ncs_revhits;		/* reverse-cache hits */
 	long	ncs_revmiss;		/* reverse-cache misses */
+};
+
+struct	nchstats_sysctl {
+	uint64_t ncs_goodhits;		/* hits that we can really use */
+	uint64_t ncs_neghits;		/* negative hits that we can use */
+	uint64_t ncs_badhits;		/* hits we must drop */
+	uint64_t ncs_falsehits;		/* hits with id mismatch */
+	uint64_t ncs_miss;		/* misses */
+	uint64_t ncs_long;		/* long names that ignore cache */
+	uint64_t ncs_pass2;		/* names found with passes == 2 */
+	uint64_t ncs_2passes;		/* number of times we attempt it */
+	uint64_t ncs_revhits;		/* reverse-cache hits */
+	uint64_t ncs_revmiss;		/* reverse-cache misses */
 };
 
 #ifdef _KERNEL
