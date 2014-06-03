@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.195 2014/06/03 21:31:54 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.196 2014/06/03 21:41:56 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.195 2014/06/03 21:31:54 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.196 2014/06/03 21:41:56 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ struct cpu_counter {
 	uint64_t nsoft;
 } cpucounter, ocpucounter;
 
-struct	uvmexp uvmexp, ouvmexp;
+struct	uvmexp_sysctl uvmexp, ouvmexp;
 int	ndrives;
 
 int	winlines = 20;
@@ -738,14 +738,22 @@ dovmstat(struct timespec *interval, int reps)
 		cpureadstats();
 		drvreadstats();
 		tkreadstats();
-		kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 		if (memf != NULL) {
+			struct uvmexp uvmexp_kernel;
 			/*
 			 * XXX Can't do this if we're reading a crash
 			 * XXX dump because they're lazily-calculated.
 			 */
 			warnx("Unable to get vmtotals from crash dump.");
 			(void)memset(&total, 0, sizeof(total));
+			kread(namelist, X_UVMEXP, &uvmexp_kernel, sizeof(uvmexp_kernel));
+#define COPY(field) uvmexp.field = uvmexp_kernel.field
+			COPY(pdreact);
+			COPY(pageins);
+			COPY(pgswapout);
+			COPY(pdfreed);
+			COPY(pdscans);
+#undef COPY
 		} else {
 			size = sizeof(total);
 			if (sysctl(vmmeter_mib, __arraycount(vmmeter_mib),
@@ -753,6 +761,10 @@ dovmstat(struct timespec *interval, int reps)
 				warn("Can't get vmtotals");
 				(void)memset(&total, 0, sizeof(total));
 			}
+			size = sizeof(uvmexp);
+			if (sysctl(uvmexp2_mib, __arraycount(uvmexp2_mib), &uvmexp,
+			    &size, NULL, 0) == -1)
+				warn("sysctl vm.uvmexp2 failed");
 		}
 		cpucounters(&cpucounter);
 		ovflw = 0;
@@ -850,7 +862,6 @@ dosum(void)
 {
 	struct nchstats_sysctl nch_stats;
 	uint64_t nchtotal;
-	struct uvmexp_sysctl uvmexp;
 	size_t ssize;
 	int active_kernel;
 	struct cpu_counter cc;
@@ -1081,10 +1092,24 @@ void
 doforkst(void)
 {
 	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	if (memf != NULL) {
+		struct uvmexp uvmexp_kernel;
+		kread(namelist, X_UVMEXP, &uvmexp_kernel, sizeof(uvmexp_kernel));
+#define COPY(field) uvmexp.field = uvmexp_kernel.field
+		COPY(forks);
+		COPY(forks_ppwait);
+		COPY(forks_sharevm);
+#undef COPY
+	} else {
+		size_t size = sizeof(uvmexp);
+		if (sysctl(uvmexp2_mib, __arraycount(uvmexp2_mib), &uvmexp,
+		    &size, NULL, 0) == -1)
+			warn("sysctl vm.uvmexp2 failed");
+	}
 
-	(void)printf("%u forks total\n", uvmexp.forks);
-	(void)printf("%u forks blocked parent\n", uvmexp.forks_ppwait);
-	(void)printf("%u forks shared address space with parent\n",
+	(void)printf("%" PRIu64 " forks total\n", uvmexp.forks);
+	(void)printf("%" PRIu64 " forks blocked parent\n", uvmexp.forks_ppwait);
+	(void)printf("%" PRIu64 " forks shared address space with parent\n",
 	    uvmexp.forks_sharevm);
 }
 
