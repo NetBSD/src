@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.157 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.158 2014/06/03 01:24:32 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.157 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.158 2014/06/03 01:24:32 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1481,8 +1481,10 @@ revarprequest(struct ifnet *ifp)
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
-	(*ifp->if_output)(ifp, m, &sa, NULL);
 
+	KERNEL_LOCK(1, NULL);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
