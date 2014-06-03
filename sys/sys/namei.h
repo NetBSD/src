@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.87 2012/11/18 18:25:50 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.88 2014/06/03 19:30:48 joerg Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.31 2012/11/18 18:25:08 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.32 2014/06/03 19:30:29 joerg Exp 
  */
 
 /*
@@ -286,6 +286,8 @@ void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
 void	nchinit(void);
 void	nchreinit(void);
+void	namecache_count_pass2(void);
+void	namecache_count_2passes(void);
 void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...)
