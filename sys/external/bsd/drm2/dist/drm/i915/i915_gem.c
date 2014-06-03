@@ -1564,6 +1564,9 @@ unpin:
 unlock:
 	mutex_unlock(&dev->struct_mutex);
 out:
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+	if (ret == -ERESTART)
+		uvm_wait("i915flt");
 	return ret;
 }
 
@@ -1581,7 +1584,6 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
     paddr_t gtt_paddr)
 {
 	struct vm_map_entry *entry = ufi->entry;
-	struct uvm_object *uobj = entry->object.uvm_obj;
 	vaddr_t curr_va;
 	off_t curr_offset;
 	paddr_t paddr;
@@ -1599,7 +1601,6 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
 		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)",
 		entry->etype, 0,0,0);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return(EIO);
 	}
 
@@ -1647,15 +1648,11 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 * XXX case.
 			 */
 			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
-			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj);
-			uvm_wait("i915flt");
 			return (ERESTART);
 		}
 	}
 
 	pmap_update(ufi->orig_map->pmap);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	return (retval);
 }
 #else
