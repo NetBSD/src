@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_reg.h,v 1.4 2014/05/21 13:02:46 reinoud Exp $	*/
+/*	$NetBSD: exynos5_reg.h,v 1.5 2014/06/03 15:51:59 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@
 #define EXYNOS5_USB2_DEVICE_LINK_OFFSET		0x02140000
 #define EXYNOS5_MIPI_HSI_OFFSET			0x02160000
 #define EXYNOS5_SATA PHY CONTROL_OFFSET		0x02170000
-#define EXYNOS5_MCUCTL_IOP_OFFSET		0x02180000
+#define EXYNOS5_MCUCTL_IOP_OFFSET		0x02180000	/* XXX unknown XXX */
 #define EXYNOS5_WDT_IOP_OFFSET			0x02190000
 #define EXYNOS5_PDMA0				0x021A0000
 #define EXYNOS5_PDMA1				0x021B0000

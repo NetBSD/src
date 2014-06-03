@@ -178,7 +178,7 @@
 #define EXYNOS4_MTCADC_ISP_OFFSET		0x02150000	/* (specialised?) AD Converter */
 #define EXYNOS4_PWM_ISP_OFFSET			0x02160000	/* PWM */
 #define EXYNOS4_WDT_ISP_OFFSET			0x02170000	/* Watch Dog Timer */
-#define EXYNOS4_MCUCTL_ISP_OFFSET		0x02180000	/* XXX micro controller control unit? */
+#define EXYNOS4_MCUCTL_ISP_OFFSET		0x02180000	/* power module control unit? */
 #define EXYNOS4_UART_ISP_OFFSET			0x02190000	/* uart base clock */
 #define EXYNOS4_SPI0_ISP_OFFSET			0x021A0000
 #define EXYNOS4_SPI1_ISP_OFFSET			0x021B0000
