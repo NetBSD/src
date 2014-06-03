@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.38 2013/10/19 17:45:00 christos Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.39 2014/06/03 11:56:07 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -847,6 +847,30 @@ read_directory(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+lstat_symlink(const atf_tc_t *tc, const char *mp)
+{
+	const char *src, *dst;
+	int res;
+	struct stat st;
+
+	USES_SYMLINKS;
+	FSTEST_ENTER();
+
+	src = "source";
+	dst = "destination";
+
+	res = rump_sys_symlink(src, dst);
+	ATF_REQUIRE(res != -1);
+	res = rump_sys_lstat(dst, &st);
+	ATF_REQUIRE(res != -1);
+
+	ATF_CHECK(S_ISLNK(st.st_mode) != 0);
+	ATF_CHECK(st.st_size == (off_t)strlen(src));
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -866,6 +890,7 @@ ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
 ATF_TC_FSAPPLY(access_simple, "access(2)");
 ATF_TC_FSAPPLY(read_directory, "read(2) on directories");
+ATF_TC_FSAPPLY(lstat_symlink, "lstat(2) values for symbolic links");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -888,6 +913,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
 	ATF_TP_FSAPPLY(access_simple);
 	ATF_TP_FSAPPLY(read_directory);
+	ATF_TP_FSAPPLY(lstat_symlink);
 
 	return atf_no_error();
 }
