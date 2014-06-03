@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.110 2014/04/15 12:22:49 macallan Exp $ */
+/*	$NetBSD: cpu.c,v 1.111 2014/06/03 20:01:34 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.110 2014/04/15 12:22:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111 2014/06/03 20:01:34 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,15 +117,39 @@ int cpu_match(device_t, cfdata_t, void *);
 CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
 
 static int
-upaid_from_node(u_int cpu_node)
+cpuid_from_node(u_int cpu_node)
 {
-	int portid;
-
-	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
-	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
-		panic("cpu node w/o upa-portid");
-
-	return portid;
+	/*
+	 * Determine the cpuid by examining the nodes properties
+	 * in the following order:
+	 *  upa-portid
+	 *  portid
+	 *  cpuid
+	 *  reg (sun4v only)
+	 */
+	
+	int id;
+	 
+	id = prom_getpropint(cpu_node, "upa-portid", -1);
+	if (id == -1)
+		id = prom_getpropint(cpu_node, "portid", -1);
+	if (id == -1)
+		id = prom_getpropint(cpu_node, "cpuid", -1);
+	if (CPU_ISSUN4V) {
+		int reg[4];
+		int* regp=reg;
+		int len = 4;
+		int rc = prom_getprop(cpu_node, "reg", sizeof(int), 
+		    &len, &regp);
+		if ( rc != 0)
+			panic("No reg property found\n");
+		/* cpuid in the lower 24 bits - sun4v hypervisor arch */
+		id = reg[0] & 0x0fffffff;
+	}
+	if (id == -1)
+		panic("failed to determine cpuid");
+	
+	return id;
 }
 
 struct cpu_info *
@@ -134,17 +158,17 @@ alloc_cpuinfo(u_int cpu_node)
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
 	vsize_t sz = 8 * PAGE_SIZE;
-	int portid;
+	int cpuid;
 	struct cpu_info *cpi, *ci;
 	extern paddr_t cpu0paddr;
 
 	/*
-	 * Check for UPAID in the cpus list.
+	 * Check for matching cpuid in the cpus list.
 	 */
-	portid = upaid_from_node(cpu_node);
+	cpuid = cpuid_from_node(cpu_node);
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
-		if (cpi->ci_cpuid == portid)
+		if (cpi->ci_cpuid == cpuid)
 			return cpi;
 
 	/* Allocate the aligned VA and determine the size. */
@@ -173,7 +197,7 @@ alloc_cpuinfo(u_int cpu_node)
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = NULL;
-	cpi->ci_cpuid = portid;
+	cpi->ci_cpuid = cpuid;
 	cpi->ci_fplwp = NULL;
 	cpi->ci_eintstack = NULL;
 	cpi->ci_spinup = NULL;
@@ -210,7 +234,7 @@ cpu_match(device_t parent, cfdata_t cf, void *aux)
 	 * If we are going to only attach a single cpu, make sure
 	 * to pick the one we are running on right now.
 	 */
-	if (upaid_from_node(ma->ma_node) != CPU_UPAID) {
+	if (cpuid_from_node(ma->ma_node) != cpu_myid()) {
 #ifdef MULTIPROCESSOR
 		if (boothowto & RB_MD1)
 #endif
@@ -314,7 +338,7 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		prom_getpropstring(node, "name"), clockfreq(clk / 1000));
 	cpu_setmodel("%s (%s)", machine_model, buf);
 
-	aprint_normal(": %s, UPA id %d\n", buf, ci->ci_cpuid);
+	aprint_normal(": %s, CPU id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
 
 	if (ci->ci_system_clockrate[0] != 0) {
