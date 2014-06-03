@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.95 2014/06/03 19:30:30 joerg Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.96 2014/06/03 19:42:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.95 2014/06/03 19:30:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.96 2014/06/03 19:42:17 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -238,28 +238,35 @@ cache_disassociate(struct namecache *ncp)
  * Lock all CPUs to prevent any cache lookup activity.  Conceptually,
  * this locks out all "readers".
  */
+#define	UPDATE(f) do { \
+	nchstats.f += cpup->cpu_stats.f; \
+	cpup->cpu_stats.f = 0; \
+} while (/* CONSTCOND */ 0)
+
 static void
 cache_lock_cpus(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	struct nchcpu *cpup;
-	long *s, *d, *m;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cpup = ci->ci_data.cpu_nch;
 		mutex_enter(&cpup->cpu_lock);
-
-		/* Collate statistics. */
-		d = (long *)&nchstats;
-		s = (long *)&cpup->cpu_stats;
-		m = s + sizeof(nchstats) / sizeof(long);
-		for (; s < m; s++, d++) {
-			*d += *s;
-			*s = 0;
-		}
+		UPDATE(ncs_goodhits);
+		UPDATE(ncs_neghits);
+		UPDATE(ncs_badhits);
+		UPDATE(ncs_falsehits);
+		UPDATE(ncs_miss);
+		UPDATE(ncs_long);
+		UPDATE(ncs_pass2);
+		UPDATE(ncs_2passes);
+		UPDATE(ncs_revhits);
+		UPDATE(ncs_revmiss);
 	}
 }
+
+#undef UPDATE
 
 /*
  * Release all CPU locks.
