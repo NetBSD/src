@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2011/08/17 13:54:31 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2014/06/03 21:31:54 joerg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -14,6 +14,6 @@ BINGRP=	kmem
 BINMODE=2555
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args
-COPTS.vmstat.c += -Wno-format-nonliteral
+COPTS.vmstat.c += -Wno-format-nonliteral -Wno-shadow
 
 .include <bsd.prog.mk>
