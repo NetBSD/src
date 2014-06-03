@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.88 2014/06/03 19:30:48 joerg Exp $	*/
+/*	$NetBSD: namei.h,v 1.89 2014/06/03 21:16:37 joerg Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.32 2014/06/03 19:30:29 joerg Exp 
+ *   from: NetBSD: namei.src,v 1.33 2014/06/03 21:16:15 joerg Exp 
  */
 
 /*
@@ -310,6 +310,19 @@ struct	nchstats {
 	long	ncs_2passes;		/* number of times we attempt it */
 	long	ncs_revhits;		/* reverse-cache hits */
 	long	ncs_revmiss;		/* reverse-cache misses */
+};
+
+struct	nchstats_sysctl {
+	uint64_t ncs_goodhits;		/* hits that we can really use */
+	uint64_t ncs_neghits;		/* negative hits that we can use */
+	uint64_t ncs_badhits;		/* hits we must drop */
+	uint64_t ncs_falsehits;		/* hits with id mismatch */
+	uint64_t ncs_miss;		/* misses */
+	uint64_t ncs_long;		/* long names that ignore cache */
+	uint64_t ncs_pass2;		/* names found with passes == 2 */
+	uint64_t ncs_2passes;		/* number of times we attempt it */
+	uint64_t ncs_revhits;		/* reverse-cache hits */
+	uint64_t ncs_revmiss;		/* reverse-cache misses */
 };
 
 #ifdef _KERNEL
