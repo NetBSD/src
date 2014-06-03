@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.14 2011/01/26 21:35:14 joerg Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.14.10.1 2014/06/03 15:26:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -677,10 +677,9 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	unsigned char *elf_img = NULL, *kern_img = NULL, *header_img = NULL;
 	int i, ch, tmp, kgzlen, err, hsize = BEBOX_HEADER_SIZE;
 	int elf_fd, bebox_fd, kern_fd, elf_img_len = 0;
+	off_t lenpos, kstart, kend, toff, endoff, flength;
 	uint32_t swapped[128];
-	off_t lenpos, kstart, kend, toff, endoff;
-	unsigned long length;
-	long flength, *offset;
+	int32_t *offset;
 	gzFile gzf;
 	struct stat kern_stat;
 	struct bebox_image_block *p;
@@ -818,14 +817,15 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 
 	/* fix the file size in the header */
 	tmp = endoff - BEBOX_HEADER_SIZE;
-	*(long *)(header_img + BEBOX_FILE_SIZE_OFFSET) =
-	    (long)sa_htobe32(tmp);
-	*(long *)(header_img + BEBOX_FILE_SIZE_ALIGN_OFFSET) =
-	    (long)sa_htobe32(roundup(tmp, BEBOX_FILE_BLOCK_SIZE));
+	*(int32_t *)(header_img + BEBOX_FILE_SIZE_OFFSET) =
+	    (int32_t)sa_htobe32(tmp);
+	*(int32_t *)(header_img + BEBOX_FILE_SIZE_ALIGN_OFFSET) =
+	    (int32_t)sa_htobe32(roundup(tmp, BEBOX_FILE_BLOCK_SIZE));
 
 	gettimeofday(&tp, 0);
 	for (offset = bebox_mtime_offset; *offset != -1; offset++)
-		*(long *)(header_img + *offset) = (long)sa_htobe32(tp.tv_sec);
+		*(int32_t *)(header_img + *offset) =
+		    (int32_t)sa_htobe32(tp.tv_sec);
 
 	write(bebox_fd, header_img, BEBOX_HEADER_SIZE);
 
