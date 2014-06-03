@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.7 2014/05/21 21:23:25 bouyer Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.8 2014/06/03 15:49:08 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -130,3 +130,15 @@ distrib/sets/lists/base/mi			patch
 
 	[apb, ticket #1064]
 
+sys/dev/pci/if_wm.c				1.269
+
+	Bump max TX DMA size to avoid pathological condition with TSO.
+	From David Young.
+	[tls, ticket #1070]
+
+sys/net/if_tap.c				1.76
+
+	Prevent a race between tap_dev_poll() and tap_start() by making sure
+	the call to selrecord() happens at splnet(). 
+	Fixes kern/47506 and kern/46199.
+	[cube, ticket #1071]
