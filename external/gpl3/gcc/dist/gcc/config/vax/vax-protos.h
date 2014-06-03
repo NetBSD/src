@@ -29,6 +29,7 @@ extern void print_operand_address (FILE *, rtx);
 extern void print_operand (FILE *, rtx, int);
 extern void vax_notice_update_cc (rtx, rtx);
 extern void vax_expand_addsub_di_operands (rtx *, enum rtx_code);
+extern bool vax_decomposed_dimode_operand_p (rtx, rtx);
 extern const char * vax_output_int_move (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_int_add (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_int_subtract (rtx, rtx *, enum machine_mode);
