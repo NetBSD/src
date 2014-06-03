@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.80 2012/01/22 18:36:16 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.80.2.1 2014/06/03 13:55:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -241,9 +241,6 @@ long	 ftell(FILE *);
 size_t	 fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 int	 getc(FILE *);
 int	 getchar(void);
-ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
-	    FILE * __restrict);
-ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
 void	 perror(const char *);
 int	 printf(const char * __restrict, ...)
 		__printflike(1, 2);
@@ -498,10 +495,12 @@ static __inline int __sputc(int _c, FILE *_p) {
 #endif /* !_ANSI_SOURCE */
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
 int	 vdprintf(int, const char * __restrict, __va_list)
 		__printflike(2, 0);
 int	 dprintf(int, const char * __restrict, ...)
 		__printflike(2, 3);
+__END_DECLS
 #endif /* (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE) */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
@@ -515,7 +514,12 @@ int	 dprintf(int, const char * __restrict, ...)
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
     defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
 FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
+	    FILE * __restrict);
+ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
+__END_DECLS
 #endif
 
 #if _FORTIFY_SOURCE > 0
