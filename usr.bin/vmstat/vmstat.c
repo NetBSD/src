@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.193 2014/06/02 19:16:10 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.194 2014/06/03 21:16:15 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.193 2014/06/02 19:16:10 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.194 2014/06/03 21:16:15 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -848,8 +848,8 @@ pct(long top, long bot)
 void
 dosum(void)
 {
-	struct nchstats nchstats;
-	u_long nchtotal;
+	struct nchstats_sysctl nch_stats;
+	uint64_t nchtotal;
 	struct uvmexp_sysctl uvmexp2;
 	size_t ssize;
 	int active_kernel;
@@ -965,28 +965,51 @@ dosum(void)
 	(void)printf("%9u total pending pageouts\n", uvmexp.pdpending);
 	(void)printf("%9u pages deactivated\n", uvmexp.pddeact);
 
-	kread(namelist, X_NCHSTATS, &nchstats, sizeof(nchstats));
-	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
-	    nchstats.ncs_badhits + nchstats.ncs_falsehits +
-	    nchstats.ncs_miss + nchstats.ncs_long;
-	(void)printf("%9lu total name lookups\n", nchtotal);
-	(void)printf("%9lu good hits\n", nchstats.ncs_goodhits);
-	(void)printf("%9lu negative hits\n", nchstats.ncs_neghits);
-	(void)printf("%9lu bad hits\n", nchstats.ncs_badhits);
-	(void)printf("%9lu false hits\n", nchstats.ncs_falsehits);
-	(void)printf("%9lu miss\n", nchstats.ncs_miss);
-	(void)printf("%9lu too long\n", nchstats.ncs_long);
-	(void)printf("%9lu pass2 hits\n", nchstats.ncs_pass2);
-	(void)printf("%9lu 2passes\n", nchstats.ncs_2passes);
+	if (active_kernel) {
+		ssize = sizeof(nch_stats);
+		if (sysctlbyname("vfs.namecache_stats", &nch_stats, &ssize,
+		    NULL, 0)) {
+			warn("vfs.namecache_stats failed");
+			memset(&nch_stats, 0, sizeof(nch_stats));
+		}
+	} else {
+		struct nchstats nch_stats_kvm;
+
+		kread(namelist, X_NCHSTATS, &nch_stats_kvm,
+		    sizeof(nch_stats_kvm));
+		nch_stats.ncs_goodhits = nch_stats_kvm.ncs_goodhits;
+		nch_stats.ncs_neghits = nch_stats_kvm.ncs_neghits;
+		nch_stats.ncs_badhits = nch_stats_kvm.ncs_badhits;
+		nch_stats.ncs_falsehits = nch_stats_kvm.ncs_falsehits;
+		nch_stats.ncs_miss = nch_stats_kvm.ncs_miss;
+		nch_stats.ncs_long = nch_stats_kvm.ncs_long;
+		nch_stats.ncs_pass2 = nch_stats_kvm.ncs_pass2;
+		nch_stats.ncs_2passes = nch_stats_kvm.ncs_2passes;
+		nch_stats.ncs_revhits = nch_stats_kvm.ncs_revhits;
+		nch_stats.ncs_revmiss = nch_stats_kvm.ncs_revmiss;
+	}
+
+	nchtotal = nch_stats.ncs_goodhits + nch_stats.ncs_neghits +
+	    nch_stats.ncs_badhits + nch_stats.ncs_falsehits +
+	    nch_stats.ncs_miss + nch_stats.ncs_long;
+	(void)printf("%9" PRIu64 " total name lookups\n", nchtotal);
+	(void)printf("%9" PRIu64 " good hits\n", nch_stats.ncs_goodhits);
+	(void)printf("%9" PRIu64 " negative hits\n", nch_stats.ncs_neghits);
+	(void)printf("%9" PRIu64 " bad hits\n", nch_stats.ncs_badhits);
+	(void)printf("%9" PRIu64 " false hits\n", nch_stats.ncs_falsehits);
+	(void)printf("%9" PRIu64 " miss\n", nch_stats.ncs_miss);
+	(void)printf("%9" PRIu64 " too long\n", nch_stats.ncs_long);
+	(void)printf("%9" PRIu64 " pass2 hits\n", nch_stats.ncs_pass2);
+	(void)printf("%9" PRIu64 " 2passes\n", nch_stats.ncs_2passes);
 	(void)printf(
 	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-process\n",
-	    "", PCT(nchstats.ncs_goodhits, nchtotal),
-	    PCT(nchstats.ncs_neghits, nchtotal),
-	    PCT(nchstats.ncs_pass2, nchtotal));
+	    "", PCT(nch_stats.ncs_goodhits, nchtotal),
+	    PCT(nch_stats.ncs_neghits, nchtotal),
+	    PCT(nch_stats.ncs_pass2, nchtotal));
 	(void)printf("%9s deletions %d%%, falsehits %d%%, toolong %d%%\n", "",
-	    PCT(nchstats.ncs_badhits, nchtotal),
-	    PCT(nchstats.ncs_falsehits, nchtotal),
-	    PCT(nchstats.ncs_long, nchtotal));
+	    PCT(nch_stats.ncs_badhits, nchtotal),
+	    PCT(nch_stats.ncs_falsehits, nchtotal),
+	    PCT(nch_stats.ncs_long, nchtotal));
 }
 
 void
