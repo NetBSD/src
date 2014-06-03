@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.15 2010/11/19 06:44:39 dholland Exp $ */
+/* $NetBSD: dkvar.h,v 1.15.14.1 2014/06/03 09:17:52 sborrill Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ struct dk_softc {
 	char			 sc_xname[DK_XNAME_SIZE]; /* external name */
 	struct disk		 sc_dkdev;	/* generic disk info */
 	struct bufq_state	*sc_bufq;	/* buffer queue */
+	struct buf		*sc_nextbufp;	/* buf waiting for ressources */
 };
 
 /* sc_flags:
@@ -84,7 +85,7 @@ struct dk_intf {
 	int	(*di_open)(dev_t, int, int, struct lwp *);
 	int	(*di_close)(dev_t, int, int, struct lwp *);
 	void	(*di_strategy)(struct buf *);
-	int	(*di_diskstart)(struct dk_softc *, struct buf *);
+	void	(*di_diskstart)(struct dk_softc *);
 };
 
 #define DK_BUSY(_dksc, _pmask)				\
@@ -103,8 +104,6 @@ int	dk_open(struct dk_intf *, struct dk_softc *, dev_t,
 int	dk_close(struct dk_intf *, struct dk_softc *, dev_t,
 		 int, int, struct lwp *);
 void	dk_strategy(struct dk_intf *, struct dk_softc *, struct buf *);
-void	dk_start(struct dk_intf *, struct dk_softc *);
-void	dk_iodone(struct dk_intf *, struct dk_softc *);
 int	dk_size(struct dk_intf *, struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_intf *, struct dk_softc *, dev_t,
 		 u_long, void *, int, struct lwp *);

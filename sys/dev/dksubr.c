@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $ */
+/* $NetBSD: dksubr.c,v 1.42.14.1 2014/06/03 09:17:52 sborrill Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42.14.1 2014/06/03 09:17:52 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,36 +221,16 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	 * provided by the individual driver.
 	 */
 	s = splbio();
+#if 0
+        if ((bp->b_flags & B_READ) == 0) {
+		printf("write %lld -> %lld\n", bp->b_rawblkno,
+		    bp->b_rawblkno + (bp->b_bcount / DEV_BSIZE));
+	}
+#endif
 	bufq_put(dksc->sc_bufq, bp);
-	dk_start(di, dksc);
+	di->di_diskstart(dksc);
 	splx(s);
 	return;
-}
-
-void
-dk_start(struct dk_intf *di, struct dk_softc *dksc)
-{
-	struct	buf *bp;
-
-	DPRINTF_FOLLOW(("dk_start(%s, %p)\n", di->di_dkname, dksc));
-
-	/* Process the work queue */
-	while ((bp = bufq_get(dksc->sc_bufq)) != NULL) {
-		if (di->di_diskstart(dksc, bp) != 0) {
-			bufq_put(dksc->sc_bufq, bp);
-			break;
-		}
-	}
-}
-
-void
-dk_iodone(struct dk_intf *di, struct dk_softc *dksc)
-{
-
-	DPRINTF_FOLLOW(("dk_iodone(%s, %p)\n", di->di_dkname, dksc));
-
-	/* We kick the queue in case we are able to get more work done */
-	dk_start(di, dksc);
 }
 
 int
