@@ -2325,3 +2325,50 @@ vax_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
 	   ? (GET_MODE_SIZE (mode) + 3) & ~3
 	   : (int_size_in_bytes (type) + 3) & ~3);
 }
+
+bool
+vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
+{
+  HOST_WIDE_INT lo_offset = 0;
+  HOST_WIDE_INT hi_offset = 0;
+
+  /* If the codes aren't the same, can't be a DImode operand.  */
+  if (GET_CODE (lo) != GET_CODE (hi))
+    return false;
+
+  /* If a register, hi regno must be one more than the lo regno.  */
+  if (REG_P (lo))
+    return REGNO (lo) + 1 == REGNO (hi);
+
+  /* If not memory, can't be a DImode operand.  */
+  if (!MEM_P (lo))
+    return false;
+
+  /* Get addresses of memory operands.  */
+  lo = XEXP(lo, 0);
+  hi = XEXP(hi, 0);
+
+  /* If POST_INC, regno must match.  */
+  if (GET_CODE (lo) == POST_INC && GET_CODE (hi) == POST_INC)
+    return REGNO (XEXP (lo, 0)) == REGNO (XEXP (hi, 0));
+
+  if (GET_CODE (lo) == PLUS)
+    {
+      /* If PLUS, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (lo, 0)) == PLUS || !CONST_INT_P (XEXP (lo, 1)))
+	return false;
+      lo_offset = INTVAL (XEXP (lo, 1));
+      lo = XEXP(lo, 0);
+    }
+
+  if (GET_CODE (hi) == PLUS)
+    {
+      /* If PLUS, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (hi, 0)) == PLUS || !CONST_INT_P (XEXP (hi, 1)))
+	return false;
+      hi_offset = INTVAL (XEXP (hi, 1));
+      hi = XEXP(hi, 0);
+    }
+
+  return rtx_equal_p(lo, hi) && lo_offset + 4 == hi_offset;
+}
