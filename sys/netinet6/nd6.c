@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.141.2.2 2013/12/17 20:47:33 bouyer Exp $	*/
+/*	$NetBSD: nd6.c,v 1.141.2.3 2014/06/03 15:34:00 msaitoh Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.141.2.2 2013/12/17 20:47:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.141.2.3 2014/06/03 15:34:00 msaitoh Exp $");
 
 #include "opt_ipsec.h"
 
@@ -2177,9 +2177,13 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	/* clean ipsec history once it goes out of the node */
 	ipsec_delaux(m);
 #endif
+	KERNEL_LOCK(1, NULL);
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
-		return (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
-	return (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
+		error = (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
+	else
+		error = (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 
   bad:
 	if (m != NULL)

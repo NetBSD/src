@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.47.4.2 2014/04/11 08:52:14 msaitoh Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.47.4.3 2014/06/03 15:34:00 msaitoh Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.47.4.2 2014/04/11 08:52:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.47.4.3 2014/06/03 15:34:00 msaitoh Exp $");
 
 /*
  * TODO:
@@ -355,6 +355,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 	struct ifaddr *ifa;
 	int s;
 
+	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
 	IFADDR_FOREACH(ifa, &sc->sc_if) {
 		switch (ifa->ifa_addr->sa_family) {
@@ -452,6 +453,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 		}
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -867,6 +869,7 @@ carpdetach(struct carp_softc *sc)
 	carp_setrun(sc, 0);
 	carp_multicast_cleanup(sc);
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	if (sc->sc_carpdev != NULL) {
 		/* XXX linkstatehook removal */
@@ -880,6 +883,7 @@ carpdetach(struct carp_softc *sc)
 	}
 	sc->sc_carpdev = NULL;
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /* Detach an interface from the carp. */
@@ -946,6 +950,7 @@ carp_send_ad(void *v)
 	struct ifaddr *ifa;
 	struct sockaddr sa;
 
+	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
 
 	advbase = advskew = 0; /* Sssssh compiler */
@@ -1148,6 +1153,7 @@ carp_send_ad(void *v)
 
 retry_later:
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 	if (advbase != 255 || advskew != 255)
 		callout_schedule(&sc->sc_ad_tmo, tvtohz(&tv));
 }
@@ -1162,8 +1168,10 @@ carp_send_arp(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
 	struct in_addr *in;
-	int s = splsoftnet();
+	int s;
 
+	KERNEL_LOCK(1, NULL);
+	s = splsoftnet();
 	IFADDR_FOREACH(ifa, &sc->sc_if) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -1173,6 +1181,7 @@ carp_send_arp(struct carp_softc *sc)
 		arprequest(sc->sc_carpdev, in, in, CLLADDR(sc->sc_if.if_sadl));
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 #ifdef INET6
@@ -1182,7 +1191,10 @@ carp_send_na(struct carp_softc *sc)
 	struct ifaddr *ifa;
 	struct in6_addr *in6;
 	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
-	int s = splsoftnet();
+	int s;
+
+	KERNEL_LOCK(1, NULL);
+	s = splsoftnet();
 
 	IFADDR_FOREACH(ifa, &sc->sc_if) {
 
@@ -1194,6 +1206,7 @@ carp_send_na(struct carp_softc *sc)
 		    ND_NA_FLAG_OVERRIDE, 1, NULL);
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif /* INET6 */
 
@@ -1598,10 +1611,12 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
+		KERNEL_LOCK(1, NULL);
 		s = splnet();
 		/* XXX linkstatehooks establish */
 		carp_carpdev_state(ifp);
 		splx(s);
+		KERNEL_UNLOCK_ONE(NULL);
 	} else {
 		carpdetach(sc);
 		sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
@@ -2060,6 +2075,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
+	KASSERT(KERNEL_LOCKED_P());
 
 	if (sc->sc_carpdev != NULL && sc->sc_state == MASTER) {
 		return (sc->sc_carpdev->if_output(ifp, m, sa, rt));
