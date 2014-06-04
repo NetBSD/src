@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.246 2014/05/20 18:32:08 rmind Exp $ */
+/*	$NetBSD: cpu.c,v 1.247 2014/06/04 07:06:03 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.246 2014/05/20 18:32:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.247 2014/06/04 07:06:03 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -526,7 +526,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 	/* Now start this CPU */
 	cpu_spinup(cpi);
 	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_longname,
-		clockfreq(cpi->hz), cpi->fpu_name);
+		clockfreq(cpi->hz / 1000), cpi->fpu_name);
 
 	cache_print(sc);
 
