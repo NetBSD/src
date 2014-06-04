@@ -2354,8 +2354,10 @@ vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
 
   if (GET_CODE (lo) == PLUS)
     {
-      /* If PLUS, this must an indexed address so fail.  */
-      if (GET_CODE (XEXP (lo, 0)) == PLUS || !CONST_INT_P (XEXP (lo, 1)))
+      /* If PLUS or MULT, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (lo, 0)) == PLUS
+	  || GET_CODE (XEXP (lo, 0)) == MULT
+	  || !CONST_INT_P (XEXP (lo, 1)))
 	return false;
       lo_offset = INTVAL (XEXP (lo, 1));
       lo = XEXP(lo, 0);
@@ -2363,8 +2365,10 @@ vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
 
   if (GET_CODE (hi) == PLUS)
     {
-      /* If PLUS, this must an indexed address so fail.  */
-      if (GET_CODE (XEXP (hi, 0)) == PLUS || !CONST_INT_P (XEXP (hi, 1)))
+      /* If PLUS or MULT, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (hi, 0)) == PLUS
+	  || GET_CODE (XEXP (hi, 0)) == MULT
+	  || !CONST_INT_P (XEXP (hi, 1)))
 	return false;
       hi_offset = INTVAL (XEXP (hi, 1));
       hi = XEXP(hi, 0);
