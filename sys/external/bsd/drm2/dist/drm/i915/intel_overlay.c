@@ -714,7 +714,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 	int ret, tmp_width;
 	struct overlay_registers __iomem *regs;
 	bool scale_changed = false;
-	struct drm_device *dev = overlay->dev;
+	struct drm_device *dev __diagused = overlay->dev;
 	u32 swidth, swidthsw, sheight, ostride;
 
 	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
@@ -819,7 +819,7 @@ out_unpin:
 int intel_overlay_switch_off(struct intel_overlay *overlay)
 {
 	struct overlay_registers __iomem *regs;
-	struct drm_device *dev = overlay->dev;
+	struct drm_device *dev __diagused = overlay->dev;
 	int ret;
 
 	BUG_ON(!mutex_is_locked(&dev->struct_mutex));
