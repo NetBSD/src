@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/05/31 10:43:00 martin Exp $
+#	$NetBSD: Makefile,v 1.7 2014/06/04 19:31:57 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -31,7 +31,7 @@ image_md_pre:
 	for f in ${SYSINSTDIR}/sysinstmsgs.??; do \
 		${INSTALL} ${COPY} $$f cdrom; \
 	done
-	${TOOL_GZIP} -d cdrom/netbsd.gz
+	${TOOL_GZIP} -d -f cdrom/netbsd.gz
 	echo '. type=dir optional' > ./fs.spec
 	echo './dev type=dir optional' >> ./fs.spec
 	${HOST_SH} cdrom/dev/MAKEDEV -s all | ${TOOL_SED} -e '1d' -e 's:^\./:./dev/:' >> ./fs.spec
