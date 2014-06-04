@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/06/01 19:51:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2014/06/04 19:07:22 tron Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -50,8 +50,6 @@ CPPFLAGS+= \
 	-I${ARCHDIR}
 CFLAGS+=-pthread
 
-COPTS+=	-Wno-stack-protector
-
 CWARNFLAGS.clang+=	-Wno-conversion
 
 # libgomp is 1.0 is in GCC 4.5, and 1.1 in 4.8 since it added more symbols
@@ -74,5 +72,7 @@ libinstall::
 .endif			# }
 
 .include <bsd.lib.mk>
+
+COPTS+=	-Wno-stack-protector
 
 .PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
