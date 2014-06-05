@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.76 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.77 2014/06/05 16:06:49 roy Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -571,7 +571,9 @@ struct ip6_mtuinfo {
 #define IPV6CTL_ANONPORTMAX	29	/* maximum ephemeral port */
 #define IPV6CTL_LOWPORTMIN	30	/* minimum reserved port */
 #define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
-/* 32 to 38: reserved */
+/* 32 to 34: reserved */
+#define IPV6CTL_AUTO_LINKLOCAL	35	/* automatic link-local addr assign */
+/* 36 to 38: reserved */
 #define IPV6CTL_USE_DEFAULTZONE	39	/* use default scope zone */
 /* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
