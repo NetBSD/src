@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.46 2014/05/15 09:23:52 msaitoh Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.47 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.46 2014/05/15 09:23:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.47 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -1528,7 +1528,8 @@ sca_frame_avail(sca_port_t *scp)
 static void
 sca_frame_process(sca_port_t *scp)
 {
-	struct ifqueue *ifq;
+	pktqueue_t *pktq = NULL;
+	struct ifqueue *ifq = NULL;
 	struct hdlc_header *hdlc;
 	struct cisco_pkt *cisco;
 	sca_desc_t *desc;
@@ -1587,8 +1588,7 @@ sca_frame_process(sca_port_t *scp)
 		m->m_pkthdr.len -= sizeof(struct hdlc_header);
 		m->m_data += sizeof(struct hdlc_header);
 		m->m_len -= sizeof(struct hdlc_header);
-		ifq = &ipintrq;
-		isr = NETISR_IP;
+		pktq = ip_pktq;
 		break;
 #endif	/* INET */
 #ifdef INET6
@@ -1598,8 +1598,7 @@ sca_frame_process(sca_port_t *scp)
 		m->m_pkthdr.len -= sizeof(struct hdlc_header);
 		m->m_data += sizeof(struct hdlc_header);
 		m->m_len -= sizeof(struct hdlc_header);
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
+		pktq = ip6_pktq;
 		break;
 #endif	/* INET6 */
 	case CISCO_KEEPALIVE:
@@ -1689,7 +1688,14 @@ sca_frame_process(sca_port_t *scp)
 		goto dropit;
 	}
 
-	/* queue the packet */
+	/* Queue the packet */
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			scp->sp_if.if_iqdrops++;
+			goto dropit;
+		}
+		return;
+	}
 	if (!IF_QFULL(ifq)) {
 		IF_ENQUEUE(ifq, m);
 		schednetisr(isr);

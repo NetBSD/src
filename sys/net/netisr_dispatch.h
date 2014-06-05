@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.17 2013/03/01 18:25:57 joerg Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.18 2014/06/05 23:48:16 rmind Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -31,10 +31,6 @@
 #if NARP > 0
 	DONETISR(NETISR_ARP,arpintr);
 #endif
-	DONETISR(NETISR_IP,ipintr);
-#endif
-#ifdef INET6
-	DONETISR(NETISR_IPV6,ip6intr);
 #endif
 #ifdef NETATALK
 	DONETISR(NETISR_ATALK,atintr);

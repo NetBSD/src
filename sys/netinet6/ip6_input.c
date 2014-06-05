@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.147 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.148 2014/06/05 23:48:16 rmind Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.147 2014/06/05 16:06:49 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.148 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -90,13 +90,14 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.147 2014/06/05 16:06:49 roy Exp $");
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/netisr.h>
+#include <net/pktqueue.h>
 #include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #ifdef INET
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #endif /* INET */
 #include <netinet/ip6.h>
@@ -135,9 +136,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.147 2014/06/05 16:06:49 roy Exp $");
 extern struct domain inet6domain;
 
 u_char ip6_protox[IPPROTO_MAX];
-static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
-struct ifqueue ip6intrq;
+pktqueue_t *ip6_pktq __read_mostly;
 
 extern callout_t in6_tmpaddrtimer_ch;
 
@@ -150,6 +150,7 @@ pfil_head_t *inet6_pfil_hook;
 percpu_t *ip6stat_percpu;
 
 static void ip6_init2(void *);
+static void ip6intr(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
 static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
@@ -178,7 +179,10 @@ ip6_init(void)
 		if (pr->pr_domain->dom_family == PF_INET6 &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
-	ip6intrq.ifq_maxlen = ip6qmaxlen;
+
+	ip6_pktq = pktq_create(IFQ_MAXLEN, ip6intr);
+	KASSERT(ip6_pktq != NULL);
+
 	scope6_init();
 	addrsel_policy_init();
 	nd6_init();
@@ -215,28 +219,24 @@ ip6_init2(void *dummy)
 /*
  * IP6 input interrupt handling. Just pass the packet to ip6_input.
  */
-void
-ip6intr(void)
+static void
+ip6intr(void *arg __unused)
 {
-	int s;
 	struct mbuf *m;
 
 	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-	for (;;) {
-		s = splnet();
-		IF_DEQUEUE(&ip6intrq, m);
-		splx(s);
-		if (m == 0)
-			break;
-		/* drop the packet if IPv6 operation is disabled on the IF */
-		if ((ND_IFINFO(m->m_pkthdr.rcvif)->flags & ND6_IFF_IFDISABLED)) {
+	while ((m = pktq_dequeue(ip6_pktq)) != NULL) {
+		const ifnet_t *ifp = m->m_pkthdr.rcvif;
+
+		/*
+		 * Drop the packet if IPv6 is disabled on the interface.
+		 */
+		if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
 			m_freem(m);
-			break;
+			continue;
 		}
 		ip6_input(m);
 	}
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
 

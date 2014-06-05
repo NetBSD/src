@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.91 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.92 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -461,7 +461,7 @@ struct ip_mreq {
 #define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
 #define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
 #define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
-#define	IPCTL_IFQ	       21	/* ipintrq node */
+#define	IPCTL_IFQ	       21	/* IP packet input queue */
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */

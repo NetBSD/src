@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.13 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: uhso.c,v 1.14 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.13 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.14 2014/06/05 23:48:16 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2139,17 +2139,12 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 
 		bpf_mtap(ifp, m);
 
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
-
-		if (IF_QFULL(&ipintrq)) {
-			IF_DROP(&ipintrq);
+		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 			m_freem(m);
 		} else {
-			IF_ENQUEUE(&ipintrq, m);
-			schednetisr(NETISR_IP);
+			ifp->if_ipackets++;
+			ifp->if_ibytes += got;
 		}
-
 		splx(s);
 	}
 }

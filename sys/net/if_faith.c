@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.47 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.48 2014/06/05 23:48:16 rmind Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.47 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.48 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -145,9 +145,10 @@ static int
 faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
-	int s, isr;
+	pktqueue_t *pktq;
+	size_t pktlen;
+	int s, error;
 	uint32_t af;
-	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("faithoutput no HDR");
@@ -165,19 +166,18 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
 		        rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
+	pktlen = m->m_pkthdr.len;
 	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+	ifp->if_obytes += pktlen;
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		ifq = &ipintrq;
-		isr = NETISR_IP;
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -186,21 +186,21 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	/* XXX do we need more sanity checks? */
-
+	KASSERT(pktq != NULL);
 	m->m_pkthdr.rcvif = ifp;
+
 	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
+		ifp->if_ipackets++;
+		ifp->if_ibytes += pktlen;
+		error = 0;
+	} else {
 		m_freem(m);
-		splx(s);
-		return (ENOBUFS);
+		error = ENOBUFS;
 	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(isr);
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
 	splx(s);
-	return (0);
+
+	return error;
 }
 
 /* ARGSUSED */

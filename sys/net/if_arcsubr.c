@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.65 2014/05/15 09:04:03 msaitoh Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.66 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.65 2014/05/15 09:04:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -524,6 +524,7 @@ arc_isphds(uint8_t type)
 static void
 arc_input(struct ifnet *ifp, struct mbuf *m)
 {
+	pktqueue_t *pktq = NULL;
 	struct arc_header *ah;
 	struct ifqueue *inq;
 	uint8_t atype;
@@ -554,14 +555,12 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET
 	case ARCTYPE_IP:
 		m_adj(m, ARC_HDRNEWLEN);
-		isr = NETISR_IP;
-		inq = &ipintrq;
+		pktq = ip_pktq;
 		break;
 
 	case ARCTYPE_IP_OLD:
 		m_adj(m, ARC_HDRLEN);
-		isr = NETISR_IP;
-		inq = &ipintrq;
+		pktq = ip_pktq;
 		break;
 
 	case ARCTYPE_ARP:
@@ -585,8 +584,7 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET6
 	case ARCTYPE_INET6:
 		m_adj(m, ARC_HDRNEWLEN);
-		isr = NETISR_IPV6;
-		inq = &ip6intrq;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -595,6 +593,13 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	s = splnet();
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
+		splx(s);
+		return;
+	}
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

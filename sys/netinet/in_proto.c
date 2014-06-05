@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.109 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.110 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.109 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.109 2014/05/18 14:46:16 rmind Exp $")
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
@@ -122,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.109 2014/05/18 14:46:16 rmind Exp $")
 
 #include "carp.h"
 #if NCARP > 0
-#include <netinet/in_var.h>
 #include <netinet/ip_carp.h>
 #endif
 
@@ -343,8 +343,6 @@ const struct protosw inetsw[] = {
 },
 };
 
-extern struct ifqueue ipintrq;
-
 const struct sockaddr_in in_any = {
 	  .sin_len = sizeof(struct sockaddr_in)
 	, .sin_family = AF_INET
@@ -367,7 +365,7 @@ struct domain inetdomain = {
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
 #endif
-	.dom_ifqueues = { &ipintrq, NULL },
+	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),

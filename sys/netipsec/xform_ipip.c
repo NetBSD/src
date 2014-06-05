@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.30 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.31 2014/06/05 23:48:17 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.30 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.31 2014/06/05 23:48:17 rmind Exp $");
 
 /*
  * IP-inside-IP processing
@@ -194,14 +194,13 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	register struct sockaddr_in *sin;
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
-	struct ifqueue *ifq = NULL;
+	pktqueue_t *pktq = NULL;
 	struct ip *ipo;
 #ifdef INET6
 	register struct sockaddr_in6 *sin6;
 	struct ip6_hdr *ip6 = NULL;
 	u_int8_t itos;
 #endif
-	int isr;
 	u_int8_t otos;
 	u_int8_t v;
 	int hlen;
@@ -392,27 +391,24 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	switch (v >> 4) {
 #ifdef INET
 	case 4:
-		ifq = &ipintrq;
-		isr = NETISR_IP;
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
 	case 6:
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
 		panic("ipip_input: should never reach here");
 	}
 
-	if (!IF_HANDOFF(ifq, m, NULL)) {
+	int s = splnet();
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 		IPIP_STATINC(IPIP_STAT_QFULL);
-
-		DPRINTF(("ipip_input: packet dropped because of full queue\n"));
-	} else {
-		schednetisr(isr);
+		m_freem(m);
 	}
+	splx(s);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.39 2014/05/15 09:04:03 msaitoh Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.40 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.39 2014/05/15 09:04:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.40 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -353,6 +353,7 @@ eco_interestingp(struct ifnet *ifp, struct mbuf *m)
 static void
 eco_input(struct ifnet *ifp, struct mbuf *m)
 {
+	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
 	int isr = 0;
@@ -381,8 +382,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	case ECO_PORT_IP:
 		switch (eh->eco_control) {
 		case ECO_CTL_IP:
-			isr = NETISR_IP;
-			inq = &ipintrq;
+			pktq = ip_pktq;
 			break;
 		case ECO_CTL_ARP_REQUEST:
 		case ECO_CTL_ARP_REPLY:
@@ -470,6 +470,13 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	drop:
 #endif
 		m_freem(m);
+		return;
+	}
+
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
 		return;
 	}
 

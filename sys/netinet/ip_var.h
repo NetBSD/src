@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.105 2014/05/30 02:17:01 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.106 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -226,7 +226,6 @@ struct mbuf *
 	 ip_srcroute(void);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_statinc(u_int);
-void	 ipintr(void);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);

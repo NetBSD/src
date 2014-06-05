@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.143 2014/05/17 14:51:09 rmind Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.144 2014/06/05 23:48:16 rmind Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.143 2014/05/17 14:51:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.144 2014/06/05 23:48:16 rmind Exp $");
 
 #include "ppp.h"
 
@@ -1391,7 +1391,8 @@ static void
 ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 {
     struct ifnet *ifp = &sc->sc_if;
-    struct ifqueue *inq;
+    pktqueue_t *pktq = NULL;
+    struct ifqueue *inq = NULL;
     int s, ilen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
@@ -1626,8 +1627,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (ipflow_fastforward(m))
 		return;
 #endif
-	isr = NETISR_IP;
-	inq = &ipintrq;
+	pktq = ip_pktq;
 	break;
 #endif
 
@@ -1649,8 +1649,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (ip6flow_fastforward(&m))
 		return;
 #endif
-	isr = NETISR_IPV6;
-	inq = &ip6intrq;
+	pktq = ip6_pktq;
 	break;
 #endif
 
@@ -1667,6 +1666,23 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
      * Put the packet on the appropriate input queue.
      */
     s = splnet();
+
+    if (__predict_true(pktq)) {
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+	    ifp->if_iqdrops++;
+	    goto bad;
+	}
+	ifp->if_ipackets++;
+	ifp->if_ibytes += ilen;
+	splx(s);
+	if (rv)
+	    (*sc->sc_ctlp)(sc);
+	return;
+    }
+
+    if (!inq) {
+	goto bad;
+    }
     if (IF_QFULL(inq)) {
 	IF_DROP(inq);
 	splx(s);
