@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.90 2014/05/17 20:44:24 rmind Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.91 2014/06/05 16:06:49 roy Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.90 2014/05/17 20:44:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.91 2014/06/05 16:06:49 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -754,6 +754,8 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 #ifdef IFT_PFSYNC
 	case IFT_PFSYNC:
 #endif
+		ND_IFINFO(ifp)->flags &= ~ND6_IFF_AUTO_LINKLOCAL;
+		ND_IFINFO(ifp)->flags |= ND6_IFF_IFDISABLED;
 		return;
 	}
 
@@ -784,6 +786,7 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 		 * linklocals for 6to4 interface, but there's no use and
 		 * it is rather harmful to have one.
 		 */
+		ND_IFINFO(ifp)->flags &= ~ND6_IFF_AUTO_LINKLOCAL;
 		return;
 #endif
 	case IFT_CARP:
@@ -817,7 +820,9 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	/*
 	 * assign a link-local address, if there's none.
 	 */
-	if (ip6_auto_linklocal) {
+	if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
+	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL)
+	{
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
 		if (ia == NULL && in6_ifattach_linklocal(ifp, altifp) != 0) {
 			printf("%s: cannot assign link-local address\n",
