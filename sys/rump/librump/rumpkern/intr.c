@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.42 2013/11/11 23:11:30 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.43 2014/06/05 23:43:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42 2013/11/11 23:11:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43 2014/06/05 23:43:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -322,6 +322,14 @@ softint_schedule(void *arg)
 			sip->sip_onlist = true;
 		}
 	}
+}
+
+void
+softint_schedule_cpu(void *arg, struct cpu_info *ci)
+{
+	/* TODO: implement this properly */
+	KASSERT(curcpu() == ci);
+	softint_schedule(arg);
 }
 
 /*
