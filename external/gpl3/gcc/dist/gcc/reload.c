@@ -846,6 +846,7 @@ static bool
 reload_inner_reg_of_subreg (rtx x, enum machine_mode mode, bool output)
 {
   rtx inner;
+  int regno;
 
   /* Only SUBREGs are problematical.  */
   if (GET_CODE (x) != SUBREG)
@@ -857,9 +858,19 @@ reload_inner_reg_of_subreg (rtx x, enum machine_mode mode, bool output)
   if (CONSTANT_P (inner) || GET_CODE (inner) == PLUS)
     return true;
 
-  /* If INNER is not a hard register, then INNER will not need reloading.  */
-  if (!(REG_P (inner) && HARD_REGISTER_P (inner)))
+  /* If INNER is not a register, then INNER will not need reloading.  */
+  if (!REG_P (inner))
     return false;
+
+  regno = REGNO (inner);
+
+  /* If INNER is not a hard register, then INNER will not need reloading
+     unless it's a mode dependent memory reference.  */
+  if (regno >= FIRST_PSEUDO_REGISTER)
+    return !output
+	   && reg_equiv_mem (regno) != 0
+	   && mode_dependent_address_p (XEXP (reg_equiv_mem (regno), 0),
+					MEM_ADDR_SPACE (reg_equiv_mem (regno)));
 
   /* If INNER is not ok for MODE, then INNER will need reloading.  */
   if (!HARD_REGNO_MODE_OK (subreg_regno (x), mode))
@@ -1142,7 +1153,7 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 
   if (in != 0 && reload_inner_reg_of_subreg (in, inmode, false))
     {
-      if (REG_P (SUBREG_REG (in)))
+      if (REG_P (SUBREG_REG (in)) && HARD_REGISTER_P (SUBREG_REG (in)))
 	subreg_in_class
 	  = find_valid_class (inmode, GET_MODE (SUBREG_REG (in)),
 			      subreg_regno_offset (REGNO (SUBREG_REG (in)),
@@ -1150,7 +1161,8 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 						   SUBREG_BYTE (in),
 						   GET_MODE (in)),
 			      REGNO (SUBREG_REG (in)));
-      else if (GET_CODE (SUBREG_REG (in)) == SYMBOL_REF)
+      else if (REG_P (SUBREG_REG (in))
+               || GET_CODE (SUBREG_REG (in)) == SYMBOL_REF)
 	subreg_in_class = find_valid_class_1 (inmode,
 					      GET_MODE (SUBREG_REG (in)),
 					      rclass);
