@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.9 2014/05/13 19:36:16 bouyer Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.10 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.9 2014/05/13 19:36:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.10 2014/06/05 23:48:16 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1927,22 +1927,15 @@ ipf_inject(fr_info_t *fin, mb_t *m)
 	int error;
 
 	if (fin->fin_out == 0) {
-		struct ifqueue *ifq;
-
-		ifq = &ipintrq;
-
-		if (IF_QFULL(ifq)) {
-			IF_DROP(ifq);
+		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 			FREE_MB_T(m);
 			error = ENOBUFS;
 		} else {
-			IF_ENQUEUE(ifq, m);
 			error = 0;
 		}
 	} else {
 		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
 	}
-
 	return error;
 }
 
