@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.89 2014/06/05 17:11:54 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.90 2014/06/05 17:18:19 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.89 2014/06/05 17:11:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.90 2014/06/05 17:18:19 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1220,11 +1220,12 @@ key_freeso(struct socket *so)
 	case PF_INET:
 	    {
 		struct inpcb *pcb = sotoinpcb(so);
-		struct inpcbpolicy *sp = pcb->inp_sp;
 
 		/* Does it have a PCB ? */
 		if (pcb == NULL)
 			return;
+
+		struct inpcbpolicy *sp = pcb->inp_sp;
 		key_freesp_so(&sp->sp_in);
 		key_freesp_so(&sp->sp_out);
 	    }
