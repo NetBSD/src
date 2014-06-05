@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.2 2013/12/07 16:54:43 palle Exp $ */
+/*	$NetBSD: hypervisor.h,v 1.3 2014/06/05 18:36:44 palle Exp $ */
 /*	$OpenBSD: hypervisor.h,v 1.14 2011/06/26 17:23:46 kettenis Exp $	*/
 
 /*
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef	_HYPERVISOR_H_
+#define	_HYPERVISOR_H_
 
 /*
  * UltraSPARC Hypervisor API.
@@ -319,3 +322,5 @@ int64_t	hv_rng_data_read(paddr_t raddr, uint64_t *delta);
 #define H_ENOMAP	14
 #define H_ETOOMANY	15
 #define H_ECHANNEL	16
+
+#endif	/* _HYPERVISOR_H_ */
