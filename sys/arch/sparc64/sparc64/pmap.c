@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.287 2014/05/21 19:33:51 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.288 2014/06/05 19:47:24 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2014/05/21 19:33:51 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2014/06/05 19:47:24 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -484,6 +484,7 @@ static int pmap_calculate_colors(void)
 		/* Found a CPU, get the E$ info. */
 		size = prom_getpropint(node, "ecache-size", -1);
 		if (size == -1) {
+			/* XXX sun4v support missing */
 			prom_printf("pmap_calculate_colors: node %x has "
 				"no ecache-size\n", node);
 			/* If we can't get the E$ size, skip the node */
