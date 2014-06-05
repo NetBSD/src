@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.37 2014/04/09 23:53:36 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.38 2014/06/05 23:43:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.37 2014/04/09 23:53:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.38 2014/06/05 23:43:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -521,6 +521,15 @@ kpreempt_enable(void)
 {
 
 	KPREEMPT_ENABLE(curlwp);
+}
+
+bool
+kpreempt_disabled(void)
+{
+	const lwp_t *l = curlwp;
+
+	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
+	    (l->l_flag & LW_IDLE) != 0 /* || cpu_kpreempt_disabled() */;
 }
 
 void
