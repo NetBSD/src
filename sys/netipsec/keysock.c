@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.26 2014/05/21 20:46:29 rmind Exp $	*/
+/*	$NetBSD: keysock.c,v 1.27 2014/06/05 17:17:26 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.26 2014/05/21 20:46:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.27 2014/06/05 17:17:26 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -243,17 +243,19 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 	tlen = len;
 	m = mprev = NULL;
 	while (tlen > 0) {
+		int mlen;	
 		if (tlen == len) {
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			n->m_len = MHLEN;
+			mlen = MHLEN;
 		} else {
 			MGET(n, M_DONTWAIT, MT_DATA);
-			n->m_len = MLEN;
+			mlen = MLEN;
 		}
 		if (!n) {
 			PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 			return ENOBUFS;
 		}
+		n->m_len = mlen;
 		if (tlen >= MCLBYTES) {	/*XXX better threshold? */
 			MCLGET(n, M_DONTWAIT);
 			if ((n->m_flags & M_EXT) == 0) {
