@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.77 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: in6.h,v 1.78 2014/06/05 23:48:16 rmind Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ struct ip6_mtuinfo {
 #define IPV6CTL_USE_DEFAULTZONE	39	/* use default scope zone */
 /* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
-#define IPV6CTL_IFQ		42	/* ip6intrq node */
+#define IPV6CTL_IFQ		42	/* IPv6 packet input queue */
 #define IPV6CTL_RTADV_MAXROUTES 43	/* maximum number of routes */
 					/* via router advertisement */
 #define IPV6CTL_RTADV_NUMROUTES 44	/* current number of routes */
