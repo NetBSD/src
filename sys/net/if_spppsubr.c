@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.128 2014/05/15 09:23:03 msaitoh Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.129 2014/06/05 23:48:16 rmind Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.128 2014/05/15 09:23:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.129 2014/06/05 23:48:16 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -466,7 +466,8 @@ void
 sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header *h = NULL;
-	struct ifqueue *inq = 0;
+	pktqueue_t *pktq = NULL;
+	struct ifqueue *inq = NULL;
 	uint16_t protocol;
 	int s;
 	struct sppp *sp = (struct sppp *)ifp;
@@ -539,14 +540,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 #ifdef INET
 			case ETHERTYPE_IP:
-				isr = NETISR_IP;
-				inq = &ipintrq;
+				pktq = ip_pktq;
 				break;
 #endif
 #ifdef INET6
 			case ETHERTYPE_IPV6:
-				isr = NETISR_IPV6;
-				inq = &ip6intrq;
+				pktq = ip6_pktq;
 				break;
 #endif
 #ifdef IPX
@@ -606,9 +605,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	case PPP_IP:
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
-			isr = NETISR_IP;
-			inq = &ipintrq;
 			sp->pp_last_activity = time_uptime;
+			pktq = ip_pktq;
 		}
 		break;
 #endif
@@ -621,9 +619,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	case PPP_IPV6:
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
-			isr = NETISR_IPV6;
-			inq = &ip6intrq;
 			sp->pp_last_activity = time_uptime;
+			pktq = ip6_pktq;
 		}
 		break;
 #endif
@@ -643,6 +640,13 @@ queue_pkt:
 		goto drop;
 
 	/* Check queue. */
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			goto drop;
+		}
+		return;
+	}
+
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		/* Queue overflow. */
