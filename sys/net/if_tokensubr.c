@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.64 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.65 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.64 2014/05/22 22:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.65 2014/06/05 23:48:16 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -416,7 +416,8 @@ bad:
 static void
 token_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifqueue *inq;
+	pktqueue_t *pktq = NULL;
+	struct ifqueue *inq = NULL;
 	struct llc *l;
 	struct token_header *trh;
 	int s, lan_hdr_len;
@@ -472,8 +473,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:
-			isr = NETISR_IP;
-			inq = &ipintrq;
+			pktq = ip_pktq;
 			break;
 
 		case ETHERTYPE_ARP:
@@ -505,6 +505,13 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 	dropanyway:
 #endif
 		m_freem(m);
+		return;
+	}
+
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
 		return;
 	}
 
