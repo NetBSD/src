@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_nfs.c,v 1.2 2012/01/30 06:39:26 dholland Exp $	*/
+/*	$NetBSD: quota_nfs.c,v 1.3 2014/06/05 13:14:23 martin Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_nfs.c,v 1.2 2012/01/30 06:39:26 dholland Exp $");
+__RCSID("$NetBSD: quota_nfs.c,v 1.3 2014/06/05 13:14:23 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h> /* XXX for DEV_BSIZE */
@@ -191,7 +191,9 @@ __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 	free(host);
 
 	if (ret != RPC_SUCCESS) {
-		errno = sverrno;
+		/* if the file server does not support any quotas at all,
+		   return ENOENT */
+		errno = sverrno == ENOTCONN ? ENOENT : sverrno;
 		return -1;
 	}
 
