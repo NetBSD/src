@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.68 2014/01/13 18:57:49 roy Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.69 2014/06/05 23:48:16 rmind Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -479,6 +479,11 @@ struct	in6_rrenumreq {
 #endif
 
 #ifdef _KERNEL
+
+#include <net/pktqueue.h>
+
+extern pktqueue_t *ip6_pktq;
+
 MALLOC_DECLARE(M_IP6OPT);
 
 extern struct in6_ifaddr *in6_ifaddr;
@@ -489,7 +494,6 @@ do {								\
 		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->in6_ifstat->tag++; \
 } while (/*CONSTCOND*/ 0)
 
-extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
 extern const struct in6_addr zeroin6_addr;
 extern const u_char inet6ctlerrmap[];
 extern unsigned long in6_maxmtu;

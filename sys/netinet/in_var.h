@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.68 2014/05/29 23:02:48 rmind Exp $	*/
+/*	$NetBSD: in_var.h,v 1.69 2014/06/05 23:48:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
-extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 extern	const	int	inetctlerrmap[];
 
 /*
@@ -213,6 +212,11 @@ struct in_multi {
 };
 
 #ifdef _KERNEL
+
+#include <net/pktqueue.h>
+
+extern pktqueue_t *ip_pktq;
+
 /*
  * Structure used by functions below to remember position when stepping
  * through all of the in_multi records.

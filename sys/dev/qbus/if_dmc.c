@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.22 2014/05/15 09:23:52 msaitoh Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.23 2014/06/05 23:48:16 rmind Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.22 2014/05/15 09:23:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.23 2014/06/05 23:48:16 rmind Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.22 2014/05/15 09:23:52 msaitoh Exp $");
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 
 #ifdef	INET
 #include <netinet/in.h>
@@ -553,14 +552,12 @@ dmcxint(void *a)
 
 	struct ifnet *ifp;
 	struct mbuf *m;
-	struct ifqueue *inq;
 	int arg, pkaddr, cmd, len, s;
 	struct ifrw *ifrw;
 	struct dmcbufs *rp;
 	struct ifxmt *ifxp;
 	struct dmc_header *dh;
 	char buf[64];
-	int isr = 0;
 
 	ifp = &sc->sc_if;
 
@@ -625,11 +622,8 @@ dmcxint(void *a)
 			/* Shave off dmc_header */
 			m_adj(m, sizeof(struct dmc_header));
 			switch (dh->dmc_type) {
-
 #ifdef INET
 			case DMC_IPTYPE:
-				isr = NETISR_IP;
-				inq = &ipintrq;
 				break;
 #endif
 			default:
@@ -638,12 +632,8 @@ dmcxint(void *a)
 			}
 
 			s = splnet();
-			if (IF_QFULL(inq)) {
-				IF_DROP(inq);
+			if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 				m_freem(m);
-			} else {
-				IF_ENQUEUE(inq, m);
-				schednetisr(isr);
 			}
 			splx(s);
 
