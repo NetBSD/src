@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.292 2014/04/30 21:15:06 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.293 2014/06/05 03:45:48 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2014/04/30 21:15:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2014/06/05 03:45:48 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6036,7 +6036,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 		    l2idx < (L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
 		    l2idx++) {
 			if ((ptep[l2idx] & L2_TYPE_MASK) != L2_TYPE_INV) {
-				l2b->l2b_occupancy += PAGE_SIZE / L2_S_SIZE;
+				l2b->l2b_occupancy++;
 			}
 		}
 
