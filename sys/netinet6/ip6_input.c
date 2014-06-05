@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.146 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.147 2014/06/05 16:06:49 roy Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.146 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.147 2014/06/05 16:06:49 roy Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -1852,6 +1852,15 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_v6only, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_V6ONLY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "auto_linklocal",
+		       SYSCTL_DESCR("Default value of per-interface flag for "
+		                    "adding an IPv6 link-local address to "
+				    "interfaces when attached"),
+		       NULL, 0, &ip6_auto_linklocal, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_AUTO_LINKLOCAL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonportmin",
