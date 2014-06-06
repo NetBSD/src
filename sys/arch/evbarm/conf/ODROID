@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID,v 1.2 2014/05/05 20:31:03 reinoud Exp $
+#	$NetBSD: ODROID,v 1.3 2014/06/06 15:00:20 reinoud Exp $
 #
 #	ODROID -- ODROID series Exynos Kernel
 #
@@ -159,6 +159,7 @@ options USB_DEBUG
 options EHCI_DEBUG
 options OHCI_DEBUG
 options UHUB_DEBUG
+options	USBVERBOSE
 
 
 # Valid options for BOOT_ARGS:
@@ -204,26 +205,38 @@ sscom2		at exyo0  port 2		# UART2
 # Exynos Watchdog Timer
 #exyowdt0 	at exyo0			# watchdog
 
-# Odroid-U connectivity
+# GPIO
+exyogpio0	at exyo0
+gpio*		at exyogpio?
 
-# UARTS
-# sscom0 attached to expansion port
-# sscom1 is default serial UART console, enable for low-level console:
-options		SSCOM0CONSOLE, CONSPEED=115200
 # On-board USB
-#exyousb0	at exyo0 port 0
-#exyousb1	at exyo0 port 1
-#ohci*		at exyousb?
-#ehci*		at exyousb?
-#usb*		at ohci?
-#usb*		at ehci?
+exyousb*	at exyo0
+ohci*		at exyousb?
+ehci*		at exyousb?
+usb*		at ohci?
+usb*		at ehci?
+
+# Network phy for the LAN9730
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+
+# I2C devices
+exyoiic0	at exyo0
+iic*		at exyoiic?
 
 # SATA
 #ahcisata*	at exyno0
 #atabus*		at ata?
 #wd*		at atabus? drive ?
 
-#include "dev/usb/usbdevices.config"
+
+# serial console connectivity
+# UARTS
+# sscom0 is default serial UART console, enable for low-level console:
+# sscomX attached to expansion port
+options		SSCOM0CONSOLE, CONSPEED=115200
+
+# include all USB devices
+include "dev/usb/usbdevices.config"
 
 
 # Pseudo-Devices
