@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.3,v 1.1.2.7 2014/05/21 21:58:12 bouyer Exp $
+# $NetBSD: CHANGES-5.2.3,v 1.1.2.8 2014/06/06 06:42:25 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2.2 release to the NetBSD 5.2.3
 release:
@@ -108,3 +108,15 @@ distrib/sets/lists/base/mi			patch
 
 	[apb, ticket #1906]
 
+crypto/dist/openssl/crypto/bn/bn.h		patch
+crypto/dist/openssl/crypto/bn/bn_lib.c		patch
+crypto/dist/openssl/crypto/ec/ec2_mult.c	patch
+crypto/dist/openssl/ssl/d1_both.c		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl3.h			patch
+
+	Update openssl to 1.0.1h which includes CVE-2014-0224, CVE-2014-0221,
+	CVE-2014-0195, CVE-2014-3470.
+	[spz, ticket #1908]
