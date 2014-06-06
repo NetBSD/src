@@ -14,10 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,13 +31,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/usr.bin/sed/misc.c 200462 2009-12-13 03:14:06Z delphij $");
+
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
+static const char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
+#endif
 
 #include <sys/types.h>
 
-#include <errno.h>
+#include <err.h>
+#include <limits.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,91 +51,21 @@ static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #include "extern.h"
 
 /*
- * malloc with result test
- */
-void *
-xmalloc(size)
-	u_int size;
-{
-	void *p;
-
-	if ((p = malloc(size)) == NULL)
-		err(FATAL, "%s", strerror(errno));
-	return (p);
-}
-
-/*
- * realloc with result test
- */
-void *
-xrealloc(p, size)
-	void *p;
-	u_int size;
-{
-	if (p == NULL)			/* Compatibility hack. */
-		return (xmalloc(size));
-
-	if ((p = realloc(p, size)) == NULL)
-		err(FATAL, "%s", strerror(errno));
-	return (p);
-}
-
-/*
- * Return a string for a regular expression error passed.  This is a overkill,
+ * Return a string for a regular expression error passed.  This is overkill,
  * because of the silly semantics of regerror (we can never know the size of
  * the buffer).
  */
 char *
-strregerror(errcode, preg)
-	int errcode;
-	regex_t *preg;
+strregerror(int errcode, regex_t *preg)
 {
 	static char *oe;
 	size_t s;
 
 	if (oe != NULL)
 		free(oe);
-	s = regerror(errcode, preg, "", 0);
-	oe = xmalloc(s);
+	s = regerror(errcode, preg, NULL, 0);
+	if ((oe = malloc(s)) == NULL)
+		err(1, "malloc");
 	(void)regerror(errcode, preg, oe, s);
 	return (oe);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-/*
- * Error reporting function
- */
-void
-#if __STDC__
-err(int severity, const char *fmt, ...)
-#else
-err(severity, fmt, va_alist)
-	int severity;
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "sed: ");
-	switch (severity) {
-	case WARNING:
-	case COMPILE:
-		(void)fprintf(stderr, "%lu: %s: ", linenum, fname);
-	}
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	if (severity == WARNING)
-		return;
-	exit(1);
-	/* NOTREACHED */
 }
