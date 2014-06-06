@@ -1,4 +1,4 @@
-/*	$NetBSD: warnc.c,v 1.2 2014/06/06 01:41:00 christos Exp $	*/
+/*	$NetBSD: warnc.c,v 1.3 2014/06/06 11:38:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: warnc.c,v 1.2 2014/06/06 01:41:00 christos Exp $");
+__RCSID("$NetBSD: warnc.c,v 1.3 2014/06/06 11:38:41 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: warnc.c,v 1.2 2014/06/06 01:41:00 christos Exp $");
 __weak_alias(warnc, _warnc)
 #endif
 
-#if !defined(HAVE_ERR_H) || !defined(HAVE_DECL_WARNC)
+#if !HAVE_ERR_H || !HAVE_DECL_WARNC
 void
 warnc(int code, const char *fmt, ...)
 {

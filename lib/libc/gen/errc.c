@@ -1,4 +1,4 @@
-/*	$NetBSD: errc.c,v 1.2 2014/06/06 01:41:00 christos Exp $	*/
+/*	$NetBSD: errc.c,v 1.3 2014/06/06 11:38:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: errc.c,v 1.2 2014/06/06 01:41:00 christos Exp $");
+__RCSID("$NetBSD: errc.c,v 1.3 2014/06/06 11:38:41 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: errc.c,v 1.2 2014/06/06 01:41:00 christos Exp $");
 __weak_alias(errc, _errc)
 #endif
 
-#if !defined(HAVE_ERR_H) || !defined(HAVE_DECL_ERRC)
+#if !HAVE_ERR_H || !HAVE_DECL_ERRC
 __dead void
 errc(int eval, int code, const char *fmt, ...)
 {
