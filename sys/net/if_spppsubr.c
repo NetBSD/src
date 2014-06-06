@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.129 2014/06/05 23:48:16 rmind Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.130 2014/06/06 22:15:32 rmind Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.129 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.130 2014/06/06 22:15:32 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -636,8 +636,9 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 queue_pkt:
-	if (! (ifp->if_flags & IFF_UP) || ! inq)
+	if ((ifp->if_flags & IFF_UP) == 0 || (!inq && !pktq)) {
 		goto drop;
+	}
 
 	/* Check queue. */
 	if (__predict_true(pktq)) {
