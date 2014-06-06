@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.131 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: route.c,v 1.132 2014/06/06 01:27:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.131 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.132 2014/06/06 01:27:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -376,16 +376,13 @@ rtfree(struct rtentry *rt)
 {
 	struct ifaddr *ifa;
 
-	if (rt == NULL)
-		panic("rtfree");
+	KASSERT(rt != NULL);
+	KASSERT(rt->rt_refcnt > 0);
+
 	rt->rt_refcnt--;
-	if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_UP) == 0) {
+	if (rt->rt_refcnt == 0 && (rt->rt_flags & RTF_UP) == 0) {
 		rt_assert_inactive(rt);
 		rttrash--;
-		if (rt->rt_refcnt < 0) {
-			printf("rtfree: %p not freed (neg refs)\n", rt);
-			return;
-		}
 		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		rt->rt_ifa = NULL;
