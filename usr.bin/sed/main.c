@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2014/06/06 00:13:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2014/06/06 01:45:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.22 2014/06/06 00:13:13 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2014/06/06 01:45:11 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -170,8 +170,13 @@ main(int argc, char *argv[])
 			ispan = 0;	/* don't span across input files */
 			break;
 		case 'l':
-			if(setlinebuf(stdout) != 0)
-				warnx("setlinebuf() failed");
+#ifdef _IOLBF
+			c = setvbuf(stdout, NULL, _IOLBF, 0);
+#else
+			c = setlinebuf(stdout);
+#endif
+			if (c)
+				warn("setting line buffered output failed");
 			break;
 		case 'n':
 			nflag = 1;
