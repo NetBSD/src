@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.40 2014/06/06 00:13:13 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.41 2014/06/06 12:46:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,13 +38,9 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.40 2014/06/06 00:13:13 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.41 2014/06/06 12:46:54 joerg Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
-#endif
-
-#ifndef lint
-static const char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #endif
 
 #include <sys/types.h>
