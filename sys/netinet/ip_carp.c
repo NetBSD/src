@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.56 2014/05/29 23:02:48 rmind Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.57 2014/06/06 01:02:47 rmind Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.56 2014/05/29 23:02:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.57 2014/06/06 01:02:47 rmind Exp $");
 
 /*
  * TODO:
@@ -390,7 +390,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
 			    rt->rt_flags & (RTF_CLONING|RTF_CLONED));
 			if (rt != NULL) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			}
 
@@ -434,7 +434,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				break;
 			}
 			if (rt != NULL) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			}
 			break;
