@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.20 2014/05/21 12:24:11 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.21 2014/06/06 14:42:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.20 2014/05/21 12:24:11 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.21 2014/06/06 14:42:26 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -202,6 +202,7 @@ void consinit(void);
 #ifdef KGDB
 static void kgdb_port_init(void);
 #endif
+static void exynos_usb_powercycle_lan9730(device_t self);
 void odroid_device_register(device_t self, void *aux);
 void odroid_device_register_post_config(device_t self, void *aux);
 
@@ -520,7 +521,8 @@ odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-GPY5", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPY6", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-ETC0", 0x3f - 0b00000000);
-	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0b00000000);
+	/* standard Xuhost bits at pin 5,6 */
+	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0b01100000);
 	prop_dictionary_set_uint32(dict, "nc-GPM0", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPM1", 0x7f - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPM2", 0x1f - 0b00000000);
@@ -611,6 +613,12 @@ odroid_device_register(device_t self, void *aux)
 		odroid_exynos5_gpio_ncs(self, dict);
 
 		/* explicit pin settings */
+		prop_dictionary_set_cstring(dict, "hub_nreset", ">GPX1[4]");
+		prop_dictionary_set_cstring(dict, "hub_connect", ">GPX0[6]");
+		prop_dictionary_set_cstring(dict, "hub_nint", "<GPX0[7]");
+
+		/* internal hub IIRC, unknown if this line exists */
+		//prop_dictionary_set_cstring(dict, "p3v3_en", ">GPA1[3]");
 	}
 #endif
 }
@@ -669,11 +677,103 @@ exynos_usb_init_usb3503_hub(device_t self)
 
 		/* DONE! */
 	} else {
-		aprint_error_dev(self, "failed to lookup GPIO pins");
+		aprint_error_dev(self,
+			"failed to lookup GPIO pins for usb3503 hub init");
 	}
 	/* XXX leaving pins claimed! */
 }
 
+
+#if 0
+static void
+exynos_max77686_dump(struct i2c_controller *i2c)
+{
+	int error;
+
+	printf("%s:\n", __func__);
+	for (int i = 0; i < 0x80; i++) {
+		error = iic_exec(i2c, I2C_OP_READ_WITH_STOP, 0x09, &i, 1,
+				&rdata, sizeof(rdata), 0);
+		KASSERT(!error);
+		if (i % 16 == 0)
+			printf("\n%02x: ", i);
+		printf("%02x ", rdata);
+	}
+	printf("\n");
+}
+#endif
+
+
+static void
+exynos_usb_powercycle_lan9730(device_t self)
+{
+#ifdef EXYNOS4
+	prop_dictionary_t dict = device_properties(self);
+	struct exynos_gpio_pindata enable_pin;
+	struct i2c_controller *i2c;
+	const char *pin_enable;
+	uint8_t rdata, wdata, reg;
+	int error;
+	bool ok;
+
+	/*
+	 * XXX fixed for now:
+	 *    Odroid-U2/U3 : Max77686 chip is attached to iic0 chipid 0x09
+	 */
+	const int iicbus      = 0;
+	const int chipid      = 0x09;
+	const int buck_outreg = 0x37;	/* buck 8 output voltage */
+	const int buck_ctlreg = 0x38;	/* buck 8 power control */
+
+	i2c = exynos_i2cbus[iicbus];
+	KASSERT(i2c);
+	iic_acquire_bus(i2c, 0);
+
+	/* set power level to 0v */
+	reg = buck_outreg;
+	wdata = 0x0;
+	error = iic_exec(i2c, I2C_OP_WRITE_WITH_STOP, chipid, &reg, 1,
+			&wdata, sizeof(wdata), 0);
+	KASSERT(!error);
+	DELAY(10000);
+
+	/* set power level back to 3.3v */
+	wdata = 0x33;
+	error = iic_exec(i2c, I2C_OP_WRITE_WITH_STOP, chipid, &reg, 1,
+			&wdata, sizeof(wdata), 0);
+	KASSERT(!error);
+	DELAY(10000);
+
+	/* enable the bucket explicitly */
+	reg = buck_ctlreg;
+        error = iic_exec(i2c, I2C_OP_READ_WITH_STOP, chipid, &reg, 1,
+			&rdata, sizeof(rdata), 0);
+	KASSERT(!error);
+	rdata |= 3;
+	error = iic_exec(i2c, I2C_OP_WRITE_WITH_STOP, chipid, &reg, 1,
+			&rdata, sizeof(rdata), 0);
+	KASSERT(!error);
+	DELAY(10000);
+
+	iic_release_bus(i2c, 0);
+
+	/* enable lan chip power */
+	prop_dictionary_get_cstring_nocopy(dict, "lan_power", &pin_enable);
+	if (pin_enable)  {
+		ok = exynos_gpio_pin_reserve(pin_enable, &enable_pin);
+		if (!ok) {
+			aprint_error_dev(self,
+				"can't reserve GPIO pin %s\n", pin_enable);
+		} else {
+			exynos_gpio_pindata_write(&enable_pin, 0);
+			DELAY(10000);
+			exynos_gpio_pindata_write(&enable_pin, 1);
+		}
+	} else {
+		aprint_error_dev(self, "failed to lookup lan_power GPIO pin");
+	}
+#endif
+}
 
 
 void
@@ -682,6 +782,7 @@ odroid_device_register_post_config(device_t self, void *aux)
 	exynos_device_register_post_config(self, aux);
 
 	if (device_is_a(self, "exyousb")) {
+		exynos_usb_powercycle_lan9730(self);
 		exynos_usb_init_usb3503_hub(self);
 	}
 }
