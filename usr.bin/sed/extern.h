@@ -14,10 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
+ * $FreeBSD: head/usr.bin/sed/extern.h 170608 2007-06-12 12:05:24Z yar $
  */
 
 extern struct s_command *prog;
@@ -43,17 +40,17 @@ extern regmatch_t *match;
 extern size_t maxnsub;
 extern u_long linenum;
 extern int appendnum;
-extern int lastline;
 extern int aflag, eflag, nflag;
-extern char *fname;
+extern const char *fname, *outfname;
+extern FILE *infile, *outfile;
+extern int rflags;	/* regex flags to use */
 
-void	 cfclose __P((struct s_command *, struct s_command *));
-void	 compile __P((void));
-void	 cspace __P((SPACE *, char *, size_t, enum e_spflag));
-char	*cu_fgets __P((char *, int));
-void	 err __P((int, const char *, ...));
-int	 mf_fgets __P((SPACE *, enum e_spflag));
-void	 process __P((void));
-char	*strregerror __P((int, regex_t *));
-void	*xmalloc __P((u_int));
-void	*xrealloc __P((void *, u_int));
+void	 cfclose(struct s_command *, struct s_command *);
+void	 compile(void);
+void	 cspace(SPACE *, const char *, size_t, enum e_spflag);
+char	*cu_fgets(char *, int, int *);
+int	 mf_fgets(SPACE *, enum e_spflag);
+int	 lastline(void);
+void	 process(void);
+void	 resetstate(void);
+char	*strregerror(int, regex_t *);
