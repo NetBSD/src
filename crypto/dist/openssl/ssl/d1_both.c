@@ -566,6 +566,12 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	seq64be[6] = (unsigned char) (msg_hdr->seq>>8);
 	seq64be[7] = (unsigned char) msg_hdr->seq;
 	item = pqueue_find(s->d1->buffered_messages, seq64be);
+
+	if (item != NULL && ((hm_fragment *) (item->data))->msg_header.msg_len != msg_hdr->msg_len)
+		{
+		item = NULL; /* let's see if Coverity will complain about this */
+		goto err;
+		}
 	
 	/* Discard the message if sequence number was already there, is
 	 * too far in the future or the fragment is already in the queue */
@@ -627,6 +633,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	int i,al;
 	struct hm_header_st msg_hdr;
 
+	redo:
 	/* see if we have the required fragment already */
 	if ((frag_len = dtls1_retrieve_buffered_fragment(s,max,ok)) || *ok)
 		{
@@ -674,8 +681,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 					s->msg_callback_arg);
 			
 			s->init_num = 0;
-			return dtls1_get_message_fragment(s, st1, stn,
-				max, ok);
+			goto redo;
 			}
 		else /* Incorrectly formated Hello request */
 			{
