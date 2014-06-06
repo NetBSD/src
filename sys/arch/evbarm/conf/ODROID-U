@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.6 2014/05/21 12:24:52 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.7 2014/06/06 15:00:20 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -26,7 +26,6 @@ options 	EXYNOS4412P
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 options 	EXYNOS_CONSOLE_EARLY
-options		ARM_TRUSTZONE_FIRMWARE
 options 	UVMHIST
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
@@ -128,7 +127,7 @@ options 	DKWEDGE_METHOD_GPT
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -202,6 +201,9 @@ ohci*		at exyousb?
 ehci*		at exyousb?
 usb*		at ohci?
 usb*		at ehci?
+
+# Network phy for the LAN9730
+ukphy*  at mii? phy ?                   # generic unknown PHYs
 
 # I2C devices
 exyoiic0	at exyo0
