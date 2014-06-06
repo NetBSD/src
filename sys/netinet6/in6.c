@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.170 2014/05/17 20:44:24 rmind Exp $	*/
+/*	$NetBSD: in6.c,v 1.171 2014/06/06 01:02:47 rmind Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.170 2014/05/17 20:44:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.171 2014/06/06 01:02:47 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1168,7 +1168,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    MLTMASK_LEN)) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1199,7 +1199,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (error)
 				goto cleanup;
 		} else {
-			RTFREE(rt);
+			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1253,7 +1253,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    32 / NBBY)) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1284,7 +1284,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				goto cleanup;
 #undef	MLTMASK_LEN
 		} else {
-			RTFREE(rt);
+			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
