@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.13 2014/06/06 00:14:55 christos Exp $	*/
+
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
