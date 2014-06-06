@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.4 2014/05/21 13:02:46 reinoud Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.5 2014/06/06 14:28:58 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.4 2014/05/21 13:02:46 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.5 2014/06/06 14:28:58 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.4 2014/05/21 13:02:46 reinoud Exp $
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
+#include <sys/gpio.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -77,6 +78,10 @@ struct exynos_usb_softc {
 
 	bus_space_handle_t sc_ehci_bsh;
 	bus_space_handle_t sc_ohci_bsh;
+	bus_space_handle_t sc_usb2phy_bsh;
+
+	bus_space_handle_t sc_pmuregs_bsh;
+	bus_space_handle_t sc_sysregs_bsh;
 
 	device_t	 sc_ohci_dev;
 	device_t	 sc_ehci_dev;
@@ -88,8 +93,15 @@ struct exynos_usb_attach_args {
 	const char *name;
 };
 
+static struct exynos_gpio_pinset uhost_pwr_pinset = {
+	.pinset_group = "ETC6",
+	.pinset_func  = 0,
+	.pinset_mask  = __BIT(5) | __BIT(6),
+};
+
+
 static int exynos_usb_intr(void *arg);
-static void exynos_usb_init(struct exynos_usb_softc *sc);
+static void exynos_usb_phy_init(struct exynos_usb_softc *sc);
 
 
 static int	exynos_usb_match(device_t, cfdata_t, void *);
@@ -116,6 +128,8 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	struct exynos_usb_softc * const sc = &exynos_usb_sc;
 	struct exyo_attach_args *exyoaa = (struct exyo_attach_args *) aux;
 	struct exyo_locators *loc = &exyoaa->exyo_loc;
+	struct exynos_gpio_pindata XuhostOVERCUR;
+	struct exynos_gpio_pindata XuhostPWREN;
 
 	/* no locators expected */
 	KASSERT(loc->loc_offset == 0);
@@ -145,9 +159,31 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
 		sc->sc_locinfo->uloc_ohci_offset, EXYNOS_BLOCK_SIZE,
 		&sc->sc_ohci_bsh);
+	bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
+		sc->sc_locinfo->uloc_usb2phy_offset, EXYNOS_BLOCK_SIZE,
+		&sc->sc_usb2phy_bsh);
+
+	bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
+		sc->sc_locinfo->uloc_pmuregs_offset, EXYNOS_BLOCK_SIZE,
+		&sc->sc_pmuregs_bsh);
+
+	if (sc->sc_locinfo->uloc_sysregs_offset)
+		bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
+			sc->sc_locinfo->uloc_sysregs_offset, EXYNOS_BLOCK_SIZE,
+			&sc->sc_sysregs_bsh);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	/* power up USB subsystem XXX PWREN not working yet */
+	exynos_gpio_pinset_acquire(&uhost_pwr_pinset);
+	exynos_gpio_pinset_to_pindata(&uhost_pwr_pinset, 5, &XuhostPWREN);
+	exynos_gpio_pinset_to_pindata(&uhost_pwr_pinset, 6, &XuhostOVERCUR);
+
+	/* enable power and set Xuhost OVERCUR to inactive by pulling it up */
+	exynos_gpio_pindata_ctl(&XuhostPWREN, GPIO_PIN_PULLUP);
+	exynos_gpio_pindata_ctl(&XuhostOVERCUR, GPIO_PIN_PULLUP);
+	DELAY(80000);
 
 	/*
 	 * Disable interrupts
@@ -163,10 +199,8 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	    caplength + EHCI_USBINTR, 0);
 #endif
 
-	/*
-	 * Init USB subsystem
-	 */
-	exynos_usb_init(sc);
+	/* init USB phys */
+	exynos_usb_phy_init(sc);
 
 	/* claim shared interrupt for OHCI/EHCI */
 	sc->sc_intrh = intr_establish(sc->sc_locinfo->uloc_usbhost_irq,
@@ -195,6 +229,8 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	};
 	sc->sc_ehci_dev = config_found(self, &usb_ehci, NULL);
 #endif
+
+	/* TBD: USB3 xhci0 / xhci1 attachments */
 }
 
 
@@ -257,14 +293,10 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.dmatag = usbsc->sc_dmat;
 	sc->sc_bus.hci_private = sc;
 
-//sc->sc_bus.use_polling=1;
-
 	strlcpy(sc->sc_vendor, "exynos", sizeof(sc->sc_vendor));
 
 	aprint_naive(": OHCI USB controller\n");
 	aprint_normal(": OHCI USB controller\n");
-
-	/* enable things ? extra settings? TBD */
 
 	/* attach */
 	r = ohci_init(sc);
@@ -318,14 +350,10 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 	if (usbsc->sc_ohci_dev != NULL)
 		sc->sc_comps[sc->sc_ncomp++] = usbsc->sc_ohci_dev;
 
-//sc->sc_bus.use_polling=1;
-
 	strlcpy(sc->sc_vendor, "exynos", sizeof(sc->sc_vendor));
 
 	aprint_naive(": EHCI USB controller\n");
 	aprint_normal(": EHCI USB controller\n");
-
-	/* enable things ? extra settings? TBD */
 
 	/* attach */
 	r = ehci_init(sc);
@@ -341,9 +369,119 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 #endif
 
 
+/*
+ * USB Phy init
+ */
+
 static void
-exynos_usb_init(struct exynos_usb_softc *sc)
+exynos_usb2_set_isolation(struct exynos_usb_softc *sc, bool on)
 {
-	/* TBD */
+	int val;
+
+	val = on ? PMU_PHY_DISABLE : PMU_PHY_ENABLE;
+	if (IS_EXYNOS4X12_P()) {
+		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+			EXYNOS_PMU_USB_PHY_CTRL, val);
+		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+			EXYNOS_PMU_USB_HSIC_1_PHY_CTRL, val);
+		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+			EXYNOS_PMU_USB_HSIC_2_PHY_CTRL, val);
+	} else {
+		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+			EXYNOS_PMU_USBDEV_PHY_CTRL, val);
+		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+			EXYNOS_PMU_USBHOST_PHY_CTRL, val);
+	}
+}
+
+
+#ifdef EXYNOS4
+static void
+exynos4_usb2phy_enable(struct exynos_usb_softc *sc)
+{
+	uint32_t phypwr, rstcon, clkreg;
+
+	/* disable phy isolation */
+	exynos_usb2_set_isolation(sc, false);
+
+	/* write clock value */
+	clkreg = 5;	/* 24 Mhz */
+	bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+		USB_PHYCLK, clkreg);
+
+	/* set device and host to normal */
+	phypwr = bus_space_read_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+		USB_PHYPWR);
+
+	/* set to normal of device */
+	phypwr &= ~PHYPWR_NORMAL_MASK_PHY0;
+	bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+		USB_PHYPWR, phypwr);
+
+	if (IS_EXYNOS4X12_P()) {
+		/* set to normal of host */
+		phypwr = bus_space_read_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+			USB_PHYPWR);
+		phypwr &= ~(PHYPWR_NORMAL_MASK_HSIC0 |
+			    PHYPWR_NORMAL_MASK_HSIC1 |
+			    PHYPWR_NORMAL_MASK_PHY1);
+		bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+			USB_PHYPWR, phypwr);
+	}
+
+	/* reset both phy and link of device */
+	rstcon = bus_space_read_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+		USB_RSTCON);
+	rstcon |= RSTCON_DEVPHY_SWRST;
+	bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+		USB_RSTCON, rstcon);
+	DELAY(10000);
+	rstcon &= ~RSTCON_DEVPHY_SWRST;
+	bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+		USB_RSTCON, rstcon);
+
+	if (IS_EXYNOS4X12_P()) {
+		/* reset both phy and link of host */
+		rstcon = bus_space_read_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+			USB_RSTCON);
+		rstcon |= RSTCON_HOSTPHY_SWRST | RSTCON_HOSTPHYLINK_SWRST;
+		bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+			USB_RSTCON, rstcon);
+		DELAY(10000);
+		rstcon &= ~(RSTCON_HOSTPHY_SWRST | RSTCON_HOSTPHYLINK_SWRST);
+		bus_space_write_4(sc->sc_bst, sc->sc_usb2phy_bsh,
+			USB_RSTCON, rstcon);
+	}
+
+	/* wait for everything to be initialized */
+	DELAY(80000);
+}
+#endif
+
+
+#ifdef EXYNOS5
+static void
+exynos5_usb2phy_enable(struct exynos_usb_softc *sc)
+{
+	/* disable phy isolation */
+	exynos_usb2_set_isolation(sc, false);
+
+	aprint_error_dev(sc->sc_self, "%s not implemented\n", __func__);
+}
+#endif
+
+
+static void
+exynos_usb_phy_init(struct exynos_usb_softc *sc)
+{
+#ifdef EXYNOS4
+	if (IS_EXYNOS4_P())
+		exynos4_usb2phy_enable(sc);
+#endif
+#ifdef EXYNOS5
+	if (IS_EXYNOS5_P())
+		exynos5_usb2phy_enable(sc);
+	/* TBD: USB3 phy init */
+#endif
 }
 
