@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.50 2014/06/02 19:29:58 joerg Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.51 2014/06/06 15:33:14 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rstat_proc.c,v 1.50 2014/06/02 19:29:58 joerg Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.51 2014/06/06 15:33:14 christos Exp $");
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
@@ -254,7 +254,7 @@ updatestat(int dummy)
 	}
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	for (i = 0; s != -1 && ifps[i].if_name != NULL; ++i) {
-		strncpy(ifdr.ifdr_name, ifps[i].if_name, sizeof(ifdr.ifdr_name));
+		strlcpy(ifdr.ifdr_name, ifps[i].if_name, sizeof(ifdr.ifdr_name));
 		if (ioctl(s, SIOCGIFDATA, &ifdr) != 0)
 			continue;
 		stats_all.s3.if_ipackets += ifdr.ifdr_data.ifi_ipackets;
