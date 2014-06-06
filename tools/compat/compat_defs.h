@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.96 2014/04/19 19:01:08 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.97 2014/06/06 01:40:40 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -259,6 +259,18 @@ void errx(int, const char *, ...);
 void warn(const char *, ...);
 void warnx(const char *, ...);
 void vwarnx(const char *, va_list);
+#endif
+#if !HAVE_DECL_WARNC
+void warnc(int, const char *, ...);
+#endif
+#if !HAVE_DECL_VWARNC
+void vwarnc(int, const char *, va_list);
+#endif
+#if !HAVE_DECL_ERRC
+void errc(int, int, const char *, ...);
+#endif
+#if !HAVE_DECL_VERRC
+void verrc(int, int, const char *, va_list);
 #endif
 
 #if !HAVE_ESETFUNC
