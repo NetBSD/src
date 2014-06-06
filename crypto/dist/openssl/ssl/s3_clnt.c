@@ -503,6 +503,7 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_FINISHED_A:
 		case SSL3_ST_CR_FINISHED_B:
 
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			ret=ssl3_get_finished(s,SSL3_ST_CR_FINISHED_A,
 				SSL3_ST_CR_FINISHED_B);
 			if (ret <= 0) goto end;
@@ -2213,6 +2214,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 			EC_KEY *tkey;
 			int ecdh_clnt_cert = 0;
 			int field_size = 0;
+
+			if (s->session->sess_cert == NULL) 
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
+				goto err;
+				}
 
 			/* Did we send out the client's
 			 * ECDH share for use in premaster
