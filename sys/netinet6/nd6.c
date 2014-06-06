@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.151 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.152 2014/06/06 01:02:47 rmind Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.151 2014/06/05 16:06:49 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152 2014/06/06 01:02:47 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -847,7 +847,7 @@ nd6_lookup1(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 		 * interface route.
 		 */
 		if (create) {
-			RTFREE(rt);
+			rtfree(rt);
 			rt = NULL;
 		}
 	}

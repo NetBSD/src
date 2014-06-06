@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.48 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.49 2014/06/06 01:02:47 rmind Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.48 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.49 2014/06/06 01:02:47 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -290,7 +290,7 @@ faithprefix(struct in6_addr *in6)
 	else
 		ret = 0;
 	if (rt)
-		RTFREE(rt);
+		rtfree(rt);
 	return ret;
 }
 #endif

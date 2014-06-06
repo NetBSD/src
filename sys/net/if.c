@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.276 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.277 2014/06/06 01:02:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.276 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.277 2014/06/06 01:02:47 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -927,7 +927,7 @@ if_rt_walktree(struct rtentry *rt, void *v)
 	    rt_mask(rt), rt->rt_flags, NULL);
 	KASSERT((rt->rt_flags & RTF_UP) == 0);
 	rt->rt_ifp = NULL;
-	RTFREE(rt);
+	rtfree(rt);
 	if (error != 0)
 		printf("%s: warning: unable to delete rtentry @ %p, "
 		    "error = %d\n", ifp->if_xname, rt, error);

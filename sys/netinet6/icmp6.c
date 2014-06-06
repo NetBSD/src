@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.168 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.169 2014/06/06 01:02:47 rmind Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.168 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.169 2014/06/06 01:02:47 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1132,8 +1132,8 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}
-	if (rt) { /* XXX: need braces to avoid conflict with else in RTFREE. */
-		RTFREE(rt);
+	if (rt) {
+		rtfree(rt);
 	}
 
 	/*
@@ -2188,7 +2188,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			    "ICMP6 redirect rejected; no route "
 			    "with inet6 gateway found for redirect dst: %s\n",
 			    icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
-			RTFREE(rt);
+			rtfree(rt);
 			goto bad;
 		}
 
@@ -2200,7 +2200,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 				"%s\n",
 				ip6_sprintf(gw6),
 				icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
-			RTFREE(rt);
+			rtfree(rt);
 			goto bad;
 		}
 	} else {
@@ -2210,7 +2210,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
 		goto bad;
 	}
-	RTFREE(rt);
+	rtfree(rt);
 	rt = NULL;
     }
 	if (IN6_IS_ADDR_MULTICAST(&reddst6)) {
