@@ -304,14 +304,21 @@ const struct exyo_locinfo exynos4_i2c_locinfo = {
 
 /* usb locators */
 const struct exyo_usb_locinfo exynos4_usb_locinfo = {
+	.uloc_pmuregs_offset	= EXYNOS4_PMU_OFFSET,
+	.uloc_sysregs_offset	= 0,
+
 	.uloc_ehci_offset	= EXYNOS4_USBHOST0_OFFSET,
 	.uloc_ohci_offset	= EXYNOS4_USBHOST1_OFFSET,
-	.uloc_usbhost_irq	= IRQ_UHOST,
 	.uloc_usbotg_offset	= EXYNOS4_USBOTG1_OFFSET,
+	.uloc_usb2phy_offset	= EXYNOS4_USBOTG1_OFFSET,
+
+	.uloc_usbhost_irq	= IRQ_UHOST,
 	.uloc_usbotg_irq	= IRQ_HSOTG,
-	.uloc_usb3_ctrl		= 0,		/* no usbctl */
-	.uloc_usb3_linkoffset	= 0,		/* no usb3   */
-	.uloc_usb3_slots	= 0,		/* no usb3   */
-	.uloc_usb3_irq		= 0,		/* no usb3   */
+	.uloc_usb3_irq		= 0,		/* no usb3 */
+
+	.uloc_usb3_xhci0_offset	= 0,		/* no usb3 */
+	.uloc_usb3_xhci1_offset	= 0,		/* no usb3 */
+	.uloc_usb3_phy0_offset	= 0,		/* no usb3 */
+	.uloc_usb3_phy1_offset	= 0,		/* no usb3 */
 };
 
