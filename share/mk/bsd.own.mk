@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.813 2014/06/05 21:05:42 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.814 2014/06/06 20:24:03 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -53,7 +53,6 @@ TOOLCHAIN_MISSING?=	no
 
 # Platforms still using GCC 4.5
 .if \
-      ${MACHINE_CPU} == "ia64" || \
       ${MACHINE_CPU} == "m68k" || \
       ${MACHINE_CPU} == "sh3" || \
       ${MACHINE_ARCH} == "powerpc"
