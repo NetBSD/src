@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.10 2014/05/21 13:02:46 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.11 2014/06/06 14:28:58 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,6 +57,8 @@ extern uint32_t exynos_pop_id;
 #define IS_EXYNOS4412_R0_P() \
 			((EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe4412) && \
 			 (EXYNOS_PRODUCT_REV(exynos_soc_id) == 0))
+#define IS_EXYNOS4X12_P()	((EXYNOS_PRODUCT_ID(exynos_soc_id) & 0xff0ff) \
+			== 0xe4012)
 
 #define IS_EXYNOS4_P()	(EXYNOS_PRODUCT_FAMILY(exynos_soc_id) == EXYNOS4_PRODUCT_FAMILY)
 
@@ -80,15 +82,22 @@ struct exyo_locators {
 
 
 struct exyo_usb_locinfo {
+	bus_size_t	uloc_pmuregs_offset;
+	bus_size_t	uloc_sysregs_offset;
+
 	bus_size_t	uloc_ehci_offset;
 	bus_size_t	uloc_ohci_offset;
-	int		uloc_usbhost_irq;
 	bus_size_t	uloc_usbotg_offset;
+	bus_size_t	uloc_usb2phy_offset;
+
+	int		uloc_usbhost_irq;
 	int		uloc_usbotg_irq;
-	bus_size_t	uloc_usb3_ctrl;
-	bus_size_t	uloc_usb3_linkoffset;
-	int		uloc_usb3_slots;
 	int		uloc_usb3_irq;
+
+	bus_size_t	uloc_usb3_xhci0_offset;
+	bus_size_t	uloc_usb3_xhci1_offset;
+	bus_size_t	uloc_usb3_phy0_offset;
+	bus_size_t	uloc_usb3_phy1_offset;
 };
 
 
