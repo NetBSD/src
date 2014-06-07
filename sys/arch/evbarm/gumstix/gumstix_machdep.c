@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.49 2014/05/23 13:56:18 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.50 2014/06/07 10:30:13 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -892,13 +892,13 @@ gumstix_device_register(device_t dev, void *aux)
 	prop_dictionary_t dict = device_properties(dev);
 
 	if (device_is_a(dev, "ehci")) {
-		prop_dictionary_set_cstring(dict, "port0-mode", "none");
-		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
-		prop_dictionary_set_cstring(dict, "port2-mode", "none");
+		prop_dictionary_set_uint16(dict, "nports", 2);
 		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
 		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
 		prop_dictionary_set_int16(dict, "port1-gpio", 183);
-		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+		prop_dictionary_set_bool(dict, "port1-gpioval", true);
 		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
 		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
 		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
