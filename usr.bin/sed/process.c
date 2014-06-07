@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.41 2014/06/06 12:46:54 joerg Exp $	*/
+/*	$NetBSD: process.c,v 1.42 2014/06/07 06:02:27 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.41 2014/06/06 12:46:54 joerg Exp $");
+__RCSID("$NetBSD: process.c,v 1.42 2014/06/07 06:02:27 ryoon Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -155,7 +155,7 @@ redirect:
 				break;
 			case 'G':
 				if (hs == NULL)
-					cspace(&PS, "\n", 1, REPLACE);
+					cspace(&HS, "\n", 1, REPLACE);
 				cspace(&PS, hs, hsl, APPEND);
 				break;
 			case 'h':
