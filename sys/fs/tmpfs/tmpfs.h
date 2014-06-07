@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.49 2014/04/30 01:33:51 christos Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.50 2014/06/07 09:54:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -305,13 +305,6 @@ bool		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
     KASSERT((node)->tn_vnode == NULL || VOP_ISLOCKED((node)->tn_vnode)); \
     KASSERT((node)->tn_type == VDIR); \
     KASSERT((node)->tn_size % sizeof(tmpfs_dirent_t) == 0);
-
-/*
- * Memory management stuff.
- */
-
-/* Amount of memory pages to reserve for the system. */
-#define	TMPFS_PAGES_RESERVED	(4 * 1024 * 1024 / PAGE_SIZE)
 
 /*
  * Routines to convert VFS structures to tmpfs internal ones.

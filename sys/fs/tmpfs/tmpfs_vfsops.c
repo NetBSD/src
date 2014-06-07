@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.61 2014/04/30 01:59:30 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.62 2014/06/07 09:54:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.61 2014/04/30 01:59:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.62 2014/06/07 09:54:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,7 +132,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 
 	/* Prohibit mounts if there is not enough memory. */
-	if (tmpfs_mem_info(true) < TMPFS_PAGES_RESERVED)
+	if (tmpfs_mem_info(true) < uvmexp.freetarg)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
