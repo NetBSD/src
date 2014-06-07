@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.277 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.278 2014/06/07 13:25:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.277 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.278 2014/06/07 13:25:33 he Exp $");
 
 #include "opt_inet.h"
 
@@ -130,10 +130,10 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.277 2014/06/06 01:02:47 rmind Exp $");
 #include <netatalk/at.h>
 #endif
 #include <net/pfil.h>
+#include <netinet/in.h>
 #include <netinet/in_var.h>
 
 #ifdef INET6
-#include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif
@@ -872,7 +872,9 @@ again:
 	 * ensures that the packets are dequeued while a cross-call will
 	 * ensure that the interrupts have completed. FIXME: not quite..
 	 */
+#ifdef INET
 	pktq_barrier(ip_pktq);
+#endif
 	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 	xc_wait(xc);
 
