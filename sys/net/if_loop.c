@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.79 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.80 2014/06/07 11:00:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.79 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80 2014/06/07 11:00:29 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -359,11 +359,11 @@ lostart(struct ifnet *ifp)
 {
 	for (;;) {
 		pktqueue_t *pktq = NULL;
-		struct ifqueue *ifq;
+		struct ifqueue *ifq = NULL;
 		struct mbuf *m;
 		size_t pktlen;
 		uint32_t af;
-		int s, isr;
+		int s, isr = 0;
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
