@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.5 2014/04/30 01:33:51 christos Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.6 2014/06/07 09:54:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.5 2014/04/30 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.6 2014/06/07 09:54:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -89,7 +89,7 @@ tmpfs_mntmem_set(struct tmpfs_mount *mp, uint64_t memlimit)
  * => If 'total' is true, then return _total_ amount of pages.
  * => If false, then return the amount of _free_ memory pages.
  *
- * Remember to remove TMPFS_PAGES_RESERVED from the returned value to avoid
+ * Remember to remove uvmexp.freetarg from the returned value to avoid
  * excessive memory usage.
  */
 size_t
@@ -118,10 +118,10 @@ tmpfs_bytes_max(struct tmpfs_mount *mp)
 	size_t freepages = tmpfs_mem_info(false);
 	uint64_t avail_mem;
 
-	if (freepages < TMPFS_PAGES_RESERVED) {
+	if (freepages < uvmexp.freetarg) {
 		freepages = 0;
 	} else {
-		freepages -= TMPFS_PAGES_RESERVED;
+		freepages -= uvmexp.freetarg;
 	}
 	avail_mem = round_page(mp->tm_bytes_used) + (freepages << PAGE_SHIFT);
 	return MIN(mp->tm_mem_limit, avail_mem);
