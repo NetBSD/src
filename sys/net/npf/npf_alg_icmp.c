@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.21 2014/06/08 12:12:56 spz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.21 2014/06/08 12:12:56 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -66,7 +66,7 @@ MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 static npf_alg_t *	alg_icmp	__read_mostly;
 
 /*
- * npfa_icmp_match: matching insperctor determines ALG case and associates
+ * npfa_icmp_match: matching inspector determines ALG case and associates
  * our ALG with the NAT entry.
  */
 static bool
