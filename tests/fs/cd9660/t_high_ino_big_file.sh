@@ -1,4 +1,4 @@
-# $NetBSD: t_high_ino_big_file.sh,v 1.2 2014/05/15 14:53:05 martin Exp $
+# $NetBSD: t_high_ino_big_file.sh,v 1.3 2014/06/08 13:45:14 pgoyette Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,9 +76,9 @@ pr_kern_48787_head() {
 }
 
 pr_kern_48787_body() {
-	avail=$( df -P . | awk '{if (NR==2) print $4}' )
-	if [ $avail -lt 4500000 ]; then
-		atf_skip "not enough free disk space, have ${avail}, need ~ 4500000 bytes"
+	avail=$( df -Pk . | awk '{if (NR==2) print $4}' )
+	if [ $avail -lt 2250000 ]; then
+		atf_skip "not enough free disk space, have ${avail} Kbytes, need ~ 2250000 Kbytes"
 	fi
 	bunzip2 < $(atf_get_srcdir)/pr_48787.image.bz2 > pr_48787.image
 	mntpnt=$(pwd)/mnt
