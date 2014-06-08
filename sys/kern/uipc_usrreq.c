@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.152 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.153 2014/06/08 02:52:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.152 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.153 2014/06/08 02:52:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,9 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	struct socket *so2;
 	const struct sockaddr_un *sun;
 
+	/* XXX: server side closed the socket */
+	if (unp->unp_conn == NULL)
+		return ECONNREFUSED;
 	so2 = unp->unp_conn->unp_socket;
 
 	KASSERT(solocked(so2));
