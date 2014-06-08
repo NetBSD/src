@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.110 2014/02/21 18:00:09 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.111 2014/06/08 17:33:24 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,6 +180,14 @@ struct cpu_info {
 	 */
 	paddr_t			ci_mmfsa;
 
+	/*
+	 * sun4v mondo control fields
+	 */
+	paddr_t			ci_cpumq;  /* cpu mondo queue address */
+	paddr_t			ci_devmq;  /* device mondo queue address */
+	paddr_t			ci_cpuset; /* mondo recipient address */ 
+	paddr_t			ci_mondo;  /* mondo message address */
+	
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
 	bool			ci_pci_fault;
