@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43 2014/06/05 23:43:04 rmind Exp $	*/
+/*	$NetBSD: intr.c,v 1.44 2014/06/08 15:24:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43 2014/06/05 23:43:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.44 2014/06/08 15:24:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -327,8 +327,10 @@ softint_schedule(void *arg)
 void
 softint_schedule_cpu(void *arg, struct cpu_info *ci)
 {
-	/* TODO: implement this properly */
-	KASSERT(curcpu() == ci);
+	/*
+	 * TODO: implement this properly
+	 * KASSERT(curcpu() == ci);
+	 */
 	softint_schedule(arg);
 }
 
