@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.33 2011/08/29 14:22:46 joerg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.34 2014/06/08 01:44:52 enami Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.33 2011/08/29 14:22:46 joerg Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.34 2014/06/08 01:44:52 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,13 +282,8 @@ main(int argc, char **argv)
 	else
 		pid = -1;
 
-#if defined(KERBEROS) && defined(CRYPT)
-	if (!doencrypt)
-#endif
-	{
-		(void)ioctl(remerr, FIONBIO, &one);
-		(void)ioctl(rem, FIONBIO, &one);
-	}
+	(void)ioctl(remerr, FIONBIO, &one);
+	(void)ioctl(rem, FIONBIO, &one);
 
 	talk(nflag, &oset, pid, rem);
 
@@ -310,12 +305,7 @@ checkfd(struct pollfd *fdp, int outfd)
 		return 0;
 
 	errno = 0;
-#if defined(KERBEROS) && defined(CRYPT)
-	if (doencrypt)
-		nr = des_read(fdp->fd, buf, sizeof buf);
-	else
-#endif
-		nr = read(fdp->fd, buf, sizeof buf);
+	nr = read(fdp->fd, buf, sizeof buf);
 
 	if (nr <= 0) {
 		if (errno != EAGAIN)
@@ -380,12 +370,7 @@ rewrite:		if (poll(fdp, 1, INFTIM) == -1) {
 			if ((fdp->revents & POLLOUT) == 0)
 				goto rewrite;
 
-#if defined(KERBEROS) && defined(CRYPT)
-			if (doencrypt)
-				nw = des_write(rem, bp, nr);
-			else
-#endif
-				nw = write(rem, bp, nr);
+			nw = write(rem, bp, nr);
 
 			if (nw < 0) {
 				if (errno == EAGAIN)
