@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.35 2014/06/08 02:02:41 enami Exp $	*/
+/*	$NetBSD: rsh.c,v 1.36 2014/06/08 02:44:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.35 2014/06/08 02:02:41 enami Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.36 2014/06/08 02:44:15 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,9 @@ int	remerr;
 static int sigs[] = { SIGINT, SIGTERM, SIGQUIT };
 
 static char   *copyargs(char **);
+#ifndef IN_RCMD
 static void	sendsig(int);
+#endif
 static int	checkfd(struct pollfd *, int);
 static void	talk(int, sigset_t *, pid_t, int);
 __dead static void	usage(void);
@@ -265,6 +267,7 @@ main(int argc, char **argv)
 
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
+#ifndef IN_RCMD
 	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
 		struct sigaction sa;
 
@@ -273,6 +276,7 @@ main(int argc, char **argv)
 			(void)sigaction(sigs[i], &sa, NULL);
 		}
 	}
+#endif
 
 	if (!nflag) {
 		pid = fork();
@@ -329,7 +333,7 @@ static void
 talk(int nflag, sigset_t *oset, __pid_t pid, int rem)
 {
 	int nr, nw, nfds;
-	struct pollfd fds[2], *fdp = &fds[0];
+	struct pollfd fds[3], *fdp = &fds[0];
 	char *bp, buf[BUFSIZ];
 
 	if (!nflag && pid == 0) {
@@ -385,31 +389,48 @@ done:
 		exit(0);
 	}
 
-	(void)sigprocmask(SIG_SETMASK, oset, NULL);
-	fds[0].events = fds[1].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
-	fds[0].fd = remerr;
-	fds[1].fd = rem;
+#ifdef IN_RCMD
 	fdp = &fds[0];
+	nfds = 3;
+	fds[0].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
+	fds[0].fd = 2;
+#else
+	(void)sigprocmask(SIG_SETMASK, oset, NULL);
+	fdp = &fds[1];
 	nfds = 2;
+	fds[0].events = 0;
+#endif
+	fds[1].events = fds[2].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
+	fds[1].fd = remerr;
+	fds[2].fd = rem;
 	do {
 		if (poll(fdp, nfds, INFTIM) == -1) {
 			if (errno != EINTR)
 				err(1, "poll");
 			continue;
 		}
-		if (fds[0].events != 0 && checkfd(&fds[0], 2) == -1) {
-			nfds--;
-			fds[0].events = 0;
-			fdp = &fds[1];
-		}
-		if (fds[1].events != 0 && checkfd(&fds[1], 1) == -1) {
+		if ((fds[1].events != 0 && checkfd(&fds[1], 2) == -1)
+#ifdef IN_RCMD
+		    || (fds[0].events != 0 && checkfd(&fds[0], remerr) == -1)
+#endif
+		    ) {
 			nfds--;
 			fds[1].events = 0;
+#ifdef IN_RCMD
+			nfds--;
+			fds[0].events = 0;
+#endif
+			fdp = &fds[2];
+		}
+		if (fds[2].events != 0 && checkfd(&fds[2], 1) == -1) {
+			nfds--;
+			fds[2].events = 0;
 		}
 	}
 	while (nfds);
 }
 
+#ifndef IN_RCMD
 static void
 sendsig(int sig)
 {
@@ -418,6 +439,7 @@ sendsig(int sig)
 	signo = sig;
 	(void)write(remerr, &signo, 1);
 }
+#endif
 
 
 static char *
