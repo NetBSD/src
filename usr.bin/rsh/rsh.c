@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.34 2014/06/08 01:44:52 enami Exp $	*/
+/*	$NetBSD: rsh.c,v 1.35 2014/06/08 02:02:41 enami Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.34 2014/06/08 01:44:52 enami Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.35 2014/06/08 02:02:41 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,7 +300,7 @@ checkfd(struct pollfd *fdp, int outfd)
 
 	if (fdp->revents & (POLLNVAL|POLLERR|POLLHUP))
 		return -1;
-	   
+
 	if ((fdp->revents & POLLIN) == 0)
 		return 0;
 
@@ -416,7 +416,7 @@ sendsig(int sig)
 	char signo;
 
 	signo = sig;
-		(void)write(remerr, &signo, 1);
+	(void)write(remerr, &signo, 1);
 }
 
 
