@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.89.10.2 2014/03/26 02:00:45 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.89.10.3 2014/06/09 21:03:19 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.89.10.2 2014/03/26 02:00:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.89.10.3 2014/06/09 21:03:19 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3057,7 +3057,7 @@ armv7_setup(char *args)
 #ifdef __ARMEB__
 	    | CPU_CONTROL_EX_BEND
 #endif
-#ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
+#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
 	    | CPU_CONTROL_AFLT_ENABLE
 #endif
 	    | CPU_CONTROL_UNAL_ENABLE;
