@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.14 2014/06/09 15:48:36 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.15 2014/06/09 15:50:16 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1059,7 +1059,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	    /*IFCAP_CSUM_UDPv4_Tx |*/ IFCAP_CSUM_UDPv4_Rx;
 #endif
 
-        sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
+	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
 
 	/* Setup some of the basics */
 	sc->sc_phyno = 1;
@@ -1220,7 +1220,7 @@ smsc_activate(device_t self, enum devact act)
 {
 	struct smsc_softc *sc = device_private(self);
 
-        switch (act) {
+	switch (act) {
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ec.ec_if);
 		sc->sc_dying = 1;
