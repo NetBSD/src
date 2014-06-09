@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.2 2014/06/09 12:57:04 rmind Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.3 2014/06/09 13:03:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.2 2014/06/09 12:57:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.3 2014/06/09 13:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -204,9 +204,9 @@ pktq_rps_hash(const struct mbuf *m __unused)
  * => Returns false on failure; caller is responsible to free the packet.
  */
 bool
-pktq_enqueue(pktqueue_t *pq, struct mbuf *m, const u_int hash)
+pktq_enqueue(pktqueue_t *pq, struct mbuf *m, const u_int hash __unused)
 {
-	const unsigned cpuid = hash % ncpu;
+	const unsigned cpuid = curcpu()->ci_index /* hash % ncpu */;
 
 	KASSERT(kpreempt_disabled());
 
