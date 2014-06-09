@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.43 2014/06/07 16:36:54 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.44 2014/06/09 12:48:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.43 2014/06/07 16:36:54 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.44 2014/06/09 12:48:58 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -650,6 +650,9 @@ regexec_e(regex_t *preg, const char *string, int eflags, int nomatch,
 	size_t slen)
 {
 	int eval;
+#ifndef REG_STARTEND
+	char *buf;
+#endif
 
 	if (preg == NULL) {
 		if (defpreg == NULL)
@@ -658,11 +661,19 @@ regexec_e(regex_t *preg, const char *string, int eflags, int nomatch,
 		defpreg = preg;
 
 	/* Set anchors */
+#ifndef REG_STARTEND
+	buf = xmalloc(slen + 1);
+	(void)memcpy(buf, string, slen);
+	buf[slen] = '\0';
+	eval = regexec(defpreg, buf,
+	    nomatch ? 0 : maxnsub + 1, match, eflags);
+	free(buf);
+#else
 	match[0].rm_so = 0;
 	match[0].rm_eo = (regoff_t)slen;
-
 	eval = regexec(defpreg, string,
 	    nomatch ? 0 : maxnsub + 1, match, eflags | REG_STARTEND);
+#endif
 	switch(eval) {
 	case 0:
 		return (1);
