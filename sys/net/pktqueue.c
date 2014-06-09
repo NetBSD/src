@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.3 2014/06/09 13:03:16 rmind Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.4 2014/06/09 14:44:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,8 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * The packet queue (pktqueue) interface is a lockless IP input queue
+ * which also abstracts and handles network ISR scheduling.  It provides
+ * a mechanism to enable receiver-side packet steering (RPS).
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.3 2014/06/09 13:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.4 2014/06/09 14:44:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,10 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.3 2014/06/09 13:03:16 rmind Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/percpu.h>
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_private.h>
 
 #include <net/pktqueue.h>
 
@@ -285,7 +287,7 @@ pktq_barrier(pktqueue_t *pq)
 /*
  * pktq_flush: free mbufs in all queues.
  *
- * => The caller must ensure there are no concurrent writers or flush.
+ * => The caller must ensure there are no concurrent writers or flush calls.
  */
 void
 pktq_flush(pktqueue_t *pq)
@@ -332,12 +334,12 @@ pktq_set_maxlen(pktqueue_t *pq, size_t maxlen)
 
 	/*
 	 * At this point, the new packets are flowing into the new
-	 * queues.  However, the old queues may have same packets
-	 * present which are no longer being present.  We are going
+	 * queues.  However, the old queues may have some packets
+	 * present which are no longer being processed.  We are going
 	 * to re-enqueue them.  This may change the order of packet
 	 * arrival, but it is not considered an issue.
 	 *
-	 * There may also in-flight interrupts calling pktq_dequeue()
+	 * There may be in-flight interrupts calling pktq_dequeue()
 	 * which reference the old queues.  Issue a barrier to ensure
 	 * that we are going to be the only pcq_get() callers on the
 	 * old queues.
