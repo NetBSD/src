@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.278 2014/06/07 13:25:33 he Exp $	*/
+/*	$NetBSD: if.c,v 1.279 2014/06/09 12:57:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.278 2014/06/07 13:25:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.279 2014/06/09 12:57:04 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -2341,6 +2341,20 @@ bad:
 #if defined(INET) || defined(INET6)
 
 static int
+sysctl_pktq_maxlen(SYSCTLFN_ARGS, pktqueue_t *pq)
+{
+	u_int nmaxlen = pktq_get_count(pq, PKTQ_MAXLEN);
+	struct sysctlnode node = *rnode;
+	int error;
+
+	node.sysctl_data = &nmaxlen;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return pktq_set_maxlen(pq, nmaxlen);
+}
+
+static int
 sysctl_pktq_count(SYSCTLFN_ARGS, pktqueue_t *pq, u_int count_id)
 {
 	int count = pktq_get_count(pq, count_id);
@@ -2357,12 +2371,21 @@ sysctl_pktq_count(SYSCTLFN_ARGS, pktqueue_t *pq, u_int count_id)
 	}
 
 #if defined(INET)
-SYSCTL_NET_PKTQ(ip_pktq, maxlen, PKTQ_MAXLEN)
+static int
+sysctl_net_ip_pktq_maxlen(SYSCTLFN_ARGS)
+{
+	return sysctl_pktq_maxlen(SYSCTLFN_CALL(rnode), ip_pktq);
+}
 SYSCTL_NET_PKTQ(ip_pktq, items, PKTQ_NITEMS)
 SYSCTL_NET_PKTQ(ip_pktq, drops, PKTQ_DROPS)
 #endif
+
 #if defined(INET6)
-SYSCTL_NET_PKTQ(ip6_pktq, maxlen, PKTQ_MAXLEN)
+static int
+sysctl_net_ip6_pktq_maxlen(SYSCTLFN_ARGS)
+{
+	return sysctl_pktq_maxlen(SYSCTLFN_CALL(rnode), ip6_pktq);
+}
 SYSCTL_NET_PKTQ(ip6_pktq, items, PKTQ_NITEMS)
 SYSCTL_NET_PKTQ(ip6_pktq, drops, PKTQ_DROPS)
 #endif
