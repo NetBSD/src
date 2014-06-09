@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.13 2014/06/09 14:18:28 mlelstv Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.14 2014/06/09 15:48:36 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -835,8 +835,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	 * The following settings are used for 'turbo mode', a.k.a multiple
 	 * frames per Rx transaction (again info taken form Linux driver).
 	 */
-	if (burst_cap)
-		reg_val |= (SMSC_HW_CFG_MEF | SMSC_HW_CFG_BCE);
+	reg_val |= (SMSC_HW_CFG_MEF | SMSC_HW_CFG_BCE);
 
 	/*               
 	 * set Rx data offset to ETHER_ALIGN which will make the IP header
