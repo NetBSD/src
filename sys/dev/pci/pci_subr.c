@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.123 2014/05/30 05:04:21 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.124 2014/06/09 11:08:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.123 2014/05/30 05:04:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.124 2014/06/09 11:08:05 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -317,6 +317,8 @@ static const struct pci_class pci_subclass_system[] = {
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,   pci_interface_rtc,},
 	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG, NULL,	},
 	{ "SD Host Controller",	PCI_SUBCLASS_SYSTEM_SDHC,	NULL,	},
+	{ "IOMMU",		PCI_SUBCLASS_SYSTEM_IOMMU,	NULL,	},
+	{ "Root Complex Event Collector", PCI_SUBCLASS_SYSTEM_RCEC, NULL, },
 	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
