@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.92 2014/06/10 17:18:18 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.93 2014/06/10 17:18:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.92 2014/06/10 17:18:18 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.93 2014/06/10 17:18:45 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1186,7 +1186,7 @@ main(int argc, char *argv[])
 	struct timeval tv;
 	fd_set fdsr;
 	int width, lockfd;
-	int evil = 0;
+	int started = 0;
 	char *domainname;
 
 	setprogname(argv[0]);
@@ -1271,8 +1271,8 @@ main(int argc, char *argv[])
 			break;
 		}
 
-		if (!evil && domains->dom_alive) {
-			evil = 1;
+		if (!started && domains->dom_alive) {
+			started = 1;
 #ifdef DEBUG
 			if (!debug)
 #endif
