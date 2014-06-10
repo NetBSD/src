@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.96 2014/06/10 17:19:22 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.97 2014/06/10 17:19:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.96 2014/06/10 17:19:22 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.97 2014/06/10 17:19:36 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: ypbind.c,v 1.96 2014/06/10 17:19:22 dholland Exp $");
 #include <ifaddrs.h>
 #include <limits.h>
 #include <netdb.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,6 +133,9 @@ static unsigned long rmtcr_port;
 
 /* The ypbind service transports */
 static SVCXPRT *udptransp, *tcptransp;
+
+/* set if we get SIGHUP */
+static sig_atomic_t hupped;
 
 ////////////////////////////////////////////////////////////
 // utilities
@@ -1533,6 +1537,51 @@ checkwork(void)
 	}
 }
 
+/*
+ * Process a hangup signal.
+ *
+ * Do an extra nag_servers() for any domains that are DEAD. This way
+ * if you know things are back up you can restore service by sending
+ * ypbind a SIGHUP rather than waiting for the timeout period.
+ */
+static void
+dohup(void)
+{
+	struct domain *dom;
+
+	hupped = 0;
+	for (dom = domains; dom != NULL; dom = dom->dom_next) {
+		if (dom->dom_state == DOM_DEAD) {
+			(void)nag_servers(dom);
+		}
+	}
+}
+
+/*
+ * Receive a hangup signal.
+ */
+static void
+hup(int __unused sig)
+{
+	hupped = 1;
+}
+
+/*
+ * Initialize hangup processing.
+ */
+static void
+starthup(void)
+{
+	struct sigaction sa;
+
+	sa.sa_handler = hup;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	if (sigaction(SIGHUP, &sa, NULL) == -1) {
+		err(1, "sigaction");
+	}
+}
+
 ////////////////////////////////////////////////////////////
 // main
 
@@ -1615,6 +1664,9 @@ main(int argc, char *argv[])
 	if (lockfd == -1)
 		err(1, "Cannot create %s", _PATH_YPBIND_LOCK);
 
+	/* Accept hangups. */
+	starthup();
+
 	/* Initialize sunrpc stuff. */
 	sunrpc_setup();
 
@@ -1672,12 +1724,24 @@ main(int argc, char *argv[])
 		switch (select(width, &fdsr, NULL, NULL, &tv)) {
 		case 0:
 			/* select timed out - check for timer-based work */
+			if (hupped) {
+				dohup();
+			}
 			checkwork();
 			break;
 		case -1:
-			yp_log(LOG_WARNING, "select: %s", strerror(errno));
+			if (hupped) {
+				dohup();
+			}
+			if (errno != EINTR) {
+				yp_log(LOG_WARNING, "select: %s",
+				       strerror(errno));
+			}
 			break;
 		default:
+			if (hupped) {
+				dohup();
+			}
 			/* incoming of our own; read it */
 			if (FD_ISSET(rpcsock, &fdsr))
 				(void)handle_replies();
@@ -1716,4 +1780,3 @@ main(int argc, char *argv[])
 		}
 	}
 }
-
