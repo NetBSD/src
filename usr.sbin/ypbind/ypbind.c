@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.97 2014/06/10 17:19:36 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.98 2014/06/10 17:19:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.97 2014/06/10 17:19:36 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.98 2014/06/10 17:19:48 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -627,6 +627,12 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	/* Clear the dead/backoff state. */
 	dom->dom_losttime = 0;
 	dom->dom_backofftime = 10;
+
+	if (is_ypset == 0) {
+		yp_log(LOG_NOTICE, "Domain %s is alive; server %s",
+		       dom->dom_name,
+		       inet_ntoa(dom->dom_server_addr.sin_addr));
+	}
 
 	/*
 	 * Generate a new binding file. If this fails, forget about it.
@@ -1514,6 +1520,9 @@ checkwork(void)
 			dom->dom_state = DOM_LOST;
 			dom->dom_losttime = t;
 			dom->dom_checktime = t + 5;
+			yp_log(LOG_NOTICE, "Domain %s lost its binding to "
+			       "server %s", dom->dom_name,
+			       inet_ntoa(dom->dom_server_addr.sin_addr));
 			(void)nag_servers(dom);
 			break;
 
@@ -1521,6 +1530,9 @@ checkwork(void)
 			if (t > dom->dom_losttime + 60) {
 				dom->dom_state = DOM_DEAD;
 				dom->dom_backofftime = 10;
+				yp_log(LOG_NOTICE, "Domain %s dead; "
+				       "going to exponential backoff",
+				       dom->dom_name);
 			}
 			dom->dom_checktime = t + 5;
 			(void)nag_servers(dom);
