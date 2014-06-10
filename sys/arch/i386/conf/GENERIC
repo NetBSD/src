@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1104 2014/05/29 14:48:40 christos Exp $
+# $NetBSD: GENERIC,v 1.1105 2014/06/10 01:42:39 hikaru Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1104 $"
+#ident 		"GENERIC-$Revision: 1.1105 $"
 
 maxusers	64		# estimated number of users
 
@@ -992,6 +992,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vte*	at pci? dev ? function ?	# RDC R6040 10/100 Ethernet
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
+vmx*	at pci? dev ? function ?	# VMware VMXNET3
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
