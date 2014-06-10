@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2013/07/24 11:45:48 skrll Exp $
+# $NetBSD: Makefile,v 1.35 2014/06/10 04:28:39 he Exp $
 
 MKMAN=	no
 
@@ -70,7 +70,7 @@ LDADD.t_getpid+=        -lpthread
 
 .if (${MKRUMP} != "no")
 TESTS_C+=		t_posix_fadvise
-LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lpthread
+LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
 
 WARNS=			4
