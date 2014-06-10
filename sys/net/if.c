@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.279 2014/06/09 12:57:04 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.280 2014/06/10 09:38:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.279 2014/06/09 12:57:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.280 2014/06/10 09:38:30 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -2457,3 +2457,44 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
 }
 #endif /* INET || INET6 */
+
+static int
+if_sdl_sysctl(SYSCTLFN_ARGS)
+{
+	struct ifnet *ifp;
+	const struct sockaddr_dl *sdl;
+
+	if (namelen != 1)
+		return EINVAL;
+
+	ifp = if_byindex(name[0]);
+	if (ifp == NULL)
+		return ENODEV;
+
+	sdl = ifp->if_sadl;
+	if (sdl == NULL) {
+		*oldlenp = 0;
+		return 0;
+	}
+
+	if (oldp == NULL) {
+		*oldlenp = sdl->sdl_alen;
+		return 0;
+	}
+
+	if (*oldlenp >= sdl->sdl_alen)
+		*oldlenp = sdl->sdl_alen;
+	return sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
+}
+
+SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "sdl",
+		       SYSCTL_DESCR("Get active link-layer address"),
+		       if_sdl_sysctl, 0, NULL, 0,
+		       CTL_NET, CTL_CREATE, CTL_EOL);
+}

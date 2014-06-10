@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.62 2014/04/23 23:17:22 pooka Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.63 2014/06/10 09:38:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -226,6 +226,12 @@ struct ether_multi {
 	uint8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
+};
+
+struct ether_multi_sysctl {
+	u_int   enm_refcount;
+	uint8_t enm_addrlo[ETHER_ADDR_LEN];
+	uint8_t enm_addrhi[ETHER_ADDR_LEN];
 };
 
 /*
