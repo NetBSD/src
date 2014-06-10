@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.199 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.200 2014/06/10 09:38:30 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.199 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.200 2014/06/10 09:38:30 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.199 2014/06/05 23:48:16 rmind Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
@@ -1488,4 +1489,71 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return ifioctl_common(ifp, cmd, data);
 	}
 	return 0;
+}
+
+static int
+ether_multicast_sysctl(SYSCTLFN_ARGS)
+{
+	struct ether_multi *enm;
+	struct ether_multi_sysctl addr;
+	struct ifnet *ifp;
+	struct ethercom *ec;
+	int error;
+	size_t written;
+
+	if (namelen != 1)
+		return EINVAL;
+
+	ifp = if_byindex(name[0]);
+	if (ifp == NULL)
+		return ENODEV;
+	if (ifp->if_type != IFT_ETHER) {
+		*oldlenp = 0;
+		return 0;
+	}
+	ec = (struct ethercom *)ifp;
+
+	if (oldp == NULL) {
+		*oldlenp = ec->ec_multicnt * sizeof(addr);
+		return 0;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	error = 0;
+	written = 0;
+
+	LIST_FOREACH(enm, &ec->ec_multiaddrs, enm_list) {
+		if (written + sizeof(addr) > *oldlenp)
+			break;
+		addr.enm_refcount = enm->enm_refcount;
+		memcpy(addr.enm_addrlo, enm->enm_addrlo, ETHER_ADDR_LEN);
+		memcpy(addr.enm_addrhi, enm->enm_addrhi, ETHER_ADDR_LEN);
+		error = sysctl_copyout(l, &addr, oldp, sizeof(addr));
+		if (error)
+			break;
+		written += sizeof(addr);
+		oldp = (char *)oldp + sizeof(addr);
+	}
+
+	*oldlenp = written;
+	return error;
+}
+
+SYSCTL_SETUP(sysctl_net_ether_setup, "sysctl net.ether subtree setup")
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ether",
+		       SYSCTL_DESCR("Ethernet-specific information"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "multicast",
+		       SYSCTL_DESCR("multicast addresses"),
+		       ether_multicast_sysctl, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
 }
