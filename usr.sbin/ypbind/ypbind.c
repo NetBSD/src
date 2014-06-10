@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.95 2014/06/10 17:19:12 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.96 2014/06/10 17:19:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.95 2014/06/10 17:19:12 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.96 2014/06/10 17:19:22 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -84,16 +84,26 @@ typedef enum {
 	YPBIND_DIRECT, YPBIND_BROADCAST,
 } ypbind_mode_t;
 
+enum domainstates {
+	DOM_NEW,		/* not yet bound */
+	DOM_ALIVE,		/* bound and healthy */
+	DOM_PINGING,		/* ping outstanding */
+	DOM_LOST,		/* binding timed out, looking for a new one */
+	DOM_DEAD,		/* long-term lost, in exponential backoff */
+};
+
 struct domain {
 	struct domain *dom_next;
 
 	char dom_name[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
 	long dom_vers;
-	time_t dom_checktime;
-	time_t dom_asktime;
+	time_t dom_checktime;		/* time of next check/contact */
+	time_t dom_asktime;		/* time we were last DOMAIN'd */
+	time_t dom_losttime;		/* time the binding was lost, or 0 */
+	unsigned dom_backofftime;	/* current backoff period, when DEAD */
 	int dom_lockfd;
-	int dom_alive;
+	enum domainstates dom_state;
 	uint32_t dom_xid;
 	FILE *dom_serversfile;		/* /var/yp/binding/foo.ypservers */
 	int dom_been_ypset;		/* ypset been done on this domain? */
@@ -143,6 +153,39 @@ open_locked(const char *path, int flags, mode_t mode)
 	(void)flock(fd, LOCK_SH);
 #endif
 	return fd;
+}
+
+/*
+ * Exponential backoff for pinging servers for a dead domain.
+ *
+ * We go 10 -> 20 -> 40 -> 60 seconds, then 2 -> 4 -> 8 -> 15 -> 30 ->
+ * 60 minutes, and stay at 60 minutes. This is overengineered.
+ *
+ * With a 60 minute max backoff the response time for when things come
+ * back is not awful, but we only try (and log) about 60 times even if
+ * things are down for a whole long weekend. This is an acceptable log
+ * load, I think.
+ */
+static void
+backoff(unsigned *psecs)
+{
+	unsigned secs;
+
+	secs = *psecs;
+	if (secs < 60) {
+		secs *= 2;
+		if (secs > 60) {
+			secs = 60;
+		}
+	} else if (secs < 60 * 15) {
+		secs *= 2;
+		if (secs > 60 * 15) {
+			secs = 60 * 15;
+		}
+	} else if (secs < 60 * 60) {
+		secs *= 2;
+	}
+	*psecs = secs;
 }
 
 ////////////////////////////////////////////////////////////
@@ -198,14 +241,28 @@ ypservers_filename(const char *domain)
 // struct domain
 
 /*
- * State transition is done like this: 
+ * The state transitions of a domain work as follows:
  *
- * STATE	EVENT		ACTION			NEWSTATE	TIMEOUT
- * no binding	timeout		broadcast 		no binding	5 sec
- * no binding	answer		--			binding		60 sec
- * binding	timeout		ping server		checking	5 sec
- * checking	timeout		ping server + broadcast	checking	5 sec
- * checking	answer		--			binding		60 sec
+ * in state NEW:
+ *    nag_servers every 5 seconds
+ *    upon answer, state is ALIVE
+ *
+ * in state ALIVE:
+ *    every 60 seconds, send ping and switch to state PINGING
+ *
+ * in state PINGING:
+ *    upon answer, go to state ALIVE
+ *    if no answer in 5 seconds, go to state LOST and do nag_servers
+ *
+ * in state LOST:
+ *    do nag_servers every 5 seconds
+ *    upon answer, go to state ALIVE
+ *    if no answer in 60 seconds, go to state DEAD
+ *
+ * in state DEAD
+ *    do nag_servers every backofftime seconds (starts at 10)
+ *    upon answer go to state ALIVE
+ *    backofftime doubles (approximately) each try, with a cap of 1 hour
  */
 
 /*
@@ -263,8 +320,10 @@ domain_create(const char *name)
 	dom->dom_vers = YPVERS;
 	dom->dom_checktime = 0;
 	dom->dom_asktime = 0;
+	dom->dom_losttime = 0;
+	dom->dom_backofftime = 10;
 	dom->dom_lockfd = -1;
-	dom->dom_alive = 0;
+	dom->dom_state = DOM_NEW;
 	dom->dom_xid = unique_xid(dom);
 	dom->dom_been_ypset = 0;
 	dom->dom_serversfile = NULL;
@@ -456,35 +515,70 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	}
 
 	/*
-	 * If the domain is alive and we aren't ypset, we don't need
-	 * to do anything.
-	 *
-	 * This code is unreachable (AFAIK) unless we receive an
-	 * unsolicited ping reply from the ypserver: because dom_alive
-	 * is 0 until we have a binding, but set from 1 to 2 when we
-	 * ping, it will never normally be 1 when a reply comes in,
-	 * even a reply to a ping. In the case where we lost the
-	 * binding and are getting a reply arising from nag_servers,
-	 * we lost the binding because we never got a ping response so
-	 * in that case dom_alive will also be 2.
-	 *
-	 * This logic is clearly wrong. XXX.
+	 * If the domain is alive and we aren't being called by ypset,
+	 * we shouldn't be getting a response at all. Log it, as it
+	 * might be hostile.
 	 */
-	if (dom->dom_alive == 1 && force == 0) {
-		/*
-		 * If the reply came from the server we expect, set
-		 * dom_alive back to 1 and ping again in 60 seconds.
-		 *
-		 * If it came from somewhere else, ignore it.
-		 */
+	if (dom->dom_state == DOM_ALIVE && force == 0) {
 		if (!memcmp(&dom->dom_server_addr, raddrp,
 			    sizeof(dom->dom_server_addr))) {
-			dom->dom_alive = 1;
-			/* recheck binding in 60 sec */
-			dom->dom_checktime = time(NULL) + 60;
+			yp_log(LOG_WARNING,
+			       "Unexpected reply from server %s for domain %s",
+			       inet_ntoa(dom->dom_server_addr.sin_addr),
+			       dom->dom_name);
+		} else {
+			yp_log(LOG_WARNING,
+			       "Falsified reply from %s for domain %s",
+			       inet_ntoa(dom->dom_server_addr.sin_addr),
+			       dom->dom_name);
 		}
 		return;
 	}
+
+	/*
+	 * If we're expected a ping response, and we've got it
+	 * (meaning we aren't being called by ypset), we don't need to
+	 * do anything.
+	 */
+	if (dom->dom_state == DOM_PINGING && force == 0) {
+		/*
+		 * If the reply came from the server we expect, set
+		 * dom_state back to ALIVE and ping again in 60
+		 * seconds.
+		 *
+		 * If it came from somewhere else, log it.
+		 */
+		if (!memcmp(&dom->dom_server_addr, raddrp,
+			    sizeof(dom->dom_server_addr))) {
+			dom->dom_state = DOM_ALIVE;
+			/* recheck binding in 60 sec */
+			dom->dom_checktime = time(NULL) + 60;
+		} else {
+			yp_log(LOG_WARNING,
+			       "Falsified reply from %s for domain %s",
+			       inet_ntoa(dom->dom_server_addr.sin_addr),
+			       dom->dom_name);
+		}
+		return;
+	}
+
+#ifdef HEURISTIC
+	/*
+	 * If transitioning to the alive state from a non-alive state,
+	 * clear dom_asktime. This will help prevent any requests that
+	 * are still coming in from triggering unnecessary pings via
+	 * the HEURISTIC code.
+	 *
+	 * XXX: this may not be an adequate measure; we may need to
+	 * keep more state so we can disable the HEURISTIC code for
+	 * the first few seconds after rebinding.
+	 */
+	if (dom->dom_state == DOM_NEW ||
+	    dom->dom_state == DOM_LOST ||
+	    dom->dom_state == DOM_DEAD) {
+		dom->dom_asktime = 0;
+	}
+#endif
 
 	/*
 	 * Take the address we got the message from (or in the case of
@@ -514,8 +608,7 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	 *
 	 * 3. Either way we should not accept a response from an
 	 * arbitrary host unless we don't currently have a binding.
-	 * (The logic in the previous if statement is probably
-	 * supposed to handle this, but it doesn't currently work.)
+	 * (This is now fixed above.)
 	 *
 	 * Note that for a random unsolicited reply to work it has to
 	 * carry the XID of one of the domains we know about; but
@@ -525,7 +618,11 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	    sizeof(dom->dom_server_addr));
 	/* recheck binding in 60 seconds */
 	dom->dom_checktime = time(NULL) + 60;
-	dom->dom_alive = 1;
+	dom->dom_state = DOM_ALIVE;
+
+	/* Clear the dead/backoff state. */
+	dom->dom_losttime = 0;
+	dom->dom_backofftime = 10;
 
 	/*
 	 * Generate a new binding file. If this fails, forget about it.
@@ -641,8 +738,8 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 		return NULL;
 	}
 
-	if (dom->dom_alive == 0) {
-		DPRINTF("dead domain %s\n", arg);
+	if (dom->dom_state == DOM_NEW) {
+		DPRINTF("new domain %s\n", arg);
 		return NULL;
 	}
 
@@ -655,9 +752,16 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	 * elsewhere uses the binding file.
 	 *
 	 * Note: HEURISTIC is enabled by default.
+	 *
+	 * dholland 20140609: I think this is part of the mechanism
+	 * that causes ypbind to spam. I'm changing this logic so it
+	 * only triggers when the state is DOM_ALIVE: if the domain
+	 * is new, lost, or dead we shouldn't send more requests than
+	 * the ones already scheduled, and if we're already in the
+	 * middle of pinging there's no point doing it again.
 	 */
 	(void)time(&now);
-	if (now < dom->dom_asktime + 5) {
+	if (dom->dom_state == DOM_ALIVE && now < dom->dom_asktime + 5) {
 		/*
 		 * Hmm. More than 2 requests in 5 seconds have indicated
 		 * that my binding is possibly incorrect.
@@ -1263,7 +1367,7 @@ nag_servers(struct domain *dom)
 		removelock(dom);
 	}
 
-	if (dom->dom_alive == 2) {
+	if (dom->dom_state == DOM_PINGING || dom->dom_state == DOM_LOST) {
 		/*
 		 * This resolves the following situation:
 		 * ypserver on other subnet was once bound,
@@ -1300,8 +1404,6 @@ nag_servers(struct domain *dom)
 
 /*
  * Send a ping message to a domain's current ypserver.
- *
- * Note that dom_alive is 2 while waiting for the response.
  */
 static int
 ping(struct domain *dom)
@@ -1352,7 +1454,6 @@ ping(struct domain *dom)
 	}
 	AUTH_DESTROY(rpcua);
 
-	dom->dom_alive = 2;
 	DPRINTF("ping %x\n", dom->dom_server_addr.sin_addr.s_addr);
 
 	if (sendto(pingsock, buf, outlen, 0, 
@@ -1371,6 +1472,13 @@ ping(struct domain *dom)
  * server via nag_servers.
  *
  * Try again in five seconds.
+ *
+ * If we get back here and the state is still DOM_PINGING, it means
+ * we didn't receive a ping response within five seconds. Declare the
+ * binding lost. If the binding is already lost, and it's been lost
+ * for 60 seconds, switch to DOM_DEAD and begin exponential backoff.
+ * The exponential backoff starts at 10 seconds and tops out at one
+ * hour; see above.
  */
 static void
 checkwork(void)
@@ -1382,14 +1490,46 @@ checkwork(void)
 
 	(void)time(&t);
 	for (dom = domains; dom != NULL; dom = dom->dom_next) {
-		if (dom->dom_checktime < t) {
-			if (dom->dom_alive == 1)
-				(void)ping(dom);
-			else
-				(void)nag_servers(dom);
-			(void)time(&t);
-			dom->dom_checktime = t + 5;
+		if (dom->dom_checktime >= t) {
+			continue;
 		}
+		switch (dom->dom_state) {
+		    case DOM_NEW:
+			/* XXX should be a timeout for this state */
+			dom->dom_checktime = t + 5;
+			(void)nag_servers(dom);
+			break;
+
+		    case DOM_ALIVE:
+			dom->dom_state = DOM_PINGING;
+			dom->dom_checktime = t + 5;
+			(void)ping(dom);
+			break;
+
+		    case DOM_PINGING:
+			dom->dom_state = DOM_LOST;
+			dom->dom_losttime = t;
+			dom->dom_checktime = t + 5;
+			(void)nag_servers(dom);
+			break;
+
+		    case DOM_LOST:
+			if (t > dom->dom_losttime + 60) {
+				dom->dom_state = DOM_DEAD;
+				dom->dom_backofftime = 10;
+			}
+			dom->dom_checktime = t + 5;
+			(void)nag_servers(dom);
+			break;
+
+		    case DOM_DEAD:
+			dom->dom_checktime = t + dom->dom_backofftime;
+			backoff(&dom->dom_backofftime);
+			(void)nag_servers(dom);
+			break;
+		}
+		/* re-fetch the time in case we hung sending packets */
+		(void)time(&t);
 	}
 }
 
@@ -1566,7 +1706,7 @@ main(int argc, char *argv[])
 		 * on this, which means that if the default domain
 		 * is dead upstream boot will hang indefinitely.
 		 */
-		if (!started && domains->dom_alive) {
+		if (!started && domains->dom_state == DOM_ALIVE) {
 			started = 1;
 #ifdef DEBUG
 			if (!debug)
