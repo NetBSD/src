@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.90 2011/08/30 17:06:22 plunky Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.91 2014/06/10 17:18:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.90 2011/08/30 17:06:22 plunky Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.91 2014/06/10 17:18:02 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -101,8 +101,6 @@ struct domain {
 };
 
 #define BUFSIZE		1400
-
-static char *domainname;
 
 static struct domain *domains;
 static int check;
@@ -1173,6 +1171,7 @@ main(int argc, char *argv[])
 	fd_set fdsr;
 	int width, lockfd;
 	int evil = 0;
+	char *domainname;
 
 	setprogname(argv[0]);
 	(void)yp_get_default_domain(&domainname);
