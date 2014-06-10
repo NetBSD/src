@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.91 2014/06/10 17:18:02 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.92 2014/06/10 17:18:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.91 2014/06/10 17:18:02 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.92 2014/06/10 17:18:18 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -342,6 +342,28 @@ purge_bindingdir(const char *dirpath)
 // sunrpc twaddle
 
 /*
+ * Check if the info coming in is (at least somewhat) valid.
+ */
+static int
+rpc_is_valid_response(char *name, struct sockaddr_in *addr)
+{
+	if (name == NULL) {
+		return 0;
+	}
+
+	if (_yp_invalid_domain(name)) {
+		return 0;
+	}
+
+	/* don't support insecure servers by default */
+	if (!insecure && ntohs(addr->sin_port) >= IPPORT_RESERVED) {
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
  * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
  */
 static void
@@ -357,15 +379,9 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	DPRINTF("returned from %s about %s\n",
 		inet_ntoa(raddrp->sin_addr), dom_name);
 
-	if (dom_name == NULL)
+	if (!rpc_is_valid_response(dom_name, raddrp)) {
 		return;
-
-	if (_yp_invalid_domain(dom_name))
-		return;	
-
-		/* don't support insecure servers by default */
-	if (!insecure && ntohs(raddrp->sin_port) >= IPPORT_RESERVED)
-		return;
+	}
 
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
 		if (!strcmp(dom->dom_name, dom_name))
