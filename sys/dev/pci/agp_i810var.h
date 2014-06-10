@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.4 2014/05/27 03:17:33 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.5 2014/06/10 14:00:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -37,8 +37,9 @@
 struct agp_i810_softc {
 	struct pci_attach_args vga_pa;	/* integrated graphics device args */
 	int chiptype;			/* chipset family: i810, i830, &c. */
+	uint32_t stolen;		/* pages of stolen graphics memory */
 
-	/* Memory-mapped I/O for device registers.  */
+	/* Memory-mapped I/O for integrated graphics device registers.  */
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -53,12 +54,15 @@ struct agp_i810_softc {
 	bus_space_handle_t flush_bsh;
 	bus_addr_t flush_addr;
 
-	uint32_t initial_aperture;	/* aperture size at startup */
-	struct agp_gatt *gatt;		/* AGP graphics addr. trans. tbl. */
+	/* i810-only fields.  */
+	struct agp_gatt *gatt;		/* i810-only OS-allocated GTT */
 	uint32_t dcache_size;		/* i810-only on-chip memory size */
-	uint32_t stolen;		/* num. GTT entries for stolen mem. */
 
-	uint32_t pgtblctl;		/* saved PGTBL_CTL?  XXX unused */
+	/* XXX Kludge to work around broken X servers.  */
+	pcireg_t pgtblctl;
+
+	/* XXX Vestige of unfinished powerhook?  */
+	uint32_t pgtblctl_resume_hack;
 };
 
 extern struct agp_softc	*agp_i810_sc;
