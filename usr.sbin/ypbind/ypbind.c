@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.94 2014/06/10 17:19:00 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.95 2014/06/10 17:19:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.94 2014/06/10 17:19:00 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.95 2014/06/10 17:19:12 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -102,24 +102,33 @@ struct domain {
 
 #define BUFSIZE		1400
 
+/* the list of all domains */
 static struct domain *domains;
 static int check;
 
+/* option settings */
 static ypbind_mode_t default_ypbindmode;
-
 static int allow_local_ypset = 0, allow_any_ypset = 0;
 static int insecure;
 
+/* the sockets we use to interact with servers */
 static int rpcsock, pingsock;
+
+/* stuff used for manually interacting with servers */
 static struct rmtcallargs rmtca;
 static struct rmtcallres rmtcr;
 static bool_t rmtcr_outval;
 static unsigned long rmtcr_port;
+
+/* The ypbind service transports */
 static SVCXPRT *udptransp, *tcptransp;
 
 ////////////////////////////////////////////////////////////
 // utilities
 
+/*
+ * Combo of open() and flock().
+ */
 static int
 open_locked(const char *path, int flags, mode_t mode)
 {
@@ -148,6 +157,9 @@ static int debug;
 
 static void yp_log(int, const char *, ...) __printflike(2, 3);
 
+/*
+ * Log some stuff, to syslog or stderr depending on the debug setting.
+ */
 static void
 yp_log(int pri, const char *fmt, ...)
 {
@@ -185,6 +197,20 @@ ypservers_filename(const char *domain)
 ////////////////////////////////////////////////////////////
 // struct domain
 
+/*
+ * State transition is done like this: 
+ *
+ * STATE	EVENT		ACTION			NEWSTATE	TIMEOUT
+ * no binding	timeout		broadcast 		no binding	5 sec
+ * no binding	answer		--			binding		60 sec
+ * binding	timeout		ping server		checking	5 sec
+ * checking	timeout		ping server + broadcast	checking	5 sec
+ * checking	answer		--			binding		60 sec
+ */
+
+/*
+ * Look up a domain by the XID we assigned it.
+ */
 static struct domain *
 domain_find(uint32_t xid)
 {
@@ -196,6 +222,11 @@ domain_find(uint32_t xid)
 	return dom;
 }
 
+/*
+ * Pick an XID for a domain.
+ *
+ * XXX: this should just generate a random number.
+ */
 static uint32_t
 unique_xid(struct domain *dom)
 {
@@ -208,6 +239,10 @@ unique_xid(struct domain *dom)
 	return tmp_xid;
 }
 
+/*
+ * Construct a new domain. Adds it to the global linked list of all
+ * domains.
+ */
 static struct domain *
 domain_create(const char *name)
 {
@@ -263,6 +298,10 @@ domain_create(const char *name)
 ////////////////////////////////////////////////////////////
 // locks
 
+/*
+ * Open a new binding file. Does not write the contents out; the
+ * caller (there's only one) does that.
+ */
 static int
 makelock(struct domain *dom)
 {
@@ -284,6 +323,9 @@ makelock(struct domain *dom)
 	return fd;
 }
 
+/*
+ * Remove a binding file.
+ */
 static void
 removelock(struct domain *dom)
 {
@@ -295,12 +337,14 @@ removelock(struct domain *dom)
 }
 
 /*
- * purge_bindingdir: remove old binding files (i.e. "rm BINDINGDIR\/\*.[0-9]")
+ * purge_bindingdir: remove old binding files (i.e. "rm *.[0-9]" in BINDINGDIR)
  *
- * local YP functions [e.g. yp_master()] will fail without even talking
- * to ypbind if there is a stale (non-flock'd) binding file present.
- * we have to scan the entire BINDINGDIR for binding files, because
- * ypbind may bind more than just the yp_get_default_domain() domain.
+ * The local YP functions [e.g. yp_master()] will fail without even
+ * talking to ypbind if there is a stale (non-flock'd) binding file
+ * present.
+ *
+ * We have to remove all binding files in BINDINGDIR, not just the one
+ * for the default domain.
  */
 static int
 purge_bindingdir(const char *dirpath)
@@ -364,7 +408,17 @@ rpc_is_valid_response(char *name, struct sockaddr_in *addr)
 }
 
 /*
- * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
+ * Take note of the fact that we've received a reply from a ypserver.
+ * Or, in the case of being ypset, that we've been ypset, which
+ * functions much the same.
+ *
+ * Note that FORCE is set if and only if IS_YPSET is set.
+ *
+ * This function has also for the past 20+ years carried the annotation
+ *
+ *      LOOPBACK IS MORE IMPORTANT: PUT IN HACK
+ *
+ * whose meaning isn't entirely clear.
  */
 static void
 rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
@@ -379,26 +433,50 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	DPRINTF("returned from %s about %s\n",
 		inet_ntoa(raddrp->sin_addr), dom_name);
 
+	/* validate some stuff */
 	if (!rpc_is_valid_response(dom_name, raddrp)) {
 		return;
 	}
 
+	/* look for the domain */
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
 		if (!strcmp(dom->dom_name, dom_name))
 			break;
 
+	/* if not found, create it, but only if FORCE; otherwise ignore */
 	if (dom == NULL) {
 		if (force == 0)
 			return;
 		dom = domain_create(dom_name);
 	}
 
+	/* the domain needs to know if it's been explicitly ypset */
 	if (is_ypset) {
 		dom->dom_been_ypset = 1;
 	}
 
-	/* soft update, alive */
+	/*
+	 * If the domain is alive and we aren't ypset, we don't need
+	 * to do anything.
+	 *
+	 * This code is unreachable (AFAIK) unless we receive an
+	 * unsolicited ping reply from the ypserver: because dom_alive
+	 * is 0 until we have a binding, but set from 1 to 2 when we
+	 * ping, it will never normally be 1 when a reply comes in,
+	 * even a reply to a ping. In the case where we lost the
+	 * binding and are getting a reply arising from nag_servers,
+	 * we lost the binding because we never got a ping response so
+	 * in that case dom_alive will also be 2.
+	 *
+	 * This logic is clearly wrong. XXX.
+	 */
 	if (dom->dom_alive == 1 && force == 0) {
+		/*
+		 * If the reply came from the server we expect, set
+		 * dom_alive back to 1 and ping again in 60 seconds.
+		 *
+		 * If it came from somewhere else, ignore it.
+		 */
 		if (!memcmp(&dom->dom_server_addr, raddrp,
 			    sizeof(dom->dom_server_addr))) {
 			dom->dom_alive = 1;
@@ -407,12 +485,56 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 		}
 		return;
 	}
-	
+
+	/*
+	 * Take the address we got the message from (or in the case of
+	 * ypset, the explicit address we were given) as the server
+	 * address for this domain, mark the domain alive, and we'll
+	 * check it again in 60 seconds.
+	 *
+	 * XXX: it looks like if we get a random unsolicited reply
+	 * from somewhere, we'll silently switch to that server
+	 * address, regardless of merit.
+	 *
+	 * 1. If we have a foo.ypservers file the address should be
+	 * checked against it and rejected if it's not one of the
+	 * addresses of one of the listed hostnames. Note that it
+	 * might not be the same address we sent to; even fairly smart
+	 * UDP daemons don't always handle multihomed hosts correctly
+	 * and we can't expect sunrpc code to do anything intelligent
+	 * at all.
+	 *
+	 * 2. If we're in broadcast mode the address should be
+	 * checked against the local addresses and netmasks so we
+	 * don't accept responses from Mars.
+	 *
+	 * 2a. If we're in broadcast mode and we've been ypset, we
+	 * should not accept anything else until we drop the ypset
+	 * state for not responding.
+	 *
+	 * 3. Either way we should not accept a response from an
+	 * arbitrary host unless we don't currently have a binding.
+	 * (The logic in the previous if statement is probably
+	 * supposed to handle this, but it doesn't currently work.)
+	 *
+	 * Note that for a random unsolicited reply to work it has to
+	 * carry the XID of one of the domains we know about; but
+	 * those values are predictable.
+	 */
 	(void)memcpy(&dom->dom_server_addr, raddrp,
 	    sizeof(dom->dom_server_addr));
 	/* recheck binding in 60 seconds */
 	dom->dom_checktime = time(NULL) + 60;
 	dom->dom_alive = 1;
+
+	/*
+	 * Generate a new binding file. If this fails, forget about it.
+	 * (But we keep the binding and we'll report it to anyone who
+	 * asks via the ypbind service.) XXX: this will interact badly,
+	 * maybe very badly, with the code in HEURISTIC.
+	 *
+	 * Note that makelock() doesn't log on failure.
+	 */
 
 	if (dom->dom_lockfd != -1)
 		(void)close(dom->dom_lockfd);
@@ -420,10 +542,6 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	if ((fd = makelock(dom)) == -1)
 		return;
 
-	/*
-	 * ok, if BINDINGDIR exists, and we can create the binding file,
-	 * then write to it..
-	 */
 	dom->dom_lockfd = fd;
 
 	iov[0].iov_base = &(udptransp->xp_port);
@@ -450,6 +568,10 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	}
 }
 
+/*
+ * The NULL call: do nothing. This is obliged to exist because of
+ * sunrpc silliness.
+ */
 static void *
 /*ARGSUSED*/
 ypbindproc_null_2(SVCXPRT *transp, void *argp)
@@ -461,6 +583,9 @@ ypbindproc_null_2(SVCXPRT *transp, void *argp)
 	return (void *)&res;
 }
 
+/*
+ * The DOMAIN call: look up the ypserver for a specified domain.
+ */
 static void *
 /*ARGSUSED*/
 ypbindproc_domain_2(SVCXPRT *transp, void *argp)
@@ -472,12 +597,23 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	int count;
 
 	DPRINTF("ypbindproc_domain_2 %s\n", arg);
+
+	/* Reject invalid domains. */
 	if (_yp_invalid_domain(arg))
 		return NULL;
 
 	(void)memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
 
+	/*
+	 * Look for the domain. XXX: Behave erratically if we have
+	 * more than 100 domains. The intent here is to avoid allowing
+	 * arbitrary incoming requests to create more than 100
+	 * domains; but this logic means that if we legitimately have
+	 * more than 100 (e.g. via ypset) we'll only actually bind the
+	 * first 100 and the rest will fail. The test on 'count' should
+	 * be moved further down.
+	 */
 	for (count = 0, dom = domains;
 	    dom != NULL;
 	    dom = dom->dom_next, count++) {
@@ -487,6 +623,16 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 			break;
 	}
 
+	/*
+	 * If the domain doesn't exist, create it, then fail the call
+	 * because we have no information yet.
+	 *
+	 * Set "check" so that checkwork() will run and look for a
+	 * server.
+	 *
+	 * XXX: like during startup there's a spurious call to
+	 * removelock() after domain_create().
+	 */
 	if (dom == NULL) {
 		dom = domain_create(arg);
 		removelock(dom);
@@ -501,6 +647,15 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	}
 
 #ifdef HEURISTIC
+	/*
+	 * Keep track of the last time we were explicitly asked about
+	 * this domain. If it happens a lot, force a ping. This works
+	 * (or "works") because we only get asked specifically when
+	 * things aren't going; otherwise the client code in libc and
+	 * elsewhere uses the binding file.
+	 *
+	 * Note: HEURISTIC is enabled by default.
+	 */
 	(void)time(&now);
 	if (now < dom->dom_asktime + 5) {
 		/*
@@ -528,6 +683,19 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	return &res;
 }
 
+/*
+ * The SETDOM call: ypset.
+ *
+ * Unless -ypsetme was given on the command line, this is rejected;
+ * even then it's only allowed from localhost unless -ypset was
+ * given on the command line.
+ *
+ * Allowing anyone anywhere to ypset you (and therefore provide your
+ * password file and such) is a horrible thing and it isn't clear to
+ * me why this functionality even exists.
+ *
+ * ypset from localhost has some but limited utility.
+ */
 static void *
 ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 {
@@ -538,6 +706,10 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	(void)memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
 	DPRINTF("ypbindproc_setdom_2 from %s\n", inet_ntoa(fromsin->sin_addr));
+
+	/*
+	 * Reject unless enabled.
+	 */
 
 	if (allow_any_ypset) {
 		/* nothing */
@@ -552,16 +724,27 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 		return NULL;
 	}
 
+	/* Make a "security" check. */
 	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED) {
 		DPRINTF("ypset from unprivileged port denied\n");
 		return &res;
 	}
 
+	/* Ignore requests we don't understand. */
 	if (sd->ypsetdom_vers != YPVERS) {
 		DPRINTF("ypset with wrong version denied\n");
 		return &res;
 	}
 
+	/*
+	 * Fetch the arguments out of the xdr-decoded blob and call
+	 * rpc_received(), setting FORCE so that the domain will be
+	 * created if we don't already know about it, and also saying
+	 * that it's actually a ypset.
+	 *
+	 * Effectively we're telilng rpc_received() that we got an
+	 * RPC response from the server specified by ypset.
+	 */
 	(void)memset(&bindsin, 0, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
 	bindsin.sin_len = sizeof(bindsin);
@@ -575,6 +758,13 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	return &res;
 }
 
+/*
+ * Dispatcher for the ypbind service.
+ *
+ * There are three calls: NULL, which does nothing, DOMAIN, which
+ * gets the binding for a particular domain, and SETDOM, which
+ * does ypset.
+ */
 static void
 ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 {
@@ -636,6 +826,12 @@ ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 	return;
 }
 
+/*
+ * Set up sunrpc stuff.
+ *
+ * This sets up the ypbind service (both TCP and UDP) and also opens
+ * the sockets we use for talking to ypservers.
+ */
 static void
 sunrpc_setup(void)
 {
@@ -684,6 +880,10 @@ sunrpc_setup(void)
 ////////////////////////////////////////////////////////////
 // operational logic
 
+/*
+ * Broadcast an RPC packet to hopefully contact some servers for a
+ * domain.
+ */
 static int
 broadcast(char *buf, int outlen)
 {
@@ -734,6 +934,13 @@ broadcast(char *buf, int outlen)
 	return (0);
 }
 
+/*
+ * Send an RPC packet to all the configured (in /var/yp/foo.ypservers)
+ * servers for a domain.
+ *
+ * XXX: we should read and parse the file up front and reread it only
+ * if it changes.
+ */
 static int
 direct(char *buf, int outlen, struct domain *dom)
 {
@@ -815,6 +1022,11 @@ direct(char *buf, int outlen, struct domain *dom)
 	return 0;
 }
 
+/*
+ * Send an RPC packet to the server that's been selected with ypset.
+ * (This is only used when in broadcast mode and when ypset is
+ * allowed.)
+ */
 static int
 direct_set(char *buf, int outlen, struct domain *dom)
 {
@@ -871,6 +1083,9 @@ direct_set(char *buf, int outlen, struct domain *dom)
 	return 0;
 }
 
+/*
+ * Receive and dispatch packets on the general RPC socket.
+ */
 static enum clnt_stat
 handle_replies(void)
 {
@@ -925,6 +1140,9 @@ try_again:
 	return RPC_SUCCESS;
 }
 
+/*
+ * Receive and dispatch packets on the ping socket.
+ */
 static enum clnt_stat
 handle_ping(void)
 {
@@ -979,6 +1197,14 @@ try_again:
 	return RPC_SUCCESS;
 }
 
+/*
+ * Contact all known servers for a domain in the hopes that one of
+ * them's awake. Also, if we previously had a binding but it timed
+ * out, try the portmapper on that host in case ypserv moved ports for
+ * some reason.
+ *
+ * As a side effect, wipe out any existing binding file.
+ */
 static int
 nag_servers(struct domain *dom)
 {
@@ -1072,6 +1298,11 @@ nag_servers(struct domain *dom)
 	return -1;
 }
 
+/*
+ * Send a ping message to a domain's current ypserver.
+ *
+ * Note that dom_alive is 2 while waiting for the response.
+ */
 static int
 ping(struct domain *dom)
 {
@@ -1133,14 +1364,13 @@ ping(struct domain *dom)
 }
 
 /*
- * State transition is done like this: 
+ * Scan for timer-based work to do.
  *
- * STATE	EVENT		ACTION			NEWSTATE	TIMEOUT
- * no binding	timeout		broadcast 		no binding	5 sec
- * no binding	answer		--			binding		60 sec
- * binding	timeout		ping server		checking	5 sec
- * checking	timeout		ping server + broadcast	checking	5 sec
- * checking	answer		--			binding		60 sec
+ * If the domain is currently alive, ping the server we're currently
+ * bound to. Otherwise, try all known servers and/or broadcast for a
+ * server via nag_servers.
+ *
+ * Try again in five seconds.
  */
 static void
 checkwork(void)
@@ -1166,6 +1396,9 @@ checkwork(void)
 ////////////////////////////////////////////////////////////
 // main
 
+/*
+ * Usage message.
+ */
 __dead static void
 usage(void)
 {
@@ -1180,6 +1413,9 @@ usage(void)
 	exit(1);
 }
 
+/*
+ * Main.
+ */
 int
 main(int argc, char *argv[])
 {
@@ -1190,6 +1426,10 @@ main(int argc, char *argv[])
 	char *domainname;
 
 	setprogname(argv[0]);
+
+	/*
+	 * Process arguments.
+	 */
 
 	default_ypbindmode = YPBIND_DIRECT;
 	while (--argc) {
@@ -1213,33 +1453,69 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/*
+	 * Look up the name of the default domain.
+	 */
+
 	(void)yp_get_default_domain(&domainname);
 	if (domainname[0] == '\0')
 		errx(1, "Domainname not set. Aborting.");
 	if (_yp_invalid_domain(domainname))
 		errx(1, "Invalid domainname: %s", domainname);
 
-	/* initialise syslog */
+	/*
+	 * Start things up.
+	 */
+
+	/* Open the system log. */
 	openlog("ypbind", LOG_PERROR | LOG_PID, LOG_DAEMON);
 
-	/* acquire ypbind.lock */
+	/* Acquire /var/run/ypbind.lock. */
 	lockfd = open_locked(_PATH_YPBIND_LOCK, O_CREAT|O_RDWR|O_TRUNC, 0644);
 	if (lockfd == -1)
 		err(1, "Cannot create %s", _PATH_YPBIND_LOCK);
 
-	/* initialize sunrpc stuff */
+	/* Initialize sunrpc stuff. */
 	sunrpc_setup();
 
-	/* blow away old bindings in BINDINGDIR */
+	/* Clean out BINDINGDIR, deleting all existing (now stale) bindings */
 	if (purge_bindingdir(BINDINGDIR) < 0)
-		errx(1, "unable to purge old bindings from %s", BINDINGDIR);
+		errx(1, "Unable to purge old bindings from %s", BINDINGDIR);
 
-	/* build initial domain binding, make it "unsuccessful" */
+	/*
+	 * We start with one binding, for the default domain. It starts
+	 * out "unsuccessful".
+	 *
+	 * XXX: domain_create adds the new domain to 'domains' (the
+	 * global linked list) and therefore we shouldn't assign
+	 * 'domains' again on return.
+	 */
+
 	domains = domain_create(domainname);
+
+	/*
+	 * Delete the lock for the default domain again, just in case something
+	 * magically caused it to appear since purge_bindingdir() was called.
+	 * XXX: this is useless and redundant; remove it.
+	 */
 	removelock(domains);
 
+	/*
+	 * Main loop. Wake up at least once a second and check for
+	 * timer-based work to do (checkwork) and also handle incoming
+	 * responses from ypservers and any RPCs made to the ypbind
+	 * service.
+	 *
+	 * There are two sockets used for ypserver traffic: one for
+	 * pings and one for everything else. These call XDR manually
+	 * for encoding and are *not* dispatched via the sunrpc
+	 * libraries.
+	 *
+	 * The ypbind serivce *is* dispatched via the sunrpc libraries.
+	 * svc_getreqset() does whatever internal muck and ultimately
+	 * ypbind service calls arrive at ypbindprog_2().
+	 */
 	checkwork();
-
 	for (;;) {
 		width = svc_maxfd;
 		if (rpcsock > width)
@@ -1255,22 +1531,41 @@ main(int argc, char *argv[])
 
 		switch (select(width, &fdsr, NULL, NULL, &tv)) {
 		case 0:
+			/* select timed out - check for timer-based work */
 			checkwork();
 			break;
 		case -1:
 			yp_log(LOG_WARNING, "select: %s", strerror(errno));
 			break;
 		default:
+			/* incoming of our own; read it */
 			if (FD_ISSET(rpcsock, &fdsr))
 				(void)handle_replies();
 			if (FD_ISSET(pingsock, &fdsr))
 				(void)handle_ping();
+
+			/* read any incoming packets for the ypbind service */
 			svc_getreqset(&fdsr);
+
+			/*
+			 * Only check for timer-based work if
+			 * something in the incoming RPC logic said
+			 * to. This might be just a hack to avoid
+			 * scanning the list unnecessarily, but I
+			 * suspect it's also a hack to cover wrong
+			 * state logic. - dholland 20140609
+			 */
 			if (check)
 				checkwork();
 			break;
 		}
 
+		/*
+		 * Defer daemonizing until the default domain binds
+		 * successfully. XXX: there seems to be no timeout
+		 * on this, which means that if the default domain
+		 * is dead upstream boot will hang indefinitely.
+		 */
 		if (!started && domains->dom_alive) {
 			started = 1;
 #ifdef DEBUG
@@ -1281,3 +1576,4 @@ main(int argc, char *argv[])
 		}
 	}
 }
+
