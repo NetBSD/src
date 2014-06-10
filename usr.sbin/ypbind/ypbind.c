@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.93 2014/06/10 17:18:45 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.94 2014/06/10 17:19:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.93 2014/06/10 17:18:45 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.94 2014/06/10 17:19:00 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1190,14 +1190,8 @@ main(int argc, char *argv[])
 	char *domainname;
 
 	setprogname(argv[0]);
-	(void)yp_get_default_domain(&domainname);
-	if (domainname[0] == '\0')
-		errx(1, "Domainname not set. Aborting.");
-	if (_yp_invalid_domain(domainname))
-		errx(1, "Invalid domainname: %s", domainname);
 
 	default_ypbindmode = YPBIND_DIRECT;
-
 	while (--argc) {
 		++argv;
 		if (!strcmp("-insecure", *argv)) {
@@ -1218,6 +1212,12 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	(void)yp_get_default_domain(&domainname);
+	if (domainname[0] == '\0')
+		errx(1, "Domainname not set. Aborting.");
+	if (_yp_invalid_domain(domainname))
+		errx(1, "Invalid domainname: %s", domainname);
 
 	/* initialise syslog */
 	openlog("ypbind", LOG_PERROR | LOG_PID, LOG_DAEMON);
