@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.112 2014/06/08 17:33:24 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.113 2014/06/10 18:27:41 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.112 2014/06/08 17:33:24 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.113 2014/06/10 18:27:41 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -562,9 +562,11 @@ cpu_boot_secondary_processors(void)
 		delay(1000);
 		sync_tick = 1;
 		membar_Sync();
-		settick(0);
+		if (CPU_ISSUN4U || CPU_ISSUN4US)
+			settick(0);
 		if (ci->ci_system_clockrate[0] != 0)
-			setstick(0);
+			if (CPU_ISSUN4U || CPU_ISSUN4US)
+				setstick(0);
 
 		setpstate(pstate);
 
@@ -592,9 +594,11 @@ cpu_hatch(void)
 	while (sync_tick == 0) {
 		/* we do nothing here */
 	}
-	settick(0);
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
+		settick(0);
 	if (curcpu()->ci_system_clockrate[0] != 0) {
-		setstick(0);
+		if (CPU_ISSUN4U || CPU_ISSUN4US)
+			setstick(0);
 		stickintr_establish(PIL_CLOCK, stickintr);
 	} else {
 		tickintr_establish(PIL_CLOCK, tickintr);
