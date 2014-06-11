@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.92 2014/06/11 17:01:31 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.93 2014/06/11 17:02:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.92 2014/06/11 17:01:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.93 2014/06/11 17:02:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1414,7 +1414,7 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	case AGP_I810_MEMTYPE_MAIN:
 	case AGP_I810_MEMTYPE_HWCURSOR:
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			agp_i810_unbind_page(sc, mem->am_offset + i);
+			(void)agp_i810_unbind_page(sc, mem->am_offset + i);
 		break;
 	case AGP_I810_MEMTYPE_DCACHE:
 		KASSERT(isc->chiptype == CHIP_I810);
