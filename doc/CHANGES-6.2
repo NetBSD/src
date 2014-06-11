@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.117 2014/06/06 05:10:59 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.118 2014/06/11 15:47:54 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2887,3 +2887,17 @@ crypto/external/bsd/openssl/lib/libcrypto/sha.inc	1.3
 	CVE-2014-0195, CVE-2014-3470 and fix some double free.
 	Avoid NULL dereference. (FreeBSD SA14:10).
 	[christos, ticket #1078]
+
+sys/arch/mips/include/pmap.h			1.63
+sys/arch/mips/mips/pmap.c			1.214
+sys/arch/mips/mips/pmap_segtab.c		1.8
+
+	Deal with incompatible cache aliases. Hopefully this addresses the
+	instability reported in PR#44900, PR#46890 and PR#48628.
+	[skrll, ticket #1068]
+
+external/mit/xorg/lib/fontconfig/etc/fonts.conf	1.7 via patch
+
+	Also look in new pkgsrc default path, /usr/pkg/share/fonts.
+	Noted by tsutsui.
+	[wiz, ticket #1077]
