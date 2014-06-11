@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.86 2014/06/10 22:02:58 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.87 2014/06/11 13:15:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.86 2014/06/10 22:02:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.87 2014/06/11 13:15:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,12 +484,12 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	/* Map the GTT, from either part of the MMIO region or its own BAR.  */
 	if (gtt_bar == 0) {
 		isc->gtt_bst = isc->bst;
-		if (isc->gtt_size < (mmadr_size - gtt_off)) {
+		if ((mmadr_size - gtt_off) < isc->gtt_size) {
 			aprint_error_dev(self, "GTTMMADR too small for GTT"
-			    ": %"PRIxMAX" < (%"PRIxMAX" - %"PRIxMAX")\n",
-			    (uintmax_t)isc->gtt_size,
+			    ": (%"PRIxMAX" - %"PRIxMAX") < %"PRIxMAX"\n",
 			    (uintmax_t)mmadr_size,
-			    (uintmax_t)gtt_off);
+			    (uintmax_t)gtt_off,
+			    (uintmax_t)isc->gtt_size);
 			error = ENXIO;
 			goto fail4;
 		}
