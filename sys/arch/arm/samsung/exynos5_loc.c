@@ -237,23 +237,3 @@ const struct exyo_locinfo exynos5_i2c_locinfo = {
 };
 
 
-/* usb locators */
-const struct exyo_usb_locinfo exynos5_usb_locinfo = {
-	.uloc_pmuregs_offset	= EXYNOS5_ALIVE_OFFSET,
-	.uloc_sysregs_offset	= EXYNOS5_SYSREG_OFFSET,
-
-	.uloc_ehci_offset	= EXYNOS5_USB2_HOST_EHCI_OFFSET,
-	.uloc_ohci_offset	= EXYNOS5_USB2_HOST_OHCI_OFFSET,
-	.uloc_usbotg_offset	= EXYNOS5_USB2_DEVICE_LINK_OFFSET,
-	.uloc_usb2phy_offset	= EXYNOS5_USB2_DEVICE_LINK_OFFSET,
-
-	.uloc_usbhost_irq	= IRQ_USB_HOST20,
-	.uloc_usbotg_irq	= IRQ_USBOTG,
-	.uloc_usb3_irq		= IRQ_USB_DRD30,
-
-	.uloc_usb3_xhci0_offset	= EXYNOS5_USB3_XHCI0_OFFSET,
-	.uloc_usb3_xhci1_offset	= EXYNOS5_USB3_XHCI1_OFFSET,
-	.uloc_usb3_phy0_offset	= EXYNOS5_USB3_PHY0_OFFSET,
-	.uloc_usb3_phy1_offset	= EXYNOS5_USB3_PHY1_OFFSET,
-};
-
