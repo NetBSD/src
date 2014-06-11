@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.89 2014/06/11 16:45:06 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.90 2014/06/11 16:48:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.89 2014/06/11 16:45:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.90 2014/06/11 16:48:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1195,6 +1195,8 @@ agp_i810_free_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 	switch (mem->am_type) {
 	case AGP_I810_MEMTYPE_MAIN:
+		bus_dmamap_destroy(sc->as_dmat, mem->am_dmamap);
+		break;
 	case AGP_I810_MEMTYPE_DCACHE:
 		break;
 	case AGP_I810_MEMTYPE_HWCURSOR:
