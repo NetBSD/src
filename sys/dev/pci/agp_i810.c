@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.93 2014/06/11 17:02:09 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.94 2014/06/11 17:15:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.93 2014/06/11 17:02:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.94 2014/06/11 17:15:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1266,8 +1266,7 @@ agp_i810_bind_memory_main(struct agp_softc *sc, struct agp_memory *mem,
     off_t offset)
 {
 	struct agp_i810_softc *const isc = sc->as_chipc;
-	bus_dma_segment_t *segs;
-	int nseg_alloc, nseg;
+	int nseg;
 	uint32_t i, j;
 	unsigned seg;
 	bus_addr_t addr;
@@ -1286,29 +1285,30 @@ agp_i810_bind_memory_main(struct agp_softc *sc, struct agp_memory *mem,
 		return EINVAL;
 
 	/* Allocate an array of DMA segments.  */
-	nseg_alloc = (mem->am_size >> AGP_PAGE_SHIFT);
-	if (nseg_alloc > (SIZE_MAX / sizeof(*segs))) {
+	nseg = (mem->am_size >> AGP_PAGE_SHIFT);
+	if (nseg > (SIZE_MAX / sizeof(*mem->am_dmaseg))) {
 		error = ENOMEM;
 		goto fail0;
 	}
-	segs = malloc(nseg_alloc * sizeof(*segs), M_AGP, M_WAITOK);
+	mem->am_dmaseg = malloc(nseg*sizeof(*mem->am_dmaseg), M_AGP, M_WAITOK);
 
 	/* Allocate DMA-safe physical segments.  */
 	error = bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE,
-	    0, segs, nseg_alloc, &nseg, BUS_DMA_WAITOK);
+	    0, mem->am_dmaseg, nseg, &mem->am_nseg, BUS_DMA_WAITOK);
 	if (error)
 		goto fail1;
-	KASSERT(nseg <= nseg_alloc);
+	KASSERT(mem->am_nseg <= nseg);
 
 	/* Shrink the array of DMA segments if we can.  */
-	if (nseg < nseg_alloc) {
-		segs = realloc(segs, nseg, M_AGP, M_WAITOK);
-		nseg_alloc = nseg;
+	if (mem->am_nseg < nseg) {
+		mem->am_dmaseg = realloc(mem->am_dmaseg, mem->am_nseg, M_AGP,
+		    M_WAITOK);
+		nseg = mem->am_nseg;
 	}
 
 	/* Load the DMA map.  */
 	error = bus_dmamap_load_raw(sc->as_dmat, mem->am_dmamap,
-	    segs, mem->am_nseg, mem->am_size, BUS_DMA_WAITOK);
+	    mem->am_dmaseg, mem->am_nseg, mem->am_size, BUS_DMA_WAITOK);
 	if (error)
 		goto fail2;
 
@@ -1334,15 +1334,16 @@ agp_i810_bind_memory_main(struct agp_softc *sc, struct agp_memory *mem,
 	}
 
 	/* Success!  */
-	mem->am_dmaseg = segs;
 	mem->am_offset = offset;
 	return 0;
 
 fail3:	for (j = 0; j < i; j += AGP_PAGE_SIZE)
 		(void)agp_i810_unbind_page(sc, offset + j);
 	bus_dmamap_unload(sc->as_dmat, mem->am_dmamap);
-fail2:	bus_dmamem_free(sc->as_dmat, segs, nseg_alloc);
-fail1:	free(segs, M_AGP);
+fail2:	bus_dmamem_free(sc->as_dmat, mem->am_dmaseg, mem->am_nseg);
+fail1:	free(mem->am_dmaseg, M_AGP);
+	mem->am_dmaseg = NULL;
+	mem->am_nseg = 0;
 fail0:	KASSERT(error);
 	return error;
 }
@@ -1412,14 +1413,22 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 	switch (mem->am_type) {
 	case AGP_I810_MEMTYPE_MAIN:
-	case AGP_I810_MEMTYPE_HWCURSOR:
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
 			(void)agp_i810_unbind_page(sc, mem->am_offset + i);
+		bus_dmamap_unload(sc->as_dmat, mem->am_dmamap);
+		bus_dmamem_free(sc->as_dmat, mem->am_dmaseg, mem->am_nseg);
+		free(mem->am_dmaseg, M_AGP);
+		mem->am_offset = 0;
 		break;
 	case AGP_I810_MEMTYPE_DCACHE:
 		KASSERT(isc->chiptype == CHIP_I810);
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
 			(void)agp_i810_write_gtt_entry(isc, i, 0);
+		break;
+	case AGP_I810_MEMTYPE_HWCURSOR:
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
+			(void)agp_i810_unbind_page(sc, mem->am_offset + i);
+		mem->am_offset = 0;
 		break;
 	default:
 		panic("invalid agp i810 memory type: %d", mem->am_type);
