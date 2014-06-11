@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.87 2014/06/11 13:15:44 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.88 2014/06/11 14:04:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.87 2014/06/11 13:15:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.88 2014/06/11 14:04:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -993,7 +993,7 @@ agp_i810_get_aperture(struct agp_softc *sc)
 	struct agp_i810_softc *isc = sc->as_chipc;
 	pcireg_t reg;
 	u_int32_t size;
-	u_int16_t miscc, gcc1, msac;
+	u_int16_t miscc, gcc1;
 
 	size = 0;
 
@@ -1021,13 +1021,7 @@ agp_i810_get_aperture(struct agp_softc *sc)
 	case CHIP_I915:
 	case CHIP_G33:
 	case CHIP_G4X:
-		reg = pci_conf_read(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-		    AGP_I915_MSAC);
-		msac = (u_int16_t)(reg >> 16);
-		if (msac & AGP_I915_MSAC_APER_128M)
-			size = 128 * 1024 * 1024;
-		else
-			size = 256 * 1024 * 1024;
+		size = sc->as_apsize;
 		break;
 	case CHIP_I965:
 		size = 512 * 1024 * 1024;
