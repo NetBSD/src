@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.88 2014/06/11 14:04:48 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.89 2014/06/11 16:45:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.88 2014/06/11 14:04:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.89 2014/06/11 16:45:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1123,7 +1123,8 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 		return NULL;
 	if ((size & (AGP_PAGE_SIZE - 1)) != 0)
 		return NULL;
-	if (sc->as_allocated + size > sc->as_maxmem)
+	KASSERT(sc->as_allocated <= sc->as_maxmem);
+	if (size > (sc->as_maxmem - sc->as_allocated))
 		return NULL;
 	switch (type) {
 	case AGP_I810_MEMTYPE_MAIN:
