@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.672 2014/05/30 16:11:52 nonaka Exp $
+$NetBSD: usbdevs,v 1.673 2014/06/11 07:05:03 njoly Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -579,6 +579,7 @@ vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor 3COM2		0x6891	3Com
 vendor EDIMAX		0x7392	EDIMAX
 vendor INTEL		0x8086	Intel
+vendor INTEL2		0x8087	Intel
 vendor ALLWIN		0x8516	ALLWIN Tech
 vendor MOSCHIP		0x9710	MosChip Semiconductor
 vendor NETGEAR4		0x9846	Netgear
@@ -1788,6 +1789,9 @@ product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
 product INTEL AP310		0x0200	AP310 AnyPoint II
 product INTEL I2011B		0x1111	Wireless 2011B
 product INTEL TESTBOARD		0x9890	82930 test board
+
+product INTEL2 RMH		0x0020	Rate Matching Hub
+product INTEL2 RMH2		0x0024	Rate Matching Hub
 
 /* Intersil products */
 product INTERSIL PRISM_GT	0x1000	PrismGT USB 2.0 WLAN
