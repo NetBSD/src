@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.12 2014/05/21 12:16:17 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.13 2014/06/11 05:43:39 matt Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.12 2014/05/21 12:16:17 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.13 2014/06/11 05:43:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -311,6 +311,16 @@ exynos_device_register(device_t self, void *aux)
 		return;
 	}
 	if (device_is_a(self, "armgtmr") || device_is_a(self, "mct")) {
+#ifdef EXONYS5
+		/*
+		 * The global timer is dependent on the MCT running.
+		 */
+		bus_size_t o = EXYNOS5_MCT_OFFSET + MCT_G_TCON;
+		uint32_t v = bus_space_read_4(&exynos_bs_tag, exynos_core_bsh,
+		     p);
+		v |= G_TCON_START;
+		bus_space_write_4(&exynos_bs_tag, exynos_core_bsh, o, v);
+#endif
 		/*
 		 * The frequencies of the timers are the reference
 		 * frequency.
