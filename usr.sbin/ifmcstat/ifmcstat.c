@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.17 2014/06/10 09:38:30 joerg Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.18 2014/06/11 14:05:28 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifmcstat.c,v 1.17 2014/06/10 09:38:30 joerg Exp $");
+__RCSID("$NetBSD: ifmcstat.c,v 1.18 2014/06/11 14:05:28 joerg Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -101,7 +101,7 @@ main(void)
 }
 
 static void *
-fetch_sysctl(size_t *len, int oids[], size_t oidlen, const char *msg)
+fetch_sysctl(size_t *len, const int oids[], size_t oidlen, const char *msg)
 {
 	void *data;
 
