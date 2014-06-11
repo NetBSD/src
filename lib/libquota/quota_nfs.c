@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_nfs.c,v 1.3 2014/06/05 13:14:23 martin Exp $	*/
+/*	$NetBSD: quota_nfs.c,v 1.4 2014/06/11 08:43:01 martin Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_nfs.c,v 1.3 2014/06/05 13:14:23 martin Exp $");
+__RCSID("$NetBSD: quota_nfs.c,v 1.4 2014/06/11 08:43:01 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h> /* XXX for DEV_BSIZE */
@@ -191,9 +191,21 @@ __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 	free(host);
 
 	if (ret != RPC_SUCCESS) {
-		/* if the file server does not support any quotas at all,
-		   return ENOENT */
-		errno = sverrno == ENOTCONN ? ENOENT : sverrno;
+		/*
+		 * Remap some error codes for callers convenience:
+		 *  - if the file server does not support any quotas at all,
+		 *    return ENOENT
+		 *  - if the server can not be reached something is very
+		 *    wrong - or we are run inside a virtual rump network
+		 *    but querying an NFS mount from the host. Make sure
+		 *    to fail silently and return ENOENT as well.
+		 */
+		if (ret == RPC_SYSTEMERROR
+		    && rpc_createerr.cf_error.re_errno == EHOSTUNREACH)
+			sverrno = ENOENT;
+		else if (sverrno == ENOTCONN)
+			sverrno = ENOENT;
+		errno = sverrno;
 		return -1;
 	}
 
