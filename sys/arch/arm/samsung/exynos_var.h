@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.11 2014/06/06 14:28:58 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.12 2014/06/11 14:54:32 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,26 +78,6 @@ struct exyo_locators {
 	/* for i2c: */
 	const char *loc_gpio_bus;
 	uint8_t loc_sda, loc_slc, loc_func;
-};
-
-
-struct exyo_usb_locinfo {
-	bus_size_t	uloc_pmuregs_offset;
-	bus_size_t	uloc_sysregs_offset;
-
-	bus_size_t	uloc_ehci_offset;
-	bus_size_t	uloc_ohci_offset;
-	bus_size_t	uloc_usbotg_offset;
-	bus_size_t	uloc_usb2phy_offset;
-
-	int		uloc_usbhost_irq;
-	int		uloc_usbotg_irq;
-	int		uloc_usb3_irq;
-
-	bus_size_t	uloc_usb3_xhci0_offset;
-	bus_size_t	uloc_usb3_xhci1_offset;
-	bus_size_t	uloc_usb3_phy0_offset;
-	bus_size_t	uloc_usb3_phy1_offset;
 };
 
 
