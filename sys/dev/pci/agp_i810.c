@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.97 2014/06/12 14:48:17 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.98 2014/06/12 14:49:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.97 2014/06/12 14:48:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.98 2014/06/12 14:49:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,8 +281,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	struct agp_i810_softc *isc;
 	int apbase, mmadr_bar, gtt_bar;
 	int mmadr_type, mmadr_flags;
-	bus_addr_t mmadr, gtt_off;
-	bus_size_t mmadr_size;
+	bus_addr_t mmadr;
+	bus_size_t mmadr_size, gtt_off;
 	int error;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
