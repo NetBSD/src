@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.51 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.52 2014/06/12 12:09:47 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.51 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.52 2014/06/12 12:09:47 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -440,9 +440,9 @@ bnx_probe(device_t parent, cfdata_t match, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
 	if (bnx_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 /****************************************************************************/
@@ -508,7 +508,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BNX_PCI_BAR0); 
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BNX_PCI_BAR0);
 	if (pci_mapreg_map(pa, BNX_PCI_BAR0, memtype, 0, &sc->bnx_btag,
 	    &sc->bnx_bhandle, NULL, &sc->bnx_size)) {
 		aprint_error_dev(sc->bnx_dev, "can't find mem space\n");
@@ -739,12 +739,9 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->bnx_mii.mii_media,
 		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->bnx_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL);
-	} else {
-		ifmedia_set(&sc->bnx_mii.mii_media,
-		    IFM_ETHER|IFM_AUTO);
-	}
+		ifmedia_set(&sc->bnx_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+	} else
+		ifmedia_set(&sc->bnx_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach to the Ethernet interface list. */
 	if_attach(ifp);
@@ -820,7 +817,7 @@ bnx_detach(device_t dev, int flags)
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return(0);
+	return 0;
 }
 
 /****************************************************************************/
@@ -847,7 +844,7 @@ bnx_reg_rd_ind(struct bnx_softc *sc, u_int32_t offset)
 		    BNX_PCICFG_REG_WINDOW);
 		DBPRINT(sc, BNX_EXCESSIVE, "%s(); offset = 0x%08X, "
 		    "val = 0x%08X\n", __func__, offset, val);
-		return (val);
+		return val;
 	}
 #else
 	return pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCICFG_REG_WINDOW);
@@ -937,7 +934,7 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 	if (phy != sc->bnx_phy_addr) {
 		DBPRINT(sc, BNX_VERBOSE,
 		    "Invalid PHY address %d for PHY read!\n", phy);
-		return(0);
+		return 0;
 	}
 
 	/*
@@ -1173,10 +1170,10 @@ bnx_acquire_nvram_lock(struct bnx_softc *sc)
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		DBPRINT(sc, BNX_WARN, "Timeout acquiring NVRAM lock!\n");
-		return (EBUSY);
+		return EBUSY;
 	}
 
-	return (0);
+	return 0;
 }
 
 /****************************************************************************/
@@ -1210,10 +1207,10 @@ bnx_release_nvram_lock(struct bnx_softc *sc)
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		DBPRINT(sc, BNX_WARN, "Timeout reeasing NVRAM lock!\n");
-		return (EBUSY);
+		return EBUSY;
 	}
 
-	return (0);
+	return 0;
 }
 
 #ifdef BNX_NVRAM_WRITE_SUPPORT
@@ -1252,11 +1249,11 @@ bnx_enable_nvram_write(struct bnx_softc *sc)
 
 		if (j >= NVRAM_TIMEOUT_COUNT) {
 			DBPRINT(sc, BNX_WARN, "Timeout writing NVRAM!\n");
-			return (EBUSY);
+			return EBUSY;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /****************************************************************************/
@@ -1342,7 +1339,7 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 
 	/* Buffered flash doesn't require an erase. */
 	if (ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED))
-		return (0);
+		return 0;
 
 	DBPRINT(sc, BNX_VERBOSE, "Erasing NVRAM page.\n");
 
@@ -1351,7 +1348,7 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 	    BNX_NVM_COMMAND_DOIT;
 
 	/*
-	 * Clear the DONE bit separately, set the NVRAM adress to erase,
+	 * Clear the DONE bit separately, set the NVRAM address to erase,
 	 * and issue the erase command.
 	 */
 	REG_WR(sc, BNX_NVM_COMMAND, BNX_NVM_COMMAND_DONE);
@@ -1371,10 +1368,10 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		DBPRINT(sc, BNX_WARN, "Timeout erasing NVRAM.\n");
-		return (EBUSY);
+		return EBUSY;
 	}
 
-	return (0);
+	return 0;
 }
 #endif /* BNX_NVRAM_WRITE_SUPPORT */
 
@@ -1435,7 +1432,7 @@ bnx_nvram_read_dword(struct bnx_softc *sc, u_int32_t offset,
 		rc = EBUSY;
 	}
 
-	return(rc);
+	return rc;
 }
 
 #ifdef BNX_NVRAM_WRITE_SUPPORT
@@ -1487,10 +1484,10 @@ bnx_nvram_write_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *val,
 	if (j >= NVRAM_TIMEOUT_COUNT) {
 		BNX_PRINTF(sc, "%s(%d): Timeout error writing NVRAM at "
 		    "offset 0x%08X\n", __FILE__, __LINE__, offset);
-		return (EBUSY);
+		return EBUSY;
 	}
 
-	return (0);
+	return 0;
 }
 #endif /* BNX_NVRAM_WRITE_SUPPORT */
 
@@ -1565,7 +1562,7 @@ bnx_init_nvram(struct bnx_softc *sc)
 
 				/* Request access to the flash interface. */
 				if ((rc = bnx_acquire_nvram_lock(sc)) != 0)
-					return (rc);
+					return rc;
 
 				/* Reconfigure the flash interface. */
 				bnx_enable_nvram_access(sc);
@@ -1603,7 +1600,7 @@ bnx_init_nvram_get_flash_size:
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return (rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -1623,11 +1620,11 @@ bnx_nvram_read(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_buf,
 	u_int32_t		cmd_flags, offset32, len32, extra;
 
 	if (buf_size == 0)
-		return (0);
+		return 0;
 
 	/* Request access to the flash interface. */
 	if ((rc = bnx_acquire_nvram_lock(sc)) != 0)
-		return (rc);
+		return rc;
 
 	/* Enable access to flash interface */
 	bnx_enable_nvram_access(sc);
@@ -1655,7 +1652,7 @@ bnx_nvram_read(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_buf,
 		rc = bnx_nvram_read_dword(sc, offset32, buf, cmd_flags);
 
 		if (rc)
-			return (rc);
+			return rc;
 
 		memcpy(ret_buf, buf + (offset & 3), pre_len);
 
@@ -1707,7 +1704,7 @@ bnx_nvram_read(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_buf,
 		}
 
 		if (rc)
-			return (rc);
+			return rc;
 
 		cmd_flags = BNX_NVM_COMMAND_LAST;
 		rc = bnx_nvram_read_dword(sc, offset32, buf, cmd_flags);
@@ -1719,7 +1716,7 @@ bnx_nvram_read(struct bnx_softc *sc, u_int32_t offset, u_int8_t *ret_buf,
 	bnx_disable_nvram_access(sc);
 	bnx_release_nvram_lock(sc);
 
-	return (rc);
+	return rc;
 }
 
 #ifdef BNX_NVRAM_WRITE_SUPPORT
@@ -1751,7 +1748,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 		offset32 &= ~3;
 		len32 += align_start;
 		if ((rc = bnx_nvram_read(sc, offset32, start, 4)))
-			return (rc);
+			return rc;
 	}
 
 	if (len32 & 3) {
@@ -1759,16 +1756,15 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 			align_end = 4 - (len32 & 3);
 			len32 += align_end;
 			if ((rc = bnx_nvram_read(sc, offset32 + len32 - 4,
-			    end, 4))) {
-				return (rc);
-			}
+			    end, 4)))
+				return rc;
 		}
 	}
 
 	if (align_start || align_end) {
 		buf = malloc(len32, M_DEVBUF, M_NOWAIT);
 		if (buf == 0)
-			return (ENOMEM);
+			return ENOMEM;
 
 		if (align_start)
 			memcpy(buf, start, 4);
@@ -1906,7 +1902,7 @@ nvram_write_end:
 	if (align_start || align_end)
 		free(buf, M_DEVBUF);
 
-	return (rc);
+	return rc;
 }
 #endif /* BNX_NVRAM_WRITE_SUPPORT */
 
@@ -1968,7 +1964,7 @@ bnx_nvram_test(struct bnx_softc *sc)
 	}
 
 bnx_nvram_test_done:
-	return (rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -2122,7 +2118,7 @@ bnx_dma_free(struct bnx_softc *sc)
 	if (sc->status_block != NULL && sc->status_map != NULL) {
 		bus_dmamap_unload(sc->bnx_dmatag, sc->status_map);
 		bus_dmamem_unmap(sc->bnx_dmatag, (void *)sc->status_block,
-		    BNX_STATUS_BLK_SZ);	
+		    BNX_STATUS_BLK_SZ);
 		bus_dmamem_free(sc->bnx_dmatag, &sc->status_seg,
 		    sc->status_rseg);
 		bus_dmamap_destroy(sc->bnx_dmatag, sc->status_map);
@@ -2134,7 +2130,7 @@ bnx_dma_free(struct bnx_softc *sc)
 	if (sc->stats_block != NULL && sc->stats_map != NULL) {
 		bus_dmamap_unload(sc->bnx_dmatag, sc->stats_map);
 		bus_dmamem_unmap(sc->bnx_dmatag, (void *)sc->stats_block,
-		    BNX_STATS_BLK_SZ);	
+		    BNX_STATS_BLK_SZ);
 		bus_dmamem_free(sc->bnx_dmatag, &sc->stats_seg,
 		    sc->stats_rseg);
 		bus_dmamap_destroy(sc->bnx_dmatag, sc->stats_map);
@@ -2488,7 +2484,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
  bnx_dma_alloc_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return(rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -2574,7 +2570,7 @@ bnx_fw_sync(struct bnx_softc *sc, u_int32_t msg_data)
 	}
 
 bnx_fw_sync_exit:
-	return (rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -3408,7 +3404,7 @@ bnx_reset(struct bnx_softc *sc, u_int32_t reset_code)
 bnx_reset_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return (rc);
+	return rc;
 }
 
 int
@@ -3511,7 +3507,7 @@ bnx_chipinit(struct bnx_softc *sc)
 bnx_chipinit_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return(rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -3633,7 +3629,7 @@ bnx_blockinit(struct bnx_softc *sc)
 bnx_blockinit_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return (rc);
+	return rc;
 }
 
 static int
@@ -3822,7 +3818,7 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 			DBPRINT(sc, BNX_WARN,
 			    "%s(%d): RX mbuf chain allocation failed!\n",
 			    __FILE__, __LINE__);
-		
+
 			m_freem(m_new);
 
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
@@ -3831,7 +3827,7 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 			rc = ENOBUFS;
 			goto bnx_get_buf_exit;
 		}
-		
+
 		rc = bnx_add_buf(sc, m_new, prod, chain_prod, prod_bseq);
 		if (rc != 0)
 			goto bnx_get_buf_exit;
@@ -3845,7 +3841,7 @@ bnx_get_buf_exit:
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Exiting %s()\n",
 	    __func__);
 
-	return(rc);
+	return rc;
 }
 
 void
@@ -4001,7 +3997,7 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return(rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -4189,7 +4185,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
-	return(rc);
+	return rc;
 }
 
 /****************************************************************************/
@@ -4644,7 +4640,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 
 		DBRUNIF(1, txbd = &sc->tx_bd_chain
 		    [TX_PAGE(sw_tx_chain_cons)][TX_IDX(sw_tx_chain_cons)]);
-	
+
 		DBRUNIF((txbd == NULL),
 		    aprint_error_dev(sc->bnx_dev,
 		        "Unexpected NULL tx_bd[0x%04X]!\n", sw_tx_chain_cons);
@@ -4835,7 +4831,7 @@ bnx_init_exit:
 
 	splx(s);
 
-	return(error);
+	return error;
 }
 
 /****************************************************************************/
@@ -4982,7 +4978,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	sc->tx_prod = prod;
 	sc->tx_prod_bseq = prod_bseq;
 
-	return (0);
+	return 0;
 
 
 nospace:
@@ -4992,7 +4988,7 @@ maperr:
 	TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 	mutex_exit(&sc->tx_pkt_mtx);
 
-	return (ENOMEM);
+	return ENOMEM;
 }
 
 /****************************************************************************/
@@ -5132,11 +5128,11 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
 			bnx_iff(sc);
-		error = 0;          
+		error = 0;
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 /****************************************************************************/
@@ -5209,7 +5205,7 @@ bnx_intr(void *xsc)
 	if ((sc->status_block->status_idx == sc->last_status_idx) &&
 	    (REG_RD(sc, BNX_PCICFG_MISC_STATUS) &
 	    BNX_PCICFG_MISC_STATUS_INTA_VALUE))
-		return (0);
+		return 0;
 
 	/* Ack the interrupt and stop others from occuring. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
@@ -5247,7 +5243,7 @@ bnx_intr(void *xsc)
 			    bnx_breakpoint(sc));
 
 			bnx_init(ifp);
-			return (1);
+			return 1;
 		}
 
 		/* Check for any completed RX frames. */
@@ -5273,9 +5269,8 @@ bnx_intr(void *xsc)
 
 		/* If there's no work left then exit the isr. */
 		if ((sblk->status_rx_quick_consumer_index0 ==
-		    sc->hw_rx_cons) &&
-		    (sblk->status_tx_quick_consumer_index0 ==
-		    sc->hw_tx_cons))
+			sc->hw_rx_cons) &&
+		    (sblk->status_tx_quick_consumer_index0 == sc->hw_tx_cons))
 			break;
 	}
 
@@ -5293,7 +5288,7 @@ bnx_intr(void *xsc)
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		bnx_start(ifp);
 
-	return (1);
+	return 1;
 }
 
 /****************************************************************************/
