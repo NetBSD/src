@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.95 2014/06/11 19:35:46 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.96 2014/06/12 03:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.95 2014/06/11 19:35:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.96 2014/06/12 03:23:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -823,7 +823,7 @@ agp_i810_init(struct agp_softc *sc)
 			}
 			break;
 		case CHIP_G4X:
-			gtt_size = 0;
+			gtt_size = 256;
 			break;
 		default:
 			panic("impossible chiptype %d", isc->chiptype);
