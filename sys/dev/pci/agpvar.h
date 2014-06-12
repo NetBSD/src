@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.19 2014/06/12 15:05:29 riastradh Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.20 2014/06/12 18:33:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -177,6 +177,8 @@ int agp_generic_enable(struct agp_softc *, u_int32_t);
 struct agp_memory *agp_generic_alloc_memory(struct agp_softc *, int, vsize_t);
 int agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
 int agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
+int agp_generic_bind_memory_bounded(struct agp_softc *, struct agp_memory *,
+	off_t, off_t, off_t);
 int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
 /* The vendor has already been matched when these functions are called */
