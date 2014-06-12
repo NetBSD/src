@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.99 2014/06/12 15:05:29 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.100 2014/06/12 17:04:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.99 2014/06/12 15:05:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.100 2014/06/12 17:04:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,7 +394,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		mmadr_bar = AGP_I915_MMADR;
 		isc->size = 2*1024*1024;
 		gtt_bar = AGP_I915_GTTADR;
-		gtt_off = ~(bus_addr_t)0; /* XXXGCC */
+		gtt_off = ~(bus_size_t)0; /* XXXGCC */
 		break;
 	case CHIP_I965:
 		apbase = AGP_I965_GMADR;
