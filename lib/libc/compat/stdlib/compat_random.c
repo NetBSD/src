@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_random.c,v 1.1 2014/06/12 18:44:36 christos Exp $	*/
+/*	$NetBSD: compat_random.c,v 1.2 2014/06/12 18:50:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_random.c,v 1.1 2014/06/12 18:44:36 christos Exp $");
+__RCSID("$NetBSD: compat_random.c,v 1.2 2014/06/12 18:50:12 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -58,10 +58,10 @@ __warn_references(srandom,
 
 char *
 initstate(unsigned long seed, char * buf, size_t len) {
-	return __initstate70((unsigned int)seed, buf, len);
+	return __initstate60((unsigned int)seed, buf, len);
 }
 
 void
 srandom(unsigned long seed) {
-	__srandom70((unsigned int)seed);
+	__srandom60((unsigned int)seed);
 }
