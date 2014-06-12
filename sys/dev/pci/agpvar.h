@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.18 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.19 2014/06/12 15:05:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -268,6 +268,6 @@ void agp_memory_info(void *, void *, struct agp_memory_info *);
  * XXX horrible hack to allow drm code to use our mapping
  * of VGA chip registers
  */
-int agp_i810_borrow(bus_addr_t, bus_space_handle_t *);
+int agp_i810_borrow(bus_addr_t, bus_size_t, bus_space_handle_t *);
 
 #endif /* !_PCI_AGPPRIV_H_ */

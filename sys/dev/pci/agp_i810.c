@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.98 2014/06/12 14:49:02 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.99 2014/06/12 15:05:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.98 2014/06/12 14:49:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.99 2014/06/12 15:05:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ struct agp_softc *agp_i810_sc = NULL;
 
 /* XXX hack, see below */
 static bus_addr_t agp_i810_vga_regbase;
+static bus_size_t agp_i810_vga_regsize;
+static bus_space_tag_t agp_i810_vga_bst;
 static bus_space_handle_t agp_i810_vga_bsh;
 
 static u_int32_t agp_i810_get_aperture(struct agp_softc *);
@@ -473,6 +475,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	 * of VGA chip registers
 	 */
 	agp_i810_vga_regbase = mmadr;
+	agp_i810_vga_regsize = isc->size;
+	agp_i810_vga_bst = isc->bst;
 	agp_i810_vga_bsh = isc->bsh;
 
 	/* Initialize the chipset.  */
@@ -677,12 +681,21 @@ agp_i810_teardown_chipset_flush_page(struct agp_softc *sc)
  * of VGA chip registers
  */
 int
-agp_i810_borrow(bus_addr_t base, bus_space_handle_t *hdlp)
+agp_i810_borrow(bus_addr_t base, bus_size_t size, bus_space_handle_t *hdlp)
 {
 
-	if (!agp_i810_vga_regbase || base != agp_i810_vga_regbase)
+	if (agp_i810_vga_regbase == 0)
 		return 0;
-	*hdlp = agp_i810_vga_bsh;
+	if (base < agp_i810_vga_regbase)
+		return 0;
+	if (agp_i810_vga_regsize < size)
+		return 0;
+	if ((base - agp_i810_vga_regbase) > (agp_i810_vga_regsize - size))
+		return 0;
+	if (bus_space_subregion(agp_i810_vga_bst, agp_i810_vga_bsh,
+		(base - agp_i810_vga_regbase), (agp_i810_vga_regsize - size),
+		hdlp))
+		return 0;
 	return 1;
 }
 
