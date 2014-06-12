@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.52 2014/06/12 13:31:47 apb Exp $
+# $NetBSD: etcupdate,v 1.53 2014/06/12 13:33:43 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -378,7 +378,7 @@ EOF
 			;;
 		esac
 	done
-	rm -f "._etcupdate_${TEMPROOT}${1}"
+	rm -f "$B"
 }
 
 # Set the environment for make.
