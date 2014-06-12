@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.c,v 1.10 2013/11/22 02:02:35 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.c,v 1.11 2014/06/12 21:39:45 joerg Exp $	*/
 /*  from NetBSD: ufs_quota.c,v 1.115 2013/11/16 17:04:53 dholland Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.10 2013/11/22 02:02:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.11 2014/06/12 21:39:45 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -443,7 +443,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_DELETE);
-	qk = args->u.delete.qc_key;
+	qk = args->u.remove.qc_key;
 
 	kauth_id = qk->qk_id;
 	if (kauth_id == QUOTA_DEFAULTID) {

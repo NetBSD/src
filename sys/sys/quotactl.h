@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.36 2012/12/01 11:41:50 mbalmer Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.37 2014/06/12 21:39:45 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -118,7 +118,7 @@ struct quotactl_args {
 		} put;
 		struct {
 			const struct quotakey *qc_key;
-		} delete;
+		} remove;
 		struct {
 			struct quotakcursor *qc_cursor;
 		} cursoropen;
