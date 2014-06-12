@@ -1560,6 +1560,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	if (IS_GEN2(dev))
 #ifdef __NetBSD__
 		{
+			/* XXX DMA limits */
 			ret = drm_limit_dma_space(dev, 0, 0x3fffffffUL);
 			if (ret)
 				goto put_gmch;
