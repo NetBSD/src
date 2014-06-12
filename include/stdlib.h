@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.108 2014/06/12 18:45:14 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.109 2014/06/12 18:49:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -177,8 +177,8 @@ char	*l64a(long);
 long	 random(void);
 char	*setstate(char *);
 #ifndef __LIBC12_SOURCE__
-char	*initstate(unsigned int, char *, size_t) __RENAME(__initstate70);
-void	 srandom(unsigned int) __RENAME(__srandom70);
+char	*initstate(unsigned int, char *, size_t) __RENAME(__initstate60);
+void	 srandom(unsigned int) __RENAME(__srandom60);
 #endif
 #ifdef _NETBSD_SOURCE
 #define	RANDOM_MAX	0x7fffffff	/* (((long)1 << 31) - 1) */
