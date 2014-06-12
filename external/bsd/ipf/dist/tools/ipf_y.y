@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.2 2012/07/22 13:44:52 darrenr Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.2 2014/06/12 17:23:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -2601,7 +2601,13 @@ char *name;
 	int pos;
 
 	nlen = strlen(name) + 1;
-	f = realloc(*frp, (*frp)->fr_size + nlen);
+	/*
+	 * realloc is harder to use here because the end of the structure
+	 * needs to be zero'd, else it gets junk bytes.
+	 */
+	f = calloc(1, (*frp)->fr_size + nlen);
+	memcpy(f, *frp, (*frp)->fr_size);
+	free(*frp);
 	if (*frp == frc)
 		frc = f;
 	*frp = f;
