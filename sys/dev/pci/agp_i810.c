@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.100 2014/06/12 17:04:58 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.101 2014/06/12 18:33:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.100 2014/06/12 17:04:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.101 2014/06/12 18:33:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,6 @@ static struct agp_memory *agp_i810_alloc_memory(struct agp_softc *, int,
 						vsize_t);
 static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *,
-		off_t);
-static int agp_i810_bind_memory_main(struct agp_softc *, struct agp_memory *,
 		off_t);
 static int agp_i810_bind_memory_dcache(struct agp_softc *, struct agp_memory *,
 		off_t);
@@ -1149,6 +1147,9 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	KASSERT(sc->as_allocated <= sc->as_maxmem);
 	if (size > (sc->as_maxmem - sc->as_allocated))
 		return NULL;
+	if (size > ((isc->gtt_size/4) << AGP_PAGE_SHIFT))
+		return NULL;
+
 	switch (type) {
 	case AGP_I810_MEMTYPE_MAIN:
 		break;
@@ -1265,8 +1266,8 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 
 	switch (mem->am_type) {
 	case AGP_I810_MEMTYPE_MAIN:
-		error = agp_i810_bind_memory_main(sc, mem, offset);
-		break;
+		return agp_generic_bind_memory_bounded(sc, mem, offset,
+		    0, (isc->gtt_size/4) << AGP_PAGE_SHIFT);
 	case AGP_I810_MEMTYPE_DCACHE:
 		error = agp_i810_bind_memory_dcache(sc, mem, offset);
 		break;
@@ -1282,93 +1283,6 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	/* Success!  */
 	mem->am_is_bound = 1;
 	return 0;
-}
-
-static int
-agp_i810_bind_memory_main(struct agp_softc *sc, struct agp_memory *mem,
-    off_t offset)
-{
-	struct agp_i810_softc *const isc = sc->as_chipc;
-	int nseg;
-	uint32_t i, j;
-	unsigned seg;
-	bus_addr_t addr;
-	bus_size_t len;
-	int error;
-
-	/* Ensure we have a sane size/offset that will fit.  */
-	if (offset < 0)
-		return EINVAL;
-	if (offset & (AGP_PAGE_SIZE - 1))
-		return EINVAL;
-	if (mem->am_size > ((isc->gtt_size/4) << AGP_PAGE_SHIFT))
-		return EINVAL;
-	if (offset > (((isc->gtt_size/4) << AGP_PAGE_SHIFT) -
-		mem->am_size))
-		return EINVAL;
-
-	/* Allocate an array of DMA segments.  */
-	nseg = (mem->am_size >> AGP_PAGE_SHIFT);
-	if (nseg > (SIZE_MAX / sizeof(*mem->am_dmaseg))) {
-		error = ENOMEM;
-		goto fail0;
-	}
-	mem->am_dmaseg = malloc(nseg*sizeof(*mem->am_dmaseg), M_AGP, M_WAITOK);
-
-	/* Allocate DMA-safe physical segments.  */
-	error = bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE,
-	    0, mem->am_dmaseg, nseg, &mem->am_nseg, BUS_DMA_WAITOK);
-	if (error)
-		goto fail1;
-	KASSERT(mem->am_nseg <= nseg);
-
-	/* Shrink the array of DMA segments if we can.  */
-	if (mem->am_nseg < nseg) {
-		mem->am_dmaseg = realloc(mem->am_dmaseg, mem->am_nseg, M_AGP,
-		    M_WAITOK);
-		nseg = mem->am_nseg;
-	}
-
-	/* Load the DMA map.  */
-	error = bus_dmamap_load_raw(sc->as_dmat, mem->am_dmamap,
-	    mem->am_dmaseg, mem->am_nseg, mem->am_size, BUS_DMA_WAITOK);
-	if (error)
-		goto fail2;
-
-	/* Bind the pages in the GTT.  */
-	i = 0;
-	KASSERT((mem->am_size & (AGP_PAGE_SIZE - 1)) == 0);
-	for (seg = 0; seg < mem->am_dmamap->dm_nsegs; seg++) {
-		KASSERT((offset + i) < mem->am_size);
-		addr = mem->am_dmamap->dm_segs[seg].ds_addr;
-		len = MIN(mem->am_dmamap->dm_segs[seg].ds_len,
-		    (mem->am_size - (offset + i)));
-		do {
-			KASSERT(0 < len);
-			KASSERT((len & (AGP_PAGE_SIZE - 1)) == 0);
-			KASSERT((offset + i) <= (mem->am_size - len));
-			error = agp_i810_bind_page(sc, offset + i, addr);
-			if (error)
-				goto fail3;
-			i += AGP_PAGE_SIZE;
-			addr += AGP_PAGE_SIZE;
-			len -= AGP_PAGE_SIZE;
-		} while (0 < len);
-	}
-
-	/* Success!  */
-	mem->am_offset = offset;
-	return 0;
-
-fail3:	for (j = 0; j < i; j += AGP_PAGE_SIZE)
-		(void)agp_i810_unbind_page(sc, offset + j);
-	bus_dmamap_unload(sc->as_dmat, mem->am_dmamap);
-fail2:	bus_dmamem_free(sc->as_dmat, mem->am_dmaseg, mem->am_nseg);
-fail1:	free(mem->am_dmaseg, M_AGP);
-	mem->am_dmaseg = NULL;
-	mem->am_nseg = 0;
-fail0:	KASSERT(error);
-	return error;
 }
 
 #define	I810_GTT_PTE_VALID	0x01
@@ -1436,13 +1350,7 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 	switch (mem->am_type) {
 	case AGP_I810_MEMTYPE_MAIN:
-		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			(void)agp_i810_unbind_page(sc, mem->am_offset + i);
-		bus_dmamap_unload(sc->as_dmat, mem->am_dmamap);
-		bus_dmamem_free(sc->as_dmat, mem->am_dmaseg, mem->am_nseg);
-		free(mem->am_dmaseg, M_AGP);
-		mem->am_offset = 0;
-		break;
+		return agp_generic_unbind_memory(sc, mem);
 	case AGP_I810_MEMTYPE_DCACHE:
 		KASSERT(isc->chiptype == CHIP_I810);
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
