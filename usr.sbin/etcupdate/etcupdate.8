@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.21 2014/06/12 13:56:32 apb Exp $
+.\"	$NetBSD: etcupdate.8,v 1.22 2014/06/12 14:07:13 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 15, 2012
+.Dd June 12, 2014
 .Dt ETCUPDATE 8
 .Os
 .Sh NAME
@@ -147,7 +147,6 @@ For example,
 .Ar destdir Ns Pa /etc
 will be used instead of
 .Pa /etc .
-.Pa \&/ .
 .It Fl h
 Prints a help text.
 .It Fl l
@@ -401,7 +400,7 @@ the ability to specify multiple colon-separated files with a single
 .Fl s
 option was removed (multiple
 .Fl s
-options must be used instead,
+options must be used instead),
 and the
 .Fl d Ar destdir
 option was added.
