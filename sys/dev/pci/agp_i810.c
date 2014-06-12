@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.96 2014/06/12 03:23:58 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.97 2014/06/12 14:48:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.96 2014/06/12 03:23:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.97 2014/06/12 14:48:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,6 +390,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case CHIP_G33:
 		apbase = AGP_I915_GMADR;
 		mmadr_bar = AGP_I915_MMADR;
+		isc->size = 2*1024*1024;
 		gtt_bar = AGP_I915_GTTADR;
 		gtt_off = ~(bus_addr_t)0; /* XXXGCC */
 		break;
@@ -397,6 +398,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
 		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
+		isc->size = 2*1024*1024;
 		gtt_bar = 0;
 		gtt_off = AGP_I965_GTT;
 		break;
@@ -404,12 +406,14 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
 		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
+		isc->size = 2*1024*1024;
 		gtt_bar = 0;
 		gtt_off = AGP_G4X_GTT;
 		break;
 	default:
 		apbase = AGP_I810_GMADR;
 		mmadr_bar = AGP_I810_MMADR;
+		isc->size = 512*1024;
 		gtt_bar = 0;
 		gtt_off = AGP_I810_GTT;
 		break;
@@ -432,17 +436,12 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		error = ENXIO;
 		goto fail1;
 	}
-	if (gtt_bar == 0) {
-		if (mmadr_size < gtt_off) {
-			aprint_error_dev(self, "MMIO registers too small"
-			    ": %"PRIuMAX" < %"PRIuMAX"\n",
-			    (uintmax_t)mmadr_size, (uintmax_t)gtt_off);
-			error = ENXIO;
-			goto fail1;
-		}
-		isc->size = gtt_off;
-	} else {
-		isc->size = mmadr_size;
+	if (mmadr_size < isc->size) {
+		aprint_error_dev(self, "MMIO registers too small"
+		    ": %"PRIuMAX" < %"PRIuMAX"\n",
+		    (uintmax_t)mmadr_size, (uintmax_t)isc->size);
+		error = ENXIO;
+		goto fail1;
 	}
 	isc->bst = isc->vga_pa.pa_memt;
 	error = bus_space_map(isc->bst, mmadr, isc->size, mmadr_flags,
@@ -493,8 +492,18 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 			error = ENXIO;
 			goto fail4;
 		}
-		error = bus_space_map(isc->gtt_bst, (mmadr + gtt_off),
-		    isc->gtt_size, mmadr_flags, &isc->gtt_bsh);
+		/*
+		 * Map the GTT separately if we can, so that we can map
+		 * it prefetchable, but in early models, there are MMIO
+		 * registers before and after the GTT, so we can only
+		 * take a subregion.
+		 */
+		if (isc->size < gtt_off)
+			error = bus_space_map(isc->gtt_bst, (mmadr + gtt_off),
+			    isc->gtt_size, mmadr_flags, &isc->gtt_bsh);
+		else
+			error = bus_space_subregion(isc->bst, isc->bsh,
+			    gtt_off, isc->gtt_size, &isc->gtt_bsh);
 		if (error) {
 			aprint_error_dev(self, "can't map GTT: %d\n", error);
 			error = ENXIO;
@@ -538,7 +547,8 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 
 fail5: __unused
 	pmf_device_deregister(self);
-	bus_space_unmap(isc->gtt_bst, isc->gtt_bsh, isc->gtt_size);
+	if ((gtt_bar != 0) || (isc->size < gtt_off))
+		bus_space_unmap(isc->gtt_bst, isc->gtt_bsh, isc->gtt_size);
 	isc->gtt_size = 0;
 fail4:
 #if notyet
