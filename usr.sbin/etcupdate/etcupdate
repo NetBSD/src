@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.54 2014/06/12 13:40:43 apb Exp $
+# $NetBSD: etcupdate,v 1.55 2014/06/12 13:42:05 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,6 +70,7 @@ MACHINE_ARCH="${MACHINE_ARCH:="$(uname -p)"}"
 export MACHINE_ARCH
 
 # Settings for post-installation procedures
+NEED_ANYTHING=false
 NEED_MAKEDEV=false
 NEED_MTREE=false
 NEED_NEWALIASES=false
@@ -153,6 +154,7 @@ shell_quote()
 install_dir() {
 	# $1 = target directory
 
+	NEED_ANYTHING=true
 	if yesno "Create ${1}"; then
 		verbose "Creating ${1}"
 		mkdir -p "${1}" || exit 1
@@ -163,6 +165,7 @@ install_dir() {
 install_file() {
 	# $1 = target file
 
+	NEED_ANYTHING=true
 	# Install the new file
 	verbose "Installing ${1}"
 	cp -p "${TEMPROOT}${1}" "${1}" && rm -f "${TEMPROOT}${1}"
@@ -192,6 +195,7 @@ install_checksum() {
 
 	${AUTOMATIC} || return
 
+	NEED_ANYTHING=true
 	D="$(dirname "${1}")"
 	mkdir -p "/var/etcupdate/${D}"
 	verbose "Saving MD5 checksum for ${1} to /var/etcupdate/${1}"
@@ -636,6 +640,10 @@ if [ ! -z "${REMAINING}" ]; then
 	echo "*** The following files need your attention:"
 	echo ""
 	echo "${REMAINING}" | sed -e 's/^/  /'
+	echo ""
+elif ! ${NEED_ANYTHING}; then
+	echo ""
+	echo "*** No changes were needed"
 	echo ""
 fi
 if yesno "Remove ${TEMPROOT}"; then
