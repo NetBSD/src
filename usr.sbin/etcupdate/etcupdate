@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.53 2014/06/12 13:33:43 apb Exp $
+# $NetBSD: etcupdate,v 1.54 2014/06/12 13:40:43 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -487,6 +487,13 @@ if [ "${N_SRC_ARGS}" -gt 1 ] && ( ${SOURCEMODE} || ${BINARYDIRMODE} ); then
 	echo "*** ERROR: Multiple -s args are allowed only with tgz files"
 	usage
 fi
+case "${TEMPROOT}" in
+/*) : OK ;;
+*)  new="${PWD:-$(pwd)}/${TEMPROOT}"
+    echo "*** NOTE: Using TEMPROOT \"${new}\" instead of \"${TEMPROOT}\""
+    TEMPROOT="${new}"
+    ;;
+esac
 if ${BINARYDIRMODE}; then
 	SRCDIR="${TEMPROOT}"
 fi
@@ -541,10 +548,24 @@ if ! ${CONTINUE}; then
 			[ $? -ne 0 ] && exit 1
 		done
 	elif ${BINARYDIRMODE}; then
-		# Populate ${TEMPROOT} from ${SRCDIR} by copying
+		# Populate ${TEMPROOT} from ${SRCDIR} by copying.
+		# Copy only the files that belong to the etc and xetc sets.
 		echo "*** Populating ${TEMPROOT} from ${BINARYDIR} (copying)"
-		cp -RPp "${BINARYDIR}"/* "${TEMPROOT}"/
-		[ $? -ne 0 ] && exit 1
+		for setname in etc xetc; do
+			mtreefile="${BINARYDIR}/etc/mtree/set.${setname}"
+			if ${VERBOSE}; then vflag="-v"; else vflag=""; fi
+			if [ -f "${mtreefile}" ]; then
+				echo "*** Copying files belonging to" \
+				     "${setname} set"
+				(cd "${BINARYDIR}" \
+				 && pax -rwdM ${vflag} "${TEMPROOT%/}/."
+				) <"${mtreefile}"
+				[ $? -ne 0 ] && exit 1
+			else
+				echo "*** Not copying files belonging to" \
+				     "${setname} set: ${mtreefile} not found"
+			fi
+		done
 	elif ${SOURCEMODE}; then
 		# Populate ${TEMPROOT} from ${SRCDIR} by running make
 		if [ ! -f "${SRCDIR}/etc/Makefile" ]; then
