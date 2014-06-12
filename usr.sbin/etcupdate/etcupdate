@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.51 2012/08/15 16:26:41 apb Exp $
+# $NetBSD: etcupdate,v 1.52 2014/06/12 13:31:47 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -447,7 +447,7 @@ do
 			# arg refers to a source directory
 			SOURCEMODE=true
 			SRCDIR="${arg}"
-		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ] \
+		elif [ -d "${arg}" ] && [ -d "${arg}/etc" ] \
 			&& ! [ -f "${arg}/etc/Makefile" ]
 		then
 			# arg refers to a directory where the
@@ -456,7 +456,8 @@ do
 			BINARYDIRMODE=true
 			BINARYDIR="${arg}"
 		else
-			echo "*** Nonexistent file or directory for -s ${arg}"
+			echo "*** Nonexistent or invalid file or directory" \
+			     "for -s ${arg}"
 			usage
 		fi
 		;;
