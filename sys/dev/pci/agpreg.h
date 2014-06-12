@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.21 2014/05/23 22:58:56 riastradh Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.22 2014/06/12 18:46:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -285,6 +285,14 @@
 #define AGP_G4X_MSAC_APER_512M		0x04
 
 #define AGP_G4X_GTT			(2*1024*1024)
+
+#define	AGP_G4X_PGTBL_SIZE_MASK		0x0000000e
+#define	AGP_G4X_PGTBL_SIZE_512K		(0 << 1)
+#define	AGP_G4X_PGTBL_SIZE_256K		(1 << 1)
+#define	AGP_G4X_PGTBL_SIZE_128K		(2 << 1)
+#define	AGP_G4X_PGTBL_SIZE_1M		(3 << 1)
+#define	AGP_G4X_PGTBL_SIZE_2M		(4 << 1)
+#define	AGP_G4X_PGTBL_SIZE_1_5M		(5 << 1)
 
 #define AGP_G4X_GCC1_GMS_STOLEN_96M	0xa0
 #define AGP_G4X_GCC1_GMS_STOLEN_160M	0xb0
