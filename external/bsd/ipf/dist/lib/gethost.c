@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.3 2014/06/12 17:23:06 christos Exp $	*/
+/*	$NetBSD: gethost.c,v 1.4 2014/06/12 22:15:25 joerg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -19,7 +19,7 @@ int gethost(family, name, hostp)
 	struct netent *n;
 	u_32_t addr;
 
-	memset(hostp, sizeof(*hostp));
+	memset(hostp, 0, sizeof(*hostp));
 	if (!strcmp(name, "test.host.dots")) {
 		if (family == AF_INET) {
 			hostp->in4.s_addr = htonl(0xfedcba98);
@@ -60,7 +60,7 @@ int gethost(family, name, hostp)
 		struct addrinfo hints, *res;
 		struct sockaddr_in6 *sin6;
 
-		memset(&hints, sizeof(hints));
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = PF_INET6;
 
 		getaddrinfo(name, NULL, &hints, &res);
