@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.6 2013/04/01 13:44:02 msaitoh Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.7 2014/06/12 12:09:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -195,25 +195,6 @@
 #define BRGPHY_IMR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_IMR_LNK_CHG	0x0002	/* Link status change */
 #define BRGPHY_IMR_CRCERR	0x0001	/* CEC error */
-
-/*******************************************************/
-/* Begin: Shared SerDes PHY register definitions       */
-/*******************************************************/
-
-/* SerDes autoneg is different from copper */
-#define BRGPHY_SERDES_ANAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANAR_BOTH_PAUSE	(0x3 << 7)
-
-#define BRGPHY_SERDES_ANLPAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANLPAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANLPAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANLPAR_BOTH_PAUSE	(0x3 << 7)
-
-/*******************************************************/
-/* End: Shared SerDes PHY register definitions         */
-/*******************************************************/
 
 /*******************************************************/
 /* Begin: PHY register values for the 5706 PHY         */
