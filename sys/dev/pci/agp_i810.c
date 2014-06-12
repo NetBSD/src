@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.101 2014/06/12 18:33:42 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.102 2014/06/12 18:41:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.101 2014/06/12 18:33:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.102 2014/06/12 18:41:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case CHIP_G33:
 		apbase = AGP_I915_GMADR;
 		mmadr_bar = AGP_I915_MMADR;
-		isc->size = 2*1024*1024;
+		isc->size = 512*1024;
 		gtt_bar = AGP_I915_GTTADR;
 		gtt_off = ~(bus_size_t)0; /* XXXGCC */
 		break;
@@ -398,7 +398,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
 		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
-		isc->size = 2*1024*1024;
+		isc->size = 512*1024;
 		gtt_bar = 0;
 		gtt_off = AGP_I965_GTT;
 		break;
@@ -406,7 +406,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
 		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
-		isc->size = 2*1024*1024;
+		isc->size = 512*1024;
 		gtt_bar = 0;
 		gtt_off = AGP_G4X_GTT;
 		break;
