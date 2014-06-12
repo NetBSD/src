@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <x86/machdep.h>	/* x86_select_freelist */
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_fault.h>
@@ -4190,7 +4192,9 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 						  size_t size)
 {
 	struct drm_i915_gem_object *obj;
-#ifndef __NetBSD__		/* XXX >32bit dma?  */
+#ifdef __NetBSD__
+	uint64_t maxaddr;
+#else
 	struct address_space *mapping;
 	u32 mask;
 #endif
@@ -4204,7 +4208,23 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 		return NULL;
 	}
 
-#ifndef __NetBSD__		/* XXX >32bit dma?  */
+#ifdef __NetBSD__
+	/*
+	 * 965GM can't handle >32-bit paddrs; all other models can't
+	 * handle >40-bit paddrs.
+	 *
+	 * XXX I think this table is incomplete.  It should be
+	 * synchronized with the other DMA address constraints
+	 * scattered throughout DRM.
+	 *
+	 * XXX DMA limits
+	 */
+	if (IS_CRESTLINE(dev) || IS_BROADWATER(dev))
+		maxaddr = 0xffffffffULL;
+	else
+		maxaddr = 0xffffffffffULL;
+	uao_set_pgfl(obj->base.gemo_shm_uao, x86_select_freelist(maxaddr));
+#else
 	mask = GFP_HIGHUSER | __GFP_RECLAIMABLE;
 	if (IS_CRESTLINE(dev) || IS_BROADWATER(dev)) {
 		/* 965gm cannot relocate objects above 4GiB. */
