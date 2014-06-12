@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.23 2014/06/12 19:05:37 apb Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.24 2014/06/12 19:12:19 apb Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.23 2014/06/12 19:05:37 apb Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.24 2014/06/12 19:12:19 apb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -63,7 +63,7 @@ struct arc4_stream {
 
 #ifdef _REENTRANT
 #define LOCK(rs)	do { \
-				if (__isthreaded) mutex_lock(&(rs)->mtx);
+				if (__isthreaded) mutex_lock(&(rs)->mtx); \
 			} while (/*CONSTCOND*/ 0)
 #define UNLOCK(rs)	do { \
 				if (__isthreaded) mutex_unlock(&(rs)->mtx); \
