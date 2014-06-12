@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.102 2014/06/12 18:41:46 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.103 2014/06/12 18:46:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.102 2014/06/12 18:41:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.103 2014/06/12 18:46:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,7 +844,31 @@ agp_i810_init(struct agp_softc *sc)
 			}
 			break;
 		case CHIP_G4X:
-			gtt_size = 256;
+			switch (isc->pgtblctl & AGP_G4X_PGTBL_SIZE_MASK) {
+			case AGP_G4X_PGTBL_SIZE_512K:
+				gtt_size = 512;
+				break;
+			case AGP_G4X_PGTBL_SIZE_256K:
+				gtt_size = 256;
+				break;
+			case AGP_G4X_PGTBL_SIZE_128K:
+				gtt_size = 128;
+				break;
+			case AGP_G4X_PGTBL_SIZE_1M:
+				gtt_size = 1*1024;
+				break;
+			case AGP_G4X_PGTBL_SIZE_2M:
+				gtt_size = 2*1024;
+				break;
+			case AGP_G4X_PGTBL_SIZE_1_5M:
+				gtt_size = 1*1024 + 512;
+				break;
+			default:
+				aprint_error_dev(sc->as_dev,
+				    "bad PGTBL size\n");
+				error = ENXIO;
+				goto fail0;
+			}
 			break;
 		default:
 			panic("impossible chiptype %d", isc->chiptype);
