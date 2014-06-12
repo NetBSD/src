@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.15 2014/06/12 06:28:09 ozaki-r Exp $	*/
+/*	$NetBSD: mutex.h,v 1.16 2014/06/12 08:50:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct kmutex {
  * interrupts, not multiple processors.
  */
 #ifdef MULTIPROCESSOR
-#if defined(_ARM_ARCH_7) && !defined(_ARM_ARCH_6)
+#ifdef _ARM_ARCH_7
 #define	MUTEX_RECEIVE(mtx)		__asm __volatile("dmb")
 #else
 #define	MUTEX_RECEIVE(mtx)		membar_consumer()
@@ -102,7 +102,7 @@ struct kmutex {
  * MUTEX_GIVE: no memory barrier required; same reason.
  */
 #ifdef MULTIPROCESSOR
-#if defined(_ARM_ARCH_7) && !defined(_ARM_ARCH_6)
+#ifdef _ARM_ARCH_7
 #define	MUTEX_GIVE(mtx)			__asm __volatile("dsb")
 #else
 #define	MUTEX_GIVE(mtx)			membar_producer()
