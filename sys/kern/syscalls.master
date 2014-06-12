@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.268 2014/04/09 23:55:37 pooka Exp $
+	$NetBSD: syscalls.master,v 1.269 2014/06/12 21:41:33 joerg Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -390,7 +390,7 @@
 			    off_t length); }
 201	STD 	 RUMP	{ int|sys||ftruncate(int fd, int PAD, off_t length); }
 202	STD	 RUMP 	{ int|sys||__sysctl(const int *name, u_int namelen, \
-			    void *old, size_t *oldlenp, const void *new, \
+			    void *oldv, size_t *oldlenp, const void *newv, \
 			    size_t newlen); }
 203	STD 		{ int|sys||mlock(const void *addr, size_t len); }
 204	STD 		{ int|sys||munlock(const void *addr, size_t len); }
@@ -629,7 +629,7 @@
 328	UNIMPL
 329	UNIMPL
 ; SA system calls.
-330	COMPAT_60 	{ int|sys||sa_register(void *new, void **old, \
+330	COMPAT_60 	{ int|sys||sa_register(void *newv, void **oldv, \
 				int flags, ssize_t stackinfo_offset); }
 331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
 332	COMPAT_60 	{ int|sys||sa_enable(void); }
