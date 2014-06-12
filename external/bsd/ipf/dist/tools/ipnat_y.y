@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat_y.y,v 1.1.1.2 2012/07/22 13:44:57 darrenr Exp $	*/
+/*	$NetBSD: ipnat_y.y,v 1.2 2014/06/12 17:23:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1762,7 +1762,9 @@ addname(np, name)
 	int pos;
 
 	nlen = strlen(name) + 1;
-	n = realloc(*np, (*np)->in_size + nlen);
+	n = calloc(1, (*np)->in_size + nlen);
+	memcpy(n, *np (*np)->in_size);
+	free(*np);
 	if (*np == nattop)
 		nattop = n;
 	*np = n;
