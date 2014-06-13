@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.100 2014/04/30 17:23:45 njoly Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.101 2014/06/13 10:37:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -300,7 +300,7 @@ struct netbsd32_quotactlargs {
 		} put;
 		struct {
 			netbsd32_pointer_t qc_key;
-		} delete;
+		} remove;
 		struct {
 			netbsd32_pointer_t qc_cursor;
 		} cursoropen;
