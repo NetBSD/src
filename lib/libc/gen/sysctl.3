@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.200 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: sysctl.3,v 1.201 2014/06/13 15:45:05 joerg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,14 +29,16 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 26, 2009
+.Dd June 13, 2014
 .Dt SYSCTL 3
 .Os
 .Sh NAME
 .Nm sysctl ,
 .Nm sysctlbyname ,
 .Nm sysctlgetmibinfo ,
-.Nm sysctlnametomib
+.Nm sysctlnametomib ,
+.Nm asysctl ,
+.Nm asysctlbyname
 .Nd get or set system information
 .Sh LIBRARY
 .Lb libc
@@ -54,6 +56,10 @@
 "char *cname" "size_t *csz" "struct sysctlnode **rnode" "int v"
 .Ft int
 .Fn sysctlnametomib "const char *sname" "int *name" "size_t *namelenp"
+.Ft void *
+.Fn asysctl "const int *name" "size_t namelen" "size_t *len"
+.Ft void *
+.Fn asysctlbyname "const char *sname" "size_t *len"
 .Sh DESCRIPTION
 The
 .Nm
@@ -250,6 +256,18 @@ sysctl(mib, 2, NULL, \*[Am]len, NULL, 0);
 p = malloc(len);
 sysctl(mib, 2, p, \*[Am]len, NULL, 0);
 .Ed
+.Pp
+The
+.Fn asysctl
+and
+.Fn asysctlbyname
+functions are wrappers for
+.Fn sysctl
+and
+.Fn sysctlbyname .
+They return memory allocated with
+.Xr malloc 3 
+and resize the buffer in a loop until all data fits.
 .Sh DYNAMIC OPERATIONS
 Several meta-identifiers are provided to perform operations on the
 .Nm

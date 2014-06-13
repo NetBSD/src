@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.250 2014/03/29 19:30:12 dholland Exp $
+#	$NetBSD: shlib_version,v 1.251 2014/06/13 15:45:05 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -41,4 +41,4 @@
 # - redo stdin/stdout/stderr to not require copy relocations
 # - move gethostbyname to a compat library
 major=12
-minor=190
+minor=191
