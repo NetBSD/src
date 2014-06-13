@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.8 2014/06/13 02:08:06 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.9 2014/06/13 13:38:52 joerg Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -31,7 +31,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.103 2014/05/02 02:25:10 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.8 2014/06/13 02:08:06 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.9 2014/06/13 13:38:52 joerg Exp $");
 #endif
 #endif
 
@@ -473,8 +473,8 @@ private size_t
 donote(struct magic_set *ms, void *vbuf, size_t offset, size_t size,
     int clazz, int swap, size_t align, int *flags)
 {
-	Elf32_Nhdr nh32 = { 0 };
-	Elf64_Nhdr nh64 = { 0 };
+	Elf32_Nhdr nh32 = { 0, 0, 0 };
+	Elf64_Nhdr nh64 = { 0, 0, 0 };
 	size_t noff, doff;
 #ifdef ELFCORE
 	int os_style = -1;
