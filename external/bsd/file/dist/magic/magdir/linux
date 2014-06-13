@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: linux,v 1.52 2013/11/19 23:18:15 christos Exp $
+# $File: linux,v 1.57 2014/05/20 20:10:17 christos Exp $
 # linux:  file(1) magic for Linux files
 #
 # Values for Linux/i386 binaries, from Daniel Quinlan <quinlan@yggdrasil.com>
@@ -40,6 +40,7 @@
 >28	long		!0		not stripped
 # core dump file, from Bill Reynolds <bill@goshawk.lanl.gov>
 216	lelong		0421		Linux/i386 core file
+!:strength / 2
 >220	string		>\0		of '%s'
 >200	lelong		>0		(signal %d)
 #
@@ -48,7 +49,10 @@
 2	string		LILO		Linux/i386 LILO boot/chain loader
 #
 # Linux make config build file, from Ole Aamot <oka@oka.no>
-28 	string		make\ config	Linux make config build file
+# Updated by Ken Sharp
+28	string		make\ config		Linux make config build file (old)
+49	search/70	Kernel\ Configuration	Linux make config build file
+
 #
 # PSF fonts, from H. Peter Anvin <hpa@yggdrasil.com>
 # Updated by Adam Buchbinder <adam.buchbinder@gmail.com>
@@ -391,4 +395,21 @@
 >>0x1040	ubeshort	x	\b-%04x
 >>0x1042	ubelong		x	\b-%08x
 >>0x1046	ubeshort	x	\b%04x
+
+# Linux device tree:
+# File format description can be found in the Linux kernel sources at 
+# Documentation/devicetree/booting-without-of.txt
+# From Christoph Biedl
+0		belong		0xd00dfeed
+# structure and strings must be within blob
+>&(8.L)		byte		x
+>>&(12.L)	byte		x
+>>>20		belong		>1	Device Tree Blob version %d
+>>>>4		belong		x	\b, size=%d
+>>>>20		belong		>1
+>>>>>28		belong		x	\b, boot CPU=%d
+>>>>20		belong		>2
+>>>>>32		belong		x	\b, string block size=%d
+>>>>20		belong		>16
+>>>>>36		belong		x	\b, DT structure block size=%d
 
