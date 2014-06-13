@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2013/07/16 17:47:43 christos Exp $
+#	$NetBSD: Makefile,v 1.40 2014/06/13 01:17:45 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -56,10 +56,6 @@ const.h: const.c
 SUBDIR+=USD.doc
 .endif
 
-# XXX Only GCC 4.1 problem
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "vax"
-COPTS.parse.c+=	-O0
-.endif
 COPTS.err.c = -Wno-format-nonliteral
 COPTS.printf.c = -Wno-format-nonliteral
 COPTS.proc.c = -Wno-format-nonliteral
