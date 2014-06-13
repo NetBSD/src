@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.305 2014/05/25 16:31:51 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.306 2014/06/13 15:45:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.305 2014/05/25 16:31:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.306 2014/06/13 15:45:02 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -883,6 +883,23 @@ rump_syscall_boot_establish(const struct rump_onesyscall *calls, size_t ncall)
 		    && callp->sy_call == (sy_call_t *)enosys);
 		callp->sy_call = calls[i].ros_handler;
 	}
+}
+
+struct rump_boot_etfs *ebstart;
+void
+rump_boot_etfs_register(struct rump_boot_etfs *eb)
+{
+
+	/*
+	 * Could use atomics, but, since caller would need to synchronize
+	 * against calling rump_init() anyway, easier to just specify the
+	 * interface as "caller serializes".  This solve-by-specification
+	 * approach avoids the grey area of using atomics before rump_init()
+	 * runs.
+	 */
+	eb->_eb_next = ebstart;
+	eb->eb_status = -1;
+	ebstart = eb;
 }
 
 /*
