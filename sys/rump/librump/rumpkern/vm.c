@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.156 2014/04/25 13:20:45 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.157 2014/06/13 11:48:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.156 2014/04/25 13:20:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.157 2014/06/13 11:48:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -306,14 +306,14 @@ uvm_init(void)
 
 		if (rump_physmemlimit / mult != tmp)
 			panic("uvm_init: RUMP_MEMLIMIT overflow: %s", buf);
-		/* it's not like we'd get far with, say, 1 byte, but ... */
-		if (rump_physmemlimit < 1024*1024)
-			printf("uvm_init: WARNING: <1MB RAM limit, "
-			    "hope you know what you're doing\n");
 
 		/* reserve some memory for the pager */
 		pdlimit = rump_physmemlimit;
 		rump_physmemlimit -= 2*MAXPHYS;
+
+		if (pdlimit < 1024*1024)
+			printf("uvm_init: WARNING: <1MB RAM limit, "
+			    "hope you know what you're doing\n");
 
 #define HUMANIZE_BYTES 9
 		CTASSERT(sizeof(buf) >= HUMANIZE_BYTES);
@@ -327,7 +327,21 @@ uvm_init(void)
 
 	TAILQ_INIT(&vmpage_lruqueue);
 
-	uvmexp.free = 1024*1024; /* XXX: arbitrary & not updated */
+	if (rump_physmemlimit == RUMPMEM_UNLIMITED) {
+		uvmexp.npages = physmem;
+	} else {
+		uvmexp.npages = pdlimit >> PAGE_SHIFT;
+		uvmexp.reserve_pagedaemon
+		    = (pdlimit-rump_physmemlimit) >> PAGE_SHIFT;
+		uvmexp.freetarg = (rump_physmemlimit-dddlim) >> PAGE_SHIFT;
+	}
+	/*
+	 * uvmexp.free is not used internally or updated.  The reason is
+	 * that the memory hypercall allocator is allowed to allocate
+	 * non-page sized chunks.  We use a byte count in curphysmem
+	 * instead.
+	 */
+	uvmexp.free = uvmexp.npages;
 
 #ifndef __uvmexp_pagesize
 	uvmexp.pagesize = PAGE_SIZE;
