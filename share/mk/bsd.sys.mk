@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.239 2014/05/27 16:16:01 plunky Exp $
+#	$NetBSD: bsd.sys.mk,v 1.240 2014/06/13 01:17:45 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -80,7 +80,7 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
-.if (defined(HAVE_GCC) && ${HAVE_GCC} >= 45 \
+.if (defined(HAVE_GCC) \
      && (${MACHINE_ARCH} == "coldfire" || \
 	 ${MACHINE_ARCH} == "sh3eb" || \
 	 ${MACHINE_ARCH} == "sh3el" || \
