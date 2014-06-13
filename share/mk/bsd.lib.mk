@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.354 2014/04/24 00:14:59 pooka Exp $
+#	$NetBSD: bsd.lib.mk,v 1.355 2014/06/13 01:17:45 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -604,8 +604,6 @@ LDADD+= -lgcc
 LIBCC:=	${CXX}
 . if ${MKLIBCXX} == "yes"
 LIBDPLIBS+=     c++	${.CURDIR}/../../../../../external/bsd/libc++/lib
-. elif defined(HAVE_GCC) && ${HAVE_GCC} == 4
-LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../gnu/lib/libstdc++-v3_4
 . else
 LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 . endif

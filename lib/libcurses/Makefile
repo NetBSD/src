@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2014/05/21 14:01:30 abs Exp $
+#	$NetBSD: Makefile,v 1.70 2014/06/13 01:17:45 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -175,11 +175,6 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_standout.3 wstandout.3 curses_input.3 wtimeout.3 \
 	 curses_touch.3 wtouchln.3 curses_underscore.3 wunderend.3 \
 	 curses_underscore.3 wunderscore.3 curses_line.3 wvline.3
-
-# sysinst crashes under gcc 4.1 after selecting partition sizes - PR lib/48827
-.if ${HAVE_GCC:U} == "4" && ${ACTIVE_CC} == "gcc" && ${MACHINE_ARCH} == "vax"
-COPTS.refresh.c+=	-fno-guess-branch-probability
-.endif
 
 .if make(install)
 SUBDIR+= PSD.doc

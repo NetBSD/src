@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/10/04 13:04:00 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2014/06/13 01:17:45 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -51,8 +51,4 @@ ada-exp.c: ada-lex.c
 
 .if ${MACHINE} == "amiga"
 COPTS.dwarf2-frame.c+=-O1
-.endif
-
-.if defined(HAVE_GCC) && HAVE_GCC == 4 && ${MACHINE} == "sun2"
-COPTS.dwarf2-frame.c+=-O0
 .endif
