@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.199 2014/06/03 21:56:30 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.200 2014/06/13 19:10:01 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.199 2014/06/03 21:56:30 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.200 2014/06/13 19:10:01 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1354,6 +1354,147 @@ doevcnt(int verbose, int type)
 		    "Total", counttotal, counttotal / uptime);
 }
 
+static void
+dopool_sysctl(int verbose, int wide)
+{
+	uint64_t total, inuse, this_total, this_inuse;
+	struct {
+		uint64_t pt_nget;
+		uint64_t pt_nfail;
+		uint64_t pt_nput;
+		uint64_t pt_nout;
+		uint64_t pt_nitems;
+		uint64_t pt_npagealloc;
+		uint64_t pt_npagefree;
+		uint64_t pt_npages;
+	} pool_totals;
+	size_t i, len;
+	int name_len, ovflw;
+	struct pool_sysctl *pp, *data;
+	char in_use[8], avail[8], maxp[32];
+
+	data = asysctlbyname("kern.pool", &len);
+	if (data == NULL)
+		err(1, "failed to reead kern.pool");
+
+	total = inuse = 0;
+	len /= sizeof(*data);
+
+	(void)printf("Memory resource pool statistics\n");
+	(void)printf(
+	    "%-*s%*s%*s%5s%*s%s%s%*s%*s%6s%s%6s%6s%6s%5s%s%s\n",
+	    wide ? 16 : 11, "Name",
+	    wide ? 6 : 5, "Size",
+	    wide ? 12 : 9, "Requests",
+	    "Fail",
+	    wide ? 12 : 9, "Releases",
+	    wide ? "  InUse" : "",
+	    wide ? " Avail" : "",
+	    wide ? 7 : 6, "Pgreq",
+	    wide ? 7 : 6, "Pgrel",
+	    "Npage",
+	    wide ? " PageSz" : "",
+	    "Hiwat",
+	    "Minpg",
+	    "Maxpg",
+	    "Idle",
+	    wide ? " Flags" : "",
+	    wide ? "   Util" : "");
+
+	name_len = MIN((int)sizeof(pp->pr_wchan), wide ? 16 : 11);
+	for (i = 0; i < len; ++i) {
+		pp = &data[i];
+		if (pp->pr_nget == 0 && !verbose)
+			continue;
+		if (pp->pr_maxpages == UINT_MAX)
+			(void)snprintf(maxp, sizeof(maxp), "inf");
+		else
+			(void)snprintf(maxp, sizeof(maxp), "%" PRIu64,
+			    pp->pr_maxpages);
+		ovflw = 0;
+		PRWORD(ovflw, "%-*s", name_len, 0, pp->pr_wchan);
+		PRWORD(ovflw, " %*" PRIu64, wide ? 6 : 5, 1, pp->pr_size);
+		PRWORD(ovflw, " %*" PRIu64, wide ? 12 : 9, 1, pp->pr_nget);
+		pool_totals.pt_nget += pp->pr_nget;
+		PRWORD(ovflw, " %*" PRIu64, 5, 1, pp->pr_nfail);
+		pool_totals.pt_nfail += pp->pr_nfail;
+		PRWORD(ovflw, " %*" PRIu64, wide ? 12 : 9, 1, pp->pr_nput);
+		pool_totals.pt_nput += pp->pr_nput;
+		if (wide) {
+			PRWORD(ovflw, " %*" PRIu64, 7, 1, pp->pr_nout);
+			pool_totals.pt_nout += pp->pr_nout;
+		}
+		if (wide) {
+			PRWORD(ovflw, " %*" PRIu64, 6, 1, pp->pr_nitems);
+			pool_totals.pt_nitems += pp->pr_nitems;
+		}
+		PRWORD(ovflw, " %*" PRIu64, wide ? 7 : 6, 1, pp->pr_npagealloc);
+		pool_totals.pt_npagealloc += pp->pr_npagealloc;
+		PRWORD(ovflw, " %*" PRIu64, wide ? 7 : 6, 1, pp->pr_npagefree);
+		pool_totals.pt_npagefree += pp->pr_npagefree;
+		PRWORD(ovflw, " %*" PRIu64, 6, 1, pp->pr_npages);
+		pool_totals.pt_npages += pp->pr_npages;
+		if (wide)
+			PRWORD(ovflw, " %*" PRIu64, 7, 1, pp->pr_pagesize);
+		PRWORD(ovflw, " %*" PRIu64, 6, 1, pp->pr_hiwat);
+		PRWORD(ovflw, " %*" PRIu64, 6, 1, pp->pr_minpages);
+		PRWORD(ovflw, " %*s", 6, 1, maxp);
+		PRWORD(ovflw, " %*" PRIu64, 5, 1, pp->pr_nidle);
+		if (wide)
+			PRWORD(ovflw, " 0x%0*" PRIx64, 4, 1,
+			    pp->pr_flags);
+
+		this_inuse = pp->pr_nout * pp->pr_size;
+		this_total = pp->pr_npages * pp->pr_pagesize;
+		if (pp->pr_flags & PR_RECURSIVE) {
+			/*
+			 * Don't count in-use memory, since it's part
+			 * of another pool and will be accounted for
+			 * there.
+			 */
+			total += (this_total - this_inuse);
+		} else {
+			inuse += this_inuse;
+			total += this_total;
+		}
+		if (wide) {
+			if (this_total == 0)
+				(void)printf("   ---");
+			else
+				(void)printf(" %5.1f%%",
+				    (100.0 * this_inuse) / this_total);
+		}
+		(void)printf("\n");
+	}
+	if (wide) {
+		snprintf(in_use, sizeof in_use, "%7"PRId64, pool_totals.pt_nout);
+		snprintf(avail, sizeof avail, "%6"PRId64, pool_totals.pt_nitems);
+	} else {
+		in_use[0] = '\0';
+		avail[0] = '\0';
+	}
+	(void)printf(
+	    "%-*s%*s%*"PRId64"%5"PRId64"%*"PRId64"%s%s%*"PRId64"%*"PRId64"%6"PRId64"\n",
+	    wide ? 16 : 11, "Totals",
+	    wide ? 6 : 5, "",
+	    wide ? 12 : 9, pool_totals.pt_nget,
+	    pool_totals.pt_nfail,
+	    wide ? 12 : 9, pool_totals.pt_nput,
+	    in_use,
+	    avail,
+	    wide ? 7 : 6, pool_totals.pt_npagealloc,
+	    wide ? 7 : 6, pool_totals.pt_npagefree,
+	    pool_totals.pt_npages);
+
+	inuse /= KILO;
+	total /= KILO;
+	(void)printf(
+	    "\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
+	    inuse, total, (100.0 * inuse) / total);
+
+	free(data);
+}
+
 void
 dopool(int verbose, int wide)
 {
@@ -1376,6 +1517,9 @@ dopool(int verbose, int wide)
 	struct pool pool, *pp = &pool;
 	struct pool_allocator pa;
 	char name[32], maxp[32];
+
+	if (memf == NULL)
+		return dopool_sysctl(verbose, wide);
 
 	memset(&pool_totals, 0, sizeof pool_totals);
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
@@ -1503,6 +1647,68 @@ dopool(int verbose, int wide)
 	    inuse, total, (100.0 * inuse) / total);
 }
 
+static void
+dopoolcache_sysctl(int verbose)
+{
+	struct pool_sysctl *data, *pp;
+	size_t i, len;
+	bool first = true;
+	int ovflw;
+	uint64_t tot;
+	float p;
+
+	data = asysctlbyname("kern.pool", &len);
+	if (data == NULL)
+		err(1, "failed to reead kern.pool");
+	len /= sizeof(*data);
+
+	for (i = 0; i < len; ++i) {
+		pp = &data[i];
+		if (pp->pr_cache_meta_size == 0)
+			continue;
+
+		if (pp->pr_cache_nmiss_global == 0 && !verbose)
+			continue;
+
+		if (first) {
+			(void)printf("Pool cache statistics.\n");
+			(void)printf("%-*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+			    12, "Name",
+			    6, "Spin",
+			    6, "GrpSz",
+			    5, "Full",
+			    5, "Emty",
+			    10, "PoolLayer",
+			    11, "CacheLayer",
+			    6, "Hit%",
+			    12, "CpuLayer",
+			    6, "Hit%"
+			);
+			first = false;
+		}
+
+		ovflw = 0;
+		PRWORD(ovflw, "%-*s", MIN((int)sizeof(pp->pr_wchan), 13), 1,
+		    pp->pr_wchan);
+		PRWORD(ovflw, " %*" PRIu64, 6, 1, pp->pr_cache_ncontended);
+		PRWORD(ovflw, " %*" PRIu64, 6, 1, pp->pr_cache_meta_size);
+		PRWORD(ovflw, " %*" PRIu64, 5, 1, pp->pr_cache_nfull);
+		PRWORD(ovflw, " %*" PRIu64, 5, 1, pp->pr_cache_nempty);
+		PRWORD(ovflw, " %*" PRIu64, 10, 1, pp->pr_cache_nmiss_global);
+
+		tot = pp->pr_cache_nhit_global + pp->pr_cache_nmiss_global;
+		p = pp->pr_cache_nhit_global * 100.0 / tot;
+		PRWORD(ovflw, " %*" PRIu64, 11, 1, tot);
+		PRWORD(ovflw, " %*.1f", 6, 1, p);
+
+		tot = pp->pr_cache_nhit_pcpu + pp->pr_cache_nmiss_pcpu;
+		p = pp->pr_cache_nhit_pcpu * 100.0 / tot;
+		PRWORD(ovflw, " %*" PRIu64, 12, 1, tot);
+		PRWORD(ovflw, " %*.1f", 6, 1, p);
+		printf("\n");
+	}
+}
+
 void
 dopoolcache(int verbose)
 {
@@ -1516,6 +1722,9 @@ dopoolcache(int verbose)
 	int first, ovflw;
 	size_t i;
 	double p;
+
+	if (memf == NULL)
+		return dopoolcache_sysctl(verbose);
 
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
