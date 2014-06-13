@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.10 2014/06/11 14:51:49 joerg Exp $	*/
+/*	$NetBSD: dklist.c,v 1.11 2014/06/13 16:00:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.10 2014/06/11 14:51:49 joerg Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.11 2014/06/13 16:00:55 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,29 +146,6 @@ mlx_disk_add(const char *name)
 		errx(EXIT_FAILURE, "%s is not attached to %s", name, mlxname);
 }
 
-static void *
-fetch_sysctl(size_t *len, const int oids[], size_t oidlen, const char *msg)
-{
-	void *data;
-
-	*len = 0;
-	data = NULL;
-
-	for (;;) {
-		if (sysctl(oids, oidlen, data, len, NULL, 0) == 0) {
-			if (data != NULL || len == 0)
-				return data;
-			errno = ENOMEM;
-		}
-		free(data);
-		if (errno == ENOMEM) {
-			data = emalloc(*len);
-			continue;
-		}
-		err(1, "%s", msg);
-	}
-}
-
 void
 mlx_disk_add_all(void)
 {
@@ -176,10 +153,10 @@ mlx_disk_add_all(void)
 	size_t i, len;
 	static const int mib[3] = { CTL_HW, HW_IOSTATS, sizeof(*data) };
 
-	data = fetch_sysctl(&len, mib, __arraycount(mib), "hw.iostats failed");
+	data = asysctl(mib, __arraycount(mib), &len);
 	len /= sizeof(*data);
 
-	if (len == 0)
+	if (data == NULL || len == 0)
 		errx(EXIT_FAILURE, "no drives attached.");
 
 	for (i = 0; i < len; ++i) {
