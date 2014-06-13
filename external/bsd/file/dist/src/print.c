@@ -1,5 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 2013/03/23 16:15:58 christos Exp $	*/
-
+/*	$NetBSD: print.c,v 1.7 2014/06/13 02:08:06 christos Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -37,7 +36,7 @@
 #if 0
 FILE_RCSID("@(#)$File: print.c,v 1.76 2013/02/26 18:25:00 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.6 2013/03/23 16:15:58 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 2014/06/13 02:08:06 christos Exp $");
 #endif
 #endif  /* lint */
 
