@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.157 2014/06/13 11:48:56 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.158 2014/06/13 11:53:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.157 2014/06/13 11:48:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.158 2014/06/13 11:53:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -100,6 +100,7 @@ static unsigned long curphysmem;
 static unsigned long dddlim;		/* 90% of memory limit used */
 #define NEED_PAGEDAEMON() \
     (rump_physmemlimit != RUMPMEM_UNLIMITED && curphysmem > dddlim)
+#define PDRESERVE (2*MAXPHYS)
 
 /*
  * Try to free two pages worth of pages from objects.
@@ -308,8 +309,12 @@ uvm_init(void)
 			panic("uvm_init: RUMP_MEMLIMIT overflow: %s", buf);
 
 		/* reserve some memory for the pager */
+		if (rump_physmemlimit <= PDRESERVE)
+			panic("uvm_init: system reserves %d bytes of mem, "
+			    "only %lu bytes given",
+			    PDRESERVE, rump_physmemlimit);
 		pdlimit = rump_physmemlimit;
-		rump_physmemlimit -= 2*MAXPHYS;
+		rump_physmemlimit -= PDRESERVE;
 
 		if (pdlimit < 1024*1024)
 			printf("uvm_init: WARNING: <1MB RAM limit, "
@@ -331,8 +336,7 @@ uvm_init(void)
 		uvmexp.npages = physmem;
 	} else {
 		uvmexp.npages = pdlimit >> PAGE_SHIFT;
-		uvmexp.reserve_pagedaemon
-		    = (pdlimit-rump_physmemlimit) >> PAGE_SHIFT;
+		uvmexp.reserve_pagedaemon = PDRESERVE >> PAGE_SHIFT;
 		uvmexp.freetarg = (rump_physmemlimit-dddlim) >> PAGE_SHIFT;
 	}
 	/*
