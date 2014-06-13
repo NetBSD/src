@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2014/05/09 08:36:09 plunky Exp $
+#	$NetBSD: Makefile,v 1.215 2014/06/13 01:17:45 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -6,11 +6,7 @@
 SUBDIR=		csu .WAIT
 
 .if (${MKGCC} != "no")
-. if ${HAVE_GCC} == 4
-SUBDIR+=	../gnu/lib/libgcc4 .WAIT
-. else
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgcc .WAIT
-. endif
 .endif
 
 SUBDIR+=	libc
@@ -75,15 +71,12 @@ SUBDIR+=	../external/public-domain/xz/lib
 SUBDIR+=	../gnu/lib/libmalloc
 
 .if (${MKGCC} != "no")
-. if ${HAVE_GCC} == 4
-SUBDIR+=	../gnu/lib/libobjc4
-. else
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
-. endif
-. if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
+# We don't build compat versions of these.
+. if !defined(MLIBDIR)
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
 SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
@@ -147,13 +140,8 @@ SUBDIR+=	../external/bsd/libc++
 .endif
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
-. if ${HAVE_GCC} == 4
-SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
-SUBDIR+=	../gnu/lib/libsupc++4
-. else
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
-. endif
 .endif
 
 #==================== 2nd library dependency barrier ====================
