@@ -1,5 +1,4 @@
-/*	$NetBSD: magic.h,v 1.1.1.5 2013/12/01 19:28:16 christos Exp $	*/
-
+/*	$NetBSD: magic.h,v 1.1.1.6 2014/06/13 01:48:22 christos Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -77,7 +76,7 @@
 #define	MAGIC_NO_CHECK_FORTRAN	0x000000 /* Don't check ascii/fortran */
 #define	MAGIC_NO_CHECK_TROFF	0x000000 /* Don't check ascii/troff */
 
-#define MAGIC_VERSION		516	/* This implementation */
+#define MAGIC_VERSION		518	/* This implementation */
 
 
 #ifdef __cplusplus
