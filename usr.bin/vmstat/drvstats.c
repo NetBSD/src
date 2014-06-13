@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.8 2014/06/02 22:57:50 joerg Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.9 2014/06/13 11:26:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -40,9 +40,7 @@
 
 #include <err.h>
 #include <fcntl.h>
-#include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
