@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.201 2014/06/13 15:45:05 joerg Exp $
+.\"	$NetBSD: sysctl.3,v 1.202 2014/06/13 22:05:15 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -266,7 +266,7 @@ functions are wrappers for
 and
 .Fn sysctlbyname .
 They return memory allocated with
-.Xr malloc 3 
+.Xr malloc 3
 and resize the buffer in a loop until all data fits.
 .Sh DYNAMIC OPERATIONS
 Several meta-identifiers are provided to perform operations on the
@@ -687,9 +687,9 @@ unavailable.
 .It Bq Er EINVAL
 The
 .Fa name
-array is zero or greater than CTL_MAXNAME.
-.It Bq Er EINVAL
-A non-null
+array is zero or greater than
+.Dv CTL_MAXNAME ;
+or a non-null
 .Fa newp
 is given and its specified length in
 .Fa newlen
@@ -702,9 +702,8 @@ array specifies an intermediate rather than terminal name.
 .It Bq Er ENOENT
 The
 .Fa name
-array specifies a node that does not exist in the tree.
-.It Bq Er ENOENT
-An attempt was made to destroy a node that does not exist, or to
+array specifies a node that does not exist in the tree;
+or an attempt was made to destroy a node that does not exist, or to
 create or destroy a node below a node that does not exist.
 .It Bq Er ENOMEM
 The length pointed to by
@@ -722,12 +721,10 @@ The
 array specifies a value that is unknown or a meta-operation was
 attempted that the requested node does not support.
 .It Bq Er EPERM
-An attempt is made to set a read-only value.
-.It Bq Er EPERM
-A process without appropriate privilege attempts to set a value or to
-create or destroy a node.
-.It Bq Er EPERM
-An attempt to change a value protected by the current kernel security
+An attempt is made to set a read-only value; or
+a process without appropriate privilege attempts to set a value or to
+create or destroy a node; or
+an attempt to change a value protected by the current kernel security
 level is made.
 .El
 .Sh SEE ALSO
