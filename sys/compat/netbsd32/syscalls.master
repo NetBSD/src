@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.100 2014/05/15 09:54:06 njoly Exp $
+	$NetBSD: syscalls.master,v 1.101 2014/06/13 10:36:18 joerg Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -412,8 +412,8 @@
 201	STD		{ int|netbsd32||ftruncate(int fd, int PAD, \
 			    netbsd32_off_t length); }
 202	STD		{ int|netbsd32||__sysctl(netbsd32_intp name, \
-			    u_int namelen, netbsd32_voidp old, \
-			    netbsd32_size_tp oldlenp, netbsd32_voidp new, \
+			    u_int namelen, netbsd32_voidp oldv, \
+			    netbsd32_size_tp oldlenp, netbsd32_voidp newv, \
 			    netbsd32_size_t newlen); }
 203	STD		{ int|netbsd32||mlock(netbsd32_voidp addr, \
 			    netbsd32_size_t len); }
