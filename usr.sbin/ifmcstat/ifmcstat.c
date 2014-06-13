@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.18 2014/06/11 14:05:28 joerg Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.19 2014/06/13 16:04:41 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifmcstat.c,v 1.18 2014/06/11 14:05:28 joerg Exp $");
+__RCSID("$NetBSD: ifmcstat.c,v 1.19 2014/06/13 16:04:41 joerg Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -100,31 +100,6 @@ main(void)
 	/*NOTREACHED*/
 }
 
-static void *
-fetch_sysctl(size_t *len, const int oids[], size_t oidlen, const char *msg)
-{
-	void *data;
-
-	*len = 0;
-	data = NULL;
-
-	for (;;) {
-		if (sysctl(oids, oidlen, data, len, NULL, 0) == 0) {
-			if (data != NULL || len == 0)
-				return data;
-			errno = ENOMEM;
-		}
-		free(data);
-		if (errno == ENOMEM) {
-			data = emalloc(*len);
-			continue;
-		}
-		if (errno != ENODEV)
-			warn("%s", msg);
-		return NULL;
-	}
-}
-
 static void
 print_hwaddr(const uint8_t *hwaddr, size_t len)
 {
@@ -157,17 +132,24 @@ print_ether_mcast(u_short ifindex)
 	}
 
 	sdl_oids[2] = ifindex;
-	hwaddr = fetch_sysctl(&sdl_len, sdl_oids, 3, "failed to read net.sdl");
+	hwaddr = asysctl(sdl_oids, 3, &sdl_len);
 
 	if (sdl_len == 0) {
 		free(hwaddr);
 		return;
 	}
+	if (hwaddr == NULL) {
+		warn("failed to read net.sdl");
+	}
 
 	ems_oids[3] = ifindex;
-	ems = fetch_sysctl(&ems_len, ems_oids, 4,
-	    "failed to read net.ether.multicast");
+	ems = asysctl(ems_oids, 4, &ems_len);
 	ems_len /= sizeof(*ems);
+
+	if (ems == NULL && ems_len != 0) {
+		warn("failed to read net.ether.multicast");
+		return;
+	}
 
 	printf("\tenaddr ");
 	print_hwaddr(hwaddr, sdl_len);
@@ -214,8 +196,11 @@ print_inet6_mcast(u_short ifindex, const char *ifname)
 	mcast_oids[3] = ifindex;
 	kludge_oids[3] = ifindex;
 
-	mcast_addrs = fetch_sysctl(&len, mcast_oids, 4,
-	    "failed to read net.inet6.multicast");
+	mcast_addrs = asysctl(mcast_oids, 4, &len);
+	if (mcast_addrs == NULL && len != 0) {
+		warn("failed to read net.inet6.multicast");
+		return;
+	}
 	if (len) {
 		p = mcast_addrs;
 		last_p = NULL;
@@ -236,8 +221,11 @@ print_inet6_mcast(u_short ifindex, const char *ifname)
 	}
 	free(mcast_addrs);
 
-	kludge_addrs = fetch_sysctl(&len, kludge_oids, 4,
-	    "failed to read net.inet6.multicast_kludge");
+	kludge_addrs = asysctl(kludge_oids, 4, &len);
+	if (kludge_addrs == NULL && len != 0) {
+		warn("failed to read net.inet6.multicast_kludge");
+		return;
+	}
 	if (len) {
 		printf("\t(on kludge entry for %s)\n", ifname);
 		p = kludge_addrs;
