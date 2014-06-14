@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.1.1.18 2014/03/14 11:27:38 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.19 2014/06/14 20:51:09 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -70,14 +70,15 @@
 #define DHCP_RAND_MAX		1
 #define DHCP_ARP_FAIL		2
 
-/* number of usecs in a second. */
-#define USECS_SECOND		1000000
-/* As we use timevals, we should use the usec part for
- * greater randomisation. */
-#define DHCP_RAND_MIN_U		DHCP_RAND_MIN * USECS_SECOND
-#define DHCP_RAND_MAX_U		DHCP_RAND_MAX * USECS_SECOND
-#define PROBE_MIN_U		PROBE_MIN * USECS_SECOND
-#define PROBE_MAX_U		PROBE_MAX * USECS_SECOND
+#ifdef RFC2131_STRICT
+/* Be strictly conformant for section 4.1.1 */
+#  define DHCP_MIN_DELAY	1
+#  define DHCP_MAX_DELAY	10
+#else
+/* or mirror the more modern IPv6RS and DHCPv6 delays */
+#  define DHCP_MIN_DELAY	0
+#  define DHCP_MAX_DELAY	1
+#endif
 
 /* DHCP options */
 enum DHO {
@@ -245,12 +246,11 @@ struct dhcp_state {
 
 #include "dhcpcd.h"
 #include "if-options.h"
-#include "net.h"
 
 #ifdef INET
-char *decode_rfc3361(int dl, const uint8_t *data);
-ssize_t decode_rfc3442(char *out, ssize_t len, int pl, const uint8_t *p);
-ssize_t decode_rfc5969(char *out, ssize_t len, int pl, const uint8_t *p);
+char *decode_rfc3361(const uint8_t *, size_t);
+ssize_t decode_rfc3442(char *, size_t, const uint8_t *p, size_t);
+ssize_t decode_rfc5969(char *, size_t, const uint8_t *p, size_t);
 
 void dhcp_printoptions(const struct dhcpcd_ctx *);
 int get_option_addr(struct dhcpcd_ctx *,struct in_addr *,
@@ -284,7 +284,7 @@ void dhcp_decline(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
 void dhcp_bind(void *);
-void dhcp_reboot_newopts(struct interface *, int);
+void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
 int dhcp_dump(struct dhcpcd_ctx *, const char *);
@@ -296,7 +296,7 @@ int dhcp_dump(struct dhcpcd_ctx *, const char *);
 #define dhcp_reboot_newopts(a, b)
 #define dhcp_close(a)
 #define dhcp_free(a)
-#define dhcp_dump(a) -1
+#define dhcp_dump(a, b) -1
 #endif
 
 #endif
