@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.483 2014/06/12 21:39:45 joerg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.484 2014/06/14 11:37:35 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.483 2014/06/12 21:39:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.484 2014/06/14 11:37:35 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3923,6 +3923,9 @@ sys_truncate(struct lwp *l, const struct sys_truncate_args *uap, register_t *ret
 	struct vattr vattr;
 	int error;
 
+	if (SCARG(uap, length) < 0)
+		return EINVAL;
+
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0)
@@ -3956,6 +3959,9 @@ sys_ftruncate(struct lwp *l, const struct sys_ftruncate_args *uap, register_t *r
 	struct vnode *vp;
 	file_t *fp;
 	int error;
+
+	if (SCARG(uap, length) < 0)
+		return EINVAL;
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)

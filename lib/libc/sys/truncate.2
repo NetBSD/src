@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.26 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: truncate.2,v 1.27 2014/06/14 11:37:35 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 16, 2008
+.Dd June 14, 2014
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -76,6 +76,10 @@ and
 .Fn ftruncate
 are:
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa length
+argument was less than 0.
 .It Bq Er EISDIR
 The named file is a directory.
 .It Bq Er EROFS
