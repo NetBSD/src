@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.65 2014/05/23 16:57:42 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.66 2014/06/14 11:52:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.65 2014/05/23 16:57:42 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.66 2014/06/14 11:52:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1194,7 +1194,7 @@ spserver(void *arg)
 	int rv;
 	unsigned int nfds, maxidx;
 
-	rump_pub_lwproc_switch(sarg->sps_l);
+	lwproc_switch(sarg->sps_l);
 
 	for (idx = 0; idx < MAXCLI; idx++) {
 		pfdlist[idx].fd = -1;
