@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.31 2014/05/10 14:11:58 martin Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.32 2014/06/14 07:39:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.31 2014/05/10 14:11:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.32 2014/06/14 07:39:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,10 +241,6 @@ cd9660_reclaim(void *v)
 	/*
 	 * Purge old data structures associated with the inode.
 	 */
-	if (ip->i_devvp) {
-		vrele(ip->i_devvp);
-		ip->i_devvp = 0;
-	}
 	genfs_node_destroy(vp);
 	pool_put(&cd9660_node_pool, vp->v_data);
 	vp->v_data = NULL;

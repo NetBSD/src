@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.47 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.48 2014/06/14 07:39:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.47 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.48 2014/06/14 07:39:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,7 +723,7 @@ cd9660_strategy(void *v)
 		biodone(bp);
 		return (0);
 	}
-	vp = ip->i_devvp;
+	vp = ip->i_mnt->im_devvp;
 	return (VOP_STRATEGY(vp, bp));
 }
 

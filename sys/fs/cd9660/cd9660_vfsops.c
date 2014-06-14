@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.85 2014/05/13 17:05:26 martin Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.86 2014/06/14 07:39:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.85 2014/05/13 17:05:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.86 2014/06/14 07:39:28 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -586,12 +586,7 @@ cd9660_root(struct mount *mp, struct vnode **vpp)
 	    (struct iso_directory_record *)imp->root;
 	ino_t ino = isodirino(dp, imp);
 
-	/*
-	 * With RRIP we must use the `.' entry of the root directory.
-	 * Simply tell vget, that it's a relocated directory.
-	 */
-	return (cd9660_vget_internal(mp, ino, vpp,
-				     imp->iso_ftype == ISO_FTYPE_RRIP, dp));
+	return cd9660_vget(mp, ino, vpp);
 }
 
 /*
@@ -683,30 +678,19 @@ int
 cd9660_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 
-	/*
-	 * XXXX
-	 * It would be nice if we didn't always set the `relocated' flag
-	 * and force the extra read, but I don't want to think about fixing
-	 * that right now.
-	 */
-	return (cd9660_vget_internal(mp, ino, vpp,
-#if 0
-				     VFSTOISOFS(mp)->iso_ftype == ISO_FTYPE_RRIP,
-#else
-				     0,
-#endif
-				     NULL));
+	return cd9660_vget_internal(mp, ino, vpp);
 }
 
 int
-cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
-	int relocated, struct iso_directory_record *isodir)
+cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
+	struct iso_directory_record *isodir;
 	struct buf *bp;
 	struct vnode *vp;
 	dev_t dev;
+	int lbn, off;
 	int error;
 
 	imp = VFSTOISOFS(mp);
@@ -754,75 +738,52 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 	cd9660_ihashins(ip);
 	mutex_exit(&cd9660_hashlock);
 
-	if (isodir == 0) {
-		int lbn, off;
+	lbn = cd9660_lblkno(imp, ino);
+	if (lbn >= imp->volume_space_size) {
+		vput(vp);
+		printf("fhtovp: lbn exceed volume space %d\n", lbn);
+		return (ESTALE);
+	}
 
-		lbn = cd9660_lblkno(imp, ino);
-		if (lbn >= imp->volume_space_size) {
-			vput(vp);
-			printf("fhtovp: lbn exceed volume space %d\n", lbn);
-			return (ESTALE);
-		}
+	off = cd9660_blkoff(imp, ino);
+	if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
+		vput(vp);
+		printf("fhtovp: crosses block boundary %d\n",
+		    off + ISO_DIRECTORY_RECORD_SIZE);
+		return (ESTALE);
+	}
 
-		off = cd9660_blkoff(imp, ino);
-		if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
-			vput(vp);
-			printf("fhtovp: crosses block boundary %d\n",
-			    off + ISO_DIRECTORY_RECORD_SIZE);
-			return (ESTALE);
-		}
+	error = bread(imp->im_devvp,
+		      lbn << (imp->im_bshift - DEV_BSHIFT),
+		      imp->logical_block_size, NOCRED, 0, &bp);
+	if (error) {
+		vput(vp);
+		printf("fhtovp: bread error %d\n",error);
+		return (error);
+	}
+	isodir = (struct iso_directory_record *)((char *)bp->b_data + off);
 
-		error = bread(imp->im_devvp,
-			      lbn << (imp->im_bshift - DEV_BSHIFT),
-			      imp->logical_block_size, NOCRED, 0, &bp);
-		if (error) {
-			vput(vp);
-			printf("fhtovp: bread error %d\n",error);
-			return (error);
-		}
-		isodir = (struct iso_directory_record *)((char *)bp->b_data + off);
-
-		if (off + isonum_711(isodir->length) >
-		    imp->logical_block_size) {
-			vput(vp);
-			if (bp != 0)
-				brelse(bp, 0);
-			printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
-			    off +isonum_711(isodir->length), off,
-			    isonum_711(isodir->length));
-			return (ESTALE);
-		}
-
-#if 0
-		if (isonum_733(isodir->extent) +
-		    isonum_711(isodir->ext_attr_length) != ifhp->ifid_start) {
-			if (bp != 0)
-				brelse(bp, 0);
-			printf("fhtovp: file start miss %d vs %d\n",
-			    isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length),
-			    ifhp->ifid_start);
-			return (ESTALE);
-		}
-#endif
-	} else
-		bp = 0;
-
-	vref(ip->i_devvp);
-
-	if (relocated) {
-		/*
-		 * On relocated directories we must
-		 * read the `.' entry out of a dir.
-		 */
-		ip->iso_start = ino >> imp->im_bshift;
+	if (off + isonum_711(isodir->length) > imp->logical_block_size) {
+		vput(vp);
 		if (bp != 0)
 			brelse(bp, 0);
-		if ((error = cd9660_blkatoff(vp, (off_t)0, NULL, &bp)) != 0) {
-			vput(vp);
-			return (error);
-		}
-		isodir = (struct iso_directory_record *)bp->b_data;
+		printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
+		    off +isonum_711(isodir->length), off,
+		    isonum_711(isodir->length));
+		return (ESTALE);
 	}
+
+#if 0
+	if (isonum_733(isodir->extent) +
+	    isonum_711(isodir->ext_attr_length) != ifhp->ifid_start) {
+		if (bp != 0)
+			brelse(bp, 0);
+		printf("fhtovp: file start miss %d vs %d\n",
+		    isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length),
+		    ifhp->ifid_start);
+		return (ESTALE);
+	}
+#endif
 
 	ip->iso_extent = isonum_733(isodir->extent);
 	ip->i_size = isonum_733(isodir->size);
@@ -836,7 +797,6 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 	default:	/* ISO_FTYPE_9660 */
 	    {
 		struct buf *bp2;
-		int off;
 		if ((imp->im_flags & ISOFSMNT_EXTATT)
 		    && (off = isonum_711(isodir->ext_attr_length)))
 			cd9660_blkatoff(vp, (off_t)-(off << imp->im_bshift),
