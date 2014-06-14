@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.281 2014/05/05 19:12:19 martin Exp $
+#	$NetBSD: build.sh,v 1.282 2014/06/14 12:25:00 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1748,7 +1748,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.281 2014/05/05 19:12:19 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.282 2014/06/14 12:25:00 apb Exp $
 # with these arguments: ${_args}
 #
 
@@ -2048,6 +2048,9 @@ main()
 	statusmsg2 "MACHINE_ARCH:"     "${MACHINE_ARCH}"
 	statusmsg2 "Build platform:"   "${uname_s} ${uname_r} ${uname_m}"
 	statusmsg2 "HOST_SH:"          "${HOST_SH}"
+	if [ -n "${BUILDID}" ]; then
+		statusmsg2 "BUILDID:"  "${BUILDID}"
+	fi
 
 	rebuildmake
 	validatemakeparams
