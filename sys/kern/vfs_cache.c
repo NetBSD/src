@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.97 2014/06/03 21:16:15 joerg Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.98 2014/06/14 16:12:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.97 2014/06/03 21:16:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.98 2014/06/14 16:12:34 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -388,8 +388,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
-	mutex_enter(&cpup->cpu_lock);
 	if (__predict_false(namelen > NCHNAMLEN)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
@@ -397,13 +397,16 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	}
 	ncp = cache_lookup_entry(dvp, name, namelen);
 	if (__predict_false(ncp == NULL)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
 	if ((cnflags & MAKEENTRY) == 0) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_badhits);
+		mutex_exit(&cpup->cpu_lock);
 		/*
 		 * Last component and we are renaming or deleting,
 		 * the cache entry is invalid, or otherwise don't
@@ -411,7 +414,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		 */
 		cache_invalidate(ncp);
 		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
@@ -428,13 +430,16 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 
 		if (__predict_true(nameiop != CREATE ||
 		    (cnflags & ISLASTCN) == 0)) {
+			mutex_enter(&cpup->cpu_lock);
 			COUNT(cpup->cpu_stats, ncs_neghits);
-			mutex_exit(&ncp->nc_lock);
 			mutex_exit(&cpup->cpu_lock);
+			mutex_exit(&ncp->nc_lock);
 			/* found neg entry; vn is already null from above */
 			return 1;
 		} else {
+			mutex_enter(&cpup->cpu_lock);
 			COUNT(cpup->cpu_stats, ncs_badhits);
+			mutex_exit(&cpup->cpu_lock);
 			/*
 			 * Last component and we are renaming or
 			 * deleting, the cache entry is invalid,
@@ -443,7 +448,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 			 */
 			cache_invalidate(ncp);
 			mutex_exit(&ncp->nc_lock);
-			mutex_exit(&cpup->cpu_lock);
 			/* found nothing */
 			return 0;
 		}
@@ -452,7 +456,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	vp = ncp->nc_vp;
 	mutex_enter(vp->v_interlock);
 	mutex_exit(&ncp->nc_lock);
-	mutex_exit(&cpup->cpu_lock);
 	error = vget(vp, LK_NOWAIT);
 	if (error) {
 		KASSERT(error == EBUSY);
@@ -460,7 +463,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		 * This vnode is being cleaned out.
 		 * XXX badhits?
 		 */
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_falsehits);
+		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
@@ -474,7 +479,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 #endif /* DEBUG */
 
 	/* We don't have the right lock, but this is only for stats. */
+	mutex_enter(&cpup->cpu_lock);
 	COUNT(cpup->cpu_stats, ncs_goodhits);
+	mutex_exit(&cpup->cpu_lock);
 
 	/* found it */
 	*vn_ret = vp;
@@ -503,8 +510,8 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
-	mutex_enter(&cpup->cpu_lock);
 	if (__predict_false(namelen > NCHNAMLEN)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
@@ -512,6 +519,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	}
 	ncp = cache_lookup_entry(dvp, name, namelen);
 	if (__predict_false(ncp == NULL)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
@@ -527,15 +535,15 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 			/*cnp->cn_flags |= ncp->nc_flags;*/
 			*iswht_ret = (ncp->nc_flags & ISWHITEOUT) != 0;
 		}
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_neghits);
-		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
+		mutex_exit(&ncp->nc_lock);
 		/* found negative entry; vn is already null from above */
 		return 1;
 	}
 	mutex_enter(vp->v_interlock);
 	mutex_exit(&ncp->nc_lock);
-	mutex_exit(&cpup->cpu_lock);
 	error = vget(vp, LK_NOWAIT);
 	if (error) {
 		KASSERT(error == EBUSY);
@@ -543,7 +551,9 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		 * This vnode is being cleaned out.
 		 * XXX badhits?
 		 */
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_falsehits);
+		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
