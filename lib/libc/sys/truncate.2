@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.27 2014/06/14 11:37:35 njoly Exp $
+.\"	$NetBSD: truncate.2,v 1.28 2014/06/14 19:02:29 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,24 +80,30 @@ are:
 The
 .Fa length
 argument was less than 0.
+.It Bq Er EIO
+An I/O error occurred updating the inode.
 .It Bq Er EISDIR
 The named file is a directory.
+.It Bq Er ENOSPC
+There was no space in the filesystem to complete the operation.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
 .It Bq Er ETXTBSY
 The file is a pure procedure (shared text) file that is being executed.
-.It Bq Er EIO
-An I/O error occurred updating the inode.
-.It Bq Er ENOSPC
-There was no space in the filesystem to complete the operation.
 .El
 .Pp
 Error codes specific to
 .Fn truncate
 are:
 .Bl -tag -width Er
-.It Bq Er ENOTDIR
-A component of the path prefix is not a directory.
+.It Bq Er EACCES
+Search permission is denied for a component of the path prefix, or
+the named file is not writable by the user.
+.It Bq Er EFAULT
+.Fa path
+points outside the process's allocated address space.
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating the pathname.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
 .Brq Dv NAME_MAX
@@ -106,14 +112,8 @@ characters, or an entire path name exceeded
 characters.
 .It Bq Er ENOENT
 The named file does not exist.
-.It Bq Er EACCES
-Search permission is denied for a component of the path prefix, or
-the named file is not writable by the user.
-.It Bq Er ELOOP
-Too many symbolic links were encountered in translating the pathname.
-.It Bq Er EFAULT
-.Fa path
-points outside the process's allocated address space.
+.It Bq Er ENOTDIR
+A component of the path prefix is not a directory.
 .El
 .Pp
 Error codes specific to
