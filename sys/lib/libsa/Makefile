@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2014/03/26 18:02:24 christos Exp $
+#	$NetBSD: Makefile,v 1.82 2014/06/14 20:49:37 mrg Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -84,6 +84,6 @@ lib${LIB}.o:: ${OBJS}
 
 CPPFLAGS+=	-Wno-pointer-sign
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
+.if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
 COPTS.bootp.c+=	-O0
 .endif
