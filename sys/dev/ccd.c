@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.148 2014/04/06 00:56:39 joerg Exp $	*/
+/*	$NetBSD: ccd.c,v 1.149 2014/06/14 07:39:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.148 2014/04/06 00:56:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.149 2014/06/14 07:39:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.148 2014/04/06 00:56:39 joerg Exp $");
 
 #include <dev/ccdvar.h>
 #include <dev/dkvar.h>
+
+#include <miscfs/specfs/specdev.h> /* for v_rdev */
 
 #if defined(CCDDEBUG) && !defined(DEBUG)
 #define DEBUG
@@ -292,7 +294,6 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 {
 	struct ccdcinfo *ci = NULL;
 	int ix;
-	struct vattr va;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char *tmppath;
 	int error, path_alloced;
@@ -344,19 +345,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		vn_lock(vpp[ix], LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR(vpp[ix], &va, l->l_cred);
-		VOP_UNLOCK(vpp[ix]);
-		if (error != 0) {
-#ifdef DEBUG
-			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-				printf("%s: %s: getattr failed %s = %d\n",
-				    cs->sc_xname, ci->ci_path,
-				    "error", error);
-#endif
-			goto out;
-		}
-		ci->ci_dev = va.va_rdev;
+		ci->ci_dev = vpp[ix]->v_rdev;
 
 		/*
 		 * Get partition information for the component.
