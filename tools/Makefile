@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.173 2014/04/03 18:23:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.174 2014/06/14 20:49:37 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -25,17 +25,12 @@
 TOOLS_BUILDRUMP?=no
 
 .if ${TOOLCHAIN_MISSING} == "no"
-.if defined(HAVE_GCC)
+. if defined(HAVE_GCC)
 TOOLCHAIN_BITS= gmake .WAIT
-.endif
-
-.if defined(HAVE_GCC)
-.if ${HAVE_GCC} >= 45
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
 TOOLCHAIN_BITS+= mpc .WAIT
-.endif
-.endif
+. endif
 .endif
 
 .if ${TOOLCHAIN_MISSING} == "no"
@@ -43,19 +38,19 @@ TOOLCHAIN_BITS+= binutils .WAIT
 .endif
 
 .if defined(HAVE_GCC)
-.if ${TOOLCHAIN_MISSING} == "no"
+. if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= gcc
 .  if ${MKCROSSGDB:Uno} != "no" || make(obj)
 TOOLCHAIN_BITS+= gdb
 .  endif
 TOOLCHAIN_BITS+= .WAIT
-.endif
+. endif
 .endif
 
 .if defined(HAVE_PCC)
-.if ${TOOLCHAIN_MISSING} == "no"
+. if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= pcc
-.endif
+. endif
 .endif
 
 .if ${TOOLCHAIN_MISSING} == "no"
@@ -134,18 +129,18 @@ SUBDIR+= \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang
-.if ${MKLLD} != "no"
+. if ${MKLLD} != "no"
 SUBDIR+=	llvm-lld
-.endif
-.if ${MKMCLINKER} != "no"
+. endif
+. if ${MKMCLINKER} != "no"
 SUBDIR+=	llvm-mcld
-.endif
+. endif
 .endif
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
-.  if ${MKGROFF} != "no"
+. if ${MKGROFF} != "no"
 SUBDIR+=	groff
-.  endif
+. endif
 SUBDIR+=	mandoc
 .endif
 
