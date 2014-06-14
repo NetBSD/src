@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.8 2014/03/14 11:31:11 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.9 2014/06/14 20:55:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
+#include <grp.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdio.h>
@@ -55,7 +56,6 @@
 #include "dhcpcd-embedded.h"
 #include "if-options.h"
 #include "ipv4.h"
-#include "platform.h"
 
 /* These options only make sense in the config file, so don't use any
    valid short options for them */
@@ -89,6 +89,13 @@
 #define O_AUTHNOTREQUIRED	O_BASE + 27
 #define O_NODHCP		O_BASE + 28
 #define O_NODHCP6		O_BASE + 29
+#define O_DHCP			O_BASE + 30
+#define O_DHCP6			O_BASE + 31
+#define O_IPV4			O_BASE + 32
+#define O_IPV6			O_BASE + 33
+#define O_CONTROLGRP		O_BASE + 34
+#define O_SLAAC			O_BASE + 35
+#define O_GATEWAY		O_BASE + 36
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -147,7 +154,9 @@ const struct option cf_options[] = {
 	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
 	{"ipv4only",        no_argument,       NULL, '4'},
 	{"ipv6only",        no_argument,       NULL, '6'},
+	{"ipv4",            no_argument,       NULL, O_IPV4},
 	{"noipv4",          no_argument,       NULL, O_NOIPV4},
+	{"ipv6",            no_argument,       NULL, O_IPV6},
 	{"noipv6",          no_argument,       NULL, O_NOIPV6},
 	{"noalias",         no_argument,       NULL, O_NOALIAS},
 	{"iaid",            required_argument, NULL, O_IAID},
@@ -166,8 +175,13 @@ const struct option cf_options[] = {
 	{"authprotocol",    required_argument, NULL, O_AUTHPROTOCOL},
 	{"authtoken",       required_argument, NULL, O_AUTHTOKEN},
 	{"noauthrequired",  no_argument,       NULL, O_AUTHNOTREQUIRED},
+	{"dhcp",            no_argument,       NULL, O_DHCP},
 	{"nodhcp",          no_argument,       NULL, O_NODHCP},
+	{"dhcp6",           no_argument,       NULL, O_DHCP6},
 	{"nodhcp6",         no_argument,       NULL, O_NODHCP6},
+	{"controlgroup",    required_argument, NULL, O_CONTROLGRP},
+	{"slaac",           required_argument, NULL, O_SLAAC},
+	{"gateway",         no_argument,       NULL, O_GATEWAY},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -265,9 +279,9 @@ add_environ(struct if_options *ifo, const char *value, int uniq)
 
 #define parse_string(buf, len, arg) parse_string_hwaddr(buf, len, arg, 0)
 static ssize_t
-parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
+parse_string_hwaddr(char *sbuf, size_t slen, const char *str, int clid)
 {
-	ssize_t l;
+	size_t l;
 	const char *p;
 	int i, punt_last = 0;
 	char c[4];
@@ -280,14 +294,14 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 		if (*p == '"')
 			punt_last = 1;
 	} else {
-		l = hwaddr_aton(NULL, str);
-		if (l > 1) {
+		l = (size_t)hwaddr_aton(NULL, str);
+		if ((ssize_t) l != -1 && l > 1) {
 			if (l > slen) {
 				errno = ENOBUFS;
 				return -1;
 			}
 			hwaddr_aton((uint8_t *)sbuf, str);
-			return l;
+			return (ssize_t)l;
 		}
 	}
 
@@ -341,7 +355,7 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 				}
 				if (c[1] != '\0' && sbuf) {
 					c[2] = '\0';
-					*sbuf++ = strtol(c, NULL, 16);
+					*sbuf++ = (char)strtol(c, NULL, 16);
 				} else
 					l--;
 				break;
@@ -354,10 +368,10 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 					c[i] = *str++;
 				}
 				if (c[2] != '\0' && sbuf) {
-					i = strtol(c, NULL, 8);
+					i = (int)strtol(c, NULL, 8);
 					if (i > 255)
 						i = 255;
-					*sbuf ++= i;
+					*sbuf ++= (char)i;
 				} else
 					l--;
 				break;
@@ -378,14 +392,14 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 			*--sbuf = '\0';
 		l--;
 	}
-	return l;
+	return (ssize_t)l;
 }
 
 static int
 parse_iaid1(uint8_t *iaid, const char *arg, size_t len, int n)
 {
 	unsigned long l;
-	size_t s;
+	ssize_t s;
 	uint32_t u32;
 	char *np;
 
@@ -393,9 +407,9 @@ parse_iaid1(uint8_t *iaid, const char *arg, size_t len, int n)
 	l = strtoul(arg, &np, 0);
 	if (l <= (unsigned long)UINT32_MAX && errno == 0 && *np == '\0') {
 		if (n)
-			u32 = htonl(l);
+			u32 = htonl((uint32_t)l);
 		else
-			u32 = l;
+			u32 = (uint32_t)l;
 		memcpy(iaid, &u32, sizeof(u32));
 		return 0;
 	}
@@ -445,7 +459,7 @@ splitv(int *argc, char **argv, const char *arg)
 			free(o);
 			return v;
 		}
-		n = realloc(v, sizeof(char *) * ((*argc) + 1));
+		n = realloc(v, sizeof(char *) * ((size_t)(*argc) + 1));
 		if (n == NULL) {
 			syslog(LOG_ERR, "%s: %m", __func__);
 			free(o);
@@ -611,8 +625,9 @@ static int
 parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
     int opt, const char *arg, struct dhcp_opt **ldop, struct dhcp_opt **edop)
 {
-	int i, l, t;
-	unsigned int u;
+	int i, t;
+	long l;
+	unsigned long u;
 	char *p = NULL, *fp, *np, **nconf;
 	ssize_t s;
 	struct in_addr addr, addr2;
@@ -624,6 +639,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	size_t *dop_len, dl;
 	struct vivco *vivco;
 	struct token *token;
+	struct group *grp;
+#ifdef _REENTRANT
+#error foo
+	struct group grpbuf;
+#endif
 #ifdef INET6
 	size_t sl;
 	struct if_ia *ia;
@@ -718,7 +738,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case 'o':
 		arg = set_option_space(ctx, arg, &d, &dl, ifo,
 		    &request, &require, &no);
-		if (make_option_mask(d, dl, request, arg, 1) != 0) {
+		if (make_option_mask(d, dl, request, arg, 1) != 0 ||
+		    make_option_mask(d, dl, no, arg, -1) != 0)
+		{
 			syslog(LOG_ERR, "unknown option `%s'", arg);
 			return -1;
 		}
@@ -763,15 +785,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case 'u':
 		s = USERCLASS_MAX_LEN - ifo->userclass[0] - 1;
 		s = parse_string((char *)ifo->userclass +
-		    ifo->userclass[0] + 2,
-		    s, arg);
+		    ifo->userclass[0] + 2, (size_t)s, arg);
 		if (s == -1) {
 			syslog(LOG_ERR, "userclass: %m");
 			return -1;
 		}
 		if (s != 0) {
-			ifo->userclass[ifo->userclass[0] + 1] = s;
-			ifo->userclass[0] += s + 1;
+			ifo->userclass[ifo->userclass[0] + 1] = (uint8_t)s;
+			ifo->userclass[0] += (uint8_t)s + 1;
 		}
 		break;
 	case 'v':
@@ -822,16 +843,16 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			}
 		} else {
 			s = parse_string((char *)ifo->vendor +
-			    ifo->vendor[0] + 3, s, arg);
+			    ifo->vendor[0] + 3, (size_t)s, arg);
 		}
 		if (s == -1) {
 			syslog(LOG_ERR, "vendor: %m");
 			return -1;
 		}
 		if (s != 0) {
-			ifo->vendor[ifo->vendor[0] + 1] = i;
-			ifo->vendor[ifo->vendor[0] + 2] = s;
-			ifo->vendor[0] += s + 2;
+			ifo->vendor[ifo->vendor[0] + 1] = (uint8_t)i;
+			ifo->vendor[ifo->vendor[0] + 2] = (uint8_t)s;
+			ifo->vendor[0] += (uint8_t)s + 2;
 		}
 		break;
 	case 'w':
@@ -866,13 +887,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		/* Commas to spaces for shell */
 		while ((p = strchr(arg, ',')))
 			*p = ' ';
-		s = strlen("skip_hooks=") + strlen(arg) + 1;
-		p = malloc(sizeof(char) * s);
+		dl = strlen("skip_hooks=") + strlen(arg) + 1;
+		p = malloc(sizeof(char) * dl);
 		if (p == NULL) {
 			syslog(LOG_ERR, "%s: %m", __func__);
 			return -1;
 		}
-		snprintf(p, s, "skip_hooks=%s", arg);
+		snprintf(p, dl, "skip_hooks=%s", arg);
 		add_environ(ifo, p, 0);
 		free(p);
 		break;
@@ -948,7 +969,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		arg = set_option_space(ctx, arg, &d, &dl, ifo,
 		    &request, &require, &no);
 		if (make_option_mask(d, dl, require, arg, 1) != 0 ||
-		    make_option_mask(d, dl, request, arg, 1) != 0)
+		    make_option_mask(d, dl, request, arg, 1) != 0 ||
+		    make_option_mask(d, dl, no, arg, -1) != 0)
 		{
 			syslog(LOG_ERR, "unknown option `%s'", arg);
 			return -1;
@@ -1029,11 +1051,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			}
 			TAILQ_INSERT_TAIL(ifo->routes, rt, next);
 		} else {
-			s = 0;
+			dl = 0;
 			if (ifo->config != NULL) {
-				while (ifo->config[s] != NULL) {
-					if (strncmp(ifo->config[s], arg,
-						p - arg) == 0)
+				while (ifo->config[dl] != NULL) {
+					if (strncmp(ifo->config[dl], arg,
+						(size_t)(p - arg)) == 0)
 					{
 						p = strdup(arg);
 						if (p == NULL) {
@@ -1041,11 +1063,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 							    "%s: %m", __func__);
 							return -1;
 						}
-						free(ifo->config[s]);
-						ifo->config[s] = p;
+						free(ifo->config[dl]);
+						ifo->config[dl] = p;
 						return 1;
 					}
-					s++;
+					dl++;
 				}
 			}
 			p = strdup(arg);
@@ -1053,14 +1075,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				syslog(LOG_ERR, "%s: %m", __func__);
 				return -1;
 			}
-			nconf = realloc(ifo->config, sizeof(char *) * (s + 2));
+			nconf = realloc(ifo->config, sizeof(char *) * (dl + 2));
 			if (nconf == NULL) {
 				syslog(LOG_ERR, "%s: %m", __func__);
 				return -1;
 			}
 			ifo->config = nconf;
-			ifo->config[s] = p;
-			ifo->config[s + 1] = NULL;
+			ifo->config[dl] = p;
+			ifo->config[dl + 1] = NULL;
 		}
 		break;
 	case 'W':
@@ -1105,8 +1127,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options &= ~DHCPCD_IPV4;
 		ifo->options |= DHCPCD_IPV6;
 		break;
+	case O_IPV4:
+		ifo->options |= DHCPCD_IPV4;
+		break;
 	case O_NOIPV4:
 		ifo->options &= ~DHCPCD_IPV4;
+		break;
+	case O_IPV6:
+		ifo->options |= DHCPCD_IPV6;
 		break;
 	case O_NOIPV6:
 		ifo->options &= ~DHCPCD_IPV6;
@@ -1205,7 +1233,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			syslog(LOG_ERR, "cannot specify a different IA type");
 			return -1;
 		}
-		ifo->ia_type = i;
+		ifo->ia_type = (uint16_t)i;
 		if (arg == NULL)
 			break;
 		fp = strwhite(arg);
@@ -1263,14 +1291,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				syslog(LOG_ERR,
 				    "%s: cannot assign IA_PD to itself",
 				    ifname);
-				return -1;
+				goto err_sla;
 			}
 			if (strlcpy(sla->ifname, p,
 			    sizeof(sla->ifname)) >= sizeof(sla->ifname))
 			{
 				syslog(LOG_ERR, "%s: interface name too long",
 				    arg);
-				return -1;
+				goto err_sla;
 			}
 			p = np;
 			if (p) {
@@ -1281,16 +1309,26 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					sla->sla_set = 0;
 				else {
 					errno = 0;
-					sla->sla = atoint(p);
+					i = atoint(p);
+					if (i == -1)
+						goto err_sla;
+					sla->sla = (uint32_t)i;
+					if (sla->sla == 0 && ia->sla_len > 1) {
+						syslog(LOG_ERR, "%s: cannot"
+						    " assign multiple prefixes"
+						    " with a SLA of 0",
+						    ifname);
+						goto err_sla;
+					}
 					sla->sla_set = 1;
 					if (errno)
-						return -1;
+						goto err_sla;
 				}
 				if (np) {
-					sla->prefix_len = atoint(np);
-					if (sla->prefix_len < 0 ||
-					    sla->prefix_len > 128)
-						return -1;
+					i = atoint(np);
+					if (i < 0 || i > 128)
+						goto err_sla;
+					sla->prefix_len = (uint8_t)i;
 				} else
 					sla->prefix_len = 64;
 			} else {
@@ -1314,8 +1352,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				}
 			}
 		}
-#endif
 		break;
+err_sla:
+		ia->sla_len--;
+		return -1;
+#endif
 	case O_HOSTNAME_SHORT:
 		ifo->options |= DHCPCD_HOSTNAME | DHCPCD_HOSTNAME_SHORT;
 		break;
@@ -1541,9 +1582,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			ndop->encopts_len = 0;
 		} else
 			free_dhcp_opt_embenc(ndop);
-		ndop->option = u; /* could have been 0 */
+		ndop->option = (uint32_t)u; /* could have been 0 */
 		ndop->type = t;
-		ndop->len = l;
+		ndop->len = (size_t)l;
 		ndop->var = np;
 		/* Save the define for embed and encap options */
 		if (opt == O_DEFINE || opt == O_DEFINE6 || opt == O_VENDOPT)
@@ -1567,18 +1608,19 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				syslog(LOG_ERR, "%s: %m", __func__);
 				return -1;
 			}
-			if (s + (sizeof(uint16_t) * 2) > UINT16_MAX) {
+			dl = (size_t)s;
+			if (dl + (sizeof(uint16_t) * 2) > UINT16_MAX) {
 				syslog(LOG_ERR, "vendor class is too big");
 				return -1;
 			}
-			np = malloc(s);
+			np = malloc(dl);
 			if (np == NULL) {
 				syslog(LOG_ERR, "%s: %m", __func__);
 				return -1;
 			}
-			parse_string(np, s, fp);
+			parse_string(np, dl, fp);
 		} else {
-			s = 0;
+			dl = 0;
 			np = NULL;
 		}
 		vivco = realloc(ifo->vivco, sizeof(*ifo->vivco) *
@@ -1588,9 +1630,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			return -1;
 		}
 		ifo->vivco = vivco;
-		ifo->vivco_en = u;
+		ifo->vivco_en = (uint32_t)u;
 		vivco = &ifo->vivco[ifo->vivco_len++];
-		vivco->len = s;
+		vivco->len = dl;
 		vivco->data = (uint8_t *)np;
 		break;
 	case O_AUTHPROTOCOL:
@@ -1652,6 +1694,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		token = malloc(sizeof(*token));
 		if (token == NULL) {
 			syslog(LOG_ERR, "%s: %m", __func__);
+			free(token);
 			return -1;
 		}
 		if (parse_uint32(&token->secretid, arg) == -1) {
@@ -1667,8 +1710,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			return -1;
 		}
 		*fp++ = '\0';
-		token->realm_len = parse_string(NULL, 0, arg);
-		if (token->realm_len) {
+		s = parse_string(NULL, 0, arg);
+		if (s == -1) {
+			syslog(LOG_ERR, "realm_len: %m");
+			free(token);
+			return -1;
+		}
+		if (s) {
+			token->realm_len = (size_t)s;
 			token->realm = malloc(token->realm_len);
 			if (token->realm == NULL) {
 				free(token);
@@ -1677,6 +1726,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			}
 			parse_string((char *)token->realm, token->realm_len,
 			    arg);
+		} else {
+			token->realm_len = 0;
+			token->realm = NULL;
 		}
 		arg = fp;
 		fp = strend(arg);
@@ -1713,13 +1765,15 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			}
 		}
 		arg = fp;
-		token->key_len = parse_string(NULL, 0, arg);
-		if (token->key_len == 0) {
-			syslog(LOG_ERR, "authtoken needs a key");
+		s = parse_string(NULL, 0, arg);
+		if (s == -1 || s == 0) {
+			syslog(LOG_ERR, s == -1 ? "token_len: %m" : 
+			    "authtoken needs a key");
 			free(token->realm);
 			free(token);
 			return -1;
 		}
+		token->key_len = (size_t)s;
 		token->key = malloc(token->key_len);
 		parse_string((char *)token->key, token->key_len, arg);
 		TAILQ_INSERT_TAIL(&ifo->auth.tokens, token, next);
@@ -1727,11 +1781,80 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case O_AUTHNOTREQUIRED:
 		ifo->auth.options &= ~DHCPCD_AUTH_REQUIRE;
 		break;
+	case O_DHCP:
+		ifo->options |= DHCPCD_DHCP | DHCPCD_IPV4;
+		break;
 	case O_NODHCP:
 		ifo->options &= ~DHCPCD_DHCP;
 		break;
+	case O_DHCP6:
+		ifo->options |= DHCPCD_DHCP6 | DHCPCD_IPV6;
+		break;
 	case O_NODHCP6:
 		ifo->options &= ~DHCPCD_DHCP6;
+		break;
+	case O_CONTROLGRP:
+#ifdef _REENTRANT
+		l = sysconf(_SC_GETGR_R_SIZE_MAX);
+		if (l == -1)
+			dl = 1024;
+		else
+			dl = (size_t)l;
+		p = malloc(dl);
+		if (p == NULL) {
+			syslog(LOG_ERR, "%s: malloc: %m", __func__);
+			return -1;
+		}
+		while ((i = getgrnam_r(arg, &grpbuf, p, (size_t)l, &grp)) ==
+		    ERANGE)
+		{
+			size_t nl = dl * 2;
+			if (nl < dl) {
+				syslog(LOG_ERR, "control_group: out of buffer");
+				free(p);
+				return -1;
+			}
+			dl = nl;
+			np = realloc(p, dl);
+			if (np == NULL) {
+				syslog(LOG_ERR, "control_group: realloc: %m");
+				free(p);
+				return -1;
+			}
+			p = np;
+		}
+		if (i != 0) {
+			errno = i;
+			syslog(LOG_ERR, "getgrnam_r: %m");
+			free(p);
+			return -1;
+		}
+		if (grp == NULL) {
+			syslog(LOG_ERR, "controlgroup: %s: not found", arg);
+			free(p);
+			return -1;
+		}
+		ctx->control_group = grp->gr_gid;
+		free(p);
+#else
+		grp = getgrnam(arg);
+		if (grp == NULL) {
+			syslog(LOG_ERR, "controlgroup: %s: not found", arg);
+			return -1;
+		}
+		ctx->control_group = grp->gr_gid;
+#endif
+		break;
+	case O_GATEWAY:
+		ifo->options |= DHCPCD_GATEWAY;
+		break;
+	case O_SLAAC:
+		if (strcmp(arg, "private") == 0 ||
+		    strcmp(arg, "stableprivate") == 0 ||
+		    strcmp(arg, "stable") == 0)
+			ifo->options |= DHCPCD_SLAACPRIVATE;
+		else
+			ifo->options &= ~DHCPCD_SLAACPRIVATE;
 		break;
 	default:
 		return 0;
@@ -1841,7 +1964,6 @@ read_config(struct dhcpcd_ctx *ctx,
 #ifdef INET6
 	ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
 	ifo->options |= DHCPCD_DHCP6;
-	ifo->dadtransmits = ipv6_dadtransmits(ifname);
 #endif
 	ifo->timeout = DEFAULT_TIMEOUT;
 	ifo->reboot = DEFAULT_REBOOT;
@@ -1849,7 +1971,8 @@ read_config(struct dhcpcd_ctx *ctx,
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
 	TAILQ_INIT(&ifo->auth.tokens);
 
-	ifo->vendorclassid[0] = dhcp_vendor((char *)ifo->vendorclassid + 1,
+	ifo->vendorclassid[0] =
+	    (uint8_t)dhcp_vendor((char *)ifo->vendorclassid + 1,
 	    sizeof(ifo->vendorclassid) - 1);
 
 	buf = NULL;
