@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.43 2013/01/13 21:01:05 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.44 2014/06/14 02:53:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -135,6 +135,15 @@ void hypervisor_enable_event(unsigned int);
 extern int xen_version;
 #define XEN_MAJOR(x) (((x) & 0xffff0000) >> 16)
 #define XEN_MINOR(x) ((x) & 0x0000ffff)
+
+/*
+ * Does the hypervisor we're running on support an api
+ * call at the requested version number ?
+ */
+#define XEN_VERSION_SUPPORTED(major, minor)		\
+	(XEN_MAJOR(xen_version) > (major) ||		\
+	 (XEN_MAJOR(xen_version) == (major) &&		\
+	  XEN_MINOR(xen_version) >= (minor)))
 
 /* hypervisor_machdep.c */
 void hypervisor_send_event(struct cpu_info *, unsigned int);
