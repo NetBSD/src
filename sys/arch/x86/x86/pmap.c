@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182 2014/05/06 04:26:23 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183 2014/06/14 02:54:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2014/05/06 04:26:23 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2014/06/14 02:54:47 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3013,9 +3013,11 @@ pmap_zero_page(paddr_t pa)
 {
 #if defined(__HAVE_DIRECT_MAP)
 	pagezero(PMAP_DIRECT_MAP(pa));
-#elif defined(XEN)
-	xen_pagezero(pa);
 #else
+#if defined(XEN)
+	if (XEN_VERSION_SUPPORTED(3, 4))
+		xen_pagezero(pa);
+#endif
 	pt_entry_t *zpte;
 	void *zerova;
 	int id;
@@ -3041,7 +3043,7 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_flush();
 #endif
 	kpreempt_enable();
-#endif
+#endif /* defined(__HAVE_DIRECT_MAP) */
 }
 
 /*
@@ -3096,9 +3098,13 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	vaddr_t dstva = PMAP_DIRECT_MAP(dstpa);
 
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
-#elif defined(XEN)
-	xen_copy_page(srcpa, dstpa);
 #else
+#if defined(XEN)
+	if (XEN_VERSION_SUPPORTED(3, 4)) {
+		xen_copy_page(srcpa, dstpa);
+		return;
+	}
+#endif
 	pt_entry_t *spte;
 	pt_entry_t *dpte;
 	void *csrcva;
@@ -3128,7 +3134,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_pte_flush();
 #endif
 	kpreempt_enable();
-#endif
+#endif /* defined(__HAVE_DIRECT_MAP) */
 }
 
 static pt_entry_t *
@@ -4105,11 +4111,15 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 
 		if (!uvm_page_physget(paddrp))
 			panic("pmap_get_physpage: out of memory");
-#ifdef __HAVE_DIRECT_MAP
+#if defined(__HAVE_DIRECT_MAP)
 		pagezero(PMAP_DIRECT_MAP(*paddrp));
-#elif defined(XEN)
-		xen_pagezero(*paddrp);
 #else
+#if defined(XEN)
+		if (XEN_VERSION_SUPPORTED(3, 4)) {
+			xen_pagezero(*paddrp);
+			return true;
+		}
+#endif
 		kpreempt_disable();
 		pmap_pte_set(early_zero_pte,
 		    pmap_pa2pte(*paddrp) | PG_V | PG_RW | PG_k);
@@ -4121,7 +4131,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		pmap_pte_flush();
 #endif /* defined(DIAGNOSTIC) */
 		kpreempt_enable();
-#endif
+#endif /* defined(__HAVE_DIRECT_MAP) */
 	} else {
 		/* XXX */
 		ptp = uvm_pagealloc(NULL, 0, NULL,
