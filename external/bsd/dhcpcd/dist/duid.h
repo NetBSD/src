@@ -1,4 +1,4 @@
-/* $NetBSD: duid.h,v 1.1.1.5 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: duid.h,v 1.1.1.6 2014/06/14 20:51:09 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,11 +30,7 @@
 #ifndef DUID_H
 #define DUID_H
 
-#include "net.h"
-
-#ifndef DUID_LEN
-#  define DUID_LEN	128 + 2
-#endif
+#define DUID_LEN	128 + 2
 
 size_t duid_init(const struct interface *);
 
