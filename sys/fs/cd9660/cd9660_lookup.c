@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.27 2014/06/03 19:30:30 joerg Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.28 2014/06/14 07:39:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.27 2014/06/03 19:30:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.28 2014/06/14 07:39:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -379,8 +379,7 @@ found:
 	brelse(bp, 0);
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
+		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return error;
@@ -389,8 +388,7 @@ found:
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
+		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -416,6 +414,7 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 {
 	struct iso_node *ip;
 	struct iso_mnt *imp;
+	struct vnode *devvp;
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
@@ -425,7 +424,11 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	lbn = cd9660_lblkno(imp, offset);
 	bsize = cd9660_blksize(imp, ip, lbn);
 
-	if ((error = bread(vp, lbn, bsize, NOCRED, 0, &bp)) != 0) {
+	if ((error = VOP_BMAP(vp, lbn, &devvp, &lbn, NULL)) != 0) {
+		*bpp = NULL;
+		return error;
+	}
+	if ((error = bread(devvp, lbn, bsize, NOCRED, 0, &bp)) != 0) {
 		*bpp = NULL;
 		return (error);
 	}
