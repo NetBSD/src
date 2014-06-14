@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.78 2014/06/03 21:16:15 joerg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.79 2014/06/14 20:10:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.78 2014/06/03 21:16:15 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.79 2014/06/14 20:10:42 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -106,17 +106,15 @@ closevmstat(WINDOW *w)
 
 
 static struct nlist namelist[] = {
-#define	X_NCHSTATS	0
-	{ .n_name = "_nchstats" },
-#define	X_INTRNAMES	1
+#define	X_INTRNAMES	0
 	{ .n_name = "_intrnames" },
-#define	X_EINTRNAMES	2
+#define	X_EINTRNAMES	1
 	{ .n_name = "_eintrnames" },
-#define	X_INTRCNT	3
+#define	X_INTRCNT	2
 	{ .n_name = "_intrcnt" },
-#define	X_EINTRCNT	4
+#define	X_EINTRCNT	3
 	{ .n_name = "_eintrcnt" },
-#define	X_ALLEVENTS	5
+#define	X_ALLEVENTS	4
 	{ .n_name = "_allevents" },
 	{ .n_name = NULL }
 };
@@ -210,8 +208,7 @@ initvmstat(void)
 
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist) &&
-		    (namelist[X_NCHSTATS].n_type == 0 ||
-		     namelist[X_ALLEVENTS].n_type == 0)) {
+		    namelist[X_ALLEVENTS].n_type == 0) {
 			nlisterr(namelist);
 			return(0);
 		}
