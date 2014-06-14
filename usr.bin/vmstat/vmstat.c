@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.200 2014/06/13 19:10:01 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.201 2014/06/14 01:26:59 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.200 2014/06/13 19:10:01 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.201 2014/06/14 01:26:59 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1489,7 +1489,8 @@ dopool_sysctl(int verbose, int wide)
 	inuse /= KILO;
 	total /= KILO;
 	(void)printf(
-	    "\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
+	    "\nIn use %" PRIu64 "K, "
+	    "total allocated %" PRIu64 "K; utilization %.1f%%\n",
 	    inuse, total, (100.0 * inuse) / total);
 
 	free(data);
