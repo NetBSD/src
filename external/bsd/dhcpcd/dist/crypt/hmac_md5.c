@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.1 2014/02/25 13:14:31 roy Exp $");
+ __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.2 2014/06/14 20:51:09 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -45,8 +45,8 @@
 
 /* hmac_md5 as per RFC3118 */
 void
-hmac_md5(const uint8_t *text, int text_len,
-    const uint8_t *key, int key_len,
+hmac_md5(const uint8_t *text, size_t text_len,
+    const uint8_t *key, size_t key_len,
     uint8_t *digest)
 {
 	uint8_t k_ipad[HMAC_PAD_LEN], k_opad[HMAC_PAD_LEN];
