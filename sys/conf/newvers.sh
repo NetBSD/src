@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.57 2010/01/10 23:55:03 snj Exp $
+#	$NetBSD: newvers.sh,v 1.58 2014/06/14 12:35:18 apb Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -64,6 +64,13 @@ if [ -z "${id}" ]; then
 		id="$(cat ident)"
 	else
 		id=$(basename ${d})
+	fi
+	# Append ".${BUILDID}" to the default value of <id>.
+	# If the "-i <id>" command line option was used then this
+	# branch is not taken, so the command-line value of <id>
+	# is used without change.
+	if [ -n "${BUILDID}" ]; then
+		id="${id}.${BUILDID}"
 	fi
 fi
 
