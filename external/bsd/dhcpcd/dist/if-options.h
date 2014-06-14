@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.1.1.21 2014/03/14 11:27:41 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.22 2014/06/14 20:51:09 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -79,7 +79,7 @@
 #define DHCPCD_VENDORRAW		(1ULL << 23)
 #define DHCPCD_TIMEOUT_IPV4LL		(1ULL << 24)
 #define DHCPCD_WAITIP			(1ULL << 25)
-#define DHCPCD_WAITUP			(1ULL << 26)
+#define DHCPCD_SLAACPRIVATE		(1ULL << 26)
 #define DHCPCD_CSR_WARNED		(1ULL << 27)
 #define DHCPCD_XID_HWADDR		(1ULL << 28)
 #define DHCPCD_BROADCAST		(1ULL << 29)
@@ -110,7 +110,7 @@ extern const struct option cf_options[];
 struct if_sla {
 	char ifname[IF_NAMESIZE];
 	uint32_t sla;
-	short prefix_len;
+	uint8_t prefix_len;
 	int8_t sla_set;
 };
 
@@ -123,7 +123,7 @@ struct if_ia {
 };
 
 struct vivco {
-	uint16_t len;
+	size_t len;
 	uint8_t *data;
 };
 
@@ -153,7 +153,7 @@ struct if_options {
 	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the length */
 	int fqdn;
 	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 2];
-	char clientid[CLIENTID_MAX_LEN + 2];
+	uint8_t clientid[CLIENTID_MAX_LEN + 2];
 	uint8_t userclass[USERCLASS_MAX_LEN + 2];
 	uint8_t vendor[VENDOR_MAX_LEN + 2];
 
@@ -168,9 +168,6 @@ struct if_options {
 	uint16_t ia_type;
 	struct if_ia *ia;
 	size_t ia_len;
-#ifdef INET6
-	int dadtransmits;
-#endif
 
 	struct dhcp_opt *dhcp_override;
 	size_t dhcp_override_len;

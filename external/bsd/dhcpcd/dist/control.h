@@ -1,4 +1,4 @@
-/* $NetBSD: control.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: control.h,v 1.1.1.5 2014/06/14 20:51:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -42,7 +42,7 @@ struct fd_list {
 int control_start(struct dhcpcd_ctx *, const char *);
 int control_stop(struct dhcpcd_ctx *);
 int control_open(struct dhcpcd_ctx *, const char *);
-int control_send(struct dhcpcd_ctx *, int, char * const *);
+ssize_t control_send(struct dhcpcd_ctx *, int, char * const *);
 void control_close(struct dhcpcd_ctx *ctx);
 
 #endif

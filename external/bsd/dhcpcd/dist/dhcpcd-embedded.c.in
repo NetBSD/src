@@ -1,9 +1,14 @@
-/* $NetBSD: dev.h,v 1.1.1.4 2014/06/14 20:51:09 roy Exp $ */
+/*
+ * DO NOT EDIT
+ * Automatically generated from dhcpcd-embedded.conf
+ * Ths allows us to simply generate DHCP structure without any C programming
+ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
- *
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -26,37 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DEV_H
-#define DEV_H
+#include <unistd.h>
 
-// dev plugin setup
-struct dev {
-	const char *name;
-	int (*initialized)(const char *);
-	int (*listening)(void);
-	int (*handle_device)(void *);
-	int (*start)(void);
-	void (*stop)(void);
-};
-
-struct dev_dhcpcd {
-	int (*handle_interface)(void *, int, const char *);
-};
-
-int dev_init(struct dev *, const struct dev_dhcpcd *);
-
-// hooks for dhcpcd
-#ifdef PLUGIN_DEV
-#include "dhcpcd.h"
-int dev_initialized(struct dhcpcd_ctx *, const char *);
-int dev_listening(struct dhcpcd_ctx *);
-int dev_start(struct dhcpcd_ctx *);
-void dev_stop(struct dhcpcd_ctx *, int);
-#else
-#define dev_initialized(a, b) (1)
-#define dev_listening(a) (0)
-#define dev_start(a) {}
-#define dev_stop(a, b) {}
-#endif
-
-#endif
+const char * const dhcpcd_embedded_conf[] = {
