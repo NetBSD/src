@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.39 2014/05/16 00:48:41 rmind Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.40 2014/06/15 23:07:36 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -242,7 +242,8 @@ vfp_attach(struct cpu_info *ci)
 		const uint32_t nsacr = armreg_nsacr_read();
 		const uint32_t nsacr_vfp = __BITS(VFP_COPROC,VFP_COPROC2);
 		if ((nsacr & nsacr_vfp) != nsacr_vfp) {
-			aprint_normal_dev(ci->ci_dev, "VFP access denied\n");
+			aprint_normal_dev(ci->ci_dev,
+			    "VFP access denied (NSACR=%#x)\n", nsacr);
 			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
 			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
@@ -266,10 +267,11 @@ vfp_attach(struct cpu_info *ci)
 		 * If we could enable them, then they exist.
 		 */
 		cpacr = armreg_cpacr_read();
-		bool vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
-		    || __SHIFTOUT(cpacr, cpacr_vfp) != CPACR_NOACCESS;
+		bool vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) == CPACR_ALL
+		    && __SHIFTOUT(cpacr, cpacr_vfp) == CPACR_ALL;
 		if (!vfp_p) {
-			aprint_normal_dev(ci->ci_dev, "No VFP detected\n");
+			aprint_normal_dev(ci->ci_dev,
+			    "VFP access denied (CPACR=%#x)\n", cpacr);
 			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
 			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
