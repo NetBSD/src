@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1122 2014/06/14 21:01:39 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1123 2014/06/15 17:55:43 tls Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1357,13 +1357,13 @@ Notes:
      implementation.
 
 Package:	pigz
-Version:	2.1.6
+Version:	2.3.1
 Current Vers:	2.3.1
 Maintainer:	Mark Adler <madler@alumni.caltech.edu>
 Archive Site:	http://zlib.net/pigz/
 Home Page:	http://zlib.net/pigz/
 Mailing List:	http://mail.zlib.net/mailman/listinfo/pigz-announce_zlib.net
-Responsible:	mrg
+Responsible:	mrg, tls
 License:	zlib
 Location:	external/zlib/pigz/dist
 Notes:
