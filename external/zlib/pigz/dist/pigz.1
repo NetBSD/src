@@ -11,6 +11,11 @@
 .Op Fl b Ar blocksize
 .Op Fl p Ar threads
 .Op Fl S Ar suffix
+.Op Fl 11
+.Op Fl F
+.Op Fl I Ar iterations
+.Op Fl M Ar maxsplits
+.Op Fl O
 .Op Ar
 .Nm unpigz
 .Op Fl cfhiKkLlNnqRrTtz
@@ -96,7 +101,12 @@ and
 or
 .Fl Fl best
 indicates the slowest compression method (best compression).
-Level 0 is no compression.
+.Fl 0
+is no compression.
+.Fl 11
+gives a few percent better compression at a severe cost in execution time.
+The default is
+.Fl 6 .
 .It Fl b, Fl Fl blocksize Ar mmm
 Set compression block size to
 .Ar mmm
@@ -131,6 +141,8 @@ Allow up to n processes (default is the number of online processors)
 Print no messages, even on error.
 .It Fl r, Fl Fl recursive
 Process the contents of all subdirectories.
+.It Fl R, Fl Fl rsyncable
+Input-determined block locations for rsync.
 .It Fl S, Fl Fl suffix Ar .sss
 Use suffix
 .Ar .sss
@@ -149,6 +161,15 @@ Provide more verbose output.
 Compress to zlib
 .Pq Pa .zz
 instead of gzip format.
+.It Fl F, Fl Fl first
+If compressing at level 11, do iterations first, before block split (default is last).
+.It Fl I, Fl Fl iterations Ar n
+If compressing at level 11, number of iterations for optimization (default 15).
+.It Fl M, Fl Fl maxsplits Ar n
+If compressing at level 11, maximum number of split blocks (default 15).
+.It Fl O, Fl Fl oneblock
+If compressing at level 11, do not split into smaller blocks (default is
+block splitting).
 .El
 .Sh COPYRIGHT NOTICE
 This software is provided 'as-is', without any express or implied
