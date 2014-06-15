@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.174 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.175 2014/06/15 14:36:57 pooka Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -99,10 +99,10 @@ SUBDIR=	host-mkdep compat binstall \
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= cap_mkdb crunchgen ctags genassym gencat hexdump \
 		${LINT_BITS} \
-		makewhatis mtree nbperf .WAIT rpcgen uudecode
+		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \
@@ -110,16 +110,16 @@ SUBDIR += .WAIT texinfo \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
 	${DTRACE_BITS} \
-		asn1_compile cat cksum compile_et db \
+		asn1_compile cksum compile_et db \
 		file lint1 slc \
 		makefs .WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
 		.WAIT disklabel \
 		.WAIT paxctl \
 		.WAIT fdisk \
 		.WAIT installboot \
-		pwd_mkdb stat strfile sunlabel zic
+		pwd_mkdb strfile sunlabel zic
 .endif
-SUBDIR+= .WAIT config
+SUBDIR+= stat .WAIT config
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \
