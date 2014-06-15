@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: platform.h,v 1.2 2014/06/15 20:14:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_exynos.h"
 
 /*
- * Kernel VM space 16Mb behind KERNEL_BASE upto 0xf0000000
+ * Kernel VM space 16Mb behind KERNEL_BASE upto 0xeff00000
  */
 #define KERNEL_VM_BASE		0xc0000000
 #define KERNEL_VM_SIZE		(EXYNOS_CORE_VBASE - KERNEL_VM_BASE)
