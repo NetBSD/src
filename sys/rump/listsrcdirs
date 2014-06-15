@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.13 2014/02/24 19:22:14 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.14 2014/06/15 14:36:57 pooka Exp $
 #
 
 #
@@ -30,10 +30,11 @@ precho src/lib/librump		user client hijack dev net vfs
 precho src/external/bsd/	flex mdocml byacc
 precho src/external/cddl/	osnet
 precho src/external/historical/	nawk
+precho src/bin/			cat
 precho src/usr.bin/		make xinstall config mktemp sed tsort
 precho src/usr.bin/		lorder join cksum m4 mkdep Makefile.inc
-precho src/usr.bin/		rump_server rump_allserver rump_wmd
-precho src/usr.bin/		shmif_dumpbus
+precho src/usr.bin/		rpcgen rump_server rump_allserver rump_wmd
+precho src/usr.bin/		stat shmif_dumpbus
 precho src/usr.sbin/		mtree
 
 # If -c is given, use CVS syntax to exclude large subdirectories
