@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.158 2014/06/13 11:53:48 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.158 2014/06/13 11:53:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -478,9 +478,15 @@ static LIST_HEAD(, pagerinfo) pagerlist = LIST_HEAD_INITIALIZER(pagerlist);
 
 /*
  * Pager "map" in routine.  Instead of mapping, we allocate memory
- * and copy page contents there.  Not optimal or even strictly
- * correct (the caller might modify the page contents after mapping
- * them in), but what the heck.  Assumes UVMPAGER_MAPIN_WAITOK.
+ * and copy page contents there.  The reason for copying instead of
+ * mapping is simple: we do not assume we are running on virtual
+ * memory.  Even if we could emulate virtual memory in some envs
+ * such as userspace, copying is much faster than trying to awkardly
+ * cope with remapping (see "Design and Implementation" pp.95-98).
+ * The downside of the approach is that the pager requires MAXPHYS
+ * free memory to perform paging, but short of virtual memory or
+ * making the pager do I/O in page-sized chunks we cannot do much
+ * about that.
  */
 vaddr_t
 uvm_pagermapin(struct vm_page **pgs, int npages, int flags)
