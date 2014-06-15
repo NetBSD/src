@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.19 2014/06/15 01:37:48 dholland Exp $
+.\"	$NetBSD: ypbind.8,v 1.20 2014/06/15 07:24:32 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,7 +131,7 @@ options are inherently insecure and should be avoided.
 .Nm
 responds to the following signals:
 .Bl -tag -width TERM -compact
-.It HUP
+.It Dv HUP
 causes
 .Nm
 to immediately retry any unbound domains that are currently in
@@ -158,7 +158,10 @@ facility.
 .Xr yppoll 8 ,
 .Xr ypset 8
 .Sh AUTHORS
+.An -nosplit
 This version of
 .Nm
-was originally implemented by Theo de Raadt.
-The ypservers support was implemented by Luke Mewburn.
+was originally implemented by
+.An Theo de Raadt .
+The ypservers support was implemented by
+.An Luke Mewburn .
