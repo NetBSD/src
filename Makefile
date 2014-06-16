@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306 2014/06/13 01:17:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.307 2014/06/16 07:11:52 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -177,6 +177,7 @@ _POSTINSTALL_ENV= \
 	HOST_SH=${HOST_SH:Q}		\
 	MAKE=${MAKE:Q}			\
 	PWD_MKDB=${TOOL_PWD_MKDB:Q}	\
+	SED=${TOOL_SED:Q}		\
 	STAT=${TOOL_STAT:Q}
 
 postinstall-check: .PHONY
