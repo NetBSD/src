@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.173 2014/06/16 22:04:39 apb Exp $
+# $NetBSD: postinstall,v 1.174 2014/06/16 22:12:30 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -138,7 +138,7 @@ shell_quote()
 bre_quote()
 {
 	local arg="$1"
-	local extra="$2:/,"
+	local extra="${2-/,}"
 	printf "%s\n" "${arg}" | ${SED} -e 's/[][^$.*\\'"${extra}"']/\\&/g'
 }
 

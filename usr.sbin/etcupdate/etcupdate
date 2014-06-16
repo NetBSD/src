@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.56 2014/06/12 13:56:32 apb Exp $
+# $NetBSD: etcupdate,v 1.57 2014/06/16 22:12:30 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -164,7 +164,7 @@ shell_quote()
 bre_quote()
 {
 	local arg="$1"
-	local extra="$2:/,"
+	local extra="${2-/,}"
 	printf "%s\n" "${arg}" | sed -e 's/[][^$.*\\'"${extra}"']/\\&/g'
 }
 
