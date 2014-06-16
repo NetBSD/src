@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.15 2012/08/23 12:06:32 drochner Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.16 2014/06/16 01:03:57 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,6 +77,8 @@
 
 #include <sys/callout.h>
 #include <sys/queue.h>
+
+#include <net/pktqueue.h>
 
 /*
  * Commands used in the SIOCSDRVSPEC ioctl.  Note the lookup of the
@@ -302,6 +304,7 @@ struct bridge_softc {
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	void			*sc_softintr;
+	pktqueue_t *		sc_fwd_pktq;
 };
 
 extern const uint8_t bstp_etheraddr[];
