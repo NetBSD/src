@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.269 2014/05/27 02:21:29 tls Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.270 2014/06/16 16:48:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.269 2014/05/27 02:21:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.270 2014/06/16 16:48:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5968,6 +5968,8 @@ wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active |= IFM_1000_SX;
 	if (CSR_READ(sc, WMREG_STATUS) & STATUS_FD)
 		ifmr->ifm_active |= IFM_FDX;
+	else
+		ifmr->ifm_active |= IFM_HDX;
 	ctrl = CSR_READ(sc, WMREG_CTRL);
 	if (ctrl & CTRL_RFCE)
 		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
