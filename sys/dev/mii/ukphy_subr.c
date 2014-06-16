@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.11 2009/02/16 08:00:42 cegger Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.12 2014/06/16 14:43:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.11 2009/02/16 08:00:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.12 2014/06/16 14:43:22 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ ukphy_status(struct mii_softc *phy)
 		anlpar = PHY_READ(phy, MII_ANAR) & PHY_READ(phy, MII_ANLPAR);
 		if ((phy->mii_flags & MIIF_HAVE_GTCR) != 0 &&
 		    (phy->mii_extcapabilities &
-		     (EXTSR_1000THDX|EXTSR_1000TFDX)) != 0) {
+			(EXTSR_1000THDX | EXTSR_1000TFDX)) != 0) {
 			gtcr = PHY_READ(phy, MII_100T2CR);
 			gtsr = PHY_READ(phy, MII_100T2SR);
 		} else
