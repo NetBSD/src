@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.h,v 1.3 2014/06/16 00:33:39 ozaki-r Exp $	*/
+/*	$NetBSD: pktqueue.h,v 1.4 2014/06/16 00:40:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #error "not supposed to be exposed to userland."
 #endif
 
+#include <sys/sysctl.h>
+
 struct mbuf;
 
 typedef struct pktqueue pktqueue_t;
@@ -53,5 +55,8 @@ int		pktq_set_maxlen(pktqueue_t *, size_t);
 
 uint32_t	pktq_rps_hash(const struct mbuf *);
 uint64_t	pktq_get_count(pktqueue_t *, pktq_count_t);
+
+int		sysctl_pktq_maxlen(SYSCTLFN_PROTO, pktqueue_t *);
+int		sysctl_pktq_count(SYSCTLFN_PROTO, pktqueue_t *, u_int);
 
 #endif

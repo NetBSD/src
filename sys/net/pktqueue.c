@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.5 2014/06/16 00:33:39 ozaki-r Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.6 2014/06/16 00:40:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.5 2014/06/16 00:33:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.6 2014/06/16 00:40:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -360,4 +360,27 @@ pktq_set_maxlen(pktqueue_t *pq, size_t maxlen)
 	/* Well, that was fun. */
 	kmem_free(qs, slotbytes);
 	return 0;
+}
+
+int
+sysctl_pktq_maxlen(SYSCTLFN_ARGS, pktqueue_t *pq)
+{
+	u_int nmaxlen = pktq_get_count(pq, PKTQ_MAXLEN);
+	struct sysctlnode node = *rnode;
+	int error;
+
+	node.sysctl_data = &nmaxlen;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return pktq_set_maxlen(pq, nmaxlen);
+}
+
+int
+sysctl_pktq_count(SYSCTLFN_ARGS, pktqueue_t *pq, u_int count_id)
+{
+	int count = pktq_get_count(pq, count_id);
+	struct sysctlnode node = *rnode;
+	node.sysctl_data = &count;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
