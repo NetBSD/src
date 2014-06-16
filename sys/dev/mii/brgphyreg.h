@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.7 2014/06/12 12:09:47 msaitoh Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.8 2014/06/16 14:43:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -52,7 +52,7 @@
 #define BRGPHY_MII_PHY_EXTCTL	0x10	/* PHY extended control */
 #define BRGPHY_PHY_EXTCTL_MAC_PHY	0x8000	/* 10BIT/GMI-interface */
 #define BRGPHY_PHY_EXTCTL_DIS_CROSS	0x4000	/* Disable MDI crossover */
-#define BRGPHY_PHY_EXTCTL_TX_DIS	0x2000	/* Tx output disable d*/
+#define BRGPHY_PHY_EXTCTL_TX_DIS	0x2000	/* Tx output disabled */
 #define BRGPHY_PHY_EXTCTL_INT_DIS	0x1000	/* Interrupts disabled */
 #define BRGPHY_PHY_EXTCTL_F_INT		0x0800	/* Force interrupt */
 #define BRGPHY_PHY_EXTCTL_BY_45		0x0400	/* Bypass 4B5B-Decoder */
@@ -85,7 +85,7 @@
 
 #define BRGPHY_MII_RXERRCNT	0x12	/* RX error counter */
 
-#define BRGPHY_MII_FCERRCNT	0x13	/* false carrier sense counter */
+#define BRGPHY_MII_FCERRCNT	0x13	/* False carrier sense counter */
 #define BGRPHY_FCERRCNT		0x00FF	/* False carrier counter */
 
 #define BRGPHY_MII_RXNOCNT	0x14	/* RX not OK counter */
@@ -140,14 +140,14 @@
 #define BRGPHY_AUXCTL_DIAG_MODE	0x0004	/* Diagnostic mode */
 
 #define BRGPHY_MII_AUXSTS	0x19	/* AUX status */
-#define BRGPHY_AUXSTS_ACOMP	0x8000	/* autoneg complete */
-#define BRGPHY_AUXSTS_AN_ACK	0x4000	/* autoneg complete ack */
-#define BRGPHY_AUXSTS_AN_ACK_D	0x2000	/* autoneg complete ack detect */
-#define BRGPHY_AUXSTS_AN_NPW	0x1000	/* autoneg next page wait */
-#define BRGPHY_AUXSTS_AN_RES	0x0700	/* AN HDC */
+#define BRGPHY_AUXSTS_ACOMP	0x8000	/* Autoneg complete */
+#define BRGPHY_AUXSTS_AN_ACK	0x4000	/* Autoneg complete ack */
+#define BRGPHY_AUXSTS_AN_ACK_D	0x2000	/* Autoneg complete ack detect */
+#define BRGPHY_AUXSTS_AN_NPW	0x1000	/* Autoneg next page wait */
+#define BRGPHY_AUXSTS_AN_RES	0x0700	/* Autoneg HCD */
 #define BRGPHY_AUXSTS_PDF	0x0080	/* Parallel detect. fault */
-#define BRGPHY_AUXSTS_RF	0x0040	/* remote fault */
-#define BRGPHY_AUXSTS_ANP_R	0x0020	/* AN page received */
+#define BRGPHY_AUXSTS_RF	0x0040	/* Remote fault */
+#define BRGPHY_AUXSTS_ANP_R	0x0020	/* Autoneg page received */
 #define BRGPHY_AUXSTS_LP_ANAB	0x0010	/* LP AN ability */
 #define BRGPHY_AUXSTS_LP_NPAB	0x0008	/* LP Next page ability */
 #define BRGPHY_AUXSTS_LINK	0x0004	/* Link status */
@@ -162,11 +162,11 @@
 #define BRGPHY_RES_10FD		0x0200	/* 10baseT full duplex */
 #define BRGPHY_RES_10HD		0x0100	/* 10baseT half duplex */
 
-#define BRGPHY_MII_ISR		0x1A	/* interrupt status */
+#define BRGPHY_MII_ISR		0x1A	/* Interrupt status */
 #define BRGPHY_ISR_PSERR	0x4000	/* Pair swap error */
 #define BRGPHY_ISR_MDXI_SC	0x2000	/* MDIX Status Change */
-#define BRGPHY_ISR_HCT		0x1000	/* counter above 32K */
-#define BRGPHY_ISR_LCT		0x0800	/* all counter below 128 */
+#define BRGPHY_ISR_HCT		0x1000	/* Counter above 32K */
+#define BRGPHY_ISR_LCT		0x0800	/* All counter below 128 */
 #define BRGPHY_ISR_AN_PR	0x0400	/* Autoneg page received */
 #define BRGPHY_ISR_NO_HDCL	0x0200	/* No HCD Link */
 #define BRGPHY_ISR_NO_HDC	0x0100	/* No HCD */
@@ -177,13 +177,13 @@
 #define BRGPHY_ISR_DUP_CHG	0x0008	/* Duplex mode change */
 #define BRGPHY_ISR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_ISR_LNK_CHG	0x0002	/* Link status change */
-#define BRGPHY_ISR_CRCERR	0x0001	/* CEC error */
+#define BRGPHY_ISR_CRCERR	0x0001	/* CRC error */
 
-#define BRGPHY_MII_IMR		0x1B	/* interrupt mask */
+#define BRGPHY_MII_IMR		0x1B	/* Interrupt mask */
 #define BRGPHY_IMR_PSERR	0x4000	/* Pair swap error */
 #define BRGPHY_IMR_MDXI_SC	0x2000	/* MDIX Status Change */
-#define BRGPHY_IMR_HCT		0x1000	/* counter above 32K */
-#define BRGPHY_IMR_LCT		0x0800	/* all counter below 128 */
+#define BRGPHY_IMR_HCT		0x1000	/* Counter above 32K */
+#define BRGPHY_IMR_LCT		0x0800	/* All counter below 128 */
 #define BRGPHY_IMR_AN_PR	0x0400	/* Autoneg page received */
 #define BRGPHY_IMR_NO_HDCL	0x0200	/* No HCD Link */
 #define BRGPHY_IMR_NO_HDC	0x0100	/* No HCD */
@@ -194,7 +194,7 @@
 #define BRGPHY_IMR_DUP_CHG	0x0008	/* Duplex mode change */
 #define BRGPHY_IMR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_IMR_LNK_CHG	0x0002	/* Link status change */
-#define BRGPHY_IMR_CRCERR	0x0001	/* CEC error */
+#define BRGPHY_IMR_CRCERR	0x0001	/* CRC error */
 
 /*******************************************************/
 /* Begin: PHY register values for the 5706 PHY         */
