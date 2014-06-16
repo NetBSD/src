@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.148 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149 2014/06/16 00:33:39 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.148 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149 2014/06/16 00:33:39 ozaki-r Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -180,7 +180,7 @@ ip6_init(void)
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
 
-	ip6_pktq = pktq_create(IFQ_MAXLEN, ip6intr);
+	ip6_pktq = pktq_create(IFQ_MAXLEN, ip6intr, NULL);
 	KASSERT(ip6_pktq != NULL);
 
 	scope6_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.318 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.319 2014/06/16 00:33:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.318 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319 2014/06/16 00:33:39 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -304,7 +304,7 @@ ip_init(void)
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	KASSERT(pr != NULL);
 
-	ip_pktq = pktq_create(IFQ_MAXLEN, ipintr);
+	ip_pktq = pktq_create(IFQ_MAXLEN, ipintr, NULL);
 	KASSERT(ip_pktq != NULL);
 
 	for (u_int i = 0; i < IPPROTO_MAX; i++) {

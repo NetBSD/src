@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.4 2014/06/09 14:44:48 rmind Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.5 2014/06/16 00:33:39 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.4 2014/06/09 14:44:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.5 2014/06/16 00:33:39 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -96,7 +96,7 @@ typedef struct {
     roundup2(offsetof(pktqueue_t, pq_queue[ncpu]), coherency_unit)
 
 pktqueue_t *
-pktq_create(size_t maxlen, void (*intrh)(void *))
+pktq_create(size_t maxlen, void (*intrh)(void *), void *sc)
 {
 	const u_int sflags = SOFTINT_NET | SOFTINT_MPSAFE | SOFTINT_RCPU;
 	const size_t len = PKTQUEUE_STRUCT_LEN(ncpu);
@@ -107,7 +107,7 @@ pktq_create(size_t maxlen, void (*intrh)(void *))
 	if ((pc = percpu_alloc(sizeof(pktq_counters_t))) == NULL) {
 		return NULL;
 	}
-	if ((sih = softint_establish(sflags, intrh, NULL)) == NULL) {
+	if ((sih = softint_establish(sflags, intrh, sc)) == NULL) {
 		percpu_free(pc, sizeof(pktq_counters_t));
 		return NULL;
 	}
