@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.308 2014/06/16 09:04:43 apb Exp $
+#	$NetBSD: Makefile,v 1.309 2014/06/16 09:06:26 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -196,6 +196,11 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
 
+postinstall-fix-obsolete_stand: .NOTMAIN .PHONY
+	@echo "   === Removing obsolete files ==="
+	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete_stand
+	@echo "   ==============================="
+
 
 #
 # Targets (in order!) called by "make build".
@@ -308,6 +313,7 @@ distribution buildworld: .PHONY .MAKE
 	${MAKEDIRTARGET} etc distribution INSTALL_DONE=1
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
+	${MAKEDIRTARGET} . postinstall-fix-obsolete_stand
 	${MAKEDIRTARGET} distrib/sets checkflist
 .endif
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
