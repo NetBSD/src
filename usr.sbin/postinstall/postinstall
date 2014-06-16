@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.167 2014/06/16 07:08:06 apb Exp $
+# $NetBSD: postinstall,v 1.168 2014/06/16 08:21:20 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -128,6 +128,33 @@ shell_quote()
 	printf "%s\n" "$result"
 }
 
+# Convert arg $1 to a basic regular expression (as in sed)
+# that will match the arg.  This works by inserting backslashes
+# before characters that are special in basic regular expressions.
+# It also inserts backslashes before the extra characters specified
+# in $2 (which defaults to "/,").
+# XXX: Does not handle embedded newlines.
+# Usage: regex="$(bre_quote "${string}")"
+bre_quote()
+{
+	local arg="$1"
+	local extra="$2:/,"
+	printf "%s\n" "${arg}" | ${SED} -e 's/[][^$.*\\'"${extra}"']/\\&/g'
+}
+
+# unprefix dir
+#	Remove any dir prefix from a list of paths on stdin,
+#	and write the result to stdout.  Useful for converting
+#	from ${DEST_DIR}/path to /path.
+#
+unprefix()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: unprefix dir"
+	local prefix="${1#/}"
+	prefix="$(bre_quote "${prefix}")"
+
+	${SED} -e "s,^${prefix}/,/,"
+}
 
 # additem item description
 #	Add item to list of supported items to check/fix,
