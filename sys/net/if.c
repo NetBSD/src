@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.281 2014/06/13 13:54:08 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.282 2014/06/16 00:40:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.281 2014/06/13 13:54:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.282 2014/06/16 00:40:10 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -2342,29 +2342,6 @@ bad:
 }
 
 #if defined(INET) || defined(INET6)
-
-static int
-sysctl_pktq_maxlen(SYSCTLFN_ARGS, pktqueue_t *pq)
-{
-	u_int nmaxlen = pktq_get_count(pq, PKTQ_MAXLEN);
-	struct sysctlnode node = *rnode;
-	int error;
-
-	node.sysctl_data = &nmaxlen;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return error;
-	return pktq_set_maxlen(pq, nmaxlen);
-}
-
-static int
-sysctl_pktq_count(SYSCTLFN_ARGS, pktqueue_t *pq, u_int count_id)
-{
-	int count = pktq_get_count(pq, count_id);
-	struct sysctlnode node = *rnode;
-	node.sysctl_data = &count;
-	return sysctl_lookup(SYSCTLFN_CALL(&node));
-}
 
 #define	SYSCTL_NET_PKTQ(q, cn, c)					\
 	static int							\
