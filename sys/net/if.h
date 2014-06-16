@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.165 2014/05/18 00:33:20 rmind Exp $	*/
+/*	$NetBSD: if.h,v 1.166 2014/06/16 00:40:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,8 +79,10 @@
 
 #include <sys/socket.h>
 #include <sys/queue.h>
+
 #include <net/dlt.h>
 #include <net/pfil.h>
+#include <net/pktqueue.h>
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
