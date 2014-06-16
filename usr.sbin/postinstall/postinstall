@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.169 2014/06/16 08:28:08 apb Exp $
+# $NetBSD: postinstall,v 1.170 2014/06/16 08:29:18 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1346,11 +1346,13 @@ do_sendmail()
 	for f in /etc/mail/helpfile /etc/mail/local-host-names \
 	    /etc/mail/sendmail.cf /etc/mail/submit.cf /etc/rc.d/sendmail \
 	    /etc/rc.d/smmsp /usr/share/misc/sendmail.hf \
-	    $(find "${DEST_DIR}/usr/share/sendmail" -type f) \
-	    $(find "${DEST_DIR}/usr/share/sendmail" -type d) \
-	    "${DEST_DIR}/var/log/sendmail.st" \
-	    "${DEST_DIR}/var/spool/clientmqueue" \
-	    "${DEST_DIR}/var/spool/mqueue"; do
+	    $( ( find "${DEST_DIR}/usr/share/sendmail" -type f ; \
+	         find "${DEST_DIR}/usr/share/sendmail" -type d \
+	       ) | unprefix "${DEST_DIR}" ) \
+	    /var/log/sendmail.st" \
+	    /var/spool/clientmqueue \
+	    /var/spool/mqueue
+	do
 		[ -e "${DEST_DIR}${f}" ] && echo "${f}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
