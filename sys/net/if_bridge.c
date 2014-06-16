@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.79 2014/06/16 01:03:57 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.80 2014/06/16 01:05:25 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.79 2014/06/16 01:03:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.80 2014/06/16 01:05:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -254,6 +254,9 @@ static int	bridge_ip6_checkbasic(struct mbuf **mp);
 # endif /* INET6 */
 #endif /* BRIDGE_IPF */
 
+static void bridge_sysctl_fwdq_setup(struct sysctllog **clog,
+    struct bridge_softc *sc);
+
 struct bridge_control {
 	int	(*bc_func)(struct bridge_softc *, void *);
 	int	bc_argsize;
@@ -378,6 +381,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_fwd_pktq = pktq_create(IFQ_MAXLEN, bridge_forward, sc);
 	KASSERT(sc->sc_fwd_pktq != NULL);
 
+	bridge_sysctl_fwdq_setup(&ifp->if_sysctl_log, sc);
+
 	if_attach(ifp);
 
 	if_alloc_sadl(ifp);
@@ -430,6 +435,92 @@ bridge_clone_destroy(struct ifnet *ifp)
 	free(sc, M_DEVBUF);
 
 	return (0);
+}
+
+static int
+bridge_sysctl_fwdq_maxlen(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	const struct bridge_softc *sc =	node.sysctl_data;
+	return sysctl_pktq_maxlen(SYSCTLFN_CALL(rnode), sc->sc_fwd_pktq);
+}
+
+#define	SYSCTL_BRIDGE_PKTQ(cn, c)					\
+	static int							\
+	bridge_sysctl_fwdq_##cn(SYSCTLFN_ARGS)				\
+	{								\
+		struct sysctlnode node = *rnode;			\
+		const struct bridge_softc *sc =	node.sysctl_data;	\
+		return sysctl_pktq_count(SYSCTLFN_CALL(rnode),		\
+					 sc->sc_fwd_pktq, c);		\
+	}
+
+SYSCTL_BRIDGE_PKTQ(items, PKTQ_NITEMS)
+SYSCTL_BRIDGE_PKTQ(drops, PKTQ_DROPS)
+
+static void
+bridge_sysctl_fwdq_setup(struct sysctllog **clog, struct bridge_softc *sc)
+{
+	const struct sysctlnode *cnode, *rnode;
+	sysctlfn len_func = NULL, maxlen_func = NULL, drops_func = NULL;
+	const char *ifname = sc->sc_if.if_xname;
+
+	len_func = bridge_sysctl_fwdq_items;
+	maxlen_func = bridge_sysctl_fwdq_maxlen;
+	drops_func = bridge_sysctl_fwdq_drops;
+
+	if (sysctl_createv(clog, 0, NULL, &rnode,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_NODE, "interfaces",
+			   SYSCTL_DESCR("Per-interface controls"),
+			   NULL, 0, NULL, 0,
+			   CTL_NET, CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_NODE, ifname,
+			   SYSCTL_DESCR("Interface controls"),
+			   NULL, 0, NULL, 0,
+			   CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_NODE, "fwdq",
+			   SYSCTL_DESCR("Protocol input queue controls"),
+			   NULL, 0, NULL, 0,
+			   CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_INT, "len",
+			   SYSCTL_DESCR("Current forwarding queue length"),
+			   len_func, 0, (void *)sc, 0,
+			   CTL_CREATE, IFQCTL_LEN, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+			   CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			   CTLTYPE_INT, "maxlen",
+			   SYSCTL_DESCR("Maximum allowed forwarding queue length"),
+			   maxlen_func, 0, (void *)sc, 0,
+			   CTL_CREATE, IFQCTL_MAXLEN, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_INT, "drops",
+			   SYSCTL_DESCR("Packets dropped due to full forwarding queue"),
+			   drops_func, 0, (void *)sc, 0,
+			   CTL_CREATE, IFQCTL_DROPS, CTL_EOL) != 0)
+		goto bad;
+
+	return;
+bad:
+	aprint_error("%s: could not attach sysctl nodes\n", ifname);
+	return;
 }
 
 /*
