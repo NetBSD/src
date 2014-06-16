@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.27 2011/01/20 14:26:11 pooka Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.28 2014/06/16 14:43:22 msaitoh Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.27 2011/01/20 14:26:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.28 2014/06/16 14:43:22 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ rlphy_status(struct mii_softc *sc)
 		/*
 		 * If the other side doesn't support NWAY, then the
 		 * best we can do is determine if we have a 10Mbps or
-		 * 100Mbps link. There's no way to know if the link 
+		 * 100Mbps link. There's no way to know if the link
 		 * is full or half duplex, so we default to half duplex
 		 * and hope that the user is clever enough to manually
 		 * change the media settings if we're wrong.
