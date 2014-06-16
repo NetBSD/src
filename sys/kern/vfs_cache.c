@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.98 2014/06/14 16:12:34 joerg Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.99 2014/06/16 12:28:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.98 2014/06/14 16:12:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99 2014/06/16 12:28:10 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -286,8 +286,7 @@ cache_unlock_cpus(void)
 }
 
 /*
- * Find a single cache entry and return it locked.  'namecache_lock' or
- * at least one of the per-CPU locks must be held.
+ * Find a single cache entry and return it locked.
  */
 static struct namecache *
 cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
@@ -297,6 +296,7 @@ cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
 	nchash_t hash;
 
 	KASSERT(dvp != NULL);
+	KASSERT(mutex_owned(namecache_lock));
 	hash = cache_hash(name, namelen);
 	ncpp = &nchashtbl[NCHASH2(hash, dvp)];
 
@@ -395,7 +395,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		/* found nothing */
 		return 0;
 	}
+	mutex_enter(namecache_lock);
 	ncp = cache_lookup_entry(dvp, name, namelen);
+	mutex_exit(namecache_lock);
 	if (__predict_false(ncp == NULL)) {
 		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_miss);
@@ -517,7 +519,9 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		/* found nothing */
 		return 0;
 	}
+	mutex_enter(namecache_lock);
 	ncp = cache_lookup_entry(dvp, name, namelen);
+	mutex_exit(namecache_lock);
 	if (__predict_false(ncp == NULL)) {
 		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_miss);
@@ -559,7 +563,9 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	}
 
 	/* Unlocked, but only for stats. */
+	mutex_enter(&cpup->cpu_lock);
 	COUNT(cpup->cpu_stats, ncs_goodhits); /* XXX can be "badhits" */
+	mutex_exit(&cpup->cpu_lock);
 
 	/* found it */
 	*vn_ret = vp;
