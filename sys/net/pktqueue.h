@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.h,v 1.2 2014/06/09 12:57:04 rmind Exp $	*/
+/*	$NetBSD: pktqueue.h,v 1.3 2014/06/16 00:33:39 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ typedef struct pktqueue pktqueue_t;
 
 typedef enum { PKTQ_MAXLEN, PKTQ_NITEMS, PKTQ_DROPS } pktq_count_t;
 
-pktqueue_t *	pktq_create(size_t, void (*)(void *));
+pktqueue_t *	pktq_create(size_t, void (*)(void *), void *);
 void		pktq_destroy(pktqueue_t *);
 
 bool		pktq_enqueue(pktqueue_t *, struct mbuf *, const u_int);
