@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.168 2014/06/16 08:21:20 apb Exp $
+# $NetBSD: postinstall,v 1.169 2014/06/16 08:28:08 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -477,8 +477,8 @@ file_exists_exact()
 
 # obsolete_paths op
 #	Obsolete the list of paths provided on stdin.
-#	Each path is relative to ${DEST_DIR}, and should
-#	be an absolute path or start with `./'.
+#	Each path should start with '/' or './', and
+#	will be interpreted relative to ${DEST_DIR}.
 #
 obsolete_paths()
 {
