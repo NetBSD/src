@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.78 2014/06/15 16:10:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.79 2014/06/16 01:03:57 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.78 2014/06/15 16:10:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.79 2014/06/16 01:03:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -100,12 +100,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.78 2014/06/15 16:10:46 ozaki-r Exp $
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/cprng.h>
+#include <sys/xcall.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_llc.h>
+#include <net/pktqueue.h>
 
 #include <net/if_ether.h>
 #include <net/if_bridgevar.h>
@@ -351,13 +353,6 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_hold_time = BSTP_DEFAULT_HOLD_TIME;
 	sc->sc_filter_flags = 0;
 
-	/* software interrupt to do the work */
-	sc->sc_softintr = softint_establish(SOFTINT_NET, bridge_forward, sc);
-	if (sc->sc_softintr == NULL) {
-		free(sc, M_DEVBUF);
-		return ENOMEM;
-	}
-
 	/* Initialize our routing table. */
 	bridge_rtable_init(sc);
 
@@ -379,6 +374,9 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	sc->sc_fwd_pktq = pktq_create(IFQ_MAXLEN, bridge_forward, sc);
+	KASSERT(sc->sc_fwd_pktq != NULL);
 
 	if_attach(ifp);
 
@@ -402,6 +400,12 @@ bridge_clone_destroy(struct ifnet *ifp)
 	struct bridge_softc *sc = ifp->if_softc;
 	struct bridge_iflist *bif;
 	int s;
+	uint64_t xc;
+
+	/* Must be called during IFF_RUNNING, i.e., before bridge_stop */
+	pktq_barrier(sc->sc_fwd_pktq);
+	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(xc);
 
 	s = splnet();
 
@@ -416,10 +420,12 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 
+	/* Should be called after if_detach for safe */
+	pktq_flush(sc->sc_fwd_pktq);
+	pktq_destroy(sc->sc_fwd_pktq);
+
 	/* Tear down the routing table. */
 	bridge_rtable_fini(sc);
-
-	softint_disestablish(sc->sc_softintr);
 
 	free(sc, M_DEVBUF);
 
@@ -1340,19 +1346,16 @@ bridge_forward(void *v)
 	struct ether_header *eh;
 	int s;
 
+	KERNEL_LOCK(1, NULL);
 	mutex_enter(softnet_lock);
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		mutex_exit(softnet_lock);
+		KERNEL_UNLOCK_ONE(NULL);
 		return;
 	}
 
 	s = splnet();
-	while (1) {
-		IFQ_POLL(&sc->sc_if.if_snd, m);
-		if (m == NULL)
-			break;
-		IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
-
+	while ((m = pktq_dequeue(sc->sc_fwd_pktq)) != NULL) {
 		src_if = m->m_pkthdr.rcvif;
 
 		sc->sc_if.if_ipackets++;
@@ -1466,6 +1469,7 @@ bridge_forward(void *v)
 	}
 	splx(s);
 	mutex_exit(softnet_lock);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -1515,17 +1519,15 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		 * for bridge processing; return the original packet for
 		 * local processing.
 		 */
-		if (IF_QFULL(&sc->sc_if.if_snd)) {
-			IF_DROP(&sc->sc_if.if_snd);
-			return (m);
-		}
 		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
 		if (mc == NULL)
-			return (m);
+			return m;
 
 		/* Perform the bridge forwarding function with the copy. */
-		IF_ENQUEUE(&sc->sc_if.if_snd, mc);
-		softint_schedule(sc->sc_softintr);
+		if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, mc, 0))) {
+			m_freem(mc);
+			return m;
+		}
 
 		/* Return the original packet for local processing. */
 		return (m);
@@ -1573,13 +1575,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	/* Perform the bridge forwarding function. */
-	if (IF_QFULL(&sc->sc_if.if_snd)) {
-		IF_DROP(&sc->sc_if.if_snd);
+	if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, 0)))
 		m_freem(m);
-		return (NULL);
-	}
-	IF_ENQUEUE(&sc->sc_if.if_snd, m);
-	softint_schedule(sc->sc_softintr);
 
 	return (NULL);
 }
