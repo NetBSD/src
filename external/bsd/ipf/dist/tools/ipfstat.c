@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.4 2014/06/12 17:23:06 christos Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.5 2014/06/16 12:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -856,8 +856,13 @@ printlivelist(fiop, out, set, fp, group, comment)
 			if (fp->fr_family != 0 && fp->fr_family != AF_INET)
 				continue;
 		}
-		if (fp->fr_data != NULL)
-			fp->fr_data = (char *)fp + fp->fr_size;
+		if (fp->fr_data != NULL) {
+			fp->fr_data = calloc(1, fp->fr_dsize);
+			if (fp->fr_data != NULL) {
+				memcpy(fp->fr_data, (char *)fp + fp->fr_size,
+				    fp->fr_dsize);
+			}
+		}
 
 		rules++;
 
