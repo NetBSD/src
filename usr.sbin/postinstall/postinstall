@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.171 2014/06/16 08:39:56 apb Exp $
+# $NetBSD: postinstall,v 1.172 2014/06/16 08:59:13 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -588,6 +588,37 @@ function checklib(results, line, regex) {
 #}'
 	
 	)
+}
+
+# obsolete_stand dir
+#	Prints the names of all obsolete files and subdirs below the
+#	provided dir.  dir should be something like /stand/${MACHINE}.
+#	The input dir and all output paths are interpreted
+#	relative to ${DEST_DIR}.
+#
+#	Assumes that the numerically largest subdir is current, and all
+#	others are obsolete.
+#
+obsolete_stand()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: obsolete_stand dir"
+	local dir="$1"
+	local subdir
+
+	if ! [ -d "${DEST_DIR}/${dir}" ]; then
+		msg "${DEST_DIR}${dir} doesn't exist; can't check for obsolete files"
+		return 1
+	fi
+
+	( cd "${DEST_DIR}${dir}" && ls -1d [0-9]*[0-9]/. ) \
+	| ${GREP} -v '[^0-9./]' \
+	| sort -t. -r -k1n -k2n -k3n \
+	| tail -n +2 \
+	| while read subdir ; do
+		subdir="${subdir%/.}"
+		find "${DEST_DIR}/${dir#/}/${subdir}" -depth -print
+	done \
+	| unprefix "${DEST_DIR}"
 }
 
 # modify_file op srcfile scratchfile awkprog
@@ -1924,6 +1955,21 @@ do_varshm()
 	return ${failed}
 }
 
+#
+#	obsolete_stand
+#
+adddisableditem obsolete_stand "remove obsolete files from /stand"
+do_obsolete_stand()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stnd  fix|check"
+	op="$1"
+	failed=0
+
+	obsolete_stand "/stand/${MACHINE}" | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
 
 #
 #	obsolete
