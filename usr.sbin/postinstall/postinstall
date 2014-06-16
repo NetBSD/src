@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.170 2014/06/16 08:29:18 apb Exp $
+# $NetBSD: postinstall,v 1.171 2014/06/16 08:39:56 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1349,7 +1349,7 @@ do_sendmail()
 	    $( ( find "${DEST_DIR}/usr/share/sendmail" -type f ; \
 	         find "${DEST_DIR}/usr/share/sendmail" -type d \
 	       ) | unprefix "${DEST_DIR}" ) \
-	    /var/log/sendmail.st" \
+	    /var/log/sendmail.st \
 	    /var/spool/clientmqueue \
 	    /var/spool/mqueue
 	do
