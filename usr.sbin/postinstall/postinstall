@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.172 2014/06/16 08:59:13 apb Exp $
+# $NetBSD: postinstall,v 1.173 2014/06/16 22:04:39 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,7 +150,7 @@ bre_quote()
 unprefix()
 {
 	[ $# -eq 1 ] || err 3 "USAGE: unprefix dir"
-	local prefix="${1#/}"
+	local prefix="${1%/}"
 	prefix="$(bre_quote "${prefix}")"
 
 	${SED} -e "s,^${prefix}/,/,"
