@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.571 2014/05/31 20:26:51 christos Exp $
+# $NetBSD: mi,v 1.572 2014/06/16 12:54:43 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2841,6 +2841,7 @@
 ./usr/tests/lib/libm/t_ldexp			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_libm			tests-obsolete		obsolete
 ./usr/tests/lib/libm/t_log			tests-lib-tests		atf
+./usr/tests/lib/libm/t_modf			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_pow			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_precision		tests-lib-tests		atf
 ./usr/tests/lib/libm/t_round			tests-lib-tests		atf
