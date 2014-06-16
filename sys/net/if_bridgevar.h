@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.16 2014/06/16 01:03:57 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.17 2014/06/16 03:43:10 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,8 +77,6 @@
 
 #include <sys/callout.h>
 #include <sys/queue.h>
-
-#include <net/pktqueue.h>
 
 /*
  * Commands used in the SIOCSDRVSPEC ioctl.  Note the lookup of the
@@ -207,6 +205,8 @@ struct ifbrparam {
 #define	ifbrp_filter	ifbrp_ifbrpu.ifbrpu_int32	/* filtering flags */
 
 #ifdef _KERNEL
+#include <net/pktqueue.h>
+
 /*
  * Timekeeping structure used in spanning tree code.
  */
