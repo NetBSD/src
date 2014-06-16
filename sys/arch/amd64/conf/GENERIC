@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.390 2014/06/12 20:22:04 alnsn Exp $
+# $NetBSD: GENERIC,v 1.391 2014/06/16 19:08:17 dsl Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.390 $"
+#ident 		"GENERIC-$Revision: 1.391 $"
 
 maxusers	64		# estimated number of users
 
@@ -818,7 +818,8 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
+# xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
+					# xhci is at best experimental
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
@@ -835,7 +836,7 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
-usb*	at xhci?
+# usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
