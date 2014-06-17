@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2014/06/06 12:46:54 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2014/06/17 16:39:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.24 2014/06/06 12:46:54 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2014/06/17 16:39:02 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 	fflag = 0;
 	inplace = NULL;
 
-	while ((c = getopt(argc, argv, "EI::ae:f:i::lnr")) != -1)
+	while ((c = getopt(argc, argv, "EI::ae:f:i::lnru")) != -1)
 		switch (c) {
 		case 'r':		/* Gnu sed compat */
 		case 'E':
@@ -177,6 +177,16 @@ main(int argc, char *argv[])
 		case 'n':
 			nflag = 1;
 			break;
+		case 'u':
+#ifdef _IONBF
+			c = setvbuf(stdout, NULL, _IONBF, 0);
+#else
+			c = -1;
+			errno = EOPNOTSUPP;
+#endif
+			if (c)
+				warn("setting unbuffered output failed");
+			break;
 		default:
 		case '?':
 			usage();
@@ -208,9 +218,10 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "%s\n%s\n",
-		"usage: sed script [-Ealn] [-i extension] [file ...]",
-		"       sed [-Ealn] [-i extension] [-e script] ... [-f script_file] ... [file ...]");
+	(void)fprintf(stderr,
+	    "Usage: %s script [-Ealnu] [-i[<extension>]] [file ...]\n"
+	    "\t%s [-Ealnu] [-i[<extension>]] [-e script] ... [-f script_file]"
+	    " ... [file ...]\n", getprogname(), getprogname());
 	exit(1);
 }
 
