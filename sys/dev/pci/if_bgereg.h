@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.87 2014/05/27 16:17:55 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.88 2014/06/17 17:37:08 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -85,6 +85,7 @@
 #define	BGE_SRAM_DATA_CFG_2		0x00000D38
 #define	BGE_SRAM_DATA_CFG_3		0x00000D3C
 #define	BGE_SRAM_DATA_CFG_4		0x00000D60
+#define	BGE_SRAM_DATA_CFG_5		0x00000E0C
 #define BGE_SOFTWARE_GENCOMM_END	0x00000FFF
 #define BGE_UNMAPPED			0x00001000
 #define BGE_UNMAPPED_END		0x00001FFF
