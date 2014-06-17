@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.80 2014/06/16 01:05:25 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.81 2014/06/17 10:39:46 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.80 2014/06/16 01:05:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.81 2014/06/17 10:39:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -188,6 +188,7 @@ static int	bridge_init(struct ifnet *);
 static void	bridge_stop(struct ifnet *, int);
 static void	bridge_start(struct ifnet *);
 
+static void	bridge_input(struct ifnet *, struct mbuf *);
 static void	bridge_forward(void *);
 
 static void	bridge_timer(void *);
@@ -707,6 +708,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 		break;
 	}
 
+	ifs->if_input = ether_input;
 	ifs->if_bridge = NULL;
 	LIST_REMOVE(bif, bif_next);
 
@@ -739,6 +741,9 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	if (ifs->if_bridge != NULL)
 		return (EBUSY);
 
+	if (ifs->if_input != ether_input)
+		return EINVAL;
+
 	bif = malloc(sizeof(*bif), M_DEVBUF, M_NOWAIT);
 	if (bif == NULL)
 		return (ENOMEM);
@@ -764,6 +769,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 
 	ifs->if_bridge = sc;
 	LIST_INSERT_HEAD(&sc->sc_iflist, bif, bif_next);
+	ifs->if_input = bridge_input;
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
@@ -1570,7 +1576,7 @@ bridge_forward(void *v)
  *	bridging if it is not for us.
  *	should be called at splnet()
  */
-struct mbuf *
+static void
 bridge_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct bridge_softc *sc = ifp->if_bridge;
@@ -1578,30 +1584,42 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct ether_header *eh;
 	struct mbuf *mc;
 
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
-		return (m);
+	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+		ether_input(ifp, m);
+		return;
+	}
 
 	bif = bridge_lookup_member_if(sc, ifp);
-	if (bif == NULL)
-		return (m);
+	if (bif == NULL) {
+		ether_input(ifp, m);
+		return;
+	}
 
 	eh = mtod(m, struct ether_header *);
+
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		if (memcmp(etherbroadcastaddr,
+		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+	}
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
 		if (bif->bif_flags & IFBIF_STP) {
 			/* Tap off 802.1D packets; they do not get forwarded. */
 			if (memcmp(eh->ether_dhost, bstp_etheraddr,
 			    ETHER_ADDR_LEN) == 0) {
-				m = bstp_input(sc, bif, m);
-				if (m == NULL)
-					return (NULL);
+				bstp_input(sc, bif, m);
+				return;
 			}
 
 			switch (bif->bif_state) {
 			case BSTP_IFSTATE_BLOCKING:
 			case BSTP_IFSTATE_LISTENING:
 			case BSTP_IFSTATE_DISABLED:
-				return (m);
+				ether_input(ifp, m);
+				return;
 			}
 		}
 
@@ -1611,17 +1629,18 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		 * local processing.
 		 */
 		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
-		if (mc == NULL)
-			return m;
-
-		/* Perform the bridge forwarding function with the copy. */
-		if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, mc, 0))) {
-			m_freem(mc);
-			return m;
+		if (mc == NULL) {
+			ether_input(ifp, m);
+			return;
 		}
 
-		/* Return the original packet for local processing. */
-		return (m);
+		/* Perform the bridge forwarding function with the copy. */
+		if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, mc, 0)))
+			m_freem(mc);
+
+		/* For local processing. */
+		ether_input(ifp, m);
+		return;
 	}
 
 	if (bif->bif_flags & IFBIF_STP) {
@@ -1629,7 +1648,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		case BSTP_IFSTATE_BLOCKING:
 		case BSTP_IFSTATE_LISTENING:
 		case BSTP_IFSTATE_DISABLED:
-			return (m);
+			ether_input(ifp, m);
+			return;
 		}
 	}
 
@@ -1649,7 +1669,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 			m->m_pkthdr.rcvif = bif->bif_ifp;
-			return (m);
+			ether_input(bif->bif_ifp, m);
+			return;
 		}
 
 		/* We just received a packet that we sent out. */
@@ -1661,15 +1682,13 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* NCARP > 0 */
 		    ) {
 			m_freem(m);
-			return (NULL);
+			return;
 		}
 	}
 
 	/* Perform the bridge forwarding function. */
 	if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, 0)))
 		m_freem(m);
-
-	return (NULL);
 }
 
 /*

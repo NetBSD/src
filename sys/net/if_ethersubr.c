@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.200 2014/06/10 09:38:30 joerg Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.201 2014/06/17 10:39:46 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.200 2014/06/10 09:38:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.201 2014/06/17 10:39:46 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -640,49 +640,23 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	ifp->if_ibytes += m->m_pkthdr.len;
 
-#if NBRIDGE > 0
-	/*
-	 * Tap the packet off here for a bridge.  bridge_input()
-	 * will return NULL if it has consumed the packet, otherwise
-	 * it gets processed as normal.  Note that bridge_input()
-	 * will always return the original packet if we need to
-	 * process it locally.
-	 */
-	if (ifp->if_bridge) {
-		/* clear M_PROMISC, in case the packets comes from a vlan */
-		m->m_flags &= ~M_PROMISC;
-		m = bridge_input(ifp, m);
-		if (m == NULL)
-			return;
-
-		/*
-		 * Bridge has determined that the packet is for us.
-		 * Update our interface pointer -- we may have had
-		 * to "bridge" the packet locally.
-		 */
-		ifp = m->m_pkthdr.rcvif;
-	} else
-#endif /* NBRIDGE > 0 */
-	{
-
 #if NCARP > 0
-		if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
-			/*
-			 * clear M_PROMISC, in case the packets comes from a
-			 * vlan
-			 */
-			m->m_flags &= ~M_PROMISC;
-			if (carp_input(m, (uint8_t *)&eh->ether_shost,
-			    (uint8_t *)&eh->ether_dhost, eh->ether_type) == 0)
-				return;
-		}
+	if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
+		/*
+		 * clear M_PROMISC, in case the packets comes from a
+		 * vlan
+		 */
+		m->m_flags &= ~M_PROMISC;
+		if (carp_input(m, (uint8_t *)&eh->ether_shost,
+		    (uint8_t *)&eh->ether_dhost, eh->ether_type) == 0)
+			return;
+	}
 #endif /* NCARP > 0 */
-		if ((m->m_flags & (M_BCAST|M_MCAST|M_PROMISC)) == 0 &&
-		    (ifp->if_flags & IFF_PROMISC) != 0 &&
-		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
-			   ETHER_ADDR_LEN) != 0) {
-			m->m_flags |= M_PROMISC;
-		}
+	if ((m->m_flags & (M_BCAST|M_MCAST|M_PROMISC)) == 0 &&
+	    (ifp->if_flags & IFF_PROMISC) != 0 &&
+	    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
+		   ETHER_ADDR_LEN) != 0) {
+		m->m_flags |= M_PROMISC;
 	}
 
 	if ((m->m_flags & M_PROMISC) == 0) {
