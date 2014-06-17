@@ -488,8 +488,6 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 #include <assert.h>
 #include <stdlib.h>
 
-#define SLJIT_HALT_PROCESS() abort()
-
 #define SLJIT_ASSERT(x) assert(x)
 
 #endif /* !SLJIT_ASSERT */
