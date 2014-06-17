@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/06/17 06:36:01 alnsn Exp $
+# $NetBSD: Makefile,v 1.3 2014/06/17 19:26:18 alnsn Exp $
 
 TESTSDIR=	${TESTSBASE}/lib/libsljit
 
@@ -19,8 +19,5 @@ WARNS=		3
 
 LDADD+=		-L${LIBSLJITDIR} -lsljit
 DPADD+=		${LIBSLJITDIR}/libsljit.a
-
-# I-cache sync routines for arm and mips
-LDADD+=		-l${MACHINE_CPU}
 
 .include <bsd.test.mk>
