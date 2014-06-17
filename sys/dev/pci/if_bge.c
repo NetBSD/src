@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.267 2014/06/17 17:37:08 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.268 2014/06/17 18:18:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.267 2014/06/17 17:37:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.268 2014/06/17 18:18:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3682,7 +3682,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		if (BGE_ASICREV(sc->bge_chipid == BGE_ASICREV_BCM5785))
 			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_4);
 		if (BGE_IS_5717_PLUS(sc))
-			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_5);
+			hwcfg5 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_5);
 	} else if (!(sc->bge_flags & BGEF_NO_EEPROM)) {
 		bge_read_eeprom(sc, (void *)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
