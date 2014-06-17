@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.268 2014/06/17 18:18:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.269 2014/06/17 21:37:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.268 2014/06/17 18:18:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.269 2014/06/17 21:37:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3304,6 +3304,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	uint32_t		pm_ctl;
 	bool			no_seeprom;
 	int			capmask;
+	int			mii_flags;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	bp = bge_lookup(pa);
@@ -3864,7 +3865,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
-		if (BGE_IS_5714_FAMILY(sc))
+		if (BGE_IS_5705_PLUS(sc))
 		    sc->bge_flags |= BGEF_FIBER_MII;
 		else
 		    sc->bge_flags |= BGEF_FIBER_TBI;
@@ -3902,9 +3903,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
-		mii_attach(sc->bge_dev, &sc->bge_mii, capmask,
-			   sc->bge_phy_addr, MII_OFFSET_ANY,
-			   MIIF_DOPAUSE);
+		mii_flags = MIIF_DOPAUSE;
+		if (sc->bge_flags & BGEF_FIBER_MII)
+			mii_flags |= MIIF_HAVEFIBER;
+		mii_attach(sc->bge_dev, &sc->bge_mii, capmask, sc->bge_phy_addr,
+		    MII_OFFSET_ANY, mii_flags);
 
 		if (LIST_EMPTY(&sc->bge_mii.mii_phys)) {
 			aprint_error_dev(sc->bge_dev, "no PHY found!\n");

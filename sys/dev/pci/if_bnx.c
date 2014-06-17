@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.52 2014/06/12 12:09:47 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.53 2014/06/17 21:37:20 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.52 2014/06/12 12:09:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.53 2014/06/17 21:37:20 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -729,6 +729,8 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	dict = device_properties(self);
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bnx_phy_flags);
 	prop_dictionary_set_uint32(dict, "chipid", sc->bnx_chipid);
+	prop_dictionary_set_uint32(dict, "shared_hwcfg",sc->bnx_shared_hw_cfg);
+	prop_dictionary_set_uint32(dict, "port_hwcfg", sc->bnx_port_hw_cfg);
 
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
