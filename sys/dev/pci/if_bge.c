@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.266 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.267 2014/06/17 17:37:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.266 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.267 2014/06/17 17:37:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3293,7 +3293,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4;
+	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
 	uint32_t		command;
 	struct ifnet		*ifp;
 	uint32_t		misccfg, mimode;
@@ -3667,7 +3667,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * memory, or fall back to the config word in the EEPROM.
 	 * Note: on some BCM5700 cards, this value appears to be unset.
 	 */
-	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = 0;
+	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = hwcfg5 = 0;
 	if (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 	    BGE_SRAM_DATA_SIG_MAGIC) {
 		uint32_t tmp;
@@ -3681,13 +3681,16 @@ bge_attach(device_t parent, device_t self, void *aux)
 			hwcfg3 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_3);
 		if (BGE_ASICREV(sc->bge_chipid == BGE_ASICREV_BCM5785))
 			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_4);
+		if (BGE_IS_5717_PLUS(sc))
+			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_5);
 	} else if (!(sc->bge_flags & BGEF_NO_EEPROM)) {
 		bge_read_eeprom(sc, (void *)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
 		hwcfg = be32toh(hwcfg);
 	}
-	aprint_normal_dev(sc->bge_dev, "HW config %08x, %08x, %08x, %08x\n",
-	    hwcfg, hwcfg2, hwcfg3, hwcfg4);
+	aprint_normal_dev(sc->bge_dev,
+	    "HW config %08x, %08x, %08x, %08x %08x\n",
+	    hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5);
 
 	bge_sig_legacy(sc, BGE_RESET_START);
 	bge_sig_post_reset(sc, BGE_RESET_START);
@@ -5040,7 +5043,7 @@ doit:
 			 * XXX jonathan@NetBSD.org: untested.
 			 * how to force  this branch to be taken?
 			 */
-			BGE_EVCNT_INCR(&sc->sc_ev_txtsopain);
+			BGE_EVCNT_INCR(sc->bge_ev_txtsopain);
 
 			m_copydata(m0, offset, sizeof(ip), &ip);
 			m_copydata(m0, hlen, sizeof(th), &th);
