@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.12 2014/06/17 16:52:33 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.12 2014/06/17 16:52:33 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.12 2014/06/17 16:52:33 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -81,9 +81,9 @@ __RCSID("$NetBSD: bpfjit.c,v 1.11 2014/05/23 22:04:09 alnsn Exp $");
 #define BJ_BUF		SLJIT_SAVED_REG1
 #define BJ_WIRELEN	SLJIT_SAVED_REG2
 #define BJ_BUFLEN	SLJIT_SAVED_REG3
-#define BJ_AREG		SLJIT_TEMPORARY_REG1
-#define BJ_TMP1REG	SLJIT_TEMPORARY_REG2
-#define BJ_TMP2REG	SLJIT_TEMPORARY_REG3
+#define BJ_AREG		SLJIT_SCRATCH_REG1
+#define BJ_TMP1REG	SLJIT_SCRATCH_REG2
+#define BJ_TMP2REG	SLJIT_SCRATCH_REG3
 #define BJ_XREG		SLJIT_TEMPORARY_EREG1
 #define BJ_TMP3REG	SLJIT_TEMPORARY_EREG2
 
@@ -425,13 +425,13 @@ emit_read32(struct sljit_compiler* compiler, uint32_t k)
  */
 static int
 emit_xcall(struct sljit_compiler* compiler, const struct bpf_insn *pc,
-    int dst, sljit_w dstw, struct sljit_jump **ret0_jump,
+    int dst, sljit_sw dstw, struct sljit_jump **ret0_jump,
     uint32_t (*fn)(const struct mbuf *, uint32_t, int *))
 {
 #if BJ_XREG == SLJIT_RETURN_REG   || \
-    BJ_XREG == SLJIT_TEMPORARY_REG1 || \
-    BJ_XREG == SLJIT_TEMPORARY_REG2 || \
-    BJ_XREG == SLJIT_TEMPORARY_REG3
+    BJ_XREG == SLJIT_SCRATCH_REG1 || \
+    BJ_XREG == SLJIT_SCRATCH_REG2 || \
+    BJ_XREG == SLJIT_SCRATCH_REG3
 #error "Not supported assignment of registers."
 #endif
 	int status;
@@ -456,7 +456,7 @@ emit_xcall(struct sljit_compiler* compiler, const struct bpf_insn *pc,
 	 */
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV,
-	    SLJIT_TEMPORARY_REG1, 0,
+	    SLJIT_SCRATCH_REG1, 0,
 	    BJ_BUF, 0);
 	if (status != SLJIT_SUCCESS)
 		return status;
@@ -464,13 +464,13 @@ emit_xcall(struct sljit_compiler* compiler, const struct bpf_insn *pc,
 	if (BPF_CLASS(pc->code) == BPF_LD && BPF_MODE(pc->code) == BPF_IND) {
 		status = sljit_emit_op2(compiler,
 		    SLJIT_ADD,
-		    SLJIT_TEMPORARY_REG2, 0,
+		    SLJIT_SCRATCH_REG2, 0,
 		    BJ_XREG, 0,
 		    SLJIT_IMM, (uint32_t)pc->k);
 	} else {
 		status = sljit_emit_op1(compiler,
 		    SLJIT_MOV,
-		    SLJIT_TEMPORARY_REG2, 0,
+		    SLJIT_SCRATCH_REG2, 0,
 		    SLJIT_IMM, (uint32_t)pc->k);
 	}
 
@@ -478,7 +478,7 @@ emit_xcall(struct sljit_compiler* compiler, const struct bpf_insn *pc,
 		return status;
 
 	status = sljit_get_local_base(compiler,
-	    SLJIT_TEMPORARY_REG3, 0, arg3_offset);
+	    SLJIT_SCRATCH_REG3, 0, arg3_offset);
 	if (status != SLJIT_SUCCESS)
 		return status;
 
@@ -510,7 +510,7 @@ emit_xcall(struct sljit_compiler* compiler, const struct bpf_insn *pc,
 	/* tmp3 = *err; */
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV_UI,
-	    SLJIT_TEMPORARY_REG3, 0,
+	    SLJIT_SCRATCH_REG3, 0,
 	    SLJIT_MEM1(SLJIT_LOCALS_REG), arg3_offset);
 	if (status != SLJIT_SUCCESS)
 		return status;
@@ -518,7 +518,7 @@ emit_xcall(struct sljit_compiler* compiler, const struct bpf_insn *pc,
 	/* if (tmp3 != 0) return 0; */
 	*ret0_jump = sljit_emit_cmp(compiler,
 	    SLJIT_C_NOT_EQUAL,
-	    SLJIT_TEMPORARY_REG3, 0,
+	    SLJIT_SCRATCH_REG3, 0,
 	    SLJIT_IMM, 0);
 	if (*ret0_jump == NULL)
 		return SLJIT_ERR_ALLOC_FAILED;
@@ -819,21 +819,21 @@ divide(sljit_uw x, sljit_uw y)
  * divt,divw are either SLJIT_IMM,pc->k or BJ_XREG,0.
  */
 static int
-emit_division(struct sljit_compiler* compiler, int divt, sljit_w divw)
+emit_division(struct sljit_compiler* compiler, int divt, sljit_sw divw)
 {
 	int status;
 
 #if BJ_XREG == SLJIT_RETURN_REG   || \
-    BJ_XREG == SLJIT_TEMPORARY_REG1 || \
-    BJ_XREG == SLJIT_TEMPORARY_REG2 || \
-    BJ_AREG == SLJIT_TEMPORARY_REG2
+    BJ_XREG == SLJIT_SCRATCH_REG1 || \
+    BJ_XREG == SLJIT_SCRATCH_REG2 || \
+    BJ_AREG == SLJIT_SCRATCH_REG2
 #error "Not supported assignment of registers."
 #endif
 
-#if BJ_AREG != SLJIT_TEMPORARY_REG1
+#if BJ_AREG != SLJIT_SCRATCH_REG1
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV,
-	    SLJIT_TEMPORARY_REG1, 0,
+	    SLJIT_SCRATCH_REG1, 0,
 	    BJ_AREG, 0);
 	if (status != SLJIT_SUCCESS)
 		return status;
@@ -841,7 +841,7 @@ emit_division(struct sljit_compiler* compiler, int divt, sljit_w divw)
 
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV,
-	    SLJIT_TEMPORARY_REG2, 0,
+	    SLJIT_SCRATCH_REG2, 0,
 	    divt, divw);
 	if (status != SLJIT_SUCCESS)
 		return status;
@@ -849,11 +849,11 @@ emit_division(struct sljit_compiler* compiler, int divt, sljit_w divw)
 #if defined(BPFJIT_USE_UDIV)
 	status = sljit_emit_op0(compiler, SLJIT_UDIV|SLJIT_INT_OP);
 
-#if BJ_AREG != SLJIT_TEMPORARY_REG1
+#if BJ_AREG != SLJIT_SCRATCH_REG1
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV,
 	    BJ_AREG, 0,
-	    SLJIT_TEMPORARY_REG1, 0);
+	    SLJIT_SCRATCH_REG1, 0);
 	if (status != SLJIT_SUCCESS)
 		return status;
 #endif
@@ -1312,7 +1312,7 @@ kx_to_reg(const struct bpf_insn *pc)
 	}
 }
 
-static sljit_w
+static sljit_sw
 kx_to_reg_arg(const struct bpf_insn *pc)
 {
 
