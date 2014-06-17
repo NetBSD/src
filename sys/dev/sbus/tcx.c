@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.48 2014/05/13 05:30:38 martin Exp $ */
+/*	$NetBSD: tcx.c,v 1.49 2014/06/17 10:47:27 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,13 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.48 2014/05/13 05:30:38 martin Exp $");
-
-/*
- * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
- * it is bypassed on the 8-bit version (onboard framebuffer for SS4)
- */
-#undef TCX_CG8
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.49 2014/06/17 10:47:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,19 +198,6 @@ struct wsdisplay_accessops tcx_accessops = {
 };
 
 #define OBPNAME	"SUNW,tcx"
-
-#ifdef TCX_CG8
-/*
- * For CG8 emulation, we map the 32-bit-deep framebuffer at an offset of
- * 256K; the cg8 space begins with a mono overlay plane and an overlay
- * enable plane (128K bytes each, 1 bit per pixel), immediately followed
- * by the color planes, 32 bits per pixel.  We also map just the 32-bit
- * framebuffer at 0x04000000 (TCX_USER_RAM_COMPAT), for compatibility
- * with the cg8 driver.
- */
-#define	TCX_CG8OVERLAY	(256 * 1024)
-#define	TCX_SIZE_DFB32	(1152 * 900 * 4) /* max size of the framebuffer */
-#endif
 
 /*
  * Match a tcx.
