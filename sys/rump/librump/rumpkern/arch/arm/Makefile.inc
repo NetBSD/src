@@ -1,8 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.3 2014/06/17 06:31:47 alnsn Exp $
+# $NetBSD: Makefile.inc,v 1.4 2014/06/17 08:50:48 alnsn Exp $
 
 CPPFLAGS+=	-DARCH_ELFSIZE=32
-
-SRCS+=		cpufunc.c
 
 .PATH:  ${RUMPTOP}/../arch/arm/arm32
 SRCS+=  	kobj_machdep.c
