@@ -1,3 +1,5 @@
+/*	$NetBSD: sljitConfig.h,v 1.10 2014/06/17 19:36:45 alnsn Exp $	*/
+
 /*
  *    Stack-less Just-In-Time compiler
  *
