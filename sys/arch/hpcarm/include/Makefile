@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.29 2013/05/02 03:56:41 matt Exp $
+#	$NetBSD: Makefile,v 1.30 2014/06/17 06:36:40 alnsn Exp $
 
 INCSDIR=	/usr/include/hpcarm
-INCS=
+INCS=		sljitarch.h
 
 .include "../../arm/include/Makefile.common"
