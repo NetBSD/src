@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.17 2014/06/16 03:43:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.18 2014/06/17 10:39:46 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -313,11 +313,10 @@ void	bridge_ifdetach(struct ifnet *);
 
 int	bridge_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    struct rtentry *);
-struct mbuf *bridge_input(struct ifnet *, struct mbuf *);
 
 void	bstp_initialization(struct bridge_softc *);
 void	bstp_stop(struct bridge_softc *);
-struct mbuf *bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
+void	bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
