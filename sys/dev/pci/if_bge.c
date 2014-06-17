@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.269 2014/06/17 21:37:20 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.270 2014/06/17 22:29:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.269 2014/06/17 21:37:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.270 2014/06/17 22:29:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3578,6 +3578,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57791 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		/* These chips are 10/100 only. */
 		capmask &= ~BMSR_EXTSTAT;
 		sc->bge_phy_flags |= BGEPHYF_NO_WIRESPEED;
 	}
@@ -3865,10 +3866,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
-		if (BGE_IS_5705_PLUS(sc))
-		    sc->bge_flags |= BGEF_FIBER_MII;
-		else
-		    sc->bge_flags |= BGEF_FIBER_TBI;
+		if (BGE_IS_5705_PLUS(sc)) {
+			sc->bge_flags |= BGEF_FIBER_MII;
+			sc->bge_phy_flags |= BGEPHYF_NO_WIRESPEED;
+		} else
+			sc->bge_flags |= BGEF_FIBER_TBI;
 	}
 
 	/* Set bge_phy_flags before prop_dictionary_set_uint32() */
