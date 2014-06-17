@@ -24,9 +24,22 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Must be the first one. Must not depend on any other include. */
 #include "regexJIT.h"
 
 #include <stdio.h>
+
+#if defined _WIN32 || defined _WIN64
+#define COLOR_RED
+#define COLOR_GREEN
+#define COLOR_ARCH
+#define COLOR_DEFAULT
+#else
+#define COLOR_RED "\33[31m"
+#define COLOR_GREEN "\33[32m"
+#define COLOR_ARCH "\33[33m"
+#define COLOR_DEFAULT "\33[0m"
+#endif
 
 #ifdef REGEX_USE_8BIT_CHARS
 #define S(str)	str
@@ -90,7 +103,7 @@ struct test_case {
 	const regex_char_t *string;	/* NULL : end of tests. */
 };
 
-void run_tests(struct test_case* test)
+void run_tests(struct test_case* test, int verbose, int silent)
 {
 	int error;
 	const regex_char_t *ptr;
@@ -99,8 +112,12 @@ void run_tests(struct test_case* test)
 	int begin, end, id, finished;
 	int success = 0, fail = 0;
 
+	if (!verbose && !silent)
+		printf("Pass -v to enable verbose, -s to disable this hint.\n\n");
+
 	for ( ; test->string ; test++) {
-		printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
+		if (verbose)
+			printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 		fail++;
 
 		if (test->pattern) {
@@ -114,15 +131,21 @@ void run_tests(struct test_case* test)
 			machine = regex_compile(test->pattern, ptr - test->pattern, test->flags, &error);
 
 			if (error) {
+				if (!verbose)
+					printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 				printf("ABORT: Error %d\n", error);
 				return;
 			}
 			if (!machine) {
+				if (!verbose)
+					printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 				printf("ABORT: machine must be exists. Report this bug, please\n");
 				return;
 			}
 		}
 		else if (test->flags != 0) {
+			if (!verbose)
+				printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 			printf("ABORT: flag must be 0 if no pattern\n");
 			return;
 		}
@@ -134,6 +157,8 @@ void run_tests(struct test_case* test)
 		match = regex_begin_match(machine);
 #ifdef REGEX_MATCH_VERBOSE
 		if (!match) {
+			if (!verbose)
+				printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 			printf("ABORT: Not enough memory for matching\n");
 			regex_free_machine(machine);
 			return;
@@ -143,10 +168,14 @@ void run_tests(struct test_case* test)
 		finished = regex_is_match_finished(match);
 
 		if (begin != test->begin || end != test->end || id != test->id) {
+			if (!verbose)
+				printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 			printf("FAIL A: begin: %d != %d || end: %d != %d || id: %d != %d\n", test->begin, begin, test->end, end, test->id, id);
 			continue;
 		}
 		if (test->finished != -1 && test->finished != !!finished) {
+			if (!verbose)
+				printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 			printf("FAIL A: finish check\n");
 			continue;
 		}
@@ -159,26 +188,31 @@ void run_tests(struct test_case* test)
 		regex_free_match(match);
 
 		if (begin != test->begin || end != test->end || id != test->id) {
+			if (!verbose)
+				printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 			printf("FAIL B: begin: %d != %d || end: %d != %d || id: %d != %d\n", test->begin, begin, test->end, end, test->id, id);
 			continue;
 		}
 		if (test->finished != -1 && test->finished != !!finished) {
+			if (!verbose)
+				printf("test: '%s' '%s': ", test->pattern ? test->pattern : "[[REUSE]]", test->string);
 			printf("FAIL B: finish check\n");
 			continue;
 		}
 
-		printf("SUCCESS\n");
+		if (verbose)
+			printf("SUCCESS\n");
 		fail--;
 		success++;
 	}
 	if (machine)
 		regex_free_machine(machine);
 
-	printf("On %s: ", regex_get_platform_name());
+	printf("REGEX tests: On " COLOR_ARCH "%s" COLOR_DEFAULT ": ", regex_get_platform_name());
 	if (fail == 0)
-		printf("All tests are passed!\n");
+		printf("All tests are " COLOR_GREEN "PASSED" COLOR_DEFAULT "!\n");
 	else
-		printf("Successful test ratio: %d%%.\n", success * 100 / (success + fail));
+		printf("Successful test ratio: " COLOR_RED "%d%%" COLOR_DEFAULT ".\n", success * 100 / (success + fail));
 }
 
 /* Testing. */
@@ -280,6 +314,8 @@ static struct test_case tests[] = {
 
 int main(int argc, char* argv[])
 {
+	int has_arg = (argc >= 2 && argv[1][0] == '-' && argv[1][2] == '\0');
+
 /*	verbose_test("a((b)((c|d))|)c|"); */
 /*	verbose_test("Xa{009,0010}Xb{,7}Xc{5,}Xd{,}Xe{1,}Xf{,1}X"); */
 /*	verbose_test("{3!}({3})({0!}){,"); */
@@ -287,7 +323,6 @@ int main(int argc, char* argv[])
 /*	verbose_test("^a({2!})*b+(a|{1!}b)+d$"); */
 /*	verbose_test("((a|b|c)*(xy)+)+", "asbcxyxy"); */
 
-	run_tests(tests);
+	run_tests(tests, has_arg && argv[1][1] == 'v', has_arg && argv[1][1] == 's');
 	return 0;
 }
-
