@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.32 2014/04/02 17:09:23 justin Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.33 2014/06/17 09:53:59 justin Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -58,7 +58,6 @@
 #define _XOPEN_SOURCE 600
 #define _BSD_SOURCE
 #define _GNU_SOURCE
-#include <features.h>
 #endif
 
 #ifdef __ANDROID__
