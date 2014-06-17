@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.9 2014/06/03 20:22:54 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.10 2014/06/17 07:08:47 spz Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -229,8 +229,19 @@ openpam_parse_chain(pam_handle_t *pamh,
 				 * outer loop does not just ignore the
 				 * error and keep searching.
 				 */
-				if (errno == ENOENT)
+				if (errno == ENOENT) {
+					/*
+					 * we're failing load, make sure
+					 * there's a log message of severity
+					 * higher than debug
+					 */
+					openpam_log(PAM_LOG_ERROR,
+					"failed loading include for service "
+					"%s in %s(%d): %s",
+					servicename, filename, lineno,
+					strerror(errno));
 					errno = EINVAL;
+				}
 				goto fail;
 			}
 			continue;
