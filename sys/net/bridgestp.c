@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.14 2009/01/18 10:28:55 mrg Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.15 2014/06/17 10:39:46 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.14 2009/01/18 10:28:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.15 2014/06/17 10:39:46 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ bstp_acknowledge_topology_change(struct bridge_softc *sc,
 	bstp_transmit_config(sc, bif);
 }
 
-struct mbuf *
+void
 bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 {
 	struct ether_header *eh;
@@ -592,7 +592,7 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 
 	if ((bif->bif_flags & IFBIF_STP) == 0)
-		return (m);
+		goto out;
 
 	len = ntohs(eh->ether_type);
 	if (len < sizeof(tpdu))
@@ -664,7 +664,7 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
  out:
 	if (m)
 		m_freem(m);
-	return (NULL);
+	return;
 }
 
 void
