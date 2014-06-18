@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.44 2014/06/18 17:47:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.45 2014/06/18 17:50:55 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -48,6 +48,8 @@ MLINKS+=getc.3 fgetc.3 getc.3 getc_unlocked.3 getc.3 getchar.3 \
 	getc.3 getchar_unlocked.3 getc.3 getw.3
 MLINKS+=getdelim.3 getline.3
 MLINKS+=mktemp.3 mkdtemp.3 mktemp.3 mkstemp.3
+MLINKS+=mktemp.3 mkostemp.3 mktemp.3 mkostemps.3
+MLINKS+=mktemp.3 mkstemps.3
 MLINKS+=printf.3 asprintf.3 printf.3 fprintf.3 printf.3 snprintf.3 \
 	printf.3 sprintf.3 printf.3 vasprintf.3 printf.3 vfprintf.3 \
 	printf.3 vprintf.3 printf.3 vsnprintf.3 printf.3 vsprintf.3 \
