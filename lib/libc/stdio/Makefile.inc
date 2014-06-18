@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.43 2014/01/16 20:31:43 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.44 2014/06/18 17:47:58 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -13,8 +13,9 @@ SRCS+=	clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 	fread.c freopen.c fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c \
 	funopen.c fvwrite.c fwalk.c fwide.c fwprintf.c fwrite.c fwscanf.c \
 	getc.c getchar.c getdelim.c getline.c gettemp.c getw.c getwc.c \
-	getwchar.c makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c \
-	putchar.c puts.c putw.c putwc.c putwchar.c refill.c remove.c rewind.c \
+	getwchar.c makebuf.c mkdtemp.c mkstemp.c mkstemps.c mkostemp.c \
+	mkostemps.c perror.c printf.c putc.c putchar.c puts.c putw.c putwc.c \
+	putwchar.c refill.c remove.c rewind.c \
 	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf_ss.c \
 	sscanf.c stdio.c swprintf.c swscanf.c tmpfile.c ungetc.c ungetwc.c \
 	vasprintf.c vdprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c \
