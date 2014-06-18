@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.38 2014/06/18 14:26:15 uwe Exp $
+.\"	$NetBSD: sed.1,v 1.39 2014/06/18 14:47:02 uwe Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -97,7 +97,7 @@ Append the editing commands found in the file
 .Ar command_file
 to the list of commands.
 The editing commands should each be listed on a separate line.
-.It Fl I Op Ar extension
+.It Fl I Ns Op Ar extension
 Edit files in-place, saving backups with the specified
 .Ar extension .
 If no
@@ -123,7 +123,7 @@ That can lead to unexpected results in many cases of in-place editing,
 where using
 .Fl i
 is desired.
-.It Fl i Op Ar extension
+.It Fl i Ns Op Ar extension
 Edit files in-place similarly to
 .Fl I ,
 but treat each file independently from other files.
