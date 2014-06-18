@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2014/06/17 16:39:02 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2014/06/18 09:41:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.25 2014/06/17 16:39:02 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2014/06/18 09:41:29 wiz Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -219,9 +219,9 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s script [-Ealnu] [-i[<extension>]] [file ...]\n"
-	    "\t%s [-Ealnu] [-i[<extension>]] [-e script] ... [-f script_file]"
-	    " ... [file ...]\n", getprogname(), getprogname());
+	    "Usage:  %s [-aElnru] command [file ...]\n"
+	    "\t%s [-aElnr] [-e command] [-f command_file] [-I [extension]]\n"
+	    "\t    [-i [extension]] [file ...]\n", getprogname(), getprogname());
 	exit(1);
 }
 
