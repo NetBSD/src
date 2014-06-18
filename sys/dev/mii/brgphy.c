@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.71 2014/06/17 21:37:20 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.72 2014/06/18 06:35:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.71 2014/06/17 21:37:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.72 2014/06/18 06:35:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,8 +290,8 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	else if (device_is_a(parent, "bnx"))
 		bsc->sc_isbnx = true;
 
+	dict = device_properties(parent);
 	if (bsc->sc_isbge || bsc->sc_isbnx) {
-		dict = device_properties(parent);
 		if (!prop_dictionary_get_uint32(dict, "phyflags",
 		    &bsc->sc_phyflags))
 			aprint_error_dev(self, "failed to get phyflags\n");
