@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.118 2014/06/11 15:47:54 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.119 2014/06/18 02:03:46 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2901,3 +2901,12 @@ external/mit/xorg/lib/fontconfig/etc/fonts.conf	1.7 via patch
 	Also look in new pkgsrc default path, /usr/pkg/share/fonts.
 	Noted by tsutsui.
 	[wiz, ticket #1077]
+
+src/external/bsd/openpam/dist/lib/openpam_configure.c 1.8 via patch
+
+	CVE-2014-3879: Incorrect error handling in PAM policy parser:
+	Missing module files were treated as soft failures leading to
+	unexpected behavior if policy files were copied between hosts with
+	differently installed modules or in the short period during upgrades
+	when module files were being replaced.
+	[christos, ticket #1076]
