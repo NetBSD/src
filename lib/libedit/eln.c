@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.16 2014/05/20 15:05:08 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.17 2014/06/18 18:12:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.16 2014/05/20 15:05:08 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.17 2014/06/18 18:12:28 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -122,6 +122,13 @@ el_set(EditLine *el, int op, ...)
 		el_zfunc_t p = va_arg(ap, el_zfunc_t);
 		void *arg = va_arg(ap, void *);
 		ret = ch_resizefun(el, p, arg);
+		break;
+	}
+
+	case EL_ALIAS_TEXT: {
+		el_afunc_t p = va_arg(ap, el_afunc_t);
+		void *arg = va_arg(ap, void *);
+		ret = ch_aliasfun(el, p, arg);
 		break;
 	}
 
