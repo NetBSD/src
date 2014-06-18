@@ -1,8 +1,8 @@
-/*	$NetBSD: openpam_configure.c,v 1.4 2012/01/03 18:56:49 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.4.10.1 2014/06/18 02:19:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2014 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -365,12 +365,17 @@ openpam_parse_chain(pam_handle_t *pamh,
 	char *line, *str, *name;
 	char *option, **optv;
 	size_t len;
-	int lineno, ret;
+	int lineno, ret, serrno;
 	FILE *f;
 
+	if (errno == ENOENT)
+		errno = 0;
+
 	if ((f = fopen(filename, "r")) == NULL) {
+		serrno = errno;
 		openpam_log(errno == ENOENT ? PAM_LOG_DEBUG : PAM_LOG_NOTICE,
 		    "%s: %s", filename, strerror(errno));
+		errno = serrno;
 		return (PAM_SUCCESS);
 	}
 	if (openpam_check_desc_owner_perms(filename, fileno(f)) != 0) {
@@ -380,6 +385,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 	this = NULL;
 	name = NULL;
 	lineno = 0;
+	serrno = 0;
 	while ((line = openpam_readline(f, &lineno, NULL)) != NULL) {
 		/* get service name if necessary */
 		if (style == pam_conf_style) {
@@ -425,9 +431,14 @@ openpam_parse_chain(pam_handle_t *pamh,
 				goto fail;
 			}
 			ret = openpam_load_chain(pamh, name, fclt);
-			FREE(name);
-			if (ret != PAM_SUCCESS)
+			if (ret != PAM_SUCCESS || errno == ENOENT) {
+				serrno = errno;
+				openpam_log(PAM_LOG_ERROR, "failed loading "
+					"include for service %s in %s: %s",
+					name, filename, strerror(errno));
 				goto fail;
+			}
+			FREE(name);
 			FREE(line);
 			continue;
 		}
@@ -477,9 +488,11 @@ openpam_parse_chain(pam_handle_t *pamh,
 
 		/* load module */
 		this->module = openpam_load_module(name);
-		FREE(name);
-		if (this->module == NULL)
+		if (this->module == NULL) {
+			serrno = (errno == ENOENT ? ENOEXEC : errno);
 			goto fail;
+		}
+		FREE(name);
 
 		/* hook it up */
 		for (next = &pamh->chains[fclt]; *next != NULL;
@@ -496,6 +509,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 	fclose(f);
 	return (PAM_SUCCESS);
 syserr:
+	serrno = errno;
 	openpam_log(PAM_LOG_ERROR, "%s: %s", filename, strerror(errno));
 fail:
 	if (this && this->optc) {
@@ -507,6 +521,10 @@ fail:
 	FREE(line);
 	FREE(name);
 	fclose(f);
+	if (serrno == 0)
+		errno = EINVAL;
+	else
+		errno = serrno;
 	return (PAM_SYSTEM_ERR);
 }
 
@@ -534,7 +552,7 @@ openpam_load_chain(pam_handle_t *pamh,
 	const char **path;
 	char *filename;
 	size_t len;
-	int ret;
+	int ret, serrno;
 
 	/* don't allow to escape from policy_path */
 	if (strchr(service, '/')) {
@@ -542,6 +560,7 @@ openpam_load_chain(pam_handle_t *pamh,
 		return (-PAM_SYSTEM_ERR);
 	}
 
+	ret = PAM_SYSTEM_ERR; /* shut up compiler stupidity */
 	for (path = openpam_policy_path; *path != NULL; ++path) {
 		len = strlen(*path);
 		if ((*path)[len - 1] == '/') {
@@ -552,11 +571,19 @@ openpam_load_chain(pam_handle_t *pamh,
 			}
 			ret = openpam_parse_chain(pamh, service, facility,
 			    filename, pam_d_style);
+			serrno = errno;
 			FREE(filename);
+			errno = serrno;
 		} else {
 			ret = openpam_parse_chain(pamh, service, facility,
 			    *path, pam_conf_style);
 		}
+
+		/* If /etc/pam.d/ exists, /etc/pam.conf will be ignored */
+		if (ret == PAM_SUCCESS && errno != ENOENT)
+			return (PAM_SUCCESS);
+
+		/* If we had a definitive error, bail out immediately */
 		if (ret != PAM_SUCCESS)
 			return (ret);
 	}
