@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.35 2014/06/17 16:39:02 christos Exp $
+.\"	$NetBSD: sed.1,v 1.36 2014/06/18 09:35:31 wiz Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -40,11 +40,11 @@
 .Nd stream editor
 .Sh SYNOPSIS
 .Nm
-.Op Fl Ealnru
+.Op Fl aElnru
 .Ar command
 .Op Ar
 .Nm
-.Op Fl Ealnr
+.Op Fl aElnr
 .Op Fl e Ar command
 .Op Fl f Ar command_file
 .Op Fl I Op Ar extension
@@ -69,12 +69,6 @@ regardless of their origin.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl E
-Interpret regular expressions as extended (modern) regular expressions
-rather than basic regular expressions (BRE's).
-The
-.Xr re_format 7
-manual page fully describes both formats.
 .It Fl a
 The files listed as parameters for the
 .Dq w
@@ -87,6 +81,12 @@ option causes
 to delay opening each file until a command containing the related
 .Dq w
 function is applied to a line of input.
+.It Fl E
+Interpret regular expressions as extended (modern) regular expressions
+rather than basic regular expressions (BRE's).
+The
+.Xr re_format 7
+manual page fully describes both formats.
 .It Fl e Ar command
 Append the editing commands specified by the
 .Ar command
@@ -123,7 +123,7 @@ That can lead to unexpected results in many cases of in-place editing,
 where using
 .Fl i
 is desired.
-.It Fl i Ar extension
+.It Fl i Op Ar extension
 Edit files in-place similarly to
 .Fl I ,
 but treat each file independently from other files.
@@ -177,7 +177,7 @@ deletes the pattern space.
 Some of the functions use a
 .Em "hold space"
 to save all or part of the pattern space for subsequent retrieval.
-.Sh "Sed Addresses"
+.Ss "Sed Addresses"
 An address is not required, but if specified must have one of the
 following formats:
 .Bl -bullet -offset indent
@@ -198,7 +198,8 @@ option was specified);
 .It
 a context address
 that consists of a regular expression preceded and followed by a
-delimiter. The closing delimiter can also optionally be followed by the
+delimiter.
+The closing delimiter can also optionally be followed by the
 .Dq i
 character, to indicate that the regular expression is to be matched
 in a case-insensitive way.
@@ -235,7 +236,7 @@ Editing commands can be applied to non-selected pattern spaces by use
 of the exclamation character
 .Pq Dq \&!
 function.
-.Sh "Sed Regular Expressions"
+.Ss "Sed Regular Expressions"
 The regular expressions used in
 .Nm ,
 by default, are basic regular expressions (BREs, see
@@ -292,7 +293,7 @@ will substitute
 .Dq XXX
 for the pattern
 .Dq abc .
-.Sh "Sed Functions"
+.Ss "Sed Functions"
 In the following list of commands, the maximum number of permissible
 addresses for each command is indicated by [0addr], [1addr], or [2addr],
 representing zero, one, or two addresses.
@@ -601,7 +602,7 @@ utility is expected to be a superset of the
 specification.
 .Pp
 The
-.Fl E , I , a
+.Fl a , E , I ,
 and
 .Fl i
 options, the prefixing
