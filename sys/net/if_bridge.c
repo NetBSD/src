@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.82 2014/06/18 09:20:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.83 2014/06/18 10:51:03 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.82 2014/06/18 09:20:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.83 2014/06/18 10:51:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1612,7 +1612,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_softc *sc = ifp->if_bridge;
 	struct bridge_iflist *bif;
 	struct ether_header *eh;
-	struct mbuf *mc;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		ether_input(ifp, m);
@@ -1635,68 +1634,50 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_MCAST;
 	}
 
-	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		if (bif->bif_flags & IFBIF_STP) {
-			/* Tap off 802.1D packets; they do not get forwarded. */
-			if (memcmp(eh->ether_dhost, bstp_etheraddr,
-			    ETHER_ADDR_LEN) == 0) {
-				bstp_input(sc, bif, m);
+	/*
+	 * A 'fast' path for packets addressed to interfaces that are
+	 * part of this bridge.
+	 */
+	if (!(m->m_flags & (M_BCAST|M_MCAST)) &&
+	    !bstp_state_before_learning(bif)) {
+		struct bridge_iflist *_bif;
+
+		LIST_FOREACH(_bif, &sc->sc_iflist, bif_next) {
+			/* It is destined for us. */
+			if (bridge_ourether(_bif, eh, 0)) {
+				if (_bif->bif_flags & IFBIF_LEARNING)
+					(void) bridge_rtupdate(sc,
+					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
+				m->m_pkthdr.rcvif = _bif->bif_ifp;
+				ether_input(_bif->bif_ifp, m);
 				return;
 			}
 
-			if (bstp_state_before_learning(bif)) {
-				ether_input(ifp, m);
+			/* We just received a packet that we sent out. */
+			if (bridge_ourether(_bif, eh, 1)) {
+				m_freem(m);
 				return;
 			}
 		}
+	}
 
-		/*
-		 * Make a deep copy of the packet and enqueue the copy
-		 * for bridge processing; return the original packet for
-		 * local processing.
-		 */
-		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
-		if (mc == NULL) {
-			ether_input(ifp, m);
-			return;
-		}
-
-		/* Perform the bridge forwarding function with the copy. */
-		if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, mc, 0)))
-			m_freem(mc);
-
-		/* For local processing. */
-		ether_input(ifp, m);
+	/* Tap off 802.1D packets; they do not get forwarded. */
+	if (bif->bif_flags & IFBIF_STP &&
+	    memcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN) == 0) {
+		bstp_input(sc, bif, m);
 		return;
 	}
 
+	/*
+	 * A normal switch would discard the packet here, but that's not what
+	 * we've done historically. This also prevents some obnoxious behaviour.
+	 */
 	if (bstp_state_before_learning(bif)) {
 		ether_input(ifp, m);
 		return;
 	}
 
-	/*
-	 * Unicast.  Make sure it's not for us.
-	 */
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-		/* It is destined for us. */
-		if (bridge_ourether(bif, eh, 0)) {
-			if (bif->bif_flags & IFBIF_LEARNING)
-				(void) bridge_rtupdate(sc,
-				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
-			m->m_pkthdr.rcvif = bif->bif_ifp;
-			ether_input(bif->bif_ifp, m);
-			return;
-		}
-
-		/* We just received a packet that we sent out. */
-		if (bridge_ourether(bif, eh, 1)) {
-			m_freem(m);
-			return;
-		}
-	}
-
-	/* Perform the bridge forwarding function. */
+	/* Queue the packet for bridge forwarding. */
 	if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, 0)))
 		m_freem(m);
 }
@@ -1715,7 +1696,9 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	struct bridge_iflist *bif;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	int used = 0;
+	bool used, bmcast;
+
+	used = bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		dst_if = bif->bif_ifp;
@@ -1730,16 +1713,15 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			}
 		}
 
-		if ((bif->bif_flags & IFBIF_DISCOVER) == 0 &&
-		    (m->m_flags & (M_BCAST|M_MCAST)) == 0)
+		if ((bif->bif_flags & IFBIF_DISCOVER) == 0 && !bmcast)
 			continue;
 
 		if ((dst_if->if_flags & IFF_RUNNING) == 0)
 			continue;
 
-		if (LIST_NEXT(bif, bif_next) == NULL) {
+		if (!used && LIST_NEXT(bif, bif_next) == NULL) {
 			mc = m;
-			used = 1;
+			used = true;
 		} else {
 			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (mc == NULL) {
@@ -1750,7 +1732,10 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 
 		bridge_enqueue(sc, dst_if, mc, 1);
 	}
-	if (used == 0)
+
+	if (bmcast)
+		ether_input(src_if, m);
+	else if (!used)
 		m_freem(m);
 }
 
