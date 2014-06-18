@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.188.8.2 2012/08/20 19:23:07 riz Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.188.8.2.4.1 2014/06/18 09:35:39 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.188.8.2 2012/08/20 19:23:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.188.8.2.4.1 2014/06/18 09:35:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -221,6 +221,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
+
+	KASSERT(KERNEL_LOCKED_P());
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
