@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.112 2014/06/17 06:31:47 alnsn Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.113 2014/06/18 19:50:32 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -227,11 +227,6 @@ typedef void (*rump_modinit_fn)(const struct modinfo *const *, size_t);
 typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
 typedef void (*rump_compload_fn)(const struct rump_component *);
 void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn, rump_compload_fn);
-
-/*
- * cache management
- */
-int rumpuser_sync_icache(void *addr, uint64_t len);
 
 /*
  * misc management
