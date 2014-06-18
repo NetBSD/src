@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1895 2014/06/16 12:54:42 joerg Exp $
+#	$NetBSD: mi,v 1.1896 2014/06/18 17:52:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7955,7 +7955,10 @@
 ./usr/share/man/cat3/mi_vector_hash.0		comp-c-catman		.cat
 ./usr/share/man/cat3/minor.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mkdtemp.0			comp-c-catman		.cat
+./usr/share/man/cat3/mkostemp.0			comp-c-catman		.cat
+./usr/share/man/cat3/mkostemps.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mkstemp.0			comp-c-catman		.cat
+./usr/share/man/cat3/mkstemps.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktime_z.0			comp-c-catman		.cat
@@ -14742,7 +14745,10 @@
 ./usr/share/man/html3/mi_vector_hash.html	comp-c-htmlman		html
 ./usr/share/man/html3/minor.html		comp-c-htmlman		html
 ./usr/share/man/html3/mkdtemp.html		comp-c-htmlman		html
+./usr/share/man/html3/mkostemp.html		comp-c-htmlman		html
+./usr/share/man/html3/mkostemps.html		comp-c-htmlman		html
 ./usr/share/man/html3/mkstemp.html		comp-c-htmlman		html
+./usr/share/man/html3/mkstemps.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktime.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktime_z.html		comp-c-htmlman		html
@@ -21515,7 +21521,10 @@
 ./usr/share/man/man3/mi_vector_hash.3		comp-c-man		.man
 ./usr/share/man/man3/minor.3			comp-c-man		.man
 ./usr/share/man/man3/mkdtemp.3			comp-c-man		.man
+./usr/share/man/man3/mkostemp.3			comp-c-man		.man
+./usr/share/man/man3/mkostemps.3		comp-c-man		.man
 ./usr/share/man/man3/mkstemp.3			comp-c-man		.man
+./usr/share/man/man3/mkstemps.3			comp-c-man		.man
 ./usr/share/man/man3/mktemp.3			comp-c-man		.man
 ./usr/share/man/man3/mktime.3			comp-c-man		.man
 ./usr/share/man/man3/mktime_z.3			comp-c-man		.man
