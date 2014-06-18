@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.15 2014/06/17 10:39:46 ozaki-r Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.16 2014/06/18 01:19:19 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.15 2014/06/17 10:39:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.16 2014/06/18 01:19:19 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,64 +115,67 @@ struct bstp_tbpdu {
 
 const uint8_t bstp_etheraddr[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
 
-void	bstp_initialize_port(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_ifupdstatus(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_enable_port(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_disable_port(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_enable_change_detection(struct bridge_iflist *);
-void	bstp_disable_change_detection(struct bridge_iflist *);
-int	bstp_root_bridge(struct bridge_softc *sc);
-int	bstp_supersedes_port_info(struct bridge_softc *,
-	    struct bridge_iflist *, struct bstp_config_unit *);
-int	bstp_designated_port(struct bridge_softc *, struct bridge_iflist *);
-int	bstp_designated_for_some_port(struct bridge_softc *);
-void	bstp_transmit_config(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_transmit_tcn(struct bridge_softc *);
-void	bstp_received_config_bpdu(struct bridge_softc *,
-	    struct bridge_iflist *, struct bstp_config_unit *);
-void	bstp_received_tcn_bpdu(struct bridge_softc *, struct bridge_iflist *,
-	    struct bstp_tcn_unit *);
-void	bstp_record_config_information(struct bridge_softc *,
-	    struct bridge_iflist *, struct bstp_config_unit *);
-void	bstp_record_config_timeout_values(struct bridge_softc *,
-	    struct bstp_config_unit *);
-void	bstp_config_bpdu_generation(struct bridge_softc *);
-void	bstp_send_config_bpdu(struct bridge_softc *, struct bridge_iflist *,
-	    struct bstp_config_unit *);
-void	bstp_configuration_update(struct bridge_softc *);
-void	bstp_root_selection(struct bridge_softc *);
-void	bstp_designated_port_selection(struct bridge_softc *);
-void	bstp_become_designated_port(struct bridge_softc *,
-	    struct bridge_iflist *);
-void	bstp_port_state_selection(struct bridge_softc *);
-void	bstp_make_forwarding(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_make_blocking(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_set_port_state(struct bridge_iflist *, uint8_t);
-void	bstp_set_bridge_priority(struct bridge_softc *, uint64_t);
-void	bstp_set_port_priority(struct bridge_softc *, struct bridge_iflist *,
-	    uint16_t);
-void	bstp_set_path_cost(struct bridge_softc *, struct bridge_iflist *,
-	    uint32_t);
-void	bstp_topology_change_detection(struct bridge_softc *);
-void	bstp_topology_change_acknowledged(struct bridge_softc *);
-void	bstp_acknowledge_topology_change(struct bridge_softc *,
-	    struct bridge_iflist *);
+static void bstp_initialize_port(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_ifupdstatus(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_enable_port(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_disable_port(struct bridge_softc *, struct bridge_iflist *);
+static int bstp_root_bridge(struct bridge_softc *sc);
+static int bstp_supersedes_port_info(struct bridge_softc *,
+				     struct bridge_iflist *,
+				     struct bstp_config_unit *);
+static int bstp_designated_port(struct bridge_softc *, struct bridge_iflist *);
+static int bstp_designated_for_some_port(struct bridge_softc *);
+static void bstp_transmit_config(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_transmit_tcn(struct bridge_softc *);
+static void bstp_received_config_bpdu(struct bridge_softc *,
+				      struct bridge_iflist *,
+				      struct bstp_config_unit *);
+static void bstp_received_tcn_bpdu(struct bridge_softc *, struct bridge_iflist *,
+				   struct bstp_tcn_unit *);
+static void bstp_record_config_information(struct bridge_softc *,
+					   struct bridge_iflist *,
+					   struct bstp_config_unit *);
+static void bstp_record_config_timeout_values(struct bridge_softc *,
+					      struct bstp_config_unit *);
+static void bstp_config_bpdu_generation(struct bridge_softc *);
+static void bstp_send_config_bpdu(struct bridge_softc *, struct bridge_iflist *,
+				  struct bstp_config_unit *);
+static void bstp_configuration_update(struct bridge_softc *);
+static void bstp_root_selection(struct bridge_softc *);
+static void bstp_designated_port_selection(struct bridge_softc *);
+static void bstp_become_designated_port(struct bridge_softc *,
+					struct bridge_iflist *);
+static void bstp_port_state_selection(struct bridge_softc *);
+static void bstp_make_forwarding(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_make_blocking(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_set_port_state(struct bridge_iflist *, uint8_t);
+#if notused
+static void bstp_set_bridge_priority(struct bridge_softc *, uint64_t);
+static void bstp_set_port_priority(struct bridge_softc *, struct bridge_iflist *,
+				   uint16_t);
+static void bstp_set_path_cost(struct bridge_softc *, struct bridge_iflist *,
+			       uint32_t);
+#endif
+static void bstp_topology_change_detection(struct bridge_softc *);
+static void bstp_topology_change_acknowledged(struct bridge_softc *);
+static void bstp_acknowledge_topology_change(struct bridge_softc *,
+					     struct bridge_iflist *);
 
-void	bstp_tick(void *);
-void	bstp_timer_start(struct bridge_timer *, uint16_t);
-void	bstp_timer_stop(struct bridge_timer *);
-int	bstp_timer_expired(struct bridge_timer *, uint16_t);
+static void bstp_tick(void *);
+static void bstp_timer_start(struct bridge_timer *, uint16_t);
+static void bstp_timer_stop(struct bridge_timer *);
+static int bstp_timer_expired(struct bridge_timer *, uint16_t);
 
-void	bstp_hold_timer_expiry(struct bridge_softc *, struct bridge_iflist *);
-void	bstp_message_age_timer_expiry(struct bridge_softc *,
-	    struct bridge_iflist *);
-void	bstp_forward_delay_timer_expiry(struct bridge_softc *,
-	    struct bridge_iflist *);
-void	bstp_topology_change_timer_expiry(struct bridge_softc *);
-void	bstp_tcn_timer_expiry(struct bridge_softc *);
-void	bstp_hello_timer_expiry(struct bridge_softc *);
+static void bstp_hold_timer_expiry(struct bridge_softc *, struct bridge_iflist *);
+static void bstp_message_age_timer_expiry(struct bridge_softc *,
+					  struct bridge_iflist *);
+static void bstp_forward_delay_timer_expiry(struct bridge_softc *,
+					    struct bridge_iflist *);
+static void bstp_topology_change_timer_expiry(struct bridge_softc *);
+static void bstp_tcn_timer_expiry(struct bridge_softc *);
+static void bstp_hello_timer_expiry(struct bridge_softc *);
 
-void
+static void
 bstp_transmit_config(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	if (bif->bif_hold_timer.active) {
@@ -208,7 +211,7 @@ bstp_transmit_config(struct bridge_softc *sc, struct bridge_iflist *bif)
 	}
 }
 
-void
+static void
 bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
     struct bstp_config_unit *cu)
 {
@@ -276,13 +279,13 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	splx(s);
 }
 
-int
+static int
 bstp_root_bridge(struct bridge_softc *sc)
 {
 	return (sc->sc_designated_root == sc->sc_bridge_id);
 }
 
-int
+static int
 bstp_supersedes_port_info(struct bridge_softc *sc, struct bridge_iflist *bif,
     struct bstp_config_unit *cu)
 {
@@ -308,7 +311,7 @@ bstp_supersedes_port_info(struct bridge_softc *sc, struct bridge_iflist *bif,
 	return (0);
 }
 
-void
+static void
 bstp_record_config_information(struct bridge_softc *sc,
     struct bridge_iflist *bif, struct bstp_config_unit *cu)
 {
@@ -319,7 +322,7 @@ bstp_record_config_information(struct bridge_softc *sc,
 	bstp_timer_start(&bif->bif_message_age_timer, cu->cu_message_age);
 }
 
-void
+static void
 bstp_record_config_timeout_values(struct bridge_softc *sc,
     struct bstp_config_unit *config)
 {
@@ -329,7 +332,7 @@ bstp_record_config_timeout_values(struct bridge_softc *sc,
 	sc->sc_topology_change = config->cu_topology_change;
 }
 
-void
+static void
 bstp_config_bpdu_generation(struct bridge_softc *sc)
 {
 	struct bridge_iflist *bif;
@@ -343,14 +346,14 @@ bstp_config_bpdu_generation(struct bridge_softc *sc)
 	}
 }
 
-int
+static int
 bstp_designated_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	return ((bif->bif_designated_bridge == sc->sc_bridge_id)
 	    && (bif->bif_designated_port == bif->bif_port_id));
 }
 
-void
+static void
 bstp_transmit_tcn(struct bridge_softc *sc)
 {
 	struct bstp_tbpdu bpdu;
@@ -392,14 +395,14 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 	splx(s);
 }
 
-void
+static void
 bstp_configuration_update(struct bridge_softc *sc)
 {
 	bstp_root_selection(sc);
 	bstp_designated_port_selection(sc);
 }
 
-void
+static void
 bstp_root_selection(struct bridge_softc *sc)
 {
 	struct bridge_iflist *root_port = NULL, *bif;
@@ -457,7 +460,7 @@ set_port:
 	}
 }
 
-void
+static void
 bstp_designated_port_selection(struct bridge_softc *sc)
 {
 	struct bridge_iflist *bif;
@@ -487,7 +490,7 @@ designated:
 	}
 }
 
-void
+static void
 bstp_become_designated_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	bif->bif_designated_root = sc->sc_designated_root;
@@ -496,7 +499,7 @@ bstp_become_designated_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 	bif->bif_designated_port = bif->bif_port_id;
 }
 
-void
+static void
 bstp_port_state_selection(struct bridge_softc *sc)
 {
 	struct bridge_iflist *bif;
@@ -519,7 +522,7 @@ bstp_port_state_selection(struct bridge_softc *sc)
 	}
 }
 
-void
+static void
 bstp_make_forwarding(struct bridge_softc *sc,
     struct bridge_iflist *bif)
 {
@@ -529,7 +532,7 @@ bstp_make_forwarding(struct bridge_softc *sc,
 	}
 }
 
-void
+static void
 bstp_make_blocking(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	if ((bif->bif_state != BSTP_IFSTATE_DISABLED) &&
@@ -545,13 +548,13 @@ bstp_make_blocking(struct bridge_softc *sc, struct bridge_iflist *bif)
 	}
 }
 
-void
+static void
 bstp_set_port_state(struct bridge_iflist *bif, uint8_t state)
 {
 	bif->bif_state = state;
 }
 
-void
+static void
 bstp_topology_change_detection(struct bridge_softc *sc)
 {
 	if (bstp_root_bridge(sc)) {
@@ -564,14 +567,14 @@ bstp_topology_change_detection(struct bridge_softc *sc)
 	sc->sc_topology_change_detected = 1;
 }
 
-void
+static void
 bstp_topology_change_acknowledged(struct bridge_softc *sc)
 {
 	sc->sc_topology_change_detected = 0;
 	bstp_timer_stop(&sc->sc_tcn_timer);
 }
 
-void
+static void
 bstp_acknowledge_topology_change(struct bridge_softc *sc,
     struct bridge_iflist *bif)
 {
@@ -667,7 +670,7 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 	return;
 }
 
-void
+static void
 bstp_received_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
     struct bstp_config_unit *cu)
 {
@@ -704,7 +707,7 @@ bstp_received_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	}
 }
 
-void
+static void
 bstp_received_tcn_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
     struct bstp_tcn_unit *tcn)
 {
@@ -715,14 +718,14 @@ bstp_received_tcn_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	}
 }
 
-void
+static void
 bstp_hello_timer_expiry(struct bridge_softc *sc)
 {
 	bstp_config_bpdu_generation(sc);
 	bstp_timer_start(&sc->sc_hello_timer, 0);
 }
 
-void
+static void
 bstp_message_age_timer_expiry(struct bridge_softc *sc,
     struct bridge_iflist *bif)
 {
@@ -745,7 +748,7 @@ bstp_message_age_timer_expiry(struct bridge_softc *sc,
 	}
 }
 
-void
+static void
 bstp_forward_delay_timer_expiry(struct bridge_softc *sc,
     struct bridge_iflist *bif)
 {
@@ -760,7 +763,7 @@ bstp_forward_delay_timer_expiry(struct bridge_softc *sc,
 	}
 }
 
-int
+static int
 bstp_designated_for_some_port(struct bridge_softc *sc)
 {
 
@@ -775,21 +778,21 @@ bstp_designated_for_some_port(struct bridge_softc *sc)
 	return (0);
 }
 
-void
+static void
 bstp_tcn_timer_expiry(struct bridge_softc *sc)
 {
 	bstp_transmit_tcn(sc);
 	bstp_timer_start(&sc->sc_tcn_timer, 0);
 }
 
-void
+static void
 bstp_topology_change_timer_expiry(struct bridge_softc *sc)
 {
 	sc->sc_topology_change_detected = 0;
 	sc->sc_topology_change = 0;
 }
 
-void
+static void
 bstp_hold_timer_expiry(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	if (bif->bif_config_pending)
@@ -882,7 +885,7 @@ bstp_stop(struct bridge_softc *sc)
 
 }
 
-void
+static void
 bstp_initialize_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	bstp_become_designated_port(sc, bif);
@@ -895,14 +898,14 @@ bstp_initialize_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 	bstp_timer_stop(&bif->bif_hold_timer);
 }
 
-void
+static void
 bstp_enable_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	bstp_initialize_port(sc, bif);
 	bstp_port_state_selection(sc);
 }
 
-void
+static void
 bstp_disable_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	int root;
@@ -929,7 +932,8 @@ bstp_disable_port(struct bridge_softc *sc, struct bridge_iflist *bif)
 	}
 }
 
-void
+#if notused
+static void
 bstp_set_bridge_priority(struct bridge_softc *sc, uint64_t new_bridge_id)
 {
 	struct bridge_iflist *bif;
@@ -961,7 +965,7 @@ bstp_set_bridge_priority(struct bridge_softc *sc, uint64_t new_bridge_id)
 	}
 }
 
-void
+static void
 bstp_set_port_priority(struct bridge_softc *sc, struct bridge_iflist *bif,
     uint16_t new_port_id)
 {
@@ -977,7 +981,7 @@ bstp_set_port_priority(struct bridge_softc *sc, struct bridge_iflist *bif,
 	}
 }
 
-void
+static void
 bstp_set_path_cost(struct bridge_softc *sc, struct bridge_iflist *bif,
     uint32_t path_cost)
 {
@@ -985,20 +989,9 @@ bstp_set_path_cost(struct bridge_softc *sc, struct bridge_iflist *bif,
 	bstp_configuration_update(sc);
 	bstp_port_state_selection(sc);
 }
+#endif
 
-void
-bstp_enable_change_detection(struct bridge_iflist *bif)
-{
-	bif->bif_change_detection_enabled = 1;
-}
-
-void
-bstp_disable_change_detection(struct bridge_iflist *bif)
-{
-	bif->bif_change_detection_enabled = 0;
-}
-
-void
+static void
 bstp_ifupdstatus(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	struct ifnet *ifp = bif->bif_ifp;
@@ -1031,7 +1024,7 @@ bstp_ifupdstatus(struct bridge_softc *sc, struct bridge_iflist *bif)
 		bstp_disable_port(sc, bif);
 }
 
-void
+static void
 bstp_tick(void *arg)
 {
 	struct bridge_softc *sc = arg;
@@ -1089,21 +1082,21 @@ bstp_tick(void *arg)
 	splx(s);
 }
 
-void
+static void
 bstp_timer_start(struct bridge_timer *t, uint16_t v)
 {
 	t->value = v;
 	t->active = 1;
 }
 
-void
+static void
 bstp_timer_stop(struct bridge_timer *t)
 {
 	t->value = 0;
 	t->active = 0;
 }
 
-int
+static int
 bstp_timer_expired(struct bridge_timer *t, uint16_t v)
 {
 	if (t->active == 0)
