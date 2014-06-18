@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.50 2014/06/17 14:25:17 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.51 2014/06/18 04:54:09 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.50 2014/06/17 14:25:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.51 2014/06/18 04:54:09 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,9 @@ tcxattach(device_t parent, device_t self, void *args)
 	}
 	tcx_loadcmap(sc, 0, 256);
 
-	tcx_set_cursor(sc);
+	if (!sc->sc_8bit)
+	    tcx_set_cursor(sc);
+
 	/* enable video */
 	confreg = bus_space_read_4(sa->sa_bustag, sc->sc_thc, THC_MISC);
 	confreg |= THC_MISC_VIDEN;
@@ -755,8 +757,12 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						tcx_clearscreen(sc, 3);
 				}
 			}
+			return 0;
+
 		case WSDISPLAYIO_GCURPOS:
-			{
+			if (sc->sc_8bit) {
+				return EOPNOTSUPP;
+			} else {
 				struct wsdisplay_curpos *cp = (void *)data;
 
 				cp->x = sc->sc_cursor_x;
@@ -765,7 +771,9 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 
 		case WSDISPLAYIO_SCURPOS:
-			{
+			if (sc->sc_8bit) {
+				return EOPNOTSUPP;
+			} else {
 				struct wsdisplay_curpos *cp = (void *)data;
 
 				sc->sc_cursor_x = cp->x;
@@ -775,7 +783,9 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 
 		case WSDISPLAYIO_GCURMAX:
-			{
+			if (sc->sc_8bit) {
+				return EOPNOTSUPP;
+			} else {
 				struct wsdisplay_curpos *cp = (void *)data;
 
 				cp->x = 32;
@@ -784,7 +794,9 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 
 		case WSDISPLAYIO_SCURSOR:
-			{
+			if (sc->sc_8bit) {
+				return EOPNOTSUPP;
+			} else {
 				struct wsdisplay_cursor *cursor = (void *)data;
 
 				return tcx_do_cursor(sc, cursor);
@@ -1074,6 +1086,10 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 static int
 tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 {
+	if (sc->sc_8bit) {
+		/* hw cursor is not implemented on tcx */
+		return -1;
+	}
 	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
 
 		if (cur->enable) {
