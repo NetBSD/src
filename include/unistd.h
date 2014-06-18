@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.140 2014/01/02 23:33:50 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.141 2014/06/18 17:48:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -353,6 +353,7 @@ __aconst char *getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
+int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
 int	 pipe2(int *, int);
 int	 profil(char *, size_t, u_long, u_int);
