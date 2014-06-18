@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.81 2014/06/17 10:39:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.82 2014/06/18 09:20:46 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.81 2014/06/17 10:39:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.82 2014/06/18 09:20:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1569,6 +1569,36 @@ bridge_forward(void *v)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
+static bool
+bstp_state_before_learning(struct bridge_iflist *bif)
+{
+	if (bif->bif_flags & IFBIF_STP) {
+		switch (bif->bif_state) {
+		case BSTP_IFSTATE_BLOCKING:
+		case BSTP_IFSTATE_LISTENING:
+		case BSTP_IFSTATE_DISABLED:
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool
+bridge_ourether(struct bridge_iflist *bif, struct ether_header *eh, int src)
+{
+	uint8_t *ether = src ? eh->ether_shost : eh->ether_dhost;
+
+	if (memcmp(CLLADDR(bif->bif_ifp->if_sadl), ether, ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+	    || (bif->bif_ifp->if_carp &&
+	        carp_ourether(bif->bif_ifp->if_carp, eh, IFT_ETHER, src) != NULL)
+#endif /* NCARP > 0 */
+	    )
+		return true;
+
+	return false;
+}
+
 /*
  * bridge_input:
  *
@@ -1614,10 +1644,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 			}
 
-			switch (bif->bif_state) {
-			case BSTP_IFSTATE_BLOCKING:
-			case BSTP_IFSTATE_LISTENING:
-			case BSTP_IFSTATE_DISABLED:
+			if (bstp_state_before_learning(bif)) {
 				ether_input(ifp, m);
 				return;
 			}
@@ -1643,14 +1670,9 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	if (bif->bif_flags & IFBIF_STP) {
-		switch (bif->bif_state) {
-		case BSTP_IFSTATE_BLOCKING:
-		case BSTP_IFSTATE_LISTENING:
-		case BSTP_IFSTATE_DISABLED:
-			ether_input(ifp, m);
-			return;
-		}
+	if (bstp_state_before_learning(bif)) {
+		ether_input(ifp, m);
+		return;
 	}
 
 	/*
@@ -1658,13 +1680,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		/* It is destined for us. */
-		if (memcmp(CLLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
-		    ETHER_ADDR_LEN) == 0
-#if NCARP > 0
-		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
-			eh, IFT_ETHER, 0) != NULL)
-#endif /* NCARP > 0 */
-		    ) {
+		if (bridge_ourether(bif, eh, 0)) {
 			if (bif->bif_flags & IFBIF_LEARNING)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
@@ -1674,13 +1690,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		}
 
 		/* We just received a packet that we sent out. */
-		if (memcmp(CLLADDR(bif->bif_ifp->if_sadl), eh->ether_shost,
-		    ETHER_ADDR_LEN) == 0
-#if NCARP > 0
-		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
-			eh, IFT_ETHER, 1) != NULL)
-#endif /* NCARP > 0 */
-		    ) {
+		if (bridge_ourether(bif, eh, 1)) {
 			m_freem(m);
 			return;
 		}
