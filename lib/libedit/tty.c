@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.45 2014/05/19 21:01:48 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.46 2014/06/18 18:52:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.45 2014/05/19 21:01:48 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.46 2014/06/18 18:52:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: tty.c,v 1.45 2014/05/19 21:01:48 christos Exp $");
 #include <errno.h>
 #include <unistd.h>	/* for isatty */
 #include <strings.h>	/* for ffs */
+#include <stdlib.h>	/* for abort */
 #include "el.h"
 #include "tty.h"
 
