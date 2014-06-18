@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.19.2.1 2012/10/31 16:07:46 riz Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.19.2.1.2.1 2014/06/18 09:34:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19.2.1 2012/10/31 16:07:46 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19.2.1.2.1 2014/06/18 09:34:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,13 +303,14 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	ip6f->ip6f_uses++;
 
+	KERNEL_LOCK(1, NULL);
 	/* Send on its way - straight to the interface output routine. */
 	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
 		ip6f->ip6f_dropped++;
 	} else {
 		ip6f->ip6f_forwarded++;
 	}
-
+	KERNEL_UNLOCK_ONE(NULL);
 	return 1;
 }
 
