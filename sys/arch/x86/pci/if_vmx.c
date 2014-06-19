@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.1 2014/06/10 01:42:39 hikaru Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.2 2014/06/19 13:16:29 hikaru Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.1 2014/06/10 01:42:39 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.2 2014/06/19 13:16:29 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -160,7 +160,7 @@ void vmxnet3_rxintr(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
 void vmxnet3_iff(struct vmxnet3_softc *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
 int vmxnet3_getbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
-void vmxnet3_stop(struct ifnet *);
+void vmxnet3_stop(struct ifnet *, int disable);
 void vmxnet3_reset(struct ifnet *);
 int vmxnet3_init(struct ifnet *);
 int vmxnet3_ioctl(struct ifnet *, u_long, void *);
@@ -281,6 +281,7 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	ifp->if_start = vmxnet3_start;
 	ifp->if_watchdog = vmxnet3_watchdog;
 	ifp->if_init = vmxnet3_init;
+	ifp->if_stop = vmxnet3_stop;
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	if (sc->sc_ds->upt_features & UPT1_F_CSUM)
 		sc->sc_ethercom.ec_if.if_capabilities |=
@@ -599,7 +600,10 @@ int
 vmxnet3_intr(void *arg)
 {
 	struct vmxnet3_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return 0;
 	if (READ_BAR1(sc, VMXNET3_BAR1_INTR) == 0)
 		return 0;
 	if (sc->sc_ds->event)
@@ -939,7 +943,7 @@ vmxnet3_getbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *ring)
 }
 
 void
-vmxnet3_stop(struct ifnet *ifp)
+vmxnet3_stop(struct ifnet *ifp, int disable)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	int queue;
@@ -950,6 +954,9 @@ vmxnet3_stop(struct ifnet *ifp)
 	vmxnet3_disable_all_intrs(sc);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (!disable)
+		return;
 
 	WRITE_CMD(sc, VMXNET3_CMD_DISABLE);
 
@@ -964,7 +971,7 @@ vmxnet3_reset(struct ifnet *ifp)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
 
-	vmxnet3_stop(ifp);
+	vmxnet3_stop(ifp, 1);
 	WRITE_CMD(sc, VMXNET3_CMD_RESET);
 	vmxnet3_init(ifp);
 }
@@ -989,7 +996,7 @@ vmxnet3_init(struct ifnet *ifp)
 	WRITE_CMD(sc, VMXNET3_CMD_ENABLE);
 	if (READ_BAR1(sc, VMXNET3_BAR1_CMD)) {
 		printf("%s: failed to initialize\n", ifp->if_xname);
-		vmxnet3_stop(ifp);
+		vmxnet3_stop(ifp, 1);
 		return EIO;
 	}
 
@@ -1013,7 +1020,7 @@ vmxnet3_change_mtu(struct vmxnet3_softc *sc, int mtu)
 
 	if (mtu < VMXNET3_MIN_MTU || mtu > VMXNET3_MAX_MTU)
 		return EINVAL;
-	vmxnet3_stop(ifp);
+	vmxnet3_stop(ifp, 1);
 	ifp->if_mtu = ds->mtu = mtu;
 	error = vmxnet3_init(ifp);
 	return error;
@@ -1191,7 +1198,7 @@ vmxnet3_watchdog(struct ifnet *ifp)
 
 	printf("%s: device timeout\n", ifp->if_xname);
 	s = splnet();
-	vmxnet3_stop(ifp);
+	vmxnet3_stop(ifp, 1);
 	vmxnet3_init(ifp);
 	splx(s);
 }
