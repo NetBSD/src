@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.18 2014/06/18 17:47:58 christos Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.19 2014/06/19 05:31:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.18 2014/06/18 17:47:58 christos Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.19 2014/06/19 05:31:15 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)
 	char *pad;
 	struct stat sbuf;
 	int rval;
-	uint32_t rand;
+	uint32_t r;
 	char carrybuf[MAXPATHLEN];
 
 	_DIAGASSERT(path != NULL);
@@ -85,8 +85,8 @@ GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)
 
 	/* Fill space with random characters */
 	while (trv >= path && *trv == 'X') {
-		rand = arc4random_uniform(sizeof(padchar) - 1);
-		*trv-- = padchar[rand];
+		r = arc4random_uniform(sizeof(padchar) - 1);
+		*trv-- = padchar[r];
 	}
 	start = trv + 1;
 
