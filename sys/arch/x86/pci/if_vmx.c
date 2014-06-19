@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.2 2014/06/19 13:16:29 hikaru Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.3 2014/06/19 13:20:28 hikaru Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.2 2014/06/19 13:16:29 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.3 2014/06/19 13:20:28 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -238,7 +238,10 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	preg |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, preg);
 
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 	if (vmxnet3_dma_init(sc)) {
 		aprint_error_dev(sc->sc_dev, "failed to setup DMA\n");
 		return;
