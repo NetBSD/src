@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.118 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.119 2014/06/19 16:54:40 ws Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.118 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.119 2014/06/19 16:54:40 ws Exp $");
 
 #include "opt_inet.h"
 
@@ -940,11 +940,11 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		error = ENXIO;
 		goto out;
 	}
-	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+	if (__predict_false(!pktq_enqueue(pktq, top, 0))) {
 		ifp->if_collisions++;
 		mutex_exit(&tp->tun_lock);
 		error = ENOBUFS;
-		m_freem(m);
+		m_freem(top);
 		goto out_nolock;
 	}
 	ifp->if_ipackets++;
