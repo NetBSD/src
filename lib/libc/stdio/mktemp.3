@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.29 2014/06/18 17:47:58 christos Exp $
+.\"	$NetBSD: mktemp.3,v 1.30 2014/06/19 09:30:33 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,12 +29,15 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 29, 2010
+.Dd June 18, 2014
 .Dt MKTEMP 3
 .Os
 .Sh NAME
 .Nm mktemp ,
 .Nm mkstemp ,
+.Nm mkstemps ,
+.Nm mkostemp ,
+.Nm mkostemps ,
 .Nm mkdtemp
 .Nd make unique temporary file or directory name
 .Sh LIBRARY
@@ -335,17 +338,17 @@ The
 function first appeared in
 .Ox 2.4 ,
 and later in
-.Fx 3.4 
+.Fx 3.4
 and
-.Nx 7.0
+.Nx 7.0 .
 The
 .Fn mkostemp
 and
 .Fn mkostemps
 functions appeared in
-.Fx 10.0 
+.Fx 10.0
 and
-.Nx 7.0
+.Nx 7.0 .
 .Sh BUGS
 For
 .Fn mktemp
