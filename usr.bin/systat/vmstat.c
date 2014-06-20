@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.79 2014/06/14 20:10:42 joerg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.80 2014/06/20 07:08:15 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.79 2014/06/14 20:10:42 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.80 2014/06/20 07:08:15 njoly Exp $");
 #endif /* not lint */
 
 /*
@@ -210,10 +210,6 @@ initvmstat(void)
 		if (kvm_nlist(kd, namelist) &&
 		    namelist[X_ALLEVENTS].n_type == 0) {
 			nlisterr(namelist);
-			return(0);
-		}
-		if (namelist[0].n_type == 0) {
-			error("No namelist");
 			return(0);
 		}
 	}
