@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.18 2014/06/17 10:39:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.19 2014/06/20 14:22:48 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -303,7 +303,6 @@ struct bridge_softc {
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
-	void			*sc_softintr;
 	pktqueue_t *		sc_fwd_pktq;
 };
 
