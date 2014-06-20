@@ -1,10 +1,12 @@
-	$NetBSD: README.compileopts,v 1.4 2014/04/23 23:25:45 pooka Exp $
+	$NetBSD: README.compileopts,v 1.5 2014/06/20 12:36:31 pooka Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
 for a desciption of NetBSD build options.
 
 Note: after changing an option, do a clean build.
+
+Global options:
 
 
     RUMP_DIAGNOSTIC
@@ -73,6 +75,25 @@ effect: Control how curlwp is obtained in a rump kernel.  This is
 	hypercall   - use a hypercall to fetch the value
 	__thread    - use the __thread feature to fetch value via TLS
 	register    - use a dedicated register (implies -ffixed)
+
+
+================================================================================
+
+Per-component options:
+
+    RUMP_SYM_NORENAME
+
+values: regexp matching symbol names
+defval: <undefined>
+effect: Causes matching symbols from the component to not be renamed
+	into the rump kernel symbol namespace (rumpns_).  This option
+	can only be used in embedded environments where there is full
+	control over the platform's namespace.	Conversely, this option
+	cannot be used in kernel components which are not meant to be
+	tied to a specific platform.  Note: the value is processed by
+	make and must be appropriately escaped.  example:
+	RUMP_SYM_NORENAME=HYPERVISOR_|block$$
+	will not rename "^HYPERVISOR_" or "^block$"
 
 
 ================================================================================
