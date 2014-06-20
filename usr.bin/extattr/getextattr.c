@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.11 2014/06/20 14:55:31 manu Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.12 2014/06/20 15:22:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -406,7 +406,7 @@ main(int argc, char *argv[])
 				hexdump(buf, error);
 				continue;
 			} else {
-				fwrite(buf, buflen, 1, stdout);
+				fwrite(buf, error, 1, stdout);
 				printf("\n");
 				continue;
 			}
