@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.9 2014/03/20 20:42:08 christos Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.10 2014/06/20 11:27:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.9 2014/03/20 20:42:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.10 2014/06/20 11:27:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ makeonedevnode(dev_t devtype, const char *devname,
 	if (error == EEXIST) /* XXX: should check it's actually the same */
 		error = 0;
 
-	return 0;
+	return error;
 }
 
 static int
