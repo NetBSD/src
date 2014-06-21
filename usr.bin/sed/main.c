@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2014/06/18 14:15:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2014/06/21 17:43:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.27 2014/06/18 14:15:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2014/06/21 17:43:04 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -427,6 +427,8 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			if (len >= sizeof(tmpfname))
 				errx(1, "%s: name too long", fname);
 			unlink(tmpfname);
+			if (outfile != NULL && outfile != stdout)
+				flose(outfile);
 			if ((outfile = fopen(tmpfname, "w")) == NULL)
 				err(1, "%s", fname);
 			fchown(fileno(outfile), sb.st_uid, sb.st_gid);
