@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.3 2011/07/17 01:14:25 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.4 2014/06/21 04:33:53 dholland Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.3 2011/07/17 01:14:25 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.4 2014/06/21 04:33:53 dholland Exp $");
 #endif
 #endif
 
@@ -243,28 +243,33 @@ child_process(entry *e) {
 		}
 #else
 		if (setgid(e->pwd->pw_gid) != 0) {
-			syslog(LOG_ERR, "setgid failed");
+			syslog(LOG_ERR, "setgid failed for %s",
+			       e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 		if (initgroups(usernm, e->pwd->pw_gid) != 0) {
-			syslog(LOG_ERR, "initgroups failed");
+			syslog(LOG_ERR, "initgroups failed for %s",
+			       e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 #if (defined(BSD)) && (BSD >= 199103)
 		if (setlogin(usernm) < 0) {
-			syslog(LOG_ERR, "setlogin() failure: %m");
+			syslog(LOG_ERR, "setlogin() failure for %s: %m",
+			       e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 #endif /* BSD */
 		if (setuid(e->pwd->pw_uid) != 0) {
-			syslog(LOG_ERR, "setuid failed");
+			syslog(LOG_ERR, "setuid failed for %s",
+			       e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 		/* we aren't root after this... */
 #endif /* LOGIN_CAP */
 
 		if (chdir(env_get("HOME", e->envp)) != 0) {
-			syslog(LOG_ERR, "chdir $HOME failed");
+			syslog(LOG_ERR, "chdir $HOME failed for %s",
+			       e->pwd->pw_name);
 			_exit(ERROR_EXIT);
 		}
 
