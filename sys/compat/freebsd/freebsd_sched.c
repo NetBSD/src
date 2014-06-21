@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.19 2008/04/28 20:23:41 martin Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.20 2014/06/21 23:12:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.19 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.20 2014/06/21 23:12:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -62,12 +62,13 @@ freebsd_sys_yield(struct lwp *l, const void *v, register_t *retval)
  */
 static int
 sched_freebsd2native(int freebsd_policy,
-    struct freebsd_sched_param *freebsd_params, int *native_policy,
+    const struct freebsd_sched_param *freebsd_params, int *native_policy,
     struct sched_param *native_params)
 {
-	int error;
+	int p;
 
-	error = 0;
+	if (native_policy == NULL)
+		native_policy = &p;
 
 	switch (freebsd_policy) {
 	case FREEBSD_SCHED_OTHER:
@@ -83,27 +84,26 @@ sched_freebsd2native(int freebsd_policy,
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		return EINVAL;
 	}
  
-	if (freebsd_params != NULL && native_params != NULL && !error) {
-		native_params = (struct sched_param *)freebsd_params;
+	if (freebsd_params != NULL && native_params != NULL) {
+		/* XXX: Needs adjustment to do a proper conversion. */
+		native_params->sched_priority = freebsd_params->sched_priority;
 	}
-        
-	return (error);
+	return 0;
 }
 
 /*
- * XXX: Needs adjustment to do a proper conversion.
  */
 static int
-sched_native2freebsd(int native_policy, struct sched_param *native_params,
+sched_native2freebsd(int native_policy, const struct sched_param *native_params,
     int *freebsd_policy, struct freebsd_sched_param *freebsd_params)
 {
-	int error;
+	int p;
 
-	error = 0;
+	if (freebsd_policy == NULL)
+		freebsd_policy = &p;
 
 	switch (native_policy) {
 	case SCHED_OTHER:
@@ -119,15 +119,15 @@ sched_native2freebsd(int native_policy, struct sched_param *native_params,
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		return EINVAL;
 	}
  
-	if (native_params != NULL && freebsd_params != NULL && !error) {
-		freebsd_params = (struct freebsd_sched_param *)native_params;
+	if (native_params != NULL && freebsd_params != NULL) {
+		/* XXX: Needs adjustment to do a proper conversion. */
+		freebsd_params->sched_priority = native_params->sched_priority;
 	}
-        
-	return (error);
+
+	return 0;
 }
 
 int
@@ -199,7 +199,7 @@ freebsd_sys_sched_getparam(struct lwp *l, const struct freebsd_sys_sched_getpara
 		goto out;
 
  out:
-	return (error);
+	return error;
 }
 
 int
