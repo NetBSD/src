@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.6 2014/06/11 14:54:32 reinoud Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.7 2014/06/21 09:11:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.6 2014/06/11 14:54:32 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.7 2014/06/21 09:11:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 	/* attach */
 	r = ohci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, errpr = %d\n", r);
+		aprint_error_dev(self, "init failed, error = %d\n", r);
 		/* disable : TBD */
 		return;
 	}
@@ -356,7 +356,7 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 	/* attach */
 	r = ehci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, errpr = %d\n", r);
+		aprint_error_dev(self, "init failed, error = %d\n", r);
 		/* disable : TBD */
 		return;
 	}
