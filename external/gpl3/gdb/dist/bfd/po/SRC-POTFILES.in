@@ -109,6 +109,7 @@ cpu-mmix.c
 cpu-moxie.c
 cpu-msp430.c
 cpu-mt.c
+cpu-nios2.c
 cpu-ns32k.c
 cpu-openrisc.c
 cpu-or32.c
@@ -153,6 +154,7 @@ elf-bfd.h
 elf-eh-frame.c
 elf-hppa.h
 elf-ifunc.c
+elf-linux-psinfo.h
 elf-m10200.c
 elf-m10300.c
 elf-nacl.c
@@ -200,6 +202,7 @@ elf32-mips.c
 elf32-moxie.c
 elf32-msp430.c
 elf32-mt.c
+elf32-nios2.c
 elf32-openrisc.c
 elf32-or32.c
 elf32-pj.c
@@ -225,7 +228,6 @@ elf32-xgate.c
 elf32-xstormy16.c
 elf32-xtensa.c
 elf32.c
-elf64-aarch64.c
 elf64-alpha.c
 elf64-gen.c
 elf64-hppa.c
@@ -244,6 +246,7 @@ elfcode.h
 elfcore.h
 elflink.c
 elfn32-mips.c
+elfxx-aarch64.c
 elfxx-ia64.c
 elfxx-mips.c
 elfxx-sparc.c

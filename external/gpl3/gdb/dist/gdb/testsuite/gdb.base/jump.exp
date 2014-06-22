@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 
 clear_xfail "*-*-*"
 
-set testfile "jump"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 # Build the test case
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
@@ -29,10 +27,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 # Start with a fresh gdb
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 if ![runto_main] then {
   perror "Couldn't run to main"

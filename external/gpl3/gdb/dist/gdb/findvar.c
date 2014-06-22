@@ -1,6 +1,6 @@
 /* Find a variable's value in memory, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "gdbcore.h"
 #include "inferior.h"
 #include "target.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "floatformat.h"
 #include "symfile.h"		/* for overlay functions */
@@ -262,13 +262,7 @@ struct value *
 value_of_register (int regnum, struct frame_info *frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  CORE_ADDR addr;
-  int optim;
-  int unavail;
   struct value *reg_val;
-  int realnum;
-  gdb_byte raw_buffer[MAX_REGISTER_SIZE];
-  enum lval_type lval;
 
   /* User registers lie completely outside of the range of normal
      registers.  Catch them early so that the target never sees them.  */
@@ -276,25 +270,8 @@ value_of_register (int regnum, struct frame_info *frame)
 		+ gdbarch_num_pseudo_regs (gdbarch))
     return value_of_user_reg (regnum, frame);
 
-  frame_register (frame, regnum, &optim, &unavail,
-		  &lval, &addr, &realnum, raw_buffer);
-
-  reg_val = allocate_value (register_type (gdbarch, regnum));
-
-  if (!optim && !unavail)
-    memcpy (value_contents_raw (reg_val), raw_buffer,
-	    register_size (gdbarch, regnum));
-  else
-    memset (value_contents_raw (reg_val), 0,
-	    register_size (gdbarch, regnum));
-
-  VALUE_LVAL (reg_val) = lval;
-  set_value_address (reg_val, addr);
-  VALUE_REGNUM (reg_val) = regnum;
-  set_value_optimized_out (reg_val, optim);
-  if (unavail)
-    mark_value_bytes_unavailable (reg_val, 0, register_size (gdbarch, regnum));
-  VALUE_FRAME_ID (reg_val) = get_frame_id (frame);
+  reg_val = value_of_register_lazy (frame, regnum);
+  value_fetch_lazy (reg_val);
   return reg_val;
 }
 
@@ -367,17 +344,15 @@ address_to_signed_pointer (struct gdbarch *gdbarch, struct type *type,
 int
 symbol_read_needs_frame (struct symbol *sym)
 {
+  if (SYMBOL_COMPUTED_OPS (sym) != NULL)
+    return SYMBOL_COMPUTED_OPS (sym)->read_needs_frame (sym);
+
   switch (SYMBOL_CLASS (sym))
     {
       /* All cases listed explicitly so that gcc -Wall will detect it if
          we failed to consider one.  */
     case LOC_COMPUTED:
-      /* FIXME: cagney/2004-01-26: It should be possible to
-	 unconditionally call the SYMBOL_COMPUTED_OPS method when available.
-	 Unfortunately DWARF 2 stores the frame-base (instead of the
-	 function) location in a function's symbol.  Oops!  For the
-	 moment enable this when/where applicable.  */
-      return SYMBOL_COMPUTED_OPS (sym)->read_needs_frame (sym);
+      gdb_assert_not_reached (_("LOC_COMPUTED variable missing a method"));
 
     case LOC_REGISTER:
     case LOC_ARG:
@@ -416,6 +391,9 @@ struct minsym_lookup_data
      if found.  It should be initialized to NULL before the search
      is started.  */
   struct minimal_symbol *result;
+
+  /* The objfile in which the symbol was found.  */
+  struct objfile *objfile;
 };
 
 /* A callback function for gdbarch_iterate_over_objfiles_in_search_order.
@@ -431,6 +409,7 @@ minsym_lookup_iterator_cb (struct objfile *objfile, void *cb_data)
   gdb_assert (data->result == NULL);
 
   data->result = lookup_minimal_symbol (data->name, NULL, objfile);
+  data->objfile = objfile;
 
   /* The iterator should stop iff a match was found.  */
   return (data->result != NULL);
@@ -456,6 +435,9 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
   if (symbol_read_needs_frame (var))
     gdb_assert (frame);
 
+  if (SYMBOL_COMPUTED_OPS (var) != NULL)
+    return SYMBOL_COMPUTED_OPS (var)->read_variable (var, frame);
+
   switch (SYMBOL_CLASS (var))
     {
     case LOC_CONST:
@@ -474,7 +456,8 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
 	{
 	  CORE_ADDR addr
 	    = symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (var),
-					SYMBOL_OBJ_SECTION (var));
+					SYMBOL_OBJ_SECTION (SYMBOL_OBJFILE (var),
+							    var));
 
 	  store_typed_address (value_contents_raw (v), type, addr);
 	}
@@ -492,10 +475,10 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
       return v;
 
     case LOC_STATIC:
-      v = allocate_value_lazy (type);
       if (overlay_debugging)
 	addr = symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (var),
-					 SYMBOL_OBJ_SECTION (var));
+					 SYMBOL_OBJ_SECTION (SYMBOL_OBJFILE (var),
+							     var));
       else
 	addr = SYMBOL_VALUE_ADDRESS (var);
       break;
@@ -506,7 +489,6 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
 	error (_("Unknown argument list address for `%s'."),
 	       SYMBOL_PRINT_NAME (var));
       addr += SYMBOL_VALUE (var);
-      v = allocate_value_lazy (type);
       break;
 
     case LOC_REF_ARG:
@@ -521,14 +503,12 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
 	argref += SYMBOL_VALUE (var);
 	ref = value_at (lookup_pointer_type (type), argref);
 	addr = value_as_address (ref);
-	v = allocate_value_lazy (type);
 	break;
       }
 
     case LOC_LOCAL:
       addr = get_frame_locals_address (frame);
       addr += SYMBOL_VALUE (var);
-      v = allocate_value_lazy (type);
       break;
 
     case LOC_TYPEDEF:
@@ -537,10 +517,10 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
       break;
 
     case LOC_BLOCK:
-      v = allocate_value_lazy (type);
       if (overlay_debugging)
 	addr = symbol_overlayed_address
-	  (BLOCK_START (SYMBOL_BLOCK_VALUE (var)), SYMBOL_OBJ_SECTION (var));
+	  (BLOCK_START (SYMBOL_BLOCK_VALUE (var)), SYMBOL_OBJ_SECTION (SYMBOL_OBJFILE (var),
+								       var));
       else
 	addr = BLOCK_START (SYMBOL_BLOCK_VALUE (var));
       break;
@@ -563,7 +543,6 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
 	             SYMBOL_PRINT_NAME (var));
 
 	    addr = value_as_address (regval);
-	    v = allocate_value_lazy (type);
 	  }
 	else
 	  {
@@ -578,12 +557,7 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
       break;
 
     case LOC_COMPUTED:
-      /* FIXME: cagney/2004-01-26: It should be possible to
-	 unconditionally call the SYMBOL_COMPUTED_OPS method when available.
-	 Unfortunately DWARF 2 stores the frame-base (instead of the
-	 function) location in a function's symbol.  Oops!  For the
-	 moment enable this when/where applicable.  */
-      return SYMBOL_COMPUTED_OPS (var)->read_variable (var, frame);
+      gdb_assert_not_reached (_("LOC_COMPUTED variable missing a method"));
 
     case LOC_UNRESOLVED:
       {
@@ -604,15 +578,15 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
 	  error (_("No global symbol \"%s\"."), SYMBOL_LINKAGE_NAME (var));
 	if (overlay_debugging)
 	  addr = symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (msym),
-					   SYMBOL_OBJ_SECTION (msym));
+					   SYMBOL_OBJ_SECTION (lookup_data.objfile,
+							       msym));
 	else
 	  addr = SYMBOL_VALUE_ADDRESS (msym);
 
-	obj_section = SYMBOL_OBJ_SECTION (msym);
+	obj_section = SYMBOL_OBJ_SECTION (lookup_data.objfile, msym);
 	if (obj_section
 	    && (obj_section->the_bfd_section->flags & SEC_THREAD_LOCAL) != 0)
 	  addr = target_translate_tls_address (obj_section->objfile, addr);
-	v = allocate_value_lazy (type);
       }
       break;
 
@@ -625,8 +599,7 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
       break;
     }
 
-  VALUE_LVAL (v) = lval_memory;
-  set_value_address (v, addr);
+  v = value_at_lazy (type, addr);
   return v;
 }
 
@@ -783,6 +756,15 @@ address_from_register (struct type *type, int regnum, struct frame_info *frame)
 
   value = value_from_register (type, regnum, frame);
   gdb_assert (value);
+
+  if (value_optimized_out (value))
+    {
+      /* This function is used while computing a location expression.
+	 Complain about the value being optimized out, rather than
+	 letting value_as_address complain about some random register
+	 the expression depends on not being saved.  */
+      error_value_optimized_out ();
+    }
 
   result = value_as_address (value);
   release_value (value);

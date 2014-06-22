@@ -1,6 +1,6 @@
 /* The ptid_t type and common functions operating on it.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
    
    This file is part of GDB.
 
@@ -19,11 +19,12 @@
 
 #include "ptid.h"
 
-/* Oft used ptids */
+/* See ptid.h for these.  */
+
 ptid_t null_ptid = { 0, 0, 0 };
 ptid_t minus_one_ptid = { -1, 0, 0 };
 
-/* Create a ptid given the necessary PID, LWP, and TID components.  */
+/* See ptid.h.  */
 
 ptid_t
 ptid_build (int pid, long lwp, long tid)
@@ -36,7 +37,7 @@ ptid_build (int pid, long lwp, long tid)
   return ptid;
 }
 
-/* Create a ptid from just a pid.  */
+/* See ptid.h.  */
 
 ptid_t
 pid_to_ptid (int pid)
@@ -44,7 +45,7 @@ pid_to_ptid (int pid)
   return ptid_build (pid, 0, 0);
 }
 
-/* Fetch the pid (process id) component from a ptid.  */
+/* See ptid.h.  */
 
 int
 ptid_get_pid (ptid_t ptid)
@@ -52,7 +53,7 @@ ptid_get_pid (ptid_t ptid)
   return ptid.pid;
 }
 
-/* Fetch the lwp (lightweight process) component from a ptid.  */
+/* See ptid.h.  */
 
 long
 ptid_get_lwp (ptid_t ptid)
@@ -60,7 +61,7 @@ ptid_get_lwp (ptid_t ptid)
   return ptid.lwp;
 }
 
-/* Fetch the tid (thread id) component from a ptid.  */
+/* See ptid.h.  */
 
 long
 ptid_get_tid (ptid_t ptid)
@@ -68,7 +69,7 @@ ptid_get_tid (ptid_t ptid)
   return ptid.tid;
 }
 
-/* ptid_equal() is used to test equality of two ptids.  */
+/* See ptid.h.  */
 
 int
 ptid_equal (ptid_t ptid1, ptid_t ptid2)
@@ -78,15 +79,38 @@ ptid_equal (ptid_t ptid1, ptid_t ptid2)
 	  && ptid1.tid == ptid2.tid);
 }
 
-/* Returns true if PTID represents a process.  */
+/* See ptid.h.  */
 
 int
 ptid_is_pid (ptid_t ptid)
 {
-  if (ptid_equal (minus_one_ptid, ptid))
-    return 0;
-  if (ptid_equal (null_ptid, ptid))
+  if (ptid_equal (minus_one_ptid, ptid)
+      || ptid_equal (null_ptid, ptid))
     return 0;
 
   return (ptid_get_lwp (ptid) == 0 && ptid_get_tid (ptid) == 0);
+}
+
+/* See ptid.h.  */
+
+int
+ptid_lwp_p (ptid_t ptid)
+{
+  if (ptid_equal (minus_one_ptid, ptid)
+      || ptid_equal (null_ptid, ptid))
+    return 0;
+
+  return (ptid_get_lwp (ptid) != 0);
+}
+
+/* See ptid.h.  */
+
+int
+ptid_tid_p (ptid_t ptid)
+{
+  if (ptid_equal (minus_one_ptid, ptid)
+      || ptid_equal (null_ptid, ptid))
+    return 0;
+
+  return (ptid_get_tid (ptid) != 0);
 }

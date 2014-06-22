@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -28,7 +28,7 @@
 #include "tramp-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"

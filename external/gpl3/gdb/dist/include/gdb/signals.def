@@ -1,5 +1,5 @@
 /* Target signal numbers for GDB and the GDB remote protocol.
-   Copyright 2010-2013 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -186,15 +186,15 @@ SET (GDB_SIGNAL_DEFAULT, 144, NULL,
 /* Mach exceptions.  In versions of GDB before 5.2, these were just before
    GDB_SIGNAL_INFO if you were compiling on a Mach host (and missing
    otherwise).  */
-SET (TARGET_EXC_BAD_ACCESS, 145, "EXC_BAD_ACCESS", "Could not access memory")
-SET (TARGET_EXC_BAD_INSTRUCTION, 146, "EXC_BAD_INSTRUCTION",
+SET (GDB_EXC_BAD_ACCESS, 145, "EXC_BAD_ACCESS", "Could not access memory")
+SET (GDB_EXC_BAD_INSTRUCTION, 146, "EXC_BAD_INSTRUCTION",
      "Illegal instruction/operand")
-SET (TARGET_EXC_ARITHMETIC, 147, "EXC_ARITHMETIC", "Arithmetic exception")
-SET (TARGET_EXC_EMULATION, 148, "EXC_EMULATION", "Emulation instruction")
-SET (TARGET_EXC_SOFTWARE, 149, "EXC_SOFTWARE", "Software generated exception")
-SET (TARGET_EXC_BREAKPOINT, 150, "EXC_BREAKPOINT", "Breakpoint")
+SET (GDB_EXC_ARITHMETIC, 147, "EXC_ARITHMETIC", "Arithmetic exception")
+SET (GDB_EXC_EMULATION, 148, "EXC_EMULATION", "Emulation instruction")
+SET (GDB_EXC_SOFTWARE, 149, "EXC_SOFTWARE", "Software generated exception")
+SET (GDB_EXC_BREAKPOINT, 150, "EXC_BREAKPOINT", "Breakpoint")
 
 /* If you are adding a new signal, add it just above this comment.  */
 
 /* Last and unused enum value, for sizing arrays, etc.  */
-SET (GDB_SIGNAL_LAST, 151, NULL, "GDB_SIGNAL_MAGIC")
+SET (GDB_SIGNAL_LAST, 151, NULL, "GDB_SIGNAL_LAST")

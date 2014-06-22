@@ -63,16 +63,16 @@ uint32		errmec = 0;
 
 /* Forward declarations */
 
-static int	batch PARAMS ((struct pstate *sregs, char *fname));
-static void	set_rega PARAMS ((struct pstate *sregs, char *reg, uint32 rval));
-static void	disp_reg PARAMS ((struct pstate *sregs, char *reg));
-static uint32	limcalc PARAMS ((float32 freq));
-static void	int_handler PARAMS ((int32 sig));
-static void	init_event PARAMS ((void));
-static int	disp_fpu PARAMS ((struct pstate  *sregs));
-static void	disp_regs PARAMS ((struct pstate  *sregs, int cwp));
-static void	disp_ctrl PARAMS ((struct pstate *sregs));
-static void	disp_mem PARAMS ((uint32 addr, uint32 len));
+static int	batch (struct pstate *sregs, char *fname);
+static void	set_rega (struct pstate *sregs, char *reg, uint32 rval);
+static void	disp_reg (struct pstate *sregs, char *reg);
+static uint32	limcalc (float32 freq);
+static void	int_handler (int32 sig);
+static void	init_event (void);
+static int	disp_fpu (struct pstate  *sregs);
+static void	disp_regs (struct pstate  *sregs, int cwp);
+static void	disp_ctrl (struct pstate *sregs);
+static void	disp_mem (uint32 addr, uint32 len);
 
 static int 
 batch(sregs, fname)

@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Free Software Foundation, Inc.
+/* Copyright 2012-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@
 	.globl	baz
 	.data	/* Previously this used .bss, but it's not portable.  */
 	.align 4
-	.type	baz, @object
+	.type	baz, %object
 	.size	baz, 4
 baz:
 	.zero	4
@@ -51,7 +51,7 @@ baz:
 	.text
 .Ltext0:
 	.globl	main
-	.type	main, @function
+	.type	main, %function
 main:
 .LFB0:
 	.file 1 "fission-reread.cc"
@@ -100,12 +100,12 @@ main:
 	.byte	0x4	/* DW_AT_byte_size */
 	.byte	0x1	/* DW_AT_decl_file (fission-reread.cc) */
 	.byte	0x1	/* DW_AT_decl_line */
-	.4byte	.Ltu_int	/* DW_AT_sibling */
+	.4byte	.Ltu_int - .Ltu_start_dwo /* DW_AT_sibling */
 	.uleb128 0x3	/* (DIE (0x31) DW_TAG_member) */
 	.ascii "bar\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_decl_file (fission-reread.cc) */
 	.byte	0x4	/* DW_AT_decl_line */
-	.4byte	.Ltu_int	/* DW_AT_type */
+	.4byte	.Ltu_int - .Ltu_start_dwo /* DW_AT_type */
 	.byte	0	/* DW_AT_data_member_location */
 	.byte	0x1	/* DW_AT_accessibility */
 	.byte	0	/* end of children of DIE 0x25 */
@@ -134,12 +134,7 @@ main:
 	.4byte	0	/* Offset to Type DIE */
 	.uleb128 0x2	/* (DIE (0) DW_TAG_type_unit) */
 	.ascii "/tmp/src/gdb/testsuite\0"	/* DW_AT_comp_dir */
-	/* Normally dwo_name would be "fission-reread.dwo".
-	   Simplification: Leave the DWO contents in the executable.
-	   "gdb.dwarf2/" is included so that gdb can load the file without
-	   having to set "debug-file-directory".  This is useful when
-	   testing with cc-with-tweaks.sh -i.  */
-	.ascii "gdb.dwarf2/fission-reread\0"	/* DW_AT_GNU_dwo_name */
+	.ascii "gdb.dwarf2/fission-reread.dwo\0" /* DW_AT_GNU_dwo_name */
 	.4byte	.Ldebug_pubnames0	/* DW_AT_GNU_pubnames */
 	.4byte	.Ldebug_pubtypes0	/* DW_AT_GNU_pubtypes */
 	.4byte	.Ldebug_addr0	/* DW_AT_GNU_addr_base */
@@ -156,14 +151,14 @@ main:
 	.byte	0x4	/* DW_AT_language */
 	.ascii "gdb.dwarf2/fission-reread.cc\0"	/* DW_AT_name */
 	.ascii "/tmp/src/gdb/testsuite\0"	/* DW_AT_comp_dir */
-	.byte	0	/* DW_AT_GNU_dwo_id */
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
+	.byte	1	/* DW_AT_GNU_dwo_id */
+	.byte	2
+	.byte	3
+	.byte	4
+	.byte	5
+	.byte	6
+	.byte	7
+	.byte	8
 .Lcu_int:
 	.uleb128 0x4	/* (DIE (0x7f) DW_TAG_base_type) */
 	.byte	0x4	/* DW_AT_byte_size */
@@ -174,7 +169,7 @@ main:
 	.ascii "main\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_decl_file (fission-reread.cc) */
 	.byte	0xa	/* DW_AT_decl_line */
-	.4byte	.Lcu_int	/* DW_AT_type */
+	.4byte	.Lcu_int - .Lcu_start_dwo /* DW_AT_type */
 	.uleb128 0	/* DW_AT_low_pc */
 	.4byte	.LFE0-.LFB0	/* DW_AT_high_pc */
 	.uleb128 0x1	/* DW_AT_frame_base */
@@ -210,23 +205,18 @@ main:
 	.4byte	.Letext0-.Ltext0	/* DW_AT_high_pc */
 	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
 	.ascii "/tmp/src/gdb/testsuite\0"	/* DW_AT_comp_dir */
-	/* Normally dwo_name would be "fission-reread.dwo".
-	   Simplification: Leave the DWO contents in the executable.
-	   "gdb.dwarf2/" is included so that gdb can load the file without
-	   having to set "debug-file-directory".  This is useful when
-	   testing with cc-with-tweaks.sh -i.  */
-	.ascii "gdb.dwarf2/fission-reread\0"	/* DW_AT_GNU_dwo_name */
+	.ascii "gdb.dwarf2/fission-reread.dwo\0" /* DW_AT_GNU_dwo_name */
 	.4byte	.Ldebug_pubnames0	/* DW_AT_GNU_pubnames */
 	.4byte	.Ldebug_pubtypes0	/* DW_AT_GNU_pubtypes */
 	.4byte	.Ldebug_addr0	/* DW_AT_GNU_addr_base */
-	.byte	0	/* DW_AT_GNU_dwo_id */
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
+	.byte	1	/* DW_AT_GNU_dwo_id */
+	.byte	2
+	.byte	3
+	.byte	4
+	.byte	5
+	.byte	6
+	.byte	7
+	.byte	8
 .Lcu_end:
 
 	.section	.debug_abbrev
@@ -414,10 +404,10 @@ main:
 	.ascii "foo\0"	/* external name */
 	.4byte	0
 	.section	.debug_aranges
-	.4byte	0x2c	/* Length of Address Ranges Info */
+	.4byte	0x1c	/* Length of Address Ranges Info */
 	.2byte	0x2	/* DWARF Version */
 	.4byte	.Lskeleton_debug_info0	/* Offset of Compilation Unit Info */
-	.byte	0x8	/* Size of Address */
+	.byte	0x4	/* Size of Address */
 	.byte	0	/* Size of Segment Descriptor */
 	.2byte	0	/* Pad to 16 byte boundary */
 	.2byte	0

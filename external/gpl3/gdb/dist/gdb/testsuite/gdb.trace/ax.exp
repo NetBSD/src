@@ -1,4 +1,4 @@
-#   Copyright 2010-2013 Free Software Foundation, Inc.
+#   Copyright 2010-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # The tests that use the maintenance command do not need tracepoint
 # support on the target, but they do want a live program.
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit

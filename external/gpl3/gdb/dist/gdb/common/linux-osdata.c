@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
    
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,8 +42,11 @@
 #include "xml-utils.h"
 #include "buffer.h"
 #include "gdb_assert.h"
-#include "gdb_dirent.h"
-#include "gdb_stat.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include "filestuff.h"
+
+#define NAMELEN(dirent) strlen ((dirent)->d_name)
 
 /* Define PID_T to be a fixed size that is at least as large as pid_t,
    so that reading pid values embedded in /proc works
@@ -76,7 +79,7 @@ linux_common_core_of_thread (ptid_t ptid)
 
   sprintf (filename, "/proc/%lld/task/%lld/stat",
 	   (PID_T) ptid_get_pid (ptid), (PID_T) ptid_get_lwp (ptid));
-  f = fopen (filename, "r");
+  f = gdb_fopen_cloexec (filename, "r");
   if (!f)
     return -1;
 
@@ -125,7 +128,7 @@ static void
 command_from_pid (char *command, int maxlen, PID_T pid)
 {
   char *stat_path = xstrprintf ("/proc/%lld/stat", pid); 
-  FILE *fp = fopen (stat_path, "r");
+  FILE *fp = gdb_fopen_cloexec (stat_path, "r");
   
   command[0] = '\0';
  
@@ -134,9 +137,9 @@ command_from_pid (char *command, int maxlen, PID_T pid)
       /* sizeof (cmd) should be greater or equal to TASK_COMM_LEN (in
 	 include/linux/sched.h in the Linux kernel sources) plus two
 	 (for the brackets).  */
-      char cmd[32]; 
+      char cmd[18];
       PID_T stat_pid;
-      int items_read = fscanf (fp, "%lld %32s", &stat_pid, cmd);
+      int items_read = fscanf (fp, "%lld %17s", &stat_pid, cmd);
 	  
       if (items_read == 2 && pid == stat_pid)
 	{
@@ -165,7 +168,7 @@ commandline_from_pid (PID_T pid)
 {
   char *pathname = xstrprintf ("/proc/%lld/cmdline", pid);
   char *commandline = NULL;
-  FILE *f = fopen (pathname, "r");
+  FILE *f = gdb_fopen_cloexec (pathname, "r");
 
   if (f)
     {
@@ -860,7 +863,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
   else
     return;
 
-  fp = fopen (proc_file, "r");
+  fp = gdb_fopen_cloexec (proc_file, "r");
   if (fp)
     {
       char buf[8192];
@@ -870,29 +873,22 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 	  if (fgets (buf, sizeof (buf), fp))
 	    {
 	      uid_t uid;
-	      unsigned long tlen, inode;
-	      int sl, timeout;
 	      unsigned int local_port, remote_port, state;
-	      unsigned int txq, rxq, trun, retn;
 	      char local_address[NI_MAXHOST], remote_address[NI_MAXHOST];
-	      char extra[512];
 	      int result;
 
+#if NI_MAXHOST <= 32
+#error "local_address and remote_address buffers too small"
+#endif
+
 	      result = sscanf (buf,
-			       "%d: %33[0-9A-F]:%X %33[0-9A-F]:%X %X %X:%X %X:%lX %X %d %d %lu %512s\n",
-			       &sl,
+			       "%*d: %32[0-9A-F]:%X %32[0-9A-F]:%X %X %*X:%*X %*X:%*X %*X %d %*d %*u %*s\n",
 			       local_address, &local_port,
 			       remote_address, &remote_port,
 			       &state,
-			       &txq, &rxq,
-			       &trun, &tlen,
-			       &retn,
-			       &uid,
-			       &timeout,
-			       &inode,
-			       extra);
+			       &uid);
 	      
-	      if (result == 15)
+	      if (result == 6)
 		{
 		  union socket_addr locaddr, remaddr;
 		  size_t addr_size;
@@ -1088,7 +1084,7 @@ linux_xfer_osdata_shm (gdb_byte *readbuf,
       buffer_init (&buffer);
       buffer_grow_str (&buffer, "<osdata type=\"shared memory\">\n");
 
-      fp = fopen ("/proc/sysvipc/shm", "r");
+      fp = gdb_fopen_cloexec ("/proc/sysvipc/shm", "r");
       if (fp)
 	{
 	  char buf[8192];
@@ -1216,7 +1212,7 @@ linux_xfer_osdata_sem (gdb_byte *readbuf,
       buffer_init (&buffer);
       buffer_grow_str (&buffer, "<osdata type=\"semaphores\">\n");
 
-      fp = fopen ("/proc/sysvipc/sem", "r");
+      fp = gdb_fopen_cloexec ("/proc/sysvipc/sem", "r");
       if (fp)
 	{
 	  char buf[8192];
@@ -1328,7 +1324,7 @@ linux_xfer_osdata_msg (gdb_byte *readbuf,
       buffer_init (&buffer);
       buffer_grow_str (&buffer, "<osdata type=\"message queues\">\n");
       
-      fp = fopen ("/proc/sysvipc/msg", "r");
+      fp = gdb_fopen_cloexec ("/proc/sysvipc/msg", "r");
       if (fp)
 	{
 	  char buf[8192];
@@ -1454,7 +1450,7 @@ linux_xfer_osdata_modules (gdb_byte *readbuf,
       buffer_init (&buffer);
       buffer_grow_str (&buffer, "<osdata type=\"modules\">\n");
 
-      fp = fopen ("/proc/modules", "r");
+      fp = gdb_fopen_cloexec ("/proc/modules", "r");
       if (fp)
 	{
 	  char buf[8192];
@@ -1463,19 +1459,42 @@ linux_xfer_osdata_modules (gdb_byte *readbuf,
 	    {
 	      if (fgets (buf, sizeof (buf), fp))
 		{
-		  char name[64], dependencies[256], status[16];
+		  char *name, *dependencies, *status, *tmp;
 		  unsigned int size;
 		  unsigned long long address;
 		  int uses;
-		  int items_read;
-		  
-		  items_read = sscanf (buf,
-				       "%64s %d %d %256s %16s 0x%llx",
-				       name, &size, &uses,
-				       dependencies, status, &address);
 
-		  if (items_read == 6)
-		    buffer_xml_printf (
+		  name = strtok (buf, " ");
+		  if (name == NULL)
+		    continue;
+
+		  tmp = strtok (NULL, " ");
+		  if (tmp == NULL)
+		    continue;
+		  if (sscanf (tmp, "%u", &size) != 1)
+		    continue;
+
+		  tmp = strtok (NULL, " ");
+		  if (tmp == NULL)
+		    continue;
+		  if (sscanf (tmp, "%d", &uses) != 1)
+		    continue;
+
+		  dependencies = strtok (NULL, " ");
+		  if (dependencies == NULL)
+		    continue;
+
+		  status = strtok (NULL, " ");
+		  if (status == NULL)
+		    continue;
+
+		  tmp = strtok (NULL, "\n");
+		  if (tmp == NULL)
+		    continue;
+		  if (sscanf (tmp, "%llx", &address) != 1)
+		    continue;
+
+		  buffer_xml_printf (
 			&buffer,
 			"<item>"
 			"<column name=\"name\">%s</column>"

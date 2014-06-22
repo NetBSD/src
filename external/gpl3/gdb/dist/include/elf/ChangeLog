@@ -1,3 +1,131 @@
+2013-12-13  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
+	    Wei-Cheng Wang  <cole945@gmail.com>
+
+	* nds32.h: New file for Andes NDS32.
+
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* epiphany.h: Remove +x file mode.
+
+2013-11-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* x86-64.h: Add R_X86_64_PC32_BND and R_X86_64_PLT32_BND.
+
+2013-11-13  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h: Define R_AARCH64_TLS_DTPMOD64,
+	R_AARCH64_TLS_DTPREL64 and R_AARCH64_TLS_TPREL64; guard
+	R_AARCH64_TLS_DTPMOD, R_AARCH64_TLS_DTPREL and
+	R_AARCH64_TLS_TPREL with RELOC_MACROS_GEN_FUNC.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc.h (DT_PPC_TLSOPT): Delete.
+	(DT_PPC_OPT, PPC_OPT_TLS): Define.
+	* ppc64.h (DT_PPC64_TLSOPT): Delete.
+	(DT_PPC64_OPT, PPC64_OPT_TLS, PPC64_OPT_MULTI_TOC): Define.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (STO_PPC64_LOCAL_BIT, STO_PPC64_LOCAL_MASK): Define.
+	(ppc64_decode_local_entry, ppc64_encode_local_entry): New functions.
+	(PPC64_LOCAL_ENTRY_OFFSET, PPC64_SET_LOCAL_ENTRY_OFFSET): Define.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (EF_PPC64_ABI): Define.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (R_PPC64_ADDR16_HIGH, R_PPC64_ADDR16_HIGHA,
+	R_PPC64_TPREL16_HIGH, R_PPC64_TPREL16_HIGHA,
+	R_PPC64_DTPREL16_HIGH, R_PPC64_DTPREL16_HIGHA): New.
+	(IS_PPC64_TLS_RELOC): Match new tls relocs.
+
+2013-10-14  Chao-ying Fu  <Chao-ying.Fu@imgtec.com>
+
+	* mips.h (enum): Add Tag_GNU_MIPS_ABI_MSA.
+	(enum): Add Val_GNU_MIPS_ABI_MSA_ANY and Val_GNU_MIPS_ABI_MSA_128.
+
+2013-09-17  Doug Gilmore  <Doug.Gilmore@imgtec.com>
+
+	* mips.h (EF_MIPS_FP64): New e_flags bit.
+
+2013-08-09  Nick Clifton  <nickc@redhat.com>
+
+	* rl78.c (E_FLAG_RL78_G10): Define.
+
+2013-07-15  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (Tag_GNU_MIPS_ABI_FP): Remove comment.
+	(Val_GNU_MIPS_ABI_FP_ANY, Val_GNU_MIPS_ABI_FP_DOUBLE,
+	Val_GNU_MIPS_ABI_FP_SINGLE, Val_GNU_MIPS_ABI_FP_SOFT,
+	Val_GNU_MIPS_ABI_FP_64): New enum.
+
+2013-07-12  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (EF_MIPS_NAN2008): New macro.
+
+2013-07-08  Tristan Gingold  <gingold@adacore.com>
+
+	* ia64.h (STB_VMS_WEAK, STB_VMS_SYSTEM): Add.
+
+2013-07-05  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h: Add new relocs R_390_PC12DBL, R_390_PLT12DBL,
+	R_390_PC24DBL, and R_390_PLT24DBL.
+
+2013-06-26  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h: Add ELF32 reloc codes and remove fake ELF64 ones.
+
+2013-06-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (ELF_ST_IS_MIPS_PLT): Respect STO_MIPS16 setting.
+	(ELF_ST_SET_MIPS_PLT): Likewise.
+
+2013-06-19  Will Newton  <will.newton@linaro.org>
+
+	* aarch64.h: Remove R_AARCH64_IRELATIVE.
+
+2013-06-07  Will Newton  <will.newton@linaro.org>
+
+	* aarch64.h: Add R_AARCH64_IRELATIVE reloc.
+
+2013-06-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (ELF_ST_SET_MIPS_PIC): Clear any STO_MIPS16 setting.
+
+2013-05-30  Paul Brook  <paul@codesourcery.com>
+
+	* mips.h (R_MIPS_EH): New.
+
+2013-05-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (R_AARCH64_TLSDESC_LD64_PREL19): Rename to ...
+	(R_AARCH64_TLSDESC_LD_PREL19): ... this.
+	(R_AARCH64_TLSDESC_ADR_PAGE): Rename to ...
+	(R_AARCH64_TLSDESC_ADR_PAGE21): ... this.
+
+2013-05-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_INTEL205): New.
+	(EM_INTEL206): Likewise.
+	(EM_INTEL207): Likewise.
+	(EM_INTEL208): Likewise.
+	(EM_INTEL209): Likewise.
+
+2013-05-02  Nick Clifton  <nickc@redhat.com>
+
+	* msp430.h: Add MSP430X relocs.
+	Add some more MSP430 machine numbers.
+	Add values used by .MSP430.attributes section.
+
+2013-03-21  Michael Schewe  <michael.schewe@gmx.net>
+
+	* h8.h: Add new reloc R_H8_DISP32A16 for relaxation of
+	mov @(disp:32,ERx) to mov @(disp:16,ERx).
+
 2013-03-08  Andreas Arnez  <arnez@linux.vnet.ibm.com>
 
 	* common.h (NT_S390_TDB): Define.

@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,40 +19,18 @@ if [build_executable ${testfile}.exp $testfile] {
     return -1
 }
 
-# A wrapper for 'remote_exec host' that passes or fails a test.
-# Returns 0 if all went well, nonzero on failure.
-# TEST is the name of the test, other arguments are as for
-# remote_exec.
-proc run {test program args} {
-    verbose "cmdline is remote_exec host $program $args"
-    # remote_exec doesn't work properly if the output is set but the
-    # input is the empty string -- so replace an empty input with
-    # /dev/null.
-    if {[llength $args] > 1 && [lindex $args 1] == ""} {
-	set args [lreplace $args 1 1 "/dev/null"]
-    }
-    set result [eval remote_exec host [list $program] $args]
-    verbose "result is $result"
-    set status [lindex $result 0]
-    set output [lindex $result 1]
-    if {$status == 0} {
- 	pass $test
- 	return 0
-    } else {
-	fail $test
-	return -1
-    }
-}
-
 set pipeline_counter 0
 
-# Run a pipeline of processes through 'run'.
-# TEST is the base name of the test, it is modified and passed to 'run'.
+set objcopy_program [gdb_find_objcopy]
+
+# Run a pipeline of processes through 'run_on_host'.
+# TEST is the base name of the test, it is modified and passed to 'run_on_host'.
 # Each subsequent argument is a list of the form {PROGRAM [ARG]...}.
-# It is passed to 'run'.  However, before being passed, if input and output
-# files are not specified in the list, then this proc provides them.
+# It is passed to 'run_on_host'.  However, before being passed, if input and
+# output files are not specified in the list, then this proc provides them.
 # Each program in the pipeline takes its input from the previous
 # program's output.
+
 proc pipeline {test args} {
     global pipeline_counter
 
@@ -74,7 +52,7 @@ proc pipeline {test args} {
 	}
 	verbose "cooked args are [list $program $arguments $input $output]"
 
-	if {[run "$test - invoke $program" $program $arguments \
+	if {[run_on_host "$test - invoke $program" $program $arguments \
 		 $input $output]} {
 	    return -1
 	}
@@ -108,37 +86,38 @@ if {[pipeline "nm" \
 # Keep all the function symbols not already in the dynamic symbol
 # table.
 remote_file host delete ${binfile}.keep_symbols
-if {[run "comm" "comm" "-13 ${binfile}.dynsyms ${binfile}.funcsyms" "" \
+if {[run_on_host "comm" "comm" "-13 ${binfile}.dynsyms ${binfile}.funcsyms" "" \
 	 "${binfile}.keep_symbols"]} {
+    return -1
+}
+
+# GDB specific - we do not have split executable in advance.
+remote_file host delete ${binfile}.strip
+if {[run_on_host "strip" [transform strip] \
+	 "--strip-all -R .comment -o ${binfile}.strip ${binfile}"]} {
+    return -1
+}
+
+# Separate full debug info into ${binfile}.debug.
+remote_file host delete ${binfile}.debug
+if {[run_on_host "copydebug" ${objcopy_program} \
+	 "--only-keep-debug ${binfile} ${binfile}.debug"]} {
     return -1
 }
 
 # Copy the full debuginfo, keeping only a minimal set of symbols and
 # removing some unnecessary sections.
 remote_file host delete ${binfile}.mini_debuginfo
-if {[run "objcopy 1" [transform objcopy] "-S --remove-section .gdb_index --remove-section .comment --keep-symbols=${binfile}.keep_symbols ${binfile} ${binfile}.mini_debuginfo"]} {
-    return -1
-}
-
-# GDB specific - we do not have split executable in advance.
-remote_file host delete ${binfile}.strip
-if {[run "strip" [transform strip] \
-	 "--strip-all -o ${binfile}.strip ${binfile}"]} {
-    return -1
-}
-
-# Separate full debug info into ${binfile}.debug.
-remote_file host delete ${binfile}.debug
-if {[run "copydebug" [transform objcopy] \
-	 "--only-keep-debug ${binfile} ${binfile}.debug"]} {
+if {[run_on_host "objcopy 1" ${objcopy_program} "-S --remove-section .gdb_index --remove-section .comment --keep-symbols=${binfile}.keep_symbols ${binfile}.debug ${binfile}.mini_debuginfo"]} {
     return -1
 }
 
 # Add the .gnu_debuglink section to the .gnu_debugdata file.
 # .gnu_debuglink is normally not present in the .gnu_debugdata section but in
 # some files there may be PT_NOTE with NT_GNU_BUILD_ID and GDB could look up
-# the .debug file from it.
-if {[run "addlink" [transform objcopy] \
+# the .debug file from it.  This is only an additional test of GDB, such link
+# is not present in usual MiniDebugInfo sections.
+if {[run_on_host "addlink" ${objcopy_program} \
 	 "--add-gnu-debuglink=${binfile}.debug ${binfile}.mini_debuginfo ${binfile}.mini_debuginfo-debuglink"]} {
     return -1
 }
@@ -146,11 +125,11 @@ if {[run "addlink" [transform objcopy] \
 # Inject the compressed data into the .gnu_debugdata section of the
 # original binary.
 remote_file host delete ${binfile}.mini_debuginfo-debuglink.xz
-if {[run "xz" "xz" "-k ${binfile}.mini_debuginfo-debuglink"]} {
+if {[run_on_host "xz" "xz" "-k ${binfile}.mini_debuginfo-debuglink"]} {
     return -1
 }
 remote_file host delete ${binfile}.test
-if {[run "objcopy 2" [transform objcopy] "--add-section .gnu_debugdata=${binfile}.mini_debuginfo-debuglink.xz ${binfile}.strip ${binfile}.test"]} {
+if {[run_on_host "objcopy 2" ${objcopy_program} "--add-section .gnu_debugdata=${binfile}.mini_debuginfo-debuglink.xz ${binfile}.strip ${binfile}.test"]} {
     return -1
 }
 

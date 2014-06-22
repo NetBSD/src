@@ -1,6 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -20,12 +20,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "cli/cli-decode.h"
 #include "cli/cli-cmds.h"
 #include "value.h"
 #include "completer.h"
-#include "cli/cli-dump.h"
 #include "gdb_assert.h"
 #include <ctype.h>
 #include "target.h"
@@ -33,11 +32,10 @@
 #include "gdbcore.h"
 #include "cli/cli-utils.h"
 #include "gdb_bfd.h"
+#include "filestuff.h"
 
-#define XMALLOC(TYPE) ((TYPE*) xmalloc (sizeof (TYPE)))
 
-
-char *
+static char *
 scan_expression_with_cleanup (char **cmd, const char *def)
 {
   if ((*cmd) == NULL || (**cmd) == '\0')
@@ -61,7 +59,7 @@ scan_expression_with_cleanup (char **cmd, const char *def)
 }
 
 
-char *
+static char *
 scan_filename_with_cleanup (char **cmd, const char *defname)
 {
   char *filename;
@@ -96,10 +94,10 @@ scan_filename_with_cleanup (char **cmd, const char *defname)
   return fullname;
 }
 
-FILE *
+static FILE *
 fopen_with_cleanup (const char *filename, const char *mode)
 {
-  FILE *file = fopen (filename, mode);
+  FILE *file = gdb_fopen_cloexec (filename, mode);
 
   if (file == NULL)
     perror_with_name (filename);
@@ -388,7 +386,7 @@ call_dump_func (struct cmd_list_element *c, char *args, int from_tty)
   d->func (args, d->mode);
 }
 
-void
+static void
 add_dump_command (char *name, void (*func) (char *args, char *mode),
 		  char *descr)
 
@@ -507,6 +505,7 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
 static void
 restore_binary_file (char *filename, struct callback_data *data)
 {
+  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
   FILE *file = fopen_with_cleanup (filename, FOPEN_RB);
   gdb_byte *buf;
   long len;
@@ -552,7 +551,7 @@ restore_binary_file (char *filename, struct callback_data *data)
   len = target_write_memory (data->load_start + data->load_offset, buf, len);
   if (len != 0)
     warning (_("restore: memory write failed (%s)."), safe_strerror (len));
-  return;
+  do_cleanups (cleanup);
 }
 
 static void

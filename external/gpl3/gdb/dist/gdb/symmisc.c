@@ -1,6 +1,6 @@
 /* Do various things to symbol tables (other than lookup), for GDB.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,13 +32,13 @@
 #include "bcache.h"
 #include "block.h"
 #include "gdb_regex.h"
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "dictionary.h"
 #include "typeprint.h"
 #include "gdbcmd.h"
 #include "source.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include "readline/readline.h"
 
 #include "psymtab.h"
@@ -58,13 +58,6 @@ FILE *std_out;
 FILE *std_err;
 
 /* Prototypes for local functions */
-
-static void dump_symtab (struct objfile *, struct symtab *,
-			 struct ui_file *);
-
-static void dump_msymbols (struct objfile *, struct ui_file *);
-
-static void dump_objfile (struct objfile *);
 
 static int block_depth (struct block *);
 
@@ -91,7 +84,8 @@ print_symbol_bcache_statistics (void)
     ALL_PSPACE_OBJFILES (pspace, objfile)
   {
     QUIT;
-    printf_filtered (_("Byte cache statistics for '%s':\n"), objfile->name);
+    printf_filtered (_("Byte cache statistics for '%s':\n"),
+		     objfile_name (objfile));
     print_bcache_statistics (psymbol_bcache_get_bcache (objfile->psymbol_cache),
                              "partial symbol cache");
     print_bcache_statistics (objfile->per_bfd->macro_cache,
@@ -113,7 +107,7 @@ print_objfile_statistics (void)
     ALL_PSPACE_OBJFILES (pspace, objfile)
   {
     QUIT;
-    printf_filtered (_("Statistics for '%s':\n"), objfile->name);
+    printf_filtered (_("Statistics for '%s':\n"), objfile_name (objfile));
     if (OBJSTAT (objfile, n_stabs) > 0)
       printf_filtered (_("  Number of \"stab\" symbols read: %d\n"),
 		       OBJSTAT (objfile, n_stabs));
@@ -168,7 +162,7 @@ dump_objfile (struct objfile *objfile)
 {
   struct symtab *symtab;
 
-  printf_filtered ("\nObject file %s:  ", objfile->name);
+  printf_filtered ("\nObject file %s:  ", objfile_name (objfile));
   printf_filtered ("Objfile at ");
   gdb_print_host_address (objfile, gdb_stdout);
   printf_filtered (", bfd at ");
@@ -209,7 +203,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
   int index;
   char ms_type;
 
-  fprintf_filtered (outfile, "\nObject file %s:\n\n", objfile->name);
+  fprintf_filtered (outfile, "\nObject file %s:\n\n", objfile_name (objfile));
   if (objfile->minimal_symbol_count == 0)
     {
       fprintf_filtered (outfile, "No minimal symbols found.\n");
@@ -218,7 +212,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
   index = 0;
   ALL_OBJFILE_MSYMBOLS (objfile, msymbol)
     {
-      struct obj_section *section = SYMBOL_OBJ_SECTION (msymbol);
+      struct obj_section *section = SYMBOL_OBJ_SECTION (objfile, msymbol);
 
       switch (MSYMBOL_TYPE (msymbol))
 	{
@@ -261,9 +255,15 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
 		      outfile);
       fprintf_filtered (outfile, " %s", SYMBOL_LINKAGE_NAME (msymbol));
       if (section)
-	fprintf_filtered (outfile, " section %s",
-			  bfd_section_name (objfile->obfd,
-					    section->the_bfd_section));
+	{
+	  if (section->the_bfd_section != NULL)
+	    fprintf_filtered (outfile, " section %s",
+			      bfd_section_name (objfile->obfd,
+						section->the_bfd_section));
+	  else
+	    fprintf_filtered (outfile, " spurious section %ld",
+			      (long) (section - objfile->sections));
+	}
       if (SYMBOL_DEMANGLED_NAME (msymbol) != NULL)
 	{
 	  fprintf_filtered (outfile, "  %s", SYMBOL_DEMANGLED_NAME (msymbol));
@@ -300,7 +300,8 @@ dump_symtab_1 (struct objfile *objfile, struct symtab *symtab,
   if (symtab->dirname)
     fprintf_filtered (outfile, "Compilation directory is %s\n",
 		      symtab->dirname);
-  fprintf_filtered (outfile, "Read from object file %s (", objfile->name);
+  fprintf_filtered (outfile, "Read from object file %s (",
+		    objfile_name (objfile));
   gdb_print_host_address (objfile, outfile);
   fprintf_filtered (outfile, ")\n");
   fprintf_filtered (outfile, "Language: %s\n",
@@ -464,7 +465,8 @@ print_symbol (void *args)
   struct symbol *symbol = ((struct print_symbol_args *) args)->symbol;
   int depth = ((struct print_symbol_args *) args)->depth;
   struct ui_file *outfile = ((struct print_symbol_args *) args)->outfile;
-  struct obj_section *section = SYMBOL_OBJ_SECTION (symbol);
+  struct obj_section *section = SYMBOL_OBJ_SECTION (SYMBOL_OBJFILE (symbol),
+						    symbol);
 
   print_spaces (depth, outfile);
   if (SYMBOL_DOMAIN (symbol) == LABEL_DOMAIN)
@@ -677,7 +679,7 @@ maintenance_print_msymbols (char *args, int from_tty)
     ALL_PSPACE_OBJFILES (pspace, objfile)
       {
 	QUIT;
-	if (symname == NULL || (!stat (objfile->name, &obj_st)
+	if (symname == NULL || (!stat (objfile_name (objfile), &obj_st)
 				&& sym_st.st_dev == obj_st.st_dev
 				&& sym_st.st_ino == obj_st.st_ino))
 	  dump_msymbols (objfile, outfile);
@@ -687,18 +689,23 @@ maintenance_print_msymbols (char *args, int from_tty)
 }
 
 static void
-maintenance_print_objfiles (char *ignore, int from_tty)
+maintenance_print_objfiles (char *regexp, int from_tty)
 {
   struct program_space *pspace;
   struct objfile *objfile;
 
   dont_repeat ();
 
+  if (regexp)
+    re_comp (regexp);
+
   ALL_PSPACES (pspace)
     ALL_PSPACE_OBJFILES (pspace, objfile)
       {
 	QUIT;
-	dump_objfile (objfile);
+	if (! regexp
+	    || re_exec (objfile_name (objfile)))
+	  dump_objfile (objfile);
       }
 }
 
@@ -709,6 +716,8 @@ maintenance_info_symtabs (char *regexp, int from_tty)
 {
   struct program_space *pspace;
   struct objfile *objfile;
+
+  dont_repeat ();
 
   if (regexp)
     re_comp (regexp);
@@ -731,7 +740,7 @@ maintenance_info_symtabs (char *regexp, int from_tty)
 	    {
 	      if (! printed_objfile_start)
 		{
-		  printf_filtered ("{ objfile %s ", objfile->name);
+		  printf_filtered ("{ objfile %s ", objfile_name (objfile));
 		  wrap_here ("  ");
 		  printf_filtered ("((struct objfile *) %s)\n", 
 				   host_address_to_string (objfile));
@@ -763,6 +772,136 @@ maintenance_info_symtabs (char *regexp, int from_tty)
       if (printed_objfile_start)
         printf_filtered ("}\n");
     }
+}
+
+/* Check consistency of symtabs.
+   An example of what this checks for is NULL blockvectors.
+   They can happen if there's a bug during debug info reading.
+   GDB assumes they are always non-NULL.
+
+   Note: This does not check for psymtab vs symtab consistency.
+   Use "maint check-psymtabs" for that.  */
+
+static void
+maintenance_check_symtabs (char *ignore, int from_tty)
+{
+  struct program_space *pspace;
+  struct objfile *objfile;
+
+  ALL_PSPACES (pspace)
+    ALL_PSPACE_OBJFILES (pspace, objfile)
+    {
+      struct symtab *symtab;
+
+      /* We don't want to print anything for this objfile until we
+         actually find something worth printing.  */
+      int printed_objfile_start = 0;
+
+      ALL_OBJFILE_SYMTABS (objfile, symtab)
+	{
+	  int found_something = 0;
+
+	  QUIT;
+
+	  if (symtab->blockvector == NULL)
+	    found_something = 1;
+	  /* Add more checks here.  */
+
+	  if (found_something)
+	    {
+	      if (! printed_objfile_start)
+		{
+		  printf_filtered ("{ objfile %s ", objfile_name (objfile));
+		  wrap_here ("  ");
+		  printf_filtered ("((struct objfile *) %s)\n", 
+				   host_address_to_string (objfile));
+		  printed_objfile_start = 1;
+		}
+	      printf_filtered ("  { symtab %s\n",
+			       symtab_to_filename_for_display (symtab));
+	      if (symtab->blockvector == NULL)
+		printf_filtered ("    NULL blockvector\n");
+	      printf_filtered ("  }\n");
+	    }
+	}
+
+      if (printed_objfile_start)
+        printf_filtered ("}\n");
+    }
+}
+
+/* Helper function for maintenance_expand_symtabs.
+   This is the name_matcher function for expand_symtabs_matching.  */
+
+static int
+maintenance_expand_name_matcher (const char *symname, void *data)
+{
+  /* Since we're not searching on symbols, just return TRUE.  */
+  return 1;
+}
+
+/* Helper function for maintenance_expand_symtabs.
+   This is the file_matcher function for expand_symtabs_matching.  */
+
+static int
+maintenance_expand_file_matcher (const char *filename, void *data,
+				 int basenames)
+{
+  const char *regexp = data;
+
+  QUIT;
+
+  /* KISS: Only apply the regexp to the complete file name.  */
+  if (basenames)
+    return 0;
+
+  if (regexp == NULL || re_exec (filename))
+    return 1;
+
+  return 0;
+}
+
+/* Expand all symbol tables whose name matches an optional regexp.  */
+
+static void
+maintenance_expand_symtabs (char *args, int from_tty)
+{
+  struct program_space *pspace;
+  struct objfile *objfile;
+  struct cleanup *cleanups;
+  char **argv;
+  char *regexp = NULL;
+
+  /* We use buildargv here so that we handle spaces in the regexp
+     in a way that allows adding more arguments later.  */
+  argv = gdb_buildargv (args);
+  cleanups = make_cleanup_freeargv (argv);
+
+  if (argv != NULL)
+    {
+      if (argv[0] != NULL)
+	{
+	  regexp = argv[0];
+	  if (argv[1] != NULL)
+	    error (_("Extra arguments after regexp."));
+	}
+    }
+
+  if (regexp)
+    re_comp (regexp);
+
+  ALL_PSPACES (pspace)
+    ALL_PSPACE_OBJFILES (pspace, objfile)
+    {
+      if (objfile->sf)
+	{
+	  objfile->sf->qf->expand_symtabs_matching
+	    (objfile, maintenance_expand_file_matcher,
+	     maintenance_expand_name_matcher, ALL_DOMAIN, regexp);
+	}
+    }
+
+  do_cleanups (cleanups);
 }
 
 
@@ -803,13 +942,24 @@ If a SOURCE file is specified, dump only that file's minimal symbols."),
 	   &maintenanceprintlist);
 
   add_cmd ("objfiles", class_maintenance, maintenance_print_objfiles,
-	   _("Print dump of current object file definitions."),
+	   _("Print dump of current object file definitions.\n\
+With an argument REGEXP, list the object files with matching names."),
 	   &maintenanceprintlist);
 
   add_cmd ("symtabs", class_maintenance, maintenance_info_symtabs, _("\
 List the full symbol tables for all object files.\n\
 This does not include information about individual symbols, blocks, or\n\
 linetables --- just the symbol table structures themselves.\n\
-With an argument REGEXP, list the symbol tables whose names that match that."),
+With an argument REGEXP, list the symbol tables with matching names."),
 	   &maintenanceinfolist);
+
+  add_cmd ("check-symtabs", class_maintenance, maintenance_check_symtabs,
+	   _("\
+Check consistency of currently expanded symtabs."),
+	   &maintenancelist);
+
+  add_cmd ("expand-symtabs", class_maintenance, maintenance_expand_symtabs,
+	   _("Expand symbol tables.\n\
+With an argument REGEXP, only expand the symbol tables with matching names."),
+	   &maintenancelist);
 }

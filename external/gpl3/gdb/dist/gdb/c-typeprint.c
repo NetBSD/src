@@ -1,5 +1,5 @@
 /* Support for printing C and C++ types for GDB, the GNU debugger.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@
 #include "typeprint.h"
 #include "cp-abi.h"
 #include "jv-lang.h"
-#include "gdb_string.h"
+#include <string.h>
 #include <errno.h>
 #include "cp-support.h"
 
@@ -1227,8 +1227,8 @@ c_type_print_base (struct type *type, struct ui_file *stream,
 		    mangled_name = TYPE_FN_FIELD_PHYSNAME (f, j);
 
 		  demangled_name =
-		    cplus_demangle (mangled_name,
-				    DMGL_ANSI | DMGL_PARAMS);
+		    gdb_demangle (mangled_name,
+				  DMGL_ANSI | DMGL_PARAMS);
 		  if (demangled_name == NULL)
 		    {
 		      /* In some cases (for instance with the HP

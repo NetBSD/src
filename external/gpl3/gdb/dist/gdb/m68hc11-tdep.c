@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68HC11 & 68HC12
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Contributed by Stephane Carrez, stcarrez@nerim.fr
 
@@ -30,7 +30,7 @@
 #include "gdbtypes.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "inferior.h"
 #include "dis-asm.h"  
@@ -338,7 +338,7 @@ m68hc11_pseudo_register_write (struct gdbarch *gdbarch,
   if (regno == M68HC12_HARD_PC_REGNUM)
     {
       const int regsize = 4;
-      char *tmp = alloca (regsize);
+      gdb_byte *tmp = alloca (regsize);
       CORE_ADDR pc;
 
       memcpy (tmp, buf, regsize);
@@ -363,7 +363,7 @@ m68hc11_pseudo_register_write (struct gdbarch *gdbarch,
   if (soft_regs[regno].name)
     {
       const int regsize = 2;
-      char *tmp = alloca (regsize);
+      gdb_byte *tmp = alloca (regsize);
       memcpy (tmp, buf, regsize);
       target_write_memory (soft_regs[regno].addr, tmp, regsize);
     }
@@ -587,18 +587,18 @@ m68hc11_analyze_instruction (struct gdbarch *gdbarch,
 static enum insn_return_kind
 m68hc11_get_return_insn (CORE_ADDR pc)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   /* A flag indicating that this is a STO_M68HC12_FAR or STO_M68HC12_INTERRUPT
      function is stored by elfread.c in the high bit of the info field.
      Use this to decide which instruction the function uses to return.  */
   sym = lookup_minimal_symbol_by_pc (pc);
-  if (sym == 0)
+  if (sym.minsym == 0)
     return RETURN_RTS;
 
-  if (MSYMBOL_IS_RTC (sym))
+  if (MSYMBOL_IS_RTC (sym.minsym))
     return RETURN_RTC;
-  else if (MSYMBOL_IS_RTI (sym))
+  else if (MSYMBOL_IS_RTI (sym.minsym))
     return RETURN_RTI;
   else
     return RETURN_RTS;
@@ -1173,7 +1173,7 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int argnum;
   int first_stack_argnum;
   struct type *type;
-  char *val;
+  const gdb_byte *val;
   gdb_byte buf[2];
   
   first_stack_argnum = 0;
@@ -1209,12 +1209,12 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       if (TYPE_LENGTH (type) & 1)
         {
-          static char zero = 0;
+          static gdb_byte zero = 0;
 
           sp--;
           write_memory (sp, &zero, 1);
         }
-      val = (char*) value_contents (args[argnum]);
+      val = value_contents (args[argnum]);
       sp -= TYPE_LENGTH (type);
       write_memory (sp, val, TYPE_LENGTH (type));
     }
@@ -1261,7 +1261,7 @@ m68hc11_register_type (struct gdbarch *gdbarch, int reg_nr)
 
 static void
 m68hc11_store_return_value (struct type *type, struct regcache *regcache,
-                            const void *valbuf)
+                            const gdb_byte *valbuf)
 {
   int len;
 
@@ -1274,7 +1274,7 @@ m68hc11_store_return_value (struct type *type, struct regcache *regcache,
     {
       regcache_raw_write_part (regcache, HARD_X_REGNUM, 4 - len,
                                len - 2, valbuf);
-      regcache_raw_write (regcache, HARD_D_REGNUM, (char*) valbuf + (len - 2));
+      regcache_raw_write (regcache, HARD_D_REGNUM, valbuf + (len - 2));
     }
   else
     error (_("return of value > 4 is not supported."));

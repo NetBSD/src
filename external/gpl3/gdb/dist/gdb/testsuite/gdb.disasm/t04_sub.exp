@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2013 Free Software Foundation, Inc.
+# Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ set srcfile ${srcdir}/${subdir}/${testfile}.s
 set objfile ${objdir}/${subdir}/${testfile}.o
 set binfile ${objdir}/${subdir}/${testfile}.x
 
-set asm-flags "";
-set link-flags "-m h8300sxelf";
+set asm-flags ""
+set link-flags "-m h8300sxelf"
 
 
 if {[target_assemble $srcfile $objfile "${asm-flags}"] != ""} then {

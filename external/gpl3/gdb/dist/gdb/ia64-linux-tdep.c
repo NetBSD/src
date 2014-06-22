@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,8 @@
 #include "solib-svr4.h"
 #include "symtab.h"
 #include "linux-tdep.h"
+
+#include <ctype.h>
 
 /* The sigtramp code is in a non-readable (executable-only) region
    of memory called the ``gate page''.  The addresses in question
@@ -118,10 +120,26 @@ ia64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
   regcache_cooked_write_unsigned (regcache, IA64_GR10_REGNUM, 0);
 }
 
+/* Implementation of `gdbarch_stap_is_single_operand', as defined in
+   gdbarch.h.  */
+
+static int
+ia64_linux_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
+{
+  return ((isdigit (*s) && s[1] == '[' && s[2] == 'r') /* Displacement.  */
+	  || *s == 'r' /* Register value.  */
+	  || isdigit (*s));  /* Literal number.  */
+}
+
 static void
 ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  static const char *const stap_register_prefixes[] = { "r", NULL };
+  static const char *const stap_register_indirection_prefixes[] = { "[",
+								    NULL };
+  static const char *const stap_register_indirection_suffixes[] = { "]",
+								    NULL };
 
   linux_init_abi (info, gdbarch);
 
@@ -142,6 +160,16 @@ ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
+
+  /* SystemTap related.  */
+  set_gdbarch_stap_register_prefixes (gdbarch, stap_register_prefixes);
+  set_gdbarch_stap_register_indirection_prefixes (gdbarch,
+					  stap_register_indirection_prefixes);
+  set_gdbarch_stap_register_indirection_suffixes (gdbarch,
+					    stap_register_indirection_suffixes);
+  set_gdbarch_stap_gdb_register_prefix (gdbarch, "r");
+  set_gdbarch_stap_is_single_operand (gdbarch,
+				      ia64_linux_stap_is_single_operand);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

@@ -1,5 +1,5 @@
 /* Definitions for remote debugging interface for ROM monitors.
-   Copyright (C) 1990-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support. Written by Rob Savoye for Cygnus.
 
    This file is part of GDB.
@@ -240,7 +240,7 @@ struct monitor_ops
 #define SREC_SIZE 160
 
 extern void monitor_open (char *args, struct monitor_ops *ops, int from_tty);
-extern void monitor_close (int quitting);
+extern void monitor_close (void);
 extern char *monitor_supply_register (struct regcache *regcache,
 				      int regno, char *valstr);
 extern int monitor_expect (char *prompt, char *buf, int buflen);

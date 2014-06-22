@@ -1,7 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright 1994-2013 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -713,7 +711,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2880850, 0xfeb80fd0, "vqrshrun%c.s16\t%12-15,22D, %0-3,5Q, #%16-18e"},
   {FPU_NEON_EXT_V1, 0xf2880910, 0xfeb80fd0, "vqshrn%c.%24?us16\t%12-15,22D, %0-3,5Q, #%16-18e"},
   {FPU_NEON_EXT_V1, 0xf2880950, 0xfeb80fd0, "vqrshrn%c.%24?us16\t%12-15,22D, %0-3,5Q, #%16-18e"},
-  {FPU_NEON_EXT_V1, 0xf2880a10, 0xfeb80fd0, "vshll%c.%24?us8\t%12-15,22D, %0-3,5Q, #%16-18d"},
+  {FPU_NEON_EXT_V1, 0xf2880a10, 0xfeb80fd0, "vshll%c.%24?us8\t%12-15,22Q, %0-3,5D, #%16-18d"},
   {FPU_NEON_EXT_V1, 0xf2900810, 0xffb00fd0, "vshrn%c.i32\t%12-15,22D, %0-3,5Q, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900850, 0xffb00fd0, "vrshrn%c.i32\t%12-15,22D, %0-3,5Q, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2880510, 0xffb80f90, "vshl%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18d"},
@@ -724,7 +722,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2900850, 0xfeb00fd0, "vqrshrun%c.s32\t%12-15,22D, %0-3,5Q, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900910, 0xfeb00fd0, "vqshrn%c.%24?us32\t%12-15,22D, %0-3,5Q, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900950, 0xfeb00fd0, "vqrshrn%c.%24?us32\t%12-15,22D, %0-3,5Q, #%16-19e"},
-  {FPU_NEON_EXT_V1, 0xf2900a10, 0xfeb00fd0, "vshll%c.%24?us16\t%12-15,22D, %0-3,5Q, #%16-19d"},
+  {FPU_NEON_EXT_V1, 0xf2900a10, 0xfeb00fd0, "vshll%c.%24?us16\t%12-15,22Q, %0-3,5D, #%16-19d"},
   {FPU_NEON_EXT_V1, 0xf2880010, 0xfeb80f90, "vshr%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
   {FPU_NEON_EXT_V1, 0xf2880110, 0xfeb80f90, "vsra%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
   {FPU_NEON_EXT_V1, 0xf2880210, 0xfeb80f90, "vrshr%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
@@ -736,7 +734,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf3900410, 0xffb00f90, "vsri%c.16\t%12-15,22R, %0-3,5R, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf3900510, 0xffb00f90, "vsli%c.16\t%12-15,22R, %0-3,5R, #%16-19d"},
   {FPU_NEON_EXT_V1, 0xf3900610, 0xffb00f90, "vqshlu%c.s16\t%12-15,22R, %0-3,5R, #%16-19d"},
-  {FPU_NEON_EXT_V1, 0xf2a00a10, 0xfea00fd0, "vshll%c.%24?us32\t%12-15,22D, %0-3,5Q, #%16-20d"},
+  {FPU_NEON_EXT_V1, 0xf2a00a10, 0xfea00fd0, "vshll%c.%24?us32\t%12-15,22Q, %0-3,5D, #%16-20d"},
   {FPU_NEON_EXT_V1, 0xf2900010, 0xfeb00f90, "vshr%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900110, 0xfeb00f90, "vsra%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900210, 0xfeb00f90, "vrshr%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
@@ -879,6 +877,8 @@ static const struct opcode32 arm_opcodes[] =
 {
   /* ARM instructions.  */
   {ARM_EXT_V1, 0xe1a00000, 0xffffffff, "nop\t\t\t; (mov r0, r0)"},
+  {ARM_EXT_V1, 0xe7f000f0, 0xfff000f0, "udf\t#%e"},
+
   {ARM_EXT_V4T | ARM_EXT_V5, 0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
   {ARM_EXT_V2, 0x00000090, 0x0fe000f0, "mul%20's%c\t%16-19R, %0-3R, %8-11R"},
   {ARM_EXT_V2, 0x00200090, 0x0fe000f0, "mla%20's%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
@@ -1414,6 +1414,7 @@ static const struct opcode16 thumb_opcodes[] =
   /* format 17 */
   {ARM_EXT_V4T, 0xDF00, 0xFF00, "svc%c\t%0-7d"},
   /* format 16 */
+  {ARM_EXT_V4T, 0xDE00, 0xFF00, "udf%c\t#%0-7d"},
   {ARM_EXT_V4T, 0xDE00, 0xFE00, UNDEFINED_INSTRUCTION},
   {ARM_EXT_V4T, 0xD000, 0xF000, "b%8-11c.n\t%0-7B%X"},
   /* format 18 */
@@ -1534,6 +1535,7 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V6T2, 0xf3af8003, 0xffffffff, "wfi%c.w"},
   {ARM_EXT_V6T2, 0xf3af8004, 0xffffffff, "sev%c.w"},
   {ARM_EXT_V6T2, 0xf3af8000, 0xffffff00, "nop%c.w\t{%0-7d}"},
+  {ARM_EXT_V6T2, 0xf7f0a000, 0xfff0f000, "udf%c.w\t%H"},
 
   {ARM_EXT_V6T2, 0xf3bf8f2f, 0xffffffff, "clrex%c"},
   {ARM_EXT_V6T2, 0xf3af8400, 0xffffff1f, "cpsie.w\t%7'a%6'i%5'f%X"},
@@ -4052,6 +4054,17 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  imm |= (given & 0x000f0000u) >> 16;
 		  imm |= (given & 0x00000ff0u) >> 0;
 		  imm |= (given & 0x0000000fu) << 12;
+		  func (stream, "#%u", imm);
+		  value_in_comment = imm;
+		}
+		break;
+
+	      case 'H':
+		{
+		  unsigned int imm = 0;
+
+		  imm |= (given & 0x000f0000u) >> 4;
+		  imm |= (given & 0x00000fffu) >> 0;
 		  func (stream, "#%u", imm);
 		  value_in_comment = imm;
 		}

@@ -1,4 +1,4 @@
-#   Copyright 2005-2013 Free Software Foundation, Inc.
+#   Copyright 2005-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,29 +25,26 @@ if {![istarget "*-*-linux*"]} then {
 }
 
 
-set testfile "checkpoint"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+set pi_txt [gdb_remote_download host ${srcdir}/${subdir}/pi.txt]
+if {[is_remote host]} {
+    set copy1_txt copy1.txt
+} else {
+    set copy1_txt [standard_output_file copy1.txt]
+}
+
+if {[prepare_for_testing ${testfile}.exp $testfile $srcfile \
+	 [list debug "additional_flags=-DPI_TXT=\"$pi_txt\" -DCOPY1_TXT=\"$copy1_txt\""]]} {
      untested checkpoint.exp
      return -1
 }
-
-# Start with a fresh gdb
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 global gdb_prompt
 
 #
 # This tests gdb checkpoint and restart.
 #
-
-remote_download host ${srcdir}/${subdir}/pi.txt pi.txt
 
 runto_main
 set break1_loc [gdb_get_line_number "breakpoint 1"]
@@ -153,8 +150,8 @@ gdb_test "restart 0" "Switching to .*breakpoint 2.*" "restart 0 one"
 gdb_breakpoint $break3_loc
 gdb_test "continue" "breakpoint 3.*" "break3 one"
 
-gdb_test "shell diff -s pi.txt copy1.txt" \
-    "Files pi.txt and copy1.txt are identical.*" \
+gdb_test "shell diff -s $pi_txt $copy1_txt" \
+    "Files .*pi.txt and .*copy1.txt are identical.*" \
     "Diff input and output one"
 
 #
@@ -206,8 +203,8 @@ gdb_test "continue 1100" "breakpoint 1.*" "breakpoint 1 7 one"
 gdb_test "step" "if .c == EOF.*" "step in 7 two"
 gdb_test "print lines" " = 1162.*" "verify lines 7 two"
 
-gdb_test "shell diff -s pi.txt copy1.txt" \
-    "Files pi.txt and copy1.txt are identical.*" \
+gdb_test "shell diff -s $pi_txt $copy1_txt" \
+    "Files .*pi.txt and .*copy1.txt are identical.*" \
     "Diff input and output two"
 
 # 
@@ -219,8 +216,8 @@ gdb_test "restart 0" "Switching to .*breakpoint 3.*" "restart 0 one"
 gdb_breakpoint $break4_loc
 gdb_test "continue" "breakpoint 4.*" "break4 one"
 
-gdb_test "shell diff pi.txt copy1.txt" \
-    "diff: copy1.txt: No such file or directory" \
+gdb_test "shell diff $pi_txt $copy1_txt" \
+    "diff: .*copy1.txt: No such file or directory" \
     "delete copy1"
 
 delete_breakpoints
@@ -375,4 +372,4 @@ verbose "Timeout now $timeout sec."
 # Finished: cleanup
 #
 
-remote_exec build "rm -f pi.txt"
+remote_exec host "rm -f $pi_txt"

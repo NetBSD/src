@@ -1,4 +1,4 @@
-# Copyright 1999-2013 Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,12 @@ if [mi_gdb_start separate-inferior-tty] {
 }
 
 standard_testfile basics.c
+# This file was audited to ensure that the explicit references to
+# objdir in it are safe for parallel testing.  Please be sure to
+# maintain this property in any additions.
 set escapedobjdir [string_to_regexp ${objdir}]
-set envirodir [string_to_regexp ${objdir}/${subdir}]
+set testsubdir [standard_output_file ""]
+set envirodir [string_to_regexp $testsubdir]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-basics.exp
@@ -67,13 +71,20 @@ proc test_mi_interpreter_selection {} {
 
 proc test_exec_and_symbol_mi_operatons {} {
     global mi_gdb_prompt
-    global binfile
+    global binfile testfile
+
+    if [is_remote host] {
+	set filename ${testfile}
+	remote_download host ${binfile} ${filename}
+    } else {
+	set filename ${binfile}
+    }
 
     # Load symbols and specify executable on a single operation
     # Tests:
     # -file-exec-and-symbols
 
-    if [mi_gdb_test "-file-exec-and-symbols ${binfile}" "\\\^done" \
+    if [mi_gdb_test "-file-exec-and-symbols ${filename}" "\\\^done" \
        "file-exec-and-symbols operation"] {
 	note "Skipping all other MI tests."
 	return 0
@@ -94,11 +105,11 @@ proc test_exec_and_symbol_mi_operatons {} {
 #            "\\\^done" \
 #            "file-clear operation"
 
-    mi_gdb_test "-file-exec-file ${binfile}" \
+    mi_gdb_test "-file-exec-file ${filename}" \
              "\\\^done" \
              "file-exec-file operation"
 
-    mi_gdb_test "-file-symbol-file ${binfile}" \
+    mi_gdb_test "-file-symbol-file ${filename}" \
              "\\\^done" \
              "file-symbol-file operation"
 
@@ -127,9 +138,8 @@ proc test_breakpoints_deletion {} {
 
 proc test_dir_specification {} {
     global mi_gdb_prompt
-    global objdir
-    global subdir
     global envirodir
+    global testsubdir
 
     # Add to the search directories, display, then reset back to default
     # Tests:
@@ -137,7 +147,7 @@ proc test_dir_specification {} {
     # -environment-directory 
     # -environment-directory -r
 
-    mi_gdb_test "202-environment-directory ${objdir}/${subdir}" \
+    mi_gdb_test "202-environment-directory ${testsubdir}" \
              "202\\\^done,source-path=\"${envirodir}.\\\$cdir.\\\$cwd\"" \
              "environment-directory arg operation"
 
@@ -154,7 +164,6 @@ proc test_cwd_specification {} {
     global mi_gdb_prompt
     global objdir
     global escapedobjdir
-    global subdir
 
     # Change the working directory, then print the current working directory
     # Tests:
@@ -178,8 +187,8 @@ proc test_path_specification {} {
     global mi_gdb_prompt
     global orig_path
     global objdir
-    global subdir
     global escapedobjdir
+    global testsubdir
     global envirodir
     global expect_out
 
@@ -194,13 +203,12 @@ proc test_path_specification {} {
     set orig_path $expect_out(3,string)
 
     set orig_path [string_to_regexp ${orig_path}]
-    set pathdir [string_to_regexp ${objdir}/${subdir}]
 
     mi_gdb_test "207-environment-path" \
              "207\\\^done,path=\"$orig_path\"" \
              "environment-path no-args operation"
 
-    mi_gdb_test "208-environment-path $objdir ${objdir}/${subdir}" \
+    mi_gdb_test "208-environment-path $objdir ${testsubdir}" \
              "208\\\^done,path=\"$escapedobjdir.${envirodir}.$orig_path\"" \
              "environment-path dir1 dir2 operation"
 

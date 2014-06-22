@@ -1,7 +1,7 @@
 #                                                       -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-# Copyright 2002-2013 Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -97,5 +97,5 @@ AC_OUTPUT([Makefile \
   gdb.hp/gdb.defects/Makefile gdb.linespec/Makefile \
   gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile \
   gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile \
-  gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile \
+  gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile \
   gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile])

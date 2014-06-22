@@ -2,7 +2,7 @@
 
 # GDB script to create web ARI page directly from within gdb/ari directory.
 #
-# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+# Copyright (C) 2012-2014 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -55,6 +55,11 @@ if [ -z "${webdir}" ] ; then
 # Use 'branch' subdir name if Tag contains branch
   if [ -f "${srcdir}/gdb/CVS/Tag" ] ; then
     tagname=`cat "${srcdir}/gdb/CVS/Tag"`
+  elif [ -d "${srcdir}/.git" ] ; then
+    tagname=`cd ${srcdir} && git rev-parse --abbrev-ref HEAD`
+    if test "$tagname" = "master"; then
+      tagname=trunk
+    fi
   else
     tagname=trunk
   fi

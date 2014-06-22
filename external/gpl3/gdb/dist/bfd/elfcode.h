@@ -1,7 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 1991-2013 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -73,6 +71,7 @@
 #include "bfdlink.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
+#include "libiberty.h"
 
 /* Renaming structures, typedefs, macros and functions to be size-specific.  */
 #define Elf_External_Ehdr	NAME(Elf,External_Ehdr)
@@ -1804,7 +1803,7 @@ NAME(_bfd_elf,bfd_from_remote_memory)
       bfd_set_error (bfd_error_no_memory);
       return NULL;
     }
-  nbfd->filename = "<in-memory>";
+  nbfd->filename = xstrdup ("<in-memory>");
   nbfd->xvec = templ->xvec;
   bim->size = contents_size;
   bim->buffer = contents;

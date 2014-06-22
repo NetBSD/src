@@ -1,4 +1,4 @@
-# Copyright 1994-2013 Free Software Foundation, Inc.
+# Copyright 1994-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,18 +24,16 @@ if [target_info exists gdb,noinferiorio] {
 }
 
 
-set testfile interrupt
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 set options { debug }
 if { ! [target_info exists gdb,nosignals] } {
     lappend options "additional_flags=-DSIGNALS"
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $options] != "" } {
-     untested interrupt.exp
-     return -1
+if {[build_executable $testfile.exp $testfile $srcfile $options] == -1} {
+    untested $testfile.exp
+    return -1
 }
 
 gdb_start

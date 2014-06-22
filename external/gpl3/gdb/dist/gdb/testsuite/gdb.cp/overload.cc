@@ -97,6 +97,8 @@ class D: C {};
 int bar (A) { return 11; }
 int bar (B) { return 22; }
 
+int intintfunc (int x) { return x; }
+
 int main () 
 {
     char arg2 = 2;

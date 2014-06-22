@@ -3,7 +3,7 @@
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -91,10 +91,10 @@ typedef int (iterate_over_objfiles_in_search_order_cb_ftype)
 extern const struct bfd_arch_info * gdbarch_bfd_arch_info (struct gdbarch *gdbarch);
 /* set_gdbarch_bfd_arch_info() - not applicable - pre-initialized.  */
 
-extern int gdbarch_byte_order (struct gdbarch *gdbarch);
+extern enum bfd_endian gdbarch_byte_order (struct gdbarch *gdbarch);
 /* set_gdbarch_byte_order() - not applicable - pre-initialized.  */
 
-extern int gdbarch_byte_order_for_code (struct gdbarch *gdbarch);
+extern enum bfd_endian gdbarch_byte_order_for_code (struct gdbarch *gdbarch);
 /* set_gdbarch_byte_order_for_code() - not applicable - pre-initialized.  */
 
 extern enum gdb_osabi gdbarch_osabi (struct gdbarch *gdbarch);
@@ -342,8 +342,6 @@ typedef struct type * (gdbarch_register_type_ftype) (struct gdbarch *gdbarch, in
 extern struct type * gdbarch_register_type (struct gdbarch *gdbarch, int reg_nr);
 extern void set_gdbarch_register_type (struct gdbarch *gdbarch, gdbarch_register_type_ftype *register_type);
 
-/* See gdbint.texinfo, and PUSH_DUMMY_CALL. */
-
 extern int gdbarch_dummy_id_p (struct gdbarch *gdbarch);
 
 typedef struct frame_id (gdbarch_dummy_id_ftype) (struct gdbarch *gdbarch, struct frame_info *this_frame);
@@ -355,8 +353,6 @@ extern void set_gdbarch_dummy_id (struct gdbarch *gdbarch, gdbarch_dummy_id_ftyp
 
 extern int gdbarch_deprecated_fp_regnum (struct gdbarch *gdbarch);
 extern void set_gdbarch_deprecated_fp_regnum (struct gdbarch *gdbarch, int deprecated_fp_regnum);
-
-/* See gdbint.texinfo.  See infcall.c. */
 
 extern int gdbarch_push_dummy_call_p (struct gdbarch *gdbarch);
 
@@ -404,7 +400,10 @@ typedef int (gdbarch_cannot_store_register_ftype) (struct gdbarch *gdbarch, int 
 extern int gdbarch_cannot_store_register (struct gdbarch *gdbarch, int regnum);
 extern void set_gdbarch_cannot_store_register (struct gdbarch *gdbarch, gdbarch_cannot_store_register_ftype *cannot_store_register);
 
-/* setjmp/longjmp support. */
+/* Determine the address where a longjmp will land and save this address
+   in PC.  Return nonzero on success.
+  
+   FRAME corresponds to the longjmp frame. */
 
 extern int gdbarch_get_longjmp_target_p (struct gdbarch *gdbarch);
 
@@ -766,6 +765,15 @@ typedef LONGEST (gdbarch_core_xfer_shared_libraries_ftype) (struct gdbarch *gdba
 extern LONGEST gdbarch_core_xfer_shared_libraries (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, LONGEST len);
 extern void set_gdbarch_core_xfer_shared_libraries (struct gdbarch *gdbarch, gdbarch_core_xfer_shared_libraries_ftype *core_xfer_shared_libraries);
 
+/* Read offset OFFSET of TARGET_OBJECT_LIBRARIES_AIX formatted shared
+   libraries list from core file into buffer READBUF with length LEN. */
+
+extern int gdbarch_core_xfer_shared_libraries_aix_p (struct gdbarch *gdbarch);
+
+typedef LONGEST (gdbarch_core_xfer_shared_libraries_aix_ftype) (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, LONGEST len);
+extern LONGEST gdbarch_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, LONGEST len);
+extern void set_gdbarch_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch, gdbarch_core_xfer_shared_libraries_aix_ftype *core_xfer_shared_libraries_aix);
+
 /* How the core target converts a PTID from a core file to a string. */
 
 extern int gdbarch_core_pid_to_str_p (struct gdbarch *gdbarch);
@@ -984,6 +992,20 @@ typedef enum gdb_signal (gdbarch_gdb_signal_from_target_ftype) (struct gdbarch *
 extern enum gdb_signal gdbarch_gdb_signal_from_target (struct gdbarch *gdbarch, int signo);
 extern void set_gdbarch_gdb_signal_from_target (struct gdbarch *gdbarch, gdbarch_gdb_signal_from_target_ftype *gdb_signal_from_target);
 
+/* Signal translation: translate the GDB's internal signal number into
+   the inferior's signal (target's) representation.  The implementation
+   of this method must be host independent.  IOW, don't rely on symbols
+   of the NAT_FILE header (the nm-*.h files), the host <signal.h>
+   header, or similar headers.
+   Return the target signal number if found, or -1 if the GDB internal
+   signal number is invalid. */
+
+extern int gdbarch_gdb_signal_to_target_p (struct gdbarch *gdbarch);
+
+typedef int (gdbarch_gdb_signal_to_target_ftype) (struct gdbarch *gdbarch, enum gdb_signal signal);
+extern int gdbarch_gdb_signal_to_target (struct gdbarch *gdbarch, enum gdb_signal signal);
+extern void set_gdbarch_gdb_signal_to_target (struct gdbarch *gdbarch, gdbarch_gdb_signal_to_target_ftype *gdb_signal_to_target);
+
 /* Extra signal info inspection.
   
    Return a type suitable to inspect extra signal information. */
@@ -1012,37 +1034,42 @@ extern LONGEST gdbarch_get_syscall_number (struct gdbarch *gdbarch, ptid_t ptid)
 extern void set_gdbarch_get_syscall_number (struct gdbarch *gdbarch, gdbarch_get_syscall_number_ftype *get_syscall_number);
 
 /* SystemTap related fields and functions.
-   Prefix used to mark an integer constant on the architecture's assembly
+   A NULL-terminated array of prefixes used to mark an integer constant
+   on the architecture's assembly.
    For example, on x86 integer constants are written as:
   
     $10 ;; integer constant 10
   
    in this case, this prefix would be the character `$'. */
 
-extern const char * gdbarch_stap_integer_prefix (struct gdbarch *gdbarch);
-extern void set_gdbarch_stap_integer_prefix (struct gdbarch *gdbarch, const char * stap_integer_prefix);
+extern const char *const * gdbarch_stap_integer_prefixes (struct gdbarch *gdbarch);
+extern void set_gdbarch_stap_integer_prefixes (struct gdbarch *gdbarch, const char *const * stap_integer_prefixes);
 
-/* Suffix used to mark an integer constant on the architecture's assembly. */
+/* A NULL-terminated array of suffixes used to mark an integer constant
+   on the architecture's assembly. */
 
-extern const char * gdbarch_stap_integer_suffix (struct gdbarch *gdbarch);
-extern void set_gdbarch_stap_integer_suffix (struct gdbarch *gdbarch, const char * stap_integer_suffix);
+extern const char *const * gdbarch_stap_integer_suffixes (struct gdbarch *gdbarch);
+extern void set_gdbarch_stap_integer_suffixes (struct gdbarch *gdbarch, const char *const * stap_integer_suffixes);
 
-/* Prefix used to mark a register name on the architecture's assembly.
+/* A NULL-terminated array of prefixes used to mark a register name on
+   the architecture's assembly.
    For example, on x86 the register name is written as:
   
     %eax ;; register eax
   
    in this case, this prefix would be the character `%'. */
 
-extern const char * gdbarch_stap_register_prefix (struct gdbarch *gdbarch);
-extern void set_gdbarch_stap_register_prefix (struct gdbarch *gdbarch, const char * stap_register_prefix);
+extern const char *const * gdbarch_stap_register_prefixes (struct gdbarch *gdbarch);
+extern void set_gdbarch_stap_register_prefixes (struct gdbarch *gdbarch, const char *const * stap_register_prefixes);
 
-/* Suffix used to mark a register name on the architecture's assembly */
+/* A NULL-terminated array of suffixes used to mark a register name on
+   the architecture's assembly. */
 
-extern const char * gdbarch_stap_register_suffix (struct gdbarch *gdbarch);
-extern void set_gdbarch_stap_register_suffix (struct gdbarch *gdbarch, const char * stap_register_suffix);
+extern const char *const * gdbarch_stap_register_suffixes (struct gdbarch *gdbarch);
+extern void set_gdbarch_stap_register_suffixes (struct gdbarch *gdbarch, const char *const * stap_register_suffixes);
 
-/* Prefix used to mark a register indirection on the architecture's assembly.
+/* A NULL-terminated array of prefixes used to mark a register
+   indirection on the architecture's assembly.
    For example, on x86 the register indirection is written as:
   
     (%eax) ;; indirecting eax
@@ -1052,10 +1079,11 @@ extern void set_gdbarch_stap_register_suffix (struct gdbarch *gdbarch, const cha
    Please note that we use the indirection prefix also for register
    displacement, e.g., `4(%eax)' on x86. */
 
-extern const char * gdbarch_stap_register_indirection_prefix (struct gdbarch *gdbarch);
-extern void set_gdbarch_stap_register_indirection_prefix (struct gdbarch *gdbarch, const char * stap_register_indirection_prefix);
+extern const char *const * gdbarch_stap_register_indirection_prefixes (struct gdbarch *gdbarch);
+extern void set_gdbarch_stap_register_indirection_prefixes (struct gdbarch *gdbarch, const char *const * stap_register_indirection_prefixes);
 
-/* Suffix used to mark a register indirection on the architecture's assembly.
+/* A NULL-terminated array of suffixes used to mark a register
+   indirection on the architecture's assembly.
    For example, on x86 the register indirection is written as:
   
     (%eax) ;; indirecting eax
@@ -1065,10 +1093,10 @@ extern void set_gdbarch_stap_register_indirection_prefix (struct gdbarch *gdbarc
    Please note that we use the indirection suffix also for register
    displacement, e.g., `4(%eax)' on x86. */
 
-extern const char * gdbarch_stap_register_indirection_suffix (struct gdbarch *gdbarch);
-extern void set_gdbarch_stap_register_indirection_suffix (struct gdbarch *gdbarch, const char * stap_register_indirection_suffix);
+extern const char *const * gdbarch_stap_register_indirection_suffixes (struct gdbarch *gdbarch);
+extern void set_gdbarch_stap_register_indirection_suffixes (struct gdbarch *gdbarch, const char *const * stap_register_indirection_suffixes);
 
-/* Prefix used to name a register using GDB's nomenclature.
+/* Prefix(es) used to name a register using GDB's nomenclature.
   
    For example, on PPC a register is represented by a number in the assembly
    language (e.g., `10' is the 10th general-purpose register).  However,
@@ -1314,9 +1342,9 @@ struct gdbarch_info
   const struct bfd_arch_info *bfd_arch_info;
 
   /* Use default: BFD_ENDIAN_UNKNOWN (NB: is not ZERO).  */
-  int byte_order;
+  enum bfd_endian byte_order;
 
-  int byte_order_for_code;
+  enum bfd_endian byte_order_for_code;
 
   /* Use default: NULL (ZERO).  */
   bfd *abfd;

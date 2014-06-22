@@ -1,4 +1,4 @@
-# Copyright 2007-2013 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,36 +29,19 @@
 # reading in effect, GDB can set breakpoints by line number
 # successfully in either compilation unit.  
 
-set testfile expand-psymtabs
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-set binfile_1 ${objdir}/${subdir}/${testfile}_1.o
-set binfile_2 ${objdir}/${subdir}/${testfile}_2.o
+standard_testfile
 
 # What compiler are we using?
 if [get_compiler_info] {
     return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile_1}" object {debug additional_flags=-DFIRST} ] != "" } {
-     untested expand-psymtabs.exp
-     return -1
+# We intentionally compile the source file in twice.
+if {[prepare_for_testing_full $testfile.exp \
+	 [list $testfile debug $srcfile {debug additional_flags=-DFIRST} \
+	      $srcfile debug]]} {
+    return -1
 }
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile_2}" object {debug}] != "" } {
-     untested expand-psymtabs.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile_1} ${binfile_2}" "${binfile}" executable {debug}] != "" } {
-     untested expand-psymtabs.exp
-     return -1
-}
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 set foo_bp [gdb_get_line_number "Break here"]
 gdb_test "break $foo_bp" "Breakpoint.*" "Expand psymtabs"
