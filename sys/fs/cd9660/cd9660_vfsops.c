@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.87 2014/06/16 09:55:49 hannken Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.88 2014/06/22 09:47:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.87 2014/06/16 09:55:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.88 2014/06/22 09:47:40 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -746,8 +746,7 @@ cd9660_loadvnode(struct mount *mp, struct vnode *vp,
 
 	if (off + isonum_711(isodir->length) > imp->logical_block_size) {
 		pool_put(&cd9660_node_pool, ip);
-		if (bp != 0)
-			brelse(bp, 0);
+		brelse(bp, 0);
 		printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
 		    off +isonum_711(isodir->length), off,
 		    isonum_711(isodir->length));
@@ -800,8 +799,7 @@ cd9660_loadvnode(struct mount *mp, struct vnode *vp,
 		break;
 	}
 
-	if (bp != 0)
-		brelse(bp, 0);
+	brelse(bp, 0);
 
 	/*
 	 * Initialize the associated vnode
