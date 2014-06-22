@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.407 2014/04/25 18:04:45 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.408 2014/06/22 17:23:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.407 2014/04/25 18:04:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.408 2014/06/22 17:23:34 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -339,8 +339,8 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 		return error;
 	epp->ep_vp = vp = nd.ni_vp;
 	/* normally this can't fail */
-	if ((error = copystr(nd.ni_pnbuf, epp->ep_resolvedname, PATH_MAX, NULL)))
-		goto bad1;
+	error = copystr(nd.ni_pnbuf, epp->ep_resolvedname, PATH_MAX, NULL);
+	KASSERT(error == 0);
 
 #ifdef DIAGNOSTIC
 	/* paranoia (take this out once namei stuff stabilizes) */
