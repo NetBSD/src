@@ -1,6 +1,6 @@
 /* ELF executable support for BFD.
 
-   Copyright 1993-2013 Free Software Foundation, Inc.
+   Copyright 1993-2014 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1117,13 +1117,17 @@ _bfd_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
 
-  BFD_ASSERT (!elf_flags_init (obfd)
-	      || (elf_elfheader (obfd)->e_flags
-		  == elf_elfheader (ibfd)->e_flags));
+  if (!elf_flags_init (obfd))
+    {
+      elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
+      elf_flags_init (obfd) = TRUE;
+    }
 
   elf_gp (obfd) = elf_gp (ibfd);
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
+
+  /* Also copy the EI_OSABI field.  */
+  elf_elfheader (obfd)->e_ident[EI_OSABI] =
+    elf_elfheader (ibfd)->e_ident[EI_OSABI];
 
   /* Copy object attributes.  */
   _bfd_elf_copy_obj_attributes (ibfd, obfd);
@@ -2521,7 +2525,7 @@ _bfd_elf_single_rel_hdr (asection *sec)
    USE_RELA_P is TRUE, we use RELA relocations; otherwise, we use REL
    relocations.  */
 
-bfd_boolean
+static bfd_boolean
 _bfd_elf_init_reloc_shdr (bfd *abfd,
 			  struct bfd_elf_section_reloc_data *reldata,
 			  asection *asect,
@@ -3071,11 +3075,13 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	{
 	  d->rel.hdr->sh_link = elf_onesymtab (abfd);
 	  d->rel.hdr->sh_info = d->this_idx;
+	  d->rel.hdr->sh_flags |= SHF_INFO_LINK;
 	}
       if (d->rela.idx != 0)
 	{
 	  d->rela.hdr->sh_link = elf_onesymtab (abfd);
 	  d->rela.hdr->sh_info = d->this_idx;
+	  d->rela.hdr->sh_flags |= SHF_INFO_LINK;
 	}
 
       /* We need to set up sh_link for SHF_LINK_ORDER.  */
@@ -3162,7 +3168,10 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	    name += 5;
 	  s = bfd_get_section_by_name (abfd, name);
 	  if (s != NULL)
-	    d->this_hdr.sh_info = elf_section_data (s)->this_idx;
+	    {
+	      d->this_hdr.sh_info = elf_section_data (s)->this_idx;
+	      d->this_hdr.sh_flags |= SHF_INFO_LINK;
+	    }
 	  break;
 
 	case SHT_STRTAB:
@@ -3453,8 +3462,7 @@ _bfd_elf_compute_section_file_positions (bfd *abfd,
     return FALSE;
 
   /* Post process the headers if necessary.  */
-  if (bed->elf_backend_post_process_headers)
-    (*bed->elf_backend_post_process_headers) (abfd, link_info);
+  (*bed->elf_backend_post_process_headers) (abfd, link_info);
 
   fsargs.failed = FALSE;
   fsargs.link_info = link_info;
@@ -4305,6 +4313,9 @@ elf_sort_sections (const void *arg1, const void *arg2)
 static file_ptr
 vma_page_aligned_bias (bfd_vma vma, ufile_ptr off, bfd_vma maxpagesize)
 {
+  /* PR binutils/16199: Handle an alignment of zero.  */
+  if (maxpagesize == 0)
+    maxpagesize = 1;
   return ((vma - off) % maxpagesize);
 }
 
@@ -5150,6 +5161,27 @@ assign_file_positions_except_relocs (bfd *abfd,
 	{
 	  if (!(*bed->elf_backend_modify_program_headers) (abfd, link_info))
 	    return FALSE;
+	}
+
+      /* Set e_type in ELF header to ET_EXEC for -pie -Ttext-segment=.  */
+      if (link_info != NULL
+	  && link_info->executable
+	  && link_info->shared)
+	{
+	  unsigned int num_segments = elf_elfheader (abfd)->e_phnum;
+	  Elf_Internal_Phdr *segment = elf_tdata (abfd)->phdr;
+	  Elf_Internal_Phdr *end_segment = &segment[num_segments];
+
+	  /* Find the lowest p_vaddr in PT_LOAD segments.  */
+	  bfd_vma p_vaddr = (bfd_vma) -1;
+	  for (; segment < end_segment; segment++)
+	    if (segment->p_type == PT_LOAD && p_vaddr > segment->p_vaddr)
+	      p_vaddr = segment->p_vaddr;
+
+	  /* Set e_type to ET_EXEC if the lowest p_vaddr in PT_LOAD
+	     segments is non-zero.  */
+	  if (p_vaddr)
+	    i_ehdrp->e_type = ET_EXEC;
 	}
 
       /* Write out the program headers.  */
@@ -6226,11 +6258,12 @@ copy_elf_program_header (bfd *ibfd, bfd *obfd)
 	      if (ELF_SECTION_IN_SEGMENT (this_hdr, segment))
 		{
 		  map->sections[isec++] = section->output_section;
-		  if (section->lma < lowest_section->lma)
-		    lowest_section = section;
 		  if ((section->flags & SEC_ALLOC) != 0)
 		    {
 		      bfd_vma seg_off;
+
+		      if (section->lma < lowest_section->lma)
+			lowest_section = section;
 
 		      /* Section lmas are set up from PT_LOAD header
 			 p_paddr in _bfd_elf_make_section_from_shdr.
@@ -9773,7 +9806,9 @@ bfd_get_elf_phdrs (bfd *abfd, void *phdrs)
 }
 
 enum elf_reloc_type_class
-_bfd_elf_reloc_type_class (const Elf_Internal_Rela *rela ATTRIBUTE_UNUSED)
+_bfd_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			   const asection *rel_sec ATTRIBUTE_UNUSED,
+			   const Elf_Internal_Rela *rela ATTRIBUTE_UNUSED)
 {
   return reloc_class_normal;
 }
@@ -10005,8 +10040,8 @@ asection _bfd_elf_large_com_section
 		      SEC_IS_COMMON, NULL, "LARGE_COMMON", 0);
 
 void
-_bfd_elf_set_osabi (bfd * abfd,
-		    struct bfd_link_info * link_info ATTRIBUTE_UNUSED)
+_bfd_elf_post_process_headers (bfd * abfd,
+			       struct bfd_link_info * link_info ATTRIBUTE_UNUSED)
 {
   Elf_Internal_Ehdr * i_ehdrp;	/* ELF file header, internal form.  */
 
