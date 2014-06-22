@@ -1,6 +1,6 @@
 /* Target-dependent code for the HP PA-RISC architecture.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -725,7 +725,7 @@ hppa32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  struct type *type = check_typedef (value_type (arg));
 	  /* The corresponding parameter that is pushed onto the
 	     stack, and [possibly] passed in a register.  */
-	  char param_val[8];
+	  gdb_byte param_val[8];
 	  int param_len;
 	  memset (param_val, 0, sizeof param_val);
 	  if (TYPE_LENGTH (type) > 8)
@@ -928,7 +928,7 @@ hppa64_convert_code_addr_to_fptr (struct gdbarch *gdbarch, CORE_ADDR code)
 	   addr += 2 * 8)
 	{
 	  ULONGEST opdaddr;
-	  char tmp[8];
+	  gdb_byte tmp[8];
 
 	  if (target_read_memory (addr, tmp, sizeof (tmp)))
 	      break;
@@ -2417,7 +2417,7 @@ hppa_stub_unwind_sniffer (const struct frame_unwind *self,
 
   if (pc == 0
       || (tdep->in_solib_call_trampoline != NULL
-	  && tdep->in_solib_call_trampoline (gdbarch, pc, NULL))
+	  && tdep->in_solib_call_trampoline (gdbarch, pc))
       || gdbarch_in_solib_return_trampoline (gdbarch, pc, NULL))
     return 1;
   return 0;
@@ -2855,13 +2855,12 @@ hppa_in_dyncall (CORE_ADDR pc)
 }
 
 int
-hppa_in_solib_call_trampoline (struct gdbarch *gdbarch,
-			       CORE_ADDR pc, char *name)
+hppa_in_solib_call_trampoline (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   unsigned int insn[HPPA_MAX_INSN_PATTERN_LEN];
   struct unwind_table_entry *u;
 
-  if (in_plt_section (pc, name) || hppa_in_dyncall (pc))
+  if (in_plt_section (pc) || hppa_in_dyncall (pc))
     return 1;
 
   /* The GNU toolchain produces linker stubs without unwind
@@ -2918,13 +2917,13 @@ hppa_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
       /* fallthrough */
     }
 
-  if (in_plt_section (pc, NULL))
+  if (in_plt_section (pc))
     {
       pc = read_memory_typed_address (pc, func_ptr_type);
 
       /* If the PLT slot has not yet been resolved, the target will be
          the PLT stub.  */
-      if (in_plt_section (pc, NULL))
+      if (in_plt_section (pc))
 	{
 	  /* Sanity check: are we pointing to the PLT stub?  */
   	  if (!hppa_match_insns (gdbarch, pc, hppa_plt_stub, insn))

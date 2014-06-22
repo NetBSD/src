@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -97,7 +97,7 @@ bsd_kvm_open (char *filename, int from_tty)
   core_kd = temp_kd;
   push_target (&bsd_kvm_ops);
 
-  inf = add_inferior_silent (PIDGET(bsd_kvm_ptid));
+  inf = add_inferior_silent (ptid_get_pid(bsd_kvm_ptid));
   inf->aspace = maybe_new_address_space ();
   inf->pspace = add_program_space (inf->aspace);
 
@@ -107,11 +107,11 @@ bsd_kvm_open (char *filename, int from_tty)
   target_fetch_registers (get_current_regcache (), -1);
 
   reinit_frame_cache ();
-  print_stack_frame (get_selected_frame (NULL), -1, 1);
+  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
 }
 
 static void
-bsd_kvm_close (int quitting)
+bsd_kvm_close (void)
 {
   if (core_kd)
     {
@@ -314,7 +314,7 @@ bsd_kvm_proc_cmd (char *arg, int fromtty)
   target_fetch_registers (get_current_regcache (), -1);
 
   reinit_frame_cache ();
-  print_stack_frame (get_selected_frame (NULL), -1, 1);
+  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
 }
 
 #endif
@@ -334,7 +334,7 @@ bsd_kvm_pcb_cmd (char *arg, int fromtty)
   target_fetch_registers (get_current_regcache (), -1);
 
   reinit_frame_cache ();
-  print_stack_frame (get_selected_frame (NULL), -1, 1);
+  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
 }
 
 static int
