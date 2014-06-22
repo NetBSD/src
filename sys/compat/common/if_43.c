@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.5 2014/05/18 14:46:15 rmind Exp $	*/
+/*	$NetBSD: if_43.c,v 1.6 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.5 2014/05/18 14:46:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.6 2014/06/22 08:10:18 rtr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -256,7 +256,7 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 		cmd = SIOCGIFNETMASK;
 	}
 
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so, PRU_CONTROL,
+	error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
 	    (struct mbuf *)cmd, (struct mbuf *)ifr, (struct mbuf *)ifp, l);
 
 	switch (ocmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.177 2014/05/22 00:28:32 rmind Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.178 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.177 2014/05/22 00:28:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.178 2014/06/22 08:10:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -179,25 +179,9 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_CONTROL);
 
 	family = so->so_proto->pr_domain->dom_family;
-
-	if (req == PRU_CONTROL) {
-		switch (family) {
-#ifdef INET
-		case PF_INET:
-			return (in_control(so, (long)m, (void *)nam,
-			    (struct ifnet *)control, l));
-#endif
-#ifdef INET6
-		case PF_INET6:
-			return (in6_control(so, (long)m, (void *)nam,
-			    (struct ifnet *)control, l));
-#endif
-		default:
-			return EAFNOSUPPORT;
-		}
-	}
 
 	s = splsoftnet();
 
@@ -956,6 +940,26 @@ tcp_detach(struct socket *so)
 	KASSERT(tp != NULL);
 	(void)tcp_disconnect(tp);
 	splx(s);
+}
+
+static int
+tcp_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
+	case PF_INET:
+		return (in_control(so, (long)m, (void *)nam,
+		    (struct ifnet *)control, l));
+#endif
+#ifdef INET6
+	case PF_INET6:
+		return (in6_control(so, (long)m, (void *)nam,
+		    (struct ifnet *)control, l));
+#endif
+	default:
+		return EAFNOSUPPORT;
+	}
 }
 
 /*
@@ -2194,10 +2198,12 @@ tcp_usrreq_init(void)
 PR_WRAP_USRREQS(tcp)
 #define	tcp_attach	tcp_attach_wrapper
 #define	tcp_detach	tcp_detach_wrapper
+#define	tcp_ioctl	tcp_ioctl_wrapper
 #define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {
 	.pr_attach	= tcp_attach,
 	.pr_detach	= tcp_detach,
+	.pr_ioctl	= tcp_ioctl,
 	.pr_generic	= tcp_usrreq,
 };
