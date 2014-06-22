@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.118 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.119 2014/06/22 08:10:19 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.118 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.119 2014/06/22 08:10:19 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -644,6 +644,14 @@ rip6_detach(struct socket *so)
 	in6_pcbdetach(in6p);
 }
 
+static int
+rip6_ioctl(struct socket *so, struct mbuf *m, 
+	struct mbuf *nam, struct mbuf *control, struct lwp *l)
+{
+	return in6_control(so, (u_long)m, (void *)nam,
+	    (struct ifnet *)control, l);
+}
+
 int
 rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
 	struct mbuf *nam, struct mbuf *control, struct lwp *l)
@@ -651,9 +659,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int error = 0;
 
-	if (req == PRU_CONTROL)
-		return in6_control(so, (u_long)m, (void *)nam,
-		    (struct ifnet *)control, l);
+	KASSERT(req != PRU_CONTROL);
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -896,10 +902,12 @@ sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 PR_WRAP_USRREQS(rip6)
 #define	rip6_attach		rip6_attach_wrapper
 #define	rip6_detach		rip6_detach_wrapper
+#define	rip6_ioctl		rip6_ioctl_wrapper
 #define	rip6_usrreq		rip6_usrreq_wrapper
 
 const struct pr_usrreqs rip6_usrreqs = {
 	.pr_attach	= rip6_attach,
 	.pr_detach	= rip6_detach,
+	.pr_ioctl	= rip6_ioctl,
 	.pr_generic	= rip6_usrreq,
 };
