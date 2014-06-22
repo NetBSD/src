@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.44 2014/05/20 19:04:00 rmind Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.45 2014/06/22 08:10:18 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.44 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.45 2014/06/22 08:10:18 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -84,12 +84,10 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_CONTROL);
+
 	ddp = sotoddpcb(so);
 
-	if (req == PRU_CONTROL) {
-		return (at_control((long) m, (void *) addr,
-		    (struct ifnet *) rights, l));
-	}
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
 		at_purgeif((struct ifnet *) rights);
@@ -480,6 +478,14 @@ ddp_detach(struct socket *so)
 	kmem_free(ddp, sizeof(*ddp));
 }
 
+static int
+ddp_ioctl(struct socket *so, struct mbuf *m, struct mbuf *addr,
+    struct mbuf *rights, struct lwp *l)
+{
+	return (at_control((long) m, (void *) addr,
+	    (struct ifnet *) rights, l));
+}
+
 /*
  * For the moment, this just find the pcb with the correct local address.
  * In the future, this will actually do some real searching, so we can use
@@ -553,11 +559,13 @@ ddp_init(void)
 PR_WRAP_USRREQS(ddp)
 #define	ddp_attach	ddp_attach_wrapper
 #define	ddp_detach	ddp_detach_wrapper
+#define	ddp_ioctl	ddp_ioctl_wrapper
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
 	.pr_attach	= ddp_attach,
 	.pr_detach	= ddp_detach,
+	.pr_ioctl	= ddp_ioctl,
 	.pr_generic	= ddp_usrreq,
 };
 

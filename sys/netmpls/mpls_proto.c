@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.9 2014/05/20 19:04:00 rmind Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.10 2014/06/22 08:10:19 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.9 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.10 2014/06/22 08:10:19 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -92,6 +92,13 @@ mpls_attach(struct socket *so, int proto)
 static void
 mpls_detach(struct socket *so)
 {
+}
+
+static int
+mpls_ioctl(struct socket *so, struct mbuf *m,
+    struct mbuf *nam, struct mbuf *control, struct lwp *l)
+{
+	return EOPNOTSUPP;
 }
 
 static int
@@ -185,11 +192,13 @@ DOMAIN_DEFINE(mplsdomain);
 PR_WRAP_USRREQS(mpls)
 #define	mpls_attach	mpls_attach_wrapper
 #define	mpls_detach	mpls_detach_wrapper
+#define	mpls_ioctl	mpls_ioctl_wrapper
 #define	mpls_usrreq	mpls_usrreq_wrapper
 
 static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_attach	= mpls_attach,
 	.pr_detach	= mpls_detach,
+	.pr_ioctl	= mpls_ioctl,
 	.pr_generic	= mpls_usrreq,
 };
 
