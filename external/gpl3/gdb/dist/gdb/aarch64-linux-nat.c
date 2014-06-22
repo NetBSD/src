@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -54,10 +54,10 @@
 static int
 get_thread_id (ptid_t ptid)
 {
-  int tid = TIDGET (ptid);
+  int tid = ptid_get_lwp (ptid);
 
   if (0 == tid)
-    tid = PIDGET (ptid);
+    tid = ptid_get_pid (ptid);
   return tid;
 }
 
@@ -312,11 +312,15 @@ aarch64_linux_set_debug_regs (const struct aarch64_debug_reg_state *state,
   const CORE_ADDR *addr;
   const unsigned int *ctrl;
 
+  memset (&regs, 0, sizeof (regs));
   iov.iov_base = &regs;
-  iov.iov_len = sizeof (regs);
   count = watchpoint ? aarch64_num_wp_regs : aarch64_num_bp_regs;
   addr = watchpoint ? state->dr_addr_wp : state->dr_addr_bp;
   ctrl = watchpoint ? state->dr_ctrl_wp : state->dr_ctrl_bp;
+  if (count == 0)
+    return;
+  iov.iov_len = (offsetof (struct user_hwdebug_state, dbg_regs[count - 1])
+		 + sizeof (regs.dbg_regs [count - 1]));
 
   for (i = 0; i < count; i++)
     {
@@ -682,7 +686,7 @@ aarch64_linux_prepare_to_resume (struct lwp_info *lwp)
   if (DR_HAS_CHANGED (info->dr_changed_bp)
       || DR_HAS_CHANGED (info->dr_changed_wp))
     {
-      int tid = GET_LWP (lwp->ptid);
+      int tid = ptid_get_lwp (lwp->ptid);
       struct aarch64_debug_reg_state *state
 	= aarch64_get_debug_reg_state (ptid_get_pid (lwp->ptid));
 

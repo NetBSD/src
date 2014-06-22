@@ -1,3 +1,15 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	* configure: Rebuild.
+
 2012-06-19  Joel Brobecker  <brobecker@adacore.com>
 
 	* interp.c: #include "config.h" instead of "sysdep.h".

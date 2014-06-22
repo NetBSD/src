@@ -428,6 +428,37 @@
 /* end mn10300 sys target macros */
 #endif
 #endif
+#ifdef NL_TARGET_msp430
+#ifdef sys_defs
+/* from syscall.h */
+/* begin msp430 sys target macros */
+ { "SYS_argc", 22 },
+ { "SYS_argn", 24 },
+ { "SYS_argnlen", 23 },
+ { "SYS_argv", 13 },
+ { "SYS_argvlen", 12 },
+ { "SYS_chdir", 14 },
+ { "SYS_chmod", 16 },
+ { "SYS_close", 3 },
+ { "SYS_exit", 1 },
+ { "SYS_fstat", 10 },
+ { "SYS_getpid", 8 },
+ { "SYS_gettimeofday", 19 },
+ { "SYS_kill", 9 },
+ { "SYS_link", 21 },
+ { "SYS_lseek", 6 },
+ { "SYS_open", 2 },
+ { "SYS_read", 4 },
+ { "SYS_reconfig", 25 },
+ { "SYS_stat", 15 },
+ { "SYS_time", 18 },
+ { "SYS_times", 20 },
+ { "SYS_unlink", 7 },
+ { "SYS_utime", 17 },
+ { "SYS_write", 5 },
+/* end msp430 sys target macros */
+#endif
+#endif
 #ifdef NL_TARGET_sparc
 #ifdef sys_defs
 /* from syscall.h */

@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Alpha.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #include "defs.h"
 #include "frame.h"
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "osabi.h"
 #include "solib-svr4.h"
 #include "symtab.h"
@@ -27,6 +27,35 @@
 #include "regcache.h"
 #include "linux-tdep.h"
 #include "alpha-tdep.h"
+
+/* This enum represents the signals' numbers on the Alpha
+   architecture.  It just contains the signal definitions which are
+   different from the generic implementation.
+
+   It is derived from the file <arch/alpha/include/uapi/asm/signal.h>,
+   from the Linux kernel tree.  */
+
+enum
+  {
+    /* SIGABRT is the same as in the generic implementation, but is
+       defined here because SIGIOT depends on it.  */
+    ALPHA_LINUX_SIGABRT = 6,
+    ALPHA_LINUX_SIGEMT = 7,
+    ALPHA_LINUX_SIGBUS = 10,
+    ALPHA_LINUX_SIGSYS = 12,
+    ALPHA_LINUX_SIGURG = 16,
+    ALPHA_LINUX_SIGSTOP = 17,
+    ALPHA_LINUX_SIGTSTP = 18,
+    ALPHA_LINUX_SIGCONT = 19,
+    ALPHA_LINUX_SIGCHLD = 20,
+    ALPHA_LINUX_SIGIO = 23,
+    ALPHA_LINUX_SIGINFO = 29,
+    ALPHA_LINUX_SIGUSR1 = 30,
+    ALPHA_LINUX_SIGUSR2 = 31,
+    ALPHA_LINUX_SIGPOLL = ALPHA_LINUX_SIGIO,
+    ALPHA_LINUX_SIGPWR = ALPHA_LINUX_SIGINFO,
+    ALPHA_LINUX_SIGIOT = ALPHA_LINUX_SIGABRT,
+  };
 
 /* Under GNU/Linux, signal handler invocations can be identified by
    the designated code sequence that is used to return from a signal
@@ -205,6 +234,114 @@ alpha_linux_regset_from_core_section (struct gdbarch *gdbarch,
   return NULL;
 }
 
+/* Implementation of `gdbarch_gdb_signal_from_target', as defined in
+   gdbarch.h.  */
+
+static enum gdb_signal
+alpha_linux_gdb_signal_from_target (struct gdbarch *gdbarch,
+				    int signal)
+{
+  switch (signal)
+    {
+    case ALPHA_LINUX_SIGEMT:
+      return GDB_SIGNAL_EMT;
+
+    case ALPHA_LINUX_SIGBUS:
+      return GDB_SIGNAL_BUS;
+
+    case ALPHA_LINUX_SIGSYS:
+      return GDB_SIGNAL_SYS;
+
+    case ALPHA_LINUX_SIGURG:
+      return GDB_SIGNAL_URG;
+
+    case ALPHA_LINUX_SIGSTOP:
+      return GDB_SIGNAL_STOP;
+
+    case ALPHA_LINUX_SIGTSTP:
+      return GDB_SIGNAL_TSTP;
+
+    case ALPHA_LINUX_SIGCONT:
+      return GDB_SIGNAL_CONT;
+
+    case ALPHA_LINUX_SIGCHLD:
+      return GDB_SIGNAL_CHLD;
+
+    /* No way to differentiate between SIGIO and SIGPOLL.
+       Therefore, we just handle the first one.  */
+    case ALPHA_LINUX_SIGIO:
+      return GDB_SIGNAL_IO;
+
+    /* No way to differentiate between SIGINFO and SIGPWR.
+       Therefore, we just handle the first one.  */
+    case ALPHA_LINUX_SIGINFO:
+      return GDB_SIGNAL_INFO;
+
+    case ALPHA_LINUX_SIGUSR1:
+      return GDB_SIGNAL_USR1;
+
+    case ALPHA_LINUX_SIGUSR2:
+      return GDB_SIGNAL_USR2;
+    }
+
+  return linux_gdb_signal_from_target (gdbarch, signal);
+}
+
+/* Implementation of `gdbarch_gdb_signal_to_target', as defined in
+   gdbarch.h.  */
+
+static int
+alpha_linux_gdb_signal_to_target (struct gdbarch *gdbarch,
+				  enum gdb_signal signal)
+{
+  switch (signal)
+    {
+    case GDB_SIGNAL_EMT:
+      return ALPHA_LINUX_SIGEMT;
+
+    case GDB_SIGNAL_BUS:
+      return ALPHA_LINUX_SIGBUS;
+
+    case GDB_SIGNAL_SYS:
+      return ALPHA_LINUX_SIGSYS;
+
+    case GDB_SIGNAL_URG:
+      return ALPHA_LINUX_SIGURG;
+
+    case GDB_SIGNAL_STOP:
+      return ALPHA_LINUX_SIGSTOP;
+
+    case GDB_SIGNAL_TSTP:
+      return ALPHA_LINUX_SIGTSTP;
+
+    case GDB_SIGNAL_CONT:
+      return ALPHA_LINUX_SIGCONT;
+
+    case GDB_SIGNAL_CHLD:
+      return ALPHA_LINUX_SIGCHLD;
+
+    case GDB_SIGNAL_IO:
+      return ALPHA_LINUX_SIGIO;
+
+    case GDB_SIGNAL_INFO:
+      return ALPHA_LINUX_SIGINFO;
+
+    case GDB_SIGNAL_USR1:
+      return ALPHA_LINUX_SIGUSR1;
+
+    case GDB_SIGNAL_USR2:
+      return ALPHA_LINUX_SIGUSR2;
+
+    case GDB_SIGNAL_POLL:
+      return ALPHA_LINUX_SIGPOLL;
+
+    case GDB_SIGNAL_PWR:
+      return ALPHA_LINUX_SIGPWR;
+    }
+
+  return linux_gdb_signal_to_target (gdbarch, signal);
+}
+
 static void
 alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -236,6 +373,11 @@ alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_regset_from_core_section
     (gdbarch, alpha_linux_regset_from_core_section);
+
+  set_gdbarch_gdb_signal_from_target (gdbarch,
+				      alpha_linux_gdb_signal_from_target);
+  set_gdbarch_gdb_signal_to_target (gdbarch,
+				    alpha_linux_gdb_signal_to_target);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

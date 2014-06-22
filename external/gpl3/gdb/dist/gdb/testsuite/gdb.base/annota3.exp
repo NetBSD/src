@@ -1,4 +1,4 @@
-# Copyright 2003-2013 Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,7 @@ if [is_remote target] then {
 # test running programs
 #
 
-set testfile "annota3"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}$EXEEXT
+standard_testfile .c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     untested annota3.exp
@@ -40,10 +38,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 }
 
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 # The commands we test here produce many lines of output; disable "press 
 # <return> to continue" prompts.

@@ -1,4 +1,4 @@
-# Copyright 1999-2013 Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -558,7 +558,13 @@ mi_gdb_test "-var-update selected_a" \
 	"\\^done,changelist=\\\[\{name=\"selected_a\",in_scope=\"true\",type_changed=\"true\",new_type=\"int\",new_num_children=\"0\",has_more=\"0\"\}\\\]" \
 	"update selected_a in do_special_tests"
 
-mi_gdb_test "-file-exec-and-symbols ${binfile}" "\\^done" \
+if [is_remote host] {
+    set filename ${testfile}
+} else {
+    set filename ${binfile}
+}
+
+mi_gdb_test "-file-exec-and-symbols ${filename}" "\\^done" \
     "floating varobj invalidation"
 
 mi_delete_varobj selected_a "delete selected_a"
@@ -621,17 +627,17 @@ mi_gdb_test "kill" \
     "kill program before endvar"
 
 mi_gdb_test "-var-create endvar * _end" \
-    {(\^done,name="endvar",numchild="0",value=".*",type=".*"|&".*unable to.*".*\^error,msg=".*")} \
+    {(\^done,name="endvar",numchild="0",value=".*",type=".*"|\^error,msg=".*")} \
     "create endvar"
 
 # Allow this to succeed whether the value is readable, unreadable, or
 # missing.  Most important is that GDB does not crash.
 mi_gdb_test "-var-update endvar" \
-    {(\^done,changelist=\[.*\]|^".*".*\^error,msg=".*not found")} \
+    {(\^done,changelist=\[.*\]|\^error,msg=".*not found")} \
     "update endvar"
 
 mi_gdb_test "-var-delete endvar" \
-    "\\^done,ndeleted=\"1\"" \
+    {(\^done,ndeleted="1"|\^error,msg=".*not found")} \
     "delete endvar"
 
 mi_delete_breakpoints

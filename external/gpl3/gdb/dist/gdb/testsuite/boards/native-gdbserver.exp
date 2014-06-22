@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,19 +17,11 @@
 # natively with gdbserver.
 #
 # To use this file:
-# bash$ touch ${my_dejagnu_dir}/my-dejagnu.exp
-# bash$ export DEJAGNU=${my_dejagnu_dir}/my-dejagnu.exp
-# bash$ mkdir ${my_dejagnu_dir}/boards
-# bash$ cp ${src_dir}/gdb/testsuite/boards/native-gdbserver.exp \
-#   ${my_dejagnu_dir}/boards
 # bash$ cd ${build_dir}/gdb
 # bash$ make check RUNTESTFLAGS="--target_board=native-gdbserver"
 
 load_generic_config "gdbserver"
-process_multilib_options ""
-
-# The default compiler for this target.
-set_board_info compiler "[find_gcc]"
+load_board_description "gdbserver-base"
 
 # This gdbserver can only run a process once per session.
 set_board_info gdb,do_reload_on_run 1
@@ -37,20 +29,12 @@ set_board_info gdb,do_reload_on_run 1
 # There's no support for argument-passing (yet).
 set_board_info noargs 1
 
-# Can't do input (or output) in the current gdbserver.
-set_board_info gdb,noinferiorio 1
-
-# gdbserver does not intercept target file operations and perform them
-# on the host.
-set_board_info gdb,nofileio 1
-
 set_board_info sockethost "localhost:"
 set_board_info use_gdb_stub 1
+set_board_info exit_is_reliable 1
 
 # We will be using the standard GDB remote protocol.
 set_board_info gdb_protocol "remote"
-# Test the copy of gdbserver in the build directory.
-set_board_info gdb_server_prog "../gdbserver/gdbserver"
 
 proc ${board}_spawn { board cmd } {
     global board_info
@@ -74,19 +58,4 @@ proc ${board}_exec { hostname program args } {
     set board_info($baseboard,isremote) 1
 
     return $result
-}
-
-proc ${board}_download { board host dest } {
-    return $host
-}
-
-proc ${board}_upload {dest srcfile args} {
-    return $srcfile
-}
-
-proc ${board}_file { dest op args } {
-    if { $op == "delete" } {
-	return 0
-    }
-    return [eval [list standard_file $dest $op] $args]
 }

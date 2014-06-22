@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -72,6 +72,11 @@ struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_cu_off
    CORE_ADDR (*get_frame_pc) (void *baton),
    void *baton);
 
+extern const gdb_byte *dwarf2_fetch_constant_bytes (sect_offset,
+						    struct dwarf2_per_cu_data *,
+						    struct obstack *,
+						    LONGEST *);
+
 struct type *dwarf2_get_die_type (cu_offset die_offset,
 				  struct dwarf2_per_cu_data *per_cu);
 
@@ -132,6 +137,9 @@ struct dwarf2_loclist_baton
 
 extern const struct symbol_computed_ops dwarf2_locexpr_funcs;
 extern const struct symbol_computed_ops dwarf2_loclist_funcs;
+
+extern const struct symbol_block_ops dwarf2_block_frame_base_locexpr_funcs;
+extern const struct symbol_block_ops dwarf2_block_frame_base_loclist_funcs;
 
 /* Compile a DWARF location expression to an agent expression.
    

@@ -1,5 +1,5 @@
 /* Linux-specific ptrace manipulation routines.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,14 +20,22 @@
 #include "server.h"
 #else
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #endif
 
 #include "linux-ptrace.h"
 #include "linux-procfs.h"
+#include "nat/linux-waitpid.h"
 #include "buffer.h"
 #include "gdb_assert.h"
 #include "gdb_wait.h"
+
+#include <stdint.h>
+
+/* Stores the currently supported ptrace options.  A value of
+   -1 means we did not check for features yet.  A value of 0 means
+   there are no supported features.  */
+static int current_ptrace_options = -1;
 
 /* Find all possible reasons we could fail to attach PID and append these
    newline terminated reason strings to initialized BUFFER.  '\0' termination
@@ -58,7 +66,6 @@ extern void (linux_ptrace_test_ret_to_nx_instr) (void);
 #include <sys/reg.h>
 #include <sys/mman.h>
 #include <signal.h>
-#include <stdint.h>
 
 #endif /* defined __i386__ || defined __x86_64__ */
 
@@ -97,7 +104,8 @@ linux_ptrace_test_ret_to_nx (void)
       return;
 
     case 0:
-      l = ptrace (PTRACE_TRACEME, 0, NULL, NULL);
+      l = ptrace (PTRACE_TRACEME, 0, (PTRACE_TYPE_ARG3) NULL,
+		  (PTRACE_TYPE_ARG4) NULL);
       if (l != 0)
 	warning (_("linux_ptrace_test_ret_to_nx: Cannot PTRACE_TRACEME: %s"),
 		 strerror (errno));
@@ -163,9 +171,11 @@ linux_ptrace_test_ret_to_nx (void)
 
   errno = 0;
 #if defined __i386__
-  l = ptrace (PTRACE_PEEKUSER, child, (void *) (uintptr_t) (EIP * 4), NULL);
+  l = ptrace (PTRACE_PEEKUSER, child, (PTRACE_TYPE_ARG3) (uintptr_t) (EIP * 4),
+	      (PTRACE_TYPE_ARG4) NULL);
 #elif defined __x86_64__
-  l = ptrace (PTRACE_PEEKUSER, child, (void *) (uintptr_t) (RIP * 8), NULL);
+  l = ptrace (PTRACE_PEEKUSER, child, (PTRACE_TYPE_ARG3) (uintptr_t) (RIP * 8),
+	      (PTRACE_TYPE_ARG4) NULL);
 #else
 # error "!__i386__ && !__x86_64__"
 #endif
@@ -178,7 +188,8 @@ linux_ptrace_test_ret_to_nx (void)
   pc = (void *) (uintptr_t) l;
 
   kill (child, SIGKILL);
-  ptrace (PTRACE_KILL, child, NULL, NULL);
+  ptrace (PTRACE_KILL, child, (PTRACE_TYPE_ARG3) NULL,
+	  (PTRACE_TYPE_ARG4) NULL);
 
   errno = 0;
   got_pid = waitpid (child, &kill_status, 0);
@@ -220,6 +231,301 @@ linux_ptrace_test_ret_to_nx (void)
 	       "Linux kernel with broken i386 NX (non-executable pages) "
 	       "support detected!"));
 #endif /* defined __i386__ || defined __x86_64__ */
+}
+
+/* Helper function to fork a process and make the child process call
+   the function FUNCTION, passing CHILD_STACK as parameter.
+
+   For MMU-less targets, clone is used instead of fork, and
+   CHILD_STACK is used as stack space for the cloned child.  If NULL,
+   stack space is allocated via malloc (and subsequently passed to
+   FUNCTION).  For MMU targets, CHILD_STACK is ignored.  */
+
+static int
+linux_fork_to_function (gdb_byte *child_stack, void (*function) (gdb_byte *))
+{
+  int child_pid;
+
+  /* Sanity check the function pointer.  */
+  gdb_assert (function != NULL);
+
+#if defined(__UCLIBC__) && defined(HAS_NOMMU)
+#define STACK_SIZE 4096
+
+    if (child_stack == NULL)
+      child_stack = xmalloc (STACK_SIZE * 4);
+
+    /* Use CLONE_VM instead of fork, to support uClinux (no MMU).  */
+#ifdef __ia64__
+      child_pid = __clone2 (function, child_stack, STACK_SIZE,
+			    CLONE_VM | SIGCHLD, child_stack + STACK_SIZE * 2);
+#else /* !__ia64__ */
+      child_pid = clone (function, child_stack + STACK_SIZE,
+			 CLONE_VM | SIGCHLD, child_stack + STACK_SIZE * 2);
+#endif /* !__ia64__ */
+#else /* !defined(__UCLIBC) && defined(HAS_NOMMU) */
+  child_pid = fork ();
+
+  if (child_pid == 0)
+    function (NULL);
+#endif /* defined(__UCLIBC) && defined(HAS_NOMMU) */
+
+  if (child_pid == -1)
+    perror_with_name (("fork"));
+
+  return child_pid;
+}
+
+/* A helper function for linux_check_ptrace_features, called after
+   the child forks a grandchild.  */
+
+static void
+linux_grandchild_function (gdb_byte *child_stack)
+{
+  /* Free any allocated stack.  */
+  xfree (child_stack);
+
+  /* This code is only reacheable by the grandchild (child's child)
+     process.  */
+  _exit (0);
+}
+
+/* A helper function for linux_check_ptrace_features, called after
+   the parent process forks a child.  The child allows itself to
+   be traced by its parent.  */
+
+static void
+linux_child_function (gdb_byte *child_stack)
+{
+  ptrace (PTRACE_TRACEME, 0, (PTRACE_TYPE_ARG3) 0, (PTRACE_TYPE_ARG4) 0);
+  kill (getpid (), SIGSTOP);
+
+  /* Fork a grandchild.  */
+  linux_fork_to_function (child_stack, linux_grandchild_function);
+
+  /* This code is only reacheable by the child (grandchild's parent)
+     process.  */
+  _exit (0);
+}
+
+static void linux_test_for_tracesysgood (int child_pid);
+static void linux_test_for_tracefork (int child_pid);
+
+/* Determine ptrace features available on this target.  */
+
+static void
+linux_check_ptrace_features (void)
+{
+  int child_pid, ret, status;
+
+  /* Initialize the options.  */
+  current_ptrace_options = 0;
+
+  /* Fork a child so we can do some testing.  The child will call
+     linux_child_function and will get traced.  The child will
+     eventually fork a grandchild so we can test fork event
+     reporting.  */
+  child_pid = linux_fork_to_function (NULL, linux_child_function);
+
+  ret = my_waitpid (child_pid, &status, 0);
+  if (ret == -1)
+    perror_with_name (("waitpid"));
+  else if (ret != child_pid)
+    error (_("linux_check_ptrace_features: waitpid: unexpected result %d."),
+	   ret);
+  if (! WIFSTOPPED (status))
+    error (_("linux_check_ptrace_features: waitpid: unexpected status %d."),
+	   status);
+
+  linux_test_for_tracesysgood (child_pid);
+
+  linux_test_for_tracefork (child_pid);
+
+  /* Clean things up and kill any pending children.  */
+  do
+    {
+      ret = ptrace (PTRACE_KILL, child_pid, (PTRACE_TYPE_ARG3) 0,
+		    (PTRACE_TYPE_ARG4) 0);
+      if (ret != 0)
+	warning (_("linux_check_ptrace_features: failed to kill child"));
+      my_waitpid (child_pid, &status, 0);
+    }
+  while (WIFSTOPPED (status));
+}
+
+/* Determine if PTRACE_O_TRACESYSGOOD can be used to catch
+   syscalls.  */
+
+static void
+linux_test_for_tracesysgood (int child_pid)
+{
+#ifdef GDBSERVER
+  /* gdbserver does not support PTRACE_O_TRACESYSGOOD.  */
+#else
+  int ret;
+
+  ret = ptrace (PTRACE_SETOPTIONS, child_pid, (PTRACE_TYPE_ARG3) 0,
+		(PTRACE_TYPE_ARG4) PTRACE_O_TRACESYSGOOD);
+  if (ret == 0)
+    current_ptrace_options |= PTRACE_O_TRACESYSGOOD;
+#endif
+}
+
+/* Determine if PTRACE_O_TRACEFORK can be used to follow fork
+   events.  */
+
+static void
+linux_test_for_tracefork (int child_pid)
+{
+  int ret, status;
+  long second_pid;
+
+  /* First, set the PTRACE_O_TRACEFORK option.  If this fails, we
+     know for sure that it is not supported.  */
+  ret = ptrace (PTRACE_SETOPTIONS, child_pid, (PTRACE_TYPE_ARG3) 0,
+		(PTRACE_TYPE_ARG4) PTRACE_O_TRACEFORK);
+
+  if (ret != 0)
+    return;
+
+#ifdef GDBSERVER
+  /* gdbserver does not support PTRACE_O_TRACEVFORKDONE yet.  */
+#else
+  /* Check if the target supports PTRACE_O_TRACEVFORKDONE.  */
+  ret = ptrace (PTRACE_SETOPTIONS, child_pid, (PTRACE_TYPE_ARG3) 0,
+		(PTRACE_TYPE_ARG4) (PTRACE_O_TRACEFORK
+				    | PTRACE_O_TRACEVFORKDONE));
+  if (ret == 0)
+    current_ptrace_options |= PTRACE_O_TRACEVFORKDONE;
+#endif
+
+  /* Setting PTRACE_O_TRACEFORK did not cause an error, however we
+     don't know for sure that the feature is available; old
+     versions of PTRACE_SETOPTIONS ignored unknown options.
+     Therefore, we attach to the child process, use PTRACE_SETOPTIONS
+     to enable fork tracing, and let it fork.  If the process exits,
+     we assume that we can't use PTRACE_O_TRACEFORK; if we get the
+     fork notification, and we can extract the new child's PID, then
+     we assume that we can.
+
+     We do not explicitly check for vfork tracing here.  It is
+     assumed that vfork tracing is available whenever fork tracing
+     is available.  */
+  ret = ptrace (PTRACE_CONT, child_pid, (PTRACE_TYPE_ARG3) 0,
+		(PTRACE_TYPE_ARG4) 0);
+  if (ret != 0)
+    warning (_("linux_test_for_tracefork: failed to resume child"));
+
+  ret = my_waitpid (child_pid, &status, 0);
+
+  /* Check if we received a fork event notification.  */
+  if (ret == child_pid && WIFSTOPPED (status)
+      && status >> 16 == PTRACE_EVENT_FORK)
+    {
+      /* We did receive a fork event notification.  Make sure its PID
+	 is reported.  */
+      second_pid = 0;
+      ret = ptrace (PTRACE_GETEVENTMSG, child_pid, (PTRACE_TYPE_ARG3) 0,
+		    (PTRACE_TYPE_ARG4) &second_pid);
+      if (ret == 0 && second_pid != 0)
+	{
+	  int second_status;
+
+	  /* We got the PID from the grandchild, which means fork
+	     tracing is supported.  */
+#ifdef GDBSERVER
+	  /* Do not enable all the options for now since gdbserver does not
+	     properly support them.  This restriction will be lifted when
+	     gdbserver is augmented to support them.  */
+	  current_ptrace_options |= PTRACE_O_TRACECLONE;
+#else
+	  current_ptrace_options |= PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK
+	    | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC;
+
+	  /* Do not enable PTRACE_O_TRACEEXIT until GDB is more prepared to
+	     support read-only process state.  */
+#endif
+
+	  /* Do some cleanup and kill the grandchild.  */
+	  my_waitpid (second_pid, &second_status, 0);
+	  ret = ptrace (PTRACE_KILL, second_pid, (PTRACE_TYPE_ARG3) 0,
+			(PTRACE_TYPE_ARG4) 0);
+	  if (ret != 0)
+	    warning (_("linux_test_for_tracefork: "
+		       "failed to kill second child"));
+	  my_waitpid (second_pid, &status, 0);
+	}
+    }
+  else
+    warning (_("linux_test_for_tracefork: unexpected result from waitpid "
+	     "(%d, status 0x%x)"), ret, status);
+}
+
+/* Enable reporting of all currently supported ptrace events.  */
+
+void
+linux_enable_event_reporting (pid_t pid)
+{
+  /* Check if we have initialized the ptrace features for this
+     target.  If not, do it now.  */
+  if (current_ptrace_options == -1)
+    linux_check_ptrace_features ();
+
+  /* Set the options.  */
+  ptrace (PTRACE_SETOPTIONS, pid, (PTRACE_TYPE_ARG3) 0,
+	  (PTRACE_TYPE_ARG4) (uintptr_t) current_ptrace_options);
+}
+
+/* Returns non-zero if PTRACE_OPTIONS is contained within
+   CURRENT_PTRACE_OPTIONS, therefore supported.  Returns 0
+   otherwise.  */
+
+static int
+ptrace_supports_feature (int ptrace_options)
+{
+  gdb_assert (current_ptrace_options >= 0);
+
+  return ((current_ptrace_options & ptrace_options) == ptrace_options);
+}
+
+/* Returns non-zero if PTRACE_EVENT_FORK is supported by ptrace,
+   0 otherwise.  Note that if PTRACE_EVENT_FORK is supported so is
+   PTRACE_EVENT_CLONE, PTRACE_EVENT_EXEC and PTRACE_EVENT_VFORK,
+   since they were all added to the kernel at the same time.  */
+
+int
+linux_supports_tracefork (void)
+{
+  return ptrace_supports_feature (PTRACE_O_TRACEFORK);
+}
+
+/* Returns non-zero if PTRACE_EVENT_CLONE is supported by ptrace,
+   0 otherwise.  Note that if PTRACE_EVENT_CLONE is supported so is
+   PTRACE_EVENT_FORK, PTRACE_EVENT_EXEC and PTRACE_EVENT_VFORK,
+   since they were all added to the kernel at the same time.  */
+
+int
+linux_supports_traceclone (void)
+{
+  return ptrace_supports_feature (PTRACE_O_TRACECLONE);
+}
+
+/* Returns non-zero if PTRACE_O_TRACEVFORKDONE is supported by
+   ptrace, 0 otherwise.  */
+
+int
+linux_supports_tracevforkdone (void)
+{
+  return ptrace_supports_feature (PTRACE_O_TRACEVFORKDONE);
+}
+
+/* Returns non-zero if PTRACE_O_TRACESYSGOOD is supported by ptrace,
+   0 otherwise.  */
+
+int
+linux_supports_tracesysgood (void)
+{
+  return ptrace_supports_feature (PTRACE_O_TRACESYSGOOD);
 }
 
 /* Display possible problems on this system.  Display them only once per GDB

@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,13 +48,12 @@
    included, so it's ok to blank out gstdint.h.  */
 #define GCC_GENERATED_STDINT_H 1
 
-#ifdef HAVE_STDDEF_H
 #include <stddef.h>
-#endif
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+
+/* For gnulib's PATH_MAX.  */
+#include "pathmax.h"
 
 #include <fcntl.h>
 
@@ -310,8 +309,6 @@ extern void print_transfer_performance (struct ui_file *stream,
 
 typedef void initialize_file_ftype (void);
 
-extern char *skip_quoted (char *);
-
 extern char *gdb_readline (char *);
 
 extern char *gdb_readline_wrapper (char *);
@@ -348,7 +345,7 @@ extern const char *pc_prefix (CORE_ADDR);
 /* See openp function definition for their description.  */
 #define OPF_TRY_CWD_FIRST     0x01
 #define OPF_SEARCH_IN_PATH    0x02
-#define OPF_DISABLE_REALPATH  0x04
+#define OPF_RETURN_REALPATH   0x04
 
 extern int openp (const char *, int, const char *, int, char **);
 
@@ -484,18 +481,18 @@ extern char *current_directory;
 extern unsigned input_radix;
 extern unsigned output_radix;
 
-/* Possibilities for prettyprint parameters to routines which print
+/* Possibilities for prettyformat parameters to routines which print
    things.  Like enum language, this should be in value.h, but needs
    to be here for the same reason.  FIXME:  If we can eliminate this
    as an arg to LA_VAL_PRINT, then we can probably move it back to
    value.h.  */
 
-enum val_prettyprint
+enum val_prettyformat
   {
-    Val_no_prettyprint = 0,
-    Val_prettyprint,
+    Val_no_prettyformat = 0,
+    Val_prettyformat,
     /* Use the default setting which the user has specified.  */
-    Val_pretty_default
+    Val_prettyformat_default
   };
 
 /* Optional native machine support.  Non-native (and possibly pure
@@ -586,7 +583,6 @@ enum gdb_osabi
   GDB_OSABI_WINCE,
   GDB_OSABI_GO32,
   GDB_OSABI_IRIX,
-  GDB_OSABI_INTERIX,
   GDB_OSABI_HPUX_ELF,
   GDB_OSABI_HPUX_SOM,
   GDB_OSABI_QNXNTO,
@@ -608,13 +604,7 @@ enum gdb_osabi
 
 /* From other system libraries */
 
-#ifdef HAVE_STDDEF_H
-#include <stddef.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 
 #ifndef atof
@@ -703,10 +693,8 @@ extern int watchdog;
 extern char *interpreter_p;
 
 /* If a given interpreter matches INTERPRETER_P then it should update
-   deprecated_command_loop_hook and deprecated_init_ui_hook with the
-   per-interpreter implementation.  */
-/* FIXME: deprecated_command_loop_hook and deprecated_init_ui_hook
-   should be moved here.  */
+   deprecated_init_ui_hook with the per-interpreter implementation.  */
+/* FIXME: deprecated_init_ui_hook should be moved here.  */
 
 struct target_waitstatus;
 struct cmd_list_element;
@@ -716,7 +704,6 @@ extern void (*deprecated_post_add_symbol_hook) (void);
 extern void (*selected_frame_level_changed_hook) (int);
 extern int (*deprecated_ui_loop_hook) (int signo);
 extern void (*deprecated_init_ui_hook) (char *argv0);
-extern void (*deprecated_command_loop_hook) (void);
 extern void (*deprecated_show_load_progress) (const char *section,
 					      unsigned long section_sent, 
 					      unsigned long section_size, 
@@ -755,29 +742,6 @@ extern int (*deprecated_ui_load_progress_hook) (const char *section,
 /* Inhibit window interface if non-zero.  */
 
 extern int use_windows;
-
-/* Provide default definitions of PIDGET, TIDGET, and MERGEPID.
-   The name ``TIDGET'' is a historical accident.  Many uses of TIDGET
-   in the code actually refer to a lightweight process id, i.e,
-   something that can be considered a process id in its own right for
-   certain purposes.  */
-
-#ifndef PIDGET
-#define PIDGET(PTID) (ptid_get_pid (PTID))
-#define TIDGET(PTID) (ptid_get_lwp (PTID))
-#define MERGEPID(PID, TID) ptid_build (PID, TID, 0)
-#endif
-
-/* Define well known filenos if the system does not define them.  */
-#ifndef STDIN_FILENO
-#define STDIN_FILENO   0
-#endif
-#ifndef STDOUT_FILENO
-#define STDOUT_FILENO  1
-#endif
-#ifndef STDERR_FILENO
-#define STDERR_FILENO  2
-#endif
 
 /* If this definition isn't overridden by the header files, assume
    that isatty and fileno exist on this system.  */

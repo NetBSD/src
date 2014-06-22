@@ -156,11 +156,12 @@ target_libraries="target-libgcc \
 		target-libgloss \
 		target-newlib \
 		target-libgomp \
+		target-libcilkrts \
 		target-libatomic \
 		target-libitm \
 		target-libstdc++-v3 \
-		target-libmudflap \
 		target-libsanitizer \
+		target-libvtv \
 		target-libssp \
 		target-libquadmath \
 		target-libgfortran \
@@ -472,22 +473,6 @@ if test x$enable_static_libjava != xyes ; then
 fi
 AC_SUBST(EXTRA_CONFIGARGS_LIBJAVA)
 
-# Disable libmudflap on some systems.
-if test x$enable_libmudflap = x ; then
-    case "${target}" in
-    *-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | bfin*-*-uclinux* | *-*-kopensolaris*-gnu)
-        # Enable libmudflap by default in GNU and friends.
-	;;
-    *-*-freebsd*)
-        # Enable libmudflap by default in FreeBSD.
-	;;
-    *)
-        # Disable it by default everywhere else.
-	noconfigdirs="$noconfigdirs target-libmudflap"
-	;;
-    esac
-fi
-
 # Disable libgomp on non POSIX hosted systems.
 if test x$enable_libgomp = x ; then
     # Enable libgomp by default on hosted POSIX systems.
@@ -522,6 +507,22 @@ if test -d ${srcdir}/libatomic; then
     fi
 fi
 
+# Disable libcilkrts on unsupported systems.
+if test -d ${srcdir}/libcilkrts; then
+    if test x$enable_libcilkrts = x; then
+	AC_MSG_CHECKING([for libcilkrts support])
+	if (srcdir=${srcdir}/libcilkrts; \
+		. ${srcdir}/configure.tgt; \
+		test -n "$UNSUPPORTED")
+	then
+	    AC_MSG_RESULT([no])
+	    noconfigdirs="$noconfigdirs target-libcilkrts"
+	else
+	    AC_MSG_RESULT([yes])
+	fi
+    fi
+fi
+
 # Disable libitm on unsupported systems.
 if test -d ${srcdir}/libitm; then
     if test x$enable_libitm = x; then
@@ -548,6 +549,22 @@ if test -d ${srcdir}/libsanitizer; then
 	then
 	    AC_MSG_RESULT([no])
 	    noconfigdirs="$noconfigdirs target-libsanitizer"
+	else
+	    AC_MSG_RESULT([yes])
+	fi
+    fi
+fi
+
+# Disable libvtv on unsupported systems.
+if test -d ${srcdir}/libvtv; then
+    if test x$enable_libvtv = x; then
+	AC_MSG_CHECKING([for libvtv support])
+	if (srcdir=${srcdir}/libvtv; \
+		. ${srcdir}/configure.tgt; \
+		test "$VTV_SUPPORTED" != "yes")
+	then
+	    AC_MSG_RESULT([no])
+	    noconfigdirs="$noconfigdirs target-libvtv"
 	else
 	    AC_MSG_RESULT([yes])
 	fi
@@ -611,6 +628,8 @@ esac
 
 # Disable Java if libffi is not supported.
 case "${target}" in
+  aarch64-*-*)
+    ;;
   alpha*-*-*)
     ;;
   arm*-*-*)
@@ -937,7 +956,7 @@ case "${target}" in
   sh*-*-pe|mips*-*-pe|*arm-wince-pe)
     noconfigdirs="$noconfigdirs tcl tk itcl libgui sim"
     ;;
-  arc-*-*)
+  arc-*-*|arceb-*-*)
     noconfigdirs="$noconfigdirs target-libgloss"
     ;;
   arm-*-pe*)
@@ -1099,9 +1118,13 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gprof target-libgloss"
     ;;
   mips*-*-bsd*)
-    noconfigdirs="$noconfigdirs gprof target-libgloss"
+    noconfigdirs="$noconfigdirs ld gas gprof target-libgloss"
     ;;
   mips*-*-linux*)
+    ;;
+  mips*-*-ultrix* | mips*-*-osf* | mips*-*-ecoff* | mips*-*-pe* \
+  | mips*-*-irix* | mips*-*-lnews* | mips*-*-riscos*)
+    noconfigdirs="$noconfigdirs ld gas gprof"
     ;;
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof"
@@ -1630,6 +1653,9 @@ if test "x$with_isl" != "xno" &&
   ISL_CHECK_VERSION(0,10)
   if test "${gcc_cv_isl}" = no ; then
     ISL_CHECK_VERSION(0,11)
+    if test "${gcc_cv_isl}" = no ; then
+      ISL_CHECK_VERSION(0,12)
+    fi
   fi
   dnl Only execute fail-action, if ISL has been requested.
   ISL_IF_FAILED([
@@ -2031,11 +2057,11 @@ case ,${enable_languages},:${enable_objc_gc} in
     ;;
 esac
 
-# Disable libitm and libsanitizer if we're not building C++
+# Disable libitm, libsanitizer, libvtv if we're not building C++
 case ,${enable_languages}, in
   *,c++,*) ;;
   *)
-    noconfigdirs="$noconfigdirs target-libitm target-libsanitizer"
+    noconfigdirs="$noconfigdirs target-libcilkrts target-libitm target-libsanitizer target-libvtv"
     ;;
 esac
 
@@ -2461,6 +2487,11 @@ if echo " ${target_configdirs} " | grep " libsanitizer " > /dev/null 2>&1 ; then
   bootstrap_target_libs=${bootstrap_target_libs}target-libsanitizer,
 fi
 
+# If we are building libvtv, bootstrap it.
+if echo " ${target_configdirs} " | grep " libvtv " > /dev/null 2>&1 ; then
+  bootstrap_target_libs=${bootstrap_target_libs}target-libvtv,
+fi
+
 # Determine whether gdb needs tk/tcl or not.
 # Use 'maybe' since enable_gdbtk might be true even if tk isn't available
 # and in that case we want gdb to be built without tk.  Ugh!
@@ -2848,6 +2879,26 @@ if test x${is_cross_compiler} = xyes ; then
   target_configargs="--with-cross-host=${host_noncanonical} ${target_configargs}"
 fi
 
+# Special user-friendly check for native x86_64-linux build, if
+# multilib is not explicitly enabled.
+case "$target:$have_compiler:$host:$target:$enable_multilib" in
+  x86_64-*linux*:yes:$build:$build:)
+    # Make sure we have a developement environment that handles 32-bit
+    dev64=no
+    echo "int main () { return 0; }" > conftest.c
+    ${CC} -m32 -o conftest ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} conftest.c
+    if test $? = 0 ; then
+      if test -s conftest || test -s conftest.exe ; then
+	dev64=yes
+      fi
+    fi 
+    rm -f conftest*
+    if test x${dev64} != xyes ; then
+      AC_MSG_ERROR([I suspect your system does not have 32-bit developement libraries (libc and headers). If you have them, rerun configure with --enable-multilib. If you do not have them, and want to build a 64-bit-only compiler, rerun configure with --disable-multilib.])
+    fi
+    ;;
+esac
+
 # Default to --enable-multilib.
 if test x${enable_multilib} = x ; then
   target_configargs="--enable-multilib ${target_configargs}"
@@ -3157,10 +3208,10 @@ GCC_TARGET_TOOL(as, AS_FOR_TARGET, AS, [gas/as-new])
 GCC_TARGET_TOOL(cc, CC_FOR_TARGET, CC, [gcc/xgcc -B$$r/$(HOST_SUBDIR)/gcc/])
 dnl see comments for CXX_FOR_TARGET_FLAG_TO_PASS
 GCC_TARGET_TOOL(c++, CXX_FOR_TARGET, CXX,
-		[gcc/xg++ -B$$r/$(HOST_SUBDIR)/gcc/ -nostdinc++ `if test -f $$r/$(TARGET_SUBDIR)/libstdc++-v3/scripts/testsuite_flags; then $(SHELL) $$r/$(TARGET_SUBDIR)/libstdc++-v3/scripts/testsuite_flags --build-includes; else echo -funconfigured-libstdc++-v3 ; fi` -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs],
+		[gcc/xg++ -B$$r/$(HOST_SUBDIR)/gcc/ -nostdinc++ `if test -f $$r/$(TARGET_SUBDIR)/libstdc++-v3/scripts/testsuite_flags; then $(SHELL) $$r/$(TARGET_SUBDIR)/libstdc++-v3/scripts/testsuite_flags --build-includes; else echo -funconfigured-libstdc++-v3 ; fi` -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/libsupc++/.libs],
 		c++)
 GCC_TARGET_TOOL(c++ for libstdc++, RAW_CXX_FOR_TARGET, CXX,
-		[gcc/xgcc -shared-libgcc -B$$r/$(HOST_SUBDIR)/gcc -nostdinc++ -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs],
+		[gcc/xgcc -shared-libgcc -B$$r/$(HOST_SUBDIR)/gcc -nostdinc++ -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/libsupc++/.libs],
 		c++)
 GCC_TARGET_TOOL(dlltool, DLLTOOL_FOR_TARGET, DLLTOOL, [binutils/dlltool])
 GCC_TARGET_TOOL(gcc, GCC_FOR_TARGET, , [gcc/xgcc -B$$r/$(HOST_SUBDIR)/gcc/])
@@ -3269,6 +3320,13 @@ case ${enable_werror} in
   *) stage2_werror_flag="" ;;
 esac
 AC_SUBST(stage2_werror_flag)
+
+# Enable --enable-host-shared.
+AC_ARG_ENABLE(host-shared,
+[AS_HELP_STRING([--enable-host-shared],
+		[build host code as shared libraries])],
+[host_shared=$enableval], [host_shared=no])
+AC_SUBST(host_shared)
 
 # Specify what files to not compare during bootstrap.
 

@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@ static struct PyModuleDef EventModuleDef =
   PyModuleDef_HEAD_INIT,
   "gdb.events",
   NULL,
-  -1, 
+  -1,
   NULL,
   NULL,
   NULL,
@@ -37,27 +37,22 @@ static struct PyModuleDef EventModuleDef =
 
 /* Initialize python events.  */
 
-static int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 add_new_registry (eventregistry_object **registryp, char *name)
 {
+  int result;
+
   *registryp = create_eventregistry_object ();
 
   if (*registryp == NULL)
-    goto fail;
+    return -1;
 
-  if (PyModule_AddObject (gdb_py_events.module,
-                             name,
-                             (PyObject *)(*registryp)) < 0)
-    goto fail;
-
-  return 0;
-
-  fail:
-   Py_XDECREF (*registryp);
-   return -1;
+  return gdb_pymodule_addobject (gdb_py_events.module,
+				 name,
+				 (PyObject *)(*registryp));
 }
 
-void
+int
 gdbpy_initialize_py_events (void)
 {
 #ifdef IS_PY3K
@@ -67,30 +62,24 @@ gdbpy_initialize_py_events (void)
 #endif
 
   if (!gdb_py_events.module)
-    goto fail;
+    return -1;
 
   if (add_new_registry (&gdb_py_events.stop, "stop") < 0)
-    goto fail;
+    return -1;
 
   if (add_new_registry (&gdb_py_events.cont, "cont") < 0)
-    goto fail;
+    return -1;
 
   if (add_new_registry (&gdb_py_events.exited, "exited") < 0)
-    goto fail;
+    return -1;
 
   if (add_new_registry (&gdb_py_events.new_objfile, "new_objfile") < 0)
-    goto fail;
+    return -1;
 
-#ifndef IS_PY3K
-  Py_INCREF (gdb_py_events.module);
-#endif
-  if (PyModule_AddObject (gdb_module,
-                          "events",
-                          (PyObject *) gdb_py_events.module) < 0)
-    goto fail;
+  if (gdb_pymodule_addobject (gdb_module,
+			      "events",
+			      (PyObject *) gdb_py_events.module) < 0)
+    return -1;
 
-  return;
-
-  fail:
-   gdbpy_print_stack ();
+  return 0;
 }

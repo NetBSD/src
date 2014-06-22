@@ -21,7 +21,9 @@ default: all
 
 VPATH = @srcdir@
 srcdir = @srcdir@
+srccom = $(srcdir)/../common
 srcroot = $(srcdir)/../..
+srcsim = $(srcdir)/..
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -562,11 +564,8 @@ $(TARGETLIB): tmp-igen tmp-dgen tmp-hw tmp-pk tmp-defines $(LIB_OBJ) $(GDB_OBJ)
 	$(AR) $(AR_FLAGS) $(TARGETLIB) $(LIB_OBJ) $(GDB_OBJ)
 	$(RANLIB) $(TARGETLIB)
 
-version.c: Makefile ../../gdb/version.in
-	rm -f version.c-tmp version.c
-	echo '#include "version.h"' >> version.c-tmp
-	echo 'const char version[] = "'"`sed q ${srcdir}/../../gdb/version.in`"'";' >> version.c-tmp
-	mv version.c-tmp version.c
+version.c: Makefile $(srccom)/create-version.sh ../../bfd/version.h ../../gdb/version.in
+	$(SHELL) $(srccom)/create-version.sh $(srcsim) $(host_alias) $(target_alias) version.c
 version.o: version.c $(version_h)
 
 psim.o: psim.c $(CPU_H) $(IDECODE_H) $(OPTIONS_H) $(TREE_H) $(BFD_H)

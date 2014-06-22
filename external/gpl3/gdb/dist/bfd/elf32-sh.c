@@ -1,6 +1,6 @@
 /* Renesas / SuperH SH specific support for 32-bit ELF
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011, 2012
+   2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
    Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
@@ -4425,6 +4425,12 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      check_segment[0] = check_segment[1] = -1;
 	    }
+	    /* We don't want warnings for non-NULL tests on undefined weak
+	       symbols.  */
+	    else if (r_type == R_SH_REL32
+		     && h
+		     && h->root.type == bfd_link_hash_undefweak) 
+	      check_segment[0] = check_segment[1] = -1;
 	  goto final_link_relocate;
 
 	case R_SH_GOTPLT32:
@@ -6025,6 +6031,10 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 #endif
 	      h = (struct elf_link_hash_entry *) h->root.u.i.link;
 	    }
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       r_type = sh_elf_optimized_tls_reloc (info, r_type, h == NULL);
@@ -6572,34 +6582,19 @@ sh_elf_get_flags_from_mach (unsigned long mach)
 }
 #endif /* not sh_elf_set_mach_from_flags */
 
-#ifndef sh_elf_set_private_flags
-/* Function to keep SH specific file flags.  */
-
-static bfd_boolean
-sh_elf_set_private_flags (bfd *abfd, flagword flags)
-{
-  BFD_ASSERT (! elf_flags_init (abfd)
-	      || elf_elfheader (abfd)->e_flags == flags);
-
-  elf_elfheader (abfd)->e_flags = flags;
-  elf_flags_init (abfd) = TRUE;
-  return sh_elf_set_mach_from_flags (abfd);
-}
-#endif /* not sh_elf_set_private_flags */
-
 #ifndef sh_elf_copy_private_data
 /* Copy backend specific data from one object module to another */
 
 static bfd_boolean
 sh_elf_copy_private_data (bfd * ibfd, bfd * obfd)
 {
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
   if (! is_sh_elf (ibfd) || ! is_sh_elf (obfd))
     return TRUE;
 
-  return sh_elf_set_private_flags (obfd, elf_elfheader (ibfd)->e_flags);
+  if (! _bfd_elf_copy_private_bfd_data (ibfd, obfd))
+    return FALSE;
+
+  return sh_elf_set_mach_from_flags (obfd);
 }
 #endif /* not sh_elf_copy_private_data */
 
@@ -7261,7 +7256,9 @@ sh_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 }
 
 static enum elf_reloc_type_class
-sh_elf_reloc_type_class (const Elf_Internal_Rela *rela)
+sh_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			 const asection *rel_sec ATTRIBUTE_UNUSED,
+			 const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -7435,8 +7432,6 @@ sh_elf_encode_eh_address (bfd *abfd,
 					sh_elf_get_relocated_section_contents
 #define bfd_elf32_mkobject		sh_elf_mkobject
 #define elf_backend_object_p		sh_elf_object_p
-#define bfd_elf32_bfd_set_private_bfd_flags \
-					sh_elf_set_private_flags
 #define bfd_elf32_bfd_copy_private_bfd_data \
 					sh_elf_copy_private_data
 #define bfd_elf32_bfd_merge_private_bfd_data \

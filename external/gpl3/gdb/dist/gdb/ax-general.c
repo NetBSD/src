@@ -1,5 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "ax.h"
 
 #include "value.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "user-regs.h"
 
@@ -57,6 +57,9 @@ new_agent_expr (struct gdbarch *gdbarch, CORE_ADDR scope)
   x->reg_mask_len = 1;
   x->reg_mask = xmalloc (x->reg_mask_len * sizeof (x->reg_mask[0]));
   memset (x->reg_mask, 0, x->reg_mask_len * sizeof (x->reg_mask[0]));
+
+  x->tracing = 0;
+  x->trace_string = 0;
 
   return x;
 }

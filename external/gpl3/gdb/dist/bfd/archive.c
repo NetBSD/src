@@ -705,7 +705,7 @@ _bfd_get_elt_at_filepos (bfd *archive, file_ptr filepos)
   else
     {
       n_nfd->origin = n_nfd->proxy_origin;
-      n_nfd->filename = filename;
+      n_nfd->filename = xstrdup (filename);
     }
 
   n_nfd->arelt_data = new_areldata;
@@ -2732,7 +2732,7 @@ _bfd_archive_close_and_cleanup (bfd *abfd)
 	  bfd_ardata (abfd)->cache = NULL;
 	}
     }
-  else if (arch_eltdata (abfd) != NULL)
+  if (arch_eltdata (abfd) != NULL)
     {
       struct areltdata *ared = arch_eltdata (abfd);
       htab_t htab = (htab_t) ared->parent_cache;

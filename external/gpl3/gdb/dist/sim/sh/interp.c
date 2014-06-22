@@ -473,22 +473,22 @@ int valid[16];
 #define UNDEF(x)
 #endif
 
-static void parse_and_set_memory_size PARAMS ((char *str));
-static int IOMEM PARAMS ((int addr, int write, int value));
-static struct loop_bounds get_loop_bounds PARAMS ((int, int, unsigned char *,
-						   unsigned char *, int, int));
-static void process_wlat_addr PARAMS ((int, int));
-static void process_wwat_addr PARAMS ((int, int));
-static void process_wbat_addr PARAMS ((int, int));
-static int process_rlat_addr PARAMS ((int));
-static int process_rwat_addr PARAMS ((int));
-static int process_rbat_addr PARAMS ((int));
-static void INLINE wlat_fast PARAMS ((unsigned char *, int, int, int));
-static void INLINE wwat_fast PARAMS ((unsigned char *, int, int, int, int));
-static void INLINE wbat_fast PARAMS ((unsigned char *, int, int, int));
-static int INLINE rlat_fast PARAMS ((unsigned char *, int, int));
-static int INLINE rwat_fast PARAMS ((unsigned char *, int, int, int));
-static int INLINE rbat_fast PARAMS ((unsigned char *, int, int));
+static void parse_and_set_memory_size (char *str);
+static int IOMEM (int addr, int write, int value);
+static struct loop_bounds get_loop_bounds (int, int, unsigned char *,
+					   unsigned char *, int, int);
+static void process_wlat_addr (int, int);
+static void process_wwat_addr (int, int);
+static void process_wbat_addr (int, int);
+static int process_rlat_addr (int);
+static int process_rwat_addr (int);
+static int process_rbat_addr (int);
+static void INLINE wlat_fast (unsigned char *, int, int, int);
+static void INLINE wwat_fast (unsigned char *, int, int, int, int);
+static void INLINE wbat_fast (unsigned char *, int, int, int);
+static int INLINE rlat_fast (unsigned char *, int, int);
+static int INLINE rwat_fast (unsigned char *, int, int, int);
+static int INLINE rbat_fast (unsigned char *, int, int);
 
 static host_callback *callback;
 
@@ -2789,7 +2789,7 @@ sim_set_callbacks (p)
 }
 
 char **
-sim_complete_command (SIM_DESC sd, char *text, char *word)
+sim_complete_command (SIM_DESC sd, const char *text, const char *word)
 {
   return NULL;
 }

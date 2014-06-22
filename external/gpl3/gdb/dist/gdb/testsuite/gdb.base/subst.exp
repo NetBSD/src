@@ -1,4 +1,4 @@
-# Copyright 2006-2013 Free Software Foundation, Inc.
+# Copyright 2006-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,12 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 gdb_test_no_output "set confirm off" \
          "deactivate GDB's confirmation interface"
+
+# Clear any substitution rules that are available by default due
+# to GDB being configured with --with-relocated-sources.
+
+gdb_test_no_output "unset substitute-path" \
+         "remove default substitution rules"
 
 gdb_test "show substitute-path" \
          "List of all source path substitution rules:" \

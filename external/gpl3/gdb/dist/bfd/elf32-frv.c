@@ -2735,13 +2735,13 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  bfd_boolean unresolved_reloc;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	  osec = sec;
 	  name = h->root.root.string;
 	}
@@ -6046,6 +6046,10 @@ elf32_frv_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
@@ -6309,27 +6313,6 @@ frv_elf_set_private_flags (bfd *abfd, flagword flags)
   return TRUE;
 }
 
-/* Copy backend specific data from one object module to another.  */
-
-static bfd_boolean
-frv_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  BFD_ASSERT (!elf_flags_init (obfd)
-	      || elf_elfheader (obfd)->e_flags == elf_elfheader (ibfd)->e_flags);
-
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
-
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
-  return TRUE;
-}
-
 /* Return true if the architecture described by elf header flag
    EXTENSION is an extension of the architecture described by BASE.  */
 
@@ -6355,23 +6338,6 @@ frv_elf_arch_extension_p (flagword base, flagword extension)
       return TRUE;
 
   return FALSE;
-}
-
-static bfd_boolean
-elf32_frvfdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  if (! frv_elf_copy_private_bfd_data (ibfd, obfd))
-    return FALSE;
-
-  if (! elf_tdata (ibfd) || ! elf_tdata (ibfd)->phdr
-      || ! elf_tdata (obfd) || ! elf_tdata (obfd)->phdr)
-    return TRUE;
-
-  return TRUE;
 }
 
 /* Merge backend specific data from an object file to the output
@@ -6829,7 +6795,6 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define bfd_elf32_bfd_reloc_type_lookup		frv_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup	frv_reloc_name_lookup
 #define bfd_elf32_bfd_set_private_flags		frv_elf_set_private_flags
-#define bfd_elf32_bfd_copy_private_bfd_data	frv_elf_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data	frv_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_print_private_bfd_data	frv_elf_print_private_bfd_data
 
@@ -6867,9 +6832,6 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #undef elf_backend_always_size_sections
 #define elf_backend_always_size_sections \
 		elf32_frvfdpic_always_size_sections
-#undef bfd_elf32_bfd_copy_private_bfd_data
-#define bfd_elf32_bfd_copy_private_bfd_data \
-		elf32_frvfdpic_copy_private_bfd_data
 
 #undef elf_backend_create_dynamic_sections
 #define elf_backend_create_dynamic_sections \

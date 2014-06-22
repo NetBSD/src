@@ -1,4 +1,4 @@
-# Copyright 2003-2013 Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ set f_ld    "${ws}long double m_long_double;"
 set f_b     "${ws}bool m_bool;"
 
 set itc     "<invalid type code ${decimal}>"
-set bad_i   "${ws}(${itc}|int) m_int;";
+set bad_i   "${ws}(${itc}|int) m_int;"
 set bad_c   "${ws}(${itc}|char) m_char;"
 set bad_li  "${ws}(${itc}|long int) m_long_int;"
 set bad_ui  "${ws}(${itc}|unsigned int) m_unsigned_int;"

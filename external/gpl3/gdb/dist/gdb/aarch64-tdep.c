@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -24,7 +24,7 @@
 #include "inferior.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "dis-asm.h"
 #include "regcache.h"
 #include "reggroups.h"
@@ -53,7 +53,6 @@
 #include "vec.h"
 
 #include "features/aarch64.c"
-#include "features/aarch64-without-fpu.c"
 
 /* Pseudo register base numbers.  */
 #define AARCH64_Q0_REGNUM 0
@@ -683,7 +682,7 @@ aarch64_analyze_prologue (struct gdbarch *gdbarch,
       int op_is_sub;
       int32_t imm;
       unsigned cond;
-      unsigned is64;
+      int is64;
       unsigned is_link;
       unsigned op;
       unsigned bit;
@@ -1095,7 +1094,7 @@ aarch64_stub_unwind_sniffer (const struct frame_unwind *self,
   gdb_byte dummy[4];
 
   addr_in_block = get_frame_address_in_block (this_frame);
-  if (in_plt_section (addr_in_block, NULL)
+  if (in_plt_section (addr_in_block)
       /* We also use the stub winder if the target memory is unreadable
 	 to avoid having the prologue unwinder trying to read it.  */
       || target_read_memory (get_frame_pc (this_frame), dummy, 4) != 0)
@@ -1897,11 +1896,11 @@ aarch64_gdb_print_insn (bfd_vma memaddr, disassemble_info *info)
 /* AArch64 BRK software debug mode instruction.
    Note that AArch64 code is always little-endian.
    1101.0100.0010.0000.0000.0000.0000.0000 = 0xd4200000.  */
-static const char aarch64_default_breakpoint[] = {0x00, 0x00, 0x20, 0xd4};
+static const gdb_byte aarch64_default_breakpoint[] = {0x00, 0x00, 0x20, 0xd4};
 
 /* Implement the "breakpoint_from_pc" gdbarch method.  */
 
-static const unsigned char *
+static const gdb_byte *
 aarch64_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
 			    int *lenptr)
 {
@@ -2499,14 +2498,6 @@ aarch64_pseudo_write (struct gdbarch *gdbarch, struct regcache *regcache,
   gdb_assert_not_reached ("regnum out of bound");
 }
 
-/* Implement the "write_pc" gdbarch method.  */
-
-static void
-aarch64_write_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  regcache_cooked_write_unsigned (regcache, AARCH64_PC_REGNUM, pc);
-}
-
 /* Callback function for user_reg_add.  */
 
 static struct value *
@@ -2618,8 +2609,6 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_push_dummy_call (gdbarch, aarch64_push_dummy_call);
   set_gdbarch_frame_align (gdbarch, aarch64_frame_align);
 
-  set_gdbarch_write_pc (gdbarch, aarch64_write_pc);
-
   /* Frame handling.  */
   set_gdbarch_dummy_id (gdbarch, aarch64_dummy_id);
   set_gdbarch_unwind_pc (gdbarch, aarch64_unwind_pc);
@@ -2728,7 +2717,6 @@ _initialize_aarch64_tdep (void)
 		    aarch64_dump_tdep);
 
   initialize_tdesc_aarch64 ();
-  initialize_tdesc_aarch64_without_fpu ();
 
   /* Debug this file's internals.  */
   add_setshow_boolean_cmd ("aarch64", class_maintenance, &aarch64_debug, _("\

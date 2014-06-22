@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2013 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Jim Blandy.
 
@@ -31,5 +31,6 @@ malloc_stub (void)
 {
   /* charset.exp wants to allocate memory for constants.  So make sure malloc
      gets linked into the program.  */
-  malloc (1);
+  void *p = malloc (1);
+  free (p);
 }

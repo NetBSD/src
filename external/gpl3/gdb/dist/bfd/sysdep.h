@@ -79,6 +79,10 @@ extern char *strrchr ();
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif /* HAVE_SYS_RESOURCE_H */
+
 #ifdef USE_BINARY_FOPEN
 #include "fopen-bin.h"
 #else

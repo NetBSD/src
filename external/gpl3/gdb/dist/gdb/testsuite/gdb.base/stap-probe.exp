@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+# Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,15 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set testfile stap-probe
+standard_testfile
 
 # Run the tests.  We run the tests two different ways: once with a
 # plain probe, and once with a probe that has an associated semaphore.
 # This returns -1 on failure to compile or start, 0 otherwise.
 proc stap_test {exec_name {arg ""}} {
-    global testfile hex
+    global testfile hex srcfile
 
-    if {[prepare_for_testing ${testfile}.exp ${exec_name} ${testfile}.c \
+    if {[prepare_for_testing ${testfile}.exp ${exec_name} $srcfile \
 	   [concat $arg debug]]} {
 	return -1
     }

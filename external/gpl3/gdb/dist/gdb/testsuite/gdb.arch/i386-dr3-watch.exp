@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,10 +23,9 @@ if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } then {
     return 0
 }
 
-set testfile "i386-dr3-watch"
-set srcfile ${testfile}.c
+standard_testfile
 
-if [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug $additional_flags}] {
+if [prepare_for_testing ${testfile}.exp ${binfile} ${srcfile} {debug $additional_flags}] {
     untested "failed to compile ${testfile}"
     return -1
 }

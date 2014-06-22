@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -189,7 +189,7 @@ ia64_hpux_handle_load_event (struct regcache *regcache)
   CORE_ADDR module_desc_addr;
   ULONGEST module_desc_size;
   CORE_ADDR so_path_addr;
-  char so_path[MAXPATHLEN];
+  char so_path[PATH_MAX];
   struct load_module_desc module_desc;
   struct so_list *new_so;
 
@@ -210,7 +210,7 @@ ia64_hpux_handle_load_event (struct regcache *regcache)
              sizeof (struct load_module_desc),
 	     pulongest (module_desc_size));
 
-  read_memory_string (so_path_addr, so_path, MAXPATHLEN);
+  read_memory_string (so_path_addr, so_path, PATH_MAX);
   read_memory (module_desc_addr, (gdb_byte *) &module_desc,
 	       sizeof (module_desc));
 
@@ -336,7 +336,8 @@ ia64_hpux_relocate_section_addresses (struct so_list *so,
      bfd, whereas we would have had to open our own if we wanted to do it
      while processing the library-load event.  */
   if (so->lm_info->text_start == 0 && so->lm_info->data_start == 0)
-    ia64_hpux_find_start_vma (sec->bfd, &so->lm_info->text_start,
+    ia64_hpux_find_start_vma (sec->the_bfd_section->owner,
+			      &so->lm_info->text_start,
 			      &so->lm_info->data_start);
 
   /* Determine the relocation offset based on which segment
@@ -459,7 +460,8 @@ ia64_hpux_read_dynamic_info (struct gdbarch *gdbarch, bfd *abfd,
             {
               CORE_ADDR load_map_addr = bfd_h_get_64 (abfd, &dynp->d_un.d_ptr);
 
-              if (target_read_memory (load_map_addr, (char *) &info->load_map,
+              if (target_read_memory (load_map_addr,
+				      (gdb_byte *) &info->load_map,
                                       sizeof (info->load_map)) != 0)
 		error (_("failed to read load map at %s"),
 		       paddress (gdbarch, load_map_addr));

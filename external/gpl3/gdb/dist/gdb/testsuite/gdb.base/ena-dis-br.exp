@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,42 +19,24 @@
 # test running programs
 #
 
-set testfile "break"
-set srcfile ${testfile}.c
-set srcfile1 ${testfile}1.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile break.c break1.c
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug nowarnings}] != "" } {
-     untested ena-dis-br.exp
-     return -1
+if {[prepare_for_testing ${testfile}.exp ${testfile} \
+	 [list $srcfile $srcfile2] {debug nowarnings}]} {
+    return -1
 }
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug nowarnings}] != "" } {
-     untested ena-dis-br.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug nowarnings}] != "" } {
-     untested ena-dis-br.exp
-     return -1
-}
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location7 [gdb_get_line_number "set breakpoint 7 here"]
-set bp_location8 [gdb_get_line_number "set breakpoint 8 here" $srcfile1]
-set bp_location9 [gdb_get_line_number "set breakpoint 9 here" $srcfile1]
+set bp_location8 [gdb_get_line_number "set breakpoint 8 here" $srcfile2]
+set bp_location9 [gdb_get_line_number "set breakpoint 9 here" $srcfile2]
 set bp_location11 [gdb_get_line_number "set breakpoint 11 here"]
-set bp_location13 [gdb_get_line_number "set breakpoint 13 here" $srcfile1]
-set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile1]
-set bp_location15 [gdb_get_line_number "set breakpoint 15 here" $srcfile1]
-set bp_location16 [gdb_get_line_number "set breakpoint 16 here" $srcfile1]
-set bp_location17 [gdb_get_line_number "set breakpoint 17 here" $srcfile1]
-set bp_location18 [gdb_get_line_number "set breakpoint 18 here" $srcfile1]
+set bp_location13 [gdb_get_line_number "set breakpoint 13 here" $srcfile2]
+set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile2]
+set bp_location15 [gdb_get_line_number "set breakpoint 15 here" $srcfile2]
+set bp_location16 [gdb_get_line_number "set breakpoint 16 here" $srcfile2]
+set bp_location17 [gdb_get_line_number "set breakpoint 17 here" $srcfile2]
+set bp_location18 [gdb_get_line_number "set breakpoint 18 here" $srcfile2]
 
 if ![runto_main] then { fail "enable/disable break tests suppressed" }
 
@@ -307,7 +289,7 @@ gdb_test "continue 2" \
     "continue with ignore count"
 
 gdb_test "next" ".*$bp_location11\[ \t\]*marker1.*" \
-    step after continue with ignore count"
+    "step after continue with ignore count"
 
 set test "continue with ignore count, not stopped at bpt"
 gdb_test_multiple "continue 2" "$test" {
@@ -318,6 +300,114 @@ gdb_test_multiple "continue 2" "$test" {
 	kfail gdb/1689 "$test"
     }
 }
+
+# Verify that GDB correctly handles the "enable/disable" command
+# with arguments, that include multiple locations.
+#
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+set b1 0
+set b2 0
+set b3 0
+set b4 0
+set b1 [break_at main ""]
+set b2 [break_at main ""]
+set b3 [break_at main ""]
+set b4 [break_at main ""]
+
+# Perform tests for disable/enable commands on multiple
+# locations and breakpoints.
+#
+# WHAT - the command to test (disable/enable).
+#
+proc test_ena_dis_br { what } {
+    global b1
+    global b2
+    global b3
+    global b4
+    global gdb_prompt
+    
+    # OPPOS    - the command opposite to WHAT.
+    # WHAT_RES - whether breakpoints are expected to end
+    #            up enabled or disabled.
+    # OPPOS_RES- same as WHAT_RES but opposite.
+    # P1/P2    - proc to call (pass/fail).  Must be
+    #            opposites.
+    # Set variable values for disable command.
+    set oppos "enable"
+    set oppos_res "y"
+    set what_res "n"
+    set p1 "pass"
+    set p2 "fail"
+
+    if { "$what" == "enable" } {
+	# Set varibale values for enable command.
+	set oppos "disable"
+	set oppos_res "n"
+	set what_res "y"
+	set p1 "fail"
+	set p2 "pass"
+    }
+
+    # Now enable(disable) $b.1 $b2.1.
+    gdb_test_no_output "$what $b1.1 $b2.1" "$what \$b1.1 \$b2.1"
+    set test1 "${what}d \$b1.1 and \$b2.1"
+
+    # Now $b1.1 and $b2.1 should be enabled(disabled).
+    gdb_test_multiple "info break" "$test1" {
+       -re "(${b1}.1)(\[^\n\r\]*)( n.*)(${b2}.1)(\[^\n\r\]*)( n.*)$gdb_prompt $" {
+           $p1 "$test1"
+       }
+       -re ".*$gdb_prompt $" {
+           $p2 "$test1"
+       }
+    }
+
+    # Now enable(disable) $b1 fooo.1, it should give error on fooo.
+    gdb_test "$what $b1 fooo.1" \
+       "Bad breakpoint number 'fooo'" \
+       "$what \$b1 fooo.1"
+
+    # $b1 should be enabled(disabled).
+    gdb_test "info break" \
+       "(${b1})(\[^\n\r]*)( $what_res.*)" \
+       "${what}d \$b1"
+
+    gdb_test_no_output "$oppos $b3" "$oppos \$b3"
+    gdb_test_no_output "$what $b4 $b3.1" "$what \$b4 \$b3.1"
+    set test1 "${what}d \$b4 and \$b3.1,remain ${oppos}d \$b3"
+
+    # Now $b4 $b3.1 should be enabled(disabled) and
+    # $b3 should remain disabled(enabled).
+    gdb_test_multiple "info break" "$test1" {
+       -re "(${b3})(\[^\n\r]*)( $oppos_res.*)(${b3}.1)(\[^\n\r\]*)( n.*)(${b4})(\[^\n\r\]*)( $what_res.*)$gdb_prompt $" {
+           $p1 "$test1"
+       }
+       -re "(${b3})(\[^\n\r]*)( $oppos_res.*)(${b4})(\[^\n\r\]*)( $what_res.*)$gdb_prompt $" {
+           $p2 "$test1"
+       }
+    }
+
+    # Now enable(disable) $b4.1 fooobaar and
+    # it should give warning on fooobaar.
+    gdb_test "$what $b4.1 fooobaar" \
+       "warning: bad breakpoint number at or near 'fooobaar'" \
+       "$what \$b4.1 fooobar"
+    set test1 "${what}d \$b4.1"
+
+    # $b4.1 should be enabled(disabled).
+    gdb_test_multiple "info break" "$test1" {
+        -re "(${b4}.1)(\[^\n\r\]*)( n.*)$gdb_prompt $" {
+           $p1 "$test1"
+       }
+       -re ".*$gdb_prompt $" {
+           $p2 "$test1"
+       }
+    }
+}
+
+test_ena_dis_br "disable"
+test_ena_dis_br "enable"
 
 gdb_exit
 return 0

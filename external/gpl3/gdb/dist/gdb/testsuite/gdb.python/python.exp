@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2013 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,8 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
-
+# Do this instead of the skip_python_check.
+# We want to do some tests when Python is not present.
 gdb_test_multiple "python print (23)" "verify python support" {
     -re "not supported.*$gdb_prompt $"	{
       unsupported "python support is disabled"
@@ -208,15 +207,9 @@ gdb_test "python gdb.write(\"Error stream\\n\", stream=gdb.STDERR)" "Error strea
 gdb_test "python gdb.write(\"Normal stream\\n\", stream=gdb.STDOUT)" "Normal stream" "Test stdout write"
 gdb_test "python gdb.write(\"Log stream\\n\", stream=gdb.STDLOG)" "Log stream" "Test stdlog write"
 
-# print-stack
-gdb_test "show python print-stack" \
-    "The mode of Python stack printing on error is \"message\".*" \
-    "Test print-backtrace show setting. Default is message."
+# Turn on full stack printing for subsequent tests.
 gdb_py_test_silent_cmd "set python print-stack full" \
-    "Test print-backtrace set setting" 1
-gdb_test "show python print-stack" \
-    "The mode of Python stack printing on error is \"full\".*" \
-    "Test print-backtrace show setting to full."
+    "Set print-stack full for prompt tests" 1
 
 # Test prompt substituion
 
@@ -339,20 +332,20 @@ if ![runto_main] then {
 # print-stack settings
 gdb_test "show python print-stack" \
     "The mode of Python stack printing on error is \"message\".*" \
-    "Test print-backtrace show setting. Default is message."
+    "Test print-stack show setting. Default is message."
 gdb_py_test_silent_cmd "set python print-stack full" \
-    "Test print-backtrace set setting" 1
+    "Test print-stack set setting to full" 1
 gdb_test "show python print-stack" \
     "The mode of Python stack printing on error is \"full\".*" \
-    "Test print-backtrace show setting to full."
+    "Test print-stack show setting to full"
 gdb_py_test_silent_cmd "set python print-stack none" \
-    "Test print-backtrace set setting" 1
+    "Test print-stack set setting to none" 1
 gdb_test "show python print-stack" \
     "The mode of Python stack printing on error is \"none\".*" \
-    "Test print-backtrace show setting to none."
+    "Test print-stack show setting to none"
 
 gdb_py_test_silent_cmd "set python print-stack message" \
-    "Test print-backtrace set setting" 1
+    "Test print-stack set setting to message" 1
 
 gdb_py_test_multiple "prompt substitution readline" \
   "python" "" \
@@ -371,7 +364,7 @@ gdb_py_test_silent_cmd "python gdb.prompt_hook = None" \
     "set the hook to default" 1
 
 gdb_py_test_silent_cmd "set python print-stack full" \
-    "Test print-backtrace set setting" 1
+    "set print-stack full for prompt error test" 1
 
 gdb_test_multiple "python gdb.prompt_hook = error_prompt" "set the hook" {
     -re "Traceback.*File.*line.*RuntimeError.*Python exception called.*" {

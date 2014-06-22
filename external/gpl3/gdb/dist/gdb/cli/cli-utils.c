@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "cli/cli-utils.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "gdb_assert.h"
 
@@ -261,30 +261,39 @@ remove_trailing_whitespace (const char *start, char *s)
 /* See documentation in cli-utils.h.  */
 
 char *
-extract_arg (char **arg)
+extract_arg_const (const char **arg)
 {
-  char *result, *copy;
+  const char *result;
 
   if (!*arg)
     return NULL;
 
   /* Find the start of the argument.  */
-  *arg = skip_spaces (*arg);
+  *arg = skip_spaces_const (*arg);
   if (!**arg)
     return NULL;
   result = *arg;
 
   /* Find the end of the argument.  */
-  *arg = skip_to_space (*arg + 1);
+  *arg = skip_to_space_const (*arg + 1);
 
   if (result == *arg)
     return NULL;
 
-  copy = xmalloc (*arg - result + 1);
-  memcpy (copy, result, *arg - result);
-  copy[*arg - result] = '\0';
+  return savestring (result, *arg - result);
+}
 
-  return copy;
+/* See documentation in cli-utils.h.  */
+
+char *
+extract_arg (char **arg)
+{
+  const char *arg_const = *arg;
+  char *result;
+
+  result = extract_arg_const (&arg_const);
+  *arg += arg_const - *arg;
+  return result;
 }
 
 /* See documentation in cli-utils.h.  */

@@ -6,6 +6,9 @@ dnl major rewriting for Tcl 7.5 by Don Libes <libes@nist.gov>
 
 sinclude(acx_configure_dir.m4)
 
+# This gets GDB_AC_LIBMCHECK.
+sinclude(libmcheck.m4)
+
 dnl gdb/configure.in uses BFD_NEED_DECLARATION, so get its definition.
 sinclude(../bfd/bfd.m4)
 
@@ -49,12 +52,14 @@ sinclude([../config/codeset.m4])
 
 sinclude([../config/zlib.m4])
 
+m4_include([common/common.m4])
+
 ## ----------------------------------------- ##
 ## ANSIfy the C compiler whenever possible.  ##
 ## From Franc,ois Pinard                     ##
 ## ----------------------------------------- ##
 
-# Copyright (C) 1996-2013 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -455,7 +460,7 @@ AC_DEFUN([GDB_AC_CHECK_BFD], [
   intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
   # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
   if test "$plugins" = "yes"; then
-    LIBS="-ldl $LIBS"
+    AC_SEARCH_LIBS(dlopen, dl)
   fi
   LIBS="-lbfd -liberty $intl $LIBS"
   AC_CACHE_CHECK([$1], [$2],

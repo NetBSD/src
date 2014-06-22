@@ -1,5 +1,5 @@
 /* Cell SPU GNU/Linux multi-architecture debugging support.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -21,7 +21,7 @@
 #include "defs.h"
 #include "gdbcore.h"
 #include "gdbcmd.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "arch-utils.h"
 #include "observer.h"
@@ -285,7 +285,7 @@ spu_xfer_partial (struct target_ops *ops, enum target_object object,
 					    0, sizeof buf) <= 0)
 	    return ret;
 
-	  lslr = strtoulst (buf, NULL, 16);
+	  lslr = strtoulst ((char *) buf, NULL, 16);
 	  return ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
 					       mem_annex, readbuf, writebuf,
 					       addr & lslr, len);
@@ -410,7 +410,7 @@ _initialize_spu_multiarch (void)
 {
   /* Install ourselves on the target stack.  */
   init_spu_ops ();
-  add_target (&spu_ops);
+  complete_target_initialization (&spu_ops);
 
   /* Install observers to watch for SPU objects.  */
   observer_attach_inferior_created (spu_multiarch_inferior_created);

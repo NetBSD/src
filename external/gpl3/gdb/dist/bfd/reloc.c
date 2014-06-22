@@ -1,8 +1,5 @@
 /* BFD support for handling relocation entries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
-   2012
-   Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2416,6 +2413,8 @@ ENUMX
   BFD_RELOC_MIPS_TLS_TPREL_LO16
 ENUMX
   BFD_RELOC_MICROMIPS_TLS_TPREL_LO16
+ENUMX
+  BFD_RELOC_MIPS_EH
 ENUMDOC
   MIPS ELF relocations.
 COMMENT
@@ -2700,6 +2699,10 @@ ENUMX
   BFD_RELOC_X86_64_TLSDESC
 ENUMX
   BFD_RELOC_X86_64_IRELATIVE
+ENUMX
+  BFD_RELOC_X86_64_PC32_BND
+ENUMX
+  BFD_RELOC_X86_64_PLT32_BND
 ENUMDOC
   x86-64/elf relocations
 
@@ -2892,6 +2895,10 @@ ENUMX
   BFD_RELOC_PPC64_PLTGOT16_DS
 ENUMX
   BFD_RELOC_PPC64_PLTGOT16_LO_DS
+ENUMX
+  BFD_RELOC_PPC64_ADDR16_HIGH
+ENUMX
+  BFD_RELOC_PPC64_ADDR16_HIGHA
 ENUMDOC
   Power(rs6000) and PowerPC relocations.
 
@@ -2979,6 +2986,14 @@ ENUMX
   BFD_RELOC_PPC64_DTPREL16_HIGHEST
 ENUMX
   BFD_RELOC_PPC64_DTPREL16_HIGHESTA
+ENUMX
+  BFD_RELOC_PPC64_TPREL16_HIGH
+ENUMX
+  BFD_RELOC_PPC64_TPREL16_HIGHA
+ENUMX
+  BFD_RELOC_PPC64_DTPREL16_HIGH
+ENUMX
+  BFD_RELOC_PPC64_DTPREL16_HIGHA
 ENUMDOC
   PowerPC and PowerPC64 thread-local storage relocations.
 
@@ -3824,6 +3839,274 @@ ENUMDOC
 
 
 ENUM
+  BFD_RELOC_NDS32_20
+ENUMDOC
+  NDS32 relocs.
+  This is a 20 bit absolute address.
+ENUM
+  BFD_RELOC_NDS32_9_PCREL
+ENUMDOC
+  This is a 9-bit pc-relative reloc with the right 1 bit assumed to be 0.
+ENUM
+  BFD_RELOC_NDS32_WORD_9_PCREL
+ENUMDOC
+  This is a 9-bit pc-relative reloc with the right 1 bit assumed to be 0.
+ENUM
+  BFD_RELOC_NDS32_15_PCREL
+ENUMDOC
+  This is an 15-bit reloc with the right 1 bit assumed to be 0.
+ENUM
+  BFD_RELOC_NDS32_17_PCREL
+ENUMDOC
+  This is an 17-bit reloc with the right 1 bit assumed to be 0.
+ENUM
+  BFD_RELOC_NDS32_25_PCREL
+ENUMDOC
+  This is a 25-bit reloc with the right 1 bit assumed to be 0.
+ENUM
+  BFD_RELOC_NDS32_HI20
+ENUMDOC
+  This is a 20-bit reloc containing the high 20 bits of an address
+  used with the lower 12 bits
+ENUM
+  BFD_RELOC_NDS32_LO12S3
+ENUMDOC
+  This is a 12-bit reloc containing the lower 12 bits of an address
+  then shift right by 3. This is used with ldi,sdi...
+ENUM
+  BFD_RELOC_NDS32_LO12S2
+ENUMDOC
+  This is a 12-bit reloc containing the lower 12 bits of an address
+  then shift left by 2. This is used with lwi,swi...
+ENUM
+  BFD_RELOC_NDS32_LO12S1
+ENUMDOC
+  This is a 12-bit reloc containing the lower 12 bits of an address
+  then shift left by 1. This is used with lhi,shi...
+ENUM
+  BFD_RELOC_NDS32_LO12S0
+ENUMDOC
+  This is a 12-bit reloc containing the lower 12 bits of an address
+  then shift left by 0. This is used with lbisbi...
+ENUM
+  BFD_RELOC_NDS32_LO12S0_ORI
+ENUMDOC
+  This is a 12-bit reloc containing the lower 12 bits of an address
+  then shift left by 0. This is only used with branch relaxations
+ENUM
+  BFD_RELOC_NDS32_SDA15S3
+ENUMDOC
+  This is a 15-bit reloc containing the small data area 18-bit signed offset
+  and shift left by 3 for use in ldi, sdi...
+ENUM
+  BFD_RELOC_NDS32_SDA15S2
+ENUMDOC
+  This is a 15-bit reloc containing the small data area 17-bit signed offset
+  and shift left by 2 for use in lwi, swi...
+ENUM
+  BFD_RELOC_NDS32_SDA15S1
+ENUMDOC
+  This is a 15-bit reloc containing the small data area 16-bit signed offset
+  and shift left by 1 for use in lhi, shi...
+ENUM
+  BFD_RELOC_NDS32_SDA15S0
+ENUMDOC
+  This is a 15-bit reloc containing the small data area 15-bit signed offset
+  and shift left by 0 for use in lbi, sbi...
+ENUM
+  BFD_RELOC_NDS32_SDA16S3
+ENUMDOC
+  This is a 16-bit reloc containing the small data area 16-bit signed offset
+  and shift left by 3
+ENUM
+  BFD_RELOC_NDS32_SDA17S2
+ENUMDOC
+  This is a 17-bit reloc containing the small data area 17-bit signed offset
+  and shift left by 2 for use in lwi.gp, swi.gp...
+ENUM
+  BFD_RELOC_NDS32_SDA18S1
+ENUMDOC
+  This is a 18-bit reloc containing the small data area 18-bit signed offset
+  and shift left by 1 for use in lhi.gp, shi.gp...
+ENUM
+  BFD_RELOC_NDS32_SDA19S0
+ENUMDOC
+  This is a 19-bit reloc containing the small data area 19-bit signed offset
+  and shift left by 0 for use in lbi.gp, sbi.gp...
+ENUM
+  BFD_RELOC_NDS32_GOT20
+ENUMX
+  BFD_RELOC_NDS32_9_PLTREL
+ENUMX
+  BFD_RELOC_NDS32_25_PLTREL
+ENUMX
+  BFD_RELOC_NDS32_COPY
+ENUMX
+  BFD_RELOC_NDS32_GLOB_DAT
+ENUMX
+  BFD_RELOC_NDS32_JMP_SLOT
+ENUMX
+  BFD_RELOC_NDS32_RELATIVE
+ENUMX
+  BFD_RELOC_NDS32_GOTOFF
+ENUMX
+  BFD_RELOC_NDS32_GOTOFF_HI20
+ENUMX
+  BFD_RELOC_NDS32_GOTOFF_LO12
+ENUMX
+  BFD_RELOC_NDS32_GOTPC20
+ENUMX
+  BFD_RELOC_NDS32_GOT_HI20
+ENUMX
+  BFD_RELOC_NDS32_GOT_LO12
+ENUMX
+  BFD_RELOC_NDS32_GOTPC_HI20
+ENUMX
+  BFD_RELOC_NDS32_GOTPC_LO12
+ENUMDOC
+  for PIC
+ENUM
+  BFD_RELOC_NDS32_INSN16
+ENUMX
+  BFD_RELOC_NDS32_LABEL
+ENUMX
+  BFD_RELOC_NDS32_LONGCALL1
+ENUMX
+  BFD_RELOC_NDS32_LONGCALL2
+ENUMX
+  BFD_RELOC_NDS32_LONGCALL3
+ENUMX
+  BFD_RELOC_NDS32_LONGJUMP1
+ENUMX
+  BFD_RELOC_NDS32_LONGJUMP2
+ENUMX
+  BFD_RELOC_NDS32_LONGJUMP3
+ENUMX
+  BFD_RELOC_NDS32_LOADSTORE
+ENUMX
+  BFD_RELOC_NDS32_9_FIXED
+ENUMX
+  BFD_RELOC_NDS32_15_FIXED
+ENUMX
+  BFD_RELOC_NDS32_17_FIXED
+ENUMX
+  BFD_RELOC_NDS32_25_FIXED
+ENUMDOC
+  for relax
+ENUM
+  BFD_RELOC_NDS32_PLTREL_HI20
+ENUMX
+  BFD_RELOC_NDS32_PLTREL_LO12
+ENUMX
+  BFD_RELOC_NDS32_PLT_GOTREL_HI20
+ENUMX
+  BFD_RELOC_NDS32_PLT_GOTREL_LO12
+ENUMDOC
+  for PIC
+ENUM
+  BFD_RELOC_NDS32_SDA12S2_DP
+ENUMX
+  BFD_RELOC_NDS32_SDA12S2_SP
+ENUMX
+  BFD_RELOC_NDS32_LO12S2_DP
+ENUMX
+  BFD_RELOC_NDS32_LO12S2_SP
+ENUMDOC
+  for floating point
+ENUM
+  BFD_RELOC_NDS32_DWARF2_OP1
+ENUMX
+  BFD_RELOC_NDS32_DWARF2_OP2
+ENUMX
+  BFD_RELOC_NDS32_DWARF2_LEB
+ENUMDOC
+  for dwarf2 debug_line.
+ENUM
+  BFD_RELOC_NDS32_UPDATE_TA
+ENUMDOC
+  for eliminate 16-bit instructions
+ENUM
+  BFD_RELOC_NDS32_PLT_GOTREL_LO20
+ENUMX
+  BFD_RELOC_NDS32_PLT_GOTREL_LO15
+ENUMX
+  BFD_RELOC_NDS32_PLT_GOTREL_LO19
+ENUMX
+  BFD_RELOC_NDS32_GOT_LO15
+ENUMX
+  BFD_RELOC_NDS32_GOT_LO19
+ENUMX
+  BFD_RELOC_NDS32_GOTOFF_LO15
+ENUMX
+  BFD_RELOC_NDS32_GOTOFF_LO19
+ENUMX
+  BFD_RELOC_NDS32_GOT15S2
+ENUMX
+  BFD_RELOC_NDS32_GOT17S2
+ENUMDOC
+  for PIC object relaxation
+ENUM
+  BFD_RELOC_NDS32_5
+ENUMDOC
+  NDS32 relocs.
+  This is a 5 bit absolute address.
+ENUM
+  BFD_RELOC_NDS32_10_UPCREL
+ENUMDOC
+  This is a 10-bit unsigned pc-relative reloc with the right 1 bit assumed to be 0.
+ENUM
+  BFD_RELOC_NDS32_SDA_FP7U2_RELA
+ENUMDOC
+  If fp were omitted, fp can used as another gp.
+ENUM
+  BFD_RELOC_NDS32_RELAX_ENTRY
+ENUMX
+  BFD_RELOC_NDS32_GOT_SUFF
+ENUMX
+  BFD_RELOC_NDS32_GOTOFF_SUFF
+ENUMX
+  BFD_RELOC_NDS32_PLT_GOT_SUFF
+ENUMX
+  BFD_RELOC_NDS32_MULCALL_SUFF
+ENUMX
+  BFD_RELOC_NDS32_PTR
+ENUMX
+  BFD_RELOC_NDS32_PTR_COUNT
+ENUMX
+  BFD_RELOC_NDS32_PTR_RESOLVED
+ENUMX
+  BFD_RELOC_NDS32_PLTBLOCK
+ENUMX
+  BFD_RELOC_NDS32_RELAX_REGION_BEGIN
+ENUMX
+  BFD_RELOC_NDS32_RELAX_REGION_END
+ENUMX
+  BFD_RELOC_NDS32_MINUEND
+ENUMX
+  BFD_RELOC_NDS32_SUBTRAHEND
+ENUMX
+  BFD_RELOC_NDS32_DIFF8
+ENUMX
+  BFD_RELOC_NDS32_DIFF16
+ENUMX
+  BFD_RELOC_NDS32_DIFF32
+ENUMX
+  BFD_RELOC_NDS32_DIFF_ULEB128
+ENUMX
+  BFD_RELOC_NDS32_25_ABS
+ENUMX
+  BFD_RELOC_NDS32_DATA
+ENUMX
+  BFD_RELOC_NDS32_TRAN
+ENUMX
+  BFD_RELOC_NDS32_17IFC_PCREL
+ENUMX
+  BFD_RELOC_NDS32_10IFCU_PCREL
+ENUMDOC
+  relaxation relative relocation types
+
+
+ENUM
   BFD_RELOC_V850_9_PCREL
 ENUMDOC
   This is a 9-bit reloc
@@ -4659,6 +4942,14 @@ ENUM
 ENUMDOC
   16 bit GOT offset.
 ENUM
+  BFD_RELOC_390_PC12DBL
+ENUMDOC
+  PC relative 12 bit shifted by 1.
+ENUM
+  BFD_RELOC_390_PLT12DBL
+ENUMDOC
+  12 bit PC rel. PLT shifted by 1.
+ENUM
   BFD_RELOC_390_PC16DBL
 ENUMDOC
   PC relative 16 bit shifted by 1.
@@ -4666,6 +4957,14 @@ ENUM
   BFD_RELOC_390_PLT16DBL
 ENUMDOC
   16 bit PC rel. PLT shifted by 1.
+ENUM
+  BFD_RELOC_390_PC24DBL
+ENUMDOC
+  PC relative 24 bit shifted by 1.
+ENUM
+  BFD_RELOC_390_PLT24DBL
+ENUMDOC
+  24 bit PC rel. PLT shifted by 1.
 ENUM
   BFD_RELOC_390_PC32DBL
 ENUMDOC
@@ -5584,6 +5883,8 @@ ENUMX
   BFD_RELOC_H8_DIR24R8
 ENUMX
   BFD_RELOC_H8_DIR32A16
+ENUMX
+  BFD_RELOC_H8_DISP32A16
 ENUMDOC
   H8 elf Relocations.
 
@@ -5663,6 +5964,36 @@ ENUMX
   BFD_RELOC_MSP430_2X_PCREL
 ENUMX
   BFD_RELOC_MSP430_RL_PCREL
+ENUMX
+  BFD_RELOC_MSP430_ABS8
+ENUMX
+  BFD_RELOC_MSP430X_PCR20_EXT_SRC
+ENUMX
+  BFD_RELOC_MSP430X_PCR20_EXT_DST
+ENUMX
+  BFD_RELOC_MSP430X_PCR20_EXT_ODST
+ENUMX
+  BFD_RELOC_MSP430X_ABS20_EXT_SRC
+ENUMX
+  BFD_RELOC_MSP430X_ABS20_EXT_DST
+ENUMX
+  BFD_RELOC_MSP430X_ABS20_EXT_ODST
+ENUMX
+  BFD_RELOC_MSP430X_ABS20_ADR_SRC
+ENUMX
+  BFD_RELOC_MSP430X_ABS20_ADR_DST
+ENUMX
+  BFD_RELOC_MSP430X_PCR16
+ENUMX
+  BFD_RELOC_MSP430X_PCR20_CALL
+ENUMX
+  BFD_RELOC_MSP430X_ABS16
+ENUMX
+  BFD_RELOC_MSP430_ABS_HI16
+ENUMX
+  BFD_RELOC_MSP430_PREL31
+ENUMX
+  BFD_RELOC_MSP430_SYM_DIFF
 ENUMDOC
   msp430 specific relocation codes
 
@@ -5688,7 +6019,7 @@ ENUMX
   BFD_RELOC_NIOS2_HIADJ16
 ENUMX
   BFD_RELOC_NIOS2_GPREL
-ENUMX 
+ENUMX
   BFD_RELOC_NIOS2_UJMP
 ENUMX
   BFD_RELOC_NIOS2_CJMP
@@ -6082,24 +6413,98 @@ ENUMDOC
   to two words (uses imm instruction).
 
 ENUM
-  BFD_RELOC_AARCH64_ADD_LO12
+  BFD_RELOC_AARCH64_RELOC_START
 ENUMDOC
-  AArch64 ADD immediate instruction, holding bits 0 to 11 of the address.
-  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
+  AArch64 pseudo relocation code to mark the start of the AArch64
+  relocation enumerators.  N.B. the order of the enumerators is
+  important as several tables in the AArch64 bfd backend are indexed
+  by these enumerators; make sure they are all synced.
 ENUM
-  BFD_RELOC_AARCH64_GOT_LD_PREL19
+  BFD_RELOC_AARCH64_NONE
 ENUMDOC
-  AArch64 Load Literal instruction, holding a 19 bit PC relative word
-  offset of the global offset table entry for a symbol.  The lowest two
-  bits must be zero and are not stored in the instruction, giving a 21
-  bit signed byte offset.  This relocation type requires signed overflow
-  checking.
+  AArch64 null relocation code.
 ENUM
-  BFD_RELOC_AARCH64_ADR_GOT_PAGE
+  BFD_RELOC_AARCH64_64
+ENUMX
+  BFD_RELOC_AARCH64_32
+ENUMX
+  BFD_RELOC_AARCH64_16
 ENUMDOC
-  Get to the page base of the global offset table entry for a symbol as
-  part of an ADRP instruction using a 21 bit PC relative value.Used in
-  conjunction with BFD_RELOC_AARCH64_LD64_GOT_LO12_NC.
+  Basic absolute relocations of N bits.  These are equivalent to
+BFD_RELOC_N and they were added to assist the indexing of the howto
+table.
+ENUM
+  BFD_RELOC_AARCH64_64_PCREL
+ENUMX
+  BFD_RELOC_AARCH64_32_PCREL
+ENUMX
+  BFD_RELOC_AARCH64_16_PCREL
+ENUMDOC
+  PC-relative relocations.  These are equivalent to BFD_RELOC_N_PCREL
+and they were added to assist the indexing of the howto table.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G0
+ENUMDOC
+  AArch64 MOV[NZK] instruction with most significant bits 0 to 15
+  of an unsigned address/value.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G0_NC
+ENUMDOC
+  AArch64 MOV[NZK] instruction with less significant bits 0 to 15 of
+  an address/value.  No overflow checking.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G1
+ENUMDOC
+  AArch64 MOV[NZK] instruction with most significant bits 16 to 31
+  of an unsigned address/value.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G1_NC
+ENUMDOC
+  AArch64 MOV[NZK] instruction with less significant bits 16 to 31
+  of an address/value.  No overflow checking.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G2
+ENUMDOC
+  AArch64 MOV[NZK] instruction with most significant bits 32 to 47
+  of an unsigned address/value.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G2_NC
+ENUMDOC
+  AArch64 MOV[NZK] instruction with less significant bits 32 to 47
+  of an address/value.  No overflow checking.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G3
+ENUMDOC
+  AArch64 MOV[NZK] instruction with most signficant bits 48 to 64
+  of a signed or unsigned address/value.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G0_S
+ENUMDOC
+  AArch64 MOV[NZ] instruction with most significant bits 0 to 15
+  of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+  value's sign.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G1_S
+ENUMDOC
+  AArch64 MOV[NZ] instruction with most significant bits 16 to 31
+  of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+  value's sign.
+ENUM
+  BFD_RELOC_AARCH64_MOVW_G2_S
+ENUMDOC
+  AArch64 MOV[NZ] instruction with most significant bits 32 to 47
+  of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+  value's sign.
+ENUM
+  BFD_RELOC_AARCH64_LD_LO19_PCREL
+ENUMDOC
+  AArch64 Load Literal instruction, holding a 19 bit pc-relative word
+  offset.  The lowest two bits must be zero and are not stored in the
+  instruction, giving a 21 bit signed byte offset.
+ENUM
+  BFD_RELOC_AARCH64_ADR_LO21_PCREL
+ENUMDOC
+  AArch64 ADR instruction, holding a simple 21 bit pc-relative byte offset.
 ENUM
   BFD_RELOC_AARCH64_ADR_HI21_PCREL
 ENUMDOC
@@ -6112,9 +6517,21 @@ ENUMDOC
   offset, giving a 4KB aligned page base address, but with no overflow
   checking.
 ENUM
-  BFD_RELOC_AARCH64_ADR_LO21_PCREL
+  BFD_RELOC_AARCH64_ADD_LO12
 ENUMDOC
-  AArch64 ADR instruction, holding a simple 21 bit pc-relative byte offset.
+  AArch64 ADD immediate instruction, holding bits 0 to 11 of the address.
+  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
+ENUM
+  BFD_RELOC_AARCH64_LDST8_LO12
+ENUMDOC
+  AArch64 8-bit load/store instruction, holding bits 0 to 11 of the
+  address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
+ENUM
+  BFD_RELOC_AARCH64_TSTBR14
+ENUMDOC
+  AArch64 14 bit pc-relative test bit and branch.
+  The lowest two bits must be zero and are not stored in the instruction,
+  giving a 16 bit signed byte offset.
 ENUM
   BFD_RELOC_AARCH64_BRANCH19
 ENUMDOC
@@ -6122,44 +6539,17 @@ ENUMDOC
   The lowest two bits must be zero and are not stored in the instruction,
   giving a 21 bit signed byte offset.
 ENUM
-  BFD_RELOC_AARCH64_CALL26
-ENUMDOC
-  AArch64 26 bit pc-relative unconditional branch and link.
-  The lowest two bits must be zero and are not stored in the instruction,
-  giving a 28 bit signed byte offset.
-ENUM
-  BFD_RELOC_AARCH64_GAS_INTERNAL_FIXUP
-ENUMDOC
-  AArch64 pseudo relocation code to be used internally by the AArch64
-  assembler and not (currently) written to any object files.
-ENUM
   BFD_RELOC_AARCH64_JUMP26
 ENUMDOC
   AArch64 26 bit pc-relative unconditional branch.
   The lowest two bits must be zero and are not stored in the instruction,
   giving a 28 bit signed byte offset.
 ENUM
-  BFD_RELOC_AARCH64_LD_LO19_PCREL
+  BFD_RELOC_AARCH64_CALL26
 ENUMDOC
-  AArch64 Load Literal instruction, holding a 19 bit pc-relative word
-  offset.  The lowest two bits must be zero and are not stored in the
-  instruction, giving a 21 bit signed byte offset.
-ENUM
-  BFD_RELOC_AARCH64_LD64_GOT_LO12_NC
-ENUMDOC
-  Unsigned 12 bit byte offset for 64 bit load/store from the page of
-  the GOT entry for this symbol.  Used in conjunction with
-  BFD_RELOC_AARCH64_ADR_GOTPAGE.
-ENUM
-  BFD_RELOC_AARCH64_LDST_LO12
-ENUMDOC
-  AArch64 unspecified load/store instruction, holding bits 0 to 11 of the
-  address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
-ENUM
-  BFD_RELOC_AARCH64_LDST8_LO12
-ENUMDOC
-  AArch64 8-bit load/store instruction, holding bits 0 to 11 of the
-  address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
+  AArch64 26 bit pc-relative unconditional branch and link.
+  The lowest two bits must be zero and are not stored in the instruction,
+  giving a 28 bit signed byte offset.
 ENUM
   BFD_RELOC_AARCH64_LDST16_LO12
 ENUMDOC
@@ -6181,108 +6571,31 @@ ENUMDOC
   AArch64 128-bit load/store instruction, holding bits 0 to 11 of the
   address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
 ENUM
-  BFD_RELOC_AARCH64_MOVW_G0
+  BFD_RELOC_AARCH64_GOT_LD_PREL19
 ENUMDOC
-  AArch64 MOV[NZK] instruction with most significant bits 0 to 15
-  of an unsigned address/value.
+  AArch64 Load Literal instruction, holding a 19 bit PC relative word
+  offset of the global offset table entry for a symbol.  The lowest two
+  bits must be zero and are not stored in the instruction, giving a 21
+  bit signed byte offset.  This relocation type requires signed overflow
+  checking.
 ENUM
-  BFD_RELOC_AARCH64_MOVW_G0_S
+  BFD_RELOC_AARCH64_ADR_GOT_PAGE
 ENUMDOC
-  AArch64 MOV[NZ] instruction with most significant bits 0 to 15
-  of a signed value.  Changes instruction to MOVZ or MOVN depending on the
-  value's sign.
+  Get to the page base of the global offset table entry for a symbol as
+  part of an ADRP instruction using a 21 bit PC relative value.Used in
+  conjunction with BFD_RELOC_AARCH64_LD64_GOT_LO12_NC.
 ENUM
-  BFD_RELOC_AARCH64_MOVW_G0_NC
+  BFD_RELOC_AARCH64_LD64_GOT_LO12_NC
 ENUMDOC
-  AArch64 MOV[NZK] instruction with less significant bits 0 to 15 of
-  an address/value.  No overflow checking.
+  Unsigned 12 bit byte offset for 64 bit load/store from the page of
+  the GOT entry for this symbol.  Used in conjunction with
+  BFD_RELOC_AARCH64_ADR_GOTPAGE.  Valid in LP64 ABI only.
 ENUM
-  BFD_RELOC_AARCH64_MOVW_G1
+  BFD_RELOC_AARCH64_LD32_GOT_LO12_NC
 ENUMDOC
-  AArch64 MOV[NZK] instruction with most significant bits 16 to 31
-  of an unsigned address/value.
-ENUM
-  BFD_RELOC_AARCH64_MOVW_G1_NC
-ENUMDOC
-  AArch64 MOV[NZK] instruction with less significant bits 16 to 31
-  of an address/value.  No overflow checking.
-ENUM
-  BFD_RELOC_AARCH64_MOVW_G1_S
-ENUMDOC
-  AArch64 MOV[NZ] instruction with most significant bits 16 to 31
-  of a signed value.  Changes instruction to MOVZ or MOVN depending on the
-  value's sign.
-ENUM
-  BFD_RELOC_AARCH64_MOVW_G2
-ENUMDOC
-  AArch64 MOV[NZK] instruction with most significant bits 32 to 47
-  of an unsigned address/value.
-ENUM
-  BFD_RELOC_AARCH64_MOVW_G2_NC
-ENUMDOC
-  AArch64 MOV[NZK] instruction with less significant bits 32 to 47
-  of an address/value.  No overflow checking.
-ENUM
-  BFD_RELOC_AARCH64_MOVW_G2_S
-ENUMDOC
-  AArch64 MOV[NZ] instruction with most significant bits 32 to 47
-  of a signed value.  Changes instruction to MOVZ or MOVN depending on the
-  value's sign.
-ENUM
-  BFD_RELOC_AARCH64_MOVW_G3
-ENUMDOC
-  AArch64 MOV[NZK] instruction with most signficant bits 48 to 64
-  of a signed or unsigned address/value.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC
-ENUMDOC
-  AArch64 TLS relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_ADD
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_ADD_LO12_NC
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_ADR_PREL21
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_CALL
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_LD64_LO12_NC
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_LD64_PREL19
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_LDR
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSDESC_OFF_G1
-ENUMDOC
-  AArch64 TLS DESC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC
-ENUMDOC
-  Unsigned 12 bit byte offset to global offset table entry for a symbols
-  tls_index structure.  Used in conjunction with
-  BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21.
+  Unsigned 12 bit byte offset for 32 bit load/store from the page of
+  the GOT entry for this symbol.  Used in conjunction with
+  BFD_RELOC_AARCH64_ADR_GOTPAGE.  Valid in ILP32 ABI only.
 ENUM
   BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21
 ENUMDOC
@@ -6291,15 +6604,13 @@ ENUMDOC
   relative value.  Used in conjunction with
   BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC.
 ENUM
-  BFD_RELOC_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21
+  BFD_RELOC_AARCH64_TLSGD_ADD_LO12_NC
 ENUMDOC
-  AArch64 TLS INITIAL EXEC relocation.
+  Unsigned 12 bit byte offset to global offset table entry for a symbols
+  tls_index structure.  Used in conjunction with
+  BFD_RELOC_AARCH64_TLSGD_ADR_PAGE21.
 ENUM
-  BFD_RELOC_AARCH64_TLSIE_LD_GOTTPREL_PREL19
-ENUMDOC
-  AArch64 TLS INITIAL EXEC relocation.
-ENUM
-  BFD_RELOC_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC
+  BFD_RELOC_AARCH64_TLSIE_MOVW_GOTTPREL_G1
 ENUMDOC
   AArch64 TLS INITIAL EXEC relocation.
 ENUM
@@ -6307,9 +6618,41 @@ ENUM
 ENUMDOC
   AArch64 TLS INITIAL EXEC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLSIE_MOVW_GOTTPREL_G1
+  BFD_RELOC_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21
 ENUMDOC
   AArch64 TLS INITIAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC
+ENUMDOC
+  AArch64 TLS INITIAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSIE_LD32_GOTTPREL_LO12_NC
+ENUMDOC
+  AArch64 TLS INITIAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSIE_LD_GOTTPREL_PREL19
+ENUMDOC
+  AArch64 TLS INITIAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G2
+ENUMDOC
+  AArch64 TLS LOCAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G1
+ENUMDOC
+  AArch64 TLS LOCAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G1_NC
+ENUMDOC
+  AArch64 TLS LOCAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G0
+ENUMDOC
+  AArch64 TLS LOCAL EXEC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G0_NC
+ENUMDOC
+  AArch64 TLS LOCAL EXEC relocation.
 ENUM
   BFD_RELOC_AARCH64_TLSLE_ADD_TPREL_HI12
 ENUMDOC
@@ -6323,43 +6666,118 @@ ENUM
 ENUMDOC
   AArch64 TLS LOCAL EXEC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G0
+  BFD_RELOC_AARCH64_TLSDESC_LD_PREL19
 ENUMDOC
-  AArch64 TLS LOCAL EXEC relocation.
+  AArch64 TLS DESC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G0_NC
+  BFD_RELOC_AARCH64_TLSDESC_ADR_PREL21
 ENUMDOC
-  AArch64 TLS LOCAL EXEC relocation.
+  AArch64 TLS DESC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G1
+  BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE21
 ENUMDOC
-  AArch64 TLS LOCAL EXEC relocation.
+  AArch64 TLS DESC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G1_NC
+  BFD_RELOC_AARCH64_TLSDESC_LD64_LO12_NC
 ENUMDOC
-  AArch64 TLS LOCAL EXEC relocation.
+  AArch64 TLS DESC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLSLE_MOVW_TPREL_G2
+  BFD_RELOC_AARCH64_TLSDESC_LD32_LO12_NC
 ENUMDOC
-  AArch64 TLS LOCAL EXEC relocation.
+  AArch64 TLS DESC relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLS_DTPMOD64
+  BFD_RELOC_AARCH64_TLSDESC_ADD_LO12_NC
+ENUMDOC
+  AArch64 TLS DESC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC_OFF_G1
+ENUMDOC
+  AArch64 TLS DESC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC
+ENUMDOC
+  AArch64 TLS DESC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC_LDR
+ENUMDOC
+  AArch64 TLS DESC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC_ADD
+ENUMDOC
+  AArch64 TLS DESC relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC_CALL
+ENUMDOC
+  AArch64 TLS DESC relocation.
+ENUM
+  BFD_RELOC_AARCH64_COPY
 ENUMDOC
   AArch64 TLS relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLS_DTPREL64
+  BFD_RELOC_AARCH64_GLOB_DAT
 ENUMDOC
   AArch64 TLS relocation.
 ENUM
-  BFD_RELOC_AARCH64_TLS_TPREL64
+  BFD_RELOC_AARCH64_JUMP_SLOT
 ENUMDOC
   AArch64 TLS relocation.
 ENUM
-  BFD_RELOC_AARCH64_TSTBR14
+  BFD_RELOC_AARCH64_RELATIVE
 ENUMDOC
-  AArch64 14 bit pc-relative test bit and branch.
-  The lowest two bits must be zero and are not stored in the instruction,
-  giving a 16 bit signed byte offset.
+  AArch64 TLS relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLS_DTPMOD
+ENUMDOC
+  AArch64 TLS relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLS_DTPREL
+ENUMDOC
+  AArch64 TLS relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLS_TPREL
+ENUMDOC
+  AArch64 TLS relocation.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC
+ENUMDOC
+  AArch64 TLS relocation.
+ENUM
+  BFD_RELOC_AARCH64_IRELATIVE
+ENUMDOC
+  AArch64 support for STT_GNU_IFUNC.
+ENUM
+  BFD_RELOC_AARCH64_RELOC_END
+ENUMDOC
+  AArch64 pseudo relocation code to mark the end of the AArch64
+  relocation enumerators that have direct mapping to ELF reloc codes.
+  There are a few more enumerators after this one; those are mainly
+  used by the AArch64 assembler for the internal fixup or to select
+  one of the above enumerators.
+ENUM
+  BFD_RELOC_AARCH64_GAS_INTERNAL_FIXUP
+ENUMDOC
+  AArch64 pseudo relocation code to be used internally by the AArch64
+  assembler and not (currently) written to any object files.
+ENUM
+  BFD_RELOC_AARCH64_LDST_LO12
+ENUMDOC
+  AArch64 unspecified load/store instruction, holding bits 0 to 11 of the
+  address.  Used in conjunction with BFD_RELOC_AARCH64_ADR_HI21_PCREL.
+ENUM
+  BFD_RELOC_AARCH64_LD_GOT_LO12_NC
+ENUMDOC
+  AArch64 pseudo relocation code to be used internally by the AArch64
+  assembler and not (currently) written to any object files.
+ENUM
+  BFD_RELOC_AARCH64_TLSIE_LD_GOTTPREL_LO12_NC
+ENUMDOC
+  AArch64 pseudo relocation code to be used internally by the AArch64
+  assembler and not (currently) written to any object files.
+ENUM
+  BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC
+ENUMDOC
+  AArch64 pseudo relocation code to be used internally by the AArch64
+  assembler and not (currently) written to any object files.
 
 ENUM
   BFD_RELOC_TILEPRO_COPY
