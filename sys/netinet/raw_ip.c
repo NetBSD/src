@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.124 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.125 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.124 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.125 2014/06/22 08:10:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -566,6 +566,13 @@ rip_detach(struct socket *so)
 	in_pcbdetach(inp);
 }
 
+static int
+rip_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	return in_control(so, (long)m, nam, (ifnet_t *)control, l);
+}
+
 int
 rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
@@ -575,10 +582,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_CONTROL);
 
-	if (req == PRU_CONTROL) {
-		return in_control(so, (long)m, nam, (ifnet_t *)control, l);
-	}
 	s = splsoftnet();
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -707,11 +712,13 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 PR_WRAP_USRREQS(rip)
 #define	rip_attach	rip_attach_wrapper
 #define	rip_detach	rip_detach_wrapper
+#define	rip_ioctl	rip_ioctl_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
 const struct pr_usrreqs rip_usrreqs = {
 	.pr_attach	= rip_attach,
 	.pr_detach	= rip_detach,
+	.pr_ioctl	= rip_ioctl,
 	.pr_generic	= rip_usrreq,
 };
 

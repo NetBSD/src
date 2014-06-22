@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.282 2014/06/16 00:40:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.283 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.282 2014/06/16 00:40:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.283 2014/06/22 08:10:18 rtr Exp $");
 
 #include "opt_inet.h"
 
@@ -1922,8 +1922,8 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #ifdef COMPAT_OSOCK
 		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
-		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-		    PRU_CONTROL, (struct mbuf *)cmd, (struct mbuf *)data,
+		error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
+		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, l);
 #endif
 	}

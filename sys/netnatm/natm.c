@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.27 2014/05/20 19:04:00 rmind Exp $	*/
+/*	$NetBSD: natm.c,v 1.28 2014/06/22 08:10:19 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.27 2014/05/20 19:04:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.28 2014/06/22 08:10:19 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,43 @@ natm_detach(struct socket *so)
 	mutex_enter(softnet_lock);
 }
 
+static int
+natm_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+  int error = 0;
+
+  s = SPLSOFTNET();
+
+  /*
+   * raw atm ioctl.   comes in as a SIOCRAWATM.   we convert it to
+   * SIOCXRAWATM and pass it to the driver.
+   */
+  if ((u_long)m == SIOCRAWATM) {
+    if (npcb->npcb_ifp == NULL) {
+      error = ENOTCONN;
+      goto done;
+    }
+    ario.npcb = npcb;
+    ario.rawvalue = *((int *)nam);
+    error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp, SIOCXRAWATM, &ario);
+    if (!error) {
+      if (ario.rawvalue)
+	npcb->npcb_flags |= NPCB_RAW;
+      else
+	npcb->npcb_flags &= ~(NPCB_RAW);
+    }
+
+    goto done;
+  }
+
+  error = EOPNOTSUPP;
+
+done:
+  splx(s);
+  return(error);
+}
+
 /*
  * user requests
  */
@@ -114,6 +151,7 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
   KASSERT(req != PRU_ATTACH);
   KASSERT(req != PRU_DETACH);
+  KASSERT(req != PRU_CONTROL);
 
   s = SPLSOFTNET();
 
@@ -264,32 +302,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
       snatm->snatm_vpi = npcb->npcb_vpi;
       break;
 
-    case PRU_CONTROL:			/* control operations on protocol */
-      /*
-       * raw atm ioctl.   comes in as a SIOCRAWATM.   we convert it to
-       * SIOCXRAWATM and pass it to the driver.
-       */
-      if ((u_long)m == SIOCRAWATM) {
-        if (npcb->npcb_ifp == NULL) {
-          error = ENOTCONN;
-          break;
-        }
-        ario.npcb = npcb;
-        ario.rawvalue = *((int *)nam);
-        error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp, SIOCXRAWATM, &ario);
-	if (!error) {
-          if (ario.rawvalue)
-	    npcb->npcb_flags |= NPCB_RAW;
-	  else
-	    npcb->npcb_flags &= ~(NPCB_RAW);
-	}
-
-        break;
-      }
-
-      error = EOPNOTSUPP;
-      break;
-
     case PRU_BIND:			/* bind socket to address */
     case PRU_LISTEN:			/* listen for connection */
     case PRU_ACCEPT:			/* accept connection from peer */
@@ -399,10 +411,12 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
 PR_WRAP_USRREQS(natm)
 #define	natm_attach	natm_attach_wrapper
 #define	natm_detach	natm_detach_wrapper
+#define	natm_ioctl	natm_ioctl_wrapper
 #define	natm_usrreq	natm_usrreq_wrapper
 
 const struct pr_usrreqs natm_usrreqs = {
 	.pr_attach	= natm_attach,
 	.pr_detach	= natm_detach,
+	.pr_ioctl	= natm_ioctl,
 	.pr_generic	= natm_usrreq,
 };

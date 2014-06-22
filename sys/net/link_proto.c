@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.9 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.10 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.9 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.10 2014/06/22 08:10:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.9 2014/05/19 02:51:24 rmind Exp $")
 static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 static int link_attach(struct socket *, int);
 static void link_detach(struct socket *);
+static int link_ioctl(struct socket *, struct mbuf *, struct mbuf *,
+	struct mbuf *, struct lwp *);
 static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static void link_init(void);
@@ -63,6 +65,7 @@ DOMAIN_DEFINE(linkdomain);	/* forward define and add to link set */
 static const struct pr_usrreqs link_usrreqs = {
 	.pr_attach	= link_attach,
 	.pr_detach	= link_detach,
+	.pr_ioctl	= link_ioctl,
 	.pr_generic	= link_usrreq,
 };
 
@@ -230,19 +233,22 @@ link_detach(struct socket *so)
 }
 
 static int
+link_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct lwp *l)
+{
+	return link_control(so, (unsigned long)m, nam,
+	    (struct ifnet *)control, l);
+}
+
+static int
 link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_CONTROL);
 
-	switch (req) {
-	case PRU_CONTROL:
-		return link_control(so, (unsigned long)m, nam,
-		    (struct ifnet *)control, l);
-	default:
-		return EOPNOTSUPP;
-	}
+	return EOPNOTSUPP;
 }
 
 /* Compare the field at byte offsets [fieldstart, fieldend) in

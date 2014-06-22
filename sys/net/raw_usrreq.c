@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.39 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.40 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.39 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.40 2014/06/22 08:10:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -162,9 +162,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
-
-	if (req == PRU_CONTROL)
-		return EOPNOTSUPP;
+	KASSERT(req != PRU_CONTROL);
 
 	s = splsoftnet();
 	KERNEL_LOCK(1, NULL);
