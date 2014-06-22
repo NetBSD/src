@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.20 2014/06/21 23:12:10 christos Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.21 2014/06/22 22:19:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.20 2014/06/21 23:12:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.21 2014/06/22 22:19:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -67,26 +67,26 @@ sched_freebsd2native(int freebsd_policy,
 {
 	int p;
 
-	if (native_policy == NULL)
-		native_policy = &p;
-
 	switch (freebsd_policy) {
 	case FREEBSD_SCHED_OTHER:
-		*native_policy = SCHED_OTHER;
+		p = SCHED_OTHER;
 		break;
 
 	case FREEBSD_SCHED_FIFO:
-		*native_policy = SCHED_FIFO;
+		p = SCHED_FIFO;
 		break;
         
 	case FREEBSD_SCHED_RR:
-		*native_policy = SCHED_RR;
+		p = SCHED_RR;
 		break;
 
 	default:
 		return EINVAL;
 	}
  
+	if (native_policy != NULL)
+		*native_policy = p;
+
 	if (freebsd_params != NULL && native_params != NULL) {
 		/* XXX: Needs adjustment to do a proper conversion. */
 		native_params->sched_priority = freebsd_params->sched_priority;
@@ -102,26 +102,26 @@ sched_native2freebsd(int native_policy, const struct sched_param *native_params,
 {
 	int p;
 
-	if (freebsd_policy == NULL)
-		freebsd_policy = &p;
-
 	switch (native_policy) {
 	case SCHED_OTHER:
-		*freebsd_policy = FREEBSD_SCHED_OTHER;
+		p = FREEBSD_SCHED_OTHER;
 		break;
 
 	case SCHED_FIFO:
-		*freebsd_policy = FREEBSD_SCHED_FIFO;
+		p = FREEBSD_SCHED_FIFO;
 		break;
         
 	case SCHED_RR:
-		*freebsd_policy = FREEBSD_SCHED_RR;
+		p = FREEBSD_SCHED_RR;
 		break;
 
 	default:
 		return EINVAL;
 	}
  
+	if (freebsd_policy != NULL)
+		*freebsd_policy = p;
+
 	if (native_params != NULL && freebsd_params != NULL) {
 		/* XXX: Needs adjustment to do a proper conversion. */
 		freebsd_params->sched_priority = native_params->sched_priority;
