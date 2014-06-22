@@ -1,5 +1,5 @@
 /* Data structures associated with tracepoints in GDB.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,17 @@
 #include "target.h"
 #include "memrange.h"
 #include "gdb_vecs.h"
+
+/* An object describing the contents of a traceframe.  */
+
+struct traceframe_info
+{
+  /* Collected memory.  */
+  VEC(mem_range_s) *memory;
+
+  /* Collected trace state variables.  */
+  VEC(int) *tvars;
+};
 
 /* A trace state variable is a value managed by a target being
    traced.  A trace state variable (or tsv for short) can be accessed
@@ -142,6 +153,8 @@ struct trace_status *current_trace_status (void);
 
 extern char *default_collect;
 
+extern int trace_regblock_size;
+
 /* Struct to collect random info about tracepoints on the target.  */
 
 struct uploaded_tp
@@ -205,6 +218,143 @@ struct static_tracepoint_marker
   char *extra;
 };
 
+struct trace_file_writer;
+
+/* Operations to write trace frames to a specific trace format.  */
+
+struct trace_frame_write_ops
+{
+  /* Write a new trace frame.  The tracepoint number of this trace
+     frame is TPNUM.  */
+  void (*start) (struct trace_file_writer *self, uint16_t tpnum);
+
+  /* Write an 'R' block.  Buffer BUF contains its contents and SIZE is
+     its size.  */
+  void (*write_r_block) (struct trace_file_writer *self,
+			 gdb_byte *buf, int32_t size);
+
+  /* Write an 'M' block, the header and memory contents respectively.
+     The header of 'M' block is composed of the start address and the
+     length of memory collection, and the memory contents contain
+     the collected memory contents in tracing.
+     For extremely large M block, GDB is unable to get its contents
+     and write them into trace file in one go, due to the limitation
+     of the remote target or the size of internal buffer, we split
+     the operation to 'M' block to two operations.  */
+  /* Write the head of 'M' block.  ADDR is the start address of
+     collected memory and LENGTH is the length of memory contents.  */
+  void (*write_m_block_header) (struct trace_file_writer *self,
+				uint64_t addr, uint16_t length);
+  /* Write the memory contents of 'M' block.  Buffer BUF contains
+     its contents and LENGTH is its length.  This method can be called
+     multiple times to write large memory contents of a single 'M'
+     block.  */
+  void (*write_m_block_memory) (struct trace_file_writer *self,
+				gdb_byte *buf, uint16_t length);
+
+  /* Write a 'V' block.  NUM is the trace variable number and VAL is
+     the value of the trace variable.  */
+  void (*write_v_block) (struct trace_file_writer *self, int32_t num,
+			 uint64_t val);
+
+  /* The end of the trace frame.  */
+  void (*end) (struct trace_file_writer *self);
+};
+
+/* Operations to write trace buffers to a specific trace format.  */
+
+struct trace_file_write_ops
+{
+  /* Destructor.  Releases everything from SELF (but not SELF
+     itself).  */
+  void (*dtor) (struct trace_file_writer *self);
+
+  /*  Save the data to file or directory NAME of desired format in
+      target side.  Return true for success, otherwise return
+      false.  */
+  int (*target_save) (struct trace_file_writer *self,
+		      const char *name);
+
+  /* Write the trace buffers to file or directory NAME.  */
+  void (*start) (struct trace_file_writer *self,
+		 const char *name);
+
+  /* Write the trace header.  */
+  void (*write_header) (struct trace_file_writer *self);
+
+  /* Write the type of block about registers.  SIZE is the size of
+     all registers on the target.  */
+  void (*write_regblock_type) (struct trace_file_writer *self,
+			       int size);
+
+  /* Write trace status TS.  */
+  void (*write_status) (struct trace_file_writer *self,
+			struct trace_status *ts);
+
+  /* Write the uploaded TSV.  */
+  void (*write_uploaded_tsv) (struct trace_file_writer *self,
+			      struct uploaded_tsv *tsv);
+
+  /* Write the uploaded tracepoint TP.  */
+  void (*write_uploaded_tp) (struct trace_file_writer *self,
+			     struct uploaded_tp *tp);
+
+  /* Write to mark the end of the definition part.  */
+  void (*write_definition_end) (struct trace_file_writer *self);
+
+  /* Write the data of trace buffer without parsing.  The content is
+     in BUF and length is LEN.  */
+  void (*write_trace_buffer) (struct trace_file_writer *self,
+			      gdb_byte *buf, LONGEST len);
+
+  /* Operations to write trace frames.  The user of this field is
+     responsible to parse the data of trace buffer.  Either field
+     'write_trace_buffer' or field ' frame_ops' is NULL.  */
+  const struct trace_frame_write_ops *frame_ops;
+
+  /* The end of writing trace buffers.  */
+  void (*end) (struct trace_file_writer *self);
+};
+
+/* Trace file writer for a given format.  */
+
+struct trace_file_writer
+{
+  const struct trace_file_write_ops *ops;
+};
+
+struct memrange
+{
+  /* memrange_absolute for absolute memory range, else basereg
+     number.  */
+  int type;
+  bfd_signed_vma start;
+  bfd_signed_vma end;
+};
+
+struct collection_list
+{
+  /* room for up to 256 regs */
+  unsigned char regs_mask[32];
+  long listsize;
+  long next_memrange;
+  struct memrange *list;
+
+  /* size of array pointed to by expr_list elt.  */
+  long aexpr_listsize;
+  long next_aexpr_elt;
+  struct agent_expr **aexpr_list;
+
+  /* True is the user requested a collection of "$_sdata", "static
+     tracepoint data".  */
+  int strace_data;
+
+  /* A set of names of wholly collected objects.  */
+  VEC(char_ptr) *wholly_collected;
+  /* A set of computed expressions.  */
+  VEC(char_ptr) *computed;
+};
+
 extern void parse_static_tracepoint_marker_definition
   (char *line, char **pp,
    struct static_tracepoint_marker *marker);
@@ -218,6 +368,9 @@ extern void (*deprecated_trace_start_stop_hook) (int start, int from_tty);
 
 /* Returns the current traceframe number.  */
 extern int get_traceframe_number (void);
+
+/* Returns the tracepoint number for current traceframe.  */
+extern int get_tracepoint_number (void);
 
 /* Make the traceframe NUM be the current GDB trace frame number, and
    do nothing more.  In particular, this does not flush the
@@ -237,15 +390,23 @@ struct cleanup *make_cleanup_restore_traceframe_number (void);
 
 void free_actions (struct breakpoint *);
 
-extern char *decode_agent_options (char *exp);
+extern const char *decode_agent_options (const char *exp, int *trace_string);
 
-extern void encode_actions (struct breakpoint *t, struct bp_location *tloc,
-			    char ***tdp_actions, char ***stepping_actions);
+extern struct cleanup *
+  encode_actions_and_make_cleanup (struct bp_location *tloc,
+				   struct collection_list *tracepoint_list,
+				   struct collection_list *stepping_list);
 
-extern void validate_actionline (char **, struct breakpoint *);
+extern void encode_actions_rsp (struct bp_location *tloc,
+				char ***tdp_actions, char ***stepping_actions);
+
+extern void validate_actionline (const char *, struct breakpoint *);
 extern void validate_trace_state_variable_name (const char *name);
 
 extern struct trace_state_variable *find_trace_state_variable (const char *name);
+extern struct trace_state_variable *
+  find_trace_state_variable_by_number (int number);
+
 extern struct trace_state_variable *create_trace_state_variable (const char *name);
 
 extern int encode_source_string (int num, ULONGEST addr,
@@ -263,11 +424,15 @@ extern void parse_tsv_definition (char *line, struct uploaded_tsv **utsvp);
 
 extern struct uploaded_tp *get_uploaded_tp (int num, ULONGEST addr,
 					    struct uploaded_tp **utpp);
+extern struct uploaded_tsv *get_uploaded_tsv (int num,
+					      struct uploaded_tsv **utsvp);
 extern struct tracepoint *create_tracepoint_from_upload (struct uploaded_tp *utp);
 extern void merge_uploaded_tracepoints (struct uploaded_tp **utpp);
 extern void merge_uploaded_trace_state_variables (struct uploaded_tsv **utsvp);
 
-extern void disconnect_tracing (int from_tty);
+extern void query_if_trace_running (int from_tty);
+extern void disconnect_tracing (void);
+extern void trace_reset_local_state (void);
 
 extern void start_tracing (char *notes);
 extern void stop_tracing (char *notes);
@@ -278,14 +443,21 @@ extern void tvariables_info_1 (void);
 extern void save_trace_state_variables (struct ui_file *fp);
 
 extern void tfind_1 (enum trace_find_type type, int num,
-		     ULONGEST addr1, ULONGEST addr2,
+		     CORE_ADDR addr1, CORE_ADDR addr2,
 		     int from_tty);
 
-extern void trace_save (const char *filename, int target_does_save);
+extern void trace_save_tfile (const char *filename,
+			      int target_does_save);
+extern void trace_save_ctf (const char *dirname,
+			    int target_does_save);
 
 extern struct traceframe_info *parse_traceframe_info (const char *tframe_info);
 
 extern int traceframe_available_memory (VEC(mem_range_s) **result,
 					CORE_ADDR memaddr, ULONGEST len);
+
+extern struct traceframe_info *get_traceframe_info (void);
+
+extern struct bp_location *get_traceframe_location (int *stepping_frame_p);
 
 #endif	/* TRACEPOINT_H */

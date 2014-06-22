@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit
@@ -34,7 +34,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 if { ![gdb_target_supports_trace] } then {
     unsupported "Current target does not support trace"
-    return 1;
+    return 1
 
 }
 
@@ -46,11 +46,11 @@ if { ![gdb_target_supports_trace] } then {
 # test passcount dynamically (live target)
 #
 
-set baseline [gdb_find_recursion_test_baseline $srcfile];
+set baseline [gdb_find_recursion_test_baseline $srcfile]
 
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 # define relative source line numbers:
@@ -74,7 +74,7 @@ set tdp3 [gdb_gettpnum "$testline3"]
 set tdp4 [gdb_gettpnum "$testline4"]
 if { $tdp2 <= 0 || $tdp3 <= 0 || $tdp4 <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 gdb_test "passcount 4 $tdp2" "Setting tracepoint $tdp2's passcount to 4" \

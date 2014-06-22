@@ -1,4 +1,4 @@
-# Copyright 2010-2013 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@ if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
 load_lib prelink-support.exp
 
 set test "break-interp"
-set binprefix ${objdir}/${subdir}/${test}
+set binprefix [standard_output_file ${test}]
 # Only to get the $interp_system name.
 set srcfile_test "start.c"
 set binfile_test ${test}-test
-set binfile_lib ${objdir}/${subdir}/${test}.so
+set binfile_lib ${binprefix}.so
 set srcfile "${test}-main.c"
 set srcfile_lib "${test}-lib.c"
 
@@ -83,7 +83,7 @@ gdb_test_multiple $test $test {
     }
 }
 
-set interp_system [section_get ${objdir}/${subdir}/$binfile_test .interp]
+set interp_system [section_get [standard_output_file $binfile_test] .interp]
 set interp_system_debug [system_debug_get $interp_system]
 verbose -log "$interp_system has debug $interp_system_debug"
 
@@ -109,12 +109,19 @@ proc strip_debug {dest} {
     }
 }
 
+# The marker function for the standard runtime linker interface is
+# _dl_debug_state.  The probes-based interface has no specific marker
+# function; the probe we will stop on (init_start) is in dl_main so we
+# check for that.
+
+set solib_bp {(_dl_debug_state|dl_main)}
+
 # Implementation of reach.
 
 proc reach_1 {func command displacement} {
-    global gdb_prompt expect_out
+    global gdb_prompt expect_out solib_bp
 
-    if {$func == "_dl_debug_state"} {
+    if {$func == $solib_bp} {
 	# Breakpoint on _dl_debug_state can have problems due to its overlap
 	# with the existing internal breakpoint from GDB.
 	gdb_test_no_output "set stop-on-solib-events 1"
@@ -142,21 +149,21 @@ proc reach_1 {func command displacement} {
 	    exp_continue
 	}
 	-re "Breakpoint \[0-9\]+, \\.?(__GI_)?$func \\(.*\\) at .*:\[0-9\]+\r\n.*$gdb_prompt $" {
-	    if {$func == "_dl_debug_state"} {
+	    if {$func == $solib_bp} {
 		fail $test
 	    } else {
 		pass $test
 	    }
 	}
 	-re "Breakpoint \[0-9\]+, \[0-9xa-f\]+ in \\.?(__GI_)?$func \\(\\).*\r\n$gdb_prompt $" {
-	    if {$func == "_dl_debug_state"} {
+	    if {$func == $solib_bp} {
 		fail $test
 	    } else {
 		pass $test
 	    }
 	}
 	-re "Stopped due to (spurious )?shared library event.*\r\n$gdb_prompt $" {
-	    if {$func == "_dl_debug_state"} {
+	    if {$func == $solib_bp} {
 		if {$debug_state_count == 0} {
 		    # First stop does not yet relocate the _start function
 		    # descriptor on ppc64.
@@ -175,7 +182,7 @@ proc reach_1 {func command displacement} {
 	fail $test_displacement
     }
 
-    if {$func == "_dl_debug_state"} {
+    if {$func == $solib_bp} {
 	gdb_test_no_output "set stop-on-solib-events 0"
     }
 }
@@ -190,103 +197,107 @@ proc reach {func command displacement} {
     }
 }
 
-proc test_core {file displacement} { with_test_prefix "core" {
-    global srcdir subdir gdb_prompt expect_out
+proc test_core {file displacement} {
+    with_test_prefix "core" {
+	global srcdir subdir gdb_prompt expect_out
 
-    set corefile [core_find $file {} "segv"]
-    if {$corefile == ""} {
-	return
-    }
+	set corefile [core_find $file {} "segv"]
+	if {$corefile == ""} {
+	    return
+	}
 
-    gdb_exit
-    gdb_start
-    # Clear it to never find any separate debug infos in $debug_root.
-    gdb_test_no_output "set debug-file-directory" \
-	"set debug-file-directory for core"
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load $file
+	gdb_exit
+	gdb_start
+	# Clear it to never find any separate debug infos in $debug_root.
+	gdb_test_no_output "set debug-file-directory" \
+	    "set debug-file-directory for core"
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_load $file
 
-    # Print the "PIE (Position Independent Executable) displacement" message.
-    gdb_test_no_output "set verbose on"
+	# Print the "PIE (Position Independent Executable) displacement" message.
+	gdb_test_no_output "set verbose on"
 
-    set test "core loaded"
-    set test_displacement "seen displacement message as $displacement"
-    gdb_test_multiple "core-file $corefile" $test {
-	-re "Using PIE \\(Position Independent Executable\\) displacement (0x\[0-9a-f\]+) " {
-	    # Missing "$gdb_prompt $" is intentional.
-	    if {$expect_out(1,string) == "0x0"} {
-		set case "ZERO"
-	    } else {
-		set case "NONZERO"
+	set test "core loaded"
+	set test_displacement "seen displacement message as $displacement"
+	gdb_test_multiple "core-file $corefile" $test {
+	    -re "Using PIE \\(Position Independent Executable\\) displacement (0x\[0-9a-f\]+) " {
+		# Missing "$gdb_prompt $" is intentional.
+		if {$expect_out(1,string) == "0x0"} {
+		    set case "ZERO"
+		} else {
+		    set case "NONZERO"
+		}
+		if {$displacement == $case || $displacement == "PRESENT"} {
+		    pass $test_displacement
+		    set displacement "FOUND-$displacement"
+		} else {
+		    fail $test_displacement
+		}
+		exp_continue
 	    }
-	    if {$displacement == $case || $displacement == "PRESENT"} {
-		pass $test_displacement
-		set displacement "FOUND-$displacement"
-	    } else {
-		fail $test_displacement
+	    -re "Core was generated by .*\r\n#0 .*$gdb_prompt $" {
+		# Do not check the binary filename as it may be truncated.
+		pass $test
 	    }
-	    exp_continue
 	}
-	-re "Core was generated by .*\r\n#0 .*$gdb_prompt $" {
-	    # Do not check the binary filename as it may be truncated.
-	    pass $test
+	if ![regexp {^(NONE|FOUND-.*)$} $displacement] {
+	    fail $test_displacement
 	}
+
+	gdb_test "bt" "#\[0-9\]+ +\[^\r\n\]*\\mlibfunc\\M\[^\r\n\]*\r\n#\[0-9\]+ +\[^\r\n\]*\\mmain\\M.*" "core main bt"
     }
-    if ![regexp {^(NONE|FOUND-.*)$} $displacement] {
-	fail $test_displacement
-    }
+}
 
-    gdb_test "bt" "#\[0-9\]+ +\[^\r\n\]*\\mlibfunc\\M\[^\r\n\]*\r\n#\[0-9\]+ +\[^\r\n\]*\\mmain\\M.*" "core main bt"
-}}
+proc test_attach_gdb {file pid displacement prefix} {
+    with_test_prefix "$prefix" {
+	global gdb_prompt expect_out
 
-proc test_attach_gdb {file pid displacement prefix} { with_test_prefix "$prefix" {
-    global gdb_prompt expect_out
+	gdb_exit
+	gdb_start
 
-    gdb_exit
-    gdb_start
+	# Print the "PIE (Position Independent Executable) displacement" message.
+	gdb_test_no_output "set verbose on"
 
-    # Print the "PIE (Position Independent Executable) displacement" message.
-    gdb_test_no_output "set verbose on"
+	gdb_test "file $file" "Reading symbols from .*done\\." "file"
 
-    gdb_test "file $file" "Reading symbols from .*done\\." "file"
-
-    set test "attach"
-    gdb_test_multiple "attach $pid" $test {
-	-re "Attaching to (program: .*, )?process $pid\r\n" {
-	    # Missing "$gdb_prompt $" is intentional.
-	    pass $test
-	}
-    }
-
-    set test "attach final prompt"
-    set test_displacement "seen displacement message as $displacement"
-    gdb_test_multiple "" $test {
-	-re "Using PIE \\(Position Independent Executable\\) displacement (0x\[0-9a-f\]+) " {
-	    # Missing "$gdb_prompt $" is intentional.
-	    if {$expect_out(1,string) == "0x0"} {
-		set case "ZERO"
-	    } else {
-		set case "NONZERO"
+	set test "attach"
+	gdb_test_multiple "attach $pid" $test {
+	    -re "Attaching to (program: .*, )?process $pid\r\n" {
+		# Missing "$gdb_prompt $" is intentional.
+		pass $test
 	    }
-	    if {$displacement == $case || $displacement == "PRESENT"} {
-		pass $test_displacement
-		set displacement "FOUND-$displacement"
-	    } else {
-		fail $test_displacement
-	    }
-	    exp_continue
 	}
-	-re "$gdb_prompt $" {
-	    pass $test
-	}
-    }
-    if ![regexp {^(NONE|FOUND-.*)$} $displacement] {
-	fail $test_displacement
-    }
 
-    gdb_test "bt" "#\[0-9\]+ +\[^\r\n\]*\\mlibfunc\\M\[^\r\n\]*\r\n#\[0-9\]+ +\[^\r\n\]*\\mmain\\M.*" "attach main bt"
-    gdb_exit
-}}
+	set test "attach final prompt"
+	set test_displacement "seen displacement message as $displacement"
+	gdb_test_multiple "" $test {
+	    -re "Using PIE \\(Position Independent Executable\\) displacement (0x\[0-9a-f\]+) " {
+		# Missing "$gdb_prompt $" is intentional.
+		if {$expect_out(1,string) == "0x0"} {
+		    set case "ZERO"
+		} else {
+		    set case "NONZERO"
+		}
+		if {$displacement == $case || $displacement == "PRESENT"} {
+		    pass $test_displacement
+		    set displacement "FOUND-$displacement"
+		} else {
+		    fail $test_displacement
+		}
+		exp_continue
+	    }
+	    -re "$gdb_prompt $" {
+		pass $test
+	    }
+	}
+	if ![regexp {^(NONE|FOUND-.*)$} $displacement] {
+	    fail $test_displacement
+	}
+
+	gdb_test "bt" "#\[0-9\]+ +\[^\r\n\]*\\mlibfunc\\M\[^\r\n\]*\r\n#\[0-9\]+ +\[^\r\n\]*\\mmain\\M.*" "attach main bt"
+	gdb_exit
+    }
+}
 
 proc test_attach {file displacement {relink_args ""}} {
     global board_info
@@ -297,7 +308,7 @@ proc test_attach {file displacement {relink_args ""}} {
     set test "sleep function started"
 
     set command "${file} sleep"
-    set res [remote_spawn host $command];
+    set res [remote_spawn host $command]
     if { $res < 0 || $res == "" } {
 	perror "Spawning $command failed."
 	fail $test
@@ -357,7 +368,7 @@ proc test_attach {file displacement {relink_args ""}} {
 }
 
 proc test_ld {file ifmain trynosym displacement} {
-    global srcdir subdir gdb_prompt expect_out inferior_exited_re
+    global srcdir subdir gdb_prompt expect_out inferior_exited_re solib_bp
 
     # First test normal `file'-command loaded $FILE with symbols.
 
@@ -379,15 +390,16 @@ proc test_ld {file ifmain trynosym displacement} {
     if $ifmain {
 	gdb_test_no_output "set args segv"
     } else {
-	global objdir binfile_test
+	global binfile_test
 
 	# ld.so needs some executable to run to reach _dl_debug_state.
-	gdb_test_no_output "set args ${objdir}/${subdir}/$binfile_test" "set args OBJDIR/${subdir}/$binfile_test"
+	gdb_test_no_output "set args [standard_output_file $binfile_test]" \
+	    "set args OBJDIR/${subdir}/$binfile_test"
     }
 
-    reach "_dl_debug_state" "run" $displacement
+    reach $solib_bp "run" $displacement
 
-    gdb_test "bt" "#0 +\[^\r\n\]*\\m(__GI_)?_dl_debug_state\\M.*" "dl bt"
+    gdb_test "bt" "#0 +\[^\r\n\]*\\m(__GI_)?$solib_bp\\M.*" "dl bt"
 
     if $ifmain {
 	reach "main" continue "NONE"
@@ -399,7 +411,7 @@ proc test_ld {file ifmain trynosym displacement} {
 
     # Try re-run if the new PIE displacement takes effect.
     gdb_test "kill" "" "kill" {Kill the program being debugged\? \(y or n\) } "y"
-    reach "_dl_debug_state" "run" $displacement
+    reach $solib_bp "run" $displacement
 
     if $ifmain {
 	test_core $file $displacement
@@ -431,7 +443,7 @@ proc test_ld {file ifmain trynosym displacement} {
 	gdb_test "exec-file $file" "exec-file $escapedfile" "load"
 
 	if $ifmain {
-	    reach "_dl_debug_state" run $displacement
+	    reach $solib_bp run $displacement
 
 	    # Use two separate gdb_test_multiple statements to avoid timeouts due
 	    # to slow processing of wildcard capturing long output
@@ -536,7 +548,7 @@ foreach ldprelink {NO YES} {
 	    } elseif {$ldsepdebug == "IN" && $interp_system_debug == ""} {
 		file_copy $interp_system $interp
 	    } elseif {$ldsepdebug == "IN" && $interp_system_debug != ""} {
-	    file_copy $interp_system $interp
+		file_copy $interp_system $interp
 		file_copy $interp_system_debug "${interp}.debug"
 		# eu-unstrip: DWARF data in '...' not adjusted for prelinking bias; consider prelink -u
 		if {![prelinkNO $interp] || ![prelinkNO "${interp}.debug"]} {
@@ -617,7 +629,7 @@ foreach ldprelink {NO YES} {
 			    set dir ${exec}.d
 			    set relink_args [build_executable_own_libs ${test}.exp [file tail $exec] $srcfile $opts $interp $dir]
 			    if {$relink_args == ""} {
-				continue;
+				continue
 			    }
 
 			    if {$binsepdebug == "SEP"} {

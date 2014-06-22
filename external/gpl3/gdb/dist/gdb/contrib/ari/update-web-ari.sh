@@ -2,7 +2,7 @@
 
 # GDB script to create GDB ARI web page.
 #
-# Copyright (C) 2001-2013 Free Software Foundation, Inc.
+# Copyright (C) 2001-2014 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -140,8 +140,9 @@ then
     echo ERROR: missing version file 1>&2
     exit 1
 fi
-version=`cat ${version_in}`
 
+date=`sed -n -e 's/^.* BFD_VERSION_DATE \(.*\)$/\1/p' $srcdir/bfd/version.h`
+version=`sed -e "s/DATE/$date/" < ${version_in}`
 
 # THIS HAS SUFFERED BIT ROT
 if ${check_warning_p} && test -d "${srcdir}"

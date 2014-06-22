@@ -1,6 +1,6 @@
 /* Target-dependent code for Moxie.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "gdbtypes.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "inferior.h"
 #include "symfile.h"
@@ -72,7 +72,7 @@ moxie_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 
 /* Implement the "breakpoint_from_pc" gdbarch method.  */
 
-const static unsigned char *
+static const unsigned char *
 moxie_breakpoint_from_pc (struct gdbarch *gdbarch,
 			  CORE_ADDR *pcptr, int *lenptr)
 {
@@ -285,6 +285,187 @@ struct moxie_unwind_cache
   struct trad_frame_saved_reg *saved_regs;
 };
 
+/* Read an unsigned integer from the inferior, and adjust
+   endianess.  */
+static ULONGEST
+moxie_process_readu (CORE_ADDR addr, gdb_byte *buf,
+		     int length, enum bfd_endian byte_order)
+{
+  if (target_read_memory (addr, buf, length))
+    {
+      if (record_debug)
+	printf_unfiltered (_("Process record: error reading memory at "
+			     "addr 0x%s len = %d.\n"),
+			   paddress (target_gdbarch (), addr), length);
+      return -1;
+    }
+
+  return extract_unsigned_integer (buf, length, byte_order);
+}
+
+
+/* Helper macro to extract the signed 10-bit offset from a 16-bit
+   branch instruction.	*/
+#define INST2OFFSET(o) ((((signed short)((o & ((1<<10)-1))<<6))>>6)<<1)
+
+/* Insert a single step breakpoint.  */
+
+static int
+moxie_software_single_step (struct frame_info *frame)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct address_space *aspace = get_frame_address_space (frame);
+  CORE_ADDR addr;
+  gdb_byte buf[4];
+  uint16_t inst;
+  uint32_t tmpu32;
+  ULONGEST fp;
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  struct regcache *regcache = get_current_regcache ();
+
+  addr = get_frame_pc (frame);
+
+  inst = (uint16_t) moxie_process_readu (addr, buf, 2, byte_order);
+
+  /* Decode instruction.  */
+  if (inst & (1 << 15))
+    {
+      if (inst & (1 << 14))
+	{
+	  /* This is a Form 3 instruction.  */
+	  int opcode = (inst >> 10 & 0xf);
+
+	  switch (opcode)
+	    {
+	    case 0x00: /* beq */
+	    case 0x01: /* bne */
+	    case 0x02: /* blt */
+	    case 0x03: /* bgt */
+	    case 0x04: /* bltu */
+	    case 0x05: /* bgtu */
+	    case 0x06: /* bge */
+	    case 0x07: /* ble */
+	    case 0x08: /* bgeu */
+	    case 0x09: /* bleu */
+	      /* Insert breaks on both branches, because we can't currently tell
+		 which way things will go.  */
+	      insert_single_step_breakpoint (gdbarch, aspace, addr + 2);
+	      insert_single_step_breakpoint (gdbarch, aspace, addr + 2 + INST2OFFSET(inst));
+	      break;
+	    default:
+	      {
+		/* Do nothing.	*/
+		break;
+	      }
+	    }
+	}
+      else
+	{
+	  /* This is a Form 2 instruction.  They are all 16 bits.  */
+	  insert_single_step_breakpoint (gdbarch, aspace, addr + 2);
+	}
+    }
+  else
+    {
+      /* This is a Form 1 instruction.	*/
+      int opcode = inst >> 8;
+
+      switch (opcode)
+	{
+	  /* 16-bit instructions.  */
+	case 0x00: /* nop */
+	case 0x02: /* mov (register-to-register) */
+	case 0x05: /* add.l */
+	case 0x06: /* push */
+	case 0x07: /* pop */
+	case 0x0a: /* ld.l (register indirect) */
+	case 0x0b: /* st.l */
+	case 0x0e: /* cmp */
+	case 0x0f:
+	case 0x10:
+	case 0x11:
+	case 0x12:
+	case 0x13:
+	case 0x14:
+	case 0x15:
+	case 0x16:
+	case 0x17:
+	case 0x18:
+	case 0x1c: /* ld.b (register indirect) */
+	case 0x1e: /* st.b */
+	case 0x21: /* ld.s (register indirect) */
+	case 0x23: /* st.s */
+	case 0x26: /* and */
+	case 0x27: /* lshr */
+	case 0x28: /* ashl */
+	case 0x29: /* sub.l */
+	case 0x2a: /* neg */
+	case 0x2b: /* or */
+	case 0x2c: /* not */
+	case 0x2d: /* ashr */
+	case 0x2e: /* xor */
+	case 0x2f: /* mul.l */
+	case 0x31: /* div.l */
+	case 0x32: /* udiv.l */
+	case 0x33: /* mod.l */
+	case 0x34: /* umod.l */
+	  insert_single_step_breakpoint (gdbarch, aspace, addr + 2);
+	  break;
+
+	  /* 48-bit instructions.  */
+	case 0x01: /* ldi.l (immediate) */
+	case 0x08: /* lda.l */
+	case 0x09: /* sta.l */
+	case 0x0c: /* ldo.l */
+	case 0x0d: /* sto.l */
+	case 0x1b: /* ldi.b (immediate) */
+	case 0x1d: /* lda.b */
+	case 0x1f: /* sta.b */
+	case 0x20: /* ldi.s (immediate) */
+	case 0x22: /* lda.s */
+	case 0x24: /* sta.s */
+	case 0x36: /* ldo.b */
+	case 0x37: /* sto.b */
+	case 0x38: /* ldo.s */
+	case 0x39: /* sto.s */
+	  insert_single_step_breakpoint (gdbarch, aspace, addr + 6);
+	  break;
+
+	  /* Control flow instructions.	 */
+	case 0x03: /* jsra */
+	case 0x1a: /* jmpa */
+	  insert_single_step_breakpoint (gdbarch, aspace,
+					 moxie_process_readu (addr + 2,
+							      buf, 4,
+							      byte_order));
+	  break;
+
+	case 0x04: /* ret */
+	  regcache_cooked_read_unsigned (regcache, MOXIE_FP_REGNUM, &fp);
+	  insert_single_step_breakpoint (gdbarch, aspace,
+					 moxie_process_readu (fp + 4,
+							      buf, 4,
+							      byte_order));
+	  break;
+
+	case 0x19: /* jsr */
+	case 0x25: /* jmp */
+	  regcache_raw_read (regcache,
+			     (inst >> 4) & 0xf, (gdb_byte *) & tmpu32);
+	  insert_single_step_breakpoint (gdbarch, aspace,
+					 tmpu32);
+	  break;
+
+	case 0x30: /* swi */
+	case 0x35: /* brk */
+	  /* Unsupported, for now.  */
+	  break;
+	}
+    }
+
+  return 1;
+}
+
 /* Implement the "read_pc" gdbarch method.  */
 
 static CORE_ADDR
@@ -493,24 +674,6 @@ moxie_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, MOXIE_SP_REGNUM);
 
   return frame_id_build (sp, get_frame_pc (this_frame));
-}
-
-/* Read an unsigned integer from the inferior, and adjust
-   endianess.  */
-static ULONGEST
-moxie_process_readu (CORE_ADDR addr, char *buf, 
-		     int length, enum bfd_endian byte_order)
-{
-  if (target_read_memory (addr, buf, length))
-    {
-      if (record_debug)
-	printf_unfiltered (_("Process record: error reading memory at "
-			     "addr 0x%s len = %d.\n"),
-			   paddress (target_gdbarch (), addr), length);
-      return -1;
-    }
-
-  return extract_unsigned_integer (buf, length, byte_order);
 }
 
 /* Parse the current instruction and record the values of the registers and
@@ -766,8 +929,7 @@ moxie_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 	  break;
 	case 0x1f: /* sta.b */
 	  {
-	    tmpu32 = moxie_process_readu (addr+2, (char *) buf, 
-					  4, byte_order);
+	    tmpu32 = moxie_process_readu (addr+2, buf, 4, byte_order);
 	    if (record_full_arch_list_add_mem (tmpu32, 1))
 	      return -1;
 	  }
@@ -793,8 +955,7 @@ moxie_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 	  break;
 	case 0x24: /* sta.s */
 	  {
-	    tmpu32 = moxie_process_readu (addr+2, (char *) buf, 
-					  4, byte_order);
+	    tmpu32 = moxie_process_readu (addr+2, buf, 4, byte_order);
 	    if (record_full_arch_list_add_mem (tmpu32, 2))
 	      return -1;
 	  }
@@ -825,8 +986,7 @@ moxie_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 	    /* We currently implement support for libgloss' 
 	       system calls.  */
 
-	    int inum = moxie_process_readu (addr+2, (char *) buf, 
-					    4, byte_order);
+	    int inum = moxie_process_readu (addr+2, buf, 4, byte_order);
 
 	    switch (inum)
 	      {
@@ -855,8 +1015,7 @@ moxie_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
 				     MOXIE_FP_REGNUM, (gdb_byte *) & tmpu32);
 		  tmpu32 = extract_unsigned_integer ((gdb_byte *) & tmpu32, 
 						     4, byte_order);
-		  length = moxie_process_readu (tmpu32+20, (char *) buf, 
-						4, byte_order);
+		  length = moxie_process_readu (tmpu32+20, buf, 4, byte_order);
 
 		  if (record_full_arch_list_add_mem (ptr, length))
 		    return -1;
@@ -989,6 +1148,9 @@ moxie_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Hook in the default unwinders.  */
   frame_unwind_append_unwinder (gdbarch, &moxie_frame_unwind);
+
+  /* Single stepping.  */
+  set_gdbarch_software_single_step (gdbarch, moxie_software_single_step);
 
   /* Support simple overlay manager.  */
   set_gdbarch_overlay_update (gdbarch, simple_overlay_update);

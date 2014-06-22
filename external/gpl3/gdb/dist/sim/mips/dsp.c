@@ -1,5 +1,5 @@
 /* Simulation code for the MIPS DSP ASE.
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    Contributed by MIPS Technologies, Inc.  Written by Chao-ying Fu.
 
 This file is part of GDB, the GNU debugger.

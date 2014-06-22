@@ -1,5 +1,5 @@
 /* MI Command Set - MI Option Parser.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -19,13 +19,16 @@
 
 #include "defs.h"
 #include "mi-getopt.h"
-#include "gdb_string.h"
+#include <string.h>
 
-int
-mi_getopt (const char *prefix,
-	   int argc, char **argv,
-	   const struct mi_opt *opts,
-	   int *oind, char **oarg)
+/* See comments about mi_getopt and mi_getopt_silent in mi-getopt.h.
+   When there is an unknown option, if ERROR_ON_UNKNOWN is true,
+   throw an error, otherwise return -1.  */
+
+static int
+mi_getopt_1 (const char *prefix, int argc, char **argv,
+	     const struct mi_opt *opts, int *oind, char **oarg,
+	     int error_on_unknown)
 {
   char *arg;
   const struct mi_opt *opt;
@@ -71,7 +74,27 @@ mi_getopt (const char *prefix,
 	  return opt->index;
 	}
     }
-  error (_("%s: Unknown option ``%s''"), prefix, arg + 1);
+
+  if (error_on_unknown)
+    error (_("%s: Unknown option ``%s''"), prefix, arg + 1);
+  else
+    return -1;
+}
+
+int
+mi_getopt (const char *prefix,
+	   int argc, char **argv,
+	   const struct mi_opt *opts,
+	   int *oind, char **oarg)
+{
+  return mi_getopt_1 (prefix, argc, argv, opts, oind, oarg, 1);
+}
+
+int
+mi_getopt_allow_unknown (const char *prefix, int argc, char **argv,
+			 const struct mi_opt *opts, int *oind, char **oarg)
+{
+  return mi_getopt_1 (prefix, argc, argv, opts, oind, oarg, 0);
 }
 
 int 

@@ -1,6 +1,6 @@
 /* Perform arithmetic and other operations on values, for GDB.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "expression.h"
 #include "target.h"
 #include "language.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "doublest.h"
 #include "dfp.h"
 #include <math.h>

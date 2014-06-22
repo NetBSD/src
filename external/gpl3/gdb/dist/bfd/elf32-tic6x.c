@@ -1,6 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 2010-2013 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -2310,12 +2309,12 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -2832,6 +2831,10 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (r_type)
@@ -3034,7 +3037,7 @@ elf32_tic6x_add_symbol_hook (bfd *abfd,
       *secp = bfd_make_section_old_way (abfd, ".scommon");
       (*secp)->flags |= SEC_IS_COMMON;
       *valp = sym->st_size;
-      bfd_set_section_alignment (abfd, *secp, bfd_log2 (sym->st_value));
+      (void) bfd_set_section_alignment (abfd, *secp, bfd_log2 (sym->st_value));
       break;
     }
 
@@ -3310,8 +3313,6 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
-      char *local_tls_type;
-      bfd_vma *local_tlsdesc_gotent;
       bfd_size_type locsymcount;
       Elf_Internal_Shdr *symtab_hdr;
       asection *srel;
@@ -3352,8 +3353,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
       end_local_got = local_got + locsymcount;
       s = htab->elf.sgot;
       srel = htab->elf.srelgot;
-      for (; local_got < end_local_got;
-	   ++local_got, ++local_tls_type, ++local_tlsdesc_gotent)
+      for (; local_got < end_local_got; ++local_got)
 	{
 	  if (*local_got > 0)
 	    {
@@ -4345,14 +4345,6 @@ elf32_tic6x_write_section (bfd *output_bfd,
   return TRUE;
 }
 
-static void
-elf32_tic6x_set_osabi (bfd *abfd, struct bfd_link_info *link_info)
-{
-  if (link_info != NULL && link_info->relocatable)
-    return;
-  _bfd_elf_set_osabi (abfd, link_info);
-}
-
 #define TARGET_LITTLE_SYM	bfd_elf32_tic6x_le_vec
 #define TARGET_LITTLE_NAME	"elf32-tic6x-le"
 #define TARGET_BIG_SYM		bfd_elf32_tic6x_be_vec
@@ -4434,9 +4426,6 @@ elf32_tic6x_set_osabi (bfd *abfd, struct bfd_link_info *link_info)
 #undef ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_C6000_LINUX
 
-#undef elf_backend_post_process_headers
-#define elf_backend_post_process_headers	elf32_tic6x_set_osabi
-
 #include "elf32-target.h"
 
 #undef elf32_bed
@@ -4452,8 +4441,5 @@ elf32_tic6x_set_osabi (bfd *abfd, struct bfd_link_info *link_info)
 #define	TARGET_BIG_NAME			"elf32-tic6x-elf-be"
 #undef ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_C6000_ELFABI
-
-#undef elf_backend_post_process_headers
-#define elf_backend_post_process_headers	elf32_tic6x_set_osabi
 
 #include "elf32-target.h"

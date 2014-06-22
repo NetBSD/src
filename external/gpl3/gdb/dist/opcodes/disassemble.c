@@ -67,6 +67,7 @@
 #define ARCH_moxie
 #define ARCH_mt
 #define ARCH_msp430
+#define ARCH_nds32
 #define ARCH_nios2
 #define ARCH_ns32k
 #define ARCH_openrisc
@@ -294,6 +295,11 @@ disassembler (abfd)
 #ifdef ARCH_msp430
     case bfd_arch_msp430:
       disassemble = print_insn_msp430;
+      break;
+#endif
+#ifdef ARCH_nds32
+    case bfd_arch_nds32:
+      disassemble = print_insn_nds32;
       break;
 #endif
 #ifdef ARCH_ns32k

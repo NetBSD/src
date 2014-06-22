@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
 
-set testfile "setshow"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
+
 if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable {debug}] != "" } {
      untested setshow.exp
      return -1
@@ -26,14 +25,11 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable {debug}] 
 
 # Start with a fresh gdb
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 # make sure $pc is sane, in case we're talking to a board.
 if { ![runto_main] } {
-    gdb_suppress_tests;
+    gdb_suppress_tests
 }
 
 #
@@ -162,21 +158,51 @@ gdb_test "show environment FOOBARBAZ" "FOOBARBAZ = grbxgrbxgrbx.*"  "show enviro
 gdb_test_no_output "set height 100" "set height 100" 
 #test show height 100
 gdb_test "show height" "Number of lines gdb thinks are in a page is 100..*" "show height" 
-# back to infinite height to avoid pagers
-gdb_test_no_output "set height 0" ""
+# Back to infinite height to avoid pagers.  While at it, check that
+# literal "unlimited" works just as well as 0.
+gdb_test_no_output "set height unlimited"
 #test set history expansion on
 gdb_test_no_output "set history expansion on" "set history expansion on" 
 #test show history expansion on
 gdb_test "show history expansion on" "History expansion on command input is on.*" "show history expansion" 
+#get home directory path
+set HOME ""
+set test "show environment HOME"
+gdb_test_multiple $test $test {
+    -re "\nHOME = (\[^\r\n\]*)\[\r\n\]+$gdb_prompt $" {
+        set HOME $expect_out(1,string)
+        pass $test
+    }
+}
+#test set history filename ~/foobar.baz
+gdb_test_no_output "set history filename ~/foobar.baz" \
+    "set history filename ~/foobar.baz"
+#test show history filename ~/foobar.baz
+gdb_test "show history filename" \
+    "The filename in which to record the command history is \"$HOME/foobar.baz\"..*" \
+    "show history filename (~/foobar.baz)"
+#get current working directory
+set PWD ""
+set test "show working directory"
+gdb_test_multiple "pwd" $test {
+    -re "\nWorking directory (\[^\r\n\]*)\\.\[\r\n\]+$gdb_prompt $" {
+        set PWD $expect_out(1,string)
+        pass $test
+    }
+}
 #test set history filename foobar.baz
 gdb_test_no_output "set history filename foobar.baz" \
-    "set history filename foobar.baz" 
+    "set history filename foobar.baz"
 #test show history filename foobar.baz
-gdb_test "show history filename" "The filename in which to record the command history is \"foobar.baz\"..*"  "show history filename (foobar.baz)" 
+gdb_test "show history filename" \
+    "The filename in which to record the command history is \"$PWD/foobar.baz\"..*" \
+    "show history filename (current_directory/foobar.baz)"
 #test set history save on
 gdb_test_no_output "set history save on" "set history save on" 
 #test show history save on
 gdb_test "show history save" "Saving of the history record on exit is on..*"  "show history save (on)" 
+#history saving should stay disabled
+gdb_test_no_output "set history save off" "set history save off" 
 #test set history size 100
 gdb_test_no_output "set history size 100" "set history size 100" 
 #test show history size 100
@@ -258,3 +284,10 @@ gdb_test "show verbose" "Verbose printing of informational messages is on..*" "s
 gdb_test_no_output "set verbose off" "set verbose off" 
 #test show verbose off
 gdb_test "show verbose" "Verbosity is off..*" "show verbose (off)" 
+#test argument must be preceded by space
+foreach x {"history file" "solib-search-path" "data-directory"} {
+    foreach y {"/home/" "." "~/home" "=home"} {
+        gdb_test "set $x$y" "Argument must be preceded by space." \
+            "$x is not set to $y"
+    }
+}

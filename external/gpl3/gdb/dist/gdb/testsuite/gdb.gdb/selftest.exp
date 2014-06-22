@@ -1,4 +1,4 @@
-# Copyright 1988-2013 Free Software Foundation, Inc.
+# Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
+load_lib selftest-support.exp
 
 # are we on a target board
 if { [is_remote target] || ![isnative] } then {
@@ -152,6 +153,10 @@ proc do_steps_and_nexts {} {
 	    }
 	    -re ".*bfd_init ..;.*$gdb_prompt $" {
 		set description "next over bfd_init"
+		set command "next"
+	    }
+	    -re ".*notice_open_fds ..;.*$gdb_prompt $" {
+		set description "next over notice_open_fds"
 		set command "next"
 	    }
 	    -re ".*VEC_cleanup .cmdarg_s.*$gdb_prompt $" {
@@ -468,43 +473,26 @@ proc test_with_self { executable } {
     return 0
 }
 
-# Find a pathname to a file that we would execute if the shell was asked
-# to run $arg using the current PATH.
-
-proc find_gdb { arg } {
-
-    # If the arg directly specifies an existing executable file, then
-    # simply use it.
-
-    if [file executable $arg] then {
-	return $arg
-    }
-
-    set result [which $arg]
-    if [string match "/" [ string range $result 0 0 ]] then {
-	return $result
-    }
-
-    # If everything fails, just return the unqualified pathname as default
-    # and hope for best.
-
-    return $arg
-}
-
 # Run the test with self.
 # Copy the file executable file in case this OS doesn't like to edit its own
 # text space.
 
 set GDB_FULLPATH [find_gdb $GDB]
 
+if {[is_remote host]} {
+    set xgdb x$tool
+} else {
+    set xgdb [standard_output_file x$tool]
+}
+
 # Remove any old copy lying around.
-remote_file host delete x$tool
+remote_file host delete $xgdb
 
 gdb_start
-set file [remote_download host $GDB_FULLPATH x$tool]
-set result [test_with_self $file];
-gdb_exit;
-catch "remote_file host delete $file";
+set file [remote_download host $GDB_FULLPATH $xgdb]
+set result [test_with_self $file]
+gdb_exit
+catch "remote_file host delete $file"
 
 if {$result <0} then {
     warning "Couldn't test self"

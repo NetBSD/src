@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit
@@ -35,10 +35,10 @@ gdb_file_cmd $binfile
 
 # define relative source line numbers:
 # all subsequent line numbers are relative to this first one (baseline)
-set baseline  [gdb_find_recursion_test_baseline $srcfile];
+set baseline  [gdb_find_recursion_test_baseline $srcfile]
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 set testline1  [expr $baseline + 3]
@@ -48,12 +48,12 @@ set testline1  [expr $baseline + 3]
 #
 
 gdb_delete_tracepoints
-set trcpt1 [gdb_gettpnum gdb_c_test];
-set trcpt2 [gdb_gettpnum gdb_asm_test];
-set trcpt3 [gdb_gettpnum $testline1];
+set trcpt1 [gdb_gettpnum gdb_c_test]
+set trcpt2 [gdb_gettpnum gdb_asm_test]
+set trcpt3 [gdb_gettpnum $testline1]
 if { $trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 # 4.1 passcount of specified tracepoint

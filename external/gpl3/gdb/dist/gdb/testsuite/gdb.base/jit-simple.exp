@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +28,9 @@ if {[get_compiler_info]} {
 # test running programs
 #
 
-set testfile jit-simple
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+standard_testfile
+
+if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
     untested jit-simple.exp
     return -1
 }

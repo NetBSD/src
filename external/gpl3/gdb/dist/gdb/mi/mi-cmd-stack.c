@@ -1,5 +1,5 @@
 /* MI Command Set - stack commands.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -27,16 +27,33 @@
 #include "block.h"
 #include "stack.h"
 #include "dictionary.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "language.h"
 #include "valprint.h"
 #include "exceptions.h"
+#include "utils.h"
+#include "mi-getopt.h"
+#include "python/python.h"
+#include <ctype.h>
+#include "mi-parse.h"
 
 enum what_to_list { locals, arguments, all };
 
-static void list_args_or_locals (enum what_to_list what, 
+static void list_args_or_locals (enum what_to_list what,
 				 enum print_values values,
-				 struct frame_info *fi);
+				 struct frame_info *fi,
+				 int skip_unavailable);
+
+/* True if we want to allow Python-based frame filters.  */
+static int frame_filters = 0;
+
+void
+mi_cmd_enable_frame_filters (char *command, char **argv, int argc)
+{
+  if (argc != 0)
+    error (_("-enable-frame-filters: no arguments allowed"));
+  frame_filters = 1;
+}
 
 /* Print a list of the stack frames.  Args can be none, in which case
    we want to print the whole backtrace, or a pair of numbers
@@ -52,14 +69,46 @@ mi_cmd_stack_list_frames (char *command, char **argv, int argc)
   int i;
   struct cleanup *cleanup_stack;
   struct frame_info *fi;
-
-  if (argc > 2 || argc == 1)
-    error (_("-stack-list-frames: Usage: [FRAME_LOW FRAME_HIGH]"));
-
-  if (argc == 2)
+  enum py_bt_status result = PY_BT_ERROR;
+  int raw_arg = 0;
+  int oind = 0;
+  enum opt
     {
-      frame_low = atoi (argv[0]);
-      frame_high = atoi (argv[1]);
+      NO_FRAME_FILTERS
+    };
+  static const struct mi_opt opts[] =
+    {
+      {"-no-frame-filters", NO_FRAME_FILTERS, 0},
+      { 0, 0, 0 }
+    };
+
+  /* Parse arguments.  In this instance we are just looking for
+     --no-frame-filters.  */
+  while (1)
+    {
+      char *oarg;
+      int opt = mi_getopt ("-stack-list-frames", argc, argv,
+			   opts, &oind, &oarg);
+      if (opt < 0)
+	break;
+      switch ((enum opt) opt)
+	{
+	case NO_FRAME_FILTERS:
+	  raw_arg = oind;
+	  break;
+	}
+    }
+
+  /* After the last option is parsed, there should either be low -
+     high range, or no further arguments.  */
+  if ((argc - oind != 0) && (argc - oind != 2))
+    error (_("-stack-list-frames: Usage: [--no-frame-filters] [FRAME_LOW FRAME_HIGH]"));
+
+  /* If there is a range, set it.  */
+  if (argc - oind == 2)
+    {
+      frame_low = atoi (argv[0 + oind]);
+      frame_high = atoi (argv[1 + oind]);
     }
   else
     {
@@ -81,16 +130,37 @@ mi_cmd_stack_list_frames (char *command, char **argv, int argc)
 
   cleanup_stack = make_cleanup_ui_out_list_begin_end (current_uiout, "stack");
 
-  /* Now let's print the frames up to frame_high, or until there are
-     frames in the stack.  */
-  for (;
-       fi && (i <= frame_high || frame_high == -1);
-       i++, fi = get_prev_frame (fi))
+  if (! raw_arg && frame_filters)
     {
-      QUIT;
-      /* Print the location and the address always, even for level 0.
-         If args is 0, don't print the arguments.  */
-      print_frame_info (fi, 1, LOC_AND_ADDRESS, 0 /* args */ );
+      int flags = PRINT_LEVEL | PRINT_FRAME_INFO;
+      int py_frame_low = frame_low;
+
+      /* We cannot pass -1 to frame_low, as that would signify a
+      relative backtrace from the tail of the stack.  So, in the case
+      of frame_low == -1, assign and increment it.  */
+      if (py_frame_low == -1)
+	py_frame_low++;
+
+      result = apply_frame_filter (get_current_frame (), flags,
+				   NO_VALUES,  current_uiout,
+				   py_frame_low, frame_high);
+    }
+
+  /* Run the inbuilt backtrace if there are no filters registered, or
+     if "--no-frame-filters" has been specified from the command.  */
+  if (! frame_filters || raw_arg  || result == PY_BT_NO_FILTERS)
+    {
+      /* Now let's print the frames up to frame_high, or until there are
+	 frames in the stack.  */
+      for (;
+	   fi && (i <= frame_high || frame_high == -1);
+	   i++, fi = get_prev_frame (fi))
+	{
+	  QUIT;
+	  /* Print the location and the address always, even for level 0.
+	     If args is 0, don't print the arguments.  */
+	  print_frame_info (fi, 1, LOC_AND_ADDRESS, 0 /* args */, 0);
+	}
     }
 
   do_cleanups (cleanup_stack);
@@ -121,24 +191,6 @@ mi_cmd_stack_info_depth (char *command, char **argv, int argc)
   ui_out_field_int (current_uiout, "depth", i);
 }
 
-static enum print_values
-parse_print_values (char *name)
-{
-   if (strcmp (name, "0") == 0
-       || strcmp (name, mi_no_values) == 0)
-     return PRINT_NO_VALUES;
-   else if (strcmp (name, "1") == 0
-	    || strcmp (name, mi_all_values) == 0)
-     return PRINT_ALL_VALUES;
-   else if (strcmp (name, "2") == 0
-	    || strcmp (name, mi_simple_values) == 0)
-     return PRINT_SIMPLE_VALUES;
-   else
-     error (_("Unknown value for PRINT_VALUES: must be: \
-0 or \"%s\", 1 or \"%s\", 2 or \"%s\""),
-	    mi_no_values, mi_all_values, mi_simple_values);
-}
-
 /* Print a list of the locals for the current frame.  With argument of
    0, print only the names, with argument of 1 print also the
    values.  */
@@ -147,13 +199,72 @@ void
 mi_cmd_stack_list_locals (char *command, char **argv, int argc)
 {
   struct frame_info *frame;
+  int raw_arg = 0;
+  enum py_bt_status result = PY_BT_ERROR;
+  int print_value;
+  int oind = 0;
+  int skip_unavailable = 0;
+  int i;
 
-  if (argc != 1)
-    error (_("-stack-list-locals: Usage: PRINT_VALUES"));
+  if (argc > 1)
+    {
+      int i;
+      enum opt
+      {
+	NO_FRAME_FILTERS,
+	SKIP_UNAVAILABLE,
+      };
+      static const struct mi_opt opts[] =
+	{
+	  {"-no-frame-filters", NO_FRAME_FILTERS, 0},
+	  {"-skip-unavailable", SKIP_UNAVAILABLE, 0},
+	  { 0, 0, 0 }
+	};
 
-   frame = get_selected_frame (NULL);
+      while (1)
+	{
+	  char *oarg;
+	  /* Don't parse 'print-values' as an option.  */
+	  int opt = mi_getopt ("-stack-list-locals", argc - 1, argv,
+			       opts, &oind, &oarg);
 
-   list_args_or_locals (locals, parse_print_values (argv[0]), frame);
+	  if (opt < 0)
+	    break;
+	  switch ((enum opt) opt)
+	    {
+	    case NO_FRAME_FILTERS:
+	      raw_arg = oind;
+	    case SKIP_UNAVAILABLE:
+	      skip_unavailable = 1;
+	      break;
+	    }
+	}
+    }
+
+  /* After the last option is parsed, there should be only
+     'print-values'.  */
+  if (argc - oind != 1)
+    error (_("-stack-list-locals: Usage: [--no-frame-filters] "
+	     "[--skip-unavailable] PRINT_VALUES"));
+
+  frame = get_selected_frame (NULL);
+  print_value = mi_parse_print_values (argv[oind]);
+
+   if (! raw_arg && frame_filters)
+     {
+       int flags = PRINT_LEVEL | PRINT_LOCALS;
+
+       result = apply_frame_filter (frame, flags, print_value,
+				    current_uiout, 0, 0);
+     }
+
+   /* Run the inbuilt backtrace if there are no filters registered, or
+      if "--no-frame-filters" has been specified from the command.  */
+   if (! frame_filters || raw_arg  || result == PY_BT_NO_FILTERS)
+     {
+       list_args_or_locals (locals, print_value, frame,
+			    skip_unavailable);
+     }
 }
 
 /* Print a list of the arguments for the current frame.  With argument
@@ -170,15 +281,50 @@ mi_cmd_stack_list_args (char *command, char **argv, int argc)
   struct cleanup *cleanup_stack_args;
   enum print_values print_values;
   struct ui_out *uiout = current_uiout;
+  int raw_arg = 0;
+  int oind = 0;
+  int skip_unavailable = 0;
+  enum py_bt_status result = PY_BT_ERROR;
+  enum opt
+  {
+    NO_FRAME_FILTERS,
+    SKIP_UNAVAILABLE,
+  };
+  static const struct mi_opt opts[] =
+    {
+      {"-no-frame-filters", NO_FRAME_FILTERS, 0},
+      {"-skip-unavailable", SKIP_UNAVAILABLE, 0},
+      { 0, 0, 0 }
+    };
 
-  if (argc < 1 || argc > 3 || argc == 2)
-    error (_("-stack-list-arguments: Usage: "
+  while (1)
+    {
+      char *oarg;
+      int opt = mi_getopt_allow_unknown ("-stack-list-args", argc, argv,
+					 opts, &oind, &oarg);
+
+      if (opt < 0)
+	break;
+      switch ((enum opt) opt)
+	{
+	case NO_FRAME_FILTERS:
+	  raw_arg = oind;
+	  break;
+	case SKIP_UNAVAILABLE:
+	  skip_unavailable = 1;
+	  break;
+	}
+    }
+
+  if (argc - oind != 1 && argc - oind != 3)
+    error (_("-stack-list-arguments: Usage: "	\
+	     "[--no-frame-filters] [--skip-unavailable] "
 	     "PRINT_VALUES [FRAME_LOW FRAME_HIGH]"));
 
-  if (argc == 3)
+  if (argc - oind == 3)
     {
-      frame_low = atoi (argv[1]);
-      frame_high = atoi (argv[2]);
+      frame_low = atoi (argv[1 + oind]);
+      frame_high = atoi (argv[2 + oind]);
     }
   else
     {
@@ -188,7 +334,7 @@ mi_cmd_stack_list_args (char *command, char **argv, int argc)
       frame_high = -1;
     }
 
-  print_values = parse_print_values (argv[0]);
+  print_values = mi_parse_print_values (argv[oind]);
 
   /* Let's position fi on the frame at which to start the
      display. Could be the innermost frame if the whole stack needs
@@ -203,21 +349,41 @@ mi_cmd_stack_list_args (char *command, char **argv, int argc)
   cleanup_stack_args
     = make_cleanup_ui_out_list_begin_end (uiout, "stack-args");
 
-  /* Now let's print the frames up to frame_high, or until there are
-     frames in the stack.  */
-  for (;
-       fi && (i <= frame_high || frame_high == -1);
-       i++, fi = get_prev_frame (fi))
+  if (! raw_arg && frame_filters)
     {
-      struct cleanup *cleanup_frame;
+      int flags = PRINT_LEVEL | PRINT_ARGS;
+      int py_frame_low = frame_low;
 
-      QUIT;
-      cleanup_frame = make_cleanup_ui_out_tuple_begin_end (uiout, "frame");
-      ui_out_field_int (uiout, "level", i);
-      list_args_or_locals (arguments, print_values, fi);
-      do_cleanups (cleanup_frame);
+      /* We cannot pass -1 to frame_low, as that would signify a
+      relative backtrace from the tail of the stack.  So, in the case
+      of frame_low == -1, assign and increment it.  */
+      if (py_frame_low == -1)
+	py_frame_low++;
+
+      result = apply_frame_filter (get_current_frame (), flags,
+				   print_values, current_uiout,
+				   py_frame_low, frame_high);
     }
 
+     /* Run the inbuilt backtrace if there are no filters registered, or
+      if "--no-frame-filters" has been specified from the command.  */
+   if (! frame_filters || raw_arg  || result == PY_BT_NO_FILTERS)
+     {
+      /* Now let's print the frames up to frame_high, or until there are
+	 frames in the stack.  */
+      for (;
+	   fi && (i <= frame_high || frame_high == -1);
+	   i++, fi = get_prev_frame (fi))
+	{
+	  struct cleanup *cleanup_frame;
+
+	  QUIT;
+	  cleanup_frame = make_cleanup_ui_out_tuple_begin_end (uiout, "frame");
+	  ui_out_field_int (uiout, "level", i);
+	  list_args_or_locals (arguments, print_values, fi, skip_unavailable);
+	  do_cleanups (cleanup_frame);
+	}
+    }
   do_cleanups (cleanup_stack_args);
 }
 
@@ -230,32 +396,87 @@ void
 mi_cmd_stack_list_variables (char *command, char **argv, int argc)
 {
   struct frame_info *frame;
+  int raw_arg = 0;
+  enum py_bt_status result = PY_BT_ERROR;
+  int print_value;
+  int oind = 0;
+  int skip_unavailable = 0;
 
-  if (argc != 1)
-    error (_("Usage: PRINT_VALUES"));
+  if (argc > 1)
+    {
+      int i;
+      enum opt
+      {
+	NO_FRAME_FILTERS,
+	SKIP_UNAVAILABLE,
+      };
+      static const struct mi_opt opts[] =
+	{
+	  {"-no-frame-filters", NO_FRAME_FILTERS, 0},
+	  {"-skip-unavailable", SKIP_UNAVAILABLE, 0},
+	  { 0, 0, 0 }
+	};
 
-  frame = get_selected_frame (NULL);
+      while (1)
+	{
+	  char *oarg;
+	  /* Don't parse 'print-values' as an option.  */
+	  int opt = mi_getopt ("-stack-list-variables", argc - 1,
+			       argv, opts, &oind, &oarg);
+	  if (opt < 0)
+	    break;
+	  switch ((enum opt) opt)
+	    {
+	    case NO_FRAME_FILTERS:
+	      raw_arg = oind;
+	      break;
+	    case SKIP_UNAVAILABLE:
+	      skip_unavailable = 1;
+	      break;
+	    }
+	}
+    }
 
-  list_args_or_locals (all, parse_print_values (argv[0]), frame);
+  /* After the last option is parsed, there should be only
+     'print-values'.  */
+  if (argc - oind != 1)
+    error (_("-stack-list-variables: Usage: [--no-frame-filters] " \
+	     "[--skip-unavailable] PRINT_VALUES"));
+
+   frame = get_selected_frame (NULL);
+   print_value = mi_parse_print_values (argv[oind]);
+
+   if (! raw_arg && frame_filters)
+     {
+       int flags = PRINT_LEVEL | PRINT_ARGS | PRINT_LOCALS;
+
+       result = apply_frame_filter (frame, flags, print_value,
+				    current_uiout, 0, 0);
+     }
+
+   /* Run the inbuilt backtrace if there are no filters registered, or
+      if "--no-frame-filters" has been specified from the command.  */
+   if (! frame_filters || raw_arg  || result == PY_BT_NO_FILTERS)
+     {
+       list_args_or_locals (all, print_value, frame,
+			    skip_unavailable);
+     }
 }
 
 /* Print single local or argument.  ARG must be already read in.  For
    WHAT and VALUES see list_args_or_locals.
 
    Errors are printed as if they would be the parameter value.  Use
-   zeroed ARG iff it should not be printed according to VALUES.  */
+   zeroed ARG iff it should not be printed according to VALUES.  If
+   SKIP_UNAVAILABLE is true, only print ARG if it is available.  */
 
 static void
 list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
-		   enum print_values values)
+		   enum print_values values, int skip_unavailable)
 {
   struct cleanup *old_chain;
-  struct cleanup *cleanup_tuple = NULL;
   struct ui_out *uiout = current_uiout;
   struct ui_file *stb;
-
-  stb = mem_fileopen ();
-  old_chain = make_cleanup_ui_file_delete (stb);
 
   gdb_assert (!arg->val || !arg->error);
   gdb_assert ((values == PRINT_NO_VALUES && arg->val == NULL
@@ -267,8 +488,22 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 	      || (arg->entry_kind == print_entry_values_only
 	          && (arg->val || arg->error)));
 
+  if (skip_unavailable && arg->val != NULL
+      && (value_entirely_unavailable (arg->val)
+	  /* A scalar object that does not have all bits available is
+	     also considered unavailable, because all bits contribute
+	     to its representation.  */
+	  || (val_print_scalar_type_p (value_type (arg->val))
+	      && !value_bytes_available (arg->val,
+					 value_embedded_offset (arg->val),
+					 TYPE_LENGTH (value_type (arg->val))))))
+    return;
+
+  stb = mem_fileopen ();
+  old_chain = make_cleanup_ui_file_delete (stb);
+
   if (values != PRINT_NO_VALUES || what == all)
-    cleanup_tuple = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
+    make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
 
   fputs_filtered (SYMBOL_PRINT_NAME (arg->sym), stb);
   if (arg->entry_kind == print_entry_values_only)
@@ -299,7 +534,7 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 	    {
 	      struct value_print_options opts;
 
-	      get_raw_print_options (&opts);
+	      get_no_prettyformat_print_options (&opts);
 	      opts.deref_ref = 1;
 	      common_val_print (arg->val, stb, 0, &opts,
 				language_def (SYMBOL_LANGUAGE (arg->sym)));
@@ -311,19 +546,18 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
       ui_out_field_stream (uiout, "value", stb);
     }
 
-  if (values != PRINT_NO_VALUES || what == all)
-    do_cleanups (cleanup_tuple);
   do_cleanups (old_chain);
 }
 
-/* Print a list of the locals or the arguments for the currently
-   selected frame.  If the argument passed is 0, printonly the names
-   of the variables, if an argument of 1 is passed, print the values
-   as well.  */
+/* Print a list of the objects for the frame FI in a certain form,
+   which is determined by VALUES.  The objects can be locals,
+   arguments or both, which is determined by WHAT.  If SKIP_UNAVAILABLE
+   is true, only print the arguments or local variables whose values
+   are available.  */
 
 static void
 list_args_or_locals (enum what_to_list what, enum print_values values,
-		     struct frame_info *fi)
+		     struct frame_info *fi, int skip_unavailable)
 {
   struct block *block;
   struct symbol *sym;
@@ -426,9 +660,9 @@ list_args_or_locals (enum what_to_list what, enum print_values values,
 		}
 
 	      if (arg.entry_kind != print_entry_values_only)
-		list_arg_or_local (&arg, what, values);
+		list_arg_or_local (&arg, what, values, skip_unavailable);
 	      if (entryarg.entry_kind != print_entry_values_no)
-		list_arg_or_local (&entryarg, what, values);
+		list_arg_or_local (&entryarg, what, values, skip_unavailable);
 	      xfree (arg.error);
 	      xfree (entryarg.error);
 	    }
@@ -457,5 +691,5 @@ mi_cmd_stack_info_frame (char *command, char **argv, int argc)
   if (argc > 0)
     error (_("-stack-info-frame: No arguments allowed"));
 
-  print_frame_info (get_selected_frame (NULL), 1, LOC_AND_ADDRESS, 0);
+  print_frame_info (get_selected_frame (NULL), 1, LOC_AND_ADDRESS, 0, 1);
 }

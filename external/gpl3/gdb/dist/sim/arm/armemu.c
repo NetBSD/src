@@ -2315,8 +2315,10 @@ check_PMUintr:
 	      WRITESDEST (dest);
 	      break;
 
-	    case 0x30:		/* TST immed */
-	      UNDEF_Test;
+	    case 0x30:		/* MOVW immed */
+	      dest = BITS (0, 11);
+	      dest |= (BITS (16, 19) << 12);
+	      WRITEDEST (dest);
 	      break;
 
 	    case 0x31:		/* TSTP immed */
@@ -2368,8 +2370,10 @@ check_PMUintr:
 		}
 	      break;
 
-	    case 0x34:		/* CMP immed */
-	      UNDEF_Test;
+	    case 0x34:		/* MOVT immed */
+	      dest  = BITS (0, 11);
+	      dest |= (BITS (16, 19) << 12);
+	      DEST |= (dest << 16);
 	      break;
 
 	    case 0x35:		/* CMPP immed */

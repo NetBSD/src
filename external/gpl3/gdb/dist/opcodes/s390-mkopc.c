@@ -1,5 +1,5 @@
 /* s390-mkopc.c -- Generates opcode table out of s390-opc.txt
-   Copyright 2000, 2001, 2003, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2000-2013 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -298,7 +298,7 @@ dumpTable (void)
   int  ix;
 
   /*  Write hash table entries (slots).  */
-  printf (file_header);
+  printf ("%s", file_header);
 
   for (ix = 0; ix < no_ops; ix++)
     {

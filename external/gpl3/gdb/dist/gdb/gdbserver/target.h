@@ -1,5 +1,5 @@
 /* Target operations for the remote server for GDB.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -21,23 +21,14 @@
 #ifndef TARGET_H
 #define TARGET_H
 
+#include "target/resume.h"
+#include "target/wait.h"
+#include "target/waitstatus.h"
+
 struct emit_ops;
 struct btrace_target_info;
 struct buffer;
-
-/* Ways to "resume" a thread.  */
-
-enum resume_kind
-{
-  /* Thread should continue.  */
-  resume_continue,
-
-  /* Thread should single-step.  */
-  resume_step,
-
-  /* Thread should be stopped.  */
-  resume_stop
-};
+struct process_info;
 
 /* This structure describes how to resume a particular thread (or all
    threads) based on the client's request.  If thread is -1, then this
@@ -57,58 +48,16 @@ struct thread_resume
      linux; SuspendThread on win32).  This is a host signal value (not
      enum gdb_signal).  */
   int sig;
+
+  /* Range to single step within.  Valid only iff KIND is resume_step.
+
+     Single-step once, and then continuing stepping as long as the
+     thread stops in this range.  (If the range is empty
+     [STEP_RANGE_START == STEP_RANGE_END], then this is a single-step
+     request.)  */
+  CORE_ADDR step_range_start;	/* Inclusive */
+  CORE_ADDR step_range_end;	/* Exclusive */
 };
-
-/* Generally, what has the program done?  */
-enum target_waitkind
-  {
-    /* The program has exited.  The exit status is in
-       value.integer.  */
-    TARGET_WAITKIND_EXITED,
-
-    /* The program has stopped with a signal.  Which signal is in
-       value.sig.  */
-    TARGET_WAITKIND_STOPPED,
-
-    /* The program has terminated with a signal.  Which signal is in
-       value.sig.  */
-    TARGET_WAITKIND_SIGNALLED,
-
-    /* The program is letting us know that it dynamically loaded
-       something.  */
-    TARGET_WAITKIND_LOADED,
-
-    /* The program has exec'ed a new executable file.  The new file's
-       pathname is pointed to by value.execd_pathname.  */
-    TARGET_WAITKIND_EXECD,
-
-    /* Nothing of interest to GDB happened, but we stopped anyway.  */
-    TARGET_WAITKIND_SPURIOUS,
-
-    /* An event has occurred, but we should wait again.  In this case,
-       we want to go back to the event loop and wait there for another
-       event from the inferior.  */
-    TARGET_WAITKIND_IGNORE
-  };
-
-struct target_waitstatus
-  {
-    enum target_waitkind kind;
-
-    /* Forked child pid, execd pathname, exit status or signal number.  */
-    union
-      {
-	int integer;
-	enum gdb_signal sig;
-	ptid_t related_pid;
-	char *execd_pathname;
-      }
-    value;
-  };
-
-/* Options that can be passed to target_ops->wait.  */
-
-#define TARGET_WNOHANG 1
 
 struct target_ops
 {
@@ -414,6 +363,8 @@ struct target_ops
      to break a cyclic dependency.  */
   void (*read_btrace) (struct btrace_target_info *, struct buffer *, int type);
 
+  /* Return true if target supports range stepping.  */
+  int (*supports_range_stepping) (void);
 };
 
 extern struct target_ops *the_target;
@@ -549,6 +500,10 @@ int kill_inferior (int);
 #define target_read_btrace(tinfo, buffer, type)	\
   (*the_target->read_btrace) (tinfo, buffer, type)
 
+#define target_supports_range_stepping() \
+  (the_target->supports_range_stepping ? \
+   (*the_target->supports_range_stepping) () : 0)
+
 /* Start non-stop mode, returns 0 on success, -1 on failure.   */
 
 int start_non_stop (int nonstop);
@@ -580,7 +535,5 @@ int write_inferior_memory (CORE_ADDR memaddr, const unsigned char *myaddr,
 void set_desired_inferior (int id);
 
 const char *target_pid_to_str (ptid_t);
-
-const char *target_waitstatus_to_string (const struct target_waitstatus *);
 
 #endif /* TARGET_H */

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2013 Free Software Foundation, Inc.
+   Copyright 2012-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ main:
 .LFE1:
 	.size	main, .-main
 .Letext0:
-	.section	.debug_info.dwo,"",@progbits
+	.section	.debug_info.dwo,"e",@progbits
 .Ldebug_info0:
 	.4byte	.Ldebug_info0_end - .Ldebug_info0 - 4 # Length of Compilation Unit Info
 	.2byte	0x4	# DWARF version number
@@ -85,32 +85,32 @@ main:
 	.uleb128 0x1	# (DIE (0xb) DW_TAG_compile_unit)
 	.ascii "GNU C 4.6.x-fission\0"	# DW_AT_producer
 	.byte	0x1	# DW_AT_language
-	.ascii "gdb.dwarf2/fission-base.c\0"	# DW_AT_name
+	.ascii "fission-base.c\0"	# DW_AT_name
 	.ascii "/tmp/src/gdb/testsuite\0"	# DW_AT_comp_dir
-	.byte	0	# DW_AT_GNU_dwo_id
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
+	.byte	1	# DW_AT_GNU_dwo_id
+	.byte	2
+	.byte	3
+	.byte	4
+	.byte	5
+	.byte	6
+	.byte	7
+	.byte	8
 	.uleb128 0x2	# (DIE (0x89) DW_TAG_subprogram)
 			# DW_AT_external
 	.ascii "func\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (fission-base.c)
 	.byte	0x13	# DW_AT_decl_line
 			# DW_AT_prototyped
-	.4byte	.Ldebug_info0_int	# DW_AT_type
+	.4byte	.Ldebug_info0_int - .Ldebug_info0 # DW_AT_type
 	.4byte	0x0	# DW_AT_ranges
 	.uleb128 0x1	# DW_AT_frame_base
 	.byte	0x9c	# DW_OP_call_frame_cfa
-	.4byte	.Ldebug_info0_int	# DW_AT_sibling
+	.4byte	.Ldebug_info0_int - .Ldebug_info0 # DW_AT_sibling
 	.uleb128 0x3	# (DIE (0xa4) DW_TAG_formal_parameter)
 	.ascii "arg\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (fission-base.c)
 	.byte	0x13	# DW_AT_decl_line
-	.4byte	.Ldebug_info0_int	# DW_AT_type
+	.4byte	.Ldebug_info0_int - .Ldebug_info0 # DW_AT_type
 	.uleb128 0x2	# DW_AT_location
 	.byte	0x91	# DW_OP_fbreg
 	.sleb128 -20
@@ -125,7 +125,7 @@ main:
 	.ascii "main\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (fission-base.c)
 	.byte	0x19	# DW_AT_decl_line
-	.4byte	.Ldebug_info0_int	# DW_AT_type
+	.4byte	.Ldebug_info0_int - .Ldebug_info0 # DW_AT_type
 	.uleb128 0x1	# DW_AT_low_pc
 	.8byte	.LFE1-.LFB1	# DW_AT_high_pc
 	.uleb128 0x1	# DW_AT_frame_base
@@ -143,24 +143,19 @@ main:
 	.8byte	.Letext0-.Ltext0	# DW_AT_high_pc
 	.4byte	.Ldebug_line0	# DW_AT_stmt_list
 	.ascii "/tmp/src/gdb/testsuite\0"	# DW_AT_comp_dir
-	# Normally dwo_name would be "fission-base.dwo".
-	# Simplification: Leave the DWO contents in the executable.
-	# "gdb.dwarf2/" is included so that gdb can load the file without
-	# having to set "debug-file-directory".  This is useful when
-	# testing with cc-with-tweaks.sh -i.
-	.ascii "gdb.dwarf2/fission-base\0"	# DW_AT_GNU_dwo_name
+	.ascii "fission-base.dwo\0"	# DW_AT_GNU_dwo_name
 	.4byte	.Ldebug_pubnames0	# DW_AT_GNU_pubnames
 	.4byte	.Ldebug_pubtypes0	# DW_AT_GNU_pubtypes
 	.4byte	.Ldebug_addr0_begin	# DW_AT_GNU_addr_base
 	.4byte	.Ldebug_ranges0_begin	# DW_AT_GNU_ranges_base
-	.byte	0	# DW_AT_GNU_dwo_id
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
+	.byte	1	# DW_AT_GNU_dwo_id
+	.byte	2
+	.byte	3
+	.byte	4
+	.byte	5
+	.byte	6
+	.byte	7
+	.byte	8
 .Lskeleton_debug_info0_end:
 	.section	.debug_abbrev,"",@progbits
 .Lskeleton_debug_abbrev0:
@@ -190,7 +185,7 @@ main:
 	.byte	0
 	.byte	0
 	.byte	0	# end of skeleton .debug_abbrev
-	.section	.debug_abbrev.dwo,"",@progbits
+	.section	.debug_abbrev.dwo,"e",@progbits
 .Ldebug_abbrev0:
 	.uleb128 0x1	# (abbrev code)
 	.uleb128 0x11	# (TAG: DW_TAG_compile_unit)
@@ -278,26 +273,29 @@ main:
 	.byte	0
 	.byte	0
 	.byte	0
-	.section	.debug_pubnames,"",@progbits
+	.section	.debug_gnu_pubnames,"",@progbits
 .Ldebug_pubnames0:
-	.4byte	0x20	# Length of Public Names Info
-	.2byte	0x2	# DWARF Version
-	.4byte	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
-	.4byte	0xd2	# Compilation Unit Length
-	.4byte	0x89	# DIE offset
+	.long	0x22	# Pub Info Length
+	.value	0x2	# DWARF Version
+	.long	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
+	.long	0x59	# Compilation Unit Length
+	.long	0x18	# DIE offset
+	.byte	0x30	# GDB-index flags
 	.ascii "func\0"	# external name
-	.4byte	0xba	# DIE offset
+	.long	0x45	# DIE offset
+	.byte	0x30	# GDB-index flags
 	.ascii "main\0"	# external name
-	.4byte	0
-	.section	.debug_pubtypes,"",@progbits
+	.long	0
+	.section	.debug_gnu_pubtypes,"",@progbits
 .Ldebug_pubtypes0:
-	.4byte	0x16	# Length of Public Type Names Info
-	.2byte	0x2	# DWARF Version
-	.4byte	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
-	.4byte	0xd2	# Compilation Unit Length
-	.4byte	.Ldebug_info0_int	# DIE offset
+	.long	0x17	# Pub Info Length
+	.value	0x2	# DWARF Version
+	.long	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
+	.long	0x59	# Compilation Unit Length
+	.long	0x3e	# DIE offset
+	.byte	0x90	# GDB-index flags
 	.ascii "int\0"	# external name
-	.4byte	0
+	.long	0
 	.section	.debug_aranges,"",@progbits
 	.4byte	0x2c	# Length of Address Ranges Info
 	.2byte	0x2	# DWARF Version
@@ -312,7 +310,7 @@ main:
 	.8byte	0
 	.section	.debug_line,"",@progbits
 .Ldebug_line0:
-	.section	.debug_line.dwo,"",@progbits
+	.section	.debug_line.dwo,"e",@progbits
 .Lskeleton_debug_line0:
 	.4byte	.LELT0-.LSLT0	# Length of Source Line Info
 .LSLT0:

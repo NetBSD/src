@@ -44,7 +44,7 @@ CFM;	IC:mod-sched-brs, br.call, brl.call, br.ret, alloc, clrrrb, cover, rfi;	IC:
 CPUID#;	IC:none;	IC:none;	none
 CR[CMCV];	IC:mov-to-CR-CMCV;	IC:mov-to-CR-CMCV;	impliedF
 CR[DCR];	IC:mov-to-CR-DCR;	IC:mov-to-CR-DCR;	impliedF
-CR[EOI];	IC:mov-to-CR-EOI;	IC:mov-to-CR-EOI;	SC Section 5.8.3.4, "End of External Interrupt Register (EOI Ð CR67)" on page 2:119
+CR[EOI];	IC:mov-to-CR-EOI;	IC:mov-to-CR-EOI;	SC Section 5.8.3.4, "End of External Interrupt Register (EOI - CR67)" on page 2:119
 CR[GPTA];	IC:mov-to-CR-GPTA;	IC:mov-to-CR-GPTA;	impliedF
 CR[IFA];	IC:mov-to-CR-IFA;	IC:mov-to-CR-IFA;	impliedF
 CR[IFS];	IC:mov-to-CR-IFS, cover;	IC:mov-to-CR-IFS, cover;	impliedF

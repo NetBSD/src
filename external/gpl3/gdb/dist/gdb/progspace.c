@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,16 +44,24 @@ static int highest_address_space_num;
 
 DEFINE_REGISTRY (program_space, REGISTRY_ACCESS_FIELD)
 
-
-
-/* An address space.  Currently this is not used for much other than
-   for comparing if pspaces/inferior/threads see the same address
+/* An address space.  It is used for comparing if pspaces/inferior/threads
+   see the same address space and for associating caches to each address
    space.  */
 
 struct address_space
 {
   int num;
+
+  /* Per aspace data-pointers required by other GDB modules.  */
+  REGISTRY_FIELDS;
 };
+
+/* Keep a registry of per-address_space data-pointers required by other GDB
+   modules.  */
+
+DEFINE_REGISTRY (address_space, REGISTRY_ACCESS_FIELD)
+
+
 
 /* Create a new address space object, and add it to the list.  */
 
@@ -64,6 +72,7 @@ new_address_space (void)
 
   aspace = XZALLOC (struct address_space);
   aspace->num = ++highest_address_space_num;
+  address_space_alloc_data (aspace);
 
   return aspace;
 }
@@ -89,6 +98,7 @@ maybe_new_address_space (void)
 static void
 free_address_space (struct address_space *aspace)
 {
+  address_space_free_data (aspace);
   xfree (aspace);
 }
 
@@ -200,7 +210,7 @@ clone_program_space (struct program_space *dest, struct program_space *src)
     exec_file_attach (src->pspace_exec_filename, 0);
 
   if (src->symfile_object_file != NULL)
-    symbol_file_add_main (src->symfile_object_file->name, 0);
+    symbol_file_add_main (objfile_name (src->symfile_object_file), 0);
 
   do_cleanups (old_chain);
   return dest;
@@ -471,7 +481,8 @@ save_current_space_and_thread (void)
   /* If restoring to null thread, we need to restore the pspace as
      well, hence, we need to save the current program space first.  */
   old_chain = save_current_program_space ();
-  save_current_inferior ();
+  /* There's no need to save the current inferior here.
+     That is handled by make_cleanup_restore_current_thread.  */
   make_cleanup_restore_current_thread ();
 
   return old_chain;

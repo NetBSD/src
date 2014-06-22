@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright 2012 Free Software Foundation, Inc.
+   Copyright 2012, 2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,6 +20,7 @@
 
 #include "sysdep.h"
 #include "bfd.h"
+#include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf-nacl.h"
 #include "elf/common.h"
@@ -33,35 +34,32 @@ segment_executable (struct elf_segment_map *seg)
   else
     {
       /* The p_flags value has not been computed yet,
-         so we have to look through the sections.  */
+	 so we have to look through the sections.  */
       unsigned int i;
       for (i = 0; i < seg->count; ++i)
-        if (seg->sections[i]->flags & SEC_CODE)
-          return TRUE;
+	if (seg->sections[i]->flags & SEC_CODE)
+	  return TRUE;
     }
   return FALSE;
 }
 
 /* Determine if this segment is eligible to receive the file and program
-   headers.  It must be read-only, non-executable, and have contents.
+   headers.  It must be read-only and non-executable.
    Its first section must start far enough past the page boundary to
    allow space for the headers.  */
 static bfd_boolean
 segment_eligible_for_headers (struct elf_segment_map *seg,
-                              bfd_vma maxpagesize, bfd_vma sizeof_headers)
+			      bfd_vma minpagesize, bfd_vma sizeof_headers)
 {
-  bfd_boolean any_contents = FALSE;
   unsigned int i;
-  if (seg->count == 0 || seg->sections[0]->lma % maxpagesize < sizeof_headers)
+  if (seg->count == 0 || seg->sections[0]->lma % minpagesize < sizeof_headers)
     return FALSE;
   for (i = 0; i < seg->count; ++i)
     {
       if ((seg->sections[i]->flags & (SEC_CODE|SEC_READONLY)) != SEC_READONLY)
-        return FALSE;
-      if (seg->sections[i]->flags & SEC_HAS_CONTENTS)
-        any_contents = TRUE;
+	return FALSE;
     }
-  return any_contents;
+  return TRUE;
 }
 
 
@@ -71,69 +69,154 @@ segment_eligible_for_headers (struct elf_segment_map *seg,
 bfd_boolean
 nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 {
+  const struct elf_backend_data *const bed = get_elf_backend_data (abfd);
   struct elf_segment_map **m = &elf_seg_map (abfd);
   struct elf_segment_map **first_load = NULL;
   struct elf_segment_map **last_load = NULL;
   bfd_boolean moved_headers = FALSE;
-  int sizeof_headers = info == NULL ? 0 : bfd_sizeof_headers (abfd, info);
-  bfd_vma maxpagesize = get_elf_backend_data (abfd)->maxpagesize;
+  int sizeof_headers;
 
   if (info != NULL && info->user_phdrs)
     /* The linker script used PHDRS explicitly, so don't change what the
        user asked for.  */
     return TRUE;
 
+  if (info != NULL)
+    /* We're doing linking, so evalute SIZEOF_HEADERS as in a linker script.  */
+    sizeof_headers = bfd_sizeof_headers (abfd, info);
+  else
+    {
+      /* We're not doing linking, so this is objcopy or suchlike.
+	 We just need to collect the size of the existing headers.  */
+      struct elf_segment_map *seg;
+      sizeof_headers = bed->s->sizeof_ehdr;
+      for (seg = *m; seg != NULL; seg = seg->next)
+	sizeof_headers += bed->s->sizeof_phdr;
+    }
+
   while (*m != NULL)
     {
       struct elf_segment_map *seg = *m;
 
       if (seg->p_type == PT_LOAD)
-        {
-          /* First, we're just finding the earliest PT_LOAD.
-             By the normal rules, this will be the lowest-addressed one.
-             We only have anything interesting to do if it's executable.  */
-          last_load = m;
-          if (first_load == NULL)
-            {
-              if (!segment_executable (*m))
-                return TRUE;
-              first_load = m;
-            }
-          /* Now that we've noted the first PT_LOAD, we're looking for
-             the first non-executable PT_LOAD with a nonempty p_filesz.  */
-          else if (!moved_headers
-                   && segment_eligible_for_headers (seg, maxpagesize,
-                                                    sizeof_headers))
-            {
-              /* This is the one we were looking for!
+	{
+	  bfd_boolean executable = segment_executable (seg);
 
-                 First, clear the flags on previous segments that
-                 say they include the file header and phdrs.  */
-              struct elf_segment_map *prevseg;
-              for (prevseg = *first_load;
-                   prevseg != seg;
-                   prevseg = prevseg->next)
-                if (prevseg->p_type == PT_LOAD)
-                  {
-                    prevseg->includes_filehdr = 0;
-                    prevseg->includes_phdrs = 0;
-                  }
+	  if (executable
+	      && seg->count > 0
+	      && seg->sections[0]->vma % bed->minpagesize == 0)
+	    {
+	      asection *lastsec = seg->sections[seg->count - 1];
+	      bfd_vma end = lastsec->vma + lastsec->size;
+	      if (end % bed->minpagesize != 0)
+		{
+		  /* This is an executable segment that starts on a page
+		     boundary but does not end on a page boundary.  Fill
+		     it out to a whole page with code fill (the tail of
+		     the segment will not be within any section).  Thus
+		     the entire code segment can be mapped from the file
+		     as whole pages and that mapping will contain only
+		     valid instructions.
 
-              /* This segment will include those headers instead.  */
-              seg->includes_filehdr = 1;
-              seg->includes_phdrs = 1;
+		     To accomplish this, we must fake out the code in
+		     assign_file_positions_for_load_sections (elf.c) so
+		     that it advances past the rest of the final page,
+		     rather than trying to put the next (unaligned, or
+		     unallocated) section.  We do this by appending a
+		     dummy section record to this element in the segment
+		     map.  No such output section ever actually exists,
+		     but this gets the layout logic to advance the file
+		     positions past this partial page.  Since we are
+		     lying to BFD like this, nothing will ever know to
+		     write the section contents.  So we do that by hand
+		     after the fact, in nacl_final_write_processing, below.  */
 
-              moved_headers = TRUE;
-            }
-        }
+		  struct elf_segment_map *newseg;
+		  asection *sec;
+		  struct bfd_elf_section_data *secdata;
 
+		  BFD_ASSERT (!seg->p_size_valid);
+
+		  secdata = bfd_zalloc (abfd, sizeof *secdata);
+		  if (secdata == NULL)
+		    return FALSE;
+
+		  sec = bfd_zalloc (abfd, sizeof *sec);
+		  if (sec == NULL)
+		    return FALSE;
+
+		  /* Fill in only the fields that actually affect the logic
+		     in assign_file_positions_for_load_sections.  */
+		  sec->vma = end;
+		  sec->lma = lastsec->lma + lastsec->size;
+		  sec->size = bed->minpagesize - (end % bed->minpagesize);
+		  sec->flags = (SEC_ALLOC | SEC_LOAD
+				| SEC_READONLY | SEC_CODE | SEC_LINKER_CREATED);
+		  sec->used_by_bfd = secdata;
+
+		  secdata->this_hdr.sh_type = SHT_PROGBITS;
+		  secdata->this_hdr.sh_flags = SHF_ALLOC | SHF_EXECINSTR;
+		  secdata->this_hdr.sh_addr = sec->vma;
+		  secdata->this_hdr.sh_size = sec->size;
+
+		  newseg = bfd_alloc (abfd,
+				      sizeof *newseg + ((seg->count + 1)
+							* sizeof (asection *)));
+		  if (newseg == NULL)
+		    return FALSE;
+		  memcpy (newseg, seg,
+			  sizeof *newseg + (seg->count * sizeof (asection *)));
+		  newseg->sections[newseg->count++] = sec;
+		  *m = seg = newseg;
+		}
+	    }
+
+	  /* First, we're just finding the earliest PT_LOAD.
+	     By the normal rules, this will be the lowest-addressed one.
+	     We only have anything interesting to do if it's executable.  */
+	  last_load = m;
+	  if (first_load == NULL)
+	    {
+	      if (!executable)
+		goto next;
+	      first_load = m;
+	    }
+	  /* Now that we've noted the first PT_LOAD, we're looking for
+	     the first non-executable PT_LOAD with a nonempty p_filesz.  */
+	  else if (!moved_headers
+		   && segment_eligible_for_headers (seg, bed->minpagesize,
+						    sizeof_headers))
+	    {
+	      /* This is the one we were looking for!
+
+		 First, clear the flags on previous segments that
+		 say they include the file header and phdrs.  */
+	      struct elf_segment_map *prevseg;
+	      for (prevseg = *first_load;
+		   prevseg != seg;
+		   prevseg = prevseg->next)
+		if (prevseg->p_type == PT_LOAD)
+		  {
+		    prevseg->includes_filehdr = 0;
+		    prevseg->includes_phdrs = 0;
+		  }
+
+	      /* This segment will include those headers instead.  */
+	      seg->includes_filehdr = 1;
+	      seg->includes_phdrs = 1;
+
+	      moved_headers = TRUE;
+	    }
+	}
+
+    next:
       m = &seg->next;
     }
 
   if (first_load != last_load && moved_headers)
     {
       /* Now swap the first and last PT_LOAD segments'
-         positions in segment_map.  */
+	 positions in segment_map.  */
       struct elf_segment_map *first = *first_load;
       struct elf_segment_map *last = *last_load;
       *first_load = first->next;
@@ -164,7 +247,7 @@ nacl_modify_program_headers (bfd *abfd, struct bfd_link_info *info)
   while (*m != NULL)
     {
       if ((*m)->p_type == PT_LOAD && (*m)->includes_filehdr)
-        break;
+	break;
 
       m = &(*m)->next;
       ++p;
@@ -178,47 +261,95 @@ nacl_modify_program_headers (bfd *abfd, struct bfd_link_info *info)
       Elf_Internal_Phdr *next_load_phdr = NULL;
 
       /* Now move past that first one and find the PT_LOAD that should be
-         before it by address order.  */
+	 before it by address order.  */
 
       m = &(*m)->next;
       ++p;
 
-      while ((*m) != NULL)
-        {
-          if (p->p_type == PT_LOAD && p->p_vaddr < first_load_phdr->p_vaddr)
-            {
-              next_load_seg = m;
-              next_load_phdr = p;
-              break;
-            }
+      while (*m != NULL)
+	{
+	  if (p->p_type == PT_LOAD && p->p_vaddr < first_load_phdr->p_vaddr)
+	    {
+	      next_load_seg = m;
+	      next_load_phdr = p;
+	      break;
+	    }
 
-          m = &(*m)->next;
-          ++p;
-        }
+	  m = &(*m)->next;
+	  ++p;
+	}
 
       /* Swap their positions in the segment_map back to how they used to be.
-         The phdrs have already been set up by now, so we have to slide up
-         the earlier ones to insert the one that should be first.  */
+	 The phdrs have already been set up by now, so we have to slide up
+	 the earlier ones to insert the one that should be first.  */
       if (next_load_seg != NULL)
-        {
-          Elf_Internal_Phdr move_phdr;
-          struct elf_segment_map *first_seg = *first_load_seg;
-          struct elf_segment_map *next_seg = *next_load_seg;
-          struct elf_segment_map *first_next = first_seg->next;
-          struct elf_segment_map *next_next = next_seg->next;
+	{
+	  Elf_Internal_Phdr move_phdr;
+	  struct elf_segment_map *first_seg = *first_load_seg;
+	  struct elf_segment_map *next_seg = *next_load_seg;
+	  struct elf_segment_map *first_next = first_seg->next;
+	  struct elf_segment_map *next_next = next_seg->next;
 
-          first_seg->next = next_next;
-          *first_load_seg = next_seg;
+	  if (next_load_seg == &first_seg->next)
+	    {
+	      *first_load_seg = next_seg;
+	      next_seg->next = first_seg;
+	      first_seg->next = next_next;
+	    }
+	  else
+	    {
+	      *first_load_seg = first_next;
+	      *next_load_seg = next_next;
 
-          next_seg->next = first_next;
-          *next_load_seg = first_seg;
+	      first_seg->next = *next_load_seg;
+	      *next_load_seg = first_seg;
 
-          move_phdr = *next_load_phdr;
-          memmove (first_load_phdr + 1, first_load_phdr,
-                   (next_load_phdr - first_load_phdr) * sizeof move_phdr);
-          *first_load_phdr = move_phdr;
-        }
+	      next_seg->next = *first_load_seg;
+	      *first_load_seg = next_seg;
+	    }
+
+	  move_phdr = *next_load_phdr;
+	  memmove (first_load_phdr + 1, first_load_phdr,
+		   (next_load_phdr - first_load_phdr) * sizeof move_phdr);
+	  *first_load_phdr = move_phdr;
+	}
     }
 
   return TRUE;
+}
+
+void
+nacl_final_write_processing (bfd *abfd, bfd_boolean linker ATTRIBUTE_UNUSED)
+{
+  struct elf_segment_map *seg;
+  for (seg = elf_seg_map (abfd); seg != NULL; seg = seg->next)
+    if (seg->p_type == PT_LOAD
+	&& seg->count > 1
+	&& seg->sections[seg->count - 1]->owner == NULL)
+      {
+	/* This is a fake section added in nacl_modify_segment_map, above.
+	   It's not a real BFD section, so nothing wrote its contents.
+	   Now write out its contents.  */
+
+	asection *sec = seg->sections[seg->count - 1];
+	char *fill;
+
+	BFD_ASSERT (sec->flags & SEC_LINKER_CREATED);
+	BFD_ASSERT (sec->flags & SEC_CODE);
+	BFD_ASSERT (sec->size > 0);
+
+	fill = abfd->arch_info->fill (sec->size, bfd_big_endian (abfd), TRUE);
+
+	if (fill == NULL
+	    || bfd_seek (abfd, sec->filepos, SEEK_SET) != 0
+	    || bfd_bwrite (fill, sec->size, abfd) != sec->size)
+	  {
+	    /* We don't have a proper way to report an error here.  So
+	       instead fudge things so that elf_write_shdrs_and_ehdr will
+	       fail.  */
+	    elf_elfheader (abfd)->e_shoff = (file_ptr) -1;
+	  }
+
+	free (fill);
+      }
 }

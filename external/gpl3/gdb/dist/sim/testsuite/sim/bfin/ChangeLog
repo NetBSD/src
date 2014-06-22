@@ -1,3 +1,36 @@
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* run-tests.sh: Add +x file mode.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* run-tests.sh (usage): Fix typo in exit.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* se_all32bitopcodes.S (se_all_next_insn): Skip debug insn opcodes.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* se_allopcodes.h (_match): Simplify register test to one less insn.
+	Omit the SSYNC insn when compiling for the sim.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* testutils.inc: Trim trailing whitespace.
+
+2013-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* run-tests.sh: Add support for running in parallel.
+
+2013-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* se_allopcodes.h: Add debugging related comments.
+
+2013-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* se_allopcodes.h: Do not clear RETN/RETE/RETI.
+
 2012-04-09  Robin Getz  <robin.getz@analog.com>
 
 	* random_0017.S, random_0018.S, random_0025.S: New ASTAT shift tests.

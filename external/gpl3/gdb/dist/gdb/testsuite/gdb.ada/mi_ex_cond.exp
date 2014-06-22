@@ -1,0 +1,94 @@
+# Copyright 2013-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "ada.exp"
+
+standard_ada_testfile foo
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug additional_flags=-bargs additional_flags=-static additional_flags=-margs ]] != "" } {
+  return -1
+}
+
+# # Some global variables used to simplify the maintenance of some of
+# # the regular expressions below.
+set any_nb "\[0-9\]+"
+set eol "\[\r\n\]+"
+
+# Before going any further, verify that we can insert exception
+# catchpoints...  That way, we won't have to do this while doing
+# the actual GDB/MI testing.
+
+clean_restart ${testfile}
+
+if ![runto_main] then {
+   fail "Cannot run to main, testcase aborted"
+   return 0
+}
+
+set msg "insert catchpoint on all Ada exceptions"
+gdb_test_multiple "catch exception" $msg {
+    -re "Catchpoint $any_nb: all Ada exceptions$eol$gdb_prompt $" {
+	pass $msg
+    }
+    -re "Your Ada runtime appears to be missing some debugging information.*\[\r\n\]+$gdb_prompt $" {
+	# If the runtime was not built with enough debug information,
+	# or if it was stripped, we can not test exception
+	# catchpoints.
+	unsupported $msg
+	return -1
+    }
+}
+
+# Now, we can start the GDB/MI testing itself...
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+mi_delete_breakpoints
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_load ${binfile}
+
+# And finally, the meat of the testcase... Insert an Ada exception
+# catchpoint that uses both conditions and exception name.
+
+mi_gdb_test "-catch-exception -c \"i = 2\" -e constraint_error" \
+            "\\^done,bkptno=\"$decimal\",bkpt={.*disp=\"keep\",enabled=\"y\",addr=\"$hex\",what=\"`constraint_error' Ada exception\",.*,cond=\"i = 2\",.*}" \
+            "catch C_E if i = 2"
+
+# It is important that we start the program's execution after having
+# inserted the exception catchpoint above.  We want to verify that
+# we are able to re-evaluate the exception catchpoint exception
+# address and stop condition without problems when new shared libraries
+# get mapped (during program startup).
+
+mi_run_cmd
+
+mi_expect_stop \
+    "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"CONSTRAINT_ERROR" \
+    "foo" "" ".*" ".*" \
+    ".*" \
+    "run to exception catchpoint hit"
+
+# Make sure that any of the catchpoint re-evaluations didn't cause
+# a clobbering of some of the exeption's info.
+
+mi_gdb_test "-break-list" \
+    "\\^done,.*,what=\"`constraint_error' Ada exception\",.*,cond=\"i = 2\",.*" \
+    "-break-list"

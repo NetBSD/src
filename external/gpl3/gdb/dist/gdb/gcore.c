@@ -1,6 +1,6 @@
 /* Generate a core file for the inferior process.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,7 @@
 #include "regcache.h"
 #include "regset.h"
 #include "gdb_bfd.h"
+#include "readline/tilde.h"
 
 /* The largest amount of memory to read from the target at once.  We
    must throttle it to limit the amount of memory used by GDB during
@@ -49,7 +50,7 @@ static int gcore_memory_sections (bfd *);
    Open a new bfd core file for output, and return the handle.  */
 
 bfd *
-create_gcore_bfd (char *filename)
+create_gcore_bfd (const char *filename)
 {
   bfd *obfd = gdb_bfd_openw (filename, default_gcore_target ());
 
@@ -121,8 +122,9 @@ do_bfd_delete_cleanup (void *arg)
 static void
 gcore_command (char *args, int from_tty)
 {
-  struct cleanup *old_chain;
-  char *corefilename, corefilename_buffer[40];
+  struct cleanup *filename_chain;
+  struct cleanup *bfd_chain;
+  char *corefilename;
   bfd *obfd;
 
   /* No use generating a corefile without a target process.  */
@@ -130,14 +132,13 @@ gcore_command (char *args, int from_tty)
     noprocess ();
 
   if (args && *args)
-    corefilename = args;
+    corefilename = tilde_expand (args);
   else
     {
       /* Default corefile name is "core.PID".  */
-      xsnprintf (corefilename_buffer, sizeof (corefilename_buffer),
-		 "core.%d", PIDGET (inferior_ptid));
-      corefilename = corefilename_buffer;
+      corefilename = xstrprintf ("core.%d", ptid_get_pid (inferior_ptid));
     }
+  filename_chain = make_cleanup (xfree, corefilename);
 
   if (info_verbose)
     fprintf_filtered (gdb_stdout,
@@ -147,16 +148,17 @@ gcore_command (char *args, int from_tty)
   obfd = create_gcore_bfd (corefilename);
 
   /* Need a cleanup that will close and delete the file.  */
-  old_chain = make_cleanup (do_bfd_delete_cleanup, obfd);
+  bfd_chain = make_cleanup (do_bfd_delete_cleanup, obfd);
 
   /* Call worker function.  */
   write_gcore_file (obfd);
 
   /* Succeeded.  */
-  fprintf_filtered (gdb_stdout, "Saved corefile %s\n", corefilename);
-
-  discard_cleanups (old_chain);
+  discard_cleanups (bfd_chain);
   gdb_bfd_unref (obfd);
+
+  fprintf_filtered (gdb_stdout, "Saved corefile %s\n", corefilename);
+  do_cleanups (filename_chain);
 }
 
 static unsigned long
@@ -428,8 +430,9 @@ gcore_create_callback (CORE_ADDR vaddr, unsigned long size, int read,
 
 	     This BFD was synthesized from reading target memory,
 	     we don't want to omit that.  */
-	  if (((vaddr >= start && vaddr + size <= end)
-	       || (start >= vaddr && end <= vaddr + size))
+	  if (objfile->separate_debug_objfile_backlink == NULL
+	      && ((vaddr >= start && vaddr + size <= end)
+	          || (start >= vaddr && end <= vaddr + size))
 	      && !(bfd_get_file_flags (abfd) & BFD_IN_MEMORY))
 	    {
 	      flags &= ~(SEC_LOAD | SEC_HAS_CONTENTS);

@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #endif
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include <stdlib.h>
 #include <stdio.h>

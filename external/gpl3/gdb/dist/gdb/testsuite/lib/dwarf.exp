@@ -1,4 +1,4 @@
-# Copyright 2010-2013 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,63 @@ proc dwarf2_support {} {
 	|| [istarget arm*-*-symbianelf*]
 	|| [istarget powerpc-*-eabi*]} {
 	return 1
+    }
+
+    return 0
+}
+
+# Build an executable from a fission-based .S file.
+# This handles the extra work of splitting the .o into non-dwo and dwo
+# pieces, making sure the .dwo is available if we're using cc-with-tweaks.sh
+# to build a .dwp file.
+# The arguments and results are the same as for build_executable.
+#
+# Current restrictions:
+# - only supports one source file
+# - cannot be run on remote hosts
+
+proc build_executable_from_fission_assembler { testname executable sources options } {
+    verbose -log "build_executable_from_fission_assembler $testname $executable $sources $options"
+    if { [llength $sources] != 1 } {
+	error "Only one source file supported."
+    }
+    if [is_remote host] {
+	error "Remote hosts are not supported."
+    }
+
+    global srcdir subdir
+    set source_file ${srcdir}/${subdir}/${sources}
+    set root_name [file rootname [file tail $source_file]]
+    set output_base [standard_output_file $root_name]
+    set object_file ${output_base}.o
+    set dwo_file ${output_base}.dwo
+    set object_options "object $options"
+    set objcopy [gdb_find_objcopy]
+
+    set result [gdb_compile $source_file $object_file object $options]
+    if { "$result" != "" } {
+	return -1
+    }
+
+    set command "$objcopy --extract-dwo $object_file $dwo_file"
+    verbose -log "Executing $command"
+    set result [catch "exec $command" output]
+    verbose -log "objcopy --extract-dwo output: $output"
+    if { $result == 1 } {
+	return -1
+    }
+
+    set command "$objcopy --strip-dwo $object_file"
+    verbose -log "Executing $command"
+    set result [catch "exec $command" output]
+    verbose -log "objcopy --strip-dwo output: $output"
+    if { $result == 1 } {
+	return -1
+    }
+
+    set result [gdb_compile $object_file $executable executable {nodebug}]
+    if { "$result" != "" } {
+	return -1
     }
 
     return 0
@@ -109,6 +166,9 @@ namespace eval Dwarf {
     # The current output file.
     variable _output_file
 
+    # Note: The _cu_ values here also apply to type units (TUs).
+    # Think of a TU as a special kind of CU.
+
     # Current CU count.
     variable _cu_count
 
@@ -133,6 +193,10 @@ namespace eval Dwarf {
     # If empty, we should write directly to the output file.
     # Otherwise, this is the name of a section to write to.
     variable _defer
+
+    # The abbrev section.  Typically .debug_abbrev but can be .debug_abbrev.dwo
+    # for Fission.
+    variable _abbrev_section
 
     # The next available abbrev number in the current CU's abbrev
     # table.
@@ -238,6 +302,11 @@ namespace eval Dwarf {
 	return "\"${string}\\0\""
     }
 
+    proc _nz_quote {string} {
+	# For now, no quoting is done.
+	return "\"${string}\""
+    }
+
     proc _handle_DW_FORM {form value} {
 	switch -exact -- $form {
 	    DW_FORM_string  {
@@ -323,11 +392,19 @@ namespace eval Dwarf {
 		define_label $l2
 	    }
 
+	    DW_FORM_block1 {
+		set len [string length $value]
+		if {$len > 255} {
+		    error "DW_FORM_block1 length too long"
+		}
+		_op .byte $len
+		_op .ascii [_nz_quote $value]
+	    }
+
 	    DW_FORM_block2 -
 	    DW_FORM_block4 -
 
 	    DW_FORM_block -
-	    DW_FORM_block1 -
 
 	    DW_FORM_ref2 -
 	    DW_FORM_indirect -
@@ -385,6 +462,7 @@ namespace eval Dwarf {
     }
 
     proc _handle_DW_TAG {tag_name {attrs {}} {children {}}} {
+	variable _abbrev_section
 	variable _abbrev_num
 	variable _constants
 
@@ -393,7 +471,7 @@ namespace eval Dwarf {
 
 	# We somewhat wastefully emit a new abbrev entry for each tag.
 	# There's no reason for this other than laziness.
-	_defer_output .debug_abbrev {
+	_defer_output $_abbrev_section {
 	    _op .uleb128 $my_abbrev "Abbrev start"
 	    _op .uleb128 $_constants($tag_name) $tag_name
 	    _op .byte $has_children "has_children"
@@ -413,13 +491,13 @@ namespace eval Dwarf {
 
 	    _handle_DW_FORM $attr_form $attr_value
 
-	    _defer_output .debug_abbrev {
+	    _defer_output $_abbrev_section {
 		_op .uleb128 $_constants($attr_name) $attr_name
 		_op .uleb128 $_constants($attr_form) $attr_form
 	    }
 	}
 
-	_defer_output .debug_abbrev {
+	_defer_output $_abbrev_section {
 	    # Terminator.
 	    _op .byte 0x0 Terminator
 	    _op .byte 0x0 Terminator
@@ -445,20 +523,27 @@ namespace eval Dwarf {
 	}
     }
 
-    proc _section {name} {
-	_emit "        .section $name"
+    proc _section {name {flags ""} {type ""}} {
+	if {$flags == "" && $type == ""} {
+	    _emit "        .section $name"
+	} elseif {$type == ""} {
+	    _emit "        .section $name, \"$flags\""
+	} else {
+	    _emit "        .section $name, \"$flags\", %$type"
+	}
     }
 
-    proc _defer_output {section body} {
+    # SECTION_SPEC is a list of arguments to _section.
+    proc _defer_output {section_spec body} {
 	variable _defer
 	variable _deferred_output
 
 	set old_defer $_defer
-	set _defer $section
+	set _defer [lindex $section_spec 0]
 
 	if {![info exists _deferred_output($_defer)]} {
 	    set _deferred_output($_defer) ""
-	    _section $section
+	    eval _section $section_spec
 	}
 
 	uplevel $body
@@ -588,6 +673,9 @@ namespace eval Dwarf {
     # FIXME move docs
     proc _location {body} {
 	variable _constants
+	variable _cu_label
+	variable _cu_addr_size
+	variable _cu_offset_size
 
 	foreach line [split $body \n] {
 	    if {[lindex $line 0] == ""} {
@@ -598,8 +686,6 @@ namespace eval Dwarf {
 
 	    switch -exact -- $opcode {
 		DW_OP_addr {
-		    variable _cu_addr_size
-
 		    _op .${_cu_addr_size}byte [lindex $line 1]
 		}
 
@@ -630,6 +716,38 @@ namespace eval Dwarf {
 		    _op .sleb128 [lindex $line 1]
 		}
 
+		DW_OP_plus_uconst {
+		    _op .uleb128 [lindex $line 1]
+		}
+
+		DW_OP_piece {
+		    _op .uleb128 [lindex $line 1]
+		}
+
+		DW_OP_bit_piece {
+		    _op .uleb128 [lindex $line 1]
+		    _op .uleb128 [lindex $line 2]
+		}
+
+		DW_OP_GNU_implicit_pointer {
+		    if {[llength $line] != 3} {
+			error "usage: DW_OP_GNU_implicit_pointer LABEL OFFSET"
+		    }
+
+		    # Here label is a section offset.
+		    set label [lindex $line 1]
+		    _op .${_cu_offset_size}byte $label
+		    _op .sleb128 [lindex $line 2]
+		}
+
+		DW_OP_deref_size {
+		    if {[llength $line] != 2} {
+			error "usage: DW_OP_deref_size SIZE"
+		    }
+
+		    _op .byte [lindex $line 1]
+		}
+
 		default {
 		    if {[llength $line] > 1} {
 			error "Unimplemented: operands in location for $opcode"
@@ -640,29 +758,59 @@ namespace eval Dwarf {
     }
 
     # Emit a DWARF CU.
-    # IS_64 is a boolean which is true if you want to emit 64-bit
-    # DWARF, and false for 32-bit DWARF.
-    # VERSION is the DWARF version number to emit.
-    # ADDR_SIZE is the size of addresses in bytes.
+    # OPTIONS is a list with an even number of elements containing
+    # option-name and option-value pairs.
+    # Current options are:
+    # is_64 0|1    - boolean indicating if you want to emit 64-bit DWARF
+    #                default = 0 (32-bit)
+    # version n    - DWARF version number to emit
+    #                default = 4
+    # addr_size n  - the size of addresses, 32, 64, or default
+    #                default = default
+    # fission 0|1  - boolean indicating if generating Fission debug info
+    #                default = 0
     # BODY is Tcl code that emits the DIEs which make up the body of
     # the CU.  It is evaluated in the caller's context.
-    proc cu {is_64 version addr_size body} {
+    proc cu {options body} {
 	variable _cu_count
+	variable _abbrev_section
 	variable _abbrev_num
 	variable _cu_label
 	variable _cu_version
 	variable _cu_addr_size
 	variable _cu_offset_size
 
-	set _cu_version $version
-	if {$is_64} {
-	    set _cu_offset_size 8
-	} else {
-	    set _cu_offset_size 4
-	}
-	set _cu_addr_size $addr_size
+	# Establish the defaults.
+	set is_64 0
+	set _cu_version 4
+	set _cu_addr_size default
+	set fission 0
+	set section ".debug_info"
+	set _abbrev_section ".debug_abbrev"
 
-	_section .debug_info
+	foreach { name value } $options {
+	    switch -exact -- $name {
+		is_64 { set is_64 $value }
+		version { set _cu_version $value }
+		addr_size { set _cu_addr_size $value }
+		fission { set fission $value }
+		default { error "unknown option $name" }
+	    }
+	}
+	if {$_cu_addr_size == "default"} {
+	    if {[is_64_target]} {
+		set _cu_addr_size 8
+	    } else {
+		set _cu_addr_size 4
+	    }
+	}
+	set _cu_offset_size [expr { $is_64 ? 8 : 4 }]
+	if { $fission } {
+	    set section ".debug_info.dwo"
+	    set _abbrev_section ".debug_abbrev.dwo"
+	}
+
+	_section $section
 
 	set cu_num [incr _cu_count]
 	set my_abbrevs [_compute_label "abbrev${cu_num}_begin"]
@@ -680,17 +828,126 @@ namespace eval Dwarf {
 	    _op .4byte "$end_label - $start_label"
 	}
 	define_label $start_label
-	_op .2byte $version Version
+	_op .2byte $_cu_version Version
 	_op .4byte $my_abbrevs Abbrevs
-	_op .byte $addr_size "Pointer size"
+	_op .byte $_cu_addr_size "Pointer size"
 
-	_defer_output .debug_abbrev {
+	_defer_output $_abbrev_section {
 	    define_label $my_abbrevs
 	}
 
 	uplevel $body
 
-	_defer_output .debug_abbrev {
+	_defer_output $_abbrev_section {
+	    # Emit the terminator.
+	    _op .byte 0x0 Terminator
+	    _op .byte 0x0 Terminator
+	}
+
+	define_label $end_label
+    }
+
+    # Emit a DWARF TU.
+    # OPTIONS is a list with an even number of elements containing
+    # option-name and option-value pairs.
+    # Current options are:
+    # is_64 0|1    - boolean indicating if you want to emit 64-bit DWARF
+    #                default = 0 (32-bit)
+    # version n    - DWARF version number to emit
+    #                default = 4
+    # addr_size n  - the size of addresses, 32, 64, or default
+    #                default = default
+    # fission 0|1  - boolean indicating if generating Fission debug info
+    #                default = 0
+    # SIGNATURE is the 64-bit signature of the type.
+    # TYPE_LABEL is the label of the type defined by this TU,
+    # or "" if there is no type (i.e., type stubs in Fission).
+    # BODY is Tcl code that emits the DIEs which make up the body of
+    # the TU.  It is evaluated in the caller's context.
+    proc tu {options signature type_label body} {
+	variable _cu_count
+	variable _abbrev_section
+	variable _abbrev_num
+	variable _cu_label
+	variable _cu_version
+	variable _cu_addr_size
+	variable _cu_offset_size
+
+	# Establish the defaults.
+	set is_64 0
+	set _cu_version 4
+	set _cu_addr_size default
+	set fission 0
+	set section ".debug_types"
+	set _abbrev_section ".debug_abbrev"
+
+	foreach { name value } $options {
+	    switch -exact -- $name {
+		is_64 { set is_64 $value }
+		version { set _cu_version $value }
+		addr_size { set _cu_addr_size $value }
+		fission { set fission $value }
+		default { error "unknown option $name" }
+	    }
+	}
+	if {$_cu_addr_size == "default"} {
+	    if {[is_64_target]} {
+		set _cu_addr_size 8
+	    } else {
+		set _cu_addr_size 4
+	    }
+	}
+	set _cu_offset_size [expr { $is_64 ? 8 : 4 }]
+	if { $fission } {
+	    set section ".debug_types.dwo"
+	    set _abbrev_section ".debug_abbrev.dwo"
+	}
+
+	_section $section
+
+	set cu_num [incr _cu_count]
+	set my_abbrevs [_compute_label "abbrev${cu_num}_begin"]
+	set _abbrev_num 1
+
+	set _cu_label [_compute_label "cu${cu_num}_begin"]
+	set start_label [_compute_label "cu${cu_num}_start"]
+	set end_label [_compute_label "cu${cu_num}_end"]
+
+	define_label $_cu_label
+	if {$is_64} {
+	    _op .4byte 0xffffffff
+	    _op .8byte "$end_label - $start_label"
+	} else {
+	    _op .4byte "$end_label - $start_label"
+	}
+	define_label $start_label
+	_op .2byte $_cu_version Version
+	_op .4byte $my_abbrevs Abbrevs
+	_op .byte $_cu_addr_size "Pointer size"
+	_op .8byte $signature Signature
+	if { $type_label != "" } {
+	    uplevel declare_labels $type_label
+	    upvar $type_label my_type_label
+	    if {$is_64} {
+		_op .8byte "$my_type_label - $_cu_label"
+	    } else {
+		_op .4byte "$my_type_label - $_cu_label"
+	    }
+	} else {
+	    if {$is_64} {
+		_op .8byte 0
+	    } else {
+		_op .4byte 0
+	    }
+	}
+
+	_defer_output $_abbrev_section {
+	    define_label $my_abbrevs
+	}
+
+	uplevel $body
+
+	_defer_output $_abbrev_section {
 	    # Emit the terminator.
 	    _op .byte 0x0 Terminator
 	    _op .byte 0x0 Terminator
@@ -705,6 +962,51 @@ namespace eval Dwarf {
 	catch {unset the_array}
 	set the_array(_) {}
 	unset the_array(_)
+    }
+
+    # Emit a .gnu_debugaltlink section with the given file name and
+    # build-id.  The buildid should be represented as a hexadecimal
+    # string, like "ffeeddcc".
+    proc gnu_debugaltlink {filename buildid} {
+	_defer_output .gnu_debugaltlink {
+	    _op .ascii [_quote $filename]
+	    foreach {a b} [split $buildid {}] {
+		_op .byte 0x$a$b
+	    }
+	}
+    }
+
+    proc _note {type name hexdata} {
+	set namelen [expr [string length $name] + 1]
+
+	# Name size.
+	_op .4byte $namelen
+	# Data size.
+	_op .4byte [expr [string length $hexdata] / 2]
+	# Type.
+	_op .4byte $type
+	# The name.
+	_op .ascii [_quote $name]
+	# Alignment.
+	set align 2
+	set total [expr {($namelen + (1 << $align) - 1) & (-1 << $align)}]
+	for {set i $namelen} {$i < $total} {incr i} {
+	    _op .byte 0
+	}
+	# The data.
+	foreach {a b} [split $hexdata {}] {
+	    _op .byte 0x$a$b
+	}
+    }
+
+    # Emit a note section holding the given build-id.
+    proc build_id {buildid} {
+	_defer_output {.note.gnu.build-id a note} {
+	    # From elf/common.h.
+	    set NT_GNU_BUILD_ID 3
+
+	    _note $NT_GNU_BUILD_ID GNU $buildid
+	}
     }
 
     # The top-level interface to the DWARF assembler.

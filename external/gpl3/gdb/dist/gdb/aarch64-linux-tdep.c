@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -34,6 +34,12 @@
 #include "inferior.h"
 #include "regcache.h"
 #include "regset.h"
+
+#include "cli/cli-utils.h"
+#include "stap-probe.h"
+#include "parser-defs.h"
+#include "user-regs.h"
+#include <ctype.h>
 
 /* The general-purpose regset consists of 31 X registers, plus SP, PC,
    and PSTATE registers, as defined in the AArch64 port of the Linux
@@ -263,12 +269,134 @@ aarch64_linux_regset_from_core_section (struct gdbarch *gdbarch,
   return NULL;
 }
 
+/* Implementation of `gdbarch_stap_is_single_operand', as defined in
+   gdbarch.h.  */
+
+static int
+aarch64_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
+{
+  return (*s == '#' || isdigit (*s) /* Literal number.  */
+	  || *s == '[' /* Register indirection.  */
+	  || isalpha (*s)); /* Register value.  */
+}
+
+/* This routine is used to parse a special token in AArch64's assembly.
+
+   The special tokens parsed by it are:
+
+      - Register displacement (e.g, [fp, #-8])
+
+   It returns one if the special token has been parsed successfully,
+   or zero if the current token is not considered special.  */
+
+static int
+aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
+				  struct stap_parse_info *p)
+{
+  if (*p->arg == '[')
+    {
+      /* Temporary holder for lookahead.  */
+      const char *tmp = p->arg;
+      char *endp;
+      /* Used to save the register name.  */
+      const char *start;
+      char *regname;
+      int len;
+      int got_minus = 0;
+      long displacement;
+      struct stoken str;
+
+      ++tmp;
+      start = tmp;
+
+      /* Register name.  */
+      while (isalnum (*tmp))
+	++tmp;
+
+      if (*tmp != ',')
+	return 0;
+
+      len = tmp - start;
+      regname = alloca (len + 2);
+
+      strncpy (regname, start, len);
+      regname[len] = '\0';
+
+      if (user_reg_map_name_to_regnum (gdbarch, regname, len) == -1)
+	error (_("Invalid register name `%s' on expression `%s'."),
+	       regname, p->saved_arg);
+
+      ++tmp;
+      tmp = skip_spaces_const (tmp);
+      /* Now we expect a number.  It can begin with '#' or simply
+	 a digit.  */
+      if (*tmp == '#')
+	++tmp;
+
+      if (*tmp == '-')
+	{
+	  ++tmp;
+	  got_minus = 1;
+	}
+      else if (*tmp == '+')
+	++tmp;
+
+      if (!isdigit (*tmp))
+	return 0;
+
+      displacement = strtol (tmp, &endp, 10);
+      tmp = endp;
+
+      /* Skipping last `]'.  */
+      if (*tmp++ != ']')
+	return 0;
+
+      /* The displacement.  */
+      write_exp_elt_opcode (OP_LONG);
+      write_exp_elt_type (builtin_type (gdbarch)->builtin_long);
+      write_exp_elt_longcst (displacement);
+      write_exp_elt_opcode (OP_LONG);
+      if (got_minus)
+	write_exp_elt_opcode (UNOP_NEG);
+
+      /* The register name.  */
+      write_exp_elt_opcode (OP_REGISTER);
+      str.ptr = regname;
+      str.length = len;
+      write_exp_string (str);
+      write_exp_elt_opcode (OP_REGISTER);
+
+      write_exp_elt_opcode (BINOP_ADD);
+
+      /* Casting to the expected type.  */
+      write_exp_elt_opcode (UNOP_CAST);
+      write_exp_elt_type (lookup_pointer_type (p->arg_type));
+      write_exp_elt_opcode (UNOP_CAST);
+
+      write_exp_elt_opcode (UNOP_IND);
+
+      p->arg = tmp;
+    }
+  else
+    return 0;
+
+  return 1;
+}
+
 static void
 aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
+  static const char *const stap_integer_prefixes[] = { "#", "", NULL };
+  static const char *const stap_register_prefixes[] = { "", NULL };
+  static const char *const stap_register_indirection_prefixes[] = { "[",
+								    NULL };
+  static const char *const stap_register_indirection_suffixes[] = { "]",
+								    NULL };
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   tdep->lowest_pc = 0x8000;
+
+  linux_init_abi (info, gdbarch);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 					 svr4_lp64_fetch_link_map_offsets);
@@ -288,6 +416,17 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_regset_from_core_section (gdbarch,
 					aarch64_linux_regset_from_core_section);
+
+  /* SystemTap related.  */
+  set_gdbarch_stap_integer_prefixes (gdbarch, stap_integer_prefixes);
+  set_gdbarch_stap_register_prefixes (gdbarch, stap_register_prefixes);
+  set_gdbarch_stap_register_indirection_prefixes (gdbarch,
+					    stap_register_indirection_prefixes);
+  set_gdbarch_stap_register_indirection_suffixes (gdbarch,
+					    stap_register_indirection_suffixes);
+  set_gdbarch_stap_is_single_operand (gdbarch, aarch64_stap_is_single_operand);
+  set_gdbarch_stap_parse_special_token (gdbarch,
+					aarch64_stap_parse_special_token);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

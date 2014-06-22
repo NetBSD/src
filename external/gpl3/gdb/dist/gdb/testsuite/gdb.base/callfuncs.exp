@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 # and modified by Bob Manson. (manson@cygnus.com)
 
-set testfile "callfuncs"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 set compile_flags {debug}
 if [support_complex_tests] {
@@ -34,7 +32,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $com
 # used to compile the test case.
 
 if [get_compiler_info] {
-    return -1;
+    return -1
 }
 
 if {$hp_aCC_compiler} {
@@ -63,7 +61,7 @@ proc do_function_calls {} {
     global gdb_prompt
 
     # We need to up this because this can be really slow on some boards.
-    set timeout 60;
+    set timeout 60
 
     # If any of these calls segv we don't want to affect subsequent tests.
     # E.g., we want to ensure register values are restored.
@@ -329,7 +327,7 @@ proc rerun_and_prepare {} {
 	# the language be set to the default.
 
 	if { ![runto_main] } {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
 
 	# However, turn off overload-resolution for aCC.  Having it on causes
@@ -338,7 +336,7 @@ proc rerun_and_prepare {} {
 	gdb_test_no_output "set overload-resolution 0"
     } else {
 	if { ![runto_main] } {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
 	gdb_test_no_output "set language c"
     }

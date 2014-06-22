@@ -1,6 +1,5 @@
 /* TI C6X disassembler.
-   Copyright 2010
-   Free Software Foundation, Inc.
+   Copyright 2010-2013 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -53,6 +52,30 @@ const tic6x_ctrl tic6x_ctrl_table[tic6x_ctrl_max] =
 /* Define the opcode table.  */
 const tic6x_opcode tic6x_opcode_table[tic6x_opcode_max] =
   {
+#define INSNU(name, func_unit, format, type, isa, flags, fixed, ops, var) \
+    {									\
+      STRINGX(name),							\
+      CONCAT2(tic6x_func_unit_,func_unit),				\
+      CONCAT3(tic6x_insn_format,_,format),	      			\
+      CONCAT2(tic6x_pipeline_,type),					\
+      CONCAT2(TIC6X_INSN_,isa),						\
+      flags,								\
+      fixed,								\
+      ops,								\
+      var								\
+    },
+#define INSNUE(name, e, func_unit, format, type, isa, flags, fixed, ops, var) \
+    {									\
+      STRINGX(name),							\
+      CONCAT2(tic6x_func_unit_,func_unit),				\
+      CONCAT3(tic6x_insn_format,_,format),	      			\
+      CONCAT2(tic6x_pipeline_,type),					\
+      CONCAT2(TIC6X_INSN_,isa),						\
+      flags,								\
+      fixed,								\
+      ops,								\
+      var								\
+    },
 #define INSN(name, func_unit, format, type, isa, flags, fixed, ops, var) \
     {									\
       STRINGX(name),							\
@@ -80,6 +103,8 @@ const tic6x_opcode tic6x_opcode_table[tic6x_opcode_max] =
 #include "opcode/tic6x-opcode-table.h"
 #undef INSN
 #undef INSNE
+#undef INSNU
+#undef INSNUE
   };
 
 /* If instruction format FMT has a field FIELD, return a pointer to
@@ -97,12 +122,39 @@ tic6x_field_from_fmt (const tic6x_insn_format *fmt, tic6x_insn_field_id field)
   return NULL;
 }
 
+/* Extract the field width.  */
+
+static unsigned int
+tic6x_field_width (const tic6x_insn_field *field)
+{
+  unsigned int i;
+  unsigned int width = 0;
+
+  if (!field->num_bitfields)
+    return field->bitfields[0].width;
+
+  for (i = 0 ; i < field->num_bitfields ; i++)
+    width += field->bitfields[i].width;
+
+  return width;
+}
+
 /* Extract the bits corresponding to FIELD from OPCODE.  */
 
 static unsigned int
 tic6x_field_bits (unsigned int opcode, const tic6x_insn_field *field)
 {
-  return (opcode >> field->low_pos) & ((1u << field->width) - 1);
+  unsigned int i;
+  unsigned int val = 0;
+
+  if (!field->num_bitfields)
+    return (opcode >> field->bitfields[0].low_pos) & ((1u << field->bitfields[0].width) - 1);
+
+  for (i = 0 ; i < field->num_bitfields ; i++)
+    val |= ((opcode >> field->bitfields[i].low_pos) & ((1u << field->bitfields[i].width) - 1))
+      << field->bitfields[i].pos;
+
+  return val;
 }
 
 /* Extract a 32-bit value read from the instruction stream.  */
@@ -119,12 +171,19 @@ tic6x_extract_32 (unsigned char *p, struct disassemble_info *info)
 /* Extract a 16-bit value read from the instruction stream.  */
 
 static unsigned int
-tic6x_extract_16 (unsigned char *p, struct disassemble_info *info)
+tic6x_extract_16 (unsigned char *p, tic6x_fetch_packet_header *header,
+                  struct disassemble_info *info)
 {
+  unsigned int op16;
+
   if (info->endian == BFD_ENDIAN_LITTLE)
-    return (p[0]) | (p[1] << 8);
+    op16 = (p[0]) | (p[1] << 8);
   else
-    return (p[1]) | (p[0] << 8);
+    op16 = (p[1]) | (p[0] << 8);
+  op16 |= (header->sat << TIC6X_COMPACT_SAT_POS);
+  op16 |= (header->br << TIC6X_COMPACT_BR_POS);
+  op16 |= (header->dsz << TIC6X_COMPACT_DSZ_POS);
+  return op16;
 }
 
 /* FP points to a fetch packet.  Return whether it is header-based; if
@@ -138,8 +197,20 @@ tic6x_check_fetch_packet_header (unsigned char *fp,
   int i;
 
   header->header = tic6x_extract_32 (fp + 28, info);
+
   if ((header->header & 0xf0000000) != 0xe0000000)
-    return FALSE;
+    {
+      header->prot = 0;
+      header->rs = 0;
+      header->dsz = 0;
+      header->br = 0;
+      header->sat = 0;
+      for (i = 0; i < 7; i++)
+	header->word_compact[i] = FALSE;
+      for (i = 0; i < 14; i++)
+	header->p_bits[i] = FALSE;
+      return FALSE;
+    }
 
   for (i = 0; i < 7; i++)
     header->word_compact[i]
@@ -225,9 +296,9 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	 pretending that the two halves of the word are in opposite
 	 locations to where they actually are.  */
       if (info->endian == BFD_ENDIAN_LITTLE)
-	opcode = tic6x_extract_16 (fp + fp_offset, info);
+	opcode = tic6x_extract_16 (fp + fp_offset, &header, info);
       else
-	opcode = tic6x_extract_16 (fp + (fp_offset ^ 2), info);
+	opcode = tic6x_extract_16 (fp + (fp_offset ^ 2), &header, info);
     }
   else
     opcode = tic6x_extract_32 (fp + fp_offset, info);
@@ -246,6 +317,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
       unsigned int func_unit_side = 0;
       unsigned int func_unit_data_side = 0;
       unsigned int func_unit_cross = 0;
+      unsigned int t_val = 0;
       /* The maximum length of the text of a non-PC-relative operand
 	 is 24 bytes (SPMASK masking all eight functional units, with
 	 separating commas and trailing NUL).  */
@@ -258,6 +330,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
       unsigned int op_num;
       bfd_boolean fixed_ok;
       bfd_boolean operands_ok;
+      bfd_boolean have_t = FALSE;
 
       if (opc->flags & TIC6X_FLAG_MACRO)
 	continue;
@@ -292,13 +365,72 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	     table.  */
 	  z_field = tic6x_field_from_fmt (fmt, tic6x_field_z);
 	  if (!z_field)
-	    abort ();
+	    {
+	      printf ("*** opcode %x: missing z field", opcode);
+	      abort ();
+	    }
 
 	  creg_value = tic6x_field_bits (opcode, creg_field);
 	  z_value = tic6x_field_bits (opcode, z_field);
 	  cond = conds[creg_value][z_value];
 	  if (cond == NULL)
 	    continue;
+	}
+
+      if (opc->flags & TIC6X_FLAG_INSN16_SPRED)
+	{
+	  const tic6x_insn_field *cc_field;
+          unsigned int s_value = 0;
+          unsigned int z_value = 0;
+          bfd_boolean cond_known = FALSE;
+          static const char *const conds[2][2] =
+            {
+              { "[a0] ", "[!a0] " },
+              { "[b0] ", "[!b0] " }
+            };
+
+          cc_field = tic6x_field_from_fmt (fmt, tic6x_field_cc);
+
+          if (cc_field)
+	    {
+	      unsigned int cc_value;
+
+	      cc_value = tic6x_field_bits (opcode, cc_field);
+	      s_value = (cc_value & 0x2) >> 1;
+	      z_value = (cc_value & 0x1);
+	      cond_known = TRUE;
+	    }
+	  else
+	    {
+	      const tic6x_insn_field *z_field;
+	      const tic6x_insn_field *s_field;
+
+	      s_field = tic6x_field_from_fmt (fmt, tic6x_field_s);
+
+	      if (!s_field)
+		{
+		  printf ("opcode %x: missing compact insn predicate register field (s field)\n",
+			  opcode);
+		  abort ();
+		}
+	      s_value = tic6x_field_bits (opcode, s_field);
+	      z_field = tic6x_field_from_fmt (fmt, tic6x_field_z);
+	      if (!z_field)
+		{
+		  printf ("opcode %x: missing compact insn predicate z_value (z field)\n", opcode);
+		  abort ();
+		}
+
+	      z_value = tic6x_field_bits (opcode, z_field);
+	      cond_known = TRUE;
+	    }
+
+          if (!cond_known)
+	    {
+	      printf ("opcode %x: unspecified ompact insn predicate\n", opcode);
+	      abort ();
+	    }
+          cond = conds[s_value][z_value];
 	}
 
       /* All fixed fields must have matching values; all fields with
@@ -311,7 +443,12 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	    = tic6x_field_from_fmt (fmt, opc->fixed_fields[fix].field_id);
 
 	  if (!field)
-	    abort ();
+	    {
+	      printf ("opcode %x: missing field #%d for FIX #%d\n",
+		      opcode, opc->fixed_fields[fix].field_id, fix);
+	      abort ();
+	    }
+
 	  field_bits = tic6x_field_bits (opcode, field);
 	  if (field_bits < opc->fixed_fields[fix].min_val
 	      || field_bits > opc->fixed_fields[fix].max_val)
@@ -358,6 +495,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	  /* Find the last instruction of the previous fetch
 	     packet.  */
 	  unsigned char fp_prev[32];
+
 	  status = info->read_memory_func (fp_addr - 32, fp_prev, 32, info);
 	  if (status)
 	    /* No previous instruction to be parallel with.  */
@@ -402,22 +540,37 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	      unsigned int fld_val;
 
 	      field = tic6x_field_from_fmt (fmt, enc->field_id);
+
 	      if (!field)
-		abort ();
+		{
+		  printf ("opcode %x: could not retrieve field (field_id:%d)\n",
+			  opcode, fld_num);
+		  abort ();
+		}
+
 	      fld_val = tic6x_field_bits (opcode, field);
+
 	      switch (enc->coding_method)
 		{
 		case tic6x_coding_fu:
 		  /* The side must be specified exactly once.  */
 		  if (func_unit_side)
-		    abort ();
+		    {
+		      printf ("opcode %x: field #%d use tic6x_coding_fu, but func_unit_side is already set!\n",
+			      opcode, fld_num);
+		      abort ();
+		    }
 		  func_unit_side = (fld_val ? 2 : 1);
 		  break;
 
 		case tic6x_coding_data_fu:
 		  /* The data side must be specified exactly once.  */
 		  if (func_unit_data_side)
-		    abort ();
+		    {
+		      printf ("opcode %x: field #%d use tic6x_coding_fu, but func_unit_side is already set!\n",
+			      opcode, fld_num);
+		      abort ();
+		    }
 		  func_unit_data_side = (fld_val ? 2 : 1);
 		  break;
 
@@ -425,10 +578,21 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  /* Cross path use must be specified exactly
 		     once.  */
 		  if (have_cross)
-		    abort ();
+		    {
+		      printf ("opcode %x: field #%d use tic6x_coding_xpath, have_cross is already set!\n",
+			      opcode, fld_num);
+		      abort ();
+		    }
 		  have_cross = TRUE;
 		  func_unit_cross = fld_val;
 		  break;
+
+                case tic6x_coding_rside:
+                  /* If the format has a t field, use it for src/dst register side.  */
+                  have_t = TRUE;
+                  t_val = fld_val;
+                  func_unit_data_side = (t_val ? 2 : 1);
+                  break;
 
 		case tic6x_coding_areg:
 		  have_areg = TRUE;
@@ -444,17 +608,28 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	     determined either from the flags or from an instruction
 	     field.  */
 	  if (func_unit_side != 1 && func_unit_side != 2)
-	    abort ();
+	    {
+	      printf ("opcode %x: func_unit_side is not encoded!\n", opcode);
+	      abort ();
+	    }
 
 	  /* Cross paths are not applicable when sides are specified
 	     for both address and data paths.  */
 	  if (func_unit_data_side && have_cross)
-	    abort ();
+	    {
+	      printf ("opcode %x: xpath not applicable when side are specified both for address and data!\n",
+		      opcode);
+	      abort ();
+	    }
 
 	  /* Separate address and data paths are only applicable for
 	     the D unit.  */
 	  if (func_unit_data_side && opc->func_unit != tic6x_func_unit_d)
-	    abort ();
+	    {
+	      printf ("opcode %x: separate address and data paths only applicable for D unit!\n",
+		      opcode);
+	      abort ();
+          }
 
 	  /* If an address register is being used but in ADDA rather
 	     than a load or store, it uses a cross path for side-A
@@ -463,7 +638,10 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	  if (have_areg && !func_unit_data_side)
 	    {
 	      if (have_cross)
-		abort ();
+		{
+		  printf ("opcode %x: illegal cross path specifier in adda opcode!\n", opcode);
+		  abort ();
+		}
 	      func_unit_cross = (func_unit_side == 1 ? TRUE : FALSE);
 	    }
 
@@ -486,6 +664,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	      break;
 
 	    default:
+              printf ("opcode %x: illegal func_unit specifier %d\n", opcode, opc->func_unit);
 	      abort ();
 	    }
 
@@ -504,8 +683,13 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	      break;
 
 	    default:
+              printf ("opcode %x: illegal data func_unit specifier %d\n",
+		      opcode, func_unit_data_side);
 	      abort ();
 	    }
+
+	  if (opc->flags & TIC6X_FLAG_INSN16_BSIDE && func_unit_side == 1)
+	      func_unit_cross = 1;
 
 	  snprintf (func_unit_buf, 7, " .%c%u%s%s", func_unit_char,
 		    func_unit_side, (func_unit_cross ? "X" : ""), data_str);
@@ -540,6 +724,19 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 
 	  switch (opc->operand_info[op_num].form)
 	    {
+	    case tic6x_operand_b15reg:
+	      /* Fully determined by the functional unit.  */
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "b15");
+	      continue;
+
+	    case tic6x_operand_zreg:
+	      /* Fully determined by the functional unit.  */
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "%c0",
+			(func_unit_side == 2 ? 'b' : 'a'));
+	      continue;
+
 	    case tic6x_operand_retreg:
 	      /* Fully determined by the functional unit.  */
 	      operands_text[op_num] = TRUE;
@@ -557,6 +754,46 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 	      snprintf (operands[op_num], 24, "nrp");
 	      continue;
 
+	    case tic6x_operand_ilc:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "ilc");
+	      continue;
+
+	    case tic6x_operand_hw_const_minus_1:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "-1");
+	      continue;
+
+	    case tic6x_operand_hw_const_0:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "0");
+	      continue;
+
+	    case tic6x_operand_hw_const_1:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "1");
+	      continue;
+
+	    case tic6x_operand_hw_const_5:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "5");
+	      continue;
+
+	    case tic6x_operand_hw_const_16:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "16");
+	      continue;
+
+	    case tic6x_operand_hw_const_24:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "24");
+	      continue;
+
+	    case tic6x_operand_hw_const_31:
+	      operands_text[op_num] = TRUE;
+	      snprintf (operands[op_num], 24, "31");
+	      continue;
+
 	    default:
 	      break;
 	    }
@@ -567,16 +804,25 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		= &opc->variable_fields[fld_num];
 	      const tic6x_insn_field *field;
 	      unsigned int fld_val;
+	      unsigned int reg_base = 0;
 	      signed int signed_fld_val;
+              char reg_side = '?';
 
 	      if (enc->operand_num != op_num)
 		continue;
 	      field = tic6x_field_from_fmt (fmt, enc->field_id);
 	      if (!field)
-		abort ();
-	      fld_val = tic6x_field_bits (opcode, field);
+		{
+		  printf ("opcode %x: missing field (field_id:%d) in format\n", opcode, enc->field_id);
+		  abort ();
+		}
+              fld_val = tic6x_field_bits (opcode, field);
 	      switch (enc->coding_method)
 		{
+                case tic6x_coding_cst_s3i:
+                  (fld_val == 0x00) && (fld_val = 0x10);
+                  (fld_val == 0x07) && (fld_val = 0x08);
+                  /* Fall through.  */
 		case tic6x_coding_ucst:
 		case tic6x_coding_ulcst_dpr_byte:
 		case tic6x_coding_ulcst_dpr_half:
@@ -596,6 +842,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		      break;
 
 		    default:
+                      printf ("opcode %x: illegal operand form for operand#%d\n", opcode, op_num);
 		      abort ();
 		    }
 		  break;
@@ -605,11 +852,26 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  snprintf (operands[op_num], 24, "%u", fld_val << 16);
 		  break;
 
+                case tic6x_coding_scst_l3i:
+		  operands_text[op_num] = TRUE;
+                  if (fld_val == 0)
+		    {
+		      signed_fld_val = 8;
+		    }
+		  else
+		    {
+		      signed_fld_val = (signed int) fld_val;
+		      signed_fld_val ^= (1 << (tic6x_field_width (field) - 1));
+		      signed_fld_val -= (1 << (tic6x_field_width (field) - 1));
+		    }
+		  snprintf (operands[op_num], 24, "%d", signed_fld_val);
+		  break;
+
 		case tic6x_coding_scst:
 		  operands_text[op_num] = TRUE;
 		  signed_fld_val = (signed int) fld_val;
-		  signed_fld_val ^= (1 << (field->width - 1));
-		  signed_fld_val -= (1 << (field->width - 1));
+		  signed_fld_val ^= (1 << (tic6x_field_width (field) - 1));
+		  signed_fld_val -= (1 << (tic6x_field_width (field) - 1));
 		  snprintf (operands[op_num], 24, "%d", signed_fld_val);
 		  break;
 
@@ -621,8 +883,8 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		case tic6x_coding_pcrel:
 		case tic6x_coding_pcrel_half:
 		  signed_fld_val = (signed int) fld_val;
-		  signed_fld_val ^= (1 << (field->width - 1));
-		  signed_fld_val -= (1 << (field->width - 1));
+		  signed_fld_val ^= (1 << (tic6x_field_width (field) - 1));
+		  signed_fld_val -= (1 << (tic6x_field_width (field) - 1));
 		  if (fetch_packet_header_based
 		      && enc->coding_method == tic6x_coding_pcrel_half)
 		    signed_fld_val *= 2;
@@ -632,70 +894,124 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  operands_addresses[op_num] = fp_addr + signed_fld_val;
 		  break;
 
+		case tic6x_coding_regpair_msb:
+		  if (opc->operand_info[op_num].form != tic6x_operand_regpair)
+		    abort ();
+		  operands_text[op_num] = TRUE;
+		  snprintf (operands[op_num], 24, "%c%u:%c%u",
+			    (func_unit_side == 2 ? 'b' : 'a'), (fld_val | 0x1),
+			    (func_unit_side == 2 ? 'b' : 'a'), (fld_val | 0x1) - 1);
+		  break;
+
+		case tic6x_coding_pcrel_half_unsigned:
+		  operands_pcrel[op_num] = TRUE;
+		  operands_addresses[op_num] = fp_addr + 2 * fld_val;
+		  break;
+
 		case tic6x_coding_reg_shift:
 		  fld_val <<= 1;
 		  /* Fall through.  */
 		case tic6x_coding_reg:
+                  if (num_bits == 16 && header.rs && !(opc->flags & TIC6X_FLAG_INSN16_NORS))
+                    {
+		      reg_base = 16;
+                    }
 		  switch (opc->operand_info[op_num].form)
 		    {
+		    case tic6x_operand_treg:
+                      if (!have_t)
+			{
+			  printf ("opcode %x: operand treg but missing t field\n", opcode);
+			  abort ();
+			}
+		      operands_text[op_num] = TRUE;
+                      reg_side = t_val ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "%c%u", reg_side, reg_base + fld_val);
+		      break;
+
 		    case tic6x_operand_reg:
 		      operands_text[op_num] = TRUE;
-		      snprintf (operands[op_num], 24, "%c%u",
-				(func_unit_side == 2 ? 'b' : 'a'), fld_val);
+                      reg_side = (func_unit_side == 2) ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "%c%u", reg_side,  reg_base + fld_val);
+		      break;
+
+		    case tic6x_operand_reg_nors:
+		      operands_text[op_num] = TRUE;
+                      reg_side = (func_unit_side == 2) ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "%c%u", reg_side, fld_val);
+		      break;
+
+		    case tic6x_operand_reg_bside:
+		      operands_text[op_num] = TRUE;
+		      snprintf (operands[op_num], 24, "b%u", reg_base + fld_val);
+		      break;
+
+		    case tic6x_operand_reg_bside_nors:
+		      operands_text[op_num] = TRUE;
+		      snprintf (operands[op_num], 24, "b%u", fld_val);
 		      break;
 
 		    case tic6x_operand_xreg:
 		      operands_text[op_num] = TRUE;
-		      snprintf (operands[op_num], 24, "%c%u",
-				(((func_unit_side == 2) ^ func_unit_cross)
-				 ? 'b'
-				 : 'a'), fld_val);
+                      reg_side = ((func_unit_side == 2) ^ func_unit_cross) ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "%c%u", reg_side,  reg_base + fld_val);
 		      break;
 
 		    case tic6x_operand_dreg:
 		      operands_text[op_num] = TRUE;
-		      snprintf (operands[op_num], 24, "%c%u",
-				(func_unit_data_side == 2 ? 'b' : 'a'),
-				fld_val);
+                      reg_side = (func_unit_data_side == 2) ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "%c%u", reg_side,  reg_base + fld_val);
 		      break;
 
 		    case tic6x_operand_regpair:
 		      operands_text[op_num] = TRUE;
 		      if (fld_val & 1)
 			operands_ok = FALSE;
+                      reg_side = (func_unit_side == 2) ? 'b' : 'a';
 		      snprintf (operands[op_num], 24, "%c%u:%c%u",
-				(func_unit_side == 2 ? 'b' : 'a'), fld_val + 1,
-				(func_unit_side == 2 ? 'b' : 'a'), fld_val);
+                                reg_side, reg_base + fld_val + 1,
+				reg_side, reg_base + fld_val);
 		      break;
 
 		    case tic6x_operand_xregpair:
 		      operands_text[op_num] = TRUE;
 		      if (fld_val & 1)
 			operands_ok = FALSE;
+                      reg_side = ((func_unit_side == 2) ^ func_unit_cross) ? 'b' : 'a';
 		      snprintf (operands[op_num], 24, "%c%u:%c%u",
-				(((func_unit_side == 2) ^ func_unit_cross)
-				 ? 'b'
-				 : 'a'), fld_val + 1,
-				(((func_unit_side == 2) ^ func_unit_cross)
-				 ? 'b'
-				 : 'a'), fld_val);
+				reg_side, reg_base + fld_val + 1,
+				reg_side, reg_base + fld_val);
+		      break;
+
+		    case tic6x_operand_tregpair:
+                      if (!have_t)
+			{
+			  printf ("opcode %x: operand tregpair but missing t field\n", opcode);
+			  abort ();
+			}
+		      operands_text[op_num] = TRUE;
+		      if (fld_val & 1)
+			operands_ok = FALSE;
+                      reg_side = t_val ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "%c%u:%c%u",
+				reg_side, reg_base + fld_val + 1,
+				reg_side, reg_base + fld_val);
 		      break;
 
 		    case tic6x_operand_dregpair:
 		      operands_text[op_num] = TRUE;
 		      if (fld_val & 1)
 			operands_ok = FALSE;
+                      reg_side = (func_unit_data_side) == 2 ? 'b' : 'a';
 		      snprintf (operands[op_num], 24, "%c%u:%c%u",
-				(func_unit_data_side == 2 ? 'b' : 'a'),
-				fld_val + 1,
-				(func_unit_data_side == 2 ? 'b' : 'a'),
-				fld_val);
+				reg_side, reg_base + fld_val + 1,
+				reg_side, reg_base + fld_val);
 		      break;
 
 		    case tic6x_operand_mem_deref:
 		      operands_text[op_num] = TRUE;
-		      snprintf (operands[op_num], 24, "*%c%u",
-				(func_unit_side == 2 ? 'b' : 'a'), fld_val);
+                      reg_side = func_unit_side == 2 ? 'b' : 'a';
+		      snprintf (operands[op_num], 24, "*%c%u", reg_side, reg_base + fld_val);
 		      break;
 
 		    case tic6x_operand_mem_short:
@@ -705,6 +1021,30 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		      break;
 
 		    default:
+                      printf ("opcode %x: unexpected operand form %d for operand #%d",
+			      opcode, opc->operand_info[op_num].form, op_num);
+		      abort ();
+		    }
+		  break;
+
+                case tic6x_coding_reg_ptr:
+		  switch (opc->operand_info[op_num].form)
+		    {
+		    case tic6x_operand_mem_short:
+		    case tic6x_operand_mem_ndw:
+                      if (fld_val > 0x3u)
+			{
+			  printf("opcode %x: illegal field value for ptr register of operand #%d (%d)",
+				 opcode, op_num, fld_val);
+			  abort ();
+			}
+		      mem_base_reg = 0x4 | fld_val;
+		      mem_base_reg_known = TRUE;
+		      break;
+
+		    default:
+                      printf ("opcode %x: unexpected operand form %d for operand #%d",
+			      opcode, opc->operand_info[op_num].form, op_num);
 		      abort ();
 		    }
 		  break;
@@ -724,14 +1064,33 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		      break;
 
 		    default:
+                      printf ("opcode %x: bad operand form\n", opcode);
 		      abort ();
 		    }
 		  break;
 
-		case tic6x_coding_mem_offset:
+		case tic6x_coding_mem_offset_minus_one_noscale:
+		case tic6x_coding_mem_offset_minus_one:
+		  fld_val += 1;
 		case tic6x_coding_mem_offset_noscale:
+		case tic6x_coding_mem_offset:
 		  mem_offset = fld_val;
 		  mem_offset_known = TRUE;
+		  if (num_bits == 16)
+		    {
+		      mem_mode_known = TRUE;
+		      mem_mode = TIC6X_INSN16_MEM_MODE_VAL (opc->flags);
+		      mem_scaled_known = TRUE;
+		      mem_scaled = TRUE;
+		      if (opc->flags & TIC6X_FLAG_INSN16_B15PTR)
+			{
+			  mem_base_reg_known = TRUE;
+			  mem_base_reg = 15;
+			}
+		      if ( enc->coding_method == tic6x_coding_mem_offset_noscale
+			   || enc->coding_method == tic6x_coding_mem_offset_noscale )
+			mem_scaled = FALSE;
+		    }
 		  break;
 
 		case tic6x_coding_mem_mode:
@@ -822,11 +1181,11 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 			      if (info->endian == BFD_ENDIAN_LITTLE)
 				search_opcode
 				  = (tic6x_extract_16
-				     (search_fp + search_fp_offset, info));
+				     (search_fp + search_fp_offset, &header, info));
 			      else
 				search_opcode
 				  = (tic6x_extract_16
-				     (search_fp + (search_fp_offset ^ 2),
+				     (search_fp + (search_fp_offset ^ 2), &header,
 				      info));
 			    }
 			  else
@@ -856,7 +1215,10 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 			  if (prev_sploop_found)
 			    {
 			      if (sploop_ii <= 0)
-				abort ();
+				{
+				  printf ("opcode %x:  sloop index not found (%d)\n", opcode, sploop_ii);
+				  abort ();
+				}
 			      else if (sploop_ii <= 1)
 				fcyc_bits = 0;
 			      else if (sploop_ii <= 2)
@@ -880,8 +1242,11 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		      operands_text[op_num] = TRUE;
 		      break;
 		    }
-		  if (fcyc_bits > field->width)
-		    abort ();
+		  if (fcyc_bits > tic6x_field_width(field))
+		    {
+		      printf ("opcode %x: illegal fcyc value (%d)\n", opcode, fcyc_bits);
+		      abort ();
+		    }
 		  if (enc->coding_method == tic6x_coding_fstg)
 		    {
 		      int i, t;
@@ -922,18 +1287,23 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		case tic6x_coding_fu:
 		case tic6x_coding_data_fu:
 		case tic6x_coding_xpath:
+		case tic6x_coding_rside:
 		  /* Don't relate to operands, so operand number is
 		     meaningless.  */
 		  break;
 
 		default:
+                  printf ("opcode %x: illegal field encoding (%d)\n", opcode, enc->coding_method);
 		  abort ();
 		}
 
 	      if (mem_base_reg_known_long && mem_offset_known_long)
 		{
 		  if (operands_text[op_num] || operands_pcrel[op_num])
-		    abort ();
+		    {
+		      printf ("opcode %x: long access but operands already known ?\n", opcode);
+		      abort ();
+		    }
 		  operands_text[op_num] = TRUE;
 		  snprintf (operands[op_num], 24, "*+b%u(%u)", mem_base_reg,
 			    mem_offset * opc->operand_info[op_num].size);
@@ -952,7 +1322,10 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  char offsetp[6];
 
 		  if (operands_text[op_num] || operands_pcrel[op_num])
-		    abort ();
+		    {
+		      printf ("opcode %x: mem access operands already known ?\n", opcode);
+		      abort ();
+		    }
 
 		  side = func_unit_side == 2 ? 'b' : 'a';
 		  snprintf (base, 4, "%c%u", side, mem_base_reg);
@@ -960,7 +1333,12 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  offset_is_reg = ((mem_mode & 4) ? TRUE : FALSE);
 		  if (offset_is_reg)
 		    {
-		      snprintf (offset, 4, "%c%u", side, mem_offset);
+
+		      if (num_bits == 16 && header.rs && !(opc->flags & TIC6X_FLAG_INSN16_NORS))
+			{
+			  reg_base = 16;
+			}
+		      snprintf (offset, 4, "%c%u", side, reg_base + mem_offset);
 		      if (opc->operand_info[op_num].form
 			  == tic6x_operand_mem_ndw)
 			offset_scaled = mem_scaled ? TRUE : FALSE;
@@ -1026,6 +1404,7 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		      break;
 
 		    default:
+                      printf ("*** unknown mem_mode : %d \n", mem_mode);
 		      abort ();
 		    }
 		}
@@ -1036,12 +1415,18 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  tic6x_ctrl_id crid;
 
 		  if (operands_text[op_num] || operands_pcrel[op_num])
-		    abort ();
+		    {
+		      printf ("*** abort crlo crli\n");
+		      abort ();
+		    }
 
 		  rw = opc->operand_info[op_num].rw;
 		  if (rw != tic6x_rw_read
 		      && rw != tic6x_rw_write)
-		    abort ();
+		    {
+		      printf ("*** abort rw : %d\n", rw);
+		      abort ();
+		    }
 
 		  for (crid = 0; crid < tic6x_ctrl_max; crid++)
 		    {
@@ -1073,26 +1458,37 @@ print_insn_tic6x (bfd_vma addr, struct disassemble_info *info)
 		  || spmask_skip_operand)
 		break;
 	    }
+          /* end for fld_num */
+
 	  if (spmask_skip_operand)
 	    {
 	      /* SPMASK operands are only valid as the single operand
 		 in the opcode table.  */
 	      if (num_operands != 1)
-		abort ();
+		{
+		  printf ("opcode: %x, num_operands != 1 : %d\n", opcode, num_operands);
+		  abort ();
+		}
 	      num_operands = 0;
 	      break;
 	    }
+
 	  /* The operand must by now have been decoded.  */
 	  if (!operands_text[op_num] && !operands_pcrel[op_num])
-	    abort ();
-	}
+            {
+              printf ("opcode: %x, operand #%d not decoded\n", opcode, op_num);
+              abort ();
+            }
+        }
+      /* end for op_num */
 
       if (!operands_ok)
 	continue;
 
       info->bytes_per_chunk = num_bits / 8;
-      info->fprintf_func (info->stream, "%s%s%s%s", parallel, cond,
-			  opc->name, func_unit);
+      info->fprintf_func (info->stream, "%s", parallel);
+      info->fprintf_func (info->stream, "%s%s%s", cond, opc->name,
+                          func_unit);
       for (op_num = 0; op_num < num_operands; op_num++)
 	{
 	  info->fprintf_func (info->stream, "%c", (op_num == 0 ? ' ' : ','));

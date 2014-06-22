@@ -1,6 +1,5 @@
 /* CGEN generic disassembler support code.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright 1996-2013 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -104,7 +103,7 @@ hash_insn_array (CGEN_CPU_DESC cd,
 		 CGEN_INSN_LIST ** htable,
 		 CGEN_INSN_LIST * hentbuf)
 {
-  int big_p = CGEN_CPU_ENDIAN (cd) == CGEN_ENDIAN_BIG;
+  int big_p = CGEN_CPU_INSN_ENDIAN (cd) == CGEN_ENDIAN_BIG;
   int i;
 
   for (i = count - 1; i >= 0; --i, ++hentbuf)
@@ -142,7 +141,7 @@ hash_insn_list (CGEN_CPU_DESC cd,
 		CGEN_INSN_LIST **htable,
 		CGEN_INSN_LIST *hentbuf)
 {
-  int big_p = CGEN_CPU_ENDIAN (cd) == CGEN_ENDIAN_BIG;
+  int big_p = CGEN_CPU_INSN_ENDIAN (cd) == CGEN_ENDIAN_BIG;
   const CGEN_INSN_LIST *ilist;
 
   for (ilist = insns; ilist != NULL; ilist = ilist->next, ++ hentbuf)

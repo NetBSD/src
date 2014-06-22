@@ -1,4 +1,4 @@
-#   Copyright 2003-2013 Free Software Foundation, Inc.
+#   Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,10 +27,8 @@ if [is_remote target] then {
     return 0
 }
 
-set testfile "attach"
-set srcfile  ${testfile}.c
-set binfile  ${objdir}/${subdir}/${testfile}
-set escapedbinfile  [string_to_regexp ${objdir}/${subdir}/${testfile}]
+standard_testfile attach.c
+set escapedbinfile  [string_to_regexp ${binfile}]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested detach.exp

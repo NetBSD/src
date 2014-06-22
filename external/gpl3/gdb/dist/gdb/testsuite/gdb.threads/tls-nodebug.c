@@ -6,5 +6,7 @@ __thread int thread_local = 42;
 
 int main(void)
 {
+  /* Ensure we link against pthreads even with --as-needed.  */
+  pthread_testcancel();
   return 0;
 }

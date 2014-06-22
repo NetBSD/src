@@ -469,9 +469,9 @@ enum op_types
 };
 
 #ifdef DEBUG
-void trace_input PARAMS ((char *name, enum op_types type, int size));
-void trace_output PARAMS ((enum op_types result));
-void trace_result PARAMS ((int has_result, unsigned32 result));
+void trace_input (char *name, enum op_types type, int size);
+void trace_output (enum op_types result);
+void trace_result (int has_result, unsigned32 result);
 
 extern int trace_num_values;
 extern unsigned32 trace_values[];

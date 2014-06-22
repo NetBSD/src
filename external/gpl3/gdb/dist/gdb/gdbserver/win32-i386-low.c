@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,9 +31,11 @@
 #ifdef __x86_64__
 /* Defined in auto-generated file reg-amd64.c.  */
 void init_registers_amd64 (void);
+extern const struct target_desc *tdesc_amd64;
 #else
 /* Defined in auto-generated file reg-i386.c.  */
 void init_registers_i386 (void);
+extern const struct target_desc *tdesc_i386;
 #endif
 
 static struct i386_debug_reg_state debug_reg_state;
@@ -399,17 +401,19 @@ static const unsigned char i386_win32_breakpoint = 0xcc;
 #define i386_win32_breakpoint_len 1
 
 static void
-init_windows_x86 (void)
+i386_arch_setup (void)
 {
 #ifdef __x86_64__
   init_registers_amd64 ();
+  win32_tdesc = tdesc_amd64;
 #else
   init_registers_i386 ();
+  win32_tdesc = tdesc_i386;
 #endif
 }
 
 struct win32_target_ops the_low_target = {
-  init_windows_x86,
+  i386_arch_setup,
   sizeof (mappings) / sizeof (mappings[0]),
   i386_initial_stuff,
   i386_get_thread_context,

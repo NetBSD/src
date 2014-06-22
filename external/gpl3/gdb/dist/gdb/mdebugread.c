@@ -1,6 +1,6 @@
 /* Read a symbol table in ECOFF format (Third-Eye).
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Original version contributed by Alessandro Forin (af@cs.cmu.edu) at
    CMU.  Major work by Per Bothner, John Gilmore and Ian Lance Taylor
@@ -55,8 +55,8 @@
 #include "block.h"
 #include "dictionary.h"
 #include "mdebugread.h"
-#include "gdb_stat.h"
-#include "gdb_string.h"
+#include <sys/stat.h>
+#include <string.h>
 #include "psympriv.h"
 #include "source.h"
 
@@ -542,6 +542,11 @@ static const struct symbol_register_ops mdebug_register_funcs = {
   mdebug_reg_to_regnum
 };
 
+/* The "aclass" indices for computed symbols.  */
+
+static int mdebug_register_index;
+static int mdebug_regparm_index;
+
 static int
 parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	      struct section_offsets *section_offsets, struct objfile *objfile)
@@ -626,16 +631,13 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
       s = new_symbol (name);
       SYMBOL_VALUE (s) = svalue;
       if (sh->sc == scRegister)
-	{
-	  class = LOC_REGISTER;
-	  SYMBOL_REGISTER_OPS (s) = &mdebug_register_funcs;
-	}
+	class = mdebug_register_index;
       else
 	class = LOC_LOCAL;
 
     data:			/* Common code for symbols describing data.  */
       SYMBOL_DOMAIN (s) = VAR_DOMAIN;
-      SYMBOL_CLASS (s) = class;
+      SYMBOL_ACLASS_INDEX (s) = class;
       add_symbol (s, top_stack->cur_st, b);
 
       /* Type could be missing if file is compiled without debugging info.  */
@@ -664,21 +666,19 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	{
 	case scRegister:
 	  /* Pass by value in register.  */
-	  SYMBOL_CLASS (s) = LOC_REGISTER;
-	  SYMBOL_REGISTER_OPS (s) = &mdebug_register_funcs;
+	  SYMBOL_ACLASS_INDEX (s) = mdebug_register_index;
 	  break;
 	case scVar:
 	  /* Pass by reference on stack.  */
-	  SYMBOL_CLASS (s) = LOC_REF_ARG;
+	  SYMBOL_ACLASS_INDEX (s) = LOC_REF_ARG;
 	  break;
 	case scVarRegister:
 	  /* Pass by reference in register.  */
-	  SYMBOL_CLASS (s) = LOC_REGPARM_ADDR;
-	  SYMBOL_REGISTER_OPS (s) = &mdebug_register_funcs;
+	  SYMBOL_ACLASS_INDEX (s) = mdebug_regparm_index;
 	  break;
 	default:
 	  /* Pass by value on stack.  */
-	  SYMBOL_CLASS (s) = LOC_ARG;
+	  SYMBOL_ACLASS_INDEX (s) = LOC_ARG;
 	  break;
 	}
       SYMBOL_VALUE (s) = svalue;
@@ -689,7 +689,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
     case stLabel:		/* label, goes into current block.  */
       s = new_symbol (name);
       SYMBOL_DOMAIN (s) = VAR_DOMAIN;	/* So that it can be used */
-      SYMBOL_CLASS (s) = LOC_LABEL;	/* but not misused.  */
+      SYMBOL_ACLASS_INDEX (s) = LOC_LABEL;	/* but not misused.  */
       SYMBOL_VALUE_ADDRESS (s) = (CORE_ADDR) sh->value;
       SYMBOL_TYPE (s) = objfile_type (objfile)->builtin_int;
       add_symbol (s, top_stack->cur_st, top_stack->cur_block);
@@ -731,7 +731,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
         }
       s = new_symbol (name);
       SYMBOL_DOMAIN (s) = VAR_DOMAIN;
-      SYMBOL_CLASS (s) = LOC_BLOCK;
+      SYMBOL_ACLASS_INDEX (s) = LOC_BLOCK;
       /* Type of the return value.  */
       if (SC_IS_UNDEF (sh->sc) || sh->sc == scNil)
 	t = objfile_type (objfile)->builtin_int;
@@ -1048,15 +1048,12 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 		FIELD_NAME (*f) = debug_info->ss + cur_fdr->issBase + tsym.iss;
 		FIELD_BITSIZE (*f) = 0;
 
-		enum_sym = ((struct symbol *)
-			    obstack_alloc (&mdebugread_objfile->objfile_obstack,
-					   sizeof (struct symbol)));
-		memset (enum_sym, 0, sizeof (struct symbol));
+		enum_sym = allocate_symbol (mdebugread_objfile);
 		SYMBOL_SET_LINKAGE_NAME
 		  (enum_sym,
 		   obstack_copy0 (&mdebugread_objfile->objfile_obstack,
 				  f->name, strlen (f->name)));
-		SYMBOL_CLASS (enum_sym) = LOC_CONST;
+		SYMBOL_ACLASS_INDEX (enum_sym) = LOC_CONST;
 		SYMBOL_TYPE (enum_sym) = t;
 		SYMBOL_DOMAIN (enum_sym) = VAR_DOMAIN;
 		SYMBOL_VALUE (enum_sym) = tsym.value;
@@ -1089,7 +1086,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 
 	s = new_symbol (name);
 	SYMBOL_DOMAIN (s) = STRUCT_DOMAIN;
-	SYMBOL_CLASS (s) = LOC_TYPEDEF;
+	SYMBOL_ACLASS_INDEX (s) = LOC_TYPEDEF;
 	SYMBOL_VALUE (s) = 0;
 	SYMBOL_TYPE (s) = t;
 	add_symbol (s, top_stack->cur_st, top_stack->cur_block);
@@ -1145,7 +1142,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	  /* Make up special symbol to contain procedure specific info.  */
 	  s = new_symbol (MDEBUG_EFI_SYMBOL_NAME);
 	  SYMBOL_DOMAIN (s) = LABEL_DOMAIN;
-	  SYMBOL_CLASS (s) = LOC_CONST;
+	  SYMBOL_ACLASS_INDEX (s) = LOC_CONST;
 	  SYMBOL_TYPE (s) = objfile_type (mdebugread_objfile)->builtin_void;
 	  e = ((struct mdebug_extra_func_info *)
 	       obstack_alloc (&mdebugread_objfile->objfile_obstack,
@@ -1285,7 +1282,7 @@ parse_symbol (SYMR *sh, union aux_ext *ax, char *ext_sh, int bigend,
 	break;
       s = new_symbol (name);
       SYMBOL_DOMAIN (s) = VAR_DOMAIN;
-      SYMBOL_CLASS (s) = LOC_TYPEDEF;
+      SYMBOL_ACLASS_INDEX (s) = LOC_TYPEDEF;
       SYMBOL_BLOCK_VALUE (s) = top_stack->cur_block;
       SYMBOL_TYPE (s) = t;
       add_symbol (s, top_stack->cur_st, top_stack->cur_block);
@@ -2259,74 +2256,59 @@ record_minimal_symbol (const char *name, const CORE_ADDR address,
                        struct objfile *objfile)
 {
   int section;
-  asection *bfd_section;
 
   switch (storage_class)
     {
       case scText:
         section = SECT_OFF_TEXT (objfile);
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".text");
         break;
       case scData:
         section = SECT_OFF_DATA (objfile);
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".data");
         break;
       case scBss:
         section = SECT_OFF_BSS (objfile);
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".bss");
         break;
       case scSData:
         section = get_section_index (objfile, ".sdata");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".sdata");
         break;
       case scSBss:
         section = get_section_index (objfile, ".sbss");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".sbss");
         break;
       case scRData:
         section = get_section_index (objfile, ".rdata");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".rdata");
         break;
       case scInit:
         section = get_section_index (objfile, ".init");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".init");
         break;
       case scXData:
         section = get_section_index (objfile, ".xdata");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".xdata");
         break;
       case scPData:
         section = get_section_index (objfile, ".pdata");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".pdata");
         break;
       case scFini:
         section = get_section_index (objfile, ".fini");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".fini");
         break;
       case scRConst:
         section = get_section_index (objfile, ".rconst");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".rconst");
         break;
 #ifdef scTlsData
       case scTlsData:
         section = get_section_index (objfile, ".tlsdata");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".tlsdata");
         break;
 #endif
 #ifdef scTlsBss
       case scTlsBss:
         section = get_section_index (objfile, ".tlsbss");
-        bfd_section = bfd_get_section_by_name (cur_bfd, ".tlsbss");
         break;
 #endif
       default:
         /* This kind of symbol is not associated to a section.  */
         section = -1;
-        bfd_section = NULL;
     }
 
   prim_record_minimal_symbol_and_info (name, address, ms_type,
-                                       section, bfd_section, objfile);
+                                       section, objfile);
 }
 
 /* Master parsing procedure for first-pass reading of file symbols
@@ -3513,7 +3495,7 @@ parse_partial_symbols (struct objfile *objfile)
 		  prim_record_minimal_symbol_and_info (name, sh.value,
 						       mst_file_text,
 						       SECT_OFF_TEXT (objfile),
-						       NULL, objfile);
+						       objfile);
 
 		  /* FALLTHROUGH */
 
@@ -3599,13 +3581,11 @@ parse_partial_symbols (struct objfile *objfile)
 		    prim_record_minimal_symbol_and_info (name, sh.value,
 							 mst_file_data,
 							 SECT_OFF_DATA (objfile),
-							 NULL,
 							 objfile);
 		  else
 		    prim_record_minimal_symbol_and_info (name, sh.value,
 							 mst_file_bss,
 							 SECT_OFF_BSS (objfile),
-							 NULL,
 							 objfile);
 		  class = LOC_STATIC;
 		  break;
@@ -4119,7 +4099,7 @@ psymtab_to_symtab_1 (struct objfile *objfile,
 
 		  memset (e, 0, sizeof (struct mdebug_extra_func_info));
 		  SYMBOL_DOMAIN (s) = LABEL_DOMAIN;
-		  SYMBOL_CLASS (s) = LOC_CONST;
+		  SYMBOL_ACLASS_INDEX (s) = LOC_CONST;
 		  SYMBOL_TYPE (s) = objfile_type (objfile)->builtin_void;
 		  SYMBOL_VALUE_BYTES (s) = (gdb_byte *) e;
 		  e->pdr.framereg = -1;
@@ -4354,7 +4334,7 @@ psymtab_to_symtab_1 (struct objfile *objfile,
 	}
       pop_parse_stack ();
 
-      st->primary = 1;
+      set_symtab_primary (st, 1);
 
       sort_blocks (st);
     }
@@ -4879,12 +4859,10 @@ new_block (enum block_type type)
 static struct symbol *
 new_symbol (char *name)
 {
-  struct symbol *s = ((struct symbol *)
-		      obstack_alloc (&mdebugread_objfile->objfile_obstack,
-				     sizeof (struct symbol)));
+  struct symbol *s = allocate_symbol (mdebugread_objfile);
 
-  memset (s, 0, sizeof (*s));
-  SYMBOL_SET_LANGUAGE (s, psymtab_language);
+  SYMBOL_SET_LANGUAGE (s, psymtab_language,
+		       &mdebugread_objfile->objfile_obstack);
   SYMBOL_SET_NAMES (s, name, strlen (name), 1, mdebugread_objfile);
   return s;
 }
@@ -4940,4 +4918,9 @@ void
 _initialize_mdebugread (void)
 {
   basic_type_data = register_objfile_data ();
+
+  mdebug_register_index
+    = register_symbol_register_impl (LOC_REGISTER, &mdebug_register_funcs);
+  mdebug_regparm_index
+    = register_symbol_register_impl (LOC_REGPARM_ADDR, &mdebug_register_funcs);
 }

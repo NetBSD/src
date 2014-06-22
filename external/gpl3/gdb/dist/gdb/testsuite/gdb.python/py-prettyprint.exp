@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2013 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,9 +53,11 @@ proc run_lang_tests {exefile lang} {
 	".*Breakpoint.*"
     gdb_test "continue" ".*Breakpoint.*"
 
-    set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
+    set remote_python_file [gdb_remote_download host \
+				${srcdir}/${subdir}/${testfile}.py]
 
-    gdb_test_no_output "python exec (open ('${remote_python_file}').read ())"
+    gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+	"python exec (open ('[file tail ${remote_python_file}]').read ())"
     
     gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>"
     gdb_test "print ssa\[1\]" " = a=< a=<5> b=<$hex>> b=< a=<6> b=<$hex>>"
@@ -81,7 +83,7 @@ proc run_lang_tests {exefile lang} {
 	gdb_py_test_silent_cmd "set print elements 200" "" 1
     }
 
-    gdb_test "print ns2" ".error reading variable: Address 0x0 out of bounds."
+    gdb_test "print ns2" ".error reading variable: Cannot access memory at address 0x0."
 
     gdb_test "print x" " = \"this is x\""
     gdb_test "print cstring" " = \"const string\""
@@ -123,9 +125,11 @@ if ![runto_main ] then {
     return
 }
 
-set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
+set remote_python_file [gdb_remote_download host \
+			    ${srcdir}/${subdir}/${testfile}.py]
 
-gdb_test_no_output "python exec (open ('${remote_python_file}').read ())"
+gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+    "python exec (open ('[file tail ${remote_python_file}]').read ())"
 
 gdb_breakpoint [gdb_get_line_number "eval-break"]
 gdb_continue_to_breakpoint "eval-break" ".* eval-break .*"

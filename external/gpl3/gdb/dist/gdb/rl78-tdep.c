@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RL78 for GDB, the GNU debugger.
 
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -94,7 +94,7 @@ enum
   RL78_PSW_REGNUM,	/* 8 bits */
   RL78_ES_REGNUM,	/* 8 bits */
   RL78_CS_REGNUM,	/* 8 bits */
-  RL78_PC_REGNUM,	/* 20 bits; we'll use 32 bits for it.  */
+  RL78_RAW_PC_REGNUM,	/* 20 bits; we'll use 32 bits for it.  */
 
   /* Fixed address SFRs (some of those above are SFRs too.) */
   RL78_SPL_REGNUM,	/* 8 bits; lower half of SP */
@@ -105,7 +105,8 @@ enum
   RL78_NUM_REGS,
 
   /* Pseudo registers.  */
-  RL78_SP_REGNUM = RL78_NUM_REGS,
+  RL78_PC_REGNUM = RL78_NUM_REGS,
+  RL78_SP_REGNUM,
 
   RL78_X_REGNUM,
   RL78_A_REGNUM,
@@ -243,6 +244,8 @@ rl78_register_type (struct gdbarch *gdbarch, int reg_nr)
 
   if (reg_nr == RL78_PC_REGNUM)
     return tdep->rl78_code_pointer;
+  else if (reg_nr == RL78_RAW_PC_REGNUM)
+    return tdep->rl78_uint32;
   else if (reg_nr <= RL78_MEM_REGNUM
            || (RL78_X_REGNUM <= reg_nr && reg_nr <= RL78_H_REGNUM)
 	   || (RL78_BANK0_R0_REGNUM <= reg_nr
@@ -298,13 +301,14 @@ rl78_register_name (struct gdbarch *gdbarch, int regnr)
     "psw",
     "es",
     "cs",
-    "pc",
+    "",
 
     "",		/* spl */
     "",		/* sph */
     "pmc",
     "mem",
 
+    "pc",
     "sp",
 
     "x",
@@ -393,7 +397,12 @@ rl78_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   /* All other registers are saved and restored.  */
   if (group == save_reggroup || group == restore_reggroup)
     {
-      if (regnum < RL78_NUM_REGS)
+      if ((regnum < RL78_NUM_REGS
+	   && regnum != RL78_SPL_REGNUM
+	   && regnum != RL78_SPH_REGNUM
+	   && regnum != RL78_RAW_PC_REGNUM)
+	  || regnum == RL78_SP_REGNUM
+	  || regnum == RL78_PC_REGNUM)
 	return 1;
       else
 	return 0;
@@ -406,6 +415,7 @@ rl78_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
       || regnum == RL78_SPH_REGNUM
       || regnum == RL78_PMC_REGNUM
       || regnum == RL78_MEM_REGNUM
+      || regnum == RL78_RAW_PC_REGNUM
       || (RL78_BANK0_RP0_REGNUM <= regnum && regnum <= RL78_BANK3_RP3_REGNUM))
     return group == system_reggroup;
 
@@ -460,6 +470,13 @@ rl78_pseudo_register_read (struct gdbarch *gdbarch,
       status = regcache_raw_read (regcache, RL78_SPL_REGNUM, buffer);
       if (status == REG_VALID)
 	status = regcache_raw_read (regcache, RL78_SPH_REGNUM, buffer + 1);
+    }
+  else if (reg == RL78_PC_REGNUM)
+    {
+      gdb_byte rawbuf[4];
+
+      status = regcache_raw_read (regcache, RL78_RAW_PC_REGNUM, rawbuf);
+      memcpy (buffer, rawbuf, 3);
     }
   else if (RL78_X_REGNUM <= reg && reg <= RL78_H_REGNUM)
     {
@@ -523,6 +540,14 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
     {
       regcache_raw_write (regcache, RL78_SPL_REGNUM, buffer);
       regcache_raw_write (regcache, RL78_SPH_REGNUM, buffer + 1);
+    }
+  else if (reg == RL78_PC_REGNUM)
+    {
+      gdb_byte rawbuf[4];
+
+      memcpy (rawbuf, buffer, 3);
+      rawbuf[3] = 0;
+      regcache_raw_write (regcache, RL78_RAW_PC_REGNUM, rawbuf);
     }
   else if (RL78_X_REGNUM <= reg && reg <= RL78_H_REGNUM)
     {
@@ -910,6 +935,14 @@ rl78_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   else if (reg == 32)
     return RL78_SP_REGNUM;
   else if (reg == 33)
+    return -1;			/* ap */
+  else if (reg == 34)
+    return RL78_PSW_REGNUM;
+  else if (reg == 35)
+    return RL78_ES_REGNUM;
+  else if (reg == 36)
+    return RL78_CS_REGNUM;
+  else if (reg == 37)
     return RL78_PC_REGNUM;
   else
     internal_error (__FILE__, __LINE__,
@@ -1125,6 +1158,7 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_ptr_bit (gdbarch, 16);
   set_gdbarch_addr_bit (gdbarch, 32);
+  set_gdbarch_dwarf2_addr_size (gdbarch, 4);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_float_format (gdbarch, floatformats_ieee_single);
   set_gdbarch_double_bit (gdbarch, 32);
@@ -1148,6 +1182,8 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_unwind_pc (gdbarch, rl78_unwind_pc);
   set_gdbarch_unwind_sp (gdbarch, rl78_unwind_sp);
   set_gdbarch_frame_align (gdbarch, rl78_frame_align);
+
+  dwarf2_append_unwinders (gdbarch);
   frame_unwind_append_unwinder (gdbarch, &rl78_unwind);
 
   /* Dummy frames, return values.  */

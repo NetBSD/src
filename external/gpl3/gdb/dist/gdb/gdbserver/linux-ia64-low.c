@@ -1,5 +1,5 @@
 /* GNU/Linux/IA64 specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 
 /* Defined in auto-generated file reg-ia64.c.  */
 void init_registers_ia64 (void);
+extern const struct target_desc *tdesc_ia64;
 
 #define ia64_num_regs 462
 
@@ -290,7 +291,7 @@ ia64_fetch_register (struct regcache *regcache, int regnum)
     {
       const gdb_byte zero[8] = { 0 };
 
-      gdb_assert (sizeof (zero) == register_size (regnum));
+      gdb_assert (sizeof (zero) == register_size (regcache->tdesc, regnum));
       supply_register (regcache, regnum, zero);
       return 1;
     }
@@ -300,7 +301,7 @@ ia64_fetch_register (struct regcache *regcache, int regnum)
     {
       const gdb_byte f_zero[16] = { 0 };
 
-      gdb_assert (sizeof (f_zero) == register_size (regnum));
+      gdb_assert (sizeof (f_zero) == register_size (regcache->tdesc, regnum));
       supply_register (regcache, regnum, f_zero);
       return 1;
     }
@@ -311,7 +312,7 @@ ia64_fetch_register (struct regcache *regcache, int regnum)
       const gdb_byte f_one[16] =
 	{ 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
-      gdb_assert (sizeof (f_one) == register_size (regnum));
+      gdb_assert (sizeof (f_one) == register_size (regcache->tdesc, regnum));
       supply_register (regcache, regnum, f_one);
       return 1;
     }
@@ -319,12 +320,41 @@ ia64_fetch_register (struct regcache *regcache, int regnum)
   return 0;
 }
 
+static struct usrregs_info ia64_usrregs_info =
+  {
+    ia64_num_regs,
+    ia64_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &ia64_usrregs_info
+  };
+
+static const struct regs_info *
+ia64_regs_info (void)
+{
+  return &regs_info;
+}
+
+static void
+ia64_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_ia64;
+}
+
+
 struct linux_target_ops the_low_target = {
-  init_registers_ia64,
-  ia64_num_regs,
-  ia64_regmap,
-  NULL,
+  ia64_arch_setup,
+  ia64_regs_info,
   ia64_cannot_fetch_register,
   ia64_cannot_store_register,
   ia64_fetch_register,
 };
+
+void
+initialize_low_arch (void)
+{
+  init_registers_ia64 ();
+}

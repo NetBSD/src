@@ -1,3 +1,16 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-25  Nick Clifton  <nickc@redhat.com>
+
+	* rx.c (SHIFT_OP): A shift by zero still sets the condition
+	codes.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
 2013-01-16  Nick Clifton  <nickc@redhat.com>
 
 	* rx.c (decode_opcode): Handle RXO_satr.

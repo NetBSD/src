@@ -1,3 +1,4 @@
+@node typedef bfd, Error reporting, BFD front end, BFD front end
 @section @code{typedef bfd}
 A BFD has type @code{bfd}; objects of this type are the
 cornerstone of any application using BFD. Using BFD
@@ -285,7 +286,16 @@ struct bfd
   unsigned int selective_search : 1;
 @};
 
+/* See note beside bfd_set_section_userdata.  */
+static inline bfd_boolean
+bfd_set_cacheable (bfd * abfd, bfd_boolean val)
+@{
+  abfd->cacheable = val;
+  return TRUE;
+@}
+
 @end example
+@node Error reporting, Miscellaneous, typedef bfd, BFD front end
 @section Error reporting
 Most BFD functions return nonzero on success (check their
 individual documentation for precise semantics).  On an error,
@@ -317,6 +327,7 @@ typedef enum bfd_error
   bfd_error_no_armap,
   bfd_error_no_more_archived_files,
   bfd_error_malformed_archive,
+  bfd_error_missing_dso,
   bfd_error_file_not_recognized,
   bfd_error_file_ambiguously_recognized,
   bfd_error_no_contents,
@@ -456,6 +467,7 @@ bfd_assert_handler_type bfd_get_assert_handler (void);
 @strong{Description}@*
 Return the BFD assert handler function.
 
+@node Miscellaneous, Memory Usage, Error reporting, BFD front end
 @section Miscellaneous
 
 

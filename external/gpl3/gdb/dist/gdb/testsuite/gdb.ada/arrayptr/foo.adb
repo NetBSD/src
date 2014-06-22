@@ -1,4 +1,4 @@
---  Copyright 2008-2013 Free Software Foundation, Inc.
+--  Copyright 2008-2014 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,19 @@ procedure Foo is
    type Little_Array_Ptr is access all Little_Array;
    Arr_Ptr: Little_Array_Ptr :=
      new Little_Array'(21, 22, 23, 24, 25, 26, 27, 28, 29, 30);
+
+   -- Same as above, but with a packed array.
+   type Small is range -64 .. 63;
+   for Small'Size use 7;
+   type Packed_Array is array (1..10) of Small;
+   pragma Pack (Packed_Array);
+
+   type Packed_Array_Ptr is access Packed_Array;
+   PA_Ptr : Packed_Array_Ptr
+      := new Packed_Array'(10, 20, 30, 40, 50, 60, 62, 63, -23, 42);
 begin
    Do_Nothing (String_P'Address);  -- STOP
    Do_Nothing (Null_String'Address);
    Do_Nothing (Arr_Ptr'Address);
+   Do_Nothing (PA_Ptr'Address);
 end Foo;

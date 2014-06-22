@@ -1,5 +1,5 @@
 /* aarch64-dis.c -- AArch64 disassembler.
-   Copyright 2009, 2010, 2011, 2012, 2013  Free Software Foundation, Inc.
+   Copyright 2009-2013  Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -24,12 +24,7 @@
 #include "libiberty.h"
 #include "opintl.h"
 #include "aarch64-dis.h"
-
-#if !defined(EMBEDDED_ENV)
-#define SYMTAB_AVAILABLE 1
 #include "elf-bfd.h"
-#include "elf/aarch64.h"
-#endif
 
 #define ERR_OK   0
 #define ERR_UND -1
@@ -125,7 +120,7 @@ parse_aarch64_dis_options (const char *options)
    N.B. the fields are required to be in such an order than the most signficant
    field for VALUE comes the first, e.g. the <index> in
     SQDMLAL <Va><d>, <Vb><n>, <Vm>.<Ts>[<index>]
-   is encoded in H:L:M in some cases, the the fields H:L:M should be passed in
+   is encoded in H:L:M in some cases, the fields H:L:M should be passed in
    the order of H, L, M.  */
 
 static inline aarch64_insn
@@ -1606,12 +1601,14 @@ convert_ubfm_to_lsl (aarch64_inst *inst)
 
 /* CINC <Wd>, <Wn>, <cond>
      is equivalent to:
-   CSINC <Wd>, <Wn>, <Wn>, invert(<cond>).  */
+   CSINC <Wd>, <Wn>, <Wn>, invert(<cond>)
+     where <cond> is not AL or NV.  */
 
 static int
 convert_from_csel (aarch64_inst *inst)
 {
-  if (inst->operands[1].reg.regno == inst->operands[2].reg.regno)
+  if (inst->operands[1].reg.regno == inst->operands[2].reg.regno
+      && (inst->operands[3].cond->value & 0xe) != 0xe)
     {
       copy_operand_info (inst, 2, 3);
       inst->operands[2].cond = get_inverted_cond (inst->operands[3].cond);
@@ -1623,13 +1620,15 @@ convert_from_csel (aarch64_inst *inst)
 
 /* CSET <Wd>, <cond>
      is equivalent to:
-   CSINC <Wd>, WZR, WZR, invert(<cond>).  */
+   CSINC <Wd>, WZR, WZR, invert(<cond>)
+     where <cond> is not AL or NV.  */
 
 static int
 convert_csinc_to_cset (aarch64_inst *inst)
 {
   if (inst->operands[1].reg.regno == 0x1f
-      && inst->operands[2].reg.regno == 0x1f)
+      && inst->operands[2].reg.regno == 0x1f
+      && (inst->operands[3].cond->value & 0xe) != 0xe)
     {
       copy_operand_info (inst, 1, 3);
       inst->operands[1].cond = get_inverted_cond (inst->operands[3].cond);

@@ -1,6 +1,6 @@
 /* Parse a printf-style format string.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -156,7 +156,7 @@ parse_format_string (const char **arg)
 
 	/* The first part of a format specifier is a set of flag
 	   characters.  */
-	while (strchr ("0-+ #", *f))
+	while (*f != '\0' && strchr ("0-+ #", *f))
 	  {
 	    if (*f == '#')
 	      seen_hash = 1;
@@ -170,7 +170,7 @@ parse_format_string (const char **arg)
 	  }
 
 	/* The next part of a format specifier is a width.  */
-	while (strchr ("0123456789", *f))
+	while (*f != '\0' && strchr ("0123456789", *f))
 	  f++;
 
 	/* The next part of a format specifier is a precision.  */
@@ -178,7 +178,7 @@ parse_format_string (const char **arg)
 	  {
 	    seen_prec = 1;
 	    f++;
-	    while (strchr ("0123456789", *f))
+	    while (*f != '\0' && strchr ("0123456789", *f))
 	      f++;
 	  }
 
@@ -263,7 +263,9 @@ parse_format_string (const char **arg)
 	    this_argclass = ptr_arg;
 	    if (lcount || seen_h || seen_big_l)
 	      bad = 1;
-	    if (seen_prec || seen_zero || seen_space || seen_plus)
+	    if (seen_prec)
+	      bad = 1;
+	    if (seen_hash || seen_zero || seen_space || seen_plus)
 	      bad = 1;
 	    break;
 

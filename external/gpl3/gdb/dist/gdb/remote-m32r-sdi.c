@@ -1,6 +1,6 @@
 /* Remote debugging interface for M32R/SDI.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    Contributed by Renesas Technology Co.
    Written by Kei Sakamoto <sakamoto.kei@renesas.com>.
@@ -26,7 +26,7 @@
 #include "inferior.h"
 #include "target.h"
 #include "regcache.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbthread.h"
 #include <ctype.h>
 #include <signal.h>
@@ -37,7 +37,6 @@
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
-#include <signal.h>
 #include <time.h>
 #include "gdb_bfd.h"
 #include "cli/cli-utils.h"
@@ -430,10 +429,10 @@ m32r_open (char *args, int from_tty)
 /* Close out all files and local state before this target loses control.  */
 
 static void
-m32r_close (int quitting)
+m32r_close (void)
 {
   if (remote_debug)
-    fprintf_unfiltered (gdb_stdlog, "m32r_close(%d)\n", quitting);
+    fprintf_unfiltered (gdb_stdlog, "m32r_close()\n");
 
   if (sdi_desc)
     {
@@ -878,7 +877,7 @@ m32r_wait (struct target_ops *ops,
    Use this when you want to detach and do something else
    with your gdb.  */
 static void
-m32r_detach (struct target_ops *ops, char *args, int from_tty)
+m32r_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   if (remote_debug)
     fprintf_unfiltered (gdb_stdlog, "m32r_detach(%d)\n", from_tty);
@@ -886,7 +885,7 @@ m32r_detach (struct target_ops *ops, char *args, int from_tty)
   m32r_resume (ops, inferior_ptid, 0, GDB_SIGNAL_0);
 
   /* Calls m32r_close to do the real work.  */
-  pop_target ();
+  unpush_target (ops);
   if (from_tty)
     fprintf_unfiltered (gdb_stdlog, "Ending remote %s debugging\n",
 			target_shortname);
@@ -933,7 +932,7 @@ m32r_fetch_register (struct target_ops *ops,
     }
   else
     {
-      char buffer[MAX_REGISTER_SIZE];
+      gdb_byte buffer[MAX_REGISTER_SIZE];
 
       regid = get_reg_id (regno);
       send_one_arg_cmd (SDI_READ_CPU_REG, regid);

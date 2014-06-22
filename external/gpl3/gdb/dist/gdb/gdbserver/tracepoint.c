@@ -1,5 +1,5 @@
 /* Tracepoint code for remote server for GDB.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include "tracepoint.h"
 #include "gdbthread.h"
 #include "agent.h"
 
@@ -29,6 +30,7 @@
 #include <stdint.h>
 
 #include "ax.h"
+#include "tdesc.h"
 
 #define DEFAULT_TRACE_BUFFER_SIZE 5242880 /* 5*1024*1024 */
 
@@ -981,6 +983,10 @@ struct traceframe
 
 } ATTR_PACKED;
 
+/* The size of the EOB marker, in bytes.  A traceframe with zeroed
+   fields (and no data) marks the end of trace data.  */
+#define TRACEFRAME_EOB_MARKER_SIZE offsetof (struct traceframe, data)
+
 /* The traceframe to be used as the source of data to send back to
    GDB.  A value of -1 means to get data from the live program.  */
 
@@ -1486,12 +1492,17 @@ clear_inferior_trace_buffer (void)
 static void
 init_trace_buffer (LONGEST bufsize)
 {
+  size_t alloc_size;
+
   trace_buffer_size = bufsize;
 
-  /* If we already have a trace buffer, try realloc'ing.  */
-  trace_buffer_lo = xrealloc (trace_buffer_lo, bufsize);
+  /* Make sure to internally allocate at least space for the EOB
+     marker.  */
+  alloc_size = (bufsize < TRACEFRAME_EOB_MARKER_SIZE
+		? TRACEFRAME_EOB_MARKER_SIZE : bufsize);
+  trace_buffer_lo = xrealloc (trace_buffer_lo, alloc_size);
 
-  trace_buffer_hi = trace_buffer_lo + bufsize;
+  trace_buffer_hi = trace_buffer_lo + trace_buffer_size;
 
   clear_trace_buffer ();
 }
@@ -1531,7 +1542,7 @@ trace_buffer_alloc (size_t amt)
 	       (long) amt, (long) sizeof (struct traceframe));
 
   /* Account for the EOB marker.  */
-  amt += sizeof (struct traceframe);
+  amt += TRACEFRAME_EOB_MARKER_SIZE;
 
 #ifdef IN_PROCESS_AGENT
  again:
@@ -2806,7 +2817,7 @@ static void
 cmd_qtv (char *own_buf)
 {
   ULONGEST num;
-  LONGEST val;
+  LONGEST val = 0;
   int err;
   char *packet = own_buf;
 
@@ -3655,14 +3666,15 @@ cmd_qtstatus (char *packet)
 	   "circular:%d;"
 	   "disconn:%d;"
 	   "starttime:%s;stoptime:%s;"
-	   "username:%s:;notes:%s:",
+	   "username:%s;notes:%s:",
 	   tracing ? 1 : 0,
 	   stop_reason_rsp, tracing_stop_tpnum,
 	   traceframe_count, traceframes_created,
 	   free_space (), phex_nz (trace_buffer_hi - trace_buffer_lo, 0),
 	   circular_trace_buffer,
 	   disconnected_tracing,
-	   plongest (tracing_start_time), plongest (tracing_stop_time),
+	   phex_nz (tracing_start_time, sizeof (tracing_start_time)),
+	   phex_nz (tracing_stop_time, sizeof (tracing_stop_time)),
 	   buf1, buf2);
 }
 
@@ -4675,6 +4687,14 @@ collect_data_at_step (struct tracepoint_hit_ctx *ctx,
 
 #endif
 
+#ifdef IN_PROCESS_AGENT
+/* The target description used by the IPA.  Given that the IPA library
+   is built for a specific architecture that is loaded into the
+   inferior, there only needs to be one such description per
+   build.  */
+const struct target_desc *ipa_tdesc;
+#endif
+
 static struct regcache *
 get_context_regcache (struct tracepoint_hit_ctx *ctx)
 {
@@ -4687,7 +4707,7 @@ get_context_regcache (struct tracepoint_hit_ctx *ctx)
       if (!fctx->regcache_initted)
 	{
 	  fctx->regcache_initted = 1;
-	  init_register_cache (&fctx->regcache, fctx->regspace);
+	  init_register_cache (&fctx->regcache, ipa_tdesc, fctx->regspace);
 	  supply_regblock (&fctx->regcache, NULL);
 	  supply_fast_tracepoint_registers (&fctx->regcache, fctx->regs);
 	}
@@ -4702,7 +4722,7 @@ get_context_regcache (struct tracepoint_hit_ctx *ctx)
       if (!sctx->regcache_initted)
 	{
 	  sctx->regcache_initted = 1;
-	  init_register_cache (&sctx->regcache, sctx->regspace);
+	  init_register_cache (&sctx->regcache, ipa_tdesc, sctx->regspace);
 	  supply_regblock (&sctx->regcache, NULL);
 	  /* Pass down the tracepoint address, because REGS doesn't
 	     include the PC, but we know what it must have been.  */
@@ -4761,13 +4781,15 @@ do_action_at_tracepoint (struct tracepoint_hit_ctx *ctx,
 	unsigned char *regspace;
 	struct regcache tregcache;
 	struct regcache *context_regcache;
-
+	int regcache_size;
 
 	trace_debug ("Want to collect registers");
 
+	context_regcache = get_context_regcache (ctx);
+	regcache_size = register_cache_size (context_regcache->tdesc);
+
 	/* Collect all registers for now.  */
-	regspace = add_traceframe_block (tframe, tpoint,
-					 1 + register_cache_size ());
+	regspace = add_traceframe_block (tframe, tpoint, 1 + regcache_size);
 	if (regspace == NULL)
 	  {
 	    trace_debug ("Trace buffer block allocation failed, skipping");
@@ -4776,11 +4798,10 @@ do_action_at_tracepoint (struct tracepoint_hit_ctx *ctx,
 	/* Identify a register block.  */
 	*regspace = 'R';
 
-	context_regcache = get_context_regcache (ctx);
-
 	/* Wrap the regblock in a register cache (in the stack, we
 	   don't want to malloc here).  */
-	init_register_cache (&tregcache, regspace + 1);
+	init_register_cache (&tregcache, context_regcache->tdesc,
+			     regspace + 1);
 
 	/* Copy the register data to the regblock.  */
 	regcache_cpy (&tregcache, context_regcache);
@@ -5083,7 +5104,7 @@ traceframe_walk_blocks (unsigned char *database, unsigned int datasize,
 	{
 	case 'R':
 	  /* Skip over the registers block.  */
-	  dataptr += register_cache_size ();
+	  dataptr += current_target_desc ()->registers_size;
 	  break;
 	case 'M':
 	  /* Skip over the memory block.  */
@@ -5178,12 +5199,13 @@ traceframe_get_pc (struct traceframe *tframe)
 {
   struct regcache regcache;
   unsigned char *dataptr;
+  const struct target_desc *tdesc = current_target_desc ();
 
   dataptr = traceframe_find_regblock (tframe, -1);
   if (dataptr == NULL)
     return 0;
 
-  init_register_cache (&regcache, dataptr);
+  init_register_cache (&regcache, tdesc, dataptr);
   return regcache_read_pc (&regcache);
 }
 
@@ -5259,6 +5281,7 @@ traceframe_read_tsv (int tsvnum, LONGEST *val)
   unsigned char *database, *dataptr;
   unsigned int datasize;
   int vnum;
+  int found = 0;
 
   trace_debug ("traceframe_read_tsv");
 
@@ -5281,7 +5304,8 @@ traceframe_read_tsv (int tsvnum, LONGEST *val)
   datasize = tframe->data_size;
   database = dataptr = &tframe->data[0];
 
-  /* Iterate through a traceframe's blocks, looking for the tsv.  */
+  /* Iterate through a traceframe's blocks, looking for the last
+     matched tsv.  */
   while ((dataptr = traceframe_find_block_type (dataptr,
 						datasize
 						- (dataptr - database),
@@ -5296,16 +5320,17 @@ traceframe_read_tsv (int tsvnum, LONGEST *val)
       if (tsvnum == vnum)
 	{
 	  memcpy (val, dataptr, sizeof (*val));
-	  return 0;
+	  found = 1;
 	}
 
       /* Skip over this block.  */
       dataptr += sizeof (LONGEST);
     }
 
-  trace_debug ("traceframe %d has no data for variable %d",
-	       tfnum, tsvnum);
-  return 1;
+  if (!found)
+    trace_debug ("traceframe %d has no data for variable %d",
+		 tfnum, tsvnum);
+  return !found;
 }
 
 /* Read a requested block of static tracepoint data from a trace
@@ -5387,6 +5412,13 @@ build_traceframe_info_xml (char blocktype, unsigned char *dataptr, void *data)
 	break;
       }
     case 'V':
+      {
+	int vnum;
+
+	memcpy (&vnum, dataptr, sizeof (vnum));
+	buffer_xml_printf (buffer, "<tvar id=\"%d\"/>\n", vnum);
+	break;
+      }
     case 'R':
     case 'S':
       {
@@ -5734,7 +5766,7 @@ gdb_collect (struct tracepoint *tpoint, unsigned char *regs)
   ctx.regcache_initted = 0;
   /* Wrap the regblock in a register cache (in the stack, we don't
      want to malloc here).  */
-  ctx.regspace = alloca (register_cache_size ());
+  ctx.regspace = alloca (ipa_tdesc->registers_size);
   if (ctx.regspace == NULL)
     {
       trace_debug ("Trace buffer block allocation failed, skipping");
@@ -5991,7 +6023,7 @@ download_tracepoint_1 (struct tracepoint *tpoint)
 
 	  if (ipa_action != 0)
 	    write_inferior_data_ptr
-	      (actions_array + i * sizeof (sizeof (*tpoint->actions)),
+	      (actions_array + i * sizeof (*tpoint->actions),
 	       ipa_action);
 	}
     }
@@ -6594,7 +6626,7 @@ gdb_probe (const struct marker *mdata, void *probe_private,
 
   /* Wrap the regblock in a register cache (in the stack, we don't
      want to malloc here).  */
-  ctx.regspace = alloca (register_cache_size ());
+  ctx.regspace = alloca (ipa_tdesc->registers_size);
   if (ctx.regspace == NULL)
     {
       trace_debug ("Trace buffer block allocation failed, skipping");

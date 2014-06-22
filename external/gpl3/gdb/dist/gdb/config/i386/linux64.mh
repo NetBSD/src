@@ -3,7 +3,8 @@ NATDEPFILES= inf-ptrace.o fork-child.o \
 	i386-nat.o amd64-nat.o amd64-linux-nat.o \
 	linux-nat.o linux-osdata.o \
 	proc-service.o linux-thread-db.o linux-fork.o \
-	linux-procfs.o linux-ptrace.o linux-btrace.o
+	linux-procfs.o linux-ptrace.o linux-btrace.o \
+	linux-waitpid.o
 NAT_FILE= config/nm-linux.h
 NAT_CDEPS = $(srcdir)/proc-service.list
 

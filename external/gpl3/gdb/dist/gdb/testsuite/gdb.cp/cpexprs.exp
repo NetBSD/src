@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2013 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -730,6 +730,9 @@ foreach cv {{} { const} { volatile} { const volatile}} {
 gdb_test "p CV_f(int)"   { = {int \(int\)} 0x[0-9a-f]+ <CV_f\(int\)>}
 gdb_test "p CV_f(CV::t)" { = {int \(int\)} 0x[0-9a-f]+ <CV_f\(int\)>}
 gdb_test "p CV_f(CV::i)" " = 43"
+
+gdb_test "p CV_f('cpexprs.cc'::CV::t)" \
+    { = {int \(int\)} 0x[0-9a-f]+ <CV_f\(int\)>}
 
 gdb_exit
 return 0

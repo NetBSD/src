@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,10 @@
 #include "defs.h"
 #include "symtab.h"
 #include "language.h"
+#include "varobj.h"
 #include "d-lang.h"
 #include "c-lang.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "parser-defs.h"
 #include "gdb_obstack.h"
 
@@ -238,6 +239,7 @@ static const struct op_print d_op_print_tab[] =
 static const struct language_defn d_language_defn =
 {
   "d",
+  "D",
   language_d,
   range_check_off,
   case_sensitive_on,
@@ -274,6 +276,7 @@ static const struct language_defn d_language_defn =
   c_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 

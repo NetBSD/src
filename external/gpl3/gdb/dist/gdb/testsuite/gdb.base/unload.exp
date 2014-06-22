@@ -1,4 +1,4 @@
-#   Copyright 2003-2013 Free Software Foundation, Inc.
+#   Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,12 +31,12 @@ set libname2 "${libfile2}.sl"
 set libsrcfile ${libfile}.c
 set libsrcfile2 ${libfile2}.c
 set srcfile $srcdir/$subdir/$testfile.c
-set binfile $objdir/$subdir/$testfile
-set shlibdir ${objdir}/${subdir}
+set binfile [standard_output_file $testfile]
+set shlibdir [standard_output_file {}]
 set libsrc  $srcdir/$subdir/$libfile.c
 set libsrc2  $srcdir/$subdir/$libfile2.c
-set lib_sl  $objdir/$subdir/$libname
-set lib_sl2  $objdir/$subdir/$libname2
+set lib_sl  [standard_output_file $libname]
+set lib_sl2  [standard_output_file $libname2]
 set lib_dlopen [shlib_target_file ${libname}]
 set lib_dlopen2 [shlib_target_file ${libname2}]
 set lib_syms [shlib_symbol_file ${libname}]
@@ -47,7 +47,7 @@ if [get_compiler_info] {
 }
 
 set lib_opts debug
-set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME\=\"${lib_dlopen}\" additional_flags=-DSHLIB_NAME2\=\"${lib_dlopen2}\"]
+set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${lib_dlopen}\" additional_flags=-DSHLIB_NAME2=\"${lib_dlopen2}\"]
 
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile_shlib $libsrc2 $lib_sl2 $lib_opts] != ""

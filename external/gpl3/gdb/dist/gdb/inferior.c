@@ -1,6 +1,6 @@
 /* Multi-process control for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,6 @@
 #include "gdbthread.h"
 #include "ui-out.h"
 #include "observer.h"
-#include "gdbthread.h"
 #include "gdbcore.h"
 #include "symfile.h"
 #include "environ.h"
@@ -35,6 +34,7 @@
 #include "continuations.h"
 #include "arch-utils.h"
 #include "target-descriptions.h"
+#include "readline/tilde.h"
 
 void _initialize_inferiors (void);
 
@@ -738,7 +738,7 @@ inferior_command (char *args, int from_tty)
   else if (inf->pid != 0)
     {
       ui_out_text (current_uiout, "\n");
-      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC);
+      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
     }
 }
 
@@ -849,7 +849,8 @@ add_inferior_command (char *args, int from_tty)
 		  ++argv;
 		  if (!*argv)
 		    error (_("No argument to -exec"));
-		  exec = *argv;
+		  exec = tilde_expand (*argv);
+		  make_cleanup (xfree, exec);
 		}
 	    }
 	  else

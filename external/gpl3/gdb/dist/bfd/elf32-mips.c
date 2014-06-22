@@ -1515,7 +1515,7 @@ static reloc_howto_type elf_mips_copy_howto =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
+	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS_COPY",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0x0,         		/* src_mask */
@@ -1531,11 +1531,27 @@ static reloc_howto_type elf_mips_jump_slot_howto =
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
+	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS_JUMP_SLOT",	/* name */
 	 FALSE,			/* partial_inplace */
 	 0x0,         		/* src_mask */
 	 0x0,		        /* dst_mask */
+	 FALSE);		/* pcrel_offset */
+
+/* Used in EH tables.  */
+static reloc_howto_type elf_mips_eh_howto =
+  HOWTO (R_MIPS_EH,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc, /* special_function */
+	 "R_MIPS_EH",		/* name */
+	 TRUE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,	        /* dst_mask */
 	 FALSE);		/* pcrel_offset */
 
 /* Set the GP value for OUTPUT_BFD.  Returns FALSE if this is a
@@ -2010,6 +2026,8 @@ bfd_elf32_bfd_reloc_type_lookup (bfd *abfd, bfd_reloc_code_real_type code)
       return &elf_mips_copy_howto;
     case BFD_RELOC_MIPS_JUMP_SLOT:
       return &elf_mips_jump_slot_howto;
+    case BFD_RELOC_MIPS_EH:
+      return &elf_mips_eh_howto;
     }
 }
 
@@ -2055,6 +2073,8 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     return &elf_mips_copy_howto;
   if (strcasecmp (elf_mips_jump_slot_howto.name, r_name) == 0)
     return &elf_mips_jump_slot_howto;
+  if (strcasecmp (elf_mips_eh_howto.name, r_name) == 0)
+    return &elf_mips_eh_howto;
 
   return NULL;
 }
@@ -2079,6 +2099,8 @@ mips_elf32_rtype_to_howto (unsigned int r_type,
       return &elf_mips_copy_howto;
     case R_MIPS_JUMP_SLOT:
       return &elf_mips_jump_slot_howto;
+    case R_MIPS_EH:
+      return &elf_mips_eh_howto;
     default:
       if (r_type >= R_MICROMIPS_min && r_type < R_MICROMIPS_max)
 	return &elf_micromips_howto_table_rel[r_type - R_MICROMIPS_min];
@@ -2344,7 +2366,6 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_default_use_rela_p	0
 #define elf_backend_sign_extend_vma	TRUE
 #define elf_backend_plt_readonly	1
-#define elf_backend_plt_sym_val		_bfd_mips_elf_plt_sym_val
 
 #define elf_backend_discard_info	_bfd_mips_elf_discard_info
 #define elf_backend_ignore_discarded_relocs \
@@ -2356,6 +2377,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 					mips_elf_is_local_label_name
 #define bfd_elf32_bfd_is_target_special_symbol \
 					_bfd_mips_elf_is_target_special_symbol
+#define bfd_elf32_get_synthetic_symtab	_bfd_mips_elf_get_synthetic_symtab
 #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
 #define bfd_elf32_find_inliner_info	_bfd_mips_elf_find_inliner_info
 #define bfd_elf32_new_section_hook	_bfd_mips_elf_new_section_hook
@@ -2427,18 +2449,6 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #undef	ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_FREEBSD
 
-/* The kernel recognizes executables as valid only if they carry a
-   "FreeBSD" label in the ELF header.  So we put this label on all
-   executables and (for simplicity) also all other object files.  */
-
-static void
-elf_fbsd_post_process_headers (bfd *abfd, struct bfd_link_info *info)
-{
-  _bfd_elf_set_osabi (abfd, info);
-}
-
-#undef	elf_backend_post_process_headers
-#define	elf_backend_post_process_headers	elf_fbsd_post_process_headers
 #undef	elf32_bed
 #define elf32_bed				elf32_fbsd_tradbed
 
@@ -2464,6 +2474,7 @@ mips_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
 #define TARGET_LITTLE_NAME              "elf32-littlemips-vxworks"
 #define TARGET_BIG_SYM                  bfd_elf32_bigmips_vxworks_vec
 #define TARGET_BIG_NAME                 "elf32-bigmips-vxworks"
+#undef	ELF_OSABI
 
 #undef elf32_bed
 #define elf32_bed			elf32_mips_vxworks_bed
@@ -2483,7 +2494,6 @@ mips_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
 #define elf_backend_default_use_rela_p		1
 #undef elf_backend_got_header_size
 #define elf_backend_got_header_size		(4 * 3)
-#undef elf_backend_plt_sym_val
 
 #undef elf_backend_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol \
@@ -2508,5 +2518,7 @@ mips_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
 #undef elf_backend_modify_segment_map
 #undef elf_backend_symbol_processing
 /* NOTE: elf_backend_rela_normal is not defined for MIPS.  */
+
+#undef bfd_elf32_get_synthetic_symtab
 
 #include "elf32-target.h"

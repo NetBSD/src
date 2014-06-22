@@ -1,6 +1,6 @@
 /* Support for printing Fortran types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C version by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -31,7 +31,7 @@
 #include "target.h"
 #include "f-lang.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include <errno.h>
 
 #if 0				/* Currently unused.  */

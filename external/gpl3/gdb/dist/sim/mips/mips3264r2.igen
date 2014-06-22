@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS 32/64 revision 2 instructions.
-// Copyright (C) 2004-2013 Free Software Foundation, Inc.
+// Copyright (C) 2004-2014 Free Software Foundation, Inc.
 // Contributed by David Ung, of MIPS Technologies.
 //
 // This file is part of GDB, the GNU debugger.

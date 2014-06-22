@@ -1256,7 +1256,7 @@ perform ()
 		fprintf (stderr, "warning, %s is not recognised\n", next);
 	      skip_past_newline ();
 	    }
-
+	  free (next);
 	}
       else
 	skip_past_newline ();

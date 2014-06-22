@@ -1,6 +1,6 @@
 /* Blackfin External Bus Interface Unit (EBIU) DDR Controller (DDRC) Model.
 
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.

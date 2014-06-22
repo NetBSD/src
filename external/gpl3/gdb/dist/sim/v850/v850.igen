@@ -934,13 +934,15 @@ rrrrr!0,111111,RRRRR + ddddddddddddddd,1:VII:::ld.hu
 
 
 // LDSR
-regID,111111,RRRRR + 0000000000100000:IX:::ldsr
-"ldsr r<reg1>, s<regID>"
+regID,111111,RRRRR + selID,00000100000:IX:::ldsr
+"ldsr r<reg1>, s<regID>":(selID == 0)
+"ldsr r<reg1>, s<regID>, <selID>"
 {
   uint32 sreg = GR[reg1];
   TRACE_ALU_INPUT1 (GR[reg1]);
   
-   if ((idecode_issue == idecode_v850e2_issue
+  /* FIXME: For now we ignore the selID.  */
+  if (   (idecode_issue == idecode_v850e2_issue
        || idecode_issue == idecode_v850e3v5_issue
        || idecode_issue == idecode_v850e2v3_issue)
       && regID < 28)

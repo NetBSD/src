@@ -1,4 +1,4 @@
-#   Copyright 1988-2013 Free Software Foundation, Inc.
+#   Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,9 +29,7 @@
 # test running programs
 #
 
-set testfile "sepdebug"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}${EXEEXT}
+standard_testfile .c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     untested sepdebug.exp
@@ -54,14 +52,15 @@ if [gdb_gnu_strip_debug $binfile] {
 # PR gdb/9538.  Verify that symlinked executable still finds the separate
 # debuginfo.
 #
-set old_subdir ${subdir}
-set subdir ${subdir}/pr9538
+set old_subdir $subdir
+set subdir [file join ${old_subdir} pr9538]
 
 # Cleanup any stale state.
-remote_exec build "rm -rf ${subdir}"
+set new_name [standard_output_file ${testfile}${EXEEXT}]
+remote_exec build "rm -rf [file dirname $new_name]"
 
-remote_exec build "mkdir ${subdir}"
-remote_exec build "ln -s ${binfile} ${subdir}"
+remote_exec build "mkdir [file dirname $new_name]"
+remote_exec build "ln -s ${binfile} $new_name"
 clean_restart ${testfile}${EXEEXT}
 if { $gdb_file_cmd_debug_info != "debug" } then {
     fail "No debug information found."
@@ -578,8 +577,8 @@ proc test_next_with_recursion {} {
     gdb_expect {
 	-re "Break.* factorial .value=6. .*$gdb_prompt $" {}
 	-re ".*$gdb_prompt $" {
-	    fail "run to factorial(6)";
-	    gdb_suppress_tests;
+	    fail "run to factorial(6)"
+	    gdb_suppress_tests
 	}
 	timeout { fail "run to factorial(6) (timeout)" ; gdb_suppress_tests }
     }
@@ -640,7 +639,7 @@ proc test_next_with_recursion {} {
 
     if [target_info exists gdb,noresults] { gdb_suppress_tests }
   gdb_continue_to_end "recursive next test"
-   gdb_stop_suppressing_tests;
+   gdb_stop_suppressing_tests
 }
 
 test_next_with_recursion
@@ -648,111 +647,113 @@ test_next_with_recursion
 
 #********
 
-proc test_different_dir {type test_different_dir xfail} { with_test_prefix "$type" {
-    global srcdir subdir objdir binfile srcfile timeout gdb_prompt
-    global bp_location6 decimal hex
+proc test_different_dir {type test_different_dir xfail} {
+    with_test_prefix "$type" {
+	global srcdir subdir binfile srcfile timeout gdb_prompt
+	global bp_location6 decimal hex
 
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_test_no_output "set debug-file-directory ${test_different_dir}" \
-	"set separate debug location"
-    gdb_load ${binfile}
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+	gdb_test_no_output "set debug-file-directory ${test_different_dir}" \
+	    "set separate debug location"
+	gdb_load ${binfile}
 
-    #
-    # test break at function
-    #
-    if {$xfail} {
-	setup_xfail "*-*-*"
-    }
-    gdb_test "break main" \
-	"Breakpoint.*at.* file .*$srcfile, line.*" \
-	"breakpoint function, optimized file"
-
-    #
-    # test break at function
-    #
-    if {$xfail} {
-	setup_xfail "*-*-*"
-    }
-    gdb_test "break marker4" \
-	"Breakpoint.*at.* file .*$srcfile, line.*" \
-	"breakpoint small function, optimized file"
-
-    #
-    # run until the breakpoint at main is hit. For non-stubs-using targets.
-    #
-    gdb_run_cmd
-    if {$xfail} {
-	setup_xfail "*-*-*"
-    }
-    gdb_expect {
-	-re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*$gdb_prompt $" {
-	    pass "run until function breakpoint, optimized file"
+	#
+	# test break at function
+	#
+	if {$xfail} {
+	    setup_xfail "*-*-*"
 	}
-	-re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$gdb_prompt $" {
-	    pass "run until function breakpoint, optimized file (code motion)"
+	gdb_test "break main" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*" \
+	    "breakpoint function, optimized file"
+
+	#
+	# test break at function
+	#
+	if {$xfail} {
+	    setup_xfail "*-*-*"
 	}
-	-re "$gdb_prompt $" {
-	    fail "run until function breakpoint, optimized file"
+	gdb_test "break marker4" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*" \
+	    "breakpoint small function, optimized file"
+
+	#
+	# run until the breakpoint at main is hit. For non-stubs-using targets.
+	#
+	gdb_run_cmd
+	if {$xfail} {
+	    setup_xfail "*-*-*"
 	}
-	timeout {
-	    fail "run until function breakpoint, optimized file (timeout)"
+	gdb_expect {
+	    -re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:$bp_location6.*$bp_location6\[\t \]+if .argc.* \{.*$gdb_prompt $" {
+		pass "run until function breakpoint, optimized file"
+	    }
+	    -re "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$gdb_prompt $" {
+		pass "run until function breakpoint, optimized file (code motion)"
+	    }
+	    -re "$gdb_prompt $" {
+		fail "run until function breakpoint, optimized file"
+	    }
+	    timeout {
+		fail "run until function breakpoint, optimized file (timeout)"
+	    }
 	}
+
+	#
+	# run until the breakpoint at a small function
+	#
+
+	#
+	# Add a second pass pattern.  The behavior differs here between stabs
+	# and dwarf for one-line functions.  Stabs preserves two line symbols
+	# (one before the prologue and one after) with the same line number, 
+	# but dwarf regards these as duplicates and discards one of them.
+	# Therefore the address after the prologue (where the breakpoint is)
+	# has no exactly matching line symbol, and GDB reports the breakpoint
+	# as if it were in the middle of a line rather than at the beginning.
+
+	set bp_location13 [gdb_get_line_number "set breakpoint 13 here"]
+	set bp_location14 [gdb_get_line_number "set breakpoint 14 here"]
+	if {$xfail} {
+	    setup_xfail "*-*-*"
+	}
+
+	gdb_test_multiple "continue" "run until breakpoint set at small function, optimized file" {
+	    -re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*$gdb_prompt $" {
+		pass "run until breakpoint set at small function, optimized file"
+	    }
+	    -re "Breakpoint $decimal, $hex in marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*$gdb_prompt $" {
+		pass "run until breakpoint set at small function, optimized file"
+	    }
+	    -re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*$gdb_prompt $" {
+		# marker4() is defined at line 46 when compiled with -DPROTOTYPES
+		pass "run until breakpoint set at small function, optimized file (line bp_location14)"
+	    }
+	}
+
+
+	# Reset the default arguments for VxWorks
+	if [istarget "*-*-vxworks*"] {
+	    set timeout 10
+	    verbose "Timeout is now $timeout seconds" 2
+	    gdb_test_no_output "set args main"
+	}
+
+	# proc test_different_dir
     }
-
-    #
-    # run until the breakpoint at a small function
-    #
-
-    #
-    # Add a second pass pattern.  The behavior differs here between stabs
-    # and dwarf for one-line functions.  Stabs preserves two line symbols
-    # (one before the prologue and one after) with the same line number, 
-    # but dwarf regards these as duplicates and discards one of them.
-    # Therefore the address after the prologue (where the breakpoint is)
-    # has no exactly matching line symbol, and GDB reports the breakpoint
-    # as if it were in the middle of a line rather than at the beginning.
-
-    set bp_location13 [gdb_get_line_number "set breakpoint 13 here"]
-    set bp_location14 [gdb_get_line_number "set breakpoint 14 here"]
-    if {$xfail} {
-	setup_xfail "*-*-*"
-    }
-
-    gdb_test_multiple "continue" "run until breakpoint set at small function, optimized file" {
-	-re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*$gdb_prompt $" {
-	    pass "run until breakpoint set at small function, optimized file"
-	}
-	-re "Breakpoint $decimal, $hex in marker4 \\(d=177601976\\) at .*$srcfile:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*$gdb_prompt $" {
-	    pass "run until breakpoint set at small function, optimized file"
-	}
-	-re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*$gdb_prompt $" {
-	    # marker4() is defined at line 46 when compiled with -DPROTOTYPES
-	    pass "run until breakpoint set at small function, optimized file (line bp_location14)"
-	}
-    }
-
-
-    # Reset the default arguments for VxWorks
-    if [istarget "*-*-vxworks*"] {
-	set timeout 10
-	verbose "Timeout is now $timeout seconds" 2
-	gdb_test_no_output "set args main"
-    }
-
-# proc test_different_dir
-}}
+}
 
 
 # now move the .debug file to a different location so that we can test
 # the "set debug-file-directory" command.
 
-set different_dir "${objdir}/${subdir}/${testfile}.dir"
-set debugfile "${different_dir}/${objdir}/${subdir}/${testfile}.debug"
+set different_dir [standard_output_file ${testfile}.dir]
+set debugfile "${different_dir}/[standard_output_file ${testfile}.debug]"
 remote_exec build "rm -rf $different_dir"
 remote_exec build "mkdir -p [file dirname $debugfile]"
-remote_exec build "mv -f ${objdir}/${subdir}/${testfile}.debug $debugfile"
+remote_exec build "mv -f [standard_output_file ${testfile}.debug] $debugfile"
 
 test_different_dir debuglink $different_dir 0
 
@@ -760,17 +761,17 @@ test_different_dir debuglink $different_dir 0
 # Test CRC mismatch is reported.
 
 if {[build_executable sepdebug.exp sepdebug2 sepdebug2.c debug] != -1
-    && ![gdb_gnu_strip_debug ${objdir}/${subdir}/sepdebug2]} {
+    && ![gdb_gnu_strip_debug [standard_output_file sepdebug2]]} {
 
-    remote_exec build "cp ${debugfile} ${objdir}/${subdir}/sepdebug2.debug"
+    remote_exec build "cp ${debugfile} [standard_output_file sepdebug2.debug]"
 
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
 
-    set escapedobjdirsubdir [string_to_regexp ${objdir}/${subdir}]
+    set escapedobjdirsubdir [string_to_regexp [standard_output_file {}]]
 
-    gdb_test "file ${objdir}/${subdir}/sepdebug2" "warning: the debug information found in \"${escapedobjdirsubdir}/sepdebug2\\.debug\" does not match \"${escapedobjdirsubdir}/sepdebug2\" \\(CRC mismatch\\)\\..*\\(no debugging symbols found\\).*" "CRC mismatch is reported"
+    gdb_test "file [standard_output_file sepdebug2]" "warning: the debug information found in \"${escapedobjdirsubdir}/sepdebug2\\.debug\" does not match \"${escapedobjdirsubdir}/sepdebug2\" \\(CRC mismatch\\)\\..*\\(no debugging symbols found\\).*" "CRC mismatch is reported"
 }
 
 
@@ -795,17 +796,17 @@ if ![string compare $build_id_debug_filename ""] then {
 	pass $test
     }
 
-    file mkdir [file dirname ${objdir}/${subdir}/${build_id_debug_filename}]
-    remote_exec build "mv $debugfile ${objdir}/${subdir}/${build_id_debug_filename}"
+    file mkdir [file dirname [standard_output_file ${build_id_debug_filename}]]
+    remote_exec build "mv $debugfile [standard_output_file ${build_id_debug_filename}]"
 
-    test_different_dir build-id "${objdir}/${subdir}" $xfail
+    test_different_dir build-id [standard_output_file {}] $xfail
 
     # Test also multiple directories can be specified.  Without the build-id
     # reference GDB would find the separate debug info just at the same
     # location as the executable file.
 
-    test_different_dir multiple-dirs "/doesnotexist:${objdir}/${subdir}" $xfail
+    test_different_dir multiple-dirs "/doesnotexist:[standard_output_file {}]" $xfail
 
     # Spare debug files may confuse testsuite runs in the future.
-    remote_exec build "rm -f ${objdir}/${subdir}/${build_id_debug_filename}"
+    remote_exec build "rm -f [standard_output_file ${build_id_debug_filename}]"
 }

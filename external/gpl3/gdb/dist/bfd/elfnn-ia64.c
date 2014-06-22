@@ -1,6 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012  Free Software Foundation, Inc.
+   Copyright 1998-2013 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1546,7 +1545,8 @@ elfNN_ia64_create_dynamic_sections (bfd *abfd,
     bfd_set_section_flags (abfd, ia64_info->root.sgot,
 			   SEC_SMALL_DATA | flags);
     /* The .got section is always aligned at 8 bytes.  */
-    bfd_set_section_alignment (abfd, ia64_info->root.sgot, 3);
+    if (! bfd_set_section_alignment (abfd, ia64_info->root.sgot, 3))
+      return FALSE;
   }
 
   if (!get_pltoff (abfd, info, ia64_info))
@@ -1952,16 +1952,17 @@ get_got (bfd *abfd, struct bfd_link_info *info,
       if (!dynobj)
 	ia64_info->root.dynobj = dynobj = abfd;
       if (!_bfd_elf_create_got_section (dynobj, info))
-	return 0;
+	return NULL;
 
       got = ia64_info->root.sgot;
 
       /* The .got section is always aligned at 8 bytes.  */
       if (!bfd_set_section_alignment (abfd, got, 3))
-	return 0;
+	return NULL;
 
       flags = bfd_get_section_flags (abfd, got);
-      bfd_set_section_flags (abfd, got, SEC_SMALL_DATA | flags);
+      if (! bfd_set_section_flags (abfd, got, SEC_SMALL_DATA | flags))
+	return NULL;
     }
 
   return got;
@@ -2352,6 +2353,9 @@ elfNN_ia64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	  h->ref_regular = 1;
 	}
       else
@@ -3898,17 +3902,17 @@ elfNN_ia64_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sym_sec, value,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  if (h->root.type == bfd_link_hash_undefweak)
 	    undef_weak_ref = TRUE;
-	  else if (warned)
+	  else if (warned || (ignored && info->executable))
 	    continue;
 	}
 
@@ -4808,7 +4812,9 @@ elfNN_ia64_print_private_bfd_data (bfd *abfd, void * ptr)
 }
 
 static enum elf_reloc_type_class
-elfNN_ia64_reloc_type_class (const Elf_Internal_Rela *rela)
+elfNN_ia64_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			     const asection *rel_sec ATTRIBUTE_UNUSED,
+			     const Elf_Internal_Rela *rela)
 {
   switch ((int) ELFNN_R_TYPE (rela->r_info))
     {

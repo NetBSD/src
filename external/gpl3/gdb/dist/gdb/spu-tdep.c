@@ -1,5 +1,5 @@
 /* SPU target-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
    Based on a port by Sid Manning <sid@us.ibm.com>.
@@ -24,7 +24,7 @@
 #include "gdbtypes.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "frame.h"
 #include "frame-unwind.h"
@@ -192,6 +192,7 @@ spu_pseudo_register_read_spu (struct regcache *regcache, const char *regname,
   gdb_byte reg[32];
   char annex[32];
   ULONGEST id;
+  ULONGEST ul;
 
   status = regcache_raw_read_unsigned (regcache, SPU_ID_REGNUM, &id);
   if (status != REG_VALID)
@@ -201,7 +202,8 @@ spu_pseudo_register_read_spu (struct regcache *regcache, const char *regname,
   target_read (&current_target, TARGET_OBJECT_SPU, annex,
 	       reg, 0, sizeof reg);
 
-  store_unsigned_integer (buf, 4, byte_order, strtoulst (reg, NULL, 16));
+  ul = strtoulst ((char *) reg, NULL, 16);
+  store_unsigned_integer (buf, 4, byte_order, ul);
   return REG_VALID;
 }
 
@@ -254,7 +256,7 @@ spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  gdb_byte reg[32];
+  char reg[32];
   char annex[32];
   ULONGEST id;
 
@@ -263,7 +265,7 @@ spu_pseudo_register_write_spu (struct regcache *regcache, const char *regname,
   xsnprintf (reg, sizeof reg, "0x%s",
 	     phex_nz (extract_unsigned_integer (buf, 4, byte_order), 4));
   target_write (&current_target, TARGET_OBJECT_SPU, annex,
-		reg, 0, strlen (reg));
+		(gdb_byte *) reg, 0, strlen (reg));
 }
 
 static void
@@ -1135,6 +1137,7 @@ spu_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   /* Keep interrupt enabled state unchanged.  */
   ULONGEST old_pc;
+
   regcache_cooked_read_unsigned (regcache, SPU_PC_REGNUM, &old_pc);
   regcache_cooked_write_unsigned (regcache, SPU_PC_REGNUM,
 				  (SPUADDR_ADDR (pc) & -4) | (old_pc & 3));
@@ -1611,8 +1614,9 @@ spu_software_single_step (struct frame_info *frame)
 	  else
 	    {
 	      if (optim)
-		error (_("Could not determine address of "
-			 "single-step breakpoint."));
+		throw_error (OPTIMIZED_OUT_ERROR,
+			     _("Could not determine address of "
+			       "single-step breakpoint."));
 	      if (unavail)
 		throw_error (NOT_AVAILABLE_ERROR,
 			     _("Could not determine address of "
@@ -1748,7 +1752,7 @@ spu_get_overlay_table (struct objfile *objfile)
   unsigned ovly_table_size, ovly_buf_table_size;
   struct spu_overlay_table *tbl;
   struct obj_section *osect;
-  char *ovly_table;
+  gdb_byte *ovly_table;
   int i;
 
   tbl = objfile_data (objfile, spu_overlay_data);
@@ -1920,7 +1924,7 @@ spu_catch_start (struct objfile *objfile)
   /* If we have debugging information, try to use it -- this
      will allow us to properly skip the prologue.  */
   pc = SYMBOL_VALUE_ADDRESS (minsym);
-  symtab = find_pc_sect_symtab (pc, SYMBOL_OBJ_SECTION (minsym));
+  symtab = find_pc_sect_symtab (pc, SYMBOL_OBJ_SECTION (objfile, minsym));
   if (symtab != NULL)
     {
       struct blockvector *bv = BLOCKVECTOR (symtab);
@@ -2044,7 +2048,7 @@ info_spu_event_command (char *args, int from_tty)
   if (len <= 0)
     error (_("Could not read event_status."));
   buf[len] = '\0';
-  event_status = strtoulst (buf, NULL, 16);
+  event_status = strtoulst ((char *) buf, NULL, 16);
  
   xsnprintf (annex, sizeof annex, "%d/event_mask", id);
   len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
@@ -2052,7 +2056,7 @@ info_spu_event_command (char *args, int from_tty)
   if (len <= 0)
     error (_("Could not read event_mask."));
   buf[len] = '\0';
-  event_mask = strtoulst (buf, NULL, 16);
+  event_mask = strtoulst ((char *) buf, NULL, 16);
  
   chain = make_cleanup_ui_out_tuple_begin_end (current_uiout, "SPUInfoEvent");
 
@@ -2111,7 +2115,7 @@ info_spu_signal_command (char *args, int from_tty)
   if (len <= 0)
     error (_("Could not read signal1_type."));
   buf[len] = '\0';
-  signal1_type = strtoulst (buf, NULL, 16);
+  signal1_type = strtoulst ((char *) buf, NULL, 16);
 
   xsnprintf (annex, sizeof annex, "%d/signal2", id);
   len = target_read (&current_target, TARGET_OBJECT_SPU, annex, buf, 0, 4);
@@ -2129,7 +2133,7 @@ info_spu_signal_command (char *args, int from_tty)
   if (len <= 0)
     error (_("Could not read signal2_type."));
   buf[len] = '\0';
-  signal2_type = strtoulst (buf, NULL, 16);
+  signal2_type = strtoulst ((char *) buf, NULL, 16);
 
   chain = make_cleanup_ui_out_tuple_begin_end (current_uiout, "SPUInfoSignal");
 

@@ -1,5 +1,5 @@
 /* GNU/Linux on  TI C6x target support.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    Contributed by Yao Qi <yao@codesourcery.com>
 
    This file is part of GDB.
@@ -47,7 +47,7 @@ struct gdbarch_tdep
      instruction.  */
   CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
 
-  const char *breakpoint; /* Breakpoint instruction.  */
+  const gdb_byte *breakpoint; /* Breakpoint instruction.  */
 
   int has_gp; /* Has general purpose registers A16 - A31 and B16 - B31.  */
 };

@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -21,7 +21,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "expression.h"		/* For language.h */
 #include "language.h"
 #include "ui-out.h"
@@ -52,6 +52,10 @@ struct ui_out_level
     /* The type of this level.  */
     enum ui_out_type type;
   };
+
+/* Define uiout->level vector types and operations.  */
+typedef struct ui_out_level *ui_out_level_p;
+DEF_VEC_P (ui_out_level_p);
 
 /* Tables are special.  Maintain a separate structure that tracks
    their state.  At present an output can only contain a single table
@@ -101,9 +105,11 @@ struct ui_out
     struct ui_out_impl *impl;
     void *data;
 
-    /* Sub structure tracking the ui-out depth.  */
+    /* Current level.  */
     int level;
-    struct ui_out_level levels[MAX_UI_OUT_LEVELS];
+
+    /* Vector to store and track the ui-out levels.  */
+    VEC (ui_out_level_p) *levels;
 
     /* A table, if any.  At present only a single table is supported.  */
     struct ui_out_table table;
@@ -113,7 +119,7 @@ struct ui_out
 static struct ui_out_level *
 current_level (struct ui_out *uiout)
 {
-  return &uiout->levels[uiout->level];
+  return VEC_index (ui_out_level_p, uiout->levels, uiout->level);
 }
 
 /* Create a new level, of TYPE.  Return the new level's index.  */
@@ -124,12 +130,11 @@ push_level (struct ui_out *uiout,
 {
   struct ui_out_level *current;
 
-  /* We had better not overflow the buffer.  */
   uiout->level++;
-  gdb_assert (uiout->level >= 0 && uiout->level < MAX_UI_OUT_LEVELS);
-  current = current_level (uiout);
+  current = XMALLOC (struct ui_out_level);
   current->field_count = 0;
   current->type = type;
+  VEC_safe_push (ui_out_level_p, uiout->levels, current);
   return uiout->level;
 }
 
@@ -139,9 +144,13 @@ static int
 pop_level (struct ui_out *uiout,
 	   enum ui_out_type type)
 {
+  struct ui_out_level *current;
+
   /* We had better not underflow the buffer.  */
-  gdb_assert (uiout->level > 0 && uiout->level < MAX_UI_OUT_LEVELS);
+  gdb_assert (uiout->level > 0);
   gdb_assert (current_level (uiout)->type == type);
+  current = VEC_pop (ui_out_level_p, uiout->levels);
+  xfree (current);
   uiout->level--;
   return uiout->level + 1;
 }
@@ -1090,6 +1099,7 @@ ui_out_new (struct ui_out_impl *impl, void *data,
 	    int flags)
 {
   struct ui_out *uiout = XMALLOC (struct ui_out);
+  struct ui_out_level *current = XMALLOC (struct ui_out_level);
 
   uiout->data = data;
   uiout->impl = impl;
@@ -1097,7 +1107,13 @@ ui_out_new (struct ui_out_impl *impl, void *data,
   uiout->table.flag = 0;
   uiout->table.body_flag = 0;
   uiout->level = 0;
-  memset (uiout->levels, 0, sizeof (uiout->levels));
+  uiout->levels = NULL;
+
+  /* Create uiout->level 0, the default level.  */
+  current->type = ui_out_type_tuple;
+  current->field_count = 0;
+  VEC_safe_push (ui_out_level_p, uiout->levels, current);
+
   uiout->table.header_first = NULL;
   uiout->table.header_last = NULL;
   uiout->table.header_next = NULL;
@@ -1109,6 +1125,18 @@ ui_out_new (struct ui_out_impl *impl, void *data,
 void
 ui_out_destroy (struct ui_out *uiout)
 {
+  int i;
+  struct ui_out_level *current;
+
+  /* Make sure that all levels are freed in the case where levels have
+     been pushed, but not popped before the ui_out object is
+     destroyed.  */
+  for (i = 0;
+       VEC_iterate (ui_out_level_p, uiout->levels, i, current);
+       ++i)
+    xfree (current);
+
+  VEC_free (ui_out_level_p, uiout->levels);
   uo_data_destroy (uiout);
   clear_table (uiout);
   xfree (uiout);

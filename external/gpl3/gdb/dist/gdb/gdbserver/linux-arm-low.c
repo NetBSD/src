@@ -1,5 +1,5 @@
 /* GNU/Linux/ARM specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,10 +29,19 @@
 
 /* Defined in auto-generated files.  */
 void init_registers_arm (void);
+extern const struct target_desc *tdesc_arm;
+
 void init_registers_arm_with_iwmmxt (void);
+extern const struct target_desc *tdesc_arm_with_iwmmxt;
+
 void init_registers_arm_with_vfpv2 (void);
+extern const struct target_desc *tdesc_arm_with_vfpv2;
+
 void init_registers_arm_with_vfpv3 (void);
+extern const struct target_desc *tdesc_arm_with_vfpv3;
+
 void init_registers_arm_with_neon (void);
+extern const struct target_desc *tdesc_arm_with_neon;
 
 #ifndef PTRACE_GET_THREAD_AREA
 #define PTRACE_GET_THREAD_AREA 22
@@ -212,7 +221,7 @@ arm_fill_vfpregset (struct regcache *regcache, void *buf)
   else
     num = 16;
 
-  base = find_regno ("d0");
+  base = find_regno (regcache->tdesc, "d0");
   for (i = 0; i < num; i++)
     collect_register (regcache, base + i, (char *) buf + i * 8);
 
@@ -232,7 +241,7 @@ arm_store_vfpregset (struct regcache *regcache, const void *buf)
   else
     num = 16;
 
-  base = find_regno ("d0");
+  base = find_regno (regcache->tdesc, "d0");
   for (i = 0; i < num; i++)
     supply_register (regcache, base + i, (char *) buf + i * 8);
 
@@ -711,13 +720,13 @@ arm_prepare_to_resume (struct lwp_info *lwp)
 
 	if (arm_hwbp_control_is_enabled (proc_info->bpts[i].control))
 	  if (ptrace (PTRACE_SETHBPREGS, pid,
-		      (PTRACE_ARG3_TYPE) ((i << 1) + 1),
+		      (PTRACE_TYPE_ARG3) ((i << 1) + 1),
 		      &proc_info->bpts[i].address) < 0)
 	    perror_with_name ("Unexpected error setting breakpoint address");
 
 	if (arm_hwbp_control_is_initialized (proc_info->bpts[i].control))
 	  if (ptrace (PTRACE_SETHBPREGS, pid,
-		      (PTRACE_ARG3_TYPE) ((i << 1) + 2),
+		      (PTRACE_TYPE_ARG3) ((i << 1) + 2),
 		      &proc_info->bpts[i].control) < 0)
 	    perror_with_name ("Unexpected error setting breakpoint");
 
@@ -731,13 +740,13 @@ arm_prepare_to_resume (struct lwp_info *lwp)
 
 	if (arm_hwbp_control_is_enabled (proc_info->wpts[i].control))
 	  if (ptrace (PTRACE_SETHBPREGS, pid,
-		      (PTRACE_ARG3_TYPE) -((i << 1) + 1),
+		      (PTRACE_TYPE_ARG3) -((i << 1) + 1),
 		      &proc_info->wpts[i].address) < 0)
 	    perror_with_name ("Unexpected error setting watchpoint address");
 
 	if (arm_hwbp_control_is_initialized (proc_info->wpts[i].control))
 	  if (ptrace (PTRACE_SETHBPREGS, pid,
-		      (PTRACE_ARG3_TYPE) -((i << 1) + 2),
+		      (PTRACE_TYPE_ARG3) -((i << 1) + 2),
 		      &proc_info->wpts[i].control) < 0)
 	    perror_with_name ("Unexpected error setting watchpoint");
 
@@ -768,8 +777,8 @@ arm_get_hwcap (unsigned long *valp)
   return 0;
 }
 
-static void
-arm_arch_setup (void)
+static const struct target_desc *
+arm_read_description (void)
 {
   int pid = lwpid_of (get_thread_lwp (current_inferior));
 
@@ -778,29 +787,24 @@ arm_arch_setup (void)
 
   arm_hwcap = 0;
   if (arm_get_hwcap (&arm_hwcap) == 0)
-    {
-      init_registers_arm ();
-      return;
-    }
+    return tdesc_arm;
 
   if (arm_hwcap & HWCAP_IWMMXT)
-    {
-      init_registers_arm_with_iwmmxt ();
-      return;
-    }
+    return tdesc_arm_with_iwmmxt;
 
   if (arm_hwcap & HWCAP_VFP)
     {
+      const struct target_desc *result;
       char *buf;
 
       /* NEON implies either no VFP, or VFPv3-D32.  We only support
 	 it with VFP.  */
       if (arm_hwcap & HWCAP_NEON)
-	init_registers_arm_with_neon ();
+	result = tdesc_arm_with_neon;
       else if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
-	init_registers_arm_with_vfpv3 ();
+	result = tdesc_arm_with_vfpv3;
       else
-	init_registers_arm_with_vfpv2 ();
+	result = tdesc_arm_with_vfpv2;
 
       /* Now make sure that the kernel supports reading these
 	 registers.  Support was added in 2.6.30.  */
@@ -810,19 +814,25 @@ arm_arch_setup (void)
 	  && errno == EIO)
 	{
 	  arm_hwcap = 0;
-	  init_registers_arm ();
+	  result = tdesc_arm;
 	}
       free (buf);
 
-      return;
+      return result;
     }
 
   /* The default configuration uses legacy FPA registers, probably
      simulated.  */
-  init_registers_arm ();
+  return tdesc_arm;
 }
 
-struct regset_info target_regsets[] = {
+static void
+arm_arch_setup (void)
+{
+  current_process ()->tdesc = arm_read_description ();
+}
+
+static struct regset_info arm_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, 18 * 4,
     GENERAL_REGS,
     arm_fill_gregset, arm_store_gregset },
@@ -835,11 +845,35 @@ struct regset_info target_regsets[] = {
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+static struct regsets_info arm_regsets_info =
+  {
+    arm_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info arm_usrregs_info =
+  {
+    arm_num_regs,
+    arm_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &arm_usrregs_info,
+    &arm_regsets_info
+  };
+
+static const struct regs_info *
+arm_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
   arm_arch_setup,
-  arm_num_regs,
-  arm_regmap,
-  NULL,
+  arm_regs_info,
   arm_cannot_fetch_register,
   arm_cannot_store_register,
   NULL, /* fetch_register */
@@ -871,3 +905,16 @@ struct linux_target_ops the_low_target = {
   arm_new_thread,
   arm_prepare_to_resume,
 };
+
+void
+initialize_low_arch (void)
+{
+  /* Initialize the Linux target descriptions.  */
+  init_registers_arm ();
+  init_registers_arm_with_iwmmxt ();
+  init_registers_arm_with_vfpv2 ();
+  init_registers_arm_with_vfpv3 ();
+  init_registers_arm_with_neon ();
+
+  initialize_regsets_info (&arm_regsets_info);
+}

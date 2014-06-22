@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ proc gdb_slow_trace_speed_test { } {
 
     gdb_delete_tracepoints
 
-    gdb_test "print iters = init_iters" ".* = .*";
+    gdb_test "print iters = init_iters" ".* = .*"
 
     set testline [gdb_get_line_number "set tracepoint here"]
 
@@ -90,7 +90,7 @@ proc gdb_fast_trace_speed_test { } {
 
     gdb_delete_tracepoints
 
-    gdb_test "print iters = init_iters" ".* = .*";
+    gdb_test "print iters = init_iters" ".* = .*"
 
     set run_ftrace 0
 
@@ -129,7 +129,7 @@ runto_main
 
 if { ![gdb_target_supports_trace] } then {
     unsupported "Current target does not support trace"
-    return 1;
+    return 1
 }
 
 # Body of test encased in a proc so we can return prematurely.

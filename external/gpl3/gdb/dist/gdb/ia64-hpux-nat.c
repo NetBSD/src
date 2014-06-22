@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -337,9 +337,7 @@ ia64_hpux_store_registers (struct target_ops *ops,
    need to be handled manually.  So we override this routine and
    delegate back if we detect that we are not in a special case.  */
 
-static LONGEST (*super_xfer_partial) (struct target_ops *, enum target_object,
-				      const char *, gdb_byte *,
-				      const gdb_byte *, ULONGEST, LONGEST);
+static target_xfer_partial_ftype *super_xfer_partial;
 
 /* The "xfer_partial" routine for a memory region that is completely
    outside of the backing-store region.  */

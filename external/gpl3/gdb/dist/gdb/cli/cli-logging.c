@@ -1,6 +1,6 @@
 /* Command-line output logging for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "interps.h"
 #include "gdb_assert.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 /* These hold the pushed copies of the gdb output files.
    If NULL then nothing has yet been pushed.  */
@@ -79,7 +79,7 @@ static struct ui_file *logging_no_redirect_file;
 static void
 set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
 {
-  struct cleanup *cleanups = NULL;
+  struct cleanup *cleanups;
   struct ui_file *output, *new_logging_no_redirect_file;
   struct ui_out *uiout = current_uiout;
 
@@ -88,13 +88,15 @@ set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
       || (logging_redirect == 0 && logging_no_redirect_file != NULL))
     return;
 
+  cleanups = make_cleanup (null_cleanup, NULL);
+
   if (logging_redirect != 0)
     {
       gdb_assert (logging_no_redirect_file != NULL);
 
       /* ui_out_redirect still has not been called for next
 	 gdb_stdout.  */
-      cleanups = make_cleanup_ui_file_delete (gdb_stdout);
+      make_cleanup_ui_file_delete (gdb_stdout);
 
       output = logging_no_redirect_file;
       new_logging_no_redirect_file = NULL;
@@ -139,8 +141,7 @@ set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
       || ui_out_redirect (uiout, output) < 0)
     warning (_("Current output protocol does not support redirection"));
 
-  if (logging_redirect != 0)
-    do_cleanups (cleanups);
+  do_cleanups (cleanups);
 }
 
 static void

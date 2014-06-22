@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/vax.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "vax-tdep.h"
 #include "solib-svr4.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 /* NetBSD ELF.  */
 

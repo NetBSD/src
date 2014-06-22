@@ -1,5 +1,5 @@
 /* Low level interface to SPUs, for the remote server for GDB.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/syscall.h>
+#include "filestuff.h"
+#include "hostio.h"
 
 /* Some older glibc versions do not define this.  */
 #ifndef __WNOTHREAD
@@ -56,7 +58,7 @@ int using_threads = 0;
 
 /* Defined in auto-generated file reg-spu.c.  */
 void init_registers_spu (void);
-
+extern const struct target_desc *tdesc_spu;
 
 /* Fetch PPU register REGNO.  */
 static CORE_ADDR
@@ -266,6 +268,7 @@ spu_create_inferior (char *program, char **allargs)
 {
   int pid;
   ptid_t ptid;
+  struct process_info *proc;
 
   pid = fork ();
   if (pid < 0)
@@ -273,12 +276,7 @@ spu_create_inferior (char *program, char **allargs)
 
   if (pid == 0)
     {
-      if (!remote_connection_is_stdio ())
-	{
-	  close (listen_desc);
-	  if (gdb_connected ())
-	    close (remote_desc);
-	}
+      close_most_fds ();
       ptrace (PTRACE_TRACEME, 0, 0, 0);
 
       setpgid (0, 0);
@@ -293,7 +291,8 @@ spu_create_inferior (char *program, char **allargs)
       _exit (0177);
     }
 
-  add_process (pid, 0);
+  proc = add_process (pid, 0);
+  proc->tdesc = tdesc_spu;
 
   ptid = ptid_build (pid, pid, 0);
   add_thread (ptid, NULL);
@@ -305,6 +304,7 @@ int
 spu_attach (unsigned long  pid)
 {
   ptid_t ptid;
+  struct process_info *proc;
 
   if (ptrace (PTRACE_ATTACH, pid, 0, 0) != 0)
     {
@@ -314,7 +314,8 @@ spu_attach (unsigned long  pid)
       _exit (0177);
     }
 
-  add_process (pid, 1);
+  proc = add_process (pid, 1);
+  proc->tdesc = tdesc_spu;
   ptid = ptid_build (pid, pid, 0);
   add_thread (ptid, NULL);
   return 0;

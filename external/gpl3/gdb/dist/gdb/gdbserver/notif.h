@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2013 Free Software Foundation, Inc.
+   Copyright (C) 1989-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,8 @@
 
 typedef struct notif_event
 {
+  /* C requires that a struct or union has at least one member.  */
+  char dummy;
 } *notif_event_p;
 
 DECLARE_QUEUE_P (notif_event_p);

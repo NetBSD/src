@@ -1,6 +1,6 @@
 /* Header file for GDB command decoding library.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ struct cmd_list_element
     struct cmd_list_element *next;
 
     /* Name of this command.  */
-    char *name;
+    const char *name;
 
     /* Command class; class values are chosen by application program.  */
     enum command_class class;

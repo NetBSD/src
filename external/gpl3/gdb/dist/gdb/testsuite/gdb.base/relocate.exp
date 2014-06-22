@@ -1,4 +1,4 @@
-# Copyright 2002-2013 Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # relocate.exp -- Expect script to test loading symbols from unrelocated
 #		  object files.
 
-set testfile relocate
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}.o
+standard_testfile .c
+append binfile .o
 
 remote_exec build "rm -f ${binfile}"
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] != "" } {
@@ -52,6 +51,13 @@ proc get_var_address { var } {
 gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
+
+#Check that invalid options are rejected.
+foreach x {"-raednow" "readnow" "foo" "-readnow s"} {
+    gdb_test "add-symbol-file ${binfile} 0 $x" \
+	"USAGE: add-symbol-file <filename> <textaddress>.*-readnow.*-s <secname> <addr>.*" \
+	"add-symbol-file: unknown option $x"
+}
 
 # Load the object file.
 gdb_test "add-symbol-file ${binfile} 0" \

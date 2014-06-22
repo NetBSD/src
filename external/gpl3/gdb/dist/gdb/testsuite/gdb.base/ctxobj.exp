@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@ set executable ctxobj-m
 set libsrc [list "${srcdir}/${subdir}/ctxobj-v.c" \
                  "${srcdir}/${subdir}/ctxobj-f.c"]
 
-set libobj1 "${objdir}/${subdir}/libctxobj1.so"
-set libobj2 "${objdir}/${subdir}/libctxobj2.so"
+set libobj1 [standard_output_file libctxobj1.so]
+set libobj2 [standard_output_file libctxobj2.so]
 
 set libobj1_opts { debug additional_flags=-fPIC
                    additional_flags=-DVERSION=104
@@ -47,7 +47,7 @@ if { [gdb_compile_shlib $libsrc $libobj2 $libobj2_opts ] != "" } {
     return -1
 }
 if { [gdb_compile "${srcdir}/${subdir}/${executable}.c" \
-                  "${objdir}/${subdir}/${executable}" \
+                  [standard_output_file ${executable}] \
                   executable \
                   [list debug shlib=${libobj1} shlib=${libobj2}]]
      != ""} {

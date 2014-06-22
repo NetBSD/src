@@ -1,6 +1,6 @@
 /* Definitions for values of C expressions, for GDB.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -273,6 +273,11 @@ extern void set_value_lazy (struct value *value, int val);
 extern int value_stack (struct value *);
 extern void set_value_stack (struct value *value, int val);
 
+/* Throw an error complaining that the value has been optimized
+   out.  */
+
+extern void error_value_optimized_out (void);
+
 /* value_contents() and value_contents_raw() both return the address
    of the gdb buffer used to hold a copy of the contents of the lval.
    value_contents() is used when the contents of the buffer are needed
@@ -319,9 +324,15 @@ extern int value_fetch_lazy (struct value *val);
 extern int value_contents_equal (struct value *val1, struct value *val2);
 
 /* If nonzero, this is the value of a variable which does not actually
-   exist in the program.  */
+   exist in the program, at least partially.  If the value is lazy,
+   this may fetch it now.  */
 extern int value_optimized_out (struct value *value);
 extern void set_value_optimized_out (struct value *value, int val);
+
+/* Like value_optimized_out, but don't fetch the value even if it is
+   lazy.  Mainly useful for constructing other values using VALUE as
+   template.  */
+extern int value_optimized_out_const (const struct value *value);
 
 /* Like value_optimized_out, but return false if any bit in the object
    is valid.  */
@@ -425,15 +436,33 @@ extern int value_bits_synthetic_pointer (const struct value *value,
 extern int value_bytes_available (const struct value *value,
 				  int offset, int length);
 
+/* Given a value, determine whether the contents bits starting at
+   OFFSET and extending for LENGTH bits are available.  This returns
+   nonzero if all bits in the given range are available, zero if any
+   bit is unavailable.  */
+
+extern int value_bits_available (const struct value *value,
+				 int offset, int length);
+
 /* Like value_bytes_available, but return false if any byte in the
    whole object is unavailable.  */
 extern int value_entirely_available (struct value *value);
+
+/* Like value_entirely_available, but return false if any byte in the
+   whole object is available.  */
+extern int value_entirely_unavailable (struct value *value);
 
 /* Mark VALUE's content bytes starting at OFFSET and extending for
    LENGTH bytes as unavailable.  */
 
 extern void mark_value_bytes_unavailable (struct value *value,
 					  int offset, int length);
+
+/* Mark VALUE's content bits starting at OFFSET and extending for
+   LENGTH bits as unavailable.  */
+
+extern void mark_value_bits_unavailable (struct value *value,
+					 int offset, int length);
 
 /* Compare LENGTH bytes of VAL1's contents starting at OFFSET1 with
    LENGTH bytes of VAL2's contents starting at OFFSET2.
@@ -583,7 +612,6 @@ extern struct value *default_read_var_value (struct symbol *var,
 
 extern struct value *allocate_value (struct type *type);
 extern struct value *allocate_value_lazy (struct type *type);
-extern void allocate_value_contents (struct value *value);
 extern void value_contents_copy (struct value *dst, int dst_offset,
 				 struct value *src, int src_offset,
 				 int length);
@@ -641,6 +669,11 @@ extern struct value *value_struct_elt (struct value **argp,
 				       struct value **args,
 				       const char *name, int *static_memfuncp,
 				       const char *err);
+
+extern struct value *value_struct_elt_bitpos (struct value **argp,
+					      int bitpos,
+					      struct type *field_type,
+					      const char *err);
 
 extern struct value *value_aggregate_elt (struct type *curtype,
 					  char *name,
@@ -722,7 +755,8 @@ extern struct value *evaluate_subexpression_type (struct expression *exp,
 
 extern void fetch_subexp_value (struct expression *exp, int *pc,
 				struct value **valp, struct value **resultp,
-				struct value **val_chain);
+				struct value **val_chain,
+				int preserve_errors);
 
 extern char *extract_field_op (struct expression *exp, int *subexp);
 
@@ -737,7 +771,7 @@ extern struct type *parse_and_eval_type (char *p, int length);
 
 extern CORE_ADDR parse_and_eval_address (const char *exp);
 
-extern LONGEST parse_and_eval_long (char *exp);
+extern LONGEST parse_and_eval_long (const char *exp);
 
 extern void unop_promote (const struct language_defn *language,
 			  struct gdbarch *gdbarch,
@@ -806,10 +840,9 @@ struct internalvar_funcs
   void (*destroy) (void *data);
 };
 
-extern struct internalvar *
-create_internalvar_type_lazy (const char *name,
-			      const struct internalvar_funcs *funcs,
-			      void *data);
+extern struct internalvar *create_internalvar_type_lazy (const char *name,
+				const struct internalvar_funcs *funcs,
+				void *data);
 
 /* Compile an internal variable to an agent expression.  VAR is the
    variable to compile; EXPR and VALUE are the agent expression we are
@@ -899,7 +932,7 @@ extern void value_print (struct value *val, struct ui_file *stream,
 
 extern void value_print_array_elements (struct value *val,
 					struct ui_file *stream, int format,
-					enum val_prettyprint pretty);
+					enum val_prettyformat pretty);
 
 extern struct value *value_release_to_mark (struct value *mark);
 

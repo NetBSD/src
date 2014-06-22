@@ -1,4 +1,4 @@
-# Copyright 1998-2013 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if { [prepare_for_testing relational.exp relational int-type.c {debug nowarnings
 }
 
 if [get_compiler_info] {
-    return -1;
+    return -1
 }
 
 #

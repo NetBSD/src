@@ -1,4 +1,4 @@
-# Copyright 2008-2013 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # This file tests setting breakpoints according to the full path of a
 # source file.
 
-set testfile "fullname"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 # We rely on being able to copy things around.
 
@@ -30,13 +28,13 @@ if { [is_remote host] } {
 # Create a temporary file in the build directory.  Use a different
 # filename in case ${srcdir} == ${objdir}.
 if { [catch {file copy -force ${srcdir}/${subdir}/${srcfile} \
-			      ${objdir}/${subdir}/tmp-${srcfile}}] != 0 } {
+			      [standard_output_file tmp-${srcfile}]}] != 0 } {
     error "Could not create temporary file"
     return -1
 }
 
 # Build the test executable using an absolute path.
-if  { [gdb_compile "${objdir}/${subdir}/tmp-${srcfile}" "${binfile}" executable {debug}] != "" } {
+if  { [gdb_compile [standard_output_file tmp-${srcfile}] "${binfile}" executable {debug}] != "" } {
     return -1
 }
 
@@ -55,7 +53,7 @@ gdb_start
 gdb_load ${binfile}
 
 set msg "set breakpoint by full path before loading symbols - built absolute"
-if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
+if { [gdb_breakpoint [standard_output_file tmp-${srcfile}]:${line} {no-message}] != 0 } {
     pass $msg
 } else {
     fail $msg
@@ -65,14 +63,15 @@ gdb_test "break main" \
 	 "Breakpoint.*at.*line.*" "set breakpoint at main - built absolute"
 
 set msg "set breakpoint by full path after loading symbols - built absolute"
-if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
+if { [gdb_breakpoint [standard_output_file tmp-${srcfile}]:${line} {no-message}] != 0 } {
     pass $msg
 } else {
     fail $msg
 }
 
 # Build the test executable using a relative path.
-if  { [gdb_compile "${subdir}/tmp-${srcfile}" "${binfile}" executable {debug}] != "" } {
+if  { [gdb_compile [relative_filename [pwd] [standard_output_file tmp-${srcfile}]] \
+	   "${binfile}" executable {debug}] != "" } {
     return -1
 }
 
@@ -81,7 +80,7 @@ gdb_start
 gdb_load ${binfile}
 
 set msg "set breakpoint by full path before loading symbols - built relative"
-if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
+if { [gdb_breakpoint [standard_output_file tmp-${srcfile}]:${line} {no-message}] != 0 } {
     pass $msg
 } else {
     fail $msg
@@ -91,7 +90,7 @@ gdb_test "break main" \
 	 "Breakpoint.*at.*line.*" "set breakpoint at main - built relative"
 
 set msg "set breakpoint by full path after loading symbols - built relative"
-if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
+if { [gdb_breakpoint [standard_output_file tmp-${srcfile}]:${line} {no-message}] != 0 } {
     pass $msg
 } else {
     fail $msg
@@ -101,8 +100,9 @@ if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] !=
 # we'll run GDB from.
 
 set save_pwd [pwd]
-cd ${subdir}
-if  { [gdb_compile "tmp-${srcfile}" "${testfile}" executable {debug}] != "" } {
+cd [standard_output_file {}]
+if  { [gdb_compile [standard_output_file tmp-${srcfile}] "${testfile}" \
+	   executable {debug}] != "" } {
     cd $save_pwd
     return -1
 }
@@ -113,7 +113,7 @@ gdb_start
 gdb_load ${binfile}
 
 set msg "set breakpoint by full path before loading symbols - built other"
-if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
+if { [gdb_breakpoint [standard_output_file tmp-${srcfile}]:${line} {no-message}] != 0 } {
     pass $msg
 } else {
     fail $msg
@@ -123,7 +123,7 @@ gdb_test "break main" \
 	 "Breakpoint.*at.*line.*" "set breakpoint at main - built other"
 
 set msg "set breakpoint by full path after loading symbols - built other"
-if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
+if { [gdb_breakpoint [standard_output_file tmp-${srcfile}]:${line} {no-message}] != 0 } {
     pass $msg
 } else {
     fail $msg

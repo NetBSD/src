@@ -1,5 +1,5 @@
 /* Agent expression code for remote server.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 #include "server.h"
 #include "ax.h"
 #include "format.h"
+#include "tracepoint.h"
 
 static void ax_vdebug (const char *, ...) ATTRIBUTE_PRINTF (1, 2);
 
@@ -1162,7 +1163,7 @@ gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
 	    int regnum = arg;
 	    struct regcache *regcache = ctx->regcache;
 
-	    switch (register_size (regnum))
+	    switch (register_size (regcache->tdesc, regnum))
 	      {
 	      case 8:
 		collect_register (regcache, regnum, cnv.u64.bytes);

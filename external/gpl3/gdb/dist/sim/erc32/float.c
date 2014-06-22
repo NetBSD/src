@@ -36,9 +36,9 @@
 
 /* Forward declarations */
 
-extern uint32	_get_sw PARAMS ((void));
-extern uint32	_get_cw PARAMS ((void));
-static void	__setfpucw PARAMS ((unsigned short fpu_control));
+extern uint32	_get_sw (void);
+extern uint32	_get_cw (void);
+static void	__setfpucw (unsigned short fpu_control);
 
 /* This host dependent routine should return the accrued exceptions */
 int
@@ -91,9 +91,16 @@ uint32 fsr;
      fsr >>= 30;
      switch (fsr) {
 	case 0: 
-	case 2: break;
-	case 1: fsr = 3;
-	case 3: fsr = 1;
+	case 2:
+	  break;
+
+	case 1:
+	  fsr = 3;
+	  break;
+
+	case 3:
+	  fsr = 1;
+	  break;
      }
      rawfsr = _get_cw();
      rawfsr |= (fsr << 10) | 0x3ff;

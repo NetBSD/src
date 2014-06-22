@@ -1,6 +1,6 @@
 /* ARM Symbian OS target support.
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,7 @@ arm_symbian_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   CORE_ADDR dest;
   gdb_byte buf[4];
 
-  if (!in_plt_section (pc, NULL))
+  if (!in_plt_section (pc))
     return 0;
 
   if (target_read_memory (pc, buf, 4) != 0)

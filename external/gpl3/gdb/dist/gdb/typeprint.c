@@ -1,6 +1,6 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@
 #include "language.h"
 #include "cp-abi.h"
 #include "typeprint.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "exceptions.h"
 #include "valprint.h"
 #include <errno.h>
@@ -684,9 +684,10 @@ _initialize_typeprint (void)
 
   c = add_com ("ptype", class_vars, ptype_command, _("\
 Print definition of type TYPE.\n\
-Usage: ptype[/FLAGS] TYPE-NAME | EXPRESSION\n\
-Argument may be a type name defined by typedef, or \"struct STRUCT-TAG\"\n\
-or \"class CLASS-NAME\" or \"union UNION-TAG\" or \"enum ENUM-TAG\".\n\
+Usage: ptype[/FLAGS] TYPE | EXPRESSION\n\
+Argument may be any type (for example a type name defined by typedef,\n\
+or \"struct STRUCT-TAG\" or \"class CLASS-NAME\" or \"union UNION-TAG\"\n\
+or \"enum ENUM-TAG\") or an expression.\n\
 The selected stack frame's lexical context is used to look up the name.\n\
 Contrary to \"whatis\", \"ptype\" always unrolls any typedefs.\n\
 \n\

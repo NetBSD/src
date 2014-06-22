@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2013 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ gdb_test "print flt" " = x=<42> y=<43>" \
 gdb_test "print ss" " = a=<a=<1> b=<$hex>> b=<a=<2> b=<$hex>>" \
     "print ss enabled #1"
 
-set num_pp 6
+set num_pp 7
 
 gdb_test "disable pretty-printer" \
     "$num_pp printers disabled.*0 of $num_pp printers enabled"
@@ -78,7 +78,7 @@ gdb_test "disable pretty-printer global lookup_function_lookup_test" \
     "1 printer disabled.*[expr $num_pp - 1] of $num_pp printers enabled"
 
 gdb_test "disable pretty-printer global pp-test;.*" \
-    "[expr $num_pp - 1] printers disabled.*0 of $num_pp printers enabled"
+    "[expr $num_pp - 2] printers disabled.*1 of $num_pp printers enabled"
 
 gdb_test "info pretty-printer global .*function" \
     {.*function_lookup_test \[disabled\].*}
@@ -93,13 +93,13 @@ gdb_test "print ss" " = {a = {a = 1, b = $hex}, b = {a = 2, b = $hex}}" \
     "print ss disabled"
 
 gdb_test "enable pretty-printer global lookup_function_lookup_test" \
-    "1 printer enabled.*1 of $num_pp printers enabled"
+    "1 printer enabled.*2 of $num_pp printers enabled"
 
 # This doesn't enable any printers because each subprinter in the collection
 # is still individually disabled.  But this is still needed, to enable the
 # collection itself.
 gdb_test "enable pretty-printer global pp-test" \
-    "0 printers enabled.*1 of $num_pp printers enabled"
+    "0 printers enabled.*2 of $num_pp printers enabled"
 
 gdb_test "enable pretty-printer global pp-test;.*ss.*" \
     "2 printers enabled.*[expr $num_pp - 3] of $num_pp printers enabled"

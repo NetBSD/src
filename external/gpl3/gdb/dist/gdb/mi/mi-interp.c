@@ -1,6 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "interps.h"
 #include "event-top.h"
 #include "event-loop.h"
@@ -43,7 +43,7 @@
 
 static void mi_execute_command_wrapper (const char *cmd);
 static void mi_execute_command_input_handler (char *cmd);
-static void mi_command_loop (int mi_version);
+static void mi_command_loop (void *data);
 
 /* These are hooks that we put in place while doing interpreter_exec
    so we can report interesting things that happened "behind the MI's
@@ -51,10 +51,6 @@ static void mi_command_loop (int mi_version);
 
 static int mi_interp_query_hook (const char *ctlstr, va_list ap)
   ATTRIBUTE_PRINTF (1, 0);
-
-static void mi3_command_loop (void);
-static void mi2_command_loop (void);
-static void mi1_command_loop (void);
 
 static void mi_insert_notify_hooks (void);
 static void mi_remove_notify_hooks (void);
@@ -169,7 +165,6 @@ mi_interpreter_resume (void *data)
      _intialize_event_loop.  */
   call_readline = gdb_readline2;
   input_handler = mi_execute_command_input_handler;
-  add_file_handler (input_fd, stdin_event_handler, 0);
   async_command_editing_p = 0;
   /* FIXME: This is a total hack for now.  PB's use of the MI
      implicitly relies on a bug in the async support which allows
@@ -193,16 +188,6 @@ mi_interpreter_resume (void *data)
   clear_interpreter_hooks ();
 
   deprecated_show_load_progress = mi_load_progress;
-
-  /* If we're _the_ interpreter, take control.  */
-  if (current_interp_named_p (INTERP_MI1))
-    deprecated_command_loop_hook = mi1_command_loop;
-  else if (current_interp_named_p (INTERP_MI2))
-    deprecated_command_loop_hook = mi2_command_loop;
-  else if (current_interp_named_p (INTERP_MI3))
-    deprecated_command_loop_hook = mi3_command_loop;
-  else
-    deprecated_command_loop_hook = mi2_command_loop;
 
   return 1;
 }
@@ -245,11 +230,6 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
   if (interp_to_use == NULL)
     error (_("-interpreter-exec: could not find interpreter \"%s\""),
 	   argv[0]);
-
-  if (!interp_exec_p (interp_to_use))
-    error (_("-interpreter-exec: interpreter \"%s\" "
-	     "does not support command execution"),
-	      argv[0]);
 
   /* Insert the MI out hooks, making sure to also call the
      interpreter's hooks if it has any.  */
@@ -323,25 +303,7 @@ mi_execute_command_input_handler (char *cmd)
 }
 
 static void
-mi1_command_loop (void)
-{
-  mi_command_loop (1);
-}
-
-static void
-mi2_command_loop (void)
-{
-  mi_command_loop (2);
-}
-
-static void
-mi3_command_loop (void)
-{
-  mi_command_loop (3);
-}
-
-static void
-mi_command_loop (int mi_version)
+mi_command_loop (void *data)
 {
   /* Turn off 8 bit strings in quoted output.  Any character with the
      high bit set is printed using C's octal format.  */
@@ -481,7 +443,7 @@ mi_on_normal_stop (struct bpstats *bs, int print_frame)
 	  get_last_target_status (&last_ptid, &last);
 	  bpstat_print (bs, last.kind);
 
-	  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC);
+	  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
 	  current_uiout = saved_uiout;
 	}
 
@@ -760,7 +722,7 @@ mi_on_resume (ptid_t ptid)
 			  current_token ? current_token : "");
     }
 
-  if (PIDGET (ptid) == -1)
+  if (ptid_get_pid (ptid) == -1)
     fprintf_unfiltered (raw_stdout, "*running,thread-id=\"all\"\n");
   else if (ptid_is_pid (ptid))
     {
@@ -997,7 +959,8 @@ _initialize_mi_interp (void)
       mi_interpreter_exec,	/* exec_proc */
       mi_interpreter_prompt_p,	/* prompt_proc_p */
       mi_ui_out, 		/* ui_out_proc */
-      mi_set_logging		/* set_logging_proc */
+      mi_set_logging,		/* set_logging_proc */
+      mi_command_loop		/* command_loop_proc */
     };
 
   /* The various interpreter levels.  */

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2013 Free Software Foundation, Inc.
+   Copyright 2008-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Keith Seitz.
 

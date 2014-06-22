@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,22 +27,22 @@ extern char *readline_line_completion_function (const char *text,
 						int matches);
 
 extern VEC (char_ptr) *noop_completer (struct cmd_list_element *,
-				       char *, char *);
+				       const char *, const char *);
 
 extern VEC (char_ptr) *filename_completer (struct cmd_list_element *,
-					   char *, char *);
+					   const char *, const char *);
 
 extern VEC (char_ptr) *expression_completer (struct cmd_list_element *,
-					     char *, char *);
+					     const char *, const char *);
 
 extern VEC (char_ptr) *location_completer (struct cmd_list_element *,
-					   char *, char *);
+					   const char *, const char *);
 
 extern VEC (char_ptr) *command_completer (struct cmd_list_element *,
-					  char *, char *);
+					  const char *, const char *);
 
 extern VEC (char_ptr) *signal_completer (struct cmd_list_element *,
-					 char *, char *);
+					 const char *, const char *);
 
 extern char *get_gdb_completer_quote_characters (void);
 
@@ -50,8 +50,9 @@ extern char *gdb_completion_word_break_characters (void);
 
 /* Exported to linespec.c */
 
-extern char *skip_quoted_chars (char *, char *, char *);
+extern const char *skip_quoted_chars (const char *, const char *,
+				      const char *);
 
-extern char *skip_quoted (char *);
+extern const char *skip_quoted (const char *);
 
 #endif /* defined (COMPLETER_H) */

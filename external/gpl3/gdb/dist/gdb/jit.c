@@ -1,6 +1,6 @@
 /* Handle JIT code generation in the inferior for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,7 @@
 #include "symtab.h"
 #include "target.h"
 #include "gdb-dlfcn.h"
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "exceptions.h"
 #include "gdb_bfd.h"
 
@@ -214,7 +214,7 @@ jit_reader_load_command (char *args, int from_tty)
   if (IS_ABSOLUTE_PATH (args))
     so_name = xstrdup (args);
   else
-    so_name = xstrprintf ("%s%s%s", SLASH_STRING, jit_reader_dir, args);
+    so_name = xstrprintf ("%s%s%s", jit_reader_dir, SLASH_STRING, args);
   prev_cleanup = make_cleanup (xfree, so_name);
 
   loaded_jit_reader = jit_reader_load (so_name);
@@ -665,7 +665,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 
   /* (begin, end) will contain the PC range this entire blockvector
      spans.  */
-  symtab->primary = 1;
+  set_symtab_primary (symtab, 1);
   BLOCKVECTOR_MAP (symtab->blockvector) = NULL;
   begin = stab->blocks->begin;
   end = stab->blocks->end;
@@ -679,8 +679,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
        i--, gdb_block_iter = gdb_block_iter->next)
     {
       struct block *new_block = allocate_block (&objfile->objfile_obstack);
-      struct symbol *block_name = obstack_alloc (&objfile->objfile_obstack,
-                                                 sizeof (struct symbol));
+      struct symbol *block_name = allocate_symbol (objfile);
       struct type *block_type = arch_type (get_objfile_arch (objfile),
 					   TYPE_CODE_VOID,
 					   1,
@@ -693,9 +692,8 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
       BLOCK_END (new_block) = (CORE_ADDR) gdb_block_iter->end;
 
       /* The name.  */
-      memset (block_name, 0, sizeof (struct symbol));
       SYMBOL_DOMAIN (block_name) = VAR_DOMAIN;
-      SYMBOL_CLASS (block_name) = LOC_BLOCK;
+      SYMBOL_ACLASS_INDEX (block_name) = LOC_BLOCK;
       SYMBOL_SYMTAB (block_name) = symtab;
       SYMBOL_TYPE (block_name) = lookup_function_type (block_type);
       SYMBOL_BLOCK_VALUE (block_name) = new_block;
@@ -787,12 +785,11 @@ jit_object_close_impl (struct gdb_symbol_callbacks *cb,
 
   priv_data = cb->priv_data;
 
-  objfile = allocate_objfile (NULL, 0);
-  objfile->gdbarch = target_gdbarch ();
+  objfile = allocate_objfile (NULL, "<< JIT compiled code >>",
+			      OBJF_NOT_FILENAME);
+  objfile->per_bfd->gdbarch = target_gdbarch ();
 
   terminate_minimal_symbol_table (objfile);
-
-  objfile->name = "<< JIT compiled code >>";
 
   j = NULL;
   for (i = obj->symtabs; i; i = j)
@@ -925,10 +922,12 @@ JITed symbol file is not an object file, ignoring it.\n"));
         sai->other[i].sectindex = sec->index;
         ++i;
       }
+  sai->num_sections = i;
 
   /* This call does not take ownership of SAI.  */
   make_cleanup_bfd_unref (nbfd);
-  objfile = symbol_file_add_from_bfd (nbfd, 0, sai, OBJF_SHARED, NULL);
+  objfile = symbol_file_add_from_bfd (nbfd, bfd_get_filename (nbfd), 0, sai,
+				      OBJF_SHARED | OBJF_NOT_FILENAME, NULL);
 
   do_cleanups (old_cleanups);
   add_objfile_entry (objfile, entry_addr);
@@ -1016,8 +1015,8 @@ static int
 jit_breakpoint_re_set_internal (struct gdbarch *gdbarch,
 				struct jit_program_space_data *ps_data)
 {
-  struct minimal_symbol *reg_symbol, *desc_symbol;
-  struct objfile *objf;
+  struct bound_minimal_symbol reg_symbol;
+  struct minimal_symbol *desc_symbol;
   struct jit_objfile_data *objf_data;
   CORE_ADDR addr;
 
@@ -1025,19 +1024,21 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch,
     {
       /* Lookup the registration symbol.  If it is missing, then we
 	 assume we are not attached to a JIT.  */
-      reg_symbol = lookup_minimal_symbol_and_objfile (jit_break_name, &objf);
-      if (reg_symbol == NULL || SYMBOL_VALUE_ADDRESS (reg_symbol) == 0)
+      reg_symbol = lookup_minimal_symbol_and_objfile (jit_break_name);
+      if (reg_symbol.minsym == NULL
+	  || SYMBOL_VALUE_ADDRESS (reg_symbol.minsym) == 0)
 	return 1;
 
-      desc_symbol = lookup_minimal_symbol (jit_descriptor_name, NULL, objf);
+      desc_symbol = lookup_minimal_symbol (jit_descriptor_name, NULL,
+					   reg_symbol.objfile);
       if (desc_symbol == NULL || SYMBOL_VALUE_ADDRESS (desc_symbol) == 0)
 	return 1;
 
-      objf_data = get_jit_objfile_data (objf);
-      objf_data->register_code = reg_symbol;
+      objf_data = get_jit_objfile_data (reg_symbol.objfile);
+      objf_data->register_code = reg_symbol.minsym;
       objf_data->descriptor = desc_symbol;
 
-      ps_data->objfile = objf;
+      ps_data->objfile = reg_symbol.objfile;
     }
   else
     objf_data = get_jit_objfile_data (ps_data->objfile);

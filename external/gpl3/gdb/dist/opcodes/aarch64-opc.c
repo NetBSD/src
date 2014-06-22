@@ -1063,7 +1063,8 @@ aarch64_logical_immediate_p (uint64_t value, int is32, aarch64_insn *encoding)
       /* Allow all zeros or all ones in top 32-bits, so that
 	 constant expressions like ~1 are permitted.  */
       if (value >> 32 != 0 && value >> 32 != 0xffffffff)
-	return 0xffffffff;
+	return FALSE;
+
       /* Replicate the 32 lower bits to the 32 upper bits.  */
       value &= 0xffffffff;
       value |= value << 32;
@@ -1118,6 +1119,15 @@ set_error (aarch64_operand_error *mismatch_detail,
   mismatch_detail->kind = kind;
   mismatch_detail->index = idx;
   mismatch_detail->error = error;
+}
+
+static inline void
+set_syntax_error (aarch64_operand_error *mismatch_detail, int idx,
+		  const char* error)
+{
+  if (mismatch_detail == NULL)
+    return;
+  set_error (mismatch_detail, AARCH64_OPDE_SYNTAX_ERROR, idx, error);
 }
 
 static inline void
@@ -1276,6 +1286,15 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	}
       break;
 
+    case AARCH64_OPND_CLASS_COND:
+      if (type == AARCH64_OPND_COND1
+	  && (opnds[idx].cond->value & 0xe) == 0xe)
+	{
+	  /* Not allow AL or NV.  */
+	  set_syntax_error (mismatch_detail, idx, NULL);
+	}
+      break;
+
     case AARCH64_OPND_CLASS_ADDRESS:
       /* Check writeback.  */
       switch (opcode->iclass)
@@ -1287,8 +1306,8 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	case ldst_unpriv:
 	  if (opnd->addr.writeback == 1)
 	    {
-	      set_other_error (mismatch_detail, idx,
-			       _("unexpected address writeback"));
+	      set_syntax_error (mismatch_detail, idx,
+				_("unexpected address writeback"));
 	      return 0;
 	    }
 	  break;
@@ -1298,8 +1317,8 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	case asisdlsop:
 	  if (opnd->addr.writeback == 0)
 	    {
-	      set_other_error (mismatch_detail, idx,
-			       _("address writeback expected"));
+	      set_syntax_error (mismatch_detail, idx,
+				_("address writeback expected"));
 	      return 0;
 	    }
 	  break;
@@ -1724,10 +1743,10 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	  assert (idx == 1);
 	  if (aarch64_get_qualifier_esize (opnds[0].qualifier) != 8)
 	    {
-	      /* uimm8 */
-	      if (!value_in_range_p (opnd->imm.value, 0, 255))
+	      /* uimm8 or simm8 */
+	      if (!value_in_range_p (opnd->imm.value, -128, 255))
 		{
-		  set_imm_out_of_range_error (mismatch_detail, idx, 0, 255);
+		  set_imm_out_of_range_error (mismatch_detail, idx, -128, 255);
 		  return 0;
 		}
 	    }
@@ -2514,6 +2533,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       break;
 
     case AARCH64_OPND_COND:
+    case AARCH64_OPND_COND1:
       snprintf (buf, size, "%s", opnd->cond->names[0]);
       break;
 
@@ -2596,7 +2616,8 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
 
     case AARCH64_OPND_SYSREG:
       for (i = 0; aarch64_sys_regs[i].name; ++i)
-	if (aarch64_sys_regs[i].value == opnd->sysreg)
+	if (aarch64_sys_regs[i].value == opnd->sysreg
+	    && ! aarch64_sys_reg_deprecated_p (&aarch64_sys_regs[i]))
 	  break;
       if (aarch64_sys_regs[i].name)
 	snprintf (buf, size, "%s", aarch64_sys_regs[i].name);
@@ -2673,326 +2694,337 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
 #define C14 14
 #define C15 15
 
+#ifdef F_DEPRECATED
+#undef F_DEPRECATED
+#endif
+#define F_DEPRECATED	0x1	/* Deprecated system register.  */
+
 /* TODO there are two more issues need to be resolved
    1. handle read-only and write-only system registers
    2. handle cpu-implementation-defined system registers.  */
-const struct aarch64_name_value_pair aarch64_sys_regs [] =
+const aarch64_sys_reg aarch64_sys_regs [] =
 {
-  { "spsr_el1",         CPEN_(0,C0,0)  }, /* = spsr_svc */
-  { "elr_el1",          CPEN_(0,C0,1)  },
-  { "sp_el0",           CPEN_(0,C1,0)  },
-  { "spsel",            CPEN_(0,C2,0)  },
-  { "daif",             CPEN_(3,C2,1)  },
-  { "currentel",        CPEN_(0,C2,2)  }, /* RO */
-  { "nzcv",             CPEN_(3,C2,0)  },
-  { "fpcr",             CPEN_(3,C4,0)  },
-  { "fpsr",             CPEN_(3,C4,1)  },
-  { "dspsr_el0",        CPEN_(3,C5,0)  },
-  { "dlr_el0",          CPEN_(3,C5,1)  },
-  { "spsr_el2",         CPEN_(4,C0,0)  }, /* = spsr_hyp */
-  { "elr_el2",          CPEN_(4,C0,1)  },
-  { "sp_el1",           CPEN_(4,C1,0)  },
-  { "spsr_irq",         CPEN_(4,C3,0)  },
-  { "spsr_abt",         CPEN_(4,C3,1)  },
-  { "spsr_und",         CPEN_(4,C3,2)  },
-  { "spsr_fiq",         CPEN_(4,C3,3)  },
-  { "spsr_el3",         CPEN_(6,C0,0)  },
-  { "elr_el3",          CPEN_(6,C0,1)  },
-  { "sp_el2",           CPEN_(6,C1,0)  },
-  { "spsr_svc",         CPEN_(0,C0,0)  }, /* = spsr_el1 */
-  { "spsr_hyp",         CPEN_(4,C0,0)  }, /* = spsr_el2 */
-  { "midr_el1",         CPENC(3,0,C0,C0,0)  }, /* RO */
-  { "ctr_el0",          CPENC(3,3,C0,C0,1)  }, /* RO */
-  { "mpidr_el1",        CPENC(3,0,C0,C0,5)  }, /* RO */
-  { "revidr_el1",       CPENC(3,0,C0,C0,6)  }, /* RO */
-  { "aidr_el1",         CPENC(3,1,C0,C0,7)  }, /* RO */
-  { "dczid_el0",        CPENC(3,3,C0,C0,7)  }, /* RO */
-  { "id_dfr0_el1",      CPENC(3,0,C0,C1,2)  }, /* RO */
-  { "id_pfr0_el1",      CPENC(3,0,C0,C1,0)  }, /* RO */
-  { "id_pfr1_el1",      CPENC(3,0,C0,C1,1)  }, /* RO */
-  { "id_afr0_el1",      CPENC(3,0,C0,C1,3)  }, /* RO */
-  { "id_mmfr0_el1",     CPENC(3,0,C0,C1,4)  }, /* RO */
-  { "id_mmfr1_el1",     CPENC(3,0,C0,C1,5)  }, /* RO */
-  { "id_mmfr2_el1",     CPENC(3,0,C0,C1,6)  }, /* RO */
-  { "id_mmfr3_el1",     CPENC(3,0,C0,C1,7)  }, /* RO */
-  { "id_isar0_el1",     CPENC(3,0,C0,C2,0)  }, /* RO */
-  { "id_isar1_el1",     CPENC(3,0,C0,C2,1)  }, /* RO */
-  { "id_isar2_el1",     CPENC(3,0,C0,C2,2)  }, /* RO */
-  { "id_isar3_el1",     CPENC(3,0,C0,C2,3)  }, /* RO */
-  { "id_isar4_el1",     CPENC(3,0,C0,C2,4)  }, /* RO */
-  { "id_isar5_el1",     CPENC(3,0,C0,C2,5)  }, /* RO */
-  { "mvfr0_el1",        CPENC(3,0,C0,C3,0)  }, /* RO */
-  { "mvfr1_el1",        CPENC(3,0,C0,C3,1)  }, /* RO */
-  { "mvfr2_el1",        CPENC(3,0,C0,C3,2)  }, /* RO */
-  { "ccsidr_el1",       CPENC(3,1,C0,C0,0)  }, /* RO */
-  { "id_aa64pfr0_el1",  CPENC(3,0,C0,C4,0)  }, /* RO */
-  { "id_aa64pfr1_el1",  CPENC(3,0,C0,C4,1)  }, /* RO */
-  { "id_aa64dfr0_el1",  CPENC(3,0,C0,C5,0)  }, /* RO */
-  { "id_aa64dfr1_el1",  CPENC(3,0,C0,C5,1)  }, /* RO */
-  { "id_aa64isar0_el1", CPENC(3,0,C0,C6,0)  }, /* RO */
-  { "id_aa64isar1_el1", CPENC(3,0,C0,C6,1)  }, /* RO */
-  { "id_aa64mmfr0_el1", CPENC(3,0,C0,C7,0)  }, /* RO */
-  { "id_aa64mmfr1_el1", CPENC(3,0,C0,C7,1)  }, /* RO */
-  { "id_aa64afr0_el1",  CPENC(3,0,C0,C5,4)  }, /* RO */
-  { "id_aa64afr1_el1",  CPENC(3,0,C0,C5,5)  }, /* RO */
-  { "clidr_el1",        CPENC(3,1,C0,C0,1)  }, /* RO */
-  { "csselr_el1",       CPENC(3,2,C0,C0,0)  }, /* RO */
-  { "vpidr_el2",        CPENC(3,4,C0,C0,0)  },
-  { "vmpidr_el2",       CPENC(3,4,C0,C0,5)  },
-  { "sctlr_el1",        CPENC(3,0,C1,C0,0)  },
-  { "sctlr_el2",        CPENC(3,4,C1,C0,0)  },
-  { "sctlr_el3",        CPENC(3,6,C1,C0,0)  },
-  { "actlr_el1",        CPENC(3,0,C1,C0,1)  },
-  { "actlr_el2",        CPENC(3,4,C1,C0,1)  },
-  { "actlr_el3",        CPENC(3,6,C1,C0,1)  },
-  { "cpacr_el1",        CPENC(3,0,C1,C0,2)  },
-  { "cptr_el2",         CPENC(3,4,C1,C1,2)  },
-  { "cptr_el3",         CPENC(3,6,C1,C1,2)  },
-  { "scr_el3",          CPENC(3,6,C1,C1,0)  },
-  { "hcr_el2",          CPENC(3,4,C1,C1,0)  },
-  { "mdcr_el2",         CPENC(3,4,C1,C1,1)  },
-  { "mdcr_el3",         CPENC(3,6,C1,C3,1)  },
-  { "hstr_el2",         CPENC(3,4,C1,C1,3)  },
-  { "hacr_el2",         CPENC(3,4,C1,C1,7)  },
-  { "ttbr0_el1",        CPENC(3,0,C2,C0,0)  },
-  { "ttbr1_el1",        CPENC(3,0,C2,C0,1)  },
-  { "ttbr0_el2",        CPENC(3,4,C2,C0,0)  },
-  { "ttbr0_el3",        CPENC(3,6,C2,C0,0)  },
-  { "vttbr_el2",        CPENC(3,4,C2,C1,0)  },
-  { "tcr_el1",          CPENC(3,0,C2,C0,2)  },
-  { "tcr_el2",          CPENC(3,4,C2,C0,2)  },
-  { "tcr_el3",          CPENC(3,6,C2,C0,2)  },
-  { "vtcr_el2",         CPENC(3,4,C2,C1,2)  },
-  { "afsr0_el1",        CPENC(3,0,C5,C1,0)  },
-  { "afsr1_el1",        CPENC(3,0,C5,C1,1)  },
-  { "afsr0_el2",        CPENC(3,4,C5,C1,0)  },
-  { "afsr1_el2",        CPENC(3,4,C5,C1,1)  },
-  { "afsr0_el3",        CPENC(3,6,C5,C1,0)  },
-  { "afsr1_el3",        CPENC(3,6,C5,C1,1)  },
-  { "esr_el1",          CPENC(3,0,C5,C2,0)  },
-  { "esr_el2",          CPENC(3,4,C5,C2,0)  },
-  { "esr_el3",          CPENC(3,6,C5,C2,0)  },
-  { "fpexc32_el2",      CPENC(3,4,C5,C3,0)  },
-  { "far_el1",          CPENC(3,0,C6,C0,0)  },
-  { "far_el2",          CPENC(3,4,C6,C0,0)  },
-  { "far_el3",          CPENC(3,6,C6,C0,0)  },
-  { "hpfar_el2",        CPENC(3,4,C6,C0,4)  },
-  { "par_el1",          CPENC(3,0,C7,C4,0)  },
-  { "mair_el1",         CPENC(3,0,C10,C2,0) },
-  { "mair_el2",         CPENC(3,4,C10,C2,0) },
-  { "mair_el3",         CPENC(3,6,C10,C2,0) },
-  { "amair_el1",        CPENC(3,0,C10,C3,0) },
-  { "amair_el2",        CPENC(3,4,C10,C3,0) },
-  { "amair_el3",        CPENC(3,6,C10,C3,0) },
-  { "vbar_el1",         CPENC(3,0,C12,C0,0) },
-  { "vbar_el2",         CPENC(3,4,C12,C0,0) },
-  { "vbar_el3",         CPENC(3,6,C12,C0,0) },
-  { "rvbar_el1",        CPENC(3,0,C12,C0,1) }, /* RO */
-  { "rvbar_el2",        CPENC(3,4,C12,C0,1) }, /* RO */
-  { "rvbar_el3",        CPENC(3,6,C12,C0,1) }, /* RO */
-  { "rmr_el1",          CPENC(3,0,C12,C0,2) },
-  { "rmr_el2",          CPENC(3,4,C12,C0,2) },
-  { "rmr_el3",          CPENC(3,6,C12,C0,2) },
-  { "isr_el1",          CPENC(3,0,C12,C1,0) }, /* RO */
-  { "contextidr_el1",   CPENC(3,0,C13,C0,1) },
-  { "tpidr_el0",        CPENC(3,3,C13,C0,2) },
-  { "tpidrro_el0",      CPENC(3,3,C13,C0,3) }, /* RO */
-  { "tpidr_el1",        CPENC(3,0,C13,C0,4) },
-  { "tpidr_el2",        CPENC(3,4,C13,C0,2) },
-  { "tpidr_el3",        CPENC(3,6,C13,C0,2) },
-  { "teecr32_el1",      CPENC(2,2,C0, C0,0) }, /* See section 3.9.7.1 */
-  { "cntfrq_el0",       CPENC(3,3,C14,C0,0) }, /* RO */
-  { "cntpct_el0",       CPENC(3,3,C14,C0,1) }, /* RO */
-  { "cntvct_el0",       CPENC(3,3,C14,C0,2) }, /* RO */
-  { "cntvoff_el2",      CPENC(3,4,C14,C0,3) },
-  { "cntkctl_el1",      CPENC(3,0,C14,C1,0) },
-  { "cnthctl_el2",      CPENC(3,4,C14,C1,0) },
-  { "cntp_tval_el0",    CPENC(3,3,C14,C2,0) },
-  { "cntp_ctl_el0",     CPENC(3,3,C14,C2,1) },
-  { "cntp_cval_el0",    CPENC(3,3,C14,C2,2) },
-  { "cntv_tval_el0",    CPENC(3,3,C14,C3,0) },
-  { "cntv_ctl_el0",     CPENC(3,3,C14,C3,1) },
-  { "cntv_cval_el0",    CPENC(3,3,C14,C3,2) },
-  { "cnthp_tval_el2",   CPENC(3,4,C14,C2,0) },
-  { "cnthp_ctl_el2",    CPENC(3,4,C14,C2,1) },
-  { "cnthp_cval_el2",   CPENC(3,4,C14,C2,2) },
-  { "cntps_tval_el1",   CPENC(3,7,C14,C2,0) },
-  { "cntps_ctl_el1",    CPENC(3,7,C14,C2,1) },
-  { "cntps_cval_el1",   CPENC(3,7,C14,C2,2) },
-  { "dacr32_el2",       CPENC(3,4,C3,C0,0)  },
-  { "ifsr32_el2",       CPENC(3,4,C5,C0,1)  },
-  { "teehbr32_el1",     CPENC(2,2,C1,C0,0)  },
-  { "sder32_el3",       CPENC(3,6,C1,C1,1)  },
-  { "mdscr_el1",         CPENC(2,0,C0, C2, 2) },
-  { "mdccsr_el0",        CPENC(2,3,C0, C1, 0) },  /* r */
-  { "mdccint_el1",       CPENC(2,0,C0, C2, 0) },
-  { "dbgdtr_el0",        CPENC(2,3,C0, C4, 0) },
-  { "dbgdtrrx_el0",      CPENC(2,3,C0, C5, 0) },  /* r */
-  { "dbgdtrtx_el0",      CPENC(2,3,C0, C5, 0) },  /* w */
-  { "osdtrrx_el1",       CPENC(2,0,C0, C0, 2) },  /* r */
-  { "osdtrtx_el1",       CPENC(2,0,C0, C3, 2) },  /* w */
-  { "oseccr_el1",        CPENC(2,0,C0, C6, 2) },
-  { "dbgvcr32_el2",      CPENC(2,4,C0, C7, 0) },
-  { "dbgbvr0_el1",       CPENC(2,0,C0, C0, 4) },
-  { "dbgbvr1_el1",       CPENC(2,0,C0, C1, 4) },
-  { "dbgbvr2_el1",       CPENC(2,0,C0, C2, 4) },
-  { "dbgbvr3_el1",       CPENC(2,0,C0, C3, 4) },
-  { "dbgbvr4_el1",       CPENC(2,0,C0, C4, 4) },
-  { "dbgbvr5_el1",       CPENC(2,0,C0, C5, 4) },
-  { "dbgbvr6_el1",       CPENC(2,0,C0, C6, 4) },
-  { "dbgbvr7_el1",       CPENC(2,0,C0, C7, 4) },
-  { "dbgbvr8_el1",       CPENC(2,0,C0, C8, 4) },
-  { "dbgbvr9_el1",       CPENC(2,0,C0, C9, 4) },
-  { "dbgbvr10_el1",      CPENC(2,0,C0, C10,4) },
-  { "dbgbvr11_el1",      CPENC(2,0,C0, C11,4) },
-  { "dbgbvr12_el1",      CPENC(2,0,C0, C12,4) },
-  { "dbgbvr13_el1",      CPENC(2,0,C0, C13,4) },
-  { "dbgbvr14_el1",      CPENC(2,0,C0, C14,4) },
-  { "dbgbvr15_el1",      CPENC(2,0,C0, C15,4) },
-  { "dbgbcr0_el1",       CPENC(2,0,C0, C0, 5) },
-  { "dbgbcr1_el1",       CPENC(2,0,C0, C1, 5) },
-  { "dbgbcr2_el1",       CPENC(2,0,C0, C2, 5) },
-  { "dbgbcr3_el1",       CPENC(2,0,C0, C3, 5) },
-  { "dbgbcr4_el1",       CPENC(2,0,C0, C4, 5) },
-  { "dbgbcr5_el1",       CPENC(2,0,C0, C5, 5) },
-  { "dbgbcr6_el1",       CPENC(2,0,C0, C6, 5) },
-  { "dbgbcr7_el1",       CPENC(2,0,C0, C7, 5) },
-  { "dbgbcr8_el1",       CPENC(2,0,C0, C8, 5) },
-  { "dbgbcr9_el1",       CPENC(2,0,C0, C9, 5) },
-  { "dbgbcr10_el1",      CPENC(2,0,C0, C10,5) },
-  { "dbgbcr11_el1",      CPENC(2,0,C0, C11,5) },
-  { "dbgbcr12_el1",      CPENC(2,0,C0, C12,5) },
-  { "dbgbcr13_el1",      CPENC(2,0,C0, C13,5) },
-  { "dbgbcr14_el1",      CPENC(2,0,C0, C14,5) },
-  { "dbgbcr15_el1",      CPENC(2,0,C0, C15,5) },
-  { "dbgwvr0_el1",       CPENC(2,0,C0, C0, 6) },
-  { "dbgwvr1_el1",       CPENC(2,0,C0, C1, 6) },
-  { "dbgwvr2_el1",       CPENC(2,0,C0, C2, 6) },
-  { "dbgwvr3_el1",       CPENC(2,0,C0, C3, 6) },
-  { "dbgwvr4_el1",       CPENC(2,0,C0, C4, 6) },
-  { "dbgwvr5_el1",       CPENC(2,0,C0, C5, 6) },
-  { "dbgwvr6_el1",       CPENC(2,0,C0, C6, 6) },
-  { "dbgwvr7_el1",       CPENC(2,0,C0, C7, 6) },
-  { "dbgwvr8_el1",       CPENC(2,0,C0, C8, 6) },
-  { "dbgwvr9_el1",       CPENC(2,0,C0, C9, 6) },
-  { "dbgwvr10_el1",      CPENC(2,0,C0, C10,6) },
-  { "dbgwvr11_el1",      CPENC(2,0,C0, C11,6) },
-  { "dbgwvr12_el1",      CPENC(2,0,C0, C12,6) },
-  { "dbgwvr13_el1",      CPENC(2,0,C0, C13,6) },
-  { "dbgwvr14_el1",      CPENC(2,0,C0, C14,6) },
-  { "dbgwvr15_el1",      CPENC(2,0,C0, C15,6) },
-  { "dbgwcr0_el1",       CPENC(2,0,C0, C0, 7) },
-  { "dbgwcr1_el1",       CPENC(2,0,C0, C1, 7) },
-  { "dbgwcr2_el1",       CPENC(2,0,C0, C2, 7) },
-  { "dbgwcr3_el1",       CPENC(2,0,C0, C3, 7) },
-  { "dbgwcr4_el1",       CPENC(2,0,C0, C4, 7) },
-  { "dbgwcr5_el1",       CPENC(2,0,C0, C5, 7) },
-  { "dbgwcr6_el1",       CPENC(2,0,C0, C6, 7) },
-  { "dbgwcr7_el1",       CPENC(2,0,C0, C7, 7) },
-  { "dbgwcr8_el1",       CPENC(2,0,C0, C8, 7) },
-  { "dbgwcr9_el1",       CPENC(2,0,C0, C9, 7) },
-  { "dbgwcr10_el1",      CPENC(2,0,C0, C10,7) },
-  { "dbgwcr11_el1",      CPENC(2,0,C0, C11,7) },
-  { "dbgwcr12_el1",      CPENC(2,0,C0, C12,7) },
-  { "dbgwcr13_el1",      CPENC(2,0,C0, C13,7) },
-  { "dbgwcr14_el1",      CPENC(2,0,C0, C14,7) },
-  { "dbgwcr15_el1",      CPENC(2,0,C0, C15,7) },
-  { "mdrar_el1",         CPENC(2,0,C1, C0, 0) },  /* r */
-  { "oslar_el1",         CPENC(2,0,C1, C0, 4) },  /* w */
-  { "oslsr_el1",         CPENC(2,0,C1, C1, 4) },  /* r */
-  { "osdlr_el1",         CPENC(2,0,C1, C3, 4) },
-  { "dbgprcr_el1",       CPENC(2,0,C1, C4, 4) },
-  { "dbgclaimset_el1",   CPENC(2,0,C7, C8, 6) },
-  { "dbgclaimclr_el1",   CPENC(2,0,C7, C9, 6) },
-  { "dbgauthstatus_el1", CPENC(2,0,C7, C14,6) },  /* r */
+  { "spsr_el1",         CPEN_(0,C0,0),	0 }, /* = spsr_svc */
+  { "elr_el1",          CPEN_(0,C0,1),	0 },
+  { "sp_el0",           CPEN_(0,C1,0),	0 },
+  { "spsel",            CPEN_(0,C2,0),	0 },
+  { "daif",             CPEN_(3,C2,1),	0 },
+  { "currentel",        CPEN_(0,C2,2),	0 }, /* RO */
+  { "nzcv",             CPEN_(3,C2,0),	0 },
+  { "fpcr",             CPEN_(3,C4,0),	0 },
+  { "fpsr",             CPEN_(3,C4,1),	0 },
+  { "dspsr_el0",        CPEN_(3,C5,0),	0 },
+  { "dlr_el0",          CPEN_(3,C5,1),	0 },
+  { "spsr_el2",         CPEN_(4,C0,0),	0 }, /* = spsr_hyp */
+  { "elr_el2",          CPEN_(4,C0,1),	0 },
+  { "sp_el1",           CPEN_(4,C1,0),	0 },
+  { "spsr_irq",         CPEN_(4,C3,0),	0 },
+  { "spsr_abt",         CPEN_(4,C3,1),	0 },
+  { "spsr_und",         CPEN_(4,C3,2),	0 },
+  { "spsr_fiq",         CPEN_(4,C3,3),	0 },
+  { "spsr_el3",         CPEN_(6,C0,0),	0 },
+  { "elr_el3",          CPEN_(6,C0,1),	0 },
+  { "sp_el2",           CPEN_(6,C1,0),	0 },
+  { "spsr_svc",         CPEN_(0,C0,0),	F_DEPRECATED }, /* = spsr_el1 */
+  { "spsr_hyp",         CPEN_(4,C0,0),	F_DEPRECATED }, /* = spsr_el2 */
+  { "midr_el1",         CPENC(3,0,C0,C0,0),	0 }, /* RO */
+  { "ctr_el0",          CPENC(3,3,C0,C0,1),	0 }, /* RO */
+  { "mpidr_el1",        CPENC(3,0,C0,C0,5),	0 }, /* RO */
+  { "revidr_el1",       CPENC(3,0,C0,C0,6),	0 }, /* RO */
+  { "aidr_el1",         CPENC(3,1,C0,C0,7),	0 }, /* RO */
+  { "dczid_el0",        CPENC(3,3,C0,C0,7),	0 }, /* RO */
+  { "id_dfr0_el1",      CPENC(3,0,C0,C1,2),	0 }, /* RO */
+  { "id_pfr0_el1",      CPENC(3,0,C0,C1,0),	0 }, /* RO */
+  { "id_pfr1_el1",      CPENC(3,0,C0,C1,1),	0 }, /* RO */
+  { "id_afr0_el1",      CPENC(3,0,C0,C1,3),	0 }, /* RO */
+  { "id_mmfr0_el1",     CPENC(3,0,C0,C1,4),	0 }, /* RO */
+  { "id_mmfr1_el1",     CPENC(3,0,C0,C1,5),	0 }, /* RO */
+  { "id_mmfr2_el1",     CPENC(3,0,C0,C1,6),	0 }, /* RO */
+  { "id_mmfr3_el1",     CPENC(3,0,C0,C1,7),	0 }, /* RO */
+  { "id_isar0_el1",     CPENC(3,0,C0,C2,0),	0 }, /* RO */
+  { "id_isar1_el1",     CPENC(3,0,C0,C2,1),	0 }, /* RO */
+  { "id_isar2_el1",     CPENC(3,0,C0,C2,2),	0 }, /* RO */
+  { "id_isar3_el1",     CPENC(3,0,C0,C2,3),	0 }, /* RO */
+  { "id_isar4_el1",     CPENC(3,0,C0,C2,4),	0 }, /* RO */
+  { "id_isar5_el1",     CPENC(3,0,C0,C2,5),	0 }, /* RO */
+  { "mvfr0_el1",        CPENC(3,0,C0,C3,0),	0 }, /* RO */
+  { "mvfr1_el1",        CPENC(3,0,C0,C3,1),	0 }, /* RO */
+  { "mvfr2_el1",        CPENC(3,0,C0,C3,2),	0 }, /* RO */
+  { "ccsidr_el1",       CPENC(3,1,C0,C0,0),	0 }, /* RO */
+  { "id_aa64pfr0_el1",  CPENC(3,0,C0,C4,0),	0 }, /* RO */
+  { "id_aa64pfr1_el1",  CPENC(3,0,C0,C4,1),	0 }, /* RO */
+  { "id_aa64dfr0_el1",  CPENC(3,0,C0,C5,0),	0 }, /* RO */
+  { "id_aa64dfr1_el1",  CPENC(3,0,C0,C5,1),	0 }, /* RO */
+  { "id_aa64isar0_el1", CPENC(3,0,C0,C6,0),	0 }, /* RO */
+  { "id_aa64isar1_el1", CPENC(3,0,C0,C6,1),	0 }, /* RO */
+  { "id_aa64mmfr0_el1", CPENC(3,0,C0,C7,0),	0 }, /* RO */
+  { "id_aa64mmfr1_el1", CPENC(3,0,C0,C7,1),	0 }, /* RO */
+  { "id_aa64afr0_el1",  CPENC(3,0,C0,C5,4),	0 }, /* RO */
+  { "id_aa64afr1_el1",  CPENC(3,0,C0,C5,5),	0 }, /* RO */
+  { "clidr_el1",        CPENC(3,1,C0,C0,1),	0 }, /* RO */
+  { "csselr_el1",       CPENC(3,2,C0,C0,0),	0 }, /* RO */
+  { "vpidr_el2",        CPENC(3,4,C0,C0,0),	0 },
+  { "vmpidr_el2",       CPENC(3,4,C0,C0,5),	0 },
+  { "sctlr_el1",        CPENC(3,0,C1,C0,0),	0 },
+  { "sctlr_el2",        CPENC(3,4,C1,C0,0),	0 },
+  { "sctlr_el3",        CPENC(3,6,C1,C0,0),	0 },
+  { "actlr_el1",        CPENC(3,0,C1,C0,1),	0 },
+  { "actlr_el2",        CPENC(3,4,C1,C0,1),	0 },
+  { "actlr_el3",        CPENC(3,6,C1,C0,1),	0 },
+  { "cpacr_el1",        CPENC(3,0,C1,C0,2),	0 },
+  { "cptr_el2",         CPENC(3,4,C1,C1,2),	0 },
+  { "cptr_el3",         CPENC(3,6,C1,C1,2),	0 },
+  { "scr_el3",          CPENC(3,6,C1,C1,0),	0 },
+  { "hcr_el2",          CPENC(3,4,C1,C1,0),	0 },
+  { "mdcr_el2",         CPENC(3,4,C1,C1,1),	0 },
+  { "mdcr_el3",         CPENC(3,6,C1,C3,1),	0 },
+  { "hstr_el2",         CPENC(3,4,C1,C1,3),	0 },
+  { "hacr_el2",         CPENC(3,4,C1,C1,7),	0 },
+  { "ttbr0_el1",        CPENC(3,0,C2,C0,0),	0 },
+  { "ttbr1_el1",        CPENC(3,0,C2,C0,1),	0 },
+  { "ttbr0_el2",        CPENC(3,4,C2,C0,0),	0 },
+  { "ttbr0_el3",        CPENC(3,6,C2,C0,0),	0 },
+  { "vttbr_el2",        CPENC(3,4,C2,C1,0),	0 },
+  { "tcr_el1",          CPENC(3,0,C2,C0,2),	0 },
+  { "tcr_el2",          CPENC(3,4,C2,C0,2),	0 },
+  { "tcr_el3",          CPENC(3,6,C2,C0,2),	0 },
+  { "vtcr_el2",         CPENC(3,4,C2,C1,2),	0 },
+  { "afsr0_el1",        CPENC(3,0,C5,C1,0),	0 },
+  { "afsr1_el1",        CPENC(3,0,C5,C1,1),	0 },
+  { "afsr0_el2",        CPENC(3,4,C5,C1,0),	0 },
+  { "afsr1_el2",        CPENC(3,4,C5,C1,1),	0 },
+  { "afsr0_el3",        CPENC(3,6,C5,C1,0),	0 },
+  { "afsr1_el3",        CPENC(3,6,C5,C1,1),	0 },
+  { "esr_el1",          CPENC(3,0,C5,C2,0),	0 },
+  { "esr_el2",          CPENC(3,4,C5,C2,0),	0 },
+  { "esr_el3",          CPENC(3,6,C5,C2,0),	0 },
+  { "fpexc32_el2",      CPENC(3,4,C5,C3,0),	0 },
+  { "far_el1",          CPENC(3,0,C6,C0,0),	0 },
+  { "far_el2",          CPENC(3,4,C6,C0,0),	0 },
+  { "far_el3",          CPENC(3,6,C6,C0,0),	0 },
+  { "hpfar_el2",        CPENC(3,4,C6,C0,4),	0 },
+  { "par_el1",          CPENC(3,0,C7,C4,0),	0 },
+  { "mair_el1",         CPENC(3,0,C10,C2,0),	0 },
+  { "mair_el2",         CPENC(3,4,C10,C2,0),	0 },
+  { "mair_el3",         CPENC(3,6,C10,C2,0),	0 },
+  { "amair_el1",        CPENC(3,0,C10,C3,0),	0 },
+  { "amair_el2",        CPENC(3,4,C10,C3,0),	0 },
+  { "amair_el3",        CPENC(3,6,C10,C3,0),	0 },
+  { "vbar_el1",         CPENC(3,0,C12,C0,0),	0 },
+  { "vbar_el2",         CPENC(3,4,C12,C0,0),	0 },
+  { "vbar_el3",         CPENC(3,6,C12,C0,0),	0 },
+  { "rvbar_el1",        CPENC(3,0,C12,C0,1),	0 }, /* RO */
+  { "rvbar_el2",        CPENC(3,4,C12,C0,1),	0 }, /* RO */
+  { "rvbar_el3",        CPENC(3,6,C12,C0,1),	0 }, /* RO */
+  { "rmr_el1",          CPENC(3,0,C12,C0,2),	0 },
+  { "rmr_el2",          CPENC(3,4,C12,C0,2),	0 },
+  { "rmr_el3",          CPENC(3,6,C12,C0,2),	0 },
+  { "isr_el1",          CPENC(3,0,C12,C1,0),	0 }, /* RO */
+  { "contextidr_el1",   CPENC(3,0,C13,C0,1),	0 },
+  { "tpidr_el0",        CPENC(3,3,C13,C0,2),	0 },
+  { "tpidrro_el0",      CPENC(3,3,C13,C0,3),	0 }, /* RO */
+  { "tpidr_el1",        CPENC(3,0,C13,C0,4),	0 },
+  { "tpidr_el2",        CPENC(3,4,C13,C0,2),	0 },
+  { "tpidr_el3",        CPENC(3,6,C13,C0,2),	0 },
+  { "teecr32_el1",      CPENC(2,2,C0, C0,0),	0 }, /* See section 3.9.7.1 */
+  { "cntfrq_el0",       CPENC(3,3,C14,C0,0),	0 }, /* RO */
+  { "cntpct_el0",       CPENC(3,3,C14,C0,1),	0 }, /* RO */
+  { "cntvct_el0",       CPENC(3,3,C14,C0,2),	0 }, /* RO */
+  { "cntvoff_el2",      CPENC(3,4,C14,C0,3),	0 },
+  { "cntkctl_el1",      CPENC(3,0,C14,C1,0),	0 },
+  { "cnthctl_el2",      CPENC(3,4,C14,C1,0),	0 },
+  { "cntp_tval_el0",    CPENC(3,3,C14,C2,0),	0 },
+  { "cntp_ctl_el0",     CPENC(3,3,C14,C2,1),	0 },
+  { "cntp_cval_el0",    CPENC(3,3,C14,C2,2),	0 },
+  { "cntv_tval_el0",    CPENC(3,3,C14,C3,0),	0 },
+  { "cntv_ctl_el0",     CPENC(3,3,C14,C3,1),	0 },
+  { "cntv_cval_el0",    CPENC(3,3,C14,C3,2),	0 },
+  { "cnthp_tval_el2",   CPENC(3,4,C14,C2,0),	0 },
+  { "cnthp_ctl_el2",    CPENC(3,4,C14,C2,1),	0 },
+  { "cnthp_cval_el2",   CPENC(3,4,C14,C2,2),	0 },
+  { "cntps_tval_el1",   CPENC(3,7,C14,C2,0),	0 },
+  { "cntps_ctl_el1",    CPENC(3,7,C14,C2,1),	0 },
+  { "cntps_cval_el1",   CPENC(3,7,C14,C2,2),	0 },
+  { "dacr32_el2",       CPENC(3,4,C3,C0,0),	0 },
+  { "ifsr32_el2",       CPENC(3,4,C5,C0,1),	0 },
+  { "teehbr32_el1",     CPENC(2,2,C1,C0,0),	0 },
+  { "sder32_el3",       CPENC(3,6,C1,C1,1),	0 },
+  { "mdscr_el1",         CPENC(2,0,C0, C2, 2),	0 },
+  { "mdccsr_el0",        CPENC(2,3,C0, C1, 0),	0 },  /* r */
+  { "mdccint_el1",       CPENC(2,0,C0, C2, 0),	0 },
+  { "dbgdtr_el0",        CPENC(2,3,C0, C4, 0),	0 },
+  { "dbgdtrrx_el0",      CPENC(2,3,C0, C5, 0),	0 },  /* r */
+  { "dbgdtrtx_el0",      CPENC(2,3,C0, C5, 0),	0 },  /* w */
+  { "osdtrrx_el1",       CPENC(2,0,C0, C0, 2),	0 },  /* r */
+  { "osdtrtx_el1",       CPENC(2,0,C0, C3, 2),	0 },  /* w */
+  { "oseccr_el1",        CPENC(2,0,C0, C6, 2),	0 },
+  { "dbgvcr32_el2",      CPENC(2,4,C0, C7, 0),	0 },
+  { "dbgbvr0_el1",       CPENC(2,0,C0, C0, 4),	0 },
+  { "dbgbvr1_el1",       CPENC(2,0,C0, C1, 4),	0 },
+  { "dbgbvr2_el1",       CPENC(2,0,C0, C2, 4),	0 },
+  { "dbgbvr3_el1",       CPENC(2,0,C0, C3, 4),	0 },
+  { "dbgbvr4_el1",       CPENC(2,0,C0, C4, 4),	0 },
+  { "dbgbvr5_el1",       CPENC(2,0,C0, C5, 4),	0 },
+  { "dbgbvr6_el1",       CPENC(2,0,C0, C6, 4),	0 },
+  { "dbgbvr7_el1",       CPENC(2,0,C0, C7, 4),	0 },
+  { "dbgbvr8_el1",       CPENC(2,0,C0, C8, 4),	0 },
+  { "dbgbvr9_el1",       CPENC(2,0,C0, C9, 4),	0 },
+  { "dbgbvr10_el1",      CPENC(2,0,C0, C10,4),	0 },
+  { "dbgbvr11_el1",      CPENC(2,0,C0, C11,4),	0 },
+  { "dbgbvr12_el1",      CPENC(2,0,C0, C12,4),	0 },
+  { "dbgbvr13_el1",      CPENC(2,0,C0, C13,4),	0 },
+  { "dbgbvr14_el1",      CPENC(2,0,C0, C14,4),	0 },
+  { "dbgbvr15_el1",      CPENC(2,0,C0, C15,4),	0 },
+  { "dbgbcr0_el1",       CPENC(2,0,C0, C0, 5),	0 },
+  { "dbgbcr1_el1",       CPENC(2,0,C0, C1, 5),	0 },
+  { "dbgbcr2_el1",       CPENC(2,0,C0, C2, 5),	0 },
+  { "dbgbcr3_el1",       CPENC(2,0,C0, C3, 5),	0 },
+  { "dbgbcr4_el1",       CPENC(2,0,C0, C4, 5),	0 },
+  { "dbgbcr5_el1",       CPENC(2,0,C0, C5, 5),	0 },
+  { "dbgbcr6_el1",       CPENC(2,0,C0, C6, 5),	0 },
+  { "dbgbcr7_el1",       CPENC(2,0,C0, C7, 5),	0 },
+  { "dbgbcr8_el1",       CPENC(2,0,C0, C8, 5),	0 },
+  { "dbgbcr9_el1",       CPENC(2,0,C0, C9, 5),	0 },
+  { "dbgbcr10_el1",      CPENC(2,0,C0, C10,5),	0 },
+  { "dbgbcr11_el1",      CPENC(2,0,C0, C11,5),	0 },
+  { "dbgbcr12_el1",      CPENC(2,0,C0, C12,5),	0 },
+  { "dbgbcr13_el1",      CPENC(2,0,C0, C13,5),	0 },
+  { "dbgbcr14_el1",      CPENC(2,0,C0, C14,5),	0 },
+  { "dbgbcr15_el1",      CPENC(2,0,C0, C15,5),	0 },
+  { "dbgwvr0_el1",       CPENC(2,0,C0, C0, 6),	0 },
+  { "dbgwvr1_el1",       CPENC(2,0,C0, C1, 6),	0 },
+  { "dbgwvr2_el1",       CPENC(2,0,C0, C2, 6),	0 },
+  { "dbgwvr3_el1",       CPENC(2,0,C0, C3, 6),	0 },
+  { "dbgwvr4_el1",       CPENC(2,0,C0, C4, 6),	0 },
+  { "dbgwvr5_el1",       CPENC(2,0,C0, C5, 6),	0 },
+  { "dbgwvr6_el1",       CPENC(2,0,C0, C6, 6),	0 },
+  { "dbgwvr7_el1",       CPENC(2,0,C0, C7, 6),	0 },
+  { "dbgwvr8_el1",       CPENC(2,0,C0, C8, 6),	0 },
+  { "dbgwvr9_el1",       CPENC(2,0,C0, C9, 6),	0 },
+  { "dbgwvr10_el1",      CPENC(2,0,C0, C10,6),	0 },
+  { "dbgwvr11_el1",      CPENC(2,0,C0, C11,6),	0 },
+  { "dbgwvr12_el1",      CPENC(2,0,C0, C12,6),	0 },
+  { "dbgwvr13_el1",      CPENC(2,0,C0, C13,6),	0 },
+  { "dbgwvr14_el1",      CPENC(2,0,C0, C14,6),	0 },
+  { "dbgwvr15_el1",      CPENC(2,0,C0, C15,6),	0 },
+  { "dbgwcr0_el1",       CPENC(2,0,C0, C0, 7),	0 },
+  { "dbgwcr1_el1",       CPENC(2,0,C0, C1, 7),	0 },
+  { "dbgwcr2_el1",       CPENC(2,0,C0, C2, 7),	0 },
+  { "dbgwcr3_el1",       CPENC(2,0,C0, C3, 7),	0 },
+  { "dbgwcr4_el1",       CPENC(2,0,C0, C4, 7),	0 },
+  { "dbgwcr5_el1",       CPENC(2,0,C0, C5, 7),	0 },
+  { "dbgwcr6_el1",       CPENC(2,0,C0, C6, 7),	0 },
+  { "dbgwcr7_el1",       CPENC(2,0,C0, C7, 7),	0 },
+  { "dbgwcr8_el1",       CPENC(2,0,C0, C8, 7),	0 },
+  { "dbgwcr9_el1",       CPENC(2,0,C0, C9, 7),	0 },
+  { "dbgwcr10_el1",      CPENC(2,0,C0, C10,7),	0 },
+  { "dbgwcr11_el1",      CPENC(2,0,C0, C11,7),	0 },
+  { "dbgwcr12_el1",      CPENC(2,0,C0, C12,7),	0 },
+  { "dbgwcr13_el1",      CPENC(2,0,C0, C13,7),	0 },
+  { "dbgwcr14_el1",      CPENC(2,0,C0, C14,7),	0 },
+  { "dbgwcr15_el1",      CPENC(2,0,C0, C15,7),	0 },
+  { "mdrar_el1",         CPENC(2,0,C1, C0, 0),	0 },  /* r */
+  { "oslar_el1",         CPENC(2,0,C1, C0, 4),	0 },  /* w */
+  { "oslsr_el1",         CPENC(2,0,C1, C1, 4),	0 },  /* r */
+  { "osdlr_el1",         CPENC(2,0,C1, C3, 4),	0 },
+  { "dbgprcr_el1",       CPENC(2,0,C1, C4, 4),	0 },
+  { "dbgclaimset_el1",   CPENC(2,0,C7, C8, 6),	0 },
+  { "dbgclaimclr_el1",   CPENC(2,0,C7, C9, 6),	0 },
+  { "dbgauthstatus_el1", CPENC(2,0,C7, C14,6),	0 },  /* r */
 
-  { "pmcr_el0",          CPENC(3,3,C9,C12, 0) },
-  { "pmcntenset_el0",    CPENC(3,3,C9,C12, 1) },
-  { "pmcntenclr_el0",    CPENC(3,3,C9,C12, 2) },
-  { "pmovsclr_el0",      CPENC(3,3,C9,C12, 3) },
-  { "pmswinc_el0",       CPENC(3,3,C9,C12, 4) },  /* w */
-  { "pmselr_el0",        CPENC(3,3,C9,C12, 5) },
-  { "pmceid0_el0",       CPENC(3,3,C9,C12, 6) },  /* r */
-  { "pmceid1_el0",       CPENC(3,3,C9,C12, 7) },  /* r */
-  { "pmccntr_el0",       CPENC(3,3,C9,C13, 0) },
-  { "pmxevtyper_el0",    CPENC(3,3,C9,C13, 1) },
-  { "pmxevcntr_el0",     CPENC(3,3,C9,C13, 2) },
-  { "pmuserenr_el0",     CPENC(3,3,C9,C14, 0) },
-  { "pmintenset_el1",    CPENC(3,0,C9,C14, 1) },
-  { "pmintenclr_el1",    CPENC(3,0,C9,C14, 2) },
-  { "pmovsset_el0",      CPENC(3,3,C9,C14, 3) },
-  { "pmevcntr0_el0",     CPENC(3,3,C14,C8, 0) },
-  { "pmevcntr1_el0",     CPENC(3,3,C14,C8, 1) },
-  { "pmevcntr2_el0",     CPENC(3,3,C14,C8, 2) },
-  { "pmevcntr3_el0",     CPENC(3,3,C14,C8, 3) },
-  { "pmevcntr4_el0",     CPENC(3,3,C14,C8, 4) },
-  { "pmevcntr5_el0",     CPENC(3,3,C14,C8, 5) },
-  { "pmevcntr6_el0",     CPENC(3,3,C14,C8, 6) },
-  { "pmevcntr7_el0",     CPENC(3,3,C14,C8, 7) },
-  { "pmevcntr8_el0",     CPENC(3,3,C14,C9, 0) },
-  { "pmevcntr9_el0",     CPENC(3,3,C14,C9, 1) },
-  { "pmevcntr10_el0",    CPENC(3,3,C14,C9, 2) },
-  { "pmevcntr11_el0",    CPENC(3,3,C14,C9, 3) },
-  { "pmevcntr12_el0",    CPENC(3,3,C14,C9, 4) },
-  { "pmevcntr13_el0",    CPENC(3,3,C14,C9, 5) },
-  { "pmevcntr14_el0",    CPENC(3,3,C14,C9, 6) },
-  { "pmevcntr15_el0",    CPENC(3,3,C14,C9, 7) },
-  { "pmevcntr16_el0",    CPENC(3,3,C14,C10,0) },
-  { "pmevcntr17_el0",    CPENC(3,3,C14,C10,1) },
-  { "pmevcntr18_el0",    CPENC(3,3,C14,C10,2) },
-  { "pmevcntr19_el0",    CPENC(3,3,C14,C10,3) },
-  { "pmevcntr20_el0",    CPENC(3,3,C14,C10,4) },
-  { "pmevcntr21_el0",    CPENC(3,3,C14,C10,5) },
-  { "pmevcntr22_el0",    CPENC(3,3,C14,C10,6) },
-  { "pmevcntr23_el0",    CPENC(3,3,C14,C10,7) },
-  { "pmevcntr24_el0",    CPENC(3,3,C14,C11,0) },
-  { "pmevcntr25_el0",    CPENC(3,3,C14,C11,1) },
-  { "pmevcntr26_el0",    CPENC(3,3,C14,C11,2) },
-  { "pmevcntr27_el0",    CPENC(3,3,C14,C11,3) },
-  { "pmevcntr28_el0",    CPENC(3,3,C14,C11,4) },
-  { "pmevcntr29_el0",    CPENC(3,3,C14,C11,5) },
-  { "pmevcntr30_el0",    CPENC(3,3,C14,C11,6) },
-  { "pmevtyper0_el0",    CPENC(3,3,C14,C12,0) },
-  { "pmevtyper1_el0",    CPENC(3,3,C14,C12,1) },
-  { "pmevtyper2_el0",    CPENC(3,3,C14,C12,2) },
-  { "pmevtyper3_el0",    CPENC(3,3,C14,C12,3) },
-  { "pmevtyper4_el0",    CPENC(3,3,C14,C12,4) },
-  { "pmevtyper5_el0",    CPENC(3,3,C14,C12,5) },
-  { "pmevtyper6_el0",    CPENC(3,3,C14,C12,6) },
-  { "pmevtyper7_el0",    CPENC(3,3,C14,C12,7) },
-  { "pmevtyper8_el0",    CPENC(3,3,C14,C13,0) },
-  { "pmevtyper9_el0",    CPENC(3,3,C14,C13,1) },
-  { "pmevtyper10_el0",   CPENC(3,3,C14,C13,2) },
-  { "pmevtyper11_el0",   CPENC(3,3,C14,C13,3) },
-  { "pmevtyper12_el0",   CPENC(3,3,C14,C13,4) },
-  { "pmevtyper13_el0",   CPENC(3,3,C14,C13,5) },
-  { "pmevtyper14_el0",   CPENC(3,3,C14,C13,6) },
-  { "pmevtyper15_el0",   CPENC(3,3,C14,C13,7) },
-  { "pmevtyper16_el0",   CPENC(3,3,C14,C14,0) },
-  { "pmevtyper17_el0",   CPENC(3,3,C14,C14,1) },
-  { "pmevtyper18_el0",   CPENC(3,3,C14,C14,2) },
-  { "pmevtyper19_el0",   CPENC(3,3,C14,C14,3) },
-  { "pmevtyper20_el0",   CPENC(3,3,C14,C14,4) },
-  { "pmevtyper21_el0",   CPENC(3,3,C14,C14,5) },
-  { "pmevtyper22_el0",   CPENC(3,3,C14,C14,6) },
-  { "pmevtyper23_el0",   CPENC(3,3,C14,C14,7) },
-  { "pmevtyper24_el0",   CPENC(3,3,C14,C15,0) },
-  { "pmevtyper25_el0",   CPENC(3,3,C14,C15,1) },
-  { "pmevtyper26_el0",   CPENC(3,3,C14,C15,2) },
-  { "pmevtyper27_el0",   CPENC(3,3,C14,C15,3) },
-  { "pmevtyper28_el0",   CPENC(3,3,C14,C15,4) },
-  { "pmevtyper29_el0",   CPENC(3,3,C14,C15,5) },
-  { "pmevtyper30_el0",   CPENC(3,3,C14,C15,6) },
-  { "pmccfiltr_el0",     CPENC(3,3,C14,C15,7) },
-  { 0,          CPENC(0,0,0,0,0)  },
+  { "pmcr_el0",          CPENC(3,3,C9,C12, 0),	0 },
+  { "pmcntenset_el0",    CPENC(3,3,C9,C12, 1),	0 },
+  { "pmcntenclr_el0",    CPENC(3,3,C9,C12, 2),	0 },
+  { "pmovsclr_el0",      CPENC(3,3,C9,C12, 3),	0 },
+  { "pmswinc_el0",       CPENC(3,3,C9,C12, 4),	0 },  /* w */
+  { "pmselr_el0",        CPENC(3,3,C9,C12, 5),	0 },
+  { "pmceid0_el0",       CPENC(3,3,C9,C12, 6),	0 },  /* r */
+  { "pmceid1_el0",       CPENC(3,3,C9,C12, 7),	0 },  /* r */
+  { "pmccntr_el0",       CPENC(3,3,C9,C13, 0),	0 },
+  { "pmxevtyper_el0",    CPENC(3,3,C9,C13, 1),	0 },
+  { "pmxevcntr_el0",     CPENC(3,3,C9,C13, 2),	0 },
+  { "pmuserenr_el0",     CPENC(3,3,C9,C14, 0),	0 },
+  { "pmintenset_el1",    CPENC(3,0,C9,C14, 1),	0 },
+  { "pmintenclr_el1",    CPENC(3,0,C9,C14, 2),	0 },
+  { "pmovsset_el0",      CPENC(3,3,C9,C14, 3),	0 },
+  { "pmevcntr0_el0",     CPENC(3,3,C14,C8, 0),	0 },
+  { "pmevcntr1_el0",     CPENC(3,3,C14,C8, 1),	0 },
+  { "pmevcntr2_el0",     CPENC(3,3,C14,C8, 2),	0 },
+  { "pmevcntr3_el0",     CPENC(3,3,C14,C8, 3),	0 },
+  { "pmevcntr4_el0",     CPENC(3,3,C14,C8, 4),	0 },
+  { "pmevcntr5_el0",     CPENC(3,3,C14,C8, 5),	0 },
+  { "pmevcntr6_el0",     CPENC(3,3,C14,C8, 6),	0 },
+  { "pmevcntr7_el0",     CPENC(3,3,C14,C8, 7),	0 },
+  { "pmevcntr8_el0",     CPENC(3,3,C14,C9, 0),	0 },
+  { "pmevcntr9_el0",     CPENC(3,3,C14,C9, 1),	0 },
+  { "pmevcntr10_el0",    CPENC(3,3,C14,C9, 2),	0 },
+  { "pmevcntr11_el0",    CPENC(3,3,C14,C9, 3),	0 },
+  { "pmevcntr12_el0",    CPENC(3,3,C14,C9, 4),	0 },
+  { "pmevcntr13_el0",    CPENC(3,3,C14,C9, 5),	0 },
+  { "pmevcntr14_el0",    CPENC(3,3,C14,C9, 6),	0 },
+  { "pmevcntr15_el0",    CPENC(3,3,C14,C9, 7),	0 },
+  { "pmevcntr16_el0",    CPENC(3,3,C14,C10,0),	0 },
+  { "pmevcntr17_el0",    CPENC(3,3,C14,C10,1),	0 },
+  { "pmevcntr18_el0",    CPENC(3,3,C14,C10,2),	0 },
+  { "pmevcntr19_el0",    CPENC(3,3,C14,C10,3),	0 },
+  { "pmevcntr20_el0",    CPENC(3,3,C14,C10,4),	0 },
+  { "pmevcntr21_el0",    CPENC(3,3,C14,C10,5),	0 },
+  { "pmevcntr22_el0",    CPENC(3,3,C14,C10,6),	0 },
+  { "pmevcntr23_el0",    CPENC(3,3,C14,C10,7),	0 },
+  { "pmevcntr24_el0",    CPENC(3,3,C14,C11,0),	0 },
+  { "pmevcntr25_el0",    CPENC(3,3,C14,C11,1),	0 },
+  { "pmevcntr26_el0",    CPENC(3,3,C14,C11,2),	0 },
+  { "pmevcntr27_el0",    CPENC(3,3,C14,C11,3),	0 },
+  { "pmevcntr28_el0",    CPENC(3,3,C14,C11,4),	0 },
+  { "pmevcntr29_el0",    CPENC(3,3,C14,C11,5),	0 },
+  { "pmevcntr30_el0",    CPENC(3,3,C14,C11,6),	0 },
+  { "pmevtyper0_el0",    CPENC(3,3,C14,C12,0),	0 },
+  { "pmevtyper1_el0",    CPENC(3,3,C14,C12,1),	0 },
+  { "pmevtyper2_el0",    CPENC(3,3,C14,C12,2),	0 },
+  { "pmevtyper3_el0",    CPENC(3,3,C14,C12,3),	0 },
+  { "pmevtyper4_el0",    CPENC(3,3,C14,C12,4),	0 },
+  { "pmevtyper5_el0",    CPENC(3,3,C14,C12,5),	0 },
+  { "pmevtyper6_el0",    CPENC(3,3,C14,C12,6),	0 },
+  { "pmevtyper7_el0",    CPENC(3,3,C14,C12,7),	0 },
+  { "pmevtyper8_el0",    CPENC(3,3,C14,C13,0),	0 },
+  { "pmevtyper9_el0",    CPENC(3,3,C14,C13,1),	0 },
+  { "pmevtyper10_el0",   CPENC(3,3,C14,C13,2),	0 },
+  { "pmevtyper11_el0",   CPENC(3,3,C14,C13,3),	0 },
+  { "pmevtyper12_el0",   CPENC(3,3,C14,C13,4),	0 },
+  { "pmevtyper13_el0",   CPENC(3,3,C14,C13,5),	0 },
+  { "pmevtyper14_el0",   CPENC(3,3,C14,C13,6),	0 },
+  { "pmevtyper15_el0",   CPENC(3,3,C14,C13,7),	0 },
+  { "pmevtyper16_el0",   CPENC(3,3,C14,C14,0),	0 },
+  { "pmevtyper17_el0",   CPENC(3,3,C14,C14,1),	0 },
+  { "pmevtyper18_el0",   CPENC(3,3,C14,C14,2),	0 },
+  { "pmevtyper19_el0",   CPENC(3,3,C14,C14,3),	0 },
+  { "pmevtyper20_el0",   CPENC(3,3,C14,C14,4),	0 },
+  { "pmevtyper21_el0",   CPENC(3,3,C14,C14,5),	0 },
+  { "pmevtyper22_el0",   CPENC(3,3,C14,C14,6),	0 },
+  { "pmevtyper23_el0",   CPENC(3,3,C14,C14,7),	0 },
+  { "pmevtyper24_el0",   CPENC(3,3,C14,C15,0),	0 },
+  { "pmevtyper25_el0",   CPENC(3,3,C14,C15,1),	0 },
+  { "pmevtyper26_el0",   CPENC(3,3,C14,C15,2),	0 },
+  { "pmevtyper27_el0",   CPENC(3,3,C14,C15,3),	0 },
+  { "pmevtyper28_el0",   CPENC(3,3,C14,C15,4),	0 },
+  { "pmevtyper29_el0",   CPENC(3,3,C14,C15,5),	0 },
+  { "pmevtyper30_el0",   CPENC(3,3,C14,C15,6),	0 },
+  { "pmccfiltr_el0",     CPENC(3,3,C14,C15,7),	0 },
+  { 0,          CPENC(0,0,0,0,0),	0 },
 };
 
-const struct aarch64_name_value_pair aarch64_pstatefields [] =
+bfd_boolean
+aarch64_sys_reg_deprecated_p (const aarch64_sys_reg *reg)
 {
-  { "spsel",            0x05  },
-  { "daifset",          0x1e  },
-  { "daifclr",          0x1f  },
-  { 0,          CPENC(0,0,0,0,0)  },
+  return (reg->flags & F_DEPRECATED) != 0;
+}
+
+const aarch64_sys_reg aarch64_pstatefields [] =
+{
+  { "spsel",            0x05,	0 },
+  { "daifset",          0x1e,	0 },
+  { "daifclr",          0x1f,	0 },
+  { 0,          CPENC(0,0,0,0,0), 0 },
 };
 
 const aarch64_sys_ins_reg aarch64_sys_regs_ic[] =

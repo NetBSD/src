@@ -1,7 +1,7 @@
 #!/bin/sh -u
 
 # Register protocol definitions for GDB, the GNU debugger.
-# Copyright (C) 2001-2013 Free Software Foundation, Inc.
+# Copyright (C) 2001-2014 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -121,6 +121,7 @@ exec > new-$2
 copyright $1
 echo '#include "server.h"'
 echo '#include "regdef.h"'
+echo '#include "tdesc.h"'
 echo
 offset=0
 i=0
@@ -134,7 +135,7 @@ while do_read
 do
   if test "${type}" = "name"; then
     name="${entry}"
-    echo "struct reg regs_${name}[] = {"
+    echo "static struct reg regs_${name}[] = {"
     continue
   elif test "${type}" = "xmltarget"; then
     xmltarget="${entry}"
@@ -160,12 +161,12 @@ done
 
 echo "};"
 echo
-echo "const char *expedite_regs_${name}[] = { \"`echo ${expedite} | sed 's/,/", "/g'`\", 0 };"
+echo "static const char *expedite_regs_${name}[] = { \"`echo ${expedite} | sed 's/,/", "/g'`\", 0 };"
 if test "${xmltarget}" = x; then
   if test "${xmlarch}" = x && test "${xmlosabi}" = x; then
-    echo "const char *xmltarget_${name} = 0;"
+    echo "static const char *xmltarget_${name} = 0;"
   else
-    echo "const char *xmltarget_${name} = \"@<target>\\"
+    echo "static const char *xmltarget_${name} = \"@<target>\\"
     if test "${xmlarch}" != x; then
       echo "<architecture>${xmlarch}</architecture>\\"
     fi
@@ -175,18 +176,27 @@ if test "${xmltarget}" = x; then
     echo "</target>\";"
   fi
 else
-  echo "const char *xmltarget_${name} = \"${xmltarget}\";"
+  echo "static const char *xmltarget_${name} = \"${xmltarget}\";"
 fi
 echo
 
 cat <<EOF
+const struct target_desc *tdesc_${name};
+
 void
-init_registers_${name} ()
+init_registers_${name} (void)
 {
-    set_register_cache (regs_${name},
-			sizeof (regs_${name}) / sizeof (regs_${name}[0]));
-    gdbserver_expedite_regs = expedite_regs_${name};
-    gdbserver_xmltarget = xmltarget_${name};
+  static struct target_desc tdesc_${name}_s;
+  struct target_desc *result = &tdesc_${name}_s;
+
+  result->reg_defs = regs_${name};
+  result->num_registers = sizeof (regs_${name}) / sizeof (regs_${name}[0]);
+  result->expedite_regs = expedite_regs_${name};
+  result->xmltarget = xmltarget_${name};
+
+  init_target_desc (result);
+
+  tdesc_${name} = result;
 }
 EOF
 

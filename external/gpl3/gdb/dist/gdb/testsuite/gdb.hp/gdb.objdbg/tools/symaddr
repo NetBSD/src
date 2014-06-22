@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 # Get the address of a symbol in Hex.
 # $1 = object/executable file name

@@ -1,6 +1,6 @@
 /* Definitions for frame unwinder, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -143,14 +143,18 @@ default_frame_sniffer (const struct frame_unwind *self,
   return 1;
 }
 
-/* A default frame unwinder stop_reason callback that always claims
-   the frame is unwindable.  */
+/* The default frame unwinder stop_reason callback.  */
 
 enum unwind_stop_reason
 default_frame_unwind_stop_reason (struct frame_info *this_frame,
 				  void **this_cache)
 {
-  return UNWIND_NO_REASON;
+  struct frame_id this_id = get_frame_id (this_frame);
+
+  if (frame_id_eq (this_id, outer_frame_id))
+    return UNWIND_OUTERMOST;
+  else
+    return UNWIND_NO_REASON;
 }
 
 /* Helper functions for value-based register unwinding.  These return
@@ -162,11 +166,18 @@ struct value *
 frame_unwind_got_optimized (struct frame_info *frame, int regnum)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
-  struct value *reg_val;
+  struct type *type = register_type (gdbarch, regnum);
+  struct value *val;
 
-  reg_val = value_zero (register_type (gdbarch, regnum), not_lval);
-  set_value_optimized_out (reg_val, 1);
-  return reg_val;
+  /* Return an lval_register value, so that we print it as
+     "<not saved>".  */
+  val = allocate_value_lazy (type);
+  set_value_lazy (val, 0);
+  set_value_optimized_out (val, 1);
+  VALUE_LVAL (val) = lval_register;
+  VALUE_REGNUM (val) = regnum;
+  VALUE_FRAME_ID (val) = get_frame_id (frame);
+  return val;
 }
 
 /* Return a value which indicates that FRAME copied REGNUM into

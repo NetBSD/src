@@ -1,6 +1,6 @@
 /* Debug register code for the i386.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,20 +20,13 @@
 #include "server.h"
 #include "target.h"
 #include "i386-low.h"
+#include "break-common.h"
 
 /* Support for 8-byte wide hw watchpoints.  */
 #ifndef TARGET_HAS_DR_LEN_8
 /* NOTE: sizeof (long) == 4 on win64.  */
 #define TARGET_HAS_DR_LEN_8 (sizeof (void *) == 8)
 #endif
-
-enum target_hw_bp_type
-  {
-    hw_write   = 0,	/* Common  HW watchpoint */
-    hw_read    = 1,	/* Read    HW watchpoint */
-    hw_access  = 2,	/* Access  HW watchpoint */
-    hw_execute = 3	/* Execute HW breakpoint */
-  };
 
 /* DR7 Debug Control register fields.  */
 
@@ -243,10 +236,10 @@ Invalid hardware breakpoint type %d in i386_length_and_rw_bits.\n",
 	return (DR_LEN_2 | rw);
       case 4:
 	return (DR_LEN_4 | rw);
-	/* ELSE FALL THROUGH */
       case 8:
         if (TARGET_HAS_DR_LEN_8)
  	  return (DR_LEN_8 | rw);
+	/* ELSE FALL THROUGH */
       default:
 	error ("\
 Invalid hardware breakpoint length %d in i386_length_and_rw_bits.\n", len);

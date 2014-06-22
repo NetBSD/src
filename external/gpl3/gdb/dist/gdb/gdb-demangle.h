@@ -1,5 +1,5 @@
 /* Basic C++ demangling support for GDB.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,9 +27,6 @@ extern int demangle;
    C++/ObjC form even in assembler language displays.  If this is set, but
    DEMANGLE is zero, names are printed raw, i.e. DEMANGLE controls.  */
 extern int asm_demangle;
-
-/* Fake a "set demangle-style" command.  */
-extern void set_demangling_style (char *);
 
 /* Check if a character is one of the commonly used C++ marker characters.  */
 extern int is_cplus_marker (int);

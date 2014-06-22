@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,8 @@
 #include "python-internal.h"
 #include "inferior.h"
 
-extern PyTypeObject thread_event_object_type;
+extern PyTypeObject thread_event_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
 
 /* Stores a list of objects to be notified when the event for which this
    registry tracks occurs.  */

@@ -1,6 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 2001-2013 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
    binary.c.
@@ -662,8 +661,9 @@ mmo_decide_section (bfd *abfd, bfd_vma vma)
       if (sec == NULL)
 	return NULL;
 
-      if (! sec->user_set_vma)
-	bfd_set_section_vma (abfd, sec, vma);
+      if (! sec->user_set_vma && ! bfd_set_section_vma (abfd, sec, vma))
+	return NULL;
+
       if (! bfd_set_section_flags (abfd, sec,
 				   bfd_get_section_flags (abfd, sec)
 				   | SEC_CODE | SEC_LOAD | SEC_ALLOC))
@@ -676,8 +676,9 @@ mmo_decide_section (bfd *abfd, bfd_vma vma)
       if (sec == NULL)
 	return NULL;
 
-      if (! sec->user_set_vma)
-	bfd_set_section_vma (abfd, sec, vma);
+      if (! sec->user_set_vma && ! bfd_set_section_vma (abfd, sec, vma))
+	return NULL;
+
       if (! bfd_set_section_flags (abfd, sec,
 				   bfd_get_section_flags (abfd, sec)
 				   | SEC_LOAD | SEC_ALLOC))
@@ -692,8 +693,9 @@ mmo_decide_section (bfd *abfd, bfd_vma vma)
   /* If there's still no suitable section, make a new one.  */
   sprintf (sec_name, ".MMIX.sec.%d", abfd->tdata.mmo_data->sec_no++);
   sec = mmo_make_section (abfd, sec_name);
-  if (! sec->user_set_vma)
-    bfd_set_section_vma (abfd, sec, vma);
+
+  if (! sec->user_set_vma && ! bfd_set_section_vma (abfd, sec, vma))
+    return NULL;
 
   if (! bfd_set_section_flags (abfd, sec,
 			       bfd_get_section_flags (abfd, sec)
@@ -787,21 +789,21 @@ static INLINE bfd_boolean
 mmo_write_chunk (bfd *abfd, const bfd_byte *loc, unsigned int len)
 {
   bfd_boolean retval = TRUE;
+  struct mmo_data_struct *mmop = abfd->tdata.mmo_data;
 
   /* Fill up a tetra from bytes remaining from a previous chunk.  */
-  if (abfd->tdata.mmo_data->byte_no != 0)
+  if (mmop->byte_no != 0)
     {
-      while (abfd->tdata.mmo_data->byte_no < 4 && len != 0)
+      while (mmop->byte_no < 4 && len != 0)
 	{
-	  abfd->tdata.mmo_data->buf[abfd->tdata.mmo_data->byte_no++] = *loc++;
+	  mmop->buf[mmop->byte_no++] = *loc++;
 	  len--;
 	}
 
-      if (abfd->tdata.mmo_data->byte_no == 4)
+      if (mmop->byte_no == 4)
 	{
-	  mmo_write_tetra (abfd,
-			   bfd_get_32 (abfd, abfd->tdata.mmo_data->buf));
-	  abfd->tdata.mmo_data->byte_no = 0;
+	  mmo_write_tetra (abfd, bfd_get_32 (abfd, mmop->buf));
+	  mmop->byte_no = 0;
 	}
     }
 
@@ -811,7 +813,7 @@ mmo_write_chunk (bfd *abfd, const bfd_byte *loc, unsigned int len)
 	mmo_write_tetra_raw (abfd, LOP_QUOTE_NEXT);
 
       retval = (retval
-		&& ! abfd->tdata.mmo_data->have_error
+		&& ! mmop->have_error
 		&& 4 == bfd_bwrite (loc, 4, abfd));
 
       loc += 4;
@@ -820,12 +822,12 @@ mmo_write_chunk (bfd *abfd, const bfd_byte *loc, unsigned int len)
 
   if (len)
     {
-      memcpy (abfd->tdata.mmo_data->buf, loc, len);
-      abfd->tdata.mmo_data->byte_no = len;
+      memcpy (mmop->buf, loc, len);
+      mmop->byte_no = len;
     }
 
   if (! retval)
-    abfd->tdata.mmo_data->have_error = TRUE;
+    mmop->have_error = TRUE;
   return retval;
 }
 

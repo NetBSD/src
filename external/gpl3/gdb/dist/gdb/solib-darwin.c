@@ -1,6 +1,6 @@
 /* Handle Darwin shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,10 +88,7 @@ static const struct program_space_data *solib_darwin_pspace_data;
 static void
 darwin_pspace_data_cleanup (struct program_space *pspace, void *arg)
 {
-  struct darwin_info *info;
-
-  info = program_space_data (pspace, solib_darwin_pspace_data);
-  xfree (info);
+  xfree (arg);
 }
 
 /* Get the current darwin data.  If none is found yet, add it now.  This
@@ -210,10 +207,10 @@ lookup_symbol_from_bfd (bfd *abfd, char *symname)
 
 /* Return program interpreter string.  */
 
-static gdb_byte *
+static char *
 find_program_interpreter (void)
 {
-  gdb_byte *buf = NULL;
+  char *buf = NULL;
 
   /* If we have an exec_bfd, get the interpreter from the load commands.  */
   if (exec_bfd)
@@ -288,7 +285,7 @@ darwin_current_sos (void)
       path_addr = extract_typed_address (buf + ptr_len, ptr_type);
 
       /* Read Mach-O header from memory.  */
-      if (target_read_memory (load_addr, (char *) &hdr, sizeof (hdr) - 4))
+      if (target_read_memory (load_addr, (gdb_byte *) &hdr, sizeof (hdr) - 4))
 	break;
       /* Discard wrong magic numbers.  Shouldn't happen.  */
       hdr_val = extract_unsigned_integer
@@ -359,7 +356,7 @@ darwin_read_exec_load_addr (struct darwin_info *info)
       load_addr = extract_typed_address (buf, ptr_type);
 
       /* Read Mach-O header from memory.  */
-      if (target_read_memory (load_addr, (char *) &hdr, sizeof (hdr) - 4))
+      if (target_read_memory (load_addr, (gdb_byte *) &hdr, sizeof (hdr) - 4))
 	break;
       /* Discard wrong magic numbers.  Shouldn't happen.  */
       hdr_val = extract_unsigned_integer
@@ -420,7 +417,7 @@ gdb_bfd_mach_o_fat_extract (bfd *abfd, bfd_format format,
 static void
 darwin_solib_get_all_image_info_addr_at_init (struct darwin_info *info)
 {
-  gdb_byte *interp_name;
+  char *interp_name;
   CORE_ADDR load_addr = 0;
   bfd *dyld_bfd = NULL;
   struct cleanup *cleanup;
@@ -624,12 +621,8 @@ darwin_bfd_open (char *pathname)
   /* The current filename for fat-binary BFDs is a name generated
      by BFD, usually a string containing the name of the architecture.
      Reset its value to the actual filename.  */
-    {
-      char *data = bfd_alloc (res, strlen (pathname) + 1);
-
-      strcpy (data, pathname);
-      res->filename = data;
-    }
+  xfree (bfd_get_filename (res));
+  res->filename = xstrdup (pathname);
 
   gdb_bfd_unref (abfd);
   return res;

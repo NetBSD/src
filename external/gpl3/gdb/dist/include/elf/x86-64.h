@@ -74,6 +74,10 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
      RELOC_NUMBER (R_X86_64_TLSDESC, 36)      /* 2x64-bit TLS descriptor.  */
      RELOC_NUMBER (R_X86_64_IRELATIVE, 37)    /* Adjust indirectly by program base */
      RELOC_NUMBER (R_X86_64_RELATIVE64, 38)   /* 64bit adjust by program base */
+     RELOC_NUMBER (R_X86_64_PC32_BND, 39)      /* PC relative 32 bit
+						  signed with BND prefix  */
+     RELOC_NUMBER (R_X86_64_PLT32_BND, 40)     /* 32 bit PLT address with
+						  BND prefix */
      RELOC_NUMBER (R_X86_64_GNU_VTINHERIT, 250)       /* GNU C++ hack  */
      RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
 END_RELOC_NUMBERS (R_X86_64_max)

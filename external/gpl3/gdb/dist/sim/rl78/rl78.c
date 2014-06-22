@@ -1,6 +1,6 @@
 /* rl78.c --- opcode semantics for stand-alone RL78 simulator.
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.

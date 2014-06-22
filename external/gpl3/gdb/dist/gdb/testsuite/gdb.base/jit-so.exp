@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ if {[get_compiler_info]} {
 
 set testfile jit-dlmain
 set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+set binfile [standard_output_file ${testfile}]
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug shlib_load}] != "" } {
     untested jit-so.exp
     return -1
@@ -41,7 +41,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 set testfile2 jit-main
 set srcfile2 ${testfile2}.c
-set binfile2 ${objdir}/${subdir}/${testfile2}.so
+set binfile2 [standard_output_file ${testfile2}.so]
 set binfile2_dlopen [shlib_target_file ${testfile2}.so]
 if { [gdb_compile_shlib "${srcdir}/${subdir}/${srcfile2}" ${binfile2} {debug additional_flags="-DMAIN=jit_dl_main"}] != "" } {
     untested jit.exp
@@ -50,7 +50,7 @@ if { [gdb_compile_shlib "${srcdir}/${subdir}/${srcfile2}" ${binfile2} {debug add
 
 set solib_testfile "jit-solib"
 set solib_srcfile "${srcdir}/${subdir}/${solib_testfile}.c"
-set solib_binfile "${objdir}/${subdir}/${solib_testfile}.so"
+set solib_binfile [standard_output_file ${solib_testfile}.so]
 set solib_binfile_test_msg "SHLIBDIR/${solib_testfile}.so"
 
 # Note: compiling without debug info: the library goes through symbol
@@ -61,57 +61,63 @@ if { [gdb_compile_shlib ${solib_srcfile} ${solib_binfile} {}] != "" } {
     return -1
 }
 
-set solib_binfile_target [gdb_download ${solib_binfile}]
+if {[is_remote target]} {
+    set solib_binfile_target [gdb_download ${solib_binfile}]
+} else {
+    set solib_binfile_target $solib_binfile
+}
 
-proc one_jit_test {count match_str} { with_test_prefix "one_jit_test-$count" {
-    global verbose testfile srcfile2 binfile2 binfile2_dlopen solib_binfile_target solib_binfile_test_msg
+proc one_jit_test {count match_str} {
+    with_test_prefix "one_jit_test-$count" {
+	global verbose testfile srcfile2 binfile2 binfile2_dlopen solib_binfile_target solib_binfile_test_msg
 
-    clean_restart $testfile
-    gdb_load_shlibs $binfile2
+	clean_restart $testfile
+	gdb_load_shlibs $binfile2
 
-    # This is just to help debugging when things fail
-    if {$verbose > 0} {
-	gdb_test "set debug jit 1"
+	# This is just to help debugging when things fail
+	if {$verbose > 0} {
+	    gdb_test "set debug jit 1"
+	}
+
+	if { ![runto_main] } {
+	    fail "Can't run to main"
+	    return
+	}
+
+	gdb_breakpoint [gdb_get_line_number "break here before-dlopen" ]
+	gdb_continue_to_breakpoint "break here before-dlopen"
+	# Poke desired values directly into inferior instead of using "set args"
+	# because "set args" does not work under gdbserver.
+	gdb_test_no_output "set var jit_libname = \"$binfile2_dlopen\""
+
+	gdb_breakpoint [gdb_get_line_number "break here after-dlopen" ]
+	gdb_continue_to_breakpoint "break here after-dlopen"
+
+	gdb_breakpoint "$srcfile2:[gdb_get_line_number {break here 0} $srcfile2]"
+	gdb_continue_to_breakpoint "break here 0"
+
+	gdb_test_no_output "set var argc = 2"
+	gdb_test_no_output "set var libname = \"$solib_binfile_target\"" "set var libname = \"$solib_binfile_test_msg\""
+	gdb_test_no_output "set var count = $count"
+
+	gdb_breakpoint "$srcfile2:[gdb_get_line_number {break here 1} $srcfile2]"
+	gdb_continue_to_breakpoint "break here 1"
+
+	gdb_test "info function jit_function" "$match_str"
+
+	# This is just to help debugging when things fail
+	if {$verbose > 0} {
+	    gdb_test "maintenance print objfiles"
+	    gdb_test "maintenance info break"
+	}
+
+	gdb_breakpoint "$srcfile2:[gdb_get_line_number {break here 2} $srcfile2]"
+	gdb_continue_to_breakpoint "break here 2"
+	# All jit librares must have been unregistered
+	gdb_test "info function jit_function" \
+	    "All functions matching regular expression \"jit_function\":"
     }
-
-    if { ![runto_main] } {
-	fail "Can't run to main"
-	return
-    }
-
-    gdb_breakpoint [gdb_get_line_number "break here before-dlopen" ]
-    gdb_continue_to_breakpoint "break here before-dlopen"
-    # Poke desired values directly into inferior instead of using "set args"
-    # because "set args" does not work under gdbserver.
-    gdb_test_no_output "set var jit_libname = \"$binfile2_dlopen\""
-
-    gdb_breakpoint [gdb_get_line_number "break here after-dlopen" ]
-    gdb_continue_to_breakpoint "break here after-dlopen"
-
-    gdb_breakpoint "$srcfile2:[gdb_get_line_number {break here 0} $srcfile2]"
-    gdb_continue_to_breakpoint "break here 0"
-
-    gdb_test_no_output "set var argc = 2"
-    gdb_test_no_output "set var libname = \"$solib_binfile_target\"" "set var libname = \"$solib_binfile_test_msg\""
-    gdb_test_no_output "set var count = $count"
-
-    gdb_breakpoint "$srcfile2:[gdb_get_line_number {break here 1} $srcfile2]"
-    gdb_continue_to_breakpoint "break here 1"
-
-    gdb_test "info function jit_function" "$match_str"
-
-    # This is just to help debugging when things fail
-    if {$verbose > 0} {
-	gdb_test "maintenance print objfiles"
-	gdb_test "maintenance info break"
-    }
-
-    gdb_breakpoint "$srcfile2:[gdb_get_line_number {break here 2} $srcfile2]"
-    gdb_continue_to_breakpoint "break here 2"
-    # All jit librares must have been unregistered
-    gdb_test "info function jit_function" \
-	"All functions matching regular expression \"jit_function\":"
-}}
+}
 
 one_jit_test 1 "${hex}  jit_function_0000"
 one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001"

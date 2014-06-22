@@ -1,6 +1,5 @@
 /* Renesas RX specific support for 32-bit ELF.
-   Copyright (C) 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -511,12 +510,12 @@ rx_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes, h,
 				   sec, relocation, unresolved_reloc,
-				   warned);
+				   warned, ignored);
 
 	  name = h->root.root.string;
 	}
@@ -1163,6 +1162,7 @@ rx_elf_relocate_section
 	  {
 	    int32_t tmp;
 
+	    saw_subtract = TRUE;
 	    RX_STACK_POP (tmp);
 	    tmp = - tmp;
 	    RX_STACK_PUSH (tmp);
@@ -1207,7 +1207,6 @@ rx_elf_relocate_section
 	  {
 	    int32_t tmp1, tmp2;
 
-	    saw_subtract = TRUE;
 	    RX_STACK_POP (tmp1);
 	    RX_STACK_POP (tmp2);
 	    tmp1 /= tmp2;
@@ -3177,31 +3176,31 @@ rx_dump_symtab (bfd * abfd, void * internal_syms, void * external_syms)
     {
       switch (ELF_ST_TYPE (isym->st_info))
 	{
-	case STT_FUNC: st_info_str = "STT_FUNC";
-	case STT_SECTION: st_info_str = "STT_SECTION";
-	case STT_FILE: st_info_str = "STT_FILE";
-	case STT_OBJECT: st_info_str = "STT_OBJECT";
-	case STT_TLS: st_info_str = "STT_TLS";
+	case STT_FUNC: st_info_str = "STT_FUNC"; break;
+	case STT_SECTION: st_info_str = "STT_SECTION"; break;
+	case STT_FILE: st_info_str = "STT_FILE"; break;
+	case STT_OBJECT: st_info_str = "STT_OBJECT"; break;
+	case STT_TLS: st_info_str = "STT_TLS"; break;
 	default: st_info_str = "";
 	}
       switch (ELF_ST_BIND (isym->st_info))
 	{
-	case STB_LOCAL: st_info_stb_str = "STB_LOCAL";
-	case STB_GLOBAL: st_info_stb_str = "STB_GLOBAL";
+	case STB_LOCAL: st_info_stb_str = "STB_LOCAL"; break;
+	case STB_GLOBAL: st_info_stb_str = "STB_GLOBAL"; break;
 	default: st_info_stb_str = "";
 	}
       switch (ELF_ST_VISIBILITY (isym->st_other))
 	{
-	case STV_DEFAULT: st_other_str = "STV_DEFAULT";
-	case STV_INTERNAL: st_other_str = "STV_INTERNAL";
-	case STV_PROTECTED: st_other_str = "STV_PROTECTED";
+	case STV_DEFAULT: st_other_str = "STV_DEFAULT"; break;
+	case STV_INTERNAL: st_other_str = "STV_INTERNAL"; break;
+	case STV_PROTECTED: st_other_str = "STV_PROTECTED"; break;
 	default: st_other_str = "";
 	}
       switch (isym->st_shndx)
 	{
-	case SHN_ABS: st_shndx_str = "SHN_ABS";
-	case SHN_COMMON: st_shndx_str = "SHN_COMMON";
-	case SHN_UNDEF: st_shndx_str = "SHN_UNDEF";
+	case SHN_ABS: st_shndx_str = "SHN_ABS"; break;
+	case SHN_COMMON: st_shndx_str = "SHN_COMMON"; break;
+	case SHN_UNDEF: st_shndx_str = "SHN_UNDEF"; break;
 	default: st_shndx_str = "";
 	}
 

@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,41 +16,19 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
 
-set testfile "opaque"
-set binfile ${objdir}/${subdir}/opaque
-
-#if  { [gdb_compile "${srcdir}/${subdir}/opaque0.c ${srcdir}/${subdir}/opaque1.c" "${binfile}" executable {debug}] != "" } {
-#     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
-#}
-
-if  { [gdb_compile "${srcdir}/${subdir}/opaque0.c" "${binfile}0.o" object {debug}] != "" } {
-     untested opaque.exp
-     return -1
-}
-
-if  { [gdb_compile "${srcdir}/${subdir}/opaque1.c" "${binfile}1.o" object {debug}] != "" } {
-     untested opaque.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] != "" } {
-     untested opaque.exp
-     return -1
-}
-
-
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
 if [get_compiler_info] {
-    return -1;
+    return -1
 }
 
-# Start with a fresh gdb.
+standard_testfile opaque0.c opaque1.c
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+if {[prepare_for_testing $testfile.exp $testfile \
+	 [list $srcfile $srcfile2] debug]} {
+    untested $testfile.exp
+    return -1
+}
 
 #
 # Test basic opaque structure handling (statically).

@@ -159,61 +159,61 @@ struct irqcell {
 /* Prototypes  */
 
 /* erc32.c */
-extern void	init_sim PARAMS ((void));
-extern void	reset PARAMS ((void));
-extern void	error_mode PARAMS ((uint32 pc));
-extern void	sim_halt PARAMS ((void));
-extern void	exit_sim PARAMS ((void));
-extern void	init_stdio PARAMS ((void));
-extern void	restore_stdio PARAMS ((void));
-extern int	memory_read PARAMS ((int32 asi, uint32 addr, uint32 *data,
-				     int32 sz, int32 *ws));
-extern int	memory_write PARAMS ((int32 asi, uint32 addr, uint32 *data,
-				    int32 sz, int32 *ws));
-extern int	sis_memory_write PARAMS ((uint32 addr,
-				    const unsigned char *data, uint32 length));
-extern int	sis_memory_read PARAMS ((uint32 addr, char *data,
-					 uint32 length));
+extern void	init_sim (void);
+extern void	reset (void);
+extern void	error_mode (uint32 pc);
+extern void	sim_halt (void);
+extern void	exit_sim (void);
+extern void	init_stdio (void);
+extern void	restore_stdio (void);
+extern int	memory_read (int32 asi, uint32 addr, uint32 *data,
+			     int32 sz, int32 *ws);
+extern int	memory_write (int32 asi, uint32 addr, uint32 *data,
+			      int32 sz, int32 *ws);
+extern int	sis_memory_write (uint32 addr,
+				  const unsigned char *data, uint32 length);
+extern int	sis_memory_read (uint32 addr, char *data,
+				 uint32 length);
 
 /* func.c */
-extern void	set_regi PARAMS ((struct pstate *sregs, int32 reg,
-				  uint32 rval));
-extern void	get_regi PARAMS ((struct pstate *sregs, int32 reg, char *buf));
-extern int	exec_cmd PARAMS ((struct pstate *sregs, char *cmd));
-extern void	reset_stat PARAMS ((struct pstate  *sregs));
-extern void	show_stat PARAMS ((struct pstate  *sregs));
-extern void	init_bpt PARAMS ((struct pstate  *sregs));
-extern void	init_signals PARAMS ((void));
+extern void	set_regi (struct pstate *sregs, int32 reg,
+			  uint32 rval);
+extern void	get_regi (struct pstate *sregs, int32 reg, char *buf);
+extern int	exec_cmd (struct pstate *sregs, char *cmd);
+extern void	reset_stat (struct pstate  *sregs);
+extern void	show_stat (struct pstate  *sregs);
+extern void	init_bpt (struct pstate  *sregs);
+extern void	init_signals (void);
 
 struct disassemble_info;
-extern void	dis_mem PARAMS ((uint32 addr, uint32 len,
-				 struct disassemble_info *info));
-extern void	event PARAMS ((void (*cfunc) (), int32 arg, uint64 delta));
-extern void	set_int PARAMS ((int32 level, void (*callback) (), int32 arg));
-extern void	advance_time PARAMS ((struct pstate  *sregs));
-extern uint32	now PARAMS ((void));
-extern int	wait_for_irq PARAMS ((void));
-extern int	check_bpt PARAMS ((struct pstate *sregs));
-extern void	reset_all PARAMS ((void));
-extern void	sys_reset PARAMS ((void));
-extern void	sys_halt PARAMS ((void));
-extern int	bfd_load PARAMS ((char *fname));
+extern void	dis_mem (uint32 addr, uint32 len,
+			 struct disassemble_info *info);
+extern void	event (void (*cfunc) (), int32 arg, uint64 delta);
+extern void	set_int (int32 level, void (*callback) (), int32 arg);
+extern void	advance_time (struct pstate  *sregs);
+extern uint32	now (void);
+extern int	wait_for_irq (void);
+extern int	check_bpt (struct pstate *sregs);
+extern void	reset_all (void);
+extern void	sys_reset (void);
+extern void	sys_halt (void);
+extern int	bfd_load (char *fname);
 
 /* exec.c */
-extern int	dispatch_instruction PARAMS ((struct pstate *sregs));
-extern int	execute_trap PARAMS ((struct pstate *sregs));
-extern int	check_interrupts PARAMS ((struct pstate  *sregs));
-extern void	init_regs PARAMS ((struct pstate *sregs));
+extern int	dispatch_instruction (struct pstate *sregs);
+extern int	execute_trap (struct pstate *sregs);
+extern int	check_interrupts (struct pstate  *sregs);
+extern void	init_regs (struct pstate *sregs);
 
 /* interf.c */
-extern int	run_sim PARAMS ((struct pstate *sregs,
-				 uint64 icount, int dis));
+extern int	run_sim (struct pstate *sregs,
+			 uint64 icount, int dis);
 
 /* float.c */
-extern int	get_accex PARAMS ((void));
-extern void	clear_accex PARAMS ((void));
-extern void	set_fsr PARAMS ((uint32 fsr));
+extern int	get_accex (void);
+extern void	clear_accex (void);
+extern void	set_fsr (uint32 fsr);
 
 /* help.c */
-extern void	usage PARAMS ((void));
-extern void	gen_help PARAMS ((void));
+extern void	usage (void);
+extern void	gen_help (void);

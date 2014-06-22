@@ -1,4 +1,4 @@
-/* Copyright 1999-2013 Free Software Foundation, Inc.
+/* Copyright 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,10 +56,3 @@ main ()
 
   return 0;
 }
-
-/*
-Local variables: 
-change-log-default-name: "ChangeLog-mi"
-End: 
-*/
-

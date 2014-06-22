@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2013 Free Software Foundation, Inc.
+   Copyright 2009-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ extern int final (int arg);
 
 typedef int (*final_t) (int arg);
 
-asm (".type gnu_ifunc, @gnu_indirect_function");
+asm (".type gnu_ifunc, %gnu_indirect_function");
 
 final_t
 gnu_ifunc (void)

@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "inferior.h"
 #include "target.h"
 #include "gdbcore.h"
@@ -511,9 +511,9 @@ store_debug_register (ptid_t ptid, int idx, long val)
 {
   int tid;
 
-  tid = TIDGET (ptid);
+  tid = ptid_get_lwp (ptid);
   if (tid == 0)
-    tid = PIDGET (ptid);
+    tid = ptid_get_pid (ptid);
 
   (void) ptrace (PT_WRITE_U, tid, (PTRACE_TYPE_ARG3) (PT_DBR + 8 * idx), val);
 }
@@ -833,9 +833,7 @@ ia64_linux_store_registers (struct target_ops *ops,
 }
 
 
-static LONGEST (*super_xfer_partial) (struct target_ops *, enum target_object,
-				      const char *, gdb_byte *,
-				      const gdb_byte *, ULONGEST, LONGEST);
+static target_xfer_partial_ftype *super_xfer_partial;
 
 static LONGEST 
 ia64_linux_xfer_partial (struct target_ops *ops,

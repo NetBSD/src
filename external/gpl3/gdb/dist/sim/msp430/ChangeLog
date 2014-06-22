@@ -1,0 +1,16 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-06-21  Nick Clifton  <nickc@redhat.com>
+
+	* Makefile.in: New.
+	* aclocal.m4: Generate.
+	* config.in: Generate.
+	* configure.ac: New.
+	* configure: Generate.
+	* msp430-sim.c: New.
+	* msp430-sim.h: New.
+	* sim-main.h: New.
+	* trace.c: New.
+	* trace.h: New.

@@ -1040,13 +1040,13 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  bfd_boolean unresolved_reloc;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  symname = h->root.root.string;
 
@@ -3177,6 +3177,10 @@ cris_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -3232,15 +3236,20 @@ cris_elf_check_relocs (bfd *abfd,
 		     abfd, sec);
 		  return FALSE;
 		}
-
-	      /* Create the .got section, so we can assume it's always
-		 present whenever there's a dynobj.  */
-	      if (!_bfd_elf_create_got_section (dynobj, info))
-		return FALSE;
 	    }
 
 	  if (sgot == NULL)
-	    sgot = bfd_get_linker_section (dynobj, ".got");
+	    {
+	      /* We may have a dynobj but no .got section, if machine-
+		 independent parts of the linker found a reason to create
+		 a dynobj.  We want to create the .got section now, so we
+		 can assume it's always present whenever there's a dynobj.
+		 It's ok to call this function more than once.  */
+	      if (!_bfd_elf_create_got_section (dynobj, info))
+		return FALSE;
+
+	      sgot = bfd_get_linker_section (dynobj, ".got");
+	    }
 
 	  if (local_got_refcounts == NULL)
 	    {
@@ -4241,7 +4250,9 @@ cris_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 }
 
 static enum elf_reloc_type_class
-elf_cris_reloc_type_class (const Elf_Internal_Rela *rela)
+elf_cris_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			   const asection *rel_sec ATTRIBUTE_UNUSED,
+			   const Elf_Internal_Rela *rela)
 {
   enum elf_cris_reloc_type r_type = ELF32_R_TYPE (rela->r_info);
   switch (r_type)

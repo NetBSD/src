@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 # so-thresh.sh
 #

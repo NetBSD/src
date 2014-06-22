@@ -1,3 +1,311 @@
+2013-12-16  Andrew Bennett  <andrew.bennett@imgtec.com>
+
+	* mips.h: Updated description of +o, +u, +v and +w for MIPS and
+	microMIPS.
+
+2013-12-13  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
+	    Wei-Cheng Wang  <cole945@gmail.com>
+
+	* nds32.h: New file for Andes NDS32.
+
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin.h: Remove +x file mode.
+
+2013-11-20  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_pstatefields): Change element type to
+	aarch64_sys_reg.
+
+2013-11-18  Renlin Li  <Renlin.Li@arm.com>
+
+	* arm.h (ARM_AEXT_V7VE): New define.
+	(ARM_ARCH_V7VE): New define.
+	(ARM_ARCH_V7A_IDIV_MP_SEC_VIRT): Removed.
+
+2013-11-18  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	Revert
+
+	2013-11-15  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_sys_reg_readonly_p): New declaration.
+	(aarch64_sys_reg_writeonly_p): Ditto.
+
+2013-11-15  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_sys_reg_readonly_p): New declaration.
+	(aarch64_sys_reg_writeonly_p): Ditto.
+
+2013-11-05  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_sys_reg): New typedef.
+	(aarch64_sys_regs): Change to define with the new type.
+	(aarch64_sys_reg_deprecated_p): Declare.
+
+2013-11-05  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (enum aarch64_operand_class): Add AARCH64_OPND_CLASS_COND.
+	(enum aarch64_opnd): Add AARCH64_OPND_COND1.
+
+2013-10-14  Chao-ying Fu  <Chao-ying.Fu@imgtec.com>
+
+	* mips.h (mips_operand_type): Add OP_IMM_INDEX and OP_REG_INDEX.
+	(mips_reg_operand_type): Add OP_REG_MSA and OP_REG_MSA_CTRL.
+	For MIPS, add comments for +d, +e, +h, +k, +l, +n, +o, +u, +v, +w,
+	+T, +U, +V, +W, +~, +!, +@, +#, +$, +%, +^, +&, +*, +|.
+	For MIPS, update extension character sequences after +.
+	(ASE_MSA): New define.
+	(ASE_MSA64): New define.
+	For microMIPS, add comments for +d, +e, +h, +k, +l, +n, +o, +u, +v, +w,
+	+x, +T, +U, +V, +W, +~, +!, +@, +#, +$, +%, +^, +&, +*, +|.
+	For microMIPS, update extension character sequences after +.
+
+2013-08-23  Yuri Chornoivan  <yurchor@ukr.net>
+
+	PR binutils/15834
+	* i960.h: Fix typos.
+
+2013-08-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove references to "+I" and imm2_expr.
+
+2013-08-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (M_DEXT, M_DINS): Delete.
+
+2013-08-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (OP_OPTIONAL_REG): New mips_operand_type.
+	(mips_optional_operand_p): New function.
+
+2013-08-04  Jürgen Urban  <JuergenUrban@gmx.de>
+	    Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Document new VU0 operand characters.
+	(OP_VU0_SUFFIX, OP_VU0_MATCH_SUFFIX): New mips_operand_types.
+	(OP_REG_VF, OP_REG_VI, OP_REG_R5900_I, OP_REG_R5900_Q, OP_REG_R5900_R)
+	(OP_REG_R5900_ACC): New mips_reg_operand_types.
+	(INSN2_VU0_CHANNEL_SUFFIX): New macro.
+	(mips_vu0_channel_mask): Declare.
+
+2013-08-03  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_pcrel_operand): Inherit from mips_int_operand.
+	(mips_int_operand_min, mips_int_operand_max): New functions.
+	(mips_decode_pcrel_operand): Use mips_decode_int_operand.
+
+2013-08-01  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_decode_reg_operand): New function.
+	(INSN_WRITE_SHIFT, INSN_WRITE_1, INSN_WRITE_2, INSN_WRITE_ALL)
+	(INSN_READ_SHIFT, INSN_READ_1, INSN_READ_2, INSN_READ_3, INSN_READ_4)
+	(INSN_READ_ALL, INSN_READ_GPR_24, INSN_WRITE_GPR_24, INSN_UDI):
+	New macros.
+	(INSN_WRITE_GPR_D, INSN_WRITE_GPR_T, INSN_WRITE_FPR_D)
+	(INSN_WRITE_FPR_S, INSN_WRITE_FPR_T, INSN_READ_GPR_S, INSN_READ_GPR_T)
+	(INSN_READ_FPR_S, INSN_READ_FPR_T, INSN_READ_FPR_R, INSN_WRITE_GPR_S)
+	(INSN2_WRITE_GPR_Z, INSN2_WRITE_FPR_Z, INSN2_READ_GPR_Z)
+	(INSN2_READ_FPR_Z, INSN2_READ_GPR_D, INSN2_READ_FPR_D)
+	(INSN2_WRITE_GPR_MB, INSN2_READ_GPR_MC, INSN2_MOD_GPR_MD)
+	(INSN2_READ_GPR_ME, INSN2_MOD_GPR_MF, INSN2_READ_GPR_MG)
+	(INSN2_READ_GPR_MJ, INSN2_WRITE_GPR_MJ, INSN2_READ_GPR_MP)
+	(INSN2_WRITE_GPR_MP, INSN2_READ_GPR_MQ, INSN2_READ_GP)
+	(INSN2_WRITE_GPR_MH, INSN2_READ_GPR_MMN): Delete.  Renumber other
+	macros to cover the gaps.
+	(INSN2_MOD_SP): Replace with...
+	(INSN2_WRITE_SP, INSN2_READ_SP): ...these new macros.
+	(MIPS16_INSN_WRITE_X, MIPS16_INSN_WRITE_Y, MIPS16_INSN_WRITE_Z)
+	(MIPS16_INSN_WRITE_T, MIPS16_INSN_WRITE_31, MIPS16_INSN_WRITE_GPR_Y)
+	(MIPS16_INSN_READ_X, MIPS16_INSN_READ_Y, MIPS16_INSN_READ_Z)
+	(MIPS16_INSN_READ_T, MIPS16_INSN_READ_SP, MIPS16_INSN_READ_GPR_X):
+	Delete.
+
+2013-08-01  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (MIPS16_INSN_WRITE_SP, MIPS16_INSN_READ_31)
+	(MIPS16_INSN_READ_PC, MIPS16_INSN_UNCOND_BRANCH)
+	(MIPS16_INSN_COND_BRANCH): Delete.
+
+2013-07-24  Anna Tikhonova  <anna.tikhonova@intel.com>
+	    Kirill Yukhin  <kirill.yukhin@intel.com>
+	    Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* i386.h (BND_PREFIX_OPCODE): New.
+
+2013-07-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_operand_type): Add OP_ENTRY_EXIT_LIST and
+	OP_SAVE_RESTORE_LIST.
+	(decode_mips16_operand): Declare.
+
+2013-07-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_operand_type, mips_reg_operand_type): New enums.
+	(mips_operand, mips_int_operand, mips_mapped_int_operand)
+	(mips_msb_operand, mips_reg_operand, mips_reg_pair_operand)
+	(mips_pcrel_operand): New structures.
+	(mips_insert_operand, mips_extract_operand, mips_signed_operand)
+	(mips_decode_int_operand, mips_decode_pcrel_operand): New functions.
+	(decode_mips_operand, decode_micromips_operand): Declare.
+
+2013-07-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Document MIPS16 "I" opcode.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (M_ACLR_OB, M_ASET_OB, M_CACHE_OB, M_CACHEE_OB, M_L_DOB)
+	(M_LB_A, M_LBE_OB, M_LBU_A, M_LBUE_OB, M_LD_A, M_LD_OB, M_LDC2_OB)
+	(M_LDL_OB, M_LDM_OB, M_LDP_OB, M_LDR_OB, M_LH_A, M_LHE_OB, M_LHU_A)
+	(M_LHUE_OB, M_LL_OB, M_LLD_OB, M_LLE_OB, M_LS_A, M_LW_A, M_LWE_OB)
+	(M_LWC0_A, M_LWC1_A, M_LWC2_A, M_LWC2_OB, M_LWC3_A, M_LWL_A, M_LWL_OB)
+	(M_LWLE_OB, M_LWM_OB, M_LWP_OB, M_LWR_A, M_LWR_OB, M_LWRE_OB, M_LWU_OB)
+	(M_PREF_OB, M_PREFE_OB, M_S_DOB, M_SAA_OB, M_SAAD_OB, M_SC_OB)
+	(M_SCD_OB, M_SCE_OB, M_SD_A, M_SD_OB, M_SDC2_OB, M_SDL_OB, M_SDM_OB)
+	(M_SDP_OB, M_SDR_OB, M_SB_A, M_SBE_OB, M_SH_A, M_SHE_OB, M_SW_A)
+	(M_SWE_OB, M_SWC0_A, M_SWC1_A, M_SWC2_A, M_SWC2_OB, M_SWC3_A, M_SWL_A)
+	(M_SWL_OB, M_SWLE_OB, M_SWM_OB, M_SWP_OB, M_SWR_A, M_SWR_OB, M_SWRE_OB)
+	(M_ULD, M_ULH, M_ULHU, M_ULW, M_USH, M_USW, M_USD): Delete.
+	(M_ULD_A, M_ULH_A, M_ULHU_A, M_ULW_A, M_USH_A, M_USW_A, M_USD_A):
+	Rename to...
+	(M_ULD_AB, M_ULH_AB, M_ULHU_AB, M_ULW_AB, M_USH_AB, M_USW_AB)
+	(M_USD_AB): ...these.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove documentation of "[" and "]".  Update documentation
+	of "k" and the MDMX formats.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Update documentation of "+s" and "+S".
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Document "+i".
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove "mi" documentation.  Update "mh" documentation.
+	(OP_MASK_MI, OP_SH_MI, MICROMIPSOP_MASK_MI, MICROMIPSOP_MASK_MI):
+	Delete.
+	(INSN2_WRITE_GPR_MHI): Rename to...
+	(INSN2_WRITE_GPR_MH): ...this.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove documentation of "+D" and "+T".
+
+2013-06-26  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Fix comment for "1": it is now STYPE rather than SHAMT.
+	Use "source" rather than "destination" for microMIPS "G".
+
+2013-06-25  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Add M_JRADDIUSP, M_JRC and M_MOVEP anonymous enum
+	values.
+
+2013-06-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Fix comment typo: "G" is _RS rather than _RD for microMIPS.
+
+2013-06-17  Catherine Moore  <clm@codesourcery.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+	    Chao-Ying Fu  <fu@mips.com>
+
+	* mips.h (OP_SH_EVAOFFSET): Define.
+	(OP_MASK_EVAOFFSET): Define.
+	(INSN_ASE_MASK): Delete.
+	(ASE_EVA): Define.
+	(M_CACHEE_AB, M_CACHEE_OB): New.
+	(M_LBE_OB, M_LBE_AB): New.
+	(M_LBUE_OB, M_LBUE_AB): New.
+	(M_LHE_OB, M_LHE_AB): New.
+	(M_LHUE_OB, M_LHUE_AB): New.
+	(M_LLE_AB, M_LLE_OB): New.
+	(M_LWE_OB, M_LWE_AB): New.
+	(M_LWLE_AB, M_LWLE_OB): New.
+	(M_LWRE_AB, M_LWRE_OB): New.
+	(M_PREFE_AB, M_PREFE_OB): New.
+	(M_SCE_AB, M_SCE_OB): New.
+	(M_SBE_OB, M_SBE_AB): New.
+	(M_SHE_OB, M_SHE_AB): New.
+	(M_SWE_OB, M_SWE_AB): New.
+	(M_SWLE_AB, M_SWLE_OB): New.
+	(M_SWRE_AB, M_SWRE_OB): New.
+	(MICROMIPSOP_SH_EVAOFFSET): Define.
+	(MICROMIPSOP_MASK_EVAOFFSET): Define.
+
+2013-06-12  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (OP_MATCH_ERET): Correct eret encoding.
+
+2013-05-22  Jürgen Urban  <JuergenUrban@gmx.de>
+
+	* mips.h (M_LQC2_AB, M_SQC2_AB): New macros.
+
+2013-05-09  Andrew Pinski  <apinski@cavium.com>
+
+	* mips.h (OP_MASK_CODE10): Correct definition.
+	(OP_SH_CODE10): Likewise.
+	Add a comment that "+J" is used now for OP_*CODE10.
+	(INSN_ASE_MASK): Update.
+	(INSN_VIRT): New macro.
+	(INSN_VIRT64): New macro
+
+2013-05-02  Nick Clifton  <nickc@redhat.com>
+
+	* msp430.h: Add patterns for MSP430X instructions.
+
+2013-04-06  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (F_PREFERRED): Define.
+	(F_PREF_ALIAS): Define.
+
+2013-04-03  Nick Clifton  <nickc@redhat.com>
+
+	* v850.h (V850_INVERSE_PCREL): Define.
+
+2013-03-27  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR binutils/15068
+	* tic6x-opcode-table.h: Fix patterns for add, ldnw and xor.
+
+2013-03-27  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR binutils/15068
+	* tic6xc-insn-formats.h (FLD): Add use of bitfield array.
+	Add 16-bit opcodes.
+	* tic6xc-opcode-table.h: Add 16-bit insns.
+	* tic6x.h: Add support for 16-bit insns.
+
+2013-03-21  Michael Schewe  <michael.schewe@gmx.net>
+
+	* h8300.h: Add MEMRELAX flag for mov.b/w/l @(d:32,ERs),Rd
+	and mov.b/w/l Rs,@(d:32,ERd).
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15082
+	* tic6x-opcode-table.h: Rename mpydp's specific operand type macro
+	from ORREGD1324 to ORXREGD1324 and make it cross-path-able through
+	tic6x_operand_xregpair operand coding type.
+	Make mpydp instruction cross-path-able, ie: remove the FIXed 'x'
+	opcode field, usu ORXREGD1324 for the src2 operand and remove the
+	TIC6X_FLAG_NO_CROSS.
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15095
+	* tic6x.h (enum tic6x_coding_method): Add
+	tic6x_coding_dreg_(msb|lsb) field coding type in order to encode
+	separately the msb and lsb of a register pair.  This is needed to
+	encode the opcodes in the same way as TI assembler does.
+	* tic6x-opcode-table.h: Modify absdp, dpint, dpsp, dptrunc, rcpdp
+	and rsqrdp opcodes to use the new field coding types.
+
 2013-03-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
 
 	* arm.h (CRC_EXT_ARMV8): New constant.
@@ -870,7 +1178,7 @@
 
 2008-04-28  Adam Nemet  <anemet@caviumnetworks.com>
 
-	* mips.h (INSN_MACRO): Move it up to the the pinfo macros.
+	* mips.h (INSN_MACRO): Move it up to the pinfo macros.
 	(INSN2_M_FP_S, INSN2_M_FP_D): New pinfo2 macros.
 
 2008-04-14  Edmar Wienskoski  <edmar@freescale.com>

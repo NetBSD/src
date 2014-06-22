@@ -175,9 +175,7 @@ C Language Assumptions
 The programmer may assume that the simulator is being built using an
 ANSI C compiler that supports a 64 bit data type.  Consequently:
 
-	o	prototypes can be used (although using
-		PARAMS() and K&R declarations wouldn't
-		go astray).
+	o	prototypes can be used
 
 	o	If sim-types.h is included, the two
 		types signed64 and unsigned64 are

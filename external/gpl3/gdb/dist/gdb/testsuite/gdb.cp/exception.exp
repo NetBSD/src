@@ -1,4 +1,4 @@
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,6 +56,11 @@ gdb_test "catch catch" "Catchpoint \[0-9\]+ \\(catch\\)" \
 gdb_test "catch throw" "Catchpoint \[0-9\]+ \\(throw\\)" \
     "catch throw (before inferior run)"
 
+# Set a rethrow catchpoint
+
+gdb_test "catch rethrow" "Catchpoint \[0-9\]+ \\(rethrow\\)" \
+    "catch rethrow (before inferior run)"
+
 
 # The catchpoints should be listed in the list of breakpoints.
 # In case of a statically linked test, we won't have a pending breakpoint.
@@ -66,10 +71,11 @@ set addr "\(<PENDING>|$hex\)"
 set re_head	"Num${ws}Type${ws}Disp${ws}Enb${ws}Address${ws}What"
 set re_2_bp	"1${ws}breakpoint${ws}keep${ws}y${ws}$addr${ws}exception catch"
 set re_3_bp	"2${ws}breakpoint${ws}keep${ws}y${ws}$addr${ws}exception throw"
+set re_4_bp   "3${ws}breakpoint${ws}keep${ws}y${ws}$addr${ws}exception rethrow"
 
 set name "info breakpoints (before inferior run)"
 gdb_test_multiple "info breakpoints" $name {
-    -re "$re_head${ws}$re_2_bp${ws}$re_3_bp\r\n$gdb_prompt $" {
+    -re "$re_head${ws}$re_2_bp${ws}$re_3_bp${ws}$re_4_bp\r\n$gdb_prompt $" {
 	pass $name
     }
     -re ".*$gdb_prompt $"
@@ -78,13 +84,13 @@ gdb_test_multiple "info breakpoints" $name {
       }
 }
 
-gdb_test "tbreak main" "Temporary breakpoint 3.*" \
+gdb_test "tbreak main" "Temporary breakpoint 4.*" \
     "Set temporary breakpoint at main"
 
 set ok 0
 gdb_run_cmd
 gdb_test_multiple "" "Run to main" {
-    -re "Temporary breakpoint 3,.*$gdb_prompt $" {
+    -re "Temporary breakpoint 4,.*$gdb_prompt $" {
 	pass "Run to main"
 	set ok 1
     }
@@ -98,10 +104,11 @@ set addr "$hex"
 set re_head	"Num${ws}Type${ws}Disp${ws}Enb${ws}Address${ws}What"
 set re_2_bp	"1${ws}breakpoint${ws}keep${ws}y${ws}$addr${ws}exception catch"
 set re_3_bp	"2${ws}breakpoint${ws}keep${ws}y${ws}$addr${ws}exception throw"
+set re_4_bp   "3${ws}breakpoint${ws}keep${ws}y${ws}$addr${ws}exception rethrow"
 
 set name "info breakpoints (after inferior run)"
 gdb_test_multiple "info breakpoints" $name {
-    -re "$re_head${ws}$re_2_bp${ws}$re_3_bp\r\n$gdb_prompt $" {
+    -re "$re_head${ws}$re_2_bp${ws}$re_3_bp${ws}$re_4_bp\r\n$gdb_prompt $" {
 	pass $name
     }
     -re ".*$gdb_prompt $"
@@ -209,16 +216,8 @@ gdb_test_multiple "backtrace" $name {
 # Continue to breakpoint on catcher.
 gdb_test "continue" ".*catcher \\(x=13\\).*" "continue to catcher for the second time"
 
-# That is all for now.
-# 
-# The original code had:
-#
-#    continue to re-throw ; backtrace
-#    continue to catch    ; backtrace
-#    continue to throw out of main
-#
-# The problem is that "re-throw" does not show a throw; only a catch.
-# I do not know if this is because of a bug, or because the generated
-# code is optimized for a throw into the same function.
-#
-# -- chastain 2004-01-09
+
+# Continue to the re-throw.
+
+gdb_test "continue" "Catchpoint \[0-9\]+.*exception rethrown.*" \
+    "continue to rethrow"

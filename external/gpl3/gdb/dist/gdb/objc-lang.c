@@ -1,6 +1,6 @@
 /* Objective-C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
    Written by Michael Snyder.
@@ -26,6 +26,7 @@
 #include "expression.h"
 #include "parser-defs.h"
 #include "language.h"
+#include "varobj.h"
 #include "c-lang.h"
 #include "objc-lang.h"
 #include "exceptions.h"
@@ -33,7 +34,7 @@
 #include "value.h"
 #include "symfile.h"
 #include "objfiles.h"
-#include "gdb_string.h"		/* for strchr */
+#include <string.h>		/* for strchr */
 #include "target.h"		/* for target_has_execution */
 #include "gdbcore.h"
 #include "gdbcmd.h"
@@ -354,6 +355,7 @@ static const struct op_print objc_op_print_tab[] =
 
 const struct language_defn objc_language_defn = {
   "objective-c",		/* Language name */
+  "Objective-C",
   language_objc,
   range_check_off,
   case_sensitive_on,
@@ -389,6 +391,7 @@ const struct language_defn objc_language_defn = {
   default_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 
@@ -426,7 +429,8 @@ start_msglist(void)
 void
 add_msglist(struct stoken *str, int addcolon)
 {
-  char *s, *p;
+  char *s;
+  const char *p;
   int len, plen;
 
   if (str == 0)			/* Unnamed arg, or...  */
@@ -1052,6 +1056,11 @@ uniquify_strings (VEC (const_char_ptr) **strings)
   const char *elem, *last = NULL;
   int out;
 
+  /* If the vector is empty, there's nothing to do.  This explicit
+     check is needed to avoid invoking qsort with NULL. */
+  if (VEC_empty (const_char_ptr, *strings))
+    return;
+
   qsort (VEC_address (const_char_ptr, *strings),
 	 VEC_length (const_char_ptr, *strings),
 	 sizeof (const_char_ptr),
@@ -1071,7 +1080,7 @@ uniquify_strings (VEC (const_char_ptr) **strings)
 }
 
 /* 
- * Function: find_imps (char *selector, struct symbol **sym_arr)
+ * Function: find_imps (const char *selector, struct symbol **sym_arr)
  *
  * Input:  a string representing a selector
  *         a pointer to an array of symbol pointers
@@ -1100,8 +1109,8 @@ uniquify_strings (VEC (const_char_ptr) **strings)
  *       be the index of the first non-debuggable one).
  */
 
-char *
-find_imps (char *method, VEC (const_char_ptr) **symbol_names)
+const char *
+find_imps (const char *method, VEC (const_char_ptr) **symbol_names)
 {
   char type = '\0';
   char *class = NULL;

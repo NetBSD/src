@@ -1,3 +1,11 @@
+2013-11-25  Steve Ellcey  <sellcey@mips.com>
+
+	* igen/Makefile.in (igen): Use BUILD_CFLAGS in link.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	* configure: Rebuild.
+
 2012-03-24  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.

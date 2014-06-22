@@ -1,5 +1,5 @@
 /* Target operations for the remote server for GDB.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -19,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include "tracepoint.h"
 
 struct target_ops *the_target;
 
@@ -81,13 +82,27 @@ mywait (ptid_t ptid, struct target_waitstatus *ourstatus, int options,
 
   ret = (*the_target->wait) (ptid, ourstatus, options);
 
-  if (ourstatus->kind == TARGET_WAITKIND_EXITED)
-    fprintf (stderr,
-	     "\nChild exited with status %d\n", ourstatus->value.integer);
-  else if (ourstatus->kind == TARGET_WAITKIND_SIGNALLED)
-    fprintf (stderr, "\nChild terminated with signal = 0x%x (%s)\n",
-	     gdb_signal_to_host (ourstatus->value.sig),
-	     gdb_signal_to_name (ourstatus->value.sig));
+  /* We don't expose _LOADED events to gdbserver core.  See the
+     `dlls_changed' global.  */
+  if (ourstatus->kind == TARGET_WAITKIND_LOADED)
+    ourstatus->kind = TARGET_WAITKIND_STOPPED;
+
+  /* If GDB is connected through TCP/serial, then GDBserver will most
+     probably be running on its own terminal/console, so it's nice to
+     print there why is GDBserver exiting.  If however, GDB is
+     connected through stdio, then there's no need to spam the GDB
+     console with this -- the user will already see the exit through
+     regular GDB output, in that same terminal.  */
+  if (!remote_connection_is_stdio ())
+    {
+      if (ourstatus->kind == TARGET_WAITKIND_EXITED)
+	fprintf (stderr,
+		 "\nChild exited with status %d\n", ourstatus->value.integer);
+      else if (ourstatus->kind == TARGET_WAITKIND_SIGNALLED)
+	fprintf (stderr, "\nChild terminated with signal = 0x%x (%s)\n",
+		 gdb_signal_to_host (ourstatus->value.sig),
+		 gdb_signal_to_name (ourstatus->value.sig));
+    }
 
   if (connected_wait)
     server_waiting = 0;
@@ -136,48 +151,6 @@ target_pid_to_str (ptid_t ptid)
   else
     xsnprintf (buf, sizeof (buf), "Process %d",
 	       ptid_get_pid (ptid));
-
-  return buf;
-}
-
-/* Return a pretty printed form of target_waitstatus.  */
-
-const char *
-target_waitstatus_to_string (const struct target_waitstatus *ws)
-{
-  static char buf[200];
-  const char *kind_str = "status->kind = ";
-
-  switch (ws->kind)
-    {
-    case TARGET_WAITKIND_EXITED:
-      sprintf (buf, "%sexited, status = %d",
-	       kind_str, ws->value.integer);
-      break;
-    case TARGET_WAITKIND_STOPPED:
-      sprintf (buf, "%sstopped, signal = %s",
-	       kind_str, gdb_signal_to_name (ws->value.sig));
-      break;
-    case TARGET_WAITKIND_SIGNALLED:
-      sprintf (buf, "%ssignalled, signal = %s",
-	       kind_str, gdb_signal_to_name (ws->value.sig));
-      break;
-    case TARGET_WAITKIND_LOADED:
-      sprintf (buf, "%sloaded", kind_str);
-      break;
-    case TARGET_WAITKIND_EXECD:
-      sprintf (buf, "%sexecd", kind_str);
-      break;
-    case TARGET_WAITKIND_SPURIOUS:
-      sprintf (buf, "%sspurious", kind_str);
-      break;
-    case TARGET_WAITKIND_IGNORE:
-      sprintf (buf, "%signore", kind_str);
-      break;
-    default:
-      sprintf (buf, "%sunknown???", kind_str);
-      break;
-    }
 
   return buf;
 }

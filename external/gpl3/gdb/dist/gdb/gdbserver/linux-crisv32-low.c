@@ -1,5 +1,5 @@
 /* GNU/Linux/CRIS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,9 +22,14 @@
 
 /* Defined in auto-generated file reg-crisv32.c.  */
 void init_registers_crisv32 (void);
+extern const struct target_desc *tdesc_crisv32;
 
 /* CRISv32 */
 #define cris_num_regs 49
+
+#ifndef PTRACE_GET_THREAD_AREA
+#define PTRACE_GET_THREAD_AREA 25
+#endif
 
 /* Note: Ignoring USP (having the stack pointer in two locations causes trouble
    without any significant gain).  */
@@ -338,6 +343,20 @@ cris_stopped_data_address (void)
   return eda;
 }
 
+ps_err_e
+ps_get_thread_area (const struct ps_prochandle *ph,
+                    lwpid_t lwpid, int idx, void **base)
+{
+  if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+    return PS_ERR;
+
+  /* IDX is the bias from the thread pointer to the beginning of the
+     thread descriptor.  It has to be subtracted due to implementation
+     quirks in libthread_db.  */
+  *base = (void *) ((char *) *base - idx);
+  return PS_OK;
+}
+
 static void
 cris_fill_gregset (struct regcache *regcache, void *buf)
 {
@@ -362,17 +381,48 @@ cris_store_gregset (struct regcache *regcache, const void *buf)
     }
 }
 
-struct regset_info target_regsets[] = {
+static void
+cris_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_crisv32;
+}
+
+static struct regset_info cris_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, cris_num_regs * 4,
     GENERAL_REGS, cris_fill_gregset, cris_store_gregset },
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+
+static struct regsets_info cris_regsets_info =
+  {
+    cris_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info cris_usrregs_info =
+  {
+    cris_num_regs,
+    cris_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &cris_usrregs_info,
+    &cris_regsets_info
+  };
+
+static const struct regs_info *
+cris_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_crisv32,
-  -1,
-  NULL,
-  NULL,
+  cris_arch_setup,
+  cris_regs_info,
   NULL,
   NULL,
   NULL, /* fetch_register */
@@ -388,3 +438,11 @@ struct linux_target_ops the_low_target = {
   cris_stopped_by_watchpoint,
   cris_stopped_data_address,
 };
+
+void
+initialize_low_arch (void)
+{
+  init_registers_crisv32 ();
+
+  initialize_regsets_info (&cris_regsets_info);
+}

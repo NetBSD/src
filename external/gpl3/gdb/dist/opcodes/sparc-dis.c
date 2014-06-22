@@ -223,7 +223,8 @@ compute_arch_mask (unsigned long mach)
     {
     case 0 :
     case bfd_mach_sparc :
-      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8);
+      return (SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8)
+              | SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_LEON));
     case bfd_mach_sparc_sparclet :
       return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLET);
     case bfd_mach_sparc_sparclite :
@@ -338,8 +339,17 @@ compare_opcodes (const void * a, const void * b)
   i = strcmp (op0->name, op1->name);
   if (i)
     {
-      if (op0->flags & F_ALIAS) /* If they're both aliases, be arbitrary.  */
-	return i;
+      if (op0->flags & F_ALIAS)
+	{
+	  if (op0->flags & F_PREFERRED)
+	    return -1;
+	  if (op1->flags & F_PREFERRED)
+	    return 1;
+
+	  /* If they're both aliases, and neither is marked as preferred,
+	     be arbitrary.  */
+	  return i;
+	}
       else
 	fprintf (stderr,
 		 /* xgettext:c-format */

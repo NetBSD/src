@@ -825,6 +825,10 @@ i370_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       if (info->shared)
@@ -1384,7 +1388,6 @@ i370_elf_relocate_section (bfd *output_bfd,
 #define elf_backend_section_from_shdr		i370_elf_section_from_shdr
 #define elf_backend_adjust_dynamic_symbol	i370_elf_adjust_dynamic_symbol
 #define elf_backend_check_relocs		i370_elf_check_relocs
-#define elf_backend_post_process_headers	_bfd_elf_set_osabi
 
 static int
 i370_noop (void)

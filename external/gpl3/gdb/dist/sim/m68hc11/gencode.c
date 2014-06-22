@@ -1,5 +1,5 @@
 /* gencode.c -- Motorola 68HC11 & 68HC12 Emulator Generator
-   Copyright 1999-2013 Free Software Foundation, Inc.
+   Copyright 1999-2014 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.

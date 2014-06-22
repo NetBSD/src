@@ -1,4 +1,4 @@
-#   Copyright 1997-2013 Free Software Foundation, Inc.
+#   Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,13 +16,10 @@
 # display.exp   Test display commands
 #               Also do some printing stuff for coverage's sake.
 #
-set testfile display
-set srcfile  ${testfile}.c
-set binfile  ${objdir}/${subdir}/${testfile}
+standard_testfile
 
-
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+if {[prepare_for_testing $testfile.exp $testfile $srcfile \
+	 {debug nowarnings}]} {
     untested display.exp
     return -1
 }
@@ -35,11 +32,6 @@ verbose "Timeout is now $timeout seconds" 2
 
 # use this to debug:
 #log_user 1
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 # Some coverage stuff
 #
@@ -176,7 +168,7 @@ gdb_test "printf \"%p\\n\", 1" "0x1"
 
 # play with "print", too
 #
-gdb_test "print/z j" ".*Undefined output format.*"
+gdb_test "print/k j" ".*Undefined output format.*"
 gdb_test "print/d j" " = 0\[\\r\\n\]+"   "debug test output 1"
 gdb_test "print/r j" " = 0\[\\r\\n\]+"   "debug test output 1a"
 gdb_test "print/x j" " = 0x0\[\\r\\n\]+" "debug test output 2"

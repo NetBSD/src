@@ -1,5 +1,5 @@
 /* Support routines for building symbol tables in GDB's internal format.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 #include "gdbtypes.h"
 #include "gdb_assert.h"
 #include "complaints.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "expression.h"		/* For "enum exp_opcode" used by...  */
 #include "bcache.h"
 #include "filenames.h"		/* For DOSish file names.  */
@@ -102,13 +102,24 @@ struct pending_block
    associated symtab.  */
 
 static struct pending_block *pending_blocks;
-
+
+struct subfile_stack
+  {
+    struct subfile_stack *next;
+    char *name;
+  };
+
+static struct subfile_stack *subfile_stack;
+
+/* The macro table for the compilation unit whose symbols we're
+   currently reading.  All the symtabs for the CU will point to this.  */
+static struct macro_table *pending_macros;
+
 static int compare_line_numbers (const void *ln1p, const void *ln2p);
 
 static void record_pending_block (struct objfile *objfile,
 				  struct block *block,
 				  struct pending_block *opblock);
-
 
 /* Initial sizes of data structures.  These are realloc'd larger if
    needed, and realloc'd down to the size actually used, when
@@ -825,6 +836,19 @@ compare_line_numbers (const void *ln1p, const void *ln2p)
   return ln1->line - ln2->line;
 }
 
+/* Return the macro table.
+   Initialize it if this is the first use.  */
+
+struct macro_table *
+get_macro_table (struct objfile *objfile, const char *comp_dir)
+{
+  if (! pending_macros)
+    pending_macros = new_macro_table (&objfile->per_bfd->storage_obstack,
+				      objfile->per_bfd->macro_cache,
+				      comp_dir);
+  return pending_macros;
+}
+
 /* Start a new symtab for a new source file.  Called, for example,
    when a stabs symbol of type N_SO is seen, or when a DWARF
    TAG_compile_unit DIE is seen.  It indicates the start of data for
@@ -1120,9 +1144,10 @@ end_symtab_from_static_block (struct block *static_block,
       blockvector = make_blockvector (objfile);
     }
 
-  /* Read the line table if it has to be read separately.  */
+  /* Read the line table if it has to be read separately.
+     This is only used by xcoffread.c.  */
   if (objfile->sf->sym_read_linetable != NULL)
-    objfile->sf->sym_read_linetable ();
+    objfile->sf->sym_read_linetable (objfile);
 
   /* Handle the case where the debug info specifies a different path
      for the main source file.  It can cause us to lose track of its
@@ -1179,10 +1204,10 @@ end_symtab_from_static_block (struct block *static_block,
 	  if (subfile->dirname)
 	    {
 	      /* Reallocate the dirname on the symbol obstack.  */
-	      symtab->dirname = (char *)
-		obstack_alloc (&objfile->objfile_obstack,
-			       strlen (subfile->dirname) + 1);
-	      strcpy (symtab->dirname, subfile->dirname);
+	      symtab->dirname =
+		obstack_copy0 (&objfile->objfile_obstack,
+			       subfile->dirname,
+			       strlen (subfile->dirname));
 	    }
 	  else
 	    {
@@ -1206,8 +1231,7 @@ end_symtab_from_static_block (struct block *static_block,
 	  /* All symtabs for the main file and the subfiles share a
 	     blockvector, so we need to clear primary for everything
 	     but the main file.  */
-
-	  symtab->primary = 0;
+	  set_symtab_primary (symtab, 0);
 	}
       else
         {
@@ -1255,7 +1279,7 @@ end_symtab_from_static_block (struct block *static_block,
   /* Set this for the main source file.  */
   if (symtab)
     {
-      symtab->primary = 1;
+      set_symtab_primary (symtab, 1);
 
       if (symtab->blockvector)
 	{
@@ -1367,7 +1391,6 @@ void
 augment_type_symtab (struct objfile *objfile, struct symtab *primary_symtab)
 {
   struct blockvector *blockvector = primary_symtab->blockvector;
-  int i;
 
   if (context_stack_depth > 0)
     {
@@ -1539,6 +1562,7 @@ buildsym_init (void)
   pending_blocks = NULL;
   pending_macros = NULL;
   using_directives = NULL;
+  subfile_stack = NULL;
 
   /* We shouldn't have any address map at this point.  */
   gdb_assert (! pending_addrmap);

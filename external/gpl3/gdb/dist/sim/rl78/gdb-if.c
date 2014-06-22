@@ -1,6 +1,6 @@
 /* gdb-if.c -- sim interface to GDB.
 
-Copyright (C) 2011-2013 Free Software Foundation, Inc.
+Copyright (C) 2011-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -54,8 +54,6 @@ static struct sim_state the_minisim = {
 };
 
 static int open;
-
-static unsigned char hw_breakpoints[MEM_SIZE/8];
 
 static struct host_callback_struct *host_callbacks;
 
@@ -341,7 +339,15 @@ sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
   val = get_le (buf, length);
 
   if (regno == sim_rl78_pc_regnum)
-    pc = val;
+    {
+      pc = val;
+
+      /* The rl78 program counter is 20 bits wide.  Ensure that GDB
+         hasn't picked up any stray bits.  This has occurred when performing
+	 a GDB "return" command in which the return address is obtained
+	 from a 32-bit container on the stack.  */
+      assert ((pc & ~0x0fffff) == 0);
+    }
   else
     memory[reg_addr (regno)] = val;
   return size;
@@ -456,13 +462,6 @@ sim_resume (SIM_DESC sd, int step, int sig_to_deliver)
 	  break;
 	}
 
-      if (hw_breakpoints[pc >> 3]
-          && (hw_breakpoints[pc >> 3] & (1 << (pc & 0x7))))
-	{
-	  reason = sim_stopped;
-	  siggnal = GDB_SIGNAL_TRAP;
-	  break;
-	}
       rc = setjmp (decode_jmp_buf);
       if (rc == 0)
 	rc = decode_opcode ();
@@ -567,7 +566,7 @@ sim_do_command (SIM_DESC sd, char *cmd)
 /* Stub for command completion.  */
 
 char **
-sim_complete_command (SIM_DESC sd, char *text, char *word)
+sim_complete_command (SIM_DESC sd, const char *text, const char *word)
 {
     return NULL;
 }

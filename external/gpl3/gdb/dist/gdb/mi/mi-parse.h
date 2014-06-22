@@ -1,5 +1,5 @@
 /* MI Command Set - MI Command Parser.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -50,6 +50,10 @@ struct mi_parse
     int thread_group; /* At present, the same as inferior number.  */
     int thread;
     int frame;
+
+    /* The language that should be used to evaluate the MI command.
+       Ignored if set to language_unknown.  */
+    enum language language;
   };
 
 /* Attempts to parse CMD returning a ``struct mi_parse''.  If CMD is
@@ -65,5 +69,9 @@ extern struct mi_parse *mi_parse (const char *cmd, char **token);
 /* Free a command returned by mi_parse_command.  */
 
 extern void mi_parse_free (struct mi_parse *cmd);
+
+/* Parse a string argument into a print_values value.  */
+
+enum print_values mi_parse_print_values (const char *name);
 
 #endif

@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,10 +22,11 @@
 #include "gdbcmd.h"
 #include "memattr.h"
 #include "target.h"
+#include "target-dcache.h"
 #include "value.h"
 #include "language.h"
 #include "vec.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "breakpoint.h"
 #include "cli/cli-utils.h"
 

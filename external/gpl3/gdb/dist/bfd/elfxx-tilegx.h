@@ -22,7 +22,9 @@
 #include "elf/internal.h"
 
 extern enum elf_reloc_type_class
-tilegx_reloc_type_class (const Elf_Internal_Rela *);
+tilegx_reloc_type_class (const struct bfd_link_info *,
+			 const asection *,
+			 const Elf_Internal_Rela *);
 
 extern reloc_howto_type *
 tilegx_reloc_name_lookup (bfd *, const char *);

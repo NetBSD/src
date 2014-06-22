@@ -1,6 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -24,7 +24,7 @@
 #include "ui-out.h"
 #include "cli-out.h"
 #include "tui.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 
 struct tui_ui_out_data

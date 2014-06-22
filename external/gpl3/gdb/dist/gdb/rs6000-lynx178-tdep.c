@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -100,13 +100,19 @@ rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
 
 	  /* Floating point arguments are passed in fpr's, as well as gpr's.
 	     There are 13 fpr's reserved for passing parameters.  At this point
-	     there is no way we would run out of them.  */
+	     there is no way we would run out of them.
+
+	     Always store the floating point value using the register's
+	     floating-point format.  */
+	  const int fp_regnum = tdep->ppc_fp0_regnum + 1 + f_argno;
+	  gdb_byte reg_val[MAX_REGISTER_SIZE];
+	  struct type *reg_type = register_type (gdbarch, fp_regnum);
 
 	  gdb_assert (len <= 8);
 
-	  regcache_cooked_write (regcache,
-	                         tdep->ppc_fp0_regnum + 1 + f_argno,
-	                         value_contents (arg));
+	  convert_typed_floating (value_contents (arg), type,
+				  reg_val, reg_type);
+	  regcache_cooked_write (regcache, fp_regnum, reg_val);
 	  ++f_argno;
 	}
 

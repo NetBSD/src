@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit
@@ -37,10 +37,10 @@ gdb_file_cmd $binfile
 # define relative source line numbers:
 # all subsequent line numbers are relative to this first one (baseline)
 
-set baseline  [gdb_find_recursion_test_baseline $srcfile];
+set baseline  [gdb_find_recursion_test_baseline $srcfile]
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 set testline1 [expr $baseline + 7]
@@ -50,12 +50,12 @@ set testline1 [expr $baseline + 7]
 #
 
 gdb_delete_tracepoints
-set trcpt1 [gdb_gettpnum gdb_c_test];
-set trcpt2 [gdb_gettpnum gdb_asm_test];
-set trcpt3 [gdb_gettpnum $testline1];
+set trcpt1 [gdb_gettpnum gdb_c_test]
+set trcpt2 [gdb_gettpnum gdb_asm_test]
+set trcpt3 [gdb_gettpnum $testline1]
 if { $trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 # 5.1 actions of specified tracepoint
@@ -235,3 +235,112 @@ gdb_test "info tracepoints" \
 \[\t \]+not installed on target." \
 		"5.10a: verify teval actions set for two tracepoints"
 
+gdb_test "break main"
+gdb_run_cmd
+gdb_test "" "Breakpoint .*"
+if ![gdb_target_supports_trace] {
+    unsupported "target does not support trace"
+    return -1
+}
+
+gdb_trace_setactions "set actions for first tracepoint" \
+    "$trcpt1" \
+    "collect \$regs" "^$" \
+    "end" ""
+
+# Check the definition of tracepoints.  These tracepoints may have
+# different number in different runs.
+
+proc check_tracepoint { data_source } {
+    with_test_prefix "$data_source" {
+	global gdb_prompt
+	global srcfile
+
+	set tp_on_gdb_c_test 0
+	set tp_on_gdb_asm_test 0
+	set tp_on_gdb_recursion_test 0
+
+	# Since the three tracepoints may appear in different orders, so
+	# we can't do 'info tracepoints' to match the output.  Instead, we
+	# show each tracepoint one by one and record the number of each
+	# tracepoint shown up the output.  Check the number finally.
+	for {set i 1} {$i < 4} {incr i 1} {
+	    set test "info tracepoints $i"
+	    gdb_test_multiple "info tracepoints $i" $test {
+		-re "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+\\r\\n\[\t \]+collect \\\$regs\\r\\n\[\t \]+installed on target" {
+		    incr tp_on_gdb_c_test
+		    exp_continue
+		}
+		-re "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+\\r\\n\[\t \]+teval \\\$tsv \\+= 1\\r\\n\[\t \]+installed on target" {
+		    incr tp_on_gdb_asm_test
+		    exp_continue
+		}
+		-re "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+\\r\\n\[\t \]+collect gdb_long_test\\r\\n\[\t \]+installed on target" {
+		    incr tp_on_gdb_recursion_test
+		    exp_continue
+		}
+		-re "${gdb_prompt} $" {
+		}
+	    }
+	}
+
+	if {$tp_on_gdb_c_test == 1} {
+	    pass "tracepoint on gdb_c_test"
+	} else {
+	    fail "tracepoint on gdb_c_test"
+	}
+	if {$tp_on_gdb_asm_test == 1} {
+	    pass "tracepoint on gdb_asm_test"
+	} else {
+	    fail "tracepoint on gdb_asm_test"
+	}
+	if {$tp_on_gdb_recursion_test == 1} {
+	    pass "tracepoint on gdb_recursion_test"
+	} else {
+	    fail "tracepoint on gdb_recursion_test $tp_on_gdb_recursion_test"
+	}
+    }
+}
+
+# Start and stop the tracing, so that we can save tracepoints
+# definitions to trace file.
+gdb_test_no_output "tstart" ""
+check_tracepoint "live"
+gdb_test_no_output "tstop" ""
+set tracefile [standard_output_file ${testfile}]
+gdb_test "tsave ${tracefile}.tf" \
+    "Trace data saved to file '${tracefile}.tf'\.\\r" \
+    "tsave ${testfile}.tf"
+gdb_test "tsave -ctf ${tracefile}.ctf" \
+    "Trace data saved to directory '${tracefile}.ctf'\.\\r" \
+    "save ctf trace file"
+
+# Restart GDB and read the trace data in tfile target.
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_file_cmd $binfile
+gdb_test "target tfile ${tracefile}.tf" ".*" \
+    "change to tfile target"
+check_tracepoint "tfile"
+
+# Try to read ctf data if GDB supports.
+set gdb_can_read_ctf_data 0
+gdb_test_multiple "target ctf" "" {
+    -re "Undefined target command: \"ctf\"\.  Try \"help target\"\.\r\n$gdb_prompt $" {
+	set gdb_can_read_ctf_data 0
+    }
+    -re "No CTF directory specified.*\r\n$gdb_prompt $" {
+	set gdb_can_read_ctf_data 1
+    }
+}
+
+if { $gdb_can_read_ctf_data } {
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_file_cmd $binfile
+    gdb_test "target ctf ${tracefile}.ctf" ".*" \
+	"change to ctf target"
+    check_tracepoint "ctf"
+}

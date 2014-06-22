@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2013 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 # Test attaching to already-running programs using extended-remote.
 
 load_lib gdbserver-support.exp
+load_lib trace-support.exp
 
 standard_testfile
 
@@ -56,6 +57,15 @@ if { [istarget "*-*-cygwin*"] } {
 gdb_test "attach $testpid" \
     "Attaching to program: .*, process $testpid.*(in|at).*" \
     "attach to remote program 1"
+
+if { [gdb_target_supports_trace] } then {
+    # Test predefined TSVs are uploaded.
+    gdb_test_sequence "info tvariables" "check uploaded tsv" {
+	"\[\r\n\]+Name\[\t \]+Initial\[\t \]+Current"
+	"\[\r\n\]+\\\$trace_timestamp 0"
+    }
+}
+
 gdb_test "backtrace" ".*main.*" "backtrace 1"
 
 gdb_test "detach" "Detaching from program.*process.*"

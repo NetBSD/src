@@ -1,3 +1,41 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Add note about broken handling of
+	SEARCH with parallel insns.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32shift_0): Make sure HLs is 0 after last
+	insn that uses it.
+	(decode_dsp32shiftimm_0): Likewise.
+	Require HLs be less than 2 for accumulator shift insns.
+
+2013-06-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Check more opcode fields before
+	decoding various insns.
+
+2013-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* TODO: Add more notes.
+
+2013-06-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in ($(srcdir)/linux-fixed-code.h): Add
+	@MAINTAINER_MODE_TRUE@ as the first item in the dependency list.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	* configure: Rebuild.
+
 2013-03-26  Mike Frysinger  <vapier@gentoo.org>
 
 	* aclocal.m4, configure: Regenerate.

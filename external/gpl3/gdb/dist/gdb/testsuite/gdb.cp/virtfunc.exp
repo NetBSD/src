@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -234,7 +234,7 @@ proc make_one_vtable_result {name args} {
     set result "vtable for '${name}' @ $hex .subobject @ $hex.:$nls"
     set count 0
     foreach func $args {
-	append result ".${count}.: $hex <$func..>${nls}"
+	append result ".${count}.:( @$hex:)? $hex <(\.)?$func..>${nls}"
 	incr count
     }
 

@@ -11840,7 +11840,7 @@
 	* mi/mi-cmd-disas.c (mi_cmd_disassemble): Allow mode to control
 	dumping of instruction opcodes.
 
-2011-01-09  Robert Millan  <rmh@gnu.org>  (tiny patch)
+2011-01-09  Robert Millan  <rmh@gnu.org>  (tiny change)
 
 	* configure.tgt: Detect GNU/kFreeBSD and set `gdb_osabi'
 	appropiately.

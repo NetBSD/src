@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,13 +43,19 @@ if {$l1 != $l2} {
     error "somebody incompatibly modified the source files needed by linespec.exp"
 }
 
-gdb_test "break one/thefile.cc:$l1" \
-    "Breakpoint $decimal at $hex: file .*thefile.cc, line $l1." \
-    "single-location break using dir/file:line"
+# Copying files to a remote host loses the directory prefix during
+# compilation.
+if { [is_remote host] } {
+    untested "breakpoints using dir/file:line"
+} else {
+    gdb_test "break one/thefile.cc:$l1" \
+        "Breakpoint $decimal at $hex: file .*thefile.cc, line $l1." \
+        "single-location break using dir/file:line"
 
-gdb_test "clear one/thefile.cc:$l1" \
-    "Deleted breakpoint $decimal *" \
-    "clear breakpoint using dir/file:line"
+    gdb_test "clear one/thefile.cc:$l1" \
+        "Deleted breakpoint $decimal *" \
+        "clear breakpoint using dir/file:line"
+}
 
 gdb_test "break thefile.cc:$l1" \
     "Breakpoint $decimal at $hex: thefile.cc:$l1. \[(\]2 locations\[)\]" \

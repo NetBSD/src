@@ -1,5 +1,5 @@
 /* Simulator parallel routines for CGEN simulators (and maybe others).
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU instruction set simulator.

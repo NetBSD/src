@@ -1,5 +1,5 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -104,10 +104,10 @@ enum serial_rc {
 
 extern int serial_readchar (struct serial *scb, int timeout);
 
-/* Write LEN chars from STRING to the port SCB.  Returns 0 for
+/* Write COUNT bytes from BUF to the port SCB.  Returns 0 for
    success, non-zero for failure.  */
 
-extern int serial_write (struct serial *scb, const char *str, int len);
+extern int serial_write (struct serial *scb, const void *buf, size_t count);
 
 /* Write a printf style string onto the serial port.  */
 
@@ -228,7 +228,7 @@ struct serial
        If != -1, this descriptor should be non-blocking or
        ops->avail should be non-NULL.  */
     int error_fd;               
-    struct serial_ops *ops;	/* Function vector */
+    const struct serial_ops *ops; /* Function vector */
     void *state;       		/* Local context info for open FD */
     serial_ttystate ttystate;	/* Not used (yet) */
     int bufcnt;			/* Amount of data remaining in receive
@@ -251,12 +251,11 @@ struct serial
 struct serial_ops
   {
     char *name;
-    struct serial_ops *next;
     int (*open) (struct serial *, const char *name);
     void (*close) (struct serial *);
     int (*fdopen) (struct serial *, int fd);
     int (*readchar) (struct serial *, int timeout);
-    int (*write) (struct serial *, const char *str, int len);
+    int (*write) (struct serial *, const void *buf, size_t count);
     /* Discard pending output */
     int (*flush_output) (struct serial *);
     /* Discard pending input */
@@ -301,7 +300,7 @@ struct serial_ops
 
 /* Add a new serial interface to the interface list.  */
 
-extern void serial_add_interface (struct serial_ops * optable);
+extern void serial_add_interface (const struct serial_ops * optable);
 
 /* File in which to record the remote debugging session.  */
 

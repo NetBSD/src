@@ -1,3 +1,20 @@
+2013-09-24  Pierre Muller  <muller@sourceware.org>
+
+	* readline.c (bind_arrow_keys_internal):
+	Handle VK_HOME, VK_END, VK_DELETE and VK_INSERT for mingw
+	hosts.
+
+2013-09-23  Martin Benda  <martin.benda@omsquare.com>
+
+	Checked in by Joel Brobecker  <brobecker@adacore.com>
+	* util.c (_rl_strnicmp): Add missing semicolon.
+
+2013-05-22  Yao Qi  <yao@codesourcery.com>
+
+	* configure.in: Invoke AC_CANONICAL_BUILD.
+	Change $host_os to $build_os.
+	* configure: Regenerated.
+
 2012-10-18  Joel Brobecker  <brobecker@adacore.com>
 
 	* terminal.c: Remove duplicate includes of windows.h and

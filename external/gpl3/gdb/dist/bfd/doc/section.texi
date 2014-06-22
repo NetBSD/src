@@ -498,6 +498,32 @@ struct relax_table @{
   int size;
 @};
 
+/* Note: the following are provided as inline functions rather than macros
+   because not all callers use the return value.  A macro implementation
+   would use a comma expression, eg: "((ptr)->foo = val, TRUE)" and some
+   compilers will complain about comma expressions that have no effect.  */
+static inline bfd_boolean
+bfd_set_section_userdata (bfd * abfd ATTRIBUTE_UNUSED, asection * ptr, void * val)
+@{
+  ptr->userdata = val;
+  return TRUE;
+@}
+
+static inline bfd_boolean
+bfd_set_section_vma (bfd * abfd ATTRIBUTE_UNUSED, asection * ptr, bfd_vma val)
+@{
+  ptr->vma = ptr->lma = val;
+  ptr->user_set_vma = TRUE;
+  return TRUE;
+@}
+
+static inline bfd_boolean
+bfd_set_section_alignment (bfd * abfd ATTRIBUTE_UNUSED, asection * ptr, unsigned int val)
+@{
+  ptr->alignment_power = val;
+  return TRUE;
+@}
+
 /* These sections are global, and are managed by BFD.  The application
    and target back end are not permitted to change the values in
    these sections.  */

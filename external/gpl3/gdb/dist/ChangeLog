@@ -1,7 +1,153 @@
-2013-08-29  Joel Brobecker  <brobecker@adacore.com>
+2013-12-19  Keven Boell  <keven.boell@intel.com>
 
-	* src-release (VER): Strip any "-cvs" suffix from the version
-	number, if extracted from $(TOOL)/version.in.
+	* cp-namespace.c (cp_lookup_nested_symbol): Enable
+	nested lookups for fortran modules.
+	* dwarf2read.c (read_module): Add fortran module to
+	the symbol table.
+	(add_partial_symbol, add_partial_module): Add fortran
+	module to the partial symbol table.
+	(new_symbol_full): Create full symbol for fortran module.
+	* f-exp.y (yylex): Add new module domain to be parsed.
+	* symtab.h: New domain for fortran modules.
+
+2013-12-19  Keven Boell  <keven.boell@intel.com>
+
+	* f-exp.y (yylex): Add domain array to enable lookup
+	in multiple domains. Loop over lookup domains and try
+	to find requested symbol. Add STRUCT_DOMAIN to lookup
+	domains to be able to query for user defined types.
+
+2013-12-13  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	* configure.ac: Add user-friendly check for native x86_64-linux
+	multilibs.
+	* configure: Regenerate.
+
+2013-11-23  Alan Modra  <amodra@gmail.com>
+
+	* config.sub, config.guess: Import from upstream.
+
+2013-11-07  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* Makefile.in: Regenerate.
+
+	* Makefile.tpl: Fix typo.
+	* Makefile.in: Regenerate partially.
+
+2013-11-04  Balaji V. Iyer  <balaji.v.iyer@intel.com>
+
+	* configure.ac: Added libcilkrts to noconfig list when C++ is not
+	supported.
+	* configure: Regenerated.
+
+2013-10-30  Jason Merrill  <jason@redhat.com>
+
+	* Makefile.tpl (STAGE1_CONFIGURE_FLAGS): Pass
+	--disable-build-format-warnings.
+
+2013-10-29  Balaji V. Iyer  <balaji.v.iyer@intel.com>
+
+	* Makefile.def: Add libcilkrts to target_modules.  Make libcilkrts
+	depend on libstdc++ and libgcc.
+	* configure: Regenerate.
+	* configure.ac: Added libcilkrts to target binaries.  Also, restrict
+	libcilkrts for POSIX and i*86, and x86_64 architectures.
+	* Makefile.in: Added libcilkrts related fields to support building it.
+
+2013-10-26  Jeff Law  <law@redhat.com>
+
+	* Makefile.def (target_modules): Remove libmudflap
+	(languages): Remove check-target-libmudflap).
+	* Makefile.in: Rebuilt.
+	* Makefile.tpl (check-target-libmudflap-c++): Remove.
+	* configure.ac (target_libraries): Remove target-libmudflap.
+	Remove checks which disabled libmudflap on some systems.
+	* configure: Rebuilt.
+	* libmudflap: Directory removed.
+
+2013-10-16  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac: Update from GCC.
+	* configure: Regenerate.
+
+2013-10-15  Hans-Peter Nilsson  <hp@axis.com>
+
+	* src-release (do-proto-toplevel): Support subdir-path-prefixed
+	files in SUPPORT_FILES.
+	(SIM_SUPPORT_DIRS): New variable.
+	(sim.tar.bz2): New rule.
+
+2013-10-08  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac: Update from GCC.
+	* configure: Regenerate.
+
+2013-10-01  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* COPYING.NEWLIB: Update with new copyright.
+
+2013-09-21  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac: Update from GCC.
+	* configure: Regenerate.
+
+2013-09-20  Alan Modra  <amodra@gmail.com>
+
+	* libtool.m4 (_LT_ENABLE_LOCK <ld -m flags>): Remove non-canonical
+	ppc host match.  Support little-endian powerpc linux hosts.
+
+2013-08-16  Joel Brobecker  <brobecker@adacore.com>
+
+	* src-release (VER): When using $(TOOL)/common/create-version.sh,
+	strip the "-cvs" suffix from the version number if present.
+
+2013-08-12  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac: Sync with GCC repo.
+	* Makefile.def: Ditto.
+	* configure: Regenerate.
+	* Makefile.in: Ditto.
+
+2013-07-22  Joel Brobecker  <brobecker@adacore.com>
+
+	* src-release (VER): Use $(TOOL)/common/create-version.sh
+	if it exists.
+
+2013-06-22  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* configure.ac (mips*-*-bsd*, mips*-*-ultrix*, mips*-*-osf*)
+	(mips*-*-ecoff*, mips*-*-pe*, mips*-*-irix* [v4 and earlier])
+	(mips*-*-lnews*, mips*-*-riscos*): Add gas and ld to noconfigdirs.
+	* configure: Regenerate.
+
+2013-06-01  George Thomas <george.thomas@atmel.com>
+
+	* include/opcode/avr.h: Rename AVR_ISA_XCH to AVR_ISA_RMW. Remove
+	from AVR_ISA_XMEGA and add new AVR_ISA_XMEGAU
+
+2013-05-06  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* COPYING.NEWLIB: Add Altera Corporation copyright.
+
+2013-04-29  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* config.guess: Update from config repo.
+	* config.sub: Ditto.
+
+2013-04-22  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* Makefile.def: Sync with GCC.
+	* Makefile.in: Regenerate.
+
+2013-04-22  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac: Sync with GCC.
+	* configure: Regenerate.
+
+2013-03-22  Mike Frysinger  <vapier@gentoo.org>
+
+	* src-release (VER): Change bfd/configure.in sed to use the new
+	`bfd/configure --version` output.
 
 2013-02-15  Yufeng Zhang  <yufeng.zhang@arm.com>
 
@@ -506,7 +652,7 @@
 
 	* config.sub: Import these changes from the config project:
 
-	2011-10-08  Joern Rennecke <joern.rennecke@embecosm.com>
+	2011-10-08  Joern Rennecke  <joern.rennecke@embecosm.com>
 	    Ben Elliston  <bje@gnu.org>
 
 	* config.sub (epiphany): New.

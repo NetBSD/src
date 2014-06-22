@@ -2837,6 +2837,10 @@ s3_bfd_score_elf_check_relocs (bfd *abfd,
             {
               while (h->root.type == bfd_link_hash_indirect)
                 h = (struct elf_link_hash_entry *)h->root.u.i.link;
+
+	      /* PR15323, ref flags aren't set for references in the
+		 same object.  */
+	      h->root.non_ir_ref = 1;
             }
         }
 

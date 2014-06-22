@@ -1,6 +1,6 @@
 # Reply server mig-output massager
 #
-#   Copyright (C) 1995-2013 Free Software Foundation, Inc.
+#   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 #
 #   Written by Miles Bader <miles@gnu.ai.mit.edu>
 #

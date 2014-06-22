@@ -1,6 +1,6 @@
 /* Target-dependent code for AMD64 Solaris.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    Contributed by Joseph Myers, CodeSourcery, LLC.
 
@@ -26,7 +26,7 @@
 #include "osabi.h"
 #include "symtab.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sol2-tdep.h"
 #include "amd64-tdep.h"

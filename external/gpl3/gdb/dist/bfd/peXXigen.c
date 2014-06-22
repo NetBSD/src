@@ -1,6 +1,5 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+   Copyright 1995-2013 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -63,6 +62,9 @@
 #include "libbfd.h"
 #include "coff/internal.h"
 #include "bfdver.h"
+#ifdef HAVE_WCHAR_H
+#include <wchar.h>
+#endif
 
 /* NOTE: it's strange to be including an architecture specific header
    in what's supposed to be general (to PE/PEI) code.  However, that's
@@ -81,12 +83,17 @@
 #include "coff/pe.h"
 #include "libcoff.h"
 #include "libpei.h"
+#include "safe-ctype.h"
 
 #if defined COFF_WITH_pep || defined COFF_WITH_pex64
 # undef AOUTSZ
 # define AOUTSZ		PEPAOUTSZ
 # define PEAOUTHDR	PEPAOUTHDR
 #endif
+
+#define HighBitSet(val)      ((val) & 0x80000000)
+#define SetHighBit(val)      ((val) | 0x80000000)
+#define WithoutHighBit(val)  ((val) & 0x7fffffff)
 
 /* FIXME: This file has various tests of POWERPC_LE_PE.  Those tests
    worked when the code was in peicode.h, but no longer work now that
@@ -461,7 +468,7 @@ _bfd_XXi_swap_aouthdr_in (bfd * abfd,
   {
     int idx;
 
-    for (idx = 0; idx < 16; idx++)
+    for (idx = 0; idx < a->NumberOfRvaAndSizes; idx++)
       {
         /* If data directory is empty, rva also should be 0.  */
 	int size =
@@ -793,7 +800,10 @@ _bfd_XXi_only_swap_filehdr_out (bfd * abfd, void * in, void * out)
   H_PUT_16 (abfd, filehdr_in->f_magic, filehdr_out->f_magic);
   H_PUT_16 (abfd, filehdr_in->f_nscns, filehdr_out->f_nscns);
 
-  H_PUT_32 (abfd, time (0), filehdr_out->f_timdat);
+  /* Only use a real timestamp if the option was chosen.  */
+  if ((pe_data (abfd)->insert_timestamp))
+    H_PUT_32 (abfd, time(0), filehdr_out->f_timdat);
+
   PUT_FILEHDR_SYMPTR (abfd, filehdr_in->f_symptr,
 		      filehdr_out->f_symptr);
   H_PUT_32 (abfd, filehdr_in->f_nsyms, filehdr_out->f_nsyms);
@@ -1283,9 +1293,10 @@ pe_print_idata (bfd * abfd, void * vfile)
 	      if (!member && !member_high)
 		break;
 
-	      if (member_high & 0x80000000)
+	      if (HighBitSet (member_high))
 		fprintf (file, "\t%lx%08lx\t %4lx%08lx  <none>",
-			 member_high,member, member_high & 0x7fffffff, member);
+			 member_high, member,
+			 WithoutHighBit (member_high), member);
 	      else
 		{
 		  int ordinal;
@@ -1315,9 +1326,9 @@ pe_print_idata (bfd * abfd, void * vfile)
 	      if (member == 0)
 		break;
 
-	      if (member & 0x80000000)
+	      if (HighBitSet (member))
 		fprintf (file, "\t%04lx\t %4lu  <none>",
-			 member, member & 0x7fffffff);
+			 member, WithoutHighBit (member));
 	      else
 		{
 		  int ordinal;
@@ -1988,6 +1999,231 @@ pe_print_reloc (bfd * abfd, void * vfile)
 
   return TRUE;
 }
+
+
+static bfd_byte *
+rsrc_print_resource_directory (FILE * , bfd *, unsigned int,
+			       bfd_byte *, bfd_byte *, bfd_byte *, bfd_vma);
+
+static bfd_byte *
+rsrc_print_resource_entries (FILE *        file,
+			     bfd *         abfd,
+			     unsigned int  indent,
+			     bfd_boolean   is_name,
+			     bfd_byte *    datastart,
+			     bfd_byte *    data,
+			     bfd_byte *    dataend,
+			     bfd_vma       rva_bias)
+{
+  unsigned long entry, addr, size;
+
+  if (data + 8 >= dataend)
+    return dataend + 1;
+
+  fprintf (file, _("%*.s Entry: "), indent, " ");
+
+  entry = (long) bfd_get_32 (abfd, data);
+  if (is_name)
+    {
+      bfd_byte * name;
+
+      /* Note - the documenation says that this field is an RVA value
+	 but windres appears to produce a section relative offset with
+	 the top bit set.  Support both styles for now.  */
+      if (HighBitSet (entry))
+	name = datastart + WithoutHighBit (entry);
+      else
+	name = datastart + entry - rva_bias;
+
+      if (name + 2 < dataend)
+	{
+	  unsigned int len;
+	  len = bfd_get_16 (abfd, name);
+
+	  fprintf (file, _("name: [val: %08lx len %d]: "), entry, len);
+	  if (name + 2 + len * 2 < dataend)
+	    {
+	      /* This strange loop is to cope with multibyte characters.  */
+	      while (len --)
+		{
+		  name += 2;
+		  fprintf (file, "%.1s", name);
+		}
+	    }
+	  else
+	    fprintf (file, _("<corrupt string length: %#x>"), len);
+	}
+      else
+	fprintf (file, _("<corrupt string offset: %#lx>"), entry);
+    }
+  else
+    fprintf (file, _("ID: %#08lx"), entry);
+
+  entry = (long) bfd_get_32 (abfd, data + 4);
+  fprintf (file, _(", Value: %#08lx\n"), entry);
+
+  if (HighBitSet  (entry))
+    return rsrc_print_resource_directory (file, abfd, indent + 1,
+					  datastart,
+					  datastart + WithoutHighBit (entry),
+					  dataend, rva_bias);
+
+  if (datastart + entry + 16 >= dataend)
+    return dataend + 1;
+
+  fprintf (file, _("%*.s  Leaf: Addr: %#08lx, Size: %#08lx, Codepage: %d\n"),
+	   indent, " ",
+	   addr = (long) bfd_get_32 (abfd, datastart + entry),
+	   size = (long) bfd_get_32 (abfd, datastart + entry + 4),
+	   (int) bfd_get_32 (abfd, datastart + entry + 8));
+
+  /* Check that the reserved entry is 0.  */
+  if (bfd_get_32 (abfd, datastart + entry + 12) != 0
+      /* And that the data address/size is valid too.  */
+      || (datastart + (addr - rva_bias) + size > dataend))
+    return dataend + 1;
+
+  return datastart + (addr - rva_bias) + size;
+}
+
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#define min(a,b) ((a) < (b) ? (a) : (b))
+
+static bfd_byte *
+rsrc_print_resource_directory (FILE *        file,
+			       bfd *         abfd,
+			       unsigned int  indent,
+			       bfd_byte *    datastart,
+			       bfd_byte *    data,
+			       bfd_byte *    dataend,
+			       bfd_vma       rva_bias)
+{
+  unsigned int num_names, num_ids;
+  bfd_byte * highest_data = data;
+
+  if (data + 16 >= dataend)
+    return dataend + 1;
+
+  fprintf (file, "%*.s ", indent, " ");
+  switch (indent)
+    {
+    case 0: fprintf (file, "Type"); break;
+    case 2: fprintf (file, "Name"); break;
+    case 4: fprintf (file, "Language"); break;
+    default: fprintf (file, "<unknown>"); break;
+    }
+
+  fprintf (file, _(" Table: Char: %d, Time: %08lx, Ver: %d/%d, Num Names: %d, IDs: %d\n"),
+	   (int) bfd_get_32 (abfd, data),
+	   (long) bfd_get_32 (abfd, data + 4),
+	   (int)  bfd_get_16 (abfd, data + 8),
+	   (int)  bfd_get_16 (abfd, data + 10),
+	   num_names = (int) bfd_get_16 (abfd, data + 12),
+	   num_ids =   (int) bfd_get_16 (abfd, data + 14));
+  data += 16;
+
+  while (num_names --)
+    {
+      bfd_byte * entry_end;
+
+      entry_end = rsrc_print_resource_entries (file, abfd, indent + 1, TRUE,
+					       datastart, data, dataend, rva_bias);
+      data += 8;
+      highest_data = max (highest_data, entry_end);
+      if (entry_end >= dataend)
+	return entry_end;
+    }
+
+  while (num_ids --)
+    {
+      bfd_byte * entry_end;
+
+      entry_end = rsrc_print_resource_entries (file, abfd, indent + 1, FALSE,
+					       datastart, data, dataend,
+					       rva_bias);
+      data += 8;
+      highest_data = max (highest_data, entry_end);
+      if (entry_end >= dataend)
+	return entry_end;
+    }
+
+  return max (highest_data, data);
+}
+
+/* Display the contents of a .rsrc section.  We do not try to
+   reproduce the resources, windres does that.  Instead we dump
+   the tables in a human readable format.  */
+
+static bfd_boolean
+rsrc_print_section (bfd * abfd, void * vfile)
+{
+  bfd_vma rva_bias;
+  pe_data_type * pe;
+  FILE * file = (FILE *) vfile;
+  bfd_size_type datasize;
+  asection * section;
+  bfd_byte * data;
+  bfd_byte * dataend;
+  bfd_byte * datastart;
+
+
+  pe = pe_data (abfd);
+  if (pe == NULL)
+    return TRUE;
+
+  section = bfd_get_section_by_name (abfd, ".rsrc");
+  if (section == NULL)
+    return TRUE;
+
+  rva_bias = section->vma - pe->pe_opthdr.ImageBase;
+
+  datasize = section->size;
+  if (datasize == 0)
+    return TRUE;
+
+  if (! bfd_malloc_and_get_section (abfd, section, & data))
+    {
+      if (data != NULL)
+	free (data);
+      return FALSE;
+    }
+  datastart = data;
+  dataend = data + datasize;
+
+  fflush (file);
+  fprintf (file, "\nThe .rsrc Resource Directory section:\n");
+
+  while (data < dataend)
+    {
+      bfd_byte * p = data;
+
+      data = rsrc_print_resource_directory (file, abfd, 0, data, data,
+					    dataend, rva_bias);
+
+      if (data == dataend + 1)
+	fprintf (file, _("Corrupt .rsrc section detected!\n"));
+      else
+	{
+	  /* Align data before continuing.  */
+	  int align = (1 << section->alignment_power) - 1;
+
+	  data = (bfd_byte *) (((ptrdiff_t) (data + align)) & ~ align);
+	  rva_bias += data - p;
+
+	  /* For reasons that are unclear .rsrc sections are sometimes created
+	     aligned to a 1^3 boundary even when their alignment is set at
+	     1^2.  Catch that case here before we issue a spurious warning
+	     message.  */
+	  if (data == (dataend - 4))
+	    data = dataend;
+	  else if (data < dataend)
+	    fprintf (file, _("\nWARNING: Extra data in .rsrc section - it will be ignored by Windows:\n"));
+	}
+    }
+
+  free (datastart);
+  return TRUE;
+}
 
 /* Print out the program headers.  */
 
@@ -2163,6 +2399,8 @@ _bfd_XX_print_private_bfd_data_common (bfd * abfd, void * vfile)
     pe_print_pdata (abfd, vfile);
   pe_print_reloc (abfd, vfile);
 
+  rsrc_print_section (abfd, vfile);
+
   return TRUE;
 }
 
@@ -2267,6 +2505,1134 @@ sort_x64_pdata (const void *l, const void *r)
   return 0;
 }
 #endif
+
+/* Functions to process a .rsrc section.  */
+
+static unsigned int sizeof_leaves;
+static unsigned int sizeof_strings;
+static unsigned int sizeof_tables_and_entries;
+
+static bfd_byte *
+rsrc_count_directory (bfd *, bfd_byte *, bfd_byte *, bfd_byte *, bfd_vma);
+
+static bfd_byte *
+rsrc_count_entries (bfd *          abfd,
+		    bfd_boolean    is_name,
+		    bfd_byte *     datastart,
+		    bfd_byte *     data,
+		    bfd_byte *     dataend,
+		    bfd_vma        rva_bias)
+{
+  unsigned long entry, addr, size;
+
+  if (data + 8 >= dataend)
+    return dataend + 1;
+
+  if (is_name)
+    {
+      bfd_byte * name;
+
+      entry = (long) bfd_get_32 (abfd, data);
+
+      if (HighBitSet (entry))
+	name = datastart + WithoutHighBit (entry);
+      else
+	name = datastart + entry - rva_bias;
+
+      if (name + 2 >= dataend)
+	return dataend + 1;
+
+      unsigned int len = bfd_get_16 (abfd, name);
+      if (len == 0 || len > 256)
+	return dataend + 1;
+
+      sizeof_strings += (len + 1) * 2;
+    }
+
+  entry = (long) bfd_get_32 (abfd, data + 4);
+
+  if (HighBitSet (entry))
+    return rsrc_count_directory (abfd,
+				 datastart,
+				 datastart + WithoutHighBit (entry),
+				 dataend, rva_bias);
+
+  if (datastart + entry + 16 >= dataend)
+    return dataend + 1;
+
+  addr = (long) bfd_get_32 (abfd, datastart + entry);
+  size = (long) bfd_get_32 (abfd, datastart + entry + 4);
+
+  sizeof_leaves += 16;
+
+  return datastart + addr - rva_bias + size;
+}
+
+static bfd_byte *
+rsrc_count_directory (bfd *          abfd,
+		      bfd_byte *     datastart,
+		      bfd_byte *     data,
+		      bfd_byte *     dataend,
+		      bfd_vma        rva_bias)
+{
+  unsigned int  num_entries, num_ids;
+  bfd_byte *    highest_data = data;
+
+  if (data + 16 >= dataend)
+    return dataend + 1;
+
+  num_entries  = (int) bfd_get_16 (abfd, data + 12);
+  num_ids      = (int) bfd_get_16 (abfd, data + 14);
+
+  num_entries += num_ids;
+
+  data += 16;
+  sizeof_tables_and_entries += 16;
+
+  while (num_entries --)
+    {
+      bfd_byte * entry_end;
+
+      entry_end = rsrc_count_entries (abfd, num_entries >= num_ids,
+				      datastart, data, dataend, rva_bias);
+      data += 8;
+      sizeof_tables_and_entries += 8;
+      highest_data = max (highest_data, entry_end);
+      if (entry_end >= dataend)
+	break;
+    }
+
+  return max (highest_data, data);
+}
+
+typedef struct rsrc_dir_chain
+{
+  unsigned int         num_entries;
+  struct rsrc_entry *  first_entry;
+  struct rsrc_entry *  last_entry;
+} rsrc_dir_chain;
+
+typedef struct rsrc_directory
+{
+  unsigned int characteristics;
+  unsigned int time;
+  unsigned int major;
+  unsigned int minor;
+
+  rsrc_dir_chain names;
+  rsrc_dir_chain ids;
+
+  struct rsrc_entry * entry;
+} rsrc_directory;
+
+typedef struct rsrc_string
+{
+  unsigned int  len;
+  bfd_byte *    string;
+} rsrc_string;
+
+typedef struct rsrc_leaf
+{
+  unsigned int  size;
+  unsigned int  codepage;
+  bfd_byte *    data;
+} rsrc_leaf;
+
+typedef struct rsrc_entry
+{
+  bfd_boolean is_name;
+  union
+  {
+    unsigned int          id;
+    struct rsrc_string    name;
+  } name_id;
+
+  bfd_boolean is_dir;
+  union
+  {
+    struct rsrc_directory * directory;
+    struct rsrc_leaf *      leaf;
+  } value;
+
+  struct rsrc_entry *     next_entry;
+  struct rsrc_directory * parent;
+} rsrc_entry;
+
+static bfd_byte *
+rsrc_parse_directory (bfd *, rsrc_directory *, bfd_byte *,
+		      bfd_byte *, bfd_byte *, bfd_vma, rsrc_entry *);
+
+static bfd_byte *
+rsrc_parse_entry (bfd *            abfd,
+		  bfd_boolean      is_name,
+		  rsrc_entry *     entry,
+		  bfd_byte *       datastart,
+		  bfd_byte *       data,
+		  bfd_byte *       dataend,
+		  bfd_vma          rva_bias,
+		  rsrc_directory * parent)
+{
+  unsigned long val, addr, size;
+
+  val = bfd_get_32 (abfd, data);
+
+  entry->parent = parent;
+  entry->is_name = is_name;
+
+  if (is_name)
+    {
+      /* FIXME: Add range checking ?  */
+      if (HighBitSet (val))
+	{
+	  val = WithoutHighBit (val);
+
+	  entry->name_id.name.len    = bfd_get_16 (abfd, datastart + val);
+	  entry->name_id.name.string = datastart + val + 2;
+	}
+      else
+	{
+	  entry->name_id.name.len    = bfd_get_16 (abfd, datastart + val
+						   - rva_bias);
+	  entry->name_id.name.string = datastart + val - rva_bias + 2;
+	}
+    }
+  else
+    entry->name_id.id = val;
+
+  val = bfd_get_32 (abfd, data + 4);
+
+  if (HighBitSet (val))
+    {
+      entry->is_dir = TRUE;
+      entry->value.directory = bfd_malloc (sizeof * entry->value.directory);
+      if (entry->value.directory == NULL)
+	return dataend;
+
+      return rsrc_parse_directory (abfd, entry->value.directory,
+				   datastart,
+				   datastart + WithoutHighBit (val),
+				   dataend, rva_bias, entry);
+    }
+
+  entry->is_dir = FALSE;
+  entry->value.leaf = bfd_malloc (sizeof * entry->value.leaf);
+  if (entry->value.leaf == NULL)
+    return dataend;
+
+  addr = bfd_get_32 (abfd, datastart + val);
+  size = entry->value.leaf->size = bfd_get_32 (abfd, datastart + val + 4);
+  entry->value.leaf->codepage = bfd_get_32 (abfd, datastart + val + 8);
+
+  entry->value.leaf->data = bfd_malloc (size);
+  if (entry->value.leaf->data == NULL)
+    return dataend;
+
+  memcpy (entry->value.leaf->data, datastart + addr - rva_bias, size);
+  return datastart + (addr - rva_bias) + size;
+}
+
+static bfd_byte *
+rsrc_parse_entries (bfd *            abfd,
+		    rsrc_dir_chain * chain,
+		    bfd_boolean      is_name,
+		    bfd_byte *       highest_data,
+		    bfd_byte *       datastart,
+		    bfd_byte *       data,
+		    bfd_byte *       dataend,
+		    bfd_vma          rva_bias,
+		    rsrc_directory * parent)
+{
+  unsigned int i;
+  rsrc_entry * entry;
+
+  if (chain->num_entries == 0)
+    {
+      chain->first_entry = chain->last_entry = NULL;
+      return highest_data;
+    }
+
+  entry = bfd_malloc (sizeof * entry);
+  if (entry == NULL)
+    return dataend;
+
+  chain->first_entry = entry;
+
+  for (i = chain->num_entries; i--;)
+    {
+      bfd_byte * entry_end;
+
+      entry_end = rsrc_parse_entry (abfd, is_name, entry, datastart,
+				    data, dataend, rva_bias, parent);
+      data += 8;
+      highest_data = max (entry_end, highest_data);
+      if (entry_end > dataend)
+	return dataend;
+
+      if (i)
+	{
+	  entry->next_entry = bfd_malloc (sizeof * entry);
+	  entry = entry->next_entry;
+	  if (entry == NULL)
+	    return dataend;
+	}
+      else
+	entry->next_entry = NULL;
+    }
+
+  chain->last_entry = entry;
+
+  return highest_data;
+}
+
+static bfd_byte *
+rsrc_parse_directory (bfd *            abfd,
+		      rsrc_directory * table,
+		      bfd_byte *       datastart,
+		      bfd_byte *       data,
+		      bfd_byte *       dataend,
+		      bfd_vma          rva_bias,
+		      rsrc_entry *     entry)
+{
+  bfd_byte * highest_data = data;
+
+  if (table == NULL)
+    return dataend;
+
+  table->characteristics = bfd_get_32 (abfd, data);
+  table->time = bfd_get_32 (abfd, data + 4);
+  table->major = bfd_get_16 (abfd, data + 8);
+  table->minor = bfd_get_16 (abfd, data + 10);
+  table->names.num_entries = bfd_get_16 (abfd, data + 12);
+  table->ids.num_entries = bfd_get_16 (abfd, data + 14);
+  table->entry = entry;
+
+  data += 16;
+
+  highest_data = rsrc_parse_entries (abfd, & table->names, TRUE, data,
+				     datastart, data, dataend, rva_bias, table);
+  data += table->names.num_entries * 8;
+
+  highest_data = rsrc_parse_entries (abfd, & table->ids, FALSE, highest_data,
+				     datastart, data, dataend, rva_bias, table);
+  data += table->ids.num_entries * 8;
+
+  return max (highest_data, data);
+}
+
+typedef struct rsrc_write_data
+{
+  bfd *      abfd;
+  bfd_byte * datastart;
+  bfd_byte * next_table;
+  bfd_byte * next_leaf;
+  bfd_byte * next_string;
+  bfd_byte * next_data;
+  bfd_vma    rva_bias;
+} rsrc_write_data;
+
+static void
+rsrc_write_string (rsrc_write_data * data,
+		   rsrc_string *     string)
+{
+  bfd_put_16 (data->abfd, string->len, data->next_string);
+  memcpy (data->next_string + 2, string->string, string->len * 2);
+  data->next_string += (string->len + 1) * 2;
+}
+
+static inline unsigned int
+rsrc_compute_rva (rsrc_write_data * data,
+		  bfd_byte *        addr)
+{
+  return (addr - data->datastart) + data->rva_bias;
+}
+
+static void
+rsrc_write_leaf (rsrc_write_data * data,
+		 rsrc_leaf *       leaf)
+{
+  bfd_put_32 (data->abfd, rsrc_compute_rva (data, data->next_data),
+	      data->next_leaf);
+  bfd_put_32 (data->abfd, leaf->size,     data->next_leaf + 4);
+  bfd_put_32 (data->abfd, leaf->codepage, data->next_leaf + 8);
+  bfd_put_32 (data->abfd, 0 /*reserved*/, data->next_leaf + 12);
+  data->next_leaf += 16;
+
+  memcpy (data->next_data, leaf->data, leaf->size);
+  data->next_data += leaf->size;
+}
+
+static void rsrc_write_directory (rsrc_write_data *, rsrc_directory *);
+
+static void
+rsrc_write_entry (rsrc_write_data *  data,
+		  bfd_byte *         where,
+		  rsrc_entry *       entry)
+{
+  if (entry->is_name)
+    {
+      bfd_put_32 (data->abfd,
+		  SetHighBit (data->next_string - data->datastart),
+		  where);
+      rsrc_write_string (data, & entry->name_id.name);
+    }
+  else
+    bfd_put_32 (data->abfd, entry->name_id.id, where);
+
+  if (entry->is_dir)
+    {
+      bfd_put_32 (data->abfd,
+		  SetHighBit (data->next_table - data->datastart),
+		  where + 4);
+      rsrc_write_directory (data, entry->value.directory);
+    }
+  else
+    {
+      bfd_put_32 (data->abfd, data->next_leaf - data->datastart, where + 4);
+      rsrc_write_leaf (data, entry->value.leaf);
+    }
+}
+
+static void
+rsrc_write_directory (rsrc_write_data * data,
+		      rsrc_directory *  dir)
+{
+  rsrc_entry * entry;
+  unsigned int i;
+  bfd_byte * next_entry;
+  bfd_byte * nt;
+
+  bfd_put_32 (data->abfd, dir->characteristics, data->next_table);
+  bfd_put_32 (data->abfd, 0 /*dir->time*/, data->next_table + 4);
+  bfd_put_16 (data->abfd, dir->major, data->next_table + 8);
+  bfd_put_16 (data->abfd, dir->minor, data->next_table + 10);
+  bfd_put_16 (data->abfd, dir->names.num_entries, data->next_table + 12);
+  bfd_put_16 (data->abfd, dir->ids.num_entries, data->next_table + 14);
+
+  /* Compute where the entries and the next table will be placed.  */
+  next_entry = data->next_table + 16;
+  data->next_table = next_entry + (dir->names.num_entries * 8)
+    + (dir->ids.num_entries * 8);
+  nt = data->next_table;
+
+  /* Write the entries.  */
+  for (i = dir->names.num_entries, entry = dir->names.first_entry;
+       i > 0 && entry != NULL;
+       i--, entry = entry->next_entry)
+    {
+      rsrc_write_entry (data, next_entry, entry);
+      next_entry += 8;
+    }
+  BFD_ASSERT (i == 0);
+  BFD_ASSERT (entry == NULL);
+
+  for (i = dir->ids.num_entries, entry = dir->ids.first_entry;
+       i > 0 && entry != NULL;
+       i--, entry = entry->next_entry)
+    {
+      rsrc_write_entry (data, next_entry, entry);
+      next_entry += 8;
+    }
+  BFD_ASSERT (i == 0);
+  BFD_ASSERT (entry == NULL);
+  BFD_ASSERT (nt == next_entry);
+}
+
+#if defined HAVE_WCHAR_H && ! defined __CYGWIN__ && ! defined __MINGW32__
+/* Return the length (number of units) of the first character in S,
+   putting its 'ucs4_t' representation in *PUC.  */
+
+static unsigned int
+u16_mbtouc (wchar_t * puc, const unsigned short * s, unsigned int n)
+{
+  unsigned short c = * s;
+
+  if (c < 0xd800 || c >= 0xe000)
+    {
+      *puc = c;
+      return 1;
+    }
+
+  if (c < 0xdc00)
+    {
+      if (n >= 2)
+        {
+          if (s[1] >= 0xdc00 && s[1] < 0xe000)
+            {
+              *puc = 0x10000 + ((c - 0xd800) << 10) + (s[1] - 0xdc00);
+              return 2;
+            }
+        }
+      else
+        {
+          /* Incomplete multibyte character.  */
+          *puc = 0xfffd;
+          return n;
+        }
+    }
+
+  /* Invalid multibyte character.  */
+  *puc = 0xfffd;
+  return 1;
+}
+#endif /* HAVE_WCHAR_H and not Cygwin/Mingw */
+
+/* Perform a comparison of two entries.  */
+static signed int
+rsrc_cmp (bfd_boolean is_name, rsrc_entry * a, rsrc_entry * b)
+{
+  signed int    res;
+  bfd_byte *    astring;
+  unsigned int  alen;
+  bfd_byte *    bstring;
+  unsigned int  blen;
+
+  if (! is_name)
+    return a->name_id.id - b->name_id.id;
+
+  /* We have to perform a case insenstive, unicode string comparison...  */
+  astring = a->name_id.name.string;
+  alen    = a->name_id.name.len;
+  bstring = b->name_id.name.string;
+  blen    = b->name_id.name.len;
+
+#if defined  __CYGWIN__ || defined __MINGW32__
+  /* Under Windows hosts (both Cygwin and Mingw types),
+     unicode == UTF-16 == wchar_t.  The case insensitive string comparison
+     function however goes by different names in the two environments...  */
+
+#undef rscpcmp
+#ifdef __CYGWIN__
+#define rscpcmp wcsncasecmp
+#endif
+#ifdef __MINGW32__
+#define rscpcmp wcsnicmp
+#endif
+
+  res = rscpcmp ((const wchar_t *) astring, (const wchar_t *) bstring,
+		 min (alen, blen));
+
+#elif defined HAVE_WCHAR_H
+  {
+    unsigned int  i;
+    res = 0;
+    for (i = min (alen, blen); i--; astring += 2, bstring += 2)
+      {
+	wchar_t awc;
+	wchar_t bwc;
+
+	/* Convert UTF-16 unicode characters into wchar_t characters so
+	   that we can then perform a case insensitive comparison.  */
+	int Alen = u16_mbtouc (& awc, (const unsigned short *) astring, 2);
+	int Blen = u16_mbtouc (& bwc, (const unsigned short *) bstring, 2);
+
+	if (Alen != Blen)
+	  return Alen - Blen;
+	res = wcsncasecmp (& awc, & bwc, 1);
+	if (res)
+	  break;
+      }
+  }
+#else
+  /* Do the best we can - a case sensitive, untranslated comparison.  */
+  res = memcmp (astring, bstring, min (alen, blen) * 2);
+#endif
+
+  if (res == 0)
+    res = alen - blen;
+
+  return res;
+}
+
+static void
+rsrc_print_name (char * buffer, rsrc_string string)
+{
+  unsigned int  i;
+  bfd_byte *    name = string.string;
+
+  for (i = string.len; i--; name += 2)
+    sprintf (buffer + strlen (buffer), "%.1s", name);
+}
+
+static const char *
+rsrc_resource_name (rsrc_entry * entry, rsrc_directory * dir)
+{
+  static char buffer [256];
+  bfd_boolean is_string = FALSE;
+
+  buffer[0] = 0;
+
+  if (dir != NULL && dir->entry != NULL && dir->entry->parent != NULL
+      && dir->entry->parent->entry != NULL)
+    {
+      strcpy (buffer, "type: ");
+      if (dir->entry->parent->entry->is_name)
+	rsrc_print_name (buffer + strlen (buffer),
+			 dir->entry->parent->entry->name_id.name);
+      else
+	{
+	  unsigned int id = dir->entry->parent->entry->name_id.id;
+
+	  sprintf (buffer + strlen (buffer), "%x", id);
+	  switch (id)
+	    {
+	    case 1: strcat (buffer, " (CURSOR)"); break;
+	    case 2: strcat (buffer, " (BITMAP)"); break;
+	    case 3: strcat (buffer, " (ICON)"); break;
+            case 4: strcat (buffer, " (MENU)"); break;
+	    case 5: strcat (buffer, " (DIALOG)"); break;
+	    case 6: strcat (buffer, " (STRING)"); is_string = TRUE; break;
+	    case 7: strcat (buffer, " (FONTDIR)"); break;
+	    case 8: strcat (buffer, " (FONT)"); break;
+	    case 9: strcat (buffer, " (ACCELERATOR)"); break;
+	    case 10: strcat (buffer, " (RCDATA)"); break;
+	    case 11: strcat (buffer, " (MESSAGETABLE)"); break;
+	    case 12: strcat (buffer, " (GROUP_CURSOR)"); break;
+	    case 14: strcat (buffer, " (GROUP_ICON)"); break;
+	    case 16: strcat (buffer, " (VERSION)"); break;
+	    case 17: strcat (buffer, " (DLGINCLUDE)"); break;
+	    case 19: strcat (buffer, " (PLUGPLAY)"); break;
+	    case 20: strcat (buffer, " (VXD)"); break;
+	    case 21: strcat (buffer, " (ANICURSOR)"); break;
+	    case 22: strcat (buffer, " (ANIICON)"); break;
+	    case 23: strcat (buffer, " (HTML)"); break;
+	    case 24: strcat (buffer, " (MANIFEST)"); break;
+	    case 240: strcat (buffer, " (DLGINIT)"); break;
+	    case 241: strcat (buffer, " (TOOLBAR)"); break;
+	    }
+	}
+    }
+
+  if (dir != NULL && dir->entry != NULL)
+    {
+      strcat (buffer, " name: ");
+      if (dir->entry->is_name)
+	rsrc_print_name (buffer + strlen (buffer), dir->entry->name_id.name);
+      else
+	{
+	  unsigned int id = dir->entry->name_id.id;
+
+	  sprintf (buffer + strlen (buffer), "%x", id);
+
+	  if (is_string)
+	    sprintf (buffer + strlen (buffer), " (resource id range: %d - %d)",
+		     (id - 1) << 4, (id << 4) - 1);
+	}
+    }
+
+  if (entry != NULL)
+    {
+      strcat (buffer, " lang: ");
+
+      if (entry->is_name)
+	rsrc_print_name (buffer + strlen (buffer), entry->name_id.name);
+      else
+	sprintf (buffer + strlen (buffer), "%x", entry->name_id.id);
+    }
+
+  return buffer;
+}
+
+/* *sigh* Windows resource strings are special.  Only the top 28-bits of
+   their ID is stored in the NAME entry.  The bottom four bits are used as
+   an index into unicode string table that makes up the data of the leaf.
+   So identical type-name-lang string resources may not actually be
+   identical at all.
+
+   This function is called when we have detected two string resources with
+   match top-28-bit IDs.  We have to scan the string tables inside the leaves
+   and discover if there are any real collisions.  If there are then we report
+   them and return FALSE.  Otherwise we copy any strings from B into A and
+   then return TRUE.  */
+
+static bfd_boolean
+rsrc_merge_string_entries (rsrc_entry * a ATTRIBUTE_UNUSED,
+			   rsrc_entry * b ATTRIBUTE_UNUSED)
+{
+  unsigned int copy_needed = 0;
+  unsigned int i;
+  bfd_byte * astring;
+  bfd_byte * bstring;
+  bfd_byte * new_data;
+  bfd_byte * nstring;
+
+  /* Step one: Find out what we have to do.  */
+  BFD_ASSERT (! a->is_dir);
+  astring = a->value.leaf->data;
+
+  BFD_ASSERT (! b->is_dir);
+  bstring = b->value.leaf->data;
+
+  for (i = 0; i < 16; i++)
+    {
+      unsigned int alen = astring[0] + (astring[1] << 8);
+      unsigned int blen = bstring[0] + (bstring[1] << 8);
+
+      if (alen == 0)
+	{
+	  copy_needed += blen * 2;
+	}
+      else if (blen == 0)
+	;
+      else if (alen != blen)
+	/* FIXME: Should we continue the loop in order to report other duplicates ?  */
+	break;
+      /* alen == blen != 0.  We might have two identical strings.  If so we
+	 can ignore the second one.  There is no need for wchar_t vs UTF-16
+	 theatrics here - we are only interested in (case sensitive) equality.  */
+      else if (memcmp (astring + 2, bstring + 2, alen * 2) != 0)
+	break;
+
+      astring += (alen + 1) * 2;
+      bstring += (blen + 1) * 2;
+    }
+
+  if (i != 16)
+    {
+      if (a->parent != NULL
+	  && a->parent->entry != NULL
+	  && a->parent->entry->is_name == FALSE)
+	_bfd_error_handler (_(".rsrc merge failure: duplicate string resource: %d"),
+			    ((a->parent->entry->name_id.id - 1) << 4) + i);
+      return FALSE;
+    }
+
+  if (copy_needed == 0)
+    return TRUE;
+
+  /* If we reach here then A and B must both have non-colliding strings.
+     (We never get string resources with fully empty string tables).
+     We need to allocate an extra COPY_NEEDED bytes in A and then bring
+     in B's strings.  */
+  new_data = bfd_malloc (a->value.leaf->size + copy_needed);
+  if (new_data == NULL)
+    return FALSE;
+
+  nstring = new_data;
+  astring = a->value.leaf->data;
+  bstring = b->value.leaf->data;
+
+  for (i = 0; i < 16; i++)
+    {
+      unsigned int alen = astring[0] + (astring[1] << 8);
+      unsigned int blen = bstring[0] + (bstring[1] << 8);
+
+      if (alen != 0)
+	{
+	  memcpy (nstring, astring, (alen + 1) * 2);
+	  nstring += (alen + 1) * 2;
+	}
+      else if (blen != 0)
+	{
+	  memcpy (nstring, bstring, (blen + 1) * 2);
+	  nstring += (blen + 1) * 2;
+	}
+      else
+	{
+	  * nstring++ = 0;
+	  * nstring++ = 0;
+	}
+
+      astring += (alen + 1) * 2;
+      bstring += (blen + 1) * 2;
+    }
+
+  BFD_ASSERT (nstring - new_data == (signed) (a->value.leaf->size + copy_needed));
+
+  free (a->value.leaf->data);
+  a->value.leaf->data = new_data;
+  a->value.leaf->size += copy_needed;
+
+  return TRUE;
+}
+
+static void rsrc_merge (rsrc_entry *, rsrc_entry *);
+
+/* Sort the entries in given part of the directory.
+   We use an old fashioned bubble sort because we are dealing
+   with lists and we want to handle matches specially.  */
+
+static void
+rsrc_sort_entries (rsrc_dir_chain *  chain,
+		   bfd_boolean       is_name,
+		   rsrc_directory *  dir)
+{
+  rsrc_entry * entry;
+  rsrc_entry * next;
+  rsrc_entry ** points_to_entry;
+  bfd_boolean swapped;
+
+  if (chain->num_entries < 2)
+    return;
+
+  do
+    {
+      swapped = FALSE;
+      points_to_entry = & chain->first_entry;
+      entry = * points_to_entry;
+      next  = entry->next_entry;
+
+      do
+	{
+	  signed int cmp = rsrc_cmp (is_name, entry, next);
+
+	  if (cmp > 0)
+	    {
+	      entry->next_entry = next->next_entry;
+	      next->next_entry = entry;
+	      * points_to_entry = next;
+	      points_to_entry = & next->next_entry;
+	      next = entry->next_entry;
+	      swapped = TRUE;
+	    }
+	  else if (cmp == 0)
+	    {
+	      if (entry->is_dir && next->is_dir)
+		{
+		  /* When we encounter identical directory entries we have to
+		     merge them together.  The exception to this rule is for
+		     resource manifests - there can only be one of these,
+		     even if they differ in language.  Zero-language manifests
+		     are assumed to be default manifests (provided by the
+		     cygwin build system) and these can be silently dropped,
+		     unless that would reduce the number of manifests to zero.
+		     There should only ever be one non-zero lang manifest -
+		     if there are more it is an error.  A non-zero lang
+		     manifest takes precedence over a default manifest.  */
+		  if (entry->is_name == FALSE
+		      && entry->name_id.id == 1
+		      && dir != NULL
+		      && dir->entry != NULL
+		      && dir->entry->is_name == FALSE
+		      && dir->entry->name_id.id == 0x18)
+		    {
+		      if (next->value.directory->names.num_entries == 0
+			  && next->value.directory->ids.num_entries == 1
+			  && next->value.directory->ids.first_entry->is_name == FALSE
+			  && next->value.directory->ids.first_entry->name_id.id == 0)
+			/* Fall through so that NEXT is dropped.  */
+			;
+		      else if (entry->value.directory->names.num_entries == 0
+			       && entry->value.directory->ids.num_entries == 1
+			       && entry->value.directory->ids.first_entry->is_name == FALSE
+			       && entry->value.directory->ids.first_entry->name_id.id == 0)
+			{
+			  /* Swap ENTRY and NEXT.  Then fall through so that the old ENTRY is dropped.  */
+			  entry->next_entry = next->next_entry;
+			  next->next_entry = entry;
+			  * points_to_entry = next;
+			  points_to_entry = & next->next_entry;
+			  next = entry->next_entry;
+			  swapped = TRUE;
+			}
+		      else
+			{
+			  _bfd_error_handler (_(".rsrc merge failure: multiple non-default manifests"));
+			  bfd_set_error (bfd_error_file_truncated);
+			  return;
+			}
+
+		      /* Unhook NEXT from the chain.  */
+		      /* FIXME: memory loss here.  */
+		      entry->next_entry = next->next_entry;
+		      chain->num_entries --;
+		      if (chain->num_entries < 2)
+			return;
+		      next = next->next_entry;
+		    }
+		  else
+		    rsrc_merge (entry, next);
+		}
+	      else if (entry->is_dir != next->is_dir)
+		{
+		  _bfd_error_handler (_(".rsrc merge failure: a directory matches a leaf"));
+		  bfd_set_error (bfd_error_file_truncated);
+		  return;
+		}
+	      else
+		{
+		  /* Otherwise with identical leaves we issue an error
+		     message - because there should never be duplicates.
+		     The exception is Type 18/Name 1/Lang 0 which is the
+		     defaul manifest - this can just be dropped.  */
+		  if (entry->is_name == FALSE
+		      && entry->name_id.id == 0
+		      && dir != NULL
+		      && dir->entry != NULL
+		      && dir->entry->is_name == FALSE
+		      && dir->entry->name_id.id == 1
+		      && dir->entry->parent != NULL
+		      && dir->entry->parent->entry != NULL
+		      && dir->entry->parent->entry->is_name == FALSE
+		      && dir->entry->parent->entry->name_id.id == 0x18 /* RT_MANIFEST */)
+		    ;
+		  else if (dir != NULL
+			   && dir->entry != NULL
+			   && dir->entry->parent != NULL
+			   && dir->entry->parent->entry != NULL
+			   && dir->entry->parent->entry->is_name == FALSE
+			   && dir->entry->parent->entry->name_id.id == 0x6 /* RT_STRING */)
+		    {
+		      /* Strings need special handling.  */
+		      if (! rsrc_merge_string_entries (entry, next))
+			{
+			  /* _bfd_error_handler should have been called inside merge_strings.  */
+			  bfd_set_error (bfd_error_file_truncated);
+			  return;
+			}
+		    }
+		  else
+		    {
+		      if (dir == NULL
+			  || dir->entry == NULL
+			  || dir->entry->parent == NULL
+			  || dir->entry->parent->entry == NULL)
+			_bfd_error_handler (_(".rsrc merge failure: duplicate leaf"));
+		      else
+			_bfd_error_handler (_(".rsrc merge failure: duplicate leaf: %s"),
+					    rsrc_resource_name (entry, dir));
+		      bfd_set_error (bfd_error_file_truncated);
+		      return;
+		    }
+		}
+
+	      /* Unhook NEXT from the chain.  */
+	      entry->next_entry = next->next_entry;
+	      chain->num_entries --;
+	      if (chain->num_entries < 2)
+		return;
+	      next = next->next_entry;
+	    }
+	  else
+	    {
+	      points_to_entry = & entry->next_entry;
+	      entry = next;
+	      next = next->next_entry;
+	    }
+	}
+      while (next);
+
+      chain->last_entry = entry;
+    }
+  while (swapped);
+}
+
+/* Attach B's chain onto A.  */
+static void
+rsrc_attach_chain (rsrc_dir_chain * achain, rsrc_dir_chain * bchain)
+{
+  if (bchain->num_entries == 0)
+    return;
+
+  achain->num_entries += bchain->num_entries;
+
+  if (achain->first_entry == NULL)
+    {
+      achain->first_entry = bchain->first_entry;
+      achain->last_entry  = bchain->last_entry;
+    }
+  else
+    {
+      achain->last_entry->next_entry = bchain->first_entry;
+      achain->last_entry = bchain->last_entry;
+    }
+
+  bchain->num_entries = 0;
+  bchain->first_entry = bchain->last_entry = NULL;
+}
+
+static void
+rsrc_merge (struct rsrc_entry * a, struct rsrc_entry * b)
+{
+  rsrc_directory * adir;
+  rsrc_directory * bdir;
+
+  BFD_ASSERT (a->is_dir);
+  BFD_ASSERT (b->is_dir);
+
+  adir = a->value.directory;
+  bdir = b->value.directory;
+
+  if (adir->characteristics != bdir->characteristics)
+    {
+      _bfd_error_handler (_(".rsrc merge failure: dirs with differing characteristics\n"));
+      bfd_set_error (bfd_error_file_truncated);
+      return;
+    }
+
+  if (adir->major != bdir->major || adir->minor != bdir->minor)
+    {
+      _bfd_error_handler (_(".rsrc merge failure: differing directory versions\n"));
+      bfd_set_error (bfd_error_file_truncated);
+      return;
+    }
+
+  /* Attach B's name chain to A.  */
+  rsrc_attach_chain (& adir->names, & bdir->names);
+
+  /* Attach B's ID chain to A.  */
+  rsrc_attach_chain (& adir->ids, & bdir->ids);
+
+  /* Now sort A's entries.  */
+  rsrc_sort_entries (& adir->names, TRUE, adir);
+  rsrc_sort_entries (& adir->ids, FALSE, adir);
+}
+
+/* Check the .rsrc section.  If it contains multiple concatenated
+   resources then we must merge them properly.  Otherwise Windows
+   will ignore all but the first set.  */
+
+static void
+rsrc_process_section (bfd * abfd,
+		      struct coff_final_link_info * pfinfo)
+{
+  rsrc_directory    new_table;
+  bfd_size_type     size;
+  asection *        sec;
+  pe_data_type *    pe;
+  bfd_vma           rva_bias;
+  bfd_byte *        data;
+  bfd_byte *        datastart;
+  bfd_byte *        dataend;
+  bfd_byte *        new_data;
+  unsigned int      num_resource_sets;
+  rsrc_directory *  type_tables;
+  rsrc_write_data   write_data;
+  unsigned int      indx;
+
+  new_table.names.num_entries = 0;
+  new_table.ids.num_entries = 0;
+
+  sec = bfd_get_section_by_name (abfd, ".rsrc");
+  if (sec == NULL || (size = sec->rawsize) == 0)
+    return;
+
+  pe = pe_data (abfd);
+  if (pe == NULL)
+    return;
+
+  rva_bias = sec->vma - pe->pe_opthdr.ImageBase;
+
+  data = bfd_malloc (size);
+  if (data == NULL)
+    return;
+  datastart = data;
+
+  if (! bfd_get_section_contents (abfd, sec, data, 0, size))
+    goto end;
+
+  /* Step one: Walk the section, computing the size of the tables,
+     leaves and data and decide if we need to do anything.  */
+  dataend   = data + size;
+  num_resource_sets = 0;
+  sizeof_leaves = sizeof_strings = sizeof_tables_and_entries = 0;
+
+  while (data < dataend)
+    {
+      bfd_byte * p = data;
+
+      data = rsrc_count_directory (abfd, data, data, dataend, rva_bias);
+      if (data > dataend)
+	{
+	  /* Corrupted .rsrc section - cannot merge.  */
+	  _bfd_error_handler (_("%s: .rsrc merge failure: corrupt .rsrc section"),
+			      bfd_get_filename (abfd));
+	  bfd_set_error (bfd_error_file_truncated);
+	  goto end;
+	}
+
+      /* Align the data pointer - we assume 1^2 alignment.  */
+      data = (bfd_byte *) (((ptrdiff_t) (data + 3)) & ~ 3);
+      rva_bias += data - p;
+
+      if (data == (dataend - 4))
+	data = dataend;
+
+      ++ num_resource_sets;
+    }
+
+  if (num_resource_sets < 2)
+    /* No merging necessary.  */
+    goto end;
+
+  /* Step two: Walk the data again, building trees of the resources.  */
+  data = datastart;
+  rva_bias = sec->vma - pe->pe_opthdr.ImageBase;
+
+  type_tables = bfd_malloc (num_resource_sets * sizeof * type_tables);
+  if (type_tables == NULL)
+    goto end;
+
+  indx = 0;
+  while (data < dataend)
+    {
+      bfd_byte * p = data;
+
+      data = rsrc_parse_directory (abfd, type_tables + indx, data, data,
+				   dataend, rva_bias, NULL);
+      data = (bfd_byte *) (((ptrdiff_t) (data + 3)) & ~ 3);
+      rva_bias += data - p;
+      if (data == (dataend - 4))
+	data = dataend;
+      indx ++;
+    }
+  BFD_ASSERT (indx == num_resource_sets);
+
+  /* Step three: Merge the top level tables (there can be only one).
+
+     We must ensure that the merged entries are in ascending order.
+
+     We also thread the top level table entries from the old tree onto
+     the new table, so that they can be pulled off later.  */
+
+  /* FIXME: Should we verify that all type tables are the same ?  */
+  new_table.characteristics = type_tables[0].characteristics;
+  new_table.time            = type_tables[0].time;
+  new_table.major           = type_tables[0].major;
+  new_table.minor           = type_tables[0].minor;
+
+  /* Chain the NAME entries onto the table.  */
+  new_table.names.first_entry = NULL;
+  new_table.names.last_entry = NULL;
+
+  for (indx = 0; indx < num_resource_sets; indx++)
+    rsrc_attach_chain (& new_table.names, & type_tables[indx].names);
+
+  rsrc_sort_entries (& new_table.names, TRUE, & new_table);
+
+  /* Chain the ID entries onto the table.  */
+  new_table.ids.first_entry = NULL;
+  new_table.ids.last_entry = NULL;
+
+  for (indx = 0; indx < num_resource_sets; indx++)
+    rsrc_attach_chain (& new_table.ids, & type_tables[indx].ids);
+
+  rsrc_sort_entries (& new_table.ids, FALSE, & new_table);
+
+  /* Step four: Create new contents for the .rsrc section.  */
+  new_data = bfd_malloc (size);
+  if (new_data == NULL)
+    goto end;
+
+  write_data.abfd        = abfd;
+  write_data.datastart   = new_data;
+  write_data.next_table  = new_data;
+  write_data.next_leaf   = new_data + sizeof_tables_and_entries;
+  write_data.next_string = write_data.next_leaf + sizeof_leaves;
+  write_data.next_data   = write_data.next_string + sizeof_strings;
+  write_data.rva_bias    = sec->vma - pe->pe_opthdr.ImageBase;
+
+  rsrc_write_directory (& write_data, & new_table);
+
+  /* Step five: Replace the old contents with the new.
+     We recompute the size as we may have lost entries due to mergeing.  */
+  size = ((write_data.next_data - new_data) + 3) & ~ 3;
+  bfd_set_section_contents (pfinfo->output_bfd, sec, new_data, 0, size);
+  sec->size = sec->rawsize = size;
+
+ end:
+  /* FIXME: Free the resource tree, if we have one.  */
+  free (datastart);
+}
 
 /* Handle the .idata section and other things that need symbol table
    access.  */
@@ -2476,6 +3842,8 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
       }
   }
 #endif
+
+  rsrc_process_section (abfd, pfinfo);
 
   /* If we couldn't find idata$2, we either have an excessively
      trivial program or are in DEEP trouble; we have to assume trivial

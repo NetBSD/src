@@ -301,7 +301,9 @@ extract_d9 (unsigned long insn, int * invalid)
 static unsigned long
 insert_u16_loop (unsigned long insn, long value, const char ** errmsg)
 {
-  if (value < -0xffff || value > 0)
+  /* Loop displacement is encoded as a positive value,
+     even though the instruction branches backwards.  */
+  if (value < 0 || value > 0xffff)
     {
       if ((value % 2) != 0)
 	* errmsg = branch_out_of_range_and_odd_offset;
@@ -311,14 +313,13 @@ insert_u16_loop (unsigned long insn, long value, const char ** errmsg)
   else if ((value % 2) != 0)
     * errmsg = branch_to_odd_offset;
 
-  return insn | ((-value & 0xfffe) << 16);
+  return insn | ((value & 0xfffe) << 16);
 }
 
 static unsigned long
 extract_u16_loop (unsigned long insn, int * invalid)
 {
   long ret = (insn >> 16) & 0xfffe;
-  ret = -ret;
 
   if (invalid != 0)
     *invalid = 0;
@@ -1211,7 +1212,7 @@ const struct v850_operand v850_operands[] =
 
 /* The unsigned DISP16 field in a format 7 insn.  */
 #define D16_LOOP	(D16_15 + 1)
-  { 16, 0, insert_u16_loop, extract_u16_loop, V850_OPERAND_RELAX | V850_OPERAND_DISP | V850_PCREL, BFD_RELOC_V850_16_PCREL },
+  { 16, 0, insert_u16_loop, extract_u16_loop, V850_OPERAND_RELAX | V850_OPERAND_DISP | V850_PCREL | V850_INVERSE_PCREL, BFD_RELOC_V850_16_PCREL },
 
 /* The DISP17 field in a format 7 insn.  */
 #define D17_16	(D16_LOOP + 1)
@@ -1814,7 +1815,6 @@ const struct v850_opcode v850_opcodes[] =
 { "ceilf.sul",	two (0x07f2, 0x0444),	two (0x07ff, 0x0fff),	{R2, R3_EVEN},				0, PROCESSOR_V850E2V3_UP },
 { "ceilf.suw",	two (0x07f2, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
 { "ceilf.sw",	two (0x07e2, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
-{ "ceilf.sw",	two (0x07e2, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
 { "cmovf.d",	two (0x07e0, 0x0410),	two (0x0fe1, 0x0ff1),	{FFF, R1_EVEN, R2_EVEN, R3_EVEN_NOTR0},	0, PROCESSOR_V850E2V3_UP },
 /* Default value for FFF is 0(not defined in spec).  */
 { "cmovf.d",	two (0x07e0, 0x0410),	two (0x0fe1, 0x0fff),	{R1_EVEN, R2_EVEN, R3_EVEN_NOTR0},	0, PROCESSOR_V850E2V3_UP },
@@ -1830,10 +1830,12 @@ const struct v850_opcode v850_opcodes[] =
 { "cvtf.dul",	two (0x07f4, 0x0454),	two (0x0fff, 0x0fff),	{R2_EVEN, R3_EVEN},			0, PROCESSOR_V850E2V3_UP },
 { "cvtf.duw",	two (0x07f4, 0x0450),	two (0x0fff, 0x07ff),	{R2_EVEN, R3},				0, PROCESSOR_V850E2V3_UP },
 { "cvtf.dw",	two (0x07e4, 0x0450),	two (0x0fff, 0x07ff),	{R2_EVEN, R3},				0, PROCESSOR_V850E2V3_UP },
+{ "cvtf.hs",	two (0x07e2, 0x0442),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E3V5_UP },
 { "cvtf.ld",	two (0x07e1, 0x0452),	two (0x0fff, 0x0fff),	{R2_EVEN, R3_EVEN},			0, PROCESSOR_V850E2V3_UP },
 { "cvtf.ls",	two (0x07e1, 0x0442),	two (0x0fff, 0x07ff),	{R2_EVEN, R3},				0, PROCESSOR_V850E2V3_UP },
 { "cvtf.sd",	two (0x07e2, 0x0452),	two (0x07ff, 0x0fff),	{R2, R3_EVEN},				0, PROCESSOR_V850E2V3_UP },
 { "cvtf.sl",	two (0x07e4, 0x0444),	two (0x07ff, 0x0fff),	{R2, R3_EVEN},				0, PROCESSOR_V850E2V3_UP },
+{ "cvtf.sh",	two (0x07e3, 0x0442),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E3V5_UP },
 { "cvtf.sul",	two (0x07f4, 0x0444),	two (0x07ff, 0x0fff),	{R2, R3_EVEN},				0, PROCESSOR_V850E2V3_UP },
 { "cvtf.suw",	two (0x07f4, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
 { "cvtf.sw",	two (0x07e4, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
@@ -1853,18 +1855,22 @@ const struct v850_opcode v850_opcodes[] =
 { "floorf.sul",	two (0x07f3, 0x0444),	two (0x07ff, 0x0fff),	{R2, R3_EVEN},				0, PROCESSOR_V850E2V3_UP },
 { "floorf.suw",	two (0x07f3, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
 { "floorf.sw",	two (0x07e3, 0x0440),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
-{ "maddf.s",	two (0x07e0, 0x0500),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3_UP },
+{ "maddf.s",	two (0x07e0, 0x0500),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3 },
+{ "fmaf.s",	two (0x07e0, 0x04e0),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E3V5_UP },
 { "maxf.d",	two (0x07e0, 0x0478),	two (0x0fe1, 0x0fff),	{R1_EVEN, R2_EVEN, R3_EVEN},		0, PROCESSOR_V850E2V3_UP },
 { "maxf.s",	two (0x07e0, 0x0468),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E2V3_UP },
 { "minf.d",	two (0x07e0, 0x047a),	two (0x0fe1, 0x0fff),	{R1_EVEN, R2_EVEN, R3_EVEN},		0, PROCESSOR_V850E2V3_UP },
 { "minf.s",	two (0x07e0, 0x046a),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E2V3_UP },
-{ "msubf.s",	two (0x07e0, 0x0520),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3_UP },
+{ "msubf.s",	two (0x07e0, 0x0520),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3 },
+{ "fmsf.s",	two (0x07e0, 0x04e2),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E3V5_UP },
 { "mulf.d",	two (0x07e0, 0x0474),	two (0x0fe1, 0x0fff),	{R1_EVEN, R2_EVEN, R3_EVEN},		0, PROCESSOR_V850E2V3_UP },
 { "mulf.s",	two (0x07e0, 0x0464),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E2V3_UP },
 { "negf.d",	two (0x07e1, 0x0458),	two (0x0fff, 0x0fff),	{R2_EVEN, R3_EVEN},			0, PROCESSOR_V850E2V3_UP },
 { "negf.s",	two (0x07e1, 0x0448),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
-{ "nmaddf.s",	two (0x07e0, 0x0540),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3_UP },
-{ "nmsubf.s",	two (0x07e0, 0x0560),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3_UP },
+{ "nmaddf.s",	two (0x07e0, 0x0540),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3 },
+{ "fnmaf.s",	two (0x07e0, 0x04e4),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E3V5_UP },
+{ "nmsubf.s",	two (0x07e0, 0x0560),	two (0x07e0, 0x0761),	{R1, R2, R3, R4},			0, PROCESSOR_V850E2V3 },
+{ "fnmsf.s",	two (0x07e0, 0x04e6),	two (0x07e0, 0x07ff),	{R1, R2, R3},				0, PROCESSOR_V850E3V5_UP },
 { "recipf.d",	two (0x07e1, 0x045e),	two (0x0fff, 0x0fff),	{R2_EVEN, R3_EVEN},			0, PROCESSOR_V850E2V3_UP },
 { "recipf.s",	two (0x07e1, 0x044e),	two (0x07ff, 0x07ff),	{R2, R3},				0, PROCESSOR_V850E2V3_UP },
 

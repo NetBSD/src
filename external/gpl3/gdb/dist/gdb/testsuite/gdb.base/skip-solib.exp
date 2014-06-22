@@ -1,4 +1,4 @@
-#   Copyright 2011-2013 Free Software Foundation, Inc.
+#   Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,10 +27,10 @@ if { ![isnative] || [is_remote host] || ![istarget *-linux*] || [skip_shlib_test
 set test "skip-solib"
 set srcfile_main "${test}-main.c"
 set executable_main ${test}-test
-set binfile_main ${objdir}/${subdir}/${executable_main}
+set binfile_main [standard_output_file ${executable_main}]
 set srcfile_lib "${test}-lib.c"
 set libname "lib${test}"
-set binfile_lib ${objdir}/${subdir}/${libname}.so
+set binfile_lib [standard_output_file ${libname}.so]
 
 #
 # Compile our program under test.  The main program references a shared library
@@ -47,9 +47,10 @@ if {[gdb_compile "${srcdir}/${subdir}/${srcfile_main}" "${binfile_main}.o" objec
     return -1
 }
 
+set testobjdir [standard_output_file {}]
 if {[gdb_compile "${binfile_main}.o" "${binfile_main}" executable \
-                 [list debug "additional_flags=-L${objdir}/${subdir} -l${test} \
-                                               -Wl,-rpath=${objdir}/${subdir}"]] != ""} {
+                 [list debug "additional_flags=-L$testobjdir -l${test} \
+                                               -Wl,-rpath=$testobjdir"]] != ""} {
     return -1
 }
 

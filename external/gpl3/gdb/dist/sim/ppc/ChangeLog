@@ -1,3 +1,29 @@
+2013-10-15  Hans-Peter Nilsson  <hp@axis.com>
+
+	* Makefile.in (srcsim): New variable.
+	(version.c): Adjust call to $(srccom)/create-version.sh as per change.
+
+2013-06-28  Tom Tromey  <tromey@redhat.com>
+
+	* Make-common.in (version.c): Use version.in, not
+	common/version.in.
+
+2013-06-24  Joel Brobecker  <brobecker@adacore.com>
+
+	* Makefile.in (srccom): New variable.
+	(version.c): Update rule dependencies, and re-implement using
+	sim/common/create-version.sh.
+
+2013-05-03  Hafiz Abid Qadeer  <abidh@codesourcery.com>
+
+	revert:
+	2013-04-19  Nathan Froyd  <froydnj@codesourcery.com>
+	* ppc-instructions (isel): New instruction.
+
+2013-04-19  Nathan Froyd  <froydnj@codesourcery.com>
+
+	* ppc-instructions (isel): New instruction.
+
 2012-12-19  Joel Brobecker  <brobecker@adacore.com>
 
 	* COPYING: Update to GPL version 3.

@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright 2012, 2013  Free Software Foundation, Inc.
+   Copyright 2012-2013  Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -31,7 +31,7 @@
    N.B. the fields are required to be in such an order than the least signficant
    field for VALUE comes the first, e.g. the <index> in
     SQDMLAL <Va><d>, <Vb><n>, <Vm>.<Ts>[<index>]
-   is encoded in H:L:M in some cases, the the fields H:L:M should be passed in
+   is encoded in H:L:M in some cases, the fields H:L:M should be passed in
    the order of M, L, H.  */
 
 static inline void
@@ -370,7 +370,6 @@ aarch64_ins_advsimd_imm_modified (const aarch64_operand *self ATTRIBUTE_UNUSED,
       imm = aarch64_shrink_expanded_imm8 (imm);
       assert ((int)imm >= 0);
     }
-  assert (imm <= 255);
   insert_fields (code, imm, 0, 2, FLD_defgh, FLD_abc);
 
   if (kind == AARCH64_MOD_NONE)

@@ -870,6 +870,7 @@ srec_set_section_contents (bfd *abfd,
 			   file_ptr offset,
 			   bfd_size_type bytes_to_do)
 {
+  int opb = bfd_octets_per_byte (abfd);
   tdata_type *tdata = abfd->tdata.srec_data;
   srec_data_list_type *entry;
 
@@ -892,16 +893,16 @@ srec_set_section_contents (bfd *abfd,
 	 regardless of the siez of the addresses.  */
       if (S3Forced)
 	tdata->type = 3;
-      else if ((section->lma + offset + bytes_to_do - 1) <= 0xffff)
+      else if ((section->lma + (offset + bytes_to_do) / opb - 1) <= 0xffff)
 	;  /* The default, S1, is OK.  */
-      else if ((section->lma + offset + bytes_to_do - 1) <= 0xffffff
+      else if ((section->lma + (offset + bytes_to_do) / opb - 1) <= 0xffffff
 	       && tdata->type <= 2)
 	tdata->type = 2;
       else
 	tdata->type = 3;
 
       entry->data = data;
-      entry->where = section->lma + offset;
+      entry->where = section->lma + offset / opb;
       entry->size = bytes_to_do;
 
       /* Sort the records by address.  Optimize for the common case of

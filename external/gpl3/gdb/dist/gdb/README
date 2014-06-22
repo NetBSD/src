@@ -577,15 +577,16 @@ try typing `M-x gdb RET'.
 Writing Code for GDB
 =====================
 
-   There is a lot of information about writing code for GDB in the
-internals manual, distributed with GDB in gdb/doc/gdbint.texinfo.  You
-can read it by hand, print it by using TeX and texinfo, or process it
-into an `info' file for use with Emacs' info mode or the standalone
-`info' program.
+   There is information about writing code for GDB in the file
+`CONTRIBUTE' and at the website:
+
+	http://www.gnu.org/software/gdb/
+
+in particular in the wiki.
 
    If you are pondering writing anything but a short patch, especially
-take note of the information about copyrights in the node Submitting
-Patches.  It can take quite a while to get all the paperwork done, so
+take note of the information about copyrights and copyright assignment.
+It can take quite a while to get all the paperwork done, so
 we encourage you to start that process as soon as you decide you are
 planning to work on something, or at least well ahead of when you
 think you will be ready to submit the patches.

@@ -1,6 +1,6 @@
 /* Modula 2 language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "expression.h"
 #include "parser-defs.h"
 #include "language.h"
+#include "varobj.h"
 #include "m2-lang.h"
 #include "c-lang.h"
 #include "valprint.h"
@@ -356,6 +357,7 @@ const struct exp_descriptor exp_descriptor_modula2 =
 const struct language_defn m2_language_defn =
 {
   "modula-2",
+  "Modula-2",
   language_m2,
   range_check_on,
   case_sensitive_on,
@@ -391,6 +393,7 @@ const struct language_defn m2_language_defn =
   default_get_string,
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 

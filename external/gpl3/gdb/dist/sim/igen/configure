@@ -4800,7 +4800,7 @@ fi
 # NOTE: If you change this list, remember to update
 # gdb/doc/gdbint.texinfo.
 build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
--Wformat-nonliteral -Wno-pointer-sign \
+-Wno-pointer-sign \
 -Wno-unused -Wunused-value -Wunused-function \
 -Wno-switch -Wno-char-subscripts -Wmissing-prototypes"
 
@@ -4808,6 +4808,7 @@ build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
 # GCC versions complain about %I64.
 case "${host}" in
   *-*-mingw32*) build_warnings="$build_warnings -Wno-format" ;;
+  *) build_warnings="$build_warnings -Wformat-nonliteral" ;;
 esac
 
 # Check whether --enable-build-warnings was given.

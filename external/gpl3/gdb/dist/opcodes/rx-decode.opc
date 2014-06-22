@@ -304,7 +304,7 @@ rx_decode_opcode (unsigned long pc AU,
   ID(mov); sBWL (sz); DIs(dst, d*16+sppp, sz); SC(IMM(1)); F_____;
 
 /** 11sz sd ss rsrc rdst	mov%s	%1, %0 */
-  if (ss == 3 && sz == 2 && rsrc == 0 && rdst == 0)
+  if (sd == 3 && ss == 3 && sz == 2 && rsrc == 0 && rdst == 0)
     {
       ID(nop2);
       rx->syntax = "nop";
@@ -895,6 +895,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 00sd rdst rsrc	bset	%1, %0%S0 */
   ID(bset); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE); F_____;
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 0111 100b ittt rdst			bset	#%1, %0 */
   ID(bset); BWL(LSIZE); SC(b*16+ittt); DR(rdst); F_____;
@@ -905,6 +907,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 01sd rdst rsrc	bclr	%1, %0%S0 */
   ID(bclr); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE); F_____;
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 0111 101b ittt rdst			bclr	#%1, %0 */
   ID(bclr); BWL(LSIZE); SC(b*16+ittt); DR(rdst); F_____;
@@ -915,6 +919,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 10sd rdst rsrc	btst	%2, %1%S1 */
   ID(btst); BWL(BSIZE); S2R(rsrc); SD(sd, rdst, BSIZE); F___ZC;
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 0111 110b ittt rdst			btst	#%2, %1 */
   ID(btst); BWL(LSIZE); S2C(b*16+ittt); SR(rdst); F___ZC;
@@ -925,6 +931,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 11sd rdst rsrc	bnot	%1, %0%S0 */
   ID(bnot); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE);
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 1111 1101 111bittt 1111 rdst	bnot	#%1, %0 */
   ID(bnot); BWL(LSIZE); SC(bittt); DR(rdst);

@@ -1,6 +1,6 @@
 /* Readline support for Python.
 
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "exceptions.h"
 #include "top.h"
 #include "cli/cli-utils.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include <stddef.h>
 
@@ -93,7 +93,7 @@ gdbpy_initialize_gdb_readline (void)
      and prevent conflicts.  For now, this file implements a
      sys.meta_path finder that simply fails to import the readline
      module.  */
-  PyRun_SimpleString ("\
+  if (PyRun_SimpleString ("\
 import sys\n\
 \n\
 class GdbRemoveReadlineFinder:\n\
@@ -106,8 +106,7 @@ class GdbRemoveReadlineFinder:\n\
     raise ImportError('readline module disabled under GDB')\n\
 \n\
 sys.meta_path.append(GdbRemoveReadlineFinder())\n\
-");
-
-  PyOS_ReadlineFunctionPointer = gdbpy_readline_wrapper;
+") == 0)
+    PyOS_ReadlineFunctionPointer = gdbpy_readline_wrapper;
 }
 

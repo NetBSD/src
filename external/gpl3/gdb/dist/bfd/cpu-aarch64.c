@@ -38,6 +38,10 @@ compatible (const bfd_arch_info_type * a, const bfd_arch_info_type * b)
   if (a->mach == b->mach)
     return a;
 
+  /* Don't allow mixing ilp32 with lp64.  */
+  if ((a->mach & bfd_mach_aarch64_ilp32) != (b->mach & bfd_mach_aarch64_ilp32))
+    return NULL;
+
   /* Otherwise if either a or b is the 'default' machine
      then it can be polymorphed into the other.  */
   if (a->the_default)
@@ -101,9 +105,11 @@ scan (const struct bfd_arch_info *info, const char *string)
     "aarch64", PRINT, 4, DEFAULT, compatible, scan,		\
     bfd_arch_default_fill, NEXT }
 
-const bfd_arch_info_type bfd_aarch64_arch =
-  N (0, "aarch64", TRUE, NULL);
+static const bfd_arch_info_type bfd_aarch64_arch_ilp32 =
+  N (bfd_mach_aarch64_ilp32, "aarch64:ilp32", FALSE, NULL);
 
+const bfd_arch_info_type bfd_aarch64_arch =
+  N (0, "aarch64", TRUE, &bfd_aarch64_arch_ilp32);
 
 bfd_boolean
 bfd_is_aarch64_special_symbol_name (const char *name, int type)

@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2013 Free Software Foundation, Inc.
+# Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,8 +52,8 @@ proc gdb_test_thread_start {messages_enabled command pattern message} {
 
   return [gdb_test_multiple $command $message {
     -re "\\\[New Thread \[^\]\]*\\\]\r\n" {
-      incr events_seen;
-      exp_continue;
+      incr events_seen
+      exp_continue
     }
     -re "\[\r\n\]*($pattern)\[\r\n\]+$gdb_prompt $" {
       if { $events_seen != $events_expected } {
@@ -78,7 +78,7 @@ proc gdb_test_thread_exit {messages_enabled command pattern message} {
   return [gdb_test_multiple $command $message {
     -re "\\\[Thread \[^\]\]* exited\\\]\r\n" {
       incr events_seen
-      exp_continue;
+      exp_continue
     }
     -re "\[\r\n\]*($pattern)\[\r\n\]+$gdb_prompt $" {
       if { $events_seen != $events_expected } {

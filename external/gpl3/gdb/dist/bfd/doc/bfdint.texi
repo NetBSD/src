@@ -1,6 +1,6 @@
 \input texinfo
 @c Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
-@c 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2009
+@c 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2009, 2013
 @c Free Software Foundation, Inc.
 @setfilename bfdint.info
 
@@ -945,7 +945,7 @@ BFD.  Some files are automatically rebuilt at make time, but only if
 you configure with the @samp{--enable-maintainer-mode} option.  Some
 files live in the object directory---the directory from which you run
 configure---and some live in the source directory.  All files that live
-in the source directory are checked into the CVS repository.
+in the source directory are checked into the git repository.
 
 @table @file
 @item bfd.h

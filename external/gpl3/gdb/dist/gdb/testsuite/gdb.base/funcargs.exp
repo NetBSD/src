@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,24 +16,22 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
 
-set testfile "funcargs"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 set compile_flags {debug nowarnings quiet}
 if [support_complex_tests] {
     lappend compile_flags "additional_flags=-DTEST_COMPLEX"
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $compile_flags] != "" } {
-     untested funcargs.exp
-     return -1
-}
-
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
 if [get_compiler_info] {
-    return -1;
+    return -1
+}
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile $compile_flags]} {
+    untested $testfile.exp
+    return -1
 }
 
 #
@@ -73,24 +71,24 @@ proc integral_args {} {
 
     # Continue; should stop at call0b and print actual arguments.
     if [gdb_test "cont" ".* call0b \\(s=1, i=2, l=3, c=97 'a'\\) .*" "continue to call0b"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call0c and print actual arguments.
     if [gdb_test "cont" ".* call0c \\(i=2, l=3, c=97 'a', s=1\\) .*" "continue to call0c"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call0d and print actual arguments.
     if [gdb_test "cont" ".* call0d \\(l=3, c=97 'a', s=1, i=2\\) .*" "continue to call0d";] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call0e and print actual arguments.
     if [gdb_test "cont" ".* call0e \\(c1=97 'a', l=3, c2=97 'a', i=2, c3=97 'a', s=1, c4=97 'a', c5=97 'a'\\) .*" "continue to call0e" ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -104,11 +102,11 @@ proc unsigned_integral_args {} {
 
     delete_breakpoints
 
-    gdb_breakpoint call1a;
-    gdb_breakpoint call1b;
-    gdb_breakpoint call1c;
-    gdb_breakpoint call1d;
-    gdb_breakpoint call1e;
+    gdb_breakpoint call1a
+    gdb_breakpoint call1b
+    gdb_breakpoint call1c
+    gdb_breakpoint call1d
+    gdb_breakpoint call1e
 
     # Run; should stop at call1a and print actual arguments.
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
@@ -130,24 +128,24 @@ proc unsigned_integral_args {} {
     
     # Continue; should stop at call1b and print actual arguments.
     if [gdb_test "cont" ".* call1b \\(us=6, ui=7, ul=8, uc=98 'b'\\) .*" "continue to call1b"] {
-	gdb_suppress_tests; 
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call1c and print actual arguments.
     if [gdb_test "cont" ".* call1c \\(ui=7, ul=8, uc=98 'b', us=6\\) .*" "continue to call1c"] {
-	gdb_suppress_tests; 
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call1d and print actual arguments.
     if [gdb_test "cont" ".* call1d \\(ul=8, uc=98 'b', us=6, ui=7\\) .*" "continue to call1d"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call1e and print actual arguments.
     if [gdb_test "cont" ".* call1e \\(uc1=98 'b', ul=8, uc2=98 'b', ui=7, uc3=98 'b', us=6, uc4=98 'b', uc5=98 'b'\\) .*" "continue to call1e"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -195,37 +193,37 @@ proc float_and_integral_args {} {
     if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix*" }
     # Continue; should stop at call2b and print actual arguments.
     if [gdb_test "cont" ".* call2b \\(f1=4, s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a'\\) .*" "continue to call2b"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call2c and print actual arguments.
     if [gdb_test "cont" ".* call2c \\(s=1, d1=5, i=2, f2=4, l=3, d2=5, c=97 'a', f1=4\\) .*" "continue to call2c"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call2d and print actual arguments.
     if [gdb_test "cont" ".* call2d \\(d1=5, i=2, f2=4, l=3, d2=5, c=97 'a', f1=4, s=1\\) .*" "continue to call2d"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call2e and print actual arguments.
     if [gdb_test "cont" ".* call2e \\(i=2, f2=4, l=3, d2=5, c=97 'a', f1=4, s=1, d1=5\\) .*" "continue to call2e"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call2f and print actual arguments.
     if [gdb_test "cont" ".* call2f \\(f2=4, l=3, d2=5, c=97 'a', f1=4, s=1, d1=5, i=2\\) .*" "continue to call2f"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call2g and print actual arguments.
     if [gdb_test "cont" ".* call2g \\(l=3, d2=5, c=97 'a', f1=4, s=1, d1=5, i=2, f2=4\\) .*" "continue to call2g"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call2h and print actual arguments.
     if [gdb_test "cont" ".* call2h \\(d2=5, c=97 'a', f1=4, s=1, d1=5, i=2, f2=4, l=3\\) .*" "continue to call2h"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # monitor only allows 8 breakpoints; w89k board allows 10, so
@@ -235,9 +233,9 @@ proc float_and_integral_args {} {
 
     # Continue; should stop at call2i and print actual arguments.
     if [gdb_test "cont" ".* call2i \\(c1=97 'a', f1=4, c2=97 'a', c3=97 'a', d1=5, c4=97 'a', c5=97 'a', c6=97 'a', f2=4, s=1, c7=97 'a', d2=5\\) .*" "continue to call2i"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 
@@ -344,7 +342,7 @@ proc pointer_args {} {
     # Continue; should stop at call3b and print actual arguments.
     # Try dereferencing the arguments.
     if [gdb_test "cont" ".* call3b \\(ucp=$hex <uc> \"b.*\", usp=$hex <us>, uip=$hex <ui>, ulp=$hex <ul>\\) .*" "continue to call3b"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     gdb_test "print *ucp" ".* = 98 'b'"
@@ -355,14 +353,14 @@ proc pointer_args {} {
     # Continue; should stop at call3c and print actual arguments.
     # Try dereferencing the arguments.
     if [gdb_test "cont" ".* call3c \\(fp=$hex <f>, dp=$hex <d>\\) .*" "continue to call3c"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     gdb_test "print *fp" ".* = 4"
     gdb_test "print *dp" ".* = 5"
 
 #    pass "locate actual args, pointer types"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -418,7 +416,7 @@ proc structs_by_reference {} {
     }
 
     pass "locate actual args, structs/unions passed by reference"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -486,7 +484,7 @@ proc structs_by_value {} {
 	fail "print un (unknown case)"
     }
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -546,7 +544,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#1 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#2 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6c and print actual arguments.
@@ -560,7 +558,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#2 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#3 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     # Continue; should stop at call6d and print actual arguments.
     # Print backtrace.
@@ -574,7 +572,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#3 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#4 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6e and print actual arguments.
@@ -590,7 +588,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#4 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#5 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6f and print actual arguments.
@@ -607,7 +605,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#5 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#6 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6g and print actual arguments.
@@ -625,7 +623,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#6 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#7 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6h and print actual arguments.
@@ -644,7 +642,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#7 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#8 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # monitor only allows 8 breakpoints; w89k board allows 10, so
@@ -671,7 +669,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#8 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#9 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6j and print actual arguments.
@@ -692,7 +690,7 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#9 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#10 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Continue; should stop at call6k and print actual arguments.
@@ -713,9 +711,9 @@ proc discard_and_shuffle {} {
 	"\[\r\n\]#10 .* call6a \\(c=97 'a', s=1, i=2, l=3, f=4, d=5, uc=98 'b', us=6, ui=7, ul=8\\) "
 	"\[\r\n\]#11 .* main \\(.*\\) at "
     } ] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 
@@ -921,7 +919,7 @@ proc shuffle_round_robin {} {
 	"\[\r\n\]#10 .* call7a \\(c=97 'a', i=2, s=1, l=3, f=4, uc=98 'b', d=5, us=6, ul=8, ui=7\\) "
 	"\[\r\n\]#11 .* main \\(.*\\) at "
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -961,7 +959,7 @@ proc recursive_structs_by_value {} {
     } else {
 	fail "recursive passing of structs by value (sparclet)"
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -997,7 +995,7 @@ proc localvars_after_alloca { } {
     gdb_test "print l" " = 3" "print l in localvars_after_alloca"
 
     gdb_test "backtrace 8" "#0.*localvars_after_alloca \\(c=97 'a', s=1, i=2, l=3\\).*#1.*main.*" "backtrace after alloca"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc call_after_alloca { } {
@@ -1020,7 +1018,7 @@ proc call_after_alloca { } {
 
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
     gdb_test "backtrace 8" "#0.*call_after_alloca_subr \\(c=97 'a', s=1, i=2, l=3, uc=98 'b', us=11, ui=12, ul=13\\).*#1.*call_after_alloca \\(c=97 'a', s=1, i=2, l=3\\).*#2.*main.*" "backtrace from call_after_alloca_subr"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -1082,18 +1080,18 @@ proc localvars_in_indirect_call { } {
 	}
 	-re ".*$gdb_prompt $" {
 	    fail "finish from indirectly called function"
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
 	default { 
 	    fail "finish from indirectly called function"
-	    gdb_suppress_tests; 
+	    gdb_suppress_tests
 	}
     }
 
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
     gdb_test "step" "call0a \\(c=97 'a', s=1, i=2, l=3\\).*" \
 	"stepping into indirectly called function"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -1156,15 +1154,8 @@ proc test_stepping_over_trampolines { } {
 	    gdb_suppress_tests
 	}
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
-
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 set prev_timeout $timeout
 if [istarget "mips*tx39-*"] {
