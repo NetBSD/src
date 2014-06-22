@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 #include "value.h"
 #include "dis-asm.h"
 #include "inferior.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "arch-utils.h"
 #include "floatformat.h"
@@ -908,22 +908,22 @@ sh_frame_align (struct gdbarch *ignore, CORE_ADDR sp)
    to R7.  */
 
 /* Helper function to justify value in register according to endianess.  */
-static char *
+static const gdb_byte *
 sh_justify_value_in_reg (struct gdbarch *gdbarch, struct value *val, int len)
 {
-  static char valbuf[4];
+  static gdb_byte valbuf[4];
 
   memset (valbuf, 0, sizeof (valbuf));
   if (len < 4)
     {
       /* value gets right-justified in the register or stack word.  */
       if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	memcpy (valbuf + (4 - len), (char *) value_contents (val), len);
+	memcpy (valbuf + (4 - len), value_contents (val), len);
       else
-	memcpy (valbuf, (char *) value_contents (val), len);
+	memcpy (valbuf, value_contents (val), len);
       return valbuf;
     }
-  return (char *) value_contents (val);
+  return value_contents (val);
 }
 
 /* Helper function to eval number of bytes to allocate on stack.  */
@@ -1068,7 +1068,7 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
   struct type *func_type = value_type (function);
   struct type *type;
   CORE_ADDR regval;
-  char *val;
+  const gdb_byte *val;
   int len, reg_size = 0;
   int pass_on_stack = 0;
   int treat_as_flt;
@@ -1209,7 +1209,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
   struct type *func_type = value_type (function);
   struct type *type;
   CORE_ADDR regval;
-  char *val;
+  const gdb_byte *val;
   int len, reg_size = 0;
   int pass_on_stack = 0;
   int last_reg_arg = INT_MAX;
@@ -1302,7 +1302,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
    TYPE, and copy that, in virtual format, into VALBUF.  */
 static void
 sh_extract_return_value_nofpu (struct type *type, struct regcache *regcache,
-			       void *valbuf)
+			       gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1321,7 +1321,7 @@ sh_extract_return_value_nofpu (struct type *type, struct regcache *regcache,
     {
       int i, regnum = R0_REGNUM;
       for (i = 0; i < len; i += 4)
-	regcache_raw_read (regcache, regnum++, (char *) valbuf + i);
+	regcache_raw_read (regcache, regnum++, valbuf + i);
     }
   else
     error (_("bad size for return value"));
@@ -1329,7 +1329,7 @@ sh_extract_return_value_nofpu (struct type *type, struct regcache *regcache,
 
 static void
 sh_extract_return_value_fpu (struct type *type, struct regcache *regcache,
-			     void *valbuf)
+			     gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   if (sh_treat_as_flt_p (type))
@@ -1339,9 +1339,9 @@ sh_extract_return_value_fpu (struct type *type, struct regcache *regcache,
       for (i = 0; i < len; i += 4)
 	if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_LITTLE)
 	  regcache_raw_read (regcache, regnum++,
-			     (char *) valbuf + len - 4 - i);
+			     valbuf + len - 4 - i);
 	else
-	  regcache_raw_read (regcache, regnum++, (char *) valbuf + i);
+	  regcache_raw_read (regcache, regnum++, valbuf + i);
     }
   else
     sh_extract_return_value_nofpu (type, regcache, valbuf);
@@ -1355,7 +1355,7 @@ sh_extract_return_value_fpu (struct type *type, struct regcache *regcache,
    the result is stored in r0, left-justified.  */
 static void
 sh_store_return_value_nofpu (struct type *type, struct regcache *regcache,
-			     const void *valbuf)
+			     const gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1371,13 +1371,13 @@ sh_store_return_value_nofpu (struct type *type, struct regcache *regcache,
     {
       int i, regnum = R0_REGNUM;
       for (i = 0; i < len; i += 4)
-	regcache_raw_write (regcache, regnum++, (char *) valbuf + i);
+	regcache_raw_write (regcache, regnum++, valbuf + i);
     }
 }
 
 static void
 sh_store_return_value_fpu (struct type *type, struct regcache *regcache,
-			   const void *valbuf)
+			   const gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   if (sh_treat_as_flt_p (type))
@@ -1387,9 +1387,9 @@ sh_store_return_value_fpu (struct type *type, struct regcache *regcache,
       for (i = 0; i < len; i += 4)
 	if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_LITTLE)
 	  regcache_raw_write (regcache, regnum++,
-			      (char *) valbuf + len - 4 - i);
+			      valbuf + len - 4 - i);
 	else
-	  regcache_raw_write (regcache, regnum++, (char *) valbuf + i);
+	  regcache_raw_write (regcache, regnum++, valbuf + i);
     }
   else
     sh_store_return_value_nofpu (type, regcache, valbuf);
@@ -1549,7 +1549,7 @@ sh_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 
 static void
 sh_register_convert_to_virtual (struct gdbarch *gdbarch, int regnum,
-				struct type *type, char *from, char *to)
+				struct type *type, gdb_byte *from, gdb_byte *to)
 {
   if (gdbarch_byte_order (gdbarch) != BFD_ENDIAN_LITTLE)
     {
@@ -1572,7 +1572,7 @@ sh_register_convert_to_virtual (struct gdbarch *gdbarch, int regnum,
 
 static void
 sh_register_convert_to_raw (struct gdbarch *gdbarch, struct type *type,
-			    int regnum, const void *from, void *to)
+			    int regnum, const gdb_byte *from, gdb_byte *to)
 {
   if (gdbarch_byte_order (gdbarch) != BFD_ENDIAN_LITTLE)
     {
@@ -1643,7 +1643,7 @@ sh_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
 			 int reg_nr, gdb_byte *buffer)
 {
   int base_regnum;
-  char temp_buffer[MAX_REGISTER_SIZE];
+  gdb_byte temp_buffer[MAX_REGISTER_SIZE];
   enum register_status status;
 
   if (reg_nr == PSEUDO_BANK_REGNUM)
@@ -1682,7 +1682,7 @@ sh_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 			  int reg_nr, const gdb_byte *buffer)
 {
   int base_regnum, portion;
-  char temp_buffer[MAX_REGISTER_SIZE];
+  gdb_byte temp_buffer[MAX_REGISTER_SIZE];
 
   if (reg_nr == PSEUDO_BANK_REGNUM)
     {
@@ -1718,7 +1718,7 @@ sh_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       /* Write the real regs for which this one is an alias.  */
       for (portion = 0; portion < 4; portion++)
 	regcache_raw_write (regcache, base_regnum + portion,
-			    ((char *) buffer
+			    (buffer
 			     + register_size (gdbarch,
 					      base_regnum) * portion));
     }
@@ -2036,7 +2036,7 @@ sh_stub_unwind_sniffer (const struct frame_unwind *self,
   CORE_ADDR addr_in_block;
 
   addr_in_block = get_frame_address_in_block (this_frame);
-  if (in_plt_section (addr_in_block, NULL))
+  if (in_plt_section (addr_in_block))
     return 1;
 
   return 0;
