@@ -1,5 +1,5 @@
 /* MI Option Parser.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -46,11 +46,15 @@ struct mi_opt
    If ARGV[OPTIND] is not an option, -1 is returned and OPTIND updated
    to specify the non-option argument.  OPTARG is set to NULL.
 
-   mi_getopt() calls ``error("%s: Unknown option %c", prefix,
-   option)'' if an unknown option is encountered.  */
+   If an unknown option is encountered, mi_getopt() calls
+   ``error("%s: Unknown option %c", prefix, option)'' while
+   mi_getopt_allow_unknown returns -1.  */
 
 extern int mi_getopt (const char *prefix, int argc, char **argv,
 		      const struct mi_opt *opt, int *optind, char **optarg);
+extern int mi_getopt_allow_unknown (const char *prefix, int argc,
+				    char **argv, const struct mi_opt *opts,
+				    int *oind, char **oarg);
 
 /* mi_valid_noargs determines if ARGC/ARGV are a valid set of
    parameters to satisfy an MI function that is not supposed to

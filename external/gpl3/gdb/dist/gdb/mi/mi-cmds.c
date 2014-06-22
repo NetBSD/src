@@ -1,5 +1,5 @@
 /* MI Command Set for GDB, the GNU debugger.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -21,7 +21,7 @@
 #include "defs.h"
 #include "top.h"
 #include "mi-cmds.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "mi-main.h"
 
 extern void _initialize_mi_cmds (void);
@@ -61,11 +61,17 @@ static struct mi_cmd mi_cmds[] =
   DEF_MI_CMD_CLI ("break-info", "info break", 1),
   DEF_MI_CMD_MI_1 ("break-insert", mi_cmd_break_insert,
 		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("dprintf-insert", mi_cmd_dprintf_insert,
+		   &mi_suppress_notification.breakpoint),
   DEF_MI_CMD_CLI ("break-list", "info break", 0),
   DEF_MI_CMD_MI_1 ("break-passcount", mi_cmd_break_passcount,
 		   &mi_suppress_notification.breakpoint),
   DEF_MI_CMD_MI_1 ("break-watch", mi_cmd_break_watch,
 		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-assert", mi_cmd_catch_assert,
+                   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-exception", mi_cmd_catch_exception,
+                   &mi_suppress_notification.breakpoint),
   DEF_MI_CMD_MI_1 ("catch-load", mi_cmd_catch_load,
                    &mi_suppress_notification.breakpoint),
   DEF_MI_CMD_MI_1 ("catch-unload", mi_cmd_catch_unload,
@@ -86,11 +92,13 @@ static struct mi_cmd mi_cmds[] =
 		 mi_cmd_data_write_register_values),
   DEF_MI_CMD_MI ("enable-timings", mi_cmd_enable_timings),
   DEF_MI_CMD_MI ("enable-pretty-printing", mi_cmd_enable_pretty_printing),
+  DEF_MI_CMD_MI ("enable-frame-filters", mi_cmd_enable_frame_filters),
   DEF_MI_CMD_MI ("environment-cd", mi_cmd_env_cd),
   DEF_MI_CMD_MI ("environment-directory", mi_cmd_env_dir),
   DEF_MI_CMD_MI ("environment-path", mi_cmd_env_path),
   DEF_MI_CMD_MI ("environment-pwd", mi_cmd_env_pwd),
-  DEF_MI_CMD_CLI ("exec-arguments", "set args", 1),
+  DEF_MI_CMD_CLI_1 ("exec-arguments", "set args", 1,
+		    &mi_suppress_notification.cmd_param_changed),
   DEF_MI_CMD_MI ("exec-continue", mi_cmd_exec_continue),
   DEF_MI_CMD_MI ("exec-finish", mi_cmd_exec_finish),
   DEF_MI_CMD_MI ("exec-jump", mi_cmd_exec_jump),
@@ -116,6 +124,8 @@ static struct mi_cmd mi_cmds[] =
   DEF_MI_CMD_CLI ("gdb-version", "show version", 0),
   DEF_MI_CMD_MI ("inferior-tty-set", mi_cmd_inferior_tty_set),
   DEF_MI_CMD_MI ("inferior-tty-show", mi_cmd_inferior_tty_show),
+  DEF_MI_CMD_MI ("info-ada-exceptions", mi_cmd_info_ada_exceptions),
+  DEF_MI_CMD_MI ("info-gdb-mi-command", mi_cmd_info_gdb_mi_command),
   DEF_MI_CMD_MI ("info-os", mi_cmd_info_os),
   DEF_MI_CMD_MI ("interpreter-exec", mi_cmd_interpreter_exec),
   DEF_MI_CMD_MI ("list-features", mi_cmd_list_features),
@@ -144,6 +154,8 @@ static struct mi_cmd mi_cmds[] =
   DEF_MI_CMD_MI ("trace-define-variable", mi_cmd_trace_define_variable),
   DEF_MI_CMD_MI_1 ("trace-find", mi_cmd_trace_find,
 		   &mi_suppress_notification.traceframe),
+  DEF_MI_CMD_MI ("trace-frame-collected",
+		 mi_cmd_trace_frame_collected),
   DEF_MI_CMD_MI ("trace-list-variables", mi_cmd_trace_list_variables),
   DEF_MI_CMD_MI ("trace-save", mi_cmd_trace_save),
   DEF_MI_CMD_MI ("trace-start", mi_cmd_trace_start),

@@ -31,6 +31,14 @@ public:
   }
 };
 
+// An object with a single constructor.
+class single_constructor
+{
+public:
+  single_constructor () { }
+  ~single_constructor () { }
+};
+
 const bool gnu_obj_1::test;
 const int gnu_obj_1::key1;
 long gnu_obj_1::key2 = 77;
@@ -81,6 +89,7 @@ int main()
   gnu_obj_2<long>	test2(roman);
   gnu_obj_3<long>	test3(greek);
   gnu_obj_4		test4;
+  single_constructor	test5;
 
   test4.dummy = test4.elsewhere;
   test4.dummy = 0;

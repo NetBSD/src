@@ -1,4 +1,4 @@
-# Copyright 2007-2013 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -135,9 +135,9 @@ gdb_test_multiple "print s" $msg {
 	    verbose "expo found: $expo" 1
 	  } else {
 	    set expo "0"
-	    regsub  ".*\[eE\]" "$value" "" expo;
+	    regsub  ".*\[eE\]" "$value" "" expo
 	  }
-	  regsub  "^-" "$expo" "" mexpo;
+	  regsub  "^-" "$expo" "" mexpo
 	  verbose "expo is $expo" 1
 	  verbose "mexpo is $mexpo" 1
 	  if { $value == 0 } {

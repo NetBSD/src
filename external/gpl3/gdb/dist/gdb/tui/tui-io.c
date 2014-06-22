@@ -1,6 +1,6 @@
 /* TUI support I/O functions.
 
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include "filestuff.h"
 
 #include "gdb_curses.h"
 
@@ -608,15 +609,14 @@ tui_initialize_io (void)
   tui_stderr = tui_fileopen (stderr);
   tui_out = tui_out_new (tui_stdout);
 
-  /* Create the default UI.  It is not created because we installed a
-     deprecated_init_ui_hook.  */
+  /* Create the default UI.  */
   tui_old_uiout = cli_out_new (gdb_stdout);
 
 #ifdef TUI_USE_PIPE_FOR_READLINE
   /* Temporary solution for readline writing to stdout: redirect
      readline output in a pipe, read that pipe and output the content
      in the curses command window.  */
-  if (pipe (tui_readline_pipe) != 0)
+  if (gdb_pipe_cloexec (tui_readline_pipe) != 0)
     {
       fprintf_unfiltered (gdb_stderr, "Cannot create pipe for readline");
       exit (1);

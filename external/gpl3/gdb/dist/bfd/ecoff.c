@@ -1,7 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -1888,7 +1886,7 @@ _bfd_ecoff_sizeof_headers (bfd *abfd,
   ret = (bfd_coff_filhsz (abfd)
 	 + bfd_coff_aoutsz (abfd)
 	 + c * bfd_coff_scnhsz (abfd));
-  return BFD_ALIGN (ret, 16);
+  return (int) BFD_ALIGN (ret, 16);
 }
 
 /* Get the contents of a section.  */
@@ -3563,9 +3561,9 @@ ecoff_link_check_archive_element (bfd *abfd,
   void (* const swap_ext_in) (bfd *, void *, EXTR *)
     = backend->debug_swap.swap_ext_in;
   HDRR *symhdr;
-  bfd_size_type external_ext_size;
+  bfd_size_type external_ext_size = 0;
   void * external_ext = NULL;
-  bfd_size_type esize;
+  bfd_size_type esize = 0;
   char *ssext = NULL;
   char *ext_ptr;
   char *ext_end;

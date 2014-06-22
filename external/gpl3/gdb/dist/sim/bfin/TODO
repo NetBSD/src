@@ -48,3 +48,7 @@ tests:
 		R0 = R1 - R2;
 	- check astat bits with vector add/sub +|+
 	- check acc with VIT_MAX and similiar insns
+
+flush[0xffa00000] causes HWERR in sim but not on hardware ?
+
+convert to using do_hw_attach_regs ?

@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -38,7 +38,7 @@
 %{
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "expression.h"
 #include "language.h"
 #include "value.h"
@@ -627,12 +627,12 @@ variable:	NAME
 			    }
 			  else
 			    {
-			      struct minimal_symbol *msymbol;
+			      struct bound_minimal_symbol msymbol;
 			      char *arg = copy_name ($1);
 
 			      msymbol =
-				lookup_minimal_symbol (arg, NULL, NULL);
-			      if (msymbol != NULL)
+				lookup_bound_minimal_symbol (arg);
+			      if (msymbol.minsym != NULL)
 				write_exp_msymbol (msymbol);
 			      else if (!have_full_symbols () && !have_partial_symbols ())
 				error (_("No symbol table is loaded.  Use the \"symbol-file\" command."));
@@ -662,7 +662,7 @@ type
 static int
 parse_number (int olen)
 {
-  char *p = lexptr;
+  const char *p = lexptr;
   LONGEST n = 0;
   LONGEST prevn = 0;
   int c,i,ischar=0;
@@ -814,7 +814,7 @@ yylex (void)
   int c;
   int namelen;
   int i;
-  char *tokstart;
+  const char *tokstart;
   char quote;
 
  retry:
@@ -927,7 +927,7 @@ yylex (void)
     {
       /* It's a number.  */
       int got_dot = 0, got_e = 0;
-      char *p = tokstart;
+      const char *p = tokstart;
       int toktype;
 
       for (++p ;; ++p)

@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2012 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2014 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl

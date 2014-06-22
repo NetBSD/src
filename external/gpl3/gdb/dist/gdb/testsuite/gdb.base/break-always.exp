@@ -1,4 +1,4 @@
-#   Copyright 2008-2013 Free Software Foundation, Inc.
+#   Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,7 +84,8 @@ gdb_test "p /x *(char *) $bp_address" \
     "read back 1 from the breakpoint's address"
 
 # Restore the original contents.
-gdb_test "p /x *(char *) $bp_address = \$shadow" ""
+gdb_test "p /x *(char *) $bp_address = \$shadow" "" \
+    "restore the original contents"
 
 # Run to breakpoint.
 gdb_continue_to_breakpoint "bar" ".*break-always.c:$bar_location.*"

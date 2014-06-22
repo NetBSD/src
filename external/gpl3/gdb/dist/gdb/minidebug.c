@@ -1,6 +1,6 @@
 /* Read MiniDebugInfo data from an objfile.
 
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "gdb_bfd.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "symfile.h"
 #include "objfiles.h"
 #include "gdbcore.h"
@@ -269,8 +269,8 @@ find_separate_debug_file_in_section (struct objfile *objfile)
     return NULL;
 
 #ifdef HAVE_LIBLZMA
-  abfd = gdb_bfd_openr_iovec (objfile->name, gnutarget, lzma_open, section,
-			      lzma_pread, lzma_close, lzma_stat);
+  abfd = gdb_bfd_openr_iovec (objfile_name (objfile), gnutarget, lzma_open,
+			      section, lzma_pread, lzma_close, lzma_stat);
   if (abfd == NULL)
     return NULL;
 

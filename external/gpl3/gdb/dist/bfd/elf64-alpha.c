@@ -1,6 +1,6 @@
 /* Alpha specific support for 64-bit ELF
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011, 2012
+   2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
    Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
@@ -1812,6 +1812,9 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		 || h->root.root.type == bfd_link_hash_warning)
 	    h = (struct alpha_elf_link_hash_entry *)h->root.root.u.i.link;
 
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.root.non_ir_ref = 1;
 	  h->root.ref_regular = 1;
 	}
 
@@ -3587,7 +3590,9 @@ elf64_alpha_relax_tls_get_addr (struct alpha_relax_info *info, bfd_vma symval,
   use_gottprel = FALSE;
   new_symndx = is_gd ? ELF64_R_SYM (irel->r_info) : STN_UNDEF;
 
-  switch (!dynamic && !info->link_info->shared)
+  /* Some compilers warn about a Boolean-looking expression being
+     used in a switch.  The explicit cast silences them.  */
+  switch ((int) (!dynamic && !info->link_info->shared))
     {
     case 1:
       {
@@ -4298,14 +4303,14 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  struct elf_link_hash_entry *hh;
 	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   hh, sec, value,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  if (warned)
 	    continue;
@@ -5315,7 +5320,9 @@ elf64_alpha_final_link (bfd *abfd, struct bfd_link_info *info)
 }
 
 static enum elf_reloc_type_class
-elf64_alpha_reloc_type_class (const Elf_Internal_Rela *rela)
+elf64_alpha_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			      const asection *rel_sec ATTRIBUTE_UNUSED,
+			      const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF64_R_TYPE (rela->r_info))
     {

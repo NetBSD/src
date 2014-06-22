@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +31,7 @@ if { ![support_displaced_stepping] } {
     return -1
 }
 
-set testfile "inferior-died"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${testfile}.c] } {
     return -1

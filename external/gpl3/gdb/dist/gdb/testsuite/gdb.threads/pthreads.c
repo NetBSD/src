@@ -1,5 +1,5 @@
 /* Pthreads test program.
-   Copyright 1996-2013 Free Software Foundation, Inc.
+   Copyright 1996-2014 Free Software Foundation, Inc.
 
    Written by Fred Fish of Cygnus Support
    Contributed by Cygnus Support

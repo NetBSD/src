@@ -1,4 +1,4 @@
-# Copyright 2002-2013 Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ set testfile1 code_elim1
 set testfile2 code_elim2
 set srcfile1 ${testfile1}.c
 set srcfile2 ${testfile2}.c
-set binfile1 ${objdir}/${subdir}/${testfile1}
-set binfile2 ${objdir}/${subdir}/${testfile2}
+set binfile1 [standard_output_file ${testfile1}]
+set binfile2 [standard_output_file ${testfile2}]
 set opts [list debug]
 lappend opts "additional_flags=-ffunction-sections"
 lappend opts "additional_flags=-fdata-sections"

@@ -234,7 +234,7 @@ if test ${sim_gen} = MULTI; then
 
   cat << __EOF__ > multi-run.c
 /* Main entry point for MULTI simulators.
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

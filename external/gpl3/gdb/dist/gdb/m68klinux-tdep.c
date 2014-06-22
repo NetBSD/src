@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "floatformat.h"
 #include "frame.h"
 #include "target.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbtypes.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -228,16 +228,10 @@ m68k_linux_get_sigtramp_info (struct frame_info *this_frame)
   CORE_ADDR sp;
   struct m68k_linux_sigtramp_info info;
 
+  /* Determine whether we are running on a uClinux or normal GNU/Linux
+     target so we can use the correct sigcontext layouts.  */
   if (target_is_uclinux == -1)
-    {
-      /* Determine whether we are running on a uClinux or normal GNU/Linux
-         target so we can use the correct sigcontext layouts.  */
-      CORE_ADDR dummy;
-
-      target_is_uclinux
-        = (target_auxv_search (&current_target, AT_NULL, &dummy) > 0
-	   && target_auxv_search (&current_target, AT_PAGESZ, &dummy) == 0);
-    }
+    target_is_uclinux = linux_is_uclinux ();
 
   sp = get_frame_register_unsigned (this_frame, M68K_SP_REGNUM);
 

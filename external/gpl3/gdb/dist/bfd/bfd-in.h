@@ -1,8 +1,6 @@
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
-   2012 Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -294,9 +292,6 @@ typedef struct bfd_section *sec_ptr;
 
 #define bfd_is_com_section(ptr) (((ptr)->flags & SEC_IS_COMMON) != 0)
 
-#define bfd_set_section_vma(bfd, ptr, val) (((ptr)->vma = (ptr)->lma = (val)), ((ptr)->user_set_vma = TRUE), TRUE)
-#define bfd_set_section_alignment(bfd, ptr, val) (((ptr)->alignment_power = (val)),TRUE)
-#define bfd_set_section_userdata(bfd, ptr, val) (((ptr)->userdata = (val)),TRUE)
 /* Find the address one past the end of SEC.  */
 #define bfd_get_section_limit(bfd, sec) \
   (((bfd)->direction != write_direction && (sec)->rawsize != 0	\
@@ -518,8 +513,6 @@ extern void warn_deprecated (const char *, const char *, int, const char *);
 #define bfd_get_dynamic_symcount(abfd) ((abfd)->dynsymcount)
 
 #define bfd_get_symbol_leading_char(abfd) ((abfd)->xvec->symbol_leading_char)
-
-#define bfd_set_cacheable(abfd,bool) (((abfd)->cacheable = bool), TRUE)
 
 extern bfd_boolean bfd_cache_close
   (bfd *abfd);
@@ -911,7 +904,8 @@ extern void elf32_arm_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
 extern bfd_boolean elf32_arm_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
-   struct bfd_section * (*) (const char *, struct bfd_section *), void (*) (void));
+   struct bfd_section * (*) (const char *, struct bfd_section *, unsigned int),
+   void (*) (void));
 extern bfd_boolean elf32_arm_build_stubs
   (struct bfd_link_info *);
 
@@ -933,7 +927,13 @@ extern unsigned int _bfd_elf_ppc_at_tprel_transform
 extern void bfd_elf64_aarch64_init_maps
   (bfd *);
 
-void bfd_elf64_aarch64_set_options
+extern void bfd_elf32_aarch64_init_maps
+  (bfd *);
+
+extern void bfd_elf64_aarch64_set_options
+  (bfd *, struct bfd_link_info *, int, int, int);
+
+extern void bfd_elf32_aarch64_set_options
   (bfd *, struct bfd_link_info *, int, int, int);
 
 /* ELF AArch64 mapping symbol support.  */
@@ -944,7 +944,7 @@ void bfd_elf64_aarch64_set_options
 extern bfd_boolean bfd_is_aarch64_special_symbol_name
   (const char * name, int type);
 
-/* AArch64 stub generation support.  Called from the linker.  */
+/* AArch64 stub generation support for ELF64.  Called from the linker.  */
 extern int elf64_aarch64_setup_section_lists
   (bfd *, struct bfd_link_info *);
 extern void elf64_aarch64_next_input_section
@@ -955,6 +955,18 @@ extern bfd_boolean elf64_aarch64_size_stubs
    void (*) (void));
 extern bfd_boolean elf64_aarch64_build_stubs
   (struct bfd_link_info *);
+/* AArch64 stub generation support for ELF32.  Called from the linker.  */
+extern int elf32_aarch64_setup_section_lists
+  (bfd *, struct bfd_link_info *);
+extern void elf32_aarch64_next_input_section
+  (struct bfd_link_info *, struct bfd_section *);
+extern bfd_boolean elf32_aarch64_size_stubs
+  (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
+   struct bfd_section * (*) (const char *, struct bfd_section *),
+   void (*) (void));
+extern bfd_boolean elf32_aarch64_build_stubs
+  (struct bfd_link_info *);
+
 
 /* TI COFF load page support.  */
 extern void bfd_ticoff_set_section_load_page
@@ -991,6 +1003,5 @@ struct coff_comdat_info
   long symbol;
 };
 
-extern struct coff_comdat_info *bfd_coff_get_comdat_section
+extern struct coff_comdat_info * bfd_coff_get_comdat_section
   (bfd *, struct bfd_section *);
-

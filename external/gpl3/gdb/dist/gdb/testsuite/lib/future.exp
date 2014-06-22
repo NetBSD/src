@@ -1,4 +1,4 @@
-# Copyright 2004-2013 Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,6 +82,36 @@ proc gdb_find_go {} {
 
 proc gdb_find_go_linker {} {
     return [find_go]
+}
+
+proc gdb_find_ldd {} {
+    global LDD_FOR_TARGET
+    if [info exists LDD_FOR_TARGET] {
+	set ldd $LDD_FOR_TARGET
+    } else {
+	set ldd "ldd"
+    }
+    return $ldd
+}
+
+proc gdb_find_objcopy {} {
+    global OBJCOPY_FOR_TARGET
+    if [info exists OBJCOPY_FOR_TARGET] {
+	set objcopy $OBJCOPY_FOR_TARGET
+    } else {
+	set objcopy [transform objcopy]
+    }
+    return $objcopy
+}
+
+proc gdb_find_readelf {} {
+    global READELF_FOR_TARGET
+    if [info exists READELF_FOR_TARGET] {
+	set readelf $READELF_FOR_TARGET
+    } else {
+	set readelf [transform readelf]
+    }
+    return $readelf
 }
 
 proc gdb_default_target_compile {source destfile type options} {
@@ -419,8 +449,8 @@ proc gdb_default_target_compile {source destfile type options} {
     }
 
     if {[is_remote host]} {
-	append add_flags " -o a.out"
-	remote_file host delete a.out
+	append add_flags " -o " [file tail $destfile]
+	remote_file host delete [file tail $destfile]
     } else {
 	if { $destfile != "" } {
 	    append add_flags " -o $destfile"
@@ -478,8 +508,8 @@ proc gdb_default_target_compile {source destfile type options} {
 
     set compiler_flags $opts
     if {[is_remote host]} {
-	remote_upload host a.out $destfile
-	remote_file host delete a.out
+	remote_upload host [file tail $destfile] $destfile
+	remote_file host delete [file tail $destfile]
     }
     set comp_output [prune_warnings [lindex $status 1]]
     regsub "^\[\r\n\]+" $comp_output "" comp_output

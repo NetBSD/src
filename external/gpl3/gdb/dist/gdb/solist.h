@@ -1,5 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,6 +88,11 @@ struct target_so_ops
        associated with a so_list entry.  */
     void (*free_so) (struct so_list *so);
 
+    /* Reset private data structures associated with SO.
+       This is called when SO is about to be reloaded.
+       It is also called before free_so when SO is about to be freed.  */
+    void (*clear_so) (struct so_list *so);
+
     /* Reset or free private data structures not associated with
        so_list entries.  */
     void (*clear_solib) (void);
@@ -124,8 +129,10 @@ struct target_so_ops
     /* Find and open shared library binary file.  */
     bfd *(*bfd_open) (char *pathname);
 
-    /* Extra hook for finding and opening a solib.
-       Convenience function for remote debuggers finding host libs.  */
+    /* Optional extra hook for finding and opening a solib.
+       If TEMP_PATHNAME is non-NULL: If the file is successfully opened a
+       pointer to a malloc'd and realpath'd copy of SONAME is stored there,
+       otherwise NULL is stored there.  */
     int (*find_and_open_solib) (char *soname,
         unsigned o_flags, char **temp_pathname);
 
@@ -148,6 +155,19 @@ struct target_so_ops
        core file (in particular, for readonly sections).  */
     int (*keep_data_in_core) (CORE_ADDR vaddr,
 			      unsigned long size);
+
+    /* Enable or disable optional solib event breakpoints as
+       appropriate.  This should be called whenever
+       stop_on_solib_events is changed.  This pointer can be
+       NULL, in which case no enabling or disabling is necessary
+       for this target.  */
+    void (*update_breakpoints) (void);
+
+    /* Target-specific processing of solib events that will be
+       performed before solib_add is called.  This pointer can be
+       NULL, in which case no specific preprocessing is necessary
+       for this target.  */
+    void (*handle_event) (void);
   };
 
 /* Free the memory associated with a (so_list *).  */

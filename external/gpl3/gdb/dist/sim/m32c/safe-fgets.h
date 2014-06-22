@@ -1,6 +1,6 @@
 /* safe-fgets.h --- interface to safe version of fgets.
 
-Copyright (C) 2005-2013 Free Software Foundation, Inc.
+Copyright (C) 2005-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.

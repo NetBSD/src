@@ -1,6 +1,6 @@
 /* IBM RS/6000 native-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
 #include "inferior.h"
 #include "target.h"
 #include "gdbcore.h"
-#include "xcoffsolib.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "libbfd.h"		/* For bfd_default_set_arch_mach (FIXME) */
@@ -34,6 +33,7 @@
 #include "inf-ptrace.h"
 #include "ppc-tdep.h"
 #include "rs6000-tdep.h"
+#include "rs6000-aix-tdep.h"
 #include "exec.h"
 #include "observer.h"
 #include "xcoffread.h"
@@ -41,7 +41,6 @@
 #include <sys/ptrace.h>
 #include <sys/reg.h>
 
-#include <sys/param.h>
 #include <sys/dir.h>
 #include <sys/user.h>
 #include <signal.h>
@@ -51,7 +50,7 @@
 
 #include <a.out.h>
 #include <sys/file.h>
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "gdb_bfd.h"
 #include <sys/core.h>
 #define __LDINFO_PTRACE32__	/* for __ld_info32 */
@@ -66,7 +65,7 @@
 /* In 32-bit compilation mode (which is the only mode from which ptrace()
    works on 4.3), __ld_info32 is #defined as equivalent to ld_info.  */
 
-#ifdef __ld_info32
+#if defined (__ld_info32) || defined (__ld_info64)
 # define ARCH3264
 #endif
 
@@ -78,61 +77,12 @@
 # define ARCH64() (register_size (target_gdbarch (), 0) == 8)
 #endif
 
-/* Union of 32-bit and 64-bit versions of ld_info.  */
-
-typedef union {
-#ifndef ARCH3264
-  struct ld_info l32;
-  struct ld_info l64;
-#else
-  struct __ld_info32 l32;
-  struct __ld_info64 l64;
-#endif
-} LdInfo;
-
-/* If compiling with 32-bit and 64-bit debugging capability (e.g. AIX 4.x),
-   declare and initialize a variable named VAR suitable for use as the arch64
-   parameter to the various LDI_*() macros.  */
-
-#ifndef ARCH3264
-# define ARCH64_DECL(var)
-#else
-# define ARCH64_DECL(var) int var = ARCH64 ()
-#endif
-
-/* Return LDI's FIELD for a 64-bit process if ARCH64 and for a 32-bit process
-   otherwise.  This technique only works for FIELDs with the same data type in
-   32-bit and 64-bit versions of ld_info.  */
-
-#ifndef ARCH3264
-# define LDI_FIELD(ldi, arch64, field) (ldi)->l32.ldinfo_##field
-#else
-# define LDI_FIELD(ldi, arch64, field) \
-  (arch64 ? (ldi)->l64.ldinfo_##field : (ldi)->l32.ldinfo_##field)
-#endif
-
-/* Return various LDI fields for a 64-bit process if ARCH64 and for a 32-bit
-   process otherwise.  */
-
-#define LDI_NEXT(ldi, arch64)		LDI_FIELD(ldi, arch64, next)
-#define LDI_FD(ldi, arch64)		LDI_FIELD(ldi, arch64, fd)
-#define LDI_FILENAME(ldi, arch64)	LDI_FIELD(ldi, arch64, filename)
-
-extern struct vmap *map_vmap (bfd * bf, bfd * arch);
-
-static void vmap_exec (void);
-
-static void vmap_ldinfo (LdInfo *);
-
-static struct vmap *add_vmap (LdInfo *);
-
-static int objfile_symbol_add (void *);
-
-static void vmap_symtab (struct vmap *);
-
 static void exec_one_dummy_insn (struct regcache *);
 
-extern void fixup_breakpoints (CORE_ADDR low, CORE_ADDR high, CORE_ADDR delta);
+static LONGEST rs6000_xfer_shared_libraries
+  (struct target_ops *ops, enum target_object object,
+   const char *annex, gdb_byte *readbuf, const gdb_byte *writebuf,
+   ULONGEST offset, LONGEST len);
 
 /* Given REGNO, a gdb register number, return the corresponding
    number suitable for use as a ptrace() parameter.  Return -1 if
@@ -181,7 +131,11 @@ regmap (struct gdbarch *gdbarch, int regno, int *isfloat)
 static int
 rs6000_ptrace32 (int req, int id, int *addr, int data, int *buf)
 {
+#ifdef HAVE_PTRACE64
+  int ret = ptrace64 (req, id, (uintptr_t) addr, data, buf);
+#else
   int ret = ptrace (req, id, (int *)addr, data, buf);
+#endif
 #if 0
   printf ("rs6000_ptrace32 (%d, %d, 0x%x, %08x, 0x%x) = 0x%x\n",
 	  req, id, (unsigned int)addr, data, (unsigned int)buf, ret);
@@ -195,7 +149,11 @@ static int
 rs6000_ptrace64 (int req, int id, long long addr, int data, void *buf)
 {
 #ifdef ARCH3264
+#  ifdef HAVE_PTRACE64
+  int ret = ptrace64 (req, id, addr, data, buf);
+#  else
   int ret = ptracex (req, id, addr, data, buf);
+#  endif
 #else
   int ret = 0;
 #endif
@@ -222,7 +180,7 @@ fetch_register (struct regcache *regcache, int regno)
 
   /* Floating-point registers.  */
   if (isfloat)
-    rs6000_ptrace32 (PT_READ_FPR, PIDGET (inferior_ptid), addr, nr, 0);
+    rs6000_ptrace32 (PT_READ_FPR, ptid_get_pid (inferior_ptid), addr, nr, 0);
 
   /* Bogus register number.  */
   else if (nr < 0)
@@ -238,14 +196,15 @@ fetch_register (struct regcache *regcache, int regno)
   else
     {
       if (!ARCH64 ())
-	*addr = rs6000_ptrace32 (PT_READ_GPR, PIDGET (inferior_ptid),
+	*addr = rs6000_ptrace32 (PT_READ_GPR, ptid_get_pid (inferior_ptid),
 				 (int *) nr, 0, 0);
       else
 	{
 	  /* PT_READ_GPR requires the buffer parameter to point to long long,
 	     even if the register is really only 32 bits.  */
 	  long long buf;
-	  rs6000_ptrace64 (PT_READ_GPR, PIDGET (inferior_ptid), nr, 0, &buf);
+	  rs6000_ptrace64 (PT_READ_GPR, ptid_get_pid (inferior_ptid),
+			   nr, 0, &buf);
 	  if (register_size (gdbarch, regno) == 8)
 	    memcpy (addr, &buf, 8);
 	  else
@@ -284,7 +243,7 @@ store_register (struct regcache *regcache, int regno)
 
   /* Floating-point registers.  */
   if (isfloat)
-    rs6000_ptrace32 (PT_WRITE_FPR, PIDGET (inferior_ptid), addr, nr, 0);
+    rs6000_ptrace32 (PT_WRITE_FPR, ptid_get_pid (inferior_ptid), addr, nr, 0);
 
   /* Bogus register number.  */
   else if (nr < 0)
@@ -310,7 +269,7 @@ store_register (struct regcache *regcache, int regno)
          the register's value is passed by value, but for 64-bit inferiors,
 	 the address of a buffer containing the value is passed.  */
       if (!ARCH64 ())
-	rs6000_ptrace32 (PT_WRITE_GPR, PIDGET (inferior_ptid),
+	rs6000_ptrace32 (PT_WRITE_GPR, ptid_get_pid (inferior_ptid),
 			 (int *) nr, *addr, 0);
       else
 	{
@@ -321,7 +280,8 @@ store_register (struct regcache *regcache, int regno)
 	    memcpy (&buf, addr, 8);
 	  else
 	    buf = *addr;
-	  rs6000_ptrace64 (PT_WRITE_GPR, PIDGET (inferior_ptid), nr, 0, &buf);
+	  rs6000_ptrace64 (PT_WRITE_GPR, ptid_get_pid (inferior_ptid),
+			   nr, 0, &buf);
 	}
     }
 
@@ -433,6 +393,10 @@ rs6000_xfer_partial (struct target_ops *ops, enum target_object object,
 
   switch (object)
     {
+    case TARGET_OBJECT_LIBRARIES_AIX:
+      return rs6000_xfer_shared_libraries (ops, object, annex,
+					   readbuf, writebuf,
+					   offset, len);
     case TARGET_OBJECT_MEMORY:
       {
 	union
@@ -604,9 +568,10 @@ exec_one_dummy_insn (struct regcache *regcache)
   prev_pc = regcache_read_pc (regcache);
   regcache_write_pc (regcache, DUMMY_INSN_ADDR);
   if (ARCH64 ())
-    ret = rs6000_ptrace64 (PT_CONTINUE, PIDGET (inferior_ptid), 1, 0, NULL);
+    ret = rs6000_ptrace64 (PT_CONTINUE, ptid_get_pid (inferior_ptid),
+			   1, 0, NULL);
   else
-    ret = rs6000_ptrace32 (PT_CONTINUE, PIDGET (inferior_ptid),
+    ret = rs6000_ptrace32 (PT_CONTINUE, ptid_get_pid (inferior_ptid),
 			   (int *) 1, 0, NULL);
 
   if (ret != 0)
@@ -614,439 +579,14 @@ exec_one_dummy_insn (struct regcache *regcache)
 
   do
     {
-      pid = waitpid (PIDGET (inferior_ptid), &status, 0);
+      pid = waitpid (ptid_get_pid (inferior_ptid), &status, 0);
     }
-  while (pid != PIDGET (inferior_ptid));
+  while (pid != ptid_get_pid (inferior_ptid));
 
   regcache_write_pc (regcache, prev_pc);
   deprecated_remove_raw_breakpoint (gdbarch, bp);
 }
 
-
-/* Copy information about text and data sections from LDI to VP for a 64-bit
-   process if ARCH64 and for a 32-bit process otherwise.  */
-
-static void
-vmap_secs (struct vmap *vp, LdInfo *ldi, int arch64)
-{
-  if (arch64)
-    {
-      vp->tstart = (CORE_ADDR) ldi->l64.ldinfo_textorg;
-      vp->tend = vp->tstart + ldi->l64.ldinfo_textsize;
-      vp->dstart = (CORE_ADDR) ldi->l64.ldinfo_dataorg;
-      vp->dend = vp->dstart + ldi->l64.ldinfo_datasize;
-    }
-  else
-    {
-      vp->tstart = (unsigned long) ldi->l32.ldinfo_textorg;
-      vp->tend = vp->tstart + ldi->l32.ldinfo_textsize;
-      vp->dstart = (unsigned long) ldi->l32.ldinfo_dataorg;
-      vp->dend = vp->dstart + ldi->l32.ldinfo_datasize;
-    }
-
-  /* The run time loader maps the file header in addition to the text
-     section and returns a pointer to the header in ldinfo_textorg.
-     Adjust the text start address to point to the real start address
-     of the text section.  */
-  vp->tstart += vp->toffs;
-}
-
-/* If the .bss section's VMA is set to an address located before
-   the end of the .data section, causing the two sections to overlap,
-   return the overlap in bytes.  Otherwise, return zero.
-
-   Motivation:
-
-   The GNU linker sometimes sets the start address of the .bss session
-   before the end of the .data section, making the 2 sections overlap.
-   The loader appears to handle this situation gracefully, by simply
-   loading the bss section right after the end of the .data section.
-
-   This means that the .data and the .bss sections are sometimes
-   no longer relocated by the same amount.  The problem is that
-   the ldinfo data does not contain any information regarding
-   the relocation of the .bss section, assuming that it would be
-   identical to the information provided for the .data section
-   (this is what would normally happen if the program was linked
-   correctly).
-
-   GDB therefore needs to detect those cases, and make the corresponding
-   adjustment to the .bss section offset computed from the ldinfo data
-   when necessary.  This function returns the adjustment amount  (or
-   zero when no adjustment is needed).  */
-
-static CORE_ADDR
-bss_data_overlap (struct objfile *objfile)
-{
-  struct obj_section *osect;
-  struct bfd_section *data = NULL;
-  struct bfd_section *bss = NULL;
-
-  /* First, find the .data and .bss sections.  */
-  ALL_OBJFILE_OSECTIONS (objfile, osect)
-    {
-      if (strcmp (bfd_section_name (objfile->obfd,
-				    osect->the_bfd_section),
-		  ".data") == 0)
-	data = osect->the_bfd_section;
-      else if (strcmp (bfd_section_name (objfile->obfd,
-					 osect->the_bfd_section),
-		       ".bss") == 0)
-	bss = osect->the_bfd_section;
-    }
-
-  /* If either section is not defined, there can be no overlap.  */
-  if (data == NULL || bss == NULL)
-    return 0;
-
-  /* Assume the problem only occurs with linkers that place the .bss
-     section after the .data section (the problem has only been
-     observed when using the GNU linker, and the default linker
-     script always places the .data and .bss sections in that order).  */
-  if (bfd_section_vma (objfile->obfd, bss)
-      < bfd_section_vma (objfile->obfd, data))
-    return 0;
-
-  if (bfd_section_vma (objfile->obfd, bss)
-      < bfd_section_vma (objfile->obfd, data) + bfd_get_section_size (data))
-    return ((bfd_section_vma (objfile->obfd, data)
-	     + bfd_get_section_size (data))
-	    - bfd_section_vma (objfile->obfd, bss));
-
-  return 0;
-}
-
-/* Handle symbol translation on vmapping.  */
-
-static void
-vmap_symtab (struct vmap *vp)
-{
-  struct objfile *objfile;
-  struct section_offsets *new_offsets;
-  int i;
-
-  objfile = vp->objfile;
-  if (objfile == NULL)
-    {
-      /* OK, it's not an objfile we opened ourselves.
-         Currently, that can only happen with the exec file, so
-         relocate the symbols for the symfile.  */
-      if (symfile_objfile == NULL)
-	return;
-      objfile = symfile_objfile;
-    }
-  else if (!vp->loaded)
-    /* If symbols are not yet loaded, offsets are not yet valid.  */
-    return;
-
-  new_offsets =
-    (struct section_offsets *)
-    alloca (SIZEOF_N_SECTION_OFFSETS (objfile->num_sections));
-
-  for (i = 0; i < objfile->num_sections; ++i)
-    new_offsets->offsets[i] = ANOFFSET (objfile->section_offsets, i);
-
-  /* The symbols in the object file are linked to the VMA of the section,
-     relocate them VMA relative.  */
-  new_offsets->offsets[SECT_OFF_TEXT (objfile)] = vp->tstart - vp->tvma;
-  new_offsets->offsets[SECT_OFF_DATA (objfile)] = vp->dstart - vp->dvma;
-  new_offsets->offsets[SECT_OFF_BSS (objfile)] = vp->dstart - vp->dvma;
-
-  /* Perform the same adjustment as the loader if the .data and
-     .bss sections overlap.  */
-  new_offsets->offsets[SECT_OFF_BSS (objfile)] += bss_data_overlap (objfile);
-
-  objfile_relocate (objfile, new_offsets);
-}
-
-/* Add symbols for an objfile.  */
-
-static int
-objfile_symbol_add (void *arg)
-{
-  struct objfile *obj = (struct objfile *) arg;
-
-  syms_from_objfile (obj, NULL, 0, 0, 0);
-  new_symfile_objfile (obj, 0);
-  return 1;
-}
-
-/* Add symbols for a vmap. Return zero upon error.  */
-
-int
-vmap_add_symbols (struct vmap *vp)
-{
-  if (catch_errors (objfile_symbol_add, vp->objfile,
-		    "Error while reading shared library symbols:\n",
-		    RETURN_MASK_ALL))
-    {
-      /* Note this is only done if symbol reading was successful.  */
-      vp->loaded = 1;
-      vmap_symtab (vp);
-      return 1;
-    }
-  return 0;
-}
-
-/* Add a new vmap entry based on ldinfo() information.
-
-   If ldi->ldinfo_fd is not valid (e.g. this struct ld_info is from a
-   core file), the caller should set it to -1, and we will open the file.
-
-   Return the vmap new entry.  */
-
-static struct vmap *
-add_vmap (LdInfo *ldi)
-{
-  bfd *abfd, *last;
-  char *mem, *filename;
-  struct objfile *obj;
-  struct vmap *vp;
-  int fd;
-  ARCH64_DECL (arch64);
-
-  /* This ldi structure was allocated using alloca() in 
-     xcoff_relocate_symtab().  Now we need to have persistent object 
-     and member names, so we should save them.  */
-
-  filename = LDI_FILENAME (ldi, arch64);
-  mem = filename + strlen (filename) + 1;
-  mem = xstrdup (mem);
-
-  fd = LDI_FD (ldi, arch64);
-  abfd = gdb_bfd_open (filename, gnutarget, fd < 0 ? -1 : fd);
-  if (!abfd)
-    {
-      warning (_("Could not open `%s' as an executable file: %s"),
-	       filename, bfd_errmsg (bfd_get_error ()));
-      return NULL;
-    }
-
-  /* Make sure we have an object file.  */
-
-  if (bfd_check_format (abfd, bfd_object))
-    vp = map_vmap (abfd, 0);
-
-  else if (bfd_check_format (abfd, bfd_archive))
-    {
-      last = gdb_bfd_openr_next_archived_file (abfd, NULL);
-      while (last != NULL)
-	{
-	  bfd *next;
-
-	  if (strcmp (mem, last->filename) == 0)
-	    break;
-
-	  next = gdb_bfd_openr_next_archived_file (abfd, last);
-	  gdb_bfd_unref (last);
-	  last = next;
-	}
-
-      if (!last)
-	{
-	  warning (_("\"%s\": member \"%s\" missing."), filename, mem);
-	  gdb_bfd_unref (abfd);
-	  return NULL;
-	}
-
-      if (!bfd_check_format (last, bfd_object))
-	{
-	  warning (_("\"%s\": member \"%s\" not in executable format: %s."),
-		   filename, mem, bfd_errmsg (bfd_get_error ()));
-	  gdb_bfd_unref (last);
-	  gdb_bfd_unref (abfd);
-	  return NULL;
-	}
-
-      vp = map_vmap (last, abfd);
-      /* map_vmap acquired a reference to LAST, so we can release
-	 ours.  */
-      gdb_bfd_unref (last);
-    }
-  else
-    {
-      warning (_("\"%s\": not in executable format: %s."),
-	       filename, bfd_errmsg (bfd_get_error ()));
-      gdb_bfd_unref (abfd);
-      return NULL;
-    }
-  obj = allocate_objfile (vp->bfd, 0);
-  vp->objfile = obj;
-
-  /* Always add symbols for the main objfile.  */
-  if (vp == vmap || auto_solib_add)
-    vmap_add_symbols (vp);
-
-  /* Anything needing a reference to ABFD has already acquired it, so
-     release our local reference.  */
-  gdb_bfd_unref (abfd);
-
-  return vp;
-}
-
-/* update VMAP info with ldinfo() information
-   Input is ptr to ldinfo() results.  */
-
-static void
-vmap_ldinfo (LdInfo *ldi)
-{
-  struct stat ii, vi;
-  struct vmap *vp;
-  int got_one, retried;
-  int got_exec_file = 0;
-  uint next;
-  int arch64 = ARCH64 ();
-
-  /* For each *ldi, see if we have a corresponding *vp.
-     If so, update the mapping, and symbol table.
-     If not, add an entry and symbol table.  */
-
-  do
-    {
-      char *name = LDI_FILENAME (ldi, arch64);
-      char *memb = name + strlen (name) + 1;
-      int fd = LDI_FD (ldi, arch64);
-
-      retried = 0;
-
-      if (fstat (fd, &ii) < 0)
-	{
-	  /* The kernel sets ld_info to -1, if the process is still using the
-	     object, and the object is removed.  Keep the symbol info for the
-	     removed object and issue a warning.  */
-	  warning (_("%s (fd=%d) has disappeared, keeping its symbols"),
-		   name, fd);
-	  continue;
-	}
-    retry:
-      for (got_one = 0, vp = vmap; vp; vp = vp->nxt)
-	{
-	  struct objfile *objfile;
-
-	  /* First try to find a `vp', which is the same as in ldinfo.
-	     If not the same, just continue and grep the next `vp'.  If same,
-	     relocate its tstart, tend, dstart, dend values.  If no such `vp'
-	     found, get out of this for loop, add this ldi entry as a new vmap
-	     (add_vmap) and come back, find its `vp' and so on...  */
-
-	  /* The filenames are not always sufficient to match on.  */
-
-	  if ((name[0] == '/' && strcmp (name, vp->name) != 0)
-	      || (memb[0] && strcmp (memb, vp->member) != 0))
-	    continue;
-
-	  /* See if we are referring to the same file.
-	     We have to check objfile->obfd, symfile.c:reread_symbols might
-	     have updated the obfd after a change.  */
-	  objfile = vp->objfile == NULL ? symfile_objfile : vp->objfile;
-	  if (objfile == NULL
-	      || objfile->obfd == NULL
-	      || bfd_stat (objfile->obfd, &vi) < 0)
-	    {
-	      warning (_("Unable to stat %s, keeping its symbols"), name);
-	      continue;
-	    }
-
-	  if (ii.st_dev != vi.st_dev || ii.st_ino != vi.st_ino)
-	    continue;
-
-	  if (!retried)
-	    close (fd);
-
-	  ++got_one;
-
-	  /* Found a corresponding VMAP.  Remap!  */
-
-	  vmap_secs (vp, ldi, arch64);
-
-	  /* The objfile is only NULL for the exec file.  */
-	  if (vp->objfile == NULL)
-	    got_exec_file = 1;
-
-	  /* relocate symbol table(s).  */
-	  vmap_symtab (vp);
-
-	  /* Announce new object files.  Doing this after symbol relocation
-	     makes aix-thread.c's job easier.  */
-	  if (vp->objfile)
-	    observer_notify_new_objfile (vp->objfile);
-
-	  /* There may be more, so we don't break out of the loop.  */
-	}
-
-      /* If there was no matching *vp, we must perforce create the
-	 sucker(s). */
-      if (!got_one && !retried)
-	{
-	  add_vmap (ldi);
-	  ++retried;
-	  goto retry;
-	}
-    }
-  while ((next = LDI_NEXT (ldi, arch64))
-	 && (ldi = (void *) (next + (char *) ldi)));
-
-  /* If we don't find the symfile_objfile anywhere in the ldinfo, it
-     is unlikely that the symbol file is relocated to the proper
-     address.  And we might have attached to a process which is
-     running a different copy of the same executable.  */
-  if (symfile_objfile != NULL && !got_exec_file)
-    {
-      warning (_("Symbol file %s\nis not mapped; discarding it.\n\
-If in fact that file has symbols which the mapped files listed by\n\
-\"info files\" lack, you can load symbols with the \"symbol-file\" or\n\
-\"add-symbol-file\" commands (note that you must take care of relocating\n\
-symbols to the proper address)."),
-	       symfile_objfile->name);
-      free_objfile (symfile_objfile);
-      gdb_assert (symfile_objfile == NULL);
-    }
-  breakpoint_re_set ();
-}
-
-/* As well as symbol tables, exec_sections need relocation.  After
-   the inferior process' termination, there will be a relocated symbol
-   table exist with no corresponding inferior process.  At that time, we
-   need to use `exec' bfd, rather than the inferior process's memory space
-   to look up symbols.
-
-   `exec_sections' need to be relocated only once, as long as the exec
-   file remains unchanged.  */
-
-static void
-vmap_exec (void)
-{
-  static bfd *execbfd;
-  int i;
-  struct target_section_table *table = target_get_section_table (&exec_ops);
-
-  if (execbfd == exec_bfd)
-    return;
-
-  execbfd = exec_bfd;
-
-  if (!vmap || !table->sections)
-    error (_("vmap_exec: vmap or table->sections == 0."));
-
-  for (i = 0; &table->sections[i] < table->sections_end; i++)
-    {
-      if (strcmp (".text", table->sections[i].the_bfd_section->name) == 0)
-	{
-	  table->sections[i].addr += vmap->tstart - vmap->tvma;
-	  table->sections[i].endaddr += vmap->tstart - vmap->tvma;
-	}
-      else if (strcmp (".data", table->sections[i].the_bfd_section->name) == 0)
-	{
-	  table->sections[i].addr += vmap->dstart - vmap->dvma;
-	  table->sections[i].endaddr += vmap->dstart - vmap->dvma;
-	}
-      else if (strcmp (".bss", table->sections[i].the_bfd_section->name) == 0)
-	{
-	  table->sections[i].addr += vmap->dstart - vmap->dvma;
-	  table->sections[i].endaddr += vmap->dstart - vmap->dvma;
-	}
-    }
-}
 
 /* Set the current architecture from the host running GDB.  Called when
    starting a child process.  */
@@ -1103,195 +643,75 @@ rs6000_create_inferior (struct target_ops * ops, char *exec_file,
 		    _("rs6000_create_inferior: failed "
 		      "to select architecture"));
 }
-
 
-/* xcoff_relocate_symtab -      hook for symbol table relocation.
-   
-   This is only applicable to live processes, and is a no-op when
-   debugging a core file.  */
 
-void
-xcoff_relocate_symtab (unsigned int pid)
+/* Shared Object support.  */
+
+/* Return the LdInfo data for the given process.  Raises an error
+   if the data could not be obtained.
+
+   The returned value must be deallocated after use.  */
+
+static gdb_byte *
+rs6000_ptrace_ldinfo (ptid_t ptid)
 {
-  int load_segs = 64; /* number of load segments */
-  int rc;
-  LdInfo *ldi = NULL;
-  int arch64 = ARCH64 ();
-  int ldisize = arch64 ? sizeof (ldi->l64) : sizeof (ldi->l32);
-  int size;
+  const int pid = ptid_get_pid (ptid);
+  int ldi_size = 1024;
+  gdb_byte *ldi = xmalloc (ldi_size);
+  int rc = -1;
 
-  /* Nothing to do if we are debugging a core file.  */
-  if (!target_has_execution)
-    return;
-
-  do
+  while (1)
     {
-      size = load_segs * ldisize;
-      ldi = (void *) xrealloc (ldi, size);
-
-#if 0
-      /* According to my humble theory, AIX has some timing problems and
-         when the user stack grows, kernel doesn't update stack info in time
-         and ptrace calls step on user stack.  That is why we sleep here a
-         little, and give kernel to update its internals.  */
-      usleep (36000);
-#endif
-
-      if (arch64)
-	rc = rs6000_ptrace64 (PT_LDINFO, pid, (unsigned long) ldi, size, NULL);
+      if (ARCH64 ())
+	rc = rs6000_ptrace64 (PT_LDINFO, pid, (unsigned long) ldi, ldi_size,
+			      NULL);
       else
-	rc = rs6000_ptrace32 (PT_LDINFO, pid, (int *) ldi, size, NULL);
+	rc = rs6000_ptrace32 (PT_LDINFO, pid, (int *) ldi, ldi_size, NULL);
 
-      if (rc == -1)
-        {
-          if (errno == ENOMEM)
-            load_segs *= 2;
-          else
-            perror_with_name (_("ptrace ldinfo"));
-        }
-      else
-	{
-          vmap_ldinfo (ldi);
-          vmap_exec (); /* relocate the exec and core sections as well.  */
-	}
-    } while (rc == -1);
-  if (ldi)
-    xfree (ldi);
+      if (rc != -1)
+	break; /* Success, we got the entire ld_info data.  */
+
+      if (errno != ENOMEM)
+	perror_with_name (_("ptrace ldinfo"));
+
+      /* ldi is not big enough.  Double it and try again.  */
+      ldi_size *= 2;
+      ldi = xrealloc (ldi, ldi_size);
+    }
+
+  return ldi;
 }
-
-/* Core file stuff.  */
 
-/* Relocate symtabs and read in shared library info, based on symbols
-   from the core file.  */
+/* Implement the to_xfer_partial target_ops method for
+   TARGET_OBJECT_LIBRARIES_AIX objects.  */
 
-void
-xcoff_relocate_core (struct target_ops *target)
+static LONGEST
+rs6000_xfer_shared_libraries
+  (struct target_ops *ops, enum target_object object,
+   const char *annex, gdb_byte *readbuf, const gdb_byte *writebuf,
+   ULONGEST offset, LONGEST len)
 {
-  struct bfd_section *ldinfo_sec;
-  int offset = 0;
-  LdInfo *ldi;
-  struct vmap *vp;
-  int arch64 = ARCH64 ();
+  gdb_byte *ldi_buf;
+  ULONGEST result;
+  struct cleanup *cleanup;
 
-  /* Size of a struct ld_info except for the variable-length filename.  */
-  int nonfilesz = (int)LDI_FILENAME ((LdInfo *)0, arch64);
+  /* This function assumes that it is being run with a live process.
+     Core files are handled via gdbarch.  */
+  gdb_assert (target_has_execution);
 
-  /* Allocated size of buffer.  */
-  int buffer_size = nonfilesz;
-  char *buffer = xmalloc (buffer_size);
-  struct cleanup *old = make_cleanup (free_current_contents, &buffer);
+  if (writebuf)
+    return -1;
 
-  ldinfo_sec = bfd_get_section_by_name (core_bfd, ".ldinfo");
-  if (ldinfo_sec == NULL)
-    {
-    bfd_err:
-      fprintf_filtered (gdb_stderr, "Couldn't get ldinfo from core file: %s\n",
-			bfd_errmsg (bfd_get_error ()));
-      do_cleanups (old);
-      return;
-    }
-  do
-    {
-      int i;
-      int names_found = 0;
+  ldi_buf = rs6000_ptrace_ldinfo (inferior_ptid);
+  gdb_assert (ldi_buf != NULL);
+  cleanup = make_cleanup (xfree, ldi_buf);
+  result = rs6000_aix_ld_info_to_xml (target_gdbarch (), ldi_buf,
+				      readbuf, offset, len, 1);
+  xfree (ldi_buf);
 
-      /* Read in everything but the name.  */
-      if (bfd_get_section_contents (core_bfd, ldinfo_sec, buffer,
-				    offset, nonfilesz) == 0)
-	goto bfd_err;
-
-      /* Now the name.  */
-      i = nonfilesz;
-      do
-	{
-	  if (i == buffer_size)
-	    {
-	      buffer_size *= 2;
-	      buffer = xrealloc (buffer, buffer_size);
-	    }
-	  if (bfd_get_section_contents (core_bfd, ldinfo_sec, &buffer[i],
-					offset + i, 1) == 0)
-	    goto bfd_err;
-	  if (buffer[i++] == '\0')
-	    ++names_found;
-	}
-      while (names_found < 2);
-
-      ldi = (LdInfo *) buffer;
-
-      /* Can't use a file descriptor from the core file; need to open it.  */
-      if (arch64)
-	ldi->l64.ldinfo_fd = -1;
-      else
-	ldi->l32.ldinfo_fd = -1;
-
-      /* The first ldinfo is for the exec file, allocated elsewhere.  */
-      if (offset == 0 && vmap != NULL)
-	vp = vmap;
-      else
-	vp = add_vmap (ldi);
-
-      /* Process next shared library upon error.  */
-      offset += LDI_NEXT (ldi, arch64);
-      if (vp == NULL)
-	continue;
-
-      vmap_secs (vp, ldi, arch64);
-
-      /* Unless this is the exec file,
-         add our sections to the section table for the core target.  */
-      if (vp != vmap)
-	{
-	  struct target_section *stp;
-
-	  stp = deprecated_core_resize_section_table (2);
-
-	  stp->bfd = vp->bfd;
-	  stp->the_bfd_section = bfd_get_section_by_name (stp->bfd, ".text");
-	  stp->addr = vp->tstart;
-	  stp->endaddr = vp->tend;
-	  stp++;
-
-	  stp->bfd = vp->bfd;
-	  stp->the_bfd_section = bfd_get_section_by_name (stp->bfd, ".data");
-	  stp->addr = vp->dstart;
-	  stp->endaddr = vp->dend;
-	}
-
-      vmap_symtab (vp);
-
-      if (vp != vmap && vp->objfile)
-	observer_notify_new_objfile (vp->objfile);
-    }
-  while (LDI_NEXT (ldi, arch64) != 0);
-  vmap_exec ();
-  breakpoint_re_set ();
-  do_cleanups (old);
+  do_cleanups (cleanup);
+  return result;
 }
-
-/* Under AIX, we have to pass the correct TOC pointer to a function
-   when calling functions in the inferior.
-   We try to find the relative toc offset of the objfile containing PC
-   and add the current load address of the data segment from the vmap.  */
-
-static CORE_ADDR
-find_toc_address (CORE_ADDR pc)
-{
-  struct vmap *vp;
-
-  for (vp = vmap; vp; vp = vp->nxt)
-    {
-      if (pc >= vp->tstart && pc < vp->tend)
-	{
-	  /* vp->objfile is only NULL for the exec file.  */
-	  return vp->dstart + xcoff_get_toc_offset (vp->objfile == NULL
-						    ? symfile_objfile
-						    : vp->objfile);
-	}
-    }
-  error (_("Unable to find TOC entry for pc %s."), hex_string (pc));
-}
-
 
 void _initialize_rs6000_nat (void);
 
@@ -1311,8 +731,4 @@ _initialize_rs6000_nat (void)
   t->to_wait = rs6000_wait;
 
   add_target (t);
-
-  /* Initialize hook in rs6000-tdep.c for determining the TOC address
-     when calling functions in the inferior.  */
-  rs6000_find_toc_address_hook = find_toc_address;
 }

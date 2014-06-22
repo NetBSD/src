@@ -1,6 +1,6 @@
 /* Machine independent variables that describe the core file under GDB.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@ struct regcache;
 
 #include "bfd.h"
 #include "exec.h"
+#include "target.h"
 
 /* Return the name of the executable file as a string.
    ERR nonzero means get error if there is none specified;
@@ -40,7 +41,13 @@ extern int have_core_file_p (void);
 
 /* Report a memory error with error().  */
 
-extern void memory_error (int status, CORE_ADDR memaddr);
+extern void memory_error (enum target_xfer_error status, CORE_ADDR memaddr);
+
+/* The string 'memory_error' would use as exception message.  Space
+   for the result is malloc'd, caller must free.  */
+
+extern char *memory_error_message (enum target_xfer_error err,
+				   struct gdbarch *gdbarch, CORE_ADDR memaddr);
 
 /* Like target_read_memory, but report an error if can't read.  */
 
@@ -49,6 +56,10 @@ extern void read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len);
 /* Like target_read_stack, but report an error if can't read.  */
 
 extern void read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len);
+
+/* Like target_read_code, but report an error if can't read.  */
+
+extern void read_code (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len);
 
 /* Read an integer from debugged memory, given address and number of
    bytes.  */
@@ -65,6 +76,19 @@ extern int safe_read_memory_integer (CORE_ADDR memaddr, int len,
 extern ULONGEST read_memory_unsigned_integer (CORE_ADDR memaddr,
 					      int len,
 					      enum bfd_endian byte_order);
+
+/* Read an integer from debugged code memory, given address,
+   number of bytes, and byte order for code.  */
+
+extern LONGEST read_code_integer (CORE_ADDR memaddr, int len,
+				  enum bfd_endian byte_order);
+
+/* Read an unsigned integer from debugged code memory, given address,
+   number of bytes, and byte order for code.  */
+
+extern ULONGEST read_code_unsigned_integer (CORE_ADDR memaddr,
+					    int len,
+					    enum bfd_endian byte_order);
 
 /* Read a null-terminated string from the debuggee's memory, given
    address, a buffer into which to place the string, and the maximum

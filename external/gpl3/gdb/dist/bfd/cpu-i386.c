@@ -1,6 +1,6 @@
 /* BFD support for the Intel 386 architecture.
    Copyright 1992, 1994, 1995, 1996, 1998, 2000, 2001, 2002, 2004, 2005,
-   2007, 2009, 2010, 2011
+   2007, 2009, 2010, 2011, 2013
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -119,6 +119,71 @@ bfd_arch_i386_long_nop_fill (bfd_size_type count,
   return bfd_arch_i386_fill (count, code, TRUE);
 }
 
+/* Fill the buffer with zero, or one-byte nop instructions if CODE is TRUE.  */
+
+static void *
+bfd_arch_i386_onebyte_nop_fill (bfd_size_type count,
+				bfd_boolean is_bigendian ATTRIBUTE_UNUSED,
+				bfd_boolean code)
+{
+  void *fill = bfd_malloc (count);
+  if (fill != NULL)
+    memset (fill, code ? 0x90 : 0, count);
+  return fill;
+}
+
+
+static const bfd_arch_info_type bfd_x64_32_nacl_arch =
+{
+  64, /* 64 bits in a word */
+  64, /* 64 bits in an address */
+  8,  /* 8 bits in a byte */
+  bfd_arch_i386,
+  bfd_mach_x64_32_nacl,
+  "i386",
+  "i386:x64-32:nacl",
+  3,
+  FALSE,
+  bfd_i386_compatible,
+  bfd_default_scan,
+  bfd_arch_i386_onebyte_nop_fill,
+  NULL
+};
+
+static const bfd_arch_info_type bfd_x86_64_nacl_arch =
+{
+  64, /* 64 bits in a word */
+  64, /* 64 bits in an address */
+  8,  /* 8 bits in a byte */
+  bfd_arch_i386,
+  bfd_mach_x86_64_nacl,
+  "i386",
+  "i386:x86-64:nacl",
+  3,
+  FALSE,
+  bfd_i386_compatible,
+  bfd_default_scan,
+  bfd_arch_i386_onebyte_nop_fill,
+  &bfd_x64_32_nacl_arch
+};
+
+const bfd_arch_info_type bfd_i386_nacl_arch =
+{
+  32,	/* 32 bits in a word */
+  32,	/* 32 bits in an address */
+  8,	/* 8 bits in a byte */
+  bfd_arch_i386,
+  bfd_mach_i386_i386_nacl,
+  "i386",
+  "i386:nacl",
+  3,
+  TRUE,
+  bfd_i386_compatible,
+  bfd_default_scan,
+  bfd_arch_i386_onebyte_nop_fill,
+  &bfd_x86_64_nacl_arch
+};
+
 static const bfd_arch_info_type bfd_x64_32_arch_intel_syntax =
 {
   64, /* 64 bits in a word */
@@ -133,7 +198,7 @@ static const bfd_arch_info_type bfd_x64_32_arch_intel_syntax =
   bfd_i386_compatible,
   bfd_default_scan,
   bfd_arch_i386_long_nop_fill,
-  0
+  &bfd_i386_nacl_arch
 };
 
 static const bfd_arch_info_type bfd_x86_64_arch_intel_syntax =

@@ -1,4 +1,4 @@
-# Copyright 2003-2013 Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,28 +16,15 @@
 # This is a test that verifies that GDB is able to "run" when the name
 # of the executable file contains a '!'.
 
-set testfile "args"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/bang!
+standard_testfile args.c
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+if {[prepare_for_testing $testfile.exp ${testfile}! $srcfile \
+	 {debug nowarnings}]} {
     untested bang.exp
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
 # Verify that we can run the program and that it terminates normally.
 
-gdb_run_cmd
-gdb_expect {
-    -re ".*$inferior_exited_re normally.*$gdb_prompt $" {
-        pass "run program"
-    }
-    timeout {
-	fail "run program (timeout)"
-    }
-}
+runto_main
+gdb_continue_to_end "" continue 1

@@ -1,6 +1,6 @@
 /* Intel 387 floating point stuff.
 
-   Copyright (C) 1988-2013 Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@
 #include "value.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "i386-tdep.h"
 #include "i387-tdep.h"
@@ -763,8 +763,21 @@ static int xsave_avxh_offset[] =
   576 + 15 * 16		/* Upper 128bit of ... %ymm15 (128 bits each).  */
 };
 
+static int xsave_mpx_offset[] =
+{
+  960 + 0 * 16,			/* bnd0r...bnd3r registers.  */
+  960 + 1 * 16,
+  960 + 2 * 16,
+  960 + 3 * 16,
+  1024 + 0 * 8,			/* bndcfg ... bndstatus.  */
+  1024 + 1 * 8,
+};
+
 #define XSAVE_AVXH_ADDR(tdep, xsave, regnum) \
   (xsave + xsave_avxh_offset[regnum - I387_YMM0H_REGNUM (tdep)])
+
+#define XSAVE_MPX_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_mpx_offset[regnum - I387_BND0R_REGNUM (tdep)])
 
 /* Similar to i387_supply_fxsave, but use XSAVE extended state.  */
 
@@ -783,7 +796,8 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       x87 = 0x1,
       sse = 0x2,
       avxh = 0x4,
-      all = x87 | sse | avxh
+      mpx  = 0x8,
+      all = x87 | sse | avxh | mpx
     } regclass;
 
   gdb_assert (regs != NULL);
@@ -795,6 +809,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
   else if (regnum >= I387_YMM0H_REGNUM (tdep)
 	   && regnum < I387_YMMENDH_REGNUM (tdep))
     regclass = avxh;
+  else if (regnum >= I387_BND0R_REGNUM (tdep)
+	   && regnum < I387_MPXEND_REGNUM (tdep))
+    regclass = mpx;
   else if (regnum >= I387_XMM0_REGNUM(tdep)
 	   && regnum < I387_MXCSR_REGNUM (tdep))
     regclass = sse;
@@ -814,7 +831,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       clear_bv = (~(*xstate_bv_p)) & tdep->xcr0;
     }
   else
-    clear_bv = I386_XSTATE_AVX_MASK;
+    clear_bv = I386_XSTATE_ALL_MASK;
 
   /* With the delayed xsave mechanism, in between the program
      starting, and the program accessing the vector registers for the
@@ -836,6 +853,14 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       else
 	regcache_raw_supply (regcache, regnum,
 			     XSAVE_AVXH_ADDR (tdep, regs, regnum));
+      return;
+
+    case mpx:
+      if ((clear_bv & I386_XSTATE_BNDREGS))
+	regcache_raw_supply (regcache, regnum, zero);
+      else
+	regcache_raw_supply (regcache, regnum,
+			     XSAVE_MPX_ADDR (tdep, regs, regnum));
       return;
 
     case sse:
@@ -872,6 +897,42 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 		   i++)
 		regcache_raw_supply (regcache, i,
 				     XSAVE_AVXH_ADDR (tdep, regs, i));
+	    }
+	}
+
+      /* Handle the MPX registers.  */
+      if ((tdep->xcr0 & I386_XSTATE_BNDREGS))
+	{
+	  if (clear_bv & I386_XSTATE_BNDREGS)
+	    {
+	      for (i = I387_BND0R_REGNUM (tdep);
+		   i < I387_BNDCFGU_REGNUM (tdep); i++)
+		regcache_raw_supply (regcache, i, zero);
+	    }
+	  else
+	    {
+	      for (i = I387_BND0R_REGNUM (tdep);
+		   i < I387_BNDCFGU_REGNUM (tdep); i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_MPX_ADDR (tdep, regs, i));
+	    }
+	}
+
+      /* Handle the MPX registers.  */
+      if ((tdep->xcr0 & I386_XSTATE_BNDCFG))
+	{
+	  if (clear_bv & I386_XSTATE_BNDCFG)
+	    {
+	      for (i = I387_BNDCFGU_REGNUM (tdep);
+		   i < I387_MPXEND_REGNUM (tdep); i++)
+		regcache_raw_supply (regcache, i, zero);
+	    }
+	  else
+	    {
+	      for (i = I387_BNDCFGU_REGNUM (tdep);
+		   i < I387_MPXEND_REGNUM (tdep); i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_MPX_ADDR (tdep, regs, i));
 	    }
 	}
 
@@ -989,7 +1050,8 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
       x87 = 0x2 | check,
       sse = 0x4 | check,
       avxh = 0x8 | check,
-      all = x87 | sse | avxh
+      mpx  = 0x10 | check,
+      all = x87 | sse | avxh | mpx
     } regclass;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -1000,7 +1062,10 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
   else if (regnum >= I387_YMM0H_REGNUM (tdep)
 	   && regnum < I387_YMMENDH_REGNUM (tdep))
     regclass = avxh;
-  else if (regnum >= I387_XMM0_REGNUM(tdep)
+  else if (regnum >= I387_BND0R_REGNUM (tdep)
+	   && regnum < I387_MPXEND_REGNUM (tdep))
+    regclass = mpx;
+  else if (regnum >= I387_XMM0_REGNUM (tdep)
 	   && regnum < I387_MXCSR_REGNUM (tdep))
     regclass = sse;
   else if (regnum >= I387_ST0_REGNUM (tdep)
@@ -1032,6 +1097,16 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
       /* Clear register set if its bit in xstat_bv is zero.  */
       if (clear_bv)
 	{
+	  if ((clear_bv & I386_XSTATE_BNDREGS))
+	    for (i = I387_BND0R_REGNUM (tdep);
+		 i < I387_BNDCFGU_REGNUM (tdep); i++)
+	      memset (XSAVE_MPX_ADDR (tdep, regs, i), 0, 16);
+
+	  if ((clear_bv & I386_XSTATE_BNDCFG))
+	    for (i = I387_BNDCFGU_REGNUM (tdep);
+		 i < I387_MPXEND_REGNUM (tdep); i++)
+	      memset (XSAVE_MPX_ADDR (tdep, regs, i), 0, 8);
+
 	  if ((clear_bv & I386_XSTATE_AVX))
 	    for (i = I387_YMM0H_REGNUM (tdep);
 		 i < I387_YMMENDH_REGNUM (tdep); i++)
@@ -1061,6 +1136,33 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		  {
 		    xstate_bv |= I386_XSTATE_AVX;
 		    memcpy (p, raw, 16);
+		  }
+	      }
+	  /* Check if any upper MPX registers are changed.  */
+	  if ((tdep->xcr0 & I386_XSTATE_BNDREGS))
+	    for (i = I387_BND0R_REGNUM (tdep);
+		 i < I387_BNDCFGU_REGNUM (tdep); i++)
+	      {
+		regcache_raw_collect (regcache, i, raw);
+		p = XSAVE_MPX_ADDR (tdep, regs, i);
+		if (memcmp (raw, p, 16))
+		  {
+		    xstate_bv |= I386_XSTATE_BNDREGS;
+		    memcpy (p, raw, 16);
+		  }
+	      }
+
+	  /* Check if any upper MPX registers are changed.  */
+	  if ((tdep->xcr0 & I386_XSTATE_BNDCFG))
+	    for (i = I387_BNDCFGU_REGNUM (tdep);
+		 i < I387_MPXEND_REGNUM (tdep); i++)
+	      {
+		regcache_raw_collect (regcache, i, raw);
+		p = XSAVE_MPX_ADDR (tdep, regs, i);
+		if (memcmp (raw, p, 8))
+		  {
+		    xstate_bv |= I386_XSTATE_BNDCFG;
+		    memcpy (p, raw, 8);
 		  }
 	      }
 
@@ -1113,6 +1215,25 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		}
 	      break;
 
+	    case mpx:
+	      if (regnum < I387_BNDCFGU_REGNUM (tdep))
+		{
+		  regcache_raw_collect (regcache, regnum, raw);
+		  p = XSAVE_MPX_ADDR (tdep, regs, regnum);
+		  if (memcmp (raw, p, 16))
+		    {
+		      xstate_bv |= I386_XSTATE_BNDREGS;
+		      memcpy (p, raw, 16);
+		    }
+		}
+	      else
+		{
+		  p = XSAVE_MPX_ADDR (tdep, regs, regnum);
+		  xstate_bv |= I386_XSTATE_BNDCFG;
+		  memcpy (p, raw, 8);
+		}
+	      break;
+
 	    case sse:
 	      /* This is an SSE register.  */
 	      p = FXSAVE_ADDR (tdep, regs, regnum);
@@ -1154,6 +1275,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	    case x87:
 	    case sse:
 	    case avxh:
+	    case mpx:
 	      /* Register REGNUM has been updated.  Return.  */
 	      return;
 	    }
