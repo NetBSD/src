@@ -24,6 +24,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
+#include "libiberty.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
@@ -449,6 +450,23 @@ xcoff_find_nearest_line (bfd *abfd,
                                             line_ptr);
 }
 
+static bfd_boolean
+xcoff_find_nearest_line_discriminator (bfd *abfd,
+                                      asection *section,
+                                      asymbol **symbols,
+                                      bfd_vma offset,
+                                      const char **filename_ptr,
+                                      const char **functionname_ptr,
+                                      unsigned int *line_ptr,
+                                      unsigned int *discriminator)
+{
+  *discriminator = 0;
+  return coff_find_nearest_line_with_names (abfd, xcoff_debug_sections,
+                                            section, symbols, offset,
+                                            filename_ptr, functionname_ptr,
+                                            line_ptr);
+}
+
 
 void
 _bfd_xcoff_swap_sym_in (bfd *abfd, void * ext1, void * in1)
@@ -713,7 +731,7 @@ end:
 
 reloc_howto_type xcoff_howto_table[] =
 {
-  /* Standard 32 bit relocation.  */
+  /* 0x00: Standard 32 bit relocation.  */
   HOWTO (R_POS,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -728,7 +746,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 32 bit relocation, but store negative value.  */
+  /* 0x01: 32 bit relocation, but store negative value.  */
   HOWTO (R_NEG,			/* type */
 	 0,			/* rightshift */
 	 -2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -743,7 +761,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 32 bit PC relative relocation.  */
+  /* 0x02: 32 bit PC relative relocation.  */
   HOWTO (R_REL,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -758,7 +776,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 16 bit TOC relative relocation.  */
+  /* 0x03: 16 bit TOC relative relocation.  */
   HOWTO (R_TOC,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -773,7 +791,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* I don't really know what this is.  */
+  /* 0x04: I don't really know what this is.  */
   HOWTO (R_RTB,			/* type */
 	 1,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -788,7 +806,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* External TOC relative symbol.  */
+  /* 0x05: External TOC relative symbol.  */
   HOWTO (R_GL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -803,7 +821,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Local TOC relative symbol.	 */
+  /* 0x06: Local TOC relative symbol.	 */
   HOWTO (R_TCL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -820,7 +838,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (7),
 
-  /* Non modifiable absolute branch.  */
+  /* 0x08: Non modifiable absolute branch.  */
   HOWTO (R_BA,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -837,7 +855,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (9),
 
-  /* Non modifiable relative branch.  */
+  /* 0x0a: Non modifiable relative branch.  */
   HOWTO (R_BR,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -854,7 +872,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (0xb),
 
-  /* Indirect load.  */
+  /* 0x0c: Indirect load.  */
   HOWTO (R_RL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -869,7 +887,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Load address.  */
+  /* 0x0d: Load address.  */
   HOWTO (R_RLA,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -886,7 +904,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (0xe),
 
-  /* Non-relocating reference.  Bitsize is 1 so that r_rsize is 0.  */
+  /* 0x0f: Non-relocating reference.  Bitsize is 1 so that r_rsize is 0.  */
   HOWTO (R_REF,			/* type */
 	 0,			/* rightshift */
 	 0,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -904,7 +922,7 @@ reloc_howto_type xcoff_howto_table[] =
   EMPTY_HOWTO (0x10),
   EMPTY_HOWTO (0x11),
 
-  /* TOC relative indirect load.  */
+  /* 0x12: TOC relative indirect load.  */
   HOWTO (R_TRL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -919,7 +937,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* TOC relative load address.  */
+  /* 0x13: TOC relative load address.  */
   HOWTO (R_TRLA,		/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -934,7 +952,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable relative branch.  */
+  /* 0x14: Modifiable relative branch.  */
   HOWTO (R_RRTBI,		 /* type */
 	 1,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -949,7 +967,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable absolute branch.  */
+  /* 0x15: Modifiable absolute branch.  */
   HOWTO (R_RRTBA,		 /* type */
 	 1,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -964,7 +982,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable call absolute indirect.  */
+  /* 0x16: Modifiable call absolute indirect.  */
   HOWTO (R_CAI,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -979,7 +997,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable call relative.  */
+  /* 0x17: Modifiable call relative.  */
   HOWTO (R_CREL,		/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -994,7 +1012,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch absolute.  */
+  /* 0x18: Modifiable branch absolute.  */
   HOWTO (R_RBA,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1009,7 +1027,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0x03fffffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch absolute.  */
+  /* 0x19: Modifiable branch absolute.  */
   HOWTO (R_RBAC,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1024,7 +1042,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch relative.  */
+  /* 0x1a: Modifiable branch relative.  */
   HOWTO (R_RBR,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1039,7 +1057,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0x03fffffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch absolute.  */
+  /* 0x1b: Modifiable branch absolute.  */
   HOWTO (R_RBRC,		/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1054,7 +1072,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 16 bit Non modifiable absolute branch.  */
+  /* 0x1c: 16 bit Non modifiable absolute branch.  */
   HOWTO (R_BA,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1069,22 +1087,22 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xfffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch relative.  */
+  /* 0x1d: Modifiable branch relative.  */
   HOWTO (R_RBR,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 TRUE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBR_16",		/* name */
 	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
+	 0xfffc,		/* src_mask */
+	 0xfffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch relative.  */
+  /* 0x1e: Modifiable branch relative.  */
   HOWTO (R_RBA,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1098,7 +1116,6 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
-
 };
 
 void
@@ -1146,6 +1163,11 @@ _bfd_xcoff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &xcoff_howto_table[8];
     case BFD_RELOC_PPC_TOC16:
       return &xcoff_howto_table[3];
+    case BFD_RELOC_16:
+      /* Note that this relocation is only internally used by gas.  */
+      return &xcoff_howto_table[0xc];
+    case BFD_RELOC_PPC_B16:
+      return &xcoff_howto_table[0x1d];
     case BFD_RELOC_32:
     case BFD_RELOC_CTOR:
       return &xcoff_howto_table[0];
@@ -2548,6 +2570,60 @@ _bfd_xcoff_sizeof_headers (bfd *abfd,
   else
     size += SMALL_AOUTSZ;
   size += abfd->section_count * SCNHSZ;
+
+  if (info->strip != strip_all)
+    {
+      /* There can be additional sections just for dealing with overflow in
+	 reloc and lineno counts. But the numbers of relocs and lineno aren't
+	 known when bfd_sizeof_headers is called, so we compute them by
+	 summing the numbers from input sections.  */
+      struct nbr_reloc_lineno
+      {
+	unsigned int reloc_count;
+	unsigned int lineno_count;
+      };
+      struct nbr_reloc_lineno *n_rl;
+      bfd *sub;
+      int max_index;
+      asection *s;
+
+      /* Although the number of sections is known, the maximum value of
+	 section->index isn't (because some sections may have been removed).
+	 Don't try to renumber sections, just compute the upper bound.  */
+      max_index = 0;
+      for (s = abfd->sections; s != NULL; s = s->next)
+	if (s->index > max_index)
+	  max_index = s->index;
+
+      /* Allocate the per section counters. It could be possible to use a
+	 preallocated array as the number of sections is limited on XCOFF,
+	 but this creates a maintainance issue.  */
+      n_rl = bfd_zmalloc ((max_index + 1) * sizeof (*n_rl));
+      if (n_rl == NULL)
+	return -1;
+
+      /* Sum.  */
+      for (sub = info->input_bfds; sub != NULL; sub = sub->link_next)
+	for (s = sub->sections; s != NULL; s = s->next)
+	  {
+	    struct nbr_reloc_lineno *e = &n_rl[s->output_section->index];
+	    e->reloc_count += s->reloc_count;
+	    e->lineno_count += s->lineno_count;
+	  }
+
+      /* Add the size of a section for each section with an overflow.  */
+      for (s = abfd->sections; s != NULL; s = s->next)
+	{
+	  struct nbr_reloc_lineno *e = &n_rl[s->index];
+
+	  if (e->reloc_count >= 0xffff
+	      || (e->lineno_count >= 0xffff && info->strip != strip_debugger))
+	    size += SCNHSZ;
+	}
+
+      free (n_rl);
+    }
+
   return size;
 }
 
@@ -3537,14 +3613,14 @@ xcoff_create_csect_from_smclas (bfd *abfd,
 
   /* .sv64 = x_smclas == 17
      This is an invalid csect for 32 bit apps.  */
-  static const char *names[19] =
-  {
-    ".pr", ".ro", ".db", ".tc", ".ua", ".rw", ".gl", ".xo",
-    ".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0",
-    ".td", NULL, ".sv3264"
-  };
-
-  if ((19 >= aux->x_csect.x_smclas)
+  static const char * const names[] =
+    {
+      ".pr", ".ro", ".db", ".tc", ".ua", ".rw", ".gl", ".xo", /* 0 - 7 */
+      ".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0", /* 8 - 15 */
+      ".td", NULL, ".sv3264", NULL, ".tl", ".ul", ".te"
+    };
+  
+  if ((aux->x_csect.x_smclas < ARRAY_SIZE (names))
       && (NULL != names[aux->x_csect.x_smclas]))
     {
       return_value = bfd_make_section_anyway
@@ -4118,7 +4194,7 @@ const bfd_target rs6000coff_vec =
     coff_bfd_is_target_special_symbol,
     coff_get_lineno,
     xcoff_find_nearest_line,
-    _bfd_generic_find_nearest_line_discriminator,
+    xcoff_find_nearest_line_discriminator,
     _bfd_generic_find_line,
     coff_find_inliner_info,
     coff_bfd_make_debug_symbol,

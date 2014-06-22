@@ -1,8 +1,652 @@
+2014-01-07  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Types In Python): Document new attribute Types.name.
+
+2013-12-30  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Types In Python): Clarify the documentation
+	of attribute gdb.Field.bitpos.
+
+2013-12-28  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Types In Python): Fix the documentation of
+	attribute "bitpos" in class gdb.Field for enum types.  Add
+	documentation for attribute "enumval" in that same class.
+
+2013-12-28  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Support Commands): Change @table into
+	@ftable.
+
+2013-12-23  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (Auto-loading): Move menu up.  Move discussion of
+	auto-loaded objfile scripts and .debug_gdb_scripts section to their
+	corresponding section in Extending GDB.
+	(Extending GDB): Move menu up.  New menu item "Auto-loading
+	extensions".
+	(Sequences): New menu item "Auto-loading sequences".
+	(Auto-loading sequences): New node.
+	(Python): Rename section from Scripting GDB to Extending GDB.
+	(Python Auto-loading): Update xref, refer to "Auto-loading extensions".
+	Move docs on ways to auto-load extensions to ...
+	(Auto-loading extensions): ... here.  New node.
+
+2013-12-23  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI): Add "GDB/MI Support Commands" entry
+	in menu.
+	(GDB/MI Variable Objects): Adjust reference to "-list-features"
+	command, now in a new node.
+	(GDB/MI Support Commands): New node, with its contents being
+	extracted from the "GDB/MI Miscellaneous Commands" node.
+	A small paragraph introducing the section is also added at
+	the start.
+	(GDB/MI Miscellaneous Commands): Delete the description of the
+	-info-gdb-mi-command, -list-features and -list-target-features
+	commands, now hosted in the "GDB/MI Support Commands" node.
+
+2013-12-12  Siva Chandra Reddy  <sivachandra@google.com>
+
+	PR python/16113
+	* gdb.texinfo (Values From Inferior): Add a note about using
+	gdb.Field objects as subscripts on gdb.Value objects.
+	(Types In Python): Add description about the new attribute
+	"parent_type" of gdb.Field objects.
+
+2013-12-12  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Add @cindex
+	entry for section docuumenting the -list-features GDB/MI command.
+
+2013-12-10  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Document the new
+	"exec-run-start-option" entry in the output of the "-list-features"
+	command.
+
+2013-12-04  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (i386): Fix yesterday's commit.
+
+2013-12-03  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Set Catchpoints): Add @kindex for each command
+	documented here.
+
+2013-12-03  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (@direntry): Add menu item for gdbserver.
+
+2013-12-03  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.texinfo (i386 Features): Add MPX feature registers.
+	(x86 Specific featuresx86 Architecture-specific Issues): Adds
+	a subsubsection for MPX and describes the display of the
+	boundary registers.
+
+2013-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Remove the
+	documentation of the "ada-exceptions" entry.
+
+2013-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Result Records): Fix the syntax of the
+	"^error" result record concerning the error message.  Document
+	the error code that may also be part of that result record.
+	(GDB/MI Miscellaneous Commands): Document the
+	"undefined-command-error-code" element in the output of
+	the "-list-features" GDB/MI command.
+
+2013-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Document
+	the new -info-gdb-mi-command GDB/MI command.  Document
+	the meaning of "-info-gdb-mi-command" in the output of
+	-list-features.
+
+2013-11-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Frames In Python) <gdb.FRAME_UNWIND_NULL_ID>:
+	Update comment.
+
+2013-11-24  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Caching Remote Data): Document new
+	"set/show stack-cache" option.
+
+2013-11-24  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Caching Target Data): Replace "ON" with "on".
+	(Maintenance Commands): Replace "ON" and "OFF" with "on" and
+	"off" respectively.
+
+2013-11-23  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Variable Objects): Add the description
+	of "displayhint" to the table about child results.
+
+2013-11-21  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Variable Objects): Add attribute
+	'dynamic' for the output of command -var-list-children.
+
+2013-11-21  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Caching Target Data): Remove "see" before
+	@pxref.
+
+2013-11-20  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Caching Target Data): Update doc for
+	per-address-space dcache.
+
+2013-11-20  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Data): Rename menu item.
+	(Caching Remote Data): Rename to ...
+	(Caching Target Data): ... it.  Update.
+
+2013-11-18  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Document the new
+	"language-option" entry in the output of the "-list-features"
+	command.
+
+2013-11-15  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Variables): Note gdb rules for ambiguous cases.
+	Add example.
+
+2013-11-14  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Breakpoints In Python): Replace "as" with "in".
+
+2013-11-14  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Show): Add xref anchor for "show language" command.
+	(Context management): Place current subsection text into its own
+	subsubsection.  Add new subsubsection describing the "--language"
+	command option.
+
+2013-11-13  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Delete
+	the documentation of "info-ada-exceptions" in the output
+	of the "-list-features" command.  Add the documentation
+	of the "ada-exception" entry instead.
+
+2013-11-12  Joel Brobecker  <brobecker@adacore.com>
+
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Fix the first
+	word of a couple of sentences to start with a capital letter.
+
+2013-11-12  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Ada): Add entry in menu for new "Ada Exceptions" node.
+	(Ada Exceptions): New node.
+	(GDB/MI): Add entry in menu for new "GDB/MI Ada Exceptions
+	Commands" node.
+	(GDB/MI Ada Exceptions Commands): New node.
+	(GDB/MI Miscellaneous Commands): Document new "info-ada-exceptions"
+	field in the output of the "-list-features" command.
+	* NEWS: Add entry for the new "info exceptions" CLI command,
+	and for the new "-info-ada-exceptions" GDB/MI command.
+
+2013-11-11  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.texinfo (Symbol Tables In Python): Add linetable method entry.
+	(Line Tables In Python): New node.
+
+2013-11-08  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Debugging Output): Update text for
+	"set debug dwarf2-read".
+
+2013-11-08  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Debugging Output): Update text for
+	"set debug symtab-create".
+
+2013-11-07  Phil Muldoon  <pmuldoon@redhat.com>
+
+        * gdb.texinfo (Commands In Python): Document COMPLETE_EXPRESSION
+        constant.
+
+2013-11-07  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.texinfo (Breakpoints In Python): Document temporary
+	option in breakpoint constructor, and add documentation to the
+	temporary attribute.
+
+2013-11-07  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Variable Objects): Update doc about the
+	output of "-var-info-expression".
+
+2013-11-06  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Starting) <set/show startup-with-shell>: Mention
+	non-interactive mode.
+	(Environment) <shell startup files warning>: Mention
+	non-interactive mode.  Mention .zshenv for Z shell, and talk about
+	BASH_ENV instead of .bashrc for BASH.
+
+2013-10-29  Nicolas Blanc  <nicolas.blanc@intel.com>
+
+	* gdb.texinfo (Commands to Specify Files): Add description
+	of the remove-symbol-file command.
+	* observer.texi: New free_objfile event
+
+2013-10-24  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Starting): Document set/show startup-with-shell.
+
+2013-10-11  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Shared Library GDB/MI Catchpoint Commands):
+	New subsection inside which the "-catch-load" and "-catch-unload"
+	commands documentation is now placed.
+	(Ada Exception GDB/MI Catchpoint Commands): New subsection
+	documenting the "-catch-assert" and "-catch-exception" new
+	GDB/MI commands.
+
+2013-10-10  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Connecting): Remove unnecessary @w{}.
+
+2013-10-10  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Connecting): Replace "set remotebaud" by "set
+	serial baud".
+	(Remote Configuration): Replace "set remotebaud" by "set serial
+	baud".  Replace "show remotebaud" by "show serial baud".
+
+2013-10-07  Pedro Alves  <palves@redhat.com>
+
+	PR breakpoints/11568
+	* gdb.texinfo (Thread-Specific Breakpoints): Mention what happens
+	when the thread is removed from the thread list.
+
+2013-10-06  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.texinfo (Convenience Variables): Document $_exitsignal.
+	Update entry for $_exitcode.
+
+2013-10-04  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Program Execution): Document "-exec-run"'s
+	new "--start" option.
+
+2013-10-02  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Registers): Expand description of saved registers
+	in frames.  Explain <not saved>.
+
+2013-09-25  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Debugging Output): Document set/show debug symfile.
+
+2013-09-16  Stan Shebs  <stan@codesourcery.com>
+
+	Remove the internals manual gdbint.texinfo.
+	* Makefile.in (INFO_DEPS): Remove gdbint.info.
+	(PDFFILES): Remove gdbint.pdf.
+	(HTMLFILES): Remove gdbint/index.html.
+	(HTMLFILES_INSTALL): Remove gdbint.
+	(GDBINT_DOC_FILES): Remove.
+	(dvi): Remove gdbint.dvi.
+	(ps): Remove gdbint.ps.
+	* gdbint.texinfo: Remove file.
+	* gdb.texinfo (Maintenance Commands): Remove reference to gdbint.
+
+2013-09-16  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.texinfo (Convenience Functions): Mention new convenience
+	function $_isvoid.
+
+2013-09-13  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.texinfo (Decimal Floating Point format): Mention S/390.
+	(Standard Target Features): Add new node to menu.
+	(S/390 and System z Features): New node.
+
+2013-09-13  Sanimir Agovic  <sanimir.agovic@intel.com>
+
+	* gdb.texinfo (GDB/MI Miscellaneous Commands): Use
+	-list-target-features in the example.
+
+2013-09-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (MiniDebugInfo): Prepare file debug and use it to create
+	mini_debuginfo.  Strip binary before adding mini_debuginfo to it.
+
+2013-09-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Sync documentation with gdb.base/gnu-debugdata.exp.
+	* gdb.texinfo (MiniDebugInfo): Add comment and "D" in the example.
+
+2013-09-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (MiniDebugInfo): Fix two trailing dots.
+
+2013-08-27  Pedro Alves  <pedro@codesourcery.com>
+	    Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Stack Manipulation) <-stack-list-locals>:
+	Document new --skip-unavailable option.
+	<-stack-list-variables>: Document new --skip-unavailable option.
+
+2013-08-26  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Maintenance Commands): "maint print objfiles" now takes
+	an optional regexp.
+
+2013-08-13  Tom Tromey  <tromey@redhat.com>
+
+	* gdbint.texinfo (Testsuite): Use @table, not @itemize.
+	Document GDB_PARALLEL and GDB_INOTIFY.
+
+2013-08-09  Stan Shebs  <stan@codesourcery.com>
+
+	* LRS: Remove file, describes a long-abandoned live-range
+	splitting extension to stabs.
+
+2013-07-25  Andrew Burgess  <aburgess@broadcom.com>
+
+	* gdb.texinfo (Output Formats): Mention the new 'z' formatter.
+
+2013-07-17  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Print Settings): Document "print raw frame-arguments".
+
+2013-07-02  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Target Commands): Don't mention "target nrom".
+
+2013-06-28  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.in (version.subst): Use version.in, not
+	common/version.in.
+	* gdbint.texinfo (Versions and Branches, Releasing GDB):
+	Likewise.
+
+2013-06-27  Pedro Alves  <palves@redhat.com>
+
+	* gdbint.texinfo (Algorithms) <Stepping over runtime loader
+	dynamic symbol resolution code>: New section, based on infrun.c
+	comment.
+
+2013-06-26  Tom Tromey  <tromey@redhat.com>
+
+	* gdbint.texinfo (Versions and Branches): Use common/version.in.
+	Update.
+	(Releasing GDB): Likewise.
+
+2013-06-26  Pedro Alves  <pedro@codesourcery.com>
+	    Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Tracepoint Commands): Document
+	-trace-frame-collected.
+
+2013-06-26  Pedro Alves  <pedro@codesourcery.com>
+
+	* gdb.texinfo (Traceframe Info Format): Document tvar element
+	and its attributes.
+
+2013-06-25  Yao Qi  <yao@codesourcery.com>
+
+	* gdbint.texinfo (Testsuite): Document 'gdb,predefined_tsv'.
+
+2013-06-24  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.in (POD2MAN1, POD2MAN5): Use version.subst.
+	(GDBvn.texi): Use version.subst.
+	(version.subst): New target.
+	(mostlyclean): Remove version.subst.
+
+2013-06-20  Pedro Alves  <pedro@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Data Manipulation)
+	<-data-list-register-values>: Document the --skip-unavailable
+	option.
+
+2013-06-07  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Symbols): Add kindex and cindex for
+	'maint print msymbols'.
+
+2013-06-05  Simon Marchi  <simon.marchi@ericsson.com>  (tiny change)
+
+	* gdb.texinfo (Miscellaneous gdb/mi Commands): Fix -add-inferior
+	response field name (thread-group to inferior).
+
+2013-06-04 Gary Benson  <gbenson@redhat.com>
+
+	* gdb.texinfo (General Query Packets/qSupported): Added
+	"qXfer:libraries-svr4:read" and "augmented-libraries-svr4-read".
+	to the table of currently defined stub features.
+	Added a more detailed entry for "augmented-libraries-svr4-read".
+	(General Query Packets/qXfer:libraries-svr4:read): Documented
+	the augmented form of this packet.
+
+2013-05-23  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (System-wide Configuration Scripts): Renames
+	"Installed System-wide Configuration Scripts". Add associated
+	@menu block.
+
+2013-05-23  Yao Qi  <yao@codesourcery.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Packets): Document 'vCont;r'.
+	(Continuing and Stepping): Document target-assisted range
+	stepping, and the 'set range-stepping' and 'show range-stepping'
+	commands.
+
+2013-05-23  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Installed System-wide Configuration Scripts):
+	Add subsection describing the scripts now available under
+	the data-dir's system-gdbbinit subdirectory.
+	* NEWS: Add entry announcing the availability of system-wide
+	configuration scripts for ElinOS and Wind River Linux.
+
+2013-05-21  Hui Zhu  <hui@codesourcery.com>
+
+	* gdb.texinfo (GDB/MI Breakpoint Commands): Describe the
+	"-dprintf-insert" command.
+
+2013-05-17  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Maintenance Commands): Update doc for
+	"maint check-psymtabs".  Add doc for "maint check-symtabs",
+	"maint expand-symtabs".
+
+2013-05-15  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Process Record and Replay): Document the
+	"record goto" command and its sub-commands.
+
+2013-05-10 Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.texinfo (Backtrace): Add "no-filter" argument.
+	(Python API): Add Frame	Filters API, Frame Wrapper API,
+	Writing a Frame Filter/Wrapper,	Managing Management of Frame
+	Filters chapter entries.
+	(Frame Filters API): New Node.
+	(Frame Wrapper API): New Node.
+	(Writing a Frame Filter): New Node.
+	(Managing Frame Filters): New Node.
+	(Progspaces In Python): Add note about frame_filters attribute.
+	(Objfiles in Python): Ditto.
+	(GDB/MI Stack Manipulation): Add -enable-frame-filters command,
+	@anchors and --no-frame-filters option to -stack-list-variables,
+	-stack-list-frames, -stack-list-locals and -stack-list-arguments
+	commands.
+
+2013-05-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbint.texinfo (Native Debugging): Add "AIX Shared Library
+	Support" subsection documenting the XML format used to transfer
+	shared library info on AIX.
+
+2013-05-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Debugging Output): Add documentation of
+	"set debug aix-solib" and "show debug aix-solib" commands.
+
+2013-05-06  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.texinfo (Nios II): New section.
+	(Nios II Features): New section.
+
+2013-05-06  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbint.texinfo (Algorithms): Remove entries documenting
+	DEPRECATED_IBM6000_TARGET, SOLIB_ADD, and
+	SOLIB_CREATE_INFERIOR_HOOK.
+
+2013-04-29  Tom Tromey  <tromey@redhat.com>
+
+	PR python/14204:
+	* gdb.texinfo (Python API): Fix menu entry.
+	(Blocks In Python): Fix subsubsection text.  Rewrite intro.
+	Define global and static block.  Add example.  Clarify
+	block relationship for inline functions.
+
+2013-04-29  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Python API): Mention Python help and keyword
+	arguments.  Move pagination text to Basic Python.
+	(Basic Python): Put pagination text here.  Document
+	close-on-exec, SIGCHLD, and SIGINT.
+
+2013-04-19  Pedro Alves  <palves@redhat.com>
+
+	* gdbint.texinfo (Misc Guidelines) <Compiler Warnings>: Write
+	"signedness" instead of "signness".
+
+2013-04-19  Pedro Alves  <palves@redhat.com>
+
+	* gdbint.texinfo (Misc Guidelines) <Compiler Warnings>: Replace
+	-Wno-pointer-sign text with text on -Wpointer-sign.
+
+2013-04-16  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Set Catchpoints): Mention earliest version of
+	GCC that has the SDT probe points.
+
+2013-04-15  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Set Catchpoints): Document regexp syntax for
+	exception catchpoints.
+
+2013-04-15  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Set Catchpoints): Document $_exception.
+	(Convenience Vars): Mention $_exception.
+
+2013-04-15  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Set Catchpoints): Reorganize exception
+	catchpoints.  Document "catch rethrow".
+	(Debugging C Plus Plus): Mention "catch rethrow".
+
+2013-04-15  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Set Catchpoints): Remove obsolete text.
+
 2013-04-12  Jan Kratochvil  <jan.kratochvil@redhat.com>
 	    Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Auto-loading safe path): Add quick -iex using command
 	line below the sample output.
+
+2013-04-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Mode Options): Document '-configuration'.
+	(Help): Document "show configuration".
+	(Bug Reporting): Add requirements to include the configuration
+	details in bug reports.
+
+2013-04-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* Makefile.in (MAN1S): Add gcore.1.
+	Remove "Host, target, and site specific Makefile fragments" comment.
+	(@host_makefile_frag@, HAVE_NATIVE_GCORE_TARGET): New.
+	(install-man1, uninstall-man1): Conditionalize gcore.1.
+	(gcore.1): New.
+	* gdb.texinfo (Man Pages): Add gcore man.
+	(gcore man): New node.
+
+2013-04-10  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Process Record and Replay): Document that "set
+	record full insn-number-max", "set record
+	instruction-history-size" and "set record
+	function-call-history-size" accept "unlimited".
+	(Backtrace): Document that "set backtrace limit" accepts
+	"unlimited".
+	(List): Document that "set listsize" accepts "unlimited".
+	(Print Settings)" Document that "set print max-symbolic-offset",
+	"set print elements" and "set print repeats" accept "unlimited".
+	(Starting and Stopping Trace Experiments): Document that "set
+	trace-buffer-size" accepts "unlimited".
+	(Remote Configuration): Document that "set tcp connect-timeout"
+	accepts "unlimited".
+	(Command History): Document that "set history size" accepts
+	"unlimited".
+	(Screen Size): Document that "set height" and "set width" accepts
+	"unlimited".  Adjust "set pagination"'s description to suggest
+	"set height unlimited" instead of "set height 0".
+
+2013-04-10  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Trace Files): Add "target ctf".
+
+2013-04-06  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* Makefile.in (POD2MAN1, POD2MAN5): Replace $(VERSION) by ../version.in.
+
+	* Makefile.in (install-man1, install-man5, uninstall-man1)
+	(uninstall-man5): Replace $(MANS) by $(MAN1S) and $(MAN5S) respectively.
+
+	* Makefile.in (gdb.1, gdbserver.1, gdbinit.5): Use $(srcdir).
+
+2013-04-06  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (gdbserver man): Rename tty to comm.  Swap --attach
+	parameters order.  Remove "On some targets" for --attach.  Document the
+	--multi parameter and extended-remote command.  Document all the
+	options.
+
+2013-04-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (gdb man): Mention option -p.  Include Fortran to
+	the list of supported languages.
+
+2013-04-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Convert man pages to texinfo, new gdbinit.5 texinfo page.
+	* Makefile.in (mandir, man1dir, man5dir, SYSTEM_GDBINIT, MANCONF,
+	(TEXI2POD, POD2MAN1, POD2MAN5, MAN1S, MAN5S, MANS, man): New.
+	(diststuff): Add man.
+	(install-man, install-man1, install-man5, uninstall-man, uninstall-man1)
+	(uninstall-man5): New.
+	(STAGESTUFF): Add *.1 and *.5.
+	(GDBvn.texi): Add SYSTEM_GDBINIT.
+	(gdb.1, gdbserver.1, gdbinit.5): New.
+	(maintainer-clean realclean): Add $(MANS).
+	(install): Add install-man.
+	(uninstall): Add uninstall-man.
+	* gdb.texinfo (@include gdb-cfg.texi): Wrap it by @c man begin INCLUDE.
+	(@copying): Wrap it by @c man begin COPYRIGHT.
+	(Top): Add Man Pages.
+	(Man Pages, gdb man, gdbserver man, gdbinit man): New.
 
 2013-04-02  Pedro Alves  <palves@redhat.com>
 
@@ -17,10 +661,41 @@
 
 2013-03-28  Pedro Alves  <palves@redhat.com>
 
+	* gdb.texinfo (Remote Configuration) <set remote @var{name}-packet
+	table>: Add entry for "trace-status".
+
+2013-03-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Maintenance Commands): Use @enumerate, not "@table
+	@bullet", which is invalid (makeinfo 5.1 barfs).
+
+2013-03-28  Pedro Alves  <palves@redhat.com>
+
 	PR gdb/15294
 
 	* gdb.texinfo (List) <set listsize>: Adjust to document that
 	listsize 0 means no limit, and remove mention of -1.
+
+2013-03-22  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Embedded Processors): Remove menu item
+	"OpenRISC 1000".
+	(OpenRISC 1000): Remove.
+
+2013-03-21  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Maintenance Commands): Add docs for
+	"mt set per-command {space,time,symtab} {on,off}".
+
+2013-03-14  Hui Zhu  <hui@codesourcery.com>
+	    Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Trace Files): Add "tsave -ctf".
+
+2013-03-13  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.texinfo (Maintenance Commands): Add missing ')' for
+	"maint agent" reference to Dynamic printf.
 
 2013-03-11  Eli Zaretskii  <eliz@gnu.org>
 
@@ -9712,7 +10387,7 @@ Wed Feb 26 18:04:40 1992  K. Richard Pixley  (rich@cygnus.com)
 
 	* Makefile.in, configure.in: removed traces of namesubdir,
 	  -subdirs, $(subdir), $(unsubdir), some rcs triggers.  Forced
-	  copyrights to '92, changed some from Cygnus to FSF.
+	  copyrights to '92, '13, changed some from Cygnus to FSF.
 
 Fri Dec 13 09:47:31 1991  John Gilmore  (gnu at cygnus.com)
 

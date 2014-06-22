@@ -1,5 +1,5 @@
 /* Cell SPU GNU/Linux support -- shared library handling.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -21,9 +21,9 @@
 #include "defs.h"
 #include "solib-spu.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "arch-utils.h"
 #include "bfd.h"
 #include "symtab.h"
@@ -209,7 +209,7 @@ spu_current_sos (void)
 	 yet.  Skip such entries; we'll be back for them later.  */
       xsnprintf (annex, sizeof annex, "%d/object-id", fd);
       len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
-			 id, 0, sizeof id);
+			 (gdb_byte *) id, 0, sizeof id);
       if (len <= 0 || len >= sizeof id)
 	continue;
       id[len] = 0;

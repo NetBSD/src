@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,13 +31,9 @@
    or we didn't fail.  */
 SET (UNWIND_NO_REASON, "no reason")
 
-/* The previous frame's analyzer returns an invalid result
-   from this_id.
-
-   FIXME drow/2006-08-16: This is how GDB used to indicate end of
-   stack.  We should migrate to a model where frames always have a
-   valid ID, and this becomes not just an error but an internal
-   error.  But that's a project for another day.  */
+/* This is no longer used anywhere, but it's kept because it's exposed
+   to Python.  This is how GDB used to indicate end of stack.  We've
+   now migrated to a model where frames always have a valid ID.  */
 SET (UNWIND_NULL_ID, "unwinder did not report frame ID")
 
 /* This frame is the outermost.  */

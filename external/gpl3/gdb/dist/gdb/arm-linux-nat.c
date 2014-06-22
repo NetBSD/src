@@ -1,5 +1,5 @@
 /* GNU/Linux on ARM native support.
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "regcache.h"
 #include "target.h"
 #include "linux-nat.h"
@@ -80,9 +80,9 @@ extern int arm_apcs_32;
 static int
 get_thread_id (ptid_t ptid)
 {
-  int tid = TIDGET (ptid);
+  int tid = ptid_get_lwp (ptid);
   if (0 == tid)
-    tid = PIDGET (ptid);
+    tid = ptid_get_pid (ptid);
   return tid;
 }
 
@@ -671,7 +671,7 @@ arm_linux_read_description (struct target_ops *ops)
 
       /* Now make sure that the kernel supports reading these
 	 registers.  Support was added in 2.6.30.  */
-      pid = GET_LWP (inferior_ptid);
+      pid = ptid_get_lwp (inferior_ptid);
       errno = 0;
       buf = alloca (VFP_REGS_SIZE);
       if (ptrace (PTRACE_GETVFPREGS, pid, 0, buf) < 0
@@ -1047,7 +1047,7 @@ arm_linux_insert_hw_breakpoint (struct gdbarch *gdbarch,
 
   arm_linux_hw_breakpoint_initialize (gdbarch, bp_tgt, &p);
   ALL_LWPS (lp)
-    arm_linux_insert_hw_breakpoint1 (&p, TIDGET (lp->ptid), 0);
+    arm_linux_insert_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 0);
 
   return 0;
 }
@@ -1065,7 +1065,7 @@ arm_linux_remove_hw_breakpoint (struct gdbarch *gdbarch,
 
   arm_linux_hw_breakpoint_initialize (gdbarch, bp_tgt, &p);
   ALL_LWPS (lp)
-    arm_linux_remove_hw_breakpoint1 (&p, TIDGET (lp->ptid), 0);
+    arm_linux_remove_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 0);
 
   return 0;
 }
@@ -1116,7 +1116,7 @@ arm_linux_insert_watchpoint (CORE_ADDR addr, int len, int rw,
 
   arm_linux_hw_watchpoint_initialize (addr, len, rw, &p);
   ALL_LWPS (lp)
-    arm_linux_insert_hw_breakpoint1 (&p, TIDGET (lp->ptid), 1);
+    arm_linux_insert_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 1);
 
   return 0;
 }
@@ -1134,7 +1134,7 @@ arm_linux_remove_watchpoint (CORE_ADDR addr, int len, int rw,
 
   arm_linux_hw_watchpoint_initialize (addr, len, rw, &p);
   ALL_LWPS (lp)
-    arm_linux_remove_hw_breakpoint1 (&p, TIDGET (lp->ptid), 1);
+    arm_linux_remove_hw_breakpoint1 (&p, ptid_get_lwp (lp->ptid), 1);
 
   return 0;
 }
@@ -1190,7 +1190,7 @@ arm_linux_watchpoint_addr_within_range (struct target_ops *target,
 static void
 arm_linux_new_thread (struct lwp_info *lp)
 {
-  int tid = TIDGET (lp->ptid);
+  int tid = ptid_get_lwp (lp->ptid);
   const struct arm_linux_hwbp_cap *info = arm_linux_get_hwbp_cap ();
 
   if (info != NULL)
@@ -1225,7 +1225,7 @@ arm_linux_thread_exit (struct thread_info *tp, int silent)
   if (info != NULL)
     {
       int i;
-      int tid = TIDGET (tp->ptid);
+      int tid = ptid_get_lwp (tp->ptid);
       struct arm_linux_thread_points *t = NULL, *p;
 
       for (i = 0; 

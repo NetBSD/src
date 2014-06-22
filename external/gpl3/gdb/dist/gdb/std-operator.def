@@ -1,6 +1,6 @@
 /* Standard language operator definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -316,3 +316,6 @@ OP (OP_TYPEOF)
    evaluated solely for its type.  This is similar to typeof, but has
    slight different semantics.  */
 OP (OP_DECLTYPE)
+
+/* The typeid operator.  This has one expression argument.  */
+OP (OP_TYPEID)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,9 @@
    it is process wide.
    This function returns the currently stopped thread in non-stop mode and
    Py_None otherwise.  In each case it returns a borrowed reference.  */
+
+static PyObject *get_event_thread (void)
+  CPYCHECKER_RETURNS_BORROWED_REF;
 
 static PyObject *
 get_event_thread (void)

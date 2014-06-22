@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2013 Free Software Foundation, Inc.
+# Copyright (C) 1989-2014 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -18,8 +18,8 @@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-host_alias = @host_alias@
-target_alias = @target_alias@
+host_alias = @host_noncanonical@
+target_alias = @target_noncanonical@
 program_transform_name = @program_transform_name@
 bindir = @bindir@
 libdir = @libdir@
@@ -100,8 +100,13 @@ GNULIB_H = $(GNULIB_BUILDDIR)/import/string.h @GNULIB_STDINT_H@
 # -I. for config files.
 # -I${srcdir} for our headers.
 # -I$(srcdir)/../regformats for regdef.h.
+#
+# We do not include ../target or ../nat in here because headers
+# in those directories should be included with the subdirectory.
+# e.g.: "target/wait.h".
+#
 INCLUDE_CFLAGS = -I. -I${srcdir} -I$(srcdir)/../common \
-	-I$(srcdir)/../regformats -I$(INCLUDE_DIR) \
+	-I$(srcdir)/../regformats -I$(srcdir)/.. -I$(INCLUDE_DIR) \
 	$(INCGNU)
 
 # M{H,T}_CFLAGS, if defined, has host- and target-dependent CFLAGS
@@ -143,6 +148,7 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/linux-ia64-low.c $(srcdir)/linux-low.c \
 	$(srcdir)/linux-m32r-low.c \
 	$(srcdir)/linux-m68k-low.c $(srcdir)/linux-mips-low.c \
+	$(srcdir)/linux-nios2-low.c \
 	$(srcdir)/linux-ppc-low.c \
 	$(srcdir)/linux-s390-low.c \
 	$(srcdir)/linux-sh-low.c $(srcdir)/linux-sparc-low.c \
@@ -155,7 +161,9 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/common/vec.c $(srcdir)/common/gdb_vecs.c \
 	$(srcdir)/common/common-utils.c $(srcdir)/common/xml-utils.c \
 	$(srcdir)/common/linux-osdata.c $(srcdir)/common/ptid.c \
-	$(srcdir)/common/buffer.c $(srcdir)/common/linux-btrace.c
+	$(srcdir)/common/buffer.c $(srcdir)/common/linux-btrace.c \
+	$(srcdir)/common/filestuff.c $(srcdir)/target/waitstatus.c \
+    $(srcdir)/common/mips-linux-watch.c
 
 DEPFILES = @GDBSERVER_DEPFILES@
 
@@ -164,13 +172,11 @@ LIBOBJS = @LIBOBJS@
 SOURCES = $(SFILES)
 TAGFILES = $(SOURCES) ${HFILES} ${ALLPARAM} ${POSSLIBS}
 
-OBS = agent.o ax.o inferiors.o regcache.o remote-utils.o server.o signals.o target.o \
-	utils.o version.o vec.o gdb_vecs.o \
-	mem-break.o hostio.o event-loop.o tracepoint.o \
-	xml-utils.o common-utils.o ptid.o buffer.o format.o \
-	dll.o notif.o \
-	$(XML_BUILTIN) \
-	$(DEPFILES) $(LIBOBJS)
+OBS = agent.o ax.o inferiors.o regcache.o remote-utils.o server.o signals.o \
+      target.o waitstatus.o utils.o version.o vec.o gdb_vecs.o \
+      mem-break.o hostio.o event-loop.o tracepoint.o xml-utils.o \
+      common-utils.o ptid.o buffer.o format.o filestuff.o dll.o notif.o \
+      tdesc.o $(XML_BUILTIN) $(DEPFILES) $(LIBOBJS)
 GDBREPLAY_OBS = gdbreplay.o version.o
 GDBSERVER_LIBS = @GDBSERVER_LIBS@
 XM_CLIBS = @LIBS@
@@ -251,9 +257,7 @@ install-only:
 		$(INSTALL_PROGRAM) $(IPA_LIB) $(DESTDIR)$(libdir)/$(IPA_LIB); \
 	fi; \
 	$(SHELL) $(srcdir)/../../mkinstalldirs $(DESTDIR)$(bindir); \
-	$(INSTALL_PROGRAM) gdbserver$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT); \
-	$(SHELL) $(srcdir)/../../mkinstalldirs $(DESTDIR)$(man1dir); \
-	$(INSTALL_DATA) $(srcdir)/gdbserver.1 $(DESTDIR)$(man1dir)/$$n.1
+	$(INSTALL_PROGRAM) gdbserver$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT)
 	@$(MAKE) $(FLAGS_TO_PASS) DO=$@ "DODIRS=$(SUBDIRS)" subdir_do
 
 uninstall: force
@@ -282,12 +286,12 @@ all-lib: $(GNULIB_BUILDDIR)/Makefile
 	@$(MAKE) $(FLAGS_TO_PASS) DO=all DODIRS=$(GNULIB_BUILDDIR) subdir_do
 .PHONY: all-lib
 
-gdbreplay$(EXEEXT): $(GDBREPLAY_OBS)
+gdbreplay$(EXEEXT): $(GDBREPLAY_OBS) $(LIBGNU)
 	rm -f gdbreplay$(EXEEXT)
 	${CC-LD} $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) \
-	  $(XM_CLIBS)
+	  $(XM_CLIBS) $(LIBGNU)
 
-IPA_OBJS=ax-ipa.o tracepoint-ipa.o format-ipa.o utils-ipa.o regcache-ipa.o remote-utils-ipa.o common-utils-ipa.o ${IPA_DEPFILES}
+IPA_OBJS=ax-ipa.o tracepoint-ipa.o format-ipa.o utils-ipa.o regcache-ipa.o remote-utils-ipa.o common-utils-ipa.o tdesc-ipa.o ${IPA_DEPFILES}
 
 IPA_LIB=libinproctrace.so
 
@@ -316,7 +320,7 @@ clean:
 	rm -f version.c
 	rm -f gdbserver$(EXEEXT) gdbreplay$(EXEEXT) core make.log
 	rm -f $(IPA_LIB)
-	rm -f aarch64.c aarch64-without-fpu.c
+	rm -f aarch64.c
 	rm -f reg-arm.c reg-bfin.c i386.c reg-ia64.c reg-m32r.c reg-m68k.c
 	rm -f reg-sh.c reg-sparc.c reg-spu.c amd64.c i386-linux.c
 	rm -f reg-cris.c reg-crisv32.c amd64-linux.c reg-xtensa.c
@@ -324,6 +328,7 @@ clean:
 	rm -f arm-with-iwmmxt.c
 	rm -f arm-with-vfpv2.c arm-with-vfpv3.c arm-with-neon.c
 	rm -f mips-linux.c mips64-linux.c
+	rm -f nios2-linux.c
 	rm -f powerpc-32.c powerpc-32l.c powerpc-64l.c powerpc-e500l.c
 	rm -f powerpc-altivec32l.c powerpc-cell32l.c powerpc-vsx32l.c
 	rm -f powerpc-altivec64l.c powerpc-cell64l.c powerpc-vsx64l.c
@@ -331,10 +336,15 @@ clean:
 	rm -f powerpc-isa205-altivec32l.c powerpc-isa205-vsx32l.c powerpc-isa205-altivec64l.c
 	rm -f powerpc-isa205-vsx64l.c
 	rm -f s390-linux32.c s390-linux64.c s390x-linux64.c
+	rm -f s390-linux32v1.c s390-linux32v2.c s390-linux64v1.c
+	rm -f s390-linux64v2.c s390x-linux64v1.c s390x-linux64v2.c
+	rm -f s390-te-linux32.c s390-te-linux64.c
 	rm -f tic6x-c64xp-linux.c tic6x-c64x-linux.c tic6x-c62x-linux.c
 	rm -f xml-builtin.c stamp-xml
 	rm -f i386-avx.c i386-avx-linux.c
+	rm -f i386-mpx.c i386-mpx-linux.c
 	rm -f amd64-avx.c amd64-avx-linux.c
+	rm -f amd64-mpx.c amd64-mpx-linux.c
 	rm -f i386-mmx.c i386-mmx-linux.c
 	rm -f x32.c x32-linux.c
 	rm -f x32-avx.c x32-avx-linux.c
@@ -376,7 +386,7 @@ $(GNULIB_BUILDDIR)/Makefile: $(srcdir)/../gnulib/Makefile.in config.status
 	  CONFIG_LINKS= \
 	  $(SHELL) config.status
 
-config.status: configure configure.srv
+config.status: configure configure.srv $(srcdir)/../development.sh
 	$(SHELL) ./config.status --recheck
 
 # automatic rebuilding in automake-generated Makefiles requires
@@ -388,13 +398,9 @@ am--refresh:
 
 force:
 
-version.c: Makefile $(srcdir)/../version.in
-	rm -f version.c-tmp version.c
-	echo '#include "server.h"' >> version.c-tmp
-	echo 'const char version[] = "'"`sed q ${srcdir}/../version.in`"'";' >> version.c-tmp
-	echo 'const char host_name[] = "$(host_alias)";' >> version.c-tmp
-	mv version.c-tmp version.c
-version.o: version.c $(server_h)
+version.c: Makefile $(srcdir)/../version.in $(srcdir)/../../bfd/version.h $(srcdir)/../common/create-version.sh
+	$(SHELL) $(srcdir)/../common/create-version.sh $(srcdir)/.. \
+	    $(host_alias) $(target_alias) version.c
 
 xml-builtin.c: stamp-xml; @true
 stamp-xml: $(XML_DIR)/feature_to_c.sh Makefile $(XML_FILES)
@@ -416,49 +422,7 @@ stamp-xml: $(XML_DIR)/feature_to_c.sh Makefile $(XML_FILES)
 # will remove them.
 MAKEOVERRIDES=
 
-gdb_proc_service_h = $(srcdir)/gdb_proc_service.h
 regdat_sh = $(srcdir)/../regformats/regdat.sh
-regdef_h = $(srcdir)/../regformats/regdef.h
-regcache_h = $(srcdir)/regcache.h
-signals_def = $(srcdir)/../../include/gdb/signals.def
-signals_h = $(srcdir)/../../include/gdb/signals.h $(signals_def)
-ptid_h = $(srcdir)/../common/ptid.h
-ax_h = $(srcdir)/ax.h
-agent_h = $(srcdir)/../common/agent.h
-linux_btrace_h = $(srcdir)/../common/linux-btrace.h \
-		$(srcdir)/../common/btrace-common.h $(vec_h) $(ptid_h)
-linux_osdata_h = $(srcdir)/../common/linux-osdata.h
-vec_h = $(srcdir)/../common/vec.h
-gdb_vecs_h = $(srcdir)/../common/gdb_vecs.h
-host_defs_h = $(srcdir)/../common/host-defs.h
-libiberty_h = $(srcdir)/../../include/libiberty.h
-# Since everything must include server.h, we make that depend on
-# generated files.
-server_h = $(srcdir)/server.h $(regcache_h) $(srcdir)/target.h \
-		$(srcdir)/mem-break.h $(srcdir)/../common/gdb_signals.h \
-		$(srcdir)/../common/common-utils.h \
-		$(srcdir)/../common/xml-utils.h \
-		$(srcdir)/../common/buffer.h \
-		$(srcdir)/../common/gdb_assert.h \
-		$(srcdir)/../common/gdb_locale.h \
-		$(ptid_h) \
-		$(signals_h) \
-		$(libiberty_h) \
-		$(srcdir)/../../include/ansidecl.h \
-		$(generated_files)
-
-gdbthread_h = $(srcdir)/gdbthread.h $(target_h) $(srcdir)/server.h
-linux_low_h = $(srcdir)/linux-low.h $(gdbthread_h)
-
-linux_ptrace_h = $(srcdir)/../common/linux-ptrace.h
-
-gdb_thread_db_h = $(srcdir)/../common/gdb_thread_db.h
-
-linux_procfs_h = $(srcdir)/../common/linux-procfs.h
-
-lynx_low_h = $(srcdir)/lynx-low.h $(srcdir)/server.h
-
-nto_low_h = $(srcdir)/nto-low.h
 
 UST_CFLAGS = $(ustinc) -DCONFIG_UST_GDB_INTEGRATION
 
@@ -504,6 +468,9 @@ linux-amd64-ipa.o: linux-amd64-ipa.c
 amd64-linux-ipa.o: amd64-linux.c
 	$(IPAGENT_COMPILE) $<
 	$(POSTCOMPILE)
+tdesc-ipa.o: tdesc.c
+	$(IPAGENT_COMPILE) $<
+	$(POSTCOMPILE)
 
 ax.o: ax.c
 	$(COMPILE) $(WARN_CFLAGS_NO_FORMAT) $<
@@ -542,12 +509,29 @@ buffer.o: ../common/buffer.c
 format.o: ../common/format.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+filestuff.o: ../common/filestuff.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 agent.o: ../common/agent.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+waitstatus.o: ../target/waitstatus.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 
-linux-btrace.o: ../common/linux-btrace.c $(linux_btrace_h) $(server_h)
-	$(CC) -c $(CPPFLAGS) $(INTERNAL_CFLAGS) $<
+linux-btrace.o: ../common/linux-btrace.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+mips-linux-watch.o: ../common/mips-linux-watch.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+# Native object files rules from ../nat
+
+linux-waitpid.o: ../nat/linux-waitpid.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 
 # We build vasprintf with -DHAVE_CONFIG_H because we want that unit to
 # include our config.h file.  Otherwise, some system headers do not get
@@ -559,19 +543,15 @@ vasprintf.o: $(srcdir)/../../libiberty/vasprintf.c
 vsnprintf.o: $(srcdir)/../../libiberty/vsnprintf.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
-
-i386_low_h = $(srcdir)/i386-low.h
-
-linux-low.o: linux-low.c
-	$(COMPILE) $< @USE_THREAD_DB@
+safe-ctype.o: $(srcdir)/../../libiberty/safe-ctype.c
+	$(COMPILE) $<
 	$(POSTCOMPILE)
-
-win32_low_h = $(srcdir)/win32-low.h
+lbasename.o: $(srcdir)/../../libiberty/lbasename.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 
 aarch64.c : $(srcdir)/../regformats/aarch64.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/aarch64.dat aarch64.c
-aarch64-without-fpu.c : $(srcdir)/../regformats/aarch64-without-fpu.dat $(regdat_sh)
-	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/aarch64-without-fpu.dat aarch64-without-fpu.c
 reg-arm.c : $(srcdir)/../regformats/reg-arm.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/reg-arm.dat reg-arm.c
 arm-with-iwmmxt.c : $(srcdir)/../regformats/arm-with-iwmmxt.dat $(regdat_sh)
@@ -596,6 +576,10 @@ i386-avx.c : $(srcdir)/../regformats/i386/i386-avx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-avx.dat i386-avx.c
 i386-avx-linux.c : $(srcdir)/../regformats/i386/i386-avx-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-avx-linux.dat i386-avx-linux.c
+i386-mpx.c : $(srcdir)/../regformats/i386/i386-mpx.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-mpx.dat i386-mpx.c
+i386-mpx-linux.c : $(srcdir)/../regformats/i386/i386-mpx-linux.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-mpx-linux.dat i386-mpx-linux.c
 i386-mmx.c : $(srcdir)/../regformats/i386/i386-mmx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/i386-mmx.dat i386-mmx.c
 i386-mmx-linux.c : $(srcdir)/../regformats/i386/i386-mmx-linux.dat $(regdat_sh)
@@ -616,6 +600,8 @@ mips64-linux.c : $(srcdir)/../regformats/mips64-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/mips64-linux.dat mips64-linux.c
 mips64-dsp-linux.c : $(srcdir)/../regformats/mips64-dsp-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/mips64-dsp-linux.dat mips64-dsp-linux.c
+nios2-linux.c :	$(srcdir)/../regformats/nios2-linux.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/nios2-linux.dat nios2-linux.c
 powerpc-32.c : $(srcdir)/../regformats/rs6000/powerpc-32.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/rs6000/powerpc-32.dat powerpc-32.c
 powerpc-32l.c : $(srcdir)/../regformats/rs6000/powerpc-32l.dat $(regdat_sh)
@@ -660,12 +646,16 @@ s390-linux64v1.c : $(srcdir)/../regformats/s390-linux64v1.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-linux64v1.dat s390-linux64v1.c
 s390-linux64v2.c : $(srcdir)/../regformats/s390-linux64v2.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-linux64v2.dat s390-linux64v2.c
+s390-te-linux64.c : $(srcdir)/../regformats/s390-te-linux64.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-te-linux64.dat s390-te-linux64.c
 s390x-linux64.c : $(srcdir)/../regformats/s390x-linux64.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-linux64.dat s390x-linux64.c
 s390x-linux64v1.c : $(srcdir)/../regformats/s390x-linux64v1.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-linux64v1.dat s390x-linux64v1.c
 s390x-linux64v2.c : $(srcdir)/../regformats/s390x-linux64v2.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-linux64v2.dat s390x-linux64v2.c
+s390x-te-linux64.c : $(srcdir)/../regformats/s390x-te-linux64.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-te-linux64.dat s390x-te-linux64.c
 
 tic6x-c64xp-linux.c : $(srcdir)/../regformats/tic6x-c64xp-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/tic6x-c64xp-linux.dat tic6x-c64xp-linux.c
@@ -686,8 +676,12 @@ amd64-linux.c : $(srcdir)/../regformats/i386/amd64-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-linux.dat amd64-linux.c
 amd64-avx.c : $(srcdir)/../regformats/i386/amd64-avx.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-avx.dat amd64-avx.c
+amd64-mpx.c : $(srcdir)/../regformats/i386/amd64-mpx.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-mpx.dat amd64-mpx.c
 amd64-avx-linux.c : $(srcdir)/../regformats/i386/amd64-avx-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-avx-linux.dat amd64-avx-linux.c
+amd64-mpx-linux.c : $(srcdir)/../regformats/i386/amd64-mpx-linux.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/amd64-mpx-linux.dat amd64-mpx-linux.c
 x32.c : $(srcdir)/../regformats/i386/x32.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/i386/x32.dat x32.c
 x32-linux.c : $(srcdir)/../regformats/i386/x32-linux.dat $(regdat_sh)

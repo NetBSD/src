@@ -1,5 +1,5 @@
 /* Shared library support for IRIX.
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file was created using portions of irix5-nat.c originally
    contributed to GDB by Ian Lance Taylor.
@@ -152,13 +152,13 @@ fetch_lm_info (CORE_ADDR addr)
      with one of the other cases.  (We don't want to incur a memory error
      if we were to read a larger region that generates an error due to
      being at the end of a page or the like.)  */
-  read_memory (addr, (char *) &buf, sizeof (buf.ol32));
+  read_memory (addr, (gdb_byte *) &buf, sizeof (buf.ol32));
 
   if (extract_unsigned_integer (buf.magic.b, sizeof (buf.magic), byte_order)
       != 0xffffffff)
     {
       /* Use buf.ol32...  */
-      char obj_buf[432];
+      gdb_byte obj_buf[432];
       CORE_ADDR obj_addr = extract_mips_address (&buf.ol32.data,
 						 sizeof (buf.ol32.data),
 						 byte_order);
@@ -182,7 +182,7 @@ fetch_lm_info (CORE_ADDR addr)
 
       /* Read rest of buffer.  */
       read_memory (addr + sizeof (buf.ol32),
-		   ((char *) &buf) + sizeof (buf.ol32),
+		   ((gdb_byte *) &buf) + sizeof (buf.ol32),
 		   sizeof (buf.oi32) - sizeof (buf.ol32));
 
       /* Fill in fields using buffer contents.  */
@@ -209,7 +209,7 @@ fetch_lm_info (CORE_ADDR addr)
 
       /* Read rest of buffer.  */
       read_memory (addr + sizeof (buf.ol32),
-		   ((char *) &buf) + sizeof (buf.ol32),
+		   ((gdb_byte *) &buf) + sizeof (buf.ol32),
 		   sizeof (buf.oi64) - sizeof (buf.ol32));
 
       /* Fill in fields using buffer contents.  */
@@ -455,7 +455,7 @@ irix_current_sos (void)
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   int addr_size = gdbarch_addr_bit (target_gdbarch ()) / TARGET_CHAR_BIT;
   CORE_ADDR lma;
-  char addr_buf[8];
+  gdb_byte addr_buf[8];
   struct so_list *head = 0;
   struct so_list **link_ptr = &head;
   int is_first = 1;
@@ -547,7 +547,7 @@ irix_open_symbol_file_object (void *from_ttyp)
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   int addr_size = gdbarch_addr_bit (target_gdbarch ()) / TARGET_CHAR_BIT;
   CORE_ADDR lma;
-  char addr_buf[8];
+  gdb_byte addr_buf[8];
   struct lm_info lm;
   struct cleanup *cleanups;
   int errcode;

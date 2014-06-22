@@ -1,6 +1,6 @@
 /* Renesas M32C target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,10 +21,7 @@
 
 #include <stdarg.h>
 
-#if defined (HAVE_STRING_H)
 #include <string.h>
-#endif
-
 #include "gdb_assert.h"
 #include "elf-bfd.h"
 #include "elf/m32c.h"
@@ -2282,8 +2279,7 @@ m32c_return_value (struct gdbarch *gdbarch,
 	    error (_("The return value is stored in memory at 'mem0', "
 		     "but GDB cannot find\n"
 		     " its address."));
-	  write_memory (SYMBOL_VALUE_ADDRESS (mem0),
-                        (char *) writebuf, valtype_len);
+	  write_memory (SYMBOL_VALUE_ADDRESS (mem0), writebuf, valtype_len);
 	}
     }
 
@@ -2457,14 +2453,15 @@ m32c_m16c_address_to_pointer (struct gdbarch *gdbarch,
       struct minimal_symbol *tramp_msym;
 
       /* Try to find a linker symbol at this address.  */
-      struct minimal_symbol *func_msym = lookup_minimal_symbol_by_pc (addr);
+      struct bound_minimal_symbol func_msym
+	= lookup_minimal_symbol_by_pc (addr);
 
-      if (! func_msym)
+      if (! func_msym.minsym)
         error (_("Cannot convert code address %s to function pointer:\n"
                "couldn't find a symbol at that address, to find trampoline."),
                paddress (gdbarch, addr));
 
-      func_name = SYMBOL_LINKAGE_NAME (func_msym);
+      func_name = SYMBOL_LINKAGE_NAME (func_msym.minsym);
       tramp_name = xmalloc (strlen (func_name) + 5);
       strcpy (tramp_name, func_name);
       strcat (tramp_name, ".plt");
@@ -2535,11 +2532,11 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
     {
       /* See if there is a minimal symbol at that address whose name is
          "NAME.plt".  */
-      struct minimal_symbol *ptr_msym = lookup_minimal_symbol_by_pc (ptr);
+      struct bound_minimal_symbol ptr_msym = lookup_minimal_symbol_by_pc (ptr);
 
-      if (ptr_msym)
+      if (ptr_msym.minsym)
         {
-          const char *ptr_msym_name = SYMBOL_LINKAGE_NAME (ptr_msym);
+          const char *ptr_msym_name = SYMBOL_LINKAGE_NAME (ptr_msym.minsym);
           int len = strlen (ptr_msym_name);
 
           if (len > 4
@@ -2572,7 +2569,7 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
 	    {
 	      ptr_msym = lookup_minimal_symbol_by_pc ((aspace << 16) | ptr);
 	      
-	      if (ptr_msym)
+	      if (ptr_msym.minsym)
 		ptr |= aspace << 16;
 	    }
 	}

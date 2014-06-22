@@ -1,4 +1,4 @@
-# Copyright 2002-2013 Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,32 +18,13 @@
 
 set ws "\[ \t\]+"
 
-set testfile "break"
-set srcfile ${testfile}.c
-set srcfile1 ${testfile}1.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile break.c break1.c
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug nowarnings}] != "" } {
-     untested info-proc.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile \
+	 [list $srcfile $srcfile2] {debug nowarnings}]} {
+    untested $testfile.exp
+    return -1
 }
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug nowarnings}] != "" } {
-     untested info-proc.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug nowarnings}] != "" } {
-     untested info-proc.exp
-     return -1
-}
-
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 gdb_test "help info proc" "Show /proc process information about .*"
 
@@ -54,7 +35,7 @@ gdb_test_multiple "info proc" "info proc without a process" {
     -re "Not supported on this target.*$gdb_prompt $" {
 	# info proc command not supported -- nothing to test here.
 	unsupported "gdb does not support info proc on this target"
-	return -1;
+	return -1
     }
 }
 

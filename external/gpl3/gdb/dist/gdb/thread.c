@@ -1,6 +1,6 @@
 /* Multi-process/thread control for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
 
@@ -32,7 +32,7 @@
 #include "gdbcmd.h"
 #include "regcache.h"
 #include "gdb.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "btrace.h"
 
 #include <ctype.h>
@@ -64,6 +64,19 @@ static void info_threads_command (char *, int);
 static void thread_apply_command (char *, int);
 static void restore_current_thread (ptid_t);
 static void prune_threads (void);
+
+/* Data to cleanup thread array.  */
+
+struct thread_array_cleanup
+{
+  /* Array of thread pointers used to set
+     reference count.  */
+  struct thread_info **tp_array;
+
+  /* Thread count in the array.  */
+  int count;
+};
+
 
 struct thread_info*
 inferior_thread (void)
@@ -750,6 +763,13 @@ finish_thread_state_cleanup (void *arg)
   finish_thread_state (*ptid_p);
 }
 
+int
+pc_in_thread_step_range (CORE_ADDR pc, struct thread_info *thread)
+{
+  return (pc >= thread->control.step_range_start
+	  && pc < thread->control.step_range_end);
+}
+
 /* Prints the list of threads and their details on UIOUT.
    This is a version of 'info_threads_command' suitable for
    use from MI.
@@ -790,7 +810,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	  if (!number_is_in_list (requested_threads, tp->num))
 	    continue;
 
-	  if (pid != -1 && PIDGET (tp->ptid) != pid)
+	  if (pid != -1 && ptid_get_pid (tp->ptid) != pid)
 	    continue;
 
 	  if (tp->state == THREAD_EXITED)
@@ -827,7 +847,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
       if (!number_is_in_list (requested_threads, tp->num))
 	continue;
 
-      if (pid != -1 && PIDGET (tp->ptid) != pid)
+      if (pid != -1 && ptid_get_pid (tp->ptid) != pid)
 	{
 	  if (requested_threads != NULL && *requested_threads != '\0')
 	    error (_("Requested thread not found in requested process"));
@@ -909,7 +929,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	  print_stack_frame (get_selected_frame (NULL),
 			     /* For MI output, print frame level.  */
 			     ui_out_is_mi_like_p (uiout),
-			     LOCATION);
+			     LOCATION, 0);
 	}
 
       if (ui_out_is_mi_like_p (uiout))
@@ -1057,12 +1077,12 @@ restore_selected_frame (struct frame_id a_frame_id, int frame_level)
   if (frame_level > 0 && !ui_out_is_mi_like_p (current_uiout))
     {
       warning (_("Couldn't restore frame #%d in "
-		 "current thread, at reparsed frame #0\n"),
+		 "current thread.  Bottom (innermost) frame selected:"),
 	       frame_level);
       /* For MI, we should probably have a notification about
 	 current frame change.  But this error is not very
 	 likely, so don't bother for now.  */
-      print_stack_frame (get_selected_frame (NULL), 1, SRC_LINE);
+      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
     }
 }
 
@@ -1125,6 +1145,18 @@ restore_current_thread_cleanup_dtor (void *arg)
   xfree (old);
 }
 
+/* Set the thread reference count.  */
+
+static void
+set_thread_refcount (void *data)
+{
+  int k;
+  struct thread_array_cleanup *ta_cleanup = data;
+
+  for (k = 0; k != ta_cleanup->count; k++)
+    ta_cleanup->tp_array[k]->refcount--;
+}
+
 struct cleanup *
 make_cleanup_restore_current_thread (void)
 {
@@ -1180,9 +1212,10 @@ make_cleanup_restore_current_thread (void)
 static void
 thread_apply_all_command (char *cmd, int from_tty)
 {
-  struct thread_info *tp;
   struct cleanup *old_chain;
   char *saved_cmd;
+  int tc;
+  struct thread_array_cleanup ta_cleanup;
 
   if (cmd == NULL || *cmd == '\000')
     error (_("Please specify a command following the thread ID list"));
@@ -1195,17 +1228,43 @@ thread_apply_all_command (char *cmd, int from_tty)
      execute_command.  */
   saved_cmd = xstrdup (cmd);
   make_cleanup (xfree, saved_cmd);
-  for (tp = thread_list; tp; tp = tp->next)
-    if (thread_alive (tp))
-      {
-	switch_to_thread (tp->ptid);
+  tc = thread_count ();
 
-	printf_filtered (_("\nThread %d (%s):\n"),
-			 tp->num, target_pid_to_str (inferior_ptid));
-	execute_command (cmd, from_tty);
-	strcpy (cmd, saved_cmd);	/* Restore exact command used
-					   previously.  */
-      }
+  if (tc)
+    {
+      struct thread_info **tp_array;
+      struct thread_info *tp;
+      int i = 0, k;
+
+      /* Save a copy of the thread_list in case we execute detach
+         command.  */
+      tp_array = xmalloc (sizeof (struct thread_info *) * tc);
+      make_cleanup (xfree, tp_array);
+      ta_cleanup.tp_array = tp_array;
+      ta_cleanup.count = tc;
+
+      ALL_THREADS (tp)
+        {
+          tp_array[i] = tp;
+          tp->refcount++;
+          i++;
+        }
+
+      make_cleanup (set_thread_refcount, &ta_cleanup);
+
+      for (k = 0; k != i; k++)
+        if (thread_alive (tp_array[k]))
+          {
+            switch_to_thread (tp_array[k]->ptid);
+            printf_filtered (_("\nThread %d (%s):\n"), 
+			     tp_array[k]->num,
+			     target_pid_to_str (inferior_ptid));
+            execute_command (cmd, from_tty);
+
+            /* Restore exact command used previously.  */
+            strcpy (cmd, saved_cmd);
+	  }
+    }
 
   do_cleanups (old_chain);
 }
@@ -1408,7 +1467,7 @@ do_captured_thread_select (struct ui_out *uiout, void *tidstr)
   else
     {
       ui_out_text (uiout, "\n");
-      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC);
+      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
     }
 
   /* Since the current thread may have changed, see if there is any

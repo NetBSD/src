@@ -1,6 +1,6 @@
 /* Routines for handling XML memory maps provided by target.
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "gdb_assert.h"
 #include "exceptions.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #if !defined(HAVE_LIBEXPAT)
 

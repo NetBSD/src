@@ -1,4 +1,4 @@
-# Copyright 2010-2013 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
 # Tests GDBs support for GNU vectors.
 # http://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html
 
-set testfile "gnu_vector"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 if [get_compiler_info] {
     return -1
@@ -40,6 +38,14 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug}] } {
 if { ![runto main] } {
     fail "runto main"
     return -1
+}
+
+# Get endianess for the scalar->vector casts
+gdb_test_multiple "show endian" "show endian" {
+    -re ".* (big|little) endian.*$gdb_prompt $" { 
+	set endian $expect_out(1,string) 
+	pass "endianness: $endian"
+    }
 }
 
 # Test printing of character vector types
@@ -85,8 +91,13 @@ gdb_test "print -f4a" "\\\$$decimal = \\{-2, -4, -8, -16\\}"
 # When casting to vector the input type must have the same length as
 # the total length of the vector.
 gdb_test "print (char4) 0x01010101" "\\\$$decimal = \\{1, 1, 1, 1\\}"
-gdb_test "print (char4) ia" "\\\$$decimal = \\{2, 0, 0, 0\\}"
 gdb_test "print (int2) lla" "\\\$$decimal = \\{1, 1\\}"
+
+if { ![string compare $endian big] } then {
+    gdb_test "print (char4) ia" "\\\$$decimal = \\{0, 0, 0, 2\\}"
+} else {
+    gdb_test "print (char4) ia" "\\\$$decimal = \\{2, 0, 0, 0\\}"
+}
 
 gdb_test "print (int2) 1" "can only cast scalar to vector of same size"
 gdb_test "print (longlong2) 2" "can only cast scalar to vector of same size"

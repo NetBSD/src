@@ -1,3 +1,76 @@
+2014-01-06  Tom Tromey  <tromey@redhat.com>
+
+	* common/cgen-trace.c: Don't use old VA_* macros.
+	* common/sim-load.c (xprintf): Likewise.
+	* common/sim-trace.c (trace_printf, debug_printf): Likewise.
+
+2014-01-06  Tom Tromey  <tromey@redhat.com>
+
+	* README-HACKING: Don't use PARAMS.
+	* arm/wrapper.c: Don't use PARAMS.
+	* bfin/sim-main.h: Don't use PARAMS.
+	* common/callback.c: Don't use PARAMS.
+	* common/cgen-trace.c: Don't use PARAMS.
+	* common/run-sim.h: Don't use PARAMS.
+	* common/run.c: Don't use PARAMS.
+	* common/sim-base.h: Don't use PARAMS.
+	* common/sim-load.c: Don't use PARAMS.
+	* common/sim-options.h: Don't use PARAMS.
+	* common/sim-trace.c: Don't use PARAMS.
+	* common/sim-trace.h: Don't use PARAMS.
+	* common/sim-utils.h: Don't use PARAMS.
+	* cr16/cr16_sim.h: Don't use PARAMS.
+	* cr16/gencode.c: Don't use PARAMS.
+	* cr16/interp.c: Don't use PARAMS.
+	* cr16/simops.c: Don't use PARAMS.
+	* d10v/d10v_sim.h: Don't use PARAMS.
+	* d10v/gencode.c: Don't use PARAMS.
+	* d10v/interp.c: Don't use PARAMS.
+	* d10v/simops.c: Don't use PARAMS.
+	* erc32/erc32.c: Don't use PARAMS.
+	* erc32/exec.c: Don't use PARAMS.
+	* erc32/float.c: Don't use PARAMS.
+	* erc32/func.c: Don't use PARAMS.
+	* erc32/sis.c: Don't use PARAMS.
+	* erc32/sis.h: Don't use PARAMS.
+	* mips/interp.c: Don't use PARAMS.
+	* mips/sim-main.h: Don't use PARAMS.
+	* sh/interp.c: Don't use PARAMS.
+	* v850/sim-main.h: Don't use PARAMS.
+	* v850/v850_sim.h: Don't use PARAMS.
+
+2013-11-07  Will Newton  <will.newton@linaro.org>
+
+	PR gdb/15508
+	* arm/wrapper.c (sim_create_inferior): Call init before
+	accessing STATE.
+
+2013-11-07  Will Newton  <will.newton@linaro.org>
+
+	PR gdb/8989
+	* arm/wrapper.c (sim_create_inferior): Avoid calling
+	bfd_get_mach with a NULL bfd.
+
+2013-06-21  Nick Clifton  <nickc@redhat.com>
+
+	* msp430: New Directory.
+	* configure.tgt: Add it.
+	* configure: Regenerate.
+
+2013-03-15  Steve Ellcey  <sellcey@mips.com>
+
+	* arm/wrapper.c (sim_complete_command): Make char arguments const.
+	* avr/interp.c (sim_complete_command): Ditto.
+	* common/sim-options.c (sim_complete_command): Ditto.
+	* cr16/interp.c (sim_complete_command): Ditto.
+	* erc32/interf.c (sim_complete_command): Ditto.
+	* m32c/gdb-if.c (sim_complete_command): Ditto.
+	* microblaze/interp.c (sim_complete_command): Ditto.
+	* ppc/sim_calls.c (sim_complete_command): Ditto.
+	* rl78/gdb-if.c (sim_complete_command): Ditto.
+	* rx/gdb-if.c (sim_complete_command): Ditto.
+	* sh/interp.c (sim_complete_command): Ditto.
+
 2013-01-01  Joel Brobecker  <brobecker@adacore.com>
 
 	Update year range in copyright notice of all files.

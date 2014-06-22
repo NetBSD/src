@@ -263,62 +263,42 @@ powerpc_init_dialect (struct disassemble_info *info)
     {
     case bfd_mach_ppc_403:
     case bfd_mach_ppc_403gc:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_403);
+      dialect = ppc_parse_cpu (dialect, &sticky, "403");
       break;
     case bfd_mach_ppc_405:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_403 | PPC_OPCODE_405);
+      dialect = ppc_parse_cpu (dialect, &sticky, "405");
       break;
     case bfd_mach_ppc_601:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_601);
+      dialect = ppc_parse_cpu (dialect, &sticky, "601");
       break;
     case bfd_mach_ppc_a35:
     case bfd_mach_ppc_rs64ii:
     case bfd_mach_ppc_rs64iii:
-      dialect = (PPC_OPCODE_POWER | PPC_OPCODE_POWER2 | PPC_OPCODE_64);
+      dialect = ppc_parse_cpu (dialect, &sticky, "pwr2") | PPC_OPCODE_64;
       break;
     case bfd_mach_ppc_e500:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_SPE
-		 | PPC_OPCODE_ISEL | PPC_OPCODE_EFS | PPC_OPCODE_BRLOCK
-		 | PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK | PPC_OPCODE_RFMCI
-		 | PPC_OPCODE_E500);
+      dialect = ppc_parse_cpu (dialect, &sticky, "e500");
       break;
     case bfd_mach_ppc_e500mc:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_ISEL
-		 | PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK | PPC_OPCODE_RFMCI
-		 | PPC_OPCODE_E500MC);
+      dialect = ppc_parse_cpu (dialect, &sticky, "e500mc");
       break;
     case bfd_mach_ppc_e500mc64:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_ISEL
-		 | PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK | PPC_OPCODE_RFMCI
-		 | PPC_OPCODE_E500MC | PPC_OPCODE_64 | PPC_OPCODE_POWER5
-		 | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7);
+      dialect = ppc_parse_cpu (dialect, &sticky, "e500mc64");
       break;
     case bfd_mach_ppc_e5500:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_ISEL
-		 | PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK | PPC_OPCODE_RFMCI
-		 | PPC_OPCODE_E500MC | PPC_OPCODE_64 | PPC_OPCODE_POWER4
-		 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
-		 | PPC_OPCODE_POWER7);
+      dialect = ppc_parse_cpu (dialect, &sticky, "e5500");
       break;
     case bfd_mach_ppc_e6500:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_ISEL
-		 | PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK | PPC_OPCODE_RFMCI
-		 | PPC_OPCODE_E500MC | PPC_OPCODE_64 | PPC_OPCODE_ALTIVEC
-		 | PPC_OPCODE_ALTIVEC2 | PPC_OPCODE_E6500 | PPC_OPCODE_POWER4
-		 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7);
+      dialect = ppc_parse_cpu (dialect, &sticky, "e6500");
       break;
     case bfd_mach_ppc_titan:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_PMR
-		 | PPC_OPCODE_RFMCI | PPC_OPCODE_TITAN);
+      dialect = ppc_parse_cpu (dialect, &sticky, "titan");
       break;
     case bfd_mach_ppc_vle:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_ISEL | PPC_OPCODE_VLE);
+      dialect = ppc_parse_cpu (dialect, &sticky, "vle");
       break;
     default:
-      dialect = (PPC_OPCODE_PPC | PPC_OPCODE_ISEL | PPC_OPCODE_64
-		 | PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
-		 | PPC_OPCODE_POWER7 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX
-		 | PPC_OPCODE_ANY);
+      dialect = ppc_parse_cpu (dialect, &sticky, "power8") | PPC_OPCODE_ANY;
     }
 
   arg = info->disassembler_options;

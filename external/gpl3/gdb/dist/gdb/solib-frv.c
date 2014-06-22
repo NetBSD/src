@@ -1,5 +1,5 @@
 /* Handle FR-V (FDPIC) shared libraries for GDB, the GNU Debugger.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
 
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "inferior.h"
 #include "gdbcore.h"
 #include "solib.h"
@@ -328,11 +328,11 @@ frv_current_sos (void)
      for details.)
 
      Note that the relocation of the main executable is also performed
-     by SOLIB_CREATE_INFERIOR_HOOK(), however, in the case of core
+     by solib_create_inferior_hook(), however, in the case of core
      files, this hook is called too late in order to be of benefit to
-     SOLIB_ADD.  SOLIB_ADD eventually calls this this function,
+     solib_add.  solib_add eventually calls this this function,
      frv_current_sos, and also precedes the call to
-     SOLIB_CREATE_INFERIOR_HOOK().   (See post_create_inferior() in
+     solib_create_inferior_hook().   (See post_create_inferior() in
      infcmd.c.)  */
   if (main_executable_lm_info == 0 && core_bfd != NULL)
     frv_relocate_main_executable ();
@@ -448,7 +448,7 @@ frv_in_dynsym_resolve_code (CORE_ADDR pc)
 {
   return ((pc >= interp_text_sect_low && pc < interp_text_sect_high)
 	  || (pc >= interp_plt_sect_low && pc < interp_plt_sect_high)
-	  || in_plt_section (pc, NULL));
+	  || in_plt_section (pc));
 }
 
 /* Given a loadmap and an address, return the displacement needed
@@ -535,7 +535,7 @@ enable_break2 (void)
   if (interp_sect)
     {
       unsigned int interp_sect_size;
-      gdb_byte *buf;
+      char *buf;
       bfd *tmp_bfd = NULL;
       int status;
       CORE_ADDR addr, interp_loadmap_addr;
@@ -812,7 +812,7 @@ frv_relocate_main_executable (void)
       int osect_idx;
       int seg;
       
-      osect_idx = osect->the_bfd_section->index;
+      osect_idx = osect - symfile_objfile->sections;
 
       /* Current address of section.  */
       addr = obj_section_addr (osect);

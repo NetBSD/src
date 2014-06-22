@@ -45,19 +45,20 @@ decompress_contents (bfd_byte *compressed_buffer,
   strm.next_in = (Bytef*) compressed_buffer + 12;
   strm.avail_out = uncompressed_size;
 
+  BFD_ASSERT (Z_OK == 0);
   rc = inflateInit (&strm);
   while (strm.avail_in > 0 && strm.avail_out > 0)
     {
       if (rc != Z_OK)
-	return FALSE;
+	break;
       strm.next_out = ((Bytef*) uncompressed_buffer
                        + (uncompressed_size - strm.avail_out));
       rc = inflate (&strm, Z_FINISH);
       if (rc != Z_STREAM_END)
-	return FALSE;
+	break;
       rc = inflateReset (&strm);
     }
-  rc = inflateEnd (&strm);
+  rc |= inflateEnd (&strm);
   return rc == Z_OK && strm.avail_out == 0;
 }
 #endif

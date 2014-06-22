@@ -1,6 +1,267 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 7.7
+
+* GDB now supports SystemTap SDT probes on AArch64 GNU/Linux.
+
+* GDB now supports Fission DWP file format version 2.
+  http://gcc.gnu.org/wiki/DebugFission
+
+* New convenience function "$_isvoid", to check whether an expression
+  is void.  A void expression is an expression where the type of the
+  result is "void".  For example, some convenience variables may be
+  "void" when evaluated (e.g., "$_exitcode" before the execution of
+  the program being debugged; or an undefined convenience variable).
+  Another example, when calling a function whose return type is
+  "void".
+
+* The "maintenance print objfiles" command now takes an optional regexp.
+
+* The "catch syscall" command now works on arm*-linux* targets.
+
+* GDB now consistently shows "<not saved>" when printing values of
+  registers the debug info indicates have not been saved in the frame
+  and there's nowhere to retrieve them from
+  (callee-saved/call-clobbered registers):
+
+    (gdb) p $rax
+    $1 = <not saved>
+
+    (gdb) info registers rax
+    rax            <not saved>
+
+  Before, the former would print "<optimized out>", and the latter
+  "*value not available*".
+
+* New script contrib/gdb-add-index.sh for adding .gdb_index sections
+  to binaries.
+
+* Python scripting
+
+  ** Frame filters and frame decorators have been added.
+  ** Temporary breakpoints are now supported.
+  ** Line tables representation has been added.
+  ** New attribute 'parent_type' for gdb.Field objects.
+  ** gdb.Field objects can be used as subscripts on gdb.Value objects.
+  ** New attribute 'name' for gdb.Type objects.
+
+* New targets
+
+Nios II ELF 			nios2*-*-elf
+Nios II GNU/Linux		nios2*-*-linux
+Texas Instruments MSP430	msp430*-*-elf
+
+* Removed native configurations
+
+Support for these a.out NetBSD and OpenBSD obsolete configurations has
+been removed.  ELF variants of these configurations are kept supported.
+
+arm*-*-netbsd*              but arm*-*-netbsdelf*       is kept supported.
+i[34567]86-*-netbsd*        but i[34567]86-*-netbsdelf* is kept supported.
+i[34567]86-*-openbsd[0-2].* but i[34567]86-*-openbsd*   is kept supported.
+i[34567]86-*-openbsd3.[0-3]
+m68*-*-netbsd*              but m68*-*-netbsdelf*       is kept supported.
+sparc-*-netbsd*             but sparc-*-netbsdelf*      is kept supported.
+vax-*-netbsd*               but vax-*-netbsdelf*        is kept supported.
+
+* New commands:
+catch rethrow
+  Like "catch throw", but catches a re-thrown exception.
+maint check-psymtabs
+  Renamed from old "maint check-symtabs".
+maint check-symtabs
+  Perform consistency checks on symtabs.
+maint expand-symtabs
+  Expand symtabs matching an optional regexp.
+
+show configuration
+  Display the details of GDB configure-time options.
+
+maint set|show per-command
+maint set|show per-command space
+maint set|show per-command time
+maint set|show per-command symtab
+  Enable display of per-command gdb resource usage.
+
+remove-symbol-file FILENAME
+remove-symbol-file -a ADDRESS
+  Remove a symbol file added via add-symbol-file.  The file to remove
+  can be identified by its filename or by an address that lies within
+  the boundaries of this symbol file in memory.
+
+info exceptions
+info exceptions REGEXP
+  Display the list of Ada exceptions defined in the program being
+  debugged.  If provided, only the exceptions whose names match REGEXP
+  are listed.
+
+* New options
+
+set debug symfile off|on
+show debug symfile
+  Control display of debugging info regarding reading symbol files and
+  symbol tables within those files
+
+set print raw frame-arguments
+show print raw frame-arguments
+  Set/show whether to print frame arguments in raw mode,
+  disregarding any defined pretty-printers.
+
+set remote trace-status-packet
+show remote trace-status-packet
+  Set/show the use of remote protocol qTStatus packet.
+
+set debug nios2
+show debug nios2
+  Control display of debugging messages related to Nios II targets.
+
+set range-stepping
+show range-stepping
+  Control whether target-assisted range stepping is enabled.
+
+set startup-with-shell
+show startup-with-shell
+  Specifies whether Unix child processes are started via a shell or
+  directly.
+
+set code-cache
+show code-cache
+  Use the target memory cache for accesses to the code segment.  This
+  improves performance of remote debugging (particularly disassembly).
+
+* You can now use a literal value 'unlimited' for options that
+  interpret 0 or -1 as meaning "unlimited".  E.g., "set
+  trace-buffer-size unlimited" is now an alias for "set
+  trace-buffer-size -1" and "set height unlimited" is now an alias for
+  "set height 0".
+
+* The "set debug symtab-create" debugging option of GDB has been changed to
+  accept a verbosity level.  0 means "off", 1 provides basic debugging
+  output, and values of 2 or greater provides more verbose output.
+
+* New command-line options
+--configuration
+  Display the details of GDB configure-time options.
+
+* The command 'tsave' can now support new option '-ctf' to save trace
+  buffer in Common Trace Format.
+
+* Newly installed $prefix/bin/gcore acts as a shell interface for the
+  GDB command gcore.
+
+* GDB now implements the the C++ 'typeid' operator.
+
+* The new convenience variable $_exception holds the exception being
+  thrown or caught at an exception-related catchpoint.
+
+* The exception-related catchpoints, like "catch throw", now accept a
+  regular expression which can be used to filter exceptions by type.
+
+* The new convenience variable $_exitsignal is automatically set to
+  the terminating signal number when the program being debugged dies
+  due to an uncaught signal.
+
+* MI changes
+
+  ** All MI commands now accept an optional "--language" option.
+     Support for this feature can be verified by using the "-list-features"
+     command, which should contain "language-option".
+
+  ** The new command -info-gdb-mi-command allows the user to determine
+     whether a GDB/MI command is supported or not.
+
+  ** The "^error" result record returned when trying to execute an undefined
+     GDB/MI command now provides a variable named "code" whose content is the
+     "undefined-command" error code.  Support for this feature can be verified
+     by using the "-list-features" command, which should contain
+     "undefined-command-error-code".
+
+  ** The -trace-save MI command can optionally save trace buffer in Common
+     Trace Format now.
+
+  ** The new command -dprintf-insert sets a dynamic printf breakpoint.
+
+  ** The command -data-list-register-values now accepts an optional
+     "--skip-unavailable" option.  When used, only the available registers
+     are displayed.
+
+  ** The new command -trace-frame-collected dumps collected variables,
+     computed expressions, tvars, memory and registers in a traceframe.
+
+  ** The commands -stack-list-locals, -stack-list-arguments and
+     -stack-list-variables now accept an option "--skip-unavailable".
+     When used, only the available locals or arguments are displayed.
+
+  ** The -exec-run command now accepts an optional "--start" option.
+     When used, the command follows the same semantics as the "start"
+     command, stopping the program's execution at the start of its
+     main subprogram.  Support for this feature can be verified using
+     the "-list-features" command, which should contain
+     "exec-run-start-option".
+
+  ** The new commands -catch-assert and -catch-exceptions insert
+     catchpoints stopping the program when Ada exceptions are raised.
+
+  ** The new command -info-ada-exceptions provides the equivalent of
+     the new "info exceptions" command.
+
+* New system-wide configuration scripts
+  A GDB installation now provides scripts suitable for use as system-wide
+  configuration scripts for the following systems:
+    ** ElinOS
+    ** Wind River Linux
+
+* GDB now supports target-assigned range stepping with remote targets.
+  This improves the performance of stepping source lines by reducing
+  the number of control packets from/to GDB.  See "New remote packets"
+  below.
+
+* GDB now understands the element 'tvar' in the XML traceframe info.
+  It has the id of the collected trace state variables.
+
+* On S/390 targets that provide the transactional-execution feature,
+  the program interruption transaction diagnostic block (TDB) is now
+  represented as a number of additional "registers" in GDB.
+
+* New remote packets
+
+vCont;r
+
+  The vCont packet supports a new 'r' action, that tells the remote
+  stub to step through an address range itself, without GDB
+  involvemement at each single-step.
+
+qXfer:libraries-svr4:read's annex
+  The previously unused annex of the qXfer:libraries-svr4:read packet
+  is now used to support passing an argument list.  The remote stub
+  reports support for this argument list to GDB's qSupported query.
+  The defined arguments are "start" and "prev", used to reduce work
+  necessary for library list updating, resulting in significant
+  speedup.
+
+* New features in the GDB remote stub, GDBserver
+
+  ** GDBserver now supports target-assisted range stepping.  Currently
+     enabled on x86/x86_64 GNU/Linux targets.
+
+  ** GDBserver now adds element 'tvar' in the XML in the reply to
+     'qXfer:traceframe-info:read'.  It has the id of the collected
+     trace state variables.
+
+  ** GDBserver now supports hardware watchpoints on the MIPS GNU/Linux
+     target.
+
+* New 'z' formatter for printing and examining memory, this displays the
+  value as hexadecimal zero padded on the left to the size of the type.
+
+* GDB can now use Windows x64 unwinding data.
+
+* The "set remotebaud" command has been replaced by "set serial baud".
+  Similarly, "show remotebaud" has been replaced by "show serial baud".
+  The "set remotebaud" and "show remotebaud" commands are still available
+  to provide backward compatibility with older versions of GDB.
+
 *** Changes in GDB 7.6
 
 * Target record has been renamed to record-full.
@@ -112,6 +373,9 @@ Tilera TILE-Gx GNU/Linux	tilegx*-*-linux
   Release versions, on the other hand, are built without -lmcheck
   by default.  The --enable-libmcheck/--disable-libmcheck configure
   options allow the user to override that default.
+--with-babeltrace/--with-babeltrace-include/--with-babeltrace-lib
+  This configure option allows the user to build GDB with
+  libbabeltrace using which GDB can read Common Trace Format data.
 
 * New commands (for set/show, see "New options" below)
 
@@ -386,7 +650,7 @@ qXfer:btrace:read
      C++ and Java objects.
 
   ** "explore" and its sub commands "explore value" and "explore type"
-     can be used to reccursively explore values and types of
+     can be used to recursively explore values and types of
      expressions.  These commands are available only if GDB is
      configured with '--with-python'.
 
@@ -5320,3 +5584,5 @@ GDB now handles cross debugging.  If you are remotely debugging between
 two different machines, type ``./configure host -target=targ''.
 Host is the machine where GDB will run; targ is the machine
 where the program that you are debugging will run.
+
+ *  GDB now supports access to Intel(R) MPX registers on GNU/Linux.
