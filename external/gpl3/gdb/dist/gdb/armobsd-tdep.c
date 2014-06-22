@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/arm.
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #include "obsd-tdep.h"
 #include "arm-tdep.h"
@@ -71,8 +71,8 @@ static const struct tramp_frame armobsd_sigframe =
 
 
 /* Override default thumb breakpoints.  */
-static const char arm_obsd_thumb_le_breakpoint[] = {0xfe, 0xdf};
-static const char arm_obsd_thumb_be_breakpoint[] = {0xdf, 0xfe};
+static const gdb_byte arm_obsd_thumb_le_breakpoint[] = {0xfe, 0xdf};
+static const gdb_byte arm_obsd_thumb_be_breakpoint[] = {0xdf, 0xfe};
 
 static void
 armobsd_init_abi (struct gdbarch_info info,

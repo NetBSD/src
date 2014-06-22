@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/amd64.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -95,7 +95,6 @@ static int amd64fbsd32_r_reg_offset[I386_NUM_GREGS] =
 
 /* Support for debugging kernel virtual memory images.  */
 
-#include <sys/types.h>
 #include <machine/pcb.h>
 #include <osreldate.h>
 

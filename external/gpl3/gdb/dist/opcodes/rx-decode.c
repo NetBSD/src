@@ -291,7 +291,7 @@ rx_decode_opcode (unsigned long pc AU,
                      op[0]);
             }
           SYNTAX("brk");
-#line 976 "rx-decode.opc"
+#line 984 "rx-decode.opc"
           ID(brk);
         
         }
@@ -306,7 +306,7 @@ rx_decode_opcode (unsigned long pc AU,
                      op[0]);
             }
           SYNTAX("dbt");
-#line 979 "rx-decode.opc"
+#line 987 "rx-decode.opc"
           ID(dbt);
         
         }
@@ -4834,7 +4834,7 @@ rx_decode_opcode (unsigned long pc AU,
                            op[0], op[1]);
                   }
                 SYNTAX("int #%1");
-#line 982 "rx-decode.opc"
+#line 990 "rx-decode.opc"
                 ID(int); SC(IMM(1));
               
               }
@@ -4846,7 +4846,7 @@ rx_decode_opcode (unsigned long pc AU,
                 case 0x00:
                     {
                       /** 0111 0101 0111 0000 0000 immm	mvtipl	#%1 */
-#line 949 "rx-decode.opc"
+#line 957 "rx-decode.opc"
                       int immm AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -4856,7 +4856,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  immm = 0x%x\n", immm);
                         }
                       SYNTAX("mvtipl	#%1");
-#line 949 "rx-decode.opc"
+#line 957 "rx-decode.opc"
                       ID(mvtipl); SC(immm);
                     
                     }
@@ -4913,11 +4913,11 @@ rx_decode_opcode (unsigned long pc AU,
             op_semantics_35:
               {
                 /** 0111 100b ittt rdst			bset	#%1, %0 */
-#line 900 "rx-decode.opc"
+#line 902 "rx-decode.opc"
                 int b AU = op[0] & 0x01;
-#line 900 "rx-decode.opc"
+#line 902 "rx-decode.opc"
                 int ittt AU = (op[1] >> 4) & 0x0f;
-#line 900 "rx-decode.opc"
+#line 902 "rx-decode.opc"
                 int rdst AU = op[1] & 0x0f;
                 if (trace)
                   {
@@ -4929,7 +4929,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  rdst = 0x%x\n", rdst);
                   }
                 SYNTAX("bset	#%1, %0");
-#line 900 "rx-decode.opc"
+#line 902 "rx-decode.opc"
                 ID(bset); BWL(LSIZE); SC(b*16+ittt); DR(rdst); F_____;
               
               
@@ -4954,11 +4954,11 @@ rx_decode_opcode (unsigned long pc AU,
             op_semantics_36:
               {
                 /** 0111 101b ittt rdst			bclr	#%1, %0 */
-#line 910 "rx-decode.opc"
+#line 914 "rx-decode.opc"
                 int b AU = op[0] & 0x01;
-#line 910 "rx-decode.opc"
+#line 914 "rx-decode.opc"
                 int ittt AU = (op[1] >> 4) & 0x0f;
-#line 910 "rx-decode.opc"
+#line 914 "rx-decode.opc"
                 int rdst AU = op[1] & 0x0f;
                 if (trace)
                   {
@@ -4970,7 +4970,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  rdst = 0x%x\n", rdst);
                   }
                 SYNTAX("bclr	#%1, %0");
-#line 910 "rx-decode.opc"
+#line 914 "rx-decode.opc"
                 ID(bclr); BWL(LSIZE); SC(b*16+ittt); DR(rdst); F_____;
               
               
@@ -4995,11 +4995,11 @@ rx_decode_opcode (unsigned long pc AU,
             op_semantics_37:
               {
                 /** 0111 110b ittt rdst			btst	#%2, %1 */
-#line 920 "rx-decode.opc"
+#line 926 "rx-decode.opc"
                 int b AU = op[0] & 0x01;
-#line 920 "rx-decode.opc"
+#line 926 "rx-decode.opc"
                 int ittt AU = (op[1] >> 4) & 0x0f;
-#line 920 "rx-decode.opc"
+#line 926 "rx-decode.opc"
                 int rdst AU = op[1] & 0x0f;
                 if (trace)
                   {
@@ -5011,7 +5011,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  rdst = 0x%x\n", rdst);
                   }
                 SYNTAX("btst	#%2, %1");
-#line 920 "rx-decode.opc"
+#line 926 "rx-decode.opc"
                 ID(btst); BWL(LSIZE); S2C(b*16+ittt); SR(rdst); F___ZC;
               
               
@@ -5185,7 +5185,7 @@ rx_decode_opcode (unsigned long pc AU,
           case 0xd0:
               {
                 /** 0111 1110 110 crsrc			pushc	%1 */
-#line 955 "rx-decode.opc"
+#line 963 "rx-decode.opc"
                 int crsrc AU = op[1] & 0x1f;
                 if (trace)
                   {
@@ -5195,7 +5195,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  crsrc = 0x%x\n", crsrc);
                   }
                 SYNTAX("pushc	%1");
-#line 955 "rx-decode.opc"
+#line 963 "rx-decode.opc"
                 ID(mov); OP(0, RX_Operand_Predec, 0, 0); SR(crsrc + 16);
               
               }
@@ -5204,7 +5204,7 @@ rx_decode_opcode (unsigned long pc AU,
           case 0xf0:
               {
                 /** 0111 1110 111 crdst			popc	%0 */
-#line 952 "rx-decode.opc"
+#line 960 "rx-decode.opc"
                 int crdst AU = op[1] & 0x1f;
                 if (trace)
                   {
@@ -5214,7 +5214,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  crdst = 0x%x\n", crdst);
                   }
                 SYNTAX("popc	%0");
-#line 952 "rx-decode.opc"
+#line 960 "rx-decode.opc"
                 ID(mov); OP(1, RX_Operand_Postinc, 0, 0); DR(crdst + 16);
               
               }
@@ -5533,7 +5533,7 @@ rx_decode_opcode (unsigned long pc AU,
                            op[0], op[1]);
                   }
                 SYNTAX("rtfi");
-#line 970 "rx-decode.opc"
+#line 978 "rx-decode.opc"
                 ID(rtfi);
               
               }
@@ -5548,7 +5548,7 @@ rx_decode_opcode (unsigned long pc AU,
                            op[0], op[1]);
                   }
                 SYNTAX("rte");
-#line 973 "rx-decode.opc"
+#line 981 "rx-decode.opc"
                 ID(rte);
               
               }
@@ -5563,7 +5563,7 @@ rx_decode_opcode (unsigned long pc AU,
                            op[0], op[1]);
                   }
                 SYNTAX("wait");
-#line 985 "rx-decode.opc"
+#line 993 "rx-decode.opc"
                 ID(wait);
               
               /*----------------------------------------------------------------------*/
@@ -5589,7 +5589,7 @@ rx_decode_opcode (unsigned long pc AU,
           case 0xaf:
               {
                 /** 0111 1111 1010 rdst			setpsw	%0 */
-#line 946 "rx-decode.opc"
+#line 954 "rx-decode.opc"
                 int rdst AU = op[1] & 0x0f;
                 if (trace)
                   {
@@ -5599,7 +5599,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  rdst = 0x%x\n", rdst);
                   }
                 SYNTAX("setpsw	%0");
-#line 946 "rx-decode.opc"
+#line 954 "rx-decode.opc"
                 ID(setpsw); DF(rdst);
               
               }
@@ -5622,7 +5622,7 @@ rx_decode_opcode (unsigned long pc AU,
           case 0xbf:
               {
                 /** 0111 1111 1011 rdst			clrpsw	%0 */
-#line 943 "rx-decode.opc"
+#line 951 "rx-decode.opc"
                 int rdst AU = op[1] & 0x0f;
                 if (trace)
                   {
@@ -5632,7 +5632,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  rdst = 0x%x\n", rdst);
                   }
                 SYNTAX("clrpsw	%0");
-#line 943 "rx-decode.opc"
+#line 951 "rx-decode.opc"
                 ID(clrpsw); DF(rdst);
               
               }
@@ -6340,7 +6340,7 @@ rx_decode_opcode (unsigned long pc AU,
                   }
                 SYNTAX("mov%s	%1, %0");
 #line 307 "rx-decode.opc"
-                if (ss == 3 && sz == 2 && rsrc == 0 && rdst == 0)
+                if (sd == 3 && ss == 3 && sz == 2 && rsrc == 0 && rdst == 0)
                   {
                     ID(nop2);
                     rx->syntax = "nop";
@@ -6818,11 +6818,11 @@ rx_decode_opcode (unsigned long pc AU,
             op_semantics_43:
               {
                 /** 1111 00sd rdst 1bit			bclr	#%1, %0%S0 */
-#line 904 "rx-decode.opc"
+#line 906 "rx-decode.opc"
                 int sd AU = op[0] & 0x03;
-#line 904 "rx-decode.opc"
+#line 906 "rx-decode.opc"
                 int rdst AU = (op[1] >> 4) & 0x0f;
-#line 904 "rx-decode.opc"
+#line 906 "rx-decode.opc"
                 int bit AU = op[1] & 0x07;
                 if (trace)
                   {
@@ -6834,7 +6834,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  bit = 0x%x\n", bit);
                   }
                 SYNTAX("bclr	#%1, %0%S0");
-#line 904 "rx-decode.opc"
+#line 906 "rx-decode.opc"
                 ID(bclr); BWL(BSIZE); SC(bit); DD(sd, rdst, BSIZE); F_____;
               
               }
@@ -6886,11 +6886,11 @@ rx_decode_opcode (unsigned long pc AU,
             op_semantics_44:
               {
                 /** 1111 01sd rdst 0bit			btst	#%2, %1%S1 */
-#line 914 "rx-decode.opc"
+#line 918 "rx-decode.opc"
                 int sd AU = op[0] & 0x03;
-#line 914 "rx-decode.opc"
+#line 918 "rx-decode.opc"
                 int rdst AU = (op[1] >> 4) & 0x0f;
-#line 914 "rx-decode.opc"
+#line 918 "rx-decode.opc"
                 int bit AU = op[1] & 0x07;
                 if (trace)
                   {
@@ -6902,7 +6902,7 @@ rx_decode_opcode (unsigned long pc AU,
                     printf ("  bit = 0x%x\n", bit);
                   }
                 SYNTAX("btst	#%2, %1%S1");
-#line 914 "rx-decode.opc"
+#line 918 "rx-decode.opc"
                 ID(btst); BWL(BSIZE); S2C(bit); SD(sd, rdst, BSIZE); F___ZC;
               
               }
@@ -7817,6 +7817,8 @@ rx_decode_opcode (unsigned long pc AU,
                       SYNTAX("bset	%1, %0%S0");
 #line 897 "rx-decode.opc"
                       ID(bset); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE); F_____;
+                      if (sd == 3) /* bset reg,reg */
+                        BWL(LSIZE);
                     
                     }
                   break;
@@ -7857,11 +7859,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_58:
                     {
                       /** 1111 1100 0110 01sd rdst rsrc	bclr	%1, %0%S0 */
-#line 907 "rx-decode.opc"
+#line 909 "rx-decode.opc"
                       int sd AU = op[1] & 0x03;
-#line 907 "rx-decode.opc"
+#line 909 "rx-decode.opc"
                       int rdst AU = (op[2] >> 4) & 0x0f;
-#line 907 "rx-decode.opc"
+#line 909 "rx-decode.opc"
                       int rsrc AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -7873,8 +7875,10 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rsrc = 0x%x\n", rsrc);
                         }
                       SYNTAX("bclr	%1, %0%S0");
-#line 907 "rx-decode.opc"
+#line 909 "rx-decode.opc"
                       ID(bclr); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE); F_____;
+                      if (sd == 3) /* bset reg,reg */
+                        BWL(LSIZE);
                     
                     }
                   break;
@@ -7915,11 +7919,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_59:
                     {
                       /** 1111 1100 0110 10sd rdst rsrc	btst	%2, %1%S1 */
-#line 917 "rx-decode.opc"
+#line 921 "rx-decode.opc"
                       int sd AU = op[1] & 0x03;
-#line 917 "rx-decode.opc"
+#line 921 "rx-decode.opc"
                       int rdst AU = (op[2] >> 4) & 0x0f;
-#line 917 "rx-decode.opc"
+#line 921 "rx-decode.opc"
                       int rsrc AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -7931,8 +7935,10 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rsrc = 0x%x\n", rsrc);
                         }
                       SYNTAX("btst	%2, %1%S1");
-#line 917 "rx-decode.opc"
+#line 921 "rx-decode.opc"
                       ID(btst); BWL(BSIZE); S2R(rsrc); SD(sd, rdst, BSIZE); F___ZC;
+                      if (sd == 3) /* bset reg,reg */
+                        BWL(LSIZE);
                     
                     }
                   break;
@@ -7973,11 +7979,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_60:
                     {
                       /** 1111 1100 0110 11sd rdst rsrc	bnot	%1, %0%S0 */
-#line 927 "rx-decode.opc"
+#line 933 "rx-decode.opc"
                       int sd AU = op[1] & 0x03;
-#line 927 "rx-decode.opc"
+#line 933 "rx-decode.opc"
                       int rdst AU = (op[2] >> 4) & 0x0f;
-#line 927 "rx-decode.opc"
+#line 933 "rx-decode.opc"
                       int rsrc AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -7989,8 +7995,10 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rsrc = 0x%x\n", rsrc);
                         }
                       SYNTAX("bnot	%1, %0%S0");
-#line 927 "rx-decode.opc"
+#line 933 "rx-decode.opc"
                       ID(bnot); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE);
+                      if (sd == 3) /* bset reg,reg */
+                        BWL(LSIZE);
                     
                     }
                   break;
@@ -8437,13 +8445,13 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_68:
                     {
                       /** 1111 1100 1101 sz sd rdst cond	sc%1%s	%0 */
-#line 991 "rx-decode.opc"
+#line 999 "rx-decode.opc"
                       int sz AU = (op[1] >> 2) & 0x03;
-#line 991 "rx-decode.opc"
+#line 999 "rx-decode.opc"
                       int sd AU = op[1] & 0x03;
-#line 991 "rx-decode.opc"
+#line 999 "rx-decode.opc"
                       int rdst AU = (op[2] >> 4) & 0x0f;
-#line 991 "rx-decode.opc"
+#line 999 "rx-decode.opc"
                       int cond AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -8456,7 +8464,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  cond = 0x%x\n", cond);
                         }
                       SYNTAX("sc%1%s	%0");
-#line 991 "rx-decode.opc"
+#line 999 "rx-decode.opc"
                       ID(sccnd); BWL(sz); DD (sd, rdst, sz); Scc(cond);
                     
                     }
@@ -8584,13 +8592,13 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_69:
                     {
                       /** 1111 1100 111bit sd rdst cond	bm%2	#%1, %0%S0 */
-#line 934 "rx-decode.opc"
+#line 942 "rx-decode.opc"
                       int bit AU = (op[1] >> 2) & 0x07;
-#line 934 "rx-decode.opc"
+#line 942 "rx-decode.opc"
                       int sd AU = op[1] & 0x03;
-#line 934 "rx-decode.opc"
+#line 942 "rx-decode.opc"
                       int rdst AU = (op[2] >> 4) & 0x0f;
-#line 934 "rx-decode.opc"
+#line 942 "rx-decode.opc"
                       int cond AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -8603,7 +8611,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  cond = 0x%x\n", cond);
                         }
                       SYNTAX("bm%2	#%1, %0%S0");
-#line 934 "rx-decode.opc"
+#line 942 "rx-decode.opc"
                       ID(bmcc); BWL(BSIZE); S2cc(cond); SC(bit); DD(sd, rdst, BSIZE);
                     
                     }
@@ -8612,11 +8620,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_70:
                     {
                       /** 1111 1100 111bit sd rdst 1111	bnot	#%1, %0%S0 */
-#line 924 "rx-decode.opc"
+#line 930 "rx-decode.opc"
                       int bit AU = (op[1] >> 2) & 0x07;
-#line 924 "rx-decode.opc"
+#line 930 "rx-decode.opc"
                       int sd AU = op[1] & 0x03;
-#line 924 "rx-decode.opc"
+#line 930 "rx-decode.opc"
                       int rdst AU = (op[2] >> 4) & 0x0f;
                       if (trace)
                         {
@@ -8628,7 +8636,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rdst = 0x%x\n", rdst);
                         }
                       SYNTAX("bnot	#%1, %0%S0");
-#line 924 "rx-decode.opc"
+#line 930 "rx-decode.opc"
                       ID(bnot); BWL(BSIZE); SC(bit); DD(sd, rdst, BSIZE);
                     
                     }
@@ -10131,11 +10139,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_74:
                     {
                       /** 1111 1101 0110 100c rsrc rdst	mvtc	%1, %0 */
-#line 961 "rx-decode.opc"
+#line 969 "rx-decode.opc"
                       int c AU = op[1] & 0x01;
-#line 961 "rx-decode.opc"
+#line 969 "rx-decode.opc"
                       int rsrc AU = (op[2] >> 4) & 0x0f;
-#line 961 "rx-decode.opc"
+#line 969 "rx-decode.opc"
                       int rdst AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -10147,7 +10155,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rdst = 0x%x\n", rdst);
                         }
                       SYNTAX("mvtc	%1, %0");
-#line 961 "rx-decode.opc"
+#line 969 "rx-decode.opc"
                       ID(mov); SR(rsrc); DR(c*16+rdst + 16);
                     
                     }
@@ -10171,11 +10179,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_75:
                     {
                       /** 1111 1101 0110 101s rsrc rdst	mvfc	%1, %0 */
-#line 964 "rx-decode.opc"
+#line 972 "rx-decode.opc"
                       int s AU = op[1] & 0x01;
-#line 964 "rx-decode.opc"
+#line 972 "rx-decode.opc"
                       int rsrc AU = (op[2] >> 4) & 0x0f;
-#line 964 "rx-decode.opc"
+#line 972 "rx-decode.opc"
                       int rdst AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -10187,7 +10195,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rdst = 0x%x\n", rdst);
                         }
                       SYNTAX("mvfc	%1, %0");
-#line 964 "rx-decode.opc"
+#line 972 "rx-decode.opc"
                       ID(mov); SR((s*16+rsrc) + 16); DR(rdst);
                     
                     /*----------------------------------------------------------------------*/
@@ -10643,9 +10651,9 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_89:
                     {
                       /** 1111 1101 0111 im11 000crdst	mvtc	#%1, %0 */
-#line 958 "rx-decode.opc"
+#line 966 "rx-decode.opc"
                       int im AU = (op[1] >> 2) & 0x03;
-#line 958 "rx-decode.opc"
+#line 966 "rx-decode.opc"
                       int crdst AU = op[2] & 0x1f;
                       if (trace)
                         {
@@ -10656,7 +10664,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  crdst = 0x%x\n", crdst);
                         }
                       SYNTAX("mvtc	#%1, %0");
-#line 958 "rx-decode.opc"
+#line 966 "rx-decode.opc"
                       ID(mov); SC(IMMex(im)); DR(crdst + 16);
                     
                     }
@@ -11771,11 +11779,11 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_93:
                     {
                       /** 1111 1101 111 bittt cond rdst	bm%2	#%1, %0%S0 */
-#line 937 "rx-decode.opc"
+#line 945 "rx-decode.opc"
                       int bittt AU = op[1] & 0x1f;
-#line 937 "rx-decode.opc"
+#line 945 "rx-decode.opc"
                       int cond AU = (op[2] >> 4) & 0x0f;
-#line 937 "rx-decode.opc"
+#line 945 "rx-decode.opc"
                       int rdst AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -11787,7 +11795,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rdst = 0x%x\n", rdst);
                         }
                       SYNTAX("bm%2	#%1, %0%S0");
-#line 937 "rx-decode.opc"
+#line 945 "rx-decode.opc"
                       ID(bmcc); BWL(LSIZE); S2cc(cond); SC(bittt); DR(rdst);
                     
                     /*----------------------------------------------------------------------*/
@@ -11799,9 +11807,9 @@ rx_decode_opcode (unsigned long pc AU,
                   op_semantics_94:
                     {
                       /** 1111 1101 111bittt 1111 rdst	bnot	#%1, %0 */
-#line 930 "rx-decode.opc"
+#line 938 "rx-decode.opc"
                       int bittt AU = op[1] & 0x1f;
-#line 930 "rx-decode.opc"
+#line 938 "rx-decode.opc"
                       int rdst AU = op[2] & 0x0f;
                       if (trace)
                         {
@@ -11812,7 +11820,7 @@ rx_decode_opcode (unsigned long pc AU,
                           printf ("  rdst = 0x%x\n", rdst);
                         }
                       SYNTAX("bnot	#%1, %0");
-#line 930 "rx-decode.opc"
+#line 938 "rx-decode.opc"
                       ID(bnot); BWL(LSIZE); SC(bittt); DR(rdst);
                     
                     
@@ -14861,7 +14869,7 @@ rx_decode_opcode (unsigned long pc AU,
       break;
     default: UNSUPPORTED(); break;
   }
-#line 994 "rx-decode.opc"
+#line 1002 "rx-decode.opc"
 
   return rx->n_bytes;
 }

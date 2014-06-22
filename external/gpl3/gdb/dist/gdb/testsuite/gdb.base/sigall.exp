@@ -1,4 +1,4 @@
-#   Copyright 1995-2013 Free Software Foundation, Inc.
+#   Copyright 1995-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +18,11 @@ if [target_info exists gdb,nosignals] {
     continue
 }
 
+standard_testfile
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-
-set testfile sigall
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested sigall.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
 }
 
 proc test_one_sig {nextsig} {
@@ -45,12 +39,20 @@ proc test_one_sig {nextsig} {
     set need_another_continue 1
     set missed_handler 0
     if $this_sig_supported then {
+	set esig $thissig
+
 	if { $thissig == "IO" } {
 	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
+	# On Linux SPARC64 systems SIGLOST==SIGPWR and gdb identifies
+	# the raised signal as PWR.
+	if { $thissig == "LOST" && [ istarget "sparc64-*-linux*" ] } then {
+	    set esig "PWR"
+	}
+
 	gdb_test "continue" \
-	    "Continuing.*Program received signal SIG$thissig.*" \
-	    "get signal $thissig"
+	    "Continuing.*Program received signal SIG$esig.*" \
+		"get signal $esig"
     }
     if [ istarget "alpha-dec-osf3*" ] then {
 	# OSF/1-3.x is unable to continue with a job control stop signal.
@@ -97,8 +99,6 @@ proc test_one_sig {nextsig} {
     }
     set thissig $nextsig
 }
-
-gdb_load $binfile
 
 # The list of signals that the program generates, in the order they
 # are generated.

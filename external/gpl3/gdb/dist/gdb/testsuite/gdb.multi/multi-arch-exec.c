@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2013 Free Software Foundation, Inc.
+   Copyright 2012-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 int
 main ()
 {
-  execl ("gdb.multi/multi-arch-exec-hello",
-         "gdb.multi/multi-arch-exec-hello",
+  execl (BASEDIR "/multi-arch-exec-hello",
+         BASEDIR "/multi-arch-exec-hello",
          (char *) NULL);
   perror ("execl failed");
   exit (1);

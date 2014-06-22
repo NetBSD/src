@@ -1,6 +1,6 @@
 /* Read a symbol table in MIPS' format (Third-Eye).
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin (af@cs.cmu.edu) at CMU.  Major work
    by Per Bothner, John Gilmore and Ian Lance Taylor at Cygnus Support.
@@ -24,7 +24,7 @@
    mdebugread.c.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "bfd.h"
 #include "symtab.h"
 #include "objfiles.h"
@@ -227,16 +227,28 @@ read_alphacoff_dynamic_symtab (struct section_offsets *section_offsets,
 
   if (!bfd_get_section_contents (abfd, si.sym_sect, sym_secptr,
 				 (file_ptr) 0, sym_secsize))
-    return;
+    {
+      do_cleanups (cleanups);
+      return;
+    }
   if (!bfd_get_section_contents (abfd, si.str_sect, str_secptr,
 				 (file_ptr) 0, str_secsize))
-    return;
+    {
+      do_cleanups (cleanups);
+      return;
+    }
   if (!bfd_get_section_contents (abfd, si.dyninfo_sect, dyninfo_secptr,
 				 (file_ptr) 0, dyninfo_secsize))
-    return;
+    {
+      do_cleanups (cleanups);
+      return;
+    }
   if (!bfd_get_section_contents (abfd, si.got_sect, got_secptr,
 				 (file_ptr) 0, got_secsize))
-    return;
+    {
+      do_cleanups (cleanups);
+      return;
+    }
 
   /* Find the number of local GOT entries and the index for the
      first dynamic symbol in the GOT.  */
@@ -264,7 +276,10 @@ read_alphacoff_dynamic_symtab (struct section_offsets *section_offsets,
 	}
     }
   if (dt_mips_local_gotno < 0 || dt_mips_gotsym < 0)
-    return;
+    {
+      do_cleanups (cleanups);
+      return;
+    }
 
   /* Scan all dynamic symbols and enter them into the minimal symbol
      table if appropriate.  */
@@ -390,7 +405,6 @@ read_alphacoff_dynamic_symtab (struct section_offsets *section_offsets,
 
 static const struct sym_fns ecoff_sym_fns =
 {
-  bfd_target_ecoff_flavour,
   mipscoff_new_init,		/* init anything gbl to entire symtab */
   mipscoff_symfile_init,	/* read initial info, setup for sym_read() */
   mipscoff_symfile_read,	/* read a symbol file into symtab */
@@ -410,5 +424,5 @@ void _initialize_mipsread (void);
 void
 _initialize_mipsread (void)
 {
-  add_symtab_fns (&ecoff_sym_fns);
+  add_symtab_fns (bfd_target_ecoff_flavour, &ecoff_sym_fns);
 }

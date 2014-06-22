@@ -1,4 +1,4 @@
-# Copyright 1992-2013 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,34 +16,20 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
 
-set testfile "list"
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile list0.c list1.c
 
 # Need to download the header to the host.
-remote_download host ${srcdir}/${subdir}/list0.h list0.h
+gdb_remote_download host ${srcdir}/${subdir}/list0.h
 
-
-if  { [gdb_compile "${srcdir}/${subdir}/list0.c" "${binfile}0.o" object {debug}] != "" } {
-     untested list.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile [list $srcfile $srcfile2] \
+	 {debug}]} {
+    return -1
 }
-
-if  { [gdb_compile "${srcdir}/${subdir}/list1.c" "${binfile}1.o" object {debug}] != "" } {
-     untested list.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] != "" } {
-     untested list.exp
-     return -1
-}
-
-
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
 if [get_compiler_info] {
-    return -1;
+    return -1
 }
 
 # The last line in the file.
@@ -57,22 +43,22 @@ set last_line_re "${last_line}\[ \t\]+} /\\* last line \\*/"
 # Return 1 if success, 0 if fail.
 #
 
-set set_listsize_count 0;
+set set_listsize_count 0
 
 proc set_listsize { arg } {
     global gdb_prompt
-    global set_listsize_count;
+    global set_listsize_count
 
-    incr set_listsize_count;
+    incr set_listsize_count
     if [gdb_test_no_output "set listsize $arg" "setting listsize to $arg #$set_listsize_count"] {
-	return 0;
+	return 0
     }
     if { $arg == 0 } {
-	set arg "unlimited";
+	set arg "unlimited"
     }
 
     if [gdb_test "show listsize" "Number of source lines.* is ${arg}.*" "show listsize $arg #$set_listsize_count"] {
-	return 0;
+	return 0
     }
     return 1
 }
@@ -198,7 +184,7 @@ proc test_list_filename_and_number {} {
 	timeout { fail "list list1.c:12 (timeout)" ; gdb_suppress_tests }
     }
     pass "list filename:number ($testcnt tests)"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -258,7 +244,7 @@ proc test_list_forward {} {
     }
 
     pass "successive list commands to page forward ($testcnt tests)"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 # Test that repeating the list linenum command doesn't print the same
@@ -301,7 +287,7 @@ proc test_repeat_list_command {} {
     }
 
     pass "repeat list commands to page forward using 'return' ($testcnt tests)"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc test_list_backwards {} {
@@ -338,7 +324,7 @@ proc test_list_backwards {} {
     }
 
     pass "$testcnt successive \"list -\" commands to page backwards"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #

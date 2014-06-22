@@ -1,4 +1,4 @@
-# Copyright 2009-2013 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,8 +49,11 @@ if [istarget "s390*-*-*"] {
     set march2 "-m32"
 }
 
+set dirname [relative_filename [pwd] [file dirname $binfile2]]
 if { [prepare_for_testing ${testfile}.exp ${exec1} "${srcfile1}" \
-	  [list debug nowarnings additional_flags=${march1}]] } {
+	  [list debug nowarnings \
+	       additional_flags=${march1} \
+	       additional_flags=-DBASEDIR=\"$dirname\"]] } {
     return -1
 }
 

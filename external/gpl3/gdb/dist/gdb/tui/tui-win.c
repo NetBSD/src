@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -46,7 +46,7 @@
 
 #include "gdb_curses.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 #include "readline/readline.h"
 

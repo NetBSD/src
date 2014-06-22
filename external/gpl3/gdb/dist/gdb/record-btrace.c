@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -190,7 +190,7 @@ record_btrace_stop_recording (void)
 /* The to_close method of target record-btrace.  */
 
 static void
-record_btrace_close (int quitting)
+record_btrace_close (void)
 {
   /* Make sure automatic recording gets disabled even if we did not stop
      recording before closing the record-btrace target.  */
@@ -469,13 +469,13 @@ btrace_func_history (struct btrace_thread_info *btinfo, struct ui_out *uiout,
       ui_out_field_uint (uiout, "index", idx);
       ui_out_text (uiout, "\t");
 
-      if ((flags & record_print_insn_range) != 0)
+      if ((flags & RECORD_PRINT_INSN_RANGE) != 0)
 	{
 	  btrace_func_history_insn_range (uiout, bfun);
 	  ui_out_text (uiout, "\t");
 	}
 
-      if ((flags & record_print_src_line) != 0)
+      if ((flags & RECORD_PRINT_SRC_LINE) != 0)
 	{
 	  btrace_func_history_src_line (uiout, bfun);
 	  ui_out_text (uiout, "\t");

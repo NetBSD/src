@@ -368,7 +368,6 @@ struct pex64_runtime_function
   bfd_vma rva_BeginAddress;
   bfd_vma rva_EndAddress;
   bfd_vma rva_UnwindData;
-  unsigned int isChained : 1;
 };
 
 struct external_pex64_runtime_function
@@ -393,8 +392,10 @@ struct external_pex64_runtime_function
 #define UWOP_SET_FPREG	      3
 #define UWOP_SAVE_NONVOL      4
 #define UWOP_SAVE_NONVOL_FAR  5
-#define UWOP_SAVE_XMM	      6
-#define UWOP_SAVE_XMM_FAR     7
+#define UWOP_SAVE_XMM         6 /* For version 1.  */
+#define UWOP_EPILOG           6 /* For version 2.  */
+#define UWOP_SAVE_XMM_FAR     7 /* For version 1 (deprecated).  */
+#define UWOP_SPARE            7 /* For version 2.  */
 #define UWOP_SAVE_XMM128      8
 #define UWOP_SAVE_XMM128_FAR  9
 #define UWOP_PUSH_MACHFRAME   10
@@ -441,14 +442,10 @@ struct pex64_unwind_info
   bfd_vma FrameOffset;
   bfd_vma sizeofUnwindCodes;
   bfd_byte *rawUnwindCodes;
-  /* Valid for UNW_FLAG_EHANDLER and UNW_FLAG_UHANDLER.  */
-  bfd_vma CountOfScopes;
-  bfd_byte *rawScopeEntries;
-  bfd_vma rva_ExceptionHandler; /* UNW_EHANDLER.  */
-  bfd_vma rva_TerminationHandler; /* UNW_FLAG_UHANDLER.  */
-  bfd_vma rva_FrameHandler; /* UNW_FLAG_FHANDLER.  */
-  bfd_vma FrameHandlerArgument; /* UNW_FLAG_FHANDLER.  */
-  bfd_vma rva_FunctionEntry; /* UNW_FLAG_CHAININFO.  */
+  bfd_vma rva_ExceptionHandler; /* UNW_EHANDLER or UNW_FLAG_UHANDLER.  */
+  bfd_vma rva_BeginAddress;	/* UNW_FLAG_CHAININFO.  */
+  bfd_vma rva_EndAddress;	/* UNW_FLAG_CHAININFO.  */
+  bfd_vma rva_UnwindData;	/* UNW_FLAG_CHAININFO.  */
 };
 
 struct external_pex64_unwind_info

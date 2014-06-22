@@ -113,18 +113,7 @@ dnl all shall eventually behave the same way.
 
 dnl We don't use automake, but we still want to support
 dnl --enable-maintainer-mode.
-USE_MAINTAINER_MODE=no
-AC_ARG_ENABLE(maintainer-mode,
-[  --enable-maintainer-mode		Enable developer functionality.],
-[case "${enableval}" in
-  yes)	MAINT="" USE_MAINTAINER_MODE=yes ;;
-  no)	MAINT="#" ;;
-  *)	AC_MSG_ERROR("--enable-maintainer-mode does not take a value"); MAINT="#" ;;
-esac
-if test x"$silent" != x"yes" && test x"$MAINT" = x""; then
-  echo "Setting maintainer mode" 6>&1
-fi],[MAINT="#"])dnl
-AC_SUBST(MAINT)
+AM_MAINTAINER_MODE
 
 
 dnl This is a generic option to enable special byte swapping
@@ -872,7 +861,7 @@ fi
 # NOTE: If you change this list, remember to update
 # gdb/doc/gdbint.texinfo.
 build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
--Wformat-nonliteral -Wno-pointer-sign \
+-Wno-pointer-sign \
 -Wno-unused -Wunused-value -Wunused-function \
 -Wno-switch -Wno-char-subscripts -Wmissing-prototypes"
 
@@ -880,6 +869,7 @@ build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
 # GCC versions complain about %I64.
 case "${host}" in
   *-*-mingw32*) build_warnings="$build_warnings -Wno-format" ;;
+  *) build_warnings="$build_warnings -Wformat-nonliteral" ;;
 esac
 
 AC_ARG_ENABLE(build-warnings,

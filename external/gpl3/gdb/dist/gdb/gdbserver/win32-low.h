@@ -1,5 +1,5 @@
 /* Internal interfaces for the Win32 specific target code for gdbserver.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <windows.h>
+
+struct target_desc;
+
+/* The inferior's target description.  This is a global because the
+   Windows ports support neither bi-arch nor multi-process.  */
+extern const struct target_desc *win32_tdesc;
 
 /* Thread information structure used to track extra information about
    each thread.  */

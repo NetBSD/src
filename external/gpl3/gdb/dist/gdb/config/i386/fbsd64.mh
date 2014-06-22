@@ -2,5 +2,6 @@
 NATDEPFILES= fork-child.o inf-ptrace.o \
 	fbsd-nat.o amd64-nat.o amd64bsd-nat.o amd64fbsd-nat.o \
 	bsd-kvm.o i386-nat.o
+HAVE_NATIVE_GCORE_HOST = 1
 
 LOADLIBES= -lkvm

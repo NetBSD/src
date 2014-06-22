@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -332,7 +332,7 @@ static struct ppc_insn_pattern powerpc32_plt_stub_so[] =
 static int
 powerpc_linux_in_dynsym_resolve_code (CORE_ADDR pc)
 {
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
 
   /* Check whether PC is in the dynamic linker.  This also checks
      whether it is in the .plt section, used by non-PIC executables.  */
@@ -341,9 +341,10 @@ powerpc_linux_in_dynsym_resolve_code (CORE_ADDR pc)
 
   /* Check if we are in the resolver.  */
   sym = lookup_minimal_symbol_by_pc (pc);
-  if (sym != NULL
-      && (strcmp (SYMBOL_LINKAGE_NAME (sym), "__glink") == 0
-	  || strcmp (SYMBOL_LINKAGE_NAME (sym), "__glink_PLTresolve") == 0))
+  if (sym.minsym != NULL
+      && (strcmp (SYMBOL_LINKAGE_NAME (sym.minsym), "__glink") == 0
+	  || strcmp (SYMBOL_LINKAGE_NAME (sym.minsym),
+		     "__glink_PLTresolve") == 0))
     return 1;
 
   return 0;
@@ -354,13 +355,13 @@ powerpc_linux_in_dynsym_resolve_code (CORE_ADDR pc)
 static CORE_ADDR
 ppc_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 {
-  int insnbuf[POWERPC32_PLT_STUB_LEN];
+  unsigned int insnbuf[POWERPC32_PLT_STUB_LEN];
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR target = 0;
 
-  if (ppc_insns_match_pattern (pc, powerpc32_plt_stub, insnbuf))
+  if (ppc_insns_match_pattern (frame, pc, powerpc32_plt_stub, insnbuf))
     {
       /* Insn pattern is
 		lis   r11, xxxx
@@ -372,7 +373,7 @@ ppc_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
       target = read_memory_unsigned_integer (target, 4, byte_order);
     }
 
-  if (ppc_insns_match_pattern (pc, powerpc32_plt_stub_so, insnbuf))
+  if (ppc_insns_match_pattern (frame, pc, powerpc32_plt_stub_so, insnbuf))
     {
       /* Insn pattern is
 		lwz   r11, xxxx(r30)
@@ -1244,6 +1245,11 @@ ppc_linux_init_abi (struct gdbarch_info info,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   struct tdesc_arch_data *tdesc_data = (void *) info.tdep_info;
+  static const char *const stap_integer_prefixes[] = { "i", NULL };
+  static const char *const stap_register_indirection_prefixes[] = { "(",
+								    NULL };
+  static const char *const stap_register_indirection_suffixes[] = { ")",
+								    NULL };
 
   linux_init_abi (info, gdbarch);
 
@@ -1262,9 +1268,11 @@ ppc_linux_init_abi (struct gdbarch_info info,
   set_gdbarch_get_syscall_number (gdbarch, ppc_linux_get_syscall_number);
 
   /* SystemTap functions.  */
-  set_gdbarch_stap_integer_prefix (gdbarch, "i");
-  set_gdbarch_stap_register_indirection_prefix (gdbarch, "(");
-  set_gdbarch_stap_register_indirection_suffix (gdbarch, ")");
+  set_gdbarch_stap_integer_prefixes (gdbarch, stap_integer_prefixes);
+  set_gdbarch_stap_register_indirection_prefixes (gdbarch,
+					  stap_register_indirection_prefixes);
+  set_gdbarch_stap_register_indirection_suffixes (gdbarch,
+					  stap_register_indirection_suffixes);
   set_gdbarch_stap_gdb_register_prefix (gdbarch, "r");
   set_gdbarch_stap_is_single_operand (gdbarch, ppc_stap_is_single_operand);
   set_gdbarch_stap_parse_special_token (gdbarch,

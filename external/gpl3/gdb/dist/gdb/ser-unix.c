@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Un*x like systems
 
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,8 +29,9 @@
 #include <sys/time.h>
 
 #include "gdb_select.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbcmd.h"
+#include "filestuff.h"
 
 #ifdef HAVE_TERMIOS
 
@@ -107,7 +108,7 @@ void _initialize_ser_hardwire (void);
 static int
 hardwire_open (struct serial *scb, const char *name)
 {
-  scb->fd = open (name, O_RDWR);
+  scb->fd = gdb_open_cloexec (name, O_RDWR, 0);
   if (scb->fd < 0)
     return -1;
 
@@ -904,37 +905,41 @@ hardwire_close (struct serial *scb)
 }
 
 
-void
-_initialize_ser_hardwire (void)
-{
-  struct serial_ops *ops = XMALLOC (struct serial_ops);
 
-  memset (ops, 0, sizeof (struct serial_ops));
-  ops->name = "hardwire";
-  ops->next = 0;
-  ops->open = hardwire_open;
-  ops->close = hardwire_close;
+/* The hardwire ops.  */
+
+static const struct serial_ops hardwire_ops =
+{
+  "hardwire",
+  hardwire_open,
+  hardwire_close,
+  NULL,
   /* FIXME: Don't replace this with the equivalent ser_base*() until
      the old TERMIOS/SGTTY/... timer code has been flushed.  cagney
      1999-09-16.  */
-  ops->readchar = hardwire_readchar;
-  ops->write = ser_base_write;
-  ops->flush_output = hardwire_flush_output;
-  ops->flush_input = hardwire_flush_input;
-  ops->send_break = hardwire_send_break;
-  ops->go_raw = hardwire_raw;
-  ops->get_tty_state = hardwire_get_tty_state;
-  ops->copy_tty_state = hardwire_copy_tty_state;
-  ops->set_tty_state = hardwire_set_tty_state;
-  ops->print_tty_state = hardwire_print_tty_state;
-  ops->noflush_set_tty_state = hardwire_noflush_set_tty_state;
-  ops->setbaudrate = hardwire_setbaudrate;
-  ops->setstopbits = hardwire_setstopbits;
-  ops->drain_output = hardwire_drain_output;
-  ops->async = ser_base_async;
-  ops->read_prim = ser_unix_read_prim;
-  ops->write_prim = ser_unix_write_prim;
-  serial_add_interface (ops);
+  hardwire_readchar,
+  ser_base_write,
+  hardwire_flush_output,
+  hardwire_flush_input,
+  hardwire_send_break,
+  hardwire_raw,
+  hardwire_get_tty_state,
+  hardwire_copy_tty_state,
+  hardwire_set_tty_state,
+  hardwire_print_tty_state,
+  hardwire_noflush_set_tty_state,
+  hardwire_setbaudrate,
+  hardwire_setstopbits,
+  hardwire_drain_output,
+  ser_base_async,
+  ser_unix_read_prim,
+  ser_unix_write_prim
+};
+
+void
+_initialize_ser_hardwire (void)
+{
+  serial_add_interface (&hardwire_ops);
 
 #ifdef HAVE_TERMIOS
 #ifdef CRTSCTS

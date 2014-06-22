@@ -39,6 +39,7 @@ dnl update the value of RL_READLINE_VERSION in readline.h when this changes
 LIBVERSION=6.2
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 dnl configure defaults
 opt_curses=no
@@ -268,7 +269,7 @@ AC_SUBST(SHARED_TARGET)
 AC_SUBST(STATIC_INSTALL_TARGET)
 AC_SUBST(SHARED_INSTALL_TARGET)
 
-case "$host_os" in
+case "$build_os" in
 msdosdjgpp*)	BUILD_DIR=`pwd.exe` ;;	# to prevent //d/path/file
 *)		BUILD_DIR=`pwd` ;;
 esac

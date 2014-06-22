@@ -1,5 +1,5 @@
 /* GNU/Linux/m32r specific low level interface, for the remote server for GDB.
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 
 /* Defined in auto-generated file reg-m32r.c.  */
 void init_registers_m32r (void);
+extern const struct target_desc *tdesc_m32r;
 
 #define m32r_num_regs 25
 
@@ -87,11 +88,33 @@ m32r_breakpoint_at (CORE_ADDR where)
   return 0;
 }
 
+static void
+m32r_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_m32r;
+}
+
+static struct usrregs_info m32r_usrregs_info =
+  {
+    m32r_num_regs,
+    m32r_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &m32r_usrregs_info,
+  };
+
+static const struct regs_info *
+m32r_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_m32r,
-  m32r_num_regs,
-  m32r_regmap,
-  NULL,
+  m32r_arch_setup,
+  m32r_regs_info,
   m32r_cannot_fetch_register,
   m32r_cannot_store_register,
   NULL, /* fetch_register */
@@ -103,3 +126,9 @@ struct linux_target_ops the_low_target = {
   0,
   m32r_breakpoint_at,
 };
+
+void
+initialize_low_arch (void)
+{
+  init_registers_m32r ();
+}

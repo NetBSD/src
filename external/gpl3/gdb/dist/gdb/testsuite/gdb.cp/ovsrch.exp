@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -34,7 +34,7 @@ proc test_class {class} {
     set conditional2 "if (A::outer::func ())"
     foreach ovld [array names tests] {
 	set method "${class}::foo  ($ovld)  const"
-	set result "Breakpoint (\[0-9\]).*file .*/ovsrch$tests($ovld).*"
+	set result "Breakpoint (\[0-9\]).*file .*ovsrch$tests($ovld).*"
 	gdb_test "break $method" $result
 	gdb_test "break '$method'" $result
 

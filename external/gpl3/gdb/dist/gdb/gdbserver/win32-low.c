@@ -1,5 +1,5 @@
 /* Low level interface to Windows debugging, for gdbserver.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by Leo Zayas.  Based on "win32-nat.c" from GDB.
 
@@ -25,6 +25,8 @@
 #include "mem-break.h"
 #include "win32-low.h"
 #include "gdbthread.h"
+#include "dll.h"
+#include "hostio.h"
 
 #include <stdint.h>
 #include <windows.h>
@@ -32,7 +34,6 @@
 #include <imagehlp.h>
 #include <tlhelp32.h>
 #include <psapi.h>
-#include <sys/param.h>
 #include <process.h>
 
 #ifndef USE_WIN32API
@@ -79,6 +80,11 @@ static enum gdb_signal last_sig = GDB_SIGNAL_0;
 /* The current debug event from WaitForDebugEvent.  */
 static DEBUG_EVENT current_event;
 
+/* A status that hasn't been reported to the core yet, and so
+   win32_wait should return it next, instead of fetching the next
+   debug event off the win32 API.  */
+static struct target_waitstatus cached_status;
+
 /* Non zero if an interrupt request is to be satisfied by suspending
    all threads.  */
 static int soft_interrupt_requested = 0;
@@ -87,14 +93,21 @@ static int soft_interrupt_requested = 0;
    by suspending all the threads.  */
 static int faked_breakpoint = 0;
 
+const struct target_desc *win32_tdesc;
+
 #define NUM_REGS (the_low_target.num_regs)
 
-typedef BOOL WINAPI (*winapi_DebugActiveProcessStop) (DWORD dwProcessId);
-typedef BOOL WINAPI (*winapi_DebugSetProcessKillOnExit) (BOOL KillOnExit);
-typedef BOOL WINAPI (*winapi_DebugBreakProcess) (HANDLE);
-typedef BOOL WINAPI (*winapi_GenerateConsoleCtrlEvent) (DWORD, DWORD);
+typedef BOOL (WINAPI *winapi_DebugActiveProcessStop) (DWORD dwProcessId);
+typedef BOOL (WINAPI *winapi_DebugSetProcessKillOnExit) (BOOL KillOnExit);
+typedef BOOL (WINAPI *winapi_DebugBreakProcess) (HANDLE);
+typedef BOOL (WINAPI *winapi_GenerateConsoleCtrlEvent) (DWORD, DWORD);
 
+static ptid_t win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
+			  int options);
 static void win32_resume (struct thread_resume *resume_info, size_t n);
+#ifndef _WIN32_WCE
+static void win32_ensure_ntdll_loaded (void);
+#endif
 
 /* Get the thread ID from the current selected inferior (the current
    thread).  */
@@ -193,9 +206,6 @@ child_add_thread (DWORD pid, DWORD tid, HANDLE h, void *tlb)
   th->thread_local_base = (CORE_ADDR) (uintptr_t) tlb;
 
   add_thread (ptid, th);
-  set_inferior_regcache_data ((struct thread_info *)
-			      find_inferior_id (&all_threads, ptid),
-			      new_register_cache ());
 
   if (the_low_target.thread_added != NULL)
     (*the_low_target.thread_added) (th);
@@ -280,21 +290,30 @@ static int
 child_xfer_memory (CORE_ADDR memaddr, char *our, int len,
 		   int write, struct target_ops *target)
 {
-  SIZE_T done;
+  BOOL success;
+  SIZE_T done = 0;
+  DWORD lasterror = 0;
   uintptr_t addr = (uintptr_t) memaddr;
 
   if (write)
     {
-      WriteProcessMemory (current_process_handle, (LPVOID) addr,
-			  (LPCVOID) our, len, &done);
+      success = WriteProcessMemory (current_process_handle, (LPVOID) addr,
+				    (LPCVOID) our, len, &done);
+      if (!success)
+	lasterror = GetLastError ();
       FlushInstructionCache (current_process_handle, (LPCVOID) addr, len);
     }
   else
     {
-      ReadProcessMemory (current_process_handle, (LPCVOID) addr, (LPVOID) our,
-			 len, &done);
+      success = ReadProcessMemory (current_process_handle, (LPCVOID) addr,
+				   (LPVOID) our, len, &done);
+      if (!success)
+	lasterror = GetLastError ();
     }
-  return done;
+  if (!success && lasterror == ERROR_PARTIAL_COPY && done > 0)
+    return done;
+  else
+    return success ? done : -1;
 }
 
 /* Clear out any old thread list and reinitialize it to a pristine
@@ -308,6 +327,8 @@ child_init_thread_list (void)
 static void
 do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
 {
+  struct process_info *proc;
+
   last_sig = GDB_SIGNAL_0;
 
   current_process_handle = proch;
@@ -319,11 +340,44 @@ do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
 
   memset (&current_event, 0, sizeof (current_event));
 
-  add_process (pid, attached);
+  proc = add_process (pid, attached);
+  proc->tdesc = win32_tdesc;
   child_init_thread_list ();
 
   if (the_low_target.initial_stuff != NULL)
     (*the_low_target.initial_stuff) ();
+
+  cached_status.kind = TARGET_WAITKIND_IGNORE;
+
+  /* Flush all currently pending debug events (thread and dll list) up
+     to the initial breakpoint.  */
+  while (1)
+    {
+      struct target_waitstatus status;
+
+      win32_wait (minus_one_ptid, &status, 0);
+
+      /* Note win32_wait doesn't return thread events.  */
+      if (status.kind != TARGET_WAITKIND_LOADED)
+	{
+	  cached_status = status;
+	  break;
+	}
+
+      {
+	struct thread_resume resume;
+
+	resume.thread = minus_one_ptid;
+	resume.kind = resume_continue;
+	resume.sig = 0;
+
+	win32_resume (&resume, 1);
+      }
+    }
+
+#ifndef _WIN32_WCE
+  win32_ensure_ntdll_loaded ();
+#endif
 }
 
 /* Resume all artificially suspended threads if we are continuing
@@ -513,7 +567,7 @@ static int
 win32_create_inferior (char *program, char **program_args)
 {
 #ifndef USE_WIN32API
-  char real_path[MAXPATHLEN];
+  char real_path[PATH_MAX];
   char *orig_path, *new_path, *path_ptr;
 #endif
   BOOL ret;
@@ -544,8 +598,7 @@ win32_create_inferior (char *program, char **program_args)
       cygwin_conv_path_list (CCP_POSIX_TO_WIN_A, path_ptr, new_path, size);
       setenv ("PATH", new_path, 1);
      }
-  cygwin_conv_path (CCP_POSIX_TO_WIN_A, program, real_path,
-		    MAXPATHLEN);
+  cygwin_conv_path (CCP_POSIX_TO_WIN_A, program, real_path, PATH_MAX);
   program = real_path;
 #endif
 
@@ -1088,6 +1141,86 @@ failed:
   return 0;
 }
 
+#ifndef _WIN32_WCE
+/* On certain versions of Windows, the information about ntdll.dll
+   is not available yet at the time we get the LOAD_DLL_DEBUG_EVENT,
+   thus preventing us from reporting this DLL as an SO. This has been
+   witnessed on Windows 8.1, for instance.  A possible explanation
+   is that ntdll.dll might be mapped before the SO info gets created
+   by the Windows system -- ntdll.dll is the first DLL to be reported
+   via LOAD_DLL_DEBUG_EVENT and other DLLs do not seem to suffer from
+   that problem.
+
+   If we indeed are missing ntdll.dll, this function tries to recover
+   from this issue, after the fact.  Do nothing if we encounter any
+   issue trying to locate that DLL.  */
+
+static void
+win32_ensure_ntdll_loaded (void)
+{
+  struct inferior_list_entry *dll_e;
+  size_t i;
+  HMODULE dh_buf[1];
+  HMODULE *DllHandle = dh_buf;
+  DWORD cbNeeded;
+  BOOL ok;
+
+  for (dll_e = all_dlls.head; dll_e != NULL; dll_e = dll_e->next)
+    {
+      struct dll_info *dll = (struct dll_info *) dll_e;
+
+      if (strcasecmp (lbasename (dll->name), "ntdll.dll") == 0)
+	return;
+    }
+
+  if (!load_psapi ())
+    return;
+
+  cbNeeded = 0;
+  ok = (*win32_EnumProcessModules) (current_process_handle,
+				    DllHandle,
+				    sizeof (HMODULE),
+				    &cbNeeded);
+
+  if (!ok || !cbNeeded)
+    return;
+
+  DllHandle = (HMODULE *) alloca (cbNeeded);
+  if (!DllHandle)
+    return;
+
+  ok = (*win32_EnumProcessModules) (current_process_handle,
+				    DllHandle,
+				    cbNeeded,
+				    &cbNeeded);
+  if (!ok)
+    return;
+
+  for (i = 0; i < ((size_t) cbNeeded / sizeof (HMODULE)); i++)
+    {
+      MODULEINFO mi;
+      char dll_name[MAX_PATH];
+
+      if (!(*win32_GetModuleInformation) (current_process_handle,
+					  DllHandle[i],
+					  &mi,
+					  sizeof (mi)))
+	continue;
+      if ((*win32_GetModuleFileNameExA) (current_process_handle,
+					 DllHandle[i],
+					 dll_name,
+					 MAX_PATH) == 0)
+	continue;
+      if (strcasecmp (lbasename (dll_name), "ntdll.dll") == 0)
+	{
+	  win32_add_one_solib (dll_name,
+			       (CORE_ADDR) (uintptr_t) mi.lpBaseOfDll);
+	  return;
+	}
+    }
+}
+#endif
+
 typedef HANDLE (WINAPI *winapi_CreateToolhelp32Snapshot) (DWORD, DWORD);
 typedef BOOL (WINAPI *winapi_Module32First) (HANDLE, LPMODULEENTRY32);
 typedef BOOL (WINAPI *winapi_Module32Next) (HANDLE, LPMODULEENTRY32);
@@ -1582,6 +1715,17 @@ win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 {
   struct regcache *regcache;
 
+  if (cached_status.kind != TARGET_WAITKIND_IGNORE)
+    {
+      /* The core always does a wait after creating the inferior, and
+	 do_initial_child_stuff already ran the inferior to the
+	 initial breakpoint (or an exit, if creating the process
+	 fails).  Report it now.  */
+      *ourstatus = cached_status;
+      cached_status.kind = TARGET_WAITKIND_IGNORE;
+      return debug_event_ptid (&current_event);
+    }
+
   while (1)
     {
       if (!get_child_debug_event (ourstatus))
@@ -1601,21 +1745,6 @@ win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 
 	  regcache = get_thread_regcache (current_inferior, 1);
 	  child_fetch_inferior_registers (regcache, -1);
-
-	  if (ourstatus->kind == TARGET_WAITKIND_LOADED
-	      && !server_waiting)
-	    {
-	      /* When gdb connects, we want to be stopped at the
-		 initial breakpoint, not in some dll load event.  */
-	      child_continue (DBG_CONTINUE, -1);
-	      break;
-	    }
-
-	  /* We don't expose _LOADED events to gdbserver core.  See
-	     the `dlls_changed' global.  */
-	  if (ourstatus->kind == TARGET_WAITKIND_LOADED)
-	    ourstatus->kind = TARGET_WAITKIND_STOPPED;
-
 	  return debug_event_ptid (&current_event);
 	default:
 	  OUTMSG (("Ignoring unknown internal event, %d\n", ourstatus->kind));

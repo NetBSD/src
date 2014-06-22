@@ -1,9 +1,50 @@
+2013-10-15  Hans-Peter Nilsson  <hp@axis.com>
+
+	* create-version.sh: Align parameters to match those of
+	../../gdb/common/create-version.sh.
+	* Make-common.in (srcsim): New variable.
+	(version.c): Adjust call to create-version.sh as per above.
+
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-09-03  Mike Stump  <mikestump@comcast.net>
+
+	* sim-options.c (complete_option_list): Mark text and word const.
+
+2013-06-28  Tom Tromey  <tromey@redhat.com>
+
+	* Make-common.in (version.c): Use version.in, not
+	common/version.in.
+	* create-version.sh: Likewise.
+
+2013-06-24  Joel Brobecker  <brobecker@adacore.com>
+
+	* create-version.sh: New script. Adapted from
+	gdb/commong/create-version.sh.
+	* Make-common.in (version.c): Update rule dependencies,
+	and re-implement using create-version.sh.
+
+2013-06-21  Nick Clifton  <nickc@redhat.com>
+
+	* gennltvals.sh: Add msp430 support.
+	* nltvals.def: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Replace maintainer-mode code with AM_MAINTAINER_MODE.
+	* aclocal.m4, configure: Regenerate.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	PR build/15414:
+	* acinclude.m4 (SIM_AC_OPTION_WARNINGS): Do not use
+	-Wformat-nonliteral with -Wno-format.
+
 2013-03-26  Mike Frysinger  <vapier@gentoo.org>
 
-	* acinclude.m4 (SIM_AC_OPTION_HARDWARE): Rename sim_hw_p setup to
-	enable_sim_hardware.  Move content of 3rd arg to AC_ARG_ENABLE to
-	outside of the macro.  Merge the "always" check with this code.
-	Delete the code in the 4th arg.
+	* acinclude.m4: Regenerate.
 
 2013-03-23  Joel Sherrill  <joel.sherrill@oarcorp.com>
 

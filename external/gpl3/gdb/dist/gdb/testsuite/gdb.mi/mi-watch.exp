@@ -1,4 +1,4 @@
-# Copyright 1999-2013 Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -141,21 +141,23 @@ proc test_watchpoint_triggering {type} {
     clear_xfail *-*-*
 }
 
-proc test_watchpoint_all {type} { with_test_prefix "$type" {
-    upvar srcdir srcdir
-    upvar subdir subdir
-    upvar binfile binfile
+proc test_watchpoint_all {type} {
+    with_test_prefix "$type" {
+	upvar srcdir srcdir
+	upvar subdir subdir
+	upvar binfile binfile
 
-    mi_delete_breakpoints
-    mi_gdb_reinitialize_dir $srcdir/$subdir
-    mi_gdb_load ${binfile}
+	mi_delete_breakpoints
+	mi_gdb_reinitialize_dir $srcdir/$subdir
+	mi_gdb_load ${binfile}
 
-    mi_runto callee4
-    test_watchpoint_creation_and_listing $type
-    #test_rwatch_creation_and_listing $type
-    #test_awatch_creation_and_listing $type
-    test_watchpoint_triggering $type
-}}
+	mi_runto callee4
+	test_watchpoint_creation_and_listing $type
+	#test_rwatch_creation_and_listing $type
+	#test_awatch_creation_and_listing $type
+	test_watchpoint_triggering $type
+    }
+}
 
 # Run the tests twice, once using software watchpoints...
 mi_gdb_test "567-gdb-set can-use-hw-watchpoints 0" \

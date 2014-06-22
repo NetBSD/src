@@ -1,5 +1,5 @@
 /* ELF STT_GNU_IFUNC support.
-   Copyright 2009
+   Copyright 2009-2013
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -104,51 +104,6 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
   return TRUE;
 }
 
-/* For a STT_GNU_IFUNC symbol, create a dynamic reloc section, SRELOC,
-   for the input section, SEC, and append this reloc to HEAD.  */
-
-asection *
-_bfd_elf_create_ifunc_dyn_reloc (bfd *abfd, struct bfd_link_info *info,
-				 asection *sec, asection *sreloc,
-				 struct elf_dyn_relocs **head)
-{
-  struct elf_dyn_relocs *p;
-  struct elf_link_hash_table *htab = elf_hash_table (info);
-
-  if (sreloc == NULL)
-    {
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
-
-      if (htab->dynobj == NULL)
-	htab->dynobj = abfd;
-
-      sreloc = _bfd_elf_make_dynamic_reloc_section (sec, htab->dynobj,
-						    bed->s->log_file_align,
-						    abfd,
-						    bed->rela_plts_and_copies_p);
-      if (sreloc == NULL)
-	return NULL;
-    }
-
-  p = *head;
-  if (p == NULL || p->sec != sec)
-    {
-      bfd_size_type amt = sizeof *p;
-
-      p = ((struct elf_dyn_relocs *) bfd_alloc (htab->dynobj, amt));
-      if (p == NULL)
-	return NULL;
-      p->next = *head;
-      *head = p;
-      p->sec = sec;
-      p->count = 0;
-      p->pc_count = 0;
-    }
-  p->count += 1;
-
-  return sreloc;
-}
-
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs against a STT_GNU_IFUNC symbol definition.  */
 
@@ -157,6 +112,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 				    struct elf_link_hash_entry *h,
 				    struct elf_dyn_relocs **head,
 				    unsigned int plt_entry_size,
+				    unsigned int plt_header_size,
 				    unsigned int got_entry_size)
 {
   asection *plt, *gotplt, *relplt;
@@ -187,23 +143,20 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 
   htab = elf_hash_table (info);
 
+  /* When building shared library, we need to handle the case where it is
+     marked with regular reference, but not non-GOT reference since the
+     non-GOT reference bit may not be set here.  */
+  if (info->shared && !h->non_got_ref && h->ref_regular)
+    for (p = *head; p != NULL; p = p->next)
+      if (p->count)
+	{
+	  h->non_got_ref = 1;
+	  goto keep;
+	}
+
   /* Support garbage collection against STT_GNU_IFUNC symbols.  */
   if (h->plt.refcount <= 0 && h->got.refcount <= 0)
     {
-      /* When building shared library, we need to handle the case
-         where it is marked with regular reference, but not non-GOT
-	 reference.  It may happen if we didn't see STT_GNU_IFUNC
-	 symbol at the time when checking relocations.  */
-      if (info->shared
-	  && !h->non_got_ref
-	  && h->ref_regular)
-	for (p = *head; p != NULL; p = p->next)
-	  if (p->count)
-	    {
-	      h->non_got_ref = 1;
-	      goto keep;
-	    }
-
       h->got = htab->init_got_offset;
       h->plt = htab->init_plt_offset;
       *head = NULL;
@@ -241,7 +194,7 @@ keep:
       /* If this is the first .plt entry, make room for the special
 	 first entry.  */
       if (plt->size == 0)
-	plt->size += plt_entry_size;
+	plt->size += plt_header_size;
     }
   else
     {
