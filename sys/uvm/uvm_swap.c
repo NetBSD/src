@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.168 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.169 2014/06/22 19:09:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.168 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.169 2014/06/22 19:09:39 maxv Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -492,13 +492,17 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	    || SCARG(uap, cmd) == SWAP_STATS13
 #endif
 	    ) {
-		if ((size_t)misc > (size_t)uvmexp.nswapdev)
-			misc = uvmexp.nswapdev;
-
-		if (misc == 0) {
+		if (misc < 0) {
 			error = EINVAL;
 			goto out;
 		}
+		if (misc == 0 || uvmexp.nswapdev == 0) {
+			error = 0;
+			goto out;
+		}
+		/* Make sure userland cannot exhaust kernel memory */
+		if ((size_t)misc > (size_t)uvmexp.nswapdev)
+			misc = uvmexp.nswapdev;
 		KASSERT(misc > 0);
 #if defined(COMPAT_13)
 		if (SCARG(uap, cmd) == SWAP_STATS13)
