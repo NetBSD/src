@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.10 2010/11/22 19:56:51 plunky Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.11 2014/06/22 08:10:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.10 2010/11/22 19:56:51 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.11 2014/06/22 08:10:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -132,7 +132,7 @@ hci_dump(void)
 #endif
 
 int
-hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
+hci_ioctl_pcb(unsigned long cmd, void *data, struct lwp *l)
 {
 	struct btreq *btr = data;
 	struct hci_unit *unit;
