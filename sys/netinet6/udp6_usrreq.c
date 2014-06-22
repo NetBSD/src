@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.98 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.99 2014/06/22 08:10:19 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.98 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.99 2014/06/22 08:10:19 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -677,16 +677,10 @@ udp6_detach(struct socket *so)
 	splx(s);
 }
 
-int
-udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
+static int
+udp6_ioctl(struct socket *so, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
 {
-	struct in6pcb *in6p = sotoin6pcb(so);
-	int s, error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-
 	/*
 	 * MAPPED_ADDR implementation info:
 	 *  Mapped addr support for PRU_CONTROL is not necessary.
@@ -697,10 +691,21 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	 *  So AF_INET socket need to be used to control AF_INET addrs,
 	 *  and AF_INET6 socket for AF_INET6 addrs.
 	 */
-	if (req == PRU_CONTROL) {
-		return in6_control(so, (u_long)m, (void *)addr6,
-				   (struct ifnet *)control, l);
-	}
+	return in6_control(so, (u_long)m, (void *)addr6,
+			   (struct ifnet *)control, l);
+}
+
+int
+udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
+    struct mbuf *control, struct lwp *l)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+	int s, error = 0;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_CONTROL);
+
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
 		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
@@ -874,10 +879,12 @@ udp6_statinc(u_int stat)
 PR_WRAP_USRREQS(udp6)
 #define	udp6_attach	udp6_attach_wrapper
 #define	udp6_detach	udp6_detach_wrapper
+#define	udp6_ioctl	udp6_ioctl_wrapper
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
 	.pr_attach	= udp6_attach,
 	.pr_detach	= udp6_detach,
+	.pr_ioctl	= udp6_ioctl,
 	.pr_generic	= udp6_usrreq,
 };
