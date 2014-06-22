@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.51 2013/10/25 16:09:29 martin Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.52 2014/06/22 17:36:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 /*
- * allocator of kernel wired memory.
+ * Allocator of kernel wired memory.
  */
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.51 2013/10/25 16:09:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.52 2014/06/22 17:36:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -178,15 +178,7 @@ static size_t kmem_cache_maxidx __read_mostly;
 static pool_cache_t kmem_cache_big[KMEM_CACHE_BIG_COUNT] __cacheline_aligned;
 static size_t kmem_cache_big_maxidx __read_mostly;
 
-
 #if defined(DEBUG) && defined(_HARDKERNEL)
-#ifndef KMEM_GUARD_DEPTH
-#define KMEM_GUARD_DEPTH 0
-#endif
-int kmem_guard_depth = KMEM_GUARD_DEPTH;
-size_t kmem_guard_size;
-static struct uvm_kmguard kmem_guard;
-static void *kmem_freecheck;
 #define	KMEM_POISON
 #define	KMEM_REDZONE
 #define	KMEM_SIZE
@@ -217,6 +209,16 @@ static void kmem_size_check(void *, size_t);
 #define	kmem_size_set(p, sz)	/* nothing */
 #define	kmem_size_check(p, sz)	/* nothing */
 #endif
+
+#if defined(KMEM_GUARD)
+#ifndef KMEM_GUARD_DEPTH
+#define KMEM_GUARD_DEPTH 0
+#endif
+int kmem_guard_depth = KMEM_GUARD_DEPTH;
+size_t kmem_guard_size;
+static struct uvm_kmguard kmem_guard;
+static void *kmem_freecheck;
+#endif /* defined(KMEM_GUARD) */
 
 CTASSERT(KM_SLEEP == PR_WAITOK);
 CTASSERT(KM_NOSLEEP == PR_NOWAIT);
