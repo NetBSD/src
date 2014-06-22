@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.45 2014/06/09 13:03:16 rmind Exp $	*/
+/*	$NetBSD: intr.c,v 1.46 2014/06/22 20:09:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.45 2014/06/09 13:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46 2014/06/22 20:09:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -242,7 +242,15 @@ softint_init(struct cpu_info *ci)
 	if (!rump_threads)
 		return;
 
+	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
+	for (i = 0; i < SOFTINT_COUNT; i++) {
+		rumpuser_cv_init(&slev[i].si_cv);
+		LIST_INIT(&slev[i].si_pending);
+	}
+	cd->cpu_softcpu = slev;
+
 	/* overloaded global init ... */
+	/* XXX: should be done the last time we are called */
 	if (ci->ci_index == 0) {
 		int sithr_swap;
 
@@ -260,13 +268,6 @@ softint_init(struct cpu_info *ci)
 				sithread_establish(i);
 		}
 	}
-
-	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
-	for (i = 0; i < SOFTINT_COUNT; i++) {
-		rumpuser_cv_init(&slev[i].si_cv);
-		LIST_INIT(&slev[i].si_pending);
-	}
-	cd->cpu_softcpu = slev;
 
 	/* well, not really a "soft" interrupt ... */
 	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
