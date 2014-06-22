@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "agent.h"
+#include "filestuff.h"
 
 int debug_agent = 0;
 
@@ -168,7 +169,7 @@ gdb_connect_sync_socket (int pid)
   if (res >= UNIX_PATH_MAX)
     return -1;
 
-  res = fd = socket (PF_UNIX, SOCK_STREAM, 0);
+  res = fd = gdb_socket_cloexec (PF_UNIX, SOCK_STREAM, 0);
   if (res == -1)
     {
       warning (_("error opening sync socket: %s"), strerror (errno));
@@ -219,7 +220,8 @@ agent_run_command (int pid, const char *cmd, int len)
   int ret = write_inferior_memory (ipa_sym_addrs.addr_cmd_buf,
 				   (const unsigned char *) cmd, len);
 #else
-  int ret = target_write_memory (ipa_sym_addrs.addr_cmd_buf, cmd, len);
+  int ret = target_write_memory (ipa_sym_addrs.addr_cmd_buf,
+				 (gdb_byte *) cmd, len);
 #endif
 
   if (ret != 0)
