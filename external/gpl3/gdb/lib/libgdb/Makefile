@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/06/13 01:17:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/06/22 23:53:01 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-I${DIST}/gdb/common \
+		-I${DIST}/gdb/gnulib/import \
 		-I${DIST}/include/opcode \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
@@ -41,8 +42,8 @@ CWARNFLAGS.clang+=	-Wno-switch
 .include <bsd.lib.mk>
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/doc \
-    ${GDBARCHDIR}
+    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
+    ${DIST}/gdb/doc ${GDBARCHDIR}
 
 #
 COPTS+=	-Wno-stack-protector
