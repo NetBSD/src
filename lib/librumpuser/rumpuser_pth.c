@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.40 2014/04/02 17:09:23 justin Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.41 2014/06/22 20:17:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.40 2014/04/02 17:09:23 justin Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.41 2014/06/22 20:17:23 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -87,7 +87,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 	for (i = 0; i < 10; i++) {
 		const struct timespec ts = {0, 10*1000*1000};
 
-		rv = pthread_create(ptidp, &pattr, f, arg);
+		KLOCK_WRAP(rv = pthread_create(ptidp, &pattr, f, arg));
 		if (rv != EAGAIN)
 			break;
 		nanosleep(&ts, NULL);
