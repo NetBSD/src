@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2013 Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@
 #include "regcache.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_ptrace.h"
 #include "gdb_wait.h"
 #include <signal.h>
@@ -40,7 +40,8 @@
 #ifdef PT_GET_PROCESS_STATE
 
 static int
-inf_ptrace_follow_fork (struct target_ops *ops, int follow_child)
+inf_ptrace_follow_fork (struct target_ops *ops, int follow_child,
+			int detach_fork)
 {
   pid_t pid, fpid;
   ptrace_state_t pe;
@@ -122,24 +123,20 @@ inf_ptrace_create_inferior (struct target_ops *ops,
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
   int ops_already_pushed = target_is_pushed (ops);
-  struct cleanup *back_to = NULL;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   if (! ops_already_pushed)
     {
       /* Clear possible core file with its process_stratum.  */
       push_target (ops);
-      back_to = make_cleanup_unpush_target (ops);
+      make_cleanup_unpush_target (ops);
     }
 
   pid = fork_inferior (exec_file, allargs, env, inf_ptrace_me, NULL,
 		       NULL, NULL, NULL);
 
-  if (! ops_already_pushed)
-    discard_cleanups (back_to);
+  discard_cleanups (back_to);
 
-  /* START_INFERIOR_TRAPS_EXPECTED is defined in inferior.h, and will
-     be 1 or 2 depending on whether we're starting without or with a
-     shell.  */
   startup_inferior (START_INFERIOR_TRAPS_EXPECTED);
 
   /* On some targets, there must be some explicit actions taken after
@@ -196,7 +193,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
   int ops_already_pushed = target_is_pushed (ops);
-  struct cleanup *back_to = NULL;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   pid = parse_pid_to_attach (args);
 
@@ -208,7 +205,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
       /* target_pid_to_str already uses the target.  Also clear possible core
 	 file with its process_stratum.  */
       push_target (ops);
-      back_to = make_cleanup_unpush_target (ops);
+      make_cleanup_unpush_target (ops);
     }
 
   if (from_tty)
@@ -243,8 +240,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
      target, it should decorate the ptid later with more info.  */
   add_thread_silent (inferior_ptid);
 
-  if (! ops_already_pushed)
-    discard_cleanups (back_to);
+  discard_cleanups (back_to);
 }
 
 #ifdef PT_GET_PROCESS_STATE
@@ -268,7 +264,7 @@ inf_ptrace_post_attach (int pid)
    specified by ARGS.  If FROM_TTY is non-zero, be chatty about it.  */
 
 static void
-inf_ptrace_detach (struct target_ops *ops, char *args, int from_tty)
+inf_ptrace_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   int sig = 0;

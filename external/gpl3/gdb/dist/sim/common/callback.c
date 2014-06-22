@@ -1,5 +1,5 @@
 /* Remote target callback routines.
-   Copyright 1995-2013 Free Software Foundation, Inc.
+   Copyright 1995-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -62,43 +62,43 @@
 /* ??? sim_cb_printf should be cb_printf, but until the callback support is
    broken out of the simulator directory, these are here to not require
    sim-utils.h.  */
-void sim_cb_printf PARAMS ((host_callback *, const char *, ...));
-void sim_cb_eprintf PARAMS ((host_callback *, const char *, ...));
+void sim_cb_printf (host_callback *, const char *, ...);
+void sim_cb_eprintf (host_callback *, const char *, ...);
 
 extern CB_TARGET_DEFS_MAP cb_init_syscall_map[];
 extern CB_TARGET_DEFS_MAP cb_init_errno_map[];
 extern CB_TARGET_DEFS_MAP cb_init_open_map[];
 
-extern int system PARAMS ((const char *));
+extern int system (const char *);
 
-static int os_init PARAMS ((host_callback *));
-static int os_shutdown PARAMS ((host_callback *));
-static int os_unlink PARAMS ((host_callback *, const char *));
-static long os_time PARAMS ((host_callback *, long *));
-static int os_system PARAMS ((host_callback *, const char *));
-static int os_rename PARAMS ((host_callback *, const char *, const char *));
-static int os_write_stdout PARAMS ((host_callback *, const char *, int));
-static void os_flush_stdout PARAMS ((host_callback *));
-static int os_write_stderr PARAMS ((host_callback *, const char *, int));
-static void os_flush_stderr PARAMS ((host_callback *));
-static int os_write PARAMS ((host_callback *, int, const char *, int));
-static int os_read_stdin PARAMS ((host_callback *, char *, int));
-static int os_read PARAMS ((host_callback *, int, char *, int));
-static int os_open PARAMS ((host_callback *, const char *, int));
-static int os_lseek PARAMS ((host_callback *, int, long, int));
-static int os_isatty PARAMS ((host_callback *, int));
-static int os_get_errno PARAMS ((host_callback *));
-static int os_close PARAMS ((host_callback *, int));
-static void os_vprintf_filtered PARAMS ((host_callback *, const char *, va_list));
-static void os_evprintf_filtered PARAMS ((host_callback *, const char *, va_list));
-static void os_error PARAMS ((host_callback *, const char *, ...))
+static int os_init (host_callback *);
+static int os_shutdown (host_callback *);
+static int os_unlink (host_callback *, const char *);
+static long os_time (host_callback *, long *);
+static int os_system (host_callback *, const char *);
+static int os_rename (host_callback *, const char *, const char *);
+static int os_write_stdout (host_callback *, const char *, int);
+static void os_flush_stdout (host_callback *);
+static int os_write_stderr (host_callback *, const char *, int);
+static void os_flush_stderr (host_callback *);
+static int os_write (host_callback *, int, const char *, int);
+static int os_read_stdin (host_callback *, char *, int);
+static int os_read (host_callback *, int, char *, int);
+static int os_open (host_callback *, const char *, int);
+static int os_lseek (host_callback *, int, long, int);
+static int os_isatty (host_callback *, int);
+static int os_get_errno (host_callback *);
+static int os_close (host_callback *, int);
+static void os_vprintf_filtered (host_callback *, const char *, va_list);
+static void os_evprintf_filtered (host_callback *, const char *, va_list);
+static void os_error (host_callback *, const char *, ...)
 #ifdef __GNUC__
   __attribute__ ((__noreturn__))
 #endif
   ;
-static int fdmap PARAMS ((host_callback *, int));
-static int fdbad PARAMS ((host_callback *, int));
-static int wrap PARAMS ((host_callback *, int));
+static int fdmap (host_callback *, int);
+static int fdbad (host_callback *, int);
+static int wrap (host_callback *, int);
 
 /* Set the callback copy of errno from what we see now.  */
 

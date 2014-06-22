@@ -1,6 +1,6 @@
 /* Native-dependent code for Alpha BSD's.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,7 +92,7 @@ alphabsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct reg gregs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &gregs, 0) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
@@ -106,7 +106,7 @@ alphabsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
@@ -124,13 +124,13 @@ alphabsd_store_inferior_registers (struct target_ops *ops,
   if (regno == -1 || getregs_supplies (regno))
     {
       struct reg gregs;
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
                   (PTRACE_TYPE_ARG3) &gregs, 0) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       alphabsd_fill_reg (regcache, (char *) &gregs, regno);
 
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
                   (PTRACE_TYPE_ARG3) &gregs, 0) == -1)
         perror_with_name (_("Couldn't write registers"));
 
@@ -143,13 +143,13 @@ alphabsd_store_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       alphabsd_fill_fpreg (regcache, (char *) &fpregs, regno);
 
-      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
@@ -158,7 +158,6 @@ alphabsd_store_inferior_registers (struct target_ops *ops,
 
 /* Support for debugging kernel virtual memory images.  */
 
-#include <sys/types.h>
 #include <sys/signal.h>
 #include <machine/pcb.h>
 

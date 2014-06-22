@@ -1,6 +1,6 @@
 /* UI_FILE - a generic STDIO like output stream.
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,9 @@
 #include "defs.h"
 #include "ui-file.h"
 #include "gdb_obstack.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_select.h"
+#include "filestuff.h"
 
 #include <errno.h>
 
@@ -653,6 +654,60 @@ stdio_file_fseek (struct ui_file *file, long offset, int whence)
   return fseek (stdio->file, offset, whence);
 }
 
+#ifdef __MINGW32__
+/* This is the implementation of ui_file method to_write for stderr.
+   gdb_stdout is flushed before writing to gdb_stderr.  */
+
+static void
+stderr_file_write (struct ui_file *file, const char *buf, long length_buf)
+{
+  gdb_flush (gdb_stdout);
+  stdio_file_write (file, buf, length_buf);
+}
+
+/* This is the implementation of ui_file method to_fputs for stderr.
+   gdb_stdout is flushed before writing to gdb_stderr.  */
+
+static void
+stderr_file_fputs (const char *linebuffer, struct ui_file *file)
+{
+  gdb_flush (gdb_stdout);
+  stdio_file_fputs (linebuffer, file);
+}
+#endif
+
+struct ui_file *
+stderr_fileopen (void)
+{
+  struct ui_file *ui_file = stdio_fileopen (stderr);
+
+#ifdef __MINGW32__
+  /* There is no real line-buffering on Windows, see
+     http://msdn.microsoft.com/en-us/library/86cebhfs%28v=vs.71%29.aspx
+     so the stdout is either fully-buffered or non-buffered.  We can't
+     make stdout non-buffered, because of two concerns,
+     1.  non-buffering hurts performance,
+     2.  non-buffering may change GDB's behavior when it is interacting
+     with front-end, such as Emacs.
+
+     We decided to leave stdout as fully buffered, but flush it first
+     when something is written to stderr.  */
+
+  /* Method 'to_write_async_safe' is not overwritten, because there's
+     no way to flush a stream in an async-safe manner.  Fortunately,
+     it doesn't really matter, because:
+     - that method is only used for printing internal debug output
+       from signal handlers.
+     - Windows hosts don't have a concept of async-safeness.  Signal
+       handlers run in a separate thread, so they can call
+       the regular non-async-safe output routines freely.  */
+  set_ui_file_write (ui_file, stderr_file_write);
+  set_ui_file_fputs (ui_file, stderr_file_fputs);
+#endif
+
+  return ui_file;
+}
+
 /* Like fdopen().  Create a ui_file from a previously opened FILE.  */
 
 struct ui_file *
@@ -662,9 +717,9 @@ stdio_fileopen (FILE *file)
 }
 
 struct ui_file *
-gdb_fopen (char *name, char *mode)
+gdb_fopen (const char *name, const char *mode)
 {
-  FILE *f = fopen (name, mode);
+  FILE *f = gdb_fopen_cloexec (name, mode);
 
   if (f == NULL)
     return NULL;

@@ -6,6 +6,7 @@
 #  gdb_sim		simulator library for target
 #  gdb_osabi		default OS ABI to use with target
 #  build_gdbserver	set to "yes" if gdbserver supports target
+#  gdb_have_gcore	set to "true"/"false" if this target can run gcore
 
 # NOTE: Every file added to a gdb_target_obs variable for any target here
 #       must also be added to either ALL_TARGET_OBS or ALL_64_TARGET_OBS
@@ -82,7 +83,7 @@ am33_2.0*-*-linux*)
 
 arm*-wince-pe | arm*-*-mingw32ce*)
 	# Target: ARM based machine running Windows CE (win32)
-	gdb_target_obs="arm-tdep.o arm-wince-tdep.o"
+	gdb_target_obs="arm-tdep.o arm-wince-tdep.o windows-tdep.o"
 	build_gdbserver=yes
 	;;
 arm*-*-linux*)
@@ -130,7 +131,7 @@ bfin-*-*)
 
 cris*)
 	# Target: CRIS
-	gdb_target_obs="cris-tdep.o solib-svr4.o"
+	gdb_target_obs="cris-tdep.o cris-linux-tdep.o linux-tdep.o solib-svr4.o"
 	;;
 
 frv-*-*)
@@ -390,9 +391,25 @@ mn10300-*-*)
 	gdb_sim=../sim/mn10300/libsim.a
 	;;
 
+msp430*-*-elf)
+	gdb_target_obs="msp430-tdep.o"
+	gdb_sim=../sim/msp430/libsim.a
+	;;
+
 mt-*-*)
 	# Target: Morpho Technologies ms1 processor
 	gdb_target_obs="mt-tdep.o"
+	;;
+
+nios2*-*-linux*)
+	# Target: Altera Nios II running Linux
+	gdb_target_obs="nios2-tdep.o nios2-linux-tdep.o solib-svr4.o \
+			symfile-mem.o glibc-tdep.o linux-tdep.o"
+	;;
+
+nios2*-*-*)
+	# Target: Altera Nios II bare-metal
+	gdb_target_obs="nios2-tdep.o"
 	;;
 
 powerpc*-*-freebsd*)
@@ -416,13 +433,13 @@ powerpc-*-openbsd*)
 			solib-svr4.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
 	;;
-powerpc-*-aix* | rs6000-*-*)
+powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
 	# Target: PowerPC running AIX
 	gdb_target_obs="rs6000-tdep.o rs6000-aix-tdep.o xcoffread.o \
-			ppc-sysv-tdep.o solib-svr4.o \
+			ppc-sysv-tdep.o solib-aix.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
 	;;
-powerpc-*-linux* | powerpc64-*-linux*)
+powerpc*-*-linux*)
 	# Target: PowerPC running Linux
 	gdb_target_obs="rs6000-tdep.o ppc-linux-tdep.o ppc-sysv-tdep.o \
 			ppc64-tdep.o solib-svr4.o solib-spu.o \
@@ -448,9 +465,9 @@ powerpc*-*-*)
 	fi
 	;;
 
-s390*-*-*)
+s390*-*-linux*)
 	# Target: S390 running Linux
-	gdb_target_obs="s390-tdep.o solib-svr4.o linux-tdep.o"
+	gdb_target_obs="s390-linux-tdep.o solib-svr4.o linux-tdep.o"
 	build_gdbserver=yes
 	;;
 
@@ -704,4 +721,15 @@ m68*-*-openbsd* | m88*-*-openbsd* | vax-*-openbsd*) ;;
 *-*-dicos*)	gdb_osabi=GDB_OSABI_DICOS ;;
 *-*-symbianelf*)
 		gdb_osabi=GDB_OSABI_SYMBIAN ;;
+powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
+                gdb_osabi=GDB_OSABI_AIX ;;
 esac
+
+# Check whether this target supports gcore.
+# Such target has to call set_gdbarch_find_memory_regions.
+gdb_have_gcore=false
+for t in x ${gdb_target_obs}; do
+  if test "$t" = linux-tdep.o; then
+    gdb_have_gcore=true
+  fi
+done
