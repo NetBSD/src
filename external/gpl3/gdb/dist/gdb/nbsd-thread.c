@@ -198,7 +198,7 @@ nbsd_thread_post_attach (int pid)
    started via the normal ptrace (PTRACE_TRACEME).  */
 
 static void
-nbsd_thread_detach (struct target_ops *ops, char *args, int from_tty)
+nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
   nbsd_thread_deactivate ();
