@@ -1,4 +1,4 @@
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +18,10 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "so-impl-ld"
+standard_testfile .c
 set libfile "solib1"
-set srcfile $srcdir/$subdir/$testfile.c
 set libsrc  $srcdir/$subdir/$libfile.c
-set binfile $objdir/$subdir/$testfile
-set lib_sl  $objdir/$subdir/$libfile.sl
+set lib_sl  [standard_output_file $libfile.sl]
 
 set lib_opts  debug
 set exec_opts [list debug shlib=$lib_sl]
@@ -41,17 +39,15 @@ if [test_compiler_info "hpcc-*"] {
 }
 
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
-     || [gdb_compile $srcfile $binfile executable $exec_opts] != ""} {
+     || [gdb_compile $srcdir/$subdir/$srcfile $binfile \
+	     executable $exec_opts] != ""} {
     untested "Couldn't compile $libsrc or $srcfile."
     return -1
 }
 
 # Start with a fresh gdb
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_load_shlibs $lib_sl
 
 # This program implicitly loads SOM shared libraries.

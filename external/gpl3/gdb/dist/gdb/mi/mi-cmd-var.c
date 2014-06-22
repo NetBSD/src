@@ -1,5 +1,5 @@
 /* MI Command Set - varobj commands.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -24,15 +24,13 @@
 #include "ui-out.h"
 #include "mi-out.h"
 #include "varobj.h"
+#include "language.h"
 #include "value.h"
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 #include "mi-getopt.h"
 #include "gdbthread.h"
-
-const char mi_no_values[] = "--no-values";
-const char mi_simple_values[] = "--simple-values";
-const char mi_all_values[] = "--all-values";
+#include "mi-parse.h"
 
 extern unsigned int varobjdebug;		/* defined in varobj.c.  */
 
@@ -340,26 +338,6 @@ mi_cmd_var_info_num_children (char *command, char **argv, int argc)
   ui_out_field_int (uiout, "numchild", varobj_get_num_children (var));
 }
 
-/* Parse a string argument into a print_values value.  */
-
-static enum print_values
-mi_parse_values_option (const char *arg)
-{
-  if (strcmp (arg, "0") == 0
-      || strcmp (arg, mi_no_values) == 0)
-    return PRINT_NO_VALUES;
-  else if (strcmp (arg, "1") == 0
-	   || strcmp (arg, mi_all_values) == 0)
-    return PRINT_ALL_VALUES;
-  else if (strcmp (arg, "2") == 0
-	   || strcmp (arg, mi_simple_values) == 0)
-    return PRINT_SIMPLE_VALUES;
-  else
-    error (_("Unknown value for PRINT_VALUES\n\
-Must be: 0 or \"%s\", 1 or \"%s\", 2 or \"%s\""),
-	   mi_no_values, mi_simple_values, mi_all_values);
-}
-
 /* Return 1 if given the argument PRINT_VALUES we should display
    the varobj VAR.  */
 
@@ -428,7 +406,7 @@ mi_cmd_var_list_children (char *command, char **argv, int argc)
   children = varobj_list_children (var, &from, &to);
   ui_out_field_int (uiout, "numchild", to - from);
   if (argc == 2 || argc == 4)
-    print_values = mi_parse_values_option (argv[0]);
+    print_values = mi_parse_print_values (argv[0]);
   else
     print_values = PRINT_NO_VALUES;
 
@@ -502,7 +480,7 @@ void
 mi_cmd_var_info_expression (char *command, char **argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
-  enum varobj_languages lang;
+  const struct language_defn *lang;
   struct varobj *var;
 
   if (argc != 1)
@@ -513,7 +491,7 @@ mi_cmd_var_info_expression (char *command, char **argv, int argc)
 
   lang = varobj_get_language (var);
 
-  ui_out_field_string (uiout, "lang", varobj_language_string[(int) lang]);
+  ui_out_field_string (uiout, "lang", lang->la_natural_name);
   ui_out_field_string (uiout, "exp", varobj_get_expression (var));
 }
 
@@ -698,7 +676,7 @@ mi_cmd_var_update (char *command, char **argv, int argc)
     name = argv[1];
 
   if (argc == 2)
-    print_values = mi_parse_values_option (argv[0]);
+    print_values = mi_parse_print_values (argv[0]);
   else
     print_values = PRINT_NO_VALUES;
 
@@ -741,7 +719,6 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
 		   int explicit)
 {
   struct ui_out *uiout = current_uiout;
-  struct cleanup *cleanup = NULL;
   VEC (varobj_update_result) *changes;
   varobj_update_result *r;
   int i;
@@ -752,9 +729,10 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
     {
       char *display_hint;
       int from, to;
+      struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
 
       if (mi_version (uiout) > 1)
-        cleanup = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
+	make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
       ui_out_field_string (uiout, "name", varobj_get_objname (r->varobj));
 
       switch (r->status)
@@ -828,8 +806,7 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
 	  r->new = NULL;	/* Paranoia.  */
 	}
 
-      if (mi_version (uiout) > 1)
-	do_cleanups (cleanup);
+      do_cleanups (cleanup);
     }
   VEC_free (varobj_update_result, changes);
 }

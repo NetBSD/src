@@ -1,5 +1,5 @@
 /* Vector API for GDB.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
    This file is part of GDB.
@@ -22,7 +22,7 @@
 
 #include <stddef.h>
 
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 
 /* The macros here implement a set of templated vector types and

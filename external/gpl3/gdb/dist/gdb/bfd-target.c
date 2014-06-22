@@ -1,6 +1,6 @@
 /* Very simple "bfd" target, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,7 +67,7 @@ target_bfd_get_section_table (struct target_ops *ops)
 }
 
 static void
-target_bfd_xclose (struct target_ops *t, int quitting)
+target_bfd_xclose (struct target_ops *t)
 {
   struct target_bfd_data *data = t->to_data;
 
@@ -96,6 +96,7 @@ target_bfd_reopen (struct bfd *abfd)
   t->to_xfer_partial = target_bfd_xfer_partial;
   t->to_xclose = target_bfd_xclose;
   t->to_data = data;
+  t->to_magic = OPS_MAGIC;
 
   return t;
 }

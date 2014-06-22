@@ -1,6 +1,6 @@
 /* Target-dependent code for Cygwin running on i386's, for GDB.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,15 +19,13 @@
 
 #include "defs.h"
 #include "osabi.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "i386-tdep.h"
 #include "windows-tdep.h"
 #include "regset.h"
 #include "gdb_obstack.h"
 #include "xml-support.h"
 #include "gdbcore.h"
-#include "solib.h"
-#include "solib-target.h"
 #include "inferior.h"
 
 /* Core file support.  */
@@ -129,7 +127,7 @@ core_process_module_section (bfd *abfd, asection *sect, void *obj)
   size_t module_name_size;
   CORE_ADDR base_addr;
 
-  char *buf = NULL;
+  gdb_byte *buf = NULL;
 
   if (strncmp (sect->name, ".module", 7) != 0)
     return;
@@ -154,9 +152,9 @@ core_process_module_section (bfd *abfd, asection *sect, void *obj)
   module_name_size =
     extract_unsigned_integer (buf + 8, 4, byte_order);
 
-  module_name = buf + 12;
-  if (module_name - buf + module_name_size > bfd_get_section_size (sect))
+  if (12 + module_name_size > bfd_get_section_size (sect))
     goto out;
+  module_name = (char *) buf + 12;
 
   /* The first module is the .exe itself.  */
   if (data->module_count != 0)
@@ -233,6 +231,8 @@ i386_cygwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
+  windows_init_abi (info, gdbarch);
+
   set_gdbarch_skip_trampoline_code (gdbarch, i386_cygwin_skip_trampoline_code);
 
   set_gdbarch_skip_main_prologue (gdbarch, i386_skip_main_prologue);
@@ -243,8 +243,6 @@ i386_cygwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset_num_regs = ARRAY_SIZE (i386_windows_gregset_reg_offset);
   tdep->sizeof_gregset = I386_WINDOWS_SIZEOF_GREGSET;
 
-  set_solib_ops (gdbarch, &solib_target_so_ops);
-
   /* Core file support.  */
   set_gdbarch_regset_from_core_section
     (gdbarch, i386_windows_regset_from_core_section);
@@ -253,13 +251,6 @@ i386_cygwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_core_pid_to_str (gdbarch, i386_windows_core_pid_to_str);
 
   set_gdbarch_auto_wide_charset (gdbarch, i386_cygwin_auto_wide_charset);
-
-  /* Canonical paths on this target look like
-     `c:\Program Files\Foo App\mydll.dll', for example.  */
-  set_gdbarch_has_dos_based_file_system (gdbarch, 1);
-
-  set_gdbarch_iterate_over_objfiles_in_search_order
-    (gdbarch, windows_iterate_over_objfiles_in_search_order);
 }
 
 static enum gdb_osabi
@@ -267,8 +258,6 @@ i386_cygwin_osabi_sniffer (bfd *abfd)
 {
   char *target_name = bfd_get_target (abfd);
 
-  /* Interix also uses pei-i386.
-     We need a way to distinguish between the two.  */
   if (strcmp (target_name, "pei-i386") == 0)
     return GDB_OSABI_CYGWIN;
 

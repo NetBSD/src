@@ -1,5 +1,5 @@
 /* emulos.c -- Small OS emulation
-   Copyright 1999-2013 Free Software Foundation, Inc.
+   Copyright 1999-2014 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.

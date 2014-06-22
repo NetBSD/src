@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2013 Free Software Foundation, Inc.
+# Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] 
 }
 
 if [get_compiler_info] {
-    return -1;
+    return -1
 }
 
 if { $gcc_compiled } then { continue }

@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -49,7 +49,7 @@ shnbsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct reg inferior_registers;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
@@ -70,7 +70,7 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
     {
       struct reg inferior_registers;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
@@ -78,7 +78,7 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
 				  (char *) &inferior_registers,
 				  SHNBSD_SIZEOF_GREGS);
 
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
 	perror_with_name (_("Couldn't set registers"));
 

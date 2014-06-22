@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,8 +21,9 @@
 #include "gdbcmd.h"
 #include "exceptions.h"
 #include "xml-support.h"
+#include "filestuff.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include "safe-ctype.h"
 
 /* Debugging flag.  */
@@ -439,17 +440,18 @@ gdb_xml_cleanup (void *arg)
   xfree (parser);
 }
 
-/* Initialize and return a parser.  Register a cleanup to destroy the
-   parser.  */
+/* Initialize a parser and store it to *PARSER_RESULT.  Register a
+   cleanup to destroy the parser.  */
 
-static struct gdb_xml_parser *
-gdb_xml_create_parser_and_cleanup_1 (const char *name,
-				     const struct gdb_xml_element *elements,
-				     void *user_data, struct cleanup **old_chain)
+static struct cleanup *
+gdb_xml_create_parser_and_cleanup (const char *name,
+				   const struct gdb_xml_element *elements,
+				   void *user_data,
+				   struct gdb_xml_parser **parser_result)
 {
   struct gdb_xml_parser *parser;
   struct scope_level start_scope;
-  struct cleanup *dummy;
+  struct cleanup *result;
 
   /* Initialize the parser.  */
   parser = XZALLOC (struct gdb_xml_parser);
@@ -475,25 +477,8 @@ gdb_xml_create_parser_and_cleanup_1 (const char *name,
   start_scope.elements = elements;
   VEC_safe_push (scope_level_s, parser->scopes, &start_scope);
 
-  if (old_chain == NULL)
-    old_chain = &dummy;
-
-  *old_chain = make_cleanup (gdb_xml_cleanup, parser);
-  return parser;
-}
-
-/* Initialize and return a parser.  Register a cleanup to destroy the
-   parser.  */
-
-struct gdb_xml_parser *
-gdb_xml_create_parser_and_cleanup (const char *name,
-				   const struct gdb_xml_element *elements,
-				   void *user_data)
-{
-  struct cleanup *old_chain;
-
-  return gdb_xml_create_parser_and_cleanup_1 (name, elements, user_data,
-					      &old_chain);
+  *parser_result = parser;
+  return make_cleanup (gdb_xml_cleanup, parser);
 }
 
 /* External entity handler.  The only external entities we support
@@ -622,8 +607,8 @@ gdb_xml_parse_quick (const char *name, const char *dtd_name,
   struct cleanup *back_to;
   int result;
 
-  parser = gdb_xml_create_parser_and_cleanup_1 (name, elements,
-						user_data, &back_to);
+  back_to = gdb_xml_create_parser_and_cleanup (name, elements,
+					       user_data, &parser);
   if (dtd_name != NULL)
     gdb_xml_use_dtd (parser, dtd_name);
   result = gdb_xml_parse (parser, document);
@@ -896,7 +881,8 @@ xml_process_xincludes (const char *name, const char *text,
   obstack_init (&data->obstack);
   back_to = make_cleanup (xml_xinclude_cleanup, data);
 
-  parser = gdb_xml_create_parser_and_cleanup (name, xinclude_elements, data);
+  gdb_xml_create_parser_and_cleanup (name, xinclude_elements,
+				     data, &parser);
   parser->is_xinclude = 1;
 
   data->include_depth = depth;
@@ -1044,11 +1030,11 @@ xml_fetch_content_from_file (const char *filename, void *baton)
 
       if (fullname == NULL)
 	malloc_failure (0);
-      file = fopen (fullname, FOPEN_RT);
+      file = gdb_fopen_cloexec (fullname, FOPEN_RT);
       xfree (fullname);
     }
   else
-    file = fopen (filename, FOPEN_RT);
+    file = gdb_fopen_cloexec (filename, FOPEN_RT);
 
   if (file == NULL)
     return NULL;

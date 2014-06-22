@@ -1,6 +1,6 @@
 /* Native-dependent code for AMD64 BSD's.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,7 +49,7 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
@@ -62,7 +62,7 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
@@ -83,13 +83,13 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
                   (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       amd64_collect_native_gregset (regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
 	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name (_("Couldn't write registers"));
 
@@ -101,13 +101,13 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       amd64_collect_fxsave (regcache, regnum, &fpregs);
 
-      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
+      if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
@@ -137,7 +137,7 @@ amd64bsd_dr_get (ptid_t ptid, int regnum)
 {
   struct dbreg dbregs;
 
-  if (ptrace (PT_GETDBREGS, PIDGET (inferior_ptid),
+  if (ptrace (PT_GETDBREGS, ptid_get_pid (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
     perror_with_name (_("Couldn't read debug registers"));
 
@@ -149,7 +149,7 @@ amd64bsd_dr_set (int regnum, unsigned long value)
 {
   struct dbreg dbregs;
 
-  if (ptrace (PT_GETDBREGS, PIDGET (inferior_ptid),
+  if (ptrace (PT_GETDBREGS, ptid_get_pid (inferior_ptid),
               (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
     perror_with_name (_("Couldn't get debug registers"));
 
@@ -160,7 +160,7 @@ amd64bsd_dr_set (int regnum, unsigned long value)
 
   DBREG_DRX ((&dbregs), regnum) = value;
 
-  if (ptrace (PT_SETDBREGS, PIDGET (inferior_ptid),
+  if (ptrace (PT_SETDBREGS, ptid_get_pid (inferior_ptid),
               (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
     perror_with_name (_("Couldn't write debug registers"));
 }

@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,14 +26,14 @@ set opts {debug}
 
 if [build_executable $testfile.exp $testfile $srcfile $opts] {
     untested mi-logging.exp
-    return -1;
+    return -1
 }
 
 if {[mi_run_to_main] < 0} {
     return -1
 }
 
-set milogfile "milog.txt"
+set milogfile [standard_output_file "milog.txt"]
 
 mi_gdb_test "-gdb-set logging file $milogfile" ".*"
 

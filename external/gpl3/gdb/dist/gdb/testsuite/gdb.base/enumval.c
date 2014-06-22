@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2013 Free Software Foundation, Inc.
+   Copyright 2012-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 enum e { I, J = 0xffffffffU, K = 0xf000000000000000ULL } e = J, f = K;
 
+enum { ZERO };
+
 void
 dummy()
 {
@@ -26,5 +28,5 @@ int
 main(void)
 {
   dummy();
-  return 0;
+  return ZERO; /* This is here to ensure it survives into the debug info.  */
 }

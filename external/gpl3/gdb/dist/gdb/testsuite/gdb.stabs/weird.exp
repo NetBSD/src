@@ -1,4 +1,4 @@
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -292,7 +292,8 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-set binfile [remote_download host ${binfile} object.o]
+set binfile [gdb_remote_download host ${binfile} \
+		 [standard_output_file object.o]]
 send_gdb "file $binfile\n"
 # If $binfile is very long, a \r (but not a \n) will echo in the
 # middle of the echo of the command.  So to match the echo, we

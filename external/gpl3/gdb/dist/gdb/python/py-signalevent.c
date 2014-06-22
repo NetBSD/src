@@ -1,6 +1,6 @@
 /* Python interface to inferior signal stop events.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,8 @@
 #include "defs.h"
 #include "py-stopevent.h"
 
-static PyTypeObject signal_event_object_type;
+static PyTypeObject signal_event_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
 
 PyObject *
 create_signal_event_object (enum gdb_signal stop_signal)

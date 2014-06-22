@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for ELF.
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright 2011, 2012, 2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1220,7 +1220,7 @@ tilegx64_short_plt_entry[PLT_ENTRY_SIZE] =
 };
 
 /* Reuse an existing info 10 bundle.  */
-static const bfd_byte const *tilegx64_plt_tail_entry =
+static const bfd_byte *const tilegx64_plt_tail_entry =
   &tilegx64_short_plt_entry[4 * TILEGX_BUNDLE_SIZE_IN_BYTES];
 
 static const bfd_byte
@@ -1265,7 +1265,7 @@ tilegx32_short_plt_entry[PLT_ENTRY_SIZE] =
 };
 
 /* Reuse an existing info 10 bundle.  */
-static const bfd_byte const *tilegx32_plt_tail_entry =
+static const bfd_byte *const tilegx32_plt_tail_entry =
   &tilegx64_short_plt_entry[4 * TILEGX_BUNDLE_SIZE_IN_BYTES];
 
 static int
@@ -1738,6 +1738,10 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       r_type = tilegx_elf_tls_transition (info, r_type, h == NULL,
@@ -3187,12 +3191,13 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned ATTRIBUTE_UNUSED;
+	  bfd_boolean ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	  if (warned)
 	    {
 	      /* To avoid generating warning messages about truncated
@@ -4370,7 +4375,9 @@ tilegx_elf_plt_sym_val (bfd_vma i, const asection *plt,
 }
 
 enum elf_reloc_type_class
-tilegx_reloc_type_class (const Elf_Internal_Rela *rela)
+tilegx_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			 const asection *rel_sec ATTRIBUTE_UNUSED,
+			 const Elf_Internal_Rela *rela)
 {
   switch ((int) TILEGX_ELF_R_TYPE (rela->r_info))
     {

@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 #include "frame-unwind.h"
 #include "command.h"
 #include "gdbcmd.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "observer.h"
 #include "gdbthread.h"
 

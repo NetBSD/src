@@ -111,6 +111,7 @@
 @V@/gdb/ChangeLog-2010 @V@/gdb/ChangeLog.010
 @V@/gdb/ChangeLog-2011 @V@/gdb/ChangeLog.011
 @V@/gdb/ChangeLog-2012 @V@/gdb/ChangeLog.012
+@V@/gdb/ChangeLog-2013 @V@/gdb/ChangeLog.013
 @V@/gdb/ChangeLog-3.x @V@/gdb/ChangeLog.3-x
 @V@/gdb/ada-exp.tab.c @V@/gdb/ada-exp_tab.c
 @V@/gdb/amd64-windows-nat.c @V@/gdb/a64w-nat.c
@@ -282,8 +283,6 @@
 @V@/gdb/hppnbsd-tdep.c @V@/gdb/hppnb-tdep.c
 @V@/gdb/i386-darwin-nat.c @V@/gdb/i386dw-nat.c
 @V@/gdb/i386-darwin-tdep.c @V@/gdb/i386dw-tdep.c
-@V@/gdb/i386-interix-nat.c @V@/gdb/i386ix-nat.c
-@V@/gdb/i386-interix-tdep.c @V@/gdb/i386ix-tdep.c
 @V@/gdb/i386-linux-tdep.c @V@/gdb/i386lx-tdep.c
 @V@/gdb/i386-linux-nat.c @V@/gdb/i386lx-nat.c
 @V@/gdb/i386bsd-nat.c @V@/gdb/i3bsd-nat.c

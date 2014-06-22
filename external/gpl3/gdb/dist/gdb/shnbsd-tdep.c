@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -25,7 +25,7 @@
 #include "value.h"
 #include "osabi.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sh-tdep.h"
 #include "solib-svr4.h"

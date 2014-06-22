@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2013 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,9 +22,7 @@ if [target_info exists no_long_long] {
     return 0
 }
 
-set testfile long_long
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 # What compiler are we using?
 #
@@ -46,10 +44,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [con
 # use this to debug:
 #log_user 1
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 if { ![runto known_types] } then { 
    fail "run to known_types" 
@@ -161,7 +156,7 @@ if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
     # EABI targets default to natural-endian VFP format.
 
     if { ([istarget "arm*-*-*"]) \
-	 && !([istarget "*-*-*eabi"] || \
+	 && !([istarget "*-*-*eabi*"] || \
 	      [istarget "*-*-mingw32ce*"] || \
 	      [istarget "*-*-openbsd*"] || \
 	      [istarget "*-*-symbianelf"]) } then {

@@ -141,6 +141,14 @@ START_RELOC_NUMBERS (elf_ppc64_reloc_type)
   RELOC_NUMBER (R_PPC64_TLSLD,		   108)
   RELOC_NUMBER (R_PPC64_TOCSAVE,	   109)
 
+/* Added when HA and HI relocs were changed to report overflows.  */
+  RELOC_NUMBER (R_PPC64_ADDR16_HIGH,	   110)
+  RELOC_NUMBER (R_PPC64_ADDR16_HIGHA,	   111)
+  RELOC_NUMBER (R_PPC64_TPREL16_HIGH,	   112)
+  RELOC_NUMBER (R_PPC64_TPREL16_HIGHA,	   113)
+  RELOC_NUMBER (R_PPC64_DTPREL16_HIGH,	   114)
+  RELOC_NUMBER (R_PPC64_DTPREL16_HIGHA,	   115)
+
 #ifndef RELOC_MACROS_GEN_FUNC
 /* Fake relocation only used internally by ld.  */
   RELOC_NUMBER (R_PPC64_LO_DS_OPT,	   128)
@@ -161,8 +169,63 @@ START_RELOC_NUMBERS (elf_ppc64_reloc_type)
 
 END_RELOC_NUMBERS (R_PPC64_max)
 
-#define IS_PPC64_TLS_RELOC(R) \
-  ((R) >= R_PPC64_TLS && (R) <= R_PPC64_DTPREL16_HIGHESTA)
+#define IS_PPC64_TLS_RELOC(R)						\
+  (((R) >= R_PPC64_TLS && (R) <= R_PPC64_DTPREL16_HIGHESTA)		\
+   || ((R) >= R_PPC64_TPREL16_HIGH && (R) <= R_PPC64_DTPREL16_HIGHA))
+
+
+/* e_flags bits specifying ABI.
+   1 for original function descriptor using ABI,
+   2 for revised ABI without function descriptors,
+   0 for unspecified or not using any features affected by the differences.  */
+#define EF_PPC64_ABI	3
+
+/* The ELFv2 ABI uses three bits in the symbol st_other field of a
+   function definition to specify the number of instructions between a
+   function's global entry point and local entry point.
+   The global entry point is used when it is necessary to set up the
+   toc pointer (r2) for the function.  Callers must enter the global
+   entry point with r12 set to the global entry point address.  On
+   return from the function, r2 may have a different value to that
+   which it had on entry.
+   The local entry point is used when r2 is known to already be valid
+   for the function.  There is no requirement on r12 when using the
+   local entry point, and on return r2 will contain the same value as
+   at entry.
+   A value of zero in these bits means that the function has a single
+   entry point with no requirement on r12 or r2, and that on return r2
+   will contain the same value as at entry.
+   Values of one and seven are reserved.  */
+#define STO_PPC64_LOCAL_BIT		5
+#define STO_PPC64_LOCAL_MASK		(7 << STO_PPC64_LOCAL_BIT)
+
+// 3 bit other field to bytes.
+static inline unsigned int
+ppc64_decode_local_entry(unsigned int other)
+{
+  return ((1 << other) >> 2) << 2;
+}
+
+// bytes to field value.
+static inline unsigned int
+ppc64_encode_local_entry(unsigned int val)
+{
+  return (val >= 4 * 4
+	  ? (val >= 8 * 4
+	     ? (val >= 16 * 4 ? 6 : 5)
+	     : 4)
+	  : (val >= 2 * 4
+	     ? 3
+	     : (val >= 1 * 4 ? 2 : 0)));
+}
+
+/* st_other to number of bytes.  */
+#define PPC64_LOCAL_ENTRY_OFFSET(other)				\
+  ppc64_decode_local_entry (((other) & STO_PPC64_LOCAL_MASK)	\
+			    >> STO_PPC64_LOCAL_BIT)
+/* number of bytes to st_other.  */
+#define PPC64_SET_LOCAL_ENTRY_OFFSET(val)		\
+  ppc64_encode_local_entry (val) << STO_PPC64_LOCAL_BIT
 
 /* Specify the start of the .glink section.  */
 #define DT_PPC64_GLINK		DT_LOPROC
@@ -171,7 +234,9 @@ END_RELOC_NUMBERS (R_PPC64_max)
 #define DT_PPC64_OPD		(DT_LOPROC + 1)
 #define DT_PPC64_OPDSZ		(DT_LOPROC + 2)
 
-/* Specify that tls descriptors should be optimized.  */
-#define DT_PPC64_TLSOPT		(DT_LOPROC + 3)
+/* Specify whether various optimisations are possible.  */
+#define DT_PPC64_OPT		(DT_LOPROC + 3)
+#define PPC64_OPT_TLS		1
+#define PPC64_OPT_MULTI_TOC	2
 
 #endif /* _ELF_PPC64_H */

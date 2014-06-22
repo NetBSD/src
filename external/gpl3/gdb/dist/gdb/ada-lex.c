@@ -54,7 +54,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -84,6 +83,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -141,7 +142,15 @@ typedef unsigned int flex_uint32_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -811,7 +820,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "ada-lex.l"
 /* FLEX lexer for Ada expressions, for GDB.
-   Copyright (C) 1994-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -870,7 +879,7 @@ static void rewind_to_char (int);
 static int find_dot_all (const char *);
 
 
-#line 874 "ada-lex.c"
+#line 883 "ada-lex.c"
 
 #define INITIAL 0
 #define BEFORE_QUAL_QUOTE 1
@@ -952,7 +961,12 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -971,7 +985,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		unsigned n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1056,7 +1070,7 @@ YY_DECL
 #line 84 "ada-lex.l"
 
 
-#line 1060 "ada-lex.c"
+#line 1074 "ada-lex.c"
 
 	if ( !(yy_init) )
 		{
@@ -1525,7 +1539,7 @@ YY_RULE_SETUP
 #line 288 "ada-lex.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1529 "ada-lex.c"
+#line 1543 "ada-lex.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(BEFORE_QUAL_QUOTE):
 	yyterminate();
@@ -2284,8 +2298,8 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
@@ -2529,7 +2543,7 @@ void yyfree (void * ptr )
 
 
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 
 /* Initialize the lexer for processing new expression. */
 
@@ -2570,8 +2584,7 @@ processInt (const char *base0, const char *num0, const char *exp0)
   ULONGEST result;
   long exp;
   int base;
-
-  char *trailer;
+  const char *trailer;
 
   if (base0 == NULL)
     base = 10;
@@ -2588,7 +2601,7 @@ processInt (const char *base0, const char *num0, const char *exp0)
     exp = strtol(exp0, (char **) NULL, 10);
 
   errno = 0;
-  result = strtoulst (num0, (const char **) &trailer, base);
+  result = strtoulst (num0, &trailer, base);
   if (errno == ERANGE)
     error (_("Integer literal out of range"));
   if (isxdigit(*trailer))
@@ -2739,7 +2752,8 @@ processString (const char *text, int len)
   const char *lim = text + len;
   struct stoken result;
 
-  q = result.ptr = obstack_alloc (&temp_parse_space, len);
+  q = obstack_alloc (&temp_parse_space, len);
+  result.ptr = q;
   p = text;
   while (p < lim)
     {
@@ -2778,19 +2792,20 @@ static int
 find_dot_all (const char *str)
 {
   int i;
-  for (i = 0; str[i] != '\000'; i += 1)
-    {
-      if (str[i] == '.')
-	{
-	  int i0 = i;
-	  do
-	    i += 1;
-	  while (isspace (str[i]));
-	  if (strncmp (str+i, "all", 3) == 0
-	      && ! isalnum (str[i+3]) && str[i+3] != '_')
-	    return i0;
-	}
-    }
+
+  for (i = 0; str[i] != '\000'; i++)
+    if (str[i] == '.')
+      {
+	int i0 = i;
+
+	do
+	  i += 1;
+	while (isspace (str[i]));
+
+	if (strncasecmp (str + i, "all", 3) == 0
+	    && !isalnum (str[i + 3]) && str[i + 3] != '_')
+	  return i0;
+      }
   return -1;
 }
 

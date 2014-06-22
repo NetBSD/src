@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2013 Free Software Foundation, Inc.
+# Copyright (C) 2002-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ proc altivec_abi_tests { extra_flags force_abi } {
 
     if { "$force_abi" == "auto" } {
 	# If the toolchain does not record attributes, skip auto-ABI tests.
-	set readelf_program [transform readelf]
+	set readelf_program [gdb_find_readelf]
 	set result [catch "exec $readelf_program -A $binfile" output]
 
 	if {$result == 0 && ![regexp Tag_GNU_Power_ABI_Vector $output]} {

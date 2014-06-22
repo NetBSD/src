@@ -1,6 +1,6 @@
 /* Interface between GDB and target environments, including files and processes
 
-   Copyright (C) 1990-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -37,6 +37,7 @@ struct uploaded_tp;
 struct static_tracepoint_marker;
 struct traceframe_info;
 struct expression;
+struct dcache_struct;
 
 /* This include file defines the interface between the main part
    of the debugger, and the part which is target-specific, or
@@ -57,12 +58,16 @@ struct expression;
    it goes into the file stratum, which is always below the process
    stratum.  */
 
+#include "target/resume.h"
+#include "target/wait.h"
+#include "target/waitstatus.h"
 #include "bfd.h"
 #include "symtab.h"
 #include "memattr.h"
 #include "vec.h"
 #include "gdb_signals.h"
 #include "btrace.h"
+#include "command.h"
 
 enum strata
   {
@@ -79,106 +84,6 @@ enum thread_control_capabilities
     tc_none = 0,		/* Default: can't control thread execution.  */
     tc_schedlock = 1,		/* Can lock the thread scheduler.  */
   };
-
-/* Stuff for target_wait.  */
-
-/* Generally, what has the program done?  */
-enum target_waitkind
-  {
-    /* The program has exited.  The exit status is in value.integer.  */
-    TARGET_WAITKIND_EXITED,
-
-    /* The program has stopped with a signal.  Which signal is in
-       value.sig.  */
-    TARGET_WAITKIND_STOPPED,
-
-    /* The program has terminated with a signal.  Which signal is in
-       value.sig.  */
-    TARGET_WAITKIND_SIGNALLED,
-
-    /* The program is letting us know that it dynamically loaded something
-       (e.g. it called load(2) on AIX).  */
-    TARGET_WAITKIND_LOADED,
-
-    /* The program has forked.  A "related" process' PTID is in
-       value.related_pid.  I.e., if the child forks, value.related_pid
-       is the parent's ID.  */
-
-    TARGET_WAITKIND_FORKED,
-
-    /* The program has vforked.  A "related" process's PTID is in
-       value.related_pid.  */
-
-    TARGET_WAITKIND_VFORKED,
-
-    /* The program has exec'ed a new executable file.  The new file's
-       pathname is pointed to by value.execd_pathname.  */
-
-    TARGET_WAITKIND_EXECD,
-
-    /* The program had previously vforked, and now the child is done
-       with the shared memory region, because it exec'ed or exited.
-       Note that the event is reported to the vfork parent.  This is
-       only used if GDB did not stay attached to the vfork child,
-       otherwise, a TARGET_WAITKIND_EXECD or
-       TARGET_WAITKIND_EXIT|SIGNALLED event associated with the child
-       has the same effect.  */
-    TARGET_WAITKIND_VFORK_DONE,
-
-    /* The program has entered or returned from a system call.  On
-       HP-UX, this is used in the hardware watchpoint implementation.
-       The syscall's unique integer ID number is in value.syscall_id.  */
-
-    TARGET_WAITKIND_SYSCALL_ENTRY,
-    TARGET_WAITKIND_SYSCALL_RETURN,
-
-    /* Nothing happened, but we stopped anyway.  This perhaps should be handled
-       within target_wait, but I'm not sure target_wait should be resuming the
-       inferior.  */
-    TARGET_WAITKIND_SPURIOUS,
-
-    /* An event has occured, but we should wait again.
-       Remote_async_wait() returns this when there is an event
-       on the inferior, but the rest of the world is not interested in
-       it.  The inferior has not stopped, but has just sent some output
-       to the console, for instance.  In this case, we want to go back
-       to the event loop and wait there for another event from the
-       inferior, rather than being stuck in the remote_async_wait()
-       function. sThis way the event loop is responsive to other events,
-       like for instance the user typing.  */
-    TARGET_WAITKIND_IGNORE,
-
-    /* The target has run out of history information,
-       and cannot run backward any further.  */
-    TARGET_WAITKIND_NO_HISTORY,
-
-    /* There are no resumed children left in the program.  */
-    TARGET_WAITKIND_NO_RESUMED
-  };
-
-struct target_waitstatus
-  {
-    enum target_waitkind kind;
-
-    /* Forked child pid, execd pathname, exit status, signal number or
-       syscall number.  */
-    union
-      {
-	int integer;
-	enum gdb_signal sig;
-	ptid_t related_pid;
-	char *execd_pathname;
-	int syscall_number;
-      }
-    value;
-  };
-
-/* Options that can be passed to target_wait.  */
-
-/* Return immediately if there's no event already queued.  If this
-   options is not requested, target_wait blocks waiting for an
-   event.  */
-#define TARGET_WNOHANG 1
 
 /* The structure below stores information about a system call.
    It is basically used in the "catch syscall" command, and in
@@ -240,6 +145,9 @@ enum target_object
      if it is not in a region marked as such, since it is known to be
      "normal" RAM.  */
   TARGET_OBJECT_STACK_MEMORY,
+  /* Memory known to be part of the target code.   This is cached even
+     if it is not in a region marked as such.  */
+  TARGET_OBJECT_CODE_MEMORY,
   /* Kernel Unwind Table.  See "ia64-tdep.c".  */
   TARGET_OBJECT_UNWIND_TABLE,
   /* Transfer auxilliary vector.  */
@@ -260,6 +168,8 @@ enum target_object
   TARGET_OBJECT_LIBRARIES,
   /* Currently loaded libraries specific for SVR4 systems, in XML format.  */
   TARGET_OBJECT_LIBRARIES_SVR4,
+  /* Currently loaded libraries specific to AIX systems, in XML format.  */
+  TARGET_OBJECT_LIBRARIES_AIX,
   /* Get OS specific data.  The ANNEX specifies the type (running
      processes, etc.).  The data being transfered is expected to follow
      the DTD specified in features/osdata.dtd.  */
@@ -293,6 +203,26 @@ enum target_object
   /* Possible future objects: TARGET_OBJECT_FILE, ...  */
 };
 
+/* Possible error codes returned by target_xfer_partial, etc.  */
+
+enum target_xfer_error
+{
+  /* Generic I/O error.  Note that it's important that this is '-1',
+     as we still have target_xfer-related code returning hardcoded
+     '-1' on error.  */
+  TARGET_XFER_E_IO = -1,
+
+  /* Transfer failed because the piece of the object requested is
+     unavailable.  */
+  TARGET_XFER_E_UNAVAILABLE = -2,
+
+  /* Keep list in sync with target_xfer_error_to_string.  */
+};
+
+/* Return the string form of ERR.  */
+
+extern const char *target_xfer_error_to_string (enum target_xfer_error err);
+
 /* Enumeration of the kinds of traceframe searches that a target may
    be able to perform.  */
 
@@ -308,16 +238,26 @@ enum trace_find_type
 typedef struct static_tracepoint_marker *static_tracepoint_marker_p;
 DEF_VEC_P(static_tracepoint_marker_p);
 
+typedef LONGEST
+  target_xfer_partial_ftype (struct target_ops *ops,
+			     enum target_object object,
+			     const char *annex,
+			     gdb_byte *readbuf,
+			     const gdb_byte *writebuf,
+			     ULONGEST offset,
+			     LONGEST len);
+
 /* Request that OPS transfer up to LEN 8-bit bytes of the target's
    OBJECT.  The OFFSET, for a seekable object, specifies the
    starting point.  The ANNEX can be used to provide additional
    data-specific information to the target.
 
-   Return the number of bytes actually transfered, or -1 if the
-   transfer is not supported or otherwise fails.  Return of a positive
-   value less than LEN indicates that no further transfer is possible.
-   Unlike the raw to_xfer_partial interface, callers of these
-   functions do not need to retry partial transfers.  */
+   Return the number of bytes actually transfered, or a negative error
+   code (an 'enum target_xfer_error' value) if the transfer is not
+   supported or otherwise fails.  Return of a positive value less than
+   LEN indicates that no further transfer is possible.  Unlike the raw
+   to_xfer_partial interface, callers of these functions do not need
+   to retry partial transfers.  */
 
 extern LONGEST target_read (struct target_ops *ops,
 			    enum target_object object,
@@ -387,6 +327,9 @@ extern char *target_read_stralloc (struct target_ops *ops,
 				   enum target_object object,
 				   const char *annex);
 
+/* See target_ops->to_xfer_partial.  */
+extern target_xfer_partial_ftype target_xfer_partial;
+
 /* Wrappers to target read/write that perform memory transfers.  They
    throw an error if the memory transfer fails.
 
@@ -420,11 +363,11 @@ struct target_ops
     /* Old targets with a static target vector provide "to_close".
        New re-entrant targets provide "to_xclose" and that is expected
        to xfree everything (including the "struct target_ops").  */
-    void (*to_xclose) (struct target_ops *targ, int quitting);
-    void (*to_close) (int);
+    void (*to_xclose) (struct target_ops *targ);
+    void (*to_close) (void);
     void (*to_attach) (struct target_ops *ops, char *, int);
     void (*to_post_attach) (int);
-    void (*to_detach) (struct target_ops *ops, char *, int);
+    void (*to_detach) (struct target_ops *ops, const char *, int);
     void (*to_disconnect) (struct target_ops *, char *, int);
     void (*to_resume) (struct target_ops *, ptid_t, int, enum gdb_signal);
     ptid_t (*to_wait) (struct target_ops *,
@@ -496,7 +439,7 @@ struct target_ops
     void (*to_terminal_ours_for_output) (void);
     void (*to_terminal_ours) (void);
     void (*to_terminal_save_ours) (void);
-    void (*to_terminal_info) (char *, int);
+    void (*to_terminal_info) (const char *, int);
     void (*to_kill) (struct target_ops *);
     void (*to_load) (char *, int);
     void (*to_create_inferior) (struct target_ops *, 
@@ -506,7 +449,7 @@ struct target_ops
     int (*to_remove_fork_catchpoint) (int);
     int (*to_insert_vfork_catchpoint) (int);
     int (*to_remove_vfork_catchpoint) (int);
-    int (*to_follow_fork) (struct target_ops *, int);
+    int (*to_follow_fork) (struct target_ops *, int, int);
     int (*to_insert_exec_catchpoint) (int);
     int (*to_remove_exec_catchpoint) (int);
     int (*to_set_syscall_catchpoint) (int, int, int, int, int *);
@@ -569,7 +512,8 @@ struct target_ops
        data-specific information to the target.
 
        Return the number of bytes actually transfered, zero when no
-       further transfer is possible, and -1 when the transfer is not
+       further transfer is possible, and a negative error code (really
+       an 'enum target_xfer_error' value) when the transfer is not
        supported.  Return of a positive value smaller than LEN does
        not indicate the end of the object, only the end of the
        transfer; higher level code should continue transferring if
@@ -783,7 +727,7 @@ struct target_ops
       TPP.  If no trace frame matches, return -1.  May throw if the
       operation fails.  */
     int (*to_trace_find) (enum trace_find_type type, int num,
-			  ULONGEST addr1, ULONGEST addr2, int *tpp);
+			  CORE_ADDR addr1, CORE_ADDR addr2, int *tpp);
 
     /* Get the value of the trace state variable number TSV, returning
        1 if the value is known and writing the value itself into the
@@ -814,7 +758,8 @@ struct target_ops
 
     /* Add/change textual notes about the trace run, returning 1 if
        successful, 0 otherwise.  */
-    int (*to_set_trace_notes) (char *user, char *notes, char* stopnotes);
+    int (*to_set_trace_notes) (const char *user, const char *notes,
+			       const char *stopnotes);
 
     /* Return the processor core that thread PTID was last seen on.
        This information is updated only when:
@@ -850,9 +795,18 @@ struct target_ops
       (const char *id);
 
     /* Return a traceframe info object describing the current
-       traceframe's contents.  This method should not cache data;
-       higher layers take care of caching, invalidating, and
-       re-fetching when necessary.  */
+       traceframe's contents.  If the target doesn't support
+       traceframe info, return NULL.  If the current traceframe is not
+       selected (the current traceframe number is -1), the target can
+       choose to return either NULL or an empty traceframe info.  If
+       NULL is returned, for example in remote target, GDB will read
+       from the live inferior.  If an empty traceframe info is
+       returned, for example in tfile target, which means the
+       traceframe info is available, but the requested memory is not
+       available in it.  GDB will try to see if the requested memory
+       is available in the read-only sections.  This method should not
+       cache data; higher layers take care of caching, invalidating,
+       and re-fetching when necessary.  */
     struct traceframe_info *(*to_traceframe_info) (void);
 
     /* Ask the target to use or not to use agent according to USE.  Return 1
@@ -889,7 +843,7 @@ struct target_ops
     void (*to_info_record) (void);
 
     /* Save the recorded execution trace into a file.  */
-    void (*to_save_record) (char *filename);
+    void (*to_save_record) (const char *filename);
 
     /* Delete the recorded execution trace from the current position onwards.  */
     void (*to_delete_record) (void);
@@ -937,6 +891,10 @@ struct target_ops
        (inclusive) to function END (exclusive).  */
     void (*to_call_history_range) (ULONGEST begin, ULONGEST end, int flags);
 
+    /* Nonzero if TARGET_OBJECT_LIBRARIES_SVR4 may be read with a
+       non-empty annex.  */
+    int (*to_augmented_libraries_svr4_read) (void);
+
     int to_magic;
     /* Need sub-structure for target machine related rather than comm related?
      */
@@ -959,15 +917,13 @@ extern struct target_ops current_target;
 #define	target_longname		(current_target.to_longname)
 
 /* Does whatever cleanup is required for a target that we are no
-   longer going to be calling.  QUITTING indicates that GDB is exiting
-   and should not get hung on an error (otherwise it is important to
-   perform clean termination, even if it takes a while).  This routine
-   is automatically always called after popping the target off the
-   target stack - the target's own methods are no longer available
-   through the target vector.  Closing file descriptors and freeing all
-   memory allocated memory are typical things it should do.  */
+   longer going to be calling.  This routine is automatically always
+   called after popping the target off the target stack - the target's
+   own methods are no longer available through the target vector.
+   Closing file descriptors and freeing all memory allocated memory are
+   typical things it should do.  */
 
-void target_close (struct target_ops *targ, int quitting);
+void target_close (struct target_ops *targ);
 
 /* Attaches to a process on the target side.  Arguments are as passed
    to the `attach' command by the user.  This routine can be called
@@ -1001,7 +957,7 @@ void target_attach (char *, int);
    typed by the user (e.g. a signal to send the process).  FROM_TTY
    says whether to be verbose or not.  */
 
-extern void target_detach (char *, int);
+extern void target_detach (const char *, int);
 
 /* Disconnect from the current target without resuming it (leaving it
    waiting for a debugger).  */
@@ -1094,15 +1050,17 @@ int target_supports_disable_randomization (void);
 #define target_can_run_breakpoint_commands() \
   (*current_target.to_can_run_breakpoint_commands) ()
 
-/* Invalidate all target dcaches.  */
-extern void target_dcache_invalidate (void);
-
 extern int target_read_string (CORE_ADDR, char **, int, int *);
 
 extern int target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr,
 			       ssize_t len);
 
+extern int target_read_raw_memory (CORE_ADDR memaddr, gdb_byte *myaddr,
+				   ssize_t len);
+
 extern int target_read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len);
+
+extern int target_read_code (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len);
 
 extern int target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr,
 				ssize_t len);
@@ -1170,13 +1128,13 @@ int target_write_memory_blocks (VEC(memory_write_request_s) *requests,
      (*current_target.to_files_info) (&current_target)
 
 /* Insert a breakpoint at address BP_TGT->placed_address in the target
-   machine.  Result is 0 for success, or an errno value.  */
+   machine.  Result is 0 for success, non-zero for error.  */
 
 extern int target_insert_breakpoint (struct gdbarch *gdbarch,
 				     struct bp_target_info *bp_tgt);
 
 /* Remove a breakpoint at address BP_TGT->placed_address in the target
-   machine.  Result is 0 for success, or an errno value.  */
+   machine.  Result is 0 for success, non-zero for error.  */
 
 extern int target_remove_breakpoint (struct gdbarch *gdbarch,
 				     struct bp_target_info *bp_tgt);
@@ -1288,7 +1246,7 @@ void target_create_inferior (char *exec_file, char *args,
    This function returns 1 if the inferior should not be resumed
    (i.e. there is another event pending).  */
 
-int target_follow_fork (int follow_child);
+int target_follow_fork (int follow_child, int detach_fork);
 
 /* On some targets, we can catch an inferior exec event when it
    occurs.  These functions insert/remove an already-created
@@ -1807,6 +1765,9 @@ extern char *target_fileio_read_stralloc (const char *filename);
 #define target_can_use_agent() \
   (*current_target.to_can_use_agent) ()
 
+#define target_augmented_libraries_svr4_read() \
+  (*current_target.to_augmented_libraries_svr4_read) ()
+
 /* Command logging facility.  */
 
 #define target_log_command(p)						\
@@ -1828,6 +1789,9 @@ int target_verify_memory (const gdb_byte *data,
 
 /* Routines for maintenance of the target structures...
 
+   complete_target_initialization: Finalize a target_ops by filling in
+   any fields needed by the target implementation.
+
    add_target:   Add a target to the list of all possible targets.
 
    push_target:  Make this target the top of the stack of currently used
@@ -1837,11 +1801,14 @@ int target_verify_memory (const gdb_byte *data,
 
    unpush_target: Remove this from the stack of currently used targets,
    no matter where it is on the list.  Returns 0 if no
-   change, 1 if removed from stack.
-
-   pop_target:   Remove the top thing on the stack of current targets.  */
+   change, 1 if removed from stack.  */
 
 extern void add_target (struct target_ops *);
+
+extern void add_target_with_completer (struct target_ops *t,
+				       completer_ftype *completer);
+
+extern void complete_target_initialization (struct target_ops *t);
 
 /* Adds a command ALIAS for target T and marks it deprecated.  This is useful
    for maintaining backwards compatibility when renaming targets.  */
@@ -1856,18 +1823,12 @@ extern void target_pre_inferior (int);
 
 extern void target_preopen (int);
 
-extern void pop_target (void);
-
-/* Does whatever cleanup is required to get rid of all pushed targets.
-   QUITTING is propagated to target_close; it indicates that GDB is
-   exiting and should not get hung on an error (otherwise it is
-   important to perform clean termination, even if it takes a
-   while).  */
-extern void pop_all_targets (int quitting);
+/* Does whatever cleanup is required to get rid of all pushed targets.  */
+extern void pop_all_targets (void);
 
 /* Like pop_all_targets, but pops only targets whose stratum is
    strictly above ABOVE_STRATUM.  */
-extern void pop_all_targets_above (enum strata above_stratum, int quitting);
+extern void pop_all_targets_above (enum strata above_stratum);
 
 extern int target_is_pushed (struct target_ops *t);
 
@@ -1885,13 +1846,12 @@ struct target_section
 
     struct bfd_section *the_bfd_section;
 
-    /* A given BFD may appear multiple times in the target section
-       list, so each BFD is associated with a given key.  The key is
-       just some convenient pointer that can be used to differentiate
-       the BFDs.  These are managed only by convention.  */
-    void *key;
-
-    bfd *bfd;			/* BFD file pointer */
+    /* The "owner" of the section.
+       It can be any unique value.  It is set by add_target_sections
+       and used by remove_target_sections.
+       For example, for executables it is a pointer to exec_bfd and
+       for shlibs it is the so_list pointer.  */
+    void *owner;
   };
 
 /* Holds an array of target sections.  Defined by [SECTIONS..SECTIONS_END[.  */
@@ -1939,8 +1899,6 @@ extern void find_default_attach (struct target_ops *, char *, int);
 
 extern void find_default_create_inferior (struct target_ops *,
 					  char *, char *, char **, int);
-
-extern struct target_ops *find_run_target (void);
 
 extern struct target_ops *find_target_beneath (struct target_ops *);
 
@@ -2008,7 +1966,7 @@ extern void target_stop_recording (void);
 extern void target_info_record (void);
 
 /* See to_save_record in struct target_ops.  */
-extern void target_save_record (char *filename);
+extern void target_save_record (const char *filename);
 
 /* Query if the target supports deleting the execution log.  */
 extern int target_supports_delete_record (void);

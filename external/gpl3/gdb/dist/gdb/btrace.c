@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -272,7 +272,7 @@ compute_ftrace (VEC (btrace_inst_s) *itrace)
   for (idx = 0; VEC_iterate (btrace_inst_s, itrace, idx, binst); ++idx)
     {
       struct symtab_and_line sal;
-      struct minimal_symbol *mfun;
+      struct bound_minimal_symbol mfun;
       struct symbol *fun;
       const char *filename;
       CORE_ADDR pc;
@@ -285,7 +285,7 @@ compute_ftrace (VEC (btrace_inst_s) *itrace)
       fun = find_pc_function (pc);
       mfun = lookup_minimal_symbol_by_pc (pc);
 
-      if (fun == NULL && mfun == NULL)
+      if (fun == NULL && mfun.minsym == NULL)
 	{
 	  DEBUG_FTRACE ("no symbol at %u, pc=%s", idx,
 			core_addr_to_string_nz (pc));
@@ -293,11 +293,11 @@ compute_ftrace (VEC (btrace_inst_s) *itrace)
 	}
 
       /* If we're switching functions, we start over.  */
-      if (ftrace_function_switched (bfun, mfun, fun))
+      if (ftrace_function_switched (bfun, mfun.minsym, fun))
 	{
 	  bfun = VEC_safe_push (btrace_func_s, ftrace, NULL);
 
-	  ftrace_init_func (bfun, mfun, fun, idx);
+	  ftrace_init_func (bfun, mfun.minsym, fun, idx);
 	  ftrace_debug (bfun, "init");
 	}
 

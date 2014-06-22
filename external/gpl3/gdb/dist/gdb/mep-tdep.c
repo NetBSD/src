@@ -1,6 +1,6 @@
 /* Target-dependent code for the Toshiba MeP for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -27,7 +27,7 @@
 #include "gdbtypes.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "inferior.h"
 #include "dis-asm.h"
@@ -1125,13 +1125,6 @@ mep_read_pc (struct regcache *regcache)
   return pc;
 }
 
-static void
-mep_write_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  regcache_cooked_write_unsigned (regcache, MEP_PC_REGNUM, pc);
-}
-
-
 static enum register_status
 mep_pseudo_cr32_read (struct gdbarch *gdbarch,
                       struct regcache *regcache,
@@ -1424,7 +1417,7 @@ mep_pc_in_vliw_section (CORE_ADDR pc)
    anyway.  */
 
 static CORE_ADDR 
-mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, long *insn)
+mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, unsigned long *insn)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int pc_in_vliw_section;
@@ -2470,8 +2463,8 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Register set.  */
   set_gdbarch_read_pc (gdbarch, mep_read_pc);
-  set_gdbarch_write_pc (gdbarch, mep_write_pc);
   set_gdbarch_num_regs (gdbarch, MEP_NUM_RAW_REGS);
+  set_gdbarch_pc_regnum (gdbarch, MEP_PC_REGNUM);
   set_gdbarch_sp_regnum (gdbarch, MEP_SP_REGNUM);
   set_gdbarch_register_name (gdbarch, mep_register_name);
   set_gdbarch_register_type (gdbarch, mep_register_type);
