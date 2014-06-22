@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -62,6 +62,6 @@ extern void (*input_handler) (char *);
 extern int input_fd;
 extern void (*after_char_processing_hook) (void);
 
-extern void cli_command_loop (void);
+extern void cli_command_loop (void *);
 
 #endif

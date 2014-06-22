@@ -1,7 +1,7 @@
 /* Target-dependent code for GNU/Linux running on the Fujitsu FR-V,
    for GDB.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "trad-frame.h"
 #include "frame-unwind.h"
 #include "regset.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "linux-tdep.h"
 
 /* Define the size (in bytes) of an FR-V instruction.  */

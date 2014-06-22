@@ -1,4 +1,4 @@
-#   Copyright 1998-2013 Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
+load_lib "trace-support.exp"
 
 
 gdb_exit
@@ -39,11 +39,11 @@ gdb_file_cmd $binfile
 #
 
 gdb_delete_tracepoints
-set c_test_num [gdb_gettpnum gdb_c_test];
-set asm_test_num [gdb_gettpnum gdb_asm_test];
+set c_test_num [gdb_gettpnum gdb_c_test]
+set asm_test_num [gdb_gettpnum gdb_asm_test]
 if { $c_test_num <= 0 || $asm_test_num <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 # 2.1 info tracepoints (all)
@@ -99,7 +99,7 @@ gdb_test "" "Breakpoint ${decimal}, main.*"
 
 if { ![gdb_target_supports_trace] } then {
     unsupported "Current target does not support trace"
-    return 1;
+    return 1
 }
 
 gdb_test "break end" "Breakpoint \[0-9\] at .*"

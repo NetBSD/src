@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -199,7 +199,7 @@ static int record_full_stop_at_limit = 1;
 static unsigned int record_full_insn_max_num
 	= DEFAULT_RECORD_FULL_INSN_MAX_NUM;
 /* Actual count of insns presently in execution log.  */
-static int record_full_insn_num = 0;
+static unsigned int record_full_insn_num = 0;
 /* Count of insns logged so far (may be larger
    than count of insns presently in execution log).  */
 static ULONGEST record_full_insn_count;
@@ -228,14 +228,7 @@ static void (*record_full_beneath_to_store_registers) (struct target_ops *,
 						       struct regcache *,
 						       int regno);
 static struct target_ops *record_full_beneath_to_xfer_partial_ops;
-static LONGEST
-  (*record_full_beneath_to_xfer_partial) (struct target_ops *ops,
-					  enum target_object object,
-					  const char *annex,
-					  gdb_byte *readbuf,
-					  const gdb_byte *writebuf,
-					  ULONGEST offset,
-					  LONGEST len);
+static target_xfer_partial_ftype *record_full_beneath_to_xfer_partial;
 static int
   (*record_full_beneath_to_insert_breakpoint) (struct gdbarch *,
 					       struct bp_target_info *);
@@ -251,7 +244,7 @@ static void
 
 static void record_full_goto_insn (struct record_full_entry *entry,
 				   enum exec_direction_kind dir);
-static void record_full_save (char *recfilename);
+static void record_full_save (const char *recfilename);
 
 /* Alloc and free functions for record_full_reg, record_full_mem, and
    record_full_end entries.  */
@@ -557,28 +550,24 @@ record_full_arch_list_add_end (void)
 static void
 record_full_check_insn_num (int set_terminal)
 {
-  if (record_full_insn_max_num)
+  if (record_full_insn_num == record_full_insn_max_num)
     {
-      gdb_assert (record_full_insn_num <= record_full_insn_max_num);
-      if (record_full_insn_num == record_full_insn_max_num)
+      /* Ask user what to do.  */
+      if (record_full_stop_at_limit)
 	{
-	  /* Ask user what to do.  */
-	  if (record_full_stop_at_limit)
-	    {
-	      int q;
+	  int q;
 
-	      if (set_terminal)
-		target_terminal_ours ();
-	      q = yquery (_("Do you want to auto delete previous execution "
-			    "log entries when record/replay buffer becomes "
-			    "full (record full stop-at-limit)?"));
-	      if (set_terminal)
-		target_terminal_inferior ();
-	      if (q)
-		record_full_stop_at_limit = 0;
-	      else
-		error (_("Process record: stopped by user."));
-	    }
+	  if (set_terminal)
+	    target_terminal_ours ();
+	  q = yquery (_("Do you want to auto delete previous execution "
+			"log entries when record/replay buffer becomes "
+			"full (record full stop-at-limit)?"));
+	  if (set_terminal)
+	    target_terminal_inferior ();
+	  if (q)
+	    record_full_stop_at_limit = 0;
+	  else
+	    error (_("Process record: stopped by user."));
 	}
     }
 }
@@ -659,8 +648,7 @@ record_full_message (struct regcache *regcache, enum gdb_signal signal)
   record_full_arch_list_head->prev = record_full_list;
   record_full_list = record_full_arch_list_tail;
 
-  if (record_full_insn_num == record_full_insn_max_num
-      && record_full_insn_max_num)
+  if (record_full_insn_num == record_full_insn_max_num)
     record_full_list_release_first ();
   else
     record_full_insn_num++;
@@ -812,13 +800,7 @@ static void (*tmp_to_store_registers) (struct target_ops *,
 				       struct regcache *,
 				       int regno);
 static struct target_ops *tmp_to_xfer_partial_ops;
-static LONGEST (*tmp_to_xfer_partial) (struct target_ops *ops,
-				       enum target_object object,
-				       const char *annex,
-				       gdb_byte *readbuf,
-				       const gdb_byte *writebuf,
-				       ULONGEST offset,
-				       LONGEST len);
+static target_xfer_partial_ftype *tmp_to_xfer_partial;
 static int (*tmp_to_insert_breakpoint) (struct gdbarch *,
 					struct bp_target_info *);
 static int (*tmp_to_remove_breakpoint) (struct gdbarch *,
@@ -1021,7 +1003,7 @@ record_full_open (char *name, int from_tty)
 /* "to_close" target method.  Close the process record target.  */
 
 static void
-record_full_close (int quitting)
+record_full_close (void)
 {
   struct record_full_core_buf_entry *entry;
 
@@ -1573,8 +1555,7 @@ record_full_registers_change (struct regcache *regcache, int regnum)
   record_full_arch_list_head->prev = record_full_list;
   record_full_list = record_full_arch_list_tail;
 
-  if (record_full_insn_num == record_full_insn_max_num
-      && record_full_insn_max_num)
+  if (record_full_insn_num == record_full_insn_max_num)
     record_full_list_release_first ();
   else
     record_full_insn_num++;
@@ -1693,8 +1674,7 @@ record_full_xfer_partial (struct target_ops *ops, enum target_object object,
       record_full_arch_list_head->prev = record_full_list;
       record_full_list = record_full_arch_list_tail;
 
-      if (record_full_insn_num == record_full_insn_max_num
-	  && record_full_insn_max_num)
+      if (record_full_insn_num == record_full_insn_max_num)
 	record_full_list_release_first ();
       else
 	record_full_insn_num++;
@@ -1851,7 +1831,7 @@ record_full_can_execute_reverse (void)
 static gdb_byte *
 record_full_get_bookmark (char *args, int from_tty)
 {
-  gdb_byte *ret = NULL;
+  char *ret = NULL;
 
   /* Return stringified form of instruction count.  */
   if (record_full_list && record_full_list->type == record_full_end)
@@ -1866,14 +1846,16 @@ record_full_get_bookmark (char *args, int from_tty)
 	fprintf_unfiltered (gdb_stdlog,
 			    "record_full_get_bookmark returns NULL\n");
     }
-  return ret;
+  return (gdb_byte *) ret;
 }
 
 /* "to_goto_bookmark" method for process record and prec over core.  */
 
 static void
-record_full_goto_bookmark (gdb_byte *bookmark, int from_tty)
+record_full_goto_bookmark (gdb_byte *raw_bookmark, int from_tty)
 {
+  char *bookmark = (char *) raw_bookmark;
+
   if (record_debug)
     fprintf_unfiltered (gdb_stdlog,
 			"record_full_goto_bookmark receives %s\n", bookmark);
@@ -1890,7 +1872,7 @@ record_full_goto_bookmark (gdb_byte *bookmark, int from_tty)
       /* Pass along to cmd_record_full_goto.  */
     }
 
-  cmd_record_goto ((char *) bookmark, from_tty);
+  cmd_record_goto (bookmark, from_tty);
   return;
 }
 
@@ -1958,14 +1940,14 @@ record_full_info (void)
 		       pulongest (record_full_insn_count));
 
       /* Display log count.  */
-      printf_filtered (_("Log contains %d instructions.\n"),
+      printf_filtered (_("Log contains %u instructions.\n"),
 		       record_full_insn_num);
     }
   else
     printf_filtered (_("No instructions have been logged.\n"));
 
   /* Display max log size.  */
-  printf_filtered (_("Max logged instructions is %d.\n"),
+  printf_filtered (_("Max logged instructions is %u.\n"),
 		   record_full_insn_max_num);
 }
 
@@ -2009,7 +1991,7 @@ record_full_goto_entry (struct record_full_entry *p)
 
   registers_changed ();
   reinit_frame_cache ();
-  print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC);
+  print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
 }
 
 /* The "to_goto_record_begin" target method.  */
@@ -2224,9 +2206,10 @@ record_full_core_xfer_partial (struct target_ops *ops,
 			    xmalloc
 			    (sizeof (struct record_full_core_buf_entry));
 			  entry->p = p;
-			  if (!bfd_malloc_and_get_section (p->bfd,
-							   p->the_bfd_section,
-							   &entry->buf))
+			  if (!bfd_malloc_and_get_section
+			        (p->the_bfd_section->owner,
+				 p->the_bfd_section,
+				 &entry->buf))
 			    {
 			      xfree (entry);
 			      return 0;
@@ -2586,7 +2569,7 @@ record_full_restore (void)
   if (record_full_insn_num > record_full_insn_max_num)
     {
       record_full_insn_max_num = record_full_insn_num;
-      warning (_("Auto increase record/replay buffer limit to %d."),
+      warning (_("Auto increase record/replay buffer limit to %u."),
                record_full_insn_max_num);
     }
 
@@ -2594,7 +2577,7 @@ record_full_restore (void)
   printf_filtered (_("Restored records from core file %s.\n"),
 		   bfd_get_filename (core_bfd));
 
-  print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC);
+  print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
 }
 
 /* bfdcore_write -- write bytes into a core file section.  */
@@ -2637,7 +2620,7 @@ record_full_save_cleanups (void *data)
    format, with an extra section for our data.  */
 
 static void
-record_full_save (char *recfilename)
+record_full_save (const char *recfilename)
 {
   struct record_full_entry *cur_record_full_list;
   uint32_t magic;
@@ -2880,8 +2863,7 @@ static void
 set_record_full_insn_max_num (char *args, int from_tty,
 			      struct cmd_list_element *c)
 {
-  if (record_full_insn_num > record_full_insn_max_num
-      && record_full_insn_max_num)
+  if (record_full_insn_num > record_full_insn_max_num)
     {
       /* Count down record_full_insn_num while releasing records from list.  */
       while (record_full_insn_num > record_full_insn_max_num)
@@ -2979,7 +2961,8 @@ delete the oldest recorded instruction to make room for each new one."),
 			    _("Set record/replay buffer limit."),
 			    _("Show record/replay buffer limit."), _("\
 Set the maximum number of instructions to be stored in the\n\
-record/replay buffer.  Zero means unlimited.  Default is 200000."),
+record/replay buffer.  A value of either \"unlimited\" or zero means no\n\
+limit.  Default is 200000."),
 			    set_record_full_insn_max_num,
 			    NULL, &set_record_full_cmdlist,
 			    &show_record_full_cmdlist);

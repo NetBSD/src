@@ -1,4 +1,4 @@
-#   Copyright 2006-2013 Free Software Foundation, Inc.
+#   Copyright 2006-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ if {![test_compiler_info "gcc-*"]} {
 }
 
 proc do_test { lib1opts lib2opts lib1first } {
-    global objdir srcdir subdir
+    global srcdir subdir
 
     set testfile "solib-weak"
     set srcfile ${testfile}.c
@@ -72,9 +72,9 @@ proc do_test { lib1opts lib2opts lib1first } {
 	append testfile "-lib2"
     }
 
-    set binfile ${objdir}/${subdir}/${testfile}
-    set lib1 ${objdir}/${subdir}/${libfile1}.sl
-    set lib2 ${objdir}/${subdir}/${libfile2}.sl
+    set binfile [standard_output_file ${testfile}]
+    set lib1 [standard_output_file ${libfile1}.sl]
+    set lib2 [standard_output_file ${libfile2}.sl]
 
     if $lib1first {
 	set exec_opts [list debug shlib=${lib1} shlib=${lib2}]

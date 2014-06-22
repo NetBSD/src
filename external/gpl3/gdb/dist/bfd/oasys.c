@@ -1,7 +1,5 @@
 /* BFD back-end for oasys objects.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,6 +26,7 @@
 #include "libbfd.h"
 #include "oasys.h"
 #include "liboasys.h"
+#include "libiberty.h"
 
 /* Read in all the section data and relocation stuff too.  */
 
@@ -1118,7 +1117,7 @@ oasys_openr_next_archived_file (bfd *arch, bfd *prev)
 	{
 	  p->abfd = _bfd_create_empty_archive_element_shell (arch);
 	  p->abfd->origin = p->pos;
-	  p->abfd->filename = p->name;
+	  p->abfd->filename = xstrdup (p->name);
 
 	  /* Fixup a pointer to this element for the member.  */
 	  p->abfd->arelt_data = (void *) p;

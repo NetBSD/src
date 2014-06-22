@@ -1,5 +1,5 @@
 # This testcase is part of GDB, the GNU debugger.
-# Copyright 2007-2013 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,15 +54,27 @@ proc mi_gdbserver_run { } {
 }
 
 proc test_file_transfer { filename description } {
-    mi_gdb_test "-target-file-put \"$filename\" \"down-server\"" \
+    # If we are running everything locally, then we want to be sure to
+    # put the files into the test's standard output location.  On the
+    # other hand, if the host or target is remote, then we need to
+    # continue with the "old-style" directory-less approach.
+    if {![is_remote host] && ![is_remote target]} {
+	set up_server [standard_output_file up-server]
+	set down_server [standard_output_file down-server]
+    } else {
+	set up_server up-server
+	set down_server down-server
+    }
+
+    mi_gdb_test "-target-file-put \"$filename\" \"${down_server}\"" \
 	"\\^done" "put $description"
-    mi_gdb_test "-target-file-get \"down-server\" \"up-server\"" \
+    mi_gdb_test "-target-file-get \"${down_server}\" \"${up_server}\"" \
 	"\\^done" "get $description"
 
     if { ![is_remote target] } {
 	# If we can check the target copy of the file, do that too.
 	# This should catch symmetric errors in upload and download.
-	set result [remote_exec host "cmp -s $filename down-server"]
+	set result [remote_exec host "cmp -s $filename ${down_server}"]
 	if { [lindex $result 0] == 0 } {
 	    pass "compare intermediate $description"
 	} else {
@@ -70,25 +82,25 @@ proc test_file_transfer { filename description } {
 	}
     }
 
-    set result [remote_exec host "cmp -s $filename up-server"]
+    set result [remote_exec host "cmp -s $filename ${up_server}"]
     if { [lindex $result 0] == 0 } {
 	pass "compare $description"
     } else {
 	fail "compare $description"
     }
 
-    mi_gdb_test "-target-file-delete \"down-server\"" \
+    mi_gdb_test "-target-file-delete \"${down_server}\"" \
 	"\\^done" "deleted $description"
 
     if { ![is_remote target] } {
-	if { ! [remote_file target exists down-server] } {
+	if { ! [remote_file target exists ${down_server}] } {
 	    pass "verified deleted $description"
 	} else {
 	    fail "verified deleted $description"
 	}
     }
 
-    catch { file delete up-server }
+    catch { file delete ${up_server} }
 }
 
 mi_gdbserver_run

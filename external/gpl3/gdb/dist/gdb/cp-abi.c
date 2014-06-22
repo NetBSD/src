@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "gdbcmd.h"
 #include "ui-out.h"
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 static struct cp_abi_ops *find_cp_abi (const char *short_name);
 
@@ -179,6 +179,47 @@ cplus_print_vtable (struct value *value)
   (*current_cp_abi.print_vtable) (value);
 }
 
+/* See cp-abi.h.  */
+
+struct value *
+cplus_typeid (struct value *value)
+{
+  if (current_cp_abi.get_typeid == NULL)
+    error (_("GDB cannot find the typeid on this target"));
+  return (*current_cp_abi.get_typeid) (value);
+}
+
+/* See cp-abi.h.  */
+
+struct type *
+cplus_typeid_type (struct gdbarch *gdbarch)
+{
+  if (current_cp_abi.get_typeid_type == NULL)
+    error (_("GDB cannot find the type for 'typeid' on this target"));
+  return (*current_cp_abi.get_typeid_type) (gdbarch);
+}
+
+/* See cp-abi.h.  */
+
+struct type *
+cplus_type_from_type_info (struct value *value)
+{
+  if (current_cp_abi.get_type_from_type_info == NULL)
+    error (_("GDB cannot find the type from a std::type_info on this target"));
+  return (*current_cp_abi.get_type_from_type_info) (value);
+}
+
+/* See cp-abi.h.  */
+
+char *
+cplus_typename_from_type_info (struct value *value)
+{
+  if (current_cp_abi.get_typename_from_type_info == NULL)
+    error (_("GDB cannot find the type name "
+	     "from a std::type_info on this target"));
+  return (*current_cp_abi.get_typename_from_type_info) (value);
+}
+
 int
 cp_pass_by_reference (struct type *type)
 {
@@ -318,7 +359,7 @@ set_cp_abi_cmd (char *args, int from_tty)
 
 static VEC (char_ptr) *
 cp_abi_completer (struct cmd_list_element *ignore,
-		  char *text, char *word)
+		  const char *text, const char *word)
 {
   static const char **cp_abi_names;
 

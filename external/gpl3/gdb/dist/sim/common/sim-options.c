@@ -1,5 +1,5 @@
 /* Simulator option handling.
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -920,7 +920,7 @@ find_match (SIM_DESC sd, sim_cpu *cpu, char *argv[], int *pargi)
 
 static char **
 complete_option_list (char **ret, size_t *cnt, const struct option_list *ol,
-		      char *text, char *word)
+		      const char *text, const char *word)
 {
   const OPTION *opt = NULL;
   int argi;
@@ -950,7 +950,7 @@ complete_option_list (char **ret, size_t *cnt, const struct option_list *ol,
    completed is stored in @word.  Trailing text of @word is not.  */
 
 char **
-sim_complete_command (SIM_DESC sd, char *text, char *word)
+sim_complete_command (SIM_DESC sd, const char *text, const char *word)
 {
   char **ret = NULL;
   size_t cnt = 1;

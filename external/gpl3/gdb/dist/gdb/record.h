@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,10 +36,10 @@ extern struct cmd_list_element *info_record_cmdlist;
 enum record_print_flag
 {
   /* Print the source file and line (if applicable).  */
-  record_print_src_line = (1 << 0),
+  RECORD_PRINT_SRC_LINE = (1 << 0),
 
   /* Print the instruction number range (if applicable).  */
-  record_print_insn_range = (1 << 1),
+  RECORD_PRINT_INSN_RANGE = (1 << 1),
 };
 
 /* Wrapper for target_read_memory that prints a debug message if
@@ -55,7 +55,7 @@ extern void cmd_record_goto (char *arg, int from_tty);
 extern void record_disconnect (struct target_ops *, char *, int);
 
 /* The default "to_detach" target method for record targets.  */
-extern void record_detach (struct target_ops *, char *, int);
+extern void record_detach (struct target_ops *, const char *, int);
 
 /* The default "to_mourn_inferior" target method for record targets.  */
 extern void record_mourn_inferior (struct target_ops *);

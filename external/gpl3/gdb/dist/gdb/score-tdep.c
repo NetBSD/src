@@ -1,7 +1,7 @@
 /* Target-dependent code for the S+core architecture, for GDB,
    the GNU Debugger.
 
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by Qinwei (qinwei@sunnorth.com.cn)
    Contributed by Ching-Peng Lin (cplin@sunplus.com)
@@ -835,7 +835,7 @@ score7_malloc_and_get_memblock (CORE_ADDR addr, CORE_ADDR size)
 }
 
 static void
-score7_free_memblock (char *memblock)
+score7_free_memblock (gdb_byte *memblock)
 {
   xfree (memblock);
 }

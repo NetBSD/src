@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,7 @@
 #include "value.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sparc-tdep.h"
 #include "sparc-ravenscar-thread.h"
@@ -119,6 +119,37 @@ sparc_is_unimp_insn (CORE_ADDR pc)
   const unsigned long insn = sparc_fetch_instruction (pc);
   
   return ((insn & 0xc1c00000) == 0);
+}
+
+/* Return non-zero if the instruction corresponding to PC is an
+   "annulled" branch, i.e. the annul bit is set.  */
+
+int
+sparc_is_annulled_branch_insn (CORE_ADDR pc)
+{
+  /* The branch instructions featuring an annul bit can be identified
+     by the following bit patterns:
+
+     OP=0
+      OP2=1: Branch on Integer Condition Codes with Prediction (BPcc).
+      OP2=2: Branch on Integer Condition Codes (Bcc).
+      OP2=5: Branch on FP Condition Codes with Prediction (FBfcc).
+      OP2=6: Branch on FP Condition Codes (FBcc).
+      OP2=3 && Bit28=0:
+             Branch on Integer Register with Prediction (BPr).
+
+     This leaves out ILLTRAP (OP2=0), SETHI/NOP (OP2=4) and the V8
+     coprocessor branch instructions (Op2=7).  */
+
+  const unsigned long insn = sparc_fetch_instruction (pc);
+  const unsigned op2 = X_OP2 (insn);
+
+  if ((X_OP (insn) == 0)
+      && ((op2 == 1) || (op2 == 2) || (op2 == 5) || (op2 == 6)
+	  || ((op2 == 3) && ((insn & 0x10000000) == 0))))
+    return X_A (insn);
+  else
+    return 0;
 }
 
 /* OpenBSD/sparc includes StackGhost, which according to the author's
@@ -855,7 +886,7 @@ sparc_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
      dynamic linker patches up the first PLT with some code that
      starts with a SAVE instruction.  Patch up PC such that it points
      at the start of our PLT entry.  */
-  if (tdep->plt_entry_size > 0 && in_plt_section (current_pc, NULL))
+  if (tdep->plt_entry_size > 0 && in_plt_section (current_pc))
     pc = current_pc - ((current_pc - pc) % tdep->plt_entry_size);
 
   insn = sparc_fetch_instruction (pc);
@@ -1538,7 +1569,6 @@ sparc_analyze_control_transfer (struct frame_info *frame,
 	  if (X_A (insn))
 	    *npc = 0;
 
-	  gdb_assert (offset != 0);
 	  return pc + offset;
 	}
     }

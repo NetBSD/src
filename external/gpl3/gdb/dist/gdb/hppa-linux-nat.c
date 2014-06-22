@@ -1,6 +1,6 @@
 /* Functions specific to running GDB native on HPPA running GNU/Linux.
 
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 #include "gdbcore.h"
 #include "regcache.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "inferior.h"
 #include "target.h"
 #include "linux-nat.h"
@@ -224,9 +224,9 @@ fetch_register (struct regcache *regcache, int regno)
     }
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = TIDGET (inferior_ptid);
+  tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
-    tid = PIDGET (inferior_ptid); /* Not a threaded program.  */
+    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
 
   errno = 0;
   val = ptrace (PTRACE_PEEKUSER, tid, hppa_linux_register_addr (regno, 0), 0);
@@ -251,9 +251,9 @@ store_register (const struct regcache *regcache, int regno)
     return;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = TIDGET (inferior_ptid);
+  tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
-    tid = PIDGET (inferior_ptid); /* Not a threaded program.  */
+    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
 
   errno = 0;
   regcache_raw_collect (regcache, regno, &val);

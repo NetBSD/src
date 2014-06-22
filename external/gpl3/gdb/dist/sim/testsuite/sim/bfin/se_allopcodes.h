@@ -102,8 +102,7 @@ _match:
 	se_all_load_table
 
 	/* is this the end of the table? */
-	R4 = 0;
-	CC = R4 == R7;
+	CC = R7 == 0;
 	IF CC jump _new_instruction;
 
 	/* is the opcode (R0) greater than the 2nd entry in the table (R6) */
@@ -129,6 +128,25 @@ _match_done:
 	jump _next_instruction;
 
 _new_instruction:
+	/* The table is generated in memory and can be extracted:
+	   (gdb) dump binary memory bin &table next_location
+
+	   16bit:
+	   $ od -j6 -x --width=4 bin | \
+	     awk '{ s=last; e=strtonum("0x"$2); \
+	       printf "\t.dw 0x%04x,\t0x%04x,\t\t0x%02x\n", \
+	          s, e-1, strtonum("0x"seq); \
+	       last=e; seq=$3}'
+
+	   32bit:
+	   $ od -j12 -x --width=8 bin | \
+	     awk '{ s=last; e=strtonum("0x"$3$2); \
+	       printf "\t.dw 0x%04x, 0x%04x,\t0x%04x, 0x%04x,\t\t0x%02x, 0\n", \
+	          and(s,0xffff), rshift(s,16), and(e-1,0xffff), rshift(e-1,16), \
+	          strtonum("0x"seq); \
+	       last=e; seq=$3}'
+
+	   This should be much faster than dumping over serial/jtag.  */
 	se_all_new_insn_stub
 
 	/* output the insn (R0) and excause (R3) if diff from last */
@@ -149,8 +167,10 @@ _legal_instruction:
 _next_instruction:
 	se_all_next_insn
 
+.ifdef BFIN_JTAG
 	/* Make sure the opcode isn't in a write buffer */
 	SSYNC;
+.endif
 
 	R1 = P5;
 	RETX = R1;
@@ -158,9 +178,6 @@ _next_instruction:
 	/* set up pointers to valid data (32Meg), to reduce address violations */
 	reset_dags
 	RETS = r0;
-	RETN = r0;
-	RETE = r0;
-	RETI = r0;
 
 	RTX;
 

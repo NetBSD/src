@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2013 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.
@@ -19,7 +19,8 @@
 srcdir = @srcdir@
 SYSCALLS_SRCDIR = $(srcdir)/../syscalls
 PYTHON_SRCDIR = $(srcdir)/../python/lib
-VPATH = $(srcdir):$(SYSCALLS_SRCDIR):$(PYTHON_SRCDIR)
+SYSTEM_GDBINIT_SRCDIR = $(srcdir)/../system-gdbinit
+VPATH = $(srcdir):$(SYSCALLS_SRCDIR):$(PYTHON_SRCDIR):$(SYSTEM_GDBINIT_SRCDIR)
 
 top_srcdir = @top_srcdir@
 top_builddir = @top_builddir@
@@ -44,6 +45,7 @@ SYSCALLS_DIR = syscalls
 SYSCALLS_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(SYSCALLS_DIR)
 SYSCALLS_FILES = \
 	gdb-syscalls.dtd \
+	arm-linux.xml \
 	ppc-linux.xml ppc64-linux.xml \
 	i386-linux.xml amd64-linux.xml \
 	sparc-linux.xml sparc64-linux.xml \
@@ -53,16 +55,27 @@ PYTHON_DIR = python
 PYTHON_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(PYTHON_DIR)
 PYTHON_FILES = \
 	gdb/__init__.py \
+	gdb/frames.py \
+	gdb/FrameIterator.py \
+	gdb/FrameDecorator.py \
 	gdb/types.py \
 	gdb/printing.py \
 	gdb/prompt.py \
+	gdb/command/bound_registers.py \
 	gdb/command/__init__.py \
+	gdb/command/frame_filters.py \
 	gdb/command/type_printers.py \
 	gdb/command/pretty_printers.py \
 	gdb/command/prompt.py \
 	gdb/command/explore.py \
 	gdb/function/__init__.py \
 	gdb/function/strfns.py
+
+SYSTEM_GDBINIT_DIR = system-gdbinit
+SYSTEM_GDBINIT_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(SYSTEM_GDBINIT_DIR)
+SYSTEM_GDBINIT_FILES = \
+	elinos.py \
+	wrs-linux.py
 
 FLAGS_TO_PASS = \
 	"prefix=$(prefix)" \
@@ -97,7 +110,7 @@ FLAGS_TO_PASS = \
 	"RUNTESTFLAGS=$(RUNTESTFLAGS)"
 
 .PHONY: all
-all: stamp-syscalls stamp-python
+all: stamp-syscalls stamp-python stamp-system-gdbinit
 
 # For portability's sake, we need to handle systems that don't have
 # symbolic links.
@@ -181,6 +194,47 @@ uninstall-python:
 	  done \
 	done
 
+stamp-system-gdbinit: Makefile $(SYSTEM_GDBINIT_FILES)
+	rm -rf ./$(SYSTEM_GDBINIT_DIR)
+	mkdir ./$(SYSTEM_GDBINIT_DIR)
+	files='$(SYSTEM_GDBINIT_FILES)' ; \
+	for file in $$files ; do \
+	  f=$(SYSTEM_GDBINIT_SRCDIR)/$$file ; \
+	  if test -f $$f ; then \
+	    $(INSTALL_DATA) $$f ./$(SYSTEM_GDBINIT_DIR) ; \
+	  fi ; \
+	done
+	touch $@
+
+.PHONY: clean-system-gdbinit
+clean-system-gdbinit:
+	rm -rf $(SYSTEM_GDBINIT_DIR)
+	rm -f stamp-system-gdbinit
+
+.PHONY: install-system-gdbinit
+install-system-gdbinit:
+	$(INSTALL_DIR) $(SYSTEM_GDBINIT_INSTALL_DIR)
+	files='$(SYSTEM_GDBINIT_FILES)' ; \
+	for file in $$files; do \
+	  f=$(SYSTEM_GDBINIT_SRCDIR)/$$file ; \
+	  if test -f $$f ; then \
+	    $(INSTALL_DATA) $$f $(SYSTEM_GDBINIT_INSTALL_DIR) ; \
+	  fi ; \
+	done
+
+.PHONY: uninstall-system-gdbinit
+uninstall-system-gdbinit:
+	files='$(SYSTEM_GDBINIT_FILES)' ; \
+	for file in $$files ; do \
+	  slashdir=`echo "/$$file" | sed 's,/[^/]*$$,,'` ; \
+	  rm -f $(SYSTEM_GDBINIT_INSTALL_DIR)/$$file ; \
+	  while test "x$$file" != "x$$slashdir" ; do \
+	    rmdir 2>/dev/null "$(SYSTEM_GDBINIT_INSTALL_DIR)$$slashdir" ; \
+	    file="$$slashdir" ; \
+	    slashdir=`echo "$$file" | sed 's,/[^/]*$$,,'` ; \
+	  done \
+	done
+
 # Traditionally "install" depends on "all".  But it may be useful
 # not to; for example, if the user has made some trivial change to a
 # source file and doesn't care about rebuilding or just wants to save the
@@ -191,13 +245,13 @@ install: all
 	@$(MAKE) $(FLAGS_TO_PASS) install-only
 
 .PHONY: install-only
-install-only: install-syscalls install-python
+install-only: install-syscalls install-python install-system-gdbinit
 
 .PHONY: uninstall
-uninstall: uninstall-syscalls uninstall-python
+uninstall: uninstall-syscalls uninstall-python uninstall-system-gdbinit
 
 .PHONY: clean
-clean: clean-syscalls clean-python
+clean: clean-syscalls clean-python clean-system-gdbinit
 
 .PHONY: maintainer-clean realclean distclean
 maintainer-clean realclean distclean: clean

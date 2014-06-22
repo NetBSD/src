@@ -389,7 +389,7 @@ _rl_strnicmp (string1, string2, count)
         break;
       s2++;
     }
-  while (--count != 0)
+  while (--count != 0);
 
   return (0);
 }

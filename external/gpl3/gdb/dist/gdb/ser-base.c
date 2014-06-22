@@ -1,6 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 1992-2013 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "event-loop.h"
 
 #include "gdb_select.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include <sys/time.h>
 #ifdef USE_WIN32API
@@ -440,17 +440,18 @@ ser_base_readchar (struct serial *scb, int timeout)
 }
 
 int
-ser_base_write (struct serial *scb, const char *str, int len)
+ser_base_write (struct serial *scb, const void *buf, size_t count)
 {
+  const char *str = buf;
   int cc;
 
-  while (len > 0)
+  while (count > 0)
     {
-      cc = scb->ops->write_prim (scb, str, len); 
+      cc = scb->ops->write_prim (scb, str, count);
 
       if (cc < 0)
 	return 1;
-      len -= cc;
+      count -= cc;
       str += cc;
     }
   return 0;

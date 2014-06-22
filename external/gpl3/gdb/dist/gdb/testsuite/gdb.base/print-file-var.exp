@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Free Software Foundation, Inc.
+# Copyright 2012-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ set executable print-file-var-main
 set lib1 "print-file-var-lib1"
 set lib2 "print-file-var-lib2"
 
-set libobj1 "${objdir}/${subdir}/${lib1}.so"
-set libobj2 "${objdir}/${subdir}/${lib2}.so"
+set libobj1 [standard_output_file ${lib1}.so]
+set libobj2 [standard_output_file ${lib2}.so]
 
 set lib_opts { debug additional_flags=-fPIC }
 
@@ -38,7 +38,7 @@ if { [gdb_compile_shlib ${srcdir}/${subdir}/${lib2}.c \
     return -1
 }
 if { [gdb_compile "${srcdir}/${subdir}/${executable}.c" \
-                  "${objdir}/${subdir}/${executable}" \
+                  [standard_output_file ${executable}] \
                   executable \
                   [list debug shlib=${libobj1} shlib=${libobj2}]]
      != ""} {

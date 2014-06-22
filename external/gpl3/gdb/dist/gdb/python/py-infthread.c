@@ -1,6 +1,6 @@
 /* Python interface to inferior threads.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,8 @@
 #include "inferior.h"
 #include "python-internal.h"
 
-static PyTypeObject thread_object_type;
+static PyTypeObject thread_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("thread_object");
 
 /* Require that INFERIOR be a valid inferior ID.  */
 #define THPY_REQUIRE_VALID(Thread)				\
@@ -48,7 +49,7 @@ create_thread_object (struct thread_info *tp)
     return NULL;
 
   thread_obj->thread = tp;
-  thread_obj->inf_obj = find_inferior_object (PIDGET (tp->ptid));
+  thread_obj->inf_obj = find_inferior_object (ptid_get_pid (tp->ptid));
 
   return thread_obj;
 }
@@ -94,7 +95,7 @@ thpy_set_name (PyObject *self, PyObject *newvalue, void *ignore)
 
   if (newvalue == NULL)
     {
-      PyErr_SetString (PyExc_TypeError, 
+      PyErr_SetString (PyExc_TypeError,
 		       _("Cannot delete `name' attribute."));
       return -1;
     }
@@ -254,15 +255,14 @@ gdbpy_selected_thread (PyObject *self, PyObject *args)
 
 
 
-void
+int
 gdbpy_initialize_thread (void)
 {
   if (PyType_Ready (&thread_object_type) < 0)
-    return;
+    return -1;
 
-  Py_INCREF (&thread_object_type);
-  PyModule_AddObject (gdb_module, "InferiorThread",
-		      (PyObject *) &thread_object_type);
+  return gdb_pymodule_addobject (gdb_module, "InferiorThread",
+				 (PyObject *) &thread_object_type);
 }
 
 

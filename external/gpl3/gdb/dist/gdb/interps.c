@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -36,7 +36,7 @@
 #include "event-top.h"
 #include "interps.h"
 #include "completer.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "top.h"		/* For command_loop.  */
 #include "exceptions.h"
@@ -100,6 +100,9 @@ interp_new (const char *name, const struct interp_procs *procs)
   new_interp->quiet_p = 0;
   new_interp->procs = procs;
   new_interp->inited = 0;
+
+  /* Check for required procs.  */
+  gdb_assert (procs->command_loop_proc != NULL);
 
   return new_interp;
 }
@@ -319,16 +322,9 @@ current_interp_display_prompt_p (void)
 void
 current_interp_command_loop (void)
 {
-  /* Somewhat messy.  For the moment prop up all the old ways of
-     selecting the command loop.  `deprecated_command_loop_hook'
-     should be deprecated.  */
-  if (deprecated_command_loop_hook != NULL)
-    deprecated_command_loop_hook ();
-  else if (current_interpreter != NULL
-	   && current_interpreter->procs->command_loop_proc != NULL)
-    current_interpreter->procs->command_loop_proc (current_interpreter->data);
-  else
-    cli_command_loop ();
+  gdb_assert (current_interpreter != NULL);
+
+  current_interpreter->procs->command_loop_proc (current_interpreter->data);
 }
 
 int
@@ -351,20 +347,13 @@ interp_set_quiet (struct interp *interp, int quiet)
 
 /* interp_exec - This executes COMMAND_STR in the current 
    interpreter.  */
-int
-interp_exec_p (struct interp *interp)
-{
-  return interp->procs->exec_proc != NULL;
-}
 
 struct gdb_exception
 interp_exec (struct interp *interp, const char *command_str)
 {
-  if (interp->procs->exec_proc != NULL)
-    {
-      return interp->procs->exec_proc (interp->data, command_str);
-    }
-  return exception_none;
+  gdb_assert (interp->procs->exec_proc != NULL);
+
+  return interp->procs->exec_proc (interp->data, command_str);
 }
 
 /* A convenience routine that nulls out all the common command hooks.
@@ -386,7 +375,6 @@ clear_interpreter_hooks (void)
   deprecated_target_wait_hook = 0;
   deprecated_call_command_hook = 0;
   deprecated_error_begin_hook = 0;
-  deprecated_command_loop_hook = 0;
 }
 
 /* This is a lazy init routine, called the first time the interpreter
@@ -409,12 +397,13 @@ interpreter_exec_cmd (char *args, int from_tty)
   unsigned int nrules;
   unsigned int i;
   int old_quiet, use_quiet;
+  struct cleanup *cleanup;
 
   if (args == NULL)
     error_no_arg (_("interpreter-exec command"));
 
   prules = gdb_buildargv (args);
-  make_cleanup_freeargv (prules);
+  cleanup = make_cleanup_freeargv (prules);
 
   nrules = 0;
   for (trule = prules; *trule != NULL; trule++)
@@ -452,11 +441,14 @@ interpreter_exec_cmd (char *args, int from_tty)
   interp_set (old_interp, 0);
   interp_set_quiet (interp_to_use, use_quiet);
   interp_set_quiet (old_interp, old_quiet);
+
+  do_cleanups (cleanup);
 }
 
 /* List the possible interpreters which could complete the given text.  */
 static VEC (char_ptr) *
-interpreter_completer (struct cmd_list_element *ignore, char *text, char *word)
+interpreter_completer (struct cmd_list_element *ignore,
+		       const char *text, const char *word)
 {
   int textlen;
   VEC (char_ptr) *matches = NULL;

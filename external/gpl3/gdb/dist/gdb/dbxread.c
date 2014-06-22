@@ -1,5 +1,5 @@
 /* Read dbx symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@
    for real.  dbx_psymtab_to_symtab() is the function that does this */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #if defined(__CYGNUSCLIB__)
 #include <sys/types.h>
@@ -39,7 +39,7 @@
 #endif
 
 #include "gdb_obstack.h"
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "symtab.h"
 #include "breakpoint.h"
 #include "target.h"
@@ -58,7 +58,6 @@
 #include "block.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
 
 #include "aout/aout64.h"
 #include "aout/stab_gnu.h"	/* We always use GNU stabs, not
@@ -291,7 +290,8 @@ static void dbx_symfile_read (struct objfile *, int);
 
 static void dbx_symfile_finish (struct objfile *);
 
-static void record_minimal_symbol (char *, CORE_ADDR, int, struct objfile *);
+static void record_minimal_symbol (const char *, CORE_ADDR, int,
+				   struct objfile *);
 
 static void add_new_header_file (char *, int);
 
@@ -435,40 +435,34 @@ explicit_lookup_type (int real_filenum, int index)
 #endif
 
 static void
-record_minimal_symbol (char *name, CORE_ADDR address, int type,
+record_minimal_symbol (const char *name, CORE_ADDR address, int type,
 		       struct objfile *objfile)
 {
   enum minimal_symbol_type ms_type;
   int section;
-  asection *bfd_section;
 
   switch (type)
     {
     case N_TEXT | N_EXT:
       ms_type = mst_text;
       section = SECT_OFF_TEXT (objfile);
-      bfd_section = DBX_TEXT_SECTION (objfile);
       break;
     case N_DATA | N_EXT:
       ms_type = mst_data;
       section = SECT_OFF_DATA (objfile);
-      bfd_section = DBX_DATA_SECTION (objfile);
       break;
     case N_BSS | N_EXT:
       ms_type = mst_bss;
       section = SECT_OFF_BSS (objfile);
-      bfd_section = DBX_BSS_SECTION (objfile);
       break;
     case N_ABS | N_EXT:
       ms_type = mst_abs;
       section = -1;
-      bfd_section = NULL;
       break;
 #ifdef N_SETV
     case N_SETV | N_EXT:
       ms_type = mst_data;
       section = SECT_OFF_DATA (objfile);
-      bfd_section = DBX_DATA_SECTION (objfile);
       break;
     case N_SETV:
       /* I don't think this type actually exists; since a N_SETV is the result
@@ -476,7 +470,6 @@ record_minimal_symbol (char *name, CORE_ADDR address, int type,
          file local.  */
       ms_type = mst_file_data;
       section = SECT_OFF_DATA (objfile);
-      bfd_section = DBX_DATA_SECTION (objfile);
       break;
 #endif
     case N_TEXT:
@@ -485,7 +478,6 @@ record_minimal_symbol (char *name, CORE_ADDR address, int type,
     case N_FN_SEQ:
       ms_type = mst_file_text;
       section = SECT_OFF_TEXT (objfile);
-      bfd_section = DBX_TEXT_SECTION (objfile);
       break;
     case N_DATA:
       ms_type = mst_file_data;
@@ -499,7 +491,7 @@ record_minimal_symbol (char *name, CORE_ADDR address, int type,
 
       /* Same with virtual function tables, both global and static.  */
       {
-	char *tempstring = name;
+	const char *tempstring = name;
 
 	if (tempstring[0] == bfd_get_symbol_leading_char (objfile->obfd))
 	  ++tempstring;
@@ -507,17 +499,14 @@ record_minimal_symbol (char *name, CORE_ADDR address, int type,
 	  ms_type = mst_data;
       }
       section = SECT_OFF_DATA (objfile);
-      bfd_section = DBX_DATA_SECTION (objfile);
       break;
     case N_BSS:
       ms_type = mst_file_bss;
       section = SECT_OFF_BSS (objfile);
-      bfd_section = DBX_BSS_SECTION (objfile);
       break;
     default:
       ms_type = mst_unknown;
       section = -1;
-      bfd_section = NULL;
       break;
     }
 
@@ -526,7 +515,7 @@ record_minimal_symbol (char *name, CORE_ADDR address, int type,
     lowest_text_address = address;
 
   prim_record_minimal_symbol_and_info
-    (name, address, ms_type, section, bfd_section, objfile);
+    (name, address, ms_type, section, objfile);
 }
 
 /* Scan and build partial symbols for a symbol file.
@@ -563,7 +552,7 @@ dbx_symfile_read (struct objfile *objfile, int symfile_flags)
 
   val = bfd_seek (sym_bfd, DBX_SYMTAB_OFFSET (objfile), SEEK_SET);
   if (val < 0)
-    perror_with_name (objfile->name);
+    perror_with_name (objfile_name (objfile));
 
   /* Size the symbol table.  */
   if (objfile->global_psymbols.size == 0 && objfile->static_psymbols.size == 0)
@@ -1012,7 +1001,7 @@ read_dbx_dynamic_symtab (struct objfile *objfile)
   long dynrel_count;
   arelent **dynrels;
   CORE_ADDR sym_value;
-  char *name;
+  const char *name;
 
   /* Check that the symbol file has dynamic symbols that we know about.
      bfd_arch_unknown can happen if we are reading a sun3 symbol file
@@ -1078,7 +1067,7 @@ read_dbx_dynamic_symtab (struct objfile *objfile)
 	  if (sym->flags & BSF_GLOBAL)
 	    type |= N_EXT;
 
-	  record_minimal_symbol ((char *) bfd_asymbol_name (sym), sym_value,
+	  record_minimal_symbol (bfd_asymbol_name (sym), sym_value,
 				 type, objfile);
 	}
     }
@@ -1132,7 +1121,7 @@ read_dbx_dynamic_symtab (struct objfile *objfile)
 	  continue;
 	}
 
-      name = (char *) bfd_asymbol_name (*rel->sym_ptr_ptr);
+      name = bfd_asymbol_name (*rel->sym_ptr_ptr);
       prim_record_minimal_symbol (name, address, mst_solib_trampoline,
 				  objfile);
     }
@@ -1360,7 +1349,6 @@ read_dbx_symtab (struct objfile *objfile)
 	  record_it:
 	  namestring = set_namestring (objfile, &nlist);
 
-	bss_ext_symbol:
 	  record_minimal_symbol (namestring, nlist.n_value,
 				 nlist.n_type, objfile);	/* Always */
 	  continue;
@@ -2460,7 +2448,6 @@ static void
 dbx_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 {
   bfd *sym_bfd;
-  struct cleanup *back_to = NULL;
 
   if (self->readin)
     {
@@ -2472,6 +2459,8 @@ dbx_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 
   if (LDSYMLEN (self) || self->number_of_dependencies)
     {
+      struct cleanup *back_to;
+
       /* Print the message now, before reading the string table,
          to avoid disconcerting pauses.  */
       if (info_verbose)
@@ -2484,6 +2473,8 @@ dbx_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 
       next_symbol_text_func = dbx_next_symbol_text;
 
+      back_to = make_cleanup (null_cleanup, NULL);
+
       if (DBX_STAB_SECTION (objfile))
 	{
 	  stabs_data
@@ -2492,14 +2483,12 @@ dbx_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 					      NULL);
 
 	  if (stabs_data)
-	    back_to = make_cleanup (free_current_contents,
-				    (void *) &stabs_data);
+	    make_cleanup (free_current_contents, (void *) &stabs_data);
 	}
 
       dbx_psymtab_to_symtab_1 (objfile, self);
 
-      if (back_to)
-	do_cleanups (back_to);
+      do_cleanups (back_to);
 
       /* Match with global symbols.  This only needs to be done once,
          after all of the symtabs and dependencies have been read in.   */
@@ -2539,7 +2528,6 @@ read_ofile_symtab (struct objfile *objfile, struct partial_symtab *pst)
   section_offsets = pst->section_offsets;
 
   dbxread_objfile = objfile;
-  subfile_stack = NULL;
 
   stringtab_global = DBX_STRINGTAB (objfile);
   set_last_source_file (NULL);
@@ -2580,21 +2568,6 @@ read_ofile_symtab (struct objfile *objfile, struct partial_symtab *pst)
 	  if (strncmp (tempstring, "__gnu_compiled", 14) == 0)
 	    processing_gcc_compilation = 2;
 	}
-
-      /* Try to select a C++ demangling based on the compilation unit
-         producer.  */
-
-#if 0
-      /* For now, stay with AUTO_DEMANGLING for g++ output, as we don't
-	 know whether it will use the old style or v3 mangling.  */
-      if (processing_gcc_compilation)
-	{
-	  if (AUTO_DEMANGLING)
-	    {
-	      set_demangling_style (GNU_DEMANGLING_STYLE_STRING);
-	    }
-	}
-#endif
     }
   else
     {
@@ -2660,15 +2633,6 @@ read_ofile_symtab (struct objfile *objfile, struct partial_symtab *pst)
 	    processing_gcc_compilation = 1;
 	  else if (strcmp (namestring, GCC2_COMPILED_FLAG_SYMBOL) == 0)
 	    processing_gcc_compilation = 2;
-
-#if 0
-	  /* For now, stay with AUTO_DEMANGLING for g++ output, as we don't
-	     know whether it will use the old style or v3 mangling.  */
-	  if (AUTO_DEMANGLING)
-	    {
-	      set_demangling_style (GNU_DEMANGLING_STYLE_STRING);
-	    }
-#endif
 	}
       else if (type & N_EXT || type == (unsigned char) N_TEXT
 	       || type == (unsigned char) N_NBTEXT)
@@ -2752,7 +2716,7 @@ cp_set_block_scope (const struct symbol *symbol,
 
 void
 process_one_symbol (int type, int desc, CORE_ADDR valu, char *name,
-		    struct section_offsets *section_offsets,
+		    const struct section_offsets *section_offsets,
 		    struct objfile *objfile)
 {
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
@@ -3270,15 +3234,6 @@ process_one_symbol (int type, int desc, CORE_ADDR valu, char *name,
 	  if (strcmp (name, GCC2_COMPILED_FLAG_SYMBOL) == 0)
 	    {
 	      processing_gcc_compilation = 2;
-#if 0				/* Works, but is experimental.  -fnf */
-	      /* For now, stay with AUTO_DEMANGLING for g++ output, as
-		 we don't know whether it will use the old style or v3
-		 mangling.  */
-	      if (AUTO_DEMANGLING)
-		{
-		  set_demangling_style (GNU_DEMANGLING_STYLE_STRING);
-		}
-#endif
 	    }
 	  else
 	    n_opt_found = 1;
@@ -3607,7 +3562,6 @@ stabsect_build_psymtabs (struct objfile *objfile, char *stab_name,
 
 static const struct sym_fns aout_sym_fns =
 {
-  bfd_target_aout_flavour,
   dbx_new_init,			/* init anything gbl to entire symtab */
   dbx_symfile_init,		/* read initial info, setup for sym_read() */
   dbx_symfile_read,		/* read a symbol file into symtab */
@@ -3624,7 +3578,7 @@ static const struct sym_fns aout_sym_fns =
 void
 _initialize_dbxread (void)
 {
-  add_symtab_fns (&aout_sym_fns);
+  add_symtab_fns (bfd_target_aout_flavour, &aout_sym_fns);
 
   dbx_objfile_data_key
     = register_objfile_data_with_cleanup (NULL, dbx_free_symfile_info);

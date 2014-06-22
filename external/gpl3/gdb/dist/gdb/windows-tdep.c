@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,8 @@
 #include "coff-pe-read.h"
 #include "gdb_bfd.h"
 #include "complaints.h"
+#include "solib.h"
+#include "solib-target.h"
 
 struct cmd_list_element *info_w32_cmdlist;
 
@@ -427,7 +429,7 @@ windows_xfer_shared_library (const char* so_name, CORE_ADDR load_addr,
    to print the value of another global variable defined with the same
    name, but in a different DLL.  */
 
-void
+static void
 windows_iterate_over_objfiles_in_search_order
   (struct gdbarch *gdbarch,
    iterate_over_objfiles_in_search_order_cb_ftype *cb,
@@ -479,6 +481,22 @@ init_w32_command_list (void)
 		      &info_w32_cmdlist, "info w32 ", 0, &infolist);
       w32_prefix_command_valid = 1;
     }
+}
+
+/* To be called from the various GDB_OSABI_CYGWIN handlers for the
+   various Windows architectures and machine types.  */
+
+void
+windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  /* Canonical paths on this target look like
+     `c:\Program Files\Foo App\mydll.dll', for example.  */
+  set_gdbarch_has_dos_based_file_system (gdbarch, 1);
+
+  set_gdbarch_iterate_over_objfiles_in_search_order
+    (gdbarch, windows_iterate_over_objfiles_in_search_order);
+
+  set_solib_ops (gdbarch, &solib_target_so_ops);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

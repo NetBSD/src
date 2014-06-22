@@ -1,6 +1,5 @@
 /* PEF support for BFD.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2011  Free Software Foundation, Inc.
+   Copyright 1999-2014 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1065,11 +1064,11 @@ const bfd_target pef_vec =
 static int
 bfd_pef_xlib_read_header (bfd *abfd, bfd_pef_xlib_header *header)
 {
-  unsigned char buf[76];
+  unsigned char buf[80];
 
   bfd_seek (abfd, 0, SEEK_SET);
 
-  if (bfd_bread ((void *) buf, 76, abfd) != 76)
+  if (bfd_bread ((void *) buf, sizeof buf, abfd) != sizeof buf)
     return -1;
 
   header->tag1 = bfd_getb32 (buf);

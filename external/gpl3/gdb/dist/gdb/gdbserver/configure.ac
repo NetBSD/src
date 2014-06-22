@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB server.
-dnl Copyright (C) 2000-2013 Free Software Foundation, Inc.
+dnl Copyright (C) 2000-2014 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -37,9 +37,23 @@ AC_PROG_RANLIB
 AC_ARG_PROGRAM
 
 AC_HEADER_STDC
-AC_HEADER_DIRENT
 
 AC_FUNC_ALLOCA
+
+# Set the 'development' global.
+. $srcdir/../development.sh
+
+# Enable -lmcheck by default (it provides cheap-enough memory
+# mangling), but turn it off for releases.
+if $development; then
+  libmcheck_default=yes
+else
+  libmcheck_default=no
+fi
+GDB_AC_LIBMCHECK(${libmcheck_default})
+
+ACX_NONCANONICAL_TARGET
+ACX_NONCANONICAL_HOST
 
 # Dependency checking.
 ZW_CREATE_DEPDIR
@@ -64,14 +78,14 @@ AC_PROG_MAKE_SET
 ACX_CONFIGURE_DIR(["../gnulib"], ["build-gnulib-gdbserver"])
 
 AC_CHECK_HEADERS(sgtty.h termio.h termios.h sys/reg.h string.h dnl
-		 proc_service.h sys/procfs.h thread_db.h linux/elf.h dnl
-		 stdlib.h unistd.h dnl
+		 proc_service.h sys/procfs.h linux/elf.h dnl
 		 errno.h fcntl.h signal.h sys/file.h malloc.h dnl
 		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
-		 netinet/tcp.h arpa/inet.h sys/wait.h wait.h sys/un.h dnl
-		 linux/perf_event.h)
+		 netinet/tcp.h arpa/inet.h)
 AC_CHECK_FUNCS(pread pwrite pread64 readlink)
 AC_REPLACE_FUNCS(vasprintf vsnprintf)
+
+GDB_AC_COMMON
 
 # Check for UST
 ustlibs=""
@@ -172,23 +186,7 @@ LIBS="$LIBS -ldl"
 AC_CHECK_FUNCS(dladdr)
 LIBS="$old_LIBS"
 
-have_errno=no
-AC_MSG_CHECKING(for errno)
-AC_TRY_LINK([
-#if HAVE_ERRNO_H
-#include <errno.h>
-#endif], [static int x; x = errno;],
-  [AC_MSG_RESULT(yes - in errno.h); AC_DEFINE(HAVE_ERRNO, 1, [Define if errno is available]) have_errno=yes])
-if test $have_errno = no; then
-AC_TRY_LINK([
-#if HAVE_ERRNO_H
-#include <errno.h>
-#endif], [extern int errno; static int x; x = errno;],
-  [AC_MSG_RESULT(yes - must define); AC_DEFINE(HAVE_ERRNO, 1, [Define if errno is available]) AC_DEFINE(MUST_DEFINE_ERRNO, 1, [Checking if errno must be defined])],
-  [AC_MSG_RESULT(no)])
-fi
-
-AC_CHECK_DECLS([strerror, strstr, perror, vasprintf, vsnprintf])
+AC_CHECK_DECLS([strerror, perror, vasprintf, vsnprintf])
 
 AC_CHECK_TYPES(socklen_t, [], [],
 [#include <sys/types.h>
@@ -322,7 +320,6 @@ LIBS="$old_LIBS"
 
 srv_thread_depfiles=
 srv_libs=
-USE_THREAD_DB=
 
 if test "$srv_linux_thread_db" = "yes"; then
   if test "$ac_cv_lib_dl_dlopen" = "yes"; then
@@ -350,7 +347,7 @@ if test "$srv_linux_thread_db" = "yes"; then
   fi
 
   srv_thread_depfiles="thread-db.o proc-service.o"
-  USE_THREAD_DB="-DUSE_THREAD_DB"
+  AC_DEFINE(USE_THREAD_DB, 1, [Define if we should use libthread_db.])
   AC_CACHE_CHECK([for TD_VERSION], gdbsrv_cv_have_td_version,
   [AC_TRY_COMPILE([#include <thread_db.h>], [TD_VERSION;],
 		  [gdbsrv_cv_have_td_version=yes],
@@ -459,7 +456,6 @@ fi
 
 AC_SUBST(GDBSERVER_DEPFILES)
 AC_SUBST(GDBSERVER_LIBS)
-AC_SUBST(USE_THREAD_DB)
 AC_SUBST(srv_xmlbuiltin)
 AC_SUBST(srv_xmlfiles)
 AC_SUBST(IPA_DEPFILES)
