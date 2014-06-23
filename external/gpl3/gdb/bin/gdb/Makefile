@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/06/22 23:52:57 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2014/06/23 15:05:30 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -22,7 +22,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
 
-TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
+TEXINFO=	gdb.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
 
@@ -33,7 +33,7 @@ gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= GDBvn.texi gdb-cfg.texi
-gdbint.info stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
+stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
