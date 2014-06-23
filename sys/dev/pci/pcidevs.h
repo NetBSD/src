@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1186 2014/06/09 08:51:03 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1187 2014/06/23 17:32:05 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1193 2014/06/09 08:50:34 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1194 2014/06/23 17:31:40 msaitoh Exp
  */
 
 /*
@@ -2422,6 +2422,9 @@
 #define	PCI_PRODUCT_HP_HPSA_11	0x323a		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_12	0x323b		/* Smart Array */
 #define	PCI_PRODUCT_HP_HPSA_13	0x323c		/* Smart Array */
+#define	PCI_PRODUCT_HP_USB	0x3300		/* iLO3 Virtual USB */
+#define	PCI_PRODUCT_HP_ILO3_SLAVE	0x3306		/* iLO3 Slave */
+#define	PCI_PRODUCT_HP_ILO3_MGMT	0x3307		/* iLO3 Management */
 #define	PCI_PRODUCT_HP_RS780_PPB_GFX	0x9602		/* (AMD) RS780 PCI-PCI Bridge (int gfx) */
 
 /* Hifn products */
@@ -3923,6 +3926,7 @@
 #define	PCI_PRODUCT_MATROX_G200E_SE	0x0522		/* MGA G200e (ServerEngines) */
 #define	PCI_PRODUCT_MATROX_G400_AGP	0x0525		/* MGA G400 AGP */
 #define	PCI_PRODUCT_MATROX_G200EW	0x0532		/* MGA G200eW */
+#define	PCI_PRODUCT_MATROX_G200EH	0x0533		/* MGA G200eH */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
