@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.99 2014/06/22 08:10:19 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.100 2014/06/23 17:18:45 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.99 2014/06/22 08:10:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.100 2014/06/23 17:18:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -679,7 +679,7 @@ udp6_detach(struct socket *so)
 
 static int
 udp6_ioctl(struct socket *so, struct mbuf *m, struct mbuf *addr6,
-    struct mbuf *control, struct lwp *l)
+    struct mbuf *ifp, struct lwp *l)
 {
 	/*
 	 * MAPPED_ADDR implementation info:
@@ -692,7 +692,7 @@ udp6_ioctl(struct socket *so, struct mbuf *m, struct mbuf *addr6,
 	 *  and AF_INET6 socket for AF_INET6 addrs.
 	 */
 	return in6_control(so, (u_long)m, (void *)addr6,
-			   (struct ifnet *)control, l);
+			   (struct ifnet *)ifp, l);
 }
 
 int
