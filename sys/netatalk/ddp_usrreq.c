@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.45 2014/06/22 08:10:18 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.46 2014/06/23 17:18:45 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.45 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.46 2014/06/23 17:18:45 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -480,10 +480,10 @@ ddp_detach(struct socket *so)
 
 static int
 ddp_ioctl(struct socket *so, struct mbuf *m, struct mbuf *addr,
-    struct mbuf *rights, struct lwp *l)
+    struct mbuf *ifp, struct lwp *l)
 {
-	return (at_control((long) m, (void *) addr,
-	    (struct ifnet *) rights, l));
+	return at_control((long) m, (void *) addr,
+	    (struct ifnet *) ifp, l);
 }
 
 /*

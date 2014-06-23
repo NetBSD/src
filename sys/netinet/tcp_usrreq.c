@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.178 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.179 2014/06/23 17:18:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.178 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.179 2014/06/23 17:18:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -944,18 +944,18 @@ tcp_detach(struct socket *so)
 
 static int
 tcp_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
+    struct mbuf *ifp, struct lwp *l)
 {
 	switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET
 	case PF_INET:
-		return (in_control(so, (long)m, (void *)nam,
-		    (struct ifnet *)control, l));
+		return in_control(so, (long)m, (void *)nam,
+		    (struct ifnet *)ifp, l);
 #endif
 #ifdef INET6
 	case PF_INET6:
-		return (in6_control(so, (long)m, (void *)nam,
-		    (struct ifnet *)control, l));
+		return in6_control(so, (long)m, (void *)nam,
+		    (struct ifnet *)ifp, l);
 #endif
 	default:
 		return EAFNOSUPPORT;
