@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.10 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.11 2014/06/23 17:18:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.10 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.11 2014/06/23 17:18:45 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -51,7 +51,7 @@ static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 static int link_attach(struct socket *, int);
 static void link_detach(struct socket *);
 static int link_ioctl(struct socket *, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct lwp *);
+    struct mbuf *, struct lwp *);
 static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static void link_init(void);
@@ -234,10 +234,10 @@ link_detach(struct socket *so)
 
 static int
 link_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+	struct mbuf *ifp, struct lwp *l)
 {
 	return link_control(so, (unsigned long)m, nam,
-	    (struct ifnet *)control, l);
+	    (struct ifnet *)ifp, l);
 }
 
 static int
