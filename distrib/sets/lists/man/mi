@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1475 2014/06/10 01:42:38 hikaru Exp $
+# $NetBSD: mi,v 1.1476 2014/06/23 15:22:07 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21,7 +21,7 @@
 ./usr/share/info/g77.info			man-fortran-info	gcc=3,gcccmds,info
 ./usr/share/info/gcc.info			man-c-info		gcccmds,info
 ./usr/share/info/gdb.info			man-debug-info		gdb,info
-./usr/share/info/gdbint.info			man-debug-info		gdb,info
+./usr/share/info/gdbint.info			man-obsolete		obsolete
 ./usr/share/info/gettext.info			man-sys-info		info
 ./usr/share/info/gprof.info			man-debug-info		binutils,info
 ./usr/share/info/grep.info			man-util-info		info,!bsdgrep
