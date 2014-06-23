@@ -95,6 +95,7 @@ typedef struct timespec __gthread_time_t;
   __gthrw_pragma(weak type)
 # define __gthrw_(name) __gthrw_ ## name
 #else
+# error "foo"
 # define __gthrw2(name,name2,type)
 # define __gthrw_(name) name
 #endif
