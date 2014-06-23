@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.52 2014/06/22 17:36:42 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.53 2014/06/23 17:43:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,8 @@
  */
 
 /*
- * This allocator has some debug features enabled with "option DEBUG".
+ * This allocator has some debug features enabled with "option DEBUG" and
+ * "option DIAGNOSTIC".
  *
  * KMEM_POISON
  *	Try to detect modify-after-free bugs.
@@ -102,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.52 2014/06/22 17:36:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.53 2014/06/23 17:43:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -178,10 +179,13 @@ static size_t kmem_cache_maxidx __read_mostly;
 static pool_cache_t kmem_cache_big[KMEM_CACHE_BIG_COUNT] __cacheline_aligned;
 static size_t kmem_cache_big_maxidx __read_mostly;
 
+#if defined(DIAGNOSTIC) && defined(_HARDKERNEL)
+#define KMEM_SIZE
+#endif /* defined(DIAGNOSTIC) */
+
 #if defined(DEBUG) && defined(_HARDKERNEL)
 #define	KMEM_POISON
 #define	KMEM_REDZONE
-#define	KMEM_SIZE
 #define	KMEM_GUARD
 #endif /* defined(DEBUG) */
 
