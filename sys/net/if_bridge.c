@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.83 2014/06/18 10:51:03 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.84 2014/06/23 06:27:58 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.83 2014/06/18 10:51:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.84 2014/06/23 06:27:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.83 2014/06/18 10:51:03 ozaki-r Exp $
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/cprng.h>
-#include <sys/xcall.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -406,12 +405,9 @@ bridge_clone_destroy(struct ifnet *ifp)
 	struct bridge_softc *sc = ifp->if_softc;
 	struct bridge_iflist *bif;
 	int s;
-	uint64_t xc;
 
 	/* Must be called during IFF_RUNNING, i.e., before bridge_stop */
 	pktq_barrier(sc->sc_fwd_pktq);
-	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(xc);
 
 	s = splnet();
 
