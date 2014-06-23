@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.270 2014/06/17 22:29:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.271 2014/06/23 17:44:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.270 2014/06/17 22:29:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.271 2014/06/23 17:44:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -975,7 +975,7 @@ bge_ape_read_fw_ver(struct bge_softc *sc)
 		fwtype = "UNKN";
 
 	/* Print the APE firmware version. */
-	printf(", APE firmware %s %d.%d.%d.%d", fwtype,
+	aprint_normal_dev(sc->bge_dev, "APE firmware %s %d.%d.%d.%d\n", fwtype,
 	    (apedata & BGE_APE_FW_VERSION_MAJMSK) >> BGE_APE_FW_VERSION_MAJSFT,
 	    (apedata & BGE_APE_FW_VERSION_MINMSK) >> BGE_APE_FW_VERSION_MINSFT,
 	    (apedata & BGE_APE_FW_VERSION_REVMSK) >> BGE_APE_FW_VERSION_REVSFT,
