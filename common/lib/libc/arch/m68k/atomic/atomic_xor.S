@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor.S,v 1.2 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_xor.S,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -129,3 +129,7 @@ ENTRY(__sync_fetch_and_xor_1)
 	bne	1b
 	rts
 END(__sync_fetch_and_xor_1)
+
+CRT_ALIAS(__atomic_fetch_xor_1,__sync_fetch_and_xor_1)
+CRT_ALIAS(__atomic_fetch_xor_2,__sync_fetch_and_xor_2)
+CRT_ALIAS(__atomic_fetch_xor_4,__sync_fetch_and_xor_4)
