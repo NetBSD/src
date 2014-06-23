@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2014/06/01 19:51:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2014/06/23 18:37:45 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -19,7 +19,7 @@ INCS+=		${BUILDINCS}
 INCS+=		nested_exception.h hash_bytes.h atomic_lockfree_defines.h
 INCS+=		cxxabi_forced.h	exception_defines.h exception_ptr.h
 
-.if ${MKCOMPAT} != no
+.if ${MKCOMPAT} != no && !empty(MACHINE_ARCH:M*64*)
 SUBDIR+=	arch
 .else
 INCS+=		c++config.h
