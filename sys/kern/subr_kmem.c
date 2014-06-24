@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.53 2014/06/23 17:43:42 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.54 2014/06/24 07:28:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@
  * KMEM_REDZONE
  *	Try to detect overrun bugs.
  *
- *	Allocate some more bytes for each allocation.
- *	The extra bytes are checked by KMEM_POISON on kmem_free.
+ *	Add a 2-byte pattern (allocate some more bytes if needed) at the end
+ *	of each allocated buffer. Check this pattern on kmem_free.
  *
  * KMEM_SIZE
  *	Try to detect alloc/free size mismatch bugs.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.53 2014/06/23 17:43:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.54 2014/06/24 07:28:23 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -199,9 +199,13 @@ static void kmem_poison_check(void *, size_t);
 #endif /* defined(KMEM_POISON) */
 
 #if defined(KMEM_REDZONE)
-#define	REDZONE_SIZE	1
+#define	REDZONE_SIZE	2
+static void kmem_redzone_fill(void *p, size_t sz);
+static void kmem_redzone_check(void *p, size_t sz);
 #else /* defined(KMEM_REDZONE) */
 #define	REDZONE_SIZE	0
+#define	kmem_redzone_fill(p, sz)		/* nothing */
+#define	kmem_redzone_check(p, sz)	/* nothing */
 #endif /* defined(KMEM_REDZONE) */
 
 #if defined(KMEM_SIZE)
@@ -248,7 +252,15 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	}
 #endif
 	size = kmem_roundup_size(requested_size);
-	allocsz = size + REDZONE_SIZE + SIZE_SIZE;
+	allocsz = size + SIZE_SIZE;
+
+#ifdef KMEM_REDZONE
+	if (size - requested_size < REDZONE_SIZE) {
+		/* If there isn't enough space in the page padding,
+		 * allocate two more bytes for the red zone. */
+		allocsz += REDZONE_SIZE;
+	}
+#endif
 
 	if ((index = ((allocsz -1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {
@@ -274,6 +286,7 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 		kmem_poison_check(p, size);
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
+		kmem_redzone_fill(p, requested_size + SIZE_SIZE);
 
 		return p + SIZE_SIZE;
 	}
@@ -316,8 +329,15 @@ kmem_intr_free(void *p, size_t requested_size)
 		return;
 	}
 #endif
+
 	size = kmem_roundup_size(requested_size);
-	allocsz = size + REDZONE_SIZE + SIZE_SIZE;
+	allocsz = size + SIZE_SIZE;
+
+#ifdef KMEM_REDZONE
+	if (size - requested_size < REDZONE_SIZE) {
+		allocsz += REDZONE_SIZE;
+	}
+#endif
 
 	if ((index = ((allocsz -1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {
@@ -334,10 +354,9 @@ kmem_intr_free(void *p, size_t requested_size)
 
 	p = (uint8_t *)p - SIZE_SIZE;
 	kmem_size_check(p, requested_size);
+	kmem_redzone_check(p, requested_size + SIZE_SIZE);
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
-	kmem_poison_check((uint8_t *)p + SIZE_SIZE + size,
-      	    allocsz - (SIZE_SIZE + size));
 	kmem_poison_fill(p, allocsz);
 
 	pool_cache_put(pc, p);
@@ -465,20 +484,20 @@ kmem_roundup_size(size_t size)
 	return (size + (KMEM_ALIGN - 1)) & ~(KMEM_ALIGN - 1);
 }
 
-/* ---- debug */
+/* ------------------ DEBUG / DIAGNOSTIC ------------------ */
 
-#if defined(KMEM_POISON)
-
+#if defined(KMEM_POISON) || defined(KMEM_REDZONE)
 #if defined(_LP64)
 #define PRIME 0x9e37fffffffc0000UL
 #else /* defined(_LP64) */
 #define PRIME 0x9e3779b1
 #endif /* defined(_LP64) */
+#endif /* defined(KMEM_POISON) || defined(KMEM_REDZONE) */
 
+#if defined(KMEM_POISON)
 static inline uint8_t
 kmem_poison_pattern(const void *p)
 {
-
 	return (uint8_t)(((uintptr_t)p) * PRIME
 	   >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
 }
@@ -525,14 +544,12 @@ kmem_poison_check(void *p, size_t sz)
 		cp++;
 	}
 }
-
 #endif /* defined(KMEM_POISON) */
 
 #if defined(KMEM_SIZE)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-
 	memcpy(p, &sz, sizeof(sz));
 }
 
@@ -547,7 +564,50 @@ kmem_size_check(void *p, size_t sz)
 		    (const uint8_t *)p + SIZE_SIZE, sz, psz);
 	}
 }
-#endif	/* defined(KMEM_SIZE) */
+#endif /* defined(KMEM_SIZE) */
+
+#if defined(KMEM_REDZONE)
+static inline uint8_t
+kmem_redzone_pattern(const void *p)
+{
+	return (uint8_t)(((uintptr_t)p) * PRIME
+	   >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
+}
+
+static void
+kmem_redzone_fill(void *p, size_t sz)
+{
+	uint8_t *cp;
+	const uint8_t *ep;
+
+	cp = (uint8_t *)p + sz;
+	ep = cp + REDZONE_SIZE;
+	while (cp < ep) {
+		*cp = kmem_redzone_pattern(cp);
+		cp++;
+	}
+}
+
+static void
+kmem_redzone_check(void *p, size_t sz)
+{
+	uint8_t *cp;
+	const uint8_t *ep;
+
+	cp = (uint8_t *)p + sz;
+	ep = (uint8_t *)p + sz + REDZONE_SIZE;
+	while (cp < ep) {
+		const uint8_t expected = kmem_redzone_pattern(cp);
+
+		if (*cp != expected) {
+			panic("%s: %p: 0x%02x != 0x%02x\n",
+			   __func__, cp, *cp, expected);
+		}
+		cp++;
+	}
+}
+#endif /* defined(KMEM_REDZONE) */
+
 
 /*
  * Used to dynamically allocate string with kmem accordingly to format.
