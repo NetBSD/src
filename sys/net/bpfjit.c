@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.13 2014/06/24 10:53:30 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.14 2014/06/24 22:19:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.13 2014/06/24 10:53:30 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.14 2014/06/24 22:19:36 rmind Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.13 2014/06/24 10:53:30 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.14 2014/06/24 22:19:36 rmind Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1611,9 +1611,9 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 
 	uint32_t jt, jf;
 
-	const size_t extwords = (bc != NULL) ? bc->extwords : 0;
-	const size_t memwords = (extwords != 0) ? extwords : BPF_MEMWORDS;
-	const bpf_memword_init_t noinit = (extwords != 0) ? bc->noinit : 0;
+	const size_t extwords = bc ? bc->extwords : 0;
+	const size_t memwords = extwords ? extwords : BPF_MEMWORDS;
+	const bpf_memword_init_t preinited = extwords ? bc->preinited : 0;
 
 	rv = NULL;
 	ret0 = NULL;
@@ -1690,9 +1690,9 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	/*
 	 * Exclude pre-initialised external memory words but keep
 	 * initialization statuses of A and X registers in case
-	 * bc->noinit wrongly sets those two bits.
+	 * bc->preinited wrongly sets those two bits.
 	 */
-	initmask &= ~noinit | BJ_INIT_ABIT | BJ_INIT_XBIT;
+	initmask &= ~preinited | BJ_INIT_ABIT | BJ_INIT_XBIT;
 
 #if defined(_KERNEL)
 	/* bpf_filter() checks initialization of memwords. */
