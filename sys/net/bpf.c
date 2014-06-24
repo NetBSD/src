@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.182 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: bpf.c,v 1.183 2014/06/24 10:53:30 alnsn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.182 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.183 2014/06/24 10:53:30 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -197,6 +197,7 @@ const struct cdevsw bpf_cdevsw = {
 bpfjit_func_t
 bpf_jit_generate(bpf_ctx_t *bc, void *code, size_t size)
 {
+
 	membar_consumer();
 	if (bpfjit_module_ops.bj_generate_code != NULL) {
 		return bpfjit_module_ops.bj_generate_code(bc, code, size);
@@ -1114,10 +1115,8 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 			return EINVAL;
 		}
 		membar_consumer();
-		if (bpf_jit) {
-			bpf_ctx_t *bc = bpf_default_ctx();
-			jcode = bpf_jit_generate(bc, fcode, flen);
-		}
+		if (bpf_jit)
+			jcode = bpf_jit_generate(NULL, fcode, flen);
 	} else {
 		fcode = NULL;
 	}
@@ -1388,16 +1387,16 @@ static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
     void *pkt, u_int pktlen, u_int buflen, const bool rcv)
 {
-	bpf_ctx_t *bc = bpf_default_ctx();
-	bpf_args_t args = {
-		.pkt = pkt,
-		.wirelen = pktlen,
-		.buflen = buflen,
-		.arg = NULL
-	};
-	struct bpf_d *d;
 	struct timespec ts;
+	bpf_args_t args;
+	struct bpf_d *d;
+
+	const bpf_ctx_t *bc = NULL;
 	bool gottime = false;
+
+	args.pkt = (const uint8_t *)pkt;
+	args.wirelen = pktlen;
+	args.buflen = buflen;
 
 	/*
 	 * Note that the IPL does not have to be raised at this point.
@@ -1414,7 +1413,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		bpf_gstats.bs_recv++;
 
 		if (d->bd_jitcode)
-			slen = d->bd_jitcode(pkt, pktlen, buflen);
+			slen = d->bd_jitcode(bc, &args);
 		else
 			slen = bpf_filter_ext(bc, d->bd_filter, &args);
 
