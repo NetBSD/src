@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.51 2014/06/18 04:54:09 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.52 2014/06/24 05:04:14 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.51 2014/06/18 04:54:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.52 2014/06/24 05:04:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,30 +331,64 @@ tcxattach(device_t parent, device_t self, void *args)
 	}
 	sc->sc_fbaddr = bus_space_vaddr(sa->sa_bustag, bh);
 
-	/* RBLIT space */
-	if (sbus_bus_map(sa->sa_bustag,
-		 sc->sc_physaddr[TCX_REG_RBLIT].oa_space,
-		 sc->sc_physaddr[TCX_REG_RBLIT].oa_base,
-			 sc->sc_fbsize << 3,
-			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
-			 &bh) != 0) {
-		aprint_error_dev(self, "tcxattach: cannot map RBLIT space\n");
-		return;
+	/*
+	 * 8bit tcx has the RSTIP and RBLIT ranges set to size 0.
+	 * On Real Hardware they work anyway ( on my SS4 at least ) but
+	 * emulators may not be so forgiving.
+	 */
+	if (sc->sc_8bit) {
+		/* BLIT space */
+		if (sbus_bus_map(sa->sa_bustag,
+			 sc->sc_physaddr[TCX_REG_BLIT].oa_space,
+			 sc->sc_physaddr[TCX_REG_BLIT].oa_base,
+				 sc->sc_fbsize << 3,
+				 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+				 &bh) != 0) {
+			aprint_error_dev(self,
+			    "tcxattach: cannot map BLIT space\n");
+			return;
+		}
+		sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
+	
+		/* STIP space */
+		if (sbus_bus_map(sa->sa_bustag,
+			 sc->sc_physaddr[TCX_REG_STIP].oa_space,
+			 sc->sc_physaddr[TCX_REG_STIP].oa_base,
+				 sc->sc_fbsize << 3,
+				 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+				 &bh) != 0) {
+			aprint_error_dev(self,
+			    "tcxattach: cannot map STIP space\n");
+			return;
+		}
+		sc->sc_rstip = bus_space_vaddr(sa->sa_bustag, bh);
+	} else {
+		/* RBLIT space */
+		if (sbus_bus_map(sa->sa_bustag,
+			 sc->sc_physaddr[TCX_REG_RBLIT].oa_space,
+			 sc->sc_physaddr[TCX_REG_RBLIT].oa_base,
+				 sc->sc_fbsize << 3,
+				 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+				 &bh) != 0) {
+			aprint_error_dev(self,
+			    "tcxattach: cannot map RBLIT space\n");
+			return;
+		}
+		sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
+	
+		/* RSTIP space */
+		if (sbus_bus_map(sa->sa_bustag,
+			 sc->sc_physaddr[TCX_REG_RSTIP].oa_space,
+			 sc->sc_physaddr[TCX_REG_RSTIP].oa_base,
+				 sc->sc_fbsize << 3,
+				 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+				 &bh) != 0) {
+			aprint_error_dev(self,
+			    "tcxattach: cannot map RSTIP space\n");
+			return;
+		}
+		sc->sc_rstip = bus_space_vaddr(sa->sa_bustag, bh);
 	}
-	sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
-
-	/* RSTIP space */
-	if (sbus_bus_map(sa->sa_bustag,
-		 sc->sc_physaddr[TCX_REG_RSTIP].oa_space,
-		 sc->sc_physaddr[TCX_REG_RSTIP].oa_base,
-			 sc->sc_fbsize << 3,
-			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
-			 &bh) != 0) {
-		aprint_error_dev(self, "tcxattach: cannot map RSTIP space\n");
-		return;
-	}
-	sc->sc_rstip = bus_space_vaddr(sa->sa_bustag, bh);
-
 	isconsole = fb_is_console(node);
 
 	confreg = bus_space_read_4(sa->sa_bustag, sc->sc_thc, THC_CONFIG);
