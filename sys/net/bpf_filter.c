@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.62 2014/06/24 10:53:30 alnsn Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.63 2014/06/24 22:19:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.62 2014/06/24 10:53:30 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.63 2014/06/24 22:19:36 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -82,7 +82,7 @@ bpf_set_extmem(bpf_ctx_t *bc, size_t nwords, bpf_memword_init_t preinited)
 	/* XXX check arguments */
 
 	bc->extwords = nwords;
-	bc->noinit = preinited;
+	bc->preinited = preinited;
 	return 0;
 }
 
@@ -591,9 +591,9 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 #if defined(KERNEL) || defined(_KERNEL)
 	bpf_memword_init_t *mem, invalid;
 	size_t size;
-	const size_t extwords = (bc != NULL) ? bc->extwords : 0;
-	const size_t memwords = (extwords != 0) ? extwords : BPF_MEMWORDS;
-	const bpf_memword_init_t noinit = (extwords != 0) ? bc->noinit : 0;
+	const size_t extwords = bc ? bc->extwords : 0;
+	const size_t memwords = extwords ? extwords : BPF_MEMWORDS;
+	const bpf_memword_init_t preinited = extwords ? bc->preinited : 0;
 #else
 	const size_t memwords = BPF_MEMWORDS;
 #endif
@@ -609,8 +609,9 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 		return 0;
 
 #if defined(KERNEL) || defined(_KERNEL)
+	/* Note: only the pre-initialised is valid on startup */
 	mem = kmem_zalloc(size = sizeof(*mem) * len, KM_SLEEP);
-	invalid = ~noinit; /* Only pre-initialised memory is valid on startup */
+	invalid = ~preinited;
 #endif
 
 	for (i = 0; i < len; ++i) {

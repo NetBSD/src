@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.64 2014/06/24 10:53:30 alnsn Exp $	*/
+/*	$NetBSD: bpf.h,v 1.65 2014/06/24 22:19:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -280,19 +280,16 @@ struct bpf_insn {
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
-#define	BPF_MEMWORDS	16
+#define	BPF_MEMWORDS		16
 
 /*
- * Each bit in bpf_memword_init_t value indicates if the corresponding
- * external memory word is initialised prior to calling a bpf program.
- * Note that when used internally, a meaning is often flipped: bits
- * indicate which memory words need to be initialised prior to
- * executing a bpf program.
+ * bpf_memword_init_t: bits indicate which words in the external memory
+ * store will be initialised by the caller before BPF program execution.
  */
 typedef uint32_t bpf_memword_init_t;
-#define BPF_MEMWORD_INIT(k) (UINT32_C(1) << (k))
+#define	BPF_MEMWORD_INIT(k)	(UINT32_C(1) << (k))
 
-/* Two most significant bits are reserved by bpfjit. */
+/* Note: two most significant bits are reserved by bpfjit. */
 __CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
 
 #ifdef _KERNEL
@@ -300,12 +297,9 @@ __CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
  * Max number of external memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
 #define	BPF_MAX_MEMWORDS	30
-__CTASSERT(BPF_MAX_MEMWORDS >= BPF_MEMWORDS);
 
-#ifdef __BPF_PRIVATE
-/* Two most significant bits are reserved by bpfjit. */
+__CTASSERT(BPF_MAX_MEMWORDS >= BPF_MEMWORDS);
 __CTASSERT(BPF_MAX_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
-#endif
 #endif
 
 /*
@@ -319,10 +313,7 @@ struct bpf_dltlist {
 struct bpf_ctx;
 typedef struct bpf_ctx bpf_ctx_t;
 
-struct bpf_args;
-typedef struct bpf_args bpf_args_t;
-
-struct bpf_args {
+typedef struct bpf_args {
 	const uint8_t *	pkt;
 	size_t		wirelen;
 	size_t		buflen;
@@ -336,21 +327,32 @@ struct bpf_args {
 	 */
 	uint32_t *	mem; /* pointer to external memory store */
 	void *		arg; /* auxiliary argument for a copfunc */
-};
+} bpf_args_t;
 
 #if defined(_KERNEL) || defined(__BPF_PRIVATE)
+
 typedef uint32_t (*bpf_copfunc_t)(const bpf_ctx_t *, bpf_args_t *, uint32_t);
 
 struct bpf_ctx {
+	/*
+	 * BPF coprocessor functions and the number of them.
+	 */
 	const bpf_copfunc_t *	copfuncs;
 	size_t			nfuncs;
+
 	/*
-	 * Number of external memwords, up to BPF_MAX_MEMWORDS or 0.
-	 * The latter forces a switch to internal memstore with a
-	 * fixed number (BPF_MEMWORDS) of memwords.
+	 * The number of memory words in the external memory store.
+	 * There may be up to BPF_MAX_MEMWORDS words; if zero is set,
+	 * then the internal memory store is used which has a fixed
+	 * number of words (BPF_MEMWORDS).
 	 */
 	size_t			extwords;
-	bpf_memword_init_t	noinit; /* pre-initialised external memwords */
+
+	/*
+	 * The bitmask indicating which words in the external memstore
+	 * will be initialised by the caller.
+	 */
+	bpf_memword_init_t	preinited;
 };
 #endif
 
@@ -447,20 +449,20 @@ bpf_mtap_sl_out(struct ifnet *_ifp, u_char *_hdr, struct mbuf *_m)
 }
 
 
-void     bpf_setops(void);
+void	bpf_setops(void);
 
-void     bpf_ops_handover_enter(struct bpf_ops *);
-void     bpf_ops_handover_exit(void);
+void	bpf_ops_handover_enter(struct bpf_ops *);
+void	bpf_ops_handover_exit(void);
 
-void	 bpfilterattach(int);
+void	bpfilterattach(int);
 
 bpf_ctx_t *bpf_create(void);
 void	bpf_destroy(bpf_ctx_t *);
 
-int   bpf_set_cop(bpf_ctx_t *, const bpf_copfunc_t *, size_t);
-int   bpf_set_extmem(bpf_ctx_t *, size_t, bpf_memword_init_t);
-u_int bpf_filter_ext(const bpf_ctx_t *, const struct bpf_insn *, bpf_args_t *);
-int   bpf_validate_ext(const bpf_ctx_t *, const struct bpf_insn *, int);
+int	bpf_set_cop(bpf_ctx_t *, const bpf_copfunc_t *, size_t);
+int	bpf_set_extmem(bpf_ctx_t *, size_t, bpf_memword_init_t);
+u_int	bpf_filter_ext(const bpf_ctx_t *, const struct bpf_insn *, bpf_args_t *);
+int	bpf_validate_ext(const bpf_ctx_t *, const struct bpf_insn *, int);
 
 bpfjit_func_t bpf_jit_generate(bpf_ctx_t *, void *, size_t);
 void	bpf_jit_freecode(bpfjit_func_t);
