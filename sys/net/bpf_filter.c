@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.63 2014/06/24 22:19:36 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.64 2014/06/24 22:27:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.63 2014/06/24 22:19:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.64 2014/06/24 22:27:40 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -79,8 +79,9 @@ bpf_set_cop(bpf_ctx_t *bc, const bpf_copfunc_t *funcs, size_t n)
 int
 bpf_set_extmem(bpf_ctx_t *bc, size_t nwords, bpf_memword_init_t preinited)
 {
-	/* XXX check arguments */
-
+	if (nwords > BPF_MAX_MEMWORDS) {
+		return EINVAL;
+	}
 	bc->extwords = nwords;
 	bc->preinited = preinited;
 	return 0;
@@ -661,7 +662,7 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 				goto out;
 #if defined(KERNEL) || defined(_KERNEL)
 			/* validate the memory word */
-			invalid &= ~BPF_MEMWORD_INIT(1 << p->k);
+			invalid &= ~BPF_MEMWORD_INIT(p->k);
 #endif
 			break;
 		case BPF_ALU:
