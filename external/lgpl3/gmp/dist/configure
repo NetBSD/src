@@ -4142,7 +4142,7 @@ echo "include_mpn(\`alpha/default.m4')" >> $gmp_tmpconfigm4i
     ;;
 
 
-  arm*-*-* | earm*-*-*)
+  arm*-*-*)
     gcc_cflags="$gcc_cflags $fomit_frame_pointer"
     gcc_cflags_optlist="arch tune"
     gcc_cflags_maybe="-marm"
