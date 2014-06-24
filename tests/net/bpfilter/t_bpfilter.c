@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.7 2013/12/18 22:39:16 alnsn Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.8 2014/06/24 11:32:36 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.7 2013/12/18 22:39:16 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.8 2014/06/24 11:32:36 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -178,8 +178,8 @@ pingtest(const char *dst, unsigned int wirelen, const char tail[7])
 
 	memcpy(pkt + pktsize - 7, tail, 7);
 	icmp->icmp_type = ICMP_ECHO;
-	icmp->icmp_id = htons(37); 
-	icmp->icmp_seq = htons(1); 
+	icmp->icmp_id = htons(37);
+	icmp->icmp_seq = htons(1);
 	icmp->icmp_cksum = in_cksum(pkt, pktsize);
 
 	slen = sizeof(sin);
