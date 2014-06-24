@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.6 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.7 2014/06/24 11:31:49 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.6 2013/12/06 01:33:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.7 2014/06/24 11:31:49 alnsn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.6 2013/12/06 01:33:37 rmind Exp $");
 
 static bpf_ctx_t *npf_bpfctx __read_mostly;
 
-static uint32_t	npf_cop_l3(bpf_ctx_t *, bpf_args_t *, uint32_t);
-static uint32_t	npf_cop_table(bpf_ctx_t *, bpf_args_t *, uint32_t);
+static uint32_t	npf_cop_l3(const bpf_ctx_t *, bpf_args_t *, uint32_t);
+static uint32_t	npf_cop_table(const bpf_ctx_t *, bpf_args_t *, uint32_t);
 
 static const bpf_copfunc_t npf_bpfcop[] = {
 	[NPF_COP_L3]	= npf_cop_l3,
@@ -112,7 +112,7 @@ npf_bpf_validate(const void *code, size_t len)
  *	BPF_MW_L4PROTO	L4 protocol.
  */
 static uint32_t
-npf_cop_l3(bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
+npf_cop_l3(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 {
 	const npf_cache_t * const npc = (const npf_cache_t *)args->arg;
 	uint32_t * const M = args->mem;
@@ -144,7 +144,7 @@ npf_cop_l3(bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
  *	A <- non-zero (true) if found and zero (false) otherwise
  */
 static uint32_t
-npf_cop_table(bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
+npf_cop_table(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 {
 	const npf_cache_t * const npc = (const npf_cache_t *)args->arg;
 	npf_tableset_t *tblset = npf_config_tableset();
