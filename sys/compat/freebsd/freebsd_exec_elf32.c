@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.18 2014/06/24 11:59:10 maxv Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.19 2014/06/24 12:17:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.18 2014/06/24 11:59:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.19 2014/06/24 12:17:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,14 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.18 2014/06/24 11:59:10 maxv
 #endif /* !ELFSIZE */
 #include <sys/exec_elf.h>
 
-#include <compat/sys/signal.h>
-#include <compat/sys/signalvar.h>
-
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/common/compat_util.h>
 
 #include <machine/freebsd_machdep.h>
-
 
 int
 ELFNAME2(freebsd,probe)(struct lwp *l, struct exec_package *epp, void *veh,
