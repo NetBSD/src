@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.53 2014/06/17 21:37:20 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.54 2014/06/24 23:25:33 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.53 2014/06/17 21:37:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.54 2014/06/24 23:25:33 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.53 2014/06/17 21:37:20 msaitoh Exp $");
  *   BCM5716  C0
  *
  * The following controllers are not supported by this driver:
- *
  *   BCM5706C A0, A1
  *   BCM5706S A0, A1
  *   BCM5708C A0, B0
@@ -1754,7 +1753,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 	}
 
 	if (len32 & 3) {
-	       	if ((len32 > 4) || !align_start) {
+		if ((len32 > 4) || !align_start) {
 			align_end = 4 - (len32 & 3);
 			len32 += align_end;
 			if ((rc = bnx_nvram_read(sc, offset32 + len32 - 4,
@@ -3142,12 +3141,10 @@ bnx_init_context(struct bnx_softc *sc)
 			DELAY(2);
 		}
 
-
 		/* ToDo: Consider returning an error here. */
 
 		for (i = 0; i < sc->ctx_pages; i++) {
 			int j;
-
 
 			/* Set the physaddr of the context memory cache. */
 			val = (u_int32_t)(sc->ctx_segs[i].ds_addr);
@@ -3158,7 +3155,6 @@ bnx_init_context(struct bnx_softc *sc)
 			REG_WR(sc, BNX_CTX_HOST_PAGE_TBL_DATA1, val);
 			REG_WR(sc, BNX_CTX_HOST_PAGE_TBL_CTRL, i |
 				BNX_CTX_HOST_PAGE_TBL_CTRL_WRITE_REQ);
-
 
 			/* Verify that the context memory write was successful. */
 			for (j = 0; j < retry_cnt; j++) {
@@ -3725,7 +3721,7 @@ bnx_add_buf(struct bnx_softc *sc, struct mbuf *m_new, u_int16_t *prod,
 	    sizeof(struct rx_bd), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
-	 * Save the mbuf, ajust the map pointer (swap map for first and
+	 * Save the mbuf, adjust the map pointer (swap map for first and
 	 * last rx_bd entry to that rx_mbuf_ptr and rx_mbuf_map matches)
 	 * and update counter.
 	 */
@@ -4031,7 +4027,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 
 		mutex_enter(&sc->tx_pkt_mtx);
 		TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
-        }
+	}
 
 	/* Destroy all the dmamaps we allocated for TX */
 	while ((pkt = TAILQ_FIRST(&sc->tx_free_pkts)) != NULL) {
@@ -5258,7 +5254,8 @@ bnx_intr(void *xsc)
 		    sc->hw_tx_cons)
 			bnx_tx_intr(sc);
 
-		/* Save the status block index value for use during the
+		/*
+		 * Save the status block index value for use during the
 		 * next interrupt.
 		 */
 		sc->last_status_idx = sblk->status_idx;

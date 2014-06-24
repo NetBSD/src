@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.15 2014/06/17 21:37:20 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.16 2014/06/24 23:25:33 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -326,7 +326,7 @@ struct flash_spec {
 #define BNX_NV_BUFFERED		0x00000001
 #define BNX_NV_TRANSLATE	0x00000002
 #define BNX_NV_WREN		0x00000004
-        u_int32_t flags;
+	u_int32_t flags;
 	u_int32_t page_bits;
 	u_int32_t page_size;
 	u_int32_t addr_mask;
@@ -341,19 +341,19 @@ struct flash_spec {
 /* information which can be accessed by the driver.                         */
 /****************************************************************************/
 
-/* 
+/*
  * This value (in milliseconds) determines the frequency of the driver
  * issuing the PULSE message code.  The firmware monitors this periodic
- * pulse to determine when to switch to an OS-absent mode. 
+ * pulse to determine when to switch to an OS-absent mode.
  */
 #define DRV_PULSE_PERIOD_MS                 250
 
-/* 
+/*
  * This value (in milliseconds) determines how long the driver should
  * wait for an acknowledgement from the firmware before timing out.  Once
  * the firmware has timed out, the driver will assume there is no firmware
  * running and there won't be any firmware-driver synchronization during a
- * driver reset. 
+ * driver reset.
  */
 #define FW_ACK_TIME_OUT_MS                  1000
 
@@ -423,8 +423,8 @@ struct flash_spec {
 #define BNX_DRV_PULSE_MB			0x00000010
 #define BNX_DRV_PULSE_SEQ_MASK			 0x00007fff
 
-#define BNX_MB_ARGS_0                          0x00000014
-#define BNX_MB_ARGS_1                          0x00000018
+#define BNX_MB_ARGS_0				0x00000014
+#define BNX_MB_ARGS_1				0x00000018
 
 /* Indicate to the firmware not to go into the
  * OS absent when it is not getting driver pulse.
@@ -2154,10 +2154,10 @@ struct l2_fhdr {
 #define BNX_CTX_ACCESS_STATUS_ACCESSMEMORYSM		 (0x3L<<10)
 #define BNX_CTX_ACCESS_STATUS_PAGETABLEINITSM		 (0x3L<<12)
 #define BNX_CTX_ACCESS_STATUS_ACCESSMEMORYINITSM	 (0x3L<<14)
-#define BNX_CTX_ACCESS_STATUS_QUALIFIED_REQUEST 	 (0x7ffL<<17)
-#define BNX_CTX_ACCESS_STATUS_CAMMASTERENCODED_XI        (0x1fL<<0)
-#define BNX_CTX_ACCESS_STATUS_CACHEMASTERENCODED_XI      (0x1fL<<5)
-#define BNX_CTX_ACCESS_STATUS_REQUEST_XI                 (0x3fffffL<<10)
+#define BNX_CTX_ACCESS_STATUS_QUALIFIED_REQUEST		 (0x7ffL<<17)
+#define BNX_CTX_ACCESS_STATUS_CAMMASTERENCODED_XI	 (0x1fL<<0)
+#define BNX_CTX_ACCESS_STATUS_CACHEMASTERENCODED_XI	 (0x1fL<<5)
+#define BNX_CTX_ACCESS_STATUS_REQUEST_XI		 (0x3fffffL<<10)
 
 #define BNX_CTX_DBG_LOCK_STATUS			0x00001044
 #define BNX_CTX_DBG_LOCK_STATUS_SM			 (0x3ffL<<0)
@@ -4551,7 +4551,7 @@ struct l2_fhdr {
 #define DMA_WRITE_CHANS	3
 
 /* Use the natural page size of the host CPU. */
-#define BCM_PAGE_BITS	PAGE_SHIFT	
+#define BCM_PAGE_BITS	PAGE_SHIFT
 #define BCM_PAGE_SIZE	PAGE_SIZE
 
 #define TX_PAGES	2

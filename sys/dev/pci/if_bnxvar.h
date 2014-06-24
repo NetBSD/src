@@ -392,7 +392,7 @@ struct bnx_firmware_header {
 	int		bnx_RXP_FwBssLen;
 	u_int32_t	bnx_RXP_FwSbssAddr;
 	int		bnx_RXP_FwSbssLen;
-	
+
 	int		bnx_TPAT_FwReleaseMajor;
 	int		bnx_TPAT_FwReleaseMinor;
 	int		bnx_TPAT_FwReleaseFix;
@@ -428,13 +428,13 @@ struct bnx_firmware_header {
 	 *
 	 * bnx_COM_FwText, bnx_COM_FwData, bnx_COM_FwRodata,
 	 * bnx_COM_FwBss, bnx_COM_FwSbss,
-	 * 
+	 *
 	 * bnx_RXP_FwText, bnx_RXP_FwData, bnx_RXP_FwRodata,
 	 * bnx_RXP_FwBss, bnx_RXP_FwSbss,
-	 * 
+	 *
 	 * bnx_TPAT_FwText, bnx_TPAT_FwData, bnx_TPAT_FwRodata,
 	 * bnx_TPAT_FwBss, bnx_TPAT_FwSbss,
-	 * 
+	 *
 	 * bnx_TXP_FwText, bnx_TXP_FwData, bnx_TXP_FwRodata,
 	 * bnx_TXP_FwBss, bnx_TXP_FwSbss,
 	 */
