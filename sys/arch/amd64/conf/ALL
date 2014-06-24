@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.9 2014/06/10 01:42:39 hikaru Exp $
+# $NetBSD: ALL,v 1.10 2014/06/24 11:59:10 maxv Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.9 $"
+#ident 		"ALL-$Revision: 1.10 $"
 
 maxusers	64		# estimated number of users
 
@@ -1829,7 +1829,6 @@ options DEBUG_FIND_COMPORT
 options DEBUG_FIND_PCIC
 options DEBUG_FIND_PCIC_I82365SL_ONLY
 options DEBUG_FPE
-options DEBUG_FREEBSD_ELF
 options DEBUG_GPIO
 options DEBUG_GPIO2
 options DEBUG_HPUX
