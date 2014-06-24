@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.4 2014/05/23 11:48:26 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.5 2014/06/24 10:53:30 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.4 2014/05/23 11:48:26 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.5 2014/06/24 10:53:30 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
 #include <string.h>
 
-#define	__BPF_PRIVATE
 #include <net/bpf.h>
 #include <net/bpfjit.h>
 
@@ -44,8 +43,18 @@ static uint8_t deadbeef_at_5[16] = {
 	0, 0xf1, 2, 0xf3, 4, 0xde, 0xad, 0xbe, 0xef, 0xff
 };
 
-static bpf_ctx_t bc_zeroed;
-static bpf_ctx_t *bc = &bc_zeroed;
+static inline
+unsigned int jitcall(bpfjit_func_t fn,
+    const uint8_t *pkt, unsigned int wirelen, unsigned int buflen)
+{
+	bpf_args_t args;
+
+	args.pkt = pkt;
+	args.wirelen = wirelen;
+	args.buflen = buflen;
+
+	return fn(NULL, &args);
+}
 
 ATF_TC(bpfjit_empty);
 ATF_TC_HEAD(bpfjit_empty, tc)
@@ -58,7 +67,7 @@ ATF_TC_BODY(bpfjit_empty, tc)
 {
 	struct bpf_insn dummy;
 
-	ATF_CHECK(bpfjit_generate_code(bc, &dummy, 0) == NULL);
+	ATF_CHECK(bpfjit_generate_code(NULL, &dummy, 0) == NULL);
 }
 
 ATF_TC(bpfjit_alu_add_k);
@@ -83,10 +92,10 @@ ATF_TC_BODY(bpfjit_alu_add_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 5);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 5);
 
 	bpfjit_free_code(code);
 }
@@ -113,10 +122,10 @@ ATF_TC_BODY(bpfjit_alu_sub_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -143,10 +152,10 @@ ATF_TC_BODY(bpfjit_alu_mul_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0xfffffffd));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(0xfffffffd));
 
 	bpfjit_free_code(code);
 }
@@ -172,10 +181,10 @@ ATF_TC_BODY(bpfjit_alu_div0_k, tc)
 
 	//ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -202,10 +211,10 @@ ATF_TC_BODY(bpfjit_alu_div1_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 7);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 7);
 
 	bpfjit_free_code(code);
 }
@@ -232,10 +241,10 @@ ATF_TC_BODY(bpfjit_alu_div2_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 3);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 3);
 
 	bpfjit_free_code(code);
 }
@@ -262,10 +271,10 @@ ATF_TC_BODY(bpfjit_alu_div4_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0x3fffffff));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(0x3fffffff));
 
 	bpfjit_free_code(code);
 }
@@ -292,10 +301,10 @@ ATF_TC_BODY(bpfjit_alu_div10_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484384));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(429484384));
 
 	bpfjit_free_code(code);
 }
@@ -322,10 +331,10 @@ ATF_TC_BODY(bpfjit_alu_div10000_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(429484));
 
 	bpfjit_free_code(code);
 }
@@ -352,10 +361,10 @@ ATF_TC_BODY(bpfjit_alu_div7609801_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 564);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 564);
 
 	bpfjit_free_code(code);
 }
@@ -382,10 +391,10 @@ ATF_TC_BODY(bpfjit_alu_div80000000_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
 
 	bpfjit_free_code(code);
 }
@@ -412,10 +421,10 @@ ATF_TC_BODY(bpfjit_alu_and_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == (0xdead&0xbeef));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == (0xdead&0xbeef));
 
 	bpfjit_free_code(code);
 }
@@ -442,10 +451,10 @@ ATF_TC_BODY(bpfjit_alu_or_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
 
 	bpfjit_free_code(code);
 }
@@ -472,10 +481,10 @@ ATF_TC_BODY(bpfjit_alu_lsh_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xbeef0000);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xbeef0000);
 
 	bpfjit_free_code(code);
 }
@@ -502,10 +511,10 @@ ATF_TC_BODY(bpfjit_alu_lsh0_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
 
 	bpfjit_free_code(code);
 }
@@ -532,10 +541,10 @@ ATF_TC_BODY(bpfjit_alu_rsh_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0x0000dead);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0x0000dead);
 
 	bpfjit_free_code(code);
 }
@@ -562,10 +571,10 @@ ATF_TC_BODY(bpfjit_alu_rsh0_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
 
 	bpfjit_free_code(code);
 }
@@ -624,11 +633,11 @@ ATF_TC_BODY(bpfjit_alu_modulo_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) != UINT32_C(0x71cbbbc3));
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0x0000a994));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) != UINT32_C(0x71cbbbc3));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(0x0000a994));
 
 
 	bpfjit_free_code(code);
@@ -657,10 +666,10 @@ ATF_TC_BODY(bpfjit_alu_add_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 5);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 5);
 
 	bpfjit_free_code(code);
 }
@@ -688,10 +697,10 @@ ATF_TC_BODY(bpfjit_alu_sub_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -719,10 +728,10 @@ ATF_TC_BODY(bpfjit_alu_mul_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0xfffffffd));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(0xfffffffd));
 
 	bpfjit_free_code(code);
 }
@@ -749,10 +758,10 @@ ATF_TC_BODY(bpfjit_alu_div0_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -780,10 +789,10 @@ ATF_TC_BODY(bpfjit_alu_div1_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 7);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 7);
 
 	bpfjit_free_code(code);
 }
@@ -811,10 +820,10 @@ ATF_TC_BODY(bpfjit_alu_div2_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 3);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 3);
 
 	bpfjit_free_code(code);
 }
@@ -842,10 +851,10 @@ ATF_TC_BODY(bpfjit_alu_div4_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0x3fffffff));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(0x3fffffff));
 
 	bpfjit_free_code(code);
 }
@@ -873,10 +882,10 @@ ATF_TC_BODY(bpfjit_alu_div10_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484384));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(429484384));
 
 	bpfjit_free_code(code);
 }
@@ -904,10 +913,10 @@ ATF_TC_BODY(bpfjit_alu_div10000_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(429484));
 
 	bpfjit_free_code(code);
 }
@@ -935,10 +944,10 @@ ATF_TC_BODY(bpfjit_alu_div7609801_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 564);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 564);
 
 	bpfjit_free_code(code);
 }
@@ -966,10 +975,10 @@ ATF_TC_BODY(bpfjit_alu_div80000000_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
 
 	bpfjit_free_code(code);
 }
@@ -997,10 +1006,10 @@ ATF_TC_BODY(bpfjit_alu_and_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == (0xdead&0xbeef));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == (0xdead&0xbeef));
 
 	bpfjit_free_code(code);
 }
@@ -1028,10 +1037,10 @@ ATF_TC_BODY(bpfjit_alu_or_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
 
 	bpfjit_free_code(code);
 }
@@ -1059,10 +1068,10 @@ ATF_TC_BODY(bpfjit_alu_lsh_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xbeef0000);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xbeef0000);
 
 	bpfjit_free_code(code);
 }
@@ -1090,10 +1099,10 @@ ATF_TC_BODY(bpfjit_alu_lsh0_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
 
 	bpfjit_free_code(code);
 }
@@ -1121,10 +1130,10 @@ ATF_TC_BODY(bpfjit_alu_rsh_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0x0000dead);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0x0000dead);
 
 	bpfjit_free_code(code);
 }
@@ -1152,10 +1161,10 @@ ATF_TC_BODY(bpfjit_alu_rsh0_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
 
 	bpfjit_free_code(code);
 }
@@ -1223,11 +1232,11 @@ ATF_TC_BODY(bpfjit_alu_modulo_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) != UINT32_C(0x71cbbbc3));
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0x0000a994));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) != UINT32_C(0x71cbbbc3));
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_C(0x0000a994));
 
 
 	bpfjit_free_code(code);
@@ -1255,10 +1264,10 @@ ATF_TC_BODY(bpfjit_alu_neg, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0u-777u);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0u-777u);
 
 	bpfjit_free_code(code);
 }
@@ -1288,10 +1297,10 @@ ATF_TC_BODY(bpfjit_jmp_ja, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -1332,17 +1341,17 @@ ATF_TC_BODY(bpfjit_jmp_jgt_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 1);
-	ATF_CHECK(code(pkt, 3, 3) == 7);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 7);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 1);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 7);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1383,17 +1392,17 @@ ATF_TC_BODY(bpfjit_jmp_jge_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 1);
-	ATF_CHECK(code(pkt, 3, 3) == 7);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 7);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 1);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 7);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1434,17 +1443,17 @@ ATF_TC_BODY(bpfjit_jmp_jeq_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 7);
-	ATF_CHECK(code(pkt, 2, 2) == 7);
-	ATF_CHECK(code(pkt, 3, 3) == 1);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 7);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 7);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 7);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 1);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1485,17 +1494,17 @@ ATF_TC_BODY(bpfjit_jmp_jset_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 1);
-	ATF_CHECK(code(pkt, 3, 3) == 1);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 5);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 1);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 1);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 5);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1547,10 +1556,10 @@ ATF_TC_BODY(bpfjit_jmp_modulo_k, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -1598,17 +1607,17 @@ ATF_TC_BODY(bpfjit_jmp_jgt_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 1);
-	ATF_CHECK(code(pkt, 3, 3) == 7);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 7);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 1);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 7);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1656,17 +1665,17 @@ ATF_TC_BODY(bpfjit_jmp_jge_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 1);
-	ATF_CHECK(code(pkt, 3, 3) == 7);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 7);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 1);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 7);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1713,17 +1722,17 @@ ATF_TC_BODY(bpfjit_jmp_jeq_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 7);
-	ATF_CHECK(code(pkt, 2, 2) == 7);
-	ATF_CHECK(code(pkt, 3, 3) == 1);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 7);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 7);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 7);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 1);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1770,17 +1779,17 @@ ATF_TC_BODY(bpfjit_jmp_jset_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 1);
-	ATF_CHECK(code(pkt, 3, 3) == 1);
-	ATF_CHECK(code(pkt, 4, 4) == 7);
-	ATF_CHECK(code(pkt, 5, 5) == 5);
-	ATF_CHECK(code(pkt, 6, 6) == 8);
-	ATF_CHECK(code(pkt, 7, 7) == 5);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 1);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 1);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 5);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -1842,10 +1851,10 @@ ATF_TC_BODY(bpfjit_jmp_modulo_x, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -1888,20 +1897,20 @@ ATF_TC_BODY(bpfjit_ld_abs, tc)
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(bc, insns[i], insn_count);
+		code = bpfjit_generate_code(NULL, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
 		for (l = 0; l < 5 + lengths[i]; l++) {
-			ATF_CHECK(code(pkt, l, l) == 0);
-			ATF_CHECK(code(pkt, pktsize, l) == 0);
+			ATF_CHECK(jitcall(code, pkt, l, l) == 0);
+			ATF_CHECK(jitcall(code, pkt, pktsize, l) == 0);
 		}
 
 		l = 5 + lengths[i];
-		ATF_CHECK(code(pkt, l, l) == expected[i]);
-		ATF_CHECK(code(pkt, pktsize, l) == expected[i]);
+		ATF_CHECK(jitcall(code, pkt, l, l) == expected[i]);
+		ATF_CHECK(jitcall(code, pkt, pktsize, l) == expected[i]);
 
 		l = pktsize;
-		ATF_CHECK(code(pkt, l, l) == expected[i]);
+		ATF_CHECK(jitcall(code, pkt, l, l) == expected[i]);
 
 		bpfjit_free_code(code);
 	}
@@ -1989,10 +1998,10 @@ ATF_TC_BODY(bpfjit_ld_abs_k_overflow, tc)
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(bc, insns[i], insn_count);
+		code = bpfjit_generate_code(NULL, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
-		ATF_CHECK(code(pkt, 8, 8) == 0);
+		ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 		bpfjit_free_code(code);
 	}
@@ -2058,20 +2067,20 @@ ATF_TC_BODY(bpfjit_ld_ind, tc)
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(bc, insns[i], insn_count);
+		code = bpfjit_generate_code(NULL, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
 		for (l = 0; l < 5 + lengths[i]; l++) {
-			ATF_CHECK(code(pkt, l, l) == 0);
-			ATF_CHECK(code(pkt, pktsize, l) == 0);
+			ATF_CHECK(jitcall(code, pkt, l, l) == 0);
+			ATF_CHECK(jitcall(code, pkt, pktsize, l) == 0);
 		}
 
 		l = 5 + lengths[i];
-		ATF_CHECK(code(pkt, l, l) == expected[i]);
-		ATF_CHECK(code(pkt, pktsize, l) == expected[i]);
+		ATF_CHECK(jitcall(code, pkt, l, l) == expected[i]);
+		ATF_CHECK(jitcall(code, pkt, pktsize, l) == expected[i]);
 
 		l = pktsize;
-		ATF_CHECK(code(pkt, l, l) == expected[i]);
+		ATF_CHECK(jitcall(code, pkt, l, l) == expected[i]);
 
 		bpfjit_free_code(code);
 	}
@@ -2159,10 +2168,10 @@ ATF_TC_BODY(bpfjit_ld_ind_k_overflow, tc)
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(bc, insns[i], insn_count);
+		code = bpfjit_generate_code(NULL, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
-		ATF_CHECK(code(pkt, 8, 8) == 0);
+		ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
 
 		bpfjit_free_code(code);
 	}
@@ -2193,12 +2202,12 @@ ATF_TC_BODY(bpfjit_ld_ind_x_overflow1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++) {
 		ATF_CHECK(bpf_filter(insns, pkt, i, i) == 10 * i);
-		ATF_CHECK(code(pkt, i, i) == 10 * i);
+		ATF_CHECK(jitcall(code, pkt, i, i) == 10 * i);
 	}
 
 	bpfjit_free_code(code);
@@ -2230,12 +2239,12 @@ ATF_TC_BODY(bpfjit_ld_ind_x_overflow2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++) {
 		ATF_CHECK(bpf_filter(insns, pkt, i, i) == 10 * i);
-		ATF_CHECK(code(pkt, i, i) == 10 * i);
+		ATF_CHECK(jitcall(code, pkt, i, i) == 10 * i);
 	}
 
 	bpfjit_free_code(code);
@@ -2263,11 +2272,11 @@ ATF_TC_BODY(bpfjit_ld_len, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < sizeof(pkt); i++)
-		ATF_CHECK(code(pkt, i, 1) == i);
+		ATF_CHECK(jitcall(code, pkt, i, 1) == i);
 
 	bpfjit_free_code(code);
 }
@@ -2293,10 +2302,10 @@ ATF_TC_BODY(bpfjit_ld_imm, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -2323,10 +2332,10 @@ ATF_TC_BODY(bpfjit_ldx_imm1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX - 5);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX - 5);
 
 	bpfjit_free_code(code);
 }
@@ -2355,10 +2364,10 @@ ATF_TC_BODY(bpfjit_ldx_imm2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -2386,12 +2395,12 @@ ATF_TC_BODY(bpfjit_ldx_len1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i < sizeof(pkt); i++) {
-		ATF_CHECK(code(pkt, i, 1) == i);
-		ATF_CHECK(code(pkt, i + 1, i) == i + 1);
+		ATF_CHECK(jitcall(code, pkt, i, 1) == i);
+		ATF_CHECK(jitcall(code, pkt, i + 1, i) == i + 1);
 	}
 
 	bpfjit_free_code(code);
@@ -2421,11 +2430,11 @@ ATF_TC_BODY(bpfjit_ldx_len2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 5, 1) == UINT32_MAX);
-	ATF_CHECK(code(pkt, 6, 5) == 7);
+	ATF_CHECK(jitcall(code, pkt, 5, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 6, 5) == 7);
 
 	bpfjit_free_code(code);
 }
@@ -2452,10 +2461,10 @@ ATF_TC_BODY(bpfjit_ldx_msh, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 2, 2) == 40);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 40);
 
 	bpfjit_free_code(code);
 }
@@ -2483,10 +2492,10 @@ ATF_TC_BODY(bpfjit_misc_tax, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, sizeof(pkt), sizeof(pkt)) == 55);
+	ATF_CHECK(jitcall(code, pkt, sizeof(pkt), sizeof(pkt)) == 55);
 
 	bpfjit_free_code(code);
 }
@@ -2513,10 +2522,10 @@ ATF_TC_BODY(bpfjit_misc_txa, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 391);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 391);
 
 	bpfjit_free_code(code);
 }
@@ -2545,11 +2554,11 @@ ATF_TC_BODY(bpfjit_st1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++)
-		ATF_CHECK(code(pkt, i, sizeof(pkt)) == i);
+		ATF_CHECK(jitcall(code, pkt, i, sizeof(pkt)) == i);
 
 	bpfjit_free_code(code);
 }
@@ -2577,10 +2586,10 @@ ATF_TC_BODY(bpfjit_st2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -2616,11 +2625,11 @@ ATF_TC_BODY(bpfjit_st3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 102);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 102);
 
 	bpfjit_free_code(code);
 }
@@ -2656,11 +2665,11 @@ ATF_TC_BODY(bpfjit_st4, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 1);
-	ATF_CHECK(code(pkt, 2, 2) == 102);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 1);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 102);
 
 	bpfjit_free_code(code);
 }
@@ -2711,11 +2720,11 @@ ATF_TC_BODY(bpfjit_st5, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (k = 1; k <= sizeof(pkt); k++)
-		ATF_CHECK(code(pkt, k, k) == 3*(k-1));
+		ATF_CHECK(jitcall(code, pkt, k, k) == 3*(k-1));
 
 	bpfjit_free_code(code);
 }
@@ -2745,11 +2754,11 @@ ATF_TC_BODY(bpfjit_stx1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++)
-		ATF_CHECK(code(pkt, i, sizeof(pkt)) == i);
+		ATF_CHECK(jitcall(code, pkt, i, sizeof(pkt)) == i);
 
 	bpfjit_free_code(code);
 }
@@ -2778,10 +2787,10 @@ ATF_TC_BODY(bpfjit_stx2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -2821,11 +2830,11 @@ ATF_TC_BODY(bpfjit_stx3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++)
-		ATF_CHECK(code(pkt, i, sizeof(pkt)) == 3 * i);
+		ATF_CHECK(jitcall(code, pkt, i, sizeof(pkt)) == 3 * i);
 
 	bpfjit_free_code(code);
 }
@@ -2876,11 +2885,11 @@ ATF_TC_BODY(bpfjit_stx4, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (k = 1; k <= sizeof(pkt); k++)
-		ATF_CHECK(code(pkt, k, k) == 3*(k-1));
+		ATF_CHECK(jitcall(code, pkt, k, k) == 3*(k-1));
 
 	bpfjit_free_code(code);
 }
@@ -2930,13 +2939,13 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -2987,13 +2996,13 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -3044,13 +3053,13 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -3102,13 +3111,13 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -3160,13 +3169,13 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -3219,13 +3228,13 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -3278,13 +3287,13 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_4, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
 		for (j = 1; j < sizeof(pkt[i]); j++)
-			ATF_CHECK(code(pkt[i], j, j) == 0);
-		ATF_CHECK(code(pkt[i], j, j) == UINT32_MAX);
+			ATF_CHECK(jitcall(code, pkt[i], j, j) == 0);
+		ATF_CHECK(jitcall(code, pkt[i], j, j) == UINT32_MAX);
 	}
 
 	bpfjit_free_code(code);
@@ -3320,16 +3329,16 @@ ATF_TC_BODY(bpfjit_abc_ja, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 0, 0) == 0);
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 0, 0) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -3363,10 +3372,10 @@ ATF_TC_BODY(bpfjit_abc_ja_over, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == UINT32_MAX);
 
 	bpfjit_free_code(code);
 }
@@ -3399,57 +3408,57 @@ ATF_TC_BODY(bpfjit_abc_ld_chain, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
 
 	/* !(pkt[3] == 8) => return 123456789 */
-	ATF_CHECK(code(pkt, 4, 4) == 123456789);
-	ATF_CHECK(code(pkt, 5, 5) == 123456789);
-	ATF_CHECK(code(pkt, 6, 6) == 123456789);
-	ATF_CHECK(code(pkt, 7, 7) == 123456789);
-	ATF_CHECK(code(pkt, 8, 8) == 123456789);
-	ATF_CHECK(code(pkt, 9, 9) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 123456789);
 
 	/* !(pkt[4:2] >= 7) => too short or return 123456789 */
 	pkt[3] = 8;
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 123456789);
-	ATF_CHECK(code(pkt, 9, 9) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 123456789);
 
 	/* !(pkt[6:4] > 6) => too short or return 987654321 */
 	pkt[4] = pkt[5] = 1;
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 987654321);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 987654321);
 
 	/* (pkt[6:4] > 6) => too short or return 123456789 */
 	pkt[6] = pkt[7] = pkt[8] = pkt[9] = 1;
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 123456789);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 123456789);
 
 	bpfjit_free_code(code);
 }
@@ -3484,69 +3493,69 @@ ATF_TC_BODY(bpfjit_examples_1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 0);
-	ATF_CHECK(code(pkt, 11, 11) == 0);
-	ATF_CHECK(code(pkt, 12, 12) == 0);
-	ATF_CHECK(code(pkt, 13, 13) == 0);
-	ATF_CHECK(code(pkt, 14, 14) == 0);
-	ATF_CHECK(code(pkt, 15, 15) == 0);
-	ATF_CHECK(code(pkt, 16, 16) == 0);
-	ATF_CHECK(code(pkt, 17, 17) == 0);
-	ATF_CHECK(code(pkt, 18, 18) == 0);
-	ATF_CHECK(code(pkt, 19, 19) == 0);
-	ATF_CHECK(code(pkt, 20, 20) == 0);
-	ATF_CHECK(code(pkt, 21, 21) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 0);
+	ATF_CHECK(jitcall(code, pkt, 11, 11) == 0);
+	ATF_CHECK(jitcall(code, pkt, 12, 12) == 0);
+	ATF_CHECK(jitcall(code, pkt, 13, 13) == 0);
+	ATF_CHECK(jitcall(code, pkt, 14, 14) == 0);
+	ATF_CHECK(jitcall(code, pkt, 15, 15) == 0);
+	ATF_CHECK(jitcall(code, pkt, 16, 16) == 0);
+	ATF_CHECK(jitcall(code, pkt, 17, 17) == 0);
+	ATF_CHECK(jitcall(code, pkt, 18, 18) == 0);
+	ATF_CHECK(jitcall(code, pkt, 19, 19) == 0);
+	ATF_CHECK(jitcall(code, pkt, 20, 20) == 0);
+	ATF_CHECK(jitcall(code, pkt, 21, 21) == 0);
 
 	/* The packet doesn't match. */
-	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
 
 	/* Still no match after setting the protocol field. */
 	pkt[12] = 0x80; pkt[13] = 0x35;
-	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
 
 	/* Set RARP message type. */
 	pkt[21] = 3;
-	ATF_CHECK(code(pkt, 22, 22) == 42);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 42);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 0);
-	ATF_CHECK(code(pkt, 11, 11) == 0);
-	ATF_CHECK(code(pkt, 12, 12) == 0);
-	ATF_CHECK(code(pkt, 13, 13) == 0);
-	ATF_CHECK(code(pkt, 14, 14) == 0);
-	ATF_CHECK(code(pkt, 15, 15) == 0);
-	ATF_CHECK(code(pkt, 16, 16) == 0);
-	ATF_CHECK(code(pkt, 17, 17) == 0);
-	ATF_CHECK(code(pkt, 18, 18) == 0);
-	ATF_CHECK(code(pkt, 19, 19) == 0);
-	ATF_CHECK(code(pkt, 20, 20) == 0);
-	ATF_CHECK(code(pkt, 21, 21) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 0);
+	ATF_CHECK(jitcall(code, pkt, 11, 11) == 0);
+	ATF_CHECK(jitcall(code, pkt, 12, 12) == 0);
+	ATF_CHECK(jitcall(code, pkt, 13, 13) == 0);
+	ATF_CHECK(jitcall(code, pkt, 14, 14) == 0);
+	ATF_CHECK(jitcall(code, pkt, 15, 15) == 0);
+	ATF_CHECK(jitcall(code, pkt, 16, 16) == 0);
+	ATF_CHECK(jitcall(code, pkt, 17, 17) == 0);
+	ATF_CHECK(jitcall(code, pkt, 18, 18) == 0);
+	ATF_CHECK(jitcall(code, pkt, 19, 19) == 0);
+	ATF_CHECK(jitcall(code, pkt, 20, 20) == 0);
+	ATF_CHECK(jitcall(code, pkt, 21, 21) == 0);
 
 	/* Change RARP message type. */
 	pkt[20] = 3;
-	ATF_CHECK(code(pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -3586,102 +3595,102 @@ ATF_TC_BODY(bpfjit_examples_2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 0);
-	ATF_CHECK(code(pkt, 11, 11) == 0);
-	ATF_CHECK(code(pkt, 12, 12) == 0);
-	ATF_CHECK(code(pkt, 13, 13) == 0);
-	ATF_CHECK(code(pkt, 14, 14) == 0);
-	ATF_CHECK(code(pkt, 15, 15) == 0);
-	ATF_CHECK(code(pkt, 16, 16) == 0);
-	ATF_CHECK(code(pkt, 17, 17) == 0);
-	ATF_CHECK(code(pkt, 18, 18) == 0);
-	ATF_CHECK(code(pkt, 19, 19) == 0);
-	ATF_CHECK(code(pkt, 20, 20) == 0);
-	ATF_CHECK(code(pkt, 21, 21) == 0);
-	ATF_CHECK(code(pkt, 22, 22) == 0);
-	ATF_CHECK(code(pkt, 23, 23) == 0);
-	ATF_CHECK(code(pkt, 24, 24) == 0);
-	ATF_CHECK(code(pkt, 25, 25) == 0);
-	ATF_CHECK(code(pkt, 26, 26) == 0);
-	ATF_CHECK(code(pkt, 27, 27) == 0);
-	ATF_CHECK(code(pkt, 28, 28) == 0);
-	ATF_CHECK(code(pkt, 29, 29) == 0);
-	ATF_CHECK(code(pkt, 30, 30) == 0);
-	ATF_CHECK(code(pkt, 31, 31) == 0);
-	ATF_CHECK(code(pkt, 32, 32) == 0);
-	ATF_CHECK(code(pkt, 33, 33) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 0);
+	ATF_CHECK(jitcall(code, pkt, 11, 11) == 0);
+	ATF_CHECK(jitcall(code, pkt, 12, 12) == 0);
+	ATF_CHECK(jitcall(code, pkt, 13, 13) == 0);
+	ATF_CHECK(jitcall(code, pkt, 14, 14) == 0);
+	ATF_CHECK(jitcall(code, pkt, 15, 15) == 0);
+	ATF_CHECK(jitcall(code, pkt, 16, 16) == 0);
+	ATF_CHECK(jitcall(code, pkt, 17, 17) == 0);
+	ATF_CHECK(jitcall(code, pkt, 18, 18) == 0);
+	ATF_CHECK(jitcall(code, pkt, 19, 19) == 0);
+	ATF_CHECK(jitcall(code, pkt, 20, 20) == 0);
+	ATF_CHECK(jitcall(code, pkt, 21, 21) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 23, 23) == 0);
+	ATF_CHECK(jitcall(code, pkt, 24, 24) == 0);
+	ATF_CHECK(jitcall(code, pkt, 25, 25) == 0);
+	ATF_CHECK(jitcall(code, pkt, 26, 26) == 0);
+	ATF_CHECK(jitcall(code, pkt, 27, 27) == 0);
+	ATF_CHECK(jitcall(code, pkt, 28, 28) == 0);
+	ATF_CHECK(jitcall(code, pkt, 29, 29) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 31, 31) == 0);
+	ATF_CHECK(jitcall(code, pkt, 32, 32) == 0);
+	ATF_CHECK(jitcall(code, pkt, 33, 33) == 0);
 
 	/* The packet doesn't match. */
-	ATF_CHECK(code(pkt, 34, 34) == 0);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == 0);
 
 	/* Still no match after setting the protocol field. */
 	pkt[12] = 8;
-	ATF_CHECK(code(pkt, 34, 34) == 0);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == 0);
 
 	pkt[26] = 128; pkt[27] = 3; pkt[28] = 112; pkt[29] = 15;
-	ATF_CHECK(code(pkt, 34, 34) == 0);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == 0);
 
 	pkt[30] = 128; pkt[31] = 3; pkt[32] = 112; pkt[33] = 35;
-	ATF_CHECK(code(pkt, 34, 34) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == UINT32_MAX);
 
 	/* Swap the ip addresses. */
 	pkt[26] = 128; pkt[27] = 3; pkt[28] = 112; pkt[29] = 35;
-	ATF_CHECK(code(pkt, 34, 34) == 0);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == 0);
 
 	pkt[30] = 128; pkt[31] = 3; pkt[32] = 112; pkt[33] = 15;
-	ATF_CHECK(code(pkt, 34, 34) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == UINT32_MAX);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 0);
-	ATF_CHECK(code(pkt, 11, 11) == 0);
-	ATF_CHECK(code(pkt, 12, 12) == 0);
-	ATF_CHECK(code(pkt, 13, 13) == 0);
-	ATF_CHECK(code(pkt, 14, 14) == 0);
-	ATF_CHECK(code(pkt, 15, 15) == 0);
-	ATF_CHECK(code(pkt, 16, 16) == 0);
-	ATF_CHECK(code(pkt, 17, 17) == 0);
-	ATF_CHECK(code(pkt, 18, 18) == 0);
-	ATF_CHECK(code(pkt, 19, 19) == 0);
-	ATF_CHECK(code(pkt, 20, 20) == 0);
-	ATF_CHECK(code(pkt, 21, 21) == 0);
-	ATF_CHECK(code(pkt, 22, 22) == 0);
-	ATF_CHECK(code(pkt, 23, 23) == 0);
-	ATF_CHECK(code(pkt, 24, 24) == 0);
-	ATF_CHECK(code(pkt, 25, 25) == 0);
-	ATF_CHECK(code(pkt, 26, 26) == 0);
-	ATF_CHECK(code(pkt, 27, 27) == 0);
-	ATF_CHECK(code(pkt, 28, 28) == 0);
-	ATF_CHECK(code(pkt, 29, 29) == 0);
-	ATF_CHECK(code(pkt, 30, 30) == 0);
-	ATF_CHECK(code(pkt, 31, 31) == 0);
-	ATF_CHECK(code(pkt, 32, 32) == 0);
-	ATF_CHECK(code(pkt, 33, 33) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 0);
+	ATF_CHECK(jitcall(code, pkt, 11, 11) == 0);
+	ATF_CHECK(jitcall(code, pkt, 12, 12) == 0);
+	ATF_CHECK(jitcall(code, pkt, 13, 13) == 0);
+	ATF_CHECK(jitcall(code, pkt, 14, 14) == 0);
+	ATF_CHECK(jitcall(code, pkt, 15, 15) == 0);
+	ATF_CHECK(jitcall(code, pkt, 16, 16) == 0);
+	ATF_CHECK(jitcall(code, pkt, 17, 17) == 0);
+	ATF_CHECK(jitcall(code, pkt, 18, 18) == 0);
+	ATF_CHECK(jitcall(code, pkt, 19, 19) == 0);
+	ATF_CHECK(jitcall(code, pkt, 20, 20) == 0);
+	ATF_CHECK(jitcall(code, pkt, 21, 21) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 23, 23) == 0);
+	ATF_CHECK(jitcall(code, pkt, 24, 24) == 0);
+	ATF_CHECK(jitcall(code, pkt, 25, 25) == 0);
+	ATF_CHECK(jitcall(code, pkt, 26, 26) == 0);
+	ATF_CHECK(jitcall(code, pkt, 27, 27) == 0);
+	ATF_CHECK(jitcall(code, pkt, 28, 28) == 0);
+	ATF_CHECK(jitcall(code, pkt, 29, 29) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 31, 31) == 0);
+	ATF_CHECK(jitcall(code, pkt, 32, 32) == 0);
+	ATF_CHECK(jitcall(code, pkt, 33, 33) == 0);
 
 	/* Change the protocol field. */
 	pkt[13] = 8;
-	ATF_CHECK(code(pkt, 34, 34) == 0);
+	ATF_CHECK(jitcall(code, pkt, 34, 34) == 0);
 
 	bpfjit_free_code(code);
 }
@@ -3725,103 +3734,145 @@ ATF_TC_BODY(bpfjit_examples_3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(bc, insns, insn_count);
+	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 0);
-	ATF_CHECK(code(pkt, 11, 11) == 0);
-	ATF_CHECK(code(pkt, 12, 12) == 0);
-	ATF_CHECK(code(pkt, 13, 13) == 0);
-	ATF_CHECK(code(pkt, 14, 14) == 0);
-	ATF_CHECK(code(pkt, 15, 15) == 0);
-	ATF_CHECK(code(pkt, 16, 16) == 0);
-	ATF_CHECK(code(pkt, 17, 17) == 0);
-	ATF_CHECK(code(pkt, 18, 18) == 0);
-	ATF_CHECK(code(pkt, 19, 19) == 0);
-	ATF_CHECK(code(pkt, 20, 20) == 0);
-	ATF_CHECK(code(pkt, 21, 21) == 0);
-	ATF_CHECK(code(pkt, 22, 22) == 0);
-	ATF_CHECK(code(pkt, 23, 23) == 0);
-	ATF_CHECK(code(pkt, 24, 24) == 0);
-	ATF_CHECK(code(pkt, 25, 25) == 0);
-	ATF_CHECK(code(pkt, 26, 26) == 0);
-	ATF_CHECK(code(pkt, 27, 27) == 0);
-	ATF_CHECK(code(pkt, 28, 28) == 0);
-	ATF_CHECK(code(pkt, 29, 29) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 0);
+	ATF_CHECK(jitcall(code, pkt, 11, 11) == 0);
+	ATF_CHECK(jitcall(code, pkt, 12, 12) == 0);
+	ATF_CHECK(jitcall(code, pkt, 13, 13) == 0);
+	ATF_CHECK(jitcall(code, pkt, 14, 14) == 0);
+	ATF_CHECK(jitcall(code, pkt, 15, 15) == 0);
+	ATF_CHECK(jitcall(code, pkt, 16, 16) == 0);
+	ATF_CHECK(jitcall(code, pkt, 17, 17) == 0);
+	ATF_CHECK(jitcall(code, pkt, 18, 18) == 0);
+	ATF_CHECK(jitcall(code, pkt, 19, 19) == 0);
+	ATF_CHECK(jitcall(code, pkt, 20, 20) == 0);
+	ATF_CHECK(jitcall(code, pkt, 21, 21) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 23, 23) == 0);
+	ATF_CHECK(jitcall(code, pkt, 24, 24) == 0);
+	ATF_CHECK(jitcall(code, pkt, 25, 25) == 0);
+	ATF_CHECK(jitcall(code, pkt, 26, 26) == 0);
+	ATF_CHECK(jitcall(code, pkt, 27, 27) == 0);
+	ATF_CHECK(jitcall(code, pkt, 28, 28) == 0);
+	ATF_CHECK(jitcall(code, pkt, 29, 29) == 0);
 
 	/* The packet doesn't match. */
-	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
 
 	/* Still no match after setting the protocol field. */
 	pkt[12] = 8;
-	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
 
 	/* Get one step closer to the match. */
 	pkt[23] = 6;
-	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
 
 	/* Set IP fragment offset to zero. */
 	pkt[20] = 0x20; pkt[21] = 0;
-	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
 
 	/* Set IP header length to 12. */
 	pkt[14] = 0xd3;
-	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
 
 	/* Match one branch of the program. */
 	pkt[27] = 79;
-	ATF_CHECK(code(pkt, 30, 30) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == UINT32_MAX);
 
 	/* Match the other branch of the program. */
 	pkt[29] = 79; pkt[27] = 0;
-	ATF_CHECK(code(pkt, 30, 30) == UINT32_MAX);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == UINT32_MAX);
 
 	/* Packet is too short. */
-	ATF_CHECK(code(pkt, 1, 1) == 0);
-	ATF_CHECK(code(pkt, 2, 2) == 0);
-	ATF_CHECK(code(pkt, 3, 3) == 0);
-	ATF_CHECK(code(pkt, 4, 4) == 0);
-	ATF_CHECK(code(pkt, 5, 5) == 0);
-	ATF_CHECK(code(pkt, 6, 6) == 0);
-	ATF_CHECK(code(pkt, 7, 7) == 0);
-	ATF_CHECK(code(pkt, 8, 8) == 0);
-	ATF_CHECK(code(pkt, 9, 9) == 0);
-	ATF_CHECK(code(pkt, 10, 10) == 0);
-	ATF_CHECK(code(pkt, 11, 11) == 0);
-	ATF_CHECK(code(pkt, 12, 12) == 0);
-	ATF_CHECK(code(pkt, 13, 13) == 0);
-	ATF_CHECK(code(pkt, 14, 14) == 0);
-	ATF_CHECK(code(pkt, 15, 15) == 0);
-	ATF_CHECK(code(pkt, 16, 16) == 0);
-	ATF_CHECK(code(pkt, 17, 17) == 0);
-	ATF_CHECK(code(pkt, 18, 18) == 0);
-	ATF_CHECK(code(pkt, 19, 19) == 0);
-	ATF_CHECK(code(pkt, 20, 20) == 0);
-	ATF_CHECK(code(pkt, 21, 21) == 0);
-	ATF_CHECK(code(pkt, 22, 22) == 0);
-	ATF_CHECK(code(pkt, 23, 23) == 0);
-	ATF_CHECK(code(pkt, 24, 24) == 0);
-	ATF_CHECK(code(pkt, 25, 25) == 0);
-	ATF_CHECK(code(pkt, 26, 26) == 0);
-	ATF_CHECK(code(pkt, 27, 27) == 0);
-	ATF_CHECK(code(pkt, 28, 28) == 0);
-	ATF_CHECK(code(pkt, 29, 29) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 0);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 0);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 0);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 0);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 9, 9) == 0);
+	ATF_CHECK(jitcall(code, pkt, 10, 10) == 0);
+	ATF_CHECK(jitcall(code, pkt, 11, 11) == 0);
+	ATF_CHECK(jitcall(code, pkt, 12, 12) == 0);
+	ATF_CHECK(jitcall(code, pkt, 13, 13) == 0);
+	ATF_CHECK(jitcall(code, pkt, 14, 14) == 0);
+	ATF_CHECK(jitcall(code, pkt, 15, 15) == 0);
+	ATF_CHECK(jitcall(code, pkt, 16, 16) == 0);
+	ATF_CHECK(jitcall(code, pkt, 17, 17) == 0);
+	ATF_CHECK(jitcall(code, pkt, 18, 18) == 0);
+	ATF_CHECK(jitcall(code, pkt, 19, 19) == 0);
+	ATF_CHECK(jitcall(code, pkt, 20, 20) == 0);
+	ATF_CHECK(jitcall(code, pkt, 21, 21) == 0);
+	ATF_CHECK(jitcall(code, pkt, 22, 22) == 0);
+	ATF_CHECK(jitcall(code, pkt, 23, 23) == 0);
+	ATF_CHECK(jitcall(code, pkt, 24, 24) == 0);
+	ATF_CHECK(jitcall(code, pkt, 25, 25) == 0);
+	ATF_CHECK(jitcall(code, pkt, 26, 26) == 0);
+	ATF_CHECK(jitcall(code, pkt, 27, 27) == 0);
+	ATF_CHECK(jitcall(code, pkt, 28, 28) == 0);
+	ATF_CHECK(jitcall(code, pkt, 29, 29) == 0);
 
 	/* Set IP header length to 16. Packet is too short. */
 	pkt[14] = 4;
-	ATF_CHECK(code(pkt, 30, 30) == 0);
+	ATF_CHECK(jitcall(code, pkt, 30, 30) == 0);
 
 	bpfjit_free_code(code);
+}
+
+ATF_TC(bpfjit_cop_no_ctx);
+ATF_TC_HEAD(bpfjit_cop_no_ctx, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test that BPF_MISC|BPF_COP "
+	    "instruction can't be accepted without a context");
+}
+
+ATF_TC_BODY(bpfjit_cop_no_ctx, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_MISC+BPF_COP, 0),
+		BPF_STMT(BPF_RET+BPF_K, 7)
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
+}
+
+ATF_TC(bpfjit_copx_no_ctx);
+ATF_TC_HEAD(bpfjit_copx_no_ctx, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test that BPF_MISC|BPF_COPX "
+	    "instruction can't be accepted without a context");
+}
+
+ATF_TC_BODY(bpfjit_copx_no_ctx, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_MISC+BPF_COPX, 0),
+		BPF_STMT(BPF_RET+BPF_K, 7)
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -3913,6 +3964,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_examples_1);
 	ATF_TP_ADD_TC(tp, bpfjit_examples_2);
 	ATF_TP_ADD_TC(tp, bpfjit_examples_3);
+	ATF_TP_ADD_TC(tp, bpfjit_cop_no_ctx);
+	ATF_TP_ADD_TC(tp, bpfjit_copx_no_ctx);
 
 	return atf_no_error();
 }

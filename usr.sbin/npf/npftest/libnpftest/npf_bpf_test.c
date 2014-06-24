@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_test.c,v 1.4 2013/11/23 19:40:11 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_test.c,v 1.5 2014/06/24 10:53:30 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ test_bpf_code(void *code, size_t size)
 	npf_cache_all(&npc, &nbuf);
 
 	memset(&bc_args, 0, sizeof(bpf_args_t));
-	bc_args.pkt = m;
+	bc_args.pkt = (const uint8_t *)m;
 	bc_args.wirelen = m_length(m);
 	bc_args.arg = &npc;
 
