@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.32 2014/06/24 10:53:30 alnsn Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.33 2014/06/25 00:20:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.32 2014/06/24 10:53:30 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.33 2014/06/25 00:20:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -741,17 +741,17 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 	const u_int nitems = rlset->rs_nitems;
 	const u_int ifid = nbuf->nb_ifid;
 	npf_rule_t *final_rl = NULL;
-	const struct mbuf *m;
 	bpf_args_t bc_args;
 	u_int n = 0;
 
-	memset(&bc_args, 0, sizeof(bpf_args_t));
-	m = nbuf_head_mbuf(nbuf);
-	bc_args.pkt = (const uint8_t *)m;
-	bc_args.wirelen = m_length(m);
-	bc_args.arg = npc;
-
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
+
+	/*
+	 * Prepare the external memory store and the arguments for
+	 * the BPF programs to be executed.
+	 */
+	uint32_t bc_words[NPF_BPF_NWORDS];
+	npf_bpf_prepare(npc, nbuf, &bc_args, bc_words);
 
 	while (n < nitems) {
 		npf_rule_t *rl = rlset->rs_rules[n];
