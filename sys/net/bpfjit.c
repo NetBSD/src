@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.17 2014/06/25 11:58:15 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.18 2014/06/25 13:53:40 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.17 2014/06/25 11:58:15 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.18 2014/06/25 13:53:40 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.17 2014/06/25 11:58:15 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.18 2014/06/25 13:53:40 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1594,6 +1594,10 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	bpf_memword_init_t initmask;
 	int nscratches, ncopfuncs;
 
+	/* memory store location for initial zero initialization */
+	sljit_si mem_reg;
+	sljit_sw mem_off;
+
 	/* a list of jumps to out-of-bound return from a generated function */
 	struct sljit_jump **ret0;
 	size_t ret0_size, ret0_maxsize;
@@ -1665,7 +1669,10 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 			goto fail;
 	}
 
-	if (extwords != 0) {
+	if (extwords == 0) {
+		mem_reg = SLJIT_MEM1(SLJIT_LOCALS_REG);
+		mem_off = offsetof(struct bpfjit_stack, mem);
+	} else {
 		/* copy "mem" argument from bpf_args to bpfjit_stack */
 		status = sljit_emit_op1(compiler,
 		    SLJIT_MOV_P,
@@ -1681,11 +1688,10 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 		    BJ_TMP1REG, 0);
 		if (status != SLJIT_SUCCESS)
 			goto fail;
-	}
 
-	status = load_buf_buflen(compiler);
-	if (status != SLJIT_SUCCESS)
-		goto fail;
+		mem_reg = SLJIT_MEM1(BJ_TMP1REG);
+		mem_off = 0;
+	}
 
 	/*
 	 * Exclude pre-initialised external memory words but keep
@@ -1703,9 +1709,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 			/* M[i] = 0; */
 			status = sljit_emit_op1(compiler,
 			    SLJIT_MOV_UI,
-			    SLJIT_MEM1(SLJIT_LOCALS_REG),
-			    offsetof(struct bpfjit_stack, mem) +
-			        i * sizeof(uint32_t),
+			    mem_reg, mem_off + i * sizeof(uint32_t),
 			    SLJIT_IMM, 0);
 			if (status != SLJIT_SUCCESS)
 				goto fail;
@@ -1731,6 +1735,10 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 		if (status != SLJIT_SUCCESS)
 			goto fail;
 	}
+
+	status = load_buf_buflen(compiler);
+	if (status != SLJIT_SUCCESS)
+		goto fail;
 
 	for (i = 0; i < insn_count; i++) {
 		if (insn_dat[i].unreachable)
