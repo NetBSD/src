@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.64 2014/06/24 22:27:40 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.65 2014/06/25 09:51:34 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.64 2014/06/24 22:27:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.65 2014/06/25 09:51:34 alnsn Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -79,7 +79,7 @@ bpf_set_cop(bpf_ctx_t *bc, const bpf_copfunc_t *funcs, size_t n)
 int
 bpf_set_extmem(bpf_ctx_t *bc, size_t nwords, bpf_memword_init_t preinited)
 {
-	if (nwords > BPF_MAX_MEMWORDS) {
+	if (nwords > BPF_MAX_MEMWORDS || (preinited >> nwords) != 0) {
 		return EINVAL;
 	}
 	bc->extwords = nwords;
