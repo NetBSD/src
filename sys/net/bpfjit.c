@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.15 2014/06/25 01:21:36 rmind Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.16 2014/06/25 11:13:28 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.15 2014/06/25 01:21:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.16 2014/06/25 11:13:28 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.15 2014/06/25 01:21:36 rmind Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.16 2014/06/25 11:13:28 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -847,7 +847,7 @@ emit_memload(struct sljit_compiler* compiler,
 	} else {
 		/* copy extmem pointer to the tmp1 register */
 		status = sljit_emit_op1(compiler,
-		    SLJIT_MOV_UI,
+		    SLJIT_MOV_P,
 		    BJ_TMP1REG, 0,
 		    SLJIT_MEM1(SLJIT_LOCALS_REG),
 		    offsetof(struct bpfjit_stack, extmem));
@@ -875,7 +875,7 @@ emit_memstore(struct sljit_compiler* compiler,
 	} else {
 		/* copy extmem pointer to the tmp1 register */
 		status = sljit_emit_op1(compiler,
-		    SLJIT_MOV_UI,
+		    SLJIT_MOV_P,
 		    BJ_TMP1REG, 0,
 		    SLJIT_MEM1(SLJIT_LOCALS_REG),
 		    offsetof(struct bpfjit_stack, extmem));
