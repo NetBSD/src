@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.52 2014/05/30 23:26:06 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.53 2014/06/25 00:20:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -223,6 +223,7 @@ bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 /* BPF interface. */
 void		npf_bpf_sysinit(void);
 void		npf_bpf_sysfini(void);
+void		npf_bpf_prepare(npf_cache_t *, nbuf_t *, bpf_args_t *, uint32_t *);
 int		npf_bpf_filter(bpf_args_t *, const void *, bpfjit_func_t);
 void *		npf_bpf_compile(void *, size_t);
 bool		npf_bpf_validate(const void *, size_t);
