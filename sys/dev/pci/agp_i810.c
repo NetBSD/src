@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.104 2014/06/25 13:10:27 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.105 2014/06/25 15:04:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.104 2014/06/25 13:10:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.105 2014/06/25 15:04:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,7 +1094,7 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	if (offset < 0 || offset >= ((isc->gtt_size/4) << AGP_PAGE_SHIFT)) {
 #ifdef AGP_DEBUG
 		printf("%s: failed"
-		    ": offset 0x%08x, shift %d, entries %"PRIdMAX"\n",
+		    ": offset 0x%08x, shift %d, entries %"PRIuMAX"\n",
 		    device_xname(sc->as_dev), (int)offset, AGP_PAGE_SHIFT,
 		    (uintmax_t)isc->gtt_size/4);
 #endif
