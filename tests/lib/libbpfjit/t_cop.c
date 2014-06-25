@@ -1,7 +1,7 @@
-/*	$NetBSD: t_cop.c,v 1.1 2014/06/25 18:04:05 alnsn Exp $ */
+/*	$NetBSD: t_cop.c,v 1.2 2014/06/25 18:16:40 alnsn Exp $ */
 
 /*-
- * Copyright (c) 2014 Alexander Nasonov.
+ * Copyright (c) 2013-2014 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cop.c,v 1.1 2014/06/25 18:04:05 alnsn Exp $");
+__RCSID("$NetBSD: t_cop.c,v 1.2 2014/06/25 18:16:40 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
