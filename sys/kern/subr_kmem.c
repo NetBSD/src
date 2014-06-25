@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.55 2014/06/25 16:05:22 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.56 2014/06/25 16:35:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 /*
  * KMEM_REDZONE: detect overrun bugs.
- *	Add a 2-byte pattern (allocate some more bytes if needed) at the end
+ *	Add a 2-byte pattern (allocate one more page if needed) at the end
  *	of each allocated buffer. Check this pattern on kmem_free.
  *
  * KMEM_POISON: detect modify-after-free bugs.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.55 2014/06/25 16:05:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.56 2014/06/25 16:35:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -196,7 +196,7 @@ static void kmem_redzone_check(void *p, size_t sz);
 #endif /* defined(KMEM_REDZONE) */
 
 #if defined(KMEM_SIZE)
-#define	SIZE_SIZE	(MAX(KMEM_ALIGN, sizeof(size_t)))
+#define	SIZE_SIZE	kmem_roundup_size(sizeof(size_t))
 static void kmem_size_set(void *, size_t);
 static void kmem_size_check(void *, size_t);
 #else
@@ -244,8 +244,8 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 #ifdef KMEM_REDZONE
 	if (size - requested_size < REDZONE_SIZE) {
 		/* If there isn't enough space in the page padding,
-		 * allocate two more bytes for the red zone. */
-		allocsz += REDZONE_SIZE;
+		 * allocate one more page for the red zone. */
+		allocsz += kmem_roundup_size(REDZONE_SIZE);
 	}
 #endif
 
@@ -322,7 +322,7 @@ kmem_intr_free(void *p, size_t requested_size)
 
 #ifdef KMEM_REDZONE
 	if (size - requested_size < REDZONE_SIZE) {
-		allocsz += REDZONE_SIZE;
+		allocsz += kmem_roundup_size(REDZONE_SIZE);
 	}
 #endif
 
