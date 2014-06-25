@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2014/06/23 10:53:20 shm Exp $
+# $NetBSD: mi,v 1.63 2014/06/25 19:20:46 alnsn Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1775,6 +1775,8 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchmodat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchownat.debug		tests-lib-debug		debug,atf

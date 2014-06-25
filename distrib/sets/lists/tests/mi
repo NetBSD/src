@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.573 2014/06/23 10:53:20 shm Exp $
+# $NetBSD: mi,v 1.574 2014/06/25 19:20:46 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2297,6 +2297,8 @@
 ./usr/tests/lib/libbpfjit/Atffile		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libbpfjit/Kyuafile		tests-lib-tests		atf,sljit,kyua
 ./usr/tests/lib/libbpfjit/t_bpfjit		tests-lib-tests		atf,sljit
+./usr/tests/lib/libbpfjit/t_extmem		tests-lib-tests		atf,sljit
+./usr/tests/lib/libbpfjit/t_cop			tests-lib-tests		atf,sljit
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/Kyuafile			tests-lib-tests		atf,kyua
