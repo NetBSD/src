@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.54 2014/06/24 07:28:23 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.55 2014/06/25 16:05:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -56,54 +56,41 @@
  */
 
 /*
- * Allocator of kernel wired memory.
+ * Allocator of kernel wired memory. This allocator has some debug features
+ * enabled with "option DIAGNOSTIC" and "option DEBUG".
  */
 
 /*
- * This allocator has some debug features enabled with "option DEBUG" and
- * "option DIAGNOSTIC".
- *
- * KMEM_POISON
- *	Try to detect modify-after-free bugs.
- *
- *	Fill freed (in the sense of kmem_free) memory with a garbage pattern.
- *	Check the pattern on allocation.
- *
- * KMEM_REDZONE
- *	Try to detect overrun bugs.
- *
+ * KMEM_SIZE: detect alloc/free size mismatch bugs.
+ *	Prefix each allocations with a fixed-sized header and record the exact
+ *	user-requested allocation size in it. When freeing, compare it with
+ *	kmem_free's "size" argument.
+ */
+
+/*
+ * KMEM_REDZONE: detect overrun bugs.
  *	Add a 2-byte pattern (allocate some more bytes if needed) at the end
  *	of each allocated buffer. Check this pattern on kmem_free.
  *
- * KMEM_SIZE
- *	Try to detect alloc/free size mismatch bugs.
- *
- *	Prefix each allocations with a fixed-sized header and record
- *	the exact user-requested allocation size in it.
- *	When freeing, compare it with kmem_free's "size" argument.
+ * KMEM_POISON: detect modify-after-free bugs.
+ *	Fill freed (in the sense of kmem_free) memory with a garbage pattern.
+ *	Check the pattern on allocation.
  *
  * KMEM_GUARD
- *	See the below "kmguard" section.
- */
-
-/*
- * kmguard
+ *	A kernel with "option DEBUG" has "kmguard" debugging feature compiled
+ *	in. See the comment in uvm/uvm_kmguard.c for what kind of bugs it tries
+ *	to detect.  Even if compiled in, it's disabled by default because it's
+ *	very expensive.  You can enable it on boot by:
+ *		boot -d
+ *		db> w kmem_guard_depth 0t30000
+ *		db> c
  *
- * A kernel with "option DEBUG" has "kmguard" debugging feature compiled in.
- * See the comment in uvm/uvm_kmguard.c for what kind of bugs it tries to
- * detect.  Even if compiled in, it's disabled by default because it's very
- * expensive.  You can enable it on boot by:
- *
- * 	boot -d
- * 	db> w kmem_guard_depth 0t30000
- * 	db> c
- *
- * The default value of kmem_guard_depth is 0, which means disabled.
- * It can be changed by KMEM_GUARD_DEPTH kernel config option.
+ *	The default value of kmem_guard_depth is 0, which means disabled.
+ *	It can be changed by KMEM_GUARD_DEPTH kernel config option.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.54 2014/06/24 07:28:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.55 2014/06/25 16:05:22 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -266,7 +253,7 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	    < kmem_cache_maxidx) {
 		pc = kmem_cache[index];
 	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
-            < kmem_cache_big_maxidx) {
+	    < kmem_cache_big_maxidx) {
 		pc = kmem_cache_big[index];
 	} else {
 		int ret = uvm_km_kmem_alloc(kmem_va_arena,
@@ -343,7 +330,7 @@ kmem_intr_free(void *p, size_t requested_size)
 	    < kmem_cache_maxidx) {
 		pc = kmem_cache[index];
 	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
-            < kmem_cache_big_maxidx) {
+	    < kmem_cache_big_maxidx) {
 		pc = kmem_cache_big[index];
 	} else {
 		FREECHECK_IN(&kmem_freecheck, p);
@@ -473,7 +460,7 @@ kmem_init(void)
 #endif
 	kmem_cache_maxidx = kmem_create_caches(kmem_cache_sizes,
 	    kmem_cache, KMEM_MAXSIZE, KMEM_SHIFT, IPL_VM);
-       	kmem_cache_big_maxidx = kmem_create_caches(kmem_cache_big_sizes,
+	kmem_cache_big_maxidx = kmem_create_caches(kmem_cache_big_sizes,
 	    kmem_cache_big, PAGE_SIZE, KMEM_BIG_SHIFT, IPL_VM);
 }
 
