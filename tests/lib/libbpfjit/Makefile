@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2014/06/17 19:26:18 alnsn Exp $
+# $NetBSD: Makefile,v 1.4 2014/06/25 18:04:44 alnsn Exp $
 
 .include <bsd.own.mk>
 .include <../../../external/bsd/sljit/Makefile.inc>
@@ -6,6 +6,7 @@
 TESTSDIR=	${TESTSBASE}/lib/libbpfjit
 
 TESTS_C+=	t_bpfjit
+TESTS_C+=	t_cop
 
 # XXX this variable doesn't belong to here
 LIBBPFJITDIR!=	cd ${NETBSDSRCDIR}/lib/libbpfjit && ${PRINTOBJDIR}
