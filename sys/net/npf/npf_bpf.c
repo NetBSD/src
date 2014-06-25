@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.7 2014/06/24 11:31:49 alnsn Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.8 2014/06/25 00:20:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.7 2014/06/24 11:31:49 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.8 2014/06/25 00:20:06 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <sys/bitops.h>
 #include <sys/mbuf.h>
 #include <net/bpf.h>
 
@@ -59,18 +60,35 @@ static const bpf_copfunc_t npf_bpfcop[] = {
 	[NPF_COP_TABLE]	= npf_cop_table,
 };
 
+#define	BPF_MW_ALLMASK \
+    ((1U << BPF_MW_IPVER) | (1U << BPF_MW_L4OFF) | (1U << BPF_MW_L4PROTO))
+
 void
 npf_bpf_sysinit(void)
 {
 	npf_bpfctx = bpf_create();
-	KASSERT(npf_bpfctx != NULL);
 	bpf_set_cop(npf_bpfctx, npf_bpfcop, __arraycount(npf_bpfcop));
+	bpf_set_extmem(npf_bpfctx, NPF_BPF_NWORDS, BPF_MW_ALLMASK);
 }
 
 void
 npf_bpf_sysfini(void)
 {
 	bpf_destroy(npf_bpfctx);
+}
+
+void
+npf_bpf_prepare(npf_cache_t *npc, nbuf_t *nbuf, bpf_args_t *args, uint32_t *m)
+{
+	const struct mbuf *mbuf = nbuf_head_mbuf(nbuf);
+	const size_t pktlen = m_length(mbuf);
+
+	/* Prepare the arguments for the BPF programs. */
+	args->pkt = (const uint8_t *)mbuf;
+	args->wirelen = pktlen;
+	args->buflen = 0;
+	args->mem = m;
+	args->arg = npc;
 }
 
 int
