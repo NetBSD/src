@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.16 2014/06/25 11:13:28 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.17 2014/06/25 11:58:15 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.16 2014/06/25 11:13:28 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.17 2014/06/25 11:58:15 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.16 2014/06/25 11:13:28 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.17 2014/06/25 11:58:15 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1650,7 +1650,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 #endif
 
 	status = sljit_emit_enter(compiler,
-	    3, nscratches, 3, sizeof(struct bpfjit_stack));
+	    2, nscratches, 3, sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
