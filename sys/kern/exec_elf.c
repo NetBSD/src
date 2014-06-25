@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.66 2014/05/15 19:37:22 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.67 2014/06/25 17:10:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.66 2014/05/15 19:37:22 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.67 2014/06/25 17:10:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -870,6 +870,10 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	int error;
 	int isnetbsd = 0;
 	char *ndata, *ndesc;
+#ifdef COMPAT_OLDNOTE
+	int compat_oldnote = -1;
+#endif
+	
 #ifdef DIAGNOSTIC
 	const char *badnote;
 #define BADNOTE(n) badnote = (n)
@@ -919,6 +923,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		    roundup(np->n_descsz, 4);
 		if (nsize != shp->sh_size) {
 			BADNOTE("note size");
+#ifdef COMPAT_OLDNOTE
+			if (nsize > shp->sh_size || compat_oldnote == 0)
+#endif
 			goto bad;
 		}
 		ndesc = ndata + roundup(np->n_namesz, 4);
@@ -933,6 +940,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				memcpy(&epp->ep_osversion, ndesc,
 				    ELF_NOTE_NETBSD_DESCSZ);
 				isnetbsd = 1;
+#ifdef COMPAT_OLDNOTE
+				compat_oldnote = epp->ep_osversion == 199905;
+#endif
 				break;
 			}
 
@@ -944,6 +954,10 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    memcmp(ndata, ELF_NOTE_SUSE_NAME,
 			    ELF_NOTE_SUSE_NAMESZ) == 0)
 				break;
+#ifdef COMPAT_OLDNOTE
+			if (compat_oldnote == 1)
+				break;
+#endif
 			BADNOTE("NetBSD tag");
 			goto bad;
 
