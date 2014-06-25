@@ -1,7 +1,7 @@
-/*	$NetBSD: bpfjit.h,v 1.3 2014/06/24 10:53:30 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.h,v 1.4 2014/06/25 19:32:37 alnsn Exp $	*/
 
 /*-
- * Copyright (c) 2011-2012,2014 Alexander Nasonov.
+ * Copyright (c) 2011-2014 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
