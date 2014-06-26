@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.119 2014/06/18 02:03:46 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.120 2014/06/26 04:02:10 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2902,7 +2902,7 @@ external/mit/xorg/lib/fontconfig/etc/fonts.conf	1.7 via patch
 	Noted by tsutsui.
 	[wiz, ticket #1077]
 
-src/external/bsd/openpam/dist/lib/openpam_configure.c 1.8 via patch
+external/bsd/openpam/dist/lib/openpam_configure.c 1.8 via patch
 
 	CVE-2014-3879: Incorrect error handling in PAM policy parser:
 	Missing module files were treated as soft failures leading to
@@ -2910,3 +2910,14 @@ src/external/bsd/openpam/dist/lib/openpam_configure.c 1.8 via patch
 	differently installed modules or in the short period during upgrades
 	when module files were being replaced.
 	[christos, ticket #1076]
+
+sys/compat/netbsd32/netbsd32_netbsd.c		1.187
+
+	Fix cases where count <= 0 in netbsd32_swapctl_stats().
+	[maxv, ticket #1084]
+
+sys/compat/freebsd/freebsd_sched.c		1.20-1.21
+
+	Avoid NULL dereference and fix sched param conversion.
+	Pointed out by Maxime Villard.
+	[maxv, ticket #1086]
