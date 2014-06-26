@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.51 2014/06/06 15:33:14 christos Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.52 2014/06/26 03:24:51 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rstat_proc.c,v 1.51 2014/06/06 15:33:14 christos Exp $");
+#if 0
+static char sccsid[] =
+	"from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
+static char sccsid[] =
+	"from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
+#endif
+__RCSID("$NetBSD: rstat_proc.c,v 1.52 2014/06/26 03:24:51 dholland Exp $");
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
