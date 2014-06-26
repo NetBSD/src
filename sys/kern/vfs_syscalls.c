@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.484 2014/06/14 11:37:35 njoly Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.485 2014/06/26 01:46:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.484 2014/06/14 11:37:35 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.485 2014/06/26 01:46:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1706,9 +1706,6 @@ vfs__fhfree(fhandle_t *fhp)
 {
 	size_t fhsize;
 
-	if (fhp == NULL) {
-		return;
-	}
 	fhsize = FHANDLE_SIZE(fhp);
 	kmem_free(fhp, fhsize);
 }
@@ -1756,7 +1753,6 @@ vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
 	size_t fidsize;
 	int error;
 
-	*fhpp = NULL;
 	mp = vp->v_mount;
 	fidsize = 0;
 	error = VFS_VPTOFH(vp, NULL, &fidsize);
@@ -1826,7 +1822,6 @@ vfs_copyinfh_alloc(const void *ufhp, size_t fhsize, fhandle_t **fhpp)
 	fhandle_t *fhp;
 	int error;
 
-	*fhpp = NULL;
 	if (fhsize > FHANDLE_SIZE_MAX) {
 		return EINVAL;
 	}
@@ -1915,7 +1910,7 @@ sys___getfh30(struct lwp *l, const struct sys___getfh30_args *uap, register_t *r
 	error = vfs_composefh_alloc(vp, &fh);
 	vput(vp);
 	if (error != 0) {
-		goto out;
+		return error;
 	}
 	error = copyin(SCARG(uap, fh_size), &usz, sizeof(size_t));
 	if (error != 0) {
