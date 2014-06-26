@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.179.2.1 2014/03/18 08:09:46 msaitoh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.179.2.2 2014/06/26 03:28:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179.2.1 2014/03/18 08:09:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179.2.2 2014/06/26 03:28:47 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1740,6 +1740,12 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 	int i, error = 0;
 	size_t ksep_len;
 
+	if (count < 0)
+		return EINVAL;
+
+	if (count == 0 || uvmexp.nswapdev == 0)
+		return 0;
+
 	/* Make sure userland cannot exhaust kernel memory */
 	if ((size_t)count > (size_t)uvmexp.nswapdev)
 		count = uvmexp.nswapdev;
@@ -1750,9 +1756,6 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 
 	uvm_swap_stats(SWAP_STATS, ksep, count, retval);
 	count = *retval;
-
-	if (count < 1)
-		goto out;
 
 	for (i = 0; i < count; i++) {
 		se32.se_dev = ksep[i].se_dev;
@@ -1768,8 +1771,6 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 			break;
 	}
 
-	
-out:
 	kmem_free(ksep, ksep_len);
 
 	return error;
