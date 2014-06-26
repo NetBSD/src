@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2014/06/21 21:05:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2014/06/26 02:14:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.29 2014/06/21 21:05:54 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2014/06/26 02:14:32 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -47,6 +47,10 @@ __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 	The Regents of the University of California.  All rights reserved.");
+#endif
+
+#if 0
+static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #endif
 
 #include <sys/types.h>
