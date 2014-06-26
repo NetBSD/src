@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2014/06/06 21:56:39 wiz Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2014/06/26 02:14:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,9 +38,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.14 2014/06/06 21:56:39 wiz Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2014/06/26 02:14:32 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/misc.c 200462 2009-12-13 03:14:06Z delphij $");
+#endif
+
+#if 0
+static const char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #endif
 
 #include <sys/types.h>
