@@ -15644,7 +15644,7 @@ const struct elf_size_info elf32_arm_size_info =
 #ifdef __QNXTARGET__
 #define ELF_MAXPAGESIZE			0x1000
 #else
-#define ELF_MAXPAGESIZE			0x8000
+#define ELF_MAXPAGESIZE			0x10000
 #endif
 #define ELF_MINPAGESIZE			0x1000
 #define ELF_COMMONPAGESIZE		0x1000
@@ -15772,9 +15772,6 @@ elf32_arm_nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 #define	elf_backend_modify_segment_map		elf32_arm_nacl_modify_segment_map
 #undef	elf_backend_modify_program_headers
 #define	elf_backend_modify_program_headers	nacl_modify_program_headers
-
-#undef	ELF_MAXPAGESIZE
-#define ELF_MAXPAGESIZE			0x10000
 
 #include "elf32-target.h"
 
