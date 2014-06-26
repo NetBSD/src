@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.42 2014/06/06 12:46:54 joerg Exp $	*/
+/*	$NetBSD: compile.c,v 1.43 2014/06/26 02:14:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,9 +38,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.42 2014/06/06 12:46:54 joerg Exp $");
+__RCSID("$NetBSD: compile.c,v 1.43 2014/06/26 02:14:32 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
+#endif
+
+#if 0
+static const char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93";
 #endif
 
 #include <sys/types.h>
