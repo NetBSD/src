@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.26 2014/01/03 14:41:57 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.27 2014/06/27 07:28:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.26 2014/01/03 14:41:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.27 2014/06/27 07:28:26 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -885,7 +885,7 @@ dwc2_root_intr_transfer(usbd_xfer_handle xfer)
 Static usbd_status
 dwc2_root_intr_start(usbd_xfer_handle xfer)
 {
-	struct dwc2_softc *sc = DWC2_PIPE2SC(xfer);
+	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 
 	DPRINTF("\n");
 
