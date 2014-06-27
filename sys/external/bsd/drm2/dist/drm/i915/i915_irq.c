@@ -2268,7 +2268,8 @@ static irqreturn_t i8xx_irq_handler(DRM_IRQ_ARGS)
 			}
 		}
 
-		if (pipe_stats[1] & PIPE_VBLANK_INTERRUPT_STATUS &&
+		if (dev_priv->num_pipe >= 2 &&
+		    pipe_stats[1] & PIPE_VBLANK_INTERRUPT_STATUS &&
 		    drm_handle_vblank(dev, 1)) {
 			if (iir & I915_DISPLAY_PLANE_B_FLIP_PENDING_INTERRUPT) {
 				intel_prepare_page_flip(dev, 1);
