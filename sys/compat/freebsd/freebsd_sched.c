@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.21 2014/06/22 22:19:28 christos Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.22 2014/06/28 11:06:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.21 2014/06/22 22:19:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.22 2014/06/28 11:06:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -94,8 +94,6 @@ sched_freebsd2native(int freebsd_policy,
 	return 0;
 }
 
-/*
- */
 static int
 sched_native2freebsd(int native_policy, const struct sched_param *native_params,
     int *freebsd_policy, struct freebsd_sched_param *freebsd_params)
