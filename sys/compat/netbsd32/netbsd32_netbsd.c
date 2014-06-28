@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.190 2014/06/22 19:09:39 maxv Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.191 2014/06/28 11:39:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.190 2014/06/22 19:09:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.191 2014/06/28 11:39:15 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1302,7 +1302,7 @@ netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, reg
 	int error;
 	struct pathbuf *pb;
 	struct nameidata nd;
-	netbsd32_size_t sz32;
+	netbsd32_size_t usz32, sz32;
 	size_t sz;
 
 	/*
@@ -1312,7 +1312,6 @@ netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, reg
 	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
-	fh = NULL;
 
 	error = pathbuf_copyin(SCARG_P32(uap, fname), &pb);
 	if (error) {
@@ -1328,30 +1327,29 @@ netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, reg
 	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
-	error = copyin(SCARG_P32(uap, fh_size), &sz32,
-	    sizeof(netbsd32_size_t));
-	if (error) {
-		vput(vp);
+	error = vfs_composefh_alloc(vp, &fh);
+	vput(vp);
+	if (error != 0) {
 		return error;
 	}
-	fh = kmem_alloc(sz32, KM_SLEEP);
-	if (fh == NULL) 
-		return EINVAL;
-	sz = sz32;
-	error = vfs_composefh(vp, fh, &sz);
-	vput(vp);
-
-	if (error == 0) {
-		const netbsd32_size_t nsz32 = sz;
-		error = copyout(&nsz32, SCARG_P32(uap, fh_size),
-		    sizeof(netbsd32_size_t));
-		if (!error) {
-			error = copyout(fh, SCARG_P32(uap, fhp), sz);
-		}
-	} else if (error == E2BIG) {
-		error = copyout(&sz, SCARG_P32(uap, fh_size), sizeof(size_t));
+	error = copyin(SCARG_P32(uap, fh_size), &usz32, sizeof(usz32));
+	if (error != 0) {
+		goto out;
 	}
-	kmem_free(fh, sz32);
+	sz = FHANDLE_SIZE(fh);
+	sz32 = sz;
+
+	error = copyout(&sz32, SCARG_P32(uap, fh_size), sizeof(sz32));
+	if (error != 0) {
+		goto out;
+	}
+	if (usz32 >= sz32) {
+		error = copyout(fh, SCARG_P32(uap, fhp), sz);
+	} else {
+		error = E2BIG;
+	}
+out:
+	vfs_composefh_free(fh);
 	return (error);
 }
 
