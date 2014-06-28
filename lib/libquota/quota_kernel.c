@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_kernel.c,v 1.5 2014/06/12 21:39:45 joerg Exp $	*/
+/*	$NetBSD: quota_kernel.c,v 1.6 2014/06/28 22:27:50 dholland Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_kernel.c,v 1.5 2014/06/12 21:39:45 joerg Exp $");
+__RCSID("$NetBSD: quota_kernel.c,v 1.6 2014/06/28 22:27:50 dholland Exp $");
 
 #include <stdlib.h>
 #include <err.h>
@@ -220,8 +220,8 @@ __quota_kernel_delete(struct quotahandle *qh, const struct quotakey *qk)
 {
 	struct quotactl_args args;
 
-	args.qc_op = QUOTACTL_DELETE;
-	args.u.remove.qc_key = qk;
+	args.qc_op = QUOTACTL_DEL;
+	args.u.del.qc_key = qk;
 	return __quotactl(qh->qh_mountpoint, &args);
 }
 
