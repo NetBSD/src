@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.83 2014/06/28 09:16:18 rtr Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -27,6 +27,8 @@ SRCS+=	alloc.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
 	panic.c printf.c qsort.c snprintf.c strerror.c \
 	subr_prf.c twiddle.c checkpasswd.c
+
+SRCS+=	bootcfg.c
 
 # string routines
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
