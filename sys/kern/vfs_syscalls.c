@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.485 2014/06/26 01:46:03 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.486 2014/06/28 22:27:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.485 2014/06/26 01:46:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.486 2014/06/28 22:27:50 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -764,7 +764,7 @@ do_sys_quotactl_put(struct mount *mp, const struct quotakey *key_u,
 }
 
 static int
-do_sys_quotactl_delete(struct mount *mp, const struct quotakey *key_u)
+do_sys_quotactl_del(struct mount *mp, const struct quotakey *key_u)
 {
 	struct quotakey key_k;
 	int error;
@@ -774,7 +774,7 @@ do_sys_quotactl_delete(struct mount *mp, const struct quotakey *key_u)
 		return error;
 	}
 
-	return vfs_quotactl_delete(mp, &key_k);
+	return vfs_quotactl_del(mp, &key_k);
 }
 
 static int
@@ -1003,8 +1003,8 @@ do_sys_quotactl(const char *path_u, const struct quotactl_args *args)
 				args->u.put.qc_key,
 				args->u.put.qc_val);
 		break;
-	    case QUOTACTL_DELETE:
-		error = do_sys_quotactl_delete(mp, args->u.remove.qc_key);
+	    case QUOTACTL_DEL:
+		error = do_sys_quotactl_del(mp, args->u.del.qc_key);
 		break;
 	    case QUOTACTL_CURSOROPEN:
 		error = do_sys_quotactl_cursoropen(mp,
