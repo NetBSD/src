@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.214 2014/05/24 16:34:03 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.215 2014/06/28 22:27:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -427,7 +427,7 @@ int	vfs_quotactl_get(struct mount *, const struct quotakey *,
 	    struct quotaval *);
 int	vfs_quotactl_put(struct mount *, const struct quotakey *,
 	    const struct quotaval *);
-int	vfs_quotactl_delete(struct mount *, const struct quotakey *);
+int	vfs_quotactl_del(struct mount *, const struct quotakey *);
 int	vfs_quotactl_cursoropen(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_cursorclose(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_cursorskipidtype(struct mount *, struct quotakcursor *,
