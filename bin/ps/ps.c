@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.81 2014/04/20 23:31:40 dholland Exp $	*/
+/*	$NetBSD: ps.c,v 1.82 2014/06/28 17:32:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.81 2014/04/20 23:31:40 dholland Exp $");
+__RCSID("$NetBSD: ps.c,v 1.82 2014/06/28 17:32:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,8 +175,11 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 		ttypath = ttname;
 	*what = KERN_PROC_TTY;
 	if (stat(ttypath, &sb) == -1) {
-		devmajor_t pts = getdevmajor("pts", S_IFCHR);
+		devmajor_t pts;
+		int serrno;
 
+		serrno = errno;
+		pts = getdevmajor("pts", S_IFCHR);
 		if (pts != NODEVMAJOR && strncmp(ttname, "pts/", 4) == 0) {
 			int ptsminor = atoi(ttname + 4);
 
@@ -184,6 +187,7 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 			if (strcmp(pathbuf, ttname) == 0 && ptsminor >= 0)
 				return makedev(pts, ptsminor);
 		}
+		errno = serrno;
 		err(1, "%s", ttypath);
 	}
 	if (!S_ISCHR(sb.st_mode))
