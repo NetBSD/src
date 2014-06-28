@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.9 2014/02/15 08:25:01 wiz Exp $
+$NetBSD: TODO.clang,v 1.10 2014/06/28 20:18:15 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -9,3 +9,6 @@ for the incomplete explicit positioning support in LLVM MC.
 Missing atomic support in ARM libgcc, -march=armv6 "workaround":
     src/external/bsd/libc++/lib
     src/external/bsd/lllvm/lib/libLLVMSupport
+
+Workaround for .fpu handling in src/sys/lib/libunwind for ARM by forcing
+GNU as.
