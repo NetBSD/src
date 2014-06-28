@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.191 2014/06/28 11:39:15 maxv Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.192 2014/06/28 22:27:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.191 2014/06/28 11:39:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.192 2014/06/28 22:27:50 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1235,8 +1235,8 @@ netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, r
 		args.u.put.qc_key = NETBSD32PTR64(args32.u.put.qc_key);
 		args.u.put.qc_val = NETBSD32PTR64(args32.u.put.qc_val);
 		break;
-	    case QUOTACTL_DELETE:
-		args.u.remove.qc_key = NETBSD32PTR64(args32.u.remove.qc_key);
+	    case QUOTACTL_DEL:
+		args.u.del.qc_key = NETBSD32PTR64(args32.u.del.qc_key);
 		break;
 	    case QUOTACTL_CURSOROPEN:
 		args.u.cursoropen.qc_cursor =
