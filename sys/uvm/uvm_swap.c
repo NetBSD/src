@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.169 2014/06/22 19:09:39 maxv Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.170 2014/06/28 15:52:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.169 2014/06/22 19:09:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.170 2014/06/28 15:52:45 maxv Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -565,7 +565,6 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		if (SCARG(uap, cmd) == SWAP_ON &&
 		    copystr("miniroot", userpath, SWAP_PATH_MAX, &len))
 			panic("swapctl: miniroot copy failed");
-		KASSERT(len > 0);
 	} else {
 		struct pathbuf *pb;
 
