@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.2 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: bootcfg.h,v 1.1 2014/06/28 09:16:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,13 +26,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BOOTMENU_H
-#define _BOOTMENU_H
+#ifndef _BOOTCFG_H
+#define _BOOTCFG_H
 
-#define COMMAND_SEPARATOR ';'
+#define BOOTCFG_FILENAME "boot.cfg"
+#define BOOTCFG_MAXMENU	 20
+#define BOOTCFG_MAXBANNER 12
 
-void parsebootconf(const char *);
-void doboottypemenu(void);
-int atoi(const char *);
+#define BOOTCFG_CMD_LOAD	  "load"
+#define BOOTCFG_CMD_USERCONF	  "userconf"
 
-#endif /* !_BOOTMENU_H */
+typedef void (*bootcfg_command)(const char *cmd, char *arg);
+
+struct bootcfg_def {
+	char *banner[BOOTCFG_MAXBANNER];	/* Banner text */
+	char *command[BOOTCFG_MAXMENU];		/* Menu commands per entry*/
+	char *consdev;				/* Console device */
+	int def;				/* Default menu option */
+	char *desc[BOOTCFG_MAXMENU];		/* Menu text per entry */
+	int nummenu;				/* Number of menu items */
+	int timeout;		 		/* Timeout in seconds */
+	int menuformat;				/* Letters instead of numbers */
+	int clear;				/* Clear the screen? */
+} extern bootcfg_info;
+
+void perform_bootcfg(const char *, bootcfg_command, const off_t);
+void bootcfg_do_noop(const char *, char *);
+
+#endif /* !_BOOTCFG_H */
