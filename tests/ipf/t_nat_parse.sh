@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_parse.sh,v 1.7 2014/06/29 04:00:59 darrenr Exp $
+# $NetBSD: t_nat_parse.sh,v 1.8 2014/06/29 09:26:32 darrenr Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,6 +47,16 @@ test_case in7 intest text text
 test_case in100 intest text text
 test_case in101 intest text text
 test_case in102 intest text text
+test_case in1_6 intest text text
+test_case in2_6 intest text text
+test_case in3_6 intest text text
+test_case in4_6 intest text text
+test_case in5_6 intest text text
+test_case in6_6 intest text text
+test_case in8_6 intest text text
+test_case in100_6 intest text text
+test_case in101_6 intest text text
+test_case in102_6 intest text text
 
 atf_init_test_cases()
 {
@@ -60,4 +70,14 @@ atf_init_test_cases()
 	atf_add_test_case in100
 	atf_add_test_case in101
 	atf_add_test_case in102
+	atf_add_test_case in1_6
+	atf_add_test_case in2_6
+	atf_add_test_case in3_6
+	atf_add_test_case in4_6
+	atf_add_test_case in5_6
+	atf_add_test_case in6_6
+	atf_add_test_case in8_6
+	atf_add_test_case in100_6
+	atf_add_test_case in101_6
+	atf_add_test_case in102_6
 }
