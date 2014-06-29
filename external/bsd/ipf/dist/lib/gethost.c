@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.4 2014/06/12 22:15:25 joerg Exp $	*/
+/*	$NetBSD: gethost.c,v 1.5 2014/06/29 05:06:46 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -26,10 +26,10 @@ int gethost(family, name, hostp)
 		}
 #ifdef USE_INET6
 		if (family == AF_INET6) {
-			hostp->i6[0] = 0xfe80aa55;
-			hostp->i6[1] = 0x12345678;
-			hostp->i6[2] = 0x5a5aa5a5;
-			hostp->i6[3] = 0xfedcba98;
+			hostp->i6[0] = htonl(0xfe80aa55);
+			hostp->i6[1] = htonl(0x12345678);
+			hostp->i6[2] = htonl(0x5a5aa5a5);
+			hostp->i6[3] = htonl(0xfedcba98);
 		}
 #endif
 		return 0;
