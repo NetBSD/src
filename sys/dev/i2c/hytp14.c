@@ -37,7 +37,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.1 2014/05/18 11:46:23 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.2 2014/06/29 09:52:43 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ hytp14_match(device_t parent, cfdata_t match, void *aux)
 		if (strcmp(ia->ia_name, "hythygtemp") == 0)
 			return 1;
 	} else {
-		/* indirect config - check typical address */
-		if (ia->ia_addr == HYTP14_DEFAULT_ADDR)
+		/* indirect config - check for configured address */
+		if ((ia->ia_addr > 0) && (ia->ia_addr <= 0x7F))
 			return 1;
 	}
 	return 0;
@@ -189,15 +189,17 @@ hytp14_refresh_sensor(struct hytp14_sc *sc)
 
 		/* send MR command */
                 /* avoid quick read/write by providing a result buffer */
-		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-				      sc->sc_addr, NULL, 0, buf, sizeof buf, 0)) == 0) {
+		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+				 sc->sc_addr, NULL, 0, buf, sizeof buf, 0);
+                if (error == 0) {
 			DPRINTF(3, ("hytp14_refresh_sensor(%s): MR sent\n",
 				    device_xname(sc->sc_dev)));
 
 			/* send DF command - read data from sensor */
-			if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-					      sc->sc_addr, NULL, 0, sc->sc_data,
-					      sizeof sc->sc_data, 0)) != 0) {
+			error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+					 sc->sc_addr, NULL, 0, sc->sc_data,
+					      sizeof sc->sc_data, 0);
+                        if (error != 0) {
 				DPRINTF(2, ("%s: %s: failed read from 0x%02x - error %d\n",
 					    device_xname(sc->sc_dev),
 					    __func__, sc->sc_addr, error));
@@ -224,7 +226,8 @@ hytp14_refresh_sensor(struct hytp14_sc *sc)
 			
 	sc->sc_refresh = hardclock_ticks;
 	
-	if (error == 0) {
+	/* skip data if sensor is in command mode */
+	if (error == 0 && (sc->sc_data[0] & HYTP14_RESP_CMDMODE) == 0) {
 		sc->sc_valid = ENVSYS_SVALID;
 	} else {
 		sc->sc_valid = ENVSYS_SINVALID;
