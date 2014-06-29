@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.15 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.16 2014/06/29 11:18:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.15 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.16 2014/06/29 11:18:40 mrg Exp $");
 
 #include "debug_playstation2.h"
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -67,10 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.15 2014/03/31 11:25:49 martin Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <playstation2/dev/spdvar.h>
 #include <playstation2/dev/spdreg.h>
@@ -421,10 +418,8 @@ smap_rxeof(void *arg)
 		_wbflush();
 		
 		if (m != NULL) {
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-#endif
 			(*ifp->if_input)(ifp, m);
 		}
 	}
@@ -523,10 +518,8 @@ smap_start(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		KDASSERT(m0 != NULL);
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0);
-#endif
 
 		p = (u_int8_t *)sc->tx_buf;
 		q = p + sz;
