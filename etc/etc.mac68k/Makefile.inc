@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2008/03/18 04:20:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2014/06/29 17:49:04 martin Exp $
 #
 #	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 #
@@ -21,4 +21,7 @@ snap_md_post:
 MKISOFS_FLAGS+=	-hfs --macbin \
 	-map ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/extensions.map
 
-iso-image: do-iso-image
+check-iso-dir:
+	-mkdir -p ${RELEASEDIR}/iso
+
+iso-image: check-iso-dir .WAIT do-iso-image
