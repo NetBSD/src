@@ -1,4 +1,4 @@
-/*	$NetBSD: sxvar.h,v 1.2 2014/04/15 10:24:54 macallan Exp $	*/
+/*	$NetBSD: sxvar.h,v 1.3 2014/06/29 03:57:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
