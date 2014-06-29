@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.816 2014/06/23 02:13:53 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.817 2014/06/29 15:10:17 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -44,6 +44,10 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # If some future port is not supported by the in-tree toolchain, this should
 # be set to "yes" for that port only.
 #
+.if ${MACHINE} == "playstation2"
+TOOLCHAIN_MISSING?=	yes
+.endif
+
 TOOLCHAIN_MISSING?=	no
 
 #
@@ -58,6 +62,8 @@ TOOLCHAIN_MISSING?=	no
       ${MACHINE_ARCH} == "powerpc64"
 HAVE_GCC?=    45
 
+.elif ${MACHINE} == "playstation2"
+HAVE_GCC?=    0
 .else
 # Otherwise, default to GCC4.8
 HAVE_GCC?=    48
@@ -481,7 +487,7 @@ TOOL_CXX.false=		false
 TOOL_FC.false=		false
 TOOL_OBJC.false=	false
 
-AVAILABLE_COMPILER?=	${HAVE_PCC:Dpcc} ${HAVE_LLVM:Dclang} ${HAVE_GCC:Dgcc} false
+AVAILABLE_COMPILER?=	${HAVE_PCC:Dpcc} ${HAVE_LLVM:Dclang} ${HAVE_GCC:Dgcc} ${EXTERNAL_TOOLCHAIN:Dgcc} false
 
 .for _t in CC CPP CXX FC OBJC
 ACTIVE_${_t}=	${AVAILABLE_COMPILER:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@:[1]}
