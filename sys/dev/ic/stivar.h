@@ -1,4 +1,4 @@
-/*	$NetBSD: stivar.h,v 1.8 2014/04/20 04:12:54 tsutsui Exp $	*/
+/*	$NetBSD: stivar.h,v 1.9 2014/06/29 04:08:43 tsutsui Exp $	*/
 
 /*	$OpenBSD: stivar.h,v 1.24 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -130,6 +130,15 @@ int	sti_cnattach(struct sti_rom *, struct sti_screen *, bus_space_tag_t,
 void	sti_describe(struct sti_softc *);
 void	sti_end_attach(struct sti_softc *);
 u_int	sti_rom_size(bus_space_tag_t, bus_space_handle_t);
+
+int	sti_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+paddr_t	sti_mmap(void *, void *, off_t, int);
+int	sti_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
+void	sti_free_screen(void *, void *);
+int	sti_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+	    void *);
+int	sti_load_font(void *, void *, struct wsdisplay_font *);
 
 int	sti_cnattach(struct sti_rom *, struct sti_screen *, bus_space_tag_t,
 	    bus_addr_t *, u_int);
