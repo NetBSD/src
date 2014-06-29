@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.6 2014/05/31 22:41:37 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.7 2014/06/29 00:05:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.6 2014/05/31 22:41:37 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.7 2014/06/29 00:05:24 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -284,8 +284,7 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 	}
 
 	/*
-	 * Call NPF_COP_L3 to fetch L3 information.  The coprocessor
-	 * populates the following words in the scratch memory store:
+	 * The memory store is populated with:
 	 * - BPF_MW_IPVER: IP version (4 or 6).
 	 * - BPF_MW_L4OFF: L4 header offset.
 	 * - BPF_MW_L4PROTO: L4 protocol.
@@ -308,21 +307,12 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 		 * A <- IP version; A == expected-version?
 		 * If no particular version specified, check for non-zero.
 		 */
-		if ((ctx->flags & FETCHED_L3) == 0) {
-			struct bpf_insn insns_l3[] = {
-				BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
-				BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ver, jt, jf),
-			};
-			add_insns(ctx, insns_l3, __arraycount(insns_l3));
-			ctx->flags |= FETCHED_L3;
-		} else {
-			/* IP version is already fetched in BPF_MW_IPVER. */
-			struct bpf_insn insns_af[] = {
-				BPF_STMT(BPF_LD+BPF_W+BPF_MEM, BPF_MW_IPVER),
-				BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ver, jt, jf),
-			};
-			add_insns(ctx, insns_af, __arraycount(insns_af));
-		}
+		struct bpf_insn insns_af[] = {
+			BPF_STMT(BPF_LD+BPF_W+BPF_MEM, BPF_MW_IPVER),
+			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ver, jt, jf),
+		};
+		add_insns(ctx, insns_af, __arraycount(insns_af));
+		ctx->flags |= FETCHED_L3;
 		ctx->af = af;
 
 		if (af) {

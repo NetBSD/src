@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.8 2014/06/25 00:20:06 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.9 2014/06/29 00:05:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.8 2014/06/25 00:20:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.9 2014/06/29 00:05:24 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,7 @@ npf_bpf_sysfini(void)
 }
 
 void
-npf_bpf_prepare(npf_cache_t *npc, nbuf_t *nbuf, bpf_args_t *args, uint32_t *m)
+npf_bpf_prepare(npf_cache_t *npc, nbuf_t *nbuf, bpf_args_t *args, uint32_t *M)
 {
 	const struct mbuf *mbuf = nbuf_head_mbuf(nbuf);
 	const size_t pktlen = m_length(mbuf);
@@ -87,19 +87,39 @@ npf_bpf_prepare(npf_cache_t *npc, nbuf_t *nbuf, bpf_args_t *args, uint32_t *m)
 	args->pkt = (const uint8_t *)mbuf;
 	args->wirelen = pktlen;
 	args->buflen = 0;
-	args->mem = m;
+	args->mem = M;
 	args->arg = npc;
+
+	/*
+	 * Convert address length to IP version.  Just mask out
+	 * number 4 or set 6 if higher bits set, such that:
+	 *
+	 *	0	=>	0
+	 *	4	=>	4 (IPVERSION)
+	 *	16	=>	6 (IPV6_VERSION >> 4)
+	 */
+	const u_int alen = npc->npc_alen;
+	const uint32_t ver = (alen & 4) | ((alen >> 4) * 6);
+
+	/*
+	 * Output words in the memory store:
+	 *	BPF_MW_IPVER	IP version (4 or 6).
+	 *	BPF_MW_L4OFF	L4 header offset.
+	 *	BPF_MW_L4PROTO	L4 protocol.
+	 */
+	M[BPF_MW_IPVER] = ver;
+	M[BPF_MW_L4OFF] = npc->npc_hlen;
+	M[BPF_MW_L4PROTO] = npc->npc_proto;
 }
 
 int
 npf_bpf_filter(bpf_args_t *args, const void *code, bpfjit_func_t jcode)
 {
-#if 0
 	/* Execute JIT-compiled code. */
 	if (__predict_true(jcode)) {
 		return jcode(npf_bpfctx, args);
 	}
-#endif
+
 	/* Execute BPF byte-code. */
 	return bpf_filter_ext(npf_bpfctx, code, args);
 }
@@ -123,35 +143,18 @@ npf_bpf_validate(const void *code, size_t len)
 
 /*
  * NPF_COP_L3: fetches layer 3 information.
- *
- * Output words in the memory store:
- *	BPF_MW_IPVER	IP version (4 or 6).
- *	BPF_MW_L4OFF	L4 header offset.
- *	BPF_MW_L4PROTO	L4 protocol.
  */
 static uint32_t
 npf_cop_l3(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 {
 	const npf_cache_t * const npc = (const npf_cache_t *)args->arg;
+	const uint32_t ver = (npc->npc_alen & 4) | ((npc->npc_alen >> 4) * 6);
 	uint32_t * const M = args->mem;
-
-	/*
-	 * Convert address length to IP version.  Just mask out
-	 * number 4 or set 6 if higher bits set, such that:
-	 *
-	 *	0	=>	0
-	 *	4	=>	4 (IPVERSION)
-	 *	16	=>	6 (IPV6_VERSION >> 4)
-	 */
-	const u_int alen = npc->npc_alen;
-	const uint32_t ver = (alen & 4) | ((alen >> 4) * 6);
 
 	M[BPF_MW_IPVER] = ver;
 	M[BPF_MW_L4OFF] = npc->npc_hlen;
 	M[BPF_MW_L4PROTO] = npc->npc_proto;
-
-	/* A <- IP version */
-	return ver;
+	return ver; /* A <- IP version */
 }
 
 #define	SRC_FLAG_BIT	(1U << 31)
