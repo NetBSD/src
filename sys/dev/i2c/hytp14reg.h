@@ -1,4 +1,4 @@
-/* $NetBSD: hytp14reg.h,v 1.1 2014/05/18 11:46:23 kardel Exp $ */
+/* $NetBSD: hytp14reg.h,v 1.2 2014/06/29 09:06:05 kardel Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 
 #define HYTP14_DEFAULT_ADDR	0x28
 
-#define HYTP14_CMD_SEND		0x50 /* send command */
-#define HYTP14_CMD_RESP		0x51 /* receive response */
-
 #define HYTP14_CMD_START_NOM	0x80 /* end command mode (or power-off)  */
 #define HYTP14_CMD_START_CM	0xA0 /* start command mode (within 10ms after power-up) */
 #define HYTP14_CMD_GET_REV	0xB0 /* get revison */
@@ -53,13 +50,16 @@
 #define HYTP14_READ_OFFSET	0x00 /* command offset to read EEPROM words */
 #define HYTP14_WRITE_OFFSET	0x40 /* command offset to write EEPROM words */
 
-#define HYTP14_READ_EEPROM(_X_)	(HYTP14_READ_OFFSET + (_X_) & (HYTP14_NUM_WORDS - 1))
-#define HYTP14_WRITE_EEPROM(_X_) (HYTP14_WRITE_OFFSET + (_X_) & (HYTP14_NUM_WORDS - 1))
+#define HYTP14_READ_EEPROM(_X_)	(HYTP14_READ_OFFSET + ((_X_) & (HYTP14_NUM_WORDS - 1)))
+#define HYTP14_WRITE_EEPROM(_X_) (HYTP14_WRITE_OFFSET + ((_X_) & (HYTP14_NUM_WORDS - 1)))
 
-#define HYTP14_EEADDR_I2CADDR	0x1C /* I2C address EEPROD word address */
+#define HYTP14_EEADDR_I2CADDR	0x1C /* I2C address EEPROM word address */
 
 #define HYTP14_RESP_CMDMODE	0x80 /* command mode response */
-#define HYTP14_RESP_STALE	0y40 /* stale measurement data */
+#define HYTP14_RESP_STALE	0x40 /* stale measurement data */
+
+#define HYT_STATUS_FMT "\177\20b\7CM\0b\6STALE\0b\5ERR_CFG\0b\4ERR_RAM\0b\3ERR_UNCEEP\0"\
+                       "b\2ERR_COREEP\0f\0\2RESP\0=\0BSY\0=\1ACK\0=\2NAK\0=\3INV\0\0"
 
 #define HYTP14_DIAG_ERR_CFG	0x20 /* configuration error */
 #define HYTP14_DIAG_ERR_RAMPRTY	0x10 /* RAM parity error */
@@ -81,10 +81,3 @@
 #define HYTP14_TEMP_OFFSET	(-40)
 
 #endif
-/*
- * $Log: hytp14reg.h,v $
- * Revision 1.1  2014/05/18 11:46:23  kardel
- * add HYT-221/271/939 humidity/temperature I2C sensor
- * extend envsys(4) framework by %rH (relative humidity)
- *
- */
