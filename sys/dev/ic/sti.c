@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.17 2014/04/20 04:12:54 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.18 2014/06/29 04:08:43 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.17 2014/04/20 04:12:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.18 2014/06/29 04:08:43 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -89,14 +89,6 @@ struct wsdisplay_emulops sti_emulops = {
 	sti_eraserows,
 	sti_alloc_attr
 };
-
-int sti_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t sti_mmap(void *, void *, off_t, int);
-int sti_alloc_screen(void *, const struct wsscreen_descr *,
-	void **, int *, int *, long *);
-	void sti_free_screen(void *, void *);
-int sti_show_screen(void *, void *, int, void (*cb)(void *, int, int), void *);
-int sti_load_font(void *, void *, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops sti_accessops = {
 	sti_ioctl,
