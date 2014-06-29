@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_parse.sh,v 1.6 2012/07/08 00:48:29 pgoyette Exp $
+# $NetBSD: t_nat_parse.sh,v 1.7 2014/06/29 04:00:59 darrenr Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ intest()
 }
 
 test_case in1 intest text text
-broken_test_case in2 intest text text
+test_case in2 intest text text
 test_case in3 intest text text
 test_case in4 intest text text
 test_case in5 intest text text
