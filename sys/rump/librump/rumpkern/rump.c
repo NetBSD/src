@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.306 2014/06/13 15:45:02 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.307 2014/06/29 11:36:52 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.306 2014/06/13 15:45:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.307 2014/06/29 11:36:52 justin Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -531,7 +531,7 @@ rump_component_load(const struct rump_component *rc_const)
 	 */
 	rc = __UNCONST(rc_const);
 
-	KASSERT(curlwp == bootlwp);
+	KASSERT(!rump_inited || curlwp == bootlwp);
 
 	LIST_FOREACH(rc_iter, &rchead, rc_entries) {
 		if (rc_iter == rc)
