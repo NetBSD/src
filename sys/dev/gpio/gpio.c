@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.55 2014/05/23 13:57:04 msaitoh Exp $ */
+/* $NetBSD: gpio.c,v 1.56 2014/06/29 09:32:24 kardel Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.55 2014/05/23 13:57:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.56 2014/06/29 09:32:24 kardel Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -699,12 +699,14 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		/* check that the controller supports all requested flags */
 		if ((flags & sc->sc_pins[pin].pin_caps) != flags)
 			return ENODEV;
-		flags = set->gp_flags | GPIO_PIN_SET;
+		flags = set->gp_flags;
 
 		set->gp_caps = sc->sc_pins[pin].pin_caps;
 		/* return old value */
 		set->gp_flags = sc->sc_pins[pin].pin_flags;
+
 		if (flags > 0) {
+			flags |= GPIO_PIN_SET;
 			gpiobus_pin_ctl(gc, pin, flags);
 			/* update current value */
 			sc->sc_pins[pin].pin_flags = flags;
