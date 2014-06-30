@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.67 2014/04/05 18:42:32 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.68 2014/06/30 14:58:59 njoly Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.67 2014/04/05 18:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.68 2014/06/30 14:58:59 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,7 +467,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    (long)USEC_2_TICKS(cru->ru_stime.tv_usec),
 
 	    l->l_priority,				/* XXX: priority */
-	    p->p_nice - 20,
+	    p->p_nice - NZERO,
 	    0,
 
 	    (long long)rt.tv_sec,
