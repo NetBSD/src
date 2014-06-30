@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.3,v 1.1.2.9 2014/06/06 07:04:13 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.3,v 1.1.2.10 2014/06/30 10:58:42 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2.2 release to the NetBSD 5.2.3
 release:
@@ -119,3 +119,9 @@ crypto/dist/openssl/ssl/ssl3.h			patch
 
 	Fix CVE-2014-0224, CVE-2014-0221, CVE-2014-0195 and CVE-2014-3470.
 	[spz, ticket #1908]
+
+sys/compat/freebsd/freebsd_sched.c		1.20-1.21
+
+	Avoid NULL dereference and fix sched param conversion.
+	Pointed out by Maxime Villard.
+	[maxv, ticket #1909]
