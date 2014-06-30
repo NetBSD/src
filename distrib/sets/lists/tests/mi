@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.574 2014/06/25 19:20:46 alnsn Exp $
+# $NetBSD: mi,v 1.575 2014/06/30 21:32:59 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -142,6 +142,7 @@
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpfilter				tests-net-debug
+./usr/libdata/debug/usr/tests/net/bpfjit				tests-net-debug
 ./usr/libdata/debug/usr/tests/net/carp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/fdpass				tests-net-debug
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug
@@ -3064,6 +3065,10 @@
 ./usr/tests/net/bpfilter/Atffile		tests-net-tests		atf,rump
 ./usr/tests/net/bpfilter/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/bpfilter/t_bpfilter		tests-net-tests		atf,rump
+./usr/tests/net/bpfjit			tests-net-tests
+./usr/tests/net/bpfjit/Atffile		tests-net-tests		atf,sljit,rump
+./usr/tests/net/bpfjit/Kyuafile		tests-net-tests		atf,sljit,rump,kyua
+./usr/tests/net/bpfjit/t_bpfjit		tests-net-tests		atf,sljit,rump
 ./usr/tests/net/carp				tests-net-tests
 ./usr/tests/net/carp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/carp/Kyuafile			tests-net-tests		atf,rump,kyua
