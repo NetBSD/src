@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.486 2014/06/28 22:27:50 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.487 2014/06/30 17:51:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.486 2014/06/28 22:27:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.487 2014/06/30 17:51:31 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2696,17 +2696,10 @@ do_sys_unlinkat(struct lwp *l, int fdat, const char *arg, int flags,
 		goto abort;
 	}
 
-
 #if NVERIEXEC > 0
 	/* Handle remove requests for veriexec entries. */
 	if ((error = veriexec_removechk(curlwp, nd.ni_vp, pathstring)) != 0) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vput(vp);
-		goto out;
+		goto abort;
 	}
 #endif /* NVERIEXEC > 0 */
 	
