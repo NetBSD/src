@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.71 2014/06/23 18:06:32 maxv Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.72 2014/06/30 17:22:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.71 2014/06/23 18:06:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.72 2014/06/30 17:22:32 maxv Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -163,12 +163,12 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; *cp == ' ' || *cp == '\t';
 	    cp++)
 		;
+	if (*cp == '\0')
+		return ENOEXEC;
 
 	/* collect the shell name; remember it's length for later */
 	shellname = cp;
 	shellnamelen = 0;
-	if (*cp == '\0')
-		goto check_shell;
 	for ( /* cp = cp */ ; *cp != '\0' && *cp != ' ' && *cp != '\t'; cp++)
 		shellnamelen++;
 	if (*cp == '\0')
