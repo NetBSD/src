@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.270 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.271 2014/06/30 06:09:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.270 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.271 2014/06/30 06:09:44 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7569,6 +7569,23 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	int32_t timeout;
 	uint32_t swsm;
 
+	/* Get the SW semaphore. */
+	timeout = 1000 + 1; /* XXX */
+	while (timeout) {
+		swsm = CSR_READ(sc, WMREG_SWSM);
+
+		if ((swsm & SWSM_SMBI) == 0)
+			break;
+
+		delay(50);
+		timeout--;
+	}
+
+	if (timeout == 0) {
+		aprint_error_dev(sc->sc_dev, "could not acquire SWSM SMBI\n");
+		return 1;
+	}
+
 	/* Get the FW semaphore. */
 	timeout = 1000 + 1; /* XXX */
 	while (timeout) {
@@ -7585,7 +7602,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	}
 
 	if (timeout == 0) {
-		aprint_error_dev(sc->sc_dev, "could not acquire EEPROM GNT\n");
+		aprint_error_dev(sc->sc_dev, "could not acquire SWSM SWESMBI\n");
 		/* Release semaphores */
 		wm_put_swsm_semaphore(sc);
 		return 1;
@@ -7599,7 +7616,7 @@ wm_put_swsm_semaphore(struct wm_softc *sc)
 	uint32_t swsm;
 
 	swsm = CSR_READ(sc, WMREG_SWSM);
-	swsm &= ~(SWSM_SWESMBI);
+	swsm &= ~(SWSM_SMBI | SWSM_SWESMBI);
 	CSR_WRITE(sc, WMREG_SWSM, swsm);
 }
 
