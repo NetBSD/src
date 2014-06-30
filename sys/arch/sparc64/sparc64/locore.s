@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.360 2014/05/31 18:22:29 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.361 2014/06/30 12:59:48 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -93,8 +93,33 @@
 #define BLOCK_SIZE SPARC64_BLOCK_SIZE
 #define BLOCK_ALIGN SPARC64_BLOCK_ALIGN
 
+#ifdef SUN4V
+#define SUN4V_N_REG_WINDOWS    8  /* As per UA2005 spec */
+#define SUN4V_NWINDOWS           (SUN4V_N_REG_WINDOWS-1) /* This is an index number, so subtract one */
+#endif
+	
 #include "ksyms.h"
 
+	/* Misc. macros */
+	
+	.macro	GET_MAXCWP reg
+#ifdef SUN4V
+	sethi	%hi(cputyp), \reg
+	ld	[\reg + %lo(cputyp)], \reg
+	bne,pt	%icc, 2f
+	 nop
+	/* sun4v */
+	ba	3f
+	 mov	SUN4V_NWINDOWS, \reg
+2:		
+#endif	
+	/* sun4u */
+	rdpr	%ver, \reg
+	and	\reg, CWP, \reg
+3:
+	.endm
+
+		
 #ifdef SUN4V
 	/* Misc. sun4v macros */
 	
@@ -5442,10 +5467,9 @@ ENTRY(cpu_switchto)
 
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
-	rdpr	%ver, %o3
-	and	%o3, CWP, %o3
+	GET_MAXCWP %o3
 	wrpr	%g0, %o3, %cleanwin
-	dec	1, %o3					! NWINDOWS-1-1
+	dec	1, %o3			! CANSAVE + CANRESTORE + OTHERWIN = MAXCWP - 1
 	/* Skip the rest if returning to a interrupted LWP. */
 	brnz,pn	%i2, Lsw_noras
 	 wrpr	%o3, %cansave
