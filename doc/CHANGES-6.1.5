@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.11 2014/06/18 09:34:45 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.12 2014/06/30 04:37:47 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -616,3 +616,9 @@ sys/rump/librump/rumpkern/klock.c		1.4
 	for details. For netinet6, the problem report, fix and test were done
 	by njoly@ on current-users@
 	[bouyer, ticket #1067]
+
+sys/compat/freebsd/freebsd_sched.c		1.20-1.21
+
+	Avoid NULL dereference and fix sched param conversion.
+	Pointed out by Maxime Villard.
+	[maxv, ticket #1086]
