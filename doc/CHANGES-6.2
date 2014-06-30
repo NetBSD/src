@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.120 2014/06/26 04:02:10 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.121 2014/06/30 12:18:15 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2921,3 +2921,10 @@ sys/compat/freebsd/freebsd_sched.c		1.20-1.21
 	Avoid NULL dereference and fix sched param conversion.
 	Pointed out by Maxime Villard.
 	[maxv, ticket #1086]
+
+sys/compat/netbsd32/netbsd32_compat_50.c	1.24
+sys/compat/netbsd32/netbsd32_event.c		1.11
+
+	Allocate directly KQ_NEVENTS bytes. Otherwise a user can panic the
+	system.
+	[maxv, ticket #1090]
