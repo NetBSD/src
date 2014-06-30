@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.20 2011/11/18 03:34:13 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.20.14.1 2014/06/30 12:10:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.20 2011/11/18 03:34:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.20.14.1 2014/06/30 12:10:05 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -631,7 +631,8 @@ compat_50_netbsd32_kevent(struct lwp *l,
 
 	nchanges = SCARG(uap, nchanges);
 	nevents = SCARG(uap, nevents);
-	maxalloc = MIN(KQ_NEVENTS, MAX(nchanges, nevents));
+	maxalloc = KQ_NEVENTS;
+
 	netbsd32_kevent_ops.keo_private =
 	    kmem_alloc(maxalloc * sizeof(struct netbsd32_kevent), KM_SLEEP);
 
