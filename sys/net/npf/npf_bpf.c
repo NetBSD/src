@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.9 2014/06/29 00:05:24 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.10 2014/06/30 00:01:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.9 2014/06/29 00:05:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.10 2014/06/30 00:01:23 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,11 +127,7 @@ npf_bpf_filter(bpf_args_t *args, const void *code, bpfjit_func_t jcode)
 void *
 npf_bpf_compile(void *code, size_t size)
 {
-#if 0
 	return bpf_jit_generate(npf_bpfctx, code, size);
-#else
-	return NULL;
-#endif
 }
 
 bool
