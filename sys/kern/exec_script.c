@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.72 2014/06/30 17:22:32 maxv Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.73 2014/06/30 17:31:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.72 2014/06/30 17:22:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.73 2014/06/30 17:31:15 maxv Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -138,11 +138,8 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 		return ENOEXEC;
 
 	/*
-	 * check that the shell spec is terminated by a newline,
-	 * and that it isn't too large.  Don't modify the
-	 * buffer unless we're ready to commit to handling it.
-	 * (The latter requirement means that we have to check
-	 * for both spaces and tabs later on.)
+	 * Check that the shell spec is terminated by a newline, and that
+	 * it isn't too large.
 	 */
 	hdrlinelen = min(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; cp < hdrstr + hdrlinelen;
@@ -155,10 +152,6 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	if (cp >= hdrstr + hdrlinelen)
 		return ENOEXEC;
 
-	shellname = NULL;
-	shellarg = NULL;
-	shellarglen = 0;
-
 	/* strip spaces before the shell name */
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; *cp == ' ' || *cp == '\t';
 	    cp++)
@@ -166,7 +159,10 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	if (*cp == '\0')
 		return ENOEXEC;
 
-	/* collect the shell name; remember it's length for later */
+	shellarg = NULL;
+	shellarglen = 0;
+
+	/* collect the shell name; remember its length for later */
 	shellname = cp;
 	shellnamelen = 0;
 	for ( /* cp = cp */ ; *cp != '\0' && *cp != ' ' && *cp != '\t'; cp++)
