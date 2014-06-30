@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.144 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.145 2014/06/30 12:56:51 ozaki-r Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.144 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.145 2014/06/30 12:56:51 ozaki-r Exp $");
 
 #include "ppp.h"
 
@@ -1396,7 +1396,6 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     int s, ilen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
-    int isr = 0;
 #ifdef VJC
     int xlen;
     u_char *iphdr;
@@ -1607,7 +1606,6 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     /* See if bpf wants to look at the packet. */
     bpf_mtap(&sc->sc_if, m);
 
-    rv = 0;
     switch (proto) {
 #ifdef INET
     case PPP_IP:
@@ -1658,7 +1656,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	 * Some other protocol - place on input queue for read().
 	 */
 	inq = &sc->sc_inq;
-	rv = 1;
+	pktq = NULL;
 	break;
     }
 
@@ -1667,6 +1665,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
      */
     s = splnet();
 
+    /* pktq: inet or inet6 cases */
     if (__predict_true(pktq)) {
 	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 	    ifp->if_iqdrops++;
@@ -1675,11 +1674,10 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	ifp->if_ipackets++;
 	ifp->if_ibytes += ilen;
 	splx(s);
-	if (rv)
-	    (*sc->sc_ctlp)(sc);
 	return;
     }
 
+    /* ifq: other protocol cases */
     if (!inq) {
 	goto bad;
     }
@@ -1692,15 +1690,11 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	goto bad;
     }
     IF_ENQUEUE(inq, m);
-    if (__predict_true(isr)) {
-        schednetisr(isr);
-    }
     splx(s);
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;
 
-    if (rv)
-	(*sc->sc_ctlp)(sc);
+    (*sc->sc_ctlp)(sc);
 
     return;
 
