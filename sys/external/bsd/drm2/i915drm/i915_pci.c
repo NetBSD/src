@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.8 2014/04/25 19:02:51 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.9 2014/07/01 20:03:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.8 2014/04/25 19:02:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.9 2014/07/01 20:03:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -73,6 +73,8 @@ struct i915drm_softc {
 	struct drm_i915_gem_object	*sc_fb_obj;
 	bus_space_handle_t		sc_fb_bsh;
 	struct genfb_softc		sc_genfb;
+	struct genfb_parameter_callback	sc_genfb_backlight_callback;
+	struct genfb_parameter_callback	sc_genfb_brightness_callback;
 	struct list_head		sc_fb_list; /* XXX Kludge!  */
 	bool				sc_console;
 };
@@ -97,9 +99,18 @@ static int	i915drm_fb_create_handle(struct drm_framebuffer *,
 		    struct drm_file *, unsigned int *);
 static void	i915drm_fb_destroy(struct drm_framebuffer *);
 
+static int	i915drm_fb_dpms(struct i915drm_softc *, int);
+
 static int	i915drm_genfb_ioctl(void *, void *, unsigned long, void *,
 		    int, struct lwp *);
 static paddr_t	i915drm_genfb_mmap(void *, void *, off_t, int);
+
+static int	i915drm_genfb_get_backlight(void *, int *);
+static int	i915drm_genfb_set_backlight(void *, int);
+static int	i915drm_genfb_upd_backlight(void *, int);
+static int	i915drm_genfb_get_brightness(void *, int *);
+static int	i915drm_genfb_set_brightness(void *, int);
+static int	i915drm_genfb_upd_brightness(void *, int);
 
 CFATTACH_DECL_NEW(i915drmkms, sizeof(struct i915drm_softc),
     i915drm_match, i915drm_attach, i915drm_detach, NULL);
@@ -467,6 +478,25 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    (uint64_t)(uintptr_t)bus_space_vaddr(dev->bst, sc->sc_fb_bsh));
+
+	sc->sc_genfb_backlight_callback = (struct genfb_parameter_callback) {
+		.gpc_cookie = sc,
+		.gpc_get_parameter = &i915drm_genfb_get_backlight,
+		.gpc_set_parameter = &i915drm_genfb_set_backlight,
+		.gpc_upd_parameter = &i915drm_genfb_upd_backlight,
+	};
+	prop_dictionary_set_uint64(dict, "backlight_callback",
+	    (uint64_t)(uintptr_t)&sc->sc_genfb_backlight_callback);
+
+	sc->sc_genfb_brightness_callback = (struct genfb_parameter_callback) {
+		.gpc_cookie = sc,
+		.gpc_get_parameter = &i915drm_genfb_get_brightness,
+		.gpc_set_parameter = &i915drm_genfb_set_brightness,
+		.gpc_upd_parameter = &i915drm_genfb_upd_brightness,
+	};
+	prop_dictionary_set_uint64(dict, "brightness_callback",
+	    (uint64_t)(uintptr_t)&sc->sc_genfb_brightness_callback);
+
 	sc->sc_genfb.sc_dev = sc->sc_dev;
 	genfb_init(&sc->sc_genfb);
 
@@ -492,6 +522,28 @@ fail1:	drm_gem_object_unreference_unlocked(&sc->sc_fb_obj->base);
 	mutex_unlock(&dev->struct_mutex);
 fail0:	KASSERT(ret < 0);
 	return ret;
+}
+
+static int
+i915drm_fb_dpms(struct i915drm_softc *sc, int dpms_mode)
+{
+	struct drm_device *const dev = &sc->sc_drm_dev;
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+	/* XXX What guarantees dev_priv->fbdev stays around?  */
+	struct drm_fb_helper *const fb_helper = &dev_priv->fbdev->helper;
+	unsigned i;
+
+	mutex_lock(&dev->mode_config.mutex);
+	for (i = 0; i < fb_helper->connector_count; i++) {
+		struct drm_connector *const connector =
+		    fb_helper->connector_info[i]->connector;
+		(*connector->funcs->dpms)(connector, dpms_mode);
+		drm_object_property_set_value(&connector->base,
+		    dev->mode_config.dpms_property, dpms_mode);
+	}
+	mutex_unlock(&dev->mode_config.mutex);
+
+	return 0;
 }
 
 static void
@@ -548,6 +600,29 @@ i915drm_genfb_ioctl(void *v, void *vs, unsigned long cmd, void *data, int flag,
 	case WSDISPLAYIO_GET_BUSID:
 		return wsdisplayio_busid_pci(genfb->sc_dev,
 		    pa->pa_pc, pa->pa_tag, data);
+
+	/*
+	 * Screen blanking ioctls.  Not to be confused with backlight
+	 * (can be disabled while stuff is still drawn on the screen),
+	 * brightness, or contrast (which we don't support).  Backlight
+	 * and brightness are done through WSDISPLAYIO_{GET,SET}PARAM.
+	 * This toggles between DPMS ON and DPMS OFF; backlight toggles
+	 * between DPMS ON and DPMS SUSPEND.
+	 */
+	case WSDISPLAYIO_GVIDEO: {
+		int *onp = (int *)data;
+
+		/* XXX Can't really determine a single answer here.  */
+		*onp = 1;
+		return 0;
+	}
+
+	case WSDISPLAYIO_SVIDEO: {
+		const int on = *(const int *)data;
+
+		return i915drm_fb_dpms(sc,
+		    on? DRM_MODE_DPMS_ON : DRM_MODE_DPMS_OFF);
+	}
 
 	default:
 		return EPASSTHROUGH;
@@ -612,4 +687,70 @@ i915drm_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* Failure!  */
 	return -1;
+}
+
+static int
+i915drm_genfb_get_backlight(void *cookie, int *enablep)
+{
+	struct i915drm_softc *const sc = cookie;
+	struct drm_device *const dev = &sc->sc_drm_dev;
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
+	*enablep = dev_priv->backlight_enabled;
+
+	return 0;
+}
+
+static int
+i915drm_genfb_set_backlight(void *cookie, int enable)
+{
+	struct i915drm_softc *const sc = cookie;
+
+	return i915drm_fb_dpms(sc,
+	    enable? DRM_MODE_DPMS_ON : DRM_MODE_DPMS_SUSPEND);
+}
+
+static int
+i915drm_genfb_upd_backlight(void *cookie __unused, int step __unused)
+{
+
+	panic("can't update i915drm backlight");
+}
+
+static int
+i915drm_genfb_get_brightness(void *cookie, int *brightnessp)
+{
+	struct i915drm_softc *const sc = cookie;
+	struct drm_device *const dev = &sc->sc_drm_dev;
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
+	*brightnessp = dev_priv->backlight_level;
+
+	return 0;
+}
+
+static int
+i915drm_genfb_set_brightness(void *cookie, int brightness)
+{
+	struct i915drm_softc *const sc = cookie;
+	struct drm_device *const dev = &sc->sc_drm_dev;
+
+	intel_panel_set_backlight(dev,
+	    MIN(brightness, intel_panel_get_max_backlight(dev)));
+
+	return 0;
+}
+
+static int
+i915drm_genfb_upd_brightness(void *cookie, int delta)
+{
+	struct i915drm_softc *const sc = cookie;
+	struct drm_device *const dev = &sc->sc_drm_dev;
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
+	intel_panel_set_backlight(dev,
+	    MIN(dev_priv->backlight_level + delta,
+		intel_panel_get_max_backlight(dev)));
+
+	return 0;
 }
