@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.10 2014/06/22 08:10:19 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.11 2014/07/01 05:49:19 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.10 2014/06/22 08:10:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.11 2014/07/01 05:49:19 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -95,8 +95,7 @@ mpls_detach(struct socket *so)
 }
 
 static int
-mpls_ioctl(struct socket *so, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *control, struct lwp *l)
+mpls_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
 }
