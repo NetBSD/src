@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.28 2014/06/22 08:10:19 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.29 2014/07/01 05:49:19 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.28 2014/06/22 08:10:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.29 2014/07/01 05:49:19 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -485,8 +485,7 @@ key_detach(struct socket *so)
 }
 
 static int
-key_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
+key_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
 }

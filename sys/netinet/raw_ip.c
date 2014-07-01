@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.126 2014/06/23 17:18:45 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.127 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.126 2014/06/23 17:18:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.127 2014/07/01 05:49:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -567,10 +567,9 @@ rip_detach(struct socket *so)
 }
 
 static int
-rip_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *ifp, struct lwp *l)
+rip_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
-	return in_control(so, (long)m, nam, (ifnet_t *)ifp, l);
+	return in_control(so, cmd, nam, ifp);
 }
 
 int

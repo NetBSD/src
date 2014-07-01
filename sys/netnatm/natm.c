@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.28 2014/06/22 08:10:19 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.29 2014/07/01 05:49:19 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.28 2014/06/22 08:10:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.29 2014/07/01 05:49:19 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,7 @@ natm_detach(struct socket *so)
 }
 
 static int
-natm_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
+natm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
   int error = 0;
 
@@ -107,7 +106,7 @@ natm_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
    * raw atm ioctl.   comes in as a SIOCRAWATM.   we convert it to
    * SIOCXRAWATM and pass it to the driver.
    */
-  if ((u_long)m == SIOCRAWATM) {
+  if (cmd == SIOCRAWATM) {
     if (npcb->npcb_ifp == NULL) {
       error = ENOTCONN;
       goto done;

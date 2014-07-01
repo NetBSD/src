@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.148 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.149 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.148 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.149 2014/07/01 05:49:18 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -224,8 +224,8 @@ COMPATNAME(route_detach)(struct socket *so)
 }
 
 static int
-COMPATNAME(route_ioctl)(struct socket *so, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *control, struct lwp *l)
+COMPATNAME(route_ioctl)(struct socket *so, u_long cmd, void *nam,
+    struct ifnet * ifp)
 {
 	return EOPNOTSUPP;
 }

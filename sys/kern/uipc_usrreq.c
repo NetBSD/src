@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.154 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.155 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.154 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.155 2014/07/01 05:49:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -866,8 +866,7 @@ unp_detach(struct socket *so)
 }
 
 static int
-unp_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
+unp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
 }

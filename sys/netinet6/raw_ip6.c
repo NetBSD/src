@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.120 2014/06/23 17:18:45 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.121 2014/07/01 05:49:19 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.120 2014/06/23 17:18:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.121 2014/07/01 05:49:19 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -645,11 +645,9 @@ rip6_detach(struct socket *so)
 }
 
 static int
-rip6_ioctl(struct socket *so, struct mbuf *m, 
-	struct mbuf *nam, struct mbuf *ifp, struct lwp *l)
+rip6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
-	return in6_control(so, (u_long)m, (void *)nam,
-	    (struct ifnet *)ifp, l);
+	return in6_control(so, cmd, nam, ifp);
 }
 
 int

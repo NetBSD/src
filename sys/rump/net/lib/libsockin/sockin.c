@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.41 2014/06/22 08:10:19 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.42 2014/07/01 05:49:19 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.41 2014/06/22 08:10:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.42 2014/07/01 05:49:19 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -68,8 +68,7 @@ static int	sockin_do_init(void);
 static void	sockin_init(void);
 static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
-static int	sockin_ioctl(struct socket *, struct mbuf *, struct mbuf *,
-			     struct mbuf *control, struct lwp *);
+static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
@@ -453,8 +452,7 @@ sockin_detach(struct socket *so)
 }
 
 static int
-sockin_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return ENOTTY;
 }
