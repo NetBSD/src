@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.168 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: if.h,v 1.169 2014/07/01 10:16:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@
 #ifdef _KERNEL
 #include <net/pktqueue.h>
 #endif
+
+//#define NET_MPSAFE 1
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
@@ -198,11 +200,12 @@ struct if_data {
  * Structure defining a queue for a network interface.
  */
 struct ifqueue {
-	struct	mbuf *ifq_head;
-	struct	mbuf *ifq_tail;
-	int	ifq_len;
-	int	ifq_maxlen;
-	int	ifq_drops;
+	struct		mbuf *ifq_head;
+	struct		mbuf *ifq_tail;
+	int		ifq_len;
+	int		ifq_maxlen;
+	int		ifq_drops;
+	kmutex_t	*ifq_lock;
 };
 
 struct ifnet_lock;
@@ -423,6 +426,9 @@ typedef struct ifnet {
 	"\22UDP6CSUM_Tx"	\
 	"\23TSO6"		\
 	"\24LRO"		\
+
+#define IFQ_LOCK(_ifq)		if ((_ifq)->ifq_lock) mutex_enter((_ifq)->ifq_lock)
+#define IFQ_UNLOCK(_ifq)	if ((_ifq)->ifq_lock) mutex_exit((_ifq)->ifq_lock)
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -752,6 +758,7 @@ do {									\
 
 #define IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
+	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq)))					\
 		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
 	else {								\
@@ -765,34 +772,41 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
+	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 
 #define IFQ_DEQUEUE(ifq, m)						\
 do {									\
+	IFQ_LOCK((ifq));						\
 	if (TBR_IS_ENABLED((ifq)))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
 		IF_DEQUEUE((ifq), (m));					\
+	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_POLL(ifq, m)						\
 do {									\
+	IFQ_LOCK((ifq));						\
 	if (TBR_IS_ENABLED((ifq)))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
+	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
+	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq)))					\
 		ALTQ_PURGE((ifq));					\
 	else								\
 		IF_PURGE((ifq));					\
+	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)						\
@@ -802,6 +816,7 @@ do {									\
 
 #define	IFQ_CLASSIFY(ifq, m, af, pattr)					\
 do {									\
+	IFQ_LOCK((ifq));						\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
 			(pattr)->pattr_class = (*(ifq)->altq_classify)	\
@@ -809,6 +824,7 @@ do {									\
 		(pattr)->pattr_af = (af);				\
 		(pattr)->pattr_hdr = mtod((m), void *);		\
 	}								\
+	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
 #define	ALTQ_DECL(x)		/* nothing */
@@ -816,6 +832,7 @@ do {									\
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
+	IFQ_LOCK((ifq));						\
 	if (IF_QFULL((ifq))) {						\
 		m_freem((m));						\
 		(err) = ENOBUFS;					\
@@ -825,13 +842,29 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
+	IFQ_UNLOCK((ifq));						\
 } while (/*CONSTCOND*/ 0)
 
-#define	IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
+#define	IFQ_DEQUEUE(ifq, m)						\
+do {									\
+	IFQ_LOCK((ifq));						\
+	IF_DEQUEUE((ifq), (m));						\
+	IFQ_UNLOCK((ifq));						\
+} while (/*CONSTCOND*/ 0)
 
-#define	IFQ_POLL(ifq, m)	IF_POLL((ifq), (m))
+#define	IFQ_POLL(ifq, m)						\
+do {									\
+	IFQ_LOCK((ifq));						\
+	IF_POLL((ifq), (m));						\
+	IFQ_UNLOCK((ifq));						\
+} while (/*CONSTCOND*/ 0)
 
-#define	IFQ_PURGE(ifq)		IF_PURGE((ifq))
+#define	IFQ_PURGE(ifq)							\
+do {									\
+	IFQ_LOCK((ifq));						\
+	IF_PURGE((ifq));						\
+	IFQ_UNLOCK((ifq));						\
+} while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
 
