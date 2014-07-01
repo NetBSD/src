@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.575 2014/06/30 21:32:59 alnsn Exp $
+# $NetBSD: mi,v 1.576 2014/07/01 03:43:09 htodd Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1610,14 +1610,24 @@
 ./usr/tests/ipf/expected/i9			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in1			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in100_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in101_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in102_6		tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in1_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in2_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in3_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in4_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in5_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in6_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in8_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/ip1			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/ip2			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/ip3			tests-ipf-tests		ipfilter
@@ -1878,14 +1888,24 @@
 ./usr/tests/ipf/regress/i9			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in1			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in100_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in101_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in102_6		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in1_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in2_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in3_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in4_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in5_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in6_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/in7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in8_6		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ip1			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ip2			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ip3			tests-ipf-tests		ipfilter
