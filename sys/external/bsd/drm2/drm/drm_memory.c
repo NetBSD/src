@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.4 2014/06/12 15:05:29 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.5 2014/07/01 16:29:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.4 2014/06/12 15:05:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.5 2014/07/01 16:29:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "agp_i810.h"
@@ -85,6 +85,7 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 	 */
 	for (unit = 0; unit < dev->bus_nmaps; unit++) {
 		struct drm_bus_map *const bm = &dev->bus_maps[unit];
+		int flags = bm->bm_flags;
 
 		/* Reject maps starting after the request.  */
 		if (map->offset < bm->bm_base)
@@ -100,12 +101,16 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 			continue;
 
 		/* Ensure we can map the space into virtual memory.  */
-		if (!ISSET(bm->bm_flags, BUS_SPACE_MAP_LINEAR))
+		if (!ISSET(flags, BUS_SPACE_MAP_LINEAR))
 			continue;
 
+		/* Reflect requested flags in the bus_space map.  */
+		if (ISSET(map->flags, _DRM_WRITE_COMBINING))
+			flags |= BUS_SPACE_MAP_PREFETCHABLE;
+
 		/* Map it.  */
-		if (bus_space_map(bst, map->offset, map->size,
-			bm->bm_flags, &map->lm_data.bus_space.bsh))
+		if (bus_space_map(bst, map->offset, map->size, flags,
+			&map->lm_data.bus_space.bsh))
 			break;
 
 		map->lm_data.bus_space.bus_map = bm;
