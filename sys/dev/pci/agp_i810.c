@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.106 2014/06/27 22:27:16 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.107 2014/07/01 16:27:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.106 2014/06/27 22:27:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.107 2014/07/01 16:27:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1100,8 +1100,9 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 
 	if (offset < 0 || offset >= ((isc->gtt_size/4) << AGP_PAGE_SHIFT)) {
 		DPRINTF(sc, "failed"
-		    ": offset 0x%08x, shift %d, entries %"PRIuMAX"\n",
-		    (int)offset, AGP_PAGE_SHIFT,
+		    ": offset 0x%"PRIxMAX", shift %u, entries %"PRIuMAX"\n",
+		    (uintmax_t)offset,
+		    (unsigned)AGP_PAGE_SHIFT,
 		    (uintmax_t)isc->gtt_size/4);
 		return EINVAL;
 	}
@@ -1160,7 +1161,7 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	struct agp_memory *mem;
 	int error;
 
-	DPRINTF(sc, "AGP: alloc(%d, 0x%x)\n", type, (int)size);
+	DPRINTF(sc, "AGP: alloc(%d, 0x%"PRIxMAX")\n", type, (uintmax_t)size);
 
 	if (size <= 0)
 		return NULL;
