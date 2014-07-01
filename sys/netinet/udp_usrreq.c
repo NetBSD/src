@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.201 2014/06/23 17:18:45 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.202 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.201 2014/06/23 17:18:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.202 2014/07/01 05:49:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -895,11 +895,9 @@ udp_detach(struct socket *so)
 }
 
 static int
-udp_ioctl(struct socket *so, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *ifp, struct lwp *l)
+udp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
-	return in_control(so, (long)m, (void *)nam,
-	    (struct ifnet *)ifp, l);
+	return in_control(so, cmd, nam, ifp);
 }
 
 static int

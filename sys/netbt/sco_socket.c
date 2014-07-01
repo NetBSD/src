@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.18 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.19 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.18 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.19 2014/07/01 05:49:18 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -108,8 +108,7 @@ sco_detach(struct socket *so)
 }
 
 static int
-sco_ioctl(struct socket *up, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
+sco_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
 }
