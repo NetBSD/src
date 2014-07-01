@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.169 2014/07/01 10:16:02 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.170 2014/07/01 14:04:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 #include <net/dlt.h>
 #include <net/pfil.h>
@@ -211,7 +212,6 @@ struct ifqueue {
 struct ifnet_lock;
 
 #ifdef _KERNEL
-#include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/percpu.h>
 
