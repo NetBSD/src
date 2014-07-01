@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.172 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: in6.c,v 1.173 2014/07/01 07:51:29 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.172 2014/07/01 05:49:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.173 2014/07/01 07:51:29 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1331,7 +1331,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				    mindelay;
 			}
 		}
-		nd6_dad_start(&ia->ia_ifa, dad_delay);
+		/* +1 ensures callout is always used */
+		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
 	return error;
@@ -2155,15 +2156,17 @@ in6_if_link_up(struct ifnet *ifp)
 		}
 
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
+			int delay;
 			/*
 			 * The TENTATIVE flag was likely set by hand
 			 * beforehand, implicitly indicating the need for DAD.
 			 * We may be able to skip the random delay in this
 			 * case, but we impose delays just in case.
 			 */
-			nd6_dad_start(ifa,
-			    cprng_fast32() %
-				(MAX_RTR_SOLICITATION_DELAY * hz));
+			delay = cprng_fast32() %
+			    (MAX_RTR_SOLICITATION_DELAY * hz);
+			/* +1 ensures callout is always used */
+			nd6_dad_start(ifa, delay + 1);
 		}
 	}
 
