@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.56 2014/06/25 16:35:12 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.57 2014/07/01 12:08:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -62,15 +62,15 @@
 
 /*
  * KMEM_SIZE: detect alloc/free size mismatch bugs.
- *	Prefix each allocations with a fixed-sized header and record the exact
- *	user-requested allocation size in it. When freeing, compare it with
- *	kmem_free's "size" argument.
+ *	Prefix each allocations with a fixed-sized, aligned header and record
+ *	the exact user-requested allocation size in it. When freeing, compare
+ *	it with kmem_free's "size" argument.
  */
 
 /*
  * KMEM_REDZONE: detect overrun bugs.
- *	Add a 2-byte pattern (allocate one more page if needed) at the end
- *	of each allocated buffer. Check this pattern on kmem_free.
+ *	Add a 2-byte pattern (allocate one more memory chunk if needed) at the
+ *	end of each allocated buffer. Check this pattern on kmem_free.
  *
  * KMEM_POISON: detect modify-after-free bugs.
  *	Fill freed (in the sense of kmem_free) memory with a garbage pattern.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.56 2014/06/25 16:35:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.57 2014/07/01 12:08:33 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -167,7 +167,7 @@ static pool_cache_t kmem_cache_big[KMEM_CACHE_BIG_COUNT] __cacheline_aligned;
 static size_t kmem_cache_big_maxidx __read_mostly;
 
 #if defined(DIAGNOSTIC) && defined(_HARDKERNEL)
-#define KMEM_SIZE
+#define	KMEM_SIZE
 #endif /* defined(DIAGNOSTIC) */
 
 #if defined(DEBUG) && defined(_HARDKERNEL)
@@ -187,8 +187,8 @@ static void kmem_poison_check(void *, size_t);
 
 #if defined(KMEM_REDZONE)
 #define	REDZONE_SIZE	2
-static void kmem_redzone_fill(void *p, size_t sz);
-static void kmem_redzone_check(void *p, size_t sz);
+static void kmem_redzone_fill(void *, size_t);
+static void kmem_redzone_check(void *, size_t);
 #else /* defined(KMEM_REDZONE) */
 #define	REDZONE_SIZE	0
 #define	kmem_redzone_fill(p, sz)		/* nothing */
@@ -196,7 +196,10 @@ static void kmem_redzone_check(void *p, size_t sz);
 #endif /* defined(KMEM_REDZONE) */
 
 #if defined(KMEM_SIZE)
-#define	SIZE_SIZE	kmem_roundup_size(sizeof(size_t))
+struct kmem_header {
+	size_t		size;
+} __aligned(KMEM_ALIGN);
+#define	SIZE_SIZE	sizeof(struct kmem_header)
 static void kmem_size_set(void *, size_t);
 static void kmem_size_check(void *, size_t);
 #else
@@ -243,8 +246,8 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 
 #ifdef KMEM_REDZONE
 	if (size - requested_size < REDZONE_SIZE) {
-		/* If there isn't enough space in the page padding,
-		 * allocate one more page for the red zone. */
+		/* If there isn't enough space in the padding, allocate
+		 * one more memory chunk for the red zone. */
 		allocsz += kmem_roundup_size(REDZONE_SIZE);
 	}
 #endif
@@ -537,18 +540,23 @@ kmem_poison_check(void *p, size_t sz)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-	memcpy(p, &sz, sizeof(sz));
+	struct kmem_header *hd;
+	hd = (struct kmem_header *)p;
+	hd->size = sz;
 }
 
 static void
 kmem_size_check(void *p, size_t sz)
 {
-	size_t psz;
+	struct kmem_header *hd;
+	size_t hsz;
 
-	memcpy(&psz, p, sizeof(psz));
-	if (psz != sz) {
+	hd = (struct kmem_header *)p;
+	hsz = hd->size;
+
+	if (hsz != sz) {
 		panic("kmem_free(%p, %zu) != allocated size %zu",
-		    (const uint8_t *)p + SIZE_SIZE, sz, psz);
+		    (const uint8_t *)p + SIZE_SIZE, sz, hsz);
 	}
 }
 #endif /* defined(KMEM_SIZE) */
@@ -582,7 +590,7 @@ kmem_redzone_check(void *p, size_t sz)
 	const uint8_t *ep;
 
 	cp = (uint8_t *)p + sz;
-	ep = (uint8_t *)p + sz + REDZONE_SIZE;
+	ep = cp + REDZONE_SIZE;
 	while (cp < ep) {
 		const uint8_t expected = kmem_redzone_pattern(cp);
 
