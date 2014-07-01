@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.271 2014/06/30 06:09:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.272 2014/07/01 10:35:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.271 2014/06/30 06:09:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.272 2014/07/01 10:35:18 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,10 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #else
 #define	DPRINTF(x, y)	/* nothing */
 #endif /* WM_DEBUG */
+
+#ifdef NET_MPSAFE
+#define WM_MPSAFE	1
+#endif
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -275,6 +279,7 @@ struct wm_softc {
 
 	void *sc_ih;			/* interrupt cookie */
 	callout_t sc_tick_ch;		/* tick callout */
+	bool sc_stopping;
 
 	int sc_ee_addrbits;		/* EEPROM address bits */
 	int sc_ich8_flash_base;
@@ -380,7 +385,20 @@ struct wm_softc {
 	int sc_mchash_type;		/* multicast filter offset */
 
 	krndsource_t rnd_source;	/* random source */
+
+	kmutex_t *sc_txrx_lock;		/* lock for tx/rx operations */
+					/* XXX need separation? */
 };
+
+#define WM_LOCK(_sc)	if ((_sc)->sc_txrx_lock) mutex_enter((_sc)->sc_txrx_lock)
+#define WM_UNLOCK(_sc)	if ((_sc)->sc_txrx_lock) mutex_exit((_sc)->sc_txrx_lock)
+#define WM_LOCKED(_sc)	(!(_sc)->sc_txrx_lock || mutex_owned((_sc)->sc_txrx_lock))
+
+#ifdef WM_MPSAFE
+#define CALLOUT_FLAGS	CALLOUT_MPSAFE
+#else
+#define CALLOUT_FLAGS	0
+#endif
 
 #define	WM_RXCHAIN_RESET(sc)						\
 do {									\
@@ -495,12 +513,16 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 static void	wm_start(struct ifnet *);
+static void	wm_start_locked(struct ifnet *);
 static void	wm_nq_start(struct ifnet *);
+static void	wm_nq_start_locked(struct ifnet *);
 static void	wm_watchdog(struct ifnet *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
+static int	wm_init_locked(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
+static void	wm_stop_locked(struct ifnet *, int);
 static bool	wm_suspend(device_t, const pmf_qual_t *);
 static bool	wm_resume(device_t, const pmf_qual_t *);
 
@@ -1184,7 +1206,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
-	callout_init(&sc->sc_tick_ch, 0);
+	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
+	sc->sc_stopping = false;
 
 	sc->sc_wmp = wmp = wm_lookup(pa);
 	if (wmp == NULL) {
@@ -1315,6 +1338,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
+#ifdef WM_MPSAFE
+	pci_intr_setattr(pc, &ih, PCI_INTR_MPSAFE, true);
+#endif
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wm_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
@@ -1354,7 +1380,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		aprint_verbose_dev(sc->sc_dev,
 		    "Communication Streaming Architecture\n");
 		if (sc->sc_type == WM_T_82547) {
-			callout_init(&sc->sc_txfifo_ch, 0);
+			callout_init(&sc->sc_txfifo_ch, CALLOUT_FLAGS);
 			callout_setfunc(&sc->sc_txfifo_ch,
 					wm_82547_txfifo_stall, sc);
 			aprint_verbose_dev(sc->sc_dev,
@@ -2051,6 +2077,12 @@ wm_attach(device_t parent, device_t self, void *aux)
 		ifp->if_capabilities |= IFCAP_TSOv6;
 	}
 
+#ifdef WM_MPSAFE
+	sc->sc_txrx_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+#else
+	sc->sc_txrx_lock = NULL;
+#endif
+
 	/*
 	 * Attach the interface.
 	 */
@@ -2159,18 +2191,26 @@ wm_detach(device_t self, int flags __unused)
 {
 	struct wm_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, s;
+	int i;
+#ifndef WM_MPSAFE
+	int s;
 
 	s = splnet();
+#endif
 	/* Stop the interface. Callouts are stopped in it. */
 	wm_stop(ifp, 1);
+
+#ifndef WM_MPSAFE
 	splx(s);
+#endif
 
 	pmf_device_deregister(self);
 
 	/* Tell the firmware about the release */
+	WM_LOCK(sc);
 	wm_release_manageability(sc);
 	wm_release_hw_control(sc);
+	WM_UNLOCK(sc);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -2182,7 +2222,10 @@ wm_detach(device_t self, int flags __unused)
 
 
 	/* Unload RX dmamaps and free mbufs */
+	WM_LOCK(sc);
 	wm_rxdrain(sc);
+	WM_UNLOCK(sc);
+	/* Must unlock here */
 
 	/* Free dmamap. It's the same as the end of the wm_attach() function */
 	for (i = 0; i < WM_NRXDESC; i++) {
@@ -2217,6 +2260,9 @@ wm_detach(device_t self, int flags __unused)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		sc->sc_ios = 0;
 	}
+
+	if (sc->sc_txrx_lock)
+		mutex_obj_free(sc->sc_txrx_lock);
 
 	return 0;
 }
@@ -2441,9 +2487,15 @@ static void
 wm_82547_txfifo_stall(void *arg)
 {
 	struct wm_softc *sc = arg;
+#ifndef WM_MPSAFE
 	int s;
 
 	s = splnet();
+#endif
+	WM_LOCK(sc);
+
+	if (sc->sc_stopping)
+		goto out;
 
 	if (sc->sc_txfifo_stall) {
 		if (CSR_READ(sc, WMREG_TDT) == CSR_READ(sc, WMREG_TDH) &&
@@ -2465,7 +2517,7 @@ wm_82547_txfifo_stall(void *arg)
 
 			sc->sc_txfifo_head = 0;
 			sc->sc_txfifo_stall = 0;
-			wm_start(&sc->sc_ethercom.ec_if);
+			wm_start_locked(&sc->sc_ethercom.ec_if);
 		} else {
 			/*
 			 * Still waiting for packets to drain; try again in
@@ -2475,7 +2527,11 @@ wm_82547_txfifo_stall(void *arg)
 		}
 	}
 
+out:
+	WM_UNLOCK(sc);
+#ifndef WM_MPSAFE
 	splx(s);
+#endif
 }
 
 static void
@@ -2546,6 +2602,17 @@ static void
 wm_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
+
+	WM_LOCK(sc);
+	if (!sc->sc_stopping)
+		wm_start_locked(ifp);
+	WM_UNLOCK(sc);
+}
+
+static void
+wm_start_locked(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	struct m_tag *mtag;
 	struct wm_txsoft *txs;
@@ -2555,6 +2622,8 @@ wm_start(struct ifnet *ifp)
 	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
+
+	KASSERT(WM_LOCKED(sc));
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -2570,14 +2639,7 @@ wm_start(struct ifnet *ifp)
 	 * descriptors.
 	 */
 	for (;;) {
-		/* Grab a packet off the queue. */
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			break;
-
-		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: have packet to transmit: %p\n",
-		    device_xname(sc->sc_dev), m0));
+		m0 = NULL;
 
 		/* Get a work queue entry. */
 		if (sc->sc_txsfree < WM_TXQUEUE_GC(sc)) {
@@ -2590,6 +2652,15 @@ wm_start(struct ifnet *ifp)
 				break;
 			}
 		}
+
+		/* Grab a packet off the queue. */
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: have packet to transmit: %p\n",
+		    device_xname(sc->sc_dev), m0));
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
@@ -2627,7 +2698,6 @@ wm_start(struct ifnet *ifp)
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    device_xname(sc->sc_dev));
-				IFQ_DEQUEUE(&ifp->if_snd, m0);
 				wm_dump_mbuf_chain(sc, m0);
 				m_freem(m0);
 				continue;
@@ -2687,8 +2757,6 @@ wm_start(struct ifnet *ifp)
 			WM_EVCNT_INCR(&sc->sc_ev_txfifo_stall);
 			break;
 		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
@@ -2831,6 +2899,13 @@ wm_start(struct ifnet *ifp)
 
 		/* Pass the packet to any BPF listeners. */
 		bpf_mtap(ifp, m0);
+	}
+
+	if (m0 != NULL) {
+		ifp->if_flags |= IFF_OACTIVE;
+		WM_EVCNT_INCR(&sc->sc_ev_txdrop);
+		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n", __func__));
+		m_freem(m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
@@ -3053,12 +3128,25 @@ static void
 wm_nq_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
+
+	WM_LOCK(sc);
+	if (!sc->sc_stopping)
+		wm_nq_start_locked(ifp);
+	WM_UNLOCK(sc);
+}
+
+static void
+wm_nq_start_locked(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	struct m_tag *mtag;
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
+
+	KASSERT(WM_LOCKED(sc));
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -3071,14 +3159,7 @@ wm_nq_start(struct ifnet *ifp)
 	 * descriptors.
 	 */
 	for (;;) {
-		/* Grab a packet off the queue. */
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			break;
-
-		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: have packet to transmit: %p\n",
-		    device_xname(sc->sc_dev), m0));
+		m0 = NULL;
 
 		/* Get a work queue entry. */
 		if (sc->sc_txsfree < WM_TXQUEUE_GC(sc)) {
@@ -3091,6 +3172,15 @@ wm_nq_start(struct ifnet *ifp)
 				break;
 			}
 		}
+
+		/* Grab a packet off the queue. */
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: have packet to transmit: %p\n",
+		    device_xname(sc->sc_dev), m0));
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
@@ -3111,7 +3201,6 @@ wm_nq_start(struct ifnet *ifp)
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    device_xname(sc->sc_dev));
-				IFQ_DEQUEUE(&ifp->if_snd, m0);
 				wm_dump_mbuf_chain(sc, m0);
 				m_freem(m0);
 				continue;
@@ -3151,8 +3240,6 @@ wm_nq_start(struct ifnet *ifp)
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
 		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
@@ -3310,6 +3397,13 @@ wm_nq_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0);
 	}
 
+	if (m0 != NULL) {
+		ifp->if_flags |= IFF_OACTIVE;
+		WM_EVCNT_INCR(&sc->sc_ev_txdrop);
+		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n", __func__));
+		m_freem(m0);
+	}
+
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
 		/* No more slots; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
@@ -3335,7 +3429,9 @@ wm_watchdog(struct ifnet *ifp)
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
+	WM_LOCK(sc);
 	wm_txintr(sc);
+	WM_UNLOCK(sc);
 
 	if (sc->sc_txfree != WM_NTXDESC(sc)) {
 #ifdef WM_DEBUG
@@ -3379,19 +3475,27 @@ wm_ifflags_cb(struct ethercom *ec)
 	struct ifnet *ifp = &ec->ec_if;
 	struct wm_softc *sc = ifp->if_softc;
 	int change = ifp->if_flags ^ sc->sc_if_flags;
+	int rc = 0;
+
+	WM_LOCK(sc);
 
 	if (change != 0)
 		sc->sc_if_flags = ifp->if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
-		return ENETRESET;
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0) {
+		rc = ENETRESET;
+		goto out;
+	}
 
 	if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
 		wm_set_filter(sc);
 
 	wm_set_vlan(sc);
 
-	return 0;
+out:
+	WM_UNLOCK(sc);
+
+	return rc;
 }
 
 /*
@@ -3408,7 +3512,10 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sockaddr_dl *sdl;
 	int s, error;
 
+#ifndef WM_MPSAFE
 	s = splnet();
+#endif
+	WM_LOCK(sc);
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
@@ -3439,14 +3546,27 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		/*FALLTHROUGH*/
 	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+		WM_UNLOCK(sc);
+#ifdef WM_MPSAFE
+		s = splnet();
+#endif
+		/* It may call wm_start, so unlock here */
+		error = ether_ioctl(ifp, cmd, data);
+#ifdef WM_MPSAFE
+		splx(s);
+#endif
+		WM_LOCK(sc);
+
+		if (error != ENETRESET)
 			break;
 
 		error = 0;
 
-		if (cmd == SIOCSIFCAP)
+		if (cmd == SIOCSIFCAP) {
+			WM_UNLOCK(sc);
 			error = (*ifp->if_init)(ifp);
-		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			WM_LOCK(sc);
+		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
@@ -3458,10 +3578,14 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
+	WM_UNLOCK(sc);
+
 	/* Try to get more packets going. */
 	ifp->if_start(ifp);
 
+#ifndef WM_MPSAFE
 	splx(s);
+#endif
 	return error;
 }
 
@@ -3483,6 +3607,13 @@ wm_intr(void *arg)
 		if ((icr & sc->sc_icr) == 0)
 			break;
 		rnd_add_uint32(&sc->rnd_source, icr);
+
+		WM_LOCK(sc);
+
+		if (sc->sc_stopping) {
+			WM_UNLOCK(sc);
+			break;
+		}
 
 		handled = 1;
 
@@ -3512,6 +3643,8 @@ wm_intr(void *arg)
 			wm_linkintr(sc, icr);
 		}
 
+		WM_UNLOCK(sc);
+
 		if (icr & ICR_RXO) {
 #if defined(WM_DEBUG)
 			log(LOG_WARNING, "%s: Receive overrun\n",
@@ -3540,6 +3673,9 @@ wm_txintr(struct wm_softc *sc)
 	struct wm_txsoft *txs;
 	uint8_t status;
 	int i;
+
+	if (sc->sc_stopping)
+		return;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -3814,11 +3950,18 @@ wm_rxintr(struct wm_softc *sc)
 
 		ifp->if_ipackets++;
 
+		WM_UNLOCK(sc);
+
 		/* Pass this up to any BPF listeners. */
 		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
+
+		WM_LOCK(sc);
+
+		if (sc->sc_stopping)
+			break;
 	}
 
 	/* Update the receive pointer. */
@@ -3836,6 +3979,8 @@ wm_rxintr(struct wm_softc *sc)
 static void
 wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 {
+
+	KASSERT(WM_LOCKED(sc));
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
 		__func__));
@@ -3997,9 +4142,16 @@ wm_tick(void *arg)
 {
 	struct wm_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+#ifndef WM_MPSAFE
 	int s;
 
 	s = splnet();
+#endif
+
+	WM_LOCK(sc);
+
+	if (sc->sc_stopping)
+		goto out;
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
@@ -4025,9 +4177,14 @@ wm_tick(void *arg)
 	else
 		wm_tbi_check_link(sc);
 
+out:
+	WM_UNLOCK(sc);
+#ifndef WM_MPSAFE
 	splx(s);
+#endif
 
-	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
+	if (!sc->sc_stopping)
+		callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
 /*
@@ -4406,16 +4563,30 @@ wm_set_vlan(struct wm_softc *sc)
 /*
  * wm_init:		[ifnet interface function]
  *
- *	Initialize the interface.  Must be called at splnet().
+ *	Initialize the interface.
  */
 static int
 wm_init(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	int ret;
+
+	WM_LOCK(sc);
+	ret = wm_init_locked(ifp);
+	WM_UNLOCK(sc);
+
+	return ret;
+}
+
+static int
+wm_init_locked(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_rxsoft *rxs;
 	int i, j, trynum, error = 0;
 	uint32_t reg;
 
+	KASSERT(WM_LOCKED(sc));
 	/*
 	 * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
 	 * There is a small but measurable benefit to avoiding the adjusment
@@ -4437,7 +4608,7 @@ wm_init(struct ifnet *ifp)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 	/* Cancel any pending I/O. */
-	wm_stop(ifp, 0);
+	wm_stop_locked(ifp, 0);
 
 	/* update statistics before reset */
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
@@ -4854,6 +5025,8 @@ wm_init(struct ifnet *ifp)
 		for (i = 0; i < WM_NRXDESC; i++)
 			WM_INIT_RXDESC(sc, i);
 
+	sc->sc_stopping = false;
+
 	/* Start the one second link check clock. */
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 
@@ -4880,6 +5053,8 @@ wm_rxdrain(struct wm_softc *sc)
 	struct wm_rxsoft *rxs;
 	int i;
 
+	KASSERT(WM_LOCKED(sc));
+
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf != NULL) {
@@ -4899,8 +5074,22 @@ static void
 wm_stop(struct ifnet *ifp, int disable)
 {
 	struct wm_softc *sc = ifp->if_softc;
+
+	WM_LOCK(sc);
+	wm_stop_locked(ifp, disable);
+	WM_UNLOCK(sc);
+}
+
+static void
+wm_stop_locked(struct ifnet *ifp, int disable)
+{
+	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txsoft *txs;
 	int i;
+
+	KASSERT(WM_LOCKED(sc));
+
+	sc->sc_stopping = true;
 
 	/* Stop the one second clock. */
 	callout_stop(&sc->sc_tick_ch);
@@ -5680,6 +5869,8 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 	struct mbuf *m;
 	int error;
 
+	KASSERT(WM_LOCKED(sc));
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
@@ -6131,6 +6322,8 @@ wm_tbi_check_link(struct wm_softc *sc)
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t status;
 
+	KASSERT(WM_LOCKED(sc));
+
 	status = CSR_READ(sc, WMREG_STATUS);
 
 	/* XXX is this needed? */
@@ -6156,8 +6349,10 @@ wm_tbi_check_link(struct wm_softc *sc)
 			/* RXCFG storm! */
 			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
 				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
-			wm_init(ifp);
+			wm_init_locked(ifp);
+			WM_UNLOCK(sc);
 			ifp->if_start(ifp);
+			WM_LOCK(sc);
 		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 			/* If the timer expired, retry autonegotiation */
 			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
