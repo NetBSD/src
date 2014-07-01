@@ -135,6 +135,13 @@ struct bnx_softc
 	/* General controller flags. */
 	uint32_t		bnx_flags;
 
+	/* Controller capability flags. */
+	uint32_t		bnx_cap_flags;
+#define BNX_MSI_CAPABLE_FLAG			0x00000001
+#define BNX_MSIX_CAPABLE_FLAG			0x00000002
+#define BNX_PCIE_CAPABLE_FLAG			0x00000004
+#define BNX_PCIX_CAPABLE_FLAG			0x00000008
+
 	/* PHY specific flags. */
 	uint32_t		bnx_phy_flags;
 
@@ -143,9 +150,11 @@ struct bnx_softc
 	uint32_t		bnx_port_hw_cfg;
 
 	uint16_t		bus_speed_mhz;		/* PCI bus speed */
-	struct flash_spec	*bnx_flash_info;	/* Flash NVRAM settings */
+	uint16_t		link_width;		/* PCIe link width */
+	uint16_t		link_speed;		/* PCIe link speed */
+	struct flash_spec	*bnx_flash_info;     /* Flash NVRAM settings */
 	uint32_t		bnx_flash_size;		/* Flash NVRAM size */
-	uint32_t		bnx_shmem_base;		/* Shared Memory base address */
+	uint32_t		bnx_shmem_base;/* Shared Memory base address */
 	char *			bnx_name;		/* Name string */
 
 	/* Tracks the version of bootcode firmware. */
