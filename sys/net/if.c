@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.284 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: if.c,v 1.285 2014/07/01 10:16:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.284 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.285 2014/07/01 10:16:02 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -611,6 +611,12 @@ if_attach(ifnet_t *ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
+#ifdef NET_MPSAFE
+	ifp->if_snd.ifq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+#else
+	ifp->if_snd.ifq_lock = NULL;
+#endif
+
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
 	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
@@ -731,6 +737,9 @@ if_detach(struct ifnet *ifp)
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
 		altq_detach(&ifp->if_snd);
 #endif
+
+	if (ifp->if_snd.ifq_lock)
+		mutex_obj_free(ifp->if_snd.ifq_lock);
 
 	sysctl_teardown(&ifp->if_sysctl_log);
 
