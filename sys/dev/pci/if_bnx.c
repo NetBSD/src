@@ -1,8 +1,8 @@
-/*	$NetBSD: if_bnx.c,v 1.55 2014/07/01 15:23:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.56 2014/07/01 17:11:35 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
- * Copyright (c) 2006 Broadcom Corporation
+ * Copyright (c) 2006-2010 Broadcom Corporation
  *	David Christensen <davidch@broadcom.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.55 2014/07/01 15:23:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.56 2014/07/01 17:11:35 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -360,6 +360,8 @@ void	bnx_load_cpu_fw(struct bnx_softc *, struct cpu_reg *,
 	    struct fw_info *);
 void	bnx_init_cpus(struct bnx_softc *);
 
+static void bnx_print_adapter_info(struct bnx_softc *);
+static void bnx_probe_pci_caps(struct bnx_softc *);
 void	bnx_stop(struct ifnet *, int);
 int	bnx_reset(struct bnx_softc *, uint32_t);
 int	bnx_chipinit(struct bnx_softc *);
@@ -443,6 +445,99 @@ bnx_probe(device_t parent, cfdata_t match, void *aux)
 
 	return 0;
 }
+
+/****************************************************************************/
+/* PCI Capabilities Probe Function.                                         */
+/*                                                                          */
+/* Walks the PCI capabiites list for the device to find what features are   */
+/* supported.                                                               */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   None.                                                                  */
+/****************************************************************************/
+static void
+bnx_print_adapter_info(struct bnx_softc *sc)
+{
+
+	aprint_normal_dev(sc->bnx_dev, "ASIC BCM%x %c%d %s(0x%08x)\n",
+	    BNXNUM(sc), 'A' + BNXREV(sc), BNXMETAL(sc),
+	    (BNX_CHIP_BOND_ID(sc) == BNX_CHIP_BOND_ID_SERDES_BIT)
+	    ? "Serdes " : "", sc->bnx_chipid);
+	    
+	/* Bus info. */
+	if (sc->bnx_flags & BNX_PCIE_FLAG) {
+		aprint_normal_dev(sc->bnx_dev, "PCIe x%d ",
+		    sc->link_width);
+		switch (sc->link_speed) {
+		case 1: aprint_normal("2.5Gbps\n"); break;
+		case 2:	aprint_normal("5Gbps\n"); break;
+		default: aprint_normal("Unknown link speed\n");
+		}
+	} else {
+		aprint_normal_dev(sc->bnx_dev, "PCI%s %dbit %dMHz\n",
+		    ((sc->bnx_flags & BNX_PCIX_FLAG) ? "-X" : ""),
+		    (sc->bnx_flags & BNX_PCI_32BIT_FLAG) ? 32 : 64,
+		    sc->bus_speed_mhz);
+	}
+
+	aprint_normal_dev(sc->bnx_dev,
+	    "Coal (RX:%d,%d,%d,%d; TX:%d,%d,%d,%d)\n",
+	    sc->bnx_rx_quick_cons_trip_int,
+	    sc->bnx_rx_quick_cons_trip,
+	    sc->bnx_rx_ticks_int,
+	    sc->bnx_rx_ticks,
+	    sc->bnx_tx_quick_cons_trip_int,
+	    sc->bnx_tx_quick_cons_trip,
+	    sc->bnx_tx_ticks_int,
+	    sc->bnx_tx_ticks);
+}
+
+
+/****************************************************************************/
+/* PCI Capabilities Probe Function.                                         */
+/*                                                                          */
+/* Walks the PCI capabiites list for the device to find what features are   */
+/* supported.                                                               */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   None.                                                                  */
+/****************************************************************************/
+static void
+bnx_probe_pci_caps(struct bnx_softc *sc)
+{
+	struct pci_attach_args *pa = &(sc->bnx_pa);
+	pcireg_t reg;
+
+	/* Check if PCI-X capability is enabled. */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX, &reg,
+		NULL) != 0) {
+		sc->bnx_cap_flags |= BNX_PCIX_CAPABLE_FLAG;
+	}
+
+	/* Check if PCIe capability is enabled. */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS, &reg,
+		NULL) != 0) {
+		pcireg_t link_status = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    reg + PCIE_LCSR);
+		DBPRINT(sc, BNX_INFO_LOAD, "PCIe link_status = "
+		    "0x%08X\n",	link_status);
+		sc->link_speed = (link_status & PCIE_LCSR_LINKSPEED) >> 16;
+		sc->link_width = (link_status & PCIE_LCSR_NLW) >> 20;
+		sc->bnx_cap_flags |= BNX_PCIE_CAPABLE_FLAG;
+		sc->bnx_flags |= BNX_PCIE_FLAG;
+	}
+
+	/* Check if MSI capability is enabled. */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &reg,
+		NULL) != 0)
+		sc->bnx_cap_flags |= BNX_MSI_CAPABLE_FLAG;
+
+	/* Check if MSI-X capability is enabled. */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSIX, &reg,
+		NULL) != 0)
+		sc->bnx_cap_flags |= BNX_MSIX_CAPABLE_FLAG;
+}
+
 
 /****************************************************************************/
 /* Device attach function.                                                  */
@@ -551,6 +646,8 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	/* Set initial device and PHY flags */
 	sc->bnx_flags = 0;
 	sc->bnx_phy_flags = 0;
+
+	bnx_probe_pci_caps(sc);
 
 	/* Get PCI bus information (speed and type). */
 	val = REG_RD(sc, BNX_PCICFG_MISC_STATUS);
@@ -755,6 +852,8 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	/* Finally, print some useful adapter info */
+	bnx_print_adapter_info(sc);
 	/* Print some important debugging info. */
 	DBRUN(BNX_INFO, bnx_dump_driver_state(sc));
 

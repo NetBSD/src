@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.17 2014/07/01 15:23:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.18 2014/07/01 17:11:35 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -44,6 +44,7 @@
 #define BNX_MFW_ENABLE_FLAG             0x40
 #define BNX_ACTIVE_FLAG                 0x80
 #define BNX_ALLOC_PKTS_FLAG             0x100
+#define BNX_PCIE_FLAG             	0x200
 
 /* PHY specific flags -- bnx_phy_flags element in bnx_softc */
 #define BNX_PHY_SERDES_FLAG                     0x001
@@ -236,15 +237,9 @@
 
 
 /* shorthand one */
-#define BNX_ASICREV(x)			((x) >> 28)
-#define BNX_ASICREV_BCM5700		0x06
-
-/* chip revisions */
-#define BNX_CHIPREV(x)			((x) >> 24)
-#define BNX_CHIPREV_5700_AX		0x70
-#define BNX_CHIPREV_5700_BX		0x71
-#define BNX_CHIPREV_5700_CX		0x72
-#define BNX_CHIPREV_5701_AX		0x00
+#define BNXNUM(sc)			(BNX_CHIP_NUM(sc) >> 16)
+#define BNXREV(sc)			(BNX_CHIP_REV(sc) >> 12)
+#define BNXMETAL(sc)			(BNX_CHIP_METAL(sc) >> 4)
 
 struct bnx_type {
 	uint16_t		bnx_vid;
