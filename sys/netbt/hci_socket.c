@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.25 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.26 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.25 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.26 2014/07/01 05:49:18 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -484,12 +484,11 @@ hci_detach(struct socket *so)
 }
 
 static int
-hci_ioctl(struct socket *up, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
+hci_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	int err;
 	mutex_enter(bt_lock);
-	err = hci_ioctl_pcb((unsigned long)m, (void *)nam, l);
+	err = hci_ioctl_pcb(cmd, nam);
 	mutex_exit(bt_lock);
 	return err;
 }

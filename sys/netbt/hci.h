@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.38 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: hci.h,v 1.39 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.38 2014/06/22 08:10:18 rtr Exp $
+ * $Id: hci.h,v 1.39 2014/07/01 05:49:18 rtr Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2536,7 +2536,7 @@ extern SIMPLEQ_HEAD(hci_unit_list, hci_unit) hci_unit_list;
 void hci_event(struct mbuf *, struct hci_unit *);
 
 /* hci_ioctl.c */
-int hci_ioctl_pcb(unsigned long, void *, struct lwp *);
+int hci_ioctl_pcb(unsigned long, void *);
 
 /* hci_link.c */
 struct hci_link *hci_acl_open(struct hci_unit *, bdaddr_t *);
