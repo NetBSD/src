@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.283 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: if.c,v 1.284 2014/07/01 05:49:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.283 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.284 2014/07/01 05:49:18 rtr Exp $");
 
 #include "opt_inet.h"
 
@@ -1715,8 +1715,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 int
-ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
-    lwp_t *l)
+ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	struct if_addrprefreq *ifap = (struct if_addrprefreq *)data;
 	struct ifaddr *ifa;
@@ -1728,7 +1727,7 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 
 	switch (cmd) {
 	case SIOCSIFADDRPREF:
-		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)
 			return EPERM;
@@ -1923,8 +1922,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
 		error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
-		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l);
+		    cmd, data, ifp);
 #endif
 	}
 
