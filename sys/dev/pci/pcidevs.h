@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1187 2014/06/23 17:32:05 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1188 2014/07/02 21:22:05 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1194 2014/06/23 17:31:40 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1195 2014/07/02 21:21:38 msaitoh Exp
  */
 
 /*
@@ -2591,7 +2591,11 @@
 #define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_IGD	0x0402		/* Haswell Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_HASWELL_IGD_1	0x0412		/* Haswell Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_I347AT4	0x0438		/* I347-AT4 Gigabit Network Connection */
+#define	PCI_PRODUCT_INTEL_DH89XX_QA	0x0434		/* DH89xx QuiskAssit */
+#define	PCI_PRODUCT_INTEL_DH89XXCC_SGMII	0x0438		/* DH89XXCC SGMII */
+#define	PCI_PRODUCT_INTEL_DH89XXCC_SERDES	0x043a		/* DH89XXCC SerDes */
+#define	PCI_PRODUCT_INTEL_DH89XXCC_BPLANE	0x043c		/* DH89XXCC backplane */
+#define	PCI_PRODUCT_INTEL_DH89XXCC_SFP	0x0440		/* DH89XXCC SFP */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O */
@@ -3041,7 +3045,19 @@
 #define	PCI_PRODUCT_INTEL_C2000_SGMII	0x1f41		/* C2000 Ethernet(SGMII) */
 #define	PCI_PRODUCT_INTEL_C2000_DUMMYGBE	0x1f42		/* C2000 Ethernet(Dummy function) */
 #define	PCI_PRODUCT_INTEL_C2000_25GBE	0x1f45		/* C2000 Ethernet(2.5Gbe) */
-#define	PCI_PRODUCT_INTEL_DH89XX_SMB	0x2330		/* DH89xx SMBus Controller */
+#define	PCI_PRODUCT_INTEL_DH89XX_LPC	0x2310		/* DH89xx LPC Controller */
+#define	PCI_PRODUCT_INTEL_DH89XX_SATA_1	0x2323		/* DH89xx SATA Controller */
+#define	PCI_PRODUCT_INTEL_DH89XX_SATA_2	0x2326		/* DH89xx SATA Controller */
+#define	PCI_PRODUCT_INTEL_DH89XX_SMB	0x2330		/* DH89xx SMBus Host Controller */
+#define	PCI_PRODUCT_INTEL_DH89XX_THERMAL	0x2332		/* DH89xx Thermal Subsystem */
+#define	PCI_PRODUCT_INTEL_DH89XX_USB	0x2334		/* DH89xx USB EHCI */
+#define	PCI_PRODUCT_INTEL_DH89XX_PCIE_1	0x2342		/* DH89xx PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_DH89XX_PCIE_2	0x2344		/* DH89xx PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_DH89XX_PCIE_3	0x2346		/* DH89xx PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_DH89XX_PCIE_4	0x2348		/* DH89xx PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_DH89XX_WDT	0x2360		/* DH89xx Watchdog Timer for Core Reset */
+#define	PCI_PRODUCT_INTEL_DH89XX_MEI_1	0x2364		/* DH89xx MEI Controller */
+#define	PCI_PRODUCT_INTEL_DH89XX_MEI_2	0x2365		/* DH89xx MEI Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
