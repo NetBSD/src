@@ -1,5 +1,5 @@
-/*	$NetBSD: if_wpireg.h,v 1.11 2014/06/30 21:33:40 jakllsch Exp $	*/
-/*	$OpenBSD: if_wpireg.h,v 1.17 2007/07/24 16:07:47 damien Exp $	*/
+/*	$NetBSD: if_wpireg.h,v 1.12 2014/07/02 00:04:18 jakllsch Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.18 2007/09/10 20:34:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -493,25 +493,10 @@ struct wpi_scan_hdr {
 	uint32_t	flags;
 	uint32_t	filter;
 
-	/* wpi_cmd_data structure */
-	uint16_t	paylen;
-	uint16_t	lnext;
-	uint32_t	txflags;
-	uint8_t		rate;
-	uint8_t		id;
-	uint8_t		tid;
-	uint8_t		security;
-	uint8_t		key[IEEE80211_KEYBUF_SIZE];
-	uint8_t		tkip[IEEE80211_WEP_MICLEN];
-	uint32_t	fnext;
-	uint32_t	lifetime;
-	uint8_t		ofdm_mask;
-	uint8_t		cck_mask;
-	uint8_t		rts_ntries;
-	uint8_t		data_ntries;
-	uint16_t	timeout;
-	uint16_t	txop;
+	/* followed by a struct wpi_cmd_data */
+	struct		wpi_cmd_data cmd;
 
+	/* followed by an array of 4x struct wpi_scan_essid */
 	struct		wpi_scan_essid essid[4];
 
 	/* followed by probe request body */
