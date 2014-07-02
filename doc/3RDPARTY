@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1128 2014/07/02 21:07:34 pettai Exp $
+#	$NetBSD: 3RDPARTY,v 1.1129 2014/07/02 21:10:32 pettai Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -775,7 +775,7 @@ Notes:
 Uses libc's ohash, and strtonum
 
 Package:	mDNSResponder
-Version:	212.1
+Version:	320.16
 Current Vers:	541
 Maintainer:	Apple
 Archive Site:	http://www.opensource.apple.com/tarballs/mDNSResponder/
