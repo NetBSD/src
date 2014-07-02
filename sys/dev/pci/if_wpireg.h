@@ -1,5 +1,5 @@
-/*	$NetBSD: if_wpireg.h,v 1.12 2014/07/02 00:04:18 jakllsch Exp $	*/
-/*	$OpenBSD: if_wpireg.h,v 1.18 2007/09/10 20:34:43 damien Exp $	*/
+/*	$NetBSD: if_wpireg.h,v 1.13 2014/07/02 00:15:41 jakllsch Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.19 2007/09/10 20:53:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -589,7 +589,7 @@ struct wpi_firmware_hdr {
 #define WPI_FW_MAIN_DATA_MAXSZ	(32 * 1024)
 #define WPI_FW_INIT_TEXT_MAXSZ	(80 * 1024)
 #define WPI_FW_INIT_DATA_MAXSZ	(32 * 1024)
-#define WPI_FW_BOOT_TEXT_MAXSZ	(80 * 1024)
+#define WPI_FW_BOOT_TEXT_MAXSZ	1024
 
 #define WPI_FW_UPDATED	(1 << 31)
 
