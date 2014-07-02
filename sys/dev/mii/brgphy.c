@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.74 2014/07/02 22:01:44 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.75 2014/07/02 22:21:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.74 2014/07/02 22:01:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.75 2014/07/02 22:21:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,9 +315,18 @@ brgphyattach(device_t parent, device_t self, void *aux)
 		    && sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5708S)
 			sc->mii_funcs = &brgphy_5708s_funcs;
 		else if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
-		    && (sc->mii_mpd_model ==  MII_MODEL_BROADCOM2_BCM5709S))
-			sc->mii_funcs = &brgphy_5709s_funcs;
-		else
+		    && (sc->mii_mpd_model ==  MII_MODEL_BROADCOM2_BCM5709S)) {
+			if (bsc->sc_isbnx)
+				sc->mii_funcs = &brgphy_5709s_funcs;
+			else {
+				/*
+				 * XXX
+				 * 5720S and 5709S shares the same PHY id.
+				 * Assume 5720S PHY if parent device is bge(4).
+				 */
+				sc->mii_funcs = &brgphy_5708s_funcs;
+			}
+		} else
 			sc->mii_funcs = &brgphy_fiber_funcs;
 	} else
 		sc->mii_funcs = &brgphy_copper_funcs;
@@ -329,40 +338,35 @@ brgphyattach(device_t parent, device_t self, void *aux)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
 	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else {
-		if (sc->mii_flags & MIIF_HAVEFIBER) {
-			sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
+	if (sc->mii_flags & MIIF_HAVEFIBER) {
+		sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
+		/*
+		 * Set the proper bits for capabilities so that the
+		 * correct media get selected by mii_phy_add_media()
+		 */
+		sc->mii_capabilities |= BMSR_ANEG;
+		sc->mii_capabilities &= ~BMSR_100T4;
+		sc->mii_extcapabilities |= EXTSR_1000XFDX;
+
+		if (bsc->sc_isbnx) {
 			/*
-			 * Set the proper bits for capabilities so that the
-			 * correct media get selected by mii_phy_add_media()
+			 * 2.5Gb support is a software enabled feature
+			 * on the BCM5708S and BCM5709S controllers.
 			 */
-			sc->mii_capabilities |= BMSR_ANEG;
-			sc->mii_capabilities &= ~BMSR_100T4;
-			sc->mii_extcapabilities |= EXTSR_1000XFDX;
-
-			if (bsc->sc_isbnx) {
-				/*
-				 * 2.5Gb support is a software enabled feature
-				 * on the BCM5708S and BCM5709S controllers.
-				 */
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-				if (bsc->sc_phyflags
-				    & BNX_PHY_2_5G_CAPABLE_FLAG) {
-					ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
-					    IFM_FDX, sc->mii_inst), 0);
-					aprint_normal("2500baseSX-FDX, ");
+			if (bsc->sc_phyflags
+			    & BNX_PHY_2_5G_CAPABLE_FLAG) {
+				ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
+					IFM_FDX, sc->mii_inst), 0);
+				aprint_normal("2500baseSX-FDX, ");
 #undef ADD
-				}
 			}
 		}
-		mii_phy_add_media(sc);
 	}
-	aprint_normal("\n");
+	mii_phy_add_media(sc);
 
+	aprint_normal("\n");
 }
 
 static int
