@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.30 2014/05/08 05:59:09 mrg Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.31 2014/07/02 20:17:30 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.30 2014/05/08 05:59:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.31 2014/07/02 20:17:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -430,6 +430,8 @@ urtwn_detach(device_t self, int flags)
 	int s;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
+
+	pmf_device_deregister(self);
 
 	s = splusb();
 
