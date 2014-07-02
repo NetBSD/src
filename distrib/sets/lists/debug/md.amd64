@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.55 2014/06/18 17:50:15 christos Exp $
+# $NetBSD: md.amd64,v 1.56 2014/07/02 05:23:20 htodd Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -338,3 +338,5 @@
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/amldb.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/net/bpfjit/t_bpfjit.debug		tests-net-debug		debug,atf,rump

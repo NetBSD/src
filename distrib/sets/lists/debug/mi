@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.64 2014/07/01 03:42:41 htodd Exp $
+# $NetBSD: mi,v 1.65 2014/07/02 05:23:20 htodd Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1774,7 +1774,6 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_match.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf
@@ -2125,7 +2124,6 @@
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpfilter/t_bpfilter.debug		tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/bpfjit/t_bpfjit.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/fdpass/fdpass32.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/fdpass/fdpass64.debug		tests-net-debug		debug,atf
