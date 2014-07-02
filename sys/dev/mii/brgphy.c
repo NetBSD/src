@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.73 2014/07/02 21:51:36 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.74 2014/07/02 22:01:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.73 2014/07/02 21:51:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.74 2014/07/02 22:01:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,9 +311,11 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
-		if (_BNX_CHIP_NUM(bsc->sc_chipid) == BNX_CHIP_NUM_5708)
+		if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
+		    && sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5708S)
 			sc->mii_funcs = &brgphy_5708s_funcs;
-		else if (_BNX_CHIP_NUM(bsc->sc_chipid) == BNX_CHIP_NUM_5709)
+		else if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
+		    && (sc->mii_mpd_model ==  MII_MODEL_BROADCOM2_BCM5709S))
 			sc->mii_funcs = &brgphy_5709s_funcs;
 		else
 			sc->mii_funcs = &brgphy_fiber_funcs;
