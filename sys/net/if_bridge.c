@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.84 2014/06/23 06:27:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.85 2014/07/02 09:43:16 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.84 2014/06/23 06:27:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.85 2014/07/02 09:43:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -376,7 +376,6 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_addrlen = 0;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
-	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->sc_fwd_pktq = pktq_create(IFQ_MAXLEN, bridge_forward, sc);
 	KASSERT(sc->sc_fwd_pktq != NULL);
@@ -1224,8 +1223,6 @@ bridge_stop(struct ifnet *ifp, int disable)
 
 	callout_stop(&sc->sc_brcallout);
 	bstp_stop(sc);
-
-	IF_PURGE(&ifp->if_snd);
 
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
 
