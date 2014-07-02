@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.72 2014/06/18 06:35:19 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.73 2014/07/02 21:51:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.72 2014/06/18 06:35:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.73 2014/07/02 21:51:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,9 +371,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 		break;
@@ -389,9 +387,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -448,21 +444,15 @@ setit:
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
@@ -487,9 +477,7 @@ setit:
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every mii_anegticks seconds.
-		 */
+		/* Only retry autonegotiation every mii_anegticks seconds. */
 		KASSERT(sc->mii_anegticks != 0);
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
@@ -824,10 +812,8 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 			ktcr |= GTCR_MAN_MS | GTCR_ADV_MS;
 		PHY_WRITE(sc, MII_100T2CR, ktcr);
 		ktcr = PHY_READ(sc, MII_100T2CR);
-		DELAY(1000);
 	}
 	PHY_WRITE(sc, MII_ANAR, anar);
-	DELAY(1000);
 
 	/* Start autonegotiation */
 	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
@@ -839,7 +825,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 void
 brgphy_loop(struct mii_softc *sc)
 {
-	u_int32_t bmsr;
+	uint32_t bmsr;
 	int i;
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_LOOP);
@@ -1248,7 +1234,7 @@ brgphy_disable_early_dac(struct mii_softc *sc)
 static void
 brgphy_jumbo_settings(struct mii_softc *sc)
 {
-	u_int32_t val;
+	uint32_t val;
 
 	/* Set Jumbo frame settings in the PHY. */
 	if ((sc->mii_mpd_oui == MII_OUI_BROADCOM)
@@ -1270,7 +1256,7 @@ brgphy_jumbo_settings(struct mii_softc *sc)
 static void
 brgphy_eth_wirespeed(struct mii_softc *sc)
 {
-	u_int32_t val;
+	uint32_t val;
 
 	/* Enable Ethernet@Wirespeed */
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
