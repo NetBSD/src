@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.6 2014/06/16 00:40:10 ozaki-r Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.7 2014/07/02 07:30:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.6 2014/06/16 00:40:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.7 2014/07/02 07:30:37 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -208,7 +208,11 @@ pktq_rps_hash(const struct mbuf *m __unused)
 bool
 pktq_enqueue(pktqueue_t *pq, struct mbuf *m, const u_int hash __unused)
 {
-	const unsigned cpuid = curcpu()->ci_index /* hash % ncpu */;
+#ifdef _RUMPKERNEL
+	const unsigned cpuid = curcpu()->ci_index;
+#else
+	const unsigned cpuid = hash % ncpu;
+#endif
 
 	KASSERT(kpreempt_disabled());
 
