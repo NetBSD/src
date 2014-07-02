@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.59 2014/06/16 22:38:27 jakllsch Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.60 2014/07/02 00:04:18 jakllsch Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.59 2014/06/16 22:38:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.60 2014/07/02 00:04:18 jakllsch Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -2728,9 +2728,9 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 
 	hdr = (struct wpi_scan_hdr *)cmd->data;
 	memset(hdr, 0, sizeof (struct wpi_scan_hdr));
-	hdr->txflags = htole32(WPI_TX_AUTO_SEQ);
-	hdr->id = WPI_ID_BROADCAST;
-	hdr->lifetime = htole32(WPI_LIFETIME_INFINITE);
+	hdr->cmd.flags = htole32(WPI_TX_AUTO_SEQ);
+	hdr->cmd.id = WPI_ID_BROADCAST;
+	hdr->cmd.lifetime = htole32(WPI_LIFETIME_INFINITE);
 
 	/*
 	 * Move to the next channel if no packets are received within 5 msecs
@@ -2743,11 +2743,11 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	if (flags & IEEE80211_CHAN_A) {
 		hdr->crc_threshold = htole16(1);
 		/* send probe requests at 6Mbps */
-		hdr->rate = wpi_plcp_signal(12);
+		hdr->cmd.rate = wpi_plcp_signal(12);
 	} else {
 		hdr->flags = htole32(WPI_CONFIG_24GHZ | WPI_CONFIG_AUTO);
 		/* send probe requests at 1Mbps */
-		hdr->rate = wpi_plcp_signal(2);
+		hdr->cmd.rate = wpi_plcp_signal(2);
 	}
 
 	/* for directed scans, firmware inserts the essid IE itself */
@@ -2797,7 +2797,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	}
 
 	/* setup length of probe request */
-	hdr->paylen = htole16(frm - (uint8_t *)wh);
+	hdr->cmd.len = htole16(frm - (uint8_t *)wh);
 
 	chan = (struct wpi_scan_chan *)frm;
 	for (c  = &ic->ic_channels[1];
