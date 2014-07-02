@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.57 2014/07/01 12:08:33 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.58 2014/07/02 15:00:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.57 2014/07/01 12:08:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.58 2014/07/02 15:00:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -273,7 +273,7 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	p = pool_cache_get(pc, kmflags);
 
 	if (__predict_true(p != NULL)) {
-		kmem_poison_check(p, size);
+		kmem_poison_check(p, allocsz);
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
 		kmem_redzone_fill(p, requested_size + SIZE_SIZE);
