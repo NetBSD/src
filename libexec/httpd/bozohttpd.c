@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.51 2014/07/01 13:41:21 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.52 2014/07/02 13:58:09 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1533,15 +1533,21 @@ bozo_process_request(bozo_httpreq_t *request)
 
 	if (fd < 0) {
 		debug((httpd, DEBUG_FAT, "open failed: %s", strerror(errno)));
-		if (errno == EPERM)
+		switch(errno) {
+		case EPERM:
 			(void)bozo_http_error(httpd, 403, request,
 						"no permission to open file");
-		else if (errno == ENOENT) {
+			break;
+		case ENAMETOOLONG:
+			/*FALLTHROUGH*/
+		case ENOENT:
 			if (!bozo_dir_index(request, file, isindex))
 				(void)bozo_http_error(httpd, 404, request,
 							"no file");
-		} else
+			break;
+		default:
 			(void)bozo_http_error(httpd, 500, request, "open file");
+		}
 		goto cleanup_nofd;
 	}
 	if (fstat(fd, &sb) < 0) {
