@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.5 2013/11/02 23:23:51 christos Exp $
+# $NetBSD: md.i386,v 1.6 2014/07/02 05:23:20 htodd Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -17,3 +17,5 @@
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/net/bpfjit/t_bpfjit.debug
