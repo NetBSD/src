@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.3 2014/05/05 15:59:11 skrll Exp $	*/
+/*	$NetBSD: completion.h,v 1.4 2014/07/03 20:48:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -27,6 +27,20 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Notes on porting:
+ *
+ * - Linux does not have destroy_completion.  You must add it yourself
+ *   in the appropriate place.
+ *
+ * - Some Linux code does `completion->done++' or similar.  Convert
+ *   that to complete(completion) and suggest the same change upstream,
+ *   unless it turns out there actually is a good reason to do that, in
+ *   which case the Linux completion API should be extended with a
+ *   sensible name for this that doesn't expose the guts of `struct
+ *   completion'.
  */
 
 #ifndef _LINUX_COMPLETION_H_
