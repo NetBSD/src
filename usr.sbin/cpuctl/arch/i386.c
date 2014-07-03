@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.55 2014/05/27 04:18:00 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.56 2014/07/03 04:11:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.55 2014/05/27 04:18:00 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.56 2014/07/03 04:11:37 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -997,7 +997,7 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 				    desc);
 				if (cai != NULL)
 					ci->ci_cinfo[cai->cai_index] = *cai;
-				else if (verbose)
+				else if ((verbose != 0) && (desc != 0xff))
 					printf("Unknown cacheinfo desc %02x\n",
 					    desc);
 			}
