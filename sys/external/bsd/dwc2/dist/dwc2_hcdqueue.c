@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.9 2014/04/03 06:34:58 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.10 2014/07/03 07:18:42 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.9 2014/04/03 06:34:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.10 2014/07/03 07:18:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -844,7 +844,7 @@ void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
 				  struct dwc2_qh *qh)
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
-	
+
 	list_del_init(&qtd->qtd_list_entry);
  	pool_cache_put(sc->sc_qtdpool, qtd);
 }
