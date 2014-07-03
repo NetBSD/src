@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1188 2014/07/02 21:22:05 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1189 2014/07/03 19:09:16 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1195 2014/07/02 21:21:38 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1196 2014/07/03 19:08:31 msaitoh Exp
  */
 
 /*
@@ -3368,7 +3368,10 @@
 #define	PCI_PRODUCT_INTEL_82Q33_IGD_1	0x29d3		/* 82Q35 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82Q33_KT	0x29d7		/* 82Q33 KT */
 #define	PCI_PRODUCT_INTEL_82X38_HB	0x29e0		/* 82X38 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82X38_PCIE_1	0x29e1		/* 82X38 Host-Primary PCIe Bridge */
+#define	PCI_PRODUCT_INTEL_82X38_HECI	0x29e4		/* 82X38 HECI */
 #define	PCI_PRODUCT_INTEL_82X38_KT	0x29e7		/* 82X38 KT */
+#define	PCI_PRODUCT_INTEL_82X38_PCIE_2	0x29e9		/* 82X38 Host-Secondary PCIe Bridge */
 #define	PCI_PRODUCT_INTEL_3200_HB	0x29f0		/* 3200/3210 Host */
 #define	PCI_PRODUCT_INTEL_3200_PCIE	0x29f1		/* 3200/3210 PCIE */
 #define	PCI_PRODUCT_INTEL_3200_KT	0x29f7		/* 3200 KT */
