@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.58 2014/07/02 15:00:28 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.59 2014/07/03 08:43:49 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.58 2014/07/02 15:00:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.59 2014/07/03 08:43:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -482,16 +482,16 @@ kmem_roundup_size(size_t size)
 #else /* defined(_LP64) */
 #define PRIME 0x9e3779b1
 #endif /* defined(_LP64) */
-#endif /* defined(KMEM_POISON) || defined(KMEM_REDZONE) */
 
-#if defined(KMEM_POISON)
 static inline uint8_t
-kmem_poison_pattern(const void *p)
+kmem_pattern_generate(const void *p)
 {
 	return (uint8_t)(((uintptr_t)p) * PRIME
 	   >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
 }
+#endif /* defined(KMEM_POISON) || defined(KMEM_REDZONE) */
 
+#if defined(KMEM_POISON)
 static int
 kmem_poison_ctor(void *arg, void *obj, int flag)
 {
@@ -511,7 +511,7 @@ kmem_poison_fill(void *p, size_t sz)
 	cp = p;
 	ep = cp + sz;
 	while (cp < ep) {
-		*cp = kmem_poison_pattern(cp);
+		*cp = kmem_pattern_generate(cp);
 		cp++;
 	}
 }
@@ -525,7 +525,7 @@ kmem_poison_check(void *p, size_t sz)
 	cp = p;
 	ep = cp + sz;
 	while (cp < ep) {
-		const uint8_t expected = kmem_poison_pattern(cp);
+		const uint8_t expected = kmem_pattern_generate(cp);
 
 		if (*cp != expected) {
 			panic("%s: %p: 0x%02x != 0x%02x\n",
@@ -562,23 +562,27 @@ kmem_size_check(void *p, size_t sz)
 #endif /* defined(KMEM_SIZE) */
 
 #if defined(KMEM_REDZONE)
-static inline uint8_t
-kmem_redzone_pattern(const void *p)
-{
-	return (uint8_t)(((uintptr_t)p) * PRIME
-	   >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
-}
-
+#define STATIC_BYTE	0xFE
+CTASSERT(REDZONE_SIZE > 1);
 static void
 kmem_redzone_fill(void *p, size_t sz)
 {
-	uint8_t *cp;
+	uint8_t *cp, pat;
 	const uint8_t *ep;
 
 	cp = (uint8_t *)p + sz;
 	ep = cp + REDZONE_SIZE;
+
+	/*
+	 * We really don't want the first byte of the red zone to be '\0';
+	 * an off-by-one in a string may not be properly detected.
+	 */
+	pat = kmem_pattern_generate(cp);
+	*cp = (pat == '\0') ? STATIC_BYTE: pat;
+	cp++;
+
 	while (cp < ep) {
-		*cp = kmem_redzone_pattern(cp);
+		*cp = kmem_pattern_generate(cp);
 		cp++;
 	}
 }
@@ -586,14 +590,22 @@ kmem_redzone_fill(void *p, size_t sz)
 static void
 kmem_redzone_check(void *p, size_t sz)
 {
-	uint8_t *cp;
+	uint8_t *cp, pat, expected;
 	const uint8_t *ep;
 
 	cp = (uint8_t *)p + sz;
 	ep = cp + REDZONE_SIZE;
-	while (cp < ep) {
-		const uint8_t expected = kmem_redzone_pattern(cp);
 
+	pat = kmem_pattern_generate(cp);
+	expected = (pat == '\0') ? STATIC_BYTE: pat;
+	if (expected != *cp) {
+		panic("%s: %p: 0x%02x != 0x%02x\n",
+		   __func__, cp, *cp, expected);
+	}
+	cp++;
+
+	while (cp < ep) {
+		expected = kmem_pattern_generate(cp);
 		if (*cp != expected) {
 			panic("%s: %p: 0x%02x != 0x%02x\n",
 			   __func__, cp, *cp, expected);
