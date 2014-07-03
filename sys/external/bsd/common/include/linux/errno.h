@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.1 2014/04/07 11:55:29 riastradh Exp $	*/
+/*	$NetBSD: errno.h,v 1.2 2014/07/03 20:48:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -27,6 +27,15 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Notes on porting:
+ *
+ * - Linux consistently passes around negative errno values.  NetBSD
+ *   consistently passes around positive ones, except the special magic
+ *   in-kernel ones (EJUSTRETURN, ERESTART, &c.) which should not be
+ *   exposed to userland.  Be careful!
  */
 
 #ifndef _LINUX_ERRNO_H_

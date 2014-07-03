@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1 2013/09/05 15:28:07 skrll Exp $	*/
+/*	$NetBSD: list.h,v 1.2 2014/07/03 20:48:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -27,6 +27,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Notes on porting:
+ *
+ * - LIST_HEAD(x) means a declaration `struct list_head x =
+ *   LIST_HEAD_INIT(x)' in Linux, but something else in NetBSD.
+ *   Replace by the expansion.
+ *
+ * - The `_rcu' routines here are not actually pserialize(9)-safe.
+ *   They need dependent read memory barriers added.  Please fix this
+ *   if you need to use them with pserialize(9).
  */
 
 #ifndef _LINUX_LIST_H_
