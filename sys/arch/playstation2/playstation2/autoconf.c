@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2014/07/04 07:27:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2014/07/04 07:27:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/conf.h>
 
 #include <playstation2/ee/sifvar.h>			/* sif_init */
