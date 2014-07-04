@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.19 2014/07/01 16:18:55 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.20 2014/07/04 21:32:08 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.19 2014/07/01 16:18:55 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.20 2014/07/04 21:32:08 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.19 2014/07/01 16:18:55 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.20 2014/07/04 21:32:08 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -118,6 +118,16 @@ __RCSID("$NetBSD: bpfjit.c,v 1.19 2014/07/01 16:18:55 alnsn Exp $");
  */
 #define GET_EXTWORDS(bc) ((bc) ? (bc)->extwords : 0)
 #define GET_MEMWORDS(bc) (GET_EXTWORDS(bc) ? GET_EXTWORDS(bc) : BPF_MEMWORDS)
+
+/*
+ * Optimization hints.
+ */
+typedef unsigned int bpfjit_hint_t;
+#define BJ_HINT_LDW  0x01 /* 32-bit packet read  */
+#define BJ_HINT_IND  0x02 /* packet read at a variable offset */
+#define BJ_HINT_COP  0x04 /* BPF_COP or BPF_COPX instruction  */
+#define BJ_HINT_XREG 0x08 /* BJ_XREG is needed   */
+#define BJ_HINT_LDX  0x10 /* BPF_LDX instruction */
 
 /*
  * Datatype for Array Bounds Check Elimination (ABC) pass.
@@ -231,6 +241,32 @@ bpfjit_modcmd(modcmd_t cmd, void *arg)
 	}
 }
 #endif
+
+/*
+ * Return a number of scratch regiters to pass
+ * to sljit_emit_enter() function.
+ */
+static sljit_si
+nscratches(bpfjit_hint_t hints)
+{
+	sljit_si rv = 2;
+
+	if (hints & BJ_HINT_LDW)
+		rv = 3; /* uses BJ_TMP2REG */
+
+	if (hints & BJ_HINT_COP)
+		rv = 3; /* calls copfunc with three arguments */
+
+	if (hints & BJ_HINT_XREG)
+		rv = 4; /* uses BJ_XREG */
+
+#ifdef _KERNEL
+	if (hints & BJ_HINT_LDX)
+		rv = 5; /* uses BJ_TMP3REG */
+#endif
+
+	return rv;
+}
 
 static uint32_t
 read_width(const struct bpf_insn *pc)
@@ -1163,7 +1199,7 @@ optimize_init(struct bpfjit_insn_data *insn_dat, size_t insn_count)
 static bool
 optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
     struct bpfjit_insn_data *insn_dat, size_t insn_count,
-    bpf_memword_init_t *initmask, int *nscratches, int *ncopfuncs)
+    bpf_memword_init_t *initmask, bpfjit_hint_t *hints)
 {
 	struct bpfjit_jump *jtf;
 	size_t i;
@@ -1174,8 +1210,7 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 
 	const size_t memwords = GET_MEMWORDS(bc);
 
-	*ncopfuncs = 0;
-	*nscratches = 2;
+	*hints = 0;
 	*initmask = BJ_INIT_NOBITS;
 
 	unreachable = false;
@@ -1203,22 +1238,16 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 			continue;
 
 		case BPF_LD:
-			if (BPF_MODE(insns[i].code) == BPF_IND ||
-			    BPF_MODE(insns[i].code) == BPF_ABS) {
-				if (BPF_MODE(insns[i].code) == BPF_IND &&
-				    *nscratches < 4) {
-					/* uses BJ_XREG */
-					*nscratches = 4;
-				}
-				if (*nscratches < 3 &&
-				    read_width(&insns[i]) == 4) {
-					/* uses BJ_TMP2REG */
-					*nscratches = 3;
-				}
+			if ((BPF_MODE(insns[i].code) == BPF_IND ||
+			    BPF_MODE(insns[i].code) == BPF_ABS) &&
+			    read_width(&insns[i]) == 4) {
+				*hints |= BJ_HINT_LDW;
 			}
 
-			if (BPF_MODE(insns[i].code) == BPF_IND)
+			if (BPF_MODE(insns[i].code) == BPF_IND) {
+				*hints |= BJ_HINT_XREG | BJ_HINT_IND;
 				*initmask |= invalid & BJ_INIT_XBIT;
+			}
 
 			if (BPF_MODE(insns[i].code) == BPF_MEM &&
 			    (uint32_t)insns[i].k < memwords) {
@@ -1229,13 +1258,7 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 			continue;
 
 		case BPF_LDX:
-#if defined(_KERNEL)
-			/* uses BJ_TMP3REG */
-			*nscratches = 5;
-#endif
-			/* uses BJ_XREG */
-			if (*nscratches < 4)
-				*nscratches = 4;
+			*hints |= BJ_HINT_XREG | BJ_HINT_LDX;
 
 			if (BPF_MODE(insns[i].code) == BPF_MEM &&
 			    (uint32_t)insns[i].k < memwords) {
@@ -1254,10 +1277,7 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 			continue;
 
 		case BPF_STX:
-			/* uses BJ_XREG */
-			if (*nscratches < 4)
-				*nscratches = 4;
-
+			*hints |= BJ_HINT_XREG;
 			*initmask |= invalid & BJ_INIT_XBIT;
 
 			if ((uint32_t)insns[i].k < memwords)
@@ -1270,11 +1290,8 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 
 			if (insns[i].code != (BPF_ALU|BPF_NEG) &&
 			    BPF_SRC(insns[i].code) == BPF_X) {
+				*hints |= BJ_HINT_XREG;
 				*initmask |= invalid & BJ_INIT_XBIT;
-				/* uses BJ_XREG */
-				if (*nscratches < 4)
-					*nscratches = 4;
-
 			}
 
 			invalid &= ~BJ_INIT_ABIT;
@@ -1283,35 +1300,23 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 		case BPF_MISC:
 			switch (BPF_MISCOP(insns[i].code)) {
 			case BPF_TAX: // X <- A
-				/* uses BJ_XREG */
-				if (*nscratches < 4)
-					*nscratches = 4;
-
+				*hints |= BJ_HINT_XREG;
 				*initmask |= invalid & BJ_INIT_ABIT;
 				invalid &= ~BJ_INIT_XBIT;
 				continue;
 
 			case BPF_TXA: // A <- X
-				/* uses BJ_XREG */
-				if (*nscratches < 4)
-					*nscratches = 4;
-
+				*hints |= BJ_HINT_XREG;
 				*initmask |= invalid & BJ_INIT_XBIT;
 				invalid &= ~BJ_INIT_ABIT;
 				continue;
 
 			case BPF_COPX:
-				/* uses BJ_XREG */
-				if (*nscratches < 4)
-					*nscratches = 4;
+				*hints |= BJ_HINT_XREG;
 				/* FALLTHROUGH */
 
 			case BPF_COP:
-				/* calls copfunc with three arguments */
-				if (*nscratches < 3)
-					*nscratches = 3;
-
-				(*ncopfuncs)++;
+				*hints |= BJ_HINT_COP;
 				*initmask |= invalid & BJ_INIT_ABIT;
 				invalid &= ~BJ_INIT_ABIT;
 				continue;
@@ -1483,15 +1488,13 @@ optimize_pass3(const struct bpf_insn *insns,
 static bool
 optimize(const bpf_ctx_t *bc, const struct bpf_insn *insns,
     struct bpfjit_insn_data *insn_dat, size_t insn_count,
-    bpf_memword_init_t *initmask, int *nscratches, int *ncopfuncs)
+    bpf_memword_init_t *initmask, bpfjit_hint_t *hints)
 {
 
 	optimize_init(insn_dat, insn_count);
 
-	if (!optimize_pass1(bc, insns, insn_dat, insn_count,
-	    initmask, nscratches, ncopfuncs)) {
+	if (!optimize_pass1(bc, insns, insn_dat, insn_count, initmask, hints))
 		return false;
-	}
 
 	optimize_pass2(bc, insns, insn_dat, insn_count);
 	optimize_pass3(insns, insn_dat, insn_count);
@@ -2037,7 +2040,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 
 	/* optimization related */
 	bpf_memword_init_t initmask;
-	int nscratches, ncopfuncs;
+	bpfjit_hint_t hints;
 
 	/* memory store location for initial zero initialization */
 	sljit_si mem_reg;
@@ -2063,10 +2066,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	if (insn_dat == NULL)
 		goto fail;
 
-	if (!optimize(bc, insns, insn_dat, insn_count,
-	    &initmask, &nscratches, &ncopfuncs)) {
+	if (!optimize(bc, insns, insn_dat, insn_count, &initmask, &hints))
 		goto fail;
-	}
 
 	compiler = sljit_create_compiler();
 	if (compiler == NULL)
@@ -2077,11 +2078,11 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 #endif
 
 	status = sljit_emit_enter(compiler,
-	    2, nscratches, 3, sizeof(struct bpfjit_stack));
+	    2, nscratches(hints), 3, sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
-	if (ncopfuncs > 0) {
+	if (hints & BJ_HINT_COP) {
 		/* save ctx argument */
 		status = sljit_emit_op1(compiler,
 		    SLJIT_MOV_P,
