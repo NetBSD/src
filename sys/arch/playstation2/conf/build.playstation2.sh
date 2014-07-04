@@ -16,6 +16,7 @@ AR=${root}/bin/${target}-ar;		export AR
 NM=${root}/bin/${target}-nm;		export NM
 SIZE=${root}/bin/${target}-size;	export SIZE
 STRIP=${root}/bin/${target}-strip;	export STRIP
+OBJCOPY=${root}/bin/${target}-objcopy;	export OBJCOPY
 
 MAKE="make";				 export MAKE
 
