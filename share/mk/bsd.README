@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.332 2014/05/08 13:58:34 phx Exp $
+#	$NetBSD: bsd.README,v 1.333 2014/07/05 19:23:38 dholland Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -608,9 +608,6 @@ LIBMODE		Library mode.  [${NONBINMODE}]
 
 DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
 	        installation.  [/usr/share/doc]
-
-HTMLDOCDIR	Base path for html system documentation installation.
-		[/usr/share/doc/html]
 
 DOCGRP		Documentation group.  [wheel]
 
