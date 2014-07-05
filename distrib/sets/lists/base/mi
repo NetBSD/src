@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1067 2014/05/15 16:06:38 apb Exp $
+# $NetBSD: mi,v 1.1068 2014/07/05 19:25:58 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1663,92 +1663,138 @@
 ./usr/share/dict/papers				base-reference-share
 ./usr/share/dict/special			base-reference-share
 ./usr/share/doc					base-sys-share
-./usr/share/doc/html				base-htmldoc-share
-./usr/share/doc/html/bind9			base-htmldoc-share
-./usr/share/doc/html/bind9/arm			base-htmldoc-share
-./usr/share/doc/html/bzip2			base-htmldoc-share
+./usr/share/doc/html				base-obsolete		obsolete
+./usr/share/doc/html/bind9			base-obsolete		obsolete
+./usr/share/doc/html/bind9/arm			base-obsolete		obsolete
+./usr/share/doc/html/bzip2			base-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints			base-obsolete		obsolete
-./usr/share/doc/html/postfix			base-htmldoc-share
+./usr/share/doc/html/postfix			base-obsolete		obsolete
+./usr/share/doc/papers				base-smm-share
+./usr/share/doc/papers/mckusick84-ffs		base-smm-share
+./usr/share/doc/papers/mckusick85-fsck		base-smm-share
+./usr/share/doc/papers/morris78-password	base-smm-share
 ./usr/share/doc/psd				base-psd-share
-./usr/share/doc/psd/01.cacm			base-psd-share
-./usr/share/doc/psd/02.implement		base-psd-share
-./usr/share/doc/psd/03.iosys			base-psd-share
-./usr/share/doc/psd/04.uprog			base-psd-share
-./usr/share/doc/psd/05.sysman			base-psd-share
-./usr/share/doc/psd/06.Clang			base-psd-share
-./usr/share/doc/psd/07.pascal			base-psd-share
-./usr/share/doc/psd/08.f77			base-psd-share
-./usr/share/doc/psd/09.f77io			base-psd-share
-./usr/share/doc/psd/10.gdb			base-psd-share
-./usr/share/doc/psd/11.adb			base-psd-share
-./usr/share/doc/psd/12.make			base-psd-share
-./usr/share/doc/psd/13.rcs			base-psd-share
-./usr/share/doc/psd/14.sccs			base-psd-share
-./usr/share/doc/psd/15.yacc			base-psd-share
-./usr/share/doc/psd/16.lex			base-psd-share
-./usr/share/doc/psd/17.m4			base-psd-share
-./usr/share/doc/psd/18.gprof			base-psd-share
-./usr/share/doc/psd/19.curses			base-psd-share
-./usr/share/doc/psd/20.ipctut			base-psd-share
-./usr/share/doc/psd/21.ipc			base-psd-share
+./usr/share/doc/psd/01.cacm			base-obsolete		obsolete
+./usr/share/doc/psd/02.implement		base-obsolete		obsolete
+./usr/share/doc/psd/03.iosys			base-obsolete		obsolete
+./usr/share/doc/psd/04.uprog			base-obsolete		obsolete
+./usr/share/doc/psd/05.sysman			base-obsolete		obsolete
+./usr/share/doc/psd/06.Clang			base-obsolete		obsolete
+./usr/share/doc/psd/07.pascal			base-obsolete		obsolete
+./usr/share/doc/psd/08.f77			base-obsolete		obsolete
+./usr/share/doc/psd/09.f77io			base-obsolete		obsolete
+./usr/share/doc/psd/10.gdb			base-obsolete		obsolete
+./usr/share/doc/psd/11.adb			base-obsolete		obsolete
+./usr/share/doc/psd/12.make			base-obsolete		obsolete
+./usr/share/doc/psd/13.rcs			base-obsolete		obsolete
+./usr/share/doc/psd/14.sccs			base-obsolete		obsolete
+./usr/share/doc/psd/15.yacc			base-obsolete		obsolete
+./usr/share/doc/psd/16.lex			base-obsolete		obsolete
+./usr/share/doc/psd/17.m4			base-obsolete		obsolete
+./usr/share/doc/psd/18.gprof			base-obsolete		obsolete
+./usr/share/doc/psd/19.curses			base-obsolete		obsolete
+./usr/share/doc/psd/20.ipctut			base-obsolete		obsolete
+./usr/share/doc/psd/21.ipc			base-obsolete		obsolete
+./usr/share/doc/reference			base-sys-share
+./usr/share/doc/reference/ref1			base-sys-share
+./usr/share/doc/reference/ref1/bzip2		base-htmldoc-share
+./usr/share/doc/reference/ref1/config		base-smm-share
+./usr/share/doc/reference/ref1/csh		base-usd-share
+./usr/share/doc/reference/ref1/ex		base-usd-share
+./usr/share/doc/reference/ref1/gprof		base-usd-share
+./usr/share/doc/reference/ref1/mail		base-usd-share
+./usr/share/doc/reference/ref1/roff		base-usd-share
+./usr/share/doc/reference/ref1/roff/msmacros	base-usd-share
+./usr/share/doc/reference/ref1/roff/msdiffs	base-usd-share
+./usr/share/doc/reference/ref1/roff/memacros	base-usd-share
+./usr/share/doc/reference/ref1/roff/meref	base-usd-share
+./usr/share/doc/reference/ref1/sh		base-usd-share
+./usr/share/doc/reference/ref1/vi		base-usd-share
+./usr/share/doc/reference/ref2			base-sys-share
+./usr/share/doc/reference/ref3			base-sys-share
+./usr/share/doc/reference/ref3/curses		base-psd-share
+./usr/share/doc/reference/ref3/sockets		base-psd-share
+./usr/share/doc/reference/ref3/sockets-advanced	base-psd-share
+./usr/share/doc/reference/ref3/sysman		base-psd-share
+./usr/share/doc/reference/ref4			base-sys-share
+./usr/share/doc/reference/ref5			base-sys-share
+./usr/share/doc/reference/ref5/timed		base-smm-share
+./usr/share/doc/reference/ref6			base-sys-share
+./usr/share/doc/reference/ref6/rogue		base-usd-share
+./usr/share/doc/reference/ref6/trek		base-usd-share
+./usr/share/doc/reference/ref7			base-sys-share
+./usr/share/doc/reference/ref7/quotas		base-smm-share
+./usr/share/doc/reference/ref8			base-sys-share
+./usr/share/doc/reference/ref8/bind9		base-htmldoc-share
+./usr/share/doc/reference/ref8/bind9/arm	base-htmldoc-share
+./usr/share/doc/reference/ref8/lpd		base-smm-share
+./usr/share/doc/reference/ref8/postfix		base-htmldoc-share
+./usr/share/doc/reference/ref8/timed		base-smm-share
+./usr/share/doc/reference/ref9			base-sys-share
+./usr/share/doc/reference/ref9/net		base-smm-share
+./usr/share/doc/reference/ref9/nfs		base-smm-share
 ./usr/share/doc/smm				base-smm-share
-./usr/share/doc/smm/01.setup			base-smm-share
+./usr/share/doc/smm/01.setup			base-obsolete		obsolete
 ./usr/share/doc/smm/01.setup/tahoe		base-obsolete		obsolete
 ./usr/share/doc/smm/01.setup/vax		base-obsolete		obsolete
-./usr/share/doc/smm/02.config			base-smm-share
-./usr/share/doc/smm/03.fsck_ffs			base-smm-share
-./usr/share/doc/smm/04.quotas			base-smm-share
-./usr/share/doc/smm/05.fastfs			base-smm-share
-./usr/share/doc/smm/06.nfs			base-smm-share
-./usr/share/doc/smm/07.lpd			base-smm-share
+./usr/share/doc/smm/02.config			base-obsolete		obsolete
+./usr/share/doc/smm/03.fsck_ffs			base-obsolete		obsolete
+./usr/share/doc/smm/04.quotas			base-obsolete		obsolete
+./usr/share/doc/smm/05.fastfs			base-obsolete		obsolete
+./usr/share/doc/smm/06.nfs			base-obsolete		obsolete
+./usr/share/doc/smm/07.lpd			base-obsolete		obsolete
 ./usr/share/doc/smm/08.sendmailop		base-obsolete		obsolete
 ./usr/share/doc/smm/09.sendmail			base-obsolete		obsolete
 ./usr/share/doc/smm/10.named			base-obsolete		obsolete
-./usr/share/doc/smm/11.timedop			base-smm-share
-./usr/share/doc/smm/12.timed			base-smm-share
-./usr/share/doc/smm/13.amd			base-smm-share
+./usr/share/doc/smm/11.timedop			base-obsolete		obsolete
+./usr/share/doc/smm/12.timed			base-obsolete		obsolete
+./usr/share/doc/smm/13.amd			base-obsolete		obsolete
 ./usr/share/doc/smm/14.uucpimpl			base-obsolete		obsolete
 ./usr/share/doc/smm/15.uucpnet			base-obsolete		obsolete
-./usr/share/doc/smm/16.security			base-smm-share
-./usr/share/doc/smm/17.password			base-smm-share
-./usr/share/doc/smm/18.net			base-smm-share
+./usr/share/doc/smm/16.security			base-obsolete		obsolete
+./usr/share/doc/smm/17.password			base-obsolete		obsolete
+./usr/share/doc/smm/18.net			base-obsolete		obsolete
+./usr/share/doc/smm/setup			base-smm-share
 ./usr/share/doc/usd				base-usd-share
-./usr/share/doc/usd/01.begin			base-usd-share
-./usr/share/doc/usd/02.learn			base-usd-share
-./usr/share/doc/usd/03.shell			base-usd-share
-./usr/share/doc/usd/04.csh			base-usd-share
-./usr/share/doc/usd/05.dc			base-usd-share
-./usr/share/doc/usd/06.bc			base-usd-share
-./usr/share/doc/usd/07.mail			base-usd-share
-./usr/share/doc/usd/08.mh			base-usd-share
-./usr/share/doc/usd/09.edtut			base-usd-share
-./usr/share/doc/usd/10.edadv			base-usd-share
-./usr/share/doc/usd/11.edit			base-usd-share
-./usr/share/doc/usd/12.ex			base-usd-share
-./usr/share/doc/usd/12.vi			base-usd-share
+./usr/share/doc/usd/01.begin			base-obsolete		obsolete
+./usr/share/doc/usd/02.learn			base-obsolete		obsolete
+./usr/share/doc/usd/03.shell			base-obsolete		obsolete
+./usr/share/doc/usd/04.csh			base-obsolete		obsolete
+./usr/share/doc/usd/05.dc			base-obsolete		obsolete
+./usr/share/doc/usd/06.bc			base-obsolete		obsolete
+./usr/share/doc/usd/07.mail			base-obsolete		obsolete
+./usr/share/doc/usd/08.mh			base-obsolete		obsolete
+./usr/share/doc/usd/09.edtut			base-obsolete		obsolete
+./usr/share/doc/usd/10.edadv			base-obsolete		obsolete
+./usr/share/doc/usd/11.edit			base-obsolete		obsolete
+./usr/share/doc/usd/12.ex			base-obsolete		obsolete
+./usr/share/doc/usd/12.vi			base-obsolete		obsolete
 ./usr/share/doc/usd/13.ex			base-obsolete		obsolete
 ./usr/share/doc/usd/13.ex/Makefile		base-obsolete		obsolete
 ./usr/share/doc/usd/13.ex/ex.rm			base-obsolete		obsolete
 ./usr/share/doc/usd/13.ex/ex.summary		base-obsolete		obsolete
-./usr/share/doc/usd/13.viref			base-usd-share
-./usr/share/doc/usd/14.jove			base-usd-share
-./usr/share/doc/usd/15.sed			base-usd-share
-./usr/share/doc/usd/16.awk			base-usd-share
-./usr/share/doc/usd/17.msmacros			base-usd-share
-./usr/share/doc/usd/18.msdiffs			base-usd-share
-./usr/share/doc/usd/19.memacros			base-usd-share
-./usr/share/doc/usd/20.meref			base-usd-share
-./usr/share/doc/usd/21.troff			base-usd-share
-./usr/share/doc/usd/22.trofftut			base-usd-share
-./usr/share/doc/usd/23.eqn			base-usd-share
-./usr/share/doc/usd/24.eqnguide			base-usd-share
-./usr/share/doc/usd/25.tbl			base-usd-share
-./usr/share/doc/usd/26.refer			base-usd-share
-./usr/share/doc/usd/27.invert			base-usd-share
-./usr/share/doc/usd/28.bib			base-usd-share
-./usr/share/doc/usd/29.diction			base-usd-share
-./usr/share/doc/usd/30.rogue			base-usd-share
-./usr/share/doc/usd/31.trek			base-usd-share
+./usr/share/doc/usd/13.viref			base-obsolete		obsolete
+./usr/share/doc/usd/14.jove			base-obsolete		obsolete
+./usr/share/doc/usd/15.sed			base-obsolete		obsolete
+./usr/share/doc/usd/16.awk			base-obsolete		obsolete
+./usr/share/doc/usd/17.msmacros			base-obsolete		obsolete
+./usr/share/doc/usd/18.msdiffs			base-obsolete		obsolete
+./usr/share/doc/usd/19.memacros			base-obsolete		obsolete
+./usr/share/doc/usd/20.meref			base-obsolete		obsolete
+./usr/share/doc/usd/21.troff			base-obsolete		obsolete
+./usr/share/doc/usd/22.trofftut			base-obsolete		obsolete
+./usr/share/doc/usd/23.eqn			base-obsolete		obsolete
+./usr/share/doc/usd/24.eqnguide			base-obsolete		obsolete
+./usr/share/doc/usd/25.tbl			base-obsolete		obsolete
+./usr/share/doc/usd/26.refer			base-obsolete		obsolete
+./usr/share/doc/usd/27.invert			base-obsolete		obsolete
+./usr/share/doc/usd/28.bib			base-obsolete		obsolete
+./usr/share/doc/usd/29.diction			base-obsolete		obsolete
+./usr/share/doc/usd/30.rogue			base-obsolete		obsolete
+./usr/share/doc/usd/31.trek			base-obsolete		obsolete
+./usr/share/doc/usd/begin			base-usd-share
+./usr/share/doc/usd/edit			base-usd-share
+./usr/share/doc/usd/vi				base-usd-share
 ./usr/share/examples				base-sys-share
 ./usr/share/examples/amd			base-amd-examples
 ./usr/share/examples/apm			base-sys-examples
