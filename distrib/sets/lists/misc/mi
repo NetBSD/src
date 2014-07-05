@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.189 2014/07/05 19:25:58 dholland Exp $
+# $NetBSD: mi,v 1.190 2014/07/05 22:08:14 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -661,7 +661,6 @@
 ./usr/share/doc/reference/ref1/mail/mail.html			misc-usd-doc		doc
 ./usr/share/doc/reference/ref1/mail/mail.ps.gz			misc-usd-doc		doc
 ./usr/share/doc/reference/ref1/mail/mail.txt			misc-usd-doc		doc
-./usr/share/doc/reference/ref1/make				misc-psd-doc		doc
 ./usr/share/doc/reference/ref1/make/make.html			misc-psd-doc		doc
 ./usr/share/doc/reference/ref1/make/make.ps.gz			misc-psd-doc		doc
 ./usr/share/doc/reference/ref1/make/make.txt			misc-psd-doc		doc
