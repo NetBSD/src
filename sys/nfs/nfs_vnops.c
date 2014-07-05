@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.304 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.305 2014/07/05 09:33:41 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.304 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.305 2014/07/05 09:33:41 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2943,12 +2943,12 @@ nfs_lookitup(struct vnode *dvp, const char *name, int len, kauth_cred_t cred, st
 	struct vnode *newvp = (struct vnode *)0;
 	struct nfsnode *np, *dnp = VTONFS(dvp);
 	char *bpos, *dpos, *cp2;
-	int error = 0, fhlen;
+	int error = 0, ofhlen, fhlen;
 #ifndef NFS_V2_ONLY
 	int attrflag;
 #endif
 	struct mbuf *mreq, *mrep, *md, *mb;
-	nfsfh_t *nfhp;
+	nfsfh_t *ofhp, *nfhp;
 	const int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_LOOKUP]++;
@@ -2961,6 +2961,17 @@ nfs_lookitup(struct vnode *dvp, const char *name, int len, kauth_cred_t cred, st
 		nfsm_getfh(nfhp, fhlen, v3);
 		if (*npp) {
 		    np = *npp;
+		    newvp = NFSTOV(np);
+		    ofhlen = np->n_fhsize;
+		    ofhp = kmem_alloc(ofhlen, KM_SLEEP);
+		    memcpy(ofhp, np->n_fhp, ofhlen);
+		    error = vcache_rekey_enter(newvp->v_mount, newvp,
+			ofhp, ofhlen, nfhp, fhlen);
+		    if (error) {
+			kmem_free(ofhp, ofhlen);
+			m_freem(mrep);
+			return error;
+		    }
 		    if (np->n_fhsize > NFS_SMALLFH && fhlen <= NFS_SMALLFH) {
 			kmem_free(np->n_fhp, np->n_fhsize);
 			np->n_fhp = &np->n_fh;
@@ -2971,7 +2982,9 @@ nfs_lookitup(struct vnode *dvp, const char *name, int len, kauth_cred_t cred, st
 #endif
 		    memcpy(np->n_fhp, nfhp, fhlen);
 		    np->n_fhsize = fhlen;
-		    newvp = NFSTOV(np);
+		    vcache_rekey_exit(newvp->v_mount, newvp,
+			ofhp, ofhlen, np->n_fhp, fhlen);
+		    kmem_free(ofhp, ofhlen);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
 		    vref(dvp);
 		    newvp = dvp;
