@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.6 2013/10/17 21:07:37 christos Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.7 2014/07/05 09:30:08 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.6 2013/10/17 21:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.7 2014/07/05 09:30:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,7 +513,7 @@ urndis_ctrl_query(struct urndis_softc *sc, uint32_t oid,
 	    le32toh(msg->rm_devicevchdl)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	kmem_free(msg, sizeof(*msg));
+	kmem_free(msg, sizeof(*msg) + qlen);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: query failed\n", DEVNAME(sc));
@@ -566,7 +566,7 @@ urndis_ctrl_set(struct urndis_softc *sc, uint32_t oid, void *buf, size_t len)
 	    le32toh(msg->rm_devicevchdl)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	kmem_free(msg, sizeof(*msg));
+	kmem_free(msg, sizeof(*msg) + len);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: set failed\n", DEVNAME(sc));
