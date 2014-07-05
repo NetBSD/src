@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 06:55:38 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2014/07/05 19:22:03 dholland Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
-DIR=	smm/06.nfs
+SECTION=smm
+ARTICLE=nfs
 SRCS=	0.t 1.t 2.t ref.t
 MACROS=	-me
 

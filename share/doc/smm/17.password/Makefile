@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2007/11/29 12:35:05 mjf Exp $
+#	$NetBSD: Makefile,v 1.2 2014/07/05 19:22:04 dholland Exp $
 
-DIR=	smm/17.password
+SECTION=smm
+ARTICLE=password
 SRCS=	password.ms
 MACROS=	-ms
+EXTRAHTMLFILES=password1.png
 
 .include <bsd.doc.mk>
