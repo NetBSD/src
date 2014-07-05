@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2014/07/05 19:22:03 dholland Exp $
+#	$NetBSD: Makefile,v 1.10 2014/07/05 19:22:42 dholland Exp $
 #
 #	@(#)Makefile	8.2 (Berkeley) 6/1/94
 
-SECTION=psd
+SECTION=reference/ref3
 ARTICLE=sysman
 SRCS=	0.t 1.0.t 1.1.t 1.2.t 1.3.t 1.4.t 1.5.t 1.6.t 1.7.t \
 	2.0.t 2.1.t 2.2.t 2.3.t 2.4.t 2.5.t a.t

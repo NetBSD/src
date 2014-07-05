@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2014/01/02 21:38:38 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2014/07/05 19:22:41 dholland Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -17,7 +17,7 @@ WARNS?=	4
 
 IDIST=		${NETBSDSRCDIR}/external/bsd/ntp/dist
 NTP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/ntp
-NTP_HTMLDIR=	/usr/share/doc/html/ntp
+NTP_HTMLDIR=	/usr/share/doc/reference/ref8
 
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
