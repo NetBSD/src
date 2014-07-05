@@ -1,17 +1,19 @@
-#	$NetBSD: Makefile,v 1.6 2014/07/05 19:22:03 dholland Exp $
+#	$NetBSD: Makefile,v 1.7 2014/07/05 19:23:15 dholland Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
-SECTION=smm
-ARTICLE=fastfs
+SECTION=papers
+ARTICLE=mckusick84-ffs
 SRCS=	0.t 1.t 2.t 3.t 4.t 5.t 6.t
 MACROS=	-ms
 ROFF_TBL=yes
 ROFF_EQN=yes
 EXTRAHTMLFILES=\
-	fastfs1.png fastfs2.png fastfs3.png fastfs4.png fastfs5.png \
-	fastfs6.png fastfs7.png fastfs8.png fastfs9.png fastfs10.png \
-	fastfs11.png fastfs12.png fastfs13.png fastfs14.png fastfs15.png \
-	fastfs16.png fastfs-9.png
+	mckusick84-ffs1.png  mckusick84-ffs2.png  mckusick84-ffs3.png  \
+	mckusick84-ffs4.png  mckusick84-ffs5.png  mckusick84-ffs6.png  \
+	mckusick84-ffs7.png  mckusick84-ffs8.png  mckusick84-ffs9.png  \
+	mckusick84-ffs10.png mckusick84-ffs11.png mckusick84-ffs12.png \
+	mckusick84-ffs13.png mckusick84-ffs14.png mckusick84-ffs15.png \
+	mckusick84-ffs16.png mckusick84-ffs-9.png
 
 .include <bsd.doc.mk>
