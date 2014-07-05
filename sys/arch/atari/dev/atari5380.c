@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.60 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.61 2014/07/05 09:36:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.60 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.61 2014/07/05 09:36:49 tsutsui Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -731,9 +731,8 @@ scsi_falcon_idisable(void)
 static inline void
 scsi_falcon_clr_ipend(void)
 {
-	int tmp;
 
-	tmp = get_falcon_5380_reg(NCR5380_IRCV);
+	(void)get_falcon_5380_reg(NCR5380_IRCV);
 	rem_sicallback((si_farg)ncr_ctrl_intr);
 }
 
