@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2014/01/01 08:41:52 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.111 2014/07/05 09:16:45 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	8
 
