@@ -1,17 +1,15 @@
-#	$NetBSD: Makefile,v 1.10 2003/07/10 10:34:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2014/07/05 19:22:03 dholland Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/23/94
 
-DIR=	psd/19.curses
+SECTION=psd
+ARTICLE=curses
 SRCS=	Master
-MACROS=	-me
-OTHER=	appen.A appen.B appen.C doc.I doc.II doc.III doc.IV fns.doc \
-	intro.0 intro.1 intro.3 intro.4 intro.5 intro.6 \
-	macros c_macros
 CEXAMPLES= ex1.gr ex2.gr life.gr twinkle1.gr twinkle2.gr win_st.gr
-TBLFILES=  intro.2.tbl
-EXTRA=	${OTHER} ${CEXAMPLES:R:S/$/.c/g} ${TBLFILES:R}
-
-CLEANFILES+= ${CEXAMPLES} ${TBLFILES}
+DEPSRCS=appen.A appen.B appen.C doc.I doc.II doc.III doc.IV fns.doc \
+	intro.0 intro.1 intro.2.tbl intro.3 intro.4 intro.5 intro.6 \
+	macros c_macros $(CEXAMPLES)
+MACROS=	-me
+CLEANFILES+= ${CEXAMPLES} intro.2.tbl
 
 .SUFFIXES:
 .SUFFIXES: .c .gr
@@ -28,10 +26,6 @@ CLEANFILES+= ${CEXAMPLES} ${TBLFILES}
 VFONT=	/usr/libexec/vfontedpr
 .c.gr:
 	${VFONT} ${.IMPSRC} | grep -v "^'wh" > ${.TARGET}
-
-paper.ps: ${SRCS} ${OTHER} ${CEXAMPLES} ${TBLFILES}
-	${TOOL_SOELIM} -I${.CURDIR} Master | \
-	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 # Unfortunately our make doesn't handle single-suffix rules.
 intro.2.tbl: intro.2

@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/12/21 16:14:41 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2014/07/05 19:22:05 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 SUBDIR=	timed timedc
-
-.if make(install)
 SUBDIR+= SMM.doc
-.endif
 
 .include <bsd.subdir.mk>
