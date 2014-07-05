@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2014/07/05 19:22:02 dholland Exp $
+#	$NetBSD: Makefile,v 1.9 2014/07/05 19:22:41 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 8/14/93
 
-SECTION=usd
+SECTION=reference/ref1
 ARTICLE=csh
 SRCS=	tabs csh.1 csh.2 csh.3 csh.4 csh.ap csh.g
 MACROS= -ms
