@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.305 2013/10/04 15:13:51 rkujawa Exp $
+# $NetBSD: GENERIC,v 1.306 2014/07/05 09:55:42 tsutsui Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.119 2013/08/11 16:15:52 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.124 2014/07/05 09:47:30 tsutsui Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.305 $"
+#ident 		"GENERIC-$Revision: 1.306 $"
 
 
 maxusers	8
@@ -382,6 +382,7 @@ xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
 wdc*		at xsurfbus?		# IDE on X-Surf
+
 clockport*	at gencp?
 
 # Arcnet
@@ -433,6 +434,10 @@ cbiiisc0 	at p5bus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
+
+acafh0		at mainbus0		# Individual Computers ACA500
+wdc*		at acafhbus?		# CF slots on ACA500
+gencp*		at acafhbus?		# clockport on ACA500
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
