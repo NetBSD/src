@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.20 2014/07/04 21:32:08 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.21 2014/07/05 11:13:13 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.20 2014/07/04 21:32:08 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.21 2014/07/05 11:13:13 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.20 2014/07/04 21:32:08 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.21 2014/07/05 11:13:13 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -140,7 +140,7 @@ struct bpfjit_stack
 	bpf_ctx_t *ctx;
 	uint32_t *extmem; /* pointer to external memory store */
 #ifdef _KERNEL
-	void *tmp;
+	int err; /* 3rd argument for m_xword/m_xhalf/m_xbyte function call */
 #endif
 	uint32_t mem[BPF_MEMWORDS]; /* internal memory store */
 };
@@ -243,7 +243,7 @@ bpfjit_modcmd(modcmd_t cmd, void *arg)
 #endif
 
 /*
- * Return a number of scratch regiters to pass
+ * Return a number of scratch registers to pass
  * to sljit_emit_enter() function.
  */
 static sljit_si
@@ -303,7 +303,7 @@ load_buf_buflen(struct sljit_compiler *compiler)
 		return status;
 
 	status = sljit_emit_op1(compiler,
-	    SLJIT_MOV,
+	    SLJIT_MOV, /* size_t source */
 	    BJ_BUFLEN, 0,
 	    SLJIT_MEM1(BJ_ARGS),
 	    offsetof(struct bpf_args, buflen));
@@ -525,11 +525,6 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 #endif
 	int status;
 
-	/*
-	 * The third argument of fn is an address on stack.
-	 */
-	const int arg3_offset = offsetof(struct bpfjit_stack, tmp);
-
 	if (BPF_CLASS(pc->code) == BPF_LDX) {
 		/* save A */
 		status = sljit_emit_op1(compiler,
@@ -566,8 +561,12 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 	if (status != SLJIT_SUCCESS)
 		return status;
 
+	/*
+	 * The third argument of fn is an address on stack.
+	 */
 	status = sljit_get_local_base(compiler,
-	    SLJIT_SCRATCH_REG3, 0, arg3_offset);
+	    SLJIT_SCRATCH_REG3, 0,
+	    offsetof(struct bpfjit_stack, err));
 	if (status != SLJIT_SUCCESS)
 		return status;
 
@@ -600,7 +599,8 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV_UI,
 	    SLJIT_SCRATCH_REG3, 0,
-	    SLJIT_MEM1(SLJIT_LOCALS_REG), arg3_offset);
+	    SLJIT_MEM1(SLJIT_LOCALS_REG),
+	    offsetof(struct bpfjit_stack, err));
 	if (status != SLJIT_SUCCESS)
 		return status;
 
@@ -700,7 +700,7 @@ emit_cop(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 		 * memory addressing.
 		 */
 		status = sljit_emit_op1(compiler,
-		    SLJIT_MOV_P,
+		    SLJIT_MOV,
 		    BJ_COPF_IDX, 0,
 		    BJ_XREG, 0);
 		if (status != SLJIT_SUCCESS)
@@ -1708,7 +1708,7 @@ generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 			/* BPF_LD+BPF_W+BPF_LEN    A <- len */
 			if (pc->code == (BPF_LD|BPF_W|BPF_LEN)) {
 				status = sljit_emit_op1(compiler,
-				    SLJIT_MOV,
+				    SLJIT_MOV, /* size_t source */
 				    BJ_AREG, 0,
 				    SLJIT_MEM1(BJ_ARGS),
 				    offsetof(struct bpf_args, wirelen));
@@ -1754,7 +1754,7 @@ generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 				if (BPF_SIZE(pc->code) != BPF_W)
 					goto fail;
 				status = sljit_emit_op1(compiler,
-				    SLJIT_MOV,
+				    SLJIT_MOV, /* size_t source */
 				    BJ_XREG, 0,
 				    SLJIT_MEM1(BJ_ARGS),
 				    offsetof(struct bpf_args, wirelen));
