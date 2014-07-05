@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.172 2014/03/24 14:15:38 szptvlfn Exp $
+# $NetBSD: GENERIC,v 1.173 2014/07/05 09:18:47 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172 $"
+#ident 		"GENERIC-$Revision: 1.173 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	8
 
