@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.124 2014/07/05 09:47:30 tsutsui Exp $
+# $NetBSD: GENERIC.in,v 1.125 2014/07/05 09:59:06 tsutsui Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,10 +52,12 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
+',`m4_dnl
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 ')m4_dnl
 
 maxusers	8
