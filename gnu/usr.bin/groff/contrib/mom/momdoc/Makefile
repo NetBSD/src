@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2010/01/26 15:11:56 wiz Exp $
+# $NetBSD: Makefile,v 1.4 2014/07/05 19:22:42 dholland Exp $
 
 DIST_SUBDIR=    contrib/mom/momdoc
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-FILESDIR=       ${HTMLDOCDIR}/groff/mom
+FILESDIR=       /usr/share/doc/reference/ref1/roff/mom
 FILES=          appendices.html \
   color.html \
   cover.html \
