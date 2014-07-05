@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/07/05 19:22:03 dholland Exp $
+#	$NetBSD: Makefile,v 1.3 2014/07/05 19:22:42 dholland Exp $
 #
 #	@(#)Makefile	8.7 (Berkeley) 8/18/96
 
@@ -14,12 +14,20 @@ SRCS.viapwh=	vi.apwh.ms
 MACROS=		-ms
 ROFF_TBL=	yes
 EXTRAHTMLFILES=	\
-	vi1.png  vi2.png  vi3.png  vi4.png  vi5.png  \
-	vi6.png  vi7.png  vi8.png  vi9.png  vi10.png \
-	vi11.png vi12.png vi13.png vi14.png vi15.png \
-	vi16.png vi17.png vi18.png vi19.png vi20.png \
-	vi21.png vi22.png vi23.png vi24.png vi25.png \
-	vi26.png vi27.png vi28.png vi29.png vi30.png \
-	vi31.png vi32.png vi33.png
+	vitut1.png  vitut2.png  vitut3.png  vitut4.png  vitut5.png  \
+	vitut6.png  vitut7.png  vitut8.png  vitut9.png  vitut10.png \
+	vitut11.png vitut12.png vitut13.png vitut14.png vitut15.png \
+	vitut16.png vitut17.png vitut18.png vitut19.png vitut20.png \
+	vitut21.png vitut22.png vitut23.png vitut24.png vitut25.png \
+	vitut26.png vitut27.png vitut28.png vitut29.png vitut30.png \
+	vitut31.png vitut32.png vitut33.png \
+	summary1.png  summary2.png  summary3.png  summary4.png  \
+	summary5.png  summary6.png  summary7.png  summary8.png  \
+	summary9.png  summary10.png summary11.png summary12.png \
+	summary13.png summary14.png summary15.png summary16.png \
+	summary17.png summary18.png summary19.png summary20.png \
+	summary21.png summary22.png summary23.png summary24.png \
+	summary25.png summary26.png summary27.png summary28.png \
+	summary29.png
 
 .include <bsd.doc.mk>
