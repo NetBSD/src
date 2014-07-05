@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2014/07/05 19:22:02 dholland Exp $
+#	$NetBSD: Makefile,v 1.3 2014/07/05 19:22:42 dholland Exp $
 #
 #	@(#)Makefile	8.20 (Berkeley) 8/18/96
 
-SECTION=	usd
+SECTION=	reference/ref1
 ARTICLE=	viref
 SRCS=		vi.ref
 DEPSRCS=	ex.cmd.roff set.opt.roff vi.cmd.roff ref.so index.so

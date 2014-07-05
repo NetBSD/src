@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2014/07/05 19:22:04 dholland Exp $
+#	$NetBSD: Makefile,v 1.8 2014/07/05 19:22:43 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 8/14/93
 
-SECTION=psd
+SECTION=reference/ref1
 ARTICLE=gprof
 SRCS=	header.me abstract.me intro.me profiling.me gathering.me \
 	postp.me present.me refs.me
