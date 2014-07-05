@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.181 2014/04/19 05:37:54 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.182 2014/07/05 09:15:38 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,9 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.181 $"
+#ident 		"GENERIC-$Revision: 1.182 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	32		# estimated number of users
 
