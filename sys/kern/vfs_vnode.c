@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.36 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.37 2014/07/05 09:33:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.36 2014/05/08 08:21:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.37 2014/07/05 09:33:15 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -1321,6 +1321,88 @@ again:
 	mutex_exit(&vcache.lock);
 	*vpp = vp;
 	return 0;
+}
+
+/*
+ * Prepare key change: lock old and new cache node.
+ * Return an error if the new node already exists.
+ */
+int
+vcache_rekey_enter(struct mount *mp, struct vnode *vp,
+    const void *old_key, size_t old_key_len,
+    const void *new_key, size_t new_key_len)
+{
+	uint32_t old_hash, new_hash;
+	struct vcache_key old_vcache_key, new_vcache_key;
+	struct vcache_node *node, *new_node;
+
+	old_vcache_key.vk_mount = mp;
+	old_vcache_key.vk_key = old_key;
+	old_vcache_key.vk_key_len = old_key_len;
+	old_hash = vcache_hash(&old_vcache_key);
+
+	new_vcache_key.vk_mount = mp;
+	new_vcache_key.vk_key = new_key;
+	new_vcache_key.vk_key_len = new_key_len;
+	new_hash = vcache_hash(&new_vcache_key);
+
+	new_node = pool_cache_get(vcache.pool, PR_WAITOK);
+	new_node->vn_vnode = NULL;
+	new_node->vn_key = new_vcache_key;
+
+	mutex_enter(&vcache.lock);
+	node = vcache_hash_lookup(&new_vcache_key, new_hash);
+	if (node != NULL) {
+		mutex_exit(&vcache.lock);
+		pool_cache_put(vcache.pool, new_node);
+		return EEXIST;
+	}
+	SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
+	    new_node, vn_hash);
+	node = vcache_hash_lookup(&old_vcache_key, old_hash);
+	KASSERT(node != NULL);
+	KASSERT(node->vn_vnode == vp);
+	node->vn_vnode = NULL;
+	node->vn_key = old_vcache_key;
+	mutex_exit(&vcache.lock);
+	return 0;
+}
+
+/*
+ * Key change complete: remove old node and unlock new node.
+ */
+void
+vcache_rekey_exit(struct mount *mp, struct vnode *vp,
+    const void *old_key, size_t old_key_len,
+    const void *new_key, size_t new_key_len)
+{
+	uint32_t old_hash, new_hash;
+	struct vcache_key old_vcache_key, new_vcache_key;
+	struct vcache_node *node;
+
+	old_vcache_key.vk_mount = mp;
+	old_vcache_key.vk_key = old_key;
+	old_vcache_key.vk_key_len = old_key_len;
+	old_hash = vcache_hash(&old_vcache_key);
+
+	new_vcache_key.vk_mount = mp;
+	new_vcache_key.vk_key = new_key;
+	new_vcache_key.vk_key_len = new_key_len;
+	new_hash = vcache_hash(&new_vcache_key);
+
+	mutex_enter(&vcache.lock);
+	node = vcache_hash_lookup(&new_vcache_key, new_hash);
+	KASSERT(node != NULL && node->vn_vnode == NULL);
+	KASSERT(node->vn_key.vk_key_len == new_key_len);
+	node->vn_vnode = vp;
+	node->vn_key = new_vcache_key;
+	node = vcache_hash_lookup(&old_vcache_key, old_hash);
+	KASSERT(node != NULL);
+	KASSERT(node->vn_vnode == NULL);
+	SLIST_REMOVE(&vcache.hashtab[old_hash & vcache.hashmask],
+	    node, vcache_node, vn_hash);
+	mutex_exit(&vcache.lock);
+	pool_cache_put(vcache.pool, node);
 }
 
 /*

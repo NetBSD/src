@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.248 2014/05/25 13:51:26 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249 2014/07/05 09:33:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -557,6 +557,10 @@ struct vnode *
 void	vnfree(struct vnode *);
 void	vremfree(struct vnode *);
 int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
+int	vcache_rekey_enter(struct mount *, struct vnode *,
+	    const void *, size_t, const void *, size_t);
+void	vcache_rekey_exit(struct mount *, struct vnode *,
+	    const void *, size_t, const void *, size_t);
 void	vcache_remove(struct mount *, const void *, size_t);
 
 /* see vnsubr(9) */
