@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.818 2014/07/05 19:22:04 dholland Exp $
+#	$NetBSD: bsd.own.mk,v 1.819 2014/07/05 19:23:38 dholland Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -638,7 +638,6 @@ LIBOWN?=	${BINOWN}
 LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=	/usr/share/doc
-HTMLDOCDIR?=	/usr/share/doc/html
 DOCGRP?=	wheel
 DOCOWN?=	root
 DOCMODE?=	${NONBINMODE}
