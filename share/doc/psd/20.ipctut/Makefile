@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2014/07/05 19:22:42 dholland Exp $
+#	$NetBSD: Makefile,v 1.8 2014/07/05 19:23:00 dholland Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 8/14/93
 
 SECTION=reference/ref3
-ARTICLE=ipctut
+ARTICLE=sockets
 SRCS=	tutor.me
 DEPSRCS=dgramread.c dgramsend.c fig2.pic fig3.pic fig8.pic pipe.c \
 	socketpair.c strchkread.c streamread.c streamwrite.c \
