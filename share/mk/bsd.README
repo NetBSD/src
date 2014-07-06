@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.333 2014/07/05 19:23:38 dholland Exp $
+#	$NetBSD: bsd.README,v 1.334 2014/07/06 18:22:03 dholland Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -197,6 +197,12 @@ MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
 
 MKGDB		If "no", don't build gdb(1).
 		Default: yes
+
+MKGROFFHTMLDOC	If "no", avoid trying to use groff to generate html for
+		miscellaneous articles, as this seems to sometimes want
+		to run software not in base. Does not affect html man
+		pages.
+		Default: no
 
 MKHESIOD	If "no", disables building of Hesiod infrastructure
 		(libraries and support programs).
