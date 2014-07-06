@@ -1,0 +1,95 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - socketmap_table(5) </title>
+</head> <body> <pre>
+SOCKETMAP_TABLE(5)                                          SOCKETMAP_TABLE(5)
+
+<b>NAME</b>
+       socketmap_table - Postfix socketmap table lookup client
+
+<b>SYNOPSIS</b>
+       <b>postmap -q "</b><i>string</i><b>" <a href="socketmap_table.html">socketmap</a>:inet:</b><i>host</i><b>:</b><i>port</i><b>:</b><i>name</i>
+       <b>postmap -q "</b><i>string</i><b>" <a href="socketmap_table.html">socketmap</a>:unix:</b><i>pathname</i><b>:</b><i>name</i>
+
+       <b>postmap -q - <a href="socketmap_table.html">socketmap</a>:inet:</b><i>host</i><b>:</b><i>port</i><b>:</b><i>name</i> &lt;<i>inputfile</i>
+       <b>postmap -q - <a href="socketmap_table.html">socketmap</a>:unix:</b><i>pathname</i><b>:</b><i>name</i> &lt;<i>inputfile</i>
+
+<b>DESCRIPTION</b>
+       The  Postfix  mail  system  uses optional tables for address rewriting.
+       mail routing or policy lookup.
+
+       The Postfix socketmap client expects TCP endpoint  names  of  the  form
+       <b>inet:</b><i>host</i><b>:</b><i>port</i><b>:</b><i>name</i>,  or  UNIX-domain  endponts  of the form <b>unix:</b><i>path-</i>
+       <i>name</i><b>:</b><i>name</i>.  In both cases, <i>name</i> specifies the name field in a socketmap
+       client request (see "REQUEST FORMAT" below).
+
+<b>PROTOCOL</b>
+       Socketmaps use a simple protocol: the client sends one request, and the
+       server sends one reply.  Each request and reply are sent  as  one  net-
+       string object.
+
+<b>REQUEST FORMAT</b>
+       The socketmap protocol supports only the lookup request.
+
+       Postfix  will  not  generate  partial  search keys such as domain names
+       without one or more subdomains, network addresses without one  or  more
+       least-significant  octets,  or  email  addresses without the localpart,
+       address extension or domain portion. This behavior is also  found  with
+       <a href="cidr_table.5.html">cidr</a>:, <a href="pcre_table.5.html">pcre</a>:, and <a href="regexp_table.5.html">regexp</a>: tables.
+
+       <i>name</i> &lt;<b>space</b>&gt; <i>key</i>
+              Search the named socketmap for the specified key.
+
+<b>REPLY FORMAT</b>
+       The  Postfix socketmap client requires that replies are not longer than
+       100000 characters (not including the netstring encapsulation).  Replies
+       must have the following form:
+
+       <b>OK</b> &lt;<b>space</b>&gt; <i>data</i>
+              The requested data was found.
+
+       <b>NOTFOUND</b> &lt;<b>space</b>&gt;
+              The requested data was not found.
+
+       <b>TEMP</b> &lt;<b>space</b>&gt; <i>reason</i>
+
+       <b>TIMEOUT</b> &lt;<b>space</b>&gt; <i>reason</i>
+
+       <b>PERM</b> &lt;<b>space</b>&gt; <i>reason</i>
+              The  request  failed.  The  reason, if non-empty, is descriptive
+              text.
+
+<b>SECURITY</b>
+       This map cannot be used for security-sensitive information,
+       because neither the connection nor the server are authenticated.
+
+<b>SEE ALSO</b>
+       <a href="http://cr.yp.to/proto/netstrings.txt">http://cr.yp.to/proto/netstrings.txt</a>, netstring definition
+       <a href="postconf.1.html">postconf(1)</a>, Postfix supported lookup tables
+       <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
+       <a href="regexp_table.5.html">regexp_table(5)</a>, format of regular expression tables
+       <a href="pcre_table.5.html">pcre_table(5)</a>, format of PCRE tables
+       <a href="cidr_table.5.html">cidr_table(5)</a>, format of CIDR tables
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
+
+<b>BUGS</b>
+       The protocol limits are not yet configurable.
+
+<b>LICENSE</b>
+       The Secure Mailer license must be distributed with this software.
+
+<b>HISTORY</b>
+       Socketmap support was introduced with Postfix version 2.10.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                            SOCKETMAP_TABLE(5)
+</pre> </body> </html>

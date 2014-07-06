@@ -165,17 +165,8 @@ postscreen_cache_map parameter specifies the location of the temporary
 whitelist. The temporary whitelist is not used for SMTP client addresses that
 appear on the permanent access list.
 
-    NOTE: To share a postscreen(8) cache between multiple postscreen(8)
-    instances under the same master(8) daemon, use "postscreen_cache_map =
-    proxy:btree:$data_directory/postscreen_cache", and disable cache cleanup
-    (postscreen_cache_cleanup_interval = 0) in all postscreen(8) instances
-    except one that is responsible for cache cleanup.
-
-    postscreen(8) cache sharing requires Postfix 2.9 or later; earlier proxymap
-    (8) implementations don't support cache cleanup.
-
-    For an alternative postscreen(8) cache sharing approach, see the
-    memcache_table(5) manpage.
+By default the temporary whitelist is not shared with other postscreen(8)
+daemons. See Sharing the temporary whitelist below for alternatives.
 
 When the SMTP client address appears on the temporary whitelist, postscreen(8)
 logs this with the client address and port number as:
@@ -340,29 +331,39 @@ In this phase of the protocol, postscreen(8) implements a number of "deep
 protocol" tests. These tests use an SMTP protocol engine that is built into the
 postscreen(8) server.
 
-Important note: deep protocol tests are disabled by default. They are more
+Important note: these protocol tests are disabled by default. They are more
 intrusive than the pregreet and DNSBL tests, and they have limitations as
 discussed next.
 
-  * When a good client passes the deep protocol tests, postscreen(8) adds the
-    client to the temporary whitelist but it cannot hand off the "live"
-    connection to a Postfix SMTP server process in the middle of the session.
-    Instead, postscreen(8) defers mail delivery attempts with a 4XX status,
-    logs the helo/sender/recipient information, and waits for the client to
-    disconnect.
+  * The main limitation of "after 220 greeting" tests is that a new client must
+    disconnect after passing these tests (reason: postscreen is not a proxy).
+    Then the client must reconnect from the same IP address before it can
+    deliver mail. The following measures may help to avoid email delays:
 
-    The next time the client connects it will be allowed to talk to a Postfix
-    SMTP server process to deliver its mail. To minimize the impact of this
-    limitation, postscreen(8) gives deep protocol tests a relatively long
-    expiration time.
+      o Allow "good" clients to skip tests with the
+        postscreen_dnsbl_whitelist_threshold feature (Postfix 2.11 and later).
+        This is especially effective for sites such as Google that never retry
+        immediately from the same IP address.
+
+      o Small sites: Configure postscreen(8) to listen on multiple IP
+        addresses, published in DNS as different IP addresses for the same MX
+        hostname or for different MX hostnames. This avoids mail delivery
+        delays with clients that reconnect immediately from the same IP
+        address.
+
+      o Large sites: Share the postscreen(8) cache between different Postfix
+        MTAs with a large-enough memcache_table(5). Again, this avoids mail
+        delivery delays with clients that reconnect immediately from the same
+        IP address.
 
   * postscreen(8)'s built-in SMTP engine does not implement the AUTH, XCLIENT,
-    and XFORWARD features. AUTH support may be added in a future version. In
-    the mean time, if you need to make these services available on port 25,
-    then do not enable the tests after the 220 server greeting.
+    and XFORWARD features. If you need to make these services available on port
+    25, then do not enable the tests after the 220 server greeting.
 
-End-user clients should connect directly to the submission service, so that
-they never have to deal with postscreen(8)'s tests.
+  * End-user clients should connect directly to the submission service, so that
+    they never have to deal with postscreen(8)'s tests.
+
+The following "after 220 greeting" tests are available:
 
   * Command pipelining test
   * Non-SMTP command test
@@ -551,6 +552,7 @@ systems.
   * postscreen(8) TLS configuration
   * Blocking mail with postscreen(8)
   * Turning off postscreen(8)
+  * Sharing the temporary whitelist
 
 TTuurrnniinngg oonn ppoossttssccrreeeenn((88)) wwiitthhoouutt bblloocckkiinngg mmaaiill
 
@@ -753,6 +755,72 @@ processes:
             -o parameter=value ...
 
  6. Read the new configuration with "postfix reload".
+
+SShhaarriinngg tthhee tteemmppoorraarryy wwhhiitteelliisstt
+
+By default, the temporary whitelist is not shared between multiple postscreen
+(8) daemons. To enable sharing, choose one of the following options:
+
+  * A non-persistent memcache: temporary whitelist can be shared between
+    postscreen(8) daemons on the same host or different hosts. Disable cache
+    cleanup (postscreen_cache_cleanup_interval = 0) in all postscreen(8)
+    daemons because memcache: does not implement this (but see example 4 below
+    for memcache: with persistent backup). This requires Postfix 2.9 or later.
+
+        # Example 1: non-persistent memcache: whitelist.
+        /etc/postfix/main.cf:
+            postscreen_cache_map = memcache:/etc/postfix/postscreen_cache
+            postscreen_cache_cleanup_interval = 0
+
+        /etc/postfix/postscreen_cache:
+            memcache = inet:127.0.0.1:11211
+            key_format = postscreen:%s
+
+  * A persistent lmdb: temporary whitelist can be shared between postscreen(8)
+    daemons that run under the same master(8) daemon, or under different master
+    (8) daemons on the same host. Disable cache cleanup
+    (postscreen_cache_cleanup_interval = 0) in all postscreen(8) daemons except
+    one that is responsible for cache cleanup. This requires Postfix 2.11 or
+    later.
+
+        # Example 2: persistent lmdb: whitelist.
+        /etc/postfix/main.cf:
+            postscreen_cache_map = lmdb:$data_directory/postscreen_cache
+            # See note 1 below.
+            # postscreen_cache_cleanup_interval = 0
+
+  * Other kinds of persistent temporary whitelist can be shared only between
+    postscreen(8) daemons that run under the same master(8) daemon. In this
+    case, temporary whitelist access must be shared through the proxymap(8)
+    daemon. This requires Postfix 2.9 or later.
+
+        # Example 3: proxied btree: whitelist.
+        /etc/postfix/main.cf:
+            postscreen_cache_map =
+                proxy:btree:/var/lib/postfix/postscreen_cache
+            # See note 1 below.
+            # postscreen_cache_cleanup_interval = 0
+
+        # Example 4: proxied btree: whitelist with memcache: accelerator.
+        /etc/postfix/main.cf:
+            postscreen_cache_map = memcache:/etc/postfix/postscreen_cache
+            proxy_write_maps =
+                proxy:btree:/var/lib/postfix/postscreen_cache
+                ... other proxied tables ...
+            # See note 1 below.
+            # postscreen_cache_cleanup_interval = 0
+
+        /etc/postfix/postscreen_cache:
+            # Note: the $data_directory macro is not defined in this context.
+            memcache = inet:127.0.0.1:11211
+            backup = proxy:btree:/var/lib/postfix/postscreen_cache
+            key_format = postscreen:%s
+
+    Note 1: disable cache cleanup (postscreen_cache_cleanup_interval = 0) in
+    all postscreen(8) daemons except one that is responsible for cache cleanup.
+
+    Note 2: postscreen(8) cache sharing via proxymap(8) requires Postfix 2.9 or
+    later; earlier proxymap(8) implementations don't support cache cleanup.
 
 HHiissttoorriiccaall nnootteess aanndd ccrreeddiittss
 

@@ -16,7 +16,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	mail_params.c mail_pathname.c mail_queue.c mail_run.c \
 	mail_scan_dir.c mail_stream.c mail_task.c mail_trigger.c maps.c \
 	mark_corrupt.c match_parent_style.c mbox_conf.c mbox_open.c \
-	mime_state.c mkmap_cdb.c mkmap_db.c mkmap_dbm.c mkmap_open.c \
+	mime_state.c mkmap_cdb.c mkmap_db.c mkmap_dbm.c mkmap_lmdb.c mkmap_open.c \
 	mkmap_sdbm.c msg_stats_print.c msg_stats_scan.c mynetworks.c \
 	mypwd.c namadr_list.c off_cvt.c opened.c own_inet_addr.c \
 	pipe_command.c post_mail.c quote_821_local.c quote_822_local.c \
@@ -50,7 +50,7 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	mail_params.o mail_pathname.o mail_queue.o mail_run.o \
 	mail_scan_dir.o mail_stream.o mail_task.o mail_trigger.o maps.o \
 	mark_corrupt.o match_parent_style.o mbox_conf.o mbox_open.o \
-	mime_state.o mkmap_cdb.o mkmap_db.o mkmap_dbm.o mkmap_open.o \
+	mime_state.o mkmap_cdb.o mkmap_db.o mkmap_dbm.o mkmap_lmdb.o mkmap_open.o \
 	mkmap_sdbm.o msg_stats_print.o msg_stats_scan.o mynetworks.o \
 	mypwd.o namadr_list.o off_cvt.o opened.o own_inet_addr.o \
 	pipe_command.o post_mail.o quote_821_local.o quote_822_local.o \
@@ -312,6 +312,7 @@ tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
 	xtext_test scache_multi_test ehlo_mask_test \
 	namadr_list_test mail_conf_time_test header_body_checks_tests \
 	mail_version_test server_acl_test resolve_local_test maps_test
+	safe_ultostr_test
 
 mime_tests: mime_test mime_nest mime_8bit mime_dom mime_trunc mime_cvt \
 	mime_cvt2 mime_cvt3 mime_garb1 mime_garb2 mime_garb3 mime_garb4
@@ -515,6 +516,11 @@ mail_conf_time_test: mail_conf_time mail_conf_time.ref
 	./mail_conf_time >mail_conf_time.tmp
 	diff mail_conf_time.ref mail_conf_time.tmp
 	rm -f mail_conf_time.tmp
+
+safe_ultostr_test: safe_ultostr safe_ultostr.in safe_ultostr.ref
+	./safe_ultostr <safe_ultostr.in >safe_ultostr.tmp 2>&1
+	diff safe_ultostr.ref safe_ultostr.tmp
+	rm -f safe_ultostr.tmp
 
 header_body_checks_null_test: header_body_checks header_body_checks_null.ref
 	./header_body_checks "" "" "" "" \
@@ -740,6 +746,7 @@ data_redirect.o: ../../include/dict.h
 data_redirect.o: ../../include/dict_cdb.h
 data_redirect.o: ../../include/dict_db.h
 data_redirect.o: ../../include/dict_dbm.h
+data_redirect.o: ../../include/dict_lmdb.h
 data_redirect.o: ../../include/msg.h
 data_redirect.o: ../../include/myflock.h
 data_redirect.o: ../../include/name_code.h
@@ -921,46 +928,10 @@ dict_memcache.o: dict_memcache.c
 dict_memcache.o: dict_memcache.h
 dict_memcache.o: memcache_proto.h
 dict_memcache.o: string_list.h
-dict_mysql.o: ../../include/argv.h
-dict_mysql.o: ../../include/dict.h
-dict_mysql.o: ../../include/events.h
-dict_mysql.o: ../../include/find_inet.h
-dict_mysql.o: ../../include/match_list.h
-dict_mysql.o: ../../include/msg.h
-dict_mysql.o: ../../include/myflock.h
-dict_mysql.o: ../../include/mymalloc.h
-dict_mysql.o: ../../include/myrand.h
-dict_mysql.o: ../../include/split_at.h
-dict_mysql.o: ../../include/stringops.h
 dict_mysql.o: ../../include/sys_defs.h
-dict_mysql.o: ../../include/vbuf.h
-dict_mysql.o: ../../include/vstream.h
-dict_mysql.o: ../../include/vstring.h
-dict_mysql.o: cfg_parser.h
-dict_mysql.o: db_common.h
 dict_mysql.o: dict_mysql.c
-dict_mysql.o: dict_mysql.h
-dict_mysql.o: string_list.h
-dict_pgsql.o: ../../include/argv.h
-dict_pgsql.o: ../../include/dict.h
-dict_pgsql.o: ../../include/events.h
-dict_pgsql.o: ../../include/find_inet.h
-dict_pgsql.o: ../../include/match_list.h
-dict_pgsql.o: ../../include/msg.h
-dict_pgsql.o: ../../include/myflock.h
-dict_pgsql.o: ../../include/mymalloc.h
-dict_pgsql.o: ../../include/myrand.h
-dict_pgsql.o: ../../include/split_at.h
-dict_pgsql.o: ../../include/stringops.h
 dict_pgsql.o: ../../include/sys_defs.h
-dict_pgsql.o: ../../include/vbuf.h
-dict_pgsql.o: ../../include/vstream.h
-dict_pgsql.o: ../../include/vstring.h
-dict_pgsql.o: cfg_parser.h
-dict_pgsql.o: db_common.h
 dict_pgsql.o: dict_pgsql.c
-dict_pgsql.o: dict_pgsql.h
-dict_pgsql.o: string_list.h
 dict_proxy.o: ../../include/argv.h
 dict_proxy.o: ../../include/attr.h
 dict_proxy.o: ../../include/dict.h
@@ -1434,6 +1405,7 @@ mail_params.o: ../../include/argv.h
 mail_params.o: ../../include/attr.h
 mail_params.o: ../../include/dict.h
 mail_params.o: ../../include/dict_db.h
+mail_params.o: ../../include/dict_lmdb.h
 mail_params.o: ../../include/get_hostname.h
 mail_params.o: ../../include/inet_addr_list.h
 mail_params.o: ../../include/inet_proto.h
@@ -1619,6 +1591,7 @@ mbox_open.o: dsn_buf.h
 mbox_open.o: mbox_conf.h
 mbox_open.o: mbox_open.c
 mbox_open.o: mbox_open.h
+memcache_proto.o: ../../include/compat_va_copy.h
 memcache_proto.o: ../../include/msg.h
 memcache_proto.o: ../../include/sys_defs.h
 memcache_proto.o: ../../include/vbuf.h
@@ -1690,12 +1663,29 @@ mkmap_fail.o: ../../include/vstream.h
 mkmap_fail.o: ../../include/vstring.h
 mkmap_fail.o: mkmap.h
 mkmap_fail.o: mkmap_fail.c
+mkmap_lmdb.o: ../../include/argv.h
+mkmap_lmdb.o: ../../include/dict.h
+mkmap_lmdb.o: ../../include/dict_lmdb.h
+mkmap_lmdb.o: ../../include/msg.h
+mkmap_lmdb.o: ../../include/myflock.h
+mkmap_lmdb.o: ../../include/mymalloc.h
+mkmap_lmdb.o: ../../include/stringops.h
+mkmap_lmdb.o: ../../include/sys_defs.h
+mkmap_lmdb.o: ../../include/vbuf.h
+mkmap_lmdb.o: ../../include/vstream.h
+mkmap_lmdb.o: ../../include/vstring.h
+mkmap_lmdb.o: ../../include/warn_stat.h
+mkmap_lmdb.o: mail_conf.h
+mkmap_lmdb.o: mail_params.h
+mkmap_lmdb.o: mkmap.h
+mkmap_lmdb.o: mkmap_lmdb.c
 mkmap_open.o: ../../include/argv.h
 mkmap_open.o: ../../include/dict.h
 mkmap_open.o: ../../include/dict_cdb.h
 mkmap_open.o: ../../include/dict_db.h
 mkmap_open.o: ../../include/dict_dbm.h
 mkmap_open.o: ../../include/dict_fail.h
+mkmap_open.o: ../../include/dict_lmdb.h
 mkmap_open.o: ../../include/dict_sdbm.h
 mkmap_open.o: ../../include/msg.h
 mkmap_open.o: ../../include/myflock.h

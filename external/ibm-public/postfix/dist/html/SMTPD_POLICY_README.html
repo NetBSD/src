@@ -489,7 +489,7 @@ forged MAIL FROM domains could be found at
  3         <a href="postconf.5.html#reject_unlisted_recipient">reject_unlisted_recipient</a>
  4         ...
  5         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
- 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/sender_access
+ 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_access
  7         ...
  8     <a href="postconf.5.html#smtpd_restriction_classes">smtpd_restriction_classes</a> = greylist
  9     greylist = <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/greylist
@@ -547,7 +547,7 @@ most of the delays and most of the database pollution problem. </p>
  3         <a href="postconf.5.html#reject_unlisted_recipient">reject_unlisted_recipient</a>
  4         ...
  5         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
- 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/sender_access
+ 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_access
  7         <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/policy
  8         ...
  9 

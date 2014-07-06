@@ -1,2 +1,6 @@
-foo        unix  -       n       n       -       0       other -v -o aaa=bbb -v
-    -o ccc=bbb -v -o ddd=bbb
+foo        unix  -       n       n       -       0       other -v
+    -o aaa=bbb
+    -v
+    -o ccc=bbb
+    -v
+    -o ddd=bbb

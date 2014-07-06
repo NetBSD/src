@@ -1024,6 +1024,7 @@ cleanup_milter.o: ../../include/tok822.h
 cleanup_milter.o: ../../include/vbuf.h
 cleanup_milter.o: ../../include/vstream.h
 cleanup_milter.o: ../../include/vstring.h
+cleanup_milter.o: ../../include/xtext.h
 cleanup_milter.o: cleanup.h
 cleanup_milter.o: cleanup_milter.c
 cleanup_out.o: ../../include/argv.h

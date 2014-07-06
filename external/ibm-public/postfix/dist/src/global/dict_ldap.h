@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dict_ldap.h,v 1.1.1.2 2014/07/06 19:27:50 tron Exp $	*/
 
 #ifndef _DICT_LDAP_H_INCLUDED_
 #define _DICT_LDAP_H_INCLUDED_
@@ -29,7 +29,7 @@ extern DICT *dict_ldap_open(const char *, int, int);
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
-/*	Yorktown Heights, NY 10532, USA
+/*	Yorktown Heights, NY 10598, USA
 /*--*/
 
 #endif

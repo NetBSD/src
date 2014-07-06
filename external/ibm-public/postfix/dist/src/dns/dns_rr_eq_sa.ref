@@ -1,24 +1,24 @@
+2604:8d00:189::2 =?= 168.100.189.2
+tested by function: no
+tested by macro:    no
 168.100.189.2 =?= 168.100.189.2
 tested by function: yes
 tested by macro:    yes
-2604:8d00:189::2 =?= 168.100.189.2
+2604:8d00:189::2 =?= 168.100.189.3
 tested by function: no
 tested by macro:    no
 168.100.189.2 =?= 168.100.189.3
 tested by function: no
 tested by macro:    no
-2604:8d00:189::2 =?= 168.100.189.3
+2604:8d00:189::2 =?= 2604:8d00:189::2
+tested by function: yes
+tested by macro:    yes
+168.100.189.2 =?= 2604:8d00:189::2
 tested by function: no
 tested by macro:    no
-168.100.189.2 =?= 2001:240:587:0:2d0:b7ff:fe88:2ca7
+2604:8d00:189::2 =?= 2604:8d00:189::3
 tested by function: no
 tested by macro:    no
-2604:8d00:189::2 =?= 2001:240:587:0:2d0:b7ff:fe88:2ca7
-tested by function: no
-tested by macro:    no
-168.100.189.2 =?= 2001:240:587:0:2d0:b7ff:febe:ca9f
-tested by function: no
-tested by macro:    no
-2604:8d00:189::2 =?= 2001:240:587:0:2d0:b7ff:febe:ca9f
+168.100.189.2 =?= 2604:8d00:189::3
 tested by function: no
 tested by macro:    no

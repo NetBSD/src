@@ -12,10 +12,10 @@ Postfix configuration parameters
 .SH DESCRIPTION
 .ad
 .fi
-The Postfix main.cf configuration file specifies a small subset
-of all the parameters that control the operation of the Postfix
-mail system. Parameters not specified in main.cf are left at their
-default values.
+The Postfix main.cf configuration file specifies parameters that
+control the operation of the Postfix mail system. Typically the
+file contains only a small subset of all parameters; parameters
+not specified are left at their default values.
 .PP
 The general format of the main.cf file is as follows:
 .IP \(bu

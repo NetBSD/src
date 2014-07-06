@@ -4,9 +4,9 @@
 # SUMMARY
 #	Postfix MySQL client configuration
 # SYNOPSIS
-#	\fBpostmap -q "\fIstring\fB" mysql:/etc/postfix/filename\fR
+#	\fBpostmap -q "\fIstring\fB" mysql:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - mysql:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - mysql:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
@@ -244,6 +244,39 @@
 #	temporary error if the limit is exceeded.  Setting the
 #	limit to 1 ensures that lookups do not return multiple
 #	values.
+# .IP "\fBoption_file\fR"
+#	Read options from the given file instead of the default my.cnf
+#	location.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
+# .IP "\fBoption_group\fR"
+#	Read options from the given group.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
+# .IP "\fBtls_cert_file\fR"
+#	File containing client's X509 certificate.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
+# .IP "\fBtls_key_file\fR"
+#	File containing the private key corresponding to \fBtls_cert_file\fR.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
+# .IP "\fBtls_CAfile\fR"
+#	File containing certificates for all of the X509 Certificate
+#	Authorities the client will recognize.  Takes precedence over
+#	\fBtls_CApath\fR.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
+# .IP "\fBtls_CApath\fR"
+#	Directory containing X509 Certificate Authority certificates
+#	in separate individual files.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
+# .IP "\fBtls_verify_cert (default: no)\fR"
+#	Verify that the server's name matches the common name in the
+#	certficate.
+# .sp
+#	This parameter is available with Postfix 2.11 and later.
 # OBSOLETE QUERY INTERFACE
 # .ad
 # .fi

@@ -6,7 +6,7 @@
 # SYNOPSIS
 #	\fBpostmap -q "\fIstring\fB" tcp:\fIhost:port\fR
 #
-#	\fBpostmap -q - tcp:\fIhost:port\fR <\fIinputfile\fR
+#	\fBpostmap -q - tcp:\fIhost:port\fB <\fIinputfile\fR
 # DESCRIPTION
 #       The Postfix mail system uses optional tables for address
 #       rewriting or mail routing. These tables are usually in

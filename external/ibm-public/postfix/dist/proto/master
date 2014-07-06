@@ -63,8 +63,8 @@
 #	accepted. The host part (and colon) may be omitted.  Either
 #	host or port may be given in symbolic form (host or service
 #	name) or in numeric form (IP address or port number).
-#	Host information may be enclosed inside "[]", but this form
-#	is not necessary.
+#	Host information may be enclosed inside "[]"; this form
+#	is necessary only with IPv6 addresses.
 # .sp
 #	Examples: a service named \fB127.0.0.1:smtp\fR or \fB::1:smtp\fR
 #	receives
@@ -86,8 +86,8 @@
 #	queue directory (pathname controlled with the \fBqueue_directory\fR
 #	configuration parameter in main.cf).
 # .sp
-#	On Solaris systems the \fBunix\fR type is implemented with
-#	streams sockets.
+#	On Solaris 8 and earlier systems the \fBunix\fR type is
+#	implemented with streams sockets.
 # .IP \fBfifo\fR
 #	The service listens on a FIFO (named pipe) and is accessible
 #	for local clients only.
@@ -104,8 +104,8 @@
 #	queue directory (pathname controlled with the \fBqueue_directory\fR
 #	configuration parameter in main.cf).
 # .sp
-#	On Solaris systems the \fBpass\fR type is implemented with
-#	streams sockets.
+#	On Solaris 8 and earlier systems the \fBpass\fR type is
+#	implemented with streams sockets.
 #
 #	This feature is available as of Postfix version 2.5.
 # .RE

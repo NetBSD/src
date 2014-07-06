@@ -6,7 +6,7 @@
 # SYNOPSIS
 #	\fBpostmap -q "\fIstring\fB" regexp:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting, mail routing, or access control. These tables
@@ -106,12 +106,12 @@
 # TEXT SUBSTITUTION
 # .ad
 # .fi
-#	Substitution of substrings from the matched expression into the result
-#	string is possible using $1, $2, etc.;
-#	specify $$ to produce a $ character as output.
-#	The macros in the result string
-#	may need to be written as ${n} or $(n) if they aren't followed
-#	by whitespace.
+#	Substitution of substrings (text that matches patterns
+#	inside "()") from the matched expression into the result
+#	string is requested with $1, $2, etc.; specify $$ to produce
+#	a $ character as output.
+#	The macros in the result string may need to be written as
+#	${n} or $(n) if they aren't followed by whitespace.
 #
 #	Note: since negated patterns (those preceded by \fB!\fR) return a
 #	result when the expression does not match, substitutions are not

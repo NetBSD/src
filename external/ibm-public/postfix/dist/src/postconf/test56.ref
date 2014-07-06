@@ -1,0 +1,5 @@
+foo unix - n n - 0 other
+#bar inet - n n 0 0 other
+# -o first
+# -o second
+baz unix - n n 0 0 other

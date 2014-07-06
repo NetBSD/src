@@ -373,7 +373,7 @@
 #	are \fBFrom:\fR, \fBTo:\fR, \fBMessage-ID:\fR, \fBDate:\fR.
 #
 #	Message headers deleted by the \fBcleanup\fR(8) daemon will
-#	be examined before they are deleted. Examples are: \fBBcc:\fr,
+#	be examined before they are deleted. Examples are: \fBBcc:\fR,
 #	\fBContent-Length:\fR, \fBReturn-Path:\fR.
 # CONFIGURATION PARAMETERS
 # .ad

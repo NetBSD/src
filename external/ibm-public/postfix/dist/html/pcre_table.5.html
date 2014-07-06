@@ -15,165 +15,148 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
        <b>postmap -q - <a href="pcre_table.5.html">pcre</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
-       The  Postfix  mail system uses optional tables for address
-       rewriting, mail routing, or access control.  These  tables
-       are usually in <b>dbm</b> or <b>db</b> format.
+       The  Postfix  mail  system  uses optional tables for address rewriting,
+       mail routing, or access control. These tables are usually in <b>dbm</b> or  <b>db</b>
+       format.
 
-       Alternatively, lookup tables can be specified in Perl Com-
-       patible Regular Expression form. In this case, each  input
-       is  compared  against  a list of patterns. When a match is
-       found, the corresponding result is returned and the search
-       is terminated.
+       Alternatively,  lookup tables can be specified in Perl Compatible Regu-
+       lar Expression form. In this case, each input  is  compared  against  a
+       list  of  patterns.  When a match is found, the corresponding result is
+       returned and the search is terminated.
 
-       To  find out what types of lookup tables your Postfix sys-
-       tem supports use the "<b>postconf -m</b>" command.
+       To find out what types of lookup tables your  Postfix  system  supports
+       use the "<b>postconf -m</b>" command.
 
-       To test lookup tables, use the  "<b>postmap  -q</b>"  command  as
-       described in the SYNOPSIS above.
+       To test lookup tables, use the "<b>postmap -q</b>" command as described in the
+       SYNOPSIS above.
 
 <b>COMPATIBILITY</b>
-       With Postfix version 2.2 and earlier specify "<b>postmap -fq</b>"
-       to query a table that contains  case  sensitive  patterns.
-       Patterns are case insensitive by default.
+       With Postfix version 2.2 and earlier specify "<b>postmap -fq</b>" to  query  a
+       table that contains case sensitive patterns. Patterns are case insensi-
+       tive by default.
 
 <b>TABLE FORMAT</b>
        The general form of a PCRE table is:
 
        <b>/</b><i>pattern</i><b>/</b><i>flags result</i>
-              When <i>pattern</i> matches the input string, use the cor-
-              responding <i>result</i> value.
+              When <i>pattern</i> matches the input  string,  use  the  corresponding
+              <i>result</i> value.
 
        <b>!/</b><i>pattern</i><b>/</b><i>flags result</i>
-              When <i>pattern</i> does <b>not</b> match the input  string,  use
-              the corresponding <i>result</i> value.
+              When  <i>pattern</i>  does  <b>not</b>  match the input string, use the corre-
+              sponding <i>result</i> value.
 
        <b>if /</b><i>pattern</i><b>/</b><i>flags</i>
 
-       <b>endif</b>  Match the input string against the patterns between
-              <b>if</b> and <b>endif</b>, if and only if that same input string
-              also matches <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+       <b>endif</b>  Match the input string  against  the  patterns  between  <b>if</b>  and
+              <b>endif</b>,  if  and only if that same input string also matches <i>pat-</i>
+              <i>tern</i>. The <b>if</b>..<b>endif</b> can nest.
 
-              Note:  do not prepend whitespace to patterns inside
-              <b>if</b>..<b>endif</b>.
+              Note: do not prepend whitespace to patterns inside <b>if</b>..<b>endif</b>.
 
               This feature is available in Postfix 2.1 and later.
 
        <b>if !/</b><i>pattern</i><b>/</b><i>flags</i>
 
-       <b>endif</b>  Match the input string against the patterns between
-              <b>if</b> and <b>endif</b>, if and only if that same input string
-              does <b>not</b> match <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+       <b>endif</b>  Match the input string  against  the  patterns  between  <b>if</b>  and
+              <b>endif</b>, if and only if that same input string does <b>not</b> match <i>pat-</i>
+              <i>tern</i>. The <b>if</b>..<b>endif</b> can nest.
 
-              Note:  do not prepend whitespace to patterns inside
-              <b>if</b>..<b>endif</b>.
+              Note: do not prepend whitespace to patterns inside <b>if</b>..<b>endif</b>.
 
               This feature is available in Postfix 2.1 and later.
 
        blank lines and comments
-              Empty  lines and whitespace-only lines are ignored,
-              as are lines whose first  non-whitespace  character
-              is a `#'.
+              Empty lines and whitespace-only lines are ignored, as are  lines
+              whose first non-whitespace character is a `#'.
 
        multi-line text
-              A  logical  line starts with non-whitespace text. A
-              line that starts with whitespace continues a  logi-
-              cal line.
+              A  logical  line  starts  with  non-whitespace text. A line that
+              starts with whitespace continues a logical line.
 
-       Each  pattern  is  a  perl-like  regular  expression.  The
-       expression delimiter can be any non-alphanumerical charac-
-       ter,  except  whitespace  or  characters that have special
-       meaning (traditionally the forward slash  is  used).   The
-       regular expression can contain whitespace.
+       Each pattern is a perl-like regular expression. The  expression  delim-
+       iter  can  be  any  non-alphanumerical  character, except whitespace or
+       characters that have special meaning (traditionally the  forward  slash
+       is used).  The regular expression can contain whitespace.
 
-       By default, matching is case-insensitive, and newlines are
-       not treated as special characters. The  behavior  is  con-
-       trolled  by  flags,  which are toggled by appending one or
-       more of the following characters after the pattern:
+       By  default, matching is case-insensitive, and newlines are not treated
+       as special characters. The behavior is controlled by flags,  which  are
+       toggled  by appending one or more of the following characters after the
+       pattern:
 
        <b>i</b> (default: on)
-              Toggles the  case  sensitivity  flag.  By  default,
-              matching is case insensitive.
+              Toggles the case sensitivity flag. By default, matching is  case
+              insensitive.
 
        <b>m</b> (default: off)
-              Toggles  the PCRE_MULTILINE flag. When this flag is
-              on, the <b>^</b> and <b>$</b>  metacharacters  match  immediately
-              after  and  immediately before a newline character,
-              respectively, in addition to matching at the  start
-              and end of the subject string.
+              Toggles the PCRE_MULTILINE flag. When this flag is on, the <b>^</b> and
+              <b>$</b> metacharacters match immediately after and immediately  before
+              a  newline  character,  respectively, in addition to matching at
+              the start and end of the subject string.
 
        <b>s</b> (default: on)
-              Toggles the PCRE_DOTALL flag. When this flag is on,
-              the <b>.</b>  metacharacter matches the newline character.
-              With Postfix versions prior to 2.0, the flag is off
-              by default, which is  inconvenient  for  multi-line
-              message header matching.
+              Toggles the PCRE_DOTALL flag.  When  this  flag  is  on,  the  <b>.</b>
+              metacharacter  matches  the newline character. With Postfix ver-
+              sions prior to 2.0, the flag is off by default, which is  incon-
+              venient for multi-line message header matching.
 
        <b>x</b> (default: off)
-              Toggles  the  pcre extended flag. When this flag is
-              on, whitespace characters  in  the  pattern  (other
-              than in a character class) are ignored.  To include
-              a whitespace character  as  part  of  the  pattern,
-              escape it with backslash.
+              Toggles the pcre extended flag. When this flag is on, whitespace
+              characters in the pattern (other than in a character class)  are
+              ignored.   To include a whitespace character as part of the pat-
+              tern, escape it with backslash.
 
               Note: do not use <b>#</b><i>comment</i> after patterns.
 
        <b>A</b> (default: off)
-              Toggles  the PCRE_ANCHORED flag.  When this flag is
-              on, the pattern is forced to  be  "anchored",  that
-              is, it is constrained to match only at the start of
-              the string which is being  searched  (the  "subject
-              string").  This  effect  can  also  be  achieved by
+              Toggles the PCRE_ANCHORED flag.  When this flag is on, the  pat-
+              tern  is  forced to be "anchored", that is, it is constrained to
+              match only at the start of the string which  is  being  searched
+              (the  "subject  string").  This  effect  can also be achieved by
               appropriate constructs in the pattern itself.
 
        <b>E</b> (default: off)
-              Toggles the  PCRE_DOLLAR_ENDONLY  flag.  When  this
-              flag  is  on,  a  <b>$</b>  metacharacter  in  the pattern
-              matches only at the  end  of  the  subject  string.
-              Without  this  flag,  a dollar also matches immedi-
-              ately before the final character if it is a newline
-              character (but not before any other newline charac-
-              ters). This flag is ignored if PCRE_MULTILINE  flag
-              is set.
+              Toggles the PCRE_DOLLAR_ENDONLY flag. When this flag is on, a  <b>$</b>
+              metacharacter in the pattern matches only at the end of the sub-
+              ject string. Without this flag, a dollar  also  matches  immedi-
+              ately  before  the  final character if it is a newline character
+              (but not before any other  newline  characters).  This  flag  is
+              ignored if PCRE_MULTILINE flag is set.
 
        <b>U</b> (default: off)
-              Toggles the ungreedy matching flag.  When this flag
-              is on, the  pattern  matching  engine  inverts  the
-              "greediness"  of  the  quantifiers so that they are
-              not greedy by default, but become  greedy  if  fol-
-              lowed  by  "?".   This  flag can also set by a (?U)
-              modifier within the pattern.
+              Toggles  the  ungreedy matching flag.  When this flag is on, the
+              pattern matching engine inverts the "greediness" of the  quanti-
+              fiers  so that they are not greedy by default, but become greedy
+              if followed by "?".  This flag can also set by a  (?U)  modifier
+              within the pattern.
 
        <b>X</b> (default: off)
-              Toggles the PCRE_EXTRA flag.  When this flag is on,
-              any  backslash  in  a pattern that is followed by a
-              letter that has no special meaning causes an error,
-              thus reserving these combinations for future expan-
-              sion.
+              Toggles  the  PCRE_EXTRA  flag.  When this flag is on, any back-
+              slash in a pattern that is followed by a letter that has no spe-
+              cial  meaning causes an error, thus reserving these combinations
+              for future expansion.
 
 <b>SEARCH ORDER</b>
-       Patterns are applied in the order as specified in the  ta-
-       ble,  until  a  pattern  is  found  that matches the input
-       string.
+       Patterns are applied in the order as specified in the  table,  until  a
+       pattern is found that matches the input string.
 
-       Each pattern  is  applied  to  the  entire  input  string.
-       Depending  on  the  application,  that string is an entire
-       client hostname, an entire client IP address, or an entire
-       mail  address.   Thus,  no parent domain or parent network
-       search is done, and <i>user@domain</i>  mail  addresses  are  not
-       broken  up  into  their <i>user</i> and <i>domain</i> constituent parts,
-       nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
+       Each  pattern  is applied to the entire input string.  Depending on the
+       application, that string is an entire client hostname, an entire client
+       IP  address, or an entire mail address.  Thus, no parent domain or par-
+       ent network search is done, and <i>user@domain</i> mail addresses are not bro-
+       ken  up  into  their <i>user</i> and <i>domain</i> constituent parts, nor is <i>user+foo</i>
+       broken up into <i>user</i> and <i>foo</i>.
 
 <b>TEXT SUBSTITUTION</b>
-       Substitution of substrings  from  the  matched  expression
-       into  the result string is possible using the conventional
-       perl syntax ($1, $2, etc.); specify  $$  to  produce  a  $
-       character  as output.  The macros in the result string may
-       need to be written as ${n} or $(n) if they aren't followed
-       by whitespace.
+       Substitution of substrings (text that  matches  patterns  inside  "()")
+       from  the  matched  expression into the result string is requested with
+       $1, $2, etc.; specify $$ to produce  a  $  character  as  output.   The
+       macros  in  the result string may need to be written as ${n} or $(n) if
+       they aren't followed by whitespace.
 
-       Note:  since negated patterns (those preceded by <b>!</b>) return
-       a result when the expression does not match, substitutions
-       are not available for negated patterns.
+       Note: since negated patterns (those preceded by <b>!</b>) return a result when
+       the  expression  does  not  match,  substitutions are not available for
+       negated patterns.
 
 <b>EXAMPLE SMTPD ACCESS MAP</b>
        # Protect your outgoing majordomo exploders

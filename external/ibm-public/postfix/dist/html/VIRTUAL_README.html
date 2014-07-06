@@ -99,7 +99,7 @@ such as DBM or Berkeley DB.  These are easy to debug with the
 <b>postmap</b> command: </p>
 
 <blockquote>
-Example: <tt>postmap -q info@example.com hash:/etc/postfix/virtual</tt>
+Example: <tt>postmap -q info@example.com <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual</tt>
 </blockquote>
 
 <p> See the documentation in <a href="LDAP_README.html">LDAP_README</a>, <a href="MYSQL_README.html">MYSQL_README</a> and <a href="PGSQL_README.html">PGSQL_README</a>
@@ -165,7 +165,7 @@ below shows how to use this mechanism for the example.com domain.
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
- 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
  4 
  5 /etc/postfix/virtual:
  6     postmaster@example.com postmaster
@@ -258,11 +258,11 @@ section at the top of this document.</p>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com ...more domains...
  3     <a href="postconf.5.html#virtual_mailbox_base">virtual_mailbox_base</a> = /var/mail/vhosts
- 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = hash:/etc/postfix/vmailbox
+ 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/vmailbox
  5     <a href="postconf.5.html#virtual_minimum_uid">virtual_minimum_uid</a> = 100
  6     <a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> = <a href="DATABASE_README.html#types">static</a>:5000
  7     <a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a> = <a href="DATABASE_README.html#types">static</a>:5000
- 8     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 8     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
  9 
 10 /etc/postfix/vmailbox:
 11     info@example.com    example.com/info
@@ -382,8 +382,8 @@ to a non-Postfix delivery agent: </p>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_transport">virtual_transport</a> = ...see below...
  3     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com ...more domains...
- 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = hash:/etc/postfix/vmailbox
- 5     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/vmailbox
+ 5     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
  6 
  7 /etc/postfix/vmailbox:
  8     info@example.com    whatever
@@ -488,7 +488,7 @@ as a mail forwarding domain: </p>
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
- 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
  4 
  5 /etc/postfix/virtual:
  6     postmaster@example.com postmaster
@@ -555,7 +555,7 @@ virtual addresses to the local delivery agent: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
 
 /etc/postfix/virtual:
     listname-request@example.com listname-request
@@ -603,7 +603,7 @@ table: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
 
 /etc/postfix/virtual:
     user@domain.tld user@domain.tld, user@domain.tld@autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld
@@ -622,7 +622,7 @@ reply back to the sender. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 
 /etc/postfix/transport:
     autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld  autoreply:

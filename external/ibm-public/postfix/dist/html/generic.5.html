@@ -17,204 +17,183 @@ GENERIC(5)                                                          GENERIC(5)
        <b>postmap -q - /etc/postfix/generic</b> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
-       The optional <a href="generic.5.html"><b>generic</b>(5)</a> table specifies an address mapping
-       that applies when mail is delivered. This is the  opposite
-       of  <a href="canonical.5.html"><b>canonical</b>(5)</a>  mapping,  which  applies  when  mail  is
-       received.
+       The optional <a href="generic.5.html"><b>generic</b>(5)</a> table specifies an address mapping that applies
+       when mail is delivered. This is the opposite of  <a href="canonical.5.html"><b>canonical</b>(5)</a>  mapping,
+       which applies when mail is received.
 
-       Typically, one would use the <a href="generic.5.html"><b>generic</b>(5)</a> table on a  system
-       that  does  not have a valid Internet domain name and that
-       uses  something  like  <i>localdomain.local</i>   instead.    The
-       <a href="generic.5.html"><b>generic</b>(5)</a>  table  is  then  used by the <a href="smtp.8.html"><b>smtp</b>(8)</a> client to
-       transform local mail addresses into  valid  Internet  mail
-       addresses  when  mail  has to be sent across the Internet.
-       See the EXAMPLE section at the end of this document.
+       Typically, one would use the <a href="generic.5.html"><b>generic</b>(5)</a> table on a system that does not
+       have a valid Internet domain name and that uses something like <i>localdo-</i>
+       <i>main.local</i>  instead.   The <a href="generic.5.html"><b>generic</b>(5)</a> table is then used by the <a href="smtp.8.html"><b>smtp</b>(8)</a>
+       client to transform local  mail  addresses  into  valid  Internet  mail
+       addresses  when mail has to be sent across the Internet.  See the EXAM-
+       PLE section at the end of this document.
 
-       The  <a href="generic.5.html"><b>generic</b>(5)</a>  mapping  affects  both   message   header
-       addresses (i.e. addresses that appear inside messages) and
-       message envelope addresses  (for  example,  the  addresses
-       that are used in SMTP protocol commands).
+       The <a href="generic.5.html"><b>generic</b>(5)</a> mapping affects  both  message  header  addresses  (i.e.
+       addresses  that  appear inside messages) and message envelope addresses
+       (for example, the addresses that are used in SMTP protocol commands).
 
-       Normally, the <a href="generic.5.html"><b>generic</b>(5)</a> table is specified as a text file
-       that serves as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command.   The
-       result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
-       fast searching by the mail  system.  Execute  the  command
-       "<b>postmap  /etc/postfix/generic</b>" to rebuild an indexed file
+       Normally, the <a href="generic.5.html"><b>generic</b>(5)</a> table is specified as a text file that  serves
+       as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The result, an indexed file in <b>dbm</b>
+       or <b>db</b> format, is used for fast searching by the  mail  system.  Execute
+       the  command  "<b>postmap /etc/postfix/generic</b>" to rebuild an indexed file
        after changing the corresponding text file.
 
-       When the table is provided via other means  such  as  NIS,
-       LDAP  or  SQL,  the  same lookups are done as for ordinary
-       indexed files.
+       When the table is provided via other means such as NIS,  LDAP  or  SQL,
+       the same lookups are done as for ordinary indexed files.
 
-       Alternatively, the table can be  provided  as  a  regular-
-       expression map where patterns are given as regular expres-
-       sions, or lookups can be directed to TCP-based server.  In
-       those  case,  the lookups are done in a slightly different
-       way as described below under "REGULAR  EXPRESSION  TABLES"
-       or "TCP-BASED TABLES".
+       Alternatively,  the  table  can be provided as a regular-expression map
+       where patterns are given as regular  expressions,  or  lookups  can  be
+       directed  to TCP-based server. In those case, the lookups are done in a
+       slightly different way as described  below  under  "REGULAR  EXPRESSION
+       TABLES" or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
-       The  search  string is folded to lowercase before database
-       lookup. As of Postfix 2.3, the search string is  not  case
-       folded  with database types such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose
-       lookup fields can match both upper and lower case.
+       The  search string is folded to lowercase before database lookup. As of
+       Postfix 2.3, the search string is not case folded with  database  types
+       such  as  <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both upper and
+       lower case.
 
 <b>TABLE FORMAT</b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern result</i>
-              When  <i>pattern</i> matches a mail address, replace it by
-              the corresponding <i>result</i>.
+              When <i>pattern</i> matches a mail address, replace it  by  the  corre-
+              sponding <i>result</i>.
 
        blank lines and comments
-              Empty lines and whitespace-only lines are  ignored,
-              as  are  lines whose first non-whitespace character
-              is a `#'.
+              Empty  lines and whitespace-only lines are ignored, as are lines
+              whose first non-whitespace character is a `#'.
 
        multi-line text
-              A logical line starts with non-whitespace  text.  A
-              line  that starts with whitespace continues a logi-
-              cal line.
+              A logical line starts with  non-whitespace  text.  A  line  that
+              starts with whitespace continues a logical line.
 
 <b>TABLE SEARCH ORDER</b>
-       With lookups from indexed files such as DB or DBM, or from
-       networked  tables  such  as NIS, LDAP or SQL, patterns are
-       tried in the order as listed below:
+       With  lookups  from  indexed files such as DB or DBM, or from networked
+       tables such as NIS, LDAP or SQL, patterns are tried  in  the  order  as
+       listed below:
 
        <i>user</i>@<i>domain address</i>
-              Replace <i>user</i>@<i>domain</i> by <i>address</i>. This form  has  the
-              highest precedence.
+              Replace <i>user</i>@<i>domain</i> by <i>address</i>. This form has the highest prece-
+              dence.
 
        <i>user address</i>
-              Replace  <i>user</i>@<i>site</i> by <i>address</i> when <i>site</i> is equal to
-              $<b><a href="postconf.5.html#myorigin">myorigin</a></b>, when <i>site</i> is listed  in  $<b><a href="postconf.5.html#mydestination">mydestination</a></b>,
-              or   when  it  is  listed  in  $<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>  or
-              $<b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
+              Replace <i>user</i>@<i>site</i> by <i>address</i> when <i>site</i> is  equal  to  $<b><a href="postconf.5.html#myorigin">myorigin</a></b>,
+              when  <i>site</i>  is listed in $<b><a href="postconf.5.html#mydestination">mydestination</a></b>, or when it is listed in
+              $<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b> or $<b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
 
        @<i>domain address</i>
-              Replace other addresses in <i>domain</i> by <i>address</i>.  This
-              form has the lowest precedence.
+              Replace other addresses in <i>domain</i> by <i>address</i>.  This form has the
+              lowest precedence.
 
 <b>RESULT ADDRESS REWRITING</b>
        The lookup result is subject to address rewriting:
 
-       <b>o</b>      When  the  result  has  the  form @<i>otherdomain</i>, the
-              result becomes the same <i>user</i> in <i>otherdomain</i>.
+       <b>o</b>      When  the  result  has the form @<i>otherdomain</i>, the result becomes
+              the same <i>user</i> in <i>otherdomain</i>.
 
-       <b>o</b>      When "<b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a>=yes</b>", append  "<b>@$<a href="postconf.5.html#myorigin">myorigin</a></b>"
-              to addresses without "@domain".
+       <b>o</b>      When "<b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a>=yes</b>", append "<b>@$<a href="postconf.5.html#myorigin">myorigin</a></b>" to  addresses
+              without "@domain".
 
-       <b>o</b>      When "<b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a>=yes</b>", append "<b>.$<a href="postconf.5.html#mydomain">mydomain</a></b>"
-              to addresses without ".domain".
+       <b>o</b>      When "<b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a>=yes</b>", append "<b>.$<a href="postconf.5.html#mydomain">mydomain</a></b>" to addresses
+              without ".domain".
 
 <b>ADDRESS EXTENSION</b>
-       When a mail address localpart contains the optional recip-
-       ient  delimiter  (e.g., <i>user+foo</i>@<i>domain</i>), the lookup order
-       becomes: <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and
-       @<i>domain</i>.
+       When a mail address localpart contains the optional recipient delimiter
+       (e.g.,  <i>user+foo</i>@<i>domain</i>),  the  lookup  order becomes: <i>user+foo</i>@<i>domain</i>,
+       <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and @<i>domain</i>.
 
-       The   <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter  controls
-       whether an unmatched address extension  (<i>+foo</i>)  is  propa-
-       gated to the result of table lookup.
+       The  <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>  parameter  controls   whether   an
+       unmatched address extension (<i>+foo</i>) is propagated to the result of table
+       lookup.
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This  section  describes how the table lookups change when
-       the table is given in the form of regular expressions. For
-       a  description  of regular expression lookup table syntax,
-       see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
+       This section describes how the table lookups change when the  table  is
+       given  in the form of regular expressions. For a description of regular
+       expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each pattern is a regular expression that  is  applied  to
-       the entire address being looked up. Thus, <i>user@domain</i> mail
-       addresses are not broken up into their  <i>user</i>  and  <i>@domain</i>
-       constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and
-       <i>foo</i>.
+       Each pattern is a regular expression that  is  applied  to  the  entire
+       address  being looked up. Thus, <i>user@domain</i> mail addresses are not bro-
+       ken up into their <i>user</i> and <i>@domain</i> constituent parts, nor  is  <i>user+foo</i>
+       broken up into <i>user</i> and <i>foo</i>.
 
-       Patterns are applied in the order as specified in the  ta-
-       ble,  until  a  pattern  is  found that matches the search
-       string.
+       Patterns  are  applied  in the order as specified in the table, until a
+       pattern is found that matches the search string.
 
-       Results are the same as with indexed  file  lookups,  with
-       the  additional feature that parenthesized substrings from
-       the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
+       Results are the same as with indexed file lookups, with the  additional
+       feature  that parenthesized substrings from the pattern can be interpo-
+       lated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>TCP-BASED TABLES</b>
-       This section describes how the table lookups  change  when
-       lookups are directed to a TCP-based server. For a descrip-
-       tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
-       <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.4.
+       This section describes how the table lookups change  when  lookups  are
+       directed   to  a  TCP-based  server.  For  a  description  of  the  TCP
+       client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature  is  not
+       available up to and including Postfix version 2.4.
 
-       Each lookup operation uses the entire address once.  Thus,
-       <i>user@domain</i>  mail  addresses  are not broken up into their
-       <i>user</i> and <i>@domain</i> constituent parts, nor is <i>user+foo</i> broken
-       up into <i>user</i> and <i>foo</i>.
+       Each  lookup operation uses the entire address once.  Thus, <i>user@domain</i>
+       mail addresses are not broken up  into  their  <i>user</i>  and  <i>@domain</i>  con-
+       stituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
        Results are the same as with indexed file lookups.
 
 <b>EXAMPLE</b>
-       The  following  shows  a  generic  mapping with an indexed
-       file.  When mail is sent to a remote host via  SMTP,  this
-       replaces  <i>his@localdomain.local</i>  by  his ISP mail address,
-       replaces <i>her@localdomain.local</i> by her  ISP  mail  address,
-       and  replaces  other  local  addresses by his ISP account,
-       with an address extension of <i>+local</i> (this example  assumes
-       that the ISP supports "+" style address extensions).
+       The  following shows a generic mapping with an indexed file.  When mail
+       is sent to a remote host via SMTP, this replaces  <i>his@localdomain.local</i>
+       by his ISP mail address, replaces <i>her@localdomain.local</i> by her ISP mail
+       address, and replaces other local addresses by his ISP account, with an
+       address extension of <i>+local</i> (this example assumes that the ISP supports
+       "+" style address extensions).
 
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-           <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
+           <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/generic
 
        /etc/postfix/generic:
            his@localdomain.local   hisaccount@hisisp.example
            her@localdomain.local   heraccount@herisp.example
            @localdomain.local      hisaccount+local@hisisp.example
 
-       Execute  the  command "<b>postmap /etc/postfix/generic</b>" when-
-       ever the table is changed.  Instead of <b>hash</b>, some  systems
-       use  <b>dbm</b> database files. To find out what tables your sys-
-       tem supports use the command "<b>postconf -m</b>".
+       Execute the command "<b>postmap /etc/postfix/generic</b>" whenever  the  table
+       is  changed.   Instead of <b>hash</b>, some systems use <b>dbm</b> database files. To
+       find out what tables your system supports  use  the  command  "<b>postconf</b>
+       <b>-m</b>".
 
 <b>BUGS</b>
-       The table format does not understand quoting  conventions.
+       The table format does not understand quoting conventions.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant.
-       The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a>  parameters  are especially relevant.  The text
+       below provides only a  parameter  summary.  See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for  more
+       details including examples.
 
        <b><a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a></b>
-              Address  mapping  lookup  table  for  envelope  and
-              header sender and recipient addresses while  deliv-
-              ering mail via SMTP.
+              Address  mapping lookup table for envelope and header sender and
+              recipient addresses while delivering mail via SMTP.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>
-              A  list  of  address rewriting or forwarding mecha-
-              nisms that propagate an address extension from  the
-              original  address  to  the result.  Specify zero or
-              more  of  <b>canonical</b>,   <b>virtual</b>,   <b>alias</b>,   <b>forward</b>,
-              <b>include</b>, or <b>generic</b>.
+              A list of address rewriting or forwarding mechanisms that propa-
+              gate  an  address  extension  from  the  original address to the
+              result.  Specify zero or more of <b>canonical</b>, <b>virtual</b>, <b>alias</b>, <b>for-</b>
+              <b>ward</b>, <b>include</b>, or <b>generic</b>.
 
        Other parameters of interest:
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
-              The  network  interface  addresses that this system
-              receives mail on.  You need to stop and start Post-
-              fix when this parameter changes.
+              The  network  interface addresses that this system receives mail
+              on.  You need to stop and  start  Postfix  when  this  parameter
+              changes.
 
        <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>
-              Other interfaces that this machine receives mail on
-              by way of a proxy agent or network address transla-
-              tor.
+              Other  interfaces that this machine receives mail on by way of a
+              proxy agent or network address translator.
 
        <b><a href="postconf.5.html#mydestination">mydestination</a></b>
-              List  of  domains  that  this mail system considers
-              local.
+              List of domains that this mail system considers local.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a></b>
               The domain that is appended to locally-posted mail.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a></b>
-              Give special treatment to <b>owner-</b><i>xxx</i> and <i>xxx</i><b>-request</b>
-              addresses.
+              Give special treatment to <b>owner-</b><i>xxx</i> and <i>xxx</i><b>-request</b> addresses.
 
 <b>SEE ALSO</b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
@@ -227,8 +206,7 @@ GENERIC(5)                                                          GENERIC(5)
        <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a>, configuration examples
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>HISTORY</b>
        A genericstable feature appears in the Sendmail MTA.

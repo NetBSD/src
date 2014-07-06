@@ -325,7 +325,7 @@ All the mail to these two accounts is forwarded to an inside address.
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
 3 
 4 /etc/postfix/virtual:
 5     postmaster      postmaster@example.com
@@ -368,8 +368,8 @@ is the real purpose of the firewall email function. </p>
  9b        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 10b        ...spam blocking rules....
 <br>
-11     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = hash:/etc/postfix/relay_recipients
-12     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+11     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/relay_recipients
+12     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 13 
 14 /etc/postfix/relay_recipients:
 15     user1@example.com   x
@@ -441,7 +441,7 @@ follows:  </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
 3 
 4 /etc/postfix/virtual:
 5     root     root@localhost
@@ -483,7 +483,7 @@ discussed the first half of this document. </p>
 <blockquote>
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
- 2     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+ 2     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
  3     <a href="postconf.5.html#relayhost">relayhost</a> =
  4     # Optional for a machine that isn't "always on"
  5     #<a href="postconf.5.html#fallback_relay">fallback_relay</a> = [gateway.example.com]
@@ -555,7 +555,7 @@ is all you need: </p>
 11     # You must specify your NAT/proxy external address.
 12     #<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> = 1.2.3.4
 13 
-14     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = hash:/etc/postfix/relay_recipients
+14     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/relay_recipients
 15 
 16 /etc/postfix/relay_recipients:
 17     user1@the.backed-up.domain.tld   x
@@ -570,7 +570,7 @@ need the above, plus: </p>
 <blockquote>
 <pre>
 20 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-21     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+21     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 22 
 23 /etc/postfix/transport:
 24     the.backed-up.domain.tld       relay:[their.mail.host.tld]
@@ -754,7 +754,7 @@ discussed the first half of this document. </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
+2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/generic
 3 
 4 /etc/postfix/generic:
 5     his@localdomain.local             hisaccount@hisisp.example
@@ -805,9 +805,9 @@ discussed the first half of this document. </p>
  2     <a href="postconf.5.html#myhostname">myhostname</a> = hostname.localdomain
  3     <a href="postconf.5.html#mydomain">mydomain</a> = localdomain
  4 
- 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
+ 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/canonical
  6 
- 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
  8 
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com

@@ -119,7 +119,7 @@ this:
         endif
         /^Message-ID:.* <!&!/ DUNNO
         /^Message-ID:.*@(porcupine\.org)/
-    	reject forged domain name in Message-ID: header: $1
+            reject forged domain name in Message-ID: header: $1
 
     /etc/postfix/body_checks:
         # Do not indent the patterns between "if" and "endif".
@@ -134,7 +134,7 @@ this:
         endif
         /^[> ]*Message-ID:.* <!&!/ DUNNO
         /^[> ]*Message-ID:.*@(porcupine\.org)/
-    	reject forged domain name in Message-ID: header: $1
+            reject forged domain name in Message-ID: header: $1
 
 Notes:
 

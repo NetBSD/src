@@ -1,4 +1,4 @@
-/*	$NetBSD: xtext.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: xtext.h,v 1.1.1.2 2014/07/06 19:27:52 tron Exp $	*/
 
 #ifndef _XTEXT_H_INCLUDED_
 #define _XTEXT_H_INCLUDED_
@@ -24,6 +24,7 @@
 extern VSTRING *xtext_quote(VSTRING *, const char *, const char *);
 extern VSTRING *xtext_quote_append(VSTRING *, const char *, const char *);
 extern VSTRING *xtext_unquote(VSTRING *, const char *);
+extern VSTRING *xtext_unquote_append(VSTRING *, const char *);
 
 /* LICENSE
 /* .ad

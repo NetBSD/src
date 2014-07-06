@@ -185,85 +185,36 @@ to configure and operate the Dovecot authentication server.  </p>
 <h4><a name="server_dovecot_comm">Postfix to Dovecot SASL communication</a></h4>
 
 <p> Communication between the Postfix SMTP server and Dovecot SASL
-happens over a UNIX-domain socket or over a TCP socket.  Dovecot 1
-supports UNIX-domain socket communication only. </p>
+happens over a UNIX-domain socket or over a TCP socket. We will
+be using a UNIX-domain socket for better privacy. </p>
 
-<h5>UNIX-domain socket communication</h5>
-
-<p> The socket
-pathname and the list of mechanisms offered to Postfix need to be
-specified on the Dovecot server side in <code>dovecot.conf</code>.
-</p>
-
-<p> The following example assumes that the Postfix queue is under
-<code>/var/spool/postfix/</code>. </p>
+<p> The following fragment for Dovecot version 2 assumes that the
+Postfix queue is under <code>/var/spool/postfix/</code>. </p>
 
 <blockquote>
 <pre>
- 1 /etc/dovecot.conf:
- 2     auth default {
- 3       mechanisms = plain login
- 4         passdb pam {
- 5         }
- 6         userdb passwd {
- 7         }
- 8         socket listen {
- 9         client {
-10           path = /var/spool/postfix/private/auth
-11           mode = 0660
-12           user = postfix
-13           group = postfix
-14         }
-15       }
-16     }
+ 1 conf.d/10-master.conf:
+ 2     service auth {
+ 3       ...
+ 4       unix_listener /var/spool/postfix/private/auth {
+ 5         mode = 0660
+ 6         # Assuming the default Postfix user and group
+ 7         user = postfix
+ 8         group = postfix        
+ 9       }
+10       ...
+11     }
+12 
+13 conf.d/10-auth.conf
+14     auth_mechanisms = plain login
 </pre>
 </blockquote>
 
-<p> Line 3 provides <code>plain</code> and <code>login</code> as
-mechanisms for the Postfix SMTP server, line 10 places the Dovecot
-SASL socket in <code>/var/spool/postfix/private/auth</code>, and
-lines 11-13 limit read+write permissions to user and group
-<code>postfix</code> only. </p>
-
-<p> Proceed with the section "<a href="#server_sasl_enable">Enabling
-SASL authentication and authorization in the Postfix SMTP server</a>"
-to turn on and use SASL in the Postfix SMTP server.  </p>
-
-<h5>TCP socket communication</h5>
-
-<p> The TCP port and the list of mechanisms offered to Postfix need
-to be specified on the Dovecot server side in <code>10-auth.conf</code>
-and <code>10-master.conf</code>. </p>
-
-<p> The following examples assume that Postfix should communicate
-with Dovecot on TCP port 12345. </p>
-
-<blockquote>
-<pre>
-1 /etc/dovecot/conf.d/10-auth.conf:
-2     auth_mechanisms = plain login
-</pre>
-</blockquote>
-
-<p> Line 2 provides plain and login as mechanisms for the Postfix
-SMTP server. </p>
-
-<blockquote>
-<pre>
-1 /etc/dovecot/conf.d/10-master.conf:
-2     service auth {
-3       unix_listener auth-userdb {
-4       }
-5       inet_listener {
-6         port = 12345
-7       }
-8     }
-</pre>
-</blockquote>
-
-<p> Line 5 creates a new TCP socket and line 6 specifies port 12345
-where Dovecot SASL should wait for Postfix authentication requests.
-</p>
+<p> Line 4 places the Dovecot SASL socket in
+<code>/var/spool/postfix/private/auth</code>, lines 5-8 limit
+read+write permissions to user and group <code>postfix</code> only,
+and line 14 provides <code>plain</code> and <code>login</code> as
+mechanisms for the Postfix SMTP server. </p>
 
 <p> Proceed with the section "<a href="#server_sasl_enable">Enabling
 SASL authentication and authorization in the Postfix SMTP server</a>"
@@ -942,8 +893,9 @@ stored as plaintext. </p>
 <p> If you must store encrypted passwords, you cannot use the ldapdb
 auxprop plugin. Instead, you can use "<code>saslauthd -a ldap</code>"
 to query the LDAP database directly, with appropriate configuration
-in <code>saslauthd.conf</code>. This may be documented in a later
-version of this document.  You will not be able to use any of the
+in <code>saslauthd.conf</code>, <a
+href="http://git.cyrusimap.org/cyrus-sasl/tree/saslauthd/LDAP_SASLAUTHD">as
+described here</a>.  You will not be able to use any of the
 methods that require access to plaintext passwords, such as the
 shared-secret methods CRAM-MD5 and DIGEST-MD5.  </p>
 
@@ -1444,7 +1396,8 @@ restriction above will reject the sender address in the MAIL FROM
 command if <code>smtpd_sender_login_maps</code> does not specify
 the SMTP client's login name as an owner of that address. </p>
 
-<p> See also <code>reject_authenticated_sender_login_mismatch</code> and
+<p> See also <code>reject_authenticated_sender_login_mismatch</code>,
+<code>reject_known_sender_login_mismatch</code>, and
 <code>reject_unauthenticated_sender_login_mismatch</code> for additional
 control over the SASL login name and the envelope sender. </p>
 
@@ -1453,6 +1406,30 @@ control over the SASL login name and the envelope sender. </p>
 <p> Postfix provides a wide range of SASL authentication configuration
 options.  The next section lists a few that are discussed frequently.
 See postconf(5) for a complete list. </p>
+
+<h4><a name="sasl_access">Per-account access control</a></h4>
+
+<p> Postfix can implement policies that depend on the SASL login
+name (Postfix 2.11 and later).  Typically this is used to HOLD or
+REJECT mail from accounts whose credentials have been compromised.
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    smtpd_recipient_restrictions = 
+	permit_mynetworks 
+	check_sasl_access hash:/etc/postfix/sasl_access
+	permit_sasl_authenticated
+	...
+
+/etc/postfix/sasl_access:
+     # Use this when smtpd_sasl_local_domain is empty.
+     username	HOLD
+     # Use this when smtpd_sasl_local_domain=example.com.
+     username@example.com HOLD
+</pre>
+</blockquote>
 
 <h4><a name="id397172">Default  authentication domain</a></h4>
 

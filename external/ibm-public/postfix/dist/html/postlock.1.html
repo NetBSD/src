@@ -14,46 +14,41 @@ POSTLOCK(1)                                                        POSTLOCK(1)
                <b>[-v</b>] <i>file command...</i>
 
 <b>DESCRIPTION</b>
-       The  <a href="postlock.1.html"><b>postlock</b>(1)</a>  command locks <i>file</i> for exclusive access,
-       and executes <i>command</i>. The  locking  method  is  compatible
-       with the Postfix UNIX-style local delivery agent.
+       The  <a href="postlock.1.html"><b>postlock</b>(1)</a>  command locks <i>file</i> for exclusive access, and executes
+       <i>command</i>. The locking method is compatible with the  Postfix  UNIX-style
+       local delivery agent.
 
        Options:
 
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              Read  the  <a href="postconf.5.html"><b>main.cf</b></a>  configuration file in the named
-              directory  instead  of  the  default  configuration
-              directory.
+              Read  the  <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  in  the named directory
+              instead of the default configuration directory.
 
        <b>-l</b> <i>lock</i><b>_</b><i>style</i>
-              Override the locking method specified via the <b><a href="postconf.5.html#mailbox_delivery_lock">mail</a>-</b>
-              <b><a href="postconf.5.html#mailbox_delivery_lock">box_delivery_lock</a></b>  configuration   parameter   (see
-              below).
+              Override the locking method  specified  via  the  <b><a href="postconf.5.html#mailbox_delivery_lock">mailbox_deliv</a>-</b>
+              <b><a href="postconf.5.html#mailbox_delivery_lock">ery_lock</a></b> configuration parameter (see below).
 
-       <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple <b>-v</b> options  make  the  software  increasingly
-              verbose.
+       <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
+              options make the software increasingly verbose.
 
        Arguments:
 
-       <i>file</i>   A  mailbox  file.  The  user should have read/write
-              permission.
+       <i>file</i>   A mailbox file. The user should have read/write permission.
 
        <i>command...</i>
-              The command to execute while  <i>file</i>  is  locked  for
-              exclusive   access.    The   command   is  executed
-              directly, i.e. without interpretation  by  a  shell
-              command interpreter.
+              The command to  execute  while  <i>file</i>  is  locked  for  exclusive
+              access.   The  command is executed directly, i.e. without inter-
+              pretation by a shell command interpreter.
 
 <b>DIAGNOSTICS</b>
-       The  result  status  is  75 (EX_TEMPFAIL) when <a href="postlock.1.html"><b>postlock</b>(1)</a>
-       could not perform the requested operation.  Otherwise, the
-       exit status is the exit status from the command.
+       The result status is 75 (EX_TEMPFAIL) when <a href="postlock.1.html"><b>postlock</b>(1)</a> could  not  per-
+       form  the  requested operation.  Otherwise, the exit status is the exit
+       status from the command.
 
 <b>BUGS</b>
-       With  remote  file  systems, the ability to acquire a lock
-       does not necessarily  eliminate  access  conflicts.  Avoid
-       file access by processes running on different machines.
+       With remote file systems, the ability to acquire a lock does not neces-
+       sarily  eliminate access conflicts. Avoid file access by processes run-
+       ning on different machines.
 
 <b>ENVIRONMENT</b>
        <b>MAIL_CONFIG</b>
@@ -63,48 +58,44 @@ POSTLOCK(1)                                                        POSTLOCK(1)
               Enable verbose logging for debugging purposes.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
-       to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
-       ples.
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
+       gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
+       <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
 <b>LOCKING CONTROLS</b>
        <b><a href="postconf.5.html#deliver_lock_attempts">deliver_lock_attempts</a> (20)</b>
-              The maximal number of attempts to acquire an exclu-
-              sive lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
+              The maximal number of attempts to acquire an exclusive lock on a
+              mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#deliver_lock_delay">deliver_lock_delay</a> (1s)</b>
-              The  time  between attempts to acquire an exclusive
-              lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
+              The  time  between  attempts  to  acquire an exclusive lock on a
+              mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#stale_lock_time">stale_lock_time</a> (500s)</b>
-              The time after  which  a  stale  exclusive  mailbox
-              lockfile is removed.
+              The time after which  a  stale  exclusive  mailbox  lockfile  is
+              removed.
 
        <b><a href="postconf.5.html#mailbox_delivery_lock">mailbox_delivery_lock</a> (see 'postconf -d' output)</b>
-              How  to  lock  a UNIX-style <a href="local.8.html"><b>local</b>(8)</a> mailbox before
-              attempting delivery.
+              How  to  lock  a  UNIX-style  <a href="local.8.html"><b>local</b>(8)</a> mailbox before attempting
+              delivery.
 
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#fork_attempts">fork_attempts</a> (5)</b>
-              The maximal number of attempts to  fork()  a  child
-              process.
+              The maximal number of attempts to fork() a child process.
 
        <b><a href="postconf.5.html#fork_delay">fork_delay</a> (1s)</b>
-              The  delay  between  attempts  to  fork()  a  child
-              process.
+              The delay between attempts to fork() a child process.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              figuration files.
 
 <b>SEE ALSO</b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

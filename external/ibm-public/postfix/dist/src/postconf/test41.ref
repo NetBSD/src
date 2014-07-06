@@ -1,0 +1,12 @@
+foo        unix  -       n       n       -       0       other
+bar        unix  -       n       n       -       0       other
+    -o xxx=yyy
+    -o aaa=bbb
+baz        unix  -       n       n       -       0       other
+foo        unix  -       n       n       -       0       other
+bar        unix  -       n       n       -       0       other
+    -o xxx=YYY
+    -o aaa=BBB
+baz        unix  -       n       n       -       0       other
+bar/unix/aaa = BBB
+bar/unix/xxx = YYY

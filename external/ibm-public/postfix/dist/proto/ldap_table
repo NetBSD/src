@@ -4,9 +4,9 @@
 # SUMMARY
 #	Postfix LDAP client configuration
 # SYNOPSIS
-#	\fBpostmap -q "\fIstring\fB" ldap:/etc/postfix/filename\fR
+#	\fBpostmap -q "\fIstring\fB" ldap:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - ldap:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - ldap:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
@@ -642,7 +642,7 @@
 #	\fBdemand\fR value of \fBTLS_REQCERT\fR in LDAP client configuration
 #	files.
 # .sp
-#	The "try" and "never" values of \fBTLS_REQCERT\fR have no equivalents
+#	The "try" and "allow" values of \fBTLS_REQCERT\fR have no equivalents
 #	here. They are not available with OpenLDAP 2.0, and in any case have
 #	questionable security properties. Either you want TLS verified LDAP
 #	connections, or you don't.

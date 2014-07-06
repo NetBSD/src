@@ -1,2 +1,4 @@
 whatever   unix  -       n       n       -       0       other
-    -o mydestination=yyy -o always_bcc=ccc -o aaa=ccc
+    -o mydestination=yyy
+    -o always_bcc=ccc
+    -o aaa=ccc

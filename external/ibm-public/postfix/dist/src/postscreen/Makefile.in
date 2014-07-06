@@ -16,8 +16,9 @@ CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG=
 PROG	= postscreen
 INC_DIR = ../../include
-LIBS	= ../../lib/libmaster.a ../../lib/libtls.a ../../lib/libglobal.a \
-	../../lib/libutil.a
+# Fake libdns dependency, for early-binding shared-library builds.
+LIBS	= ../../lib/libmaster.a ../../lib/libtls.a ../../lib/libdns.a \
+	../../lib/libglobal.a ../../lib/libutil.a
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 
@@ -385,6 +386,7 @@ postscreen_tests.o: ../../include/match_list.h
 postscreen_tests.o: ../../include/msg.h
 postscreen_tests.o: ../../include/myaddrinfo.h
 postscreen_tests.o: ../../include/myflock.h
+postscreen_tests.o: ../../include/name_code.h
 postscreen_tests.o: ../../include/server_acl.h
 postscreen_tests.o: ../../include/string_list.h
 postscreen_tests.o: ../../include/sys_defs.h

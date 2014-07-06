@@ -37,7 +37,7 @@
 /^(static| )*(const +)?CONFIG_STR_FN_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	str_fn_vars["char *" substr($3,2,length($3)-2) ";"] = 1
-	$2 = "pc_" $2
+	$2 = "pcf_" $2
 	if (++stab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    str_fn_table[$0] = 1
 	}

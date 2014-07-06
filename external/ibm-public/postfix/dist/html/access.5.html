@@ -17,110 +17,96 @@ ACCESS(5)                                                            ACCESS(5)
        <b>postmap -q - /etc/postfix/access</b> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
-       This  document  describes  access  control  on remote SMTP
-       client information: host  names,  network  addresses,  and
-       envelope  sender or recipient addresses; it is implemented
-       by the  Postfix  SMTP  server.   See  <a href="header_checks.5.html"><b>header_checks</b>(5)</a>  or
-       <a href="header_checks.5.html"><b>body_checks</b>(5)</a>  for access control on the content of email
-       messages.
+       This  document  describes access control on remote SMTP client informa-
+       tion: host names, network addresses, and envelope sender  or  recipient
+       addresses;   it  is  implemented  by  the  Postfix  SMTP  server.   See
+       <a href="header_checks.5.html"><b>header_checks</b>(5)</a> or <a href="header_checks.5.html"><b>body_checks</b>(5)</a> for access control on the content of
+       email messages.
 
-       Normally, the <a href="access.5.html"><b>access</b>(5)</a> table is specified as a text  file
-       that  serves  as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The
-       result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
-       fast  searching  by  the  mail system. Execute the command
-       "<b>postmap /etc/postfix/access</b>" to rebuild an  indexed  file
+       Normally,  the  <a href="access.5.html"><b>access</b>(5)</a> table is specified as a text file that serves
+       as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The result, an indexed file in <b>dbm</b>
+       or  <b>db</b>  format,  is used for fast searching by the mail system. Execute
+       the command "<b>postmap /etc/postfix/access</b>" to rebuild  an  indexed  file
        after changing the corresponding text file.
 
-       When  the  table  is provided via other means such as NIS,
-       LDAP or SQL, the same lookups are  done  as  for  ordinary
-       indexed files.
+       When  the  table  is provided via other means such as NIS, LDAP or SQL,
+       the same lookups are done as for ordinary indexed files.
 
-       Alternatively,  the  table  can  be provided as a regular-
-       expression map where patterns are given as regular expres-
-       sions,  or lookups can be directed to TCP-based server. In
-       those cases, the lookups are done in a slightly  different
-       way  as  described below under "REGULAR EXPRESSION TABLES"
-       or "TCP-BASED TABLES".
+       Alternatively, the table can be provided as  a  regular-expression  map
+       where  patterns  are  given  as  regular expressions, or lookups can be
+       directed to TCP-based server. In those cases, the lookups are done in a
+       slightly  different  way  as  described below under "REGULAR EXPRESSION
+       TABLES" or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
-       The search string is folded to lowercase  before  database
-       lookup.  As  of Postfix 2.3, the search string is not case
-       folded with database types such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>:  whose
-       lookup fields can match both upper and lower case.
+       The search string is folded to lowercase before database lookup. As  of
+       Postfix  2.3,  the search string is not case folded with database types
+       such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both  upper  and
+       lower case.
 
 <b>TABLE FORMAT</b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern action</i>
-              When <i>pattern</i> matches a mail address, domain or host
-              address, perform the corresponding <i>action</i>.
+              When  <i>pattern</i>  matches  a  mail address, domain or host address,
+              perform the corresponding <i>action</i>.
 
        blank lines and comments
-              Empty  lines and whitespace-only lines are ignored,
-              as are lines whose first  non-whitespace  character
-              is a `#'.
+              Empty lines and whitespace-only lines are ignored, as are  lines
+              whose first non-whitespace character is a `#'.
 
        multi-line text
-              A  logical  line starts with non-whitespace text. A
-              line that starts with whitespace continues a  logi-
-              cal line.
+              A  logical  line  starts  with  non-whitespace text. A line that
+              starts with whitespace continues a logical line.
 
 <b>EMAIL ADDRESS PATTERNS</b>
-       With lookups from indexed files such as DB or DBM, or from
-       networked tables such as NIS, LDAP or  SQL,  patterns  are
-       tried in the order as listed below:
+       With lookups from indexed files such as DB or DBM,  or  from  networked
+       tables  such  as  NIS,  LDAP or SQL, patterns are tried in the order as
+       listed below:
 
        <i>user</i>@<i>domain</i>
               Matches the specified mail address.
 
        <i>domain.tld</i>
-              Matches  <i>domain.tld</i>  as the domain part of an email
-              address.
+              Matches <i>domain.tld</i> as the domain part of an email address.
 
-              The pattern <i>domain.tld</i> also matches subdomains, but
-              only when the string <b>smtpd_access_maps</b> is listed in
-              the Postfix  <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b>  con-
-              figuration setting.
+              The pattern <i>domain.tld</i> also matches subdomains,  but  only  when
+              the  string  <b>smtpd_access_maps</b>  is  listed  in  the Postfix <b><a href="postconf.5.html#parent_domain_matches_subdomains">par</a>-</b>
+              <b><a href="postconf.5.html#parent_domain_matches_subdomains">ent_domain_matches_subdomains</a></b> configuration setting.
 
        <i>.domain.tld</i>
-              Matches subdomains of <i>domain.tld</i>, but only when the
-              string <b>smtpd_access_maps</b> is not listed in the Post-
-              fix  <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b> configuration
-              setting.
+              Matches subdomains of  <i>domain.tld</i>,  but  only  when  the  string
+              <b>smtpd_access_maps</b>   is   not   listed   in   the   Postfix  <b><a href="postconf.5.html#parent_domain_matches_subdomains">par</a>-</b>
+              <b><a href="postconf.5.html#parent_domain_matches_subdomains">ent_domain_matches_subdomains</a></b> configuration setting.
 
-       <i>user</i>@  Matches all mail addresses with the specified  user
-              part.
+       <i>user</i>@  Matches all mail addresses with the specified user part.
 
-       Note:  lookup  of  the null sender address is not possible
-       with some types of lookup table. By default, Postfix  uses
-       &lt;&gt;  as  the  lookup  key  for such addresses. The value is
-       specified with the <b><a href="postconf.5.html#smtpd_null_access_lookup_key">smtpd_null_access_lookup_key</a></b>  parameter
-       in the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file.
+       Note: lookup of the null sender address is not possible with some types
+       of lookup table. By default, Postfix uses &lt;&gt; as the lookup key for such
+       addresses. The value is specified with the <b><a href="postconf.5.html#smtpd_null_access_lookup_key">smtpd_null_access_lookup_key</a></b>
+       parameter in the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file.
 
 <b>EMAIL ADDRESS EXTENSION</b>
-       When a mail address localpart contains the optional recip-
-       ient delimiter (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order
-       becomes:  <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>domain</i>, <i>user+foo</i>@,
-       and <i>user</i>@.
+       When a mail address localpart contains the optional recipient delimiter
+       (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order  becomes:  <i>user+foo</i>@<i>domain</i>,
+       <i>user</i>@<i>domain</i>, <i>domain</i>, <i>user+foo</i>@, and <i>user</i>@.
 
 <b>HOST NAME/ADDRESS PATTERNS</b>
-       With lookups from indexed files such as DB or DBM, or from
-       networked  tables  such as NIS, LDAP or SQL, the following
-       lookup patterns are examined in the order as listed:
+       With  lookups  from  indexed files such as DB or DBM, or from networked
+       tables such as NIS, LDAP or SQL,  the  following  lookup  patterns  are
+       examined in the order as listed:
 
        <i>domain.tld</i>
               Matches <i>domain.tld</i>.
 
-              The pattern <i>domain.tld</i> also matches subdomains, but
-              only when the string <b>smtpd_access_maps</b> is listed in
-              the Postfix  <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b>  con-
-              figuration setting.
+              The  pattern  <i>domain.tld</i>  also matches subdomains, but only when
+              the string <b>smtpd_access_maps</b>  is  listed  in  the  Postfix  <b><a href="postconf.5.html#parent_domain_matches_subdomains">par</a>-</b>
+              <b><a href="postconf.5.html#parent_domain_matches_subdomains">ent_domain_matches_subdomains</a></b> configuration setting.
 
        <i>.domain.tld</i>
-              Matches subdomains of <i>domain.tld</i>, but only when the
-              string <b>smtpd_access_maps</b> is not listed in the Post-
-              fix  <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b> configuration
-              setting.
+              Matches  subdomains  of  <i>domain.tld</i>,  but  only  when the string
+              <b>smtpd_access_maps</b>  is   not   listed   in   the   Postfix   <b><a href="postconf.5.html#parent_domain_matches_subdomains">par</a>-</b>
+              <b><a href="postconf.5.html#parent_domain_matches_subdomains">ent_domain_matches_subdomains</a></b> configuration setting.
 
        <i>net.work.addr.ess</i>
 
@@ -128,23 +114,21 @@ ACCESS(5)                                                            ACCESS(5)
 
        <i>net.work</i>
 
-       <i>net</i>    Matches the specified IPv4 host address or  subnet-
-              work.  An  IPv4  host address is a sequence of four
-              decimal octets separated by ".".
+       <i>net</i>    Matches  the  specified IPv4 host address or subnetwork. An IPv4
+              host address is a sequence of four decimal octets  separated  by
+              ".".
 
-              Subnetworks are matched  by  repeatedly  truncating
-              the last ".octet" from the remote IPv4 host address
-              string until a match is found in the access  table,
-              or until further truncation is not possible.
+              Subnetworks  are  matched  by  repeatedly  truncating  the  last
+              ".octet" from the remote IPv4 host address string until a  match
+              is found in the access table, or until further truncation is not
+              possible.
 
-              NOTE 1: The access map lookup key must be in canon-
-              ical form: do not specify unnecessary null  charac-
-              ters,  and  do not enclose network address informa-
-              tion with "[]" characters.
+              NOTE 1: The access map lookup key must be in canonical form:  do
+              not specify unnecessary null characters, and do not enclose net-
+              work address information with "[]" characters.
 
-              NOTE 2: use the <b>cidr</b> lookup table type  to  specify
-              network/netmask  patterns.  See  <a href="cidr_table.5.html"><b>cidr_table</b>(5)</a>  for
-              details.
+              NOTE 2: use the <b>cidr</b> lookup table type to  specify  network/net-
+              mask patterns. See <a href="cidr_table.5.html"><b>cidr_table</b>(5)</a> for details.
 
        <i>net:work:addr:ess</i>
 
@@ -152,27 +136,25 @@ ACCESS(5)                                                            ACCESS(5)
 
        <i>net:work</i>
 
-       <i>net</i>    Matches the specified IPv6 host address or  subnet-
-              work.  An  IPv6 host address is a sequence of three
-              to eight hexadecimal octet pairs separated by  ":".
+       <i>net</i>    Matches  the  specified IPv6 host address or subnetwork. An IPv6
+              host address is a sequence of three to eight  hexadecimal  octet
+              pairs separated by ":".
 
-              Subnetworks  are  matched  by repeatedly truncating
-              the last ":octetpair" from  the  remote  IPv6  host
-              address string until a match is found in the access
-              table, or until further truncation is not possible.
+              Subnetworks  are  matched  by  repeatedly  truncating  the  last
+              ":octetpair" from the remote IPv6 host address  string  until  a
+              match  is found in the access table, or until further truncation
+              is not possible.
 
-              NOTE 1: the truncation and comparison are done with
-              the string representation of the IPv6 host address.
-              Thus, not all the ":" subnetworks will be tried.
+              NOTE 1: the truncation and comparison are done with  the  string
+              representation  of  the IPv6 host address. Thus, not all the ":"
+              subnetworks will be tried.
 
-              NOTE 2: The access map lookup key must be in canon-
-              ical form: do not specify unnecessary null  charac-
-              ters,  and  do not enclose network address informa-
-              tion with "[]" characters.
+              NOTE 2: The access map lookup key must be in canonical form:  do
+              not specify unnecessary null characters, and do not enclose net-
+              work address information with "[]" characters.
 
-              NOTE 3: use the <b>cidr</b> lookup table type  to  specify
-              network/netmask  patterns.  See  <a href="cidr_table.5.html"><b>cidr_table</b>(5)</a>  for
-              details.
+              NOTE 3: use the <b>cidr</b> lookup table type to  specify  network/net-
+              mask patterns. See <a href="cidr_table.5.html"><b>cidr_table</b>(5)</a> for details.
 
               IPv6 support is available in Postfix 2.2 and later.
 
@@ -180,282 +162,255 @@ ACCESS(5)                                                            ACCESS(5)
        <b>OK</b>     Accept the address etc. that matches the pattern.
 
        <i>all-numerical</i>
-              An all-numerical result is treated as OK. This for-
-              mat is generated by address-based relay  authoriza-
-              tion schemes such as pop-before-smtp.
+              An  all-numerical result is treated as OK. This format is gener-
+              ated by address-based relay authorization schemes such  as  pop-
+              before-smtp.
+
+       For other accept actions, see "OTHER ACTIONS" below.
 
 <b>REJECT ACTIONS</b>
-       Postfix  version  2.3  and  later  support enhanced status
-       codes as defined in <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When no code  is  specified
-       at  the  beginning  of  the  <i>text</i> below, Postfix inserts a
-       default enhanced status code of "5.7.1"  in  the  case  of
-       reject  actions, and "4.7.1" in the case of defer actions.
-       See "ENHANCED STATUS CODES" below.
+       Postfix  version 2.3 and later support enhanced status codes as defined
+       in <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When no code is specified at the beginning  of  the  <i>text</i>
+       below, Postfix inserts a default enhanced status code of "5.7.1" in the
+       case of reject actions, and "4.7.1" in the case of defer  actions.  See
+       "ENHANCED STATUS CODES" below.
 
        <b>4</b><i>NN text</i>
 
        <b>5</b><i>NN text</i>
-              Reject the address etc. that matches  the  pattern,
-              and respond with the numerical three-digit code and
-              text. <b>4</b><i>NN</i> means "try again later", while <b>5</b><i>NN</i>  means
-              "do not try again".
+              Reject  the  address  etc. that matches the pattern, and respond
+              with the numerical three-digit code and  text.  <b>4</b><i>NN</i>  means  "try
+              again later", while <b>5</b><i>NN</i> means "do not try again".
 
-              The  following  responses  have special meaning for
-              the Postfix SMTP server:
+              The  following  responses  have  special meaning for the Postfix
+              SMTP server:
 
               <b>421</b> <i>text</i> (Postfix 2.3 and later)
 
               <b>521</b> <i>text</i> (Postfix 2.6 and later)
-                     After responding with the  numerical  three-
-                     digit  code and text, disconnect immediately
-                     from the SMTP client.  This  frees  up  SMTP
-                     server  resources  so  that they can be made
+                     After responding with the numerical three-digit code  and
+                     text,  disconnect immediately from the SMTP client.  This
+                     frees up SMTP server resources so that they can  be  made
                      available to another SMTP client.
 
-                     Note: The "521" response should be used only
-                     with  botnets and other malware where inter-
-                     operability is of no concern.  The "send 521
-                     and  disconnect"  behavior is NOT defined in
-                     the SMTP standard.
+                     Note: The "521" response should be used only with botnets
+                     and other malware where interoperability is  of  no  con-
+                     cern.   The  "send  521  and  disconnect" behavior is NOT
+                     defined in the SMTP standard.
 
        <b>REJECT</b> <i>optional text...</i>
-              Reject the address etc. that matches  the  pattern.
-              Reply    with   "<b>$<a href="postconf.5.html#access_map_reject_code">access_map_reject_code</a></b>   <i>optional</i>
-              <i>text...</i>" when the optional text is specified,  oth-
-              erwise reply with a generic error response message.
+              Reject the address etc. that matches  the  pattern.  Reply  with
+              "<b>$<a href="postconf.5.html#access_map_reject_code">access_map_reject_code</a></b>  <i>optional  text...</i>"  when  the optional
+              text is specified, otherwise reply with a generic error response
+              message.
 
        <b>DEFER</b> <i>optional text...</i>
-              Reject the address etc. that matches  the  pattern.
-              Reply    with    "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a></b>   <i>optional</i>
-              <i>text...</i>" when the optional text is specified,  oth-
-              erwise reply with a generic error response message.
+              Reject  the  address  etc.  that matches the pattern. Reply with
+              "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a></b> <i>optional text...</i>" when the optional text
+              is specified, otherwise reply with a generic error response mes-
+              sage.
 
               This feature is available in Postfix 2.6 and later.
 
        <b>DEFER_IF_REJECT</b> <i>optional text...</i>
-              Defer  the  request if some later restriction would
-              result   in   a   REJECT   action.    Reply    with
-              "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a>   4.7.1</b>  <i>optional  text...</i>"
-              when the  optional  text  is  specified,  otherwise
-              reply with a generic error response message.
+              Defer the request if some later restriction would  result  in  a
+              REJECT action. Reply with "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a> 4.7.1</b> <i>optional</i>
+              <i>text...</i>" when the optional text is  specified,  otherwise  reply
+              with a generic error response message.
 
               Prior to Postfix 2.6, the SMTP reply code is 450.
 
               This feature is available in Postfix 2.1 and later.
 
        <b>DEFER_IF_PERMIT</b> <i>optional text...</i>
-              Defer the request if some later  restriction  would
-              result  in a an explicit or implicit PERMIT action.
-              Reply with "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a> 4.7.1</b>   <i>optional</i>
-              <i>text...</i>"  when the optional text is specified, oth-
-              erwise reply with a generic error response message.
+              Defer the request if some later restriction would result in a an
+              explicit   or    implicit    PERMIT    action.     Reply    with
+              "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a>   4.7.1</b>    <i>optional  text...</i>"  when  the
+              optional text is specified, otherwise reply with a generic error
+              response message.
 
               Prior to Postfix 2.6, the SMTP reply code is 450.
 
               This feature is available in Postfix 2.1 and later.
 
+       For other reject actions, see "OTHER ACTIONS" below.
+
 <b>OTHER ACTIONS</b>
        <i>restriction...</i>
-              Apply the named UCE restriction(s) (<b>permit</b>, <b>reject</b>,
+              Apply    the   named   UCE   restriction(s)   (<b>permit</b>,   <b>reject</b>,
               <b><a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a></b>, and so on).
 
        <b>BCC</b> <i>user@domain</i>
-              Send  one  copy  of  the  message  to the specified
-              recipient.
+              Send one copy of the message to the specified recipient.
 
-              If multiple BCC actions are  specified  within  the
-              same  SMTP  MAIL  transaction, only the last action
-              will be used.
+              If multiple BCC actions are specified within the same SMTP  MAIL
+              transaction, only the last action will be used.
 
-              This feature is not  part  of  the  stable  Postfix
-              release.
+              This feature is not part of the stable Postfix release.
 
        <b>DISCARD</b> <i>optional text...</i>
-              Claim  successful delivery and silently discard the
-              message.  Log the optional text if specified,  oth-
-              erwise log a generic message.
+              Claim successful delivery and silently discard the message.  Log
+              the optional text if specified, otherwise log a generic message.
 
-              Note:  this action currently affects all recipients
-              of the message.   To  discard  only  one  recipient
-              without  discarding  the  entire  message,  use the
-              <a href="transport.5.html">transport(5)</a> table to direct mail to the <a href="discard.8.html">discard(8)</a>
-              service.
+              Note:  this  action currently affects all recipients of the mes-
+              sage.  To discard only  one  recipient  without  discarding  the
+              entire message, use the <a href="transport.5.html">transport(5)</a> table to direct mail to the
+              <a href="discard.8.html">discard(8)</a> service.
 
               This feature is available in Postfix 2.0 and later.
 
-       <b>DUNNO</b>  Pretend that the lookup key  was  not  found.  This
-              prevents  Postfix  from  trying  substrings  of the
-              lookup key (such as a subdomain name, or a  network
-              address subnetwork).
+       <b>DUNNO</b>  Pretend that the lookup key was not found. This prevents Postfix
+              from  trying  substrings  of the lookup key (such as a subdomain
+              name, or a network address subnetwork).
 
               This feature is available in Postfix 2.0 and later.
 
        <b>FILTER</b> <i>transport:destination</i>
-              After the message is queued, send the  entire  mes-
-              sage through the specified external content filter.
-              The <i>transport</i> name specifies the first field  of  a
-              mail  delivery  agent  definition in <a href="master.5.html">master.cf</a>; the
-              syntax of the next-hop <i>destination</i> is described  in
-              the  manual  page  of  the  corresponding  delivery
-              agent.  More  information  about  external  content
-              filters is in the Postfix <a href="FILTER_README.html">FILTER_README</a> file.
+              After the message is queued, send the entire message through the
+              specified  external content filter. The <i>transport</i> name specifies
+              the first field of a mail  delivery  agent  definition  in  <a href="master.5.html">mas-
+              ter.cf</a>;  the  syntax of the next-hop <i>destination</i> is described in
+              the manual page  of  the  corresponding  delivery  agent.   More
+              information  about  external  content  filters is in the Postfix
+              <a href="FILTER_README.html">FILTER_README</a> file.
 
-              Note  1: do not use $<i>number</i> regular expression sub-
-              stitutions for <i>transport</i> or <i>destination</i> unless  you
-              know that the information has a trusted origin.
+              Note 1: do not use $<i>number</i> regular expression substitutions  for
+              <i>transport</i>  or  <i>destination</i>  unless you know that the information
+              has a trusted origin.
 
-              Note  2:  this  action  overrides  the <a href="postconf.5.html">main.cf</a> <b><a href="postconf.5.html#content_filter">con</a>-</b>
-              <b><a href="postconf.5.html#content_filter">tent_filter</a></b> setting, and affects all recipients  of
-              the  message.  In  the  case  that  multiple <b>FILTER</b>
-              actions fire, only the last one is executed.
+              Note 2: this action overrides the  <a href="postconf.5.html">main.cf</a>  <b><a href="postconf.5.html#content_filter">content_filter</a></b>  set-
+              ting,  and  affects  all  recipients of the message. In the case
+              that multiple <b>FILTER</b> actions fire, only the  last  one  is  exe-
+              cuted.
 
-              Note 3: the purpose of the  FILTER  command  is  to
-              override  message routing.  To override the recipi-
-              ent's <i>transport</i> but not the  next-hop  <i>destination</i>,
-              specify  an  empty  filter <i>destination</i> (Postfix 2.7
-              and later), or specify a <i>transport:destination</i> that
-              delivers   through  a  different  Postfix  instance
-              (Postfix 2.6 and earlier). Other options are  using
-              the  recipient-dependent <b><a href="postconf.5.html#transport_maps">transport_maps</a></b> or the sen-
-              der-dependent   <b><a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport</a>-</b>
-              <b><a href="postconf.5.html#sender_dependent_default_transport_maps">_maps</a></b> features.
+              Note 3: the purpose of the FILTER command is to override message
+              routing.  To override the  recipient's  <i>transport</i>  but  not  the
+              next-hop <i>destination</i>, specify an empty filter <i>destination</i> (Post-
+              fix 2.7 and later),  or  specify  a  <i>transport:destination</i>  that
+              delivers  through  a different Postfix instance (Postfix 2.6 and
+              earlier). Other options are using the recipient-dependent <b><a href="postconf.5.html#transport_maps">trans</a>-</b>
+              <b><a href="postconf.5.html#transport_maps">port_maps</a></b>   or  the  sender-dependent  <b><a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default-</b>
+              <b>_transport_maps</a></b> features.
 
               This feature is available in Postfix 2.0 and later.
 
        <b>HOLD</b> <i>optional text...</i>
-              Place the message on the <b>hold</b> queue, where it  will
-              sit  until someone either deletes it or releases it
-              for delivery.  Log the optional text if  specified,
-              otherwise log a generic message.
+              Place the message on the <b>hold</b> queue, where  it  will  sit  until
+              someone  either deletes it or releases it for delivery.  Log the
+              optional text if specified, otherwise log a generic message.
 
-              Mail  that  is  placed on hold can be examined with
-              the <a href="postcat.1.html"><b>postcat</b>(1)</a> command, and  can  be  destroyed  or
-              released with the <a href="postsuper.1.html"><b>postsuper</b>(1)</a> command.
+              Mail that is placed on hold can be examined with the  <a href="postcat.1.html"><b>postcat</b>(1)</a>
+              command,  and can be destroyed or released with the <a href="postsuper.1.html"><b>postsuper</b>(1)</a>
+              command.
 
-              Note:  use  "<b>postsuper -r</b>" to release mail that was
-              kept on hold for a significant fraction  of  <b>$<a href="postconf.5.html#maximal_queue_lifetime">maxi</a>-</b>
-              <b><a href="postconf.5.html#maximal_queue_lifetime">mal_queue_lifetime</a></b>  or  <b>$<a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b>,  or
-              longer. Use "<b>postsuper -H</b>" only for mail that  will
-              not expire within a few delivery attempts.
+              Note: use "<b>postsuper -r</b>" to release mail that was kept  on  hold
+              for   a   significant  fraction  of  <b>$<a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a></b>  or
+              <b>$<a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b>, or longer. Use "<b>postsuper -H</b>"  only  for
+              mail that will not expire within a few delivery attempts.
 
-              Note:  this action currently affects all recipients
-              of the message.
+              Note:  this  action currently affects all recipients of the mes-
+              sage.
 
               This feature is available in Postfix 2.0 and later.
 
        <b>PREPEND</b> <i>headername: headervalue</i>
-              Prepend  the  specified  message header to the mes-
-              sage.  When more than one PREPEND action  executes,
-              the  first prepended header appears before the sec-
-              ond etc. prepended header.
+              Prepend the specified message header to the message.  When  more
+              than  one  PREPEND  action  executes, the first prepended header
+              appears before the second etc. prepended header.
 
-              Note: this action must execute before  the  message
-              content  is received; it cannot execute in the con-
-              text of <b><a href="postconf.5.html#smtpd_end_of_data_restrictions">smtpd_end_of_data_restrictions</a></b>.
+              Note: this action must execute before  the  message  content  is
+              received;    it    cannot    execute    in    the   context   of
+              <b><a href="postconf.5.html#smtpd_end_of_data_restrictions">smtpd_end_of_data_restrictions</a></b>.
 
               This feature is available in Postfix 2.1 and later.
 
        <b>REDIRECT</b> <i>user@domain</i>
-              After  the  message  is queued, send the message to
-              the  specified  address  instead  of  the  intended
-              recipient(s).
+              After the message is queued, send the message to  the  specified
+              address instead of the intended recipient(s).
 
-              Note:  this action overrides the FILTER action, and
-              currently affects all recipients of the message.
+              Note:  this  action  overrides  the FILTER action, and currently
+              affects all recipients of the message.
 
               This feature is available in Postfix 2.1 and later.
 
        <b>WARN</b> <i>optional text...</i>
-              Log a warning with the optional text, together with
-              client information and  if  available,  with  helo,
-              sender, recipient and protocol information.
+              Log a warning with  the  optional  text,  together  with  client
+              information  and  if available, with helo, sender, recipient and
+              protocol information.
 
               This feature is available in Postfix 2.1 and later.
 
 <b>ENHANCED STATUS CODES</b>
-       Postfix version 2.3  and  later  support  enhanced  status
-       codes  as  defined  in  <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When an enhanced status
-       code is specified in an access table,  it  is  subject  to
-       modification.  The  following  transformations  are needed
-       when the same access  table  is  used  for  client,  helo,
-       sender,  or  recipient  access  restrictions;  they happen
-       regardless of whether Postfix replies to a MAIL FROM, RCPT
-       TO or other SMTP command.
+       Postfix version 2.3 and later support enhanced status codes as  defined
+       in  <a href="http://tools.ietf.org/html/rfc3463">RFC  3463</a>.   When an enhanced status code is specified in an access
+       table, it is subject to modification. The following transformations are
+       needed  when the same access table is used for client, helo, sender, or
+       recipient access restrictions; they happen regardless of whether  Post-
+       fix replies to a MAIL FROM, RCPT TO or other SMTP command.
 
-       <b>o</b>      When  a sender address matches a REJECT action, the
-              Postfix SMTP server will transform a recipient  DSN
-              status  (e.g.,  4.1.1-4.1.6) into the corresponding
-              sender DSN status, and vice versa.
+       <b>o</b>      When  a sender address matches a REJECT action, the Postfix SMTP
+              server will transform a recipient DSN status (e.g., 4.1.1-4.1.6)
+              into the corresponding sender DSN status, and vice versa.
 
-       <b>o</b>      When  non-address  information  matches  a   REJECT
-              action  (such  as  the HELO command argument or the
-              client hostname/address), the Postfix  SMTP  server
-              will  transform  a  sender  or recipient DSN status
-              into  a  generic  non-address  DSN  status   (e.g.,
-              4.0.0).
+       <b>o</b>      When  non-address  information  matches a REJECT action (such as
+              the HELO command argument or the client  hostname/address),  the
+              Postfix  SMTP  server  will  transform a sender or recipient DSN
+              status into a generic non-address DSN status (e.g., 4.0.0).
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This  section  describes how the table lookups change when
-       the table is given in the form of regular expressions. For
-       a  description  of regular expression lookup table syntax,
-       see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
+       This section describes how the table lookups change when the  table  is
+       given  in the form of regular expressions. For a description of regular
+       expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each pattern is a regular expression that  is  applied  to
-       the entire string being looked up. Depending on the appli-
-       cation, that string  is  an  entire  client  hostname,  an
-       entire client IP address, or an entire mail address. Thus,
-       no  parent  domain  or  parent  network  search  is  done,
-       <i>user@domain</i>  mail  addresses  are not broken up into their
-       <i>user@</i> and <i>domain</i> constituent parts, nor is <i>user+foo</i> broken
-       up into <i>user</i> and <i>foo</i>.
+       Each pattern is a regular expression that  is  applied  to  the  entire
+       string being looked up. Depending on the application, that string is an
+       entire client hostname, an entire client IP address, or an entire  mail
+       address.  Thus,  no  parent  domain  or  parent network search is done,
+       <i>user@domain</i> mail addresses are not  broken  up  into  their  <i>user@</i>  and
+       <i>domain</i>  constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
-       Patterns  are applied in the order as specified in the ta-
-       ble, until a pattern is  found  that  matches  the  search
-       string.
+       Patterns are applied in the order as specified in the  table,  until  a
+       pattern is found that matches the search string.
 
-       Actions  are  the  same as with indexed file lookups, with
-       the additional feature that parenthesized substrings  from
-       the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
+       Actions  are the same as with indexed file lookups, with the additional
+       feature that parenthesized substrings from the pattern can be  interpo-
+       lated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>TCP-BASED TABLES</b>
-       This  section  describes how the table lookups change when
-       lookups are directed to a TCP-based server. For a descrip-
-       tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
-       <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.4.
+       This  section  describes  how the table lookups change when lookups are
+       directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
+       client/server  lookup  protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature is not
+       available up to and including Postfix version 2.4.
 
-       Each  lookup  operation uses the entire query string once.
-       Depending on the application, that  string  is  an  entire
-       client hostname, an entire client IP address, or an entire
-       mail address.  Thus, no parent domain  or  parent  network
-       search  is done, <i>user@domain</i> mail addresses are not broken
-       up into their <i>user@</i> and <i>domain</i> constituent parts,  nor  is
+       Each lookup operation uses the entire query string once.  Depending  on
+       the  application,  that  string is an entire client hostname, an entire
+       client IP address, or an entire mail address.  Thus, no  parent  domain
+       or  parent  network  search is done, <i>user@domain</i> mail addresses are not
+       broken up into  their  <i>user@</i>  and  <i>domain</i>  constituent  parts,  nor  is
        <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
        Actions are the same as with indexed file lookups.
 
 <b>EXAMPLE</b>
-       The  following  example  uses an indexed file, so that the
-       order of table entries does not matter. The  example  per-
-       mits  access  by the client at address 1.2.3.4 but rejects
-       all other clients in 1.2.3.0/24. Instead  of  <b>hash</b>  lookup
-       tables,  some  systems use <b>dbm</b>.  Use the command "<b>postconf</b>
-       <b>-m</b>" to find out what lookup  tables  Postfix  supports  on
-       your system.
+       The  following example uses an indexed file, so that the order of table
+       entries does not matter. The example permits access by  the  client  at
+       address 1.2.3.4 but rejects all other clients in 1.2.3.0/24. Instead of
+       <b>hash</b> lookup tables, some systems use <b>dbm</b>.  Use  the  command  "<b>postconf</b>
+       <b>-m</b>" to find out what lookup tables Postfix supports on your system.
 
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
            <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> =
-               <a href="postconf.5.html#check_client_access">check_client_access</a> hash:/etc/postfix/access
+               <a href="postconf.5.html#check_client_access">check_client_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/access
 
        /etc/postfix/access:
            1.2.3   REJECT
            1.2.3.4 OK
 
-       Execute  the  command  "<b>postmap /etc/postfix/access</b>" after
-       editing the file.
+       Execute  the  command  "<b>postmap  /etc/postfix/access</b>" after editing the
+       file.
 
 <b>BUGS</b>
-       The table format does not understand quoting  conventions.
+       The table format does not understand quoting conventions.
 
 <b>SEE ALSO</b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
@@ -468,8 +423,7 @@ ACCESS(5)                                                            ACCESS(5)
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema
