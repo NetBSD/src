@@ -1848,6 +1848,9 @@ int i915_driver_unload(struct drm_device *dev)
 
 	/* Free error state after interrupts are fully disabled. */
 	del_timer_sync(&dev_priv->hangcheck_timer);
+#ifdef __NetBSD__
+	teardown_timer(&dev_priv->hangcheck_timer);
+#endif
 	cancel_work_sync(&dev_priv->error_work);
 	i915_destroy_error_state(dev);
 
