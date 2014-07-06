@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.66 2014/07/06 06:34:33 dholland Exp $
+#	$NetBSD: bsd.doc.mk,v 1.67 2014/07/06 18:22:03 dholland Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -68,7 +68,7 @@ DEPSRCS.${ARTICLE}?=${DEPSRCS}
 .if ${MKDOC} != "no"
 realall: ${SA}.txt
 realall: ${SA}.${PRINTABLE}
-.if ${MKHTML} != "no"
+.if ${MKHTML} != "no" && ${MKGROFFHTMLDOC} != "no"
 realall: ${SA}.html
 .endif
 .endif
@@ -155,11 +155,11 @@ ${SA}.ps.gz: ${SA}.ps
 DOCINST:=
 .for SA in ${SUBARTICLES}
 DOCINST+=${SA}.txt ${SA}.${PRINTABLE}
-.if ${MKHTML} != "no"
+.if ${MKHTML} != "no" && ${MKGROFFHTMLDOC} != "no"
 DOCINST+=${SA}.html
 .endif
 .endfor
-.if ${MKHTML} != "no"
+.if ${MKHTML} != "no" && ${MKGROFFHTMLDOC} != "no"
 DOCINST+=${EXTRAHTMLFILES}
 .endif
 
