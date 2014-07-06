@@ -1,4 +1,4 @@
-.\" $NetBSD: 4.t,v 1.1 2007/12/18 03:35:52 garbled Exp $
+.\" $NetBSD: 4.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -151,7 +151,7 @@ with a ``config'' line:
 The
 .I sysname
 field is the name given to the loaded system image; almost everyone
-names their standard system image ``kernel''.  The configuration clauses
+names their standard system image ``netbsd''.  The configuration clauses
 are one or more specifications indicating where the root file system
 is located and the number and location of paging devices.
 The device used by the system to process argument lists during
