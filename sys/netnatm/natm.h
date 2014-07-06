@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.13 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: natm.h,v 1.14 2014/07/06 15:44:25 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -133,7 +133,7 @@ struct atm_rawioctl {
 /* natm_pcb.c */
 struct	natmpcb *npcb_alloc(bool);
 void	npcb_free(struct natmpcb *, int);
-struct	natmpcb *npcb_add(struct natmpcb *, struct ifnet *, int, int);
+struct	natmpcb *npcb_add(struct natmpcb *, struct ifnet *, u_int16_t, u_int8_t);
 
 /* natm.c */
 int	natm0_sysctl(int *, u_int, void *, size_t *, void *, size_t);
