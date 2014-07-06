@@ -1,0 +1,268 @@
+The stable Postfix release is called postfix-2.10.x where 2=major
+release number, 10=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-2.11-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 2.8 or earlier, read RELEASE_NOTES-2.9
+before proceeding.
+
+Major changes - laptop-friendliness
+-----------------------------------
+
+[Incompat 20120924] Postfix no longer uses FIFOs to emulate UNIX-domain
+sockets on Solaris 9 (Vintage 2002!) and later. If you install
+Postfix for the first time on an older Solaris system, edit the
+master.cf file and replace "unix" with "fifo" for the pickup and
+qmgr services.
+
+[Feature 20120924] the default master.cf file now uses "unix" instead
+of "fifo" for the pickup and qmgr services. This avoids periodic
+disk drive spin-up.
+
+Major changes - permit logging
+------------------------------
+
+[Feature 20120303] [Feature 20120303] New control for "permit"
+logging in smtpd_mumble_restrictions (by default, the SMTP server
+logs "reject" actions but not "permit" actions).  Specify
+"smtpd_log_access_permit_actions = static:all" to log all "permit"-style
+actions, or specify a list of explicit action names.  More details
+are in the postconf(5) manpage.  
+
+Major changes - postconf
+------------------------
+
+[Incompat 20121224] The postconf command produces more warnings:
+
+- An attempt to modify a read-only parameter (process_name, process_id)
+  in main.cf or master.cf.
+
+- An undefined $name in a parameter value in main.cf or master.cf
+  (except for backwards-compatibility parameters such as $virtual_maps).
+
+[Feature 20121224] The postconf command has been updated to make
+trouble-shooting (and support) easier. In summary, use "postconf
+-Mxf" and "postconf -nxf" to review master.cf and main.cf parameter
+settings with expanded parameter values.
+
+- "postconf -x" now expands $name in main.cf and master.cf parameter
+  values.
+
+- postconf warns about attempts to modify a read-only parameter
+  (process_name, process_id) in main.cf or master.cf.
+
+- postconf warns about an undefined $name in a parameter value in
+  main.cf or master.cf (except for backwards-compatibility parameters
+  such as $virtual_maps).
+
+[Feature 20121227]
+
+- "postconf -o name=value" overrides main.cf parameter settings.
+  This can be used, for example, to examine stress-dependent settings
+  with "postconf -x -o stress=yes".
+
+Major changes - postscreen
+--------------------------
+
+[Incompat 20121123] The postscreen deep protocol tests now log the
+last command before a protocol error ("UNIMPLEMENTED" when the last
+command is not implemented, "CONNECT" when there was no prior
+command). The changed logfile messages are:
+
+NON-SMTP COMMAND from [address]:port after command: text
+BARE NEWLINE from [address]:port after command
+COMMAND TIME LIMIT from [address]:port after command
+COMMAND COUNT LIMIT from [address]:port after command
+COMMAND LENGTH LIMIT from [address]:port after command
+
+Major changes - load-balancer support
+-------------------------------------
+
+[Incompat 20120625] The postscreen(8)-to-smtpd(8) protocol has
+changed.  To avoid "cannot receive connection attributes" warnings
+and dropped connections, execute the command "postfix reload". No
+mail will be lost as long as the remote SMTP client tries again
+later.
+
+[Feature 20120625] Support for upstream proxy agent in the postscreen(8)
+and smtpd(8) daemons.  To enable the haproxy protocol, specify one
+of the following:
+
+    postscreen_upstream_proxy_protocol = haproxy
+    smtpd_upstream_proxy_protocol = haproxy
+
+Note 1: smtpd_upstream_proxy_protocol can't be used in smtpd processes
+that are behind postscreen. Configure postscreen_upstream_proxy_protocol
+instead.
+
+Note 2: To use the nginx proxy with smtpd(8), enable the XCLIENT
+protocol with smtpd_authorized_xclient_hosts. This supports SASL
+authentication in the proxy agent (Postfix 2.9 and later).
+
+Major changes - relay safety
+----------------------------
+
+[Incompat 20130613] New smtpd_relay_restrictions parameter built-in
+default settings:
+
+    smtpd_relay_restrictions = 
+	permit_mynetworks 
+	permit_sasl_authenticated 
+	defer_unauth_destination
+
+This safety net prevents open relay problems due to mistakes
+with spam filter rules in smtpd_recipient_restrictions.
+
+If your site has a complex mail relay policy configured under
+smtpd_recipient_restrictions, this safety net may defer mail that
+Postfix should accept.
+
+To fix this safety net, take one of the following actions:
+
+- Set smtpd_relay_restrictions empty, and keep using the existing
+  mail relay authorization policy in smtpd_recipient_restrictions.
+
+- Copy the existing mail relay authorization policy from
+  smtpd_recipient_restrictions to smtpd_relay_restrictions.
+
+There is no need to change the value of smtpd_recipient_restrictions.
+
+[Feature 20130613] This version introduces the smtpd_relay_restrictions
+feature for mail relay control. The new built-in default settings
+are:
+
+    smtpd_relay_restrictions = 
+	permit_mynetworks 
+ 	permit_sasl_authenticated
+	defer_unauth_destination
+
+    smtpd_recipient_restrictions =
+	( optional spam blocking rules would go here )
+
+For comparison, this is the Postfix before 2.10 default:
+
+    smtpd_recipient_restrictions =
+	permit_mynetworks 
+	reject_unauth_destination
+	( optional spam blocking rules would go here )
+
+With Postfix versions before 2.10, the mail relay policy and spam
+blocking policy were combined under smtpd_recipient_restrictions,
+resulting in error-prone configuration.
+
+As of Postfix 2.10, the mail relay policy is preferably implemented
+with smtpd_relay_restrictions, so that a permissive spam blocking
+policy under smtpd_recipient_restrictions will not unexpectedly
+result in a permissive mail relay policy.
+
+As of Postfix 2.10.0 the smtpd_relay_restrictions parameter built-in
+default settings are:
+
+    smtpd_relay_restrictions =
+        permit_mynetworks
+        permit_sasl_authenticated
+        defer_unauth_destination
+
+If your site has a complex mail relay policy configured under
+smtpd_recipient_restrictions, this safety net may defer mail that
+Postfix should accept.
+
+To migrate from an earlier Postfix release with the least amount
+of pain:
+
+- Set smtpd_relay_restrictions empty, and keep using the existing
+  mail relay authorization policy in smtpd_recipient_restrictions.
+
+- There is no need to change the value of smtpd_recipient_restrictions.
+
+To take advantage of the new smtpd_relay_restrictions feature:
+
+- Copy the existing mail relay authorization policy from
+  smtpd_recipient_restrictions to smtpd_relay_restrictions.
+
+- There is no need to change the value of smtpd_recipient_restrictions.
+
+Major changes - start-up
+------------------------
+
+[Feature 20120306] New master "-w" option, to wait for master daemon
+process initialization to complete. This feature returns an error
+exit status if master daemon initialization fails, or if it does
+not complete in a reasonable amount of time. The exit status is
+used by "postfix start" to provide more accurate information to
+system start-up scripts.
+
+Major changes - tls
+-------------------
+
+[Incompat 20130203] Thanks to OpenSSL documentation, the Postfix
+2.9.0..2.9.5 SMTP client and server server used an incorrect procedure
+to compute TLS certificate PUBLIC-KEY fingerprints (these may be
+used in the check_ccert_access and in smtp_tls_policy_maps features).
+Support for certificate PUBLIC-KEY finger prints was introduced
+with Postfix 2.9; there is no known problem with the certificate
+fingerprint algorithms available since Postfix 2.2.
+
+Certificate PUBLIC-KEY finger prints may be used in the Postfix
+SMTP server (with "check_ccert_access") and in the Postfix SMTP
+client (with the "fingerprint" security level).  
+
+Specify "tls_legacy_public_key_fingerprints = yes" temporarily,
+pending a migration from configuration files with incorrect Postfix
+2.9.0..2.9.5 certificate PUBLIC-KEY finger prints, to the correct
+fingerprints used by Postfix 2.9.6 and later.
+
+To compute the correct PUBLIC-KEY finger prints:
+
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey | \
+    openssl pkey -pubin -outform DER | \
+    openssl dgst -sha1 -c
+
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey | \
+    openssl rsa -pubin -outform DER | \
+    openssl dgst -md5 -c
+
+[Feature 20120422] This release adds support to turn off the TLSv1.1
+and TLSv1.2 protocols.  Introduced with OpenSSL version 1.0.1, these
+are known to cause inter-operability problems with for example
+hotmail.
+
+The radical workaround is to temporarily turn off problematic
+protocols globally:
+
+/etc/postfix/main.cf:
+    smtp_tls_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+    smtp_tls_mandatory_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+
+    smtpd_tls_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+    smtpd_tls_mandatory_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+
+However, it may be better to temporarily turn off problematic
+protocols for broken sites only:
+
+/etc/postfix/main.cf:
+    smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
+
+/etc/postfix/tls_policy:
+    example.com         may protocols=!SSLv2:!TLSv1.1:!TLSv1.2
+
+Important:
+
+- Note the use of ":" instead of comma or space. Also, note that
+  there is NO space around the "=" in "protocols=".
+
+- The smtp_tls_policy_maps lookup key must match the "next-hop"
+  destination that is given to the Postfix SMTP client. If you
+  override the next-hop destination with transport_maps, relayhost,
+  sender_dependent_relayhost_maps, or otherwise, you need to specify
+  the same destination for the smtp_tls_policy_maps lookup key.

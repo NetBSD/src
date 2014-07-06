@@ -10,7 +10,7 @@ GGeenneerraall ccoonnffiigguurraattiioonn
   * VIRTUAL_README: Virtual domain hosting
   * SASL_README: SASL Authentication
   * TLS_README: TLS Encryption and authentication
-  * TLS_LEGACY_README: Legacy TLS support
+  * FORWARD_SECRECY_README: TLS Forward Secrecy
   * IPV6_README: IP Version 6 Support
   * MULTI_INSTANCE_README: Multiple-instance management
   * INSTALL: Installation from source code
@@ -48,6 +48,7 @@ LLooookkuupp ttaabblleess ((ddaattaabbaasseess))
   * DB_README: Berkeley DB Howto
   * CDB_README: CDB Howto
   * LDAP_README: LDAP Howto
+  * LMDB_README: LMDB Howto
   * MEMCACHE_README: Memcache Howto
   * MYSQL_README: MySQL Howto
   * PCRE_README: PCRE Howto
