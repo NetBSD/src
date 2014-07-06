@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.101 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.102 2014/07/06 03:33:33 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.101 2014/07/01 05:49:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.102 2014/07/06 03:33:33 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -693,6 +693,18 @@ udp6_ioctl(struct socket *so, u_long cmd, void *addr6, struct ifnet *ifp)
 	return in6_control(so, cmd, addr6, ifp);
 }
 
+static int
+udp6_stat(struct socket *so, struct stat *ub)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+
+	if (in6p == NULL)
+		return EINVAL;
+
+	/* stat: don't bother with a blocksize */
+	return 0;
+}
+
 int
 udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
@@ -703,6 +715,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -772,12 +785,6 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	case PRU_PEERADDR:
 		in6_setpeeraddr(in6p, addr6);
 		break;
-
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize
-		 */
-		return 0;
 
 	case PRU_LISTEN:
 	case PRU_CONNECT2:
@@ -878,11 +885,13 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_attach	udp6_attach_wrapper
 #define	udp6_detach	udp6_detach_wrapper
 #define	udp6_ioctl	udp6_ioctl_wrapper
+#define	udp6_stat	udp6_stat_wrapper
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
 	.pr_attach	= udp6_attach,
 	.pr_detach	= udp6_detach,
 	.pr_ioctl	= udp6_ioctl,
+	.pr_stat	= udp6_stat,
 	.pr_generic	= udp6_usrreq,
 };
