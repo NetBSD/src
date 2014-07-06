@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.283 2014/07/06 17:35:09 apb Exp $
+#	$NetBSD: build.sh,v 1.284 2014/07/06 17:49:20 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1278,6 +1278,8 @@ parseoptions()
 	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS}"
 	MAKEFLAGS="${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
+	setmakeenv USETOOLS "yes"
+	setmakeenv MAKEWRAPPERMACHINE "${makewrappermachine:-${MACHINE}}"
 }
 
 # sanitycheck --
@@ -1748,7 +1750,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.283 2014/07/06 17:35:09 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.284 2014/07/06 17:49:20 apb Exp $
 # with these arguments: ${_args}
 #
 
@@ -1763,8 +1765,6 @@ EOF
 		done
 
 		eval cat <<EOF
-MAKEWRAPPERMACHINE=${makewrappermachine:-${MACHINE}}; export MAKEWRAPPERMACHINE
-USETOOLS=yes; export USETOOLS
 EOF
 	} | eval sort -u "${makewrapout}"
 	eval cat <<EOF "${makewrapout}"
