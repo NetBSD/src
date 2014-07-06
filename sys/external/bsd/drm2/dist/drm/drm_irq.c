@@ -207,6 +207,9 @@ void drm_vblank_cleanup(struct drm_device *dev)
 		return;
 
 	del_timer_sync(&dev->vblank_disable_timer);
+#ifdef __NetBSD__
+	teardown_timer(&dev->vblank_disable_timer);
+#endif
 
 	vblank_disable_fn((unsigned long)dev);
 
