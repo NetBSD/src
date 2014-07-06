@@ -96,6 +96,7 @@ milter.o: milter.c
 milter.o: milter.h
 milter8.o: ../../include/argv.h
 milter8.o: ../../include/attr.h
+milter8.o: ../../include/compat_va_copy.h
 milter8.o: ../../include/connect.h
 milter8.o: ../../include/header_opts.h
 milter8.o: ../../include/iostuff.h

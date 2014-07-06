@@ -13,97 +13,86 @@ DISCARD(8)                                                          DISCARD(8)
        <b>discard</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  Postfix  <a href="discard.8.html"><b>discard</b>(8)</a> delivery agent processes delivery
-       requests from the queue manager. Each request specifies  a
-       queue  file,  a sender address, a domain or host name that
-       is treated as the reason  for  discarding  the  mail,  and
-       recipient information.  The reason may be prefixed with an
-       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>-compatible detail code.  This program expects  to
+       The  Postfix <a href="discard.8.html"><b>discard</b>(8)</a> delivery agent processes delivery requests from
+       the queue manager. Each  request  specifies  a  queue  file,  a  sender
+       address,  a next-hop destination that is treated as the reason for dis-
+       carding the mail, and recipient information.  The reason  may  be  pre-
+       fixed with an <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>-compatible detail code.  This program expects to
        be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
 
-       The  <a href="discard.8.html"><b>discard</b>(8)</a>  delivery  agent  pretends  to deliver all
-       recipients in the delivery request,  logs  the  "next-hop"
-       domain  or  host  information as the reason for discarding
-       the mail, updates the queue file and marks  recipients  as
-       finished or informs the queue manager that delivery should
-       be tried again at a later time.
+       The <a href="discard.8.html"><b>discard</b>(8)</a> delivery agent pretends to deliver all recipients in the
+       delivery  request,  logs  the  "next-hop" destination as the reason for
+       discarding the mail, updates the queue file, and either  marks  recipi-
+       ents  as  finished or informs the queue manager that delivery should be
+       tried again at a later time.
 
-       Delivery status reports are sent to the <a href="trace.8.html"><b>trace</b>(8)</a> daemon as
-       appropriate.
+       Delivery status reports are sent to the <a href="trace.8.html"><b>trace</b>(8)</a> daemon as appropriate.
 
 <b>SECURITY</b>
-       The  <a href="discard.8.html"><b>discard</b>(8)</a>  mailer is not security-sensitive. It does
-       not talk to the network, and can be run chrooted at  fixed
-       low privilege.
+       The  <a href="discard.8.html"><b>discard</b>(8)</a>  mailer  is not security-sensitive. It does not talk to
+       the network, and can be run chrooted at fixed low privilege.
 
 <b>STANDARDS</b>
-       None.
+       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
-       Depending  on the setting of the <b><a href="postconf.5.html#notify_classes">notify_classes</a></b> parameter,
-       the postmaster is notified of bounces and of  other  trou-
-       ble.
+       Depending on the setting of the <b><a href="postconf.5.html#notify_classes">notify_classes</a></b> parameter, the  postmas-
+       ter is notified of bounces and of other trouble.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are  picked up automatically as <a href="discard.8.html"><b>dis-</b></a>
-       <a href="discard.8.html"><b>card</b>(8)</a> processes run for only a limited amount  of  time.
-       Use the command "<b>postfix reload</b>" to speed up a change.
+       Changes  to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="discard.8.html"><b>discard</b>(8)</a> processes
+       run for only a limited amount of time. Use the command "<b>postfix reload</b>"
+       to speed up a change.
 
-       The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
-              built-in watchdog timer.
+              How  much  time  a  Postfix  daemon process may take to handle a
+              request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The  maximal  number  of  digits  after the decimal
-              point when logging sub-second delay values.
+              The maximal number of digits after the decimal point  when  log-
+              ging sub-second delay values.
 
        <b><a href="postconf.5.html#double_bounce_sender">double_bounce_sender</a> (double-bounce)</b>
-              The sender address of postmaster notifications that
-              are generated by the mail system.
+              The  sender  address of postmaster notifications that are gener-
+              ated by the mail system.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending or receiving information
-              over an internal communication channel.
+              The time limit for sending  or  receiving  information  over  an
+              internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits  for  an incoming connection
-              before terminating voluntarily.
+              The  maximum  amount of time that an idle Postfix daemon process
+              waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of incoming connections  that  a
-              Postfix  daemon  process will service before termi-
-              nating voluntarily.
+              The maximal number of incoming connections that a Postfix daemon
+              process will service before terminating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
-              process.
+              The process ID of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
-              process.
+              The process name of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
@@ -115,8 +104,7 @@ DISCARD(8)                                                          DISCARD(8)
        syslogd(8), system logging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>HISTORY</b>
        This service was introduced with Postfix version 2.2.
