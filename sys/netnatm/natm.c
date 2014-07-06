@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.29 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.30 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.29 2014/07/01 05:49:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.30 2014/07/06 03:33:33 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,19 @@ done:
   return(error);
 }
 
+static int
+natm_ioctl(struct socket *so, struct stat *ub)
+{
+  struct natmpcb *npcb;
+
+  npcb = (struct natmpcb *) so->so_pcb;
+
+  if (npcb == NULL)
+    return EINVAL;
+
+  return 0;
+}
+
 /*
  * user requests
  */
@@ -151,6 +164,7 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   KASSERT(req != PRU_ATTACH);
   KASSERT(req != PRU_DETACH);
   KASSERT(req != PRU_CONTROL);
+  KASSERT(req != PRU_SENSE);
 
   s = SPLSOFTNET();
 
@@ -287,10 +301,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
       break;
 
-    case PRU_SENSE:			/* return status into m */
-      /* return zero? */
-      break;
-
     case PRU_PEERADDR:			/* fetch peer's address */
       snatm = mtod(nam, struct sockaddr_natm *);
       memset(snatm, 0, sizeof(*snatm));
@@ -411,11 +421,13 @@ PR_WRAP_USRREQS(natm)
 #define	natm_attach	natm_attach_wrapper
 #define	natm_detach	natm_detach_wrapper
 #define	natm_ioctl	natm_ioctl_wrapper
+#define	natm_stat	natm_stat_wrapper
 #define	natm_usrreq	natm_usrreq_wrapper
 
 const struct pr_usrreqs natm_usrreqs = {
 	.pr_attach	= natm_attach,
 	.pr_detach	= natm_detach,
 	.pr_ioctl	= natm_ioctl,
+	.pr_stat	= natm_stat,
 	.pr_generic	= natm_usrreq,
 };

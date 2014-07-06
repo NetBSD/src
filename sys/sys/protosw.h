@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.49 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.50 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -62,6 +62,7 @@ struct ifnet;
 struct sockaddr;
 struct socket;
 struct sockopt;
+struct stat;
 struct domain;
 struct proc;
 struct lwp;
@@ -238,6 +239,7 @@ struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
+	int	(*pr_stat)(struct socket *, struct stat *);
 	int	(*pr_generic)(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
 };
@@ -296,6 +298,15 @@ name##_ioctl_wrapper(struct socket *a, u_long b,	\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_ioctl(a, b, c, d);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_stat_wrapper(struct socket *a, struct stat *b)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_stat(a, b);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\

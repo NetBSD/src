@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.71 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.72 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.71 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.72 2014/07/06 03:33:33 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,8 +239,7 @@ soo_stat(file_t *fp, struct stat *ub)
 	ub->st_mode = S_IFSOCK;
 
 	solock(so);
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so, PRU_SENSE,
-	    (struct mbuf *)ub, NULL, NULL, curlwp);
+	error = (*so->so_proto->pr_usrreqs->pr_stat)(so, ub);
 	sounlock(so);
 
 	return error;

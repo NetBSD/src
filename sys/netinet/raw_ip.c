@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.127 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.128 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.127 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.128 2014/07/06 03:33:33 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -572,6 +572,19 @@ rip_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 	return in_control(so, cmd, nam, ifp);
 }
 
+static int
+rip_stat(struct socket *so, struct stat *ub)
+{
+	struct inpcb *inp;
+
+	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
+
+	/* stat: don't bother with a blocksize. */
+	return 0;
+}
+
 int
 rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
@@ -582,6 +595,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	s = splsoftnet();
 	if (req == PRU_PURGEIF) {
@@ -675,13 +689,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 		break;
 
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize.
-		 */
-		splx(s);
-		return (0);
-
 	case PRU_RCVOOB:
 		error = EOPNOTSUPP;
 		break;
@@ -712,12 +719,14 @@ PR_WRAP_USRREQS(rip)
 #define	rip_attach	rip_attach_wrapper
 #define	rip_detach	rip_detach_wrapper
 #define	rip_ioctl	rip_ioctl_wrapper
+#define	rip_stat	rip_stat_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
 const struct pr_usrreqs rip_usrreqs = {
 	.pr_attach	= rip_attach,
 	.pr_detach	= rip_detach,
 	.pr_ioctl	= rip_ioctl,
+	.pr_stat	= rip_stat,
 	.pr_generic	= rip_usrreq,
 };
 

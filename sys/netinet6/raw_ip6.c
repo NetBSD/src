@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.121 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.122 2014/07/06 03:33:33 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.121 2014/07/01 05:49:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.122 2014/07/06 03:33:33 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -650,6 +650,13 @@ rip6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 	return in6_control(so, cmd, nam, ifp);
 }
 
+static int
+rip6_stat(struct socket *so, struct stat *ub)
+{
+	/* stat: don't bother with a blocksize */
+	return 0;
+}
+
 int
 rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
 	struct mbuf *nam, struct mbuf *control, struct lwp *l)
@@ -658,6 +665,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	int error = 0;
 
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -826,11 +834,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		break;
 	}
 
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize
-		 */
-		return 0;
 	/*
 	 * Not supported.
 	 */
@@ -901,11 +904,13 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_attach		rip6_attach_wrapper
 #define	rip6_detach		rip6_detach_wrapper
 #define	rip6_ioctl		rip6_ioctl_wrapper
+#define	rip6_stat		rip6_stat_wrapper
 #define	rip6_usrreq		rip6_usrreq_wrapper
 
 const struct pr_usrreqs rip6_usrreqs = {
 	.pr_attach	= rip6_attach,
 	.pr_detach	= rip6_detach,
 	.pr_ioctl	= rip6_ioctl,
+	.pr_stat	= rip6_stat,
 	.pr_generic	= rip6_usrreq,
 };

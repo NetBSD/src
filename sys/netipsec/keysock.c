@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.29 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.30 2014/07/06 03:33:33 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.29 2014/07/01 05:49:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.30 2014/07/06 03:33:33 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -490,6 +490,12 @@ key_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 	return EOPNOTSUPP;
 }
 
+static int
+key_stat(struct socket *so, struct stat *ub)
+{
+	return 0;
+}
+
 /*
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
@@ -503,6 +509,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	s = splsoftnet();
 	error = raw_usrreq(so, req, m, nam, control, l);
@@ -522,12 +529,14 @@ PR_WRAP_USRREQS(key)
 #define	key_attach	key_attach_wrapper
 #define	key_detach	key_detach_wrapper
 #define	key_ioctl	key_ioctl_wrapper
+#define	key_stat	key_stat_wrapper
 #define	key_usrreq	key_usrreq_wrapper
 
 const struct pr_usrreqs key_usrreqs = {
 	.pr_attach	= key_attach,
 	.pr_detach	= key_detach,
 	.pr_ioctl	= key_ioctl,
+	.pr_stat	= key_stat,
 	.pr_generic	= key_usrreq,
 };
 
