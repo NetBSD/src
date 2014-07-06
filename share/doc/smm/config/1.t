@@ -1,4 +1,4 @@
-.\" $NetBSD: 1.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
+.\" $NetBSD: 1.t,v 1.3 2014/07/06 05:32:30 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -51,12 +51,14 @@ in a single, easy to understand, file.
 This document describes the content and 
 format of system configuration
 files and the rules which must be followed when creating 
-these files.  Example configuration files are constructed
+these files.
+Example configuration files are constructed
 and discussed.
 .PP
 Later sections suggest guidelines to be used in modifying
 system source and explain some of the inner workings of the
-autoconfiguration process.  Appendix D summarizes the rules
+autoconfiguration process.
+Appendix D summarizes the rules
 used in calculating the most important system data structures
 and indicates some inherent system data structure size
 limitations (and how to go about modifying them).
