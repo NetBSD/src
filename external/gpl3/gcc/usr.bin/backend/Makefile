@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2014/03/15 20:46:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2014/07/06 00:21:24 joerg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -401,6 +401,8 @@ CFLAGS+=	-Wno-stack-protector
 COPTS.lambda-code.c=		-O0
 COPTS.tree-loop-linear.c=	-O0
 .endif
+
+COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
