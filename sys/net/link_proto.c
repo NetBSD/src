@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.12 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.13 2014/07/06 16:06:19 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.12 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.13 2014/07/06 16:06:19 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -51,6 +51,7 @@ static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 static int link_attach(struct socket *, int);
 static void link_detach(struct socket *);
 static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
+static int link_stat(struct socket *, struct stat *);
 static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static void link_init(void);
@@ -65,6 +66,7 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_attach	= link_attach,
 	.pr_detach	= link_detach,
 	.pr_ioctl	= link_ioctl,
+	.pr_stat	= link_stat,
 	.pr_generic	= link_usrreq,
 };
 
@@ -238,12 +240,19 @@ link_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 }
 
 static int
+link_stat(struct socket *so, struct stat *ub)
+{
+	return EOPNOTSUPP;
+}
+
+static int
 link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	return EOPNOTSUPP;
 }
