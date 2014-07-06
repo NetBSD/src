@@ -51,8 +51,8 @@ and for someother.domain. The example comes in two parts. </p>
  2     maildrop_destination_recipient_limit = 1
  3     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = some.domain someother.domain
  4     <a href="postconf.5.html#virtual_transport">virtual_transport</a> = maildrop
- 5     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = hash:/etc/postfix/virtual_mailbox
- 6     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual_alias
+ 5     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual_mailbox
+ 6     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual_alias
  7 
  8 /etc/postfix/virtual_mailbox:
  9     user1@some.domain        <i>...text here does not matter...</i>
@@ -159,7 +159,7 @@ use the Postfix <a href="local.8.html">local(8)</a> delivery agent's <a href="po
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#mailbox_command_maps">mailbox_command_maps</a> = hash:/etc/postfix/mailbox_commands
+    <a href="postconf.5.html#mailbox_command_maps">mailbox_command_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/mailbox_commands
 
 /etc/postfix/mailbox_commands:
     you    /path/to/maildrop -d ${USER}

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-	"http://www.w3.org/TR/html4/loose.dtd">
+        "http://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -68,7 +68,7 @@ before they can become a problem).  </p>
 <h2> <a name="concurrency"> Concurrency scheduling </a> </h2>
 
 <p> The following sections document the Postfix 2.5 concurrency
-scheduler, after a discussion of the limitations of the existing
+scheduler, after a discussion of the limitations of the earlier
 concurrency scheduler. This is followed by results of medium-concurrency
 experiments, and a discussion of trade-offs between performance and
 robustness.  </p>
@@ -734,7 +734,8 @@ destinations is the message to be delivered and what transports are
 going to be used for the delivery. </p>
 
 <li> <p> Each recipient entry groups a batch of recipients of one
-message which are all going to be delivered to the same destination.
+message which are all going to be delivered to the same destination
+(and over the same transport).
 </p>
 
 <li> <p> Each transport structure groups everything what is going
@@ -876,10 +877,10 @@ do
     if transport process limit reached continue
     foreach transport's job (in the order of the transport's job list)
     do
-	foreach job's peer (round-robin-by-destination)
-	     if peer-&gt;queue-&gt;concurrency &lt; peer-&gt;queue-&gt;window
-		 return next peer entry.
-	done
+        foreach job's peer (round-robin-by-destination)
+             if peer-&gt;queue-&gt;concurrency &lt; peer-&gt;queue-&gt;window
+                 return next peer entry.
+        done
     done
 done
 </pre>
@@ -1064,9 +1065,8 @@ can preempt this job.
 <p>
 
 [Well, the truth is, the counter is incremented every time an entry
-is selected and it is divided by k when it is used. Or even more
-true, there is no division, the other side of the equation is
-multiplied by k. But for the understanding it's good enough to use
+is selected and it is divided by k when it is used.
+But for the understanding it's good enough to use
 the above approximation of the truth.]
 
 </p>

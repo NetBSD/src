@@ -16,13 +16,13 @@ COMMANDS= man1/postalias.1 man1/postcat.1 man1/postconf.1 man1/postfix.1 \
 CONFIG	= man5/access.5 man5/aliases.5 man5/canonical.5 man5/relocated.5 \
 	man5/transport.5 man5/virtual.5 man5/pcre_table.5 man5/regexp_table.5 \
 	man5/cidr_table.5 man5/tcp_table.5 man5/header_checks.5 \
-	man5/body_checks.5 man5/ldap_table.5 man5/memcache_table.5 \
-	man5/mysql_table.5 \
+	man5/body_checks.5 man5/ldap_table.5 man5/lmdb_table.5 \
+	man5/memcache_table.5 man5/mysql_table.5 \
 	man5/pgsql_table.5 man5/master.5 man5/nisplus_table.5 \
 	man5/generic.5 man5/bounce.5 man5/postfix-wrapper.5 \
-	man5/sqlite_table.5
+	man5/sqlite_table.5 man5/socketmap_table.5
 TOOLS	= man1/smtp-sink.1 man1/smtp-source.1 man1/qmqp-sink.1 \
-	man1/qmqp-source.1 man1/qshape.1
+	man1/qmqp-source.1 man1/qshape.1 man1/posttls-finger.1
 
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(TOOLS)
 
@@ -274,6 +274,9 @@ man5/body_checks.5: ../proto/header_checks
 man5/ldap_table.5: ../proto/ldap_table
 	../mantools/srctoman - $? >$@
 
+man5/lmdb_table.5: ../proto/lmdb_table
+	../mantools/srctoman - $? >$@
+
 man5/master.5: ../proto/master
 	../mantools/srctoman - $? >$@
 
@@ -281,6 +284,9 @@ man5/memcache_table.5: ../proto/memcache_table
 	../mantools/srctoman - $? >$@
 
 man5/mysql_table.5: ../proto/mysql_table
+	../mantools/srctoman - $? >$@
+
+man5/socketmap_table.5: ../proto/socketmap_table
 	../mantools/srctoman - $? >$@
 
 man5/sqlite_table.5: ../proto/sqlite_table
@@ -318,6 +324,11 @@ man1/smtp-sink.1: ../src/smtpstone/smtp-sink.c
 	../mantools/srctoman $? >$@
 
 man1/smtp-source.1: ../src/smtpstone/smtp-source.c
+	../mantools/fixman ../proto/postconf.proto $? >junk && \
+	    (cmp -s junk $? || mv junk $?) && rm -f junk
+	../mantools/srctoman $? >$@
+
+man1/posttls-finger.1: ../src/posttls-finger/posttls-finger.c
 	../mantools/fixman ../proto/postconf.proto $? >junk && \
 	    (cmp -s junk $? || mv junk $?) && rm -f junk
 	../mantools/srctoman $? >$@

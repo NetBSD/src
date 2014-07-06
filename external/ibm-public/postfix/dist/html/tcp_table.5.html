@@ -15,29 +15,27 @@ TCP_TABLE(5)                                                      TCP_TABLE(5)
        <b>postmap -q - <a href="tcp_table.5.html">tcp</a>:</b><i>host:port</i> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
-       The  Postfix  mail system uses optional tables for address
-       rewriting or mail routing. These tables are usually in <b>dbm</b>
-       or <b>db</b> format. Alternatively, table lookups can be directed
-       to a TCP server.
+       The  Postfix  mail system uses optional tables for address rewriting or
+       mail routing. These tables are usually in <b>dbm</b> or  <b>db</b>  format.  Alterna-
+       tively, table lookups can be directed to a TCP server.
 
-       To find out what types of lookup tables your Postfix  sys-
-       tem supports use the "<b>postconf -m</b>" command.
+       To  find  out  what types of lookup tables your Postfix system supports
+       use the "<b>postconf -m</b>" command.
 
-       To  test  lookup  tables,  use the "<b>postmap -q</b>" command as
-       described in the SYNOPSIS above.
+       To test lookup tables, use the "<b>postmap -q</b>" command as described in the
+       SYNOPSIS above.
 
 <b>PROTOCOL DESCRIPTION</b>
-       The TCP map class implements a very simple  protocol:  the
-       client  sends  a  request, and the server sends one reply.
-       Requests and replies are sent as one line of  ASCII  text,
-       terminated  by  the  ASCII  newline character. Request and
-       reply parameters (see below) are separated by  whitespace.
+       The TCP map class implements a very simple protocol: the client sends a
+       request, and the server sends one reply. Requests and replies are  sent
+       as  one  line of ASCII text, terminated by the ASCII newline character.
+       Request and reply parameters (see below) are separated by whitespace.
 
-       Send  and receive operations must complete in 100 seconds.
+       Send and receive operations must complete in 100 seconds.
 
 <b>REQUEST FORMAT</b>
-       Each request specifies a command, a lookup key, and possi-
-       bly a lookup result.
+       Each request specifies a command, a lookup key, and possibly  a  lookup
+       result.
 
        <b>get</b> SPACE <i>key</i> NEWLINE
               Look up data under the specified key.
@@ -46,47 +44,42 @@ TCP_TABLE(5)                                                      TCP_TABLE(5)
               This request is currently not implemented.
 
 <b>REPLY FORMAT</b>
-       Each  reply specifies a status code and text. Replies must
-       be no longer than 4096 characters  including  the  newline
-       terminator.
+       Each  reply specifies a status code and text. Replies must be no longer
+       than 4096 characters including the newline terminator.
 
        <b>500</b> SPACE <i>text</i> NEWLINE
-              In  case  of  a  lookup request, the requested data
-              does not exist.  In case of an update request,  the
-              request  was  rejected.   The  text  describes  the
-              nature of the problem.
+              In case of a lookup request, the requested data does not  exist.
+              In  case  of  an  update request, the request was rejected.  The
+              text describes the nature of the problem.
 
        <b>400</b> SPACE <i>text</i> NEWLINE
-              This  indicates  an  error  condition.   The   text
-              describes  the  nature  of  the problem. The client
-              should retry the request later.
+              This indicates an error condition. The text describes the nature
+              of the problem. The client should retry the request later.
 
        <b>200</b> SPACE <i>text</i> NEWLINE
-              The request was successful. In the case of a lookup
-              request,  the  text  contains an encoded version of
-              the requested data.
+              The request was successful. In the case of a lookup request, the
+              text contains an encoded version of the requested data.
 
 <b>ENCODING</b>
-       In request and reply parameters,  the  character  %,  each
-       non-printing character, and each whitespace character must
-       be replaced by %XX, where XX is  the  corresponding  ASCII
-       hexadecimal  character value. The hexadecimal codes can be
-       specified in any case (upper, lower, mixed).
+       In request and reply parameters, the  character  %,  each  non-printing
+       character, and each whitespace character must be replaced by %XX, where
+       XX is the corresponding ASCII hexadecimal character value. The hexadec-
+       imal codes can be specified in any case (upper, lower, mixed).
 
-       The Postfix client always encodes a request.   The  server
-       may  omit  the encoding as long as the reply is guaranteed
-       to not contain the % or NEWLINE character.
+       The  Postfix  client always encodes a request.  The server may omit the
+       encoding as long as the reply is guaranteed to not  contain  the  %  or
+       NEWLINE character.
 
 <b>SECURITY</b>
-       Do not use TCP lookup tables for  security  critical  pur-
-       poses.   The client-server connection is not protected and
-       the server is not authenticated.
+       Do  not  use  TCP  lookup  tables  for security critical purposes.  The
+       client-server connection is not protected and the server is not authen-
+       ticated.
 
 <b>BUGS</b>
        Only the lookup method is currently implemented.
 
-       The client does not hang up when the  connection  is  idle
-       for a long time.
+       The  client  does  not  hang  up when the connection is idle for a long
+       time.
 
 <b>SEE ALSO</b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
@@ -98,8 +91,7 @@ TCP_TABLE(5)                                                      TCP_TABLE(5)
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

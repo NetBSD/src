@@ -134,20 +134,20 @@ Examples of simple restriction lists are:
     # Relay control (Postfix 2.10 and later): local clients and
     # authenticated clients may specify any destination domain.
     smtpd_relay_restrictions = permit_mynetworks,
-	permit_sasl_authenticated,
-	reject_unauth_destination
+        permit_sasl_authenticated,
+        reject_unauth_destination
 
     # Spam control: exclude local clients and authenticated clients
     # from DNSBL lookups.
     smtpd_recipient_restrictions = permit_mynetworks,
-	permit_sasl_authenticated,
-	# reject_unauth_destination is not needed here if the mail
-	# relay policy is specified under smtpd_relay_restrictions
-	# (available with Postfix 2.10 and later).
-	reject_unauth_destination
-	reject_rbl_client zen.spamhaus.org,
-	reject_rhsbl_helo dbl.spamhaus.org,
-	reject_rhsbl_sender dbl.spamhaus.org
+        permit_sasl_authenticated,
+        # reject_unauth_destination is not needed here if the mail
+        # relay policy is specified under smtpd_relay_restrictions
+        # (available with Postfix 2.10 and later).
+        reject_unauth_destination
+        reject_rbl_client zen.spamhaus.org,
+        reject_rhsbl_helo dbl.spamhaus.org,
+        reject_rhsbl_sender dbl.spamhaus.org
 
     # Block clients that speak too early.
     smtpd_data_restrictions = reject_unauth_pipelining

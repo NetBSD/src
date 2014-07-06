@@ -33,6 +33,8 @@ and for earlier Postfix versions that don't.  </p>
 
 <li><a href="#overload"> Symptoms of Postfix SMTP server overload </a> 
 
+<li><a href="#adapt"> Automatic stress-adaptive behavior </a>
+
 <li><a href="#concurrency"> Service more SMTP clients at the same time </a> 
 
 <li><a href="#time"> Spend less time per SMTP client </a>
@@ -40,8 +42,6 @@ and for earlier Postfix versions that don't.  </p>
 <li><a href="#hangup"> Disconnect suspicious SMTP clients </a>
 
 <li><a href="#legacy"> Temporary measures for older Postfix releases </a>
-
-<li><a href="#adapt"> Automatic stress-adaptive behavior </a>
 
 <li><a href="#feature"> Detecting support for stress-adaptive behavior </a>
 
@@ -109,6 +109,9 @@ Oct  3 20:39:27 spike postfix/master[28905]: warning: service "smtp"
 Oct  3 20:39:27 spike postfix/master[28905]: warning: to avoid this
  condition, increase the process count in <a href="master.5.html">master.cf</a> or reduce the
  service time per client
+Oct  3 20:39:27 spike postfix/master[28905]: warning: see
+  <a href="http://www.postfix.org/STRESS_README.html">http://www.postfix.org/STRESS_README.html</a> for examples of
+  stress-adapting configuration settings
 </pre>
 
 </ul>
@@ -118,7 +121,115 @@ Postfix SMTP server overload is not necessarily lost. It should
 still arrive once the situation returns to normal, as long as the
 overload condition is temporary.  </p>
 
+<h2><a name="adapt"> Automatic stress-adaptive behavior </a></h2>
+
+<p> Postfix version 2.5 introduces automatic stress-adaptive behavior.
+It works as follows. When a "public" network service such as the
+SMTP server runs into an "all server ports are busy" condition, the
+Postfix <a href="master.8.html">master(8)</a> daemon logs a warning, restarts the service
+(without interrupting existing network sessions), and runs the
+service with "-o stress=yes" on the server process command line:
+</p>
+
+<blockquote>
+<pre>
+80821  ??  S      0:00.24 smtpd -n smtp -t inet -u -c -o stress=yes
+</pre>
+</blockquote>
+
+<p> Normally, the Postfix <a href="master.8.html">master(8)</a> daemon runs such a service with
+"-o stress=" on the command line (i.e.  with an empty parameter
+value):  </p>
+
+<blockquote>
+<pre>
+83326  ??  S      0:00.28 smtpd -n smtp -t inet -u -c -o stress=
+</pre>
+</blockquote>
+
+<p> Services that have local access only never have "-o stress"
+parameters on the command line. This includes services internal to
+Postfix such as the queue manager, and services that listen on a
+loopback interface only, such as after-filter SMTP services.  </p>
+
+<p> The "stress" parameter value is the key to making <a href="postconf.5.html">main.cf</a>
+parameter settings stress adaptive. The following settings are the
+default with Postfix 2.6 and later. </p>
+
+<blockquote>
+<pre>
+1 <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> = ${stress?10}${stress:300}s
+2 <a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a> = ${stress?1}${stress:20}
+3 <a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> = ${stress?1}${stress:100}
+4 # Parameters added after Postfix 2.6:
+5 <a href="postconf.5.html#smtpd_per_record_deadline">smtpd_per_record_deadline</a> = ${stress?yes}${stress:no}
+6 <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_starttls_timeout</a> = ${stress?10}${stress:300}s
+7 <a href="postconf.5.html#address_verify_poll_count">address_verify_poll_count</a> = ${stress?1}${stress:3}
+</pre>
+</blockquote>
+
+<p> Translation: <p>
+
+<ul>
+
+<li> <p> Line 1: under conditions of stress, use an <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a>
+value of 10 seconds instead of the default 300 seconds. Experience
+on the postfix-users list from a variety of sysadmins shows that
+reducing the "normal" <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> to 60s is unlikely to affect
+legitimate clients. However, it is unlikely to become the Postfix
+default because it's not RFC compliant. Setting <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> to
+10s or even 5s under stress will still allow most
+legitimate clients to connect and send mail, but may delay mail
+from some clients. No mail should be lost, as long as this measure
+is used only temporarily. </p>
+
+<li> <p> Line 2: under conditions of stress, use an <a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a>
+of 1 instead of the default 20. This helps by disconnecting clients
+after a single error, giving other clients a chance to connect.
+However, this may cause significant delays with legitimate mail,
+such as a mailing list that contains a few no-longer-active user
+names that didn't bother to unsubscribe. No mail should be lost,
+as long as this measure is used only temporarily. </p>
+
+<li> <p> Line 3: under conditions of stress, use an
+<a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> of 1 instead of the default 100. This
+prevents clients from keeping connections open by repeatedly
+sending HELO, EHLO, NOOP, RSET, VRFY or ETRN commands. </p>
+
+<li> <p> Line 5: under conditions of stress, change the behavior
+of <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> and <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_starttls_timeout</a>, from a time limit per
+read or write system call, to a time limit to send or receive a
+complete record (an SMTP command line, SMTP response line, SMTP
+message content line, or TLS protocol message). </p>
+
+<li> <p> Line 6: under conditions of stress, reduce the time limit
+for TLS protocol handshake messages to 10 seconds, from the default
+value of 300 seconds. See also the <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> discussion above.
+</p>
+
+<li> <p> Line 7: under conditions of stress, do not wait up to 6
+seconds for the completion of an address verification probe. If the
+result is not already in the address verification cache, reply
+immediately with $<a href="postconf.5.html#unverified_recipient_tempfail_action">unverified_recipient_tempfail_action</a> or
+$<a href="postconf.5.html#unverified_sender_tempfail_action">unverified_sender_tempfail_action</a>. No mail should be lost, as long
+as this measure is used only temporarily.  </p>
+
+</ul>
+
+<p> The syntax of ${name?value} and ${name:value} is explained at
+the beginning of the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
+
+<p> NOTE: Please keep in mind that the stress-adaptive feature is
+a fairly desperate measure to keep <b>some</b> legitimate mail
+flowing under overload conditions.  If a site is reaching the SMTP
+server process limit when there isn't an attack or bot flood
+occurring, then either the process limit needs to be raised or more
+hardware needs to be added.  </p>
+
 <h2><a name="concurrency"> Service more SMTP clients at the same time </a> </h2>
+
+<p> This section and the ones that follow discuss permanent measures
+against mail server overload.  </p>
 
 <p> One measure to avoid the "all server processes busy" condition
 is to service more SMTP clients simultaneously. For this you need
@@ -144,7 +255,7 @@ filters (BSD kqueue(2), Linux epoll(4), or Solaris /dev/poll).
 
 <li> <p> More processes use more memory. You can reduce the Postfix
 memory footprint by using <a href="CDB_README.html">cdb</a>:
-lookup tables instead of Berkeley DB's hash: or btree: tables. </p>
+lookup tables instead of Berkeley DB's <a href="DATABASE_README.html#types">hash</a>: or <a href="DATABASE_README.html#types">btree</a>: tables. </p>
 
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
@@ -257,7 +368,7 @@ response, use something like: </p>
  5         <a href="postconf.5.html#reject_rbl_client">reject_rbl_client</a> zen.spamhaus.org=127.0.0.11
  6         <a href="postconf.5.html#reject_rbl_client">reject_rbl_client</a> zen.spamhaus.org
  7  
- 8      <a href="postconf.5.html#rbl_reply_maps">rbl_reply_maps</a> = hash:/etc/postfix/rbl_reply_maps
+ 8      <a href="postconf.5.html#rbl_reply_maps">rbl_reply_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/rbl_reply_maps
  9  
 10  /etc/postfix/rbl_reply_maps:
 11      # With Postfix 2.3-2.5 use "421" to hang up connections.
@@ -289,7 +400,7 @@ listed at <a href="http://www.postfix.org/download.html">http://www.postfix.org/
 above 8 with: </p>
 
 <pre>
- 8      <a href="postconf.5.html#rbl_reply_maps">rbl_reply_maps</a> = ${stress?hash:/etc/postfix/rbl_reply_maps}
+ 8      <a href="postconf.5.html#rbl_reply_maps">rbl_reply_maps</a> = ${stress?<a href="DATABASE_README.html#types">hash</a>:/etc/postfix/rbl_reply_maps}
 </pre>
 
 </ul>
@@ -348,95 +459,6 @@ repeatedly sending NOOP or RSET commands. </p>
 <p> With these measures, no mail should be lost, as long
 as these measures are used only temporarily. The next section of
 this document introduces a way to automate this process. </p>
-
-<h2><a name="adapt"> Automatic stress-adaptive behavior </a></h2>
-
-<p> Postfix version 2.5 introduces automatic stress-adaptive behavior.
-This is also available as a source code patch for Postfix versions
-2.4 and 2.3 from the mirrors listed at
-<a href="http://www.postfix.org/download.html">http://www.postfix.org/download.html</a>.  </p>
-
-<p> It works as follows. When a "public" network service such as
-the SMTP server runs into an "all server ports are busy" condition,
-the Postfix <a href="master.8.html">master(8)</a> daemon logs a warning, restarts the service
-(without interrupting existing network sessions), and runs the
-service with "-o stress=yes" on the server process command line:
-</p>
-
-<blockquote>
-<pre>
-80821  ??  S      0:00.24 smtpd -n smtp -t inet -u -c -o stress=yes
-</pre>
-</blockquote>
-
-<p> Normally, the Postfix <a href="master.8.html">master(8)</a> daemon runs such a service with
-"-o stress=" on the command line (i.e.  with an empty parameter
-value):  </p>
-
-<blockquote>
-<pre>
-83326  ??  S      0:00.28 smtpd -n smtp -t inet -u -c -o stress=
-</pre>
-</blockquote>
-
-<p> Services that have local access only never have "-o stress"
-parameters on the command line. This includes services internal to
-Postfix such as the queue manager, and services that listen on a
-loopback interface only, such as after-filter SMTP services.  </p>
-
-<p> The "stress" parameter value is the key to making <a href="postconf.5.html">main.cf</a>
-parameter settings stress adaptive. The following settings are the
-default with Postfix 2.6 and later. With earlier Postfix versions
-that have stress-adaptive support, append the lines below to the
-<a href="postconf.5.html">main.cf</a> file and issue a "postfix reload" command: </p>
-
-<blockquote>
-<pre>
-1 <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> = ${stress?10}${stress:300}s
-2 <a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a> = ${stress?1}${stress:20}
-3 <a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> = ${stress?1}${stress:100}
-</pre>
-</blockquote>
-
-<p> Translation: <p>
-
-<ul>
-
-<li> <p> Line 1: under conditions of stress, use an <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a>
-value of 10 seconds instead of the default 300 seconds. Experience
-on the postfix-users list from a variety of sysadmins shows that
-reducing the "normal" <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> to 60s is unlikely to affect
-legitimate clients. However, it is unlikely to become the Postfix
-default because it's not RFC compliant. Setting <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> to
-10s (line 2 below) or even 5s under stress will still allow most
-legitimate clients to connect and send mail, but may delay mail
-from some clients. No mail should be lost, as long as this measure
-is used only temporarily. </p>
-
-<li> <p> Line 2: under conditions of stress, use an <a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a>
-of 1 instead of the default 20. This helps by disconnecting clients
-after a single error, giving other clients a chance to connect.
-However, this may cause significant delays with legitimate mail,
-such as a mailing list that contains a few no-longer-active user
-names that didn't bother to unsubscribe. No mail should be lost,
-as long as this measure is used only temporarily. </p>
-
-<li> <p> Line 3: under conditions of stress, use an
-<a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> of 1 instead of the default 100. This
-prevents clients from keeping idle connections open by repeatedly
-sending NOOP or RSET commands. </p>
-
-</ul>
-
-<p> The syntax of ${name?value} and ${name:value} is explained at
-the beginning of the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
-
-<p> NOTE: Please keep in mind that the stress-adaptive feature is
-a fairly desperate measure to keep <b>some</b> legitimate mail
-flowing under overload conditions.  If a site is reaching the SMTP
-server process limit when there isn't an attack or bot flood
-occurring, then either the process limit needs to be raised or more
-hardware needs to be added.  </p>
 
 <h2><a name="feature"> Detecting support for stress-adaptive behavior </a></h2>
 
