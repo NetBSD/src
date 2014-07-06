@@ -333,7 +333,7 @@ in forged email.  </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = hash:/etc/postfix/sender_access
+    <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_access
     <a href="postconf.5.html#unverified_sender_reject_code">unverified_sender_reject_code</a> = 550
     # Postfix 2.6 and later.
     # <a href="postconf.5.html#unverified_sender_defer_code">unverified_sender_defer_code</a> = 250
@@ -341,7 +341,7 @@ in forged email.  </p>
     # Default setting for Postfix 2.7 and later.
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree instead.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/db/postfix/verify
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="DATABASE_README.html#types">btree</a>:/var/db/postfix/verify
  
 /etc/postfix/sender_access:
     # Don't do this when you handle lots of email.
@@ -378,7 +378,7 @@ you can see what mail would be blocked: </p>
     <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = 
         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
         ... 
-        <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/sender_access
+        <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_access
         <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a>
         <a href="postconf.5.html#warn_if_reject">warn_if_reject</a> <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a> 
         ...
@@ -388,7 +388,7 @@ you can see what mail would be blocked: </p>
     # Default setting for Postfix 2.7 and later.
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree instead.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/db/postfix/verify
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="DATABASE_README.html#types">btree</a>:/var/db/postfix/verify
 </pre>
 </blockquote>
 
@@ -454,23 +454,35 @@ results are lost after "postfix reload" or "postfix stop". </p>
 
 <blockquote>
 <pre>
+# Example 1: Default setting for Postfix 2.7 and later.
+# Note: avoid hash files here. Use btree instead.
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    # Default setting for Postfix 2.7 and later.
-    # Note: avoid hash files here. Use btree instead.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:$<a href="postconf.5.html#data_directory">data_directory</a>/verify_cache
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="DATABASE_README.html#types">btree</a>:$<a href="postconf.5.html#data_directory">data_directory</a>/verify_cache
 
-    # Shared persistent cache (requires Postfix 2.9 or later).  
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="proxymap.8.html">proxy</a>:btree:$<a href="postconf.5.html#data_directory">data_directory</a>/verify_cache
-    # Disable automatic cache cleanup in all Postfix instances except
-    # for one instance that will be responsible for cache cleanup.
+# Example 2: Shared persistent <a href="lmdb_table.5.html">lmdb</a>: cache (Postfix 2.11 or later).  
+# Disable automatic cache cleanup in all Postfix instances except
+# for one instance that will be responsible for cache cleanup.
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="lmdb_table.5.html">lmdb</a>:$<a href="postconf.5.html#data_directory">data_directory</a>/verify_cache
     # <a href="postconf.5.html#address_verify_cache_cleanup_interval">address_verify_cache_cleanup_interval</a> = 0
 
-    # Shared memory cache (requires Postfix 2.9 or later).
-    # See <a href="memcache_table.5.html">memcache_table(5)</a> for details.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/verify-memcache.cf
+# Example 3: Shared persistent <a href="DATABASE_README.html#types">btree</a>: cache (Postfix 2.9 or later).  
+# Disable automatic cache cleanup in all Postfix instances except
+# for one instance that will be responsible for cache cleanup.
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html#types">btree</a>:$<a href="postconf.5.html#data_directory">data_directory</a>/verify_cache
+    # <a href="postconf.5.html#address_verify_cache_cleanup_interval">address_verify_cache_cleanup_interval</a> = 0
 
-    # Default setting for Postfix 2.6 and earlier.
-    # This uses non-persistent storage only.
+# Example 4: Shared memory cache (requires Postfix 2.9 or later).
+# Disable automatic cache cleanup in all Postfix instances.
+# See <a href="memcache_table.5.html">memcache_table(5)</a> for details.
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/verify-memcache.cf
+    <a href="postconf.5.html#address_verify_cache_cleanup_interval">address_verify_cache_cleanup_interval</a> = 0
+
+# Example 5: Default setting for Postfix 2.6 and earlier.
+# This uses non-persistent storage only.
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#address_verify_map">address_verify_map</a> =
 </pre>
 </blockquote>
