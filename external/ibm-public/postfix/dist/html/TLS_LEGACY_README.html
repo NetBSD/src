@@ -564,7 +564,7 @@ the cost of repeatedly negotiating TLS session keys is high.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/etc/postfix/smtpd_scache
+    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = <a href="DATABASE_README.html#types">btree</a>:/etc/postfix/smtpd_scache
 </pre>
 </blockquote>
 
@@ -652,7 +652,7 @@ the user or host.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#relay_clientcerts">relay_clientcerts</a> = hash:/etc/postfix/relay_clientcerts
+    <a href="postconf.5.html#relay_clientcerts">relay_clientcerts</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/relay_clientcerts
 
 /etc/postfix/relay_clientcerts:
     D7:04:2F:A7:0B:8C:A5:21:FA:31:77:E1:41:8A:EE:80 lutzpc.at.home
@@ -938,7 +938,7 @@ is allowed to negotiate per unit time.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/etc/postfix/smtp_scache
+    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = <a href="DATABASE_README.html#types">btree</a>:/etc/postfix/smtp_scache
 </pre>
 </blockquote>
 
@@ -1204,7 +1204,7 @@ verification. This feature requires Postfix 2.2.9 or later.  </p>
 
 <blockquote> <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = hash:/etc/postfix/tls_per_site
+    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/tls_per_site
     <a href="postconf.5.html#relayhost">relayhost</a> = [msa.example.net]:587
 
 /etc/postfix/tls_per_site:
@@ -1509,13 +1509,13 @@ super-user privileges. </p>
 <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/cacert.pem
 <a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> = /etc/postfix/FOO-cert.pem
 <a href="postconf.5.html#smtp_tls_key_file">smtp_tls_key_file</a> = /etc/postfix/FOO-key.pem
-<a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/run/smtp_tls_session_cache
+<a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = <a href="DATABASE_README.html#types">btree</a>:/var/run/smtp_tls_session_cache
 <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes
 <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> = /etc/postfix/cacert.pem
 <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = /etc/postfix/FOO-cert.pem
 <a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a> = /etc/postfix/FOO-key.pem
 <a href="postconf.5.html#smtpd_tls_received_header">smtpd_tls_received_header</a> = yes
-<a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/run/smtpd_tls_session_cache
+<a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = <a href="DATABASE_README.html#types">btree</a>:/var/run/smtpd_tls_session_cache
 <a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes
 <a href="postconf.5.html#tls_random_source">tls_random_source</a> = dev:/dev/urandom
 </pre>

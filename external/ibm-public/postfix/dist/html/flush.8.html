@@ -13,146 +13,130 @@ FLUSH(8)                                                              FLUSH(8)
        <b>flush</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The <a href="flush.8.html"><b>flush</b>(8)</a> server maintains a record of deferred mail by
-       destination.  This information is used to improve the per-
-       formance of the SMTP <b>ETRN</b> request, and of its command-line
-       equivalent, "<b>sendmail -qR</b>" or "<b>postqueue -f</b>".   This  pro-
-       gram expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
+       The <a href="flush.8.html"><b>flush</b>(8)</a> server maintains a record of deferred mail by destination.
+       This information is used to improve the performance of  the  SMTP  <b>ETRN</b>
+       request,   and  of  its  command-line  equivalent,  "<b>sendmail  -qR</b>"  or
+       "<b>postqueue -f</b>".  This program expects to  be  run  from  the  <a href="master.8.html"><b>master</b>(8)</a>
+       process manager.
 
-       The record is implemented  as  a  per-destination  logfile
-       with as contents the queue IDs of deferred mail. A logfile
-       is  append-only,  and  is  truncated  when   delivery   is
-       requested for the corresponding destination. A destination
-       is the part on the right-hand side of the right-most <b>@</b>  in
+       The record is implemented as a per-destination logfile with as contents
+       the queue IDs of deferred mail. A logfile is append-only, and is  trun-
+       cated  when  delivery is requested for the corresponding destination. A
+       destination is the part on the right-hand side of the right-most  <b>@</b>  in
        an email address.
 
-       Per-destination  logfiles  of deferred mail are maintained
-       only for eligible destinations. The list of eligible  des-
-       tinations is specified with the <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a></b> config-
-       uration parameter, which defaults to <b>$<a href="postconf.5.html#relay_domains">relay_domains</a></b>.
+       Per-destination  logfiles of deferred mail are maintained only for eli-
+       gible destinations. The list of eligible destinations is specified with
+       the  <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a></b>  configuration  parameter,  which  defaults  to
+       <b>$<a href="postconf.5.html#relay_domains">relay_domains</a></b>.
 
        This server implements the following requests:
 
        <b>add</b> <i>sitename queueid</i>
-              Inform the <a href="flush.8.html"><b>flush</b>(8)</a> server that  the  message  with
-              the  specified queue ID is queued for the specified
-              destination.
+              Inform the <a href="flush.8.html"><b>flush</b>(8)</a> server that the message with  the  specified
+              queue ID is queued for the specified destination.
 
        <b>send_site</b> <i>sitename</i>
-              Request delivery of mail that  is  queued  for  the
-              specified destination.
+              Request delivery of mail that is queued for the specified desti-
+              nation.
 
        <b>send_file</b> <i>queueid</i>
               Request delivery of the specified deferred message.
 
        <b>refresh</b>
-              Refresh  non-empty  per-destination  logfiles  that
-              were not read in <b>$<a href="postconf.5.html#fast_flush_refresh_time">fast_flush_refresh_time</a></b> hours, by
-              simulating send requests (see above) for the corre-
-              sponding destinations.
+              Refresh non-empty per-destination logfiles that were not read in
+              <b>$<a href="postconf.5.html#fast_flush_refresh_time">fast_flush_refresh_time</a></b> hours, by simulating send requests (see
+              above) for the corresponding destinations.
 
-              Delete empty per-destination logfiles that were not
-              updated in <b>$<a href="postconf.5.html#fast_flush_purge_time">fast_flush_purge_time</a></b> days.
+              Delete empty per-destination logfiles that were not  updated  in
+              <b>$<a href="postconf.5.html#fast_flush_purge_time">fast_flush_purge_time</a></b> days.
 
               This request completes in the background.
 
        <b>purge</b>  Do a <b>refresh</b> for all per-destination logfiles.
 
 <b>SECURITY</b>
-       The <a href="flush.8.html"><b>flush</b>(8)</a> server is not security-sensitive. It does not
-       talk  to the network, and it does not talk to local users.
-       The fast flush server can run chrooted at fixed low privi-
-       lege.
+       The  <a href="flush.8.html"><b>flush</b>(8)</a> server is not security-sensitive. It does not talk to the
+       network, and it does not talk to local users.  The  fast  flush  server
+       can run chrooted at fixed low privilege.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       Fast  flush  logfiles  are  truncated  only after a "send"
-       request, not when mail is actually delivered,  and  there-
-       fore  can  accumulate outdated or redundant data. In order
-       to maintain sanity, "refresh" must  be  executed  periodi-
-       cally.  This can be automated with a suitable wakeup timer
-       setting in the <a href="master.5.html"><b>master.cf</b></a> configuration file.
+       Fast flush logfiles are truncated only after a "send" request, not when
+       mail is actually delivered, and therefore can  accumulate  outdated  or
+       redundant data. In order to maintain sanity, "refresh" must be executed
+       periodically. This can be automated with a suitable wakeup  timer  set-
+       ting in the <a href="master.5.html"><b>master.cf</b></a> configuration file.
 
-       Upon receipt of a request to deliver mail for an  eligible
-       destination,  the <a href="flush.8.html"><b>flush</b>(8)</a> server requests delivery of all
-       messages that are listed in  that  destination's  logfile,
-       regardless  of  the  recipients of those messages. This is
-       not an issue for mail that is sent to a <b><a href="postconf.5.html#relay_domains">relay_domains</a></b> des-
-       tination  because  such mail typically only has recipients
-       in one domain.
+       Upon  receipt of a request to deliver mail for an eligible destination,
+       the <a href="flush.8.html"><b>flush</b>(8)</a> server requests delivery of all messages that  are  listed
+       in  that  destination's  logfile, regardless of the recipients of those
+       messages. This is not an issue for mail that is sent to a <b><a href="postconf.5.html#relay_domains">relay_domains</a></b>
+       destination  because  such  mail  typically  only has recipients in one
+       domain.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="flush.8.html"><b>flush</b>(8)</a>
-       processes  run  for only a limited amount of time. Use the
-       command "<b>postfix reload</b>" to speed up a change.
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically  as  <a href="flush.8.html"><b>flush</b>(8)</a>  processes
+       run for only a limited amount of time. Use the command "<b>postfix reload</b>"
+       to speed up a change.
 
-       The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
+       more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
-              built-in watchdog timer.
+              How much time a Postfix daemon process  may  take  to  handle  a
+              request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
-              Optional list of destinations that are eligible for
-              per-destination  logfiles  with mail that is queued
-              to those destinations.
+              Optional list of destinations that are eligible for per-destina-
+              tion logfiles with mail that is queued to those destinations.
 
        <b><a href="postconf.5.html#fast_flush_refresh_time">fast_flush_refresh_time</a> (12h)</b>
-              The time after which a non-empty  but  unread  per-
-              destination   "fast  flush"  logfile  needs  to  be
-              refreshed.
+              The time after which  a  non-empty  but  unread  per-destination
+              "fast flush" logfile needs to be refreshed.
 
        <b><a href="postconf.5.html#fast_flush_purge_time">fast_flush_purge_time</a> (7d)</b>
-              The time after which an empty per-destination "fast
-              flush" logfile is deleted.
+              The  time after which an empty per-destination "fast flush" log-
+              file is deleted.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending or receiving information
-              over an internal communication channel.
+              The time limit for sending  or  receiving  information  over  an
+              internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits  for  an incoming connection
-              before terminating voluntarily.
+              The  maximum  amount of time that an idle Postfix daemon process
+              waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of incoming connections  that  a
-              Postfix  daemon  process will service before termi-
-              nating voluntarily.
+              The maximal number of incoming connections that a Postfix daemon
+              process will service before terminating voluntarily.
 
-       <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf  -d'  out-</b>
-       <b>put)</b>
-              What   Postfix   features   match   subdomains   of
-              "domain.tld" automatically, instead of requiring an
-              explicit ".domain.tld" pattern.
+       <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf -d' output)</b>
+              What Postfix features match subdomains of "domain.tld" automati-
+              cally, instead of requiring an explicit ".domain.tld" pattern.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
-              process.
+              The process ID of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
-              process.
+              The process name of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The  mail  system  name that is prepended to the process name in
+              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              fix/smtpd".
 
 <b>FILES</b>
        /var/spool/postfix/flush, "fast flush" logfiles.
@@ -169,8 +153,7 @@ FLUSH(8)                                                              FLUSH(8)
        <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>HISTORY</b>
        This service was introduced with Postfix version 1.0.

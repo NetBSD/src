@@ -66,9 +66,9 @@
 # TABLE FORMAT
 #        The input format for the postmap(1) command is as follows:
 # 
-#        pattern result
+#        pattern address
 #               When  pattern matches a mail address, replace it by
-#               the corresponding result.
+#               the corresponding address.
 # 
 #        blank lines and comments
 #               Empty lines and whitespace-only lines are  ignored,

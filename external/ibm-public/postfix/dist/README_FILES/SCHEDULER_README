@@ -29,7 +29,7 @@ Topics covered by this document:
 CCoonnccuurrrreennccyy sscchheedduulliinngg
 
 The following sections document the Postfix 2.5 concurrency scheduler, after a
-discussion of the limitations of the existing concurrency scheduler. This is
+discussion of the limitations of the earlier concurrency scheduler. This is
 followed by results of medium-concurrency experiments, and a discussion of
 trade-offs between performance and robustness.
 
@@ -504,7 +504,8 @@ elsewhere, but it is nice to have a coherent overview in one place:
     to be delivered and what transports are going to be used for the delivery.
 
   * Each recipient entry groups a batch of recipients of one message which are
-    all going to be delivered to the same destination.
+    all going to be delivered to the same destination (and over the same
+    transport).
 
   * Each transport structure groups everything what is going to be delivered by
     delivery agents dedicated for that transport. Each transport maintains a
@@ -593,10 +594,10 @@ The first approximation of the new scheduling algorithm is like this:
         if transport process limit reached continue
         foreach transport's job (in the order of the transport's job list)
         do
-    	foreach job's peer (round-robin-by-destination)
-    	     if peer->queue->concurrency < peer->queue->window
-    		 return next peer entry.
-    	done
+            foreach job's peer (round-robin-by-destination)
+                 if peer->queue->concurrency < peer->queue->window
+                     return next peer entry.
+            done
         done
     done
 
@@ -710,9 +711,8 @@ accumulated, job which requires no more than that number of slots to be fully
 delivered can preempt this job.
 
 [Well, the truth is, the counter is incremented every time an entry is selected
-and it is divided by k when it is used. Or even more true, there is no
-division, the other side of the equation is multiplied by k. But for the
-understanding it's good enough to use the above approximation of the truth.]
+and it is divided by k when it is used. But for the understanding it's good
+enough to use the above approximation of the truth.]
 
 OK, so now we know the conditions which must be satisfied so one job can
 preempt another one. But what job gets preempted, how do we choose what job

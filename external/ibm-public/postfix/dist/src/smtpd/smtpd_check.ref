@@ -91,20 +91,20 @@ OK
 OK
 >>> client unknown 131.155.210.17
 OK
->>> mail foo@watson.ibm.com
-./smtpd_check: <queue id>: reject: MAIL from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@watson.ibm.com> proto=SMTP helo=<123.123.123.123>
+>>> mail foo@ibm.com
+./smtpd_check: <queue id>: reject: MAIL from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]
 >>> client unknown 168.100.189.13
 OK
->>> mail foo@watson.ibm.com
+>>> mail foo@ibm.com
 OK
 >>> client foo 123.123.123.123
 OK
->>> mail foo@watson.ibm.com
+>>> mail foo@ibm.com
 OK
 >>> sender_restrictions reject_unknown_address
 OK
->>> mail foo@watson.ibm.com
+>>> mail foo@ibm.com
 OK
 >>> mail foo@bad.domain
 ./smtpd_check: <queue id>: reject: MAIL from foo[123.123.123.123]: 450 4.1.8 <foo@bad.domain>: Sender address rejected: Domain not found; from=<foo@bad.domain> proto=SMTP helo=<123.123.123.123>
@@ -140,34 +140,34 @@ OK
 OK
 >>> client unknown 131.155.210.17
 OK
->>> rcpt foo@watson.ibm.com
-./smtpd_check: <queue id>: reject: RCPT from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<123.123.123.123>
+>>> rcpt foo@ibm.com
+./smtpd_check: <queue id>: reject: RCPT from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@friend.bad.domain> to=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]
 >>> client unknown 168.100.189.13
 OK
->>> rcpt foo@watson.ibm.com
+>>> rcpt foo@ibm.com
 OK
 >>> client foo 123.123.123.123
 OK
->>> rcpt foo@watson.ibm.com
+>>> rcpt foo@ibm.com
 ./smtpd_check: warning: support for restriction "check_relay_domains" will be removed from Postfix; use "reject_unauth_destination" instead
-./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 5.7.1 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<123.123.123.123>
-554 5.7.1 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied
+./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 5.7.1 <foo@ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
+554 5.7.1 <foo@ibm.com>: Recipient address rejected: Relay access denied
 >>> rcpt foo@porcupine.org
 OK
 >>> recipient_restrictions check_relay_domains
 OK
 >>> client foo.porcupine.org 168.100.189.13
 OK
->>> rcpt foo@watson.ibm.com
+>>> rcpt foo@ibm.com
 OK
 >>> rcpt foo@porcupine.org
 OK
 >>> client foo 123.123.123.123
 OK
->>> rcpt foo@watson.ibm.com
-./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 5.7.1 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<123.123.123.123>
-554 5.7.1 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied
+>>> rcpt foo@ibm.com
+./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 5.7.1 <foo@ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
+554 5.7.1 <foo@ibm.com>: Recipient address rejected: Relay access denied
 >>> rcpt foo@porcupine.org
 OK
 >>> recipient_restrictions hash:./smtpd_check_access
@@ -206,9 +206,9 @@ OK
 OK
 >>> client foo 131.155.210.17
 OK
->>> rcpt foo@watson.ibm.com
-./smtpd_check: <queue id>: reject: RCPT from foo[131.155.210.17]: 554 5.7.1 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<123.123.123.123>
-554 5.7.1 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied
+>>> rcpt foo@ibm.com
+./smtpd_check: <queue id>: reject: RCPT from foo[131.155.210.17]: 554 5.7.1 <foo@ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
+554 5.7.1 <foo@ibm.com>: Recipient address rejected: Relay access denied
 >>> recipient_restrictions check_client_access,hash:./smtpd_check_access,check_relay_domains
 OK
 >>> client foo 131.155.210.17

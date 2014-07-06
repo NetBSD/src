@@ -4,9 +4,9 @@
 # SUMMARY
 #	Postfix memcache client configuration
 # SYNOPSIS
-#	\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/filename\fR
+#	\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
@@ -71,7 +71,7 @@
 #	*_cache_cleanup_interval = 0) except with one Postfix
 #	instance that will be responsible for cache cleanup.
 #
-#	NOTE 2: When different tables share the same memcache
+#	NOTE 2: When multiple tables share the same memcache
 #	database, each table should use the \fBkey_format\fR feature
 #	(see below) to prepend its own unique string to the lookup
 #	key.  Otherwise, automatic \fBpostscreen\fR(8) or \fBverify\fR(8)
@@ -103,14 +103,16 @@
 # .ad
 # .fi
 # .IP "\fBkey_format (default: %s)\fB"
-#	Format of the lookup and update keys in memcache requests.
+#	Format of the lookup and update keys that the Postfix
+#	memcache client sends to the memcache server.
 #	By default, these are the same as the lookup and update
-#	keys that are given to the Postfix memcache client.
+#	keys that the memcache client receives from Postfix
+#	applications.
 #
 #	NOTE 1: The \fBkey_format\fR feature is not used for \fBbackup\fR
 #	database requests.
 #
-#	NOTE 2: When different tables share the same memcache
+#	NOTE 2: When multiple tables share the same memcache
 #	database, each table should prepend its own unique string
 #	to the lookup key.  Otherwise, automatic \fBpostscreen\fR(8)
 #	or \fBverify\fR(8) cache cleanup may not work.
