@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.31 2014/07/06 15:09:38 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.32 2014/07/06 15:49:14 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.31 2014/07/06 15:09:38 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.32 2014/07/06 15:49:14 rtr Exp $");
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/domain.h>
@@ -60,6 +61,7 @@ u_long natm0_recvspace = 16*1024;
 static int
 natm_attach(struct socket *so, int proto)
 {
+	int error = 0;
 	struct natmpcb *npcb;
 
 	KASSERT(so->so_pcb == NULL);
@@ -76,7 +78,7 @@ natm_attach(struct socket *so, int proto)
 	npcb = npcb_alloc(true);
 	npcb->npcb_socket = so;
 	so->so_pcb = npcb;
-	return 0;
+	return error;
 }
 
 static void
@@ -98,9 +100,13 @@ natm_detach(struct socket *so)
 static int
 natm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
-  int error = 0;
+  int error = 0, s;
+  struct natmpcb *npcb;
+  struct atm_rawioctl ario;
 
   s = SPLSOFTNET();
+
+  npcb = (struct natmpcb *) so->so_pcb;
 
   /*
    * raw atm ioctl.   comes in as a SIOCRAWATM.   we convert it to
@@ -157,7 +163,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   struct sockaddr_natm *snatm;
   struct atm_pseudoioctl api;
   struct atm_pseudohdr *aph;
-  struct atm_rawioctl ario;
   struct ifnet *ifp;
   int proto = so->so_proto->pr_protocol;
 
