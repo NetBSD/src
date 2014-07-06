@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.42 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.43 2014/07/06 16:18:46 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.42 2014/07/01 05:49:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.43 2014/07/06 16:18:46 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -69,6 +69,7 @@ static void	sockin_init(void);
 static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
 static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
+static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
@@ -77,6 +78,7 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_attach = sockin_attach,
 	.pr_detach = sockin_detach,
 	.pr_ioctl = sockin_ioctl,
+	.pr_stat = sockin_stat,
 	.pr_generic = sockin_usrreq,
 };
 
@@ -458,12 +460,19 @@ sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 }
 
 static int
+sockin_stat(struct socket *so, struct stat *ub)
+{
+	return 0;
+}
+
+static int
 sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	switch (req) {
 	case PRU_ACCEPT:
