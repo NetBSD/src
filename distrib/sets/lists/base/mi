@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1070 2014/07/05 22:08:14 dholland Exp $
+# $NetBSD: mi,v 1.1071 2014/07/06 21:06:48 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1471,6 +1471,7 @@
 ./usr/sbin/postmulti				base-postfix-bin	postfix
 ./usr/sbin/postqueue				base-postfix-bin	postfix
 ./usr/sbin/postsuper				base-postfix-bin	postfix
+./usr/sbin/posttls-finger			base-postfix-bin	postfix
 ./usr/sbin/powerd				base-sysutil-bin
 ./usr/sbin/pppd					base-ppp-bin
 ./usr/sbin/pppdump				base-ppp-bin

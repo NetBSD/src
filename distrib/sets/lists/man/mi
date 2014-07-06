@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1476 2014/06/23 15:22:07 christos Exp $
+# $NetBSD: mi,v 1.1477 2014/07/06 21:06:48 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -440,6 +440,7 @@
 ./usr/share/man/cat1/postmulti.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postqueue.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postsuper.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat1/posttls-finger.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/pr.0			man-util-catman		.cat
 ./usr/share/man/cat1/prenice.0			man-util-catman		.cat
 ./usr/share/man/cat1/printenv.0			man-util-catman		.cat
@@ -3543,6 +3544,7 @@
 ./usr/share/man/html1/postmulti.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postqueue.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postsuper.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html1/posttls-finger.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/pr.html			man-util-htmlman	html
 ./usr/share/man/html1/prenice.html		man-util-htmlman	html
 ./usr/share/man/html1/printenv.html		man-util-htmlman	html
@@ -6290,6 +6292,7 @@
 ./usr/share/man/man1/postmulti.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/postqueue.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/postsuper.1		man-postfix-man		postfix,.man
+./usr/share/man/man1/posttls-finger.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/pr.1			man-util-man		.man
 ./usr/share/man/man1/prenice.1			man-util-man		.man
 ./usr/share/man/man1/printenv.1			man-util-man		.man

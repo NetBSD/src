@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2014/07/02 13:38:05 alnsn Exp $
+# $NetBSD: mi,v 1.67 2014/07/06 21:06:48 tron Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1143,6 +1143,7 @@
 ./usr/libdata/debug/usr/sbin/postmulti.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postqueue.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postsuper.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/sbin/posttls-finger.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/powerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		debug
