@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.284 2014/07/06 17:49:20 apb Exp $
+#	$NetBSD: build.sh,v 1.285 2014/07/06 18:04:44 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -278,6 +278,29 @@ ERRORMESSAGE
 	exit 1
 }
 
+# Quote args to make them safe in the shell.
+# Usage: quotedlist="$(shell_quote args...)"
+#
+# After building up a quoted list, use it by evaling it inside
+# double quotes, like this:
+#    eval "set -- $quotedlist"
+# or like this:
+#    eval "\$command $quotedlist \$filename"
+shell_quote()
+{
+	local result=''
+	local arg
+	for arg in "$@" ; do
+		# Append a space if necessary
+		result="${result}${result:+ }"
+		# Convert each embedded ' to '\'',
+		# then insert ' at the beginning of the first line,
+		# and append ' at the end of the last line.
+		result="${result}$(printf "%s\n" "$arg" | \
+			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+	done
+	printf "%s\n" "$result"
+}
 
 statusmsg()
 {
@@ -1750,27 +1773,30 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.284 2014/07/06 17:49:20 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.285 2014/07/06 18:04:44 apb Exp $
 # with these arguments: ${_args}
 #
 
 EOF
 	{
-		for f in ${makeenv}; do
-			if eval "[ -z \"\${$f}\" -a \"\${${f}-X}\" = \"X\" ]"; then
-				eval echo "unset ${f}"
+		sorted_vars="$(for var in ${makeenv}; do echo "${var}" ; done \
+			| sort -u )"
+		for var in ${sorted_vars}; do
+			eval val=\"\${${var}}\"
+			eval is_set=\"\${${var}+set}\"
+			if [ -z "${is_set}" ]; then
+				echo "unset ${var}"
 			else
-				eval echo "${f}=\'\$$(echo ${f})\'\;\ export\ ${f}"
+				qval="$(shell_quote "${val}")"
+				echo "${var}=${qval}; export ${var}"
 			fi
 		done
 
-		eval cat <<EOF
-EOF
-	} | eval sort -u "${makewrapout}"
-	eval cat <<EOF "${makewrapout}"
+		cat <<EOF
 
 exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
 EOF
+	} | eval cat "${makewrapout}"
 	[ "${runcmd}" = "echo" ] && echo EOF
 	${runcmd} chmod +x "${makewrapper}"
 	statusmsg2 "Updated makewrapper:" "${makewrapper}"
