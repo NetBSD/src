@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.282 2014/06/14 12:25:00 apb Exp $
+#	$NetBSD: build.sh,v 1.283 2014/07/06 17:35:09 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -695,7 +695,7 @@ getarch()
 		line="${line%%#*}" # ignore comments
 		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		case "${line} " in
-		"")
+		" ")
 			# skip blank lines or comment lines
 			continue
 			;;
@@ -770,7 +770,7 @@ validatearch()
 		line="${line%%#*}" # ignore comments
 		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		case "${line} " in
-		"")
+		" ")
 			# skip blank lines or comment lines
 			continue
 			;;
@@ -1748,7 +1748,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.282 2014/06/14 12:25:00 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.283 2014/07/06 17:35:09 apb Exp $
 # with these arguments: ${_args}
 #
 
