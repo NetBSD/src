@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.18 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.19 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.18 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.19 2014/07/06 03:33:33 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -130,6 +130,17 @@ rfcomm_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 	return EPASSTHROUGH;
 }
 
+static int
+rfcomm_stat(struct socket *so, struct stat *ub)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return 0;
+}
+
 /*
  * User Request.
  * up is socket
@@ -158,6 +169,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	switch (req) {
 	case PRU_PURGEIF:
@@ -233,9 +245,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		sbappendstream(&up->so_snd, m);
 
 		return rfcomm_send(pcb, m0);
-
-	case PRU_SENSE:
-		return 0;		/* (no release) */
 
 	case PRU_RCVD:
 		return rfcomm_rcvd(pcb, sbspace(&up->so_rcv));
@@ -430,11 +439,13 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_attach		rfcomm_attach_wrapper
 #define	rfcomm_detach		rfcomm_detach_wrapper
 #define	rfcomm_ioctl		rfcomm_ioctl_wrapper
+#define	rfcomm_stat		rfcomm_stat_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_attach	= rfcomm_attach,
 	.pr_detach	= rfcomm_detach,
 	.pr_ioctl	= rfcomm_ioctl,
+	.pr_stat	= rfcomm_stat,
 	.pr_generic	= rfcomm_usrreq,
 };
