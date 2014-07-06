@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.50 2014/07/05 19:25:58 dholland Exp $
+# $NetBSD: mi,v 1.51 2014/07/06 08:53:15 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -95,10 +95,10 @@
 ./usr/games/wump				games-games-bin
 ./usr/libexec/ching/castching			games-games-bin
 ./usr/libexec/ching/printching			games-games-bin
-./usr/share/doc/reference/ref6/rogue/rogue.html		games-usd-doc		doc
+./usr/share/doc/reference/ref6/rogue/rogue.html		games-usd-doc		doc,html
 ./usr/share/doc/reference/ref6/rogue/rogue.ps.gz	games-usd-doc		doc
 ./usr/share/doc/reference/ref6/rogue/rogue.txt		games-usd-doc		doc
-./usr/share/doc/reference/ref6/trek/trek.html		games-usd-doc		doc
+./usr/share/doc/reference/ref6/trek/trek.html		games-usd-doc		doc,html
 ./usr/share/doc/reference/ref6/trek/trek.ps.gz		games-usd-doc		doc
 ./usr/share/doc/reference/ref6/trek/trek.txt		games-usd-doc		doc
 ./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
