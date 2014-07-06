@@ -229,20 +229,24 @@ $ make
 
 <p> and so on. In some cases, optimization is turned off automatically. </p>
 
-<h3>4.3 - Building with optional extensions</h3>
+<h3>4.3 - Building with optional features</h3>
 
 By default, Postfix builds as a mail system with relatively few
 bells and whistles. Support for third-party databases etc.
-must be configured when Postfix is compiled.  The following documents describe how to build Postfix with support for extensions:
+must be configured when Postfix is compiled.  The following documents
+describe how to build Postfix with support for optional features:
 
 <blockquote>
 <table border="1">
 
-<tr> <th>Postfix extension </th> <th>Document </th> <th>Availability</th>
+<tr> <th>Optional feature </th> <th>Document </th> <th>Availability</th>
 </tr>
 
 <tr> <td> Berkeley DB database</td> <td>DB_README</td> <td> Postfix
 1.0 </td> </tr>
+
+<tr> <td> LMDB database</td> <td>LMDB_README</td> <td> Postfix
+2.11 </td> </tr>
 
 <tr> <td> LDAP database</td> <td>LDAP_README</td> <td> Postfix
 1.0 </td> </tr>
@@ -305,6 +309,9 @@ default</th> </tr>
 
 <tr> <td>DEF_CONFIG_DIR</td> <td>config_directory</td>
 <td>/etc/postfix</td> </tr>
+
+<tr> <td>DEF_DB_TYPE</td> <td>default_database_type</td>
+<td>hash</td> </tr>
 
 <tr> <td>DEF_DAEMON_DIR</td> <td>daemon_directory</td>
 <td>/usr/libexec/postfix</td> </tr>
@@ -372,7 +379,9 @@ off Postfix features at compile time:</td> </tr>
 
 <tr> <td> </td> <td> -DNO_DB </td> <td> Do not build with Berkeley
 DB support. By default, Berkeley DB support is compiled in on
-platforms that are known to support this feature.  </td> </tr>
+platforms that are known to support this feature. If you override
+this, then you probably should also override DEF_DB_TYPE as described
+in section 4.4.  </td> </tr>
 
 <tr> <td> </td> <td> -DNO_DEVPOLL </td> <td> Do not build with
 Solaris <tt>/dev/poll</tt> support. By default, <tt>/dev/poll</tt>
@@ -395,7 +404,11 @@ support is compiled in on platforms that are known to support it.
 </td> </tr>
 
 <tr> <td> </td> <td> -DNO_NIS </td> <td> Do not build with NIS or
-NISPLUS support. NIS is not available on some recent Linux or Solaris
+NISPLUS support. NIS is not available on some recent Linux
+distributions. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_NISPLUS </td> <td> Do not build with
+NISPLUS support. NISPLUS is not available on some recent Solaris
 distributions. </td> </tr>
 
 <tr> <td> </td> <td> -DNO_PCRE </td> <td> Do not build with PCRE

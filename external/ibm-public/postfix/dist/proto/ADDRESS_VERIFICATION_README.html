@@ -454,23 +454,35 @@ results are lost after "postfix reload" or "postfix stop". </p>
 
 <blockquote>
 <pre>
+# Example 1: Default setting for Postfix 2.7 and later.
+# Note: avoid hash files here. Use btree instead.
 /etc/postfix/main.cf:
-    # Default setting for Postfix 2.7 and later.
-    # Note: avoid hash files here. Use btree instead.
     address_verify_map = btree:$data_directory/verify_cache
 
-    # Shared persistent cache (requires Postfix 2.9 or later).  
-    address_verify_map = proxy:btree:$data_directory/verify_cache
-    # Disable automatic cache cleanup in all Postfix instances except
-    # for one instance that will be responsible for cache cleanup.
+# Example 2: Shared persistent lmdb: cache (Postfix 2.11 or later).  
+# Disable automatic cache cleanup in all Postfix instances except
+# for one instance that will be responsible for cache cleanup.
+/etc/postfix/main.cf:
+    address_verify_map = lmdb:$data_directory/verify_cache
     # address_verify_cache_cleanup_interval = 0
 
-    # Shared memory cache (requires Postfix 2.9 or later).
-    # See memcache_table(5) for details.
-    address_verify_map = memcache:/etc/postfix/verify-memcache.cf
+# Example 3: Shared persistent btree: cache (Postfix 2.9 or later).  
+# Disable automatic cache cleanup in all Postfix instances except
+# for one instance that will be responsible for cache cleanup.
+/etc/postfix/main.cf:
+    address_verify_map = proxy:btree:$data_directory/verify_cache
+    # address_verify_cache_cleanup_interval = 0
 
-    # Default setting for Postfix 2.6 and earlier.
-    # This uses non-persistent storage only.
+# Example 4: Shared memory cache (requires Postfix 2.9 or later).
+# Disable automatic cache cleanup in all Postfix instances.
+# See memcache_table(5) for details.
+/etc/postfix/main.cf:
+    address_verify_map = memcache:/etc/postfix/verify-memcache.cf
+    address_verify_cache_cleanup_interval = 0
+
+# Example 5: Default setting for Postfix 2.6 and earlier.
+# This uses non-persistent storage only.
+/etc/postfix/main.cf:
     address_verify_map =
 </pre>
 </blockquote>
