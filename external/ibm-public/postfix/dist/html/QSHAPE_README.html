@@ -428,7 +428,7 @@ pseudo-cohort failure limit for the cloned smtp transport. </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
     fragile_destination_concurrency_failed_cohort_limit = 100
     fragile_destination_concurrency_limit = 20
 
@@ -462,7 +462,7 @@ and destination concurrency limit for this transport (say 2000). </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
     <a href="postconf.5.html#initial_destination_concurrency">initial_destination_concurrency</a> = 2000
     fragile_destination_concurrency_limit = 2000
 
@@ -508,7 +508,7 @@ the same destination.  </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
     slow_destination_rate_delay = 1
     slow_destination_concurrency_failed_cohort_limit = 100
 
@@ -547,7 +547,7 @@ problem destination as the <a href="postconf.5.html#fallback_relay">fallback_rel
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 
 /etc/postfix/transport:
     example.com  slow:[dead.host]

@@ -40,7 +40,8 @@ improves performance depends on the conditions:
 
   * SMTP Connection caching introduces some overhead: the client needs to send
     an RSET command to find out if a connection is still usable, before it can
-    send the next MAIL FROM command.
+    send the next MAIL FROM command. This introduces one additional round-trip
+    delay.
 
 For other potential issues with SMTP connection caching, see the discussion of
 limitations at the end of this document.
@@ -147,12 +148,17 @@ mechanisms:
     times. This avoids triggering bugs in implementations that do not correctly
     handle multiple deliveries per session.
 
-    With Postfix 2.2 the use count is limited with the
-    smtp_connection_cache_reuse_limit configuration parameter. With Postfix 2.3
-    this is replaced by a time limit which is specified with the
-    smtp_connection_reuse_time_limit parameter. In addition, Postfix 2.3 logs
-    the use count of multiply-used connections, as shown in the following
-    example:
+    As of Postfix 2.3 connection reuse is preferably limited with the
+    smtp_connection_reuse_time_limit parameter. In addition, Postfix 2.11
+    provides smtp_connection_reuse_count_limit to limit how many times a
+    connection may be reused, but this feature is unsafe as it introduces a
+    "fatal attractor" failure mode (when a destination has multiple inbound
+    MTAs, the slowest inbound MTA will attract most connections from Postfix to
+    that destination).
+
+    .
+    Postfix 2.3 logs the use count of multiply-used connections, as shown in
+    the following example:
 
         Nov  3 16:04:31 myname postfix/smtp[30840]: 19B6B2900FE:
         to=<wietse@test.example.com>, orig_to=<wietse@test>,
