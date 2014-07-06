@@ -1,4 +1,4 @@
-.\" $NetBSD: 2.t,v 1.1 2007/12/18 03:35:52 garbled Exp $
+.\" $NetBSD: 2.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -69,7 +69,7 @@ indicates if the system is going to operate on a DEC VAX-11\(dg computer,
 \(dg DEC, VAX, UNIBUS, MASSBUS and MicroVAX are trademarks of Digital
 Equipment Corporation.
 .FE
-or some other machine on which 4.4BSD operates.  The machine type
+or some other machine on which NetBSD operates.  The machine type
 is used to locate certain data files which are machine specific, and
 also to select rules used in constructing the resultant
 configuration files.
@@ -179,8 +179,8 @@ System options
 Other than the mandatory pieces of information described above, it
 is also possible to include various optional system facilities
 or to modify system behavior and/or limits.
-For example, 4.4BSD can be configured to support binary compatibility for
-programs built under 4.3BSD.  Also, optional support is provided
+For example, NetBSD can be configured to support binary compatibility for
+programs built under Linux and FreeBSD.  Also, optional support is provided
 for disk quotas and tracing the performance of the virtual memory
 subsystem.  Any optional facilities to be configured into
 the system are specified in the configuration file.  The resultant
