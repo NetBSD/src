@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.17 2012/02/15 04:33:19 macallan Exp $	*/
+/*	$NetBSD: bat.h,v 1.18 2014/07/06 08:06:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 struct bat {
 	register_t batu;
 	register_t batl;
-};
+} __aligned(8);
 #endif
 
 /* Lower BAT bits (all but PowerPC 601): */
