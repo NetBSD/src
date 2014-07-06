@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2014/07/06 06:28:49 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.21 2014/07/06 08:10:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -327,6 +327,23 @@ bootmenu(void)
 	}
 }
 
+static u_int
+checkmemsize(void)
+{
+	u_int m;
+
+#define MIN_MB 4
+#define MAX_MB 12
+
+	for (m = MIN_MB; m <= MAX_MB; m++) {
+		if (badbaddr((void *)(m * 1024 * 1024 - 1))) {
+			/* no memory */
+			break;
+		}
+	}
+
+	return (m - 1) * 1024 * 1024;
+}
 
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
@@ -339,6 +356,8 @@ extern const char bootprog_name[];
 void
 bootmain(int bootdev)
 {
+	u_int sram_memsize;
+	u_int probed_memsize;
 
 #ifndef NETBOOT
 	hostadaptor = get_scsi_host_adapter();
@@ -352,7 +371,8 @@ bootmain(int bootdev)
 		printf("This MPU cannot run NetBSD.\n");
 		exit(1);
 	}
-	if (SRAM_MEMSIZE < 4*1024*1024) {
+	sram_memsize = SRAM_MEMSIZE;
+	if (sram_memsize < 4*1024*1024) {
 		printf("Main memory too small.\n");
 		exit(1);
 	}
@@ -383,5 +403,16 @@ bootmain(int bootdev)
 	}
 #endif
 	print_title("%s, Revision %s\n", bootprog_name, bootprog_rev);
+
+	/* check actual memory size for machines with a dead SRAM battery */
+	probed_memsize = checkmemsize();
+	if (sram_memsize != probed_memsize) {
+		printf("\x1b[1mWarning: SRAM Memory Size (%d MB) "
+		    "is different from probed Memory Size (%d MB)\n"
+		    "         Check and reset SRAM values.\x1b[m\n\n",
+		    sram_memsize / (1024 * 1024),
+		    probed_memsize / (1024 * 1024));
+	}
+
 	bootmenu();
 }
