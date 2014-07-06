@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2014/07/06 05:31:02 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.20 2014/07/06 06:28:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -32,6 +32,9 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libsa/ufs.h>
+#ifdef NETBOOT
+#include <lib/libsa/dev_net.h>
+#endif
 #include <lib/libkern/libkern.h>
 
 #include "libx68k.h"
@@ -46,21 +49,38 @@
 #define SRAM_MEMSIZE	(*((long*) 0x00ed0008))
 
 char default_kernel[20] =
+#ifndef NETBOOT
     "sd0a:netbsd";
+#else
+    "nfs:netbsd";
+#endif
 int mpu;
+#ifndef NETBOOT
 int hostadaptor;
+#endif
 int console_device = -1;
 
+#ifdef DEBUG
+#ifdef NETBOOT
+int debug = 1;
+#endif
+#endif
+
 static void help(void);
+#ifndef NETBOOT
 static int get_scsi_host_adapter(void);
+#endif
 static void doboot(const char *, int);
 static void boot(char *);
+#ifndef NETBOOT
 static void cmd_ls(char *);
+#endif
 int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
 extern int badbaddr(void *);
 
+#ifndef NETBOOT
 /* from boot_ufs/bootmain.c */
 static int
 get_scsi_host_adapter(void)
@@ -83,19 +103,25 @@ get_scsi_host_adapter(void)
 
 	return ha;
 }
-
+#endif
 
 static void
 help(void)
 {
 	printf("Usage:\n");
 	printf("boot [dev:][file] -[flags]\n");
+#ifndef NETBOOT
 	printf(" dev:   sd<ID><PART>, ID=0-7, PART=a-p\n");
 	printf("        cd<ID>a, ID=0-7\n");
 	printf("        fd<UNIT>a, UNIT=0-3, format is detected.\n");
+#else
+	printf(" dev:   nfs, first probed NE2000 is used.\n");
+#endif
 	printf(" file:  netbsd, netbsd.gz, etc.\n");
 	printf(" flags: abdqsv\n");
+#ifndef NETBOOT
 	printf("ls [dev:][directory]\n");
+#endif
 	printf("halt\nreboot\n");
 }
 
@@ -127,10 +153,16 @@ doboot(const char *file, int flags)
 	}
 
 #ifdef DEBUG
+#ifndef NETBOOT
 	printf("dev = %x, unit = %d, part = %c, name = %s\n",
 	       dev, unit, part + 'a', name);
+#else
+	printf("dev = %x, unit = %d, name = %s\n",
+	       dev, unit, name);
+#endif
 #endif
 
+#ifndef NETBOOT
 	if (dev == 0) {		/* SCSI */
 		dev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
 					   hostadaptor >> 4,
@@ -139,14 +171,23 @@ doboot(const char *file, int flags)
 	} else {
 		dev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
 	}
+#else
+	dev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
+#endif
 #ifdef DEBUG
 	printf("boot device = %x\n", dev);
+#ifndef NETBOOT
 	printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
 	       B_X68K_SCSI_IF(dev),
 	       B_X68K_SCSI_IF_UN(dev),
 	       B_X68K_SCSI_ID(dev),
 	       B_X68K_SCSI_LUN(dev),
 	       B_X68K_SCSI_PART(dev) + 'a');
+#else
+	printf("if = %d, unit = %d\n",
+	       B_X68K_SCSI_IF(dev),
+	       B_X68K_SCSI_IF_UN(dev));
+#endif
 #endif
 
 	p = ((short*) marks[MARK_ENTRY]) - 1;
@@ -208,6 +249,7 @@ boot(char *arg)
 	}
 }
 
+#ifndef NETBOOT
 static void
 cmd_ls(char *arg)
 {
@@ -228,6 +270,7 @@ cmd_ls(char *arg)
 	ls(filename);
 	devopen_open_dir = 0;
 }
+#endif
 
 int
 bootmenu(void)
@@ -275,8 +318,10 @@ bootmenu(void)
 		else if (strcmp("halt", p) == 0 ||
 			 strcmp("reboot", p) == 0)
 			exit(0);
+#ifndef NETBOOT
 		else if (strcmp("ls", p) == 0)
 			cmd_ls(options);
+#endif
 		else
 			printf("Unknown command %s\n", p);
 	}
@@ -295,7 +340,12 @@ void
 bootmain(int bootdev)
 {
 
+#ifndef NETBOOT
 	hostadaptor = get_scsi_host_adapter();
+#else
+	rtc_offset = RTC_OFFSET;
+	try_bootp = 1;
+#endif
 	mpu = detectmpu();
 
 	if (mpu < 3) {		/* not tested on 68020 */
@@ -310,6 +360,7 @@ bootmain(int bootdev)
 	console_device = consio_init(console_device);
 	setheap(HEAP_START, HEAP_END);
 
+#ifndef NETBOOT
 	switch (B_TYPE(bootdev)) {
 	case X68K_MAJOR_FD:
 		default_kernel[0] = 'f';
@@ -330,6 +381,7 @@ bootmain(int bootdev)
 	default:
 		printf("Warning: unknown boot device: %x\n", bootdev);
 	}
+#endif
 	print_title("%s, Revision %s\n", bootprog_name, bootprog_rev);
 	bootmenu();
 }
