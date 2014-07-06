@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.65 2014/07/05 19:22:04 dholland Exp $
+#	$NetBSD: bsd.doc.mk,v 1.66 2014/07/06 06:34:33 dholland Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -159,7 +159,9 @@ DOCINST+=${SA}.txt ${SA}.${PRINTABLE}
 DOCINST+=${SA}.html
 .endif
 .endfor
+.if ${MKHTML} != "no"
 DOCINST+=${EXTRAHTMLFILES}
+.endif
 
 .if ${MKDOC} != "no"
 docinstall:
