@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2012/03/20 12:37:01 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.19 2014/07/06 05:31:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -45,8 +45,10 @@
 #define EXSCSI_BDID	((void*) 0x00ea0001)
 #define SRAM_MEMSIZE	(*((long*) 0x00ed0008))
 
-char default_kernel[20] = "sd0a:netbsd";
-int mpu, hostadaptor;
+char default_kernel[20] =
+    "sd0a:netbsd";
+int mpu;
+int hostadaptor;
 int console_device = -1;
 
 static void help(void);
@@ -262,14 +264,16 @@ bootmenu(void)
 		printf("> ");
 		gets(input);
 
-		for (p = &input[0]; p - &input[0] < 80 && *p == ' '; p++);
+		for (p = &input[0]; p - &input[0] < 80 && *p == ' '; p++)
+			;
 		options = gettrailer(p);
 		if (strcmp("boot", p) == 0)
 			boot(options);
 		else if (strcmp("help", p) == 0 ||
 			 strcmp("?", p) == 0)
 			help();
-		else if ((strcmp("halt", p) == 0) ||(strcmp("reboot", p) == 0))
+		else if (strcmp("halt", p) == 0 ||
+			 strcmp("reboot", p) == 0)
 			exit(0);
 		else if (strcmp("ls", p) == 0)
 			cmd_ls(options);
@@ -290,6 +294,7 @@ extern const char bootprog_name[];
 void
 bootmain(int bootdev)
 {
+
 	hostadaptor = get_scsi_host_adapter();
 	mpu = detectmpu();
 
