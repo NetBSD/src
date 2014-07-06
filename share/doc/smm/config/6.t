@@ -1,4 +1,4 @@
-.\" $NetBSD: 6.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
+.\" $NetBSD: 6.t,v 1.3 2014/07/06 05:32:30 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -63,7 +63,8 @@ it is best to bracket them with
 #endif
 .DE
 to allow your source to be easily distributed to others, and
-also to simplify \fIdiff\fP\|(1) listings.  It is
+also to simplify \fIdiff\fP\|(1) listings.
+It is
 recommended that you save the old code with something
 of the form:
 .DS
@@ -98,7 +99,8 @@ and the third is an optional list of modules for use on a specific machine.
 This last file may override specifications in the first two.
 The format of the 
 .I files
-file has grown somewhat complex over time.  Entries are normally of
+file has grown somewhat complex over time.
+Entries are normally of
 the form
 .IP
 .nf
@@ -132,17 +134,20 @@ If a file is specified as a
 any special compilation options for device drivers will be invoked.
 On the VAX this results in the use of the
 .B \-i
-option for the C optimizer.  This is required when pointer references
+option for the C optimizer.
+This is required when pointer references
 are made to memory locations in the VAX I/O address space.
 .PP
 Two other optional keywords modify the usage of the file.
 .I Config
 understands that certain files are used especially for
-kernel profiling.  These files are indicated in the
+kernel profiling.
+These files are indicated in the
 .I files
 files with a 
 .I profiling-routine
-keyword.  For example, the current profiling subroutines
+keyword.
+For example, the current profiling subroutines
 are sequestered off in a separate file with the following
 entry:
 .IP
@@ -161,10 +166,12 @@ option.
 .PP
 The second keyword which can be of use is the
 .I config-dependent
-keyword.  This causes
+keyword.
+This causes
 .I config
 to compile the indicated module with the global configuration
-parameters.  This allows certain modules, such as
+parameters.
+This allows certain modules, such as
 .I machdep.c
 to size system data structures based on the maximum number
 of users configured for the system.
@@ -194,32 +201,40 @@ lw(1.0i) l.
 .DE
 .PP
 Existing block and character device drivers for the VAX 
-reside in ``/usr/src/sys/dev''. Any new device
+reside in ``/usr/src/sys/dev''.
+Any new device
 drivers should be placed in the appropriate source code directory
 and named so as not to conflict with existing devices.
 Normally, definitions for things like device registers are placed in
-a separate file in the same directory.  For example, the ``auixp''
+a separate file in the same directory.
+For example, the ``auixp''
 device driver is named ``auixp.c'' and its associated include file is
 named ``auixpreg.h''. There is also an ``auixpvar.h'' which contains
 data structures and other external declarations that the driver needs
 to expose.
 .PP
 Once the source for the device driver has been placed in a directory,
-the file ``/usr/src/sys/conf/files'' should be modified.  The 
+the file ``/usr/src/sys/conf/files'' should be modified.
+The 
 .I files
 files in the conf directory contain a line for each C source or binary-only
-file in the system.  Those files which are machine independent are
+file in the system.
+Those files which are machine independent are
 located in ``/usr/src/sys/conf/files,'' while machine specific files for
-the ``foo'' port are in ``/usr/src/sys/arch/foo/conf/files.foo.''  The ``devices.foo'' file
-is used to map device names to major block device numbers.  If the device
+the ``foo'' port are in ``/usr/src/sys/arch/foo/conf/files.foo''.
+The ``devices.foo'' file
+is used to map device names to major block device numbers.
+If the device
 driver being added provides support for a new disk
 you will want to modify this file (the format is obvious).
 .PP
 In addition to including the driver in the
 .I files
-file, it must also be added to the device configuration tables.  These
+file, it must also be added to the device configuration tables.
+These
 are located in ``/sys/vax/conf.c'', or similar for machines other than
-the VAX.  If you don't understand what to add to this file, you should
+the VAX.
+If you don't understand what to add to this file, you should
 study an entry for an existing driver. 
 Remember that the position in the
 device table specifies the major device number.
@@ -230,5 +245,6 @@ With the configuration information in place, your configuration
 file appropriately modified, and a system reconfigured and rebooted
 you should incorporate the shell commands needed to install the special
 files in the file system to the file ``/dev/MAKEDEV'' or
-``/dev/MAKEDEV.local''.  This is discussed in the document ``Installing
+``/dev/MAKEDEV.local''.
+This is discussed in the document ``Installing
 and Operating 4.4BSD''.
