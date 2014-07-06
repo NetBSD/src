@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.180 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.181 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.180 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.181 2014/07/06 03:33:33 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -180,6 +180,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -242,11 +243,11 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
-	if ((inp == NULL
+	if (inp == NULL
 #ifdef INET6
 	    && in6p == NULL
 #endif
-	    ) && req != PRU_SENSE)
+	    )
 	{
 		error = EINVAL;
 		goto release;
@@ -474,13 +475,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		tp = tcp_drop(tp, ECONNABORTED);
 		break;
-
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize.
-		 */
-		splx(s);
-		return (0);
 
 	case PRU_RCVOOB:
 		if (control && control->m_len) {
@@ -957,6 +951,13 @@ tcp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 	default:
 		return EAFNOSUPPORT;
 	}
+}
+
+static int
+tcp_stat(struct socket *so, struct stat *ub)
+{
+	/* stat: don't bother with a blocksize.  */
+	return 0;
 }
 
 /*
@@ -2196,11 +2197,13 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_attach	tcp_attach_wrapper
 #define	tcp_detach	tcp_detach_wrapper
 #define	tcp_ioctl	tcp_ioctl_wrapper
+#define	tcp_stat	tcp_stat_wrapper
 #define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {
 	.pr_attach	= tcp_attach,
 	.pr_detach	= tcp_detach,
 	.pr_ioctl	= tcp_ioctl,
+	.pr_stat	= tcp_stat,
 	.pr_generic	= tcp_usrreq,
 };

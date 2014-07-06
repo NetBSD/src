@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.40 2014/06/22 08:10:18 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.41 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.40 2014/06/22 08:10:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.41 2014/07/06 03:33:33 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -163,6 +163,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	s = splsoftnet();
 	KERNEL_LOCK(1, NULL);
@@ -235,13 +236,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = (*so->so_proto->pr_output)(m, so);
 		if (nam)
 			raw_disconnect(rp);
-		break;
-
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize.
-		 */
-		error = 0;
 		break;
 
 	/*
