@@ -55,12 +55,13 @@ new address) or access control (the lookup string is the client, sender or
 recipient, and the result is an action such as "reject").
 
 With some tables, however, Postfix needs to know only if the lookup key exists.
-The lookup result itself is not used. Examples are the local_recipient_maps
-that determine what local recipients Postfix accepts in mail from the network,
-the mydestination parameter that specifies what domains Postfix delivers
-locally, or the mynetworks parameter that specifies the IP addresses of trusted
-clients or client networks. Technically, these are lists, not tables. Despite
-the difference, Postfix lists are described here because they use the same
+Any non-empty lookup result value may be used here: the lookup result is not
+used. Examples are the local_recipient_maps that determine what local
+recipients Postfix accepts in mail from the network, the mydestination
+parameter that specifies what domains Postfix delivers locally, or the
+mynetworks parameter that specifies the IP addresses of trusted clients or
+client networks. Technically, these are lists, not tables. Despite the
+difference, Postfix lists are described here because they use the same
 underlying infrastructure as Postfix lookup tables.
 
 PPrreeppaarriinngg PPoossttffiixx ffoorr LLDDAAPP oorr SSQQLL llooookkuuppss
@@ -99,9 +100,9 @@ performance.
     read/write access conflicts and gives the new data to Postfix once that
     data is available.
 
-  * If you change a regexp: or pcre: file then Postfix may or may not pick up
-    the file changes immediately. This is because a Postfix process reads the
-    entire file into memory once and never examines the file again.
+  * If you change a regexp:, pcre:, cidr: or texthash: file then Postfix may
+    not pick up the file changes immediately. This is because a Postfix process
+    reads the entire file into memory once and never examines the file again.
 
       o If the file is used by a short-running process such as smtpd(8),
         cleanup(8) or local(8), there is no need to execute "postfix reload"
@@ -119,18 +120,21 @@ performance.
 
 UUppddaattiinngg BBeerrkkeelleeyy DDBB ffiilleess ssaaffeellyy
 
-Although Postfix uses file locking to avoid access conflicts while updating
-Berkeley DB or other local database files, you still have a problem when the
-update fails because the disk is full or because something else happens. This
-is because commands such as postmap(1) or postalias(1) overwrite existing
-files. If the update fails in the middle then you have no usable database, and
-Postfix will stop working. This is not an issue with the CDB database type
+Postfix uses file locking to avoid access conflicts while updating Berkeley DB
+or other local database files. This used to be safe, but as Berkeley DB has
+evolved to use more aggressive caching, file locking may no longer be
+sufficient.
+
+Furthermore, file locking would not prevent problems when the update fails
+because the disk is full or something else causes a database update to fail. In
+particular, commands such as postmap(1) or postalias(1) overwrite existing
+files. If the overwrite fails in the middle then you have no usable database,
+and Postfix will stop working. This is not an issue with the CDB database type
 available with Postfix 2.2 and later: CDB creates a new file, and renames the
 file upon successful completion.
 
-With multi-file databases such as DBM, there is no simple solution. With
-Berkeley DB and other "one file" databases, it is possible to add some extra
-robustness by using "mv" to REPLACE an existing database file instead of
+With Berkeley DB and other "one file" databases, it is possible to add some
+extra robustness by using "mv" to REPLACE an existing database file instead of
 overwriting it:
 
     # ppoossttmmaapp aacccceessss..iinn &&&& mmvv aacccceessss..iinn..ddbb aacccceessss..ddbb
@@ -147,16 +151,16 @@ font.
     # Note 1: commands are specified after a TAB character.
     # Note 2: use postalias(1) for local aliases, postmap(1) for the rest.
     aliases.db: aliases.in
-    	postalias aliases.in
-    	mv aliases.in.db aliases.db
+            postalias aliases.in
+            mv aliases.in.db aliases.db
 
     access.db: access.in
-    	postmap access.in
-    	mv access.in.db access.db
+            postmap access.in
+            mv access.in.db access.db
 
     virtual.db: virtual.in
-    	postmap virtual.in
-    	mv virtual.in.db virtual.db
+            postmap virtual.in
+            mv virtual.in.db virtual.db
 
     ...etcetera...
     # vvii aacccceessss..iinn
@@ -191,10 +195,11 @@ To find out what database types your Postfix system supports, use the "ppooss
         (CIDR) patterns. The table format is described in cidr_table(5).
     ddbbmm
         An indexed file type based on hashing. This is available only on
-        systems with support for DBM databases. Database files are created with
-        the postmap(1) or postalias(1) command. The lookup table name as used
-        in "dbm:table" is the database file name without the ".dir" or ".pag"
-        suffix.
+        systems with support for DBM databases. Public database files are
+        created with the postmap(1) or postalias(1) command, and private
+        databases are maintained by Postfix daemons. The lookup table name as
+        used in "dbm:table" is the database file name without the ".dir" or
+        ".pag" suffix.
     eennvviirroonn
         The UNIX process environment array. The lookup key is the variable
         name. The lookup table name in "environ:table" is ignored.
@@ -203,74 +208,79 @@ To find out what database types your Postfix system supports, use the "ppooss
         for logging only. This table exists to simplify Postfix error tests.
     hhaasshh
         An indexed file type based on hashing. This is available only on
-        systems with support for Berkeley DB databases. Database files are
-        created with the postmap(1) or postalias(1) command. The database name
-        as used in "hash:table" is the database file name without the ".db"
-        suffix.
+        systems with support for Berkeley DB databases. Public database files
+        are created with the postmap(1) or postalias(1) command, and private
+        databases are maintained by Postfix daemons. The database name as used
+        in "hash:table" is the database file name without the ".db" suffix.
     iinntteerrnnaall
         A non-shared, in-memory hash table. Its content are lost when a process
         terminates.
+    llmmddbb
+        OpenLDAP LMDB database. This is available only on systems with support
+        for LMDB databases. Public database files are created with the postmap
+        (1) or postalias(1) command, and private databases are maintained by
+        Postfix daemons. The database name as used in "lmdb:table" is the
+        database file name without the ".lmdb" suffix. See lmdb_table(5) for
+        details.
     llddaapp (read-only)
-        Perform lookups using the LDAP protocol. Configuration details are
-        given in the ldap_table(5).
+        LDAP database client. Configuration details are given in the ldap_table
+        (5).
     mmeemmccaacchhee
-        Perform memcache database lookups or updates. Configuration details are
-        given in memcache_table(5).
+        Memcache database client. Configuration details are given in
+        memcache_table(5).
     mmyyssqqll (read-only)
-        Perform MySQL database lookups. Configuration details are given in
-        mysql_table(5).
+        MySQL database client. Configuration details are given in mysql_table
+        (5).
     nneettiinnffoo (read-only)
-        Perform Netinfo database lookups.
+        Netinfo database client.
     nniiss (read-only)
-        Perform NIS database lookups.
+        NIS database client.
     nniisspplluuss (read-only)
-        Perform NIS+ database lookups. Configuration details are given in
-        nisplus_table(5).
+        NIS+ database client. Configuration details are given in nisplus_table
+        (5).
     ppccrree (read-only)
         A lookup table based on Perl Compatible Regular Expressions. The file
         format is described in pcre_table(5). The lookup table name as used in
         "pcre:table" is the name of the regular expression file.
     ppggssqqll (read-only)
-        Perform PostgreSQL database lookups. Configuration details are given in
+        PostgreSQL database client. Configuration details are given in
         pgsql_table(5).
     pprrooxxyy
-        Access information via the Postfix proxymap(8) service. The lookup
-        table name syntax is "proxy:type:table".
+        Postfix proxymap(8) client for shared access to Postfix databases. The
+        lookup table name syntax is "proxy:type:table".
     rreeggeexxpp (read-only)
         A lookup table based on regular expressions. The file format is
         described in regexp_table(5). The lookup table name as used in "regexp:
         table" is the name of the regular expression file.
     ssddbbmm
         An indexed file type based on hashing. This is available only on
-        systems with support for SDBM databases. Database files are created
-        with the postmap(1) or postalias(1) command. The lookup table name as
+        systems with support for SDBM databases. Public database files are
+        created with the postmap(1) or postalias(1) command, and private
+        databases are maintained by Postfix daemons. The lookup table name as
         used in "sdbm:table" is the database file name without the ".dir" or
         ".pag" suffix.
     ssoocckkeettmmaapp (read-only)
-        Query a Sendmail-style socketmap server. The name of the table
-        specifies iinneett:host:port:socketmap-name for a TCP-based server, or
-        uunniixx:pathname:socketmap-name for a UNIX-domain server. In both cases
-        socketmap-name is the name of the socketmap.
+        Sendmail-style socketmap client. The name of the table is either iinneett:
+        host:port:name for a TCP/IP server, or uunniixx:pathname:name for a UNIX-
+        domain server. See socketmap_table(5) for details.
     ssqqlliittee (read-only)
-        Perform SQLite database lookups. Configuration details are given in
-        sqlite_table(5).
+        SQLite database. Configuration details are given in sqlite_table(5).
     ssttaattiicc (read-only)
-        Always returns its lookup table name as lookup result. For example, the
-        lookup table "static:foobar" always returns the string "foobar" as
-        lookup result.
+        A table that always returns its name as the lookup result. For example,
+        "static:foobar" always returns the string "foobar" as lookup result.
     ttccpp
-        Access information through a TCP/IP server. The protocol is described
-        in tcp_table(5). The lookup table name is "tcp:host:port" where "host"
-        specifies a symbolic hostname or a numeric IP address, and "port"
-        specifies a symbolic service name or a numeric port number.
+        TCP/IP client. The protocol is described in tcp_table(5). The lookup
+        table name is "tcp:host:port" where "host" specifies a symbolic
+        hostname or a numeric IP address, and "port" specifies a symbolic
+        service name or a numeric port number.
     tteexxtthhaasshh (read-only)
-        This produces similar results as hash: files, except that you don't
-        have to run the postmap(1) command before you can use the file, and
-        that texthash: does not detect changes after the file is read. The
+        A table that produces similar results as hash: files, except that you
+        don't have to run the postmap(1) command before you can use the file,
+        and that texthash: does not detect changes after the file is read. The
         lookup table name is "texthash:filename", where the file name is taken
         literally; no suffix is appended.
     uunniixx (read-only)
-        A limited way to query the UNIX authentication database. The following
+        A limited view of the UNIX authentication database. The following
         tables are implemented:
         uunniixx::ppaasssswwdd..bbyynnaammee
             The table is the UNIX password database. The key is a login name.

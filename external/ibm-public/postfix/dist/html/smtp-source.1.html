@@ -15,55 +15,49 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
        <b>smtp-source</b> [<i>options</i>] <b>unix:</b><i>pathname</i>
 
 <b>DESCRIPTION</b>
-       <b>smtp-source</b>  connects  to  the  named  <i>host</i>  and  TCP <i>port</i>
-       (default: port 25) and sends one or more messages  to  it,
-       either  sequentially  or  in  parallel. The program speaks
-       either SMTP (default) or LMTP.  Connections can be made to
-       UNIX-domain  and  IPv4 or IPv6 servers.  IPv4 and IPv6 are
-       the default.
+       <b>smtp-source</b>  connects to the named <i>host</i> and TCP <i>port</i> (default: port 25)
+       and sends one or more messages to it, either sequentially or in  paral-
+       lel. The program speaks either SMTP (default) or LMTP.  Connections can
+       be made to UNIX-domain and IPv4 or IPv6 servers.  IPv4 and IPv6 are the
+       default.
 
-       Note: this is an unsupported test program. No  attempt  is
-       made  to  maintain  compatibility  between successive ver-
-       sions.
+       Note:  this is an unsupported test program. No attempt is made to main-
+       tain compatibility between successive versions.
 
        Arguments:
 
-       <b>-4</b>     Connect to the server with IPv4. This option has no
-              effect  when Postfix is built without IPv6 support.
+       <b>-4</b>     Connect to the server with IPv4. This option has no effect  when
+              Postfix is built without IPv6 support.
 
-       <b>-6</b>     Connect to the server with IPv6. This option is not
-              available  when  Postfix is built without IPv6 sup-
-              port.
+       <b>-6</b>     Connect  to  the  server with IPv6. This option is not available
+              when Postfix is built without IPv6 support.
 
-       <b>-A</b>     Don't abort when the server sends  something  other
-              than the expected positive reply code.
+       <b>-A</b>     Don't abort when the  server  sends  something  other  than  the
+              expected positive reply code.
 
-       <b>-c</b>     Display  a running counter that is incremented each
-              time an SMTP DATA command completes.
+       <b>-c</b>     Display  a running counter that is incremented each time an SMTP
+              DATA command completes.
 
        <b>-C</b> <i>count</i>
-              When a host sends RESET  instead  of  SYN|ACK,  try
-              <i>count</i>  times before giving up. The default count is
-              1. Specify a larger count in order to work around a
-              problem with TCP/IP stacks that send RESET when the
-              listen queue is full.
+              When a host sends RESET instead  of  SYN|ACK,  try  <i>count</i>  times
+              before giving up. The default count is 1. Specify a larger count
+              in order to work around a problem with TCP/IP stacks  that  send
+              RESET when the listen queue is full.
 
-       <b>-d</b>     Don't disconnect after sending a message; send  the
-              next message over the same connection.
+       <b>-d</b>     Don't  disconnect after sending a message; send the next message
+              over the same connection.
 
        <b>-f</b> <i>from</i>
-              Use   the   specified   sender   address  (default:
-              &lt;foo@<a href="postconf.5.html#myhostname">myhostname</a>&gt;).
+              Use the specified sender address (default: &lt;foo@<a href="postconf.5.html#myhostname">myhostname</a>&gt;).
 
        <b>-F</b> <i>file</i>
-              Send the pre-formatted message header and  body  in
-              the  specified  <i>file</i>,  while  prepending '.' before
-              lines that begin with '.', and while appending CRLF
-              after each line.
+              Send the pre-formatted message header and body in the  specified
+              <i>file</i>, while prepending '.' before lines that begin with '.', and
+              while appending CRLF after each line.
 
        <b>-l</b> <i>length</i>
-              Send  <i>length</i>  bytes  as message payload. The length
-              does not include message headers.
+              Send <i>length</i> bytes  as  message  payload.  The  length  does  not
+              include message headers.
 
        <b>-L</b>     Speak LMTP rather than SMTP.
 
@@ -71,56 +65,50 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
               Send the specified number of messages (default: 1).
 
        <b>-M</b> <i><a href="postconf.5.html#myhostname">myhostname</a></i>
-              Use the specified hostname or [address] in the HELO
-              command and in the  default  sender  and  recipient
-              addresses, instead of the machine hostname.
+              Use  the specified hostname or [address] in the HELO command and
+              in the default sender and recipient addresses,  instead  of  the
+              machine hostname.
 
-       <b>-N</b>     Prepend  a  non-repeating  sequence  number to each
-              recipient address. This avoids the artificial  100%
-              hit  rate  in the resolve and rewrite client caches
-              and exercises the  trivial-rewrite  daemon,  better
-              approximating  Postfix  performance under real-life
+       <b>-N</b>     Prepend  a  non-repeating  sequence  number  to  each  recipient
+              address. This avoids the artificial 100% hit rate in the resolve
+              and rewrite client caches and exercises the trivial-rewrite dae-
+              mon, better approximating Postfix  performance  under  real-life
               work-loads.
 
-       <b>-o</b>     Old mode: don't send HELO, and don't  send  message
-              headers.
+       <b>-o</b>     Old mode: don't send HELO, and don't send message headers.
 
        <b>-r</b> <i>recipient</i><b>_</b><i>count</i>
-              Send  the specified number of recipients per trans-
-              action (default: 1).  Recipient names are generated
-              by prepending a number to the recipient address.
+              Send   the   specified  number  of  recipients  per  transaction
+              (default: 1).  Recipient names are  generated  by  prepending  a
+              number to the recipient address.
 
        <b>-R</b> <i>interval</i>
-              Wait for a random period of time 0 &lt;= n &lt;= interval
-              between messages.  Suspending one thread  does  not
-              affect other delivery threads.
+              Wait for a random period of time 0 &lt;= n &lt;= interval between mes-
+              sages.  Suspending one thread does  not  affect  other  delivery
+              threads.
 
        <b>-s</b> <i>session</i><b>_</b><i>count</i>
-              Run the specified number of SMTP sessions in paral-
-              lel (default: 1).
+              Run  the specified number of SMTP sessions in parallel (default:
+              1).
 
        <b>-S</b> <i>subject</i>
-              Send mail with the  named  subject  line  (default:
-              none).
+              Send mail with the named subject line (default: none).
 
-       <b>-t</b> <i>to</i>  Use   the  specified  recipient  address  (default:
-              &lt;foo@<a href="postconf.5.html#myhostname">myhostname</a>&gt;).
+       <b>-t</b> <i>to</i>  Use the specified recipient address (default: &lt;foo@<a href="postconf.5.html#myhostname">myhostname</a>&gt;).
 
        <b>-T</b> <i>windowsize</i>
-              Override the  default  TCP  window  size.  To  work
-              around  broken  TCP window scaling implementations,
-              specify a value &gt; 0 and &lt; 65536.
+              Override  the default TCP window size. To work around broken TCP
+              window scaling implementations, specify a value &gt; 0 and &lt; 65536.
 
-       <b>-v</b>     Make the program more verbose, for  debugging  pur-
-              poses.
+       <b>-v</b>     Make the program more verbose, for debugging purposes.
 
        <b>-w</b> <i>interval</i>
-              Wait a fixed time between messages.  Suspending one
-              thread does not affect other delivery threads.
+              Wait  a fixed time between messages.  Suspending one thread does
+              not affect other delivery threads.
 
        [<b>inet:</b>]<i>host</i>[:<i>port</i>]
-              Connect via  TCP  to  host  <i>host</i>,  port  <i>port</i>.  The
-              default port is <b>smtp</b>.
+              Connect via TCP to host <i>host</i>, port <i>port</i>.  The  default  port  is
+              <b>smtp</b>.
 
        <b>unix:</b><i>pathname</i>
               Connect to the UNIX-domain socket at <i>pathname</i>.
@@ -132,8 +120,7 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
        <a href="smtp-sink.1.html">smtp-sink(1)</a>, SMTP/LMTP message dump
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

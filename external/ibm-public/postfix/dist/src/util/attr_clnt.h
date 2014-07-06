@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.h,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: attr_clnt.h,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
 
 #ifndef _ATTR_CLNT_H_INCLUDED_
 #define _ATTR_CLNT_H_INCLUDED_
@@ -12,6 +12,11 @@
 /*	#include <attr_clnt.h>
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <stdarg.h>
 
  /*
   * Utility library.

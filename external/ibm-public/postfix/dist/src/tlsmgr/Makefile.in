@@ -8,8 +8,9 @@ CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= 
 PROG	= tlsmgr
 INC_DIR	= ../../include
-LIBS	= ../../lib/libmaster.a ../../lib/libtls.a ../../lib/libglobal.a \
-	../../lib/libutil.a
+# Fake libdns dependency, for early-binding shared-library builds.
+LIBS	= ../../lib/libmaster.a ../../lib/libtls.a ../../lib/libdns.a \
+	../../lib/libglobal.a ../../lib/libutil.a
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 
@@ -63,6 +64,7 @@ tlsmgr.o: ../../include/argv.h
 tlsmgr.o: ../../include/attr.h
 tlsmgr.o: ../../include/data_redirect.h
 tlsmgr.o: ../../include/dict.h
+tlsmgr.o: ../../include/dns.h
 tlsmgr.o: ../../include/events.h
 tlsmgr.o: ../../include/htable.h
 tlsmgr.o: ../../include/iostuff.h
@@ -73,11 +75,13 @@ tlsmgr.o: ../../include/mail_server.h
 tlsmgr.o: ../../include/mail_version.h
 tlsmgr.o: ../../include/master_proto.h
 tlsmgr.o: ../../include/msg.h
+tlsmgr.o: ../../include/myaddrinfo.h
 tlsmgr.o: ../../include/myflock.h
 tlsmgr.o: ../../include/mymalloc.h
 tlsmgr.o: ../../include/name_code.h
 tlsmgr.o: ../../include/name_mask.h
 tlsmgr.o: ../../include/set_eugid.h
+tlsmgr.o: ../../include/sock_addr.h
 tlsmgr.o: ../../include/stringops.h
 tlsmgr.o: ../../include/sys_defs.h
 tlsmgr.o: ../../include/tls.h

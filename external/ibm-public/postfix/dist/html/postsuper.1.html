@@ -15,35 +15,30 @@ POSTSUPER(1)                                                      POSTSUPER(1)
                [<b>-r</b> <i>queue</i><b>_</b><i>id</i>] [<i>directory ...</i>]
 
 <b>DESCRIPTION</b>
-       The  <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  command  does  maintenance  jobs on the
-       Postfix queue. Use of the command  is  restricted  to  the
-       superuser.   See the <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command for unprivileged
-       queue operations such as  listing  or  flushing  the  mail
-       queue.
+       The  <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  command  does maintenance jobs on the Postfix queue.
+       Use  of  the  command  is  restricted  to  the  superuser.    See   the
+       <a href="postqueue.1.html"><b>postqueue</b>(1)</a>  command for unprivileged queue operations such as listing
+       or flushing the mail queue.
 
-       By default, <a href="postsuper.1.html"><b>postsuper</b>(1)</a> performs the operations requested
-       with the <b>-s</b> and <b>-p</b> command-line  options  on  all  Postfix
-       queue directories - this includes the <b>incoming</b>, <b>active</b> and
-       <b>deferred</b> directories  with  mail  files  and  the  <b>bounce</b>,
-       <b>defer</b>, <b>trace</b> and <b>flush</b> directories with log files.
+       By default, <a href="postsuper.1.html"><b>postsuper</b>(1)</a> performs the operations requested with the  <b>-s</b>
+       and  <b>-p</b>  command-line  options  on all Postfix queue directories - this
+       includes the <b>incoming</b>, <b>active</b> and <b>deferred</b> directories with mail  files
+       and the <b>bounce</b>, <b>defer</b>, <b>trace</b> and <b>flush</b> directories with log files.
 
        Options:
 
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              The  <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  is  in the named
-              directory  instead  of  the  default  configuration
-              directory.  See  also  the  MAIL_CONFIG environment
-              setting below.
+              The <a href="postconf.5.html"><b>main.cf</b></a> configuration file is in the named directory instead
+              of the default configuration directory. See also the MAIL_CONFIG
+              environment setting below.
 
        <b>-d</b> <i>queue</i><b>_</b><i>id</i>
-              Delete one message with the named queue ID from the
-              named   mail  queue(s)  (default:  <b>hold</b>,  <b>incoming</b>,
-              <b>active</b> and <b>deferred</b>).
+              Delete  one  message with the named queue ID from the named mail
+              queue(s) (default: <b>hold</b>, <b>incoming</b>, <b>active</b> and <b>deferred</b>).
 
-              If a <i>queue</i><b>_</b><i>id</i> of <b>-</b> is specified, the program  reads
-              queue  IDs  from  standard  input.  For example, to
-              delete  all  mail  with   exactly   one   recipient
-              <b>user@example.com</b>:
+              If a <i>queue</i><b>_</b><i>id</i> of <b>-</b> is specified, the  program  reads  queue  IDs
+              from  standard  input.  For  example,  to  delete  all mail with
+              exactly one recipient <b>user@example.com</b>:
 
               mailq | tail +2 | grep -v '^ *(' | awk  'BEGIN { RS = "" }
                   # $7=sender, $8=recipient1, $9=recipient2
@@ -51,231 +46,203 @@ POSTSUPER(1)                                                      POSTSUPER(1)
                         print $1 }
               ' | tr -d '*!' | postsuper -d -
 
-              Specify  "<b>-d ALL</b>" to remove all messages; for exam-
-              ple, specify "<b>-d ALL deferred</b>" to delete  all  mail
-              in  the  <b>deferred</b>  queue.  As a safety measure, the
-              word <b>ALL</b> must be specified in upper case.
+              Specify "<b>-d ALL</b>" to remove all messages;  for  example,  specify
+              "<b>-d  ALL deferred</b>" to delete all mail in the <b>deferred</b> queue.  As
+              a safety measure, the word <b>ALL</b> must be specified in upper  case.
 
-              Warning: Postfix queue IDs are reused (always  with
-              Postfix  &lt;=  2.8;  and  with  Postfix  &gt;=  2.9 when
-              <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no).  There is a  very  small
-              possibility  that  postsuper deletes the wrong mes-
-              sage file when it is  executed  while  the  Postfix
-              mail system is delivering mail.
+              Warning:  Postfix  queue  IDs are reused (always with Postfix &lt;=
+              2.8; and with Postfix  &gt;=  2.9  when  <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no).
+              There  is  a  very  small possibility that postsuper deletes the
+              wrong message file when it is executed while  the  Postfix  mail
+              system is delivering mail.
 
               The scenario is as follows:
 
-              1)     The  Postfix  queue manager deletes the mes-
-                     sage that <a href="postsuper.1.html"><b>postsuper</b>(1)</a> is asked  to  delete,
-                     because Postfix is finished with the message
-                     (it is delivered, or it is returned  to  the
-                     sender).
+              1)     The  Postfix queue manager deletes the message that <a href="postsuper.1.html"><b>post-</b></a>
+                     <a href="postsuper.1.html"><b>super</b>(1)</a> is asked to delete, because Postfix is  finished
+                     with  the  message (it is delivered, or it is returned to
+                     the sender).
 
-              2)     New  mail  arrives,  and  the new message is
-                     given the same queue ID as the message  that
-                     <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  is  supposed  to  delete.  The
-                     probability for reusing a deleted  queue  ID
-                     is about 1 in 2**15 (the number of different
-                     microsecond values that the system clock can
-                     distinguish within a second).
+              2)     New mail arrives, and the new message is given  the  same
+                     queue  ID as the message that <a href="postsuper.1.html"><b>postsuper</b>(1)</a> is supposed to
+                     delete.  The probability for reusing a deleted  queue  ID
+                     is  about 1 in 2**15 (the number of different microsecond
+                     values that the system clock  can  distinguish  within  a
+                     second).
 
-              3)     <a href="postsuper.1.html"><b>postsuper</b>(1)</a>   deletes   the   new  message,
-                     instead of the old message  that  it  should
-                     have deleted.
+              3)     <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  deletes the new message, instead of the old
+                     message that it should have deleted.
 
        <b>-h</b> <i>queue</i><b>_</b><i>id</i>
-              Put  mail  "on  hold" so that no attempt is made to
-              deliver it.  Move one message with the named  queue
-              ID from the named mail queue(s) (default: <b>incoming</b>,
-              <b>active</b> and <b>deferred</b>) to the <b>hold</b> queue.
+              Put mail "on hold" so that no attempt is  made  to  deliver  it.
+              Move  one  message  with  the named queue ID from the named mail
+              queue(s) (default: <b>incoming</b>, <b>active</b> and <b>deferred</b>)  to  the  <b>hold</b>
+              queue.
 
-              If a <i>queue</i><b>_</b><i>id</i> of <b>-</b> is specified, the program  reads
-              queue IDs from standard input.
+              If  a  <i>queue</i><b>_</b><i>id</i>  of  <b>-</b> is specified, the program reads queue IDs
+              from standard input.
 
-              Specify "<b>-h ALL</b>" to hold all messages; for example,
-              specify "<b>-h ALL deferred</b>" to hold all mail  in  the
-              <b>deferred</b>  queue.  As a safety measure, the word <b>ALL</b>
-              must be specified in upper case.
+              Specify "<b>-h ALL</b>" to hold all messages; for example, specify  "<b>-h</b>
+              <b>ALL  deferred</b>"  to  hold  all  mail in the <b>deferred</b> queue.  As a
+              safety measure, the word <b>ALL</b> must be specified in upper case.
 
-              Note: while mail is "on hold" it  will  not  expire
-              when  its  time  in  the  queue  exceeds  the <b><a href="postconf.5.html#maximal_queue_lifetime">maxi</a>-</b>
-              <b><a href="postconf.5.html#maximal_queue_lifetime">mal_queue_lifetime</a></b>  or  <b><a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b>  set-
-              ting.  It becomes subject to expiration after it is
-              released from "hold".
+              Note: while mail is "on hold" it will not expire when  its  time
+              in    the    queue   exceeds   the   <b><a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a></b>   or
+              <b><a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b> setting. It becomes subject to  expiration
+              after it is released from "hold".
 
               This feature is available in Postfix 2.0 and later.
 
        <b>-H</b> <i>queue</i><b>_</b><i>id</i>
-              Release mail that was put "on hold".  Move one mes-
-              sage with the named queue ID from  the  named  mail
-              queue(s) (default: <b>hold</b>) to the <b>deferred</b> queue.
+              Release  mail that was put "on hold".  Move one message with the
+              named queue ID from the named mail queue(s) (default:  <b>hold</b>)  to
+              the <b>deferred</b> queue.
 
-              If  a <i>queue</i><b>_</b><i>id</i> of <b>-</b> is specified, the program reads
-              queue IDs from standard input.
+              If  a  <i>queue</i><b>_</b><i>id</i>  of  <b>-</b> is specified, the program reads queue IDs
+              from standard input.
 
-              Note: specify "<b>postsuper -r</b>" to release  mail  that
-              was  kept  on  hold  for  a significant fraction of
-              <b>$<a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a></b> or  <b>$<a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b>,
-              or longer.
+              Note: specify "<b>postsuper -r</b>" to release mail that  was  kept  on
+              hold  for  a  significant fraction of <b>$<a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a></b> or
+              <b>$<a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b>, or longer.
 
-              Specify  "<b>-H  ALL</b>"  to release all mail that is "on
-              hold".  As a safety measure, the word <b>ALL</b>  must  be
-              specified in upper case.
+              Specify "<b>-H ALL</b>" to release all mail that is "on  hold".   As  a
+              safety measure, the word <b>ALL</b> must be specified in upper case.
 
               This feature is available in Postfix 2.0 and later.
 
-       <b>-p</b>     Purge old temporary files that are left over  after
-              system or software crashes.
+       <b>-p</b>     Purge  old  temporary  files  that are left over after system or
+              software crashes.
 
        <b>-r</b> <i>queue</i><b>_</b><i>id</i>
-              Requeue  the  message  with the named queue ID from
-              the named mail queue(s) (default:  <b>hold</b>,  <b>incoming</b>,
-              <b>active</b>  and  <b>deferred</b>).   To  requeue multiple mes-
-              sages, specify multiple <b>-r</b> command-line options.
+              Requeue the message with the named queue ID from the named  mail
+              queue(s)  (default:  <b>hold</b>,  <b>incoming</b>,  <b>active</b> and <b>deferred</b>).  To
+              requeue multiple  messages,  specify  multiple  <b>-r</b>  command-line
+              options.
 
-              Alternatively, if a <i>queue</i><b>_</b><i>id</i> of <b>-</b> is specified, the
-              program reads queue IDs from standard input.
+              Alternatively,  if  a  <i>queue</i><b>_</b><i>id</i>  of  <b>-</b> is specified, the program
+              reads queue IDs from standard input.
 
-              Specify  "<b>-r  ALL</b>"  to  requeue  all messages. As a
-              safety measure, the word <b>ALL</b> must be  specified  in
-              upper case.
+              Specify "<b>-r ALL</b>" to requeue all messages. As a  safety  measure,
+              the word <b>ALL</b> must be specified in upper case.
 
-              A  requeued message is moved to the <b>maildrop</b> queue,
-              from where  it  is  copied  by  the  <a href="pickup.8.html"><b>pickup</b>(8)</a>  and
-              <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemons  to  a  new queue file. In many
-              respects its handling differs from that  of  a  new
+              A requeued message is moved to the <b>maildrop</b> queue, from where it
+              is copied by the <a href="pickup.8.html"><b>pickup</b>(8)</a> and <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemons to a new queue
+              file.  In  many respects its handling differs from that of a new
               local submission.
 
-              <b>o</b>      The   message   is   not  subjected  to  the
-                     <a href="postconf.5.html#smtpd_milters">smtpd_milters</a> or <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a> settings.
-                     When  mail  has  passed  through an external
-                     content filter, this would produce incorrect
-                     results with Milter applications that depend
-                     on original SMTP connection  state  informa-
-                     tion.
+              <b>o</b>      The message is not  subjected  to  the  <a href="postconf.5.html#smtpd_milters">smtpd_milters</a>  or
+                     <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a> settings.  When mail has passed through
+                     an external content filter, this would produce  incorrect
+                     results  with Milter applications that depend on original
+                     SMTP connection state information.
 
-              <b>o</b>      The  message  is  subjected  again  to  mail
-                     address rewriting and substitution.  This is
-                     useful  when rewriting rules or virtual map-
-                     pings have changed.
+              <b>o</b>      The message is subjected again to mail address  rewriting
+                     and substitution.  This is useful when rewriting rules or
+                     virtual mappings have changed.
 
-                     The  address  rewriting  context  (local  or
-                     remote)  is the same as when the message was
-                     received.
+                     The address rewriting context (local or  remote)  is  the
+                     same as when the message was received.
 
-              <b>o</b>      The message is subjected to  the  same  <a href="postconf.5.html#content_filter">con</a>-
-                     <a href="postconf.5.html#content_filter">tent_filter</a>  settings  (if  any) as used for
-                     new local mail submissions.  This is  useful
-                     when <a href="postconf.5.html#content_filter">content_filter</a> settings have changed.
+              <b>o</b>      The  message is subjected to the same <a href="postconf.5.html#content_filter">content_filter</a> set-
+                     tings (if any) as used for new  local  mail  submissions.
+                     This is useful when <a href="postconf.5.html#content_filter">content_filter</a> settings have changed.
 
-              Warning:  Postfix queue IDs are reused (always with
-              Postfix &lt;=  2.8;  and  with  Postfix  &gt;=  2.9  when
-              <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no).   There  is a very small
-              possibility that <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  requeues  the  wrong
-              message  file when it is executed while the Postfix
-              mail system is running, but no harm should be done.
+              Warning: Postfix queue IDs are reused (always  with  Postfix  &lt;=
+              2.8;  and  with  Postfix  &gt;= 2.9 when <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no).
+              There is a very small possibility that <a href="postsuper.1.html"><b>postsuper</b>(1)</a> requeues the
+              wrong  message  file  when it is executed while the Postfix mail
+              system is running, but no harm should be done.
 
               This feature is available in Postfix 1.1 and later.
 
-       <b>-s</b>     Structure check and structure repair.  This  should
-              be done once before Postfix startup.
+       <b>-s</b>     Structure check and structure repair.  This should be done  once
+              before Postfix startup.
 
-              <b>o</b>      Rename  files  whose name does not match the
-                     message file inode number. This operation is
-                     necessary  after restoring a mail queue from
-                     a different machine  or  from  backup,  when
-                     queue files were created with Postfix &lt;= 2.8
-                     or with "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> = no".
+              <b>o</b>      Rename  files  whose name does not match the message file
+                     inode number. This operation is necessary after restoring
+                     a  mail  queue  from  a different machine or from backup,
+                     when queue files were created with Postfix &lt;= 2.8 or with
+                     "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> = no".
 
-              <b>o</b>      Move queue files that are in the wrong place
-                     in the file system hierarchy and remove sub-
-                     directories that are no longer needed.  File
-                     position  rearrangements are necessary after
-                     a  change  in  the  <b><a href="postconf.5.html#hash_queue_names">hash_queue_names</a></b>  and/or
+              <b>o</b>      Move  queue files that are in the wrong place in the file
+                     system hierarchy and remove subdirectories  that  are  no
+                     longer  needed.   File position rearrangements are neces-
+                     sary  after  a  change  in  the  <b><a href="postconf.5.html#hash_queue_names">hash_queue_names</a></b>  and/or
                      <b><a href="postconf.5.html#hash_queue_depth">hash_queue_depth</a></b> configuration parameters.
 
-              <b>o</b>      Rename     queue    files    created    with
-                     "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>  =  yes"   to   short
-                     names, for migration to Postfix &lt;= 2.8.  The
-                     procedure is as follows:
+              <b>o</b>      Rename  queue files created with "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> =
+                     yes" to short names, for migration  to  Postfix  &lt;=  2.8.
+                     The procedure is as follows:
 
                      # postfix stop
                      # postconf <a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a>=no
                      # postsuper
 
-                     Run <a href="postsuper.1.html"><b>postsuper</b>(1)</a> repeatedly until  it  stops
-                     reporting file name changes.
+                     Run <a href="postsuper.1.html"><b>postsuper</b>(1)</a> repeatedly until it stops reporting file
+                     name changes.
 
-       <b>-S</b>     A  redundant  version of <b>-s</b> that requires that long
-              file names also match the message file  inode  num-
-              ber.  This  option exists for testing purposes, and
-              is available with Postfix 2.9 and later.
+       <b>-S</b>     A redundant version of <b>-s</b> that requires  that  long  file  names
+              also match the message file inode number. This option exists for
+              testing purposes, and is available with Postfix 2.9 and later.
 
-       <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple  <b>-v</b>  options  make  the software increasingly
-              verbose.
+       <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
+              options make the software increasingly verbose.
 
 <b>DIAGNOSTICS</b>
-       Problems are reported to the standard error stream and  to
-       <b>syslogd</b>(8).
+       Problems are reported to the standard error stream and to <b>syslogd</b>(8).
 
-       <a href="postsuper.1.html"><b>postsuper</b>(1)</a>  reports  the number of messages deleted with
-       <b>-d</b>, the number of messages requeued with <b>-r</b>, and the  num-
-       ber  of  messages whose queue file name was fixed with <b>-s</b>.
-       The report is written to the standard error stream and  to
-       <b>syslogd</b>(8).
+       <a href="postsuper.1.html"><b>postsuper</b>(1)</a> reports the number of messages deleted with <b>-d</b>, the number
+       of messages requeued with <b>-r</b>, and the number of  messages  whose  queue
+       file  name  was  fixed  with  <b>-s</b>. The report is written to the standard
+       error stream and to <b>syslogd</b>(8).
 
 <b>ENVIRONMENT</b>
        MAIL_CONFIG
               Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file.
 
 <b>BUGS</b>
-       Mail  that  is  not sanitized by Postfix (i.e. mail in the
-       <b>maildrop</b> queue) cannot be placed "on hold".
+       Mail that is not sanitized by Postfix (i.e. mail in the <b>maildrop</b> queue)
+       cannot be placed "on hold".
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant
-       to this program.  The text below provides only a parameter
-       summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including  exam-
-       ples.
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
+       <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              figuration files.
 
        <b><a href="postconf.5.html#hash_queue_depth">hash_queue_depth</a> (1)</b>
-              The number of subdirectory levels for queue  direc-
-              tories  listed with the <a href="postconf.5.html#hash_queue_names">hash_queue_names</a> parameter.
+              The number of subdirectory levels for queue  directories  listed
+              with the <a href="postconf.5.html#hash_queue_names">hash_queue_names</a> parameter.
 
        <b><a href="postconf.5.html#hash_queue_names">hash_queue_names</a> (deferred, defer)</b>
-              The names  of  queue  directories  that  are  split
-              across multiple subdirectory levels.
+              The  names  of  queue directories that are split across multiple
+              subdirectory levels.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
        Available in Postfix version 2.9 and later:
 
        <b><a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> (no)</b>
-              Enable long, non-repeating, queue IDs  (queue  file
-              names).
+              Enable long, non-repeating, queue IDs (queue file names).
 
 <b>SEE ALSO</b>
        <a href="sendmail.1.html">sendmail(1)</a>, Sendmail-compatible user interface
        <a href="postqueue.1.html">postqueue(1)</a>, unprivileged queue operations
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

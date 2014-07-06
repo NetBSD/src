@@ -1,298 +1,280 @@
-The stable Postfix release is called postfix-2.10.x where 2=major
-release number, 10=minor release number, x=patchlevel.  The stable
+The stable Postfix release is called postfix-2.11.x where 2=major
+release number, 11=minor release number, x=patchlevel.  The stable
 release never changes except for patches that address bugs or
 emergencies. Patches change the patchlevel and the release date.
 
 New features are developed in snapshot releases. These are called
-postfix-2.11-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+postfix-2.12-yyyymmdd where yyyymmdd is the release date (yyyy=year,
 mm=month, dd=day).  Patches are never issued for snapshot releases;
 instead, a new snapshot is released.
 
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
-If you upgrade from Postfix 2.8 or earlier, read RELEASE_NOTES-2.9
+If you upgrade from Postfix 2.9 or earlier, read RELEASE_NOTES-2.10
 before proceeding.
-
-Debian Exim before 4.80-3 interoperability workaround
------------------------------------------------------
-
-Debian Exim versions before 4.80-3 may fail to communicate with
-Postfix and possibly other MTAs, with the following Exim SMTP client
-error message:
-
-    TLS error on connection to server-name [server-address]
-    (gnutls_handshake): The Diffie-Hellman prime sent by the server
-    is not acceptable (not long enough)
-
-This problem may affect Debian Exim versions before 4.80-3 that use
-TLS with EDH (Ephemeral Diffie-Hellman) key exchanges. For details
-see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=676563
-
-To restore Postfix SMTP server interoperability with affected Exim
-SMTP clients, configure the Postfix SMTP server to use a 2048-bit
-prime number instead of 1024:
-
-    # cd /etc/postfix
-    # openssl dhparam -out dh2048.pem 2048
-    # postconf -e 'smtpd_tls_dh1024_param_file = ${config_directory}/dh2048.pem'
-
-This change increases the CPU cost of EDH key exchanges (rarely a
-problem for SMTP servers) and is unlikely to cause problems with
-other SMTP client implementations.
-
-This problem should not affect EECDH (Ephemeral Elliptic Curve
-Diffie-Hellman) key exchanges.
-
-Major changes - laptop-friendliness
------------------------------------
-
-[Incompat 20120924] Postfix no longer uses FIFOs to emulate UNIX-domain
-sockets on Solaris 9 (Vintage 2002!) and later. If you install
-Postfix for the first time on an older Solaris system, edit the
-master.cf file and replace "unix" with "fifo" for the pickup and
-qmgr services.
-
-[Feature 20120924] the default master.cf file now uses "unix" instead
-of "fifo" for the pickup and qmgr services. This avoids periodic
-disk drive spin-up.
-
-Major changes - permit logging
-------------------------------
-
-[Feature 20120303] [Feature 20120303] New control for "permit"
-logging in smtpd_mumble_restrictions (by default, the SMTP server
-logs "reject" actions but not "permit" actions).  Specify
-"smtpd_log_access_permit_actions = static:all" to log all "permit"-style
-actions, or specify a list of explicit action names.  More details
-are in the postconf(5) manpage.  
-
-Major changes - postconf
-------------------------
-
-[Incompat 20121224] The postconf command produces more warnings:
-
-- An attempt to modify a read-only parameter (process_name, process_id)
-  in main.cf or master.cf.
-
-- An undefined $name in a parameter value in main.cf or master.cf
-  (except for backwards-compatibility parameters such as $virtual_maps).
-
-[Feature 20121224] The postconf command has been updated to make
-trouble-shooting (and support) easier. In summary, use "postconf
--Mxf" and "postconf -nxf" to review master.cf and main.cf parameter
-settings with expanded parameter values.
-
-- "postconf -x" now expands $name in main.cf and master.cf parameter
-  values.
-
-- postconf warns about attempts to modify a read-only parameter
-  (process_name, process_id) in main.cf or master.cf.
-
-- postconf warns about an undefined $name in a parameter value in
-  main.cf or master.cf (except for backwards-compatibility parameters
-  such as $virtual_maps).
-
-[Feature 20121227]
-
-- "postconf -o name=value" overrides main.cf parameter settings.
-  This can be used, for example, to examine stress-dependent settings
-  with "postconf -x -o stress=yes".
-
-Major changes - postscreen
---------------------------
-
-[Incompat 20121123] The postscreen deep protocol tests now log the
-last command before a protocol error ("UNIMPLEMENTED" when the last
-command is not implemented, "CONNECT" when there was no prior
-command). The changed logfile messages are:
-
-NON-SMTP COMMAND from [address]:port after command: text
-BARE NEWLINE from [address]:port after command
-COMMAND TIME LIMIT from [address]:port after command
-COMMAND COUNT LIMIT from [address]:port after command
-COMMAND LENGTH LIMIT from [address]:port after command
-
-Major changes - load-balancer support
--------------------------------------
-
-[Incompat 20120625] The postscreen(8)-to-smtpd(8) protocol has
-changed.  To avoid "cannot receive connection attributes" warnings
-and dropped connections, execute the command "postfix reload". No
-mail will be lost as long as the remote SMTP client tries again
-later.
-
-[Feature 20120625] Support for upstream proxy agent in the postscreen(8)
-and smtpd(8) daemons.  To enable the haproxy protocol, specify one
-of the following:
-
-    postscreen_upstream_proxy_protocol = haproxy
-    smtpd_upstream_proxy_protocol = haproxy
-
-Note 1: smtpd_upstream_proxy_protocol can't be used in smtpd processes
-that are behind postscreen. Configure postscreen_upstream_proxy_protocol
-instead.
-
-Note 2: To use the nginx proxy with smtpd(8), enable the XCLIENT
-protocol with smtpd_authorized_xclient_hosts. This supports SASL
-authentication in the proxy agent (Postfix 2.9 and later).
-
-Major changes - relay safety
-----------------------------
-
-[Incompat 20130613] New smtpd_relay_restrictions parameter built-in
-default settings:
-
-    smtpd_relay_restrictions = 
-	permit_mynetworks 
-	permit_sasl_authenticated 
-	defer_unauth_destination
-
-This safety net prevents open relay problems due to mistakes
-with spam filter rules in smtpd_recipient_restrictions.
-
-If your site has a complex mail relay policy configured under
-smtpd_recipient_restrictions, this safety net may defer mail that
-Postfix should accept.
-
-To fix this safety net, take one of the following actions:
-
-- Set smtpd_relay_restrictions empty, and keep using the existing
-  mail relay authorization policy in smtpd_recipient_restrictions.
-
-- Copy the existing mail relay authorization policy from
-  smtpd_recipient_restrictions to smtpd_relay_restrictions.
-
-There is no need to change the value of smtpd_recipient_restrictions.
-
-[Feature 20130613] This version introduces the smtpd_relay_restrictions
-feature for mail relay control. The new built-in default settings
-are:
-
-    smtpd_relay_restrictions = 
-	permit_mynetworks 
- 	permit_sasl_authenticated
-	defer_unauth_destination
-
-    smtpd_recipient_restrictions =
-	( optional spam blocking rules would go here )
-
-For comparison, this is the Postfix before 2.10 default:
-
-    smtpd_recipient_restrictions =
-	permit_mynetworks 
-	reject_unauth_destination
-	( optional spam blocking rules would go here )
-
-With Postfix versions before 2.10, the mail relay policy and spam
-blocking policy were combined under smtpd_recipient_restrictions,
-resulting in error-prone configuration.
-
-As of Postfix 2.10, the mail relay policy is preferably implemented
-with smtpd_relay_restrictions, so that a permissive spam blocking
-policy under smtpd_recipient_restrictions will not unexpectedly
-result in a permissive mail relay policy.
-
-As of Postfix 2.10.0 the smtpd_relay_restrictions parameter built-in
-default settings are:
-
-    smtpd_relay_restrictions =
-        permit_mynetworks
-        permit_sasl_authenticated
-        defer_unauth_destination
-
-If your site has a complex mail relay policy configured under
-smtpd_recipient_restrictions, this safety net may defer mail that
-Postfix should accept.
-
-To migrate from an earlier Postfix release with the least amount
-of pain:
-
-- Set smtpd_relay_restrictions empty, and keep using the existing
-  mail relay authorization policy in smtpd_recipient_restrictions.
-
-- There is no need to change the value of smtpd_recipient_restrictions.
-
-To take advantage of the new smtpd_relay_restrictions feature:
-
-- Copy the existing mail relay authorization policy from
-  smtpd_recipient_restrictions to smtpd_relay_restrictions.
-
-- There is no need to change the value of smtpd_recipient_restrictions.
-
-Major changes - start-up
-------------------------
-
-[Feature 20120306] New master "-w" option, to wait for master daemon
-process initialization to complete. This feature returns an error
-exit status if master daemon initialization fails, or if it does
-not complete in a reasonable amount of time. The exit status is
-used by "postfix start" to provide more accurate information to
-system start-up scripts.
 
 Major changes - tls
 -------------------
 
-[Incompat 20130203] Thanks to OpenSSL documentation, the Postfix
-2.9.0..2.9.5 SMTP client and server server used an incorrect procedure
-to compute TLS certificate PUBLIC-KEY fingerprints (these may be
-used in the check_ccert_access and in smtp_tls_policy_maps features).
-Support for certificate PUBLIC-KEY finger prints was introduced
-with Postfix 2.9; there is no known problem with the certificate
-fingerprint algorithms available since Postfix 2.2.
+[Documentation 20131218] The new FORWARD_SECRECY_README document
+conveniently presents all information about Postfix "perfect" forward
+secrecy support in one place: what forward secrecy is, how to tweak
+settings, and what you can expect to see when Postfix uses ciphers
+with forward secrecy.
 
-Certificate PUBLIC-KEY finger prints may be used in the Postfix
-SMTP server (with "check_ccert_access") and in the Postfix SMTP
-client (with the "fingerprint" security level).  
+[Feature 20130602] Support for PKI-less TLS server certificate
+verification, where the CA public key or the server certificate is
+identified via DNSSEC lookup.
 
-Specify "tls_legacy_public_key_fingerprints = yes" temporarily,
-pending a migration from configuration files with incorrect Postfix
-2.9.0..2.9.5 certificate PUBLIC-KEY finger prints, to the correct
-fingerprints used by Postfix 2.9.6 and later.
+This feature introduces new TLS security levels called "dane" and
+"dane-only" (DNS-based Authentication of Named Entities) that use
+DNSSEC to look up CA or server certificate information.  The details
+of DANE core protocols are still evolving, as are the details of
+how DANE should be used in the context of SMTP. Postfix implements
+what appears to be a "rational" subset of the DANE profiles that
+is suitable for SMTP.
 
-To compute the correct PUBLIC-KEY finger prints:
+The problem with conventional PKI is that there are literally
+hundreds of organizations world-wide that can provide a certificate
+in anyone's name. There have been widely-published incidents in
+recent history where a certificate authority gave out an inappropriate
+certificate (e.g., a certificate in the name of Microsoft to someone
+who did not represent Microsoft), where a CA was compromised (e.g.,
+DigiNotar, Comodo), or where a CA made operational mistakes (e.g.,
+TURKTRUST).  Another concern is that a legitimate CA might be coerced
+to provide a certificate that allows its government to play
+man-in-the-middle on TLS traffic and observe the plaintext.
 
-# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
-$ openssl x509 -in cert.pem -noout -pubkey | \
-    openssl pkey -pubin -outform DER | \
-    openssl dgst -sha1 -c
+Major changes - LMDB database support
+-------------------------------------
 
-# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
-$ openssl x509 -in cert.pem -noout -pubkey | \
-    openssl rsa -pubin -outform DER | \
-    openssl dgst -md5 -c
+LMDB is a memory-mapped database that was originally developed as
+part of OpenLDAP. The Postfix LMDB driver was originally contributed
+by Howard Chu, LMDB's creator.
 
-[Feature 20120422] This release adds support to turn off the TLSv1.1
-and TLSv1.2 protocols.  Introduced with OpenSSL version 1.0.1, these
-are known to cause inter-operability problems with for example
-hotmail.
+LMDB can be used for all Postfix lookup tables and caches.  It is
+the first persistent Postfix database that can be shared among
+multiple writers such as postscreen daemons (Postfix already supported
+shared non-persistent memcached caches).  See lmdb_table(5) and
+LMDB_README for further information, including how to access Postfix
+LMDB databases with non-Postfix programs.
 
-The radical workaround is to temporarily turn off problematic
-protocols globally:
+Postfix currently requires LMDB version 0.9.11 or later. The minimum
+version may change over time in the light of deployment experience.
 
-/etc/postfix/main.cf:
-    smtp_tls_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
-    smtp_tls_mandatory_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+Major changes - postscreen whitelisting
+---------------------------------------
 
-    smtpd_tls_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
-    smtpd_tls_mandatory_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+[Feature 20130512] Allow a remote SMTP client to skip postscreen(8)
+tests based on its postscreen_dnsbl_sites score.
 
-However, it may be better to temporarily turn off problematic
-protocols for broken sites only:
+Specify a negative "postscreen_dnsbl_whitelist_threshold" value to
+enable this feature.  When a client passes the threshold value
+without having failed other tests, all pending or disabled tests
+are flagged as completed.
 
-/etc/postfix/main.cf:
-    smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
+This feature can mitigate the email delays due to "after 220 greeting"
+protocol tests, which otherwise require that a client reconnects
+before it can deliver mail. Some providers such as Google don't
+retry from the same IP address. This can result in large email
+delivery delays.
 
-/etc/postfix/tls_policy:
-    example.com         may protocols=!SSLv2:!TLSv1.1:!TLSv1.2
+Major changes - recipient_delimiter
+-----------------------------------
 
-Important:
+[Feature 20130405] The recipient_delimiter parameter can now specify
+a set of characters.  A user name is now separated from its address
+extension by the first character that matches the recipient_delimiter
+set.
 
-- Note the use of ":" instead of comma or space. Also, note that
-  there is NO space around the "=" in "protocols=".
+For example, specify "recipient_delimiter = +-" to support both the
+Postfix-style "+" and the qmail-style "-" extension delimiter.  
 
-- The smtp_tls_policy_maps lookup key must match the "next-hop"
-  destination that is given to the Postfix SMTP client. If you
-  override the next-hop destination with transport_maps, relayhost,
-  sender_dependent_relayhost_maps, or otherwise, you need to specify
-  the same destination for the smtp_tls_policy_maps lookup key.
+As before, this implementation recognizes one delimiter character
+per email address, and one address extension per email address.
+
+Major changes - smtpd access control
+------------------------------------
+
+[Feature 20131031] The check_sasl_access feature can be used to
+block hijacked logins. Like other check_mumble_access features it
+queries a lookup table (in this case with the SASL login name), and
+it supports the same actions as any Postfix access(5) table.
+
+[Feature 20130924] The reject_known_sender_login_mismatch feature
+applies reject_sender_login_mismatch only to MAIL FROM addresses
+that are known in $smtpd_sender_login_maps.
+
+Major changes - MacOS X
+-----------------------
+
+[Feature 20130325] Full support for kqueue() event handling which
+scales better with large numbers of file handles, plus a workaround
+for timeout handling on file handles (such as /dev/urandom) that
+still do not correctly support poll().
+
+Major changes - master
+----------------------
+
+[Incompat 20131217] The master_service_disable parameter value
+syntax has changed: use "service/type" instead of "service.type".
+The new form is consistent with postconf(1) namespaces for master.cf.
+The old form is still supported to avoid breaking existing
+configurations.
+
+Major changes - milter
+----------------------
+
+[Feature 20131126] Support for ESMTP parameters "NOTIFY" and "ORCPT"
+in the SMFIR_ADDRCPT_PAR (add recipient with parameters) request.
+Credits: Andrew Ayer.
+
+Major changes - mysql
+---------------------
+
+[Feature 20131117] MySQL client support for option_file, option_group,
+tls_cert_file, tls_key_file, tls_CAfile, tls_CApath, tls_verify_cert.
+Credits: Gareth Palmer.
+
+Major changes - postconf
+------------------------
+
+[Feature 20131217] Support for advanced master.cf query and update
+operations.  This was implemented primarily to support automated
+system management tools.
+
+The goal is to make all Postfix master.cf details accessible as
+lists of "name=value" pairs, where the names are organized into
+structured name spaces.  This allows other programs to query
+information or request updates, without having to worry about the
+exact layout of master.cf files.
+
+Managing master.cf service attributes
+-------------------------------------
+
+First, an example that shows the smtp/inet service in the traditional
+form:
+
+    $ postconf -M smtp/inet
+    smtp       inet  n       -       n       -       -       smtpd
+
+Different variants of this command show different amounts of output.
+For example, "postconf -M smtp" enumerates all services that have
+a name "smtp" and any service type ("inet", "unix", etc.), and
+"postconf -M" enumerates all master.cf services.  
+
+General rule: each name component that is not present becomes a "*"
+wildcard.
+
+Coming back to the above example, the postconf -F option can now
+enumerate the smtp/inet service fields as follows:
+
+    $ postconf -F smtp/inet
+    smtp/inet/service = smtp
+    smtp/inet/type = inet
+    smtp/inet/private = n
+    smtp/inet/unprivileged = -
+    smtp/inet/chroot = n
+    smtp/inet/wakeup = -
+    smtp/inet/process_limit = -
+    smtp/inet/command = smtpd
+
+This form makes it very easy to change one field in master.cf.
+For example to turn on chroot on the smtp/inet service you use:
+
+    $ postconf -F smtp/inet/chroot=y
+    $ postfix reload
+
+Moreover, with "-F" you can specify "*" for service name or service
+type to get a wild-card match.  For example, to turn off chroot on
+all Postfix daemons, use this:
+
+    $ postconf -F '*/*/chroot=n'
+    $ postfix reload
+
+Managing master.cf service "-o parameter=value" settings
+--------------------------------------------------------
+
+For a second example, let's look at the submission service.  This
+service typically has multiple "-o parameter=value" overrides. First
+the traditional view:
+
+    $ postconf -Mf submission
+    submission inet  n       -       n       -       -       smtpd
+        -o smtpd_tls_security_level=encrypt
+        -o smtpd_sasl_auth_enable=yes
+        ...
+
+The postconf -P option can now enumerate these parameters as follows:
+
+    $ postconf -P submission
+    submission/inet/smtpd_sasl_auth_enable = yes
+    submission/inet/smtpd_tls_security_level = encrypt
+    ...
+
+Again, this form makes it very easy to modify one parameter
+setting. For example, to change the smtpd_tls_security_level setting
+for the submission/inet service:
+
+    $ postconf -P 'submission/inet/smtpd_tls_security_level=may'
+
+You can create or remove a parametername=parametervalue setting:
+
+Create:
+    $ postconf -P 'submission/inet/parametername=parametervalue'
+
+Remove:
+    $ postconf -PX submission/inet/parametername
+
+Finally, always execute "postfix reload" after updating master.cf.
+
+Managing master.cf service entries
+----------------------------------
+
+Finally, adding master.cf entries is possible, but currently this
+does not yet have "advanced" support. It can only be done at the
+level of the traditional master.cf file format.
+
+Suppose that you need to configure a Postfix SMTP client that will
+handle slow email deliveries.  To implement this you need to clone
+the smtp/unix service settings and create a new delay/unix service.
+
+First, you would enumerate the smtp/unix service like this:
+
+    $ postconf -M smtp/unix
+    smtp      unix  -       -       n       -       -       smtp
+
+Then you would copy those fields (except the first field) by hand
+to create the delay/unix service:
+
+    $ postconf -M delay/unix="delay   unix   -   -   n   -   -   smtp"
+
+To combine the above steps in one command:
+
+    $ postconf -M delay/unix="`postconf -M smtp/unix|awk '{$1 = "delay"}'`"
+
+This is perhaps not super-convenient for manual cloning, but it
+should be sufficient for programmatic configuration management.
+
+Again, always execute "postfix reload" after updating master.cf.
+
+Deleting or commenting out master.cf entries
+--------------------------------------------
+
+The -X (delete entry) and -# (comment out entry) options already
+exist for main.cf, and they now also work work for entire master.cf
+entries:
+
+Remove main.cf or master.cf entry:
+    $ postconf -X parametername
+    $ postconf -MX delay/unix
+
+Comment out main.cf or master.cf entry:
+    $ postconf -# parametername
+    $ postconf -M# delay/unix
+
+As with main.cf, there is no support to "undo" master.cf changes
+that are made with -X or -#.
+
+Again, always execute "postfix reload" after updating master.cf.
