@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2012/11/01 14:46:26 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2014/07/06 05:31:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -46,7 +46,8 @@
 #define EXSCSI_BDID	((void*) 0x00ea0001)
 #define SRAM_MEMSIZE	(*((long*) 0x00ed0008))
 
-char default_kernel[20] = "nfs:netbsd";
+char default_kernel[20] =
+    "nfs:netbsd";
 int mpu;
 int console_device = -1;
 
@@ -100,17 +101,23 @@ doboot(const char *file, int flags)
 		printf("XXX: unknown corruption in /boot.\n");
 	}
 
+#ifdef DEBUG
 	printf("dev = %x, unit = %d, name = %s\n",
 	       dev, unit, name);
+#endif
 
 	dev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
+#ifdef DEBUG
 	printf("boot device = %x\n", dev);
 	printf("if = %d, unit = %d\n",
 	       B_X68K_SCSI_IF(dev),
 	       B_X68K_SCSI_IF_UN(dev));
+#endif
 
 	p = ((short*) marks[MARK_ENTRY]) - 1;
+#ifdef DEBUG
 	printf("Kernel Version: 0x%x\n", *p);
+#endif
 	if (*p != 0x4e73 && *p != 0) {
 		/*
 		 * XXX temporary solution; compatibility loader
@@ -206,9 +213,11 @@ bootmenu(void)
 		options = gettrailer(p);
 		if (strcmp("boot", p) == 0)
 			boot(options);
-		else if (strcmp("help", p) == 0 || strcmp("?", p) == 0)
+		else if (strcmp("help", p) == 0 ||
+			 strcmp("?", p) == 0)
 			help();
-		else if (strcmp("halt", p) == 0 || strcmp("reboot", p) == 0)
+		else if (strcmp("halt", p) == 0 ||
+			 strcmp("reboot", p) == 0)
 			exit(0);
 		else
 			printf("Unknown command %s\n", p);
@@ -227,9 +236,10 @@ extern const char bootprog_name[];
 void
 bootmain(int bootdev)
 {
-	mpu = detectmpu();
+
 	rtc_offset = RTC_OFFSET;
 	try_bootp = 1;
+	mpu = detectmpu();
 
 	if (mpu < 3) {		/* not tested on 68020 */
 		printf("This MPU cannot run NetBSD.\n");
