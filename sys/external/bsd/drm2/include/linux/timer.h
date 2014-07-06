@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.3 2014/07/06 15:43:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,6 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Notes on porting:
+ *
+ * - Linux does not have teardown_timer.  You must add it yourself in
+ *   the appropriate place.
+ */
+
 #ifndef _LINUX_TIMER_H_
 #define _LINUX_TIMER_H_
 
@@ -53,6 +60,13 @@ setup_timer(struct timer_list *timer, void (*fn)(unsigned long),
 }
 
 static inline void
+teardown_timer(struct timer_list *timer)
+{
+
+	callout_destroy(&timer->tl_callout);
+}
+
+static inline void
 mod_timer(struct timer_list *timer, unsigned long then)
 {
 	const unsigned long now = jiffies;
@@ -63,8 +77,8 @@ mod_timer(struct timer_list *timer, unsigned long then)
 static inline void
 del_timer_sync(struct timer_list *timer)
 {
+
 	callout_halt(&timer->tl_callout, NULL);
-	callout_destroy(&timer->tl_callout);
 }
 
 /*
