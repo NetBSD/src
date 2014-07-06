@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/01/02 22:33:20 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2014/07/06 20:25:48 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ PFX_COMMANDS= postalias.1.html postcat.1.html \
 	postconf.1.html postdrop.1.html postfix.1.html postkick.1.html \
 	postlock.1.html postlog.1.html postmap.1.html postqueue.1.html \
 	postsuper.1.html qshape.1.html sendmail.1.html smtp-sink.1.html \
-	smtp-source.1.html postmulti.1.html
+	smtp-source.1.html postmulti.1.html posttls-finger.1.html
 PFX_CONFIG= access.5.html aliases.5.html canonical.5.html cidr_table.5.html \
 	generic.5.html header_checks.5.html ldap_table.5.html \
 	master.5.html mysql_table.5.html nisplus_table.5.html \
@@ -30,21 +30,22 @@ PFX_CONFIG= access.5.html aliases.5.html canonical.5.html cidr_table.5.html \
 PFX_READMES= ADDRESS_CLASS_README.html ADDRESS_REWRITING_README.html \
 	ADDRESS_VERIFICATION_README.html BACKSCATTER_README.html \
 	BASIC_CONFIGURATION_README.html BUILTIN_FILTER_README.html \
-	CONNECTION_CACHE_README.html CONTENT_INSPECTION_README.html \
-	DATABASE_README.html DSN_README.html DB_README.html DEBUG_README.html \
-	ETRN_README.html FILTER_README.html IPV6_README.html \
-	LDAP_README.html \
-	LOCAL_RECIPIENT_README.html MAILDROP_README.html MYSQL_README.html \
-	MILTER_README.html \
-	NFS_README.html OVERVIEW.html PCRE_README.html \
+	CDB_README.html CONNECTION_CACHE_README.html \
+	CONTENT_INSPECTION_README.html DATABASE_README.html DB_README.html \
+	DEBUG_README.html DSN_README.html ETRN_README.html FILTER_README.html \
+	FORWARD_SECRECY_README.html INSTALL.html IPV6_README.html \
+	LDAP_README.html LINUX_README.html LMDB_README.html \
+	LOCAL_RECIPIENT_README.html MAILDROP_README.html MEMCACHE_README.html \
+	MILTER_README.html MULTI_INSTANCE_README.html MYSQL_README.html \
+	NFS_README.html OVERVIEW.html PACKAGE_README.html PCRE_README.html \
 	PGSQL_README.html POSTSCREEN_README.html QSHAPE_README.html \
 	RESTRICTION_CLASS_README.html SASL_README.html SCHEDULER_README.html \
 	SMTPD_ACCESS_README.html SMTPD_POLICY_README.html \
-	SMTPD_PROXY_README.html STANDARD_CONFIGURATION_README.html \
-	SOHO_README.html SQLITE_README.html \
-	TLS_README.html TLS_LEGACY_README.html TUNING_README.html \
+	SMTPD_PROXY_README.html SQLITE_README.html \
+	STANDARD_CONFIGURATION_README.html STRESS_README.html \
+	TLS_LEGACY_README.html TLS_README.html TUNING_README.html \
 	UUCP_README.html VERP_README.html VIRTUAL_README.html \
-	XCLIENT_README.html XFORWARD_README.html MULTI_INSTANCE_README.html
+	XCLIENT_README.html XFORWARD_README.html
 
 FILES=	$(PFX_DAEMONS) $(PFX_COMMANDS) $(PFX_CONFIG) $(PFX_READMES) \
 	index.html postconf.5.html OVERVIEW.html postfix-logo.jpg
