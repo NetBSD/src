@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.67 2014/06/25 17:10:39 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.68 2014/07/06 07:41:41 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.67 2014/06/25 17:10:39 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.68 2014/07/06 07:41:41 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -789,7 +789,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 	}
 
-	if (epp->ep_vmcmds.evs_cmds == NULL) {
+	if (epp->ep_vmcmds.evs_used == 0) {
 		/* No VMCMD; there was no PT_LOAD section, or those
 		 * sections were empty */
 		error = ENOEXEC;
