@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.19 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.20 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.19 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.20 2014/07/06 03:33:33 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -113,6 +113,17 @@ sco_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 	return EOPNOTSUPP;
 }
 
+static int
+sco_stat(struct socket *so, struct stat *ub)
+{
+	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return 0;
+}
+
 /*
  * User Request.
  * up is socket
@@ -137,6 +148,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	switch(req) {
 	case PRU_PURGEIF:
@@ -222,9 +234,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 
 		sbappendrecord(&up->so_snd, m);
 		return sco_send(pcb, m0);
-
-	case PRU_SENSE:
-		return 0;		/* (no sense - Doh!) */
 
 	case PRU_RCVD:
 	case PRU_RCVOOB:
@@ -384,11 +393,13 @@ PR_WRAP_USRREQS(sco)
 #define	sco_attach		sco_attach_wrapper
 #define	sco_detach		sco_detach_wrapper
 #define	sco_ioctl		sco_ioctl_wrapper
+#define	sco_stat		sco_stat_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
 const struct pr_usrreqs sco_usrreqs = {
 	.pr_attach	= sco_attach,
 	.pr_detach	= sco_detach,
 	.pr_ioctl	= sco_ioctl,
+	.pr_stat	= sco_stat,
 	.pr_generic	= sco_usrreq,
 };

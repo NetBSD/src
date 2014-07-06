@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.155 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.156 2014/07/06 03:33:33 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.155 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.156 2014/07/06 03:33:33 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,6 +377,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	KASSERT(solocked(so));
 	unp = sotounpcb(so);
@@ -627,30 +628,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		unp_detach(so);
 		break;
 
-	case PRU_SENSE:
-		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		switch (so->so_type) {
-		case SOCK_SEQPACKET: /* FALLTHROUGH */
-		case SOCK_STREAM:
-			if (unp->unp_conn == 0) 
-				break;
-
-			so2 = unp->unp_conn->unp_socket;
-			KASSERT(solocked2(so, so2));
-			((struct stat *) m)->st_blksize += so2->so_rcv.sb_cc;
-			break;
-		default:
-			break;
-		}
-		((struct stat *) m)->st_dev = NODEV;
-		if (unp->unp_ino == 0)
-			unp->unp_ino = unp_ino++;
-		((struct stat *) m)->st_atimespec =
-		    ((struct stat *) m)->st_mtimespec =
-		    ((struct stat *) m)->st_ctimespec = unp->unp_ctime;
-		((struct stat *) m)->st_ino = unp->unp_ino;
-		return (0);
-
 	case PRU_RCVOOB:
 		error = EOPNOTSUPP;
 		break;
@@ -869,6 +846,38 @@ static int
 unp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
+}
+
+static int
+unp_stat(struct socket *so, struct stat *ub)
+{
+	struct unpcb *unp;
+	struct socket *so2;
+
+	unp = sotounpcb(so);
+	if (unp == NULL)
+		return EINVAL;
+
+	ub->st_blksize = so->so_snd.sb_hiwat;
+	switch (so->so_type) {
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
+	case SOCK_STREAM:
+		if (unp->unp_conn == 0) 
+			break;
+
+		so2 = unp->unp_conn->unp_socket;
+		KASSERT(solocked2(so, so2));
+		ub->st_blksize += so2->so_rcv.sb_cc;
+		break;
+	default:
+		break;
+	}
+	ub->st_dev = NODEV;
+	if (unp->unp_ino == 0)
+		unp->unp_ino = unp_ino++;
+	ub->st_atimespec = ub->st_mtimespec = ub->st_ctimespec = unp->unp_ctime;
+	ub->st_ino = unp->unp_ino;
+	return (0);
 }
 
 /*
@@ -1817,5 +1826,6 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_attach	= unp_attach,
 	.pr_detach	= unp_detach,
 	.pr_ioctl	= unp_ioctl,
+	.pr_stat	= unp_stat,
 	.pr_generic	= unp_usrreq,
 };
