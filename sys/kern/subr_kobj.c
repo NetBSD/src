@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.47 2014/07/06 15:22:31 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.48 2014/07/06 15:35:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.47 2014/07/06 15:22:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.48 2014/07/06 15:35:32 maxv Exp $");
 
 #include "opt_modular.h"
 
@@ -244,8 +244,7 @@ kobj_load(kobj_t ko)
 	 * Scan the section header for information and table sizing.
 	 */
 	nsym = 0;
-	symtabindex = -1;
-	symstrindex = -1;
+	symtabindex = symstrindex = -1;
 	for (i = 0; i < hdr->e_shnum; i++) {
 		switch (shdr[i].sh_type) {
 		case SHT_PROGBITS:
@@ -282,6 +281,7 @@ kobj_load(kobj_t ko)
 		error = ENOEXEC;
 		goto out;
 	}
+	KASSERT(symtabindex != -1);
 	if (symstrindex < 0 || symstrindex > hdr->e_shnum ||
 	    shdr[symstrindex].sh_type != SHT_STRTAB) {
 		kobj_error(ko, "file has invalid symbol strings");
@@ -318,10 +318,6 @@ kobj_load(kobj_t ko)
 			kobj_error(ko, "out of memory");
 			goto out;
 		}
-	}
-	if (symtabindex == -1) {
-		kobj_error(ko, "lost symbol table index");
-		goto out;
 	}
 
 	/*
