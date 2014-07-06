@@ -1,4 +1,4 @@
-.\" $NetBSD: 3.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
+.\" $NetBSD: 3.t,v 1.3 2014/07/06 05:32:30 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -38,7 +38,8 @@
 SYSTEM BUILDING PROCESS
 .PP
 In this section we consider the steps necessary to build a bootable system
-image.  We assume the system source is located in the ``/usr/src'' directory
+image.
+We assume the system source is located in the ``/usr/src'' directory
 and that, initially, the system is being configured from source code.
 .PP
 Under normal circumstances there are 5 steps in building a system.
@@ -61,11 +62,13 @@ using
 Compile and link the system with 
 .IR make .
 .PP
-Steps 1 and 2 are usually done only once.  When a system configuration
+Steps 1 and 2 are usually done only once.
+When a system configuration
 changes it usually suffices to just run
 .I config
 on the modified configuration file, rebuild the source code dependencies,
-and remake the system.  Sometimes,
+and remake the system.
+Sometimes,
 however, configuration dependencies may not be noticed in which case
 it is necessary to clean out the object files saved
 in the system's directory; this will be discussed later.
@@ -78,9 +81,11 @@ use.
 (For example, configuration files for 64-bit x86 machines live in
 ``/usr/src/sys/arch/amd64/conf''.)
 A configuration file is most easily constructed by copying an
-existing configuration file and modifying it.  The NetBSD distribution
+existing configuration file and modifying it.
+The NetBSD distribution
 contains assorted standard configuration files for different machine
-types and varieties.  Start with ``GENERIC'' if no other is more
+types and varieties.
+Start with ``GENERIC'' if no other is more
 appropriate.
 .PP
 The configuration file must have the same name as the directory in
@@ -89,7 +94,8 @@ Further,
 .I config
 assumes this directory is located under the ``compile'' directory at
 the same level as the ``conf'' directory in which  it
-is run.  For example, the generic 64-bit x86
+is run.
+For example, the generic 64-bit x86
 system has a configuration file ``/usr/src/sys/arch/amd64/conf/GENERIC''
 and an accompanying
 directory named ``/usr/src/sys/arch/amd64/compile/GENERIC''.
@@ -101,35 +107,43 @@ as most of the system code and the files created by
 use pathnames of the form ``../''.
 .PP
 When building the configuration file, be sure to include the items
-described in section 2.  In particular, the machine type,
+described in section 2.
+In particular, the machine type,
 cpu type, timezone, system identifier, maximum users, and root device
-must be specified.  The specification of the hardware present may take
+must be specified.
+The specification of the hardware present may take
 a bit of work; particularly if your hardware is configured at non-standard
 places (e.g. device registers located at funny places or devices not
-supported by the system).  Section 4 of this document
+supported by the system).
+Section 4 of this document
 gives a detailed description of the configuration file syntax,
 section 5 explains some sample configuration files, and
 section 6 discusses how to add new devices to
-the system.  If the devices to be configured are not already
+the system.
+If the devices to be configured are not already
 described in one of the existing configuration files you should check
-the section 4 manual pages.  For each
+the section 4 manual pages.
+For each
 supported device, the manual page synopsis entry gives a
 sample configuration line.
 .PP
 Once the configuration file is complete, run it through
 .I config
-and look for any errors.  Never try and use a system which
+and look for any errors.
+Never try and use a system which
 .I config
 has complained about; the results are unpredictable.
 For the most part,
 .IR config 's
-error diagnostics are self explanatory.  It may be the case that
+error diagnostics are self explanatory.
+It may be the case that
 the line numbers given with the error messages are off by one.
 .PP
 A successful run of
 .I config
 on your configuration file will generate a number of files in
-the configuration directory.  These files are:
+the configuration directory.
+These files are:
 .IP \(bu 3
 A file to be used by \fImake\fP\|(1)
 in compiling and loading the system,
@@ -180,8 +194,10 @@ the next time
 is run.
 .PP
 This step is particularly important if your site makes changes
-to the system include files.  The rules generated specify which source code
-files are dependent on which include files.  Without these rules,
+to the system include files.
+The rules generated specify which source code
+files are dependent on which include files.
+Without these rules,
 .I make
 will not recognize when it must rebuild modules
 due to the modification of a system header file.
@@ -200,7 +216,8 @@ should allow a new system to be rebuilt by simply typing ``make''.
 .\" XXX is this still supported?
 Alternate system image names
 are used when the root file system location and/or swapping configuration
-is done in more than one way.  The makefile which
+is done in more than one way.
+The makefile which
 .I config
 creates has entry points for each system image defined in
 the configuration file.
@@ -213,7 +230,8 @@ as the root filesystem, separate system images are only required
 to support different swap configurations.
 .PP
 Note that the name of a bootable image is different from the system
-identifier.  All bootable images are configured for the same system;
+identifier.
+All bootable images are configured for the same system;
 only the information about the root file system and paging devices differ.
 (This is described in more detail in section 4.)
 .PP
@@ -227,7 +245,8 @@ This is advantageous for programs such as
 which run much faster when the symbols they need are located at
 the front of the symbol table.  
 Remember also that many programs expect
-the currently executing system to be named ``/netbsd''.  If you install
+the currently executing system to be named ``/netbsd''.
+If you install
 a new system and name it something other than ``/netbsd'', many programs
 are likely to give strange results.
 .NH 2
@@ -235,52 +254,67 @@ Sharing object modules
 .PP
 If you have many systems which are all built on a single machine
 there are at least two approaches to saving time in building system
-images.  The best way is to have a single system image which is run on
-all machines.  This is attractive since it minimizes disk space used
-and time required to rebuild systems after making changes.  However,
+images.
+The best way is to have a single system image which is run on
+all machines.
+This is attractive since it minimizes disk space used
+and time required to rebuild systems after making changes.
+However,
 it is often the case that one or more systems will require a separately
-configured system image.  This may be due to limited memory (building
+configured system image.
+This may be due to limited memory (building
 a system with many unused device drivers can be expensive), or to
 configuration requirements (one machine may be a development machine
 where disk quotas are not needed, while another is a production machine
-where they are), etc.  In these cases it is possible
+where they are), etc.
+In these cases it is possible
 for common systems to share relocatable object modules which are not
 configuration dependent.
 .PP
-To share object modules, a generic system should be built.  Then, for
+To share object modules, a generic system should be built.
+Then, for
 each system configure the system as before, but before recompiling and
 linking the system, type ``make links'' in the system compilation directory.
 This will cause the system
 to be searched for source modules which are safe to share between systems
 and generate symbolic links in the current directory to the appropriate
-object modules in the directory ``../GENERIC''.  A shell script,
+object modules in the directory ``../GENERIC''.
+A shell script,
 ``makelinks'' is generated with this request and may be checked for
-correctness.  The file ``/sys/conf/defines'' contains a list of symbols
+correctness.
+The file ``/sys/conf/defines'' contains a list of symbols
 which we believe are safe to ignore when checking the source code
-for modules which may be shared.  Note that this list includes the definitions
+for modules which may be shared.
+Note that this list includes the definitions
 used to conditionally compile in the virtual memory tracing facilities, and
 the trace point support used only rarely (even at Berkeley). 
 It may be necessary
-to modify this file to reflect local needs.  Note further that
+to modify this file to reflect local needs.
+Note further that
 interdependencies which are not directly visible
-in the source code are not caught.  This means that if you place
+in the source code are not caught.
+This means that if you place
 per-system dependencies in an include file, they will not be recognized
 and the shared code may be selected in an unexpected fashion.
 .NH 2
 Building profiled systems
 .PP
 It is simple to configure a system which will automatically
-collect profiling information as it operates.  The profiling data
+collect profiling information as it operates.
+The profiling data
 may be collected with \fIkgmon\fP\|(8) and processed with
 \fIgprof\fP\|(1)
-to obtain information regarding the system's operation.  Profiled
+to obtain information regarding the system's operation.
+Profiled
 systems maintain histograms of the program counter as well as the
-number of invocations of each routine.  The \fIgprof\fP
+number of invocations of each routine.
+The \fIgprof\fP
 command will also generate a dynamic call graph of the executing
 system and propagate time spent in each routine along the arcs
 of the call graph (consult the \fIgprof\fP documentation for elaboration).
 The program counter sampling can be driven by the system clock, or
-if you have an alternate real time clock, this can be used.  The 
+if you have an alternate real time clock, this can be used.
+The 
 latter is highly recommended, as use of the system clock will result
 in statistical anomalies, and time spent in the clock routine will
 not be accurately attributed.
@@ -289,9 +323,11 @@ To configure a profiled system, the
 .B \-p
 option should be supplied to \fIconfig\fP.
 A profiled system is about 5-10% larger in its text space due to
-the calls to count the subroutine invocations.  When the system
+the calls to count the subroutine invocations.
+When the system
 executes, the profiling data is stored in a buffer which is 1.2
-times the size of the text space.  The overhead for running a
+times the size of the text space.
+The overhead for running a
 profiled system varies; under normal load we see anywhere from 5-25%
 of the system time spent in the profiling code.
 .PP

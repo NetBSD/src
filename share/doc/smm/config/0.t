@@ -1,4 +1,4 @@
-.\" $NetBSD: 0.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
+.\" $NetBSD: 0.t,v 1.3 2014/07/06 05:32:30 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -76,7 +76,8 @@ configuration files and how to configure
 systems with non-standard hardware configurations.
 Sections describing the preferred way to
 add new code to the system and how the system's autoconfiguration
-process operates are included.  An appendix
+process operates are included.
+An appendix
 contains a summary of the rules used by the system
 in calculating the size of system data structures,
 and also indicates some of the standard system size
