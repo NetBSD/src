@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.47 2014/07/01 05:49:18 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.48 2014/07/06 03:33:33 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.47 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.48 2014/07/06 03:33:33 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -85,6 +85,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
 
 	ddp = sotoddpcb(so);
 
@@ -186,13 +187,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		 * Don't mfree. Good architecture...
 		 */
 		return (EOPNOTSUPP);
-
-	case PRU_SENSE:
-		/*
-		 * 1. Don't return block size.
-		 * 2. Don't mfree.
-		 */
-		return (0);
 
 	default:
 		error = EOPNOTSUPP;
@@ -484,6 +478,19 @@ ddp_ioctl(struct socket *so, u_long cmd, void *addr, struct ifnet *ifp)
 	return at_control(cmd, addr, ifp);
 }
 
+static int
+ddp_stat(struct socket *so, struct stat *ub)
+{
+	struct ddpcb   *ddp;
+
+	ddp = sotoddpcb(so);
+	if (ddp == NULL)
+		return EINVAL;
+
+	/* Don't return block size. */
+	return 0;
+}
+
 /*
  * For the moment, this just find the pcb with the correct local address.
  * In the future, this will actually do some real searching, so we can use
@@ -558,12 +565,14 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_attach	ddp_attach_wrapper
 #define	ddp_detach	ddp_detach_wrapper
 #define	ddp_ioctl	ddp_ioctl_wrapper
+#define	ddp_stat	ddp_stat_wrapper
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
 	.pr_attach	= ddp_attach,
 	.pr_detach	= ddp_detach,
 	.pr_ioctl	= ddp_ioctl,
+	.pr_stat	= ddp_stat,
 	.pr_generic	= ddp_usrreq,
 };
 
