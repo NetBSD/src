@@ -1,4 +1,4 @@
-.\" $NetBSD: 6.t,v 1.1 2007/12/18 03:35:53 garbled Exp $
+.\" $NetBSD: 6.t,v 1.2 2014/07/06 05:16:18 dholland Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -49,9 +49,9 @@ This section is broken into four parts:
 .IP \(bu 3
 general guidelines to be followed in modifying system code,
 .IP \(bu 3
-how to add non-standard system facilities to 4.4BSD,
+how to add non-standard system facilities to NetBSD, and
 .IP \(bu 3
-how to add a device driver to 4.4BSD, and
+how to add a device driver to NetBSD.
 .NH 2
 Modifying system code
 .PP
@@ -63,9 +63,7 @@ it is best to bracket them with
 #endif
 .DE
 to allow your source to be easily distributed to others, and
-also to simplify \fIdiff\fP\|(1) listings.  If you choose not
-to use a source code control system (e.g. SCCS, RCS), and
-perhaps even if you do, it is
+also to simplify \fIdiff\fP\|(1) listings.  It is
 recommended that you save the old code with something
 of the form:
 .DS
@@ -73,15 +71,11 @@ of the form:
 \&...
 #endif
 .DE
-We try to isolate our site-dependent code in individual files
-which may be configured with pseudo-device specifications.
 .PP
-Indicate machine-specific code with ``#ifdef vax'' (or other machine,
-as appropriate).
-4.4BSD underwent extensive work to make it extremely portable to
-machines with similar architectures\- you may someday find
-yourself trying to use a single copy of the source code on
-multiple machines.
+Machine-specific code should be placed in existing machine-specific
+files, or added as new files in machine-specific source
+directories.
+The use of machine-specific preprocessor conditionals is discouraged.
 .NH 2
 Adding non-standard system facilities
 .PP
@@ -91,9 +85,8 @@ data base files for non-standard system facilities.
 .I Config
 uses a set of files that list the source modules that may be required
 when building a system.
-The data bases are taken from the directory in which
-.I config
-is run, normally /sys/conf.
+The data bases are taken from standard locations in the system source
+tree, normally ``/usr/src/sys/conf''.
 Three such files may be used:
 .IR files ,
 .IR files .machine,
@@ -176,7 +169,7 @@ parameters.  This allows certain modules, such as
 to size system data structures based on the maximum number
 of users configured for the system.
 .NH 2
-Adding device drivers to 4.4BSD
+Adding device drivers to NetBSD
 .PP
 The I/O system and
 .I config
@@ -185,38 +178,39 @@ The system source directories are organized as follows:
 .DS
 .TS
 lw(1.0i) l.
-/sys/h	machine independent include files
-/sys/sys	machine-independent system source files
-/sys/conf	site configuration files and basic templates
-/sys/net	network-protocol-independent, but network-related code
-/sys/netinet	DARPA Internet code
-/sys/netimp	IMP support code
-/sys/netns	Xerox NS code
-/sys/vax	VAX-specific mainline code
-/sys/vaxif	VAX network interface code
-/sys/vaxmba	VAX MASSBUS device drivers and related code
-/sys/vaxuba	VAX UNIBUS device drivers and related code
+/usr/src/sys/sys	machine independent include files
+/usr/src/sys/kern	machine-independent system source files
+/usr/src/sys/conf	machine-independent configuration data
+/usr/src/sys/net	network-protocol-independent, but network-related code
+/usr/src/sys/netinet	DARPA Internet code
+/usr/src/sys/dev	machine-independent device drivers
+/usr/src/sys/arch	machine-dependent code
+/usr/src/sys/arch/amd64	machine-dependent code for 64-bit x86
+/usr/src/sys/arch/i386	machine-dependent code for 32-bit x86
+/usr/src/sys/arch/x86	machine-dependent code shared between x86 types
+/usr/src/sys/arch/amd64/conf	site configuration files and basic templates
+(and so on)
 .TE
 .DE
 .PP
 Existing block and character device drivers for the VAX 
-reside in ``/sys/vax'', ``/sys/vaxmba'', and ``/sys/vaxuba''.  Network
-interface drivers reside in ``/sys/vaxif''.  Any new device
+reside in ``/usr/src/sys/dev''. Any new device
 drivers should be placed in the appropriate source code directory
 and named so as not to conflict with existing devices.
 Normally, definitions for things like device registers are placed in
-a separate file in the same directory.  For example, the ``dh''
-device driver is named ``dh.c'' and its associated include file is
-named ``dhreg.h''.
+a separate file in the same directory.  For example, the ``auixp''
+device driver is named ``auixp.c'' and its associated include file is
+named ``auixpreg.h''. There is also an ``auixpvar.h'' which contains
+data structures and other external declarations that the driver needs
+to expose.
 .PP
 Once the source for the device driver has been placed in a directory,
-the file ``/sys/conf/files.machine'', and possibly
-``/sys/conf/devices.machine'' should be modified.  The 
+the file ``/usr/src/sys/conf/files'' should be modified.  The 
 .I files
 files in the conf directory contain a line for each C source or binary-only
 file in the system.  Those files which are machine independent are
-located in ``/sys/conf/files,'' while machine specific files
-are in ``/sys/conf/files.machine.''  The ``devices.machine'' file
+located in ``/usr/src/sys/conf/files,'' while machine specific files for
+the ``foo'' port are in ``/usr/src/sys/arch/foo/conf/files.foo.''  The ``devices.foo'' file
 is used to map device names to major block device numbers.  If the device
 driver being added provides support for a new disk
 you will want to modify this file (the format is obvious).
