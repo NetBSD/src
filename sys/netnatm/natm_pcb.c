@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.15 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.16 2014/07/06 15:44:25 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.15 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.16 2014/07/06 15:44:25 rtr Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -98,13 +99,9 @@ npcb_free(struct natmpcb *npcb, int op)
  *   returns npcb if ok
  */
 
-struct natmpcb *npcb_add(npcb, ifp, vci, vpi)
-
-struct natmpcb *npcb;
-struct ifnet *ifp;
-u_int16_t vci;
-u_int8_t vpi;
-
+struct natmpcb *
+npcb_add(struct natmpcb *npcb, struct ifnet *ifp,
+	u_int16_t vci, u_int8_t vpi)
 {
   struct natmpcb *cpcb = NULL;		/* current pcb */
   int s = splnet();
