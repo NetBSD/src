@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.52 2014/06/24 05:04:14 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.53 2014/07/07 15:22:07 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.52 2014/06/24 05:04:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.53 2014/07/07 15:22:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -903,9 +903,8 @@ tcx_clearscreen(struct tcx_softc *sc, int spc)
 	uint64_t spc64;
 	int i, len;
 
-	bg |=  ((uint64_t)sc->sc_bg << 32);
-	spc64 = (spc & 3) << 24;
-	bg |= spc64;
+	spc64 = ((spc & 3) << 24) | sc->sc_bg;
+	bg |= (spc64 << 32);
 
 	len = sc->sc_fb.fb_type.fb_width * sc->sc_fb.fb_type.fb_height;
 	for (i = 0; i < len; i += 32)
