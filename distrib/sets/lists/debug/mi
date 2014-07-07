@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2014/07/06 21:06:48 tron Exp $
+# $NetBSD: mi,v 1.68 2014/07/07 19:41:22 alnsn Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -2125,6 +2125,7 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlvsym.debug		tests-libexec-debug	debug,atf,pic
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/bpf/t_mbuf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpfilter/t_bpfilter.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpfjit/t_bpfjit.debug		tests-net-debug		debug,atf,sljit,rump
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf,rump
