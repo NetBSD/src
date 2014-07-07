@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.190 2014/05/22 14:01:46 riastradh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.191 2014/07/07 20:14:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -545,6 +545,7 @@ void			uao_reference(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
+void			ubchist_init(void);
 void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 			    int);
 void			ubc_release(void *, int);
