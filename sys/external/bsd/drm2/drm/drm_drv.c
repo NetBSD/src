@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.5 2014/06/13 00:47:08 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.6 2014/07/07 20:21:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.5 2014/06/13 00:47:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.6 2014/07/07 20:21:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.5 2014/06/13 00:47:08 riastradh Exp $"
 /* XXX Mega-kludge because modules are broken.  */
 #include <sys/once.h>
 #endif
+#include <sys/pmf.h>
 #include <sys/poll.h>
 #ifndef _MODULE
 #include <sys/reboot.h>		/* XXX drm_init kludge */
@@ -53,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.5 2014/06/13 00:47:08 riastradh Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
+
+#include <linux/pm.h>
 
 #include <drm/drmP.h>
 
@@ -96,6 +99,9 @@ static int	drm_detach(device_t, int);
 static int	drm_init(void);
 static ONCE_DECL(drm_init_once);
 #endif
+
+static bool	drm_suspend(device_t, const pmf_qual_t *);
+static bool	drm_resume(device_t, const pmf_qual_t *);
 
 static void	drm_undo_fill_in_dev(struct drm_device *);
 
@@ -386,10 +392,22 @@ drm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	if (!pmf_device_register(parent, NULL, NULL)) {
+		aprint_error_dev(parent, "unable to establish power handler");
+		goto fail2;
+	}
+	if (!pmf_device_register(self, &drm_suspend, &drm_resume)) {
+		aprint_error_dev(self, "unable to establish power handler");
+		goto fail3;
+	}
+
 	/* Success!  */
 	sc->sc_initialized = true;
 	return;
 
+fail4: __unused
+	pmf_device_deregister(self);
+fail3:	pmf_device_deregister(parent);
 fail2:	if (dev->driver->unload != NULL)
 		(*dev->driver->unload)(dev);
 fail1:	drm_undo_fill_in_dev(dev);
@@ -410,6 +428,9 @@ drm_detach(device_t self, int flags)
 
 	if (sc->sc_opencount != 0)
 		return EBUSY;
+
+	pmf_device_deregister(self);
+	pmf_device_deregister(device_parent(self));
 
 	/* XXX The placement of this is pretty random...  */
 	if (dev->driver->unload != NULL)
@@ -507,6 +528,35 @@ drm_undo_fill_in_dev(struct drm_device *dev)
 	linux_mutex_destroy(&dev->struct_mutex);
 	spin_lock_destroy(&dev->event_lock);
 	spin_lock_destroy(&dev->count_lock);
+}
+
+static bool
+drm_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct drm_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int error;
+
+	error = (*dev->driver->suspend)(dev,
+	    (pm_message_t) { .event = PM_EVENT_SUSPEND });
+	if (error)
+		return false;
+
+	return true;
+}
+
+static bool
+drm_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct drm_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int error;
+
+	error = (*dev->driver->resume)(dev);
+	if (error)
+		return false;
+
+	return true;
 }
 
 static struct drm_softc *
