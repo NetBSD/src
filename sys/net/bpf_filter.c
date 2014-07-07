@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.66 2014/07/05 22:06:11 alnsn Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.67 2014/07/07 19:56:03 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.66 2014/07/05 22:06:11 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.67 2014/07/07 19:56:03 alnsn Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -327,13 +327,12 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (pc->k > args->buflen ||
-			    X > args->buflen - pc->k ||
+			if (k < X || k >= args->buflen ||
 			    sizeof(int32_t) > args->buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
-				if (args->buflen != 0)
+				if (k < X || args->buflen != 0)
 					return 0;
 				A = xword(args->pkt, k, &merr);
 				if (merr != 0)
@@ -348,13 +347,12 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (pc->k > args->buflen ||
-			    X > args->buflen - pc->k ||
+			if (k < X || k >= args->buflen ||
 			    sizeof(int16_t) > args->buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
-				if (args->buflen != 0)
+				if (k < X || args->buflen != 0)
 					return 0;
 				A = xhalf(args->pkt, k, &merr);
 				if (merr != 0)
@@ -369,12 +367,11 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-			if (pc->k >= args->buflen ||
-			    X >= args->buflen - pc->k) {
+			if (k < X || k >= args->buflen) {
 #ifdef _KERNEL
 				int merr;
 
-				if (args->buflen != 0)
+				if (k < X || args->buflen != 0)
 					return 0;
 				A = xbyte(args->pkt, k, &merr);
 				if (merr != 0)
