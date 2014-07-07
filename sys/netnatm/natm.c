@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.32 2014/07/06 15:49:14 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.33 2014/07/07 07:09:59 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.32 2014/07/06 15:49:14 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.33 2014/07/07 07:09:59 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -140,14 +140,7 @@ done:
 static int
 natm_stat(struct socket *so, struct stat *ub)
 {
-  struct natmpcb *npcb;
-
-  npcb = (struct natmpcb *) so->so_pcb;
-
-  if (npcb == NULL)
-    return EINVAL;
-
-  return 0;
+  return EOPNOTSUPP;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.43 2014/07/06 16:18:46 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.44 2014/07/07 07:09:59 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.43 2014/07/06 16:18:46 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.44 2014/07/07 07:09:59 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -462,7 +462,7 @@ sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 sockin_stat(struct socket *so, struct stat *ub)
 {
-	return 0;
+	return EOPNOTSUPP;
 }
 
 static int
