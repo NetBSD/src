@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.124 2014/07/07 15:13:21 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.125 2014/07/07 17:13:56 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.124 2014/07/07 15:13:21 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.125 2014/07/07 17:13:56 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -653,6 +653,8 @@ rip6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 rip6_stat(struct socket *so, struct stat *ub)
 {
+	KASSERT(solocked(so));
+
 	/* stat: don't bother with a blocksize */
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.156 2014/07/06 03:33:33 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.157 2014/07/07 17:13:56 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.156 2014/07/06 03:33:33 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.157 2014/07/07 17:13:56 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -853,6 +853,8 @@ unp_stat(struct socket *so, struct stat *ub)
 {
 	struct unpcb *unp;
 	struct socket *so2;
+
+	KASSERT(solocked(so));
 
 	unp = sotounpcb(so);
 	if (unp == NULL)

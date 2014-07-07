@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.104 2014/07/07 15:13:21 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.105 2014/07/07 17:13:56 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.104 2014/07/07 15:13:21 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.105 2014/07/07 17:13:56 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -696,6 +696,8 @@ udp6_ioctl(struct socket *so, u_long cmd, void *addr6, struct ifnet *ifp)
 static int
 udp6_stat(struct socket *so, struct stat *ub)
 {
+	KASSERT(solocked(so));
+
 	/* stat: don't bother with a blocksize */
 	return 0;
 }

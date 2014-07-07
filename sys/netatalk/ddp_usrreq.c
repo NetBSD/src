@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.50 2014/07/07 15:13:21 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.51 2014/07/07 17:13:56 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.50 2014/07/07 15:13:21 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.51 2014/07/07 17:13:56 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -481,6 +481,8 @@ ddp_ioctl(struct socket *so, u_long cmd, void *addr, struct ifnet *ifp)
 static int
 ddp_stat(struct socket *so, struct stat *ub)
 {
+	KASSERT(solocked(so));
+
 	/* stat: don't bother with a blocksize. */
 	return 0;
 }

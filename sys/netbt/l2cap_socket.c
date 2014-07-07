@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.20 2014/07/07 15:13:21 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.21 2014/07/07 17:13:56 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.20 2014/07/07 15:13:21 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.21 2014/07/07 17:13:56 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -117,7 +117,7 @@ l2cap_detach(struct socket *so)
 }
 
 static int
-l2cap_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
+l2cap_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EPASSTHROUGH;
 }
@@ -125,6 +125,8 @@ l2cap_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 l2cap_stat(struct socket *so, struct stat *ub)
 {
+	KASSERT(solocked(so));
+
 	return 0;
 }
 
