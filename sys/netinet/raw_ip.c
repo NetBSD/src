@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.128 2014/07/06 03:33:33 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.129 2014/07/07 07:09:58 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.128 2014/07/06 03:33:33 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.129 2014/07/07 07:09:58 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -575,14 +575,7 @@ rip_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 rip_stat(struct socket *so, struct stat *ub)
 {
-	struct inpcb *inp;
-
-	inp = sotoinpcb(so);
-	if (inp == NULL)
-		return EINVAL;
-
-	/* stat: don't bother with a blocksize. */
-	return 0;
+	return EOPNOTSUPP;
 }
 
 int

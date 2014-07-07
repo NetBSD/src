@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.18 2014/07/06 03:33:33 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.19 2014/07/07 07:09:58 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.18 2014/07/06 03:33:33 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.19 2014/07/07 07:09:58 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -125,12 +125,7 @@ l2cap_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 l2cap_stat(struct socket *so, struct stat *ub)
 {
-	struct l2cap_channel *pcb = so->so_pcb;
-
-	if (pcb == NULL)
-		return EINVAL;
-
-	return 0;
+	return EOPNOTSUPP;
 }
 
 /*

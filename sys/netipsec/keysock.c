@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.30 2014/07/06 03:33:33 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.31 2014/07/07 07:09:59 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.30 2014/07/06 03:33:33 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.31 2014/07/07 07:09:59 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -493,7 +493,7 @@ key_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 key_stat(struct socket *so, struct stat *ub)
 {
-	return 0;
+	return EOPNOTSUPP;
 }
 
 /*
