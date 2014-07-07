@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.182 2014/07/07 07:09:58 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.183 2014/07/07 15:13:21 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.182 2014/07/07 07:09:58 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.183 2014/07/07 15:13:21 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -956,7 +956,8 @@ tcp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 tcp_stat(struct socket *so, struct stat *ub)
 {
-	return EOPNOTSUPP;
+	/* stat: don't bother with a blocksize.  */
+	return 0;
 }
 
 /*

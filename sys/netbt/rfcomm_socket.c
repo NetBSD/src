@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.20 2014/07/07 07:09:58 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.21 2014/07/07 15:13:21 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.20 2014/07/07 07:09:58 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.21 2014/07/07 15:13:21 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -133,7 +133,7 @@ rfcomm_ioctl(struct socket *up, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 rfcomm_stat(struct socket *so, struct stat *ub)
 {
-	return EOPNOTSUPP;
+	return 0;
 }
 
 /*
