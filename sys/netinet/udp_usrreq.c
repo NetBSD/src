@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.204 2014/07/07 07:09:58 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.205 2014/07/07 15:13:21 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.204 2014/07/07 07:09:58 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.205 2014/07/07 15:13:21 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -903,7 +903,8 @@ udp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 udp_stat(struct socket *so, struct stat *ub)
 {
-	return EOPNOTSUPP;
+	/* stat: don't bother with a blocksize. */
+	return 0;
 }
 
 static int
