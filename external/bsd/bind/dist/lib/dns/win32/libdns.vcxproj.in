@@ -113,6 +113,7 @@
     <ClCompile Include="..\byaddr.c" />
     <ClCompile Include="..\cache.c" />
     <ClCompile Include="..\callbacks.c" />
+    <ClCompile Include="..\client.c" />
     <ClCompile Include="..\clientinfo.c" />
     <ClCompile Include="..\compress.c" />
     <ClCompile Include="..\db.c" />
@@ -128,6 +129,7 @@
     <ClCompile Include="..\dst_lib.c" />
     <ClCompile Include="..\dst_parse.c" />
     <ClCompile Include="..\dst_result.c" />
+    <ClCompile Include="..\ecdb.c" />
     <ClCompile Include="..\forward.c" />
 @IF GEOIP
     <ClCompile Include="..\geoip.c" />
@@ -197,6 +199,7 @@
     <ClCompile Include="..\time.c" />
     <ClCompile Include="..\timer.c" />
     <ClCompile Include="..\tkey.c" />
+    <ClCompile Include="..\tsec.c" />
     <ClCompile Include="..\tsig.c" />
     <ClCompile Include="..\ttl.c" />
     <ClCompile Include="..\update.c" />
@@ -228,6 +231,7 @@
     <ClInclude Include="..\include\dns\cache.h" />
     <ClInclude Include="..\include\dns\callbacks.h" />
     <ClInclude Include="..\include\dns\cert.h" />
+    <ClInclude Include="..\include\dns\client.h" />
     <ClInclude Include="..\include\dns\clientinfo.h" />
     <ClInclude Include="..\include\dns\compress.h" />
     <ClInclude Include="..\include\dns\db.h" />
@@ -240,6 +244,7 @@
     <ClInclude Include="..\include\dns\dnssec.h" />
     <ClInclude Include="..\include\dns\ds.h" />
     <ClInclude Include="..\include\dns\dsdigest.h" />
+    <ClInclude Include="..\include\dns\ecdb.h" />
     <ClInclude Include="..\include\dns\enumclass.h" />
     <ClInclude Include="..\include\dns\enumtype.h" />
     <ClInclude Include="..\include\dns\events.h" />
@@ -297,6 +302,7 @@
     <ClInclude Include="..\include\dns\time.h" />
     <ClInclude Include="..\include\dns\timer.h" />
     <ClInclude Include="..\include\dns\tkey.h" />
+    <ClInclude Include="..\include\dns\tsec.h" />
     <ClInclude Include="..\include\dns\tsig.h" />
     <ClInclude Include="..\include\dns\ttl.h" />
     <ClInclude Include="..\include\dns\types.h" />

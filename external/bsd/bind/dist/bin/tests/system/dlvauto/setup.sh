@@ -19,6 +19,6 @@ SYSTEMTESTTOP=..
 
 sh clean.sh 
 
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 cd ns1 && sh sign.sh

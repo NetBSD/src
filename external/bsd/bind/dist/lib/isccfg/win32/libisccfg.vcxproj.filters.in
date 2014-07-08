@@ -27,6 +27,9 @@
     <ClCompile Include="..\aclconf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\dnsconf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,6 +42,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\isccfg\aclconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\isccfg\dnsconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isccfg\cfg.h">
