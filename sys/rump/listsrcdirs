@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.14 2014/06/15 14:36:57 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.15 2014/07/08 14:30:21 pooka Exp $
 #
 
 #
@@ -11,44 +11,89 @@
 # ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
 #
 
-precho ()
+# default echomode (for compat)
+em=sys
+
+# mini-getopt (so that we don't have to with getopt vs. getopts
+unset cvsmode
+if [ "${1}" = "-c" ]; then
+	cvsmode=true
+	shift
+fi
+[ ! -z "${1}" ] && em=$1
+# "both" is undocumented, can be used for checking dupes:
+# sh listsrcdirs both | sort | uniq -d
+if [ "${em}" != "sys" -a "${em}" != "usr" -a "${em}" != "both" ]; then
+	echo 'mode must be sys or usr'
+	exit 1
+fi
+
+lsrc ()
 {
 
-	pfx=$1
-	shift
-	for arg in $* ; do echo ${pfx}${arg} ; done
+	what=$1
+	pfx=$2
+	shift 2
+	if [ "${em}" = "both" -o "${what}" = "${em}" ]; then
+		for arg in $* ; do echo src${pfx}${arg} ; done
+	fi
 }
 
 ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips"
 ARCHS_EXTRA="arm/arm32 Makefile"
 
-precho src/			build.sh Makefile Makefile.inc
-precho src/			tools common include share/mk
-precho src/etc/			Makefile.params master.passwd group
-precho src/lib/lib		c util rump
-precho src/lib/librump		user client hijack dev net vfs
-precho src/external/bsd/	flex mdocml byacc
-precho src/external/cddl/	osnet
-precho src/external/historical/	nawk
-precho src/bin/			cat
-precho src/usr.bin/		make xinstall config mktemp sed tsort
-precho src/usr.bin/		lorder join cksum m4 mkdep Makefile.inc
-precho src/usr.bin/		rpcgen rump_server rump_allserver rump_wmd
-precho src/usr.bin/		stat shmif_dumpbus
-precho src/usr.sbin/		mtree
+# sources necessary for building rump kernel components
+lsrc sys /			build.sh Makefile Makefile.inc
+lsrc sys /			tools common include share/mk
+lsrc sys /etc/			Makefile.params master.passwd group
+lsrc sys /lib/lib		c util rump
+lsrc sys /lib/librump		user client hijack dev net vfs
+lsrc sys /external/bsd/		flex mdocml byacc
+lsrc sys /external/cddl/	osnet
+lsrc sys /external/historical/	nawk
+lsrc sys /bin/			cat
+lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
+lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
+lsrc sys /usr.bin/		rpcgen rump_server rump_allserver rump_wmd
+lsrc sys /usr.bin/		stat shmif_dumpbus
+lsrc sys /usr.sbin/		mtree
+
+# assorted userspace sources, mostly for configuration & diagnostics
+lsrc usr /lib/lib		crypt ipsec m npf pci prop
+lsrc usr /lib/lib		pthread rmt y z
+lsrc usr /libexec/		ld.elf_so
+lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
+lsrc usr /bin/			rm rmdir
+lsrc usr /sbin/			cgdconfig chown
+lsrc usr /sbin/			disklabel dump fsck fsck_ext2fs fsck_ffs
+lsrc usr /sbin/			fsck_lfs fsck_msdos fsck_v7fs
+lsrc usr /sbin/			ifconfig mknod
+lsrc usr /sbin/			modstat mount mount_ffs mount_tmpfs newfs
+lsrc usr /sbin/			newfs_v7fs newfs_msdos newfs_ext2fs
+lsrc usr /sbin/			newfs_lfs newfs_sysvbfs newfs_udf
+lsrc usr /sbin/			ping ping6 raidctl reboot
+lsrc usr /sbin/			rndctl route setkey sysctl umount
+lsrc usr /usr.bin/		kdump ktrace
+lsrc usr /usr.sbin/		arp dumpfs makefs ndp npf pcictl vnconfig
+lsrc usr /usr.sbin/		wlanctl
+lsrc usr /external/bsd/		libpcap tcpdump wpa
+lsrc usr /crypto/		Makefile.openssl
+lsrc usr /crypto/dist/		ipsec-tools
+lsrc usr /crypto/external/bsd/	openssl
+
 
 # If -c is given, use CVS syntax to exclude large subdirectories
 # of sys.  Otherwise just do it wholesale.
-if [ "${1}" = '-c' ]; then
-	echo \!src/sys/arch src/sys
+if ${cvsmode:-false}; then
+	[ "${em}" = "sys" ] && echo \!src/sys/arch src/sys
 
 	# pick a few useful archs, namely those mentioned in buildrump.sh
 	for arch in ${ARCHS}; do
-		precho src/sys/arch/${arch}/ include ${arch} Makefile
+		lsrc sys /sys/arch/${arch}/ include ${arch} Makefile
 	done
 	for extra in ${ARCHS_EXTRA}; do
-		echo src/sys/arch/${extra}
+		lsrc sys /sys/arch/ ${extra}
 	done
 else
-	echo src/sys
+	lsrc sys / sys
 fi
