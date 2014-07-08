@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.42 2014/06/18 17:50:14 christos Exp $
+# $NetBSD: ad.mips,v 1.43 2014/07/08 05:55:33 spz Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -163,12 +163,15 @@
 ./usr/lib/64/libintl.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libipsec.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libipsec.so.3.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libirs.so.8			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libirs.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisc.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisc.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisccc.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisccc.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisccfg.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisccfg.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisccfg.so.8.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisccfg.so.8.0			base-compat-shlib	obsolete
 ./usr/lib/64/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/64/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/64/libisns.so.0			base-compat-shlib	compat,pic,arch64
@@ -497,12 +500,15 @@
 ./usr/lib/o32/libintl.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libipsec.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libipsec.so.3.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libirs.so.8			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libirs.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisc.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisc.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisccc.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisccc.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisccfg.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libisccfg.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libisccfg.so.8.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libisccfg.so.8.0			base-compat-shlib	obsolete
 ./usr/lib/o32/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/o32/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/o32/libisns.so.0			base-compat-shlib	compat,pic,arch64

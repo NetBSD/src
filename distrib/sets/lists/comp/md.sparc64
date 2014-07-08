@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.184 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: md.sparc64,v 1.185 2014/07/08 05:55:34 spz Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc=48,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -442,6 +442,10 @@
 ./usr/lib/sparc/libipsec.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libipsec_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libipsec_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc/libirs.a			comp-c-lib		compat
+./usr/lib/sparc/libirs.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libirs_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libirs_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/sparc/libisc.a			comp-c-lib		compat
 ./usr/lib/sparc/libisc.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libisc_p.a			comp-c-proflib		compat,profile

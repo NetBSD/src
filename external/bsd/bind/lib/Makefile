@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2013/09/11 23:04:09 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/07/08 05:55:33 spz Exp $
 
-SUBDIR+= libisc liblwres .WAIT libdns libisccc .WAIT libisccfg .WAIT libbind9
+SUBDIR+= libisc liblwres .WAIT libdns libisccc .WAIT libisccfg .WAIT libbind9 \
+	libirs
 
 .include <bsd.subdir.mk>

@@ -334,8 +334,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/route.h> header file. */
 #define HAVE_NET_ROUTE_H 1
 
+/* Define if your OpenSSL version supports AES */
+#define HAVE_OPENSSL_AES 1
+
 /* Define if your OpenSSL version supports ECDSA. */
 #define HAVE_OPENSSL_ECDSA 1
+
+/* Define if your OpenSSL version supports EVP AES */
+#define HAVE_OPENSSL_EVP_AES 1
 
 /* Define if your OpenSSL version supports GOST. */
 #define HAVE_OPENSSL_GOST 1

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.264 2014/04/24 21:46:44 pooka Exp $
+# $NetBSD: shl.mi,v 1.265 2014/07/08 05:55:34 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,6 +64,7 @@
 ./usr/lib/libhx509_pic.a			comp-c-piclib		kerberos,picinstall
 ./usr/lib/libintl_pic.a				comp-c-piclib	picinstall
 ./usr/lib/libipsec_pic.a			comp-c-piclib	picinstall
+./usr/lib/libirs_pic.a				comp-bind-piclib	picinstall
 ./usr/lib/libisc_pic.a				comp-bind-piclib	picinstall
 ./usr/lib/libisccc_pic.a			comp-bind-piclib	picinstall
 ./usr/lib/libisccfg_pic.a			comp-bind-piclib	picinstall

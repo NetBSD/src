@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.221 2014/07/05 20:17:51 joerg Exp $
+# $NetBSD: md.amd64,v 1.222 2014/07/08 05:55:34 spz Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -686,6 +686,10 @@
 ./usr/lib/i386/libipsec.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libipsec_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libipsec_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/i386/libirs.a				comp-c-lib		compat
+./usr/lib/i386/libirs.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libirs_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libirs_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/i386/libisc.a				comp-c-lib		compat
 ./usr/lib/i386/libisc.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libisc_p.a			comp-c-proflib		compat,profile

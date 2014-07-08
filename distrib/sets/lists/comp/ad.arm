@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.56 2014/06/17 06:36:40 alnsn Exp $
+# $NetBSD: ad.arm,v 1.57 2014/07/08 05:55:33 spz Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -1242,9 +1242,17 @@
 ./usr/lib/oabi/libipsec_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libipsec_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libipsec_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libirs.a				comp-c-lib		compat
+./usr/lib/oabi/libirs.a				comp-c-lib		compat
+./usr/lib/oabi/libirs.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libirs.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libirs_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libirs_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libirs_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libirs_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libisc.a				comp-c-lib		compat
 ./usr/lib/oabi/libisc.a				comp-c-lib		compat
-./usr/lib/oabi/libisc.so				base-sys-shlib		compat,pic
+./usr/lib/oabi/libisc.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libisc.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libisc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libisc_p.a			comp-c-proflib		compat,profile

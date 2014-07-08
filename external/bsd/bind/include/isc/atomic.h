@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.3 2010/12/25 15:26:32 christos Exp $	*/
+/*	NetBSD: atomic.h,v 1.3 2010/12/25 15:26:32 christos Exp 	*/
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1

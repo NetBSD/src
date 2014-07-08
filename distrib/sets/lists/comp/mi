@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1896 2014/06/18 17:52:49 christos Exp $
+#	$NetBSD: mi,v 1.1897 2014/07/08 05:55:34 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3598,6 +3598,8 @@
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
+./usr/lib/libirs.a				comp-bind-lib
+./usr/lib/libirs_p.a				comp-bind-lib		profile
 ./usr/lib/libisc.a				comp-bind-lib
 ./usr/lib/libisc_p.a				comp-bind-lib		profile
 ./usr/lib/libisccc.a				comp-bind-lib
