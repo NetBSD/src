@@ -29,7 +29,8 @@ rm -f ns2/single-nsec3.db
 rm -f ns2/nsec3chain-test.db
 rm -f */example.bk
 rm -f dig.out.*
-rm -f delve.out.*
+rm -f rndc.out.*
+rm -f delv.out*
 rm -f ns2/dlv.db
 rm -f ns3/multiple.example.db ns3/nsec3-unknown.example.db ns3/nsec3.example.db
 rm -f ns3/optout-unknown.example.db ns3/optout.example.db

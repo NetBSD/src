@@ -114,6 +114,9 @@ ALL : "..\..\..\Build\Release\libisc.dll"
 
 
 CLEAN :
+@IF AES
+	-@erase "$(INTDIR)\aes.obj"
+@END AES
 	-@erase "$(INTDIR)\app.obj"
 	-@erase "$(INTDIR)\assertions.obj"
 	-@erase "$(INTDIR)\backtrace.obj"
@@ -166,6 +169,7 @@ CLEAN :
 @IF PKCS11
 	-@erase "$(INTDIR)\pk11.obj"
 	-@erase "$(INTDIR)\pk11_api.obj"
+	-@erase "$(INTDIR)\pk11_result.obj"
 @END PKCS11
 	-@erase "$(INTDIR)\pool.obj"
 	-@erase "$(INTDIR)\portset.obj"
@@ -253,6 +257,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\time.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\win32os.obj" \
+@IF AES
+	"$(INTDIR)\aes.obj" \
+@END AES
 	"$(INTDIR)\assertions.obj" \
 	"$(INTDIR)\backtrace.obj" \
 	"$(INTDIR)\backtrace-emptytbl.obj" \
@@ -287,6 +294,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\ondestroy.obj" \
 @IF PKCS11
 	"$(INTDIR)\pk11.obj" \
+	"$(INTDIR)\pk11_result.obj" \
 @END PKCS11
 	"$(INTDIR)\quota.obj" \
 	"$(INTDIR)\radix.obj" \
@@ -331,6 +339,10 @@ ALL : "..\..\..\Build\Debug\libisc.dll" "$(OUTDIR)\libisc.bsc"
 
 
 CLEAN :
+@IF AES
+	-@erase "$(INTDIR)\aes.obj"
+	-@erase "$(INTDIR)\aes.sbr"
+@END AES
 	-@erase "$(INTDIR)\app.obj"
 	-@erase "$(INTDIR)\app.sbr"
 	-@erase "$(INTDIR)\assertions.obj"
@@ -432,6 +444,7 @@ CLEAN :
 @IF PKCS11
 	-@erase "$(INTDIR)\pk11.obj"
 	-@erase "$(INTDIR)\pk11_api.obj"
+	-@erase "$(INTDIR)\pk11_result.obj"
 @END PKCS11
 	-@erase "$(INTDIR)\pool.obj"
 	-@erase "$(INTDIR)\pool.sbr"
@@ -551,6 +564,9 @@ BSC32_SBRS= \
 	"$(INTDIR)\time.sbr" \
 	"$(INTDIR)\version.sbr" \
 	"$(INTDIR)\win32os.sbr" \
+@IF AES
+	"$(INTDIR)\aes.sbr" \
+@END AES
 	"$(INTDIR)\assertions.sbr" \
 	"$(INTDIR)\backtrace.sbr" \
 	"$(INTDIR)\backtrace-emptytbl.sbr" \
@@ -585,6 +601,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\ondestroy.sbr" \
 @IF PKCS11
 	"$(INTDIR)\pk11.sbr" \
+	"$(INTDIR)\pk11_result.sbr" \
 @END PKCS11
 	"$(INTDIR)\quota.sbr" \
 	"$(INTDIR)\radix.sbr" \
@@ -650,6 +667,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\time.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\win32os.obj" \
+@IF AES
+	"$(INTDIR)\aes.obj" \
+@END AES
 	"$(INTDIR)\assertions.obj" \
 	"$(INTDIR)\backtrace.obj" \
 	"$(INTDIR)\backtrace-emptytbl.obj" \
@@ -684,6 +704,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\ondestroy.obj" \
 @IF PKCS11
 	"$(INTDIR)\pk11.obj" \
+	"$(INTDIR)\pk11_result.obj" \
 @END PKCS11
 	"$(INTDIR)\quota.obj" \
 	"$(INTDIR)\radix.obj" \
@@ -1177,6 +1198,24 @@ SOURCE=.\win32os.c
 
 
 !ENDIF 
+
+@IF AES
+SOURCE=..\aes.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\aes.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\aes.obj"	"$(INTDIR)\aes.sbr" : $(SOURCE) "$(INTDIR)"
+
+
+!ENDIF 
+@END AES
 
 SOURCE=..\assertions.c
 
@@ -1803,6 +1842,24 @@ SOURCE=..\pk11.c
 
 
 "$(INTDIR)\pk11.obj"	"$(INTDIR)\pk11.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pk11_result.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pk11_result.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pk11_result.obj"	"$(INTDIR)\pk11_result.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

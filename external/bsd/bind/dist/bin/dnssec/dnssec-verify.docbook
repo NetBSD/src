@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-verify.docbook,v 1.52 2011/12/22 07:32:40 each Exp  -->
 <refentry id="man.dnssec-verify">
   <refentryinfo>
-    <date>April 12, 2012</date>
+    <date>January 15, 2014</date>
   </refentryinfo>
 
   <refmeta>

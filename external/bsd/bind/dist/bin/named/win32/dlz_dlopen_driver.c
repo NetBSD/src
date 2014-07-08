@@ -1,7 +1,7 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.3 2014/02/28 17:40:06 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.4 2014/07/08 04:45:37 spz Exp $	*/
 
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -321,6 +321,7 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 			   "dlz_dlopen: %s: incorrect driver API version %d, "
 			   "requires %d",
 			   cd->dl_path, cd->version, DLZ_DLOPEN_VERSION);
+		result = ISC_R_FAILURE;
 		goto failed;
 	}
 

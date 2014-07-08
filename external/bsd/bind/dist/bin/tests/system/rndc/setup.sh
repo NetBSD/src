@@ -21,7 +21,7 @@ SYSTEMTESTTOP=..
 
 sh clean.sh
 
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 sh ../genzone.sh 2 >ns2/nil.db
 sh ../genzone.sh 2 >ns2/other.db

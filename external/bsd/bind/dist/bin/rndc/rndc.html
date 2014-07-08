@@ -29,10 +29,10 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">rndc</code>  [<code class="option">-b <em class="replaceable"><code>source-address</code></em></code>] [<code class="option">-c <em class="replaceable"><code>config-file</code></em></code>] [<code class="option">-k <em class="replaceable"><code>key-file</code></em></code>] [<code class="option">-s <em class="replaceable"><code>server</code></em></code>] [<code class="option">-p <em class="replaceable"><code>port</code></em></code>] [<code class="option">-V</code>] [<code class="option">-y <em class="replaceable"><code>key_id</code></em></code>] {command}</p></div>
+<div class="cmdsynopsis"><p><code class="command">rndc</code>  [<code class="option">-b <em class="replaceable"><code>source-address</code></em></code>] [<code class="option">-c <em class="replaceable"><code>config-file</code></em></code>] [<code class="option">-k <em class="replaceable"><code>key-file</code></em></code>] [<code class="option">-s <em class="replaceable"><code>server</code></em></code>] [<code class="option">-p <em class="replaceable"><code>port</code></em></code>] [<code class="option">-q</code>] [<code class="option">-V</code>] [<code class="option">-y <em class="replaceable"><code>key_id</code></em></code>] {command}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543421"></a><h2>DESCRIPTION</h2>
+<a name="id2543424"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">rndc</strong></span>
       controls the operation of a name
       server.  It supersedes the <span><strong class="command">ndc</strong></span> utility
@@ -63,7 +63,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543457"></a><h2>OPTIONS</h2>
+<a name="id2543459"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-b <em class="replaceable"><code>source-address</code></em></span></dt>
 <dd><p>
@@ -104,6 +104,11 @@
             instead
             of BIND 9's default control channel port, 953.
           </p></dd>
+<dt><span class="term">-q</span></dt>
+<dd><p>
+            Quiet mode: Message text returned by the server
+            will not be printed except when there is an error.
+          </p></dd>
 <dt><span class="term">-V</span></dt>
 <dd><p>
             Enable verbose logging.
@@ -129,7 +134,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543653"></a><h2>COMMANDS</h2>
+<a name="id2543668"></a><h2>COMMANDS</h2>
 <p>
       A list of commands supported by <span><strong class="command">rndc</strong></span> can
       be seen by running <span><strong class="command">rndc</strong></span> without arguments.
@@ -451,8 +456,8 @@
 <dt><span class="term"><strong class="userinput"><code>signing [<span class="optional">( -list | -clear <em class="replaceable"><code>keyid/algorithm</code></em> | -clear <code class="literal">all</code> | -nsec3param ( <em class="replaceable"><code>parameters</code></em> | <code class="literal">none</code> ) ) </span>] <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>] </code></strong></span></dt>
 <dd>
 <p>
-            List, edit, or remove the DNSSEC signing state for 
-            the specified zone.  The status of ongoing DNSSEC
+            List, edit, or remove the DNSSEC signing state records
+            for the specified zone.  The status of ongoing DNSSEC
             operations (such as signing or generating
             NSEC3 chains) is stored in the zone in the form
             of DNS resource records of type
@@ -491,8 +496,10 @@
             defines the number of additional times to apply
             the algorithm when generating an NSEC3 hash.  The
             <code class="option">salt</code> is a string of data expressed
-            in hexadecimal, or a hyphen (`-') if no salt is
-            to be used.
+            in hexadecimal, a hyphen (`-') if no salt is
+            to be used, or the keyword <code class="literal">auto</code>,
+            which causes <span><strong class="command">named</strong></span> to generate a
+            random 64-bit salt.
           </p>
 <p>
             So, for example, to create an NSEC3 chain using
@@ -512,7 +519,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544978"></a><h2>LIMITATIONS</h2>
+<a name="id2542133"></a><h2>LIMITATIONS</h2>
 <p>
       There is currently no way to provide the shared secret for a
       <code class="option">key_id</code> without using the configuration file.
@@ -522,7 +529,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2542129"></a><h2>SEE ALSO</h2>
+<a name="id2542151"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">rndc.conf</span>(5)</span>,
       <span class="citerefentry"><span class="refentrytitle">rndc-confgen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
@@ -532,7 +539,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545256"></a><h2>AUTHOR</h2>
+<a name="id2545415"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

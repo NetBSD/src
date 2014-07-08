@@ -15,7 +15,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 rm -f named-compilezone
 ln -s $CHECKZONE named-compilezone

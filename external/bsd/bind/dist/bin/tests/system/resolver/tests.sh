@@ -458,5 +458,21 @@ test ${ttl:-0} -eq ${ttl1:-1} || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo "I:check prefetch qtype * (${n})"
+ret=0
+$DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.1.${n} || ret=1
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+# sleep so we are in prefetch range
+sleep ${ttl1:-0}
+# trigger prefetch
+$DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.2.${n} || ret=1
+ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
+sleep 1
+# check that the nameserver is still alive
+$DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.3.${n} || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 exit $status

@@ -294,12 +294,6 @@ typedef __int64 off_t;
  */
 @HAVE_LIBXML2@
 
-/*
- * Define when building BIND9.  When building exportable versions
- * of libisc, libdns, etc, this must be removed.
- */
-#define BIND9 1
-
 /** define if struct addrinfo exists */
 #define HAVE_ADDRINFO
 
@@ -308,6 +302,15 @@ typedef __int64 off_t;
 
 /** define if gai_strerror() exists */
 #define HAVE_GAISTRERROR
+
+/* return type of gai_strerror */
+#define IRS_GAISTRERROR_RETURN_T char *
+
+/* Define to the buffer length type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_BUFLEN_T DWORD
+
+/* Define to the flags type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_FLAGS_T int
 
 /* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
    */
@@ -343,6 +346,21 @@ typedef __int64 off_t;
 /* Define if GOST private keys are encoded in ASN.1. */
 @PREFER_GOSTASN1@
 
+/* Define if your OpenSSL version supports EVP AES */
+@HAVE_OPENSSL_EVP_AES@
+
+/* Define if your OpenSSL version supports AES */
+@HAVE_OPENSSL_AES@
+
+/* Use AES for Source Identity Token generation */
+@AES_SIT@
+
+/* Use HMAC-SHA1 for Source Identity Token generation */
+@HMAC_SHA1_SIT@
+
+/* Use HMAC-SHA256 for Source Identity Token generation */
+@HMAC_SHA256_SIT@
+
 /* Define to 1 if you have the `readline' function. */
 @HAVE_READLINE@
 
@@ -369,6 +387,17 @@ typedef __int64 off_t;
 
 /* Large system tuning */
 @TUNE_LARGE@
+
+/*
+ * Define to nothing if C supports flexible array members, and to 1 if it does
+ * not. That way, with a declaration like `struct s { int n; double
+ * d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
+ * compilers. When computing the size of such an object, don't use 'sizeof
+ * (struct s)' as it overestimates the size. Use 'offsetof (struct s, d)'
+ * instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
+ * MSVC and with C++ compilers.
+ */
+#define FLEXIBLE_ARRAY_MEMBER /**/
 
 /* Avoid warnings with strlen() */
 #ifdef _WIN64

@@ -71,14 +71,6 @@
       <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>dnssectool.lib;libisc.lib;libdns.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-@IF PYTHON
-    <PostBuildEvent>
-      <Command>cd ..\..\python
-copy /Y dnssec-checkds.py ..\..\Build\$(Configuration)\dnssec-checkds.py
-copy /Y dnssec-coverage.py ..\..\Build\$(Configuration)\dnssec-coverage.py
-</Command>
-    </PostBuildEvent>
-@END PYTHON
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
     <ClCompile>
@@ -108,14 +100,6 @@ copy /Y dnssec-coverage.py ..\..\Build\$(Configuration)\dnssec-coverage.py
       <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>dnssectool.lib;libisc.lib;libdns.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-@IF PYTHON
-    <PostBuildEvent>
-      <Command>cd ..\..\python
-copy /Y dnssec-checkds.py ..\..\Build\$(Configuration)\dnssec-checkds.py
-copy /Y dnssec-coverage.py ..\..\Build\$(Configuration)\dnssec-coverage.py
-</Command>
-    </PostBuildEvent>
-@END PYTHON
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\dnssec-importkey.c" />

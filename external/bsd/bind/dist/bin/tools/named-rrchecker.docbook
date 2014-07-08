@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 
 <refentry id="man.named-rrchecker">
   <refentryinfo>
-    <date>August 25, 2009</date>
+    <date>November 12, 2013</date>
   </refentryinfo>
   <refmeta>
     <refentrytitle><application>named-rrchecker</application></refentrytitle>
@@ -34,6 +34,7 @@
   <docinfo>
     <copyright>
       <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>

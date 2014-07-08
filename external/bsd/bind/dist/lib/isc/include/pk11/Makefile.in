@@ -23,7 +23,7 @@ top_srcdir =	@top_srcdir@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	constants.h internal.h pk11.h
+HEADERS =	constants.h internal.h pk11.h result.h
 SUBDIRS =
 TARGETS =
 
