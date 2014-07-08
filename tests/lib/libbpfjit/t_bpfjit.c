@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.5 2014/06/24 10:53:30 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.6 2014/07/08 21:07:52 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.5 2014/06/24 10:53:30 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.6 2014/07/08 21:07:52 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -56,28 +56,28 @@ unsigned int jitcall(bpfjit_func_t fn,
 	return fn(NULL, &args);
 }
 
-ATF_TC(bpfjit_empty);
-ATF_TC_HEAD(bpfjit_empty, tc)
+ATF_TC(libbpfjit_empty);
+ATF_TC_HEAD(libbpfjit_empty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test that JIT compilation for an empty bpf program fails");
+	    "Test that JIT compilation of an empty bpf program fails");
 }
 
-ATF_TC_BODY(bpfjit_empty, tc)
+ATF_TC_BODY(libbpfjit_empty, tc)
 {
 	struct bpf_insn dummy;
 
 	ATF_CHECK(bpfjit_generate_code(NULL, &dummy, 0) == NULL);
 }
 
-ATF_TC(bpfjit_alu_add_k);
-ATF_TC_HEAD(bpfjit_alu_add_k, tc)
+ATF_TC(libbpfjit_alu_add_k);
+ATF_TC_HEAD(libbpfjit_alu_add_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_ADD+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_add_k, tc)
+ATF_TC_BODY(libbpfjit_alu_add_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 3),
@@ -100,14 +100,14 @@ ATF_TC_BODY(bpfjit_alu_add_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_sub_k);
-ATF_TC_HEAD(bpfjit_alu_sub_k, tc)
+ATF_TC(libbpfjit_alu_sub_k);
+ATF_TC_HEAD(libbpfjit_alu_sub_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_SUB+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_sub_k, tc)
+ATF_TC_BODY(libbpfjit_alu_sub_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 1),
@@ -130,14 +130,14 @@ ATF_TC_BODY(bpfjit_alu_sub_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_mul_k);
-ATF_TC_HEAD(bpfjit_alu_mul_k, tc)
+ATF_TC(libbpfjit_alu_mul_k);
+ATF_TC_HEAD(libbpfjit_alu_mul_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_MUL+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_mul_k, tc)
+ATF_TC_BODY(libbpfjit_alu_mul_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0xffffffff)),
@@ -160,14 +160,14 @@ ATF_TC_BODY(bpfjit_alu_mul_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div0_k);
-ATF_TC_HEAD(bpfjit_alu_div0_k, tc)
+ATF_TC(libbpfjit_alu_div0_k);
+ATF_TC_HEAD(libbpfjit_alu_div0_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=0");
 }
 
-ATF_TC_BODY(bpfjit_alu_div0_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div0_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_ALU+BPF_DIV+BPF_K, 0),
@@ -189,14 +189,14 @@ ATF_TC_BODY(bpfjit_alu_div0_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div1_k);
-ATF_TC_HEAD(bpfjit_alu_div1_k, tc)
+ATF_TC(libbpfjit_alu_div1_k);
+ATF_TC_HEAD(libbpfjit_alu_div1_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=1");
 }
 
-ATF_TC_BODY(bpfjit_alu_div1_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div1_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 7),
@@ -219,14 +219,14 @@ ATF_TC_BODY(bpfjit_alu_div1_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div2_k);
-ATF_TC_HEAD(bpfjit_alu_div2_k, tc)
+ATF_TC(libbpfjit_alu_div2_k);
+ATF_TC_HEAD(libbpfjit_alu_div2_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=2");
 }
 
-ATF_TC_BODY(bpfjit_alu_div2_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div2_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 7),
@@ -249,14 +249,14 @@ ATF_TC_BODY(bpfjit_alu_div2_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div4_k);
-ATF_TC_HEAD(bpfjit_alu_div4_k, tc)
+ATF_TC(libbpfjit_alu_div4_k);
+ATF_TC_HEAD(libbpfjit_alu_div4_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=4");
 }
 
-ATF_TC_BODY(bpfjit_alu_div4_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div4_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0xffffffff)),
@@ -279,14 +279,14 @@ ATF_TC_BODY(bpfjit_alu_div4_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div10_k);
-ATF_TC_HEAD(bpfjit_alu_div10_k, tc)
+ATF_TC(libbpfjit_alu_div10_k);
+ATF_TC_HEAD(libbpfjit_alu_div10_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=10");
 }
 
-ATF_TC_BODY(bpfjit_alu_div10_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div10_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(4294843849)),
@@ -309,14 +309,14 @@ ATF_TC_BODY(bpfjit_alu_div10_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div10000_k);
-ATF_TC_HEAD(bpfjit_alu_div10000_k, tc)
+ATF_TC(libbpfjit_alu_div10000_k);
+ATF_TC_HEAD(libbpfjit_alu_div10000_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=10000");
 }
 
-ATF_TC_BODY(bpfjit_alu_div10000_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div10000_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(4294843849)),
@@ -339,14 +339,14 @@ ATF_TC_BODY(bpfjit_alu_div10000_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div7609801_k);
-ATF_TC_HEAD(bpfjit_alu_div7609801_k, tc)
+ATF_TC(libbpfjit_alu_div7609801_k);
+ATF_TC_HEAD(libbpfjit_alu_div7609801_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=7609801");
 }
 
-ATF_TC_BODY(bpfjit_alu_div7609801_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div7609801_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(4294967295)),
@@ -369,14 +369,14 @@ ATF_TC_BODY(bpfjit_alu_div7609801_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div80000000_k);
-ATF_TC_HEAD(bpfjit_alu_div80000000_k, tc)
+ATF_TC(libbpfjit_alu_div80000000_k);
+ATF_TC_HEAD(libbpfjit_alu_div80000000_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=0x80000000");
 }
 
-ATF_TC_BODY(bpfjit_alu_div80000000_k, tc)
+ATF_TC_BODY(libbpfjit_alu_div80000000_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0xffffffde)),
@@ -399,14 +399,14 @@ ATF_TC_BODY(bpfjit_alu_div80000000_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_and_k);
-ATF_TC_HEAD(bpfjit_alu_and_k, tc)
+ATF_TC(libbpfjit_alu_and_k);
+ATF_TC_HEAD(libbpfjit_alu_and_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_AND+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_and_k, tc)
+ATF_TC_BODY(libbpfjit_alu_and_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead),
@@ -429,14 +429,14 @@ ATF_TC_BODY(bpfjit_alu_and_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_or_k);
-ATF_TC_HEAD(bpfjit_alu_or_k, tc)
+ATF_TC(libbpfjit_alu_or_k);
+ATF_TC_HEAD(libbpfjit_alu_or_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_OR+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_or_k, tc)
+ATF_TC_BODY(libbpfjit_alu_or_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0000),
@@ -459,14 +459,14 @@ ATF_TC_BODY(bpfjit_alu_or_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_lsh_k);
-ATF_TC_HEAD(bpfjit_alu_lsh_k, tc)
+ATF_TC(libbpfjit_alu_lsh_k);
+ATF_TC_HEAD(libbpfjit_alu_lsh_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_lsh_k, tc)
+ATF_TC_BODY(libbpfjit_alu_lsh_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -489,14 +489,14 @@ ATF_TC_BODY(bpfjit_alu_lsh_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_lsh0_k);
-ATF_TC_HEAD(bpfjit_alu_lsh0_k, tc)
+ATF_TC(libbpfjit_alu_lsh0_k);
+ATF_TC_HEAD(libbpfjit_alu_lsh0_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_K with k=0");
 }
 
-ATF_TC_BODY(bpfjit_alu_lsh0_k, tc)
+ATF_TC_BODY(libbpfjit_alu_lsh0_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -519,14 +519,14 @@ ATF_TC_BODY(bpfjit_alu_lsh0_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_rsh_k);
-ATF_TC_HEAD(bpfjit_alu_rsh_k, tc)
+ATF_TC(libbpfjit_alu_rsh_k);
+ATF_TC_HEAD(libbpfjit_alu_rsh_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_alu_rsh_k, tc)
+ATF_TC_BODY(libbpfjit_alu_rsh_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -549,14 +549,14 @@ ATF_TC_BODY(bpfjit_alu_rsh_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_rsh0_k);
-ATF_TC_HEAD(bpfjit_alu_rsh0_k, tc)
+ATF_TC(libbpfjit_alu_rsh0_k);
+ATF_TC_HEAD(libbpfjit_alu_rsh0_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_K with k=0");
 }
 
-ATF_TC_BODY(bpfjit_alu_rsh0_k, tc)
+ATF_TC_BODY(libbpfjit_alu_rsh0_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -579,14 +579,14 @@ ATF_TC_BODY(bpfjit_alu_rsh0_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_modulo_k);
-ATF_TC_HEAD(bpfjit_alu_modulo_k, tc)
+ATF_TC(libbpfjit_alu_modulo_k);
+ATF_TC_HEAD(libbpfjit_alu_modulo_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of modulo logic of BPF_ALU+BPF_K operations");
 }
 
-ATF_TC_BODY(bpfjit_alu_modulo_k, tc)
+ATF_TC_BODY(libbpfjit_alu_modulo_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0x7fffff77)),
@@ -643,14 +643,14 @@ ATF_TC_BODY(bpfjit_alu_modulo_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_add_x);
-ATF_TC_HEAD(bpfjit_alu_add_x, tc)
+ATF_TC(libbpfjit_alu_add_x);
+ATF_TC_HEAD(libbpfjit_alu_add_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_ADD+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_add_x, tc)
+ATF_TC_BODY(libbpfjit_alu_add_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 3),
@@ -674,14 +674,14 @@ ATF_TC_BODY(bpfjit_alu_add_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_sub_x);
-ATF_TC_HEAD(bpfjit_alu_sub_x, tc)
+ATF_TC(libbpfjit_alu_sub_x);
+ATF_TC_HEAD(libbpfjit_alu_sub_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_SUB+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_sub_x, tc)
+ATF_TC_BODY(libbpfjit_alu_sub_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 1),
@@ -705,14 +705,14 @@ ATF_TC_BODY(bpfjit_alu_sub_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_mul_x);
-ATF_TC_HEAD(bpfjit_alu_mul_x, tc)
+ATF_TC(libbpfjit_alu_mul_x);
+ATF_TC_HEAD(libbpfjit_alu_mul_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_MUL+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_mul_x, tc)
+ATF_TC_BODY(libbpfjit_alu_mul_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0xffffffff)),
@@ -736,14 +736,14 @@ ATF_TC_BODY(bpfjit_alu_mul_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div0_x);
-ATF_TC_HEAD(bpfjit_alu_div0_x, tc)
+ATF_TC(libbpfjit_alu_div0_x);
+ATF_TC_HEAD(libbpfjit_alu_div0_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=0");
 }
 
-ATF_TC_BODY(bpfjit_alu_div0_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div0_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 0),
@@ -766,14 +766,14 @@ ATF_TC_BODY(bpfjit_alu_div0_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div1_x);
-ATF_TC_HEAD(bpfjit_alu_div1_x, tc)
+ATF_TC(libbpfjit_alu_div1_x);
+ATF_TC_HEAD(libbpfjit_alu_div1_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=1");
 }
 
-ATF_TC_BODY(bpfjit_alu_div1_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div1_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 7),
@@ -797,14 +797,14 @@ ATF_TC_BODY(bpfjit_alu_div1_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div2_x);
-ATF_TC_HEAD(bpfjit_alu_div2_x, tc)
+ATF_TC(libbpfjit_alu_div2_x);
+ATF_TC_HEAD(libbpfjit_alu_div2_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=2");
 }
 
-ATF_TC_BODY(bpfjit_alu_div2_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div2_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 7),
@@ -828,14 +828,14 @@ ATF_TC_BODY(bpfjit_alu_div2_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div4_x);
-ATF_TC_HEAD(bpfjit_alu_div4_x, tc)
+ATF_TC(libbpfjit_alu_div4_x);
+ATF_TC_HEAD(libbpfjit_alu_div4_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=4");
 }
 
-ATF_TC_BODY(bpfjit_alu_div4_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div4_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0xffffffff)),
@@ -859,14 +859,14 @@ ATF_TC_BODY(bpfjit_alu_div4_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div10_x);
-ATF_TC_HEAD(bpfjit_alu_div10_x, tc)
+ATF_TC(libbpfjit_alu_div10_x);
+ATF_TC_HEAD(libbpfjit_alu_div10_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=10");
 }
 
-ATF_TC_BODY(bpfjit_alu_div10_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div10_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(4294843849)),
@@ -890,14 +890,14 @@ ATF_TC_BODY(bpfjit_alu_div10_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div10000_x);
-ATF_TC_HEAD(bpfjit_alu_div10000_x, tc)
+ATF_TC(libbpfjit_alu_div10000_x);
+ATF_TC_HEAD(libbpfjit_alu_div10000_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=10000");
 }
 
-ATF_TC_BODY(bpfjit_alu_div10000_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div10000_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(4294843849)),
@@ -921,14 +921,14 @@ ATF_TC_BODY(bpfjit_alu_div10000_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div7609801_x);
-ATF_TC_HEAD(bpfjit_alu_div7609801_x, tc)
+ATF_TC(libbpfjit_alu_div7609801_x);
+ATF_TC_HEAD(libbpfjit_alu_div7609801_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=7609801");
 }
 
-ATF_TC_BODY(bpfjit_alu_div7609801_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div7609801_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(4294967295)),
@@ -952,14 +952,14 @@ ATF_TC_BODY(bpfjit_alu_div7609801_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_div80000000_x);
-ATF_TC_HEAD(bpfjit_alu_div80000000_x, tc)
+ATF_TC(libbpfjit_alu_div80000000_x);
+ATF_TC_HEAD(libbpfjit_alu_div80000000_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_DIV+BPF_X with X=0x80000000");
 }
 
-ATF_TC_BODY(bpfjit_alu_div80000000_x, tc)
+ATF_TC_BODY(libbpfjit_alu_div80000000_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_MAX - 33),
@@ -983,14 +983,14 @@ ATF_TC_BODY(bpfjit_alu_div80000000_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_and_x);
-ATF_TC_HEAD(bpfjit_alu_and_x, tc)
+ATF_TC(libbpfjit_alu_and_x);
+ATF_TC_HEAD(libbpfjit_alu_and_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_AND+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_and_x, tc)
+ATF_TC_BODY(libbpfjit_alu_and_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead),
@@ -1014,14 +1014,14 @@ ATF_TC_BODY(bpfjit_alu_and_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_or_x);
-ATF_TC_HEAD(bpfjit_alu_or_x, tc)
+ATF_TC(libbpfjit_alu_or_x);
+ATF_TC_HEAD(libbpfjit_alu_or_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_OR+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_or_x, tc)
+ATF_TC_BODY(libbpfjit_alu_or_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0000),
@@ -1045,14 +1045,14 @@ ATF_TC_BODY(bpfjit_alu_or_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_lsh_x);
-ATF_TC_HEAD(bpfjit_alu_lsh_x, tc)
+ATF_TC(libbpfjit_alu_lsh_x);
+ATF_TC_HEAD(libbpfjit_alu_lsh_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_lsh_x, tc)
+ATF_TC_BODY(libbpfjit_alu_lsh_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -1076,14 +1076,14 @@ ATF_TC_BODY(bpfjit_alu_lsh_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_lsh0_x);
-ATF_TC_HEAD(bpfjit_alu_lsh0_x, tc)
+ATF_TC(libbpfjit_alu_lsh0_x);
+ATF_TC_HEAD(libbpfjit_alu_lsh0_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with k=0");
 }
 
-ATF_TC_BODY(bpfjit_alu_lsh0_x, tc)
+ATF_TC_BODY(libbpfjit_alu_lsh0_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -1107,14 +1107,14 @@ ATF_TC_BODY(bpfjit_alu_lsh0_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_rsh_x);
-ATF_TC_HEAD(bpfjit_alu_rsh_x, tc)
+ATF_TC(libbpfjit_alu_rsh_x);
+ATF_TC_HEAD(libbpfjit_alu_rsh_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_alu_rsh_x, tc)
+ATF_TC_BODY(libbpfjit_alu_rsh_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -1138,14 +1138,14 @@ ATF_TC_BODY(bpfjit_alu_rsh_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_rsh0_x);
-ATF_TC_HEAD(bpfjit_alu_rsh0_x, tc)
+ATF_TC(libbpfjit_alu_rsh0_x);
+ATF_TC_HEAD(libbpfjit_alu_rsh0_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with k=0");
 }
 
-ATF_TC_BODY(bpfjit_alu_rsh0_x, tc)
+ATF_TC_BODY(libbpfjit_alu_rsh0_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -1169,14 +1169,14 @@ ATF_TC_BODY(bpfjit_alu_rsh0_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_modulo_x);
-ATF_TC_HEAD(bpfjit_alu_modulo_x, tc)
+ATF_TC(libbpfjit_alu_modulo_x);
+ATF_TC_HEAD(libbpfjit_alu_modulo_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of modulo logic of BPF_ALU+BPF_X operations");
 }
 
-ATF_TC_BODY(bpfjit_alu_modulo_x, tc)
+ATF_TC_BODY(libbpfjit_alu_modulo_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0x7fffff77)),
@@ -1242,14 +1242,14 @@ ATF_TC_BODY(bpfjit_alu_modulo_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_alu_neg);
-ATF_TC_HEAD(bpfjit_alu_neg, tc)
+ATF_TC(libbpfjit_alu_neg);
+ATF_TC_HEAD(libbpfjit_alu_neg, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ALU+BPF_NEG");
 }
 
-ATF_TC_BODY(bpfjit_alu_neg, tc)
+ATF_TC_BODY(libbpfjit_alu_neg, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 777),
@@ -1272,14 +1272,14 @@ ATF_TC_BODY(bpfjit_alu_neg, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_ja);
-ATF_TC_HEAD(bpfjit_jmp_ja, tc)
+ATF_TC(libbpfjit_jmp_ja);
+ATF_TC_HEAD(libbpfjit_jmp_ja, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JA");
 }
 
-ATF_TC_BODY(bpfjit_jmp_ja, tc)
+ATF_TC_BODY(libbpfjit_jmp_ja, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_JMP+BPF_JA, 1),
@@ -1305,14 +1305,14 @@ ATF_TC_BODY(bpfjit_jmp_ja, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jgt_k);
-ATF_TC_HEAD(bpfjit_jmp_jgt_k, tc)
+ATF_TC(libbpfjit_jmp_jgt_k);
+ATF_TC_HEAD(libbpfjit_jmp_jgt_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JGT+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jgt_k, tc)
+ATF_TC_BODY(libbpfjit_jmp_jgt_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1356,14 +1356,14 @@ ATF_TC_BODY(bpfjit_jmp_jgt_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jge_k);
-ATF_TC_HEAD(bpfjit_jmp_jge_k, tc)
+ATF_TC(libbpfjit_jmp_jge_k);
+ATF_TC_HEAD(libbpfjit_jmp_jge_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JGE+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jge_k, tc)
+ATF_TC_BODY(libbpfjit_jmp_jge_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1407,14 +1407,14 @@ ATF_TC_BODY(bpfjit_jmp_jge_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jeq_k);
-ATF_TC_HEAD(bpfjit_jmp_jeq_k, tc)
+ATF_TC(libbpfjit_jmp_jeq_k);
+ATF_TC_HEAD(libbpfjit_jmp_jeq_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JEQ+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jeq_k, tc)
+ATF_TC_BODY(libbpfjit_jmp_jeq_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1458,14 +1458,14 @@ ATF_TC_BODY(bpfjit_jmp_jeq_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jset_k);
-ATF_TC_HEAD(bpfjit_jmp_jset_k, tc)
+ATF_TC(libbpfjit_jmp_jset_k);
+ATF_TC_HEAD(libbpfjit_jmp_jset_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JSET+BPF_K");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jset_k, tc)
+ATF_TC_BODY(libbpfjit_jmp_jset_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1509,14 +1509,14 @@ ATF_TC_BODY(bpfjit_jmp_jset_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_modulo_k);
-ATF_TC_HEAD(bpfjit_jmp_modulo_k, tc)
+ATF_TC(libbpfjit_jmp_modulo_k);
+ATF_TC_HEAD(libbpfjit_jmp_modulo_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of modulo logic of BPF_JMP+BPF_K operations");
 }
 
-ATF_TC_BODY(bpfjit_jmp_modulo_k, tc)
+ATF_TC_BODY(libbpfjit_jmp_modulo_k, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0x7fffff77)),
@@ -1564,14 +1564,14 @@ ATF_TC_BODY(bpfjit_jmp_modulo_k, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jgt_x);
-ATF_TC_HEAD(bpfjit_jmp_jgt_x, tc)
+ATF_TC(libbpfjit_jmp_jgt_x);
+ATF_TC_HEAD(libbpfjit_jmp_jgt_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JGT+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jgt_x, tc)
+ATF_TC_BODY(libbpfjit_jmp_jgt_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1622,14 +1622,14 @@ ATF_TC_BODY(bpfjit_jmp_jgt_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jge_x);
-ATF_TC_HEAD(bpfjit_jmp_jge_x, tc)
+ATF_TC(libbpfjit_jmp_jge_x);
+ATF_TC_HEAD(libbpfjit_jmp_jge_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JGE+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jge_x, tc)
+ATF_TC_BODY(libbpfjit_jmp_jge_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1680,14 +1680,14 @@ ATF_TC_BODY(bpfjit_jmp_jge_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jeq_x);
-ATF_TC_HEAD(bpfjit_jmp_jeq_x, tc)
+ATF_TC(libbpfjit_jmp_jeq_x);
+ATF_TC_HEAD(libbpfjit_jmp_jeq_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JEQ+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jeq_x, tc)
+ATF_TC_BODY(libbpfjit_jmp_jeq_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1737,14 +1737,14 @@ ATF_TC_BODY(bpfjit_jmp_jeq_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_jset_x);
-ATF_TC_HEAD(bpfjit_jmp_jset_x, tc)
+ATF_TC(libbpfjit_jmp_jset_x);
+ATF_TC_HEAD(libbpfjit_jmp_jset_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_JMP+BPF_JSET+BPF_X");
 }
 
-ATF_TC_BODY(bpfjit_jmp_jset_x, tc)
+ATF_TC_BODY(libbpfjit_jmp_jset_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -1794,14 +1794,14 @@ ATF_TC_BODY(bpfjit_jmp_jset_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_jmp_modulo_x);
-ATF_TC_HEAD(bpfjit_jmp_modulo_x, tc)
+ATF_TC(libbpfjit_jmp_modulo_x);
+ATF_TC_HEAD(libbpfjit_jmp_modulo_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of modulo logic of BPF_JMP+BPF_X operations");
 }
 
-ATF_TC_BODY(bpfjit_jmp_modulo_x, tc)
+ATF_TC_BODY(libbpfjit_jmp_modulo_x, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_C(0x7fffff77)),
@@ -1859,14 +1859,14 @@ ATF_TC_BODY(bpfjit_jmp_modulo_x, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ld_abs);
-ATF_TC_HEAD(bpfjit_ld_abs, tc)
+ATF_TC(libbpfjit_ld_abs);
+ATF_TC_HEAD(libbpfjit_ld_abs, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_ABS");
 }
 
-ATF_TC_BODY(bpfjit_ld_abs, tc)
+ATF_TC_BODY(libbpfjit_ld_abs, tc)
 {
 	static struct bpf_insn insns[3][2] = {
 		{
@@ -1900,7 +1900,7 @@ ATF_TC_BODY(bpfjit_ld_abs, tc)
 		code = bpfjit_generate_code(NULL, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
-		for (l = 0; l < 5 + lengths[i]; l++) {
+		for (l = 1; l < 5 + lengths[i]; l++) {
 			ATF_CHECK(jitcall(code, pkt, l, l) == 0);
 			ATF_CHECK(jitcall(code, pkt, pktsize, l) == 0);
 		}
@@ -1916,14 +1916,14 @@ ATF_TC_BODY(bpfjit_ld_abs, tc)
 	}
 }
 
-ATF_TC(bpfjit_ld_abs_k_overflow);
-ATF_TC_HEAD(bpfjit_ld_abs_k_overflow, tc)
+ATF_TC(libbpfjit_ld_abs_k_overflow);
+ATF_TC_HEAD(libbpfjit_ld_abs_k_overflow, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_ABS with overflow in k+4");
 }
 
-ATF_TC_BODY(bpfjit_ld_abs_k_overflow, tc)
+ATF_TC_BODY(libbpfjit_ld_abs_k_overflow, tc)
 {
 	static struct bpf_insn insns[12][3] = {
 		{
@@ -2007,14 +2007,14 @@ ATF_TC_BODY(bpfjit_ld_abs_k_overflow, tc)
 	}
 }
 
-ATF_TC(bpfjit_ld_ind);
-ATF_TC_HEAD(bpfjit_ld_ind, tc)
+ATF_TC(libbpfjit_ld_ind);
+ATF_TC_HEAD(libbpfjit_ld_ind, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_IND");
 }
 
-ATF_TC_BODY(bpfjit_ld_ind, tc)
+ATF_TC_BODY(libbpfjit_ld_ind, tc)
 {
 	static struct bpf_insn insns[6][3] = {
 		{
@@ -2070,7 +2070,7 @@ ATF_TC_BODY(bpfjit_ld_ind, tc)
 		code = bpfjit_generate_code(NULL, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
-		for (l = 0; l < 5 + lengths[i]; l++) {
+		for (l = 1; l < 5 + lengths[i]; l++) {
 			ATF_CHECK(jitcall(code, pkt, l, l) == 0);
 			ATF_CHECK(jitcall(code, pkt, pktsize, l) == 0);
 		}
@@ -2086,14 +2086,14 @@ ATF_TC_BODY(bpfjit_ld_ind, tc)
 	}
 }
 
-ATF_TC(bpfjit_ld_ind_k_overflow);
-ATF_TC_HEAD(bpfjit_ld_ind_k_overflow, tc)
+ATF_TC(libbpfjit_ld_ind_k_overflow);
+ATF_TC_HEAD(libbpfjit_ld_ind_k_overflow, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_IND with overflow in k+4");
 }
 
-ATF_TC_BODY(bpfjit_ld_ind_k_overflow, tc)
+ATF_TC_BODY(libbpfjit_ld_ind_k_overflow, tc)
 {
 	static struct bpf_insn insns[12][3] = {
 		{
@@ -2177,14 +2177,14 @@ ATF_TC_BODY(bpfjit_ld_ind_k_overflow, tc)
 	}
 }
 
-ATF_TC(bpfjit_ld_ind_x_overflow1);
-ATF_TC_HEAD(bpfjit_ld_ind_x_overflow1, tc)
+ATF_TC(libbpfjit_ld_ind_x_overflow1);
+ATF_TC_HEAD(libbpfjit_ld_ind_x_overflow1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_IND with overflow in X+4");
 }
 
-ATF_TC_BODY(bpfjit_ld_ind_x_overflow1, tc)
+ATF_TC_BODY(libbpfjit_ld_ind_x_overflow1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_LEN, 0),
@@ -2213,14 +2213,14 @@ ATF_TC_BODY(bpfjit_ld_ind_x_overflow1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ld_ind_x_overflow2);
-ATF_TC_HEAD(bpfjit_ld_ind_x_overflow2, tc)
+ATF_TC(libbpfjit_ld_ind_x_overflow2);
+ATF_TC_HEAD(libbpfjit_ld_ind_x_overflow2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_IND with overflow in X+4");
 }
 
-ATF_TC_BODY(bpfjit_ld_ind_x_overflow2, tc)
+ATF_TC_BODY(libbpfjit_ld_ind_x_overflow2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_LEN, 0),
@@ -2250,14 +2250,14 @@ ATF_TC_BODY(bpfjit_ld_ind_x_overflow2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ld_len);
-ATF_TC_HEAD(bpfjit_ld_len, tc)
+ATF_TC(libbpfjit_ld_len);
+ATF_TC_HEAD(libbpfjit_ld_len, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_W+BPF_LEN");
 }
 
-ATF_TC_BODY(bpfjit_ld_len, tc)
+ATF_TC_BODY(libbpfjit_ld_len, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -2281,14 +2281,14 @@ ATF_TC_BODY(bpfjit_ld_len, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ld_imm);
-ATF_TC_HEAD(bpfjit_ld_imm, tc)
+ATF_TC(libbpfjit_ld_imm);
+ATF_TC_HEAD(libbpfjit_ld_imm, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LD+BPF_IMM");
 }
 
-ATF_TC_BODY(bpfjit_ld_imm, tc)
+ATF_TC_BODY(libbpfjit_ld_imm, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, UINT32_MAX),
@@ -2310,14 +2310,14 @@ ATF_TC_BODY(bpfjit_ld_imm, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ldx_imm1);
-ATF_TC_HEAD(bpfjit_ldx_imm1, tc)
+ATF_TC(libbpfjit_ldx_imm1);
+ATF_TC_HEAD(libbpfjit_ldx_imm1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LDX+BPF_IMM");
 }
 
-ATF_TC_BODY(bpfjit_ldx_imm1, tc)
+ATF_TC_BODY(libbpfjit_ldx_imm1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, UINT32_MAX - 5),
@@ -2340,14 +2340,14 @@ ATF_TC_BODY(bpfjit_ldx_imm1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ldx_imm2);
-ATF_TC_HEAD(bpfjit_ldx_imm2, tc)
+ATF_TC(libbpfjit_ldx_imm2);
+ATF_TC_HEAD(libbpfjit_ldx_imm2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LDX+BPF_IMM");
 }
 
-ATF_TC_BODY(bpfjit_ldx_imm2, tc)
+ATF_TC_BODY(libbpfjit_ldx_imm2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 5),
@@ -2372,14 +2372,14 @@ ATF_TC_BODY(bpfjit_ldx_imm2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ldx_len1);
-ATF_TC_HEAD(bpfjit_ldx_len1, tc)
+ATF_TC(libbpfjit_ldx_len1);
+ATF_TC_HEAD(libbpfjit_ldx_len1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LDX+BPF_LEN");
 }
 
-ATF_TC_BODY(bpfjit_ldx_len1, tc)
+ATF_TC_BODY(libbpfjit_ldx_len1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_LEN, 0),
@@ -2406,14 +2406,14 @@ ATF_TC_BODY(bpfjit_ldx_len1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ldx_len2);
-ATF_TC_HEAD(bpfjit_ldx_len2, tc)
+ATF_TC(libbpfjit_ldx_len2);
+ATF_TC_HEAD(libbpfjit_ldx_len2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LDX+BPF_LEN");
 }
 
-ATF_TC_BODY(bpfjit_ldx_len2, tc)
+ATF_TC_BODY(libbpfjit_ldx_len2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_LEN, 0),
@@ -2439,14 +2439,14 @@ ATF_TC_BODY(bpfjit_ldx_len2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_ldx_msh);
-ATF_TC_HEAD(bpfjit_ldx_msh, tc)
+ATF_TC(libbpfjit_ldx_msh);
+ATF_TC_HEAD(libbpfjit_ldx_msh, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_LDX+BPF_MSH");
 }
 
-ATF_TC_BODY(bpfjit_ldx_msh, tc)
+ATF_TC_BODY(libbpfjit_ldx_msh, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_B+BPF_MSH, 1),
@@ -2469,14 +2469,14 @@ ATF_TC_BODY(bpfjit_ldx_msh, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_misc_tax);
-ATF_TC_HEAD(bpfjit_misc_tax, tc)
+ATF_TC(libbpfjit_misc_tax);
+ATF_TC_HEAD(libbpfjit_misc_tax, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_MISC+BPF_TAX");
 }
 
-ATF_TC_BODY(bpfjit_misc_tax, tc)
+ATF_TC_BODY(libbpfjit_misc_tax, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 3),
@@ -2500,14 +2500,14 @@ ATF_TC_BODY(bpfjit_misc_tax, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_misc_txa);
-ATF_TC_HEAD(bpfjit_misc_txa, tc)
+ATF_TC(libbpfjit_misc_txa);
+ATF_TC_HEAD(libbpfjit_misc_txa, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_MISC+BPF_TXA");
 }
 
-ATF_TC_BODY(bpfjit_misc_txa, tc)
+ATF_TC_BODY(libbpfjit_misc_txa, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 391),
@@ -2530,18 +2530,19 @@ ATF_TC_BODY(bpfjit_misc_txa, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_st1);
-ATF_TC_HEAD(bpfjit_st1, tc)
+ATF_TC(libbpfjit_st1);
+ATF_TC_HEAD(libbpfjit_st1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ST");
 }
 
-ATF_TC_BODY(bpfjit_st1, tc)
+ATF_TC_BODY(libbpfjit_st1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
 		BPF_STMT(BPF_ST, 0),
+		BPF_STMT(BPF_ALU+BPF_ADD+BPF_K, 1),
 		BPF_STMT(BPF_LD+BPF_MEM, 0),
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
@@ -2563,14 +2564,14 @@ ATF_TC_BODY(bpfjit_st1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_st2);
-ATF_TC_HEAD(bpfjit_st2, tc)
+ATF_TC(libbpfjit_st2);
+ATF_TC_HEAD(libbpfjit_st2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ST");
 }
 
-ATF_TC_BODY(bpfjit_st2, tc)
+ATF_TC_BODY(libbpfjit_st2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -2594,14 +2595,14 @@ ATF_TC_BODY(bpfjit_st2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_st3);
-ATF_TC_HEAD(bpfjit_st3, tc)
+ATF_TC(libbpfjit_st3);
+ATF_TC_HEAD(libbpfjit_st3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ST");
 }
 
-ATF_TC_BODY(bpfjit_st3, tc)
+ATF_TC_BODY(libbpfjit_st3, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -2634,14 +2635,14 @@ ATF_TC_BODY(bpfjit_st3, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_st4);
-ATF_TC_HEAD(bpfjit_st4, tc)
+ATF_TC(libbpfjit_st4);
+ATF_TC_HEAD(libbpfjit_st4, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ST");
 }
 
-ATF_TC_BODY(bpfjit_st4, tc)
+ATF_TC_BODY(libbpfjit_st4, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
@@ -2674,14 +2675,14 @@ ATF_TC_BODY(bpfjit_st4, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_st5);
-ATF_TC_HEAD(bpfjit_st5, tc)
+ATF_TC(libbpfjit_st5);
+ATF_TC_HEAD(libbpfjit_st5, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_ST");
 }
 
-ATF_TC_BODY(bpfjit_st5, tc)
+ATF_TC_BODY(libbpfjit_st5, tc)
 {
 	struct bpf_insn insns[5*BPF_MEMWORDS+2];
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
@@ -2729,14 +2730,14 @@ ATF_TC_BODY(bpfjit_st5, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_stx1);
-ATF_TC_HEAD(bpfjit_stx1, tc)
+ATF_TC(libbpfjit_stx1);
+ATF_TC_HEAD(libbpfjit_stx1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_STX");
 }
 
-ATF_TC_BODY(bpfjit_stx1, tc)
+ATF_TC_BODY(libbpfjit_stx1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_LEN, 0),
@@ -2763,14 +2764,14 @@ ATF_TC_BODY(bpfjit_stx1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_stx2);
-ATF_TC_HEAD(bpfjit_stx2, tc)
+ATF_TC(libbpfjit_stx2);
+ATF_TC_HEAD(libbpfjit_stx2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_STX");
 }
 
-ATF_TC_BODY(bpfjit_stx2, tc)
+ATF_TC_BODY(libbpfjit_stx2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_LEN, 0),
@@ -2795,14 +2796,14 @@ ATF_TC_BODY(bpfjit_stx2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_stx3);
-ATF_TC_HEAD(bpfjit_stx3, tc)
+ATF_TC(libbpfjit_stx3);
+ATF_TC_HEAD(libbpfjit_stx3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_STX");
 }
 
-ATF_TC_BODY(bpfjit_stx3, tc)
+ATF_TC_BODY(libbpfjit_stx3, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_LEN, 0),
@@ -2839,14 +2840,14 @@ ATF_TC_BODY(bpfjit_stx3, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_stx4);
-ATF_TC_HEAD(bpfjit_stx4, tc)
+ATF_TC(libbpfjit_stx4);
+ATF_TC_HEAD(libbpfjit_stx4, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation of BPF_STX");
 }
 
-ATF_TC_BODY(bpfjit_stx4, tc)
+ATF_TC_BODY(libbpfjit_stx4, tc)
 {
 	struct bpf_insn insns[5*BPF_MEMWORDS+2];
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
@@ -2894,15 +2895,15 @@ ATF_TC_BODY(bpfjit_stx4, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_abs_1);
-ATF_TC_HEAD(bpfjit_opt_ld_abs_1, tc)
+ATF_TC(libbpfjit_opt_ld_abs_1);
+ATF_TC_HEAD(libbpfjit_opt_ld_abs_1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_ABS");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_abs_1, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_abs_1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
@@ -2951,15 +2952,15 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_abs_2);
-ATF_TC_HEAD(bpfjit_opt_ld_abs_2, tc)
+ATF_TC(libbpfjit_opt_ld_abs_2);
+ATF_TC_HEAD(libbpfjit_opt_ld_abs_2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_ABS");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_abs_2, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_abs_2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 26),
@@ -3008,15 +3009,15 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_abs_3);
-ATF_TC_HEAD(bpfjit_opt_ld_abs_3, tc)
+ATF_TC(libbpfjit_opt_ld_abs_3);
+ATF_TC_HEAD(libbpfjit_opt_ld_abs_3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_ABS");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_abs_3, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_abs_3, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 30),
@@ -3065,15 +3066,15 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_3, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_ind_1);
-ATF_TC_HEAD(bpfjit_opt_ld_ind_1, tc)
+ATF_TC(libbpfjit_opt_ld_ind_1);
+ATF_TC_HEAD(libbpfjit_opt_ld_ind_1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_IND");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_ind_1, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_ind_1, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 12),
@@ -3123,15 +3124,15 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_ind_2);
-ATF_TC_HEAD(bpfjit_opt_ld_ind_2, tc)
+ATF_TC(libbpfjit_opt_ld_ind_2);
+ATF_TC_HEAD(libbpfjit_opt_ld_ind_2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_IND");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_ind_2, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_ind_2, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 0),
@@ -3181,15 +3182,15 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_ind_3);
-ATF_TC_HEAD(bpfjit_opt_ld_ind_3, tc)
+ATF_TC(libbpfjit_opt_ld_ind_3);
+ATF_TC_HEAD(libbpfjit_opt_ld_ind_3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_IND");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_ind_3, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_ind_3, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 15),
@@ -3240,15 +3241,15 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_3, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_opt_ld_ind_4);
-ATF_TC_HEAD(bpfjit_opt_ld_ind_4, tc)
+ATF_TC(libbpfjit_opt_ld_ind_4);
+ATF_TC_HEAD(libbpfjit_opt_ld_ind_4, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test JIT compilation with length optimization "
 	    "applied to BPF_LD+BPF_IND");
 }
 
-ATF_TC_BODY(bpfjit_opt_ld_ind_4, tc)
+ATF_TC_BODY(libbpfjit_opt_ld_ind_4, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 11),
@@ -3299,14 +3300,14 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_4, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_abc_ja);
-ATF_TC_HEAD(bpfjit_abc_ja, tc)
+ATF_TC(libbpfjit_abc_ja);
+ATF_TC_HEAD(libbpfjit_abc_ja, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test ABC optimization with a single BPF_JMP+BPF_JA");
 }
 
-ATF_TC_BODY(bpfjit_abc_ja, tc)
+ATF_TC_BODY(libbpfjit_abc_ja, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 3), /* min. length 4 */
@@ -3332,7 +3333,6 @@ ATF_TC_BODY(bpfjit_abc_ja, tc)
 	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(jitcall(code, pkt, 0, 0) == 0);
 	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
 	ATF_CHECK(jitcall(code, pkt, 2, 2) == 0);
 	ATF_CHECK(jitcall(code, pkt, 3, 3) == 0);
@@ -3343,14 +3343,14 @@ ATF_TC_BODY(bpfjit_abc_ja, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_abc_ja_over);
-ATF_TC_HEAD(bpfjit_abc_ja_over, tc)
+ATF_TC(libbpfjit_abc_ja_over);
+ATF_TC_HEAD(libbpfjit_abc_ja_over, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test ABC optimization when BPF_JMP+BPF_JA jumps over all loads");
 }
 
-ATF_TC_BODY(bpfjit_abc_ja_over, tc)
+ATF_TC_BODY(libbpfjit_abc_ja_over, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_JMP+BPF_JA, 2),
@@ -3380,15 +3380,15 @@ ATF_TC_BODY(bpfjit_abc_ja_over, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_abc_ld_chain);
-ATF_TC_HEAD(bpfjit_abc_ld_chain, tc)
+ATF_TC(libbpfjit_abc_ld_chain);
+ATF_TC_HEAD(libbpfjit_abc_ld_chain, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test ABC optimization of a chain of BPF_LD instructions "
 	    "with exits leading to a single BPF_RET");
 }
 
-ATF_TC_BODY(bpfjit_abc_ld_chain, tc)
+ATF_TC_BODY(libbpfjit_abc_ld_chain, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 3), /* min. length 4 */
@@ -3463,15 +3463,15 @@ ATF_TC_BODY(bpfjit_abc_ld_chain, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_examples_1);
-ATF_TC_HEAD(bpfjit_examples_1, tc)
+ATF_TC(libbpfjit_examples_1);
+ATF_TC_HEAD(libbpfjit_examples_1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test the first example from bpf(4) - "
 	    "accept Reverse ARP requests");
 }
 
-ATF_TC_BODY(bpfjit_examples_1, tc)
+ATF_TC_BODY(libbpfjit_examples_1, tc)
 {
 	/*
 	 * The following filter is taken from the Reverse ARP
@@ -3560,15 +3560,15 @@ ATF_TC_BODY(bpfjit_examples_1, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_examples_2);
-ATF_TC_HEAD(bpfjit_examples_2, tc)
+ATF_TC(libbpfjit_examples_2);
+ATF_TC_HEAD(libbpfjit_examples_2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test the second example from bpf(4) - "
 	    "accept IP packets between two specified hosts");
 }
 
-ATF_TC_BODY(bpfjit_examples_2, tc)
+ATF_TC_BODY(libbpfjit_examples_2, tc)
 {
 	/*
 	 * This filter accepts only IP packets between host 128.3.112.15
@@ -3695,15 +3695,15 @@ ATF_TC_BODY(bpfjit_examples_2, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_examples_3);
-ATF_TC_HEAD(bpfjit_examples_3, tc)
+ATF_TC(libbpfjit_examples_3);
+ATF_TC_HEAD(libbpfjit_examples_3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test the third example from bpf(4) - "
 	    "accept TCP finger packets");
 }
 
-ATF_TC_BODY(bpfjit_examples_3, tc)
+ATF_TC_BODY(libbpfjit_examples_3, tc)
 {
 	/*
 	 * This filter returns only TCP finger packets.
@@ -3833,14 +3833,14 @@ ATF_TC_BODY(bpfjit_examples_3, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_no_ctx);
-ATF_TC_HEAD(bpfjit_cop_no_ctx, tc)
+ATF_TC(libbpfjit_cop_no_ctx);
+ATF_TC_HEAD(libbpfjit_cop_no_ctx, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that BPF_MISC|BPF_COP "
 	    "instruction can't be accepted without a context");
 }
 
-ATF_TC_BODY(bpfjit_cop_no_ctx, tc)
+ATF_TC_BODY(libbpfjit_cop_no_ctx, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_MISC+BPF_COP, 0),
@@ -3854,14 +3854,14 @@ ATF_TC_BODY(bpfjit_cop_no_ctx, tc)
 	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
 }
 
-ATF_TC(bpfjit_copx_no_ctx);
-ATF_TC_HEAD(bpfjit_copx_no_ctx, tc)
+ATF_TC(libbpfjit_copx_no_ctx);
+ATF_TC_HEAD(libbpfjit_copx_no_ctx, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that BPF_MISC|BPF_COPX "
 	    "instruction can't be accepted without a context");
 }
 
-ATF_TC_BODY(bpfjit_copx_no_ctx, tc)
+ATF_TC_BODY(libbpfjit_copx_no_ctx, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_MISC+BPF_COPX, 0),
@@ -3878,94 +3878,98 @@ ATF_TC_BODY(bpfjit_copx_no_ctx, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, bpfjit_empty);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_add_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_sub_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_mul_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div0_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div1_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div2_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div4_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div10_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div10000_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div7609801_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div80000000_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_and_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_or_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh0_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh0_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_modulo_k);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_add_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_sub_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_mul_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div0_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div1_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div2_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div4_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div10_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div10000_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div7609801_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_div80000000_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_and_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_or_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh0_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh0_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_modulo_x);
-	ATF_TP_ADD_TC(tp, bpfjit_alu_neg);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_ja);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jgt_k);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jge_k);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_k);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jset_k);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_modulo_k);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jgt_x);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jge_x);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_jset_x);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_modulo_x);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_abs);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_abs_k_overflow);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_ind);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_ind_k_overflow);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_ind_x_overflow1);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_ind_x_overflow2);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_len);
-	ATF_TP_ADD_TC(tp, bpfjit_ld_imm);
-	ATF_TP_ADD_TC(tp, bpfjit_ldx_imm1);
-	ATF_TP_ADD_TC(tp, bpfjit_ldx_imm2);
-	ATF_TP_ADD_TC(tp, bpfjit_ldx_len1);
-	ATF_TP_ADD_TC(tp, bpfjit_ldx_len2);
-	ATF_TP_ADD_TC(tp, bpfjit_ldx_msh);
-	ATF_TP_ADD_TC(tp, bpfjit_misc_tax);
-	ATF_TP_ADD_TC(tp, bpfjit_misc_txa);
-	ATF_TP_ADD_TC(tp, bpfjit_st1);
-	ATF_TP_ADD_TC(tp, bpfjit_st2);
-	ATF_TP_ADD_TC(tp, bpfjit_st3);
-	ATF_TP_ADD_TC(tp, bpfjit_st4);
-	ATF_TP_ADD_TC(tp, bpfjit_st5);
-	ATF_TP_ADD_TC(tp, bpfjit_stx1);
-	ATF_TP_ADD_TC(tp, bpfjit_stx2);
-	ATF_TP_ADD_TC(tp, bpfjit_stx3);
-	ATF_TP_ADD_TC(tp, bpfjit_stx4);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_abs_1);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_abs_2);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_abs_3);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_1);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_2);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_3);
-	ATF_TP_ADD_TC(tp, bpfjit_opt_ld_ind_4);
-	ATF_TP_ADD_TC(tp, bpfjit_abc_ja);
-	ATF_TP_ADD_TC(tp, bpfjit_abc_ja_over);
-	ATF_TP_ADD_TC(tp, bpfjit_abc_ld_chain);
-	ATF_TP_ADD_TC(tp, bpfjit_examples_1);
-	ATF_TP_ADD_TC(tp, bpfjit_examples_2);
-	ATF_TP_ADD_TC(tp, bpfjit_examples_3);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_no_ctx);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_no_ctx);
+	/*
+	 * For every new test please also add a similar test
+	 * to ../../net/bpfjit/t_bpfjit.c
+	 */
+	ATF_TP_ADD_TC(tp, libbpfjit_empty);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_add_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_sub_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_mul_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div0_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div1_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div2_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div4_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div10_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div10000_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div7609801_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div80000000_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_and_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_or_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh0_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_rsh_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_rsh0_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_modulo_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_add_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_sub_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_mul_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div0_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div1_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div2_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div4_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div10_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div10000_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div7609801_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_div80000000_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_and_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_or_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh0_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_rsh_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_rsh0_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_modulo_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_neg);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_ja);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jgt_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jge_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jeq_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jset_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_modulo_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jgt_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jge_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jeq_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jset_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_modulo_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_abs);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_abs_k_overflow);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_ind);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_ind_k_overflow);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_ind_x_overflow1);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_ind_x_overflow2);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_len);
+	ATF_TP_ADD_TC(tp, libbpfjit_ld_imm);
+	ATF_TP_ADD_TC(tp, libbpfjit_ldx_imm1);
+	ATF_TP_ADD_TC(tp, libbpfjit_ldx_imm2);
+	ATF_TP_ADD_TC(tp, libbpfjit_ldx_len1);
+	ATF_TP_ADD_TC(tp, libbpfjit_ldx_len2);
+	ATF_TP_ADD_TC(tp, libbpfjit_ldx_msh);
+	ATF_TP_ADD_TC(tp, libbpfjit_misc_tax);
+	ATF_TP_ADD_TC(tp, libbpfjit_misc_txa);
+	ATF_TP_ADD_TC(tp, libbpfjit_st1);
+	ATF_TP_ADD_TC(tp, libbpfjit_st2);
+	ATF_TP_ADD_TC(tp, libbpfjit_st3);
+	ATF_TP_ADD_TC(tp, libbpfjit_st4);
+	ATF_TP_ADD_TC(tp, libbpfjit_st5);
+	ATF_TP_ADD_TC(tp, libbpfjit_stx1);
+	ATF_TP_ADD_TC(tp, libbpfjit_stx2);
+	ATF_TP_ADD_TC(tp, libbpfjit_stx3);
+	ATF_TP_ADD_TC(tp, libbpfjit_stx4);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_abs_1);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_abs_2);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_abs_3);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_ind_1);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_ind_2);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_ind_3);
+	ATF_TP_ADD_TC(tp, libbpfjit_opt_ld_ind_4);
+	ATF_TP_ADD_TC(tp, libbpfjit_abc_ja);
+	ATF_TP_ADD_TC(tp, libbpfjit_abc_ja_over);
+	ATF_TP_ADD_TC(tp, libbpfjit_abc_ld_chain);
+	ATF_TP_ADD_TC(tp, libbpfjit_examples_1);
+	ATF_TP_ADD_TC(tp, libbpfjit_examples_2);
+	ATF_TP_ADD_TC(tp, libbpfjit_examples_3);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_no_ctx);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_no_ctx);
 
 	return atf_no_error();
 }
