@@ -1,0 +1,13 @@
+LIBRARY libirs
+
+; Exported Functions
+EXPORTS
+irs_freeaddrinfo
+irs_gai_strerror
+irs_getaddrinfo
+irs_getnameinfo
+irs_resconf_destroy
+irs_resconf_getnameservers
+irs_resconf_getndots
+irs_resconf_getsearchlist
+irs_resconf_load

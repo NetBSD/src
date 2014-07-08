@@ -18,7 +18,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 #
 # jnl and database files MUST be removed before we start
