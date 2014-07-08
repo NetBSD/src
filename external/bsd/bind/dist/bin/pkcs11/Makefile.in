@@ -26,6 +26,10 @@ CDEFINES =
 
 ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
 
+ISCDEPLIBS =	../../lib/isc/libisc.@A@
+
+DEPLIBS =	${ISCDEPLIBS}
+
 # if FORCE_STATIC_PROVIDER: LIBS += ${PROVIDER}
 LIBS =		${ISCLIBS} @LIBS@
 
@@ -47,19 +51,19 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
-pkcs11-list@EXEEXT@: @srcdir@/pkcs11-list.@O@
+pkcs11-list@EXEEXT@: @srcdir@/pkcs11-list.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
 		-o $@ @srcdir@/pkcs11-list.@O@ ${LIBS}
 
-pkcs11-destroy@EXEEXT@: @srcdir@/pkcs11-destroy.@O@
+pkcs11-destroy@EXEEXT@: @srcdir@/pkcs11-destroy.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
 		-o $@ @srcdir@/pkcs11-destroy.@O@ ${LIBS}
 
-pkcs11-keygen@EXEEXT@: @srcdir@/pkcs11-keygen.@O@
+pkcs11-keygen@EXEEXT@: @srcdir@/pkcs11-keygen.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
 		-o $@ @srcdir@/pkcs11-keygen.@O@ ${LIBS}
 
-pkcs11-tokens@EXEEXT@: @srcdir@/pkcs11-tokens.@O@
+pkcs11-tokens@EXEEXT@: @srcdir@/pkcs11-tokens.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
 		-o $@ @srcdir@/pkcs11-tokens.@O@ ${LIBS}
 

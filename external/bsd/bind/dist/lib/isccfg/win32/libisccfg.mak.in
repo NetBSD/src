@@ -126,6 +126,7 @@ CLEAN :
 !ENDIF 
 	-@erase "$(INTDIR)\DLLMain.obj"
 	-@erase "$(INTDIR)\aclconf.obj"
+	-@erase "$(INTDIR)\dnsconf.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\namedconf.obj"
 	-@erase "$(INTDIR)\parser.obj"
@@ -152,6 +153,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\DLLMain.obj" \
 	"$(INTDIR)\aclconf.obj" \
+	"$(INTDIR)\dnsconf.obj" \
 	"$(INTDIR)\log.obj" \
 	"$(INTDIR)\parser.obj" \
 	"$(INTDIR)\version.obj" \
@@ -192,6 +194,8 @@ CLEAN :
 	-@erase "$(INTDIR)\DLLMain.sbr"
 	-@erase "$(INTDIR)\aclconf.obj"
 	-@erase "$(INTDIR)\aclconf.sbr"
+	-@erase "$(INTDIR)\dnsconf.obj"
+	-@erase "$(INTDIR)\dnsconf.sbr"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\log.sbr"
 	-@erase "$(INTDIR)\namedconf.obj"
@@ -220,6 +224,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\libisccfg.bsc"
 BSC32_SBRS= \
 	"$(INTDIR)\DLLMain.sbr" \
 	"$(INTDIR)\aclconf.sbr" \
+	"$(INTDIR)\dnsconf.sbr" \
 	"$(INTDIR)\log.sbr" \
 	"$(INTDIR)\parser.sbr" \
 	"$(INTDIR)\version.sbr" \
@@ -237,6 +242,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\DLLMain.obj" \
 	"$(INTDIR)\aclconf.obj" \
+	"$(INTDIR)\dnsconf.obj" \
 	"$(INTDIR)\log.obj" \
 	"$(INTDIR)\parser.obj" \
 	"$(INTDIR)\version.obj" \
@@ -322,6 +328,24 @@ SOURCE=..\aclconf.c
 
 
 "$(INTDIR)\aclconf.obj"	"$(INTDIR)\aclconf.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dnsconf.c
+
+!IF  "$(CFG)" == "libisccfg - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dnsconf.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisccfg - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dnsconf.obj"	"$(INTDIR)\dnsconf.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

@@ -85,3 +85,4 @@ rm -f ns3/test-?.bk.signed
 rm -f ns3/test-?.bk.signed.jnl
 rm -f import.key Kimport*
 rm -f checkgost checkdsa checkecdsa
+rm -f ns3/a-file
