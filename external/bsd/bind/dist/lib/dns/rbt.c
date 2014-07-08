@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.7 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: rbt.c,v 1.8 2014/07/08 09:08:05 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -307,12 +307,13 @@ Name(dns_rbtnode_t *node) {
 static void printnodename(dns_rbtnode_t *node);
 
 static void
-hexdump(const char *desc, void *data, size_t size) {
+hexdump(const char *desc, void *blob, size_t size) {
 	char hexdump[BUFSIZ * 2 + 1];
 	isc_buffer_t b;
 	isc_region_t r;
 	isc_result_t result;
 	size_t bytes;
+	isc_uint8_t *data = blob;
 
 	fprintf(stderr, "%s: ", desc);
 	do {
