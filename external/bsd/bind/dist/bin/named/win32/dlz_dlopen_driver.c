@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.4 2014/07/08 04:45:37 spz Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.2 2014/07/08 05:43:37 spz Exp $	*/
 
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -77,14 +77,14 @@ typedef struct dlopen_data {
 		if ((cd->flags & DNS_SDLZFLAG_THREADSAFE) == 0 && \
 		    cd->in_configure == ISC_FALSE) \
 			LOCK(&cd->lock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MAYBE_UNLOCK(cd) \
 	do { \
 		if ((cd->flags & DNS_SDLZFLAG_THREADSAFE) == 0 && \
 		    cd->in_configure == ISC_FALSE) \
 			UNLOCK(&cd->lock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * Log a message at the given level.

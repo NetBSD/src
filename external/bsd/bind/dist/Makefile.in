@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_VERSION@
 
-SUBDIRS =	make unit lib bin doc
+SUBDIRS =	make unit lib bin doc @LIBEXPORT@
 TARGETS =
 PREREQS =	bind.keys.h
 
