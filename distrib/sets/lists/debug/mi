@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.68 2014/07/07 19:41:22 alnsn Exp $
+# $NetBSD: mi,v 1.69 2014/07/08 11:13:24 martin Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -75,6 +75,7 @@
 ./usr/lib/libheimntlm_g.a			comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libhx509_g.a				comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libiberty_g.a				comp-c-debuglib		debuglib,binutils
+./usr/lib/libirs_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libintl_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libipsec_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libisc_g.a				comp-c-debuglib		debuglib
@@ -477,6 +478,7 @@
 ./usr/libdata/debug/usr/bin/db.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/deroff.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/delv.debug		comp-bind-bin		debug
 ./usr/libdata/debug/usr/bin/diff.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/diff3.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dig.debug		comp-netutil-debug	debug
@@ -1000,6 +1002,7 @@
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
+./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keygen.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-revoke.debug	comp-bind-debug		debug
