@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.52 2014/07/02 13:58:09 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.53 2014/07/08 14:01:21 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -935,7 +935,12 @@ check_direct_access(bozo_httpreq_t *request)
 		bozo_check_special_files(request, basename);
 	}
 
-	snprintf(dirfile, sizeof(dirfile), "%s/%s", dir, DIRECT_ACCESS_FILE);
+	if ((size_t)snprintf(dirfile, sizeof(dirfile), "%s/%s", dir,
+	  DIRECT_ACCESS_FILE) >= sizeof(dirfile)) {
+		bozo_http_error(request->hr_httpd, 404, request,
+		  "directfile path too long");
+		return 0;
+	}
 	if (stat(dirfile, &sb) < 0 ||
 	    (fp = fopen(dirfile, "r")) == NULL)
 		return 0;
@@ -1127,7 +1132,7 @@ use_slashdir:
 /*
  * checks to see if this request has a valid .bzredirect file.  returns
  * 0 when no redirection happend, or 1 when handle_redirect() has been
- * called.
+ * called, -1 on error.
  */
 static int
 check_bzredirect(bozo_httpreq_t *request)
@@ -1142,7 +1147,12 @@ check_bzredirect(bozo_httpreq_t *request)
 	 * if this pathname is really a directory, but doesn't end in /,
 	 * use it as the directory to look for the redir file.
 	 */
-	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
+	if((size_t)snprintf(dir, sizeof(dir), "%s", request->hr_file + 1) >=
+	  sizeof(dir)) {
+		bozo_http_error(request->hr_httpd, 404, request,
+		  "file path too long");
+		return -1;
+	}
 	debug((request->hr_httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
 	basename = strrchr(dir, '/');
 
@@ -1156,13 +1166,23 @@ check_bzredirect(bozo_httpreq_t *request)
 		bozo_check_special_files(request, basename);
 	}
 
-	snprintf(redir, sizeof(redir), "%s/%s", dir, REDIRECT_FILE);
+	if ((size_t)snprintf(redir, sizeof(redir), "%s/%s", dir,
+	  REDIRECT_FILE) >= sizeof(redir)) {
+		bozo_http_error(request->hr_httpd, 404, request,
+		  "redirectfile path too long");
+		return -1;
+	}
 	if (lstat(redir, &sb) == 0) {
 		if (!S_ISLNK(sb.st_mode))
 			return 0;
 		absolute = 0;
 	} else {
-		snprintf(redir, sizeof(redir), "%s/%s", dir, ABSREDIRECT_FILE);
+		if((size_t)snprintf(redir, sizeof(redir), "%s/%s", dir,
+		  ABSREDIRECT_FILE) >= sizeof(redir)) {
+			bozo_http_error(request->hr_httpd, 404, request,
+			  "redirectfile path too long");
+			return -1;
+		}
 		if (lstat(redir, &sb) < 0 || !S_ISLNK(sb.st_mode))
 			return 0;
 		absolute = 1;
@@ -1186,9 +1206,14 @@ check_bzredirect(bozo_httpreq_t *request)
 	/* now we have the link pointer, redirect to the real place */
 	if (absolute)
 		finalredir = redirpath;
-	else
-		snprintf(finalredir = redir, sizeof(redir), "/%s/%s", dir,
-			 redirpath);
+	else {
+		if ((size_t)snprintf(finalredir = redir, sizeof(redir), "/%s/%s",
+		  dir, redirpath) >= sizeof(redir)) {
+			bozo_http_error(request->hr_httpd, 404, request,
+			  "redirect path too long");
+			return -1;
+		}
+	}
 
 	debug((request->hr_httpd, DEBUG_FAT,
 	       "check_bzredirect: new redir %s", finalredir));
@@ -1307,8 +1332,12 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		goto bad_done;
 	}
 
-	if (check_bzredirect(request))
+	switch(check_bzredirect(request)) {
+	case -1:
+		goto bad_done;
+	case 1:
 		return 0;
+	}
 
 	if (httpd->untrustedref) {
 		int to_indexhtml = 0;
