@@ -18,10 +18,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named-checkzone.docbook,v 1.44 2011/12/22 07:32:39 each Exp  -->
 <refentry id="man.named-checkzone">
   <refentryinfo>
-    <date>June 13, 2000</date>
+    <date>February 19, 2014</date>
   </refentryinfo>
 
   <refmeta>

@@ -11,6 +11,10 @@ and other useful additions to BIND 9. It includes:
 
       A DNS query performance testing tool
 
+    - perftcpdns/
+
+      A performance testing tool for DNS over TCP
+
     - dane/
 
       mkdane.sh generates TLSA records for use with DNS-based

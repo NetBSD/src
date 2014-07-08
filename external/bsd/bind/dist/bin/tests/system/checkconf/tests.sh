@@ -179,5 +179,17 @@ $CHECKCONF -z max-ttl-bad.conf > /dev/null 2>&1 && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
+echo "I: checking that named-checkconf -z skips zone check with alternate databases"
+ret=0
+$CHECKCONF -z altdb.conf > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z skips zone check with DLZ"
+ret=0
+$CHECKCONF -z altdlz.conf > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 exit $status

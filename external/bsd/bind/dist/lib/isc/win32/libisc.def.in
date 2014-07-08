@@ -6,12 +6,16 @@ EXPORTS
 NTReportError
 closelog
 @IF PKCS11
-dst__pkcs11_init
-dst__pkcs11_destroy
 getpassphrase
 @END PKCS11
 isc___socketmgr_maxudp
 isc__app_block
+isc__app_ctxfinish
+isc__app_ctxonrun
+isc__app_ctxrun
+isc__app_ctxshutdown
+isc__app_ctxstart
+isc__app_ctxsuspend
 isc__app_finish
 isc__app_onrun
 isc__app_reload
@@ -19,6 +23,11 @@ isc__app_run
 isc__app_shutdown
 isc__app_start
 isc__app_unblock
+isc__appctx_create
+isc__appctx_destroy
+isc__appctx_setsocketmgr
+isc__appctx_settaskmgr
+isc__appctx_settimermgr
 isc__backtrace_nsymbols
 isc__backtrace_symtable
 isc__buffer_activeregion
@@ -77,6 +86,7 @@ isc__socket_permunix
 isc__socket_recv
 isc__socket_recv2
 isc__socket_recvv
+isc__socket_register
 isc__socket_send
 isc__socket_sendto
 isc__socket_sendto2
@@ -95,6 +105,31 @@ isc__task_getname
 isc__task_gettag
 isc__task_unsendrange
 isc__taskmgr_mode
+@IF AES
+isc_aes128_crypt
+isc_aes192_crypt
+isc_aes256_crypt
+@END AES
+isc_app_block
+isc_app_ctxfinish
+isc_app_ctxonrun
+isc_app_ctxrun
+isc_app_ctxshutdown
+isc_app_ctxstart
+isc_app_ctxsuspend
+isc_app_finish
+isc_app_onrun
+isc_app_register
+isc_app_reload
+isc_app_run
+isc_app_shutdown
+isc_app_start
+isc_app_unblock
+isc_appctx_create
+isc_appctx_destroy
+isc_appctx_setsocketmgr
+isc_appctx_settaskmgr
+isc_appctx_settimermgr
 isc_assertion_failed
 isc_assertion_setcallback
 isc_assertion_typetotext
@@ -288,6 +323,7 @@ isc_lfsr_generate32
 isc_lfsr_init
 isc_lfsr_skip
 isc_lib_initmsgcat
+isc_lib_register
 isc_log_categorybyname
 isc_log_closefilelogs
 isc_log_create
@@ -505,6 +541,7 @@ isc_sockaddr_setport
 isc_sockaddr_totext
 isc_sockaddr_v6fromin
 isc_socket_socketevent
+isc_socketmgr_createinctx
 @IF LIBXML2
 isc_socketmgr_renderxml
 @END LIBXML2
@@ -563,6 +600,7 @@ isc_task_setprivilege
 isc_task_shutdown
 isc_task_unsend
 isc_taskmgr_create
+isc_taskmgr_createinctx
 isc_taskmgr_destroy
 isc_taskmgr_excltask
 @IF LIBXML2
@@ -605,6 +643,7 @@ isc_timer_detach
 isc_timer_reset
 isc_timer_touch
 isc_timermgr_create
+isc_timermgr_createinctx
 isc_timermgr_destroy
 isc_timermgr_poke
 isc_tm_timegm
@@ -621,18 +660,22 @@ pk11_attribute_first
 pk11_attribute_next
 pk11_dump_tokens
 pk11_error_fatalcheck
+pk11_finalize
 pk11_get_best_token
 pk11_get_lib_name
 pk11_get_session
+pk11_initialize
+pk11_initmsgcat
 pk11_mem_get
 pk11_mem_put
 pk11_numbits
 pk11_parse_uri
 pk11_rand_bytes
 pk11_rand_seed_fromfile
+pk11_result_register
+pk11_result_totext
 pk11_return_session
 pk11_set_lib_name
-pk11_shutdown
 pkcs_C_CloseSession
 pkcs_C_CreateObject
 pkcs_C_DeriveKey
@@ -640,6 +683,8 @@ pkcs_C_DestroyObject
 pkcs_C_DigestFinal
 pkcs_C_DigestInit
 pkcs_C_DigestUpdate
+pkcs_C_Encrypt
+pkcs_C_EncryptInit
 pkcs_C_Finalize
 pkcs_C_FindObjects
 pkcs_C_FindObjectsFinal
