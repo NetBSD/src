@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.1.1.1 2014/07/08 04:45:12 spz Exp $	*/
+/*	$NetBSD: delv.c,v 1.2 2014/07/08 05:43:37 spz Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -86,7 +86,7 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MAXNAME (DNS_NAME_MAXTEXT+1)
 
@@ -704,7 +704,7 @@ setup_dnsseckeys(dns_client_t *client) {
 
 	if (filename == NULL) {
 #ifndef WIN32
-		filename = SYSCONFDIR "/bind.keys";
+		filename = NS_SYSCONFDIR "/bind.keys";
 #else
 		static char buf[MAX_PATH];
 		strlcpy(buf, isc_ntpaths_get(SYS_CONF_DIR), sizeof(buf));
@@ -990,7 +990,7 @@ plus_option(char *option) {
 		size_t _l = strlen(cmd); \
 		if (_l >= sizeof(A) || strncasecmp(cmd, A, _l) != 0) \
 			goto invalid_option; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	switch (cmd[0]) {
 	case 'a': /* all */

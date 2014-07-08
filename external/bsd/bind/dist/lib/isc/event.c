@@ -1,7 +1,7 @@
-/*	$NetBSD: event.c,v 1.3 2012/06/05 00:42:27 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.4 2014/07/08 05:43:40 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
