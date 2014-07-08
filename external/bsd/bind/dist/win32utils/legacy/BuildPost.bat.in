@@ -1,6 +1,6 @@
 echo off
 rem
-rem Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+rem Copyright (C) 2005,2013,2014  Internet Systems Consortium, Inc. ("ISC")
 rem
 rem Permission to use, copy, modify, and distribute this software for any
 rem purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,10 @@ echo Copying named-checkzone.exe to named-compilezone.exe
 copy /Y ..\..\Build\Release\named-checkzone.exe ..\..\Build\Release\named-compilezone.exe
 if exist ..\..\Build\Debug\named-checkzone.exe copy /Y ..\..\Build\Debug\named-checkzone.exe ..\..\Build\Debug\named-compilezone.exe
 if exist ..\..\Build\Debug\named-checkzone.ilk copy /Y ..\..\Build\Debug\named-checkzone.ilk ..\..\Build\Debug\named-compilezone.ilk
+
+copy /Y ..\..\Build\Release\ddns-confgen.exe ..\..\Build\Release\tsig-keygen.exe
+if exist ..\..\Build\Debug\ddns-confgen.exe copy /Y ..\..\Build\Debug\ddns-confgen.exe ..\..\Build\Debug\tsig-keygen.exe
+if exist ..\..\Build\Debug\ddns-confgen.ilk copy /Y ..\..\Build\Debug\ddns-confgen.ilk ..\..\Build\Debug\tsig-keygen.ilk
 
 @IF PYTHON
 echo Copying python scripts

@@ -130,6 +130,10 @@ SOURCE=..\include\dns\cert.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\client.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\clientinfo.h
 # End Source File
 # Begin Source File
@@ -175,6 +179,10 @@ SOURCE=..\include\dns\dnssec.h
 # Begin Source File
 
 SOURCE=..\include\dns\ds.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\ecdb.h
 # End Source File
 # Begin Source File
 
@@ -404,6 +412,10 @@ SOURCE=..\include\dns\tkey.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\tsec.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\tsig.h
 # End Source File
 # Begin Source File
@@ -480,6 +492,10 @@ SOURCE=..\callbacks.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\client.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\clientinfo.c
 # End Source File
 # Begin Source File
@@ -525,6 +541,10 @@ SOURCE=..\dnssec.c
 # Begin Source File
 
 SOURCE=..\ds.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ecdb.c
 # End Source File
 # Begin Source File
 
@@ -711,6 +731,10 @@ SOURCE=..\timer.c
 # Begin Source File
 
 SOURCE=..\tkey.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\tsec.c
 # End Source File
 # Begin Source File
 

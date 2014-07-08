@@ -61,11 +61,26 @@ cd lwres\win32
 nmake /nologo -f liblwres.mak CFG="liblwres - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 
+cd irs\win32
+nmake /nologo -f libirs.mak CFG="libirs - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+cd ..\..
+
 @IF TESTS
 cd tests\win32
 nmake /nologo -f libtests.mak CFG="libtests - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 @END TESTS
+
+@IF SAMPLES
+cd samples\win32
+nmake /nologo -f resolve.mak CFG="resolve - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f async.mak CFG="async - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f gai.mak CFG="gai - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f update.mak CFG="update - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f request.mak CFG="request - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f nsprobe.mak CFG="nsprobe - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+cd ..\..
+@END SAMPLES
 
 rem This is the DLL required for the event Viewer
 
@@ -99,6 +114,10 @@ cd dig\win32
 nmake /nologo -f dig.mak CFG="dig - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo /nologo -f host.mak CFG="host - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f nslookup.mak CFG="nslookup - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+cd ..\..
+
+cd delv\win32
+nmake /nologo -f delv.mak CFG="delv - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 
 cd nsupdate\win32

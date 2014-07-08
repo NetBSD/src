@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id -->
 <refentry id="man.pkcs11-ecgen">
   <refentryinfo>
-    <date>Feb 30, 2012</date>
+    <date>January 15, 2014</date>
   </refentryinfo>
 
   <refmeta>
