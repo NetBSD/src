@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1477 2014/07/06 21:06:48 tron Exp $
+# $NetBSD: mi,v 1.1478 2014/07/08 05:55:34 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -135,6 +135,7 @@
 ./usr/share/man/cat1/db.0			man-util-catman		.cat
 ./usr/share/man/cat1/dc.0			man-util-catman		.cat
 ./usr/share/man/cat1/dd.0			man-util-catman		.cat
+./usr/share/man/cat1/delv.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/deroff.0			man-util-catman		.cat
 ./usr/share/man/cat1/df.0			man-util-catman		.cat
 ./usr/share/man/cat1/diff.0			man-util-catman		.cat
@@ -3257,6 +3258,7 @@
 ./usr/share/man/html1/db.html			man-util-htmlman	html
 ./usr/share/man/html1/dc.html			man-util-htmlman	html
 ./usr/share/man/html1/dd.html			man-util-htmlman	html
+./usr/share/man/html1/delv.html			man-netutil-htmlman	html
 ./usr/share/man/html1/deroff.html		man-util-htmlman	html
 ./usr/share/man/html1/df.html			man-util-htmlman	html
 ./usr/share/man/html1/diff.html			man-util-htmlman	html
@@ -5283,6 +5285,7 @@
 ./usr/share/man/html8/dmsetup.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/dnsblog.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dnssec-dsfromkey.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-importkey.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keyfromlabel.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keygen.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-revoke.html	man-bind-htmlman	html
@@ -5987,6 +5990,7 @@
 ./usr/share/man/man1/db.1			man-util-man		.man
 ./usr/share/man/man1/dc.1			man-util-man		.man
 ./usr/share/man/man1/dd.1			man-util-man		.man
+./usr/share/man/man1/delv.1			man-netutil-man		.man
 ./usr/share/man/man1/deroff.1			man-util-man		.man
 ./usr/share/man/man1/df.1			man-util-man		.man
 ./usr/share/man/man1/diff.1			man-util-man		.man
@@ -8234,6 +8238,7 @@
 ./usr/share/man/man8/dmsetup.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/dnsblog.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dnssec-dsfromkey.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-importkey.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-keyfromlabel.8	man-bind-man		.man
 ./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-makekeyset.8	man-obsolete		obsolete
