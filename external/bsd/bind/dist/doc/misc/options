@@ -260,7 +260,7 @@ options {
         sig-signing-signatures <integer>;
         sig-signing-type <integer>;
         sig-validity-interval <integer> [ <integer> ];
-        sit-secret <quoted_string>; // not configured
+        sit-secret <string>; // not configured
         sortlist { <address_match_element>; ... };
         stacksize <size>;
         statistics-file <quoted_string>;

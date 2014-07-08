@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.1.11 2014/02/28 17:40:06 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.12 2014/07/08 04:45:37 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,7 @@ struct ns_server {
 	unsigned int		session_keyalg;
 	isc_uint16_t		session_keybits;
 	isc_boolean_t		interface_auto;
-	unsigned char		secret[33];	/*%< Source Identity Token */
+	unsigned char		secret[32];	/*%< Source Identity Token */
 };
 
 #define NS_SERVER_MAGIC			ISC_MAGIC('S','V','E','R')

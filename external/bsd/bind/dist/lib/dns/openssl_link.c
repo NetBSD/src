@@ -1,7 +1,7 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.7 2013/07/27 15:23:11 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.1.1.8 2014/07/08 04:48:38 spz Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -244,8 +244,7 @@ dst__openssl_init(const char *engine) {
 }
 
 void
-dst__openssl_destroy() {
-
+dst__openssl_destroy(void) {
 	/*
 	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
 	 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.1.1.7 2014/02/28 17:40:16 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.8 2014/07/08 04:49:49 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -336,6 +336,6 @@ isc_net_enableipv6(void) {
 }
 
 unsigned int
-isc_net_probedscp() {
+isc_net_probedscp(void) {
 	return (0);
 }

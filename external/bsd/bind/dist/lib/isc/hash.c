@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.1.1.7 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.8 2014/07/08 04:49:28 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -277,7 +277,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 }
 
 void
-isc_hash_init() {
+isc_hash_init(void) {
 	INSIST(hash != NULL && VALID_HASH(hash));
 
 	isc_hash_ctxinit(hash);
@@ -340,7 +340,7 @@ isc_hash_ctxdetach(isc_hash_t **hctxp) {
 }
 
 void
-isc_hash_destroy() {
+isc_hash_destroy(void) {
 	unsigned int refs;
 
 	INSIST(hash != NULL && VALID_HASH(hash));

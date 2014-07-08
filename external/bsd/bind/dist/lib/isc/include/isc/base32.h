@@ -1,7 +1,7 @@
-/*	$NetBSD: base32.h,v 1.1.1.3 2012/06/04 17:56:48 christos Exp $	*/
+/*	$NetBSD: base32.h,v 1.1.1.4 2014/07/08 04:49:36 spz Exp $	*/
 
 /*
- * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

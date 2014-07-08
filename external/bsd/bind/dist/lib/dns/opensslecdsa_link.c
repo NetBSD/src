@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.1.1.4 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.1.1.5 2014/07/08 04:48:43 spz Exp $	*/
 
 /*
  * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#ifdef HAVE_OPENSSL_ECDSA
+#if defined(OPENSSL) && defined(HAVE_OPENSSL_ECDSA)
 
 #if !defined(HAVE_EVP_SHA256) || !defined(HAVE_EVP_SHA384)
 #error "ECDSA without EVP for SHA2?"

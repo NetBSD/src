@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.10 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.11 2014/07/08 04:49:32 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -2268,7 +2268,7 @@ isc_mempool_getfillcount(isc_mempool_t *mpctx0) {
 }
 
 isc_result_t
-isc__mem_register() {
+isc__mem_register(void) {
 	return (isc_mem_register(isc_mem_create2));
 }
 

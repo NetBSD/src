@@ -1,7 +1,7 @@
-/*	$NetBSD: ntpaths.c,v 1.1.1.4 2012/06/04 17:56:57 christos Exp $	*/
+/*	$NetBSD: ntpaths.c,v 1.1.1.5 2014/07/08 04:49:49 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@ static DWORD baseLen = MAX_PATH;
 static BOOL Initialized = FALSE;
 
 void
-isc_ntpaths_init() {
+isc_ntpaths_init(void) {
 	HKEY hKey;
 	BOOL keyFound = TRUE;
 

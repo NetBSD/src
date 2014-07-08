@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.1.1.5 2014/02/28 17:40:14 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.1.1.6 2014/07/08 04:48:54 spz Exp $	*/
 
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -584,8 +584,8 @@ ip2name(const dns_rpz_cidr_key_t *tgt_ip, dns_rpz_prefix_t tgt_prefix,
 		}
 	}
 
-	isc__buffer_init(&buffer, str, sizeof(str));
-	isc__buffer_add(&buffer, len);
+	isc_buffer_init(&buffer, str, sizeof(str));
+	isc_buffer_add(&buffer, len);
 	result = dns_name_fromtext(ip_name, &buffer, base_name, 0, NULL);
 	return (result);
 }

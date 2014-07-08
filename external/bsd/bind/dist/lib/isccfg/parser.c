@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.1.1.9 2014/02/28 17:40:16 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.10 2014/07/08 04:49:55 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1308,8 +1308,9 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 				       "not implemented", clause->name);
 
 		if ((clause->flags & CFG_CLAUSEFLAG_NOTCONFIGURED) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is not "
-					   "configured", clause->name);
+			cfg_parser_warning(pctx, 0, "option '%s' was not "
+					   "enabled at compile time",
+					   clause->name);
 			result = ISC_R_FAILURE;
 			goto cleanup;
 		}

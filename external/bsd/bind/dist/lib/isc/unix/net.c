@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.5 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.6 2014/07/08 04:49:45 spz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -724,13 +724,13 @@ try_dscp_v6(void) {
 }
 
 static void
-try_dscp() {
+try_dscp(void) {
 	try_dscp_v4();
 	try_dscp_v6();
 }
 
 static void
-initialize_dscp() {
+initialize_dscp(void) {
 	RUNTIME_CHECK(isc_once_do(&once_dscp, try_dscp) == ISC_R_SUCCESS);
 }
 

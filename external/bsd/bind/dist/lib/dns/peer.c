@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.c,v 1.1.1.6 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.1.1.7 2014/07/08 04:48:45 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -470,7 +470,7 @@ dns_peer_getrequestsit(dns_peer_t *peer, isc_boolean_t *retval) {
 	REQUIRE(retval != NULL);
 
 	if (DNS_BIT_CHECK(REQUEST_SIT_BIT, &peer->bitflags)) {
-		*retval = peer->request_nsid;
+		*retval = peer->request_sit;
 		return (ISC_R_SUCCESS);
 	} else
 		return (ISC_R_NOTFOUND);

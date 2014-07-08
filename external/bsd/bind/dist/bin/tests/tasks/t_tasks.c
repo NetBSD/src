@@ -1,7 +1,7 @@
-/*	$NetBSD: t_tasks.c,v 1.1.1.6 2013/12/31 20:10:27 christos Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.1.1.7 2014/07/08 04:46:44 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

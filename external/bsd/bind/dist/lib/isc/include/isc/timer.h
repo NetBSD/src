@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.h,v 1.1.1.6 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.1.7 2014/07/08 04:49:39 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

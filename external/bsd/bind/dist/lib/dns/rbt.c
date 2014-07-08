@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.1.1.8 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.1.1.9 2014/07/08 04:48:44 spz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -310,16 +308,25 @@ static void printnodename(dns_rbtnode_t *node);
 
 static void
 hexdump(const char *desc, unsigned char *data, size_t size) {
-	char hexdump[BUFSIZ];
+	char hexdump[BUFSIZ * 2 + 1];
 	isc_buffer_t b;
 	isc_region_t r;
+	isc_result_t result;
+	size_t bytes;
 
-	isc_buffer_init(&b, hexdump, sizeof(hexdump));
-	r.base = data;
-	r.length = size;
-	isc_hex_totext(&r, 0, "", &b);
-	isc_buffer_putuint8(&b, 0);
-	fprintf(stderr, "%s: %s\n", desc, hexdump);
+	fprintf(stderr, "%s: ", desc);
+	do {
+		isc_buffer_init(&b, hexdump, sizeof(hexdump));
+		r.base = data;
+		r.length = bytes = (size > BUFSIZ) ? BUFSIZ : size;
+		result = isc_hex_totext(&r, 0, "", &b);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		isc_buffer_putuint8(&b, 0);
+		fprintf(stderr, "%s", hexdump);
+		data += bytes;
+		size -= bytes;
+	} while (size > 0);
+	fprintf(stderr, "\n");
 }
 #endif
 
@@ -648,7 +655,7 @@ dns_rbt_serialize_tree(FILE *file, dns_rbt_t *rbt,
 
 	isc_crc64_final(&crc);
 #ifdef DEBUG
-	hexdump("serializing CRC", crc, sizeof(crc));
+	hexdump("serializing CRC", (unsigned char *)&crc, sizeof(crc));
 #endif
 
 	/* Serialize header */
@@ -843,7 +850,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 
 	isc_crc64_final(&crc);
 #ifdef DEBUG
-	hexdump("deserializing CRC", crc, sizeof(crc));
+	hexdump("deserializing CRC", (unsigned char *)&crc, sizeof(crc));
 #endif
 
 	/* Check file hash */
@@ -860,7 +867,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 		result = ISC_R_INVALIDFILE;
 
  cleanup:
-	if (result != ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS && rbt != NULL) {
 		rbt->root = NULL;
 		rbt->nodecount = 0;
 		dns_rbt_destroy(&rbt);

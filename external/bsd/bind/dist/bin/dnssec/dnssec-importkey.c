@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.1.1.2 2014/02/28 17:40:05 christos Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.1.1.3 2014/07/08 04:45:13 spz Exp $	*/
 
 /*
  * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -48,6 +48,10 @@
 #include <dns/result.h>
 
 #include <dst/dst.h>
+
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
 
 #include "dnssectool.h"
 
@@ -304,6 +308,9 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("out of memory");
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;

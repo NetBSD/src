@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.1.1.12 2014/02/28 17:40:14 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.1.1.13 2014/07/08 04:49:13 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -209,7 +209,7 @@ struct dns_view {
 	void *				new_zone_config;
 	void				(*cfg_destroy)(void **);
 
-	unsigned char			secret[33];	/* Client secret */
+	unsigned char			secret[32];	/* Client secret */
 };
 
 #define DNS_VIEW_MAGIC			ISC_MAGIC('V','i','e','w')

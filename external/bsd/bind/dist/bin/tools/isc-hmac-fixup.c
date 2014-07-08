@@ -1,7 +1,7 @@
-/*	$NetBSD: isc-hmac-fixup.c,v 1.1.1.3 2012/06/04 17:54:43 christos Exp $	*/
+/*	$NetBSD: isc-hmac-fixup.c,v 1.1.1.4 2014/07/08 04:46:47 spz Exp $	*/
 
 /*
- * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -54,7 +54,7 @@ main(int argc, char **argv)  {
 		fprintf(stderr, "error: %s\n", isc_result_totext(result));
 		return (1);
 	}
-	isc__buffer_usedregion(&buf, &r);
+	isc_buffer_usedregion(&buf, &r);
 
 	if (!strcasecmp(argv[1], "md5") ||
 	    !strcasecmp(argv[1], "hmac-md5")) {

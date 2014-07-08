@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.1.1.11 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.1.1.12 2014/07/08 04:48:42 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -3240,7 +3240,8 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				dns_pseudosection_t section,
 				const dns_master_style_t *style,
 				dns_messagetextflag_t flags,
-				isc_buffer_t *target) {
+				isc_buffer_t *target)
+{
 	dns_rdataset_t *ps = NULL;
 	dns_name_t *name = NULL;
 	isc_result_t result;
@@ -3361,6 +3362,8 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				 * version
 				 */
 				ADD_STRING(target, "(\"");
+				if (isc_buffer_availablelength(target) < optlen)
+					return (ISC_R_NOSPACE);
 				for (i = 0; i < optlen; i++) {
 					if (isprint(optdata[i]))
 						isc_buffer_putmem(target,

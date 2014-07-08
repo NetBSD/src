@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.11 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.12 2014/07/08 04:48:37 spz Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -230,7 +230,7 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA384]));
 #endif
 #elif PKCS11CRYPTO
-	dst__pkcs11_init(mctx, engine);
+	RETERR(dst__pkcs11_init(mctx, engine));
 	RETERR(dst__pkcs11rsa_init(&dst_t_func[DST_ALG_RSAMD5]));
 	RETERR(dst__pkcs11rsa_init(&dst_t_func[DST_ALG_RSASHA1]));
 	RETERR(dst__pkcs11rsa_init(&dst_t_func[DST_ALG_NSEC3RSASHA1]));

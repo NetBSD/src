@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3_50.c,v 1.1.1.7 2013/07/27 15:23:16 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.1.1.8 2014/07/08 04:49:17 spz Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

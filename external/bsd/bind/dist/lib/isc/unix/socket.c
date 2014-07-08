@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.13 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.14 2014/07/08 04:49:47 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h> /* uintptr_t */
+#endif
 
 #include <isc/buffer.h>
 #include <isc/bufferlist.h>
@@ -6272,7 +6275,7 @@ isc__socket_gettag(isc_socket_t *socket0) {
 }
 
 isc_result_t
-isc__socket_register() {
+isc__socket_register(void) {
 	return (isc_socket_register(isc__socketmgr_create));
 }
 

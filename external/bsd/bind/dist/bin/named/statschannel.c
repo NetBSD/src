@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.11 2014/02/28 17:40:06 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.1.1.12 2014/07/08 04:45:34 spz Exp $	*/
 
 /*
  * Copyright (C) 2008-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -321,6 +321,7 @@ init_desc(void) {
 	SET_RESSTATDESC(sitin, "SIT replies received", "SitIn");
 	SET_RESSTATDESC(sitok, "SIT client cookie ok", "SitClientOk");
 #endif
+	SET_RESSTATDESC(badvers, "bad EDNS version", "BadEDNSVersion");
 
 	INSIST(i == dns_resstatscounter_max);
 

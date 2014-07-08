@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslgost_link.c,v 1.1.1.6 2014/02/28 17:40:13 christos Exp $	*/
+/*	$NetBSD: opensslgost_link.c,v 1.1.1.7 2014/07/08 04:48:44 spz Exp $	*/
 
 /*
  * Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#ifdef HAVE_OPENSSL_GOST
+#if defined(OPENSSL) && defined(HAVE_OPENSSL_GOST)
 
 #include <isc/entropy.h>
 #include <isc/mem.h>
