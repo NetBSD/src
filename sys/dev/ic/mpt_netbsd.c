@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.24 2014/04/17 16:08:42 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.25 2014/07/08 14:18:54 chs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.24 2014/04/17 16:08:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.25 2014/07/08 14:18:54 chs Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 #include <sys/scsiio.h>
@@ -99,13 +99,6 @@ static void	mpt_scsipi_request(struct scsipi_channel *,
 static void	mpt_minphys(struct buf *);
 static int 	mpt_ioctl(struct scsipi_channel *, u_long, void *, int,
 	struct proc *);
-
-/*
- * XXX - this assumes the device_private() of the attachement starts with
- * a struct mpt_softc, so we can use the return value of device_private()
- * straight without any offset.
- */
-#define DEV_TO_MPT(DEV)	device_private(DEV)
 
 void
 mpt_scsipi_attach(mpt_softc_t *mpt)
@@ -367,7 +360,7 @@ mpt_timeout(void *arg)
 	}
 	xs = req->xfer;
 	periph = xs->xs_periph;
-	mpt = (void *) periph->periph_channel->chan_adapter->adapt_dev;
+	mpt = device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	scsipi_printaddr(periph);
 	printf("command timeout\n");
 
@@ -1541,7 +1534,7 @@ mpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
-	mpt_softc_t *mpt = DEV_TO_MPT(adapt->adapt_dev);
+	mpt_softc_t *mpt = device_private(adapt->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
