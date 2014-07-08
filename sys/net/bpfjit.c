@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.21 2014/07/05 11:13:13 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.22 2014/07/08 11:30:31 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.21 2014/07/05 11:13:13 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.22 2014/07/08 11:30:31 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.21 2014/07/05 11:13:13 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.22 2014/07/08 11:30:31 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -250,6 +250,14 @@ static sljit_si
 nscratches(bpfjit_hint_t hints)
 {
 	sljit_si rv = 2;
+
+#ifdef _KERNEL
+	/*
+	 * Most kernel programs load packet bytes and they generate
+	 * m_xword/m_xhalf/m_xbyte() calls with three arguments.
+	 */
+	rv = 3;
+#endif
 
 	if (hints & BJ_HINT_LDW)
 		rv = 3; /* uses BJ_TMP2REG */
