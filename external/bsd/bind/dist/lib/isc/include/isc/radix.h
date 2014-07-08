@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.7 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.8 2014/07/08 05:43:40 spz Exp $	*/
 
 /*
  * Copyright (C) 2007, 2008, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -53,7 +53,7 @@
 			(pt).bitlen = 0; \
 		} \
 		isc_refcount_init(&(pt).refcount, 0); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 typedef struct isc_prefix {
 	isc_mem_t *mctx;

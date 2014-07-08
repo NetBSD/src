@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.9 2014/07/08 05:43:39 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -192,6 +192,8 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->provideixfr = ISC_TRUE;
 	view->maxcachettl = 7 * 24 * 3600;
 	view->maxncachettl = 3 * 3600;
+	view->prefetch_eligible = 0;
+	view->prefetch_trigger = 0;
 	view->dstport = 53;
 	view->preferred_glue = 0;
 	view->flush = ISC_FALSE;

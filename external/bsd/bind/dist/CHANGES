@@ -1,3 +1,224 @@
+	--- 9.10.0-P2 released ---
+
+3861.	[security]	Missing isc_buffer_availablelength check results
+			in a REQUIRE assertion when printing out a packet
+			(CVE-2014-3859).  [RT #36078]
+
+3858.	[bug]		Disable GCC 4.9 "delete null pointer check".
+			[RT #35968]
+
+3853.	[cleanup]	Refactor dns_rdataslab_fromrdataset to seperate out
+			the handling of a rdataset with no records. [RT #35968]
+
+3850.	[bug]		Disabling forwarding could trigger a REQUIRE assertion.
+			[RT #35979]
+
+3843.	[bug]		Use the x64 version of the Microsoft Visual C++
+			Redistributable when built for 64 bit Windows.
+			[RT #35973]
+
+3838.	[protocol]	EDNS EXPIRE as been assigned a code point of 9.
+
+	--- 9.10.0-P1 released ---
+
+3837.	[security]	A NULL pointer is passed to query_prefetch resulting
+			a REQUIRE assertion failure when a fetch is actually
+			initiated (CVE-2014-3214).  [RT #35899]
+
+	--- 9.10.0 released ---
+
+3824.	[bug]		A collision between two flag values could cause
+			problems with cache cleaning when SIT was enabled.
+			[RT #35858]
+
+	--- 9.10.0rc2 released ---
+
+3817.	[func]		The "delve" command is now spelled "delv" to avoid
+			a namespace collision with the Xapian project.
+			[RT #35801]
+
+3815.	[doc]		Clarify "nsupdate -y" usage in man page. [RT #35808]
+
+3810.	[bug]		Work around broken nameservers that fail to ignore
+			unknown EDNS options. [RT #35766]
+
+3809.	[doc]		Fix SIT and NSID documentation.
+
+3808.	[doc]		Clean up "prefetch" documentation. [RT #35751]
+
+3807.	[bug]		Fix sign extention bug in dns_name_fromtext when
+			lowercase is set. [RT #35743]
+
+3806.	[test]		Improved system test portability. [RT #35625]
+
+3805.	[contrib]	Added contrib/perftcpdns, a performance testing tool
+			for DNS over TCP. [RT #35710]
+
+	--- 9.10.0rc1 released ---
+
+3804.	[bug]		Corrected a race condition in dispatch.c in which
+			portentry could be reset leading to an assertion
+			failure in socket_search(). (Change #3708
+			addressed the same issue but was incomplete.)
+			[RT #35128]
+
+3803.	[bug]		"named-checkconf -z" incorrectly rejected zones
+			using alternate data sources for not having a "file"
+			option. [RT #35685]
+
+3802.	[bug]		Various header files were not being installed.
+
+3801.	[port]		Fix probing for gssapi support on FreeBSD. [RT #35615]
+
+3800.	[bug]		A pending event on the route socket could cause an
+			assertion failure when shutting down named. [RT #35674]
+
+3799.	[bug]		Improve named's command line error reporting.
+			[RT #35603]
+
+3798.	[bug]		'rndc zonestatus' was reporting the wrong re-signing
+			time. [RT #35659]
+
+3797.	[port]		netbsd: geoip support probing was broken. [RT #35642]
+
+3796.	[bug]		Register dns and pkcs#11 error codes. [RT #35629]
+
+3795.	[bug]		Make named-checkconf detect raw masterfiles for
+			hint zones and reject them. [RT #35268]
+
+3794.	[maint]		Added AAAA for C.ROOT-SERVERS.NET.
+
+3793.	[bug]		zone.c:save_nsec3param() could assert when out of
+			memory. [RT #35621]
+
+3792.	[func]		Provide links to the alternate statistics views when
+			displaying in a browser.  [RT #35605]
+
+3791.	[placeholder]
+
+3790.	[bug]		Handle broken nameservers that send BADVERS in
+			response to unknown EDNS options.  Maintain
+			statistics on BADVERS responses.
+
+3789.	[bug]		Null pointer dereference on rbt creation failure.
+
+3788.	[bug]		dns_peer_getrequestsit was returning request_nsid by
+			mistake.
+
+	--- 9.10.0b2 released ---
+
+3787.	[bug]		The code that checks whether "auto-dnssec" is
+			allowed was ignoring "allow-update" ACLs set at
+			the options or view level. [RT #29536]
+
+3786.	[func]		Provide more detailed error codes when using
+			native PKCS#11. "pkcs11-tokens" now fails robustly
+			rather than asserting when run against an HSM with
+			an incomplete PKCS#11 API implementation. [RT #35479]
+
+3785.	[bug]		Debugging code dumphex didn't accept arbitrarily long
+			input (only compiled with -DDEBUG). [RT #35544]
+
+3784.	[bug]		Using "rrset-order fixed" when it had not been
+			enabled at compile time caused inconsistent
+			results. It now works as documented, defaulting
+			to cyclic mode. [RT #28104]
+
+3783.	[func]		"tsig-keygen" is now available as an alternate
+			command name for "ddns-confgen".  It generates
+			a TSIG key in named.conf format without comments.
+			[RT #35503]
+
+3782.	[func]		Specifying "auto" as the salt when using
+			"rndc signing -nsec3param" causes named to
+			generate a 64-bit salt at random. [RT #35322]
+
+3781.	[tuning]	Use adaptive mutex locks when available; this
+			has been found to improve performance under load
+			on many systems. "configure --with-locktype=standard"
+			restores conventional mutex locks. [RT #32576]
+
+3780.	[bug]		$GENERATE handled negative numbers incorrectly.
+			[RT #25528]
+
+3779.	[cleanup]	Clarify the error message when using an option
+			that was not enabled at compile time. [RT #35504]
+
+3778.	[bug]		Log a warning when the wrong address family is
+			used in "listen-on" or "listen-on-v6". [RT #17848]
+
+3777.	[bug]		EDNS EXPIRE code could dump core when processing
+			DLZ queries. [RT #35493]
+
+3776.	[func]		"rndc -q" suppresses output from successful
+			rndc commands. Errors are printed on stderr.
+			[RT #21393]
+
+3775.	[bug]		dlz_dlopen driver could return the wrong error
+			code on API version mismatch, leading to a segfault.
+			[RT #35495]
+
+3774.	[func]		When using "request-nsid", log the NSID value in
+			printable form as well as hex. [RT #20864]
+
+3773.	[func]		"host", "nslookup" and "nsupdate" now have
+			options to print the version number and exit.
+			[RT #26057]
+
+3772.	[contrib]	Added sqlite3 dynamically-loadable DLZ module.
+			(Based in part on a contribution from Tim Tessier.)
+			[RT #20822]
+
+3771.	[cleanup]	Adjusted log level for "using built-in key"
+			messages. [RT #24383]
+
+3770.	[bug]		"dig +trace" could fail with an assertion when it
+			needed to fall back to TCP due to a truncated
+			response. [RT #24660]
+
+3769.	[doc]		Improved documentation of "rndc signing -list".
+			[RT #30652]
+
+3768.	[bug]		"dnssec-checkds" was missing the SHA-384 digest
+			algorithm. [RT #34000]
+
+3767.	[func]		Log explicitly when using rndc.key to configure
+			command channel. [RT #35316]
+
+3766.	[cleanup]	Fixed problems with building outside the source
+			tree when using native PKCS#11. [RT #35459]
+
+3765.	[bug]		Fixed a bug in "rndc secroots" that could crash
+			named when dumping an empty keynode. [RT #35469]
+
+3764.	[bug]		The dnssec-keygen/settime -S and -i options
+			(to set up a successor key and set the prepublication
+			interval) were missing from dnssec-keyfromlabel.
+			[RT #35394]
+
+3763.	[bug]		delve: Cache DNSSEC records to avoid the need to
+			re-fetch them when restarting validation. [RT #35476]
+
+3762.	[bug]		Address build problems with --pkcs11-native +
+			--with-openssl with ECDSA support. [RT #35467]
+
+3761.	[bug]		Address dangling reference bug in dns_keytable_add.
+			[RT #35471]
+
+3760.	[bug]		Improve SIT with native PKCS#11 and on Windows.
+			[RT #35433]
+
+3759.	[port]		Enable delve on Windows. [RT #35441]
+
+3758.	[port]		Enable export library APIs on Windows. [RT #35382]
+
+3757.	[port]		Enable Python tools (dnssec-coverage,
+			dnssec-checkds) to run on Windows. [RT #34355]
+
+3756.	[bug]		GSSAPI Kerberos realm checking was broken in
+			check_config leading to spurious messages being
+			logged.  [RT #35443]
+
 	--- 9.10.0b1 released ---
 
 3755.	[func]		Add stats counters for known EDNS options + others.
@@ -81,8 +302,7 @@
 			same resolver and validator logic as named. This
 			allows easy validation of DNSSEC data in environments
 			with untrustworthy resolvers, and assists with
-			troubleshooting of DNSSEC problems. (Note: not yet
-			available on win32.) [RT #32406]
+			troubleshooting of DNSSEC problems. [RT #32406]
 
 3740.	[contrib]	Minor fixes to configure --with-dlz-bdb,
 			--with-dlz-postgres and --with-dlz-odbc. [RT #35340]
@@ -1447,7 +1667,7 @@
 			     when queryperf is available.
 			 - the encoding of PASSTHRU action to "rpz-passthru".
 			     (The old encoding is still accepted.)
-		       [RT #26172]
+			[RT #26172]
 
 
 3329.	[bug]		Handle RRSIG signer-name case consistently: We

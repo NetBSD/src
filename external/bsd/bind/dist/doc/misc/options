@@ -260,7 +260,7 @@ options {
         sig-signing-signatures <integer>;
         sig-signing-type <integer>;
         sig-validity-interval <integer> [ <integer> ];
-        sit-secret <quoted_string>; // not configured
+        sit-secret <string>; // not configured
         sortlist { <address_match_element>; ... };
         stacksize <size>;
         statistics-file <quoted_string>;
@@ -438,7 +438,6 @@ view <string> <optional_class> {
         max-ncache-ttl <integer>;
         max-refresh-time <integer>;
         max-retry-time <integer>;
-        max-rsa-exponent-size <integer>;
         max-transfer-idle-in <integer>;
         max-transfer-idle-out <integer>;
         max-transfer-time-in <integer>;

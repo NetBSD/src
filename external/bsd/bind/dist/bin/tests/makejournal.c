@@ -1,4 +1,4 @@
-/*	$NetBSD: makejournal.c,v 1.1.1.1 2014/02/28 17:40:07 christos Exp $	*/
+/*	$NetBSD: makejournal.c,v 1.2 2014/07/08 05:43:38 spz Exp $	*/
 
 /*
  * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 		goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 isc_mem_t *mctx = NULL;
 isc_log_t *lctx = NULL;
