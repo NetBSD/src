@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.109 2014/07/08 09:21:52 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.110 2014/07/08 19:34:47 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.109 2014/07/08 09:21:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.110 2014/07/08 19:34:47 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,6 +92,8 @@ MODULE(MODULE_CLASS_VFS, msdos, NULL);
 #else
 #define DPRINTF(a)
 #endif
+
+#define GEMDOSFS_BSIZE	512
 
 #define MSDOSFS_NAMEMAX(pmp) \
 	(pmp)->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12
@@ -466,8 +468,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	struct byte_bpb50 *b50;
 	struct byte_bpb710 *b710;
 	uint8_t SecPerClust;
-	int	ronly, error, tmp;
-	int	bsize;
+	int	ronly, error, BlkPerSec;
 	uint64_t psize;
 	unsigned secsize;
 
@@ -496,14 +497,12 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	}
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		bsize = secsize;
-		if (bsize != 512) {
-			DPRINTF(("Invalid block bsize %d for GEMDOS\n", bsize));
+		if (secsize != GEMDOSFS_BSIZE) {
+			DPRINTF(("Invalid block secsize %d for GEMDOS\n", secsize));
 			error = EINVAL;
 			goto error_exit;
 		}
-	} else
-		bsize = 0;
+	}
 
 	/*
 	 * Read the boot sector of the filesystem, and then check the
@@ -547,25 +546,35 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
 
-	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
-		/* XXX - We should probably check more values here */
-    		if (!pmp->pm_BytesPerSec || !SecPerClust
-	    		|| pmp->pm_SecPerTrack > 63) {
-			DPRINTF(("bytespersec %d secperclust %d "
-			    "secpertrack %d\n", 
-			    pmp->pm_BytesPerSec, SecPerClust,
-			    pmp->pm_SecPerTrack));
-			error = EINVAL;
-			goto error_exit;
-		}
-	}
-
 	if (pmp->pm_Sectors == 0) {
 		pmp->pm_HiddenSects = getulong(b50->bpbHiddenSecs);
 		pmp->pm_HugeSectors = getulong(b50->bpbHugeSectors);
 	} else {
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
+	}
+
+	/*
+	 * Sanity checks, from the FAT specification:
+	 * - sectors per cluster: >= 1, power of 2
+	 * - logical sector size: >= 1, power of 2
+	 * - cluster size:        <= max FS block size
+	 * - number of sectors:   >= 1
+	 */
+	if ((SecPerClust == 0) || !powerof2(SecPerClust) ||
+	    (pmp->pm_BytesPerSec == 0) || !powerof2(pmp->pm_BytesPerSec) ||
+	    (SecPerClust * pmp->pm_BytesPerSec > MAXBSIZE) ||
+	    (pmp->pm_HugeSectors == 0)) {
+		DPRINTF(("consistency checks\n"));
+		error = EINVAL;
+		goto error_exit;
+	}
+
+	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS) &&
+	    (pmp->pm_SecPerTrack > 63)) {
+		DPRINTF(("SecPerTrack %d\n", pmp->pm_SecPerTrack));
+		error = EINVAL;
+		goto error_exit;
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
@@ -606,17 +615,12 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 		/*
 		 * Check a few values (could do some more):
-		 * - logical sector size: power of 2, >= block size
-		 * - sectors per cluster: power of 2, >= 1
-		 * - number of sectors:   >= 1, <= size of partition
+		 * - logical sector size: >= block size
+		 * - number of sectors:   <= size of partition
 		 */
-		if ( (SecPerClust == 0)
-		  || (SecPerClust & (SecPerClust - 1))
-		  || (pmp->pm_BytesPerSec < bsize)
-		  || (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1))
-		  || (pmp->pm_HugeSectors == 0)
-		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
-		      > psize)) {
+		if ((pmp->pm_BytesPerSec < GEMDOSFS_BSIZE) ||
+		    (pmp->pm_HugeSectors *
+		     (pmp->pm_BytesPerSec / GEMDOSFS_BSIZE) > psize)) {
 			DPRINTF(("consistency checks for GEMDOS\n"));
 			error = EINVAL;
 			goto error_exit;
@@ -627,14 +631,14 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		 * always be the same as the number of bytes per disk block
 		 * Let's pretend it is.
 		 */
-		tmp = pmp->pm_BytesPerSec / bsize;
-		pmp->pm_BytesPerSec  = bsize;
-		pmp->pm_HugeSectors *= tmp;
-		pmp->pm_HiddenSects *= tmp;
-		pmp->pm_ResSectors  *= tmp;
-		pmp->pm_Sectors     *= tmp;
-		pmp->pm_FATsecs     *= tmp;
-		SecPerClust         *= tmp;
+		BlkPerSec = pmp->pm_BytesPerSec / GEMDOSFS_BSIZE;
+		pmp->pm_BytesPerSec  = GEMDOSFS_BSIZE;
+		pmp->pm_HugeSectors *= BlkPerSec;
+		pmp->pm_HiddenSects *= BlkPerSec;
+		pmp->pm_ResSectors  *= BlkPerSec;
+		pmp->pm_Sectors     *= BlkPerSec;
+		pmp->pm_FATsecs     *= BlkPerSec;
+		SecPerClust         *= BlkPerSec;
 	}
 
 	/* Check that fs has nonzero FAT size */
