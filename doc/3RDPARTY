@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1131 2014/07/08 06:01:47 spz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1132 2014/07/08 22:39:38 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -798,6 +798,21 @@ Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/mdocml/dist
 Notes:
+
+Package:	mesa-demos
+Version:	8.1.0
+Current Vers:	8.2.0
+Maintainer:	mesa-git@?
+Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/demos/
+Home Page:	http://www.mesa3d.org/
+Mailing List:
+Responsible:	riastradh, mrg
+License:	ISC
+Location:	xsrc/external/mit/MesaDemos/dist
+Notes:
+We use only glxinfo and glxgears.  Delete all else on import.
+Vendor tag:	xorg
+Release tag:	mesa-demos-X-Y-Z
 
 Package:	mesa-drm
 Version:	git 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c
