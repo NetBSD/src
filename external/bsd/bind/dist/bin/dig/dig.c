@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.8 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.9 2014/07/08 05:43:37 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,6 @@
 #include <isc/string.h>
 #include <isc/util.h>
 #include <isc/task.h>
-#include <isc/timer.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
