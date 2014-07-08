@@ -1,4 +1,4 @@
-/*	$NetBSD: t_extmem.c,v 1.1 2014/06/25 19:13:03 alnsn Exp $ */
+/*	$NetBSD: t_extmem.c,v 1.2 2014/07/08 21:13:01 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_extmem.c,v 1.1 2014/06/25 19:13:03 alnsn Exp $");
+__RCSID("$NetBSD: t_extmem.c,v 1.2 2014/07/08 21:13:01 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -61,14 +61,14 @@ retM(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 }
 
 
-ATF_TC(bpfjit_extmem_load_default);
-ATF_TC_HEAD(bpfjit_extmem_load_default, tc)
+ATF_TC(libbpfjit_extmem_load_default);
+ATF_TC_HEAD(libbpfjit_extmem_load_default, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that external memory "
 	    "is zero initialized by default");
 }
 
-ATF_TC_BODY(bpfjit_extmem_load_default, tc)
+ATF_TC_BODY(libbpfjit_extmem_load_default, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_MEM, 1),
@@ -100,14 +100,14 @@ ATF_TC_BODY(bpfjit_extmem_load_default, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_extmem_load_preinited);
-ATF_TC_HEAD(bpfjit_extmem_load_preinited, tc)
+ATF_TC(libbpfjit_extmem_load_preinited);
+ATF_TC_HEAD(libbpfjit_extmem_load_preinited, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test a load of external "
 	    "pre-initialized memory");
 }
 
-ATF_TC_BODY(bpfjit_extmem_load_preinited, tc)
+ATF_TC_BODY(libbpfjit_extmem_load_preinited, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_MEM, 3),
@@ -139,14 +139,14 @@ ATF_TC_BODY(bpfjit_extmem_load_preinited, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_extmem_invalid_load);
-ATF_TC_HEAD(bpfjit_extmem_invalid_load, tc)
+ATF_TC(libbpfjit_extmem_invalid_load);
+ATF_TC_HEAD(libbpfjit_extmem_invalid_load, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that out-of-range load "
 	    "fails validation");
 }
 
-ATF_TC_BODY(bpfjit_extmem_invalid_load, tc)
+ATF_TC_BODY(libbpfjit_extmem_invalid_load, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_MEM, 4),
@@ -158,13 +158,13 @@ ATF_TC_BODY(bpfjit_extmem_invalid_load, tc)
 	ATF_CHECK(bpfjit_generate_code(&ctx, insns, insn_count) == NULL);
 }
 
-ATF_TC(bpfjit_extmem_store);
-ATF_TC_HEAD(bpfjit_extmem_store, tc)
+ATF_TC(libbpfjit_extmem_store);
+ATF_TC_HEAD(libbpfjit_extmem_store, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test stores to external memory");
 }
 
-ATF_TC_BODY(bpfjit_extmem_store, tc)
+ATF_TC_BODY(libbpfjit_extmem_store, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 1),        /* A <- 1     */
@@ -208,14 +208,14 @@ ATF_TC_BODY(bpfjit_extmem_store, tc)
 	ATF_CHECK(mem[3] == 3);
 }
 
-ATF_TC(bpfjit_extmem_side_effect);
-ATF_TC_HEAD(bpfjit_extmem_side_effect, tc)
+ATF_TC(libbpfjit_extmem_side_effect);
+ATF_TC_HEAD(libbpfjit_extmem_side_effect, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that ABC optimization doesn\'t "
 	    "skip stores to external memory");
 }
 
-ATF_TC_BODY(bpfjit_extmem_side_effect, tc)
+ATF_TC_BODY(libbpfjit_extmem_side_effect, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 0),  /* A <- P[0]  */
@@ -260,14 +260,14 @@ ATF_TC_BODY(bpfjit_extmem_side_effect, tc)
 	ATF_CHECK(mem[3] == 3);
 }
 
-ATF_TC(bpfjit_extmem_invalid_store);
-ATF_TC_HEAD(bpfjit_extmem_invalid_store, tc)
+ATF_TC(libbpfjit_extmem_invalid_store);
+ATF_TC_HEAD(libbpfjit_extmem_invalid_store, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that out-of-range store "
 	    "fails validation");
 }
 
-ATF_TC_BODY(bpfjit_extmem_invalid_store, tc)
+ATF_TC_BODY(libbpfjit_extmem_invalid_store, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_ST, 4),
@@ -279,14 +279,14 @@ ATF_TC_BODY(bpfjit_extmem_invalid_store, tc)
 	ATF_CHECK(bpfjit_generate_code(&ctx, insns, insn_count) == NULL);
 }
 
-ATF_TC(bpfjit_cop_ret_mem);
-ATF_TC_HEAD(bpfjit_cop_ret_mem, tc)
+ATF_TC(libbpfjit_cop_ret_mem);
+ATF_TC_HEAD(libbpfjit_cop_ret_mem, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns a content of external memory word");
 }
 
-ATF_TC_BODY(bpfjit_cop_ret_mem, tc)
+ATF_TC_BODY(libbpfjit_cop_ret_mem, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -324,14 +324,14 @@ ATF_TC_BODY(bpfjit_cop_ret_mem, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_ret_preinited_mem);
-ATF_TC_HEAD(bpfjit_cop_ret_preinited_mem, tc)
+ATF_TC(libbpfjit_cop_ret_preinited_mem);
+ATF_TC_HEAD(libbpfjit_cop_ret_preinited_mem, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function that "
 	    "returns a content of external pre-initialized memory word");
 }
 
-ATF_TC_BODY(bpfjit_cop_ret_preinited_mem, tc)
+ATF_TC_BODY(libbpfjit_cop_ret_preinited_mem, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -369,14 +369,14 @@ ATF_TC_BODY(bpfjit_cop_ret_preinited_mem, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_ret_mem);
-ATF_TC_HEAD(bpfjit_copx_ret_mem, tc)
+ATF_TC(libbpfjit_copx_ret_mem);
+ATF_TC_HEAD(libbpfjit_copx_ret_mem, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns a content of external memory word");
 }
 
-ATF_TC_BODY(bpfjit_copx_ret_mem, tc)
+ATF_TC_BODY(libbpfjit_copx_ret_mem, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -415,14 +415,14 @@ ATF_TC_BODY(bpfjit_copx_ret_mem, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_ret_preinited_mem);
-ATF_TC_HEAD(bpfjit_copx_ret_preinited_mem, tc)
+ATF_TC(libbpfjit_copx_ret_preinited_mem);
+ATF_TC_HEAD(libbpfjit_copx_ret_preinited_mem, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function that "
 	    "returns a content of external pre-initialized memory word");
 }
 
-ATF_TC_BODY(bpfjit_copx_ret_preinited_mem, tc)
+ATF_TC_BODY(libbpfjit_copx_ret_preinited_mem, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -464,16 +464,16 @@ ATF_TC_BODY(bpfjit_copx_ret_preinited_mem, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, bpfjit_extmem_load_default);
-	ATF_TP_ADD_TC(tp, bpfjit_extmem_load_preinited);
-	ATF_TP_ADD_TC(tp, bpfjit_extmem_invalid_load);
-	ATF_TP_ADD_TC(tp, bpfjit_extmem_store);
-	ATF_TP_ADD_TC(tp, bpfjit_extmem_side_effect);
-	ATF_TP_ADD_TC(tp, bpfjit_extmem_invalid_store);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_ret_mem);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_ret_preinited_mem);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_ret_mem);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_ret_preinited_mem);
+	ATF_TP_ADD_TC(tp, libbpfjit_extmem_load_default);
+	ATF_TP_ADD_TC(tp, libbpfjit_extmem_load_preinited);
+	ATF_TP_ADD_TC(tp, libbpfjit_extmem_invalid_load);
+	ATF_TP_ADD_TC(tp, libbpfjit_extmem_store);
+	ATF_TP_ADD_TC(tp, libbpfjit_extmem_side_effect);
+	ATF_TP_ADD_TC(tp, libbpfjit_extmem_invalid_store);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_mem);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_preinited_mem);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_mem);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_preinited_mem);
 
 	return atf_no_error();
 }

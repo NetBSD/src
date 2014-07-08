@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cop.c,v 1.2 2014/06/25 18:16:40 alnsn Exp $ */
+/*	$NetBSD: t_cop.c,v 1.3 2014/07/08 21:13:01 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2013-2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cop.c,v 1.2 2014/06/25 18:16:40 alnsn Exp $");
+__RCSID("$NetBSD: t_cop.c,v 1.3 2014/07/08 21:13:01 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -101,14 +101,14 @@ setARG(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 	return old;
 }
 
-ATF_TC(bpfjit_cop_no_ctx);
-ATF_TC_HEAD(bpfjit_cop_no_ctx, tc)
+ATF_TC(libbpfjit_cop_no_ctx);
+ATF_TC_HEAD(libbpfjit_cop_no_ctx, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that bpf program with BPF_COP "
 	    "instruction isn't valid without a context");
 }
 
-ATF_TC_BODY(bpfjit_cop_no_ctx, tc)
+ATF_TC_BODY(libbpfjit_cop_no_ctx, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_MISC+BPF_COP, 0),
@@ -125,14 +125,14 @@ ATF_TC_BODY(bpfjit_cop_no_ctx, tc)
 	ATF_CHECK(code == NULL);
 }
 
-ATF_TC(bpfjit_cop_ret_A);
-ATF_TC_HEAD(bpfjit_cop_ret_A, tc)
+ATF_TC(libbpfjit_cop_ret_A);
+ATF_TC_HEAD(libbpfjit_cop_ret_A, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns a content of the A register");
 }
 
-ATF_TC_BODY(bpfjit_cop_ret_A, tc)
+ATF_TC_BODY(libbpfjit_cop_ret_A, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -158,14 +158,14 @@ ATF_TC_BODY(bpfjit_cop_ret_A, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_ret_buflen);
-ATF_TC_HEAD(bpfjit_cop_ret_buflen, tc)
+ATF_TC(libbpfjit_cop_ret_buflen);
+ATF_TC_HEAD(libbpfjit_cop_ret_buflen, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns the buflen argument");
 }
 
-ATF_TC_BODY(bpfjit_cop_ret_buflen, tc)
+ATF_TC_BODY(libbpfjit_cop_ret_buflen, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -191,14 +191,14 @@ ATF_TC_BODY(bpfjit_cop_ret_buflen, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_ret_wirelen);
-ATF_TC_HEAD(bpfjit_cop_ret_wirelen, tc)
+ATF_TC(libbpfjit_cop_ret_wirelen);
+ATF_TC_HEAD(libbpfjit_cop_ret_wirelen, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns the wirelen argument");
 }
 
-ATF_TC_BODY(bpfjit_cop_ret_wirelen, tc)
+ATF_TC_BODY(libbpfjit_cop_ret_wirelen, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -224,14 +224,14 @@ ATF_TC_BODY(bpfjit_cop_ret_wirelen, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_ret_nfuncs);
-ATF_TC_HEAD(bpfjit_cop_ret_nfuncs, tc)
+ATF_TC(libbpfjit_cop_ret_nfuncs);
+ATF_TC_HEAD(libbpfjit_cop_ret_nfuncs, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns nfuncs member of the context argument");
 }
 
-ATF_TC_BODY(bpfjit_cop_ret_nfuncs, tc)
+ATF_TC_BODY(libbpfjit_cop_ret_nfuncs, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -257,14 +257,14 @@ ATF_TC_BODY(bpfjit_cop_ret_nfuncs, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_side_effect);
-ATF_TC_HEAD(bpfjit_cop_side_effect, tc)
+ATF_TC(libbpfjit_cop_side_effect);
+ATF_TC_HEAD(libbpfjit_cop_side_effect, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test that ABC optimization doesn't skip BPF_COP call");
 }
 
-ATF_TC_BODY(bpfjit_cop_side_effect, tc)
+ATF_TC_BODY(libbpfjit_cop_side_effect, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -296,14 +296,14 @@ ATF_TC_BODY(bpfjit_cop_side_effect, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_cop_invalid_index);
-ATF_TC_HEAD(bpfjit_cop_invalid_index, tc)
+ATF_TC(libbpfjit_cop_invalid_index);
+ATF_TC_HEAD(libbpfjit_cop_invalid_index, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test that out-of-range coprocessor function fails validation");
 }
 
-ATF_TC_BODY(bpfjit_cop_invalid_index, tc)
+ATF_TC_BODY(libbpfjit_cop_invalid_index, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -316,14 +316,14 @@ ATF_TC_BODY(bpfjit_cop_invalid_index, tc)
 	ATF_CHECK(bpfjit_generate_code(&ctx, insns, insn_count) == NULL);
 }
 
-ATF_TC(bpfjit_copx_no_ctx);
-ATF_TC_HEAD(bpfjit_copx_no_ctx, tc)
+ATF_TC(libbpfjit_copx_no_ctx);
+ATF_TC_HEAD(libbpfjit_copx_no_ctx, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test that bpf program with BPF_COPX "
 	    "instruction isn't valid without a context");
 }
 
-ATF_TC_BODY(bpfjit_copx_no_ctx, tc)
+ATF_TC_BODY(libbpfjit_copx_no_ctx, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_MISC+BPF_COP, 0),
@@ -340,14 +340,14 @@ ATF_TC_BODY(bpfjit_copx_no_ctx, tc)
 	ATF_CHECK(code == NULL);
 }
 
-ATF_TC(bpfjit_copx_ret_A);
-ATF_TC_HEAD(bpfjit_copx_ret_A, tc)
+ATF_TC(libbpfjit_copx_ret_A);
+ATF_TC_HEAD(libbpfjit_copx_ret_A, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns a content of the A register");
 }
 
-ATF_TC_BODY(bpfjit_copx_ret_A, tc)
+ATF_TC_BODY(libbpfjit_copx_ret_A, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -374,14 +374,14 @@ ATF_TC_BODY(bpfjit_copx_ret_A, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_ret_buflen);
-ATF_TC_HEAD(bpfjit_copx_ret_buflen, tc)
+ATF_TC(libbpfjit_copx_ret_buflen);
+ATF_TC_HEAD(libbpfjit_copx_ret_buflen, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns the buflen argument");
 }
 
-ATF_TC_BODY(bpfjit_copx_ret_buflen, tc)
+ATF_TC_BODY(libbpfjit_copx_ret_buflen, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -408,14 +408,14 @@ ATF_TC_BODY(bpfjit_copx_ret_buflen, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_ret_wirelen);
-ATF_TC_HEAD(bpfjit_copx_ret_wirelen, tc)
+ATF_TC(libbpfjit_copx_ret_wirelen);
+ATF_TC_HEAD(libbpfjit_copx_ret_wirelen, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns the wirelen argument");
 }
 
-ATF_TC_BODY(bpfjit_copx_ret_wirelen, tc)
+ATF_TC_BODY(libbpfjit_copx_ret_wirelen, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_IMM, 2), // retWL
@@ -442,14 +442,14 @@ ATF_TC_BODY(bpfjit_copx_ret_wirelen, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_ret_nfuncs);
-ATF_TC_HEAD(bpfjit_copx_ret_nfuncs, tc)
+ATF_TC(libbpfjit_copx_ret_nfuncs);
+ATF_TC_HEAD(libbpfjit_copx_ret_nfuncs, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test coprocessor function "
 	    "that returns nfuncs member of the context argument");
 }
 
-ATF_TC_BODY(bpfjit_copx_ret_nfuncs, tc)
+ATF_TC_BODY(libbpfjit_copx_ret_nfuncs, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -476,14 +476,14 @@ ATF_TC_BODY(bpfjit_copx_ret_nfuncs, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_side_effect);
-ATF_TC_HEAD(bpfjit_copx_side_effect, tc)
+ATF_TC(libbpfjit_copx_side_effect);
+ATF_TC_HEAD(libbpfjit_copx_side_effect, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test that ABC optimization doesn't skip BPF_COPX call");
 }
 
-ATF_TC_BODY(bpfjit_copx_side_effect, tc)
+ATF_TC_BODY(libbpfjit_copx_side_effect, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 13),
@@ -516,14 +516,14 @@ ATF_TC_BODY(bpfjit_copx_side_effect, tc)
 	bpfjit_free_code(code);
 }
 
-ATF_TC(bpfjit_copx_invalid_index);
-ATF_TC_HEAD(bpfjit_copx_invalid_index, tc)
+ATF_TC(libbpfjit_copx_invalid_index);
+ATF_TC_HEAD(libbpfjit_copx_invalid_index, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test that out-of-range BPF_COPX call fails at runtime");
 }
 
-ATF_TC_BODY(bpfjit_copx_invalid_index, tc)
+ATF_TC_BODY(libbpfjit_copx_invalid_index, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LDX+BPF_IMM, 5), // invalid index
@@ -552,21 +552,21 @@ ATF_TC_BODY(bpfjit_copx_invalid_index, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, bpfjit_cop_no_ctx);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_ret_A);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_ret_buflen);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_ret_wirelen);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_ret_nfuncs);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_side_effect);
-	ATF_TP_ADD_TC(tp, bpfjit_cop_invalid_index);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_no_ctx);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_A);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_buflen);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_wirelen);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_nfuncs);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_side_effect);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_invalid_index);
 
-	ATF_TP_ADD_TC(tp, bpfjit_copx_no_ctx);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_ret_A);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_ret_buflen);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_ret_wirelen);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_ret_nfuncs);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_side_effect);
-	ATF_TP_ADD_TC(tp, bpfjit_copx_invalid_index);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_no_ctx);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_A);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_buflen);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_wirelen);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_nfuncs);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_side_effect);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_invalid_index);
 
 	return atf_no_error();
 }
