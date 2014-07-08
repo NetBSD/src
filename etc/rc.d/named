@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.23 2012/10/01 18:46:43 christos Exp $
+# $NetBSD: named,v 1.24 2014/07/08 07:04:07 spz Exp $
 #
 
 # PROVIDE: named
@@ -63,6 +63,11 @@ named_migrate()
 
 named_precmd()
 {
+	if [ ! -e "/etc/rndc.key" ]; then
+		echo "Generating rndc.key"
+		/usr/sbin/rndc-confgen -a
+	fi
+
 	if [ -z "$named_chrootdir" ]; then
 		if [ ! -d "/etc/namedb/keys" ]; then
 			mkdir -m 775 "/etc/namedb/keys"
