@@ -114,6 +114,27 @@ Package=<4>
 
 ###############################################################################
 
+Project: "libirs"="..\..\lib\irs\win32\libirs.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "bindevt"="..\..\lib\win32\bindevt\bindevt.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -144,6 +165,140 @@ Package=<4>
 }}}
 
 @END TESTS
+###############################################################################
+@IF SAMPLES
+
+Project: "resolve"="..\..\lib\samples\win32\resolve.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libirs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "async"="..\..\lib\samples\win32\async.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "gai"="..\..\lib\samples\win32\gai.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libirs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "update"="..\..\lib\samples\win32\update.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "request"="..\..\lib\samples\win32\request.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nsprobe"="..\..\lib\samples\win32\nsprobe.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+}}}
+
+@END SAMPLES
 ###############################################################################
 
 Project: "named"="..\..\bin\named\win32\named.dsp" - Package Owner=<4>
@@ -213,6 +368,30 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name rndcutil
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "delv"="..\..\bin\delv\win32\delv.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libirs
     End Project Dependency
 }}}
 
