@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/06 20:09:26 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2014/07/08 09:58:12 martin Exp $
 
 NOMAN=	# defined
 
@@ -10,7 +10,7 @@ SRCS=	posttls-finger.c tlsmgrmem.c
 DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${PROG}
 .PATH:	${DIST}
 
-DPADD+= ${LIBPDNS} ${LIBPTLS} ${LIBPGLOBAL} ${LIBPUTIL}
-LDADD+= ${LIBPDNS} ${LIBPTLS} ${LIBPGLOBAL} ${LIBPUTIL}
+DPADD+= ${LIBPDNS} ${LIBPTLS} ${LIBPGLOBAL} ${LIBPUTIL} ${LIBCRYPTO}
+LDADD+= ${LIBPDNS} ${LIBPTLS} ${LIBPGLOBAL} ${LIBPUTIL} ${LIBCRYPTO}
 
 .include <bsd.prog.mk>
