@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.46 2014/06/18 17:50:14 christos Exp $
+# $NetBSD: ad.arm,v 1.47 2014/07/08 05:55:33 spz Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -163,12 +163,15 @@
 ./usr/lib/oabi/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libirs.so.8			base-compat-shlib	compat,pic
+./usr/lib/oabi/libirs.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccfg.so.8			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccfg.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccfg.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccfg.so.8.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libisns.so.0			base-compat-shlib	compat,pic
