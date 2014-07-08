@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\aclconf.c" />
+    <ClCompile Include="..\dnsconf.c" />
     <ClCompile Include="..\log.c" />
     <ClCompile Include="..\namedconf.c" />
     <ClCompile Include="..\parser.c" />
@@ -116,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\isccfg\aclconf.h" />
+    <ClInclude Include="..\include\isccfg\dnsconf.h" />
     <ClInclude Include="..\include\isccfg\cfg.h" />
     <ClInclude Include="..\include\isccfg\grammar.h" />
     <ClInclude Include="..\include\isccfg\log.h" />

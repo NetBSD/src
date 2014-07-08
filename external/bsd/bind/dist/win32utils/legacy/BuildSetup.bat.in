@@ -56,6 +56,7 @@ copy ..\..\bin\named\named.html ..\..\Build\Release
 copy ..\..\bin\rndc\*.html ..\..\Build\Release
 copy ..\..\bin\confgen\*.html ..\..\Build\Release
 copy ..\..\bin\dig\*.html ..\..\Build\Release
+copy ..\..\bin\delv\*.html ..\..\Build\Release
 copy ..\..\bin\nsupdate\*.html ..\..\Build\Release
 copy ..\..\bin\check\*.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-keygen.html ..\..\Build\Release
@@ -66,6 +67,10 @@ copy ..\..\bin\dnssec\dnssec-settime.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-revoke.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-verify.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-importkey.html ..\..\Build\Release
+@IF PYTHON
+copy ..\..\bin\python\dnssec-checkds.html ..\..\Build\Release
+copy ..\..\bin\python\dnssec-coverage.html ..\..\Build\Release
+@END PYTHON
 @IF PKCS11
 copy ..\..\bin\pkcs11\pkcs11-keygen.html ..\..\Build\Release
 copy ..\..\bin\pkcs11\pkcs11-list.html ..\..\Build\Release
