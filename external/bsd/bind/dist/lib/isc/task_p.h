@@ -1,4 +1,4 @@
-/*	$NetBSD: task_p.h,v 1.7 2014/03/29 22:44:20 joerg Exp $	*/
+/*	$NetBSD: task_p.h,v 1.8 2014/07/08 05:43:40 spz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,7 @@
 #if defined(ISC_PLATFORM_USETHREADS)
 void
 isc__taskmgr_pause(isc_taskmgr_t *taskmgr);
+
 void
 isc__taskmgr_resume(isc_taskmgr_t *taskmgr);
 #else
