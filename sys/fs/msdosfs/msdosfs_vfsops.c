@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.108 2014/05/24 16:34:03 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.109 2014/07/08 09:21:52 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.108 2014/05/24 16:34:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.109 2014/07/08 09:21:52 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,8 +96,6 @@ MODULE(MODULE_CLASS_VFS, msdos, NULL);
 #define MSDOSFS_NAMEMAX(pmp) \
 	(pmp)->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12
 
-VFS_PROTOS(msdosfs);
-
 int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
     struct msdosfs_args *);
 
@@ -129,6 +127,7 @@ struct vfsops msdosfs_vfsops = {
 	.vfs_statvfs = msdosfs_statvfs,
 	.vfs_sync = msdosfs_sync,
 	.vfs_vget = msdosfs_vget,
+	.vfs_loadvnode = msdosfs_loadvnode,
 	.vfs_fhtovp = msdosfs_fhtovp,
 	.vfs_vptofh = msdosfs_vptofh,
 	.vfs_init = msdosfs_init,
@@ -910,16 +909,20 @@ int
 msdosfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct denode *ndep;
 	int error;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_root(); mp %p, pmp %p\n", mp, pmp);
 #endif
-	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)
-		return (error);
-	*vpp = DETOV(ndep);
-	return (0);
+	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, vpp)) != 0)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
 }
 
 int
@@ -1019,7 +1022,6 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid defh;
-	struct denode *dep;
 	uint32_t gen;
 	int error;
 
@@ -1037,14 +1039,19 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		*vpp = NULLVP;
 		return error;
 	}
-	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, &dep);
+	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, vpp);
 	if (error) {
 		DPRINTF(("deget %d\n", error));
 		*vpp = NULLVP;
-		return (error);
+		return error;
 	}
-	*vpp = DETOV(dep);
-	return (0);
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULLVP;
+		return error;
+	}
+	return 0;
 }
 
 int
