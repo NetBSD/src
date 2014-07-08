@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/08 05:55:33 spz Exp $
+#	$NetBSD: Makefile,v 1.2 2014/07/08 19:08:43 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ BINDIR=	/usr/bin
 
 DIST=${IDIST}/bin/delv
 CPPFLAGS+= -I${DIST}/include -I${IDIST}/lib/irs/include
-LDADD+=    -lirs
+LDADD+=    -lirs -lisccfg
 
 .PATH: ${DIST}
 
