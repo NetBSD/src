@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mbuf.c,v 1.1 2014/07/07 19:40:28 alnsn Exp $	*/
+/*	$NetBSD: t_mbuf.c,v 1.2 2014/07/08 21:44:26 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -27,16 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mbuf.c,v 1.1 2014/07/07 19:40:28 alnsn Exp $");
+__RCSID("$NetBSD: t_mbuf.c,v 1.2 2014/07/08 21:44:26 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
-#include <unistd.h>
 
 #include <net/bpf.h>
 
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <rump/rump.h>
@@ -79,7 +77,7 @@ test_ldb_abs(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A      */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 120;
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -109,7 +107,7 @@ test_ldh_abs(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A        */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 0x0a0e; /* 10 14 */
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -131,7 +129,7 @@ test_ldw_abs(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A       */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 0x03050709;
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -172,7 +170,7 @@ test_ldb_ind(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A       */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 15;
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -201,7 +199,7 @@ test_ldw_ind(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A         */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 0x05080b0e;
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -235,7 +233,7 @@ test_ldh_ind(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A         */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 0x0a0e; /* 10 14 */
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -274,7 +272,7 @@ test_msh(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),         /* ret A      */
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 	const unsigned int res = 120;
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
@@ -292,7 +290,7 @@ test_ldb_abs_overflow(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -309,7 +307,7 @@ test_ldh_abs_overflow(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -326,7 +324,7 @@ test_ldw_abs_overflow(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -343,7 +341,7 @@ test_ldb_ind_overflow1(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -361,7 +359,7 @@ test_ldb_ind_overflow2(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -379,7 +377,7 @@ test_ldb_ind_overflow3(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -396,7 +394,7 @@ test_ldh_ind_overflow1(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -414,7 +412,7 @@ test_ldh_ind_overflow2(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -432,7 +430,7 @@ test_ldh_ind_overflow3(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -449,7 +447,7 @@ test_ldw_ind_overflow1(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -467,7 +465,7 @@ test_ldw_ind_overflow2(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -485,7 +483,7 @@ test_ldw_ind_overflow3(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
@@ -503,7 +501,7 @@ test_msh_overflow(size_t split)
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
 
-	static char P[] = { 1, 2, 3, 4, 5 };
+	static unsigned char P[] = { 1, 2, 3, 4, 5 };
 
 	if (!prog_validate(insns, sizeof(insns) / sizeof(insns[0])))
 		return false;
