@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.236 2014/06/18 17:50:14 christos Exp $
+# $NetBSD: md.amd64,v 1.237 2014/07/08 05:55:33 spz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -158,12 +158,15 @@
 ./usr/lib/i386/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libirs.so.8			base-compat-shlib	compat,pic
+./usr/lib/i386/libirs.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.8			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccfg.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccfg.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccfg.so.8.0			base-compat-shlib	obsolete
 ./usr/lib/i386/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libisns.so.0			base-compat-shlib	compat,pic
