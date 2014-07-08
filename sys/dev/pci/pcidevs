@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1196 2014/07/03 19:08:31 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1197 2014/07/08 17:45:12 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4880,9 +4880,16 @@ product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
 /* RDC Semiconductor products */
-product RDC	IDE		0x1011	RDC IDE controller
-product RDC	PCIB		0x6036	RDC PCI-ISA bridge
-product RDC	R6040		0x6040	RDC R6040 10/100 Ethernet
+product RDC	R1010_IDE	0x1010	R1010 IDE controller
+product RDC	R1011_IDE	0x1011	R1011 IDE controller
+product RDC	R1012_IDE	0x1012	R1012 IDE controller
+product RDC	R6021_HB	0x6021	R6021 Host
+product RDC	R6025_HB	0x6025	R6025 Host
+product RDC	R6031_ISA	0x6031	R6031 PCI-ISA bridge
+product RDC	PCIB		0x6036	R6036 PCI-ISA bridge
+product RDC	R6040		0x6040	R6040 10/100 Ethernet
+product RDC	R6060_OHCI	0x6060	R6060 USB OHCI
+product RDC	R6061_EHCI	0x6061	R6061 USB EHCI
 
 /* Realtek products */
 product REALTEK RTS5209		0x5209	RTS5209 PCI-E Card Reader
