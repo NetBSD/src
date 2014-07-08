@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/09/12 17:14:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/07/08 22:29:12 riastradh Exp $
 
 NOMAN=	# defined
 
@@ -15,7 +15,7 @@ CPPFLAGS+=${X11FLAGS.THREADS} -DDO_GLU
 LDADD+=	-lGLU -lGL -lXext -lX11 -lpthread -lm
 DPADD+=	${LIBGLU} ${LIBGL} ${LIBXEXT} ${LIBX11} ${LIBPTHREAD} ${LIBM}
 
-.PATH:	${X11SRCDIR.MesaDemos}/progs/xdemos
+.PATH:	${X11SRCDIR.MesaDemos}/src/xdemos
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
