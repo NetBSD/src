@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.140 2014/03/09 17:59:19 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.141 2014/07/08 17:16:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1224,6 +1224,13 @@ typedef struct {
 typedef Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
+
+/*
+ * Arbitrary limits to avoid DoS for excessive memory allocation.
+ */
+#define ELF_MAXPHNUM	128
+#define ELF_MAXSHNUM	32768
+#define ELF_MAXNOTESIZE	1024
 
 #define ELF_AUX_ENTRIES 15	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
