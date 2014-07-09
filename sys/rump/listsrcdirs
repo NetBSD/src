@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.16 2014/07/09 12:14:47 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.17 2014/07/09 12:20:32 pooka Exp $
 #
 
 #
@@ -90,16 +90,16 @@ lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
 lsrc usr /sbin/			cgdconfig chown
-lsrc usr /sbin/			disklabel dump fsck fsck_ext2fs fsck_ffs
-lsrc usr /sbin/			fsck_lfs fsck_msdos fsck_v7fs
+lsrc usr /sbin/			disklabel dump
+lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
 lsrc usr /sbin/			ifconfig mknod
-lsrc usr /sbin/			modstat mount mount_ffs mount_tmpfs newfs
-lsrc usr /sbin/			newfs_v7fs newfs_msdos newfs_ext2fs
-lsrc usr /sbin/			newfs_lfs newfs_sysvbfs newfs_udf
+lsrc usr /sbin/			modstat mount
+lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
+lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
 lsrc usr /sbin/			ping ping6 raidctl reboot
 lsrc usr /sbin/			rndctl route setkey sysctl umount
 lsrc usr /usr.bin/		kdump ktrace
-lsrc usr /usr.sbin/		arp dumpfs makefs ndp npf pcictl vnconfig
+lsrc usr /usr.sbin/		arp dumpfs ndp npf pcictl vnconfig
 lsrc usr /usr.sbin/		wlanctl
 lsrc usr /external/bsd/		libpcap tcpdump wpa
 lsrc usr /crypto/		Makefile.openssl
