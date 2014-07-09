@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.36 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.37 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.36 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.37 2014/07/09 14:41:42 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -95,6 +95,14 @@ natm_detach(struct socket *so)
 	/* sofree drops the lock */
 	sofree(so);
 	mutex_enter(softnet_lock);
+}
+
+static int
+natm_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERt(solocked(so));
+
+	return EOPNOTSUPP;
 }
 
 static int
@@ -191,6 +199,7 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
   KASSERT(req != PRU_ATTACH);
   KASSERT(req != PRU_DETACH);
+  KASSERT(req != PRU_ACCEPT);
   KASSERT(req != PRU_CONTROL);
   KASSERT(req != PRU_SENSE);
   KASSERT(req != PRU_PEERADDR);
@@ -333,7 +342,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
     case PRU_BIND:			/* bind socket to address */
     case PRU_LISTEN:			/* listen for connection */
-    case PRU_ACCEPT:			/* accept connection from peer */
     case PRU_CONNECT2:			/* connect two sockets */
     case PRU_ABORT:			/* abort (fast DISCONNECT, DETATCH) */
 					/* (only happens if LISTEN socket) */
@@ -439,6 +447,7 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
 PR_WRAP_USRREQS(natm)
 #define	natm_attach	natm_attach_wrapper
 #define	natm_detach	natm_detach_wrapper
+#define	natm_accept	natm_accept_wrapper
 #define	natm_ioctl	natm_ioctl_wrapper
 #define	natm_stat	natm_stat_wrapper
 #define	natm_peeraddr	natm_peeraddr_wrapper
@@ -448,6 +457,7 @@ PR_WRAP_USRREQS(natm)
 const struct pr_usrreqs natm_usrreqs = {
 	.pr_attach	= natm_attach,
 	.pr_detach	= natm_detach,
+	.pr_accept	= natm_accept,
 	.pr_ioctl	= natm_ioctl,
 	.pr_stat	= natm_stat,
 	.pr_peeraddr	= natm_peeraddr,
