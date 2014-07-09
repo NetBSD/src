@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.111 2014/07/09 08:43:54 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.112 2014/07/09 09:00:18 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.111 2014/07/09 08:43:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.112 2014/07/09 09:00:18 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -524,8 +524,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		}
 	}
 
-	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
-	memset(pmp, 0, sizeof *pmp);
+	pmp = malloc(sizeof(*pmp), M_MSDOSFSMNT, M_WAITOK|M_ZERO);
 	pmp->pm_mountp = mp;
 
 	/*
@@ -576,15 +575,16 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
-		unsigned short vers = getushort(b710->bpbFSVers);
+		unsigned short FSVers = getushort(b710->bpbFSVers);
+		unsigned short ExtFlags = getushort(b710->bpbExtFlags);
 		/*
 		 * Some say that bsBootSectSig[23] must be zero, but
 		 * Windows does not require this and some digital cameras
 		 * do not set these to zero.  Therefore, do not insist.
 		 */
-		if (pmp->pm_Sectors || pmp->pm_FATsecs || vers) {
-			DPRINTF(("sectors %d fatsecs %lu vers %d\n",
-			    pmp->pm_Sectors, pmp->pm_FATsecs, vers));
+		if (pmp->pm_Sectors || pmp->pm_FATsecs || FSVers) {
+			DPRINTF(("Sectors %d FATsecs %lu FSVers %d\n",
+			    pmp->pm_Sectors, pmp->pm_FATsecs, FSVers));
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -593,20 +593,18 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		pmp->pm_fatdiv = 1;
 		pmp->pm_FATsecs = getulong(b710->bpbBigFATsecs);
 
-		/* mirrorring is enabled if the FATMIRROR bit is not set */
-		if ((getushort(b710->bpbExtFlags) & FATMIRROR) == 0)
+		/* Mirroring is enabled if the FATMIRROR bit is not set. */
+		if ((ExtFlags & FATMIRROR) == 0)
 			pmp->pm_flags |= MSDOSFS_FATMIRROR;
 		else
-			pmp->pm_curfat = getushort(b710->bpbExtFlags) & FATNUM;
+			pmp->pm_curfat = ExtFlags & FATNUM;
 	} else
 		pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		if (FAT32(pmp)) {
+			/* GEMDOS doesn't know FAT32. */
 			DPRINTF(("FAT32 for GEMDOS\n"));
-			/*
-			 * GEMDOS doesn't know FAT32.
-			 */
 			error = EINVAL;
 			goto error_exit;
 		}
