@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.48 2014/07/06 15:35:32 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.49 2014/07/09 05:50:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.48 2014/07/06 15:35:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.49 2014/07/09 05:50:51 maxv Exp $");
 
 #include "opt_modular.h"
 
@@ -225,13 +225,13 @@ kobj_load(kobj_t ko)
 	/*
 	 * Allocate and read in the section header.
 	 */
-	ko->ko_shdrsz = hdr->e_shnum * hdr->e_shentsize;
-	if (ko->ko_shdrsz == 0 || hdr->e_shoff == 0 ||
-	    hdr->e_shentsize != sizeof(Elf_Shdr)) {
+	if (hdr->e_shnum == 0 || hdr->e_shnum > ELF_MAXSHNUM ||
+	    hdr->e_shoff == 0 || hdr->e_shentsize != sizeof(Elf_Shdr)) {
 		kobj_error(ko, "bad sizes");
 		error = ENOEXEC;
 		goto out;
 	}
+	ko->ko_shdrsz = hdr->e_shnum * sizeof(Elf_Shdr);
 	error = ko->ko_read(ko, (void **)&shdr, ko->ko_shdrsz, hdr->e_shoff,
 	    true);
 	if (error != 0) {
@@ -282,7 +282,9 @@ kobj_load(kobj_t ko)
 		goto out;
 	}
 	KASSERT(symtabindex != -1);
-	if (symstrindex < 0 || symstrindex > hdr->e_shnum ||
+	KASSERT(symstrindex != -1);
+
+	if (symstrindex == SHN_UNDEF || symstrindex >= hdr->e_shnum ||
 	    shdr[symstrindex].sh_type != SHT_STRTAB) {
 		kobj_error(ko, "file has invalid symbol strings");
 		error = ENOEXEC;
@@ -326,6 +328,7 @@ kobj_load(kobj_t ko)
 	ko->ko_symcnt = shdr[symtabindex].sh_size / sizeof(Elf_Sym);
 	if (ko->ko_symcnt == 0) {
 		kobj_error(ko, "no symbol table");
+		error = ENOEXEC;
 		goto out;
 	}
 	error = ko->ko_read(ko, (void **)&ko->ko_symtab,
@@ -342,6 +345,7 @@ kobj_load(kobj_t ko)
 	ko->ko_strtabsz = shdr[symstrindex].sh_size;
 	if (ko->ko_strtabsz == 0) {
 		kobj_error(ko, "no symbol strings");
+		error = ENOEXEC;
 		goto out;
 	}
 	error = ko->ko_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
@@ -365,15 +369,22 @@ kobj_load(kobj_t ko)
 	/*
 	 * Do we have a string table for the section names?
 	 */
-	if (hdr->e_shstrndx != 0 && shdr[hdr->e_shstrndx].sh_size != 0 &&
-	    shdr[hdr->e_shstrndx].sh_type == SHT_STRTAB) {
-		ko->ko_shstrtabsz = shdr[hdr->e_shstrndx].sh_size;
-		error = ko->ko_read(ko, (void **)&ko->ko_shstrtab,
-		    shdr[hdr->e_shstrndx].sh_size,
-		    shdr[hdr->e_shstrndx].sh_offset, true);
-		if (error != 0) {
-			kobj_error(ko, "read failed %d", error);
+	if (hdr->e_shstrndx != SHN_UNDEF) {
+		if (hdr->e_shstrndx >= hdr->e_shnum) {
+			kobj_error(ko, "bad shstrndx");
+			error = ENOEXEC;
 			goto out;
+		}
+		if (shdr[hdr->e_shstrndx].sh_size != 0 &&
+		    shdr[hdr->e_shstrndx].sh_type == SHT_STRTAB) {
+			ko->ko_shstrtabsz = shdr[hdr->e_shstrndx].sh_size;
+			error = ko->ko_read(ko, (void **)&ko->ko_shstrtab,
+			    shdr[hdr->e_shstrndx].sh_size,
+			    shdr[hdr->e_shstrndx].sh_offset, true);
+			if (error != 0) {
+				kobj_error(ko, "read failed %d", error);
+				goto out;
+			}
 		}
 	}
 
