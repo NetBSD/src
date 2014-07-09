@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.23 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.24 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.23 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.24 2014/07/09 04:54:03 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -121,6 +121,36 @@ sco_stat(struct socket *so, struct stat *ub)
 	return 0;
 }
 
+static int
+sco_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return sco_peeraddr_pcb(pcb, sa);
+}
+
+static int
+sco_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return sco_sockaddr_pcb(pcb, sa);
+}
+
 /*
  * User Request.
  * up is socket
@@ -146,6 +176,8 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	switch(req) {
 	case PRU_PURGEIF:
@@ -194,18 +226,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		soisconnecting(up);
 		return sco_connect(pcb, sa);
 
-	case PRU_PEERADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_peeraddr(pcb, sa);
-
-	case PRU_SOCKADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_sockaddr(pcb, sa);
-
 	case PRU_SHUTDOWN:
 		socantsendmore(up);
 		break;
@@ -243,7 +263,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_peeraddr(pcb, sa);
+		return sco_peeraddr_pcb(pcb, sa);
 
 	case PRU_CONNECT2:
 	case PRU_SENDOOB:
@@ -391,6 +411,8 @@ PR_WRAP_USRREQS(sco)
 #define	sco_detach		sco_detach_wrapper
 #define	sco_ioctl		sco_ioctl_wrapper
 #define	sco_stat		sco_stat_wrapper
+#define	sco_peeraddr		sco_peeraddr_wrapper
+#define	sco_sockaddr		sco_sockaddr_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
 const struct pr_usrreqs sco_usrreqs = {
@@ -398,5 +420,7 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_detach	= sco_detach,
 	.pr_ioctl	= sco_ioctl,
 	.pr_stat	= sco_stat,
+	.pr_peeraddr	= sco_peeraddr,
+	.pr_sockaddr	= sco_sockaddr,
 	.pr_generic	= sco_usrreq,
 };
