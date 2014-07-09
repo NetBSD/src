@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.52 2014/07/09 04:54:03 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.53 2014/07/09 14:41:42 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.52 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.53 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -84,6 +84,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -170,7 +171,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_LISTEN:
 	case PRU_CONNECT2:
-	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -471,6 +471,14 @@ ddp_detach(struct socket *so)
 }
 
 static int
+ddp_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 ddp_ioctl(struct socket *so, u_long cmd, void *addr, struct ifnet *ifp)
 {
 	return at_control(cmd, addr, ifp);
@@ -577,6 +585,7 @@ ddp_init(void)
 PR_WRAP_USRREQS(ddp)
 #define	ddp_attach	ddp_attach_wrapper
 #define	ddp_detach	ddp_detach_wrapper
+#define	ddp_accept	ddp_accept_wrapper
 #define	ddp_ioctl	ddp_ioctl_wrapper
 #define	ddp_stat	ddp_stat_wrapper
 #define	ddp_peeraddr	ddp_peeraddr_wrapper
@@ -586,6 +595,7 @@ PR_WRAP_USRREQS(ddp)
 const struct pr_usrreqs ddp_usrreqs = {
 	.pr_attach	= ddp_attach,
 	.pr_detach	= ddp_detach,
+	.pr_accept	= ddp_accept,
 	.pr_ioctl	= ddp_ioctl,
 	.pr_stat	= ddp_stat,
 	.pr_peeraddr	= ddp_peeraddr,

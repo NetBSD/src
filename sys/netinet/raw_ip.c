@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.132 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.133 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.132 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.133 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -567,6 +567,16 @@ rip_detach(struct socket *so)
 }
 
 static int
+rip_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	panic("rip_accept");
+	/* NOT REACHED */
+	return EOPNOTSUPP;
+}
+
+static int
 rip_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return in_control(so, cmd, nam, ifp);
@@ -612,6 +622,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -730,6 +741,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 PR_WRAP_USRREQS(rip)
 #define	rip_attach	rip_attach_wrapper
 #define	rip_detach	rip_detach_wrapper
+#define	rip_accept	rip_accept_wrapper
 #define	rip_ioctl	rip_ioctl_wrapper
 #define	rip_stat	rip_stat_wrapper
 #define	rip_peeraddr	rip_peeraddr_wrapper
@@ -739,6 +751,7 @@ PR_WRAP_USRREQS(rip)
 const struct pr_usrreqs rip_usrreqs = {
 	.pr_attach	= rip_attach,
 	.pr_detach	= rip_detach,
+	.pr_accept	= rip_accept,
 	.pr_ioctl	= rip_ioctl,
 	.pr_stat	= rip_stat,
 	.pr_peeraddr	= rip_peeraddr,

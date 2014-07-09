@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.47 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.48 2014/07/09 14:41:43 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.47 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.48 2014/07/09 14:41:43 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -68,6 +68,7 @@ static int	sockin_do_init(void);
 static void	sockin_init(void);
 static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
+static int	sockin_accept(struct socket *, struct mbuf *);
 static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_peeraddr(struct socket *, struct mbuf *);
@@ -79,6 +80,7 @@ static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
 static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_attach = sockin_attach,
 	.pr_detach = sockin_detach,
+	.pr_accept = sockin_accept,
 	.pr_ioctl = sockin_ioctl,
 	.pr_stat = sockin_stat,
 	.pr_peeraddr = sockin_peeraddr,
@@ -458,6 +460,15 @@ sockin_detach(struct socket *so)
 }
 
 static int
+sockin_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	/* we do all the work in the worker thread */
+	return 0;
+}
+
+static int
 sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return ENOTTY;
@@ -507,16 +518,13 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	int error = 0;
 
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
 
 	switch (req) {
-	case PRU_ACCEPT:
-		/* we do all the work in the worker thread */
-		break;
-
 	case PRU_BIND:
 		error = rumpcomp_sockin_bind(SO2S(so),
 		    mtod(nam, const struct sockaddr *),
