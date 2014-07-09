@@ -1,32 +1,52 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.15 2014/07/08 14:30:21 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.16 2014/07/09 12:14:47 pooka Exp $
 #
 
 #
-# This script echoes the NetBSD source directories required to build rump
-# kernels with TOOLS_BUILDRUMP=yes (used for example by buildrump.sh).
+# This script echoes the NetBSD source directories useful for
+# rump kernels.
 # Feed the output to whichever method you use to obtain NetBSD sources, e.g.
 #
 # ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
 #
+# Note: after making changes, test that "sh listsrcdirs all | sort | uniq -d"
+# returns an empty set.
+#
 
 # default echomode (for compat)
-em=sys
+em='sys posix'
+
+# everything we support
+all='sys posix usr'
 
 # mini-getopt (so that we don't have to with getopt vs. getopts
-unset cvsmode
+cvsmode=false
 if [ "${1}" = "-c" ]; then
 	cvsmode=true
 	shift
 fi
-[ ! -z "${1}" ] && em=$1
-# "both" is undocumented, can be used for checking dupes:
-# sh listsrcdirs both | sort | uniq -d
-if [ "${em}" != "sys" -a "${em}" != "usr" -a "${em}" != "both" ]; then
-	echo 'mode must be sys or usr'
+
+[ ! -z "${*}" ] && em="${*}"
+[ "$em" = all ] && em="${all}"
+for x in ${em}; do
+	for y in ${all}; do
+		[ $x = $y ] && continue 2
+	done
+	echo invalid specifier $x
 	exit 1
-fi
+done
+
+iswanted ()
+{
+
+	for x in ${em}; do
+		if [ "$x" = "$1" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
 
 lsrc ()
 {
@@ -34,29 +54,34 @@ lsrc ()
 	what=$1
 	pfx=$2
 	shift 2
-	if [ "${em}" = "both" -o "${what}" = "${em}" ]; then
-		for arg in $* ; do echo src${pfx}${arg} ; done
-	fi
+
+	iswanted ${what} && for arg in $* ; do echo src${pfx}${arg} ; done
 }
 
 ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips"
 ARCHS_EXTRA="arm/arm32 Makefile"
 
-# sources necessary for building rump kernel components
+# sources necessary for building rump kernel components.  This list
+# depends on TOOLS_BUILDRUMP=yes.
 lsrc sys /			build.sh Makefile Makefile.inc
 lsrc sys /			tools common include share/mk
 lsrc sys /etc/			Makefile.params master.passwd group
-lsrc sys /lib/lib		c util rump
-lsrc sys /lib/librump		user client hijack dev net vfs
+lsrc sys /lib/lib		c util
 lsrc sys /external/bsd/		flex mdocml byacc
 lsrc sys /external/cddl/	osnet
 lsrc sys /external/historical/	nawk
 lsrc sys /bin/			cat
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
-lsrc sys /usr.bin/		rpcgen rump_server rump_allserver rump_wmd
-lsrc sys /usr.bin/		stat shmif_dumpbus
+lsrc sys /usr.bin/		rpcgen rump_wmd
+lsrc sys /usr.bin/		stat
 lsrc sys /usr.sbin/		mtree
+
+# sources hosted in the NetBSD tree that are required/useful
+# when targeting POSIX-y platforms
+lsrc posix /lib/lib		rump rumpdev rumpnet rumpvfs
+lsrc posix /lib/lib		rumpuser rumpclient rumphijack
+lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 
 # assorted userspace sources, mostly for configuration & diagnostics
 lsrc usr /lib/lib		crypt ipsec m npf pci prop
@@ -84,8 +109,8 @@ lsrc usr /crypto/external/bsd/	openssl
 
 # If -c is given, use CVS syntax to exclude large subdirectories
 # of sys.  Otherwise just do it wholesale.
-if ${cvsmode:-false}; then
-	[ "${em}" = "sys" ] && echo \!src/sys/arch src/sys
+if ${cvsmode}; then
+	iswanted sys && echo \!src/sys/arch src/sys
 
 	# pick a few useful archs, namely those mentioned in buildrump.sh
 	for arch in ${ARCHS}; do
