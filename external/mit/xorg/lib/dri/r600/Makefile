@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/08/11 23:15:37 joerg Exp $
+# $NetBSD: Makefile,v 1.5 2014/07/09 20:22:55 riastradh Exp $
 
 MODULE=	r600
 
@@ -54,9 +54,6 @@ SRCS+= \
 	radeon_cs.c
 
 LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
-
-COPTS.radeon_screen.c=  -Wno-error	# XXX const
-COPTS.r700_assembler.c=  -Wno-error	# XXX pointer casts
 
 CWARNFLAGS.clang+=	-Wno-constant-logical-operand -Wno-empty-body \
 			-Wno-format
