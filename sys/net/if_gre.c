@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.156 2014/06/05 23:48:16 rmind Exp $ */
+/*	$NetBSD: if_gre.c,v 1.157 2014/07/09 04:54:03 rtr Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.156 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.157 2014/07/09 04:54:03 rtr Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -149,8 +149,8 @@ static bool gre_is_nullconf(const struct gre_soparm *);
 static int gre_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, struct rtentry *);
 static int gre_ioctl(struct ifnet *, u_long, void *);
-static int gre_getsockname(struct socket *, struct mbuf *, struct lwp *);
-static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
+static int gre_getsockname(struct socket *, struct mbuf *);
+static int gre_getpeername(struct socket *, struct mbuf *);
 static int gre_getnames(struct socket *, struct lwp *,
     struct sockaddr_storage *, struct sockaddr_storage *);
 static void gre_clearconf(struct gre_soparm *, bool);
@@ -969,22 +969,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 }
 
 static int
-gre_getname(struct socket *so, int req, struct mbuf *nam, struct lwp *l)
+gre_getsockname(struct socket *so, struct mbuf *nam)
 {
-	return (*so->so_proto->pr_usrreqs->pr_generic)(so,
-	    req, NULL, nam, NULL, l);
+	return (*so->so_proto->pr_usrreqs->pr_sockaddr)(so, nam);
 }
 
 static int
-gre_getsockname(struct socket *so, struct mbuf *nam, struct lwp *l)
+gre_getpeername(struct socket *so, struct mbuf *nam)
 {
-	return gre_getname(so, PRU_SOCKADDR, nam, l);
-}
-
-static int
-gre_getpeername(struct socket *so, struct mbuf *nam, struct lwp *l)
-{
-	return gre_getname(so, PRU_PEERADDR, nam, l);
+	return (*so->so_proto->pr_usrreqs->pr_peeraddr)(so, nam);
 }
 
 static int
@@ -1001,11 +994,11 @@ gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_storage *src,
 	ss = mtod(m, struct sockaddr_storage *);
 
 	solock(so);
-	if ((rc = gre_getsockname(so, m, l)) != 0)
+	if ((rc = gre_getsockname(so, m)) != 0)
 		goto out;
 	*src = *ss;
 
-	if ((rc = gre_getpeername(so, m, l)) != 0)
+	if ((rc = gre_getpeername(so, m)) != 0)
 		goto out;
 	*dst = *ss;
 out:

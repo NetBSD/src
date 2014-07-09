@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.19 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.20 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.19 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.20 2014/07/09 04:54:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -271,13 +271,13 @@ rfcomm_session_lookup(struct sockaddr_bt *src, struct sockaddr_bt *dest)
 		if (rs->rs_state == RFCOMM_SESSION_CLOSED)
 			continue;
 
-		l2cap_sockaddr(rs->rs_l2cap, &addr);
+		l2cap_sockaddr_pcb(rs->rs_l2cap, &addr);
 
 		if (bdaddr_same(&src->bt_bdaddr, &addr.bt_bdaddr) == 0)
 			if (bdaddr_any(&src->bt_bdaddr) == 0)
 				continue;
 
-		l2cap_peeraddr(rs->rs_l2cap, &addr);
+		l2cap_peeraddr_pcb(rs->rs_l2cap, &addr);
 
 		if (addr.bt_psm != dest->bt_psm)
 			continue;
