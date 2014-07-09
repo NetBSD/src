@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.13 2014/07/07 17:13:56 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.14 2014/07/09 04:54:04 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.13 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.14 2014/07/09 04:54:04 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -102,6 +102,22 @@ mpls_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 
 static int
 mpls_stat(struct socket *so, struct stat *ub)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+mpls_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+mpls_sockaddr(struct socket *so, struct mbuf *nam)
 {
 	KASSERT(solocked(so));
 
@@ -201,6 +217,8 @@ PR_WRAP_USRREQS(mpls)
 #define	mpls_detach	mpls_detach_wrapper
 #define	mpls_ioctl	mpls_ioctl_wrapper
 #define	mpls_stat	mpls_stat_wrapper
+#define	mpls_peeraddr	mpls_peeraddr_wrapper
+#define	mpls_sockaddr	mpls_sockaddr_wrapper
 #define	mpls_usrreq	mpls_usrreq_wrapper
 
 static const struct pr_usrreqs mpls_usrreqs = {
@@ -208,6 +226,8 @@ static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_detach	= mpls_detach,
 	.pr_ioctl	= mpls_ioctl,
 	.pr_stat	= mpls_stat,
+	.pr_peeraddr	= mpls_peeraddr,
+	.pr_sockaddr	= mpls_sockaddr,
 	.pr_generic	= mpls_usrreq,
 };
 

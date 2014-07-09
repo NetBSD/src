@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.33 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.34 2014/07/09 04:54:04 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.33 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.34 2014/07/09 04:54:04 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -498,6 +498,38 @@ key_stat(struct socket *so, struct stat *ub)
 	return 0;
 }
 
+static int
+key_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct rawcb *rp = sotorawcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(rp != NULL);
+	KASSERT(nam != NULL);
+
+	if (rp->rcb_faddr == NULL)
+		return ENOTCONN;
+
+	raw_setpeeraddr(rp, nam);
+	return 0;
+}
+
+static int
+key_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct rawcb *rp = sotorawcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(rp != NULL);
+	KASSERT(nam != NULL);
+
+	if (rp->rcb_faddr == NULL)
+		return ENOTCONN;
+
+	raw_setsockaddr(rp, nam);
+	return 0;
+}
+
 /*
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
@@ -512,6 +544,8 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	s = splsoftnet();
 	error = raw_usrreq(so, req, m, nam, control, l);
@@ -532,6 +566,8 @@ PR_WRAP_USRREQS(key)
 #define	key_detach	key_detach_wrapper
 #define	key_ioctl	key_ioctl_wrapper
 #define	key_stat	key_stat_wrapper
+#define	key_peeraddr	key_peeraddr_wrapper
+#define	key_sockaddr	key_sockaddr_wrapper
 #define	key_usrreq	key_usrreq_wrapper
 
 const struct pr_usrreqs key_usrreqs = {
@@ -539,6 +575,8 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_detach	= key_detach,
 	.pr_ioctl	= key_ioctl,
 	.pr_stat	= key_stat,
+	.pr_peeraddr	= key_peeraddr,
+	.pr_sockaddr	= key_sockaddr,
 	.pr_generic	= key_usrreq,
 };
 

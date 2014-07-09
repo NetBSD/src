@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.15 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.16 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.15 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.16 2014/07/09 04:54:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,12 +112,12 @@ rfcomm_bind(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 }
 
 /*
- * rfcomm_sockaddr(dlc, sockaddr)
+ * rfcomm_sockaddr_pcb(dlc, sockaddr)
  *
  * return local address
  */
 int
-rfcomm_sockaddr(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
+rfcomm_sockaddr_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &dlc->rd_laddr, sizeof(struct sockaddr_bt));
@@ -184,7 +184,7 @@ rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 	if (rfcomm_dlc_lookup(rs, dlc->rd_dlci))
 		return EBUSY;
 
-	l2cap_sockaddr(rs->rs_l2cap, &dlc->rd_laddr);
+	l2cap_sockaddr_pcb(rs->rs_l2cap, &dlc->rd_laddr);
 
 	/*
 	 * attach the DLC to the session and start it off
@@ -200,12 +200,12 @@ rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 }
 
 /*
- * rfcomm_peeraddr(dlc, sockaddr)
+ * rfcomm_peeraddr_pcb(dlc, sockaddr)
  *
  * return remote address
  */
 int
-rfcomm_peeraddr(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
+rfcomm_peeraddr_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &dlc->rd_raddr, sizeof(struct sockaddr_bt));
@@ -332,7 +332,7 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 		return EADDRNOTAVAIL;
 
 	LIST_FOREACH(rs, &rfcomm_session_listen, rs_next) {
-		l2cap_sockaddr(rs->rs_l2cap, &addr);
+		l2cap_sockaddr_pcb(rs->rs_l2cap, &addr);
 
 		if (addr.bt_psm != dlc->rd_laddr.bt_psm)
 			continue;

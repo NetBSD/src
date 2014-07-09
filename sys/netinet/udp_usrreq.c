@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.206 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.207 2014/07/09 04:54:04 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.206 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.207 2014/07/09 04:54:04 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -910,6 +910,28 @@ udp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
+udp_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotoinpcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	in_setpeeraddr(sotoinpcb(so), nam);
+	return 0;
+}
+
+static int
+udp_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotoinpcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	in_setsockaddr(sotoinpcb(so), nam);
+	return 0;
+}
+
+static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
@@ -920,6 +942,8 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	s = splsoftnet();
 	if (req == PRU_PURGEIF) {
@@ -1028,14 +1052,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		m_freem(control);
 		m_freem(m);
 		error =  EOPNOTSUPP;
-		break;
-
-	case PRU_SOCKADDR:
-		in_setsockaddr(inp, nam);
-		break;
-
-	case PRU_PEERADDR:
-		in_setpeeraddr(inp, nam);
 		break;
 
 	default:
@@ -1268,6 +1284,8 @@ PR_WRAP_USRREQS(udp)
 #define	udp_detach	udp_detach_wrapper
 #define	udp_ioctl	udp_ioctl_wrapper
 #define	udp_stat	udp_stat_wrapper
+#define	udp_peeraddr	udp_peeraddr_wrapper
+#define	udp_sockaddr	udp_sockaddr_wrapper
 #define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
@@ -1275,5 +1293,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_detach	= udp_detach,
 	.pr_ioctl	= udp_ioctl,
 	.pr_stat	= udp_stat,
+	.pr_peeraddr	= udp_peeraddr,
+	.pr_sockaddr	= udp_sockaddr,
 	.pr_generic	= udp_usrreq,
 };
