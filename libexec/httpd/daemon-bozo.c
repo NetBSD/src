@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon-bozo.c,v 1.15 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.15.14.1 2014/07/09 09:44:56 msaitoh Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
