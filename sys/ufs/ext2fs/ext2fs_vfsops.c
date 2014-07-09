@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.182 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.183 2014/07/09 08:43:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.182 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.183 2014/07/09 08:43:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -248,7 +248,6 @@ ext2fs_done(void)
  *
  * Name is updated by mount(8) after booting.
  */
-#define ROOTNAME	"root_device"
 
 int
 ext2fs_mountroot(void)
