@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.13 2014/06/30 12:18:40 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.14 2014/07/09 09:51:22 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -629,3 +629,27 @@ sys/compat/netbsd32/netbsd32_event.c		1.11
 	Allocate directly KQ_NEVENTS bytes. Otherwise a user can panic the
 	system.
 	[maxv, ticket #1090]
+
+libexec/httpd/CHANGES				1.12-1.18
+libexec/httpd/Makefile				1.13-1.22
+libexec/httpd/Makefile.boot			1.6
+libexec/httpd/auth-bozo.c			1.11-1.13
+libexec/httpd/bozohttpd.8			1.33-1.46
+libexec/httpd/bozohttpd.c			1.31-1.54
+libexec/httpd/bozohttpd.h			1.21-1.32
+libexec/httpd/cgi-bozo.c			1.21-1.25
+libexec/httpd/content-bozo.c			1.8-1.10
+libexec/httpd/daemon-bozo.c			1.16-1.16
+libexec/httpd/dir-index-bozo.c			1.15-1.19
+libexec/httpd/lua-bozo.c			1.1-1.9
+libexec/httpd/main.c				1.6-1.7
+libexec/httpd/netbsd_queue.h			1.1
+libexec/httpd/printenv.lua			1.1-1.2
+libexec/httpd/ssl-bozo.c			1.14-1.16
+libexec/httpd/tilde-luzah-bozo.c		1.10
+libexec/httpd/libbozohttpd/Makefile		1.2
+libexec/httpd/libbozohttpd/libbozohttpd.3	1.2-1.3
+libexec/httpd/small/Makefile			1.2
+
+	Update bozohttpd from 20111118 to 20140708.
+	[mrg, ticket #1095]
