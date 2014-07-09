@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.22 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.23 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.22 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.23 2014/07/09 04:54:03 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -138,6 +138,36 @@ rfcomm_stat(struct socket *so, struct stat *ub)
 	return 0;
 }
 
+static int
+rfcomm_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return rfcomm_peeraddr_pcb(pcb, sa);
+}
+
+static int
+rfcomm_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return rfcomm_sockaddr_pcb(pcb, sa);
+}
+
 /*
  * User Request.
  * up is socket
@@ -167,6 +197,8 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	switch (req) {
 	case PRU_PURGEIF:
@@ -213,18 +245,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		soisconnecting(up);
 		return rfcomm_connect(pcb, sa);
 
-	case PRU_PEERADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_peeraddr(pcb, sa);
-
-	case PRU_SOCKADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_sockaddr(pcb, sa);
-
 	case PRU_SHUTDOWN:
 		socantsendmore(up);
 		break;
@@ -256,7 +276,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_peeraddr(pcb, sa);
+		return rfcomm_peeraddr_pcb(pcb, sa);
 
 	case PRU_CONNECT2:
 	case PRU_SENDOOB:
@@ -437,6 +457,8 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_detach		rfcomm_detach_wrapper
 #define	rfcomm_ioctl		rfcomm_ioctl_wrapper
 #define	rfcomm_stat		rfcomm_stat_wrapper
+#define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
+#define	rfcomm_sockaddr		rfcomm_sockaddr_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct pr_usrreqs rfcomm_usrreqs = {
@@ -444,5 +466,7 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_detach	= rfcomm_detach,
 	.pr_ioctl	= rfcomm_ioctl,
 	.pr_stat	= rfcomm_stat,
+	.pr_peeraddr	= rfcomm_peeraddr,
+	.pr_sockaddr	= rfcomm_sockaddr,
 	.pr_generic	= rfcomm_usrreq,
 };

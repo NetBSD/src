@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.13 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.14 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.13 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.14 2014/07/09 04:54:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,12 +118,12 @@ l2cap_bind(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 }
 
 /*
- * l2cap_sockaddr(l2cap_channel, sockaddr)
+ * l2cap_sockaddr_pcb(l2cap_channel, sockaddr)
  *
  *	get local address of channel
  */
 int
-l2cap_sockaddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
+l2cap_sockaddr_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &chan->lc_laddr, sizeof(struct sockaddr_bt));
@@ -209,12 +209,12 @@ fail:
 }
 
 /*
- * l2cap_peeraddr(l2cap_channel, sockaddr)
+ * l2cap_peeraddr_pcb(l2cap_channel, sockaddr)
  *
  *	get remote address of channel
  */
 int
-l2cap_peeraddr(struct l2cap_channel *chan, struct sockaddr_bt *addr)
+l2cap_peeraddr_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
 
 	memcpy(addr, &chan->lc_raddr, sizeof(struct sockaddr_bt));

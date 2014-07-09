@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.157 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.158 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.157 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.158 2014/07/09 04:54:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,6 +378,8 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	KASSERT(solocked(so));
 	unp = sotounpcb(so);
@@ -638,14 +640,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_SOCKADDR:
-		unp_setaddr(so, nam, false);
-		break;
-
-	case PRU_PEERADDR:
-		unp_setaddr(so, nam, true);
-		break;
-
 	default:
 		panic("piusrreq");
 	}
@@ -880,6 +874,28 @@ unp_stat(struct socket *so, struct stat *ub)
 	ub->st_atimespec = ub->st_mtimespec = ub->st_ctimespec = unp->unp_ctime;
 	ub->st_ino = unp->unp_ino;
 	return (0);
+}
+
+static int
+unp_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotounpcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	unp_setaddr(so, nam, true);
+	return 0;
+}
+
+static int
+unp_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotounpcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	unp_setaddr(so, nam, false);
+	return 0;
 }
 
 /*
@@ -1829,5 +1845,7 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_detach	= unp_detach,
 	.pr_ioctl	= unp_ioctl,
 	.pr_stat	= unp_stat,
+	.pr_peeraddr	= unp_peeraddr,
+	.pr_sockaddr	= unp_sockaddr,
 	.pr_generic	= unp_usrreq,
 };

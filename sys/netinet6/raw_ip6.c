@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.125 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.126 2014/07/09 04:54:04 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.125 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.126 2014/07/09 04:54:04 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -659,6 +659,28 @@ rip6_stat(struct socket *so, struct stat *ub)
 	return 0;
 }
 
+static int
+rip6_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotoin6pcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	in6_setpeeraddr(sotoin6pcb(so), nam);
+	return 0;
+}
+
+static int
+rip6_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotoin6pcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	in6_setsockaddr(sotoin6pcb(so), nam);
+	return 0;
+}
+
 int
 rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
 	struct mbuf *nam, struct mbuf *control, struct lwp *l)
@@ -668,6 +690,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -847,14 +871,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_SOCKADDR:
-		in6_setsockaddr(in6p, nam);
-		break;
-
-	case PRU_PEERADDR:
-		in6_setpeeraddr(in6p, nam);
-		break;
-
 	default:
 		panic("rip6_usrreq");
 	}
@@ -907,6 +923,8 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_detach		rip6_detach_wrapper
 #define	rip6_ioctl		rip6_ioctl_wrapper
 #define	rip6_stat		rip6_stat_wrapper
+#define	rip6_peeraddr		rip6_peeraddr_wrapper
+#define	rip6_sockaddr		rip6_sockaddr_wrapper
 #define	rip6_usrreq		rip6_usrreq_wrapper
 
 const struct pr_usrreqs rip6_usrreqs = {
@@ -914,5 +932,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_detach	= rip6_detach,
 	.pr_ioctl	= rip6_ioctl,
 	.pr_stat	= rip6_stat,
+	.pr_peeraddr	= rip6_peeraddr,
+	.pr_sockaddr	= rip6_sockaddr,
 	.pr_generic	= rip6_usrreq,
 };

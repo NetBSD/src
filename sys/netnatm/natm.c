@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.35 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.36 2014/07/09 04:54:04 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.35 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.36 2014/07/09 04:54:04 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -145,6 +145,34 @@ natm_stat(struct socket *so, struct stat *ub)
   return 0;
 }
 
+static int
+natm_peeraddr(struct socket *so, struct mbuf *nam)
+{
+  struct natmpcb *npcb = (struct natmpcb *) so->so_pcb;
+  struct sockaddr_natm *snatm;
+
+  KASSERT(solocked(so));
+  KASSERT(pcb != NULL);
+  KASSERT(nam != NULL);
+
+  snatm = mtod(nam, struct sockaddr_natm *);
+  memset(snatm, 0, sizeof(*snatm));
+  nam->m_len = snatm->snatm_len = sizeof(*snatm);
+  snatm->snatm_family = AF_NATM;
+  memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
+  snatm->snatm_vci = npcb->npcb_vci;
+  snatm->snatm_vpi = npcb->npcb_vpi;
+  return 0;
+}
+
+static int
+natm_sockaddr(struct socket *so, struct mbuf *nam)
+{
+  KASSERT(solocked(so));
+
+  return EOPNOTSUPP;
+}
+
 /*
  * user requests
  */
@@ -165,6 +193,8 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   KASSERT(req != PRU_DETACH);
   KASSERT(req != PRU_CONTROL);
   KASSERT(req != PRU_SENSE);
+  KASSERT(req != PRU_PEERADDR);
+  KASSERT(req != PRU_SOCKADDR);
 
   s = SPLSOFTNET();
 
@@ -301,16 +331,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
       break;
 
-    case PRU_PEERADDR:			/* fetch peer's address */
-      snatm = mtod(nam, struct sockaddr_natm *);
-      memset(snatm, 0, sizeof(*snatm));
-      nam->m_len = snatm->snatm_len = sizeof(*snatm);
-      snatm->snatm_family = AF_NATM;
-      memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
-      snatm->snatm_vci = npcb->npcb_vci;
-      snatm->snatm_vpi = npcb->npcb_vpi;
-      break;
-
     case PRU_BIND:			/* bind socket to address */
     case PRU_LISTEN:			/* listen for connection */
     case PRU_ACCEPT:			/* accept connection from peer */
@@ -324,7 +344,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     case PRU_SENDOOB:			/* send out of band data */
     case PRU_PROTORCV:			/* receive from below */
     case PRU_PROTOSEND:			/* send to below */
-    case PRU_SOCKADDR:			/* fetch socket's address */
 #ifdef DIAGNOSTIC
       printf("natm: PRU #%d unsupported\n", req);
 #endif
@@ -422,6 +441,8 @@ PR_WRAP_USRREQS(natm)
 #define	natm_detach	natm_detach_wrapper
 #define	natm_ioctl	natm_ioctl_wrapper
 #define	natm_stat	natm_stat_wrapper
+#define	natm_peeraddr	natm_peeraddr_wrapper
+#define	natm_sockaddr	natm_sockaddr_wrapper
 #define	natm_usrreq	natm_usrreq_wrapper
 
 const struct pr_usrreqs natm_usrreqs = {
@@ -429,5 +450,7 @@ const struct pr_usrreqs natm_usrreqs = {
 	.pr_detach	= natm_detach,
 	.pr_ioctl	= natm_ioctl,
 	.pr_stat	= natm_stat,
+	.pr_peeraddr	= natm_peeraddr,
+	.pr_sockaddr	= natm_sockaddr,
 	.pr_generic	= natm_usrreq,
 };

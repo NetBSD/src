@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.11 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.12 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.11 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.12 2014/07/09 04:54:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,12 +98,12 @@ sco_bind(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 }
 
 /*
- * sco_sockaddr(pcb, sockaddr)
+ * sco_sockaddr_pcb(pcb, sockaddr)
  *
  *	Copy local address of PCB to sockaddr
  */
 int
-sco_sockaddr(struct sco_pcb *pcb, struct sockaddr_bt *addr)
+sco_sockaddr_pcb(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 {
 
 	memset(addr, 0, sizeof(struct sockaddr_bt));
@@ -177,12 +177,12 @@ sco_connect(struct sco_pcb *pcb, struct sockaddr_bt *dest)
 }
 
 /*
- * sco_peeraddr(pcb, sockaddr)
+ * sco_peeraddr_pcb(pcb, sockaddr)
  *
  *	Copy remote address of SCO pcb to sockaddr
  */
 int
-sco_peeraddr(struct sco_pcb *pcb, struct sockaddr_bt *addr)
+sco_peeraddr_pcb(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 {
 
 	memset(addr, 0, sizeof(struct sockaddr_bt));

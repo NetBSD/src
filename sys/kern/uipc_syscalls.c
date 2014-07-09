@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.170 2014/05/18 14:46:15 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.171 2014/07/09 04:54:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.170 2014/05/18 14:46:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.171 2014/07/09 04:54:03 rtr Exp $");
 
 #include "opt_pipe.h"
 
@@ -1296,10 +1296,10 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 #endif /* PIPE_SOCKETPAIR */
 
 /*
- * Get socket name.
+ * Get peer socket name.
  */
 int
-do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
+do_sys_getpeername(int fd, struct mbuf **nam)
 {
 	struct socket	*so;
 	struct mbuf	*m;
@@ -1312,13 +1312,38 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 	MCLAIM(m, so->so_mowner);
 
 	solock(so);
-	if (which == PRU_PEERADDR && (so->so_state & SS_ISCONNECTED) == 0) {
+	if ((so->so_state & SS_ISCONNECTED) == 0)
 		error = ENOTCONN;
-	} else {
+	else {
 		*nam = m;
-		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-		    which, NULL, m, NULL, NULL);
+		error = (*so->so_proto->pr_usrreqs->pr_peeraddr)(so, m);
 	}
+	sounlock(so);
+	if (error != 0)
+		m_free(m);
+	fd_putfile(fd);
+	return error;
+}
+
+/*
+ * Get local socket name.
+ */
+int
+do_sys_getsockname(int fd, struct mbuf **nam)
+{
+	struct socket	*so;
+	struct mbuf	*m;
+	int		error;
+
+	if ((error = fd_getsock(fd, &so)) != 0)
+		return error;
+
+	m = m_getclr(M_WAIT, MT_SONAME);
+	MCLAIM(m, so->so_mowner);
+
+	*nam = m;
+	solock(so);
+	error = (*so->so_proto->pr_usrreqs->pr_sockaddr)(so, m);
 	sounlock(so);
 	if (error != 0)
 		m_free(m);
@@ -1382,7 +1407,7 @@ sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap,
 	struct mbuf	*m;
 	int		error;
 
-	error = do_sys_getsockname(l, SCARG(uap, fdes), PRU_SOCKADDR, &m);
+	error = do_sys_getsockname(SCARG(uap, fdes), &m);
 	if (error != 0)
 		return error;
 
@@ -1408,7 +1433,7 @@ sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap,
 	struct mbuf	*m;
 	int		error;
 
-	error = do_sys_getsockname(l, SCARG(uap, fdes), PRU_PEERADDR, &m);
+	error = do_sys_getpeername(SCARG(uap, fdes), &m);
 	if (error != 0)
 		return error;
 

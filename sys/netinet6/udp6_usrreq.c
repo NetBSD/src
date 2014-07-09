@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.105 2014/07/07 17:13:56 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.106 2014/07/09 04:54:04 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.105 2014/07/07 17:13:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.106 2014/07/09 04:54:04 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -702,6 +702,28 @@ udp6_stat(struct socket *so, struct stat *ub)
 	return 0;
 }
 
+static int
+udp6_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotoin6pcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	in6_setpeeraddr(sotoin6pcb(so), nam);
+	return 0;
+}
+
+static int
+udp6_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotoin6pcb(so) != NULL);
+	KASSERT(nam != NULL);
+
+	in6_setsockaddr(sotoin6pcb(so), nam);
+	return 0;
+}
+
 int
 udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
@@ -713,6 +735,8 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -773,14 +797,6 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	case PRU_ABORT:
 		soisdisconnected(so);
 		in6_pcbdetach(in6p);
-		break;
-
-	case PRU_SOCKADDR:
-		in6_setsockaddr(in6p, addr6);
-		break;
-
-	case PRU_PEERADDR:
-		in6_setpeeraddr(in6p, addr6);
 		break;
 
 	case PRU_LISTEN:
@@ -883,6 +899,8 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_detach	udp6_detach_wrapper
 #define	udp6_ioctl	udp6_ioctl_wrapper
 #define	udp6_stat	udp6_stat_wrapper
+#define	udp6_peeraddr	udp6_peeraddr_wrapper
+#define	udp6_sockaddr	udp6_sockaddr_wrapper
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
@@ -890,5 +908,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pr_detach	= udp6_detach,
 	.pr_ioctl	= udp6_ioctl,
 	.pr_stat	= udp6_stat,
+	.pr_peeraddr	= udp6_peeraddr,
+	.pr_sockaddr	= udp6_sockaddr,
 	.pr_generic	= udp6_usrreq,
 };
