@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.5,v 1.1.2.10 2014/06/30 11:00:06 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.5,v 1.1.2.11 2014/07/09 16:12:11 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.4 release to the NetBSD 5.1.5
 release:
@@ -125,3 +125,62 @@ sys/compat/freebsd/freebsd_sched.c		1.20-1.21
 	Avoid NULL dereference and fix sched param conversion.
 	Pointed out by Maxime Villard.
 	[maxv, ticket #1909]
+
+libexec/httpd/CHANGES				1.3-1.18
+libexec/httpd/Makefile				1.8-1.22 via patch
+libexec/httpd/Makefile.boot			1.3-1.6
+libexec/httpd/auth-bozo.c			1.5-1.13
+libexec/httpd/bozohttpd.8			1.6-1.46
+libexec/httpd/bozohttpd.c			1.8,1.12-1.54
+libexec/httpd/bozohttpd.h			1.8-1.32
+libexec/httpd/cgi-bozo.c			1.11-1.25
+libexec/httpd/content-bozo.c			1.4-1.10
+libexec/httpd/daemon-bozo.c			1.5-1.16
+libexec/httpd/dir-index-bozo.c			1.6-1.19
+libexec/httpd/ssl-bozo.c			1.5-1.16
+libexec/httpd/tilde-luzah-bozo.c		1.5-1.10
+libexec/httpd/lua-bozo.c			1.1-1.9
+libexec/httpd/main.c				1.1-1.7
+libexec/httpd/netbsd_queue.h			1.1
+libexec/httpd/printenv.lua			1.1-1.2
+libexec/httpd/debug/Makefile			1.1
+libexec/httpd/libbozohttpd/Makefile		1.2
+libexec/httpd/libbozohttpd/libbozohttpd.3	1.3
+libexec/httpd/libbozohttpd/shlib_version	1.1
+libexec/httpd/lua/Makefile			1.1
+libexec/httpd/lua/bozo.lua			1.1
+libexec/httpd/lua/glue.c			1.1
+libexec/httpd/lua/optparse.lua			1.1
+libexec/httpd/lua/shlib_version			1.1
+libexec/httpd/small/Makefile			1.1-1.2
+libexec/httpd/testsuite/Makefile		1.4
+libexec/httpd/testsuite/html_cmp		1.4
+libexec/httpd/testsuite/t1.in			1.3
+libexec/httpd/testsuite/t1.out			1.3
+libexec/httpd/testsuite/t10.in			1.1
+libexec/httpd/testsuite/t10.out			1.1
+libexec/httpd/testsuite/t2.in			1.3
+libexec/httpd/testsuite/t2.out			1.3
+libexec/httpd/testsuite/t3.in			1.3
+libexec/httpd/testsuite/t3.out			1.3
+libexec/httpd/testsuite/t4.in			1.3
+libexec/httpd/testsuite/t4.out			1.3
+libexec/httpd/testsuite/t5.in			1.3
+libexec/httpd/testsuite/t5.out			1.3
+libexec/httpd/testsuite/t6.in			1.3
+libexec/httpd/testsuite/t6.out			1.3
+libexec/httpd/testsuite/t7.in			1.3
+libexec/httpd/testsuite/t7.out			1.3
+libexec/httpd/testsuite/t8.in			1.3
+libexec/httpd/testsuite/t8.out			1.3
+libexec/httpd/testsuite/t9.in			1.3
+libexec/httpd/testsuite/t9.out			1.3
+libexec/httpd/testsuite/test-bigfile		1.1
+libexec/httpd/testsuite/data/bigfile		1.1
+libexec/httpd/testsuite/data/bigfile.partial4000 1.1
+libexec/httpd/testsuite/data/bigfile.partial8000 1.1
+libexec/httpd/testsuite/data/file		1.3
+libexec/httpd/testsuite/data/index.html		1.3
+
+	Update bozohttpd from 20080303+patches to 20140708.
+	[mrg, ticket #1913]
