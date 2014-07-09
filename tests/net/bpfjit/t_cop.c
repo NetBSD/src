@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cop.c,v 1.1 2014/07/09 13:49:49 alnsn Exp $ */
+/*	$NetBSD: t_cop.c,v 1.2 2014/07/09 15:56:12 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cop.c,v 1.1 2014/07/09 13:49:49 alnsn Exp $");
+__RCSID("$NetBSD: t_cop.c,v 1.2 2014/07/09 15:56:12 alnsn Exp $");
 
 #include <stdint.h>
 #include <string.h>
@@ -467,7 +467,7 @@ ATF_TC_BODY(bpfjit_copx_ret_buflen, tc)
 
 	ATF_CHECK(code(&ctx, &args) == sizeof(pkt));
 
-	rump_unschedule();
+	rump_schedule();
 	rumpns_bpfjit_free_code(code);
 	rump_unschedule();
 }
