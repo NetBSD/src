@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/08/11 23:15:37 joerg Exp $
+# $NetBSD: Makefile,v 1.9 2014/07/09 20:22:55 riastradh Exp $
 
 MODULE=	r200
 
@@ -30,7 +30,6 @@ SRCS=	\
 	r200_state.c \
 	r200_state_init.c \
 	r200_cmdbuf.c \
-	r200_pixel.c \
 	r200_tex.c \
 	r200_texstate.c \
 	r200_tcl.c \
@@ -47,13 +46,6 @@ SRCS+= \
 	radeon_cs.c
 
 LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
-
-# XXX
-.if ${MACHINE_ARCH} == "sparc64"
-COPTS.r200_tcl.c=	-Wno-error
-.endif
-
-COPTS.radeon_screen.c=  -Wno-error	# XXX const
 
 CWARNFLAGS.clang+=	-Wno-format -Wno-constant-logical-operand \
 			-Wno-empty-body
