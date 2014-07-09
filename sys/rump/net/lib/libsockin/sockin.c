@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.48 2014/07/09 14:41:43 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.49 2014/07/09 15:37:55 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.48 2014/07/09 14:41:43 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.49 2014/07/09 15:37:55 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -284,7 +284,7 @@ sockin_process(struct socket *so)
 }
 
 static void
-sockin_accept(struct socket *so)
+sockin_waccept(struct socket *so)
 {
 	struct socket *nso;
 	struct sockaddr_in6 sin;
@@ -363,7 +363,7 @@ sockinworker(void *arg)
 						so = su_iter->su_so;
 						mutex_exit(&su_mtx);
 						if(so->so_options&SO_ACCEPTCONN)
-							sockin_accept(so);
+							sockin_waccept(so);
 						else
 							sockin_process(so);
 						mutex_enter(&su_mtx);
