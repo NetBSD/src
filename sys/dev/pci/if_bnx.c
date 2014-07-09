@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.56 2014/07/01 17:11:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.57 2014/07/09 16:30:11 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.56 2014/07/01 17:11:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.57 2014/07/09 16:30:11 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -828,6 +828,9 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(dict, "shared_hwcfg",sc->bnx_shared_hw_cfg);
 	prop_dictionary_set_uint32(dict, "port_hwcfg", sc->bnx_port_hw_cfg);
 
+	/* Print some useful adapter info */
+	bnx_print_adapter_info(sc);
+
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
@@ -852,8 +855,6 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/* Finally, print some useful adapter info */
-	bnx_print_adapter_info(sc);
 	/* Print some important debugging info. */
 	DBRUN(BNX_INFO, bnx_dump_driver_state(sc));
 
