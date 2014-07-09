@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.154 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.155 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.154 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.155 2014/07/09 14:41:42 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -224,6 +224,16 @@ COMPATNAME(route_detach)(struct socket *so)
 }
 
 static int
+COMPATNAME(route_accept)(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	panic("route_accept");
+	/* NOT REACHED */
+	return EOPNOTSUPP;
+}
+
+static int
 COMPATNAME(route_ioctl)(struct socket *so, u_long cmd, void *nam,
     struct ifnet * ifp)
 {
@@ -278,6 +288,7 @@ COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -1378,6 +1389,7 @@ PR_WRAP_USRREQS(compat_50_route);
 static const struct pr_usrreqs route_usrreqs = {
 	.pr_attach	= COMPATNAME(route_attach_wrapper),
 	.pr_detach	= COMPATNAME(route_detach_wrapper),
+	.pr_accept	= COMPATNAME(route_accept_wrapper),
 	.pr_ioctl	= COMPATNAME(route_ioctl_wrapper),
 	.pr_stat	= COMPATNAME(route_stat_wrapper),
 	.pr_peeraddr	= COMPATNAME(route_peeraddr_wrapper),

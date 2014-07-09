@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.106 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.107 2014/07/09 14:41:42 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.106 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.107 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -678,6 +678,14 @@ udp6_detach(struct socket *so)
 }
 
 static int
+udp6_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 udp6_ioctl(struct socket *so, u_long cmd, void *addr6, struct ifnet *ifp)
 {
 	/*
@@ -733,6 +741,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -801,7 +810,6 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 
 	case PRU_LISTEN:
 	case PRU_CONNECT2:
-	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -897,6 +905,7 @@ udp6_statinc(u_int stat)
 PR_WRAP_USRREQS(udp6)
 #define	udp6_attach	udp6_attach_wrapper
 #define	udp6_detach	udp6_detach_wrapper
+#define	udp6_accept	udp6_accept_wrapper
 #define	udp6_ioctl	udp6_ioctl_wrapper
 #define	udp6_stat	udp6_stat_wrapper
 #define	udp6_peeraddr	udp6_peeraddr_wrapper
@@ -906,6 +915,7 @@ PR_WRAP_USRREQS(udp6)
 const struct pr_usrreqs udp6_usrreqs = {
 	.pr_attach	= udp6_attach,
 	.pr_detach	= udp6_detach,
+	.pr_accept	= udp6_accept,
 	.pr_ioctl	= udp6_ioctl,
 	.pr_stat	= udp6_stat,
 	.pr_peeraddr	= udp6_peeraddr,

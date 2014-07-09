@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.24 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.25 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.24 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.25 2014/07/09 14:41:42 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -108,6 +108,23 @@ sco_detach(struct socket *so)
 }
 
 static int
+sco_accept(struct socket *so, struct mbuf *nam)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return sco_peeraddr_pcb(pcb, sa);
+}
+
+static int
 sco_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
@@ -174,6 +191,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	DPRINTFN(2, "%s\n", prurequests[req]);
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -258,12 +276,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_LISTEN:
 		return sco_listen(pcb);
-
-	case PRU_ACCEPT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_peeraddr_pcb(pcb, sa);
 
 	case PRU_CONNECT2:
 	case PRU_SENDOOB:
@@ -409,6 +421,7 @@ PR_WRAP_USRREQS(sco)
 
 #define	sco_attach		sco_attach_wrapper
 #define	sco_detach		sco_detach_wrapper
+#define	sco_accept		sco_accept_wrapper
 #define	sco_ioctl		sco_ioctl_wrapper
 #define	sco_stat		sco_stat_wrapper
 #define	sco_peeraddr		sco_peeraddr_wrapper
@@ -418,6 +431,7 @@ PR_WRAP_USRREQS(sco)
 const struct pr_usrreqs sco_usrreqs = {
 	.pr_attach	= sco_attach,
 	.pr_detach	= sco_detach,
+	.pr_accept	= sco_accept,
 	.pr_ioctl	= sco_ioctl,
 	.pr_stat	= sco_stat,
 	.pr_peeraddr	= sco_peeraddr,
