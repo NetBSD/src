@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.50 2014/07/06 03:33:33 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.51 2014/07/09 04:54:04 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -240,6 +240,8 @@ struct pr_usrreqs {
 	void	(*pr_detach)(struct socket *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
 	int	(*pr_stat)(struct socket *, struct stat *);
+	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
+	int	(*pr_sockaddr)(struct socket *, struct mbuf *);
 	int	(*pr_generic)(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
 };
@@ -307,6 +309,24 @@ name##_stat_wrapper(struct socket *a, struct stat *b)	\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_stat(a, b);				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_peeraddr_wrapper(struct socket *a, struct mbuf *b)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_peeraddr(a, b);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_sockaddr_wrapper(struct socket *a, struct mbuf *b)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_sockaddr(a, b);			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\
