@@ -1,0 +1,843 @@
+Script started on Thu Jul 10 00:40:27 2014
+amd64(msaitoh)% patchj [K -p0 <~/bozo-netbsd-0[K5.diff 
+Hmm...  Looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: CHANGES
+|===================================================================
+|RCS file: CHANGES
+|diff -N CHANGES
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- CHANGES	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file CHANGES...)
+Patching file CHANGES using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: Makefile
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/Makefile,v
+|retrieving revision 1.7
+|diff -p -r1.7 Makefile
+|*** Makefile	25 Apr 2008 17:34:38 -0000	1.7
+|--- Makefile	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file Makefile using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 13.
+Hunk #3 succeeded at 45.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: Makefile.boot
+|===================================================================
+|RCS file: Makefile.boot
+|diff -N Makefile.boot
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- Makefile.boot	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file Makefile.boot...)
+Patching file Makefile.boot using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: auth-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/auth-bozo.c,v
+|retrieving revision 1.4
+|diff -p -r1.4 auth-bozo.c
+|*** auth-bozo.c	3 Mar 2008 22:15:08 -0000	1.4
+|--- auth-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file auth-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 37.
+Hunk #4 succeeded at 52.
+Hunk #5 succeeded at 69.
+Hunk #6 succeeded at 99.
+Hunk #7 succeeded at 161.
+Hunk #8 succeeded at 238.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: bozohttpd.8
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/bozohttpd.8,v
+|retrieving revision 1.5
+|diff -p -r1.5 bozohttpd.8
+|*** bozohttpd.8	13 Sep 2008 14:00:34 -0000	1.5
+|--- bozohttpd.8	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file bozohttpd.8 using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 13.
+Hunk #3 succeeded at 26.
+Hunk #4 succeeded at 68.
+Hunk #5 succeeded at 97.
+Hunk #6 succeeded at 115.
+Hunk #7 succeeded at 208.
+Hunk #8 succeeded at 233.
+Hunk #9 succeeded at 249.
+Hunk #10 succeeded at 262.
+Hunk #11 succeeded at 280.
+Hunk #12 succeeded at 294.
+Hunk #13 succeeded at 322.
+Hunk #14 succeeded at 357.
+Hunk #15 succeeded at 368.
+Hunk #16 succeeded at 400.
+Hunk #17 succeeded at 410.
+Hunk #18 succeeded at 468.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: bozohttpd.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/bozohttpd.c,v
+|retrieving revision 1.7.8.4
+|diff -p -r1.7.8.4 bozohttpd.c
+|*** bozohttpd.c	15 Oct 2010 23:25:45 -0000	1.7.8.4
+|--- bozohttpd.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file bozohttpd.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 55.
+Hunk #4 succeeded at 88.
+Hunk #5 succeeded at 120.
+Hunk #6 succeeded at 154.
+Hunk #7 succeeded at 161.
+Hunk #8 succeeded at 293.
+Hunk #9 succeeded at 365.
+Hunk #10 succeeded at 680.
+Hunk #11 succeeded at 711.
+Hunk #12 succeeded at 755.
+Hunk #13 succeeded at 847.
+Hunk #14 succeeded at 1147.
+Hunk #15 succeeded at 1163.
+Hunk #16 succeeded at 1358.
+Hunk #17 succeeded at 1750.
+Hunk #18 succeeded at 1769.
+Hunk #19 succeeded at 1784.
+Hunk #20 succeeded at 1888.
+Hunk #21 succeeded at 2001.
+Hunk #22 succeeded at 2025.
+Hunk #23 succeeded at 2062.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: bozohttpd.h
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/bozohttpd.h,v
+|retrieving revision 1.5.8.2
+|diff -p -r1.5.8.2 bozohttpd.h
+|*** bozohttpd.h	18 Feb 2009 00:05:41 -0000	1.5.8.2
+|--- bozohttpd.h	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file bozohttpd.h using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 29.
+Hunk #4 succeeded at 140.
+Hunk #5 succeeded at 199.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: cgi-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/cgi-bozo.c,v
+|retrieving revision 1.7.8.3
+|diff -p -r1.7.8.3 cgi-bozo.c
+|*** cgi-bozo.c	24 Feb 2009 03:15:07 -0000	1.7.8.3
+|--- cgi-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file cgi-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 43.
+Hunk #4 succeeded at 53.
+Hunk #5 succeeded at 332.
+Hunk #6 succeeded at 342.
+Hunk #7 succeeded at 372.
+Hunk #8 succeeded at 382.
+Hunk #9 succeeded at 438.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: content-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/content-bozo.c,v
+|retrieving revision 1.3
+|diff -p -r1.3 content-bozo.c
+|*** content-bozo.c	3 Mar 2008 22:15:09 -0000	1.3
+|--- content-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file content-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 34.
+Hunk #4 succeeded at 46.
+Hunk #5 succeeded at 212.
+Hunk #6 succeeded at 277.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: daemon-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/daemon-bozo.c,v
+|retrieving revision 1.4
+|diff -p -r1.4 daemon-bozo.c
+|*** daemon-bozo.c	2 May 2008 19:14:03 -0000	1.4
+|--- daemon-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file daemon-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 40.
+Hunk #4 succeeded at 267.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: dir-index-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/dir-index-bozo.c,v
+|retrieving revision 1.4.8.1
+|diff -p -r1.4.8.1 dir-index-bozo.c
+|*** dir-index-bozo.c	8 Feb 2009 20:30:20 -0000	1.4.8.1
+|--- dir-index-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file dir-index-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 39.
+Hunk #4 succeeded at 140.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: lua-bozo.c
+|===================================================================
+|RCS file: lua-bozo.c
+|diff -N lua-bozo.c
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- lua-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file lua-bozo.c...)
+Patching file lua-bozo.c using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: main.c
+|===================================================================
+|RCS file: main.c
+|diff -N main.c
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- main.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file main.c...)
+Patching file main.c using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: netbsd_queue.h
+|===================================================================
+|RCS file: netbsd_queue.h
+|diff -N netbsd_queue.h
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- netbsd_queue.h	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file netbsd_queue.h...)
+Patching file netbsd_queue.h using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: printenv.lua
+|===================================================================
+|RCS file: printenv.lua
+|diff -N printenv.lua
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- printenv.lua	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file printenv.lua...)
+Patching file printenv.lua using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: ssl-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/ssl-bozo.c,v
+|retrieving revision 1.4
+|diff -p -r1.4 ssl-bozo.c
+|*** ssl-bozo.c	10 May 2008 19:25:20 -0000	1.4
+|--- ssl-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file ssl-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 32.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: tilde-luzah-bozo.c
+|===================================================================
+|RCS file: /cvsroot/src/libexec/httpd/tilde-luzah-bozo.c,v
+|retrieving revision 1.3.8.1
+|diff -p -r1.3.8.1 tilde-luzah-bozo.c
+|*** tilde-luzah-bozo.c	8 Feb 2009 20:30:20 -0000	1.3.8.1
+|--- tilde-luzah-bozo.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+Patching file tilde-luzah-bozo.c using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 15.
+Hunk #3 succeeded at 38.
+Hunk #4 succeeded at 69.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: debug/Makefile
+|===================================================================
+|RCS file: debug/Makefile
+|diff -N debug/Makefile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- debug/Makefile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file debug/Makefile...)
+Patching file debug/Makefile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: libbozohttpd/Makefile
+|===================================================================
+|RCS file: libbozohttpd/Makefile
+|diff -N libbozohttpd/Makefile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- libbozohttpd/Makefile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file libbozohttpd/Makefile...)
+Patching file libbozohttpd/Makefile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: libbozohttpd/libbozohttpd.3
+|===================================================================
+|RCS file: libbozohttpd/libbozohttpd.3
+|diff -N libbozohttpd/libbozohttpd.3
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- libbozohttpd/libbozohttpd.3	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file libbozohttpd/libbozohttpd.3...)
+Patching file libbozohttpd/libbozohttpd.3 using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: libbozohttpd/shlib_version
+|===================================================================
+|RCS file: libbozohttpd/shlib_version
+|diff -N libbozohttpd/shlib_version
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- libbozohttpd/shlib_version	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file libbozohttpd/shlib_version...)
+Patching file libbozohttpd/shlib_version using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: lua/Makefile
+|===================================================================
+|RCS file: lua/Makefile
+|diff -N lua/Makefile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- lua/Makefile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file lua/Makefile...)
+Patching file lua/Makefile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: lua/bozo.lua
+|===================================================================
+|RCS file: lua/bozo.lua
+|diff -N lua/bozo.lua
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- lua/bozo.lua	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file lua/bozo.lua...)
+Patching file lua/bozo.lua using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: lua/glue.c
+|===================================================================
+|RCS file: lua/glue.c
+|diff -N lua/glue.c
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- lua/glue.c	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file lua/glue.c...)
+Patching file lua/glue.c using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: lua/optparse.lua
+|===================================================================
+|RCS file: lua/optparse.lua
+|diff -N lua/optparse.lua
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- lua/optparse.lua	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file lua/optparse.lua...)
+Patching file lua/optparse.lua using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: lua/shlib_version
+|===================================================================
+|RCS file: lua/shlib_version
+|diff -N lua/shlib_version
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- lua/shlib_version	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file lua/shlib_version...)
+Patching file lua/shlib_version using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: small/Makefile
+|===================================================================
+|RCS file: small/Makefile
+|diff -N small/Makefile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- small/Makefile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file small/Makefile...)
+Patching file small/Makefile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/Makefile
+|===================================================================
+|RCS file: testsuite/Makefile
+|diff -N testsuite/Makefile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/Makefile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/Makefile...)
+Patching file testsuite/Makefile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/html_cmp
+|===================================================================
+|RCS file: testsuite/html_cmp
+|diff -N testsuite/html_cmp
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/html_cmp	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/html_cmp...)
+Patching file testsuite/html_cmp using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t1.in
+|===================================================================
+|RCS file: testsuite/t1.in
+|diff -N testsuite/t1.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t1.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t1.in...)
+Patching file testsuite/t1.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t1.out
+|===================================================================
+|RCS file: testsuite/t1.out
+|diff -N testsuite/t1.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t1.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t1.out...)
+Patching file testsuite/t1.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t10.in
+|===================================================================
+|RCS file: testsuite/t10.in
+|diff -N testsuite/t10.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t10.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t10.in...)
+Patching file testsuite/t10.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx HTTP/1.0
+|Index: testsuite/t10.out
+|===================================================================
+|RCS file: testsuite/t10.out
+|diff -N testsuite/t10.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t10.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t10.out...)
+Patching file testsuite/t10.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t2.in
+|===================================================================
+|RCS file: testsuite/t2.in
+|diff -N testsuite/t2.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t2.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t2.in...)
+Patching file testsuite/t2.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t2.out
+|===================================================================
+|RCS file: testsuite/t2.out
+|diff -N testsuite/t2.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t2.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t2.out...)
+Patching file testsuite/t2.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t3.in
+|===================================================================
+|RCS file: testsuite/t3.in
+|diff -N testsuite/t3.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t3.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t3.in...)
+Patching file testsuite/t3.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t3.out
+|===================================================================
+|RCS file: testsuite/t3.out
+|diff -N testsuite/t3.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t3.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t3.out...)
+Patching file testsuite/t3.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t4.in
+|===================================================================
+|RCS file: testsuite/t4.in
+|diff -N testsuite/t4.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t4.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t4.in...)
+Patching file testsuite/t4.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t4.out
+|===================================================================
+|RCS file: testsuite/t4.out
+|diff -N testsuite/t4.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t4.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t4.out...)
+Patching file testsuite/t4.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t5.in
+|===================================================================
+|RCS file: testsuite/t5.in
+|diff -N testsuite/t5.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t5.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t5.in...)
+Patching file testsuite/t5.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t5.out
+|===================================================================
+|RCS file: testsuite/t5.out
+|diff -N testsuite/t5.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t5.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t5.out...)
+Patching file testsuite/t5.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t6.in
+|===================================================================
+|RCS file: testsuite/t6.in
+|diff -N testsuite/t6.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t6.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t6.in...)
+Patching file testsuite/t6.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t6.out
+|===================================================================
+|RCS file: testsuite/t6.out
+|diff -N testsuite/t6.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t6.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t6.out...)
+Patching file testsuite/t6.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t7.in
+|===================================================================
+|RCS file: testsuite/t7.in
+|diff -N testsuite/t7.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t7.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t7.in...)
+Patching file testsuite/t7.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t7.out
+|===================================================================
+|RCS file: testsuite/t7.out
+|diff -N testsuite/t7.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t7.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t7.out...)
+Patching file testsuite/t7.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t8.in
+|===================================================================
+|RCS file: testsuite/t8.in
+|diff -N testsuite/t8.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t8.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t8.in...)
+Patching file testsuite/t8.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t8.out
+|===================================================================
+|RCS file: testsuite/t8.out
+|diff -N testsuite/t8.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t8.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t8.out...)
+Patching file testsuite/t8.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t9.in
+|===================================================================
+|RCS file: testsuite/t9.in
+|diff -N testsuite/t9.in
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t9.in	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t9.in...)
+Patching file testsuite/t9.in using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/t9.out
+|===================================================================
+|RCS file: testsuite/t9.out
+|diff -N testsuite/t9.out
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/t9.out	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/t9.out...)
+Patching file testsuite/t9.out using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/test-bigfile
+|===================================================================
+|RCS file: testsuite/test-bigfile
+|diff -N testsuite/test-bigfile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/test-bigfile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/test-bigfile...)
+Patching file testsuite/test-bigfile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/data/bigfile
+|===================================================================
+|RCS file: testsuite/data/bigfile
+|diff -N testsuite/data/bigfile
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/data/bigfile	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/data/bigfile...)
+Patching file testsuite/data/bigfile using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/data/bigfile.partial4000
+|===================================================================
+|RCS file: testsuite/data/bigfile.partial4000
+|diff -N testsuite/data/bigfile.partial4000
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/data/bigfile.partial4000	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/data/bigfile.partial4000...)
+Patching file testsuite/data/bigfile.partial4000 using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/data/bigfile.partial8000
+|===================================================================
+|RCS file: testsuite/data/bigfile.partial8000
+|diff -N testsuite/data/bigfile.partial8000
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/data/bigfile.partial8000	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/data/bigfile.partial8000...)
+Patching file testsuite/data/bigfile.partial8000 using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/data/file
+|===================================================================
+|RCS file: testsuite/data/file
+|diff -N testsuite/data/file
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/data/file	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/data/file...)
+Patching file testsuite/data/file using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+Hmm...  The next patch looks like a new-style context diff to me...
+The text leading up to this was:
+--------------------------
+|Index: testsuite/data/index.html
+|===================================================================
+|RCS file: testsuite/data/index.html
+|diff -N testsuite/data/index.html
+|*** /dev/null	1 Jan 1970 00:00:00 -0000
+|--- testsuite/data/index.html	8 Jul 2014 14:51:16 -0000
+--------------------------
+(Creating file testsuite/data/index.html...)
+Patching file testsuite/data/index.html using Plan A...
+Empty context always matches.
+Hunk #1 succeeded at 1.
+done
+amd64(msaitoh)% exit
+exit
+
+Script done on Thu Jul 10 00:40:45 2014
