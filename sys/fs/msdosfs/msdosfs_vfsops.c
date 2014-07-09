@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.110 2014/07/08 19:34:47 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.111 2014/07/09 08:43:54 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.110 2014/07/08 19:34:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.111 2014/07/09 08:43:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,8 +106,6 @@ static int update_mp(struct mount *, struct msdosfs_args *);
 MALLOC_JUSTDEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
 MALLOC_JUSTDEFINE(M_MSDOSFSFAT, "MSDOSFS FAT", "MSDOS FS FAT table");
 MALLOC_JUSTDEFINE(M_MSDOSFSTMP, "MSDOSFS temp", "MSDOS FS temp. structures");
-
-#define ROOTNAME "root_device"
 
 static struct sysctllog *msdosfs_sysctl_log;
 
