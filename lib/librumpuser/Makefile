@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/06/17 08:42:35 alnsn Exp $
+#	$NetBSD: Makefile,v 1.19 2014/07/09 23:41:40 justin Exp $
 #
 
 .include <bsd.own.mk>
@@ -20,6 +20,7 @@ CPPFLAGS+=	-DLIBRUMPUSER
 SRCS=		rumpuser.c
 SRCS+=		rumpuser_pth.c
 SRCS+=		rumpuser_component.c rumpuser_bio.c
+SRCS+=		rumpuser_file.c rumpuser_mem.c
 
 SRCS+=		rumpuser_errtrans.c rumpuser_sigtrans.c
 
