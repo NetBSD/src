@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.185 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.186 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.185 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.186 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -198,6 +198,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -422,22 +423,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_DISCONNECT:
 		tp = tcp_disconnect(tp);
-		break;
-
-	/*
-	 * Accept a connection.  Essentially all the work is
-	 * done at higher levels; just return the address
-	 * of the peer, storing through addr.
-	 */
-	case PRU_ACCEPT:
-#ifdef INET
-		if (inp)
-			in_setpeeraddr(inp, nam);
-#endif
-#ifdef INET6
-		if (in6p)
-			in6_setpeeraddr(in6p, nam);
-#endif
 		break;
 
 	/*
@@ -921,6 +906,80 @@ tcp_detach(struct socket *so)
 	KASSERT(tp != NULL);
 	(void)tcp_disconnect(tp);
 	splx(s);
+}
+
+static int
+tcp_accept(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp = NULL;
+#ifdef INET6
+	struct in6pcb *in6p = NULL;
+#endif
+	struct tcpcb *tp = NULL;
+	int ostate = 0;
+
+	KASSERT(solocked(so));
+
+	switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
+	case PF_INET:
+		inp = sotoinpcb(so);
+		break;
+#endif
+#ifdef INET6
+	case PF_INET6:
+		in6p = sotoin6pcb(so);
+		break;
+#endif
+	default:
+		return EAFNOSUPPORT;
+	}
+
+	/*
+	 * When a TCP is attached to a socket, then there will be
+	 * a (struct inpcb) pointed at by the socket, and this
+	 * structure will point at a subsidary (struct tcpcb).
+	 */
+	if (inp == NULL
+#ifdef INET6
+	    && in6p == NULL
+#endif
+	    )
+	{
+		return EINVAL;
+	}
+#ifdef INET
+	if (inp) {
+		tp = intotcpcb(inp);
+		/* WHAT IF TP IS 0? */
+		ostate = tcp_debug_capture(tp, PRU_ACCEPT);
+	}
+#endif
+#ifdef INET6
+	if (in6p) {
+		tp = in6totcpcb(in6p);
+		/* WHAT IF TP IS 0? */
+		ostate = tcp_debug_capture(tp, PRU_ACCEPT);
+	}
+#endif
+
+	/*
+	 * Accept a connection.  Essentially all the work is
+	 * done at higher levels; just return the address
+	 * of the peer, storing through addr.
+	 */
+#ifdef INET
+	if (inp)
+		in_setpeeraddr(inp, nam);
+#endif
+#ifdef INET6
+	if (in6p)
+		in6_setpeeraddr(in6p, nam);
+#endif
+
+	tcp_debug_trace(so, tp, ostate, PRU_ACCEPT);
+
+	return 0;
 }
 
 static int
@@ -2289,6 +2348,7 @@ tcp_usrreq_init(void)
 PR_WRAP_USRREQS(tcp)
 #define	tcp_attach	tcp_attach_wrapper
 #define	tcp_detach	tcp_detach_wrapper
+#define	tcp_accept	tcp_accept_wrapper
 #define	tcp_ioctl	tcp_ioctl_wrapper
 #define	tcp_stat	tcp_stat_wrapper
 #define	tcp_peeraddr	tcp_peeraddr_wrapper
@@ -2298,6 +2358,7 @@ PR_WRAP_USRREQS(tcp)
 const struct pr_usrreqs tcp_usrreqs = {
 	.pr_attach	= tcp_attach,
 	.pr_detach	= tcp_detach,
+	.pr_accept	= tcp_accept,
 	.pr_ioctl	= tcp_ioctl,
 	.pr_stat	= tcp_stat,
 	.pr_peeraddr	= tcp_peeraddr,

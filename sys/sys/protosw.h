@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.51 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.52 2014/07/09 14:41:43 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -238,6 +238,7 @@ static const char * const prcorequests[] = {
 struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
+	int	(*pr_accept)(struct socket *, struct mbuf *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
 	int	(*pr_stat)(struct socket *, struct stat *);
 	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
@@ -292,6 +293,15 @@ name##_detach_wrapper(struct socket *a)			\
 	KERNEL_LOCK(1, NULL);				\
 	name##_detach(a);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
+}							\
+static int						\
+name##_accept_wrapper(struct socket *a, struct mbuf *b)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_accept(a, b);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
 }							\
 static int						\
 name##_ioctl_wrapper(struct socket *a, u_long b,	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.14 2014/06/06 01:02:47 rmind Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.15 2014/07/09 14:41:42 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.14 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.15 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -104,7 +104,7 @@ static struct mbuf *mpls_label_inet6(struct mbuf *, union mpls_shim *, uint);
 static struct mbuf *mpls_prepend_shim(struct mbuf *, union mpls_shim *);
 
 extern int mpls_defttl, mpls_mapttl_inet, mpls_mapttl_inet6, mpls_icmp_respond,
-	mpls_forwarding, mpls_accept, mpls_mapprec_inet, mpls_mapclass_inet6,
+	mpls_forwarding, mpls_frame_accept, mpls_mapprec_inet, mpls_mapclass_inet6,
 	mpls_rfc4182;
 
 /* ARGSUSED */
@@ -329,7 +329,7 @@ mpls_lse(struct mbuf *m)
 
 	/* Check if we're accepting MPLS Frames */
 	error = EINVAL;
-	if (!mpls_accept)
+	if (!mpls_frame_accept)
 		goto done;
 
 	/* TTL decrement */

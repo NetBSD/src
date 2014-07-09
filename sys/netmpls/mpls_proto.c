@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.14 2014/07/09 04:54:04 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.15 2014/07/09 14:41:42 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.14 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.15 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -61,7 +61,7 @@ int mpls_mapttl_inet = 1;
 int mpls_mapttl_inet6 = 1;
 int mpls_icmp_respond = 0;
 int mpls_forwarding = 0;
-int mpls_accept = 0;
+int mpls_frame_accept = 0;
 int mpls_mapprec_inet = 1;
 int mpls_mapclass_inet6 = 1;
 int mpls_rfc4182 = 1;
@@ -92,6 +92,14 @@ mpls_attach(struct socket *so, int proto)
 static void
 mpls_detach(struct socket *so)
 {
+}
+
+static int
+mpls_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
 }
 
 static int
@@ -160,7 +168,7 @@ sysctl_net_mpls_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "accept",
 		       SYSCTL_DESCR("Accept MPLS Frames"),
-		       NULL, 0, &mpls_accept, 0,
+		       NULL, 0, &mpls_frame_accept, 0,
 		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -215,6 +223,7 @@ DOMAIN_DEFINE(mplsdomain);
 PR_WRAP_USRREQS(mpls)
 #define	mpls_attach	mpls_attach_wrapper
 #define	mpls_detach	mpls_detach_wrapper
+#define	mpls_accept	mpls_accept_wrapper
 #define	mpls_ioctl	mpls_ioctl_wrapper
 #define	mpls_stat	mpls_stat_wrapper
 #define	mpls_peeraddr	mpls_peeraddr_wrapper
@@ -224,6 +233,7 @@ PR_WRAP_USRREQS(mpls)
 static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_attach	= mpls_attach,
 	.pr_detach	= mpls_detach,
+	.pr_accept	= mpls_accept,
 	.pr_ioctl	= mpls_ioctl,
 	.pr_stat	= mpls_stat,
 	.pr_peeraddr	= mpls_peeraddr,

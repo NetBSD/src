@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.224 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.225 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.224 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.225 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -802,8 +802,7 @@ soaccept(struct socket *so, struct mbuf *nam)
 	so->so_state &= ~SS_NOFDREF;
 	if ((so->so_state & SS_ISDISCONNECTED) == 0 ||
 	    (so->so_proto->pr_flags & PR_ABRTACPTDIS) == 0)
-		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-		    PRU_ACCEPT, NULL, nam, NULL, NULL);
+		error = (*so->so_proto->pr_usrreqs->pr_accept)(so, nam);
 	else
 		error = ECONNABORTED;
 

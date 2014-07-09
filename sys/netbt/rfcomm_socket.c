@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.23 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.24 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.23 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.24 2014/07/09 14:41:42 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -125,6 +125,23 @@ rfcomm_detach(struct socket *so)
 }
 
 static int
+rfcomm_accept(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return rfcomm_peeraddr_pcb(pcb, sa);
+}
+
+static int
 rfcomm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EPASSTHROUGH;
@@ -195,6 +212,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	DPRINTFN(2, "%s\n", prurequests[req]);
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -271,12 +289,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_LISTEN:
 		return rfcomm_listen(pcb);
-
-	case PRU_ACCEPT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return rfcomm_peeraddr_pcb(pcb, sa);
 
 	case PRU_CONNECT2:
 	case PRU_SENDOOB:
@@ -455,6 +467,7 @@ PR_WRAP_USRREQS(rfcomm)
 
 #define	rfcomm_attach		rfcomm_attach_wrapper
 #define	rfcomm_detach		rfcomm_detach_wrapper
+#define	rfcomm_accept		rfcomm_accept_wrapper
 #define	rfcomm_ioctl		rfcomm_ioctl_wrapper
 #define	rfcomm_stat		rfcomm_stat_wrapper
 #define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
@@ -464,6 +477,7 @@ PR_WRAP_USRREQS(rfcomm)
 const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_attach	= rfcomm_attach,
 	.pr_detach	= rfcomm_detach,
+	.pr_accept	= rfcomm_accept,
 	.pr_ioctl	= rfcomm_ioctl,
 	.pr_stat	= rfcomm_stat,
 	.pr_peeraddr	= rfcomm_peeraddr,

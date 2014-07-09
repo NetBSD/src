@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.34 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.35 2014/07/09 14:41:42 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.34 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.35 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -485,6 +485,16 @@ key_detach(struct socket *so)
 }
 
 static int
+key_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	panic("key_accept");
+	/* NOT REACHED */
+	return EOPNOTSUPP;
+}
+
+static int
 key_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
@@ -542,6 +552,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -564,6 +575,7 @@ DOMAIN_DEFINE(keydomain);
 PR_WRAP_USRREQS(key)
 #define	key_attach	key_attach_wrapper
 #define	key_detach	key_detach_wrapper
+#define	key_accept	key_accept_wrapper
 #define	key_ioctl	key_ioctl_wrapper
 #define	key_stat	key_stat_wrapper
 #define	key_peeraddr	key_peeraddr_wrapper
@@ -573,6 +585,7 @@ PR_WRAP_USRREQS(key)
 const struct pr_usrreqs key_usrreqs = {
 	.pr_attach	= key_attach,
 	.pr_detach	= key_detach,
+	.pr_accept	= key_accept,
 	.pr_ioctl	= key_ioctl,
 	.pr_stat	= key_stat,
 	.pr_peeraddr	= key_peeraddr,

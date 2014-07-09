@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.126 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.127 2014/07/09 14:41:42 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.126 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.127 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -645,6 +645,14 @@ rip6_detach(struct socket *so)
 }
 
 static int
+rip6_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 rip6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return in6_control(so, cmd, nam, ifp);
@@ -688,6 +696,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int error = 0;
 
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -866,7 +875,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	case PRU_RCVOOB:
 	case PRU_RCVD:
 	case PRU_LISTEN:
-	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
@@ -921,6 +929,7 @@ sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 PR_WRAP_USRREQS(rip6)
 #define	rip6_attach		rip6_attach_wrapper
 #define	rip6_detach		rip6_detach_wrapper
+#define	rip6_accept		rip6_accept_wrapper
 #define	rip6_ioctl		rip6_ioctl_wrapper
 #define	rip6_stat		rip6_stat_wrapper
 #define	rip6_peeraddr		rip6_peeraddr_wrapper
@@ -930,6 +939,7 @@ PR_WRAP_USRREQS(rip6)
 const struct pr_usrreqs rip6_usrreqs = {
 	.pr_attach	= rip6_attach,
 	.pr_detach	= rip6_detach,
+	.pr_accept	= rip6_accept,
 	.pr_ioctl	= rip6_ioctl,
 	.pr_stat	= rip6_stat,
 	.pr_peeraddr	= rip6_peeraddr,

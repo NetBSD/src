@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.158 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.159 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.158 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.159 2014/07/09 14:41:42 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,6 +376,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -417,56 +418,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_DISCONNECT:
 		unp_disconnect(unp);
-		break;
-
-	case PRU_ACCEPT:
-		KASSERT(so->so_lock == uipc_lock);
-		/*
-		 * Mark the initiating STREAM socket as connected *ONLY*
-		 * after it's been accepted.  This prevents a client from
-		 * overrunning a server and receiving ECONNREFUSED.
-		 */
-		if (unp->unp_conn == NULL) {
-			/*
-			 * This will use the empty socket and will not
-			 * allocate.
-			 */
-			unp_setaddr(so, nam, true);
-			break;
-		}
-		so2 = unp->unp_conn->unp_socket;
-		if (so2->so_state & SS_ISCONNECTING) {
-			KASSERT(solocked2(so, so->so_head));
-			KASSERT(solocked2(so2, so->so_head));
-			soisconnected(so2);
-		}
-		/*
-		 * If the connection is fully established, break the
-		 * association with uipc_lock and give the connected
-		 * pair a separate lock to share.
-		 * There is a race here: sotounpcb(so2)->unp_streamlock
-		 * is not locked, so when changing so2->so_lock
-		 * another thread can grab it while so->so_lock is still
-		 * pointing to the (locked) uipc_lock.
-		 * this should be harmless, except that this makes
-		 * solocked2() and solocked() unreliable.
-		 * Another problem is that unp_setaddr() expects the
-		 * the socket locked. Grabing sotounpcb(so2)->unp_streamlock
-		 * fixes both issues.
-		 */
-		mutex_enter(sotounpcb(so2)->unp_streamlock);
-		unp_setpeerlocks(so2, so);
-		/*
-		 * Only now return peer's address, as we may need to
-		 * block in order to allocate memory.
-		 *
-		 * XXX Minor race: connection can be broken while
-		 * lock is dropped in unp_setaddr().  We will return
-		 * error == 0 and sun_noname as the peer address.
-		 */
-		unp_setaddr(so, nam, true);
-		/* so_lock now points to unp_streamlock */
-		mutex_exit(so2->so_lock);
 		break;
 
 	case PRU_SHUTDOWN:
@@ -834,6 +785,69 @@ unp_detach(struct socket *so)
 		unp_thread_kick();
 	} else
 		unp_free(unp);
+}
+
+static int
+unp_accept(struct socket *so, struct mbuf *nam)
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct socket *so2;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	/* XXX code review required to determine if unp can ever be NULL */
+	if (unp == NULL)
+		return EINVAL;
+
+	KASSERT(so->so_lock == uipc_lock);
+	/*
+	 * Mark the initiating STREAM socket as connected *ONLY*
+	 * after it's been accepted.  This prevents a client from
+	 * overrunning a server and receiving ECONNREFUSED.
+	 */
+	if (unp->unp_conn == NULL) {
+		/*
+		 * This will use the empty socket and will not
+		 * allocate.
+		 */
+		unp_setaddr(so, nam, true);
+		return 0;
+	}
+	so2 = unp->unp_conn->unp_socket;
+	if (so2->so_state & SS_ISCONNECTING) {
+		KASSERT(solocked2(so, so->so_head));
+		KASSERT(solocked2(so2, so->so_head));
+		soisconnected(so2);
+	}
+	/*
+	 * If the connection is fully established, break the
+	 * association with uipc_lock and give the connected
+	 * pair a separate lock to share.
+	 * There is a race here: sotounpcb(so2)->unp_streamlock
+	 * is not locked, so when changing so2->so_lock
+	 * another thread can grab it while so->so_lock is still
+	 * pointing to the (locked) uipc_lock.
+	 * this should be harmless, except that this makes
+	 * solocked2() and solocked() unreliable.
+	 * Another problem is that unp_setaddr() expects the
+	 * the socket locked. Grabing sotounpcb(so2)->unp_streamlock
+	 * fixes both issues.
+	 */
+	mutex_enter(sotounpcb(so2)->unp_streamlock);
+	unp_setpeerlocks(so2, so);
+	/*
+	 * Only now return peer's address, as we may need to
+	 * block in order to allocate memory.
+	 *
+	 * XXX Minor race: connection can be broken while
+	 * lock is dropped in unp_setaddr().  We will return
+	 * error == 0 and sun_noname as the peer address.
+	 */
+	unp_setaddr(so, nam, true);
+	/* so_lock now points to unp_streamlock */
+	mutex_exit(so2->so_lock);
+	return 0;
 }
 
 static int
@@ -1843,6 +1857,7 @@ unp_discard_later(file_t *fp)
 const struct pr_usrreqs unp_usrreqs = {
 	.pr_attach	= unp_attach,
 	.pr_detach	= unp_detach,
+	.pr_accept	= unp_accept,
 	.pr_ioctl	= unp_ioctl,
 	.pr_stat	= unp_stat,
 	.pr_peeraddr	= unp_peeraddr,

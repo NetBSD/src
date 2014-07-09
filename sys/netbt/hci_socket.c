@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.31 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.32 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.31 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.32 2014/07/09 14:41:42 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -484,6 +484,14 @@ hci_detach(struct socket *so)
 }
 
 static int
+hci_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 hci_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	int err;
@@ -560,6 +568,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	DPRINTFN(2, "%s\n", prurequests[req]);
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -659,7 +668,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_RCVOOB:
 		return EOPNOTSUPP;	/* (no release) */
 
-	case PRU_ACCEPT:
 	case PRU_CONNECT2:
 	case PRU_LISTEN:
 	case PRU_SENDOOB:
@@ -892,6 +900,7 @@ PR_WRAP_USRREQS(hci)
 
 #define	hci_attach		hci_attach_wrapper
 #define	hci_detach		hci_detach_wrapper
+#define	hci_accept		hci_accept_wrapper
 #define	hci_ioctl		hci_ioctl_wrapper
 #define	hci_stat		hci_stat_wrapper
 #define	hci_peeraddr		hci_peeraddr_wrapper
@@ -901,6 +910,7 @@ PR_WRAP_USRREQS(hci)
 const struct pr_usrreqs hci_usrreqs = {
 	.pr_attach	= hci_attach,
 	.pr_detach	= hci_detach,
+	.pr_accept	= hci_accept,
 	.pr_ioctl	= hci_ioctl,
 	.pr_stat	= hci_stat,
 	.pr_peeraddr	= hci_peeraddr,

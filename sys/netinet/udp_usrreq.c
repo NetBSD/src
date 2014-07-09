@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.207 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.208 2014/07/09 14:41:42 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.207 2014/07/09 04:54:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.208 2014/07/09 14:41:42 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -895,6 +895,16 @@ udp_detach(struct socket *so)
 }
 
 static int
+udp_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	panic("udp_accept");
+	/* NOT REACHED */
+	return EOPNOTSUPP;
+}
+
+static int
 udp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return in_control(so, cmd, nam, ifp);
@@ -940,6 +950,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -1282,6 +1293,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 PR_WRAP_USRREQS(udp)
 #define	udp_attach	udp_attach_wrapper
 #define	udp_detach	udp_detach_wrapper
+#define	udp_accept	udp_accept_wrapper
 #define	udp_ioctl	udp_ioctl_wrapper
 #define	udp_stat	udp_stat_wrapper
 #define	udp_peeraddr	udp_peeraddr_wrapper
@@ -1291,6 +1303,7 @@ PR_WRAP_USRREQS(udp)
 const struct pr_usrreqs udp_usrreqs = {
 	.pr_attach	= udp_attach,
 	.pr_detach	= udp_detach,
+	.pr_accept	= udp_accept,
 	.pr_ioctl	= udp_ioctl,
 	.pr_stat	= udp_stat,
 	.pr_peeraddr	= udp_peeraddr,
