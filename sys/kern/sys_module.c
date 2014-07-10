@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.15 2014/07/10 19:12:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.15 2014/07/10 19:12:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp 
 #include <sys/syscallargs.h>
 
 #include <opt_modular.h>
+
+/*
+ * Arbitrary limit to avoid DoS for excessive memory allocation.
+ */
+#define MAXPROPSLEN	4096
 
 static int
 handle_modctl_load(modctl_load_t *ml)
@@ -67,7 +72,12 @@ handle_modctl_load(modctl_load_t *ml)
 		goto out2;
 
 	if (ml->ml_props != NULL) {
+		if (ml->ml_propslen > MAXPROPSLEN) {
+			error = ENOMEM;
+			goto out2;
+		}
 		propslen = ml->ml_propslen + 1;
+
 		props = (char *)kmem_alloc(propslen, KM_SLEEP);
 		if (props == NULL) {
 			error = ENOMEM;
