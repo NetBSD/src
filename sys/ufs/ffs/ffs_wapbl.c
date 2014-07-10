@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.26 2014/07/10 06:27:15 dholland Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.27 2014/07/10 15:15:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.26 2014/07/10 06:27:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.27 2014/07/10 15:15:54 christos Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -351,20 +351,18 @@ ffs_wapbl_start(struct mount *mp)
 #endif
 
 			if ((fs->fs_flags & FS_DOWAPBL) == 0) {
-				UFS_WAPBL_BEGIN(mp);
+				if ((error = UFS_WAPBL_BEGIN(mp)) != 0)
+					goto out;
 				fs->fs_flags |= FS_DOWAPBL;
 				error = ffs_sbupdate(ump, MNT_WAIT);
 				if (error) {
 					UFS_WAPBL_END(mp);
-					ffs_wapbl_stop(mp, MNT_FORCE);
-					return error;
+					goto out;
 				}
 				UFS_WAPBL_END(mp);
 				error = wapbl_flush(mp->mnt_wapbl, 1);
-				if (error) {
-					ffs_wapbl_stop(mp, MNT_FORCE);
-					return error;
-				}
+				if (error)
+					goto out;
 			}
 		} else if (fs->fs_flags & FS_DOWAPBL) {
 			fs->fs_fmod = 1;
@@ -391,6 +389,9 @@ ffs_wapbl_start(struct mount *mp)
 	}
 
 	return 0;
+out:
+	ffs_wapbl_stop(mp, MNT_FORCE);
+	return error;
 }
 
 int
