@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.183 2014/06/24 10:53:30 alnsn Exp $	*/
+/*	$NetBSD: bpf.c,v 1.184 2014/07/10 15:32:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.183 2014/06/24 10:53:30 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.184 2014/07/10 15:32:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1388,15 +1388,17 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
     void *pkt, u_int pktlen, u_int buflen, const bool rcv)
 {
 	struct timespec ts;
-	bpf_args_t args;
+	bpf_args_t args = {
+		.pkt = (const uint8_t *)pkt,
+		.wirelen = pktlen,
+		.buflen = buflen,
+		.mem = NULL,
+		.arg = NULL
+	};
 	struct bpf_d *d;
 
 	const bpf_ctx_t *bc = NULL;
 	bool gottime = false;
-
-	args.pkt = (const uint8_t *)pkt;
-	args.wirelen = pktlen;
-	args.buflen = buflen;
 
 	/*
 	 * Note that the IPL does not have to be raised at this point.
