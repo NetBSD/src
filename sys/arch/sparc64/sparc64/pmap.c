@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.288 2014/06/05 19:47:24 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.289 2014/07/10 06:24:02 jdc Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2014/06/05 19:47:24 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2014/07/10 06:24:02 jdc Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -742,8 +742,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	 * Get hold or the message buffer.
 	 */
 	msgbufp = (struct kern_msgbuf *)(vaddr_t)MSGBUF_VA;
-/* XXXXX -- increase msgbufsiz for uvmhist printing */
-	msgbufsiz = 4*PAGE_SIZE /* round_page(sizeof(struct msgbuf)) */;
+	msgbufsiz = MSGBUFSIZE;
 	BDPRINTF(PDB_BOOT, ("Trying to allocate msgbuf at %lx, size %lx\n",
 			    (long)msgbufp, (long)msgbufsiz));
 	if ((long)msgbufp !=
