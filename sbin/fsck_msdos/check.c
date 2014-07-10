@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.18 2009/04/11 07:14:50 lukem Exp $	*/
+/*	$NetBSD: check.c,v 1.19 2014/07/10 21:06:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.18 2009/04/11 07:14:50 lukem Exp $");
+__RCSID("$NetBSD: check.c,v 1.19 2014/07/10 21:06:20 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -135,7 +135,7 @@ checkfilesys(const char *filename)
 		goto out;
 
 	/* now write the FATs */
-	if (mod & FSFATMOD) {
+	if (mod & (FSFATMOD|FSFIXFAT)) {
 		if (ask(1, "Update FATs")) {
 			mod |= writefat(dosfs, &boot, fat, mod & FSFIXFAT);
 			if (mod & FSFATAL)
