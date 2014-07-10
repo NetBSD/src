@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.60 2014/07/09 23:41:40 justin Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.61 2014/07/10 08:17:43 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.60 2014/07/09 23:41:40 justin Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.61 2014/07/10 08:17:43 justin Exp $");
 #endif /* !lint */
 
 #include <sys/stat.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.60 2014/07/09 23:41:40 justin Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdint.h>
