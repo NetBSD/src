@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.16 2014/07/10 19:21:46 maxv Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.17 2014/07/10 21:13:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.16 2014/07/10 19:21:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.17 2014/07/10 21:13:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ handle_modctl_load(modctl_load_t *ml)
 		}
 		propslen = ml->ml_propslen + 1;
 
-		props = (char *)kmem_alloc(propslen, KM_SLEEP);
+		props = kmem_alloc(propslen, KM_SLEEP);
 		if (props == NULL) {
 			error = ENOMEM;
 			goto out1;
