@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.186 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.187 2014/07/10 14:05:19 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.186 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.187 2014/07/10 14:05:19 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -948,20 +948,6 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	{
 		return EINVAL;
 	}
-#ifdef INET
-	if (inp) {
-		tp = intotcpcb(inp);
-		/* WHAT IF TP IS 0? */
-		ostate = tcp_debug_capture(tp, PRU_ACCEPT);
-	}
-#endif
-#ifdef INET6
-	if (in6p) {
-		tp = in6totcpcb(in6p);
-		/* WHAT IF TP IS 0? */
-		ostate = tcp_debug_capture(tp, PRU_ACCEPT);
-	}
-#endif
 
 	/*
 	 * Accept a connection.  Essentially all the work is
@@ -969,16 +955,22 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	 * of the peer, storing through addr.
 	 */
 #ifdef INET
-	if (inp)
+	if (inp) {
+		tp = intotcpcb(inp);
+		KASSERT(tp != NULL);
+		ostate = tcp_debug_capture(tp, PRU_ACCEPT);
 		in_setpeeraddr(inp, nam);
+	}
 #endif
 #ifdef INET6
-	if (in6p)
+	if (in6p) {
+		tp = in6totcpcb(in6p);
+		KASSERT(tp != NULL);
+		ostate = tcp_debug_capture(tp, PRU_ACCEPT);
 		in6_setpeeraddr(in6p, nam);
+	}
 #endif
-
 	tcp_debug_trace(so, tp, ostate, PRU_ACCEPT);
-
 	return 0;
 }
 
