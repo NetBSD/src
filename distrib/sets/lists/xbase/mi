@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.122 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: mi,v 1.123 2014/07/11 19:19:16 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2146,6 +2146,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/epo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/es			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/et			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/eu			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	obsolete
