@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.27 2014/07/10 15:15:54 christos Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.28 2014/07/11 16:17:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.27 2014/07/10 15:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.28 2014/07/11 16:17:29 christos Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -351,9 +351,9 @@ ffs_wapbl_start(struct mount *mp)
 #endif
 
 			if ((fs->fs_flags & FS_DOWAPBL) == 0) {
+				fs->fs_flags |= FS_DOWAPBL;
 				if ((error = UFS_WAPBL_BEGIN(mp)) != 0)
 					goto out;
-				fs->fs_flags |= FS_DOWAPBL;
 				error = ffs_sbupdate(ump, MNT_WAIT);
 				if (error) {
 					UFS_WAPBL_END(mp);
