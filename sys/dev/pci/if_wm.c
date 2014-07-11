@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.272 2014/07/01 10:35:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.273 2014/07/11 02:23:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.272 2014/07/01 10:35:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.273 2014/07/11 02:23:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1202,6 +1202,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	uint16_t cfg1, cfg2, swdpin, io3;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
+	bool force_clear_smbi;
 	uint32_t reg;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -1393,7 +1394,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    && (sc->sc_type != WM_T_PCH)
 		    && (sc->sc_type != WM_T_PCH2)
 		    && (sc->sc_type != WM_T_PCH_LPT)) {
-			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 			/* ICH* and PCH* have no PCIe capability registers */
 			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
 				PCI_CAP_PCIEXPRESS, &sc->sc_pcixe_capoff,
@@ -1611,9 +1611,12 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82572:
 		/* SPI */
 		wm_set_spiaddrbits(sc);
+		sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 		break;
 	case WM_T_82573:
+		sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
+		/* FALLTHROUGH */
 	case WM_T_82574:
 	case WM_T_82583:
 		if (wm_is_onboard_nvm_eeprom(sc) == 0)
@@ -1667,6 +1670,29 @@ wm_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		break;
+	}
+
+	/* Ensure the SMBI bit is clear before first NVM or PHY access */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+		reg = CSR_READ(sc, WMREG_SWSM2);
+		if ((reg & SWSM2_LOCK) != 0) {
+			CSR_WRITE(sc, WMREG_SWSM2, reg | SWSM2_LOCK);
+			force_clear_smbi = true;
+		} else
+			force_clear_smbi = false;
+		break;
+	default:
+		force_clear_smbi = true;
+		break;
+	}
+	if (force_clear_smbi) {
+		reg = CSR_READ(sc, WMREG_SWSM);
+		if ((reg & ~SWSM_SMBI) != 0)
+			aprint_error_dev(sc->sc_dev,
+			    "Please update the Bootagent\n");
+		CSR_WRITE(sc, WMREG_SWSM, reg & ~SWSM_SMBI);
 	}
 
 	/*
@@ -4196,6 +4222,7 @@ static void
 wm_reset(struct wm_softc *sc)
 {
 	int phy_reset = 0;
+	int error = 0;
 	uint32_t reg, mask;
 
 	/*
@@ -4298,7 +4325,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		wm_get_hw_semaphore_82573(sc);
+		error = wm_get_hw_semaphore_82573(sc);
 		break;
 	default:
 		break;
@@ -4404,9 +4431,11 @@ wm_reset(struct wm_softc *sc)
 
 	/* Must release the MDIO ownership after MAC reset */
 	switch (sc->sc_type) {
+	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		wm_put_hw_semaphore_82573(sc);
+		if (error == 0)
+			wm_put_hw_semaphore_82573(sc);
 		break;
 	default:
 		break;
