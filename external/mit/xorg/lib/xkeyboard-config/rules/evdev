@@ -865,22 +865,27 @@
 
 ! layout	variant		=	compat
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   jp        $sun_compat =   complete+japan(kana_lock)
 
 ! layout[1]	variant[1]	=	compat
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   jp       $sun_compat =   complete+japan(kana_lock)
 
 ! layout[2]	variant[2]	=	compat
   de		neo			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		adnw			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
   jp       $sun_compat  =   +complete+japan(kana_lock):2
 
 ! layout[3]	variant[3]	=	compat
   de		neo			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		adnw			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
   jp       $sun_compat  =   +complete+japan(kana_lock):3
 
 ! layout[4]	variant[4]	=	compat
   de		neo			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		adnw			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
   jp       $sun_compat  =   +complete+japan(kana_lock):4
 
 ! model		layout		=	compat
@@ -945,6 +950,7 @@
   grp:caps_switch       =       +capslock(groupshift)
   grp:shift_caps_toggle	=	+group(shift_caps_toggle)
   grp:shift_caps_switch	=	+group(shift_caps_switch)
+  grp:win_space_toggle	=	+group(win_space_toggle)
   grp:win_menu_switch	=	+group(win_menu_switch)
   grp:alt_caps_toggle   =       +group(alt_caps_toggle)
   grp:alt_space_toggle	=	+group(alt_space_toggle)
