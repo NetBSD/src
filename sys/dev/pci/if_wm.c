@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.275 2014/07/11 08:34:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.276 2014/07/11 08:50:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.275 2014/07/11 08:34:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.276 2014/07/11 08:50:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1645,7 +1645,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
 		/* FLASH */
-		sc->sc_flags |= WM_F_EEPROM_FLASH | LOCK_EXTCNF;
+		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_LOCK_EXTCNF;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
@@ -5340,7 +5340,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
 		return 0;
 
-	if (sc->sc_flags & LOCK_EXTCNF) {
+	if (sc->sc_flags & WM_F_LOCK_EXTCNF) {
 		ret = wm_get_swfwhw_semaphore(sc);
 	} else if (sc->sc_flags & WM_F_LOCK_SWFW) {
 		/* this will also do wm_get_swsm_semaphore() if needed */
@@ -5374,7 +5374,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 			    "could not acquire EEPROM GNT\n");
 			reg &= ~EECD_EE_REQ;
 			CSR_WRITE(sc, WMREG_EECD, reg);
-			if (sc->sc_flags & LOCK_EXTCNF)
+			if (sc->sc_flags & WM_F_LOCK_EXTCNF)
 				wm_put_swfwhw_semaphore(sc);
 			if (sc->sc_flags & WM_F_LOCK_SWFW)
 				wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
@@ -5407,7 +5407,7 @@ wm_release_eeprom(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_EECD, reg);
 	}
 
-	if (sc->sc_flags & LOCK_EXTCNF)
+	if (sc->sc_flags & WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
 	if (sc->sc_flags & WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
@@ -7711,7 +7711,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 			    "%s: failed to get semaphore\n", __func__);
 			return 0;
 		}
-	} else if (sc->sc_flags == LOCK_EXTCNF) {
+	} else if (sc->sc_flags == WM_F_LOCK_EXTCNF) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -7729,7 +7729,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 
 	if (sc->sc_flags == WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
-	else if (sc->sc_flags == LOCK_EXTCNF)
+	else if (sc->sc_flags == WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
 
 	return rv;
@@ -7750,7 +7750,7 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 			    "%s: failed to get semaphore\n", __func__);
 			return;
 		}
-	} else if (sc->sc_flags == LOCK_EXTCNF) {
+	} else if (sc->sc_flags == WM_F_LOCK_EXTCNF) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -7764,7 +7764,7 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 
 	if (sc->sc_flags == WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
-	else if (sc->sc_flags == LOCK_EXTCNF)
+	else if (sc->sc_flags == WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
 }
 
