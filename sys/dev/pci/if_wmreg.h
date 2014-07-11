@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.56 2014/04/11 04:42:34 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.57 2014/07/11 02:23:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -927,6 +927,9 @@ struct livengood_tcpip_ctxdesc {
 #define	MNG_IAMT_MODE		0x3
 #define FWSM_RSPCIPHY		0x00000040	/* Reset PHY on PCI reset */
 #define FWSM_FW_VALID		0x00008000 /* FW established a valid mode */
+
+#define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
+#define SWSM2_LOCK		0x00000002 /* Secondary driver semaphore bit */
 
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
