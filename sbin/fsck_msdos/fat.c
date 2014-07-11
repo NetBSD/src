@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.28 2014/07/10 21:00:52 christos Exp $	*/
+/*	$NetBSD: fat.c,v 1.29 2014/07/11 14:59:53 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.28 2014/07/10 21:00:52 christos Exp $");
+__RCSID("$NetBSD: fat.c,v 1.29 2014/07/11 14:59:53 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -392,7 +392,8 @@ checkfat(struct bootblock *boot, struct fatEntry *fat)
 
 		/* follow the chain and mark all clusters on the way */
 		for (len = 0, p = head;
-		     p >= CLUST_FIRST && p < boot->NumClusters;
+		     p >= CLUST_FIRST && p < boot->NumClusters &&
+		     fat[p].head != head;
 		     p = fat[p].next) {
 			fat[p].head = head;
 			len++;
