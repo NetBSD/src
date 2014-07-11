@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.5 2014/06/20 12:36:31 pooka Exp $
+	$NetBSD: README.compileopts,v 1.6 2014/07/11 20:26:31 justin Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -75,6 +75,22 @@ effect: Control how curlwp is obtained in a rump kernel.  This is
 	hypercall   - use a hypercall to fetch the value
 	__thread    - use the __thread feature to fetch value via TLS
 	register    - use a dedicated register (implies -ffixed)
+
+
+================================================================================
+
+Rumpuser options:
+
+    RUMPUSER_THREADS
+
+values: pthread/none/fiber or <undefined>
+defval: <undefined>
+effect: Define the way threading is implemented in the rumpuser hypercall
+	implmentation.
+	<undefined> - use default implementation (currently "pthread")
+	pthread     - use pthreads to implement threading
+	none        - do not support kernel threads at all
+	fiber       - user a fiber interface, cooperatively scheduled contexts
 
 
 ================================================================================
