@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.273 2014/07/11 02:23:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.274 2014/07/11 07:22:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.273 2014/07/11 02:23:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.274 2014/07/11 07:22:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1636,7 +1636,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_80003:
 		/* SPI */
 		wm_set_spiaddrbits(sc);
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC;
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC
+		    | WM_F_EEPROM_SEMAPHORE;
 		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
