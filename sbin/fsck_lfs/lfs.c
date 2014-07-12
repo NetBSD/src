@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.41 2013/10/19 01:09:58 christos Exp $ */
+/* $NetBSD: lfs.c,v 1.42 2014/07/12 19:44:00 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,6 +85,7 @@
 #include <unistd.h>
 #include <util.h>
 
+#include "fsutil.h"
 #include "bufcache.h"
 #include "vnode.h"
 #include "lfs_user.h"
@@ -107,7 +108,6 @@ static int
 lfs_fragextend(struct uvnode *, int, int, daddr_t, struct ubuf **);
 
 int fsdirty = 0;
-void (*panic_func)(int, const char *, va_list) = my_vpanic;
 
 /*
  * LFS buffer and uvnode operations
@@ -835,19 +835,12 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 
 /* print message and exit */
 void
-my_vpanic(int fatal, const char *fmt, va_list ap)
-{
-        (void) vprintf(fmt, ap);
-	exit(8);
-}
-
-void
 call_panic(const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-        panic_func(1, fmt, ap);
+        vmsg(1, fmt, ap);
 	va_end(ap);
 }
 
