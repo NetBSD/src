@@ -1,5 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.1.1.1 2013/03/24 15:45:50 christos Exp $	*/
-
+/*	$NetBSD: ip_icmp.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
 /*	NetBSD: ip_icmp.h,v 1.11 1996/08/03 15:48:18 neil Exp 	*/
 
 /*
@@ -14,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

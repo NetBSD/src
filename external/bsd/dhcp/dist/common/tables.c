@@ -1,11 +1,10 @@
-/*	$NetBSD: tables.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $	*/
-
+/*	$NetBSD: tables.c,v 1.1.1.3 2014/07/12 11:57:47 spz Exp $	*/
 /* tables.c
 
    Tables of information... */
 
 /*
- * Copyright (c) 2011-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2011-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -27,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tables.c,v 1.1.1.2 2013/03/24 22:50:32 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.1.1.3 2014/07/12 11:57:47 spz Exp $");
 
 #include "dhcpd.h"
 
@@ -210,9 +203,19 @@ static struct option dhcp_options[] = {
 	{ "pxe-client-id", "BX",		&dhcp_universe,  97, 1 },
 #endif
 	{ "uap-servers", "t",			&dhcp_universe,  98, 1 },
+#if defined(RFC4776_OPTIONS)
+        { "geoconf-civic", "X",                 &dhcp_universe, 99, 1 },
+#endif
+#if defined(RFC4833_OPTIONS)
+	{ "pcode", "t",				&dhcp_universe, 100, 1 },
+	{ "tcode", "t",				&dhcp_universe, 101, 1 },
+#endif
 	{ "netinfo-server-address", "Ia",	&dhcp_universe, 112, 1 },
 	{ "netinfo-server-tag", "t",		&dhcp_universe, 113, 1 },
 	{ "default-url", "t",			&dhcp_universe, 114, 1 },
+#if defined(RFC2937_OPTIONS)
+	{ "name-service-search", "Sa",		&dhcp_universe, 117, 1 },
+#endif
 	{ "subnet-selection", "I",		&dhcp_universe, 118, 1 },
 	{ "domain-search", "Dc",		&dhcp_universe, 119, 1 },
 	{ "vivco", "Evendor-class.",		&dhcp_universe, 124, 1 },
@@ -231,6 +234,18 @@ static struct option dhcp_options[] = {
 	{ "pxe-undefined-7", "X",		&dhcp_universe, 134, 1 },
 	{ "pxe-undefined-8", "X",		&dhcp_universe, 135, 1 },
 #endif
+#if defined(RFC5192_OPTIONS)
+	{"pana-agent", "Ia",			&dhcp_universe, 136, 1 },
+#endif
+#if defined(RFC5223_OPTIONS)
+	{"v4-lost", "d",			&dhcp_universe, 137, 1 },
+#endif
+#if defined(RFC5417_OPTIONS)
+	{"capwap-ac-v4", "Ia",			&dhcp_universe, 138, 1 },
+#endif
+#if defined(RFC6731_OPTIONS)
+        { "rdnss-selection", "BIID",		&dhcp_universe, 146, 1 },
+#endif
 #if 0
 	/* Not defined by RFC yet */
 	{ "tftp-server-address", "Ia",		&dhcp_universe, 150, 1 },
@@ -242,9 +257,11 @@ static struct option dhcp_options[] = {
 	{ "loader-pathprefix", "t",		&dhcp_universe, 210, 1 },
 	{ "loader-reboottime", "L",		&dhcp_universe, 211, 1 },
 #endif
-#if 0
-	/* Not defined by RFC yet */
-	{ "vss-info", "BX",			&dhcp_universe, 221, 1 },
+#if defined(RFC5969_OPTIONS)
+        { "option-6rd", "BB6Ia",		&dhcp_universe, 212, 1 },
+#endif
+#if defined(RFC5986_OPTIONS)
+	{"v4-access-domain", "d",		&dhcp_universe, 213, 1 },
 #endif
 	{ NULL, NULL, NULL, 0, 0 }
 };
@@ -408,8 +425,7 @@ static struct option dhcpv6_options[] = {
 
 	/* Note that 35 is not assigned. */
 
-	/* Not yet considering for inclusion. */
-#if 0
+#if defined(RFC4776_OPTIONS)
 			/* RFC4776 OPTIONS */
 
 	{ "geoconf-civic", "X",			&dhcpv6_universe, 36, 1 },
@@ -443,18 +459,20 @@ static struct option dhcpv6_options[] = {
 	{ "fqdn", "Efqdn6-if-you-see-me-its-a-bug-bug-bug.",
 						&dhcpv6_universe, 39, 1 },
 
-	/* Not yet considering for inclusion. */
-#if 0
-			/* draft-ietf-dhc-paa-option-05 */
+
+			/* RFC5192 */
+#if defined(RFC5192_OPTIONS)
 	{ "pana-agent", "6A",			&dhcpv6_universe, 40, 1 },
+#endif
 
 			/* RFC4833 OPTIONS */
-
+#if defined(RFC4833_OPTIONS)
 	{ "new-posix-timezone", "t",		&dhcpv6_universe, 41, 1 },
 	{ "new-tzdb-timezone", "t",		&dhcpv6_universe, 42, 1 },
+#endif
 
 			/* RFC4994 OPTIONS */
-
+#if defined(RFC4994_OPTIONS)
 	{ "ero", "SA",				&dhcpv6_universe, 43, 1 },
 #endif
 
@@ -465,6 +483,70 @@ static struct option dhcpv6_options[] = {
 	{ "clt-time", "L",			&dhcpv6_universe, 46, 1 },
 	{ "lq-relay-data", "6X",		&dhcpv6_universe, 47, 1 },
 	{ "lq-client-link", "6A",		&dhcpv6_universe, 48, 1 },
+
+			/* RFC5223 OPTIONS */
+#if defined(RFC5223_OPTIONS)
+	{ "v6-lost", "d",			&dhcpv6_universe, 51, 1 },
+#endif
+
+			/* RFC5417 OPTIONS */
+#if defined(RFC5417_OPTIONS)
+	{ "capwap-ac-v6", "6a",			&dhcpv6_universe, 52, 1 },
+#endif
+
+			/* RFC5460 OPTIONS */
+#if defined(RFC5460_OPTIONS)
+	{ "relay-id", "X",			&dhcpv6_universe, 53, 1 },
+#endif
+
+			/* RFC5986 OPTIONS */
+#if defined(RFC5986_OPTIONS)
+	{ "v6-access-domain", "d",		&dhcpv6_universe, 57, 1 },
+#endif
+
+			/* RFC6011 OPTIONS */
+#if defined(RFC6011_OPTIONS)
+	{ "sip-ua-cs-list", "D",		&dhcpv6_universe, 58, 1 },
+#endif
+
+			/* RFC5970 OPTIONS */
+#if defined(RFC5970_OPTIONS)
+	{ "bootfile-url", "t",			&dhcpv6_universe, 59, 1 },
+	{ "bootfile-param", "X",		&dhcpv6_universe, 60, 1 },
+	{ "client-arch-type", "SA",		&dhcpv6_universe, 61, 1 },
+	{ "nii", "BBB",				&dhcpv6_universe, 62, 1 },
+#endif
+
+			/* RFC6334 OPTIONS */
+#if defined(RFC6334_OPTIONS)
+	{ "aftr-name", "d",			&dhcpv6_universe, 64, 1 },
+#endif
+
+			/* RFC6440 OPTIONS */
+#if defined(RFC6440_OPTIONS)
+	{ "erp-local-domain-name", "d",		&dhcpv6_universe, 65, 1 },
+#endif
+
+			/* RFC6731 OPTIONS */
+#if defined(RFC6731_OPTIONS)
+	{ "rdnss-selection", "6BD",		&dhcpv6_universe, 74, 1 },
+#endif
+
+			/* RFC6939 OPTIONS */
+#if defined(RFC6939_OPTIONS)
+	{ "client-linklayer-addr", "X",		&dhcpv6_universe, 79, 1 },
+#endif
+
+			/* RFC6977 OPTIONS */
+#if defined(RFC6977_OPTIONS)
+	{ "link-address", "6",			&dhcpv6_universe, 80, 1 },
+#endif
+
+			/* RFC7083 OPTIONS */
+#if defined(RFC7083_OPTIONS)
+	{ "solmax-rt", "L",			&dhcpv6_universe, 82, 1 },
+	{ "inf-max-rt", "L",			&dhcpv6_universe, 83, 1 },
+#endif
 
 	{ NULL, NULL, NULL, 0, 0 }
 };

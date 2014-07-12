@@ -1,10 +1,10 @@
-/*	$NetBSD: discover.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $	*/
-
+/*	$NetBSD: discover.c,v 1.1.1.2 2014/07/12 11:57:42 spz Exp $	*/
 /* discover.c
 
    Find and identify the network interfaces. */
 
 /*
+ * Copyright (c) 2013-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2009,2011 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
@@ -26,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.1.1.1 2013/03/24 15:45:52 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.1.1.2 2014/07/12 11:57:42 spz Exp $");
 
 #include "dhcpd.h"
 
@@ -61,10 +55,6 @@ struct in_addr limited_broadcast;
 
 int local_family = AF_INET;
 struct in_addr local_address;
-
-#ifdef DHCPv6
-struct in6_addr local_address6;
-#endif /* DHCPv6 */
 
 void (*bootp_packet_handler) (struct interface_info *,
 			      struct dhcp_packet *, unsigned,
@@ -1246,7 +1236,7 @@ discover_interfaces(int state) {
 			    (state == DISCOVER_RELAY)) {
 				if_register6(tmp, 1);
 			} else {
-				if_register6(tmp, 0);
+				if_register_linklocal6(tmp);
 			}
 #endif /* DHCPv6 */
 		}
@@ -1302,13 +1292,14 @@ discover_interfaces(int state) {
 				   tmp -> name, isc_result_totext (status));
 
 #if defined(DHCPv6)
-		/* Only register the first interface for V6, since they all
-		 * use the same socket.  XXX: This has some messy side
-		 * effects if we start dynamically adding and removing
-		 * interfaces, but we're well beyond that point in terms of
-		 * mess.
+		/* Only register the first interface for V6, since
+		 * servers and relays all use the same socket.
+		 * XXX: This has some messy side effects if we start
+		 * dynamically adding and removing interfaces, but
+		 * we're well beyond that point in terms of mess.
 		 */
-		if (local_family == AF_INET6)
+		if (((state == DISCOVER_SERVER) || (state == DISCOVER_RELAY)) &&
+		    (local_family == AF_INET6))
 			break;
 #endif
 	} /* for (tmp = interfaces; ... */
