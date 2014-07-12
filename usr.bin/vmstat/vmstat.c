@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.202 2014/06/14 04:06:54 joerg Exp $ */
+/* $NetBSD: vmstat.c,v 1.203 2014/07/12 20:04:31 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.202 2014/06/14 04:06:54 joerg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.203 2014/07/12 20:04:31 nakayama Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,7 @@ void	needhdr(int);
 void	getnlist(int);
 long	getuptime(void);
 void	printhdr(void);
-long	pct(long, long);
+long	pct(u_long, u_long);
 __dead static void	usage(void);
 void	doforkst(void);
 
@@ -852,7 +852,7 @@ needhdr(int dummy)
 }
 
 long
-pct(long top, long bot)
+pct(u_long top, u_long bot)
 {
 	long ans;
 
@@ -862,7 +862,7 @@ pct(long top, long bot)
 	return (ans);
 }
 
-#define	PCT(top, bot) (int)pct((long)(top), (long)(bot))
+#define	PCT(top, bot) (int)pct((u_long)(top), (u_long)(bot))
 
 void
 dosum(void)
