@@ -28,7 +28,7 @@ statement.
 Then run the server as root, in debug mode:
 
 # touch /tmp/test.leases
-# dhcpd -cf test-a.conf -lf /tmp/test.leases -d
+# dhcpd -6 -cf test-a.conf -lf /tmp/test.leases -d
 
 You can invoke the scripts then:
 
