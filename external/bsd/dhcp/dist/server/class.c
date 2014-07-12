@@ -1,11 +1,10 @@
-/*	$NetBSD: class.c,v 1.1.1.2 2013/03/24 22:50:38 christos Exp $	*/
-
+/*	$NetBSD: class.c,v 1.1.1.3 2014/07/12 11:58:04 spz Exp $	*/
 /* class.c
 
    Handling for client classes. */
 
 /*
- * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1998-2003 by Internet Software Consortium
  *
@@ -27,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: class.c,v 1.1.1.2 2013/03/24 22:50:38 christos Exp $");
+__RCSID("$NetBSD: class.c,v 1.1.1.3 2014/07/12 11:58:04 spz Exp $");
 
 #include "dhcpd.h"
 
@@ -74,10 +67,8 @@ void classification_setup ()
 void classify_client (packet)
 	struct packet *packet;
 {
-	execute_statements ((struct binding_value **)0, packet,
-			    (struct lease *)0, (struct client_state *)0,
-			    packet -> options, (struct option_state *)0,
-			    &global_scope, default_classification_rules);
+	execute_statements (NULL, packet, NULL, NULL, packet->options, NULL,
+			    &global_scope, default_classification_rules, NULL);
 }
 
 int check_collection (packet, lease, collection)

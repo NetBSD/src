@@ -1,5 +1,4 @@
-/*	$NetBSD: t_api.c,v 1.1.1.2 2013/03/24 22:50:44 christos Exp $	*/
-
+/*	$NetBSD: t_api.c,v 1.1.1.3 2014/07/12 11:58:01 spz Exp $	*/
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -539,12 +538,12 @@ t_fgetbs(FILE *fp) {
 	int	c;
 	size_t	n;
 	size_t	size;
-	char	*buf;
+	char	*buf, *old;
 	char	*p;
 
-	n	= 0;
-	size	= T_BUFSIZ;
-	buf	= (char *) malloc(T_BUFSIZ * sizeof(char));
+	n = 0;
+	size = T_BUFSIZ;
+	old = buf = (char *) malloc(T_BUFSIZ * sizeof(char));
 
 	if (buf != NULL) {
 		p = buf;
@@ -560,7 +559,8 @@ t_fgetbs(FILE *fp) {
 				buf = (char *)realloc(buf,
 						      size * sizeof(char));
 				if (buf == NULL)
-					break;
+					goto err;
+				old = buf;
 				p = buf + n;
 			}
 		}
@@ -571,7 +571,10 @@ t_fgetbs(FILE *fp) {
 		}
 		return (buf);
 	} else {
-		fprintf(stderr, "malloc failed %d", errno);
+ err:
+		if (old != NULL)
+			free(old);
+		fprintf(stderr, "malloc/realloc failed %d", errno);
 		return(NULL);
 	}
 }

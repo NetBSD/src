@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcp6.h,v 1.1.1.1 2013/03/24 15:45:49 christos Exp $	*/
-
+/*	$NetBSD: dhcp6.h,v 1.1.1.2 2014/07/12 11:57:53 spz Exp $	*/
 /* dhcp6.h
 
    DHCPv6 Protocol structures... */
 
 /*
- * Copyright (c) 2006-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2013 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2006-2009 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -195,6 +195,7 @@ struct dhcpv6_relay_packet {
 	unsigned char peer_address[16];
 	unsigned char options[FLEXIBLE_ARRAY_MEMBER];
 };
+#define MAX_V6RELAY_HOPS 32
 
 /* Leasequery query-types (RFC 5007) */
 
