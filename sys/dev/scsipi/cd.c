@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.319 2014/04/18 06:23:32 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.320 2014/07/12 12:13:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.319 2014/04/18 06:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.320 2014/07/12 12:13:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,6 +312,9 @@ cddetach(device_t self, int flags)
 {
 	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
+
+	if (cd->sc_dk.dk_openmask != 0 && (flags & DETACH_FORCE) == 0)
+		return EBUSY;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
