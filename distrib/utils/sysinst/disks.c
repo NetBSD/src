@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.130 2013/12/07 20:40:42 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.131 2014/07/12 16:11:27 dholland Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -772,10 +772,7 @@ make_fstab(void)
 			if (!check_lfs_progs())
 				s = "# ";
 			fstype = "lfs";
-			/* XXX fsck_lfs considered harmfull */
-			fsck_pass = 0;
-			dump_freq = 1;
-			break;
+			/* FALLTHROUGH */
 		case FS_BSDFFS:
 			fsck_pass = (strcmp(mp, "/") == 0) ? 1 : 2;
 			dump_freq = 1;
