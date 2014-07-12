@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.123 2014/07/11 19:19:16 mrg Exp $
+# $NetBSD: mi,v 1.124 2014/07/12 19:46:22 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1518,7 +1518,6 @@
 ./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
 ./usr/X11R7/include/drm					base-x11-root	obsolete
 ./usr/X11R7/include/fontconfig				base-x11-root	xorg
-./usr/X11R7/include/freetype2				base-x11-root	xorg
 ./usr/X11R7/include/freetype2				base-x11-root	xorg
 ./usr/X11R7/include/freetype2/cache			base-x11-root	xorg
 ./usr/X11R7/include/freetype2/config			base-x11-root	xorg
