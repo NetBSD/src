@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.24 2014/07/12 16:13:57 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.25 2014/07/12 16:52:57 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.24 2014/07/12 16:13:57 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.25 2014/07/12 16:52:57 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.24 2014/07/12 16:13:57 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.25 2014/07/12 16:52:57 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -769,7 +769,7 @@ emit_pkt_read(struct sljit_compiler *compiler,
     const struct bpf_insn *pc, struct sljit_jump *to_mchain_jump,
     struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize)
 {
-	int status;
+	int status = SLJIT_ERR_ALLOC_FAILED;
 	uint32_t width;
 	struct sljit_jump *jump;
 #ifdef _KERNEL
