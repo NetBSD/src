@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1943 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1944 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -439,3 +439,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		and reorganize. [dholland 20140705]
 	postfix(1): Import version 2.11.1 [tron 20140706]
 	bind: Import version 9.10.0-P2 [spz 20140708]
+	dhcp: Import version 4.3.0 [spz 20140712]
