@@ -1,5 +1,4 @@
-/*	$NetBSD: ldap_casa.c,v 1.1.1.2 2013/03/27 00:31:46 christos Exp $	*/
-
+/*	$NetBSD: ldap_casa.c,v 1.1.1.3 2014/07/12 11:58:13 spz Exp $	*/
 /* ldap_casa.c
    
    CASA routines for DHCPD... */
@@ -57,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldap_casa.c,v 1.1.1.2 2013/03/27 00:31:46 christos Exp $");
+__RCSID("$NetBSD: ldap_casa.c,v 1.1.1.3 2014/07/12 11:58:13 spz Exp $");
 
 #if defined(LDAP_CASA_AUTH)
 #include "ldap_casa.h"

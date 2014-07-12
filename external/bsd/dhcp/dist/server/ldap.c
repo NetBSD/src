@@ -1,5 +1,4 @@
-/*	$NetBSD: ldap.c,v 1.1.1.3 2013/03/27 00:31:46 christos Exp $	*/
-
+/*	$NetBSD: ldap.c,v 1.1.1.4 2014/07/12 11:58:13 spz Exp $	*/
 /* ldap.c
 
    Routines for reading the configuration from LDAP */
@@ -40,8 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldap.c,v 1.1.1.3 2013/03/27 00:31:46 christos Exp $");
-
+__RCSID("$NetBSD: ldap.c,v 1.1.1.4 2014/07/12 11:58:13 spz Exp $");
 
 #include "dhcpd.h"
 #include <signal.h>
@@ -634,10 +632,9 @@ ldap_start (void)
       options = NULL;
       option_state_allocate (&options, MDL);
 
-      execute_statements_in_scope ((struct binding_value **) NULL,
-                 (struct packet *) NULL, (struct lease *) NULL,
-                 (struct client_state *) NULL, (struct option_state *) NULL,
-                 options, &global_scope, root_group, (struct group *) NULL);
+      execute_statements_in_scope (NULL, NULL, NULL, NULL, NULL,
+				   options, &global_scope, root_group,
+				   NULL, NULL);
 
       ldap_server = _do_lookup_dhcp_string_option (options, SV_LDAP_SERVER);
       ldap_dhcp_server_cn = _do_lookup_dhcp_string_option (options,
