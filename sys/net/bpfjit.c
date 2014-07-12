@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.23 2014/07/11 20:43:33 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.24 2014/07/12 16:13:57 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.23 2014/07/11 20:43:33 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.24 2014/07/12 16:13:57 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.23 2014/07/11 20:43:33 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.24 2014/07/12 16:13:57 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,8 +123,8 @@ __RCSID("$NetBSD: bpfjit.c,v 1.23 2014/07/11 20:43:33 alnsn Exp $");
  * Optimization hints.
  */
 typedef unsigned int bpfjit_hint_t;
-#define BJ_HINT_LDW  0x01 /* 32-bit packet read  */
-#define BJ_HINT_IND  0x02 /* packet read at a variable offset */
+#define BJ_HINT_PKT  0x01 /* packet read         */
+#define BJ_HINT_LDW  0x02 /* 32-bit load         */
 #define BJ_HINT_COP  0x04 /* BPF_COP or BPF_COPX instruction  */
 #define BJ_HINT_XREG 0x08 /* BJ_XREG is needed   */
 #define BJ_HINT_LDX  0x10 /* BPF_LDX instruction */
@@ -252,14 +252,11 @@ nscratches(bpfjit_hint_t hints)
 	sljit_si rv = 2;
 
 #ifdef _KERNEL
-	/*
-	 * Most kernel programs load packet bytes and they generate
-	 * m_xword/m_xhalf/m_xbyte() calls with three arguments.
-	 */
-	rv = 3;
+	if (hints & BJ_HINT_PKT)
+		rv = 3; /* xcall with three arguments */
 #endif
 
-	if (hints & BJ_HINT_LDW)
+	if (hints & (BJ_HINT_LDW|BJ_HINT_PKT))
 		rv = 3; /* uses BJ_TMP2REG */
 
 	if (hints & BJ_HINT_COP)
@@ -354,7 +351,7 @@ append_jump(struct sljit_jump *jump, struct sljit_jump ***jumps,
 }
 
 /*
- * Generate code for BPF_LD+BPF_B+BPF_ABS    A <- P[k:1].
+ * Emit code for BPF_LD+BPF_B+BPF_ABS    A <- P[k:1].
  */
 static int
 emit_read8(struct sljit_compiler *compiler, uint32_t k)
@@ -367,7 +364,7 @@ emit_read8(struct sljit_compiler *compiler, uint32_t k)
 }
 
 /*
- * Generate code for BPF_LD+BPF_H+BPF_ABS    A <- P[k:2].
+ * Emit code for BPF_LD+BPF_H+BPF_ABS    A <- P[k:2].
  */
 static int
 emit_read16(struct sljit_compiler *compiler, uint32_t k)
@@ -409,7 +406,7 @@ emit_read16(struct sljit_compiler *compiler, uint32_t k)
 }
 
 /*
- * Generate code for BPF_LD+BPF_W+BPF_ABS    A <- P[k:4].
+ * Emit code for BPF_LD+BPF_W+BPF_ABS    A <- P[k:4].
  */
 static int
 emit_read32(struct sljit_compiler *compiler, uint32_t k)
@@ -504,21 +501,15 @@ emit_read32(struct sljit_compiler *compiler, uint32_t k)
 
 #ifdef _KERNEL
 /*
- * Generate m_xword/m_xhalf/m_xbyte call.
+ * Emit code for m_xword/m_xhalf/m_xbyte call.
  *
- * pc is one of:
- * BPF_LD+BPF_W+BPF_ABS    A <- P[k:4]
- * BPF_LD+BPF_H+BPF_ABS    A <- P[k:2]
- * BPF_LD+BPF_B+BPF_ABS    A <- P[k:1]
- * BPF_LD+BPF_W+BPF_IND    A <- P[X+k:4]
- * BPF_LD+BPF_H+BPF_IND    A <- P[X+k:2]
- * BPF_LD+BPF_B+BPF_IND    A <- P[X+k:1]
- * BPF_LDX+BPF_B+BPF_MSH   X <- 4*(P[k:1]&0xf)
- *
- * The dst variable should be
- *  - BJ_AREG when emitting code for BPF_LD instructions,
- *  - BJ_XREG or BJ_TMP1REG register when emitting code
- *    for BPF_MSH instruction.
+ * @pc BPF_LD+BPF_W+BPF_ABS    A <- P[k:4]
+ *     BPF_LD+BPF_H+BPF_ABS    A <- P[k:2]
+ *     BPF_LD+BPF_B+BPF_ABS    A <- P[k:1]
+ *     BPF_LD+BPF_W+BPF_IND    A <- P[X+k:4]
+ *     BPF_LD+BPF_H+BPF_IND    A <- P[X+k:2]
+ *     BPF_LD+BPF_B+BPF_IND    A <- P[X+k:1]
+ *     BPF_LDX+BPF_B+BPF_MSH   X <- 4*(P[k:1]&0xf)
  */
 static int
 emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
@@ -567,6 +558,8 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 		    SLJIT_SCRATCH_REG2, 0,
 		    BJ_XREG, 0,
 		    SLJIT_IMM, (uint32_t)pc->k);
+		if (status != SLJIT_SUCCESS)
+			return status;
 
 		/* if (k < X) return 0; */
 		jump = sljit_emit_cmp(compiler,
@@ -584,10 +577,9 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 		    SLJIT_MOV,
 		    SLJIT_SCRATCH_REG2, 0,
 		    SLJIT_IMM, (uint32_t)pc->k);
+		if (status != SLJIT_SUCCESS)
+			return status;
 	}
-
-	if (status != SLJIT_SUCCESS)
-		return status;
 
 	/*
 	 * The third argument of fn is an address on stack.
@@ -602,6 +594,8 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 	status = sljit_emit_ijump(compiler,
 	    SLJIT_CALL3,
 	    SLJIT_IMM, SLJIT_FUNC_OFFSET(fn));
+	if (status != SLJIT_SUCCESS)
+		return status;
 
 	if (dst != SLJIT_RETURN_REG) {
 		/* move return value to dst */
@@ -643,7 +637,7 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 	if (!append_jump(jump, ret0, ret0_size, ret0_maxsize))
 		return SLJIT_ERR_ALLOC_FAILED;
 
-	return status;
+	return SLJIT_SUCCESS;
 }
 #endif
 
@@ -758,7 +752,7 @@ emit_cop(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 		return status;
 #endif
 
-	return status;
+	return SLJIT_SUCCESS;
 }
 
 /*
@@ -775,7 +769,7 @@ emit_pkt_read(struct sljit_compiler *compiler,
     const struct bpf_insn *pc, struct sljit_jump *to_mchain_jump,
     struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize)
 {
-	int status = 0; /* XXX gcc 4.1 */
+	int status;
 	uint32_t width;
 	struct sljit_jump *jump;
 #ifdef _KERNEL
@@ -901,7 +895,7 @@ emit_pkt_read(struct sljit_compiler *compiler,
 	sljit_set_label(over_mchain_jump, label);
 #endif
 
-	return status;
+	return SLJIT_SUCCESS;
 }
 
 static int
@@ -961,7 +955,7 @@ emit_memstore(struct sljit_compiler *compiler,
 }
 
 /*
- * Generate code for BPF_LDX+BPF_B+BPF_MSH    X <- 4*(P[k:1]&0xf).
+ * Emit code for BPF_LDX+BPF_B+BPF_MSH    X <- 4*(P[k:1]&0xf).
  */
 static int
 emit_msh(struct sljit_compiler *compiler,
@@ -1066,7 +1060,7 @@ emit_msh(struct sljit_compiler *compiler,
 	sljit_set_label(over_mchain_jump, label);
 #endif
 
-	return status;
+	return SLJIT_SUCCESS;
 }
 
 static int
@@ -1103,7 +1097,7 @@ divide(sljit_uw x, sljit_uw y)
 #endif
 
 /*
- * Generate A = A / div.
+ * Emit code for A = A / div.
  * divt,divw are either SLJIT_IMM,pc->k or BJ_XREG,0.
  */
 static int
@@ -1267,14 +1261,16 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 			continue;
 
 		case BPF_LD:
-			if ((BPF_MODE(insns[i].code) == BPF_IND ||
-			    BPF_MODE(insns[i].code) == BPF_ABS) &&
-			    read_width(&insns[i]) == 4) {
-				*hints |= BJ_HINT_LDW;
+			if (BPF_MODE(insns[i].code) == BPF_IND ||
+			    BPF_MODE(insns[i].code) == BPF_ABS) {
+				*hints |= BJ_HINT_PKT;
 			}
 
+			if (BPF_SIZE(insns[i].code) == BPF_W)
+				*hints |= BJ_HINT_LDW;
+
 			if (BPF_MODE(insns[i].code) == BPF_IND) {
-				*hints |= BJ_HINT_XREG | BJ_HINT_IND;
+				*hints |= BJ_HINT_XREG;
 				*initmask |= invalid & BJ_INIT_XBIT;
 			}
 
@@ -1377,13 +1373,11 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 
 			jtf = insn_dat[i].u.jdata.jtf;
 
-			jtf[0].sjump = NULL;
 			jtf[0].jdata = &insn_dat[i].u.jdata;
 			SLIST_INSERT_HEAD(&insn_dat[jt].bjumps,
 			    &jtf[0], entries);
 
 			if (jf != jt) {
-				jtf[1].sjump = NULL;
 				jtf[1].jdata = &insn_dat[i].u.jdata;
 				SLIST_INSERT_HEAD(&insn_dat[jf].bjumps,
 				    &jtf[1], entries);
@@ -1653,6 +1647,18 @@ generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 	if (ret0 == NULL)
 		goto fail;
 
+	/* reset sjump members of jdata */
+	for (i = 0; i < insn_count; i++) {
+		if (insn_dat[i].unreachable ||
+		    BPF_CLASS(insns[i].code) != BPF_JMP) {
+			continue;
+		}
+
+		jtf = insn_dat[i].u.jdata.jtf;
+		jtf[0].sjump = jtf[1].sjump = NULL;
+	}
+
+	/* main loop */
 	for (i = 0; i < insn_count; i++) {
 		if (insn_dat[i].unreachable)
 			continue;
