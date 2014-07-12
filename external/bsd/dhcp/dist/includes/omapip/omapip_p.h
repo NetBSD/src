@@ -1,11 +1,10 @@
-/*	$NetBSD: omapip_p.h,v 1.1.1.3 2013/03/27 00:31:39 christos Exp $	*/
-
+/*	$NetBSD: omapip_p.h,v 1.1.1.4 2014/07/12 11:57:57 spz Exp $	*/
 /* omapip_p.h
 
    Private master include file for the OMAPI library. */
 
 /*
- * Copyright (c) 2009-2010 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2010,2014 by Internet Systems Consortium, Inc. ("ISC") 
  * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
@@ -27,12 +26,6 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #ifndef __OMAPIP_OMAPIP_P_H__

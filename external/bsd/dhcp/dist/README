@@ -1,8 +1,8 @@
 	      Internet Systems Consortium DHCP Distribution
-			     Version 4.2.5-P1
-			      26 March 2013
+			      Version 4.3.0
+			     3 February 2014
 
-			        README FILE
+			      README FILE
 
 You should read this file carefully before trying to install or use
 the ISC DHCP Distribution.
@@ -40,6 +40,7 @@ the ISC DHCP Distribution.
 	 5.10	 MacOS X
 	6	SUPPORT
 	 6.1	 HOW TO REPORT BUGS
+	7	HISTORY
 
 		      WHERE TO FIND DOCUMENTATION
 
@@ -98,9 +99,14 @@ directory, it may not have up-to-date information).
 
 			    RELEASE STATUS
 
-This is ISC DHCP 4.2.5-P1, a security release.  A security issue has
-been found and fixed in Bind9, this release includes the updated Bind9
-code.  There are no code changes to DHCP.
+This is ISC DHCP 4.3.0.  The major theme for this release is "ipv6 uplift",
+in which we enhance the v6 code to support many of the features found
+in the v4 code.  These include: support for v6, support for on_commit,
+on_expiry and on_release in v6, support for accessing v6 relay options
+and better log messages for v6 addresses.  Non v6 features include:
+support for the standard DDNS, better OMAPI class and sub-class support
+allowing for dynamic addition and removal of sub-classes, and support for
+DDNS without zone statements.
 
 In this release, the DHCPv6 server should be fully functional on Linux,
 Solaris, or any BSD.  The DHCPv6 client should be similarly functional
@@ -135,12 +141,12 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.2.5-P1.tar.gz
-	tar xvf dhcp-4.2.5-P1.tar
+	gunzip dhcp-4.3.0.tar.gz
+	tar xvf dhcp-4.3.0.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.2.5-P1 subdirectory that you've just created and
+Now, cd to the dhcp-4.3.0 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
@@ -275,7 +281,7 @@ we completely bypass the Linux IP stack, but on old versions of Linux
 DHCP clients connected to the same network as the ISC DHCP server or
 ISC relay agent will not see messages from the DHCP server.   It *is*
 possible to run into trouble with this on Linux 2.2 and later if you
-are running a verson of the DHCP server that was compiled on a Linux
+are running a version of the DHCP server that was compiled on a Linux
 2.0 system, though.
 
 It is possible to work around this problem on some versions of Linux
@@ -532,7 +538,7 @@ server and relay will work only on a single interface.  (They do work
 on multi-interface machines if configured to listen on only one of the
 interfaces.)
 
-We have reports of Windows XP clients having difficutly retrieving
+We have reports of Windows XP clients having difficulty retrieving
 addresses from a server running on an AIX machine.  This issue
 was traced to the client requiring messages be sent to the all ones
 broadcast address (255.255.255.255) while the AIX server was sending 
@@ -694,3 +700,19 @@ bug reports are more likely to get handled more quickly overall.
 Please see https://www.isc.org/software/dhcp/ for details on how to subscribe
 to the ISC DHCP mailing lists.
 
+			       HISTORY
+
+ISC DHCP was originally written by Ted Lemon under a contract with
+Vixie Labs with the goal of being a complete reference implementation
+of the DHCP protocol.  Funding for this project was provided by
+Internet Systems Consortium. The first release of the ISC DHCP
+distribution in December 1997 included just the DHCP server.
+Release 2 in June 1999 added a DHCP client and a BOOTP/DHCP relay
+agent. DHCP 3 was released in October 2001 and included DHCP failover
+support, OMAPI, Dynamic DNS, conditional behaviour, client classing,
+and more. Version 3 of the DHCP server was funded by Nominum, Inc.
+The 4.0 release in December 2007 introduced DHCPv6 protocol support
+for the server and client.
+
+This product includes cryptographic software written
+by Eric Young (eay@cryptsoft.com).

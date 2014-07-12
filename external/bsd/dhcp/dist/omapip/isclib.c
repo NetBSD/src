@@ -1,7 +1,6 @@
-/*	$NetBSD: isclib.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $	*/
-
+/*	$NetBSD: isclib.c,v 1.1.1.3 2014/07/12 11:57:59 spz Exp $	*/
 /*
- * Copyright(c) 2009-2010 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2009-2010,2013-2014 by Internet Systems Consortium, Inc.("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.1.1.3 2014/07/12 11:57:59 spz Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the export library but need the fdwatchcommand
@@ -33,8 +32,61 @@ __RCSID("$NetBSD: isclib.c,v 1.1.1.2 2013/03/27 00:31:40 christos Exp $");
 #include "dhcpd.h"
 
 #include <sys/time.h>
+#include <signal.h>
 
 dhcp_context_t dhcp_gbl_ctx;
+int shutdown_signal = 0;
+
+#if defined (NSUPDATE)
+
+/* This routine will open up the /etc/resolv.conf file and
+ * send any nameservers it finds to the DNS client code.
+ * It may be moved to be part of the dns client code instead
+ * of being in the DHCP code
+ */
+isc_result_t 
+dhcp_dns_client_setservers(void)
+{
+	isc_result_t result;
+	irs_resconf_t *resconf = NULL;
+	isc_sockaddrlist_t *nameservers;
+	isc_sockaddr_t *sa;
+
+	result = irs_resconf_load(dhcp_gbl_ctx.mctx, _PATH_RESOLV_CONF,
+				  &resconf);
+	if (result != ISC_R_SUCCESS && result != ISC_R_FILENOTFOUND) {
+		log_error("irs_resconf_load failed: %d.", result);
+		return (result);
+	}
+
+	nameservers = irs_resconf_getnameservers(resconf);
+
+	/* Initialize port numbers */
+	for (sa = ISC_LIST_HEAD(*nameservers);
+	     sa != NULL;
+	     sa = ISC_LIST_NEXT(sa, link)) {
+		switch (sa->type.sa.sa_family) {
+		case AF_INET:
+			sa->type.sin.sin_port = htons(NS_DEFAULTPORT);
+			break;
+		case AF_INET6:
+			sa->type.sin6.sin6_port = htons(NS_DEFAULTPORT);
+			break;
+		default:
+			break;
+		}
+	}
+
+	result = dns_client_setservers(dhcp_gbl_ctx.dnsclient,
+				       dns_rdataclass_in,
+				       NULL, nameservers);
+	if (result != ISC_R_SUCCESS) {
+		log_error("dns_client_setservers failed: %d.",
+			  result);
+	}
+	return (result);
+}
+#endif
 
 void
 isclib_cleanup(void)
@@ -73,86 +125,110 @@ isclib_cleanup(void)
 }
 
 isc_result_t
-dhcp_context_create(void) {
+dhcp_context_create(int flags,
+		    struct in_addr  *local4,
+		    struct in6_addr *local6) {
 	isc_result_t result;
 
-	/*
-	 * Set up the error messages, this isn't the right place
-	 * for this call but it is convienent for now.
-	 */
-	result = dhcp_result_register();
-	if (result != ISC_R_SUCCESS) {
-		log_fatal("register_table() %s: %u", "failed", result);
+	if ((flags & DHCP_CONTEXT_PRE_DB) != 0) {
+		/*
+		 * Set up the error messages, this isn't the right place
+		 * for this call but it is convienent for now.
+		 */
+		result = dhcp_result_register();
+		if (result != ISC_R_SUCCESS) {
+			log_fatal("register_table() %s: %u", "failed", result);
+		}
+
+		memset(&dhcp_gbl_ctx, 0, sizeof (dhcp_gbl_ctx));
+	
+		isc_lib_register();
+
+		/* get the current time for use as the random seed */
+		gettimeofday(&cur_tv, (struct timezone *)0);
+		isc_random_seed(cur_tv.tv_sec);
+
+#if defined (NSUPDATE)
+		result = dns_lib_init();
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+#else
+		/* The dst library is inited as part of dns_lib_init, we don't
+		 * need it if NSUPDATE is enabled */
+		result = dst_lib_init(dhcp_gbl_ctx.mctx, NULL, 0);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+#endif
+		result = isc_mem_create(0, 0, &dhcp_gbl_ctx.mctx);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		result = isc_appctx_create(dhcp_gbl_ctx.mctx,
+					   &dhcp_gbl_ctx.actx);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		result = isc_app_ctxstart(dhcp_gbl_ctx.actx);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+		dhcp_gbl_ctx.actx_started = ISC_TRUE;
+
+		result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
+						 dhcp_gbl_ctx.actx,
+						 1, 0,
+						 &dhcp_gbl_ctx.taskmgr);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		result = isc_socketmgr_createinctx(dhcp_gbl_ctx.mctx,
+						   dhcp_gbl_ctx.actx,
+						   &dhcp_gbl_ctx.socketmgr);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		result = isc_timermgr_createinctx(dhcp_gbl_ctx.mctx,
+						  dhcp_gbl_ctx.actx,
+						  &dhcp_gbl_ctx.timermgr);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		result = isc_task_create(dhcp_gbl_ctx.taskmgr, 0, &dhcp_gbl_ctx.task);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
 	}
 
-	memset(&dhcp_gbl_ctx, 0, sizeof (dhcp_gbl_ctx));
-	
-	isc_lib_register();
-
-	/* get the current time for use as the random seed */
-	gettimeofday(&cur_tv, (struct timezone *)0);
-	isc_random_seed(cur_tv.tv_sec);
-
 #if defined (NSUPDATE)
-	result = dns_lib_init();
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	if ((flags & DHCP_CONTEXT_POST_DB) != 0) {
+		isc_sockaddr_t localaddr4, *localaddr4_ptr = NULL;
+		isc_sockaddr_t localaddr6, *localaddr6_ptr = NULL;
+		if (local4 != NULL) {
+			isc_sockaddr_fromin(&localaddr4, local4, 0);
+			localaddr4_ptr = &localaddr4;
+		}
+		if (local6 != NULL) {
+			isc_sockaddr_fromin6(&localaddr6, local6, 0);
+			localaddr6_ptr = &localaddr6;
+		}
+
+		result = dns_client_createx2(dhcp_gbl_ctx.mctx,
+					     dhcp_gbl_ctx.actx,
+					     dhcp_gbl_ctx.taskmgr,
+					     dhcp_gbl_ctx.socketmgr,
+					     dhcp_gbl_ctx.timermgr,
+					     0,
+					     &dhcp_gbl_ctx.dnsclient,
+					     localaddr4_ptr,
+					     localaddr6_ptr);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		result = dhcp_dns_client_setservers();
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+	}
 #endif
 
-	result = isc_mem_create(0, 0, &dhcp_gbl_ctx.mctx);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	result = isc_appctx_create(dhcp_gbl_ctx.mctx, &dhcp_gbl_ctx.actx);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	result = isc_app_ctxstart(dhcp_gbl_ctx.actx);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	dhcp_gbl_ctx.actx_started = ISC_TRUE;
-
-	result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
-					 dhcp_gbl_ctx.actx,
-					 1, 0,
-					 &dhcp_gbl_ctx.taskmgr);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	result = isc_socketmgr_createinctx(dhcp_gbl_ctx.mctx,
-					   dhcp_gbl_ctx.actx,
-					   &dhcp_gbl_ctx.socketmgr);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	result = isc_timermgr_createinctx(dhcp_gbl_ctx.mctx,
-					  dhcp_gbl_ctx.actx,
-					  &dhcp_gbl_ctx.timermgr);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	result = isc_task_create(dhcp_gbl_ctx.taskmgr, 0, &dhcp_gbl_ctx.task);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-#if defined (NSUPDATE)
-	result = dns_client_createx(dhcp_gbl_ctx.mctx,
-				    dhcp_gbl_ctx.actx,
-				    dhcp_gbl_ctx.taskmgr,
-				    dhcp_gbl_ctx.socketmgr,
-				    dhcp_gbl_ctx.timermgr,
-				    0,
-				    &dhcp_gbl_ctx.dnsclient);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-#else
-	/* The dst library is inited as part of dns_lib_init, we don't
-	 * need it if NSUPDATE is enabled */
-	result = dst_lib_init(dhcp_gbl_ctx.mctx, NULL, 0);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-#endif
 	return(ISC_R_SUCCESS);
 
  cleanup:
@@ -222,3 +298,24 @@ isclib_make_dst_key(char          *inname,
 				  &b, dhcp_gbl_ctx.mctx, dstkey));
 }
 
+/**
+ * signal handler that initiates server shutdown
+ *
+ * @param signal signal code that we received
+ */
+void dhcp_signal_handler(int signal) {
+	isc_appctx_t *ctx = dhcp_gbl_ctx.actx;
+	int prev = shutdown_signal;
+
+	if (prev != 0) {
+		/* Already in shutdown. */
+		return;
+	}
+	/* Possible race but does it matter? */
+	shutdown_signal = signal;
+
+	/* Use reload (aka suspend) for easier dispatch() reenter. */
+	if (ctx && ctx->methods && ctx->methods->ctxsuspend) {
+		(void) isc_app_ctxsuspend(ctx);
+	}
+}

@@ -1,11 +1,11 @@
-/*	$NetBSD: dhctoken.h,v 1.1.1.3 2013/03/27 00:31:38 christos Exp $	*/
-
+/*	$NetBSD: dhctoken.h,v 1.1.1.4 2014/07/12 11:57:53 spz Exp $	*/
 /* dhctoken.h
 
    Tokens for config file lexer and parser. */
 
 /*
- * Copyright (c) 2004,2007-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2011-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2007-2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,14 +26,13 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
+/*
+ * The following tokens have been deprecated and aren't in use anymore.
+ * They have been left in place to avoid disturbing the code.
+ * DNS_UPDATE, DNS_DELETE, NS_UPDATE, UPDATED_DNS_RR
+ */
 enum dhcp_token {
 	SEMI = ';',
 	DOT = '.',
@@ -366,7 +365,10 @@ enum dhcp_token {
 	GETHOSTBYNAME = 665,
 	PRIMARY6 = 666,
 	SECONDARY6 = 667,
-	TOKEN_INFINIBAND = 668
+	TOKEN_INFINIBAND = 668,
+	POOL6 = 669,
+	V6RELAY = 670,
+	V6RELOPT = 671
 };
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\

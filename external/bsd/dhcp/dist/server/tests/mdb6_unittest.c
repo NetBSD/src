@@ -1,5 +1,4 @@
-/*	$NetBSD: mdb6_unittest.c,v 1.1.1.1 2013/03/24 22:50:43 christos Exp $	*/
-
+/*	$NetBSD: mdb6_unittest.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $	*/
 /*
  * Copyright (C) 2007-2012 by Internet Systems Consortium, Inc. ("ISC")
  *
@@ -53,7 +52,8 @@ ATF_TC_BODY(iaaddr_basic, tc)
     struct iasubopt *iaaddr_copy;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     iaaddr = NULL;
@@ -97,7 +97,8 @@ ATF_TC_BODY(iaaddr_negative, tc)
     struct iasubopt *iaaddr_copy;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* tests */
     /* bogus allocate arguments */
@@ -158,7 +159,8 @@ ATF_TC_BODY(ia_na_basic, tc)
     struct iasubopt *iaaddr;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     iaid = 666;
@@ -221,7 +223,8 @@ ATF_TC_BODY(ia_na_manyaddrs, tc)
     int i;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* tests */
     /* lots of iaaddr that we delete */
@@ -296,7 +299,8 @@ ATF_TC_BODY(ia_na_negative, tc)
     struct ia_xx *ia_na_copy;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* tests */
     /* bogus allocate arguments */
@@ -372,7 +376,8 @@ ATF_TC_BODY(ipv6_pool_basic, tc)
     unsigned int attempts;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -517,7 +522,8 @@ ATF_TC_BODY(ipv6_pool_negative, tc)
     struct ipv6_pool *pool_copy;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -576,7 +582,8 @@ ATF_TC_BODY(expire_order, tc)
     unsigned int attempts;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -675,7 +682,8 @@ ATF_TC_BODY(expire_order_reduce, tc)
     unsigned int attempts;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -796,7 +804,8 @@ ATF_TC_BODY(small_pool, tc)
     unsigned int attempts;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -867,7 +876,8 @@ ATF_TC_BODY(many_pools, tc)
     struct ipv6_pool *pool;
 
     /* set up dhcp globals */
-    dhcp_context_create();
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);

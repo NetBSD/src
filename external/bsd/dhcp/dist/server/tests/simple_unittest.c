@@ -1,5 +1,4 @@
-/*	$NetBSD: simple_unittest.c,v 1.1.1.1 2013/03/24 22:50:44 christos Exp $	*/
-
+/*	$NetBSD: simple_unittest.c,v 1.1.1.2 2014/07/12 11:58:17 spz Exp $	*/
 /*
  * Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
  *
