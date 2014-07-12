@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.52 2014/03/28 10:16:28 apb Exp $
+#	$NetBSD: airport,v 1.53 2014/07/12 15:19:47 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -2837,6 +2837,7 @@ HBZ:Heber Springs Municipal Airport, AR, USA
 HCA:Big Spring, TX, USA
 HCB:Shoal Cove, AK, USA
 HCD:Hutchinson (Butler Field), MN, USA
+HCJ:Hechi Jinchengjiang Airport, China
 HCM:Ell, Somalia
 HCQ:Halls Creek, Western Australia, Australia
 HCR:Holy Cross Airport, AK, USA
