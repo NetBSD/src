@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.68 2014/06/30 14:58:59 njoly Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.69 2014/07/12 09:58:39 njoly Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.68 2014/06/30 14:58:59 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.69 2014/07/12 09:58:39 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ out:
 	return error;
 }
 
-#define USEC_2_TICKS(x)		((x) / 10000)
+#define UTIME2TICKS(s,u)	(((uint64_t)(s) * 1000000 + (u)) / 10000)
 
 /*
  * Linux compatible /proc/<pid>/stat. Only active when the -o linux
@@ -413,12 +413,11 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	char *bf;
 	struct proc *p = l->l_proc;
 	int len;
-	struct tty *tty = p->p_session->s_ttyp;
-	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 	struct timeval rt;
 	struct vmspace	*vm;
+	struct kinfo_proc2 ki;
 	int error = 0;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
@@ -432,65 +431,67 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
 
+	fill_kproc2(p, &ki, false);
 	calcru(p, NULL, NULL, NULL, &rt);
 
 	len = snprintf(bf, LBFSZ,
-	    "%d (%s) %c %d %d %d %lld %d "
+	    "%d (%s) %c %d %d %d %u %d "
 	    "%u "
-	    "%lu %lu %lu %lu %lu %lu %lu %lu "
-	    "%d %d %d "
-	    "%lld %lld %lu %lu %" PRIu64 " "
+	    "%"PRIu64" %lu %"PRIu64" %lu %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" "
+	    "%d %d %"PRIu64" "
+	    "%lld %"PRIu64" %"PRId64" %lu %"PRIu64" "
 	    "%lu %lu %lu "
 	    "%u %u "
 	    "%u %u %u %u "
-	    "%lu %lu %lu %d %d\n",
+	    "%"PRIu64" %"PRIu64" %"PRIu64" %d %"PRIu64"\n",
 
-	    p->p_pid,
-	    p->p_comm,
-	    "0IR3SZD"[(p->p_stat > 6) ? 0 : (int)p->p_stat],
-	    (p->p_pptr != NULL) ? p->p_pptr->p_pid : 0,
+	    ki.p_pid,						/* 1 pid */
+	    ki.p_comm,						/* 2 tcomm */
+	    "0RRSTZXR8"[(ki.p_stat > 8) ? 0 : (int)ki.p_stat],	/* 3 state */
+	    ki.p_ppid,						/* 4 ppid */
+	    ki.p__pgid,						/* 5 pgrp */
+	    ki.p_sid,						/* 6 sid */
+	    (ki.p_tdev != (uint32_t)NODEV) ? ki.p_tdev : 0,	/* 7 tty_nr */
+	    ki.p_tpgid,						/* 8 tty_pgrp */
 
-	    p->p_pgid,
-	    p->p_session->s_sid,
-	    (unsigned long long)(tty ? tty->t_dev : 0),
-	    (tty && tty->t_pgrp) ? tty->t_pgrp->pg_id : 0,
+	    ki.p_flag,						/* 9 flags */
 
-	    p->p_flag,
-
-	    ru->ru_minflt,
+	    ki.p_uru_minflt,					/* 10 min_flt */
 	    cru->ru_minflt,
-	    ru->ru_majflt,
+	    ki.p_uru_majflt,					/* 12 maj_flt */
 	    cru->ru_majflt,
-	    (long)USEC_2_TICKS(ru->ru_utime.tv_usec),
-	    (long)USEC_2_TICKS(ru->ru_stime.tv_usec),
-	    (long)USEC_2_TICKS(cru->ru_utime.tv_usec),
-	    (long)USEC_2_TICKS(cru->ru_stime.tv_usec),
+	    UTIME2TICKS(ki.p_uutime_sec, ki.p_uutime_usec),	/* 14 utime */
+	    UTIME2TICKS(ki.p_ustime_sec, ki.p_ustime_usec),	/* 15 stime */
+	    UTIME2TICKS(cru->ru_utime.tv_sec, cru->ru_utime.tv_usec), /* 16 cutime */
+	    UTIME2TICKS(cru->ru_stime.tv_sec, cru->ru_stime.tv_usec), /* 17 cstime */
 
-	    l->l_priority,				/* XXX: priority */
-	    p->p_nice - NZERO,
-	    0,
+	    ki.p_priority,				/* XXX: 18 priority */
+	    ki.p_nice - NZERO,				/* 19 nice */
+	    ki.p_nlwps,					/* 20 num_threads */
 
 	    (long long)rt.tv_sec,
-	    (long long)p->p_stats->p_start.tv_sec,
-	    (unsigned long)(vm->vm_tsize + vm->vm_dsize + vm->vm_ssize), /* size */
-	    (unsigned long)(vm->vm_rssize),	/* resident */
-	    p->p_rlimit[RLIMIT_RSS].rlim_cur,
+	    UTIME2TICKS(ki.p_ustart_sec, ki.p_ustart_usec), /* 22 start_time */
+	    ki.p_vm_msize,				/* 23 vsize */
+	    PGTOKB(ki.p_vm_rssize),			/* 24 rss */
+	    p->p_rlimit[RLIMIT_RSS].rlim_cur,		/* 25 rsslim */
 
-	    stext,					/* start code */
-	    etext,					/* end code */
-	    sstack,					/* mm start stack */
-	    0,						/* XXX: pc */
-	    0,						/* XXX: sp */
-	    p->p_sigpend.sp_set.__bits[0],		/* XXX: pending */
-	    0,						/* XXX: held */
-	    p->p_sigctx.ps_sigignore.__bits[0],		/* ignored */
-	    p->p_sigctx.ps_sigcatch.__bits[0],		/* caught */
+	    stext,					/* 26 start_code */
+	    etext,					/* 27 end_code */
+	    sstack,					/* 28 start_stack */
 
-	    (unsigned long)(intptr_t)l->l_wchan,
-	    ru->ru_nvcsw,
-	    ru->ru_nivcsw,
-	    p->p_exitsig,
-	    0);						/* XXX: processor */
+	    0,						/* XXX: 29 esp */
+	    0,						/* XXX: 30 eip */
+
+	    ki.p_siglist.__bits[0],			/* XXX: 31 pending */
+	    0,						/* XXX: 32 blocked */
+	    ki.p_sigignore.__bits[0],		/* 33 sigign */
+	    ki.p_sigcatch.__bits[0],		/* 34 sigcatch */
+
+	    ki.p_wchan,					/* 35 wchan */
+	    ki.p_uru_nvcsw,
+	    ki.p_uru_nivcsw,
+	    ki.p_exitsig,				/* 38 exit_signal */
+	    ki.p_cpuid);				/* 39 task_cpu */
 
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
