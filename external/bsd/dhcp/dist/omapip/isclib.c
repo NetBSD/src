@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.c,v 1.1.1.3 2014/07/12 11:57:59 spz Exp $	*/
+/*	$NetBSD: isclib.c,v 1.2 2014/07/12 12:09:37 spz Exp $	*/
 /*
  * Copyright(c) 2009-2010,2013-2014 by Internet Systems Consortium, Inc.("ISC")
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.1.1.3 2014/07/12 11:57:59 spz Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.2 2014/07/12 12:09:37 spz Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the export library but need the fdwatchcommand
@@ -44,7 +44,7 @@ int shutdown_signal = 0;
  * It may be moved to be part of the dns client code instead
  * of being in the DHCP code
  */
-isc_result_t 
+static isc_result_t 
 dhcp_dns_client_setservers(void)
 {
 	isc_result_t result;

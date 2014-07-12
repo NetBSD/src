@@ -1,4 +1,4 @@
-/*	$NetBSD: confpars.c,v 1.1.1.3 2014/07/12 11:58:04 spz Exp $	*/
+/*	$NetBSD: confpars.c,v 1.2 2014/07/12 12:09:38 spz Exp $	*/
 /* confpars.c
 
    Parser for dhcpd config file... */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: confpars.c,v 1.1.1.3 2014/07/12 11:58:04 spz Exp $");
+__RCSID("$NetBSD: confpars.c,v 1.2 2014/07/12 12:09:38 spz Exp $");
 
 /*! \file server/confpars.c */
 
@@ -1421,11 +1421,8 @@ void parse_failover_state (cfile, state, stos)
  *			     the configuration includes an "after" clause
  */
 
-void get_permit(cfile, permit_head, is_allow, valid_from, valid_until)
-	struct parse *cfile;
-	struct permit **permit_head;
-	int is_allow;
-	TIME *valid_from, *valid_until;
+static void get_permit(struct parse *cfile, struct permit **permit_head,
+	        int is_allow, TIME *valid_from, TIME *valid_until)
 {
 	enum dhcp_token token;
 	struct permit *permit;
