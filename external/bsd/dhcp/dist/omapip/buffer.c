@@ -1,11 +1,10 @@
-/*	$NetBSD: buffer.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $	*/
-
+/*	$NetBSD: buffer.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $	*/
 /* buffer.c
 
    Buffer access functions for the object management protocol... */
 
 /*
- * Copyright (c) 2009,2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
@@ -27,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.1.1.2 2013/03/24 22:50:36 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.1.1.3 2014/07/12 11:57:58 spz Exp $");
 
 #include "dhcpd.h"
 
@@ -725,3 +718,22 @@ isc_result_t omapi_connection_put_handle (omapi_object_t *c, omapi_object_t *h)
 		return status;
 	return omapi_connection_put_uint32 (c, handle);
 }
+
+isc_result_t omapi_connection_put_named_uint32 (omapi_object_t *c,
+						const char *name,
+						u_int32_t value)
+{
+	isc_result_t status;
+
+	status = omapi_connection_put_name(c, name);
+	if (status != ISC_R_SUCCESS)
+		return (status);
+
+	status = omapi_connection_put_uint32(c, sizeof(u_int32_t));
+	if (status != ISC_R_SUCCESS)
+		return (status);
+
+	status = omapi_connection_put_uint32(c, value);
+	return (status);
+}
+

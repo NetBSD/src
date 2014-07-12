@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcp-eval.5,v 1.1.1.2 2013/03/24 22:50:29 christos Exp $
+.\"	$NetBSD: dhcp-eval.5,v 1.1.1.3 2014/07/12 11:57:40 spz Exp $
 .\"
-.\"	Id: dhcp-eval.5,v 1.29.24.4 2012/05/17 15:51:20 sar Exp 
+.\"	Id: dhcp-eval.5,v 1.33 2012/05/17 15:50:14 sar Exp 
 .\"
-.\" Copyright (c) 2009-2012 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2009-2012,2014 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
@@ -23,9 +23,6 @@
 .\"   Redwood City, CA 94063
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
-.\"
-.\" This software has been written for Internet Systems Consortium
-.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
 .\"
 .\" Support and other services are available for ISC products - see
 .\" https://www.isc.org for more information or to learn more about ISC.
@@ -318,7 +315,7 @@ the data expression is reversed in place, using hunks of the size
 specified in the numeric expression.  For example, if the numeric
 expression evaluates to four, and the data expression evaluates to
 twelve bytes of data, then the reverse expression will evaluate to
-twelve bytes of data, consisting of the last four bytes of the the
+twelve bytes of data, consisting of the last four bytes of the
 input data, followed by the middle four bytes, followed by the first
 four bytes.
 .RE
@@ -505,8 +502,5 @@ about DDNS.
 dhcpd.conf(5), dhcpd.leases(5), dhclient.conf(5), dhcp-options(5), dhcpd(8),
 dhclient(8), RFC2132, RFC2131.
 .SH AUTHOR
-The Internet Systems Consortium DHCP Distribution was written by Ted
-Lemon under a contract with Vixie Labs.  Funding for
-this project was provided through Internet Systems Consortium.
 Information about Internet Systems Consortium can be found at
 .B https://www.isc.org.

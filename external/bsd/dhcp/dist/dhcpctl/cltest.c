@@ -1,5 +1,4 @@
-/*	$NetBSD: cltest.c,v 1.1.1.2 2013/03/27 00:31:38 christos Exp $	*/
-
+/*	$NetBSD: cltest.c,v 1.1.1.3 2014/07/12 11:57:51 spz Exp $	*/
 /* cltest.c
 
    Example program that uses the dhcpctl library. */
@@ -31,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cltest.c,v 1.1.1.2 2013/03/27 00:31:38 christos Exp $");
+__RCSID("$NetBSD: cltest.c,v 1.1.1.3 2014/07/12 11:57:51 spz Exp $");
+
+#include "config.h"
 
 #include <time.h>
 #include <sys/time.h>

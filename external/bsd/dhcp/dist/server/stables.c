@@ -1,11 +1,10 @@
-/*	$NetBSD: stables.c,v 1.1.1.1 2013/03/24 15:46:03 christos Exp $	*/
-
+/*	$NetBSD: stables.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $	*/
 /* stables.c
 
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 2004-2011 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2011,2013-2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +25,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stables.c,v 1.1.1.1 2013/03/24 15:46:03 christos Exp $");
+__RCSID("$NetBSD: stables.c,v 1.1.1.2 2014/07/12 11:58:16 spz Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -271,6 +264,11 @@ static struct option server_options[] = {
 	{ "ldap-tls-randfile", "t",		&server_universe,  77, 1 },
 #endif /* LDAP_USE_SSL */
 #endif /* LDAP_CONFIGURATION */
+	{ "dhcp-cache-threshold", "B",		&server_universe,  78, 1 },
+	{ "dont-use-fsync", "f",		&server_universe,  79, 1 },
+	{ "ddns-local-address4", "I",		&server_universe,  80, 1 },
+	{ "ddns-local-address6", "6",		&server_universe,  81, 1 },
+	{ "ignore-client-uids", "f",		&server_universe,  82, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
@@ -334,6 +332,7 @@ struct enumeration_value ddns_styles_values [] = {
 	{ "none", 0 },
 	{ "ad-hoc", 1 },
 	{ "interim", 2 },
+	{ "standard", 3 },
 	{ (char *)0, 0 }
 };
 
