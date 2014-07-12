@@ -18,8 +18,9 @@ DHCPSRC = ../dhcp.c ../bootp.c ../confpars.c ../db.c ../class.c      \
           ../ldap.c ../ldap_casa.c ../dhcpd.c
 
 DHCPLIBS = $(top_builddir)/common/libdhcp.a $(top_builddir)/omapip/libomapi.a    \
-          $(top_builddir)/dhcpctl/libdhcpctl.a $(top_builddir)/bind/lib/libdns.a \
-          $(top_builddir)/bind/lib/libisc.a
+          $(top_builddir)/dhcpctl/libdhcpctl.a $(top_builddir)/bind/lib/libirs.a \
+	  $(top_builddir)/bind/lib/libdns.a $(top_builddir)/bind/lib/libisccfg.a \
+	  $(top_builddir)/bind/lib/libisc.a
 
 ATF_TESTS =
 TESTS = 

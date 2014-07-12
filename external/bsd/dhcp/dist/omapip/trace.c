@@ -1,5 +1,4 @@
-/*	$NetBSD: trace.c,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $	*/
-
+/*	$NetBSD: trace.c,v 1.1.1.3 2014/07/12 11:58:01 spz Exp $	*/
 /* trace.c
 
    Subroutines that support tracing of OMAPI wire transactions and
@@ -7,7 +6,7 @@
    transactions... */
 
 /*
- * Copyright (c) 2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2012,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2009-2010 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
@@ -30,14 +29,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon, as part of a project for Nominum, Inc.   To learn more
- * about Internet Systems Consortium, see https://www.isc.org/.  To
- * learn more about Nominum, Inc., see ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.1.1.2 2013/03/24 22:50:37 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.1.1.3 2014/07/12 11:58:01 spz Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
