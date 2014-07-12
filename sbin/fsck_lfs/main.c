@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.46 2014/07/12 16:11:27 dholland Exp $	 */
+/* $NetBSD: main.c,v 1.47 2014/07/12 19:44:00 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -57,7 +57,6 @@ static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
 static void usage(void);
 static void efun(int, const char *, ...);
-extern void (*panic_func)(int, const char *, va_list);
 
 static void
 efun(int eval, const char *fmt, ...)
@@ -81,7 +80,6 @@ main(int argc, char **argv)
 	skipclean = 1;
 	exitonfail = 0;
 	idaddr = 0x0;
-	panic_func = vmsg;
 	esetfunc(efun);
 	while ((ch = getopt(argc, argv, optstring)) != -1) {
 		switch (ch) {
