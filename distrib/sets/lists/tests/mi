@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.580 2014/07/12 14:40:06 darrenr Exp $
+# $NetBSD: mi,v 1.581 2014/07/12 15:42:56 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1774,6 +1774,7 @@
 ./usr/tests/ipf/input/n15_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n16			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n17_6			tests-ipf-tests		obsolete
 ./usr/tests/ipf/input/n18			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n1_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n2			tests-ipf-tests		ipfilter
@@ -1938,6 +1939,7 @@
 ./usr/tests/ipf/regress/n16			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n16_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n17_6			tests-ipf-tests		obsolete
 ./usr/tests/ipf/regress/n18			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n1_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n2			tests-ipf-tests		ipfilter
