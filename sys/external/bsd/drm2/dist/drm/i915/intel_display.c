@@ -8969,14 +8969,14 @@ static void i915_disable_vga(struct drm_device *dev)
 		vga_reg = VGACNTRL;
 
 #ifdef __NetBSD__
-    {
 	const bus_size_t vgabase = 0x3c0;
 	const bus_space_tag_t iot = dev->pdev->pd_pa.pa_iot;
 	bus_space_handle_t ioh;
+	int error;
 
-	if (bus_space_map(iot, vgabase, 0x10, 0, &ioh)) {
+	if ((error = bus_space_map(iot, vgabase, 0x10, 0, &ioh)) != 0) {
 		aprint_error_dev(dev->pdev->pd_dev,
-		    "unable to map VGA registers");
+		    "unable to map VGA registers (error %d)\n", error);
 	} else {
 		CTASSERT(vgabase <= VGA_SR_INDEX);
 		CTASSERT(vgabase <= VGA_SR_DATA);
@@ -8986,7 +8986,6 @@ static void i915_disable_vga(struct drm_device *dev)
 		    (sr1 | __BIT(5)));
 		bus_space_unmap(iot, ioh, 0x10);
 	}
-    }
 #else
 	vga_get_uninterruptible(dev->pdev, VGA_RSRC_LEGACY_IO);
 	outb(SR01, VGA_SR_INDEX);
