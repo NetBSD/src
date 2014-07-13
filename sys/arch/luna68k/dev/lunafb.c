@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.30 2013/12/30 13:14:48 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.31 2014/07/13 16:00:32 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.30 2013/12/30 13:14:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.31 2014/07/13 16:00:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,15 +377,8 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 		break;
 	default:
 	case 0x0f:
-#if 1
-		/*
-		 * XXX
-		 * experiment resulted in WHITE on SKYBLUE after Xorg server
-		 * touches pallete. Disable 4bpp for now.
-		 */
 		bpp = 4;	/* XXX check monochrome bit in DIPSW */
 		break;
-#endif
 	case 1:
 		bpp = 1;
 		break;
@@ -431,7 +424,11 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 	} else if (hwplanemask == 0xff) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
 
-		/* Initialize the Bt458 */
+		/*
+		 * Initialize the Bt458.  When we write to control registers,
+		 * the address is not incremented automatically. So we specify
+		 * it ourselves for each control register.
+		 */
 		ndac->bt_addr = 0x04;
 		ndac->bt_ctrl = 0xff; /* all planes will be read */
 		ndac->bt_addr = 0x05;
@@ -441,14 +438,15 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 		ndac->bt_addr = 0x07;
 		ndac->bt_ctrl = 0x00; /* no test mode */
 
+		/*
+		 * Set ANSI 16 colors.  We only supports 4bpp console right
+		 * now, repeat 16 colors in 256 colormap.
+		 */
 		ndac->bt_addr = 0;
-		ndac->bt_cmap = dc->dc_cmap.r[0] = 0;
-		ndac->bt_cmap = dc->dc_cmap.g[0] = 0;
-		ndac->bt_cmap = dc->dc_cmap.b[0] = 0;
-		for (i = 1; i < 256; i++) {
-			ndac->bt_cmap = dc->dc_cmap.r[i] = 255;
-			ndac->bt_cmap = dc->dc_cmap.g[i] = 255;
-			ndac->bt_cmap = dc->dc_cmap.b[i] = 255;
+		for (i = 0; i < 256; i++) {
+			ndac->bt_cmap = dc->dc_cmap.r[i] = ansicmap[i % 16].r;
+			ndac->bt_cmap = dc->dc_cmap.g[i] = ansicmap[i % 16].g;
+			ndac->bt_cmap = dc->dc_cmap.b[i] = ansicmap[i % 16].b;
 		}
 	}
 
@@ -477,7 +475,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_hw = dc;
 
-	if (bpp == 4)
+	if (bpp == 4 || bpp == 8)
 		omrasops4_init(ri, 34, 80);
 	else
 		omrasops1_init(ri, 34, 80);
