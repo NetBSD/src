@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.49 2012/05/12 19:53:22 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.50 2014/07/13 01:46:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.49 2012/05/12 19:53:22 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.50 2014/07/13 01:46:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,30 +502,6 @@ getprivs(id_t id, int idtype)
 			}
 			err(1, "%s: quota_open", fst[i].f_mntonname);
 		}
-#if 0
-		if (strncmp(fst[i].f_fstypename, "nfs", 
-		    sizeof(fst[i].f_fstypename)) == 0) {
-			version = 0;
-			qup->numqvs = QUOTA_NLIMITS;
-			qup->qvs = malloc(qup->numqvs * sizeof(qup->qvs[0]));
-			if (qup->qvs == NULL) {
-				err(1, "Out of memory");
-			}
-			if (getnfsquota(fst[i].f_mntfromname,
-			    qup->qvs, id, ufs_quota_class_names[idtype]) != 1)
-				continue;
-		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
-			qup->numqvs = QUOTA_NLIMITS;
-			qup->qvs = malloc(qup->numqvs * sizeof(qup->qvs[0]));
-			if (qup->qvs == NULL) {
-				err(1, "Out of memory");
-			}
-			if (getvfsquota(fst[i].f_mntonname, qup->qvs, &version,
-			    id, idtype, dflag, 0) != 1)
-				continue;
-		} else
-			continue;
-#else
 		qup->numqvs = quota_getnumidtypes(qup->qh);
 		qup->qvs = malloc(qup->numqvs * sizeof(qup->qvs[0]));
 		if (qup->qvs == NULL) {
@@ -547,7 +523,6 @@ getprivs(id_t id, int idtype)
 				quotaval_clear(&qup->qvs[j]);
 			}
 		}
-#endif
 		(void)strlcpy(qup->fsname, fst[i].f_mntonname,
 		    sizeof(qup->fsname));
 		if (quphead == NULL)
