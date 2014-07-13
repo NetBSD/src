@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.12 2014/07/09 11:45:45 martin Exp $
+# $NetBSD: ad.powerpc,v 1.13 2014/07/13 12:15:45 martin Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -188,7 +188,8 @@
 ./usr/libdata/debug/usr/lib/powerpc/libipsec.so.3.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisc.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisccc.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.0.debug		comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.0.debug		comp-compat-shlib	compat,arch64,debug,pic,obsolete
+./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.1.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libiscsi.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,iscsi
 ./usr/libdata/debug/usr/lib/powerpc/libisns.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libkadm5clnt.so.13.0.debug	 comp-compat-shlib	 compat,arch64,debug,pic,kerberos
