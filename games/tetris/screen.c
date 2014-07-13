@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.28 2014/06/11 16:47:39 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.29 2014/07/13 16:23:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,6 +98,8 @@ static void
 setcolor(int c)
 {
 	char *buf;
+	if (nocolor == 1)
+		return;
 	if (set_a_foreground == NULL)
 		return;
 
