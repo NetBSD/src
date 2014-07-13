@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.9 2014/07/01 20:03:21 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.10 2014/07/13 01:17:15 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.9 2014/07/01 20:03:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.10 2014/07/13 01:17:15 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -211,11 +211,9 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 		 * which kernel messages will go into a black hole,
 		 * until genfb replays the console.  Whattakludge.
 		 *
-		 * wsdisplay_cndetach must come first, to clear cn_tab,
-		 * so that nothing will use it; then vga_cndetach
-		 * unmaps the bus space that it would have used.
+		 * vga_cndetach detaches wscons and unmaps the bus space
+		 * that it would have used.
 		 */
-		wsdisplay_cndetach();
 		vga_cndetach();
 	} else
 #endif
