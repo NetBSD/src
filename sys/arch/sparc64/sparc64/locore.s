@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.361 2014/06/30 12:59:48 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.362 2014/07/13 22:09:01 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -106,6 +106,7 @@
 #ifdef SUN4V
 	sethi	%hi(cputyp), \reg
 	ld	[\reg + %lo(cputyp)], \reg
+	cmp	\reg, CPU_SUN4V
 	bne,pt	%icc, 2f
 	 nop
 	/* sun4v */
