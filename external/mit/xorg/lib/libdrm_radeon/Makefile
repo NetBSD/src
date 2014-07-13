@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.6 2014/07/09 20:22:56 riastradh Exp $
+#      $NetBSD: Makefile,v 1.7 2014/07/13 16:35:49 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ SRCS=	radeon_bo.c \
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}
+
+CWARNFLAGS.clang+=	-Wno-pointer-sign -Wno-parentheses-equality
 
 LIBDPLIBS=	drm	${.CURDIR}/../libdrm
 
