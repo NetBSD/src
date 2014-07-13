@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.24 2014/07/08 07:04:07 spz Exp $
+# $NetBSD: named,v 1.25 2014/07/13 22:06:56 tls Exp $
 #
 
 # PROVIDE: named
@@ -101,7 +101,7 @@ named_precmd()
 		;;
 	esac
 
-	for i in null random; do
+	for i in null random urandom; do
 		if [ ! -c "${named_chrootdir}/dev/$i" ]; then
 			rm -f "${named_chrootdir}/dev/$i"
 			(cd /dev && 
