@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1072 2014/07/08 05:55:33 spz Exp $
+# $NetBSD: mi,v 1.1073 2014/07/13 12:29:01 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4827,6 +4827,11 @@
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-obsolete		obsolete
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.bg.bds.cp1251	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.bg.bds.iso8859-5	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.bg.qwerty.cp1251	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.bg.qwerty.iso8859-5	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.bg.qwerty.koi8-r	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-obsolete	obsolete
