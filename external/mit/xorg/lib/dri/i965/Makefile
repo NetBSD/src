@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2014/07/09 20:22:55 riastradh Exp $
+# $NetBSD: Makefile,v 1.16 2014/07/13 16:35:49 joerg Exp $
 
 MODULE=	i965
 
@@ -124,7 +124,7 @@ SRCS+= \
 	brw_fs_vector_splitting.cpp \
 	brw_shader.cpp
 
-CWARNFLAGS.clang+=	-Wno-format -Wno-switch
+CWARNFLAGS.clang+=	-Wno-format -Wno-switch -Wno-tautological-compare
 
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
 
