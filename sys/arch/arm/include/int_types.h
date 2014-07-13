@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.14 2014/02/24 16:57:57 christos Exp $	*/
+/*	$NetBSD: int_types.h,v 1.15 2014/07/13 16:31:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,7 +68,11 @@
 # define __UINT64_TYPE__	unsigned __INT64_TYPE__
 #endif
 
+#ifdef __clang__
+typedef	signed __INT8_TYPE__	   __int8_t;
+#else
 typedef	__INT8_TYPE__		   __int8_t;
+#endif
 typedef	__UINT8_TYPE__		  __uint8_t;
 typedef	__INT16_TYPE__		  __int16_t;
 typedef	__UINT16_TYPE__		 __uint16_t;
