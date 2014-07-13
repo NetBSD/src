@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.159 2012/04/20 20:23:21 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.160 2014/07/13 17:12:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.159 2012/04/20 20:23:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.160 2014/07/13 17:12:23 dholland Exp $");
 
 #include "opt_scsi.h"
 
@@ -376,7 +376,7 @@ scsipi_put_tag(struct scsipi_xfer *xs)
  * scsipi_get_xs:
  *
  *	Allocate an xfer descriptor and associate it with the
- *	specified peripherial.  If the peripherial has no more
+ *	specified peripheral.  If the peripheral has no more
  *	available command openings, we either block waiting for
  *	one to become available, or fail.
  */
@@ -484,9 +484,9 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
  * scsipi_put_xs:
  *
  *	Release an xfer descriptor, decreasing the outstanding command
- *	count for the peripherial.  If there is a thread waiting for
+ *	count for the peripheral.  If there is a thread waiting for
  *	an opening, wake it up.  If not, kick any queued I/O the
- *	peripherial may have.
+ *	peripheral may have.
  *
  *	NOTE: Must be called at splbio().
  */

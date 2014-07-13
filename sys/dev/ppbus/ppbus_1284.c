@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.12 2008/04/18 14:56:40 cegger Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.13 2014/07/13 17:12:23 dholland Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.12 2008/04/18 14:56:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.13 2014/07/13 17:12:23 dholland Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.12 2008/04/18 14:56:40 cegger Exp $
 #include <dev/ppbus/ppbus_var.h>
 
 
-/* Wait for the peripherial up to 40ms */
+/* Wait for the peripheral up to 40ms */
 static int
 do_1284_wait(struct ppbus_softc * bus, char mask, char status)
 {
