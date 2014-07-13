@@ -132,7 +132,7 @@ int sigwait(const unsigned int *set, int *sig);
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */
-#define PATH_RANDOMDEV "/dev/random"
+#define PATH_RANDOMDEV "/dev/urandom"
 
 /** define if pthread_attr_getstacksize() is available */
 #define HAVE_PTHREAD_ATTR_GETSTACKSIZE 1

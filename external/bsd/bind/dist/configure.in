@@ -930,7 +930,7 @@ case "$use_randomdev" in
 				devrandom=/dev/arandom
 				;;
 			*)
-				devrandom=/dev/random
+				devrandom=/dev/urandom
 				;;
 		esac
 		AC_MSG_RESULT($devrandom)
