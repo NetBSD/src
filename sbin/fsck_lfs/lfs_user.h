@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.6 2014/07/12 19:48:24 dholland Exp $ */
+/* $NetBSD: lfs_user.h,v 1.7 2014/07/13 02:44:21 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -89,6 +89,7 @@ int check_summary(struct lfs *, struct segsum *, ulfs_daddr_t, int, struct uvnod
 ulfs_daddr_t try_verify(struct lfs *, struct uvnode *, ulfs_daddr_t, int);
 struct ulfs1_dinode *lfs_ifind(struct lfs *, ino_t, struct ubuf *);
 void call_panic(const char *, ...);
+void my_vpanic(int, const char *, va_list);
 int extend_ifile(struct lfs *);
 struct uvnode *lfs_valloc(struct lfs *, ino_t);
 int lfs_balloc(struct uvnode *, off_t, int, struct ubuf **);
