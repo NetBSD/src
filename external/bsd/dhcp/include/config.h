@@ -16,7 +16,7 @@
 #define DHCP_BYTE_ORDER _BYTE_ORDER
 
 #if 0
-/* From the Makefile */
+/* make it possible to obey USE_INET6=no, define it in the Makefile instead */
 /* Define to 1 to include DHCPv6 support. */
 #define DHCPv6 1
 #endif
