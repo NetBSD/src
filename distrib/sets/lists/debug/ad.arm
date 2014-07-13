@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.37 2014/07/13 12:15:45 martin Exp $
+# $NetBSD: ad.arm,v 1.38 2014/07/13 13:53:59 martin Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -113,6 +113,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libirs.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete

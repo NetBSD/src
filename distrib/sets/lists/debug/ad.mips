@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.33 2014/07/13 12:15:45 martin Exp $
+# $NetBSD: ad.mips,v 1.34 2014/07/13 13:53:59 martin Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -118,6 +118,7 @@
 ./usr/libdata/debug/usr/lib/64/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
 ./usr/libdata/debug/usr/lib/64/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
 ./usr/libdata/debug/usr/lib/64/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libirs.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libisns.so.0.0.debug	comp-isns-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
@@ -295,6 +296,7 @@
 ./usr/libdata/debug/usr/lib/o32/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
 ./usr/libdata/debug/usr/lib/o32/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
 ./usr/libdata/debug/usr/lib/o32/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libirs.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libisns.so.0.0.debug	comp-isns-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
