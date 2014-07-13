@@ -1,4 +1,4 @@
-#	$NetBSD: files.g2,v 1.1 2013/02/19 16:07:23 matt Exp $
+#	$NetBSD: files.g2,v 1.2 2014/07/13 17:12:23 dholland Exp $
 #
 # Configuration info for Broadcom BCM5301X ARM Peripherals
 #
@@ -22,7 +22,7 @@ defparam opt_cortina.h				MEMSIZE
 defflag opt_cortina.h				G2_CONSOLE_EARLY
 defflag opt_cortina.h				G2ETH_COUNTERS
 
-# G2 Peripherial attach point
+# G2 Peripheral attach point
 device	g2periph { [channel=-1] } : bus_space_generic
 attach	g2periph at mainbus
 file	arch/arm/cortina/g2_periph.c		g2periph	needs-flag
