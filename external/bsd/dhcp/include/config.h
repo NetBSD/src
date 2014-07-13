@@ -15,8 +15,11 @@
 #include <sys/endian.h>
 #define DHCP_BYTE_ORDER _BYTE_ORDER
 
+#if 0
+/* From the Makefile */
 /* Define to 1 to include DHCPv6 support. */
 #define DHCPv6 1
+#endif
 
 /* Define to any value to chroot() prior to loading config. */
 /* #undef EARLY_CHROOT */
@@ -180,18 +183,6 @@
 
 /* Version number of package */
 #define VERSION "4.3.0"
-
-/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
-#endif
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
