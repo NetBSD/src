@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cop.c,v 1.3 2014/07/08 21:13:01 alnsn Exp $ */
+/*	$NetBSD: t_cop.c,v 1.4 2014/07/13 21:35:33 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2013-2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cop.c,v 1.3 2014/07/08 21:13:01 alnsn Exp $");
+__RCSID("$NetBSD: t_cop.c,v 1.4 2014/07/13 21:35:33 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -296,6 +296,45 @@ ATF_TC_BODY(libbpfjit_cop_side_effect, tc)
 	bpfjit_free_code(code);
 }
 
+ATF_TC(libbpfjit_cop_copx);
+ATF_TC_HEAD(libbpfjit_cop_copx, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test BPF_COP call followed by BPF_COPX call");
+}
+
+ATF_TC_BODY(libbpfjit_cop_copx, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 1),         /* A <- 1    */
+		BPF_STMT(BPF_MISC+BPF_COP, 0),       /* retA      */
+		BPF_STMT(BPF_MISC+BPF_TAX, 0),       /* X <- A    */
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 0),   /* A = P[0]  */
+		BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 1),  /* A = A + X */
+		BPF_STMT(BPF_MISC+BPF_TAX, 0),       /* X <- A    */
+		BPF_STMT(BPF_MISC+BPF_COPX, 0),      /* retNF     */
+		BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 1),  /* A = A + X */
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1] = { 2 };
+	bpf_args_t args = {
+		.pkt = pkt,
+		.buflen = sizeof(pkt),
+		.wirelen = sizeof(pkt),
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	code = bpfjit_generate_code(&ctx, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(code(&ctx, &args) == 3 + ctx.nfuncs);
+
+	bpfjit_free_code(code);
+}
+
 ATF_TC(libbpfjit_cop_invalid_index);
 ATF_TC_HEAD(libbpfjit_cop_invalid_index, tc)
 {
@@ -516,6 +555,46 @@ ATF_TC_BODY(libbpfjit_copx_side_effect, tc)
 	bpfjit_free_code(code);
 }
 
+ATF_TC(libbpfjit_copx_cop);
+ATF_TC_HEAD(libbpfjit_copx_cop, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test BPF_COPX call followed by BPF_COP call");
+}
+
+ATF_TC_BODY(libbpfjit_copx_cop, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LDX+BPF_IMM, 2),        /* X <- 2    */
+		BPF_STMT(BPF_MISC+BPF_COPX, 0),      /* retWL     */
+		BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 1),  /* A = A + X */
+		BPF_STMT(BPF_MISC+BPF_TAX, 0),       /* X <- A    */
+		BPF_STMT(BPF_LD+BPF_B+BPF_ABS, 0),   /* A = P[0]  */
+		BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 1),  /* A = A + X */
+		BPF_STMT(BPF_MISC+BPF_TAX, 0),       /* X <- A    */
+		BPF_STMT(BPF_MISC+BPF_COP, 3),      /* retNF     */
+		BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 1),  /* A = A + X */
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1] = { 2 };
+	bpf_args_t args = {
+		.pkt = pkt,
+		.buflen = sizeof(pkt),
+		.wirelen = sizeof(pkt),
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	code = bpfjit_generate_code(&ctx, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(code(&ctx, &args) == 5 + ctx.nfuncs);
+
+	bpfjit_free_code(code);
+}
+
 ATF_TC(libbpfjit_copx_invalid_index);
 ATF_TC_HEAD(libbpfjit_copx_invalid_index, tc)
 {
@@ -552,12 +631,17 @@ ATF_TC_BODY(libbpfjit_copx_invalid_index, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	/*
+	 * For every new test please also add a similar test
+	 * to ../../net/bpfjit/t_cop.c
+	 */
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_no_ctx);
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_A);
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_buflen);
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_wirelen);
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_ret_nfuncs);
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_side_effect);
+	ATF_TP_ADD_TC(tp, libbpfjit_cop_copx);
 	ATF_TP_ADD_TC(tp, libbpfjit_cop_invalid_index);
 
 	ATF_TP_ADD_TC(tp, libbpfjit_copx_no_ctx);
@@ -566,6 +650,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_wirelen);
 	ATF_TP_ADD_TC(tp, libbpfjit_copx_ret_nfuncs);
 	ATF_TP_ADD_TC(tp, libbpfjit_copx_side_effect);
+	ATF_TP_ADD_TC(tp, libbpfjit_copx_cop);
 	ATF_TP_ADD_TC(tp, libbpfjit_copx_invalid_index);
 
 	return atf_no_error();
