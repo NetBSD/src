@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.362 2014/07/13 22:09:01 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.363 2014/07/13 22:32:49 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -246,6 +246,9 @@ cputyp:	.word	CPU_SUN4U ! Default to sun4u
 	/* hardware interrupts (can be linked or made `fast') */
 #define	HARDINT4U(lev) \
 	VTRAP(lev, _C_LABEL(sparc_interrupt))
+#ifdef SUN4V
+#define HARDINT4V(lev) HARDINT4U(lev)	
+#endif
 
 	/* software interrupts (may not be made direct, sorry---but you
 	   should not be using them trivially anyway) */
@@ -948,7 +951,23 @@ _C_LABEL(trapbase_sun4v):
 	!
 	sun4v_trap_entry 49				! 0x000-0x030
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)		! 0x031 = data MMU miss
-	sun4v_trap_entry 78				! 0x032-0x07f
+	sun4v_trap_entry 15				! 0x032-0x040
+	HARDINT4V(1)					! 0x041 = level 1 interrupt
+	HARDINT4V(2)					! 0x042 = level 2 interrupt
+	HARDINT4V(3)					! 0x043 = level 3 interrupt
+	HARDINT4V(4)					! 0x044 = level 4 interrupt
+	HARDINT4V(5)					! 0x045 = level 5 interrupt
+	HARDINT4V(6)					! 0x046 = level 6 interrupt
+	HARDINT4V(7)					! 0x047 = level 7 interrupt
+	HARDINT4V(8)					! 0x048 = level 8 interrupt
+	HARDINT4V(9)					! 0x049 = level 9 interrupt
+	HARDINT4V(10)					! 0x04a = level 10 interrupt
+	HARDINT4V(11)					! 0x04b = level 11 interrupt
+	HARDINT4V(12)					! 0x04c = level 12 interrupt
+	HARDINT4V(13)					! 0x04d = level 13 interrupt
+	HARDINT4V(14)					! 0x04e = level 14 interrupt
+	HARDINT4V(15)					! 0x04f = level 15 interrupt
+	sun4v_trap_entry 48				! 0x050-0x07f
 	SPILL64(uspill8_sun4v,ASI_AIUS)			! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32(uspill4_sun4v,ASI_AIUS)			! 0x084 spill_1_normal
 	SPILLBOTH(uspill8_sun4v,uspill4_sun4v,ASI_AIUS)	! 0x088 spill_2_normal
