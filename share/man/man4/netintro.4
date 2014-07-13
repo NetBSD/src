@@ -1,4 +1,4 @@
-.\"	$NetBSD: netintro.4,v 1.27 2013/10/06 08:27:00 wiz Exp $
+.\"	$NetBSD: netintro.4,v 1.28 2014/07/13 12:47:13 mbalmer Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd October 5, 2013
+.Dd July 13, 2014
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -285,6 +285,12 @@ multiple masks or destination addresses, and also adopts the
 convention that specification of the default address means
 to delete the first address for the interface belonging to
 the address family in which the original socket was opened.
+.It Dv SIOCGIFALIAS
+This request provides means to get additional addresses together
+with netmask and broadcast/destination from an interface.
+It also uses the
+.Ar ifaliasreq
+structure.
 .El
 .Pp
 Request making use of the
