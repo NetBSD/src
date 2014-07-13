@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/08 05:55:33 spz Exp $
+#	$NetBSD: Makefile,v 1.2 2014/07/13 14:54:22 christos Exp $
 
 LIB=irs
 #USE_SHLIBDIR=   yes
@@ -14,8 +14,7 @@ DIST=   ${IDIST}/lib/irs
 
 .PATH.c:	${DIST}
 
-SRCS=		context.c dnsconf.c gai_strerror.c getaddrinfo.c \
-		getnameinfo.c resconf.c version.c
+SRCS=		context.c dnsconf.c resconf.c version.c
 
 
 .include <bsd.lib.mk>
