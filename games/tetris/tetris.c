@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.26 2014/07/13 16:23:55 pgoyette Exp $	*/
+/*	$NetBSD: tetris.c,v 1.27 2014/07/13 17:38:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -145,9 +145,9 @@ main(int argc, char *argv[])
 
 	keys = "jkl pq";
 
-	while ((ch = getopt(argc, argv, "ck:l:ps")) != -1)
+	while ((ch = getopt(argc, argv, "bk:l:ps")) != -1)
 		switch(ch) {
-		case 'c':
+		case 'b':
 			nocolor = 1;
 			break;
 		case 'k':
