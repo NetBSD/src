@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1478 2014/07/08 05:55:34 spz Exp $
+# $NetBSD: mi,v 1.1479 2014/07/13 08:37:13 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -862,6 +862,7 @@
 ./usr/share/man/cat4/arp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/artsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ast.0			man-sys-catman		.cat
+./usr/share/man/cat4/asus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atabus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atalk.0			man-sys-catman		.cat
@@ -3908,6 +3909,7 @@
 ./usr/share/man/html4/arp.html			man-sys-htmlman		html
 ./usr/share/man/html4/artsata.html		man-sys-htmlman		html
 ./usr/share/man/html4/ast.html			man-sys-htmlman		html
+./usr/share/man/html4/asus.html			man-sys-htmlman		html
 ./usr/share/man/html4/ata.html			man-sys-htmlman		html
 ./usr/share/man/html4/atabus.html		man-sys-htmlman		html
 ./usr/share/man/html4/atalk.html		man-sys-htmlman		html
@@ -6717,6 +6719,7 @@
 ./usr/share/man/man4/arp.4			man-sys-man		.man
 ./usr/share/man/man4/artsata.4			man-sys-man		.man
 ./usr/share/man/man4/ast.4			man-sys-man		.man
+./usr/share/man/man4/asus.4			man-sys-man		.man
 ./usr/share/man/man4/ata.4			man-sys-man		.man
 ./usr/share/man/man4/atabus.4			man-sys-man		.man
 ./usr/share/man/man4/atalk.4			man-sys-man		.man
