@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.25 2014/06/11 16:47:39 christos Exp $	*/
+/*	$NetBSD: tetris.c,v 1.26 2014/07/13 16:23:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ gid_t	gid, egid;
 
 char	key_msg[100];
 int	showpreview;
+int	nocolor;
 
 static void elide(void);
 static void setup_board(void);
@@ -144,8 +145,11 @@ main(int argc, char *argv[])
 
 	keys = "jkl pq";
 
-	while ((ch = getopt(argc, argv, "k:l:ps")) != -1)
+	while ((ch = getopt(argc, argv, "ck:l:ps")) != -1)
 		switch(ch) {
+		case 'c':
+			nocolor = 1;
+			break;
 		case 'k':
 			if (strlen(keys = optarg) != 6)
 				usage();
