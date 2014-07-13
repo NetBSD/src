@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/07/09 20:22:55 riastradh Exp $
+# $NetBSD: Makefile,v 1.6 2014/07/13 16:35:49 joerg Exp $
 
 MODULE=	r600
 
@@ -56,6 +56,6 @@ SRCS+= \
 LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
 
 CWARNFLAGS.clang+=	-Wno-constant-logical-operand -Wno-empty-body \
-			-Wno-format
+			-Wno-format -Wno-tautological-compare
 
 .include "${.CURDIR}/../dri.mk"
