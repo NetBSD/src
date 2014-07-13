@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.13 2014/06/11 16:47:39 christos Exp $	*/
+/*	$NetBSD: tetris.h,v 1.14 2014/07/13 16:23:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -168,6 +168,7 @@ extern gid_t	gid, egid;
 
 extern char	key_msg[100];
 extern int	showpreview;
+extern int	nocolor;
 
 int	fits_in(const struct shape *, int);
 void	place(const struct shape *, int, int);
