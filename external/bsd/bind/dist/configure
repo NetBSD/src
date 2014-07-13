@@ -14049,7 +14049,7 @@ $as_echo "unspecified" >&6; }
 				devrandom=/dev/arandom
 				;;
 			*)
-				devrandom=/dev/random
+				devrandom=/dev/urandom
 				;;
 		esac
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $devrandom" >&5
