@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.1.1.25 2014/06/14 20:51:04 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.1.1.26 2014/07/14 11:45:03 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -891,9 +891,7 @@ if_managelink(struct dhcpcd_ctx *ctx)
 			case AF_INET6:
 				sin6 = (struct sockaddr_in6*)(void *)
 				    rti_info[RTAX_IFA];
-				memcpy(ia6.s6_addr,
-				    sin6->sin6_addr.s6_addr,
-				    sizeof(ia6.s6_addr));
+				ia6 = sin6->sin6_addr;
 				if (rtm->rtm_type == RTM_NEWADDR) {
 					ifa_flags = if_addrflags6(ifname, &ia6);
 					if (ifa_flags == -1)
@@ -1022,45 +1020,6 @@ if_nd6reachable(const char *ifname, struct in6_addr *addr)
 	return flags;
 }
 
-void
-if_rarestore(struct dhcpcd_ctx *ctx)
-{
-
-	if (ctx->options & DHCPCD_FORKED)
-		return;
-
-	for (; ctx->ra_restore_len > 0; ctx->ra_restore_len--) {
-#ifdef ND6_IFF_ACCEPT_RTADV
-		if (!(ctx->options & DHCPCD_FORKED)) {
-			syslog(LOG_DEBUG,
-			    "%s: restoring kernel IPv6 RA support",
-			    ctx->ra_restore[ctx->ra_restore_len - 1]);
-			if (set_if_nd6_flag(
-			    ctx->ra_restore[ctx->ra_restore_len -1],
-			    ND6_IFF_ACCEPT_RTADV) == -1)
-				syslog(LOG_ERR, "%s: set_if_nd6_flag: %m",
-				    ctx->ra_restore[ctx->ra_restore_len - 1]);
-#ifdef ND6_IFF_OVERRIDE_RTADV
-			if (ctx->ra_kernel_set == 0 && del_if_nd6_flag(
-			    ctx->ra_restore[ctx->ra_restore_len -1],
-			    ND6_IFF_OVERRIDE_RTADV) == -1)
-				syslog(LOG_ERR, "%s: del_if_nd6_flag: %m",
-				    ctx->ra_restore[ctx->ra_restore_len - 1]);
-#endif
-		}
-#endif
-		free(ctx->ra_restore[ctx->ra_restore_len - 1]);
-	}
-	free(ctx->ra_restore);
-	ctx->ra_restore = NULL;
-
-	if (ctx->ra_kernel_set) {
-		syslog(LOG_DEBUG, "restoring kernel IPv6 RA support");
-		if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 1) == -1)
-			syslog(LOG_ERR, "IPV6CTL_ACCEPT_RTADV: %m");
-	}
-}
-
 static int
 if_raflush(void)
 {
@@ -1087,10 +1046,6 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const char *ifname, int own)
 	if (ifname) {
 #ifdef ND6_IFF_OVERRIDE_RTADV
 		int override;
-#endif
-#ifdef ND6_IFF_ACCEPT_RTADV
-		size_t i;
-		char *p, **nrest;
 #endif
 
 #ifdef ND6_IFF_IFDISABLED
@@ -1169,7 +1124,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const char *ifname, int own)
 				return ra;
 			}
 #ifdef ND6_IFF_OVERRIDE_RTADV
-			if (override == 0 && ctx->ra_kernel_set == 0 &&
+			if (override == 0 &&
 			    set_if_nd6_flag(ifname, ND6_IFF_OVERRIDE_RTADV)
 			    == -1)
 			{
@@ -1180,25 +1135,6 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const char *ifname, int own)
 				return ra;
 			}
 #endif
-			for (i = 0; i < ctx->ra_restore_len; i++)
-				if (strcmp(ctx->ra_restore[i], ifname) == 0)
-					break;
-			if (i == ctx->ra_restore_len) {
-				p = strdup(ifname);
-				if (p == NULL) {
-					syslog(LOG_ERR, "%s: %m", __func__);
-					return 0;
-				}
-				nrest = realloc(ctx->ra_restore,
-				    (ctx->ra_restore_len + 1) * sizeof(char *));
-				if (nrest == NULL) {
-					syslog(LOG_ERR, "%s: %m", __func__);
-					free(p);
-					return 0;
-				}
-				ctx->ra_restore = nrest;
-				ctx->ra_restore[ctx->ra_restore_len++] = p;
-			}
 			return 0;
 		}
 		return ra;
@@ -1220,7 +1156,6 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const char *ifname, int own)
 			return ra;
 		}
 		ra = 0;
-		ctx->ra_kernel_set = 1;
 
 		/* Flush the kernel knowledge of advertised routers
 		 * and prefixes so the kernel does not expire prefixes
