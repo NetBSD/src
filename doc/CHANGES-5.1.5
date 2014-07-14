@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.5,v 1.1.2.11 2014/07/09 16:12:11 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.5,v 1.1.2.12 2014/07/14 09:17:04 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.4 release to the NetBSD 5.1.5
 release:
@@ -184,3 +184,8 @@ libexec/httpd/testsuite/data/index.html		1.3
 
 	Update bozohttpd from 20080303+patches to 20140708.
 	[mrg, ticket #1913]
+
+sys/kern/sys_module.c				1.15 via patch
+
+	Fix a user-controlled memory allocation.
+	[maxv, ticket #1914]
