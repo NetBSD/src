@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.16 2014/03/10 13:21:22 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.17 2014/07/14 00:58:35 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.16 2014/03/10 13:21:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.17 2014/07/14 00:58:35 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2820,14 +2820,16 @@ static void
 xhci_device_intr_done(usbd_xfer_handle xfer)
 {
 	struct xhci_softc * const sc = xfer->pipe->device->bus->hci_private;
-	struct xhci_slot * const xs = xfer->pipe->device->hci_private;
-	const u_int dci = xhci_ep_get_dci(xfer->pipe->endpoint->edesc);
+	struct xhci_slot * const xs __debugused = xfer->pipe->device->hci_private;
+	const u_int dci __debugused = xhci_ep_get_dci(xfer->pipe->endpoint->edesc);
 	const u_int endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
 	const bool isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	DPRINTF(("%s\n", __func__));
 
+#ifdef DEBUG
 	device_printf(sc->sc_dev, "%s %p slot %u dci %u\n", __func__, xfer,
 	    xs->xs_idx, dci);
+#endif
 
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
