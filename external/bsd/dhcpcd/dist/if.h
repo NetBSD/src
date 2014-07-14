@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.1.1.1 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: if.h,v 1.1.1.2 2014/07/14 11:45:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -92,7 +92,8 @@
 #define RAW_EOF			1 << 0
 #define RAW_PARTIALCSUM		2 << 0
 
-int if_up(struct interface *ifp);
+int if_setflag(struct interface *ifp, short flag);
+#define if_up(ifp) if_setflag((ifp), IFF_UP)
 struct if_head *if_discover(struct dhcpcd_ctx *, int, char * const *);
 struct interface *if_find(struct dhcpcd_ctx *, const char *);
 void if_free(struct interface *);
@@ -133,7 +134,6 @@ int if_route(const struct rt *rt, int);
 
 #ifdef INET6
 int if_checkipv6(struct dhcpcd_ctx *ctx, const char *, int);
-void if_rarestore(struct dhcpcd_ctx *);
 int if_nd6reachable(const char *ifname, struct in6_addr *addr);
 
 int if_address6(const struct ipv6_addr *, int);
@@ -147,7 +147,6 @@ int if_route6(const struct rt6 *rt, int);
 #define if_delroute6(rt) if_route6(rt, -1)
 #else
 #define if_checkipv6(a, b, c) (-1)
-#define if_rarestore(a)
 #endif
 
 int if_machinearch(char *, size_t);
