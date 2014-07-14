@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.2 2011/07/17 23:29:10 dyoung Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3 2014/07/14 12:40:38 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -124,6 +124,30 @@ bus_intr_establish(bus_space_tag_t t, int p, int l, int	(*h)(void *), void *a)
 /* XXXX Things get complicated if we use unmapped register accesses. */
 #define	bus_space_vaddr(t, h)	(PHYS_ASI((h)._asi) ? \
 			NULL : (void *)(vaddr_t)((h)._ptr))
+
+#define bus_space_barrier(t, h, o, s, f)	\
+	sparc_bus_space_barrier((t), (h), (o), (s), (f))
+
+static __inline void
+sparc_bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h,
+    bus_size_t o, bus_size_t s, int f)
+{
+	/*
+	 * We have a bit of a problem with the bus_space_barrier()
+	 * interface.  It defines a read barrier and a write barrier
+	 * which really don't map to the 7 different types of memory
+	 * barriers in the SPARC v9 instruction set.
+	 */
+	if (f == BUS_SPACE_BARRIER_READ)
+		/* A load followed by a load to the same location? */
+		__asm volatile("membar #Lookaside");
+	else if (f == BUS_SPACE_BARRIER_WRITE)
+		/* A store followed by a store? */
+		__asm volatile("membar #StoreStore");
+	else 
+		/* A store followed by a load? */
+		__asm volatile("membar #StoreLoad|#MemIssue|#Lookaside");
+}
 
 /*
  *	uintN_t bus_space_read_N(bus_space_tag_t tag,
