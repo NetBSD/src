@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.95 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.96 2014/07/14 16:06:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.95 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.96 2014/07/14 16:06:48 maxv Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1081,8 +1081,9 @@ module_do_load(const char *name, bool isdep, int flags,
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod2, MODULE_CLASS_ANY, true);
 			if (error != 0) {
-				module_error("recursive load failed for `%s', "
-				    "error %d", mi->mi_name, error);
+				module_error("recursive load failed for `%s' "
+				    "(`%s' required), error %d", mi->mi_name,
+				    buf, error);
 				goto fail;
 			}
 			mod->mod_required[mod->mod_nrequired++] = mod2;
