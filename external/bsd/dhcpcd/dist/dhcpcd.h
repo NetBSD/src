@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.18 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.19 2014/07/14 11:45:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -125,11 +125,8 @@ struct dhcpcd_ctx {
 	struct dhcp_opt *dhcp6_opts;
 	size_t dhcp6_opts_len;
 	struct ipv6_ctx *ipv6;
-	char **ra_restore;
-	size_t ra_restore_len;
 #ifndef __linux__
 	int ra_global;
-	int ra_kernel_set;
 #endif
 #endif /* INET6 */
 
@@ -156,5 +153,6 @@ void dhcpcd_dropinterface(struct interface *, const char *);
 int dhcpcd_selectprofile(struct interface *, const char *);
 
 void dhcpcd_startinterface(void *);
+void dhcpcd_initstate(struct interface *);
 
 #endif
