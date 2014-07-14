@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.1.1.29 2014/06/14 20:51:06 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.1.1.30 2014/07/14 11:45:05 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 2, 2014
+.Dd July 7, 2014
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@
 .Sh DESCRIPTION
 .Nm
 is an implementation of the DHCP client specified in
-.%R RFC 2131 .
+.Li RFC 2131 .
 .Nm
 gets the host information
 .Po
@@ -104,17 +104,17 @@ to renew early.
 .Pp
 .Nm
 is also an implementation of the BOOTP client specified in
-.%R RFC 951 .
+.Li RFC 951 .
 .Pp
 .Nm
 is also an implementation of the IPv6 Router Solicitor as specified in
-.%R RFC 4861
+.Li RFC 4861
 and
-.%R RFC 6106 .
+.Li RFC 6106 .
 .Pp
 .Nm
 is also an implemenation of the DHCPv6 client as specified in
-.%R RFC 3315 .
+.Li RFC 3315 .
 By default,
 .Nm
 only starts DHCPv6 when instructed to do so by an IPV6 Router Advertisement.
@@ -212,7 +212,7 @@ instead of the default
 .Pa @SCRIPT@ .
 .It Fl D , Fl Fl duid
 Generate an
-.%R RFC 4361
+.Li RFC 4361
 compliant clientid.
 This requires persistent storage and not all DHCP servers work with it so it
 is not enabled by default.
@@ -260,7 +260,7 @@ are disable, none, ptr and both.
 itself never does any DNS updates.
 .Nm
 encodes the FQDN hostname as specified in
-.%R RFC1035 .
+.Li RFC1035 .
 .It Fl f , Fl Fl config Ar file
 Specify a config to load instead of
 .Pa @SYSCONFDIR@/dhcpcd.conf .
@@ -553,6 +553,14 @@ Dumps the last lease for the
 to stdout.
 .Ar interface
 could also be a path to a DHCP wire formatted file.
+Use the
+.Fl 4
+or
+.Fl 6
+flags to specify an address family.
+Pass a 2nd
+.Fl U, Fl Fl dumplease option to dump a secondary lease, such as
+DHCPv6 Prefix Delegation when not being mixed with another IA type.
 .It Fl V, Fl Fl variables
 Display a list of option codes and the associated variable for use in
 .Xr dhcpcd-run-hooks 8 .
@@ -672,7 +680,8 @@ RFC\ 951, RFC\ 1534, RFC\ 2104, RFC\ 2131, RFC\ 2132, RFC\ 2563, RFC\ 2855,
 RFC\ 3004, RFC\ 3118, RFC\ 3203, RFC\ 3315, RFC\ 3361, RFC\ 3633, RFC\ 3396,
 RFC\ 3397, RFC\ 3442, RFC\ 3495, RFC\ 3925, RFC\ 3927, RFC\ 4039, RFC\ 4075,
 RFC\ 4242, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4074, RFC\ 4861, RFC\ 4833,
-RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106, RFC\ 6334, RFC\ 6704, RFC\ 7217.
+RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106, RFC\ 6334, RFC\ 6603, RFC\ 6704,
+RFC\ 7217.
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
