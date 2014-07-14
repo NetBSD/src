@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.102 2014/05/25 19:33:28 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.103 2014/07/14 16:29:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.102 2014/05/25 19:33:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.103 2014/07/14 16:29:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.102 2014/05/25 19:33:28 christos 
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
-MODULE(MODULE_CLASS_VFS, smbfs, NULL);
+MODULE(MODULE_CLASS_VFS, smbfs, "nsmb");
 
 VFS_PROTOS(smbfs);
 
