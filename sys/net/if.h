@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.170 2014/07/01 14:04:40 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.171 2014/07/14 02:34:36 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -290,6 +290,7 @@ typedef struct ifnet {
 	struct ifaddr	*if_hwdl;
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
+	void	*if_bridgeif;		/* shortcut to interface list entry */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
 	pfil_head_t *	if_pfil;	/* filtering point */
 	uint64_t if_capabilities;	/* interface capabilities */

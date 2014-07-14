@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.16 2014/06/18 01:19:19 ozaki-r Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.17 2014/07/14 02:34:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.16 2014/06/18 01:19:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.17 2014/07/14 02:34:36 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,8 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	struct bstp_cbpdu bpdu;
 	int s;
 
+	KASSERT(BRIDGE_LOCKED(sc));
+
 	ifp = bif->bif_ifp;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -274,9 +276,11 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 
 	memcpy(mtod(m, char *) + sizeof(*eh), &bpdu, sizeof(bpdu));
 
+	BRIDGE_UNLOCK(sc);
 	s = splnet();
 	bridge_enqueue(sc, ifp, m, 0);
 	splx(s);
+	BRIDGE_LOCK(sc);
 }
 
 static int
@@ -363,6 +367,8 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 	struct mbuf *m;
 	int s;
 
+	KASSERT(BRIDGE_LOCKED(sc));
+
 	KASSERT(bif != NULL);
 	ifp = bif->bif_ifp;
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -390,9 +396,11 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 
 	memcpy(mtod(m, char *) + sizeof(*eh), &bpdu, sizeof(bpdu));
 
+	BRIDGE_UNLOCK(sc);
 	s = splnet();
 	bridge_enqueue(sc, ifp, m, 0);
 	splx(s);
+	BRIDGE_LOCK(sc);
 }
 
 static void
@@ -592,6 +600,10 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 	struct bstp_tcn_unit tu;
 	uint16_t len;
 
+#ifdef BRIDGE_MPSAFE
+	KASSERT(bif->bif_refs > 0);
+#endif
+
 	eh = mtod(m, struct ether_header *);
 
 	if ((bif->bif_flags & IFBIF_STP) == 0)
@@ -621,7 +633,11 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 	switch (tpdu.tbu_bpdutype) {
 	case BSTP_MSGTYPE_TCN:
 		tu.tu_message_type = tpdu.tbu_bpdutype;
+
+		BRIDGE_LOCK(sc);
 		bstp_received_tcn_bpdu(sc, bif, &tu);
+		BRIDGE_UNLOCK(sc);
+
 		break;
 	case BSTP_MSGTYPE_CFG:
 		if (m->m_len < sizeof(cpdu) &&
@@ -658,7 +674,11 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 		    (cpdu.cbu_flags & BSTP_FLAG_TCA) ? 1 : 0;
 		cu.cu_topology_change =
 		    (cpdu.cbu_flags & BSTP_FLAG_TC) ? 1 : 0;
+
+		BRIDGE_LOCK(sc);
 		bstp_received_config_bpdu(sc, bif, &cu);
+		BRIDGE_UNLOCK(sc);
+
 		break;
 	default:
 		goto out;
@@ -805,6 +825,9 @@ bstp_initialization(struct bridge_softc *sc)
 	struct bridge_iflist *bif, *mif;
 
 	mif = NULL;
+
+	BRIDGE_LOCK(sc);
+
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		if ((bif->bif_flags & IFBIF_STP) == 0)
 			continue;
@@ -823,7 +846,9 @@ bstp_initialization(struct bridge_softc *sc)
 			continue;
 		}
 	}
+
 	if (mif == NULL) {
+		BRIDGE_UNLOCK(sc);
 		bstp_stop(sc);
 		return;
 	}
@@ -836,6 +861,8 @@ bstp_initialization(struct bridge_softc *sc)
 	    (((uint64_t)(uint8_t)CLLADDR(mif->bif_ifp->if_sadl)[3]) << 16) |
 	    (((uint64_t)(uint8_t)CLLADDR(mif->bif_ifp->if_sadl)[4]) << 8) |
 	    (((uint64_t)(uint8_t)CLLADDR(mif->bif_ifp->if_sadl)[5]) << 0);
+
+	BRIDGE_UNLOCK(sc);
 
 	sc->sc_designated_root = sc->sc_bridge_id;
 	sc->sc_root_path_cost = 0;
@@ -853,6 +880,8 @@ bstp_initialization(struct bridge_softc *sc)
 		callout_reset(&sc->sc_bstpcallout, hz,
 		    bstp_tick, sc);
 
+	BRIDGE_LOCK(sc);
+
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		if (bif->bif_flags & IFBIF_STP)
 			bstp_enable_port(sc, bif);
@@ -863,6 +892,8 @@ bstp_initialization(struct bridge_softc *sc)
 	bstp_port_state_selection(sc);
 	bstp_config_bpdu_generation(sc);
 	bstp_timer_start(&sc->sc_hello_timer, 0);
+
+	BRIDGE_UNLOCK(sc);
 }
 
 void
@@ -870,12 +901,14 @@ bstp_stop(struct bridge_softc *sc)
 {
 	struct bridge_iflist *bif;
 
+	BRIDGE_LOCK(sc);
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		bstp_set_port_state(bif, BSTP_IFSTATE_DISABLED);
 		bstp_timer_stop(&bif->bif_hold_timer);
 		bstp_timer_stop(&bif->bif_message_age_timer);
 		bstp_timer_stop(&bif->bif_forward_delay_timer);
 	}
+	BRIDGE_UNLOCK(sc);
 
 	callout_stop(&sc->sc_bstpcallout);
 
@@ -1032,6 +1065,7 @@ bstp_tick(void *arg)
 	int s;
 
 	s = splnet();
+	BRIDGE_LOCK(sc);
 
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		if ((bif->bif_flags & IFBIF_STP) == 0)
@@ -1079,6 +1113,7 @@ bstp_tick(void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		callout_reset(&sc->sc_bstpcallout, hz, bstp_tick, sc);
 
+	BRIDGE_UNLOCK(sc);
 	splx(s);
 }
 

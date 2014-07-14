@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.19 2014/06/20 14:22:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.20 2014/07/14 02:34:36 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,6 +77,8 @@
 
 #include <sys/callout.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 /*
  * Commands used in the SIOCSDRVSPEC ioctl.  Note the lookup of the
@@ -255,6 +257,8 @@ struct bridge_iflist {
 	uint8_t			bif_priority;
 	struct ifnet		*bif_ifp;	/* member if */
 	uint32_t		bif_flags;	/* member if flags */
+	uint32_t		bif_refs;	/* reference count */
+	bool			bif_waiting;	/* waiting for released  */
 };
 
 /*
@@ -299,8 +303,11 @@ struct bridge_softc {
 	callout_t		sc_brcallout;	/* bridge callout */
 	callout_t		sc_bstpcallout;	/* STP callout */
 	LIST_HEAD(, bridge_iflist) sc_iflist;	/* member interface list */
+	kmutex_t		*sc_iflist_lock;
+	kcondvar_t		sc_iflist_cv;
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
+	kmutex_t		*sc_rtlist_lock;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	pktqueue_t *		sc_fwd_pktq;
@@ -319,6 +326,17 @@ void	bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
+
+#ifdef NET_MPSAFE
+#define BRIDGE_MPSAFE	1
+#endif
+
+#define BRIDGE_LOCK(_sc)	if ((_sc)->sc_iflist_lock) \
+					mutex_enter((_sc)->sc_iflist_lock)
+#define BRIDGE_UNLOCK(_sc)	if ((_sc)->sc_iflist_lock) \
+					mutex_exit((_sc)->sc_iflist_lock)
+#define BRIDGE_LOCKED(_sc)	(!(_sc)->sc_iflist_lock || \
+				 mutex_owned((_sc)->sc_iflist_lock))
 
 #endif /* _KERNEL */
 #endif /* !_NET_IF_BRIDGEVAR_H_ */
