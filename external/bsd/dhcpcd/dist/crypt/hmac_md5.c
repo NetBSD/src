@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.2 2014/06/14 20:51:09 roy Exp $");
+ __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.3 2014/07/14 14:02:02 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -33,6 +33,7 @@
 
 #include "crypt.h"
 
+#include "../config.h"
 #ifdef HAVE_MD5_H
 #include <md5.h>
 #else
