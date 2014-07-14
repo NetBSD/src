@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.1.1.22 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.23 2014/07/14 11:45:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,6 +30,7 @@
 #ifndef IF_OPTIONS_H
 #define IF_OPTIONS_H
 
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -104,6 +105,9 @@
 #define DHCPCD_IAID			(1ULL << 48)
 #define DHCPCD_DHCP			(1ULL << 49)
 #define DHCPCD_DHCP6			(1ULL << 50)
+#define DHCPCD_NOPFXDLG			(1ULL << 51)
+#define DHCPCD_PFXDLGONLY		(1ULL << 52)
+#define DHCPCD_PFXDLGMIX		(1ULL << 53)
 
 extern const struct option cf_options[];
 
@@ -117,6 +121,10 @@ struct if_sla {
 struct if_ia {
 	uint8_t iaid[4];
 #ifdef INET6
+	uint16_t ia_type;
+	uint8_t iaid_set;
+	struct in6_addr addr;
+	uint8_t prefix_len;
 	size_t sla_len;
 	struct if_sla *sla;
 #endif
@@ -130,13 +138,13 @@ struct vivco {
 struct if_options {
 	uint8_t iaid[4];
 	int metric;
-	uint8_t requestmask[256 / 8];
-	uint8_t requiremask[256 / 8];
-	uint8_t nomask[256 / 8];
-	uint8_t requestmask6[(UINT16_MAX + 1) / 8];
-	uint8_t requiremask6[(UINT16_MAX + 1) / 8];
-	uint8_t nomask6[(UINT16_MAX + 1) / 8];
-	uint8_t dstmask[256 / 8];
+	uint8_t requestmask[256 / NBBY];
+	uint8_t requiremask[256 / NBBY];
+	uint8_t nomask[256 / NBBY];
+	uint8_t requestmask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t requiremask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t nomask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t dstmask[256 / NBBY];
 	uint32_t leasetime;
 	time_t timeout;
 	time_t reboot;
@@ -165,7 +173,6 @@ struct if_options {
 	in_addr_t *arping;
 	char *fallback;
 
-	uint16_t ia_type;
 	struct if_ia *ia;
 	size_t ia_len;
 
