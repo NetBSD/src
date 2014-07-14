@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.1.1.10 2014/06/14 20:51:05 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.1.1.11 2014/07/14 11:45:04 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -655,7 +655,6 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 	i = 0;
 	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
 		if (ap->prefix_vltime == 0) {
-			TAILQ_REMOVE(addrs, ap, next);
 			if (ap->flags & IPV6_AF_ADDED) {
 				syslog(LOG_INFO, "%s: deleting address %s",
 				    ap->iface->name, ap->saddr);
@@ -667,7 +666,12 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 			}
 			eloop_q_timeout_delete(ap->iface->ctx->eloop,
 			    0, NULL, ap);
-			free(ap);
+			if (ap->flags & IPV6_AF_REQUEST) {
+				ap->flags &= ~IPV6_AF_ADDED;
+			} else {
+				TAILQ_REMOVE(addrs, ap, next);
+				free(ap);
+			}
 		} else if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr)) {
 			if (ap->flags & IPV6_AF_NEW)
 				i++;
@@ -754,72 +758,69 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 		return;
 	}
 	TAILQ_FOREACH(ifp, ifs, next) {
-		if (strcmp(ifp->name, ifname) == 0)
-			break;
-	}
-	if (ifp == NULL) {
-		errno = ESRCH;
-		return;
-	}
-	state = ipv6_getstate(ifp);
-	if (state == NULL) {
-		errno = ENOENT;
-		return;
-	}
+		/* Each psuedo interface also stores addresses */
+		if (strcmp(ifp->name, ifname))
+			continue;
+		state = ipv6_getstate(ifp);
+		if (state == NULL)
+			continue;
 
-	if (!IN6_IS_ADDR_LINKLOCAL(addr)) {
-		ipv6nd_handleifa(ctx, cmd, ifname, addr, flags);
-		dhcp6_handleifa(ctx, cmd, ifname, addr, flags);
-	}
-
-	TAILQ_FOREACH(ap, &state->addrs, next) {
-		if (IN6_ARE_ADDR_EQUAL(&ap->addr, addr))
-			break;
-	}
-
-	switch (cmd) {
-	case RTM_DELADDR:
-		if (ap) {
-			TAILQ_REMOVE(&state->addrs, ap, next);
-			free(ap);
+		if (!IN6_IS_ADDR_LINKLOCAL(addr)) {
+			ipv6nd_handleifa(ctx, cmd, ifname, addr, flags);
+			dhcp6_handleifa(ctx, cmd, ifname, addr, flags);
 		}
-		break;
-	case RTM_NEWADDR:
-		if (ap == NULL) {
-			ap = calloc(1, sizeof(*ap));
-			ap->iface = ifp;
-			memcpy(ap->addr.s6_addr, addr->s6_addr,
-			    sizeof(ap->addr.s6_addr));
-			TAILQ_INSERT_TAIL(&state->addrs,
-			    ap, next);
-		}
-		ap->addr_flags = flags;
 
-		if (IN6_IS_ADDR_LINKLOCAL(&ap->addr)) {
-#ifdef IPV6_POLLADDRFLAG
-			if (ap->addr_flags & IN6_IFF_TENTATIVE) {
-				struct timeval tv;
-
-				ms_to_tv(&tv, RETRANS_TIMER / 2);
-				eloop_timeout_add_tv(ap->iface->ctx->eloop,
-				    &tv, ipv6_checkaddrflags, ap);
+		TAILQ_FOREACH(ap, &state->addrs, next) {
+			if (IN6_ARE_ADDR_EQUAL(&ap->addr, addr))
 				break;
+		}
+
+		switch (cmd) {
+		case RTM_DELADDR:
+			if (ap) {
+				TAILQ_REMOVE(&state->addrs, ap, next);
+				free(ap);
 			}
+			break;
+		case RTM_NEWADDR:
+			if (ap == NULL) {
+				ap = calloc(1, sizeof(*ap));
+				ap->iface = ifp;
+				ap->addr = *addr;
+				TAILQ_INSERT_TAIL(&state->addrs,
+				    ap, next);
+			}
+			ap->addr_flags = flags;
+
+			if (IN6_IS_ADDR_LINKLOCAL(&ap->addr)) {
+#ifdef IPV6_POLLADDRFLAG
+				if (ap->addr_flags & IN6_IFF_TENTATIVE) {
+					struct timeval tv;
+
+					ms_to_tv(&tv, RETRANS_TIMER / 2);
+					eloop_timeout_add_tv(
+					    ap->iface->ctx->eloop,
+					    &tv, ipv6_checkaddrflags, ap);
+					break;
+				}
 #endif
 
-			if (!(ap->addr_flags & IN6_IFF_NOTUSEABLE)) {
-				/* Now run any callbacks.
-				 * Typically IPv6RS or DHCPv6 */
-				while ((cb = TAILQ_FIRST(&state->ll_callbacks)))
-				{
-					TAILQ_REMOVE(&state->ll_callbacks,
-					    cb, next);
-					cb->callback(cb->arg);
-					free(cb);
+				if (!(ap->addr_flags & IN6_IFF_NOTUSEABLE)) {
+					/* Now run any callbacks.
+					 * Typically IPv6RS or DHCPv6 */
+					while ((cb =
+					    TAILQ_FIRST(&state->ll_callbacks)))
+					{
+						TAILQ_REMOVE(
+						    &state->ll_callbacks,
+						    cb, next);
+						cb->callback(cb->arg);
+						free(cb);
+					}
 				}
 			}
+			break;
 		}
-		break;
 	}
 }
 
@@ -1056,7 +1057,8 @@ ipv6_handleifa_addrs(int cmd,
 	found = 0;
 	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
 		if (!IN6_ARE_ADDR_EQUAL(addr, &ap->addr)) {
-			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0)
+			if (ap->flags & IPV6_AF_ADDED &&
+			    !(ap->flags & IPV6_AF_DADCOMPLETED))
 				alldadcompleted = 0;
 			continue;
 		}
@@ -1113,10 +1115,8 @@ desc_route(const char *cmd, const struct rt6 *rt)
 	char gatebuf[INET6_ADDRSTRLEN];
 	const char *ifname = rt->iface->name, *dest, *gate;
 
-	dest = inet_ntop(AF_INET6, &rt->dest.s6_addr,
-	    destbuf, INET6_ADDRSTRLEN);
-	gate = inet_ntop(AF_INET6, &rt->gate.s6_addr,
-	    gatebuf, INET6_ADDRSTRLEN);
+	dest = inet_ntop(AF_INET6, &rt->dest, destbuf, INET6_ADDRSTRLEN);
+	gate = inet_ntop(AF_INET6, &rt->gate, gatebuf, INET6_ADDRSTRLEN);
 	if (IN6_ARE_ADDR_EQUAL(&rt->gate, &in6addr_any))
 		syslog(LOG_INFO, "%s: %s route to %s/%d", ifname, cmd,
 		    dest, ipv6_prefixlen(&rt->net));
@@ -1125,7 +1125,8 @@ desc_route(const char *cmd, const struct rt6 *rt)
 		syslog(LOG_INFO, "%s: %s default route via %s", ifname, cmd,
 		    gate);
 	else
-		syslog(LOG_INFO, "%s: %s route to %s/%d via %s", ifname, cmd,
+		syslog(LOG_INFO, "%s: %s%s route to %s/%d via %s", ifname, cmd,
+		    rt->flags & RTF_REJECT ? " reject" : "",
 		    dest, ipv6_prefixlen(&rt->net), gate);
 }
 

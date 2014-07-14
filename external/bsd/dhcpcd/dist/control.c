@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.1.1.6 2014/06/14 20:51:03 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.1.1.7 2014/07/14 11:45:02 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -55,8 +55,9 @@ static void
 control_handle_data(void *arg)
 {
 	struct fd_list *l = arg, *lp, *last;
-	char buffer[1024], *e, *p, *argvp[255], **ap;
+	char buffer[1024], *e, *p, *argvp[255], **ap, *a;
 	ssize_t bytes;
+	size_t len;
 	int argc;
 
 	bytes = read(l->fd, buffer, sizeof(buffer) - 1);
@@ -82,14 +83,28 @@ control_handle_data(void *arg)
 	buffer[bytes] = '\0';
 	p = buffer;
 	e = buffer + bytes;
-	argc = 0;
-	ap = argvp;
-	while (p < e && (size_t)argc < sizeof(argvp)) {
-		argc++;
-		*ap++ = p;
-		p += strlen(p) + 1;
+
+	/* Each command is \n terminated
+	 * Each argument is NULL separated */
+	while (p < e) {
+		argc = 0;
+		ap = argvp;
+		while (p < e) {
+			argc++;
+			if ((size_t)argc > sizeof(argvp)) {
+				errno = ENOBUFS;
+				return;
+			}
+			a = *ap++ = p;
+			len = strlen(p);
+			p += len + 1;
+			if (a[len - 1] == '\n') {
+				a[len - 1] = '\0';
+				break;
+			}
+		}
+		dhcpcd_handleargs(l->ctx, l, argc, argvp);
 	}
-	dhcpcd_handleargs(l->ctx, l, argc, argvp);
 }
 
 static void

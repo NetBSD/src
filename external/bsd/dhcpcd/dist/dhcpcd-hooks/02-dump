@@ -1,8 +1,10 @@
-# $NetBSD: 02-dump,v 1.1.1.3 2014/03/14 11:27:41 roy Exp $
+# $NetBSD: 02-dump,v 1.1.1.4 2014/07/14 11:45:06 roy Exp $
 
 # Just echo our DHCP options we have
 
-if [ "$reason" = "DUMP" ]; then
+case "$reason" in
+DUMP|DUMP6)
 	set | sed -ne 's/^new_//p' | sort
 	exit 0
-fi
+	;;
+esac

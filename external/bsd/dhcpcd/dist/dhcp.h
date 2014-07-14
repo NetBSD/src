@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.1.1.19 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.20 2014/07/14 11:45:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -252,7 +252,8 @@ char *decode_rfc3361(const uint8_t *, size_t);
 ssize_t decode_rfc3442(char *, size_t, const uint8_t *p, size_t);
 ssize_t decode_rfc5969(char *, size_t, const uint8_t *p, size_t);
 
-void dhcp_printoptions(const struct dhcpcd_ctx *);
+void dhcp_printoptions(const struct dhcpcd_ctx *,
+    const struct dhcp_opt *, size_t);
 int get_option_addr(struct dhcpcd_ctx *,struct in_addr *,
     const struct dhcp_message *, uint8_t);
 #define is_bootp(i, m) ((m) &&						\
@@ -287,16 +288,15 @@ void dhcp_bind(void *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
-int dhcp_dump(struct dhcpcd_ctx *, const char *);
+int dhcp_dump(struct interface *);
 #else
-#define dhcp_printoptions
 #define dhcp_drop(a, b)
 #define dhcp_start(a) {}
 #define dhcp_reboot(a, b) b = b
 #define dhcp_reboot_newopts(a, b)
 #define dhcp_close(a)
 #define dhcp_free(a)
-#define dhcp_dump(a, b) -1
+#define dhcp_dump(a) -1
 #endif
 
 #endif

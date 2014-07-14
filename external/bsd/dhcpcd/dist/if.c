@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.1.1.1 2014/06/14 20:51:04 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.1.1.2 2014/07/14 11:45:03 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -136,7 +136,7 @@ if_carrier(struct interface *iface)
 }
 
 int
-if_up(struct interface *ifp)
+if_setflag(struct interface *ifp, short flag)
 {
 	struct ifreq ifr;
 	int s, r;
@@ -155,10 +155,10 @@ if_up(struct interface *ifp)
 #endif
 	r = -1;
 	if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
-		if ((ifr.ifr_flags & IFF_UP))
+		if (flag == 0 || ifr.ifr_flags & flag)
 			r = 0;
 		else {
-			ifr.ifr_flags |= IFF_UP;
+			ifr.ifr_flags |= flag;
 			if (ioctl(s, SIOCSIFFLAGS, &ifr) == 0)
 				r = 0;
 		}
@@ -243,6 +243,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		}
 		if (ifp)
 			continue;
+
 		if (argc > 0) {
 			for (i = 0; i < argc; i++) {
 #ifdef __linux__
@@ -298,6 +299,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		ifp->ctx = ctx;
 		strlcpy(ifp->name, p, sizeof(ifp->name));
 		ifp->flags = ifa->ifa_flags;
+		ifp->carrier = if_carrier(ifp);
 
 		sdl_type = 0;
 		/* Don't allow loopback unless explicit */
@@ -485,7 +487,9 @@ if_find(struct dhcpcd_ctx *ctx, const char *ifname)
 
 	if (ctx != NULL && ctx->ifaces != NULL) {
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-			if (strcmp(ifp->name, ifname) == 0)
+			if ((ifp->options == NULL ||
+			    !(ifp->options->options & DHCPCD_PFXDLGONLY)) &&
+			    strcmp(ifp->name, ifname) == 0)
 				return ifp;
 		}
 	}
