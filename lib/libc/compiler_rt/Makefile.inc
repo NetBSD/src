@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.20 2014/05/20 12:23:47 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.21 2014/07/14 07:55:26 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -23,10 +23,8 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${LIBC_MACHINE_ARCH}
 #	divdc3.c \
 #	divsc3.c
 
-.if ${HAVE_LLVM:Uno} == "yes"
-# Requires C11 support
-GENERIC_SRCS+= atomic.c
-.endif
+# Implemented on top of our atomic interface.
+#GENERIC_SRCS+= atomic.c
 
 .if ${HAVE_LIBGCC_EH} == "no"
 GENERIC_SRCS+= \
