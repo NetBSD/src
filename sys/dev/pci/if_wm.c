@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.277 2014/07/14 01:24:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.278 2014/07/14 05:00:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.277 2014/07/14 01:24:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.278 2014/07/14 05:00:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1631,7 +1631,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
-	case WM_T_I354: /* XXXX ok? */
+	case WM_T_I354:
 	case WM_T_80003:
 		/* SPI */
 		wm_set_spiaddrbits(sc);
