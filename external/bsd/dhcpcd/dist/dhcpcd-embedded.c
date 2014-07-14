@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.5 2014/06/14 20:51:04 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.6 2014/07/14 11:45:03 roy Exp $");
 
 /*
  * DO NOT EDIT
@@ -254,6 +254,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed uint32 vltime",
 "embed ip6address prefix",
 "encap 13 option",
+"encap 67 option",
 "define6 27 array ip6address nis_servers",
 "define6 28 array ip6address nisp_servers",
 "define6 29 domain nis_domain_name",
@@ -307,6 +308,9 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed byte minor",
 "define6 63 binhex geoloc",
 "define6 64 domain aftr_name",
+"define6 67 embed pd_exclude",
+"embed byte prefix_len",
+"embed binhex subnetID",
 "define6 69 encap mip6_idinf",
 "encap 71 option",
 "encap 72 option",

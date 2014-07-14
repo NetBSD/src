@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.1.1.6 2014/06/14 20:51:05 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.1.1.7 2014/07/14 11:45:04 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -85,13 +85,13 @@ inet_cidrtoaddr(int cidr, struct in_addr *addr)
 		errno = EINVAL;
 		return -1;
 	}
-	ocets = (cidr + 7) / 8;
+	ocets = (cidr + 7) / NBBY;
 
 	addr->s_addr = 0;
 	if (ocets > 0) {
 		memset(&addr->s_addr, 255, (size_t)ocets - 1);
 		memset((unsigned char *)&addr->s_addr + (ocets - 1),
-		    (256 - (1 << (32 - cidr) % 8)), 1);
+		    (256 - (1 << (32 - cidr) % NBBY)), 1);
 	}
 
 	return 0;

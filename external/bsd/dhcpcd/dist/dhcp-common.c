@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.6 2014/06/14 20:51:04 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.7 2014/07/14 11:45:03 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -89,6 +89,7 @@ dhcp_vendor(char *str, size_t len)
 
 int
 make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
+    const struct dhcp_opt *odopts, size_t odopts_len,
     uint8_t *mask, const char *opts, int add)
 {
 	char *token, *o, *p, *t;
@@ -97,14 +98,14 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 	unsigned int n;
 	size_t i;
 
-	o = p = strdup(opts);
 	if (opts == NULL)
 		return -1;
+	o = p = strdup(opts);
 	while ((token = strsep(&p, ", "))) {
 		if (*token == '\0')
 			continue;
-		for (i = 0, opt = dopts; i < dopts_len; i++, opt++) {
-			match = 0;
+		match = 0;
+		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
 			if (strcmp(opt->var, token) == 0)
 				match = 1;
 			else {
@@ -114,26 +115,40 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 					if (opt->option == n)
 						match = 1;
 			}
-			if (match) {
-				if (add == 2 && !(opt->type & ADDRIPV4)) {
-					free(o);
-					errno = EINVAL;
-					return -1;
-				}
-				if (add == 1 || add == 2)
-					add_option_mask(mask,
-					    opt->option);
-				else
-					del_option_mask(mask,
-					    opt->option);
+			if (match)
 				break;
+		}
+		if (match == 0) {
+			for (i = 0, opt = dopts; i < dopts_len; i++, opt++) {
+				if (strcmp(opt->var, token) == 0)
+				        match = 1;
+				else {
+					errno = 0;
+					n = (unsigned int)strtol(token, &t, 0);
+					if (errno == 0 && !*t)
+						if (opt->option == n)
+							match = 1;
+				}
+				if (match)
+					break;
 			}
 		}
-		if (!opt->option) {
+		if (!match || !opt->option) {
 			free(o);
 			errno = ENOENT;
 			return -1;
 		}
+		if (add == 2 && !(opt->type & ADDRIPV4)) {
+			free(o);
+			errno = EINVAL;
+			return -1;
+		}
+		if (add == 1 || add == 2)
+			add_option_mask(mask,
+			    opt->option);
+		else
+			del_option_mask(mask,
+			    opt->option);
 	}
 	free(o);
 	return 0;
