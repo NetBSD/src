@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.8 2014/07/14 14:56:10 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.9 2014/07/14 14:58:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.8 2014/07/14 14:56:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.9 2014/07/14 14:58:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,6 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.8 2014/07/14 14:56:10 riastradh Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -2644,4 +2645,33 @@ accelerate(struct uatp_softc *sc, unsigned int old_raw, unsigned int raw,
 	    (sc, (((int) smoothed) - ((int) old_smoothed)), remainder);
 
 #undef CHECK_
+}
+
+MODULE(MODULE_CLASS_DRIVER, uatp, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+uatp_modcmd(modcmd_t cmd, void *aux)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_uatp,
+		    cfattach_ioconf_uatp, cfdata_ioconf_uatp);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_uatp,
+		    cfattach_ioconf_uatp, cfdata_ioconf_uatp);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
