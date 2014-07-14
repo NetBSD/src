@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.133 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.134 2014/07/14 13:39:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.133 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.134 2014/07/14 13:39:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -594,7 +594,7 @@ rip_stat(struct socket *so, struct stat *ub)
 static int
 rip_peeraddr(struct socket *so, struct mbuf *nam)
 {
-	KASSERT(solocked(0));
+	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
@@ -605,7 +605,7 @@ rip_peeraddr(struct socket *so, struct mbuf *nam)
 static int
 rip_sockaddr(struct socket *so, struct mbuf *nam)
 {
-	KASSERT(solocked(0));
+	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
