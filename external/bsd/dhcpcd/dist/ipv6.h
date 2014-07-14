@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.1.1.9 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.10 2014/07/14 11:45:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -74,10 +74,8 @@
 #endif
 
 /* This was fixed in NetBSD */
-#ifdef __NetBSD_Prereq__
-#  if __NetBSD_Prereq__(6, 99, 20)
-#    undef IPV6_POLLADDRFLAG
-#  endif
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 699002000
+#  undef IPV6_POLLADDRFLAG
 #endif
 
 struct ipv6_addr {
@@ -92,7 +90,10 @@ struct ipv6_addr {
 	short flags;
 	char saddr[INET6_ADDRSTRLEN];
 	uint8_t iaid[4];
+	uint16_t ia_type;
 	struct interface *delegating_iface;
+	uint8_t prefix_exclude_len;
+	struct in6_addr prefix_exclude;
 
 	void (*dadcallback)(void *);
 	int dadcounter;
@@ -111,7 +112,8 @@ TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 #define IPV6_AF_DADCOMPLETED	0x0040
 #define IPV6_AF_DELEGATED	0x0080
 #define IPV6_AF_DELEGATEDPFX	0x0100
-#define IPV6_AF_DELEGATEDZERO	0X0200
+#define IPV6_AF_DELEGATEDZERO	0x0200
+#define IPV6_AF_REQUEST		0x0400
 
 struct rt6 {
 	TAILQ_ENTRY(rt6) next;
