@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.8 2014/06/14 20:55:37 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.9 2014/07/14 11:49:48 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -282,7 +282,7 @@ ipv6nd_sendrsprobe(void *arg)
 	dst.sin6_len = sizeof(dst);
 #endif
 	dst.sin6_scope_id = ifp->index;
-	if (inet_pton(AF_INET6, ALLROUTERS, &dst.sin6_addr.s6_addr) != 1) {
+	if (inet_pton(AF_INET6, ALLROUTERS, &dst.sin6_addr) != 1) {
 		syslog(LOG_ERR, "%s: %m", __func__);
 		return;
 	}
@@ -627,8 +627,7 @@ ipv6nd_dadcallback(void *arg)
 			ap->dadcounter = dadcounter;
 			ap->flags &= ~(IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED);
 			ap->flags |= IPV6_AF_NEW;
-			p = inet_ntop(AF_INET6, ap->addr.s6_addr,
-			    buf, sizeof(buf));
+			p = inet_ntop(AF_INET6, &ap->addr, buf, sizeof(buf));
 			if (p)
 				snprintf(ap->saddr,
 				    sizeof(ap->saddr),
@@ -734,8 +733,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
 		if (ifp == rap->iface &&
-		    memcmp(rap->from.s6_addr, ctx->from.sin6_addr.s6_addr,
-		    sizeof(rap->from.s6_addr)) == 0)
+		    IN6_ARE_ADDR_EQUAL(&rap->from, &ctx->from.sin6_addr))
 			break;
 	}
 
@@ -764,8 +762,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 			return;
 		}
 		rap->iface = ifp;
-		memcpy(rap->from.s6_addr, ctx->from.sin6_addr.s6_addr,
-		    sizeof(rap->from.s6_addr));
+		rap->from = ctx->from.sin6_addr;
 		strlcpy(rap->sfrom, ctx->sfrom, sizeof(rap->sfrom));
 		TAILQ_INIT(&rap->addrs);
 		TAILQ_INIT(&rap->options);
@@ -852,9 +849,8 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 			}
 			TAILQ_FOREACH(ap, &rap->addrs, next)
 				if (ap->prefix_len ==pi->nd_opt_pi_prefix_len &&
-				    memcmp(ap->prefix.s6_addr,
-				    pi->nd_opt_pi_prefix.s6_addr,
-				    sizeof(ap->prefix.s6_addr)) == 0)
+				    IN6_ARE_ADDR_EQUAL(&ap->prefix,
+				    &pi->nd_opt_pi_prefix))
 					break;
 			if (ap == NULL) {
 				if (!(pi->nd_opt_pi_flags_reserved &
@@ -868,9 +864,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 				ap->iface = rap->iface;
 				ap->flags = IPV6_AF_NEW;
 				ap->prefix_len = pi->nd_opt_pi_prefix_len;
-				memcpy(ap->prefix.s6_addr,
-				   pi->nd_opt_pi_prefix.s6_addr,
-				   sizeof(ap->prefix.s6_addr));
+				ap->prefix = pi->nd_opt_pi_prefix;
 				if (pi->nd_opt_pi_flags_reserved &
 				    ND_OPT_PI_FLAG_AUTO)
 				{
@@ -884,7 +878,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 						break;
 					}
 					cbp = inet_ntop(AF_INET6,
-					    ap->addr.s6_addr,
+					    &ap->addr,
 					    buf, sizeof(buf));
 					if (cbp)
 						snprintf(ap->saddr,
@@ -947,7 +941,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 			op += sizeof(rdnss->nd_opt_rdnss_lifetime);
 			l = 0;
 			for (n = ndo->nd_opt_len - 1; n > 1; n -= 2,
-			    op += sizeof(addr.s6_addr))
+			    op += sizeof(addr))
 			{
 				r = ipv6_printaddr(NULL, 0, op, ifp->name);
 				if (r != -1)
@@ -961,7 +955,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 			if (opt == NULL)
 				continue;
 			for (n = ndo->nd_opt_len - 1; n > 1; n -= 2,
-			    op += sizeof(addr.s6_addr))
+			    op += sizeof(addr))
 			{
 				r = ipv6_printaddr(tmp, l, op,
 				    ifp->name);
@@ -1401,8 +1395,7 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
 		if (rap->iface == ifp &&
-		    memcmp(rap->from.s6_addr, nd_na->nd_na_target.s6_addr,
-		    sizeof(rap->from.s6_addr)) == 0)
+		    IN6_ARE_ADDR_EQUAL(&rap->from, &nd_na->nd_na_target))
 			break;
 	}
 	if (rap == NULL) {
