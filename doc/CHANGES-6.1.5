@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.14 2014/07/09 09:51:22 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.15 2014/07/14 06:34:51 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -653,3 +653,13 @@ libexec/httpd/small/Makefile			1.2
 
 	Update bozohttpd from 20111118 to 20140708.
 	[mrg, ticket #1095]
+
+sys/kern/kern_core.c				1.23
+
+	Fix a read-beyond-end string read.
+	[maxv, ticket #1097]
+
+sys/kern/sys_module.c				1.15
+
+	Fix a user-controlled memory allocation.
+	[maxv, ticket #1098]
