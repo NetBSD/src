@@ -1,4 +1,4 @@
-/*	$NetBSD: t_extmem.c,v 1.2 2014/07/08 21:13:01 alnsn Exp $ */
+/*	$NetBSD: t_extmem.c,v 1.3 2014/07/14 19:11:15 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_extmem.c,v 1.2 2014/07/08 21:13:01 alnsn Exp $");
+__RCSID("$NetBSD: t_extmem.c,v 1.3 2014/07/14 19:11:15 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -464,6 +464,10 @@ ATF_TC_BODY(libbpfjit_copx_ret_preinited_mem, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	/*
+	 * For every new test please also add a similar test
+	 * to ../../net/bpfjit/t_extmem.c
+	 */
 	ATF_TP_ADD_TC(tp, libbpfjit_extmem_load_default);
 	ATF_TP_ADD_TC(tp, libbpfjit_extmem_load_preinited);
 	ATF_TP_ADD_TC(tp, libbpfjit_extmem_invalid_load);
