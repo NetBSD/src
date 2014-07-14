@@ -294,7 +294,7 @@ public:
     n->last_pc = pcEnd;
     n->data_base = 0;
     n->ehframe_base = 0;
-    if (rb_tree_insert_node(&segmentTree, n) == n) {
+    if (static_cast<Range *>(rb_tree_insert_node(&segmentTree, n)) == n) {
       pthread_rwlock_unlock(&fdeTreeLock);
       return true;
     }
@@ -305,7 +305,7 @@ public:
 
   bool removeFDE(pint_t pcStart, pint_t pcEnd, pint_t fde) {
     pthread_rwlock_wrlock(&fdeTreeLock);
-    Range *n = (Range *)rb_tree_find_node(&segmentTree, &pcStart);
+    Range *n = static_cast<Range *>(rb_tree_find_node(&segmentTree, &pcStart));
     if (n == NULL) {
       pthread_rwlock_unlock(&fdeTreeLock);
       return false;
@@ -402,7 +402,7 @@ private:
     n->data_base = data_base;
     n->ehframe_base = ehframe_base;
 
-    if (rb_tree_insert_node(&segmentTree, n) != n) {
+    if (static_cast<Range *>(rb_tree_insert_node(&segmentTree, n)) == n) {
       free(n);
       return;
     }
