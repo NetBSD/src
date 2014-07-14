@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.24 2014/06/11 20:09:17 riastradh Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.25 2014/07/14 10:05:24 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.24 2014/06/11 20:09:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.25 2014/07/14 10:05:24 mbalmer Exp $");
 
 #include "opt_wskbdmap.h"
 #include <sys/types.h>
@@ -419,6 +419,28 @@ static const keysym_t pckbd_keydesc_fr[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_be[] = {
+/*  pos	     normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_ampersand,	KS_1,		KS_bar,
+    KC(3),   KS_eacute,		KS_2,		KS_at,
+    KC(5),   KS_apostrophe,	KS_4,
+    KC(6),   KS_parenleft,	KS_5,
+    KC(7),   KS_section,	KS_6,		KS_asciicircum,
+    KC(8),   KS_egrave,		KS_7,
+    KC(9),   KS_exclam,		KS_8,
+    KC(10),  KS_ccedilla,	KS_9,		KS_braceleft,
+    KC(11),  KS_agrave,		KS_0,		KS_braceright,
+    KC(12),  KS_parenright,	KS_degree,
+    KC(13),  KS_minus,		KS_underscore,
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis,	KS_bracketleft,
+    KC(27),  KS_dollar,		KS_asterisk,	KS_bracketright,
+    KC(43),  KS_mu,		KS_sterling,	KS_grave,
+    KC(40),  KS_ugrave,		KS_percent,	KS_acute,
+    KC(41),  KS_twosuperior,	KS_threesuperior,
+    KC(53),  KS_equal,		KS_plus,	KS_asciitilde,
+    KC(86),  KS_less,		KS_greater,	KS_backslash,
+};
+
 static const keysym_t pckbd_keydesc_it[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,	    	KS_quotedbl,	KS_twosuperior,
@@ -788,6 +810,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_SF,			KB_SG,	pckbd_keydesc_sf),
 	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	pckbd_keydesc_sg_nodead),
 	KBD_MAP(KB_FR,                  KB_US,  pckbd_keydesc_fr),
+	KBD_MAP(KB_BE,                  KB_FR,  pckbd_keydesc_be),
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
