@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.86 2014/07/02 09:51:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.87 2014/07/14 02:34:36 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.86 2014/07/02 09:51:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.87 2014/07/14 02:34:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -219,6 +219,7 @@ static struct bridge_iflist *bridge_lookup_member(struct bridge_softc *,
 						  const char *name);
 static struct bridge_iflist *bridge_lookup_member_if(struct bridge_softc *,
 						     struct ifnet *ifp);
+static void	bridge_release_member(struct bridge_softc *, struct bridge_iflist *);
 static void	bridge_delete_member(struct bridge_softc *,
 				     struct bridge_iflist *);
 
@@ -365,6 +366,12 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	callout_init(&sc->sc_bstpcallout, 0);
 
 	LIST_INIT(&sc->sc_iflist);
+#ifdef BRIDGE_MPSAFE
+	sc->sc_iflist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+#else
+	sc->sc_iflist_lock = NULL;
+#endif
+	cv_init(&sc->sc_iflist_cv, "if_bridge_cv");
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
@@ -414,8 +421,10 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	bridge_stop(ifp, 1);
 
+	BRIDGE_LOCK(sc);
 	while ((bif = LIST_FIRST(&sc->sc_iflist)) != NULL)
 		bridge_delete_member(sc, bif);
+	BRIDGE_UNLOCK(sc);
 
 	mutex_enter(&bridge_list_lock);
 	LIST_REMOVE(sc, sc_list);
@@ -431,6 +440,10 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	/* Tear down the routing table. */
 	bridge_rtable_fini(sc);
+
+	cv_destroy(&sc->sc_iflist_cv);
+	if (sc->sc_iflist_lock)
+		mutex_obj_free(sc->sc_iflist_lock);
 
 	free(sc, M_DEVBUF);
 
@@ -648,7 +661,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 /*
  * bridge_lookup_member:
  *
- *	Lookup a bridge member interface.  Must be called at splnet().
+ *	Lookup a bridge member interface.
  */
 static struct bridge_iflist *
 bridge_lookup_member(struct bridge_softc *sc, const char *name)
@@ -656,31 +669,76 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name)
 	struct bridge_iflist *bif;
 	struct ifnet *ifp;
 
+	BRIDGE_LOCK(sc);
+
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		ifp = bif->bif_ifp;
 		if (strcmp(ifp->if_xname, name) == 0)
-			return (bif);
+			break;
 	}
 
-	return (NULL);
+#ifdef BRIDGE_MPSAFE
+	if (bif != NULL) {
+		if (bif->bif_waiting)
+			bif = NULL;
+		else
+			atomic_inc_32(&bif->bif_refs);
+	}
+#endif
+
+	BRIDGE_UNLOCK(sc);
+
+	return bif;
 }
 
 /*
  * bridge_lookup_member_if:
  *
- *	Lookup a bridge member interface by ifnet*.  Must be called at splnet().
+ *	Lookup a bridge member interface by ifnet*.
  */
 static struct bridge_iflist *
 bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp)
 {
 	struct bridge_iflist *bif;
 
-	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-		if (bif->bif_ifp == member_ifp)
-			return (bif);
-	}
+	BRIDGE_LOCK(sc);
 
-	return (NULL);
+	bif = member_ifp->if_bridgeif;
+
+#ifdef BRIDGE_MPSAFE
+	if (bif != NULL) {
+		if (bif->bif_waiting)
+			bif = NULL;
+		else
+			atomic_inc_32(&bif->bif_refs);
+	}
+#endif
+
+	BRIDGE_UNLOCK(sc);
+
+	return bif;
+}
+
+/*
+ * bridge_release_member:
+ *
+ *	Release the specified member interface.
+ */
+static void
+bridge_release_member(struct bridge_softc *sc, struct bridge_iflist *bif)
+{
+#ifdef BRIDGE_MPSAFE
+	atomic_dec_32(&bif->bif_refs);
+	membar_sync();
+	if (__predict_false(bif->bif_waiting && bif->bif_refs == 0)) {
+		BRIDGE_LOCK(sc);
+		cv_broadcast(&sc->sc_iflist_cv);
+		BRIDGE_UNLOCK(sc);
+	}
+#else
+	(void)sc;
+	(void)bif;
+#endif
 }
 
 /*
@@ -693,30 +751,24 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	struct ifnet *ifs = bif->bif_ifp;
 
-	switch (ifs->if_type) {
-	case IFT_ETHER:
-		/*
-		 * Take the interface out of promiscuous mode.
-		 */
-		(void) ifpromisc(ifs, 0);
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		panic("bridge_delete_member: impossible");
-#endif
-		break;
-	}
+	KASSERT(BRIDGE_LOCKED(sc));
 
 	ifs->if_input = ether_input;
 	ifs->if_bridge = NULL;
+	ifs->if_bridgeif = NULL;
+
 	LIST_REMOVE(bif, bif_next);
 
-	bridge_rtdelete(sc, ifs);
+#ifdef BRIDGE_MPSAFE
+	bif->bif_waiting = true;
+	membar_sync();
+	while (bif->bif_refs > 0) {
+		aprint_debug("%s: cv_wait on iflist\n", __func__);
+		cv_wait(&sc->sc_iflist_cv, sc->sc_iflist_lock);
+	}
+#endif
 
 	free(bif, M_DEVBUF);
-
-	if (sc->sc_if.if_flags & IFF_RUNNING)
-		bstp_initialization(sc);
 }
 
 static int
@@ -765,10 +817,17 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	bif->bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
 	bif->bif_priority = BSTP_DEFAULT_PORT_PRIORITY;
 	bif->bif_path_cost = BSTP_DEFAULT_PATH_COST;
+	bif->bif_refs = 0;
+	bif->bif_waiting = false;
+
+	BRIDGE_LOCK(sc);
 
 	ifs->if_bridge = sc;
+	ifs->if_bridgeif = bif;
 	LIST_INSERT_HEAD(&sc->sc_iflist, bif, bif_next);
 	ifs->if_input = bridge_input;
+
+	BRIDGE_UNLOCK(sc);
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
@@ -787,15 +846,52 @@ static int
 bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 {
 	struct ifbreq *req = arg;
+	const char *name = req->ifbr_ifsname;
 	struct bridge_iflist *bif;
+	struct ifnet *ifs;
 
-	bif = bridge_lookup_member(sc, req->ifbr_ifsname);
-	if (bif == NULL)
-		return (ENOENT);
+	BRIDGE_LOCK(sc);
+
+	/*
+	 * Don't use bridge_lookup_member. We want to get a member
+	 * with bif_refs == 0.
+	 */
+	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+		ifs = bif->bif_ifp;
+		if (strcmp(ifs->if_xname, name) == 0)
+			break;
+	}
+
+	if (bif == NULL) {
+		BRIDGE_UNLOCK(sc);
+		return ENOENT;
+	}
 
 	bridge_delete_member(sc, bif);
 
-	return (0);
+	BRIDGE_UNLOCK(sc);
+
+	switch (ifs->if_type) {
+	case IFT_ETHER:
+		/*
+		 * Take the interface out of promiscuous mode.
+		 * Don't call it with holding sc_iflist_lock.
+		 */
+		(void) ifpromisc(ifs, 0);
+		break;
+	default:
+#ifdef DIAGNOSTIC
+		panic("bridge_delete_member: impossible");
+#endif
+		break;
+	}
+
+	bridge_rtdelete(sc, ifs);
+
+	if (sc->sc_if.if_flags & IFF_RUNNING)
+		bstp_initialization(sc);
+
+	return 0;
 }
 
 static int
@@ -813,6 +909,8 @@ bridge_ioctl_gifflags(struct bridge_softc *sc, void *arg)
 	req->ifbr_priority = bif->bif_priority;
 	req->ifbr_path_cost = bif->bif_path_cost;
 	req->ifbr_portno = bif->bif_ifp->if_index & 0xff;
+
+	bridge_release_member(sc, bif);
 
 	return (0);
 }
@@ -835,11 +933,14 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 
 		default:
 			/* Nothing else can. */
+			bridge_release_member(sc, bif);
 			return (EINVAL);
 		}
 	}
 
 	bif->bif_flags = req->ifbr_ifsflags;
+
+	bridge_release_member(sc, bif);
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
@@ -876,6 +977,8 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 	struct ifbreq breq;
 	int count, len, error = 0;
 
+	BRIDGE_LOCK(sc);
+
 	count = 0;
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next)
 		count++;
@@ -906,6 +1009,8 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 		len -= sizeof(breq);
 	}
 
+	BRIDGE_UNLOCK(sc);
+
 	bifc->ifbic_len = sizeof(breq) * count;
 	return (error);
 }
@@ -920,6 +1025,8 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 
 	if (bac->ifbac_len == 0)
 		return (0);
+
+	mutex_enter(sc->sc_rtlist_lock);
 
 	len = bac->ifbac_len;
 	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
@@ -942,6 +1049,8 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 		len -= sizeof(bareq);
 	}
  out:
+	mutex_exit(sc->sc_rtlist_lock);
+
 	bac->ifbac_len = sizeof(bareq) * count;
 	return (error);
 }
@@ -959,6 +1068,8 @@ bridge_ioctl_saddr(struct bridge_softc *sc, void *arg)
 
 	error = bridge_rtupdate(sc, req->ifba_dst, bif->bif_ifp, 1,
 	    req->ifba_flags);
+
+	bridge_release_member(sc, bif);
 
 	return (error);
 }
@@ -1114,6 +1225,8 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
+	bridge_release_member(sc, bif);
+
 	return (0);
 }
 
@@ -1170,6 +1283,8 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
+	bridge_release_member(sc, bif);
+
 	return (0);
 }
 
@@ -1184,6 +1299,9 @@ bridge_ifdetach(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_bridge;
 	struct ifbreq breq;
+
+	/* ioctl_lock should prevent this from happening */
+	KASSERT(sc != NULL);
 
 	memset(&breq, 0, sizeof(breq));
 	strlcpy(breq.ifbr_ifsname, ifp->if_xname, sizeof(breq.ifbr_ifsname));
@@ -1237,8 +1355,6 @@ bridge_stop(struct ifnet *ifp, int disable)
  * bridge_enqueue:
  *
  *	Enqueue a packet on a bridge member interface.
- *
- *	NOTE: must be called at splnet().
  */
 void
 bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
@@ -1280,7 +1396,9 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	len = m->m_pkthdr.len;
 	m->m_flags |= M_PROTO1;
 	mflags = m->m_flags;
+
 	IFQ_ENQUEUE(&dst_ifp->if_snd, m, &pktattr, error);
+
 	if (error) {
 		/* mbuf is already freed */
 		sc->sc_if.if_oerrors++;
@@ -1318,7 +1436,9 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	struct ether_header *eh;
 	struct ifnet *dst_if;
 	struct bridge_softc *sc;
+#ifndef BRIDGE_MPSAFE
 	int s;
+#endif
 
 	if (m->m_len < ETHER_HDR_LEN) {
 		m = m_pullup(m, ETHER_HDR_LEN);
@@ -1329,14 +1449,17 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	eh = mtod(m, struct ether_header *);
 	sc = ifp->if_bridge;
 
+#ifndef BRIDGE_MPSAFE
 	s = splnet();
+#endif
 
 	/*
 	 * If bridge is down, but the original output interface is up,
 	 * go ahead and send out that interface.  Otherwise, the packet
 	 * is dropped below.
 	 */
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+	if (__predict_false(sc == NULL) ||
+	    (sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		dst_if = ifp;
 		goto sendunicast;
 	}
@@ -1353,6 +1476,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		struct bridge_iflist *bif;
 		struct mbuf *mc;
 		int used = 0;
+
+		BRIDGE_LOCK(sc);
 
 		LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 			dst_if = bif->bif_ifp;
@@ -1388,9 +1513,14 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 
 			bridge_enqueue(sc, dst_if, mc, 0);
 		}
+
+		BRIDGE_UNLOCK(sc);
+
 		if (used == 0)
 			m_freem(m);
+#ifndef BRIDGE_MPSAFE
 		splx(s);
+#endif
 		return (0);
 	}
 
@@ -1401,13 +1531,17 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
+#ifndef BRIDGE_MPSAFE
 		splx(s);
+#endif
 		return (0);
 	}
 
 	bridge_enqueue(sc, dst_if, m, 0);
 
+#ifndef BRIDGE_MPSAFE
 	splx(s);
+#endif
 	return (0);
 }
 
@@ -1438,17 +1572,24 @@ bridge_forward(void *v)
 	struct bridge_iflist *bif;
 	struct ifnet *src_if, *dst_if;
 	struct ether_header *eh;
+#ifndef BRIDGE_MPSAFE
 	int s;
 
 	KERNEL_LOCK(1, NULL);
 	mutex_enter(softnet_lock);
+#endif
+
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+#ifndef BRIDGE_MPSAFE
 		mutex_exit(softnet_lock);
 		KERNEL_UNLOCK_ONE(NULL);
+#endif
 		return;
 	}
 
+#ifndef BRIDGE_MPSAFE
 	s = splnet();
+#endif
 	while ((m = pktq_dequeue(sc->sc_fwd_pktq)) != NULL) {
 		src_if = m->m_pkthdr.rcvif;
 
@@ -1471,6 +1612,7 @@ bridge_forward(void *v)
 			case BSTP_IFSTATE_LISTENING:
 			case BSTP_IFSTATE_DISABLED:
 				m_freem(m);
+				bridge_release_member(sc, bif);
 				continue;
 			}
 		}
@@ -1497,8 +1639,11 @@ bridge_forward(void *v)
 		if ((bif->bif_flags & IFBIF_STP) != 0 &&
 		    bif->bif_state == BSTP_IFSTATE_LEARNING) {
 			m_freem(m);
+			bridge_release_member(sc, bif);
 			continue;
 		}
+
+		bridge_release_member(sc, bif);
 
 		/*
 		 * At this point, the port either doesn't participate
@@ -1543,6 +1688,7 @@ bridge_forward(void *v)
 			m_freem(m);
 			continue;
 		}
+
 		bif = bridge_lookup_member_if(sc, dst_if);
 		if (bif == NULL) {
 			/* Not a member of the bridge (anymore?) */
@@ -1555,15 +1701,20 @@ bridge_forward(void *v)
 			case BSTP_IFSTATE_DISABLED:
 			case BSTP_IFSTATE_BLOCKING:
 				m_freem(m);
+				bridge_release_member(sc, bif);
 				continue;
 			}
 		}
 
+		bridge_release_member(sc, bif);
+
 		bridge_enqueue(sc, dst_if, m, 1);
 	}
+#ifndef BRIDGE_MPSAFE
 	splx(s);
 	mutex_exit(softnet_lock);
 	KERNEL_UNLOCK_ONE(NULL);
+#endif
 }
 
 static bool
@@ -1601,7 +1752,6 @@ bridge_ourether(struct bridge_iflist *bif, struct ether_header *eh, int src)
  *
  *	Receive input from a member interface.  Queue the packet for
  *	bridging if it is not for us.
- *	should be called at splnet()
  */
 static void
 bridge_input(struct ifnet *ifp, struct mbuf *m)
@@ -1610,7 +1760,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_iflist *bif;
 	struct ether_header *eh;
 
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+	if (__predict_false(sc == NULL) ||
+	    (sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		ether_input(ifp, m);
 		return;
 	}
@@ -1639,6 +1790,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	    !bstp_state_before_learning(bif)) {
 		struct bridge_iflist *_bif;
 
+		BRIDGE_LOCK(sc);
 		LIST_FOREACH(_bif, &sc->sc_iflist, bif_next) {
 			/* It is destined for us. */
 			if (bridge_ourether(_bif, eh, 0)) {
@@ -1647,14 +1799,20 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 				m->m_pkthdr.rcvif = _bif->bif_ifp;
 				ether_input(_bif->bif_ifp, m);
-				return;
+				break;
 			}
 
 			/* We just received a packet that we sent out. */
 			if (bridge_ourether(_bif, eh, 1)) {
 				m_freem(m);
-				return;
+				break;
 			}
+		}
+		BRIDGE_UNLOCK(sc);
+
+		if (_bif != NULL) {
+			bridge_release_member(sc, bif);
+			return;
 		}
 	}
 
@@ -1662,6 +1820,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	if (bif->bif_flags & IFBIF_STP &&
 	    memcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN) == 0) {
 		bstp_input(sc, bif, m);
+		bridge_release_member(sc, bif);
 		return;
 	}
 
@@ -1671,8 +1830,11 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (bstp_state_before_learning(bif)) {
 		ether_input(ifp, m);
+		bridge_release_member(sc, bif);
 		return;
 	}
+
+	bridge_release_member(sc, bif);
 
 	/* Queue the packet for bridge forwarding. */
 	if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, 0)))
@@ -1696,6 +1858,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	bool used, bmcast;
 
 	used = bmcast = m->m_flags & (M_BCAST|M_MCAST);
+
+	BRIDGE_LOCK(sc);
 
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		dst_if = bif->bif_ifp;
@@ -1734,6 +1898,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		ether_input(src_if, m);
 	else if (!used)
 		m_freem(m);
+
+	BRIDGE_UNLOCK(sc);
 }
 
 /*
@@ -1746,15 +1912,19 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
     struct ifnet *dst_if, int setflags, uint8_t flags)
 {
 	struct bridge_rtnode *brt;
-	int error;
+	int error = 0;
+
+	mutex_enter(sc->sc_rtlist_lock);
 
 	/*
 	 * A route for this destination might already exist.  If so,
 	 * update it, otherwise create a new one.
 	 */
 	if ((brt = bridge_rtnode_lookup(sc, dst)) == NULL) {
-		if (sc->sc_brtcnt >= sc->sc_brtmax)
-			return (ENOSPC);
+		if (sc->sc_brtcnt >= sc->sc_brtmax) {
+			error = ENOSPC;
+			goto out;
+		}
 
 		/*
 		 * Allocate a new bridge forwarding node, and
@@ -1762,8 +1932,10 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 		 * address.
 		 */
 		brt = pool_get(&bridge_rtnode_pool, PR_NOWAIT);
-		if (brt == NULL)
-			return (ENOMEM);
+		if (brt == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
 
 		memset(brt, 0, sizeof(*brt));
 		brt->brt_expire = time_uptime + sc->sc_brttimeout;
@@ -1772,7 +1944,7 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 
 		if ((error = bridge_rtnode_insert(sc, brt)) != 0) {
 			pool_put(&bridge_rtnode_pool, brt);
-			return (error);
+			goto out;
 		}
 	}
 
@@ -1785,7 +1957,10 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 			brt->brt_expire = time_uptime + sc->sc_brttimeout;
 	}
 
-	return (0);
+out:
+	mutex_exit(sc->sc_rtlist_lock);
+
+	return error;
 }
 
 /*
@@ -1797,11 +1972,17 @@ static struct ifnet *
 bridge_rtlookup(struct bridge_softc *sc, const uint8_t *addr)
 {
 	struct bridge_rtnode *brt;
+	struct ifnet *ifs = NULL;
 
-	if ((brt = bridge_rtnode_lookup(sc, addr)) == NULL)
-		return (NULL);
+	mutex_enter(sc->sc_rtlist_lock);
 
-	return (brt->brt_ifp);
+	brt = bridge_rtnode_lookup(sc, addr);
+	if (brt != NULL)
+		ifs = brt->brt_ifp;
+
+	mutex_exit(sc->sc_rtlist_lock);
+
+	return ifs;
 }
 
 /*
@@ -1816,23 +1997,30 @@ bridge_rttrim(struct bridge_softc *sc)
 {
 	struct bridge_rtnode *brt, *nbrt;
 
+	mutex_enter(sc->sc_rtlist_lock);
+
 	/* Make sure we actually need to do this. */
 	if (sc->sc_brtcnt <= sc->sc_brtmax)
-		return;
+		goto out;
 
 	/* Force an aging cycle; this might trim enough addresses. */
 	bridge_rtage(sc);
 	if (sc->sc_brtcnt <= sc->sc_brtmax)
-		return;
+		goto out;
 
 	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
 		nbrt = LIST_NEXT(brt, brt_list);
 		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
 			bridge_rtnode_destroy(sc, brt);
 			if (sc->sc_brtcnt <= sc->sc_brtmax)
-				return;
+				goto out;
 		}
 	}
+
+out:
+	mutex_exit(sc->sc_rtlist_lock);
+
+	return;
 }
 
 /*
@@ -1844,15 +2032,16 @@ static void
 bridge_timer(void *arg)
 {
 	struct bridge_softc *sc = arg;
-	int s;
 
-	s = splnet();
+	mutex_enter(sc->sc_rtlist_lock);
+
 	bridge_rtage(sc);
-	splx(s);
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		callout_reset(&sc->sc_brcallout,
 		    bridge_rtable_prune_period * hz, bridge_timer, sc);
+
+	mutex_exit(sc->sc_rtlist_lock);
 }
 
 /*
@@ -1864,6 +2053,8 @@ static void
 bridge_rtage(struct bridge_softc *sc)
 {
 	struct bridge_rtnode *brt, *nbrt;
+
+	KASSERT(mutex_owned(sc->sc_rtlist_lock));
 
 	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
 		nbrt = LIST_NEXT(brt, brt_list);
@@ -1884,11 +2075,15 @@ bridge_rtflush(struct bridge_softc *sc, int full)
 {
 	struct bridge_rtnode *brt, *nbrt;
 
+	mutex_enter(sc->sc_rtlist_lock);
+
 	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
 		nbrt = LIST_NEXT(brt, brt_list);
 		if (full || (brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC)
 			bridge_rtnode_destroy(sc, brt);
 	}
+
+	mutex_exit(sc->sc_rtlist_lock);
 }
 
 /*
@@ -1900,12 +2095,21 @@ static int
 bridge_rtdaddr(struct bridge_softc *sc, const uint8_t *addr)
 {
 	struct bridge_rtnode *brt;
+	int error = 0;
 
-	if ((brt = bridge_rtnode_lookup(sc, addr)) == NULL)
-		return (ENOENT);
+	mutex_enter(sc->sc_rtlist_lock);
+
+	if ((brt = bridge_rtnode_lookup(sc, addr)) == NULL) {
+		error = ENOENT;
+		goto out;
+	}
 
 	bridge_rtnode_destroy(sc, brt);
-	return (0);
+
+out:
+	mutex_exit(sc->sc_rtlist_lock);
+
+	return error;
 }
 
 /*
@@ -1918,11 +2122,15 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
 {
 	struct bridge_rtnode *brt, *nbrt;
 
+	mutex_enter(sc->sc_rtlist_lock);
+
 	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
 		nbrt = LIST_NEXT(brt, brt_list);
 		if (brt->brt_ifp == ifp)
 			bridge_rtnode_destroy(sc, brt);
 	}
+
+	mutex_exit(sc->sc_rtlist_lock);
 }
 
 /*
@@ -1947,6 +2155,8 @@ bridge_rtable_init(struct bridge_softc *sc)
 
 	LIST_INIT(&sc->sc_rtlist);
 
+	sc->sc_rtlist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+
 	return (0);
 }
 
@@ -1960,6 +2170,8 @@ bridge_rtable_fini(struct bridge_softc *sc)
 {
 
 	free(sc->sc_rthash, M_DEVBUF);
+	if (sc->sc_rtlist_lock)
+		mutex_obj_free(sc->sc_rtlist_lock);
 }
 
 /*
@@ -2010,6 +2222,8 @@ bridge_rtnode_lookup(struct bridge_softc *sc, const uint8_t *addr)
 	uint32_t hash;
 	int dir;
 
+	KASSERT(mutex_owned(sc->sc_rtlist_lock));
+
 	hash = bridge_rthash(sc, addr);
 	LIST_FOREACH(brt, &sc->sc_rthash[hash], brt_hash) {
 		dir = memcmp(addr, brt->brt_addr, ETHER_ADDR_LEN);
@@ -2034,6 +2248,8 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 	struct bridge_rtnode *lbrt;
 	uint32_t hash;
 	int dir;
+
+	KASSERT(mutex_owned(sc->sc_rtlist_lock));
 
 	hash = bridge_rthash(sc, brt->brt_addr);
 
@@ -2077,15 +2293,14 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 static void
 bridge_rtnode_destroy(struct bridge_softc *sc, struct bridge_rtnode *brt)
 {
-	int s = splnet();
+
+	KASSERT(mutex_owned(sc->sc_rtlist_lock));
 
 	LIST_REMOVE(brt, brt_hash);
 
 	LIST_REMOVE(brt, brt_list);
 	sc->sc_brtcnt--;
 	pool_put(&bridge_rtnode_pool, brt);
-
-	splx(s);
 }
 
 #if defined(BRIDGE_IPF)
