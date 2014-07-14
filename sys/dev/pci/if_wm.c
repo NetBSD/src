@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.276 2014/07/11 08:50:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.277 2014/07/14 01:24:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.276 2014/07/11 08:50:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.277 2014/07/14 01:24:58 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5881,8 +5881,6 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	return 0;
 
  bad:
-	aprint_error_dev(sc->sc_dev, "unable to read Ethernet address\n");
-
 	return -1;
 }
 
