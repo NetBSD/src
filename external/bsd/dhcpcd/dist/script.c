@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.6 2014/06/14 20:55:37 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.7 2014/07/14 11:49:48 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -315,7 +315,8 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	snprintf(env[7], e, "ifmtu=%d", if_getmtu(ifp->name));
 	l = e = strlen("interface_order=");
 	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
-		e += strlen(ifp2->name) + 1;
+		if (!(ifp2->options->options & DHCPCD_PFXDLGONLY))
+			e += strlen(ifp2->name) + 1;
 	}
 	EMALLOC(8, e);
 	p = env[8];
@@ -323,11 +324,13 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	e -= l;
 	p += l;
 	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
-		l = strlcpy(p, ifp2->name, e);
-		p += l;
-		e -= l;
-		*p++ = ' ';
-		e--;
+		if (!(ifp2->options->options & DHCPCD_PFXDLGONLY)) {
+			l = strlcpy(p, ifp2->name, e);
+			p += l;
+			e -= l;
+			*p++ = ' ';
+			e--;
+		}
 	}
 	*--p = '\0';
 	if (strcmp(reason, "TEST") == 0) {
@@ -396,6 +399,16 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	}
 #endif
 #ifdef INET6
+	if (dhcp6 && d6_state && ifo->options & DHCPCD_PFXDLGONLY) {
+		nenv = realloc(env, sizeof(char *) * (elen + 2));
+		if (nenv == NULL)
+			goto eexit;
+		env = nenv;
+		env[elen] = strdup("ifclass=pd");
+		if (env[elen] == NULL)
+			goto eexit;
+		elen++;
+	}
 	if (dhcp6 && d6_state && d6_state->old) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->old, d6_state->old_len);
