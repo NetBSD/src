@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.13 2014/06/14 20:55:37 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.14 2014/07/14 11:49:48 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -128,16 +128,24 @@ static const size_t udp_dhcp_len = sizeof(struct udp_dhcp_packet);
 static int dhcp_open(struct interface *);
 
 void
-dhcp_printoptions(const struct dhcpcd_ctx *ctx)
+dhcp_printoptions(const struct dhcpcd_ctx *ctx,
+    const struct dhcp_opt *opts, size_t opts_len)
 {
 	const char * const *p;
-	size_t i;
-	const struct dhcp_opt *opt;
+	size_t i, j;
+	const struct dhcp_opt *opt, *opt2;
 
 	for (p = dhcp_params; *p; p++)
 		printf("    %s\n", *p);
 
-	for (i = 0, opt = ctx->dhcp_opts; i < ctx->dhcp_opts_len; i++, opt++)
+	for (i = 0, opt = ctx->dhcp_opts; i < ctx->dhcp_opts_len; i++, opt++) {
+		for (j = 0, opt2 = opts; j < opts_len; j++, opt2++)
+			if (opt->option == opt2->option)
+				break;
+		if (j == opts_len)
+			printf("%03d %s\n", opt->option, opt->var);
+	}
+	for (i = 0, opt = opts; i < opts_len; i++, opt++)
 		printf("%03d %s\n", opt->option, opt->var);
 }
 
@@ -289,7 +297,7 @@ decode_rfc3442(char *out, size_t len, const uint8_t *p, size_t pl)
 			errno = EINVAL;
 			return -1;
 		}
-		ocets = (cidr + 7) / 8;
+		ocets = (cidr + 7) / NBBY;
 		if (!out) {
 			p += 4 + ocets;
 			bytes += ((4 * 4) * 2) + 4;
@@ -360,7 +368,7 @@ decode_rfc3442_rt(const uint8_t *data, size_t dl)
 		}
 		TAILQ_INSERT_TAIL(routes, rt, next);
 
-		ocets = (cidr + 7) / 8;
+		ocets = (cidr + 7) / NBBY;
 		/* If we have ocets then we have a destination and netmask */
 		if (ocets > 0) {
 			memcpy(&rt->dest.s_addr, p, ocets);
@@ -932,6 +940,30 @@ make_message(struct dhcp_message **message,
 		    i < iface->ctx->dhcp_opts_len;
 		    i++, opt++)
 		{
+			if (!(opt->type & REQUEST ||
+				has_option_mask(ifo->requestmask, opt->option)))
+				continue;
+			if (opt->type & NOREQ)
+				continue;
+			if (type == DHCP_INFORM &&
+			    (opt->option == DHO_RENEWALTIME ||
+				opt->option == DHO_REBINDTIME))
+				continue;
+			len = (size_t)((p - m) + 2);
+			if (len > sizeof(*dhcp))
+				goto toobig;
+			*p++ = (uint8_t)opt->option;
+		}
+		for (i = 0, opt = ifo->dhcp_override;
+		    i < ifo->dhcp_override_len;
+		    i++, opt++)
+		{
+			/* Check if added above */
+			for (lp = n_params + 1; lp < p; lp++)
+				if (*lp == (uint8_t)opt->option)
+					break;
+			if (lp < p)
+				continue;
 			if (!(opt->type & REQUEST ||
 				has_option_mask(ifo->requestmask, opt->option)))
 				continue;
@@ -2736,40 +2768,23 @@ dhcp_open(struct interface *ifp)
 }
 
 int
-dhcp_dump(struct dhcpcd_ctx *ctx, const char *ifname)
+dhcp_dump(struct interface *ifp)
 {
-	struct interface *ifp;
 	struct dhcp_state *state;
 
-	if (ctx->ifaces == NULL) {
-		ctx->ifaces = malloc(sizeof(*ctx->ifaces));
-		if (ctx->ifaces == NULL)
-			return -1;
-		TAILQ_INIT(ctx->ifaces);
-	}
-	state = NULL;
-	ifp = calloc(1, sizeof(*ifp));
-	if (ifp == NULL)
-		goto eexit;
-	ifp->ctx = ctx;
-	TAILQ_INSERT_HEAD(ctx->ifaces, ifp, next);
 	ifp->if_data[IF_DATA_DHCP] = state = calloc(1, sizeof(*state));
 	if (state == NULL)
 		goto eexit;
-	ifp->options = calloc(1, sizeof(*ifp->options));
-	if (ifp->options == NULL)
-		goto eexit;
-	strlcpy(ifp->name, ifname, sizeof(ifp->name));
 	snprintf(state->leasefile, sizeof(state->leasefile),
 	    LEASEFILE, ifp->name);
 	state->new = read_lease(ifp);
 	if (state->new == NULL && errno == ENOENT) {
-		strlcpy(state->leasefile, ifname, sizeof(state->leasefile));
+		strlcpy(state->leasefile, ifp->name, sizeof(state->leasefile));
 		state->new = read_lease(ifp);
 	}
 	if (state->new == NULL) {
 		if (errno == ENOENT)
-			syslog(LOG_ERR, "%s: no lease to dump", ifname);
+			syslog(LOG_ERR, "%s: no lease to dump", ifp->name);
 		return -1;
 	}
 	state->reason = "DUMP";
@@ -3018,13 +3033,22 @@ dhcp_start(struct interface *ifp)
 	if (!(ifp->options->options & DHCPCD_IPV4))
 		return;
 
-	tv.tv_sec = DHCP_MIN_DELAY;
-	tv.tv_usec = (suseconds_t)arc4random_uniform(
-	    (DHCP_MAX_DELAY - DHCP_MIN_DELAY) * 1000000);
-	timernorm(&tv);
-	syslog(LOG_DEBUG,
-	    "%s: delaying DHCP for %0.1f seconds",
-	    ifp->name, timeval_to_double(&tv));
+	/* No point in delaying a static configuration */
+	if (ifp->options->options & DHCPCD_STATIC &&
+	    !(ifp->options->options & DHCPCD_INFORM))
+	{
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+	} else {
+		tv.tv_sec = DHCP_MIN_DELAY;
+		tv.tv_usec = (suseconds_t)arc4random_uniform(
+		    (DHCP_MAX_DELAY - DHCP_MIN_DELAY) * 1000000);
+		timernorm(&tv);
+		syslog(LOG_DEBUG,
+		    "%s: delaying DHCP for %0.1f seconds",
+		    ifp->name, timeval_to_double(&tv));
+	}
+
 	eloop_timeout_add_tv(ifp->ctx->eloop, &tv, dhcp_start1, ifp);
 }
 
