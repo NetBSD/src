@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.8 2014/06/14 20:55:37 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.9 2014/07/14 11:49:48 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 6, 2014
+.Dd July 7, 2014
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -215,7 +215,7 @@ DNS if the domain part does not match theirs.
 Also, see the
 .Ic env
 option above to control how the hostname is set on the host.
-.It Ic ia_na Op Ar iaid
+.It Ic ia_na Op Ar iaid Op / address
 Request a DHCPv6 Normal Address for
 .Ar iaid .
 .Ar iaid
@@ -231,7 +231,7 @@ Request a DHCPv6 Temporary Address for
 You can request more than one ia_ta by specifying a unique
 .Ar iaid
 for each one.
-.It Ic ia_pd Op Ar iaid Op Ar interface Op / Ar sla_id Op / Ar prefix_len
+.It Ic ia_pd Op Ar iaid Oo / Ar prefix / Ar prefix_len Oc Op Ar interface Op / Ar sla_id Op / Ar prefix_len
 Request a DHCPv6 Delegated Prefix for
 .Ar iaid .
 This option must be used in an
@@ -251,7 +251,10 @@ Otherwise addresses are only assigned for each
 and
 .Ar sla_id .
 Each assigned address will have a suffix of 1.
-You cannot assign a prefix to the requesting interface.
+You cannot assign a prefix to the requesting interface unless the
+DHCPv6 server supports
+.Li RFC6603
+Prefix Exclude Option.
 .Nm dhcpcd
 has to be running for all the interfaces it is delegating to.
 A default
@@ -291,6 +294,18 @@ IPv6RS should be disabled globally when requesting a Prefix Delegation like so:
 .D1 interface eth1
 .D1 ipv4
 .D1 ipv6rs
+.It Ic ia_pd_mix
+To be RFC compliant,
+.Nm dhcpcd
+cannot mix Prefix Delegation with other DHCPv6 address types in the same
+session.
+This has a number of issues: additional DHCP traffic and potential collisions
+between options.
+.Ic ia_pd_mix
+enables
+.Li draft-ietf-dhc-dhcpv6-stateful-issues-06
+support so that Prefix Delegation can be mixed with other address types in
+the same session.
 .It Ic ipv4only
 Only configure IPv4.
 .It Ic ipv6only
@@ -458,6 +473,9 @@ Subsequent options are only parsed for this wireless
 .Ar ssid .
 .It Ic slaac Op Ar hwaddr | Ar private
 Selects the interface identifier used for SLAAC generated IPv6 addresses.
+If
+.Ar private
+is used, a RFC7217 address is generated.
 .It Ic static Ar value
 Configures a static
 .Ar value .
@@ -740,11 +758,5 @@ Same as
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
-When configuring DHCPv6 you can only select one IA type.
-I can't think of a use case where you would want different types,
-so if you have one then please bring it up for discussion on the
-.Aq Mt  dhcpcd-discuss@marples.name
-mailing list.
-.Pp
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd
