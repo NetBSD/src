@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.11 2014/07/14 11:45:04 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.12 2014/07/14 14:02:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1631,7 +1631,7 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 			continue;
 		}
 		p = D6_COPTION_DATA(o);
-		iap = (struct dhcp6_ia_addr *)D6_COPTION_DATA(o);
+		iap = (const struct dhcp6_ia_addr *)D6_COPTION_DATA(o);
 		p += sizeof(in6);
 		a = dhcp6_findaddr(ifp, &iap->addr);
 		if (a == NULL) {
@@ -1693,7 +1693,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 	char iabuf[INET6_ADDRSTRLEN];
 	const char *ia;
 	int i;
-	uint8_t u8, len, *pw;
+	uint8_t u8, *pw;
 	size_t off;
 	uint16_t ol;
 	const struct dhcp6_pd_addr *pdp;
@@ -1754,7 +1754,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			state->expire = a->prefix_vltime;
 		i++;
 
-		p = D6_OPTION_DATA(o) + sizeof(pdp);
+		p = D6_COPTION_DATA(o) + sizeof(pdp);
 		ol -= sizeof(pdp);
 		ex = dhcp6_findoption(D6_OPTION_PD_EXCLUDE, p, ol);
 		a->prefix_exclude_len = 0;
@@ -1791,7 +1791,6 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			a->prefix_exclude_len = 0;
 			continue;
 		}
-		len = a->prefix_len / NBBY;
 		u8 = a->prefix_len % NBBY;
 		memcpy(&a->prefix_exclude, &a->prefix,
 		    sizeof(a->prefix_exclude));
