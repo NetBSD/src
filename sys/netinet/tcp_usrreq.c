@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.187 2014/07/10 14:05:19 rmind Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.188 2014/07/14 13:20:41 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.187 2014/07/10 14:05:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.188 2014/07/14 13:20:41 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -473,12 +473,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_RCVOOB:
-		if (control && control->m_len) {
-			m_freem(control);
-			m_freem(m);
-			error = EINVAL;
-			break;
-		}
 		if ((so->so_oobmark == 0 &&
 		    (so->so_state & SS_RCVATMARK) == 0) ||
 		    so->so_options & SO_OOBINLINE ||
