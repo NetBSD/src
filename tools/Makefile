@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175 2014/06/15 14:36:57 pooka Exp $
+#	$NetBSD: Makefile,v 1.176 2014/07/15 13:19:44 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -117,7 +117,7 @@ SUBDIR += .WAIT texinfo \
 		.WAIT paxctl \
 		.WAIT fdisk \
 		.WAIT installboot \
-		pwd_mkdb strfile sunlabel zic
+		pwd_mkdb strfile sunlabel vgrind zic
 .endif
 SUBDIR+= stat .WAIT config
 
