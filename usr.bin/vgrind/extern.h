@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2004/04/23 22:14:57 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2014/07/15 13:17:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,9 +32,8 @@
  *      @(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-typedef int boolean;
 
-extern boolean	 x_escaped;            /* if last character was an escape */
+extern bool	x_escaped;             /* if last character was an escape */
 extern char    *x_start;               /* start of the current string */
 extern char    *l_acmbeg;              /* string introducing a comment */
 extern char    *l_acmend;              /* string ending a comment */
@@ -46,11 +45,11 @@ extern char    *l_combeg;              /* string introducing a comment */
 extern char    *l_comend;              /* string ending a comment */
 extern char     l_escape;              /* character used to escape characters */
 extern char    *l_keywds[];    	       /* keyword table address */
-extern boolean  l_onecase;             /* upper and lower case are equivalent */
+extern bool     l_onecase;             /* upper and lower case are equivalent */
 extern char    *l_prcbeg;              /* regular expr for procedure begin */
 extern char    *l_strbeg;              /* delimiter for string constant */
 extern char    *l_strend;              /* delimiter for string constant */
-extern boolean  l_toplex;              /* procedures only defined at top lex level */
+extern bool     l_toplex;              /* procedures only defined at top lex level */
 extern const char *language;           /* the language indicator */
 
 #include <sys/cdefs.h>
