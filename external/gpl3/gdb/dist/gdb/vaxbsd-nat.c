@@ -67,7 +67,7 @@ void
 supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
   if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) gregs, ptid_get_tid (inferior_ptid)) == -1)
+	      (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
@@ -75,7 +75,7 @@ void
 fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
   if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) gregs, ptid_get_tid (inferior_ptid)) == -1)
+	      (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't get registers"));
 }
 
