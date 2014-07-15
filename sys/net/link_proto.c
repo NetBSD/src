@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.15 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.16 2014/07/15 20:17:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.15 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.16 2014/07/15 20:17:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -362,8 +362,8 @@ sockaddr_dl_init(struct sockaddr_dl *sdl, socklen_t socklen, uint16_t ifindex,
 	if (len > socklen) {
 		sdl->sdl_len = socklen;
 #ifdef DIAGNOSTIC
-		printf("%s: too long: %" PRIu8 " > %" PRIu8 "\n", __func__, len,
-		    socklen);
+		printf("%s: too long: %u > %u\n", __func__, (u_int)len,
+		    (u_int)socklen);
 #endif
 		return NULL;
 	}
@@ -442,8 +442,8 @@ sockaddr_dl_setaddr(struct sockaddr_dl *sdl, socklen_t socklen,
 	len = sockaddr_dl_measure(sdl->sdl_nlen, addrlen);
 	if (len > socklen) {
 #ifdef DIAGNOSTIC
-		printf("%s: too long: %" PRIu8 " > %" PRIu8 "\n", __func__, len,
-		    socklen);
+		printf("%s: too long: %u > %u\n", __func__, (u_int)len,
+		    (u_int)socklen);
 #endif
 		return NULL;
 	}
