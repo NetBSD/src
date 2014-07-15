@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.112 2014/07/09 09:00:18 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.113 2014/07/15 11:43:54 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.112 2014/07/09 09:00:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.113 2014/07/15 11:43:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -741,6 +741,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 */
 	if (pmp->pm_fsinfo) {
 		struct fsinfo *fp;
+		const int rdsz = roundup(sizeof(*fp), pmp->pm_BytesPerSec);
 
 		/*
 		 * XXX	If the fsinfo block is stored on media with
@@ -748,7 +749,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		 *	padded at the end or in the middle?
 		 */
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, 0, &bp)) != 0)
+		    rdsz, NOCRED, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
