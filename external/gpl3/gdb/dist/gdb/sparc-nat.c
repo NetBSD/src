@@ -171,7 +171,7 @@ sparc_fetch_inferior_registers (struct target_ops *ops,
     {
       gregset_t regs;
 
-      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, ptid_get_tid (inferior_ptid)) == -1)
+      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sparc_supply_gregset (sparc_gregset, regcache, -1, &regs);
@@ -183,7 +183,7 @@ sparc_fetch_inferior_registers (struct target_ops *ops,
     {
       fpregset_t fpregs;
 
-      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, ptid_get_tid (inferior_ptid)) == -1)
+      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       sparc_supply_fpregset (sparc_fpregset, regcache, -1, &fpregs);
@@ -207,12 +207,12 @@ sparc_store_inferior_registers (struct target_ops *ops,
     {
       gregset_t regs;
 
-      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, ptid_get_tid (inferior_ptid)) == -1)
+      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sparc_collect_gregset (sparc_gregset, regcache, regnum, &regs);
 
-      if (ptrace (PTRACE_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, ptid_get_tid (inferior_ptid)) == -1)
+      if (ptrace (PTRACE_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write registers"));
 
       /* Deal with the stack regs.  */
@@ -233,7 +233,7 @@ sparc_store_inferior_registers (struct target_ops *ops,
     {
       fpregset_t fpregs, saved_fpregs;
 
-      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, ptid_get_tid (inferior_ptid)) == -1)
+      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating-point registers"));
 
       memcpy (&saved_fpregs, &fpregs, sizeof (fpregs));
@@ -246,7 +246,7 @@ sparc_store_inferior_registers (struct target_ops *ops,
       if (memcmp (&saved_fpregs, &fpregs, sizeof (fpregs)) != 0)
 	{
 	  if (ptrace (PTRACE_SETFPREGS, pid,
-		      (PTRACE_TYPE_ARG3) &fpregs, ptid_get_tid (inferior_ptid)) == -1)
+		      (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	    perror_with_name (_("Couldn't write floating-point registers"));
 	}
 

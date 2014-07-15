@@ -47,7 +47,7 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
       struct reg regs;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_tid (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       amd64_supply_native_gregset (regcache, &regs, -1);
@@ -60,7 +60,7 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_tid (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       amd64_supply_fxsave (regcache, -1, &fpregs);
@@ -81,13 +81,13 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
       struct reg regs;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &regs, ptid_get_tid (inferior_ptid)) == -1)
+                  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       amd64_collect_native_gregset (regcache, &regs, regnum);
 
       if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-	          (PTRACE_TYPE_ARG3) &regs, ptid_get_tid (inferior_ptid)) == -1)
+	          (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't write registers"));
 
       if (regnum != -1)
@@ -99,13 +99,13 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_tid (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       amd64_collect_fxsave (regcache, regnum, &fpregs);
 
       if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_tid (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
