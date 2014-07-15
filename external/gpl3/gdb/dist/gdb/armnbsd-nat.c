@@ -202,7 +202,7 @@ fetch_register (struct regcache *regcache, int regno)
   int ret;
 
   ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -255,7 +255,7 @@ fetch_regs (struct regcache *regcache)
   int regno;
 
   ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -273,7 +273,7 @@ fetch_fp_register (struct regcache *regcache, int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -303,7 +303,7 @@ fetch_fp_regs (struct regcache *regcache)
   int regno;
 
   ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -341,7 +341,7 @@ store_register (const struct regcache *regcache, int regno)
   int ret;
 
   ret = ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -404,7 +404,7 @@ store_register (const struct regcache *regcache, int regno)
     }
 
   ret = ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -452,7 +452,7 @@ store_regs (const struct regcache *regcache)
     }
 
   ret = ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store general registers"));
@@ -465,7 +465,7 @@ store_fp_register (const struct regcache *regcache, int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     {
@@ -488,7 +488,7 @@ store_fp_register (const struct regcache *regcache, int regno)
     }
 
   ret = ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -511,7 +511,7 @@ store_fp_regs (const struct regcache *regcache)
 			(char *) &inferior_fp_registers.fpr_vfp.vfp_fpscr);
 
   ret = ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_tid (inferior_ptid));
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store floating-point registers"));
