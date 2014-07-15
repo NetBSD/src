@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.17 2014/07/14 00:58:35 ozaki-r Exp $	*/
+/*	$NetBSD: xhci.c,v 1.18 2014/07/15 02:25:45 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.17 2014/07/14 00:58:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.18 2014/07/15 02:25:45 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2809,7 +2809,9 @@ xhci_device_intr_start(usbd_xfer_handle xfer)
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
 	if (sc->sc_bus.use_polling) {
+#ifdef XHCI_DEBUG
 		device_printf(sc->sc_dev, "%s polling\n", __func__);
+#endif
 		//xhci_waitintr(sc, xfer);
 	}
 
@@ -2826,7 +2828,7 @@ xhci_device_intr_done(usbd_xfer_handle xfer)
 	const bool isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	DPRINTF(("%s\n", __func__));
 
-#ifdef DEBUG
+#ifdef XHCI_DEBUG
 	device_printf(sc->sc_dev, "%s %p slot %u dci %u\n", __func__, xfer,
 	    xs->xs_idx, dci);
 #endif
