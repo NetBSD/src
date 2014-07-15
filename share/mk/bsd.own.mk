@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.822 2014/07/15 13:25:40 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.823 2014/07/15 13:27:04 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -377,7 +377,7 @@ TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TOOL_TIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}tic
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
-TOOL_VFONTEDPR=		${TOOLDIR}/libexec/${_TOOL_PREFIX}/vfontedpr
+TOOL_VFONTEDPR=		${TOOLDIR}/libexec/${_TOOL_PREFIX}vfontedpr
 TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 .else	# USETOOLS != yes						# } {
