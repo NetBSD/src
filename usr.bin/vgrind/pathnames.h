@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2003/08/07 11:17:00 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2014/07/15 13:17:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,4 +31,6 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef _PATH_VGRINDEFS
 #define	_PATH_VGRINDEFS	"/usr/share/misc/vgrindefs"
+#endif

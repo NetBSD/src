@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.21 2009/04/14 22:15:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2014/07/15 13:17:15 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
+WARNS=6
 .include <bsd.own.mk>
 
 PROG=	vfontedpr
@@ -13,8 +14,8 @@ CLEANFILES+=vgrindefs.src.db
 FILES=				tmac.vgrind vgrindefs.src vgrindefs.src.db
 FILESNAME_vgrindefs.src=	vgrindefs
 FILESNAME_vgrindefs.src.db=	vgrindefs.db
-FILESDIR=			/usr/share/misc
-FILESDIR_tmac.vgrind=		/usr/share/tmac
+FILESDIR?=			/usr/share/misc
+FILESDIR_tmac.vgrind?=		/usr/share/tmac
 FILESNAME_tmac.vgrind=		vgrind.tmac
 .endif
 
@@ -35,8 +36,7 @@ CAP_MKDB_ENDIAN=
 .if ${MKSHARE} != "no"
 vgrindefs.src.db: vgrindefs.src
 	${_MKTARGET_CREATE}
-	${TOOL_CAP_MKDB} ${CAP_MKDB_ENDIAN} -f vgrindefs.src \
-	    ${.CURDIR}/vgrindefs.src
+	${TOOL_CAP_MKDB} ${CAP_MKDB_ENDIAN} -f vgrindefs.src ${.ALLSRC}
 .else
 vgrindefs.src.db:
 .endif
