@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -92,5 +92,7 @@ mutex_lock_nest_lock(struct mutex *mutex, struct mutex *already)
 	KASSERT(mutex_is_locked(already));
 	mutex_lock(mutex);
 }
+
+#define	lockdep_assert_held(m)	do {} while (0)
 
 #endif  /* _LINUX_MUTEX_H_ */
