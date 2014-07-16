@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.53 2014/07/07 15:22:07 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.54 2014/07/16 17:58:35 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.53 2014/07/07 15:22:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.54 2014/07/16 17:58:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,30 +123,6 @@ struct wsscreen_list tcx_screenlist = {
 	sizeof(_tcx_scrlist) / sizeof(struct wsscreen_descr *),
 	_tcx_scrlist
 };
-
-/*
- * The S24 provides the framebuffer RAM mapped in three ways:
- * 26 bits per pixel, in 32-bit words; the low-order 24 bits are
- * blue, green, and red values, and the other two bits select the
- * display modes, per pixel);
- * 24 bits per pixel, in 32-bit words; the high-order byte reads as
- * zero, and is ignored on writes (so the mode bits cannot be altered);
- * 8 bits per pixel, unpadded; writes to this space do not modify the
- * other 18 bits.
- */
-#define TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses color map */
-#define TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses color map */
-#define TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, ignores color map */
-#define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
-
-/*
- * differences between S24 and tcx, as far as this driver is concerned:
- * - S24 has 4MB VRAM, 24bit + 2bit control planes, no expansion possible
- * - tcx has 1MB VRAM, 8bit, no control planes, may have a VSIMM toat bumps
- *   VRAM to 2MB
- * - tcx can apply ROPs to STIP operations, unlike S24
- * - tcx has a Bt458 DAC, just like CG6. S24 has an AT&T 20C567
- */
 
 /* autoconfiguration driver */
 static void	tcxattach(device_t, device_t, void *);
@@ -263,7 +239,7 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	/*
 	 * actual FB size ( of the 8bit region )
-	 * no need to restrict userland mappings to the visible VRAM
+	 * no reason to restrict userland mappings to the visible VRAM
 	 */
 	if (sc->sc_8bit) {
 		aprint_normal(" (8-bit only TCX)\n");
