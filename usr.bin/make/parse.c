@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.194 2014/02/15 00:17:17 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.195 2014/07/16 15:33:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.194 2014/02/15 00:17:17 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.195 2014/07/16 15:33:41 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.194 2014/02/15 00:17:17 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.195 2014/07/16 15:33:41 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1952,6 +1952,42 @@ Parse_DoVar(char *line, GNode *ctxt)
 }
 
 
+/*
+ * ParseMaybeSubMake --
+ * 	Scan the command string to see if it a possible submake node
+ * Input:
+ *	cmd		the command to scan
+ * Results:
+ *	TRUE if the command is possibly a submake, FALSE if not.
+ */
+static Boolean
+ParseMaybeSubMake(const char *cmd)
+{
+    static struct {
+	const char *name;
+	size_t len;
+    } vals[] = {
+#define MKV(A)	{	A, sizeof(A) - 1	}
+	MKV("${MAKE}"),
+	MKV("${.MAKE}"),
+	MKV("$(MAKE)"),
+	MKV("$(.MAKE)"),
+	MKV("make"),
+    };
+    for (size_t i = 0; i < __arraycount(vals); i++) {
+	char *ptr;
+	if ((ptr = strstr(cmd, vals[i].name)) == NULL)
+	    continue;
+	if ((ptr == cmd || !isalnum((unsigned char)ptr[-1]))
+	    && !isalnum((unsigned char)ptr[vals[i].len])) {
+	printf("good [%c] [%c] [%s]\n", ptr[-1], ptr[vals[i].len], cmd);
+	    return TRUE;
+	}
+	printf("bad [%c] [%c] [%s]\n", ptr[-1], ptr[vals[i].len], cmd);
+    }
+    return FALSE;
+}
+
 /*-
  * ParseAddCmd  --
  *	Lst_ForEach function to add a command line to all targets
@@ -1964,7 +2000,9 @@ Parse_DoVar(char *line, GNode *ctxt)
  *	Always 0
  *
  * Side Effects:
- *	A new element is added to the commands list of the node.
+ *	A new element is added to the commands list of the node,
+ *	and the node can be marked as a submake node if the command is
+ *	determined to be that.
  */
 static int
 ParseAddCmd(void *gnp, void *cmd)
@@ -1978,6 +2016,8 @@ ParseAddCmd(void *gnp, void *cmd)
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
 	(void)Lst_AtEnd(gn->commands, cmd);
+	if (ParseIsSubMake(cmd))
+	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
     } else {
 #ifdef notyet
