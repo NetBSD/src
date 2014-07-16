@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.2 2014/07/03 20:48:19 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.3 2014/07/16 20:56:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -91,6 +91,17 @@ list_empty(const struct list_head *head)
 	return (head->next == head);
 }
 
+static inline int
+list_is_singular(const struct list_head *head)
+{
+
+	if (list_empty(head))
+		return false;
+	if (head->next != head->prev)
+		return false;
+	return true;
+}
+
 static inline void
 __list_add_between(struct list_head *prev, struct list_head *node,
     struct list_head *next)
@@ -181,6 +192,8 @@ list_del_init(struct list_head *node)
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
 #define	list_first_entry(PTR, TYPE, FIELD)				\
 	list_entry(list_first((PTR)), TYPE, FIELD)
+#define	list_next_entry(ENTRY, FIELD)					\
+	list_entry(list_next(&(ENTRY)->FIELD), typeof(*(ENTRY)), FIELD)
 
 #define	list_for_each(VAR, HEAD)					\
 	for ((VAR) = list_first((HEAD));				\
@@ -204,6 +217,11 @@ list_del_init(struct list_head *node)
 		    ((NEXT) = list_entry(list_next(&(VAR)->FIELD),	\
 			typeof(*(VAR)), FIELD), 1);			\
 		(VAR) = (NEXT))
+
+#define	list_for_each_entry_continue(VAR, HEAD, FIELD)			\
+	for ((VAR) = list_next_entry((VAR), FIELD);			\
+		&(VAR)->FIELD != (HEAD);				\
+		(VAR) = list_next_entry((VAR), FIELD))
 
 /*
  * `H'ead-only/`H'ash-table doubly-linked lists.
@@ -255,11 +273,11 @@ hlist_del_init(struct hlist_node *node)
 #define	hlist_for_each_safe(VAR, NEXT, HEAD)				\
 	LIST_FOREACH_SAFE(VAR, HEAD, hln_entry, NEXT)
 
-#define	hlist_for_each_entry(VAR, HLIST, HEAD, FIELD)			\
-	for ((HLIST) = LIST_FIRST((HEAD));				\
-		((HLIST) != NULL) &&					\
-		    ((VAR) = hlist_entry((HLIST), typeof(*(VAR)), FIELD), 1); \
-		(HLIST) = LIST_NEXT((HLIST), hln_entry))
+#define	hlist_for_each_entry(VAR, HEAD, FIELD)				\
+	for ((VAR) = hlist_entry(LIST_FIRST((HEAD)), typeof(*(VAR)), FIELD);  \
+		&(VAR)->FIELD != NULL;					      \
+	        (VAR) = hlist_entry(LIST_NEXT(&(VAR)->FIELD, hln_entry),      \
+		    typeof(*(VAR)), FIELD))
 
 /*
  * XXX The nominally RCU-safe APIs below lack dependent read barriers,

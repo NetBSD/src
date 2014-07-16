@@ -1,7 +1,7 @@
-/*	$NetBSD: intel_fb.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: mipi_display.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,40 +29,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* intel_fb.c stubs */
+#ifndef _VIDEO_MIPI_DISPLAY_H_
+#define _VIDEO_MIPI_DISPLAY_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fb.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+#define	MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM	0x03
+#define	MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM	0x13
+#define	MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM	0x23
 
-#include <drm/drmP.h>
-#include <drm/drm_fb_helper.h>
+#define	MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM	0x04
+#define	MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM	0x14
+#define	MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM	0x24
 
-#include "i915_drv.h"
-#include "intel_drv.h"
+#define	MIPI_DSI_DCS_SHORT_WRITE		0x05
+#define	MIPI_DSI_DCS_SHORT_WRITE_PARAM		0x15
 
-void
-intel_fb_output_poll_changed(struct drm_device *dev __unused)
-{
-	struct drm_i915_private *const dev_priv = dev->dev_private;
+#define	MIPI_DSI_DCS_READ			0x06
 
-	drm_fb_helper_hotplug_event(&dev_priv->fbdev->helper);
-}
+#define	MIPI_DSI_NULL_PACKET			0x09
+#define	MIPI_DSI_BLANKING_PACKET		0x19
+#define	MIPI_DSI_GENERIC_LONG_WRITE		0x29
+#define	MIPI_DSI_DCS_LONG_WRITE			0x39
 
-void
-intel_fb_restore_mode(struct drm_device *dev __unused)
-{
-	struct drm_i915_private *const dev_priv = dev->dev_private;
-	struct drm_plane *plane;
-	int ret;
-
-	mutex_lock(&dev->mode_config.mutex);
-
-	ret = drm_fb_helper_restore_fbdev_mode(&dev_priv->fbdev->helper);
-	if (ret)
-		DRM_ERROR("failed to restore fbdev mode: %d\n", ret);
-
-	list_for_each_entry(plane, &dev->mode_config.plane_list, head)
-		(*plane->funcs->disable_plane)(plane);
-
-	mutex_unlock(&dev->mode_config.mutex);
-}
+#endif  /* _VIDEO_MIPI_DISPLAY_H_ */

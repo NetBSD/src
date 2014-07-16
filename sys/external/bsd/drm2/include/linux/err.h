@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: err.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,9 +38,6 @@
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#define	ENOTSUPP	ENOTSUP	/* XXX ???  */
-#define	EREMOTEIO	EIO	/* XXX Urk...  */
-
 #define	MAX_ERRNO	ELAST
 
 static inline bool
@@ -50,17 +47,17 @@ IS_ERR_VALUE(uintptr_t n)
 }
 
 static inline void *
-ERR_PTR(int error)
+ERR_PTR(long error)
 {
 	KASSERT(error < 0);
 	return (void *)(intptr_t)error;
 }
 
-static inline int
+static inline long
 PTR_ERR(const void *ptr)
 {
-	KASSERT(ptr == (void *)(intptr_t)(int)(intptr_t)ptr); /* XXX Hurk!  */
-	return (int)(intptr_t)ptr;
+	KASSERT(ptr == (void *)(intptr_t)(long)(intptr_t)ptr); /* XXX Hurk!  */
+	return (long)(intptr_t)ptr;
 }
 
 static inline bool
@@ -81,7 +78,7 @@ ERR_CAST(void *ptr)		/* XXX Linux declares with const.  */
 	return ptr;
 }
 
-static inline int
+static inline long
 PTR_RET(const void *ptr)
 {
 	return (IS_ERR(ptr)? PTR_ERR(ptr) : 0);

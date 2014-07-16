@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,10 @@
 
 #include <sys/malloc.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <linux/mm_types.h>
+
 static inline void *
 vmalloc_user(unsigned long size)
 {
@@ -50,6 +54,30 @@ static inline void
 vfree(void *ptr)
 {
 	return free(ptr, M_TEMP);
+}
+
+#define	PAGE_KERNEL	0	/* XXX pgprot */
+
+static inline void *
+vmap(struct page **pages, unsigned npages, unsigned long flags __unused,
+    pgprot_t prot __unused)
+{
+	vaddr_t va;
+
+	/* XXX Sleazy cast should be OK here.  */
+	__CTASSERT(sizeof(*pages[0]) == sizeof(struct vm_page));
+	va = uvm_pagermapin((struct vm_page **)pages, npages, 0);
+	if (va == 0)
+		return NULL;
+
+	return (void *)va;
+}
+
+static inline void
+vunmap(void *ptr, unsigned npages)
+{
+
+	uvm_pagermapout((vaddr_t)ptr, npages);
 }
 
 #endif  /* _LINUX_VMALLOC_H_ */

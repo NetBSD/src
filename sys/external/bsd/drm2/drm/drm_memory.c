@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.5 2014/07/01 16:29:57 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.6 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.5 2014/07/01 16:29:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.6 2014/07/16 20:56:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "agp_i810.h"
@@ -179,11 +179,6 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align)
 	if (error)
 		goto fail0;
 	KASSERT(nsegs == 1);
-
-	/*
-	 * XXX Old drm passed BUS_DMA_NOWAIT below but BUS_DMA_WAITOK
-	 * above.  WTF?
-	 */
 
 	/*
 	 * Map the DMA-safe memory into kernel virtual address space.

@@ -40,10 +40,17 @@
 
 #include <linux/types.h>
 #include <asm/ioctl.h>
+
+/* XXX Why was this historically different between Linux and BSD?  */
+#  ifdef __NetBSD__
+typedef unsigned long drm_handle_t;
+#  else
 typedef unsigned int drm_handle_t;
+#  endif
 
-#else /* One of the BSDs */
+#endif
 
+#ifdef __NetBSD__
 #include <sys/ioccom.h>
 #include <sys/types.h>
 typedef int8_t   __s8;
@@ -54,14 +61,9 @@ typedef int32_t  __s32;
 typedef uint32_t __u32;
 typedef int64_t  __s64;
 typedef uint64_t __u64;
-typedef unsigned long drm_handle_t;
-
-#  ifdef __NetBSD__		/* XXX totally wrong place for this */
-#    ifndef __user
-#      define	__user
-#    endif
+#  ifndef __user
+#    define	__user
 #  endif
-
 #endif
 
 #define DRM_NAME	"drm"	  /**< Name in kernel, /dev, and /proc */

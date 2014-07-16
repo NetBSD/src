@@ -27,7 +27,8 @@
  *
  */
 
-#include <generated/utsrelease.h>
+#include <asm/io.h>
+#include <linux/irqflags.h>
 #include "i915_drv.h"
 
 static const char *yesno(int v)
@@ -279,7 +280,7 @@ static void i915_ring_error_state(struct drm_i915_error_state_buf *m,
 		if (INTEL_INFO(dev)->gen >= 8) {
 			int i;
 			for (i = 0; i < 4; i++)
-				err_printf(m, "  PDP%d: 0x%016llx\n",
+				err_printf(m, "  PDP%d: 0x%016"PRIx64"\n",
 					   i, ring->vm_info.pdp[i]);
 		} else {
 			err_printf(m, "  PP_DIR_BASE: 0x%08x\n",
@@ -334,8 +335,10 @@ int i915_error_state_to_str(struct drm_i915_error_state_buf *m,
 
 	err_printf(m, "%s\n", error->error_msg);
 	err_printf(m, "Time: %ld s %ld us\n", error->time.tv_sec,
-		   error->time.tv_usec);
+		   (long)error->time.tv_usec);
+#ifndef __NetBSD__		/* XXX kernel version */
 	err_printf(m, "Kernel: " UTS_RELEASE "\n");
+#endif
 	max_hangcheck_score = 0;
 	for (i = 0; i < ARRAY_SIZE(error->ring); i++) {
 		if (error->ring[i].hangcheck_score > max_hangcheck_score)
@@ -362,7 +365,7 @@ int i915_error_state_to_str(struct drm_i915_error_state_buf *m,
 	err_printf(m, "Missed interrupts: 0x%08lx\n", dev_priv->gpu_error.missed_irq_rings);
 
 	for (i = 0; i < dev_priv->num_fence_regs; i++)
-		err_printf(m, "  fence[%d] = %08llx\n", i, error->fence[i]);
+		err_printf(m, "  fence[%d] = %08"PRIx64"\n", i, error->fence[i]);
 
 	for (i = 0; i < ARRAY_SIZE(error->extra_instdone); i++)
 		err_printf(m, "  INSTDONE_%d: 0x%08x\n", i,
@@ -541,6 +544,11 @@ static void i915_error_state_free(struct kref *error_ref)
 	kfree(error);
 }
 
+#ifdef __NetBSD__
+#  define	__aperture_iomem
+#  define	__iomem __aperture_iomem
+#endif
+
 static struct drm_i915_error_object *
 i915_error_object_create_sized(struct drm_i915_private *dev_priv,
 			       struct drm_i915_gem_object *src,
@@ -582,7 +590,11 @@ i915_error_object_create_sized(struct drm_i915_private *dev_priv,
 			s = io_mapping_map_atomic_wc(dev_priv->gtt.mappable,
 						     reloc_offset);
 			memcpy_fromio(d, s, PAGE_SIZE);
+#ifdef __NetBSD__
+			io_mapping_unmap_atomic(dev_priv->gtt.mappable, s);
+#else
 			io_mapping_unmap_atomic(s);
+#endif
 		} else if (src->stolen) {
 			unsigned long offset;
 
@@ -628,6 +640,11 @@ unwind:
 #define i915_error_ggtt_object_create(dev_priv, src) \
 	i915_error_object_create_sized((dev_priv), (src), &(dev_priv)->gtt.base, \
 				       (src)->base.size>>PAGE_SHIFT)
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	__aperture_iomem
+#endif
 
 static void capture_bo(struct drm_i915_error_buffer *err,
 		       struct drm_i915_gem_object *obj)
@@ -791,7 +808,14 @@ static void i915_record_ring_state(struct drm_device *dev,
 		ering->instdone = I915_READ(INSTDONE);
 	}
 
+#ifdef __NetBSD__
+	spin_lock(&dev_priv->irq_lock);
+	ering->waiting = DRM_SPIN_WAITERS_P(&ring->irq_queue,
+	    &dev_priv->irq_lock);
+	spin_unlock(&dev_priv->irq_lock);
+#else
 	ering->waiting = waitqueue_active(&ring->irq_queue);
+#endif
 	ering->instpm = I915_READ(RING_INSTPM(ring->mmio_base));
 	ering->seqno = ring->get_seqno(ring, false);
 	ering->acthd = intel_ring_get_active_head(ring);
@@ -921,6 +945,7 @@ static void i915_gem_record_rings(struct drm_device *dev,
 					i915_error_ggtt_object_create(dev_priv,
 							     ring->scratch.obj);
 
+#ifndef __NetBSD__		/* XXX not a clue */
 			if (request->file_priv) {
 				struct task_struct *task;
 
@@ -933,6 +958,7 @@ static void i915_gem_record_rings(struct drm_device *dev,
 				}
 				rcu_read_unlock();
 			}
+#endif
 		}
 
 		error->ring[i].ringbuffer =

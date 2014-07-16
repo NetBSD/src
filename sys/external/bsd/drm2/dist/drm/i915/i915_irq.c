@@ -28,10 +28,16 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#ifdef __NetBSD__
+#include <sys/cdefs.h>
+#endif
+
 #include <linux/printk.h>
 #include <linux/sysrq.h>
 #include <linux/slab.h>
+#ifdef CONFIG_DEBUG_FS
 #include <linux/circ_buf.h>
+#endif
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -718,7 +724,11 @@ static u32 gm45_get_vblank_counter(struct drm_device *dev, int pipe)
 }
 
 /* raw reads, only for fast reads of display block, no need for forcewake etc. */
+#ifdef __NetBSD__
+#define	__raw_i915_read32(dev_priv, reg) bus_space_read_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
+#else
 #define __raw_i915_read32(dev_priv__, reg__) readl((dev_priv__)->regs + (reg__))
+#endif
 
 static bool ilk_pipe_in_vblank_locked(struct drm_device *dev, enum pipe pipe)
 {
@@ -1076,6 +1086,10 @@ static void ironlake_rps_change_irq_handler(struct drm_device *dev)
 static void notify_ring(struct drm_device *dev,
 			struct intel_ring_buffer *ring)
 {
+#ifdef __NetBSD__
+	struct drm_i915_private *dev_priv = dev->dev_private;
+#endif
+
 	if (ring->obj == NULL)
 		return;
 
@@ -1085,6 +1099,7 @@ static void notify_ring(struct drm_device *dev,
     {
 	unsigned long flags;
 	spin_lock_irqsave(&dev_priv->irq_lock, flags);
+	/* XXX Set a flag under the lock...  */
 	DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
     }
@@ -1433,14 +1448,30 @@ static void gmbus_irq_handler(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
+#ifdef __NetBSD__
+	spin_lock(&dev_priv->gmbus_wait_lock);
+	/* XXX Set a flag here...  */
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->gmbus_wait_queue,
+	    &dev_priv->gmbus_wait_lock);
+	spin_unlock(&dev_priv->gmbus_wait_lock);
+#else
 	wake_up_all(&dev_priv->gmbus_wait_queue);
+#endif
 }
 
 static void dp_aux_irq_handler(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
+#ifdef __NetBSD__
+	spin_lock(&dev_priv->gmbus_wait_lock);
+	/* XXX Set a flag here...  */
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->gmbus_wait_queue,
+	    &dev_priv->gmbus_wait_lock);
+	spin_unlock(&dev_priv->gmbus_wait_lock);
+#else
 	wake_up_all(&dev_priv->gmbus_wait_queue);
+#endif
 }
 
 #if defined(CONFIG_DEBUG_FS)
@@ -1681,16 +1712,6 @@ static irqreturn_t valleyview_irq_handler(DRM_IRQ_ARGS)
 
 out:
 	return ret;
-}
-
-static void ilk_gt_irq_handler(struct drm_device *dev,
-			       struct drm_i915_private *dev_priv,
-			       u32 gt_iir)
-{
-	if (gt_iir & (GT_USER_INTERRUPT | GT_PIPE_NOTIFY))
-		notify_ring(dev, &dev_priv->ring[RCS]);
-	if (gt_iir & GT_BSD_USER_INTERRUPT)
-		notify_ring(dev, &dev_priv->ring[VCS]);
 }
 
 static void ibx_irq_handler(struct drm_device *dev, u32 pch_iir)
@@ -2111,6 +2132,24 @@ static void i915_error_wake_up(struct drm_i915_private *dev_priv,
 	 * a gpu reset pending so that i915_error_work_func can acquire them).
 	 */
 
+#ifdef __NetBSD__
+	spin_lock(&dev_priv->irq_lock);
+	for_each_ring(ring, dev_priv, i)
+		DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
+	spin_unlock(&dev_priv->irq_lock);
+
+	spin_lock(&dev_priv->pending_flip_lock);
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->pending_flip_queue,
+	    &dev_priv->pending_flip_lock);
+	spin_unlock(&dev_priv->pending_flip_lock);
+
+	if (reset_completed) {
+		spin_lock(&dev_priv->gpu_error.reset_lock);
+		DRM_SPIN_WAKEUP_ALL(&dev_priv->gpu_error.reset_queue,
+		    &dev_priv->gpu_error.reset_lock);
+		spin_unlock(&dev_priv->gpu_error.reset_lock);
+	}
+#else
 	/* Wake up __wait_seqno, potentially holding dev->struct_mutex. */
 	for_each_ring(ring, dev_priv, i)
 		wake_up_all(&ring->irq_queue);
@@ -2124,6 +2163,7 @@ static void i915_error_wake_up(struct drm_i915_private *dev_priv,
 	 */
 	if (reset_completed)
 		wake_up_all(&dev_priv->gpu_error.reset_queue);
+#endif
 }
 
 /**
@@ -2140,12 +2180,16 @@ static void i915_error_work_func(struct work_struct *work)
 	struct drm_i915_private *dev_priv =
 		container_of(error, struct drm_i915_private, gpu_error);
 	struct drm_device *dev = dev_priv->dev;
+#ifndef __NetBSD__
 	char *error_event[] = { I915_ERROR_UEVENT "=1", NULL };
 	char *reset_event[] = { I915_RESET_UEVENT "=1", NULL };
 	char *reset_done_event[] = { I915_ERROR_UEVENT "=0", NULL };
+#endif
 	int ret;
 
+#ifndef __NetBSD__
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, error_event);
+#endif
 
 	/*
 	 * Note that there's only one work item which does gpu resets, so we
@@ -2159,8 +2203,10 @@ static void i915_error_work_func(struct work_struct *work)
 	 */
 	if (i915_reset_in_progress(error) && !i915_terminally_wedged(error)) {
 		DRM_DEBUG_DRIVER("resetting chip\n");
+#ifndef __NetBSD__
 		kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE,
 				   reset_event);
+#endif
 
 		/*
 		 * All state reset _must_ be completed before we update the
@@ -2186,8 +2232,10 @@ static void i915_error_work_func(struct work_struct *work)
 			smp_mb__before_atomic_inc();
 			atomic_inc(&dev_priv->gpu_error.reset_counter);
 
+#ifndef __NetBSD__
 			kobject_uevent_env(&dev->primary->kdev->kobj,
 					   KOBJ_CHANGE, reset_done_event);
+#endif
 		} else {
 			atomic_set_mask(I915_WEDGED, &error->reset_counter);
 		}
@@ -2567,7 +2615,11 @@ semaphore_waits_for(struct intel_ring_buffer *ring, u32 *seqno)
 		head &= ring->size - 1;
 
 		/* This here seems to blow up */
+#ifdef __NetBSD__
+		cmd = bus_space_read_4(ring->bst, ring->bsh, head);
+#else
 		cmd = ioread32(ring->virtual_start + head);
+#endif
 		if (cmd == ipehr)
 			break;
 
@@ -2577,7 +2629,11 @@ semaphore_waits_for(struct intel_ring_buffer *ring, u32 *seqno)
 	if (!i)
 		return NULL;
 
+#ifdef __NetBSD__
+	*seqno = bus_space_read_4(ring->bst, ring->bsh, head + 4) + 1;
+#else
 	*seqno = ioread32(ring->virtual_start + head + 4) + 1;
+#endif
 	return &dev_priv->ring[(ring->id + (((ipehr >> 17) & 1) + 1)) % 3];
 }
 
@@ -2692,6 +2748,25 @@ static void i915_hangcheck_elapsed(unsigned long data)
 			if (ring_idle(ring, seqno)) {
 				ring->hangcheck.action = HANGCHECK_IDLE;
 
+#ifdef __NetBSD__
+				spin_lock(&dev_priv->irq_lock);
+				if (DRM_SPIN_WAITERS_P(&ring->irq_queue,
+					&dev_priv->irq_lock)) {
+					if (!test_and_set_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings)) {
+						if (!(dev_priv->gpu_error.test_irq_rings & intel_ring_flag(ring)))
+							DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
+								  ring->name);
+						else
+							DRM_INFO("Fake missed irq on %s\n",
+								 ring->name);
+						DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
+					}
+					ring->hangcheck.score += BUSY;
+				} else {
+					busy = false;
+				}
+				spin_unlock(&dev_priv->irq_lock);
+#else
 				if (waitqueue_active(&ring->irq_queue)) {
 					/* Issue a wake-up to catch stuck h/w. */
 					if (!test_and_set_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings)) {
@@ -2707,6 +2782,7 @@ static void i915_hangcheck_elapsed(unsigned long data)
 					ring->hangcheck.score += BUSY;
 				} else
 					busy = false;
+#endif
 			} else {
 				/* We always increment the hangcheck score
 				 * if the ring is busy and still processing

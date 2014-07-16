@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <linux/export.h>
 #include "drmP.h"
 #include "drm_flip_work.h"
 

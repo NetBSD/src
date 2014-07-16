@@ -33,6 +33,7 @@
 #include <linux/moduleparam.h>
 #include <linux/module.h>
 #include <linux/printk.h>
+#include <asm/div64.h>
 #include "intel_drv.h"
 
 void
@@ -397,6 +398,7 @@ static u32 vlv_get_backlight(struct intel_connector *connector)
 	return _vlv_get_backlight(dev, pipe);
 }
 
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
 static u32 intel_panel_get_backlight(struct intel_connector *connector)
 {
 	struct drm_device *dev = connector->base.dev;
@@ -414,6 +416,7 @@ static u32 intel_panel_get_backlight(struct intel_connector *connector)
 	DRM_DEBUG_DRIVER("get backlight PWM = %d\n", val);
 	return val;
 }
+#endif
 
 static void bdw_set_backlight(struct intel_connector *connector, u32 level)
 {
@@ -510,8 +513,10 @@ void intel_panel_set_backlight(struct intel_connector *connector, u32 level,
 	level = n;
 
 	panel->backlight.level = level;
+#ifndef __NetBSD__		/* XXX backlight */
 	if (panel->backlight.device)
 		panel->backlight.device->props.brightness = level;
+#endif
 
 	if (panel->backlight.enabled)
 		intel_panel_actually_set_backlight(connector, level);
@@ -786,9 +791,11 @@ void intel_panel_enable_backlight(struct intel_connector *connector)
 
 	if (panel->backlight.level == 0) {
 		panel->backlight.level = panel->backlight.max;
+#ifndef __NetBSD__		/* XXX backlight */
 		if (panel->backlight.device)
 			panel->backlight.device->props.brightness =
 				panel->backlight.level;
+#endif
 	}
 
 	dev_priv->display.enable_backlight(connector);

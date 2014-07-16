@@ -845,6 +845,10 @@ static inline void intel_fbdev_restore_mode(struct drm_device *dev)
 {
 }
 #endif
+#ifdef __NetBSD__
+extern int	intel_genfb_attach(struct drm_device *, struct drm_fb_helper *,
+		    const struct drm_fb_helper_surface_size *);
+#endif
 
 /* intel_hdmi.c */
 void intel_hdmi_init(struct drm_device *dev, int hdmi_reg, enum port port);

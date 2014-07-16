@@ -97,7 +97,7 @@ static struct ch7xxx_id_struct {
 
 static struct ch7xxx_did_struct {
 	uint8_t did;
-	char *name;
+	const char *name;
 } ch7xxx_dids[] = {
 	{ CH7xxx_DID, "CH7XXX" },
 	{ CH7010_DID, "CH7010B" },
@@ -119,7 +119,7 @@ static const char *ch7xxx_get_id(uint8_t vid)
 	return NULL;
 }
 
-static char *ch7xxx_get_did(uint8_t did)
+static const char *ch7xxx_get_did(uint8_t did)
 {
 	int i;
 

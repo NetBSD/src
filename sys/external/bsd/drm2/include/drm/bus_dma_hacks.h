@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,8 +48,7 @@ bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
 {
 	struct pglist pageq;
 	struct vm_page *page;
-	bus_addr_t prev_addr, addr;
-	unsigned int i;
+	unsigned i;
 	int error;
 
 	/*
@@ -78,30 +77,20 @@ bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
 	page = TAILQ_FIRST(pages);
 	KASSERT(page != NULL);
 
-	addr = VM_PAGE_TO_PHYS(page);
-	segs[0].ds_addr = addr;
-	segs[0].ds_len = PAGE_SIZE;
-
-	i = 0;
-	while ((page = TAILQ_NEXT(page, pageq.queue)) != NULL) {
-		prev_addr = addr;
-		addr = VM_PAGE_TO_PHYS(page);
-		if ((addr == (prev_addr + PAGE_SIZE)) &&
-		    ((addr & boundary) == (prev_addr & boundary))) {
-			segs[i].ds_len += PAGE_SIZE;
-		} else {
-			i += 1;
-			if (i >= nsegs) {
-				error = EFBIG;
-				goto fail1;
-			}
-			segs[i].ds_addr = addr;
-			segs[i].ds_len = PAGE_SIZE;
+	for (i = 0; i < nsegs; i++) {
+		if (page == NULL) {
+			error = EFBIG;
+			goto fail1;
 		}
+		segs[i].ds_addr = VM_PAGE_TO_PHYS(page);
+		segs[i].ds_len = MIN(PAGE_SIZE, size);
+		size -= PAGE_SIZE;
+		page = TAILQ_NEXT(page, pageq.queue);
 	}
+	KASSERT(page == NULL);
 
 	/* Success!  */
-	*rsegs = (i + 1);
+	*rsegs = nsegs;
 	return 0;
 
 fail1:	uvm_obj_unwirepages(uobj, start, (start + size));

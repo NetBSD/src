@@ -42,6 +42,9 @@
 #include <linux/dma_remapping.h>
 #include <linux/err.h>
 #include <asm/bug.h>
+#include <linux/math64.h>
+#include <linux/bitops.h>
+#include <linux/log2.h>
 
 static void intel_increase_pllclock(struct drm_crtc *crtc);
 static void intel_crtc_update_cursor(struct drm_crtc *crtc, bool on);
@@ -1950,7 +1953,11 @@ static int intel_align_height(struct drm_device *dev, int height, bool tiled)
 	int tile_height;
 
 	tile_height = tiled ? (IS_GEN2(dev) ? 16 : 8) : 1;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	return round_up(height, tile_height);
+#else
 	return ALIGN(height, tile_height);
+#endif
 }
 
 int
@@ -3123,23 +3130,34 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-#ifdef __NetBSD__		/* XXX DRM_WAIT_UNINTERRUPTIBLE_UNTIL */
-	int error = 0;
+#ifdef __NetBSD__
+	int ret = 0;
 #endif
 
 	if (crtc->primary->fb == NULL)
 		return;
 
 #ifdef __NetBSD__
-    {
-	unsigned long flags;
-	spin_lock_irqsave(&dev_priv->pending_flip_lock, flags);
-	WARN_ON(DRM_SPIN_WAITERS_P(&dev_priv->pending_flip_queue));
-	DRM_SPIN_WAIT_NOINTR_UNTIL(error, &dev_priv->pending_flip_queue,
-	    &dev_priv->pending_flip_lock,
-	    !intel_crtc_has_pending_flip(crtc));
-	spin_unlock_irqrestore(&dev_priv->pending_flip_lock, flags);
-    }
+	if (cold) {
+		unsigned timo = 1000;
+		ret = 0;
+		while (!intel_crtc_has_pending_flip(crtc)) {
+			if (timo-- == 0) {
+				ret = -ETIMEDOUT;
+				break;
+			}
+			DELAY(10);
+		}
+	} else {
+		unsigned long flags;
+		spin_lock_irqsave(&dev_priv->pending_flip_lock, flags);
+		WARN_ON(DRM_SPIN_WAITERS_P(&dev_priv->pending_flip_queue,
+			&dev_priv->pending_flip_lock));
+		DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &dev_priv->pending_flip_queue,
+		    &dev_priv->pending_flip_lock,
+		    !intel_crtc_has_pending_flip(crtc));
+		spin_unlock_irqrestore(&dev_priv->pending_flip_lock, flags);
+	}
 #else
 	WARN_ON(waitqueue_active(&dev_priv->pending_flip_queue));
 
@@ -4299,10 +4317,6 @@ static int valleyview_cur_cdclk(struct drm_i915_private *dev_priv)
 static int valleyview_calc_cdclk(struct drm_i915_private *dev_priv,
 				 int max_pixclk)
 {
-	int cur_cdclk;
-
-	cur_cdclk = valleyview_cur_cdclk(dev_priv);
-
 	/*
 	 * Really only a few cases to deal with, as only 4 CDclks are supported:
 	 *   200MHz
@@ -5754,7 +5768,7 @@ static void i9xx_get_plane_config(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 val, base, offset;
+	u32 val, base;
 	int pipe = crtc->pipe, plane = crtc->plane;
 	int fourcc, pixel_format;
 	int aligned_height;
@@ -5779,9 +5793,9 @@ static void i9xx_get_plane_config(struct intel_crtc *crtc,
 
 	if (INTEL_INFO(dev)->gen >= 4) {
 		if (plane_config->tiled)
-			offset = I915_READ(DSPTILEOFF(plane));
+			(void)I915_READ(DSPTILEOFF(plane));
 		else
-			offset = I915_READ(DSPLINOFF(plane));
+			(void)I915_READ(DSPLINOFF(plane));
 		base = I915_READ(DSPSURF(plane)) & 0xfffff000;
 	} else {
 		base = I915_READ(DSPADDR(plane));
@@ -5798,8 +5812,13 @@ static void i9xx_get_plane_config(struct intel_crtc *crtc,
 	aligned_height = intel_align_height(dev, crtc->base.primary->fb->height,
 					    plane_config->tiled);
 
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	plane_config->size = round_up(crtc->base.primary->fb->pitches[0] *
+				   aligned_height, PAGE_SIZE);
+#else
 	plane_config->size = ALIGN(crtc->base.primary->fb->pitches[0] *
 				   aligned_height, PAGE_SIZE);
+#endif
 
 	DRM_DEBUG_KMS("pipe/plane %d/%d with fb: size=%dx%d@%d, offset=%x, pitch %d, size 0x%x\n",
 		      pipe, plane, crtc->base.primary->fb->width,
@@ -6762,7 +6781,7 @@ static void ironlake_get_plane_config(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 val, base, offset;
+	u32 val, base;
 	int pipe = crtc->pipe, plane = crtc->plane;
 	int fourcc, pixel_format;
 	int aligned_height;
@@ -6787,12 +6806,12 @@ static void ironlake_get_plane_config(struct intel_crtc *crtc,
 
 	base = I915_READ(DSPSURF(plane)) & 0xfffff000;
 	if (IS_HASWELL(dev) || IS_BROADWELL(dev)) {
-		offset = I915_READ(DSPOFFSET(plane));
+		(void)I915_READ(DSPOFFSET(plane));
 	} else {
 		if (plane_config->tiled)
-			offset = I915_READ(DSPTILEOFF(plane));
+			(void)I915_READ(DSPTILEOFF(plane));
 		else
-			offset = I915_READ(DSPLINOFF(plane));
+			(void)I915_READ(DSPLINOFF(plane));
 	}
 	plane_config->base = base;
 
@@ -6806,8 +6825,13 @@ static void ironlake_get_plane_config(struct intel_crtc *crtc,
 	aligned_height = intel_align_height(dev, crtc->base.primary->fb->height,
 					    plane_config->tiled);
 
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	plane_config->size = round_up(crtc->base.primary->fb->pitches[0] *
+				   aligned_height, PAGE_SIZE);
+#else
 	plane_config->size = ALIGN(crtc->base.primary->fb->pitches[0] *
 				   aligned_height, PAGE_SIZE);
+#endif
 
 	DRM_DEBUG_KMS("pipe/plane %d/%d with fb: size=%dx%d@%d, offset=%x, pitch %d, size 0x%x\n",
 		      pipe, plane, crtc->base.primary->fb->width,
@@ -7966,7 +7990,7 @@ static u32
 intel_framebuffer_pitch_for_width(int width, int bpp)
 {
 	u32 pitch = DIV_ROUND_UP(width * bpp, 8);
-#ifdef __NetBSD__		/* XXX ALIGN already means something.  */
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
 	return round_up(pitch, 64);
 #else
 	return ALIGN(pitch, 64);
@@ -7977,7 +8001,7 @@ static u32
 intel_framebuffer_size_for_mode(struct drm_display_mode *mode, int bpp)
 {
 	u32 pitch = intel_framebuffer_pitch_for_width(mode->hdisplay, bpp);
-#ifdef __NetBSD__		/* XXX ALIGN already means something.  */
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
 	return round_up(pitch * mode->vdisplay, PAGE_SIZE);
 #else
 	return ALIGN(pitch * mode->vdisplay, PAGE_SIZE);
@@ -10559,7 +10583,7 @@ static void ibx_pch_dpll_disable(struct drm_i915_private *dev_priv,
 	udelay(200);
 }
 
-static char *ibx_pch_dpll_names[] = {
+static const char *ibx_pch_dpll_names[] = {
 	"PCH DPLL A",
 	"PCH DPLL B",
 };

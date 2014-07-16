@@ -823,7 +823,7 @@ static const struct dmi_system_id intel_dual_link_lvds[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "MacBookPro8,2"),
 		},
 	},
-	{ }	/* terminating entry */
+	{ .callback = NULL }	/* terminating entry */
 };
 
 bool intel_is_dual_link_lvds(struct drm_device *dev)

@@ -659,6 +659,7 @@ static int i915_resume_early(struct drm_device *dev)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	/*
 	 * We have a resume ordering issue with the snd-hda driver also
 	 * requiring our device to be power up. Due to the lack of a
@@ -670,7 +671,9 @@ static int i915_resume_early(struct drm_device *dev)
 	 */
 	if (pci_enable_device(dev->pdev))
 		return -EIO;
+#endif
 
+	/* XXX pmf probably handles this for us too.  */
 	pci_set_master(dev->pdev);
 
 	return i915_drm_thaw_early(dev);

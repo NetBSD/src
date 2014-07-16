@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define _LINUX_MUTEX_H_
 
 #include <sys/mutex.h>
+
+#include <lib/libkern/libkern.h> /* KASSERT */
 
 struct mutex {
 	kmutex_t mtx_lock;
@@ -81,6 +83,14 @@ static inline bool
 mutex_is_locked(struct mutex *mutex)
 {
 	return mutex_owned(&mutex->mtx_lock);
+}
+
+static inline void
+mutex_lock_nest_lock(struct mutex *mutex, struct mutex *already)
+{
+
+	KASSERT(mutex_is_locked(already));
+	mutex_lock(mutex);
 }
 
 #endif  /* _LINUX_MUTEX_H_ */

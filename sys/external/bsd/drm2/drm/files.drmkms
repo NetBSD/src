@@ -1,6 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.5 2014/04/01 15:08:58 riastradh Exp $
-
-define	drmkmsbus	{ }
+#	$NetBSD: files.drmkms,v 1.6 2014/07/16 20:56:25 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -10,17 +8,18 @@ include "external/bsd/drm2/linux/files.drmkms_linux"
 # ARM SoC graphics drivers.
 define	drmkms_i2c: drmkms_linux
 
-define	drmkms
-device	drmkms: drmkms_linux, drmkms_i2c
-attach	drmkms at drmkmsbus
+define	drmkms: drmkms_linux, drmkms_i2c
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
 
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 
 # XXX Should probably be in a header file.  opt_drmkms.h?
@@ -39,6 +38,7 @@ file	external/bsd/drm2/drm/drm_drv.c			drmkms
 file	external/bsd/drm2/dist/drm/drm_edid.c		drmkms_i2c
 #file	external/bsd/drm2/dist/drm/drm_encoder_slave.c	drmkms_i2c
 file	external/bsd/drm2/dist/drm/drm_fb_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_flip_work.c	drmkms
 file	external/bsd/drm2/drm/drm_fops.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_gem.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_global.c		drmkms
@@ -51,13 +51,16 @@ file	external/bsd/drm2/drm/drm_lock.c		drmkms
 file	external/bsd/drm2/drm/drm_memory.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_mm.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_modes.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_plane_helper.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_platform.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_prime.c		drmkms
-#file	external/bsd/drm2/dist/drm/drm_proc.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_probe_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_rect.c		drmkms
 file	external/bsd/drm2/drm/drm_scatter.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_stub.c		drmkms
+file	external/bsd/drm2/drm/drm_sysfs.c		drmkms
 file	external/bsd/drm2/drm/drm_vm.c			drmkms
+file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
 
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
-file	external/bsd/drm2/drm/drm_sysfs.c		drmkms

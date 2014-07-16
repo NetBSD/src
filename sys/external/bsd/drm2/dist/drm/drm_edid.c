@@ -37,6 +37,7 @@
 #include <linux/printk.h>
 #include <linux/device.h>
 #include <linux/string.h>
+#include <linux/errno.h>
 #include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
@@ -2511,7 +2512,7 @@ add_alternate_cea_modes(struct drm_connector *connector, struct edid *edid)
 {
 	struct drm_device *dev = connector->dev;
 	struct drm_display_mode *mode, *tmp;
-	LIST_HEAD(list);
+	struct list_head list = LIST_HEAD_INIT(list);
 	int modes = 0;
 
 	/* Don't add CEA modes if the CEA extension block is missing */

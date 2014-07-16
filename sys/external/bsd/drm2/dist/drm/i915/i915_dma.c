@@ -30,9 +30,7 @@
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
-#ifndef __NetBSD__		/* XXX fb */
 #include <drm/drm_fb_helper.h>
-#endif
 #include "intel_drv.h"
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -74,7 +72,8 @@ intel_read_legacy_status_page(struct drm_i915_private *dev_priv, int reg)
 {
 	if (I915_NEED_GFX_HWS(dev_priv->dev))
 #ifdef __NetBSD__
-		return DRM_READ32(&dev_priv->dri1.gfx_hws_cpu_map, reg);
+		return bus_space_read_4(dev_priv->dev->pdev->pd_pa.pa_memt,
+		    dev_priv->dri1.gfx_hws_cpu_bsh, reg);
 #else
 		return ioread32(dev_priv->dri1.gfx_hws_cpu_addr + reg);
 #endif
@@ -135,7 +134,8 @@ static void i915_free_hws(struct drm_device *dev)
 	if (ring->status_page.gfx_addr) {
 		ring->status_page.gfx_addr = 0;
 #ifdef __NetBSD__
-		drm_iounmap(dev, &dev_priv->dri1.gfx_hws_cpu_map);
+		bus_space_unmap(dev->pdev->pd_pa.pa_memt,
+		    dev_priv->dri1.gfx_hws_cpu_bsh, 4096);
 #else
 		iounmap(dev_priv->dri1.gfx_hws_cpu_addr);
 #endif
@@ -248,11 +248,13 @@ static int i915_dma_resume(struct drm_device * dev)
 
 	DRM_DEBUG_DRIVER("%s\n", __func__);
 
+#ifndef __NetBSD__		/* XXX crufty legacy dri crap */
 	if (ring->virtual_start == NULL) {
 		DRM_ERROR("can not ioremap virtual address for"
 			  " ring buffer\n");
 		return -ENOMEM;
 	}
+#endif
 
 	/* Program Hardware Status Page */
 	if (!ring->status_page.page_addr) {
@@ -836,17 +838,21 @@ static int i915_wait_irq(struct drm_device * dev, int irq_nr)
 static int i915_irq_emit(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv)
 {
+#ifndef __NetBSD__
 	struct drm_i915_private *dev_priv = dev->dev_private;
+#endif
 	drm_i915_irq_emit_t *emit = data;
 	int result;
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		return -ENODEV;
 
+#ifndef __NetBSD__		/* XXX crufty legacy dri crap */
 	if (!dev_priv || !LP_RING(dev_priv)->virtual_start) {
 		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
+#endif
 
 	RING_LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1101,8 +1107,7 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	drm_i915_hws_addr_t *hws = data;
 	struct intel_ring_buffer *ring;
 #ifdef __NetBSD__
-	struct drm_local_map *const gfx_hws_cpu_map =
-	    &dev_priv->dri1.gfx_hws_cpu_map;
+	int ret;
 #endif
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
@@ -1127,25 +1132,22 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	ring->status_page.gfx_addr = hws->addr & (0x1ffff<<12);
 
 #ifdef __NetBSD__
-	gfx_hws_cpu_map->offset = (dev_priv->mm.gtt_base_addr +
-	    hws->addr);
-	gfx_hws_cpu_map->size = 4096;
-	gfx_hws_cpu_map->flags = 0;
-	gfx_hws_cpu_map->flags |= _DRM_RESTRICTED;
-	gfx_hws_cpu_map->flags |= _DRM_KERNEL;
-	gfx_hws_cpu_map->flags |= _DRM_WRITE_COMBINING;
-	gfx_hws_cpu_map->flags |= _DRM_DRIVER;
-	if (drm_ioremap(dev, gfx_hws_cpu_map) == NULL) {
+	/* XXX errno NetBSD->Linux */
+	ret = bus_space_map(dev->pdev->pd_pa.pa_memt,
+	    (dev_priv->gtt.mappable_base + hws->addr), 4096,
+	    BUS_SPACE_MAP_PREFETCHABLE,
+	    &dev_priv->dri1.gfx_hws_cpu_bsh);
+	if (ret) {
 		i915_dma_cleanup(dev);
 		ring->status_page.gfx_addr = 0;
 		DRM_ERROR("can not ioremap virtual address for"
 				" G33 hw status page\n");
-		return -ENOMEM;
+		return ret;
 	}
 
-	/* XXX drm_local_map abstraction violation.  Pooh.  */
-	bus_space_set_region_1(gfx_hws_cpu_map->lm_data.bus_space.bst,
-	    gfx_hws_cpu_map->lm_data.bus_space.bsh, 0, 0, PAGE_SIZE);
+	__CTASSERT(PAGE_SIZE == 4096);
+	bus_space_set_region_1(dev->pdev->pd_pa.pa_memt,
+	    dev_priv->dri1.gfx_hws_cpu_bsh, 0, 0, PAGE_SIZE);
 #else
 	dev_priv->dri1.gfx_hws_cpu_addr =
 		ioremap_wc(dev_priv->gtt.mappable_base + hws->addr, 4096);
@@ -1414,11 +1416,9 @@ static int i915_load_modeset_init(struct drm_device *dev)
 		return 0;
 	}
 
-#ifndef __NetBSD__		/* XXX fb */
 	ret = intel_fbdev_init(dev);
 	if (ret)
 		goto cleanup_gem;
-#endif
 
 	/* Only enable hotplug handling once the fbdev is fully set up. */
 	intel_hpd_init(dev);
@@ -1678,30 +1678,16 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	else
 		mmio_size = 2*1024*1024;
 
-#ifdef __NetBSD__
-	if (dev->bus_maps[mmio_bar].bm_size < mmio_size) {
-		DRM_ERROR("MMIO BAR %d is too small"
-		    ": %"PRIxMAX" < %"PRIxMAX"\n",
-		    mmio_bar,
-		    (uintmax_t)dev->bus_maps[mmio_bar].bm_size,
-		    (uintmax_t)mmio_size);
-		ret = -EIO;
-		goto put_bridge;
-	}
-
-	ret = drm_addmap(dev, dev->bus_maps[mmio_bar].bm_base, mmio_size,
-	    _DRM_REGISTERS, (_DRM_KERNEL | _DRM_DRIVER), &dev_priv->regs_map);
-	if (ret) {
-		DRM_ERROR("Failed to map MMIO BAR %d: %d\n", mmio_bar, ret);
-		goto put_bridge;
-	}
-#else
 	dev_priv->regs = pci_iomap(dev->pdev, mmio_bar, mmio_size);
 	if (!dev_priv->regs) {
 		DRM_ERROR("failed to map registers\n");
 		ret = -EIO;
 		goto put_bridge;
 	}
+
+#ifdef __NetBSD__
+	dev_priv->regs_bst = dev_priv->dev->pdev->pd_resources[mmio_bar].bst;
+	dev_priv->regs_bsh = dev_priv->dev->pdev->pd_resources[mmio_bar].bsh;
 #endif
 
 	/* This must be called before any calls to HAS_PCH_* */
@@ -1713,25 +1699,15 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	if (ret)
 		goto out_regs;
 
-#ifndef __NetBSD__		/* XXX fb */
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		i915_kick_out_firmware_fb(dev_priv);
-#endif
 
 	pci_set_master(dev->pdev);
 
+#ifndef __NetBSD__		/* Handled in i915_gem_gtt.  */
 	/* overlay on gen2 is broken and can't address above 1G */
 	if (IS_GEN2(dev))
-#ifdef __NetBSD__
-		{
-			/* XXX DMA limits */
-			ret = drm_limit_dma_space(dev, 0, 0x3fffffffUL);
-			if (ret)
-				goto put_gmch;
-		}
-#else
 		dma_set_coherent_mask(&dev->pdev->dev, DMA_BIT_MASK(30));
-#endif
 
 	/* 965GM sometimes incorrectly writes to hardware status page (HWS)
 	 * using 32bit addressing, overwriting memory if HWS is located
@@ -1742,13 +1718,6 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	 * which also needs to be handled carefully.
 	 */
 	if (IS_BROADWATER(dev) || IS_CRESTLINE(dev))
-#ifdef __NetBSD__
-		{
-			ret = drm_limit_dma_space(dev, 0, 0xffffffffUL);
-			if (ret)
-				goto put_gmch;
-		}
-#else
 		dma_set_coherent_mask(&dev->pdev->dev, DMA_BIT_MASK(32));
 #endif
 
@@ -1863,6 +1832,7 @@ out_gem_unload:
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
 	spin_lock_destroy(&dev_priv->pending_flip_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->gpu_error.reset_queue);
+	spin_lock_destroy(&dev_priv->gpu_error.reset_lock);
 #endif
 
 	if (dev->pdev->msi_enabled)
@@ -1881,14 +1851,12 @@ out_gtt:
 	dev_priv->gtt.base.cleanup(&dev_priv->gtt.base);
 out_regs:
 	intel_uncore_fini(dev);
-#ifdef __NetBSD__
-	(void)drm_rmmap(dev, dev_priv->regs_map);
-#else
 	pci_iounmap(dev->pdev, dev_priv->regs);
-#endif
 put_bridge:
 	pci_dev_put(dev_priv->bridge_dev);
 free_priv:
+	/* XXX intel_pm_fini */
+	linux_mutex_destroy(&dev_priv->rps.hw_lock);
 	if (dev_priv->slab)
 		kmem_cache_destroy(dev_priv->slab);
 #ifdef __NetBSD__
@@ -1936,9 +1904,7 @@ int i915_driver_unload(struct drm_device *dev)
 	acpi_video_unregister();
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-#ifndef __NetBSD__		/* XXX fb */
 		intel_fbdev_fini(dev);
-#endif
 		intel_modeset_cleanup(dev);
 		cancel_work_sync(&dev_priv->console_resume_work);
 
@@ -1993,7 +1959,6 @@ int i915_driver_unload(struct drm_device *dev)
 
 	intel_teardown_gmbus(dev);
 	intel_teardown_mchbar(dev);
-	intel_gt_fini(dev);
 
 	destroy_workqueue(dev_priv->wq);
 	pm_qos_remove_request(&dev_priv->pm_qos);
@@ -2001,19 +1966,15 @@ int i915_driver_unload(struct drm_device *dev)
 	dev_priv->gtt.base.cleanup(&dev_priv->gtt.base);
 
 	intel_uncore_fini(dev);
-#ifdef __NetBSD__
-	if (dev_priv->regs_map != NULL)
-		(void)drm_rmmap(dev, dev_priv->regs_map);
-#else
 	if (dev_priv->regs != NULL)
 		pci_iounmap(dev->pdev, dev_priv->regs);
-#endif
 
 	if (dev_priv->slab)
 		kmem_cache_destroy(dev_priv->slab);
 
-	i915_gem_gtt_fini(dev);
 	pci_dev_put(dev_priv->bridge_dev);
+	/* XXX intel_pm_fini */
+	linux_mutex_destroy(&dev_priv->rps.hw_lock);
 #ifdef __NetBSD__
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
 	spin_lock_destroy(&dev_priv->pending_flip_lock);

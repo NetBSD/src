@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,6 +106,15 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
 
 	return 0;
+}
+
+/* Not native to Linux.  */
+static inline bool
+kref_exclusive_p(struct kref *kref)
+{
+
+	KASSERT(0 < kref->kr_count);
+	return (kref->kr_count == 1);
 }
 
 #endif  /* _LINUX_KREF_H_ */

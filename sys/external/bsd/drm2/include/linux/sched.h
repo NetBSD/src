@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,11 @@
 #ifndef _LINUX_SCHED_H_
 #define _LINUX_SCHED_H_
 
+#include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
+
+#define	TASK_COMM_LEN	MAXCOMLEN
 
 #define	current	curproc
 
@@ -40,6 +44,19 @@ static inline pid_t
 task_pid_nr(struct proc *p)
 {
 	return p->p_pid;
+}
+
+static inline long
+schedule_timeout_uninterruptible(long timeout)
+{
+	int start, end;
+
+	start = hardclock_ticks;
+	/* XXX Integer truncation...not likely to matter here.  */
+	(void)kpause("loonix", false /*!intr*/, timeout, NULL);
+	end = hardclock_ticks;
+
+	return (end - start);
 }
 
 #endif  /* _LINUX_SCHED_H_ */

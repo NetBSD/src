@@ -34,6 +34,10 @@ struct drm_fb_helper;
 
 #include <linux/kgdb.h>
 
+#ifdef __NetBSD__
+#include <dev/wsfb/genfbvar.h>
+#endif
+
 struct drm_fb_helper_crtc {
 	struct drm_mode_set mode_set;
 	struct drm_display_mode *desired_mode;
@@ -88,7 +92,16 @@ struct drm_fb_helper {
 	int connector_count;
 	struct drm_fb_helper_connector **connector_info;
 	struct drm_fb_helper_funcs *funcs;
-#ifndef __NetBSD__		/* XXX fb info */
+#ifdef __NetBSD__		/* XXX fb info */
+	bus_space_tag_t fb_bst;
+	bus_space_handle_t fb_bsh;
+	/*
+	 * XXX Should be a child, not genfb, but genfb doesn't have its
+	 * own independent device_t concept.
+	 */
+	struct genfb_softc genfb;
+	bool genfb_attached:1;
+#else
 	struct fb_info *fbdev;
 #endif
 	u32 pseudo_palette[17];
@@ -103,7 +116,9 @@ int drm_fb_helper_init(struct drm_device *dev,
 		       struct drm_fb_helper *helper, int crtc_count,
 		       int max_conn);
 void drm_fb_helper_fini(struct drm_fb_helper *helper);
-#ifndef __NetBSD__		/* XXX fb info */
+#ifdef __NetBSD__		/* XXX fb info */
+int drm_fb_helper_set_config(struct drm_fb_helper *);
+#else
 int drm_fb_helper_blank(int blank, struct fb_info *info);
 int drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 			      struct fb_info *info);

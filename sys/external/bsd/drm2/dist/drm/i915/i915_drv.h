@@ -45,6 +45,7 @@
 #include <linux/completion.h>
 #include <linux/shrinker.h>
 #include <linux/pm_qos.h>
+#include <linux/sched.h>
 
 /* General customization:
  */
@@ -633,7 +634,12 @@ struct i915_address_space {
 
 	struct {
 		dma_addr_t addr;
+#ifdef __NetBSD__
+		bus_dma_segment_t seg;
+		bus_dmamap_t map;
+#else
 		struct page *page;
+#endif
 	} scratch;
 
 	/**
@@ -668,11 +674,20 @@ struct i915_address_space {
 			    uint64_t length,
 			    bool use_scratch);
 	void (*insert_entries)(struct i915_address_space *vm,
+#ifdef __NetBSD__
+			       bus_dmamap_t dmamap,
+#else
 			       struct sg_table *st,
+#endif
 			       uint64_t start,
 			       enum i915_cache_level cache_level);
 	void (*cleanup)(struct i915_address_space *vm);
 };
+
+#ifdef __NetBSD__
+#  define	__gtt_iomem
+#  define	__iomem __gtt_iomem
+#endif
 
 /* The Graphics Translation Table is the way in which GEN hardware translates a
  * Graphics Virtual Address into a Physical Address. In addition to the normal
@@ -690,7 +705,26 @@ struct i915_gtt {
 	phys_addr_t mappable_base;	/* PA of our GMADR */
 
 	/** "Graphics Stolen Memory" holds the global PTEs */
+#ifdef __NetBSD__
+	/*
+	 * This is not actually the `Graphics Stolen Memory'; it is the
+	 * graphics translation table, which we write to through the
+	 * GTTADR/GTTMMADR PCI BAR, and which is backed by `Graphics
+	 * GTT Stolen Memory'.  That isn't the `Graphics Stolen Memory'
+	 * either, although it is stolen from main memory.
+	 */
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
+	bus_size_t		size;
+
+	/* Maximum physical address that can be wired into a GTT entry.  */
+	uint64_t		max_paddr;
+
+	/* Page freelist for pages limited to the above maximum address.  */
+	int			pgfl;
+#else
 	void __iomem *gsm;
+#endif
 
 	bool do_idle_maps;
 
@@ -703,12 +737,36 @@ struct i915_gtt {
 };
 #define gtt_total_entries(gtt) ((gtt).base.total >> PAGE_SHIFT)
 
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	__gtt_iomem
+#endif
+
 #define GEN8_LEGACY_PDPS 4
 struct i915_hw_ppgtt {
 	struct i915_address_space base;
 	struct kref ref;
 	struct drm_mm_node node;
 	unsigned num_pd_entries;
+#ifdef __NetBSD__
+	union {
+		struct {
+			unsigned		npdp;
+			bus_dma_segment_t	pd_segs[GEN8_LEGACY_PDPS];
+			bus_dmamap_t		pd_map;
+			struct {
+				/* XXX Should be GEN8_PDES_PER_PAGE.  */
+				bus_dma_segment_t pt_segs[PAGE_SIZE/8];
+				bus_dmamap_t pt_map;
+			} pd[GEN8_LEGACY_PDPS];
+		}	*gen8;
+		struct {
+			bus_size_t		pd_base;
+			bus_dma_segment_t	*pt_segs; /* num_pd_entries */
+			bus_dmamap_t		pt_map;
+		}	*gen6;
+	} u;
+#else
 	unsigned num_pd_pages; /* gen8+ */
 	union {
 		struct page **pt_pages;
@@ -723,6 +781,7 @@ struct i915_hw_ppgtt {
 		dma_addr_t *pt_dma_addr;
 		dma_addr_t *gen8_pt_dma_addr[4];
 	};
+#endif
 
 	struct i915_hw_context *ctx;
 
@@ -1095,7 +1154,7 @@ struct i915_power_domains {
 struct i915_dri1_state {
 	unsigned allow_batchbuffer : 1;
 #ifdef __NetBSD__
-	struct drm_local_map gfx_hws_cpu_map;
+	bus_space_handle_t gfx_hws_cpu_bsh;
 #else
 	u32 __iomem *gfx_hws_cpu_addr;
 #endif
@@ -1259,6 +1318,7 @@ struct i915_gpu_error {
 	 * that wait for dev_priv->mm.wedged to settle.
 	 */
 #ifdef __NetBSD__
+	spinlock_t reset_lock;
 	drm_waitqueue_t reset_queue;
 #else
 	wait_queue_head_t reset_queue;
@@ -1416,22 +1476,31 @@ struct intel_pipe_crc {
 	struct intel_pipe_crc_entry *entries;
 	enum intel_pipe_crc_source source;
 	int head, tail;
+#ifdef __NetBSD__
+	drm_waitqueue_t wq;
+#else
 	wait_queue_head_t wq;
+#endif
 };
+
+#ifdef __NetBSD__
+#  define	__i915_iomem
+#  define	__iomem __i915_iomem
+#endif
 
 typedef struct drm_i915_private {
 	struct drm_device *dev;
 	struct kmem_cache *slab;
 
-	const struct intel_device_info info;
+	struct intel_device_info info;
 
 	int relative_constants_mode;
 
 #ifdef __NetBSD__
-	struct drm_local_map *regs_map;
-#else
-	void __iomem *regs;
+	bus_space_tag_t regs_bst;
+	bus_space_handle_t regs_bsh;
 #endif
+	void __iomem *regs;
 
 	struct intel_uncore uncore;
 
@@ -1447,7 +1516,12 @@ typedef struct drm_i915_private {
 	 */
 	uint32_t gpio_mmio_base;
 
+#ifdef __NetBSD__
+	spinlock_t gmbus_wait_lock;
+	drm_waitqueue_t gmbus_wait_queue;
+#else
 	wait_queue_head_t gmbus_wait_queue;
+#endif
 
 	struct pci_dev *bridge_dev;
 	struct intel_ring_buffer ring[I915_NUM_RINGS];
@@ -1635,6 +1709,11 @@ typedef struct drm_i915_private {
 	/* Old ums support infrastructure, same warning applies. */
 	struct i915_ums_state ums;
 } drm_i915_private_t;
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	__i915_iomem
+#endif
 
 static inline struct drm_i915_private *to_i915(const struct drm_device *dev)
 {

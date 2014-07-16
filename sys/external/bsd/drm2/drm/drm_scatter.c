@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -43,9 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2 2014/03/18 18:20:42 riastradh Ex
 
 static int	drm_sg_alloc_mem(struct drm_device *, size_t,
 		    struct drm_sg_mem **);
+static void	drm_sg_free_mem(struct drm_device *, struct drm_sg_mem *);
 
 int
-drm_sg_alloc_ioctl(struct drm_device *dev, void *data,
+drm_sg_alloc(struct drm_device *dev, void *data,
     struct drm_file *file __unused)
 {
 	struct drm_scatter_gather *const request = data;
@@ -109,9 +110,25 @@ drm_sg_free(struct drm_device *dev, void *data, struct drm_file *file)
 	/* Remove dev->sg.  */
 	dev->sg = NULL;
 
+	/* Free it.  */
+	drm_sg_free_mem(dev, sg);
+
 	/* Success!  */
-	drm_sg_cleanup(sg);
 	return 0;
+}
+
+void
+drm_legacy_sg_cleanup(struct drm_device *dev)
+{
+
+	if (!drm_core_check_feature(dev, DRIVER_SG))
+		return;
+	if (dev->sg == NULL)
+		return;
+	if (drm_core_check_feature(dev, DRIVER_MODESET))
+		return;
+
+	drm_sg_free_mem(dev, dev->sg);
 }
 
 static int
@@ -202,12 +219,12 @@ fail2:	bus_dmamem_unmap(sg->sg_tag, sg->virtual, sg->sg_size);
 fail1:	KASSERT(sg->sg_nsegs <= (unsigned int)INT_MAX);
 	bus_dmamem_free(sg->sg_tag, sg->sg_segs, (int)sg->sg_nsegs);
 fail0:	sg->sg_tag = NULL;	/* XXX paranoia */
-	kfree(sg);
+	kmem_free(sg, offsetof(struct drm_sg_mem, sg_segs[sg->sg_nsegs_max]));
 	return error;
 }
 
-void
-drm_sg_cleanup(struct drm_sg_mem *sg)
+static void
+drm_sg_free_mem(struct drm_device *dev, struct drm_sg_mem *sg)
 {
 
 	bus_dmamap_unload(sg->sg_tag, sg->sg_map);

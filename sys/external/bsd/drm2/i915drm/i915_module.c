@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,10 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
+#ifndef _MODULE
+#include <sys/once.h>
+#endif
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
@@ -46,8 +49,54 @@ MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c 
 #include "ioconf.c"
 #endif
 
-/* XXX Kludge.  */
+/* XXX Kludge to get these from i915_drv.c.  */
 extern struct drm_driver *const i915_drm_driver;
+extern const struct pci_device_id *const i915_device_ids;
+extern const size_t i915_n_device_ids;
+
+static int
+i915drmkms_init(void)
+{
+	extern int drm_guarantee_initialized(void);
+	int error;
+
+	error = drm_guarantee_initialized();
+	if (error)
+		return error;
+
+	i915_drm_driver->num_ioctls = i915_max_ioctl;
+	i915_drm_driver->driver_features |= DRIVER_MODESET;
+	i915_drm_driver->driver_features &= ~DRIVER_USE_AGP;
+
+	error = drm_pci_init(i915_drm_driver, NULL);
+	if (error) {
+		aprint_error("i915drmkms: failed to init pci: %d\n",
+		    error);
+		return error;
+	}
+
+	return 0;
+}
+
+int	i915drmkms_guarantee_initialized(void); /* XXX */
+int
+i915drmkms_guarantee_initialized(void)
+{
+#ifdef _MODULE
+	return 0;
+#else
+	static ONCE_DECL(i915drmkms_init_once);
+
+	return RUN_ONCE(&i915drmkms_init_once, &i915drmkms_init);
+#endif
+}
+
+static void
+i915drmkms_fini(void)
+{
+
+	drm_pci_exit(i915_drm_driver, NULL);
+}
 
 static int
 i915drmkms_modcmd(modcmd_t cmd, void *arg __unused)
@@ -57,12 +106,13 @@ i915drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		/* XXX Kludge it up...  Must happen before attachment.  */
-		i915_drm_driver->num_ioctls = i915_max_ioctl;
-		i915_drm_driver->driver_features |= DRIVER_MODESET;
-
-		error = drm_pci_init(i915_drm_driver, NULL);
+#ifdef _MODULE
+		error = i915drmkms_init();
+#else
+		error = i915drmkms_guarantee_initialized();
+#endif
 		if (error) {
-			aprint_error("i915drmkms: failed to init pci: %d\n",
+			aprint_error("i915drmkms: failed to initialize: %d\n",
 			    error);
 			return error;
 		}
@@ -72,7 +122,7 @@ i915drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 		if (error) {
 			aprint_error("i915drmkms: failed to init component"
 			    ": %d\n", error);
-			drm_pci_exit(i915_drm_driver, NULL);
+			i915drmkms_fini();
 			return error;
 		}
 #endif
@@ -88,7 +138,7 @@ i915drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 			return error;
 		}
 #endif
-		drm_pci_exit(i915_drm_driver, NULL);
+		i915drmkms_fini();
 		return 0;
 
 	default:

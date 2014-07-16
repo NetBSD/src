@@ -31,6 +31,7 @@
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/printk.h>
+#include <linux/pm_qos.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
@@ -367,8 +368,20 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp, bool has_aux_irq)
 
 #define C (((status = I915_READ_NOTRACE(ch_ctl)) & DP_AUX_CH_CTL_SEND_BUSY) == 0)
 	if (has_aux_irq)
+#ifdef __NetBSD__
+	    {
+		int ret;
+		spin_lock(&dev_priv->irq_lock);
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
+		    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
+		    C);
+		done = ret;	/* XXX ugh */
+		spin_unlock(&dev_priv->irq_lock);
+	    }
+#else
 		done = wait_event_timeout(dev_priv->gmbus_wait_queue, C,
 					  msecs_to_jiffies_timeout(10));
+#endif
 	else
 		done = wait_for_atomic(C, 10) == 0;
 	if (!done)
@@ -697,8 +710,13 @@ intel_dp_aux_init(struct intel_dp *intel_dp, struct intel_connector *connector)
 	intel_dp->aux.dev = dev->dev;
 	intel_dp->aux.transfer = intel_dp_aux_transfer;
 
+#ifdef __NetBSD__
+	DRM_DEBUG_KMS("registering %s bus for %s\n", name,
+		      device_xname(connector->base.dev->dev));
+#else
 	DRM_DEBUG_KMS("registering %s bus for %s\n", name,
 		      connector->base.kdev->kobj.name);
+#endif
 
 	ret = drm_dp_aux_register_i2c_bus(&intel_dp->aux);
 	if (ret < 0) {
@@ -707,6 +725,7 @@ intel_dp_aux_init(struct intel_dp *intel_dp, struct intel_connector *connector)
 		return;
 	}
 
+#ifndef __NetBSD__
 	ret = sysfs_create_link(&connector->base.kdev->kobj,
 				&intel_dp->aux.ddc.dev.kobj,
 				intel_dp->aux.ddc.dev.kobj.name);
@@ -714,15 +733,20 @@ intel_dp_aux_init(struct intel_dp *intel_dp, struct intel_connector *connector)
 		DRM_ERROR("sysfs_create_link() for %s failed (%d)\n", name, ret);
 		drm_dp_aux_unregister_i2c_bus(&intel_dp->aux);
 	}
+#endif
 }
 
 static void
 intel_dp_connector_unregister(struct intel_connector *intel_connector)
 {
+#ifndef __NetBSD__
 	struct intel_dp *intel_dp = intel_attached_dp(&intel_connector->base);
+#endif
 
+#ifndef __NetBSD__
 	sysfs_remove_link(&intel_connector->base.kdev->kobj,
 			  intel_dp->aux.ddc.dev.kobj.name);
+#endif
 	intel_connector_unregister(intel_connector);
 }
 
@@ -3865,6 +3889,7 @@ intel_dp_init(struct drm_device *dev, int output_reg, enum port port)
 {
 	struct intel_digital_port *intel_dig_port;
 	struct intel_encoder *intel_encoder;
+	struct drm_encoder *encoder;
 	struct intel_connector *intel_connector;
 
 	intel_dig_port = kzalloc(sizeof(*intel_dig_port), GFP_KERNEL);
@@ -3878,6 +3903,7 @@ intel_dp_init(struct drm_device *dev, int output_reg, enum port port)
 	}
 
 	intel_encoder = &intel_dig_port->base;
+	encoder = &intel_encoder->base;
 
 	drm_encoder_init(dev, &intel_encoder->base, &intel_dp_enc_funcs,
 			 DRM_MODE_ENCODER_TMDS);

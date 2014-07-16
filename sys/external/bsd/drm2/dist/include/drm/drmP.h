@@ -72,6 +72,7 @@
 #include <linux/kref.h>
 #include <linux/pm.h>
 #include <linux/timer.h>
+#include <linux/ktime.h>
 #include <asm/pgalloc.h>
 #include <drm/drm.h>
 #include <drm/drm_sarea.h>
@@ -590,10 +591,8 @@ struct drm_agp_head {
 	int acquired;			/**< whether the AGP device has been acquired */
 	unsigned long base;
 	int agp_mtrr;
-#ifndef __NetBSD__
 	int cant_use_aperture;
 	unsigned long page_mask;
-#endif
 };
 
 /**
@@ -1026,7 +1025,7 @@ struct drm_driver {
 
 	/* these have to be filled in */
 
-	irqreturn_t(*irq_handler) (int irq, void *arg);
+	irqreturn_t(*irq_handler) (DRM_IRQ_ARGS);
 	void (*irq_preinstall) (struct drm_device *dev);
 	int (*irq_postinstall) (struct drm_device *dev);
 	void (*irq_uninstall) (struct drm_device *dev);
@@ -1133,7 +1132,10 @@ enum drm_minor_type {
 	DRM_MINOR_CNT,
 };
 
-#ifndef __NetBSD__		/* XXX debugfs */
+#ifdef __NetBSD__		/* XXX debugfs */
+struct seq_file;
+#endif
+
 /**
  * Info file list entry. This structure represents a debugfs or proc file to
  * be created by the drm core
@@ -1154,7 +1156,6 @@ struct drm_info_node {
 	const struct drm_info_list *info_ent;
 	struct dentry *dent;
 };
-#endif
 
 /**
  * DRM minor structure. This structure represents a drm minor number.
@@ -1264,7 +1265,7 @@ struct drm_device {
 	/*@{ */
 	bool irq_enabled;		/**< True if irq handler is enabled */
 #ifdef __NetBSD__
-	struct drm_bus_irq_cookie *irq;
+	struct drm_bus_irq_cookie *irq_cookie;
 #endif
 	__volatile__ long context_flag;	/**< Context swapping flag */
 	int last_context;		/**< Last current context */
@@ -1311,10 +1312,7 @@ struct drm_device {
 #ifdef __NetBSD__
 	bus_space_tag_t bst;
 	struct drm_bus_map *bus_maps;
-	size_t bus_nmaps;
-	/* XXX What does this have to do with AGP?  */
-	struct drm_bus_map *agp_maps;
-	size_t agp_nmaps;
+	unsigned bus_nmaps;
 	bus_dma_tag_t bus_dmat;
 	bus_dma_tag_t dmat;
 	bool dmat_subregion_p;
@@ -1396,32 +1394,23 @@ static inline bool drm_is_primary_client(const struct drm_file *file_priv)
 /** \name Internal function definitions */
 /*@{*/
 
-#ifndef __NetBSD__		/* XXX temporary measure 20130212 */
-
 				/* Driver support (drm_drv.h) */
+#ifndef __NetBSD__
 extern long drm_ioctl(struct file *filp,
 		      unsigned int cmd, unsigned long arg);
 extern long drm_compat_ioctl(struct file *filp,
 			     unsigned int cmd, unsigned long arg);
-extern int drm_lastclose(struct drm_device *dev);
-extern bool drm_ioctl_flags(unsigned int nr, unsigned int *flags);
 #endif
-
-#ifdef __NetBSD__
-extern int drm_config_found(device_t, /* XXX const */ struct drm_driver *,
-    unsigned long, struct drm_device *);
+extern int drm_lastclose(struct drm_device *dev);
+#ifndef __NetBSD__
+extern bool drm_ioctl_flags(unsigned int nr, unsigned int *flags);
 #endif
 
 				/* Device support (drm_fops.h) */
 extern struct mutex drm_global_mutex;
 #ifdef __NetBSD__
 extern int drm_open_file(struct drm_file *, void *, struct drm_minor *);
-extern int drm_close_file(struct drm_file *);
-#if 0				/* XXX drm event poll */
-extern int drm_dequeue_event(struct drm_file *, size_t,
-    struct drm_pending_event **);
-#endif
-extern void drm_lastclose(struct drm_device *);
+extern void drm_close_file(struct drm_file *);
 #else
 extern int drm_open(struct inode *inode, struct file *filp);
 extern int drm_stub_open(struct inode *inode, struct file *filp);
@@ -1505,13 +1494,13 @@ extern int drm_authmagic(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 extern int drm_remove_magic(struct drm_master *master, drm_magic_t magic);
 
+/* Cache management (drm_cache.c) */
+void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 #ifdef __NetBSD__		/* XXX drm clflush */
 void drm_clflush_pglist(struct pglist *);
 void drm_clflush_page(struct page *);
 void drm_clflush_virt_range(const void *, size_t);
 #else
-/* Cache management (drm_cache.c) */
-void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 void drm_clflush_sg(struct sg_table *st);
 void drm_clflush_virt_range(char *addr, unsigned long length);
 #endif
@@ -1646,6 +1635,9 @@ extern unsigned int drm_timestamp_monotonic;
 extern struct class *drm_class;
 extern struct dentry *drm_debugfs_root;
 
+#ifdef __NetBSD__
+extern spinlock_t drm_minor_lock;
+#endif
 extern struct idr drm_minors_idr;
 
 extern struct drm_local_map *drm_getsarea(struct drm_device *dev);
@@ -1754,8 +1746,9 @@ extern drm_dma_handle_t *drm_pci_alloc(struct drm_device *dev, size_t size,
 extern void __drm_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
 extern void drm_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
 #ifdef __NetBSD__
-extern void drm_pci_attach(device_t, const struct pci_attach_args *,
-    struct pci_dev *, struct drm_device *);
+extern int drm_pci_attach(device_t, const struct pci_attach_args *,
+    struct pci_dev *, struct drm_driver *, unsigned long,
+    struct drm_device **);
 extern int drm_pci_detach(struct drm_device *, int);
 #endif
 
@@ -1809,13 +1802,11 @@ drm_gem_object_unreference(struct drm_gem_object *obj)
 static inline void
 drm_gem_object_unreference_unlocked(struct drm_gem_object *obj)
 {
-	if (obj && !atomic_add_unless(&obj->refcount.refcount, -1, 1)) {
-		struct drm_device *dev = obj->dev;
-
-		mutex_lock(&dev->struct_mutex);
-		if (likely(atomic_dec_and_test(&obj->refcount.refcount)))
-			drm_gem_object_free(&obj->refcount);
-		mutex_unlock(&dev->struct_mutex);
+	if (obj != NULL) {
+		struct drm_device *const dev = obj->dev;
+		if (kref_put_mutex(&obj->refcount, drm_gem_object_free,
+			&dev->struct_mutex))
+			mutex_unlock(&dev->struct_mutex);
 	}
 }
 
@@ -1953,9 +1944,6 @@ DRM_IS_BUS_SPACE(struct drm_local_map *map)
 		return false;
 #endif
 		panic("I don't know how to access drm consistent memory!");
-
-	case _DRM_GEM:
-		panic("I don't know how to access drm gem memory!");
 
 	default:
 		panic("I don't know what kind of memory you mean!");

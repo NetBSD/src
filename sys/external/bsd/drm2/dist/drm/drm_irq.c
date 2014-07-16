@@ -49,6 +49,7 @@
 #include <linux/sched.h>
 
 #include <asm/bug.h>
+#include <asm/param.h>
 
 #ifdef __NetBSD__		/* XXX hurk -- selnotify &c. */
 #include <sys/poll.h>
