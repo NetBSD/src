@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.113 2014/07/15 11:43:54 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.114 2014/07/16 20:09:00 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.113 2014/07/15 11:43:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.114 2014/07/16 20:09:00 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -492,6 +492,14 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		secsize = DEV_BSIZE;
 		psize = 0;
 		error = 0;
+	}
+	if (secsize < DEV_BSIZE) {
+#ifdef DIAGNOSTIC /* XXX: to be converted to DPRINTF */
+		printf("%s(): Invalid block secsize (%d < DEV_BSIZE)\n", __func__,
+		    secsize);
+#endif
+		error = EINVAL;
+		goto error_exit;
 	}
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
