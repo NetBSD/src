@@ -40,6 +40,7 @@
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <asm/bug.h>
+#include <asm/io.h>
 #include <asm/shmparam.h>
 #include <drm/drmP.h>
 
@@ -282,7 +283,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 #ifdef __NetBSD__
 		if (map->offset < dev->agp->base ||
 		    map->offset > dev->agp->base +
-		    dev->agp->agp_info.ai_aperture_size - 1) {
+		    dev->agp->agp_info.aki_info.ai_aperture_size - 1) {
 			map->offset += dev->agp->base;
 		}
 #else

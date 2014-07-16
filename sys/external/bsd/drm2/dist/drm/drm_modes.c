@@ -35,8 +35,12 @@
 #include <linux/export.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
+#ifdef CONFIG_VIDEOMODE_HELPERS
+#ifdef CONFIG_OF
 #include <video/of_videomode.h>
+#endif
 #include <video/videomode.h>
+#endif
 #include <drm/drm_modes.h>
 
 #include "drm_crtc_internal.h"

@@ -33,8 +33,28 @@
 #include "intel_dsi.h"
 #include "intel_dsi_cmd.h"
 
+#ifdef __NetBSD__
+static bool
+intel_dsi_dummy_init(struct intel_dsi_device *dev __unused)
+{
+
+	return false;
+}
+
+static const struct intel_dsi_dev_ops intel_dsi_dummy = {
+	.init = &intel_dsi_dummy_init,
+};
+#endif
+
 /* the sub-encoders aka panel drivers */
 static const struct intel_dsi_device intel_dsi_devices[] = {
+#ifdef __NetBSD__
+	{
+		.panel_id = 0,
+		.name = "dummy",
+		.dev_ops = &intel_dsi_dummy,
+	},
+#endif
 };
 
 static void band_gap_reset(struct drm_i915_private *dev_priv)
