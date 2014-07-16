@@ -1,4 +1,4 @@
-/*	$NetBSD: page.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: page.h,v 1.2 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,6 +48,12 @@ static inline bus_addr_t
 page_to_phys(struct page *page)
 {
 	return VM_PAGE_TO_PHYS(&page->p_vmp);
+}
+
+static inline unsigned long
+page_to_pfn(struct page *page)
+{
+	return (page_to_phys(page) >> PAGE_SHIFT);
 }
 
 #endif	/* _ASM_PAGE_H_ */

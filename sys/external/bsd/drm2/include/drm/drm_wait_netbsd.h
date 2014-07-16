@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 typedef kcondvar_t drm_waitqueue_t;
 
 #define	DRM_HZ	hz		/* XXX Hurk...  */
+
+#define	DRM_UDELAY	DELAY
 
 static inline void
 DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)

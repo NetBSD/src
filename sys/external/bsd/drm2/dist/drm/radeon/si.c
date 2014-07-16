@@ -1570,7 +1570,11 @@ static int si_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = SI_RLC_UCODE_SIZE * 4;
 		mc_req_size = SI_MC_UCODE_SIZE * 4;
 		mc2_req_size = TAHITI_MC_UCODE_SIZE * 4;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(TAHITI_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(TAHITI_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_PITCAIRN:
 		chip_name = "PITCAIRN";
@@ -1581,7 +1585,11 @@ static int si_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = SI_RLC_UCODE_SIZE * 4;
 		mc_req_size = SI_MC_UCODE_SIZE * 4;
 		mc2_req_size = PITCAIRN_MC_UCODE_SIZE * 4;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(PITCAIRN_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(PITCAIRN_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_VERDE:
 		chip_name = "VERDE";
@@ -1592,7 +1600,11 @@ static int si_init_microcode(struct radeon_device *rdev)
 		rlc_req_size = SI_RLC_UCODE_SIZE * 4;
 		mc_req_size = SI_MC_UCODE_SIZE * 4;
 		mc2_req_size = VERDE_MC_UCODE_SIZE * 4;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(VERDE_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(VERDE_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_OLAND:
 		chip_name = "OLAND";
@@ -1602,7 +1614,11 @@ static int si_init_microcode(struct radeon_device *rdev)
 		ce_req_size = SI_CE_UCODE_SIZE * 4;
 		rlc_req_size = SI_RLC_UCODE_SIZE * 4;
 		mc_req_size = mc2_req_size = OLAND_MC_UCODE_SIZE * 4;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(OLAND_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(OLAND_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_HAINAN:
 		chip_name = "HAINAN";
@@ -1612,7 +1628,11 @@ static int si_init_microcode(struct radeon_device *rdev)
 		ce_req_size = SI_CE_UCODE_SIZE * 4;
 		rlc_req_size = SI_RLC_UCODE_SIZE * 4;
 		mc_req_size = mc2_req_size = OLAND_MC_UCODE_SIZE * 4;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(HAINAN_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(HAINAN_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	default: BUG();
 	}
@@ -2896,7 +2916,7 @@ static void si_setup_rb(struct radeon_device *rdev,
 static void si_gpu_init(struct radeon_device *rdev)
 {
 	u32 gb_addr_config = 0;
-	u32 mc_shared_chmap, mc_arb_ramcfg;
+	u32 mc_shared_chmap __unused, mc_arb_ramcfg;
 	u32 sx_debug_1;
 	u32 hdp_host_path_cntl;
 	u32 tmp;
@@ -4544,7 +4564,7 @@ static void si_vm_decode_fault(struct radeon_device *rdev,
 	u32 mc_id = (status & MEMORY_CLIENT_ID_MASK) >> MEMORY_CLIENT_ID_SHIFT;
 	u32 vmid = (status & FAULT_VMID_MASK) >> FAULT_VMID_SHIFT;
 	u32 protections = (status & PROTECTIONS_MASK) >> PROTECTIONS_SHIFT;
-	char *block;
+	const char *block;
 
 	if (rdev->family == CHIP_TAHITI) {
 		switch (mc_id) {
@@ -6147,8 +6167,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.evergreen.disp_int & LB_D1_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[0]) {
 						drm_handle_vblank(rdev->ddev, 0);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[0]))
 						radeon_crtc_handle_flip(rdev, 0);
@@ -6173,8 +6200,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.evergreen.disp_int_cont & LB_D2_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[1]) {
 						drm_handle_vblank(rdev->ddev, 1);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[1]))
 						radeon_crtc_handle_flip(rdev, 1);
@@ -6199,8 +6233,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.evergreen.disp_int_cont2 & LB_D3_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[2]) {
 						drm_handle_vblank(rdev->ddev, 2);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[2]))
 						radeon_crtc_handle_flip(rdev, 2);
@@ -6225,8 +6266,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.evergreen.disp_int_cont3 & LB_D4_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[3]) {
 						drm_handle_vblank(rdev->ddev, 3);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[3]))
 						radeon_crtc_handle_flip(rdev, 3);
@@ -6251,8 +6299,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.evergreen.disp_int_cont4 & LB_D5_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[4]) {
 						drm_handle_vblank(rdev->ddev, 4);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[4]))
 						radeon_crtc_handle_flip(rdev, 4);
@@ -6277,8 +6332,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.evergreen.disp_int_cont5 & LB_D6_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[5]) {
 						drm_handle_vblank(rdev->ddev, 5);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[5]))
 						radeon_crtc_handle_flip(rdev, 5);
@@ -6942,6 +7004,7 @@ int si_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
 
 static void si_pcie_gen3_enable(struct radeon_device *rdev)
 {
+#ifndef __NetBSD__		/* XXX radeon pcie */
 	struct pci_dev *root = rdev->pdev->bus->self;
 	int bridge_pos, gpu_pos;
 	u32 speed_cntl, mask, current_data_rate;
@@ -7095,6 +7158,7 @@ static void si_pcie_gen3_enable(struct radeon_device *rdev)
 			break;
 		udelay(1);
 	}
+#endif
 }
 
 static void si_program_aspm(struct radeon_device *rdev)
@@ -7226,13 +7290,17 @@ static void si_program_aspm(struct radeon_device *rdev)
 				WREG32_PIF_PHY1(PB1_PIF_CNTL, data);
 
 			if (!disable_clkreq) {
+#ifndef __NetBSD__		/* XXX radeon pcie */
 				struct pci_dev *root = rdev->pdev->bus->self;
 				u32 lnkcap;
+#endif
 
 				clk_req_support = false;
+#ifndef __NetBSD__		/* XXX radeon pcie */
 				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
 				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
+#endif
 			} else {
 				clk_req_support = false;
 			}
