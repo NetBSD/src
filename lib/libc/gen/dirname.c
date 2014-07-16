@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.12 2014/07/14 20:44:45 christos Exp $	*/
+/*	$NetBSD: dirname.c,v 1.13 2014/07/16 10:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.12 2014/07/14 20:44:45 christos Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.13 2014/07/16 10:52:26 christos Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -45,7 +45,7 @@ __weak_alias(dirname,_dirname)
 #endif
 
 static size_t
-dirname_r(const char *path, char *buf, size_t buflen)
+xdirname_r(const char *path, char *buf, size_t buflen)
 {
 	const char *endp;
 	size_t len;
@@ -94,7 +94,7 @@ char *
 dirname(char *path)
 {
 	static char result[PATH_MAX];
-	(void)dirname_r(path, result, sizeof(result));
+	(void)xdirname_r(path, result, sizeof(result));
 	return result;
 }
 #endif
