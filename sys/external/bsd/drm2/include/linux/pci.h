@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.5 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.6 2014/07/16 23:24:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -439,16 +439,13 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 	if (pci_mapreg_map(&pdev->pd_pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_ROM,
 		(BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR),
 		&pdev->pd_rom_bst, &pdev->pd_rom_bsh, NULL, &pdev->pd_rom_size)
-	    != 0) {
-		aprint_error_dev(pdev->pd_dev, "unable to map ROM\n");
+	    != 0)
 		return NULL;
-	}
 	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
 
 	/* XXX This type is obviously wrong in general...  */
 	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
 		PCI_ROM_CODE_TYPE_X86, &bsh, &size)) {
-		aprint_error_dev(pdev->pd_dev, "unable to find ROM\n");
 		pci_unmap_rom(pdev, NULL);
 		return NULL;
 	}
