@@ -58,8 +58,14 @@ int radeon_driver_unload_kms(struct drm_device *dev)
 	if (rdev == NULL)
 		return 0;
 
+#ifdef __NetBSD__
+	/* XXX ugh */
+	if (rdev->rmmio_size)
+		goto done_free;
+#else
 	if (rdev->rmmio == NULL)
 		goto done_free;
+#endif
 
 	pm_runtime_get_sync(dev->dev);
 
@@ -537,7 +543,9 @@ static int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file
  */
 void radeon_driver_lastclose_kms(struct drm_device *dev)
 {
+#ifndef __NetBSD__		/* XXX radeon vga */
 	vga_switcheroo_process_delayed_switch();
+#endif
 }
 
 /**
@@ -564,7 +572,6 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	if (rdev->family >= CHIP_CAYMAN) {
 		struct radeon_fpriv *fpriv;
 		struct radeon_bo_va *bo_va;
-		int r;
 
 		fpriv = kzalloc(sizeof(*fpriv), GFP_KERNEL);
 		if (unlikely(!fpriv)) {

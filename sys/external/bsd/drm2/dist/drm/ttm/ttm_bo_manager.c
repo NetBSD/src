@@ -35,6 +35,7 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>
+#include <linux/export.h>
 
 /**
  * Currently we use a spinlock for the lock, but a mutex *may* be

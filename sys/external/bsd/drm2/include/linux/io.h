@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_IO_H_
 #define _LINUX_IO_H_
+
+#include <asm/io.h>
 
 #define	arch_phys_wc_add	linux_arch_phys_wc_add
 #define	arch_phys_wc_del	linux_arch_phys_wc_del
