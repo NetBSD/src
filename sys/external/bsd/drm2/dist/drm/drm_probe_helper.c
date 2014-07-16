@@ -29,6 +29,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <asm/param.h>
 #include <linux/export.h>
 #include <linux/moduleparam.h>
 

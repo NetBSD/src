@@ -26,6 +26,7 @@
  * Derived from Xorg ddx, xf86-video-intel, src/i830_video.c
  */
 #include <linux/kernel.h>
+#include <asm/io.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -231,7 +232,7 @@ static void intel_overlay_unmap_regs(struct intel_overlay *overlay,
 	struct drm_i915_private *dev_priv = overlay->dev->dev_private;
 
 	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
-		io_mapping_unmap(dev_priv->mm.gtt_mapping, regs);
+		io_mapping_unmap(dev_priv->gtt.mappable, regs);
 #else
 	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
 		io_mapping_unmap(regs);
@@ -1467,8 +1468,15 @@ intel_overlay_map_regs_atomic(struct intel_overlay *overlay)
 static void intel_overlay_unmap_regs_atomic(struct intel_overlay *overlay,
 					struct overlay_registers __iomem *regs)
 {
+#ifdef __NetBSD__		/* XXX io mapping */
+	struct drm_i915_private *dev_priv = overlay->dev->dev_private;
+
+	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
+		io_mapping_unmap_atomic(dev_priv->gtt.mappable, regs);
+#else
 	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
 		io_mapping_unmap_atomic(regs);
+#endif
 }
 
 

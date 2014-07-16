@@ -820,8 +820,6 @@ int drm_fb_helper_check_var(struct fb_var_screeninfo *var,
 EXPORT_SYMBOL(drm_fb_helper_check_var);
 #endif
 
-static int	drm_fb_helper_set_config(struct drm_fb_helper *);
-
 #ifndef __NetBSD__		/* XXX fb info */
 /**
  * drm_fb_helper_set_par - implementation for ->fb_set_par
@@ -846,7 +844,7 @@ int drm_fb_helper_set_par(struct fb_info *info)
 EXPORT_SYMBOL(drm_fb_helper_set_par);
 #endif
 
-static int
+int
 drm_fb_helper_set_config(struct drm_fb_helper *fb_helper)
 {
 	struct drm_device *dev = fb_helper->dev;
@@ -1014,10 +1012,10 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	info->var.pixclock = 0;
 	if (register_framebuffer(info) < 0)
 		return -EINVAL;
-#endif
 
 	dev_info(fb_helper->dev->dev, "fb%d: %s frame buffer device\n",
 			info->node, info->fix.id);
+#endif
 
 	/* Switch back to kernel console on panic */
 	/* multi card linked list maybe */
@@ -1656,7 +1654,11 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 	drm_modeset_lock_all(dev);
 	drm_setup_crtcs(fb_helper);
 	drm_modeset_unlock_all(dev);
+#ifdef __NetBSD__
+	drm_fb_helper_set_config(fb_helper);
+#else
 	drm_fb_helper_set_par(fb_helper->fbdev);
+#endif
 
 	return 0;
 }

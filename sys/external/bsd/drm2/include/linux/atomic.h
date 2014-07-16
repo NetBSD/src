@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.4 2014/06/03 14:59:30 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.5 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -138,6 +138,19 @@ static inline int
 atomic_inc_not_zero(atomic_t *atomic)
 {
 	return atomic_add_unless(atomic, 1, 0);
+}
+
+static inline int
+atomic_xchg(atomic_t *atomic, int new)
+{
+	return (int)atomic_swap_uint(&atomic->a_u.au_uint, (unsigned)new);
+}
+
+static inline int
+atomic_cmpxchg(atomic_t *atomic, int old, int new)
+{
+	return (int)atomic_cas_uint(&atomic->a_u.au_uint, (unsigned)old,
+	    (unsigned)new);
 }
 
 static inline void
