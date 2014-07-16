@@ -2158,6 +2158,10 @@ extern int i915_resume(struct drm_device *dev);
 extern int i915_master_create(struct drm_device *dev, struct drm_master *master);
 extern void i915_master_destroy(struct drm_device *dev, struct drm_master *master);
 
+extern int i915_drm_freeze(struct drm_device *dev);
+extern int i915_drm_thaw_early(struct drm_device *dev);
+extern int i915_drm_thaw(struct drm_device *dev);
+
 /* i915_params.c */
 struct i915_params {
 	int modeset;
@@ -2230,6 +2234,7 @@ extern void intel_uncore_early_sanitize(struct drm_device *dev);
 extern void intel_uncore_init(struct drm_device *dev);
 extern void intel_uncore_check_errors(struct drm_device *dev);
 extern void intel_uncore_fini(struct drm_device *dev);
+extern void intel_uncore_destroy(struct drm_device *dev);
 
 void
 i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,

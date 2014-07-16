@@ -868,14 +868,16 @@ void intel_uncore_init(struct drm_device *dev)
 
 void intel_uncore_fini(struct drm_device *dev)
 {
-#ifdef __NetBSD__
-	struct drm_i915_private *const dev_priv = dev->dev_private;
-#endif
-
 	/* Paranoia: make sure we have disabled everything before we exit. */
 	intel_uncore_sanitize(dev);
 	intel_uncore_forcewake_reset(dev, false);
+}
+
+void intel_uncore_destroy(struct drm_device *dev)
+{
 #ifdef __NetBSD__
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
 	teardown_timer(&dev_priv->uncore.force_wake_timer);
 #endif
 }
