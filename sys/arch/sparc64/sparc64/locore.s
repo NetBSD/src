@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.363 2014/07/13 22:32:49 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.364 2014/07/16 19:53:18 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -101,7 +101,7 @@
 #include "ksyms.h"
 
 	/* Misc. macros */
-	
+
 	.macro	GET_MAXCWP reg
 #ifdef SUN4V
 	sethi	%hi(cputyp), \reg
@@ -120,7 +120,27 @@
 3:
 	.endm
 
-		
+
+	.macro	SET_MMU_CONTEXTID ctxid,ctx,scratch
+#ifdef SUN4V
+	sethi	%hi(cputyp), \scratch
+	ld	[\scratch + %lo(cputyp)], \scratch
+	cmp	\scratch, CPU_SUN4V
+	bne,pt	%icc, 2f
+	 nop
+	/* sun4v */
+	stxa	\ctxid, [\ctx] ASI_MMU;
+	ba	3f
+	 nop
+2:		
+#endif	
+	/* sun4u */
+	stxa	\ctxid, [\ctx] ASI_DMMU;
+3:
+	
+	.endm
+
+
 #ifdef SUN4V
 	/* Misc. sun4v macros */
 	
@@ -1362,13 +1382,13 @@ intr_setup_msg:
 	\
 	wrpr	%g0, %g5, %otherwin; \
 	\
-	sethi	%hi(KERNBASE), %g5; \
 	mov	CTX_PRIMARY, %g7; \
 	\
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 	\
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	SET_MMU_CONTEXTID %g0, %g7, %g5;			/* Switch MMU to kernel primary context */ \
 	\
+	sethi	%hi(KERNBASE), %g5; \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 	
@@ -1463,9 +1483,9 @@ intr_setup_msg:
 	wrpr	%g0, 0, %canrestore; \
 	mov	CTX_PRIMARY, %g7; \
 	wrpr	%g0, %g5, %otherwin; \
-	sethi	%hi(KERNBASE), %g5; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	SET_MMU_CONTEXTID %g0, %g7, %g5;			/* Switch MMU to kernel primary context */ \
+	sethi	%hi(KERNBASE), %g5; \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 #endif /* _LP64 */
