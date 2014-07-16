@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.6 2014/07/16 20:56:25 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.7 2014/07/16 20:59:57 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -12,6 +12,7 @@ define	drmkms: drmkms_linux, drmkms_i2c
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
+makeoptions	drmkms_ttm	CPPFLAGS+="-I$S/external/bsd/drm2/include/drm"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
@@ -64,3 +65,28 @@ file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
 
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
+
+# TTM, the texture and tiling manager.
+
+define	drmkms_ttm: drmkms
+
+file	external/bsd/drm2/ttm/ttm_agp_backend.c			drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_memory.c		drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_tt.c			drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_bo.c			drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_bo_util.c		drmkms_ttm
+file	external/bsd/drm2/ttm/ttm_bo_vm.c			drmkms_ttm
+# Linux module goo.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_module.c		drmkms_ttm
+# Used only by vmwgfx.  Needs porting for rcu -> pserialize.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_object.c		drmkms_ttm
+# Used only by vmwgfx.  Needs porting.  Does silly things like SIGKILL.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_lock.c		drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_execbuf_util.c	drmkms_ttm
+# Replaced locally by ttm_bus_dma.c.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_page_alloc.c		drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_bo_manager.c		drmkms_ttm
+# Replaced locally by ttm_bus_dma.c.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_page_alloc_dma.c	drmkms_ttm
+
+file	external/bsd/drm2/ttm/ttm_bus_dma.c			drmkms_ttm

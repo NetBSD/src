@@ -165,7 +165,7 @@ static inline uint64_t radeon_sa_bo_gpu_addr(struct radeon_sa_bo *sa_bo)
 
 static inline void * radeon_sa_bo_cpu_addr(struct radeon_sa_bo *sa_bo)
 {
-	return sa_bo->manager->cpu_ptr + sa_bo->soffset;
+	return (char *)sa_bo->manager->cpu_ptr + sa_bo->soffset;
 }
 
 extern int radeon_sa_bo_manager_init(struct radeon_device *rdev,

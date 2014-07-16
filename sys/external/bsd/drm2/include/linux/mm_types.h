@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_types.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: mm_types.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,5 +39,11 @@ struct page {
 };
 
 typedef unsigned pgprot_t;
+
+static inline unsigned
+pgprot_val(pgprot_t pgprot)
+{
+	return pgprot;
+}
 
 #endif  /* _LINUX_MM_TYPES_H_ */

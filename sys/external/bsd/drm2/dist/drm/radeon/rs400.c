@@ -225,7 +225,15 @@ int rs400_gart_set_page(struct radeon_device *rdev, int i, uint64_t addr)
 		((upper_32_bits(addr) & 0xff) << 4) |
 		RS400_PTE_WRITEABLE | RS400_PTE_READABLE;
 	entry = cpu_to_le32(entry);
+#ifdef __NetBSD__		/* XXX Batch syncs for batch GART updates.  */
+	bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map, i*4, 4,
+	    BUS_DMASYNC_PREWRITE);
+#endif
 	gtt[i] = entry;
+#ifdef __NetBSD__		/* XXX Batch syncs for batch GART updates.  */
+	bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map, i*4, 4,
+	    BUS_DMASYNC_POSTWRITE);
+#endif
 	return 0;
 }
 

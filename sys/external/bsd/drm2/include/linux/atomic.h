@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.5 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.6 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -151,6 +151,42 @@ atomic_cmpxchg(atomic_t *atomic, int old, int new)
 {
 	return (int)atomic_cas_uint(&atomic->a_u.au_uint, (unsigned)old,
 	    (unsigned)new);
+}
+
+struct atomic64 {
+	volatile uint64_t	a_v;
+};
+
+typedef struct atomic64 atomic64_t;
+
+static inline uint64_t
+atomic64_read(const struct atomic64 *a)
+{
+	return a->a_v;
+}
+
+static inline void
+atomic64_set(struct atomic64 *a, uint64_t v)
+{
+	a->a_v = v;
+}
+
+static inline void
+atomic64_add(long long d, struct atomic64 *a)
+{
+	atomic_add_64(&a->a_v, d);
+}
+
+static inline void
+atomic64_sub(long long d, struct atomic64 *a)
+{
+	atomic_add_64(&a->a_v, -d);
+}
+
+static inline uint64_t
+atomic64_xchg(struct atomic64 *a, uint64_t v)
+{
+	return atomic_swap_64(&a->a_v, v);
 }
 
 static inline void

@@ -638,9 +638,22 @@ static void rs600_gart_fini(struct radeon_device *rdev)
 #define R600_PTE_READABLE  (1 << 5)
 #define R600_PTE_WRITEABLE (1 << 6)
 
+#ifdef __NetBSD__
+#  define	__iomem	volatile
+#  define	writeq	fake_writeq
+
+static inline void
+fake_writeq(uint64_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint64_t __iomem *)ptr = v;
+}
+#endif
+
 int rs600_gart_set_page(struct radeon_device *rdev, int i, uint64_t addr)
 {
-	void __iomem *ptr = (void *)rdev->gart.ptr;
+	void __iomem *ptr = rdev->gart.ptr;
 
 	if (i < 0 || i > rdev->gart.num_gpu_pages) {
 		return -EINVAL;
@@ -648,9 +661,14 @@ int rs600_gart_set_page(struct radeon_device *rdev, int i, uint64_t addr)
 	addr = addr & 0xFFFFFFFFFFFFF000ULL;
 	addr |= R600_PTE_VALID | R600_PTE_SYSTEM | R600_PTE_SNOOPED;
 	addr |= R600_PTE_READABLE | R600_PTE_WRITEABLE;
-	writeq(addr, ptr + (i * 8));
+	writeq(addr, (uint8_t __iomem *)ptr + (i * 8));
 	return 0;
 }
+
+#ifdef __NetBSD__
+#  undef	writeq
+#  undef	__iomem
+#endif
 
 int rs600_irq_set(struct radeon_device *rdev)
 {
@@ -783,8 +801,15 @@ int rs600_irq_process(struct radeon_device *rdev)
 		if (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
 			if (rdev->irq.crtc_vblank_int[0]) {
 				drm_handle_vblank(rdev->ddev, 0);
+#ifdef __NetBSD__
+				spin_lock(&rdev->irq.vblank_lock);
+				rdev->pm.vblank_sync = true;
+				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+				spin_unlock(&rdev->irq.vblank_lock);
+#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
+#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[0]))
 				radeon_crtc_handle_flip(rdev, 0);
@@ -792,8 +817,15 @@ int rs600_irq_process(struct radeon_device *rdev)
 		if (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
 			if (rdev->irq.crtc_vblank_int[1]) {
 				drm_handle_vblank(rdev->ddev, 1);
+#ifdef __NetBSD__
+				spin_lock(&rdev->irq.vblank_lock);
+				rdev->pm.vblank_sync = true;
+				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+				spin_unlock(&rdev->irq.vblank_lock);
+#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
+#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[1]))
 				radeon_crtc_handle_flip(rdev, 1);

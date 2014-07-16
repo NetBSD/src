@@ -1924,6 +1924,7 @@ void trinity_dpm_print_power_state(struct radeon_device *rdev,
 	r600_dpm_print_ps_status(rdev, rps);
 }
 
+#ifdef CONFIG_DEBUG_FS
 void trinity_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 							 struct seq_file *m)
 {
@@ -1945,6 +1946,7 @@ void trinity_dpm_debugfs_print_current_performance_level(struct radeon_device *r
 			   trinity_convert_voltage_index_to_value(rdev, pl->vddc_index));
 	}
 }
+#endif
 
 void trinity_dpm_fini(struct radeon_device *rdev)
 {

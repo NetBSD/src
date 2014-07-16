@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,12 @@ hweight16(uint16_t n)
 	return popcount32(n);
 }
 
+static inline unsigned int
+hweight32(uint16_t n)
+{
+	return popcount32(n);
+}
+
 /*
  * XXX Don't define BITS_PER_LONG as sizeof(unsigned long)*CHAR_BIT
  * because that won't work in preprocessor conditionals, where it often
@@ -88,6 +94,22 @@ __change_bit(unsigned int n, volatile unsigned long *p)
 	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
 
 	p[n / units] ^= (1UL << (n % units));
+}
+
+static inline unsigned long
+find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
+{
+	const size_t bpl = (CHAR_BIT * sizeof(*ptr));
+	const unsigned long *p;
+	unsigned long result = 0;
+
+	for (p = ptr; bpl < nbits; nbits -= bpl, p++, result += bpl) {
+		if (~*p)
+			break;
+	}
+
+	result += ffs(~*p | (~0UL << MIN(nbits, bpl)));
+	return result;
 }
 
 #endif  /* _LINUX_BITOPS_H_ */

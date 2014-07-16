@@ -1804,6 +1804,7 @@ void sumo_dpm_print_power_state(struct radeon_device *rdev,
 	r600_dpm_print_ps_status(rdev, rps);
 }
 
+#ifdef CONFIG_DEBUG_FS
 void sumo_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						      struct seq_file *m)
 {
@@ -1831,6 +1832,7 @@ void sumo_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev
 			   sumo_convert_voltage_index_to_value(rdev, pl->vddc_index));
 	}
 }
+#endif
 
 void sumo_dpm_fini(struct radeon_device *rdev)
 {
