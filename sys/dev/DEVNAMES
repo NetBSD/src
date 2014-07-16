@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.290 2014/07/16 18:22:23 bouyer Exp $
+#	$NetBSD: DEVNAMES,v 1.291 2014/07/16 18:32:21 bouyer Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1327,6 +1327,8 @@ tea5757			MI
 tfb			MI
 tga			MI
 ti			MI
+tiotg			arm
+tifb			arm
 timer			news68k
 timer			sparc
 timer			sparc64
