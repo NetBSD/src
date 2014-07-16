@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1093 2014/06/12 21:08:31 christos Exp $
+#	$NetBSD: files,v 1.1094 2014/07/16 18:22:23 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1227,6 +1227,10 @@ file	dev/usb/ehci.c			ehci			needs-flag
 #
 device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
+
+# Mentor graphics OTG IP
+device	motg: usbus, usbroothub, usb_dma
+file	dev/usb/motg.c			motg			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
