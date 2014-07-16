@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.195 2014/07/16 15:33:41 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.196 2014/07/16 16:52:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.195 2014/07/16 15:33:41 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.196 2014/07/16 16:52:59 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.195 2014/07/16 15:33:41 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.196 2014/07/16 16:52:59 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1979,11 +1979,8 @@ ParseMaybeSubMake(const char *cmd)
 	if ((ptr = strstr(cmd, vals[i].name)) == NULL)
 	    continue;
 	if ((ptr == cmd || !isalnum((unsigned char)ptr[-1]))
-	    && !isalnum((unsigned char)ptr[vals[i].len])) {
-	printf("good [%c] [%c] [%s]\n", ptr[-1], ptr[vals[i].len], cmd);
+	    && !isalnum((unsigned char)ptr[vals[i].len]))
 	    return TRUE;
-	}
-	printf("bad [%c] [%c] [%s]\n", ptr[-1], ptr[vals[i].len], cmd);
     }
     return FALSE;
 }
@@ -2016,7 +2013,7 @@ ParseAddCmd(void *gnp, void *cmd)
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
 	(void)Lst_AtEnd(gn->commands, cmd);
-	if (ParseIsSubMake(cmd))
+	if (ParseMaybeSubMake(cmd))
 	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
     } else {
