@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.196 2014/07/16 16:52:59 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.197 2014/07/16 18:58:07 justin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.196 2014/07/16 16:52:59 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.197 2014/07/16 18:58:07 justin Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.196 2014/07/16 16:52:59 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.197 2014/07/16 18:58:07 justin Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1963,6 +1963,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 static Boolean
 ParseMaybeSubMake(const char *cmd)
 {
+    size_t i;
     static struct {
 	const char *name;
 	size_t len;
@@ -1974,7 +1975,7 @@ ParseMaybeSubMake(const char *cmd)
 	MKV("$(.MAKE)"),
 	MKV("make"),
     };
-    for (size_t i = 0; i < __arraycount(vals); i++) {
+    for (i = 0; i < __arraycount(vals); i++) {
 	char *ptr;
 	if ((ptr = strstr(cmd, vals[i].name)) == NULL)
 	    continue;
