@@ -427,7 +427,7 @@ bool i915_semaphore_is_enabled(struct drm_device *dev)
 	return true;
 }
 
-static int i915_drm_freeze(struct drm_device *dev)
+int i915_drm_freeze(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
@@ -563,7 +563,7 @@ static void intel_resume_hotplug(struct drm_device *dev)
 	drm_helper_hpd_irq_event(dev);
 }
 
-static int i915_drm_thaw_early(struct drm_device *dev)
+int i915_drm_thaw_early(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -644,15 +644,13 @@ static int __i915_drm_thaw(struct drm_device *dev, bool restore_gtt_mappings)
 	return error;
 }
 
-#ifndef __NetBSD__		/* XXX freeze/thaw */
-static int i915_drm_thaw(struct drm_device *dev)
+int i915_drm_thaw(struct drm_device *dev)
 {
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		i915_check_and_clear_faults(dev);
 
 	return __i915_drm_thaw(dev, true);
 }
-#endif
 
 static int i915_resume_early(struct drm_device *dev)
 {
