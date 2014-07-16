@@ -196,7 +196,6 @@ static void
 nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
-  nbsd_thread_deactivate ();
   unpush_target (ops);
   /* Ordinarily, gdb caches solib information, but this means that it
      won't call the new_obfile hook on a reattach. Clear the symbol file
@@ -204,6 +203,7 @@ nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
   clear_solib();
   symbol_file_clear(0);
   beneath->to_detach (beneath, args, from_tty);
+  nbsd_thread_deactivate ();
 }
 
 static int nsusp;
