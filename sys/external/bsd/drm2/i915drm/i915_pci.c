@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.11 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.12 2014/07/16 23:25:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.11 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.12 2014/07/16 23:25:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -93,6 +93,9 @@ static const struct intel_device_info *
 static int	i915drmkms_match(device_t, cfdata_t, void *);
 static void	i915drmkms_attach(device_t, device_t, void *);
 static int	i915drmkms_detach(device_t, int);
+
+static bool	i915drmkms_suspend(device_t, const pmf_qual_t *);
+static bool	i915drmkms_resume(device_t, const pmf_qual_t *);
 
 static void	intel_genfb_defer_set_config(struct drm_fb_helper *);
 static void	intel_genfb_set_config_work(struct work *, void *);
@@ -190,6 +193,10 @@ i915drmkms_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
+	if (!pmf_device_register(self, &i915drmkms_suspend,
+		&i915drmkms_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
+
 	SIMPLEQ_INIT(&sc->sc_genfb_work);
 
 	/* XXX errno Linux->NetBSD */
@@ -229,17 +236,56 @@ i915drmkms_detach(device_t self, int flags)
 		return error;
 
 	if (sc->sc_genfb_wq == NULL)
-		return 0;
+		goto out;
 	workqueue_destroy(sc->sc_genfb_wq);
 
 	if (sc->sc_drm_dev == NULL)
-		return 0;
+		goto out;
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_detach(sc->sc_drm_dev, flags);
 	if (error)
 		return error;
+	sc->sc_drm_dev = NULL;
 
+out:	pmf_device_deregister(self);
 	return 0;
+}
+
+static bool
+i915drmkms_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct i915drmkms_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
+
+	if (dev == NULL)
+		return true;
+
+	ret = i915_drm_freeze(dev);
+	if (ret)
+		return false;
+
+	return true;
+}
+
+static bool
+i915drmkms_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct i915drmkms_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
+
+	if (dev == NULL)
+		return true;
+
+	ret = i915_drm_thaw_early(dev);
+	if (ret)
+		return false;
+	ret = i915_drm_thaw(dev);
+	if (ret)
+		return false;
+
+	return true;
 }
 
 int

@@ -1851,6 +1851,7 @@ out_gtt:
 	dev_priv->gtt.base.cleanup(&dev_priv->gtt.base);
 out_regs:
 	intel_uncore_fini(dev);
+	intel_uncore_destroy(dev);
 	pci_iounmap(dev->pdev, dev_priv->regs);
 put_bridge:
 	pci_dev_put(dev_priv->bridge_dev);
@@ -1966,6 +1967,7 @@ int i915_driver_unload(struct drm_device *dev)
 	dev_priv->gtt.base.cleanup(&dev_priv->gtt.base);
 
 	intel_uncore_fini(dev);
+	intel_uncore_destroy(dev);
 	if (dev_priv->regs != NULL)
 		pci_iounmap(dev->pdev, dev_priv->regs);
 
