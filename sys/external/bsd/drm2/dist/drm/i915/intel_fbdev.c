@@ -35,6 +35,7 @@
 #include <linux/fb.h>
 #include <linux/init.h>
 #include <linux/vga_switcheroo.h>
+#include <linux/err.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -43,6 +44,7 @@
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 
+#ifndef __NetBSD__
 static struct fb_ops intelfb_ops = {
 	.owner = THIS_MODULE,
 	.fb_check_var = drm_fb_helper_check_var,
@@ -56,6 +58,7 @@ static struct fb_ops intelfb_ops = {
 	.fb_debug_enter = drm_fb_helper_debug_enter,
 	.fb_debug_leave = drm_fb_helper_debug_leave,
 };
+#endif
 
 static int intelfb_alloc(struct drm_fb_helper *helper,
 			 struct drm_fb_helper_surface_size *sizes)
@@ -64,7 +67,8 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 		container_of(helper, struct intel_fbdev, helper);
 	struct drm_framebuffer *fb;
 	struct drm_device *dev = helper->dev;
-	struct drm_mode_fb_cmd2 mode_cmd = {};
+	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
 	struct drm_i915_gem_object *obj;
 	int size, ret;
 
@@ -75,13 +79,22 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
 
+#ifdef __NetBSD__
+	mode_cmd.pitches[0] = round_up(mode_cmd.width *
+				    DIV_ROUND_UP(sizes->surface_bpp, 8), 64);
+#else
 	mode_cmd.pitches[0] = ALIGN(mode_cmd.width *
 				    DIV_ROUND_UP(sizes->surface_bpp, 8), 64);
+#endif
 	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
 							  sizes->surface_depth);
 
 	size = mode_cmd.pitches[0] * mode_cmd.height;
+#ifdef __NetBSD__
+	size = round_up(size, PAGE_SIZE);
+#else
 	size = ALIGN(size, PAGE_SIZE);
+#endif
 	obj = i915_gem_object_create_stolen(dev, size);
 	if (obj == NULL)
 		obj = i915_gem_alloc_object(dev, size);
@@ -124,7 +137,9 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	struct intel_framebuffer *intel_fb = ifbdev->fb;
 	struct drm_device *dev = helper->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 	struct drm_framebuffer *fb;
 	struct drm_i915_gem_object *obj;
 	int size, ret;
@@ -158,6 +173,32 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	obj = intel_fb->obj;
 	size = obj->base.size;
 
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	helper->fb_bst = dev->pdev->pd_pa.pa_memt;
+	ret = -bus_space_map(helper->fb_bst,
+	    (dev_priv->gtt.mappable_base + i915_gem_obj_ggtt_offset(obj)),
+	    size, (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE),
+	    &helper->fb_bsh);
+	if (ret) {
+		DRM_ERROR("unable to map framebuffer: %d\n", ret);
+		goto out_unpin;
+	}
+
+	ret = intel_genfb_attach(dev, helper, sizes);
+	if (ret) {
+		DRM_ERROR("unable to attach genfb: %d\n", ret);
+		bus_space_unmap(helper->fb_bst, helper->fb_bsh, size);
+		goto out_unpin;
+	}
+	helper->genfb_attached = true;
+	fb = &ifbdev->fb->base;
+	ifbdev->helper.fb = fb;
+
+	if (ifbdev->fb->obj->stolen && !prealloc)
+		bus_space_set_region_1(helper->fb_bst, helper->fb_bsh, 0, 0,
+		    size);
+#else
 	info = framebuffer_alloc(0, &dev->pdev->dev);
 	if (!info) {
 		ret = -ENOMEM;
@@ -214,6 +255,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	 */
 	if (ifbdev->fb->obj->stolen && !prealloc)
 		memset_io(info->screen_base, 0, info->screen_size);
+#endif
 
 	/* Use default scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
 
@@ -222,7 +264,9 @@ static int intelfb_create(struct drm_fb_helper *helper,
 		      i915_gem_obj_ggtt_offset(obj), obj);
 
 	mutex_unlock(&dev->struct_mutex);
+#ifndef __NetBSD__
 	vga_switcheroo_client_fb_set(dev->pdev, info);
+#endif
 	return 0;
 
 out_unpin:
@@ -458,6 +502,15 @@ static struct drm_fb_helper_funcs intel_fb_helper_funcs = {
 static void intel_fbdev_destroy(struct drm_device *dev,
 				struct intel_fbdev *ifbdev)
 {
+#ifdef __NetBSD__
+	if (ifbdev->helper.genfb_attached) {
+		/* XXX genfb doesn't give us a child device_t!  */
+		(void)config_detach_children(dev->dev, DETACH_FORCE);
+		bus_space_unmap(ifbdev->helper.fb_bst, ifbdev->helper.fb_bsh,
+		    ifbdev->fb->obj->base.size);
+		ifbdev->helper.genfb_attached = false;
+	}
+#else
 	if (ifbdev->helper.fbdev) {
 		struct fb_info *info = ifbdev->helper.fbdev;
 
@@ -468,6 +521,7 @@ static void intel_fbdev_destroy(struct drm_device *dev,
 
 		framebuffer_release(info);
 	}
+#endif
 
 	drm_fb_helper_fini(&ifbdev->helper);
 
@@ -552,7 +606,11 @@ static bool intel_fbdev_init_bios(struct drm_device *dev,
 		}
 
 		cur_size = intel_crtc->config.adjusted_mode.crtc_vdisplay;
+#ifdef __NetBSD__
+		cur_size = round_up(cur_size, plane_config->tiled ? (IS_GEN2(dev) ? 16 : 8) : 1);
+#else
 		cur_size = ALIGN(cur_size, plane_config->tiled ? (IS_GEN2(dev) ? 16 : 8) : 1);
+#endif
 		cur_size *= fb->base.pitches[0];
 		DRM_DEBUG_KMS("pipe %c area: %dx%d, bpp: %d, size: %d\n",
 			      pipe_name(intel_crtc->pipe),
@@ -656,6 +714,7 @@ void intel_fbdev_fini(struct drm_device *dev)
 	dev_priv->fbdev = NULL;
 }
 
+#ifndef __NetBSD__		/* XXX fb suspend */
 void intel_fbdev_set_suspend(struct drm_device *dev, int state)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -676,6 +735,7 @@ void intel_fbdev_set_suspend(struct drm_device *dev, int state)
 
 	fb_set_suspend(info, state);
 }
+#endif
 
 void intel_fbdev_output_poll_changed(struct drm_device *dev)
 {

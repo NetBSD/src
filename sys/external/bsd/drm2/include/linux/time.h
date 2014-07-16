@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,6 +54,12 @@ getrawmonotonic(struct timespec *ts)
 	getnanouptime(ts);
 }
 
+static inline void
+do_gettimeofday(struct timeval *tv)
+{
+	microtime(tv);
+}
+
 static inline bool
 timespec_valid(const struct timespec *ts)
 {
@@ -83,6 +89,24 @@ static inline int64_t
 timespec_to_ns(const struct timespec *ts)
 {
 	return (((int64_t)ts->tv_sec * 1000000000LL) + ts->tv_nsec);
+}
+
+static inline struct timeval
+ns_to_timeval(int64_t nsec)
+{
+	struct timespec ts;
+	struct timeval tv;
+
+	ts = ns_to_timespec(nsec);
+	TIMESPEC_TO_TIMEVAL(&tv, &ts);
+
+	return tv;
+}
+
+static inline int64_t
+timeval_to_ns(struct timeval *tv)
+{
+	return (((int64_t)tv->tv_sec * 1000000000UL) + (tv->tv_usec * 1000ul));
 }
 
 static inline struct timespec

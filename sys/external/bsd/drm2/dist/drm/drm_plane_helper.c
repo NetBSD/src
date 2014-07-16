@@ -24,8 +24,10 @@
  */
 
 #include <linux/list.h>
+#include <linux/export.h>
 #include <drm/drmP.h>
 #include <drm/drm_rect.h>
+#include <drm/drm_plane_helper.h>
 
 #define SUBPIXEL_MASK 0xffff
 
@@ -36,7 +38,7 @@
  * creating the primary plane.  However drivers that still call
  * drm_plane_init() will use this minimal format list as the default.
  */
-const static uint32_t safe_modeset_formats[] = {
+static const uint32_t safe_modeset_formats[] = {
        DRM_FORMAT_XRGB8888,
        DRM_FORMAT_ARGB8888,
 };

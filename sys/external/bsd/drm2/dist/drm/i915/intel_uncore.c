@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/err.h>
 #include "i915_drv.h"
 #include "intel_drv.h"
 
@@ -28,17 +29,17 @@
 
 #ifdef __NetBSD__
 
-#define	__raw_i915_read8(dev_priv, reg) DRM_READ8((dev_priv)->regs_map, (reg))
-#define	__raw_i915_write8(dev_priv, reg, val) DRM_WRITE8((dev_priv)->regs_map, (reg), (val))
+#define	__raw_i915_read8(dev_priv, reg) bus_space_read_1((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
+#define	__raw_i915_write8(dev_priv, reg, val) bus_space_write_1((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (val))
 
-#define	__raw_i915_read16(dev_priv, reg) DRM_READ16((dev_priv)->regs_map, (reg))
-#define	__raw_i915_write16(dev_priv, reg, val) DRM_WRITE16((dev_priv)->regs_map, (reg), (val))
+#define	__raw_i915_read16(dev_priv, reg) bus_space_read_2((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
+#define	__raw_i915_write16(dev_priv, reg, val) bus_space_write_2((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (val))
 
-#define	__raw_i915_read32(dev_priv, reg) DRM_READ32((dev_priv)->regs_map, (reg))
-#define	__raw_i915_write32(dev_priv, reg, val) DRM_WRITE32((dev_priv)->regs_map, (reg), (val))
+#define	__raw_i915_read32(dev_priv, reg) bus_space_read_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
+#define	__raw_i915_write32(dev_priv, reg, val) bus_space_write_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (val))
 
-#define	__raw_i915_read64(dev_priv, reg) DRM_READ64((dev_priv)->regs_map, (reg))
-#define	__raw_i915_write64(dev_priv, reg, val) DRM_WRITE64((dev_priv)->regs_map, (reg), (val))
+#define	__raw_i915_read64(dev_priv, reg) bus_space_read_8((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
+#define	__raw_i915_write64(dev_priv, reg, val) bus_space_write_8((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (val))
 
 #else
 
@@ -867,6 +868,10 @@ void intel_uncore_init(struct drm_device *dev)
 
 void intel_uncore_fini(struct drm_device *dev)
 {
+#ifdef __NetBSD__
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+#endif
+
 	/* Paranoia: make sure we have disabled everything before we exit. */
 	intel_uncore_sanitize(dev);
 	intel_uncore_forcewake_reset(dev, false);
@@ -938,8 +943,13 @@ int i915_get_reset_stats_ioctl(struct drm_device *dev,
 	if (args->flags || args->pad)
 		return -EINVAL;
 
+#ifdef __NetBSD__
+	if (args->ctx_id == DEFAULT_CONTEXT_ID && !DRM_SUSER())
+		return -EPERM;
+#else
 	if (args->ctx_id == DEFAULT_CONTEXT_ID && !capable(CAP_SYS_ADMIN))
 		return -EPERM;
+#endif
 
 	ret = mutex_lock_interruptible(&dev->struct_mutex);
 	if (ret)
@@ -952,7 +962,11 @@ int i915_get_reset_stats_ioctl(struct drm_device *dev,
 	}
 	hs = &ctx->hang_stats;
 
+#ifdef __NetBSD__
+	if (DRM_SUSER())
+#else
 	if (capable(CAP_SYS_ADMIN))
+#endif
 		args->reset_count = i915_reset_count(&dev_priv->gpu_error);
 	else
 		args->reset_count = 0;

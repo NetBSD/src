@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -545,6 +545,57 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		 * whenever it was going to time out, as Linux does --
 		 * neither speed it up nor postpone it.
 		 */
+		break;
+
+	case WORK_PENDING:
+		KASSERT(dw->work.w_wq == wq);
+		break;
+
+	case WORK_CANCELLED:
+	case WORK_DELAYED_CANCELLED:
+		/* XXX Wait for cancellation and then queue?  */
+		break;
+
+	default:
+		panic("delayed work %p in bad state: %d", dw,
+		    (int)dw->work.w_state);
+		break;
+	}
+	linux_work_unlock(&dw->work);
+}
+
+void
+mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
+    unsigned long ticks)
+{
+
+	KASSERT(wq != NULL);
+
+	linux_work_lock(&dw->work);
+	switch (dw->work.w_state) {
+	case WORK_IDLE:
+	case WORK_INVOKED:
+		if (ticks == 0) {
+			/* Skip the delay and queue it now.  */
+			dw->work.w_state = WORK_PENDING;
+			dw->work.w_wq = wq;
+			workqueue_enqueue(wq->wq_workqueue, &dw->work.w_wk,
+			    NULL);
+		} else {
+			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
+			callout_reset(&dw->dw_callout, ticks,
+			    &linux_worker_intr, dw);
+			dw->work.w_state = WORK_DELAYED;
+			dw->work.w_wq = wq;
+			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
+		}
+		break;
+
+	case WORK_DELAYED:
+		/*
+		 * Timer is already ticking.  Reschedule it.
+		 */
+		callout_schedule(&dw->dw_callout, ticks);
 		break;
 
 	case WORK_PENDING:

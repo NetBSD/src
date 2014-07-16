@@ -64,13 +64,13 @@ int drm_agp_info(struct drm_device *dev, struct drm_agp_info *info)
 #if __NetBSD__
 	info->agp_version_major = 1;
 	info->agp_version_minor = 0;
-	info->mode = kern->ai_mode;
-	info->aperture_base = kern->ai_aperture_base;
-	info->aperture_size = kern->ai_aperture_size;
-	info->memory_allowed = kern->ai_memory_allowed;
-	info->memory_used = kern->ai_memory_used;
-	info->id_vendor = PCI_VENDOR(kern->ai_devid);
-	info->id_device = PCI_PRODUCT(kern->ai_devid);
+	info->mode = kern->aki_info.ai_mode;
+	info->aperture_base = kern->aki_info.ai_aperture_base;
+	info->aperture_size = kern->aki_info.ai_aperture_size;
+	info->memory_allowed = kern->aki_info.ai_memory_allowed;
+	info->memory_used = kern->aki_info.ai_memory_used;
+	info->id_vendor = PCI_VENDOR(kern->aki_info.ai_devid);
+	info->id_device = PCI_PRODUCT(kern->aki_info.ai_devid);
 #else
 	info->agp_version_major = kern->version.major;
 	info->agp_version_minor = kern->version.minor;
@@ -465,8 +465,9 @@ struct drm_agp_head *drm_agp_init(struct drm_device *dev)
 #endif
 	INIT_LIST_HEAD(&head->memory);
 #ifdef __NetBSD__
-	/* Not sure what the other fields are used for...  */
-	head->base = head->agp_info.ai_aperture_base;
+	head->cant_use_aperture = false; /* XXX */
+	head->page_mask = ~0UL;
+	head->base = head->agp_info.aki_info.ai_aperture_base;
 #else
 	head->cant_use_aperture = head->agp_info.cant_use_aperture;
 	head->page_mask = head->agp_info.page_mask;
@@ -474,8 +475,6 @@ struct drm_agp_head *drm_agp_init(struct drm_device *dev)
 #endif
 	return head;
 }
-
-#ifndef __NetBSD__
 
 /**
  * drm_agp_clear - Clear AGP resource list
@@ -500,8 +499,14 @@ void drm_agp_clear(struct drm_device *dev)
 
 	list_for_each_entry_safe(entry, tempe, &dev->agp->memory, head) {
 		if (entry->bound)
-			drm_unbind_agp(entry->memory);
+#ifdef __NetBSD__
+			drm_unbind_agp(dev->agp->bridge, entry->memory);
+#endif
+#ifdef __NetBSD__
+		drm_free_agp(dev->agp->bridge, entry->memory, entry->pages);
+#else
 		drm_free_agp(entry->memory, entry->pages);
+#endif
 		kfree(entry);
 	}
 	INIT_LIST_HEAD(&dev->agp->memory);
@@ -513,6 +518,7 @@ void drm_agp_clear(struct drm_device *dev)
 	dev->agp->enabled = 0;
 }
 
+#ifndef __NetBSD__		/* XXX Dead code that doesn't make sense...  */
 /**
  * Binds a collection of pages into AGP memory at the given offset, returning
  * the AGP memory structure containing them.
@@ -556,6 +562,6 @@ drm_agp_bind_pages(struct drm_device *dev,
 }
 EXPORT_SYMBOL(drm_agp_bind_pages);
 
-#endif	/* __NetBSD__ */
+#endif
 
 #endif /* __OS_HAS_AGP */

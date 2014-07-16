@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.2 2014/04/01 14:57:58 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.3 2014/07/16 20:56:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
+
+#define	oops_in_progress	(panicstr != NULL)
+
+#define	IS_ENABLED(option)	0 /* XXX Hmm...  */
 
 #define	__printf	__printflike
 #define	__user
@@ -42,6 +47,7 @@
 #define	__always_unused	__unused
 
 #define	barrier()	__insn_barrier()
+#define	likely(X)	__predict_true(X)
 #define	unlikely(X)	__predict_false(X)
 
 /*
@@ -54,6 +60,8 @@
 #define	max_t(T, X, Y)	MAX(X, Y)
 #define	min_t(T, X, Y)	MIN(X, Y)
 
+#define	clamp_t(T, X, MIN, MAX)	min_t(T, max_t(T, X, MIN), MAX)
+
 /*
  * Rounding to nearest.
  */
@@ -65,6 +73,7 @@
  * Rounding to what may or may not be powers of two.
  */
 #define	DIV_ROUND_UP(X, N)	(((X) + (N) - 1) / (N))
+#define	DIV_ROUND_UP_ULL(X, N)	DIV_ROUND_UP((unsigned long long)(X), (N))
 
 /*
  * Rounding to powers of two -- carefully avoiding multiple evaluation
@@ -87,10 +96,10 @@
  * the type of c.
  */
 #define	container_of(PTR, TYPE, FIELD)					\
-	((void)sizeof((PTR) -						\
+	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD) +		\
+	    0*sizeof((PTR) -						\
 		&((TYPE *)(((char *)(PTR)) -				\
-		    offsetof(TYPE, FIELD)))->FIELD),			\
-	    ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))))
+			offsetof(TYPE, FIELD)))->FIELD)))
 
 #define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
 
@@ -113,6 +122,44 @@ abs64(int64_t x)
 	return (x < 0? (-x) : x);
 }
 
+static inline uintmax_t
+mult_frac(uintmax_t x, uintmax_t multiplier, uintmax_t divisor)
+{
+	uintmax_t q = (x / divisor);
+	uintmax_t r = (x % divisor);
+
+	return ((q * multiplier) + ((r * multiplier) / divisor));
+}
+
 static int panic_timeout __unused = 0;
+
+static inline int
+vscnprintf(char *buf, size_t size, const char *fmt, va_list va)
+{
+	int ret;
+
+	ret = vsnprintf(buf, size, fmt, va);
+	if (__predict_false(ret < 0))
+		return ret;
+	if (__predict_false(size == 0))
+		return 0;
+	if (__predict_false(size <= ret))
+		return (size - 1);
+
+	return ret;
+}
+
+static inline int
+scnprintf(char *buf, size_t size, const char *fmt, ...)
+{
+	va_list va;
+	int ret;
+
+	va_start(va, fmt);
+	ret = vscnprintf(buf, size, fmt, va);
+	va_end(va);
+
+	return ret;
+}
 
 #endif  /* _LINUX_KERNEL_H_ */

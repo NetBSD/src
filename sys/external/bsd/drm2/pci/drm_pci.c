@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.3 2014/03/29 19:54:46 christos Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.3 2014/03/29 19:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -53,7 +53,6 @@ static int	drm_pci_set_unique(struct drm_device *, struct drm_master *,
 		    struct drm_unique *);
 static int	drm_pci_irq_by_busid(struct drm_device *,
 		    struct drm_irq_busid *);
-static int	drm_pci_agp_init(struct drm_device *);
 
 const struct drm_bus drm_pci_bus = {
 	.bus_type = DRIVER_BUS_PCI,
@@ -64,7 +63,6 @@ const struct drm_bus drm_pci_bus = {
 	.set_busid = drm_pci_set_busid,
 	.set_unique = drm_pci_set_unique,
 	.irq_by_busid = drm_pci_irq_by_busid,
-	.agp_init = drm_pci_agp_init,
 };
 
 static const struct pci_attach_args *
@@ -87,34 +85,42 @@ drm_pci_exit(struct drm_driver *driver __unused,
 {
 }
 
-/* XXX Should go elsewhere.  */
-#define	PCI_NMAPREGS	((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
-
-void
+int
 drm_pci_attach(device_t self, const struct pci_attach_args *pa,
-    struct pci_dev *pdev, struct drm_device *dev)
+    struct pci_dev *pdev, struct drm_driver *driver, unsigned long cookie,
+    struct drm_device **devp)
 {
+	struct drm_device *dev;
 	unsigned int unit;
+	int ret;
 
+	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(pdev, self, pa, 0);
 
+	/* Create a DRM device.  */
+	dev = drm_dev_alloc(driver, self);
+	if (dev == NULL) {
+		ret = -ENOMEM;
+		goto fail0;
+	}
+
 	dev->pdev = pdev;
-	dev->pci_vendor = pdev->vendor;
-	dev->pci_device = pdev->device;
 
 	/* XXX Set the power state to D0?  */
 
+	/* Set up the bus space and bus DMA tags.  */
 	dev->bst = pa->pa_memt;
 	/* XXX Let the driver say something about 32-bit vs 64-bit DMA?  */
 	dev->bus_dmat = (pci_dma64_available(pa)? pa->pa_dmat64 : pa->pa_dmat);
 	dev->dmat = dev->bus_dmat;
 	dev->dmat_subregion_p = false;
 
-	CTASSERT(PCI_NMAPREGS < (SIZE_MAX / sizeof(dev->bus_maps[0])));
-	dev->bus_nmaps = PCI_NMAPREGS;
-	dev->bus_maps = kmem_zalloc((PCI_NMAPREGS * sizeof(dev->bus_maps[0])),
-	    KM_SLEEP);
-	for (unit = 0; unit < dev->bus_nmaps; unit++) {
+	/* Find all the memory maps.  */
+	CTASSERT(PCI_NUM_RESOURCES < (SIZE_MAX / sizeof(dev->bus_maps[0])));
+	dev->bus_maps = kmem_zalloc(PCI_NUM_RESOURCES *
+	    sizeof(dev->bus_maps[0]), KM_SLEEP);
+	dev->bus_nmaps = PCI_NUM_RESOURCES;
+	for (unit = 0; unit < PCI_NUM_RESOURCES; unit++) {
 		struct drm_bus_map *const bm = &dev->bus_maps[unit];
 		const int reg = PCI_BAR(unit);
 		const pcireg_t type =
@@ -134,38 +140,76 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 			continue;
 		}
 
-		aprint_debug_dev(self, "map %u at %"PRIxMAX" size %"PRIxMAX
-		    " flags 0x%"PRIxMAX"\n",
-		    unit, (uintmax_t)bm->bm_base, (uintmax_t)bm->bm_size,
-		    (uintmax_t)bm->bm_flags);
-
 		/* Assume since it is a memory mapping it can be linear.  */
 		bm->bm_flags |= BUS_SPACE_MAP_LINEAR;
 	}
 
-	/* All `agp' maps are just initialized to zero.  */
-	CTASSERT(PCI_NMAPREGS < (SIZE_MAX / sizeof(dev->agp_maps[0])));
-	dev->agp_nmaps = PCI_NMAPREGS;
-	dev->agp_maps = kmem_zalloc((PCI_NMAPREGS * sizeof(dev->agp_maps[0])),
-	    KM_SLEEP);
+	/* Set up AGP stuff if requested.  */
+	if (drm_core_check_feature(dev, DRIVER_USE_AGP)) {
+		if (drm_pci_device_is_agp(dev))
+			dev->agp = drm_agp_init(dev);
+		if (dev->agp)
+			dev->agp->agp_mtrr = arch_phys_wc_add(dev->agp->base,
+				dev->agp->agp_info.aki_info.ai_aperture_size);
+	}
+
+	/* Register the DRM device and do driver-specific initialization.  */
+	ret = drm_dev_register(dev, cookie);
+	if (ret)
+		goto fail1;
+
+	/* Success!  */
+	*devp = dev;
+	return 0;
+
+fail2: __unused
+	drm_dev_unregister(dev);
+fail1:	drm_pci_agp_destroy(dev);
+	dev->bus_nmaps = 0;
+	kmem_free(dev->bus_maps, PCI_NUM_RESOURCES * sizeof(dev->bus_maps[0]));
+	KASSERT(!dev->dmat_subregion_p);
+	drm_dev_unref(dev);
+fail0:	return ret;
 }
 
 int
-drm_pci_detach(struct drm_device *dev __unused, int flags __unused)
+drm_pci_detach(struct drm_device *dev, int flags __unused)
 {
 
-	kmem_free(dev->bus_maps, (PCI_NMAPREGS * sizeof(dev->bus_maps[0])));
-	kmem_free(dev->agp_maps, (PCI_NMAPREGS * sizeof(dev->agp_maps[0])));
+	/* Do driver-specific detachment and unregister the device.  */
+	drm_dev_unregister(dev);
 
-	/*
-	 * XXX This is the wrong place!  Should be a routine in
-	 * drm_memory.c.
-	 */
+	/* Tear down AGP stuff if necessary.  */
+	if (dev->agp) {
+		arch_phys_wc_del(dev->agp->agp_mtrr);
+		drm_agp_clear(dev);
+		kfree(dev->agp); /* XXX Should go in drm_agp_clear...  */
+		dev->agp = NULL;
+	}
+
+	/* Free the record of available bus space mappings.  */
+	dev->bus_nmaps = 0;
+	kmem_free(dev->bus_maps, PCI_NUM_RESOURCES * sizeof(dev->bus_maps[0]));
+
+	/* Tear down bus space and bus DMA tags.  */
 	if (dev->dmat_subregion_p)
 		bus_dmatag_destroy(dev->dmat);
 
-	/* XXX Disestablish irqs or anything?  */
+	drm_dev_unref(dev);
+
 	return 0;
+}
+
+void
+drm_pci_agp_destroy(struct drm_device *dev)
+{
+
+	if (dev->agp) {
+		arch_phys_wc_del(dev->agp->agp_mtrr);
+		drm_agp_clear(dev);
+		kfree(dev->agp); /* XXX Should go in drm_agp_clear...  */
+		dev->agp = NULL;
+	}
 }
 
 static int
@@ -309,10 +353,4 @@ static int
 drm_pci_irq_by_busid(struct drm_device *dev, struct drm_irq_busid *busid)
 {
 	return -ENOSYS;		/* XXX */
-}
-
-static int
-drm_pci_agp_init(struct drm_device *dev)
-{
-	return 0;		/* XXX */
 }
