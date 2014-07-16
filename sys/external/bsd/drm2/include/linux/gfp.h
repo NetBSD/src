@@ -1,4 +1,4 @@
-/*	$NetBSD: gfp.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,7 +68,9 @@ typedef int gfp_t;
 #define	__free_page	linux___free_page
 
 struct page;
+#if 0
 struct page *	alloc_page(gfp_t);
 void		__free_page(struct page *);
+#endif
 
 #endif	/* _LINUX_GFP_H_ */

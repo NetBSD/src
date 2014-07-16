@@ -31,6 +31,7 @@
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/module.h>
+#include <linux/export.h>
 
 static void ttm_eu_backoff_reservation_locked(struct list_head *list)
 {

@@ -36,6 +36,8 @@
 #include <linux/kobject.h>
 #include <linux/mm.h>
 
+struct page;
+
 /**
  * struct ttm_mem_shrink - callback to shrink TTM memory usage.
  *
@@ -75,7 +77,9 @@ struct ttm_mem_shrink {
 #define TTM_MEM_MAX_ZONES 2
 struct ttm_mem_zone;
 struct ttm_mem_global {
+#ifndef __NetBSD__
 	struct kobject kobj;
+#endif
 	struct ttm_mem_shrink *shrink;
 	struct workqueue_struct *swap_queue;
 	struct work_struct work;

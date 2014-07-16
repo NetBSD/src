@@ -790,8 +790,15 @@ int r100_irq_process(struct radeon_device *rdev)
 		if (status & RADEON_CRTC_VBLANK_STAT) {
 			if (rdev->irq.crtc_vblank_int[0]) {
 				drm_handle_vblank(rdev->ddev, 0);
+#ifdef __NetBSD__
+				spin_lock(&rdev->irq.vblank_lock);
+				rdev->pm.vblank_sync = true;
+				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+				spin_unlock(&rdev->irq.vblank_lock);
+#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
+#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[0]))
 				radeon_crtc_handle_flip(rdev, 0);
@@ -799,8 +806,15 @@ int r100_irq_process(struct radeon_device *rdev)
 		if (status & RADEON_CRTC2_VBLANK_STAT) {
 			if (rdev->irq.crtc_vblank_int[1]) {
 				drm_handle_vblank(rdev->ddev, 1);
+#ifdef __NetBSD__
+				spin_lock(&rdev->irq.vblank_lock);
+				rdev->pm.vblank_sync = true;
+				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+				spin_unlock(&rdev->irq.vblank_lock);
+#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
+#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[1]))
 				radeon_crtc_handle_flip(rdev, 1);
@@ -1092,7 +1106,7 @@ static void r100_cp_load_microcode(struct radeon_device *rdev)
 
 	if (rdev->me_fw) {
 		size = rdev->me_fw->size / 4;
-		fw_data = (const __be32 *)&rdev->me_fw->data[0];
+		fw_data = (const __be32 *)rdev->me_fw->data;
 		WREG32(RADEON_CP_ME_RAM_ADDR, 0);
 		for (i = 0; i < size; i += 2) {
 			WREG32(RADEON_CP_ME_RAM_DATAH,
@@ -4089,6 +4103,23 @@ int r100_init(struct radeon_device *rdev)
 uint32_t r100_mm_rreg(struct radeon_device *rdev, uint32_t reg,
 		      bool always_indirect)
 {
+#ifdef __NetBSD__
+	if (reg < rdev->rmmio_size && !always_indirect) {
+		return bus_space_read_4(rdev->rmmio_bst, rdev->rmmio_bsh, reg);
+	} else {
+		unsigned long flags;
+		uint32_t ret;
+
+		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
+		bus_space_write_4(rdev->rmmio_bst, rdev->rmmio_bsh,
+		    RADEON_MM_INDEX, reg);
+		ret = bus_space_read_4(rdev->rmmio_bst, rdev->rmmio_bsh,
+		    RADEON_MM_DATA);
+		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
+
+		return ret;
+	}
+#else
 	if (reg < rdev->rmmio_size && !always_indirect)
 		return readl(((void __iomem *)rdev->rmmio) + reg);
 	else {
@@ -4102,11 +4133,26 @@ uint32_t r100_mm_rreg(struct radeon_device *rdev, uint32_t reg,
 
 		return ret;
 	}
+#endif
 }
 
 void r100_mm_wreg(struct radeon_device *rdev, uint32_t reg, uint32_t v,
 		  bool always_indirect)
 {
+#ifdef __NetBSD__
+	if (reg < rdev->rmmio_size && !always_indirect) {
+		bus_space_write_4(rdev->rmmio_bst, rdev->rmmio_bsh, reg, v);
+	} else {
+		unsigned long flags;
+
+		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
+		bus_space_write_4(rdev->rmmio_bst, rdev->rmmio_bsh,
+		    RADEON_MM_INDEX, reg);
+		bus_space_write_4(rdev->rmmio_bst, rdev->rmmio_bsh,
+		    RADEON_MM_DATA, v);
+		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
+	}
+#else
 	if (reg < rdev->rmmio_size && !always_indirect)
 		writel(v, ((void __iomem *)rdev->rmmio) + reg);
 	else {
@@ -4117,24 +4163,49 @@ void r100_mm_wreg(struct radeon_device *rdev, uint32_t reg, uint32_t v,
 		writel(v, ((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
 		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 	}
+#endif
 }
 
 u32 r100_io_rreg(struct radeon_device *rdev, u32 reg)
 {
+#ifdef __NetBSD__
+	if (reg < rdev->rio_mem_size) {
+		return bus_space_read_4(rdev->rio_mem_bst, rdev->rio_mem_bsh,
+		    reg);
+	} else {
+		bus_space_write_4(rdev->rio_mem_bst, rdev->rio_mem_bsh,
+		    RADEON_MM_INDEX, reg);
+		return bus_space_read_4(rdev->rio_mem_bst, rdev->rio_mem_bsh,
+		    RADEON_MM_DATA);
+	}
+#else
 	if (reg < rdev->rio_mem_size)
 		return ioread32(rdev->rio_mem + reg);
 	else {
 		iowrite32(reg, rdev->rio_mem + RADEON_MM_INDEX);
 		return ioread32(rdev->rio_mem + RADEON_MM_DATA);
 	}
+#endif
 }
 
 void r100_io_wreg(struct radeon_device *rdev, u32 reg, u32 v)
 {
+#ifdef __NetBSD__
+	if (reg < rdev->rio_mem_size) {
+		bus_space_write_4(rdev->rio_mem_bst, rdev->rio_mem_bsh, reg,
+		    v);
+	} else {
+		bus_space_write_4(rdev->rio_mem_bst, rdev->rio_mem_bsh,
+		    RADEON_MM_INDEX, reg);
+		bus_space_write_4(rdev->rio_mem_bst, rdev->rio_mem_bsh,
+		    RADEON_MM_DATA, v);
+	}
+#else
 	if (reg < rdev->rio_mem_size)
 		iowrite32(v, rdev->rio_mem + reg);
 	else {
 		iowrite32(reg, rdev->rio_mem + RADEON_MM_INDEX);
 		iowrite32(v, rdev->rio_mem + RADEON_MM_DATA);
 	}
+#endif
 }

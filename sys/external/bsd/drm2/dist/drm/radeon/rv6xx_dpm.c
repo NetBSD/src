@@ -2024,6 +2024,7 @@ void rv6xx_dpm_print_power_state(struct radeon_device *rdev,
 	r600_dpm_print_ps_status(rdev, rps);
 }
 
+#ifdef CONFIG_DEBUG_FS
 void rv6xx_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						       struct seq_file *m)
 {
@@ -2048,6 +2049,7 @@ void rv6xx_dpm_debugfs_print_current_performance_level(struct radeon_device *rde
 			   current_index, pl->sclk, pl->mclk, pl->vddc);
 	}
 }
+#endif
 
 void rv6xx_dpm_fini(struct radeon_device *rdev)
 {

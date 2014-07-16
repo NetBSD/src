@@ -180,7 +180,7 @@ void radeon_uvd_fini(struct radeon_device *rdev)
 int radeon_uvd_suspend(struct radeon_device *rdev)
 {
 	unsigned size;
-	void *ptr;
+	uint8_t *ptr;
 	int i;
 
 	if (rdev->uvd.vcpu_bo == NULL)
@@ -208,7 +208,7 @@ int radeon_uvd_suspend(struct radeon_device *rdev)
 int radeon_uvd_resume(struct radeon_device *rdev)
 {
 	unsigned size;
-	void *ptr;
+	uint8_t *ptr;
 
 	if (rdev->uvd.vcpu_bo == NULL)
 		return -EINVAL;
@@ -272,13 +272,21 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 	unsigned pitch = msg[28];
 
 	unsigned width_in_mb = width / 16;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	unsigned height_in_mb = round_up(height / 16, 2);
+#else
 	unsigned height_in_mb = ALIGN(height / 16, 2);
+#endif
 
 	unsigned image_size, tmp, min_dpb_size;
 
 	image_size = width * height;
 	image_size += image_size / 2;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	image_size = round_up(image_size, 1024);
+#else
 	image_size = ALIGN(image_size, 1024);
+#endif
 
 	switch (stream_type) {
 	case 0: /* H264 */
@@ -309,7 +317,11 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 		/* BP */
 		tmp = max(width_in_mb, height_in_mb);
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		min_dpb_size += round_up(tmp * 7 * 16, 64);
+#else
 		min_dpb_size += ALIGN(tmp * 7 * 16, 64);
+#endif
 		break;
 
 	case 3: /* MPEG2 */
@@ -327,7 +339,11 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 		min_dpb_size += width_in_mb * height_in_mb * 64;
 
 		/* IT surface buffer */
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		min_dpb_size += round_up(width_in_mb * height_in_mb * 32, 64);
+#else
 		min_dpb_size += ALIGN(width_in_mb * height_in_mb * 32, 64);
+#endif
 		break;
 
 	default:
@@ -379,7 +395,7 @@ static int radeon_uvd_cs_msg(struct radeon_cs_parser *p, struct radeon_bo *bo,
 		return r;
 	}
 
-	msg = ptr + offset;
+	msg = (int32_t *)((uint8_t *)ptr + offset);
 
 	msg_type = msg[1];
 	handle = msg[2];
@@ -482,7 +498,7 @@ static int radeon_uvd_cs_reloc(struct radeon_cs_parser *p,
 	}
 
 	if ((start >> 28) != ((end - 1) >> 28)) {
-		DRM_ERROR("reloc %LX-%LX crossing 256MB boundary!\n",
+		DRM_ERROR("reloc %"PRIX64"-%"PRIX64" crossing 256MB boundary!\n",
 			  start, end);
 		return -EINVAL;
 	}
@@ -490,7 +506,7 @@ static int radeon_uvd_cs_reloc(struct radeon_cs_parser *p,
 	/* TODO: is this still necessary on NI+ ? */
 	if ((cmd == 0 || cmd == 0x3) &&
 	    (start >> 28) != (p->rdev->uvd.gpu_addr >> 28)) {
-		DRM_ERROR("msg/fb buffer %LX-%LX out of 256MB segment!\n",
+		DRM_ERROR("msg/fb buffer %"PRIX64"-%"PRIX64" out of 256MB segment!\n",
 			  start, end);
 		return -EINVAL;
 	}
