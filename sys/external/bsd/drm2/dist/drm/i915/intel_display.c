@@ -11329,10 +11329,12 @@ static void i915_disable_vga(struct drm_device *dev)
 	const bus_size_t vgabase = 0x3c0;
 	const bus_space_tag_t iot = dev->pdev->pd_pa.pa_iot;
 	bus_space_handle_t ioh;
+	int error;
 
-	if (bus_space_map(iot, vgabase, 0x10, 0, &ioh)) {
+	error = bus_space_map(iot, vgabase, 0x10, 0, &ioh);
+	if (error) {
 		aprint_error_dev(dev->pdev->pd_dev,
-		    "unable to map VGA registers");
+		    "unable to map VGA registers: %d\n", error);
 	} else {
 		CTASSERT(vgabase <= VGA_SR_INDEX);
 		CTASSERT(vgabase <= VGA_SR_DATA);
