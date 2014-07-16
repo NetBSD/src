@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1136 2014/07/14 14:08:41 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1137 2014/07/16 19:05:42 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -825,6 +825,20 @@ Responsible:	mrg, bjs
 License:	BSD
 Location:	sys/external/bsd/drm/dist
 Notes:
+
+Package:	MesaLib
+Version:	7.11.2
+Current Vers:	10.2.3
+Maintainer:	mesa-git@?
+Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
+Home Page:	http://www.mesa3d.org/
+Mailing List:
+Responsible:	riastradh, mrg
+License:	ISC
+Location:	xsrc/external/mit/MesaLib/dist
+Notes:
+Vendor tag:	xorg
+Release tag:	MesaLib-X-Y-Z
 
 Package:	mopd
 Version:	2.5.3
