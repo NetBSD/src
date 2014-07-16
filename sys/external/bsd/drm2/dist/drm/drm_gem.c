@@ -42,6 +42,10 @@
 #include <drm/drmP.h>
 #include <drm/drm_vma_manager.h>
 
+#ifdef __NetBSD__
+#include <uvm/uvm_extern.h>
+#endif
+
 /** @file drm_gem.c
  *
  * This file provides some of the base ioctls and library routines for
@@ -96,7 +100,11 @@ drm_gem_init(struct drm_device *dev)
 {
 	struct drm_vma_offset_manager *vma_offset_manager;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev->object_name_lock);
+#else
 	mutex_init(&dev->object_name_lock);
+#endif
 	idr_init(&dev->object_name_idr);
 
 	vma_offset_manager = kzalloc(sizeof(*vma_offset_manager), GFP_KERNEL);
@@ -123,7 +131,7 @@ drm_gem_destroy(struct drm_device *dev)
 
 	idr_destroy(&dev->object_name_idr);
 #ifdef __NetBSD__
-	spin_lock_destroy(&dev->object_name_lock);
+	linux_mutex_destroy(&dev->object_name_lock);
 #endif
 }
 
@@ -139,7 +147,9 @@ drm_gem_destroy(struct drm_device *dev)
 int drm_gem_object_init(struct drm_device *dev,
 			struct drm_gem_object *obj, size_t size)
 {
+#ifndef __NetBSD__
 	struct file *filp;
+#endif
 
 	drm_gem_private_object_init(dev, obj, size);
 
@@ -185,13 +195,18 @@ void drm_gem_private_object_init(struct drm_device *dev,
 	kref_init(&obj->refcount);
 	obj->handle_count = 0;
 	obj->size = size;
+#ifdef __NetBSD__
+	drm_vma_node_init(&obj->vma_node);
+#else
 	drm_vma_node_reset(&obj->vma_node);
+#endif
 }
 EXPORT_SYMBOL(drm_gem_private_object_init);
 
 static void
 drm_gem_remove_prime_handles(struct drm_gem_object *obj, struct drm_file *filp)
 {
+#ifndef __NetBSD__		/* XXX drm prime */
 	/*
 	 * Note: obj->dma_buf can't disappear as long as we still hold a
 	 * handle reference in obj->handle_count.
@@ -202,6 +217,7 @@ drm_gem_remove_prime_handles(struct drm_gem_object *obj, struct drm_file *filp)
 						   obj->dma_buf);
 	}
 	mutex_unlock(&filp->prime.lock);
+#endif
 }
 
 /**
@@ -227,11 +243,13 @@ static void drm_gem_object_handle_free(struct drm_gem_object *obj)
 
 static void drm_gem_object_exported_dma_buf_free(struct drm_gem_object *obj)
 {
+#ifndef __NetBSD__
 	/* Unbreak the reference cycle if we have an exported dma_buf. */
 	if (obj->dma_buf) {
 		dma_buf_put(obj->dma_buf);
 		obj->dma_buf = NULL;
 	}
+#endif
 }
 
 static void
@@ -293,10 +311,8 @@ drm_gem_handle_delete(struct drm_file *filp, u32 handle)
 	idr_remove(&filp->object_idr, handle);
 	spin_unlock(&filp->table_lock);
 
-#ifndef __NetBSD__			/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_gem_remove_prime_handles(obj, filp);
-#endif
 	drm_vma_node_revoke(&obj->vma_node, filp->filp);
 
 	if (dev->driver->gem_close_object)
@@ -464,6 +480,40 @@ EXPORT_SYMBOL(drm_gem_create_mmap_offset);
  * @obj: obj in question
  * @gfpmask: gfp mask of requested pages
  */
+#ifdef __NetBSD__
+struct page **
+drm_gem_get_pages(struct drm_gem_object *obj, gfp_t gfpmask)
+{
+	struct pglist pglist;
+	struct vm_page *vm_page;
+	struct page **pages;
+	unsigned i;
+	int ret;
+
+	KASSERT((obj->size & (PAGE_SIZE - 1)) != 0);
+
+	pages = drm_malloc_ab(obj->size >> PAGE_SHIFT, sizeof(*pages));
+	if (pages == NULL) {
+		ret = -ENOMEM;
+		goto fail0;
+	}
+
+	TAILQ_INIT(&pglist);
+	/* XXX errno NetBSD->Linux */
+	ret = -uvm_obj_wirepages(obj->gemo_shm_uao, 0, obj->size, &pglist);
+	if (ret)
+		goto fail1;
+
+	i = 0;
+	TAILQ_FOREACH(vm_page, &pglist, pageq.queue)
+		pages[i++] = container_of(vm_page, struct page, p_vmp);
+
+	return pages;
+
+fail1:	drm_free_large(pages);
+fail0:	return ERR_PTR(ret);
+}
+#else
 struct page **drm_gem_get_pages(struct drm_gem_object *obj, gfp_t gfpmask)
 {
 	struct inode *inode;
@@ -524,6 +574,7 @@ fail:
 	drm_free_large(pages);
 	return ERR_CAST(p);
 }
+#endif
 EXPORT_SYMBOL(drm_gem_get_pages);
 
 /**
@@ -533,6 +584,21 @@ EXPORT_SYMBOL(drm_gem_get_pages);
  * @dirty: if true, pages will be marked as dirty
  * @accessed: if true, the pages will be marked as accessed
  */
+#ifdef __NetBSD__
+void
+drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages, bool dirty,
+    bool accessed __unused /* XXX */)
+{
+	unsigned i;
+
+	for (i = 0; i < (obj->size >> PAGE_SHIFT); i++) {
+		if (dirty)
+			pages[i]->p_vmp.flags &= ~PG_CLEAN;
+	}
+
+	uvm_obj_unwirepages(obj->gemo_shm_uao, 0, obj->size);
+}
+#else
 void drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages,
 		bool dirty, bool accessed)
 {
@@ -559,6 +625,7 @@ void drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages,
 
 	drm_free_large(pages);
 }
+#endif
 EXPORT_SYMBOL(drm_gem_put_pages);
 
 /** Returns a reference to the object named by the handle. */
@@ -767,9 +834,12 @@ drm_gem_release(struct drm_device *dev, struct drm_file *file_private)
 void
 drm_gem_object_release(struct drm_gem_object *obj)
 {
+#ifndef __NetBSD__
 	WARN_ON(obj->dma_buf);
+#endif
 
 #ifdef __NetBSD__
+	drm_vma_node_destroy(&obj->vma_node);
 	if (obj->gemo_shm_uao)
 		uao_detach(obj->gemo_shm_uao);
 	uvm_obj_destroy(&obj->gemo_uvmobj, true);

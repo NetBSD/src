@@ -34,6 +34,7 @@
 #include <linux/dma_remapping.h>
 #include <linux/log2.h>
 #include <linux/pagemap.h>
+#include <linux/err.h>
 
 #define  __EXEC_OBJECT_HAS_PIN (1<<31)
 #define  __EXEC_OBJECT_HAS_FENCE (1<<30)
@@ -106,7 +107,8 @@ eb_lookup_vmas(struct eb_vmas *eb,
 	/* Grab a reference to the object and release the lock so we can lookup
 	 * or create the VMA without using GFP_ATOMIC */
 	for (i = 0; i < args->buffer_count; i++) {
-		obj = to_intel_bo(idr_find(&file->object_idr, exec[i].handle));
+		obj = to_intel_bo((struct drm_gem_object *)
+		    idr_find(&file->object_idr, exec[i].handle));
 		if (obj == NULL) {
 			spin_unlock(&file->table_lock);
 			DRM_DEBUG("Invalid object handle %d at index %d\n",
@@ -335,7 +337,7 @@ relocate_entry_gtt(struct drm_i915_gem_object *obj,
 	reloc_page = io_mapping_map_atomic_wc(dev_priv->gtt.mappable,
 			reloc->offset & PAGE_MASK);
 	reloc_entry = (uint32_t __iomem *)
-		(reloc_page + offset_in_page(reloc->offset));
+		((char __iomem *)reloc_page + offset_in_page(reloc->offset));
 	iowrite32(reloc->delta, reloc_entry);
 
 	if (INTEL_INFO(dev)->gen >= 8) {

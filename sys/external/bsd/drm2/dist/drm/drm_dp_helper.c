@@ -28,6 +28,7 @@
 #include <linux/sched.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
+#include <linux/device.h>
 #include <drm/drm_dp_helper.h>
 #include <drm/drmP.h>
 
@@ -740,7 +741,9 @@ int drm_dp_aux_register_i2c_bus(struct drm_dp_aux *aux)
 	aux->ddc.class = I2C_CLASS_DDC;
 	aux->ddc.owner = THIS_MODULE;
 	aux->ddc.dev.parent = aux->dev;
+#ifndef __NetBSD__
 	aux->ddc.dev.of_node = aux->dev->of_node;
+#endif
 
 	strlcpy(aux->ddc.name, aux->name ? aux->name : dev_name(aux->dev),
 		sizeof(aux->ddc.name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: shrinker.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: shrinker.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,12 +33,16 @@
 #define _LINUX_SHRINKER_H_
 
 struct shrink_control {
-	unsigned long nr_to_scan;
+	unsigned long	nr_to_scan;
 };
 
 struct shrinker {
-	int (*shrink)(struct shrinker *, struct shrink_control *);
-	int seeks;
+	int		(*shrink)(struct shrinker *, struct shrink_control *);
+	unsigned long	(*count_objects)(struct shrinker *,
+			    struct shrink_control *);
+	unsigned long	(*scan_objects)(struct shrinker *,
+			    struct shrink_control *);
+	int		seeks;
 };
 
 #define	DEFAULT_SEEKS	2	/* XXX cargo-culted from Linux */

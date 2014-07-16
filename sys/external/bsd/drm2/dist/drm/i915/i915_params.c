@@ -22,6 +22,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/module.h>
+#include <linux/moduleparam.h>
 #include "i915_drv.h"
 
 struct i915_params i915 __read_mostly = {

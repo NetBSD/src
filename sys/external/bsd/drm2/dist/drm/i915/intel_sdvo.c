@@ -864,7 +864,8 @@ static void intel_sdvo_get_dtd_from_mode(struct intel_sdvo_dtd *dtd,
 static void intel_sdvo_get_mode_from_dtd(struct drm_display_mode *pmode,
 					 const struct intel_sdvo_dtd *dtd)
 {
-	struct drm_display_mode mode = {};
+	static const struct drm_display_mode zero_mode;
+	struct drm_display_mode mode = zero_mode;
 
 	mode.hdisplay = dtd->part1.h_active;
 	mode.hdisplay += ((dtd->part1.h_high >> 4) & 0x0f) << 8;
@@ -2391,6 +2392,7 @@ intel_sdvo_get_slave_addr(struct drm_device *dev, struct intel_sdvo *sdvo)
 static void
 intel_sdvo_connector_unregister(struct intel_connector *intel_connector)
 {
+#ifndef __NetBSD__
 	struct drm_connector *drm_connector;
 	struct intel_sdvo *sdvo_encoder;
 
@@ -2399,6 +2401,7 @@ intel_sdvo_connector_unregister(struct intel_connector *intel_connector)
 
 	sysfs_remove_link(&drm_connector->kdev->kobj,
 			  sdvo_encoder->ddc.dev.kobj.name);
+#endif
 	intel_connector_unregister(intel_connector);
 }
 
@@ -2431,16 +2434,20 @@ intel_sdvo_connector_init(struct intel_sdvo_connector *connector,
 	if (ret < 0)
 		goto err1;
 
+#ifndef __NetBSD__
 	ret = sysfs_create_link(&drm_connector->kdev->kobj,
 				&encoder->ddc.dev.kobj,
 				encoder->ddc.dev.kobj.name);
 	if (ret < 0)
 		goto err2;
+#endif
 
 	return 0;
 
+#ifndef __NetBSD__
 err2:
 	drm_sysfs_connector_remove(drm_connector);
+#endif
 err1:
 	drm_connector_cleanup(drm_connector);
 

@@ -24,7 +24,7 @@ static const u8 intel_dsm_guid[] = {
 	0x0f, 0x13, 0x17, 0xb0, 0x1c, 0x2c
 };
 
-static char *intel_dsm_port_name(u8 id)
+static const char *intel_dsm_port_name(u8 id)
 {
 	switch (id) {
 	case 0:
@@ -60,7 +60,7 @@ static char *intel_dsm_port_name(u8 id)
 	}
 }
 
-static char *intel_dsm_mux_type(u8 type)
+static const char *intel_dsm_mux_type(u8 type)
 {
 	switch (type) {
 	case 0:
