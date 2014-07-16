@@ -1,4 +1,4 @@
-/*	$NetBSD: tcxreg.h,v 1.5 2009/08/06 18:26:03 macallan Exp $ */
+/*	$NetBSD: tcxreg.h,v 1.6 2014/07/16 17:58:35 macallan Exp $ */
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
  *  All rights reserved.
@@ -29,21 +29,43 @@
  */
 
 /*
+ * differences between S24 and tcx, as far as this driver is concerned:
+ * - S24 has 4MB VRAM, 24bit + 2bit control planes, no expansion possible
+ * - tcx has 1MB VRAM, 8bit, no control planes, may have a VSIMM that bumps
+ *   VRAM to 2MB
+ * - tcx can apply ROPs to STIP operations, unlike S24
+ * - tcx has a Bt458 DAC, just like CG6. S24 has an AT&T 20C567
+ * - the chip itself seems to be (almost) the same, just with different DACs
+ *   and VRAM configuration
+ */
+
+/*
  * A TCX is composed of numerous groups of control registers, all with TLAs:
  *	DHC - ???
  *	TEC - transform engine control?
  *	THC - TEC Hardware Configuration
  *	ROM - a 128Kbyte ROM with who knows what in it.
- *	STIP - ???
- *	RSTIP - Raw ???
- *	BLIT - ???
- *	RBLIT - Raw ???
+ *	STIP - stipple engine, doesn't write attribute bits
+ *	RSTIP - stipple engine, writes attribute bits
+ *	BLIT - blit engine, doesn't copy attribute bits
+ *	RBLIT - blit engine, does copy attribute bits
  *	ALT - ???
  *	colormap - see below
  *	frame buffer memory (video RAM)
  *	possible other stuff
  *
+ *	RSTIP and RBLIT are set to size zero on my SS4's tcx, they work anyway
+ *	though. No sense using them since tcx has only the lower 8bit planes,
+ *	with no control planes, so there is no actual difference to STIP and
+ *	BLIT ops, and things like qemu and temlib may not actually implement
+ *	them.
+ *	The hardware cursor registers in the THC range are cut off by the size
+ *	attribute but seem to exist, although the parts that display the cursor
+ *	( the DAC's overlay support ) only exist on the S24.
+ * 	At this point I wouldn't be surprised if 8bit tcx actually supports
+ *	the DFB24 and RDFB32 ranges, with the upper planes returning garbage.
  */
+
 #define TCX_REG_DFB8	0
 #define TCX_REG_DFB24	1
 #define TCX_REG_STIP	2
@@ -60,6 +82,25 @@
 
 #define TCX_NREG	13
 
+/*
+ * The S24 provides the framebuffer RAM mapped in three ways:
+ * 26 bits used per pixel, in 32-bit words; the low-order 24 bits are
+ * blue, green, and red values, and the other two bits select the
+ * display modes, per pixel);
+ * 24 bits per pixel, in 32-bit words; the high-order byte reads as
+ * zero, and is ignored on writes (so the mode bits cannot be altered);
+ * 8 bits per pixel, unpadded; writes to this space do not modify the
+ * other 18 bits.
+ */
+#define TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses color map */
+#define TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses color map */
+#define TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, ignores color map */
+#define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
+/*
+ * The DAC actually supports other bits, for example to select between the
+ * red and green plane for 8bit output. Not useful here since we can only
+ * access the red plane as 8bit framebuffer.
+ */
 
 /*
  * The layout of the THC.
