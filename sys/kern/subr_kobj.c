@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.49 2014/07/09 05:50:51 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.50 2014/07/16 13:26:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.49 2014/07/09 05:50:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.50 2014/07/16 13:26:33 maxv Exp $");
 
 #include "opt_modular.h"
 
@@ -173,7 +173,6 @@ kobj_load(kobj_t ko)
 	KASSERT(ko->ko_source != NULL);
 
 	shdr = NULL;
-	mapsize = 0;
 	error = 0;
 	hdr = NULL;
 
@@ -361,8 +360,7 @@ kobj_load(kobj_t ko)
 	error = kobj_renamespace(ko->ko_symtab, ko->ko_symcnt,
 	    &ko->ko_strtab, &ko->ko_strtabsz);
 	if (error != 0) {
-		kobj_error(ko, "renamespace failed %d",
-		    error);
+		kobj_error(ko, "renamespace failed %d", error);
 		goto out;
 	}
 
@@ -393,6 +391,7 @@ kobj_load(kobj_t ko)
 	 */
 	alignmask = 0;
 	mapbase = 0;
+	mapsize = 0;
 	for (i = 0; i < hdr->e_shnum; i++) {
 		switch (shdr[i].sh_type) {
 		case SHT_PROGBITS:
@@ -414,6 +413,7 @@ kobj_load(kobj_t ko)
 	 */
 	if (mapsize == 0) {
 		kobj_error(ko, "no text/data/bss");
+		error = ENOEXEC;
 		goto out;
 	}
 	if (ko->ko_type == KT_MEMORY) {
@@ -449,6 +449,7 @@ kobj_load(kobj_t ko)
 				if (((vaddr_t)addr & alignmask) != 0) {
 					kobj_error(ko,
 					    "section %d not aligned", i);
+					error = ENOEXEC;
 					goto out;
 				}
 			} else {
@@ -463,16 +464,15 @@ kobj_load(kobj_t ko)
 				error = ko->ko_read(ko, &addr,
 				    shdr[i].sh_size, shdr[i].sh_offset, false);
 				if (error != 0) {
-					kobj_error(ko, "read failed %d",
-					    error);
+					kobj_error(ko, "read failed %d", error);
 					goto out;
 				}
 			} else if (ko->ko_type == KT_MEMORY &&
 			    shdr[i].sh_size != 0) {
-			    	kobj_error(ko, "non-loadable BSS "
+				kobj_error(ko, "non-loadable BSS "
 				    "section in pre-loaded module");
-				error = EINVAL;
-			    	goto out;
+				error = ENOEXEC;
+				goto out;
 			} else {
 				ko->ko_progtab[pb].name = "<<NOBITS>>";
 				memset(addr, 0, shdr[i].sh_size);
@@ -531,8 +531,7 @@ kobj_load(kobj_t ko)
 				    shdr[i].sh_size,
 				    shdr[i].sh_offset, true);
 				if (error != 0) {
-					kobj_error(ko, "read failed %d",
-					    error);
+					kobj_error(ko, "read failed %d", error);
 					goto out;
 				}
 			}
