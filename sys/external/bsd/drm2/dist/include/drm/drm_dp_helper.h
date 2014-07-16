@@ -41,22 +41,22 @@
  * 1.2 formally includes both eDP and DPI definitions.
  */
 
-#define AUX_NATIVE_WRITE	0x8
-#define AUX_NATIVE_READ		0x9
-#define AUX_I2C_WRITE		0x0
-#define AUX_I2C_READ		0x1
-#define AUX_I2C_STATUS		0x2
-#define AUX_I2C_MOT		0x4
+#define DP_AUX_I2C_WRITE		0x0
+#define DP_AUX_I2C_READ			0x1
+#define DP_AUX_I2C_STATUS		0x2
+#define DP_AUX_I2C_MOT			0x4
+#define DP_AUX_NATIVE_WRITE		0x8
+#define DP_AUX_NATIVE_READ		0x9
 
-#define AUX_NATIVE_REPLY_ACK	(0x0 << 4)
-#define AUX_NATIVE_REPLY_NACK	(0x1 << 4)
-#define AUX_NATIVE_REPLY_DEFER	(0x2 << 4)
-#define AUX_NATIVE_REPLY_MASK	(0x3 << 4)
+#define DP_AUX_NATIVE_REPLY_ACK		(0x0 << 0)
+#define DP_AUX_NATIVE_REPLY_NACK	(0x1 << 0)
+#define DP_AUX_NATIVE_REPLY_DEFER	(0x2 << 0)
+#define DP_AUX_NATIVE_REPLY_MASK	(0x3 << 0)
 
-#define AUX_I2C_REPLY_ACK	(0x0 << 6)
-#define AUX_I2C_REPLY_NACK	(0x1 << 6)
-#define AUX_I2C_REPLY_DEFER	(0x2 << 6)
-#define AUX_I2C_REPLY_MASK	(0x3 << 6)
+#define DP_AUX_I2C_REPLY_ACK		(0x0 << 2)
+#define DP_AUX_I2C_REPLY_NACK		(0x1 << 2)
+#define DP_AUX_I2C_REPLY_DEFER		(0x2 << 2)
+#define DP_AUX_I2C_REPLY_MASK		(0x3 << 2)
 
 /* AUX CH addresses */
 /* DPCD */
@@ -77,10 +77,10 @@
 #define DP_DOWNSTREAMPORT_PRESENT           0x005
 # define DP_DWN_STRM_PORT_PRESENT           (1 << 0)
 # define DP_DWN_STRM_PORT_TYPE_MASK         0x06
-/* 00b = DisplayPort */
-/* 01b = Analog */
-/* 10b = TMDS or HDMI */
-/* 11b = Other */
+# define DP_DWN_STRM_PORT_TYPE_DP           (0 << 1)
+# define DP_DWN_STRM_PORT_TYPE_ANALOG       (1 << 1)
+# define DP_DWN_STRM_PORT_TYPE_TMDS         (2 << 1)
+# define DP_DWN_STRM_PORT_TYPE_OTHER        (3 << 1)
 # define DP_FORMAT_CONVERSION               (1 << 3)
 # define DP_DETAILED_CAP_INFO_AVAILABLE	    (1 << 4) /* DPI */
 
@@ -266,9 +266,10 @@
 
 #define DP_TEST_REQUEST			    0x218
 # define DP_TEST_LINK_TRAINING		    (1 << 0)
-# define DP_TEST_LINK_PATTERN		    (1 << 1)
+# define DP_TEST_LINK_VIDEO_PATTERN	    (1 << 1)
 # define DP_TEST_LINK_EDID_READ		    (1 << 2)
 # define DP_TEST_LINK_PHY_TEST_PATTERN	    (1 << 3) /* DPCD >= 1.1 */
+# define DP_TEST_LINK_FAUX_PATTERN	    (1 << 4) /* DPCD >= 1.2 */
 
 #define DP_TEST_LINK_RATE		    0x219
 # define DP_LINK_RATE_162		    (0x6)
@@ -278,10 +279,20 @@
 
 #define DP_TEST_PATTERN			    0x221
 
+#define DP_TEST_CRC_R_CR		    0x240
+#define DP_TEST_CRC_G_Y			    0x242
+#define DP_TEST_CRC_B_CB		    0x244
+
+#define DP_TEST_SINK_MISC		    0x246
+#define DP_TEST_CRC_SUPPORTED		    (1 << 5)
+
 #define DP_TEST_RESPONSE		    0x260
 # define DP_TEST_ACK			    (1 << 0)
 # define DP_TEST_NAK			    (1 << 1)
 # define DP_TEST_EDID_CHECKSUM_WRITE	    (1 << 2)
+
+#define DP_TEST_SINK			    0x270
+#define DP_TEST_SINK_START	    (1 << 0)
 
 #define DP_SOURCE_OUI			    0x300
 #define DP_SINK_OUI			    0x400
@@ -290,6 +301,7 @@
 #define DP_SET_POWER                        0x600
 # define DP_SET_POWER_D0                    0x1
 # define DP_SET_POWER_D3                    0x2
+# define DP_SET_POWER_MASK                  0x3
 
 #define DP_PSR_ERROR_STATUS                 0x2006  /* XXX 1.2? */
 # define DP_PSR_LINK_CRC_ERROR              (1 << 0)
@@ -333,32 +345,186 @@ i2c_dp_aux_add_bus(struct i2c_adapter *adapter);
 
 
 #define DP_LINK_STATUS_SIZE	   6
-bool drm_dp_channel_eq_ok(u8 link_status[DP_LINK_STATUS_SIZE],
+bool drm_dp_channel_eq_ok(const u8 link_status[DP_LINK_STATUS_SIZE],
 			  int lane_count);
-bool drm_dp_clock_recovery_ok(u8 link_status[DP_LINK_STATUS_SIZE],
+bool drm_dp_clock_recovery_ok(const u8 link_status[DP_LINK_STATUS_SIZE],
 			      int lane_count);
-u8 drm_dp_get_adjust_request_voltage(u8 link_status[DP_LINK_STATUS_SIZE],
+u8 drm_dp_get_adjust_request_voltage(const u8 link_status[DP_LINK_STATUS_SIZE],
 				     int lane);
-u8 drm_dp_get_adjust_request_pre_emphasis(u8 link_status[DP_LINK_STATUS_SIZE],
+u8 drm_dp_get_adjust_request_pre_emphasis(const u8 link_status[DP_LINK_STATUS_SIZE],
 					  int lane);
 
-#define DP_RECEIVER_CAP_SIZE	0xf
-void drm_dp_link_train_clock_recovery_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE]);
-void drm_dp_link_train_channel_eq_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE]);
+#define DP_RECEIVER_CAP_SIZE		0xf
+#define EDP_PSR_RECEIVER_CAP_SIZE	2
+
+void drm_dp_link_train_clock_recovery_delay(const u8 dpcd[DP_RECEIVER_CAP_SIZE]);
+void drm_dp_link_train_channel_eq_delay(const u8 dpcd[DP_RECEIVER_CAP_SIZE]);
 
 u8 drm_dp_link_rate_to_bw_code(int link_rate);
 int drm_dp_bw_code_to_link_rate(u8 link_bw);
 
+struct edp_sdp_header {
+	u8 HB0; /* Secondary Data Packet ID */
+	u8 HB1; /* Secondary Data Packet Type */
+	u8 HB2; /* 7:5 reserved, 4:0 revision number */
+	u8 HB3; /* 7:5 reserved, 4:0 number of valid data bytes */
+} __packed;
+
+#define EDP_SDP_HEADER_REVISION_MASK		0x1F
+#define EDP_SDP_HEADER_VALID_PAYLOAD_BYTES	0x1F
+
+struct edp_vsc_psr {
+	struct edp_sdp_header sdp_header;
+	u8 DB0; /* Stereo Interface */
+	u8 DB1; /* 0 - PSR State; 1 - Update RFB; 2 - CRC Valid */
+	u8 DB2; /* CRC value bits 7:0 of the R or Cr component */
+	u8 DB3; /* CRC value bits 15:8 of the R or Cr component */
+	u8 DB4; /* CRC value bits 7:0 of the G or Y component */
+	u8 DB5; /* CRC value bits 15:8 of the G or Y component */
+	u8 DB6; /* CRC value bits 7:0 of the B or Cb component */
+	u8 DB7; /* CRC value bits 15:8 of the B or Cb component */
+	u8 DB8_31[24]; /* Reserved */
+} __packed;
+
+#define EDP_VSC_PSR_STATE_ACTIVE	(1<<0)
+#define EDP_VSC_PSR_UPDATE_RFB		(1<<1)
+#define EDP_VSC_PSR_CRC_VALUES_VALID	(1<<2)
+
 static inline int
-drm_dp_max_link_rate(u8 dpcd[DP_RECEIVER_CAP_SIZE])
+drm_dp_max_link_rate(const u8 dpcd[DP_RECEIVER_CAP_SIZE])
 {
 	return drm_dp_bw_code_to_link_rate(dpcd[DP_MAX_LINK_RATE]);
 }
 
 static inline u8
-drm_dp_max_lane_count(u8 dpcd[DP_RECEIVER_CAP_SIZE])
+drm_dp_max_lane_count(const u8 dpcd[DP_RECEIVER_CAP_SIZE])
 {
 	return dpcd[DP_MAX_LANE_COUNT] & DP_MAX_LANE_COUNT_MASK;
 }
+
+static inline bool
+drm_dp_enhanced_frame_cap(const u8 dpcd[DP_RECEIVER_CAP_SIZE])
+{
+	return dpcd[DP_DPCD_REV] >= 0x11 &&
+		(dpcd[DP_MAX_LANE_COUNT] & DP_ENHANCED_FRAME_CAP);
+}
+
+/*
+ * DisplayPort AUX channel
+ */
+
+/**
+ * struct drm_dp_aux_msg - DisplayPort AUX channel transaction
+ * @address: address of the (first) register to access
+ * @request: contains the type of transaction (see DP_AUX_* macros)
+ * @reply: upon completion, contains the reply type of the transaction
+ * @buffer: pointer to a transmission or reception buffer
+ * @size: size of @buffer
+ */
+struct drm_dp_aux_msg {
+	unsigned int address;
+	u8 request;
+	u8 reply;
+	void *buffer;
+	size_t size;
+};
+
+/**
+ * struct drm_dp_aux - DisplayPort AUX channel
+ * @ddc: I2C adapter that can be used for I2C-over-AUX communication
+ * @dev: pointer to struct device that is the parent for this AUX channel
+ * @transfer: transfers a message representing a single AUX transaction
+ *
+ * The .dev field should be set to a pointer to the device that implements
+ * the AUX channel.
+ *
+ * The .name field may be used to specify the name of the I2C adapter. If set to
+ * NULL, dev_name() of .dev will be used.
+ *
+ * Drivers provide a hardware-specific implementation of how transactions
+ * are executed via the .transfer() function. A pointer to a drm_dp_aux_msg
+ * structure describing the transaction is passed into this function. Upon
+ * success, the implementation should return the number of payload bytes
+ * that were transferred, or a negative error-code on failure. Helpers
+ * propagate errors from the .transfer() function, with the exception of
+ * the -EBUSY error, which causes a transaction to be retried. On a short,
+ * helpers will return -EPROTO to make it simpler to check for failure.
+ *
+ * An AUX channel can also be used to transport I2C messages to a sink. A
+ * typical application of that is to access an EDID that's present in the
+ * sink device. The .transfer() function can also be used to execute such
+ * transactions. The drm_dp_aux_register_i2c_bus() function registers an
+ * I2C adapter that can be passed to drm_probe_ddc(). Upon removal, drivers
+ * should call drm_dp_aux_unregister_i2c_bus() to remove the I2C adapter.
+ *
+ * Note that the aux helper code assumes that the .transfer() function
+ * only modifies the reply field of the drm_dp_aux_msg structure.  The
+ * retry logic and i2c helpers assume this is the case.
+ */
+struct drm_dp_aux {
+	const char *name;
+	struct i2c_adapter ddc;
+	struct device *dev;
+
+	ssize_t (*transfer)(struct drm_dp_aux *aux,
+			    struct drm_dp_aux_msg *msg);
+};
+
+ssize_t drm_dp_dpcd_read(struct drm_dp_aux *aux, unsigned int offset,
+			 void *buffer, size_t size);
+ssize_t drm_dp_dpcd_write(struct drm_dp_aux *aux, unsigned int offset,
+			  void *buffer, size_t size);
+
+/**
+ * drm_dp_dpcd_readb() - read a single byte from the DPCD
+ * @aux: DisplayPort AUX channel
+ * @offset: address of the register to read
+ * @valuep: location where the value of the register will be stored
+ *
+ * Returns the number of bytes transferred (1) on success, or a negative
+ * error code on failure.
+ */
+static inline ssize_t drm_dp_dpcd_readb(struct drm_dp_aux *aux,
+					unsigned int offset, u8 *valuep)
+{
+	return drm_dp_dpcd_read(aux, offset, valuep, 1);
+}
+
+/**
+ * drm_dp_dpcd_writeb() - write a single byte to the DPCD
+ * @aux: DisplayPort AUX channel
+ * @offset: address of the register to write
+ * @value: value to write to the register
+ *
+ * Returns the number of bytes transferred (1) on success, or a negative
+ * error code on failure.
+ */
+static inline ssize_t drm_dp_dpcd_writeb(struct drm_dp_aux *aux,
+					 unsigned int offset, u8 value)
+{
+	return drm_dp_dpcd_write(aux, offset, &value, 1);
+}
+
+int drm_dp_dpcd_read_link_status(struct drm_dp_aux *aux,
+				 u8 status[DP_LINK_STATUS_SIZE]);
+
+/*
+ * DisplayPort link
+ */
+#define DP_LINK_CAP_ENHANCED_FRAMING (1 << 0)
+
+struct drm_dp_link {
+	unsigned char revision;
+	unsigned int rate;
+	unsigned int num_lanes;
+	unsigned long capabilities;
+};
+
+int drm_dp_link_probe(struct drm_dp_aux *aux, struct drm_dp_link *link);
+int drm_dp_link_power_up(struct drm_dp_aux *aux, struct drm_dp_link *link);
+int drm_dp_link_configure(struct drm_dp_aux *aux, struct drm_dp_link *link);
+
+int drm_dp_aux_register_i2c_bus(struct drm_dp_aux *aux);
+void drm_dp_aux_unregister_i2c_bus(struct drm_dp_aux *aux);
 
 #endif /* _DRM_DP_HELPER_H_ */
