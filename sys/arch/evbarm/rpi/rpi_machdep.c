@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.41 2014/04/06 12:43:19 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.42 2014/07/16 23:54:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.41 2014/04/06 12:43:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.42 2014/07/16 23:54:32 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_arm_debug.h"
 
 #include "sdhc.h"
 #include "bcmdwctwo.h"
