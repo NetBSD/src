@@ -288,12 +288,13 @@ VCHIQ_STATUS_T vchiq_open_service(
 		NULL);
 
 	if (service) {
+		*phandle = service->handle;
 		status = vchiq_open_service_internal(service,
 		    (uintptr_t)current);
-		if (status == VCHIQ_SUCCESS)
-			*phandle = service->handle;
-		else
+		if (status != VCHIQ_SUCCESS) {
 			vchiq_remove_service(service->handle);
+			*phandle = VCHIQ_SERVICE_HANDLE_INVALID;
+		}
 	}
 
 failed:
