@@ -26,6 +26,22 @@
 
 #define FORCEWAKE_ACK_TIMEOUT_MS 2
 
+#ifdef __NetBSD__
+
+#define	__raw_i915_read8(dev_priv, reg) DRM_READ8((dev_priv)->regs_map, (reg))
+#define	__raw_i915_write8(dev_priv, reg, val) DRM_WRITE8((dev_priv)->regs_map, (reg), (val))
+
+#define	__raw_i915_read16(dev_priv, reg) DRM_READ16((dev_priv)->regs_map, (reg))
+#define	__raw_i915_write16(dev_priv, reg, val) DRM_WRITE16((dev_priv)->regs_map, (reg), (val))
+
+#define	__raw_i915_read32(dev_priv, reg) DRM_READ32((dev_priv)->regs_map, (reg))
+#define	__raw_i915_write32(dev_priv, reg, val) DRM_WRITE32((dev_priv)->regs_map, (reg), (val))
+
+#define	__raw_i915_read64(dev_priv, reg) DRM_READ64((dev_priv)->regs_map, (reg))
+#define	__raw_i915_write64(dev_priv, reg, val) DRM_WRITE64((dev_priv)->regs_map, (reg), (val))
+
+#else
+
 #define __raw_i915_read8(dev_priv__, reg__) readb((dev_priv__)->regs + (reg__))
 #define __raw_i915_write8(dev_priv__, reg__, val__) writeb(val__, (dev_priv__)->regs + (reg__))
 
@@ -37,6 +53,8 @@
 
 #define __raw_i915_read64(dev_priv__, reg__) readq((dev_priv__)->regs + (reg__))
 #define __raw_i915_write64(dev_priv__, reg__, val__) writeq(val__, (dev_priv__)->regs + (reg__))
+
+#endif
 
 #define __raw_posting_read(dev_priv__, reg__) (void)__raw_i915_read32(dev_priv__, reg__)
 
@@ -852,6 +870,9 @@ void intel_uncore_fini(struct drm_device *dev)
 	/* Paranoia: make sure we have disabled everything before we exit. */
 	intel_uncore_sanitize(dev);
 	intel_uncore_forcewake_reset(dev, false);
+#ifdef __NetBSD__
+	teardown_timer(&dev_priv->uncore.force_wake_timer);
+#endif
 }
 
 static const struct register_whitelist {
