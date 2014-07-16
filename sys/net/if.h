@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.171 2014/07/14 02:34:36 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.172 2014/07/16 03:17:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -242,6 +242,9 @@ struct ifnet_lock {
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
+struct bridge_softc;
+struct bridge_iflist;
+
 typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
@@ -289,8 +292,8 @@ typedef struct ifnet {
 	 */
 	struct ifaddr	*if_hwdl;
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
-	void	*if_bridge;		/* bridge glue */
-	void	*if_bridgeif;		/* shortcut to interface list entry */
+	struct bridge_softc	*if_bridge;	/* bridge glue */
+	struct bridge_iflist	*if_bridgeif;	/* shortcut to interface list entry */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
 	pfil_head_t *	if_pfil;	/* filtering point */
 	uint64_t if_capabilities;	/* interface capabilities */
