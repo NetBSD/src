@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.20 2013/08/16 02:21:53 jmcneill Exp $
+#	$NetBSD: BEAGLEBONE,v 1.21 2014/07/16 18:36:46 bouyer Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -243,45 +243,77 @@ omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
-# onboard video
-#omapfb* 	at obio0 addr 0x48050000 size 0x10000
+# onboard video, experimental. Video mode is hardcoded in the driver
+#tifb* 	at obio0 addr 0x4830E000 size 0x1000 intr 36
 
 # make sure the console display is always wsdisplay0
-#wsdisplay0	at wsemuldisplaydev? console 1
 #wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-#options 	WSEMUL_VT100		# sun terminal emulation
-#options 	WS_DEFAULT_FG=WSCOL_BLACK
-#options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-#options		WS_KERNEL_FG=WSCOL_GREEN
-#options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
-#options		FONT_QVSS8x15
-#options 	FONT_GALLANT12x22	# the console font
+options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-# On-board USB
-#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
-#ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
-#usb*		at ohci?
-#usb*		at ehci?
-#uhub*		at usb?
-#uhub*		at uhub? port ?
-#umass*		at uhub? port ? configuration ? interface ?
-#wd*		at umass?
-#uhidev*		at uhub?
-#ukbd*		at uhidev?
-#ums*		at uhidev?
-#wskbd*		at ukbd?
-#wsmouse*	at ums?
+# On-board USB. Experimental
+tiotg* 	at obio0 addr 0x47400000 size 0x5000 intrbase 17
+motg*	at tiotg? port ?
+usb*		at motg?
+uhub*		at usb?
+uhub*		at uhub? port ?
+uhidev*		at uhub?
+ukbd*		at uhidev?
+ums*		at uhidev?
+wskbd*		at ukbd?
+wsmouse*	at ums?
+# USB Modem
+umodem* at uhub? port ? configuration ?
+ucom*	at umodem?
+# Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
 
-#axe*		at uhub? port ? configuration ? interface ?
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
+
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
+
+uipaq*	at uhub? port ?		# iPAQ PDAs
+ucom*	at uipaq? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
+
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
+
+
+umass*		at uhub? port ? configuration ? interface ?
+wd*		at umass?
+# SCSI bus support
+scsibus*	at scsi?
+# SCSI devices
+sd*		at scsibus? target ? lun ?      # SCSI disk drives
+
+axe*		at uhub? port ? configuration ? interface ?
 
 # Ethernet
 cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
