@@ -33,14 +33,14 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <x86/machdep.h>	/* x86_select_freelist */
-
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_prot.h>
+
+#include <drm/bus_dma_hacks.h>
 #endif
 
 #include <drm/drmP.h>
@@ -57,7 +57,9 @@
 #include <linux/errno.h>
 #include <linux/time.h>
 #include <linux/err.h>
+#include <linux/bitops.h>
 #include <asm/param.h>
+#include <asm/page.h>
 
 static void i915_gem_object_flush_gtt_write_domain(struct drm_i915_gem_object *obj);
 static void i915_gem_object_flush_cpu_write_domain(struct drm_i915_gem_object *obj,
@@ -141,9 +143,16 @@ i915_gem_wait_for_error(struct i915_gpu_error *error)
 	 * userspace. If it takes that long something really bad is going on and
 	 * we should simply try to bail out and fail as gracefully as possible.
 	 */
+#ifdef __NetBSD__
+	spin_lock(&error->reset_lock);
+	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &error->reset_queue, &error->reset_lock,
+	    10*HZ, EXIT_COND);
+	spin_unlock(&error->reset_lock);
+#else
 	ret = wait_event_interruptible_timeout(error->reset_queue,
 					       EXIT_COND,
 					       10*HZ);
+#endif
 	if (ret == 0) {
 		DRM_ERROR("Timed out waiting for the gpu reset to complete\n");
 		return -EIO;
@@ -236,6 +245,7 @@ static void i915_gem_object_detach_phys(struct drm_i915_gem_object *obj)
 
 	if (obj->madv == I915_MADV_WILLNEED) {
 #ifdef __NetBSD__
+		const char *vaddr = phys->vaddr;
 		unsigned i;
 
 		for (i = 0; i < obj->base.size / PAGE_SIZE; i++) {
@@ -253,9 +263,9 @@ static void i915_gem_object_detach_phys(struct drm_i915_gem_object *obj)
 			    struct page, p_vmp);
 			char *const dst = kmap_atomic(page);
 			(void)memcpy(dst, vaddr + (i*PAGE_SIZE), PAGE_SIZE);
-			kunmap_atomic(page);
+			drm_clflush_virt_range(dst, PAGE_SIZE);
+			kunmap_atomic(dst);
 
-			drm_clflush_page(page);
 			vm_page->flags &= ~PG_CLEAN;
 			/* XXX mark page accessed */
 			uvm_obj_unwirepages(obj->base.gemo_shm_uao,
@@ -314,8 +324,13 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 	if (obj->madv != I915_MADV_WILLNEED)
 		return -EFAULT;
 
+#ifdef __NetBSD__
+	if (obj->base.gemo_shm_uao == NULL)
+		return -EINVAL;
+#else
 	if (obj->base.filp == NULL)
 		return -EINVAL;
+#endif
 
 	/* create a new object */
 	phys = drm_pci_alloc(obj->base.dev, obj->base.size, align);
@@ -323,7 +338,7 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		return -ENOMEM;
 
 	vaddr = phys->vaddr;
-#ifdef __NetBSD__
+#ifndef __NetBSD__
 #ifdef CONFIG_X86
 	set_memory_wc((unsigned long)vaddr, phys->size / PAGE_SIZE);
 #endif
@@ -336,6 +351,9 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 #ifdef __NetBSD__
 		struct pglist pages;
 		int ret;
+
+		TAILQ_INIT(&pages);
+
 		/* XXX errno NetBSD->Linux */
 		ret = -uvm_obj_wirepages(obj->base.gemo_shm_uao, i*PAGE_SIZE,
 		    (i+1)*PAGE_SIZE, &pages);
@@ -344,7 +362,7 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 			return ret;
 		}
 		KASSERT(!TAILQ_EMPTY(&pages));
-		page = TAILQ_FIRST(&pages);
+		page = container_of(TAILQ_FIRST(&pages), struct page, p_vmp);
 #else
 		page = shmem_read_mapping_page(mapping, i);
 		if (IS_ERR(page)) {
@@ -360,8 +378,10 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		memcpy(vaddr, src, PAGE_SIZE);
 		kunmap_atomic(src);
 
+#ifndef __NetBSD__
 		mark_page_accessed(page);
 		page_cache_release(page);
+#endif
 
 		vaddr += PAGE_SIZE;
 	}
@@ -376,7 +396,7 @@ i915_gem_phys_pwrite(struct drm_i915_gem_object *obj,
 		     struct drm_file *file_priv)
 {
 	struct drm_device *dev = obj->base.dev;
-	void *vaddr = obj->phys_handle->vaddr + args->offset;
+	void *vaddr = (char *)obj->phys_handle->vaddr + args->offset;
 	char __user *user_data = to_user_ptr(args->data_ptr);
 
 	if (__copy_from_user_inatomic_nocache(vaddr, user_data, args->size)) {
@@ -444,10 +464,10 @@ i915_gem_dumb_create(struct drm_file *file,
 		     struct drm_mode_create_dumb *args)
 {
 	/* have to work out size/pitch and return them */
-#ifdef __NetBSD__		/* ALIGN already means something.  */
+#ifdef __NetBSD__		/* ALIGN means something else.  */
 	args->pitch = round_up(args->width * DIV_ROUND_UP(args->bpp, 8), 64);
 #else
-	args->pitch = ALIGN(args->width * ((args->bpp + 7) / 8), 64);
+	args->pitch = ALIGN(args->width * DIV_ROUND_UP(args->bpp, 8), 64);
 #endif
 	args->size = args->pitch * args->height;
 	return i915_gem_create(file, dev,
@@ -475,7 +495,7 @@ __copy_to_user_swizzled(char __user *cpu_vaddr,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
-#ifdef __NetBSD__
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
 		int cacheline_end = round_up(gpu_offset + 1, 64);
 #else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
@@ -505,7 +525,7 @@ __copy_from_user_swizzled(char *gpu_vaddr, int gpu_offset,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
-#ifdef __NetBSD__
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
 		int cacheline_end = round_up(gpu_offset + 1, 64);
 #else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
@@ -539,8 +559,13 @@ int i915_gem_obj_prepare_shmem_read(struct drm_i915_gem_object *obj,
 
 	*needs_clflush = 0;
 
+#ifdef __NetBSD__
+	if (obj->base.gemo_shm_uao == NULL)
+		return -EINVAL;
+#else
 	if (!obj->base.filp)
 		return -EINVAL;
+#endif
 
 	if (!(obj->base.read_domains & I915_GEM_DOMAIN_CPU)) {
 		/* If we're not in the cpu read domain, set ourself into the gtt
@@ -812,10 +837,16 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 		goto out;
 	}
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	/* prime objects have no backing filp to GEM pread/pwrite
 	 * pages from.
 	 */
+#ifdef __NetBSD__
+	/* Also stolen objects.  */
+	if (obj->base.gemo_shm_uao == NULL) {
+		ret = -EINVAL;
+		goto out;
+	}
+#else
 	if (!obj->base.filp) {
 		ret = -EINVAL;
 		goto out;
@@ -1207,10 +1238,16 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 		goto out;
 	}
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	/* prime objects have no backing filp to GEM pread/pwrite
 	 * pages from.
 	 */
+#ifdef __NetBSD__
+	/* Also stolen objects.  */
+	if (obj->base.gemo_shm_uao == NULL) {
+		ret = -EINVAL;
+		goto out;
+	}
+#else
 	if (!obj->base.filp) {
 		ret = -EINVAL;
 		goto out;
@@ -1288,10 +1325,12 @@ i915_gem_check_olr(struct intel_ring_buffer *ring, u32 seqno)
 	return ret;
 }
 
+#ifndef __NetBSD__
 static void fake_irq(unsigned long data)
 {
 	wake_up_process((struct task_struct *)data);
 }
+#endif
 
 static bool missed_irq(struct drm_i915_private *dev_priv,
 		       struct intel_ring_buffer *ring)
@@ -1325,6 +1364,81 @@ static bool can_wait_boost(struct drm_i915_file_private *file_priv)
  * Returns 0 if the seqno was found within the alloted time. Else returns the
  * errno with remaining time filled in timeout argument.
  */
+#ifdef __NetBSD__
+static int
+__wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
+    bool interruptible, struct timespec *timeout,
+    struct drm_i915_file_private *file_priv)
+{
+	struct drm_device *dev = ring->dev;
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	bool irq_test_in_progress;
+	struct timespec before, after;
+	int ticks;
+	bool wedged;
+	int ret;
+
+	irq_test_in_progress = (dev_priv->gpu_error.test_irq_rings &
+	    intel_ring_flag(ring));
+	__insn_barrier();
+
+	if (i915_seqno_passed(ring->get_seqno(ring, true), seqno))
+		return 0;
+
+	if (timeout)
+		ticks = mstohz(timespec_to_ns(timeout) / 1000000);
+
+	if (INTEL_INFO(dev)->gen >= 6 && can_wait_boost(file_priv)) {
+		gen6_rps_boost(dev_priv);
+		if (file_priv)
+			mod_delayed_work(dev_priv->wq,
+					 &file_priv->mm.idle_work,
+					 msecs_to_jiffies(100));
+	}
+
+	if (!irq_test_in_progress && WARN_ON(!ring->irq_get(ring)))
+		return -ENODEV;
+
+	nanotime(&before);
+	spin_lock(&dev_priv->irq_lock);
+#define	EXIT_COND							      \
+	(((reset_counter != atomic_read(&dev_priv->gpu_error.reset_counter))  \
+	    ? wedged = true : false) ||					      \
+	    i915_seqno_passed(ring->get_seqno(ring, false),		      \
+		seqno))
+
+	if (timeout) {
+		/*
+		 * XXX This missed_irq business smells like unlocked
+		 * Linux waitqueue nonsense.
+		 */
+		if (missed_irq(dev_priv, ring))
+			ticks = 1;
+		if (interruptible)
+			DRM_SPIN_TIMED_WAIT_UNTIL(ret, &ring->irq_queue,
+			    &dev_priv->irq_lock, ticks, EXIT_COND);
+		else
+			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
+			    &dev_priv->irq_lock, ticks, EXIT_COND);
+	} else {
+		if (interruptible)
+			DRM_SPIN_WAIT_UNTIL(ret, &ring->irq_queue,
+			    &dev_priv->irq_lock, EXIT_COND);
+		else
+			DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
+			    &dev_priv->irq_lock, EXIT_COND);
+	}
+#undef	EXIT_COND
+	spin_unlock(&dev_priv->irq_lock);
+	nanotime(&after);
+
+	if (!irq_test_in_progress)
+		ring->irq_put(ring);
+	if (timeout)
+		timespecsub(&after, &before, timeout);
+	return MAX(ret, 0);	/* ignore remaining ticks */
+}
+#else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 			unsigned reset_counter,
 			bool interruptible,
@@ -1426,6 +1540,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 
 	return ret;
 }
+#endif
 
 /**
  * Waits for a sequence number to be signaled, and cleans up the
@@ -1657,10 +1772,16 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	if (obj == NULL)
 		return -ENOENT;
 
-#ifndef __NetBSD__    /* XXX drm prime */
 	/* prime objects have no backing filp to GEM mmap
 	 * pages from.
 	 */
+#ifdef __NetBSD__
+	/* Also stolen objects (XXX can we get them here?)  */
+	if (obj->gemo_shm_uao == NULL) {
+		drm_gem_object_unreference_unlocked(obj);
+		return -EINVAL;
+	}
+#else
 	if (!obj->filp) {
 		drm_gem_object_unreference_unlocked(obj);
 		return -EINVAL;
@@ -1719,14 +1840,24 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	KASSERT(byte_offset <= obj->base.size);
 	page_offset = (byte_offset >> PAGE_SHIFT);
 
+	intel_runtime_pm_get(dev_priv);
+
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
 		goto out;
 
 	trace_i915_gem_object_fault(obj, page_offset, true, write);
 
-	/* Now bind it into the GTT if needed */
-	ret = i915_gem_object_pin(obj, 0, true, false);
+	ret = i915_gem_object_wait_rendering__nonblocking(obj, NULL, !write);
+	if (ret)
+		goto unlock;
+
+	if ((obj->cache_level != I915_CACHE_NONE) && !HAS_LLC(dev)) {
+		ret = -EINVAL;
+		goto unlock;
+	}
+
+	ret = i915_gem_obj_ggtt_pin(obj, 0, PIN_MAPPABLE);
 	if (ret)
 		goto unlock;
 
@@ -1740,19 +1871,22 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 
 	obj->fault_mappable = true;
 
-	/* Finally, remap it using the new GTT offset */
 	/* XXX errno NetBSD->Linux */
 	ret = -i915_udv_fault(ufi, vaddr, pps, npages, centeridx, access_type,
-	    flags, (dev_priv->mm.gtt_base_addr + obj->gtt_offset));
+	    flags,
+	    (dev_priv->gtt.mappable_base + i915_gem_obj_ggtt_offset(obj)));
 unpin:
-	i915_gem_object_unpin(obj);
+	i915_gem_object_ggtt_unpin(obj);
 unlock:
 	mutex_unlock(&dev->struct_mutex);
 out:
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	if (ret == -ERESTART)
 		uvm_wait("i915flt");
-	return ret;
+	/* XXX Deal with GPU hangs here...  */
+	intel_runtime_pm_put(dev_priv);
+	/* XXX errno Linux->NetBSD */
+	return -ret;
 }
 
 /*
@@ -2182,6 +2316,9 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 	i915_gem_object_free_mmap_offset(obj);
 
 #ifdef __NetBSD__
+	if (obj->base.gemo_shm_uao == NULL)
+		return;
+
 	{
 		struct uvm_object *const uobj = obj->base.gemo_shm_uao;
 
@@ -2227,7 +2364,7 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 	ret = i915_gem_object_set_to_cpu_domain(obj, true);
 	if (ret) {
 		WARN_ON(ret != -EIO);
-		i915_gem_clflush_object(obj);
+		i915_gem_clflush_object(obj, true);
 		obj->base.read_domains = obj->base.write_domain =
 		    I915_GEM_DOMAIN_CPU;
 	}
@@ -2457,6 +2594,8 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 			goto fail2;
 		}
 	}
+
+	/* XXX Should create the DMA map when creating the object.  */
 
 	/* XXX errno NetBSD->Linux */
 	error = -bus_dmamap_create(dev->dmat, obj->base.size, obj->igo_nsegs,
@@ -4733,10 +4872,11 @@ static const struct drm_i915_gem_object_ops i915_gem_object_ops = {
 struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 						  size_t size)
 {
-	struct drm_i915_gem_object *obj;
 #ifdef __NetBSD__
-	uint64_t maxaddr;
-#else
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+#endif
+	struct drm_i915_gem_object *obj;
+#ifndef __NetBSD__
 	struct address_space *mapping;
 	gfp_t mask;
 #endif
@@ -4751,21 +4891,7 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 	}
 
 #ifdef __NetBSD__
-	/*
-	 * 965GM can't handle >32-bit paddrs; all other models can't
-	 * handle >40-bit paddrs.
-	 *
-	 * XXX I think this table is incomplete.  It should be
-	 * synchronized with the other DMA address constraints
-	 * scattered throughout DRM.
-	 *
-	 * XXX DMA limits
-	 */
-	if (IS_CRESTLINE(dev) || IS_BROADWATER(dev))
-		maxaddr = 0xffffffffULL;
-	else
-		maxaddr = 0xffffffffffULL;
-	uao_set_pgfl(obj->base.gemo_shm_uao, x86_select_freelist(maxaddr));
+	uao_set_pgfl(obj->base.gemo_shm_uao, dev_priv->gtt.pgfl);
 #else
 	mask = GFP_HIGHUSER | __GFP_RECLAIMABLE;
 	if (IS_CRESTLINE(dev) || IS_BROADWATER(dev)) {
@@ -5263,7 +5389,12 @@ i915_gem_load(struct drm_device *dev)
 			  i915_gem_retire_work_handler);
 	INIT_DELAYED_WORK(&dev_priv->mm.idle_work,
 			  i915_gem_idle_work_handler);
+#ifdef __NetBSD__
+	spin_lock_init(&dev_priv->gpu_error.reset_lock);
+	DRM_INIT_WAITQUEUE(&dev_priv->gpu_error.reset_queue, "i915errst");
+#else
 	init_waitqueue_head(&dev_priv->gpu_error.reset_queue);
+#endif
 
 	/* On GEN3 we really need to make sure the ARB C3 LP bit is set */
 	if (IS_GEN3(dev)) {
@@ -5484,7 +5615,6 @@ unsigned long i915_gem_obj_size(struct drm_i915_gem_object *o,
 
 	return 0;
 }
-#endif
 
 static unsigned long
 i915_gem_inactive_scan(struct shrinker *shrinker, struct shrink_control *sc)
@@ -5522,6 +5652,7 @@ i915_gem_inactive_scan(struct shrinker *shrinker, struct shrink_control *sc)
 		mutex_unlock(&dev->struct_mutex);
 
 	return freed;
+#endif
 }
 
 struct i915_vma *i915_gem_obj_to_ggtt(struct drm_i915_gem_object *obj)

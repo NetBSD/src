@@ -71,8 +71,8 @@ struct  intel_ring_buffer {
 #define I915_NUM_RINGS 4
 	u32		mmio_base;
 #ifdef __NetBSD__
-	struct drm_local_map	virtual_start_map;
-	void __ring_iomem	*virtual_start;
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
 #else
 	void		__iomem *virtual_start;
 #endif
@@ -290,7 +290,7 @@ static inline void intel_ring_emit(struct intel_ring_buffer *ring,
 				   u32 data)
 {
 #ifdef __NetBSD__
-	DRM_WRITE32(&ring->virtual_start_map, ring->tail, data);
+	bus_space_write_4(ring->bst, ring->bsh, ring->tail, data);
 #else
 	iowrite32(data, ring->virtual_start + ring->tail);
 #endif

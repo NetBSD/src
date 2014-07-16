@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,14 +33,18 @@
 #define _LINUX_PCI_H_
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cdefs.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
+#include <machine/limits.h>
+
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/agpvar.h>
 
 #include <linux/ioport.h>
 
@@ -71,7 +75,19 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define	PCI_SLOT(DEVFN)		__SHIFTOUT((DEVFN), __BITS(3, 7))
 #define	PCI_FUNC(DEVFN)		__SHIFTOUT((DEVFN), __BITS(0, 2))
 
+#define	PCI_NUM_RESOURCES	((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
+
 #define	PCI_CAP_ID_AGP	PCI_CAP_AGP
+
+typedef int pci_power_t;
+
+#define	PCI_D0		0
+#define	PCI_D1		1
+#define	PCI_D2		2
+#define	PCI_D3hot	3
+#define	PCI_D3cold	4
+
+#define	__pci_iomem
 
 struct pci_dev {
 	struct pci_attach_args	pd_pa;
@@ -83,6 +99,15 @@ struct pci_dev {
 	bus_size_t		pd_rom_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
+	struct {
+		pcireg_t		type;
+		bus_addr_t		addr;
+		bus_size_t		size;
+		int			flags;
+		bus_space_tag_t		bst;
+		bus_space_handle_t	bsh;
+		void __pci_iomem	*kva;
+	}			pd_resources[PCI_NUM_RESOURCES];
 	struct device		dev;		/* XXX Don't believe me!  */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
@@ -107,6 +132,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 {
 	const uint32_t subsystem_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG);
+	unsigned i;
 
 	pdev->pd_pa = *pa;
 	pdev->pd_kludges = kludges;
@@ -121,6 +147,24 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 	pdev->revision = PCI_REVISION(pa->pa_class);
 	pdev->class = __SHIFTOUT(pa->pa_class, 0xffffff00UL); /* ? */
 	pdev->msi_enabled = false;
+
+	CTASSERT(__arraycount(pdev->pd_resources) == PCI_NUM_RESOURCES);
+	for (i = 0; i < PCI_NUM_RESOURCES; i++) {
+		const int reg = PCI_BAR(i);
+
+		pdev->pd_resources[i].type = pci_mapreg_type(pa->pa_pc,
+		    pa->pa_tag, reg);
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg,
+			pdev->pd_resources[i].type,
+			&pdev->pd_resources[i].addr,
+			&pdev->pd_resources[i].size,
+			&pdev->pd_resources[i].flags)) {
+			pdev->pd_resources[i].addr = 0;
+			pdev->pd_resources[i].size = 0;
+			pdev->pd_resources[i].flags = 0;
+		}
+		pdev->pd_resources[i].kva = NULL;
+	}
 }
 
 static inline int
@@ -130,33 +174,37 @@ pci_find_capability(struct pci_dev *pdev, int cap)
 	    NULL, NULL);
 }
 
-static inline void
+static inline int
 pci_read_config_dword(struct pci_dev *pdev, int reg, uint32_t *valuep)
 {
 	KASSERT(!ISSET(reg, 3));
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg);
+	return 0;
 }
 
-static inline void
+static inline int
 pci_read_config_word(struct pci_dev *pdev, int reg, uint16_t *valuep)
 {
 	KASSERT(!ISSET(reg, 1));
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
 	    (reg &~ 3)) >> (8 * (reg & 3));
+	return 0;
 }
 
-static inline void
+static inline int
 pci_read_config_byte(struct pci_dev *pdev, int reg, uint8_t *valuep)
 {
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
 	    (reg &~ 1)) >> (8 * (reg & 1));
+	return 0;
 }
 
-static inline void
+static inline int
 pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 {
 	KASSERT(!ISSET(reg, 3));
 	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, value);
+	return 0;
 }
 
 static inline void
@@ -176,17 +224,19 @@ pci_rmw_config(struct pci_dev *pdev, int reg, unsigned int bytes,
 	pci_write_config_dword(pdev, reg32, value32);
 }
 
-static inline void
+static inline int
 pci_write_config_word(struct pci_dev *pdev, int reg, uint16_t value)
 {
 	KASSERT(!ISSET(reg, 1));
 	pci_rmw_config(pdev, reg, 2, value);
+	return 0;
 }
 
-static inline void
+static inline int
 pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
 {
 	pci_rmw_config(pdev, reg, 1, value);
+	return 0;
 }
 
 /*
@@ -312,14 +362,28 @@ pci_kludgey_match_isa_bridge(const struct pci_attach_args *pa)
 	return 1;
 }
 
+static inline void
+pci_dev_put(struct pci_dev *pdev)
+{
+
+	if (pdev == NULL)
+		return;
+
+	KASSERT(ISSET(pdev->pd_kludges, NBPCI_KLUDGE_GET_MUMBLE));
+	kmem_free(pdev, sizeof(*pdev));
+}
+
 static inline struct pci_dev *
-pci_get_class(uint32_t class_subclass_shifted __unused,
-    struct pci_dev *from __unused)
+pci_get_class(uint32_t class_subclass_shifted __unused, struct pci_dev *from)
 {
 	struct pci_attach_args pa;
 
 	KASSERT(class_subclass_shifted == (PCI_CLASS_BRIDGE_ISA << 8));
-	KASSERT(from == NULL);
+
+	if (from != NULL) {
+		pci_dev_put(from);
+		return NULL;
+	}
 
 	if (!pci_find_device(&pa, &pci_kludgey_match_isa_bridge))
 		return NULL;
@@ -328,14 +392,6 @@ pci_get_class(uint32_t class_subclass_shifted __unused,
 	linux_pci_dev_init(pdev, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
 
 	return pdev;
-}
-
-static inline void
-pci_dev_put(struct pci_dev *pdev)
-{
-
-	KASSERT(ISSET(pdev->pd_kludges, NBPCI_KLUDGE_GET_MUMBLE));
-	kmem_free(pdev, sizeof(*pdev));
 }
 
 #define	__pci_rom_iomem
@@ -380,6 +436,82 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 	*sizep = size;
 	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst, bsh);
 	return pdev->pd_rom_vaddr;
+}
+
+static inline bus_addr_t
+pci_resource_start(struct pci_dev *pdev, unsigned i)
+{
+
+	KASSERT(i < PCI_NUM_RESOURCES);
+	return pdev->pd_resources[i].addr;
+}
+
+static inline bus_size_t
+pci_resource_len(struct pci_dev *pdev, unsigned i)
+{
+
+	KASSERT(i < PCI_NUM_RESOURCES);
+	return pdev->pd_resources[i].size;
+}
+
+static inline bus_addr_t
+pci_resource_end(struct pci_dev *pdev, unsigned i)
+{
+
+	return pci_resource_start(pdev, i) + (pci_resource_len(pdev, i) - 1);
+}
+
+static inline int
+pci_resource_flags(struct pci_dev *pdev, unsigned i)
+{
+
+	KASSERT(i < PCI_NUM_RESOURCES);
+	return pdev->pd_resources[i].flags;
+}
+
+static inline void __pci_iomem *
+pci_iomap(struct pci_dev *pdev, unsigned i, bus_size_t size)
+{
+	int error;
+
+	KASSERT(i < PCI_NUM_RESOURCES);
+	KASSERT(pdev->pd_resources[i].kva == NULL);
+
+	if (PCI_MAPREG_TYPE(pdev->pd_resources[i].type) != PCI_MAPREG_TYPE_MEM)
+		return NULL;
+	if (pdev->pd_resources[i].size < size)
+		return NULL;
+	error = bus_space_map(pdev->pd_pa.pa_memt, pdev->pd_resources[i].addr,
+	    size, BUS_SPACE_MAP_LINEAR | pdev->pd_resources[i].flags,
+	    &pdev->pd_resources[i].bsh);
+	if (error) {
+		/* Horrible hack: try asking the fake AGP device.  */
+		if (!agp_i810_borrow(pdev->pd_resources[i].addr, size,
+			&pdev->pd_resources[i].bsh))
+			return NULL;
+	}
+	pdev->pd_resources[i].bst = pdev->pd_pa.pa_memt;
+	pdev->pd_resources[i].kva = bus_space_vaddr(pdev->pd_resources[i].bst,
+	    pdev->pd_resources[i].bsh);
+
+	return pdev->pd_resources[i].kva;
+}
+
+static inline void
+pci_iounmap(struct pci_dev *pdev, void __pci_iomem *kva)
+{
+	unsigned i;
+
+	CTASSERT(__arraycount(pdev->pd_resources) == PCI_NUM_RESOURCES);
+	for (i = 0; i < PCI_NUM_RESOURCES; i++) {
+		if (pdev->pd_resources[i].kva == kva)
+			break;
+	}
+	KASSERT(i < PCI_NUM_RESOURCES);
+
+	pdev->pd_resources[i].kva = NULL;
+	bus_space_unmap(pdev->pd_resources[i].bst, pdev->pd_resources[i].bsh,
+	    pdev->pd_resources[i].size);
 }
 
 #endif  /* _LINUX_PCI_H_ */
