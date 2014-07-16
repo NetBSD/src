@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.3 2014/07/06 15:43:55 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -72,6 +72,14 @@ mod_timer(struct timer_list *timer, unsigned long then)
 	const unsigned long now = jiffies;
 
 	callout_schedule(&timer->tl_callout, (now < then? (then - now) : 0));
+}
+
+static inline void
+mod_timer_pinned(struct timer_list *timer, unsigned long then)
+{
+
+	/* XXX Stay on the same CPU it was originally on...  */
+	mod_timer(timer, then);
 }
 
 static inline void

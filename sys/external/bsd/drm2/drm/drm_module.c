@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.5 2014/04/04 15:16:59 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.6 2014/07/16 20:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,13 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.5 2014/04/04 15:16:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.6 2014/07/16 20:56:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#ifndef _MODULE
+#include <sys/once.h>
+#endif
 #include <sys/reboot.h>
 #include <sys/systm.h>
+
+#include <linux/mutex.h>
 
 #include <drm/drmP.h>
 
@@ -49,69 +54,87 @@ MODULE(MODULE_CLASS_DRIVER, drmkms, "iic,drmkms_linux");
 #include "ioconf.c"
 #endif
 
-/*
- * XXX Mega-kludge.  See drm_init in drm_drv.c for details.
- */
+struct mutex	drm_global_mutex;
+
+static int
+drm_init(void)
+{
+	extern int linux_guarantee_initialized(void);
+	int error;
+
+	error = linux_guarantee_initialized();
+	if (error)
+		return error;
+
+	if (ISSET(boothowto, AB_DEBUG))
+		drm_debug = ~(unsigned int)0;
+
+	spin_lock_init(&drm_minor_lock);
+	idr_init(&drm_minors_idr);
+	linux_mutex_init(&drm_global_mutex);
+	drm_connector_ida_init();
+
+	return 0;
+}
+
+int	drm_guarantee_initialized(void); /* XXX */
+int
+drm_guarantee_initialized(void)
+{
 #ifdef _MODULE
-static const int linux_suppress_init = 1;
+	return 0;
 #else
-extern int linux_suppress_init;
+	static ONCE_DECL(drm_init_once);
+
+	return RUN_ONCE(&drm_init_once, &drm_init);
 #endif
+}
+
+static void
+drm_fini(void)
+{
+
+	drm_connector_ida_destroy();
+	linux_mutex_destroy(&drm_global_mutex);
+	idr_destroy(&drm_minors_idr);
+	spin_lock_destroy(&drm_minor_lock);
+}
 
 static int
 drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 {
 #ifdef _MODULE
 	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
-	int error;
 #endif
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if (!linux_suppress_init) {
-			linux_mutex_init(&drm_global_mutex);
-			if (ISSET(boothowto, AB_DEBUG))
-				drm_debug = ~(unsigned int)0;
-		}
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_drmkms,
-		    cfattach_ioconf_drmkms, cfdata_ioconf_drmkms);
-		if (error) {
-			aprint_error("drmkms: unable to init component: %d\n",
-			    error);
-			goto init_fail0;
-		}
+		error = drm_init();
+#else
+		error = drm_guarantee_initialized();
+#endif
+		if (error)
+			return error;
+#ifdef _MODULE
 		error = devsw_attach("drm", NULL, &bmajor,
 		    &drm_cdevsw, &cmajor);
 		if (error) {
 			aprint_error("drmkms: unable to attach devsw: %d\n",
 			    error);
-			goto init_fail1;
+			return error;
 		}
 #endif
 		return 0;
-
-#ifdef _MODULE
-init_fail2: __unused
-		(void)devsw_detach(NULL, &drm_cdevsw);
-init_fail1:	(void)config_fini_component(cfdriver_ioconf_drmkms,
-		    cfattach_ioconf_drmkms, cfdata_ioconf_drmkms);
-init_fail0:	linux_mutex_destroy(&drm_global_mutex);
-		return error;
-#endif	/* _MODULE */
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		error = devsw_detach(NULL, &drm_cdevsw);
 		if (error)
 			return error;
-		error = config_fini_component(cfdriver_ioconf_drmkms,
-		    cfattach_ioconf_drmkms, cfdata_ioconf_drmkms);
-		if (error)
-			/* XXX Now what?  Reattach the devsw?  */
-			return error;
 #endif
-		linux_mutex_destroy(&drm_global_mutex);
+		drm_fini();
 		return 0;
 
 	default:

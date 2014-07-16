@@ -29,6 +29,7 @@
 
 #include <linux/acpi.h>
 #include <acpi/video.h>
+#include <asm/io.h>
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
