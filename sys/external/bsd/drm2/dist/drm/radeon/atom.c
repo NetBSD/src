@@ -92,6 +92,15 @@ static void debug_print_spaces(int n)
 		printk("   ");
 }
 
+#ifdef __NetBSD__		/* XXX */
+/*
+ * Kludge: NetBSD defines DEBUG to mean debugging is enabled.  Since
+ * we're not going to include any more header files, it's OK for it to
+ * be defined unconditionally after this.
+ */
+#undef	DEBUG
+#endif
+
 #define DEBUG(...) do if (atom_debug) { printk(KERN_DEBUG __VA_ARGS__); } while (0)
 #define SDEBUG(...) do if (atom_debug) { printk(KERN_DEBUG); debug_print_spaces(debug_depth); printk(__VA_ARGS__); } while (0)
 #else

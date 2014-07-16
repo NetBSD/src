@@ -78,7 +78,7 @@ exit_do_move:
 static void radeon_benchmark_log_results(int n, unsigned size,
 					 unsigned int time,
 					 unsigned sdomain, unsigned ddomain,
-					 char *kind)
+					 const char *kind)
 {
 	unsigned int throughput = (n * (size >> 10)) / time;
 	DRM_INFO("radeon: %s %u bo moves of %u kB from"

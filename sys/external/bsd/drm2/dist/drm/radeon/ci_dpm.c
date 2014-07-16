@@ -24,6 +24,7 @@
 #include <linux/firmware.h>
 #include "drmP.h"
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "radeon_ucode.h"
 #include "cikd.h"
 #include "r600_dpm.h"
@@ -181,8 +182,10 @@ static int ci_get_std_voltage_value_sidd(struct radeon_device *rdev,
 					 struct atom_voltage_table_entry *voltage_table,
 					 u16 *std_voltage_hi_sidd, u16 *std_voltage_lo_sidd);
 static int ci_set_power_limit(struct radeon_device *rdev, u32 n);
+#ifndef __NetBSD__		/* XXX unused? */
 static int ci_set_overdrive_target_tdp(struct radeon_device *rdev,
 				       u32 target_tdp);
+#endif
 static int ci_update_uvd_dpm(struct radeon_device *rdev, bool gate);
 
 static struct ci_power_info *ci_get_pi(struct radeon_device *rdev)
@@ -691,6 +694,7 @@ static int ci_enable_smc_cac(struct radeon_device *rdev, bool enable)
 	return ret;
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 static int ci_power_control_set_level(struct radeon_device *rdev)
 {
 	struct ci_power_info *pi = ci_get_pi(rdev);
@@ -714,6 +718,7 @@ static int ci_power_control_set_level(struct radeon_device *rdev)
 
 	return ret;
 }
+#endif
 
 void ci_dpm_powergate_uvd(struct radeon_device *rdev, bool gate)
 {
@@ -995,6 +1000,8 @@ static void ci_set_dpm_event_sources(struct radeon_device *rdev, u32 sources)
 		tmp &= DPM_EVENT_SRC_MASK;
 		tmp |= DPM_EVENT_SRC(dpm_event_src);
 		WREG32_SMC(CG_THERMAL_CTRL, tmp);
+#else
+		(void)dpm_event_src;
 #endif
 
 		tmp = RREG32_SMC(GENERAL_PWRMGT);
@@ -1245,6 +1252,7 @@ static PPSMC_Result ci_send_msg_to_smc_with_parameter(struct radeon_device *rdev
 	return ci_send_msg_to_smc(rdev, msg);
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 static PPSMC_Result ci_send_msg_to_smc_return_parameter(struct radeon_device *rdev,
 							PPSMC_Msg msg, u32 *parameter)
 {
@@ -1257,6 +1265,7 @@ static PPSMC_Result ci_send_msg_to_smc_return_parameter(struct radeon_device *rd
 
 	return smc_result;
 }
+#endif
 
 static int ci_dpm_force_state_sclk(struct radeon_device *rdev, u32 n)
 {
@@ -1314,6 +1323,7 @@ static int ci_set_power_limit(struct radeon_device *rdev, u32 n)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 static int ci_set_overdrive_target_tdp(struct radeon_device *rdev,
 				       u32 target_tdp)
 {
@@ -1328,7 +1338,9 @@ static int ci_set_boot_state(struct radeon_device *rdev)
 {
 	return ci_enable_sclk_mclk_dpm(rdev, false);
 }
+#endif
 
+#ifdef CONFIG_DEBUG_FS
 static u32 ci_get_average_sclk_freq(struct radeon_device *rdev)
 {
 	u32 sclk_freq;
@@ -1354,6 +1366,7 @@ static u32 ci_get_average_mclk_freq(struct radeon_device *rdev)
 
 	return mclk_freq;
 }
+#endif
 
 static void ci_dpm_start_smc(struct radeon_device *rdev)
 {
@@ -4815,6 +4828,7 @@ int ci_dpm_set_power_state(struct radeon_device *rdev)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 int ci_dpm_power_control_set_level(struct radeon_device *rdev)
 {
 	return ci_power_control_set_level(rdev);
@@ -4824,6 +4838,7 @@ void ci_dpm_reset_asic(struct radeon_device *rdev)
 {
 	ci_set_boot_state(rdev);
 }
+#endif
 
 void ci_dpm_display_configuration_changed(struct radeon_device *rdev)
 {
@@ -5083,18 +5098,22 @@ int ci_dpm_init(struct radeon_device *rdev)
 	u8 frev, crev;
 	struct ci_power_info *pi;
 	int ret;
+#ifndef __NetBSD__
 	u32 mask;
+#endif
 
 	pi = kzalloc(sizeof(struct ci_power_info), GFP_KERNEL);
 	if (pi == NULL)
 		return -ENOMEM;
 	rdev->pm.dpm.priv = pi;
 
+#ifndef __NetBSD__
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret)
 		pi->sys_pcie_mask = 0;
 	else
 		pi->sys_pcie_mask = mask;
+#endif
 	pi->force_pcie_gen = RADEON_PCIE_GEN_INVALID;
 
 	pi->pcie_gen_performance.max = RADEON_PCIE_GEN1;
@@ -5276,6 +5295,7 @@ int ci_dpm_init(struct radeon_device *rdev)
 	return 0;
 }
 
+#ifdef CONFIG_DEBUG_FS
 void ci_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						    struct seq_file *m)
 {
@@ -5285,6 +5305,7 @@ void ci_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 	seq_printf(m, "power level avg    sclk: %u mclk: %u\n",
 		   sclk, mclk);
 }
+#endif
 
 void ci_dpm_print_power_state(struct radeon_device *rdev,
 			      struct radeon_ps *rps)

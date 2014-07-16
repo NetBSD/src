@@ -2753,6 +2753,7 @@ int kv_dpm_init(struct radeon_device *rdev)
 	return 0;
 }
 
+#ifdef CONFIG_DEBUG_FS
 void kv_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						    struct seq_file *m)
 {
@@ -2774,6 +2775,7 @@ void kv_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 			   current_index, sclk, vddc);
 	}
 }
+#endif	/* CONFIG_DEBUG_FS */
 
 void kv_dpm_print_power_state(struct radeon_device *rdev,
 			      struct radeon_ps *rps)

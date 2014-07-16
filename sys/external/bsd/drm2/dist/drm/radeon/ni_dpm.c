@@ -4319,6 +4319,7 @@ void ni_dpm_print_power_state(struct radeon_device *rdev,
 	r600_dpm_print_ps_status(rdev, rps);
 }
 
+#ifdef CONFIG_DEBUG_FS
 void ni_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						    struct seq_file *m)
 {
@@ -4339,6 +4340,7 @@ void ni_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 			   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci);
 	}
 }
+#endif	/* CONFIG_DEBUG_FS */
 
 u32 ni_dpm_get_sclk(struct radeon_device *rdev, bool low)
 {

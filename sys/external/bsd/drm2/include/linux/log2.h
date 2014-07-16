@@ -1,4 +1,4 @@
-/*	$NetBSD: log2.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: log2.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,10 @@
 #ifndef _LINUX_LOG2_H_
 #define _LINUX_LOG2_H_
 
+#include <sys/types.h>
 #include <sys/bitops.h>
+
+#include <machine/limits.h>
 
 static inline bool
 is_power_of_2(unsigned long x)

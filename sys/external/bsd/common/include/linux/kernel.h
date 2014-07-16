@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.3 2014/07/16 20:56:24 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.4 2014/07/16 20:59:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@
  */
 #define	round_up(X, N)		((((X) - 1) | ((N) - 1)) + 1)
 #define	round_down(X, N)	((X) & ~(uintmax_t)((N) - 1))
+
+#define	IS_ALIGNED(X, N)	(((X) & ((N) - 1)) == 0)
 
 /*
  * These select 32-bit halves of what may be 32- or 64-bit quantities,
