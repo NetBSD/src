@@ -29,6 +29,7 @@
 #include "atom.h"
 #include <linux/math64.h>
 #include <linux/seq_file.h>
+#include <linux/bitops.h>
 
 #define MC_CG_ARB_FREQ_F0           0x0a
 #define MC_CG_ARB_FREQ_F1           0x0b
@@ -3511,7 +3512,7 @@ static int si_notify_smc_display_change(struct radeon_device *rdev,
 
 static void si_program_response_times(struct radeon_device *rdev)
 {
-	u32 voltage_response_time, backbias_response_time, acpi_delay_time, vbi_time_out;
+	u32 voltage_response_time, backbias_response_time __unused, acpi_delay_time, vbi_time_out;
 	u32 vddc_dly, acpi_dly, vbi_dly;
 	u32 reference_clock;
 
@@ -6318,7 +6319,9 @@ int si_dpm_init(struct radeon_device *rdev)
 	struct si_power_info *si_pi;
 	struct atom_clock_dividers dividers;
 	int ret;
+#ifndef __NetBSD__		/* XXX radeon pcie */
 	u32 mask;
+#endif
 
 	si_pi = kzalloc(sizeof(struct si_power_info), GFP_KERNEL);
 	if (si_pi == NULL)
@@ -6328,11 +6331,13 @@ int si_dpm_init(struct radeon_device *rdev)
 	eg_pi = &ni_pi->eg;
 	pi = &eg_pi->rv7xx;
 
+#ifndef __NetBSD__		/* XXX radeon pcie */
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret)
 		si_pi->sys_pcie_mask = 0;
 	else
 		si_pi->sys_pcie_mask = mask;
+#endif
 	si_pi->force_pcie_gen = RADEON_PCIE_GEN_INVALID;
 	si_pi->boot_pcie_gen = si_get_current_pcie_speed(rdev);
 
@@ -6470,6 +6475,7 @@ void si_dpm_fini(struct radeon_device *rdev)
 	r600_free_extended_power_table(rdev);
 }
 
+#ifdef CONFIG_DEBUG_FS
 void si_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						    struct seq_file *m)
 {
@@ -6490,3 +6496,4 @@ void si_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 			   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci, pl->pcie_gen + 1);
 	}
 }
+#endif

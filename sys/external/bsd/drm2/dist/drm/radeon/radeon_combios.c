@@ -2631,7 +2631,7 @@ void radeon_combios_get_power_modes(struct radeon_device *rdev)
 {
 	struct drm_device *dev = rdev->ddev;
 	u16 offset, misc, misc2 = 0;
-	u8 rev, blocks, tmp;
+	u8 rev, blocks __unused, tmp;
 	int state_index = 0;
 	struct radeon_i2c_bus_rec i2c_bus;
 

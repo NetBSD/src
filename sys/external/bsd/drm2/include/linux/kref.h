@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -57,6 +57,21 @@ kref_get(struct kref *kref)
 	KASSERTMSG((count > 1), "getting released kref");
 }
 
+static inline bool
+kref_get_unless_zero(struct kref *kref)
+{
+	unsigned count;
+
+	do {
+		count = kref->kr_count;
+		if ((count == 0) || (count == UINT_MAX))
+			return false;
+	} while (atomic_cas_uint(&kref->kr_count, count, (count + 1)) !=
+	    count);
+
+	return true;
+}
+
 static inline int
 kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 {
@@ -108,7 +123,17 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 	return 0;
 }
 
-/* Not native to Linux.  */
+/*
+ * Not native to Linux.  Mostly used for assertions...
+ */
+
+static inline bool
+kref_referenced_p(struct kref *kref)
+{
+
+	return (0 < kref->kr_count);
+}
+
 static inline bool
 kref_exclusive_p(struct kref *kref)
 {

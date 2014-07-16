@@ -44,6 +44,40 @@ MODULE_FIRMWARE(FIRMWARE_BONAIRE);
 
 static void radeon_vce_idle_work_handler(struct work_struct *work);
 
+#ifdef __NetBSD__		/* XXX Ugh!  */
+static bool
+scan_2dec_u8(const char **sp, char delim, uint8_t *u8p)
+{
+	char c0, c1;
+
+	if (!isdigit((unsigned char)(c0 = *(*sp)++)))
+		return false;
+	if (!isdigit((unsigned char)(c1 = *(*sp)++)))
+		return false;
+	if (*(*sp)++ != delim)
+		return false;
+
+	*u8p = ((c0 - '0') * 10) + (c1 - '0');
+	return true;
+}
+
+static bool
+scan_2dec_uint(const char **sp, char delim, unsigned int *uintp)
+{
+	char c0, c1;
+
+	if (!isdigit((unsigned char)(c0 = *(*sp)++)))
+		return false;
+	if (!isdigit((unsigned char)(c1 = *(*sp)++)))
+		return false;
+	if (*(*sp)++ != delim)
+		return false;
+
+	*uintp = ((c0 - '0') * 10) + (c1 - '0');
+	return true;
+}
+#endif
+
 /**
  * radeon_vce_init - allocate memory, load vce firmware
  *
@@ -93,8 +127,17 @@ int radeon_vce_init(struct radeon_device *rdev)
 		return -EINVAL;
 
 	c += strlen(fw_version);
+#ifdef __NetBSD__
+	if (!scan_2dec_u8(&c, '.', &start))
+		return -EINVAL;
+	if (!scan_2dec_u8(&c, '.', &mid))
+		return -EINVAL;
+	if (!scan_2dec_u8(&c, ']', &end))
+		return -EINVAL;
+#else
 	if (sscanf(c, "%2hhd.%2hhd.%2hhd]", &start, &mid, &end) != 3)
 		return -EINVAL;
+#endif
 
 	/* search for feedback version */
 
@@ -108,8 +151,13 @@ int radeon_vce_init(struct radeon_device *rdev)
 		return -EINVAL;
 
 	c += strlen(fb_version);
+#ifdef __NetBSD__
+	if (!scan_2dec_uint(&c, ']', &rdev->vce.fb_version))
+		return -EINVAL;
+#else
 	if (sscanf(c, "%2u]", &rdev->vce.fb_version) != 1)
 		return -EINVAL;
+#endif
 
 	DRM_INFO("Found VCE firmware/feedback version %hhd.%hhd.%hhd / %d!\n",
 		 start, mid, end, rdev->vce.fb_version);
@@ -474,7 +522,7 @@ int radeon_vce_cs_reloc(struct radeon_cs_parser *p, int lo, int hi,
 	p->ib.ptr[hi] = start >> 32;
 
 	if (end <= start) {
-		DRM_ERROR("invalid reloc offset %llX!\n", offset);
+		DRM_ERROR("invalid reloc offset %"PRIX64"!\n", offset);
 		return -EINVAL;
 	}
 	if ((end - start) < size) {

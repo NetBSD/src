@@ -72,6 +72,25 @@ void rv370_pcie_gart_tlb_flush(struct radeon_device *rdev)
 #define R300_PTE_WRITEABLE (1 << 2)
 #define R300_PTE_READABLE  (1 << 3)
 
+#ifdef __NetBSD__
+/*
+ * XXX Can't use bus_space here because this is all mapped through the
+ * radeon_bo abstraction.  Can't assume we're x86 because this is
+ * AMD/ATI Radeon, not Intel.
+ */
+
+#  define	__iomem		volatile
+#  define	writel		fake_writel
+
+static inline void
+fake_writel(uint32_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint32_t __iomem *)ptr = v;
+}
+#endif
+
 int rv370_pcie_gart_set_page(struct radeon_device *rdev, int i, uint64_t addr)
 {
 	void __iomem *ptr = rdev->gart.ptr;
@@ -85,9 +104,14 @@ int rv370_pcie_gart_set_page(struct radeon_device *rdev, int i, uint64_t addr)
 	/* on x86 we want this to be CPU endian, on powerpc
 	 * on powerpc without HW swappers, it'll get swapped on way
 	 * into VRAM - so no need for cpu_to_le32 on VRAM tables */
-	writel(addr, ((void __iomem *)ptr) + (i * 4));
+	writel(addr, (uint8_t __iomem *)ptr + (i * 4));
 	return 0;
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	writel
+#endif
 
 int rv370_pcie_gart_init(struct radeon_device *rdev)
 {

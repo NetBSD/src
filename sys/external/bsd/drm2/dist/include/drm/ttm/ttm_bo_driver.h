@@ -34,6 +34,7 @@
 #include <ttm/ttm_memory.h>
 #include <ttm/ttm_module.h>
 #include <ttm/ttm_placement.h>
+#include <drm/drm_agpsupport.h>
 #include <drm/drm_mm.h>
 #include <drm/drm_global.h>
 #include <drm/drm_vma_manager.h>
@@ -41,6 +42,7 @@
 #include <linux/fs.h>
 #include <linux/spinlock.h>
 #include <linux/reservation.h>
+#include <asm/page.h>
 
 struct ttm_backend_func {
 	/**
@@ -113,14 +115,19 @@ enum ttm_caching_state {
 
 struct ttm_tt {
 	struct ttm_bo_device *bdev;
-	struct ttm_backend_func *func;
+	const struct ttm_backend_func *func;
 	struct page *dummy_read_page;
 	struct page **pages;
 	uint32_t page_flags;
 	unsigned long num_pages;
 	struct sg_table *sg; /* for SG objects via dma-buf */
 	struct ttm_bo_global *glob;
+#ifdef __NetBSD__
+	struct uvm_object *swap_storage;
+	struct pglist pglist;
+#else
 	struct file *swap_storage;
+#endif
 	enum ttm_caching_state caching_state;
 	enum {
 		tt_bound,
@@ -142,7 +149,12 @@ struct ttm_tt {
  */
 struct ttm_dma_tt {
 	struct ttm_tt ttm;
+#ifdef __NetBSD__
+	bus_dma_segment_t *dma_segs;
+	bus_dmamap_t dma_address;
+#else
 	dma_addr_t *dma_address;
+#endif
 	struct list_head pages_list;
 };
 
@@ -453,6 +465,10 @@ struct ttm_bo_driver {
 	 */
 	int (*io_mem_reserve)(struct ttm_bo_device *bdev, struct ttm_mem_reg *mem);
 	void (*io_mem_free)(struct ttm_bo_device *bdev, struct ttm_mem_reg *mem);
+
+#ifdef __NetBSD__
+	const struct uvm_pagerops *ttm_uvm_ops;
+#endif
 };
 
 /**
@@ -484,7 +500,9 @@ struct ttm_bo_global {
 	 * Constant after init.
 	 */
 
+#ifndef __NetBSD__
 	struct kobject kobj;
+#endif
 	struct ttm_mem_global *mem_glob;
 	struct page *dummy_read_page;
 	struct ttm_mem_shrink shrink;
@@ -556,7 +574,12 @@ struct ttm_bo_device {
 	 * Protected by load / firstopen / lastclose /unload sync.
 	 */
 
+#ifdef __NetBSD__
+	bus_space_tag_t memt;
+	bus_dma_tag_t dmat;
+#else
 	struct address_space *dev_mapping;
+#endif
 
 	/*
 	 * Internal protection.
@@ -759,7 +782,12 @@ extern int ttm_bo_device_release(struct ttm_bo_device *bdev);
 extern int ttm_bo_device_init(struct ttm_bo_device *bdev,
 			      struct ttm_bo_global *glob,
 			      struct ttm_bo_driver *driver,
+#ifdef __NetBSD__
+			      bus_space_tag_t memt,
+			      bus_dma_tag_t dmat,
+#else
 			      struct address_space *mapping,
+#endif
 			      uint64_t file_page_offset, bool need_dma32);
 
 /**
@@ -886,7 +914,7 @@ static inline int ttm_bo_reserve(struct ttm_buffer_object *bo,
 {
 	int ret;
 
-	WARN_ON(!atomic_read(&bo->kref.refcount));
+	WARN_ON(!kref_referenced_p(&bo->kref));
 
 	ret = __ttm_bo_reserve(bo, interruptible, no_wait, use_ticket, ticket);
 	if (likely(ret == 0))
@@ -911,7 +939,7 @@ static inline int ttm_bo_reserve_slowpath(struct ttm_buffer_object *bo,
 {
 	int ret = 0;
 
-	WARN_ON(!atomic_read(&bo->kref.refcount));
+	WARN_ON(!kref_referenced_p(&bo->kref));
 
 	if (interruptible)
 		ret = ww_mutex_lock_slow_interruptible(&bo->resv->lock,

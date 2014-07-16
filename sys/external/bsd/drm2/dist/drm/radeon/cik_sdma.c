@@ -572,6 +572,37 @@ int cik_copy_dma(struct radeon_device *rdev,
 	return r;
 }
 
+#ifdef __NetBSD__
+/*
+ * XXX Can't use bus_space here because this is all mapped through the
+ * radeon_bo abstraction.  Can't assume we're x86 because this is
+ * AMD/ATI Radeon, not Intel.
+ */
+
+#  define	__iomem		volatile
+#  define	readl		fake_readl
+#  define	writel		fake_writel
+
+static inline uint32_t
+fake_readl(const void __iomem *ptr)
+{
+	uint32_t v;
+
+	v = *(const uint32_t __iomem *)ptr;
+	membar_consumer();
+
+	return v;
+}
+
+static inline void
+fake_writel(uint32_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint32_t __iomem *)ptr = v;
+}
+#endif
+
 /**
  * cik_sdma_ring_test - simple async dma engine test
  *
@@ -587,7 +618,7 @@ int cik_sdma_ring_test(struct radeon_device *rdev,
 {
 	unsigned i;
 	int r;
-	void __iomem *ptr = (void *)rdev->vram_scratch.ptr;
+	void __iomem *ptr = rdev->vram_scratch.ptr;
 	u32 tmp;
 
 	if (!ptr) {
@@ -641,7 +672,7 @@ int cik_sdma_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 	struct radeon_ib ib;
 	unsigned i;
 	int r;
-	void __iomem *ptr = (void *)rdev->vram_scratch.ptr;
+	void __iomem *ptr = rdev->vram_scratch.ptr;
 	u32 tmp = 0;
 
 	if (!ptr) {
@@ -691,6 +722,12 @@ int cik_sdma_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 	radeon_ib_free(rdev, &ib);
 	return r;
 }
+
+#ifdef __NetBSD__
+#  undef	fake_writel
+#  undef	fake_readl
+#  undef	__iomem
+#endif
 
 /**
  * cik_sdma_is_lockup - Check if the DMA engine is locked up

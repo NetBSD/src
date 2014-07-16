@@ -976,6 +976,7 @@ u32 rs780_dpm_get_mclk(struct radeon_device *rdev, bool low)
 	return pi->bootup_uma_clk;
 }
 
+#ifdef CONFIG_DEBUG_FS
 void rs780_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						       struct seq_file *m)
 {
@@ -999,6 +1000,7 @@ void rs780_dpm_debugfs_print_current_performance_level(struct radeon_device *rde
 		seq_printf(m, "power level 1    sclk: %u vddc_index: %d\n",
 			   ps->sclk_high, ps->max_voltage);
 }
+#endif
 
 int rs780_dpm_force_performance_level(struct radeon_device *rdev,
 				      enum radeon_dpm_forced_level level)

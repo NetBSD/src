@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/bitops.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/firmware.h>
@@ -898,6 +899,28 @@ void r600_hpd_fini(struct radeon_device *rdev)
 	radeon_irq_kms_disable_hpd(rdev, disable);
 }
 
+#ifdef __NetBSD__
+/*
+ * XXX Can't use bus_space here because this is all mapped through the
+ * radeon_bo abstraction.  Can't assume we're x86 because this is
+ * AMD/ATI Radeon, not Intel.
+ */
+
+#  define	__iomem		volatile
+#  define	readl		fake_readl
+
+static inline uint32_t
+fake_readl(const void __iomem *ptr)
+{
+	uint32_t v;
+
+	v = *(const uint32_t __iomem *)ptr;
+	membar_consumer();
+
+	return v;
+}
+#endif
+
 /*
  * R600 PCIE GART
  */
@@ -909,8 +932,7 @@ void r600_pcie_gart_tlb_flush(struct radeon_device *rdev)
 	/* flush hdp cache so updates hit vram */
 	if ((rdev->family >= CHIP_RV770) && (rdev->family <= CHIP_RV740) &&
 	    !(rdev->flags & RADEON_IS_AGP)) {
-		void __iomem *ptr = (void *)rdev->gart.ptr;
-		u32 tmp;
+		void __iomem *ptr = rdev->gart.ptr;
 
 		/* r7xx hw bug.  write to HDP_DEBUG1 followed by fb read
 		 * rather than write to HDP_REG_COHERENCY_FLUSH_CNTL
@@ -918,7 +940,7 @@ void r600_pcie_gart_tlb_flush(struct radeon_device *rdev)
 		 * method for them.
 		 */
 		WREG32(HDP_DEBUG1, 0);
-		tmp = readl((void __iomem *)ptr);
+		(void)readl(ptr);
 	} else
 		WREG32(R_005480_HDP_MEM_COHERENCY_FLUSH_CNTL, 0x1);
 
@@ -939,6 +961,11 @@ void r600_pcie_gart_tlb_flush(struct radeon_device *rdev)
 		udelay(1);
 	}
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	readl
+#endif
 
 int r600_pcie_gart_init(struct radeon_device *rdev)
 {
@@ -1243,7 +1270,7 @@ static void r600_vram_gtt_location(struct radeon_device *rdev, struct radeon_mc 
 			mc->vram_start = mc->gtt_end + 1;
 		}
 		mc->vram_end = mc->vram_start + mc->mc_vram_size - 1;
-		dev_info(rdev->dev, "VRAM: %lluM 0x%08llX - 0x%08llX (%lluM used)\n",
+		dev_info(rdev->dev, "VRAM: %"PRIu64"M 0x%08"PRIX64" - 0x%08"PRIX64" (%"PRIu64"M used)\n",
 				mc->mc_vram_size >> 20, mc->vram_start,
 				mc->vram_end, mc->real_vram_size >> 20);
 	} else {
@@ -1355,7 +1382,7 @@ int r600_vram_scratch_init(struct radeon_device *rdev)
 		return r;
 	}
 	r = radeon_bo_kmap(rdev->vram_scratch.robj,
-				(void **)&rdev->vram_scratch.ptr);
+				(void **)__UNVOLATILE(&rdev->vram_scratch.ptr));
 	if (r)
 		radeon_bo_unpin(rdev->vram_scratch.robj);
 	radeon_bo_unreserve(rdev->vram_scratch.robj);
@@ -2304,50 +2331,82 @@ int r600_init_microcode(struct radeon_device *rdev)
 		chip_name = "RV770";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV770";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(RV770_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(RV770_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_RV730:
 		chip_name = "RV730";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV730";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(RV730_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(RV730_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_RV710:
 		chip_name = "RV710";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV710";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(RV710_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(RV710_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_RV740:
 		chip_name = "RV730";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV740";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(RV740_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(RV740_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_CEDAR:
 		chip_name = "CEDAR";
 		rlc_chip_name = "CEDAR";
 		smc_chip_name = "CEDAR";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(CEDAR_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(CEDAR_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_REDWOOD:
 		chip_name = "REDWOOD";
 		rlc_chip_name = "REDWOOD";
 		smc_chip_name = "REDWOOD";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(REDWOOD_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(REDWOOD_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_JUNIPER:
 		chip_name = "JUNIPER";
 		rlc_chip_name = "JUNIPER";
 		smc_chip_name = "JUNIPER";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(JUNIPER_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(JUNIPER_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
 		chip_name = "CYPRESS";
 		rlc_chip_name = "CYPRESS";
 		smc_chip_name = "CYPRESS";
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		smc_req_size = round_up(CYPRESS_SMC_UCODE_SIZE, 4);
+#else
 		smc_req_size = ALIGN(CYPRESS_SMC_UCODE_SIZE, 4);
+#endif
 		break;
 	case CHIP_PALM:
 		chip_name = "PALM";
@@ -3242,7 +3301,7 @@ int r600_ih_ring_alloc(struct radeon_device *rdev)
 			return r;
 		}
 		r = radeon_bo_kmap(rdev->ih.ring_obj,
-				   (void **)&rdev->ih.ring);
+				   (void **)__UNVOLATILE(&rdev->ih.ring));
 		radeon_bo_unreserve(rdev->ih.ring_obj);
 		if (r) {
 			DRM_ERROR("radeon: failed to map ih ring buffer (%d).\n", r);
@@ -3872,8 +3931,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.r600.disp_int & LB_D1_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[0]) {
 						drm_handle_vblank(rdev->ddev, 0);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[0]))
 						radeon_crtc_handle_flip(rdev, 0);
@@ -3898,8 +3964,15 @@ restart_ih:
 				if (rdev->irq.stat_regs.r600.disp_int & LB_D2_VBLANK_INTERRUPT) {
 					if (rdev->irq.crtc_vblank_int[1]) {
 						drm_handle_vblank(rdev->ddev, 1);
+#ifdef __NetBSD__
+						spin_lock(&rdev->irq.vblank_lock);
+						rdev->pm.vblank_sync = true;
+						DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+						spin_unlock(&rdev->irq.vblank_lock);
+#else
 						rdev->pm.vblank_sync = true;
 						wake_up(&rdev->irq.vblank_queue);
+#endif
 					}
 					if (atomic_read(&rdev->irq.pflip[1]))
 						radeon_crtc_handle_flip(rdev, 1);
@@ -4084,6 +4157,11 @@ int r600_debugfs_mc_info_init(struct radeon_device *rdev)
 #endif
 }
 
+#ifdef __NetBSD__
+#  define	__iomem		volatile
+#  define	readl		fake_readl
+#endif
+
 /**
  * r600_ioctl_wait_idle - flush host path cache on wait idle ioctl
  * rdev: radeon device structure
@@ -4103,14 +4181,18 @@ void r600_ioctl_wait_idle(struct radeon_device *rdev, struct radeon_bo *bo)
 	 */
 	if ((rdev->family >= CHIP_RV770) && (rdev->family <= CHIP_RV740) &&
 	    rdev->vram_scratch.ptr && !(rdev->flags & RADEON_IS_AGP)) {
-		void __iomem *ptr = (void *)rdev->vram_scratch.ptr;
-		u32 tmp;
+		void __iomem *ptr = rdev->vram_scratch.ptr;
 
 		WREG32(HDP_DEBUG1, 0);
-		tmp = readl((void __iomem *)ptr);
+		(void)readl(ptr);
 	} else
 		WREG32(R_005480_HDP_MEM_COHERENCY_FLUSH_CNTL, 0x1);
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	readl
+#endif
 
 void r600_set_pcie_lanes(struct radeon_device *rdev, int lanes)
 {
@@ -4204,6 +4286,7 @@ int r600_get_pcie_lanes(struct radeon_device *rdev)
 
 static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 {
+#ifndef __NetBSD__		/* XXX radeon pcie */
 	u32 link_width_cntl, lanes, speed_cntl, training_cntl, tmp;
 	u16 link_cntl2;
 
@@ -4314,6 +4397,7 @@ static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 			link_width_cntl &= ~LC_UPCONFIGURE_DIS;
 		WREG32_PCIE_PORT(PCIE_LC_LINK_WIDTH_CNTL, link_width_cntl);
 	}
+#endif
 }
 
 /**

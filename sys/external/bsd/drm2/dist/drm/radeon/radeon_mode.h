@@ -909,4 +909,12 @@ void radeon_fb_output_poll_changed(struct radeon_device *rdev);
 void radeon_crtc_handle_flip(struct radeon_device *rdev, int crtc_id);
 
 int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tiled);
+
+#ifdef __NetBSD__
+struct drm_fb_helper;
+struct drm_fb_helper_surface_size;
+int	radeon_genfb_attach(struct drm_device *, struct drm_fb_helper *,
+	    const struct drm_fb_helper_surface_size *, struct radeon_bo *);
+#endif
+
 #endif

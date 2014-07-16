@@ -26,6 +26,7 @@
  *          Jerome Glisse
  *          Christian König
  */
+#include <linux/jiffies.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
@@ -515,7 +516,7 @@ bool radeon_ring_test_lockup(struct radeon_device *rdev, struct radeon_ring *rin
 
 	elapsed = jiffies_to_msecs(jiffies_64 - last);
 	if (radeon_lockup_timeout && elapsed >= radeon_lockup_timeout) {
-		dev_err(rdev->dev, "ring %d stalled for more than %llumsec\n",
+		dev_err(rdev->dev, "ring %d stalled for more than %"PRIu64"msec\n",
 			ring->idx, elapsed);
 		return true;
 	}
@@ -657,7 +658,7 @@ int radeon_ring_init(struct radeon_device *rdev, struct radeon_ring *ring, unsig
 			return r;
 		}
 		r = radeon_bo_kmap(ring->ring_obj,
-				       (void **)&ring->ring);
+				       (void **)__UNVOLATILE(&ring->ring));
 		radeon_bo_unreserve(ring->ring_obj);
 		if (r) {
 			dev_err(rdev->dev, "(%d) ring map failed\n", r);

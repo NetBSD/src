@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.3 2014/07/16 20:56:24 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.4 2014/07/16 20:59:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -222,6 +222,12 @@ list_del_init(struct list_head *node)
 	for ((VAR) = list_next_entry((VAR), FIELD);			\
 		&(VAR)->FIELD != (HEAD);				\
 		(VAR) = list_next_entry((VAR), FIELD))
+
+#define	list_for_each_entry_safe_from(VAR, NEXT, HEAD, FIELD)		\
+	for (;								\
+		(&(VAR)->FIELD != (HEAD)) &&				\
+		    ((NEXT) = list_next_entry((VAR), FIELD));		\
+		(VAR) = (NEXT))
 
 /*
  * `H'ead-only/`H'ash-table doubly-linked lists.

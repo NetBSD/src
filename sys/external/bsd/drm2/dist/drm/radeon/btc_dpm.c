@@ -24,6 +24,7 @@
 
 #include "drmP.h"
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "btcd.h"
 #include "r600_dpm.h"
 #include "cypress_dpm.h"
@@ -2761,6 +2762,7 @@ void btc_dpm_fini(struct radeon_device *rdev)
 	r600_free_extended_power_table(rdev);
 }
 
+#ifdef CONFIG_DEBUG_FS
 void btc_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						     struct seq_file *m)
 {
@@ -2791,6 +2793,7 @@ void btc_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 		}
 	}
 }
+#endif
 
 u32 btc_dpm_get_sclk(struct radeon_device *rdev, bool low)
 {

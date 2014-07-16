@@ -154,10 +154,22 @@ static void radeon_unmap_vram_bos(struct radeon_device *rdev)
 static void radeon_sync_with_vblank(struct radeon_device *rdev)
 {
 	if (rdev->pm.active_crtcs) {
+#ifdef __NetBSD__
+		int ret __unused;
+
+		spin_lock(&rdev->irq.vblank_lock);
+		rdev->pm.vblank_sync = false;
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &rdev->irq.vblank_queue,
+		    &rdev->irq.vblank_lock,
+		    msecs_to_jiffies(RADEON_WAIT_VBLANK_TIMEOUT),
+		    rdev->pm.vblank_sync);
+		spin_unlock(&rdev->irq.vblank_lock);
+#else
 		rdev->pm.vblank_sync = false;
 		wait_event_timeout(
 			rdev->irq.vblank_queue, rdev->pm.vblank_sync,
 			msecs_to_jiffies(RADEON_WAIT_VBLANK_TIMEOUT));
+#endif
 	}
 }
 
@@ -338,6 +350,7 @@ static void radeon_pm_print_states(struct radeon_device *rdev)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX radeon power */
 static ssize_t radeon_get_pm_profile(struct device *dev,
 				     struct device_attribute *attr,
 				     char *buf)
@@ -562,7 +575,9 @@ static DEVICE_ATTR(power_dpm_state, S_IRUGO | S_IWUSR, radeon_get_dpm_state, rad
 static DEVICE_ATTR(power_dpm_force_performance_level, S_IRUGO | S_IWUSR,
 		   radeon_get_dpm_forced_performance_level,
 		   radeon_set_dpm_forced_performance_level);
+#endif
 
+#ifndef __NetBSD__		/* XXX radeon hwmon */
 static ssize_t radeon_hwmon_show_temp(struct device *dev,
 				      struct device_attribute *attr,
 				      char *buf)
@@ -635,11 +650,13 @@ static const struct attribute_group *hwmon_groups[] = {
 	&hwmon_attrgroup,
 	NULL
 };
+#endif
 
 static int radeon_hwmon_init(struct radeon_device *rdev)
 {
 	int err = 0;
 
+#ifndef __NetBSD__		/* XXX radeon hwmon */
 	switch (rdev->pm.int_thermal_type) {
 	case THERMAL_TYPE_RV6XX:
 	case THERMAL_TYPE_RV770:
@@ -663,14 +680,17 @@ static int radeon_hwmon_init(struct radeon_device *rdev)
 	default:
 		break;
 	}
+#endif
 
 	return err;
 }
 
 static void radeon_hwmon_fini(struct radeon_device *rdev)
 {
+#ifndef __NetBSD__		/* XXX radeon hwmon */
 	if (rdev->pm.int_hwmon_dev)
 		hwmon_device_unregister(rdev->pm.int_hwmon_dev);
+#endif
 }
 
 static void radeon_dpm_thermal_work_handler(struct work_struct *work)
@@ -1178,6 +1198,7 @@ static int radeon_pm_init_old(struct radeon_device *rdev)
 
 	INIT_DELAYED_WORK(&rdev->pm.dynpm_idle_work, radeon_dynpm_idle_work_handler);
 
+#ifndef __NetBSD__		/* XXX radeon power */
 	if (rdev->pm.num_power_states > 1) {
 		/* where's the best place to put these? */
 		ret = device_create_file(rdev->dev, &dev_attr_power_profile);
@@ -1193,6 +1214,7 @@ static int radeon_pm_init_old(struct radeon_device *rdev)
 
 		DRM_INFO("radeon: power management initialized\n");
 	}
+#endif
 
 	return 0;
 }
@@ -1244,6 +1266,7 @@ static int radeon_pm_init_dpm(struct radeon_device *rdev)
 		goto dpm_failed;
 	rdev->pm.dpm_enabled = true;
 
+#ifndef __NetBSD__		/* XXX radeon power */
 	ret = device_create_file(rdev->dev, &dev_attr_power_dpm_state);
 	if (ret)
 		DRM_ERROR("failed to create device file for dpm state\n");
@@ -1257,6 +1280,7 @@ static int radeon_pm_init_dpm(struct radeon_device *rdev)
 	ret = device_create_file(rdev->dev, &dev_attr_power_method);
 	if (ret)
 		DRM_ERROR("failed to create device file for power method\n");
+#endif
 
 	if (radeon_debugfs_pm_init(rdev)) {
 		DRM_ERROR("Failed to register debugfs file for dpm!\n");
@@ -1390,8 +1414,10 @@ static void radeon_pm_fini_old(struct radeon_device *rdev)
 
 		cancel_delayed_work_sync(&rdev->pm.dynpm_idle_work);
 
+#ifndef __NetBSD__		/* XXX radeon power */
 		device_remove_file(rdev->dev, &dev_attr_power_profile);
 		device_remove_file(rdev->dev, &dev_attr_power_method);
+#endif
 	}
 
 	radeon_hwmon_fini(rdev);
@@ -1407,11 +1433,13 @@ static void radeon_pm_fini_dpm(struct radeon_device *rdev)
 		radeon_dpm_disable(rdev);
 		mutex_unlock(&rdev->pm.mutex);
 
+#ifndef __NetBSD__		/* XXX radeon power */
 		device_remove_file(rdev->dev, &dev_attr_power_dpm_state);
 		device_remove_file(rdev->dev, &dev_attr_power_dpm_force_performance_level);
 		/* XXX backwards compat */
 		device_remove_file(rdev->dev, &dev_attr_power_profile);
 		device_remove_file(rdev->dev, &dev_attr_power_method);
+#endif
 	}
 	radeon_dpm_fini(rdev);
 

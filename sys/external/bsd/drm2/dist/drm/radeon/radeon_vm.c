@@ -899,7 +899,11 @@ int radeon_vm_init(struct radeon_device *rdev, struct radeon_vm *vm)
 	vm->fence = NULL;
 	vm->last_flush = NULL;
 	vm->last_id_use = NULL;
+#ifdef __NetBSD__
+	linux_mutex_init(&vm->mutex);
+#else
 	mutex_init(&vm->mutex);
+#endif
 	INIT_LIST_HEAD(&vm->va);
 
 	pd_size = radeon_vm_directory_size(rdev);
@@ -967,5 +971,9 @@ void radeon_vm_fini(struct radeon_device *rdev, struct radeon_vm *vm)
 	radeon_fence_unref(&vm->last_flush);
 	radeon_fence_unref(&vm->last_id_use);
 
+#ifdef __NetBSD__
+	linux_mutex_destroy(&vm->mutex);
+#else
 	mutex_destroy(&vm->mutex);
+#endif
 }

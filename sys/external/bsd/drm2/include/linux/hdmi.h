@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.2 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,6 +60,49 @@ enum hdmi_active_aspect {
         HDMI_ACTIVE_ASPECT_4_3_SP_14_9		= 13,
         HDMI_ACTIVE_ASPECT_16_9_SP_14_9		= 14,
         HDMI_ACTIVE_ASPECT_16_9_SP_4_3		= 15,
+};
+
+enum hdmi_audio_coding_type {
+	HDMI_AUDIO_CODING_TYPE_STREAM		= 0,
+	HDMI_AUDIO_CODING_TYPE_PCM		= 1,
+	HDMI_AUDIO_CODING_TYPE_AC3		= 2,
+	HDMI_AUDIO_CODING_TYPE_MPEG1		= 3,
+	HDMI_AUDIO_CODING_TYPE_MP3		= 4,
+	HDMI_AUDIO_CODING_TYPE_MPEG2		= 5,
+	HDMI_AUDIO_CODING_TYPE_AAC_LC		= 6,
+	HDMI_AUDIO_CODING_TYPE_DTS		= 7,
+	HDMI_AUDIO_CODING_TYPE_ATRAC		= 8,
+	HDMI_AUDIO_CODING_TYPE_DSD		= 9,
+	HDMI_AUDIO_CODING_TYPE_EAC3		= 10,
+	HDMI_AUDIO_CODING_TYPE_DTS_HD		= 11,
+	HDMI_AUDIO_CODING_TYPE_MLP		= 12,
+	HDMI_AUDIO_CODING_TYPE_DST		= 13,
+	HDMI_AUDIO_CODING_TYPE_WMA_PRO		= 14,
+};
+
+enum hdmi_audio_coding_type_ext {
+	HDMI_AUDIO_CODING_TYPE_EXT_STREAM	= 0,
+	HDMI_AUDIO_CODING_TYPE_EXT_HE_AAC	= 1,
+	HDMI_AUDIO_CODING_TYPE_EXT_HE_AAC_V2	= 2,
+	HDMI_AUDIO_CODING_TYPE_EXT_MPEG_SURROUND = 3,
+};
+
+enum hdmi_audio_sample_frequency {
+	HDMI_AUDIO_SAMPLE_FREQUENCY_STREAM	= 0,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_32000	= 1,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_44100	= 2,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_48000	= 3,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_88200	= 4,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_96000	= 5,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_176400	= 6,
+	HDMI_AUDIO_SAMPLE_FREQUENCY_192000	= 7,
+};
+
+enum hdmi_audio_sample_size {
+	HDMI_AUDIO_SAMPLE_SIZE_STREAM		= 0,
+	HDMI_AUDIO_SAMPLE_SIZE_16		= 1,
+	HDMI_AUDIO_SAMPLE_SIZE_20		= 2,
+	HDMI_AUDIO_SAMPLE_SIZE_24		= 3,
 };
 
 enum hdmi_colorimetry {
@@ -177,6 +220,73 @@ hdmi_infoframe_checksum(void *buf, size_t length)
 
 	p = buf;
 	p[3] = (256 - checksum);
+}
+
+#define	HDMI_AUDIO_INFOFRAME_SIZE	10
+struct hdmi_audio_infoframe {
+	struct hdmi_infoframe_header	header;
+	uint8_t				channels;
+	enum hdmi_audio_coding_type	coding_type;
+	enum hdmi_audio_sample_size	sample_size;
+	enum hdmi_audio_sample_frequency sample_frequency;
+	enum hdmi_audio_coding_type_ext	coding_type_ext;
+	uint8_t				channel_allocation;
+	uint8_t				level_shift_value;
+	bool				downmix_inhibit;
+};
+
+static inline int
+hdmi_audio_infoframe_init(struct hdmi_audio_infoframe *frame)
+{
+	static const struct hdmi_audio_infoframe zero_frame;
+
+	*frame = zero_frame;
+
+	hdmi_infoframe_header_init(&frame->header, HDMI_INFOFRAME_TYPE_AUDIO,
+	    1, HDMI_AUDIO_INFOFRAME_SIZE);
+
+	return 0;
+}
+
+static inline ssize_t
+hdmi_audio_infoframe_pack(const struct hdmi_audio_infoframe *frame, void *buf,
+    size_t size)
+{
+	const size_t length = HDMI_INFOFRAME_HEADER_SIZE +
+	    HDMI_AUDIO_INFOFRAME_SIZE;
+	uint8_t channels = 0;
+	uint8_t *p = buf;
+	int ret;
+
+	KASSERT(frame->header.length == HDMI_AUDIO_INFOFRAME_SIZE);
+
+	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
+	if (ret < 0)
+		return ret;
+	p += HDMI_INFOFRAME_HEADER_SIZE;
+	size -= HDMI_INFOFRAME_HEADER_SIZE;
+
+	if (frame->channels >= 2)
+		channels = frame->channels - 1;
+
+	p[0] = __SHIFTIN(frame->coding_type, __BITS(7,4));
+	p[0] |= __SHIFTIN(channels, __BITS(2,0));
+
+	p[1] = __SHIFTIN(frame->sample_frequency, __BITS(4,2));
+	p[1] |= __SHIFTIN(frame->sample_size, __BITS(1,0));
+
+	p[2] = __SHIFTIN(frame->coding_type_ext, __BITS(5,0));
+
+	p[3] = __SHIFTIN(frame->level_shift_value, __BITS(6, 3));
+
+	p[4] = __SHIFTIN(frame->downmix_inhibit? 1 : 0, __BIT(7));
+
+	/* XXX p[5], p[6], p[7], p[8], p[9]?  */
+	CTASSERT(HDMI_AUDIO_INFOFRAME_SIZE == 10);
+
+	hdmi_infoframe_checksum(buf, length);
+
+	return length;
 }
 
 #define	HDMI_AVI_INFOFRAME_SIZE		13

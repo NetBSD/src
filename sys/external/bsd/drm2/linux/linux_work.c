@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,6 +202,15 @@ struct wq_flush {
 };
 
 void
+flush_work(struct work_struct *work)
+{
+	struct workqueue_struct *const wq = work->w_wq;
+
+	if (wq != NULL)
+		flush_workqueue(wq);
+}
+
+void
 flush_workqueue(struct workqueue_struct *wq)
 {
 	static const struct wq_flush zero_wqf;
@@ -312,15 +321,17 @@ INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 	work->w_fn = fn;
 }
 
-void
+bool
 schedule_work(struct work_struct *work)
 {
-	queue_work(system_wq, work);
+	return queue_work(system_wq, work);
 }
 
-void
+bool
 queue_work(struct workqueue_struct *wq, struct work_struct *work)
 {
+	/* True if we put it on the queue, false if it was already there.  */
+	bool newly_queued;
 
 	KASSERT(wq != NULL);
 
@@ -331,6 +342,7 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 		work->w_state = WORK_PENDING;
 		work->w_wq = wq;
 		workqueue_enqueue(wq->wq_workqueue, &work->w_wk, NULL);
+		newly_queued = true;
 		break;
 
 	case WORK_DELAYED:
@@ -339,9 +351,11 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 
 	case WORK_PENDING:
 		KASSERT(work->w_wq == wq);
+		newly_queued = false;
 		break;
 
 	case WORK_CANCELLED:
+		newly_queued = false;
 		break;
 
 	case WORK_DELAYED_CANCELLED:
@@ -353,6 +367,8 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 		break;
 	}
 	linux_work_unlock(work);
+
+	return newly_queued;
 }
 
 bool
@@ -506,16 +522,17 @@ INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 	INIT_WORK(&dw->work, fn);
 }
 
-void
+bool
 schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 {
-	queue_delayed_work(system_wq, dw, ticks);
+	return queue_delayed_work(system_wq, dw, ticks);
 }
 
-void
+bool
 queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
     unsigned long ticks)
 {
+	bool newly_queued;
 
 	KASSERT(wq != NULL);
 
@@ -537,6 +554,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			dw->work.w_wq = wq;
 			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
 		}
+		newly_queued = true;
 		break;
 
 	case WORK_DELAYED:
@@ -545,15 +563,18 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		 * whenever it was going to time out, as Linux does --
 		 * neither speed it up nor postpone it.
 		 */
+		newly_queued = false;
 		break;
 
 	case WORK_PENDING:
 		KASSERT(dw->work.w_wq == wq);
+		newly_queued = false;
 		break;
 
 	case WORK_CANCELLED:
 	case WORK_DELAYED_CANCELLED:
 		/* XXX Wait for cancellation and then queue?  */
+		newly_queued = false;
 		break;
 
 	default:
@@ -562,12 +583,15 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		break;
 	}
 	linux_work_unlock(&dw->work);
+
+	return newly_queued;
 }
 
-void
+bool
 mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
     unsigned long ticks)
 {
+	bool timer_modified;
 
 	KASSERT(wq != NULL);
 
@@ -589,6 +613,7 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			dw->work.w_wq = wq;
 			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
 		}
+		timer_modified = false;
 		break;
 
 	case WORK_DELAYED:
@@ -596,15 +621,18 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		 * Timer is already ticking.  Reschedule it.
 		 */
 		callout_schedule(&dw->dw_callout, ticks);
+		timer_modified = true;
 		break;
 
 	case WORK_PENDING:
 		KASSERT(dw->work.w_wq == wq);
+		timer_modified = false;
 		break;
 
 	case WORK_CANCELLED:
 	case WORK_DELAYED_CANCELLED:
 		/* XXX Wait for cancellation and then queue?  */
+		timer_modified = false;
 		break;
 
 	default:
@@ -613,6 +641,8 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		break;
 	}
 	linux_work_unlock(&dw->work);
+
+	return timer_modified;
 }
 
 bool

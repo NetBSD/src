@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.5 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,7 +68,17 @@ struct pci_device_id {
 	((PCI_CLASS_BRIDGE << 8) | PCI_SUBCLASS_BRIDGE_ISA)
 CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 
+/* XXX This is getting silly...  */
+#define	PCI_VENDOR_ID_ASUSTEK	PCI_VENDOR_ASUSTEK
+#define	PCI_VENDOR_ID_ATI	PCI_VENDOR_ATI
+#define	PCI_VENDOR_ID_DELL	PCI_VENDOR_DELL
+#define	PCI_VENDOR_ID_IBM	PCI_VENDOR_IBM
+#define	PCI_VENDOR_ID_HP	PCI_VENDOR_HP
 #define	PCI_VENDOR_ID_INTEL	PCI_VENDOR_INTEL
+#define	PCI_VENDOR_ID_SONY	PCI_VENDOR_SONY
+#define	PCI_VENDOR_ID_VIA	PCI_VENDOR_VIATECH
+
+#define	PCI_DEVICE_ID_ATI_RADEON_QY	PCI_PRODUCT_ATI_RADEON_RV100_QY
 
 #define	PCI_DEVFN(DEV, FN)						\
 	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
@@ -76,6 +86,7 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define	PCI_FUNC(DEVFN)		__SHIFTOUT((DEVFN), __BITS(0, 2))
 
 #define	PCI_NUM_RESOURCES	((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
+#define	DEVICE_COUNT_RESOURCE	PCI_NUM_RESOURCES
 
 #define	PCI_CAP_ID_AGP	PCI_CAP_AGP
 
@@ -108,6 +119,7 @@ struct pci_dev {
 		bus_space_handle_t	bsh;
 		void __pci_iomem	*kva;
 	}			pd_resources[PCI_NUM_RESOURCES];
+	struct pci_conf_state	*pd_saved_state;
 	struct device		dev;		/* XXX Don't believe me!  */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
@@ -117,7 +129,7 @@ struct pci_dev {
 	uint16_t		subsystem_device;
 	uint8_t			revision;
 	uint32_t		class;
-	bool 			msi_enabled;
+	bool			msi_enabled;
 };
 
 static inline device_t
@@ -146,7 +158,6 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 	pdev->subsystem_device = PCI_SUBSYS_ID(subsystem_id);
 	pdev->revision = PCI_REVISION(pa->pa_class);
 	pdev->class = __SHIFTOUT(pa->pa_class, 0xffffff00UL); /* ? */
-	pdev->msi_enabled = false;
 
 	CTASSERT(__arraycount(pdev->pd_resources) == PCI_NUM_RESOURCES);
 	for (i = 0; i < PCI_NUM_RESOURCES; i++) {
@@ -242,18 +253,16 @@ pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
 /*
  * XXX pci msi
  */
-static inline void
+static inline int
 pci_enable_msi(struct pci_dev *pdev)
 {
-	KASSERT(!pdev->msi_enabled);
-	pdev->msi_enabled = true;
+	return -ENOSYS;
 }
 
 static inline void
-pci_disable_msi(struct pci_dev *pdev)
+pci_disable_msi(struct pci_dev *pdev __unused)
 {
 	KASSERT(pdev->msi_enabled);
-	pdev->msi_enabled = false;
 }
 
 static inline void
@@ -264,6 +273,18 @@ pci_set_master(struct pci_dev *pdev)
 	csr = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
 	    PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    PCI_COMMAND_STATUS_REG, csr);
+}
+
+static inline void
+pci_clear_master(struct pci_dev *pdev)
+{
+	pcireg_t csr;
+
+	csr = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    PCI_COMMAND_STATUS_REG);
+	csr &= ~(pcireg_t)PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
 	    PCI_COMMAND_STATUS_REG, csr);
 }
@@ -512,6 +533,35 @@ pci_iounmap(struct pci_dev *pdev, void __pci_iomem *kva)
 	pdev->pd_resources[i].kva = NULL;
 	bus_space_unmap(pdev->pd_resources[i].bst, pdev->pd_resources[i].bsh,
 	    pdev->pd_resources[i].size);
+}
+
+static inline void
+pci_save_state(struct pci_dev *pdev)
+{
+
+	KASSERT(pdev->pd_saved_state == NULL);
+	pdev->pd_saved_state = kmem_alloc(sizeof(*pdev->pd_saved_state),
+	    KM_SLEEP);
+	pci_conf_capture(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    pdev->pd_saved_state);
+}
+
+static inline void
+pci_restore_state(struct pci_dev *pdev)
+{
+
+	KASSERT(pdev->pd_saved_state != NULL);
+	pci_conf_restore(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    pdev->pd_saved_state);
+	kmem_free(pdev->pd_saved_state, sizeof(*pdev->pd_saved_state));
+	pdev->pd_saved_state = NULL;
+}
+
+static inline bool
+pci_is_pcie(struct pci_dev *pdev)
+{
+
+	return (pci_find_capability(pdev, PCI_CAP_PCIEXPRESS) != 0);
 }
 
 #endif  /* _LINUX_PCI_H_ */

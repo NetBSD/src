@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -41,9 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.3 2014/07/16 20:56:25 riastradh E
 #include <linux/idr.h>
 #include <linux/io.h>
 #include <linux/mutex.h>
+#include <linux/reservation.h>
 #include <linux/workqueue.h>
 
 MODULE(MODULE_CLASS_MISC, drmkms_linux, NULL);
+
+DEFINE_WW_CLASS(reservation_ww_class __cacheline_aligned);
 
 static int
 linux_init(void)

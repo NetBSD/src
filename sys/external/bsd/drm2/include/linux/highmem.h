@@ -1,4 +1,4 @@
-/*	$NetBSD: highmem.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: highmem.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #define	kunmap_atomic	linux_kunmap_atomic
 #define	kmap		linux_kmap
 #define	kunmap		linux_kunmap
+
+/* XXX Kludge!  */
+#define	kmap_atomic_prot(page, prot)	kmap_atomic(page)
 
 int	linux_kmap_init(void);
 void	linux_kmap_fini(void);

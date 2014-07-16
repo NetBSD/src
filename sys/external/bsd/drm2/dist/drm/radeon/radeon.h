@@ -60,10 +60,16 @@
  *                          are considered as fatal)
  */
 
+#include <asm/byteorder.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>
 #include <linux/list.h>
 #include <linux/kref.h>
+#include <linux/device.h>
+#include <linux/log2.h>
+#include <linux/notifier.h>
+#include <linux/printk.h>
+#include <linux/rwsem.h>
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -106,7 +112,7 @@ extern int radeon_hard_reset;
  * symbol;
  */
 #define RADEON_MAX_USEC_TIMEOUT			100000	/* 100 ms */
-#define RADEON_FENCE_JIFFIES_TIMEOUT		(HZ / 2)
+#define RADEON_FENCE_JIFFIES_TIMEOUT		(DRM_HZ / 2)
 /* RADEON_IB_POOL_SIZE must be a power of 2 */
 #define RADEON_IB_POOL_SIZE			16
 #define RADEON_DEBUGFS_MAX_COMPONENTS		32
@@ -237,7 +243,12 @@ bool radeon_get_bios(struct radeon_device *rdev);
  * Dummy page
  */
 struct radeon_dummy_page {
+#ifdef __NetBSD__
+	bus_dma_segment_t	rdp_seg;
+	bus_dmamap_t		rdp_map;
+#else
 	struct page	*page;
+#endif
 	dma_addr_t	addr;
 };
 int radeon_dummy_page_init(struct radeon_device *rdev);
@@ -475,7 +486,9 @@ struct radeon_bo {
 	struct drm_gem_object		gem_base;
 
 	struct ttm_bo_kmap_obj		dma_buf_vmap;
+#ifndef __NetBSD__		/* XXX pid???  */
 	pid_t				pid;
+#endif
 };
 #define gem_to_radeon_bo(gobj) container_of((gobj), struct radeon_bo, gem_base)
 
@@ -505,7 +518,12 @@ int radeon_gem_debugfs_init(struct radeon_device *rdev);
  * alignment).
  */
 struct radeon_sa_manager {
+#ifdef __NetBSD__
+	spinlock_t		wq_lock;
+	drm_waitqueue_t		wq;
+#else
 	wait_queue_head_t	wq;
+#endif
 	struct radeon_bo	*bo;
 	struct list_head	*hole;
 	struct list_head	flist[RADEON_NUM_RINGS];
@@ -587,6 +605,10 @@ struct radeon_mc;
 #define RADEON_GPU_PAGE_ALIGN(a) (((a) + RADEON_GPU_PAGE_MASK) & ~RADEON_GPU_PAGE_MASK)
 
 struct radeon_gart {
+#ifdef __NetBSD__
+	bus_dma_segment_t		rg_table_seg;
+	bus_dmamap_t			rg_table_map;
+#endif
 	dma_addr_t			table_addr;
 	struct radeon_bo		*robj;
 	void				*ptr;
@@ -606,11 +628,19 @@ int radeon_gart_table_vram_pin(struct radeon_device *rdev);
 void radeon_gart_table_vram_unpin(struct radeon_device *rdev);
 int radeon_gart_init(struct radeon_device *rdev);
 void radeon_gart_fini(struct radeon_device *rdev);
+#ifdef __NetBSD__
+void radeon_gart_unbind(struct radeon_device *rdev, unsigned gpu_start,
+			unsigned npages);
+int radeon_gart_bind(struct radeon_device *rdev, unsigned gpu_start,
+		     unsigned npages, struct page **pages,
+		     bus_dmamap_t dmamap);
+#else
 void radeon_gart_unbind(struct radeon_device *rdev, unsigned offset,
 			int pages);
 int radeon_gart_bind(struct radeon_device *rdev, unsigned offset,
 		     int pages, struct page **pagelist,
 		     dma_addr_t *dma_addr);
+#endif
 void radeon_gart_restore(struct radeon_device *rdev);
 
 
@@ -664,9 +694,18 @@ struct radeon_doorbell {
 	/* doorbell mmio */
 	resource_size_t		base;
 	resource_size_t		size;
+#ifdef __NetBSD__
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
+#else
 	u32 __iomem		*ptr;
+#endif
 	u32			num_doorbells;	/* Number of doorbells actually reserved for radeon. */
+#ifdef __NetBSD__
+	unsigned long		used[DIV_ROUND_UP(RADEON_MAX_DOORBELLS, CHAR_BIT*sizeof(unsigned long))];
+#else
 	unsigned long		used[DIV_ROUND_UP(RADEON_MAX_DOORBELLS, BITS_PER_LONG)];
+#endif
 };
 
 int radeon_doorbell_get(struct radeon_device *rdev, u32 *page);
@@ -755,7 +794,12 @@ struct radeon_irq {
 	atomic_t			ring_int[RADEON_NUM_RINGS];
 	bool				crtc_vblank_int[RADEON_MAX_CRTCS];
 	atomic_t			pflip[RADEON_MAX_CRTCS];
+#ifdef __NetBSD__
+	spinlock_t			vblank_lock;
+	drm_waitqueue_t			vblank_queue;
+#else
 	wait_queue_head_t		vblank_queue;
+#endif
 	bool				hpd[RADEON_MAX_HPD_PINS];
 	bool				afmt[RADEON_MAX_AFMT_BLOCKS];
 	union radeon_irq_stat_regs	stat_regs;
@@ -2211,8 +2255,10 @@ struct radeon_device {
 	uint16_t			bios_header_start;
 	struct radeon_bo		*stollen_vga_memory;
 	/* Register mmio */
+#ifndef __NetBSD__
 	resource_size_t			rmmio_base;
 	resource_size_t			rmmio_size;
+#endif
 	/* protects concurrent MM_INDEX/DATA based register access */
 	spinlock_t mmio_idx_lock;
 	/* protects concurrent SMC based register access */
@@ -2237,7 +2283,14 @@ struct radeon_device {
 	spinlock_t didt_idx_lock;
 	/* protects concurrent ENDPOINT (audio) register access */
 	spinlock_t end_idx_lock;
+#ifdef __NetBSD__
+	bus_space_tag_t			rmmio_bst;
+	bus_space_handle_t		rmmio_bsh;
+	bus_addr_t			rmmio_addr;
+	bus_size_t			rmmio_size;
+#else
 	void __iomem			*rmmio;
+#endif
 	radeon_rreg_t			mc_rreg;
 	radeon_wreg_t			mc_wreg;
 	radeon_rreg_t			pll_rreg;
@@ -2246,8 +2299,14 @@ struct radeon_device {
 	radeon_rreg_t			pciep_rreg;
 	radeon_wreg_t			pciep_wreg;
 	/* io port */
+#ifdef __NetBSD__
+	bus_space_tag_t			rio_mem_bst;
+	bus_space_handle_t		rio_mem_bsh;
+	bus_size_t			rio_mem_size;
+#else
 	void __iomem                    *rio_mem;
 	resource_size_t			rio_mem_size;
+#endif
 	struct radeon_clock             clock;
 	struct radeon_mc		mc;
 	struct radeon_gart		gart;
@@ -2256,7 +2315,12 @@ struct radeon_device {
 	struct radeon_doorbell		doorbell;
 	struct radeon_mman		mman;
 	struct radeon_fence_driver	fence_drv[RADEON_NUM_RINGS];
+#ifdef __NetBSD__
+	spinlock_t			fence_lock;
+	drm_waitqueue_t			fence_queue;
+#else
 	wait_queue_head_t		fence_queue;
+#endif
 	struct mutex			ring_lock;
 	struct radeon_ring		ring[RADEON_NUM_RINGS];
 	bool				ib_pool_ready;
@@ -2354,10 +2418,17 @@ void cik_mm_wdoorbell(struct radeon_device *rdev, u32 index, u32 v);
 /*
  * Registers read & write functions.
  */
+#ifdef __NetBSD__
+#define	RREG8(r) bus_space_read_1(rdev->rmmio_bst, rdev->rmmio_bsh, (r))
+#define	WREG8(r, v) bus_space_write_1(rdev->rmmio_bst, rdev->rmmio_bsh, (r), (v))
+#define	RREG16(r) bus_space_read_2(rdev->rmmio_bst, rdev->rmmio_bsh, (r))
+#define	WREG16(r, v) bus_space_write_2(rdev->rmmio_bst, rdev->rmmio_bsh, (r), (v))
+#else
 #define RREG8(reg) readb((rdev->rmmio) + (reg))
 #define WREG8(reg, v) writeb(v, (rdev->rmmio) + (reg))
 #define RREG16(reg) readw((rdev->rmmio) + (reg))
 #define WREG16(reg, v) writew(v, (rdev->rmmio) + (reg))
+#endif
 #define RREG32(reg) r100_mm_rreg(rdev, (reg), false)
 #define RREG32_IDX(reg) r100_mm_rreg(rdev, (reg), true)
 #define DREG32(reg) printk(KERN_INFO "REGISTER: " #reg " : 0x%08X\n", r100_mm_rreg(rdev, (reg), false))

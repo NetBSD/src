@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 #include <linux/export.h>
+#include <linux/module.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@ typedef int64_t __s64;
 typedef uint16_t __le16;
 typedef uint32_t __le32;
 typedef uint64_t __le64;
+
+typedef uint16_t __be16;
+typedef uint32_t __be32;
+typedef uint64_t __be64;
 
 /*
  * This is used for absolute bus addresses, so it has to be bus_addr_t

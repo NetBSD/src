@@ -28,6 +28,7 @@
 #include <drm/radeon_drm.h>
 #include <drm/drm_fixed.h>
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "atom.h"
 #include "atom-bits.h"
 

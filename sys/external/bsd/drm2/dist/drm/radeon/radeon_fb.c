@@ -48,6 +48,7 @@ struct radeon_fbdev {
 	struct radeon_device *rdev;
 };
 
+#ifndef __NetBSD__
 static struct fb_ops radeonfb_ops = {
 	.owner = THIS_MODULE,
 	.fb_check_var = drm_fb_helper_check_var,
@@ -61,6 +62,7 @@ static struct fb_ops radeonfb_ops = {
 	.fb_debug_enter = drm_fb_helper_debug_enter,
 	.fb_debug_leave = drm_fb_helper_debug_leave,
 };
+#endif
 
 
 int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tiled)
@@ -122,9 +124,17 @@ static int radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 						  fb_tiled) * ((bpp + 1) / 8);
 
 	if (rdev->family >= CHIP_R600)
+#ifdef __NetBSD__
+		height = DIV_ROUND_UP(mode_cmd->height, 8);
+#else
 		height = ALIGN(mode_cmd->height, 8);
+#endif
 	size = mode_cmd->pitches[0] * height;
+#ifdef __NetBSD__
+	aligned_size = DIV_ROUND_UP (size, PAGE_SIZE);
+#else
 	aligned_size = ALIGN(size, PAGE_SIZE);
+#endif
 	ret = radeon_gem_object_create(rdev, aligned_size, 0,
 				       RADEON_GEM_DOMAIN_VRAM,
 				       false, true,
@@ -192,14 +202,20 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 {
 	struct radeon_fbdev *rfbdev = (struct radeon_fbdev *)helper;
 	struct radeon_device *rdev = rfbdev->rdev;
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 	struct drm_framebuffer *fb = NULL;
 	struct drm_mode_fb_cmd2 mode_cmd;
 	struct drm_gem_object *gobj = NULL;
 	struct radeon_bo *rbo = NULL;
+#ifndef __NetBSD__
 	struct device *device = &rdev->pdev->dev;
+#endif
 	int ret;
+#ifndef __NetBSD__
 	unsigned long tmp;
+#endif
 
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
@@ -219,6 +235,23 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 
 	rbo = gem_to_radeon_bo(gobj);
 
+#ifdef __NetBSD__
+	ret = radeon_framebuffer_init(rdev->ddev, &rfbdev->rfb, &mode_cmd, gobj);
+	if (ret) {
+		DRM_ERROR("failed to initialize framebuffer %d\n", ret);
+		goto out_unref;
+	}
+
+	(void)memset(rbo->kptr, 0, radeon_bo_size(rbo));
+	ret = radeon_genfb_attach(rdev->ddev, helper, sizes, rbo);
+	if (ret) {
+		DRM_ERROR("failed to attach genfb: %d\n", ret);
+		goto out_unref;
+	}
+	helper->genfb_attached = true;
+	fb = &rfbdev->rfb.base;
+	rfbdev->helper.fb = fb;
+#else
 	/* okay we have an object now allocate the framebuffer */
 	info = framebuffer_alloc(0, device);
 	if (info == NULL) {
@@ -286,6 +319,7 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 	DRM_INFO("   pitch is %d\n", fb->pitches[0]);
 
 	vga_switcheroo_client_fb_set(rdev->ddev->pdev, info);
+#endif
 	return 0;
 
 out_unref:
@@ -308,9 +342,17 @@ void radeon_fb_output_poll_changed(struct radeon_device *rdev)
 
 static int radeon_fbdev_destroy(struct drm_device *dev, struct radeon_fbdev *rfbdev)
 {
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 	struct radeon_framebuffer *rfb = &rfbdev->rfb;
 
+#ifdef __NetBSD__
+	if (rfbdev->helper.genfb_attached) {
+		/* XXX detach genfb for real...  */
+		(void)config_detach_children(dev->dev, DETACH_FORCE);
+	}
+#else
 	if (rfbdev->helper.fbdev) {
 		info = rfbdev->helper.fbdev;
 
@@ -319,6 +361,7 @@ static int radeon_fbdev_destroy(struct drm_device *dev, struct radeon_fbdev *rfb
 			fb_dealloc_cmap(&info->cmap);
 		framebuffer_release(info);
 	}
+#endif
 
 	if (rfb->obj) {
 		radeonfb_destroy_pinned_object(rfb->obj);
@@ -384,7 +427,9 @@ void radeon_fbdev_fini(struct radeon_device *rdev)
 
 void radeon_fbdev_set_suspend(struct radeon_device *rdev, int state)
 {
+#ifndef __NetBSD__		/* XXX radeon fb suspend */
 	fb_set_suspend(rdev->mode_info.rfbdev->helper.fbdev, state);
+#endif
 }
 
 int radeon_fbdev_total_size(struct radeon_device *rdev)

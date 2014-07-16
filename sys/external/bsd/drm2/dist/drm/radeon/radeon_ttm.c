@@ -43,6 +43,12 @@
 #include "radeon_reg.h"
 #include "radeon.h"
 
+#ifdef __NetBSD__
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
+#include <drm/bus_dma_hacks.h>
+#endif
+
 #define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
 
 static int radeon_ttm_debugfs_init(struct radeon_device *rdev);
@@ -281,7 +287,7 @@ static int radeon_move_vram_ram(struct ttm_buffer_object *bo,
 				bool no_wait_gpu,
 				struct ttm_mem_reg *new_mem)
 {
-	struct radeon_device *rdev;
+	struct radeon_device *rdev __unused;
 	struct ttm_mem_reg *old_mem = &bo->mem;
 	struct ttm_mem_reg tmp_mem;
 	u32 placements;
@@ -328,7 +334,7 @@ static int radeon_move_ram_vram(struct ttm_buffer_object *bo,
 				bool no_wait_gpu,
 				struct ttm_mem_reg *new_mem)
 {
-	struct radeon_device *rdev;
+	struct radeon_device *rdev __unused;
 	struct ttm_mem_reg *old_mem = &bo->mem;
 	struct ttm_mem_reg tmp_mem;
 	struct ttm_placement placement;
@@ -592,18 +598,24 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 {
 	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt = (void *)ttm;
+#ifndef __NetBSD__
 	unsigned i;
 	int r;
+#endif
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
 	if (ttm->state != tt_unpopulated)
 		return 0;
 
 	if (slave && ttm->sg) {
+#ifdef __NetBSD__		/* XXX drm prime */
+		return -EINVAL;
+#else
 		drm_prime_sg_to_page_addr_arrays(ttm->sg, ttm->pages,
 						 gtt->ttm.dma_address, ttm->num_pages);
 		ttm->state = tt_unbound;
 		return 0;
+#endif
 	}
 
 	rdev = radeon_get_rdev(ttm->bdev);
@@ -612,6 +624,11 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 		return ttm_agp_tt_populate(ttm);
 	}
 #endif
+
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	return ttm_bus_dma_populate(&gtt->ttm);
+#else
 
 #ifdef CONFIG_SWIOTLB
 	if (swiotlb_nr_tbl()) {
@@ -639,13 +656,16 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 		}
 	}
 	return 0;
+#endif
 }
 
 static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
 	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt = (void *)ttm;
+#ifndef __NetBSD__
 	unsigned i;
+#endif
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
 	if (slave)
@@ -658,6 +678,11 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 		return;
 	}
 #endif
+
+#ifdef __NetBSD__
+	ttm_bus_dma_unpopulate(&gtt->ttm);
+	return;
+#else
 
 #ifdef CONFIG_SWIOTLB
 	if (swiotlb_nr_tbl()) {
@@ -674,6 +699,7 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	}
 
 	ttm_pool_unpopulate(ttm);
+#endif
 }
 
 static struct ttm_bo_driver radeon_bo_driver = {
@@ -708,7 +734,12 @@ int radeon_ttm_init(struct radeon_device *rdev)
 	r = ttm_bo_device_init(&rdev->mman.bdev,
 			       rdev->mman.bo_global_ref.ref.object,
 			       &radeon_bo_driver,
+#ifdef __NetBSD__
+			       rdev->ddev->bst,
+			       rdev->ddev->dmat,
+#else
 			       rdev->ddev->anon_inode->i_mapping,
+#endif
 			       DRM_FILE_PAGE_OFFSET,
 			       rdev->need_dma32);
 	if (r) {
@@ -797,6 +828,52 @@ void radeon_ttm_set_active_vram_size(struct radeon_device *rdev, u64 size)
 	man->size = size >> PAGE_SHIFT;
 }
 
+#ifdef __NetBSD__
+
+#include <uvm/uvm_fault.h>
+
+int
+radeon_ttm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
+    struct vm_page **pps, int npages, int centeridx, vm_prot_t access_type,
+    int flags)
+{
+	struct uvm_object *const uobj = ufi->entry->object.uvm_obj;
+	struct ttm_buffer_object *const bo = container_of(uobj,
+	    struct ttm_buffer_object, uvmobj);
+	struct radeon_device *const rdev = radeon_get_rdev(bo->bdev);
+	int error;
+
+	KASSERT(rdev != NULL);
+	down_read(&rdev->pm.mclk_lock);
+	error = ttm_bo_uvm_fault(ufi, vaddr, pps, npages, centeridx,
+	    access_type, flags);
+	up_read(&rdev->pm.mclk_lock);
+
+	return error;
+}
+
+int
+radeon_mmap_object(struct drm_device *dev, off_t offset, size_t size,
+    vm_prot_t prot, struct uvm_object **uobjp, voff_t *uoffsetp,
+    struct file *file)
+{
+	struct radeon_device *rdev = dev->dev_private;
+
+	KASSERT(0 == (offset & ~(PAGE_SIZE - 1)));
+
+	if (__predict_false(rdev == NULL))	/* XXX How?? */
+		return -EINVAL;
+
+	if (__predict_false((offset >> PAGE_SHIFT) < DRM_FILE_PAGE_OFFSET))
+		return drm_mmap_object(dev, offset, size, prot, uobjp,
+		    uoffsetp /* , file */);
+	else
+		return ttm_bo_mmap_object(&rdev->mman.bdev, offset, size, prot,
+		    uobjp, uoffsetp, file);
+}
+
+#else
+
 static struct vm_operations_struct radeon_ttm_vm_ops;
 static const struct vm_operations_struct *ttm_vm_ops = NULL;
 
@@ -844,6 +921,8 @@ int radeon_mmap(struct file *filp, struct vm_area_struct *vma)
 	vma->vm_ops = &radeon_ttm_vm_ops;
 	return 0;
 }
+
+#endif	/* __NetBSD__ */
 
 #if defined(CONFIG_DEBUG_FS)
 

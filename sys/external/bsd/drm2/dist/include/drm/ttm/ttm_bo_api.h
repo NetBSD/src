@@ -31,8 +31,18 @@
 #ifndef _TTM_BO_API_H_
 #define _TTM_BO_API_H_
 
+#ifdef __NetBSD__
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mutex.h>		/* XXX ugh include order botch */
+#include <uvm/uvm_object.h>
+#include <uvm/uvm_param.h>
+#include <uvm/uvm_prot.h>
+#endif
+
 #include <drm/drm_hashtab.h>
 #include <drm/drm_vma_manager.h>
+#include <linux/atomic.h>
 #include <linux/kref.h>
 #include <linux/list.h>
 #include <linux/wait.h>
@@ -88,6 +98,9 @@ struct ttm_bus_placement {
 	bool		is_iomem;
 	bool		io_reserved_vm;
 	uint64_t        io_reserved_count;
+#ifdef __NetBSD__
+	bus_space_handle_t	memh;
+#endif
 };
 
 
@@ -194,6 +207,9 @@ struct ttm_buffer_object {
 	void (*destroy) (struct ttm_buffer_object *);
 	unsigned long num_pages;
 	size_t acc_size;
+#ifdef __NetBSD__
+	struct uvm_object uvmobj;
+#endif
 
 	/**
 	* Members not needing protection.
@@ -270,7 +286,19 @@ struct ttm_buffer_object {
 #define TTM_BO_MAP_IOMEM_MASK 0x80
 struct ttm_bo_kmap_obj {
 	void *virtual;
+#ifdef __NetBSD__
+	union {
+		struct {
+			bus_space_handle_t	memh;
+			bus_size_t		size;
+		} io;
+		struct {
+			vsize_t			vsize;
+		} uvm;
+	} u;
+#else
 	struct page *page;
+#endif
 	enum {
 		ttm_bo_map_iomap        = 1 | TTM_BO_MAP_IOMEM_MASK,
 		ttm_bo_map_vmap         = 2,
@@ -650,6 +678,19 @@ extern int ttm_bo_kmap(struct ttm_buffer_object *bo, unsigned long start_page,
 
 extern void ttm_bo_kunmap(struct ttm_bo_kmap_obj *map);
 
+#ifdef __NetBSD__
+
+/* XXX ttm_fbdev_mmap?  */
+
+extern void ttm_bo_uvm_reference(struct uvm_object *);
+extern void ttm_bo_uvm_detach(struct uvm_object *);
+extern int ttm_bo_uvm_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
+    int, int, vm_prot_t, int);
+extern int ttm_bo_mmap_object(struct ttm_bo_device *, off_t, size_t, vm_prot_t,
+    struct uvm_object **, voff_t *, struct file *);
+
+#else
+
 /**
  * ttm_fbdev_mmap - mmap fbdev memory backed by a ttm buffer object.
  *
@@ -677,6 +718,8 @@ extern int ttm_fbdev_mmap(struct vm_area_struct *vma,
 
 extern int ttm_bo_mmap(struct file *filp, struct vm_area_struct *vma,
 		       struct ttm_bo_device *bdev);
+
+#endif	/* __NetBSD__ */
 
 /**
  * ttm_bo_io

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,17 @@ struct i2c_msg;
 
 #define	I2C_CLASS_DDC	0x01
 
+struct i2c_board_info {
+	char			type[I2C_NAME_SIZE];
+	uint16_t		addr;
+};
+
+static inline void
+i2c_new_device(struct i2c_adapter *adapter __unused,
+    struct i2c_board_info *board __unused)
+{
+}
+
 struct i2c_adapter {
 	char		 		name[I2C_NAME_SIZE];
 	const struct i2c_algorithm	*algo;
@@ -56,6 +67,7 @@ struct i2c_adapter {
 	struct {
 		device_t	parent;
 	}				dev;	/* XXX Kludge for intel_dp.  */
+	void				*i2ca_adapdata;
 };
 
 static inline int
@@ -67,6 +79,20 @@ i2c_add_adapter(struct i2c_adapter *adapter __unused)
 static inline void
 i2c_del_adapter(struct i2c_adapter *adapter __unused)
 {
+}
+
+static inline void *
+i2c_get_adapdata(const struct i2c_adapter *adapter)
+{
+
+	return adapter->i2ca_adapdata;
+}
+
+static inline void
+i2c_set_adapdata(struct i2c_adapter *adapter, void *data)
+{
+
+	adapter->i2ca_adapdata = data;
 }
 
 struct i2c_msg {

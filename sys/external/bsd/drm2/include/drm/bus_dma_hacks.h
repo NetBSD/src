@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.5 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,11 +34,19 @@
 
 #include <sys/cdefs.h>
 #include <sys/bus.h>
+#include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 /* XXX This is x86-specific bollocks.  */
+#if !defined(__i386__) && !defined(__x86_64__)
+#error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
+#endif
+
+#include <x86/bus_private.h>
+#include <x86/machdep.h>
 
 static inline int
 bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
@@ -103,6 +111,64 @@ bus_dmamem_unwire_uvm_object(bus_dma_tag_t tag __unused,
     bus_dma_segment_t *segs __unused, int nsegs __unused)
 {
 	uvm_obj_unwirepages(uobj, start, (start + size));
+}
+
+static inline int
+bus_dmamem_pgfl(bus_dma_tag_t tag)
+{
+	return x86_select_freelist(tag->_bounce_alloc_hi - 1);
+}
+
+static inline int
+bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
+    struct pglist *pglist, bus_size_t size, int flags)
+{
+	km_flag_t kmflags;
+	bus_dma_segment_t *segs;
+	int nsegs, seg;
+	struct vm_page *page;
+	int error;
+
+	nsegs = 0;
+	TAILQ_FOREACH(page, pglist, pageq.queue) {
+		if (nsegs == INT_MAX)
+			return ENOMEM;
+#if __i386__
+		if (nsegs == (SIZE_MAX / sizeof(segs[0])))
+			return ENOMEM;
+#endif
+		nsegs++;
+	}
+
+	KASSERT(nsegs <= (SIZE_MAX / sizeof(segs[0])));
+	switch (flags & (BUS_DMA_WAITOK|BUS_DMA_NOWAIT)) {
+	case BUS_DMA_WAITOK:	kmflags = KM_SLEEP;	break;
+	case BUS_DMA_NOWAIT:	kmflags = KM_NOSLEEP;	break;
+	default:		panic("invalid flags: %d", flags);
+	}
+	segs = kmem_alloc((nsegs * sizeof(segs[0])), kmflags);
+	if (segs == NULL)
+		return ENOMEM;
+
+	seg = 0;
+	TAILQ_FOREACH(page, pglist, pageq.queue) {
+		segs[seg].ds_addr = VM_PAGE_TO_PHYS(page);
+		segs[seg].ds_len = PAGE_SIZE;
+		seg++;
+	}
+
+	error = bus_dmamap_load_raw(tag, map, segs, nsegs, size, flags);
+	if (error)
+		goto fail0;
+
+	/* Success!  */
+	return 0;
+
+fail1: __unused
+	bus_dmamap_unload(tag, map);
+fail0:	KASSERT(error);
+	kmem_free(segs, (nsegs * sizeof(segs[0])));
+	return error;
 }
 
 #endif	/* _DRM_BUS_DMA_HACKS_H_ */

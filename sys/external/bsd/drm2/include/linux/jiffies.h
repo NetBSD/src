@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,8 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
-#define	jiffies	hardclock_ticks
+#define	jiffies		hardclock_ticks
+#define	jiffies_64	hardclock_ticks /* XXX */
 
 /* XXX Er, what?  */
 #define	MAX_JIFFY_OFFSET	((INT_MAX >> 1) - 1)

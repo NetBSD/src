@@ -154,7 +154,11 @@ int radeon_bo_create(struct radeon_device *rdev,
 	size_t acc_size;
 	int r;
 
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	size = round_up(size, PAGE_SIZE);
+#else
 	size = ALIGN(size, PAGE_SIZE);
+#endif
 
 	if (kernel) {
 		type = ttm_bo_type_kernel;
@@ -362,7 +366,7 @@ int radeon_bo_init(struct radeon_device *rdev)
 		rdev->mc.vram_mtrr = arch_phys_wc_add(rdev->mc.aper_base,
 						      rdev->mc.aper_size);
 	}
-	DRM_INFO("Detected VRAM RAM=%lluM, BAR=%lluM\n",
+	DRM_INFO("Detected VRAM RAM=%"PRIx64"M, BAR=%lluM\n",
 		rdev->mc.mc_vram_size >> 20,
 		(unsigned long long)rdev->mc.aper_size >> 20);
 	DRM_INFO("RAM width %dbits %cDR\n",
@@ -490,11 +494,15 @@ int radeon_bo_list_validate(struct radeon_device *rdev,
 	return 0;
 }
 
+#ifdef __NetBSD__
+/* XXX Fill me in!  */
+#else
 int radeon_bo_fbdev_mmap(struct radeon_bo *bo,
 			     struct vm_area_struct *vma)
 {
 	return ttm_fbdev_mmap(vma, &bo->tbo);
 }
+#endif
 
 int radeon_bo_get_surface_reg(struct radeon_bo *bo)
 {
