@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.5 2014/07/17 14:28:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -94,6 +94,48 @@ __change_bit(unsigned int n, volatile unsigned long *p)
 	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
 
 	p[n / units] ^= (1UL << (n % units));
+}
+
+static inline unsigned long
+__test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+	volatile unsigned long *const p = &ptr[bit / units];
+	const unsigned long mask = (1UL << (bit % units));
+	unsigned long v;
+
+	v = *p;
+	*p |= mask;
+
+	return (v & mask);
+}
+
+static inline unsigned long
+__test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+	volatile unsigned long *const p = &ptr[bit / units];
+	const unsigned long mask = (1UL << (bit % units));
+	unsigned long v;
+
+	v = *p;
+	*p &= ~mask;
+
+	return (v & mask);
+}
+
+static inline unsigned long
+__test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+	volatile unsigned long *const p = &ptr[bit / units];
+	const unsigned long mask = (1UL << (bit % units));
+	unsigned long v;
+
+	v = *p;
+	*p ^= mask;
+
+	return (v & mask);
 }
 
 static inline unsigned long
