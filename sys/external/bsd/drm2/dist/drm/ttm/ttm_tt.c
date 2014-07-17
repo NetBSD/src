@@ -366,6 +366,7 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 		KASSERT(i < ttm->num_pages);
 		KASSERT(ttm->pages[i] == NULL);
 		ttm->pages[i] = container_of(page, struct page, p_vmp);
+		i++;
 	}
 	KASSERT(i == ttm->num_pages);
 
