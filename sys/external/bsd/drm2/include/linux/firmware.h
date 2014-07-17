@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.4 2014/07/17 20:37:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ request_firmware(const struct firmware **fwp, const char *image_name,
 fail1:	firmware_free(fw->data, fw->size);
 fail0:	KASSERT(ret);
 	kmem_free(fw, sizeof(*fw));
+	*fwp = NULL;
 	return ret;
 }
 
@@ -83,8 +84,10 @@ static inline void
 release_firmware(const struct firmware *fw)
 {
 
-	firmware_free(fw->data, fw->size);
-	kmem_free(__UNCONST(fw), sizeof(*fw));
+	if (fw != NULL) {
+		firmware_free(fw->data, fw->size);
+		kmem_free(__UNCONST(fw), sizeof(*fw));
+	}
 }
 
 #endif  /* _LINUX_FIRMWARE_H_ */
