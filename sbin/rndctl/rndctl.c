@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.27.2.1 2014/04/07 02:49:52 tls Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.27.2.2 2014/07/17 14:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.27.2.1 2014/04/07 02:49:52 tls Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.27.2.2 2014/07/17 14:03:33 tls Exp $");
 #endif
 
 
@@ -318,10 +318,6 @@ do_list(int all, u_int32_t type, char *name)
 				rstat_name.source.dv_samples);
 			printf("\tDv bits = %d\n",
 			       rstat_name.source.dv_total);
-			printf("\tLZ bytes in = %d\n",
-			       rstat_name.source.lzv_bytes);
-			printf("\tLZ bits out = %d\n",
-			       rstat_name.source.lzv_total);
 		}
 		close(fd);
 		return;
@@ -360,10 +356,6 @@ do_list(int all, u_int32_t type, char *name)
 				       rstat.source[i].dv_samples);
 				printf("\tDv bits = %d\n",
 				       rstat.source[i].dv_total);
-				printf("\tLZ bytes in = %d\n",
-				       rstat.source[i].lzv_bytes);
-				printf("\tLZ bits out = %d\n",
-				       rstat.source[i].lzv_total);
 			}
                 }
 		start += rstat.count;

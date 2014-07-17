@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.19.2.1 2014/04/07 02:54:53 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.19.2.2 2014/07/17 14:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.19.2.1 2014/04/07 02:54:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.19.2.2 2014/07/17 14:03:33 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -523,8 +523,6 @@ krndsource_to_rndsource_est(krndsource_t *kr, rndsource_est_t *re)
 	re->dt_total = kr->time_delta.outbits;
 	re->dv_samples = kr->value_delta.insamples;
 	re->dv_total = kr->value_delta.outbits;
-	re->lzv_bytes = kr->lz_v.inbytes;
-	re->lzv_total = kr->lz_v.outbits;
 }
 
 int

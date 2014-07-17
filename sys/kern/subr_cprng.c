@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.23.2.1 2014/07/17 14:03:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23.2.1 2014/07/17 14:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $"
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/once.h>
+#include <sys/percpu.h>
 #include <sys/poll.h>		/* XXX POLLIN/POLLOUT/&c. */
 #include <sys/select.h>
 #include <sys/systm.h>
@@ -54,10 +55,21 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $"
 #endif
 
 #include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
+#include <crypto/ccrand/ccrand.h>
 
 #if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
 #endif
+
+#define CPRNGF_MAXBYTES           (512 * 1024 * 1024)
+#define CPRNGF_HARDMAX            (1 * 1024 * 1024 * 1024)
+#define CPRNGF_RESEED_SECONDS     600
+
+typedef struct {
+	ccrand_t	ccrand;
+	int		numbytes;
+	time_t		nextreseed;
+} cprng_fast_ctx_t;
 
 static int sysctl_kern_urnd(SYSCTLFN_PROTO);
 static int sysctl_kern_arnd(SYSCTLFN_PROTO);
@@ -66,11 +78,18 @@ static void	cprng_strong_generate(struct cprng_strong *, void *, size_t);
 static void	cprng_strong_reseed(struct cprng_strong *);
 static void	cprng_strong_reseed_from(struct cprng_strong *, const void *,
 		    size_t, bool);
+static void	cprng_fast_randrekey(cprng_fast_ctx_t *);
+void		*cprng_fast_rekey_softintr = NULL;
+
 #if DEBUG
 static void	cprng_strong_rngtest(struct cprng_strong *);
+static void	cprng_fast_rngtest(void);
 #endif
 
 static rndsink_callback_t	cprng_strong_rndsink_callback;
+
+percpu_t *percpu_cprng_fast_ctx;
+static int cprng_fast_initialized;
 
 void
 cprng_init(void)
@@ -103,10 +122,11 @@ cprng_counter(void)
 		return cpu_counter32();
 #endif
 	if (__predict_false(cold)) {
+		static int ctr;
 		/* microtime unsafe if clock not running yet */
-		return 0;
+		return ctr++;
 	}
-	microtime(&tv);
+	getmicrotime(&tv);
 	return (tv.tv_sec * 1000000 + tv.tv_usec);
 }
 
@@ -481,6 +501,25 @@ cprng_strong_rngtest(struct cprng_strong *cprng)
 	explicit_memset(rt, 0, sizeof(*rt)); /* paranoia */
 	kmem_intr_free(rt, sizeof(*rt));
 }
+
+static void cprng_fast_rngtest(void)
+{
+	rngtest_t *const rt = kmem_intr_alloc(sizeof(*rt), KM_NOSLEEP);
+	if (rt == NULL)
+		/* XXX Warn? */
+		return;
+
+	(void)snprintf(rt->rt_name, sizeof(rt->rt_name),
+		       "cpu%d", curcpu()->ci_index);
+	cprng_fast(rt->rt_b, sizeof(rt->rt_b));
+
+	if (rngtest(rt)) {
+		printf("cprng_fast for %s: failed statistical RNG test\n",
+		       rt->rt_name);
+	}
+	explicit_memset(rt, 0, sizeof(*rt));
+	kmem_intr_free(rt, sizeof(*rt));
+}
 #endif
 
 /*
@@ -532,8 +571,16 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.arandom node. Picks a random number
- * for you.
+ * sysctl helper routine for kern.arandom node.  Fills the supplied
+ * structure with random data for you.
+ *
+ * This node was originally declared as type "int" but its implementation
+ * in OpenBSD, whence it came, would happily return up to 8K of data if
+ * requested.  Evidently this was used to key RC4 in userspace.
+ *
+ * In NetBSD, the libc stack-smash-protection code reads 64 bytes
+ * from here at every program startup.  So though it would be nice
+ * to make this node return only 32 or 64 bits, we can't.  Too bad!
  */
 static int
 sysctl_kern_arnd(SYSCTLFN_ARGS)
@@ -542,31 +589,144 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 	void *v;
 	struct sysctlnode node = *rnode;
 
-	if (*oldlenp == 0)
+	switch (*oldlenp) {
+	    case 0:
 		return 0;
-	/*
-	 * This code used to allow sucking 8192 bytes at a time out
-	 * of the kernel arc4random generator.  Evidently there is some
-	 * very old OpenBSD application code that may try to do this.
-	 *
-	 * Note that this node is documented as type "INT" -- 4 or 8
-	 * bytes, not 8192.
-	 *
-	 * We continue to support this abuse of the "len" pointer here
-	 * but only 256 bytes at a time, as, anecdotally, the actual
-	 * application use here was to generate RC4 keys in userspace.
-	 *
-	 * Support for such large requests will probably be removed
-	 * entirely in the future.
-	 */
-	if (*oldlenp > 256)
-		return E2BIG;
+	    default:
+		if (*oldlenp > 256) {
+			return E2BIG;
+		}
+		v = kmem_alloc(*oldlenp, KM_SLEEP);
+		cprng_fast(v, *oldlenp);
+		node.sysctl_data = v;
+		node.sysctl_size = *oldlenp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		kmem_free(v, *oldlenp);
+		return error;
+	}
+}
 
-	v = kmem_alloc(*oldlenp, KM_SLEEP);
-	cprng_fast(v, *oldlenp);
-	node.sysctl_data = v;
-	node.sysctl_size = *oldlenp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	kmem_free(v, *oldlenp);
-	return error;
+static void
+cprng_fast_randrekey(cprng_fast_ctx_t *ctx)
+{
+	uint8_t key[16];
+	int s;
+	
+	int have_initial = rnd_initial_entropy;
+
+	cprng_strong(kern_cprng, key, sizeof(key), FASYNC);
+	s = splhigh();
+	ccrand_reseed(&ctx->ccrand, (uint32_t *)key,
+		      sizeof(key) / sizeof(uint32_t));
+	splx(s);
+	explicit_memset(key, 0, sizeof(key));
+	/*
+	 * Reset for next reseed cycle.
+	 */
+	ctx->nextreseed = time_uptime +
+	    (have_initial ? CPRNGF_RESEED_SECONDS : 0);
+	ctx->numbytes = 0;
+
+#if DEBUG
+	cprng_fast_rngtest();
+#endif
+}
+
+static void
+cprng_fast_init_ctx(void *v,
+	      void *arg __unused,
+	      struct cpu_info * ci __unused)
+{
+	cprng_fast_ctx_t *ctx = v;
+	cprng_fast_randrekey(ctx);
+}
+
+static void
+cprng_fast_rekey_one(void *arg __unused)
+{
+	cprng_fast_ctx_t *ctx = percpu_getref(percpu_cprng_fast_ctx);
+
+	cprng_fast_randrekey(ctx);
+	percpu_putref(percpu_cprng_fast_ctx);
+}
+
+/*
+ * Because we key the cprng_fast instances from the kernel_cprng,
+ * and we try not to initialize the kernel_cprng until there is at
+ * least some chance there's entropy available for it, this must
+ * be called somewhat later than cprng_init() and is thus a separate
+ * function.
+ */
+void
+cprng_fast_init(void)
+{
+        percpu_cprng_fast_ctx = percpu_alloc(sizeof(cprng_fast_ctx_t));
+
+        percpu_foreach(percpu_cprng_fast_ctx, cprng_fast_init_ctx, NULL);
+	cprng_fast_rekey_softintr =
+	    softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+			      cprng_fast_rekey_one, NULL);
+	cprng_fast_initialized++;
+}
+
+static inline void
+cprng_fast_checkrekey(cprng_fast_ctx_t *ctx)
+{
+	extern void *cprng_fast_rekey_softintr;
+
+	if (__predict_false((ctx->numbytes > CPRNGF_MAXBYTES) ||
+			    (time_uptime > ctx->nextreseed))) {
+		/* Schedule a deferred reseed */
+		softint_schedule(cprng_fast_rekey_softintr);
+	}
+}
+
+uint32_t
+cprng_fast32(void)
+{
+	cprng_fast_ctx_t *ctx = percpu_getref(percpu_cprng_fast_ctx);
+	int s;
+	uint32_t ret;
+
+	cprng_fast_checkrekey(ctx);
+
+	s = splhigh();
+	ret = ccrand32(&ctx->ccrand);
+	splx(s);
+	ctx->numbytes+= sizeof(ret);
+	percpu_putref(percpu_cprng_fast_ctx);
+	return ret;
+}
+
+uint64_t
+cprng_fast64(void)
+{
+	cprng_fast_ctx_t *ctx = percpu_getref(percpu_cprng_fast_ctx);
+	int s;
+	uint64_t ret;
+
+	cprng_fast_checkrekey(ctx);
+
+	s = splhigh();
+	ret = ccrand64(&ctx->ccrand);
+	splx(s);
+	ctx->numbytes += sizeof(ret);
+	percpu_putref(percpu_cprng_fast_ctx);
+	return ret;
+}
+
+size_t
+cprng_fast(void *p, size_t len)
+{
+	cprng_fast_ctx_t *ctx = percpu_getref(percpu_cprng_fast_ctx);
+	int s;
+
+	cprng_fast_checkrekey(ctx);
+
+	s = splhigh();
+	ccrand_bytes(&ctx->ccrand, p, len);
+	splx(s);
+	ctx->numbytes += len;
+	percpu_putref(percpu_cprng_fast_ctx);
+	return len;
 }

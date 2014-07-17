@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.9 2014/01/17 02:08:56 pooka Exp $ */
+/*	$NetBSD: cprng.h,v 1.9.2.1 2014/07/17 14:03:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -41,42 +41,23 @@
 #include <sys/rnd.h>		/* XXX users bogusly transitively need this */
 
 #include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
+#include <sys/percpu.h>
+#include <sys/intr.h>
 
 /*
  * NIST SP800-90 says 2^19 bytes per request for the CTR_DRBG.
  */
 #define CPRNG_MAX_LEN	524288
 
-/*
- * We do not want an arc4random() prototype available to anyone.
- */
-void _arc4randbytes(void *, size_t);
-uint32_t _arc4random(void);
+size_t cprng_fast(void *, size_t);
 
-static inline size_t
-cprng_fast(void *p, size_t len)
-{
-	_arc4randbytes(p, len);
-	return len;
-}
-
-static inline uint32_t
-cprng_fast32(void)
-{
-	return _arc4random();
-}
-
-static inline uint64_t
-cprng_fast64(void)
-{
-	uint64_t r;
-	_arc4randbytes(&r, sizeof(r));
-	return r;
-}
+uint32_t cprng_fast32(void);
+uint64_t cprng_fast64(void);
 
 typedef struct cprng_strong cprng_strong_t;
 
 void	cprng_init(void);
+void	cprng_fast_init(void);
 
 #define CPRNG_INIT_ANY		0x00000001
 #define CPRNG_REKEY_ANY		0x00000002

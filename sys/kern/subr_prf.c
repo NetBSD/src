@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.153.2.2 2014/04/09 03:41:30 tls Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.153.2.3 2014/07/17 14:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.153.2.2 2014/04/09 03:41:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.153.2.3 2014/07/17 14:03:33 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -145,6 +145,7 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
 static void kprintf_rnd_get(size_t bytes, void *priv)
 {
 	if (kprnd_added)  {
+		KASSERT(kprintf_inited);
 		if (mutex_tryenter(&kprintf_mtx)) {
 			SHA512_Final(kprnd_accum, &kprnd_sha);
 			rnd_add_data(&rnd_printf_source,
@@ -474,13 +475,15 @@ putchar(int c, int flags, struct tty *tp)
 	}
 #endif
 
-	rbuf[cursor] = c;
-	if (cursor == sizeof(rbuf) - 1) {
-		SHA512_Update(&kprnd_sha, rbuf, sizeof(rbuf));
-		kprnd_added++;
-		cursor = 0;
-	} else {
-		cursor++;
+	if (__predict_true(kprintf_inited)) {
+		rbuf[cursor] = c;
+		if (cursor == sizeof(rbuf) - 1) {
+			SHA512_Update(&kprnd_sha, rbuf, sizeof(rbuf));
+			kprnd_added++;
+			cursor = 0;
+		} else {
+			cursor++;
+		}
 	}
 }
 
