@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71 2014/07/09 13:50:48 alnsn Exp $
+# $NetBSD: mi,v 1.72 2014/07/17 12:04:05 prlw1 Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -161,6 +161,7 @@
 ./usr/lib/librumpdev_ulpt_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_umass_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_usb_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_vnd_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_wscons_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_cd9660_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_efs_g.a			comp-c-debuglib		debuglib,rump

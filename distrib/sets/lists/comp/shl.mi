@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.265 2014/07/08 05:55:34 spz Exp $
+# $NetBSD: shl.mi,v 1.266 2014/07/17 12:04:05 prlw1 Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -173,6 +173,7 @@
 ./usr/lib/librumpdev_ulpt_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_umass_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_usb_pic.a			comp-c-piclib		rump,picinstall
+./usr/lib/librumpdev_vnd_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_wscons_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpfs_cd9660_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpfs_efs_pic.a			comp-c-piclib		rump,picinstall

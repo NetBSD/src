@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1897 2014/07/08 05:55:34 spz Exp $
+#	$NetBSD: mi,v 1.1898 2014/07/17 12:04:05 prlw1 Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3781,6 +3781,8 @@
 ./usr/lib/librumpdev_umass_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_usb.a			comp-c-lib		rump
 ./usr/lib/librumpdev_usb_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_vnd.a			comp-c-lib		rump
+./usr/lib/librumpdev_vnd_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_wscons.a			comp-c-lib		rump
 ./usr/lib/librumpdev_wscons_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib		rump
