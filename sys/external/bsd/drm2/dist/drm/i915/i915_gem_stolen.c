@@ -302,8 +302,8 @@ static void i915_gem_object_put_pages_stolen(struct drm_i915_gem_object *obj)
 	kmem_free(obj->pages, (obj->igo_nsegs * sizeof(obj->pages[0])));
 #else
 	sg_free_table(obj->pages);
-#endif
 	kfree(obj->pages);
+#endif
 }
 
 static const struct drm_i915_gem_object_ops i915_gem_object_stolen_ops = {
