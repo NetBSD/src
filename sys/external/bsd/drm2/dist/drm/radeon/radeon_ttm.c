@@ -45,6 +45,7 @@
 
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_fault.h>
 #include <uvm/uvm_param.h>
 #include <drm/bus_dma_hacks.h>
 #endif
@@ -702,10 +703,24 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 #endif
 }
 
+#ifdef __NetBSD__
+static int	radeon_ttm_fault(struct uvm_faultinfo *, vaddr_t,
+		    struct vm_page **, int, int, vm_prot_t, int);
+
+static const struct uvm_pagerops radeon_uvm_ops = {
+	.pgo_reference = &ttm_bo_uvm_reference,
+	.pgo_detach = &ttm_bo_uvm_detach,
+	.pgo_fault = &radeon_ttm_fault,
+};
+#endif
+
 static struct ttm_bo_driver radeon_bo_driver = {
 	.ttm_tt_create = &radeon_ttm_tt_create,
 	.ttm_tt_populate = &radeon_ttm_tt_populate,
 	.ttm_tt_unpopulate = &radeon_ttm_tt_unpopulate,
+#ifdef __NetBSD__
+	.ttm_uvm_ops = &radeon_uvm_ops,
+#endif
 	.invalidate_caches = &radeon_invalidate_caches,
 	.init_mem_type = &radeon_init_mem_type,
 	.evict_flags = &radeon_evict_flags,
@@ -830,9 +845,7 @@ void radeon_ttm_set_active_vram_size(struct radeon_device *rdev, u64 size)
 
 #ifdef __NetBSD__
 
-#include <uvm/uvm_fault.h>
-
-int
+static int
 radeon_ttm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
     struct vm_page **pps, int npages, int centeridx, vm_prot_t access_type,
     int flags)
