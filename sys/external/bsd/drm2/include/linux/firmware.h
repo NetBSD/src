@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.4 2014/07/17 20:37:01 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.5 2014/07/17 20:56:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,14 +51,24 @@ static inline int
 request_firmware(const struct firmware **fwp, const char *image_name,
     struct device *dev)
 {
+	const char *drvname;
 	struct firmware *fw;
 	int ret;
 
 	fw = kmem_alloc(sizeof(*fw), KM_SLEEP);
 
+	/*
+	 * If driver xyz(4) asks for xyz/foo/bar.bin, turn that into
+	 * just foo/bar.bin.  This leaves open the possibility of name
+	 * collisions.  Let's hope upstream is sensible about this.
+	 */
+	drvname = device_cfdriver(dev)->cd_name;
+	if ((strncmp(drvname, image_name, strlen(drvname)) == 0) &&
+	    (image_name[strlen(drvname)] == '/'))
+		image_name += (strlen(drvname) + 1);
+
 	/* XXX errno NetBSD->Linux */
-	ret = -firmware_open(device_cfdriver(dev)->cd_name, image_name,
-	    &fw->fw_h);
+	ret = -firmware_open(drvname, image_name, &fw->fw_h);
 	if (ret)
 		goto fail0;
 	fw->size = firmware_get_size(fw->fw_h);
