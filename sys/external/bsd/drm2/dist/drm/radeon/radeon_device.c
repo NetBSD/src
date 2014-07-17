@@ -1250,7 +1250,7 @@ int radeon_device_init(struct radeon_device *rdev,
 #endif
 
 	rdev->shutdown = false;
-	rdev->dev = &pdev->dev;
+	rdev->dev = ddev->dev;
 	rdev->ddev = ddev;
 	rdev->pdev = pdev;
 	rdev->flags = flags;
