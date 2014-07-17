@@ -275,7 +275,7 @@ radeon_gart_post_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 	membar_sync();		/* XXX overkill */
 	if (rdev->gart.rg_table_map != NULL)
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
-		    gpu_pgstart*4, gpu_npages*4, BUS_DMASYNC_PREWRITE);
+		    gpu_pgstart*4, gpu_npages*4, BUS_DMASYNC_POSTWRITE);
 	radeon_gart_tlb_flush(rdev);
 }
 #endif
