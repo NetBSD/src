@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.151 2014/07/17 18:53:34 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.152 2014/07/17 19:23:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.151 2014/07/17 18:53:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.152 2014/07/17 19:23:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.151 2014/07/17 18:53:34 riastradh Exp $");
 #include <sys/mutex.h>
 #include <sys/bus.h>
 #include <sys/once.h>
+#include <sys/atomic.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
