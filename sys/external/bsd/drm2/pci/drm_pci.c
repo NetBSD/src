@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.5 2014/07/17 21:13:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.5 2014/07/17 21:13:49 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -167,7 +167,8 @@ fail2: __unused
 fail1:	drm_pci_agp_destroy(dev);
 	dev->bus_nmaps = 0;
 	kmem_free(dev->bus_maps, PCI_NUM_RESOURCES * sizeof(dev->bus_maps[0]));
-	KASSERT(!dev->dmat_subregion_p);
+	if (dev->dmat_subregion_p)
+		bus_dmatag_destroy(dev->dmat);
 	drm_dev_unref(dev);
 fail0:	return ret;
 }
