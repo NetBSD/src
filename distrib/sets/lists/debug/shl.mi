@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.66 2014/07/08 11:13:24 martin Exp $
+# $NetBSD: shl.mi,v 1.67 2014/07/17 12:04:05 prlw1 Exp $
 ./usr/libdata/debug/lib/libc.so.12.192.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -188,6 +188,7 @@
 ./usr/libdata/debug/usr/lib/librumpdev_ulpt.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_umass.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_usb.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_vnd.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_wscons.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_cd9660.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_efs.so.0.0.debug	comp-rump-debug	debug,rump
