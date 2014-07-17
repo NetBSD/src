@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.6 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.7 2014/07/17 13:47:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.6 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.7 2014/07/17 13:47:19 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -73,6 +73,7 @@ drm_init(void)
 	idr_init(&drm_minors_idr);
 	linux_mutex_init(&drm_global_mutex);
 	drm_connector_ida_init();
+	drm_global_init();
 
 	return 0;
 }
@@ -94,6 +95,7 @@ static void
 drm_fini(void)
 {
 
+	drm_global_release();
 	drm_connector_ida_destroy();
 	linux_mutex_destroy(&drm_global_mutex);
 	idr_destroy(&drm_minors_idr);
