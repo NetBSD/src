@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.32 2014/02/09 01:46:10 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.33 2014/07/17 06:27:52 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -235,12 +235,12 @@ char	*bozostrdup(bozohttpd_t *, const char *);
 #ifdef NO_SSL_SUPPORT
 #define bozo_ssl_set_opts(w, x, y)	do { /* nothing */ } while (0)
 #define bozo_ssl_init(x)		do { /* nothing */ } while (0)
-#define bozo_ssl_accept(x)		do { /* nothing */ } while (0)
+#define bozo_ssl_accept(x)		(0)
 #define bozo_ssl_destroy(x)		do { /* nothing */ } while (0)
 #else
 void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
-void	bozo_ssl_accept(bozohttpd_t *);
+int	bozo_ssl_accept(bozohttpd_t *);
 void	bozo_ssl_destroy(bozohttpd_t *);
 #endif
 
