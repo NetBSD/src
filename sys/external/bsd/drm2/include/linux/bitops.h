@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.5 2014/07/17 14:28:28 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.6 2014/07/17 14:30:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ __test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
 	v = *p;
 	*p |= mask;
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
@@ -121,7 +121,7 @@ __test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
 	v = *p;
 	*p &= ~mask;
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
@@ -135,7 +135,7 @@ __test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 	v = *p;
 	*p ^= mask;
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
