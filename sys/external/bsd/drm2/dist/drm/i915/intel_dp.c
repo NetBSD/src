@@ -367,9 +367,8 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp, bool has_aux_irq)
 	bool done;
 
 #define C (((status = I915_READ_NOTRACE(ch_ctl)) & DP_AUX_CH_CTL_SEND_BUSY) == 0)
-	if (has_aux_irq)
 #ifdef __NetBSD__
-	    {
+	if (has_aux_irq && !cold) {
 		int ret;
 		spin_lock(&dev_priv->gmbus_wait_lock);
 		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
@@ -377,13 +376,16 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp, bool has_aux_irq)
 		    C);
 		done = ret;	/* XXX ugh */
 		spin_unlock(&dev_priv->gmbus_wait_lock);
-	    }
+	} else {
+		done = wait_for_atomic(C, 10) == 0;
+	}
 #else
+	if (has_aux_irq)
 		done = wait_event_timeout(dev_priv->gmbus_wait_queue, C,
 					  msecs_to_jiffies_timeout(10));
-#endif
 	else
 		done = wait_for_atomic(C, 10) == 0;
+#endif
 	if (!done)
 		DRM_ERROR("dp aux hw did not signal timeout (has irq: %i)!\n",
 			  has_aux_irq);
