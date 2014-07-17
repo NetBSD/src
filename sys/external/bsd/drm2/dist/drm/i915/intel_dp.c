@@ -371,12 +371,12 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp, bool has_aux_irq)
 #ifdef __NetBSD__
 	    {
 		int ret;
-		spin_lock(&dev_priv->irq_lock);
+		spin_lock(&dev_priv->gmbus_wait_lock);
 		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
 		    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
 		    C);
 		done = ret;	/* XXX ugh */
-		spin_unlock(&dev_priv->irq_lock);
+		spin_unlock(&dev_priv->gmbus_wait_lock);
 	    }
 #else
 		done = wait_event_timeout(dev_priv->gmbus_wait_queue, C,
