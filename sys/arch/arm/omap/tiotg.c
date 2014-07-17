@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.1 2014/07/16 18:27:19 bouyer Exp $ */
+/* $NetBSD: tiotg.c,v 1.2 2014/07/17 19:58:18 bouyer Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.1 2014/07/16 18:27:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2 2014/07/17 19:58:18 bouyer Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.1 2014/07/16 18:27:19 bouyer Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
+#include <dev/usb/motgreg.h>
 #include <dev/usb/motgvar.h>
 
 #define MOTG_DEBUG
@@ -376,27 +377,42 @@ ti_motg_intr(void *v)
 {
 	struct ti_motg_softc *sc = v;
 	uint32_t stat, stat0, stat1;
-	int vbus = 0;
 	int rv = 0;
+	int i;
 
 	mutex_spin_enter(&sc->sc_motg.sc_intr_lock);
 	stat = TIOTG_USBC_READ4(sc, USBCTRL_STAT);
 	stat0 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT0);
 	stat1 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT1);
-	DPRINTF(("USB %d 0x%x 0x%x stat %d\n", sc->sc_ctrlport, stat0, stat1, stat));
+	DPRINTF(("USB %d 0x%x 0x%x stat %d\n",
+	    sc->sc_ctrlport, stat0, stat1, stat));
+	/* try to deal with vbus errors */
+	if (stat1 & MUSB2_MASK_IVBUSERR ) {
+		stat1 &= ~MUSB2_MASK_IVBUSERR;
+		for (i = 0; i < 1000; i++) {
+			TIOTG_USBC_WRITE4(sc, USBCTRL_IRQ_STAT1,
+			    MUSB2_MASK_IVBUSERR);
+			motg_intr_vbus(&sc->sc_motg, stat & 0x1);
+			delay(1000);
+			stat = TIOTG_USBC_READ4(sc, USBCTRL_STAT);
+			if (stat & 0x1)
+				break;
+		}
+	}
 	if (stat0) {
 		TIOTG_USBC_WRITE4(sc, USBCTRL_IRQ_STAT0, stat0);
 	}
 	if (stat1) {
 		TIOTG_USBC_WRITE4(sc, USBCTRL_IRQ_STAT1, stat1);
 	}
-	if (stat1 & USBCTRL_IRQ_STAT1_DRVVBUS) {
-		vbus = ((stat & 0x1) ? 1 : 0);
-		DPRINTF(("USB %d stat %d\n", sc->sc_ctrlport, stat));
+	if ((stat & 0x1) == 0) {
+		mutex_spin_exit(&sc->sc_motg.sc_intr_lock);
+		aprint_error_dev(sc->sc_motg.sc_dev, ": vbus error\n");
+		return 1;
 	}
-	if (stat0 != 0 || stat1 != 0 || stat != 0) {
+	if (stat0 != 0 || stat1 != 0) {
 		rv = motg_intr(&sc->sc_motg, ((stat0 >> 16) & 0xffff),
-			    stat0 & 0xffff, stat1 & 0xff, vbus);
+			    stat0 & 0xffff, stat1 & 0xff);
 	}
 	mutex_spin_exit(&sc->sc_motg.sc_intr_lock);
 	return rv;
