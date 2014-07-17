@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.54 2014/07/08 14:06:17 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.55 2014/07/17 06:27:52 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -527,7 +527,8 @@ bozo_read_request(bozohttpd_t *httpd)
 	 */
 	if (bozo_daemon_fork(httpd))
 		return NULL;
-	bozo_ssl_accept(httpd);
+	if (bozo_ssl_accept(httpd))
+		return NULL;
 
 	request = bozomalloc(httpd, sizeof(*request));
 	memset(request, 0, sizeof(*request));
