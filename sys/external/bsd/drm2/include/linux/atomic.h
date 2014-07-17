@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.6 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.7 2014/07/17 14:30:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
 
 	do v = *p; while (atomic_cas_ulong(p, v, (v | mask)) != v);
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
@@ -239,7 +239,7 @@ test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
 
 	do v = *p; while (atomic_cas_ulong(p, v, (v & ~mask)) != v);
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 static inline unsigned long
@@ -252,7 +252,7 @@ test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 
 	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
 
-	return (v & mask);
+	return ((v & mask) != 0);
 }
 
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
