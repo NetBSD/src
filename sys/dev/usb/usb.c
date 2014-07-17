@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.150 2014/07/17 18:42:37 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.151 2014/07/17 18:53:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.150 2014/07/17 18:42:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.151 2014/07/17 18:53:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -442,6 +442,7 @@ usb_task_thread(void *arg)
 {
 	struct usb_task *task;
 	struct usb_taskq *taskq;
+	bool mpsafe;
 
 	taskq = arg;
 	DPRINTF(("usb_task_thread: start taskq %s\n", taskq->name));
@@ -455,14 +456,16 @@ usb_task_thread(void *arg)
 		}
 		DPRINTFN(2,("usb_task_thread: woke up task=%p\n", task));
 		if (task != NULL) {
+			mpsafe = ISSET(task->flags, USB_TASKQ_MPSAFE);
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = USB_NUM_TASKQS;
 			mutex_exit(&taskq->lock);
 
-			if (!(task->flags & USB_TASKQ_MPSAFE))
+			if (!mpsafe)
 				KERNEL_LOCK(1, curlwp);
 			task->fun(task->arg);
-			if (!(task->flags & USB_TASKQ_MPSAFE))
+			/* Can't dereference task after this point.  */
+			if (!mpsafe)
 				KERNEL_UNLOCK_ONE(curlwp);
 
 			mutex_enter(&taskq->lock);
