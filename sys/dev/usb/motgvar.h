@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.1 2014/07/16 18:22:23 bouyer Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.2 2014/07/17 19:58:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,8 @@ struct motg_xfer {
 
 
 usbd_status	motg_init(struct motg_softc *);
-int		motg_intr(struct motg_softc *, uint16_t, uint16_t, uint8_t, int);
+int		motg_intr(struct motg_softc *, uint16_t, uint16_t, uint8_t);
+int		motg_intr_vbus(struct motg_softc *, int);
 int		motg_detach(struct motg_softc *, int);
 void		motg_childdet(device_t, device_t);
 int		motg_activate(device_t, enum devact);

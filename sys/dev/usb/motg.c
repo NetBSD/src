@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.1 2014/07/16 18:22:23 bouyer Exp $	*/
+/*	$NetBSD: motg.c,v 1.2 2014/07/17 19:58:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.1 2014/07/16 18:22:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.2 2014/07/17 19:58:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,10 +464,6 @@ motg_open(usbd_pipe_handle pipe)
 	struct motg_softc *sc = pipe->device->bus->hci_private;
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
-#if 0
-	usbd_status err = USBD_NOMEM;
-	int ival;
-#endif
 
 	DPRINTF(("motg_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, pipe->device->address,
@@ -660,7 +656,7 @@ motg_poll(struct usbd_bus *bus)
 
 int
 motg_intr(struct motg_softc *sc, uint16_t rx_ep, uint16_t tx_ep,
-    uint8_t ctrl, int vbus)
+    uint8_t ctrl)
 {
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	sc->sc_intr_tx_ep = tx_ep;
@@ -670,6 +666,20 @@ motg_intr(struct motg_softc *sc, uint16_t rx_ep, uint16_t tx_ep,
 	if (!sc->sc_bus.use_polling) {
 		sc->sc_bus.no_intrs++;
 		usb_schedsoftintr(&sc->sc_bus);
+	}
+	return 1;
+}
+
+int
+motg_intr_vbus(struct motg_softc *sc, int vbus)
+{
+	uint8_t val;
+	if (sc->sc_mode == MOTG_MODE_HOST && vbus == 0) {
+		DPRINTF(("motg_intr_vbus: vbus down, try to re-enable\n"));
+		/* try to re-enter session for Host mode */
+		val = UREAD1(sc, MUSB2_REG_DEVCTL);
+		val |= MUSB2_MASK_SESS;
+		UWRITE1(sc, MUSB2_REG_DEVCTL, val);
 	}
 	return 1;
 }
