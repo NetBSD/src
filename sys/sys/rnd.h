@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.40.2.1 2014/04/07 02:00:00 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.40.2.2 2014/07/17 14:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,8 +92,6 @@ typedef struct {
 	uint32_t	dt_total;	/* time-delta entropy estimate */
 	uint32_t	dv_samples;	/* value-delta samples input */
 	uint32_t	dv_total;	/* value-delta entropy estimate */
-	uint32_t	lzv_bytes;	/* LZF bytes in */
-	uint32_t	lzv_total;	/* LZF entropy estimate (bits) */
 } rndsource_est_t;
 
 /*
@@ -132,15 +130,6 @@ typedef struct {
 #endif
 #define RND_POOLBITS	(RND_POOLWORDS * 32)
 
-typedef struct rnd_lz_estimator {
-	LZF_STATE	state;
-	size_t		cursor;
-	uint8_t		in[1024];
-	uint8_t		out[1024];
-	uint64_t	inbytes;
-	uint64_t	outbits;
-} rnd_lz_t;
-
 typedef struct rnd_delta_estimator {
 	uint64_t	x;
 	uint64_t	dx;
@@ -161,7 +150,6 @@ typedef struct krndsource {
         size_t          test_cnt;       /* how much test data accumulated? */
 	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
 	void		*getarg;	/* argument to get-function */
-	rnd_lz_t	lz_v;		/* LZF context as entropy estimator */
 	rngtest_t	*test;		/* test data for RNG type sources */
 } krndsource_t;
 

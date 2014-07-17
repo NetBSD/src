@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.454.2.1 2014/04/07 02:20:00 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.454.2.2 2014/07/17 14:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.454.2.1 2014/04/07 02:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.454.2.2 2014/07/17 14:03:33 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -497,6 +497,8 @@ main(void)
 	/* Initialize the kernel strong PRNG. */
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
+	cprng_fast_init();
 					 
 	/* Initialize interfaces. */
 	ifinit1();

@@ -1,0 +1,15 @@
+#	$NetBSD: files.ccrand,v 1.1.2.1 2014/07/17 14:03:33 tls Exp $
+
+define	ccrand
+file crypto/ccrand/ccrand2.c
+file crypto/ccrand/ccrand32.c
+file crypto/ccrand/ccrand64.c
+file crypto/ccrand/ccrand_bytes.c
+file crypto/ccrand/ccrand_gen16.c
+file crypto/ccrand/ccrand_reseed.c
+file crypto/ccrand/ccrand_seed.c
+file crypto/ccrand/ccrand_seed32.c
+file crypto/ccrand/ccrand_seed64.c
+file crypto/ccrand/ccrand_use.c
+file crypto/ccrand/ccrand_words.c
+file crypto/ccrand/ccrandn.c

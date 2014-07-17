@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.23.2.3 2014/04/09 03:39:44 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.23.2.4 2014/07/17 14:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.23.2.3 2014/04/09 03:39:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.23.2.4 2014/07/17 14:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -97,7 +97,7 @@ typedef struct _rnd_sample_t {
 	krndsource_t	*source;
 	int		cursor;
 	int		entropy;
-	uint64_t	ts[RND_SAMPLE_COUNT];
+	uint32_t	ts[RND_SAMPLE_COUNT];
 	u_int32_t	values[RND_SAMPLE_COUNT];
 } rnd_sample_t;
 
@@ -162,13 +162,13 @@ void *rnd_process, *rnd_wakeup;
 struct callout skew_callout;
 
 void	      		rnd_wakeup_readers(void);
-static inline uint64_t	rnd_counter(void);
+static inline uint32_t	rnd_counter(void);
 static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
 u_int32_t     rnd_extract_data_locked(void *, u_int32_t, u_int32_t); /* XXX */
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
-					uint32_t, uint32_t, uint64_t);
+					uint32_t, uint32_t, uint32_t);
 static inline void	rnd_schedule_process(void);
 
 int			rnd_ready = 0;
@@ -214,25 +214,23 @@ rnd_init_softint(void) {
 /*
  * Generate a 64-bit counter.
  */
-static inline uint64_t
+static inline uint32_t
 rnd_counter(void)
 {
 	struct timespec ts;
-	uint64_t ret;
+	uint32_t ret;
 
 #if defined(__HAVE_CPU_COUNTER)
-	if (cpu_hascounter() && (sizeof(cpu_counter()) == sizeof(uint64_t))) {
-		return (cpu_counter());
-	}
+	return (cpu_counter32());
 #endif
 	if (rnd_ready) {
 		nanouptime(&ts);
 		ret = ts.tv_sec;
-		ret *= (uint64_t)1000000000;
+		ret *= (uint32_t)1000000000;
 		ret += ts.tv_nsec;
 		return ret;
 	}
-	/* when called from rnd_init, its too early to call microtime safely */
+	/* when called from rnd_init, its too early to call nanotime safely */
 	return (0);
 }
 
@@ -323,68 +321,15 @@ rnd_wakeup_readers(void)
 	rndsinks_distribute();
 }
 
-static uint32_t
-rnd_lz_estimate(krndsource_t *rs, rnd_lz_t *const est,
-		const void *const data, uint32_t len)
-{
-	const uint8_t *const cdata = data;
-	size_t c = 0, wherein = 0, cursor = est->cursor;
-	size_t isz = sizeof(est->in), osz = sizeof(est->out);
-	LZF_STATE *state = &est->state;
-	uint8_t *in = est->in, *out = est->out;
-	uint32_t total = 0;
-
-	KASSERT(rs != NULL);
-	KASSERT(cursor < isz);
-	KASSERT(cursor < osz);
-
-	/* We don't loop, so the maximum estimate we will
-	   ever return is one internal-buffer-size worth of bits. */
-
-	if (cursor + len - wherein >= isz) {
-		c = lzf_compress_r(in, cursor, out,
-				   cursor, *state);
-		memset(out, 0, osz);
-		memset(in, 0, isz);
-		if (c == 0) {
-			c = cursor;
-		}
-		total += c;
-		wherein += cursor;
-		cursor = 0;
-	} else {
-		memcpy(in + cursor, cdata + wherein, len - wherein);
-		cursor += len - wherein;
-		wherein += len - wherein;
-	}
-
-	total *= NBBY;
-
-	/*
-	 * Compressing a stream of zeroes gives us 144 output
-	 * bits per input kilobyte -- pure overhead, not entropy.
-	 */
-	total = total > 144 ? total - 144 : 0;
-
-	/* LZF is not a very good LZ compressor! */
-	total /= 2;
-	
-	est->cursor = cursor;
-	est->inbytes += len;
-	est->outbits += total;
-
-	return est->outbits > rs->total ?  est->outbits - rs->total : 0;
-}
-
 /*
  * Use the timing/value of the event to estimate the entropy gathered.
  * If all the differentials (first, second, and third) are non-zero, return
  * non-zero.  If any of these are zero, return zero.
  */
 static inline uint32_t
-rnd_delta_estimate(rnd_delta_t *d, uint64_t v, int64_t delta)
+rnd_delta_estimate(rnd_delta_t *d, uint32_t v, int32_t delta)
 {
-	int64_t delta2, delta3;
+	int32_t delta2, delta3;
 
 	d->insamples++;
 
@@ -415,17 +360,17 @@ rnd_delta_estimate(rnd_delta_t *d, uint64_t v, int64_t delta)
 }
 
 /*
- * Delta estimator for 64-bit timeestamps.  Must handle wrap.
+ * Delta estimator for 32-bit timeestamps.  Must handle wrap.
  */
 static inline uint32_t
 rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 {
-	int64_t delta;
-	uint64_t ret;
+	int32_t delta;
+	uint32_t ret;
 	rnd_delta_t *d = &rs->time_delta;
 
 	if (t < d->x) {
-		delta = UINT64_MAX - d->x + t;
+		delta = UINT32_MAX - d->x + t;
 	} else {
 		delta = d->x - t;
 	}
@@ -442,21 +387,19 @@ rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 	if (deltacnt++ % 1151 == 0) {
 		rnd_printf("rnd_dt_estimate: %s x = %lld, dx = %lld, "
 		       "d2x = %lld\n", rs->name,
-		       (long long int)d->x,
-		       (long long int)d->dx,
-		       (long long int)d->d2x);
+		       (int)d->x, (int)d->dx, (int)d->d2x);
 	}
 #endif
 	return ret;
 }
 
 /*
- * Delta estimator for 32 or 64 bit values.  "Wrap" isn't.
+ * Delta estimator for 32 or bit values.  "Wrap" isn't.
  */
 static inline uint32_t
-rnd_dv_estimate(krndsource_t *rs, uint64_t v)
+rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 {
-	int64_t delta;
+	int32_t delta;
 	uint32_t ret;
 	rnd_delta_t *d = &rs->value_delta;
 
@@ -465,7 +408,7 @@ rnd_dv_estimate(krndsource_t *rs, uint64_t v)
 	if (delta < 0) {
 		delta = -delta;
 	}
-	ret = rnd_delta_estimate(d, v, (uint64_t)delta);
+	ret = rnd_delta_estimate(d, v, (uint32_t)delta);
 
 	KASSERT(d->x == v);
 	KASSERT(d->dx == delta);
@@ -511,7 +454,7 @@ rnd_skew(void *arg)
 	flipflop = !flipflop;
 
 	if (flipflop) {
-		rnd_add_uint64(&skewsrc, rnd_counter());
+		rnd_add_uint32(&skewsrc, rnd_counter());
 		callout_schedule(&skew_callout, hz / 10);
 	} else {
 		callout_schedule(&skew_callout, 1);
@@ -526,7 +469,7 @@ rnd_skew(void *arg)
 void
 rnd_init(void)
 {
-	uint64_t c;
+	uint32_t c;
 
 	if (rnd_ready)
 		return;
@@ -667,7 +610,7 @@ void
 rnd_attach_source(krndsource_t *rs, const char *name, uint32_t type,
     uint32_t flags)
 {
-	uint64_t ts;
+	uint32_t ts;
 
 	ts = rnd_counter();
 
@@ -675,7 +618,6 @@ rnd_attach_source(krndsource_t *rs, const char *name, uint32_t type,
 	memset(&rs->time_delta, 0, sizeof(rs->time_delta));
 	rs->time_delta.x = ts;
 	memset(&rs->value_delta, 0, sizeof(rs->value_delta));
-	memset(&rs->lz_v, 0, sizeof(rs->lz_v));
 	rs->total = 0;
 
 	/*
@@ -776,13 +718,12 @@ rnd_detach_source(krndsource_t *source)
 }
 
 static inline uint32_t
-rnd_estimate(krndsource_t *rs, uint64_t ts, uint64_t val)
+rnd_estimate(krndsource_t *rs, uint32_t ts, uint32_t val)
 {
-	uint32_t entropy = 0, dt_est, dv_est, lz_est;
+	uint32_t entropy = 0, dt_est, dv_est;
 
 	dt_est = rnd_dt_estimate(rs, ts);
 	dv_est = rnd_dv_estimate(rs, val);
-	lz_est = rnd_lz_estimate(rs, &rs->lz_v, &val, sizeof(val));
 
 	if (!(rs->flags & RND_FLAG_NO_ESTIMATE)) {
 		if (rs->flags & RND_FLAG_ESTIMATE_TIME) {
@@ -790,7 +731,7 @@ rnd_estimate(krndsource_t *rs, uint64_t ts, uint64_t val)
 		}
 
                 if (rs->flags & RND_FLAG_ESTIMATE_VALUE) {
-			entropy += MIN(lz_est, dv_est);
+			entropy += dv_est;
 		}
 
 	}
@@ -804,35 +745,11 @@ rnd_estimate(krndsource_t *rs, uint64_t ts, uint64_t val)
 void
 _rnd_add_uint32(krndsource_t *rs, uint32_t val)
 {
-	uint64_t ts;	
+	uint32_t ts;	
 	uint32_t entropy = 0;
 
 	if (rs->flags & RND_FLAG_NO_COLLECT)
 		return;
-
-	/*
-	 * Sample the counter as soon as possible to avoid
-	 * entropy overestimation.
-	 */
-	ts = rnd_counter();
-
-	/*
-	 * Calculate estimates - we may not use them, but if we do
-	 * not calculate them, the estimators' history becomes invalid.
-	 */
-	entropy = rnd_estimate(rs, ts, (uint64_t)val);
-
-	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
-}
-
-void
-_rnd_add_uint64(krndsource_t *rs, uint64_t val)
-{
-	uint64_t ts;   
-	uint32_t entropy = 0;
-
-	if (rs->flags & RND_FLAG_NO_COLLECT)
-                return;
 
 	/*
 	 * Sample the counter as soon as possible to avoid
@@ -850,6 +767,30 @@ _rnd_add_uint64(krndsource_t *rs, uint64_t val)
 }
 
 void
+_rnd_add_uint64(krndsource_t *rs, uint64_t val)
+{
+	uint32_t ts;   
+	uint32_t entropy = 0;
+
+	if (rs->flags & RND_FLAG_NO_COLLECT)
+                return;
+
+	/*
+	 * Sample the counter as soon as possible to avoid
+	 * entropy overestimation.
+	 */
+	ts = rnd_counter();
+
+	/*
+	 * Calculate estimates - we may not use them, but if we do
+	 * not calculate them, the estimators' history becomes invalid.
+	 */
+	entropy = rnd_estimate(rs, ts, (uint32_t)(val & (uint64_t)0xffffffff));
+
+	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
+}
+
+void
 rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 	     uint32_t entropy)
 {
@@ -862,14 +803,13 @@ rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 	if (__predict_false(rs == NULL)) {
 		rs = &rnd_source_anonymous;
 	}
-	entropy = MIN(entropy, rnd_lz_estimate(rs, &rs->lz_v, data, len));
 	rndpool_add_data(&rnd_pool, data, len, entropy);
 	mutex_spin_exit(&rndpool_mtx);
 }
 
 static void
 rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
-		u_int32_t entropy, uint64_t ts)
+		u_int32_t entropy, uint32_t ts)
 {
 	rnd_sample_t *state = NULL;
 	const uint32_t *dint = data;
@@ -1199,7 +1139,7 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 		timed_in++;
 	}
 	if (__predict_false(!rnd_initial_entropy)) {
-		uint64_t c;
+		uint32_t c;
 
 #ifdef RND_VERBOSE
 		rnd_printf("rnd: WARNING! initial entropy low (%u).\n",
