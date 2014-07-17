@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.27 2014/04/08 17:56:10 christos Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.28 2014/07/17 08:21:34 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.27 2014/04/08 17:56:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.28 2014/07/17 08:21:34 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.27 2014/04/08 17:56:10 christos Ex
 void kernfs_hashins(struct kernfs_node *);
 void kernfs_hashrem(struct kernfs_node *);
 struct vnode *kernfs_hashget(kfstype, struct mount *,
-    const struct kern_target *, u_int32_t);
+    const struct kern_target *);
 
 static LIST_HEAD(kfs_hashhead, kernfs_node) *kfs_hashtbl;
 static u_long	kfs_ihash;	/* size of hash table - 1 */
-#define KFSVALUEHASH(v)	((v) & kfs_ihash)
+#define KFSHASH(v)	((v) & kfs_ihash)
 
 static kmutex_t kfs_hashlock;
 static kmutex_t kfs_ihash_lock;
@@ -108,7 +108,7 @@ static kmutex_t kfs_ihash_lock;
  * allocate a kfsnode/vnode pair.  the vnode is
  * referenced, and locked.
  *
- * the kfs_type, kfs_value and mount point uniquely
+ * the kfs_type and mount point uniquely
  * identify a kfsnode.  the mount point is needed
  * because someone might mount this filesystem
  * twice.
@@ -131,19 +131,19 @@ static kmutex_t kfs_ihash_lock;
  * the vnode free list.
  */
 int
-kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type,
-    const struct kern_target *kt, u_int32_t value)
+kernfs_allocvp(struct mount *mp, struct vnode **vpp,
+    const struct kern_target *kt)
 {
 	struct kernfs_node *kfs = NULL, *kfsp;
 	struct vnode *vp = NULL;
 	int error;
 	long *cookie;
 
-	if ((*vpp = kernfs_hashget(kfs_type, mp, kt, value)) != NULL)
+	if ((*vpp = kernfs_hashget(kt->kt_tag, mp, kt)) != NULL)
 		return (0);
 
 	mutex_enter(&kfs_hashlock);
-	if ((*vpp = kernfs_hashget(kfs_type, mp, kt, value)) != NULL) {
+	if ((*vpp = kernfs_hashget(kt->kt_tag, mp, kt)) != NULL) {
 		mutex_exit(&kfs_hashlock);
 		return (0);
 	}
@@ -184,18 +184,17 @@ again:
 	else
 		TAILQ_INSERT_TAIL(&VFSTOKERNFS(mp)->nodelist, kfs, kfs_list);
 
-	kfs->kfs_type = kfs_type;
+	kfs->kfs_type = kt->kt_tag;
 	kfs->kfs_vnode = vp;
-	kfs->kfs_fileno = KERNFS_FILENO(kt, kfs_type, kfs->kfs_cookie);
-	kfs->kfs_value = value;
+	kfs->kfs_fileno = KERNFS_FILENO(kt, kt->kt_tag, kfs->kfs_cookie);
 	kfs->kfs_kt = kt;
 	kfs->kfs_mode = kt->kt_mode;
 	vp->v_type = kt->kt_vtype;
 
-	if (kfs_type == KFSkern)
+	if (kt->kt_tag == KFSkern)
 		vp->v_vflag = VV_ROOT;
 
-	if (kfs_type == KFSdevice) {
+	if (kt->kt_tag == KFSdevice) {
 		spec_node_init(vp, *(dev_t *)kt->kt_data);
 	}
 
@@ -249,7 +248,7 @@ kernfs_hashreinit(void)
 	for (i = 0; i <= oldmask; i++) {
 		while ((pp = LIST_FIRST(&oldhash[i])) != NULL) {
 			LIST_REMOVE(pp, kfs_hash);
-			val = KFSVALUEHASH(pp->kfs_value);
+			val = KFSHASH(pp->kfs_type);
 			LIST_INSERT_HEAD(&hash[val], pp, kfs_hash);
 		}
 	}
@@ -270,7 +269,7 @@ kernfs_hashdone(void)
 }
 
 struct vnode *
-kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt, u_int32_t value)
+kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt)
 {
 	struct kfs_hashhead *ppp;
 	struct kernfs_node *pp;
@@ -278,11 +277,11 @@ kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt, u_i
 
  loop:
 	mutex_enter(&kfs_ihash_lock);
-	ppp = &kfs_hashtbl[KFSVALUEHASH(value)];
+	ppp = &kfs_hashtbl[KFSHASH(type)];
 	LIST_FOREACH(pp, ppp, kfs_hash) {
 		vp = KERNFSTOV(pp);
 		if (pp->kfs_type == type && vp->v_mount == mp &&
-		    pp->kfs_kt == kt && pp->kfs_value == value) {
+		    pp->kfs_kt == kt) {
 			mutex_enter(vp->v_interlock);
 			mutex_exit(&kfs_ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE))
@@ -308,7 +307,7 @@ kernfs_hashins(struct kernfs_node *pp)
 	KASSERT(error == 0);
 
 	mutex_enter(&kfs_ihash_lock);
-	ppp = &kfs_hashtbl[KFSVALUEHASH(pp->kfs_value)];
+	ppp = &kfs_hashtbl[KFSHASH(pp->kfs_type)];
 	LIST_INSERT_HEAD(ppp, pp, kfs_hash);
 	mutex_exit(&kfs_ihash_lock);
 }
