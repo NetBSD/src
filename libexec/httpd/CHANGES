@@ -1,5 +1,8 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
+changes in bozohttpd 20140717:
+	o  properly handle SSL errors.
+
 changes in bozohttpd 20140708:
 	o  fixes for virtual host support, from rajeev_v_pillai@yahoo.com
 	o  avoid printing double errors, from shm@netbsd.org
