@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.9 2014/07/14 14:58:32 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10 2014/07/17 17:11:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.9 2014/07/14 14:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10 2014/07/17 17:11:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -974,7 +974,8 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	/* Attach wsmouse.  */
 	a.accessops = &uatp_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &a,
+	    wsmousedevprint);
 }
 
 /* Sysctl setup */
