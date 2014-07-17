@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.149 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: usb.c,v 1.150 2014/07/17 18:42:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.149 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.150 2014/07/17 18:42:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -355,28 +355,40 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 {
 	struct usb_taskq *taskq;
 
+	KASSERT(0 <= queue);
+	KASSERT(queue < USB_NUM_TASKQS);
 	taskq = &usb_taskq[queue];
 	mutex_enter(&taskq->lock);
-	if (task->queue == -1) {
+	if (atomic_cas_uint(&task->queue, USB_NUM_TASKQS, queue) ==
+	    USB_NUM_TASKQS) {
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
 		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
 		task->queue = queue;
+		cv_signal(&taskq->cv);
 	} else {
 		DPRINTFN(3,("usb_add_task: task=%p on q\n", task));
 	}
-	cv_signal(&taskq->cv);
 	mutex_exit(&taskq->lock);
 }
 
+/*
+ * XXX This does not wait for completion!  Most uses need such an
+ * operation.  Urgh...
+ */
 void
 usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 {
+	unsigned queue;
 
-	if (task->queue != -1) {
-		struct usb_taskq *taskq = &usb_taskq[task->queue];
+	while ((queue = task->queue) != USB_NUM_TASKQS) {
+		struct usb_taskq *taskq = &usb_taskq[queue];
 		mutex_enter(&taskq->lock);
-		TAILQ_REMOVE(&taskq->tasks, task, next);
-		task->queue = -1;
+		if (__predict_true(task->queue == queue)) {
+			TAILQ_REMOVE(&taskq->tasks, task, next);
+			task->queue = USB_NUM_TASKQS;
+			mutex_exit(&taskq->lock);
+			break;
+		}
 		mutex_exit(&taskq->lock);
 	}
 }
@@ -444,7 +456,7 @@ usb_task_thread(void *arg)
 		DPRINTFN(2,("usb_task_thread: woke up task=%p\n", task));
 		if (task != NULL) {
 			TAILQ_REMOVE(&taskq->tasks, task, next);
-			task->queue = -1;
+			task->queue = USB_NUM_TASKQS;
 			mutex_exit(&taskq->lock);
 
 			if (!(task->flags & USB_TASKQ_MPSAFE))
