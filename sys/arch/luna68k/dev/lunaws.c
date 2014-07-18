@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.28 2014/02/02 15:35:06 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.29 2014/07/18 18:02:08 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.28 2014/02/02 15:35:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.29 2014/07/18 18:02:08 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -199,7 +199,7 @@ wsintr(void *arg)
 	int rr;
 
 	rr = getsiocsr(sio);
-	if (rr & RR_RXRDY) {
+	if ((rr & RR_RXRDY) != 0) {
 		do {
 			code = sio->sio_data;
 			if (rr & (RR_FRAMING | RR_OVERRUN | RR_PARITY)) {
@@ -208,10 +208,10 @@ wsintr(void *arg)
 			}
 			sc->sc_rxq[sc->sc_rxqtail] = code;
 			sc->sc_rxqtail = OMKBD_NEXTRXQ(sc->sc_rxqtail);
-		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
+		} while (((rr = getsiocsr(sio)) & RR_RXRDY) != 0);
 		softint_schedule(sc->sc_si);
 	}
-	if (rr & RR_TXRDY)
+	if ((rr & RR_TXRDY) != 0)
 		sio->sio_cmd = WR0_RSTPEND;
 	/* not capable of transmit, yet */
 }
@@ -241,9 +241,9 @@ wssoftintr(void *arg)
 			code = (code & 07) ^ 07;
 			/* LMR->RML: wsevent counts 0 for leftmost */
 			sc->sc_msbuttons = (code & 02);
-			if (code & 01)
+			if ((code & 01) != 0)
 				sc->sc_msbuttons |= 04;
-			if (code & 04)
+			if ((code & 04) != 0)
 				sc->sc_msbuttons |= 01;
 			sc->sc_msreport = 1;
 		} else if (sc->sc_msreport == 1) {
