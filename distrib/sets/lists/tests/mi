@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.581 2014/07/12 15:42:56 dholland Exp $
+# $NetBSD: mi,v 1.582 2014/07/18 12:36:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2651,6 +2651,7 @@
 ./usr/tests/lib/libc/sys/t_lwp_create		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_lwp_ctl		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_minherit		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mknod		tests-lib-tests		atf
