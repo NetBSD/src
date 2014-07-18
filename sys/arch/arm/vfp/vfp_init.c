@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.40 2014/06/15 23:07:36 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.41 2014/07/18 22:54:53 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -334,7 +334,7 @@ vfp_attach(struct cpu_info *ci)
 	cpu_media_and_vfp_features[1] = armreg_mvfr1_read();
 	if (fpsid != 0) {
 		uint32_t f0 = armreg_mvfr0_read();
-		uint32_t f1 = armreg_mvfr0_read();
+		uint32_t f1 = armreg_mvfr1_read();
 		aprint_normal("vfp%d at %s: %s%s%s%s%s\n",
 		    device_unit(ci->ci_dev),
 		    device_xname(ci->ci_dev),
