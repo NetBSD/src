@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.51.2.1 2014/07/18 02:21:53 riz Exp $ */
+/*	$NetBSD: md.c,v 1.51.2.2 2014/07/18 02:41:34 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,19 +85,19 @@ md_get_info(void)
 
 	dlcyl = disklabel.d_ncylinders;
 	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
 	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
+	dlsize = disklabel.d_secperunit;
 
 	/*
-	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
-	 * and secperunit,  just in case the disk is already labelled.
-	 * (If our new label's RAW_PART size ends up smaller than the
-	 * in-core RAW_PART size  value, updating the label will fail.)
+	 * Tru64 UNIX's disklabel is the same format as BSD disklabel,
+	 * and it seems Tru64 stores incorrect geometry values in
+	 * d_nsectors (sectors/track) and d_secpercyl (sectors/cylinder).
+	 * d_secperunit seems always reliable so use it to get
+	 * dlsec (sectors/track) and dlcylsize (sectors/cylinder) values.
+	 * See PR/48697 for details.
 	 */
-	dlsize = dlcyl*dlhead*dlsec;
-	if (disklabel.d_secperunit > dlsize)
-		dlsize = disklabel.d_secperunit;
+	dlsec = dlsize / (dlhead * dlcyl);
+	dlcylsize = dlsec * dlhead;
 
 	return 1;
 }
