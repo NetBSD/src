@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.183 2014/07/18 17:51:27 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.184 2014/07/18 17:59:12 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,11 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.183 $"
+#ident 		"GENERIC-$Revision: 1.184 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
-maxusers	32		# estimated number of users
+maxusers	8		# estimated number of users
 
 # Support for various CPU types
 options 	HP320
@@ -129,7 +129,6 @@ options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network filesystem server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
-options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -163,6 +162,9 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
+#options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
+options 	NFS_BOOT_DHCP	# use dhcp for NFS boot
+
 # Options for HP hardware
 options 	USELEDS		# make the lights twinkle
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
@@ -181,8 +183,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 
-options 	FONT_GALLANT12x22
-#options 	FONT_VT220ISO8x16
+#options 	FONT_GALLANT12x22
+options 	FONT_VT220ISO8x16
 
 config		netbsd root on ? type ?
 
