@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.123 2014/07/14 06:34:22 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.124 2014/07/18 02:42:02 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2962,3 +2962,21 @@ sys/kern/sys_module.c				1.15
 
 	Fix a user-controlled memory allocation.
 	[maxv, ticket #1098]
+
+distrib/utils/sysinst/arch/alpha/md.c		1.52
+distrib/utils/sysinst/arch/landisk/md.c		1.11
+distrib/utils/sysinst/arch/macppc/md.c		1.46
+distrib/utils/sysinst/arch/mipsco/md.c		1.21
+distrib/utils/sysinst/arch/news68k/md.c		1.35
+distrib/utils/sysinst/arch/newsmips/md.c	1.22
+distrib/utils/sysinst/arch/pmax/md.c		1.68
+distrib/utils/sysinst/arch/vax/md.c		1.40
+
+	Use msg_display(3) rather than printf(3) to print dobootblk messages.
+	[tsutsui, ticket #1079]
+
+distrib/utils/sysinst/arch/alpha/md.c		1.53
+
+	Make sysinst deal correctly with Tru64 disklabels. PR#48697
+	[tsutsui, ticket #1080]
+
