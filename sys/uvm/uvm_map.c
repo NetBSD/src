@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.329 2014/07/18 12:19:09 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.330 2014/07/18 12:36:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.329 2014/07/18 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.330 2014/07/18 12:36:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3097,6 +3097,7 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	case MAP_INHERIT_NONE:
 	case MAP_INHERIT_COPY:
 	case MAP_INHERIT_SHARE:
+	case MAP_INHERIT_ZERO:
 		break;
 	default:
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
@@ -4346,6 +4347,35 @@ uvm_mapent_forkcopy(struct vm_map *new_map, struct vm_map *old_map,
 }
 
 /*
+ * zero the mapping: the new entry will be zero initialized
+ */
+static void
+uvm_mapent_forkzero(struct vm_map *new_map, struct vm_map *old_map,
+    struct vm_map_entry *old_entry)
+{
+	struct vm_map_entry *new_entry;
+
+	new_entry = uvm_mapent_clone(new_map, old_entry, 0);
+
+	new_entry->etype |=
+	    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
+
+	if (new_entry->aref.ar_amap) {
+		uvm_map_unreference_amap(new_entry, 0);
+		new_entry->aref.ar_pageoff = 0;
+		new_entry->aref.ar_amap = NULL;
+	}
+
+	if (UVM_ET_ISOBJ(new_entry)) {
+		if (new_entry->object.uvm_obj->pgops->pgo_detach)
+			new_entry->object.uvm_obj->pgops->pgo_detach(
+			    new_entry->object.uvm_obj);
+		new_entry->object.uvm_obj = NULL;
+		new_entry->etype &= ~UVM_ET_OBJ;
+	}
+}
+
+/*
  *   F O R K   -   m a i n   e n t r y   p o i n t
  */
 /*
@@ -4405,6 +4435,9 @@ uvmspace_fork(struct vmspace *vm1)
 			uvm_mapent_forkcopy(new_map, old_map, old_entry);
 			break;
 
+		case MAP_INHERIT_ZERO:
+			uvm_mapent_forkzero(new_map, old_map, old_entry);
+			break;
 		default:
 			KASSERT(0);
 			break;
