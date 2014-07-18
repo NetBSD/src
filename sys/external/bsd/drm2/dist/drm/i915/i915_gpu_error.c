@@ -334,7 +334,7 @@ int i915_error_state_to_str(struct drm_i915_error_state_buf *m,
 	}
 
 	err_printf(m, "%s\n", error->error_msg);
-	err_printf(m, "Time: %ld s %ld us\n", error->time.tv_sec,
+	err_printf(m, "Time: %"PRIdMAX" s %ld us\n", (intmax_t)error->time.tv_sec,
 		   (long)error->time.tv_usec);
 #ifndef __NetBSD__		/* XXX kernel version */
 	err_printf(m, "Kernel: " UTS_RELEASE "\n");
@@ -809,10 +809,8 @@ static void i915_record_ring_state(struct drm_device *dev,
 	}
 
 #ifdef __NetBSD__
-	spin_lock(&dev_priv->irq_lock);
 	ering->waiting = DRM_SPIN_WAITERS_P(&ring->irq_queue,
 	    &dev_priv->irq_lock);
-	spin_unlock(&dev_priv->irq_lock);
 #else
 	ering->waiting = waitqueue_active(&ring->irq_queue);
 #endif
