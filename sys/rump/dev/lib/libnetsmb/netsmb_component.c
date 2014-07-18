@@ -1,4 +1,4 @@
-/*	$NetBSD: netsmb_component.c,v 1.1 2014/03/13 01:57:29 pooka Exp $	*/
+/*	$NetBSD: netsmb_component.c,v 1.2 2014/07/18 16:25:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netsmb_component.c,v 1.1 2014/03/13 01:57:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netsmb_component.c,v 1.2 2014/07/18 16:25:17 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,7 +48,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	int error;
 
 	bmaj = cmaj = NODEVMAJOR;
-	if ((error = devsw_attach("nsmb", NULL, &bmaj, &nsmb_cdevsw, &cmaj))!=0)
+	error = devsw_attach("nsmb", NULL, &bmaj, &nsmb_cdevsw, &cmaj);
+	if (error && error != EEXIST)
 		panic("nsmb devsw attach failed: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/nsmb", '0',
 	    cmaj, 0, 4)) != 0)
