@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.182 2014/07/05 09:15:38 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.183 2014/07/18 17:51:27 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.182 $"
+#ident 		"GENERIC-$Revision: 1.183 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -59,7 +59,7 @@ options 	SYSVSHM		# System V-style shared memory
 options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
 
-#options 	MODULAR		# new style module(7) framework
+options 	MODULAR		# new style module(7) framework
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -97,26 +97,26 @@ options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
 options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
 options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
-options 	COMPAT_LINUX	# Linux/m68k binary compatibility
-options 	COMPAT_SVR4	# SVR4 binary compatibility
+#options 	COMPAT_LINUX	# Linux/m68k binary compatibility
+#options 	COMPAT_SVR4	# SVR4 binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystems
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
-file-system	EXT2FS		# second extended file system (linux)
+#file-system	EXT2FS		# second extended file system (linux)
 file-system	FDESC		# user file descriptor filesystem
 file-system	FFS		# fast filesystem
 file-system	KERNFS		# kernel data-structure filesystem
-file-system	LFS		# log-structured file system
+#file-system	LFS		# log-structured file system
 file-system	MFS		# Memory-based filesystem
 file-system	NFS		# Network filesystem client
 file-system	NULLFS		# loopback file system
-file-system	OVERLAY		# overlay file system
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system	OVERLAY		# overlay file system
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	PROCFS		# /proc filesystem
-file-system	UMAPFS		# NULLFS + uid and gid remapping
-file-system	UNION		# Union filesystem (req. for FDESC)
-file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# Union filesystem (req. for FDESC)
+#file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -130,7 +130,7 @@ options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network filesystem server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
 options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
 options 	INET		# Internet protocols
@@ -141,8 +141,8 @@ options 	GATEWAY		# IP forwarding
 options 	MROUTING	# Multicast routing
 options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
@@ -294,7 +294,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss			# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
@@ -320,17 +320,17 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vcoda			# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	putter			# for puffs and pud
+#pseudo-device	putter			# for puffs and pud
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
