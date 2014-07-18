@@ -759,6 +759,7 @@ void ttm_bo_kunmap(struct ttm_bo_kmap_obj *map)
 	case ttm_bo_map_vmap:
 #ifdef __NetBSD__
 		pmap_kremove((vaddr_t)map->virtual, map->u.uvm.vsize);
+		pmap_update(pmap_kernel());
 		uvm_km_free(kernel_map, (vaddr_t)map->virtual,
 		    map->u.uvm.vsize, UVM_KMF_VAONLY);
 #else
