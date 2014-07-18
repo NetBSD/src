@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.40 2014/03/16 05:20:24 dholland Exp $ */
+/* $NetBSD: siotty.c,v 1.41 2014/07/18 18:02:08 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.40 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.41 2014/07/18 18:02:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -231,7 +231,7 @@ siottyintr(void *arg)
 		sio->sio_cmd = WR0_RSTINT;
 		cn_check_magic(sc->sc_tty->t_dev, CNC_BREAK, siotty_cnm_state);
 	}
-	if (rr & RR_RXRDY) {
+	if ((rr & RR_RXRDY) != 0) {
 		do {
 			if (cc > 0) {
 				c = sio->sio_data;
@@ -250,9 +250,9 @@ siottyintr(void *arg)
 			sc->sc_rbput = put;
 			sc->sc_rbavail = cc;
 			sc->sc_rx_ready = true;
-		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
+		} while (((rr = getsiocsr(sio)) & RR_RXRDY) != 0);
 	}
-	if (rr & RR_TXRDY) {
+	if ((rr & RR_TXRDY) != 0) {
 		sio->sio_cmd = WR0_RSTPEND;
 		if (sc->sc_tbc > 0) {
 			sio->sio_data = *sc->sc_tba;
@@ -349,7 +349,7 @@ siostart(struct tty *tp)
 
 	sc = device_lookup_private(&siotty_cd, minor(tp->t_dev));
 	s = splserial();
-	if (tp->t_state & (TS_BUSY|TS_TIMEOUT|TS_TTSTOP))
+	if ((tp->t_state & (TS_BUSY|TS_TIMEOUT|TS_TTSTOP)) != 0)
 		goto out;
 	if (!ttypull(tp))
 		goto out;
@@ -397,11 +397,11 @@ sioparam(struct tty *tp, struct termios *t)
 	if (wr4 < 0)
 		return EINVAL;
 
-	if (sc->sc_flags & TIOCFLAG_SOFTCAR) {
+	if ((sc->sc_flags & TIOCFLAG_SOFTCAR) != 0) {
 		t->c_cflag |= CLOCAL;
 		t->c_cflag &= ~HUPCL;
 	}
-	if (sc->sc_flags & TIOCFLAG_CLOCAL)
+	if ((sc->sc_flags & TIOCFLAG_CLOCAL) != 0)
 		t->c_cflag |= CLOCAL;
 
 	/*
@@ -426,7 +426,7 @@ sioparam(struct tty *tp, struct termios *t)
 		sc->sc_wr[WR3] |= WR3_RX8BIT; sc->sc_wr[WR5] |= WR5_TX8BIT;
 		break;
 	}
-	if (tp->t_cflag & PARENB) {
+	if ((tp->t_cflag & PARENB) != 0) {
 		wr4 |= WR4_PARENAB;
 		if ((tp->t_cflag & PARODD) == 0)
 			wr4 |= WR4_EPARITY;
@@ -451,11 +451,11 @@ siomctl(struct siotty_softc *sc, int control, int op)
 	uint16_t rr;
 
 	val = 0;
-	if (control & TIOCM_BREAK)
+	if ((control & TIOCM_BREAK) != 0)
 		val |= WR5_BREAK;
-	if (control & TIOCM_DTR)
+	if ((control & TIOCM_DTR) != 0)
 		val |= WR5_DTR;
-	if (control & TIOCM_RTS)
+	if ((control & TIOCM_RTS) != 0)
 		val |= WR5_RTS;
 	s = splserial();
 	wr5 = sc->sc_wr[WR5];
@@ -472,13 +472,13 @@ siomctl(struct siotty_softc *sc, int control, int op)
 	case DMGET:
 		val = 0;
 		rr = getsiocsr(sc->sc_ctl);
-		if (wr5 & WR5_DTR)
+		if ((wr5 & WR5_DTR) != 0)
 			val |= TIOCM_DTR;
-		if (wr5 & WR5_RTS)
+		if ((wr5 & WR5_RTS) != 0)
 			val |= TIOCM_RTS;
-		if (rr & RR_CTS)
+		if ((rr & RR_CTS) != 0)
 			val |= TIOCM_CTS;
-		if (rr & RR_DCD)
+		if ((rr & RR_DCD) != 0)
 			val |= TIOCM_CD;
 		goto done;
 	}
@@ -525,9 +525,9 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 		/* raise RTS and DTR here; but, DTR lead is not wired */
 		/* then check DCD condition; but, DCD lead is not wired */
 #if 0
-		if ((sc->sc_flags & TIOCFLAG_SOFTCAR)
-		    || (tp->t_cflag & MDMBUF)
-		    || (getsiocsr(sc->sc_ctl) & RR_DCD))
+		if ((sc->sc_flags & TIOCFLAG_SOFTCAR) != 0
+		    || (tp->t_cflag & MDMBUF) != 0
+		    || (getsiocsr(sc->sc_ctl) & RR_DCD) != 0)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
@@ -559,7 +559,7 @@ sioclose(dev_t dev, int flag, int mode, struct lwp *l)
 	s = splserial();
 	siomctl(sc, TIOCM_BREAK, DMBIC);
 #if 0 /* because unable to feed DTR signal */
-	if ((tp->t_cflag & HUPCL)
+	if ((tp->t_cflag & HUPCL) != 0
 	    || tp->t_wopen || (tp->t_state & TS_ISOPEN) == 0) {
 		siomctl(sc, TIOCM_DTR, DMBIC);
 		/* Yield CPU time to others for 1 second, then ... */
