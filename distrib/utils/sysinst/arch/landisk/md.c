@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2011/11/04 11:27:03 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.10.2.1 2014/07/18 02:21:53 riz Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -124,7 +124,7 @@ md_post_newfs(void)
 	char *bootxx;
 	int error;
 
-	printf (msg_string(MSG_dobootblks), diskdev);
+	msg_display(MSG_dobootblks, diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
 	bootxx = bootxx_name();
 	if (bootxx != NULL) {
