@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.46 2014/06/30 21:46:33 matt Exp $	*/
+/*	$NetBSD: mman.h,v 1.47 2014/07/18 12:36:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -161,6 +161,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_INHERIT_NONE	2	/* absent from child */
 #define	MAP_INHERIT_DONATE_COPY	3	/* copy and delete -- not
 					   implemented in UVM */
+#define	MAP_INHERIT_ZERO	4	/* zero in child */
 #define	MAP_INHERIT_DEFAULT	MAP_INHERIT_COPY
 #endif
 
