@@ -666,7 +666,7 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 	KASSERT(start_page <= (ttm->num_pages - num_pages));
 	prot = ttm_io_prot(mem->placement, (VM_PROT_READ | VM_PROT_WRITE));
 	vaddr = uvm_km_alloc(kernel_map, (num_pages << PAGE_SHIFT), PAGE_SIZE,
-	    UVM_KMF_WIRED | UVM_KMF_VAONLY | UVM_KMF_CANFAIL | UVM_KMF_WAITVA);
+	    UVM_KMF_VAONLY | UVM_KMF_CANFAIL | UVM_KMF_WAITVA);
 	if (vaddr == 0)
 		return -ENOMEM;
 	for (i = 0; i < num_pages; i++)
