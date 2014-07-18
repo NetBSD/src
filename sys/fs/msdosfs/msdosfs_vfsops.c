@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.114 2014/07/16 20:09:00 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.115 2014/07/18 17:24:34 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.114 2014/07/16 20:09:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.115 2014/07/18 17:24:34 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.114 2014/07/16 20:09:00 maxv Ex
 MODULE(MODULE_CLASS_VFS, msdos, NULL);
 
 #ifdef MSDOSFS_DEBUG
-#define DPRINTF(a) uprintf a
+#define DPRINTF(fmt, ...) uprintf("%s(): " fmt "\n", __func__, ##__VA_ARGS__)
 #else
-#define DPRINTF(a)
+#define DPRINTF(fmt, ...)
 #endif
 
 #define GEMDOSFS_BSIZE	512
@@ -337,7 +337,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			/* not yet implemented */
 			error = EOPNOTSUPP;
 		if (error) {
-			DPRINTF(("vflush %d\n", error));
+			DPRINTF("vflush %d", error);
 			return (error);
 		}
 		if ((pmp->pm_flags & MSDOSFSMNT_RONLY) &&
@@ -357,14 +357,14 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			    KAUTH_SYSTEM_MOUNT, KAUTH_REQ_SYSTEM_MOUNT_DEVICE,
 			    mp, devvp, KAUTH_ARG(VREAD | VWRITE));
 			VOP_UNLOCK(devvp);
-			DPRINTF(("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d\n", error));
+			DPRINTF("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d", error);
 			if (error)
 				return (error);
 
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
 		if (args->fspec == NULL) {
-			DPRINTF(("missing fspec\n"));
+			DPRINTF("missing fspec");
 			return EINVAL;
 		}
 	}
@@ -375,17 +375,17 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = namei_simple_user(args->fspec,
 				NSM_FOLLOW_NOEMULROOT, &devvp);
 	if (error != 0) {
-		DPRINTF(("namei %d\n", error));
+		DPRINTF("namei %d", error);
 		return (error);
 	}
 
 	if (devvp->v_type != VBLK) {
-		DPRINTF(("not block\n"));
+		DPRINTF("not block");
 		vrele(devvp);
 		return (ENOTBLK);
 	}
 	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
-		DPRINTF(("no block switch\n"));
+		DPRINTF("no block switch");
 		vrele(devvp);
 		return (ENXIO);
 	}
@@ -401,7 +401,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
-		DPRINTF(("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d\n", error));
+		DPRINTF("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d", error);
 		vrele(devvp);
 		return (error);
 	}
@@ -416,12 +416,12 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = VOP_OPEN(devvp, xflags, FSCRED);
 		VOP_UNLOCK(devvp);
 		if (error) {
-			DPRINTF(("VOP_OPEN %d\n", error));
+			DPRINTF("VOP_OPEN %d", error);
 			goto fail;
 		}
 		error = msdosfs_mountfs(devvp, mp, l, args);
 		if (error) {
-			DPRINTF(("msdosfs_mountfs %d\n", error));
+			DPRINTF("msdosfs_mountfs %d", error);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void) VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp);
@@ -433,14 +433,13 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	} else {
 		vrele(devvp);
 		if (devvp != pmp->pm_devvp) {
-			DPRINTF(("devvp %p pmp %p\n", 
-			    devvp, pmp->pm_devvp));
+			DPRINTF("devvp %p pmp %p", devvp, pmp->pm_devvp);
 			return (EINVAL);	/* needs translation */
 		}
 	}
 	if ((error = update_mp(mp, args)) != 0) {
 		msdosfs_unmount(mp, MNT_FORCE);
-		DPRINTF(("update_mp %d\n", error));
+		DPRINTF("update_mp %d", error);
 		return error;
 	}
 
@@ -494,17 +493,14 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		error = 0;
 	}
 	if (secsize < DEV_BSIZE) {
-#ifdef DIAGNOSTIC /* XXX: to be converted to DPRINTF */
-		printf("%s(): Invalid block secsize (%d < DEV_BSIZE)\n", __func__,
-		    secsize);
-#endif
+		DPRINTF("Invalid block secsize (%d < DEV_BSIZE)", secsize);
 		error = EINVAL;
 		goto error_exit;
 	}
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		if (secsize != GEMDOSFS_BSIZE) {
-			DPRINTF(("Invalid block secsize %d for GEMDOS\n", secsize));
+			DPRINTF("Invalid block secsize %d for GEMDOS", secsize);
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -524,9 +520,9 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
 		if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
 		    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
-			DPRINTF(("bootsig0 %d bootsig1 %d\n", 
+			DPRINTF("bootsig0 %d bootsig1 %d", 
 			    bsp->bs50.bsBootSectSig0,
-			    bsp->bs50.bsBootSectSig1));
+			    bsp->bs50.bsBootSectSig1);
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -570,14 +566,14 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	    (pmp->pm_BytesPerSec == 0) || !powerof2(pmp->pm_BytesPerSec) ||
 	    (SecPerClust * pmp->pm_BytesPerSec > MAXBSIZE) ||
 	    (pmp->pm_HugeSectors == 0)) {
-		DPRINTF(("consistency checks\n"));
+		DPRINTF("consistency checks");
 		error = EINVAL;
 		goto error_exit;
 	}
 
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS) &&
 	    (pmp->pm_SecPerTrack > 63)) {
-		DPRINTF(("SecPerTrack %d\n", pmp->pm_SecPerTrack));
+		DPRINTF("SecPerTrack %d", pmp->pm_SecPerTrack);
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -591,8 +587,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		 * do not set these to zero.  Therefore, do not insist.
 		 */
 		if (pmp->pm_Sectors || pmp->pm_FATsecs || FSVers) {
-			DPRINTF(("Sectors %d FATsecs %lu FSVers %d\n",
-			    pmp->pm_Sectors, pmp->pm_FATsecs, FSVers));
+			DPRINTF("Sectors %d FATsecs %lu FSVers %d",
+			    pmp->pm_Sectors, pmp->pm_FATsecs, FSVers);
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -612,7 +608,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		if (FAT32(pmp)) {
 			/* GEMDOS doesn't know FAT32. */
-			DPRINTF(("FAT32 for GEMDOS\n"));
+			DPRINTF("FAT32 for GEMDOS");
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -625,7 +621,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		if ((pmp->pm_BytesPerSec < GEMDOSFS_BSIZE) ||
 		    (pmp->pm_HugeSectors *
 		     (pmp->pm_BytesPerSec / GEMDOSFS_BSIZE) > psize)) {
-			DPRINTF(("consistency checks for GEMDOS\n"));
+			DPRINTF("consistency checks for GEMDOS");
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -647,7 +643,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	/* Check that fs has nonzero FAT size */
 	if (pmp->pm_FATsecs == 0) {
-		DPRINTF(("FATsecs is 0\n"));
+		DPRINTF("FATsecs is 0");
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -720,8 +716,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * must be a power of 2
 	 */
 	if (pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
-		DPRINTF(("bpcluster %lu cnshift %lu\n", 
-		    pmp->pm_bpcluster, pmp->pm_cnshift));
+		DPRINTF("bpcluster %lu cnshift %lu", pmp->pm_bpcluster,
+		    pmp->pm_cnshift);
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -732,8 +728,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * 32KiB due to limits in Windows versions before Vista.
 	 */
 	if (pmp->pm_bpcluster > MAXBSIZE) {
-		DPRINTF(("bpcluster %lu > MAXBSIZE %d\n",
-		    pmp->pm_bpcluster, MAXBSIZE));
+		DPRINTF("bpcluster %lu > MAXBSIZE %d",
+		    pmp->pm_bpcluster, MAXBSIZE);
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -800,7 +796,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * Have the inuse map filled in.
 	 */
 	if ((error = fillinusemap(pmp)) != 0) {
-		DPRINTF(("fillinusemap %d\n", error));
+		DPRINTF("fillinusemap %d", error);
 		goto error_exit;
 	}
 
@@ -1035,8 +1031,7 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	int error;
 
 	if (fhp->fid_len != sizeof(struct defid)) {
-		DPRINTF(("fid_len %d %zd\n", fhp->fid_len,
-		    sizeof(struct defid)));
+		DPRINTF("fid_len %d %zd", fhp->fid_len, sizeof(struct defid));
 		return EINVAL;
 	}
 	memcpy(&defh, fhp, sizeof(defh));
@@ -1050,7 +1045,7 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	}
 	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, vpp);
 	if (error) {
-		DPRINTF(("deget %d\n", error));
+		DPRINTF("deget %d", error);
 		*vpp = NULLVP;
 		return error;
 	}
