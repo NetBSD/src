@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfig.h,v 1.10 2014/06/17 19:36:45 alnsn Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.11 2014/07/18 19:38:02 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -87,6 +87,10 @@
 
 #ifdef _KERNEL
 #define SLJIT_VERBOSE 0
+#endif
+
+#ifdef _KERNEL
+#define SLJIT_IS_FPU_AVAILABLE 0
 #endif
 
 #ifdef _KERNEL
