@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2014/07/05 09:16:45 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.112 2014/07/18 17:30:52 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -40,6 +40,9 @@ options 	KTRACE
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
+
+options 	MODULAR			# new style module(7) framework
+
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -104,7 +107,7 @@ options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP protocol stack support
-#options 	INET6		# IPV6
+options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
@@ -174,8 +177,8 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
