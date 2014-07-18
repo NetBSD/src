@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2014/06/10 04:28:39 he Exp $
+# $NetBSD: Makefile,v 1.36 2014/07/18 12:34:52 christos Exp $
 
 MKMAN=	no
 
@@ -30,6 +30,7 @@ TESTS_C+=		t_link
 TESTS_C+=		t_listen
 TESTS_C+=		t_lwp_ctl
 TESTS_C+=		t_lwp_create
+TESTS_C+=		t_minherit
 TESTS_C+=		t_mincore
 TESTS_C+=		t_mkdir
 TESTS_C+=		t_mkfifo
