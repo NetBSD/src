@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.31 2014/07/13 16:00:32 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.32 2014/07/18 18:03:36 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.31 2014/07/13 16:00:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.32 2014/07/18 18:03:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,12 +156,14 @@ static int   omfb_show_screen(void *, void *, int,
 			      void (*) (void *, int, int), void *);
 
 static const struct wsdisplay_accessops omfb_accessops = {
-	omfbioctl,
-	omfbmmap,
-	omfb_alloc_screen,
-	omfb_free_screen,
-	omfb_show_screen,
-	0 /* load_font */
+	.ioctl        = omfbioctl,
+	.mmap         = omfbmmap,
+	.alloc_screen = omfb_alloc_screen,
+	.free_screen  = omfb_free_screen,
+	.show_screen  = omfb_show_screen,
+	.load_font    = NULL,
+	.pollc        = NULL,
+	.scroll       = NULL
 };
 
 static int  omfbmatch(device_t, cfdata_t, void *);
