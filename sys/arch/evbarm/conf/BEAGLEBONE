@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.21 2014/07/16 18:36:46 bouyer Exp $
+#	$NetBSD: BEAGLEBONE,v 1.22 2014/07/19 18:18:31 bouyer Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -272,11 +272,21 @@ motg*	at tiotg? port ?
 usb*		at motg?
 uhub*		at usb?
 uhub*		at uhub? port ?
+
 uhidev*		at uhub?
-ukbd*		at uhidev?
-ums*		at uhidev?
-wskbd*		at ukbd?
-wsmouse*	at ums?
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB generic touchscreen
+uts*	at uhidev? reportid ?
+wsmouse* at uts? mux 0
+
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
