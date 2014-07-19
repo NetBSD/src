@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.9 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.10 2014/07/19 18:38:34 lneto Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -201,11 +201,11 @@ bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 
 #if LUA_VERSION_NUM >= 502
 	luaL_openlibs(map->L);
-	lua_getglobal(L, "package");
-	lua_getfield(L, -1, "preload");
-	lua_pushcfunction(L, luaopen_httpd);
-	lua_setfield(L, -2, "httpd");
-	lua_pop(L, 2);
+	lua_getglobal(map->L, "package");
+	lua_getfield(map->L, -1, "preload");
+	lua_pushcfunction(map->L, luaopen_httpd);
+	lua_setfield(map->L, -2, "httpd");
+	lua_pop(map->L, 2);
 #else
 	lua_openlib(map->L, "", luaopen_base);
 	lua_openlib(map->L, LUA_LOADLIBNAME, luaopen_package);

@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.14 2014/07/13 13:53:59 martin Exp $
+# $NetBSD: ad.powerpc,v 1.15 2014/07/19 18:38:33 lneto Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -202,7 +202,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/liblber.so.3.3.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
 ./usr/libdata/debug/usr/lib/powerpc/libldap.so.4.3.debug			comp-compat-shlib	compat,arch64,debug,pic,ldap
 ./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.4.3.debug		comp-compat-shlib	compat,arch64,debug,pic,ldap
-./usr/libdata/debug/usr/lib/powerpc/liblua.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/liblua.so.5.3.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/liblutok.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,kyua
 ./usr/libdata/debug/usr/lib/powerpc/liblwres.so.8.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/liblzf.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic

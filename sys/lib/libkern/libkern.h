@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.113 2014/02/27 18:05:07 joerg Exp $	*/
+/*	$NetBSD: libkern.h,v 1.114 2014/07/19 18:38:35 lneto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,8 +61,13 @@ LIBKERN_INLINE int isascii(int) __unused;
 LIBKERN_INLINE int isupper(int) __unused;
 LIBKERN_INLINE int islower(int) __unused;
 LIBKERN_INLINE int isalpha(int) __unused;
+LIBKERN_INLINE int isalnum(int) __unused;
 LIBKERN_INLINE int isdigit(int) __unused;
 LIBKERN_INLINE int isxdigit(int) __unused;
+LIBKERN_INLINE int iscntrl(int) __unused;
+LIBKERN_INLINE int isgraph(int) __unused;
+LIBKERN_INLINE int isprint(int) __unused;
+LIBKERN_INLINE int ispunct(int) __unused;
 LIBKERN_INLINE int toupper(int) __unused;
 LIBKERN_INLINE int tolower(int) __unused;
 
@@ -163,6 +168,12 @@ isalpha(int ch)
 }
 
 LIBKERN_INLINE int
+isalnum(int ch)
+{
+	return (isalpha(ch) || isdigit(ch));
+}
+
+LIBKERN_INLINE int
 isdigit(int ch)
 {
 	return (ch >= '0' && ch <= '9');
@@ -174,6 +185,30 @@ isxdigit(int ch)
 	return (isdigit(ch) ||
 	    (ch >= 'A' && ch <= 'F') ||
 	    (ch >= 'a' && ch <= 'f'));
+}
+
+LIBKERN_INLINE int
+iscntrl(int ch)
+{
+	return ((ch >= 0x00 && ch <= 0x1F) || ch == 0x7F);
+}
+
+LIBKERN_INLINE int
+isgraph(int ch)
+{
+	return (ch != ' ' && isprint(ch));
+}
+
+LIBKERN_INLINE int
+isprint(int ch)
+{
+	return (ch >= 0x20 && ch <= 0x7E);
+}
+
+LIBKERN_INLINE int
+ispunct(int ch)
+{
+	return (isprint(ch) && ch != ' ' && !isalnum(ch));
 }
 
 LIBKERN_INLINE int
@@ -312,13 +347,15 @@ char	*strsep(char **, const char *);
 
 /* These exist in GCC 3.x, but we don't bother. */
 char	*strcat(char *, const char *);
+size_t	 strcspn(const char *, const char *);
 char	*strncpy(char *, const char *, size_t);
 char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
 char	*strchr(const char *, int);
 char	*strrchr(const char *, int);
-
 char	*strstr(const char *, const char *);
+char	*strpbrk(const char *, const char *);
+size_t	 strspn(const char *, const char *);
 
 /*
  * ffs is an instruction on vax.

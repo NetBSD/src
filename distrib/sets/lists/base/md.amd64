@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.237 2014/07/08 05:55:33 spz Exp $
+# $NetBSD: md.amd64,v 1.238 2014/07/19 18:38:33 lneto Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -190,8 +190,8 @@
 ./usr/lib/i386/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/libldap_r.so.4.3			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/liblua.so			base-compat-shlib	compat,pic
-./usr/lib/i386/liblua.so.1			base-compat-shlib	compat,pic
-./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/i386/liblua.so.5			base-compat-shlib	compat,pic
+./usr/lib/i386/liblua.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblutok.so			base-compat-shlib	compat,pic,kyua
 ./usr/lib/i386/liblutok.so.1			base-obsolete		obsolete
 ./usr/lib/i386/liblutok.so.1.0			base-obsolete		obsolete
@@ -327,10 +327,10 @@
 ./usr/lib/i386/libz.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libz.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/lua				base-compat-shlib	compat
-./usr/lib/i386/lua/5.1				base-compat-shlib	compat
-./usr/lib/i386/lua/5.1/gpio.so			base-compat-shlib	compat,pic
-./usr/lib/i386/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
-./usr/lib/i386/lua/5.1/syslog.so		base-compat-shlib	compat,pic
+./usr/lib/i386/lua/5.3				base-compat-shlib	compat
+./usr/lib/i386/lua/5.3/gpio.so			base-compat-shlib	compat,pic
+./usr/lib/i386/lua/5.3/sqlite.so		base-compat-shlib	compat,pic
+./usr/lib/i386/lua/5.3/syslog.so		base-compat-shlib	compat,pic
 ./usr/lib/i386/npf				base-obsolete		obsolete
 ./usr/lib/i386/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/i386/npf/ext_log.so.0			base-obsolete		obsolete

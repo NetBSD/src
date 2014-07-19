@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.57 2014/07/13 13:53:59 martin Exp $
+# $NetBSD: md.sparc64,v 1.58 2014/07/19 18:38:33 lneto Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -256,7 +256,7 @@
 ./usr/libdata/debug/usr/lib/sparc/liblber.so.3.3.debug			comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/libldap.so.4.3.debug			comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/libldap_r.so.4.3.debug		comp-compat-shlib	compat,pic,debug,ldap
-./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblua.so.5.3.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblutok.so.1.0.debug			comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/sparc/liblutok.so.2.0.debug			comp-compat-shlib	compat,pic,debug,kyua
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.6.0.debug			comp-compat-shlib	compat,pic,debug,obsolete

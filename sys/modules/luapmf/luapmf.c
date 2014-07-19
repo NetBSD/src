@@ -1,4 +1,4 @@
-/*	$NetBSD: luapmf.c,v 1.5 2014/07/19 17:20:02 lneto Exp $ */
+/*	$NetBSD: luapmf.c,v 1.6 2014/07/19 18:38:35 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -91,7 +91,7 @@ luaopen_pmf(lua_State *L)
 		{ NULL, NULL }
 	};
 
-	luaL_register(L, "pmf", pmf_lib);
+	luaL_newlib(L, pmf_lib);
 
 	/* some integer values */
 	lua_pushinteger(L, PMFE_DISPLAY_ON);
