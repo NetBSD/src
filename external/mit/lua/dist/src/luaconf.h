@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.7 2014/03/26 22:03:26 christos Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.8 2014/07/19 17:11:52 lneto Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
@@ -553,10 +553,13 @@
 */
 #if defined(LUA_CORE)
 #ifdef _KERNEL
+/* XXX: we should raise an error instead of return INTMAX_MAX */
+#define luai_numdiv(a,b)	((b) != 0 ? (a)/(b) : INTMAX_MAX)
 #define luai_nummod(a,b)	((a)%(b))
 #define luai_numpow(a,b)	luai_nummul(a,b)
 #else
 #include <math.h>
+#define luai_numdiv(a,b)	((a)/(b))
 #define luai_nummod(a,b)	((a) - floor((a)/(b))*(b))
 #define luai_numpow(a,b)	(pow(a,b))
 #endif
@@ -564,7 +567,6 @@
 #define luai_numadd(a,b)	((a)+(b))
 #define luai_numsub(a,b)	((a)-(b))
 #define luai_nummul(a,b)	((a)*(b))
-#define luai_numdiv(a,b)	((a)/(b))
 #define luai_numunm(a)		(-(a))
 #define luai_numeq(a,b)		((a)==(b))
 #define luai_numlt(a,b)		((a)<(b))
