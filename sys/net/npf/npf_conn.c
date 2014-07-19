@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.1 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.2 2014/07/19 20:59:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.1 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.2 2014/07/19 20:59:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -328,6 +328,7 @@ npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 		memcpy(&key->ck_key[2 + nwords], npc->npc_ips[idst], alen);
 		keylen = (2 + (nwords * 2)) * sizeof(uint32_t);
 	}
+	(void)keylen;
 	return true;
 }
 
@@ -566,7 +567,7 @@ npf_conn_setnat(const npf_cache_t *npc, npf_conn_t *con,
 		[NPF_NATIN] = NPF_SRC,
 	};
 	npf_connkey_t key, *bk;
-	npf_conn_t *ret;
+	npf_conn_t *ret __diagused;
 	npf_addr_t *taddr;
 	in_port_t tport;
 	u_int tidx;
