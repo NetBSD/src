@@ -1,7 +1,7 @@
 /*	$NetBSD */
 
 /*
- * Copyright (c) 2011, Lourival Neto <lneto@NetBSD.org>.
+ * Copyright (c) 2011-2014, Lourival Neto <lneto@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,11 +36,8 @@
 #include <sys/param.h>
 #include <sys/kmem.h>
 
-#ifndef _LUA_INCLUDE_STDLIB
-#define _LUA_INCLUDE_STDLIB
-
-#define realloc(ptr, nsize)	kmem_alloc(nsize, KM_SLEEP)
-#define free(ptr)		kmem_free(ptr, osize)
+#ifndef _LUA_INCLUDE_STDLIB_
+#define _LUA_INCLUDE_STDLIB_
 
 #define exit(EXIT_FAILURE)	return
 
