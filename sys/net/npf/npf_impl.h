@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.53 2014/06/25 00:20:06 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.54 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -49,10 +49,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/hash.h>
-#include <sys/rbtree.h>
 #include <sys/ptree.h>
-#include <sys/rwlock.h>
 
 #include <net/bpf.h>
 #include <net/bpfjit.h>
@@ -74,7 +71,7 @@ struct npf_ruleset;
 struct npf_rule;
 struct npf_rprocset;
 struct npf_nat;
-struct npf_session;
+struct npf_conn;
 
 typedef struct npf_ruleset	npf_ruleset_t;
 typedef struct npf_rule		npf_rule_t;
@@ -82,13 +79,13 @@ typedef struct npf_nat		npf_nat_t;
 typedef struct npf_rprocset	npf_rprocset_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
-typedef struct npf_session	npf_session_t;
+typedef struct npf_conn		npf_conn_t;
 
-struct npf_sehash;
+struct npf_conndb;
 struct npf_table;
 struct npf_tableset;
 
-typedef struct npf_sehash	npf_sehash_t;
+typedef struct npf_conndb	npf_conndb_t;
 typedef struct npf_table	npf_table_t;
 typedef struct npf_tableset	npf_tableset_t;
 
@@ -123,7 +120,6 @@ typedef struct {
 } npf_tcpstate_t;
 
 typedef struct {
-	kmutex_t	nst_lock;
 	u_int		nst_state;
 	npf_tcpstate_t	nst_tcpst[2];
 } npf_state_t;
@@ -135,7 +131,7 @@ typedef struct {
 typedef struct {
 	bool		(*match)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 	bool		(*translate)(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
-	npf_session_t * (*inspect)(npf_cache_t *, nbuf_t *, int);
+	npf_conn_t *	(*inspect)(npf_cache_t *, nbuf_t *, int);
 } npfa_funcs_t;
 
 /*
@@ -172,8 +168,8 @@ void		npflogdetach(void);
 int		npfctl_switch(void *);
 int		npfctl_reload(u_long, void *);
 int		npfctl_getconf(u_long, void *);
-int		npfctl_sessions_save(u_long, void *);
-int		npfctl_sessions_load(u_long, void *);
+int		npfctl_conn_save(u_long, void *);
+int		npfctl_conn_load(u_long, void *);
 int		npfctl_rule(u_long, void *);
 int		npfctl_table(void *);
 
@@ -300,29 +296,6 @@ void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
 bool		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *, int *);
 
-/* Session handling interface. */
-void		npf_session_sysinit(void);
-void		npf_session_sysfini(void);
-void		npf_session_tracking(bool);
-
-npf_sehash_t *	sess_htable_create(void);
-void		sess_htable_destroy(npf_sehash_t *);
-
-npf_session_t *	npf_session_lookup(const npf_cache_t *, const nbuf_t *,
-		    const int, bool *);
-npf_session_t *	npf_session_inspect(npf_cache_t *, nbuf_t *, const int, int *);
-npf_session_t *	npf_session_establish(npf_cache_t *, nbuf_t *, int, bool);
-void		npf_session_release(npf_session_t *);
-void		npf_session_expire(npf_session_t *);
-bool		npf_session_pass(const npf_session_t *, npf_rproc_t **);
-void		npf_session_setpass(npf_session_t *, npf_rproc_t *);
-int		npf_session_setnat(npf_session_t *, npf_nat_t *, u_int);
-npf_nat_t *	npf_session_retnat(npf_session_t *, const int, bool *);
-
-void		npf_session_load(npf_sehash_t *);
-int		npf_session_save(prop_array_t, prop_array_t);
-int		npf_session_restore(npf_sehash_t *, prop_dictionary_t);
-
 /* State handling. */
 bool		npf_state_init(npf_cache_t *, nbuf_t *, npf_state_t *);
 bool		npf_state_inspect(npf_cache_t *, nbuf_t *, npf_state_t *,
@@ -342,14 +315,14 @@ bool		npf_nat_matchpolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
-int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *, const int);
+int		npf_do_nat(npf_cache_t *, npf_conn_t *, nbuf_t *, const int);
 void		npf_nat_destroy(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
 
 int		npf_nat_save(prop_dictionary_t, prop_array_t, npf_nat_t *);
-npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
+npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_conn_t *);
 
 /* ALG interface. */
 void		npf_alg_sysinit(void);
@@ -359,11 +332,10 @@ int		npf_alg_unregister(npf_alg_t *);
 npf_alg_t *	npf_alg_construct(const char *);
 bool		npf_alg_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
-npf_session_t *	npf_alg_session(npf_cache_t *, nbuf_t *, int);
+npf_conn_t *	npf_alg_conn(npf_cache_t *, nbuf_t *, int);
 
 /* Debugging routines. */
-void		npf_addr_dump(const npf_addr_t *);
-void		npf_sessions_dump(void);
+const char *	npf_addr_dump(const npf_addr_t *, int);
 void		npf_state_dump(const npf_state_t *);
 void		npf_nat_dump(const npf_nat_t *);
 void		npf_state_setsampler(void (*)(npf_state_t *, bool));

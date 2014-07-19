@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.30 2014/05/19 18:45:51 jakllsch Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.31 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.30 2014/05/19 18:45:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.31 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.30 2014/05/19 18:45:51 jakllsch Ex
 #include <netinet6/ip6_var.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 static bool		pfil_registered = false;
 static pfil_head_t *	npf_ph_if = NULL;
@@ -141,7 +142,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 	nbuf_t nbuf;
 	npf_cache_t npc;
-	npf_session_t *se;
+	npf_conn_t *con;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int error, retfl;
@@ -166,7 +167,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		 */
 		error = npf_reassembly(&npc, &nbuf, mp);
 		if (error) {
-			se = NULL;
+			con = NULL;
 			goto out;
 		}
 		if (*mp == NULL) {
@@ -175,11 +176,11 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		}
 	}
 
-	/* Inspect the list of sessions (if found, acquires a reference). */
-	se = npf_session_inspect(&npc, &nbuf, di, &error);
+	/* Inspect the list of connections (if found, acquires a reference). */
+	con = npf_conn_inspect(&npc, &nbuf, di, &error);
 
-	/* If "passing" session found - skip the ruleset inspection. */
-	if (se && npf_session_pass(se, &rp)) {
+	/* If "passing" connection found - skip the ruleset inspection. */
+	if (con && npf_conn_pass(con, &rp)) {
 		npf_stats_inc(NPF_STAT_PASS_SESSION);
 		KASSERT(error == 0);
 		goto pass;
@@ -209,7 +210,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/*
 	 * Get the rule procedure (acquires a reference) for association
-	 * with a session (if any) and execution.
+	 * with a connection (if any) and execution.
 	 */
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
@@ -225,19 +226,19 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_stats_inc(NPF_STAT_PASS_RULESET);
 
 	/*
-	 * Establish a "pass" session, if required.  Just proceed,
-	 * if session creation fails (e.g. due to unsupported protocol).
+	 * Establish a "pass" connection, if required.  Just proceed if
+	 * connection creation fails (e.g. due to unsupported protocol).
 	 */
-	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
-		se = npf_session_establish(&npc, &nbuf, di,
+	if ((retfl & NPF_RULE_STATEFUL) != 0 && !con) {
+		con = npf_conn_establish(&npc, &nbuf, di,
 		    (retfl & NPF_RULE_MULTIENDS) == 0);
-		if (se) {
+		if (con) {
 			/*
 			 * Note: the reference on the rule procedure is
-			 * transfered to the session.  It will be released
-			 * on session destruction.
+			 * transfered to the connection.  It will be
+			 * released on connection destruction.
 			 */
-			npf_session_setpass(se, rp);
+			npf_conn_setpass(con, rp);
 		}
 	}
 pass:
@@ -246,15 +247,15 @@ pass:
 	/*
 	 * Perform NAT.
 	 */
-	error = npf_do_nat(&npc, se, &nbuf, di);
+	error = npf_do_nat(&npc, con, &nbuf, di);
 block:
 	/*
 	 * Execute the rule procedure, if any is associated.
 	 * It may reverse the decision from pass to block.
 	 */
 	if (rp && !npf_rproc_run(&npc, &nbuf, rp, &decision)) {
-		if (se) {
-			npf_session_release(se);
+		if (con) {
+			npf_conn_release(con);
 		}
 		npf_rproc_release(rp);
 		*mp = NULL;
@@ -262,11 +263,11 @@ block:
 	}
 out:
 	/*
-	 * Release the reference on a session.  Release the reference on a
-	 * rule procedure only if there was no association.
+	 * Release the reference on a connection.  Release the reference
+	 * on a rule procedure only if there was no association.
 	 */
-	if (se) {
-		npf_session_release(se);
+	if (con) {
+		npf_conn_release(con);
 	} else if (rp) {
 		npf_rproc_release(rp);
 	}

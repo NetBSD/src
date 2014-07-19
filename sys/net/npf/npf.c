@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.19 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: npf.c,v 1.20 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.19 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.20 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.19 2014/03/16 05:20:30 dholland Exp $");
 #include <sys/uio.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 /*
  * Module and device structures.
@@ -100,7 +101,7 @@ npf_init(void)
 	npf_bpf_sysinit();
 	npf_worker_sysinit();
 	npf_tableset_sysinit();
-	npf_session_sysinit();
+	npf_conn_sysinit();
 	npf_nat_sysinit();
 	npf_alg_sysinit();
 	npf_ext_sysinit();
@@ -129,15 +130,15 @@ npf_fini(void)
 #endif
 	npf_pfil_unregister(true);
 
-	/* Flush all sessions, destroy configuration (ruleset, etc). */
-	npf_session_tracking(false);
+	/* Flush all connections, destroy configuration (ruleset, etc). */
+	npf_conn_tracking(false);
 	npf_config_fini();
 
 	/* Finally, safe to destroy the subsystems. */
 	npf_ext_sysfini();
 	npf_alg_sysfini();
 	npf_nat_sysfini();
-	npf_session_sysfini();
+	npf_conn_sysfini();
 	npf_tableset_sysfini();
 	npf_bpf_sysfini();
 
@@ -226,10 +227,10 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = npfctl_stats(data);
 		break;
 	case IOC_NPF_SESSIONS_SAVE:
-		error = npfctl_sessions_save(cmd, data);
+		error = npfctl_conn_save(cmd, data);
 		break;
 	case IOC_NPF_SESSIONS_LOAD:
-		error = npfctl_sessions_load(cmd, data);
+		error = npfctl_conn_load(cmd, data);
 		break;
 	case IOC_NPF_SWITCH:
 		error = npfctl_switch(data);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.42 2014/06/29 00:05:24 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.43 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		14
+#define	NPF_VERSION		15
 
 /*
  * Public declarations and definitions.
@@ -326,7 +326,7 @@ typedef enum {
 	/* Packets blocked. */
 	NPF_STAT_BLOCK_DEFAULT,
 	NPF_STAT_BLOCK_RULESET,
-	/* Session and NAT entries. */
+	/* Connection and NAT entries. */
 	NPF_STAT_SESSION_CREATE,
 	NPF_STAT_SESSION_DESTROY,
 	NPF_STAT_NAT_CREATE,

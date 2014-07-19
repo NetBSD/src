@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.30 2014/02/19 03:51:31 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.31 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.30 2014/02/19 03:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.31 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -735,12 +735,15 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 
 #if defined(DDB) || defined(_NPF_TESTING)
 
-void
-npf_addr_dump(const npf_addr_t *addr)
+const char *
+npf_addr_dump(const npf_addr_t *addr, int alen)
 {
-	printf("IP[%x:%x:%x:%x]\n",
-	    addr->s6_addr32[0], addr->s6_addr32[1],
-	    addr->s6_addr32[2], addr->s6_addr32[3]);
+	if (alen == sizeof(struct in_addr)) {
+		struct in_addr ip;
+		memcpy(&ip, addr, alen);
+		return inet_ntoa(ip);
+	}
+	return "[IPv6]"; // XXX
 }
 
 #endif

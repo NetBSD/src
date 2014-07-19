@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.13 2013/11/04 22:17:21 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.14 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.13 2013/11/04 22:17:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.14 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -463,7 +463,6 @@ npf_state_tcp(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	const u_int tcpfl = th->th_flags, state = nst->nst_state;
 	u_int nstate;
 
-	KASSERT(nst->nst_state == 0 || mutex_owned(&nst->nst_lock));
 	KASSERT(nst->nst_state < NPF_TCP_NSTATES);
 
 	/* Look for a transition to a new state. */

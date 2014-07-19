@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.12 2014/02/17 02:38:46 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.13 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.12 2014/02/17 02:38:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.13 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -226,10 +226,10 @@ npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 	pserialize_read_exit(s);
 }
 
-npf_session_t *
-npf_alg_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
+npf_conn_t *
+npf_alg_conn(npf_cache_t *npc, nbuf_t *nbuf, int di)
 {
-	npf_session_t *se = NULL;
+	npf_conn_t *con = NULL;
 	int s;
 
 	s = pserialize_read_enter();
@@ -238,9 +238,9 @@ npf_alg_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 
 		if (!f->inspect)
 			continue;
-		if ((se = f->inspect(npc, nbuf, di)) != NULL)
+		if ((con = f->inspect(npc, nbuf, di)) != NULL)
 			break;
 	}
 	pserialize_read_exit(s);
-	return se;
+	return con;
 }

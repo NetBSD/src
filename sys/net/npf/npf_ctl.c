@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.33 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.34 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.33 2014/02/06 02:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.34 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.33 2014/02/06 02:51:28 rmind Exp $");
 #include <prop/proplib.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 #define	NPF_ERR_DEBUG(e) \
@@ -161,6 +162,9 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			NPF_ERR_DEBUG(errdict);
 			error = EINVAL;
 			break;
+		}
+		if (type == NPF_TABLE_HASH) {
+			size = 1024; /* XXX */
 		}
 
 		/* Create and insert the table. */
@@ -545,8 +549,8 @@ npfctl_reload(u_long cmd, void *data)
 	 */
 	npf_config_reload(npf_dict, rlset, tblset, nset, rpset, flush);
 
-	/* Turn on/off session tracking accordingly. */
-	npf_session_tracking(!flush);
+	/* Turn on/off connection tracking accordingly. */
+	npf_conn_tracking(!flush);
 
 	/* Done.  Since data is consumed now, we shall not destroy it. */
 	tblset = NULL;
@@ -705,83 +709,83 @@ npfctl_getconf(u_long cmd, void *data)
 }
 
 /*
- * npfctl_sessions_save: construct a list of sessions and export for saving.
+ * npfctl_conn_save: construct a list of connections and export.
  */
 int
-npfctl_sessions_save(u_long cmd, void *data)
+npfctl_conn_save(u_long cmd, void *data)
 {
 	struct plistref *pref = data;
-	prop_dictionary_t sesdict;
-	prop_array_t selist, nplist;
+	prop_array_t conlist, nplist;
+	prop_dictionary_t dict;
 	int error;
 
 	/* Create a dictionary and two lists. */
-	sesdict = prop_dictionary_create();
-	selist = prop_array_create();
+	dict = prop_dictionary_create();
+	conlist = prop_array_create();
 	nplist = prop_array_create();
 
-	/* Save the sessions. */
-	error = npf_session_save(selist, nplist);
+	/* Save the connections. */
+	error = npf_conn_save(conlist, nplist);
 	if (error) {
 		goto fail;
 	}
 
-	/* Set the session list, NAT policy list and export the dictionary. */
-	prop_dictionary_set(sesdict, "session-list", selist);
-	prop_dictionary_set(sesdict, "nat-policy-list", nplist);
-	error = prop_dictionary_copyout_ioctl(pref, cmd, sesdict);
+	/* Set the connection list, NAT policy list and export. */
+	prop_dictionary_set(dict, "session-list", conlist);
+	prop_dictionary_set(dict, "nat-policy-list", nplist);
+	error = prop_dictionary_copyout_ioctl(pref, cmd, dict);
 fail:
-	prop_object_release(sesdict);
+	prop_object_release(dict);
 	return error;
 }
 
 /*
- * npfctl_sessions_load: import a list of sessions, reconstruct them and load.
+ * npfctl_conn_load: import a list of connections and load them.
  */
 int
-npfctl_sessions_load(u_long cmd, void *data)
+npfctl_conn_load(u_long cmd, void *data)
 {
 	const struct plistref *pref = data;
-	npf_sehash_t *sehasht = NULL;
-	prop_dictionary_t sesdict, sedict;
+	npf_conndb_t *conndb = NULL;
+	prop_dictionary_t dict, condict;
 	prop_object_iterator_t it;
-	prop_array_t selist;
+	prop_array_t conlist;
 	int error;
 
-	/* Retrieve the dictionary containing session and NAT policy lists. */
-	error = prop_dictionary_copyin_ioctl(pref, cmd, &sesdict);
+	/* Get the dictionary containing connections and NAT policies. */
+	error = prop_dictionary_copyin_ioctl(pref, cmd, &dict);
 	if (error)
 		return error;
 
 	/*
-	 * Note: session objects contain the references to the NAT policy
-	 * entries.  Therefore, no need to directly access it.
+	 * Note: connection objects contain the references to the NAT
+	 * policy entries.  Therefore, no need to directly access it.
 	 */
-	selist = prop_dictionary_get(sesdict, "session-list");
-	if (prop_object_type(selist) != PROP_TYPE_ARRAY) {
-		prop_object_release(selist);
+	conlist = prop_dictionary_get(dict, "session-list");
+	if (prop_object_type(conlist) != PROP_TYPE_ARRAY) {
+		prop_object_release(conlist);
 		return EINVAL;
 	}
 
-	/* Create a session hash table. */
-	sehasht = sess_htable_create();
+	/* Create a connection database. */
+	conndb = npf_conndb_create();
 
 	/*
-	 * Iterate through and construct each session.  Note: acquire the
-	 * config lock as we access NAT policies during the restore.
+	 * Iterate through and construct each connection.  Note: acquire
+	 * the config lock as we access NAT policies during the restore.
 	 */
 	error = 0;
-	it = prop_array_iterator(selist);
+	it = prop_array_iterator(conlist);
 
 	npf_config_enter();
-	while ((sedict = prop_object_iterator_next(it)) != NULL) {
-		/* Session - dictionary. */
-		if (prop_object_type(sedict) != PROP_TYPE_DICTIONARY) {
+	while ((condict = prop_object_iterator_next(it)) != NULL) {
+		/* Connection - dictionary. */
+		if (prop_object_type(condict) != PROP_TYPE_DICTIONARY) {
 			error = EINVAL;
 			break;
 		}
-		/* Construct and insert real session structure. */
-		error = npf_session_restore(sehasht, sedict);
+		/* Construct and insert real connection structure. */
+		error = npf_conn_restore(conndb, condict);
 		if (error) {
 			break;
 		}
@@ -789,14 +793,14 @@ npfctl_sessions_load(u_long cmd, void *data)
 	npf_config_exit();
 
 	prop_object_iterator_release(it);
-	prop_object_release(selist);
+	prop_object_release(conlist);
 
 	if (!error) {
 		/* Finally, load the new table. */
-		npf_session_load(sehasht);
+		npf_conn_load(conndb);
 	} else {
-		/* Destroy session table. */
-		sess_htable_destroy(sehasht);
+		/* Destroy the connection database. */
+		npf_conndb_destroy(conndb);
 	}
 	return error;
 }
