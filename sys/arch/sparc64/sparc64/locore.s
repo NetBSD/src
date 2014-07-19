@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.364 2014/07/16 19:53:18 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.365 2014/07/19 20:58:12 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -140,6 +140,24 @@
 	
 	.endm
 
+
+	.macro	NORMAL_GLOBALS scratch
+#ifdef SUN4V
+	sethi	%hi(cputyp), \scratch
+	ld	[\scratch + %lo(cputyp)], \scratch
+	cmp	\scratch, CPU_SUN4V
+	bne,pt	%icc, 2f
+	 nop
+	/* sun4v */
+	ba	3f
+	 wrpr	%g0, 0, %gl
+2:		
+#endif	
+	/* sun4u */
+	wrpr	%g0, PSTATE_KERN, %pstate
+3:
+	.endm
+	
 
 #ifdef SUN4V
 	/* Misc. sun4v macros */
@@ -3582,7 +3600,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 #endif
 	INTR_SETUP(-CC64FSZ-TF_SIZE)
 	! Switch to normal globals so we can save them
-	wrpr	%g0, PSTATE_KERN, %pstate
+	NORMAL_GLOBALS %g5
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
