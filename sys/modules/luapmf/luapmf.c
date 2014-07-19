@@ -1,4 +1,4 @@
-/*	$NetBSD: luapmf.c,v 1.3 2013/12/16 23:35:48 lneto Exp $ */
+/*	$NetBSD: luapmf.c,v 1.4 2014/07/19 17:14:40 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -82,9 +82,8 @@ get_platform(lua_State *L)
 }
 
 static int
-luaopen_pmf(void *ls)
+luaopen_pmf(lua_State *L)
 {
-	lua_State *L = (lua_State *)ls;
 	const luaL_Reg pmf_lib[ ] = {
 		{ "system_shutdown",	system_shutdown },
 		{ "set_platform",	set_platform },
