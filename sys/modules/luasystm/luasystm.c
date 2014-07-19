@@ -1,4 +1,4 @@
-/*	$NetBSD: luasystm.c,v 1.2 2014/03/24 20:21:02 christos Exp $ */
+/*	$NetBSD: luasystm.c,v 1.3 2014/07/19 17:14:40 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -159,9 +159,8 @@ systm_panic(lua_State *L)
 /* mutexes */
 
 static int
-luaopen_systm(void *ls)
+luaopen_systm(lua_State *L)
 {
-	lua_State *L = (lua_State *)ls;
 	const luaL_Reg systm_lib[ ] = {
 		{ "print",			print },
 		{ "print_nolog",		print_nolog },

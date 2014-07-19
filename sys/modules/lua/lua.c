@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.9 2014/07/19 17:13:22 lneto Exp $ */
+/*	$NetBSD: lua.c,v 1.10 2014/07/19 17:14:40 lneto Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -588,7 +588,7 @@ lua_maxcount(lua_State *L, lua_Debug *d)
 }
 
 int
-lua_mod_register(const char *name, int (*open)(void *))
+lua_mod_register(const char *name, lua_CFunction open)
 {
 	struct lua_module *m;
 
