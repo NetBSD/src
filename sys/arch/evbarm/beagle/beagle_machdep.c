@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.57 2014/04/03 17:14:41 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.58 2014/07/19 18:16:50 bouyer Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.57 2014/04/03 17:14:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.58 2014/07/19 18:16:50 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -1094,6 +1094,11 @@ beagle_device_register(device_t self, void *aux)
 			    prop_data_create_data(beagle_edid,
 						  sizeof(beagle_edid)));
 		}
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", true);
+		return;
+	}
+	if (device_is_a(self, "tifb")) {
 		if (use_fb_console)
 			prop_dictionary_set_bool(dict, "is_console", true);
 		return;
