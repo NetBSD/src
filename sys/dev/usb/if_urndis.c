@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.8 2014/07/05 11:13:13 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9 2014/07/19 08:38:28 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.8 2014/07/05 11:13:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9 2014/07/19 08:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1033,7 +1033,7 @@ urndis_init(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	if (ifp->if_flags & IFF_RUNNING)
-		return EBUSY;
+		return 0;
 
 	err = urndis_ctrl_init(sc);
 	if (err != RNDIS_STATUS_SUCCESS)
