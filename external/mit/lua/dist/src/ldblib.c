@@ -1,7 +1,7 @@
-/*	$NetBSD: ldblib.c,v 1.1.1.2 2012/03/15 00:08:10 alnsn Exp $	*/
+/*	$NetBSD: ldblib.c,v 1.2 2014/07/19 17:21:24 lneto Exp $	*/
 
 /*
-** $Id: ldblib.c,v 1.1.1.2 2012/03/15 00:08:10 alnsn Exp $
+** $Id: ldblib.c,v 1.2 2014/07/19 17:21:24 lneto Exp $
 ** Interface from Lua to its debug API
 ** See Copyright Notice in lua.h
 */
@@ -301,6 +301,7 @@ static int db_gethook (lua_State *L) {
 }
 
 
+#ifndef _KERNEL
 static int db_debug (lua_State *L) {
   for (;;) {
     char buffer[250];
@@ -316,6 +317,7 @@ static int db_debug (lua_State *L) {
     lua_settop(L, 0);  /* remove eventual returns */
   }
 }
+#endif
 
 
 #define LEVELS1	12	/* size of the first part of the stack */
@@ -375,7 +377,9 @@ static int db_errorfb (lua_State *L) {
 
 
 static const luaL_Reg dblib[] = {
+#ifndef _KERNEL
   {"debug", db_debug},
+#endif
   {"getfenv", db_getfenv},
   {"gethook", db_gethook},
   {"getinfo", db_getinfo},
