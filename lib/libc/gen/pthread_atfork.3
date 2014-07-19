@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_atfork.3,v 1.6 2014/07/19 14:53:22 roy Exp $
+.\"	$NetBSD: pthread_atfork.3,v 1.7 2014/07/19 14:58:50 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,7 +119,9 @@ in the
 handler.
 POSIX does not mandate that
 .Fn pthread_mutex_unlock
-be async-signal-safe, but it is in NetBSD and thus safe to use within the
+be async-signal-safe, but it is in
+.Nx
+and thus safe to use within the
 .Ar child
 handler.
 .Sh BUGS
