@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.7 2013/11/06 00:53:03 mrg Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.8 2014/07/19 18:38:33 lneto Exp $
 
 ./lib/i386
 ./lib/i386/npf
@@ -7,7 +7,7 @@
 ./usr/lib/i386
 ./usr/lib/i386/i18n
 ./usr/lib/i386/lua
-./usr/lib/i386/lua/5.1
+./usr/lib/i386/lua/5.3
 ./usr/lib/i386/security
 ./usr/libdata/debug/lib/i386
 ./usr/libdata/debug/lib/i386/npf
