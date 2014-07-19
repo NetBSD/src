@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.21 2014/06/08 12:12:56 spz Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.22 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.21 2014/06/08 12:12:56 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.22 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.21 2014/06/08 12:12:56 spz Exp $"
 #include <net/pfil.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 
@@ -195,7 +196,7 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 }
 
 /*
- * npfa_icmp_session: ALG ICMP inspector.
+ * npfa_icmp_inspect: ALG ICMP inspector.
  *
  * => Returns true if "enpc" is filled.
  */
@@ -241,8 +242,8 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	return true;
 }
 
-static npf_session_t *
-npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
+static npf_conn_t *
+npfa_icmp_conn(npf_cache_t *npc, nbuf_t *nbuf, int di)
 {
 	npf_cache_t enpc;
 
@@ -294,8 +295,8 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 		return false;
 	}
 
-	/* Lookup for a session using embedded packet. */
-	return npf_session_lookup(&enpc, nbuf, di, &forw);
+	/* Lookup a connection using the embedded packet. */
+	return npf_conn_lookup(&enpc, nbuf, di, &forw);
 }
 
 /*
@@ -414,7 +415,7 @@ npf_alg_icmp_init(void)
 	static const npfa_funcs_t icmp = {
 		.match		= npfa_icmp_match,
 		.translate	= npfa_icmp_nat,
-		.inspect	= npfa_icmp_session,
+		.inspect	= npfa_icmp_conn,
 	};
 	alg_icmp = npf_alg_register("icmp", &icmp);
 	return alg_icmp ? 0 : ENOMEM;
