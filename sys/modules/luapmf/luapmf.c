@@ -1,4 +1,4 @@
-/*	$NetBSD: luapmf.c,v 1.4 2014/07/19 17:14:40 lneto Exp $ */
+/*	$NetBSD: luapmf.c,v 1.5 2014/07/19 17:20:02 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -150,10 +150,10 @@ luapmf_modcmd(modcmd_t cmd, void *opaque)
 	int error;
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = lua_mod_register("pmf", luaopen_pmf);
+		error = klua_mod_register("pmf", luaopen_pmf);
 		break;
 	case MODULE_CMD_FINI:
-		error = lua_mod_unregister("pmf");
+		error = klua_mod_unregister("pmf");
 		break;
 	default:
 		error = ENOTTY;
