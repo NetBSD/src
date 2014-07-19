@@ -1,15 +1,17 @@
-/*	$NetBSD: ldblib.c,v 1.3 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: ldblib.c,v 1.4 2014/07/19 19:37:31 lneto Exp $	*/
 
 /*
-** $Id: ldblib.c,v 1.3 2014/07/19 18:38:34 lneto Exp $
+** $Id: ldblib.c,v 1.4 2014/07/19 19:37:31 lneto Exp $
 ** Interface from Lua to its debug API
 ** See Copyright Notice in lua.h
 */
 
 
+#ifndef _KERNEL
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#endif
 
 #define ldblib_c
 #define LUA_LIB
