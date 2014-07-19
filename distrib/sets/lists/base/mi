@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1073 2014/07/13 12:29:01 mbalmer Exp $
+# $NetBSD: mi,v 1.1074 2014/07/19 18:38:33 lneto Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1001,7 +1001,7 @@
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr
-./usr/lib/lua/5.1				base-sys-usr
+./usr/lib/lua/5.3				base-sys-usr
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
@@ -3941,7 +3941,7 @@
 ./usr/share/locale/zh_TW/LC_MESSAGES		base-locale-zh
 ./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/lua					base-sys-root
-./usr/share/lua/5.1				base-sys-root
+./usr/share/lua/5.3				base-sys-root
 ./usr/share/man					base-man-share
 ./usr/share/man/COPYRIGHT			base-obsolete		obsolete
 ./usr/share/man/cat1				base-man-share

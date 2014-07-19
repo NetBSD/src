@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2013/12/17 00:02:22 lneto Exp $
+#	$NetBSD: Makefile,v 1.2 2014/07/19 18:38:35 lneto Exp $
 
 .include "../Makefile.inc"
 
 KMOD=		luasystm
 SRCS=		luasystm.c
 
-CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src \
-		-I${S}/modules/lua \
-		-I${S}/sys
+CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src
 
 .include <bsd.kmodule.mk>

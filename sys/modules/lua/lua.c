@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.11 2014/07/19 17:20:02 lneto Exp $ */
+/*	$NetBSD: lua.c,v 1.12 2014/07/19 18:38:35 lneto Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -194,7 +194,7 @@ lua_attach(device_t parent, device_t self, void *aux)
             NULL, 0, &lua_max_instr, 0,
 	    CTL_CREATE, CTL_EOL);
 
-	aprint_normal_dev(self, "%s  %s\n", LUA_RELEASE, LUA_COPYRIGHT);
+	aprint_normal_dev(self, "%s\n", LUA_COPYRIGHT);
 }
 
 static int
@@ -424,7 +424,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				VOP_UNLOCK(nd.ni_vp);
 				klua_lock(s->K);
 				error = lua_load(s->K->L, lua_reader, &ls,
-				    strrchr(load->path, '/') + 1);
+				    strrchr(load->path, '/') + 1, "bt");
 				vn_close(nd.ni_vp, FREAD, cred);
 				switch (error) {
 				case 0:	/* no error */
@@ -509,7 +509,7 @@ lua_require(lua_State *L)
 				md->open(L);
 				md->refcount++;
 				LIST_INSERT_HEAD(&s->lua_modules, md, mod_next);
-				return 0;
+				return 1;
 			}
 
 	lua_pushstring(L, "module not found");

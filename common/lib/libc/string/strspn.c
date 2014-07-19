@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.18 2012/03/21 00:35:50 christos Exp $	*/
+/*	$NetBSD: strspn.c,v 1.1 2014/07/19 18:38:33 lneto Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,12 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strspn.c,v 1.18 2012/03/21 00:35:50 christos Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.1 2014/07/19 18:38:33 lneto Exp $");
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 #if ULONG_MAX != 0xffffffffffffffffull
 
