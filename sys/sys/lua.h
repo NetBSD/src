@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.4 2014/07/19 17:13:22 lneto Exp $ */
+/*	$NetBSD: lua.h,v 1.5 2014/07/19 17:14:40 lneto Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -80,7 +80,7 @@ struct lua_load {
 #define LUALOAD		_IOWR('l', 4, struct lua_load)
 
 #ifdef _KERNEL
-extern int lua_mod_register(const char *, int (*)(void *));
+extern int lua_mod_register(const char *, lua_CFunction);
 extern int lua_mod_unregister(const char *);
 
 typedef struct _klua_State {

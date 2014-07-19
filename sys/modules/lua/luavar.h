@@ -1,4 +1,4 @@
-/*	$NetBSD: luavar.h,v 1.1 2013/10/16 19:44:57 mbalmer Exp $ */
+/*	$NetBSD: luavar.h,v 1.2 2014/07/19 17:14:40 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, Marc Balmer <mbalmer@NetBSD.org>.
@@ -31,9 +31,11 @@
 #ifndef _LUA_VAR_
 #define _LUA_VAR_
 
+#include <lua.h>
+
 struct lua_module {
 	char			mod_name[LUA_MAX_MODNAME];
-	int 			(*open)(void *);
+	lua_CFunction		open;
 	int			refcount;
 	LIST_ENTRY(lua_module)	mod_next;
 };
