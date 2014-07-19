@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.38 2014/07/13 13:53:59 martin Exp $
+# $NetBSD: ad.arm,v 1.39 2014/07/19 18:38:33 lneto Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -129,7 +129,7 @@
 ./usr/libdata/debug/usr/lib/oabi/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblua.so.1.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblua.so.5.3.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,obsolete

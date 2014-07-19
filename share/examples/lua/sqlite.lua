@@ -1,6 +1,6 @@
--- $NetBSD: sqlite.lua,v 1.1 2011/10/15 12:58:43 mbalmer Exp $
+-- $NetBSD: sqlite.lua,v 1.2 2014/07/19 18:38:34 lneto Exp $
 
-require 'sqlite'
+local sqlite = require 'sqlite'
 
 print(sqlite._VERSION .. ' - ' .. sqlite._DESCRIPTION)
 print(sqlite._COPYRIGHT)

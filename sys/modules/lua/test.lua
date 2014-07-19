@@ -1,8 +1,8 @@
-require 'core'
+systm = require 'systm'
 
-core.print("hello, kernel world!\n")
+systm.print("hello, kernel world!\n")
 
 function onClose()
-	core.print('I am about to be closed\n')
+	systm.print('I am about to be closed\n')
 end
 

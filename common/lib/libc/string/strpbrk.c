@@ -1,4 +1,4 @@
-/*	$NetBSD: strcspn.c,v 1.18 2012/03/21 00:35:50 christos Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.1 2014/07/19 18:38:33 lneto Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,45 +26,54 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strcspn.c,v 1.18 2012/03/21 00:35:50 christos Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.1 2014/07/19 18:38:33 lneto Exp $");
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
-/* 64bit version is in strspn.c */
-#if ULONG_MAX != 0xffffffffffffffffull
-
-size_t
-strcspn(const char *s, const char *charset)
-{
-	static const uint8_t idx[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
-	const char *t;
-	uint8_t set[32];
+#define FAST_STRPBRK 1
 #define UC(a) ((unsigned int)(unsigned char)(a))
+
+#ifdef FAST_STRPBRK
+#define ADD_NEW_TO_SET(i) (set[inv[i] = idx++] = (i))
+#define IS_IN_SET(i) (inv[i] < idx && set[inv[i]] == (i))
+#define ADD_TO_SET(i) (void)(IS_IN_SET(i) || /*LINTED no effect*/ADD_NEW_TO_SET(i))
+#else
+#define IS_IN_SET(i) (set[(i) >> 3] & idx[(i) & 7])
+#define ADD_TO_SET(i) (void)(set[(i) >> 3] |= idx[(i) & 7])
+#endif
+
+char *
+strpbrk(const char *s, const char *charset)
+{
+#ifdef FAST_STRPBRK
+	uint8_t set[256], inv[256], idx = 0;
+#else
+	static const size_t idx[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
+	uint8_t set[32];
+
+	(void)memset(set, 0, sizeof(set));
+#endif
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(charset != NULL);
 
 	if (charset[0] == '\0')
-		return strlen(s);
-	if (charset[1] == '\0') {
-		for (t = s; *t != '\0'; ++t)
-			if (*t == *charset)
-				break;
-		return t - s;
-	}
-
-	(void)memset(set, 0, sizeof(set));
+		return NULL;
+	if (charset[1] == '\0')
+		return strchr(s, charset[0]);
 
 	for (; *charset != '\0'; ++charset)
-		set[UC(*charset) >> 3] |= idx[UC(*charset) & 7];
+		ADD_TO_SET(UC(*charset));
 
-	for (t = s; *t != '\0'; ++t)
-		if (set[UC(*t) >> 3] & idx[UC(*t) & 7])
-			break;
-	return t - s;
+	for (; *s != '\0'; ++s)
+		if (IS_IN_SET(UC(*s)))
+			return __UNCONST(s);
+	return NULL;
 }
-
-#endif
