@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.3 2014/06/19 13:20:28 hikaru Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.4 2014/07/19 06:12:24 hikaru Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.3 2014/06/19 13:20:28 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.4 2014/07/19 06:12:24 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1145,11 +1145,13 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf *m)
 	case 0:
 		break;
 	case EFBIG:
-		if (m_defrag(m, M_DONTWAIT) == 0 &&
-		    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-		     BUS_DMA_NOWAIT) == 0)
-			break;
-
+		mp = m_defrag(m, M_DONTWAIT);
+		if (mp != NULL) {
+			m = mp;
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+			    BUS_DMA_NOWAIT) == 0)
+				break;
+		}
 		/* FALLTHROUGH */
 	default:
 		m_freem(m);
