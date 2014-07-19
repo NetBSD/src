@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.674 2014/07/14 12:02:59 ryoon Exp $
+$NetBSD: usbdevs,v 1.675 2014/07/19 14:17:49 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2402,6 +2402,7 @@ product OPTIONNV GE40X3		0x7381	GE40x
 product OPTIONNV ICON401	0x7401	iCON 401
 product OPTIONNV GTM382		0x7501	GTM 382
 product OPTIONNV GE40X4		0x7601	GE40x
+product OPTIONNV GTHSUPAM	0x8300	Globetrotter HSUPA Modem
 product OPTIONNV ICONEDGE	0xc031	iCON EDGE
 product OPTIONNV MODHSXPA	0xd013	Module HSxPA
 product OPTIONNV ICON321	0xd031	iCON 321
