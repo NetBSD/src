@@ -1,6 +1,7 @@
-/*	$NetBSD: lua.c,v 1.8 2014/03/16 05:20:30 dholland Exp $ */
+/*	$NetBSD: lua.c,v 1.9 2014/07/19 17:13:22 lneto Exp $ */
 
 /*
+ * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
  * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
@@ -45,6 +46,7 @@
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+#include <sys/cpu.h>
 
 #include <lauxlib.h>
 
@@ -330,8 +332,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				return EBUSY;
 			}
 
-		K = klua_newstate(lua_alloc, NULL, create->name,
-		    create->desc);
+		K = kluaL_newstate(create->name, create->desc, IPL_NONE);
 		K->ks_user = true;
 
 		if (K == NULL)
@@ -364,7 +365,9 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					    		    "%s to state %s\n",
 					    		    m->mod_name,
 					    		    s->lua_name);
+						klua_lock(s->K);
 					    	m->open(s->K->L);
+						klua_unlock(s->K);
 					    	m->refcount++;
 					    	LIST_INSERT_HEAD(
 					    	    &s->lua_modules, m,
@@ -419,6 +422,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				ls.off = 0L;
 				ls.size = va.va_size;
 				VOP_UNLOCK(nd.ni_vp);
+				klua_lock(s->K);
 				error = lua_load(s->K->L, lua_reader, &ls,
 				    strrchr(load->path, '/') + 1);
 				vn_close(nd.ni_vp, FREAD, cred);
@@ -429,11 +433,13 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					if (lua_verbose)
 						device_printf(sc->sc_dev,
 						    "syntax error\n");
+					klua_unlock(s->K);
 					return EINVAL;
 				case LUA_ERRMEM:
 					if (lua_verbose)
 						device_printf(sc->sc_dev,
 						    "memory error\n");
+					klua_unlock(s->K);
 					return ENOMEM;
 				default:
 					if (lua_verbose)
@@ -441,6 +447,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 						    "load error %d: %s\n",
 						    error,
 						    lua_tostring(s->K->L, -1));
+					klua_unlock(s->K);
 					return EINVAL;
 				}
 				if (lua_max_instr > 0)
@@ -453,8 +460,10 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 						    "execution error: %s\n",
 						    lua_tostring(s->K->L, -1));
 					}
+					klua_unlock(s->K);
 					return EINVAL;
 				}
+				klua_unlock(s->K);
 				return 0;
 			}
 		return ENXIO;
@@ -507,20 +516,38 @@ lua_require(lua_State *L)
 	return lua_error(L);
 }
 
-void *
+typedef struct {
+	size_t size;
+} __packed alloc_header_t;
+
+static void *
 lua_alloc(void *ud, void *ptr, size_t osize, size_t nsize)
 {
-	void *nptr;
+	void *nptr = NULL;
 
-	if (nsize == 0) {
-		nptr = NULL;
+	const size_t hdr_size = sizeof(alloc_header_t);
+	alloc_header_t *hdr = (alloc_header_t *) ((char *) ptr - hdr_size);
+
+	if (nsize == 0) { /* freeing */
 		if (ptr != NULL)
-			kmem_free(ptr, osize);
-	} else {
-		nptr = kmem_alloc(nsize, KM_SLEEP);
-		if (ptr != NULL) {
-			memcpy(nptr, ptr, osize < nsize ? osize : nsize);
-			kmem_free(ptr, osize);
+			kmem_intr_free(hdr, hdr->size);
+	} else if (ptr != NULL && nsize <= hdr->size - hdr_size) /* shrinking */
+		return ptr; /* don't need to reallocate */
+	else { /* creating or expanding */
+		km_flag_t sleep = cpu_intr_p() || cpu_softintr_p() ?
+			KM_NOSLEEP : KM_SLEEP;
+
+		size_t alloc_size = nsize + hdr_size;
+		alloc_header_t *nhdr = kmem_intr_alloc(alloc_size, sleep);
+		if (nhdr == NULL) /* failed to allocate */
+			return NULL;
+
+		nhdr->size = alloc_size;
+		nptr = (void *) ((char *) nhdr + hdr_size);
+
+		if (ptr != NULL) { /* expanding */
+			memcpy(nptr, ptr, osize);
+			kmem_intr_free(hdr, hdr->size);
 		}
 	}
 	return nptr;
@@ -600,7 +627,8 @@ lua_mod_unregister(const char *name)
 }
 
 klua_State *
-klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc)
+klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc,
+		int ipl)
 {
 	klua_State *K;
 	struct lua_state *s;
@@ -641,8 +669,7 @@ klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc)
 	}
 	LIST_INSERT_HEAD(&lua_states, s, lua_next);
 
-	mutex_init(&K->ks_lock, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&K->ks_inuse_cv, "luainuse");
+	mutex_init(&K->ks_lock, MUTEX_DEFAULT, ipl);
 
 finish:
 	mutex_enter(&sc->sc_state_lock);
@@ -650,6 +677,12 @@ finish:
 	cv_signal(&sc->sc_state_cv);
 	mutex_exit(&sc->sc_state_lock);
 	return K;
+}
+
+inline klua_State *
+kluaL_newstate(const char *name, const char *desc, int ipl)
+{
+	return klua_newstate(lua_alloc, NULL, name, desc, ipl);
 }
 
 void
@@ -660,18 +693,9 @@ klua_close(klua_State *K)
 	struct lua_module *m;
 	int error = 0;
 
-	/* Notify the Lua state that it is about to be closed */
-	if (klua_lock(K))
-		return;		/* Nothing we can do about */
-
 	lua_getglobal(K->L, "onClose");
 	if (lua_isfunction(K->L, -1))
 		lua_pcall(K->L, -1, 0, 0);
-
-	/*
-	 * Don't unlock, make sure no one uses the state until it is destroyed
-	 * klua_unlock(K);
-	 */
 
 	sc = device_private(sc_self);
 	mutex_enter(&sc->sc_state_lock);
@@ -696,7 +720,6 @@ klua_close(klua_State *K)
 		}
 
 	lua_close(K->L);
-	cv_destroy(&K->ks_inuse_cv);
 	mutex_destroy(&K->ks_lock);
 	kmem_free(K, sizeof(klua_State));
 
@@ -742,33 +765,15 @@ klua_find(const char *name)
 	return K;
 }
 
-int
+inline void
 klua_lock(klua_State *K)
 {
-	int error;
-
-	error = 0;
 	mutex_enter(&K->ks_lock);
-	while (K->ks_inuse == true) {
-		error = cv_wait_sig(&K->ks_inuse_cv, &K->ks_lock);
-		if (error)
-			break;
-	}
-	if (!error)
-		K->ks_inuse = true;
-	mutex_exit(&K->ks_lock);
-
-	if (error)
-		return error;
-	return 0;
 }
 
-void
+inline void
 klua_unlock(klua_State *K)
 {
-	mutex_enter(&K->ks_lock);
-	K->ks_inuse = false;
-	cv_signal(&K->ks_inuse_cv);
 	mutex_exit(&K->ks_lock);
 }
 
