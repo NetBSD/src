@@ -1,4 +1,4 @@
-/*	$NetBSD: luasystm.c,v 1.3 2014/07/19 17:14:40 lneto Exp $ */
+/*	$NetBSD: luasystm.c,v 1.4 2014/07/19 17:20:02 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -216,10 +216,10 @@ luasystm_modcmd(modcmd_t cmd, void *opaque)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = lua_mod_register("systm", luaopen_systm);
+		error = klua_mod_register("systm", luaopen_systm);
 		break;
 	case MODULE_CMD_FINI:
-		error = lua_mod_unregister("systm");
+		error = klua_mod_unregister("systm");
 		break;
 	default:
 		error = ENOTTY;
