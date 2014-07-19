@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.32 2014/05/14 20:35:27 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.33 2014/07/19 18:24:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.32 2014/05/14 20:35:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.33 2014/07/19 18:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,6 +114,31 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.32 2014/05/14 20:35:27 rmind Exp $
 #include <sys/systm.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
+
+#define	npf_session_t		npf_conn_t
+#define	npf_session		npf_conn
+#define	npf_sehash_t		npf_conndb_t
+
+#define	npf_session_sysinit	npf_conn_sysinit
+#define	npf_session_sysfini	npf_conn_sysfini
+#define	npf_session_tracking	npf_conn_tracking
+#define	npf_session_lookup	npf_conn_lookup
+#define	npf_session_inspect	npf_conn_inspect
+#define	npf_session_release	npf_conn_release
+#define	npf_session_establish	npf_conn_establish
+#define	npf_session_setnat	npf_conn_setnat
+#define	npf_session_expire	npf_conn_expire
+#define	npf_session_pass	npf_conn_pass
+#define	npf_session_setpass	npf_conn_setpass
+#define	npf_session_release	npf_conn_release
+#define	npf_session_retnat	npf_conn_retnat
+#define	npf_session_load	npf_conn_load
+#define	npf_session_save	npf_conn_save
+#define	npf_session_restore	npf_conn_restore
+#define	sess_htable_create	npf_conndb_create
+#define	sess_htable_destroy	npf_conndb_destroy
+#define	npf_alg_session		npf_alg_conn
 
 /*
  * Session structures: entry for embedding and the main structure.
@@ -140,7 +165,7 @@ typedef struct {
 	uint16_t		se_dst_id;
 } npf_sentry_t;
 
-struct npf_session {
+struct npf_conn {
 	/* Session "forwards" and "backwards" entries. */
 	npf_sentry_t		s_forw_entry;
 	npf_sentry_t		s_back_entry;
@@ -154,6 +179,7 @@ struct npf_session {
 	} s_common_id;
 	/* Flags and the protocol state. */
 	u_int			s_flags;
+	kmutex_t		s_lock;
 	npf_state_t		s_state;
 	/* Association of rule procedure data. */
 	npf_rproc_t *		s_rproc;
@@ -168,7 +194,7 @@ struct npf_session {
 
 LIST_HEAD(npf_sesslist, npf_session);
 
-struct npf_sehash {
+struct npf_conndb {
 	rb_tree_t		sh_tree;
 	struct npf_sesslist	sh_list;
 	krwlock_t		sh_lock;
@@ -589,12 +615,14 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	}
 
 	/* Inspect the protocol data and handle state changes. */
+	mutex_enter(&se->s_lock);
 	if (!npf_state_inspect(npc, nbuf, &se->s_state, forw)) {
 		/* Invalid: let the rules deal with it. */
 		npf_session_release(se);
 		npf_stats_inc(NPF_STAT_INVALID_STATE);
 		se = NULL;
 	}
+	mutex_exit(&se->s_lock);
 	return se;
 }
 
@@ -628,6 +656,7 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, int di, bool per_if)
 	npf_stats_inc(NPF_STAT_SESSION_CREATE);
 
 	/* Reference count and flags (indicate direction). */
+	mutex_init(&se->s_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	se->s_refcnt = 1;
 	se->s_flags = (di & PFIL_ALL);
 	se->s_rproc = NULL;
@@ -714,6 +743,7 @@ npf_session_destroy(npf_session_t *se)
 
 	/* Destroy the state. */
 	npf_state_destroy(&se->s_state);
+	mutex_destroy(&se->s_lock);
 
 	/* Free the structure, increase the counter. */
 	pool_cache_put(sess_cache, se);
@@ -726,7 +756,8 @@ npf_session_destroy(npf_session_t *se)
  * and re-insert session entry accordingly.
  */
 int
-npf_session_setnat(npf_session_t *se, npf_nat_t *nt, u_int ntype)
+npf_session_setnat(const npf_cache_t *npc,
+    npf_session_t *se, npf_nat_t *nt, u_int ntype)
 {
 	npf_sehash_t *sh;
 	npf_sentry_t *sen;
@@ -1080,7 +1111,6 @@ npf_session_restore(npf_sehash_t *stbl, prop_dictionary_t sedict)
 	npf_sehash_t *fsh, *bsh;
 	npf_sentry_t *fw, *bk;
 	prop_object_t obj;
-	npf_state_t *nst;
 	const void *d;
 	int error = 0;
 
@@ -1097,11 +1127,9 @@ npf_session_restore(npf_sehash_t *stbl, prop_dictionary_t sedict)
 	 */
 	se = pool_cache_get(sess_cache, PR_WAITOK);
 	memcpy(se, d, sizeof(npf_session_t));
+	mutex_init(&se->s_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	se->s_refcnt = 0;
 	se->s_rproc = NULL;
-
-	nst = &se->s_state;
-	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 
 	/*
 	 * Reconstruct NAT association, if any, or return NULL.
@@ -1143,6 +1171,8 @@ out:
 }
 
 #if defined(DDB) || defined(_NPF_TESTING)
+
+void npf_sessions_dump(void);
 
 void
 npf_sessions_dump(void)
