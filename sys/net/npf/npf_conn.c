@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.2 2014/07/19 20:59:01 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.3 2014/07/19 21:22:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.2 2014/07/19 20:59:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.3 2014/07/19 21:22:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -332,7 +332,7 @@ npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 	return true;
 }
 
-static __always_inline void
+static __inline void
 connkey_set_addr(npf_connkey_t *key, const npf_addr_t *naddr, const int di)
 {
 	const u_int alen = key->ck_key[0] & 0xffff;
@@ -342,7 +342,7 @@ connkey_set_addr(npf_connkey_t *key, const npf_addr_t *naddr, const int di)
 	memcpy(addr, naddr, alen);
 }
 
-static __always_inline void
+static __inline void
 connkey_set_id(npf_connkey_t *key, const uint16_t id, const int di)
 {
 	const uint32_t oid = key->ck_key[1];
