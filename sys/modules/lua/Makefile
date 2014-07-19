@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/12/27 22:09:43 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2014/07/19 17:21:24 lneto Exp $
 
 .include "../Makefile.inc"
 
@@ -36,6 +36,7 @@ SRCS+=		lauxlib.c
 
 # Lua stdlibs source code
 SRCS+=		lbaselib.c \
+		ldblib.c \
 		lstrlib.c \
 		ltablib.c \
 		linit.c
