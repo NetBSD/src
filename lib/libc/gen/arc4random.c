@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.24 2014/06/12 19:12:19 apb Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.25 2014/07/19 14:53:22 roy Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.24 2014/06/12 19:12:19 apb Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.25 2014/07/19 14:53:22 roy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -125,6 +125,12 @@ arc4_fork_child(void)
 static inline void
 arc4_check_init(struct arc4_stream *as)
 {
+	/*
+	 * pthread_atfork(3) only allows async-signal-safe functions in
+	 * the child handler.
+	 * NetBSD's mutex_unlock is async-signal safe, other implementations
+	 * may not be.
+	 */
 
 	if (__predict_false(!as->inited)) {
 		as->inited = true;
