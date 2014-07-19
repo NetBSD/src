@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1948 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1949 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -447,3 +447,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	    USB OTG controller. [bouyer 20140716]
 	tifb(4): added an experimental driver for the Texas Instruments AM335x
 	    SoC's graphic controller. [bouyer 20140716]
+	lua: Updated to 5.3 work3 [lneto 20140719]

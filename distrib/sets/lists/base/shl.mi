@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.707 2014/07/17 12:04:05 prlw1 Exp $
+# $NetBSD: shl.mi,v 1.708 2014/07/19 18:38:33 lneto Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -357,8 +357,8 @@
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.4.3			base-ldap-shlib		ldap
 ./usr/lib/liblua.so				base-sys-shlib
-./usr/lib/liblua.so.1				base-sys-shlib
-./usr/lib/liblua.so.1.0				base-sys-shlib
+./usr/lib/liblua.so.5				base-sys-shlib
+./usr/lib/liblua.so.5.3				base-sys-shlib
 ./usr/lib/liblutok.so				base-sys-shlib		kyua
 ./usr/lib/liblutok.so.1				base-obsolete		obsolete
 ./usr/lib/liblutok.so.1.0			base-obsolete		obsolete
@@ -801,9 +801,9 @@
 ./usr/lib/libzpool.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libzpool.so.0.0			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot,picinstall
-./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
-./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
-./usr/lib/lua/5.1/syslog.so                    	base-sys-shlib
+./usr/lib/lua/5.3/gpio.so                    	base-sys-shlib
+./usr/lib/lua/5.3/sqlite.so                    	base-sys-shlib
+./usr/lib/lua/5.3/syslog.so                    	base-sys-shlib
 ./usr/lib/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0.0			base-obsolete		obsolete

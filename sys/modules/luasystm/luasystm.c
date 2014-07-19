@@ -1,4 +1,4 @@
-/*	$NetBSD: luasystm.c,v 1.4 2014/07/19 17:20:02 lneto Exp $ */
+/*	$NetBSD: luasystm.c,v 1.5 2014/07/19 18:38:35 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -182,7 +182,7 @@ luaopen_systm(lua_State *L)
 		{NULL, NULL}
 	};
 
-	luaL_register(L, "systm", systm_lib);
+	luaL_newlib(L, systm_lib);
 
 	/* some string values */
 	lua_pushstring(L, copyright);
