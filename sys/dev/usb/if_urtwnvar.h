@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.7 2013/10/15 15:13:18 skrll Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.8 2014/07/20 13:25:23 nonaka Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -142,6 +142,12 @@ struct urtwn_softc {
 #define URTWN_CHIP_92C_1T2R	0x02
 #define URTWN_CHIP_UMC		0x04
 #define URTWN_CHIP_UMC_A_CUT	0x08
+#define URTWN_CHIP_88E		0x10
+
+	void				(*sc_rf_write)(struct urtwn_softc *,
+					    int, uint8_t, uint32_t);
+	int				(*sc_power_on)(struct urtwn_softc *);
+	int				(*sc_dma_init)(struct urtwn_softc *);
 
 	uint8_t				board_type;
 	uint8_t				regulatory;
@@ -163,6 +169,11 @@ struct urtwn_softc {
 	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list;
 
 	struct r92c_rom			rom;
+	uint8_t				r88e_rom[512];
+	uint8_t				cck_tx_pwr[6];
+	uint8_t				ht40_tx_pwr[5];
+	int8_t				bw20_tx_pwr_diff;
+	int8_t				ofdm_tx_pwr_diff;
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 
