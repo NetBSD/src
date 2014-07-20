@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.12 2014/07/20 13:41:14 wiz Exp $
+.\" 	$NetBSD: hcreate.3,v 1.13 2014/07/20 20:17:21 christos Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,11 +51,11 @@
 .Ft void
 .Fn hdestroy "void"
 .Ft void
-.Fn hdestroy1 "int flags"
+.Fn hdestroy1 "void (*freekey)(void *)" "void (*freedata)(void *)"
 .Ft void
 .Fn hdestroy_r "struct hsearch_data *table"
 .Ft void
-.Fn hdestroy1_r "struct hsearch_data *table" "int flags"
+.Fn hdestroy1_r "struct hsearch_data *table" "void (*freekey)(void *)" "void (*freedata)(void *)"
 .Ft ENTRY *
 .Fn hsearch "ENTRY item" "ACTION action"
 .Ft int
@@ -166,27 +166,23 @@ function provided, the
 .Fn hdestroy1
 and
 .Fn hdestroy1_r
-allow controlling if the
+allow controlling how the
 .Fa key
 or
 .Fa value
 will be freed using the
-.Fa flags
-argument.
-If the bit
-.Dv FREE_KEY
-is set, then the
+provided functions in the
+.Fa freekey
+and
+.Fa freedata
+arguments.
+If they are
+.Dv NULL ,
+then
 .Fa key
-of each entry will be
-passed to
-.Xr free 3 .
-If the bit
-.Dv FREE_VALUE
-is set, then the
+and
 .Fa value
-of each entry will be
-passed to
-.Xr free 3 .
+are not freed.
 .Pp
 The
 .Fn hcreate_r ,
