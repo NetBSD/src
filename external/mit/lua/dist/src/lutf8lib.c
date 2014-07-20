@@ -1,17 +1,15 @@
-/*	$NetBSD: lutf8lib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lutf8lib.c,v 1.1.1.1 2014/07/20 23:17:39 lneto Exp $	*/
 
 /*
-** $Id: lutf8lib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $
+** Id: lutf8lib.c,v 1.9 2014/05/14 18:33:37 roberto Exp 
 ** Standard library for UTF-8 manipulation
 ** See Copyright Notice in lua.h
 */
 
 
-#ifndef _KERNEL
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
 
 #define lutf8lib_c
 #define LUA_LIB
