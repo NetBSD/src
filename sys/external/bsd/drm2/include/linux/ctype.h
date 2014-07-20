@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: ctype.h,v 1.2 2014/07/20 17:56:44 prlw1 Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,11 +33,5 @@
 #define _LINUX_CTYPE_H_
 
 #include <lib/libkern/libkern.h>
-
-static inline int
-isprint(int c)
-{
-	return ((' ' <= c) && (c < 127));
-}
 
 #endif  /* _LINUX_CTYPE_H_ */
