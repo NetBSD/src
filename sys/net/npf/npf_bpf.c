@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.10 2014/06/30 00:01:23 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.11 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.10 2014/06/30 00:01:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.11 2014/07/20 00:37:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,9 +78,9 @@ npf_bpf_sysfini(void)
 }
 
 void
-npf_bpf_prepare(npf_cache_t *npc, nbuf_t *nbuf, bpf_args_t *args, uint32_t *M)
+npf_bpf_prepare(npf_cache_t *npc, bpf_args_t *args, uint32_t *M)
 {
-	const struct mbuf *mbuf = nbuf_head_mbuf(nbuf);
+	const struct mbuf *mbuf = nbuf_head_mbuf(npc->npc_nbuf);
 	const size_t pktlen = m_length(mbuf);
 
 	/* Prepare the arguments for the BPF programs. */

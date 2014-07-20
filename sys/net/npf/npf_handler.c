@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.31 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.32 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.31 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.32 2014/07/20 00:37:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,8 +87,9 @@ npf_ifhook(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 }
 
 static int
-npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
+npf_reassembly(npf_cache_t *npc, struct mbuf **mp)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	int error = EINVAL;
 
 	/* Reset the mbuf as it may have changed. */
@@ -125,7 +126,7 @@ npf_reassembly(npf_cache_t *npc, nbuf_t *nbuf, struct mbuf **mp)
 	nbuf_init(nbuf, *mp, nbuf->nb_ifp);
 	npc->npc_info = 0;
 
-	if (npf_cache_all(npc, nbuf) & NPC_IPFRAG) {
+	if (npf_cache_all(npc) & NPC_IPFRAG) {
 		return EINVAL;
 	}
 	npf_stats_inc(NPF_STAT_REASSEMBLY);
@@ -154,18 +155,20 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 */
 	KASSERT(ifp != NULL);
 	nbuf_init(&nbuf, *mp, ifp);
+	npc.npc_nbuf = &nbuf;
 	npc.npc_info = 0;
+
 	decision = NPF_DECISION_BLOCK;
 	error = 0;
 	retfl = 0;
 	rp = NULL;
 
 	/* Cache everything.  Determine whether it is an IP fragment. */
-	if (npf_cache_all(&npc, &nbuf) & NPC_IPFRAG) {
+	if (__predict_false(npf_cache_all(&npc) & NPC_IPFRAG)) {
 		/*
 		 * Pass to IPv4 or IPv6 reassembly mechanism.
 		 */
-		error = npf_reassembly(&npc, &nbuf, mp);
+		error = npf_reassembly(&npc, mp);
 		if (error) {
 			con = NULL;
 			goto out;
@@ -177,7 +180,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Inspect the list of connections (if found, acquires a reference). */
-	con = npf_conn_inspect(&npc, &nbuf, di, &error);
+	con = npf_conn_inspect(&npc, di, &error);
 
 	/* If "passing" connection found - skip the ruleset inspection. */
 	if (con && npf_conn_pass(con, &rp)) {
@@ -185,7 +188,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		KASSERT(error == 0);
 		goto pass;
 	}
-	if (error) {
+	if (__predict_false(error)) {
 		if (error == ENETUNREACH)
 			goto block;
 		goto out;
@@ -195,8 +198,8 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	int slock = npf_config_read_enter();
 	npf_ruleset_t *rlset = npf_config_ruleset();
 
-	rl = npf_ruleset_inspect(&npc, &nbuf, rlset, di, NPF_LAYER_3);
-	if (rl == NULL) {
+	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_LAYER_3);
+	if (__predict_false(rl == NULL)) {
 		const bool pass = npf_default_pass();
 		npf_config_read_exit(slock);
 
@@ -230,7 +233,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * connection creation fails (e.g. due to unsupported protocol).
 	 */
 	if ((retfl & NPF_RULE_STATEFUL) != 0 && !con) {
-		con = npf_conn_establish(&npc, &nbuf, di,
+		con = npf_conn_establish(&npc, di,
 		    (retfl & NPF_RULE_MULTIENDS) == 0);
 		if (con) {
 			/*
@@ -247,13 +250,13 @@ pass:
 	/*
 	 * Perform NAT.
 	 */
-	error = npf_do_nat(&npc, con, &nbuf, di);
+	error = npf_do_nat(&npc, con, di);
 block:
 	/*
 	 * Execute the rule procedure, if any is associated.
 	 * It may reverse the decision from pass to block.
 	 */
-	if (rp && !npf_rproc_run(&npc, &nbuf, rp, &decision)) {
+	if (rp && !npf_rproc_run(&npc, rp, &decision)) {
 		if (con) {
 			npf_conn_release(con);
 		}
@@ -292,7 +295,7 @@ out:
 	 * Depending on the flags and protocol, return TCP reset (RST) or
 	 * ICMP destination unreachable.
 	 */
-	if (retfl && npf_return_block(&npc, &nbuf, retfl)) {
+	if (retfl && npf_return_block(&npc, retfl)) {
 		*mp = NULL;
 	}
 
