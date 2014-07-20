@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.152 2014/07/17 08:21:34 hannken Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.153 2014/07/20 13:58:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.152 2014/07/17 08:21:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.153 2014/07/20 13:58:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,11 +520,8 @@ kernfs_lookup(void *v)
 		break;
 
 	found:
-		error = kernfs_allocvp(dvp->v_mount, vpp, kt);
-		if (error)
-			return error;
-		VOP_UNLOCK(*vpp);
-		return 0;
+		error = vcache_get(dvp->v_mount, &kt, sizeof(kt), vpp);
+		return error;
 
 	case KFSsubdir:
 		ks = (struct kernfs_subdir *)kfs->kfs_kt->kt_data;
@@ -834,11 +831,11 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 	struct vnode *vp;
 	int error;
 
-	if ((error = kernfs_allocvp(ap->a_vp->v_mount, &vp, kt)) != 0)
+	if ((error = vcache_get(ap->a_vp->v_mount, &kt, sizeof(kt), &vp)) != 0)
 		return error;
 	kfs = VTOKERN(vp);
 	d->d_fileno = kfs->kfs_fileno;
-	vput(vp);
+	vrele(vp);
 	return 0;
 }
 
@@ -1079,8 +1076,17 @@ kernfs_reclaim(void *v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct kernfs_node *kfs = VTOKERN(vp);
 
-	return (kernfs_freevp(ap->a_vp));
+	vp->v_data = NULL;
+	vcache_remove(vp->v_mount, &kfs->kfs_kt, sizeof(kfs->kfs_kt));
+	mutex_enter(&kfs_lock);
+	TAILQ_REMOVE(&VFSTOKERNFS(vp->v_mount)->nodelist, kfs, kfs_list);
+	mutex_exit(&kfs_lock);
+	kmem_free(kfs, sizeof(struct kernfs_node));
+
+	return 0;
 }
 
 /*
