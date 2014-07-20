@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.58 2014/07/19 18:16:50 bouyer Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.59 2014/07/20 23:08:43 bouyer Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.58 2014/07/19 18:16:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.59 2014/07/20 23:08:43 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -189,6 +189,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.58 2014/07/19 18:16:50 bouyer E
 #  error no prcm device configured.
 # endif
 # include <arm/omap/am335x_prcm.h>
+# include <dev/i2c/tps65217pmicvar.h>
 # if NSDHC > 0
 #  include <arm/omap/omap2_obiovar.h>
 #  include <arm/omap/omap3_sdmmcreg.h>
@@ -237,6 +238,9 @@ int use_fb_console = true;
 
 #ifdef CPU_CORTEXA15
 uint32_t omap5_cnt_frq;
+#endif
+#if defined(TI_AM335X)
+device_t pmic_dev = NULL;
 #endif
 
 /*
@@ -1107,4 +1111,17 @@ beagle_device_register(device_t self, void *aux)
 		if (use_fb_console)
 			prop_dictionary_set_bool(dict, "is_console", false);
 	}
+	if (device_is_a(self, "tps65217pmic")) {
+		pmic_dev = self;
+	}
+}
+
+int
+set_mpu_volt(int mvolt)
+{
+	if (pmic_dev == NULL)
+		return ENODEV;
+
+	/* MPU voltage is on vdcd2 */
+	return tps65217pmic_set_volt(pmic_dev, "DCDC2", mvolt);
 }
