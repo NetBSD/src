@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1949 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1950 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -444,7 +444,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	wskbd(4): Added belgian keyboard layouts (KB_BE) to pckbd(4) and
 		ukbd(4). [mbalmer 20140714]
 	tiotg(4): added a driver for the Texas Instruments AM335x SoC's
-	    USB OTG controller. [bouyer 20140716]
+		USB OTG controller. [bouyer 20140716]
 	tifb(4): added an experimental driver for the Texas Instruments AM335x
-	    SoC's graphic controller. [bouyer 20140716]
+		SoC's graphic controller. [bouyer 20140716]
 	lua: Updated to 5.3 work3 [lneto 20140719]
+	urtwn(4): Add support for Realtek RTL8188EUS and RTL8188ETV chipsets.
+		Ported from FreeBSD. [nonaka 20140720]
