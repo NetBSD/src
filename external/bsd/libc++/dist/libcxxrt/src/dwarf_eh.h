@@ -365,7 +365,7 @@ static inline struct dwarf_eh_lsda parse_lsda(_Unwind_Context *context,
 		lsda.type_table = type_table;
 		//lsda.type_table = (uintptr_t*)(data + v);
 	}
-#if __arm__
+#if defined(__arm__) && !defined(__ARM_DWARF_EH__)
 	lsda.type_table_encoding = (DW_EH_PE_pcrel | DW_EH_PE_indirect);
 #endif
 
