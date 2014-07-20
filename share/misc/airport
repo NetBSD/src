@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.56 2014/07/13 18:08:33 asau Exp $
+#	$NetBSD: airport,v 1.57 2014/07/20 19:19:49 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -3730,7 +3730,7 @@ KGX:Grayling Airport, AK, USA
 KGY:Kingaroy, Queensland, Australia
 KGZ:Glacier Creek Airport, AK, USA
 KHA:Khaneh, Iran
-KHC:Kerch, Krym (Crimea), Russia
+KHC:Kerch, Ukraine
 KHE:Kherson, Mykolayiv, Ukraine
 KHG:Kashi, China
 KHH:Kaohsiung International, Taiwan
@@ -7029,7 +7029,7 @@ SIL:Sila, Papua New Guinea
 SIM:Simbai, Papua New Guinea
 SIN:Singapore
 SIO:Smithton, Tasmania, Australia
-SIP:Simferopol, Krym (Crimea), Russia
+SIP:Simferopol, Ukraine
 SIQ:Singkep (Dabo Airport), Indonesia
 SIR:Sion (Sitten), Switzerland
 SIS:Sishen, South Africa
