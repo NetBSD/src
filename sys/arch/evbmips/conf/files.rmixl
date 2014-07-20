@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.4 2011/03/18 00:59:13 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.5 2014/07/20 10:22:54 alnsn Exp $
 
 file	arch/evbmips/rmixl/autoconf.c
 file	arch/evbmips/rmixl/machdep.c
@@ -14,6 +14,9 @@ file	arch/mips/mips/mips3_clockintr.c
 device	mainbus { [node = -1] }
 attach	mainbus at root
 file	arch/mips/rmi/rmixl_mainbus.c		mainbus
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

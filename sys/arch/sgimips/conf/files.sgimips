@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.51 2012/10/02 23:54:54 christos Exp $
+#	$NetBSD: files.sgimips,v 1.52 2014/07/20 10:22:55 alnsn Exp $
 
 maxpartitions 16
 
@@ -34,6 +34,9 @@ file arch/mips/mips/mips3_clockintr.c	mips3
 file dev/md_root.c			memory_disk_hooks
 
 file dev/cons.c
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-dependent drivers
 include "arch/sgimips/dev/files.dev"

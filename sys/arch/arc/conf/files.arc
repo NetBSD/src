@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.64 2011/02/20 07:52:42 matt Exp $
+#	$NetBSD: files.arc,v 1.65 2014/07/20 10:22:54 alnsn Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -79,6 +79,11 @@ file	arch/arc/arc/wired_map_machdep.c
 file	arch/arc/arc/arcbios.c
 
 file	arch/mips/mips/mips3_clock.c
+
+#
+# Stack-less Just-In-Time compiler
+#
+include	"external/bsd/sljit/conf/files.sljit"
 
 ##
 ##	Machine-independent ATAPI drivers

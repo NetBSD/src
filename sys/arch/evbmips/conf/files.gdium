@@ -1,4 +1,4 @@
-#	$NetBSD: files.gdium,v 1.3 2011/07/24 21:40:31 macallan Exp $
+#	$NetBSD: files.gdium,v 1.4 2014/07/20 10:22:54 alnsn Exp $
 
 file	arch/evbmips/gdium/gdium_bus_io.c
 file	arch/evbmips/gdium/gdium_bus_mem.c
@@ -25,6 +25,9 @@ file	arch/evbmips/gdium/mainbus.c		mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/evbmips/evbmips/cpu.c		cpu
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
