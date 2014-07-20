@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.4 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.5 2014/07/20 14:16:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.4 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.5 2014/07/20 14:16:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -826,7 +826,6 @@ int
 npf_conn_save(prop_array_t conlist, prop_array_t nplist)
 {
 	npf_conn_t *con, *prev;
-	int error;
 
 	/*
 	 * Note: acquire conn_lock to prevent from the database
@@ -877,7 +876,7 @@ skip:
 	npf_conndb_settail(conn_db, prev);
 	mutex_exit(&conn_lock);
 
-	return error;
+	return 0;
 }
 
 /*
