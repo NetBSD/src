@@ -1,7 +1,7 @@
-/*	$NetBSD: lctype.c,v 1.1 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lctype.c,v 1.1.1.1 2014/07/20 23:17:33 lneto Exp $	*/
 
 /*
-** $Id: lctype.c,v 1.1 2014/07/19 18:38:34 lneto Exp $
+** Id: lctype.c,v 1.11 2011/10/03 16:19:23 roberto Exp 
 ** 'ctype' functions for Lua
 ** See Copyright Notice in lua.h
 */
@@ -13,9 +13,7 @@
 
 #if !LUA_USE_CTYPE	/* { */
 
-#ifndef _KERNEL
 #include <limits.h>
-#endif
 
 LUAI_DDEF const lu_byte luai_ctype_[UCHAR_MAX + 2] = {
   0x00,  /* EOZ */

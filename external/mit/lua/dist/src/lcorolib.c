@@ -1,15 +1,13 @@
-/*	$NetBSD: lcorolib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lcorolib.c,v 1.1.1.1 2014/07/20 23:17:33 lneto Exp $	*/
 
 /*
-** $Id: lcorolib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $
+** Id: lcorolib.c,v 1.6 2014/05/08 13:52:20 roberto Exp 
 ** Coroutine Library
 ** See Copyright Notice in lua.h
 */
 
 
-#ifndef _KERNEL
 #include <stdlib.h>
-#endif
 
 
 #define lcorolib_c
