@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.14 2014/05/31 22:41:37 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.15 2014/07/20 00:48:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.14 2014/05/31 22:41:37 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.15 2014/07/20 00:48:51 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -452,7 +452,7 @@ npfctl_config_show(int fd)
 		if (ncf == NULL) {
 			return errno;
 		}
-		fprintf(ctx->fp, "Filtering:\t%s\nConfiguration:\t%s\n",
+		fprintf(ctx->fp, "# filtering:\t%s\n# config:\t%s\n",
 		    active ? "active" : "inactive",
 		    loaded ? "loaded" : "empty");
 		print_linesep(ctx);
