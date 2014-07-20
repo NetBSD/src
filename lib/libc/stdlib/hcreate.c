@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.9 2014/07/20 13:34:17 christos Exp $ */
+/* $NetBSD: hcreate.c,v 1.10 2014/07/20 20:17:21 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.9 2014/07/20 13:34:17 christos Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.10 2014/07/20 20:17:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)
@@ -141,20 +141,21 @@ hcreate_r(size_t nel, struct hsearch_data *head)
 }
 
 void
-hdestroy1(int flags)
+hdestroy1(void (*freekey)(void *), void (*freedata)(void *))
 {
 	_DIAGASSERT(htable.table != NULL);
-	hdestroy1_r(&htable, flags);
+	hdestroy1_r(&htable, freekey, freedata);
 }
 
 void
 hdestroy(void)
 {
-	hdestroy1(0);
+	hdestroy1(NULL, NULL);
 }
 
 void
-hdestroy1_r(struct hsearch_data *head, int flags)
+hdestroy1_r(struct hsearch_data *head, void (*freekey)(void *),
+    void (*freedata)(void *))
 {
 	struct internal_entry *ie;
 	size_t idx;
@@ -172,10 +173,10 @@ hdestroy1_r(struct hsearch_data *head, int flags)
 		while (!SLIST_EMPTY(&table[idx])) {
 			ie = SLIST_FIRST(&table[idx]);
 			SLIST_REMOVE_HEAD(&table[idx], link);
-			if (flags & FREE_KEY)
-				free(ie->ent.key);
-			if (flags & FREE_DATA)
-				free(ie->ent.data);
+			if (freekey)
+				(*freekey)(ie->ent.key);
+			if (freedata)
+				(*freedata)(ie->ent.data);
 			free(ie);
 		}
 	}
@@ -185,7 +186,7 @@ hdestroy1_r(struct hsearch_data *head, int flags)
 void
 hdestroy_r(struct hsearch_data *head)
 {
-	hdestroy1_r(head, 0);
+	hdestroy1_r(head, NULL, NULL);
 }
 
 ENTRY *
