@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.11 2014/07/20 13:34:17 christos Exp $
+.\" 	$NetBSD: hcreate.3,v 1.12 2014/07/20 13:41:14 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,7 +153,7 @@ The traditional
 .Fn hdestroy
 and
 .Fn hdestroy_r
-functions don't 
+functions don't
 .Xr free 3
 the data associated with the
 .Fa key
@@ -177,14 +177,14 @@ If the bit
 .Dv FREE_KEY
 is set, then the
 .Fa key
-of each entry will be 
+of each entry will be
 passed to
 .Xr free 3 .
 If the bit
 .Dv FREE_VALUE
 is set, then the
 .Fa value
-of each entry will be 
+of each entry will be
 passed to
 .Xr free 3 .
 .Pp
@@ -288,9 +288,9 @@ given is not found.
 .El
 .Sh SEE ALSO
 .Xr bsearch 3 ,
+.Xr free 3 ,
 .Xr lsearch 3 ,
 .Xr malloc 3 ,
-.Xr free 3 ,
 .Xr strcmp 3
 .Sh STANDARDS
 The
@@ -310,7 +310,7 @@ functions first appeared in
 .At V .
 The
 .Fn hcreate_r ,
-.Fn hdestroy_r
+.Fn hdestroy_r ,
 and
 .Fn hsearch_r
 functions are
