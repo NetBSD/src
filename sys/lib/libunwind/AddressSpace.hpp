@@ -402,7 +402,7 @@ private:
     n->data_base = data_base;
     n->ehframe_base = ehframe_base;
 
-    if (static_cast<Range *>(rb_tree_insert_node(&segmentTree, n)) == n) {
+    if (static_cast<Range *>(rb_tree_insert_node(&segmentTree, n)) != n) {
       free(n);
       return;
     }
