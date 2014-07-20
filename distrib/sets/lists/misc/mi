@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.193 2014/07/06 21:06:48 tron Exp $
+# $NetBSD: mi,v 1.194 2014/07/20 15:58:40 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -913,19 +913,19 @@
 ./usr/share/doc/reference/ref8/postfix/FORWARD_SECRECY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/IPV6_README.html			misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/LDAP_README.html			misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/reference/ref8/postfix/LMDB_README.html			misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/reference/ref8/postfix/LMDB_README.html			misc-obsolete		obsolete
 ./usr/share/doc/reference/ref8/postfix/LOCAL_RECIPIENT_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/MAILDROP_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/MEMCACHE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/MILTER_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/MULTI_INSTANCE_README.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/reference/ref8/postfix/MYSQL_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/reference/ref8/postfix/MYSQL_README.html		misc-obsolete		obsolete
 ./usr/share/doc/reference/ref8/postfix/NFS_README.html			misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/OVERVIEW.html			misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/reference/ref8/postfix/PCRE_README.html			misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/reference/ref8/postfix/PGSQL_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/reference/ref8/postfix/PCRE_README.html			misc-obsolete		obsolete
+./usr/share/doc/reference/ref8/postfix/PGSQL_README.html		misc-obsolete		obsolete
 ./usr/share/doc/reference/ref8/postfix/POSTSCREEN_README.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/reference/ref8/postfix/QSHAPE_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/reference/ref8/postfix/QSHAPE_README.html		misc-obsolete		obsolete
 ./usr/share/doc/reference/ref8/postfix/RESTRICTION_CLASS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/SASL_README.html			misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/SCHEDULER_README.html		misc-postfix-htmldoc	postfix,doc
@@ -1490,7 +1490,7 @@
 ./usr/share/examples/postfix/FORWARD_SECRECY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/IPV6_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/LDAP_README	misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/LMDB_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/LMDB_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/LICENSE		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/LMTP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
@@ -1498,14 +1498,14 @@
 ./usr/share/examples/postfix/MEMCACHE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MULTI_INSTANCE_README	misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/MYSQL_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/NFS_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/OVERVIEW		misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/PGSQL_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/PCRE_README	misc-obsolete	obsolete
+./usr/share/examples/postfix/PGSQL_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/POSTSCREEN_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/QMQP_README	misc-obsolete	obsolete
-./usr/share/examples/postfix/QSHAPE_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/QSHAPE_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/RESTRICTION_CLASS_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SASL_README	misc-postfix-examples	postfix,doc
