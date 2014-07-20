@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.25 2014/07/20 15:46:34 uebayasi Exp $	*/
+/*	$NetBSD: ipi.c,v 1.26 2014/07/20 15:48:54 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.25 2014/07/20 15:46:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.26 2014/07/20 15:48:54 uebayasi Exp $");
 
 #include "opt_mtrr.h"
 
@@ -150,7 +150,7 @@ x86_ipi_handler(void)
 	KDASSERT((pending >> X86_NIPI) == 0);
 	while ((bit = ffs(pending)) != 0) {
 		bit--;
-		pending &= ~(1<<bit);
+		pending &= ~(1 << bit);
 		ci->ci_ipi_events[bit].ev_count++;
 		(*ipifunc[bit])(ci);
 	}
@@ -167,7 +167,7 @@ x86_ipi_halt(struct cpu_info *ci)
 	x86_disable_intr();
 	atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
 
-	for(;;) {
+	for (;;) {
 		x86_hlt();
 	}
 }
