@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.2 2014/05/19 18:45:51 jakllsch Exp $	*/
+/*	$NetBSD: npf_ext_normalize.c,v 1.3 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.2 2014/05/19 18:45:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.3 2014/07/20 00:37:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -141,7 +141,7 @@ npf_normalize_ip4(npf_cache_t *npc, npf_normalize_t *np)
  * npf_normalize: the main routine to normalize IPv4 and/or TCP headers.
  */
 static bool
-npf_normalize(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
+npf_normalize(npf_cache_t *npc, void *params, int *decision)
 {
 	npf_normalize_t *np = params;
 	struct tcphdr *th = npc->npc_l4.tcp;
@@ -168,7 +168,7 @@ npf_normalize(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 		return true;
 	}
 	mss = 0;
-	if (!npf_fetch_tcpopts(npc, nbuf, &mss, &wscale)) {
+	if (!npf_fetch_tcpopts(npc, &mss, &wscale)) {
 		return true;
 	}
 	if (ntohs(mss) <= maxmss) {
@@ -178,7 +178,7 @@ npf_normalize(npf_cache_t *npc, nbuf_t *nbuf, void *params, int *decision)
 	maxmss = htons(maxmss);
 
 	/* Store new MSS, calculate TCP checksum and update it. */
-	if (npf_fetch_tcpopts(npc, nbuf, &maxmss, &wscale)) {
+	if (npf_fetch_tcpopts(npc, &maxmss, &wscale)) {
 		cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
 		th->th_sum = cksum;
 	}
