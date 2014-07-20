@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.38 2014/07/17 08:21:34 hannken Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.39 2014/07/20 13:17:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,9 +122,6 @@ extern const int static_nkern_targets;
 extern int (**kernfs_vnodeop_p)(void *);
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
-
-struct secasvar;
-struct secpolicy;
 
 int kernfs_root(struct mount *, struct vnode **);
 
