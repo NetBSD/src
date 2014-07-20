@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.52 2013/06/30 21:38:57 rmind Exp $
+# 	$NetBSD: LROUTER,v 1.53 2014/07/20 10:06:11 alnsn Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -91,6 +91,10 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # NetBSD backwards compatibility
 options 	COMPAT_43

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.61 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: VR41XX,v 1.62 2014/07/20 10:06:11 alnsn Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -102,6 +102,10 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # NetBSD backwards compatibility
 options 	COMPAT_43

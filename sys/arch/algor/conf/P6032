@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.70 2013/06/05 23:07:59 christos Exp $
+#	$NetBSD: P6032,v 1.71 2014/07/20 10:06:10 alnsn Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.70 $"
+#ident 		"P6032-$Revision: 1.71 $"
 
 maxusers 32
 
@@ -50,6 +50,10 @@ options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43

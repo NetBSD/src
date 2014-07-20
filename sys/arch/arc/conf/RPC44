@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.48 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: RPC44,v 1.49 2014/07/20 10:06:10 alnsn Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.48 $"
+#ident		"GENERIC-$Revision: 1.49 $"
 
 maxusers	32		# estimated number of users
 
@@ -129,6 +129,10 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 ##options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

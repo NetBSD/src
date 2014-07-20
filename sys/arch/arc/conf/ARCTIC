@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.65 2013/06/30 21:38:55 rmind Exp $
+#	$NetBSD: ARCTIC,v 1.66 2014/07/20 10:06:10 alnsn Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -109,6 +109,10 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

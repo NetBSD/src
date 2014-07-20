@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.23 2013/06/30 21:38:56 rmind Exp $
+# $NetBSD: GDIUM,v 1.24 2014/07/20 10:06:11 alnsn Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.23 $"
+#ident 		"GDIUM-$Revision: 1.24 $"
 
 maxusers	16
 
@@ -101,6 +101,10 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue

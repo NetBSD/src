@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142 2013/06/30 21:38:56 rmind Exp $
+# $NetBSD: GENERIC,v 1.143 2014/07/20 10:06:10 alnsn Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 maxusers	32
 
@@ -132,6 +132,10 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
