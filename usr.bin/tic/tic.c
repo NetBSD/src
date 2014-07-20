@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.23 2012/12/08 23:29:28 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.24 2014/07/20 20:20:16 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.23 2012/12/08 23:29:28 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.24 2014/07/20 20:20:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -585,7 +585,7 @@ main(int argc, char **argv)
 		free(term->name);
 		free(term);
 	}
-	hdestroy();
+	hdestroy1(free, NULL);
 #endif
 
 
