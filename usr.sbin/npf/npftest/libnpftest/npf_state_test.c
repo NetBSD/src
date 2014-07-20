@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_test.c,v 1.5 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf_state_test.c,v 1.6 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*
  * NPF state tracking test.
@@ -146,15 +146,16 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 	}
 
 	nbuf_init(&nbuf, construct_packet(p), dummy_ifp);
-	ret = npf_cache_all(&npc, &nbuf);
+	npc.npc_nbuf = &nbuf;
+	ret = npf_cache_all(&npc);
 	KASSERT((ret & NPC_IPFRAG) == 0);
 
 	if (*snew) {
-		ret = npf_state_init(&npc, &nbuf, nst);
+		ret = npf_state_init(&npc, nst);
 		KASSERT(ret == true);
 		*snew = false;
 	}
-	ret = npf_state_inspect(&npc, &nbuf, nst, p->flags == OUT);
+	ret = npf_state_inspect(&npc, nst, p->flags == OUT);
 	m_freem(nbuf.nb_mbuf);
 
 	return ret ? true : (p->flags & ERR) != 0;

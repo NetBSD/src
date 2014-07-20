@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.3 2014/07/19 21:22:58 christos Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.4 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.3 2014/07/19 21:22:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.4 2014/07/20 00:37:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -358,9 +358,9 @@ connkey_set_id(npf_connkey_t *key, const uint16_t id, const int di)
  * => If found, we will hold a reference for the caller.
  */
 npf_conn_t *
-npf_conn_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
-    const int di, bool *forw)
+npf_conn_lookup(const npf_cache_t *npc, const int di, bool *forw)
 {
+	const nbuf_t *nbuf = npc->npc_nbuf;
 	npf_conn_t *con;
 	npf_connkey_t key;
 	u_int flags, cifid;
@@ -411,8 +411,9 @@ npf_conn_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
  * => If found, we will hold a reference for the caller.
  */
 npf_conn_t *
-npf_conn_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
+npf_conn_inspect(npf_cache_t *npc, const int di, int *error)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	npf_conn_t *con;
 	bool forw, ok;
 
@@ -422,7 +423,7 @@ npf_conn_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	}
 
 	/* Query ALG which may lookup connection for us. */
-	if ((con = npf_alg_conn(npc, nbuf, di)) != NULL) {
+	if ((con = npf_alg_conn(npc, di)) != NULL) {
 		/* Note: reference is held. */
 		return con;
 	}
@@ -433,13 +434,13 @@ npf_conn_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	/* Main lookup of the connection. */
-	if ((con = npf_conn_lookup(npc, nbuf, di, &forw)) == NULL) {
+	if ((con = npf_conn_lookup(npc, di, &forw)) == NULL) {
 		return NULL;
 	}
 
 	/* Inspect the protocol data and handle state changes. */
 	mutex_enter(&con->c_lock);
-	ok = npf_state_inspect(npc, nbuf, &con->c_state, forw);
+	ok = npf_state_inspect(npc, &con->c_state, forw);
 	mutex_exit(&con->c_lock);
 
 	if (__predict_false(!ok)) {
@@ -458,8 +459,9 @@ npf_conn_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
  * => Connection will be activated on the first reference release.
  */
 npf_conn_t *
-npf_conn_establish(npf_cache_t *npc, nbuf_t *nbuf, int di, bool per_if)
+npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 {
+	const nbuf_t *nbuf = npc->npc_nbuf;
 	npf_conn_t *con;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
@@ -484,7 +486,7 @@ npf_conn_establish(npf_cache_t *npc, nbuf_t *nbuf, int di, bool per_if)
 	con->c_nat = NULL;
 
 	/* Initialize protocol state. */
-	if (!npf_state_init(npc, nbuf, &con->c_state)) {
+	if (!npf_state_init(npc, &con->c_state)) {
 		goto err;
 	}
 

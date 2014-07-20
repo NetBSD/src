@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.13 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.14 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.13 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.14 2014/07/20 00:37:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -189,7 +189,7 @@ npf_alg_unregister(npf_alg_t *alg)
  * npf_alg_match: call ALG matching inspectors, determine if any ALG matches.
  */
 bool
-npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npf_alg_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 {
 	bool match = false;
 	int s;
@@ -198,7 +198,7 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	for (u_int i = 0; i < alg_count; i++) {
 		const npfa_funcs_t *f = &alg_funcs[i];
 
-		if (f->match && f->match(npc, nbuf, nt, di)) {
+		if (f->match && f->match(npc, nt, di)) {
 			match = true;
 			break;
 		}
@@ -211,7 +211,7 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
  * npf_alg_exec: execute ALG hooks for translation.
  */
 void
-npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
+npf_alg_exec(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
 	int s;
 
@@ -220,14 +220,14 @@ npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 		const npfa_funcs_t *f = &alg_funcs[i];
 
 		if (f->translate) {
-			f->translate(npc, nbuf, nt, forw);
+			f->translate(npc, nt, forw);
 		}
 	}
 	pserialize_read_exit(s);
 }
 
 npf_conn_t *
-npf_alg_conn(npf_cache_t *npc, nbuf_t *nbuf, int di)
+npf_alg_conn(npf_cache_t *npc, int di)
 {
 	npf_conn_t *con = NULL;
 	int s;
@@ -238,7 +238,7 @@ npf_alg_conn(npf_cache_t *npc, nbuf_t *nbuf, int di)
 
 		if (!f->inspect)
 			continue;
-		if ((con = f->inspect(npc, nbuf, di)) != NULL)
+		if ((con = f->inspect(npc, di)) != NULL)
 			break;
 	}
 	pserialize_read_exit(s);

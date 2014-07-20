@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.8 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.9 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -166,7 +166,8 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 	}
 
 	nbuf_init(&nbuf, m, ifp);
-	if (!npf_cache_all(&npc, &nbuf)) {
+	npc.npc_nbuf = &nbuf;
+	if (!npf_cache_all(&npc)) {
 		printf("error: could not fetch the packet data");
 		return false;
 	}

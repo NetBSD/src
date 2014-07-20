@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.29 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.30 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.29 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.30 2014/07/20 00:37:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -464,14 +464,14 @@ npf_nat_which(const int type, bool forw)
  * => Acquire a reference on the policy, if found.
  */
 static npf_natpolicy_t *
-npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
+npf_nat_inspect(npf_cache_t *npc, const int di)
 {
 	int slock = npf_config_read_enter();
 	npf_ruleset_t *rlset = npf_config_natset();
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	rl = npf_ruleset_inspect(npc, nbuf, rlset, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
 		npf_config_read_exit(slock);
 		return NULL;
@@ -552,7 +552,7 @@ out:
  * npf_nat_translate: perform translation given the state data.
  */
 static inline int
-npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
+npf_nat_translate(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
 	const npf_natpolicy_t *np = nt->nt_natpolicy;
 	const u_int which = npf_nat_which(np->n_type, forw);
@@ -576,10 +576,10 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 	/* Execute ALG translation first. */
 	if ((npc->npc_info & NPC_ALG_EXEC) == 0) {
 		npc->npc_info |= NPC_ALG_EXEC;
-		npf_alg_exec(npc, nbuf, nt, forw);
-		npf_recache(npc, nbuf);
+		npf_alg_exec(npc, nt, forw);
+		npf_recache(npc);
 	}
-	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+	KASSERT(!nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET));
 
 	/* Finally, perform the translation. */
 	return npf_napt_rwr(npc, which, addr, port);
@@ -617,8 +617,9 @@ npf_nat_algo(npf_cache_t *npc, const npf_natpolicy_t *np, bool forw)
  *	- Associate a NAT policy with a connection (may establish a new).
  */
 int
-npf_do_nat(npf_cache_t *npc, npf_conn_t *con, nbuf_t *nbuf, const int di)
+npf_do_nat(npf_cache_t *npc, npf_conn_t *con, const int di)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	npf_conn_t *ncon = NULL;
 	npf_natpolicy_t *np;
 	npf_nat_t *nt;
@@ -645,7 +646,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, nbuf_t *nbuf, const int di)
 	 * Inspect the packet for a NAT policy, if there is no connection.
 	 * Note: acquires a reference if found.
 	 */
-	np = npf_nat_inspect(npc, nbuf, di);
+	np = npf_nat_inspect(npc, di);
 	if (np == NULL) {
 		/* If packet does not match - done. */
 		return 0;
@@ -655,7 +656,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, nbuf_t *nbuf, const int di)
 	/* Static NAT - just perform the translation. */
 	if (np->n_flags & NPF_NAT_STATIC) {
 		if (nbuf_cksum_barrier(nbuf, di)) {
-			npf_recache(npc, nbuf);
+			npf_recache(npc);
 		}
 		error = npf_nat_algo(npc, np, forw);
 		atomic_dec_uint(&np->n_refcnt);
@@ -669,7 +670,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, nbuf_t *nbuf, const int di)
 	 * "backwards" stream depends on other, stateless filtering rules.
 	 */
 	if (con == NULL) {
-		ncon = npf_conn_establish(npc, nbuf, di, true);
+		ncon = npf_conn_establish(npc, di, true);
 		if (ncon == NULL) {
 			atomic_dec_uint(&np->n_refcnt);
 			return ENOMEM;
@@ -697,18 +698,18 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, nbuf_t *nbuf, const int di)
 	}
 
 	/* Determine whether any ALG matches. */
-	if (npf_alg_match(npc, nbuf, nt, di)) {
+	if (npf_alg_match(npc, nt, di)) {
 		KASSERT(nt->nt_alg != NULL);
 	}
 
 translate:
 	/* May need to process the delayed checksums first (XXX: NetBSD). */
 	if (nbuf_cksum_barrier(nbuf, di)) {
-		npf_recache(npc, nbuf);
+		npf_recache(npc);
 	}
 
 	/* Perform the translation. */
-	error = npf_nat_translate(npc, nbuf, nt, forw);
+	error = npf_nat_translate(npc, nt, forw);
 out:
 	if (__predict_false(ncon)) {
 		if (error) {
