@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.28 2014/04/18 00:21:14 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.29 2014/07/20 23:00:49 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -118,7 +118,7 @@ typedef struct {
  * Structures of type str_t uniqely identify structures. This can't
  * be done in structures of type type_t, because these are copied
  * if they must be modified. So it would not be possible to check
- * if to structures are identical by comparing the pointers to
+ * if two structures are identical by comparing the pointers to
  * the type structures.
  *
  * The typename is used if the structure is unnamed to identify
