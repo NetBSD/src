@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.9 2014/01/08 16:49:48 jakllsch Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.10 2014/07/20 23:01:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.9 2014/01/08 16:49:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.10 2014/07/20 23:01:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.9 2014/01/08 16:49:48 jakllsch Ex
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/i2c/tps65217pmicreg.h>
+#include <dev/i2c/tps65217pmicvar.h>
 
 #define NTPS_REG	7
 #define SNUM_REGS	NTPS_REG-1
@@ -608,26 +609,49 @@ tps65217pmic_reg_read(struct tps65217pmic_softc *sc, uint8_t reg)
 	return rv;
 }
 
+static void
+tps65217pmic_reg_write_unlocked(struct tps65217pmic_softc *sc,
+    uint8_t reg, uint8_t data)
+{
+	uint8_t wbuf[2];
+
+	wbuf[0] = reg;
+	wbuf[1] = data;
+
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, NULL, 0,
+	    wbuf, 2, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev, "cannot execute I2C write\n");
+	}
+}
+
 static void __unused
 tps65217pmic_reg_write(struct tps65217pmic_softc *sc, uint8_t reg, uint8_t data)
 {
-	uint8_t wbuf[2];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
 		aprint_error_dev(sc->sc_dev, "cannot acquire bus for write\n");
 		return;
 	}
 
-	wbuf[0] = reg;
-	wbuf[1] = data;
+	tps65217pmic_reg_write_unlocked(sc, reg, data);
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, wbuf,
-	    2, NULL, 0, I2C_F_POLL)) {
-		aprint_error_dev(sc->sc_dev, "cannot execute I2C write\n");
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+}
+
+static void
+tps65217pmic_reg_write_l2(struct tps65217pmic_softc *sc,
+    uint8_t reg, uint8_t data)
+{
+	uint8_t regpw = reg ^ TPS65217PMIC_PASSWORD_XOR;
+	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+		aprint_error_dev(sc->sc_dev, "cannot acquire bus for write\n");
 		return;
 	}
 
+	tps65217pmic_reg_write_unlocked(sc, TPS65217PMIC_PASSWORD, regpw);
+	tps65217pmic_reg_write_unlocked(sc, reg, data);
+	tps65217pmic_reg_write_unlocked(sc, TPS65217PMIC_PASSWORD, regpw);
+	tps65217pmic_reg_write_unlocked(sc, reg, data);
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 }
 
@@ -702,3 +726,50 @@ tps65217pmic_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	mutex_exit(&sc->sc_lock);
 }
 
+int
+tps65217pmic_set_volt(device_t self, const char *name, int mvolt)
+{
+	int i;
+	struct tps65217pmic_softc *sc = device_private(self);
+	struct tps_reg_param *regulator = NULL;
+	uint8_t val;
+
+	for (i = 0; i < __arraycount(tps_regulators); i++) {
+		if (strcmp(name, tps_regulators[i].name) == 0) {
+			regulator = &tps_regulators[i];
+			break;
+		}
+	}
+	if (regulator == NULL)
+		return EINVAL;
+
+	if (regulator->voltage_min > mvolt || regulator->voltage_max < mvolt)
+		return EINVAL;
+
+	if (!regulator->is_enabled)
+		return EINVAL;
+
+	if (regulator->is_tracking)
+		return EINVAL;
+
+	if (regulator->is_xadj)
+		return EINVAL;
+
+	/* find closest voltage entry */
+	for (i = 0; i < regulator->nvoltages; i++) {
+		if (mvolt <= regulator->voltages[i]) {
+			break;
+		}
+	}
+	KASSERT(i < regulator->nvoltages);
+	tps65217pmic_reg_write_l2(sc, regulator->defreg_num, i);
+
+	val = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFSLEW);
+	val |= TPS65217PMIC_DEFSLEW_GO;
+	tps65217pmic_reg_write_l2(sc, TPS65217PMIC_DEFSLEW, val);
+
+	while (val & TPS65217PMIC_DEFSLEW_GO) {
+		val = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFSLEW);
+	}
+	return 0;
+}
