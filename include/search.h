@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.20 2013/04/27 21:35:25 joerg Exp $	*/
+/*	$NetBSD: search.h,v 1.21 2014/07/20 13:34:17 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -62,8 +62,12 @@ void	 hdestroy(void);
 ENTRY	*hsearch(ENTRY, ACTION);
 
 #ifdef _NETBSD_SOURCE
+#define FREE_KEY 1
+#define FREE_DATA 2
+void	 hdestroy1(int);
 int	 hcreate_r(size_t, struct hsearch_data *);
 void	 hdestroy_r(struct hsearch_data *);
+void	 hdestroy1_r(struct hsearch_data *, int);
 int	 hsearch_r(ENTRY, ACTION, ENTRY **, struct hsearch_data *);
 #endif /* _NETBSD_SOURCE */
 
