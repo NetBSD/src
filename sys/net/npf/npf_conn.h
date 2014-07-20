@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.h,v 1.1 2014/07/19 19:14:21 rmind Exp $	*/
+/*	$NetBSD: npf_conn.h,v 1.2 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -100,10 +100,9 @@ void		npf_conn_sysfini(void);
 void		npf_conn_tracking(bool);
 
 bool		npf_conn_conkey(const npf_cache_t *, npf_connkey_t *, bool);
-npf_conn_t *	npf_conn_lookup(const npf_cache_t *, const nbuf_t *,
-		    const int, bool *);
-npf_conn_t *	npf_conn_inspect(npf_cache_t *, nbuf_t *, const int, int *);
-npf_conn_t *	npf_conn_establish(npf_cache_t *, nbuf_t *, int, bool);
+npf_conn_t *	npf_conn_lookup(const npf_cache_t *, const int, bool *);
+npf_conn_t *	npf_conn_inspect(npf_cache_t *, const int, int *);
+npf_conn_t *	npf_conn_establish(npf_cache_t *, int, bool);
 void		npf_conn_release(npf_conn_t *);
 void		npf_conn_expire(npf_conn_t *);
 bool		npf_conn_pass(const npf_conn_t *, npf_rproc_t **);
