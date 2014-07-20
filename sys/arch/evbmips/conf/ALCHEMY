@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.52 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: ALCHEMY,v 1.53 2014/07/20 10:06:11 alnsn Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.52 $"
+#ident 		"ALCHEMY-$Revision: 1.53 $"
 
 maxusers	32
 
@@ -113,6 +113,10 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

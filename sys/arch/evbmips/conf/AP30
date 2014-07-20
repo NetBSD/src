@@ -1,10 +1,10 @@
-#	$NetBSD: AP30,v 1.30 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: AP30,v 1.31 2014/07/20 10:06:11 alnsn Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.30 $"
+#ident 		"AP30-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -109,6 +109,10 @@ options 	INET		# Internet protocols
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
