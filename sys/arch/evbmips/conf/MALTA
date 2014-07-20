@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.77 2014/03/17 01:03:51 mrg Exp $
+#	$NetBSD: MALTA,v 1.78 2014/07/20 10:06:11 alnsn Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.77 $"
+#ident 		"MALTA-$Revision: 1.78 $"
 
 maxusers	32
 
@@ -106,6 +106,10 @@ options 	INET		# Internet protocols
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
