@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.6 2013/08/17 00:40:10 matt Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.7 2014/07/20 23:08:43 bouyer Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.6 2013/08/17 00:40:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.7 2014/07/20 23:08:43 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.6 2013/08/17 00:40:10 matt Exp $")
 #define AM335X_CLKCTRL_MODULEMODE_MASK		__BITS(0, 1)
 #define   AM335X_CLKCTRL_MODULEMODE_DISABLED	0
 #define   AM335X_CLKCTRL_MODULEMODE_ENABLE	2
+
+uint32_t am335x_devid;
 
 static void
 am335x_prcm_check_clkctrl(bus_size_t cm_module,
@@ -98,19 +100,38 @@ prcm_module_disable(const struct omap_module *om)
 	am335x_prcm_check_clkctrl(cm_module, clkctrl_reg, clkctrl);
 }
 
-static const uint16_t mpu_frequencies[] = {
-	550,
-	600,
-	650,
-	700,
-	720,
-	800,
-	900,
-	1000
-};
-static int mpu_frequency;
+/*
+ * MPU frequency and power table, built from informations in
+ * http://processors.wiki.ti.com/index.php/AM335x_Power_Estimation_Tool
+ */
 
-void
+struct mpu_frequency {
+	uint16_t freq; /* MPU frequency in Khz */
+	uint16_t mvolt; /* MPU voltage in millivolt */
+};
+
+static const struct mpu_frequency mpu_frequencies_rev0_zcz[] = {
+	{275,  1100},
+	{500,  1100},
+	{600,  1200},
+	{720,  1260},
+	{0,       0},
+};
+static const struct mpu_frequency mpu_frequencies_revA_zcz[] = {
+	{300,   950},
+	{550,  1100},
+	{600,  1100},
+	{720,  1200},
+	{800,  1260},
+	{900,  1325},
+	{1000, 1325},
+	{0,       0},
+};
+static const struct mpu_frequency *mpu_frequencies = NULL;
+
+static struct mpu_frequency mpu_frequency;
+
+static void
 prcm_mpu_pll_config(u_int mpupll_m)
 {
 	uint32_t clkmode = prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKMODE_DPLL_MPU);
@@ -144,12 +165,15 @@ static int
 mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	int freq = mpu_frequency;
+	int freq = mpu_frequency.freq;
 	int old_freq = freq;
+	int old_mvolt = mpu_frequency.mvolt;
+	struct mpu_frequency new_mpu_frequency;
 
-	KASSERTMSG(curcpu()->ci_data.cpu_cc_freq == mpu_frequency * 1000000,
+	KASSERTMSG(
+	    curcpu()->ci_data.cpu_cc_freq == mpu_frequency.freq * 1000000,
 	    "cc_freq %"PRIu64" mpu_freq %u000000",
-	    curcpu()->ci_data.cpu_cc_freq, mpu_frequency);
+	    curcpu()->ci_data.cpu_cc_freq, mpu_frequency.freq);
 
 	node.sysctl_data = &freq;
 
@@ -158,11 +182,12 @@ mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	KASSERT(old_freq == mpu_frequency);
+	KASSERT(old_freq == mpu_frequency.freq);
 
 	error = EINVAL;
-	for (size_t i = 0; i < __arraycount(mpu_frequencies); i++) {
-		if (mpu_frequencies[i] == freq) {
+	for (size_t i = 0; mpu_frequencies[i].freq > 0; i++) {
+		if (mpu_frequencies[i].freq == freq) {
+			new_mpu_frequency = mpu_frequencies[i];
 			error = 0;
 			break;
 		}
@@ -171,11 +196,30 @@ mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	if (freq != old_freq) {
-		const int s = splhigh();
+		int s;
+		if (new_mpu_frequency.mvolt > old_mvolt) {
+			/* need to raise VMPU before raising freq */
+			error  = set_mpu_volt(new_mpu_frequency.mvolt);
+		}
+		if (error)
+			return error;
+		s = splhigh();
 		prcm_mpu_pll_config(freq);
 		curcpu()->ci_data.cpu_cc_freq = freq * 1000000;
-		mpu_frequency = freq;
+		mpu_frequency = new_mpu_frequency;
 		splx(s);
+		if (mpu_frequency.mvolt < old_mvolt) {
+			/* need to lower VMPU after lowering freq */
+			error = set_mpu_volt(mpu_frequency.mvolt);
+			if (error) {
+				/* if we failed to lower VMPU, record it */
+				aprint_error_dev(curcpu()->ci_dev, 
+				   "warning: failed to change MPU voltage from "
+				   "%d to %d\n",
+				   old_mvolt, mpu_frequency.mvolt);
+				mpu_frequency.mvolt = old_mvolt;
+			}
+		}
 		aprint_normal_dev(curcpu()->ci_dev,
 		    "frequency changed from %d MHz to %d MHz\n",
 		    old_freq, freq);
@@ -188,16 +232,36 @@ mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_am335x_machdep_setup, "sysctl am335x machdep subtree setup")
 {
 	const struct sysctlnode *freqnode, *node;
+	int i;
+	int cc_freq = curcpu()->ci_data.cpu_cc_freq / 1000000;
 
-	static char mpu_available_frequencies[__arraycount(mpu_frequencies)*6];
+	static char mpu_available_frequencies[__arraycount(mpu_frequencies_revA_zcz)*6];
+	char cur_cpu_freq[6];
 
-	__CTASSERT(__arraycount(mpu_frequencies) == 8);
-	snprintf(mpu_available_frequencies, sizeof(mpu_available_frequencies),
-	   "%u %u %u %u %u %u %u %u",
-	   mpu_frequencies[0], mpu_frequencies[1], mpu_frequencies[2],
-	   mpu_frequencies[3], mpu_frequencies[4], mpu_frequencies[5],
-	   mpu_frequencies[6], mpu_frequencies[7]);
-	mpu_frequency = curcpu()->ci_data.cpu_cc_freq / 1000000;
+	if (TI_AM335X_CTLMOD_DEVID_REV(am335x_devid) == 0) 
+		mpu_frequencies = mpu_frequencies_rev0_zcz;
+	else
+		mpu_frequencies = mpu_frequencies_revA_zcz;
+	mpu_available_frequencies[0] = '\0';
+	for (i = 0 ; mpu_frequencies[i].freq > 0; i++) {
+		snprintf(cur_cpu_freq, sizeof(cur_cpu_freq), "%u",
+		    mpu_frequencies[i].freq);
+		if (i > 0) {
+			strlcat(mpu_available_frequencies, " ",
+			    sizeof(mpu_available_frequencies));
+		}
+		strlcat(mpu_available_frequencies, cur_cpu_freq,
+		    sizeof(mpu_available_frequencies));
+	}
+	/* locate current freq in array */
+	for (i = 0; mpu_frequencies[i].freq > 0; i++) {
+		if (mpu_frequencies[i].freq >= cc_freq) {
+			mpu_frequency = mpu_frequencies[i];
+			mpu_frequency.freq = cc_freq;
+			break;
+		}
+	}
+	KASSERT(mpu_frequency.mvolt > 0);
 
 	sysctl_createv(clog, 0, NULL, &node,
 		       CTLFLAG_PERMANENT,
@@ -234,6 +298,8 @@ am335x_sys_clk(bus_space_handle_t ctlmode_ioh)
 	const uint32_t control_status = bus_space_read_4(&omap_bs_tag,
 		ctlmode_ioh, CTLMOD_CONTROL_STATUS);
 	omap_sys_clk = sys_clks[__SHIFTOUT(control_status, CTLMOD_CONTROL_STATUS_SYSBOOT1)];
+
+	am335x_devid = bus_space_read_4(&omap_bs_tag, ctlmode_ioh, TI_AM335X_CTLMOD_DEVID);
 }
 
 void
