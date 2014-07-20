@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.87 2014/07/14 02:34:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.88 2014/07/20 16:40:34 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.87 2014/07/14 02:34:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.88 2014/07/20 16:40:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -646,6 +646,11 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		default:
 			break;
 		}
+		break;
+
+	case SIOCSIFMTU:
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	default:
