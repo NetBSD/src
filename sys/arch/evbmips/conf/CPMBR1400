@@ -1,3 +1,5 @@
+#	$NetBSD: CPMBR1400,v 1.17 2014/07/20 10:06:11 alnsn Exp $
+
 include		"arch/evbmips/conf/std.rasoc"
 
 options 	SYMTAB_SPACE=450000		# size for embedded symbol table
@@ -136,6 +138,10 @@ options 	MROUTING	# IP multicast routing
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
