@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.44 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.45 2014/07/20 15:46:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
 
-extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
+extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);
 
 #endif /* _KERNEL */
 

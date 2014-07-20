@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.24 2014/05/19 22:47:54 rmind Exp $	*/
+/*	$NetBSD: ipi.c,v 1.25 2014/07/20 15:46:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.24 2014/05/19 22:47:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.25 2014/07/20 15:46:34 uebayasi Exp $");
 
 #include "opt_mtrr.h"
 
@@ -78,17 +78,17 @@ void	acpi_cpu_sleep(struct cpu_info *);
 
 static void	x86_ipi_synch_fpu(struct cpu_info *);
 
-void (*ipifunc[X86_NIPI])(struct cpu_info *) =
+void (* const ipifunc[X86_NIPI])(struct cpu_info *) =
 {
-	x86_ipi_halt,
-	NULL,
-	x86_ipi_generic,
-	x86_ipi_synch_fpu,
-	x86_ipi_reload_mtrr,
-	gdt_reload_cpu,
-	x86_ipi_xcall,
-	acpi_cpu_sleep,
-	x86_ipi_kpreempt
+	x86_ipi_halt,		/* X86_IPI_HALT */
+	NULL,			/* X86_IPI_MICROSET */
+	x86_ipi_generic,	/* X86_IPI_GENERIC */
+	x86_ipi_synch_fpu,	/* X86_IPI_SYNCH_FPU */
+	x86_ipi_reload_mtrr,	/* X86_IPI_MTRR */
+	gdt_reload_cpu,		/* X86_IPI_GDT */
+	x86_ipi_xcall,		/* X86_IPI_XCALL */
+	acpi_cpu_sleep,		/* X86_IPI_ACPI_CPU_SLEEP */
+	x86_ipi_kpreempt	/* X86_IPI_KPREEMPT */
 };
 
 /*
