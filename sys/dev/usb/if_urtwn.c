@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.32 2014/07/20 13:25:23 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.33 2014/07/20 14:02:53 nonaka Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.32 2014/07/20 13:25:23 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.33 2014/07/20 14:02:53 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -109,6 +109,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(ABOCOM,	RTL8188CU_2),
 	URTWN_DEV(ABOCOM,	RTL8192CU),
 	URTWN_DEV(ASUSTEK,	RTL8192CU),
+	URTWN_DEV(ASUSTEK,	USBN10NANO),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_1),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_2),
 	URTWN_DEV(AZUREWAVE,	RTL8188CU),
