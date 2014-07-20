@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1898 2014/07/17 12:04:05 prlw1 Exp $
+#	$NetBSD: mi,v 1.1899 2014/07/20 13:38:19 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6888,7 +6888,8 @@
 ./usr/share/man/cat3/hcreate.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hcreate_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hdestroy.0			comp-c-catman		.cat
-./usr/share/man/cat3/hdestroy_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/hdestroy1.0		comp-c-catman		.cat
+./usr/share/man/cat3/hdestroy1_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/heapsort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/herror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hesiod.0			comp-c-catman		hesiod,.cat
@@ -13712,7 +13713,9 @@
 ./usr/share/man/html3/hcreate.html		comp-c-htmlman		html
 ./usr/share/man/html3/hcreate_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/hdestroy.html		comp-c-htmlman		html
+./usr/share/man/html3/hdestroy1.html		comp-c-htmlman		html
 ./usr/share/man/html3/hdestroy_r.html		comp-c-htmlman		html
+./usr/share/man/html3/hdestroy1_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/heapsort.html		comp-c-htmlman		html
 ./usr/share/man/html3/herror.html		comp-c-htmlman		html
 ./usr/share/man/html3/hesiod.html		comp-c-htmlman		hesiod,html
@@ -20454,7 +20457,9 @@
 ./usr/share/man/man3/hcreate.3			comp-c-man		.man
 ./usr/share/man/man3/hcreate_r.3		comp-c-man		.man
 ./usr/share/man/man3/hdestroy.3			comp-c-man		.man
+./usr/share/man/man3/hdestroy1.3		comp-c-man		.man
 ./usr/share/man/man3/hdestroy_r.3		comp-c-man		.man
+./usr/share/man/man3/hdestroy1_r.3		comp-c-man		.man
 ./usr/share/man/man3/heapsort.3			comp-c-man		.man
 ./usr/share/man/man3/herror.3			comp-c-man		.man
 ./usr/share/man/man3/hesiod.3			comp-c-man		hesiod,.man
