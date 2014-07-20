@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.675 2014/07/19 14:17:49 skrll Exp $
+$NetBSD: usbdevs,v 1.676 2014/07/20 14:00:48 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -905,6 +905,7 @@ product ASUSTEK USBN10		0x1786	USB-N10
 product ASUSTEK RT3070_1	0x1790	RT3070
 product ASUSTEK RTL8192SU_1	0x1791	RTL8192SU
 product ASUSTEK RTL8192CU	0x17ab	RTL8192CU
+product ASUSTEK USBN10NANO	0x17ba	USB-N10 Nano
 product ASUSTEK MYPAL_A730	0x4202	MyPal A730
 product ASUSTEK2 USBN11		0x0b05	USB-N11
 
