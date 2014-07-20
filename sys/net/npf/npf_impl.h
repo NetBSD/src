@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.54 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.55 2014/07/20 00:37:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -129,9 +129,9 @@ typedef struct {
  */
 
 typedef struct {
-	bool		(*match)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-	bool		(*translate)(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
-	npf_conn_t *	(*inspect)(npf_cache_t *, nbuf_t *, int);
+	bool		(*match)(npf_cache_t *, npf_nat_t *, int);
+	bool		(*translate)(npf_cache_t *, npf_nat_t *, bool);
+	npf_conn_t *	(*inspect)(npf_cache_t *, int);
 } npfa_funcs_t;
 
 /*
@@ -189,8 +189,8 @@ bool		npf_pfil_registered_p(void);
 int		npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 
 /* Protocol helpers. */
-int		npf_cache_all(npf_cache_t *, nbuf_t *);
-void		npf_recache(npf_cache_t *, nbuf_t *);
+int		npf_cache_all(npf_cache_t *);
+void		npf_recache(npf_cache_t *);
 
 bool		npf_rwrip(const npf_cache_t *, u_int, const npf_addr_t *);
 bool		npf_rwrport(const npf_cache_t *, u_int, const in_port_t);
@@ -213,13 +213,13 @@ void		npf_addr_mask(const npf_addr_t *, const npf_netmask_t,
 
 int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
 		    uint32_t *);
-bool		npf_fetch_tcpopts(npf_cache_t *, nbuf_t *, uint16_t *, int *);
-bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
+bool		npf_fetch_tcpopts(npf_cache_t *, uint16_t *, int *);
+bool		npf_return_block(npf_cache_t *, const int);
 
 /* BPF interface. */
 void		npf_bpf_sysinit(void);
 void		npf_bpf_sysfini(void);
-void		npf_bpf_prepare(npf_cache_t *, nbuf_t *, bpf_args_t *, uint32_t *);
+void		npf_bpf_prepare(npf_cache_t *, bpf_args_t *, uint32_t *);
 int		npf_bpf_filter(bpf_args_t *, const void *, bpfjit_func_t);
 void *		npf_bpf_compile(void *, size_t);
 bool		npf_bpf_validate(const void *, size_t);
@@ -267,8 +267,8 @@ prop_dictionary_t npf_ruleset_list(npf_ruleset_t *, const char *);
 int		npf_ruleset_flush(npf_ruleset_t *, const char *);
 void		npf_ruleset_gc(npf_ruleset_t *);
 
-npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *,
-		    const npf_ruleset_t *, const int, const int);
+npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, const npf_ruleset_t *,
+		    const int, const int);
 int		npf_rule_conclude(const npf_rule_t *, int *);
 
 /* Rule interface. */
@@ -294,16 +294,15 @@ void		npf_rprocset_insert(npf_rprocset_t *, npf_rproc_t *);
 npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
 void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
-bool		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *, int *);
+bool		npf_rproc_run(npf_cache_t *, npf_rproc_t *, int *);
 
 /* State handling. */
-bool		npf_state_init(npf_cache_t *, nbuf_t *, npf_state_t *);
-bool		npf_state_inspect(npf_cache_t *, nbuf_t *, npf_state_t *,
-		    const bool);
+bool		npf_state_init(npf_cache_t *, npf_state_t *);
+bool		npf_state_inspect(npf_cache_t *, npf_state_t *, const bool);
 int		npf_state_etime(const npf_state_t *, const int);
 void		npf_state_destroy(npf_state_t *);
 
-bool		npf_state_tcp(npf_cache_t *, nbuf_t *, npf_state_t *, int);
+bool		npf_state_tcp(npf_cache_t *, npf_state_t *, int);
 int		npf_state_tcp_timeout(const npf_state_t *);
 
 /* NAT. */
@@ -315,7 +314,7 @@ bool		npf_nat_matchpolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
-int		npf_do_nat(npf_cache_t *, npf_conn_t *, nbuf_t *, const int);
+int		npf_do_nat(npf_cache_t *, npf_conn_t *, const int);
 void		npf_nat_destroy(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
@@ -330,9 +329,9 @@ void		npf_alg_sysfini(void);
 npf_alg_t *	npf_alg_register(const char *, const npfa_funcs_t *);
 int		npf_alg_unregister(npf_alg_t *);
 npf_alg_t *	npf_alg_construct(const char *);
-bool		npf_alg_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
-npf_conn_t *	npf_alg_conn(npf_cache_t *, nbuf_t *, int);
+bool		npf_alg_match(npf_cache_t *, npf_nat_t *, int);
+void		npf_alg_exec(npf_cache_t *, npf_nat_t *, bool);
+npf_conn_t *	npf_alg_conn(npf_cache_t *, int);
 
 /* Debugging routines. */
 const char *	npf_addr_dump(const npf_addr_t *, int);
