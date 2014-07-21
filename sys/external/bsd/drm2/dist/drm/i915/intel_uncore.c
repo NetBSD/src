@@ -38,8 +38,13 @@
 #define	__raw_i915_read32(dev_priv, reg) bus_space_read_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
 #define	__raw_i915_write32(dev_priv, reg, val) bus_space_write_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (val))
 
+#ifdef _LP64
 #define	__raw_i915_read64(dev_priv, reg) bus_space_read_8((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg))
 #define	__raw_i915_write64(dev_priv, reg, val) bus_space_write_8((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (val))
+#else
+#define	__raw_i915_read64(dev_priv, reg) (bus_space_read_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg)) | ((uint64_t)bus_space_read_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg)) << 32))
+#define	__raw_i915_write64(dev_priv, reg, val) (bus_space_write_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg), (uint32_t)(val)), bus_space_write_4((dev_priv)->regs_bst, (dev_priv)->regs_bsh, (reg) + 4, (uint32_t)((val) >> 32)))
+#endif
 
 #else
 
