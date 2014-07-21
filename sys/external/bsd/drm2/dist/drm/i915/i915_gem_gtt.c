@@ -2029,7 +2029,38 @@ int i915_gem_gtt_prepare_object(struct drm_i915_gem_object *obj)
 #endif
 }
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+static inline uint64_t
+gen8_get_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i)
+{
+	CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
+	CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
+#ifdef _LP64			/* XXX How to detect bus_space_read_8?  */
+	return bus_space_read_8(bst, bsh, 8*i);
+#else
+	/*
+	 * XXX I'm not sure this case can actually happen in practice:
+	 * 32-bit gen8 chipsets?
+	 */
+	return bus_space_read_4(bst, bsh, 8*i) |
+	    ((uint64_t)bus_space_read_4(bst, bsh, 8*i + 4) << 32);
+#endif
+}
+
+static inline void
+gen8_set_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i,
+    gen8_gtt_pte_t pte)
+{
+	CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
+	CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
+#ifdef _LP64			/* XXX How to detect bus_space_write_8?  */
+	bus_space_write_8(bst, bsh, 8*i, pte);
+#else
+	bus_space_write_4(bst, bsh, 8*i, (uint32_t)pte);
+	bus_space_write_4(bst, bsh, 8*i + 4, (uint32_t)(pte >> 32));
+#endif
+}
+#else
 static inline void gen8_set_pte(void __iomem *addr, gen8_gtt_pte_t pte)
 {
 #ifdef writeq
@@ -2055,13 +2086,12 @@ gen8_ggtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
 	KASSERT(0 < dmamap->dm_nsegs);
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		KASSERT(dmamap->dm_segs[i].ds_len == PAGE_SIZE);
-		CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
-		bus_space_write_8(bst, bsh, 8*(first_entry + i),
+		gen8_set_pte(bst, bsh, first_entry + i,
 		    gen8_pte_encode(dmamap->dm_segs[i].ds_addr, level, true));
 	}
 	if (0 < i) {
 		/* Posting read.  */
-		WARN_ON(bus_space_read_8(bst, bsh, 8*(first_entry + i - 1))
+		WARN_ON(gen8_get_pte(bst, bsh, (first_entry + i - 1))
 		    != gen8_pte_encode(dmamap->dm_segs[i - 1].ds_addr, level,
 			true));
 	}
@@ -2212,8 +2242,8 @@ static void gen8_ggtt_clear_range(struct i915_address_space *vm,
 #ifdef __NetBSD__
 	CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
 	for (i = 0; i < num_entries; i++)
-		bus_space_write_8(bst, bsh, 8*(first_entry + i), scratch_pte);
-	(void)bus_space_read_8(bst, bsh, 8*first_entry);
+		gen8_set_pte(bst, bsh, first_entry + i, scratch_pte);
+	(void)gen8_get_pte(bst, bsh, first_entry);
 #else
 	for (i = 0; i < num_entries; i++)
 		gen8_set_pte(&gtt_base[i], scratch_pte);
