@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.229 2014/03/22 16:08:51 prlw1 Exp $	*/
+/*	$NetBSD: vnd.c,v 1.230 2014/07/22 13:32:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.229 2014/03/22 16:08:51 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.230 2014/07/22 13:32:59 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -2039,7 +2039,13 @@ vnd_set_geometry(struct vnd_softc *vnd)
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, vnd, "zlib");
+#ifdef VND_COMPRESSION
+#define VND_DEPENDS "zlib"
+#else
+#define VND_DEPENDS NULL
+#endif
+
+MODULE(MODULE_CLASS_DRIVER, vnd, VND_DEPENDS);
 CFDRIVER_DECL(vnd, DV_DISK, NULL);
 
 static int
