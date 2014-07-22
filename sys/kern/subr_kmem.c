@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.59 2014/07/03 08:43:49 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.60 2014/07/22 07:38:41 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -65,13 +65,23 @@
  *	Prefix each allocations with a fixed-sized, aligned header and record
  *	the exact user-requested allocation size in it. When freeing, compare
  *	it with kmem_free's "size" argument.
- */
-
-/*
+ *
  * KMEM_REDZONE: detect overrun bugs.
  *	Add a 2-byte pattern (allocate one more memory chunk if needed) at the
  *	end of each allocated buffer. Check this pattern on kmem_free.
  *
+ * These options are enabled on DIAGNOSTIC.
+ *
+ *  |CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|
+ *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+--+--+
+ *  |/////|     |     |     |     |     |     |     |     |   |*|**|UU|
+ *  |/HSZ/|     |     |     |     |     |     |     |     |   |*|**|UU|
+ *  |/////|     |     |     |     |     |     |     |     |   |*|**|UU|
+ *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+--+--+
+ *  |Size |    Buffer usable by the caller (requested size)   |RedZ|Unused\
+ */
+
+/*
  * KMEM_POISON: detect modify-after-free bugs.
  *	Fill freed (in the sense of kmem_free) memory with a garbage pattern.
  *	Check the pattern on allocation.
@@ -90,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.59 2014/07/03 08:43:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.60 2014/07/22 07:38:41 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -168,11 +178,11 @@ static size_t kmem_cache_big_maxidx __read_mostly;
 
 #if defined(DIAGNOSTIC) && defined(_HARDKERNEL)
 #define	KMEM_SIZE
+#define	KMEM_REDZONE
 #endif /* defined(DIAGNOSTIC) */
 
 #if defined(DEBUG) && defined(_HARDKERNEL)
 #define	KMEM_POISON
-#define	KMEM_REDZONE
 #define	KMEM_GUARD
 #endif /* defined(DEBUG) */
 
