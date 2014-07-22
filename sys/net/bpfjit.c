@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.29 2014/07/22 08:20:08 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.30 2014/07/22 08:29:51 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.29 2014/07/22 08:20:08 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.30 2014/07/22 08:29:51 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.29 2014/07/22 08:20:08 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.30 2014/07/22 08:29:51 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -612,19 +612,11 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 			return status;
 	}
 
-	/* tmp2 = *err; */
-	status = sljit_emit_op1(compiler,
-	    SLJIT_MOV_UI,
-	    BJ_TMP2REG, 0,
-	    SLJIT_MEM1(SLJIT_LOCALS_REG),
-	    offsetof(struct bpfjit_stack, err));
-	if (status != SLJIT_SUCCESS)
-		return status;
-
-	/* if (tmp2 != 0) return 0; */
+	/* if (*err != 0) return 0; */
 	jump = sljit_emit_cmp(compiler,
-	    SLJIT_C_NOT_EQUAL,
-	    BJ_TMP2REG, 0,
+	    SLJIT_C_NOT_EQUAL|SLJIT_INT_OP,
+	    SLJIT_MEM1(SLJIT_LOCALS_REG),
+	    offsetof(struct bpfjit_stack, err),
 	    SLJIT_IMM, 0);
 	if (jump == NULL)
 		return SLJIT_ERR_ALLOC_FAILED;
@@ -989,24 +981,6 @@ emit_msh(struct sljit_compiler *compiler,
 	if (status != SLJIT_SUCCESS)
 		return status;
 
-	/* tmp1 &= 0xf */
-	status = sljit_emit_op2(compiler,
-	    SLJIT_AND,
-	    BJ_TMP1REG, 0,
-	    BJ_TMP1REG, 0,
-	    SLJIT_IMM, 0xf);
-	if (status != SLJIT_SUCCESS)
-		return status;
-
-	/* tmp1 = tmp1 << 2 */
-	status = sljit_emit_op2(compiler,
-	    SLJIT_SHL,
-	    BJ_XREG, 0,
-	    BJ_TMP1REG, 0,
-	    SLJIT_IMM, 2);
-	if (status != SLJIT_SUCCESS)
-		return status;
-
 #ifdef _KERNEL
 	over_mchain_jump = sljit_emit_jump(compiler, SLJIT_JUMP);
 	if (over_mchain_jump == NULL)
@@ -1035,6 +1009,12 @@ emit_msh(struct sljit_compiler *compiler,
 	if (status != SLJIT_SUCCESS)
 		return status;
 
+	label = sljit_emit_label(compiler);
+	if (label == NULL)
+		return SLJIT_ERR_ALLOC_FAILED;
+	sljit_set_label(over_mchain_jump, label);
+#endif
+
 	/* tmp1 &= 0xf */
 	status = sljit_emit_op2(compiler,
 	    SLJIT_AND,
@@ -1044,7 +1024,7 @@ emit_msh(struct sljit_compiler *compiler,
 	if (status != SLJIT_SUCCESS)
 		return status;
 
-	/* tmp1 = tmp1 << 2 */
+	/* X = tmp1 << 2 */
 	status = sljit_emit_op2(compiler,
 	    SLJIT_SHL,
 	    BJ_XREG, 0,
@@ -1052,13 +1032,6 @@ emit_msh(struct sljit_compiler *compiler,
 	    SLJIT_IMM, 2);
 	if (status != SLJIT_SUCCESS)
 		return status;
-
-
-	label = sljit_emit_label(compiler);
-	if (label == NULL)
-		return SLJIT_ERR_ALLOC_FAILED;
-	sljit_set_label(over_mchain_jump, label);
-#endif
 
 	return SLJIT_SUCCESS;
 }
@@ -2107,8 +2080,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	sljit_compiler_verbose(compiler, stderr);
 #endif
 
-	status = sljit_emit_enter(compiler, 2, nscratches(hints),
-	    nsaveds(hints), sizeof(struct bpfjit_stack));
+	status = sljit_emit_enter(compiler,
+	    2, nscratches(hints), nsaveds(hints), sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
