@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.278 2014/07/14 05:00:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.279 2014/07/22 04:20:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.278 2014/07/14 05:00:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.279 2014/07/22 04:20:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,11 +712,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_FIBER,
 	  "Intel i82545GM 1000BASE-X Ethernet",
 	  WM_T_82545_3,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_SERDES,
 	  "Intel i82545GM Gigabit Ethernet (SERDES)",
 	  WM_T_82545_3,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_COPPER,
 	  "Intel i82546EB 1000BASE-T Ethernet",
 	  WM_T_82546,		WMP_F_1000T },
@@ -740,11 +740,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_FIBER,
 	  "Intel i82546GB 1000BASE-X Ethernet",
 	  WM_T_82546_3,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_SERDES,
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
 	  WM_T_82546_3,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
 	  "i82546GB quad-port Gigabit Ethernet",
 	  WM_T_82546_3,		WMP_F_1000T },
@@ -804,11 +804,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_FIBER,
 	  "Intel PRO/1000 PF (82571EB)",
 	  WM_T_82571,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_SERDES,
 	  "Intel PRO/1000 PB (82571EB)",
 	  WM_T_82571,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER,
 	  "Intel PRO/1000 QT (82571EB)",
 	  WM_T_82571,		WMP_F_1000T },
@@ -824,11 +824,10 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
 	  WM_T_82572,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_SERDES,
 	  "Intel i82572EI Gigabit Ethernet (SERDES)",
 	  WM_T_82572,		WMP_F_SERDES },
-#endif
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI,
 	  "Intel i82572EI 1000baseT Ethernet",
@@ -861,20 +860,19 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT,
 	  "i80003 dual 1000baseX Ethernet",
 	  WM_T_80003,		WMP_F_1000T },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT,
 	  "Intel i80003ES2 dual Gigabit Ethernet (SERDES)",
 	  WM_T_80003,		WMP_F_SERDES },
-#endif
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT,
 	  "Intel i80003 1000baseT Ethernet",
 	  WM_T_80003,		WMP_F_1000T },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	  "Intel i80003 Gigabit Ethernet (SERDES)",
 	  WM_T_80003,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_M_AMT,
 	  "Intel i82801H (M_AMT) LAN Controller",
 	  WM_T_ICH8,		WMP_F_1000T },
@@ -989,36 +987,36 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_FIBER,
 	  "82576 1000BaseX Ethernet",
 	  WM_T_82576,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_SERDES,
 	  "82576 gigabit Ethernet (SERDES)",
 	  WM_T_82576,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_QUAD_COPPER,
 	  "82576 quad-1000BaseT Ethernet",
 	  WM_T_82576,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_NS,
 	  "82576 gigabit Ethernet",
 	  WM_T_82576,		WMP_F_1000T },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_NS_SERDES,
 	  "82576 gigabit Ethernet (SERDES)",
 	  WM_T_82576,		WMP_F_SERDES },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_SERDES_QUAD,
 	  "82576 quad-gigabit Ethernet (SERDES)",
 	  WM_T_82576,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_COPPER,
 	  "82580 1000BaseT Ethernet",
 	  WM_T_82580,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_FIBER,
 	  "82580 1000BaseX Ethernet",
 	  WM_T_82580,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_SERDES,
 	  "82580 1000BaseT Ethernet (SERDES)",
 	  WM_T_82580,		WMP_F_SERDES },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_SGMII,
 	  "82580 gigabit Ethernet (SGMII)",
 	  WM_T_82580,		WMP_F_1000T },
@@ -1040,10 +1038,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_FIBER,
 	  "I350 Gigabit Fiber Network Connection",
 	  WM_T_I350,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SERDES,
 	  "I350 Gigabit Backplane Connection",
 	  WM_T_I350,		WMP_F_SERDES },
+#if 0
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SGMII,
 	  "I350 Gigabit Connection",
 	  WM_T_I350,		WMP_F_1000T },
@@ -1063,10 +1062,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_FIBER,
 	  "I210 Gigabit Ethernet (Fiber)",
 	  WM_T_I210,		WMP_F_1000X },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES,
 	  "I210 Gigabit Ethernet (SERDES)",
 	  WM_T_I210,		WMP_F_SERDES },
+#if 0
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII,
 	  "I210 Gigabit Ethernet (SGMII)",
 	  WM_T_I210,		WMP_F_SERDES },
@@ -6141,6 +6141,8 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	 */
 	sc->sc_ctrl |= CTRL_SWDPIO(0);
 	sc->sc_ctrl &= ~CTRL_SWDPIO(1);
+	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
+		sc->sc_ctrl &= ~CTRL_LRST;
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
@@ -6207,6 +6209,9 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t status;
 	int i;
+
+	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
+		return 0;
 
 	sc->sc_txcw = 0;
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
@@ -6350,6 +6355,11 @@ wm_tbi_check_link(struct wm_softc *sc)
 	uint32_t status;
 
 	KASSERT(WM_LOCKED(sc));
+
+	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
+		sc->sc_tbi_linkup = 1;
+		return;
+	}
 
 	status = CSR_READ(sc, WMREG_STATUS);
 
@@ -8491,6 +8501,11 @@ wm_check_for_link(struct wm_softc *sc)
 	uint32_t ctrl;
 	uint32_t status;
 	uint32_t sig;
+
+	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
+		sc->sc_tbi_linkup = 1;
+		return 0;
+	}
 
 	rxcw = CSR_READ(sc, WMREG_RXCW);
 	ctrl = CSR_READ(sc, WMREG_CTRL);
