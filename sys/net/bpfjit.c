@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.28 2014/07/13 21:54:46 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.29 2014/07/22 08:20:08 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.28 2014/07/13 21:54:46 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.29 2014/07/22 08:20:08 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.28 2014/07/13 21:54:46 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.29 2014/07/22 08:20:08 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,11 +89,12 @@ __RCSID("$NetBSD: bpfjit.c,v 1.28 2014/07/13 21:54:46 alnsn Exp $");
 #define BJ_BUF		SLJIT_SAVED_REG1
 //#define BJ_ARGS	SLJIT_SAVED_REG2
 #define BJ_BUFLEN	SLJIT_SAVED_REG3
+#define BJ_XREG		SLJIT_SAVED_EREG1
+#define BJ_ASAVE	SLJIT_SAVED_EREG2
 #define BJ_AREG		SLJIT_SCRATCH_REG1
 #define BJ_TMP1REG	SLJIT_SCRATCH_REG2
 #define BJ_TMP2REG	SLJIT_SCRATCH_REG3
-#define BJ_XREG		SLJIT_TEMPORARY_EREG1
-#define BJ_TMP3REG	SLJIT_TEMPORARY_EREG2
+#define BJ_TMP3REG	SLJIT_TEMPORARY_EREG1
 
 #ifdef _KERNEL
 #define MAX_MEMWORDS BPF_MAX_MEMWORDS
@@ -118,11 +119,12 @@ __RCSID("$NetBSD: bpfjit.c,v 1.28 2014/07/13 21:54:46 alnsn Exp $");
 typedef unsigned int bpfjit_hint_t;
 #define BJ_HINT_ABS  0x01 /* packet read at absolute offset   */
 #define BJ_HINT_IND  0x02 /* packet read at variable offset   */
-#define BJ_HINT_COP  0x04 /* BPF_COP or BPF_COPX instruction  */
-#define BJ_HINT_COPX 0x08 /* BPF_COPX instruction             */
-#define BJ_HINT_XREG 0x10 /* BJ_XREG is needed                */
-#define BJ_HINT_LDX  0x20 /* BPF_LDX instruction              */
-#define BJ_HINT_PKT  (BJ_HINT_ABS|BJ_HINT_IND) /* packet read */
+#define BJ_HINT_MSH  0x04 /* BPF_MSH instruction              */
+#define BJ_HINT_COP  0x08 /* BPF_COP or BPF_COPX instruction  */
+#define BJ_HINT_COPX 0x10 /* BPF_COPX instruction             */
+#define BJ_HINT_XREG 0x20 /* BJ_XREG is needed                */
+#define BJ_HINT_LDX  0x40 /* BPF_LDX instruction              */
+#define BJ_HINT_PKT  (BJ_HINT_ABS|BJ_HINT_IND|BJ_HINT_MSH)
 
 /*
  * Datatype for Array Bounds Check Elimination (ABC) pass.
@@ -257,16 +259,28 @@ nscratches(bpfjit_hint_t hints)
 	if (hints & BJ_HINT_COP)
 		rv = 3; /* calls copfunc with three arguments */
 
+	if (hints & BJ_HINT_COPX)
+		rv = 4; /* uses BJ_TMP3REG */
+
+	return rv;
+}
+
+/*
+ * Return a number of saved registers to pass
+ * to sljit_emit_enter() function.
+ */
+static sljit_si
+nsaveds(bpfjit_hint_t hints)
+{
+	sljit_si rv = 3;
+
 	if (hints & BJ_HINT_XREG)
 		rv = 4; /* uses BJ_XREG */
 
 #ifdef _KERNEL
 	if (hints & BJ_HINT_LDX)
-		rv = 5; /* uses BJ_TMP3REG */
+		rv = 5; /* uses BJ_ASAVE */
 #endif
-
-	if (hints & BJ_HINT_COPX)
-		rv = 5; /* uses BJ_TMP3REG */
 
 	return rv;
 }
@@ -518,26 +532,16 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
     int dst, struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize,
     uint32_t (*fn)(const struct mbuf *, uint32_t, int *))
 {
-#if BJ_XREG    == SLJIT_RETURN_REG   || \
-    BJ_XREG    == SLJIT_SCRATCH_REG1 || \
-    BJ_XREG    == SLJIT_SCRATCH_REG2 || \
-    BJ_XREG    == SLJIT_SCRATCH_REG3 || \
-    BJ_TMP3REG == SLJIT_RETURN_REG   || \
-    BJ_TMP3REG == SLJIT_SCRATCH_REG1 || \
-    BJ_TMP3REG == SLJIT_SCRATCH_REG2 || \
-    BJ_TMP3REG == SLJIT_SCRATCH_REG3
-#error "Not supported assignment of registers."
-#endif
 	struct sljit_jump *jump;
 	int status;
 
-	BJ_ASSERT(dst != BJ_TMP2REG && dst != BJ_TMP3REG);
+	BJ_ASSERT(dst != BJ_ASAVE);
 
 	if (BPF_CLASS(pc->code) == BPF_LDX) {
 		/* save A */
 		status = sljit_emit_op1(compiler,
 		    SLJIT_MOV,
-		    BJ_TMP3REG, 0,
+		    BJ_ASAVE, 0,
 		    BJ_AREG, 0);
 		if (status != SLJIT_SUCCESS)
 			return status;
@@ -633,7 +637,7 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 		status = sljit_emit_op1(compiler,
 		    SLJIT_MOV,
 		    BJ_AREG, 0,
-		    BJ_TMP3REG, 0);
+		    BJ_ASAVE, 0);
 		if (status != SLJIT_SUCCESS)
 			return status;
 	}
@@ -650,11 +654,7 @@ emit_cop(struct sljit_compiler *compiler,
     const bpf_ctx_t *bc, const struct bpf_insn *pc,
     struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize)
 {
-#if BJ_XREG    == SLJIT_RETURN_REG   || \
-    BJ_XREG    == SLJIT_SCRATCH_REG1 || \
-    BJ_XREG    == SLJIT_SCRATCH_REG2 || \
-    BJ_XREG    == SLJIT_SCRATCH_REG3 || \
-    BJ_TMP3REG == SLJIT_SCRATCH_REG1 || \
+#if BJ_TMP3REG == SLJIT_SCRATCH_REG1 || \
     BJ_TMP3REG == SLJIT_SCRATCH_REG2 || \
     BJ_TMP3REG == SLJIT_SCRATCH_REG3
 #error "Not supported assignment of registers."
@@ -1105,13 +1105,6 @@ emit_division(struct sljit_compiler *compiler, int divt, sljit_sw divw)
 {
 	int status;
 
-#if BJ_XREG == SLJIT_RETURN_REG   || \
-    BJ_XREG == SLJIT_SCRATCH_REG1 || \
-    BJ_XREG == SLJIT_SCRATCH_REG2 || \
-    BJ_AREG == SLJIT_SCRATCH_REG2
-#error "Not supported assignment of registers."
-#endif
-
 #if BJ_AREG != SLJIT_SCRATCH_REG1
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV,
@@ -1283,6 +1276,11 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 			if (BPF_MODE(insns[i].code) == BPF_MEM &&
 			    (uint32_t)insns[i].k < memwords) {
 				*initmask |= invalid & BJ_INIT_MBIT(insns[i].k);
+			}
+
+			if (BPF_MODE(insns[i].code) == BPF_MSH &&
+			    BPF_SIZE(insns[i].code) == BPF_B) {
+				*hints |= BJ_HINT_MSH;
 			}
 
 			invalid &= ~BJ_INIT_XBIT;
@@ -2109,8 +2107,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	sljit_compiler_verbose(compiler, stderr);
 #endif
 
-	status = sljit_emit_enter(compiler,
-	    2, nscratches(hints), 3, sizeof(struct bpfjit_stack));
+	status = sljit_emit_enter(compiler, 2, nscratches(hints),
+	    nsaveds(hints), sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
