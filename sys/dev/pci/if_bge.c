@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.272 2014/07/02 22:25:14 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.273 2014/07/22 17:25:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.272 2014/07/02 22:25:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.273 2014/07/22 17:25:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3313,6 +3313,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bool			no_seeprom;
 	int			capmask;
 	int			mii_flags;
+	int			map_flags;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	bp = bge_lookup(pa);
@@ -3490,6 +3491,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	/* Chips with APE need BAR2 access for APE registers/memory. */
 	if ((sc->bge_flags & BGEF_APE) != 0) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2);
+#if 0
 		if (pci_mapreg_map(pa, BGE_PCI_BAR2, memtype, 0,
 			&sc->bge_apetag, &sc->bge_apehandle, NULL,
 			&sc->bge_apesize)) {
@@ -3497,6 +3499,29 @@ bge_attach(device_t parent, device_t self, void *aux)
 			    "couldn't map BAR2 memory\n");
 			return;
 		}
+#else
+		/*
+		 * Workaround for PCI prefetchable bit. Some BCM5717-5720 based
+		 * system get NMI on boot (PR#48451). This problem might not be
+		 * the driver's bug but our PCI common part's bug. Until we
+		 * find a real reason, we ignore the prefetchable bit.
+		 */
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2,
+		    memtype, &memaddr, &sc->bge_apesize, &map_flags) != 0) {
+			aprint_error_dev(sc->bge_dev,
+			    "couldn't map BAR2 memory\n");
+			return;
+		}
+
+		map_flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+		if (bus_space_map(pa->pa_memt, memaddr,
+		    sc->bge_apesize, map_flags, &sc->bge_apehandle) != 0) {
+			aprint_error_dev(sc->bge_dev,
+			    "couldn't map BAR2 memory\n");
+			return;
+		}
+		sc->bge_apetag = pa->pa_memt;
+#endif
 
 		/* Enable APE register/memory access by host driver. */
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE);
