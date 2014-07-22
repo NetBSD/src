@@ -66,7 +66,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.1 2014/07/11 20:26:31 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.2 2014/07/22 22:41:58 justin Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -416,20 +416,9 @@ rumpuser_init(int version, const struct rumpuser_hyperup *hyp)
 		return 1;
 	}
 
-#ifdef RUMPUSER_USE_DEVRANDOM
-	uint32_t rv;
-	int fd;
-
-	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
-		srandom(time(NULL));
-	} else {
-		if (read(fd, &rv, sizeof(rv)) != sizeof(rv))
-			srandom(time(NULL));
-		else
-			srandom(rv);
-		close(fd);
+	if (rumpuser__random_init() != 0) {
+		return 1;
 	}
-#endif
 
         rumpuser__hyp = *hyp;
 
@@ -568,26 +557,6 @@ rumpuser_kill(int64_t pid, int rumpsig)
 	if (sig > 0)
 		raise(sig);
 	return 0;
-}
-
-int
-rumpuser_getrandom(void *buf, size_t buflen, int flags, size_t *retp)
-{
-	size_t origlen = buflen;
-	uint32_t *p = buf;
-	uint32_t tmp;
-	int chunk;
-
-	do {
-		chunk = buflen < 4 ? buflen : 4; /* portable MIN ... */
-		tmp = RUMPUSER_RANDOM();
-		memcpy(p, &tmp, chunk);
-		p++;
-		buflen -= chunk;
-	} while (chunk);
-
-	*retp = origlen;
-	ET(0);
 }
 
 /* thread functions */
