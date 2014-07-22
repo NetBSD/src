@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1899 2014/07/20 13:38:19 christos Exp $
+#	$NetBSD: mi,v 1.1900 2014/07/22 22:35:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7812,6 +7812,7 @@
 ./usr/share/man/cat3/libmj.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libnetpgpverify.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/libnpf.0			comp-npf-catman		npf,.cat
 ./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
 ./usr/share/man/cat3/libquota.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
@@ -8064,7 +8065,7 @@
 ./usr/share/man/cat3/noqiflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/noraw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/notimeout.0		comp-c-catman		.cat
-./usr/share/man/cat3/npf.0			comp-npf-catman		.cat,npf
+./usr/share/man/cat3/npf.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/nrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ns.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/ns_addr.0			comp-obsolete		obsolete
@@ -14617,6 +14618,7 @@
 ./usr/share/man/html3/libmj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgpverify.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/libnpf.html		comp-npf-htmlman	npf,html
 ./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
 ./usr/share/man/html3/libquota.html		comp-c-htmlman		html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
@@ -14856,7 +14858,7 @@
 ./usr/share/man/html3/noqiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/noraw.html		comp-c-htmlman		html
 ./usr/share/man/html3/notimeout.html		comp-c-htmlman		html
-./usr/share/man/html3/npf.html			comp-npf-htmlman	html,npf
+./usr/share/man/html3/npf.html			comp-obsolete		obsolete
 ./usr/share/man/html3/nrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/nsdispatch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ntoa.html			comp-c-htmlman		html
@@ -21382,6 +21384,7 @@
 ./usr/share/man/man3/libmj.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libnetpgpverify.3		comp-c-man		crypto,.man
+./usr/share/man/man3/libnpf.3			comp-npf-man		npf,.man
 ./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
 ./usr/share/man/man3/libquota.3			comp-c-man		.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
@@ -21634,7 +21637,7 @@
 ./usr/share/man/man3/noqiflush.3		comp-c-man		.man
 ./usr/share/man/man3/noraw.3			comp-c-man		.man
 ./usr/share/man/man3/notimeout.3		comp-c-man		.man
-./usr/share/man/man3/npf.3			comp-npf-man		.man,npf
+./usr/share/man/man3/npf.3			comp-obsolete		obsolete
 ./usr/share/man/man3/nrand48.3			comp-c-man		.man
 ./usr/share/man/man3/ns.3			comp-obsolete		obsolete
 ./usr/share/man/man3/ns_addr.3			comp-obsolete		obsolete
