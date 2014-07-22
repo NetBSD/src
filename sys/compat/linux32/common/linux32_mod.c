@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.5 2014/03/07 01:33:43 christos Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.6 2014/07/22 08:18:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.5 2014/03/07 01:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.6 2014/07/22 08:18:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -67,7 +67,7 @@ static struct execsw linux32_execsw[] = {
 			.elf_probe_func = linux32_elf32_probe, 
 		},
 		.es_emul = &emul_linux32,
-		.es_prio = EXECSW_PRIO_FIRST, 
+		.es_prio = EXECSW_PRIO_ANY, 
 		.es_arglen = LINUX32_ELF_AUX_ARGSIZ,
 		.es_copyargs = linux32_elf32_copyargs,
 		.es_setregs = NULL,
