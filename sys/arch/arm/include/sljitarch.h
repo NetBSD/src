@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.1 2014/06/17 06:36:39 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.2 2014/07/22 20:16:39 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -53,7 +53,7 @@
 	cpu_icache_sync_range((vaddr_t)(from), (vsize_t)((to) - (from)))
 #else
 #define SLJIT_CACHE_FLUSH(from, to) \
-	(void)arm_sync_icache((uintptr_t)(from), (size_t)(to - from))
+	(void)arm_sync_icache((uintptr_t)(from), (size_t)((to) - (from)))
 #endif
 
 #endif
