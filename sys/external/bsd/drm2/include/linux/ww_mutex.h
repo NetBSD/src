@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.2 2014/07/22 02:38:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -144,7 +144,11 @@ static inline void
 ww_mutex_init(struct ww_mutex *mutex, struct ww_class *class)
 {
 
-	mutex_init(&mutex->wwm_lock, MUTEX_DEFAULT, IPL_NONE);
+	/*
+	 * XXX Apparently Linux takes these with spin locks held.  That
+	 * strikes me as a bad idea, but so it is...
+	 */
+	mutex_init(&mutex->wwm_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex->wwm_state = WW_UNLOCKED;
 	mutex->wwm_class = class;
 	rb_tree_init(&mutex->wwm_waiters, &ww_acquire_ctx_rb_ops);
