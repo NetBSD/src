@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.2 2013/11/25 23:53:44 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.3 2014/07/22 20:38:55 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,6 @@
 #endif
 
 #define SLJIT_CACHE_FLUSH(from, to) \
-	__syncicache((from), (to)-(from))
+	__syncicache((void *)(from), (size_t)((to) - (from)))
 
 #endif
