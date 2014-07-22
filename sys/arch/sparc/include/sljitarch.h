@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.2 2013/11/17 12:01:58 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.3 2014/07/22 20:41:37 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,6 @@
 #endif
 
 #define SLJIT_CACHE_FLUSH(from, to) \
-	sparc_cache_flush((from), (to))
+	sparc_cache_flush((sljit_ins *)(from), (sljit_ins *)(to))
 
 #endif
