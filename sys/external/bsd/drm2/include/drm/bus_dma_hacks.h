@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.5 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.6 2014/07/22 22:14:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -162,12 +162,13 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 		goto fail0;
 
 	/* Success!  */
-	return 0;
+	error = 0;
+	goto out;
 
 fail1: __unused
 	bus_dmamap_unload(tag, map);
 fail0:	KASSERT(error);
-	kmem_free(segs, (nsegs * sizeof(segs[0])));
+out:	kmem_free(segs, (nsegs * sizeof(segs[0])));
 	return error;
 }
 
