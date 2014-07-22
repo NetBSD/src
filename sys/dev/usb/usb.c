@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.152 2014/07/17 19:23:40 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.153 2014/07/22 23:06:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.152 2014/07/17 19:23:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.153 2014/07/22 23:06:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -364,7 +364,6 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 	    USB_NUM_TASKQS) {
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
 		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
-		task->queue = queue;
 		cv_signal(&taskq->cv);
 	} else {
 		DPRINTFN(3,("usb_add_task: task=%p on q\n", task));
