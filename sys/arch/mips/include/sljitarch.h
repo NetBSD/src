@@ -1,7 +1,7 @@
-/*	$NetBSD: sljitarch.h,v 1.3 2013/11/17 12:01:58 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.4 2014/07/22 19:54:55 alnsn Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012,2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,24 @@
 #ifndef _MIPS_SLJITARCH_H
 #define _MIPS_SLJITARCH_H
 
-#ifndef _LP64
+#ifdef _LP64
+#define SLJIT_CONFIG_MIPS_64 1
+#else
 #define SLJIT_CONFIG_MIPS_32 1
+#endif
+
+#include <sys/types.h>
+
+#ifdef _KERNEL
+#include <mips/cache.h>
+
+#define SLJIT_CACHE_FLUSH(from, to) mips_icache_sync_range( \
+	(vaddr_t)(from), (vsize_t)((const char *)(to) - (const char *)(from)))
+#else
+#include <mips/cachectl.h>
+
+#define SLJIT_CACHE_FLUSH(from, to) \
+	(void)_cacheflush((void*)(from), (size_t)((to) - (from)), ICACHE)
 #endif
 
 #endif
