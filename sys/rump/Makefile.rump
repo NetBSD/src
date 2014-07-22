@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.98 2014/06/20 11:57:56 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.99 2014/07/22 20:25:13 alnsn Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -18,6 +18,16 @@ CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 _RUMP_NATIVEABI= no
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 CPPFLAGS+=	-D_RUMPKERNEL -I${RUMPTOP}/librump/rumpkern
+.endif
+
+# Define baseline cpu for mips ports, required for
+# rumpcomp_sync_icache() hypercall.
+.if !empty(MACHINE_ARCH:Mmips*)
+.if !empty(MACHINE_ARCH:Mmips64*)
+CPPFLAGS+=	-DMIPS64=1
+.else
+CPPFLAGS+=	-DMIPS1=1
+.endif
 .endif
 
 CPPFLAGS+=	-DMAXUSERS=32
