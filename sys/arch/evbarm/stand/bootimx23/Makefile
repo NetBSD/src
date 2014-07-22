@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2014/01/12 15:26:29 tsutsui Exp $
+# $Id: Makefile,v 1.14 2014/07/22 17:46:59 bouyer Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -8,7 +8,7 @@ SRCS=		bootimx23.c power_prep.c clock_prep.c emi_prep.c pinctrl_prep.c common.c 
 
 CLEANFILES+=	${PROG}
 CFLAGS+=	-Wall -Wno-main -ffreestanding -fno-unwind-tables
-CFLAGS+=	-march=armv5te -mtune=arm926ej-s
+CPUFLAGS=	-march=armv5te -mtune=arm926ej-s
 CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
