@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.5 2014/07/18 02:10:55 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.5 2014/07/18 02:10:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,6 +476,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_vqs = &sc->sc_vq[0];
 	vsc->sc_config_change = 0;
 	vsc->sc_intrhand = virtio_vq_intr;
+	vsc->sc_flags = 0;
 
 	features = virtio_negotiate_features(vsc,
 					     (VIRTIO_NET_F_MAC |
