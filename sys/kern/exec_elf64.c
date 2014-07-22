@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf64.c,v 1.5 2014/03/07 01:34:29 christos Exp $	*/
+/*	$NetBSD: exec_elf64.c,v 1.6 2014/07/22 08:18:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf64.c,v 1.5 2014/03/07 01:34:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf64.c,v 1.6 2014/07/22 08:18:33 maxv Exp $");
 
 #define	ELFSIZE	64
 
@@ -60,7 +60,7 @@ static struct execsw exec_elf64_execsw[] = {
 			.elf_probe_func = netbsd_elf64_probe,
 		},
 		.es_emul = &emul_netbsd,
-		.es_prio = EXECSW_PRIO_ANY,
+		.es_prio = EXECSW_PRIO_FIRST,
 		.es_arglen = ELF64_AUXSIZE,
 		.es_copyargs = elf64_copyargs,
 		.es_setregs = NULL,
