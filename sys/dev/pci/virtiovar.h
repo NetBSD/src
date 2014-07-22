@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.2 2013/12/06 02:39:58 yamt Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.3 2014/07/22 01:55:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -127,6 +127,8 @@ struct virtio_softc {
 	int			sc_ipl; /* set by child */
 	void			*sc_ih;
 
+	int			sc_flags; /* set by child */
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
@@ -145,6 +147,8 @@ struct virtio_softc {
 	int			(*sc_intrhand)(struct virtio_softc*);
 					 /* set by child */
 };
+
+#define VIRTIO_F_PCI_INTR_MPSAFE	(1 << 0)
 
 /* public interface */
 uint32_t virtio_negotiate_features(struct virtio_softc*, uint32_t);
