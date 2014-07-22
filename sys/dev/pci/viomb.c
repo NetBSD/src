@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.2 2013/10/17 21:06:15 christos Exp $	*/
+/*	$NetBSD: viomb.c,v 1.3 2014/07/22 01:55:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.2 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.3 2014/07/22 01:55:54 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_nvqs = 2;
 	vsc->sc_config_change = viomb_config_change;
 	vsc->sc_intrhand = virtio_vq_intr;
+	vsc->sc_flags = 0;
 
 	virtio_negotiate_features(vsc,
 				  VIRTIO_CONFIG_DEVICE_FEATURES);
