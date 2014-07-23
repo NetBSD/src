@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.88 2014/07/20 16:40:34 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.89 2014/07/23 04:09:48 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.88 2014/07/20 16:40:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.89 2014/07/23 04:09:48 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -989,6 +989,7 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 		count++;
 
 	if (bifc->ifbic_len == 0) {
+		BRIDGE_UNLOCK(sc);
 		bifc->ifbic_len = sizeof(breq) * count;
 		return (0);
 	}
