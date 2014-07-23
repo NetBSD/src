@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.143 2014/05/18 21:25:44 justin Exp $
+#	$NetBSD: makesyscalls.sh,v 1.144 2014/07/23 11:41:34 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -256,8 +256,9 @@ NR == 1 {
 
 	printf "#ifdef RUMP_KERNEL_IS_LIBC\n" > rumpcalls
 	printf "#define rsys_aliases(what,where) \\\n" > rumpcalls
-	printf "\t__strong_alias(what,where); \\\n" > rumpcalls
-	printf "\t__strong_alias(_##what,where);\n" > rumpcalls
+	printf "\t__weak_alias(what,where); \\\n" > rumpcalls
+	printf "\t__weak_alias(_##what,where); \\\n" > rumpcalls
+	printf "\t__strong_alias(_sys_##what,where);\n" > rumpcalls
 	printf "#else\n#define rsys_aliases(a,b)\n#endif\n\n" > rumpcalls
 
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
