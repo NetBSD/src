@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.89 2014/07/23 04:09:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.90 2014/07/23 05:32:23 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.89 2014/07/23 04:09:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.90 2014/07/23 05:32:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -979,8 +979,8 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 {
 	struct ifbifconf *bifc = arg;
 	struct bridge_iflist *bif;
-	struct ifbreq breq;
-	int count, len, error = 0;
+	struct ifbreq *breqs;
+	int i, count, error = 0;
 
 	BRIDGE_LOCK(sc);
 
@@ -988,37 +988,42 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next)
 		count++;
 
-	if (bifc->ifbic_len == 0) {
+	if (bifc->ifbic_len == 0 || bifc->ifbic_len < (sizeof(*breqs) * count)) {
 		BRIDGE_UNLOCK(sc);
-		bifc->ifbic_len = sizeof(breq) * count;
-		return (0);
+		/* Tell that a larger buffer is needed */
+		bifc->ifbic_len = sizeof(*breqs) * count;
+		return 0;
 	}
 
-	count = 0;
-	len = bifc->ifbic_len;
-	memset(&breq, 0, sizeof breq);
+	breqs = malloc(sizeof(*breqs) * count, M_DEVBUF, M_NOWAIT);
+
+	i = 0;
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-		if (len < sizeof(breq))
-			break;
+		struct ifbreq *breq = &breqs[i++];
+		memset(breq, 0, sizeof(*breq));
 
-		strlcpy(breq.ifbr_ifsname, bif->bif_ifp->if_xname,
-		    sizeof(breq.ifbr_ifsname));
-		breq.ifbr_ifsflags = bif->bif_flags;
-		breq.ifbr_state = bif->bif_state;
-		breq.ifbr_priority = bif->bif_priority;
-		breq.ifbr_path_cost = bif->bif_path_cost;
-		breq.ifbr_portno = bif->bif_ifp->if_index & 0xff;
-		error = copyout(&breq, bifc->ifbic_req + count, sizeof(breq));
-		if (error)
-			break;
-		count++;
-		len -= sizeof(breq);
+		strlcpy(breq->ifbr_ifsname, bif->bif_ifp->if_xname,
+		    sizeof(breq->ifbr_ifsname));
+		breq->ifbr_ifsflags = bif->bif_flags;
+		breq->ifbr_state = bif->bif_state;
+		breq->ifbr_priority = bif->bif_priority;
+		breq->ifbr_path_cost = bif->bif_path_cost;
+		breq->ifbr_portno = bif->bif_ifp->if_index & 0xff;
 	}
 
+	/* Don't call copyout with holding the mutex */
 	BRIDGE_UNLOCK(sc);
 
-	bifc->ifbic_len = sizeof(breq) * count;
-	return (error);
+	for (i = 0; i < count; i++) {
+		error = copyout(&breqs[i], bifc->ifbic_req + i, sizeof(*breqs));
+		if (error)
+			break;
+	}
+	bifc->ifbic_len = sizeof(*breqs) * i;
+
+	free(breqs, M_DEVBUF);
+
+	return error;
 }
 
 static int
