@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.101 2014/06/12 21:42:26 joerg Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.102 2014/07/23 11:43:29 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.101 2014/06/12 21:42:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.102 2014/07/23 11:43:29 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -52,8 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.101 2014/06/12 21:42:26 joerg Ex
 
 #ifdef RUMP_KERNEL_IS_LIBC
 #define rsys_aliases(what,where) \
-	__strong_alias(what,where); \
-	__strong_alias(_##what,where);
+	__weak_alias(what,where); \
+	__weak_alias(_##what,where); \
+	__strong_alias(_sys_##what,where);
 #else
 #define rsys_aliases(a,b)
 #endif
