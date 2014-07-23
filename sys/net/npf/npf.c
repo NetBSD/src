@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.20 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.21 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.20 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.21 2014/07/23 01:25:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -129,9 +129,6 @@ npf_fini(void)
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
 	npf_pfil_unregister(true);
-
-	/* Flush all connections, destroy configuration (ruleset, etc). */
-	npf_conn_tracking(false);
 	npf_config_fini();
 
 	/* Finally, safe to destroy the subsystems. */
@@ -220,23 +217,17 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_NPF_RULE:
 		error = npfctl_rule(cmd, data);
 		break;
-	case IOC_NPF_GETCONF:
-		error = npfctl_getconf(cmd, data);
-		break;
 	case IOC_NPF_STATS:
 		error = npfctl_stats(data);
 		break;
-	case IOC_NPF_SESSIONS_SAVE:
-		error = npfctl_conn_save(cmd, data);
-		break;
-	case IOC_NPF_SESSIONS_LOAD:
-		error = npfctl_conn_load(cmd, data);
+	case IOC_NPF_SAVE:
+		error = npfctl_save(cmd, data);
 		break;
 	case IOC_NPF_SWITCH:
 		error = npfctl_switch(data);
 		break;
-	case IOC_NPF_RELOAD:
-		error = npfctl_reload(cmd, data);
+	case IOC_NPF_LOAD:
+		error = npfctl_load(cmd, data);
 		break;
 	case IOC_NPF_VERSION:
 		*(int *)data = NPF_VERSION;

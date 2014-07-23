@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conndb.c,v 1.1 2014/07/19 18:24:16 rmind Exp $	*/
+/*	$NetBSD: npf_conndb.c,v 1.2 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.1 2014/07/19 18:24:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.2 2014/07/23 01:25:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -126,6 +126,10 @@ void
 npf_conndb_destroy(npf_conndb_t *cd)
 {
 	size_t len = offsetof(npf_conndb_t, cd_hashtbl[CONNDB_HASH_BUCKETS]);
+
+	KASSERT(cd->cd_recent == NULL);
+	KASSERT(cd->cd_list == NULL);
+	KASSERT(cd->cd_tail == NULL);
 
 	for (u_int i = 0; i < CONNDB_HASH_BUCKETS; i++) {
 		npf_hashbucket_t *hb = &cd->cd_hashtbl[i];
@@ -252,6 +256,7 @@ npf_conndb_getlist(npf_conndb_t *cd)
 		KASSERT(cd->cd_list == NULL);
 		cd->cd_list = con;
 	} else {
+		KASSERT(prev->c_next == NULL);
 		prev->c_next = con;
 	}
 	return cd->cd_list;
@@ -264,5 +269,6 @@ void
 npf_conndb_settail(npf_conndb_t *cd, npf_conn_t *con)
 {
 	KASSERT(con || cd->cd_list == NULL);
+	KASSERT(!con || con->c_next == NULL);
 	cd->cd_tail = con;
 }

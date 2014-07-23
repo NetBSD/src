@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.5 2014/07/20 14:16:00 joerg Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.6 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -93,14 +93,13 @@
  *
  * Lock order
  *
- *	conn_lock ->
- *		[ npf_config_lock -> ]
- *			npf_hashbucket_t::cd_lock ->
- *				npf_conn_t::c_lock
+ *	npf_config_lock ->
+ *		conn_lock ->
+ *			npf_conn_t::c_lock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.5 2014/07/20 14:16:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.6 2014/07/23 01:25:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,25 +131,22 @@ CTASSERT(PFIL_ALL == (0x001 | 0x002));
 #define	CONN_REMOVED	0x020	/* "forw/back" entries removed */
 
 /*
- * Connection tracking state: disabled (off), enabled (on) or flush request.
+ * Connection tracking state: disabled (off) or enabled (on).
  */
-enum { CONN_TRACKING_OFF, CONN_TRACKING_ON, CONN_TRACKING_FLUSH };
+enum { CONN_TRACKING_OFF, CONN_TRACKING_ON };
 static volatile int	conn_tracking	__cacheline_aligned;
 
 /* Connection tracking database, connection cache and the lock. */
 static npf_conndb_t *	conn_db		__read_mostly;
 static pool_cache_t	conn_cache	__read_mostly;
 static kmutex_t		conn_lock	__cacheline_aligned;
-static kcondvar_t	conn_cv		__cacheline_aligned;
 
+static void	npf_conn_gc(npf_conndb_t *, bool, bool);
 static void	npf_conn_worker(void);
 static void	npf_conn_destroy(npf_conn_t *);
 
 /*
  * npf_conn_sys{init,fini}: initialise/destroy connection tracking.
- *
- * Connection database is initialised when connection tracking gets
- * enabled via npf_conn_tracking() interface.
  */
 
 void
@@ -159,9 +155,8 @@ npf_conn_sysinit(void)
 	conn_cache = pool_cache_init(sizeof(npf_conn_t), coherency_unit,
 	    0, 0, "npfconpl", NULL, IPL_NET, NULL, NULL, NULL);
 	mutex_init(&conn_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&conn_cv, "npfconcv");
 	conn_tracking = CONN_TRACKING_OFF;
-	conn_db = NULL;
+	conn_db = npf_conndb_create();
 
 	npf_worker_register(npf_conn_worker);
 }
@@ -169,58 +164,54 @@ npf_conn_sysinit(void)
 void
 npf_conn_sysfini(void)
 {
-	/* Disable tracking, flush all connections. */
-	npf_conn_tracking(false);
+	/* Note: the caller should have flushed the connections. */
+	KASSERT(conn_tracking == CONN_TRACKING_OFF);
 	npf_worker_unregister(npf_conn_worker);
 
-	KASSERT(conn_tracking == CONN_TRACKING_OFF);
-	KASSERT(conn_db == NULL);
+	npf_conndb_destroy(conn_db);
 	pool_cache_destroy(conn_cache);
 	mutex_destroy(&conn_lock);
-	cv_destroy(&conn_cv);
 }
 
 /*
- * npf_conn_reload: perform the reload by flushing the current connection
- * database and replacing with the new one or just destroying.
+ * npf_conn_load: perform the load by flushing the current connection
+ * database and replacing it with the new one or just destroying.
  *
- * Key routine synchronising with all other readers and writers.
+ * => The caller must disable the connection tracking and ensure that
+ *    there are no connection database lookups or references in-flight.
  */
-static void
-npf_conn_reload(npf_conndb_t *ndb, int tracking)
+void
+npf_conn_load(npf_conndb_t *ndb, bool track)
 {
-	npf_conndb_t *odb;
+	npf_conndb_t *odb = NULL;
 
-	/* Must synchronise with G/C thread and connection saving/restoring. */
-	mutex_enter(&conn_lock);
-	while (conn_tracking == CONN_TRACKING_FLUSH) {
-		cv_wait(&conn_cv, &conn_lock);
-	}
+	KASSERT(npf_config_locked_p());
 
 	/*
-	 * Set the flush status.  It disables connection inspection as well
-	 * as creation.  There may be some operations in-flight, drain them.
+	 * The connection database is in the quiescent state.
+	 * Prevent G/C thread from running and install a new database.
 	 */
-	npf_config_enter();
-	conn_tracking = CONN_TRACKING_FLUSH;
-	npf_config_sync();
-	npf_config_exit();
-
-	/* Notify the worker to G/C all connections. */
-	npf_worker_signal();
-	while (conn_tracking == CONN_TRACKING_FLUSH) {
-		cv_wait(&conn_cv, &conn_lock);
+	mutex_enter(&conn_lock);
+	if (ndb) {
+		KASSERT(conn_tracking == CONN_TRACKING_OFF);
+		odb = conn_db;
+		conn_db = ndb;
+		membar_sync();
 	}
-
-	/* Install the new database, make it visible. */
-	odb = atomic_swap_ptr(&conn_db, ndb);
-	membar_sync();
-	conn_tracking = tracking;
-
-	/* Done.  Destroy the old database, if any. */
+	if (track) {
+		/* After this point lookups start flying in. */
+		conn_tracking = CONN_TRACKING_ON;
+	}
 	mutex_exit(&conn_lock);
+
 	if (odb) {
+		/*
+		 * Flush all, no sync since the caller did it for us.
+		 * Also, release the pool cache memory.
+		 */
+		npf_conn_gc(odb, true, false);
 		npf_conndb_destroy(odb);
+		pool_cache_invalidate(conn_cache);
 	}
 }
 
@@ -230,21 +221,11 @@ npf_conn_reload(npf_conndb_t *ndb, int tracking)
 void
 npf_conn_tracking(bool track)
 {
-	if (conn_tracking == CONN_TRACKING_OFF && track) {
-		/* Disabled -> Enable. */
-		npf_conndb_t *cd = npf_conndb_create();
-		npf_conn_reload(cd, CONN_TRACKING_ON);
-		return;
-	}
-	if (conn_tracking == CONN_TRACKING_ON && !track) {
-		/* Enabled -> Disable. */
-		npf_conn_reload(NULL, CONN_TRACKING_OFF);
-		pool_cache_invalidate(conn_cache);
-		return;
-	}
+	KASSERT(npf_config_locked_p());
+	conn_tracking = track ? CONN_TRACKING_ON : CONN_TRACKING_OFF;
 }
 
-static bool
+static inline bool
 npf_conn_trackable_p(const npf_cache_t *npc)
 {
 	/*
@@ -476,7 +457,7 @@ npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 		return NULL;
 	}
 	NPF_PRINTF(("NPF: create conn %p\n", con));
-	npf_stats_inc(NPF_STAT_SESSION_CREATE);
+	npf_stats_inc(NPF_STAT_CONN_CREATE);
 
 	/* Reference count and flags (indicate direction). */
 	mutex_init(&con->c_lock, MUTEX_DEFAULT, IPL_SOFTNET);
@@ -521,7 +502,7 @@ npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 	if (!npf_conndb_insert(conn_db, bk, con)) {
 		/* We have hit the duplicate. */
 		npf_conndb_remove(conn_db, fw);
-		npf_stats_inc(NPF_STAT_RACE_SESSION);
+		npf_stats_inc(NPF_STAT_RACE_CONN);
 		goto err;
 	}
 
@@ -552,7 +533,7 @@ npf_conn_destroy(npf_conn_t *con)
 
 	/* Free the structure, increase the counter. */
 	pool_cache_put(conn_cache, con);
-	npf_stats_inc(NPF_STAT_SESSION_DESTROY);
+	npf_stats_inc(NPF_STAT_CONN_DESTROY);
 	NPF_PRINTF(("NPF: conn %p destroyed\n", con));
 }
 
@@ -719,21 +700,18 @@ npf_conn_expired(const npf_conn_t *con, const struct timespec *tsnow)
 }
 
 /*
- * npf_conn_worker: G/C to run from a worker thread.
+ * npf_conn_gc: garbage collect the expired connections.
+ *
+ * => Must run in a single-threaded manner.
+ * => If it is a flush request, then destroy all connections.
+ * => If 'sync' is true, then perform passive serialisation.
  */
 static void
-npf_conn_worker(void)
+npf_conn_gc(npf_conndb_t *cd, bool flush, bool sync)
 {
 	npf_conn_t *con, *prev, *gclist = NULL;
-	npf_conndb_t *cd;
 	struct timespec tsnow;
-	bool flushall;
 
-	mutex_enter(&conn_lock);
-	if ((cd = conn_db) == NULL) {
-		goto done;
-	}
-	flushall = (conn_tracking != CONN_TRACKING_ON);
 	getnanouptime(&tsnow);
 
 	/*
@@ -745,7 +723,7 @@ npf_conn_worker(void)
 		npf_conn_t *next = con->c_next;
 
 		/* Expired?  Flushing all? */
-		if (!npf_conn_expired(con, &tsnow) && !flushall) {
+		if (!npf_conn_expired(con, &tsnow) && !flush) {
 			prev = con;
 			con = next;
 			continue;
@@ -775,12 +753,18 @@ npf_conn_worker(void)
 		con = next;
 	}
 	npf_conndb_settail(cd, prev);
-done:
-	/* Ensure we it is safe to destroy the connections. */
-	if (gclist) {
-		npf_config_enter();
-		npf_config_sync();
-		npf_config_exit();
+
+	/*
+	 * Ensure it is safe to destroy the connections.
+	 * Note: drop the conn_lock (see the lock order).
+	 */
+	if (sync) {
+		mutex_exit(&conn_lock);
+		if (gclist) {
+			npf_config_enter();
+			npf_config_sync();
+			npf_config_exit();
+		}
 	}
 
 	/*
@@ -802,28 +786,25 @@ done:
 		npf_conn_destroy(con);
 		con = next;
 	}
-
-	if (conn_tracking == CONN_TRACKING_FLUSH) {
-		/* Flush was requested - indicate we are done. */
-		conn_tracking = CONN_TRACKING_OFF;
-		cv_broadcast(&conn_cv);
-	}
-	mutex_exit(&conn_lock);
-}
-
-void
-npf_conn_load(npf_conndb_t *cd)
-{
-	KASSERT(cd != NULL);
-	npf_conn_reload(cd, CONN_TRACKING_ON);
 }
 
 /*
- * npf_conn_save: construct a list of connections prepared for saving.
+ * npf_conn_worker: G/C to run from a worker thread.
+ */
+static void
+npf_conn_worker(void)
+{
+	mutex_enter(&conn_lock);
+	/* Note: the conn_lock will be released (sync == true). */
+	npf_conn_gc(conn_db, false, true);
+}
+
+/*
+ * npf_conn_export: construct a list of connections prepared for saving.
  * Note: this is expected to be an expensive operation.
  */
 int
-npf_conn_save(prop_array_t conlist, prop_array_t nplist)
+npf_conn_export(prop_array_t conlist)
 {
 	npf_conn_t *con, *prev;
 
@@ -832,7 +813,7 @@ npf_conn_save(prop_array_t conlist, prop_array_t nplist)
 	 * destruction and G/C thread.
 	 */
 	mutex_enter(&conn_lock);
-	if (!conn_db || conn_tracking != CONN_TRACKING_ON) {
+	if (conn_tracking != CONN_TRACKING_ON) {
 		mutex_exit(&conn_lock);
 		return 0;
 	}
@@ -861,11 +842,8 @@ npf_conn_save(prop_array_t conlist, prop_array_t nplist)
 		d = prop_data_create_data(bkey, NPF_CONN_MAXKEYLEN);
 		prop_dictionary_set_and_rel(cdict, "back-key", d);
 
-		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		prop_dictionary_set_uint64(cdict, "id-ptr", (uintptr_t)con);
-
 		if (con->c_nat) {
-			npf_nat_save(cdict, nplist, con->c_nat);
+			npf_nat_export(cdict, con->c_nat);
 		}
 		prop_array_add(conlist, cdict);
 		prop_object_release(cdict);
@@ -875,16 +853,16 @@ skip:
 	}
 	npf_conndb_settail(conn_db, prev);
 	mutex_exit(&conn_lock);
-
 	return 0;
 }
 
 /*
- * npf_conn_restore: fully reconstruct a single connection from a directory
- * and insert into the given database.
+ * npf_conn_import: fully reconstruct a single connection from a
+ * directory and insert into the given database.
  */
 int
-npf_conn_restore(npf_conndb_t *cd, prop_dictionary_t cdict)
+npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
+    npf_ruleset_t *natlist)
 {
 	npf_conn_t *con;
 	npf_connkey_t *fw, *bk;
@@ -909,7 +887,7 @@ npf_conn_restore(npf_conndb_t *cd, prop_dictionary_t cdict)
 	memcpy(&con->c_state, d, sizeof(npf_state_t));
 
 	/* Reconstruct NAT association, if any, or return NULL. */
-	con->c_nat = npf_nat_restore(cdict, con);
+	con->c_nat = npf_nat_import(cdict, natlist, con);
 
 	/*
 	 * Fetch and copy the keys for each direction.

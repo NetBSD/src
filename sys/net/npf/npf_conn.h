@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.h,v 1.2 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_conn.h,v 1.3 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@ typedef struct npf_connkey npf_connkey_t;
 
 #include <sys/rbtree.h>
 
+/*
+ * See npf_conn_key() function for the description key layout.
+ */
 #define	NPF_CONN_NKEYWORDS	(2 + ((sizeof(npf_addr_t) * 2) >> 2))
 #define	NPF_CONN_MAXKEYLEN	(NPF_CONN_NKEYWORDS * sizeof(uint32_t))
 #define	NPF_CONN_GETALEN(key)	((key)->ck_key[0] & 0xffff)
@@ -98,6 +101,7 @@ struct npf_conn {
 void		npf_conn_sysinit(void);
 void		npf_conn_sysfini(void);
 void		npf_conn_tracking(bool);
+void		npf_conn_load(npf_conndb_t *, bool);
 
 bool		npf_conn_conkey(const npf_cache_t *, npf_connkey_t *, bool);
 npf_conn_t *	npf_conn_lookup(const npf_cache_t *, const int, bool *);
@@ -110,11 +114,9 @@ void		npf_conn_setpass(npf_conn_t *, npf_rproc_t *);
 int		npf_conn_setnat(const npf_cache_t *, npf_conn_t *,
 		    npf_nat_t *, u_int);
 npf_nat_t *	npf_conn_retnat(npf_conn_t *, const int, bool *);
-
-void		npf_conn_load(npf_conndb_t *);
-int		npf_conn_save(prop_array_t, prop_array_t);
-int		npf_conn_restore(npf_conndb_t *, prop_dictionary_t);
-
+int		npf_conn_export(prop_array_t);
+int		npf_conn_import(npf_conndb_t *, prop_dictionary_t,
+		    npf_ruleset_t *);
 void		npf_conn_print(const npf_conn_t *);
 
 /*
