@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.17 2014/06/13 18:49:41 mlelstv Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.18 2014/07/23 06:10:40 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -837,10 +837,10 @@ smsc_chip_init(struct smsc_softc *sc)
 	 */
 	reg_val |= (SMSC_HW_CFG_MEF | SMSC_HW_CFG_BCE);
 
-	/*               
+	/*
 	 * set Rx data offset to ETHER_ALIGN which will make the IP header
 	 * align on a word boundary.
-	 */              
+	 */
 	reg_val |= ETHER_ALIGN << SMSC_HW_CFG_RXDOFF_SHIFT;
 
 	smsc_write_reg(sc, SMSC_HW_CFG, reg_val);
@@ -1357,12 +1357,12 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			 * Ignore H/W csum for non-IPv4 packets.
 			 */
 			smsc_dbg_printf(sc,"Ethertype %02x pktlen %02x\n",
-			   be16toh(eh->ether_type), pktlen);
+			    be16toh(eh->ether_type), pktlen);
 			if (be16toh(eh->ether_type) == ETHERTYPE_IP &&
-			   pktlen > ETHER_MIN_LEN) {
+			    pktlen > ETHER_MIN_LEN) {
 
 				m->m_pkthdr.csum_flags |=
-				   (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_DATA);
+				    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_DATA);
 
 				/*
 				 * Copy the TCP/UDP checksum from the last 2
@@ -1370,17 +1370,17 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				 * csum_data field.
 				 */
 				memcpy(&m->m_pkthdr.csum_data,
-				   buf + pktlen - 2, 2);
+				    buf + pktlen - 2, 2);
 				/*
 				 * The data is copied in network order, but the
 				 * csum algorithm in the kernel expects it to be
 				 * in host network order.
 				 */
 				m->m_pkthdr.csum_data =
-				   ntohs(m->m_pkthdr.csum_data);
+				    ntohs(m->m_pkthdr.csum_data);
 				smsc_dbg_printf(sc,
-				   "RX checksum offloaded (0x%04x)\n",
-				   m->m_pkthdr.csum_data);
+				    "RX checksum offloaded (0x%04x)\n",
+				    m->m_pkthdr.csum_data);
 			}
 		}
 
