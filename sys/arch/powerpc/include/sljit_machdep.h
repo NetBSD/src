@@ -1,7 +1,7 @@
-/*	$NetBSD: sljitarch.h,v 1.3 2014/07/22 20:41:37 alnsn Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.1 2014/07/23 18:19:45 alnsn Exp $	*/
 
 /*-
- * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,14 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SPARC_SLJITARCH_H
-#define _SPARC_SLJITARCH_H
+#ifndef _POWERPC_SLJITARCH_H
+#define _POWERPC_SLJITARCH_H
 
-#ifndef _LP64
-#define SLJIT_CONFIG_SPARC_32 1
+#include <sys/types.h>
+#include <machine/cpu.h>
+
+#if defined(_LP64)
+#define SLJIT_CONFIG_PPC_64 1
+#else
+#define SLJIT_CONFIG_PPC_32 1
 #endif
 
 #define SLJIT_CACHE_FLUSH(from, to) \
-	sparc_cache_flush((sljit_ins *)(from), (sljit_ins *)(to))
+	__syncicache((void *)(from), (size_t)((to) - (from)))
 
 #endif
