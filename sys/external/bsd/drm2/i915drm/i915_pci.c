@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.12 2014/07/16 23:25:18 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.13 2014/07/23 18:05:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.12 2014/07/16 23:25:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.13 2014/07/23 18:05:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -301,8 +301,7 @@ intel_genfb_attach(struct drm_device *dev, struct drm_fb_helper *helper,
 	int ret;
 
 #if NVGA > 0
-	if (vga_is_console(dev->pdev->pd_pa.pa_iot, -1) ||
-	    vga_is_console(dev->pdev->pd_pa.pa_iot, -1)) {
+	if (vga_is_console(dev->pdev->pd_pa.pa_iot, -1)) {
 		what_was_cons = CONS_VGA;
 		prop_dictionary_set_bool(dict, "is_console", true);
 		/*
