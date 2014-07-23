@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2014/07/22 20:19:57 alnsn Exp $
+#	$NetBSD: Makefile,v 1.37 2014/07/23 18:19:44 alnsn Exp $
 
 INCSDIR= /usr/include/pmax
 
@@ -17,7 +17,7 @@ INCS=	ansi.h asm.h autoconf.h \
 	param.h pcb.h pmap.h pmc.h \
 	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
-	setjmp.h signal.h sljitarch.h \
+	setjmp.h signal.h sljit_machdep.h \
 	tc_machdep.h trap.h types.h \
 	vmparam.h \
 	wchar_limits.h
