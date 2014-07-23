@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.225 2014/07/19 18:38:33 lneto Exp $
+# $NetBSD: md.sparc64,v 1.226 2014/07/23 02:42:56 lneto Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -320,6 +320,10 @@
 ./usr/lib/sparc/libz.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libz.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/lua				base-compat-shlib	compat
+./usr/lib/sparc/lua/5.1				base-obsolete		obsolete
+./usr/lib/sparc/lua/5.1/gpio.so			base-obsolete		obsolete
+./usr/lib/sparc/lua/5.1/sqlite.so		base-obsolete		obsolete
+./usr/lib/sparc/lua/5.1/syslog.so		base-obsolete		obsolete
 ./usr/lib/sparc/lua/5.3				base-compat-shlib	compat
 ./usr/lib/sparc/lua/5.3/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/sparc/lua/5.3/sqlite.so		base-compat-shlib	compat,pic
