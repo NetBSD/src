@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.41 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.42 2014/07/23 05:00:38 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.41 2014/07/23 01:25:34 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.42 2014/07/23 05:00:38 htodd Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -493,7 +493,7 @@ npfctl_save(int fd)
 	}
 	error = npf_config_export(ncf, NPF_DB_PATH);
 	npf_config_destroy(ncf);
-	return 0;
+	return error;
 }
 
 static int
