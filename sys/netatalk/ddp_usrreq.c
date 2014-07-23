@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.53 2014/07/09 14:41:42 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.54 2014/07/23 13:17:18 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.53 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.54 2014/07/23 13:17:18 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -89,6 +89,8 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	ddp = sotoddpcb(so);
 
@@ -171,7 +173,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_LISTEN:
 	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -180,7 +181,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_RCVD:
-	case PRU_RCVOOB:
 		/*
 		 * Don't mfree. Good architecture...
 		 */
@@ -512,6 +512,25 @@ ddp_sockaddr(struct socket *so, struct mbuf *nam)
 	return 0;
 }
 
+static int
+ddp_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+ddp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+
+	return EOPNOTSUPP;
+}
+
 /*
  * For the moment, this just find the pcb with the correct local address.
  * In the future, this will actually do some real searching, so we can use
@@ -590,6 +609,8 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_stat	ddp_stat_wrapper
 #define	ddp_peeraddr	ddp_peeraddr_wrapper
 #define	ddp_sockaddr	ddp_sockaddr_wrapper
+#define	ddp_recvoob	ddp_recvoob_wrapper
+#define	ddp_sendoob	ddp_sendoob_wrapper
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
@@ -600,6 +621,8 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_stat	= ddp_stat,
 	.pr_peeraddr	= ddp_peeraddr,
 	.pr_sockaddr	= ddp_sockaddr,
+	.pr_recvoob	= ddp_recvoob,
+	.pr_sendoob	= ddp_sendoob,
 	.pr_generic	= ddp_usrreq,
 };
 

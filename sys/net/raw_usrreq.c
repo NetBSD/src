@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.43 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.44 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.43 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.44 2014/07/23 13:17:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -167,11 +167,13 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
 	KERNEL_LOCK(1, NULL);
 
-	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	KASSERT(!control || req == PRU_SEND);
 	if (rp == NULL) {
 		error = EINVAL;
 		goto release;
@@ -239,19 +241,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = (*so->so_proto->pr_output)(m, so);
 		if (nam)
 			raw_disconnect(rp);
-		break;
-
-	/*
-	 * Not supported.
-	 */
-	case PRU_RCVOOB:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_SENDOOB:
-		m_freem(control);
-		m_freem(m);
-		error = EOPNOTSUPP;
 		break;
 
 	default:

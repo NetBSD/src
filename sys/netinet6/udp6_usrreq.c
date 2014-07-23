@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.107 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.108 2014/07/23 13:17:18 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.107 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.108 2014/07/23 13:17:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -732,6 +732,27 @@ udp6_sockaddr(struct socket *so, struct mbuf *nam)
 	return 0;
 }
 
+static int
+udp6_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+udp6_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
 int
 udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
@@ -746,6 +767,8 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
@@ -810,7 +833,6 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 
 	case PRU_LISTEN:
 	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -819,7 +841,6 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		break;
 
 	case PRU_RCVD:
-	case PRU_RCVOOB:
 		return EOPNOTSUPP;	/* do not free mbuf's */
 
 	default:
@@ -910,6 +931,8 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_stat	udp6_stat_wrapper
 #define	udp6_peeraddr	udp6_peeraddr_wrapper
 #define	udp6_sockaddr	udp6_sockaddr_wrapper
+#define	udp6_recvoob	udp6_recvoob_wrapper
+#define	udp6_sendoob	udp6_sendoob_wrapper
 #define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
@@ -920,5 +943,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pr_stat	= udp6_stat,
 	.pr_peeraddr	= udp6_peeraddr,
 	.pr_sockaddr	= udp6_sockaddr,
+	.pr_recvoob	= udp6_recvoob,
+	.pr_sendoob	= udp6_sendoob,
 	.pr_generic	= udp6_usrreq,
 };

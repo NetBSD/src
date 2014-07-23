@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.49 2014/07/09 15:37:55 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.50 2014/07/23 13:17:19 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.49 2014/07/09 15:37:55 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.50 2014/07/23 13:17:19 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -73,6 +73,8 @@ static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_peeraddr(struct socket *, struct mbuf *);
 static int	sockin_sockaddr(struct socket *, struct mbuf *);
+static int	sockin_recvoob(struct socket *, struct mbuf *, int);
+static int	sockin_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
@@ -85,6 +87,8 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_stat = sockin_stat,
 	.pr_peeraddr = sockin_peeraddr,
 	.pr_sockaddr = sockin_sockaddr,
+	.pr_recvoob = sockin_recvoob,
+	.pr_sendoob = sockin_sendoob,
 	.pr_generic = sockin_usrreq,
 };
 
@@ -513,6 +517,18 @@ sockin_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+sockin_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	panic("sockin_recvoob: IMPLEMENT ME, recvoob not supported");
+}
+
+static int
+sockin_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	panic("sockin_sendoob: IMPLEMENT ME, sendoob not supported");
+}
+
+static int
 sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
@@ -523,6 +539,8 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	switch (req) {
 	case PRU_BIND:

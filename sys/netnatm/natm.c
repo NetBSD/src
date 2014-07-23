@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.37 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.38 2014/07/23 13:17:19 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.37 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.38 2014/07/23 13:17:19 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -181,6 +181,22 @@ natm_sockaddr(struct socket *so, struct mbuf *nam)
   return EOPNOTSUPP;
 }
 
+static int
+natm_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+  KASSERT(solocked(so));
+
+  return EOPNOTSUPP;
+}
+
+static int
+natm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+  KASSERT(solocked(so));
+
+  return EOPNOTSUPP;
+}
+
 /*
  * user requests
  */
@@ -204,6 +220,8 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   KASSERT(req != PRU_SENSE);
   KASSERT(req != PRU_PEERADDR);
   KASSERT(req != PRU_SOCKADDR);
+  KASSERT(req != PRU_RCVOOB);
+  KASSERT(req != PRU_SENDOOB);
 
   s = SPLSOFTNET();
 
@@ -348,8 +366,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     case PRU_RCVD:			/* have taken data; more room now */
     case PRU_FASTTIMO:			/* 200ms timeout */
     case PRU_SLOWTIMO:			/* 500ms timeout */
-    case PRU_RCVOOB:			/* retrieve out of band data */
-    case PRU_SENDOOB:			/* send out of band data */
     case PRU_PROTORCV:			/* receive from below */
     case PRU_PROTOSEND:			/* send to below */
 #ifdef DIAGNOSTIC
@@ -452,6 +468,8 @@ PR_WRAP_USRREQS(natm)
 #define	natm_stat	natm_stat_wrapper
 #define	natm_peeraddr	natm_peeraddr_wrapper
 #define	natm_sockaddr	natm_sockaddr_wrapper
+#define	natm_recvoob	natm_recvoob_wrapper
+#define	natm_sendoob	natm_sendoob_wrapper
 #define	natm_usrreq	natm_usrreq_wrapper
 
 const struct pr_usrreqs natm_usrreqs = {
@@ -462,5 +480,7 @@ const struct pr_usrreqs natm_usrreqs = {
 	.pr_stat	= natm_stat,
 	.pr_peeraddr	= natm_peeraddr,
 	.pr_sockaddr	= natm_sockaddr,
+	.pr_recvoob	= natm_recvoob,
+	.pr_sendoob	= natm_sendoob,
 	.pr_generic	= natm_usrreq,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.32 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.33 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.32 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.33 2014/07/23 13:17:18 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -547,6 +547,27 @@ hci_sockaddr(struct socket *so, struct mbuf *nam)
 	return 0;
 }
 
+static int
+hci_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+hci_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
@@ -573,6 +594,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	switch(req) {
 	case PRU_PURGEIF:
@@ -665,12 +688,10 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return hci_send(pcb, m, (sa ? &sa->bt_bdaddr : &pcb->hp_raddr));
 
 	case PRU_RCVD:
-	case PRU_RCVOOB:
 		return EOPNOTSUPP;	/* (no release) */
 
 	case PRU_CONNECT2:
 	case PRU_LISTEN:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -905,6 +926,8 @@ PR_WRAP_USRREQS(hci)
 #define	hci_stat		hci_stat_wrapper
 #define	hci_peeraddr		hci_peeraddr_wrapper
 #define	hci_sockaddr		hci_sockaddr_wrapper
+#define	hci_recvoob		hci_recvoob_wrapper
+#define	hci_sendoob		hci_sendoob_wrapper
 #define	hci_usrreq		hci_usrreq_wrapper
 
 const struct pr_usrreqs hci_usrreqs = {
@@ -915,5 +938,7 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_stat	= hci_stat,
 	.pr_peeraddr	= hci_peeraddr,
 	.pr_sockaddr	= hci_sockaddr,
+	.pr_recvoob	= hci_recvoob,
+	.pr_sendoob	= hci_sendoob,
 	.pr_generic	= hci_usrreq,
 };

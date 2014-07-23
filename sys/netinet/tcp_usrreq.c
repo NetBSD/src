@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.188 2014/07/14 13:20:41 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.189 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.188 2014/07/14 13:20:41 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.189 2014/07/23 13:17:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -203,6 +203,8 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -256,7 +258,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		splx(s);
 		return EAFNOSUPPORT;
 	}
-	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	KASSERT(!control || req == PRU_SEND);
 #ifdef INET6
 	/* XXX: KASSERT((inp != NULL) ^ (in6p != NULL)); */
 #endif
@@ -470,45 +472,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_ABORT:
 		tp = tcp_drop(tp, ECONNABORTED);
-		break;
-
-	case PRU_RCVOOB:
-		if ((so->so_oobmark == 0 &&
-		    (so->so_state & SS_RCVATMARK) == 0) ||
-		    so->so_options & SO_OOBINLINE ||
-		    tp->t_oobflags & TCPOOB_HADDATA) {
-			error = EINVAL;
-			break;
-		}
-		if ((tp->t_oobflags & TCPOOB_HAVEDATA) == 0) {
-			error = EWOULDBLOCK;
-			break;
-		}
-		m->m_len = 1;
-		*mtod(m, char *) = tp->t_iobc;
-		if (((long)nam & MSG_PEEK) == 0)
-			tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
-		break;
-
-	case PRU_SENDOOB:
-		if (sbspace(&so->so_snd) < -512) {
-			m_freem(m);
-			error = ENOBUFS;
-			break;
-		}
-		/*
-		 * According to RFC961 (Assigned Protocols),
-		 * the urgent pointer points to the last octet
-		 * of urgent data.  We continue, however,
-		 * to consider it to indicate the first octet
-		 * of data past the urgent section.
-		 * Otherwise, snd_up should be one lower.
-		 */
-		sbappendstream(&so->so_snd, m);
-		tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
-		tp->t_force = 1;
-		error = tcp_output(tp);
-		tp->t_force = 0;
 		break;
 
 	default:
@@ -1096,6 +1059,139 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 	tcp_debug_trace(so, tp, ostate, PRU_SOCKADDR);
 
 	return 0;
+}
+
+static int
+tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	struct inpcb *inp = NULL;
+#ifdef INET6
+	struct in6pcb *in6p = NULL;
+#endif
+	struct tcpcb *tp = NULL;
+	int ostate = 0;
+
+	switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
+	case PF_INET:
+		inp = sotoinpcb(so);
+		break;
+#endif
+#ifdef INET6
+	case PF_INET6:
+		in6p = sotoin6pcb(so);
+		break;
+#endif
+	default:
+		return EAFNOSUPPORT;
+	}
+
+	if (inp == NULL
+#ifdef INET6
+	    && in6p == NULL
+#endif
+	    )
+		return EINVAL;
+
+#ifdef INET
+	if (inp) {
+		tp = intotcpcb(inp);
+		ostate = tcp_debug_capture(tp, PRU_RCVOOB);
+	}
+#endif
+#ifdef INET6
+	if (in6p) {
+		tp = in6totcpcb(in6p);
+		ostate = tcp_debug_capture(tp, PRU_RCVOOB);
+	}
+#endif
+
+	if ((so->so_oobmark == 0 &&
+	    (so->so_state & SS_RCVATMARK) == 0) ||
+	    so->so_options & SO_OOBINLINE ||
+	    tp->t_oobflags & TCPOOB_HADDATA)
+		return EINVAL;
+
+	if ((tp->t_oobflags & TCPOOB_HAVEDATA) == 0)
+		return EWOULDBLOCK;
+
+	m->m_len = 1;
+	*mtod(m, char *) = tp->t_iobc;
+	if ((flags & MSG_PEEK) == 0)
+		tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
+
+	tcp_debug_trace(so, tp, ostate, PRU_RCVOOB);
+
+	return 0;
+}
+
+static int
+tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	struct inpcb *inp = NULL;
+#ifdef INET6
+	struct in6pcb *in6p = NULL;
+#endif
+	struct tcpcb *tp = NULL;
+	int ostate = 0;
+	int error = 0;
+
+	switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
+	case PF_INET:
+		inp = sotoinpcb(so);
+		break;
+#endif
+#ifdef INET6
+	case PF_INET6:
+		in6p = sotoin6pcb(so);
+		break;
+#endif
+	default:
+		return EAFNOSUPPORT;
+	}
+
+	if (inp == NULL
+#ifdef INET6
+	    && in6p == NULL
+#endif
+	    )
+		return EINVAL;
+
+#ifdef INET
+	if (inp) {
+		tp = intotcpcb(inp);
+		ostate = tcp_debug_capture(tp, PRU_SENDOOB);
+	}
+#endif
+#ifdef INET6
+	if (in6p) {
+		tp = in6totcpcb(in6p);
+		ostate = tcp_debug_capture(tp, PRU_SENDOOB);
+	}
+#endif
+
+	if (sbspace(&so->so_snd) < -512) {
+		m_freem(m);
+		return ENOBUFS;
+	}
+	/*
+	 * According to RFC961 (Assigned Protocols),
+	 * the urgent pointer points to the last octet
+	 * of urgent data.  We continue, however,
+	 * to consider it to indicate the first octet
+	 * of data past the urgent section.
+	 * Otherwise, snd_up should be one lower.
+	 */
+	sbappendstream(&so->so_snd, m);
+	tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
+	tp->t_force = 1;
+	error = tcp_output(tp);
+	tp->t_force = 0;
+
+	tcp_debug_trace(so, tp, ostate, PRU_SENDOOB);
+
+	return error;
 }
 
 /*
@@ -2339,6 +2435,8 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_stat	tcp_stat_wrapper
 #define	tcp_peeraddr	tcp_peeraddr_wrapper
 #define	tcp_sockaddr	tcp_sockaddr_wrapper
+#define	tcp_recvoob	tcp_recvoob_wrapper
+#define	tcp_sendoob	tcp_sendoob_wrapper
 #define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {
@@ -2349,5 +2447,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_stat	= tcp_stat,
 	.pr_peeraddr	= tcp_peeraddr,
 	.pr_sockaddr	= tcp_sockaddr,
+	.pr_recvoob	= tcp_recvoob,
+	.pr_sendoob	= tcp_sendoob,
 	.pr_generic	= tcp_usrreq,
 };

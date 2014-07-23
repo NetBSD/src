@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.33 2014/05/18 14:46:15 rmind Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.34 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.33 2014/05/18 14:46:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.34 2014/07/23 13:17:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -319,9 +319,12 @@ nopages:
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-			error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-			    top, NULL, NULL, l);
+			if (flags & MSG_OOB)
+				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
+				    top, NULL);
+			else
+				error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+				    PRU_SEND, top, NULL, NULL, l);
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
@@ -367,8 +370,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		solock(so);
-		error = (*pr->pr_usrreqs->pr_generic)(so, PRU_RCVOOB, m,
-		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, NULL);
+		error = (*pr->pr_usrreqs->pr_recvoob)(so, m, flags & MSG_PEEK);
 		sounlock(so);
 		if (error)
 			goto bad;

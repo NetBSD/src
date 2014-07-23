@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.208 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.209 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.208 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.209 2014/07/23 13:17:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -942,6 +942,25 @@ udp_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+udp_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+udp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
+static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
@@ -955,6 +974,8 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
 	if (req == PRU_PURGEIF) {
@@ -970,7 +991,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
 
-	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	KASSERT(!control || req == PRU_SEND);
 	if (inp == NULL) {
 		splx(s);
 		return EINVAL;
@@ -1053,16 +1074,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (m)
 			m_freem(m);
 	}
-		break;
-
-	case PRU_RCVOOB:
-		error =  EOPNOTSUPP;
-		break;
-
-	case PRU_SENDOOB:
-		m_freem(control);
-		m_freem(m);
-		error =  EOPNOTSUPP;
 		break;
 
 	default:
@@ -1298,6 +1309,8 @@ PR_WRAP_USRREQS(udp)
 #define	udp_stat	udp_stat_wrapper
 #define	udp_peeraddr	udp_peeraddr_wrapper
 #define	udp_sockaddr	udp_sockaddr_wrapper
+#define	udp_recvoob	udp_recvoob_wrapper
+#define	udp_sendoob	udp_sendoob_wrapper
 #define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
@@ -1308,5 +1321,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_stat	= udp_stat,
 	.pr_peeraddr	= udp_peeraddr,
 	.pr_sockaddr	= udp_sockaddr,
+	.pr_recvoob	= udp_recvoob,
+	.pr_sendoob	= udp_sendoob,
 	.pr_generic	= udp_usrreq,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.155 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.156 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.155 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.156 2014/07/23 13:17:18 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -281,6 +281,26 @@ COMPATNAME(route_sockaddr)(struct socket *so, struct mbuf *nam)
 }
 
 static int
+COMPATNAME(route_recvoob)(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+COMPATNAME(route_sendoob)(struct socket *so, struct mbuf *m,
+    struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
+static int
 COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
@@ -293,6 +313,8 @@ COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
 	error = raw_usrreq(so, req, m, nam, control, l);
@@ -1394,6 +1416,8 @@ static const struct pr_usrreqs route_usrreqs = {
 	.pr_stat	= COMPATNAME(route_stat_wrapper),
 	.pr_peeraddr	= COMPATNAME(route_peeraddr_wrapper),
 	.pr_sockaddr	= COMPATNAME(route_sockaddr_wrapper),
+	.pr_recvoob	= COMPATNAME(route_recvoob_wrapper),
+	.pr_sendoob	= COMPATNAME(route_sendoob_wrapper),
 	.pr_generic	= COMPATNAME(route_usrreq_wrapper),
 };
 

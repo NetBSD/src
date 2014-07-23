@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.134 2014/07/14 13:39:18 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.135 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.134 2014/07/14 13:39:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.135 2014/07/23 13:17:18 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -613,6 +613,25 @@ rip_sockaddr(struct socket *so, struct mbuf *nam)
 	return 0;
 }
 
+static int
+rip_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+rip_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
 int
 rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
@@ -627,6 +646,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	s = splsoftnet();
 	if (req == PRU_PURGEIF) {
@@ -720,16 +741,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 		break;
 
-	case PRU_RCVOOB:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_SENDOOB:
-		m_freem(control);
-		m_freem(m);
-		error = EOPNOTSUPP;
-		break;
-
 	default:
 		panic("rip_usrreq");
 	}
@@ -746,6 +757,8 @@ PR_WRAP_USRREQS(rip)
 #define	rip_stat	rip_stat_wrapper
 #define	rip_peeraddr	rip_peeraddr_wrapper
 #define	rip_sockaddr	rip_sockaddr_wrapper
+#define	rip_recvoob	rip_recvoob_wrapper
+#define	rip_sendoob	rip_sendoob_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
 const struct pr_usrreqs rip_usrreqs = {
@@ -756,6 +769,8 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_stat	= rip_stat,
 	.pr_peeraddr	= rip_peeraddr,
 	.pr_sockaddr	= rip_sockaddr,
+	.pr_recvoob	= rip_recvoob,
+	.pr_sendoob	= rip_sendoob,
 	.pr_generic	= rip_usrreq,
 };
 
