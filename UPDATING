@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.255 2014/05/30 18:33:30 joerg Exp $
+$NetBSD: UPDATING,v 1.256 2014/07/23 08:37:03 apb Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,15 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20140721:
+	The src/external/mit/lua/src directory was accidentally created
+	and then deleted in the CVS repository.  If you get errors like
+
+	cvs [update aborted]: cannot open directory
+	/cvsroot/src/external/mit/lua/src: No such file or directory
+
+	then delete your local copy of that directory tree and try again.
 
 20140530:
 	ARM eABI switched to DWARF based exception handling. This requires
