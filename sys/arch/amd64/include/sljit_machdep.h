@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.3 2013/11/17 12:01:58 alnsn Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.1 2014/07/23 18:19:43 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
@@ -26,14 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_SLJITARCH_H
-#define _I386_SLJITARCH_H
+#ifndef _AMD64_SLJITARCH_H
+#define _AMD64_SLJITARCH_H
 
-#define SLJIT_CONFIG_X86_32 1
-
-/* No call attributes. */
-#define SLJIT_CALL
-#define SLJIT_X86_32_FASTCALL 0
+#define SLJIT_CONFIG_X86_64 1
 
 #define SLJIT_CACHE_FLUSH(from, to)
 

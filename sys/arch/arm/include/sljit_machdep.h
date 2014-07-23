@@ -1,7 +1,7 @@
-/*	$NetBSD: sljitarch.h,v 1.4 2014/07/22 19:54:55 alnsn Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.1 2014/07/23 18:19:43 alnsn Exp $	*/
 
 /*-
- * Copyright (c) 2012,2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,27 +26,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MIPS_SLJITARCH_H
-#define _MIPS_SLJITARCH_H
+#ifndef _ARM_SLJITARCH_H
+#define _ARM_SLJITARCH_H
 
-#ifdef _LP64
-#define SLJIT_CONFIG_MIPS_64 1
-#else
-#define SLJIT_CONFIG_MIPS_32 1
-#endif
-
-#include <sys/types.h>
+#include <sys/cdefs.h>
 
 #ifdef _KERNEL
-#include <mips/cache.h>
-
-#define SLJIT_CACHE_FLUSH(from, to) mips_icache_sync_range( \
-	(vaddr_t)(from), (vsize_t)((const char *)(to) - (const char *)(from)))
+#include <machine/types.h>
+#include <arm/cpufunc.h>
 #else
-#include <mips/cachectl.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <arm/sysarch.h>
+#endif
 
+#if defined(_ARM_ARCH_T2)
+#define SLJIT_CONFIG_ARM_THUMB2 1
+#elif defined(_ARM_ARCH_7)
+#define SLJIT_CONFIG_ARM_V7 1
+#else
+#define SLJIT_CONFIG_ARM_V5 1
+#endif
+
+#ifdef _KERNEL
 #define SLJIT_CACHE_FLUSH(from, to) \
-	(void)_cacheflush((void*)(from), (size_t)((to) - (from)), ICACHE)
+	cpu_icache_sync_range((vaddr_t)(from), (vsize_t)((to) - (from)))
+#else
+#define SLJIT_CACHE_FLUSH(from, to) \
+	(void)arm_sync_icache((uintptr_t)(from), (size_t)((to) - (from)))
 #endif
 
 #endif

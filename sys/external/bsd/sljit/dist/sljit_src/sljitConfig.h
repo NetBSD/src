@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfig.h,v 1.11 2014/07/18 19:38:02 alnsn Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.12 2014/07/23 18:19:45 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -57,7 +57,7 @@
 /* #define SLJIT_CONFIG_AUTO 1 */
 /* #define SLJIT_CONFIG_UNSUPPORTED 1 */
 
-#include <machine/sljitarch.h>
+#include <machine/sljit_machdep.h>
 
 #if defined(_KERNEL) && !defined(SLJIT_MALLOC)
 #define SLJIT_MALLOC(size) malloc((size), M_TEMP, M_WAITOK)
