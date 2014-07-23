@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.25 2014/07/22 20:19:57 alnsn Exp $
+# $NetBSD: md.cobalt,v 1.26 2014/07/23 18:19:43 alnsn Exp $
 ./usr/include/cobalt				comp-c-include
 ./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cobalt/ansi.h			comp-c-include
@@ -52,7 +52,8 @@
 ./usr/include/cobalt/rwlock.h			comp-c-include
 ./usr/include/cobalt/setjmp.h			comp-c-include
 ./usr/include/cobalt/signal.h			comp-c-include
-./usr/include/cobalt/sljitarch.h		comp-c-include
+./usr/include/cobalt/sljitarch.h		comp-obsolete		obsolete
+./usr/include/cobalt/sljit_machdep.h		comp-c-include
 ./usr/include/cobalt/stdarg.h			comp-obsolete		obsolete
 ./usr/include/cobalt/trap.h			comp-c-include
 ./usr/include/cobalt/types.h			comp-c-include
