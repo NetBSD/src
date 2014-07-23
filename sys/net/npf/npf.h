@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.45 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.46 2014/07/23 01:48:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ typedef struct {
 static inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)
 {
+	KASSERT(npc->npc_nbuf != NULL);
 	return __predict_true((npc->npc_info & inf) != 0);
 }
 
