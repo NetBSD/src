@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.44 2014/07/19 18:38:33 lneto Exp $
+# $NetBSD: ad.mips,v 1.45 2014/07/23 02:42:56 lneto Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -329,6 +329,10 @@
 ./usr/lib/64/libz.so.1				base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libz.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/lua				base-compat-shlib	compat,arch64
+./usr/lib/64/lua/5.1				base-obsolete		obsolete
+./usr/lib/64/lua/5.1/gpio.so			base-obsolete		obsolete
+./usr/lib/64/lua/5.1/sqlite.so			base-obsolete		obsolete
+./usr/lib/64/lua/5.1/syslog.so			base-obsolete		obsolete
 ./usr/lib/64/lua/5.3				base-compat-shlib	compat,arch64
 ./usr/lib/64/lua/5.3/gpio.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/lua/5.3/sqlite.so			base-compat-shlib	compat,pic,arch64
@@ -664,6 +668,10 @@
 ./usr/lib/o32/libz.so.1				base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libz.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/lua				base-compat-shlib	compat,arch64
+./usr/lib/o32/lua/5.1				base-obsolete		obsolete
+./usr/lib/o32/lua/5.1/gpio.so			base-obsolete		obsolete
+./usr/lib/o32/lua/5.1/sqlite.so			base-obsolete		obsolete
+./usr/lib/o32/lua/5.1/syslog.so			base-obsolete		obsolete
 ./usr/lib/o32/lua/5.3				base-compat-shlib	compat,arch64
 ./usr/lib/o32/lua/5.3/gpio.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/lua/5.3/sqlite.so			base-compat-shlib	compat,pic,arch64
