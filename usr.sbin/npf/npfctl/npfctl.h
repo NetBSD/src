@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.37 2014/05/15 02:34:29 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.38 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #define	NPF_DEV_PATH	"/dev/npf"
 #define	NPF_CONF_PATH	"/etc/npf.conf"
-#define	NPF_SESSDB_PATH	"/var/db/npf_sessions.db"
+#define	NPF_DB_PATH	"/var/db/npf.db"
 
 typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
