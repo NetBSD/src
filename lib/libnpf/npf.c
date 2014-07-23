@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.30 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.31 2014/07/23 05:00:38 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.30 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.31 2014/07/23 05:00:38 htodd Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -227,7 +227,7 @@ npf_config_export(const nl_config_t *ncf, const char *path)
 	if (!prop_dictionary_externalize_to_file(npf_dict, path)) {
 		error = errno;
 	}
-	return 0;
+	return error;
 }
 
 nl_config_t *
