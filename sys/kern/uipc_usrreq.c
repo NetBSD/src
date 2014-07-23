@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.159 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.160 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.159 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.160 2014/07/23 13:17:18 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,6 +366,25 @@ unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 }
 
 static int
+unp_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+unp_sendoob(struct socket *so, struct mbuf *m, struct mbuf * control)
+{
+	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
+static int
 unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
@@ -381,11 +400,13 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	KASSERT(solocked(so));
 	unp = sotounpcb(so);
 
-	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	KASSERT(!control || req == PRU_SEND);
 	if (unp == NULL) {
 		error = EINVAL;
 		goto release;
@@ -579,16 +600,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		KASSERT(so->so_head == NULL);
 		KASSERT(so->so_pcb != NULL);
 		unp_detach(so);
-		break;
-
-	case PRU_RCVOOB:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_SENDOOB:
-		m_freem(control);
-		m_freem(m);
-		error = EOPNOTSUPP;
 		break;
 
 	default:
@@ -1862,5 +1873,7 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_stat	= unp_stat,
 	.pr_peeraddr	= unp_peeraddr,
 	.pr_sockaddr	= unp_sockaddr,
+	.pr_recvoob	= unp_recvoob,
+	.pr_sendoob	= unp_sendoob,
 	.pr_generic	= unp_usrreq,
 };

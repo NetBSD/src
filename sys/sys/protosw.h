@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.52 2014/07/09 14:41:43 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.53 2014/07/23 13:17:19 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -243,6 +243,8 @@ struct pr_usrreqs {
 	int	(*pr_stat)(struct socket *, struct stat *);
 	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
 	int	(*pr_sockaddr)(struct socket *, struct mbuf *);
+	int	(*pr_recvoob)(struct socket *, struct mbuf *, int);
+	int	(*pr_sendoob)(struct socket *, struct mbuf *, struct mbuf *);
 	int	(*pr_generic)(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
 };
@@ -337,6 +339,26 @@ name##_sockaddr_wrapper(struct socket *a, struct mbuf *b)	\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_sockaddr(a, b);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_recvoob_wrapper(struct socket *a,		\
+    struct mbuf *b, int c)				\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_recvoob(a, b, c);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_sendoob_wrapper(struct socket *a,		\
+    struct mbuf *b, struct mbuf *c)			\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_sendoob(a, b, c);			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\
