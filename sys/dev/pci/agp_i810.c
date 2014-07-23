@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.109 2014/07/23 14:38:08 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.110 2014/07/23 14:48:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.109 2014/07/23 14:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.110 2014/07/23 14:48:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1328,6 +1328,7 @@ agp_i810_bind_memory_dcache(struct agp_softc *sc, struct agp_memory *mem,
 		if (error)
 			goto fail0;
 	}
+	mem->am_offset = offset;
 
 	/* Success!  */
 	return 0;
