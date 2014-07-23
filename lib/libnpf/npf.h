@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.26 2014/05/19 18:47:19 jakllsch Exp $	*/
+/*	$NetBSD: npf.h,v 1.27 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -74,9 +74,12 @@ typedef void (*nl_table_callback_t)(unsigned, int);
 #define	NPF_MAX_TABLE_ID	(16)
 
 nl_config_t *	npf_config_create(void);
-int		npf_config_submit(nl_config_t *, int);
 void		npf_config_destroy(nl_config_t *);
+
+int		npf_config_submit(nl_config_t *, int);
 nl_config_t *	npf_config_retrieve(int, bool *, bool *);
+nl_config_t *	npf_config_import(const char *);
+int		npf_config_export(const nl_config_t *, const char *);
 int		npf_config_flush(int);
 
 int		npf_ruleset_add(int, const char *, nl_rule_t *, uint64_t *);
@@ -119,9 +122,6 @@ void		npf_table_destroy(nl_table_t *);
 #ifdef _NPF_PRIVATE
 
 #include <ifaddrs.h>
-
-int		npf_sessions_send(int, const char *);
-int		npf_sessions_recv(int, const char *);
 
 nl_rule_t *	npf_rule_iterate(nl_config_t *, unsigned *);
 const char *	npf_rule_getname(nl_rule_t *);

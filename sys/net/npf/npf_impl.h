@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.55 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.56 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -149,8 +149,9 @@ bool		npf_config_locked_p(void);
 int		npf_config_read_enter(void);
 void		npf_config_read_exit(int);
 
-void		npf_config_reload(prop_dictionary_t, npf_ruleset_t *,
-		    npf_tableset_t *, npf_ruleset_t *, npf_rprocset_t *, bool);
+void		npf_config_load(prop_dictionary_t, npf_ruleset_t *,
+		    npf_tableset_t *, npf_ruleset_t *, npf_rprocset_t *,
+		    npf_conndb_t *, bool);
 npf_ruleset_t *	npf_config_ruleset(void);
 npf_ruleset_t *	npf_config_natset(void);
 npf_tableset_t *npf_config_tableset(void);
@@ -167,9 +168,8 @@ void		npflogattach(int);
 void		npflogdetach(void);
 int		npfctl_switch(void *);
 int		npfctl_reload(u_long, void *);
-int		npfctl_getconf(u_long, void *);
-int		npfctl_conn_save(u_long, void *);
-int		npfctl_conn_load(u_long, void *);
+int		npfctl_save(u_long, void *);
+int		npfctl_load(u_long, void *);
 int		npfctl_rule(u_long, void *);
 int		npfctl_table(void *);
 
@@ -255,8 +255,8 @@ npf_ruleset_t *	npf_ruleset_create(size_t);
 void		npf_ruleset_destroy(npf_ruleset_t *);
 void		npf_ruleset_insert(npf_ruleset_t *, npf_rule_t *);
 void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *);
-npf_rule_t *	npf_ruleset_matchnat(npf_ruleset_t *, npf_natpolicy_t *);
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
+npf_natpolicy_t *npf_ruleset_findnat(npf_ruleset_t *, uint64_t);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
 
 int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
@@ -310,8 +310,10 @@ void		npf_nat_sysinit(void);
 void		npf_nat_sysfini(void);
 npf_natpolicy_t *npf_nat_newpolicy(prop_dictionary_t, npf_ruleset_t *);
 void		npf_nat_freepolicy(npf_natpolicy_t *);
-bool		npf_nat_matchpolicy(npf_natpolicy_t *, npf_natpolicy_t *);
+bool		npf_nat_cmppolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
+void		npf_nat_setid(npf_natpolicy_t *, uint64_t);
+uint64_t	npf_nat_getid(const npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_conn_t *, const int);
@@ -320,8 +322,9 @@ void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
 
-int		npf_nat_save(prop_dictionary_t, prop_array_t, npf_nat_t *);
-npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_conn_t *);
+void		npf_nat_export(prop_dictionary_t, npf_nat_t *);
+npf_nat_t *	npf_nat_import(prop_dictionary_t, npf_ruleset_t *,
+		    npf_conn_t *);
 
 /* ALG interface. */
 void		npf_alg_sysinit(void);
