@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.32 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.33 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.32 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.33 2014/07/23 01:25:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,7 +184,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* If "passing" connection found - skip the ruleset inspection. */
 	if (con && npf_conn_pass(con, &rp)) {
-		npf_stats_inc(NPF_STAT_PASS_SESSION);
+		npf_stats_inc(NPF_STAT_PASS_CONN);
 		KASSERT(error == 0);
 		goto pass;
 	}
