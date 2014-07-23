@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.107 2014/07/01 16:27:25 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.108 2014/07/23 14:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.107 2014/07/01 16:27:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.108 2014/07/23 14:23:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1323,8 +1323,7 @@ agp_i810_bind_memory_dcache(struct agp_softc *sc, struct agp_memory *mem,
 
 	KASSERT((mem->am_size & (AGP_PAGE_SIZE - 1)) == 0);
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
-		/* XXX No offset?  */
-		error = agp_i810_write_gtt_entry(isc, i,
+		error = agp_i810_write_gtt_entry(isc, offset + i,
 		    i | I810_GTT_PTE_VALID | I810_GTT_PTE_DCACHE);
 		if (error)
 			goto fail0;
