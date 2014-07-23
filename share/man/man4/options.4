@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.437 2014/03/23 00:50:20 dholland Exp $
+.\"	$NetBSD: options.4,v 1.438 2014/07/23 20:13:13 gdt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -604,11 +604,18 @@ Note that many parts of the kernel (typically device drivers) include their own
 conditionals instead.
 This option also turns on certain other options,
 which may decrease system performance.
+Systems with this option are not suitable for regular use, and are
+intended only for debugging or looking for bugs.
 .It Cd options DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
 structures is detected.
-These checks can decrease performance up to 15%.
+Historically, the performance degredation is sufficiently small that
+it is reasonable for systems with
+.Em options DIAGNOSTIC
+to be in production use, with the real consideration not being
+performance but instead a preference for more panics versus continued
+operation with undetected problems.
 .It Cd options LOCKDEBUG
 Adds code to the kernel to detect incorrect use of locking primitives
 (mutex, rwlock).
