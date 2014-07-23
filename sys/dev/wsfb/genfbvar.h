@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.22 2014/03/18 18:20:42 riastradh Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.23 2014/07/23 16:56:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -25,9 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.22 2014/03/18 18:20:42 riastradh Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
