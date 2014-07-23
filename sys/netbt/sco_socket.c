@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.25 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.26 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.25 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.26 2014/07/23 13:17:18 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -168,6 +168,27 @@ sco_sockaddr(struct socket *so, struct mbuf *nam)
 	return sco_sockaddr_pcb(pcb, sa);
 }
 
+static int
+sco_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+sco_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
@@ -196,6 +217,8 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	switch(req) {
 	case PRU_PURGEIF:
@@ -271,14 +294,12 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_send(pcb, m0);
 
 	case PRU_RCVD:
-	case PRU_RCVOOB:
 		return EOPNOTSUPP;	/* (no release) */
 
 	case PRU_LISTEN:
 		return sco_listen(pcb);
 
 	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -426,6 +447,8 @@ PR_WRAP_USRREQS(sco)
 #define	sco_stat		sco_stat_wrapper
 #define	sco_peeraddr		sco_peeraddr_wrapper
 #define	sco_sockaddr		sco_sockaddr_wrapper
+#define	sco_recvoob		sco_recvoob_wrapper
+#define	sco_sendoob		sco_sendoob_wrapper
 #define	sco_usrreq		sco_usrreq_wrapper
 
 const struct pr_usrreqs sco_usrreqs = {
@@ -436,5 +459,7 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_stat	= sco_stat,
 	.pr_peeraddr	= sco_peeraddr,
 	.pr_sockaddr	= sco_sockaddr,
+	.pr_recvoob	= sco_recvoob,
+	.pr_sendoob	= sco_sendoob,
 	.pr_generic	= sco_usrreq,
 };

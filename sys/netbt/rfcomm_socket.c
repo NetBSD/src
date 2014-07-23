@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.24 2014/07/09 14:41:42 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.25 2014/07/23 13:17:18 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.24 2014/07/09 14:41:42 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.25 2014/07/23 13:17:18 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -185,6 +185,27 @@ rfcomm_sockaddr(struct socket *so, struct mbuf *nam)
 	return rfcomm_sockaddr_pcb(pcb, sa);
 }
 
+static int
+rfcomm_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+rfcomm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
@@ -217,6 +238,8 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	switch (req) {
 	case PRU_PURGEIF:
@@ -284,14 +307,10 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_RCVD:
 		return rfcomm_rcvd(pcb, sbspace(&up->so_rcv));
 
-	case PRU_RCVOOB:
-		return EOPNOTSUPP;	/* (no release) */
-
 	case PRU_LISTEN:
 		return rfcomm_listen(pcb);
 
 	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -472,6 +491,8 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_stat		rfcomm_stat_wrapper
 #define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
 #define	rfcomm_sockaddr		rfcomm_sockaddr_wrapper
+#define	rfcomm_recvoob		rfcomm_recvoob_wrapper
+#define	rfcomm_sendoob		rfcomm_sendoob_wrapper
 #define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct pr_usrreqs rfcomm_usrreqs = {
@@ -482,5 +503,7 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_stat	= rfcomm_stat,
 	.pr_peeraddr	= rfcomm_peeraddr,
 	.pr_sockaddr	= rfcomm_sockaddr,
+	.pr_recvoob	= rfcomm_recvoob,
+	.pr_sendoob	= rfcomm_sendoob,
 	.pr_generic	= rfcomm_usrreq,
 };
