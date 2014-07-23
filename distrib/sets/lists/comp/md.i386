@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.147 2014/07/05 20:17:51 joerg Exp $
+# $NetBSD: md.i386,v 1.148 2014/07/23 18:19:43 alnsn Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -204,7 +204,8 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
-./usr/include/i386/sljitarch.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-obsolete		obsolete
+./usr/include/i386/sljit_machdep.h		comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
