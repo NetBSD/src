@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.256 2014/07/23 08:37:03 apb Exp $
+$NetBSD: UPDATING,v 1.257 2014/07/23 08:52:32 apb Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -10,6 +10,9 @@ using build.sh, see the BUILDING file.
 Note that much of the advice in this UPDATING file was written before
 build.sh existed.  Nevertheless, the advice here may be useful for
 working around specific problems with build.sh.
+
+Sections are marked with "^^^^^".  After the section on "Recent changes"
+are several sections containing more general information.
 
 See also: BUILDING, build.sh, Makefile.
 
@@ -677,3 +680,13 @@ Fix:    May need to build & install libs with NOLINT=1 before rebuilding lint
 Symptom:Update build fails in src/tools/gcc complaining that a variable
 	(e.g. CPPFLAGS) has changed since the previous run.
 Fix:    Run "nbmake-${ARCH} clean" in src/tools/gcc or do a clean build.
+
+Symptom:cvs [update aborted]: cannot open directory /cvsroot/src/...:
+	No such file or directory.
+Cause:	If a directory is created by mistake, then it is sometimes
+	deleted from the CVS repository using administrative commands
+	that bypass the normal cvs access controls.  If your cvs working tree
+	contains references to a directory that has been deleted on the
+	server in this way, then "cvs update" reports this error.
+Fix:	Recursively delete the affected directory from your working tree
+	and try the update again.
