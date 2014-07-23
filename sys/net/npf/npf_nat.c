@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.30 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.31 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.30 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.31 2014/07/23 01:25:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,14 +113,22 @@ typedef struct {
  * NAT policy structure.
  */
 struct npf_natpolicy {
+	kmutex_t		n_lock;
 	LIST_HEAD(, npf_nat)	n_nat_list;
 	volatile u_int		n_refcnt;
-	kmutex_t		n_lock;
 	npf_portmap_t *		n_portmap;
-	/* NPF_NP_CMP_START */
+	uint64_t		n_id;
+
+	/*
+	 * Translation type, flags and address.  Optionally, prefix
+	 * for the NPTv6 and translation port.  Translation algorithm
+	 * and related data (for NPTv6, the adjustment value).
+	 *
+	 * NPF_NP_CMP_START mark starts here.
+	 */
 	int			n_type;
 	u_int			n_flags;
-	size_t			n_addr_sz;
+	u_int			n_alen;
 	npf_addr_t		n_taddr;
 	npf_netmask_t		n_tmask;
 	in_port_t		n_tport;
@@ -183,7 +191,7 @@ npf_nat_sysfini(void)
  * => Shares portmap if policy is on existing translation address.
  */
 npf_natpolicy_t *
-npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
+npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
 {
 	npf_natpolicy_t *np;
 	prop_object_t obj;
@@ -204,11 +212,11 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 
 	/* Translation IP, mask and port (if applicable). */
 	obj = prop_dictionary_get(natdict, "translation-ip");
-	np->n_addr_sz = prop_data_size(obj);
-	if (np->n_addr_sz == 0 || np->n_addr_sz > sizeof(npf_addr_t)) {
+	np->n_alen = prop_data_size(obj);
+	if (np->n_alen == 0 || np->n_alen > sizeof(npf_addr_t)) {
 		goto err;
 	}
-	memcpy(&np->n_taddr, prop_data_data_nocopy(obj), np->n_addr_sz);
+	memcpy(&np->n_taddr, prop_data_data_nocopy(obj), np->n_alen);
 	prop_dictionary_get_uint8(natdict, "translation-mask", &np->n_tmask);
 	prop_dictionary_get_uint16(natdict, "translation-port", &np->n_tport);
 
@@ -235,7 +243,7 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 	 * Inspect NAT policies in the ruleset for port map sharing.
 	 * Note that npf_ruleset_sharepm() will increase the reference count.
 	 */
-	if (!npf_ruleset_sharepm(nrlset, np)) {
+	if (!npf_ruleset_sharepm(rset, np)) {
 		/* Allocate a new port map for the NAT policy. */
 		pm = kmem_zalloc(PORTMAP_MEM_SIZE, KM_SLEEP);
 		pm->p_refcnt = 1;
@@ -297,31 +305,30 @@ npf_nat_freealg(npf_natpolicy_t *np, npf_alg_t *alg)
 
 	mutex_enter(&np->n_lock);
 	LIST_FOREACH(nt, &np->n_nat_list, nt_entry) {
-		if (nt->nt_alg != alg) {
-			continue;
-		}
-		nt->nt_alg = NULL;
+		if (nt->nt_alg == alg)
+			nt->nt_alg = NULL;
 	}
 	mutex_exit(&np->n_lock);
 }
 
 /*
- * npf_nat_matchpolicy: compare two NAT policies.
+ * npf_nat_cmppolicy: compare two NAT policies.
  *
  * => Return 0 on match, and non-zero otherwise.
  */
 bool
-npf_nat_matchpolicy(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
+npf_nat_cmppolicy(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
 {
-	void *np_raw, *mnp_raw;
+	const void *np_raw, *mnp_raw;
+
 	/*
 	 * Compare the relevant NAT policy information (in raw form),
 	 * which is enough for matching criterion.
 	 */
 	KASSERT(np && mnp && np != mnp);
-	np_raw = (uint8_t *)np + NPF_NP_CMP_START;
-	mnp_raw = (uint8_t *)mnp + NPF_NP_CMP_START;
-	return (memcmp(np_raw, mnp_raw, NPF_NP_CMP_SIZE) == 0);
+	np_raw = (const uint8_t *)np + NPF_NP_CMP_START;
+	mnp_raw = (const uint8_t *)mnp + NPF_NP_CMP_START;
+	return memcmp(np_raw, mnp_raw, NPF_NP_CMP_SIZE) == 0;
 }
 
 bool
@@ -335,10 +342,10 @@ npf_nat_sharepm(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
 	if ((np->n_flags & mnp->n_flags & NPF_NAT_PORTMAP) == 0) {
 		return false;
 	}
-	if (np->n_addr_sz != mnp->n_addr_sz) {
+	if (np->n_alen != mnp->n_alen) {
 		return false;
 	}
-	if (memcmp(&np->n_taddr, &mnp->n_taddr, np->n_addr_sz) != 0) {
+	if (memcmp(&np->n_taddr, &mnp->n_taddr, np->n_alen) != 0) {
 		return false;
 	}
 	/* If NAT policy has an old port map - drop the reference. */
@@ -353,6 +360,18 @@ npf_nat_sharepm(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
 	mnp->n_portmap = pm;
 	pm->p_refcnt++;
 	return true;
+}
+
+void
+npf_nat_setid(npf_natpolicy_t *np, uint64_t id)
+{
+	np->n_id = id;
+}
+
+uint64_t
+npf_nat_getid(const npf_natpolicy_t *np)
+{
+	return np->n_id;
 }
 
 /*
@@ -605,7 +624,7 @@ npf_nat_algo(npf_cache_t *npc, const npf_natpolicy_t *np, bool forw)
 	}
 
 	return error;
-}	
+}
 
 /*
  * npf_do_nat:
@@ -776,103 +795,62 @@ npf_nat_destroy(npf_nat_t *nt)
 }
 
 /*
- * npf_nat_save: construct NAT entry and reference to the NAT policy.
+ * npf_nat_export: serialise the NAT entry with a NAT policy ID.
  */
-int
-npf_nat_save(prop_dictionary_t condict, prop_array_t natlist, npf_nat_t *nt)
+void
+npf_nat_export(prop_dictionary_t condict, npf_nat_t *nt)
 {
 	npf_natpolicy_t *np = nt->nt_natpolicy;
-	prop_object_iterator_t it;
-	prop_dictionary_t npdict;
-	prop_data_t nd, npd;
-	uint64_t itnp;
+	prop_dictionary_t natdict;
+	prop_data_t d;
 
-	/* Set NAT entry data. */
-	nd = prop_data_create_data(nt, sizeof(npf_nat_t));
-	prop_dictionary_set(condict, "nat-data", nd);
-	prop_object_release(nd);
-
-	/* Find or create a NAT policy. */
-	it = prop_array_iterator(natlist);
-	while ((npdict = prop_object_iterator_next(it)) != NULL) {
-		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		prop_dictionary_get_uint64(npdict, "id-ptr", &itnp);
-		if ((uintptr_t)itnp == (uintptr_t)np) {
-			break;
-		}
-	}
-	if (npdict == NULL) {
-		/* Create NAT policy dictionary and copy the data. */
-		npdict = prop_dictionary_create();
-		npd = prop_data_create_data(np, sizeof(npf_natpolicy_t));
-		prop_dictionary_set(npdict, "nat-policy-data", npd);
-		prop_object_release(npd);
-
-		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		prop_dictionary_set_uint64(npdict, "id-ptr", (uintptr_t)np);
-		prop_array_add(natlist, npdict);
-		prop_object_release(npdict);
-	}
-	prop_dictionary_set(condict, "nat-policy", npdict);
-	prop_object_release(npdict);
-	return 0;
+	natdict = prop_dictionary_create();
+	d = prop_data_create_data(&nt->nt_oaddr, sizeof(npf_addr_t));
+	prop_dictionary_set_and_rel(natdict, "oaddr", d);
+	prop_dictionary_set_uint16(natdict, "oport", nt->nt_oport);
+	prop_dictionary_set_uint16(natdict, "tport", nt->nt_tport);
+	prop_dictionary_set_uint64(natdict, "nat-policy", np->n_id);
+	prop_dictionary_set_and_rel(condict, "nat", natdict);
 }
 
 /*
- * npf_nat_restore: find a matching NAT policy and restore NAT entry.
- *
- * => Caller should lock the active NAT ruleset.
+ * npf_nat_import: find the NAT policy and unserialise the NAT entry.
  */
 npf_nat_t *
-npf_nat_restore(prop_dictionary_t condict, npf_conn_t *con)
+npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
+    npf_conn_t *con)
 {
-	const npf_natpolicy_t *onp;
-	const npf_nat_t *ntraw;
-	prop_object_t obj;
 	npf_natpolicy_t *np;
-	npf_rule_t *rl;
 	npf_nat_t *nt;
+	uint64_t np_id;
+	const void *d;
 
-	/* Get raw NAT entry. */
-	obj = prop_dictionary_get(condict, "nat-data");
-	ntraw = prop_data_data_nocopy(obj);
-	if (ntraw == NULL || prop_data_size(obj) != sizeof(npf_nat_t)) {
+	prop_dictionary_get_uint64(natdict, "nat-policy", &np_id);
+	if ((np = npf_ruleset_findnat(natlist, np_id)) == NULL) {
 		return NULL;
 	}
+	nt = pool_cache_get(nat_cache, PR_WAITOK);
+	memset(nt, 0, sizeof(npf_nat_t));
 
-	/* Find a stored NAT policy information. */
-	obj = prop_dictionary_get(
-	    prop_dictionary_get(condict, "nat-policy"), "nat-policy-data");
-	onp = prop_data_data_nocopy(obj);
-	if (onp == NULL || prop_data_size(obj) != sizeof(npf_natpolicy_t)) {
+	prop_object_t obj = prop_dictionary_get(natdict, "oaddr");
+	if ((d = prop_data_data_nocopy(obj)) == NULL ||
+	    prop_data_size(obj) != sizeof(npf_addr_t)) {
+		pool_cache_put(nat_cache, nt);
 		return NULL;
 	}
-
-	/*
-	 * Match if there is an existing NAT policy.  Will acquire the
-	 * reference on it if further operations are successful.
-	 */
-	KASSERT(npf_config_locked_p());
-	rl = npf_ruleset_matchnat(npf_config_natset(), __UNCONST(onp));
-	if (rl == NULL) {
-		return NULL;
-	}
-	np = npf_rule_getnat(rl);
-	KASSERT(np != NULL);
+	memcpy(&nt->nt_oaddr, d, sizeof(npf_addr_t));
+	prop_dictionary_get_uint16(natdict, "oport", &nt->nt_oport);
+	prop_dictionary_get_uint16(natdict, "tport", &nt->nt_tport);
 
 	/* Take a specific port from port-map. */
-	if (!npf_nat_takeport(np, ntraw->nt_tport)) {
+	if (!npf_nat_takeport(np, nt->nt_tport)) {
+		pool_cache_put(nat_cache, nt);
 		return NULL;
 	}
-	atomic_inc_uint(&np->n_refcnt);
 
-	/* Create and return NAT entry for association. */
-	nt = pool_cache_get(nat_cache, PR_WAITOK);
-	memcpy(nt, ntraw, sizeof(npf_nat_t));
 	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
 	nt->nt_natpolicy = np;
 	nt->nt_conn = con;
-	nt->nt_alg = NULL;
 	return nt;
 }
 
