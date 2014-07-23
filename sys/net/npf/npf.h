@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.44 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.45 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		15
+#define	NPF_VERSION		16
 
 /*
  * Public declarations and definitions.
@@ -308,13 +308,11 @@ typedef struct npf_ioctl_table {
 
 #define	IOC_NPF_VERSION		_IOR('N', 100, int)
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
+#define	IOC_NPF_LOAD		_IOWR('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
-#define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
-#define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
+#define	IOC_NPF_SAVE		_IOR('N', 105, struct plistref)
 #define	IOC_NPF_RULE		_IOWR('N', 107, struct plistref)
-#define	IOC_NPF_GETCONF		_IOR('N', 108, struct plistref)
 
 /*
  * Statistics counters.
@@ -324,13 +322,13 @@ typedef enum {
 	/* Packets passed. */
 	NPF_STAT_PASS_DEFAULT,
 	NPF_STAT_PASS_RULESET,
-	NPF_STAT_PASS_SESSION,
+	NPF_STAT_PASS_CONN,
 	/* Packets blocked. */
 	NPF_STAT_BLOCK_DEFAULT,
 	NPF_STAT_BLOCK_RULESET,
 	/* Connection and NAT entries. */
-	NPF_STAT_SESSION_CREATE,
-	NPF_STAT_SESSION_DESTROY,
+	NPF_STAT_CONN_CREATE,
+	NPF_STAT_CONN_DESTROY,
 	NPF_STAT_NAT_CREATE,
 	NPF_STAT_NAT_DESTROY,
 	/* Invalid state cases. */
@@ -339,7 +337,7 @@ typedef enum {
 	NPF_STAT_INVALID_STATE_TCP2,
 	NPF_STAT_INVALID_STATE_TCP3,
 	/* Raced packets. */
-	NPF_STAT_RACE_SESSION,
+	NPF_STAT_RACE_CONN,
 	NPF_STAT_RACE_NAT,
 	/* Fragments. */
 	NPF_STAT_FRAGMENTS,

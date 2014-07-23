@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.29 2014/05/19 18:47:19 jakllsch Exp $	*/
+/*	$NetBSD: npf.c,v 1.30 2014/07/23 01:25:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.29 2014/05/19 18:47:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.30 2014/07/23 01:25:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -167,7 +167,7 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	}
 	if (fd) {
 		error = prop_dictionary_sendrecv_ioctl(npf_dict, fd,
-		    IOC_NPF_RELOAD, &ncf->ncf_err);
+		    IOC_NPF_LOAD, &ncf->ncf_err);
 		if (error) {
 			prop_object_release(npf_dict);
 			assert(ncf->ncf_err == NULL);
@@ -179,20 +179,13 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	return error;
 }
 
-nl_config_t *
-npf_config_retrieve(int fd, bool *active, bool *loaded)
+static nl_config_t *
+_npf_config_consdict(prop_dictionary_t npf_dict)
 {
-	prop_dictionary_t npf_dict;
 	nl_config_t *ncf;
-	int error;
 
-	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_GETCONF, &npf_dict);
-	if (error) {
-		return NULL;
-	}
 	ncf = calloc(1, sizeof(*ncf));
 	if (ncf == NULL) {
-		prop_object_release(npf_dict);
 		return NULL;
 	}
 	ncf->ncf_dict = npf_dict;
@@ -201,9 +194,57 @@ npf_config_retrieve(int fd, bool *active, bool *loaded)
 	ncf->ncf_rproc_list = prop_dictionary_get(npf_dict, "rprocs");
 	ncf->ncf_table_list = prop_dictionary_get(npf_dict, "tables");
 	ncf->ncf_nat_list = prop_dictionary_get(npf_dict, "translation");
+	return ncf;
+}
 
+nl_config_t *
+npf_config_retrieve(int fd, bool *active, bool *loaded)
+{
+	prop_dictionary_t npf_dict;
+	nl_config_t *ncf;
+	int error;
+
+	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_SAVE, &npf_dict);
+	if (error) {
+		return NULL;
+	}
+	ncf = _npf_config_consdict(npf_dict);
+	if (ncf == NULL) {
+		prop_object_release(npf_dict);
+		return NULL;
+	}
 	prop_dictionary_get_bool(npf_dict, "active", active);
 	*loaded = (ncf->ncf_rules_list != NULL);
+	return ncf;
+}
+
+int
+npf_config_export(const nl_config_t *ncf, const char *path)
+{
+	prop_dictionary_t npf_dict = ncf->ncf_dict;
+	int error = 0;
+
+	if (!prop_dictionary_externalize_to_file(npf_dict, path)) {
+		error = errno;
+	}
+	return 0;
+}
+
+nl_config_t *
+npf_config_import(const char *path)
+{
+	prop_dictionary_t npf_dict;
+	nl_config_t *ncf;
+
+	npf_dict = prop_dictionary_internalize_from_file(path);
+	if (npf_dict) {
+		return NULL;
+	}
+	ncf = _npf_config_consdict(npf_dict);
+	if (ncf == NULL) {
+		prop_object_release(npf_dict);
+		return NULL;
+	}
 	return ncf;
 }
 
@@ -1135,46 +1176,6 @@ _npf_alg_unload(nl_config_t *ncf, const char *name)
 /*
  * MISC.
  */
-
-int
-npf_sessions_recv(int fd, const char *fpath)
-{
-	prop_dictionary_t sdict;
-	int error;
-
-	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_SESSIONS_SAVE, &sdict);
-	if (error) {
-		return error;
-	}
-	if (!prop_dictionary_externalize_to_file(sdict, fpath)) {
-		error = errno;
-	}
-	prop_object_release(sdict);
-	return error;
-}
-
-int
-npf_sessions_send(int fd, const char *fpath)
-{
-	prop_dictionary_t sdict;
-	int error;
-
-	if (fpath) {
-		sdict = prop_dictionary_internalize_from_file(fpath);
-		if (sdict == NULL) {
-			return errno;
-		}
-	} else {
-		/* Empty: will flush the sessions. */
-		prop_array_t selist = prop_array_create();
-		sdict = prop_dictionary_create();
-		prop_dictionary_set(sdict, "session-list", selist);
-		prop_object_release(selist);
-	}
-	error = prop_dictionary_send_ioctl(sdict, fd, IOC_NPF_SESSIONS_LOAD);
-	prop_object_release(sdict);
-	return error;
-}
 
 static prop_dictionary_t
 _npf_debug_initonce(nl_config_t *ncf)
