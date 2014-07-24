@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpfjit.4,v 1.1 2014/07/24 21:08:50 alnsn Exp $
+.\"	$NetBSD: bpfjit.4,v 1.2 2014/07/24 21:22:29 wiz Exp $
 .\"
 .\" Copyright (c) 2014 Alexander Nasonov.
 .\" All rights reserved.
@@ -43,16 +43,16 @@ The
 .Nm
 kernel interface adds
 .Sy Just-In-Time
-compilation of filter programs sent to
+compilation of filter programs sent to a
 .Xr bpf 4
 device.
-Intead of being interpreted for every packet,
-those filter programs are compiled into a native code
+Instead of being interpreted for every packet,
+these filter programs are compiled into native code
 and the code is being executed for every packet.
 .Pp
 The implementation of
 .Nm
-is based on
+is based on the
 .Sy Stack-Less Just-In-Time
 library, or
 .Nm sljit
@@ -77,11 +77,9 @@ PowerPC 64
 SPARC 32
 .El
 .Pp
-The
 .Nm
 supports all architectures listed above.
 .Pp
-The
 .Nm
 is also available as a module in modular kernels.
 .Sh SYSCTLS
@@ -98,13 +96,14 @@ existing filter programs.
 .El
 .Sh SEE ALSO
 .Xr bpf 4 ,
-.Xr modload 8 .
+.Xr modload 8
 .Pp
 .Lk http://sljit.sourceforge.net/ sljit library
 .Sh HISTORY
 The
 .Nm
-interface first appeared in NetBSD 7.0.
+interface first appeared in
+.Nx 7.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -113,5 +112,5 @@ code was written by
 .Pp
 The
 .Nm sljit
-libary was written by
+library was written by
 .An Zoltan Herczeg Aq Mt hzmester@freemail.hu .
