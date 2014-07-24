@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.274 2014/07/24 07:33:24 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.275 2014/07/24 13:22:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.274 2014/07/24 07:33:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.275 2014/07/24 13:22:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3351,10 +3351,28 @@ bge_attach(device_t parent, device_t self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+#if 0
 		if (pci_mapreg_map(pa, BGE_PCI_BAR0,
 		    memtype, 0, &sc->bge_btag, &sc->bge_bhandle,
 		    &memaddr, &sc->bge_bsize) == 0)
 			break;
+#else
+		/*
+		 * Workaround for PCI prefetchable bit. Some BCM5717-5720 based
+		 * system get NMI on boot (PR#48451). This problem might not be
+		 * the driver's bug but our PCI common part's bug. Until we
+		 * find a real reason, we ignore the prefetchable bit.
+		 */
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR0,
+		    memtype, &memaddr, &sc->bge_bsize, &map_flags) == 0) {
+			map_flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+			if (bus_space_map(pa->pa_memt, memaddr, sc->bge_bsize,
+			    map_flags, &sc->bge_bhandle) == 0) {
+				sc->bge_btag = pa->pa_memt;
+				break;
+			}
+		}
+#endif
 	default:
 		aprint_error_dev(sc->bge_dev, "can't find mem space\n");
 		return;
