@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.14 2014/07/24 21:18:40 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.15 2014/07/24 22:13:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.14 2014/07/24 21:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.15 2014/07/24 22:13:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -195,16 +195,19 @@ i915drmkms_detach(device_t self, int flags)
 	if (error)
 		return error;
 
-	KASSERT(sc->sc_task_state == I915DRMKMS_TASK_WORKQUEUE);
-	if (sc->sc_task_u.workqueue == NULL)
+	if (sc->sc_task_state == I915DRMKMS_TASK_ATTACH)
 		goto out;
-	workqueue_destroy(sc->sc_task_u.workqueue);
+	if (sc->sc_task_u.workqueue != NULL) {
+		workqueue_destroy(sc->sc_task_u.workqueue);
+		sc->sc_task_u.workqueue = NULL;
+	}
 
 	if (sc->sc_drm_dev == NULL)
 		goto out;
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_detach(sc->sc_drm_dev, flags);
 	if (error)
+		/* XXX Kinda too late to fail now...  */
 		return error;
 	sc->sc_drm_dev = NULL;
 
