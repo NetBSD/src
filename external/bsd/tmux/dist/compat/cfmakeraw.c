@@ -1,4 +1,4 @@
-/* $Id: cfmakeraw.c,v 1.1.1.1 2014/07/24 14:22:55 christos Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2013 Dagobert Michelsen

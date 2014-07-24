@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: tmux(1) configuration file
 " Maintainer: Tiago Cunha <tcunha@users.sourceforge.net>
-" Last Change: $Date: 2014/07/24 14:22:55 $
+" Last Change: Date: 2010-07-27 18:29:07 
 " License: This file is placed in the public domain.
 "
 " To install this file:
