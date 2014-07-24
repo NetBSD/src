@@ -1,4 +1,4 @@
-/* $Id: cmd-list.c,v 1.1.1.3 2014/07/24 14:22:53 christos Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
