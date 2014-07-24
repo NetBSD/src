@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.16 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.17 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.16 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.17 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,12 +96,12 @@ rfcomm_attach_pcb(struct rfcomm_dlc **handle,
 }
 
 /*
- * rfcomm_bind(dlc, sockaddr)
+ * rfcomm_bind_pcb(dlc, sockaddr)
  *
  * bind DLC to local address
  */
 int
-rfcomm_bind(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
+rfcomm_bind_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
 
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
@@ -301,7 +301,7 @@ rfcomm_detach_pcb(struct rfcomm_dlc **handle)
 }
 
 /*
- * rfcomm_listen(dlc)
+ * rfcomm_listen_pcb(dlc)
  *
  * This DLC is a listener. We look for an existing listening session
  * with a matching address to attach to or else create a new one on
@@ -309,7 +309,7 @@ rfcomm_detach_pcb(struct rfcomm_dlc **handle)
  * available for the session.
  */
 int
-rfcomm_listen(struct rfcomm_dlc *dlc)
+rfcomm_listen_pcb(struct rfcomm_dlc *dlc)
 {
 	struct rfcomm_session *rs;
 	struct rfcomm_dlc *used;
@@ -349,7 +349,7 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 
 		rs->rs_state = RFCOMM_SESSION_LISTEN;
 
-		err = l2cap_listen(rs->rs_l2cap);
+		err = l2cap_listen_pcb(rs->rs_l2cap);
 		if (err) {
 			rfcomm_session_free(rs);
 			return err;
