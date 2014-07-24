@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.273 2014/07/22 17:25:19 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.274 2014/07/24 07:33:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.273 2014/07/22 17:25:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.274 2014/07/24 07:33:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2176,7 +2176,7 @@ bge_poll_fw(struct bge_softc *sc)
 			aprint_error_dev(sc->bge_dev, "reset timed out\n");
 			return -1;
 		}
-	} else if ((sc->bge_flags & BGEF_NO_EEPROM) == 0) {
+	} else {
 		/*
 		 * Poll the value location we just wrote until
 		 * we see the 1's complement of the magic number.
@@ -2191,7 +2191,8 @@ bge_poll_fw(struct bge_softc *sc)
 			DELAY(10);
 		}
 
-		if (i >= BGE_TIMEOUT) {
+		if ((i >= BGE_TIMEOUT)
+		    && ((sc->bge_flags & BGEF_NO_EEPROM) == 0)) {
 			aprint_error_dev(sc->bge_dev,
 			    "firmware handshake timed out, val = %x\n", val);
 			return -1;
@@ -4273,13 +4274,13 @@ bge_reset(struct bge_softc *sc)
 		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, BGE_TLP_DATA_FIFO_PROTECT);
 	}
 
-	/* 5718 reset step 13, 57XX step 17 */
-	/* Poll until the firmware initialization is complete */
-	bge_poll_fw(sc);
-
 	/* 5718 reset step 12, 57XX step 15 and 16 */
 	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
+
+	/* 5718 reset step 13, 57XX step 17 */
+	/* Poll until the firmware initialization is complete */
+	bge_poll_fw(sc);
 
 	/* 57XX step 21 */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
