@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.65 2014/06/12 19:02:35 riastradh Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.66 2014/07/24 13:42:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.65 2014/06/12 19:02:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.66 2014/07/24 13:42:28 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -703,7 +703,9 @@ static struct {
 	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics.  */
 	{ VM_FREELIST_FIRST4G,	4ULL * 1024 * 1024 * 1024 },
 #endif
-	/* 24-bit addresses needed for ISA DMA and ancient graphics.  */
+	/* 30-bit addresses needed for ancient graphics.  */
+	{ VM_FREELIST_FIRST1G,	1ULL * 1024 * 1024 * 1024 },
+	/* 24-bit addresses needed for ISA DMA.  */
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
