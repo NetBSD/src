@@ -90,7 +90,7 @@ cmd_show_messages_terminals(struct cmd_q *cmdq)
 				    ent->code, ent->name);
 				break;
 			case TTYCODE_STRING:
-				strnvis(out, code->value.string, sizeof out,
+				strnvis(out, sizeof out, code->value.string,
 				    VIS_OCTAL|VIS_TAB|VIS_NL);
 				cmdq_print(cmdq, "%4u: %s: (string) %s",
 				    ent->code, ent->name, out);
