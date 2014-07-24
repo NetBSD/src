@@ -1,5 +1,5 @@
-/*      Id: match.c,v 1.98 2012/03/22 18:51:41 plunky Exp    */	
-/*      $NetBSD: match.c,v 1.1.1.5 2012/03/26 14:27:12 plunky Exp $   */
+/*      Id: match.c,v 1.101 2014/04/08 19:53:24 ragge Exp    */	
+/*      $NetBSD: match.c,v 1.1.1.6 2014/07/24 19:28:50 plunky Exp $   */
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -70,15 +70,12 @@
 void setclass(int tmp, int class);
 int getclass(int tmp);
 
-extern char *ltyp[], *rtyp[];
-
 #ifdef PCC_DEBUG
 static char *srtyp[] = { "SRNOPE", "SRDIR", "SROREG", "SRREG" };
 #endif
 
 /*
  * return true if shape is appropriate for the node p
- * side effect for SFLD is to set up fldsz, etc
  *
  * Return values:
  * SRNOPE  Cannot match this shape.
@@ -200,7 +197,7 @@ ttype(TWORD t, int tword)
 
 #ifdef PCC_DEBUG
 	if (t2debug)
-		printf("ttype(%o, %o)\n", t, tword);
+		printf("ttype(0x%x, 0x%x)\n", t, tword);
 #endif
 	if (ISPTR(t) && ISFTN(DECREF(t)) && (tword & TFTN)) {
 		/* For funny function pointers */
@@ -279,7 +276,7 @@ expand(NODE *p, int cookie, char *cp)
 		switch( *cp ){
 
 		default:
-			PUTCHAR( *cp );
+			putchar(*cp);
 			continue;  /* this is the usual case... */
 
 		case 'Z':  /* special machine dependent operations */
@@ -700,15 +697,15 @@ relops(NODE *p)
 
 	q = &table[idx];
 
-	(void)shswitch(-1, p->n_left, q->lshape, FORCC,
+	(void)shswitch(-1, p->n_left, q->lshape, INREGS,
 	    q->rewrite & RLEFT, gol);
 
-	(void)shswitch(-1, p->n_right, q->rshape, FORCC,
+	(void)shswitch(-1, p->n_right, q->rshape, INREGS,
 	    q->rewrite & RRIGHT, gor);
 	
 	F2DEBUG(("relops: node %p\n", p));
 	p->n_su = MKIDX(idx, 0);
-	SCLASS(p->n_su, CLASSA); /* XXX */
+	SCLASS(p->n_su, 0); /* XXX */
 	return 0;
 }
 
