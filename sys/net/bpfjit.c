@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.30 2014/07/22 08:29:51 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.30 2014/07/22 08:29:51 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.30 2014/07/22 08:29:51 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -558,24 +558,34 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 		return status;
 
 	if (BPF_CLASS(pc->code) == BPF_LD && BPF_MODE(pc->code) == BPF_IND) {
-		/* if (X > UINT32_MAX - pc->k) return 0; */
-		jump = sljit_emit_cmp(compiler,
-		    SLJIT_C_GREATER,
-		    BJ_XREG, 0,
-		    SLJIT_IMM, UINT32_MAX - pc->k);
-		if (jump == NULL)
-			return SLJIT_ERR_ALLOC_FAILED;
-		if (!append_jump(jump, ret0, ret0_size, ret0_maxsize))
-			return SLJIT_ERR_ALLOC_FAILED;
+		if (pc->k == 0) {
+			/* k = X; */
+			status = sljit_emit_op1(compiler,
+			    SLJIT_MOV,
+			    SLJIT_SCRATCH_REG2, 0,
+			    BJ_XREG, 0);
+			if (status != SLJIT_SUCCESS)
+				return status;
+		} else {
+			/* if (X > UINT32_MAX - pc->k) return 0; */
+			jump = sljit_emit_cmp(compiler,
+			    SLJIT_C_GREATER,
+			    BJ_XREG, 0,
+			    SLJIT_IMM, UINT32_MAX - pc->k);
+			if (jump == NULL)
+				return SLJIT_ERR_ALLOC_FAILED;
+			if (!append_jump(jump, ret0, ret0_size, ret0_maxsize))
+				return SLJIT_ERR_ALLOC_FAILED;
 
-		/* k = X + pc->k; */
-		status = sljit_emit_op2(compiler,
-		    SLJIT_ADD,
-		    SLJIT_SCRATCH_REG2, 0,
-		    BJ_XREG, 0,
-		    SLJIT_IMM, (uint32_t)pc->k);
-		if (status != SLJIT_SUCCESS)
-			return status;
+			/* k = X + pc->k; */
+			status = sljit_emit_op2(compiler,
+			    SLJIT_ADD,
+			    SLJIT_SCRATCH_REG2, 0,
+			    BJ_XREG, 0,
+			    SLJIT_IMM, (uint32_t)pc->k);
+			if (status != SLJIT_SUCCESS)
+				return status;
+		}
 	} else {
 		/* k = pc->k */
 		status = sljit_emit_op1(compiler,
