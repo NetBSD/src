@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.102 2008/11/22 16:12:25 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.3 2010/06/03 18:57:23 plunky Exp $	*/
+/*	Id: local2.c,v 1.105 2012/09/26 20:33:03 plunky Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.4 2014/07/24 19:19:32 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,8 +30,6 @@
 
 # include "pass2.h"
 # include <ctype.h>
-
-# define putstr(s)	fputs((s), stdout)
 
 void acon(FILE *, NODE *p);
 int argsize(NODE *p);
@@ -635,7 +633,7 @@ printcon(NODE *p)
 	p = p->n_left;
 	if (p->n_lval >= 0700000000000LL) {
 		/* converted to pointer in clocal() */
-		conput(0, p);
+		conput(stdout, p);
 		return;
 	}
 	if (p->n_lval == 0 && p->n_name[0] == '\0') {
@@ -825,7 +823,7 @@ zzzcode(NODE *p, int c)
 
 /* set up temporary registers */
 void
-setregs()
+setregs(void)
 {
 	fregs = 7;	/* 7 free regs on PDP10 (1-7) */
 }
@@ -931,18 +929,18 @@ conput(FILE *fp, NODE *p)
 	switch (p->n_op) {
 	case ICON:
 		if (p->n_lval != 0) {
-			acon(stdout, p);
+			acon(fp, p);
 			if (p->n_name[0] != '\0')
-				putchar('+');
+				fputc('+', fp);
 		}
 		if (p->n_name[0] != '\0')
-			printf("%s", p->n_name);
+			fprintf(fp, "%s", p->n_name);
 		if (p->n_name[0] == '\0' && p->n_lval == 0)
-			putchar('0');
+			fputc('0', fp);
 		return;
 
 	case REG:
-		putstr(rnames[p->n_rval]);
+		fprintf(fp, "%s", rnames[p->n_rval]);
 		return;
 
 	default:
@@ -968,7 +966,7 @@ upput(NODE *p, int size)
 	size /= SZLONG;
 	switch (p->n_op) {
 	case REG:
-		putstr(rnames[p->n_rval + size]);
+		printf("%s", rnames[p->n_rval + size]);
 		break;
 
 	case NAME:
@@ -1073,7 +1071,7 @@ adrput(FILE *fp, NODE *p)
 
 /*
  * print out a constant
-*/
+ */
 void
 acon(FILE *fp, NODE *p)
 {
@@ -1311,6 +1309,7 @@ void
 mflags(char *str)
 {
 }
+
 /*
  * Do something target-dependent for xasm arguments.
  * Supposed to find target-specific constraints and rewrite them.

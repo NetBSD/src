@@ -1,7 +1,7 @@
-/*	Id: order.c,v 1.6 2014/06/03 20:19:50 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.4 2014/07/24 19:19:00 plunky Exp $	*/
+/*	Id: order.c,v 1.4 2014/04/08 19:51:31 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.1 2014/07/24 19:21:25 plunky Exp $	*/
 /*
- * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
+ * Copyright (c) 2014 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -40,39 +38,37 @@ int canaddr(NODE *);
 int
 notoff(TWORD t, int r, CONSZ off, char *cp)
 {
-	if (r != 4 && r != 5)
-		return 1; /* can only index ac2 and ac3 */
-#if 0
-	if (t == CHAR || t == UCHAR) {
-		if (off < -256 || off > 254)
-			return 1;
-	} else
-#endif
-	if (off < -128 || off > 127)
-		return 1;
+	if (off > MAX_SHORT || off < MIN_SHORT)
+		return 1; /* max signed 16-bit offset */
 	return(0);  /* YES */
 }
 
 /*
  * Turn a UMUL-referenced node into OREG.
  * Be careful about register classes, this is a place where classes change.
+ * Especially on m68k we must be careful about class changes;
+ * Pointers can only have a scalar added to it if PLUS, but when
+ * MINUS may be either only pointers or left pointer and right scalar.
+ *
+ * So far we only handle the trivial OREGs here.
  */
 void
 offstar(NODE *p, int shape)
 {
-	NODE *r;
+	NODE *q;
 
-	if (x2debug)
+	if (x2debug) {
 		printf("offstar(%p)\n", p);
+		fwalk(p, e2print, 0);
+	}
 
-	if (regno(p) == 4 || regno(p) == 5)
-		return; /* Is already OREG */
+	if (isreg(p))
+		return; /* Matched (%a0) */
 
-	r = p->n_right;
-	if ((p->n_op == PLUS || p->n_op == MINUS) && r->n_op == ICON) {
-		if (!isreg(p->n_left) ||
-		    (regno(p->n_left) != 4 && regno(p->n_left) != 5))
-			(void)geninsn(p->n_left, INBREG);
+	q = p->n_right;
+	if ((p->n_op == PLUS || p->n_op == MINUS) && q->n_op == ICON &&
+	    notoff(0, 0, q->n_lval, 0) == 0 && !isreg(p->n_left)) {
+		(void)geninsn(p->n_left, INBREG);
 		return;
 	}
 	(void)geninsn(p, INBREG);
@@ -80,12 +76,11 @@ offstar(NODE *p, int shape)
 
 /*
  * Do the actual conversion of offstar-found OREGs into real OREGs.
+ * For simple OREGs conversion should already be done.
  */
 void
 myormake(NODE *q)
 {
-	if (x2debug)
-		printf("myormake(%p)\n", q);
 }
 
 /*
@@ -140,6 +135,16 @@ setuni(NODE *p, int cookie)
 struct rspecial *
 nspecial(struct optab *q)
 {
+	switch (q->op) {
+	case STASG:
+		{
+			static struct rspecial s[] = {
+				{ NEVER, D0 }, { NEVER, D1 },
+				{ NEVER, A0 }, { NEVER, A1 },
+				/* { NRES, A0 }, */ { 0 } };
+			return s;
+		}
+	}
 	comperr("nspecial entry %d", q - table);
 	return 0; /* XXX gcc */
 }
@@ -152,16 +157,18 @@ setorder(NODE *p)
 {
 	return 0;
 }
+
 /*
- * Set registers "live" at function calls (like arguments in registers).
- * This is for liveness analysis of registers.
+ * set registers in calling conventions live.
  */
 int *
 livecall(NODE *p)
 {
-	static int r[1] = { -1 }; /* Terminate with -1 */
+	static int r[] = { A0, -1 };
 
-	return &r[0];
+	if (p->n_op == STCALL)
+		return r; /* only if struct return */
+	return &r[1];
 }
 
 /*
