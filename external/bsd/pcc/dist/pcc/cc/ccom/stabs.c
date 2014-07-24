@@ -1,5 +1,5 @@
-/*	Id: stabs.c,v 1.33 2012/03/22 18:04:41 plunky Exp 	*/	
-/*	$NetBSD: stabs.c,v 1.1.1.5 2012/03/26 14:26:52 plunky Exp $	*/
+/*	Id: stabs.c,v 1.34 2012/04/22 21:07:41 plunky Exp 	*/	
+/*	$NetBSD: stabs.c,v 1.1.1.6 2014/07/24 19:24:35 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -98,7 +98,7 @@ extern int isinlining;
  * Note that "int" is always internal number 1.
  */
 void
-stabs_init()
+stabs_init(void)
 {
 	struct stabtype *st;
 

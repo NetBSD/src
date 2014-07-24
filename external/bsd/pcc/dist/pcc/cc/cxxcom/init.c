@@ -1,5 +1,5 @@
-/*	Id: init.c,v 1.2 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: init.c,v 1.1.1.2 2012/03/26 14:26:57 plunky Exp $	*/
+/*	Id: init.c,v 1.5 2014/03/09 09:31:35 ragge Exp 	*/	
+/*	$NetBSD: init.c,v 1.1.1.3 2014/07/24 19:25:33 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -270,7 +270,7 @@ infld(CONSZ off, int fsz, CONSZ val)
 {
 #ifdef PCC_DEBUG
 	if (idebug)
-		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+		printf("infld off " CONFMT ", fsz %d, val " CONFMT " inbits %d\n",
 		    off, fsz, val, inbits);
 #endif
 	val &= SZMASK(fsz);
@@ -279,7 +279,7 @@ infld(CONSZ off, int fsz, CONSZ val)
 		int shsz = SZCHAR-inbits;
 		xinval = (xinval << shsz) | (val >> (fsz - shsz));
 		printf("%s " CONFMT "\n",
-		    astypnames[CHAR], xinval & SZMASK(SZCHAR));
+		    astypnames[CHAR], (CONSZ)(xinval & SZMASK(SZCHAR)));
 		fsz -= shsz;
 		val &= SZMASK(fsz);
 		xinval = inbits = 0;
@@ -293,7 +293,7 @@ infld(CONSZ off, int fsz, CONSZ val)
 		int shsz = SZCHAR-inbits;
 		xinval |= (val << inbits);
 		printf("%s " CONFMT "\n",
-		    astypnames[CHAR], xinval & SZMASK(SZCHAR));
+		    astypnames[CHAR], (CONSZ)(xinval & SZMASK(SZCHAR)));
 		fsz -= shsz;
 		val >>= shsz;
 		xinval = inbits = 0;
@@ -317,7 +317,7 @@ zbits(OFFSZ off, int fsz)
 
 #ifdef PCC_DEBUG
 	if (idebug)
-		printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
+		printf("zbits off " CONFMT ", fsz %d inbits %d\n", off, fsz, inbits);
 #endif
 #if TARGET_ENDIAN == TARGET_BE
 	if ((m = (inbits % SZCHAR))) {
@@ -343,7 +343,7 @@ zbits(OFFSZ off, int fsz)
 		} else {
 			fsz -= m;
 			printf("%s " CONFMT "\n", 
-			    astypnames[CHAR], xinval & SZMASK(SZCHAR));
+			    astypnames[CHAR], (CONSZ)(xinval & SZMASK(SZCHAR)));
 			xinval = inbits = 0;
 		}
 	}
@@ -445,7 +445,7 @@ stkpush(void)
 #ifdef PCC_DEBUG
 	if (idebug) {
 		printf("stkpush: '%s' %s ", sp->sname, scnames(sp->sclass));
-		tprint(stdout, t, 0);
+		tprint(t, 0);
 	}
 #endif
 
@@ -491,7 +491,7 @@ stkpush(void)
 #ifdef PCC_DEBUG
 	if (idebug) {
 		printf(" newtype ");
-		tprint(stdout, is->in_t, 0);
+		tprint(is->in_t, 0);
 		printf("\n");
 	}
 #endif
@@ -587,7 +587,7 @@ findoff(void)
 	}
 #ifdef PCC_DEBUG
 	if (idebug>1) {
-		printf("findoff: off %lld\n", off);
+		printf("findoff: off " CONFMT "\n", off);
 		prtstk(pstk);
 	}
 #endif
@@ -606,7 +606,7 @@ nsetval(CONSZ off, int fsz, NODE *p)
 	struct ilist *il;
 
 	if (idebug>1)
-		printf("setval: off %lld fsz %d p %p\n", off, fsz, p);
+		printf("setval: off " CONFMT " fsz %d p %p\n", off, fsz, p);
 
 	if (fsz == 0)
 		return;
@@ -730,7 +730,7 @@ insbf(OFFSZ off, int fsz, int val)
 
 #ifdef PCC_DEBUG
 	if (idebug > 1)
-		printf("insbf: off %lld fsz %d val %d\n", off, fsz, val);
+		printf("insbf: off " CONFMT " fsz %d val %d\n", off, fsz, val);
 #endif
 
 	if (fsz == 0)
@@ -818,9 +818,9 @@ endinit(int seg)
 		for (il = ll->il; il; il = il->next) {
 #ifdef PCC_DEBUG
 			if (idebug > 1) {
-				printf("off %lld size %d val %lld type ",
+				printf("off " CONFMT " size %d val " CONFMT " type ",
 				    ll->begsz+il->off, il->fsz, il->n->n_lval);
-				tprint(stdout, il->n->n_type, 0);
+				tprint(il->n->n_type, 0);
 				printf("\n");
 			}
 #endif
@@ -897,9 +897,8 @@ endictx(void)
  * process an initializer's left brace
  */
 void
-ilbrace()
+ilbrace(void)
 {
-
 #ifdef PCC_DEBUG
 	if (idebug)
 		printf("ilbrace()\n");
@@ -920,7 +919,7 @@ ilbrace()
  * called when a '}' is seen
  */
 void
-irbrace()
+irbrace(void)
 {
 #ifdef PCC_DEBUG
 	if (idebug)
@@ -1123,7 +1122,7 @@ prtstk(struct instk *in)
 		for (i = 0; i < o; i++)
 			printf("  ");
 		printf("%p) '%s' ", in, in->in_sym->sname);
-		tprint(stdout, in->in_t, 0);
+		tprint(in->in_t, 0);
 		printf(" %s ", scnames(in->in_sym->sclass));
 		if (in->in_df /* && in->in_df->ddim */)
 		    printf("arydim=%d ", in->in_df->ddim);

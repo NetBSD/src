@@ -1,5 +1,5 @@
-#	Id: Makefile.in,v 1.20 2012/03/15 09:22:12 plunky Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.5 2012/03/26 14:27:04 plunky Exp $
+#	Id: Makefile.in,v 1.22 2012/09/25 11:17:17 plunky Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.6 2014/07/24 19:27:12 plunky Exp $
 #
 # Makefile.in for the f77 frontend of pcc.
 #
@@ -12,7 +12,6 @@ bindir = @bindir@
 libdir = @libdir@
 libexecdir = @libexecdir@
 includedir = @includedir@
-strip = @strip@
 CC = @CC@
 TARGOS = @targos@
 TARGOSVER = @targosver@
@@ -21,13 +20,13 @@ TARGET = @target@
 VERSION = @PACKAGE_VERSION@
 PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
-F77LIBDIR=-L${prefix}/lib
+F77LIBDIR=-L$(prefix)/lib
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@
 CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -DLANG_F77 \
-	-DLIBEXECDIR=\"${libexecdir}\" -DINCLUDEDIR=\"${includedir}\" \
-	-DPCCINCDIR=\"${PCCINCDIR}/\" -DPCCLIBDIR=\"${PCCLIBDIR}/\" \
-	-DLIBDIR=\"${F77LIBDIR}\" -Dmach_${TARGMACH} -Dos_${TARGOS} \
-	-I${FCOMDIR} -I${top_builddir} -I${top_srcdir}/os/${TARGOS} -I${MDIR}
+	-DLIBEXECDIR=\"$(libexecdir)\" -DINCLUDEDIR=\"$(includedir)\" \
+	-DPCCINCDIR=\"$(PCCINCDIR)/\" -DPCCLIBDIR=\"$(PCCLIBDIR)/\" \
+	-DLIBDIR=\"$(F77LIBDIR)\" -Dmach_$(TARGMACH) -Dos_$(TARGOS) \
+	-I$(FCOMDIR) -I$(top_builddir) -I$(top_srcdir)/os/$(TARGOS) -I$(MDIR)
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 INSTALL = @INSTALL@
@@ -36,27 +35,23 @@ INSTALL_DATA = @INSTALL_DATA@
 OBJS=f77.o
 DEST=@BINPREFIX@f77
 
-MIPDIR=${top_srcdir}/mip
-MDIR=${top_srcdir}/arch/$(TARGMACH)
-FCOMDIR=${top_srcdir}/f77/fcom
+MIPDIR=$(top_srcdir)/mip
+MDIR=$(top_srcdir)/arch/$(TARGMACH)
+FCOMDIR=$(top_srcdir)/f77/fcom
 
-all: ${DEST}
+all: $(DEST)
 
-${DEST}: $(OBJS)
+$(DEST): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 install:
-	${INSTALL_PROGRAM} ${DEST} ${bindir}
-	@if [ ${strip} = yes ]; then		\
-		strip ${bindir}/${DEST} ;	\
-		echo strip ${bindir}/${DEST} ;	\
-	fi
+	$(INSTALL_PROGRAM) $(DEST) $(bindir)
 
 clean:
-	rm -f  $(OBJS) ${DEST}
+	rm -f  $(OBJS) $(DEST)
 
 distclean: clean
 	rm -f  Makefile

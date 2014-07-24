@@ -1,8 +1,9 @@
-/*	Id: ccconfig.h,v 1.3 2014/03/09 09:32:58 ragge Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.3 2014/07/24 19:29:33 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.1 2012/08/30 17:38:19 ragge Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.1 2014/07/24 19:29:37 plunky Exp $	*/
 
 /*
- * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
+ * Copyright (c) 2008 Adam Hoka.
+ * Modified from sunos files slightly by Gregor Richards.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,6 +14,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,22 +34,23 @@
  */
 
 /* common cpp predefines */
-#define	CPPADD	{ "-D__BSD2_11__", "-DBSD2_11", NULL }
+#define	CPPADD	{ "-Dunix", "-D__SVR4", "-D__unix", "-D__svr4__", "-D__ELF__", NULL }
 
 /* host-dependent */
-#define CRTBEGIN	0
-#define CRTEND		0
-#define CRTI		0
-#define CRTN		0
+#define CRT0 "crt1.o"
+#define GCRT0 "gcrt1.o"
 
 #ifdef LANG_F77
-#define F77LIBLIST { "-L/usr/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
+#define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
 #endif
 
-#if defined(mach_pdp11)
-#define	CPPMDADD { "-D__pdp11__", "-Dpdp11", NULL, }
-#elif defined(mach_nova)
-#define	CPPMDADD { "-D__nova__", "-Dnova", NULL, }
++/* assumes GNU ld */
+#define	DYNLINKER { "--dynamic-linker", "/usr/lib/ld.so.1", NULL }
+
+#if defined(mach_i386)
+#define	CPPMDADD { "-D__i386__", "-D__i386", NULL, }
 #else
 #error defines for arch missing
 #endif
+
+#define	STABS

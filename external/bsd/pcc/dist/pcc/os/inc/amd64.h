@@ -1,8 +1,8 @@
-/*	Id: ccconfig.h,v 1.3 2014/03/09 09:32:58 ragge Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.3 2014/07/24 19:29:33 plunky Exp $	*/
+/*	Id: amd64.h,v 1.1 2012/12/28 12:38:15 ragge Exp 	*/	
+/*	$NetBSD: amd64.h,v 1.1.1.1 2014/07/24 19:29:37 plunky Exp $	*/
 
 /*
- * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
+ * Copyright (c) 2012 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,27 +26,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Various settings that controls how the C compiler works.
- */
+#define CPPMDADD	{ "-D__x86_64__", "-D__x86_64", "-D__amd64__", \
+	"-D__amd64", "-D__LP64__", "-D_LP64", NULL, }
 
-/* common cpp predefines */
-#define	CPPADD	{ "-D__BSD2_11__", "-DBSD2_11", NULL }
-
-/* host-dependent */
-#define CRTBEGIN	0
-#define CRTEND		0
-#define CRTI		0
-#define CRTN		0
-
-#ifdef LANG_F77
-#define F77LIBLIST { "-L/usr/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
+/* fixup small m options */
+#ifndef AMD64_64_EMUL
+#define	AMD64_64_EMUL	"elf_x86_64"
 #endif
-
-#if defined(mach_pdp11)
-#define	CPPMDADD { "-D__pdp11__", "-Dpdp11", NULL, }
-#elif defined(mach_nova)
-#define	CPPMDADD { "-D__nova__", "-Dnova", NULL, }
-#else
-#error defines for arch missing
+#ifndef AMD64_32_EMUL
+#define	AMD64_32_EMUL	"elf_i386"
 #endif
+#define PCC_EARLY_ARG_CHECK	{					\
+	if (match(argp, "-m32")) {					\
+		argp = "-m" AMD64_32_EMUL;				\
+	} else if (match(argp, "-m64")) {				\
+		argp = "-m" AMD64_64_EMUL;				\
+	}								\
+}

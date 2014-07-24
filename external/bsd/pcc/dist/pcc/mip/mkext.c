@@ -1,5 +1,5 @@
-/*	Id: mkext.c,v 1.50 2011/06/05 08:54:43 plunky Exp 	*/	
-/*	$NetBSD: mkext.c,v 1.1.1.4 2011/09/01 12:47:13 plunky Exp $	*/
+/*	Id: mkext.c,v 1.52 2014/03/11 21:32:18 ragge Exp 	*/	
+/*	$NetBSD: mkext.c,v 1.1.1.5 2014/07/24 19:28:50 plunky Exp $	*/
 
 /*
  * Generate defines for the needed hardops.
@@ -374,7 +374,9 @@ if (bitsz == 64) {
 	}
 	fprintf(fc, "static int rmap[NUMCLASS][%d] = {\n", mx);
 	for (j = 0; j < NUMCLASS; j++) {
-		int cl = (1 << (j+1));
+		int cl = SAREG << j;
+		if (j > 3)
+			cl = SEREG << (j - 4);
 		fprintf(fc, "\t{ ");
 		for (i = 0; i < MAXREGS; i++)
 			if (rstatus[i] & cl) fprintf(fc, "%d, ", i);
@@ -427,7 +429,7 @@ if (bitsz == 64) {
 #define	P(x)	fprintf x
 
 void
-mktables()
+mktables(void)
 {
 	struct optab *op;
 	int mxalen = 0, curalen;

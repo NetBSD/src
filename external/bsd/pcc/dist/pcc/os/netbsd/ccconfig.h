@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.20 2011/07/23 08:29:27 plunky Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:17 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.30 2014/04/08 19:52:27 ragge Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.5 2014/07/24 19:29:33 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,33 +32,8 @@
  * Various settings that controls how the C compiler works.
  */
 
-#ifndef LIBDIR
-#define LIBDIR "/usr/lib/"
-#endif
-
 /* common cpp predefines */
 #define	CPPADD	{ "-D__NetBSD__", "-D__ELF__", NULL, }
-
-/* host-dependent */
-#define CRT0FILE LIBDIR "crt0.o"
-#define CRT0FILE_PROFILE LIBDIR "gcrt0.o"
-
-#if TARGOSVER == 1
-#define STARTFILES { LIBDIR "crtbegin.o", NULL }
-#define	ENDFILES { LIBDIR "crtend.o", NULL }
-#else
-#define STARTFILES { LIBDIR "crti.o", LIBDIR "crtbegin.o", NULL }
-#define	ENDFILES { LIBDIR "crtend.o", LIBDIR "crtn.o", NULL }
-#endif
-
-/* shared libraries linker files */
-#if TARGOSVER == 1
-#define STARTFILES_S { LIBDIR "crtbeginS.o", NULL }
-#define	ENDFILES_S { LIBDIR "crtendS.o", NULL }
-#else
-#define STARTFILES_S { LIBDIR "crti.o", LIBDIR "crtbeginS.o", NULL }
-#define	ENDFILES_S { LIBDIR "crtendS.o", LIBDIR "crtn.o", NULL }
-#endif
 
 #ifdef LANG_F77
 #define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
@@ -66,6 +41,12 @@
 
 /* host-independent */
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.elf_so", NULL }
+
+#define CRTEND_T	"crtend.o"
+
+#define DEFLIBS		{ "-lc", NULL }
+#define DEFPROFLIBS	{ "-lc_p", NULL }
+#define DEFCXXLIBS	{ "-lp++", "-lc", NULL }
 
 #if defined(mach_amd64)
 #define CPPMDADD \
@@ -77,6 +58,11 @@
 #define	CPPMDADD { "-D__i386__", NULL, }
 #define	PCC_SIZE_TYPE		"unsigned int"
 #define	PCC_PTRDIFF_TYPE	"int"
+#elif defined(mach_m68k)
+#define	CPPMDADD { "-D__mc68000__", "-D__mc68020__", "-D__m68k__", NULL, }
+#undef DEFLIBS
+#define DEFLIBS	{ "-lc", "-lgcc", NULL }
+#define STARTLABEL "_start"
 #elif defined(mach_mips)
 #define	CPPMDADD { "-D__mips__", NULL, }
 #elif defined(mach_pdp10)
@@ -86,6 +72,7 @@
 #define STARTLABEL "_start"
 #elif defined(mach_vax)
 #define CPPMDADD { "-D__vax__", NULL, }
+#define	PCC_EARLY_SETUP { kflag = 1; }
 #elif defined(mach_sparc64)
 #define CPPMDADD { "-D__sparc64__", NULL, }
 #else

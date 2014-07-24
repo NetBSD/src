@@ -1,5 +1,5 @@
-/*	Id: cxxcode.c,v 1.3 2012/01/04 19:04:08 ragge Exp 	*/	
-/*	$NetBSD: cxxcode.c,v 1.1.1.1 2012/01/11 20:33:18 plunky Exp $	*/
+/*	Id: cxxcode.c,v 1.6 2014/05/03 09:57:57 ragge Exp 	*/	
+/*	$NetBSD: cxxcode.c,v 1.1.1.2 2014/07/24 19:25:40 plunky Exp $	*/
 /*
  * Copyright (c) 2011 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -41,7 +41,11 @@ void
 dclns(NODE *attr, char *n)
 {
 	struct symtab *sp;
+#ifdef GCC_COMPAT
 	struct attr *ap = gcc_attr_parse(attr);
+#else
+	struct attr *ap = NULL;
+#endif
 
 	if (cppdebug)printf("declaring namespace %s\n", n);
 	n = addname(n);
@@ -323,7 +327,7 @@ decoratename(struct symtab *sp, int type)
 	 * variables outside namespaces and classes
 	 */
 	if (elnk == LINK_C || strcmp(sp->sname, "main") == 0 ||
-	    (sp->sdown == spole && ISFTN(sp->stype) == 0)) {
+	    (sp->sdown == spole && !ISFTN(sp->stype))) {
 		n = exname(sp->sname);
 		return addname(n);
 	}
@@ -442,7 +446,9 @@ cxxlookup(NODE *p, int flags)
 	char *n, *s;
 
 #define SPNAME(p) ((char *)(p->n_op == NAME ? p->n_sp : p->n_right->n_sp))
+#ifdef PCC_DEBUG
 	if (cppdebug){ printf("cxxlookup %s\n", SPNAME(p)); symtree(); }
+#endif
 
 	q = p;
 	if (p->n_op == NAME) {
@@ -470,7 +476,9 @@ cxxlookup(NODE *p, int flags)
 			if (sp == NULL) {
 				sp = getsymtab(s, ftyp);
 				if ((flags & SNOCREAT) == 0) {
+#ifdef PCC_DEBUG
 	if (cppdebug)printf("cxxlookup: adding %s %s %s at %s\n", symclass[ftyp], s, sp->soname, nscur ? nscur->sname : "base");
+#endif
 					INSSYM(sp);
 					cxxsetname(sp);
 				}
@@ -810,7 +818,7 @@ cxxstructref(NODE *p, int f, char *n)
 		cerror("ref to unknown struct");
 	sp = sfind(n, sp);
 	while (sp != NULL) {
-		if (ISFTN(sp->stype) == 0) {
+		if (!ISFTN(sp->stype)) {
 			if (sp->sclass == STATIC || sp->sclass == USTATIC) {
 				tfree(p);
 				return nametree(sp);
