@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.21 2011/06/23 13:41:25 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.3 2011/09/01 12:46:28 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.31 2014/06/01 11:35:02 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4 2014/07/24 19:15:38 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -83,9 +83,9 @@
 #define	MIN_INT		(-0x7fffffff-1)
 #define	MAX_INT		0x7fffffff
 #define	MAX_UNSIGNED	0xffffffffU
-#define	MIN_LONG	0x8000000000000000L
-#define	MAX_LONG	0x7fffffffffffffffL
-#define	MAX_ULONG	0xffffffffffffffffUL
+#define	MIN_LONG	0x8000000000000000LL
+#define	MAX_LONG	0x7fffffffffffffffLL
+#define	MAX_ULONG	0xffffffffffffffffULL
 #define	MIN_LONGLONG	0x8000000000000000LL
 #define	MAX_LONGLONG	0x7fffffffffffffffLL
 #define	MAX_ULONGLONG	0xffffffffffffffffULL
@@ -124,11 +124,14 @@ typedef long long OFFSZ;
 
 #define	CC_DIV_0	/* division by zero is safe in the compiler */
 
+#ifdef MACHOABI
+#define	HASP2ALIGN
+#endif
+
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&07)
 #define wdal(k)		(BYTEOFF(k)==0)
-#define BITOOR(x)	(x)	/* bit offset to oreg offset XXX die! */
 
 #define STOARG(p)
 #define STOFARG(p)
@@ -253,32 +256,34 @@ int COLORMAP(int c, int *r);
 int xasmconstregs(char *);
 void targarg(char *w, void *arg, int n);
 #define	XASM_TARGARG(w, ary)	\
-	(w[1] == 'b' || w[1] == 'h' || w[1] == 'w' || w[1] == 'k' ? \
-	w++, targarg(w, ary, n), 1 : 0)
+	(w[1] == 'b' || w[1] == 'h' || w[1] == 'w' || w[1] == 'k' || \
+	 w[1] == 'q' ? w++, targarg(w, ary, n), 1 : 0)
 int numconv(void *ip, void *p, void *q);
 #define	XASM_NUMCONV(ip, p, q)	numconv(ip, p, q)
 #define	XASMCONSTREGS(x)	xasmconstregs(x)
 
+#define	HAVE_WEAKREF
+#define TARGET_FLT_EVAL_METHOD	0	/* all as their type */
 /*
  * builtins.
  */
 #define TARGET_VALIST
 #define TARGET_STDARGS
 #define TARGET_BUILTINS							\
-	{ "__builtin_stdarg_start", amd64_builtin_stdarg_start, 2 },	\
-	{ "__builtin_va_start", amd64_builtin_stdarg_start, 2 },	\
-	{ "__builtin_va_arg", amd64_builtin_va_arg, 2 },		\
-	{ "__builtin_va_end", amd64_builtin_va_end, 1 },		\
-	{ "__builtin_va_copy", amd64_builtin_va_copy, 2 },		\
-	{ "__builtin_frame_address", i386_builtin_frame_address, -1 },	\
-	{ "__builtin_return_address", i386_builtin_return_address, -1 },
+	{ "__builtin_stdarg_start", amd64_builtin_stdarg_start, 	\
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_start", amd64_builtin_stdarg_start,		\
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_arg", amd64_builtin_va_arg, BTNORVAL|BTNOPROTO,	\
+							2, 0, 0 },	\
+	{ "__builtin_va_end", amd64_builtin_va_end, 0, 1, 0, VOID },	\
+	{ "__builtin_va_copy", amd64_builtin_va_copy, 0, 2, 0, VOID },
 
 #define NODE struct node
 struct node;
-NODE *amd64_builtin_stdarg_start(NODE *f, NODE *a, unsigned int);
-NODE *amd64_builtin_va_arg(NODE *f, NODE *a, unsigned int);
-NODE *amd64_builtin_va_end(NODE *f, NODE *a, unsigned int);
-NODE *amd64_builtin_va_copy(NODE *f, NODE *a, unsigned int);
-NODE *i386_builtin_frame_address(NODE *f, NODE *a, unsigned int);
-NODE *i386_builtin_return_address(NODE *f, NODE *a, unsigned int);
+struct bitable;
+NODE *amd64_builtin_stdarg_start(const struct bitable *, NODE *a);
+NODE *amd64_builtin_va_arg(const struct bitable *, NODE *a);
+NODE *amd64_builtin_va_end(const struct bitable *, NODE *a);
+NODE *amd64_builtin_va_copy(const struct bitable *, NODE *a);
 #undef NODE

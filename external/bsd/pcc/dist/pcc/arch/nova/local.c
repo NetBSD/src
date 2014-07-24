@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.13 2011/06/05 10:29:10 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.4 2011/09/01 12:46:41 plunky Exp $	*/
+/*	Id: local.c,v 1.16 2014/06/03 20:19:50 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.5 2014/07/24 19:18:45 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -35,7 +35,15 @@ clocal(NODE *p)
 {
 	struct symtab *q;
 	NODE *r, *l;
+	TWORD t;
 	int o;
+
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("clocal\n");
+		fwalk(p, eprint, 0);
+	}
+#endif
 
 	switch( o = p->n_op ){
 	case NAME:
@@ -43,12 +51,19 @@ clocal(NODE *p)
 		if ((q = p->n_sp) == NULL)
 			return p; /* Nothing to care about */
 		switch (q->sclass) {
+		case PARAM:
 		case AUTO:
-			/* fake up a structure reference */
-			r = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
-			r->n_lval = 0;
-			r->n_rval = FPREG;
-			p = stref(block(STREF, r, p, 0, 0, 0));
+			if (0 && q->soffset < MAXZP * SZINT &&
+			    q->sclass != PARAM) {
+				p->n_lval = -(q->soffset/SZCHAR) + ZPOFF*2;
+				p->n_sp = NULL;
+			} else {
+				/* fake up a structure reference */
+				r = block(REG, NIL, NIL, PTR+STRTY, 0, 0);
+				r->n_lval = 0;
+				r->n_rval = FPREG;
+				p = stref(block(STREF, r, p, 0, 0, 0));
+			}
 			break;
 		default:
 			break;
@@ -59,23 +74,42 @@ clocal(NODE *p)
 	case PVCONV:
                 if( p->n_right->n_op != ICON ) cerror( "bad conversion", 0);
                 nfree(p);
-                return(buildtree(o==PMCONV?MUL:DIV, p->n_left, p->n_right));
+                p = (buildtree(o==PMCONV?MUL:DIV, p->n_left, p->n_right));
+		break;
 
 	case PCONV:
+		t = p->n_type;
+		if (t == INCREF(CHAR) || t == INCREF(UCHAR) ||
+		    t == INCREF(BOOL) || t == INCREF(VOID))
+			break;
 		l = p->n_left;
+		t = l->n_type;
+		if (t == INCREF(CHAR) || t == INCREF(UCHAR) ||
+		    t == INCREF(BOOL) || t == INCREF(VOID))
+			break;
+		if (p->n_type <= UCHAR || l->n_type <= UCHAR)
+			break; /* must do runtime ptr conv */
 		/* if conversion to another pointer type, just remove */
 		if (p->n_type > BTMASK && l->n_type > BTMASK)
+			goto delp;
+		if (l->n_op == ICON && l->n_sp == NULL)
 			goto delp;
 		break;
 
 	delp:	l->n_type = p->n_type;
 		l->n_qual = p->n_qual;
 		l->n_df = p->n_df;
-		l->n_sue = p->n_sue;
-		nfree(p);
-		p = l;
+		l->n_ap = p->n_ap;
+		p = nfree(p);
 		break;
 	}
+
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("clocal end\n");
+		fwalk(p, eprint, 0);
+	}
+#endif
 
 #if 0
 	register struct symtab *q;
@@ -340,27 +374,45 @@ void
 myp2tree(NODE *p)
 {
 	struct symtab *sp;
-	int o = p->n_op, i;
+	NODE *l, *r;
+	int o = p->n_op;
 
-	if (o != FCON) 
-		return;
+	switch (o) {
+	case NAME: /* reading from a name must be done with a subroutine */
+		if (p->n_type != CHAR && p->n_type != UCHAR)
+			break;
+		l = buildtree(ADDROF, ccopy(p), NIL);
+		r = block(NAME, NIL, NIL, INT, 0, 0);
 
-	sp = inlalloc(sizeof(struct symtab));
-	sp->sclass = STATIC;
-	sp->ssue = 0;
-	sp->slevel = 1; /* fake numeric label */
-	sp->soffset = getlab();
-	sp->sflags = 0;
-	sp->stype = p->n_type;
-	sp->squal = (CON >> TSHIFT);
+		r->n_sp = lookup(addname("__nova_rbyte"), SNORMAL);
+		if (r->n_sp->sclass == SNULL) {
+			r->n_sp->sclass = EXTERN;
+			r->n_sp->stype = INCREF(p->n_type)+(FTN-PTR);
+		}
+		r->n_type = r->n_sp->stype;
+		r = clocal(r);
+		r = optim(buildtree(CALL, r, l));
+		*p = *r;
+		nfree(r);
+		break;
 
-	defloc(sp);
-	ninval(0, sp->ssue->suesize, p);
+	case FCON:
+		sp = inlalloc(sizeof(struct symtab));
+		sp->sclass = STATIC;
+		sp->sap = 0;
+		sp->slevel = 1; /* fake numeric label */
+		sp->soffset = getlab();
+		sp->sflags = 0;
+		sp->stype = p->n_type;
+		sp->squal = (CON >> TSHIFT);
 
-	p->n_op = NAME;
-	p->n_lval = 0;
-	p->n_sp = sp;
+		defloc(sp);
+		ninval(0, tsize(sp->stype, sp->sdf, sp->sap), p);
 
+		p->n_op = NAME;
+		p->n_lval = 0;
+		p->n_sp = sp;
+	}
 }
 
 /*ARGSUSED*/
@@ -390,19 +442,16 @@ cisreg(TWORD t)
  * indirections must be fullword.
  */
 NODE *
-offcon(OFFSZ off, TWORD t, union dimfun *d, struct suedef *sue)
+offcon(OFFSZ off, TWORD t, union dimfun *d, struct attr *ap)
 {
 	register NODE *p;
 
 	if (xdebug)
-		printf("offcon: OFFSZ %ld type %x dim %p siz %d\n",
-		    off, t, d, sue->suesize);
+		printf("offcon: OFFSZ %ld type %x dim %p siz %ld\n",
+		    off, t, d, tsize(t, d, ap));
 
-	p = bcon(0);
-	p->n_lval = off/SZINT;	/* Default */
-	if (ISPTR(DECREF(t)))
-		return p;
-	if (t == VOID || t == CHAR || t == UCHAR)
+	p = bcon(off/SZINT);
+	if (t == INCREF(CHAR) || t == INCREF(UCHAR) || t == INCREF(VOID))
 		p->n_lval = off/SZCHAR; /* pointer to char */
 	return(p);
 }
@@ -432,7 +481,7 @@ cerror("spalloc");
 		cerror("roundsp");
 
 	/* save the address of sp */
-	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
+	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_ap);
 	sp->n_lval = 0;
 	sp->n_rval = STKREG;
 	t->n_type = sp->n_type;
@@ -450,38 +499,13 @@ cerror("spalloc");
  * mat be associated with a label
  */
 int
-ninval(NODE *p)
+ninval(CONSZ off, int fsz, NODE *p)
 {
-	struct symtab *q;
-	TWORD t;
-
-	p = p->n_left;
-	t = p->n_type;
-	if (t > BTMASK)
-		p->n_type = t = INT; /* pointer */
-
-	if (p->n_op != ICON)
-		cerror("ninval: init node not constant");
-
-	switch (t) {
-	case LONG:
-	case ULONG:
-		inval(p->n_lval & 0xffff);
-		inval(p->n_lval >> 16);
-		break;
-	case INT:
-	case UNSIGNED:
-		printf("\t.word 0%o", (short)p->n_lval);
-		if ((q = p->n_sp) != NULL) {
-			if ((q->sclass == STATIC && q->slevel > 0)) {
-				printf("+" LABFMT, q->soffset);
-			} else
-				printf("+%s", exname(q->soname));
-		}
-		printf("\n");
-		break;
-	default:
-		return 0;
+	switch (p->n_type) {
+	case FLOAT:
+	case DOUBLE:
+	case LDOUBLE:
+		cerror("ninval");
 	}
 	return 1;
 }
@@ -519,6 +543,7 @@ ctype(TWORD type)
 	return (type);
 }
 
+#if 0
 /* curid is a variable which is defined but
  * is not initialized (and not a function );
  * This routine returns the storage class for an uninitialized declaration
@@ -528,6 +553,7 @@ noinit()
 {
 	return(EXTERN);
 }
+#endif
 
 void
 calldec(NODE *p, NODE *q) 
@@ -539,6 +565,7 @@ extdec(struct symtab *q)
 {
 }
 
+#if 0
 /* make a common declaration for id, if reasonable */
 void
 commdec(struct symtab *q)
@@ -583,6 +610,8 @@ setloc1(int locc)
 	lastloc = locc;
 	printf("	.%s\n", loctbl[locc]);
 }
+#endif
+
 /*
  * Give target the opportunity of handling pragmas.
  */
@@ -594,10 +623,25 @@ mypragma(char *str)
 
 /*
  * Called when a identifier has been declared, to give target last word.
+ * On Nova we put symbols over the size of an int above 24 bytes in
+ * offset and leave zeropage for small vars.
  */
 void
 fixdef(struct symtab *sp)
 {
+#if 0
+	if (sp->sclass != AUTO)
+		return; /* not our business */
+	if (ISPTR(sp->stype) || sp->stype < LONG)
+		return;
+	if (sp->soffset >= (MAXZP * SZINT))
+		return; /* already above */
+	/* have to move */
+	/* XXX remember old autooff for reorg of smaller vars */
+	if (autooff < MAXZP * SZINT)
+		autooff = MAXZP * SZINT;
+	oalloc(sp, &autooff);
+#endif
 }
 
 void
