@@ -1,0 +1,97 @@
+This file is testing line counting in various scenarios involving
+escaped newlines, including using the trigraph escape sequence
+
+--> __LINE__ 4
+"multi-\
+line ??/
+string"
+--> __LINE__ 8
+'multi-\
+line ??/
+character constant'
+--> __LINE__ 12
+multi-\
+line 012\
+345??/
+678 integer constant
+--> __LINE__ 17
+multi-\
+line\
+ li??/
+st ??/
+of \
+tokens
+--> __LINE__ 24
+/* multi-\
+line ??/
+comment */
+--> __LINE__ 28
+ /\
+??/
+*/ comment with escaped newlines /*
+         in the markers
+??/
+*\
+/
+--> __LINE__ 36
+// multi-\
+line ??/
+C++ comment
+--> __LINE__ 40
+\
+ \
+ /\
+??/
+\
+/ ??/
+  C++ comment with leading whitespace and escaped newlines
+--> __LINE__ 48
+#pragma multi-\
+line ??/
+#pragma directive
+--> __LINE__ 52
+#define FOO multi-\
+line macro /* with\
+ a comment *??/
+/ embedded
+--> __LINE__ 57
+FOO
+--> __LINE__ 59
+/??/
+*  comment \
+   before ??/
+   directive */ #define BAR macro with a leading comment
+--> __LINE__ 64
+BAR
+--> __LINE__ 66
+\
+ ??/
+	#define BAZ macro with leading whitespace and escaped newlines
+--> __LINE__ 70
+BAZ
+--> __LINE__ 72
+#define POTATO a token split by escaped newlines
+PO\
+TA??/
+TO
+--> __LINE__ 77
+#if 0
+#pragma multi-??/
+line \
+#pragma inside if-false block
+--> __LINE__ 82
+#else
+#pragma multi-??/
+line \
+#pragma inside if-true block
+--> __LINE__ 87
+#endif
+--> __LINE__ 89
+/* comment */ # pragma with a preceding comment
+--> __LINE__ 91
+#if 0
+/* multi-\
+ * line comment at flslvl=1
+ */
+#endif
+--> __LINE__ 97
