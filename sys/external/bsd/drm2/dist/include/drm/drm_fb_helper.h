@@ -35,7 +35,7 @@ struct drm_fb_helper;
 #include <linux/kgdb.h>
 
 #ifdef __NetBSD__
-#include <dev/wsfb/genfbvar.h>
+#include <sys/device_if.h>
 #endif
 
 struct drm_fb_helper_crtc {
@@ -93,14 +93,7 @@ struct drm_fb_helper {
 	struct drm_fb_helper_connector **connector_info;
 	struct drm_fb_helper_funcs *funcs;
 #ifdef __NetBSD__		/* XXX fb info */
-	bus_space_tag_t fb_bst;
-	bus_space_handle_t fb_bsh;
-	/*
-	 * XXX Should be a child, not genfb, but genfb doesn't have its
-	 * own independent device_t concept.
-	 */
-	struct genfb_softc genfb;
-	bool genfb_attached:1;
+	device_t fbdev;
 #else
 	struct fb_info *fbdev;
 #endif
