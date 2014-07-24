@@ -1,4 +1,4 @@
-/* $Id: osdep-aix.c,v 1.1.1.1 2011/08/17 18:40:05 jmmv Exp $ */
+/* $Id: osdep-aix.c,v 1.1.1.2 2014/07/24 14:22:54 christos Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,6 +24,12 @@
 
 char *
 osdep_get_name(unused int fd, unused char *tty)
+{
+	return (NULL);
+}
+
+char *
+osdep_get_cwd(unused int fd)
 {
 	return (NULL);
 }
