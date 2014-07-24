@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.3 2014/07/24 21:37:35 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.4 2014/07/24 21:45:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.3 2014/07/24 21:37:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.4 2014/07/24 21:45:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -65,25 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.3 2014/07/24 21:37:35 riastradh Exp $"
 #include "i915_drv.h"
 #include "i915_pci.h"
 #include "intelfb.h"
-
-extern void	comcnputc(dev_t, int);
-static void __printflike(1,2) __unused
-comprintf(const char *fmt, ...)
-{
-	char buf[1024], *p;
-	va_list va;
-
-	va_start(va, fmt);
-	vsnprintf(buf, sizeof buf, fmt, va);
-	va_end(va);
-
-	buf[sizeof buf - 1] = '\0';
-	for (p = buf; *p != '\0'; p++) {
-		comcnputc(NODEV, *p);
-		if (*p == '\n')
-			comcnputc(NODEV, '\r');
-	}
-}
 
 struct intelfb_softc {
 	/* XXX genfb requires the genfb_softc to be first.  */
