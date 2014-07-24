@@ -620,7 +620,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 		} else
 			codelen = 0;
 
-		data = ud.data;
+		data = (const char *)ud.data;
 		size = ud.size;
 		if (escape_c0 && size == 1 && *data == '\\') {
 			data = "\\\\";
