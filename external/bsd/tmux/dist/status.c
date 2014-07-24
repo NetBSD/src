@@ -394,7 +394,7 @@ status_replace1(struct client *c, char **iptr, char **optr, char *out,
 		ch = ']';
 		goto skip_to;
 	case '{':
-		ptr = (char *) "#{";
+		ptr = __UNCONST("#{");
 		goto do_replace;
 	case '#':
 		*(*optr)++ = '#';

@@ -179,7 +179,7 @@ format_find(struct format_tree *ft, const char *key)
 {
 	struct format_entry	*fe, fe_find;
 
-	fe_find.key = (char *) key;
+	fe_find.key = __UNCONST(key);
 	fe = RB_FIND(format_tree, ft, &fe_find);
 	if (fe == NULL)
 		return (NULL);

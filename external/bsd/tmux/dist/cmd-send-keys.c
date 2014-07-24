@@ -86,10 +86,10 @@ cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	for (i = 0; i < args->argc; i++) {
-		str = args->argv[i];
+		str = (u_char *)args->argv[i];
 
 		if (!args_has(args, 'l') &&
-		    (key = key_string_lookup_string(str)) != KEYC_NONE) {
+		    (key = key_string_lookup_string((const char *)str)) != KEYC_NONE) {
 			    window_pane_key(wp, s, key);
 		} else {
 			for (; *str != '\0'; str++)
