@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: prepare-import.sh,v 1.2 2011/08/17 18:37:59 jmmv Exp $
+# $NetBSD: prepare-import.sh,v 1.3 2014/07/24 15:03:30 christos Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -98,6 +98,7 @@ main() {
 	extract_distfile "${distfile}" "${distname}"
 	cleanup_dist
 	diff_dirs dist.old dist
+	cleantags dist
 	log "Don't forget to update the -D flags in usr.bin/tmux/Makefile" \
 	    "and to update the version in doc/3RDPARTY"
 }
