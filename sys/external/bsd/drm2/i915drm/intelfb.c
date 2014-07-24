@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.2 2014/07/24 21:28:44 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.3 2014/07/24 21:37:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.2 2014/07/24 21:28:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.3 2014/07/24 21:37:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -107,10 +107,8 @@ static int	intelfb_genfb_dpms(struct drm_device *, int);
 static int	intelfb_genfb_ioctl(void *, void *, unsigned long, void *,
 		    int, struct lwp *);
 static paddr_t	intelfb_genfb_mmap(void *, void *, off_t, int);
-#if notyet			/* XXX */
 static int	intelfb_genfb_enable_polling(void *);
 static int	intelfb_genfb_disable_polling(void *);
-#endif
 
 CFATTACH_DECL_NEW(intelfb, sizeof(struct intelfb_softc),
     intelfb_match, intelfb_attach, intelfb_detach, NULL);
@@ -242,10 +240,8 @@ intelfb_setconfig_task(struct i915drmkms_task *task)
 	genfb_init(&sc->sc_genfb);
 	genfb_ops.genfb_ioctl = intelfb_genfb_ioctl;
 	genfb_ops.genfb_mmap = intelfb_genfb_mmap;
-#if notyet			/* XXX */
 	genfb_ops.genfb_enable_polling = intelfb_genfb_enable_polling;
 	genfb_ops.genfb_disable_polling = intelfb_genfb_disable_polling;
-#endif
 
 	error = genfb_attach(&sc->sc_genfb, &genfb_ops);
 	if (error) {
@@ -411,7 +407,6 @@ intelfb_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	return -1;
 }
 
-#if notyet			/* XXX */
 static int
 intelfb_genfb_enable_polling(void *cookie)
 {
@@ -431,4 +426,3 @@ intelfb_genfb_disable_polling(void *cookie)
 
 	return drm_fb_helper_debug_leave_fb(sc->sc_ifa.ifa_fb_helper);
 }
-#endif
