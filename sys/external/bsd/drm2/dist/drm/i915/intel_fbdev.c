@@ -44,7 +44,9 @@
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 
+#ifdef __NetBSD__
 #include "intelfb.h"
+#endif
 
 #ifndef __NetBSD__
 static struct fb_ops intelfb_ops = {
