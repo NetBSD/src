@@ -1,4 +1,4 @@
-/* $Id: strsep.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* $Id: strsep.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
 /*	$OpenBSD: strsep.c,v 1.6 2005/08/08 08:05:37 espie Exp $	*/
 
 /*-

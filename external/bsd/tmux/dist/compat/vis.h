@@ -1,6 +1,6 @@
-/* $Id: vis.h,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* $Id: vis.h,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
 /*	$OpenBSD: vis.h,v 1.11 2005/08/09 19:38:31 millert Exp $	*/
-/*	$NetBSD: vis.h,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $	*/
+/*	$NetBSD: vis.h,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

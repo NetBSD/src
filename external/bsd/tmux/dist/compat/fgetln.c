@@ -1,5 +1,5 @@
-/* $Id: fgetln.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
-/*	$NetBSD: fgetln.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $	*/
+/* $Id: fgetln.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
+/*	$NetBSD: fgetln.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,9 +43,7 @@
 #include "tmux.h"
 
 char *
-fgetln(fp, len)
-	FILE *fp;
-	size_t *len;
+fgetln(FILE *fp, size_t *len)
 {
 	static char *buf = NULL;
 	static size_t bufsiz = 0;

@@ -1,4 +1,4 @@
-/* $Id: forkpty-aix.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* $Id: forkpty-aix.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
