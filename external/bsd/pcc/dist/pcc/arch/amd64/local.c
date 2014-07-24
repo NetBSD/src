@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.66 2012/03/23 17:03:09 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.4 2012/03/26 14:26:17 plunky Exp $	*/
+/*	Id: local.c,v 1.80 2014/07/03 14:25:51 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.5 2014/07/24 19:15:20 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -93,12 +93,16 @@ picext(NODE *p)
 {
 #if defined(ELFABI)
 
+	struct attr *ga;
 	NODE *q;
 	struct symtab *sp;
 	char *c;
 
 	if (p->n_sp->sflags & SBEENHERE)
 		return p;
+	if ((ga = attr_find(p->n_sp->sap, GCC_ATYP_VISIBILITY)) &&
+	    strcmp(ga->sarg(0), "hidden") == 0)
+		return p; /* no GOT reference */
 
 	c = p->n_sp->soname ? p->n_sp->soname : exname(p->n_sp->sname);
 	sp = picsymtab("", c, "@GOTPCREL");
@@ -386,6 +390,9 @@ clocal(NODE *p)
 		if (o == ICON) {
 			CONSZ val = l->n_lval;
 
+			if (ISPTR(l->n_type) && !nncon(l))
+				break; /* cannot convert named pointers */
+
 			if (!ISPTR(m)) /* Pointers don't need to be conv'd */
 			    switch (m) {
 			case BOOL:
@@ -502,6 +509,12 @@ myp2tree(NODE *p)
 {
 	struct symtab *sp, sps;
 	static int dblxor, fltxor;
+	int codeatyp(NODE *);
+
+	if (p->n_op == STCALL || p->n_op == USTCALL) {
+		/* save struct encoding */
+		p->n_su = codeatyp(p);
+	}
 
 	if (p->n_op == UMINUS && (p->n_type == FLOAT || p->n_type == DOUBLE)) {
 		/* Store xor code for sign change */
@@ -530,7 +543,7 @@ myp2tree(NODE *p)
 
 		sp = p->n_left->n_sp;
 		if ((s = strstr(sp->sname, "@GOTPCREL")) != NULL) {
-			strcpy(s, "@PLT");
+			memcpy(s, "@PLT", sizeof("@PLT"));
 			p->n_left->n_op = ICON;
 		}
 		return;
@@ -540,8 +553,9 @@ myp2tree(NODE *p)
 
 #ifdef mach_amd64
 	{
-		/* Do not loose negative zeros */
-		long long *llp = (long long *)(&p->n_dcon);
+		/* Do not lose negative zeros */
+		long double *d = &p->n_dcon;
+		long long *llp = (long long *)d;
 		short *ssp = (short *)&llp[1];
 		if (*llp == 0 && *ssp == 0)
 			return;
@@ -576,8 +590,11 @@ myp2tree(NODE *p)
 int
 andable(NODE *p)
 {
+#ifdef notdef
+	/* shared libraries cannot have direct referenced static syms */
 	if (p->n_sp->sclass == STATIC || p->n_sp->sclass == USTATIC)
 		return 1;
+#endif
 	return !kflag;
 }
 
@@ -729,6 +746,19 @@ defzero(struct symtab *sp)
 	off /= SZCHAR;
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 
+#ifdef MACHOABI
+	if (sp->sclass == STATIC) {
+		al = ispow2(al);
+		printf("\t.zerofill __DATA,__bss,");
+		if (sp->slevel == 0) {
+			printf("%s", name);
+		} else
+			printf(LABFMT, sp->soffset);
+		printf(",%d,%d\n", off, al);
+	} else {
+		printf("\t.comm %s,0%o,%d\n", name, off, al);
+	}
+#else
 	if (sp->sclass == STATIC) {
 		if (sp->slevel == 0) {
 			printf("\t.local %s\n", name);
@@ -739,20 +769,21 @@ defzero(struct symtab *sp)
 		printf("\t.comm %s,0%o,%d\n", name, off, al);
 	} else
 		printf("\t.comm " LABFMT ",0%o,%d\n", sp->soffset, off, al);
+#endif
 }
 
 static char *
-section2string(char *name, int len)
+section2string(char *name)
 {
-	char *s;
-	int n;
+	int len = strlen(name);
 
 	if (strncmp(name, "link_set", 8) == 0) {
-		const char *postfix = ",\"aw\",@progbits";
-		n = len + strlen(postfix) + 1;
-		s = IALLOC(n);
-		strlcpy(s, name, n);
-		strlcat(s, postfix, n);
+		const char postfix[] = ",\"aw\",@progbits";
+		char *s;
+
+		s = IALLOC(len + sizeof(postfix));
+		memcpy(s, name, len);
+		memcpy(s + len, postfix, sizeof(postfix));
 		return s;
 	}
 
@@ -786,7 +817,7 @@ mypragma(char *str)
 		return 1;
 	}
 	if (strcmp(str, "section") == 0 && a2 != NULL) {
-		nextsect = section2string(a2, strlen(a2));
+		nextsect = section2string(a2);
 		return 1;
 	}
 	if (strcmp(str, "alias") == 0 && a2 != NULL) {
@@ -812,12 +843,12 @@ fixdef(struct symtab *sp)
 
 #ifdef HAVE_WEAKREF
 	/* not many as'es have this directive */
-	if ((ga = gcc_get_attr(sp->sap, GCC_ATYP_WEAKREF)) != NULL) {
-		char *wr = ga->a1.sarg;
+	if ((ga = attr_find(sp->sap, GCC_ATYP_WEAKREF)) != NULL) {
+		char *wr = ga->sarg(0);
 		char *sn = sp->soname ? sp->soname : sp->sname;
 		if (wr == NULL) {
-			if ((ga = gcc_get_attr(sp->sap, GCC_ATYP_ALIAS))) {
-				wr = ga->a1.sarg;
+			if ((ga = attr_find(sp->sap, GCC_ATYP_ALIAS))) {
+				wr = ga->sarg(0);
 			}
 		}
 		if (wr == NULL)
@@ -852,60 +883,25 @@ fixdef(struct symtab *sp)
 	}
 }
 
-NODE *
-i386_builtin_return_address(NODE *f, NODE *a, TWORD t)
+/*
+ * find struct return functions and set correct return regs if needed.
+ * this is saved in the su field earlier.
+ * uses the stalign field which is otherwise unused.
+ */
+static void
+fixstcall(NODE *p, void *arg)
 {
-	int nframes;
 
-	if (a == NULL || a->n_op != ICON)
-		goto bad;
-
-	nframes = a->n_lval;
-
-	tfree(f);
-	tfree(a);
-
-	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
-	regno(f) = FPREG;
-
-	while (nframes--)
-		f = block(UMUL, f, NIL, PTR+VOID, 0, 0);
-
-	f = block(PLUS, f, bcon(4), INCREF(PTR+VOID), 0, 0);
-	f = buildtree(UMUL, f, NIL);
-
-	return f;
-bad:
-        uerror("bad argument to __builtin_return_address");
-        return bcon(0);
-}
-
-NODE *
-i386_builtin_frame_address(NODE *f, NODE *a, TWORD t)
-{
-	int nframes;
-
-	if (a == NULL || a->n_op != ICON)
-		goto bad;
-
-	nframes = a->n_lval;
-
-	tfree(f);
-	tfree(a);
-
-	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
-	regno(f) = FPREG;
-
-	while (nframes--)
-		f = block(UMUL, f, NIL, PTR+VOID, 0, 0);
-
-	return f;
-bad:
-        uerror("bad argument to __builtin_frame_address");
-        return bcon(0);
+        if (p->n_op != STCALL && p->n_op != USTCALL)
+                return;
+	p->n_stalign = p->n_su;
 }
 
 void
 pass1_lastchance(struct interpass *ip)
 {
+        if (ip->type != IP_NODE)
+                return;
+        walkf(ip->ip_node, fixstcall, 0);
 }
+

@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.166 2012/03/22 18:04:41 plunky Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.6 2012/03/26 14:26:25 plunky Exp $	*/
+/*	Id: local2.c,v 1.177 2014/06/04 06:43:49 gmcgarry Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.7 2014/07/24 19:17:13 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -58,16 +58,20 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 {
 	int i;
 
-	printf("	pushl %%ebp\n");
-	printf("	movl %%esp,%%ebp\n");
+#if 1
 #if defined(MACHOABI)
-	printf("	subl $8,%%esp\n");	/* 16-byte stack alignment */
+	addto += 8;
 #endif
-	if (addto)
-		printf("	subl $%d,%%esp\n", addto);
+	if (addto == 0 || addto > 65535) {
+		printf("	pushl %%ebp\n\tmovl %%esp,%%ebp\n");
+		if (addto)
+			printf("	subl $%d,%%esp\n", addto);
+	} else
+		printf("	enter $%d,$0\n", addto);
+#endif
 	for (i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i))
-			fprintf(stdout, "	movl %s,-%d(%s)\n",
+			printf("	movl %s,-%d(%s)\n",
 			    rnames[i], regoff[i], rnames[FPREG]);
 }
 
@@ -125,7 +129,7 @@ eoftn(struct interpass_prolog *ipp)
 	/* return from function code */
 	for (i = 0; i < MAXREGS; i++)
 		if (TESTBIT(ipp->ipp_regs, i))
-			fprintf(stdout, "	movl -%d(%s),%s\n",
+			printf("	movl -%d(%s),%s\n",
 			    regoff[i], rnames[FPREG], rnames[i]);
 
 	/* struct return needs special treatment */
@@ -184,7 +188,7 @@ hopcode(int f, int o)
  * Return type size in bytes.  Used by R2REGS, arg 2 to offset().
  */
 int
-tlen(p) NODE *p;
+tlen(NODE *p)
 {
 	switch(p->n_type) {
 		case CHAR:
@@ -282,31 +286,13 @@ fldexpand(NODE *p, int cookie, char **cp)
 static void
 starg(NODE *p)
 {
-	FILE *fp = stdout;
-
-#if defined(MACHOABI)
-	fprintf(fp, "	subl $%d,%%esp\n", p->n_stsize);
-	fprintf(fp, "	subl $4,%%esp\n");
-	fprintf(fp, "	pushl $%d\n", p->n_stsize);
-	expand(p, 0, "	pushl AL\n");
-	expand(p, 0, "	leal 12(%esp),A1\n");
-	expand(p, 0, "	pushl A1\n");
-	if (kflag) {
-		fprintf(fp, "	call L%s$stub\n", EXPREFIX "memcpy");
-		addstub(&stublist, EXPREFIX "memcpy");
-	} else {
-		fprintf(fp, "	call %s\n", EXPREFIX "memcpy");
-	}
-	fprintf(fp, "	addl $16,%%esp\n");
-#else
 	NODE *q = p->n_left;
 
-	fprintf(fp, "	subl $%d,%%esp\n", (p->n_stsize+3) & ~3);
+	printf("	subl $%d,%%esp\n", (p->n_stsize + 3) & ~3);
 	p->n_left = mklnode(OREG, 0, ESP, INT);
 	zzzcode(p, 'Q');
 	tfree(p->n_left);
 	p->n_left = q;
-#endif
 }
 
 /*
@@ -338,9 +324,10 @@ fcomp(NODE *p)
 static void
 ulltofp(NODE *p)
 {
+	int jmplab;
+
 #if defined(ELFABI) || defined(PECOFFABI)
 	static int loadlab;
-	int jmplab;
 
 	if (loadlab == 0) {
 		loadlab = getlab2();
@@ -348,18 +335,27 @@ ulltofp(NODE *p)
 		printf(LABFMT ":	.long 0,0x80000000,0x403f\n", loadlab);
 		expand(p, 0, "	.text\n");
 	}
+#endif
+
 	jmplab = getlab2();
 	expand(p, 0, "	pushl UL\n	pushl AL\n");
 	expand(p, 0, "	fildq (%esp)\n");
 	expand(p, 0, "	addl $8,%esp\n");
 	expand(p, 0, "	cmpl $0,UL\n");
 	printf("	jge " LABFMT "\n", jmplab);
+
+#if defined(ELFABI)
 	printf("	fldt " LABFMT "%s\n", loadlab, kflag ? "@GOTOFF" : "");
-	printf("	faddp %%st,%%st(1)\n");
-	printf(LABFMT ":\n", jmplab);
+#elif defined(MACHOABI)
+	printf("\tpushl 0x5f800000\n");
+	printf("\tfadds (%%esp)\n");
+	printf("\taddl $4,%%esp\n");
 #else
 #error incomplete implementation
 #endif
+
+	printf("	faddp %%st,%%st(1)\n");
+	printf(LABFMT ":\n", jmplab);
 }
 
 static int
@@ -439,13 +435,11 @@ zzzcode(NODE *p, int c)
 		break;
 
 	case 'C':  /* remove from stack after subroutine call */
-#ifdef notyet
+#ifdef notdef
 		if (p->n_left->n_flags & FSTDCALL)
 			break;
 #endif
 		pr = p->n_qual;
-		if (p->n_op == STCALL || p->n_op == USTCALL)
-			pr += 4;
 		if (p->n_flags & FFPPOP)
 			printf("	fstp	%%st(0)\n");
 		if (p->n_op == UCALL)
@@ -531,62 +525,26 @@ zzzcode(NODE *p, int c)
 #endif
                 break;
 
-	case 'P': /* push hidden argument on stack */
-		printf("\tleal -%d(%%ebp),", stkpos);
-		adrput(stdout, getlr(p, '1'));
-		printf("\n\tpushl ");
-		adrput(stdout, getlr(p, '1'));
-		putchar('\n');
-		break;
-
 	case 'Q': /* emit struct assign */
 		/*
-		 * With <= 16 bytes, put out mov's, otherwise use movsb/w/l.
+		 * Put out some combination of movs{b,w,l}
 		 * esi/edi/ecx are available.
-		 * XXX should not need esi/edi if not rep movsX.
-		 * XXX can save one insn if src ptr in reg.
 		 */
-		switch (p->n_stsize) {
-		case 1:
-			expand(p, INAREG, "	movb (%esi),%cl\n");
-			expand(p, INAREG, "	movb %cl,AL\n");
-			break;
-		case 2:
-			expand(p, INAREG, "	movw (%esi),%cx\n");
-			expand(p, INAREG, "	movw %cx,AL\n");
-			break;
-		case 4:
-			expand(p, INAREG, "	movl (%esi),%ecx\n");
-			expand(p, INAREG, "	movl %ecx,AL\n");
-			break;
-		default:
-			expand(p, INAREG, "	leal AL,%edi\n");
-			if (p->n_stsize <= 16 && (p->n_stsize & 3) == 0) {
-				printf("	movl (%%esi),%%ecx\n");
-				printf("	movl %%ecx,(%%edi)\n");
-				printf("	movl 4(%%esi),%%ecx\n");
-				printf("	movl %%ecx,4(%%edi)\n");
-				if (p->n_stsize > 8) {
-					printf("	movl 8(%%esi),%%ecx\n");
-					printf("	movl %%ecx,8(%%edi)\n");
-				}
-				if (p->n_stsize == 16) {
-					printf("\tmovl 12(%%esi),%%ecx\n");
-					printf("\tmovl %%ecx,12(%%edi)\n");
-				}
-			} else {
-				if (p->n_stsize > 4) {
-					printf("\tmovl $%d,%%ecx\n",
-					    p->n_stsize >> 2);
-					printf("	rep movsl\n");
-				}
-				if (p->n_stsize & 2)
-					printf("	movsw\n");
-				if (p->n_stsize & 1)
-					printf("	movsb\n");
+		expand(p, INAREG, "	leal AL,%edi\n");
+		if (p->n_stsize < 32) {
+			int i = p->n_stsize >> 2;
+			while (i) {
+				expand(p, INAREG, "	movsl\n");
+				i--;
 			}
-			break;
+		} else {
+			printf("\tmovl $%d,%%ecx\n", p->n_stsize >> 2);
+			printf("	rep movsl\n");
 		}
+		if (p->n_stsize & 2)
+			printf("	movsw\n");
+		if (p->n_stsize & 1)
+			printf("	movsb\n");
 		break;
 
 	case 'S': /* emit eventual move after cast from longlong */
@@ -608,7 +566,7 @@ zzzcode(NODE *p, int c)
 			expand(p, INBREG, "\tmovb A2,A1\n");
 #ifdef notdef
 			/* cannot use freetemp() in instruction emission */
-			s = BITOOR(freetemp(1));
+			s = freetemp(1);
 			printf("\tmovl %%e%ci,%d(%%ebp)\n", rnames[lr][1], s);
 			printf("\tmovb %d(%%ebp),%s\n", s, rnames[pr]);
 #endif
@@ -747,7 +705,7 @@ upput(NODE *p, int size)
 	size /= SZCHAR;
 	switch (p->n_op) {
 	case REG:
-		fprintf(stdout, "%%%s", &rnames[p->n_rval][3]);
+		printf("%%%s", &rnames[p->n_rval][3]);
 		break;
 
 	case NAME:
@@ -757,7 +715,7 @@ upput(NODE *p, int size)
 		p->n_lval -= size;
 		break;
 	case ICON:
-		fprintf(stdout, "$" CONFMT, p->n_lval >> 32);
+		printf("$" CONFMT, p->n_lval >> 32);
 		break;
 	default:
 		comperr("upput bad op %d size %d", p->n_op, size);
@@ -903,7 +861,7 @@ storefloat(struct interpass *ip, NODE *p)
 			NODE *ll;
 			int off;
 
-                	off = BITOOR(freetemp(szty(t)));
+                	off = freetemp(szty(t));
                 	ll = mklnode(OREG, off, FPREG, t);
 			nip = ipnode(mkbinode(ASSIGN, ll, p->n_left, t));
 			p->n_left = mklnode(OREG, off, FPREG, t);
@@ -1005,6 +963,50 @@ fixxfloat(struct interpass *ip, NODE *p)
 	outfargs(ip, ary, nn, cwp, 'u');
 }
 
+static NODE *
+lptr(NODE *p)
+{
+	if (p->n_op == ASSIGN && p->n_right->n_op == REG &&
+	    regno(p->n_right) == EBP)
+		return p->n_right;
+	if (p->n_op == FUNARG && p->n_left->n_op == REG &&
+	    regno(p->n_left) == EBP)
+		return p->n_left;
+	return NIL;
+}
+
+/*
+ * Find arg reg that should be struct reference instead.
+ */
+static void
+updatereg(NODE *p, void *arg)
+{
+	NODE *q;
+
+	if (p->n_op != STCALL)
+		return;
+	if (p->n_right->n_op != CM)
+		p = p->n_right;
+	else for (p = p->n_right;
+	    p->n_op == CM && p->n_left->n_op == CM; p = p->n_left)
+		;
+	if (p->n_op == CM) {
+		if ((q = lptr(p->n_left)))
+			;
+		else
+			q = lptr(p->n_right);
+	} else
+		q = lptr(p);
+	if (q == NIL)
+		comperr("bad STCALL hidden reg");
+
+	/* q is now the hidden arg */
+	q->n_op = MINUS;
+	q->n_type = INCREF(CHAR);
+	q->n_left = mklnode(REG, 0, EBP, INCREF(CHAR));
+	q->n_right = mklnode(ICON, stkpos, 0, INT);
+}
+
 void
 myreader(struct interpass *ipole)
 {
@@ -1018,6 +1020,13 @@ myreader(struct interpass *ipole)
 		storefloat(ip, ip->ip_node);
 		if (ip->ip_node->n_op == XASM)
 			fixxfloat(ip, ip->ip_node);
+	}
+	if (stkpos != p2autooff) {
+		DLIST_FOREACH(ip, ipole, qelem) {
+			if (ip->type != IP_NODE)
+				continue;
+			walkf(ip->ip_node, updatereg, 0);
+		}
 	}
 	if (stkpos > p2autooff)
 		p2autooff = stkpos;
@@ -1195,14 +1204,13 @@ lastcall(NODE *p)
 	p->n_qual = 0;
 	if (p->n_op != CALL && p->n_op != FORTCALL && p->n_op != STCALL)
 		return;
-	for (p = p->n_right; p->n_op == CM; p = p->n_left)
-		size += argsiz(p->n_right);
-	size += argsiz(p);
-#if defined(ELFABI)
-	if (kflag)
-		size -= 4;
-#endif
-	
+	for (p = p->n_right; p->n_op == CM; p = p->n_left) { 
+		if (p->n_right->n_op != ASSIGN)
+			size += argsiz(p->n_right);
+	}
+	if (p->n_op != ASSIGN)
+		size += argsiz(p);
+
 #if defined(MACHOABI)
 	int newsize = (size + 15) & ~15;	/* stack alignment */
 	int align = newsize-size;
