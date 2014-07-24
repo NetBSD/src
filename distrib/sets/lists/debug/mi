@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.74 2014/07/24 20:31:01 plunky Exp $
+# $NetBSD: mi,v 1.75 2014/07/24 21:02:55 plunky Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -660,6 +660,7 @@
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/openpgp.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/bin/p++.debug		comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/paste.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/patch.debug		comp-util-debug		debug
@@ -890,7 +891,7 @@
 ./usr/libdata/debug/usr/libexec/ching/printching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/comsat.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/cpp.debug	comp-obsolete		pcc,obsolete
-./usr/libdata/debug/usr/libexec/cxxcom.debug	comp-c-debug		pcc,debug
+./usr/libdata/debug/usr/libexec/cxxcom.debug	comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/digest-service.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete

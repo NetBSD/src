@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1901 2014/07/24 20:31:01 plunky Exp $
+#	$NetBSD: mi,v 1.1902 2014/07/24 21:02:55 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -76,6 +76,7 @@
 ./usr/bin/nm					comp-util-bin		binutils
 ./usr/bin/objcopy				comp-util-bin		binutils
 ./usr/bin/objdump				comp-util-bin		binutils
+./usr/bin/p++					comp-cxx-bin		pcc
 ./usr/bin/pcc					comp-c-bin		pcc
 ./usr/bin/protoize				comp-c-bin		gcc=4,gcccmds
 ./usr/bin/protoize                              comp-obsolete           gcc=45,obsolete
@@ -4087,7 +4088,7 @@
 ./usr/libexec/ccom				comp-c-bin		pcc
 ./usr/libexec/collect2				comp-obsolete		obsolete
 ./usr/libexec/cpp				comp-obsolete		pcc,obsolete
-./usr/libexec/cxxcom				comp-c-bin		pcc
+./usr/libexec/cxxcom				comp-cxx-bin		pcc
 ./usr/libexec/f771				comp-fortran-bin	gcc=3,gcccmds
 ./usr/libexec/f771				comp-obsolete		gcc=4,obsolete
 ./usr/libexec/lint1				comp-c-bin
