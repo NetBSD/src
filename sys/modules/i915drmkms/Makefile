@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2014/07/16 20:56:26 riastradh Exp $
+# $NetBSD: Makefile,v 1.4 2014/07/24 21:18:40 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
 
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/drm/i915
+CPPFLAGS+=	-I${S}/external/bsd/drm2/i915drm
 
 .PATH:	${S}/external/bsd/drm2/i915drm
 .PATH:	${S}/external/bsd/drm2/dist/drm/i915
@@ -66,6 +67,7 @@ SRCS+=	intel_uncore.c
 SRCS+=	i915_module.c
 SRCS+=	i915_pci.c
 SRCS+=	intel_gtt.c
+SRCS+=	intelfb.c
 
 COPTS.i915_drv.c+=	-Wno-override-init
 COPTS.intel_display.c+=	-Wno-shadow
