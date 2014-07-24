@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.823 2014/07/15 13:27:04 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.824 2014/07/24 20:29:19 plunky Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -262,6 +262,7 @@ TOOL_OBJC.clang=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
 # PCC supports C and Fortran
 TOOL_CC.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
 TOOL_CPP.pcc=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
+TOOL_CXX.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-p++
 
 #
 # Make sure DESTDIR is set, so that builds with these tools always
@@ -398,6 +399,7 @@ TOOL_OBJC.gcc=	gcc
 # PCC supports C and Fortran
 TOOL_CC.pcc=		pcc
 TOOL_CPP.pcc=		/usr/libexec/pcpp
+TOOL_CXX.pcc=		p++
 
 TOOL_AMIGAAOUT2BB=	amiga-aout2bb
 TOOL_AMIGAELF2BB=	amiga-elf2bb
