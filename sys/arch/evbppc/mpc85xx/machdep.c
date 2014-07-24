@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2014/07/24 23:30:38 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1183,7 +1183,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	/*
 	 * fill in with an absolute branch to a routine that will panic.
 	 */
-	*(int *)0 = 0x48000002 | (int) calltozero;
+	*(volatile int *)0 = 0x48000002 | (int) calltozero;
 
 	/*
 	 * Get the cache sizes.
