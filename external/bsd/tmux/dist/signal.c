@@ -1,4 +1,4 @@
-/* $Id: signal.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* $Id: signal.c,v 1.1.1.3 2014/07/24 14:22:53 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
