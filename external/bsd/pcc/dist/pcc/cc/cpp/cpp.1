@@ -1,5 +1,5 @@
-.\"	Id: cpp.1,v 1.15 2011/08/31 08:34:00 plunky Exp 	
-.\"	$NetBSD: cpp.1,v 1.4 2011/09/01 12:55:30 plunky Exp $
+.\"	Id: cpp.1,v 1.17 2013/02/26 19:27:38 plunky Exp 	
+.\"	$NetBSD: cpp.1,v 1.5 2014/07/24 20:12:50 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd August 31, 2011
+.Dd February 26, 2013
 .Dt CPP 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nd C preprocessor
 .Sh SYNOPSIS
 .Nm
-.Op Fl CMPtVv
+.Op Fl ACEMPtVv
 .Op Fl D Ar macro Ns Oo = Ns Ar value Oc
 .Op Fl d Ar flags
 .Op Fl I Ar path
@@ -63,6 +63,9 @@ output if not provided.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+For assembler-with-cpp input: treat non-directive lines starting
+with a # as comments.
 .It Fl C
 Do not discard comments.
 .It Fl D Ar macro Ns Oo = Ns Ar value Oc
@@ -88,6 +91,8 @@ statements for all defined macros other than builtin macros
 .El
 .Lp
 any unknown flags are ignored.
+.It Fl E
+Modify the exit code, if there were any warnings.
 .It Fl I Ar path
 Add
 .Ar path
@@ -230,11 +235,16 @@ option.
 The
 .Nm
 utility exits with one of the following values:
-.Bl -tag -width Ds
+.Lp
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 Successfully finished.
 .It 1
 An error occurred.
+.It 2
+The
+.Fl E
+option was given, and warnings were issued.
 .El
 .Sh SEE ALSO
 .Xr as 1 ,
