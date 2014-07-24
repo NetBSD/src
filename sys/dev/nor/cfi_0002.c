@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi_0002.c,v 1.6 2011/12/17 19:42:41 phx Exp $	*/
+/*	$NetBSD: cfi_0002.c,v 1.7 2014/07/24 23:25:53 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_flash.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.6 2011/12/17 19:42:41 phx Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.7 2014/07/24 23:25:53 joerg Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ static int  cfi_0002_busy_dq7(struct cfi * const , flash_off_t);
 static int  cfi_0002_busy_reg(struct cfi * const, flash_off_t);
 #endif
 
-
+#ifdef NOR_VERBOSE
 static const char *page_mode_str[] = {
 	"(not supported)",
 	"4 word page",
@@ -80,7 +80,6 @@ static const char *wp_mode_str[] = {
 	"Uniform, Top or Bottom WP Protect",
 };
 
-
 static inline const char *
 cfi_0002_page_mode_str(uint8_t mode)
 {
@@ -96,6 +95,7 @@ cfi_0002_wp_mode_str(uint8_t mode)
 		panic("%s: mode %d out of range", __func__, mode);
 	return wp_mode_str[mode];
 }
+#endif
 
 /*
  * cfi_0002_time_write_nbyte - maximum usec delay waiting for write buffer
