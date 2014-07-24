@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.190 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.191 2014/07/24 16:02:19 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.190 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.191 2014/07/24 16:02:19 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -199,6 +199,8 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -292,27 +294,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 
 	switch (req) {
-
-	/*
-	 * Prepare to accept connections.
-	 */
-	case PRU_LISTEN:
-#ifdef INET
-		if (inp && inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL);
-			if (error)
-				break;
-		}
-#endif
-#ifdef INET6
-		if (in6p && in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, NULL);
-			if (error)
-				break;
-		}
-#endif
-		tp->t_state = TCPS_LISTEN;
-		break;
 
 	/*
 	 * Initiate connection to peer.
