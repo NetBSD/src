@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.54 2014/07/24 21:10:26 alnsn Exp $
+.\"	$NetBSD: bpf.4,v 1.55 2014/07/24 21:21:55 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd August 29, 2013
+.Dd July 24, 2014
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -748,11 +748,11 @@ struct bpf_insn insns[] = {
 };
 .Ed
 .Sh SEE ALSO
-.Xr bpfjit 4 ,
 .Xr ioctl 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
 .Xr signal 3 ,
+.Xr bpfjit 4 ,
 .Xr tcpdump 8
 .Rs
 .%T "The BSD Packet Filter: A New Architecture for User-level Packet Capture"
@@ -769,9 +769,11 @@ its development from 1983 on.
 Since then, it has evolved into the ULTRIX Packet Filter
 at DEC, a STREAMS NIT module under SunOS 4.1, and BPF.
 .Sh AUTHORS
-Steven McCanne, of Lawrence Berkeley Laboratory, implemented BPF in
-Summer 1990.
-The design was in collaboration with Van Jacobson,
+.An -nosplit
+.An Steven McCanne ,
+of Lawrence Berkeley Laboratory, implemented BPF in Summer 1990.
+The design was in collaboration with
+.An Van Jacobson ,
 also of Lawrence Berkeley Laboratory.
 .Sh BUGS
 The read buffer must be of a fixed size (returned by the
