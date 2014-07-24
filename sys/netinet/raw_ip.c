@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.135 2014/07/23 13:17:18 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.136 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.135 2014/07/23 13:17:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.136 2014/07/24 15:12:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -112,7 +112,6 @@ struct inpcbtable rawcbtable;
 
 int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
     struct in_addr, int, int, void (*)(struct inpcb *, int));
-int	 rip_bind(struct inpcb *, struct mbuf *);
 int	 rip_connect(struct inpcb *, struct mbuf *);
 void	 rip_disconnect(struct inpcb *);
 
@@ -482,24 +481,6 @@ rip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 }
 
 int
-rip_bind(struct inpcb *inp, struct mbuf *nam)
-{
-	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
-
-	if (nam->m_len != sizeof(*addr))
-		return (EINVAL);
-	if (!IFNET_FIRST())
-		return (EADDRNOTAVAIL);
-	if (addr->sin_family != AF_INET)
-		return (EAFNOSUPPORT);
-	if (!in_nullhost(addr->sin_addr) &&
-	    ifa_ifwithaddr(sintosa(addr)) == 0)
-		return (EADDRNOTAVAIL);
-	inp->inp_laddr = addr->sin_addr;
-	return (0);
-}
-
-int
 rip_connect(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
@@ -572,7 +553,53 @@ rip_accept(struct socket *so, struct mbuf *nam)
 	KASSERT(solocked(so));
 
 	panic("rip_accept");
-	/* NOT REACHED */
+
+	return EOPNOTSUPP;
+}
+
+static int
+rip_bind(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	struct sockaddr_in *addr;
+	int error = 0;
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(inp != NULL);
+	KASSERT(nam != NULL);
+
+	s = splsoftnet();
+	addr = mtod(nam, struct sockaddr_in *);
+	if (nam->m_len != sizeof(*addr)) {
+		error = EINVAL;
+		goto release;
+	}
+	if (!IFNET_FIRST()) {
+		error = EADDRNOTAVAIL;
+		goto release;
+	}
+	if (addr->sin_family != AF_INET) {
+		error = EAFNOSUPPORT;
+		goto release;
+	}
+	if (!in_nullhost(addr->sin_addr) &&
+	    ifa_ifwithaddr(sintosa(addr)) == 0) {
+		error = EADDRNOTAVAIL;
+		goto release;
+	}
+	inp->inp_laddr = addr->sin_addr;
+
+release:
+	splx(s);
+	return error;
+}
+
+static int
+rip_listen(struct socket *so)
+{
+	KASSERT(solocked(so));
+
 	return EOPNOTSUPP;
 }
 
@@ -642,6 +669,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -670,14 +699,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_BIND:
-		error = rip_bind(inp, nam);
-		break;
-
-	case PRU_LISTEN:
-		error = EOPNOTSUPP;
-		break;
 
 	case PRU_CONNECT:
 		error = rip_connect(inp, nam);
@@ -753,6 +774,8 @@ PR_WRAP_USRREQS(rip)
 #define	rip_attach	rip_attach_wrapper
 #define	rip_detach	rip_detach_wrapper
 #define	rip_accept	rip_accept_wrapper
+#define	rip_bind	rip_bind_wrapper
+#define	rip_listen	rip_listen_wrapper
 #define	rip_ioctl	rip_ioctl_wrapper
 #define	rip_stat	rip_stat_wrapper
 #define	rip_peeraddr	rip_peeraddr_wrapper
@@ -765,6 +788,8 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_attach	= rip_attach,
 	.pr_detach	= rip_detach,
 	.pr_accept	= rip_accept,
+	.pr_bind	= rip_bind,
+	.pr_listen	= rip_listen,
 	.pr_ioctl	= rip_ioctl,
 	.pr_stat	= rip_stat,
 	.pr_peeraddr	= rip_peeraddr,

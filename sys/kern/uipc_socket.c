@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.226 2014/07/23 13:17:18 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.227 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.226 2014/07/23 13:17:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.227 2014/07/24 15:12:03 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -629,8 +629,7 @@ sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	int	error;
 
 	solock(so);
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-	    PRU_BIND, NULL, nam, NULL, l);
+	error = (*so->so_proto->pr_usrreqs->pr_bind)(so, nam);
 	sounlock(so);
 	return error;
 }
@@ -646,8 +645,7 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 		sounlock(so);
 		return EINVAL;
 	}
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-	    PRU_LISTEN, NULL, NULL, NULL, l);
+	error = (*so->so_proto->pr_usrreqs->pr_listen)(so);
 	if (error != 0) {
 		sounlock(so);
 		return error;
