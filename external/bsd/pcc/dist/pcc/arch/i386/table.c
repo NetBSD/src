@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.137 2011/08/06 15:11:48 ragge Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.4 2011/09/01 12:46:36 plunky Exp $	*/
+/*	Id: table.c,v 1.140 2014/07/03 14:31:36 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.5 2014/07/24 19:17:34 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -244,7 +244,7 @@ struct optab table[] = {
 
 /* convert int to short. Nothing to do */
 { SCONV,	INAREG,
-	SAREG,	TWORD,
+	SAREG,	TWORD|TPOINT,
 	SANY,	TSHORT|TUSHORT,
 		0,	RLEFT,
 		"", },
@@ -570,42 +570,23 @@ struct optab table[] = {
 		NDREG|NDSL,	RESC1,	/* should be 0 */
 		"	call *AL\nZC", },
 
-/* struct return */
-{ USTCALL,	FOREFF,
-	SCON,	TANY,
-	SANY,	TANY,
-		NAREG|NASL,	0,
-		"ZP	call CL\nZC", },
-
-{ USTCALL,	INAREG,
-	SCON,	TANY,
-	SANY,	TANY,
-		NAREG|NASL,	RESC1,	/* should be 0 */
-		"ZP	call CL\nZC", },
-
-{ USTCALL,	INAREG,
-	SNAME|SAREG,	TANY,
-	SANY,	TANY,
-		NAREG|NASL,	RESC1,	/* should be 0 */
-		"ZP	call *AL\nZC", },
-
 { STCALL,	FOREFF,
 	SCON,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	0,
-		"ZP	call CL\nZC", },
+		"	call CL\nZC", },
 
 { STCALL,	INAREG,
 	SCON,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"ZP	call CL\nZC", },
+		"	call CL\nZC", },
 
 { STCALL,	INAREG,
 	SNAME|SAREG,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"ZP	call *AL\nZC", },
+		"	call *AL\nZC", },
 
 /*
  * The next rules handle all binop-style operators.
@@ -1610,19 +1591,11 @@ struct optab table[] = {
 		0,	0,
 		"	subl $12,%esp\n	fstpt (%esp)\n", },
 
-#if defined(MACHOABI)
-{ STARG,	FOREFF,
-	SAREG|SOREG|SNAME|SCON,	TANY,
-	SANY,	TSTRUCT,
-		NSPECIAL|NAREG,	0,
-		"ZF", },
-#else
 { STARG,	FOREFF,
 	SAREG,	TPTRTO|TSTRUCT,
 	SANY,	TSTRUCT,
 		NSPECIAL,	0,
 		"ZF", },
-#endif
 
 # define DF(x) FORREW,SANY,TANY,SANY,TANY,REWRITE,x,""
 
