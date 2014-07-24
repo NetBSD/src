@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.102 2014/07/23 11:43:29 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.103 2014/07/24 12:01:05 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.102 2014/07/23 11:43:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.103 2014/07/24 12:01:05 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -50,13 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.102 2014/07/23 11:43:29 pooka Ex
 #define rsys_seterrno(error) rumpuser_seterrno(error)
 #endif
 
-#ifdef RUMP_KERNEL_IS_LIBC
-#define rsys_aliases(what,where) \
-	__weak_alias(what,where); \
-	__weak_alias(_##what,where); \
-	__strong_alias(_sys_##what,where);
-#else
-#define rsys_aliases(a,b)
+#ifndef RUMP_KERNEL_IS_LIBC
+#define RUMP_SYS_COMPAT
 #endif
 
 #if	BYTE_ORDER == BIG_ENDIAN
@@ -92,7 +87,11 @@ rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 	}
 	return rv;
 }
-rsys_aliases(read,rump___sysimpl_read);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(read,rump___sysimpl_read);
+__weak_alias(_read,rump___sysimpl_read);
+__strong_alias(_sys_read,rump___sysimpl_read);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_write(int, const void *, size_t);
 ssize_t
@@ -118,7 +117,11 @@ rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 	}
 	return rv;
 }
-rsys_aliases(write,rump___sysimpl_write);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(write,rump___sysimpl_write);
+__weak_alias(_write,rump___sysimpl_write);
+__strong_alias(_sys_write,rump___sysimpl_write);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_open(const char *, int, mode_t);
 int
@@ -144,7 +147,11 @@ rump___sysimpl_open(const char * path, int flags, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(open,rump___sysimpl_open);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(open,rump___sysimpl_open);
+__weak_alias(_open,rump___sysimpl_open);
+__strong_alias(_sys_open,rump___sysimpl_open);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_close(int);
 int
@@ -168,7 +175,11 @@ rump___sysimpl_close(int fd)
 	}
 	return rv;
 }
-rsys_aliases(close,rump___sysimpl_close);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(close,rump___sysimpl_close);
+__weak_alias(_close,rump___sysimpl_close);
+__strong_alias(_sys_close,rump___sysimpl_close);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_link(const char *, const char *);
 int
@@ -193,7 +204,11 @@ rump___sysimpl_link(const char * path, const char * link)
 	}
 	return rv;
 }
-rsys_aliases(link,rump___sysimpl_link);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(link,rump___sysimpl_link);
+__weak_alias(_link,rump___sysimpl_link);
+__strong_alias(_sys_link,rump___sysimpl_link);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_unlink(const char *);
 int
@@ -217,7 +232,11 @@ rump___sysimpl_unlink(const char * path)
 	}
 	return rv;
 }
-rsys_aliases(unlink,rump___sysimpl_unlink);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(unlink,rump___sysimpl_unlink);
+__weak_alias(_unlink,rump___sysimpl_unlink);
+__strong_alias(_sys_unlink,rump___sysimpl_unlink);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_chdir(const char *);
 int
@@ -241,7 +260,11 @@ rump___sysimpl_chdir(const char * path)
 	}
 	return rv;
 }
-rsys_aliases(chdir,rump___sysimpl_chdir);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(chdir,rump___sysimpl_chdir);
+__weak_alias(_chdir,rump___sysimpl_chdir);
+__strong_alias(_sys_chdir,rump___sysimpl_chdir);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchdir(int);
 int
@@ -265,8 +288,13 @@ rump___sysimpl_fchdir(int fd)
 	}
 	return rv;
 }
-rsys_aliases(fchdir,rump___sysimpl_fchdir);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchdir,rump___sysimpl_fchdir);
+__weak_alias(_fchdir,rump___sysimpl_fchdir);
+__strong_alias(_sys_fchdir,rump___sysimpl_fchdir);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_mknod(const char *, mode_t, uint32_t);
 int
 rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
@@ -291,7 +319,12 @@ rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 	}
 	return rv;
 }
-rsys_aliases(compat_50_mknod,rump___sysimpl_mknod);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mknod,rump___sysimpl_mknod);
+__weak_alias(_mknod,rump___sysimpl_mknod);
+__strong_alias(_sys_mknod,rump___sysimpl_mknod);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_chmod(const char *, mode_t);
 int
@@ -316,7 +349,11 @@ rump___sysimpl_chmod(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(chmod,rump___sysimpl_chmod);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(chmod,rump___sysimpl_chmod);
+__weak_alias(_chmod,rump___sysimpl_chmod);
+__strong_alias(_sys_chmod,rump___sysimpl_chmod);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_chown(const char *, uid_t, gid_t);
 int
@@ -342,7 +379,11 @@ rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 	}
 	return rv;
 }
-rsys_aliases(chown,rump___sysimpl_chown);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(chown,rump___sysimpl_chown);
+__weak_alias(_chown,rump___sysimpl_chown);
+__strong_alias(_sys_chown,rump___sysimpl_chown);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 pid_t rump___sysimpl_getpid(void);
 pid_t
@@ -358,7 +399,11 @@ rump___sysimpl_getpid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(getpid,rump___sysimpl_getpid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getpid,rump___sysimpl_getpid);
+__weak_alias(_getpid,rump___sysimpl_getpid);
+__strong_alias(_sys_getpid,rump___sysimpl_getpid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_unmount(const char *, int);
 int
@@ -383,7 +428,11 @@ rump___sysimpl_unmount(const char * path, int flags)
 	}
 	return rv;
 }
-rsys_aliases(unmount,rump___sysimpl_unmount);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(unmount,rump___sysimpl_unmount);
+__weak_alias(_unmount,rump___sysimpl_unmount);
+__strong_alias(_sys_unmount,rump___sysimpl_unmount);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setuid(uid_t);
 int
@@ -407,7 +456,11 @@ rump___sysimpl_setuid(uid_t uid)
 	}
 	return rv;
 }
-rsys_aliases(setuid,rump___sysimpl_setuid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setuid,rump___sysimpl_setuid);
+__weak_alias(_setuid,rump___sysimpl_setuid);
+__strong_alias(_sys_setuid,rump___sysimpl_setuid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 uid_t rump___sysimpl_getuid(void);
 uid_t
@@ -423,7 +476,11 @@ rump___sysimpl_getuid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(getuid,rump___sysimpl_getuid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getuid,rump___sysimpl_getuid);
+__weak_alias(_getuid,rump___sysimpl_getuid);
+__strong_alias(_sys_getuid,rump___sysimpl_getuid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 uid_t rump___sysimpl_geteuid(void);
 uid_t
@@ -439,7 +496,11 @@ rump___sysimpl_geteuid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(geteuid,rump___sysimpl_geteuid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(geteuid,rump___sysimpl_geteuid);
+__weak_alias(_geteuid,rump___sysimpl_geteuid);
+__strong_alias(_sys_geteuid,rump___sysimpl_geteuid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_recvmsg(int, struct msghdr *, int);
 ssize_t
@@ -465,7 +526,11 @@ rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 	}
 	return rv;
 }
-rsys_aliases(recvmsg,rump___sysimpl_recvmsg);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(recvmsg,rump___sysimpl_recvmsg);
+__weak_alias(_recvmsg,rump___sysimpl_recvmsg);
+__strong_alias(_sys_recvmsg,rump___sysimpl_recvmsg);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_sendmsg(int, const struct msghdr *, int);
 ssize_t
@@ -491,7 +556,11 @@ rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 	}
 	return rv;
 }
-rsys_aliases(sendmsg,rump___sysimpl_sendmsg);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(sendmsg,rump___sysimpl_sendmsg);
+__weak_alias(_sendmsg,rump___sysimpl_sendmsg);
+__strong_alias(_sys_sendmsg,rump___sysimpl_sendmsg);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
 ssize_t
@@ -520,7 +589,11 @@ rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockadd
 	}
 	return rv;
 }
-rsys_aliases(recvfrom,rump___sysimpl_recvfrom);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(recvfrom,rump___sysimpl_recvfrom);
+__weak_alias(_recvfrom,rump___sysimpl_recvfrom);
+__strong_alias(_sys_recvfrom,rump___sysimpl_recvfrom);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_accept(int, struct sockaddr *, socklen_t *);
 int
@@ -546,7 +619,11 @@ rump___sysimpl_accept(int s, struct sockaddr * name, socklen_t * anamelen)
 	}
 	return rv;
 }
-rsys_aliases(accept,rump___sysimpl_accept);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(accept,rump___sysimpl_accept);
+__weak_alias(_accept,rump___sysimpl_accept);
+__strong_alias(_sys_accept,rump___sysimpl_accept);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getpeername(int, struct sockaddr *, socklen_t *);
 int
@@ -572,7 +649,11 @@ rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, socklen_t * alen)
 	}
 	return rv;
 }
-rsys_aliases(getpeername,rump___sysimpl_getpeername);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getpeername,rump___sysimpl_getpeername);
+__weak_alias(_getpeername,rump___sysimpl_getpeername);
+__strong_alias(_sys_getpeername,rump___sysimpl_getpeername);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getsockname(int, struct sockaddr *, socklen_t *);
 int
@@ -598,7 +679,11 @@ rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, socklen_t * alen)
 	}
 	return rv;
 }
-rsys_aliases(getsockname,rump___sysimpl_getsockname);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getsockname,rump___sysimpl_getsockname);
+__weak_alias(_getsockname,rump___sysimpl_getsockname);
+__strong_alias(_sys_getsockname,rump___sysimpl_getsockname);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_access(const char *, int);
 int
@@ -623,7 +708,11 @@ rump___sysimpl_access(const char * path, int flags)
 	}
 	return rv;
 }
-rsys_aliases(access,rump___sysimpl_access);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(access,rump___sysimpl_access);
+__weak_alias(_access,rump___sysimpl_access);
+__strong_alias(_sys_access,rump___sysimpl_access);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_chflags(const char *, u_long);
 int
@@ -648,7 +737,11 @@ rump___sysimpl_chflags(const char * path, u_long flags)
 	}
 	return rv;
 }
-rsys_aliases(chflags,rump___sysimpl_chflags);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(chflags,rump___sysimpl_chflags);
+__weak_alias(_chflags,rump___sysimpl_chflags);
+__strong_alias(_sys_chflags,rump___sysimpl_chflags);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchflags(int, u_long);
 int
@@ -673,7 +766,11 @@ rump___sysimpl_fchflags(int fd, u_long flags)
 	}
 	return rv;
 }
-rsys_aliases(fchflags,rump___sysimpl_fchflags);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchflags,rump___sysimpl_fchflags);
+__weak_alias(_fchflags,rump___sysimpl_fchflags);
+__strong_alias(_sys_fchflags,rump___sysimpl_fchflags);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 void rump___sysimpl_sync(void);
 void
@@ -683,7 +780,11 @@ rump___sysimpl_sync(void )
 
 	rsys_syscall(SYS_sync, NULL, 0, retval);
 }
-rsys_aliases(sync,rump___sysimpl_sync);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(sync,rump___sysimpl_sync);
+__weak_alias(_sync,rump___sysimpl_sync);
+__strong_alias(_sys_sync,rump___sysimpl_sync);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 pid_t rump___sysimpl_getppid(void);
 pid_t
@@ -699,7 +800,11 @@ rump___sysimpl_getppid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(getppid,rump___sysimpl_getppid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getppid,rump___sysimpl_getppid);
+__weak_alias(_getppid,rump___sysimpl_getppid);
+__strong_alias(_sys_getppid,rump___sysimpl_getppid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_dup(int);
 int
@@ -723,7 +828,11 @@ rump___sysimpl_dup(int fd)
 	}
 	return rv;
 }
-rsys_aliases(dup,rump___sysimpl_dup);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(dup,rump___sysimpl_dup);
+__weak_alias(_dup,rump___sysimpl_dup);
+__strong_alias(_sys_dup,rump___sysimpl_dup);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 gid_t rump___sysimpl_getegid(void);
 gid_t
@@ -739,7 +848,11 @@ rump___sysimpl_getegid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(getegid,rump___sysimpl_getegid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getegid,rump___sysimpl_getegid);
+__weak_alias(_getegid,rump___sysimpl_getegid);
+__strong_alias(_sys_getegid,rump___sysimpl_getegid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_ktrace(const char *, int, int, pid_t);
 int
@@ -766,7 +879,11 @@ rump___sysimpl_ktrace(const char * fname, int ops, int facs, pid_t pid)
 	}
 	return rv;
 }
-rsys_aliases(ktrace,rump___sysimpl_ktrace);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(ktrace,rump___sysimpl_ktrace);
+__weak_alias(_ktrace,rump___sysimpl_ktrace);
+__strong_alias(_sys_ktrace,rump___sysimpl_ktrace);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 gid_t rump___sysimpl_getgid(void);
 gid_t
@@ -782,7 +899,11 @@ rump___sysimpl_getgid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(getgid,rump___sysimpl_getgid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getgid,rump___sysimpl_getgid);
+__weak_alias(_getgid,rump___sysimpl_getgid);
+__strong_alias(_sys_getgid,rump___sysimpl_getgid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl___getlogin(char *, size_t);
 int
@@ -807,7 +928,11 @@ rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 	}
 	return rv;
 }
-rsys_aliases(__getlogin,rump___sysimpl___getlogin);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(__getlogin,rump___sysimpl___getlogin);
+__weak_alias(___getlogin,rump___sysimpl___getlogin);
+__strong_alias(_sys___getlogin,rump___sysimpl___getlogin);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl___setlogin(const char *);
 int
@@ -831,7 +956,11 @@ rump___sysimpl___setlogin(const char * namebuf)
 	}
 	return rv;
 }
-rsys_aliases(__setlogin,rump___sysimpl___setlogin);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(__setlogin,rump___sysimpl___setlogin);
+__weak_alias(___setlogin,rump___sysimpl___setlogin);
+__strong_alias(_sys___setlogin,rump___sysimpl___setlogin);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_ioctl(int, u_long, void *);
 int
@@ -857,7 +986,11 @@ rump___sysimpl_ioctl(int fd, u_long com, void * data)
 	}
 	return rv;
 }
-rsys_aliases(ioctl,rump___sysimpl_ioctl);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(ioctl,rump___sysimpl_ioctl);
+__weak_alias(_ioctl,rump___sysimpl_ioctl);
+__strong_alias(_sys_ioctl,rump___sysimpl_ioctl);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_revoke(const char *);
 int
@@ -881,7 +1014,11 @@ rump___sysimpl_revoke(const char * path)
 	}
 	return rv;
 }
-rsys_aliases(revoke,rump___sysimpl_revoke);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(revoke,rump___sysimpl_revoke);
+__weak_alias(_revoke,rump___sysimpl_revoke);
+__strong_alias(_sys_revoke,rump___sysimpl_revoke);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_symlink(const char *, const char *);
 int
@@ -906,7 +1043,11 @@ rump___sysimpl_symlink(const char * path, const char * link)
 	}
 	return rv;
 }
-rsys_aliases(symlink,rump___sysimpl_symlink);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(symlink,rump___sysimpl_symlink);
+__weak_alias(_symlink,rump___sysimpl_symlink);
+__strong_alias(_sys_symlink,rump___sysimpl_symlink);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_readlink(const char *, char *, size_t);
 ssize_t
@@ -932,7 +1073,11 @@ rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 	}
 	return rv;
 }
-rsys_aliases(readlink,rump___sysimpl_readlink);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(readlink,rump___sysimpl_readlink);
+__weak_alias(_readlink,rump___sysimpl_readlink);
+__strong_alias(_sys_readlink,rump___sysimpl_readlink);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 mode_t rump___sysimpl_umask(mode_t);
 mode_t
@@ -956,7 +1101,11 @@ rump___sysimpl_umask(mode_t newmask)
 	}
 	return rv;
 }
-rsys_aliases(umask,rump___sysimpl_umask);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(umask,rump___sysimpl_umask);
+__weak_alias(_umask,rump___sysimpl_umask);
+__strong_alias(_sys_umask,rump___sysimpl_umask);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_chroot(const char *);
 int
@@ -980,7 +1129,11 @@ rump___sysimpl_chroot(const char * path)
 	}
 	return rv;
 }
-rsys_aliases(chroot,rump___sysimpl_chroot);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(chroot,rump___sysimpl_chroot);
+__weak_alias(_chroot,rump___sysimpl_chroot);
+__strong_alias(_sys_chroot,rump___sysimpl_chroot);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getgroups(int, gid_t *);
 int
@@ -1005,7 +1158,11 @@ rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 	}
 	return rv;
 }
-rsys_aliases(getgroups,rump___sysimpl_getgroups);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getgroups,rump___sysimpl_getgroups);
+__weak_alias(_getgroups,rump___sysimpl_getgroups);
+__strong_alias(_sys_getgroups,rump___sysimpl_getgroups);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setgroups(int, const gid_t *);
 int
@@ -1030,7 +1187,11 @@ rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 	}
 	return rv;
 }
-rsys_aliases(setgroups,rump___sysimpl_setgroups);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setgroups,rump___sysimpl_setgroups);
+__weak_alias(_setgroups,rump___sysimpl_setgroups);
+__strong_alias(_sys_setgroups,rump___sysimpl_setgroups);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getpgrp(void);
 int
@@ -1050,7 +1211,11 @@ rump___sysimpl_getpgrp(void )
 	}
 	return rv;
 }
-rsys_aliases(getpgrp,rump___sysimpl_getpgrp);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getpgrp,rump___sysimpl_getpgrp);
+__weak_alias(_getpgrp,rump___sysimpl_getpgrp);
+__strong_alias(_sys_getpgrp,rump___sysimpl_getpgrp);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setpgid(pid_t, pid_t);
 int
@@ -1075,7 +1240,11 @@ rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 	}
 	return rv;
 }
-rsys_aliases(setpgid,rump___sysimpl_setpgid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setpgid,rump___sysimpl_setpgid);
+__weak_alias(_setpgid,rump___sysimpl_setpgid);
+__strong_alias(_sys_setpgid,rump___sysimpl_setpgid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_dup2(int, int);
 int
@@ -1100,7 +1269,11 @@ rump___sysimpl_dup2(int from, int to)
 	}
 	return rv;
 }
-rsys_aliases(dup2,rump___sysimpl_dup2);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(dup2,rump___sysimpl_dup2);
+__weak_alias(_dup2,rump___sysimpl_dup2);
+__strong_alias(_sys_dup2,rump___sysimpl_dup2);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fcntl(int, int, void *);
 int
@@ -1126,8 +1299,13 @@ rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 	}
 	return rv;
 }
-rsys_aliases(fcntl,rump___sysimpl_fcntl);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fcntl,rump___sysimpl_fcntl);
+__weak_alias(_fcntl,rump___sysimpl_fcntl);
+__strong_alias(_sys_fcntl,rump___sysimpl_fcntl);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int
 rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct timeval * tv)
@@ -1154,7 +1332,12 @@ rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct time
 	}
 	return rv;
 }
-rsys_aliases(compat_50_select,rump___sysimpl_select);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(select,rump___sysimpl_select);
+__weak_alias(_select,rump___sysimpl_select);
+__strong_alias(_sys_select,rump___sysimpl_select);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_fsync(int);
 int
@@ -1178,7 +1361,11 @@ rump___sysimpl_fsync(int fd)
 	}
 	return rv;
 }
-rsys_aliases(fsync,rump___sysimpl_fsync);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fsync,rump___sysimpl_fsync);
+__weak_alias(_fsync,rump___sysimpl_fsync);
+__strong_alias(_sys_fsync,rump___sysimpl_fsync);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_connect(int, const struct sockaddr *, socklen_t);
 int
@@ -1204,7 +1391,11 @@ rump___sysimpl_connect(int s, const struct sockaddr * name, socklen_t namelen)
 	}
 	return rv;
 }
-rsys_aliases(connect,rump___sysimpl_connect);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(connect,rump___sysimpl_connect);
+__weak_alias(_connect,rump___sysimpl_connect);
+__strong_alias(_sys_connect,rump___sysimpl_connect);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_bind(int, const struct sockaddr *, socklen_t);
 int
@@ -1230,7 +1421,11 @@ rump___sysimpl_bind(int s, const struct sockaddr * name, socklen_t namelen)
 	}
 	return rv;
 }
-rsys_aliases(bind,rump___sysimpl_bind);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(bind,rump___sysimpl_bind);
+__weak_alias(_bind,rump___sysimpl_bind);
+__strong_alias(_sys_bind,rump___sysimpl_bind);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setsockopt(int, int, int, const void *, socklen_t);
 int
@@ -1258,7 +1453,11 @@ rump___sysimpl_setsockopt(int s, int level, int name, const void * val, socklen_
 	}
 	return rv;
 }
-rsys_aliases(setsockopt,rump___sysimpl_setsockopt);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setsockopt,rump___sysimpl_setsockopt);
+__weak_alias(_setsockopt,rump___sysimpl_setsockopt);
+__strong_alias(_sys_setsockopt,rump___sysimpl_setsockopt);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_listen(int, int);
 int
@@ -1283,7 +1482,11 @@ rump___sysimpl_listen(int s, int backlog)
 	}
 	return rv;
 }
-rsys_aliases(listen,rump___sysimpl_listen);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(listen,rump___sysimpl_listen);
+__weak_alias(_listen,rump___sysimpl_listen);
+__strong_alias(_sys_listen,rump___sysimpl_listen);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getsockopt(int, int, int, void *, socklen_t *);
 int
@@ -1311,7 +1514,11 @@ rump___sysimpl_getsockopt(int s, int level, int name, void * val, socklen_t * av
 	}
 	return rv;
 }
-rsys_aliases(getsockopt,rump___sysimpl_getsockopt);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getsockopt,rump___sysimpl_getsockopt);
+__weak_alias(_getsockopt,rump___sysimpl_getsockopt);
+__strong_alias(_sys_getsockopt,rump___sysimpl_getsockopt);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_readv(int, const struct iovec *, int);
 ssize_t
@@ -1337,7 +1544,11 @@ rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 	}
 	return rv;
 }
-rsys_aliases(readv,rump___sysimpl_readv);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(readv,rump___sysimpl_readv);
+__weak_alias(_readv,rump___sysimpl_readv);
+__strong_alias(_sys_readv,rump___sysimpl_readv);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_writev(int, const struct iovec *, int);
 ssize_t
@@ -1363,7 +1574,11 @@ rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 	}
 	return rv;
 }
-rsys_aliases(writev,rump___sysimpl_writev);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(writev,rump___sysimpl_writev);
+__weak_alias(_writev,rump___sysimpl_writev);
+__strong_alias(_sys_writev,rump___sysimpl_writev);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchown(int, uid_t, gid_t);
 int
@@ -1389,7 +1604,11 @@ rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 	}
 	return rv;
 }
-rsys_aliases(fchown,rump___sysimpl_fchown);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchown,rump___sysimpl_fchown);
+__weak_alias(_fchown,rump___sysimpl_fchown);
+__strong_alias(_sys_fchown,rump___sysimpl_fchown);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchmod(int, mode_t);
 int
@@ -1414,7 +1633,11 @@ rump___sysimpl_fchmod(int fd, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(fchmod,rump___sysimpl_fchmod);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchmod,rump___sysimpl_fchmod);
+__weak_alias(_fchmod,rump___sysimpl_fchmod);
+__strong_alias(_sys_fchmod,rump___sysimpl_fchmod);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setreuid(uid_t, uid_t);
 int
@@ -1439,7 +1662,11 @@ rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 	}
 	return rv;
 }
-rsys_aliases(setreuid,rump___sysimpl_setreuid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setreuid,rump___sysimpl_setreuid);
+__weak_alias(_setreuid,rump___sysimpl_setreuid);
+__strong_alias(_sys_setreuid,rump___sysimpl_setreuid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setregid(gid_t, gid_t);
 int
@@ -1464,7 +1691,11 @@ rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 	}
 	return rv;
 }
-rsys_aliases(setregid,rump___sysimpl_setregid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setregid,rump___sysimpl_setregid);
+__weak_alias(_setregid,rump___sysimpl_setregid);
+__strong_alias(_sys_setregid,rump___sysimpl_setregid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_rename(const char *, const char *);
 int
@@ -1489,7 +1720,11 @@ rump___sysimpl_rename(const char * from, const char * to)
 	}
 	return rv;
 }
-rsys_aliases(rename,rump___sysimpl_rename);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(rename,rump___sysimpl_rename);
+__weak_alias(_rename,rump___sysimpl_rename);
+__strong_alias(_sys_rename,rump___sysimpl_rename);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_flock(int, int);
 int
@@ -1514,7 +1749,11 @@ rump___sysimpl_flock(int fd, int how)
 	}
 	return rv;
 }
-rsys_aliases(flock,rump___sysimpl_flock);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(flock,rump___sysimpl_flock);
+__weak_alias(_flock,rump___sysimpl_flock);
+__strong_alias(_sys_flock,rump___sysimpl_flock);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mkfifo(const char *, mode_t);
 int
@@ -1539,7 +1778,11 @@ rump___sysimpl_mkfifo(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(mkfifo,rump___sysimpl_mkfifo);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mkfifo,rump___sysimpl_mkfifo);
+__weak_alias(_mkfifo,rump___sysimpl_mkfifo);
+__strong_alias(_sys_mkfifo,rump___sysimpl_mkfifo);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
 ssize_t
@@ -1568,7 +1811,11 @@ rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const stru
 	}
 	return rv;
 }
-rsys_aliases(sendto,rump___sysimpl_sendto);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(sendto,rump___sysimpl_sendto);
+__weak_alias(_sendto,rump___sysimpl_sendto);
+__strong_alias(_sys_sendto,rump___sysimpl_sendto);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_shutdown(int, int);
 int
@@ -1593,7 +1840,11 @@ rump___sysimpl_shutdown(int s, int how)
 	}
 	return rv;
 }
-rsys_aliases(shutdown,rump___sysimpl_shutdown);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(shutdown,rump___sysimpl_shutdown);
+__weak_alias(_shutdown,rump___sysimpl_shutdown);
+__strong_alias(_sys_shutdown,rump___sysimpl_shutdown);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_socketpair(int, int, int, int *);
 int
@@ -1620,7 +1871,11 @@ rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 	}
 	return rv;
 }
-rsys_aliases(socketpair,rump___sysimpl_socketpair);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(socketpair,rump___sysimpl_socketpair);
+__weak_alias(_socketpair,rump___sysimpl_socketpair);
+__strong_alias(_sys_socketpair,rump___sysimpl_socketpair);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mkdir(const char *, mode_t);
 int
@@ -1645,7 +1900,11 @@ rump___sysimpl_mkdir(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(mkdir,rump___sysimpl_mkdir);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mkdir,rump___sysimpl_mkdir);
+__weak_alias(_mkdir,rump___sysimpl_mkdir);
+__strong_alias(_sys_mkdir,rump___sysimpl_mkdir);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_rmdir(const char *);
 int
@@ -1669,8 +1928,13 @@ rump___sysimpl_rmdir(const char * path)
 	}
 	return rv;
 }
-rsys_aliases(rmdir,rump___sysimpl_rmdir);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(rmdir,rump___sysimpl_rmdir);
+__weak_alias(_rmdir,rump___sysimpl_rmdir);
+__strong_alias(_sys_rmdir,rump___sysimpl_rmdir);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_utimes(const char *, const struct timeval *);
 int
 rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
@@ -1694,7 +1958,12 @@ rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_aliases(compat_50_utimes,rump___sysimpl_utimes);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(utimes,rump___sysimpl_utimes);
+__weak_alias(_utimes,rump___sysimpl_utimes);
+__strong_alias(_sys_utimes,rump___sysimpl_utimes);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_setsid(void);
 int
@@ -1714,7 +1983,11 @@ rump___sysimpl_setsid(void )
 	}
 	return rv;
 }
-rsys_aliases(setsid,rump___sysimpl_setsid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setsid,rump___sysimpl_setsid);
+__weak_alias(_setsid,rump___sysimpl_setsid);
+__strong_alias(_sys_setsid,rump___sysimpl_setsid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_nfssvc(int, void *);
 int
@@ -1739,7 +2012,11 @@ rump___sysimpl_nfssvc(int flag, void * argp)
 	}
 	return rv;
 }
-rsys_aliases(nfssvc,rump___sysimpl_nfssvc);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(nfssvc,rump___sysimpl_nfssvc);
+__weak_alias(_nfssvc,rump___sysimpl_nfssvc);
+__strong_alias(_sys_nfssvc,rump___sysimpl_nfssvc);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_pread(int, void *, size_t, off_t);
 ssize_t
@@ -1767,7 +2044,11 @@ rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 	}
 	return rv;
 }
-rsys_aliases(pread,rump___sysimpl_pread);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pread,rump___sysimpl_pread);
+__weak_alias(_pread,rump___sysimpl_pread);
+__strong_alias(_sys_pread,rump___sysimpl_pread);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_pwrite(int, const void *, size_t, off_t);
 ssize_t
@@ -1795,7 +2076,11 @@ rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 	}
 	return rv;
 }
-rsys_aliases(pwrite,rump___sysimpl_pwrite);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pwrite,rump___sysimpl_pwrite);
+__weak_alias(_pwrite,rump___sysimpl_pwrite);
+__strong_alias(_sys_pwrite,rump___sysimpl_pwrite);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setgid(gid_t);
 int
@@ -1819,7 +2104,11 @@ rump___sysimpl_setgid(gid_t gid)
 	}
 	return rv;
 }
-rsys_aliases(setgid,rump___sysimpl_setgid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setgid,rump___sysimpl_setgid);
+__weak_alias(_setgid,rump___sysimpl_setgid);
+__strong_alias(_sys_setgid,rump___sysimpl_setgid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setegid(gid_t);
 int
@@ -1843,7 +2132,11 @@ rump___sysimpl_setegid(gid_t egid)
 	}
 	return rv;
 }
-rsys_aliases(setegid,rump___sysimpl_setegid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setegid,rump___sysimpl_setegid);
+__weak_alias(_setegid,rump___sysimpl_setegid);
+__strong_alias(_sys_setegid,rump___sysimpl_setegid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_seteuid(uid_t);
 int
@@ -1867,7 +2160,11 @@ rump___sysimpl_seteuid(uid_t euid)
 	}
 	return rv;
 }
-rsys_aliases(seteuid,rump___sysimpl_seteuid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(seteuid,rump___sysimpl_seteuid);
+__weak_alias(_seteuid,rump___sysimpl_seteuid);
+__strong_alias(_sys_seteuid,rump___sysimpl_seteuid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 long rump___sysimpl_pathconf(const char *, int);
 long
@@ -1892,7 +2189,11 @@ rump___sysimpl_pathconf(const char * path, int name)
 	}
 	return rv;
 }
-rsys_aliases(pathconf,rump___sysimpl_pathconf);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pathconf,rump___sysimpl_pathconf);
+__weak_alias(_pathconf,rump___sysimpl_pathconf);
+__strong_alias(_sys_pathconf,rump___sysimpl_pathconf);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 long rump___sysimpl_fpathconf(int, int);
 long
@@ -1917,7 +2218,11 @@ rump___sysimpl_fpathconf(int fd, int name)
 	}
 	return rv;
 }
-rsys_aliases(fpathconf,rump___sysimpl_fpathconf);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fpathconf,rump___sysimpl_fpathconf);
+__weak_alias(_fpathconf,rump___sysimpl_fpathconf);
+__strong_alias(_sys_fpathconf,rump___sysimpl_fpathconf);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getrlimit(int, struct rlimit *);
 int
@@ -1942,7 +2247,11 @@ rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 	}
 	return rv;
 }
-rsys_aliases(getrlimit,rump___sysimpl_getrlimit);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getrlimit,rump___sysimpl_getrlimit);
+__weak_alias(_getrlimit,rump___sysimpl_getrlimit);
+__strong_alias(_sys_getrlimit,rump___sysimpl_getrlimit);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setrlimit(int, const struct rlimit *);
 int
@@ -1967,7 +2276,11 @@ rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 	}
 	return rv;
 }
-rsys_aliases(setrlimit,rump___sysimpl_setrlimit);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setrlimit,rump___sysimpl_setrlimit);
+__weak_alias(_setrlimit,rump___sysimpl_setrlimit);
+__strong_alias(_sys_setrlimit,rump___sysimpl_setrlimit);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 off_t rump___sysimpl_lseek(int, off_t, int);
 off_t
@@ -1994,7 +2307,11 @@ rump___sysimpl_lseek(int fd, off_t offset, int whence)
 	}
 	return rv;
 }
-rsys_aliases(lseek,rump___sysimpl_lseek);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lseek,rump___sysimpl_lseek);
+__weak_alias(_lseek,rump___sysimpl_lseek);
+__strong_alias(_sys_lseek,rump___sysimpl_lseek);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_truncate(const char *, off_t);
 int
@@ -2020,7 +2337,11 @@ rump___sysimpl_truncate(const char * path, off_t length)
 	}
 	return rv;
 }
-rsys_aliases(truncate,rump___sysimpl_truncate);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(truncate,rump___sysimpl_truncate);
+__weak_alias(_truncate,rump___sysimpl_truncate);
+__strong_alias(_sys_truncate,rump___sysimpl_truncate);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_ftruncate(int, off_t);
 int
@@ -2046,7 +2367,11 @@ rump___sysimpl_ftruncate(int fd, off_t length)
 	}
 	return rv;
 }
-rsys_aliases(ftruncate,rump___sysimpl_ftruncate);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(ftruncate,rump___sysimpl_ftruncate);
+__weak_alias(_ftruncate,rump___sysimpl_ftruncate);
+__strong_alias(_sys_ftruncate,rump___sysimpl_ftruncate);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl___sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
 int
@@ -2075,8 +2400,13 @@ rump___sysimpl___sysctl(const int * name, u_int namelen, void * oldv, size_t * o
 	}
 	return rv;
 }
-rsys_aliases(__sysctl,rump___sysimpl___sysctl);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(__sysctl,rump___sysimpl___sysctl);
+__weak_alias(___sysctl,rump___sysimpl___sysctl);
+__strong_alias(_sys___sysctl,rump___sysimpl___sysctl);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_futimes(int, const struct timeval *);
 int
 rump___sysimpl_futimes(int fd, const struct timeval * tptr)
@@ -2100,7 +2430,12 @@ rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_aliases(compat_50_futimes,rump___sysimpl_futimes);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(futimes,rump___sysimpl_futimes);
+__weak_alias(_futimes,rump___sysimpl_futimes);
+__strong_alias(_sys_futimes,rump___sysimpl_futimes);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 pid_t rump___sysimpl_getpgid(pid_t);
 pid_t
@@ -2124,7 +2459,11 @@ rump___sysimpl_getpgid(pid_t pid)
 	}
 	return rv;
 }
-rsys_aliases(getpgid,rump___sysimpl_getpgid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getpgid,rump___sysimpl_getpgid);
+__weak_alias(_getpgid,rump___sysimpl_getpgid);
+__strong_alias(_sys_getpgid,rump___sysimpl_getpgid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_reboot(int, char *);
 int
@@ -2149,7 +2488,11 @@ rump___sysimpl_reboot(int opt, char * bootstr)
 	}
 	return rv;
 }
-rsys_aliases(reboot,rump___sysimpl_reboot);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(reboot,rump___sysimpl_reboot);
+__weak_alias(_reboot,rump___sysimpl_reboot);
+__strong_alias(_sys_reboot,rump___sysimpl_reboot);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_poll(struct pollfd *, u_int, int);
 int
@@ -2175,7 +2518,11 @@ rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 	}
 	return rv;
 }
-rsys_aliases(poll,rump___sysimpl_poll);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(poll,rump___sysimpl_poll);
+__weak_alias(_poll,rump___sysimpl_poll);
+__strong_alias(_sys_poll,rump___sysimpl_poll);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_timer_create(clockid_t, struct sigevent *, timer_t *);
 int
@@ -2201,7 +2548,11 @@ rump___sysimpl_timer_create(clockid_t clock_id, struct sigevent * evp, timer_t *
 	}
 	return rv;
 }
-rsys_aliases(timer_create,rump___sysimpl_timer_create);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(timer_create,rump___sysimpl_timer_create);
+__weak_alias(_timer_create,rump___sysimpl_timer_create);
+__strong_alias(_sys_timer_create,rump___sysimpl_timer_create);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_timer_delete(timer_t);
 int
@@ -2225,7 +2576,11 @@ rump___sysimpl_timer_delete(timer_t timerid)
 	}
 	return rv;
 }
-rsys_aliases(timer_delete,rump___sysimpl_timer_delete);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(timer_delete,rump___sysimpl_timer_delete);
+__weak_alias(_timer_delete,rump___sysimpl_timer_delete);
+__strong_alias(_sys_timer_delete,rump___sysimpl_timer_delete);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_timer_getoverrun(timer_t);
 int
@@ -2249,7 +2604,11 @@ rump___sysimpl_timer_getoverrun(timer_t timerid)
 	}
 	return rv;
 }
-rsys_aliases(timer_getoverrun,rump___sysimpl_timer_getoverrun);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(timer_getoverrun,rump___sysimpl_timer_getoverrun);
+__weak_alias(_timer_getoverrun,rump___sysimpl_timer_getoverrun);
+__strong_alias(_sys_timer_getoverrun,rump___sysimpl_timer_getoverrun);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fdatasync(int);
 int
@@ -2273,7 +2632,11 @@ rump___sysimpl_fdatasync(int fd)
 	}
 	return rv;
 }
-rsys_aliases(fdatasync,rump___sysimpl_fdatasync);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fdatasync,rump___sysimpl_fdatasync);
+__weak_alias(_fdatasync,rump___sysimpl_fdatasync);
+__strong_alias(_sys_fdatasync,rump___sysimpl_fdatasync);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_modctl(int, void *);
 int
@@ -2298,7 +2661,11 @@ rump___sysimpl_modctl(int cmd, void * arg)
 	}
 	return rv;
 }
-rsys_aliases(modctl,rump___sysimpl_modctl);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(modctl,rump___sysimpl_modctl);
+__weak_alias(_modctl,rump___sysimpl_modctl);
+__strong_alias(_sys_modctl,rump___sysimpl_modctl);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_init(unsigned int, intptr_t *);
 int
@@ -2323,7 +2690,11 @@ rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_init,rump___sysimpl__ksem_init);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_init,rump___sysimpl__ksem_init);
+__weak_alias(__ksem_init,rump___sysimpl__ksem_init);
+__strong_alias(_sys__ksem_init,rump___sysimpl__ksem_init);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_open(const char *, int, mode_t, unsigned int, intptr_t *);
 int
@@ -2351,7 +2722,11 @@ rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned in
 	}
 	return rv;
 }
-rsys_aliases(_ksem_open,rump___sysimpl__ksem_open);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_open,rump___sysimpl__ksem_open);
+__weak_alias(__ksem_open,rump___sysimpl__ksem_open);
+__strong_alias(_sys__ksem_open,rump___sysimpl__ksem_open);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_unlink(const char *);
 int
@@ -2375,7 +2750,11 @@ rump___sysimpl__ksem_unlink(const char * name)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_unlink,rump___sysimpl__ksem_unlink);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_unlink,rump___sysimpl__ksem_unlink);
+__weak_alias(__ksem_unlink,rump___sysimpl__ksem_unlink);
+__strong_alias(_sys__ksem_unlink,rump___sysimpl__ksem_unlink);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_close(intptr_t);
 int
@@ -2399,7 +2778,11 @@ rump___sysimpl__ksem_close(intptr_t id)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_close,rump___sysimpl__ksem_close);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_close,rump___sysimpl__ksem_close);
+__weak_alias(__ksem_close,rump___sysimpl__ksem_close);
+__strong_alias(_sys__ksem_close,rump___sysimpl__ksem_close);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_post(intptr_t);
 int
@@ -2423,7 +2806,11 @@ rump___sysimpl__ksem_post(intptr_t id)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_post,rump___sysimpl__ksem_post);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_post,rump___sysimpl__ksem_post);
+__weak_alias(__ksem_post,rump___sysimpl__ksem_post);
+__strong_alias(_sys__ksem_post,rump___sysimpl__ksem_post);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_wait(intptr_t);
 int
@@ -2447,7 +2834,11 @@ rump___sysimpl__ksem_wait(intptr_t id)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_wait,rump___sysimpl__ksem_wait);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_wait,rump___sysimpl__ksem_wait);
+__weak_alias(__ksem_wait,rump___sysimpl__ksem_wait);
+__strong_alias(_sys__ksem_wait,rump___sysimpl__ksem_wait);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_trywait(intptr_t);
 int
@@ -2471,7 +2862,11 @@ rump___sysimpl__ksem_trywait(intptr_t id)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_trywait,rump___sysimpl__ksem_trywait);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_trywait,rump___sysimpl__ksem_trywait);
+__weak_alias(__ksem_trywait,rump___sysimpl__ksem_trywait);
+__strong_alias(_sys__ksem_trywait,rump___sysimpl__ksem_trywait);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_getvalue(intptr_t, unsigned int *);
 int
@@ -2496,7 +2891,11 @@ rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_getvalue,rump___sysimpl__ksem_getvalue);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_getvalue,rump___sysimpl__ksem_getvalue);
+__weak_alias(__ksem_getvalue,rump___sysimpl__ksem_getvalue);
+__strong_alias(_sys__ksem_getvalue,rump___sysimpl__ksem_getvalue);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_destroy(intptr_t);
 int
@@ -2520,7 +2919,11 @@ rump___sysimpl__ksem_destroy(intptr_t id)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_destroy,rump___sysimpl__ksem_destroy);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_destroy,rump___sysimpl__ksem_destroy);
+__weak_alias(__ksem_destroy,rump___sysimpl__ksem_destroy);
+__strong_alias(_sys__ksem_destroy,rump___sysimpl__ksem_destroy);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl__ksem_timedwait(intptr_t, const struct timespec *);
 int
@@ -2545,7 +2948,11 @@ rump___sysimpl__ksem_timedwait(intptr_t id, const struct timespec * abstime)
 	}
 	return rv;
 }
-rsys_aliases(_ksem_timedwait,rump___sysimpl__ksem_timedwait);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(_ksem_timedwait,rump___sysimpl__ksem_timedwait);
+__weak_alias(__ksem_timedwait,rump___sysimpl__ksem_timedwait);
+__strong_alias(_sys__ksem_timedwait,rump___sysimpl__ksem_timedwait);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lchmod(const char *, mode_t);
 int
@@ -2570,7 +2977,11 @@ rump___sysimpl_lchmod(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(lchmod,rump___sysimpl_lchmod);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lchmod,rump___sysimpl_lchmod);
+__weak_alias(_lchmod,rump___sysimpl_lchmod);
+__strong_alias(_sys_lchmod,rump___sysimpl_lchmod);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lchown(const char *, uid_t, gid_t);
 int
@@ -2596,8 +3007,13 @@ rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 	}
 	return rv;
 }
-rsys_aliases(lchown,rump___sysimpl_lchown);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lchown,rump___sysimpl_lchown);
+__weak_alias(_lchown,rump___sysimpl_lchown);
+__strong_alias(_sys_lchown,rump___sysimpl_lchown);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_lutimes(const char *, const struct timeval *);
 int
 rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
@@ -2621,7 +3037,12 @@ rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_aliases(compat_50_lutimes,rump___sysimpl_lutimes);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lutimes,rump___sysimpl_lutimes);
+__weak_alias(_lutimes,rump___sysimpl_lutimes);
+__strong_alias(_sys_lutimes,rump___sysimpl_lutimes);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 pid_t rump___sysimpl_getsid(pid_t);
 pid_t
@@ -2645,7 +3066,11 @@ rump___sysimpl_getsid(pid_t pid)
 	}
 	return rv;
 }
-rsys_aliases(getsid,rump___sysimpl_getsid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getsid,rump___sysimpl_getsid);
+__weak_alias(_getsid,rump___sysimpl_getsid);
+__strong_alias(_sys_getsid,rump___sysimpl_getsid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fktrace(int, int, int, pid_t);
 int
@@ -2672,7 +3097,11 @@ rump___sysimpl_fktrace(int fd, int ops, int facs, pid_t pid)
 	}
 	return rv;
 }
-rsys_aliases(fktrace,rump___sysimpl_fktrace);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fktrace,rump___sysimpl_fktrace);
+__weak_alias(_fktrace,rump___sysimpl_fktrace);
+__strong_alias(_sys_fktrace,rump___sysimpl_fktrace);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_preadv(int, const struct iovec *, int, off_t);
 ssize_t
@@ -2700,7 +3129,11 @@ rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offse
 	}
 	return rv;
 }
-rsys_aliases(preadv,rump___sysimpl_preadv);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(preadv,rump___sysimpl_preadv);
+__weak_alias(_preadv,rump___sysimpl_preadv);
+__strong_alias(_sys_preadv,rump___sysimpl_preadv);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_pwritev(int, const struct iovec *, int, off_t);
 ssize_t
@@ -2728,7 +3161,11 @@ rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offs
 	}
 	return rv;
 }
-rsys_aliases(pwritev,rump___sysimpl_pwritev);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pwritev,rump___sysimpl_pwritev);
+__weak_alias(_pwritev,rump___sysimpl_pwritev);
+__strong_alias(_sys_pwritev,rump___sysimpl_pwritev);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl___getcwd(char *, size_t);
 int
@@ -2753,7 +3190,11 @@ rump___sysimpl___getcwd(char * bufp, size_t length)
 	}
 	return rv;
 }
-rsys_aliases(__getcwd,rump___sysimpl___getcwd);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(__getcwd,rump___sysimpl___getcwd);
+__weak_alias(___getcwd,rump___sysimpl___getcwd);
+__strong_alias(_sys___getcwd,rump___sysimpl___getcwd);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchroot(int);
 int
@@ -2777,7 +3218,11 @@ rump___sysimpl_fchroot(int fd)
 	}
 	return rv;
 }
-rsys_aliases(fchroot,rump___sysimpl_fchroot);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchroot,rump___sysimpl_fchroot);
+__weak_alias(_fchroot,rump___sysimpl_fchroot);
+__strong_alias(_sys_fchroot,rump___sysimpl_fchroot);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lchflags(const char *, u_long);
 int
@@ -2802,7 +3247,11 @@ rump___sysimpl_lchflags(const char * path, u_long flags)
 	}
 	return rv;
 }
-rsys_aliases(lchflags,rump___sysimpl_lchflags);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lchflags,rump___sysimpl_lchflags);
+__weak_alias(_lchflags,rump___sysimpl_lchflags);
+__strong_alias(_sys_lchflags,rump___sysimpl_lchflags);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_issetugid(void);
 int
@@ -2818,7 +3267,11 @@ rump___sysimpl_issetugid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(issetugid,rump___sysimpl_issetugid);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(issetugid,rump___sysimpl_issetugid);
+__weak_alias(_issetugid,rump___sysimpl_issetugid);
+__strong_alias(_sys_issetugid,rump___sysimpl_issetugid);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_utrace(const char *, void *, size_t);
 int
@@ -2844,7 +3297,11 @@ rump___sysimpl_utrace(const char * label, void * addr, size_t len)
 	}
 	return rv;
 }
-rsys_aliases(utrace,rump___sysimpl_utrace);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(utrace,rump___sysimpl_utrace);
+__weak_alias(_utrace,rump___sysimpl_utrace);
+__strong_alias(_sys_utrace,rump___sysimpl_utrace);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_kqueue(void);
 int
@@ -2864,8 +3321,13 @@ rump___sysimpl_kqueue(void )
 	}
 	return rv;
 }
-rsys_aliases(kqueue,rump___sysimpl_kqueue);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(kqueue,rump___sysimpl_kqueue);
+__weak_alias(_kqueue,rump___sysimpl_kqueue);
+__strong_alias(_sys_kqueue,rump___sysimpl_kqueue);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_kevent(int, const struct kevent *, size_t, struct kevent *, size_t, const struct timespec *);
 int
 rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges, struct kevent * eventlist, size_t nevents, const struct timespec * timeout)
@@ -2893,7 +3355,12 @@ rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges,
 	}
 	return rv;
 }
-rsys_aliases(compat_50_kevent,rump___sysimpl_kevent);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(kevent,rump___sysimpl_kevent);
+__weak_alias(_kevent,rump___sysimpl_kevent);
+__strong_alias(_sys_kevent,rump___sysimpl_kevent);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_fsync_range(int, int, off_t, off_t);
 int
@@ -2920,7 +3387,11 @@ rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 	}
 	return rv;
 }
-rsys_aliases(fsync_range,rump___sysimpl_fsync_range);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fsync_range,rump___sysimpl_fsync_range);
+__weak_alias(_fsync_range,rump___sysimpl_fsync_range);
+__strong_alias(_sys_fsync_range,rump___sysimpl_fsync_range);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getvfsstat(struct statvfs *, size_t, int);
 int
@@ -2946,7 +3417,11 @@ rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 	}
 	return rv;
 }
-rsys_aliases(getvfsstat,rump___sysimpl_getvfsstat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getvfsstat,rump___sysimpl_getvfsstat);
+__weak_alias(_getvfsstat,rump___sysimpl_getvfsstat);
+__strong_alias(_sys_getvfsstat,rump___sysimpl_getvfsstat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_statvfs1(const char *, struct statvfs *, int);
 int
@@ -2972,7 +3447,11 @@ rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 	}
 	return rv;
 }
-rsys_aliases(statvfs1,rump___sysimpl_statvfs1);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(statvfs1,rump___sysimpl_statvfs1);
+__weak_alias(_statvfs1,rump___sysimpl_statvfs1);
+__strong_alias(_sys_statvfs1,rump___sysimpl_statvfs1);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fstatvfs1(int, struct statvfs *, int);
 int
@@ -2998,7 +3477,11 @@ rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 	}
 	return rv;
 }
-rsys_aliases(fstatvfs1,rump___sysimpl_fstatvfs1);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fstatvfs1,rump___sysimpl_fstatvfs1);
+__weak_alias(_fstatvfs1,rump___sysimpl_fstatvfs1);
+__strong_alias(_sys_fstatvfs1,rump___sysimpl_fstatvfs1);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattrctl(const char *, int, const char *, int, const char *);
 int
@@ -3026,7 +3509,11 @@ rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int
 	}
 	return rv;
 }
-rsys_aliases(extattrctl,rump___sysimpl_extattrctl);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattrctl,rump___sysimpl_extattrctl);
+__weak_alias(_extattrctl,rump___sysimpl_extattrctl);
+__strong_alias(_sys_extattrctl,rump___sysimpl_extattrctl);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattr_set_file(const char *, int, const char *, const void *, size_t);
 int
@@ -3054,7 +3541,11 @@ rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_aliases(extattr_set_file,rump___sysimpl_extattr_set_file);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_set_file,rump___sysimpl_extattr_set_file);
+__weak_alias(_extattr_set_file,rump___sysimpl_extattr_set_file);
+__strong_alias(_sys_extattr_set_file,rump___sysimpl_extattr_set_file);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_extattr_get_file(const char *, int, const char *, void *, size_t);
 ssize_t
@@ -3082,7 +3573,11 @@ rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_aliases(extattr_get_file,rump___sysimpl_extattr_get_file);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_get_file,rump___sysimpl_extattr_get_file);
+__weak_alias(_extattr_get_file,rump___sysimpl_extattr_get_file);
+__strong_alias(_sys_extattr_get_file,rump___sysimpl_extattr_get_file);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattr_delete_file(const char *, int, const char *);
 int
@@ -3108,7 +3603,11 @@ rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const c
 	}
 	return rv;
 }
-rsys_aliases(extattr_delete_file,rump___sysimpl_extattr_delete_file);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_delete_file,rump___sysimpl_extattr_delete_file);
+__weak_alias(_extattr_delete_file,rump___sysimpl_extattr_delete_file);
+__strong_alias(_sys_extattr_delete_file,rump___sysimpl_extattr_delete_file);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattr_set_fd(int, int, const char *, const void *, size_t);
 int
@@ -3136,7 +3635,11 @@ rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, 
 	}
 	return rv;
 }
-rsys_aliases(extattr_set_fd,rump___sysimpl_extattr_set_fd);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_set_fd,rump___sysimpl_extattr_set_fd);
+__weak_alias(_extattr_set_fd,rump___sysimpl_extattr_set_fd);
+__strong_alias(_sys_extattr_set_fd,rump___sysimpl_extattr_set_fd);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_extattr_get_fd(int, int, const char *, void *, size_t);
 ssize_t
@@ -3164,7 +3667,11 @@ rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, 
 	}
 	return rv;
 }
-rsys_aliases(extattr_get_fd,rump___sysimpl_extattr_get_fd);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_get_fd,rump___sysimpl_extattr_get_fd);
+__weak_alias(_extattr_get_fd,rump___sysimpl_extattr_get_fd);
+__strong_alias(_sys_extattr_get_fd,rump___sysimpl_extattr_get_fd);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattr_delete_fd(int, int, const char *);
 int
@@ -3190,7 +3697,11 @@ rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrnam
 	}
 	return rv;
 }
-rsys_aliases(extattr_delete_fd,rump___sysimpl_extattr_delete_fd);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_delete_fd,rump___sysimpl_extattr_delete_fd);
+__weak_alias(_extattr_delete_fd,rump___sysimpl_extattr_delete_fd);
+__strong_alias(_sys_extattr_delete_fd,rump___sysimpl_extattr_delete_fd);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattr_set_link(const char *, int, const char *, const void *, size_t);
 int
@@ -3218,7 +3729,11 @@ rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_aliases(extattr_set_link,rump___sysimpl_extattr_set_link);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_set_link,rump___sysimpl_extattr_set_link);
+__weak_alias(_extattr_set_link,rump___sysimpl_extattr_set_link);
+__strong_alias(_sys_extattr_set_link,rump___sysimpl_extattr_set_link);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_extattr_get_link(const char *, int, const char *, void *, size_t);
 ssize_t
@@ -3246,7 +3761,11 @@ rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_aliases(extattr_get_link,rump___sysimpl_extattr_get_link);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_get_link,rump___sysimpl_extattr_get_link);
+__weak_alias(_extattr_get_link,rump___sysimpl_extattr_get_link);
+__strong_alias(_sys_extattr_get_link,rump___sysimpl_extattr_get_link);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_extattr_delete_link(const char *, int, const char *);
 int
@@ -3272,7 +3791,11 @@ rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const c
 	}
 	return rv;
 }
-rsys_aliases(extattr_delete_link,rump___sysimpl_extattr_delete_link);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_delete_link,rump___sysimpl_extattr_delete_link);
+__weak_alias(_extattr_delete_link,rump___sysimpl_extattr_delete_link);
+__strong_alias(_sys_extattr_delete_link,rump___sysimpl_extattr_delete_link);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_extattr_list_fd(int, int, void *, size_t);
 ssize_t
@@ -3299,7 +3822,11 @@ rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nb
 	}
 	return rv;
 }
-rsys_aliases(extattr_list_fd,rump___sysimpl_extattr_list_fd);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_list_fd,rump___sysimpl_extattr_list_fd);
+__weak_alias(_extattr_list_fd,rump___sysimpl_extattr_list_fd);
+__strong_alias(_sys_extattr_list_fd,rump___sysimpl_extattr_list_fd);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_extattr_list_file(const char *, int, void *, size_t);
 ssize_t
@@ -3326,7 +3853,11 @@ rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * da
 	}
 	return rv;
 }
-rsys_aliases(extattr_list_file,rump___sysimpl_extattr_list_file);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_list_file,rump___sysimpl_extattr_list_file);
+__weak_alias(_extattr_list_file,rump___sysimpl_extattr_list_file);
+__strong_alias(_sys_extattr_list_file,rump___sysimpl_extattr_list_file);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 ssize_t rump___sysimpl_extattr_list_link(const char *, int, void *, size_t);
 ssize_t
@@ -3353,8 +3884,13 @@ rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * da
 	}
 	return rv;
 }
-rsys_aliases(extattr_list_link,rump___sysimpl_extattr_list_link);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(extattr_list_link,rump___sysimpl_extattr_list_link);
+__weak_alias(_extattr_list_link,rump___sysimpl_extattr_list_link);
+__strong_alias(_sys_extattr_list_link,rump___sysimpl_extattr_list_link);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *, const sigset_t *);
 int
 rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const struct timespec * ts, const sigset_t * mask)
@@ -3382,8 +3918,14 @@ rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const stru
 	}
 	return rv;
 }
-rsys_aliases(compat_50_pselect,rump___sysimpl_pselect);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pselect,rump___sysimpl_pselect);
+__weak_alias(_pselect,rump___sysimpl_pselect);
+__strong_alias(_sys_pselect,rump___sysimpl_pselect);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_pollts(struct pollfd *, u_int, const struct timespec *, const sigset_t *);
 int
 rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * ts, const sigset_t * mask)
@@ -3409,7 +3951,12 @@ rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * t
 	}
 	return rv;
 }
-rsys_aliases(compat_50_pollts,rump___sysimpl_pollts);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pollts,rump___sysimpl_pollts);
+__weak_alias(_pollts,rump___sysimpl_pollts);
+__strong_alias(_sys_pollts,rump___sysimpl_pollts);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_setxattr(const char *, const char *, const void *, size_t, int);
 int
@@ -3437,7 +3984,11 @@ rump___sysimpl_setxattr(const char * path, const char * name, const void * value
 	}
 	return rv;
 }
-rsys_aliases(setxattr,rump___sysimpl_setxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setxattr,rump___sysimpl_setxattr);
+__weak_alias(_setxattr,rump___sysimpl_setxattr);
+__strong_alias(_sys_setxattr,rump___sysimpl_setxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lsetxattr(const char *, const char *, const void *, size_t, int);
 int
@@ -3465,7 +4016,11 @@ rump___sysimpl_lsetxattr(const char * path, const char * name, const void * valu
 	}
 	return rv;
 }
-rsys_aliases(lsetxattr,rump___sysimpl_lsetxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lsetxattr,rump___sysimpl_lsetxattr);
+__weak_alias(_lsetxattr,rump___sysimpl_lsetxattr);
+__strong_alias(_sys_lsetxattr,rump___sysimpl_lsetxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fsetxattr(int, const char *, const void *, size_t, int);
 int
@@ -3493,7 +4048,11 @@ rump___sysimpl_fsetxattr(int fd, const char * name, const void * value, size_t s
 	}
 	return rv;
 }
-rsys_aliases(fsetxattr,rump___sysimpl_fsetxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fsetxattr,rump___sysimpl_fsetxattr);
+__weak_alias(_fsetxattr,rump___sysimpl_fsetxattr);
+__strong_alias(_sys_fsetxattr,rump___sysimpl_fsetxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getxattr(const char *, const char *, void *, size_t);
 int
@@ -3520,7 +4079,11 @@ rump___sysimpl_getxattr(const char * path, const char * name, void * value, size
 	}
 	return rv;
 }
-rsys_aliases(getxattr,rump___sysimpl_getxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getxattr,rump___sysimpl_getxattr);
+__weak_alias(_getxattr,rump___sysimpl_getxattr);
+__strong_alias(_sys_getxattr,rump___sysimpl_getxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lgetxattr(const char *, const char *, void *, size_t);
 int
@@ -3547,7 +4110,11 @@ rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, siz
 	}
 	return rv;
 }
-rsys_aliases(lgetxattr,rump___sysimpl_lgetxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lgetxattr,rump___sysimpl_lgetxattr);
+__weak_alias(_lgetxattr,rump___sysimpl_lgetxattr);
+__strong_alias(_sys_lgetxattr,rump___sysimpl_lgetxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fgetxattr(int, const char *, void *, size_t);
 int
@@ -3574,7 +4141,11 @@ rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 	}
 	return rv;
 }
-rsys_aliases(fgetxattr,rump___sysimpl_fgetxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fgetxattr,rump___sysimpl_fgetxattr);
+__weak_alias(_fgetxattr,rump___sysimpl_fgetxattr);
+__strong_alias(_sys_fgetxattr,rump___sysimpl_fgetxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_listxattr(const char *, char *, size_t);
 int
@@ -3600,7 +4171,11 @@ rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 	}
 	return rv;
 }
-rsys_aliases(listxattr,rump___sysimpl_listxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(listxattr,rump___sysimpl_listxattr);
+__weak_alias(_listxattr,rump___sysimpl_listxattr);
+__strong_alias(_sys_listxattr,rump___sysimpl_listxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_llistxattr(const char *, char *, size_t);
 int
@@ -3626,7 +4201,11 @@ rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 	}
 	return rv;
 }
-rsys_aliases(llistxattr,rump___sysimpl_llistxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(llistxattr,rump___sysimpl_llistxattr);
+__weak_alias(_llistxattr,rump___sysimpl_llistxattr);
+__strong_alias(_sys_llistxattr,rump___sysimpl_llistxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_flistxattr(int, char *, size_t);
 int
@@ -3652,7 +4231,11 @@ rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 	}
 	return rv;
 }
-rsys_aliases(flistxattr,rump___sysimpl_flistxattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(flistxattr,rump___sysimpl_flistxattr);
+__weak_alias(_flistxattr,rump___sysimpl_flistxattr);
+__strong_alias(_sys_flistxattr,rump___sysimpl_flistxattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_removexattr(const char *, const char *);
 int
@@ -3677,7 +4260,11 @@ rump___sysimpl_removexattr(const char * path, const char * name)
 	}
 	return rv;
 }
-rsys_aliases(removexattr,rump___sysimpl_removexattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(removexattr,rump___sysimpl_removexattr);
+__weak_alias(_removexattr,rump___sysimpl_removexattr);
+__strong_alias(_sys_removexattr,rump___sysimpl_removexattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lremovexattr(const char *, const char *);
 int
@@ -3702,7 +4289,11 @@ rump___sysimpl_lremovexattr(const char * path, const char * name)
 	}
 	return rv;
 }
-rsys_aliases(lremovexattr,rump___sysimpl_lremovexattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lremovexattr,rump___sysimpl_lremovexattr);
+__weak_alias(_lremovexattr,rump___sysimpl_lremovexattr);
+__strong_alias(_sys_lremovexattr,rump___sysimpl_lremovexattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fremovexattr(int, const char *);
 int
@@ -3727,8 +4318,13 @@ rump___sysimpl_fremovexattr(int fd, const char * name)
 	}
 	return rv;
 }
-rsys_aliases(fremovexattr,rump___sysimpl_fremovexattr);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fremovexattr,rump___sysimpl_fremovexattr);
+__weak_alias(_fremovexattr,rump___sysimpl_fremovexattr);
+__strong_alias(_sys_fremovexattr,rump___sysimpl_fremovexattr);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_stat30(const char *, struct stat *);
 int
 rump___sysimpl_stat30(const char * path, struct stat * ub)
@@ -3752,8 +4348,15 @@ rump___sysimpl_stat30(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_aliases(compat_50___stat30,rump___sysimpl_stat30);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(stat,rump___sysimpl_stat30);
+__weak_alias(__stat30,rump___sysimpl_stat30);
+__weak_alias(___stat30,rump___sysimpl_stat30);
+__strong_alias(_sys___stat30,rump___sysimpl_stat30);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_fstat30(int, struct stat *);
 int
 rump___sysimpl_fstat30(int fd, struct stat * sb)
@@ -3777,8 +4380,15 @@ rump___sysimpl_fstat30(int fd, struct stat * sb)
 	}
 	return rv;
 }
-rsys_aliases(compat_50___fstat30,rump___sysimpl_fstat30);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fstat,rump___sysimpl_fstat30);
+__weak_alias(__fstat30,rump___sysimpl_fstat30);
+__weak_alias(___fstat30,rump___sysimpl_fstat30);
+__strong_alias(_sys___fstat30,rump___sysimpl_fstat30);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_lstat30(const char *, struct stat *);
 int
 rump___sysimpl_lstat30(const char * path, struct stat * ub)
@@ -3802,7 +4412,13 @@ rump___sysimpl_lstat30(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_aliases(compat_50___lstat30,rump___sysimpl_lstat30);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lstat,rump___sysimpl_lstat30);
+__weak_alias(__lstat30,rump___sysimpl_lstat30);
+__weak_alias(___lstat30,rump___sysimpl_lstat30);
+__strong_alias(_sys___lstat30,rump___sysimpl_lstat30);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_getdents30(int, char *, size_t);
 int
@@ -3828,7 +4444,12 @@ rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 	}
 	return rv;
 }
-rsys_aliases(__getdents30,rump___sysimpl_getdents30);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getdents,rump___sysimpl_getdents30);
+__weak_alias(__getdents30,rump___sysimpl_getdents30);
+__weak_alias(___getdents30,rump___sysimpl_getdents30);
+__strong_alias(_sys___getdents30,rump___sysimpl_getdents30);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_socket30(int, int, int);
 int
@@ -3854,7 +4475,12 @@ rump___sysimpl_socket30(int domain, int type, int protocol)
 	}
 	return rv;
 }
-rsys_aliases(__socket30,rump___sysimpl_socket30);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(socket,rump___sysimpl_socket30);
+__weak_alias(__socket30,rump___sysimpl_socket30);
+__weak_alias(___socket30,rump___sysimpl_socket30);
+__strong_alias(_sys___socket30,rump___sysimpl_socket30);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getfh30(const char *, void *, size_t *);
 int
@@ -3880,7 +4506,12 @@ rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 	}
 	return rv;
 }
-rsys_aliases(__getfh30,rump___sysimpl_getfh30);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getfh,rump___sysimpl_getfh30);
+__weak_alias(__getfh30,rump___sysimpl_getfh30);
+__weak_alias(___getfh30,rump___sysimpl_getfh30);
+__strong_alias(_sys___getfh30,rump___sysimpl_getfh30);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fhopen40(const void *, size_t, int);
 int
@@ -3906,7 +4537,12 @@ rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 	}
 	return rv;
 }
-rsys_aliases(__fhopen40,rump___sysimpl_fhopen40);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fhopen,rump___sysimpl_fhopen40);
+__weak_alias(__fhopen40,rump___sysimpl_fhopen40);
+__weak_alias(___fhopen40,rump___sysimpl_fhopen40);
+__strong_alias(_sys___fhopen40,rump___sysimpl_fhopen40);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fhstatvfs140(const void *, size_t, struct statvfs *, int);
 int
@@ -3933,8 +4569,14 @@ rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * b
 	}
 	return rv;
 }
-rsys_aliases(__fhstatvfs140,rump___sysimpl_fhstatvfs140);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fhstatvfs1,rump___sysimpl_fhstatvfs140);
+__weak_alias(__fhstatvfs140,rump___sysimpl_fhstatvfs140);
+__weak_alias(___fhstatvfs140,rump___sysimpl_fhstatvfs140);
+__strong_alias(_sys___fhstatvfs140,rump___sysimpl_fhstatvfs140);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
+#ifdef RUMP_SYS_COMPAT
 int rump___sysimpl_fhstat40(const void *, size_t, struct stat *);
 int
 rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
@@ -3959,7 +4601,13 @@ rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 	}
 	return rv;
 }
-rsys_aliases(compat_50___fhstat40,rump___sysimpl_fhstat40);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fhstat,rump___sysimpl_fhstat40);
+__weak_alias(__fhstat40,rump___sysimpl_fhstat40);
+__weak_alias(___fhstat40,rump___sysimpl_fhstat40);
+__strong_alias(_sys___fhstat40,rump___sysimpl_fhstat40);
+#endif /* RUMP_KERNEL_IS_LIBC */
+#endif /* RUMP_SYS_COMPAT */
 
 int rump___sysimpl_aio_cancel(int, struct aiocb *);
 int
@@ -3984,7 +4632,11 @@ rump___sysimpl_aio_cancel(int fildes, struct aiocb * aiocbp)
 	}
 	return rv;
 }
-rsys_aliases(aio_cancel,rump___sysimpl_aio_cancel);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_cancel,rump___sysimpl_aio_cancel);
+__weak_alias(_aio_cancel,rump___sysimpl_aio_cancel);
+__strong_alias(_sys_aio_cancel,rump___sysimpl_aio_cancel);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_aio_error(const struct aiocb *);
 int
@@ -4008,7 +4660,11 @@ rump___sysimpl_aio_error(const struct aiocb * aiocbp)
 	}
 	return rv;
 }
-rsys_aliases(aio_error,rump___sysimpl_aio_error);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_error,rump___sysimpl_aio_error);
+__weak_alias(_aio_error,rump___sysimpl_aio_error);
+__strong_alias(_sys_aio_error,rump___sysimpl_aio_error);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_aio_fsync(int, struct aiocb *);
 int
@@ -4033,7 +4689,11 @@ rump___sysimpl_aio_fsync(int op, struct aiocb * aiocbp)
 	}
 	return rv;
 }
-rsys_aliases(aio_fsync,rump___sysimpl_aio_fsync);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_fsync,rump___sysimpl_aio_fsync);
+__weak_alias(_aio_fsync,rump___sysimpl_aio_fsync);
+__strong_alias(_sys_aio_fsync,rump___sysimpl_aio_fsync);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_aio_read(struct aiocb *);
 int
@@ -4057,7 +4717,11 @@ rump___sysimpl_aio_read(struct aiocb * aiocbp)
 	}
 	return rv;
 }
-rsys_aliases(aio_read,rump___sysimpl_aio_read);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_read,rump___sysimpl_aio_read);
+__weak_alias(_aio_read,rump___sysimpl_aio_read);
+__strong_alias(_sys_aio_read,rump___sysimpl_aio_read);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_aio_return(struct aiocb *);
 int
@@ -4081,7 +4745,11 @@ rump___sysimpl_aio_return(struct aiocb * aiocbp)
 	}
 	return rv;
 }
-rsys_aliases(aio_return,rump___sysimpl_aio_return);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_return,rump___sysimpl_aio_return);
+__weak_alias(_aio_return,rump___sysimpl_aio_return);
+__strong_alias(_sys_aio_return,rump___sysimpl_aio_return);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_aio_write(struct aiocb *);
 int
@@ -4105,7 +4773,11 @@ rump___sysimpl_aio_write(struct aiocb * aiocbp)
 	}
 	return rv;
 }
-rsys_aliases(aio_write,rump___sysimpl_aio_write);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_write,rump___sysimpl_aio_write);
+__weak_alias(_aio_write,rump___sysimpl_aio_write);
+__strong_alias(_sys_aio_write,rump___sysimpl_aio_write);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lio_listio(int, struct aiocb *const *, int, struct sigevent *);
 int
@@ -4132,7 +4804,11 @@ rump___sysimpl_lio_listio(int mode, struct aiocb *const * list, int nent, struct
 	}
 	return rv;
 }
-rsys_aliases(lio_listio,rump___sysimpl_lio_listio);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lio_listio,rump___sysimpl_lio_listio);
+__weak_alias(_lio_listio,rump___sysimpl_lio_listio);
+__strong_alias(_sys_lio_listio,rump___sysimpl_lio_listio);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mount50(const char *, const char *, int, void *, size_t);
 int
@@ -4160,7 +4836,12 @@ rump___sysimpl_mount50(const char * type, const char * path, int flags, void * d
 	}
 	return rv;
 }
-rsys_aliases(__mount50,rump___sysimpl_mount50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mount,rump___sysimpl_mount50);
+__weak_alias(__mount50,rump___sysimpl_mount50);
+__weak_alias(___mount50,rump___sysimpl_mount50);
+__strong_alias(_sys___mount50,rump___sysimpl_mount50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_posix_fadvise50(int, off_t, off_t, int);
 int
@@ -4184,7 +4865,12 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 		rv = *retval;
 	return rv;
 }
-rsys_aliases(__posix_fadvise50,rump___sysimpl_posix_fadvise50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(posix_fadvise,rump___sysimpl_posix_fadvise50);
+__weak_alias(__posix_fadvise50,rump___sysimpl_posix_fadvise50);
+__weak_alias(___posix_fadvise50,rump___sysimpl_posix_fadvise50);
+__strong_alias(_sys___posix_fadvise50,rump___sysimpl_posix_fadvise50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_select50(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int
@@ -4212,7 +4898,12 @@ rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct ti
 	}
 	return rv;
 }
-rsys_aliases(__select50,rump___sysimpl_select50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(select,rump___sysimpl_select50);
+__weak_alias(__select50,rump___sysimpl_select50);
+__weak_alias(___select50,rump___sysimpl_select50);
+__strong_alias(_sys___select50,rump___sysimpl_select50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_gettimeofday50(struct timeval *, void *);
 int
@@ -4237,7 +4928,12 @@ rump___sysimpl_gettimeofday50(struct timeval * tp, void * tzp)
 	}
 	return rv;
 }
-rsys_aliases(__gettimeofday50,rump___sysimpl_gettimeofday50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(gettimeofday,rump___sysimpl_gettimeofday50);
+__weak_alias(__gettimeofday50,rump___sysimpl_gettimeofday50);
+__weak_alias(___gettimeofday50,rump___sysimpl_gettimeofday50);
+__strong_alias(_sys___gettimeofday50,rump___sysimpl_gettimeofday50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_settimeofday50(const struct timeval *, const void *);
 int
@@ -4262,7 +4958,12 @@ rump___sysimpl_settimeofday50(const struct timeval * tv, const void * tzp)
 	}
 	return rv;
 }
-rsys_aliases(__settimeofday50,rump___sysimpl_settimeofday50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(settimeofday,rump___sysimpl_settimeofday50);
+__weak_alias(__settimeofday50,rump___sysimpl_settimeofday50);
+__weak_alias(___settimeofday50,rump___sysimpl_settimeofday50);
+__strong_alias(_sys___settimeofday50,rump___sysimpl_settimeofday50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_utimes50(const char *, const struct timeval *);
 int
@@ -4287,7 +4988,12 @@ rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_aliases(__utimes50,rump___sysimpl_utimes50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(utimes,rump___sysimpl_utimes50);
+__weak_alias(__utimes50,rump___sysimpl_utimes50);
+__weak_alias(___utimes50,rump___sysimpl_utimes50);
+__strong_alias(_sys___utimes50,rump___sysimpl_utimes50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_adjtime50(const struct timeval *, struct timeval *);
 int
@@ -4312,7 +5018,12 @@ rump___sysimpl_adjtime50(const struct timeval * delta, struct timeval * olddelta
 	}
 	return rv;
 }
-rsys_aliases(__adjtime50,rump___sysimpl_adjtime50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(adjtime,rump___sysimpl_adjtime50);
+__weak_alias(__adjtime50,rump___sysimpl_adjtime50);
+__weak_alias(___adjtime50,rump___sysimpl_adjtime50);
+__strong_alias(_sys___adjtime50,rump___sysimpl_adjtime50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_futimes50(int, const struct timeval *);
 int
@@ -4337,7 +5048,12 @@ rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_aliases(__futimes50,rump___sysimpl_futimes50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(futimes,rump___sysimpl_futimes50);
+__weak_alias(__futimes50,rump___sysimpl_futimes50);
+__weak_alias(___futimes50,rump___sysimpl_futimes50);
+__strong_alias(_sys___futimes50,rump___sysimpl_futimes50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lutimes50(const char *, const struct timeval *);
 int
@@ -4362,7 +5078,12 @@ rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_aliases(__lutimes50,rump___sysimpl_lutimes50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lutimes,rump___sysimpl_lutimes50);
+__weak_alias(__lutimes50,rump___sysimpl_lutimes50);
+__weak_alias(___lutimes50,rump___sysimpl_lutimes50);
+__strong_alias(_sys___lutimes50,rump___sysimpl_lutimes50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_setitimer50(int, const struct itimerval *, struct itimerval *);
 int
@@ -4388,7 +5109,12 @@ rump___sysimpl_setitimer50(int which, const struct itimerval * itv, struct itime
 	}
 	return rv;
 }
-rsys_aliases(__setitimer50,rump___sysimpl_setitimer50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(setitimer,rump___sysimpl_setitimer50);
+__weak_alias(__setitimer50,rump___sysimpl_setitimer50);
+__weak_alias(___setitimer50,rump___sysimpl_setitimer50);
+__strong_alias(_sys___setitimer50,rump___sysimpl_setitimer50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_getitimer50(int, struct itimerval *);
 int
@@ -4413,7 +5139,12 @@ rump___sysimpl_getitimer50(int which, struct itimerval * itv)
 	}
 	return rv;
 }
-rsys_aliases(__getitimer50,rump___sysimpl_getitimer50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(getitimer,rump___sysimpl_getitimer50);
+__weak_alias(__getitimer50,rump___sysimpl_getitimer50);
+__weak_alias(___getitimer50,rump___sysimpl_getitimer50);
+__strong_alias(_sys___getitimer50,rump___sysimpl_getitimer50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_clock_gettime50(clockid_t, struct timespec *);
 int
@@ -4438,7 +5169,12 @@ rump___sysimpl_clock_gettime50(clockid_t clock_id, struct timespec * tp)
 	}
 	return rv;
 }
-rsys_aliases(__clock_gettime50,rump___sysimpl_clock_gettime50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(clock_gettime,rump___sysimpl_clock_gettime50);
+__weak_alias(__clock_gettime50,rump___sysimpl_clock_gettime50);
+__weak_alias(___clock_gettime50,rump___sysimpl_clock_gettime50);
+__strong_alias(_sys___clock_gettime50,rump___sysimpl_clock_gettime50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_clock_settime50(clockid_t, const struct timespec *);
 int
@@ -4463,7 +5199,12 @@ rump___sysimpl_clock_settime50(clockid_t clock_id, const struct timespec * tp)
 	}
 	return rv;
 }
-rsys_aliases(__clock_settime50,rump___sysimpl_clock_settime50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(clock_settime,rump___sysimpl_clock_settime50);
+__weak_alias(__clock_settime50,rump___sysimpl_clock_settime50);
+__weak_alias(___clock_settime50,rump___sysimpl_clock_settime50);
+__strong_alias(_sys___clock_settime50,rump___sysimpl_clock_settime50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_clock_getres50(clockid_t, struct timespec *);
 int
@@ -4488,7 +5229,12 @@ rump___sysimpl_clock_getres50(clockid_t clock_id, struct timespec * tp)
 	}
 	return rv;
 }
-rsys_aliases(__clock_getres50,rump___sysimpl_clock_getres50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(clock_getres,rump___sysimpl_clock_getres50);
+__weak_alias(__clock_getres50,rump___sysimpl_clock_getres50);
+__weak_alias(___clock_getres50,rump___sysimpl_clock_getres50);
+__strong_alias(_sys___clock_getres50,rump___sysimpl_clock_getres50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_nanosleep50(const struct timespec *, struct timespec *);
 int
@@ -4513,7 +5259,12 @@ rump___sysimpl_nanosleep50(const struct timespec * rqtp, struct timespec * rmtp)
 	}
 	return rv;
 }
-rsys_aliases(__nanosleep50,rump___sysimpl_nanosleep50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(nanosleep,rump___sysimpl_nanosleep50);
+__weak_alias(__nanosleep50,rump___sysimpl_nanosleep50);
+__weak_alias(___nanosleep50,rump___sysimpl_nanosleep50);
+__strong_alias(_sys___nanosleep50,rump___sysimpl_nanosleep50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_kevent50(int, const struct kevent *, size_t, struct kevent *, size_t, const struct timespec *);
 int
@@ -4542,7 +5293,12 @@ rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchange
 	}
 	return rv;
 }
-rsys_aliases(__kevent50,rump___sysimpl_kevent50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(kevent,rump___sysimpl_kevent50);
+__weak_alias(__kevent50,rump___sysimpl_kevent50);
+__weak_alias(___kevent50,rump___sysimpl_kevent50);
+__strong_alias(_sys___kevent50,rump___sysimpl_kevent50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_pselect50(int, fd_set *, fd_set *, fd_set *, const struct timespec *, const sigset_t *);
 int
@@ -4571,7 +5327,12 @@ rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const st
 	}
 	return rv;
 }
-rsys_aliases(__pselect50,rump___sysimpl_pselect50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pselect,rump___sysimpl_pselect50);
+__weak_alias(__pselect50,rump___sysimpl_pselect50);
+__weak_alias(___pselect50,rump___sysimpl_pselect50);
+__strong_alias(_sys___pselect50,rump___sysimpl_pselect50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_pollts50(struct pollfd *, u_int, const struct timespec *, const sigset_t *);
 int
@@ -4598,7 +5359,12 @@ rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec *
 	}
 	return rv;
 }
-rsys_aliases(__pollts50,rump___sysimpl_pollts50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pollts,rump___sysimpl_pollts50);
+__weak_alias(__pollts50,rump___sysimpl_pollts50);
+__weak_alias(___pollts50,rump___sysimpl_pollts50);
+__strong_alias(_sys___pollts50,rump___sysimpl_pollts50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_aio_suspend50(const struct aiocb *const *, int, const struct timespec *);
 int
@@ -4624,7 +5390,12 @@ rump___sysimpl_aio_suspend50(const struct aiocb *const * list, int nent, const s
 	}
 	return rv;
 }
-rsys_aliases(__aio_suspend50,rump___sysimpl_aio_suspend50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(aio_suspend,rump___sysimpl_aio_suspend50);
+__weak_alias(__aio_suspend50,rump___sysimpl_aio_suspend50);
+__weak_alias(___aio_suspend50,rump___sysimpl_aio_suspend50);
+__strong_alias(_sys___aio_suspend50,rump___sysimpl_aio_suspend50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_stat50(const char *, struct stat *);
 int
@@ -4649,7 +5420,12 @@ rump___sysimpl_stat50(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_aliases(__stat50,rump___sysimpl_stat50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(stat,rump___sysimpl_stat50);
+__weak_alias(__stat50,rump___sysimpl_stat50);
+__weak_alias(___stat50,rump___sysimpl_stat50);
+__strong_alias(_sys___stat50,rump___sysimpl_stat50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fstat50(int, struct stat *);
 int
@@ -4674,7 +5450,12 @@ rump___sysimpl_fstat50(int fd, struct stat * sb)
 	}
 	return rv;
 }
-rsys_aliases(__fstat50,rump___sysimpl_fstat50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fstat,rump___sysimpl_fstat50);
+__weak_alias(__fstat50,rump___sysimpl_fstat50);
+__weak_alias(___fstat50,rump___sysimpl_fstat50);
+__strong_alias(_sys___fstat50,rump___sysimpl_fstat50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lstat50(const char *, struct stat *);
 int
@@ -4699,7 +5480,12 @@ rump___sysimpl_lstat50(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_aliases(__lstat50,rump___sysimpl_lstat50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lstat,rump___sysimpl_lstat50);
+__weak_alias(__lstat50,rump___sysimpl_lstat50);
+__weak_alias(___lstat50,rump___sysimpl_lstat50);
+__strong_alias(_sys___lstat50,rump___sysimpl_lstat50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_timer_settime50(timer_t, int, const struct itimerspec *, struct itimerspec *);
 int
@@ -4726,7 +5512,12 @@ rump___sysimpl_timer_settime50(timer_t timerid, int flags, const struct itimersp
 	}
 	return rv;
 }
-rsys_aliases(__timer_settime50,rump___sysimpl_timer_settime50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(timer_settime,rump___sysimpl_timer_settime50);
+__weak_alias(__timer_settime50,rump___sysimpl_timer_settime50);
+__weak_alias(___timer_settime50,rump___sysimpl_timer_settime50);
+__strong_alias(_sys___timer_settime50,rump___sysimpl_timer_settime50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_timer_gettime50(timer_t, struct itimerspec *);
 int
@@ -4751,7 +5542,12 @@ rump___sysimpl_timer_gettime50(timer_t timerid, struct itimerspec * value)
 	}
 	return rv;
 }
-rsys_aliases(__timer_gettime50,rump___sysimpl_timer_gettime50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(timer_gettime,rump___sysimpl_timer_gettime50);
+__weak_alias(__timer_gettime50,rump___sysimpl_timer_gettime50);
+__weak_alias(___timer_gettime50,rump___sysimpl_timer_gettime50);
+__strong_alias(_sys___timer_gettime50,rump___sysimpl_timer_gettime50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mknod50(const char *, mode_t, dev_t);
 int
@@ -4777,7 +5573,12 @@ rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 	}
 	return rv;
 }
-rsys_aliases(__mknod50,rump___sysimpl_mknod50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mknod,rump___sysimpl_mknod50);
+__weak_alias(__mknod50,rump___sysimpl_mknod50);
+__weak_alias(___mknod50,rump___sysimpl_mknod50);
+__strong_alias(_sys___mknod50,rump___sysimpl_mknod50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fhstat50(const void *, size_t, struct stat *);
 int
@@ -4803,7 +5604,12 @@ rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 	}
 	return rv;
 }
-rsys_aliases(__fhstat50,rump___sysimpl_fhstat50);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fhstat,rump___sysimpl_fhstat50);
+__weak_alias(__fhstat50,rump___sysimpl_fhstat50);
+__weak_alias(___fhstat50,rump___sysimpl_fhstat50);
+__strong_alias(_sys___fhstat50,rump___sysimpl_fhstat50);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_pipe2(int *, int);
 int
@@ -4828,7 +5634,11 @@ rump___sysimpl_pipe2(int * fildes, int flags)
 	}
 	return rv;
 }
-rsys_aliases(pipe2,rump___sysimpl_pipe2);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pipe2,rump___sysimpl_pipe2);
+__weak_alias(_pipe2,rump___sysimpl_pipe2);
+__strong_alias(_sys_pipe2,rump___sysimpl_pipe2);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_dup3(int, int, int);
 int
@@ -4854,7 +5664,11 @@ rump___sysimpl_dup3(int from, int to, int flags)
 	}
 	return rv;
 }
-rsys_aliases(dup3,rump___sysimpl_dup3);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(dup3,rump___sysimpl_dup3);
+__weak_alias(_dup3,rump___sysimpl_dup3);
+__strong_alias(_sys_dup3,rump___sysimpl_dup3);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_kqueue1(int);
 int
@@ -4878,7 +5692,11 @@ rump___sysimpl_kqueue1(int flags)
 	}
 	return rv;
 }
-rsys_aliases(kqueue1,rump___sysimpl_kqueue1);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(kqueue1,rump___sysimpl_kqueue1);
+__weak_alias(_kqueue1,rump___sysimpl_kqueue1);
+__strong_alias(_sys_kqueue1,rump___sysimpl_kqueue1);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_paccept(int, struct sockaddr *, socklen_t *, const sigset_t *, int);
 int
@@ -4906,7 +5724,11 @@ rump___sysimpl_paccept(int s, struct sockaddr * name, socklen_t * anamelen, cons
 	}
 	return rv;
 }
-rsys_aliases(paccept,rump___sysimpl_paccept);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(paccept,rump___sysimpl_paccept);
+__weak_alias(_paccept,rump___sysimpl_paccept);
+__strong_alias(_sys_paccept,rump___sysimpl_paccept);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_linkat(int, const char *, int, const char *, int);
 int
@@ -4934,7 +5756,11 @@ rump___sysimpl_linkat(int fd1, const char * name1, int fd2, const char * name2, 
 	}
 	return rv;
 }
-rsys_aliases(linkat,rump___sysimpl_linkat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(linkat,rump___sysimpl_linkat);
+__weak_alias(_linkat,rump___sysimpl_linkat);
+__strong_alias(_sys_linkat,rump___sysimpl_linkat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_renameat(int, const char *, int, const char *);
 int
@@ -4961,7 +5787,11 @@ rump___sysimpl_renameat(int fromfd, const char * from, int tofd, const char * to
 	}
 	return rv;
 }
-rsys_aliases(renameat,rump___sysimpl_renameat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(renameat,rump___sysimpl_renameat);
+__weak_alias(_renameat,rump___sysimpl_renameat);
+__strong_alias(_sys_renameat,rump___sysimpl_renameat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mkfifoat(int, const char *, mode_t);
 int
@@ -4987,7 +5817,11 @@ rump___sysimpl_mkfifoat(int fd, const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(mkfifoat,rump___sysimpl_mkfifoat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mkfifoat,rump___sysimpl_mkfifoat);
+__weak_alias(_mkfifoat,rump___sysimpl_mkfifoat);
+__strong_alias(_sys_mkfifoat,rump___sysimpl_mkfifoat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mknodat(int, const char *, mode_t, dev_t);
 int
@@ -5015,7 +5849,11 @@ rump___sysimpl_mknodat(int fd, const char * path, mode_t mode, dev_t dev)
 	}
 	return rv;
 }
-rsys_aliases(mknodat,rump___sysimpl_mknodat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mknodat,rump___sysimpl_mknodat);
+__weak_alias(_mknodat,rump___sysimpl_mknodat);
+__strong_alias(_sys_mknodat,rump___sysimpl_mknodat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_mkdirat(int, const char *, mode_t);
 int
@@ -5041,7 +5879,11 @@ rump___sysimpl_mkdirat(int fd, const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(mkdirat,rump___sysimpl_mkdirat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(mkdirat,rump___sysimpl_mkdirat);
+__weak_alias(_mkdirat,rump___sysimpl_mkdirat);
+__strong_alias(_sys_mkdirat,rump___sysimpl_mkdirat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_faccessat(int, const char *, int, int);
 int
@@ -5068,7 +5910,11 @@ rump___sysimpl_faccessat(int fd, const char * path, int amode, int flag)
 	}
 	return rv;
 }
-rsys_aliases(faccessat,rump___sysimpl_faccessat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(faccessat,rump___sysimpl_faccessat);
+__weak_alias(_faccessat,rump___sysimpl_faccessat);
+__strong_alias(_sys_faccessat,rump___sysimpl_faccessat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchmodat(int, const char *, mode_t, int);
 int
@@ -5095,7 +5941,11 @@ rump___sysimpl_fchmodat(int fd, const char * path, mode_t mode, int flag)
 	}
 	return rv;
 }
-rsys_aliases(fchmodat,rump___sysimpl_fchmodat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchmodat,rump___sysimpl_fchmodat);
+__weak_alias(_fchmodat,rump___sysimpl_fchmodat);
+__strong_alias(_sys_fchmodat,rump___sysimpl_fchmodat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fchownat(int, const char *, uid_t, gid_t, int);
 int
@@ -5123,7 +5973,11 @@ rump___sysimpl_fchownat(int fd, const char * path, uid_t owner, gid_t group, int
 	}
 	return rv;
 }
-rsys_aliases(fchownat,rump___sysimpl_fchownat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fchownat,rump___sysimpl_fchownat);
+__weak_alias(_fchownat,rump___sysimpl_fchownat);
+__strong_alias(_sys_fchownat,rump___sysimpl_fchownat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_fstatat(int, const char *, struct stat *, int);
 int
@@ -5150,7 +6004,11 @@ rump___sysimpl_fstatat(int fd, const char * path, struct stat * buf, int flag)
 	}
 	return rv;
 }
-rsys_aliases(fstatat,rump___sysimpl_fstatat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(fstatat,rump___sysimpl_fstatat);
+__weak_alias(_fstatat,rump___sysimpl_fstatat);
+__strong_alias(_sys_fstatat,rump___sysimpl_fstatat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_utimensat(int, const char *, const struct timespec *, int);
 int
@@ -5177,7 +6035,11 @@ rump___sysimpl_utimensat(int fd, const char * path, const struct timespec * tptr
 	}
 	return rv;
 }
-rsys_aliases(utimensat,rump___sysimpl_utimensat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(utimensat,rump___sysimpl_utimensat);
+__weak_alias(_utimensat,rump___sysimpl_utimensat);
+__strong_alias(_sys_utimensat,rump___sysimpl_utimensat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_openat(int, const char *, int, mode_t);
 int
@@ -5204,7 +6066,11 @@ rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
 	}
 	return rv;
 }
-rsys_aliases(openat,rump___sysimpl_openat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(openat,rump___sysimpl_openat);
+__weak_alias(_openat,rump___sysimpl_openat);
+__strong_alias(_sys_openat,rump___sysimpl_openat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_readlinkat(int, const char *, char *, size_t);
 int
@@ -5231,7 +6097,11 @@ rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 	}
 	return rv;
 }
-rsys_aliases(readlinkat,rump___sysimpl_readlinkat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(readlinkat,rump___sysimpl_readlinkat);
+__weak_alias(_readlinkat,rump___sysimpl_readlinkat);
+__strong_alias(_sys_readlinkat,rump___sysimpl_readlinkat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_symlinkat(const char *, int, const char *);
 int
@@ -5257,7 +6127,11 @@ rump___sysimpl_symlinkat(const char * path1, int fd, const char * path2)
 	}
 	return rv;
 }
-rsys_aliases(symlinkat,rump___sysimpl_symlinkat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(symlinkat,rump___sysimpl_symlinkat);
+__weak_alias(_symlinkat,rump___sysimpl_symlinkat);
+__strong_alias(_sys_symlinkat,rump___sysimpl_symlinkat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_unlinkat(int, const char *, int);
 int
@@ -5283,7 +6157,11 @@ rump___sysimpl_unlinkat(int fd, const char * path, int flag)
 	}
 	return rv;
 }
-rsys_aliases(unlinkat,rump___sysimpl_unlinkat);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(unlinkat,rump___sysimpl_unlinkat);
+__weak_alias(_unlinkat,rump___sysimpl_unlinkat);
+__strong_alias(_sys_unlinkat,rump___sysimpl_unlinkat);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_futimens(int, const struct timespec *);
 int
@@ -5308,7 +6186,11 @@ rump___sysimpl_futimens(int fd, const struct timespec * tptr)
 	}
 	return rv;
 }
-rsys_aliases(futimens,rump___sysimpl_futimens);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(futimens,rump___sysimpl_futimens);
+__weak_alias(_futimens,rump___sysimpl_futimens);
+__strong_alias(_sys_futimens,rump___sysimpl_futimens);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl___quotactl(const char *, struct quotactl_args *);
 int
@@ -5333,7 +6215,11 @@ rump___sysimpl___quotactl(const char * path, struct quotactl_args * args)
 	}
 	return rv;
 }
-rsys_aliases(__quotactl,rump___sysimpl___quotactl);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(__quotactl,rump___sysimpl___quotactl);
+__weak_alias(___quotactl,rump___sysimpl___quotactl);
+__strong_alias(_sys___quotactl,rump___sysimpl___quotactl);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int, struct timespec *);
 int
@@ -5361,7 +6247,11 @@ rump___sysimpl_recvmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	}
 	return rv;
 }
-rsys_aliases(recvmmsg,rump___sysimpl_recvmmsg);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(recvmmsg,rump___sysimpl_recvmmsg);
+__weak_alias(_recvmmsg,rump___sysimpl_recvmmsg);
+__strong_alias(_sys_recvmmsg,rump___sysimpl_recvmmsg);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
 int
@@ -5388,7 +6278,11 @@ rump___sysimpl_sendmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	}
 	return rv;
 }
-rsys_aliases(sendmmsg,rump___sysimpl_sendmmsg);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(sendmmsg,rump___sysimpl_sendmmsg);
+__weak_alias(_sendmmsg,rump___sysimpl_sendmmsg);
+__strong_alias(_sys_sendmmsg,rump___sysimpl_sendmmsg);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 int
@@ -5415,7 +6309,11 @@ rump___sysimpl_clock_nanosleep(clockid_t clock_id, int flags, const struct times
 	}
 	return rv;
 }
-rsys_aliases(clock_nanosleep,rump___sysimpl_clock_nanosleep);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(clock_nanosleep,rump___sysimpl_clock_nanosleep);
+__weak_alias(_clock_nanosleep,rump___sysimpl_clock_nanosleep);
+__strong_alias(_sys_clock_nanosleep,rump___sysimpl_clock_nanosleep);
+#endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump_sys_pipe(int *);
 int
@@ -5433,7 +6331,11 @@ rump_sys_pipe(int *fd)
 	}
 	return error ? -1 : 0;
 }
-rsys_aliases(pipe,rump_sys_pipe);
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(pipe,rump_sys_pipe);
+__weak_alias(_pipe,rump_sys_pipe);
+__strong_alias(_sys_pipe,rump_sys_pipe);
+#endif
 
 #ifndef RUMP_CLIENT
 int rumpns_enosys(void);
