@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.53 2013/08/29 20:02:35 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.54 2014/07/24 21:10:26 alnsn Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -682,7 +682,7 @@ support, the additional sysctl is available:
 .Bl -tag -width "XnetXbpfXjitXX"
 .It Li net.bpf.jit
 Toggle
-.Nm Just-In-Time
+.Sy Just-In-Time
 compilation of new filter programs.
 In order to enable Just-In-Time compilation,
 the bpfjit kernel module must be loaded.
@@ -748,6 +748,7 @@ struct bpf_insn insns[] = {
 };
 .Ed
 .Sh SEE ALSO
+.Xr bpfjit 4 ,
 .Xr ioctl 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
