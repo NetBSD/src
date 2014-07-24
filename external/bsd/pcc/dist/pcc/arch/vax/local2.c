@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.28 2012/03/22 18:56:17 plunky Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.5 2012/03/26 14:26:41 plunky Exp $	*/
+/*	Id: local2.c,v 1.37 2012/12/21 21:44:27 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.6 2014/07/24 19:21:48 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -51,6 +51,15 @@ prologue(struct interpass_prolog *ipp)
 	printf("	.word 0x%llx\n", (unsigned long long)ipp->ipp_regs[0]);
 	if (p2maxautooff)
 		printf("	subl2 $%d,%%sp\n", p2maxautooff);
+	if (pflag) {
+		int i = getlab2();
+		printf("\tmovab\t" LABFMT ",%%r0\n", i);
+		printf("\tjsb\t__mcount\n");
+		printf("\t.data\n");
+		printf("\t.align  2\n");
+		printf(LABFMT ":\t.long\t0\n", i);
+		printf("\t.text\n");
+	}
 }
 
 /*
@@ -338,7 +347,7 @@ casg64(NODE *p)
 	}
 	expand(p, FOREFF, str);
 	if (mneg)
-		expand(p, FOREFF, "\n\tmnegl $-1,UL");
+		expand(p, FOREFF, "\n\tmnegl $1,UL");
 }
 
 /*
@@ -451,6 +460,7 @@ void
 zzzcode(NODE *p, int c)
 {
 	NODE *l, *r;
+	TWORD t;
 	int m;
 	char *ch;
 
@@ -565,8 +575,8 @@ zzzcode(NODE *p, int c)
 		return;
 
 	case 'U':	/* 32 - n, for unsigned right shifts */
-		m = p->n_left->n_type == UCHAR ? 8 :
-		    p->n_left->n_type == USHORT ? 16 : 32;
+		t = DEUNSIGN(p->n_left->n_type);
+		m = t == CHAR ? 8 : t == SHORT ? 16 : 32;
 		printf("$" CONFMT, m - p->n_right->n_lval);
 		return;
 
@@ -604,6 +614,7 @@ zzzcode(NODE *p, int c)
 			else if( r->n_op == REG ) r->n_op = OREG;
 			else if( r->n_op != OREG ) cerror( "STASG-r" );
 
+		if (size != 0) {
 			if( size <= 0 || size > 65535 )
 				cerror("structure size <0=0 or >65535");
 
@@ -628,6 +639,7 @@ zzzcode(NODE *p, int c)
 			printf(",");
 			adrput(stdout, l);
 			printf("\n");
+		}
 
 			if( r->n_op == NAME ) r->n_op = ICON;
 			else if( r->n_op == OREG ) r->n_op = REG;
@@ -643,34 +655,29 @@ zzzcode(NODE *p, int c)
 }
 
 void
-rmove( int rt,int  rs, TWORD t ){
+rmove(int rt, int rs, TWORD t)
+{
 	printf( "	%s	%s,%s\n",
 		(t==FLOAT ? "movf" : (t==DOUBLE ? "movd" : "movl")),
 		rnames[rt], rnames[rs] );
-	}
-
-#if 0
-setregs(){ /* set up temporary registers */
-	fregs = 6;	/* tbl- 6 free regs on VAX (0-5) */
-	;
-	}
-
-szty(t){ /* size, in registers, needed to hold thing of type t */
-	return( (t==DOUBLE||t==FLOAT) ? 2 : 1 );
-	}
-#endif
+}
 
 int
-rewfld( p ) NODE *p; {
+rewfld(NODE *p)
+{
 	return(1);
-	}
+}
 
 #if 0
-callreg(p) NODE *p; {
+int
+callreg(NODE *p)
+{
 	return( R0 );
-	}
+}
 
-base( p ) register NODE *p; {
+int
+base(register NODE *p)
+{
 	register int o = p->op;
 
 	if( (o==ICON && p->name[0] != '\0')) return( 100 ); /* ie no base reg */
@@ -685,9 +692,11 @@ base( p ) register NODE *p; {
 	  && (p->type==INT || p->type==UNSIGNED || ISPTR(p->type)) )
 		return( p->left->left->rval + 0200*(1+2) );
 	return( -1 );
-	}
+}
 
-offset( p, tyl ) register NODE *p; int tyl; {
+int
+offset(register NODE *p, int tyl)
+{
 
 	if( tyl==1 && p->op==REG && (p->type==INT || p->type==UNSIGNED) ) return( p->rval );
 	if( (p->op==LS && p->left->op==REG && (p->left->type==INT || p->left->type==UNSIGNED) &&
@@ -695,7 +704,7 @@ offset( p, tyl ) register NODE *p; int tyl; {
 	      && (1<<p->right->lval)==tyl))
 		return( p->left->rval );
 	return( -1 );
-	}
+}
 #endif
 
 #if 0
@@ -760,16 +769,18 @@ fldexpand(NODE *p, int cookie, char **cp)
 }
 
 int
-flshape( p ) register NODE *p; {
+flshape(register NODE *p)
+{
 	return( p->n_op == REG || p->n_op == NAME || p->n_op == ICON ||
 		(p->n_op == OREG && (!R2TEST(p->n_rval) || tlen(p) == 1)) );
-	}
+}
 
 int
-shtemp( p ) register NODE *p; {
+shtemp(register NODE *p)
+{
 	if( p->n_op == STARG ) p = p->n_left;
 	return( p->n_op==NAME || p->n_op ==ICON || p->n_op == OREG || (p->n_op==UMUL && shumul(p->n_left, STARNM|SOREG)) );
-	}
+}
 
 /*
  * Shape matches for UMUL.  Cooperates with offstar().
@@ -847,10 +858,11 @@ shumul( p, shape ) register NODE *p; int shape; {
 #endif
 
 void
-adrcon( val ) CONSZ val; {
+adrcon(CONSZ val)
+{
 	printf( "$" );
 	printf( CONFMT, val );
-	}
+}
 
 void
 conput(FILE *fp, NODE *p)
@@ -871,9 +883,10 @@ conput(FILE *fp, NODE *p)
 	}
 
 void
-insput( p ) register NODE *p; {
+insput(register NODE *p)
+{
 	cerror( "insput" );
-	}
+}
 
 /*
  * Write out the upper address, like the upper register of a 2-register
@@ -886,17 +899,19 @@ upput(NODE *p, int size)
 	size /= SZCHAR;
 	switch (p->n_op) {
 	case REG:
-		fprintf(stdout, "%s", rnames[regno(p)-16+1]);
+		printf("%s", rnames[regno(p)-16+1]);
 		break;
 
 	case NAME:
+		if (kflag)
+			comperr("upput NAME");
 	case OREG:
 		p->n_lval += size;
 		adrput(stdout, p);
 		p->n_lval -= size;
 		break;
 	case ICON:
-		fprintf(stdout, "$" CONFMT, p->n_lval >> 32);
+		printf("$" CONFMT, p->n_lval >> 32);
 		break;
 	default:
 		comperr("upput bad op %d size %d", p->n_op, size);
@@ -1141,7 +1156,7 @@ mkcall(NODE *p, char *name)
 	p->n_op = CALL;
 	p->n_right = mkunode(FUNARG, p->n_left, 0, p->n_left->n_type);
 	p->n_left = mklnode(ICON, 0, 0, FTN|p->n_type);
-	p->n_left->n_name = "__fixunsdfdi";
+	p->n_left->n_name = name;
 }
 
 /* do local tree transformations and optimizations */
@@ -1152,6 +1167,7 @@ optim2(NODE *p, void *arg)
 	TWORD lt;
 
 	switch (p->n_op) {
+	case DIV:
 	case MOD:
 		if (p->n_type == USHORT || p->n_type == UCHAR) {
 			r = mkunode(SCONV, p->n_left, 0, UNSIGNED);
@@ -1160,7 +1176,7 @@ optim2(NODE *p, void *arg)
 			s = mkunode(FUNARG, s, 0, UNSIGNED);
 			r = mkbinode(CM, r, s, INT);
 			s = mklnode(ICON, 0, 0, FTN|UNSIGNED);
-			s->n_name = "__urem";
+			s->n_name = p->n_op == MOD ? "__urem" : "__udiv";
 			p->n_left = mkbinode(CALL, s, r, UNSIGNED);
 			p->n_op = SCONV;
 		} else if (p->n_type == UNSIGNED) {
@@ -1168,7 +1184,7 @@ optim2(NODE *p, void *arg)
 			p->n_right = mkunode(FUNARG, p->n_right, 0, UNSIGNED);
 			p->n_right = mkbinode(CM, p->n_left, p->n_right, INT);
 			p->n_left = mklnode(ICON, 0, 0, FTN|UNSIGNED);
-			p->n_left->n_name = "__urem";
+			p->n_left->n_name = p->n_op == MOD ? "__urem" : "__udiv";
 			p->n_op = CALL;
 		}
 		break;
@@ -1182,7 +1198,7 @@ optim2(NODE *p, void *arg)
 			p->n_left = mklnode(ICON, 0, 0, FTN|p->n_type);
 			p->n_left->n_name = "__lshrdi3";
 			p->n_op = CALL;
-		} else if (p->n_type == INT) {
+		} else if (p->n_type == INT || p->n_type == LONGLONG) {
 			/* convert >> to << with negative shift count */
 			/* RS of char & short must use extv */
 			if (p->n_right->n_op == ICON) {
@@ -1241,7 +1257,7 @@ optim2(NODE *p, void *arg)
 			else if (lt == ULONGLONG) {
 				p->n_left = mkunode(SCONV, p->n_left,0, DOUBLE);
 				p->n_type = FLOAT;
-				mkcall(p->n_left, "__floatunsdidf");
+				mkcall(p->n_left, "__floatundidf");
 			} else if (lt == UNSIGNED) {
 				/* insert an extra double-to-float sconv */
 				p->n_left = mkunode(SCONV, p->n_left,0, DOUBLE);
@@ -1251,11 +1267,31 @@ optim2(NODE *p, void *arg)
 			if (lt == LONGLONG)
 				mkcall(p, "__floatdidf");
 			else if (lt == ULONGLONG)
-				mkcall(p->n_left, "__floatunsdidf");
+				mkcall(p, "__floatundidf");
 			break;
 			
 		}
 		break;
+	}
+}
+
+static void
+aofname(NODE *p, void *arg)
+{
+	int o = optype(p->n_op);
+	TWORD t;
+
+	if (o == LTYPE || p->n_op == ADDROF)
+		return;
+	t = p->n_left->n_type;
+	if (p->n_left->n_op == NAME && ISLONGLONG(t))
+		p->n_left = mkunode(UMUL,
+		    mkunode(ADDROF, p->n_left, 0, INCREF(t)), 0, t);
+	if (o == BITYPE && p->n_right->n_op == NAME &&
+	    ISLONGLONG(p->n_right->n_type)) {
+		t = p->n_right->n_type;
+		p->n_right = mkunode(UMUL,
+		    mkunode(ADDROF, p->n_right, 0, INCREF(t)), 0, t);
 	}
 }
 
@@ -1267,6 +1303,8 @@ myreader(struct interpass *ipole)
 	DLIST_FOREACH(ip, ipole, qelem) {
 		if (ip->type != IP_NODE)
 			continue;
+		if (kflag)
+			walkf(ip->ip_node, aofname, 0);
 		walkf(ip->ip_node, optim2, 0);
 	}
 }
@@ -1376,6 +1414,17 @@ mflags(char *str)
 int
 myxasm(struct interpass *ip, NODE *p)
 {
+	char *c;
+	int i;
+
+	/* Discard o<> constraints since they will not be generated */
+	for (c = p->n_name; *c; c++) {
+		if (*c == 'o' || *c == '<' || *c == '>') {
+			for (i = 0; c[i]; i++)
+				c[i] = c[i+1];
+			c--;
+		}
+	}
 	return 0;
 }
 

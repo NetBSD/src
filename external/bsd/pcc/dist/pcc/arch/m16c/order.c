@@ -1,5 +1,5 @@
-/*	Id: order.c,v 1.20 2008/09/27 07:35:23 ragge Exp 	*/	
-/*	$NetBSD: order.c,v 1.1.1.3 2010/06/03 18:57:17 plunky Exp $	*/
+/*	Id: order.c,v 1.22 2014/06/01 11:35:02 ragge Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.4 2014/07/24 19:17:52 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -304,7 +304,7 @@ gencall(NODE *p, NODE *prev)
 		/* Check if left can be evaluated directly */
 		if (p->n_left->n_op == UMUL) {
 			TWORD t = p->n_left->n_type;
-			int k = BITOOR(freetemp(szty(t)));
+			int k = (freetemp(szty(t)));
 			NODE *n = mklnode(OREG, k, FB, t);
 			NODE *q = tcopy(n);
 			pass2_compile(ipnode(mkbinode(ASSIGN, n, p->n_left,t)));
@@ -538,7 +538,7 @@ storearg(NODE *p)
 		if (canaddr(narry[i]))
 			continue;
 		t = narry[i]->n_type;
-		k = BITOOR(freetemp(szty(t)));
+		k = (freetemp(szty(t)));
 		n = mklnode(OREG, k, FB, t);
 		q = tcopy(n);
 		pass2_compile(ipnode(mkbinode(ASSIGN, n, narry[i], t)));
@@ -588,7 +588,7 @@ mktailopt(struct interpass *ip1, struct interpass *ip2)
 		if (strcmp(fn, cftname)) {
 			/* Not us, must generate fake prologue */
 			ip1->type = IP_ASM;
-			ip1->ip_asm = "mov.w FB,SP\n\tpop.w FB";
+			ip1->ip_asm = "\tmov.w FB,SP\n\tpop.w FB\n";
 			pass2_compile(ip1);
 			p->n_lval = p->n_rval = 0;
 			p->n_name = fn;

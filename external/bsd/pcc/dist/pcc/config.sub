@@ -792,6 +792,10 @@ case $basic_machine in
 		basic_machine=i960-intel
 		os=-nindy
 		;;
+	nova*)
+		basic_machine=nova-dg
+		os=-bsd
+		;;
 	mon960)
 		basic_machine=i960-intel
 		os=-mon960

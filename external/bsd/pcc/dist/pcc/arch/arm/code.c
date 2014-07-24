@@ -1,5 +1,5 @@
-/*      Id: code.c,v 1.26 2011/11/13 22:30:18 gmcgarry Exp     */	
-/*      $NetBSD: code.c,v 1.1.1.5 2012/01/11 20:32:43 plunky Exp $    */
+/*      Id: code.c,v 1.28 2014/04/19 07:47:51 ragge Exp     */	
+/*      $NetBSD: code.c,v 1.1.1.6 2014/07/24 19:16:08 plunky Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -60,7 +60,8 @@ setseg(int seg, char *name)
 	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
 	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
 	case NMSEG: 
-		printf("\t.section %s,\"aw\",@progbits\n", name);
+		printf("\t.section %s,\"a%c\",@progbits\n", name,
+		    cftnsp ? 'x' : 'w');
 		return;
 	}
 	printf("\t%s\n", name);
@@ -388,7 +389,7 @@ bfcode(struct symtab **sp, int cnt)
  * End-of-Function code:
  */
 void
-efcode()
+efcode(void)
 {
 	NODE *p, *q;
 	int tempnr;
@@ -428,7 +429,7 @@ efcode()
  * End-of-job: called just before final exit.
  */
 void
-ejobcode(int flag )
+ejobcode(int flag)
 {
 	printf("\t.ident \"PCC: %s\"\n", VERSSTR);
 }
@@ -439,7 +440,7 @@ ejobcode(int flag )
  * Initialise data structures specific for the local machine.
  */
 void
-bjobcode()
+bjobcode(void)
 {
 }
 

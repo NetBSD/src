@@ -1,5 +1,5 @@
-/*	Id: table.c,v 1.1 2006/07/30 09:30:48 ragge Exp 	*/	
-/*	$NetBSD: table.c,v 1.1.1.2 2010/06/03 18:57:22 plunky Exp $	*/
+/*	Id: table.c,v 1.3 2014/06/03 20:19:50 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.3 2014/07/24 19:19:10 plunky Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -33,6 +33,7 @@
 # define ANYSIGNED TINT|TLONG|TSHORT|TCHAR
 # define ANYUSIGNED TUNSIGNED|TULONG|TUSHORT|TUCHAR
 # define ANYFIXED ANYSIGNED|ANYUSIGNED
+# define ANYREG (INAREG|INBREG|INCREG)
 # define TUWORD TUNSIGNED|TULONG
 # define TSWORD TINT|TLONG
 # define TWORD TUWORD|TSWORD
@@ -41,61 +42,89 @@ struct optab table[] = {
 /* First entry must be an empty entry */
 { -1, FOREFF, SANY, TANY, SANY, TANY, 0, 0, "", },
 
-{ ASSIGN,	FOREFF|INAREG,
-	SAREG,	TWORD|TPOINT,
-	SAREG,	TWORD|TPOINT,
+/*
+ * All ASSIGN entries.
+ */
+/* reg->reg */
+{ ASSIGN,	FOREFF|INAREG|INBREG,
+	SAREG|SBREG,	TWORD|TPOINT,
+	SAREG|SBREG,	TWORD|TPOINT,
 		0,	RDEST,
-		"	mov AR,ALZA\n", },
-
-{ ASSIGN,	FOREFF|INAREG,
-	SNAME,	TWORD|TPOINT,
-	SAREG,	TWORD|TPOINT,
-		0,	RDEST,
-		"	sta AR,ZC,1\n", },
-
-{ ASSIGN,	FOREFF|INAREG,
-	SOREG,	TWORD|TPOINT,
-	SAREG,	TWORD|TPOINT,
+		"	mov AR,AL\n", },
+/* reg->mem */
+{ ASSIGN,	FOREFF|INAREG|INBREG,
+	SNAME|SOREG,	TWORD|TPOINT,
+	SAREG|SBREG,	TWORD|TPOINT,
 		0,	RDEST,
 		"	sta AR,AL\n", },
+/* mem->reg */
+{ ASSIGN,	FOREFF|INAREG|INBREG,
+	SAREG|SBREG,	TWORD|TPOINT,
+	SNAME|SOREG,	TWORD|TPOINT,
+		0,	RDEST,
+		"	lda AL,AR\n", },
 
-{ OPLTYPE,	INAREG,
-	SANY,	TANY,
-	SONE,	TWORD,
-		NAREG,	RESC1,
-		"	subzl A1,A1ZA\n", },
-
-{ OPLTYPE,	INAREG,
-	SANY,	TANY,
-	SCON,	TWORD,
-		NAREG,	RESC1,
-		"	lda A1,ZB,1\n", },
-
-{ OPLTYPE,	INAREG,
+/*
+ * LEAF type movements.
+ */
+/* 0 -> reg */
+{ OPLTYPE,	INAREG|INBREG,
 	SANY,	TANY,
 	SZERO,	TWORD,
 		NAREG,	RESC1,
-		"	sub A1,A1ZA\n", },
+		"	subo A1,A1\n", },
 
+/* 1 -> reg */
+{ OPLTYPE,	INAREG|INBREG,
+	SANY,	TANY,
+	SONE,	TWORD,
+		NAREG|NBREG,	RESC1,
+		"	subzl A1,A1	# 1\n", },
+
+/* constant -> reg */
+{ OPLTYPE,	INAREG|INBREG,
+	SANY,	TANY,
+	SCON,	TWORD|TPOINT,
+		NAREG|NBREG,	RESC1,
+		"	lda A1,AR\n", },
+
+/* mem -> reg */
 { OPLTYPE,	INAREG,
-	SANY,	TANY,
-	SNAME,	TWORD|TPOINT,
+	SANY,		TANY,
+	SNAME|SOREG,	TWORD,
 		NAREG,	RESC1,
-		"	lda A1,ZD,1\n", },
+		"	lda A1,AR\n", },
 
+/* reg -> A-reg */
+{ OPLTYPE,	INAREG,
+	SANY,		TANY,
+	SAREG|SBREG,	TWORD,
+		NAREG,	RESC1,
+		"	mov AR,A1\n", },
+
+/* reg -> B-reg */
 { OPLTYPE,	INBREG,
-	SANY,	TANY,
-	SNAME,	TWORD|TPOINT,
+	SANY,		TANY,
+	SAREG|SBREG,	TWORD,
 		NBREG,	RESC1,
-		"	lda A1,ZD,1\n", },
+		"	mov AR,A1\n", },
 
 { OPLTYPE,	INBREG,
-	SANY,	TANY,
-	SCREG,	TWORD|TPOINT,
+	SANY,		TANY,
+	SNAME|SOREG,	TPOINT,
 		NBREG,	RESC1,
 		"	lda A1,AR\n", },
 
-{ PLUS,	INBREG|INAREG,
+{ OPLTYPE,	INBREG,
+	SANY,		TANY,
+	SLDFPSP,	TANY,
+		NBREG,	RESC1,
+		"	lda A1,AR\n", },
+
+/*
+ * Simple ops.
+ */
+{ PLUS,		INBREG|INAREG,
 	SAREG|SBREG,	TWORD|TPOINT,
 	SONE,		TANY,
 		0,	RLEFT,
@@ -107,11 +136,26 @@ struct optab table[] = {
 		0,	RLEFT,
 		"	O AR,AL\n", },
 
+/*
+ * Indirections
+ */
 { UMUL,	INAREG,
 	SANY,	TPOINT|TWORD,
 	SOREG,	TPOINT|TWORD,
 		NAREG|NASL,	RESC1,
-		"	lda A1,AL\n", },
+		"	lda A1,AL #\n", },
+
+{ UMUL,	INAREG,
+	SANY,	TPOINT|TWORD,
+	SOREG,	TCHAR|TUCHAR,
+		NAREG|NASL,	RESC1,
+		"	lda A1,AL #\n", },
+
+{ UMUL,	INBREG,
+	SANY,	TPOINT|TWORD,
+	SOREG,	TPOINT|TWORD,
+		NBREG|NBSL,	RESC1,
+		"	lda A1,AL  # #\n", },
 
 #if 0
 
@@ -436,6 +480,7 @@ struct optab table[] = {
 		"	popl A1\n	popl U1\n", },
 
 /* slut sconv */
+#endif
 
 /*
  * Subroutine calls.
@@ -445,14 +490,27 @@ struct optab table[] = {
 	SCON,	TANY,
 	SANY,	TANY,
 		0,	0,
-		"	call CL\nZC", },
+		"	jsr CL\nZC", },
 
 { UCALL,	FOREFF,
 	SCON,	TANY,
-	SAREG,	TWORD|TPOINT,
+	SANY,	TANY,
 		0,	0,
-		"	call CL\n", },
+		"	jsr CL\n", },
 
+{ CALL,		INAREG|FOREFF,
+	SCON,	TANY,
+	SANY,	TANY,
+		NAREG|NASL,	RESC1,
+		"	jsr CL\nZC", },
+
+{ UCALL,	INAREG|FOREFF,
+	SCON,	TANY,
+	SANY,	TANY,
+		NAREG|NASL,	RESC1,
+		"	jsr CL\n", },
+
+#if 0
 { CALL,	INAREG,
 	SCON,	TANY,
 	SAREG,	TWORD|TPOINT,
@@ -1416,13 +1474,15 @@ struct optab table[] = {
 	SANY,	TLL,
 		0,	RNULL,
 		"	pushl UL\n	pushl AL\n", },
+#endif
 
 { FUNARG,	FOREFF,
-	SCON|SAREG|SNAME|SOREG,	TWORD|TPOINT,
-	SANY,	TWORD|TPOINT,
+	SAREG|SBREG,	TCHAR|TUCHAR|TWORD|TPOINT,
+	SANY,		TCHAR|TUCHAR|TWORD|TPOINT,
 		0,	RNULL,
-		"	pushl AL\n", },
+		"	sta AL,@sp\n", },
 
+#if 0
 { FUNARG,	FOREFF,
 	SCON,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
 	SANY,	TWORD|TSHORT|TUSHORT|TCHAR|TUCHAR,
@@ -1502,8 +1562,6 @@ struct optab table[] = {
 { FLD, DF(FLD), },
 
 { OPLEAF, DF(NAME), },
-
-{ INIT, DF(INIT), },
 
 { OPUNARY, DF(UMINUS), },
 

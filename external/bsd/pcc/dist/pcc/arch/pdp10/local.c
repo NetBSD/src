@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.77 2011/06/05 17:21:17 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.4 2011/09/01 12:46:42 plunky Exp $	*/
+/*	Id: local.c,v 1.78 2014/05/29 19:20:03 plunky Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.5 2014/07/24 19:19:10 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -642,7 +642,7 @@ incode(NODE *p, int sz)
 	inwd += sz;
 	if (inoff % SZINT == 0) {
 		s = isinlining ? permalloc(30) : tmpalloc(30);
-		sprintf(s, "	.long 0%llo", word);
+		sprintf(s, "\t.long 0%llo\n", word);
 		send_passt(IP_ASM, s);
 		word = inwd = 0;
 	}
@@ -710,7 +710,7 @@ vfdzero(int n)
 	inwd += n;
 	if (inoff%ALINT ==0) {
 		s = isinlining ? permalloc(30) : tmpalloc(30);
-		sprintf(s, "	.long 0%llo", word);
+		sprintf(s, "\t.long 0%llo\n", word);
 		send_passt(IP_ASM, s);
 		word = inwd = 0;
 	}
