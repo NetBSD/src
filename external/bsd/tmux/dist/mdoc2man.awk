@@ -1,6 +1,6 @@
 #!/usr/bin/awk
 #
-# $Id: mdoc2man.awk,v 1.1.1.1 2014/07/24 14:22:54 christos Exp $
+# Id: mdoc2man.awk,v 1.9 2009/10/24 00:52:42 dtucker Exp 
 #
 # Version history:
 #  v4+ Adapted for OpenSSH Portable (see cvs Id and history)

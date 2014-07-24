@@ -1,4 +1,4 @@
-/* $Id: tree.h,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
+/* Id */
 /*	$OpenBSD: tree.h,v 1.13 2011/07/09 00:19:45 pirofti Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>

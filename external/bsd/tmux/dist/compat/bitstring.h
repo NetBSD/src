@@ -1,6 +1,6 @@
-/* $Id: bitstring.h,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
+/* Id */
 /*	$OpenBSD: bitstring.h,v 1.5 2003/06/02 19:34:12 millert Exp $	*/
-/*	$NetBSD: bitstring.h,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $	*/
+/*	NetBSD: bitstring.h,v 1.5 1997/05/14 15:49:55 pk Exp 	*/
 
 /*
  * Copyright (c) 1989, 1993

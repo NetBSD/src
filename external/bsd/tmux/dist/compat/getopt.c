@@ -1,4 +1,4 @@
-/* $Id: getopt.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 1987, 1993, 1994

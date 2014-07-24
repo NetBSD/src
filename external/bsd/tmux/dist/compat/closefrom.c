@@ -1,4 +1,4 @@
-/* $Id: closefrom.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2004-2005 Todd C. Miller <Todd.Miller@courtesan.com>

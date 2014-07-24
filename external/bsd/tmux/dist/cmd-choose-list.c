@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-list.c,v 1.1.1.1 2014/07/24 14:22:53 christos Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>

@@ -1,5 +1,5 @@
-/* $Id: fgetln.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
-/*	$NetBSD: fgetln.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $	*/
+/* Id */
+/*	NetBSD: fgetln.c,v 1.3 2007/08/07 02:06:58 lukem Exp 	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

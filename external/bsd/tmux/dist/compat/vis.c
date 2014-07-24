@@ -1,4 +1,4 @@
-/* $Id: vis.c,v 1.1.1.3 2014/07/24 14:22:55 christos Exp $ */
+/* Id */
 /*	$OpenBSD: vis.c,v 1.19 2005/09/01 17:15:49 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
