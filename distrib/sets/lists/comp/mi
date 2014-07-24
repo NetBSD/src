@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1900 2014/07/22 22:35:03 christos Exp $
+#	$NetBSD: mi,v 1.1901 2014/07/24 20:31:01 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4087,6 +4087,7 @@
 ./usr/libexec/ccom				comp-c-bin		pcc
 ./usr/libexec/collect2				comp-obsolete		obsolete
 ./usr/libexec/cpp				comp-obsolete		pcc,obsolete
+./usr/libexec/cxxcom				comp-c-bin		pcc
 ./usr/libexec/f771				comp-fortran-bin	gcc=3,gcccmds
 ./usr/libexec/f771				comp-obsolete		gcc=4,obsolete
 ./usr/libexec/lint1				comp-c-bin
