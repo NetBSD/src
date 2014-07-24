@@ -73,17 +73,14 @@ log_close(void)
 void
 log_vwrite(const char *msg, va_list ap)
 {
-	char	*fmt;
-
 	if (log_file == NULL)
 		return;
 
-	if (asprintf(&fmt, "%s\n", msg) == -1)
+	if (vfprintf(log_file, msg, ap) == -1)
 		exit(1);
-	if (vfprintf(log_file, fmt, ap) == -1)
+	if (fprintf(log_file, "\n") == -1)
 		exit(1);
 	fflush(log_file);
-	free(fmt);
 }
 
 /* Log a warning with error string. */
