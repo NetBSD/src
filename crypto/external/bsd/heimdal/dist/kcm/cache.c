@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: cache.c,v 1.2 2014/07/24 22:54:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -104,7 +104,7 @@ kcm_ccache_resolve_by_uuid(krb5_context context,
     for (p = ccache_head; p != NULL; p = p->next) {
 	if ((p->flags & KCM_FLAGS_VALID) == 0)
 	    continue;
-	if (memcmp(p->uuid, uuid, sizeof(uuid)) == 0) {
+	if (memcmp(p->uuid, uuid, sizeof(*uuid)) == 0) {
 	    ret = 0;
 	    break;
 	}
