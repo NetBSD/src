@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.1 2014/07/24 21:18:40 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.2 2014/07/24 21:28:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.1 2014/07/24 21:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.2 2014/07/24 21:28:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -316,8 +316,8 @@ intelfb_genfb_ioctl(void *v, void *vs, unsigned long cmd, void *data, int flag,
 		return pci_devioctl(pa->pa_pc, pa->pa_tag, cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(genfb->sc_dev,
-		    pa->pa_pc, pa->pa_tag, data);
+		return wsdisplayio_busid_pci(dev->dev, pa->pa_pc, pa->pa_tag,
+		    data);
 
 	/*
 	 * Screen blanking ioctls.  Not to be confused with backlight
