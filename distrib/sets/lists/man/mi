@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1479 2014/07/13 08:37:13 mbalmer Exp $
+# $NetBSD: mi,v 1.1480 2014/07/24 21:08:50 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -916,6 +916,7 @@
 ./usr/share/man/cat4/bnx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/boca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bpf.0			man-sys-catman		.cat
+./usr/share/man/cat4/bpfjit.0			man-sys-catman		.cat
 ./usr/share/man/cat4/brgphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bridge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bt.0			man-sys-catman		.cat
@@ -3962,6 +3963,7 @@
 ./usr/share/man/html4/bnx.html			man-sys-htmlman		html
 ./usr/share/man/html4/boca.html			man-sys-htmlman		html
 ./usr/share/man/html4/bpf.html			man-sys-htmlman		html
+./usr/share/man/html4/bpfjit.html		man-sys-htmlman		html
 ./usr/share/man/html4/brgphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/bridge.html		man-sys-htmlman		html
 ./usr/share/man/html4/bt.html			man-sys-htmlman		html
@@ -6773,6 +6775,7 @@
 ./usr/share/man/man4/bnx.4			man-sys-man		.man
 ./usr/share/man/man4/boca.4			man-sys-man		.man
 ./usr/share/man/man4/bpf.4			man-sys-man		.man
+./usr/share/man/man4/bpfjit.4			man-sys-man		.man
 ./usr/share/man/man4/brgphy.4			man-sys-man		.man
 ./usr/share/man/man4/bridge.4			man-sys-man		.man
 ./usr/share/man/man4/bt.4			man-sys-man		.man
