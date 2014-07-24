@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.52 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.53 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,7 +131,7 @@ struct inpcb {
 #ifdef _KERNEL
 void	in_losing(struct inpcb *);
 int	in_pcballoc(struct socket *, void *);
-int	in_pcbbind(void *, struct mbuf *, struct lwp *);
+int	in_pcbbind(void *, struct mbuf *);
 int	in_pcbconnect(void *, struct mbuf *, struct lwp *);
 void	in_pcbdetach(void *);
 void	in_pcbdisconnect(void *);

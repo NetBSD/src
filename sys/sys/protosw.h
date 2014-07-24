@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.53 2014/07/23 13:17:19 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.54 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -239,6 +239,8 @@ struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
 	int	(*pr_accept)(struct socket *, struct mbuf *);
+	int	(*pr_bind)(struct socket *, struct mbuf *);
+	int	(*pr_listen)(struct socket *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
 	int	(*pr_stat)(struct socket *, struct stat *);
 	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
@@ -302,6 +304,24 @@ name##_accept_wrapper(struct socket *a, struct mbuf *b)	\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_accept(a, b);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_bind_wrapper(struct socket *a, struct mbuf *b)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_bind(a, b);				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_listen_wrapper(struct socket *a)			\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_listen(a);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\
