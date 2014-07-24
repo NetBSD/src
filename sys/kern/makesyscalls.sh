@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.144 2014/07/23 11:41:34 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.145 2014/07/24 11:58:45 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -254,12 +254,9 @@ NR == 1 {
 	    > rumpcalls
 	printf "#endif\n\n" > rumpcalls
 
-	printf "#ifdef RUMP_KERNEL_IS_LIBC\n" > rumpcalls
-	printf "#define rsys_aliases(what,where) \\\n" > rumpcalls
-	printf "\t__weak_alias(what,where); \\\n" > rumpcalls
-	printf "\t__weak_alias(_##what,where); \\\n" > rumpcalls
-	printf "\t__strong_alias(_sys_##what,where);\n" > rumpcalls
-	printf "#else\n#define rsys_aliases(a,b)\n#endif\n\n" > rumpcalls
+	printf "#ifndef RUMP_KERNEL_IS_LIBC\n" > rumpcalls
+	printf "#define RUMP_SYS_COMPAT\n" > rumpcalls
+	printf "#endif\n\n" > rumpcalls
 
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
@@ -795,8 +792,13 @@ function putent(type, compatwrap) {
 
 	printrumpsysmap(syscall, wfn, funcalias, "rump___sysimpl_" rumpfname)
 
+	printf("\n") > rumpcalls
+
+	if (compatwrap)
+		printf("#ifdef RUMP_SYS_COMPAT\n") > rumpcalls
+
 	# need a local prototype, we export the re-re-named one in .h
-	printf("\n%s rump___sysimpl_%s(", returntype, rumpfname) \
+	printf("%s rump___sysimpl_%s(", returntype, rumpfname) \
 	    > rumpcalls
 	for (i = 1; i < argc; i++) {
 		if (argname[i] != "PAD")
@@ -874,8 +876,26 @@ function putent(type, compatwrap) {
 		printf("\treturn rv;\n") > rumpcalls
 	}
 	printf("}\n") > rumpcalls
-	printf("rsys_aliases(%s%s,rump___sysimpl_%s);\n", \
-	    compatwrap_, funcalias, rumpfname) > rumpcalls
+
+	printf("#ifdef RUMP_KERNEL_IS_LIBC\n") > rumpcalls
+
+	# create the bog-standard, non-renamed public name.
+	# this way we get e.g. select instead of just __select50
+	if (fcompat)
+		printf("__weak_alias(%s,rump___sysimpl_%s);\n", \
+		    fbase, rumpfname) > rumpcalls
+
+	printf("__weak_alias(%s,rump___sysimpl_%s);\n", \
+	    funcalias, rumpfname) > rumpcalls
+	printf("__weak_alias(_%s,rump___sysimpl_%s);\n", \
+	    funcalias, rumpfname) > rumpcalls
+	printf("__strong_alias(_sys_%s,rump___sysimpl_%s);\n", \
+	    funcalias, rumpfname) >rumpcalls
+
+	printf("#endif /* RUMP_KERNEL_IS_LIBC */\n") > rumpcalls
+
+	if (compatwrap)
+		printf("#endif /* RUMP_SYS_COMPAT */\n") > rumpcalls
 
 }
 $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" \
@@ -946,7 +966,11 @@ END {
 		printf("\t} else {\n\t\tfd[0] = retval[0];\n") > rumpcalls
 		printf("\t\tfd[1] = retval[1];\n\t}\n") > rumpcalls
 		printf("\treturn error ? -1 : 0;\n}\n") > rumpcalls
-		printf "rsys_aliases(pipe,rump_sys_pipe);\n" > rumpcalls
+		printf("#ifdef RUMP_KERNEL_IS_LIBC\n") > rumpcalls
+		printf("__weak_alias(pipe,rump_sys_pipe);\n") > rumpcalls
+		printf("__weak_alias(_pipe,rump_sys_pipe);\n") > rumpcalls
+		printf("__strong_alias(_sys_pipe,rump_sys_pipe);\n") > rumpcalls
+		printf("#endif\n") > rumpcalls
 	}
 
 	# print default rump syscall interfaces
