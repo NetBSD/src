@@ -2756,6 +2756,7 @@ static inline void intel_unregister_dsm_handler(void) { return; }
 #endif /* CONFIG_ACPI */
 
 /* modesetting */
+extern void i915_disable_vga(struct drm_device *dev);
 extern void intel_modeset_init_hw(struct drm_device *dev);
 extern void intel_modeset_suspend_hw(struct drm_device *dev);
 extern void intel_modeset_init(struct drm_device *dev);

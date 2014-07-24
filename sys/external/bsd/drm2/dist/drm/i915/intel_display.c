@@ -11318,7 +11318,7 @@ static void intel_init_quirks(struct drm_device *dev)
 }
 
 /* Disable the VGA plane that we never use */
-static void i915_disable_vga(struct drm_device *dev)
+void i915_disable_vga(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u8 sr1;
@@ -11326,7 +11326,7 @@ static void i915_disable_vga(struct drm_device *dev)
 
 #ifdef __NetBSD__
     {
-	const bus_size_t vgabase = 0x3c0;
+	const bus_addr_t vgabase = 0x3c0;
 	const bus_space_tag_t iot = dev->pdev->pd_pa.pa_iot;
 	bus_space_handle_t ioh;
 	int error;
@@ -11435,8 +11435,10 @@ void intel_modeset_init(struct drm_device *dev)
 	intel_cpu_pll_init(dev);
 	intel_shared_dpll_init(dev);
 
+#ifndef __NetBSD__		/* XXX We wait until intelfb is ready.  */
 	/* Just disable it once at startup */
 	i915_disable_vga(dev);
+#endif
 	intel_setup_outputs(dev);
 
 	/* Just in case the BIOS is doing something questionable. */
