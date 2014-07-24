@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.160 2014/07/23 13:17:18 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.161 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.160 2014/07/23 13:17:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.161 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,6 +396,8 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -413,21 +415,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-	case PRU_BIND:
-		KASSERT(l != NULL);
-		error = unp_bind(so, nam, l);
-		break;
-
-	case PRU_LISTEN:
-		/*
-		 * If the socket can accept a connection, it must be
-		 * locked by uipc_lock.
-		 */
-		unp_resetlock(so);
-		if (unp->unp_vnode == NULL)
-			error = EINVAL;
-		break;
-
 	case PRU_CONNECT:
 		KASSERT(l != NULL);
 		error = unp_connect(so, nam, l);
@@ -947,7 +934,7 @@ makeun(struct mbuf *nam, size_t *addrlen) {
 }
 
 int
-unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+unp_bind(struct socket *so, struct mbuf *nam)
 {
 	struct sockaddr_un *sun;
 	struct unpcb *unp;
@@ -960,6 +947,11 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	proc_t *p;
 
 	unp = sotounpcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(unp != NULL);
+	KASSERT(nam != NULL);
+
 	if (unp->unp_vnode != NULL)
 		return (EINVAL);
 	if ((unp->unp_flags & UNP_BUSY) != 0) {
@@ -972,7 +964,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	p = l->l_proc;
+	p = curlwp->l_proc;
 	sun = makeun(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
@@ -1016,8 +1008,8 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_addrlen = addrlen;
 	unp->unp_addr = sun;
 	unp->unp_connid.unp_pid = p->p_pid;
-	unp->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
+	unp->unp_connid.unp_euid = kauth_cred_geteuid(curlwp->l_cred);
+	unp->unp_connid.unp_egid = kauth_cred_getegid(curlwp->l_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
 	vput(nd.ni_dvp);
@@ -1030,6 +1022,25 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	solock(so);
 	unp->unp_flags &= ~UNP_BUSY;
 	return (error);
+}
+
+static int
+unp_listen(struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(unp != NULL);
+
+	/*
+	 * If the socket can accept a connection, it must be
+	 * locked by uipc_lock.
+	 */
+	unp_resetlock(so);
+	if (unp->unp_vnode == NULL)
+		return EINVAL;
+
+	return 0;
 }
 
 int
@@ -1869,6 +1880,8 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_attach	= unp_attach,
 	.pr_detach	= unp_detach,
 	.pr_accept	= unp_accept,
+	.pr_bind	= unp_bind,
+	.pr_listen	= unp_listen,
 	.pr_ioctl	= unp_ioctl,
 	.pr_stat	= unp_stat,
 	.pr_peeraddr	= unp_peeraddr,
