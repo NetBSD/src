@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.33 2014/07/18 18:17:54 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.34 2014/07/24 14:09:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.33 2014/07/18 18:17:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.34 2014/07/24 14:09:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ struct om_hwdevconfig {
 struct omfb_softc {
 	device_t sc_dev;		/* base device */
 	struct om_hwdevconfig *sc_dc;	/* device configuration */
-	int nscreens;
+	int sc_nscreens;
 };
 
 static int  omgetcmap(struct omfb_softc *, struct wsdisplay_cmap *);
@@ -204,7 +204,7 @@ omfbattach(device_t parent, device_t self, void *args)
 
 	if (omfb_console) {
 		sc->sc_dc = &omfb_console_dc;
-		sc->nscreens = 1;
+		sc->sc_nscreens = 1;
 	} else {
 		sc->sc_dc = kmem_zalloc(sizeof(struct om_hwdevconfig),
 		    KM_SLEEP);
@@ -497,14 +497,14 @@ omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct omfb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
 
-	if (sc->nscreens > 0)
+	if (sc->sc_nscreens > 0)
 		return ENOMEM;
 
 	*cookiep = ri;
 	*curxp = 0;
 	*curyp = 0;
 	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, attrp);
-	sc->nscreens++;
+	sc->sc_nscreens++;
 	return 0;
 }
 
@@ -516,7 +516,7 @@ omfb_free_screen(void *v, void *cookie)
 	if (sc->sc_dc == &omfb_console_dc)
 		panic("omfb_free_screen: console");
 
-	sc->nscreens--;
+	sc->sc_nscreens--;
 }
 
 static int
