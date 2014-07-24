@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.36 2014/01/27 13:22:55 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.37 2014/07/24 21:35:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.36 2014/01/27 13:22:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.37 2014/07/24 21:35:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,8 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_genfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	struct genfb_ops ops;
+	static const struct genfb_ops zero_ops;
+	struct genfb_ops ops = zero_ops;
 	pcireg_t rom;
 	int idx, bar, type;
 
