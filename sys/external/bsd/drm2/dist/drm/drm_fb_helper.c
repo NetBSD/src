@@ -173,7 +173,6 @@ static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 }
 #endif
 
-#ifndef __NetBSD__		/* XXX fb info */
 static void drm_fb_helper_save_lut_atomic(struct drm_crtc *crtc, struct drm_fb_helper *helper)
 {
 	uint16_t *r_base, *g_base, *b_base;
@@ -208,9 +207,16 @@ static void drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
  * drm_fb_helper_debug_enter - implementation for ->fb_debug_enter
  * @info: fbdev registered by the helper
  */
+#ifndef __NetBSD__
 int drm_fb_helper_debug_enter(struct fb_info *info)
 {
-	struct drm_fb_helper *helper = info->par;
+	return drm_fb_helper_debug_enter_fb(info->par);
+}
+#endif
+
+int
+drm_fb_helper_debug_enter_fb(struct drm_fb_helper *helper)
+{
 	struct drm_crtc_helper_funcs *funcs;
 	int i;
 
@@ -257,9 +263,16 @@ static struct drm_framebuffer *drm_mode_config_fb(struct drm_crtc *crtc)
  * drm_fb_helper_debug_leave - implementation for ->fb_debug_leave
  * @info: fbdev registered by the helper
  */
+#ifndef __NetBSD__
 int drm_fb_helper_debug_leave(struct fb_info *info)
 {
-	struct drm_fb_helper *helper = info->par;
+	return drm_fb_helper_debug_leave_fb(info->par);
+}
+#endif
+
+int
+drm_fb_helper_debug_leave_fb(struct drm_fb_helper *helper)
+{
 	struct drm_crtc *crtc;
 	struct drm_crtc_helper_funcs *funcs;
 	struct drm_framebuffer *fb;
@@ -287,7 +300,6 @@ int drm_fb_helper_debug_leave(struct fb_info *info)
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_debug_leave);
-#endif
 
 /**
  * drm_fb_helper_restore_fbdev_mode - restore fbdev configuration

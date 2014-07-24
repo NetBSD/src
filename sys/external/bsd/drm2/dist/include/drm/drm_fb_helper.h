@@ -139,6 +139,8 @@ int drm_fb_helper_single_add_all_connectors(struct drm_fb_helper *fb_helper);
 int drm_fb_helper_debug_enter(struct fb_info *info);
 int drm_fb_helper_debug_leave(struct fb_info *info);
 #endif
+int drm_fb_helper_debug_enter_fb(struct drm_fb_helper *fb_helper);
+int drm_fb_helper_debug_leave_fb(struct drm_fb_helper *fb_helper);
 struct drm_display_mode *
 drm_has_preferred_mode(struct drm_fb_helper_connector *fb_connector,
 			int width, int height);
