@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.23 2014/07/23 16:56:49 riastradh Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.24 2014/07/24 21:35:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -60,6 +60,8 @@ struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
 	paddr_t	(*genfb_mmap)(void *, void *, off_t, int);
 	int (*genfb_borrow)(void *, bus_addr_t, bus_space_handle_t *);
+	int (*genfb_enable_polling)(void *);
+	int (*genfb_disable_polling)(void *);
 };
 
 struct genfb_colormap_callback {
