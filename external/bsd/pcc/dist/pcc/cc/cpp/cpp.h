@@ -1,5 +1,5 @@
-/*	Id: cpp.h,v 1.55 2011/09/27 08:34:59 plunky Exp 	*/	
-/*	$NetBSD: cpp.h,v 1.1.1.5 2012/01/11 20:33:06 plunky Exp $	*/
+/*	Id: cpp.h,v 1.68 2014/05/28 08:52:42 plunky Exp 	*/	
+/*	$NetBSD: cpp.h,v 1.1.1.6 2014/07/24 19:22:35 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004,2010 Anders Magnusson (ragge@ludd.luth.se).
@@ -26,10 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h> /* for obuf */
-#include <stdlib.h>
-
-#include "config.h"
+#include <stdio.h>	/* for debug/printf */
 
 typedef unsigned char usch;
 extern usch yytext[];
@@ -40,10 +37,11 @@ extern	int	flslvl;
 extern	int	elflvl;
 extern	int	elslvl;
 extern	int	dflag;
-extern	int	tflag, Cflag, Pflag;
-extern	int	Mflag, dMflag;
-extern	usch	*Mfile;
+extern	int	tflag, Aflag, Cflag, Pflag;
+extern	int	Mflag, dMflag, MPflag;
+extern	usch	*Mfile, *MPfile;
 extern	int	ofd;
+extern	int	defining;
 
 /* args for lookup() */
 #define FIND    0
@@ -74,6 +72,7 @@ extern	int	ofd;
 #define CONC	2	/* STX, not legal char */
 #define SNUFF	3	/* ETX, not legal char */
 #define	EBLOCK	4	/* EOT, not legal char */
+#define	PHOLD	5	/* ENQ, not legal char */
 
 /* Used in macro expansion */
 #define RECMAX	10000			/* max # of recursive macros */
@@ -84,14 +83,18 @@ extern int bidx;
 #define	MKB(l,h)	(l+((h)<<8))
 
 /* quick checks for some characters */
-#define C_SPEC	001
-#define C_EP	002
-#define C_ID	004
-#define C_I	(C_SPEC|C_ID)		
-#define C_2	010		/* for yylex() tokenizing */
-#define	C_WSNL	020		/* ' ','\t','\r','\n' */
-#define	iswsnl(x) (spechr[x] & C_WSNL)
-extern char spechr[];
+#define C_SPEC	0001		/* for fastscan() parsing */
+#define C_2	0002		/* for yylex() tokenizing */
+#define C_WSNL	0004		/* ' ','\t','\r','\n' */
+#define C_ID	0010		/* [_a-zA-Z0-9] */
+#define C_ID0	0020		/* [_a-zA-Z] */
+#define C_EP	0040		/* [epEP] */
+#define C_DIGIT	0100		/* [0-9] */
+#define C_HEX	0200		/* [0-9a-fA-F] */
+
+extern usch spechr[];
+
+#define iswsnl(x)	(spechr[x] & (C_WSNL))
 
 /* definition for include file info */
 struct includ {
@@ -99,6 +102,7 @@ struct includ {
 	const usch *fname;	/* current fn, changed if #line found */
 	const usch *orgfn;	/* current fn, not changed */
 	int lineno;
+	int escln;		/* escaped newlines, to be added */
 	int infil;
 	usch *curptr;
 	usch *maxread;
@@ -112,12 +116,16 @@ struct includ {
 #else
 	usch *bbuf;
 #endif
-} *ifiles;
+};
+#define INCINC 0
+#define SYSINC 1
+
+extern struct includ *ifiles;
 
 /* Symbol table entry  */
 struct symtab {
-	const usch *namep;    
-	const usch *value;    
+	const usch *namep;
+	const usch *value;
 	const usch *file;
 	int line;
 };
@@ -147,8 +155,6 @@ struct nd {
 
 struct symtab *lookup(const usch *namep, int enterf);
 usch *gotident(struct symtab *nl);
-int slow;	/* scan slowly for new tokens */
-int defining;
 int submac(struct symtab *nl, int);
 int kfind(struct symtab *nl);
 int doexp(void);
@@ -171,7 +177,6 @@ char *curfile(void);
 void setline(int);
 void setfile(char *);
 int yyparse(void);
-void yyerror(const char *);
 void unpstr(const usch *);
 usch *savstr(const usch *str);
 void savch(int c);
@@ -180,14 +185,8 @@ void putch(int);
 void putstr(const usch *s);
 void line(void);
 usch *sheap(const char *fmt, ...);
-void xwarning(usch *);
-void xerror(usch *);
-#ifdef HAVE_CPP_VARARG_MACRO_GCC
-#define warning(...) xwarning(sheap(__VA_ARGS__))
-#define error(...) xerror(sheap(__VA_ARGS__))
-#else
-#define warning printf
-#define error printf
-#endif
+void warning(const char *fmt, ...);
+void error(const char *fmt, ...);
 int cinput(void);
 void getcmnt(void);
+void xwrite(int, const void *, unsigned int);
