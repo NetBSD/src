@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.33 2014/07/23 13:17:18 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.34 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.33 2014/07/23 13:17:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.34 2014/07/24 15:12:03 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -492,6 +492,41 @@ hci_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
+hci_bind(struct socket *so, struct mbuf *nam)
+{
+	struct hci_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	bdaddr_copy(&pcb->hp_laddr, &sa->bt_bdaddr);
+
+	if (bdaddr_any(&sa->bt_bdaddr))
+		pcb->hp_flags |= HCI_PROMISCUOUS;
+	else
+		pcb->hp_flags &= ~HCI_PROMISCUOUS;
+
+	return 0;
+}
+
+static int
+hci_listen(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 hci_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	int err;
@@ -590,6 +625,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -624,25 +661,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		soisdisconnected(up);
 		hci_detach(up);
-		return 0;
-
-	case PRU_BIND:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		bdaddr_copy(&pcb->hp_laddr, &sa->bt_bdaddr);
-
-		if (bdaddr_any(&sa->bt_bdaddr))
-			pcb->hp_flags |= HCI_PROMISCUOUS;
-		else
-			pcb->hp_flags &= ~HCI_PROMISCUOUS;
-
 		return 0;
 
 	case PRU_CONNECT:
@@ -691,7 +709,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return EOPNOTSUPP;	/* (no release) */
 
 	case PRU_CONNECT2:
-	case PRU_LISTEN:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -922,6 +939,8 @@ PR_WRAP_USRREQS(hci)
 #define	hci_attach		hci_attach_wrapper
 #define	hci_detach		hci_detach_wrapper
 #define	hci_accept		hci_accept_wrapper
+#define	hci_bind		hci_bind_wrapper
+#define	hci_listen		hci_listen_wrapper
 #define	hci_ioctl		hci_ioctl_wrapper
 #define	hci_stat		hci_stat_wrapper
 #define	hci_peeraddr		hci_peeraddr_wrapper
@@ -934,6 +953,8 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_attach	= hci_attach,
 	.pr_detach	= hci_detach,
 	.pr_accept	= hci_accept,
+	.pr_bind	= hci_bind,
+	.pr_listen	= hci_listen,
 	.pr_ioctl	= hci_ioctl,
 	.pr_stat	= hci_stat,
 	.pr_peeraddr	= hci_peeraddr,

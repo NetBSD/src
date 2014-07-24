@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.14 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.15 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.14 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.15 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,12 +102,12 @@ l2cap_attach_pcb(struct l2cap_channel **handle,
 }
 
 /*
- * l2cap_bind(l2cap_channel, sockaddr)
+ * l2cap_bind_pcb(l2cap_channel, sockaddr)
  *
  *	set local address of channel
  */
 int
-l2cap_bind(struct l2cap_channel *chan, struct sockaddr_bt *addr)
+l2cap_bind_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
 
 	if (chan->lc_lcid != L2CAP_NULL_CID)
@@ -291,7 +291,7 @@ l2cap_detach_pcb(struct l2cap_channel **handle)
 }
 
 /*
- * l2cap_listen(l2cap_channel)
+ * l2cap_listen_pcb(l2cap_channel)
  *
  *	Use this channel as a listening post (until detached). This will
  *	result in calls to:
@@ -308,7 +308,7 @@ l2cap_detach_pcb(struct l2cap_channel **handle)
  *	You cannot use this channel for anything else subsequent to this call
  */
 int
-l2cap_listen(struct l2cap_channel *chan)
+l2cap_listen_pcb(struct l2cap_channel *chan)
 {
 	struct l2cap_channel *used, *prev = NULL;
 	uint32_t psm;

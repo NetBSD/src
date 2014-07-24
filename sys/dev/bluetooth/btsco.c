@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.29 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: btsco.c,v 1.30 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.29 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.30 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -592,13 +592,13 @@ btsco_open(void *hdl, int flags)
 		if (err)
 			goto done;
 
-		err = sco_bind(sc->sc_sco_l, &sa);
+		err = sco_bind_pcb(sc->sc_sco_l, &sa);
 		if (err) {
 			sco_detach_pcb(&sc->sc_sco_l);
 			goto done;
 		}
 
-		err = sco_listen(sc->sc_sco_l);
+		err = sco_listen_pcb(sc->sc_sco_l);
 		if (err) {
 			sco_detach_pcb(&sc->sc_sco_l);
 			goto done;
@@ -610,7 +610,7 @@ btsco_open(void *hdl, int flags)
 		if (err)
 			goto done;
 
-		err = sco_bind(sc->sc_sco, &sa);
+		err = sco_bind_pcb(sc->sc_sco, &sa);
 		if (err) {
 			sco_detach_pcb(&sc->sc_sco);
 			goto done;

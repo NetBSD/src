@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.20 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.21 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.20 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.21 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -199,7 +199,7 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 	if (laddr->bt_psm == L2CAP_PSM_ANY)
 		laddr->bt_psm = L2CAP_PSM_RFCOMM;
 
-	(void)l2cap_bind(rs->rs_l2cap, laddr);
+	(void)l2cap_bind_pcb(rs->rs_l2cap, laddr);
 
 	LIST_INSERT_HEAD(list, rs, rs_next);
 
