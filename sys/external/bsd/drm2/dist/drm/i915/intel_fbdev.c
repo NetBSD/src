@@ -44,6 +44,8 @@
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 
+#include "intelfb.h"
+
 #ifndef __NetBSD__
 static struct fb_ops intelfb_ops = {
 	.owner = THIS_MODULE,
@@ -174,30 +176,31 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	size = obj->base.size;
 
 #ifdef __NetBSD__
-	/* XXX errno NetBSD->Linux */
-	helper->fb_bst = dev->pdev->pd_pa.pa_memt;
-	ret = -bus_space_map(helper->fb_bst,
-	    (dev_priv->gtt.mappable_base + i915_gem_obj_ggtt_offset(obj)),
-	    size, (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE),
-	    &helper->fb_bsh);
-	if (ret) {
-		DRM_ERROR("unable to map framebuffer: %d\n", ret);
-		goto out_unpin;
-	}
+    {
+	static const struct intelfb_attach_args zero_ifa;
+	struct intelfb_attach_args ifa = zero_ifa;
 
-	ret = intel_genfb_attach(dev, helper, sizes);
-	if (ret) {
-		DRM_ERROR("unable to attach genfb: %d\n", ret);
-		bus_space_unmap(helper->fb_bst, helper->fb_bsh, size);
+	ifa.ifa_drm_dev = dev;
+	ifa.ifa_fb_helper = helper;
+	ifa.ifa_fb_sizes = *sizes;
+	ifa.ifa_fb_bst = dev->pdev->pd_pa.pa_memt;
+	ifa.ifa_fb_addr = (dev_priv->gtt.mappable_base +
+	    i915_gem_obj_ggtt_offset(obj));
+	ifa.ifa_fb_size = size;
+	ifa.ifa_fb_zero = (ifbdev->fb->obj->stolen && !prealloc);
+
+	/*
+	 * XXX Should do this asynchronously, since we hold
+	 * dev->struct_mutex.
+	 */
+	helper->fbdev = config_found_ia(dev->dev, "intelfbbus", &ifa, NULL);
+	if (helper->fbdev == NULL) {
+		DRM_ERROR("unable to attach intelfb\n");
 		goto out_unpin;
 	}
-	helper->genfb_attached = true;
 	fb = &ifbdev->fb->base;
 	ifbdev->helper.fb = fb;
-
-	if (ifbdev->fb->obj->stolen && !prealloc)
-		bus_space_set_region_1(helper->fb_bst, helper->fb_bsh, 0, 0,
-		    size);
+    }
 #else
 	info = framebuffer_alloc(0, &dev->pdev->dev);
 	if (!info) {
@@ -503,13 +506,15 @@ static void intel_fbdev_destroy(struct drm_device *dev,
 				struct intel_fbdev *ifbdev)
 {
 #ifdef __NetBSD__
-	if (ifbdev->helper.genfb_attached) {
-		/* XXX genfb doesn't give us a child device_t!  */
-		(void)config_detach_children(dev->dev, DETACH_FORCE);
-		bus_space_unmap(ifbdev->helper.fb_bst, ifbdev->helper.fb_bsh,
-		    ifbdev->fb->obj->base.size);
-		ifbdev->helper.genfb_attached = false;
-	}
+	int ret;
+#endif
+
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	ret = -config_detach(ifbdev->helper.fbdev, DETACH_FORCE);
+	if (ret)
+		DRM_ERROR("failed to detach intelfb: %d\n", ret);
+	ifbdev->helper.fbdev = NULL;
 #else
 	if (ifbdev->helper.fbdev) {
 		struct fb_info *info = ifbdev->helper.fbdev;
