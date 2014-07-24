@@ -1,5 +1,5 @@
-.\"	Id: ccom.1,v 1.27 2012/03/22 21:09:41 plunky Exp 	
-.\"	$NetBSD: ccom.1,v 1.1.1.5 2012/03/26 14:26:46 plunky Exp $
+.\"	Id: ccom.1,v 1.31 2014/06/06 14:59:46 plunky Exp 	
+.\"	$NetBSD: ccom.1,v 1.1.1.6 2014/07/24 19:22:51 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -89,40 +89,40 @@ options can be given, the following options are supported:
 .Bl -tag -width PowerPC
 .It AMD64
 .It ARM
-.Sy little-endian Ns ,
-.Sy big-endian Ns ,
-.Sy fpe=fpa Ns ,
-.Sy fpe=vpf Ns ,
-.Sy soft-float Ns ,
-.Sy arch=armv1 Ns ,
-.Sy arch=armv2 Ns ,
-.Sy arch=armv2a Ns ,
-.Sy arch=armv3 Ns ,
-.Sy arch=armv4 Ns ,
-.Sy arch=armv4t Ns ,
-.Sy arch=armv4tej Ns ,
-.Sy arch=armv5 Ns ,
-.Sy arch=armv5te Ns ,
-.Sy arch=armv5tej Ns ,
-.Sy arch=armv6 Ns ,
-.Sy arch=armv6t2 Ns ,
-.Sy arch=armv6kz Ns ,
+.Sy little-endian ,
+.Sy big-endian ,
+.Sy fpe=fpa ,
+.Sy fpe=vpf ,
+.Sy soft-float ,
+.Sy arch=armv1 ,
+.Sy arch=armv2 ,
+.Sy arch=armv2a ,
+.Sy arch=armv3 ,
+.Sy arch=armv4 ,
+.Sy arch=armv4t ,
+.Sy arch=armv4tej ,
+.Sy arch=armv5 ,
+.Sy arch=armv5te ,
+.Sy arch=armv5tej ,
+.Sy arch=armv6 ,
+.Sy arch=armv6t2 ,
+.Sy arch=armv6kz ,
 .Sy arch=armv6k No \*(Am
-.Sy arch=armv7 Ns .
+.Sy arch=armv7 .
 .It HPPA
 .It i386
 .It M16C
 .It MIPS
 .Sy little-endian No \*(Am
-.Sy big-endian Ns .
+.Sy big-endian .
 .It NOVA
 .It PDP-10
 .It PDP-11
 .It PowerPC
-.Sy little-endian Ns ,
-.Sy big-endian Ns ,
+.Sy little-endian ,
+.Sy big-endian ,
 .Sy soft-float No \*(Am
-.Sy hard-float Ns .
+.Sy hard-float .
 .It Sparc64
 .It VAX
 .El
@@ -149,6 +149,11 @@ Enable
 .Ar warning ,
 and treat it as an error condition.
 If a specific warning is not given, producing any warning will cause an error.
+.It Sy deprecated-declarations
+Report whenever a symbol marked with the
+.Sq deprecated
+attribute is used.
+This warning is enabled by default.
 .It Sy implicit-function-declaration
 (TODO) Require explicit prototypes for all called functions.
 .It Sy implicit-int
@@ -280,7 +285,7 @@ directive can be used to modify behaviour of
 during compilation.
 All tokens up to the first unescaped newline are considered part
 of the pragma command, with the following operations being recognized:
-.Bl -tag
+.Bl -tag -width Ds
 .It Sy STDC
 Standard C99 operator follows.
 Currently no C99 operations are implemented, and any directives starting
@@ -309,6 +314,9 @@ Cause an error if any of the following
 .Ar identifier Ns s
 subsequently appear in the code
 .Pq but not in any macro expansions .
+Currently not implemented.
+.It Sy GCC system_header
+GNU C compatibility.
 Currently not implemented.
 .It Sy GCC visibility
 GNU C compatibility.
@@ -351,14 +359,14 @@ overridden at link time.
 If an
 .Ar alias
 is given, this will be used as the default value of
-.Ar name.
+.Ar name .
 .It Sy ident
 Currently not implemented.
 .El
 .Lp
 and the following target-specific operations are handled by
 machine-dependent code:
-.Bl -tag
+.Bl -tag -width Ds
 .It Sy tls
 For AMD64 and i386 targets, the variable declared in the current statement
 will be referenced via the

@@ -1,5 +1,5 @@
-/*      Id: gcc_compat.c,v 1.83 2012/03/22 18:04:41 plunky Exp      */	
-/*      $NetBSD: gcc_compat.c,v 1.1.1.5 2012/03/26 14:26:48 plunky Exp $     */
+/*      Id: gcc_compat.c,v 1.106 2014/06/07 07:04:09 plunky Exp      */	
+/*      $NetBSD: gcc_compat.c,v 1.1.1.6 2014/07/24 19:23:32 plunky Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -97,14 +97,66 @@ static TWORD g77t[] = { G77_INTEGER, G77_UINTEGER, G77_LONGINT, G77_ULONGINT };
 static char *g77n[] = { "__g77_integer", "__g77_uinteger",
 	"__g77_longint", "__g77_ulongint" };
 
+#ifdef TARGET_TIMODE
+static char *loti, *hiti, *TISTR;
+static struct symtab *tisp, *ucmpti2sp, *cmpti2sp, *subvti3sp,
+	*addvti3sp, *mulvti3sp, *divti3sp, *udivti3sp, *modti3sp, *umodti3sp,
+	*ashldi3sp, *ashrdi3sp, *lshrdi3sp, *floatuntixfsp;
+
+static struct symtab *
+addftn(char *n, TWORD t)
+{
+	NODE *p = block(TYPE, 0, 0, 0, 0, 0);
+	struct symtab *sp;
+
+	sp = lookup(addname(n), 0);
+	p->n_type = INCREF(t) + (FTN-PTR);
+	p->n_sp = sp;
+	p->n_df = memset(permalloc(sizeof(union dimfun)), 0,
+	    sizeof(union dimfun));
+	defid(p, EXTERN);
+	nfree(p);
+	return sp;
+}
+
+static struct symtab *
+addstr(char *n)
+{
+	NODE *p = block(NAME, NIL, NIL, FLOAT, 0, 0);
+	struct symtab *sp;
+	NODE *q;
+	struct attr *ap;
+	struct rstack *rp;
+	extern struct rstack *rpole;
+
+	p->n_type = ctype(ULONGLONG);
+	rpole = rp = bstruct(NULL, STNAME, NULL);
+	soumemb(p, loti, 0);
+	soumemb(p, hiti, 0);
+	q = dclstruct(rp);
+	sp = q->n_sp = lookup(addname(n), 0);
+	defid(q, TYPEDEF);
+	ap = attr_new(GCC_ATYP_MODE, 3);
+	ap->sarg(0) = addname("TI");
+	ap->iarg(1) = 0;
+	sp->sap = attr_add(sp->sap, ap);
+	nfree(q);
+	nfree(p);
+
+	return sp;
+}
+#endif
+
 void
-gcc_init()
+gcc_init(void)
 {
 	struct kw *kwp;
 	NODE *p;
 	TWORD t;
-	int i;
+	int i, d_debug;
 
+	d_debug = ddebug;
+	ddebug = 0;
 	for (kwp = kw; kwp->name; kwp++)
 		kwp->ptr = addname(kwp->name);
 
@@ -117,7 +169,49 @@ gcc_init()
 		defid(p, TYPEDEF);
 		nfree(p);
 	}
+	ddebug = d_debug;
+#ifdef TARGET_TIMODE
+	{
+		struct attr *ap;
 
+		loti = addname("__loti");
+		hiti = addname("__hiti");
+		TISTR = addname("TI");
+
+		tisp = addstr("0ti");
+
+		cmpti2sp = addftn("__cmpti2", INT);
+		ucmpti2sp = addftn("__ucmpti2", INT);
+
+		addvti3sp = addftn("__addvti3", STRTY);
+		addvti3sp->sap = tisp->sap;
+		subvti3sp = addftn("__subvti3", STRTY);
+		subvti3sp->sap = tisp->sap;
+		mulvti3sp = addftn("__mulvti3", STRTY);
+		mulvti3sp->sap = tisp->sap;
+		divti3sp = addftn("__divti3", STRTY);
+		divti3sp->sap = tisp->sap;
+		modti3sp = addftn("__modti3", STRTY);
+		modti3sp->sap = tisp->sap;
+
+		ap = attr_new(GCC_ATYP_MODE, 3);
+		ap->sarg(0) = TISTR;
+		ap->iarg(1) = 1;
+		ap = attr_add(tisp->sap, ap);
+		udivti3sp = addftn("__udivti3", STRTY);
+		udivti3sp->sap = ap;
+		umodti3sp = addftn("__umodti3", STRTY);
+		umodti3sp->sap = ap;
+		ashldi3sp = addftn("__ashldi3", ctype(LONGLONG));
+		ashldi3sp->sap = ap;
+		ashrdi3sp = addftn("__ashrdi3", ctype(LONGLONG));
+		ashrdi3sp->sap = ap;
+		lshrdi3sp = addftn("__lshrdi3", ctype(LONGLONG));
+		lshrdi3sp->sap = ap;
+
+		floatuntixfsp = addftn("__floatuntixf", LDOUBLE);
+	}
+#endif
 }
 
 #define	TS	"\n#pragma tls\n# %d\n"
@@ -229,7 +323,7 @@ struct atax {
 	CS(xxxATTR_BASETYP)	{ 0, NULL },
 	CS(ATTR_QUALTYP)	{ 0, NULL },
 	CS(ATTR_STRUCT)		{ 0, NULL },
-	CS(GCC_ATYP_ALIGNED)	{ A_0ARG|A_1ARG, "aligned" },
+	CS(ATTR_ALIGNED)	{ A_0ARG|A_1ARG, "aligned" },
 	CS(GCC_ATYP_PACKED)	{ A_0ARG|A_1ARG, "packed" },
 	CS(GCC_ATYP_SECTION)	{ A_1ARG|A1_STR, "section" },
 	CS(GCC_ATYP_TRANSP_UNION) { A_0ARG, "transparent_union" },
@@ -264,6 +358,9 @@ struct atax {
 	CS(GCC_ATYP_TLSMODEL)	{ A_1ARG|A1_STR, "tls_model" },
 	CS(GCC_ATYP_ALIASWEAK)	{ A_1ARG|A1_STR, "aliasweak" },
 	CS(GCC_ATYP_RETURNS_TWICE) { A_0ARG, "returns_twice" },
+	CS(GCC_ATYP_WARNING)	{ A_1ARG|A1_STR, "warning" },
+	CS(GCC_ATYP_NOCLONE)	{ A_0ARG, "noclone" },
+	CS(GCC_ATYP_REGPARM)	{ A_1ARG, "regparm" },
 
 	CS(GCC_ATYP_BOUNDED)	{ A_3ARG|A_MANY|A1_NAME, "bounded" },
 };
@@ -289,6 +386,12 @@ struct atax mods[] = {
 	{ FCOMPLEX, "SC" },
 	{ COMPLEX, "DC" },
 	{ LCOMPLEX, "XC" },
+	{ INT, "libgcc_cmp_return" },
+	{ INT, "libgcc_shift_count" },
+	{ LONG, "unwind_word" },
+#ifdef TARGET_TIMODE
+	{ 800, "TI" },
+#endif
 #ifdef TARGET_MODS
 	TARGET_MODS
 #endif
@@ -321,7 +424,7 @@ setaarg(int str, union aarg *aa, NODE *p)
 		    ((str & (A1_NAME|A2_NAME|A3_NAME)) && p->n_op != NAME))
 			uerror("bad arg to attribute");
 		if (p->n_op == STRING) {
-			aa->sarg = newstring(p->n_name, strlen(p->n_name)+1);
+			aa->sarg = newstring(p->n_name, strlen(p->n_name));
 		} else
 			aa->sarg = (char *)p->n_sp;
 		nfree(p);
@@ -338,7 +441,7 @@ gcc_attribs(NODE *p)
 	NODE *q, *r;
 	struct attr *ap;
 	char *name = NULL, *c;
-	int cw, attr, narg, i;
+	int cw, attr, narg;
 
 	if (p->n_op == NAME) {
 		name = (char *)p->n_sp;
@@ -350,7 +453,7 @@ gcc_attribs(NODE *p)
 		cerror("bad variable attribute");
 
 	if ((attr = amatch(name, atax, GCC_ATYP_MAX)) == 0) {
-		werror("unsupported attribute '%s'", name);
+		warner(Wattributes, name);
 		ap = NULL;
 		goto out;
 	}
@@ -399,7 +502,7 @@ gcc_attribs(NODE *p)
 
 	/* some attributes must be massaged special */
 	switch (attr) {
-	case GCC_ATYP_ALIGNED:
+	case ATTR_ALIGNED:
 		if (narg == 0)
 			ap->aa[0].iarg = ALMAX;
 		else
@@ -410,12 +513,6 @@ gcc_attribs(NODE *p)
 			ap->aa[0].iarg = 1; /* bitwise align */
 		else
 			ap->aa[0].iarg *= SZCHAR;
-		break;
-
-	case GCC_ATYP_MODE:
-		if ((i = amatch(ap->aa[0].sarg, mods, ATSZ)) == 0)
-			werror("unknown mode arg %s", ap->aa[0].sarg);
-		ap->aa[0].iarg = ctype(mods[i].typ);
 		break;
 
 	case GCC_ATYP_VISIBILITY:
@@ -503,7 +600,7 @@ gcc_tcattrfix(NODE *p)
 
 	ap = attr_find(p->n_ap, ATTR_STRUCT);
 	ap->amsize = csz;
-	ap = attr_find(p->n_ap, GCC_ATYP_ALIGNED);
+	ap = attr_find(p->n_ap, ATTR_ALIGNED);
 	ap->iarg(0) = mxal;
 
 }
@@ -515,50 +612,445 @@ int
 pragmas_gcc(char *t)
 {
 	char u;
-	int ign, warn, err, i;
-	extern bittype warnary[], werrary[];
-	extern char *flagstr[], *pragstore;
+	extern char *pragstore;
 
 	if (strcmp((t = pragtok(NULL)), "diagnostic") == 0) {
-		ign = warn = err = 0;
+		int warn, err;
+
 		if (strcmp((t = pragtok(NULL)), "ignored") == 0)
-			ign = 1;
+			warn = 0, err = 0;
 		else if (strcmp(t, "warning") == 0)
-			warn = 1;
+			warn = 1, err = 0;
 		else if (strcmp(t, "error") == 0)
-			err = 1;
+			warn = 1, err = 1;
 		else
 			return 1;
+
 		if (eat('\"') || eat('-'))
 			return 1;
+
 		for (t = pragstore; *t && *t != '\"'; t++)
 			;
+
 		u = *t;
 		*t = 0;
-		for (i = 0; i < NUMW; i++) {
-			if (strcmp(flagstr[i], pragstore+1) != 0)
-				continue;
-			if (err) {
-				BITSET(warnary, i);
-				BITSET(werrary, i);
-			} else if (warn) {
-				BITSET(warnary, i);
-				BITCLEAR(werrary, i);
-			} else {
-				BITCLEAR(warnary, i);
-				BITCLEAR(werrary, i);
-			}
-			return 0;
-		}
+		Wset(pragstore + 1, warn, err);
 		*t = u;
 	} else if (strcmp(t, "poison") == 0) {
 		/* currently ignore */;
 	} else if (strcmp(t, "visibility") == 0) {
 		/* currently ignore */;
+	} else if (strcmp(t, "system_header") == 0) {
+		/* currently ignore */;
 	} else
 		werror("gcc pragma unsupported");
 	return 0;
 }
+
+/*
+ * Fixup types when modes given in defid().
+ */
+void
+gcc_modefix(NODE *p)
+{
+	struct attr *ap;
+#ifdef TARGET_TIMODE
+	struct attr *a2;
+#endif
+	struct symtab *sp;
+	char *s;
+	int i, u;
+
+	if ((ap = attr_find(p->n_ap, GCC_ATYP_MODE)) == NULL)
+		return;
+
+	u = ISUNSIGNED(BTYPE(p->n_type));
+	if ((i = amatch(ap->aa[0].sarg, mods, ATSZ)) == 0) {
+		werror("unknown mode arg %s", ap->aa[0].sarg);
+		return;
+	}
+	i = mods[i].typ;
+	switch (i) {
+#ifdef TARGET_TIMODE
+	case 800:
+		if (BTYPE(p->n_type) == STRTY)
+			break;
+		MODTYPE(p->n_type, tisp->stype);
+		p->n_df = tisp->sdf;
+		p->n_ap = tisp->sap;
+		if (ap->iarg(1) == u)
+			break;
+		/* must add a new mode struct to avoid overwriting */
+		a2 = attr_new(GCC_ATYP_MODE, 3);
+		a2->sarg(0) = ap->sarg(0);
+		a2->iarg(1) = u;
+		p->n_ap = attr_add(p->n_ap, a2);
+		break;
+#endif
+	case 1 ... MAXTYPES:
+		MODTYPE(p->n_type, ctype(i));
+		if (u)
+			p->n_type = ENUNSIGN(p->n_type);
+		break;
+
+	case FCOMPLEX:
+	case COMPLEX:
+	case LCOMPLEX:
+		/* Destination should have been converted to a struct already */
+		if (BTYPE(p->n_type) != STRTY)
+			uerror("gcc_modefix: complex not STRTY");
+		i -= (FCOMPLEX-FLOAT);
+		ap = strattr(p->n_ap);
+		sp = ap->amlist;
+		if (sp->stype == (unsigned)i)
+			return; /* Already correct type */
+		/* we must change to another struct */
+		s = i == FLOAT ? "0f" :
+		    i == DOUBLE ? "0d" :
+		    i == LDOUBLE ? "0l" : 0;
+		sp = lookup(addname(s), 0);
+		for (ap = sp->sap; ap != NULL; ap = ap->next)
+			p->n_ap = attr_add(p->n_ap, attr_dup(ap, 3));
+		break;
+
+	default:
+		cerror("gcc_modefix");
+	}
+}
+
+#ifdef TARGET_TIMODE
+
+/*
+ * Return ap if this node is a TI node, else NULL.
+ */
+struct attr *
+isti(NODE *p)
+{
+	struct attr *ap;
+
+	if (p->n_type != STRTY)
+		return NULL;
+	if ((ap = attr_find(p->n_ap, GCC_ATYP_MODE)) == NULL)
+		return NULL;
+	if (strcmp(ap->sarg(0), TISTR))
+		return NULL;
+	return ap;
+}
+
+static char *
+tistack(void)
+{
+	struct symtab *sp, *sp2;
+	char buf[12];
+	NODE *q;
+	char *n;
+
+	/* allocate space on stack */
+	snprintf(buf, 12, "%d", getlab());
+	n = addname(buf);
+	sp = lookup(n, 0);
+	sp2 = tisp;
+	q = block(TYPE, NIL, NIL, sp2->stype, sp2->sdf, sp2->sap);
+	q->n_sp = sp;
+	nidcl2(q, AUTO, 0);
+	nfree(q);
+	return n;
+}
+
+#define	biop(x,y,z) block(x, y, z, INT, 0, 0)
+/*
+ * Create a ti node from something not a ti node.
+ * This usually means:  allocate space on stack, store val, give stack address.
+ */
+static NODE *
+ticast(NODE *p, int u)
+{
+	CONSZ val;
+	NODE *q;
+	char *n;
+	int u2;
+
+	n = tistack();
+
+	/* store val */
+	switch (p->n_op) {
+	case ICON:
+		val = 0;
+		if (u == 0 && p->n_lval < 0)
+			val = -1;
+		q = eve(biop(DOT, bdty(NAME, n), bdty(NAME, loti)));
+		q = buildtree(ASSIGN, q, p);
+		p = biop(DOT, bdty(NAME, n), bdty(NAME, hiti));
+		p = eve(biop(ASSIGN, p, bcon(val)));
+		q = buildtree(COMOP, q, p);
+		p = buildtree(COMOP, q, eve(bdty(NAME, n)));
+		break;
+
+	default:
+		u2 = ISUNSIGNED(p->n_type);
+		q = eve(biop(DOT, bdty(NAME, n), bdty(NAME, loti)));
+		q = buildtree(ASSIGN, q, p);
+		p = biop(DOT, bdty(NAME, n), bdty(NAME, hiti));
+		if (u2) {
+			p = eve(biop(ASSIGN, p, bcon(0)));
+		} else {
+			q = buildtree(ASSIGN, eve(ccopy(p)), q);
+			p = buildtree(RSEQ, eve(p), bcon(SZLONG-1));
+		}
+		q = buildtree(COMOP, q, p);
+		p = buildtree(COMOP, q, eve(bdty(NAME, n)));
+		break;
+	}
+	return p;
+}
+
+/*
+ * Check if we may have to do a cast to/from TI.
+ */
+NODE *
+gcc_eval_ticast(int op, NODE *p1, NODE *p2)
+{
+	struct attr *a1, *a2;
+	int t;
+
+	if ((a1 = isti(p1)) == NULL && (a2 = isti(p2)) == NULL)
+		return NIL;
+
+	if (op == RETURN)
+		p1 = ccopy(p1);
+	if (a1 == NULL) {
+		if (a2 == NULL)
+			cerror("gcc_eval_ticast error");
+		switch (p1->n_type) {
+		case LDOUBLE:
+			p2 = doacall(floatuntixfsp,
+			    nametree(floatuntixfsp), p2);
+			tfree(p1);
+			break;
+		case ULONG:
+		case LONG:
+			p2 = cast(structref(p2, DOT, loti), p1->n_type, 0);
+			tfree(p1);
+			break;
+		case VOID:
+			return NIL;
+		default:
+			uerror("gcc_eval_ticast: %d", p1->n_type);
+		}
+		return p2;
+	}
+	/* p2 can be anything, but we must cast it to p1 */
+	t = a1->iarg(1);
+
+	if (p2->n_type == STRTY &&
+	    (a2 = attr_find(p2->n_ap, GCC_ATYP_MODE)) &&
+	    strcmp(a2->sarg(0), TISTR) == 0) {
+		/* Already TI, just add extra mode bits */
+		a2 = attr_new(GCC_ATYP_MODE, 3);
+		a2->sarg(0) = TISTR;
+		a2->iarg(1) = t;
+		p2->n_ap = attr_add(p2->n_ap, a2);
+	} else  {
+		p2 = ticast(p2, t);
+	}
+	tfree(p1);
+	return p2;
+}
+
+/*
+ * Apply a unary op on a TI value.
+ */
+NODE *
+gcc_eval_tiuni(int op, NODE *p1)
+{
+	struct attr *a1;
+	NODE *p;
+
+	if ((a1 = isti(p1)) == NULL)
+		return NULL;
+
+	switch (op) {
+	case UMINUS:
+		p = ticast(bcon(0), 0);
+		p = buildtree(CM, p, p1);
+		p = doacall(subvti3sp, nametree(subvti3sp), p);
+		break;
+
+	case UMUL:
+		p = NULL;
+	default:
+		uerror("unsupported unary TI mode op %d", op);
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Evaluate AND/OR/ER.  p1 and p2 are pointers to ti struct.
+ */
+static NODE *
+gcc_andorer(int op, NODE *p1, NODE *p2)
+{
+	char *n = tistack();
+	NODE *p, *t1, *t2, *p3;
+
+	t1 = tempnode(0, p1->n_type, p1->n_df, p1->n_ap);
+	t2 = tempnode(0, p2->n_type, p2->n_df, p2->n_ap);
+
+	p1 = buildtree(ASSIGN, ccopy(t1), p1);
+	p2 = buildtree(ASSIGN, ccopy(t2), p2);
+	p = buildtree(COMOP, p1, p2);
+
+	p3 = buildtree(ADDROF, eve(bdty(NAME, n)), NIL);
+	p1 = buildtree(ASSIGN, structref(ccopy(p3), STREF, hiti),
+	    buildtree(op, structref(ccopy(t1), STREF, hiti),
+	    structref(ccopy(t2), STREF, hiti)));
+	p = buildtree(COMOP, p, p1);
+	p1 = buildtree(ASSIGN, structref(ccopy(p3), STREF, loti),
+	    buildtree(op, structref(t1, STREF, loti),
+	    structref(t2, STREF, loti)));
+	p = buildtree(COMOP, p, p1);
+	p = buildtree(COMOP, p, buildtree(UMUL, p3, NIL));
+	return p;
+}
+
+/*
+ * Ensure that a 128-bit assign succeeds.
+ * If left is not TI, make right not TI,
+ * else if left _is_ TI, make right TI,
+ * else do nothing.
+ */
+static NODE *
+timodeassign(NODE *p1, NODE *p2)
+{
+	struct attr *a1, *a2;
+
+	a1 = isti(p1);
+	a2 = isti(p2);
+	if (a1 && a2 == NULL) {
+		p2 = ticast(p2, a1->iarg(1));
+	} else if (a1 == NULL && a2) {
+		if (ISFTY(p1->n_type))
+			cerror("cannot TI float convert");
+		p2 = structref(p2, DOT, loti);
+	}
+	return buildtree(ASSIGN, p1, p2);
+}
+
+/*
+ * Evaluate 128-bit operands.
+ */
+NODE *
+gcc_eval_timode(int op, NODE *p1, NODE *p2)
+{
+	struct attr *a1, *a2;
+	struct symtab *sp;
+	NODE *p;
+	int isu = 0, gotti, isaop;
+
+	if (op == CM)
+		return buildtree(op, p1, p2);
+
+	a1 = isti(p1);
+	a2 = isti(p2);
+
+	if (a1 == NULL && a2 == NULL)
+		return NULL;
+
+	if (op == ASSIGN)
+		return timodeassign(p1, p2);
+
+	gotti = (a1 != NULL);
+	gotti += (a2 != NULL);
+
+	if (gotti == 0)
+		return NULL;
+
+	if (a1 != NULL)
+		isu = a1->iarg(1);
+	if (a2 != NULL && !isu)
+		isu = a2->iarg(1);
+
+	if (a1 == NULL) {
+		p1 = ticast(p1, isu);
+		a1 = attr_find(p1->n_ap, GCC_ATYP_MODE);
+	}
+	if (a2 == NULL && (cdope(op) & SHFFLG) == 0) {
+		p2 = ticast(p2, isu);
+		a2 = attr_find(p2->n_ap, GCC_ATYP_MODE);
+	}
+
+	switch (op) {
+	case GT:
+	case GE:
+	case LT:
+	case LE:
+	case EQ:
+	case NE:
+		/* change to call */
+		sp = isu ? ucmpti2sp : cmpti2sp;
+		p = doacall(sp, nametree(sp), buildtree(CM, p1, p2));
+		p = buildtree(op, p, bcon(1));
+		break;
+
+	case AND:
+	case ER:
+	case OR:
+		if (!ISPTR(p1->n_type))
+			p1 = buildtree(ADDROF, p1, NIL);
+		if (!ISPTR(p2->n_type))
+			p2 = buildtree(ADDROF, p2, NIL);
+		p = gcc_andorer(op, p1, p2);
+		break;
+
+	case LSEQ:
+	case RSEQ:
+	case LS:
+	case RS:
+		sp = op == LS || op == LSEQ ? ashldi3sp :
+		    isu ? lshrdi3sp : ashrdi3sp;
+		p2 = cast(p2, INT, 0);
+		/* XXX p1 ccopy may have side effects */
+		p = doacall(sp, nametree(sp), buildtree(CM, ccopy(p1), p2));
+		if (op == LSEQ || op == RSEQ) {
+			p = buildtree(ASSIGN, p1, p);
+		} else
+			tfree(p1);
+		break;
+
+	case PLUSEQ:
+	case MINUSEQ:
+	case MULEQ:
+	case DIVEQ:
+	case MODEQ:
+	case PLUS:
+	case MINUS:
+	case MUL:
+	case DIV:
+	case MOD:
+		isaop = (cdope(op)&ASGOPFLG);
+		if (isaop)
+			op = UNASG op;
+		sp = op == PLUS ? addvti3sp :
+		    op == MINUS ? subvti3sp :
+		    op == MUL ? mulvti3sp :
+		    op == DIV ? (isu ? udivti3sp : divti3sp) :
+		    op == MOD ? (isu ? umodti3sp : modti3sp) : 0;
+		/* XXX p1 ccopy may have side effects */
+		p = doacall(sp, nametree(sp), buildtree(CM, ccopy(p1), p2));
+		if (isaop)
+			p = buildtree(ASSIGN, p1, p);
+		else
+			tfree(p1);
+		break;
+
+	default:
+		uerror("unsupported TImode op %d", op);
+		p = bcon(0);
+	}
+	return p;
+}
+#endif
 
 #ifdef PCC_DEBUG
 void

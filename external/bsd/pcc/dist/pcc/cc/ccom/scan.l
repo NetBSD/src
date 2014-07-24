@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.109 2011/09/03 08:04:18 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.1.1.5 2012/01/11 20:33:13 plunky Exp $	*/
+/*	Id: scan.l,v 1.122 2014/07/03 17:30:31 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.1.1.6 2014/07/24 19:23:05 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -35,9 +35,9 @@ L			[a-zA-Z_]
 H			[a-fA-F0-9]
 E			[Ee][+-]?{D}+
 P			[Pp][+-]?{D}+
-FS			(f|F|l|L)?i?
-IS			(u|U|l|L)*
-UL			({L}|\\u{H}{H}{H}{H}|\\U{H}{H}{H}{H}{H}{H}{H}{H})
+FS			(f|F|l|L|i)*
+IS			(u|U|l|L|i)*
+UL			({L}|[\x80-\xFF])
 
 %{
 #include <stdlib.h>
@@ -48,6 +48,7 @@ UL			({L}|\\u{H}{H}{H}{H}|\\U{H}{H}{H}{H}{H}{H}{H}{H})
 
 #include "pass1.h"
 #include "cgram.h"
+#include "unicode.h"
 
 static NODE *cvtdig(int radix);
 static NODE *charcon(void);
@@ -115,7 +116,7 @@ extern void yyset_lineno (int);
 "int"			{ 	return resw(INT, C_TYPE); }
 "long"			{ 	return resw(LONG, C_TYPE); }
 "register"		{ 	return resw(REGISTER, C_CLASS); }
-"restrict"		{ ; /* just ignore */ }
+"restrict"		{ return resw(0, C_QUALIFIER); }
 "return"		{ return(C_RETURN); }
 "short"			{ 	return resw(SHORT, C_TYPE); }
 "signed"		{ 	return resw(SIGNED, C_TYPE); }
@@ -198,7 +199,8 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 ";"			{ notype = 0; return(';'); }
 ("{"|"<%")		{ notype = 0; return('{'); }
 ("}"|"%>")		{ if (rpole) notype = 1; return('}'); }
-","			{ if (parbal && !inoso) notype = 0; return(','); }
+","			{ if (parbal && !inoso) notype = 0;
+				if (parbal == 0) notype = 1; return(','); }
 ":"			{ if (doing_init) nodinit--; return(':'); }
 "="			{ return('='); }
 "("			{ parbal++; notype = 0; return('('); }
@@ -235,7 +237,7 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 %%
 
-int lineno;
+int lineno, issyshdr;
 char *ftitle = "<stdin>";
 
 int
@@ -291,7 +293,7 @@ typround(long double dc, char *e, TWORD *tw)
 			break;
 		case 'l':
 		case 'L':
-			*tw = LDOUBLE;
+			*tw = ctype(LDOUBLE);
 			break;
 		case 'i':
 		case 'I':
@@ -348,6 +350,32 @@ h2n(int ch)
 	
 }
 
+/*
+ * Get exponent.  Max size is 16 bits.
+ */
+static int
+fdecl(char *c, char **ep)
+{
+	int minus = 0;
+	int val = 0;
+
+	if (*c == '+')
+		c++;
+	else if (*c == '-')
+		minus = 1, c++;
+
+	while (isdigit((int)*c)) {
+		val *= 10;
+		val += *c++;
+		if (val > 32769)
+			val = 32769;
+	}
+	if (minus)
+		val = -val;
+	*ep = c;
+	return val;
+}
+
 NODE *
 fhexcon(char *c)
 {
@@ -378,7 +406,7 @@ fhexcon(char *c)
 	if (*c != 'P' && *c != 'p')
 		cerror("fhexcon2");
 	c++;
-	ed += strtol(c, &ep, 10);
+	ed += fdecl(c, &ep);
 
 	/* avoid looping in vain. Idea from Fred J. Tydeman */
 	if (ed > 32769) ed = 32769;
@@ -394,71 +422,6 @@ fhexcon(char *c)
 	return p;
 }
 #endif
-
-unsigned int
-esccon(char **sptr)
-{
-	char *wr = *sptr;
-	char *owr;
-	char c;
-	unsigned int val;
-	int wsz = 4, esccon_warn = 1;
-
-	switch (*wr++) {
-	case 'a': val = '\a'; break;
-	case 'b': val = '\b'; break;
-	case 'f': val = '\f'; break;
-	case 'n': val = '\n'; break;
-	case 'r': val = '\r'; break;
-	case 't': val = '\t'; break;
-	case 'v': val = '\v'; break;
-	case '\"': val = '\"'; break;
-	case 'x': val = strtoul(wr, &wr, 16); break;
-	/* ISO/IEC 9099:1999 (E) 6.4.3 */
-	case 'U'|(char)0x80:
-		esccon_warn = 0;
-		/* FALLTHROUGH */
-	case 'U':
-		wsz = 8;
-		/* FALLTHROUGH */
-	case 'u':
-		owr = wr;
-		while (wr < (owr + wsz))
-			if (*wr == '\0')
-				break;
-			else
-				++wr;
-		if (wr != (owr + wsz)) {
-			/* incomplete */
-			val = strtoul(owr, &wr, 16);
-		} else {
-			c = owr[wsz];
-			owr[wsz] = '\0'; /* prevent it from reading too much */
-			val = strtoul(owr, &wr, 16);
-			owr[wsz] = c;
-		}
-		if (wr != (owr + wsz))
-			werror("incomplete universal character name");
-		if (wsz == 4)
-			val &= 0xFFFF;
-		if (esccon_warn && ((val >= 0xD800 && val <= 0xDFFF) ||
-		    (val < 0xA0 && val != 0x24 && val != 0x40 && val != 0x60)))
-			werror("invalid universal character name %04X", val);
-		break;
-	case '0': case '1': case '2': case '3': case '4': 
-	case '5': case '6': case '7':
-		val = wr[-1] - '0';
-		if (*wr >= '0' && *wr <= '7') {
-			val = (val << 3) + (*wr++ - '0');
-			if (*wr >= '0' && *wr <= '7')
-				val = (val << 3) + (*wr++ - '0');
-		}
-		break;
-	default: val = wr[-1];
-	}
-	*sptr = wr;
-	return val;
-}
 
 NODE *
 cvtdig(int radix)
@@ -491,6 +454,8 @@ cvtdig(int radix)
 			ntype+=2, numl++;
 		else if ((*ch == 'u' || *ch == 'U') && numu < 1)
 			ntype = ENUNSIGN(ntype), numu++;
+		else if (*ch == 'i')
+			ntype = DOUBLE;
 		else
 			break;
 		ch++;
@@ -500,6 +465,11 @@ cvtdig(int radix)
 
 	otype = ntype;
 	switch (ntype) {
+	case DOUBLE: /* special case */
+		p = block(FCON, NIL, NIL, IMAG, 0, 0);
+		p->n_dcon = FLOAT_CAST(v, DOUBLE);
+		return p;
+
 	case INT:
 	case LONG:
 	case LONGLONG:
@@ -548,62 +518,52 @@ cvtdig(int radix)
 }
 
 /*
- * Convert a character constant to an integer.
+ * Convert a character constant to an 8-bit integer.
  */
 NODE *
 charcon(void)
 {
-	int lastcon = 0;
-	int val, i = 0;
+	int val = 0, i = 0;
 	char *pp = yytext;
 
 	if (*pp == 'L')
 		pp++;
 	pp++;
 	while (*pp != '\'') {
-		if (*pp++ == '\\') {
-			val = esccon(&pp);
-		} else
-			val = pp[-1];
-		makecc(val, i);
+		val=esc2char(&pp);
 		i++;
 	}
 
 	if (i == 0)
 		uerror("empty character constant");
-	if (i > (SZINT/SZCHAR) || (i>1))
-		werror("too many characters in character constant");
-	return bcon(lastcon);
+	else if (i > 1)
+		werror("%d too many characters in character constant",i-1);
+	return bcon(val);
 }
 
+/*
+ * Convert a utf-8 character constant to an 32-bit integer.
+ */
 NODE *
 wcharcon(void)
 {
-	unsigned int lastcon = 0;
-	unsigned int val, i = 0;
+	unsigned int val = 0, i = 0;
 	char *pp = yytext;
 
 	if (*pp == 'L')
 		pp++;
 	pp++;
 	while (*pp != '\'') {
-		if (*pp++ == '\\') {
-			val = esccon(&pp);
-		} else
-			val = pp[-1];
-#if WCHAR_SIZE == 2
-		lastcon = (lastcon << 16) | (val & 0xFFFF);
-#else
-		lastcon = val;
-#endif
+		if(*pp == '\\') val=esc2char(&pp);
+		else val=u82cp(&pp);
 		i++;
 	}
 
 	if (i == 0)
 		uerror("empty wide-character constant");
 	if (i > 1)
-		werror("too many characters in wide-character constant");
-	return xbcon(lastcon, NULL, ctype(UNSIGNED));
+		werror("%d too many characters in wide-character constant",i-1);
+	return xbcon(val, NULL, ctype(UNSIGNED));
 }
 
 void
@@ -638,8 +598,13 @@ control(int t)
 			wr++;
 		if (*wr != '\"')
 			goto bad;
-		*wr = 0;
+		*wr++ = 0;
 		ftitle = addstring(eptr);
+		while (*wr == ' ')
+			wr++;
+		issyshdr = 0;
+		if (*wr == '3')
+			issyshdr = 1;
 #ifdef STABS
 		if (gflag)
 			stabs_file(ftitle);
@@ -652,7 +617,6 @@ bad:
 
 int pragma_allpacked;
 int pragma_packed, pragma_aligned;
-char *pragma_renamed;
 
 static int
 pragmas_weak(char *str)
@@ -664,13 +628,21 @@ pragmas_weak(char *str)
 		return 1;
 	if ((s2 = pragtok(NULL)) == NULL) {
 		sp = lookup(addname(s1), SNORMAL);
+#ifdef GCC_COMPAT
 		sp->sap = attr_add(sp->sap, gcc_attr_parse(bdty(NAME, "weak")));
+#else
+		sp->sap = NULL;
+#endif
 	} else if (*s2 == '=') {
 		if ((s2 = pragtok(NULL)) == NULL)
 			return 1;
 		sp = lookup(addname(s2), SNORMAL);
+#ifdef GCC_COMPAT
 		sp->sap = attr_add(sp->sap, gcc_attr_parse(bdty(CALL,
 		    bdty(NAME, "aliasweak"), bdty(STRING, s1, 0))));
+#else
+		sp->sap = NULL;
+#endif
 	} else
 		return 1;
 	return 0;
@@ -731,11 +703,12 @@ pragmas_alpack(char *t)
 
 /*
  * Packing control.
- * still missing push/pop.
  */
 static int
 pragmas_pack(char *t)
 {
+#define	PACKSTKSZ 10
+	static int packstk[PACKSTKSZ], packptr;
 	char *s;
 
 	if (eat('('))
@@ -743,6 +716,22 @@ pragmas_pack(char *t)
 	s = pragtok(0);
 	if (*s == ')')
 		return pragma_allpacked = 0;
+	if (strcmp(s, "push") == 0) {
+		if (packptr == PACKSTKSZ)
+			uerror("too many push");
+		packstk[packptr++] = pragma_allpacked;
+		s = pragtok(0);
+		if (*s == ')')
+			return 0;
+		if (*s != ',')
+			return 1;
+		s = pragtok(0);
+	} else if (strcmp(s, "pop") == 0) {
+		if (packptr == 0)
+			uerror("stack empty");
+		pragma_allpacked = packstk[--packptr];
+		return eat(')');
+	}
 
 	if (*s < '0' || *s > '9') /* no number */
 		return 1;
@@ -750,15 +739,11 @@ pragmas_pack(char *t)
 	return eat(')');
 }
 
-static int
-pragmas_renamed(char *t)
-{
-	char *f = pragtok(0);
-
-	if (f == 0)
-		return 1;
-	pragma_renamed = newstring(f, strlen(f));
-	return 0;
+static int      
+pragmas_unsupp(char *t) 
+{ 
+	werror("#pragma %s unsupported", t);
+	return 0; /* Just ignore */
 }
 
 static int
@@ -774,7 +759,7 @@ struct pragmas {
 	{ "pack", pragmas_pack },
 	{ "packed", pragmas_alpack },
 	{ "aligned", pragmas_alpack },
-	{ "rename", pragmas_renamed },
+	{ "rename", pragmas_unsupp },
 #ifdef GCC_COMPAT
 	{ "GCC", pragmas_gcc },
 #endif
@@ -783,11 +768,12 @@ struct pragmas {
 	{ "ident", NULL },
 	{ 0 },
 };
+
 /*
  * got a full pragma line.  Split it up here.
  */
 static void
-pragma()
+pragma(void)
 {
 	struct pragmas *p;
 	char *t, *pt;

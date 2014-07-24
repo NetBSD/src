@@ -1,5 +1,5 @@
-/*	Id: common.c,v 1.100 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: common.c,v 1.1.1.6 2012/03/26 14:27:10 plunky Exp $	*/
+/*	Id: common.c,v 1.111 2014/06/07 07:04:10 plunky Exp 	*/	
+/*	$NetBSD: common.c,v 1.1.1.7 2014/07/24 19:28:31 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -66,6 +66,7 @@
 #include <string.h>
 
 #include "pass2.h"
+#include "unicode.h"
 
 # ifndef EXIT
 # define EXIT exit
@@ -134,10 +135,26 @@ cerror(char *s, ...)
  * warning
  */
 void
+u8error(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	WHERE('w');
+	fprintf(stderr, "warning: ");
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+	if (warniserr)
+		incerr();
+}
+
+/*
+ * warning
+ */
+void
 werror(char *s, ...)
 {
 	va_list ap;
-
 	va_start(ap, s);
 	WHERE('w');
 	fprintf(stderr, "warning: ");
@@ -150,42 +167,89 @@ werror(char *s, ...)
 
 #ifndef MKEXT
 
-bittype warnary[(NUMW/NUMBITS)+1], werrary[(NUMW/NUMBITS)+1];
-
-static char *warntxt[] = {
-	"conversion from '%s' to '%s' may alter its value", /* Wtruncate */
-	"function declaration isn't a prototype", /* Wstrict_prototypes */
-	"no previous prototype for `%s'", /* Wmissing_prototypes */
-	"return type defaults to `int'", /* Wimplicit_int */
-		 /* Wimplicit_function_declaration */
-	"implicit declaration of function '%s'",
-	"declaration of '%s' shadows a %s declaration", /* Wshadow */
-	"illegal pointer combination", /* Wpointer_sign */
-	"comparison between signed and unsigned", /* Wsign_compare */
-	"ignoring #pragma %s %s", /* Wunknown_pragmas */
-	"statement not reached", /* Wunreachable_code */
-};
-
-char *flagstr[] = {
-	"truncate", "strict-prototypes", "missing-prototypes", 
-	"implicit-int", "implicit-function-declaration", "shadow", 
-	"pointer-sign", "sign-compare", "unknown-pragmas", 
-	"unreachable-code", 
+struct Warning {
+	char *flag;
+	char warn;
+	char err;
+	char *fmt;
 };
 
 /*
- * "emulate" the gcc warning flags.
+ * conditional warnings
+ */
+struct Warning Warnings[] = {
+	{
+		"truncate", 0, 0,
+		"conversion from '%s' to '%s' may alter its value"
+	}, {
+		"strict-prototypes", 0, 0,
+		"function declaration isn't a prototype"
+	}, {
+		"missing-prototypes", 0, 0,
+		"no previous prototype for `%s'"
+	}, {
+		"implicit-int", 0, 0,
+		"return type defaults to `int'",
+	}, {
+		"implicit-function-declaration", 0, 0,
+		"implicit declaration of function '%s'"
+	}, {
+		"shadow", 0, 0,
+		"declaration of '%s' shadows a %s declaration"
+	}, {
+		"pointer-sign", 0, 0,
+		"illegal pointer combination"
+	}, {
+		"sign-compare", 0, 0,
+		"comparison between signed and unsigned"
+	}, {
+		"unknown-pragmas", 0, 0,
+		"ignoring #pragma %s %s"
+	}, {
+		"unreachable-code", 0, 0,
+		"statement not reached"
+	}, {
+		"deprecated-declarations", 1, 0,
+		"`%s' is deprecated"
+	}, {
+		"attributes", 1, 0,
+		"unsupported attribute `%s'"
+	}, {	NULL	}
+};
+
+/*
+ * set the warn/err status of a conditional warning
+ */
+int
+Wset(char *str, int warn, int err)
+{
+	struct Warning *w = Warnings;
+
+	for (w = Warnings; w->flag; w++) {
+		if (strcmp(w->flag, str) == 0) {
+			w->warn = warn;
+			w->err = err;
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/*
+ * handle a conditional warning flag.
  */
 void
 Wflags(char *str)
 {
-	int i, isset, iserr;
+	struct Warning *w;
+	int isset, iserr;
 
 	/* handle -Werror specially */
 	if (strcmp("error", str) == 0) {
-		for (i = 0; i < NUMW; i++)
-			BITSET(werrary, i);
+		for (w = Warnings; w->flag; w++)
+			w->err = 1;
 
+		warniserr = 1;
 		return;
 	}
 
@@ -201,18 +265,18 @@ Wflags(char *str)
 		iserr = 1;
 	}
 
-	for (i = 0; i < NUMW; i++) {
-		if (strcmp(flagstr[i], str) != 0)
+	for (w = Warnings; w->flag; w++) {
+		if (strcmp(w->flag, str) != 0)
 			continue;
 
 		if (isset) {
 			if (iserr)
-				BITSET(werrary, i);
-			BITSET(warnary, i);
+				w->err = 1;
+			w->warn = 1;
 		} else if (iserr) {
-			BITCLEAR(werrary, i);
+			w->err = 0;
 		} else {
-			BITCLEAR(warnary, i);
+			w->warn = 0;
 		}
 
 		return;
@@ -222,25 +286,29 @@ Wflags(char *str)
 }
 
 /*
- * Deal with gcc warnings.
+ * emit a conditional warning
  */
 void
 warner(int type, ...)
 {
 	va_list ap;
-	char *w;
+	char *t;
+	extern int issyshdr;
 
-	if (TESTBIT(warnary, type) == 0)
+	if (issyshdr && type == Wtruncate)
+		return; /* Too many false positives */
+
+	if (Warnings[type].warn == 0)
 		return; /* no warning */
-	if (TESTBIT(werrary, type)) {
-		w = "error";
+	if (Warnings[type].err) {
+		t = "error";
 		incerr();
 	} else
-		w = "warning";
+		t = "warning";
 
 	va_start(ap, type);
-	fprintf(stderr, "%s:%d: %s: ", ftitle, lineno, w);
-	vfprintf(stderr, warntxt[type], ap);
+	fprintf(stderr, "%s:%d: %s: ", ftitle, lineno, t);
+	vfprintf(stderr, Warnings[type].fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
 }
@@ -248,11 +316,11 @@ warner(int type, ...)
 
 #ifndef MKEXT
 static NODE *freelink;
-static int usednodes;
+int usednodes;
 
 #ifndef LANG_F77
 NODE *
-talloc()
+talloc(void)
 {
 	register NODE *p;
 
@@ -302,7 +370,7 @@ tcopy(NODE *p)
  * ensure that all nodes have been freed
  */
 void
-tcheck()
+tcheck(void)
 {
 	extern int inlnodecnt;
 
@@ -483,7 +551,7 @@ struct dopest {
 };
 
 void
-mkdope()
+mkdope(void)
 {
 	struct dopest *q;
 
@@ -497,7 +565,7 @@ mkdope()
  * output a nice description of the type of t
  */
 void
-tprint(FILE *fp, TWORD t, TWORD q)
+tprint(TWORD t, TWORD q)
 {
 	static char * tnames[] = {
 		"undef",
@@ -534,18 +602,18 @@ tprint(FILE *fp, TWORD t, TWORD q)
 
 	for(;; t = DECREF(t), q = DECREF(q)) {
 		if (ISCON(q))
-			fputc('C', fp);
+			putchar('C');
 		if (ISVOL(q))
-			fputc('V', fp);
+			putchar('V');
 
 		if (ISPTR(t))
-			fprintf(fp, "PTR ");
+			printf("PTR ");
 		else if (ISFTN(t))
-			fprintf(fp, "FTN ");
+			printf("FTN ");
 		else if (ISARY(t))
-			fprintf(fp, "ARY ");
+			printf("ARY ");
 		else {
-			fprintf(fp, "%s%s%s", ISCON(q << TSHIFT) ? "const " : "",
+			printf("%s%s%s", ISCON(q << TSHIFT) ? "const " : "",
 			    ISVOL(q << TSHIFT) ? "volatile " : "", tnames[t]);
 			return;
 		}
@@ -573,11 +641,11 @@ struct balloc {
 #define	ROUNDUP(x) (((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1))
 
 static char *allocpole;
-static int allocleft;
-int permallocsize, tmpallocsize, lostmem;
+static size_t allocleft;
+size_t permallocsize, tmpallocsize, lostmem;
 
 void *
-permalloc(int size)
+permalloc(size_t size)
 {
 	void *rv;
 
@@ -586,7 +654,7 @@ permalloc(int size)
 			cerror("permalloc: missing %d bytes", size);
 		return rv;
 	}
-	if (size <= 0)
+	if (size == 0)
 		cerror("permalloc2");
 	if (allocleft < size) {
 		/* loses unused bytes */
@@ -603,7 +671,7 @@ permalloc(int size)
 }
 
 void *
-tmpcalloc(int size)
+tmpcalloc(size_t size)
 {
 	void *rv;
 
@@ -618,7 +686,7 @@ tmpcalloc(int size)
 char *
 tmpstrdup(char *str)
 {
-	int len;
+	size_t len;
 
 	len = strlen(str) + 1;
 	return memcpy(tmpalloc(len), str, len);
@@ -646,20 +714,19 @@ struct xalloc {
 int uselem = NELEM; /* next unused element */
 
 void *
-tmpalloc(int size)
+tmpalloc(size_t size)
 {
 	struct xalloc *xp;
 	void *rv;
 	size_t nelem;
 
 	nelem = ROUNDUP(size)/ELEMSZ;
-	ALLDEBUG(("tmpalloc(%ld,%ld) %d (%zd) ", ELEMSZ, NELEM, size, nelem));
+	ALLDEBUG(("tmpalloc(%ld,%ld) %zd (%zd) ", ELEMSZ, NELEM, size, nelem));
 	if (nelem > NELEM/2) {
-		xp = malloc(size + ROUNDUP(sizeof(struct xalloc *)));
-		if (xp == NULL)
+		size += ROUNDUP(sizeof(struct xalloc *));
+		if ((xp = malloc(size)) == NULL)
 			cerror("out of memory");
-		ALLDEBUG(("XMEM! (%ld,%p) ",
-		    size + ROUNDUP(sizeof(struct xalloc *)), xp));
+		ALLDEBUG(("XMEM! (%zd,%p) ", size, xp));
 		xp->next = tmpole;
 		tmpole = xp;
 		ALLDEBUG(("rv %p\n", &xp->u.elm[0]));
@@ -683,7 +750,7 @@ tmpalloc(int size)
 }
 
 void
-tmpfree()
+tmpfree(void)
 {
 	struct xalloc *x1;
 
@@ -741,7 +808,7 @@ markfree(struct mark *m)
  * Return the new address.
  */
 char *
-newstring(char *s, int len)
+newstring(char *s, size_t len)
 {
 	char *u, *c;
 
@@ -750,7 +817,8 @@ newstring(char *s, int len)
 		u = c = permalloc(len);
 	} else {
 		u = c = &allocpole[MEMCHUNKSZ-allocleft];
-		allocleft -= ROUNDUP(len+1);
+		allocleft -= ROUNDUP(len);
+		permallocsize += ROUNDUP(len);
 	}
 	while (len--)
 		*c++ = *s++;

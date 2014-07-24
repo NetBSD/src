@@ -63,7 +63,6 @@
 /* #define HAVE_UNISTD_H 1 */
 /* #define HOST_BIG_ENDIAN  */
 #define HOST_LITTLE_ENDIAN
-#define ISFLEX 1
 
 #define PACKAGE_NAME "pcc"
 #define PACKAGE_STRING "pcc 1.1.0"
