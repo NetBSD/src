@@ -1,7 +1,9 @@
 include "arch/amd64/conf/NO_DRM"
 
 i915drmkms* 	at pci? dev ? function ?
-radeondrmkms*	at pci? dev ? function ?
+intelfb*	at intelfbbus?
+#nouveau*	at pci? dev ? function ?
+#radeondrmkms*	at pci? dev ? function ?
 
 no options 	DIAGNOSTIC
 options 	DIAGNOSTIC	# expensive kernel consistency check
