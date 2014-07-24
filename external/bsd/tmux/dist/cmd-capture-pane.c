@@ -65,7 +65,7 @@ cmd_capture_pane_pending(struct args *args, struct window_pane *wp,
 	if (wp->ictx.since_ground == NULL)
 		return (xstrdup(""));
 
-	line = EVBUFFER_DATA(wp->ictx.since_ground);
+	line = (char *)EVBUFFER_DATA(wp->ictx.since_ground);
 	linelen = EVBUFFER_LENGTH(wp->ictx.since_ground);
 
 	buf = xstrdup("");

@@ -374,7 +374,7 @@ client_write_one(enum msgtype type, int fd, const void *buf, size_t len)
 	int	retval;
 
 	retval = imsg_compose(&client_ibuf, type, PROTOCOL_VERSION, -1, fd,
-	    (void*)buf, len);
+	    __UNCONST(buf), len);
 	if (retval != 1)
 		return (-1);
 	return (0);
