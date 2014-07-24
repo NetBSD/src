@@ -1,5 +1,5 @@
-/*	Id: pass1.h,v 1.237 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: pass1.h,v 1.3 2012/03/26 14:30:46 plunky Exp $	*/
+/*	Id: pass1.h,v 1.261 2014/06/07 07:04:09 plunky Exp 	*/	
+/*	$NetBSD: pass1.h,v 1.4 2014/07/24 20:12:50 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -90,12 +90,13 @@ extern	char *scnames(int);
 #define	SMASK		07
 
 #define	STLS		00010	/* Thread Local Support variable */
-/* #define SREF		00020 */
+#define SINSYS		00020	/* Declared in system header */
 #define SNOCREAT	00040	/* don't create a symbol in lookup() */
 #define STEMP		00100	/* Allocate symtab from temp or perm mem */
 #define	SDYNARRAY	00200	/* symbol is dynamic array on stack */
 #define	SINLINE		00400	/* function is of type inline */
 #define	STNODE		01000	/* symbol shall be a temporary node */
+#define	SBUILTIN	02000	/* this is a builtin function */
 #define	SASG		04000	/* symbol is assigned to already */
 #define	SLOCAL1		010000
 #define	SLOCAL2		020000
@@ -167,15 +168,13 @@ struct swents {			/* switch table */
 int mygenswitch(int, TWORD, struct swents **, int);
 
 extern	int blevel;
-extern	int instruct, got_type;
 extern	int oldstyle;
 
-extern	int lineno, nerrors;
+extern	int lineno, nerrors, issyshdr;
 
 extern	char *ftitle;
 extern	struct symtab *cftnsp;
-extern	int autooff, maxautooff, argoff, strucoff;
-extern	int brkflag;
+extern	int autooff, maxautooff, argoff;
 
 extern	OFFSZ inoff;
 
@@ -196,7 +195,6 @@ extern	char *astypnames[];
 
 /* pragma globals */
 extern int pragma_allpacked, pragma_packed, pragma_aligned;
-extern char *pragma_renamed;
 
 /*
  * Flags used in the (elementary) flow analysis ...
@@ -225,7 +223,7 @@ extern char *pragma_renamed;
 #define DTORS		12		/* destructor */
 #define	NMSEG		13		/* other (named) segment */
 
-extern int lastloc, nextloc;
+extern int lastloc;
 void locctr(int type, struct symtab *sp);
 void setseg(int type, char *name);
 void defalign(int al);
@@ -278,8 +276,7 @@ extern struct rstack *rpole;
 int oalloc(struct symtab *, int *);
 void deflabel(char *, NODE *);
 void gotolabel(char *);
-unsigned int esccon(char **);
-void inline_start(struct symtab *);
+void inline_start(struct symtab *, int class);
 void inline_end(void);
 void inline_addarg(struct interpass *);
 void inline_ref(struct symtab *);
@@ -318,8 +315,6 @@ void bjobcode(void);
 void ejobcode(int);
 void calldec(NODE *, NODE *);
 int cisreg(TWORD);
-char *tmpsprintf(char *, ...);
-char *tmpvsprintf(char *, va_list);
 void asginit(NODE *);
 void desinit(NODE *);
 void endinit(int);
@@ -364,6 +359,7 @@ NODE *cxop(int op, NODE *l, NODE *r);
 NODE *imop(int op, NODE *l, NODE *r);
 NODE *cxelem(int op, NODE *p);
 NODE *cxconj(NODE *p);
+NODE *cxcast(NODE *p1, NODE *p2);
 NODE *cxret(NODE *p, NODE *q);
 NODE *cast(NODE *p, TWORD t, TWORD q);
 NODE *ccast(NODE *p, TWORD t, TWORD u, union dimfun *df, struct attr *sue);
@@ -371,10 +367,12 @@ int andable(NODE *);
 int conval(NODE *, int, NODE *);
 int ispow2(CONSZ);
 void defid(NODE *q, int class);
+void defid2(NODE *q, int class, char *astr);
 void efcode(void);
 void ecomp(NODE *p);
 int upoff(int size, int alignment, int *poff);
 void nidcl(NODE *p, int class);
+void nidcl2(NODE *p, int class, char *astr);
 void eprint(NODE *, int, int *, int *);
 int uclass(int class);
 int notlval(NODE *);
@@ -388,10 +386,13 @@ void yyerror(char *);
 int pragmas_gcc(char *t);
 NODE *cstknode(TWORD t, union dimfun *df, struct attr *ap);
 int concast(NODE *p, TWORD t);
-NODE *builtin_check(NODE *f, NODE *a);
+#ifdef WORD_ADDRESSED
+#define rmpconv(p) (p)
+#else
 NODE *rmpconv(NODE *);
+#endif
+NODE *optloop(NODE *);
 NODE *nlabel(int label);
-
 
 #ifdef SOFTFLOAT
 typedef struct softfloat SF;
@@ -447,12 +448,12 @@ enum {	ATTR_NONE,
 	ATTR_COMPLEX,	/* Internal definition of complex */
 	xxxATTR_BASETYP,	/* Internal; see below */
 	ATTR_QUALTYP,	/* Internal; const/volatile, see below */
+	ATTR_ALIGNED,	/* Internal; also used as gcc type attribute */
 	ATTR_STRUCT,	/* Internal; element list */
 #define	ATTR_MAX ATTR_STRUCT
 
 #ifdef GCC_COMPAT
 	/* type attributes */
-	GCC_ATYP_ALIGNED,
 	GCC_ATYP_PACKED,
 	GCC_ATYP_SECTION,
 	GCC_ATYP_TRANSP_UNION,
@@ -491,6 +492,9 @@ enum {	ATTR_NONE,
 	GCC_ATYP_TLSMODEL,
 	GCC_ATYP_ALIASWEAK,
 	GCC_ATYP_RETURNS_TWICE,
+	GCC_ATYP_WARNING,
+	GCC_ATYP_NOCLONE,
+	GCC_ATYP_REGPARM,
 
 	/* other stuff */
 	GCC_ATYP_BOUNDED,	/* OpenBSD extra boundary checks */
@@ -534,12 +538,42 @@ struct attr *gcc_attr_parse(NODE *);
 void gcc_tcattrfix(NODE *);
 struct gcc_attrib *gcc_get_attr(struct suedef *, int);
 void dump_attr(struct attr *gap);
+void gcc_modefix(NODE *);
+NODE *gcc_eval_timode(int op, NODE *, NODE *);
+NODE *gcc_eval_ticast(int op, NODE *, NODE *);
+NODE *gcc_eval_tiuni(int op, NODE *);
+struct attr *isti(NODE *p);
+
 
 struct attr *attr_add(struct attr *orig, struct attr *new);
 struct attr *attr_new(int, int);
 struct attr *attr_find(struct attr *, int);
 struct attr *attr_copy(struct attr *src, struct attr *dst, int nelem);
 struct attr *attr_dup(struct attr *ap, int n);
+
+#ifndef NO_C_BUILTINS
+struct bitable {
+	char *name;
+	NODE *(*fun)(const struct bitable *, NODE *a);
+	short flags;
+#define	BTNOPROTO	001
+#define	BTNORVAL	002
+#define	BTNOEVE		004
+#define	BTGNUONLY	010
+	short narg;
+	TWORD *tp;
+	TWORD rt;
+};
+
+NODE *builtin_check(struct symtab *, NODE *a);
+void builtin_init(void);
+
+/* Some builtins targets need to implement */
+NODE *builtin_frame_address(const struct bitable *bt, NODE *a);
+NODE *builtin_return_address(const struct bitable *bt, NODE *a);
+NODE *builtin_cfa(const struct bitable *bt, NODE *a);
+#endif
+
 
 #ifdef STABS
 void stabs_init(void);
@@ -616,6 +650,8 @@ void stabs_struct(struct symtab *, struct attr *);
 #define XIMAG		(MAXOP+32)
 #define TYMERGE		(MAXOP+33)
 #define LABEL		(MAXOP+34)
+#define BIQUEST		(MAXOP+35)
+#define UPLUS		(MAXOP+36)
 
 
 /*
