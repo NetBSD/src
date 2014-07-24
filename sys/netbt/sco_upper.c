@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.12 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.13 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.12 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.13 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,12 +82,12 @@ sco_attach_pcb(struct sco_pcb **handle,
 }
 
 /*
- * sco_bind(pcb, sockaddr)
+ * sco_bind_pcb(pcb, sockaddr)
  *
  *	Bind SCO pcb to local address
  */
 int
-sco_bind(struct sco_pcb *pcb, struct sockaddr_bt *addr)
+sco_bind_pcb(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 {
 
 	if (pcb->sp_link != NULL || pcb->sp_flags & SP_LISTENING)
@@ -245,12 +245,12 @@ sco_detach_pcb(struct sco_pcb **handle)
 }
 
 /*
- * sco_listen(pcb)
+ * sco_listen_pcb(pcb)
  *
  *	Mark pcb as a listener.
  */
 int
-sco_listen(struct sco_pcb *pcb)
+sco_listen_pcb(struct sco_pcb *pcb)
 {
 
 	if (pcb->sp_link != NULL)

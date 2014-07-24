@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.50 2014/07/23 13:17:19 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.51 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.50 2014/07/23 13:17:19 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.51 2014/07/24 15:12:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -69,6 +69,8 @@ static void	sockin_init(void);
 static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
 static int	sockin_accept(struct socket *, struct mbuf *);
+static int	sockin_bind(struct socket *, struct mbuf *);
+static int	sockin_listen(struct socket *);
 static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_peeraddr(struct socket *, struct mbuf *);
@@ -83,6 +85,8 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_attach = sockin_attach,
 	.pr_detach = sockin_detach,
 	.pr_accept = sockin_accept,
+	.pr_bind = sockin_bind,
+	.pr_listen = sockin_listen,
 	.pr_ioctl = sockin_ioctl,
 	.pr_stat = sockin_stat,
 	.pr_peeraddr = sockin_peeraddr,
@@ -473,6 +477,25 @@ sockin_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
+sockin_bind(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	return rumpcomp_sockin_bind(SO2S(so),
+	    mtod(nam, const struct sockaddr *),
+	    nam->m_len);
+}
+
+static int
+sockin_listen(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return rumpcomp_sockin_listen(SO2S(so), so->so_qlimit);
+}
+
+static int
 sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return ENOTTY;
@@ -543,21 +566,11 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENDOOB);
 
 	switch (req) {
-	case PRU_BIND:
-		error = rumpcomp_sockin_bind(SO2S(so),
-		    mtod(nam, const struct sockaddr *),
-		    nam->m_len);
-		break;
-
 	case PRU_CONNECT:
 		error = rumpcomp_sockin_connect(SO2S(so),
 		    mtod(nam, struct sockaddr *), nam->m_len);
 		if (error == 0)
 			soisconnected(so);
-		break;
-
-	case PRU_LISTEN:
-		error = rumpcomp_sockin_listen(SO2S(so), so->so_qlimit);
 		break;
 
 	case PRU_SEND:

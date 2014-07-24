@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.25 2014/07/23 13:17:18 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.26 2014/07/24 15:12:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.25 2014/07/23 13:17:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.26 2014/07/24 15:12:03 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -142,6 +142,41 @@ rfcomm_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
+rfcomm_bind(struct socket *so, struct mbuf *nam)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	return rfcomm_bind_pcb(pcb, sa);
+}
+
+static int
+rfcomm_listen(struct socket *so)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return rfcomm_listen_pcb(pcb);
+}
+
+static int
 rfcomm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EPASSTHROUGH;
@@ -234,6 +269,8 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -260,18 +297,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		soisdisconnected(up);
 		rfcomm_detach(up);
 		return 0;
-
-	case PRU_BIND:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		return rfcomm_bind(pcb, sa);
 
 	case PRU_CONNECT:
 		KASSERT(nam != NULL);
@@ -306,9 +331,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_RCVD:
 		return rfcomm_rcvd(pcb, sbspace(&up->so_rcv));
-
-	case PRU_LISTEN:
-		return rfcomm_listen(pcb);
 
 	case PRU_CONNECT2:
 	case PRU_FASTTIMO:
@@ -487,6 +509,8 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_attach		rfcomm_attach_wrapper
 #define	rfcomm_detach		rfcomm_detach_wrapper
 #define	rfcomm_accept		rfcomm_accept_wrapper
+#define	rfcomm_bind		rfcomm_bind_wrapper
+#define	rfcomm_listen		rfcomm_listen_wrapper
 #define	rfcomm_ioctl		rfcomm_ioctl_wrapper
 #define	rfcomm_stat		rfcomm_stat_wrapper
 #define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
@@ -499,6 +523,8 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_attach	= rfcomm_attach,
 	.pr_detach	= rfcomm_detach,
 	.pr_accept	= rfcomm_accept,
+	.pr_bind	= rfcomm_bind,
+	.pr_listen	= rfcomm_listen,
 	.pr_ioctl	= rfcomm_ioctl,
 	.pr_stat	= rfcomm_stat,
 	.pr_peeraddr	= rfcomm_peeraddr,
