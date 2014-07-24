@@ -1,4 +1,4 @@
-/*	$NetBSD: copyin.c,v 1.5 2012/03/16 07:23:38 matt Exp $	*/
+/*	$NetBSD: copyin.c,v 1.6 2014/07/24 23:27:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.5 2012/03/16 07:23:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.6 2014/07/24 23:27:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -60,6 +60,7 @@ copyin_byte(const uint8_t * const usaddr8, register_t ds_msr)
 	return data;
 }
 
+#if 0
 static inline uint16_t
 copyin_halfword(const uint16_t * const usaddr16, register_t ds_msr)
 {
@@ -74,6 +75,7 @@ copyin_halfword(const uint16_t * const usaddr16, register_t ds_msr)
 	    : [ds_msr] "r" (ds_msr), [usaddr16] "b" (usaddr16));
 	return data;
 }
+#endif
 
 static inline uint32_t
 copyin_word(const uint32_t * const usaddr32, register_t ds_msr)
