@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.44 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: satlink.c,v 1.45 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.44 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.45 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ const struct cdevsw satlink_cdevsw = {
 	.d_poll = satlinkpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = satlinkkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

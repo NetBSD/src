@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.31 2014/03/16 05:20:26 dholland Exp $ */
+/*      $NetBSD: clockctl.c,v 1.32 2014/07/25 08:10:35 dholland Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.31 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.32 2014/07/25 08:10:35 dholland Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -67,6 +67,7 @@ const struct cdevsw clockctl_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

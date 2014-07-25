@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.24 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.25 2014/07/25 08:10:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.24 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.25 2014/07/25 08:10:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/uio.h>
@@ -74,6 +74,7 @@ const struct cdevsw arcbios_cdevsw = {
 	.d_poll = arcbios_ttypoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY,
 };
 

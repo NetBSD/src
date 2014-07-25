@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.82 2014/06/12 18:33:42 riastradh Exp $	*/
+/*	$NetBSD: agp.c,v 1.83 2014/07/25 08:10:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.82 2014/06/12 18:33:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.83 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1122,6 +1122,7 @@ const struct cdevsw agp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = agpmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

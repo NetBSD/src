@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.30 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.31 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.30 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.31 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -148,6 +148,7 @@ const struct cdevsw cdtty_cdevsw = {
 	.d_poll = cdttypoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

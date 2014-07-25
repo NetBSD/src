@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.31 2014/03/16 05:20:26 dholland Exp $ */
+/* $NetBSD: video.c,v 1.32 2014/07/25 08:10:35 dholland Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.31 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.32 2014/07/25 08:10:35 dholland Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -215,6 +215,7 @@ const struct cdevsw video_cdevsw = {
 	.d_poll = videopoll,
 	.d_mmap = videommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

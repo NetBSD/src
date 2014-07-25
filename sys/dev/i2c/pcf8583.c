@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.14 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.15 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.14 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.15 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ const struct cdevsw pcfrtc_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

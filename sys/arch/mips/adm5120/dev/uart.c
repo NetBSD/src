@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.11 2014/06/28 10:25:32 skrll Exp $ */
+/* $NetBSD: uart.c,v 1.12 2014/07/25 08:10:34 dholland Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.11 2014/06/28 10:25:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.12 2014/07/25 08:10:34 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,6 +76,7 @@ const struct cdevsw uart_cdevsw = {
 	.d_poll = uart_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

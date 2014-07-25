@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.56 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: mfc.c,v 1.57 2014/07/25 08:10:31 dholland Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.56 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.57 2014/07/25 08:10:31 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +258,7 @@ const struct cdevsw mfcs_cdevsw = {
 	.d_poll = mfcspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

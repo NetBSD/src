@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.44 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.45 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.44 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.45 2014/07/25 08:10:32 dholland Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -139,6 +139,7 @@ const struct cdevsw kbd_cdevsw = {
 	.d_poll = kbdpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = kbdkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

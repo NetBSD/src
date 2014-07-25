@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.64 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.65 2014/07/25 08:10:38 dholland Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.64 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.65 2014/07/25 08:10:38 dholland Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -190,6 +190,7 @@ const struct cdevsw bktr_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = bktr_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 #endif /* __NetBSD __ */
