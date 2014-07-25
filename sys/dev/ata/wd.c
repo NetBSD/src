@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.410 2014/07/25 08:22:08 dholland Exp $ */
+/*	$NetBSD: wd.c,v 1.411 2014/07/25 08:34:27 dholland Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.410 2014/07/25 08:22:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.411 2014/07/25 08:34:27 dholland Exp $");
 
 #include "opt_ata.h"
 
@@ -1551,24 +1551,6 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 		return 0;
 	    }
-
-	case DIOCGDISCARDPARAMS: {
-		struct disk_discard_params * tp;
-
-		if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA7)
-		    || !(wd->sc_params.support_dsm & ATA_SUPPORT_DSM_TRIM))
-			return ENOTTY;
-		tp = (struct disk_discard_params *)addr;
-		tp->maxsize = 0xffff; /*wd->sc_params.max_dsm_blocks*/
-		aprint_debug_dev(wd->sc_dev, "TRIM maxsize %ld\n", tp->maxsize);
-		return 0;
-	}
-	case DIOCDISCARD: {
-		struct disk_discard_range *dr;
-
-		dr = addr;
-		return wd_trim(wd, WDPART(dev), dr->bno, dr->size);
-	}
 
 	default:
 		return ENOTTY;
