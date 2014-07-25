@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.8 2014/07/25 01:38:26 mrg Exp $
+.\"	$NetBSD: pci.3,v 1.9 2014/07/25 10:21:34 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -145,7 +145,7 @@ and
 .Fa func
 into
 .Fa drvname
-using 
+using
 .Fa len
 as the buffer length.
 .El
@@ -155,15 +155,16 @@ The
 .Fn pcibus_conf_write ,
 .Fn pcidev_conf_read ,
 .Fn pcidev_conf_write ,
-.Fn pci_devinfo
+.Fn pci_devinfo ,
 and
 .Fn pci_drvname
-functions return 0 on success and -1 on failure.
+functions return 0 on success and \-1 on failure.
 .Pp
 The
 .Fn pci_findvendor
-function returns NULL if the PCI vendor description cannot be
-found.
+function returns
+.Dv NULL
+if the PCI vendor description cannot be found.
 .Sh SEE ALSO
 .Xr pci 4
 .Sh HISTORY
