@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.15 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.16 2014/07/25 20:07:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.15 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.16 2014/07/25 20:07:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -89,7 +89,7 @@ static u_int npf_tcp_timeouts[] __read_mostly = {
 	[NPF_TCPS_TIME_WAIT]	= 60 * 2 * 2,
 };
 
-static bool npf_strict_order_rst __read_mostly = false;
+static bool npf_strict_order_rst __read_mostly = true;
 
 #define	NPF_TCP_MAXACKWIN	66000
 
@@ -395,7 +395,7 @@ npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
 			seq = end;
 		}
 
-		/* Strict in-order sequence for RST packets. */
+		/* Strict in-order sequence for RST packets (RFC 5961). */
 		if (npf_strict_order_rst && (fstate->nst_end - seq) > 1) {
 			return false;
 		}
