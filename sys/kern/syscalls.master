@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.269 2014/06/12 21:41:33 joerg Exp $
+	$NetBSD: syscalls.master,v 1.270 2014/07/25 08:25:47 dholland Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -944,3 +944,7 @@
 478	STD 		{ int|sys|60|_lwp_park(clockid_t clock_id, int flags, \
 			    const struct timespec *ts, lwpid_t unpark, \
 			    const void *hint, const void *unparkhint); }
+479	STD  RUMP	{ int|sys||posix_fallocate(int fd, int PAD, off_t pos, \
+			    off_t len); }
+480	STD  RUMP	{ int|sys||fdiscard(int fd, int PAD, off_t pos, \
+			    off_t len); }
