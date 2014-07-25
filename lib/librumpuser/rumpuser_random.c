@@ -26,7 +26,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_random.c,v 1.1 2014/07/22 22:41:58 justin Exp $");
+__RCSID("$NetBSD: rumpuser_random.c,v 1.2 2014/07/25 14:00:31 justin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ rumpuser__random_init(void)
 	random_fd = open(random_device, O_RDONLY);
 	if (random_fd < 0) {
 		fprintf(stderr, "random init open failed\n");
-		return 1;
+		return errno;
 	}
 	return 0;
 }
@@ -87,5 +87,5 @@ rumpuser_getrandom(void *buf, size_t buflen, int flags, size_t *retp)
 	*retp = buflen;
 #endif
 
-	ET(0);
+	return 0;
 }
