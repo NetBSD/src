@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.35 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.36 2014/07/25 23:07:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.35 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.36 2014/07/25 23:07:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -492,7 +492,7 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 	}
 	prop_object_iterator_release(it);
 	if (error) {
-		/* FIXME: npf_conn_gc(cd, true, false); */
+		npf_conn_gc(cd, true, false);
 		npf_conndb_destroy(cd);
 	} else {
 		*conndb = cd;
