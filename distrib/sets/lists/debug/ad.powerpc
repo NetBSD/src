@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.16 2014/07/25 01:38:27 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.17 2014/07/25 08:32:22 dholland Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -154,7 +154,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbz2.so.1.1.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libc.so.12.192.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libc.so.12.193.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libcom_err.so.7.0.debug	comp-compat-shlib	compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libcrypto.so.8.2.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto
