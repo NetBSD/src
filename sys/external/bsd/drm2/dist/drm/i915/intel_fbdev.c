@@ -198,6 +198,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	helper->fbdev = config_found_ia(dev->dev, "intelfbbus", &ifa, NULL);
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("unable to attach intelfb\n");
+		ret = -ENXIO;
 		goto out_unpin;
 	}
 	fb = &ifbdev->fb->base;
