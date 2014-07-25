@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.26 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: rf.c,v 1.27 2014/07/25 08:02:20 dholland Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.26 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.27 2014/07/25 08:02:20 dholland Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -123,6 +123,7 @@ const struct bdevsw rf_bdevsw = {
 	.d_ioctl = rfioctl,
 	.d_dump = rfdump,
 	.d_psize = rfsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

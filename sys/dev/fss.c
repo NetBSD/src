@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.89 2014/05/25 13:52:12 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.90 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.89 2014/05/25 13:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.90 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,11 @@ static struct vfs_hooks fss_vfs_hooks = {
 const struct bdevsw fss_bdevsw = {
 	.d_open = fss_open,
 	.d_close = fss_close,
-	.d_strategy = fss_strategy, fss_ioctl,
+	.d_strategy = fss_strategy,
+	.d_ioctl = fss_ioctl,
 	.d_dump = fss_dump,
 	.d_psize = fss_size,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 

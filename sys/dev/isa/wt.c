@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.84 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: wt.c,v 1.85 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.84 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.85 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,7 @@ const struct bdevsw wt_bdevsw = {
 	.d_ioctl = wtioctl,
 	.d_dump = wtdump,
 	.d_psize = wtsize,
+	.d_discard = nodiscard,
 	.d_flag = D_TAPE
 };
 
