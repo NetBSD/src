@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.281 2014/07/23 10:48:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.282 2014/07/25 18:28:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.281 2014/07/23 10:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.282 2014/07/25 18:28:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3188,7 +3188,9 @@ wm_reset(struct wm_softc *sc)
 
 	/* Set the completion timeout for interface */
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		wm_set_pcie_completion_timeout(sc);
 
 	/* Clear interrupt */
@@ -6058,6 +6060,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	uint32_t reg;
 
 	/* We have MII. */
 	sc->sc_flags |= WM_F_HAS_MII;
@@ -6066,6 +6069,15 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		sc->sc_tipg =  TIPG_1000T_80003_DFLT;
 	else
 		sc->sc_tipg = TIPG_1000T_DFLT;
+
+	/* XXX Not for I354? FreeBSD's e1000_82575.c doesn't include it */
+	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
+	    || (sc->sc_type == WM_T_I211)) {
+		reg = CSR_READ(sc, WMREG_PHPM);
+		reg &= ~PHPM_GO_LINK_D;
+		CSR_WRITE(sc, WMREG_PHPM, reg);
+	}
 
 	/*
 	 * Let the chip set speed/duplex on its own based on
