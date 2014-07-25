@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.4 2014/07/24 21:45:03 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.5 2014/07/25 16:35:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.4 2014/07/24 21:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.5 2014/07/25 16:35:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -113,6 +113,9 @@ intelfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mapped = false;
 	sc->sc_scheduled = false;
 	sc->sc_attached = false;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* XXX Defer this too?  */
 	error = bus_space_map(ifa->ifa_fb_bst, ifa->ifa_fb_addr,
