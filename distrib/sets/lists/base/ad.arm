@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.49 2014/07/23 02:42:56 lneto Exp $
+# $NetBSD: ad.arm,v 1.50 2014/07/25 01:38:27 mrg Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -170,8 +170,8 @@
 ./usr/lib/oabi/libisccc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccc.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccfg.so.8			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccfg.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccfg.so.8.0			base-compat-shlib	obsolete
+./usr/lib/oabi/libisccfg.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libisns.so.0			base-compat-shlib	compat,pic
@@ -241,9 +241,7 @@
 ./usr/lib/oabi/libpcap.so.5			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpcap.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libpci.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libperfuse.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libperfuse.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpmc.so.1			base-compat-shlib	compat,pic

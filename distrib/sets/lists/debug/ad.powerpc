@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.15 2014/07/19 18:38:33 lneto Exp $
+# $NetBSD: ad.powerpc,v 1.16 2014/07/25 01:38:27 mrg Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -222,7 +222,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libp2k.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,rump
 ./usr/libdata/debug/usr/lib/powerpc/libpam.so.4.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libpcap.so.5.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libpci.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libpci.so.2.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libperfuse.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libposix.so.0.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libppath.so.0.0.debug	comp-compat-shlib	compat,arch64,debug,pic

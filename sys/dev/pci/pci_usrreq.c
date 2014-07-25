@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.26 2014/05/28 04:41:52 riastradh Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.27 2014/07/25 01:38:26 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.26 2014/05/28 04:41:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.27 2014/07/25 01:38:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -74,8 +74,10 @@ static int
 pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
+	struct pci_child *child;
 	struct pciio_bdf_cfgreg *bdfr;
 	struct pciio_businfo *binfo;
+	struct pciio_drvname *dname;
 	pcitag_t tag;
 
 	switch (cmd) {
@@ -103,6 +105,17 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		binfo = data;
 		binfo->busno = sc->sc_bus;
 		binfo->maxdevs = sc->sc_maxndevs;
+		return 0;
+
+	case PCI_IOC_DRVNAME:
+		dname = data;
+		if (dname->device >= sc->sc_maxndevs || dname->function > 7)
+			return EINVAL;
+		child = &sc->PCI_SC_DEVICESC(dname->device, dname->function);
+		if (!child->c_dev)
+			return ENXIO;
+		strlcpy(dname->name, device_xname(child->c_dev),
+			sizeof dname->name);
 		return 0;
 
 	default:

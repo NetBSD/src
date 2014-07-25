@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.39 2014/07/19 18:38:33 lneto Exp $
+# $NetBSD: ad.arm,v 1.40 2014/07/25 01:38:27 mrg Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -155,7 +155,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/oabi/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libpcap.so.5.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libpci.so.2.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libpci.so.2.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/oabi/libpmc.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libposix.so.0.1.debug	comp-sys-debug	debug,compat
