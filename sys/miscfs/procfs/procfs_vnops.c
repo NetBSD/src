@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.189 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.190 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.189 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.190 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,8 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, procfs_setattr },		/* setattr */
 	{ &vop_read_desc, procfs_read },		/* read */
 	{ &vop_write_desc, procfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, procfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, procfs_poll },		/* poll */

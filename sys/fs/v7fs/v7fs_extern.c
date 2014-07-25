@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.c,v 1.2 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: v7fs_extern.c,v 1.3 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.2 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.3 2014/07/25 08:20:52 dholland Exp $");
 
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
@@ -65,6 +65,8 @@ const struct vnodeopv_entry_desc v7fs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, v7fs_setattr },		/* setattr */
 	{ &vop_read_desc, v7fs_read },			/* read */
 	{ &vop_write_desc, v7fs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */
@@ -112,6 +114,8 @@ const struct vnodeopv_entry_desc v7fs_specop_entries[] = {
 	{ &vop_setattr_desc, v7fs_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -158,6 +162,8 @@ const struct vnodeopv_entry_desc v7fs_fifoop_entries[] = {
 	{ &vop_setattr_desc, v7fs_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */
 	{ &vop_write_desc, vn_fifo_bypass },		/* write */
+	{ &vop_fallocate_desc, vn_fifo_bypass },	/* fallocate */
+	{ &vop_fdiscard_desc, vn_fifo_bypass },		/* fdiscard */
 	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */

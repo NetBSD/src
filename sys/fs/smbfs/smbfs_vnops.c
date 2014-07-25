@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.90 2014/04/25 15:18:06 pooka Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.91 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.90 2014/04/25 15:18:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.91 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,8 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_advlock_desc,		smbfs_advlock },
 	{ &vop_close_desc,		smbfs_close },
 	{ &vop_create_desc,		smbfs_create },
+	{ &vop_fallocate_desc,		genfs_eopnotsupp },
+	{ &vop_fdiscard_desc,		genfs_eopnotsupp },
 	{ &vop_fsync_desc,		smbfs_fsync },
 	{ &vop_getattr_desc,		smbfs_getattr },
 	{ &vop_getpages_desc,		genfs_compat_getpages },

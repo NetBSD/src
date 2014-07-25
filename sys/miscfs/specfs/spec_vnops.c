@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.144 2014/07/25 08:19:19 dholland Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.145 2014/07/25 08:20:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.144 2014/07/25 08:19:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145 2014/07/25 08:20:53 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,6 +123,8 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_setattr_desc, spec_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */

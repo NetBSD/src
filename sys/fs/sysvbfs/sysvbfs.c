@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.13 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.14 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.13 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.14 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -59,6 +59,8 @@ const struct vnodeopv_entry_desc sysvbfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, sysvbfs_setattr },		/* setattr */
 	{ &vop_read_desc, sysvbfs_read },		/* read */
 	{ &vop_write_desc, sysvbfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */
