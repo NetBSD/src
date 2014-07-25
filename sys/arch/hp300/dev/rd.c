@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.95 2014/03/24 19:42:58 christos Exp $	*/
+/*	$NetBSD: rd.c,v 1.96 2014/07/25 08:02:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.95 2014/03/24 19:42:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.96 2014/07/25 08:02:18 dholland Exp $");
 
 #include "opt_useleds.h"
 
@@ -288,6 +288,7 @@ const struct bdevsw rd_bdevsw = {
 	.d_ioctl = rdioctl,
 	.d_dump = rddump,
 	.d_psize = rdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
