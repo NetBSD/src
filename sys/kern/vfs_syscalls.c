@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.487 2014/06/30 17:51:31 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.488 2014/07/25 08:25:47 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.487 2014/06/30 17:51:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.488 2014/07/25 08:25:47 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -115,6 +115,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.487 2014/06/30 17:51:31 maxv Exp 
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
+
+/* XXX this shouldn't be here */
+#ifndef OFF_T_MAX
+#define OFF_T_MAX __type_max(off_t)
+#endif
 
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *);
@@ -4684,4 +4689,106 @@ sys_revoke(struct lwp *l, const struct sys_revoke_args *uap, register_t *retval)
 	error = dorevoke(vp, l->l_cred);
 	vrele(vp);
 	return (error);
+}
+
+/*
+ * Allocate backing store for a file, filling a hole without having to
+ * explicitly write anything out.
+ */
+/* ARGSUSED */
+int
+sys_posix_fallocate(struct lwp *l, const struct sys_posix_fallocate_args *uap,
+		register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) pos;
+		syscallarg(off_t) len;
+	} */
+	int fd;
+	off_t pos, len;
+	struct file *fp;
+	struct vnode *vp;
+	int result;
+
+	fd = SCARG(uap, fd);
+	pos = SCARG(uap, pos);
+	len = SCARG(uap, len);
+	
+	if (pos < 0 || len < 0 || len > OFF_T_MAX - pos) {
+		return EINVAL;
+	}
+	
+	result = fd_getvnode(fd, &fp);
+	if (result) {
+		return result;
+	}
+	if ((fp->f_flag & FWRITE) == 0) {
+		result = EBADF;
+		goto fail;
+	}
+	vp = fp->f_data;
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (vp->v_type == VDIR) {
+		result = EISDIR;
+	} else {
+		result = VOP_FALLOCATE(vp, pos, len);
+	}
+	VOP_UNLOCK(vp);
+
+fail:
+	fd_putfile(fd);
+	return result;
+}
+
+/*
+ * Dellocate backing store for a file, creating a hole. Also used for
+ * invoking TRIM on disks.
+ */
+/* ARGSUSED */
+int
+sys_fdiscard(struct lwp *l, const struct sys_fdiscard_args *uap,
+		register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) pos;
+		syscallarg(off_t) len;
+	} */
+	int fd;
+	off_t pos, len;
+	struct file *fp;
+	struct vnode *vp;
+	int result;
+
+	fd = SCARG(uap, fd);
+	pos = SCARG(uap, pos);
+	len = SCARG(uap, len);
+
+	if (pos < 0 || len < 0 || len > OFF_T_MAX - pos) {
+		return EINVAL;
+	}
+	
+	result = fd_getvnode(fd, &fp);
+	if (result) {
+		return result;
+	}
+	if ((fp->f_flag & FWRITE) == 0) {
+		result = EBADF;
+		goto fail;
+	}
+	vp = fp->f_data;
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (vp->v_type == VDIR) {
+		result = EISDIR;
+	} else {
+		result = VOP_FDISCARD(vp, pos, len);
+	}
+	VOP_UNLOCK(vp);
+
+fail:
+	fd_putfile(fd);
+	return result;
 }
