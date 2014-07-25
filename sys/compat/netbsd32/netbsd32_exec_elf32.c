@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.36 2012/08/03 07:49:18 matt Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.37 2014/07/25 16:23:13 maxv Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.36 2012/08/03 07:49:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.37 2014/07/25 16:23:13 maxv Exp $");
 
 #define	ELFSIZE		32
 
@@ -124,10 +124,6 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 #endif
 	return 0;
 }
-
-/* round up and down to page boundaries. */
-#define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
-#define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
