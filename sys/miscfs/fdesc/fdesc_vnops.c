@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.120 2014/07/13 11:23:01 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.121 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.120 2014/07/13 11:23:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.121 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,8 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_setattr_desc, fdesc_setattr },		/* setattr */
 	{ &vop_read_desc, fdesc_read },			/* read */
 	{ &vop_write_desc, fdesc_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, fdesc_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fdesc_poll },			/* poll */

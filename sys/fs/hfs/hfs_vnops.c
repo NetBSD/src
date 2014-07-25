@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.29 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.30 2014/07/25 08:20:51 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.29 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.30 2014/07/25 08:20:51 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -165,6 +165,8 @@ const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, hfs_vop_read },		/* read */
 	{ &vop_write_desc, genfs_eopnotsupp },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, genfs_eopnotsupp },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, genfs_eopnotsupp },		/* poll */
@@ -219,6 +221,8 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -275,6 +279,8 @@ const struct vnodeopv_entry_desc hfs_fifoop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */
 	{ &vop_write_desc, vn_fifo_bypass },		/* write */
+	{ &vop_fallocate_desc, vn_fifo_bypass },	/* fallocate */
+	{ &vop_fdiscard_desc, vn_fifo_bypass },		/* fdiscard */
 	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
