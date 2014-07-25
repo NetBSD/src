@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1902 2014/07/24 21:02:55 plunky Exp $
+#	$NetBSD: mi,v 1.1903 2014/07/25 08:32:22 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4374,6 +4374,7 @@
 ./usr/share/man/cat2/fchroot.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fcntl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fdatasync.0		comp-c-catman		.cat
+./usr/share/man/cat2/fdiscard.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fhopen.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fhstat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fhstatfs.0			comp-obsolete		obsolete
@@ -4491,6 +4492,7 @@
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pollts.0			comp-c-catman		.cat
 ./usr/share/man/cat2/posix_fadvise.0		comp-c-catman		.cat
+./usr/share/man/cat2/posix_fallocate.0		comp-c-catman		.cat
 ./usr/share/man/cat2/posix_madvise.0		comp-c-catman		.cat
 ./usr/share/man/cat2/pread.0			comp-c-catman		.cat
 ./usr/share/man/cat2/preadv.0			comp-c-catman		.cat
@@ -11275,6 +11277,7 @@
 ./usr/share/man/html2/fchroot.html		comp-c-htmlman		html
 ./usr/share/man/html2/fcntl.html		comp-c-htmlman		html
 ./usr/share/man/html2/fdatasync.html		comp-c-htmlman		html
+./usr/share/man/html2/fdiscard.html		comp-c-htmlman		html
 ./usr/share/man/html2/fhopen.html		comp-c-htmlman		html
 ./usr/share/man/html2/fhstat.html		comp-c-htmlman		html
 ./usr/share/man/html2/fhstatvfs.html		comp-c-htmlman		html
@@ -11386,6 +11389,7 @@
 ./usr/share/man/html2/poll.html			comp-c-htmlman		html
 ./usr/share/man/html2/pollts.html		comp-c-htmlman		html
 ./usr/share/man/html2/posix_fadvise.html	comp-c-htmlman		html
+./usr/share/man/html2/posix_fallocate.html		comp-c-htmlman		html
 ./usr/share/man/html2/posix_madvise.html	comp-c-htmlman		html
 ./usr/share/man/html2/pread.html		comp-c-htmlman		html
 ./usr/share/man/html2/preadv.html		comp-c-htmlman		html
@@ -17947,6 +17951,7 @@
 ./usr/share/man/man2/fchroot.2			comp-c-man		.man
 ./usr/share/man/man2/fcntl.2			comp-c-man		.man
 ./usr/share/man/man2/fdatasync.2		comp-c-man		.man
+./usr/share/man/man2/fdiscard.2			comp-c-man		.man
 ./usr/share/man/man2/fhopen.2			comp-c-man		.man
 ./usr/share/man/man2/fhstat.2			comp-c-man		.man
 ./usr/share/man/man2/fhstatfs.2			comp-obsolete		obsolete
@@ -18063,6 +18068,7 @@
 ./usr/share/man/man2/poll.2			comp-c-man		.man
 ./usr/share/man/man2/pollts.2			comp-c-man		.man
 ./usr/share/man/man2/posix_fadvise.2		comp-c-man		.man
+./usr/share/man/man2/posix_fallocate.2		comp-c-man		.man
 ./usr/share/man/man2/posix_madvise.2		comp-c-man		.man
 ./usr/share/man/man2/pread.2			comp-c-man		.man
 ./usr/share/man/man2/preadv.2			comp-c-man		.man
