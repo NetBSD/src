@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.58 2014/07/25 01:05:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.59 2014/07/25 18:28:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -624,6 +624,9 @@ struct livengood_tcpip_ctxdesc {
 #define	WM_MC_TABSIZE	128
 #define	WM_ICH8_MC_TABSIZE 32
 #define	WM_VLAN_TABSIZE	128
+
+#define	WMREG_PHPM	0x0e14	/* PHY Power Management */
+#define	PHPM_GO_LINK_D		__BIT(5)	/* Go Link Disconnect */
 
 #define WMREG_EEER	0x0e30	/* Energy Efficiency Ethernet "EEE" */
 #define EEER_TX_LPI_EN		0x00010000 /* EEER Tx LPI Enable */
