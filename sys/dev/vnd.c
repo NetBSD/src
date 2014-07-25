@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.231 2014/07/25 08:02:19 dholland Exp $	*/
+/*	$NetBSD: vnd.c,v 1.232 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.231 2014/07/25 08:02:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.232 2014/07/25 08:10:35 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -218,6 +218,7 @@ const struct cdevsw vnd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

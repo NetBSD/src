@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.7 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: athflash.c,v 1.8 2014/07/25 08:10:34 dholland Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.7 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.8 2014/07/25 08:10:34 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,6 +144,7 @@ const struct cdevsw athflash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

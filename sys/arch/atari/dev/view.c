@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.33 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: view.c,v 1.34 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.33 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.34 2014/07/25 08:10:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ const struct cdevsw view_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = viewmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

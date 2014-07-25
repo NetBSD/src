@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.12 2014/07/25 06:36:16 hkenken Exp $ */
+/* $NetBSD: imxuart.c,v 1.13 2014/07/25 08:10:32 dholland Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.12 2014/07/25 06:36:16 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.13 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -348,6 +348,7 @@ const struct cdevsw imxcom_cdevsw = {
 	.d_poll = imxupoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

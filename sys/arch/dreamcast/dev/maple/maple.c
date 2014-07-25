@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.50 2014/03/27 18:22:56 christos Exp $	*/
+/*	$NetBSD: maple.c,v 1.51 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.50 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.51 2014/07/25 08:10:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,6 +175,7 @@ const struct cdevsw maple_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.44 2014/07/25 08:02:20 dholland Exp $	*/
+/*	$NetBSD: rl.c,v 1.45 2014/07/25 08:10:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.44 2014/07/25 08:02:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.45 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,6 +117,7 @@ const struct cdevsw rl_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.33 2014/03/26 08:17:59 christos Exp $ */
+/*	$NetBSD: ms.c,v 1.34 2014/07/25 08:10:35 dholland Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.33 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.34 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -175,6 +175,7 @@ const struct cdevsw ms_cdevsw ={
 	.d_poll = mspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = mskqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

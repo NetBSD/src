@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.27 2014/07/25 01:38:26 mrg Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.28 2014/07/25 08:10:38 dholland Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.27 2014/07/25 01:38:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.28 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -193,6 +193,7 @@ const struct cdevsw pci_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = pcimmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.153 2014/07/22 23:06:29 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.154 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.153 2014/07/22 23:06:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.154 2014/07/25 08:10:39 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -128,6 +128,7 @@ const struct cdevsw usb_cdevsw = {
 	.d_poll = usbpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = usbkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

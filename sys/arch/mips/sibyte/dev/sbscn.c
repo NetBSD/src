@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.38 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: sbscn.c,v 1.39 2014/07/25 08:10:34 dholland Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.38 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.39 2014/07/25 08:10:34 dholland Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -196,6 +196,7 @@ const struct cdevsw sbscn_cdevsw = {
 	.d_poll = sbscnpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
