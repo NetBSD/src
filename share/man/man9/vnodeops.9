@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.95 2014/07/25 08:16:47 dholland Exp $
+.\"     $NetBSD: vnodeops.9,v 1.96 2014/07/25 08:38:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .Nm VOP_SETATTR ,
 .Nm VOP_READ ,
 .Nm VOP_WRITE ,
-.Nm VOP_FALLOCATE,
-.Nm VOP_FDISCARD,
+.Nm VOP_FALLOCATE ,
+.Nm VOP_FDISCARD ,
 .Nm VOP_IOCTL ,
 .Nm VOP_FCNTL ,
 .Nm VOP_POLL ,
@@ -688,8 +688,8 @@ and
 .Fa len
 arguments (specified in bytes) name an extent within the file.
 The blocks underlying this range, rounding down at the top and up at
-the bottom if needed, are checked. If any physical storage is used,
-it is deallocated.
+the bottom if needed, are checked.
+If any physical storage is used, it is deallocated.
 This operation creates
 .Dq holes
 in files.
