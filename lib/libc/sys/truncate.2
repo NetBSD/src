@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.28 2014/06/14 19:02:29 wiz Exp $
+.\"	$NetBSD: truncate.2,v 1.29 2014/07/25 08:30:47 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 14, 2014
+.Dd July 23, 2014
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -133,7 +133,8 @@ the
 is not open for writing.
 .El
 .Sh SEE ALSO
-.Xr open 2
+.Xr open 2 ,
+.Xr fdiscard 2
 .Sh STANDARDS
 Use of
 .Fn truncate
@@ -151,6 +152,3 @@ and
 .Fn ftruncate
 function calls appeared in
 .Bx 4.2 .
-.Sh BUGS
-These calls should be generalized to allow ranges
-of bytes in a file to be discarded.
