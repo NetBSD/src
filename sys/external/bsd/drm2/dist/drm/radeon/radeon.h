@@ -233,6 +233,9 @@ enum radeon_pll_errata {
 
 struct radeon_device;
 
+#ifdef __NetBSD__
+extern struct radeon_device *radeon_device_private(device_t);
+#endif
 
 /*
  * BIOS.
