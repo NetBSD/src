@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.111 2014/07/23 14:50:23 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.112 2014/07/25 23:05:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.111 2014/07/23 14:50:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.112 2014/07/25 23:05:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1365,7 +1365,7 @@ fail0:	for (j = 0; j < i; j += AGP_PAGE_SIZE)
 static int
 agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 {
-	struct agp_i810_softc *isc = sc->as_chipc;
+	struct agp_i810_softc *isc __diagused = sc->as_chipc;
 	u_int32_t i;
 
 	if (!mem->am_is_bound)
