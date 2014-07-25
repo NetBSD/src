@@ -1,0 +1,26 @@
+#	$NetBSD: files.kobo,v 1.1 2014/07/25 11:22:50 hkenken Exp $
+#
+# KOBO evaluation board configuration info
+#
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+
+file	arch/evbarm/kobo/kobo_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include	"arch/arm/imx/files.imx51"
+
+# USB Host controller
+device	imxusbc_axi
+attach	imxusbc at axi with imxusbc_axi
+file	arch/evbarm/kobo/kobo_usb.c		imxusbc_axi
+
+# E-Ink controller
+# attach	epdc at axi with eink_kobo
+# file	arch/evbarm/kobo/kobo_eink.c		eink_kobo
+# defflag	opt_kobo_eink.h				EINK_DEBUG
