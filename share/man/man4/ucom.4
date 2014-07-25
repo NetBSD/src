@@ -1,4 +1,4 @@
-.\" $NetBSD: ucom.4,v 1.23 2014/04/17 17:50:21 martin Exp $
+.\" $NetBSD: ucom.4,v 1.24 2014/07/25 16:13:21 gdt Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,12 @@ The
 .Va portno
 locator can be used to decide which port to use for device that have
 multiple external ports.
+.Pp
+Note that while
+.Nm
+supports the (undocumented) pulse-per-second API normally used on
+conventional serial ports, USB serial devices typically have a varying
+latency around 1 ms due to the USB frame structure.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/dtyU?
