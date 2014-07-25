@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.5 2013/10/07 17:36:40 matt Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.6 2014/07/25 07:49:56 hkenken Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.5 2013/10/07 17:36:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.6 2014/07/25 07:49:56 hkenken Exp $");
+
+#include "opt_imx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,9 +119,8 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal_dev(self,
 	    "i.MX USB Controller id=%d revision=%d HCI revision=0x%x\n", 
-	    id & (uint32_t)IMXUSB_ID_ID_MASK, 
-	    (id & (uint32_t)IMXUSB_ID_REVISION_MASK) >>
-	    	IMXUSB_ID_REVISION_SHIFT,
+	    (int)__SHIFTOUT(id, IMXUSB_ID_ID),
+	    (int)__SHIFTOUT(id, IMXUSB_ID_REVISION),
 	    hcirev);
 			  
 	hwhost = bus_space_read_4(iot, sc->sc_ioh, IMXUSB_HWHOST);
@@ -129,16 +130,14 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 
 	comma = "";
 	if (hwhost & HWHOST_HC) {
-		int n_ports = 1 + ((hwhost & HWHOST_NPORT_MASK) >>
-		    HWHOST_NPORT_SHIFT);
+		int n_ports = 1 + __SHIFTOUT(hwhost, HWHOST_NPORT);
 		aprint_normal("%d host port%s",
 		    n_ports, n_ports > 1 ? "s" : "");
 		comma = ", ";
 	}
 
 	if (hwdevice & HWDEVICE_DC) {
-		int n_endpoints = (hwdevice & HWDEVICE_DEVEP_MASK) >>
-		    HWDEVICE_DEVEP_SHIFT;
+		int n_endpoints = __SHIFTOUT(hwdevice, HWDEVICE_DEVEP);
 		aprint_normal("%sdevice capable, %d endpoint%s",
 		    comma,
 		    n_endpoints, n_endpoints > 1 ? "s" : "");
@@ -176,7 +175,15 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	
 	if (usbc->sc_setup_md_hook)
 		usbc->sc_setup_md_hook(sc, IMXUSB_HOST);
-	else if (sc->sc_iftype == IMXUSBC_IF_ULPI) {
+
+	if (sc->sc_iftype == IMXUSBC_IF_ULPI) {
+#if 0
+		if(hsc->sc_bus.usbrev == USBREV_2_0)
+			ulpi_write(hsc, ULPI_FUNCTION_CONTROL + ULPI_REG_CLEAR, (1 << 0));
+		else
+			ulpi_write(hsc, ULPI_FUNCTION_CONTROL + ULPI_REG_SET, (1 << 2));
+#endif
+
 		imxusb_ulpi_write(sc, ULPI_FUNCTION_CONTROL + ULPI_REG_CLEAR,
 		    OTG_CONTROL_IDPULLUP);
 
@@ -216,7 +223,23 @@ imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 	struct ehci_softc *hsc = &sc->sc_hsc;
 
 	reg = EOREAD4(hsc, EHCI_PORTSC(1));
-	reg = (reg & ~PORTSC_PTS_MASK) | (interface << PORTSC_PTS_SHIFT);
+	reg &= ~(PORTSC_PTS | PORTSC_PTW);
+	switch (interface) {
+	case IMXUSBC_IF_UTMI_WIDE:
+		reg |= PORTSC_PTW_16;
+	case IMXUSBC_IF_UTMI:
+		reg |= PORTSC_PTS_UTMI;
+		break;
+	case IMXUSBC_IF_PHILIPS:
+		reg |= PORTSC_PTS_PHILIPS;
+		break;
+	case IMXUSBC_IF_ULPI:
+		reg |= PORTSC_PTS_ULPI;
+		break;
+	case IMXUSBC_IF_SERIAL:
+		reg |= PORTSC_PTS_SERIAL;
+		break;
+	}
 	EOWRITE4(hsc, EHCI_PORTSC(1), reg);
 }
 
@@ -278,12 +301,12 @@ imxusb_ulpi_read(struct imxehci_softc *sc, int addr)
 
 	ulpi_wakeup(sc, TIMEOUT);
 
-	data = ULPI_RUN | (addr << ULPI_ADDR_SHIFT);
+	data = ULPI_RUN | __SHIFTIN(addr, ULPI_ADDR);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_ULPIVIEW, data);
 
 	data = ulpi_wait(sc, TIMEOUT);
 
-	return (data & ULPI_DATRD_MASK) >> ULPI_DATRD_SHIFT;
+	return __SHIFTOUT(data, ULPI_DATRD);
 }
 
 void
@@ -293,7 +316,7 @@ imxusb_ulpi_write(struct imxehci_softc *sc, int addr, uint8_t data)
 
 	ulpi_wakeup(sc, TIMEOUT);
 
-	reg = ULPI_RUN | ULPI_RW | ((addr) << ULPI_ADDR_SHIFT) | data;
+	reg = ULPI_RUN | ULPI_RW | __SHIFTIN(addr, ULPI_ADDR) | __SHIFTIN(data, ULPI_DATWR);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_ULPIVIEW, reg);
 
 	ulpi_wait(sc, TIMEOUT);
@@ -402,6 +425,6 @@ imxehci_host_mode(struct imxehci_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGSC, reg);
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE);
-	reg |= USBMODE_HOST;
+	reg |= USBMODE_CM_HOST;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE, reg);
 }
