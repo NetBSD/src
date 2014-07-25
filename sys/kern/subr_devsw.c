@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.31 2014/05/25 16:31:51 pooka Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.32 2014/07/25 07:56:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.31 2014/05/25 16:31:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.32 2014/07/25 07:56:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -819,6 +819,22 @@ bdev_size(dev_t dev)
 }
 
 int
+bdev_discard(dev_t dev, off_t pos, off_t len)
+{
+	const struct bdevsw *d;
+	int rv, mpflag;
+
+	if ((d = bdevsw_lookup(dev)) == NULL)
+		return ENXIO;
+
+	DEV_LOCK(d);
+	rv = (*d->d_discard)(dev, pos, len);
+	DEV_UNLOCK(d);
+
+	return rv;
+}
+
+int
 cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
 	const struct cdevsw *d;
@@ -978,6 +994,22 @@ cdev_kqfilter(dev_t dev, struct knote *kn)
 
 	DEV_LOCK(d);
 	rv = (*d->d_kqfilter)(dev, kn);
+	DEV_UNLOCK(d);
+
+	return rv;
+}
+
+int
+cdev_discard(dev_t dev, off_t pos, off_t len)
+{
+	const struct cdevsw *d;
+	int rv, mpflag;
+
+	if ((d = cdevsw_lookup(dev)) == NULL)
+		return ENXIO;
+
+	DEV_LOCK(d);
+	rv = (*d->d_discard)(dev, pos, len);
 	DEV_UNLOCK(d);
 
 	return rv;
