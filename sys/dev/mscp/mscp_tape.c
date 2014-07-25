@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.41 2014/03/16 05:20:28 dholland Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.42 2014/07/25 08:02:19 dholland Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.41 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.42 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -130,6 +130,7 @@ const struct bdevsw mt_bdevsw = {
 	.d_ioctl = mtioctl,
 	.d_dump = mtdump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_TAPE
 };
 

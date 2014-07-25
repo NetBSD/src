@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.102 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.103 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.102 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.103 2014/07/25 08:02:19 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -230,6 +230,7 @@ const struct bdevsw fd_bdevsw = {
 	.d_ioctl = fdioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

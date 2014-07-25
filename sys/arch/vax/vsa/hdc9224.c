@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.52 2013/10/25 14:44:25 martin Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.53 2014/07/25 08:02:19 dholland Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.52 2013/10/25 14:44:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.53 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ const struct bdevsw rd_bdevsw = {
 	.d_ioctl = rdioctl,
 	.d_dump = nulldump,
 	.d_psize = rdpsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

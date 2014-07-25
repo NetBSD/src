@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.29 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: ts.c,v 1.30 2014/07/25 08:02:20 dholland Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.29 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.30 2014/07/25 08:02:20 dholland Exp $");
 
 #undef	TSDEBUG
 
@@ -183,6 +183,7 @@ const struct bdevsw ts_bdevsw = {
 	.d_ioctl = tsioctl,
 	.d_dump = tsdump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_TAPE
 };
 

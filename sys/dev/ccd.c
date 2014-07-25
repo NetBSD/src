@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.149 2014/06/14 07:39:00 hannken Exp $	*/
+/*	$NetBSD: ccd.c,v 1.150 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.149 2014/06/14 07:39:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.150 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,6 +187,7 @@ const struct bdevsw ccd_bdevsw = {
 	.d_ioctl = ccdioctl,
 	.d_dump = nodump,
 	.d_psize = ccdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 

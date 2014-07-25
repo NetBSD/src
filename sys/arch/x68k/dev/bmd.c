@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.19 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: bmd.c,v 1.20 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.19 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.20 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ const struct bdevsw bmd_bdevsw = {
 	.d_ioctl = bmdioctl,
 	.d_dump = bmddump,
 	.d_psize = bmdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

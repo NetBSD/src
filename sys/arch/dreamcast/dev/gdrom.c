@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.38 2014/03/18 08:08:55 martin Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.39 2014/07/25 08:02:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.38 2014/03/18 08:08:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.39 2014/07/25 08:02:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ const struct bdevsw gdrom_bdevsw = {
 	.d_ioctl = gdromioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

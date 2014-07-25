@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.69 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.70 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.69 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.70 2014/07/25 08:02:19 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -113,6 +113,7 @@ const struct bdevsw md_bdevsw = {
 	.d_ioctl = mdioctl,
 	.d_dump = nodump,
 	.d_psize = mdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 

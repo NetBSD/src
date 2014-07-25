@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.79 2014/03/16 05:49:41 dholland Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.80 2014/07/25 08:02:19 dholland Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.79 2014/03/16 05:49:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.80 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -163,6 +163,7 @@ const struct bdevsw ra_bdevsw = {
 	.d_ioctl = raioctl,
 	.d_dump = radump,
 	.d_psize = rasize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -584,6 +585,7 @@ const struct bdevsw rx_bdevsw = {
 	.d_ioctl = rxioctl,
 	.d_dump = radump,
 	.d_psize = rxsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -655,6 +657,7 @@ const struct bdevsw racd_bdevsw = {
 	.d_ioctl = raioctl,
 	.d_dump = radump,
 	.d_psize = rasize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

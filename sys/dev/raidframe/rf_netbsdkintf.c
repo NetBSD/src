@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.310 2014/05/12 15:53:01 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.311 2014/07/25 08:02:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.310 2014/05/12 15:53:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.311 2014/07/25 08:02:20 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -211,6 +211,7 @@ const struct bdevsw raid_bdevsw = {
 	.d_ioctl = raidioctl,
 	.d_dump = raiddump,
 	.d_psize = raidsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

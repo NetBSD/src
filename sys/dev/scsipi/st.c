@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.223 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: st.c,v 1.224 2014/07/25 08:02:20 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.223 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.224 2014/07/25 08:02:20 dholland Exp $");
 
 #include "opt_scsi.h"
 
@@ -111,6 +111,7 @@ const struct bdevsw st_bdevsw = {
 	.d_ioctl = stioctl,
 	.d_dump = stdump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_TAPE
 };
 
