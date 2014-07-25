@@ -1,11 +1,11 @@
-/*	$NetBSD: int_const.h,v 1.5 2014/07/25 21:43:13 joerg Exp $	*/
+/*	$NetBSD: common_int_mwgwtypes.h,v 1.1 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Joerg Sonnenberger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,42 +29,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_INT_CONST_H_
-#define _AMD64_INT_CONST_H_
+#ifndef _SYS_COMMON_INT_MWGWTYPES_H_
+#define _SYS_COMMON_INT_MWGWTYPES_H_
 
-#ifdef __INTMAX_C_SUFFIX__
-#include <sys/common_int_const.h>
-#else
-
-#ifdef __x86_64__
-
-/*
- * 7.18.4 Macros for integer constants
- */
-
-/* 7.18.4.1 Macros for minimum-width integer constants */
-
-#define	INT8_C(c)	c
-#define	INT16_C(c)	c
-#define	INT32_C(c)	c
-#define	INT64_C(c)	c ## L
-
-#define	UINT8_C(c)	c
-#define	UINT16_C(c)	c
-#define	UINT32_C(c)	c ## U
-#define	UINT64_C(c)	c ## UL
-
-/* 7.18.4.2 Macros for greatest-width integer constants */
-
-#define	INTMAX_C(c)	c ## L
-#define	UINTMAX_C(c)	c ## UL
-
-#else	/*	__x86_64__	*/
-
-#include <i386/int_const.h>
-
-#endif	/*	__x86_64__	*/
-
+#ifndef __UINT_FAST64_TYPE__
+#error Your compiler does not provide min/fast width type macros.
 #endif
 
-#endif /* !_AMD64_INT_CONST_H_ */
+/*
+ * 7.18.1 Integer types
+ */
+
+/* 7.18.1.2 Minimum-width integer types */
+
+typedef	__INT_LEAST8_TYPE__		  int_least8_t;
+typedef	__UINT_LEAST8_TYPE__		 uint_least8_t;
+typedef	__INT_LEAST16_TYPE__		 int_least16_t;
+typedef	__UINT_LEAST16_TYPE__		uint_least16_t;
+typedef	__INT_LEAST32_TYPE__		 int_least32_t;
+typedef	__UINT_LEAST32_TYPE__		uint_least32_t;
+typedef	__INT_LEAST64_TYPE__		 int_least64_t;
+typedef	__UINT_LEAST64_TYPE__		uint_least64_t;
+
+/* 7.18.1.3 Fastest minimum-width integer types */
+typedef	__INT_FAST8_TYPE__		   int_fast8_t;
+typedef	__UINT_FAST8_TYPE__		  uint_fast8_t;
+typedef	__INT_FAST16_TYPE__		  int_fast16_t;
+typedef	__UINT_FAST16_TYPE__		 uint_fast16_t;
+typedef	__INT_FAST32_TYPE__		  int_fast32_t;
+typedef	__UINT_FAST32_TYPE__		 uint_fast32_t;
+typedef	__INT_FAST64_TYPE__		  int_fast64_t;
+typedef	__UINT_FAST64_TYPE__		 uint_fast64_t;
+
+/* 7.18.1.5 Greatest-width integer types */
+
+typedef	__INTMAX_TYPE__			      intmax_t;
+typedef	__UINTMAX_TYPE__		     uintmax_t;
+
+#endif /* _SYS_COMMON_INT_MWGWTYPES_H_ */

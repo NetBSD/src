@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.16 2014/07/14 20:20:31 joerg Exp $	*/
+/*	$NetBSD: int_types.h,v 1.17 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _ARM_INT_TYPES_H_
 #define _ARM_INT_TYPES_H_
 
+#ifdef __UINTPTR_TYPE__
+#include <sys/common_int_types.h>
+#else
 #include <sys/cdefs.h>
 
 /*
@@ -91,5 +94,6 @@ typedef	__UINT64_TYPE__		 __uint64_t;
 
 typedef	__INTPTR_TYPE__		 __intptr_t;
 typedef	__UINTPTR_TYPE__	__uintptr_t;
+#endif
 
 #endif	/* !_ARM_INT_TYPES_H_ */

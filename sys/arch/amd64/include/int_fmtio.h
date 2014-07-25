@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.6 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.7 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _AMD64_INT_FMTIO_H_
 #define _AMD64_INT_FMTIO_H_
+
+#ifdef __INTPTR_FMTd__
+#include <sys/common_int_fmtio.h>
+#else
 
 #ifdef __x86_64__
 
@@ -216,5 +220,7 @@
 #include <i386/int_fmtio.h>
 
 #endif	/*	__x86_64__	*/
+
+#endif
 
 #endif /* !_AMD64_INT_FMTIO_H_ */
