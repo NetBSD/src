@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.10 2013/11/23 16:35:32 rmind Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.11 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.10 2013/11/23 16:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.11 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -59,6 +59,8 @@ const struct vnodeopv_entry_desc tmpfs_fifoop_entries[] = {
 	{ &vop_setattr_desc,		tmpfs_fifo_setattr },
 	{ &vop_read_desc,		tmpfs_fifo_read },
 	{ &vop_write_desc,		tmpfs_fifo_write },
+	{ &vop_fallocate_desc,		vn_fifo_bypass },
+	{ &vop_fdiscard_desc,		vn_fifo_bypass },
 	{ &vop_ioctl_desc,		tmpfs_fifo_ioctl },
 	{ &vop_fcntl_desc,		tmpfs_fifo_fcntl },
 	{ &vop_poll_desc,		tmpfs_fifo_poll },
