@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.7 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.8 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _I386_INT_FMTIO_H_
 #define _I386_INT_FMTIO_H_
+
+#ifdef __INTPTR_FMTd__
+#include <sys/common_int_fmtio.h>
+#else
 
 /*
  * 7.8.1 Macros for format specifiers
@@ -208,5 +212,7 @@
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"llx"	/* uintmax_t		*/
 #define	SCNxPTR		"x"	/* uintptr_t		*/
+
+#endif
 
 #endif /* !_I386_INT_FMTIO_H_ */
