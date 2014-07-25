@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.6 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.7 2014/07/25 23:07:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.6 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.7 2014/07/25 23:07:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -141,7 +141,6 @@ static npf_conndb_t *	conn_db		__read_mostly;
 static pool_cache_t	conn_cache	__read_mostly;
 static kmutex_t		conn_lock	__cacheline_aligned;
 
-static void	npf_conn_gc(npf_conndb_t *, bool, bool);
 static void	npf_conn_worker(void);
 static void	npf_conn_destroy(npf_conn_t *);
 
@@ -706,7 +705,7 @@ npf_conn_expired(const npf_conn_t *con, const struct timespec *tsnow)
  * => If it is a flush request, then destroy all connections.
  * => If 'sync' is true, then perform passive serialisation.
  */
-static void
+void
 npf_conn_gc(npf_conndb_t *cd, bool flush, bool sync)
 {
 	npf_conn_t *con, *prev, *gclist = NULL;
