@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.9 2014/05/17 20:44:24 rmind Exp $ */
+/* $NetBSD: vmt.c,v 1.10 2014/07/25 07:12:55 ozaki-r Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -815,7 +815,7 @@ vmt_tclo_tick(void *xarg)
 				continue;
 			}
 
-			TAILQ_FOREACH(iface_addr, &iface->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(iface_addr, iface) {
 				if (iface_addr->ifa_addr->sa_family != AF_INET) {
 					continue;
 				}
