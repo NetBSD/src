@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.3 2014/07/19 22:08:54 bouyer Exp $	*/
+/*	$NetBSD: motg.c,v 1.4 2014/07/25 21:16:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.3 2014/07/19 22:08:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.4 2014/07/25 21:16:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,8 @@ UREAD2(struct motg_softc *sc, bus_size_t r)
 	UBARR(sc);
 	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, r);
 }
+
+#if 0
 static __inline uint32_t
 UREAD4(struct motg_softc *sc, bus_size_t r)
 {
@@ -177,6 +179,7 @@ UREAD4(struct motg_softc *sc, bus_size_t r)
 	UBARR(sc);
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 }
+#endif
 
 static void
 musbotg_pull_common(struct motg_softc *sc, uint8_t on)  
