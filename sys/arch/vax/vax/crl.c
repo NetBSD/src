@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.31 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: crl.c,v 1.32 2014/07/25 08:10:35 dholland Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.31 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.32 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ const struct cdevsw crl_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

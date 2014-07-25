@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.15 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: profile.c,v 1.16 2014/07/25 08:10:34 dholland Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.15 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.16 2014/07/25 08:10:34 dholland Exp $");
 
 #include "profiler.h"
 
@@ -126,6 +126,7 @@ const struct cdevsw prof_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

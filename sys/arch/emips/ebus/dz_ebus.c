@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.7 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.8 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.7 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.8 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -121,6 +121,7 @@ const struct cdevsw dz_cdevsw = {
 	.d_poll = dzpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

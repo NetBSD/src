@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.80 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: midi.c,v 1.81 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.80 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81 2014/07/25 08:10:35 dholland Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -119,6 +119,7 @@ const struct cdevsw midi_cdevsw = {
 	.d_poll = midipoll,
 	.d_mmap = nommap,
 	.d_kqfilter = midikqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

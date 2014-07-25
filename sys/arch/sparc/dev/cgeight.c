@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.48 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.49 2014/07/25 08:10:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.48 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.49 2014/07/25 08:10:34 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,7 @@ const struct cdevsw cgeight_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = cgeightmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

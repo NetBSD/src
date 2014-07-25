@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.129 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.130 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.129 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.130 2014/07/25 08:10:37 dholland Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -262,6 +262,7 @@ const struct cdevsw zstty_cdevsw = {
 	.d_poll = zspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

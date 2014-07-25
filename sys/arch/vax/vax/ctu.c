@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.33 2014/07/25 08:02:18 dholland Exp $ */
+/*	$NetBSD: ctu.c,v 1.34 2014/07/25 08:10:35 dholland Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.33 2014/07/25 08:02:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.34 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ const struct cdevsw ctu_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TAPE
 };
 #endif

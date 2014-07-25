@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.21 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: pcons.c,v 1.22 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.21 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.22 2014/07/25 08:10:35 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -91,6 +91,7 @@ const struct cdevsw pcons_cdevsw = {
 	.d_poll = pconspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

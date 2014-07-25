@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.14 2014/07/25 08:02:20 dholland Exp $ */
+/* $NetBSD: spiflash.c,v 1.15 2014/07/25 08:10:39 dholland Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.14 2014/07/25 08:02:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.15 2014/07/25 08:10:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -162,6 +162,7 @@ const struct cdevsw spiflash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK,
 };
 
