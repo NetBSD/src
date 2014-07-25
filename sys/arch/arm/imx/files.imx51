@@ -1,10 +1,11 @@
-#	$NetBSD: files.imx51,v 1.10 2014/07/25 07:07:47 hkenken Exp $
+#	$NetBSD: files.imx51,v 1.11 2014/07/25 07:49:56 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
 
 defparam opt_imx.h				MEMSIZE
 defflag opt_imx.h				IMX51
+defflag opt_imx.h				IMX50
 
 define	bus_dma_generic
 
@@ -32,7 +33,8 @@ file	arch/arm/imx/imx51_clock.c
 # Clock Control Module
 device	imxccm
 attach	imxccm	at axi
-file	arch/arm/imx/imx51_ccm.c	imxccm		needs-flag
+file	arch/arm/imx/imx51_ccm.c		imxccm	needs-flag
+defflag opt_imx51clk.h				IMXCCMDEBUG
 
 # frequency of external low frequency clock
 # typically 32000, 32768, or 38400.
@@ -62,6 +64,12 @@ defflag opt_imxgpio.h			IMX_GPIO_INTR_SPLIT
 device	imxiomux : bus_space_generic
 attach	imxiomux at axi
 file	arch/arm/imx/imx51_iomux.c		imxiomux
+
+# EPDC controller
+# device	epdc : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons
+# file	arch/arm/imx/imx50_epdc.c	epdc	 needs-flag
+# defflag opt_imx50_epdc.h		IMXEPDCCONSOLE
+# defparam opt_imx50_epdc.h		EPDC_DEBUG
 
 # IPU v3 controller
 device	ipu : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons

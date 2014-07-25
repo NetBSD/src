@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_tzic.c,v 1.6 2014/03/10 09:35:18 skrll Exp $	*/
+/*	$NetBSD: imx51_tzic.c,v 1.7 2014/07/25 07:49:56 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -26,10 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.6 2014/03/10 09:35:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.7 2014/07/25 07:49:56 hkenken Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 
+#include "opt_imx.h"
 #include "locators.h"
 
 #include <sys/param.h>

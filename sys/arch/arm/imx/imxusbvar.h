@@ -30,7 +30,8 @@ enum imx_usb_if {
 	IMXUSBC_IF_UTMI,
 	IMXUSBC_IF_PHILIPS,
 	IMXUSBC_IF_ULPI,
-	IMXUSBC_IF_SERIAL
+	IMXUSBC_IF_SERIAL,
+	IMXUSBC_IF_UTMI_WIDE
 };
 
 struct imxehci_softc {

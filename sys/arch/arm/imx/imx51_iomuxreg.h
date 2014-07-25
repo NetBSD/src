@@ -662,21 +662,5 @@
 	IOMUX_PIN(IOMUXC_SW_MUX_CTL_PAD_##name,	\
 	    IOMUXC_SW_PAD_CTL_PAD_##name)
 
-#define MUX_PIN_MUX(name)			\
-	IOMUX_PIN(IOMUXC_SW_MUX_CTL_PAD_##name, IOMUX_PAD_NONE)
-
-#define MUX_PIN_PAD(name) \
-	IOMUX_PIN(IOMUX_MUX_NONE, IOMUXC_SW_PAD_CTL_PAD_##name)
-
-#define MUX_PIN_GRP(name) \
-	IOMUX_PIN(IOMUX_MUX_NONE, IOMUXC_SW_PAD_CTL_GRP_##name)
-
-#define MUX_PIN_PATH(name) \
-	IOMUX_PIN(IOMUXC_##name##_SELECT_INPUT, IOMUX_MUX_NONE)
-
-/* INPUT Control */
-
-#define MUX_SELECT(name) (name##_SELECT_INPUT)
-
 #endif /* _IMX51_IOMUXREG_H */
 
