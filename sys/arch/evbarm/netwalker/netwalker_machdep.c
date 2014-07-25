@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.16 2014/05/06 11:22:53 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.17 2014/07/25 16:04:27 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,9 +102,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.16 2014/05/06 11:22:53 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.17 2014/07/25 16:04:27 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
+#include "opt_arm_debug.h"
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.16 2014/05/06 11:22:53 hkenk
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/bus.h>
 
