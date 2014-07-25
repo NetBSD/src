@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.48 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: grf.c,v 1.49 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.48 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.49 2014/07/25 08:10:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,6 +118,7 @@ const struct cdevsw grf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = grfmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

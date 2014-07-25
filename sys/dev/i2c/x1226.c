@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.16 2014/03/17 15:57:56 skrll Exp $	*/
+/*	$NetBSD: x1226.c,v 1.17 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.16 2014/03/17 15:57:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.17 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ const struct cdevsw xrtc_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

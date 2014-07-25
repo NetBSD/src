@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.33 2014/07/25 08:02:19 dholland Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.34 2014/07/25 08:10:36 dholland Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ const struct cdevsw dm_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 

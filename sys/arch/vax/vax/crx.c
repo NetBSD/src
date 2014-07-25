@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.14 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: crx.c,v 1.15 2014/07/25 08:10:35 dholland Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.14 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.15 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -69,6 +69,7 @@ const struct cdevsw crx_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

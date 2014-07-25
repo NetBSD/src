@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.61 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: p9100.c,v 1.62 2014/07/25 08:10:38 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.61 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.62 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,7 @@ const struct cdevsw pnozz_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = p9100mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 
