@@ -65,9 +65,11 @@ static unsigned long i915_stolen_to_physical(struct drm_device *dev)
 	 */
 	base = 0;
 	if (INTEL_INFO(dev)->gen >= 3) {
+#ifndef __NetBSD__		/* XXX disable this for now */
 		/* Read Graphics Base of Stolen Memory directly */
 		pci_read_config_dword(dev->pdev, 0x5c, &base);
 		base &= ~((1<<20) - 1);
+#endif
 	} else { /* GEN2 */
 #if 0
 		/* Stolen is immediately above Top of Memory */
