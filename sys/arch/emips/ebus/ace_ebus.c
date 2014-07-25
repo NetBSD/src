@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.10 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.11 2014/07/25 08:02:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.10 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.11 2014/07/25 08:02:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.10 2014/03/16 05:20:23 dholland Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.11 2014/07/25 08:02:18 dholland Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1562,6 +1562,7 @@ const struct bdevsw ace_bdevsw = {
 	.d_ioctl = aceioctl,
 	.d_dump = acedump,
 	.d_psize = acesize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

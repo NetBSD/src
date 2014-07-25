@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.10 2013/09/13 22:18:42 joerg Exp $	*/
+/*	$NetBSD: flash.c,v 1.11 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.10 2013/09/13 22:18:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.11 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -98,6 +98,7 @@ const struct bdevsw flash_bdevsw = {
 	.d_ioctl = flashioctl,
 	.d_dump = flashdump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,	/* XXX this driver probably wants a discard */
 	.d_flag = D_DISK | D_MPSAFE
 };
 

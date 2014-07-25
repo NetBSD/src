@@ -1,4 +1,4 @@
-/* $NetBSD: altmem.c,v 1.2 2014/03/16 05:20:26 dholland Exp $ */
+/* $NetBSD: altmem.c,v 1.3 2014/07/25 08:02:19 dholland Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.2 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.3 2014/07/25 08:02:19 dholland Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -66,6 +66,7 @@ const struct bdevsw altmem_bdevsw = {
 	.d_ioctl = altmemioctl,
 	.d_dump = nodump,
 	.d_psize = altmemsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 const struct cdevsw altmem_cdevsw = {

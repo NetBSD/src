@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.170 2014/06/28 15:52:45 maxv Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.171 2014/07/25 08:02:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.170 2014/06/28 15:52:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.171 2014/07/25 08:02:20 dholland Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1286,6 +1286,7 @@ const struct bdevsw swap_bdevsw = {
 	.d_ioctl = noioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 
