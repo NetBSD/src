@@ -1,11 +1,11 @@
-/*	$NetBSD: int_const.h,v 1.5 2014/07/25 21:43:13 joerg Exp $	*/
+/*	$NetBSD: common_int_types.h,v 1.1 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Joerg Sonnenberger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,42 +29,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_INT_CONST_H_
-#define _AMD64_INT_CONST_H_
+#ifndef _SYS_COMMON_INT_TYPES_H_
+#define _SYS_COMMON_INT_TYPES_H_
 
-#ifdef __INTMAX_C_SUFFIX__
-#include <sys/common_int_const.h>
-#else
-
-#ifdef __x86_64__
-
-/*
- * 7.18.4 Macros for integer constants
- */
-
-/* 7.18.4.1 Macros for minimum-width integer constants */
-
-#define	INT8_C(c)	c
-#define	INT16_C(c)	c
-#define	INT32_C(c)	c
-#define	INT64_C(c)	c ## L
-
-#define	UINT8_C(c)	c
-#define	UINT16_C(c)	c
-#define	UINT32_C(c)	c ## U
-#define	UINT64_C(c)	c ## UL
-
-/* 7.18.4.2 Macros for greatest-width integer constants */
-
-#define	INTMAX_C(c)	c ## L
-#define	UINTMAX_C(c)	c ## UL
-
-#else	/*	__x86_64__	*/
-
-#include <i386/int_const.h>
-
-#endif	/*	__x86_64__	*/
-
+#ifndef __UINTPTR_TYPE__
+#error Your compiler does not provide exact width type macros.
 #endif
 
-#endif /* !_AMD64_INT_CONST_H_ */
+/*
+ * 7.18.1 Integer types
+ */
+
+/* 7.18.1.1 Exact-width integer types */
+
+typedef	__INT8_TYPE__		   __int8_t;
+typedef	__UINT8_TYPE__		  __uint8_t;
+typedef	__INT16_TYPE__		  __int16_t;
+typedef	__UINT16_TYPE__		 __uint16_t;
+typedef	__INT32_TYPE__		  __int32_t;
+typedef	__UINT32_TYPE__		 __uint32_t;
+typedef	__INT64_TYPE__		  __int64_t;
+typedef	__UINT64_TYPE__		 __uint64_t;
+
+#define	__BIT_TYPES_DEFINED__
+
+/* 7.18.1.4 Integer types capable of holding object pointers */
+
+typedef	__INTPTR_TYPE__		 __intptr_t;
+typedef	__UINTPTR_TYPE__	__uintptr_t;
+
+#endif /* _SYS_COMMON_INT_TYPES_H_ */
