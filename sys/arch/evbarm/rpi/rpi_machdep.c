@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.42 2014/07/16 23:54:32 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.42 2014/07/16 23:54:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_arm_debug.h"
+#include "opt_vcprop.h"
 
 #include "sdhc.h"
 #include "bcmdwctwo.h"
@@ -103,7 +104,7 @@ extern int KERNEL_BASE_phys[];
 extern int KERNEL_BASE_virt[];
 
 BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[MAX_BOOT_STRING];
+static char bootargs[VCPROP_MAXCMDLINE];
 char *boot_args = NULL;
 
 static void rpi_bootparams(void);
