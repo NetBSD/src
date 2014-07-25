@@ -1,6 +1,6 @@
-#	$NetBSD: files.imx51,v 1.9 2014/05/06 11:22:53 hkenken Exp $
+#	$NetBSD: files.imx51,v 1.10 2014/07/25 07:07:47 hkenken Exp $
 #
-# Configuration info for the Freescale i.MX51
+# Configuration info for the Freescale i.MX5x
 #
 
 defparam opt_imx.h				MEMSIZE
@@ -90,19 +90,15 @@ file   arch/arm/imx/imx51_usb.c			imxusbc
 attach ehci at imxusbc with imxehci
 file   arch/arm/imx/imxusb.c			imxehci
 
-# attach	wdc at ahb with wdc_ahb : bus_dma_generic
-# file	arch/arm/imx/wdc_axi.c			wdc_axi
-
 # SD host controller for SD/MMC
 attach	sdhc at axi with sdhc_axi
 file	arch/arm/imx/imx51_esdhc.c		sdhc_axi
 
 # iic Controler
-# device	imxi2c: i2cbus
-# file	arch/arm/imx/imx51_i2c.c		imxi2c
-
-# attach	imxi2c at aips with imxi2c_aips
-# file	arch/arm/imx/imxi2c_aips.c		imxi2c_aips
+device	imxi2c: i2cbus
+attach	imxi2c at axi
+file	arch/arm/imx/imxi2c.c		imxi2c
+file	arch/arm/imx/imx51_i2c.c	imxi2c
 
 # SPI bus controlloer
 # attach of this driver need to be specified in paltform configuration
@@ -116,7 +112,7 @@ defparam opt_imxspi.h				IMXSPI_DEBUG
 
 # Smart Direct Memory Access Controller
 # device	imxsdma: dmover_service, bus_dma_generic
-# attach	imxsdma at ahb
+# attach	imxsdma at axi
 # file	arch/arm/imx/imxsdma.c		imxsdma
 # file	arch/arm/imx/imxsdmaprog.c		imxsdma
 
