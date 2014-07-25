@@ -1,11 +1,11 @@
-/*	$NetBSD: int_const.h,v 1.5 2014/07/25 21:43:13 joerg Exp $	*/
+/*	$NetBSD: common_int_const.h,v 1.1 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Joerg Sonnenberger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,42 +29,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_INT_CONST_H_
-#define _AMD64_INT_CONST_H_
+#ifndef _SYS_COMMON_INT_CONST_H_
+#define _SYS_COMMON_INT_CONST_H_
 
-#ifdef __INTMAX_C_SUFFIX__
-#include <sys/common_int_const.h>
-#else
+#ifndef __INTMAX_C_SUFFIX__
+#error Your compiler does not provide inter constant suffix macros.
+#endif
 
-#ifdef __x86_64__
-
+#define __int_join_(c,suffix) c ## suffix
+#define __int_join(c,suffix) __int_join_(c,suffix)
 /*
  * 7.18.4 Macros for integer constants
  */
 
 /* 7.18.4.1 Macros for minimum-width integer constants */
 
-#define	INT8_C(c)	c
-#define	INT16_C(c)	c
-#define	INT32_C(c)	c
-#define	INT64_C(c)	c ## L
+#define	INT8_C(c)	__int_join(c, __INT8_C_SUFFIX__)
+#define	INT16_C(c)	__int_join(c, __INT16_C_SUFFIX__)
+#define	INT32_C(c)	__int_join(c, __INT32_C_SUFFIX__)
+#define	INT64_C(c)	__int_join(c, __INT64_C_SUFFIX__)
 
-#define	UINT8_C(c)	c
-#define	UINT16_C(c)	c
-#define	UINT32_C(c)	c ## U
-#define	UINT64_C(c)	c ## UL
+#define	UINT8_C(c)	__int_join(c, __UINT8_C_SUFFIX__)
+#define	UINT16_C(c)	__int_join(c, __UINT16_C_SUFFIX__)
+#define	UINT32_C(c)	__int_join(c, __UINT32_C_SUFFIX__)
+#define	UINT64_C(c)	__int_join(c, __UINT64_C_SUFFIX__)
 
 /* 7.18.4.2 Macros for greatest-width integer constants */
 
-#define	INTMAX_C(c)	c ## L
-#define	UINTMAX_C(c)	c ## UL
+#define	INTMAX_C(c)	__int_join(c, __INTMAX_C_SUFFIX__)
+#define	UINTMAX_C(c)	__int_join(c, __UINTMAX_C_SUFFIX__)
 
-#else	/*	__x86_64__	*/
-
-#include <i386/int_const.h>
-
-#endif	/*	__x86_64__	*/
-
-#endif
-
-#endif /* !_AMD64_INT_CONST_H_ */
+#endif /* _SYS_COMMON_INT_CONST_H_ */
