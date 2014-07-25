@@ -210,3 +210,5 @@
 475  sys_recvmmsg           recvmmsg           rump___sysimpl_recvmmsg
 476  sys_sendmmsg           sendmmsg           rump___sysimpl_sendmmsg
 477  sys_clock_nanosleep    clock_nanosleep    rump___sysimpl_clock_nanosleep
+479  sys_posix_fallocate    posix_fallocate    rump___sysimpl_posix_fallocate
+480  sys_fdiscard           fdiscard           rump___sysimpl_fdiscard
