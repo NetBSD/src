@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.253 2014/06/23 14:14:10 riastradh Exp $
+#	$NetBSD: shlib_version,v 1.254 2014/07/25 08:31:06 dholland Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -42,4 +42,4 @@
 # - move gethostbyname to a compat library
 # - remove arc4random(3) API
 major=12
-minor=192
+minor=193
