@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.75 2014/05/17 23:30:24 rmind Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.76 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.75 2014/05/17 23:30:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.76 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -633,6 +633,8 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_setattr_desc, genfs_ebadf },		/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
