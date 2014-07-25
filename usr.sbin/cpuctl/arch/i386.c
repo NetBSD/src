@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.57 2014/07/25 13:52:26 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.58 2014/07/25 14:18:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.57 2014/07/25 13:52:26 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.58 2014/07/25 14:18:49 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -360,7 +360,10 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 					 "(Haswell)",
 				[0x46] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
-				[0x4d] = "Atom C2000, E3000",
+				[0x4a] = "Future Atom E3000, Z3000",
+				[0x4d] = "Atom C2000",
+				[0x5a] = "Future Atom E3000, Z3000",
+				[0x5d] = "Future Atom E3000, Z3000",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
