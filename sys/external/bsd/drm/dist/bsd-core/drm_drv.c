@@ -314,6 +314,7 @@ struct cdevsw drm_cdevsw = {
 	.d_poll = drm_poll,
 	.d_mmap = drm_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY | D_NEGOFFSAFE
 };
 

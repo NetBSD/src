@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.41 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: dz.c,v 1.42 2014/07/25 08:10:36 dholland Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.41 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.42 2014/07/25 08:10:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ const struct cdevsw dz_cdevsw = {
 	.d_poll = dzpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

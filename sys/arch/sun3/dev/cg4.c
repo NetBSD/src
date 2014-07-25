@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.40 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: cg4.c,v 1.41 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.40 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.41 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ const struct cdevsw cgfour_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = cg4mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

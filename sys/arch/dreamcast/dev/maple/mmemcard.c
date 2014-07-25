@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.23 2014/07/25 08:02:18 dholland Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.24 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.23 2014/07/25 08:02:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.24 2014/07/25 08:10:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -210,6 +210,7 @@ const struct cdevsw mmem_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

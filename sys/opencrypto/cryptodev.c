@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.78 2014/03/16 05:20:30 dholland Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.79 2014/07/25 08:10:40 dholland Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.78 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.79 2014/07/25 08:10:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1119,6 +1119,7 @@ struct cdevsw crypto_cdevsw = {
 	.d_poll = cryptoselect /*nopoll*/,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

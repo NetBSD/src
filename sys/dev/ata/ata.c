@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.130 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: ata.c,v 1.131 2014/07/25 08:10:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.130 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.131 2014/07/25 08:10:36 dholland Exp $");
 
 #include "opt_ata.h"
 
@@ -116,6 +116,7 @@ const struct cdevsw atabus_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

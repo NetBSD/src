@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.41 2014/07/18 18:02:08 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.42 2014/07/25 08:10:33 dholland Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.41 2014/07/18 18:02:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.42 2014/07/25 08:10:33 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -138,6 +138,7 @@ const struct cdevsw siotty_cdevsw = {
 	.d_poll = siopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

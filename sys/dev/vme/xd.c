@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.92 2014/07/25 08:02:20 dholland Exp $	*/
+/*	$NetBSD: xd.c,v 1.93 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.92 2014/07/25 08:02:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.93 2014/07/25 08:10:39 dholland Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -313,6 +313,7 @@ const struct cdevsw xd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
