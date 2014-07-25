@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.69 2014/04/03 15:24:20 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.70 2014/07/25 08:02:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.69 2014/04/03 15:24:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.70 2014/07/25 08:02:19 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -116,6 +116,7 @@ const struct bdevsw dk_bdevsw = {
 	.d_ioctl = dkioctl,
 	.d_dump = dkdump,
 	.d_psize = dksize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

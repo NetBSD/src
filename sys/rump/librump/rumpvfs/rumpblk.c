@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.55 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.56 2014/07/25 08:02:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.55 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.56 2014/07/25 08:02:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -101,6 +101,7 @@ static const struct bdevsw rumpblk_bdevsw = {
 	.d_ioctl = rumpblk_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -111,6 +112,7 @@ static const struct bdevsw rumpblk_bdevsw_fail = {
 	.d_ioctl = rumpblk_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.91 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: xd.c,v 1.92 2014/07/25 08:02:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.91 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.92 2014/07/25 08:02:20 dholland Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -298,6 +298,7 @@ const struct bdevsw xd_bdevsw = {
 	.d_ioctl = xdioctl,
 	.d_dump = xddump,
 	.d_psize = xdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

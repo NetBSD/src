@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.33 2014/03/23 03:41:10 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.34 2014/07/25 08:02:19 dholland Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.33 2014/03/23 03:41:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.34 2014/07/25 08:02:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,7 @@ const struct bdevsw rd_bdevsw = {
 	.d_ioctl = rdioctl,
 	.d_dump = rddump,
 	.d_psize = rdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
