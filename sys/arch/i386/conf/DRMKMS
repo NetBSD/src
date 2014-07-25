@@ -3,6 +3,12 @@ include "arch/i386/conf/NO_DRM"
 i915drmkms* 	at pci? dev ? function ?
 intelfb* 	at intelfbbus?
 
+radeondrmkms* 	at pci? dev ? function ?
+radeondrmkmsfb* at radeonfbbus?
+
+#nouveau*	at pci? dev ? function ?
+#nouveaufb*	at nouveaufbbus
+
 no options 	DIAGNOSTIC
 options 	DIAGNOSTIC	# expensive kernel consistency check
 options 	DEBUG		# expensive debugging checks/support
