@@ -88,12 +88,12 @@ static const guard_t INITIALISED = static_cast<guard_t>(1) << 56;
 #define LOCK_PART(guard) (guard)
 #define INIT_PART(guard) (guard)
 #else
+typedef uint32_t guard_lock_t;
 #	if defined(__LITTLE_ENDIAN__)
 typedef struct {
 	uint32_t init_half;
 	uint32_t lock_half;
 } guard_t;
-typedef uint32_t guard_lock_t;
 static const uint32_t LOCKED = static_cast<guard_lock_t>(1) << 31;
 static const uint32_t INITIALISED = 1;
 #	else
