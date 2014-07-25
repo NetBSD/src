@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.11 2014/03/16 05:20:23 dholland Exp $ */
+/* $NetBSD: imxuart.c,v 1.12 2014/07/25 06:36:16 hkenken Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.11 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.12 2014/07/25 06:36:16 hkenken Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -2223,7 +2223,7 @@ imxuart_common_getc(dev_t dev, struct imxuart_regs *regsp)
 	c = 0xff & bus_space_read_4(iot, ioh, IMX_URXD);
 
 	{
-		int cn_trapped = 0; /* unused */
+		int __attribute__((__unused__))cn_trapped = 0; /* unused */
 #ifdef DDB
 		extern int db_active;
 		if (!db_active)
@@ -2246,7 +2246,7 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
 	if (!READAHEAD_IS_FULL() &&
 	    ((usr2 = bus_space_read_4(iot, ioh, IMX_USR2)) & IMX_USR2_RDR)) {
 
-		int cn_trapped = 0;
+		int __attribute__((__unused__))cn_trapped = 0;
 		cin = bus_space_read_4(iot, ioh, IMX_URXD);
 		cn_check_magic(dev, cin & 0xff, imxuart_cnm_state);
 		imxuart_readahead_in = (imxuart_readahead_in + 1) &
