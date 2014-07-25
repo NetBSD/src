@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.145 2013/11/12 03:29:22 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.146 2014/07/25 08:24:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.145 2013/11/12 03:29:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.146 2014/07/25 08:24:31 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1621,17 +1621,22 @@ ffs_discardcb(struct work *wk, void *arg)
 	struct discardopdata *td = (void *)wk;
 	struct discarddata *ts = arg;
 	struct fs *fs = ts->fs;
-	struct disk_discard_range ta;
+	off_t start, len;
 #ifdef TRIMDEBUG
 	int error;
 #endif
 
-	ta.bno = FFS_FSBTODB(fs, td->bno);
-	ta.size = td->size >> DEV_BSHIFT;
+/* like FSBTODB but emits bytes; XXX move to fs.h */
+#ifndef FFS_FSBTOBYTES
+#define FFS_FSBTOBYTES(fs, b) ((b) << (fs)->fs_fshift)
+#endif
+
+	start = FFS_FSBTOBYTES(fs, td->bno);
+	len = td->size;
 #ifdef TRIMDEBUG
 	error =
 #endif
-		VOP_IOCTL(td->devvp, DIOCDISCARD, &ta, FWRITE, FSCRED);
+		VOP_FDISCARD(td->devvp, start, len);
 #ifdef TRIMDEBUG
 	printf("trim(%" PRId64 ",%ld):%d\n", td->bno, td->size, error);
 #endif
@@ -1648,19 +1653,8 @@ ffs_discardcb(struct work *wk, void *arg)
 void *
 ffs_discard_init(struct vnode *devvp, struct fs *fs)
 {
-	struct disk_discard_params tp;
 	struct discarddata *ts;
 	int error;
-
-	error = VOP_IOCTL(devvp, DIOCGDISCARDPARAMS, &tp, FREAD, FSCRED);
-	if (error) {
-		printf("DIOCGDISCARDPARAMS: %d\n", error);
-		return NULL;
-	}
-	if (tp.maxsize * DEV_BSIZE < fs->fs_bsize) {
-		printf("tp.maxsize=%ld, fs_bsize=%d\n", tp.maxsize, fs->fs_bsize);
-		return NULL;
-	}
 
 	ts = kmem_zalloc(sizeof (*ts), KM_SLEEP);
 	error = workqueue_create(&ts->wq, "trimwq", ffs_discardcb, ts,
@@ -1672,7 +1666,7 @@ ffs_discard_init(struct vnode *devvp, struct fs *fs)
 	mutex_init(&ts->entrylk, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ts->wqlk, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ts->wqcv, "trimwqcv");
-	ts->maxsize = max(tp.maxsize * DEV_BSIZE, 100*1024); /* XXX */
+	ts->maxsize = 100*1024; /* XXX */
 	ts->fs = fs;
 	return ts;
 }
