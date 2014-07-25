@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.407 2014/03/16 05:20:27 dholland Exp $ */
+/*	$NetBSD: wd.c,v 1.408 2014/07/25 08:02:19 dholland Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.407 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.408 2014/07/25 08:02:19 dholland Exp $");
 
 #include "opt_ata.h"
 
@@ -148,6 +148,7 @@ const struct bdevsw wd_bdevsw = {
 	.d_ioctl = wdioctl,
 	.d_dump = wddump,
 	.d_psize = wdsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
