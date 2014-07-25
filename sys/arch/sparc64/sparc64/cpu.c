@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.113 2014/06/10 18:27:41 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.114 2014/07/25 17:21:32 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.113 2014/06/10 18:27:41 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.114 2014/07/25 17:21:32 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -342,7 +342,7 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	ci->ci_system_clockrate[1] = sclk / 1000000;
 
 	snprintf(buf, sizeof buf, "%s @ %s MHz",
-		prom_getpropstring(node, "name"), clockfreq(clk / 1000));
+		prom_getpropstring(node, "name"), clockfreq(clk));
 	cpu_setmodel("%s (%s)", machine_model, buf);
 
 	aprint_normal(": %s, CPU id %d\n", buf, ci->ci_cpuid);
