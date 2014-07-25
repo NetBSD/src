@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.5 2014/07/25 16:15:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.5 2014/07/25 16:15:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -703,6 +703,7 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 		dw->work.w_state = WORK_CANCELLED;
 		linux_wait_for_cancelled_work(&dw->work);
 		cancelled_p = true;
+		break;
 
 	case WORK_INVOKED:
 		linux_wait_for_invoked_work(&dw->work);
