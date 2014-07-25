@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.39 2014/06/03 11:56:07 njoly Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.40 2014/07/25 12:16:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,38 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 	if (rump_sys_stat(pb, &sb2) == -1)
 		atf_tc_fail_errno("stat 2");
 
-	ATF_REQUIRE(memcmp(&sb1, &sb2, sizeof(sb1)) == 0);
+	if (memcmp(&sb1, &sb2, sizeof(sb1)) != 0) {
+		printf("what\tsb1\t\tsb2\n");
+
+#define FIELD(FN)	\
+		printf(#FN "\t%lld\t%lld\n", \
+		(long long)sb1.FN, (long long)sb2.FN)
+#define TIME(FN)	\
+		printf(#FN "\t%lld.%ld\t%lld.%ld\n", \
+		(long long)sb1.FN.tv_sec, sb1.FN.tv_nsec, \
+		(long long)sb2.FN.tv_sec, sb2.FN.tv_nsec)
+
+		FIELD(st_dev);
+		FIELD(st_mode);
+		FIELD(st_ino);
+		FIELD(st_nlink);
+		FIELD(st_uid);
+		FIELD(st_gid);
+		FIELD(st_rdev);
+		TIME(st_atim);
+		TIME(st_mtim);
+		TIME(st_ctim);
+		TIME(st_birthtim);
+		FIELD(st_size);
+		FIELD(st_blocks);
+		FIELD(st_flags);
+		FIELD(st_gen);
+
+#undef FIELD
+#undef TIME
+
+		atf_tc_fail("stat results differ, see ouput for more details");
+	}
 }
 
 static void
