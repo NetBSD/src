@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.10 2014/03/16 05:20:22 dholland Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.10 2014/03/16 05:20:22 dholland Exp $ */
+/*	$Id: at91dbgu.c,v 1.11 2014/07/25 08:10:31 dholland Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.11 2014/07/25 08:10:31 dholland Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.10 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.11 2014/07/25 08:10:31 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -192,6 +192,7 @@ const struct cdevsw at91dbgu_cdevsw = {
 	.d_poll = at91dbgu_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

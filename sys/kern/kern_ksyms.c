@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.71 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.72 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.71 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.72 2014/07/25 08:10:40 dholland Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1145,5 +1145,6 @@ const struct cdevsw ksyms_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nullkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };

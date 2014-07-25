@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.68 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.68 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -80,6 +80,7 @@ const struct cdevsw veriexec_cdevsw = {
 #endif
 	.d_poll = nopoll,
 	.d_mmap = nommap,
+	.d_discard = nodiscard,
 #if defined(__NetBSD__)
        .d_kqfilter = nokqfilter,
        .d_flag = D_OTHER,

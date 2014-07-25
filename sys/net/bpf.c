@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.184 2014/07/10 15:32:09 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.185 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.184 2014/07/10 15:32:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.185 2014/07/25 08:10:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -191,6 +191,7 @@ const struct cdevsw bpf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

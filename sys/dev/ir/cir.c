@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.30 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: cir.c,v 1.31 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.30 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.31 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ const struct cdevsw cir_cdevsw = {
 	.d_poll = cirpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

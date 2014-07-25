@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.20 2014/03/16 05:20:22 dholland Exp $	*/
+/*	$NetBSD: opms.c,v 1.21 2014/07/25 08:10:31 dholland Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.20 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.21 2014/07/25 08:10:31 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,6 +149,7 @@ const struct cdevsw opms_cdevsw = {
 	.d_poll = opmspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = opmskqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

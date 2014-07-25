@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.74 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.74 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75 2014/07/25 08:10:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,6 +251,7 @@ const struct cdevsw uscanner_cdevsw = {
 	.d_poll = uscannerpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = uscannerkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

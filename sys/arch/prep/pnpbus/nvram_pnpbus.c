@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.19 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.20 2014/07/25 08:10:34 dholland Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.19 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.20 2014/07/25 08:10:34 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,6 +101,7 @@ const struct cdevsw nvram_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

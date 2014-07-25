@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.64 2014/07/25 08:02:19 dholland Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.65 2014/07/25 08:10:35 dholland Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.64 2014/07/25 08:02:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.65 2014/07/25 08:10:35 dholland Exp $");
 
 #include "opt_xen.h"
 
@@ -212,6 +212,7 @@ const struct cdevsw xbd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.7 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.8 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.7 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.8 2014/07/25 08:10:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -232,6 +232,7 @@ const struct cdevsw drm_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = drm_mmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	/* XXX was D_TTY | D_NEGOFFSAFE */
 	/* XXX Add D_MPSAFE some day... */
 	.d_flag = D_NEGOFFSAFE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.44 2014/03/16 12:26:58 reinoud Exp $ */
+/*	$NetBSD: sscom.c,v 1.45 2014/07/25 08:10:32 dholland Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.44 2014/03/16 12:26:58 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.45 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -198,6 +198,7 @@ const struct cdevsw sscom_cdevsw = {
 	.d_poll = sscompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

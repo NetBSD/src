@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.21 2014/03/16 05:20:28 dholland Exp $ */
+/* $NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.21 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ const struct cdevsw hdaudio_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

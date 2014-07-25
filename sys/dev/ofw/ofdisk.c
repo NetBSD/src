@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.46 2014/07/25 08:02:20 dholland Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.47 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.46 2014/07/25 08:02:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.47 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -102,6 +102,7 @@ const struct cdevsw ofdisk_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

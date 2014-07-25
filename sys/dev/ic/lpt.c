@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.79 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: lpt.c,v 1.80 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.79 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.80 2014/07/25 08:10:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ const struct cdevsw lpt_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

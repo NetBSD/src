@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.91 2014/07/02 20:17:30 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.91 2014/07/02 20:17:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92 2014/07/25 08:10:39 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,7 @@ const struct cdevsw uhid_cdevsw = {
 	.d_poll = uhidpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = uhidkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.19 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: bthub.c,v 1.20 2014/07/25 08:10:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.19 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.20 2014/07/25 08:10:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,6 +80,7 @@ const struct cdevsw bthub_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

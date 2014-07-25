@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.52 2014/05/27 05:14:02 msaitoh Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.53 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.52 2014/05/27 05:14:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.53 2014/07/25 08:10:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,5 +425,6 @@ const struct cdevsw log_cdevsw = {
 	.d_poll = logpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = logkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };

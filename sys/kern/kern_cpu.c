@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.65 2014/03/25 12:50:53 macallan Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.66 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.65 2014/03/25 12:50:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.66 2014/07/25 08:10:40 dholland Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -112,6 +112,7 @@ const struct cdevsw cpuctl_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

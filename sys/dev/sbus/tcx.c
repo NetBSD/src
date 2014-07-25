@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.55 2014/07/22 04:55:51 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.56 2014/07/25 08:10:38 dholland Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.55 2014/07/22 04:55:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.56 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ const struct cdevsw tcx_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = tcxmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

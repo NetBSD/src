@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.7 2014/03/27 18:27:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.8 2014/07/25 08:10:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,6 +60,7 @@ struct cdevsw filemon_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_MPSAFE
 };
 

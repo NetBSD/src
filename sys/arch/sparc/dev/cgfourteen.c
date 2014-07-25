@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.78 2014/04/23 16:54:21 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.79 2014/07/25 08:10:34 dholland Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -130,6 +130,7 @@ const struct cdevsw cgfourteen_cdevsw = {
 	.d_poll = cgfourteenpoll,
 	.d_mmap = cgfourteenmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

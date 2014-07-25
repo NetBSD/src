@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.37 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.38 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.37 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.38 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -138,6 +138,7 @@ const struct cdevsw fcom_cdevsw = {
 	.d_poll = fcompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

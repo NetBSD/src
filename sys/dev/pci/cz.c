@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.59 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: cz.c,v 1.60 2014/07/25 08:10:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.59 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.60 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1546,6 +1546,7 @@ const struct cdevsw cz_cdevsw = {
 	.d_poll = czttypoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.18 2014/03/16 05:20:30 dholland Exp $ */
+/* $NetBSD: if_srt.c,v 1.19 2014/07/25 08:10:40 dholland Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.18 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.19 2014/07/25 08:10:40 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -492,5 +492,6 @@ const struct cdevsw srt_cdevsw = {
 	.d_poll = nullpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nullkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.15 2014/07/19 14:20:46 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.16 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.15 2014/07/19 14:20:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.16 2014/07/25 08:10:39 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -389,6 +389,7 @@ const struct cdevsw uhso_cdevsw = {
 	.d_poll = uhso_tty_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

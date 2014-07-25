@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.51 2014/03/16 05:20:23 dholland Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.52 2014/07/25 08:10:32 dholland Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.51 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.52 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -127,6 +127,7 @@ const struct cdevsw sacom_cdevsw = {
 	.d_poll = sacompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

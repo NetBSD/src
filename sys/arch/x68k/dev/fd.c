@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.109 2014/07/25 08:02:19 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.110 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.109 2014/07/25 08:02:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.110 2014/07/25 08:10:35 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -292,6 +292,7 @@ const struct cdevsw fd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

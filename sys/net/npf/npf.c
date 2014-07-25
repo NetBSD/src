@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.21 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.22 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.21 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.22 2014/07/25 08:10:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,6 +84,7 @@ const struct cdevsw npf_cdevsw = {
 	.d_poll = npf_dev_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

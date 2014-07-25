@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.48 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: plcom.c,v 1.49 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.48 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.49 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -204,6 +204,7 @@ const struct cdevsw plcom_cdevsw = {
 	.d_poll = plcompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

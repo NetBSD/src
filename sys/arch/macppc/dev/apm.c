@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.26 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: apm.c,v 1.27 2014/07/25 08:10:34 dholland Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.26 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.27 2014/07/25 08:10:34 dholland Exp $");
 
 #include "apm.h"
 
@@ -137,6 +137,7 @@ const struct cdevsw apm_cdevsw = {
 	.d_poll = apmpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = apmkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 #endif

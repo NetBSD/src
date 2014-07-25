@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.28 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.29 2014/07/25 08:10:34 dholland Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.28 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.29 2014/07/25 08:10:34 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,6 +89,7 @@ const struct cdevsw macofcons_cdevsw = {
 	.d_poll = ofcpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.3 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.4 2014/07/25 08:10:33 dholland Exp $");
 
 /*
  * LCD driver for FriendlyARM MINI2440.
@@ -197,6 +197,7 @@ const struct cdevsw lcd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = lcdmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

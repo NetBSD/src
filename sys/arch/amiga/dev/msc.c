@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.46 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: msc.c,v 1.47 2014/07/25 08:10:31 dholland Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.46 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.47 2014/07/25 08:10:31 dholland Exp $");
 
 #include "msc.h"
 
@@ -236,6 +236,7 @@ const struct cdevsw msc_cdevsw = {
 	.d_poll = mscpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.86 2014/05/22 16:31:19 dholland Exp $	*/
+/*	$NetBSD: dcm.c,v 1.87 2014/07/25 08:10:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.86 2014/05/22 16:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.87 2014/07/25 08:10:33 dholland Exp $");
 
 #include "opt_kgdb.h"
 
@@ -341,6 +341,7 @@ const struct cdevsw dcm_cdevsw = {
 	.d_poll = dcmpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

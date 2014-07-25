@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.76 2014/05/07 22:53:34 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.77 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.76 2014/05/07 22:53:34 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.77 2014/07/25 08:10:40 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -184,6 +184,7 @@ const struct cdevsw tap_cdevsw = {
 	.d_poll = tap_cdev_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = tap_cdev_kqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

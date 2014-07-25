@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.40 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: bpp.c,v 1.41 2014/07/25 08:10:38 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.40 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.41 2014/07/25 08:10:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -136,6 +136,7 @@ const struct cdevsw bpp_cdevsw = {
 	.d_poll = bpppoll,
 	.d_mmap = nommap,
 	.d_kqfilter = bppkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

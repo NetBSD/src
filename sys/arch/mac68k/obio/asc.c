@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.56 2014/03/16 05:20:25 dholland Exp $	*/
+/*	$NetBSD: asc.c,v 1.57 2014/07/25 08:10:34 dholland Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.56 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.57 2014/07/25 08:10:34 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -131,6 +131,7 @@ const struct cdevsw asc_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = ascmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

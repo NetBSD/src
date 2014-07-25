@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.54 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: ser.c,v 1.55 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.54 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.55 2014/07/25 08:10:32 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -269,6 +269,7 @@ const struct cdevsw ser_cdevsw = {
 	.d_poll = serpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

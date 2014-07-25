@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.64 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: cgsix.c,v 1.65 2014/07/25 08:10:39 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.64 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.65 2014/07/25 08:10:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ const struct cdevsw cgsix_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = cgsixmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

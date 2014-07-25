@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.86 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: if_se.c,v 1.87 2014/07/25 08:10:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.86 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.87 2014/07/25 08:10:38 dholland Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -247,6 +247,7 @@ const struct cdevsw se_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

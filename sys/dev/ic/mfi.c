@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.52 2014/03/16 05:20:27 dholland Exp $ */
+/* $NetBSD: mfi.c,v 1.53 2014/07/25 08:10:37 dholland Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.52 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.53 2014/07/25 08:10:37 dholland Exp $");
 
 #include "bio.h"
 
@@ -194,6 +194,7 @@ const struct cdevsw mfi_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

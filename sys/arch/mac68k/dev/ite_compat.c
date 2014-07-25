@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.11 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.12 2014/07/25 08:10:33 dholland Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.11 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.12 2014/07/25 08:10:33 dholland Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -73,6 +73,7 @@ const struct cdevsw ite_cdevsw = {
 	.d_poll = itepoll,
 	.d_mmap = nommap,
 	.d_kqfilter = itekqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.29 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: sbjcn.c,v 1.30 2014/07/25 08:10:34 dholland Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.29 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.30 2014/07/25 08:10:34 dholland Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -185,6 +185,7 @@ const struct cdevsw sbjcn_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

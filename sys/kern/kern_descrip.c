@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.224 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.225 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.224 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.225 2014/07/25 08:10:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,7 @@ const struct cdevsw filedesc_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

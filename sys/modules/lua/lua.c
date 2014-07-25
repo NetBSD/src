@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.12 2014/07/19 18:38:35 lneto Exp $ */
+/*	$NetBSD: lua.c,v 1.13 2014/07/25 08:10:40 dholland Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -104,6 +104,7 @@ const struct cdevsw lua_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

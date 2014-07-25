@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.15 2014/03/16 05:20:28 dholland Exp $ */
+/* $NetBSD: onewire.c,v 1.16 2014/07/25 08:10:38 dholland Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.15 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16 2014/07/25 08:10:38 dholland Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -90,6 +90,7 @@ const struct cdevsw onewire_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

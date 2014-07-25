@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.119 2014/06/19 16:54:40 ws Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.120 2014/07/25 08:10:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.119 2014/06/19 16:54:40 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120 2014/07/25 08:10:40 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -106,6 +106,7 @@ const struct cdevsw tun_cdevsw = {
 	.d_poll = tunpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = tunkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

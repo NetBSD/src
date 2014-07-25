@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.71 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: cons.c,v 1.72 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.71 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.72 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -77,6 +77,7 @@ const struct cdevsw cons_cdevsw = {
 	.d_poll = cnpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = cnkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

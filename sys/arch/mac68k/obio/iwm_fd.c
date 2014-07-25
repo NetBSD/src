@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.49 2014/07/25 08:02:18 dholland Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.50 2014/07/25 08:10:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.49 2014/07/25 08:02:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.50 2014/07/25 08:10:34 dholland Exp $");
 
 #include "locators.h"
 
@@ -254,6 +254,7 @@ const struct cdevsw fd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

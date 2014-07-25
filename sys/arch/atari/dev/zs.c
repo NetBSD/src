@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.76 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.77 2014/07/25 08:10:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.76 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.77 2014/07/25 08:10:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +248,7 @@ const struct cdevsw zs_cdevsw = {
 	.d_poll = zspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

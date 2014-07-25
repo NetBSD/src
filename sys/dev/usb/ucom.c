@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.104 2014/05/04 22:18:38 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.105 2014/07/25 08:10:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.104 2014/05/04 22:18:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.105 2014/07/25 08:10:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,7 @@ const struct cdevsw ucom_cdevsw = {
 	.d_poll = ucompoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

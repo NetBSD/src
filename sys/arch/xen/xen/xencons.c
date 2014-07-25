@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.40 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: xencons.c,v 1.41 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.40 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.41 2014/07/25 08:10:35 dholland Exp $");
 
 #include "opt_xen.h"
 
@@ -132,6 +132,7 @@ const struct cdevsw xencons_cdevsw = {
 	.d_poll = xencons_poll,
 	.d_mmap = NULL,	/* XXX: is this safe? - dholland 20140315 */
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 
