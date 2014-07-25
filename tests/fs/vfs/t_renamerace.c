@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.30 2014/01/09 13:23:57 hannken Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.31 2014/07/25 13:44:59 pgoyette Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -102,9 +102,6 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
 
-	if (FSTYPE_UDF(tc))
-		atf_tc_expect_fail("Test expected to fail");
-
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
 
@@ -148,9 +145,6 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
-
-	if (FSTYPE_UDF(tc))
-		atf_tc_expect_fail("Test expected to fail");
 
 	/* XXX: msdosfs also sometimes hangs */
 	if (FSTYPE_MSDOS(tc))
