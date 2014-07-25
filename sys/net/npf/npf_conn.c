@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.7 2014/07/25 23:07:21 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.8 2014/07/25 23:21:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.7 2014/07/25 23:07:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.8 2014/07/25 23:21:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -242,8 +242,10 @@ npf_conn_trackable_p(const npf_cache_t *npc)
 
 /*
  * npf_conn_conkey: construct a key for the connection lookup.
+ *
+ * => Returns the key length in bytes or zero on failure.
  */
-bool
+unsigned
 npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 {
 	const u_int alen = npc->npc_alen;
@@ -272,7 +274,7 @@ npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 			id[NPF_DST] = ic->icmp_id;
 			break;
 		}
-		return false;
+		return 0;
 	case IPPROTO_ICMPV6:
 		if (npf_iscached(npc, NPC_ICMP_ID)) {
 			const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
@@ -280,20 +282,29 @@ npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 			id[NPF_DST] = ic6->icmp6_id;
 			break;
 		}
-		return false;
+		return 0;
 	default:
 		/* Unsupported protocol. */
-		return false;
+		return 0;
 	}
 
-	/*
-	 * Finally, construct a key formed out of 32-bit integers.
-	 */
 	if (__predict_true(forw)) {
 		isrc = NPF_SRC, idst = NPF_DST;
 	} else {
 		isrc = NPF_DST, idst = NPF_SRC;
 	}
+
+	/*
+	 * Construct a key formed out of 32-bit integers.  The key layout:
+	 *
+	 * Field: | proto |  alen | src-id | dst-id | src-addr | dst-addr |
+	 *        +-------+-------+--------+--------+----------+----------+
+	 * Bits:  |   8   |   8   |   16   |   16   |  32-128  |  32-128  |
+	 *
+	 * The source and destination are inverted if they key is for the
+	 * backwards stream (forw == false).  The address length depends
+	 * on the 'alen' field; it is a length in bytes, either 4 or 16.
+	 */
 
 	key->ck_key[0] = ((uint32_t)npc->npc_proto << 16) | (alen & 0xffff);
 	key->ck_key[1] = ((uint32_t)id[isrc] << 16) | id[idst];
@@ -308,8 +319,7 @@ npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 		memcpy(&key->ck_key[2 + nwords], npc->npc_ips[idst], alen);
 		keylen = (2 + (nwords * 2)) * sizeof(uint32_t);
 	}
-	(void)keylen;
-	return true;
+	return keylen;
 }
 
 static __inline void

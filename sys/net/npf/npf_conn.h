@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.h,v 1.4 2014/07/25 23:07:21 rmind Exp $	*/
+/*	$NetBSD: npf_conn.h,v 1.5 2014/07/25 23:21:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ void		npf_conn_sysfini(void);
 void		npf_conn_tracking(bool);
 void		npf_conn_load(npf_conndb_t *, bool);
 
-bool		npf_conn_conkey(const npf_cache_t *, npf_connkey_t *, bool);
+unsigned	npf_conn_conkey(const npf_cache_t *, npf_connkey_t *, bool);
 npf_conn_t *	npf_conn_lookup(const npf_cache_t *, const int, bool *);
 npf_conn_t *	npf_conn_inspect(npf_cache_t *, const int, int *);
 npf_conn_t *	npf_conn_establish(npf_cache_t *, int, bool);
