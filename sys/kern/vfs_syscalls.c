@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.489 2014/07/25 08:30:10 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.490 2014/07/25 16:28:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.489 2014/07/25 08:30:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.490 2014/07/25 16:28:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4709,7 +4709,7 @@ sys_posix_fallocate(struct lwp *l, const struct sys_posix_fallocate_args *uap,
 	off_t pos, len;
 	struct file *fp;
 	struct vnode *vp;
-	int result;
+	int error;
 
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
@@ -4719,27 +4719,27 @@ sys_posix_fallocate(struct lwp *l, const struct sys_posix_fallocate_args *uap,
 		return EINVAL;
 	}
 	
-	result = fd_getvnode(fd, &fp);
-	if (result) {
-		return result;
+	error = fd_getvnode(fd, &fp);
+	if (error) {
+		return error;
 	}
 	if ((fp->f_flag & FWRITE) == 0) {
-		result = EBADF;
+		error = EBADF;
 		goto fail;
 	}
 	vp = fp->f_data;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR) {
-		result = EISDIR;
+		error = EISDIR;
 	} else {
-		result = VOP_FALLOCATE(vp, pos, len);
+		error = VOP_FALLOCATE(vp, pos, len);
 	}
 	VOP_UNLOCK(vp);
 
 fail:
 	fd_putfile(fd);
-	return result;
+	return error;
 }
 
 /*
@@ -4760,7 +4760,7 @@ sys_fdiscard(struct lwp *l, const struct sys_fdiscard_args *uap,
 	off_t pos, len;
 	struct file *fp;
 	struct vnode *vp;
-	int result;
+	int error;
 
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
@@ -4770,25 +4770,25 @@ sys_fdiscard(struct lwp *l, const struct sys_fdiscard_args *uap,
 		return EINVAL;
 	}
 	
-	result = fd_getvnode(fd, &fp);
-	if (result) {
-		return result;
+	error = fd_getvnode(fd, &fp);
+	if (error) {
+		return error;
 	}
 	if ((fp->f_flag & FWRITE) == 0) {
-		result = EBADF;
+		error = EBADF;
 		goto fail;
 	}
 	vp = fp->f_data;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR) {
-		result = EISDIR;
+		error = EISDIR;
 	} else {
-		result = VOP_FDISCARD(vp, pos, len);
+		error = VOP_FDISCARD(vp, pos, len);
 	}
 	VOP_UNLOCK(vp);
 
 fail:
 	fd_putfile(fd);
-	return result;
+	return error;
 }
