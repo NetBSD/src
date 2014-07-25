@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.115 2014/07/25 17:54:50 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.116 2014/07/25 18:29:45 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.115 2014/07/25 17:54:50 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116 2014/07/25 18:29:45 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -284,6 +284,7 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	struct cpu_info *ci;
 	const char *sep;
 	register int i, l;
+	uint64_t ver;
 	int bigcache, cachesize;
 	char buf[100];
 	int 	totalsize = 0;
@@ -347,6 +348,13 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 
 	aprint_normal(": %s, CPU id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
+	if (CPU_ISSUN4U || CPU_ISSUN4US) {
+		ver = getver();
+		aprint_normal_dev(dev, "manuf %x, impl %x, mask %x\n",
+		    (u_int)((ver & VER_MANUF) >> VER_MANUF_SHIFT),
+		    (u_int)((ver & VER_IMPL) >> VER_IMPL_SHIFT),
+		    (u_int)((ver & VER_MASK) >> VER_MASK_SHIFT));
+	}
 
 	if (ci->ci_system_clockrate[0] != 0) {
 		aprint_normal_dev(dev, "system tick frequency %s MHz\n",
