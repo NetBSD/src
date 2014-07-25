@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.14 2014/07/23 02:42:56 lneto Exp $
+# $NetBSD: ad.powerpc,v 1.15 2014/07/25 01:38:27 mrg Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -220,7 +220,7 @@
 ./usr/lib/powerpc/libpcap.so.5			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libpcap.so.5.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libpci.so.2			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libpci.so.2.0			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libpci.so.2.1			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libperfuse.so			base-compat-shlib       compat,arch64,pic		
 ./usr/lib/powerpc/libperfuse.so.0		base-compat-shlib       compat,arch64,pic
 ./usr/lib/powerpc/libperfuse.so.0.0		base-compat-shlib       compat,arch64,pic
