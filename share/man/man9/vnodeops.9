@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.94 2014/07/21 05:56:26 dholland Exp $
+.\"     $NetBSD: vnodeops.9,v 1.95 2014/07/25 08:16:47 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,8 @@
 .Nm VOP_SETATTR ,
 .Nm VOP_READ ,
 .Nm VOP_WRITE ,
+.Nm VOP_FALLOCATE,
+.Nm VOP_FDISCARD,
 .Nm VOP_IOCTL ,
 .Nm VOP_FCNTL ,
 .Nm VOP_POLL ,
@@ -114,6 +116,10 @@
 .Ft int
 .Fn VOP_WRITE "struct vnode *vp" "struct uio *uio" "int ioflag" \
 "kauth_cred_t cred"
+.Ft int
+.Fn VOP_FALLOCATE "struct vnode *vp" "off_t pos" "off_t len"
+.Ft int
+.Fn VOP_FDISCARD "struct vnode *vp" "off_t pos" "off_t len"
 .Ft int
 .Fn VOP_IOCTL "struct vnode *vp" "u_long command" "void *data" \
 "int fflag" "kauth_cred_t cred"
@@ -235,6 +241,8 @@ The following table gives a summary of the operations.
 .It VOP_SETATTR	Set file attributes
 .It VOP_READ	Read from a file
 .It VOP_WRITE	Write to a file
+.It VOP_FALLOCATE	Allocate backing for a file
+.It VOP_FDISCARD	Discard backing for a file
 .It VOP_IOCTL	Perform device-specific I/O
 .It VOP_FCNTL	Perform file control
 .It VOP_POLL	Test if poll event has occurred
@@ -653,6 +661,50 @@ The low 16 bits are a bit mask which can contain the same flags as
 .Pp
 Zero is returned on success, otherwise an error is returned.
 The vnode should be locked on entry and remains locked on exit.
+.It Fn VOP_FALLOCATE "vp" "pos" "len"
+Allocate backing store.
+The argument
+.Fa vp
+is the vnode for the file.
+The
+.Fa pos
+and
+.Fa len
+arguments (specified in bytes) name an extent within the file.
+The blocks underlying this range, rounding up at the top and down at
+the bottom if needed, are checked; if no physical storage is
+allocated, a physical block is allocated and zeroed.
+This operation removes
+.Dq holes
+from files.
+.It Fn VOP_FDISCARD "vp" "pos" "len"
+Discard backing store.
+The argument
+.Fa vp
+is the vnode for the file.
+The
+.Fa pos
+and
+.Fa len
+arguments (specified in bytes) name an extent within the file.
+The blocks underlying this range, rounding down at the top and up at
+the bottom if needed, are checked. If any physical storage is used,
+it is deallocated.
+This operation creates
+.Dq holes
+in files.
+Discarded blocks of regular files read back afterwards as zeroes.
+On devices, the underlying discard-block operation if any (e.g. ATA
+TRIM) is issued.
+The device handles this as it sees fit.
+In particular it is
+.Em not
+guaranteed that discarded blocks on devices will be zeroed; reading a
+discarded block might produce zeros, or ones, or the previously
+existing data, or some other data, or trash.
+.\" XXX: if you discard part of a block in a regular file, should that
+.\" part be explicitly zeroed? Also, how do you find the underlying
+.\" block size?
 .It Fn VOP_IOCTL "vp" "command" "data" "fflag" "cred"
 Perform device-specific I/O.
 The argument
