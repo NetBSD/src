@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.20 2014/03/16 05:20:22 dholland Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.21 2014/07/25 08:10:31 dholland Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.20 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.21 2014/07/25 08:10:31 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -178,6 +178,7 @@ const struct cdevsw altq_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
 

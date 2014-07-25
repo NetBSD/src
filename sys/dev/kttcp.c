@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.34 2014/07/23 13:17:18 rtr Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.35 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.34 2014/07/23 13:17:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.35 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,6 +85,7 @@ const struct cdevsw kttcp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 

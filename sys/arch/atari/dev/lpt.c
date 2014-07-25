@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.36 2014/03/16 05:20:23 dholland Exp $ */
+/*	$NetBSD: lpt.c,v 1.37 2014/07/25 08:10:32 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.36 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.37 2014/07/25 08:10:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,7 @@ const struct cdevsw lp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.38 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: ms.c,v 1.39 2014/07/25 08:10:31 dholland Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.38 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.39 2014/07/25 08:10:31 dholland Exp $");
 
 /*
  * Mouse driver.
@@ -141,6 +141,7 @@ const struct cdevsw ms_cdevsw = {
 	.d_poll = mspoll,
 	.d_mmap = nommap,
 	.d_kqfilter = mskqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

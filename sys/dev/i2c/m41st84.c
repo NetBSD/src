@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.20 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.21 2014/07/25 08:10:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.20 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.21 2014/07/25 08:10:37 dholland Exp $");
 
 #include "opt_strtc.h"
 
@@ -88,6 +88,7 @@ const struct cdevsw strtc_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
 #endif

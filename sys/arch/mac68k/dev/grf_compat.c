@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.25 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.26 2014/07/25 08:10:33 dholland Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -34,7 +34,7 @@
 #include "opt_grf_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.25 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.26 2014/07/25 08:10:33 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ const struct cdevsw grf_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = grfmmap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

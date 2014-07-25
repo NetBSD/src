@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.59 2014/06/19 18:01:18 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.60 2014/07/25 08:10:34 dholland Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.59 2014/06/19 18:01:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.60 2014/07/25 08:10:34 dholland Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -258,6 +258,7 @@ const struct cdevsw sci_cdevsw = {
 	.d_poll = scipoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

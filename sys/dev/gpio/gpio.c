@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.56 2014/06/29 09:32:24 kardel Exp $ */
+/* $NetBSD: gpio.c,v 1.57 2014/07/25 08:10:36 dholland Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.56 2014/06/29 09:32:24 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.57 2014/07/25 08:10:36 dholland Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -110,6 +110,7 @@ const struct cdevsw gpio_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.54 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: qd.c,v 1.55 2014/07/25 08:10:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.54 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.55 2014/07/25 08:10:38 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -354,6 +354,7 @@ const struct cdevsw qd_cdevsw = {
 	.d_poll = qdpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = qdkqfilter,
+	.d_discard = nodiscard,
 	.d_flag = 0
 };
 

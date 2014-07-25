@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.63 2014/03/16 05:20:25 dholland Exp $ */
+/*	$NetBSD: scif.c,v 1.64 2014/07/25 08:10:34 dholland Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.63 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.64 2014/07/25 08:10:34 dholland Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -222,6 +222,7 @@ const struct cdevsw scif_cdevsw = {
 	.d_poll = scifpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

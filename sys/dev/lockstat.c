@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.18 2014/04/21 16:33:21 chs Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.19 2014/07/25 08:10:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.18 2014/04/21 16:33:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.19 2014/07/25 08:10:35 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,6 +121,7 @@ const struct cdevsw lockstat_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
