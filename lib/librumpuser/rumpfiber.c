@@ -66,7 +66,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.2 2014/07/22 22:41:58 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.3 2014/07/25 14:00:31 justin Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -410,14 +410,16 @@ struct rumpuser_hyperup rumpuser__hyp;
 int
 rumpuser_init(int version, const struct rumpuser_hyperup *hyp)
 {
+	int rv;
 
 	if (version != RUMPUSER_VERSION) {
 		printk("rumpuser version mismatch\n");
-		return 1;
+		abort();
 	}
 
-	if (rumpuser__random_init() != 0) {
-		return 1;
+	rv = rumpuser__random_init();
+	if (rv != 0) {
+		ET(rv);
 	}
 
         rumpuser__hyp = *hyp;

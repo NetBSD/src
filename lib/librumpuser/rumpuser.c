@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.62 2014/07/22 22:41:58 justin Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.63 2014/07/25 14:00:31 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.62 2014/07/22 22:41:58 justin Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.63 2014/07/25 14:00:31 justin Exp $");
 #endif /* !lint */
 
 #include <sys/stat.h>
@@ -57,15 +57,17 @@ struct rumpuser_hyperup rumpuser__hyp;
 int
 rumpuser_init(int version, const struct rumpuser_hyperup *hyp)
 {
+	int rv;
 
 	if (version != RUMPUSER_VERSION) {
 		fprintf(stderr, "rumpuser mismatch, kern: %d, hypervisor %d\n",
 		    version, RUMPUSER_VERSION);
-		return 1;
+		abort();
 	}
 
-	if (rumpuser__random_init() != 0) {
-		return 1;
+	rv = rumpuser__random_init();
+	if (rv != 0) {
+		ET(rv);
 	}
 
 	rumpuser__thrinit();
