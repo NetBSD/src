@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.391 2014/06/16 19:08:17 dsl Exp $
+# $NetBSD: GENERIC,v 1.392 2014/07/25 15:01:14 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.391 $"
+#ident 		"GENERIC-$Revision: 1.392 $"
 
 maxusers	64		# estimated number of users
 
@@ -86,7 +86,7 @@ vmt0		at cpu0		# VMware Tools
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
