@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1190 2014/07/08 17:45:44 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1191 2014/07/25 20:13:36 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1197 2014/07/08 17:45:12 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1198 2014/07/25 20:13:05 msaitoh Exp
  */
 
 /*
@@ -3766,6 +3766,10 @@
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21152BA,S21154AE/BE PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21555	0xb555		/* 21555 Non-Transparent PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_CP_DMI_1	0xd131		/* Core Processor DMI */
+#define	PCI_PRODUCT_INTEL_CP_DMI_2	0xd132		/* Core Processor DMI */
+#define	PCI_PRODUCT_INTEL_CP_PCIE_1	0xd138		/* Core Processor PCIe Root Port (x16 or x8 max) */
+#define	PCI_PRODUCT_INTEL_CP_PCIE_2	0xd13a		/* Core Processor PCIe Root Port (x8 max) */
 #define	PCI_PRODUCT_INTEL_CP_QPI_LINK	0xd150		/* Core Processor QPI Link */
 #define	PCI_PRODUCT_INTEL_CP_QPI_RPREGS	0xd151		/* Core Processor QPI Routing and Protocol Registers */
 #define	PCI_PRODUCT_INTEL_CP_SYS_MREGS	0xd155		/* Core Processor System Management Registers */
