@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.1 2014/07/25 12:35:03 riastradh Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.2 2014/07/25 16:35:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.1 2014/07/25 12:35:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.2 2014/07/25 16:35:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -110,6 +110,9 @@ radeonfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rfa = *rfa;
 	sc->sc_scheduled = false;
 	sc->sc_attached = false;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	radeon_task_init(&sc->sc_setconfig_task, &radeonfb_setconfig_task);
 	error = radeon_task_schedule(parent, &sc->sc_setconfig_task);
