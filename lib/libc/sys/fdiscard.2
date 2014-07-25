@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdiscard.2,v 1.1 2014/07/25 08:30:47 dholland Exp $
+.\"	$NetBSD: fdiscard.2,v 1.2 2014/07/25 08:47:42 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ may discard less physical space than requested.
 When
 .Fn posix_fallocate
 is applied to an unallocated region in a regular file (a
-.Dq hole ),
+.Dq hole ) ,
 the hole is filled and the visible contents are unaffected; both holes
 and newly allocated regions read as all zeros.
 If
@@ -137,16 +137,16 @@ is set to indicate the error.
 The file handle
 .Fa fd
 is invalid or not open for writing.
-.It Bq Er EINVAL
-The position and/or length values are negative.
-.It Bq Er EISDIR
-The selected file is a directory.
-.It Bq Er EIO
-A hardware-level I/O error occurred.
-.It Bq Er ENOSPC
-There was no space in the filesystem to complete the operation.
 .It Bq Er EDQUOT
 Allocating the requested blocks would exceed the user's quota.
+.It Bq Er EINVAL
+The position and/or length values are negative.
+.It Bq Er EIO
+A hardware-level I/O error occurred.
+.It Bq Er EISDIR
+The selected file is a directory.
+.It Bq Er ENOSPC
+There was no space in the file system to complete the operation.
 .El
 .Sh SEE ALSO
 .Xr ftruncate 2
@@ -160,5 +160,5 @@ function calls appeared in
 Similar functions appeared previously in Linux.
 The
 .Fn posix_fallocate
-function is expected to conform to 
+function is expected to conform to
 .St -p1003.1-2004 .
