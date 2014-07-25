@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.379 2014/07/02 07:18:32 ozaki-r Exp $
+# $NetBSD: ALL,v 1.380 2014/07/25 15:01:14 dholland Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.379 $"
+#ident 		"ALL-$Revision: 1.380 $"
 
 maxusers	64		# estimated number of users
 
@@ -109,7 +109,7 @@ options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 options 	LOCKDEBUG	# expensive locking checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)

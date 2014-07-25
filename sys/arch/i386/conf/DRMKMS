@@ -10,7 +10,7 @@ radeondrmkmsfb* at radeonfbbus?
 #nouveaufb*	at nouveaufbbus
 
 no options 	DIAGNOSTIC
-options 	DIAGNOSTIC	# expensive kernel consistency check
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 options 	LOCKDEBUG	# debug locks
 makeoptions 	DEBUG="-g"	# compile full symbol table
