@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.119 2014/05/26 19:12:07 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.120 2014/07/25 08:20:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.119 2014/05/26 19:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.120 2014/07/25 08:20:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -74,6 +74,8 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_read },
 	{ &vop_write_desc,		tmpfs_write },
+	{ &vop_fallocate_desc,		genfs_eopnotsupp },
+	{ &vop_fdiscard_desc,		genfs_eopnotsupp },
 	{ &vop_ioctl_desc,		tmpfs_ioctl },
 	{ &vop_fcntl_desc,		tmpfs_fcntl },
 	{ &vop_poll_desc,		tmpfs_poll },
