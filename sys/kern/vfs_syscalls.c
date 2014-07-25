@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.488 2014/07/25 08:25:47 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.489 2014/07/25 08:30:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.488 2014/07/25 08:25:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.489 2014/07/25 08:30:10 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4743,7 +4743,7 @@ fail:
 }
 
 /*
- * Dellocate backing store for a file, creating a hole. Also used for
+ * Deallocate backing store for a file, creating a hole. Also used for
  * invoking TRIM on disks.
  */
 /* ARGSUSED */
