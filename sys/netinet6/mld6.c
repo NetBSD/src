@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.57 2014/06/10 09:38:30 joerg Exp $	*/
+/*	$NetBSD: mld6.c,v 1.58 2014/07/25 07:12:55 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.57 2014/06/10 09:38:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.58 2014/07/25 07:12:55 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -972,7 +972,7 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 
 	if (oldp == NULL) {
 		*oldlenp = 0;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr == NULL)
 				continue;
 			if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -988,7 +988,7 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 
 	error = 0;
 	written = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr == NULL)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET6)

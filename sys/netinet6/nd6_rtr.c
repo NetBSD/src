@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.91 2014/05/17 21:26:20 rmind Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.92 2014/07/25 07:12:55 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.91 2014/05/17 21:26:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.92 2014/07/25 07:12:55 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,7 +897,7 @@ purge_detached(struct ifnet *ifp)
 {
 	struct nd_prefix *pr, *pr_next;
 	struct in6_ifaddr *ia;
-	struct ifaddr *ifa, *ifa_next;
+	struct ifaddr *ifa;
 
 	for (pr = nd_prefix.lh_first; pr; pr = pr_next) {
 		pr_next = pr->ndpr_next;
@@ -915,8 +915,7 @@ purge_detached(struct ifnet *ifp)
 		    !LIST_EMPTY(&pr->ndpr_advrtrs)))
 			continue;
 
-		for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa_next) {
-			ifa_next = ifa->ifa_list.tqe_next;
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			ia = (struct in6_ifaddr *)ifa;
