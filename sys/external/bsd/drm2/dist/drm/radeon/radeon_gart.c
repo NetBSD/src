@@ -262,9 +262,14 @@ radeon_gart_pre_update(struct radeon_device *rdev, unsigned gpu_pgstart,
     unsigned gpu_npages)
 {
 
-	if (rdev->gart.rg_table_map != NULL)
+	if (rdev->gart.rg_table_map != NULL) {
+		const unsigned entsize =
+		    rdev->gart.table_size / rdev->gart.num_gpu_pages;
+
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
-		    gpu_pgstart*4, gpu_npages*4, BUS_DMASYNC_PREWRITE);
+		    gpu_pgstart*entsize, gpu_npages*entsize,
+		    BUS_DMASYNC_PREWRITE);
+	}
 }
 
 static void
@@ -273,9 +278,14 @@ radeon_gart_post_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 {
 
 	membar_sync();		/* XXX overkill */
-	if (rdev->gart.rg_table_map != NULL)
+	if (rdev->gart.rg_table_map != NULL) {
+		const unsigned entsize =
+		    rdev->gart.table_size / rdev->gart.num_gpu_pages;
+
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
-		    gpu_pgstart*4, gpu_npages*4, BUS_DMASYNC_POSTWRITE);
+		    gpu_pgstart*entsize, gpu_npages*entsize,
+		    BUS_DMASYNC_POSTWRITE);
+	}
 	radeon_gart_tlb_flush(rdev);
 }
 #endif
@@ -289,7 +299,7 @@ radeon_gart_unbind(struct radeon_device *rdev, unsigned gpu_start,
     unsigned npages)
 {
 	const unsigned gpu_per_cpu = (PAGE_SIZE / RADEON_GPU_PAGE_SIZE);
-	const unsigned gpu_npages = (npages / gpu_per_cpu);
+	const unsigned gpu_npages = (npages * gpu_per_cpu);
 	const unsigned gpu_pgstart = (gpu_start / RADEON_GPU_PAGE_SIZE);
 	const unsigned pgstart = (gpu_pgstart / gpu_per_cpu);
 	unsigned pgno, gpu_pgno;
@@ -367,7 +377,7 @@ radeon_gart_bind(struct radeon_device *rdev, unsigned gpu_start,
     unsigned npages, struct page **pages, bus_dmamap_t dmamap)
 {
 	const unsigned gpu_per_cpu = (PAGE_SIZE / RADEON_GPU_PAGE_SIZE);
-	const unsigned gpu_npages = (npages / gpu_per_cpu);
+	const unsigned gpu_npages = (npages * gpu_per_cpu);
 	const unsigned gpu_pgstart = (gpu_start / RADEON_GPU_PAGE_SIZE);
 	const unsigned pgstart = (gpu_pgstart / gpu_per_cpu);
 	unsigned pgno, gpu_pgno;
