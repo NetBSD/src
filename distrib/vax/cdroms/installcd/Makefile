@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/06/04 19:31:57 martin Exp $
+#	$NetBSD: Makefile,v 1.8 2014/07/26 19:34:08 dholland Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -9,7 +9,7 @@ CLEANFILES+= fs.spec
 
 # for PRINTOBJDIR
 .include <bsd.own.mk>
-SYSINSTDIR!= cd ${.CURDIR}/../../../utils/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 # prepare mutliuser install environment
 image_md_pre:

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 2014/05/18 13:06:12 martin Exp $
+#	$NetBSD: Makefile,v 1.18 2014/07/26 19:34:08 dholland Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
 # for PRINTOBJDIR
 .include <bsd.own.mk>
 
-SYSINSTDIR!= cd ${.CURDIR}/../../../utils/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 CDRELEASE_NOISOS=	true
 CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc64/bootfs && ${PRINTOBJDIR}
