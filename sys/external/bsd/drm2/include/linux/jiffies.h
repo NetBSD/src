@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.5 2014/07/26 06:20:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -56,7 +56,19 @@ jiffies_to_msecs(unsigned int j)
 static inline unsigned int
 usecs_to_jiffies(unsigned int usec)
 {
-	return mstohz((usec + (1000 / hz) - 1) / (1000 / hz));
+	if (hz <= 100)
+		return mstohz(roundup(usec, (1000 / hz)));
+
+	/*
+	 * Avoid integer overflow on 32-bit platforms.  The cutoff is
+	 * kinda arbitrary; for hz <= 2000, 0x200000 is safe, but both
+	 * values could wiggle around a little.
+	 */
+	KASSERT(hz <= 2000);
+	if (usec <= 0x200000)
+		return ((usec * hz) / 1000000);
+	else
+		return ((usec / 1000000) * hz);
 }
 
 static inline unsigned int
