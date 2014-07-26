@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.186 2014/07/23 18:19:43 alnsn Exp $
+# $NetBSD: md.sparc64,v 1.187 2014/07/26 06:12:30 dholland Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc=48,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -577,10 +577,10 @@
 ./usr/lib/sparc/libp2k.so			base-sys-shlib		compat,pic,rump
 ./usr/lib/sparc/libp2k_p.a			comp-c-proflib		compat,profile,rump
 ./usr/lib/sparc/libp2k_pic.a			comp-c-piclib		compat,pic,rump,picinstall
-./usr/lib/sparc/libpam.a			comp-c-lib		compat
-./usr/lib/sparc/libpam.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libpam_p.a			comp-obsolete		obsolete
-./usr/lib/sparc/libpam_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc/libpam.a			comp-c-lib		compat,pam
+./usr/lib/sparc/libpam.so			base-sys-shlib		compat,pic,pam
+./usr/lib/sparc/libpam_p.a			comp-obsolete		obsolete,pam
+./usr/lib/sparc/libpam_pic.a			comp-c-piclib		compat,pic,pam,picinstall
 ./usr/lib/sparc/libpcap.a			comp-c-lib		compat
 ./usr/lib/sparc/libpcap.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libpcap_p.a			comp-c-proflib		compat,profile
