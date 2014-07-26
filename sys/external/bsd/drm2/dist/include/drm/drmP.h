@@ -1097,6 +1097,8 @@ struct drm_driver {
 
 	/* Driver private ops for this object */
 #ifdef __NetBSD__
+	int (*mmap_object)(struct drm_device *, off_t, size_t, int,
+	    struct uvm_object **, voff_t *, struct file *);
 	const struct uvm_pagerops *gem_uvm_ops;
 #else
 	const struct vm_operations_struct *gem_vm_ops;
@@ -1422,7 +1424,7 @@ extern int drm_release(struct inode *inode, struct file *filp);
 				/* Mapping support (drm_vm.h) */
 #ifdef __NetBSD__
 extern int drm_mmap_object(struct drm_device *, off_t, size_t, int,
-    struct uvm_object **, voff_t *);
+    struct uvm_object **, voff_t *, struct file *);
 extern paddr_t drm_mmap_paddr(struct drm_device *, off_t, int);
 #else
 extern int drm_mmap(struct file *filp, struct vm_area_struct *vma);
@@ -1775,7 +1777,9 @@ void drm_gem_private_object_init(struct drm_device *dev,
 void drm_gem_pager_reference(struct uvm_object *);
 void drm_gem_pager_detach(struct uvm_object *);
 int drm_gem_mmap_object(struct drm_device *, off_t, size_t, int,
-    struct uvm_object **, voff_t *);
+    struct uvm_object **, voff_t *, struct file *);
+int drm_gem_or_legacy_mmap_object(struct drm_device *, off_t, size_t, int,
+    struct uvm_object **, voff_t *, struct file *);
 #else
 void drm_gem_vm_open(struct vm_area_struct *vma);
 void drm_gem_vm_close(struct vm_area_struct *vma);
