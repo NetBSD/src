@@ -1049,6 +1049,8 @@ static struct drm_driver driver = {
 #endif
 	.gem_free_object = i915_gem_free_object,
 #ifdef __NetBSD__
+	/* XXX Not clear the `or legacy' part is important here.  */
+	.mmap_object = &drm_gem_or_legacy_mmap_object,
 	.gem_uvm_ops = &i915_gem_uvm_ops,
 #else
 	.gem_vm_ops = &i915_gem_vm_ops,
