@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2014/01/12 15:26:31 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2014/07/26 17:24:04 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -14,7 +14,11 @@ LIBSA!=cd ${.CURDIR}/../libsa && ${PRINTOBJDIR}
 
 MDEC_DIR?=/usr/mdec
 
+.if ${MACHINE} == "sun3"
+RELOC?= 280000
+.else
 RELOC?= 240000
+.endif
 DEFS?= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 
