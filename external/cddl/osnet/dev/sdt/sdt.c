@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.8 2011/07/30 10:12:14 uebayasi Exp $	*/
+/*	$NetBSD: sdt.c,v 1.9 2014/07/26 04:54:20 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ static void	sdt_load(void *);
 
 static const struct cdevsw sdt_cdevsw = {
 	sdt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
 	D_OTHER
 };
 
