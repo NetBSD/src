@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.1 2014/07/26 19:30:44 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2014/07/26 19:32:22 dholland Exp $
 #
 # Makefile for sysinst
+
+.if exists(${.CURDIR}/../../../Makefile.inc)
+.include "${.CURDIR}/../../../Makefile.inc"
+.endif
 
 .if empty(DBG:M-g)
 COPTS += -Os
@@ -29,7 +33,11 @@ MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 .include <bsd.own.mk>		# for mk.conf
-.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+#.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+DISTRIBVERDEP=	${NETBSDSRCDIR}/sys/sys/param.h \
+		${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
 _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 
