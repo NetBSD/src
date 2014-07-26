@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.5 2014/07/17 21:13:49 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.6 2014/07/26 07:53:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.5 2014/07/17 21:13:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.6 2014/07/26 07:53:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -280,7 +280,7 @@ drm_pci_get_name(struct drm_device *dev)
 static int
 drm_pci_format_unique(struct drm_device *dev, char *buf, size_t size)
 {
-	const unsigned int domain = 0; /* XXX PCI domains? */
+	const unsigned int domain = device_unit(device_parent(dev->dev));
 	const unsigned int bus = dev->pdev->pd_pa.pa_bus;
 	const unsigned int device = dev->pdev->pd_pa.pa_device;
 	const unsigned int function = dev->pdev->pd_pa.pa_function;
