@@ -872,7 +872,7 @@ radeon_mmap_object(struct drm_device *dev, off_t offset, size_t size,
 {
 	struct radeon_device *rdev = dev->dev_private;
 
-	KASSERT(0 == (offset & ~(PAGE_SIZE - 1)));
+	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
 
 	if (__predict_false(rdev == NULL))	/* XXX How?? */
 		return -EINVAL;
