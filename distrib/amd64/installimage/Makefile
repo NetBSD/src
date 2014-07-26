@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/11/03 14:25:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2014/07/26 19:34:08 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ prepare_md_post:
 	    < ${.CURDIR}/boot.cfg.in > boot.cfg
 
 DISTRIBDIR!= cd ${.CURDIR}/../.. ; pwd
-SYSINSTDIR!= cd ${DISTRIBDIR}/utils/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+SYSINSTDIR!= cd ${.CURDIR}/../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 SPEC_EXTRA=		${.CURDIR}/spec.inst
 IMGFILE_EXTRA=								\
