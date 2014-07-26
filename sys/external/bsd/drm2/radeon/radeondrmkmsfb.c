@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.2 2014/07/25 16:35:43 riastradh Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.3 2014/07/26 07:02:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.2 2014/07/25 16:35:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3 2014/07/26 07:02:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -273,21 +273,17 @@ radeonfb_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* Treat low memory as the framebuffer itself.  */
 	if (offset < genfb->sc_fbsize) {
 		const unsigned num_pages __diagused = rbo->tbo.num_pages;
-		bus_addr_t addr;
 		int flags = 0;
 
 		KASSERT(genfb->sc_fbsize == (num_pages << PAGE_SHIFT));
-		KASSERT(num_pages == rbo->tbo.ttm->num_pages);
-		addr = page_to_phys(rbo->tbo.ttm->pages[offset >> PAGE_SHIFT]);
-		/* XXX CACHEABLE/  PREFETCHABLE?  WC?  WB?  */
-		if (ISSET(rbo->tbo.mem.placement, TTM_PL_FLAG_CACHED))
+		KASSERT(rbo->tbo.mem.bus.is_iomem);
+
+		if (ISSET(rbo->tbo.mem.placement, TTM_PL_FLAG_WC))
 			flags |= BUS_SPACE_MAP_PREFETCHABLE;
-		/*
-		 * XXX Urk.  We assume bus_space_mmap can cope with
-		 * normal system RAM addresses.
-		 */
-		return bus_space_mmap(rbo->tbo.bdev->memt, addr, 0, prot,
-		    flags);
+
+		return bus_space_mmap(rbo->tbo.bdev->memt,
+		    rbo->tbo.mem.bus.base, rbo->tbo.mem.bus.offset + offset,
+		    prot, flags);
 	}
 
 	/* XXX Cargo-culted from genfb_pci.  */
