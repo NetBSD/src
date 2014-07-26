@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.5 2014/07/26 06:20:25 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.6 2014/07/26 14:24:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -56,19 +56,12 @@ jiffies_to_msecs(unsigned int j)
 static inline unsigned int
 usecs_to_jiffies(unsigned int usec)
 {
-	if (hz <= 100)
-		return mstohz(roundup(usec, (1000 / hz)));
+	const struct timeval tv = {
+		.tv_sec = usec / 1000000,
+		.tv_usec = usec % 1000000,
+	};
 
-	/*
-	 * Avoid integer overflow on 32-bit platforms.  The cutoff is
-	 * kinda arbitrary; for hz <= 2000, 0x200000 is safe, but both
-	 * values could wiggle around a little.
-	 */
-	KASSERT(hz <= 2000);
-	if (usec <= 0x200000)
-		return ((usec * hz) / 1000000);
-	else
-		return ((usec / 1000000) * hz);
+	return tvtohz(&tv);
 }
 
 static inline unsigned int
