@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.366 2014/07/24 18:23:28 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.367 2014/07/26 17:16:41 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -154,7 +154,9 @@
 2:		
 #endif	
 	/* sun4u */
-	wrpr	%g0, PSTATE_KERN, %pstate
+	rdpr	 %pstate, \scratch
+	and	\scratch, ~PSTATE_AG, \scratch	! Alternate Globals (AG) bit set to zero
+	wrpr	%g0, \scratch, %pstate
 3:
 	.endm
 	
