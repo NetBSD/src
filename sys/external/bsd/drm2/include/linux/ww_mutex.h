@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.2 2014/07/22 02:38:31 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.3 2014/07/26 21:35:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -622,6 +622,8 @@ ww_mutex_unlock(struct ww_mutex *mutex)
 		mutex->wwm_state = WW_UNLOCKED;
 		break;
 	case WW_CTX:
+		KASSERT(mutex->wwm_u.ctx != NULL);
+		mutex->wwm_u.ctx->wwx_acquired--;
 		mutex->wwm_u.ctx = NULL;
 		/*
 		 * If there are any waiters with contexts, grant the
