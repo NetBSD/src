@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1076 2014/07/23 02:42:56 lneto Exp $
+# $NetBSD: mi,v 1.1077 2014/07/26 19:35:59 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1565,6 +1565,7 @@
 ./usr/sbin/supscan				base-sup-bin
 ./usr/sbin/sushi				base-obsolete		obsolete
 ./usr/sbin/sysconfd				base-obsolete		obsolete
+./usr/sbin/sysinst				base-sysutil-bin
 ./usr/sbin/sysctl				base-obsolete		obsolete
 ./usr/sbin/syslogd				base-sysutil-bin
 ./usr/sbin/tbrconfig				base-obsolete		obsolete
