@@ -3,7 +3,7 @@ include "arch/amd64/conf/NO_DRM"
 i915drmkms* 	at pci? dev ? function ?
 intelfb*	at intelfbbus?
 
-radeondrmkms*	at pci? dev ? function ?
+radeon*		at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
 #nouveau*	at pci? dev ? function ?
