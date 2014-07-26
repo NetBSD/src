@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.2 2014/07/26 20:24:33 dholland Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.1 2014/02/24 07:23:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.2 2014/07/26 20:24:33 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,18 @@ dev_type_tty(pdctty);
 dev_type_poll(pdcpoll);
 
 const struct cdevsw pdc_cdevsw = {
-	pdcopen, pdcclose, pdcread, pdcwrite, pdcioctl,
-	pdcstop, pdctty, pdcpoll, nommap, ttykqfilter, D_TTY
+	.d_open = pdcopen,
+	.d_close = pdcclose,
+	.d_read = pdcread,
+	.d_write = pdcwrite,
+	.d_ioctl = pdcioctl,
+	.d_stop = pdcstop,
+	.d_tty = pdctty,
+	.d_poll = pdcpoll,
+	.d_mmap = nommap,
+	.d_kpqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 void pdcstart(struct tty *);
