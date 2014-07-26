@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.6 2014/07/22 22:14:22 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.7 2014/07/26 14:27:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -131,12 +131,8 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 
 	nsegs = 0;
 	TAILQ_FOREACH(page, pglist, pageq.queue) {
-		if (nsegs == INT_MAX)
+		if (nsegs == MIN(INT_MAX, (SIZE_MAX / sizeof(segs[0]))))
 			return ENOMEM;
-#if __i386__
-		if (nsegs == (SIZE_MAX / sizeof(segs[0])))
-			return ENOMEM;
-#endif
 		nsegs++;
 	}
 
