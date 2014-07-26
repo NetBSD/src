@@ -1,0 +1,102 @@
+/*	$NetBSD: msg.md.fr,v 1.1 2014/07/26 19:30:47 dholland Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* shark machine dependent messages, french */
+
+
+message md_hello
+{
+}
+
+message md_may_remove_boot_medium
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+}
+
+message Keyboard_type {Type de clavier}
+message kb_default {fr}
+
+message badreadbb
+{Impossible de lire le contenu du secteur de démarrage
+}
+
+message badreadriscix
+{Impossible de lire la table de partitions RISCiX
+}
+
+message notnetbsdriscix
+{Aucune partition NetBSD trouvée dans la table de partitions RISCiX. Impossible
+de créer un label.
+}
+
+message notnetbsd
+{Aucune partition NetBSD trouvée (disque filecore uniquement ?). Impossible
+de créer un label.
+}
+
+message dobootblks
+{Installation des blocs de démarrage sur %s ...
+}
+
+message arm32fspart
+{Nous avons maintenant vos partitions NetBSD sur %s comme suit
+(taille et Offset en %s) :
+}
+
+message set_kernel_1
+{Kernel (GENERIC)}
+
+message setbootdevice
+{Afin que votre système démarre automatiquement depuis le système de fichiers
+sur le disque, vous devez configurer manuellement OpenFirmware pour lui
+spécifier l'emplacement depuis lequel il doit charger le noyau.
+
+OpenFirmware peut charger un noyau NetBSD a.out (malheureusement, ELF n'est pas
+supporté) directement depuis une partition FFS sur le disque dur local. Donc,
+afin de configurer le noyau qui vient d'être installé, exécutez la commande
+suivante depuis l'interpréteur de commandes OpenFirmware :
+
+setenv boot-device disk:\\netbsd.aout
+
+Il n'est nécessaire d'exécuter cette commande qu'une seule fois et uniquement
+si la propriété 'boot-device' ne contient pas déjà la valeur affichée ci-dessus.
+}
+
+message badclearmbr
+{Erreur lors de l'effacement du premier secteur du disque. Si OpenFirmware ne
+parvient pas à voir le disque, essayez d'exécuter manuellement la commande
+suivante depuis l'interpréteur de commandes de l'installeur :
+
+dd if=/dev/zero of=%s bs=512 count=1
+}
