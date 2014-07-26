@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_mod.c,v 1.2 2013/12/17 22:39:23 alnsn Exp $	*/
+/*	$NetBSD: sljit_mod.c,v 1.3 2014/07/26 21:07:45 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sljit_mod.c,v 1.2 2013/12/17 22:39:23 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sljit_mod.c,v 1.3 2014/07/26 21:07:45 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,8 +51,6 @@ sljit_modcmd(modcmd_t cmd, void *arg)
 		return 0;
 
 	case MODULE_CMD_FINI:
-		mutex_destroy(&sljit_global_mutex);
-		mutex_destroy(&sljit_allocator_mutex);
 		return EOPNOTSUPP;
 
 	default:
