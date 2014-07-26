@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.58 2014/07/25 07:12:55 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.59 2014/07/26 22:21:16 joerg Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.58 2014/07/25 07:12:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.59 2014/07/26 22:21:16 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -1025,6 +1025,12 @@ done:
 
 SYSCTL_SETUP(sysctl_in6_mklude_setup, "sysctl net.inet6.multicast_kludge subtree setup")
 {
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
