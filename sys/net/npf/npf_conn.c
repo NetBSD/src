@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.8 2014/07/25 23:21:46 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.9 2014/07/26 16:42:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.8 2014/07/25 23:21:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.9 2014/07/26 16:42:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -297,9 +297,9 @@ npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 	/*
 	 * Construct a key formed out of 32-bit integers.  The key layout:
 	 *
-	 * Field: | proto |  alen | src-id | dst-id | src-addr | dst-addr |
-	 *        +-------+-------+--------+--------+----------+----------+
-	 * Bits:  |   8   |   8   |   16   |   16   |  32-128  |  32-128  |
+	 * Field: | proto  |  alen  | src-id | dst-id | src-addr | dst-addr |
+	 *        +--------+--------+--------+--------+----------+----------+
+	 * Bits:  |   16   |   16   |   16   |   16   |  32-128  |  32-128  |
 	 *
 	 * The source and destination are inverted if they key is for the
 	 * backwards stream (forw == false).  The address length depends
