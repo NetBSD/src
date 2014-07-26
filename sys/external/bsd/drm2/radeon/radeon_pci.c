@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.2 2014/07/25 12:35:03 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.3 2014/07/26 07:32:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.2 2014/07/25 12:35:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.3 2014/07/26 07:32:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -71,6 +71,7 @@ SIMPLEQ_HEAD(radeon_task_head, radeon_task);
 
 struct radeon_softc {
 	device_t			sc_dev;
+	struct pci_attach_args		sc_pa;
 	enum {
 		RADEON_TASK_ATTACH,
 		RADEON_TASK_WORKQUEUE,
@@ -96,6 +97,7 @@ static bool	radeon_pci_lookup(const struct pci_attach_args *,
 
 static int	radeon_match(device_t, cfdata_t, void *);
 static void	radeon_attach(device_t, device_t, void *);
+static void	radeon_attach_real(device_t);
 static int	radeon_detach(device_t, int);
 
 static void	radeon_task_work(struct work *, void *);
@@ -152,16 +154,31 @@ radeon_attach(device_t parent, device_t self, void *aux)
 {
 	struct radeon_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
+
+	pci_aprint_devinfo(pa, NULL);
+
+	/*
+	 * Trivial initialization first; the rest will come after we
+	 * have mounted the root file system and can load firmware
+	 * images.
+	 */
+	sc->sc_dev = NULL;
+	sc->sc_pa = *pa;
+
+	config_mountroot(self, &radeon_attach_real);
+}
+
+static void
+radeon_attach_real(device_t self)
+{
+	struct radeon_softc *const sc = device_private(self);
+	const struct pci_attach_args *const pa = &sc->sc_pa;
 	bool ok __diagused;
 	unsigned long flags;
 	int error;
 
 	ok = radeon_pci_lookup(pa, &flags);
 	KASSERT(ok);
-
-	sc->sc_dev = self;
-
-	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_task_state = RADEON_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
@@ -171,7 +188,7 @@ radeon_attach(device_t parent, device_t self, void *aux)
 	    flags, &sc->sc_drm_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
-		return;
+		goto out;
 	}
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_task_u.attach)) {
@@ -189,8 +206,10 @@ radeon_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to create workqueue: %d\n",
 		    error);
 		sc->sc_task_u.workqueue = NULL;
-		return;
+		goto out;
 	}
+
+out:	sc->sc_dev = self;
 }
 
 static int
@@ -198,6 +217,10 @@ radeon_detach(device_t self, int flags)
 {
 	struct radeon_softc *const sc = device_private(self);
 	int error;
+
+	if (sc->sc_dev == NULL)
+		/* Not done attaching.  */
+		return EBUSY;
 
 	/* XXX Check for in-use before tearing it all down...  */
 	error = config_detach_children(self, flags);
