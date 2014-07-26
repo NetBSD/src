@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.5 2014/07/26 21:15:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.5 2014/07/26 21:15:45 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.4 2014/07/16 20:56:25 riastradh Exp
 #include <drm/drm_vma_manager.h>
 
 static int	drm_gem_mmap_object_locked(struct drm_device *, off_t, size_t,
-		    int, struct uvm_object **, voff_t *);
+		    int, struct uvm_object **, voff_t *, struct file *);
 
 void
 drm_gem_pager_reference(struct uvm_object *uobj)
@@ -61,14 +61,32 @@ drm_gem_pager_detach(struct uvm_object *uobj)
 }
 
 int
+drm_gem_or_legacy_mmap_object(struct drm_device *dev, off_t byte_offset,
+    size_t nbytes, int prot, struct uvm_object **uobjp, voff_t *uoffsetp,
+    struct file *file)
+{
+	int ret;
+
+	ret = drm_gem_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
+	    uoffsetp, file);
+	if (ret)
+		return ret;
+	if (*uobjp != NULL)
+		return 0;
+
+	return drm_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
+	    uoffsetp, file);
+}
+
+int
 drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
-    int prot, struct uvm_object **uobjp, voff_t *uoffsetp)
+    int prot, struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file)
 {
 	int ret;
 
 	mutex_lock(&dev->struct_mutex);
 	ret = drm_gem_mmap_object_locked(dev, byte_offset, nbytes, prot,
-	    uobjp, uoffsetp);
+	    uobjp, uoffsetp, file);
 	mutex_unlock(&dev->struct_mutex);
 
 	return ret;
@@ -77,7 +95,7 @@ drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 static int
 drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
     size_t nbytes, int prot __unused, struct uvm_object **uobjp,
-    voff_t *uoffsetp)
+    voff_t *uoffsetp, struct file *file __unused)
 {
 	const unsigned long startpage = (byte_offset >> PAGE_SHIFT);
 	const unsigned long npages = (nbytes >> PAGE_SHIFT);

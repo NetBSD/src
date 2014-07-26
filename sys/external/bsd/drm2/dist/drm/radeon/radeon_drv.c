@@ -119,7 +119,10 @@ extern int radeon_get_crtc_scanoutpos(struct drm_device *dev, int crtc,
 extern bool radeon_is_px(struct drm_device *dev);
 extern const struct drm_ioctl_desc radeon_ioctls_kms[];
 extern int radeon_max_kms_ioctl;
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+int radeon_mmap_object(struct drm_device *, off_t, size_t, vm_prot_t,
+    struct uvm_object **, voff_t *, struct file *);
+#else
 int radeon_mmap(struct file *filp, struct vm_area_struct *vma);
 #endif
 int radeon_mode_dumb_mmap(struct drm_file *filp,
@@ -563,6 +566,7 @@ static struct drm_driver kms_driver = {
 	.dumb_destroy = drm_gem_dumb_destroy,
 #ifdef __NetBSD__
 	.fops = NULL,
+	.mmap_object = &radeon_mmap_object,
 	.gem_uvm_ops = &radeon_gem_uvm_ops,
 #else
 	.fops = &radeon_driver_kms_fops,

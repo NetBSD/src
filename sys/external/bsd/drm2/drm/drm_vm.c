@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.5 2014/07/26 21:15:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.5 2014/07/26 21:15:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -47,7 +47,7 @@ static paddr_t	drm_mmap_map_paddr(struct drm_device *, struct drm_local_map *,
 
 int
 drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
-    struct uvm_object **uobjp, voff_t *uoffsetp)
+    struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file __unused)
 {
 	dev_t devno = cdevsw_lookup_major(&drm_cdevsw);
 	struct uvm_object *uobj;
