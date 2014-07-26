@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,12 +89,11 @@ __RCSID("$NetBSD: bpfjit.c,v 1.31 2014/07/24 22:54:38 alnsn Exp $");
 #define BJ_BUF		SLJIT_SAVED_REG1
 //#define BJ_ARGS	SLJIT_SAVED_REG2
 #define BJ_BUFLEN	SLJIT_SAVED_REG3
-#define BJ_XREG		SLJIT_SAVED_EREG1
-#define BJ_ASAVE	SLJIT_SAVED_EREG2
 #define BJ_AREG		SLJIT_SCRATCH_REG1
 #define BJ_TMP1REG	SLJIT_SCRATCH_REG2
 #define BJ_TMP2REG	SLJIT_SCRATCH_REG3
-#define BJ_TMP3REG	SLJIT_TEMPORARY_EREG1
+#define BJ_XREG		SLJIT_TEMPORARY_EREG1
+#define BJ_TMP3REG	SLJIT_TEMPORARY_EREG2
 
 #ifdef _KERNEL
 #define MAX_MEMWORDS BPF_MAX_MEMWORDS
@@ -136,6 +135,7 @@ struct bpfjit_stack
 {
 	bpf_ctx_t *ctx;
 	uint32_t *extmem; /* pointer to external memory store */
+	uint32_t reg; /* saved A or X register */
 #ifdef _KERNEL
 	int err; /* 3rd argument for m_xword/m_xhalf/m_xbyte function call */
 #endif
@@ -259,8 +259,16 @@ nscratches(bpfjit_hint_t hints)
 	if (hints & BJ_HINT_COP)
 		rv = 3; /* calls copfunc with three arguments */
 
+	if (hints & BJ_HINT_XREG)
+		rv = 4; /* uses BJ_XREG */
+
+#ifdef _KERNEL
+	if (hints & BJ_HINT_LDX)
+		rv = 5; /* uses BJ_TMP3REG */
+#endif
+
 	if (hints & BJ_HINT_COPX)
-		rv = 4; /* uses BJ_TMP3REG */
+		rv = 5; /* uses BJ_TMP3REG */
 
 	return rv;
 }
@@ -273,14 +281,6 @@ static sljit_si
 nsaveds(bpfjit_hint_t hints)
 {
 	sljit_si rv = 3;
-
-	if (hints & BJ_HINT_XREG)
-		rv = 4; /* uses BJ_XREG */
-
-#ifdef _KERNEL
-	if (hints & BJ_HINT_LDX)
-		rv = 5; /* uses BJ_ASAVE */
-#endif
 
 	return rv;
 }
@@ -528,21 +528,30 @@ emit_read32(struct sljit_compiler *compiler, sljit_si src, uint32_t k)
  *     BPF_LDX+BPF_B+BPF_MSH   X <- 4*(P[k:1]&0xf)
  */
 static int
-emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
-    int dst, struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize,
+emit_xcall(struct sljit_compiler *compiler, bpfjit_hint_t hints,
+    const struct bpf_insn *pc, int dst, struct sljit_jump ***ret0,
+    size_t *ret0_size, size_t *ret0_maxsize,
     uint32_t (*fn)(const struct mbuf *, uint32_t, int *))
 {
+#if BJ_XREG == SLJIT_RETURN_REG   || \
+    BJ_XREG == SLJIT_SCRATCH_REG1 || \
+    BJ_XREG == SLJIT_SCRATCH_REG2 || \
+    BJ_XREG == SLJIT_SCRATCH_REG3
+#error "Not supported assignment of registers."
+#endif
 	struct sljit_jump *jump;
+	sljit_si save_reg;
 	int status;
 
-	BJ_ASSERT(dst != BJ_ASAVE);
+	save_reg = (BPF_CLASS(pc->code) == BPF_LDX) ? BJ_AREG : BJ_XREG;
 
-	if (BPF_CLASS(pc->code) == BPF_LDX) {
-		/* save A */
+	if (save_reg == BJ_AREG || (hints & BJ_HINT_XREG)) {
+		/* save A or X */
 		status = sljit_emit_op1(compiler,
-		    SLJIT_MOV,
-		    BJ_ASAVE, 0,
-		    BJ_AREG, 0);
+		    SLJIT_MOV_UI, /* uint32_t destination */
+		    SLJIT_MEM1(SLJIT_LOCALS_REG),
+		    offsetof(struct bpfjit_stack, reg),
+		    save_reg, 0);
 		if (status != SLJIT_SUCCESS)
 			return status;
 	}
@@ -634,12 +643,13 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
 	if (!append_jump(jump, ret0, ret0_size, ret0_maxsize))
 		return SLJIT_ERR_ALLOC_FAILED;
 
-	if (BPF_CLASS(pc->code) == BPF_LDX) {
-		/* restore A */
+	if (save_reg == BJ_AREG || (hints & BJ_HINT_XREG)) {
+		/* restore A or X */
 		status = sljit_emit_op1(compiler,
-		    SLJIT_MOV,
-		    BJ_AREG, 0,
-		    BJ_ASAVE, 0);
+		    SLJIT_MOV_UI, /* uint32_t source */
+		    save_reg, 0,
+		    SLJIT_MEM1(SLJIT_LOCALS_REG),
+		    offsetof(struct bpfjit_stack, reg));
 		if (status != SLJIT_SUCCESS)
 			return status;
 	}
@@ -652,11 +662,15 @@ emit_xcall(struct sljit_compiler *compiler, const struct bpf_insn *pc,
  * Emit code for BPF_COP and BPF_COPX instructions.
  */
 static int
-emit_cop(struct sljit_compiler *compiler,
+emit_cop(struct sljit_compiler *compiler, bpfjit_hint_t hints,
     const bpf_ctx_t *bc, const struct bpf_insn *pc,
     struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize)
 {
-#if BJ_TMP3REG == SLJIT_SCRATCH_REG1 || \
+#if BJ_XREG    == SLJIT_RETURN_REG   || \
+    BJ_XREG    == SLJIT_SCRATCH_REG1 || \
+    BJ_XREG    == SLJIT_SCRATCH_REG2 || \
+    BJ_XREG    == SLJIT_SCRATCH_REG3 || \
+    BJ_TMP3REG == SLJIT_SCRATCH_REG1 || \
     BJ_TMP3REG == SLJIT_SCRATCH_REG2 || \
     BJ_TMP3REG == SLJIT_SCRATCH_REG3
 #error "Not supported assignment of registers."
@@ -668,6 +682,17 @@ emit_cop(struct sljit_compiler *compiler,
 	int status;
 
 	BJ_ASSERT(bc != NULL && bc->copfuncs != NULL);
+
+	if (hints & BJ_HINT_LDX) {
+		/* save X */
+		status = sljit_emit_op1(compiler,
+		    SLJIT_MOV_UI, /* uint32_t destination */
+		    SLJIT_MEM1(SLJIT_LOCALS_REG),
+		    offsetof(struct bpfjit_stack, reg),
+		    BJ_XREG, 0);
+		if (status != SLJIT_SUCCESS)
+			return status;
+	}
 
 	if (BPF_MISCOP(pc->code) == BPF_COP) {
 		call_reg = SLJIT_IMM;
@@ -762,6 +787,17 @@ emit_cop(struct sljit_compiler *compiler,
 		return status;
 #endif
 
+	if (hints & BJ_HINT_LDX) {
+		/* restore X */
+		status = sljit_emit_op1(compiler,
+		    SLJIT_MOV_UI, /* uint32_t source */
+		    BJ_XREG, 0,
+		    SLJIT_MEM1(SLJIT_LOCALS_REG),
+		    offsetof(struct bpfjit_stack, reg));
+		if (status != SLJIT_SUCCESS)
+			return status;
+	}
+
 	return SLJIT_SUCCESS;
 }
 
@@ -775,7 +811,7 @@ emit_cop(struct sljit_compiler *compiler,
  * BPF_LD+BPF_B+BPF_IND    A <- P[X+k:1]
  */
 static int
-emit_pkt_read(struct sljit_compiler *compiler,
+emit_pkt_read(struct sljit_compiler *compiler, bpfjit_hint_t hints,
     const struct bpf_insn *pc, struct sljit_jump *to_mchain_jump,
     struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize)
 {
@@ -875,15 +911,15 @@ emit_pkt_read(struct sljit_compiler *compiler,
 
 	switch (width) {
 	case 4:
-		status = emit_xcall(compiler, pc, BJ_AREG,
+		status = emit_xcall(compiler, hints, pc, BJ_AREG,
 		    ret0, ret0_size, ret0_maxsize, &m_xword);
 		break;
 	case 2:
-		status = emit_xcall(compiler, pc, BJ_AREG,
+		status = emit_xcall(compiler, hints, pc, BJ_AREG,
 		    ret0, ret0_size, ret0_maxsize, &m_xhalf);
 		break;
 	case 1:
-		status = emit_xcall(compiler, pc, BJ_AREG,
+		status = emit_xcall(compiler, hints, pc, BJ_AREG,
 		    ret0, ret0_size, ret0_maxsize, &m_xbyte);
 		break;
 	}
@@ -960,7 +996,7 @@ emit_memstore(struct sljit_compiler *compiler,
  * Emit code for BPF_LDX+BPF_B+BPF_MSH    X <- 4*(P[k:1]&0xf).
  */
 static int
-emit_msh(struct sljit_compiler *compiler,
+emit_msh(struct sljit_compiler *compiler, bpfjit_hint_t hints,
     const struct bpf_insn *pc, struct sljit_jump *to_mchain_jump,
     struct sljit_jump ***ret0, size_t *ret0_size, size_t *ret0_maxsize)
 {
@@ -1014,7 +1050,7 @@ emit_msh(struct sljit_compiler *compiler,
 			return SLJIT_ERR_ALLOC_FAILED;
 	}
 
-	status = emit_xcall(compiler, pc, BJ_TMP1REG,
+	status = emit_xcall(compiler, hints, pc, BJ_TMP1REG,
 	    ret0, ret0_size, ret0_maxsize, &m_xbyte);
 	if (status != SLJIT_SUCCESS)
 		return status;
@@ -1087,6 +1123,13 @@ static int
 emit_division(struct sljit_compiler *compiler, int divt, sljit_sw divw)
 {
 	int status;
+
+#if BJ_XREG == SLJIT_RETURN_REG   || \
+    BJ_XREG == SLJIT_SCRATCH_REG1 || \
+    BJ_XREG == SLJIT_SCRATCH_REG2 || \
+    BJ_AREG == SLJIT_SCRATCH_REG2
+#error "Not supported assignment of registers."
+#endif
 
 #if BJ_AREG != SLJIT_SCRATCH_REG1
 	status = sljit_emit_op1(compiler,
@@ -1588,9 +1631,9 @@ kx_to_reg_arg(const struct bpf_insn *pc)
 }
 
 static bool
-generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
-    const struct bpf_insn *insns, struct bpfjit_insn_data *insn_dat,
-    size_t insn_count)
+generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
+    const bpf_ctx_t *bc, const struct bpf_insn *insns,
+    struct bpfjit_insn_data *insn_dat, size_t insn_count)
 {
 	/* a list of jumps to out-of-bound return from a generated function */
 	struct sljit_jump **ret0;
@@ -1736,7 +1779,7 @@ generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 			if (unconditional_ret)
 				continue;
 
-			status = emit_pkt_read(compiler, pc,
+			status = emit_pkt_read(compiler, hints, pc,
 			    to_mchain_jump, &ret0, &ret0_size, &ret0_maxsize);
 			if (status != SLJIT_SUCCESS)
 				goto fail;
@@ -1796,7 +1839,7 @@ generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 			if (unconditional_ret)
 				continue;
 
-			status = emit_msh(compiler, pc,
+			status = emit_msh(compiler, hints, pc,
 			    to_mchain_jump, &ret0, &ret0_size, &ret0_maxsize);
 			if (status != SLJIT_SUCCESS)
 				goto fail;
@@ -2004,7 +2047,7 @@ generate_insn_code(struct sljit_compiler *compiler, const bpf_ctx_t *bc,
 					goto fail;
 				}
 
-				status = emit_cop(compiler, bc, pc,
+				status = emit_cop(compiler, hints, bc, pc,
 				    &ret0, &ret0_size, &ret0_maxsize);
 				if (status != SLJIT_SUCCESS)
 					goto fail;
@@ -2177,8 +2220,10 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
-	if (!generate_insn_code(compiler, bc, insns, insn_dat, insn_count))
+	if (!generate_insn_code(compiler, hints,
+	    bc, insns, insn_dat, insn_count)) {
 		goto fail;
+	}
 
 	rv = sljit_generate_code(compiler);
 
