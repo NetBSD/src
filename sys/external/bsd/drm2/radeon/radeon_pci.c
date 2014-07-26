@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.3 2014/07/26 07:32:18 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.4 2014/07/26 07:36:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.3 2014/07/26 07:32:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.4 2014/07/26 07:36:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -102,7 +102,7 @@ static int	radeon_detach(device_t, int);
 
 static void	radeon_task_work(struct work *, void *);
 
-CFATTACH_DECL_NEW(radeondrmkms, sizeof(struct radeon_softc),
+CFATTACH_DECL_NEW(radeon, sizeof(struct radeon_softc),
     radeon_match, radeon_attach, radeon_detach, NULL);
 
 /* XXX Kludge to get these from radeon_drv.c.  */
