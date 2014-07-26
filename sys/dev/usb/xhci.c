@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.19 2014/07/15 03:40:06 ozaki-r Exp $	*/
+/*	$NetBSD: xhci.c,v 1.20 2014/07/26 00:17:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.19 2014/07/15 03:40:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.20 2014/07/26 00:17:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2821,7 +2821,8 @@ xhci_device_intr_start(usbd_xfer_handle xfer)
 static void
 xhci_device_intr_done(usbd_xfer_handle xfer)
 {
-	struct xhci_softc * const sc = xfer->pipe->device->bus->hci_private;
+	struct xhci_softc * const sc __diagused =
+		xfer->pipe->device->bus->hci_private;
 #ifdef XHCI_DEBUG
 	struct xhci_slot * const xs = xfer->pipe->device->hci_private;
 	const u_int dci = xhci_ep_get_dci(xfer->pipe->endpoint->edesc);
