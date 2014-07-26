@@ -316,7 +316,7 @@ EXPORT_SYMBOL(ttm_dma_tt_fini);
 
 void ttm_tt_unbind(struct ttm_tt *ttm)
 {
-	int ret;
+	int ret __diagused;
 
 	if (ttm->state == tt_bound) {
 		ret = ttm->func->unbind(ttm);
