@@ -322,7 +322,8 @@ radeon_gart_unbind(struct radeon_device *rdev, unsigned gpu_start,
 		if (rdev->gart.ptr == NULL)
 			continue;
 		for (gpu_pgno = 0; gpu_pgno < gpu_per_cpu; gpu_pgno++)
-			radeon_gart_set_page(rdev, gpu_pgstart + gpu_pgno,
+			radeon_gart_set_page(rdev,
+			    (gpu_pgstart + gpu_per_cpu*pgno + gpu_pgno),
 			    (rdev->dummy_page.addr +
 				gpu_pgno*RADEON_GPU_PAGE_SIZE));
 	}
@@ -402,7 +403,8 @@ radeon_gart_bind(struct radeon_device *rdev, unsigned gpu_start,
 		if (rdev->gart.ptr == NULL)
 			continue;
 		for (gpu_pgno = 0; gpu_pgno < gpu_per_cpu; gpu_pgno++)
-			radeon_gart_set_page(rdev, gpu_pgstart + gpu_pgno,
+			radeon_gart_set_page(rdev,
+			    (gpu_pgstart + gpu_per_cpu*pgno + gpu_pgno),
 			    (addr + gpu_pgno*RADEON_GPU_PAGE_SIZE));
 	}
 	radeon_gart_post_update(rdev, gpu_pgstart, gpu_npages);
@@ -476,10 +478,11 @@ void radeon_gart_restore(struct radeon_device *rdev)
 	for (pgno = 0; pgno < rdev->gart.num_cpu_pages; pgno++) {
 		const bus_addr_t addr = rdev->gart.pages_addr[pgno];
 		for (gpu_pgno = 0; gpu_pgno < gpu_per_cpu; gpu_pgno++)
-			radeon_gart_set_page(rdev, gpu_pgno,
+			radeon_gart_set_page(rdev,
+			    (gpu_per_cpu*pgno + gpu_pgno),
 			    (addr + gpu_pgno*RADEON_GPU_PAGE_SIZE));
 	}
-	radeon_gart_pre_update(rdev, 0, rdev->gart.num_gpu_pages);
+	radeon_gart_post_update(rdev, 0, rdev->gart.num_gpu_pages);
 #else
 	int i, j, t;
 	u64 page_base;
