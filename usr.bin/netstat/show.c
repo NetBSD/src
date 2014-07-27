@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.19 2014/04/28 15:41:15 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.20 2014/07/27 04:26:23 dholland Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -705,6 +705,7 @@ char *
 mpls_ntoa(const struct sockaddr *sa)
 {
 	static char obuf[16];
+	size_t olen;
 	const union mpls_shim *pms;
 	union mpls_shim ms;
 	int psize = sizeof(struct sockaddr_mpls);
@@ -717,7 +718,8 @@ mpls_ntoa(const struct sockaddr *sa)
 	while(psize < sa->sa_len) {
 		pms++;
 		ms.s_addr = ntohl(pms->s_addr);
-		snprintf(obuf, sizeof(obuf), "%s,%u", obuf,
+		olen = strlen(obuf);
+		snprintf(obuf + olen, sizeof(obuf) - olen, ",%u",
 		    ms.shim.label);
 		psize+=sizeof(ms);
 	}
