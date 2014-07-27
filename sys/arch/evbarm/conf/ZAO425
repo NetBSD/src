@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.52 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: ZAO425,v 1.53 2014/07/27 03:34:41 dholland Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -127,7 +127,7 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages

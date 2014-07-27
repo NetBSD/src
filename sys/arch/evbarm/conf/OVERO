@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.35 2014/05/23 13:56:18 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.36 2014/07/27 03:34:41 dholland Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -139,7 +139,7 @@ options 	IRQSTATS	# manage IRQ statistics
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

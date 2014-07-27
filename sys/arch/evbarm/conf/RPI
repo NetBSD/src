@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.44 2014/04/22 18:51:35 kardel Exp $
+#	$NetBSD: RPI,v 1.45 2014/07/27 03:34:41 dholland Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -129,7 +129,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	IPKDB		# remote kernel debugging

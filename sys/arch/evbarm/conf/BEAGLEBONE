@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.22 2014/07/19 18:18:31 bouyer Exp $
+#	$NetBSD: BEAGLEBONE,v 1.23 2014/07/27 03:34:41 dholland Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -126,7 +126,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
