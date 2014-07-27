@@ -129,7 +129,7 @@ drm_sg_alloc(struct drm_device *dev, struct drm_scatter_gather *request)
 
 	if ((ret = bus_dmamem_alloc(dmah->tag, request->size, PAGE_SIZE, 0,
 				    dmah->segs, pages, &nsegs,
-				    BUS_DMA_WAITOK) != 0)) {
+				    BUS_DMA_WAITOK)) != 0) {
 		printf("drm: Unable to allocate %lu bytes of DMA, error %d\n",
 		    request->size, ret);
 		dmah->tag = NULL;
