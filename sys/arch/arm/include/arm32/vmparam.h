@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34 2014/03/31 01:48:37 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35 2014/07/27 21:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
+#include <arm/cpuconf.h>
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS

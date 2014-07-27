@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.133 2014/06/15 03:27:46 ozaki-r Exp $	*/
+/*	$NetBSD: pmap.h,v 1.134 2014/07/27 21:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -739,6 +739,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_XSCALE_X))
 #define	L1_S_CACHE_MASK_armv6	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_ARMV6_TEX))
+#define	L1_S_CACHE_MASK_armv6n	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_ARMV6_TEX)|L1_S_V6_S)
 #define	L1_S_CACHE_MASK_armv7	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_ARMV6_TEX)|L1_S_V6_S)
 
 #define	L2_L_PROT_U_generic	(L2_AP(AP_U))
@@ -764,6 +765,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_L_TEX(TEX_XSCALE_X))
 #define	L2_L_CACHE_MASK_armv6	(L2_B|L2_C|L2_V6_L_TEX(TEX_ARMV6_TEX))
+#define	L2_L_CACHE_MASK_armv6n	(L2_B|L2_C|L2_V6_L_TEX(TEX_ARMV6_TEX)|L2_XS_S)
 #define	L2_L_CACHE_MASK_armv7	(L2_B|L2_C|L2_V6_L_TEX(TEX_ARMV6_TEX)|L2_XS_S)
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
@@ -822,7 +824,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #else
 #define	L2_S_PROTO_armv6c	(L2_TYPE_S)	/* XP=0, subpage APs */
 #endif
+#ifdef ARM_MMU_EXTENDED
+#define	L2_S_PROTO_armv6n	(L2_TYPE_S|L2_XS_XN)
+#else
 #define	L2_S_PROTO_armv6n	(L2_TYPE_S)	/* with XP=1 */
+#endif
 #ifdef ARM_MMU_EXTENDED
 #define	L2_S_PROTO_armv7	(L2_TYPE_S|L2_XS_XN)
 #else
@@ -904,8 +910,8 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_PROT_RO		L2_L_PROT_RO_armv6n
 #define	L2_L_PROT_MASK		L2_L_PROT_MASK_armv6n
 
-#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_armv6
-#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv6
+#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_armv6n
+#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv6n
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_armv6n
 
 /* These prototypes make writeable mappings, while the other MMU types
