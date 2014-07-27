@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.21 2011/09/06 18:33:01 joerg Exp $	*/
+/*	$NetBSD: cu.c,v 1.22 2014/07/27 04:32:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.21 2011/09/06 18:33:01 joerg Exp $");
+__RCSID("$NetBSD: cu.c,v 1.22 2014/07/27 04:32:23 dholland Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -55,7 +55,8 @@ cumain(int argc, char *argv[])
 	int flow = -1;		/* -1 is "tandem" ^S/^Q */
 	static int helpme = 0, nostop = 0;
 	char useresc = '~';
-	static char sbuf[12], brbuf[16];
+	static char sbuf[12];
+	int cmdlineBR;
 	extern char *optarg;
 	extern int optind;
 
@@ -80,6 +81,7 @@ cumain(int argc, char *argv[])
 	CU = NULL;
 	DV = NULL;
 	BR = DEFBR;
+	cmdlineBR = 0;
 
 	while((c = getopt_long(argc, argv,
 	    "E:F:P:a:p:c:l:s:hefot0123456789", longopts, NULL)) != -1) {
@@ -159,9 +161,8 @@ cumain(int argc, char *argv[])
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			(void)snprintf(brbuf, sizeof(brbuf) -1, "%s%c",
-				 brbuf, c);
-			BR = atoi(brbuf);
+			cmdlineBR = cmdlineBR * 10 + (c - '0');
+			BR = cmdlineBR;
 			break;
 		default:
 			if (nostop == 0)
