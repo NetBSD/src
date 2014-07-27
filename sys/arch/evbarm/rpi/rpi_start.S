@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.11 2014/05/14 14:38:54 joerg Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.12 2014/07/27 09:04:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -82,12 +82,13 @@
  */
 
 #include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.11 2014/05/14 14:38:54 joerg Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.12 2014/07/27 09:04:09 skrll Exp $")
 
 /*
  * Workaround Erratum 411920
@@ -209,9 +210,23 @@ _C_LABEL(rpi_start):
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain the write buffers. */
 
 	ldr	r0, Ltemp_l1_table	/* The page table address */
-	mcr	p15, 0, r0, c2, c0, 0	/* Set Translation Table Base */
 
-	mov	r0, #0
+	mcr	p15, 0, r0, c2, c0, 0	/* Set Translation Table Base 0 (TTB0) */
+
+#if defined(ARM_MMU_EXTENDED)
+	// When using split TTBRs, we need to set both since the physical
+	// addresses we were/are using might be in either.
+	mcr	p15, 0, r0, c2, c0, 1	/* TTBR1 write */
+#endif  
+
+#if defined(ARM_MMU_EXTENDED)
+	mov	r1, #TTBCR_S_N_1        /* make sure TTBCR_S_N is 1 */
+#else   
+	mov	r1, #0			/* make sure TTBCR is 0 */
+#endif
+	mcr	p15, 0, r1, c2, c0, 2	/* TTBCR write */
+  
+	mov     r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate TLBs */
 
 	/* Set the Domain Access register.  Very important! */
@@ -267,18 +282,22 @@ Lstart:
 
 	/* bits to set in the Control Register */
 Lcontrol_set:
+#ifdef ARM11_COMPAT_MMU
+#define	CPU_CONTROL_EXTRA	CPU_CONTROL_SYST_ENABLE
+#else
+#define	CPU_CONTROL_EXTRA	CPU_CONTROL_XP_ENABLE
+#endif
 	.word CPU_CONTROL_MMU_ENABLE  | \
 	      CPU_CONTROL_DC_ENABLE   | \
-	      CPU_CONTROL_WBUF_ENABLE |    /* not defined in 1176 */   \
-	      CPU_CONTROL_32BP_ENABLE | \
-	      CPU_CONTROL_32BD_ENABLE | \
-	      CPU_CONTROL_LABT_ENABLE | \
-	      CPU_CONTROL_SYST_ENABLE | \
+	      CPU_CONTROL_WBUF_ENABLE |    /* not defined in 1176 (SBO) */ \
+	      CPU_CONTROL_32BP_ENABLE |    /* SBO */ \
+	      CPU_CONTROL_32BD_ENABLE |    /* SBO */ \
+	      CPU_CONTROL_LABT_ENABLE |    /* SBO */ \
 		(1 << 16) | 	/* SBO - Global enable for data tcm */ \
 		(1 << 18) |	/* SBO - Global enable for insn tcm */ \
 	      CPU_CONTROL_UNAL_ENABLE | \
-	      CPU_CONTROL_IC_ENABLE
-
+	      CPU_CONTROL_IC_ENABLE | \
+	      CPU_CONTROL_EXTRA
 
 	/* bits to clear in the Control Register */
 Lcontrol_clr:
@@ -305,20 +324,26 @@ Lctl_ID_dis:
 	.word	n_sec					    ; \
 	.word	attr					    ;
 
+#ifdef ARM11_COMPAT_MMU
+#define	L1_S_APv6_KRW		L1_S_AP_KRW
+#else
+#define	L1_S_APv6_KRW		L1_S_APv7_KRW
+#endif
+
 mmu_init_table:
 	/* Add 1MB of VA==PA at 0x00000000 so we can keep the kernel going */
 	MMU_INIT(0x0, 0x0,
 	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
-	    L1_S_PROTO | L1_S_AP_KRW)
+	    L1_S_PROTO | L1_S_APv6_KRW)
 
 	MMU_INIT(KERNEL_BASE, 0x0,
 	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
-	    L1_S_PROTO | L1_S_AP_KRW  | L1_S_B | L1_S_C)
+	    L1_S_PROTO | L1_S_APv6_KRW  | L1_S_B | L1_S_C)
 
 	/* Map the 16MB of peripherals */
 	MMU_INIT(RPI_KERNEL_IO_VBASE, RPI_KERNEL_IO_PBASE,
 	    (RPI_KERNEL_IO_VSIZE + L1_S_SIZE - 1),
-	    L1_S_PROTO | L1_S_AP_KRW)
+	    L1_S_PROTO | L1_S_APv6_KRW)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
