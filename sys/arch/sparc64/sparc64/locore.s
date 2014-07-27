@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.367 2014/07/26 17:16:41 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.368 2014/07/27 16:37:47 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -159,7 +159,38 @@
 	wrpr	%g0, \scratch, %pstate
 3:
 	.endm
+
+	.macro	ALTERNATE_GLOBALS scratch
+#ifdef SUN4V
+	sethi	%hi(cputyp), \scratch
+	ld	[\scratch + %lo(cputyp)], \scratch
+	cmp	\scratch, CPU_SUN4V
+	bne,pt	%icc, 2f
+	 nop
+	/* sun4v */
+	ba	3f
+	 wrpr	%g0, 1, %gl
+2:		
+#endif	
+	/* sun4u */
+	rdpr	 %pstate, \scratch
+	or	\scratch, PSTATE_AG, \scratch	! Alternate Globals (AG) bit set to one
+	wrpr	%g0, \scratch, %pstate
+3:
+	.endm
 	
+	.macro	ENABLE_INTERRUPTS scratch
+	rdpr	 %pstate, \scratch
+	or	\scratch, PSTATE_IE, \scratch	! Interrupt Enable (IE) bit set to one
+	wrpr	%g0, \scratch, %pstate
+	.endm
+
+	.macro	DISABLE_INTERRUPTS scratch
+	rdpr	 %pstate, \scratch
+	and	\scratch, ~PSTATE_IE, \scratch	! Interrupt Enable (IE) bit set to zero
+	wrpr	%g0, \scratch, %pstate
+	.endm
+		
 
 #ifdef SUN4V
 	/* Misc. sun4v macros */
@@ -3904,10 +3935,12 @@ return_from_trap:
 	!!
 	bnz,pn	%icc, 1f				! Returning to userland?
 	 nop
-	wrpr	%g0, PSTATE_INTR, %pstate
+	ENABLE_INTERRUPTS %g5
 	wrpr	%g0, %g0, %pil				! Lower IPL
 1:
-	wrpr	%g0, PSTATE_KERN, %pstate		! Make sure we have normal globals & no IRQs
+	!! Make sure we have normal globals & no IRQs
+	DISABLE_INTERRUPTS %g5
+	NORMAL_GLOBALS %g5
 
 	/* Restore normal globals */
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (1*8)], %g1
@@ -3921,7 +3954,7 @@ return_from_trap:
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #else
-	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
+	ALTERNATE_GLOBALS %g7		! Assuming %g7 is ok to trash
 #endif
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (1*8)], %i1
