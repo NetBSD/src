@@ -185,9 +185,9 @@ void ttm_tt_destroy(struct ttm_tt *ttm)
 	if (!(ttm->page_flags & TTM_PAGE_FLAG_PERSISTENT_SWAP) &&
 	    ttm->swap_storage)
 		fput(ttm->swap_storage);
-#endif
 
 	ttm->swap_storage = NULL;
+#endif
 	ttm->func->destroy(ttm);
 }
 
