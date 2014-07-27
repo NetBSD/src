@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.5 2014/06/30 12:59:48 palle Exp $ */
+ /* $NetBSD: TODO,v 1.6 2014/07/27 17:46:43 palle Exp $ */
 
 Things to be done:
 
@@ -18,3 +18,7 @@ sun4v:
 - cpu.c: cpu_attach() does not emit cache info on sun4v
 - check build without SUN4V defined
 - replace relevant references til %ver with GET_MAXCWP
+- pmap_mp_init(): sun4v missing handling
+- cpu_pmap_prepare: sun4v multi???
+- replace constructs like "wrpr %g0, PSTATE_KERN, %pstate" with NORMAL_GLOBALS
+- replace constructs line "wrpr %g0, PSTATE_INTR, %pstate" with ALTERNATE_GOBALS
