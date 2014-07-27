@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.36 2014/02/09 13:40:59 maxv Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.37 2014/07/27 04:23:44 dholland Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -181,11 +181,11 @@ print_entry(prop_dictionary_t entry)
 
 	/* Get fingerprint in ASCII. */
 	len = prop_data_size(prop_dictionary_get(entry, "fp"));
-	len *= 2;
-	fp = calloc(1, len + 1);
+	fp = calloc(1, len*2 + 1);
 	v = dict_getd(entry, "fp");
-	for (i = 0; i < len; i++)
-		snprintf(fp, len + 1, "%s%02x", fp, v[i] & 0xff);
+	for (i = 0; i < len; i++) {
+		snprintf(&fp[i*2], 3, "%02x", v[i] & 0xff);
+	}
 
 	/* Get flags. */
 	memset(flags, 0, sizeof(flags));
