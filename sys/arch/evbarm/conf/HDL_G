@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.38 2013/06/30 21:38:56 rmind Exp $
+# $NetBSD: HDL_G,v 1.39 2014/07/27 03:34:41 dholland Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -128,7 +128,7 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
