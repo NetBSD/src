@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.69 2014/04/05 18:42:32 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.70 2014/07/27 16:47:26 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -118,12 +118,17 @@ typedef enum {
 /*
  * control data for the proc file system.
  */
+struct pfskey {
+	pfstype		pk_type;	/* type of procfs node */
+	pid_t		pk_pid;		/* associated process */
+	int		pk_fd;		/* associated fd if not -1 */
+};
 struct pfsnode {
-	LIST_ENTRY(pfsnode) pfs_hash;	/* hash chain */
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
-	pfstype		pfs_type;	/* type of procfs node */
-	pid_t		pfs_pid;	/* associated process */
-	int		pfs_fd;		/* associated fd if not -1 */
+	struct pfskey	pfs_key;
+#define pfs_type pfs_key.pk_type
+#define pfs_pid pfs_key.pk_pid
+#define pfs_fd pfs_key.pk_fd
 	mode_t		pfs_mode;	/* mode bits for stat() */
 	u_long		pfs_flags;	/* open flags */
 	u_long		pfs_fileno;	/* unique file id */
@@ -187,9 +192,7 @@ const vfs_namemap_t *vfs_findname(const vfs_namemap_t *, const char *, int);
 
 int procfs_proc_lock(int, struct proc **, int);
 void procfs_proc_unlock(struct proc *);
-int procfs_freevp(struct vnode *);
-int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int,
-    struct proc *);
+int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int);
 int procfs_donote(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_doregs(struct lwp *, struct lwp *, struct pfsnode *,
@@ -232,9 +235,6 @@ int procfs_doversion(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
 void procfs_revoke_vnodes(struct proc *, void *);
-void procfs_hashinit(void);
-void procfs_hashreinit(void);
-void procfs_hashdone(void);
 int procfs_getfp(struct pfsnode *, struct proc *, struct file **);
 
 /* functions to check whether or not files should be displayed */
