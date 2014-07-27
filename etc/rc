@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.168 2014/04/09 12:45:05 apb Exp $
+# $NetBSD: rc,v 1.169 2014/07/27 07:46:46 apb Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -84,6 +84,7 @@ rc_real_work()
 	# with redirected output.
 	#
 	_rc_postprocessor_fd=9 ; export _rc_postprocessor_fd
+	_rc_pid=$$ ; export _rc_pid
 	eval "exec ${_rc_postprocessor_fd}>&1"
 
 	# Print a metadata line when we exit
