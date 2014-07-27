@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.64 2013/06/30 21:38:55 rmind Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.65 2014/07/27 03:34:41 dholland Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -110,7 +110,7 @@ options 	USERCONF	# userconf(4) support
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.24 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: IMX31LITE,v 1.25 2014/07/27 03:34:41 dholland Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -119,7 +119,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 options 	PMAP_DEBUG	# Enable pmap_debug_level code

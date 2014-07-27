@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.37 2014/07/25 21:38:52 joerg Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.38 2014/07/27 03:34:41 dholland Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -152,7 +152,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

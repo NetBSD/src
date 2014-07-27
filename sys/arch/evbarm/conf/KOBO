@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.1 2014/07/25 11:22:50 hkenken Exp $
+#	$NetBSD: KOBO,v 1.2 2014/07/27 03:34:41 dholland Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -138,7 +138,7 @@ options 	NO_POWERSAVE	# uncomment this to run under ICE
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger

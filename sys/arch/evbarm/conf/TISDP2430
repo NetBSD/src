@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.27 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: TISDP2430,v 1.28 2014/07/27 03:34:41 dholland Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -121,7 +121,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
