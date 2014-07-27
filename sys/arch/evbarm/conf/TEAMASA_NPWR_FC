@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.43 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.44 2014/07/27 03:34:41 dholland Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -123,7 +123,7 @@ options 	USERCONF	# userconf(4) support
 # Development and Debugging options
 
 options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GOLDENGATE,v 1.5 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: GOLDENGATE,v 1.6 2014/07/27 03:34:41 dholland Exp $
 #
 #	GOLDENGATE -- Cortina GOLDENGATE Eval Board Kernel
 #
@@ -135,7 +135,7 @@ options 	RNDVERBOSE	# Verbose rnd messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG	# Enable lock debugging
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
