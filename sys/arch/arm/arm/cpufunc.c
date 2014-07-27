@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.147 2014/04/18 23:50:59 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.148 2014/07/27 21:31:34 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.147 2014/04/18 23:50:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.148 2014/07/27 21:31:34 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3153,10 +3153,11 @@ arm11x6_setup(char *args)
 		CPU_CONTROL_32BP_ENABLE |
 		CPU_CONTROL_32BD_ENABLE |
 		CPU_CONTROL_LABT_ENABLE |
-		CPU_CONTROL_SYST_ENABLE |
 		CPU_CONTROL_UNAL_ENABLE |
 #ifdef ARM_MMU_EXTENDED
 		CPU_CONTROL_XP_ENABLE   |
+#else
+		CPU_CONTROL_SYST_ENABLE |
 #endif
 		CPU_CONTROL_IC_ENABLE;
 
