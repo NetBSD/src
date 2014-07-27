@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2014/05/31 14:29:06 christos Exp $
+# $NetBSD: Makefile,v 1.2 2014/07/27 14:24:17 apb Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ FILESDIR_${cmd}_${cmd_scope} = ${TESTSDIR}
 FILESBUILD_${cmd}_${cmd_scope} = yes
 
 ${cmd}_${cmd_scope}: scoped_command
-	${.CURDIR}/scoped_command '${cmd_scope}' '${cmd}' '${cmd}' \
+	${HOST_SH} ${.CURDIR}/scoped_command '${cmd_scope}' '${cmd}' '${cmd}' \
 		>'${.TARGET}'
 
 .  for dot_scope in case compound file for func subshell until while
@@ -31,7 +31,7 @@ FILESBUILD_${dot_scope}_${cmd}_${cmd_scope} = yes
 FILESMODE_${dot_scope}_${cmd}_${cmd_scope} = ${BINMODE}
 
 ${dot_scope}_${cmd}_${cmd_scope}: scoped_command
-	${.CURDIR}/scoped_command '${dot_scope}' \
+	${HOST_SH} ${.CURDIR}/scoped_command '${dot_scope}' \
 		'. "${cmd}_${cmd_scope}"' 'dotcmd' 'dotcmd' >'${.TARGET}'
 .  endfor
 . endfor
