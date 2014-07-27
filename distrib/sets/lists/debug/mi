@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.75 2014/07/24 21:02:55 plunky Exp $
+# $NetBSD: mi,v 1.76 2014/07/27 10:19:12 martin Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1224,6 +1224,7 @@
 ./usr/libdata/debug/usr/sbin/sup.debug		comp-sup-debug		debug
 ./usr/libdata/debug/usr/sbin/supfilesrv.debug	comp-sup-debug		debug
 ./usr/libdata/debug/usr/sbin/supscan.debug	comp-sup-debug		debug
+./usr/libdata/debug/usr/sbin/sysinst.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/syslogd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdchk.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdmatch.debug	comp-netutil-debug	debug
