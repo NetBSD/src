@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.282 2014/07/25 18:28:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.283 2014/07/28 06:36:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.282 2014/07/25 18:28:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.283 2014/07/28 06:36:09 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,13 +382,19 @@ struct wm_softc {
 
 	krndsource_t rnd_source;	/* random source */
 
-	kmutex_t *sc_txrx_lock;		/* lock for tx/rx operations */
-					/* XXX need separation? */
+	kmutex_t *sc_tx_lock;		/* lock for tx operations */
+	kmutex_t *sc_rx_lock;		/* lock for rx operations */
 };
 
-#define WM_LOCK(_sc)	if ((_sc)->sc_txrx_lock) mutex_enter((_sc)->sc_txrx_lock)
-#define WM_UNLOCK(_sc)	if ((_sc)->sc_txrx_lock) mutex_exit((_sc)->sc_txrx_lock)
-#define WM_LOCKED(_sc)	(!(_sc)->sc_txrx_lock || mutex_owned((_sc)->sc_txrx_lock))
+#define WM_TX_LOCK(_sc)		if ((_sc)->sc_tx_lock) mutex_enter((_sc)->sc_tx_lock)
+#define WM_TX_UNLOCK(_sc)	if ((_sc)->sc_tx_lock) mutex_exit((_sc)->sc_tx_lock)
+#define WM_TX_LOCKED(_sc)	(!(_sc)->sc_tx_lock || mutex_owned((_sc)->sc_tx_lock))
+#define WM_RX_LOCK(_sc)		if ((_sc)->sc_rx_lock) mutex_enter((_sc)->sc_rx_lock)
+#define WM_RX_UNLOCK(_sc)	if ((_sc)->sc_rx_lock) mutex_exit((_sc)->sc_rx_lock)
+#define WM_RX_LOCKED(_sc)	(!(_sc)->sc_rx_lock || mutex_owned((_sc)->sc_rx_lock))
+#define WM_BOTH_LOCK(_sc)	do {WM_TX_LOCK(_sc); WM_RX_LOCK(_sc);} while (0)
+#define WM_BOTH_UNLOCK(_sc)	do {WM_RX_UNLOCK(_sc); WM_TX_UNLOCK(_sc);} while (0)
+#define WM_BOTH_LOCKED(_sc)	(WM_TX_LOCKED(_sc) && WM_RX_LOCKED(_sc))
 
 #ifdef WM_MPSAFE
 #define CALLOUT_FLAGS	CALLOUT_MPSAFE
@@ -2159,9 +2165,11 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 #ifdef WM_MPSAFE
-	sc->sc_txrx_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	sc->sc_tx_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	sc->sc_rx_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 #else
-	sc->sc_txrx_lock = NULL;
+	sc->sc_tx_lock = NULL;
+	sc->sc_rx_lock = NULL;
 #endif
 
 	/* Attach the interface. */
@@ -2287,10 +2295,10 @@ wm_detach(device_t self, int flags __unused)
 	pmf_device_deregister(self);
 
 	/* Tell the firmware about the release */
-	WM_LOCK(sc);
+	WM_BOTH_LOCK(sc);
 	wm_release_manageability(sc);
 	wm_release_hw_control(sc);
-	WM_UNLOCK(sc);
+	WM_BOTH_UNLOCK(sc);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -2302,9 +2310,9 @@ wm_detach(device_t self, int flags __unused)
 
 
 	/* Unload RX dmamaps and free mbufs */
-	WM_LOCK(sc);
+	WM_RX_LOCK(sc);
 	wm_rxdrain(sc);
-	WM_UNLOCK(sc);
+	WM_RX_UNLOCK(sc);
 	/* Must unlock here */
 
 	/* Free dmamap. It's the same as the end of the wm_attach() function */
@@ -2341,8 +2349,10 @@ wm_detach(device_t self, int flags __unused)
 		sc->sc_ios = 0;
 	}
 
-	if (sc->sc_txrx_lock)
-		mutex_obj_free(sc->sc_txrx_lock);
+	if (sc->sc_tx_lock)
+		mutex_obj_free(sc->sc_tx_lock);
+	if (sc->sc_rx_lock)
+		mutex_obj_free(sc->sc_rx_lock);
 
 	return 0;
 }
@@ -2385,9 +2395,9 @@ wm_watchdog(struct ifnet *ifp)
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
-	WM_LOCK(sc);
+	WM_TX_LOCK(sc);
 	wm_txintr(sc);
-	WM_UNLOCK(sc);
+	WM_TX_UNLOCK(sc);
 
 	if (sc->sc_txfree != WM_NTXDESC(sc)) {
 #ifdef WM_DEBUG
@@ -2442,7 +2452,7 @@ wm_tick(void *arg)
 	s = splnet();
 #endif
 
-	WM_LOCK(sc);
+	WM_TX_LOCK(sc);
 
 	if (sc->sc_stopping)
 		goto out;
@@ -2472,7 +2482,7 @@ wm_tick(void *arg)
 		wm_tbi_check_link(sc);
 
 out:
-	WM_UNLOCK(sc);
+	WM_TX_UNLOCK(sc);
 #ifndef WM_MPSAFE
 	splx(s);
 #endif
@@ -2489,7 +2499,7 @@ wm_ifflags_cb(struct ethercom *ec)
 	int change = ifp->if_flags ^ sc->sc_if_flags;
 	int rc = 0;
 
-	WM_LOCK(sc);
+	WM_BOTH_LOCK(sc);
 
 	if (change != 0)
 		sc->sc_if_flags = ifp->if_flags;
@@ -2505,7 +2515,7 @@ wm_ifflags_cb(struct ethercom *ec)
 	wm_set_vlan(sc);
 
 out:
-	WM_UNLOCK(sc);
+	WM_BOTH_UNLOCK(sc);
 
 	return rc;
 }
@@ -2527,7 +2537,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifndef WM_MPSAFE
 	s = splnet();
 #endif
-	WM_LOCK(sc);
+	WM_BOTH_LOCK(sc);
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
@@ -2558,7 +2568,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		/*FALLTHROUGH*/
 	default:
-		WM_UNLOCK(sc);
+		WM_BOTH_UNLOCK(sc);
 #ifdef WM_MPSAFE
 		s = splnet();
 #endif
@@ -2567,7 +2577,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef WM_MPSAFE
 		splx(s);
 #endif
-		WM_LOCK(sc);
+		WM_BOTH_LOCK(sc);
 
 		if (error != ENETRESET)
 			break;
@@ -2575,9 +2585,9 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 
 		if (cmd == SIOCSIFCAP) {
-			WM_UNLOCK(sc);
+			WM_BOTH_UNLOCK(sc);
 			error = (*ifp->if_init)(ifp);
-			WM_LOCK(sc);
+			WM_BOTH_LOCK(sc);
 		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
@@ -2590,7 +2600,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
-	WM_UNLOCK(sc);
+	WM_BOTH_UNLOCK(sc);
 
 	/* Try to get more packets going. */
 	ifp->if_start(ifp);
@@ -3474,7 +3484,7 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 	struct mbuf *m;
 	int error;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_RX_LOCKED(sc));
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -3525,7 +3535,7 @@ wm_rxdrain(struct wm_softc *sc)
 	struct wm_rxsoft *rxs;
 	int i;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_RX_LOCKED(sc));
 
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3548,9 +3558,9 @@ wm_init(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	int ret;
 
-	WM_LOCK(sc);
+	WM_BOTH_LOCK(sc);
 	ret = wm_init_locked(ifp);
-	WM_UNLOCK(sc);
+	WM_BOTH_UNLOCK(sc);
 
 	return ret;
 }
@@ -3563,7 +3573,7 @@ wm_init_locked(struct ifnet *ifp)
 	int i, j, trynum, error = 0;
 	uint32_t reg;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_BOTH_LOCKED(sc));
 	/*
 	 * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
 	 * There is a small but measurable benefit to avoiding the adjusment
@@ -4022,9 +4032,9 @@ wm_stop(struct ifnet *ifp, int disable)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	WM_LOCK(sc);
+	WM_BOTH_LOCK(sc);
 	wm_stop_locked(ifp, disable);
-	WM_UNLOCK(sc);
+	WM_BOTH_UNLOCK(sc);
 }
 
 static void
@@ -4034,7 +4044,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 	struct wm_txsoft *txs;
 	int i;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_BOTH_LOCKED(sc));
 
 	sc->sc_stopping = true;
 
@@ -4317,7 +4327,7 @@ wm_82547_txfifo_stall(void *arg)
 
 	s = splnet();
 #endif
-	WM_LOCK(sc);
+	WM_TX_LOCK(sc);
 
 	if (sc->sc_stopping)
 		goto out;
@@ -4353,7 +4363,7 @@ wm_82547_txfifo_stall(void *arg)
 	}
 
 out:
-	WM_UNLOCK(sc);
+	WM_TX_UNLOCK(sc);
 #ifndef WM_MPSAFE
 	splx(s);
 #endif
@@ -4413,10 +4423,10 @@ wm_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	WM_LOCK(sc);
+	WM_TX_LOCK(sc);
 	if (!sc->sc_stopping)
 		wm_start_locked(ifp);
-	WM_UNLOCK(sc);
+	WM_TX_UNLOCK(sc);
 }
 
 static void
@@ -4433,7 +4443,7 @@ wm_start_locked(struct ifnet *ifp)
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_TX_LOCKED(sc));
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -4929,10 +4939,10 @@ wm_nq_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	WM_LOCK(sc);
+	WM_TX_LOCK(sc);
 	if (!sc->sc_stopping)
 		wm_nq_start_locked(ifp);
-	WM_UNLOCK(sc);
+	WM_TX_UNLOCK(sc);
 }
 
 static void
@@ -4946,7 +4956,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_TX_LOCKED(sc));
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -5489,7 +5499,7 @@ wm_rxintr(struct wm_softc *sc)
 
 		ifp->if_ipackets++;
 
-		WM_UNLOCK(sc);
+		WM_RX_UNLOCK(sc);
 
 		/* Pass this up to any BPF listeners. */
 		bpf_mtap(ifp, m);
@@ -5497,7 +5507,7 @@ wm_rxintr(struct wm_softc *sc)
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 
-		WM_LOCK(sc);
+		WM_RX_LOCK(sc);
 
 		if (sc->sc_stopping)
 			break;
@@ -5519,7 +5529,7 @@ static void
 wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 {
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_TX_LOCKED(sc));
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
 		__func__));
@@ -5689,10 +5699,10 @@ wm_intr(void *arg)
 			break;
 		rnd_add_uint32(&sc->rnd_source, icr);
 
-		WM_LOCK(sc);
+		WM_RX_LOCK(sc);
 
 		if (sc->sc_stopping) {
-			WM_UNLOCK(sc);
+			WM_RX_UNLOCK(sc);
 			break;
 		}
 
@@ -5709,6 +5719,9 @@ wm_intr(void *arg)
 #endif
 		wm_rxintr(sc);
 
+		WM_RX_UNLOCK(sc);
+		WM_TX_LOCK(sc);
+
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
 		if (icr & ICR_TXDW) {
 			DPRINTF(WM_DEBUG_TX,
@@ -5724,7 +5737,7 @@ wm_intr(void *arg)
 			wm_linkintr(sc, icr);
 		}
 
-		WM_UNLOCK(sc);
+		WM_TX_UNLOCK(sc);
 
 		if (icr & ICR_RXO) {
 #if defined(WM_DEBUG)
@@ -7444,7 +7457,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t status;
 
-	KASSERT(WM_LOCKED(sc));
+	KASSERT(WM_TX_LOCKED(sc));
 
 	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
 		sc->sc_tbi_linkup = 1;
@@ -7479,9 +7492,9 @@ wm_tbi_check_link(struct wm_softc *sc)
 			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
 				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
 			wm_init_locked(ifp);
-			WM_UNLOCK(sc);
+			WM_TX_UNLOCK(sc);
 			ifp->if_start(ifp);
-			WM_LOCK(sc);
+			WM_TX_LOCK(sc);
 		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 			/* If the timer expired, retry autonegotiation */
 			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
