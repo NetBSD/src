@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.202 2014/06/30 10:03:41 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.203 2014/07/28 14:24:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.202 2014/06/30 10:03:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.203 2014/07/28 14:24:48 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -175,6 +175,7 @@ extern u_char	aarp_org_code[3];
 static struct timeval bigpktppslim_last;
 static int bigpktppslim = 2;	/* XXX */
 static int bigpktpps_count;
+static kmutex_t bigpktpps_lock __cacheline_aligned;
 
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
@@ -603,11 +604,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
+		mutex_enter(&bigpktpps_lock);
 		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
 			    bigpktppslim)) {
 			printf("%s: discarding oversize frame (len=%d)\n",
 			    ifp->if_xname, m->m_pkthdr.len);
 		}
+		mutex_exit(&bigpktpps_lock);
 		m_freem(m);
 		return;
 	}
@@ -1531,4 +1534,10 @@ SYSCTL_SETUP(sysctl_net_ether_setup, "sysctl net.ether subtree setup")
 		       SYSCTL_DESCR("multicast addresses"),
 		       ether_multicast_sysctl, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
+}
+
+void
+etherinit(void)
+{
+	mutex_init(&bigpktpps_lock, MUTEX_DEFAULT, IPL_NET);
 }
