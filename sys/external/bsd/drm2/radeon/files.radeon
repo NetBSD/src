@@ -1,7 +1,7 @@
-#	$NetBSD: files.radeon,v 1.4 2014/07/26 07:36:09 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.5 2014/07/28 00:02:50 riastradh Exp $
 
 define	radeonfbbus	{ }
-device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus
+device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
 attach	radeon at pci
 
 # XXX Rename this to radeonfb when the legacy radeonfb(4) is gone.
