@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.51 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.52 2014/07/28 10:09:51 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.51 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.52 2014/07/28 10:09:51 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -558,6 +558,8 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 
 	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
