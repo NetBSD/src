@@ -2115,7 +2115,7 @@ powerpc*-*-freebsd*)
 	esac
 	;;
 powerpc*-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h rs6000/sysv4.h"
+	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h"
 	tm_file="${tm_file} netbsd.h netbsd-elf.h"
 	case ${target} in
 	  powerpc64*)
@@ -2127,6 +2127,7 @@ powerpc*-*-netbsd*)
 	    tmake_file="${tmake_file} rs6000/t-netbsd"
 	    ;;
 	esac
+	tm_file="${tm_file} rs6000/sysv4.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	if test x${enable_secureplt} != xno; then
 	  tm_file="rs6000/secureplt.h ${tm_file}"
