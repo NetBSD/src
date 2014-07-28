@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.285 2014/07/01 10:16:02 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.286 2014/07/28 14:24:48 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.285 2014/07/01 10:16:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.286 2014/07/28 14:24:48 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -252,6 +252,8 @@ ifinit1(void)
 
 	if_pfil = pfil_head_create(PFIL_TYPE_IFNET, NULL);
 	KASSERT(if_pfil != NULL);
+
+	etherinit();
 }
 
 ifnet_t *
