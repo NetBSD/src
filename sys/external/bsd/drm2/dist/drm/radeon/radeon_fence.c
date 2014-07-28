@@ -192,7 +192,11 @@ void radeon_fence_process(struct radeon_device *rdev, int ring)
 
 	if (wake)
 #ifdef __NetBSD__
+	{
+		spin_lock(&rdev->fence_lock);
 		DRM_SPIN_WAKEUP_ALL(&rdev->fence_queue, &rdev->fence_lock);
+		spin_unlock(&rdev->fence_lock);
+	}
 #else
 		wake_up_all(&rdev->fence_queue);
 #endif
