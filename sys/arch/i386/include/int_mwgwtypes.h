@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.7 2014/07/25 21:43:13 joerg Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.8 2014/07/28 11:22:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@ typedef	unsigned long long int	uint_least64_t;
 
 /* 7.18.1.3 Fastest minimum-width integer types */
 
-typedef	signed char		   int_fast8_t;
-typedef	unsigned char		  uint_fast8_t;
+typedef	int			   int_fast8_t;
+typedef	unsigned int		  uint_fast8_t;
 typedef	int			  int_fast16_t;
 typedef	unsigned int		 uint_fast16_t;
 typedef	int			  int_fast32_t;
