@@ -189,9 +189,11 @@ zvol_check_volsize(uint64_t volsize, uint64_t blocksize)
 	if (volsize % blocksize != 0)
 		return (EINVAL);
 
+#if 0
 #ifdef _ILP32
 	if (volsize - 1 > SPEC_MAXOFFSET_T)
 		return (EOVERFLOW);
+#endif
 #endif
 	return (0);
 }
