@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.185 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: bpf.c,v 1.186 2014/07/28 07:32:46 alnsn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.185 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.186 2014/07/28 07:32:46 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1928,6 +1928,7 @@ sysctl_net_bpf_maxbufsize(SYSCTLFN_ARGS)
 	return (0);
 }
 
+#if defined(MODULAR) || defined(BPFJIT)
 static int
 sysctl_net_bpf_jit(SYSCTLFN_ARGS)
 {
@@ -1951,12 +1952,13 @@ sysctl_net_bpf_jit(SYSCTLFN_ARGS)
 	membar_sync();
 
 	if (newval && bpfjit_module_ops.bj_generate_code == NULL) {
-		printf("WARNING jit activation is postponed "
+		printf("JIT compilation is postponed "
 		    "until after bpfjit module is loaded\n");
 	}
 
 	return 0;
 }
+#endif
 
 static int
 sysctl_net_bpf_peers(SYSCTLFN_ARGS)
@@ -2042,12 +2044,14 @@ sysctl_net_bpf_setup(void)
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL) {
+#if defined(MODULAR) || defined(BPFJIT)
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_BOOL, "jit",
 			SYSCTL_DESCR("Toggle Just-In-Time compilation"),
 			sysctl_net_bpf_jit, 0, &bpf_jit, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+#endif
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxbufsize",
