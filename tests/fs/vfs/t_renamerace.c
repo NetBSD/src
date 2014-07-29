@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.31 2014/07/25 13:44:59 pgoyette Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.32 2014/07/29 09:15:48 gson Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -101,6 +101,8 @@ renamerace(const atf_tc_t *tc, const char *mp)
 		atf_tc_skip("filesystem has not enough inodes");
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
+	if (FSTYPE_UDF(tc))
+		atf_tc_expect_fail("PR kern/49046");
 
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
@@ -120,6 +122,9 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	for (i = 0; i < NWRK; i++)
 		pthread_join(pt2[i], NULL);
 	RL(rump_sys_chdir("/"));
+
+	if (FSTYPE_UDF(tc))
+		atf_tc_fail("race did not trigger this time");
 
 	if (FSTYPE_MSDOS(tc)) {
 		atf_tc_expect_fail("PR kern/44661");
