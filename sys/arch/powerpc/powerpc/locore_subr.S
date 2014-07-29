@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.50 2013/08/23 06:22:32 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.51 2014/07/29 19:15:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -344,9 +344,9 @@ _ENTRY(softint_fast_dispatch)
 	 */
 	mflr	%r0
 	streg	%r0, CFRAME_LR(%r1)
-	stptru	%sp, -CALLFRAMELEN(%sp)
+	stptru	%r1, -CALLFRAMELEN(%r1)
 	mfmsr	%r0
-	streg	%r0, CFRAME_R31(%sp)
+	streg	%r0, CFRAME_R31(%r1)
 
 	/*
 	 * We need a 2nd callframe from which cpu_switchto will consume
@@ -355,9 +355,9 @@ _ENTRY(softint_fast_dispatch)
 	lis	%r8, _C_LABEL(softint_cleanup)@ha
 	addi	%r8, %r8, _C_LABEL(softint_cleanup)@l
 	streg	%r8, CFRAME_LR(%r1)
-	stptru	%sp, -CALLFRAMELEN(%sp)
-	streg	%r30, CFRAME_R30(%sp)
-	streg	%r31, CFRAME_R31(%sp)
+	stptru	%r1, -CALLFRAMELEN(%r1)
+	streg	%r30, CFRAME_R30(%r1)
+	streg	%r31, CFRAME_R31(%r1)
 
 	GET_CPUINFO(%r7)
 	mr	%r30, %r13		/* curlwp is now in r13 */
