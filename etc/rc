@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.169 2014/07/27 07:46:46 apb Exp $
+# $NetBSD: rc,v 1.170 2014/07/29 20:39:16 apb Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -127,6 +127,10 @@ rc_real_work()
 	# nevertheless attempt to print prompts and wait for input.
 	#
 	(
+	    # First detach from tty, to avoid intercepting SIGINFO.
+	    eval "exec ${_rc_original_stdout_fd}<&-"
+	    eval "exec ${_rc_original_stderr_fd}<&-"
+	    exec </dev/null >/dev/null 2>&1
 	    while kill -0 $RC_PID ; do
 		print_rc_metadata "nop"
 		sleep 3
