@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.37 2014/07/20 10:22:54 alnsn Exp $
+#	$NetBSD: files.cobalt,v 1.38 2014/07/29 21:21:44 skrll Exp $
 
 maxpartitions 16
 
@@ -45,6 +45,8 @@ file arch/cobalt/cobalt/console.c
 file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/interrupt.c
 file arch/cobalt/cobalt/machdep.c
+
+file arch/mips/mips/bus_dma.c
 
 file dev/bus_dma/bus_dmamem_common.c
 
