@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.49 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.50 2014/07/29 01:35:44 ozaki-r Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.49 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.50 2014/07/29 01:35:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -136,7 +136,7 @@ faith_clone_destroy(struct ifnet *ifp)
 
 	bpf_detach(ifp);
 	if_detach(ifp);
-	free(ifp, M_DEVBUF);
+	if_free(ifp);
 
 	return (0);
 }
