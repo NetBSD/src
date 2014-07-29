@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_timer.c,v 1.4 2011/06/29 05:56:31 matt Exp $	*/
+/*	$NetBSD: e500_timer.c,v 1.5 2014/07/29 23:35:00 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.4 2011/06/29 05:56:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.5 2014/07/29 23:35:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -68,14 +68,6 @@ static struct timecounter ppcbooke_timecounter = {
 	NULL,			/* tc_priv */
 	NULL			/* tc_next */
 };
-
-static inline uint32_t 
-openpic_read(struct cpu_softc *cpu, bus_size_t offset)
-{
-
-	return bus_space_read_4(cpu->cpu_bst, cpu->cpu_bsh,
-	    OPENPIC_BASE + offset);
-}
 
 static inline void 
 openpic_write(struct cpu_softc *cpu, bus_size_t offset, uint32_t val)
