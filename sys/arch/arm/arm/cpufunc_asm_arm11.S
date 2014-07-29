@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.12 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.13 2014/07/29 07:01:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -29,9 +29,6 @@
  * SUCH DAMAGE.
  *
  * ARM11 assembly functions for CPU / MMU / TLB specific operations
- *
- * XXX We make no attempt at present to take advantage of the v6 memory
- * architecture or physically tagged cache.
  */
  
 #include "assym.h"
