@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.92 2014/07/25 08:20:52 dholland Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.93 2014/07/29 11:10:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.92 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.93 2014/07/29 11:10:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1020,8 +1020,6 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1059,8 +1057,6 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
