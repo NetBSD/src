@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.9 2014/07/14 11:49:48 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.10 2014/07/30 15:47:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -49,7 +49,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE 2
+#define ELOOP_QUEUE 3
 #include "common.h"
 #include "dhcpcd.h"
 #include "dhcp6.h"
@@ -606,9 +606,14 @@ ipv6nd_dadcallback(void *arg)
 		 * Because ap->dadcounter is always increamented,
 		 * a different address is generated. */
 		/* XXX Cache DAD counter per prefix/id/ssid? */
-		if (ifp->options->options & DHCPCD_SLAACPRIVATE &&
-		    ap->dadcounter < IDGEN_RETRIES)
-		{
+		if (ifp->options->options & DHCPCD_SLAACPRIVATE) {
+			if (ap->dadcounter >= IDGEN_RETRIES) {
+				syslog(LOG_ERR,
+				    "%s: unable to obtain a"
+				    " stable private address",
+				    ifp->name);
+				goto try_script;
+			}
 			syslog(LOG_INFO, "%s: deleting address %s",
 				ifp->name, ap->saddr);
 			if (if_deladdress6(ap) == -1 &&
@@ -645,6 +650,7 @@ ipv6nd_dadcallback(void *arg)
 		}
 	}
 
+try_script:
 	if (!wascompleted) {
 		TAILQ_FOREACH(rap, ifp->ctx->ipv6->ra_routers, next) {
 			if (rap->iface != ifp)
