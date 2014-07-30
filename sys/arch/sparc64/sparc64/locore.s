@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.368 2014/07/27 16:37:47 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.369 2014/07/30 13:50:33 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -160,23 +160,8 @@
 3:
 	.endm
 
-	.macro	ALTERNATE_GLOBALS scratch
-#ifdef SUN4V
-	sethi	%hi(cputyp), \scratch
-	ld	[\scratch + %lo(cputyp)], \scratch
-	cmp	\scratch, CPU_SUN4V
-	bne,pt	%icc, 2f
-	 nop
-	/* sun4v */
-	ba	3f
-	 wrpr	%g0, 1, %gl
-2:		
-#endif	
-	/* sun4u */
-	rdpr	 %pstate, \scratch
-	or	\scratch, PSTATE_AG, \scratch	! Alternate Globals (AG) bit set to one
-	wrpr	%g0, \scratch, %pstate
-3:
+	.macro	ALTERNATE_GLOBALS
+	 wrpr    %g0, PSTATE_KERN|PSTATE_AG, %pstate	! sun4u only for now...
 	.endm
 	
 	.macro	ENABLE_INTERRUPTS scratch
@@ -3954,7 +3939,7 @@ return_from_trap:
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #else
-	ALTERNATE_GLOBALS %g7		! Assuming %g7 is ok to trash
+	ALTERNATE_GLOBALS
 #endif
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (1*8)], %i1
