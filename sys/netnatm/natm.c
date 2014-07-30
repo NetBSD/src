@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.39 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.40 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.39 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.40 2014/07/30 10:04:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -100,7 +100,7 @@ natm_detach(struct socket *so)
 static int
 natm_accept(struct socket *so, struct mbuf *nam)
 {
-	KASSERt(solocked(so));
+	KASSERT(solocked(so));
 
 	return EOPNOTSUPP;
 }
@@ -108,7 +108,7 @@ natm_accept(struct socket *so, struct mbuf *nam)
 static int
 natm_bind(struct socket *so, struct mbuf *nam)
 {
-	KASSERt(solocked(so));
+	KASSERT(solocked(so));
 
 	return EOPNOTSUPP;
 }
@@ -116,10 +116,79 @@ natm_bind(struct socket *so, struct mbuf *nam)
 static int
 natm_listen(struct socket *so)
 {
-	KASSERt(solocked(so));
+	KASSERT(solocked(so));
 
 	return EOPNOTSUPP;
 }
+
+static int
+natm_connect(struct socket *so, struct mbuf *nam)
+{
+	int error = 0, s2;
+	struct natmpcb *npcb;
+	struct sockaddr_natm *snatm;
+	struct atm_pseudoioctl api;
+	struct atm_pseudohdr *aph;
+	struct ifnet *ifp;
+	int proto = so->so_proto->pr_protocol;
+
+	KASSERT(solocked(so));
+
+	/*
+	 * validate nam and npcb
+	 */
+
+	if (nam->m_len != sizeof(*snatm))
+		return EINVAL;
+	snatm = mtod(nam, struct sockaddr_natm *);
+	if (snatm->snatm_len != sizeof(*snatm) ||
+	    (npcb->npcb_flags & NPCB_FREE) == 0)
+		return EINVAL;
+	if (snatm->snatm_family != AF_NATM)
+		return EAFNOSUPPORT;
+
+	snatm->snatm_if[IFNAMSIZ-1] = '\0';  /* XXX ensure null termination
+						since ifunit() uses strcmp */
+
+	/*
+	 * convert interface string to ifp, validate.
+	 */
+
+	ifp = ifunit(snatm->snatm_if);
+	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0) {
+		return ENXIO;
+	}
+	if (ifp->if_output != atm_output) {
+		return EAFNOSUPPORT;
+	}
+
+	/*
+	 * register us with the NATM PCB layer
+	 */
+
+	if (npcb_add(npcb, ifp, snatm->snatm_vci, snatm->snatm_vpi) != npcb)
+		return EADDRINUSE;
+
+	/*
+	 * enable rx
+	 */
+
+	ATM_PH_FLAGS(&api.aph) = (proto == PROTO_NATMAAL5) ? ATM_PH_AAL5 : 0;
+	ATM_PH_VPI(&api.aph) = npcb->npcb_vpi;
+	ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
+	api.rxhand = npcb;
+	s2 = splnet();
+	if (ifp->if_ioctl(ifp, SIOCATMENA, &api) != 0) {
+		splx(s2);
+		npcb_free(npcb, NPCB_REMOVE);
+		return EIO;
+	}
+	splx(s2);
+
+	soisconnected(so);
+	return error;
+}
+
 
 static int
 natm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
@@ -234,6 +303,7 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   KASSERT(req != PRU_ACCEPT);
   KASSERT(req != PRU_BIND);
   KASSERT(req != PRU_LISTEN);
+  KASSERT(req != PRU_CONNECT);
   KASSERT(req != PRU_CONTROL);
   KASSERT(req != PRU_SENSE);
   KASSERT(req != PRU_PEERADDR);
@@ -251,75 +321,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   }
 
   switch (req) {
-    case PRU_CONNECT:			/* establish connection to peer */
-
-      /*
-       * validate nam and npcb
-       */
-
-      if (nam->m_len != sizeof(*snatm)) {
-        error = EINVAL;
-	break;
-      }
-      snatm = mtod(nam, struct sockaddr_natm *);
-      if (snatm->snatm_len != sizeof(*snatm) ||
-		(npcb->npcb_flags & NPCB_FREE) == 0) {
-	error = EINVAL;
-	break;
-      }
-      if (snatm->snatm_family != AF_NATM) {
-	error = EAFNOSUPPORT;
-	break;
-      }
-
-      snatm->snatm_if[IFNAMSIZ-1] = '\0';  /* XXX ensure null termination
-						since ifunit() uses strcmp */
-
-      /*
-       * convert interface string to ifp, validate.
-       */
-
-      ifp = ifunit(snatm->snatm_if);
-      if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0) {
-	error = ENXIO;
-	break;
-      }
-      if (ifp->if_output != atm_output) {
-	error = EAFNOSUPPORT;
-	break;
-      }
-
-
-      /*
-       * register us with the NATM PCB layer
-       */
-
-      if (npcb_add(npcb, ifp, snatm->snatm_vci, snatm->snatm_vpi) != npcb) {
-        error = EADDRINUSE;
-        break;
-      }
-
-      /*
-       * enable rx
-       */
-
-      ATM_PH_FLAGS(&api.aph) = (proto == PROTO_NATMAAL5) ? ATM_PH_AAL5 : 0;
-      ATM_PH_VPI(&api.aph) = npcb->npcb_vpi;
-      ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
-      api.rxhand = npcb;
-      s2 = splnet();
-      if (ifp->if_ioctl(ifp, SIOCATMENA, &api) != 0) {
-	splx(s2);
-	npcb_free(npcb, NPCB_REMOVE);
-        error = EIO;
-	break;
-      }
-      splx(s2);
-
-      soisconnected(so);
-
-      break;
-
     case PRU_DISCONNECT:		/* disconnect from peer */
 
       if ((npcb->npcb_flags & NPCB_CONNECTED) == 0) {
@@ -482,6 +483,7 @@ PR_WRAP_USRREQS(natm)
 #define	natm_accept	natm_accept_wrapper
 #define	natm_bind	natm_bind_wrapper
 #define	natm_listen	natm_listen_wrapper
+#define	natm_connect	natm_connect_wrapper
 #define	natm_ioctl	natm_ioctl_wrapper
 #define	natm_stat	natm_stat_wrapper
 #define	natm_peeraddr	natm_peeraddr_wrapper
@@ -496,6 +498,7 @@ const struct pr_usrreqs natm_usrreqs = {
 	.pr_accept	= natm_accept,
 	.pr_bind	= natm_bind,
 	.pr_listen	= natm_listen,
+	.pr_connect	= natm_connect,
 	.pr_ioctl	= natm_ioctl,
 	.pr_stat	= natm_stat,
 	.pr_peeraddr	= natm_peeraddr,
