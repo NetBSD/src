@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.16 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.17 2014/07/30 10:50:54 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.16 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.17 2014/07/30 10:50:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -998,6 +998,7 @@ pq3pci_make_tag(void *v, int bus, int dev, int func)
 	return (bus << 16) | (dev << 11) | (func << 8);
 }
 
+#if 0
 static inline pcitag_t
 pq3pci_config_addr_read(pci_chipset_tag_t pc)
 {
@@ -1006,6 +1007,7 @@ pq3pci_config_addr_read(pci_chipset_tag_t pc)
         __asm volatile("mbar\n\tmsync");
 	return v;
 }
+#endif
 
 static inline void
 pq3pci_config_addr_write(pci_chipset_tag_t pc, pcitag_t v)
