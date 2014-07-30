@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.5 2014/07/30 07:11:57 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.6 2014/07/30 07:20:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -63,7 +63,7 @@
 #include <machine/asm.h>
 #include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.5 2014/07/30 07:11:57 skrll Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.6 2014/07/30 07:20:34 skrll Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -140,7 +140,7 @@ ENTRY_NP(arm11x6_icache_sync_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	/* Erratum ARM1136 371025, workaround #2 */
-	/* Erratum ARM1176 371367 */
+	/* Erratum ARM1176 371367, workaround #2 */
 	mrs	r2, cpsr		/* save the CPSR */
 	cpsid	ifa			/* disable interrupts (irq,fiq,abort) */
 	mov	r3, #0
@@ -158,7 +158,7 @@ ENTRY_NP(arm11x6_icache_sync_range)
 	nop
 	nop
 
-	mcrr	p15, 0, r1, r0, c12	/* clean and invalidate D cache range */ /* XXXNH */
+	mcrr	p15, 0, r1, r0, c12	/* clean D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 END(arm11x6_icache_sync_range)
@@ -167,7 +167,7 @@ ENTRY_NP(arm11x6_idcache_wbinv_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	/* Erratum ARM1136 371025, workaround #2 */
-	/* Erratum ARM1176 371367 */
+	/* Erratum ARM1176 371367, workaround #2 */
 	mrs	r2, cpsr		/* save the CPSR */
 	cpsid	ifa			/* disable interrupts (irq,fiq,abort) */
 	mov	r3, #0
