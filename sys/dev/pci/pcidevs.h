@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1191 2014/07/25 20:13:36 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1192 2014/07/30 12:35:11 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1198 2014/07/25 20:13:05 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1199 2014/07/30 12:34:12 msaitoh Exp
  */
 
 /*
@@ -2637,6 +2637,7 @@
 #define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE16	0x0c01		/* Haswell PCI-E x16 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
+#define	PCI_PRODUCT_INTEL_XE3_12KV3_HOST_DRAM	0x0c08		/* Xeon E3-1200 v3 Host Bridge, DRAM */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE4	0x0c09		/* Haswell PCI-E x4 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_MINI_HDA	0x0c0c		/* Haswell Mini HD Audio Controller */
 #define	PCI_PRODUCT_INTEL_S1200_PCIE_1	0x0c46		/* Atom S1200 PCIe Root Port 1 */
