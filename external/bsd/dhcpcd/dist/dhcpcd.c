@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.6 2014/07/14 11:49:48 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.7 2014/07/30 15:47:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -345,8 +345,6 @@ configure_interface1(struct interface *ifp)
 		ifo->options &= ~(DHCPCD_ARP | DHCPCD_IPV4LL);
 	if (!(ifp->flags & (IFF_POINTOPOINT | IFF_LOOPBACK | IFF_MULTICAST)))
 		ifo->options &= ~DHCPCD_IPV6RS;
-	if (ifo->options & DHCPCD_LINK && ifp->carrier == LINK_UNKNOWN)
-		ifo->options &= ~DHCPCD_LINK;
 
 	if (ifo->metric != -1)
 		ifp->metric = (unsigned int)ifo->metric;
@@ -613,14 +611,33 @@ dhcpcd_startinterface(void *arg)
 	struct if_options *ifo = ifp->options;
 	size_t i;
 	char buf[DUID_LEN * 3];
+	struct timeval tv;
 
 	pre_start(ifp);
 	if (if_up(ifp) == -1)
 		syslog(LOG_ERR, "%s: if_up: %m", ifp->name);
 
-	if (ifp->carrier == LINK_DOWN && ifo->options & DHCPCD_LINK) {
-		syslog(LOG_INFO, "%s: waiting for carrier", ifp->name);
-		return;
+	if (ifo->options & DHCPCD_LINK) {
+link_retry:
+		switch (ifp->carrier) {
+		case LINK_UP:
+			break;
+		case LINK_DOWN:
+			syslog(LOG_INFO, "%s: waiting for carrier", ifp->name);
+			return;
+		case LINK_UNKNOWN:
+			/* No media state available, so we loop until
+			 * IFF_UP and IFF_RUNNING are set. */
+			ifp->carrier = if_carrier(ifp);
+			if (ifp->carrier != LINK_UNKNOWN)
+				goto link_retry;
+			syslog(LOG_INFO, "%s: unknown carrier", ifp->name);
+			tv.tv_sec = 0;
+			tv.tv_usec = 100;
+			eloop_timeout_add_tv(ifp->ctx->eloop, &tv,
+			    dhcpcd_startinterface, ifp);
+			return;
+		}
 	}
 
 	if (ifo->options & (DHCPCD_DUID | DHCPCD_IPV6)) {
