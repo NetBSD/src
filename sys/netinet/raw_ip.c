@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.136 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.137 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.136 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.137 2014/07/30 10:04:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -112,7 +112,7 @@ struct inpcbtable rawcbtable;
 
 int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
     struct in_addr, int, int, void (*)(struct inpcb *, int));
-int	 rip_connect(struct inpcb *, struct mbuf *);
+int	 rip_connect_pcb(struct inpcb *, struct mbuf *);
 void	 rip_disconnect(struct inpcb *);
 
 static void sysctl_net_inet_raw_setup(struct sysctllog **);
@@ -481,7 +481,7 @@ rip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 }
 
 int
-rip_connect(struct inpcb *inp, struct mbuf *nam)
+rip_connect_pcb(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
 
@@ -604,6 +604,27 @@ rip_listen(struct socket *so)
 }
 
 static int
+rip_connect(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	int error = 0;
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(inp != NULL);
+	KASSERT(nam != NULL);
+
+	s = splsoftnet();
+	error = rip_connect_pcb(inp, nam);
+	if (! error)
+		soisconnected(so);
+
+	splx(s);
+	return error;
+}
+
+
+static int
 rip_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return in_control(so, cmd, nam, ifp);
@@ -671,6 +692,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -699,13 +721,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_CONNECT:
-		error = rip_connect(inp, nam);
-		if (error)
-			break;
-		soisconnected(so);
-		break;
 
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
@@ -744,7 +759,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = rip_connect(inp, nam);
+			error = rip_connect_pcb(inp, nam);
 			if (error) {
 			die:
 				m_freem(m);
@@ -776,6 +791,7 @@ PR_WRAP_USRREQS(rip)
 #define	rip_accept	rip_accept_wrapper
 #define	rip_bind	rip_bind_wrapper
 #define	rip_listen	rip_listen_wrapper
+#define	rip_connect	rip_connect_wrapper
 #define	rip_ioctl	rip_ioctl_wrapper
 #define	rip_stat	rip_stat_wrapper
 #define	rip_peeraddr	rip_peeraddr_wrapper
@@ -790,6 +806,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_accept	= rip_accept,
 	.pr_bind	= rip_bind,
 	.pr_listen	= rip_listen,
+	.pr_connect	= rip_connect,
 	.pr_ioctl	= rip_ioctl,
 	.pr_stat	= rip_stat,
 	.pr_peeraddr	= rip_peeraddr,

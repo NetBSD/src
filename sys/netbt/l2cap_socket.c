@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.25 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.26 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.25 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.26 2014/07/30 10:04:26 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -169,6 +169,29 @@ l2cap_listen(struct socket *so)
 }
 
 static int
+l2cap_connect(struct socket *so, struct mbuf *nam)
+{
+	struct l2cap_channel *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	soisconnecting(so);
+	return l2cap_connect_pcb(pcb, sa);
+}
+
+static int
 l2cap_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EPASSTHROUGH;
@@ -253,7 +276,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct l2cap_channel *pcb = up->so_pcb;
-	struct sockaddr_bt *sa;
 	struct mbuf *m0;
 	int err = 0;
 
@@ -263,6 +285,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -290,19 +313,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		soisdisconnected(up);
 		l2cap_detach(up);
 		return 0;
-
-	case PRU_CONNECT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		soisconnecting(up);
-		return l2cap_connect(pcb, sa);
 
 	case PRU_SHUTDOWN:
 		socantsendmore(up);
@@ -500,6 +510,7 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_accept		l2cap_accept_wrapper
 #define	l2cap_bind		l2cap_bind_wrapper
 #define	l2cap_listen		l2cap_listen_wrapper
+#define	l2cap_connect		l2cap_connect_wrapper
 #define	l2cap_ioctl		l2cap_ioctl_wrapper
 #define	l2cap_stat		l2cap_stat_wrapper
 #define	l2cap_peeraddr		l2cap_peeraddr_wrapper
@@ -514,6 +525,7 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_accept	= l2cap_accept,
 	.pr_bind	= l2cap_bind,
 	.pr_listen	= l2cap_listen,
+	.pr_connect	= l2cap_connect,
 	.pr_ioctl	= l2cap_ioctl,
 	.pr_stat	= l2cap_stat,
 	.pr_peeraddr	= l2cap_peeraddr,
