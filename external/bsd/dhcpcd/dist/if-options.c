@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.1.1.28 2014/07/14 11:45:03 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.1.1.29 2014/07/30 15:44:09 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -2065,11 +2065,11 @@ read_config(struct dhcpcd_ctx *ctx,
 		for (e = dhcpcd_embedded_conf; *e; e++) {
 			ol = strlen(*e) + 1;
 			if (ol > buflen) {
-				free(buf);
 				buflen = ol;
-				buf = malloc(buflen);
+				buf = realloc(buf, buflen);
 				if (buf == NULL) {
 					syslog(LOG_ERR, "%s: %m", __func__);
+					free(buf);
 					return NULL;
 				}
 			}
