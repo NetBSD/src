@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.192 2014/07/30 06:53:53 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.193 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.192 2014/07/30 06:53:53 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.193 2014/07/30 10:04:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -233,6 +233,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -284,72 +285,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 
 	switch (req) {
-
-	/*
-	 * Initiate connection to peer.
-	 * Create a template for use in transmissions on this connection.
-	 * Enter SYN_SENT state, and mark socket as connecting.
-	 * Start keep-alive timer, and seed output sequence space.
-	 * Send initial segment on connection.
-	 */
-	case PRU_CONNECT:
-#ifdef INET
-		if (inp) {
-			if (inp->inp_lport == 0) {
-				error = in_pcbbind(inp, NULL);
-				if (error)
-					break;
-			}
-			error = in_pcbconnect(inp, nam, l);
-		}
-#endif
-#ifdef INET6
-		if (in6p) {
-			if (in6p->in6p_lport == 0) {
-				error = in6_pcbbind(in6p, NULL);
-				if (error)
-					break;
-			}
-			error = in6_pcbconnect(in6p, nam, l);
-			if (!error) {
-				/* mapped addr case */
-				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
-					tp->t_family = AF_INET;
-				else
-					tp->t_family = AF_INET6;
-			}
-		}
-#endif
-		if (error)
-			break;
-		tp->t_template = tcp_template(tp);
-		if (tp->t_template == 0) {
-#ifdef INET
-			if (inp)
-				in_pcbdisconnect(inp);
-#endif
-#ifdef INET6
-			if (in6p)
-				in6_pcbdisconnect(in6p);
-#endif
-			error = ENOBUFS;
-			break;
-		}
-		/*
-		 * Compute window scaling to request.
-		 * XXX: This should be moved to tcp_output().
-		 */
-		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-		    (TCP_MAXWIN << tp->request_r_scale) < sb_max)
-			tp->request_r_scale++;
-		soisconnecting(so);
-		TCP_STATINC(TCP_STAT_CONNATTEMPT);
-		tp->t_state = TCPS_SYN_SENT;
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
-		tp->iss = tcp_new_iss(tp, 0);
-		tcp_sendseqinit(tp);
-		error = tcp_output(tp);
-		break;
 
 	/*
 	 * Create a TCP connection between two sockets.
@@ -913,6 +848,96 @@ tcp_listen(struct socket *so)
 
 release:
 	tcp_debug_trace(so, tp, ostate, PRU_LISTEN);
+	splx(s);
+
+	return error;
+}
+
+static int
+tcp_connect(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int s;
+	int error = 0;
+	int ostate = 0;
+
+	KASSERT(solocked(so));
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_CONNECT);
+
+	s = splsoftnet();
+
+	/*
+	 * Initiate connection to peer.
+	 * Create a template for use in transmissions on this connection.
+	 * Enter SYN_SENT state, and mark socket as connecting.
+	 * Start keep-alive timer, and seed output sequence space.
+	 * Send initial segment on connection.
+	 */
+#ifdef INET
+	if (inp) {
+		if (inp->inp_lport == 0) {
+			error = in_pcbbind(inp, NULL);
+			if (error)
+				goto release;
+		}
+		error = in_pcbconnect(inp, nam, curlwp);
+	}
+#endif
+#ifdef INET6
+	if (in6p) {
+		if (in6p->in6p_lport == 0) {
+			error = in6_pcbbind(in6p, NULL);
+			if (error)
+				goto release;
+		}
+		error = in6_pcbconnect(in6p, nam, curlwp);
+		if (!error) {
+			/* mapped addr case */
+			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
+				tp->t_family = AF_INET;
+			else
+				tp->t_family = AF_INET6;
+		}
+	}
+#endif
+	if (error)
+		goto release;
+	tp->t_template = tcp_template(tp);
+	if (tp->t_template == 0) {
+#ifdef INET
+		if (inp)
+			in_pcbdisconnect(inp);
+#endif
+#ifdef INET6
+		if (in6p)
+			in6_pcbdisconnect(in6p);
+#endif
+		error = ENOBUFS;
+		goto release;
+	}
+	/*
+	 * Compute window scaling to request.
+	 * XXX: This should be moved to tcp_output().
+	 */
+	while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
+	    (TCP_MAXWIN << tp->request_r_scale) < sb_max)
+		tp->request_r_scale++;
+	soisconnecting(so);
+	TCP_STATINC(TCP_STAT_CONNATTEMPT);
+	tp->t_state = TCPS_SYN_SENT;
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
+	tp->iss = tcp_new_iss(tp, 0);
+	tcp_sendseqinit(tp);
+	error = tcp_output(tp);
+
+release:
+	tcp_debug_trace(so, tp, ostate, PRU_CONNECT);
 	splx(s);
 
 	return error;
@@ -2309,6 +2334,7 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_accept	tcp_accept_wrapper
 #define	tcp_bind	tcp_bind_wrapper
 #define	tcp_listen	tcp_listen_wrapper
+#define	tcp_connect	tcp_connect_wrapper
 #define	tcp_ioctl	tcp_ioctl_wrapper
 #define	tcp_stat	tcp_stat_wrapper
 #define	tcp_peeraddr	tcp_peeraddr_wrapper
@@ -2323,6 +2349,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_accept	= tcp_accept,
 	.pr_bind	= tcp_bind,
 	.pr_listen	= tcp_listen,
+	.pr_connect	= tcp_connect,
 	.pr_ioctl	= tcp_ioctl,
 	.pr_stat	= tcp_stat,
 	.pr_peeraddr	= tcp_peeraddr,
