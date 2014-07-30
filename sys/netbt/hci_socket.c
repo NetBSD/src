@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.34 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.35 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.34 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.35 2014/07/30 10:04:26 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -527,6 +527,31 @@ hci_listen(struct socket *so)
 }
 
 static int
+hci_connect(struct socket *so, struct mbuf *nam)
+{
+	struct hci_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	if (hci_unit_lookup(&sa->bt_bdaddr) == NULL)
+		return EADDRNOTAVAIL;
+
+	bdaddr_copy(&pcb->hp_raddr, &sa->bt_bdaddr);
+	soisconnected(so);
+	return 0;
+}
+
+static int
 hci_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	int err;
@@ -627,6 +652,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -661,23 +687,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		soisdisconnected(up);
 		hci_detach(up);
-		return 0;
-
-	case PRU_CONNECT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		if (hci_unit_lookup(&sa->bt_bdaddr) == NULL)
-			return EADDRNOTAVAIL;
-
-		bdaddr_copy(&pcb->hp_raddr, &sa->bt_bdaddr);
-		soisconnected(up);
 		return 0;
 
 	case PRU_SHUTDOWN:
@@ -941,6 +950,7 @@ PR_WRAP_USRREQS(hci)
 #define	hci_accept		hci_accept_wrapper
 #define	hci_bind		hci_bind_wrapper
 #define	hci_listen		hci_listen_wrapper
+#define	hci_connect		hci_connect_wrapper
 #define	hci_ioctl		hci_ioctl_wrapper
 #define	hci_stat		hci_stat_wrapper
 #define	hci_peeraddr		hci_peeraddr_wrapper
@@ -955,6 +965,7 @@ const struct pr_usrreqs hci_usrreqs = {
 	.pr_accept	= hci_accept,
 	.pr_bind	= hci_bind,
 	.pr_listen	= hci_listen,
+	.pr_connect	= hci_connect,
 	.pr_ioctl	= hci_ioctl,
 	.pr_stat	= hci_stat,
 	.pr_peeraddr	= hci_peeraddr,
