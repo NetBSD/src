@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.161 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.162 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.161 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.162 2014/07/30 10:04:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,6 +398,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -415,11 +416,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-	case PRU_CONNECT:
-		KASSERT(l != NULL);
-		error = unp_connect(so, nam, l);
-		break;
-
 	case PRU_CONNECT2:
 		error = unp_connect2(so, (struct socket *)nam, PRU_CONNECT2);
 		break;
@@ -502,7 +498,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					 * intervening control ops, like
 					 * another connection.
 					 */
-					error = unp_connect(so, nam, l);
+					error = unp_connect(so, nam);
 				}
 			} else {
 				if ((so->so_state & SS_ISCONNECTED) == 0)
@@ -1044,7 +1040,7 @@ unp_listen(struct socket *so)
 }
 
 int
-unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+unp_connect(struct socket *so, struct mbuf *nam)
 {
 	struct sockaddr_un *sun;
 	vnode_t *vp;
@@ -1085,7 +1081,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		goto bad;
 	}
 	pathbuf_destroy(pb);
-	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, curlwp->l_cred)) != 0)
 		goto bad;
 	/* Acquire v_interlock to protect against unp_detach(). */
 	mutex_enter(vp->v_interlock);
@@ -1127,9 +1123,9 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
-		unp3->unp_connid.unp_pid = l->l_proc->p_pid;
-		unp3->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-		unp3->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
+		unp3->unp_connid.unp_pid = curlwp->l_proc->p_pid;
+		unp3->unp_connid.unp_euid = kauth_cred_geteuid(curlwp->l_cred);
+		unp3->unp_connid.unp_egid = kauth_cred_getegid(curlwp->l_cred);
 		unp3->unp_flags |= UNP_EIDSVALID;
 		if (unp2->unp_flags & UNP_EIDSBIND) {
 			unp->unp_connid = unp2->unp_connid;
@@ -1882,6 +1878,7 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_accept	= unp_accept,
 	.pr_bind	= unp_bind,
 	.pr_listen	= unp_listen,
+	.pr_connect	= unp_connect,
 	.pr_ioctl	= unp_ioctl,
 	.pr_stat	= unp_stat,
 	.pr_peeraddr	= unp_peeraddr,

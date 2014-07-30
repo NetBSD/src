@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.210 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.211 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.210 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.211 2014/07/30 10:04:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -930,6 +930,24 @@ udp_listen(struct socket *so)
 	return EOPNOTSUPP;
 }
 
+static int
+udp_connect(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	int error = 0;
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(inp != NULL);
+	KASSERT(nam != NULL);
+
+	s = splsoftnet();
+	error = in_pcbconnect(inp, nam, curlwp);
+	if (! error)
+		soisconnected(so);
+	splx(s);
+	return error;
+}
 
 static int
 udp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
@@ -999,6 +1017,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -1031,13 +1050,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * the udp pcb queue and/or pcb addresses.
 	 */
 	switch (req) {
-	case PRU_CONNECT:
-		error = in_pcbconnect(inp, nam, l);
-		if (error)
-			break;
-		soisconnected(so);
-		break;
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
@@ -1328,6 +1340,7 @@ PR_WRAP_USRREQS(udp)
 #define	udp_accept	udp_accept_wrapper
 #define	udp_bind	udp_bind_wrapper
 #define	udp_listen	udp_listen_wrapper
+#define	udp_connect	udp_connect_wrapper
 #define	udp_ioctl	udp_ioctl_wrapper
 #define	udp_stat	udp_stat_wrapper
 #define	udp_peeraddr	udp_peeraddr_wrapper
@@ -1342,6 +1355,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_accept	= udp_accept,
 	.pr_bind	= udp_bind,
 	.pr_listen	= udp_listen,
+	.pr_connect	= udp_connect,
 	.pr_ioctl	= udp_ioctl,
 	.pr_stat	= udp_stat,
 	.pr_peeraddr	= udp_peeraddr,
