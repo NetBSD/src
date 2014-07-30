@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2013/08/23 06:19:46 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2014/07/30 23:56:01 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.23 2013/08/23 06:19:46 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.24 2014/07/30 23:56:01 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
 	}
 
 	if (OPC_MFSPR_P(opcode, SPR_PIR)) {
-		__asm ("mfpir %0" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
+		__asm ("mfspr %0, 286" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
 		return true;
 	}
 
