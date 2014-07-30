@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1198 2014/07/25 20:13:05 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1199 2014/07/30 12:34:12 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2630,6 +2630,7 @@ product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
 product INTEL HASWELL_PCIE16	0x0c01	Haswell PCI-E x16 Controller
 product INTEL HASWELL_PCIE8	0x0c05	Haswell PCI-E x8 Controller
+product INTEL XE3_12KV3_HOST_DRAM 0x0c08 Xeon E3-1200 v3 Host Bridge, DRAM
 product INTEL HASWELL_PCIE4	0x0c09	Haswell PCI-E x4 Controller
 product INTEL HASWELL_MINI_HDA	0x0c0c	Haswell Mini HD Audio Controller
 product INTEL S1200_PCIE_1	0x0c46	Atom S1200 PCIe Root Port 1
