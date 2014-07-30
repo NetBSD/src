@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.53 2014/07/30 23:15:23 joerg Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.54 2014/07/30 23:27:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -304,7 +304,7 @@ ENTRY_NOPROFILE(emptyidlespin)
 	twnei	%r4,IPL_NONE
 	mfmsr	%r5
 	andi.	%r5,%r5,PSL_EE@l
-	tweqi	%r5,PSL_EE@l
+	tweqi	%r5,0
 #endif
 	blr				/* CPUINIT needs a raw blr */
 
