@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.287 2014/07/29 05:56:58 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.288 2014/07/30 13:32:09 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,12 +90,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.287 2014/07/29 05:56:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.288 2014/07/30 13:32:09 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
 #include "opt_atalk.h"
 #include "opt_natm.h"
+#include "opt_wlan.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -137,6 +138,10 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.287 2014/07/29 05:56:58 ozaki-r Exp $");
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif
+
+#include "ether.h"
+#include "fddi.h"
+#include "token.h"
 
 #include "carp.h"
 #if NCARP > 0
@@ -253,7 +258,9 @@ ifinit1(void)
 	if_pfil = pfil_head_create(PFIL_TYPE_IFNET, NULL);
 	KASSERT(if_pfil != NULL);
 
+#if NETHER > 0 || NFDDI > 0 || defined(NETATALK) || NTOKEN > 0 || defined(WLAN)
 	etherinit();
+#endif
 }
 
 ifnet_t *
