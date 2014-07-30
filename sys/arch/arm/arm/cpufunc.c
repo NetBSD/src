@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.148 2014/07/27 21:31:34 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.149 2014/07/30 20:52:18 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.148 2014/07/27 21:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.149 2014/07/30 20:52:18 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3204,9 +3204,24 @@ arm11x6_setup(char *args)
 	}
 
 	/*
-	 * Enable an errata workaround
+	 * This enables the workaround for the following ARM1176 r0pX
+	 * errata.
+	 *
+	 * 394601: In low interrupt latency configuration, interrupted clean
+	 * and invalidate operation may not clean dirty data.
+	 *
+	 * 716151: Clean Data Cache line by MVA can corrupt subsequent
+	 * stores to the same cache line.
+	 *
+	 * 714068: Prefetch Instruction Cache Line or Invalidate Instruction
+	 * Cache Line by MVA can cause deadlock.
 	 */
 	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1176JZS) { /* ARM1176JZSr0 */
+		/* 394601 and 716151 */
+		cpuctrl |= CPU_CONTROL_FI_ENABLE;
+		auxctrl |= ARM1176_AUXCTL_FIO;
+
+		/* 714068 */
 		auxctrl |= ARM1176_AUXCTL_PHD;
 	}
 
