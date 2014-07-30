@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2012/07/29 18:05:42 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2014/07/30 19:33:56 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2014/07/30 19:33:56 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -68,7 +68,7 @@ cpu_configure(void)
 	/* Make sure that timers run at CPU frequency */
 	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
 
-	if (config_rootfound("plb", &local_plb_devs) == NULL)
+	if (config_rootfound("plb", __UNCONST(&local_plb_devs)) == NULL)
 		panic("configure: plb not configured");
 
 	(void)spl0();
