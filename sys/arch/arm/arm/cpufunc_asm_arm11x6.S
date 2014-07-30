@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.6 2014/07/30 07:20:34 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.7 2014/07/30 13:31:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -63,7 +63,7 @@
 #include <machine/asm.h>
 #include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.6 2014/07/30 07:20:34 skrll Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.7 2014/07/30 13:31:17 skrll Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -108,7 +108,7 @@ RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.6 2014/07/30 07:20:34 skrll Exp $")
 #define Flush_D_cache(reg) \
 1:	mov	reg, #0;		/* SBZ */					\
 	mcr	p15, 0, reg, c7, c14, 0;/* Clean and Invalidate Entire Data Cache */	\
-	mrc	p15, 0, reg, C7, C10, 6;/* Read Cache Dirty Status Register */		\
+	mrc	p15, 0, reg, c7, c10, 6;/* Read Cache Dirty Status Register */		\
 	ands	reg, reg, #01;		/* Check if it is clean */			\
 	bne	1b;			/* loop if not */				\
 	mcr	p15, 0, reg, c7, c10, 4;/* Data Synchronization Barrier */
