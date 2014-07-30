@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.1.1.2 2014/07/14 11:45:03 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.1.1.3 2014/07/30 15:44:09 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -121,16 +121,17 @@ if_carrier(struct interface *iface)
 	}
 	iface->flags = (unsigned int)ifr.ifr_flags;
 
-	r = LINK_UNKNOWN;
 #ifdef SIOCGIFMEDIA
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, iface->name, sizeof(ifmr.ifm_name));
 	if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1 &&
 	    ifmr.ifm_status & IFM_AVALID)
 		r = (ifmr.ifm_status & IFM_ACTIVE) ? LINK_UP : LINK_DOWN;
+	else
+		r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_UNKNOWN;
+#else
+	r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_DOWN;
 #endif
-	if (r == LINK_UNKNOWN)
-		r = (ifr.ifr_flags & IFF_RUNNING) ? LINK_UP : LINK_DOWN;
 	close(s);
 	return r;
 }
@@ -155,7 +156,7 @@ if_setflag(struct interface *ifp, short flag)
 #endif
 	r = -1;
 	if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
-		if (flag == 0 || ifr.ifr_flags & flag)
+		if (flag == 0 || (ifr.ifr_flags & flag) == flag)
 			r = 0;
 		else {
 			ifr.ifr_flags |= flag;

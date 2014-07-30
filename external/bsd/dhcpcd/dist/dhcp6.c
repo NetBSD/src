@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.12 2014/07/14 14:02:01 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.13 2014/07/30 15:44:10 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -48,8 +48,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE 3
-
+#define ELOOP_QUEUE 4
 #include "config.h"
 #include "common.h"
 #include "dhcp.h"
@@ -1605,8 +1604,6 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 {
 	struct dhcp6_state *state;
 	const struct dhcp6_option *o;
-	const uint8_t *p;
-	struct in6_addr in6;
 	struct ipv6_addr *a;
 	char iabuf[INET6_ADDRSTRLEN];
 	const char *ia;
@@ -1630,9 +1627,7 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 			    ifp->name);
 			continue;
 		}
-		p = D6_COPTION_DATA(o);
 		iap = (const struct dhcp6_ia_addr *)D6_COPTION_DATA(o);
-		p += sizeof(in6);
 		a = dhcp6_findaddr(ifp, &iap->addr);
 		if (a == NULL) {
 			a = calloc(1, sizeof(*a));
@@ -1959,6 +1954,7 @@ dhcp6_validatelease(struct interface *ifp,
     const char *sfrom)
 {
 	struct dhcp6_state *state;
+	int nia;
 
 	if (len <= sizeof(*m)) {
 		syslog(LOG_ERR, "%s: DHCPv6 lease truncated", ifp->name);
@@ -1971,7 +1967,13 @@ dhcp6_validatelease(struct interface *ifp,
 
 	state->renew = state->rebind = state->expire = 0;
 	state->lowpl = ND6_INFINITE_LIFETIME;
-	return dhcp6_findia(ifp, m, len, sfrom);
+	nia = dhcp6_findia(ifp, m, len, sfrom);
+	if (nia == 0) {
+		syslog(LOG_ERR, "%s: no useable IA found in lease",
+		    ifp->name);
+		return -1;
+	}
+	return nia;
 }
 
 static ssize_t
@@ -2041,11 +2043,6 @@ dhcp6_readlease(struct interface *ifp)
 	fd = dhcp6_validatelease(ifp, state->new, state->new_len, NULL);
 	if (fd == -1)
 		goto ex;
-	if (fd == 0) {
-		syslog(LOG_INFO, "%s: no useable IA found in lease",
-		    ifp->name);
-		goto ex;
-	}
 
 	if (state->expire != ND6_INFINITE_LIFETIME) {
 		gettimeofday(&now, NULL);
@@ -2150,7 +2147,6 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 	int pfxlen;
 
 	/* RFC6603 Section 4.2 */
-	pfxlen = 0; /* appease gcc */
 	if (strcmp(ifp->name, ifs->name) == 0) {
 		if (prefix->prefix_exclude_len == 0) {
 			/* Don't spam the log automatically */
