@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.52 2014/07/30 22:45:21 joerg Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.53 2014/07/30 23:15:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -508,7 +508,7 @@ _ENTRY(cpu_lwp_bootstrap)
 	blrl				/* jump indirect to r31 */
 	lwz	%r31, FRAME_SRR1(%r1)	/* trapexit wants srr1 in r31 */
 #ifdef PPC_BOOKE
-	lis	%r30, 0xbeeffeed@ha
+	lis	%r30, 0xbeeffeed@h
 	ori	%r30, %r30, 0xbeeffeed@l
 	andis.	%r0,%r31,PSL_CE@h
 	tweqi	%r0,0

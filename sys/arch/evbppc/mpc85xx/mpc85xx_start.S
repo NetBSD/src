@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.7 2014/07/30 22:45:21 joerg Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.8 2014/07/30 23:15:23 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.7 2014/07/30 22:45:21 joerg Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.8 2014/07/30 23:15:23 joerg Exp $")
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -86,7 +86,7 @@ __start:
 	/*
 	 * Set all the registers we don't care about to a known junk value.
 	 */
-	lis	%r2,0xdeadbeef@ha
+	lis	%r2,0xdeadbeef@h
 	ori	%r2,%r2,0xdeadbeef@l
 	mr	%r9,%r2
 	mr	%r10,%r9
