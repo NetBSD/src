@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.30 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: btsco.c,v 1.31 2014/07/30 10:04:25 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.30 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.31 2014/07/30 10:04:25 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -617,7 +617,7 @@ btsco_open(void *hdl, int flags)
 		}
 
 		bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
-		err = sco_connect(sc->sc_sco, &sa);
+		err = sco_connect_pcb(sc->sc_sco, &sa);
 		if (err) {
 			sco_detach_pcb(&sc->sc_sco);
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.129 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.130 2014/07/30 10:04:26 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.129 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.130 2014/07/30 10:04:26 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -699,6 +699,62 @@ rip6_listen(struct socket *so)
 }
 
 static int
+rip6_connect(struct socket *so, struct mbuf *nam)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+	struct sockaddr_in6 *addr;
+	struct in6_addr *in6a = NULL;
+	struct ifnet *ifp = NULL;
+	int scope_ambiguous = 0;
+	int error = 0;
+
+	KASSERT(solocked(so));
+	KASSERT(in6p != NULL);
+	KASSERT(nam != NULL);
+
+	addr = mtod(nam, struct sockaddr_in6 *);
+
+	if (nam->m_len != sizeof(*addr))
+		return EINVAL;
+	if (!IFNET_FIRST())
+		return EADDRNOTAVAIL;
+	if (addr->sin6_family != AF_INET6)
+		return EAFNOSUPPORT;
+
+	/*
+	 * Application should provide a proper zone ID or the use of
+	 * default zone IDs should be enabled.  Unfortunately, some
+	 * applications do not behave as it should, so we need a
+	 * workaround.  Even if an appropriate ID is not determined,
+	 * we'll see if we can determine the outgoing interface.  If we
+	 * can, determine the zone ID based on the interface below.
+	 */
+	if (addr->sin6_scope_id == 0 && !ip6_use_defzone)
+		scope_ambiguous = 1;
+	if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
+		return error;
+
+	/* Source address selection. XXX: need pcblookup? */
+	in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
+	    in6p->in6p_moptions, &in6p->in6p_route,
+	    &in6p->in6p_laddr, &ifp, &error);
+	if (in6a == NULL) {
+		if (error == 0)
+			return EADDRNOTAVAIL;
+		return error;
+	}
+	/* XXX: see above */
+	if (ifp && scope_ambiguous &&
+	    (error = in6_setscope(&addr->sin6_addr, ifp, NULL)) != 0) {
+		return error;
+	}
+	in6p->in6p_laddr = *in6a;
+	in6p->in6p_faddr = addr->sin6_addr;
+	soisconnected(so);
+	return error;
+}
+
+static int
 rip6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return in6_control(so, cmd, nam, ifp);
@@ -764,6 +820,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -794,59 +851,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		soisdisconnected(so);
 		rip6_detach(so);
 		break;
-
-	case PRU_CONNECT:
-	{
-		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
-		struct in6_addr *in6a = NULL;
-		struct ifnet *ifp = NULL;
-		int scope_ambiguous = 0;
-
-		if (nam->m_len != sizeof(*addr)) {
-			error = EINVAL;
-			break;
-		}
-		if (!IFNET_FIRST()) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-		if (addr->sin6_family != AF_INET6) {
-			error = EAFNOSUPPORT;
-			break;
-		}
-
-		/*
-		 * Application should provide a proper zone ID or the use of
-		 * default zone IDs should be enabled.  Unfortunately, some
-		 * applications do not behave as it should, so we need a
-		 * workaround.  Even if an appropriate ID is not determined,
-		 * we'll see if we can determine the outgoing interface.  If we
-		 * can, determine the zone ID based on the interface below.
-		 */
-		if (addr->sin6_scope_id == 0 && !ip6_use_defzone)
-			scope_ambiguous = 1;
-		if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
-			return error;
-
-		/* Source address selection. XXX: need pcblookup? */
-		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-		    in6p->in6p_moptions, &in6p->in6p_route,
-		    &in6p->in6p_laddr, &ifp, &error);
-		if (in6a == NULL) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
-			break;
-		}
-		/* XXX: see above */
-		if (ifp && scope_ambiguous &&
-		    (error = in6_setscope(&addr->sin6_addr, ifp, NULL)) != 0) {
-			break;
-		}
-		in6p->in6p_laddr = *in6a;
-		in6p->in6p_faddr = addr->sin6_addr;
-		soisconnected(so);
-		break;
-	}
 
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
@@ -959,6 +963,7 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_accept		rip6_accept_wrapper
 #define	rip6_bind		rip6_bind_wrapper
 #define	rip6_listen		rip6_listen_wrapper
+#define	rip6_connect		rip6_connect_wrapper
 #define	rip6_ioctl		rip6_ioctl_wrapper
 #define	rip6_stat		rip6_stat_wrapper
 #define	rip6_peeraddr		rip6_peeraddr_wrapper
@@ -973,6 +978,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_accept	= rip6_accept,
 	.pr_bind	= rip6_bind,
 	.pr_listen	= rip6_listen,
+	.pr_connect	= rip6_connect,
 	.pr_ioctl	= rip6_ioctl,
 	.pr_stat	= rip6_stat,
 	.pr_peeraddr	= rip6_peeraddr,

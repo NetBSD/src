@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.15 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.16 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.15 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.16 2014/07/30 10:04:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -131,7 +131,7 @@ l2cap_sockaddr_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 }
 
 /*
- * l2cap_connect(l2cap_channel, sockaddr)
+ * l2cap_connect_pcb(l2cap_channel, sockaddr)
  *
  *	Initiate a connection to destination. This corresponds to
  *	"Open Channel Request" in the L2CAP specification and will
@@ -144,7 +144,7 @@ l2cap_sockaddr_pcb(struct l2cap_channel *chan, struct sockaddr_bt *addr)
  *		proto->connecting(upper)
  */
 int
-l2cap_connect(struct l2cap_channel *chan, struct sockaddr_bt *dest)
+l2cap_connect_pcb(struct l2cap_channel *chan, struct sockaddr_bt *dest)
 {
 	struct hci_unit *unit;
 	int err;

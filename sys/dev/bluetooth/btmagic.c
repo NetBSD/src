@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.8 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.9 2014/07/30 10:04:25 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.8 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.9 2014/07/30 10:04:25 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -543,9 +543,9 @@ btmagic_connect(struct btmagic_softc *sc)
 
 	sa.bt_psm = L2CAP_PSM_HID_CNTL;
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
-	err = l2cap_connect(sc->sc_ctl, &sa);
+	err = l2cap_connect_pcb(sc->sc_ctl, &sa);
 	if (err) {
-		printf("%s: l2cap_connect failed (%d)\n",
+		printf("%s: l2cap_connect_pcb failed (%d)\n",
 		    device_xname(sc->sc_dev), err);
 		return err;
 	}
@@ -830,7 +830,7 @@ btmagic_ctl_connected(void *arg)
 
 		sa.bt_psm = L2CAP_PSM_HID_INTR;
 		bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
-		err = l2cap_connect(sc->sc_int, &sa);
+		err = l2cap_connect_pcb(sc->sc_int, &sa);
 		if (err)
 			goto fail;
 	}

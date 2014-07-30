@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.49 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: un.h,v 1.50 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -85,7 +85,7 @@ kmutex_t *uipc_streamlock (void);
 kmutex_t *uipc_rawlock (void);
 
 int	unp_bind (struct socket *, struct mbuf *);
-int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
+int	unp_connect (struct socket *, struct mbuf *);
 int	unp_connect2 (struct socket *, struct socket *, int);
 void	unp_discard (struct file *);
 void	unp_disconnect (struct unpcb *);

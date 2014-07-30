@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.17 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.18 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.17 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.18 2014/07/30 10:04:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,12 +125,12 @@ rfcomm_sockaddr_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 }
 
 /*
- * rfcomm_connect(dlc, sockaddr)
+ * rfcomm_connect_pcb(dlc, sockaddr)
  *
  * Initiate connection of RFCOMM DLC to remote address.
  */
 int
-rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
+rfcomm_connect_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 {
 	struct rfcomm_session *rs;
 	int err = 0;
@@ -167,7 +167,7 @@ rfcomm_connect(struct rfcomm_dlc *dlc, struct sockaddr_bt *dest)
 		rs->rs_flags |= RFCOMM_SESSION_INITIATOR;
 		rs->rs_state = RFCOMM_SESSION_WAIT_CONNECT;
 
-		err = l2cap_connect(rs->rs_l2cap, &dlc->rd_raddr);
+		err = l2cap_connect_pcb(rs->rs_l2cap, &dlc->rd_raddr);
 		if (err) {
 			rfcomm_session_free(rs);
 			return err;

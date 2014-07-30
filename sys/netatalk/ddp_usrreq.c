@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.55 2014/07/24 15:12:03 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.56 2014/07/30 10:04:26 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.55 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.56 2014/07/30 10:04:26 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.55 2014/07/24 15:12:03 rtr Exp $");
 static void at_pcbdisconnect(struct ddpcb *);
 static void at_sockaddr(struct ddpcb *, struct mbuf *);
 static int at_pcbsetaddr(struct ddpcb *, struct mbuf *);
-static int at_pcbconnect(struct ddpcb *, struct mbuf *, struct lwp *);
+static int at_pcbconnect(struct ddpcb *, struct mbuf *);
 static void ddp_detach(struct socket *);
 
 struct ifqueue atintrq1, atintrq2;
@@ -87,6 +87,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -111,16 +112,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		goto release;
 	}
 	switch (req) {
-	case PRU_CONNECT:
-		if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT) {
-			error = EISCONN;
-			break;
-		}
-		error = at_pcbconnect(ddp, addr, l);
-		if (error == 0)
-			soisconnected(so);
-		break;
-
 	case PRU_DISCONNECT:
 		if (ddp->ddp_fsat.sat_addr.s_node == ATADDR_ANYNODE) {
 			error = ENOTCONN;
@@ -143,7 +134,7 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 					break;
 				}
 				s = splnet();
-				error = at_pcbconnect(ddp, addr, l);
+				error = at_pcbconnect(ddp, addr);
 				if (error) {
 					splx(s);
 					break;
@@ -300,7 +291,7 @@ at_pcbsetaddr(struct ddpcb *ddp, struct mbuf *addr)
 }
 
 static int
-at_pcbconnect(struct ddpcb *ddp, struct mbuf *addr, struct lwp *l)
+at_pcbconnect(struct ddpcb *ddp, struct mbuf *addr)
 {
 	struct rtentry *rt;
 	const struct sockaddr_at *cdst;
@@ -493,6 +484,25 @@ ddp_listen(struct socket *so)
 }
 
 static int
+ddp_connect(struct socket *so, struct mbuf *nam)
+{
+	struct ddpcb *ddp = sotoddpcb(so);
+	int error = 0;
+
+	KASSERT(solocked(so));
+	KASSERT(ddp != NULL);
+	KASSERT(nam != NULL);
+
+	if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT)
+		return EISCONN;
+	error = at_pcbconnect(ddp, nam);
+	if (error == 0)
+		soisconnected(so);
+
+	return error;
+}
+
+static int
 ddp_ioctl(struct socket *so, u_long cmd, void *addr, struct ifnet *ifp)
 {
 	return at_control(cmd, addr, ifp);
@@ -621,6 +631,7 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_accept	ddp_accept_wrapper
 #define	ddp_bind	ddp_bind_wrapper
 #define	ddp_listen	ddp_listen_wrapper
+#define	ddp_connect	ddp_connect_wrapper
 #define	ddp_ioctl	ddp_ioctl_wrapper
 #define	ddp_stat	ddp_stat_wrapper
 #define	ddp_peeraddr	ddp_peeraddr_wrapper
@@ -635,6 +646,7 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_accept	= ddp_accept,
 	.pr_bind	= ddp_bind,
 	.pr_listen	= ddp_listen,
+	.pr_connect	= ddp_connect,
 	.pr_ioctl	= ddp_ioctl,
 	.pr_stat	= ddp_stat,
 	.pr_peeraddr	= ddp_peeraddr,

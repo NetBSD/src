@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.45 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.46 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.45 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.46 2014/07/30 10:04:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -165,6 +165,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -188,7 +189,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * within that protocol family (assuming there's
 	 * nothing else around it should go to).
 	 */
-	case PRU_CONNECT:
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;

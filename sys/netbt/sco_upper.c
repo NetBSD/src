@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.13 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.14 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.13 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.14 2014/07/30 10:04:26 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -114,12 +114,12 @@ sco_sockaddr_pcb(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 }
 
 /*
- * sco_connect(pcb, sockaddr)
+ * sco_connect_pcb(pcb, sockaddr)
  *
  *	Initiate a SCO connection to the destination address.
  */
 int
-sco_connect(struct sco_pcb *pcb, struct sockaddr_bt *dest)
+sco_connect_pcb(struct sco_pcb *pcb, struct sockaddr_bt *dest)
 {
 	hci_add_sco_con_cp cp;
 	struct hci_unit *unit;

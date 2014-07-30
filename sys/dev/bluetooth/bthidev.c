@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.26 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.27 2014/07/30 10:04:25 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.26 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.27 2014/07/30 10:04:25 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -577,9 +577,9 @@ bthidev_connect(struct bthidev_softc *sc)
 
 	sa.bt_psm = sc->sc_ctlpsm;
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
-	err = l2cap_connect(sc->sc_ctl, &sa);
+	err = l2cap_connect_pcb(sc->sc_ctl, &sa);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "l2cap_connect failed (%d)\n", err);
+		aprint_error_dev(sc->sc_dev, "l2cap_connect_pcb failed (%d)\n", err);
 		return err;
 	}
 
@@ -753,7 +753,7 @@ bthidev_ctl_connected(void *arg)
 
 		sa.bt_psm = sc->sc_intpsm;
 		bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
-		err = l2cap_connect(sc->sc_int, &sa);
+		err = l2cap_connect_pcb(sc->sc_int, &sa);
 		if (err)
 			goto fail;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.109 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.110 2014/07/30 10:04:26 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.109 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.110 2014/07/30 10:04:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -710,6 +710,27 @@ udp6_listen(struct socket *so)
 }
 
 static int
+udp6_connect(struct socket *so, struct mbuf *nam)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+	int error = 0;
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(in6p != NULL);
+
+	if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr))
+		return EISCONN;
+	s = splsoftnet();
+	error = in6_pcbconnect(in6p, nam, curlwp);
+	splx(s);
+	if (error == 0)
+		soisconnected(so);
+
+	return error;
+}
+
+static int
 udp6_ioctl(struct socket *so, u_long cmd, void *addr6, struct ifnet *ifp)
 {
 	/*
@@ -789,6 +810,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -810,18 +832,6 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	}
 
 	switch (req) {
-
-	case PRU_CONNECT:
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-			error = EISCONN;
-			break;
-		}
-		s = splsoftnet();
-		error = in6_pcbconnect(in6p, addr6, l);
-		splx(s);
-		if (error == 0)
-			soisconnected(so);
-		break;
 
 	case PRU_DISCONNECT:
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
@@ -948,6 +958,7 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_accept	udp6_accept_wrapper
 #define	udp6_bind	udp6_bind_wrapper
 #define	udp6_listen	udp6_listen_wrapper
+#define	udp6_connect	udp6_connect_wrapper
 #define	udp6_ioctl	udp6_ioctl_wrapper
 #define	udp6_stat	udp6_stat_wrapper
 #define	udp6_peeraddr	udp6_peeraddr_wrapper
@@ -962,6 +973,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pr_accept	= udp6_accept,
 	.pr_bind	= udp6_bind,
 	.pr_listen	= udp6_listen,
+	.pr_connect	= udp6_connect,
 	.pr_ioctl	= udp6_ioctl,
 	.pr_stat	= udp6_stat,
 	.pr_peeraddr	= udp6_peeraddr,

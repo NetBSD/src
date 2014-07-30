@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.15 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.16 2014/07/30 10:04:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.15 2014/07/24 15:12:03 rtr Exp $
+ * $Id: l2cap.h,v 1.16 2014/07/30 10:04:26 rtr Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -464,7 +464,7 @@ int l2cap_ctloutput(int, struct socket *, struct sockopt *);
 int l2cap_attach_pcb(struct l2cap_channel **, const struct btproto *, void *);
 int l2cap_bind_pcb(struct l2cap_channel *, struct sockaddr_bt *);
 int l2cap_sockaddr_pcb(struct l2cap_channel *, struct sockaddr_bt *);
-int l2cap_connect(struct l2cap_channel *, struct sockaddr_bt *);
+int l2cap_connect_pcb(struct l2cap_channel *, struct sockaddr_bt *);
 int l2cap_peeraddr_pcb(struct l2cap_channel *, struct sockaddr_bt *);
 int l2cap_disconnect(struct l2cap_channel *, int);
 void l2cap_detach_pcb(struct l2cap_channel **);
