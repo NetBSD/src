@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.1.1.33 2014/07/14 11:45:03 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.1.1.34 2014/07/30 15:44:10 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -58,6 +58,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#define ELOOP_QUEUE 2
 #include "config.h"
 #include "arp.h"
 #include "common.h"
@@ -205,9 +206,12 @@ get_option(struct dhcpcd_ctx *ctx,
 				goto exit;
 			break;
 		case DHO_OPTIONSOVERLOADED:
-			/* Ensure we only get this option once */
+			/* Ensure we only get this option once by setting
+			 * the last bit as well as the value.
+			 * This is valid because only the first two bits
+			 * actually mean anything in RFC2132 Section 9.3 */
 			if (!overl)
-				overl = p[1];
+				overl = 0x80 | p[1];
 			break;
 		}
 		l = *p++;
