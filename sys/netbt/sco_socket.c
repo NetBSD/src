@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.28 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.29 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.28 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.29 2014/07/31 03:39:35 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -183,6 +183,45 @@ sco_connect(struct socket *so, struct mbuf *nam)
 }
 
 static int
+sco_disconnect(struct socket *so)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	soisdisconnecting(so);
+	return sco_disconnect_pcb(pcb, so->so_linger);
+}
+
+static int
+sco_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+sco_abort(struct socket *so)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sco_disconnect_pcb(pcb, 0);
+	soisdisconnected(so);
+	sco_detach(so);
+	return 0;
+}
+
+static int
 sco_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EOPNOTSUPP;
@@ -273,6 +312,9 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -292,20 +334,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_DISCONNECT:
-		soisdisconnecting(up);
-		return sco_disconnect(pcb, up->so_linger);
-
-	case PRU_ABORT:
-		sco_disconnect(pcb, 0);
-		soisdisconnected(up);
-		sco_detach(up);
-		return 0;
-
-	case PRU_SHUTDOWN:
-		socantsendmore(up);
-		break;
-
 	case PRU_SEND:
 		KASSERT(m != NULL);
 		if (m->m_pkthdr.len == 0)
@@ -478,6 +506,9 @@ PR_WRAP_USRREQS(sco)
 #define	sco_bind		sco_bind_wrapper
 #define	sco_listen		sco_listen_wrapper
 #define	sco_connect		sco_connect_wrapper
+#define	sco_disconnect		sco_disconnect_wrapper
+#define	sco_shutdown		sco_shutdown_wrapper
+#define	sco_abort		sco_abort_wrapper
 #define	sco_ioctl		sco_ioctl_wrapper
 #define	sco_stat		sco_stat_wrapper
 #define	sco_peeraddr		sco_peeraddr_wrapper
@@ -493,6 +524,9 @@ const struct pr_usrreqs sco_usrreqs = {
 	.pr_bind	= sco_bind,
 	.pr_listen	= sco_listen,
 	.pr_connect	= sco_connect,
+	.pr_disconnect	= sco_disconnect,
+	.pr_shutdown	= sco_shutdown,
+	.pr_abort	= sco_abort,
 	.pr_ioctl	= sco_ioctl,
 	.pr_stat	= sco_stat,
 	.pr_peeraddr	= sco_peeraddr,

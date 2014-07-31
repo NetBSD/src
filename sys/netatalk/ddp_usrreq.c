@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.56 2014/07/30 10:04:26 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.57 2014/07/31 03:39:35 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.56 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.57 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -88,6 +88,9 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -112,19 +115,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		goto release;
 	}
 	switch (req) {
-	case PRU_DISCONNECT:
-		if (ddp->ddp_fsat.sat_addr.s_node == ATADDR_ANYNODE) {
-			error = ENOTCONN;
-			break;
-		}
-		at_pcbdisconnect(ddp);
-		soisdisconnected(so);
-		break;
-
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		break;
-
 	case PRU_SEND:{
 			int s = 0;
 
@@ -153,11 +143,6 @@ ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 				splx(s);
 			}
 		}
-		break;
-
-	case PRU_ABORT:
-		soisdisconnected(so);
-		ddp_detach(so);
 		break;
 
 	case PRU_CONNECT2:
@@ -503,6 +488,41 @@ ddp_connect(struct socket *so, struct mbuf *nam)
 }
 
 static int
+ddp_disconnect(struct socket *so)
+{
+	struct ddpcb *ddp = sotoddpcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(ddp != NULL);
+
+	if (ddp->ddp_fsat.sat_addr.s_node == ATADDR_ANYNODE)
+		return ENOTCONN;
+
+	at_pcbdisconnect(ddp);
+	soisdisconnected(so);
+	return 0;
+}
+
+static int
+ddp_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+ddp_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	soisdisconnected(so);
+	ddp_detach(so);
+	return 0;
+}
+
+static int
 ddp_ioctl(struct socket *so, u_long cmd, void *addr, struct ifnet *ifp)
 {
 	return at_control(cmd, addr, ifp);
@@ -632,6 +652,9 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_bind	ddp_bind_wrapper
 #define	ddp_listen	ddp_listen_wrapper
 #define	ddp_connect	ddp_connect_wrapper
+#define	ddp_disconnect	ddp_disconnect_wrapper
+#define	ddp_shutdown	ddp_shutdown_wrapper
+#define	ddp_abort	ddp_abort_wrapper
 #define	ddp_ioctl	ddp_ioctl_wrapper
 #define	ddp_stat	ddp_stat_wrapper
 #define	ddp_peeraddr	ddp_peeraddr_wrapper
@@ -647,6 +670,9 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_bind	= ddp_bind,
 	.pr_listen	= ddp_listen,
 	.pr_connect	= ddp_connect,
+	.pr_disconnect	= ddp_disconnect,
+	.pr_shutdown	= ddp_shutdown,
+	.pr_abort	= ddp_abort,
 	.pr_ioctl	= ddp_ioctl,
 	.pr_stat	= ddp_stat,
 	.pr_peeraddr	= ddp_peeraddr,

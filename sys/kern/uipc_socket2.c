@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.119 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.120 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.119 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.120 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -437,7 +437,7 @@ soqremque(struct socket *so, int q)
  * socantsendmore: indicates that no more data will be sent on the
  * socket; it would normally be applied to a socket when the user
  * informs the system that no more data is to be sent, by the protocol
- * code (in case PRU_SHUTDOWN).
+ * code (in case pr_shutdown()).
  */
 void
 socantsendmore(struct socket *so)

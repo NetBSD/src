@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.21 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.22 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.21 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.22 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -499,7 +499,7 @@ rfcomm_session_complete(void *arg, int count)
 	 */
 	if (rs->rs_state == RFCOMM_SESSION_CLOSED) {
 		if (SIMPLEQ_EMPTY(&rs->rs_credits))
-			l2cap_disconnect(rs->rs_l2cap, 0);
+			l2cap_disconnect_pcb(rs->rs_l2cap, 0);
 	}
 }
 
@@ -853,7 +853,7 @@ rfcomm_session_recv_ua(struct rfcomm_session *rs, int dlci)
 		case RFCOMM_SESSION_WAIT_DISCONNECT:	/* We sent DISC */
 			callout_stop(&rs->rs_timeout);
 			rs->rs_state = RFCOMM_SESSION_CLOSED;
-			l2cap_disconnect(rs->rs_l2cap, 0);
+			l2cap_disconnect_pcb(rs->rs_l2cap, 0);
 			break;
 
 		default:

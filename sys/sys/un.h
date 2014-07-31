@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.50 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: un.h,v 1.51 2014/07/31 03:39:36 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -88,9 +88,9 @@ int	unp_bind (struct socket *, struct mbuf *);
 int	unp_connect (struct socket *, struct mbuf *);
 int	unp_connect2 (struct socket *, struct socket *, int);
 void	unp_discard (struct file *);
-void	unp_disconnect (struct unpcb *);
+void	unp_disconnect1 (struct unpcb *);
 bool	unp_drop (struct unpcb *, int);
-void	unp_shutdown (struct unpcb *);
+void	unp_shutdown1 (struct unpcb *);
 int 	unp_externalize (struct mbuf *, struct lwp *, int);
 int	unp_internalize (struct mbuf **);
 void 	unp_dispose (struct mbuf *);

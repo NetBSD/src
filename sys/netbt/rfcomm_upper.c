@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.18 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.19 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.18 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.19 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -213,12 +213,12 @@ rfcomm_peeraddr_pcb(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 }
 
 /*
- * rfcomm_disconnect(dlc, linger)
+ * rfcomm_disconnect_pcb(dlc, linger)
  *
  * disconnect RFCOMM DLC
  */
 int
-rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
+rfcomm_disconnect_pcb(struct rfcomm_dlc *dlc, int linger)
 {
 	struct rfcomm_session *rs = dlc->rd_session;
 	int err = 0;

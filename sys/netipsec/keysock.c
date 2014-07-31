@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.38 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.39 2014/07/31 03:39:35 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.38 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.39 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -490,7 +490,7 @@ key_accept(struct socket *so, struct mbuf *nam)
 	KASSERT(solocked(so));
 
 	panic("key_accept");
-	/* NOT REACHED */
+
 	return EOPNOTSUPP;
 }
 
@@ -514,6 +514,50 @@ static int
 key_connect(struct socket *so, struct mbuf *nam)
 {
 	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+key_disconnect(struct socket *so)
+{
+	struct rawcb *rp = sotorawcb(so);
+	int s;
+        
+	KASSERT(solocked(so));
+	KASSERT(rp != NULL);
+
+	s = splsoftnet();
+	soisdisconnected(so);
+	raw_disconnect(rp);
+	splx(s);
+ 
+	return 0;                               
+}
+
+static int
+key_shutdown(struct socket *so)
+{
+	int s;
+
+	KASSERT(solocked(so));
+
+	/*
+	 * Mark the connection as being incapable of further input.
+	 */
+	s = splsoftnet();
+	socantsendmore(so);
+	splx(s);
+
+	return 0;
+}
+
+static int
+key_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	panic("key_abort");
 
 	return EOPNOTSUPP;
 }
@@ -599,6 +643,9 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -627,6 +674,9 @@ PR_WRAP_USRREQS(key)
 #define	key_bind	key_bind_wrapper
 #define	key_listen	key_listen_wrapper
 #define	key_connect	key_connect_wrapper
+#define	key_disconnect	key_disconnect_wrapper
+#define	key_shutdown	key_shutdown_wrapper
+#define	key_abort	key_abort_wrapper
 #define	key_ioctl	key_ioctl_wrapper
 #define	key_stat	key_stat_wrapper
 #define	key_peeraddr	key_peeraddr_wrapper
@@ -642,6 +692,9 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_bind	= key_bind,
 	.pr_listen	= key_listen,
 	.pr_connect	= key_connect,
+	.pr_disconnect	= key_disconnect,
+	.pr_shutdown	= key_shutdown,
+	.pr_abort	= key_abort,
 	.pr_ioctl	= key_ioctl,
 	.pr_stat	= key_stat,
 	.pr_peeraddr	= key_peeraddr,

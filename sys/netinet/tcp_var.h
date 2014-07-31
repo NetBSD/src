@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.174 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.175 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -901,7 +901,7 @@ void	 *tcp6_ctlinput(int, const struct sockaddr *, void *);
 void	 *tcp_ctlinput(int, const struct sockaddr *, void *);
 int	 tcp_ctloutput(int, struct socket *, struct sockopt *);
 struct tcpcb *
-	 tcp_disconnect(struct tcpcb *);
+	 tcp_disconnect1(struct tcpcb *);
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 #ifdef TCP_SIGNATURE

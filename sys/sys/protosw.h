@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.55 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.56 2014/07/31 03:39:36 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -242,6 +242,9 @@ struct pr_usrreqs {
 	int	(*pr_bind)(struct socket *, struct mbuf *);
 	int	(*pr_listen)(struct socket *);
 	int	(*pr_connect)(struct socket *, struct mbuf *);
+	int	(*pr_disconnect)(struct socket *);
+	int	(*pr_shutdown)(struct socket *);
+	int	(*pr_abort)(struct socket *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
 	int	(*pr_stat)(struct socket *, struct stat *);
 	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
@@ -332,6 +335,33 @@ name##_listen_wrapper(struct socket *a)			\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_listen(a);				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_disconnect_wrapper(struct socket *a)		\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_disconnect(a);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_shutdown_wrapper(struct socket *a)		\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_shutdown(a);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}							\
+static int						\
+name##_abort_wrapper(struct socket *a)			\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name##_abort(a);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }							\

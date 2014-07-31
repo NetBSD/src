@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.9 2014/07/30 10:04:25 rtr Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.10 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.9 2014/07/30 10:04:25 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.10 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -413,14 +413,14 @@ btmagic_detach(device_t self, int flags)
 
 	/* close interrupt channel */
 	if (sc->sc_int != NULL) {
-		l2cap_disconnect(sc->sc_int, 0);
+		l2cap_disconnect_pcb(sc->sc_int, 0);
 		l2cap_detach_pcb(&sc->sc_int);
 		sc->sc_int = NULL;
 	}
 
 	/* close control channel */
 	if (sc->sc_ctl != NULL) {
-		l2cap_disconnect(sc->sc_ctl, 0);
+		l2cap_disconnect_pcb(sc->sc_ctl, 0);
 		l2cap_detach_pcb(&sc->sc_ctl);
 		sc->sc_ctl = NULL;
 	}
@@ -670,12 +670,12 @@ btmagic_timeout(void *arg)
 	switch (sc->sc_state) {
 	case BTMAGIC_CLOSED:
 		if (sc->sc_int != NULL) {
-			l2cap_disconnect(sc->sc_int, 0);
+			l2cap_disconnect_pcb(sc->sc_int, 0);
 			break;
 		}
 
 		if (sc->sc_ctl != NULL) {
-			l2cap_disconnect(sc->sc_ctl, 0);
+			l2cap_disconnect_pcb(sc->sc_ctl, 0);
 			break;
 		}
 		break;
@@ -1005,10 +1005,10 @@ btmagic_linkmode(void *arg, int new)
 		return;
 
 	if (sc->sc_int != NULL)
-		l2cap_disconnect(sc->sc_int, 0);
+		l2cap_disconnect_pcb(sc->sc_int, 0);
 
 	if (sc->sc_ctl != NULL)
-		l2cap_disconnect(sc->sc_ctl, 0);
+		l2cap_disconnect_pcb(sc->sc_ctl, 0);
 }
 
 /*
