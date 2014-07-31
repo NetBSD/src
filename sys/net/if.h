@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.172 2014/07/16 03:17:26 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.173 2014/07/31 02:21:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -981,6 +981,7 @@ __END_DECLS
 #ifdef _KERNEL
 
 #define	IFNET_FIRST()			TAILQ_FIRST(&ifnet_list)
+#define	IFNET_EMPTY()			TAILQ_EMPTY(&ifnet_list)
 #define	IFNET_NEXT(__ifp)		TAILQ_NEXT((__ifp), if_list)
 #define	IFNET_FOREACH(__ifp)		TAILQ_FOREACH(__ifp, &ifnet_list, if_list)
 #define	IFADDR_FIRST(__ifp)		TAILQ_FIRST(&(__ifp)->if_addrlist)
