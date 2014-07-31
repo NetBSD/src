@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.18 2014/07/30 10:04:26 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.19 2014/07/31 03:39:35 rtr Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.18 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.19 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -120,6 +120,30 @@ mpls_listen(struct socket *so)
 
 static int
 mpls_connect(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+mpls_disconnect(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+mpls_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+mpls_abort(struct socket *so)
 {
 	KASSERT(solocked(so));
 
@@ -267,6 +291,9 @@ PR_WRAP_USRREQS(mpls)
 #define	mpls_bind	mpls_bind_wrapper
 #define	mpls_listen	mpls_listen_wrapper
 #define	mpls_connect	mpls_connect_wrapper
+#define	mpls_disconnect	mpls_disconnect_wrapper
+#define	mpls_shutdown	mpls_shutdown_wrapper
+#define	mpls_abort	mpls_abort_wrapper
 #define	mpls_ioctl	mpls_ioctl_wrapper
 #define	mpls_stat	mpls_stat_wrapper
 #define	mpls_peeraddr	mpls_peeraddr_wrapper
@@ -282,6 +309,9 @@ static const struct pr_usrreqs mpls_usrreqs = {
 	.pr_bind	= mpls_bind,
 	.pr_listen	= mpls_listen,
 	.pr_connect	= mpls_connect,
+	.pr_disconnect	= mpls_disconnect,
+	.pr_shutdown	= mpls_shutdown,
+	.pr_abort	= mpls_abort,
 	.pr_ioctl	= mpls_ioctl,
 	.pr_stat	= mpls_stat,
 	.pr_peeraddr	= mpls_peeraddr,

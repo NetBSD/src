@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.53 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.54 2014/07/31 03:39:36 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.53 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.54 2014/07/31 03:39:36 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -72,6 +72,9 @@ static int	sockin_accept(struct socket *, struct mbuf *);
 static int	sockin_bind(struct socket *, struct mbuf *);
 static int	sockin_listen(struct socket *);
 static int	sockin_connect(struct socket *, struct mbuf *);
+static int	sockin_disconnect(struct socket *);
+static int	sockin_shutdown(struct socket *);
+static int	sockin_abort(struct socket *);
 static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int	sockin_stat(struct socket *, struct stat *);
 static int	sockin_peeraddr(struct socket *, struct mbuf *);
@@ -89,6 +92,9 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_bind = sockin_bind,
 	.pr_listen = sockin_listen,
 	.pr_connect = sockin_connect,
+	.pr_disconnect = sockin_disconnect,
+	.pr_shutdown = sockin_shutdown,
+	.pr_abort = sockin_abort,
 	.pr_ioctl = sockin_ioctl,
 	.pr_stat = sockin_stat,
 	.pr_peeraddr = sockin_peeraddr,
@@ -513,6 +519,30 @@ sockin_connect(struct socket *so, struct mbuf *nam)
 	return error;
 }
 
+static int
+sockin_disconnect(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_disconnect: IMPLEMENT ME, disconnect not supported");
+}
+
+static int
+sockin_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	removesock(so);
+	return 0;
+}
+
+static int
+sockin_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_abort: IMPLEMENT ME, abort not supported");
+}
 
 static int
 sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
@@ -561,12 +591,16 @@ sockin_sockaddr(struct socket *so, struct mbuf *nam)
 static int
 sockin_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
+	KASSERT(solocked(so));
+
 	panic("sockin_recvoob: IMPLEMENT ME, recvoob not supported");
 }
 
 static int
 sockin_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
+	KASSERT(solocked(so));
+
 	panic("sockin_sendoob: IMPLEMENT ME, sendoob not supported");
 }
 
@@ -580,6 +614,9 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -642,10 +679,6 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (!rump_threads)
 			sockin_process(so);
 	}
-		break;
-
-	case PRU_SHUTDOWN:
-		removesock(so);
 		break;
 
 	default:

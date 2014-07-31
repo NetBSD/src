@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.131 2014/07/31 02:21:51 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.132 2014/07/31 03:39:35 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.131 2014/07/31 02:21:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.132 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -755,6 +755,44 @@ rip6_connect(struct socket *so, struct mbuf *nam)
 }
 
 static int
+rip6_disconnect(struct socket *so)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(in6p != NULL);
+
+	if ((so->so_state & SS_ISCONNECTED) == 0)
+		return ENOTCONN;
+
+	in6p->in6p_faddr = in6addr_any;
+	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
+	return 0;
+}
+
+static int
+rip6_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	/*
+	 * Mark the connection as being incapable of futther input.
+	 */
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+rip6_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	soisdisconnected(so);
+	rip6_detach(so);
+	return 0;
+}
+
+static int
 rip6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return in6_control(so, cmd, nam, ifp);
@@ -821,6 +859,9 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -838,30 +879,10 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	}
 
 	switch (req) {
-	case PRU_DISCONNECT:
-		if ((so->so_state & SS_ISCONNECTED) == 0) {
-			error = ENOTCONN;
-			break;
-		}
-		in6p->in6p_faddr = in6addr_any;
-		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
-		break;
-
-	case PRU_ABORT:
-		soisdisconnected(so);
-		rip6_detach(so);
-		break;
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
 
-	/*
-	 * Mark the connection as being incapable of futther input.
-	 */
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		break;
 	/*
 	 * Ship a packet out. The appropriate raw output
 	 * routine handles any messaging necessary.
@@ -964,6 +985,9 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_bind		rip6_bind_wrapper
 #define	rip6_listen		rip6_listen_wrapper
 #define	rip6_connect		rip6_connect_wrapper
+#define	rip6_disconnect		rip6_disconnect_wrapper
+#define	rip6_shutdown		rip6_shutdown_wrapper
+#define	rip6_abort		rip6_abort_wrapper
 #define	rip6_ioctl		rip6_ioctl_wrapper
 #define	rip6_stat		rip6_stat_wrapper
 #define	rip6_peeraddr		rip6_peeraddr_wrapper
@@ -979,6 +1003,9 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_bind	= rip6_bind,
 	.pr_listen	= rip6_listen,
 	.pr_connect	= rip6_connect,
+	.pr_disconnect	= rip6_disconnect,
+	.pr_shutdown	= rip6_shutdown,
+	.pr_abort	= rip6_abort,
 	.pr_ioctl	= rip6_ioctl,
 	.pr_stat	= rip6_stat,
 	.pr_peeraddr	= rip6_peeraddr,

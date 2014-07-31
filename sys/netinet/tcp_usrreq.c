@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.193 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.194 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.193 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.194 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -234,6 +234,9 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -294,31 +297,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	/*
-	 * Initiate disconnect from peer.
-	 * If connection never passed embryonic stage, just drop;
-	 * else if don't need to let data drain, then can just drop anyways,
-	 * else have to begin TCP shutdown process: mark socket disconnecting,
-	 * drain unread data, state switch to reflect user close, and
-	 * send segment (e.g. FIN) to peer.  Socket will be really disconnected
-	 * when peer sends FIN and acks ours.
-	 *
-	 * SHOULD IMPLEMENT LATER PRU_CONNECT VIA REALLOC TCPCB.
-	 */
-	case PRU_DISCONNECT:
-		tp = tcp_disconnect(tp);
-		break;
-
-	/*
-	 * Mark the connection as being incapable of further output.
-	 */
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		tp = tcp_usrclosed(tp);
-		if (tp)
-			error = tcp_output(tp);
-		break;
-
-	/*
 	 * After a receive, possibly send window update to peer.
 	 */
 	case PRU_RCVD:
@@ -346,13 +324,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 		sbappendstream(&so->so_snd, m);
 		error = tcp_output(tp);
-		break;
-
-	/*
-	 * Abort the TCP.
-	 */
-	case PRU_ABORT:
-		tp = tcp_drop(tp, ECONNABORTED);
 		break;
 
 	default:
@@ -722,7 +693,7 @@ tcp_detach(struct socket *so)
 		return;
 
 	s = splsoftnet();
-	(void)tcp_disconnect(tp);
+	(void)tcp_disconnect1(tp);
 	splx(s);
 }
 
@@ -944,6 +915,100 @@ release:
 }
 
 static int
+tcp_disconnect(struct socket *so)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int s;
+	int error = 0;
+	int ostate = 0;
+
+	KASSERT(solocked(so));
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_DISCONNECT);
+
+	/*
+	 * Initiate disconnect from peer.
+	 * If connection never passed embryonic stage, just drop;
+	 * else if don't need to let data drain, then can just drop anyways,
+	 * else have to begin TCP shutdown process: mark socket disconnecting,
+	 * drain unread data, state switch to reflect user close, and
+	 * send segment (e.g. FIN) to peer.  Socket will be really disconnected
+	 * when peer sends FIN and acks ours.
+	 *
+	 * SHOULD IMPLEMENT LATER PRU_CONNECT VIA REALLOC TCPCB.
+	 */
+	s = splsoftnet();
+	tp = tcp_disconnect1(tp);
+	tcp_debug_trace(so, tp, ostate, PRU_DISCONNECT);
+	splx(s);
+
+	return error;
+}
+
+static int
+tcp_shutdown(struct socket *so)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int s;
+	int error = 0;
+	int ostate = 0;
+
+	KASSERT(solocked(so));
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_SHUTDOWN);
+	/*
+	 * Mark the connection as being incapable of further output.
+	 */
+	s = splsoftnet();
+	socantsendmore(so);
+	tp = tcp_usrclosed(tp);
+	if (tp)
+		error = tcp_output(tp);
+	tcp_debug_trace(so, tp, ostate, PRU_SHUTDOWN);
+	splx(s);
+
+	return error;
+}
+
+static int
+tcp_abort(struct socket *so)
+{
+	struct inpcb *inp = NULL;
+	struct in6pcb *in6p = NULL;
+	struct tcpcb *tp = NULL;
+	int s;
+	int error = 0;
+	int ostate = 0;
+
+	KASSERT(solocked(so));
+
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+		return error;
+
+	ostate = tcp_debug_capture(tp, PRU_ABORT);
+
+	/*
+	 * Abort the TCP.
+	 */
+	s = splsoftnet();
+	tp = tcp_drop(tp, ECONNABORTED);
+	tcp_debug_trace(so, tp, ostate, PRU_ABORT);
+	splx(s);
+
+	return error;
+}
+
+static int
 tcp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	switch (so->so_proto->pr_domain->dom_family) {
@@ -1104,7 +1169,7 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
  * send segment to peer (with FIN).
  */
 struct tcpcb *
-tcp_disconnect(struct tcpcb *tp)
+tcp_disconnect1(struct tcpcb *tp)
 {
 	struct socket *so;
 
@@ -2335,6 +2400,9 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_bind	tcp_bind_wrapper
 #define	tcp_listen	tcp_listen_wrapper
 #define	tcp_connect	tcp_connect_wrapper
+#define	tcp_disconnect	tcp_disconnect_wrapper
+#define	tcp_shutdown	tcp_shutdown_wrapper
+#define	tcp_abort	tcp_abort_wrapper
 #define	tcp_ioctl	tcp_ioctl_wrapper
 #define	tcp_stat	tcp_stat_wrapper
 #define	tcp_peeraddr	tcp_peeraddr_wrapper
@@ -2350,6 +2418,9 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_bind	= tcp_bind,
 	.pr_listen	= tcp_listen,
 	.pr_connect	= tcp_connect,
+	.pr_disconnect	= tcp_disconnect,
+	.pr_shutdown	= tcp_shutdown,
+	.pr_abort	= tcp_abort,
 	.pr_ioctl	= tcp_ioctl,
 	.pr_stat	= tcp_stat,
 	.pr_peeraddr	= tcp_peeraddr,
