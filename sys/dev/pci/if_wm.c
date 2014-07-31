@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.284 2014/07/31 02:54:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.285 2014/07/31 03:50:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.284 2014/07/31 02:54:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.285 2014/07/31 03:50:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,8 +375,6 @@ struct wm_softc {
 	int sc_tbi_linkup;		/* TBI link status */
 	int sc_tbi_anegticks;		/* autonegotiation ticks */
 	int sc_tbi_ticks;		/* tbi ticks */
-	int sc_tbi_nrxcfg;		/* count of ICR_RXCFG */
-	int sc_tbi_lastnrxcfg;		/* count of ICR_RXCFG (on last tick) */
 
 	int sc_mchash_type;		/* multicast filter offset */
 
@@ -3853,15 +3851,10 @@ wm_init_locked(struct ifnet *ifp)
 		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
-	/* Reset TBI's RXCFG count */
-	sc->sc_tbi_nrxcfg = sc->sc_tbi_lastnrxcfg = 0;
-
 	/* Set up the interrupt registers. */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
 	    ICR_RXO | ICR_RXT0;
-	if ((sc->sc_flags & WM_F_HAS_MII) == 0)
-		sc->sc_icr |= ICR_RXCFG;
 	CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
@@ -5658,11 +5651,6 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 			sc->sc_tbi_linkup = 0;
 		}
 		wm_tbi_set_linkled(sc);
-	} else if (icr & ICR_RXCFG) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: receiving /C/\n",
-		    device_xname(sc->sc_dev)));
-		sc->sc_tbi_nrxcfg++;
-		wm_check_for_link(sc);
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: Receive sequence error\n",
@@ -5737,7 +5725,7 @@ wm_intr(void *arg)
 #endif
 		wm_txintr(sc);
 
-		if (icr & (ICR_LSC|ICR_RXSEQ|ICR_RXCFG)) {
+		if (icr & (ICR_LSC|ICR_RXSEQ)) {
 			WM_EVCNT_INCR(&sc->sc_ev_linkintr);
 			wm_linkintr(sc, icr);
 		}
@@ -7262,8 +7250,15 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 	aprint_normal_dev(sc->sc_dev, "");
-	ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
-	ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
+
+	/* Only 82545 is LX */
+	if (sc->sc_type == WM_T_82545) {
+		ADD("1000baseLX", IFM_1000_LX, ANAR_X_HD);
+		ADD("1000baseLX-FDX", IFM_1000_LX|IFM_FDX, ANAR_X_FD);
+	} else {
+		ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
+		ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
+	}
 	ADD("auto", IFM_AUTO, ANAR_X_FD|ANAR_X_HD);
 	aprint_normal("\n");
 
@@ -7293,7 +7288,11 @@ wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
-	ifmr->ifm_active |= IFM_1000_SX;
+	/* Only 82545 is LX */
+	if (sc->sc_type == WM_T_82545)
+		ifmr->ifm_active |= IFM_1000_LX;
+	else
+		ifmr->ifm_active |= IFM_1000_SX;
 	if (CSR_READ(sc, WMREG_STATUS) & STATUS_FD)
 		ifmr->ifm_active |= IFM_FDX;
 	else
@@ -7321,30 +7320,30 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
 		return 0;
 
-	sc->sc_txcw = 0;
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
-	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
+	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
+	    || (sc->sc_type >= WM_T_82575))
+		CSR_WRITE(sc, WMREG_SCTL, SCTL_DISABLE_SERDES_LOOPBACK);
+
+	/* XXX power_up_serdes_link_82575() */
+
+	sc->sc_ctrl &= ~CTRL_LRST;
+	sc->sc_txcw = TXCW_ANE;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		sc->sc_txcw |= TXCW_FD | TXCW_HD;
+	else if (ife->ifm_media & IFM_FDX)
+		sc->sc_txcw |= TXCW_FD;
+	else
+		sc->sc_txcw |= TXCW_HD;
+
+	if ((sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= TXCW_SYM_PAUSE | TXCW_ASYM_PAUSE;
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		sc->sc_txcw |= TXCW_ANE;
-	} else {
-		/*
-		 * If autonegotiation is turned off, force link up and turn on
-		 * full duplex
-		 */
-		sc->sc_txcw &= ~TXCW_ANE;
-		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
-		sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		CSR_WRITE_FLUSH(sc);
-		delay(1000);
-	}
 
 	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
-		    device_xname(sc->sc_dev),sc->sc_txcw));
+		    device_xname(sc->sc_dev), sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 	CSR_WRITE_FLUSH(sc);
-	delay(10000);
+	delay(1000);
 
 	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
 	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(sc->sc_dev),i));
@@ -7355,21 +7354,6 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	 */
 	if (((i != 0) && (sc->sc_type > WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
-
-		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-			/*
-			 * Reset the link, and let autonegotiation do its thing
-			 */
-			sc->sc_ctrl |= CTRL_LRST;
-			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-			CSR_WRITE_FLUSH(sc);
-			delay(1000);
-			sc->sc_ctrl &= ~CTRL_LRST;
-			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-			CSR_WRITE_FLUSH(sc);
-			delay(1000);
-		}
-
 		for (i = 0; i < WM_LINKUP_TIMEOUT; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
@@ -7458,7 +7442,6 @@ wm_tbi_set_linkled(struct wm_softc *sc)
 static void
 wm_tbi_check_link(struct wm_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t status;
 
@@ -7492,15 +7475,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP)
 	    && ((status & STATUS_LU) == 0)) {
 		sc->sc_tbi_linkup = 0;
-		if (sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg > 100) {
-			/* RXCFG storm! */
-			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
-				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
-			wm_init_locked(ifp);
-			WM_TX_UNLOCK(sc);
-			ifp->if_start(ifp);
-			WM_TX_LOCK(sc);
-		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 			/* If the timer expired, retry autonegotiation */
 			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
 				DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
