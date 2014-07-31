@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 2014/03/22 21:49:18 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 2014/07/31 14:41:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -938,9 +938,6 @@ Lebootcode:
  * Misc. global variables.
  */
 	.data
-GLOBAL(machineid)
-	.long	0			| default to X68030
-
 GLOBAL(mmutype)
 	.long	MMU_68030		| default to 030 internal MMU
 
