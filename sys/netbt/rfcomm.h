@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.15 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.16 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.15 2014/07/30 10:04:26 rtr Exp $
+ * $Id: rfcomm.h,v 1.16 2014/07/31 03:39:35 rtr Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -412,7 +412,7 @@ int rfcomm_bind_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
 int rfcomm_sockaddr_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
 int rfcomm_connect_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
 int rfcomm_peeraddr_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
-int rfcomm_disconnect(struct rfcomm_dlc *, int);
+int rfcomm_disconnect_pcb(struct rfcomm_dlc *, int);
 void rfcomm_detach_pcb(struct rfcomm_dlc **);
 int rfcomm_listen_pcb(struct rfcomm_dlc *);
 int rfcomm_send(struct rfcomm_dlc *, struct mbuf *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.18 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.19 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.18 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.19 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -53,6 +53,9 @@ static void link_detach(struct socket *);
 static int link_accept(struct socket *, struct mbuf *);
 static int link_bind(struct socket *, struct mbuf *);
 static int link_listen(struct socket *);
+static int link_disconnect(struct socket *);
+static int link_shutdown(struct socket *);
+static int link_abort(struct socket *);
 static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int link_stat(struct socket *, struct stat *);
 static int link_peeraddr(struct socket *, struct mbuf *);
@@ -73,6 +76,9 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_accept	= link_accept,
 	.pr_bind	= link_bind,
 	.pr_listen	= link_listen,
+	.pr_disconnect	= link_disconnect,
+	.pr_shutdown	= link_shutdown,
+	.pr_abort	= link_abort,
 	.pr_ioctl	= link_ioctl,
 	.pr_stat	= link_stat,
 	.pr_peeraddr	= link_peeraddr,
@@ -269,6 +275,30 @@ link_listen(struct socket *so)
 }
 
 static int
+link_disconnect(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 link_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return link_control(so, cmd, nam, ifp);
@@ -307,6 +337,9 @@ link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
