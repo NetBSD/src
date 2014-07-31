@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.40 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.41 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.40 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.41 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -189,6 +189,58 @@ natm_connect(struct socket *so, struct mbuf *nam)
 	return error;
 }
 
+static int
+natm_disconnect(struct socket *so)
+{
+	struct natmpcb *npcb = (struct natmpcb *)so->so_pcb;
+
+	KASSERT(solocked(so));
+	KASSERT(npcb != NULL);
+
+	if ((npcb->npcb_flags & NPCB_CONNECTED) == 0) {
+		printf("natm: disconnected check\n");
+		return EIO;
+	}
+	ifp = npcb->npcb_ifp;
+
+	/*
+	 * disable rx
+	 */
+	ATM_PH_FLAGS(&api.aph) = ATM_PH_AAL5;
+	ATM_PH_VPI(&api.aph) = npcb->npcb_vpi;
+	ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
+	api.rxhand = npcb;
+
+	s2 = splnet();
+	ifp->if_ioctl(ifp, SIOCATMDIS, &api);
+	splx(s);
+
+	npcb_free(npcb, NPCB_REMOVE);
+	soisdisconnected(so);
+	return 0;
+}
+
+static int
+natm_shutdown(struct socket *so)
+{
+	int s;
+
+	KASSERT(solocked(so));
+
+	s = splsoftnet();
+	socantsendmore(so);
+	splx(s);
+
+	return 0;
+}
+
+static int
+natm_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
 
 static int
 natm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
@@ -304,6 +356,9 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   KASSERT(req != PRU_BIND);
   KASSERT(req != PRU_LISTEN);
   KASSERT(req != PRU_CONNECT);
+  KASSERT(req != PRU_DISCONNECT);
+  KASSERT(req != PRU_SHUTDOWN);
+  KASSERT(req != PRU_ABORT);
   KASSERT(req != PRU_CONTROL);
   KASSERT(req != PRU_SENSE);
   KASSERT(req != PRU_PEERADDR);
@@ -321,36 +376,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   }
 
   switch (req) {
-    case PRU_DISCONNECT:		/* disconnect from peer */
-
-      if ((npcb->npcb_flags & NPCB_CONNECTED) == 0) {
-        printf("natm: disconnected check\n");
-        error = EIO;
-	break;
-      }
-      ifp = npcb->npcb_ifp;
-
-      /*
-       * disable rx
-       */
-
-      ATM_PH_FLAGS(&api.aph) = ATM_PH_AAL5;
-      ATM_PH_VPI(&api.aph) = npcb->npcb_vpi;
-      ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
-      api.rxhand = npcb;
-      s2 = splnet();
-      ifp->if_ioctl(ifp, SIOCATMDIS, &api);
-      splx(s);
-
-      npcb_free(npcb, NPCB_REMOVE);
-      soisdisconnected(so);
-
-      break;
-
-    case PRU_SHUTDOWN:			/* won't send any more data */
-      socantsendmore(so);
-      break;
-
     case PRU_SEND:			/* send this data */
       if (control && control->m_len) {
 	m_freem(control);
@@ -378,8 +403,6 @@ natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
       break;
 
     case PRU_CONNECT2:			/* connect two sockets */
-    case PRU_ABORT:			/* abort (fast DISCONNECT, DETATCH) */
-					/* (only happens if LISTEN socket) */
     case PRU_RCVD:			/* have taken data; more room now */
     case PRU_FASTTIMO:			/* 200ms timeout */
     case PRU_SLOWTIMO:			/* 500ms timeout */
@@ -484,6 +507,9 @@ PR_WRAP_USRREQS(natm)
 #define	natm_bind	natm_bind_wrapper
 #define	natm_listen	natm_listen_wrapper
 #define	natm_connect	natm_connect_wrapper
+#define	natm_disconnect	natm_disconnect_wrapper
+#define	natm_shutdown	natm_shutdown_wrapper
+#define	natm_abort	natm_abort_wrapper
 #define	natm_ioctl	natm_ioctl_wrapper
 #define	natm_stat	natm_stat_wrapper
 #define	natm_peeraddr	natm_peeraddr_wrapper
@@ -499,6 +525,9 @@ const struct pr_usrreqs natm_usrreqs = {
 	.pr_bind	= natm_bind,
 	.pr_listen	= natm_listen,
 	.pr_connect	= natm_connect,
+	.pr_disconnect	= natm_disconnect,
+	.pr_shutdown	= natm_shutdown,
+	.pr_abort	= natm_abort,
 	.pr_ioctl	= natm_ioctl,
 	.pr_stat	= natm_stat,
 	.pr_peeraddr	= natm_peeraddr,

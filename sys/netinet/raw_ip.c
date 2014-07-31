@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.138 2014/07/31 02:21:51 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.139 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.138 2014/07/31 02:21:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.139 2014/07/31 03:39:35 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -113,7 +113,7 @@ struct inpcbtable rawcbtable;
 int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
     struct in_addr, int, int, void (*)(struct inpcb *, int));
 int	 rip_connect_pcb(struct inpcb *, struct mbuf *);
-void	 rip_disconnect(struct inpcb *);
+static void	 rip_disconnect1(struct inpcb *);
 
 static void sysctl_net_inet_raw_setup(struct sysctllog **);
 
@@ -495,8 +495,8 @@ rip_connect_pcb(struct inpcb *inp, struct mbuf *nam)
 	return (0);
 }
 
-void
-rip_disconnect(struct inpcb *inp)
+static void
+rip_disconnect1(struct inpcb *inp)
 {
 
 	inp->inp_faddr = zeroin_addr;
@@ -623,6 +623,40 @@ rip_connect(struct socket *so, struct mbuf *nam)
 	return error;
 }
 
+static int
+rip_disconnect(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	KASSERT(solocked(so));
+	KASSERT(inp != NULL);
+
+	soisdisconnected(so);
+	rip_disconnect1(inp);
+	return 0;
+}
+
+static int
+rip_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	/*
+	 * Mark the connection as being incapable of further input.
+	 */
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+rip_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	panic("rip_abort");
+
+	return EOPNOTSUPP;
+}
 
 static int
 rip_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
@@ -693,6 +727,9 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -724,18 +761,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	case PRU_DISCONNECT:
-		soisdisconnected(so);
-		rip_disconnect(inp);
-		break;
-
-	/*
-	 * Mark the connection as being incapable of further input.
-	 */
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
 		break;
 
 	case PRU_RCVD:
@@ -773,7 +798,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 		error = rip_output(m, inp);
 		if (nam)
-			rip_disconnect(inp);
+			rip_disconnect1(inp);
 	}
 		break;
 
@@ -792,6 +817,9 @@ PR_WRAP_USRREQS(rip)
 #define	rip_bind	rip_bind_wrapper
 #define	rip_listen	rip_listen_wrapper
 #define	rip_connect	rip_connect_wrapper
+#define	rip_disconnect	rip_disconnect_wrapper
+#define	rip_shutdown	rip_shutdown_wrapper
+#define	rip_abort	rip_abort_wrapper
 #define	rip_ioctl	rip_ioctl_wrapper
 #define	rip_stat	rip_stat_wrapper
 #define	rip_peeraddr	rip_peeraddr_wrapper
@@ -807,6 +835,9 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pr_bind	= rip_bind,
 	.pr_listen	= rip_listen,
 	.pr_connect	= rip_connect,
+	.pr_disconnect	= rip_disconnect,
+	.pr_shutdown	= rip_shutdown,
+	.pr_abort	= rip_abort,
 	.pr_ioctl	= rip_ioctl,
 	.pr_stat	= rip_stat,
 	.pr_peeraddr	= rip_peeraddr,
