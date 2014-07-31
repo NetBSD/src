@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.51 2014/07/31 03:39:36 rtr Exp $	*/
+/*	$NetBSD: un.h,v 1.52 2014/07/31 14:12:57 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -84,19 +84,10 @@ kmutex_t *uipc_dgramlock (void);
 kmutex_t *uipc_streamlock (void);
 kmutex_t *uipc_rawlock (void);
 
-int	unp_bind (struct socket *, struct mbuf *);
 int	unp_connect (struct socket *, struct mbuf *);
 int	unp_connect2 (struct socket *, struct socket *, int);
-void	unp_discard (struct file *);
-void	unp_disconnect1 (struct unpcb *);
-bool	unp_drop (struct unpcb *, int);
-void	unp_shutdown1 (struct unpcb *);
-int 	unp_externalize (struct mbuf *, struct lwp *, int);
-int	unp_internalize (struct mbuf **);
 void 	unp_dispose (struct mbuf *);
-int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
-	    struct lwp *);
-void	unp_setaddr (struct socket *, struct mbuf *, bool);
+int 	unp_externalize (struct mbuf *, struct lwp *, int);
 
 #else /* !_KERNEL */
 
