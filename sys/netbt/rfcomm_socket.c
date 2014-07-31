@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.28 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.29 2014/07/31 15:16:06 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.28 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.29 2014/07/31 15:16:06 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -360,8 +360,10 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 			m_freem(ctl);
 
 		m0 = m_copypacket(m, M_DONTWAIT);
-		if (m0 == NULL)
-			return ENOMEM;
+		if (m0 == NULL) {
+			err = ENOMEM;
+			goto release;
+		}
 
 		sbappendstream(&up->so_snd, m);
 
