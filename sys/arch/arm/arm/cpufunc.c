@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.149 2014/07/30 20:52:18 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.150 2014/07/31 07:14:42 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.149 2014/07/30 20:52:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150 2014/07/31 07:14:42 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1734,7 +1734,7 @@ get_cachetype_table(void)
 			    cachetab[i].ct_pdcache_line_size;
 			arm_pcache.dcache_ways = cachetab[i].ct_pdcache_ways;
 			if (arm_pcache.dcache_ways) {
-				arm_pcache.dcache_way_size = 
+				arm_pcache.dcache_way_size =
 				    arm_pcache.dcache_line_size
 				    / arm_pcache.dcache_ways;
 			}
@@ -1743,7 +1743,7 @@ get_cachetype_table(void)
 			    cachetab[i].ct_picache_line_size;
 			arm_pcache.icache_ways = cachetab[i].ct_picache_ways;
 			if (arm_pcache.icache_ways) {
-				arm_pcache.icache_way_size = 
+				arm_pcache.icache_way_size =
 				    arm_pcache.icache_line_size
 				    / arm_pcache.icache_ways;
 			}
@@ -3135,7 +3135,7 @@ armv7_setup(char *args)
 #endif /* CPU_ARMV7 */
 
 
-#if defined(CPU_ARM1136) || defined(CPU_ARM1176) 
+#if defined(CPU_ARM1136) || defined(CPU_ARM1176)
 void
 arm11x6_setup(char *args)
 {
