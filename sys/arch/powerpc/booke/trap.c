@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2014/07/30 23:56:01 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2014/07/31 01:01:55 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.24 2014/07/30 23:56:01 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.25 2014/07/31 01:01:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,9 @@ emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
 	}
 
 	if (OPC_MFSPR_P(opcode, SPR_PIR)) {
-		__asm ("mfspr %0, 286" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
+		__asm ("mfspr %0, %1"
+		    :	"=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)])
+		    :	"n"(SPL_PIR));
 		return true;
 	}
 
@@ -525,7 +527,7 @@ debug_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	 * Ack the interrupt.
 	 */
 	mtspr(SPR_DBSR, tf->tf_esr);
-	KASSERT(tf->tf_esr & (DBSR_IAC1|DBSR_IAC2));
+	KASSERT(tf->tf_esr & (DBSR_IAC1|DBSR_IAC2|DBSR_BRT));
 	KASSERT((tf->tf_srr1 & PSL_SE) == 0);
 
 	/*
