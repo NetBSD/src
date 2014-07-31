@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.15 2014/02/26 01:53:23 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.16 2014/07/31 08:04:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -326,8 +326,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  *          (non-cacheable for MPCore)
  *    1 1   Write back, no write alloc, buffered
  *          (write back, write alloc for MPCore)
- *    
- *    AA    external cache 
+ *
+ *    AA    external cache
  *    0 0   Non-cacheable non-buffered
  *    0 1   Write back, write alloc, buffered
  *    1 0   Write through, no write alloc, buffered
