@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.27 2014/07/30 10:04:25 rtr Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.28 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.27 2014/07/30 10:04:25 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.28 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -370,14 +370,14 @@ bthidev_detach(device_t self, int flags)
 
 	/* close interrupt channel */
 	if (sc->sc_int != NULL) {
-		l2cap_disconnect(sc->sc_int, 0);
+		l2cap_disconnect_pcb(sc->sc_int, 0);
 		l2cap_detach_pcb(&sc->sc_int);
 		sc->sc_int = NULL;
 	}
 
 	/* close control channel */
 	if (sc->sc_ctl != NULL) {
-		l2cap_disconnect(sc->sc_ctl, 0);
+		l2cap_disconnect_pcb(sc->sc_ctl, 0);
 		l2cap_detach_pcb(&sc->sc_ctl);
 		sc->sc_ctl = NULL;
 	}
@@ -450,12 +450,12 @@ bthidev_timeout(void *arg)
 	switch (sc->sc_state) {
 	case BTHID_CLOSED:
 		if (sc->sc_int != NULL) {
-			l2cap_disconnect(sc->sc_int, 0);
+			l2cap_disconnect_pcb(sc->sc_int, 0);
 			break;
 		}
 
 		if (sc->sc_ctl != NULL) {
-			l2cap_disconnect(sc->sc_ctl, 0);
+			l2cap_disconnect_pcb(sc->sc_ctl, 0);
 			break;
 		}
 
@@ -678,14 +678,14 @@ bthidev_process_one(struct bthidev_softc *sc, struct mbuf *m)
 			mutex_enter(bt_lock);
 			/* close interrupt channel */
 			if (sc->sc_int != NULL) {
-				l2cap_disconnect(sc->sc_int, 0);
+				l2cap_disconnect_pcb(sc->sc_int, 0);
 				l2cap_detach_pcb(&sc->sc_int);
 				sc->sc_int = NULL;
 			}
 
 			/* close control channel */
 			if (sc->sc_ctl != NULL) {
-				l2cap_disconnect(sc->sc_ctl, 0);
+				l2cap_disconnect_pcb(sc->sc_ctl, 0);
 				l2cap_detach_pcb(&sc->sc_ctl);
 				sc->sc_ctl = NULL;
 			}
@@ -939,10 +939,10 @@ bthidev_linkmode(void *arg, int new)
 		return;
 
 	if (sc->sc_int != NULL)
-		l2cap_disconnect(sc->sc_int, 0);
+		l2cap_disconnect_pcb(sc->sc_int, 0);
 
 	if (sc->sc_ctl != NULL)
-		l2cap_disconnect(sc->sc_ctl, 0);
+		l2cap_disconnect_pcb(sc->sc_ctl, 0);
 }
 
 /*

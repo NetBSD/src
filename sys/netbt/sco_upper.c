@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.14 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.15 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.14 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.15 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -193,12 +193,12 @@ sco_peeraddr_pcb(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 }
 
 /*
- * sco_disconnect(pcb, linger)
+ * sco_disconnect_pcb(pcb, linger)
  *
  *	Initiate disconnection of connected SCO pcb
  */
 int
-sco_disconnect(struct sco_pcb *pcb, int linger)
+sco_disconnect_pcb(struct sco_pcb *pcb, int linger)
 {
 	hci_discon_cp cp;
 	struct hci_link *sco;
@@ -236,7 +236,7 @@ sco_detach_pcb(struct sco_pcb **handle)
 	*handle = NULL;
 
 	if (pcb->sp_link != NULL) {
-		sco_disconnect(pcb, 0);
+		sco_disconnect_pcb(pcb, 0);
 		pcb->sp_link = NULL;
 	}
 
