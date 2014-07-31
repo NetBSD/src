@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.162 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.163 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.162 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.163 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,6 +399,9 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -418,15 +421,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 	case PRU_CONNECT2:
 		error = unp_connect2(so, (struct socket *)nam, PRU_CONNECT2);
-		break;
-
-	case PRU_DISCONNECT:
-		unp_disconnect(unp);
-		break;
-
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		unp_shutdown(unp);
 		break;
 
 	case PRU_RCVD:
@@ -513,7 +507,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			KASSERT(l != NULL);
 			error = unp_output(m, control, unp, l);
 			if (nam)
-				unp_disconnect(unp);
+				unp_disconnect1(unp);
 			break;
 		}
 
@@ -576,13 +570,6 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		default:
 			panic("uipc 4");
 		}
-		break;
-
-	case PRU_ABORT:
-		(void)unp_drop(unp, ECONNABORTED);
-		KASSERT(so->so_head == NULL);
-		KASSERT(so->so_pcb != NULL);
-		unp_detach(so);
 		break;
 
 	default:
@@ -757,7 +744,7 @@ unp_detach(struct socket *so)
 		unp->unp_vnode = NULL;
 	}
 	if (unp->unp_conn)
-		unp_disconnect(unp);
+		unp_disconnect1(unp);
 	while (unp->unp_refs) {
 		KASSERT(solocked2(so, unp->unp_refs->unp_socket));
 		if (unp_drop(unp->unp_refs, ECONNRESET)) {
@@ -1039,6 +1026,40 @@ unp_listen(struct socket *so)
 	return 0;
 }
 
+static int
+unp_disconnect(struct socket *so)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotounpcb(so) != NULL);
+
+	unp_disconnect1(sotounpcb(so));
+	return 0;
+}
+
+static int
+unp_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotounpcb(so) != NULL);
+
+	socantsendmore(so);
+	unp_shutdown1(sotounpcb(so));
+	return 0;
+}
+
+static int
+unp_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+	KASSERT(sotounpcb(so) != NULL);
+
+	(void)unp_drop(sotounpcb(so), ECONNABORTED);
+	KASSERT(so->so_head == NULL);
+	KASSERT(so->so_pcb != NULL);
+	unp_detach(so);
+	return 0;
+}
+
 int
 unp_connect(struct socket *so, struct mbuf *nam)
 {
@@ -1206,7 +1227,7 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 }
 
 void
-unp_disconnect(struct unpcb *unp)
+unp_disconnect1(struct unpcb *unp)
 {
 	struct unpcb *unp2 = unp->unp_conn;
 	struct socket *so;
@@ -1224,7 +1245,7 @@ unp_disconnect(struct unpcb *unp)
 			for (;;) {
 				KASSERT(solocked2(so, unp2->unp_socket));
 				if (unp2 == 0)
-					panic("unp_disconnect");
+					panic("unp_disconnect1");
 				if (unp2->unp_nextref == unp)
 					break;
 				unp2 = unp2->unp_nextref;
@@ -1246,7 +1267,7 @@ unp_disconnect(struct unpcb *unp)
 }
 
 void
-unp_shutdown(struct unpcb *unp)
+unp_shutdown1(struct unpcb *unp)
 {
 	struct socket *so;
 
@@ -1269,7 +1290,7 @@ unp_drop(struct unpcb *unp, int errno)
 	KASSERT(solocked(so));
 
 	so->so_error = errno;
-	unp_disconnect(unp);
+	unp_disconnect1(unp);
 	if (so->so_head) {
 		so->so_pcb = NULL;
 		/* sofree() drops the socket lock */
@@ -1879,6 +1900,9 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_bind	= unp_bind,
 	.pr_listen	= unp_listen,
 	.pr_connect	= unp_connect,
+	.pr_disconnect	= unp_disconnect,
+	.pr_shutdown	= unp_shutdown,
+	.pr_abort	= unp_abort,
 	.pr_ioctl	= unp_ioctl,
 	.pr_stat	= unp_stat,
 	.pr_peeraddr	= unp_peeraddr,
