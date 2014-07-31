@@ -79,7 +79,7 @@ STRONG_ALIAS(armv7_tlb_flushD_SE, armv7_tlb_flushID_SE)
 STRONG_ALIAS(armv7_tlb_flushI_SE, armv7_tlb_flushID_SE)
 ENTRY(armv7_tlb_flushID_SE)
 	bfc	r0, #0, #12		@ clear ASID
-#ifdef ARM_MMU_EXTENDED_XXX
+#ifdef ARM_MMU_EXTENDED
 	bfi	r0, r1, #0, #8		@ insert ASID into MVA
 #endif
 #ifdef MULTIPROCESSOR
