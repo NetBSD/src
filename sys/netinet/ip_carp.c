@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.57 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.58 2014/07/31 00:56:23 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.57 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.58 2014/07/31 00:56:23 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -153,8 +153,8 @@ struct carp_softc {
 	LIST_HEAD(__carp_mchead, carp_mc_entry)	carp_mc_listhead;
 };
 
-int carp_suppress_preempt = 0;
-int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
+static int carp_suppress_preempt = 0;
+static int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 
 static percpu_t *carpstat_percpu;
 
@@ -185,47 +185,50 @@ struct carp_if {
 		addlog("\n");						\
 	}
 
-void	carp_hmac_prepare(struct carp_softc *);
-void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
-	    unsigned char *);
-int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
-	    unsigned char *);
-void	carp_setroute(struct carp_softc *, int);
-void	carp_proto_input_c(struct mbuf *, struct carp_header *, sa_family_t);
+static void	carp_hmac_prepare(struct carp_softc *);
+static void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
+		    unsigned char *);
+static int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
+		    unsigned char *);
+static void	carp_setroute(struct carp_softc *, int);
+static void	carp_proto_input_c(struct mbuf *, struct carp_header *,
+		    sa_family_t);
 void	carpattach(int);
-void	carpdetach(struct carp_softc *);
-int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
-	    struct carp_header *);
-void	carp_send_ad_all(void);
-void	carp_send_ad(void *);
-void	carp_send_arp(struct carp_softc *);
-void	carp_master_down(void *);
-int	carp_ioctl(struct ifnet *, u_long, void *);
-void	carp_start(struct ifnet *);
-void	carp_setrun(struct carp_softc *, sa_family_t);
-void	carp_set_state(struct carp_softc *, int);
-int	carp_addrcount(struct carp_if *, struct in_ifaddr *, int);
+static void	carpdetach(struct carp_softc *);
+static int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
+		    struct carp_header *);
+static void	carp_send_ad_all(void);
+static void	carp_send_ad(void *);
+static void	carp_send_arp(struct carp_softc *);
+static void	carp_master_down(void *);
+static int	carp_ioctl(struct ifnet *, u_long, void *);
+static void	carp_start(struct ifnet *);
+static void	carp_setrun(struct carp_softc *, sa_family_t);
+static void	carp_set_state(struct carp_softc *, int);
+static int	carp_addrcount(struct carp_if *, struct in_ifaddr *, int);
 enum	{ CARP_COUNT_MASTER, CARP_COUNT_RUNNING };
 
-void	carp_multicast_cleanup(struct carp_softc *);
-int	carp_set_ifp(struct carp_softc *, struct ifnet *);
-void	carp_set_enaddr(struct carp_softc *);
-void	carp_addr_updated(void *);
-u_int32_t	carp_hash(struct carp_softc *, u_char *);
-int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
-int	carp_join_multicast(struct carp_softc *);
-#ifdef INET6
-void	carp_send_na(struct carp_softc *);
-int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
-int	carp_join_multicast6(struct carp_softc *);
+static void	carp_multicast_cleanup(struct carp_softc *);
+static int	carp_set_ifp(struct carp_softc *, struct ifnet *);
+static void	carp_set_enaddr(struct carp_softc *);
+#if 0
+static void	carp_addr_updated(void *);
 #endif
-int	carp_clone_create(struct if_clone *, int);
-int	carp_clone_destroy(struct ifnet *);
-int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
-int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
-void	carp_ether_purgemulti(struct carp_softc *);
+static u_int32_t	carp_hash(struct carp_softc *, u_char *);
+static int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
+static int	carp_join_multicast(struct carp_softc *);
+#ifdef INET6
+static void	carp_send_na(struct carp_softc *);
+static int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
+static int	carp_join_multicast6(struct carp_softc *);
+#endif
+static int	carp_clone_create(struct if_clone *, int);
+static int	carp_clone_destroy(struct ifnet *);
+static int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
+static int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
+static void	carp_ether_purgemulti(struct carp_softc *);
 
-static void sysctl_net_inet_carp_setup(struct sysctllog **);
+static void	sysctl_net_inet_carp_setup(struct sysctllog **);
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -236,7 +239,7 @@ carp_cksum(struct mbuf *m, int len)
 	return (in_cksum(m, len));
 }
 
-void
+static void
 carp_hmac_prepare(struct carp_softc *sc)
 {
 	u_int8_t carp_version = CARP_VERSION, type = CARP_ADVERTISEMENT;
@@ -319,7 +322,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 		sc->sc_pad[i] ^= 0x36 ^ 0x5c;
 }
 
-void
+static void
 carp_hmac_generate(struct carp_softc *sc, u_int32_t counter[2],
     unsigned char md[20])
 {
@@ -338,7 +341,7 @@ carp_hmac_generate(struct carp_softc *sc, u_int32_t counter[2],
 	SHA1Final(md, &sha1ctx);
 }
 
-int
+static int
 carp_hmac_verify(struct carp_softc *sc, u_int32_t counter[2],
     unsigned char md[20])
 {
@@ -349,7 +352,7 @@ carp_hmac_verify(struct carp_softc *sc, u_int32_t counter[2],
 	return (memcmp(md, md2, sizeof(md2)));
 }
 
-void
+static void
 carp_setroute(struct carp_softc *sc, int cmd)
 {
 	struct ifaddr *ifa;
@@ -595,7 +598,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 }
 #endif /* INET6 */
 
-void
+static void
 carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 {
 	struct carp_softc *sc;
@@ -762,7 +765,7 @@ carpattach(int n)
 	carpstat_percpu = percpu_alloc(sizeof(uint64_t) * CARP_NSTATS);
 }
 
-int
+static int
 carp_clone_create(struct if_clone *ifc, int unit)
 {
 	extern int ifqmaxlen;
@@ -829,7 +832,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-int
+static int
 carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
@@ -845,7 +848,7 @@ carp_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-void
+static void
 carpdetach(struct carp_softc *sc)
 {
 	struct carp_if *cif;
@@ -898,7 +901,7 @@ carp_ifdetach(struct ifnet *ifp)
 	}
 }
 
-int
+static int
 carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
     struct carp_header *ch)
 {
@@ -916,7 +919,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
 	return (0);
 }
 
-void
+static void
 carp_send_ad_all(void)
 {
 	struct ifnet *ifp;
@@ -937,7 +940,7 @@ carp_send_ad_all(void)
 }
 
 
-void
+static void
 carp_send_ad(void *v)
 {
 	struct carp_header ch;
@@ -1162,7 +1165,7 @@ retry_later:
  * the virtual router MAC address for each IP address
  * associated with the virtual router.
  */
-void
+static void
 carp_send_arp(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
@@ -1184,7 +1187,7 @@ carp_send_arp(struct carp_softc *sc)
 }
 
 #ifdef INET6
-void
+static void
 carp_send_na(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
@@ -1225,7 +1228,7 @@ carp_send_na(struct carp_softc *sc)
 		c -= a; c -= b; c ^= (b >> 15);		\
 	} while (0)
 
-u_int32_t
+static u_int32_t
 carp_hash(struct carp_softc *sc, u_char *src)
 {
 	u_int32_t a = 0x9e3779b9, b = sc->sc_hashkey[0], c = sc->sc_hashkey[1];
@@ -1245,7 +1248,7 @@ carp_hash(struct carp_softc *sc, u_char *src)
 	return (c);
 }
 
-int
+static int
 carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia, int type)
 {
 	struct carp_softc *vh;
@@ -1406,7 +1409,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 	return (0);
 }
 
-void
+static void
 carp_master_down(void *v)
 {
 	struct carp_softc *sc = v;
@@ -1436,7 +1439,7 @@ carp_master_down(void *v)
  * When in backup state, af indicates whether to reset the master down timer
  * for v4 or v6. If it's set to zero, reset the ones which are already pending.
  */
-void
+static void
 carp_setrun(struct carp_softc *sc, sa_family_t af)
 {
 	struct timeval tv;
@@ -1493,7 +1496,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 	}
 }
 
-void
+static void
 carp_multicast_cleanup(struct carp_softc *sc)
 {
 	struct ip_moptions *imo = &sc->sc_imo;
@@ -1527,7 +1530,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 	carp_ether_purgemulti(sc);
 }
 
-int
+static int
 carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 {
 	struct carp_if *cif, *ncif = NULL;
@@ -1631,7 +1634,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 	return (0);
 }
 
-void
+static void
 carp_set_enaddr(struct carp_softc *sc)
 {
 	uint8_t enaddr[ETHER_ADDR_LEN];
@@ -1653,7 +1656,8 @@ carp_set_enaddr(struct carp_softc *sc)
 	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr), false);
 }
 
-void
+#if 0
+static void
 carp_addr_updated(void *v)
 {
 	struct carp_softc *sc = (struct carp_softc *) v;
@@ -1692,8 +1696,9 @@ carp_addr_updated(void *v)
 
 	carp_setrun(sc, 0);
 }
+#endif
 
-int
+static int
 carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 {
 	struct ifnet *ifp = sc->sc_carpdev;
@@ -1762,7 +1767,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	return (0);
 }
 
-int
+static int
 carp_join_multicast(struct carp_softc *sc)
 {
 	struct ip_moptions *imo = &sc->sc_imo, tmpimo;
@@ -1785,7 +1790,7 @@ carp_join_multicast(struct carp_softc *sc)
 
 
 #ifdef INET6
-int
+static int
 carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 {
 	struct ifnet *ifp = sc->sc_carpdev;
@@ -1851,7 +1856,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	return (0);
 }
 
-int
+static int
 carp_join_multicast6(struct carp_softc *sc)
 {
 	struct in6_multi_mship *imm, *imm2;
@@ -1898,7 +1903,7 @@ carp_join_multicast6(struct carp_softc *sc)
 
 #endif /* INET6 */
 
-int
+static int
 carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp *l = curlwp;		/* XXX */
@@ -2072,7 +2077,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 /*
  * Start output on carp interface. This function should never be called.
  */
-void
+static void
 carp_start(struct ifnet *ifp)
 {
 #ifdef DEBUG
@@ -2095,7 +2100,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	}
 }
 
-void
+static void
 carp_set_state(struct carp_softc *sc, int state)
 {
 	static const char *carp_states[] = { CARP_STATES };
@@ -2158,7 +2163,7 @@ carp_carpdev_state(void *v)
 	}
 }
 
-int
+static int
 carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 {
 	const struct sockaddr *sa = ifreq_getaddr(SIOCADDMULTI, ifr);
@@ -2210,7 +2215,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	return (error);
 }
 
-int
+static int
 carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 {
 	const struct sockaddr *sa = ifreq_getaddr(SIOCDELMULTI, ifr);
@@ -2261,7 +2266,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
  * Delete any multicast address we have asked to add from parent
  * interface.  Called when the carp is being unconfigured.
  */
-void
+static void
 carp_ether_purgemulti(struct carp_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_carpdev;		/* Parent. */
