@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.59 2014/07/25 18:28:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.60 2014/07/31 03:50:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -348,6 +348,7 @@ struct livengood_tcpip_ctxdesc {
 #define SCTL_CTL_DATA_MASK 0x000000ff
 #define SCTL_CTL_ADDR_SHIFT 8
 #define SCTL_CTL_POLL_TIMEOUT 640
+#define SCTL_DISABLE_SERDES_LOOPBACK 0x0400
 
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
@@ -540,6 +541,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TXCW	0x0178	/* Transmit Configuration Word (TBI mode) */
 	/* See MII ANAR_X bits. */
+#define	TXCW_FD		(1U << 5)	/* Full Duplex */
+#define	TXCW_HD		(1U << 6)	/* Half Duplex */
 #define	TXCW_SYM_PAUSE	(1U << 7)	/* sym pause request */
 #define	TXCW_ASYM_PAUSE	(1U << 8)	/* asym pause request */
 #define	TXCW_TxConfig	(1U << 30)	/* Tx Config */
