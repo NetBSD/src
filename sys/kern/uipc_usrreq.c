@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.163 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.164 2014/07/31 14:12:57 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.163 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.164 2014/07/31 14:12:57 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,14 +170,18 @@ const struct sockaddr_un sun_noname = {
 };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
-static void unp_detach(struct socket *);
-struct mbuf *unp_addsockcred(struct lwp *, struct mbuf *);
-static void unp_mark(file_t *);
-static void unp_scan(struct mbuf *, void (*)(file_t *), int);
-static void unp_discard_now(file_t *);
-static void unp_discard_later(file_t *);
-static void unp_thread(void *);
-static void unp_thread_kick(void);
+static struct mbuf * unp_addsockcred(struct lwp *, struct mbuf *);
+static void   unp_discard_later(file_t *);
+static void   unp_discard_now(file_t *);
+static void   unp_disconnect1(struct unpcb *);
+static bool   unp_drop(struct unpcb *, int);
+static int    unp_internalize(struct mbuf **);
+static void   unp_mark(file_t *);
+static void   unp_scan(struct mbuf *, void (*)(file_t *), int);
+static void   unp_shutdown1(struct unpcb *);
+static void   unp_thread(void *);
+static void   unp_thread_kick(void);
+
 static kmutex_t *uipc_lock;
 
 static kcondvar_t unp_thread_cv;
@@ -296,9 +300,8 @@ unp_free(struct unpcb *unp)
 	kmem_free(unp, sizeof(*unp));
 }
 
-int
-unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
-	struct lwp *l)
+static int
+unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 {
 	struct socket *so2;
 	const struct sockaddr_un *sun;
@@ -315,7 +318,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	else
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
-		control = unp_addsockcred(l, control);
+		control = unp_addsockcred(curlwp, control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		so2->so_rcv.sb_overflowed++;
@@ -329,7 +332,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	}
 }
 
-void
+static void
 unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 {
 	const struct sockaddr_un *sun;
@@ -505,7 +508,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 			}
 			KASSERT(l != NULL);
-			error = unp_output(m, control, unp, l);
+			error = unp_output(m, control, unp);
 			if (nam)
 				unp_disconnect1(unp);
 			break;
@@ -916,7 +919,7 @@ makeun(struct mbuf *nam, size_t *addrlen) {
 	return sun;
 }
 
-int
+static int
 unp_bind(struct socket *so, struct mbuf *nam)
 {
 	struct sockaddr_un *sun;
@@ -1226,7 +1229,7 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 	return (0);
 }
 
-void
+static void
 unp_disconnect1(struct unpcb *unp)
 {
 	struct unpcb *unp2 = unp->unp_conn;
@@ -1266,7 +1269,7 @@ unp_disconnect1(struct unpcb *unp)
 	}
 }
 
-void
+static void
 unp_shutdown1(struct unpcb *unp)
 {
 	struct socket *so;
@@ -1282,7 +1285,7 @@ unp_shutdown1(struct unpcb *unp)
 	}
 }
 
-bool
+static bool
 unp_drop(struct unpcb *unp, int errno)
 {
 	struct socket *so = unp->unp_socket;
@@ -1437,7 +1440,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	return error;
 }
 
-int
+static int
 unp_internalize(struct mbuf **controlp)
 {
 	filedesc_t *fdescp = curlwp->l_fd;
