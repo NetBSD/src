@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.283 2014/07/28 06:36:09 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.284 2014/07/31 02:54:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.283 2014/07/28 06:36:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.284 2014/07/31 02:54:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1746,13 +1746,18 @@ wm_attach(device_t parent, device_t self, void *aux)
 		} else
 			force_clear_smbi = false;
 		break;
-	default:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
 		force_clear_smbi = true;
+		break;
+	default:
+		force_clear_smbi = false;
 		break;
 	}
 	if (force_clear_smbi) {
 		reg = CSR_READ(sc, WMREG_SWSM);
-		if ((reg & ~SWSM_SMBI) != 0)
+		if ((reg & SWSM_SMBI) != 0)
 			aprint_error_dev(sc->sc_dev,
 			    "Please update the Bootagent\n");
 		CSR_WRITE(sc, WMREG_SWSM, reg & ~SWSM_SMBI);
