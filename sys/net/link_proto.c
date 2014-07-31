@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.19 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.20 2014/07/31 13:21:33 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.19 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.20 2014/07/31 13:21:33 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -53,6 +53,7 @@ static void link_detach(struct socket *);
 static int link_accept(struct socket *, struct mbuf *);
 static int link_bind(struct socket *, struct mbuf *);
 static int link_listen(struct socket *);
+static int link_connect(struct socket *, struct mbuf *);
 static int link_disconnect(struct socket *);
 static int link_shutdown(struct socket *);
 static int link_abort(struct socket *);
@@ -60,6 +61,8 @@ static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int link_stat(struct socket *, struct stat *);
 static int link_peeraddr(struct socket *, struct mbuf *);
 static int link_sockaddr(struct socket *, struct mbuf *);
+static int link_recvoob(struct socket *, struct mbuf *, int);
+static int link_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static void link_init(void);
@@ -76,6 +79,7 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_accept	= link_accept,
 	.pr_bind	= link_bind,
 	.pr_listen	= link_listen,
+	.pr_connect	= link_connect,
 	.pr_disconnect	= link_disconnect,
 	.pr_shutdown	= link_shutdown,
 	.pr_abort	= link_abort,
@@ -83,6 +87,8 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_stat	= link_stat,
 	.pr_peeraddr	= link_peeraddr,
 	.pr_sockaddr	= link_sockaddr,
+	.pr_recvoob	= link_recvoob,
+	.pr_sendoob	= link_sendoob,
 	.pr_generic	= link_usrreq,
 };
 
@@ -275,6 +281,14 @@ link_listen(struct socket *so)
 }
 
 static int
+link_connect(struct socket *so, struct mbuf *nam)
+{
+ 	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 link_disconnect(struct socket *so)
 {
 	KASSERT(solocked(so));
@@ -329,6 +343,22 @@ link_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
+link_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
 link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
@@ -337,6 +367,7 @@ link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_ACCEPT);
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
 	KASSERT(req != PRU_DISCONNECT);
 	KASSERT(req != PRU_SHUTDOWN);
 	KASSERT(req != PRU_ABORT);
@@ -344,6 +375,8 @@ link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
 	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SENDOOB);
 
 	return EOPNOTSUPP;
 }
