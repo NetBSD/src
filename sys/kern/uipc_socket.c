@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.229 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.230 2014/07/31 20:28:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.229 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.230 2014/07/31 20:28:59 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -778,8 +778,7 @@ soabort(struct socket *so)
 	KASSERT(so->so_head == NULL);
 
 	so->so_aborting++;		/* XXX */
-	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
-	    PRU_ABORT, NULL, NULL, NULL, NULL);
+	error = (*so->so_proto->pr_usrreqs->pr_abort)(so);
 	refs = --so->so_aborting;	/* XXX */
 	if (error || (refs == 0)) {
 		sofree(so);
