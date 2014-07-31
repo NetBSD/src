@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.192 2014/06/28 22:27:50 dholland Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.193 2014/07/31 12:35:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.192 2014/06/28 22:27:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193 2014/07/31 12:35:33 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -230,28 +230,12 @@ netbsd32_open(struct lwp *l, const struct netbsd32_open_args *uap, register_t *r
 		syscallarg(mode_t) mode;
 	} */
 	struct sys_open_args ua;
-	struct pathbuf *pb;
-	int error, fd;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
-        
-	if (SCARG(&ua, path) != NULL) {
-		error = pathbuf_copyin(SCARG(&ua, path), &pb);
-		if (error) 
-			return error; 
-	} else {
-		pb = pathbuf_create(".");
-		if (pb == NULL)
-			return ENOMEM;
-	}
-                
-        error = do_open(l, NULL, pb, SCARG(&ua, flags), SCARG(&ua, mode), &fd);
-        pathbuf_destroy(pb);
-	if (error == 0)
-		*retval = fd;
-        return error;
+
+	return sys_open(l, &ua, retval);
 }
 
 int
