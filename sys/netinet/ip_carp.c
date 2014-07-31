@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.58 2014/07/31 00:56:23 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.59 2014/07/31 02:37:25 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.58 2014/07/31 00:56:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59 2014/07/31 02:37:25 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -153,7 +153,7 @@ struct carp_softc {
 	LIST_HEAD(__carp_mchead, carp_mc_entry)	carp_mc_listhead;
 };
 
-static int carp_suppress_preempt = 0;
+int carp_suppress_preempt = 0;
 static int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 
 static percpu_t *carpstat_percpu;
