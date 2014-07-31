@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.134 2014/07/27 21:31:34 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.135 2014/07/31 08:04:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -98,14 +98,14 @@
 #include <uvm/pmap/tlb.h>
 #include <uvm/pmap/pmap_tlb.h>
 
-/* 
+/*
  * If we have an EXTENDED MMU and the address space is split evenly between
  * user and kernel, we can use the TTBR0/TTBR1 to have separate L1 tables for
  * user and kernel address spaces.
- */      
+ */
 #if (KERNEL_BASE & 0x80000000) == 0
 #error ARMv6 or later systems must have a KERNEL_BASE >= 0x80000000
-#endif  
+#endif
 #endif  /* ARM_MMU_EXTENDED */
 
 /*
@@ -401,7 +401,7 @@ void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
 void	pmap_devmap_register(const struct pmap_devmap *);
 
 /*
- * Special page zero routine for use by the idle loop (no cache cleans). 
+ * Special page zero routine for use by the idle loop (no cache cleans).
  */
 bool	pmap_pageidlezero(paddr_t);
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
@@ -432,7 +432,7 @@ extern vaddr_t pmap_directbase;
 #endif
 
 /*
- * Useful macros and constants 
+ * Useful macros and constants
  */
 
 /* Virtual address to page table entry */
@@ -481,7 +481,7 @@ extern int pmap_needs_pte_sync;
  * we need to do PTE syncs.  If only SA-1 is configured, then evaluate
  * this at compile time.
  */
-#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0) && (ARM_NMMUS == 1) 
+#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0) && (ARM_NMMUS == 1)
 #define	PMAP_INCLUDE_PTE_SYNC
 #if (ARM_MMU_V6 > 0)
 #define	PMAP_NEEDS_PTE_SYNC	1
@@ -588,7 +588,7 @@ l2pte_reset(pt_entry_t *ptep)
 	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
 		ptep[k] = 0;
 	}
-}       
+}
 
 /* L1 and L2 page table macros */
 #define pmap_pde_v(pde)		l1pte_valid(*(pde))
@@ -1091,7 +1091,7 @@ struct vm_page_md {
 #define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
 	(pg)->mdpage.pvh_attrs = 0
 #endif
- 
+
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	SLIST_INIT(&(pg)->mdpage.pvh_list);				\
