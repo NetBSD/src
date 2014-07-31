@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.27 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.28 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.27 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.28 2014/07/31 03:39:35 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -200,6 +200,45 @@ rfcomm_connect(struct socket *so, struct mbuf *nam)
 }
 
 static int
+rfcomm_disconnect(struct socket *so)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	soisdisconnecting(so);
+	return rfcomm_disconnect_pcb(pcb, so->so_linger);
+}
+
+static int
+rfcomm_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+rfcomm_abort(struct socket *so)
+{
+	struct rfcomm_dlc *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	rfcomm_disconnect_pcb(pcb, 0);
+	soisdisconnected(so);
+	rfcomm_detach(so);
+	return 0;
+}
+
+static int
 rfcomm_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
 	return EPASSTHROUGH;
@@ -294,6 +333,9 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	KASSERT(req != PRU_BIND);
 	KASSERT(req != PRU_LISTEN);
 	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
 	KASSERT(req != PRU_CONTROL);
 	KASSERT(req != PRU_SENSE);
 	KASSERT(req != PRU_PEERADDR);
@@ -311,20 +353,6 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_DISCONNECT:
-		soisdisconnecting(up);
-		return rfcomm_disconnect(pcb, up->so_linger);
-
-	case PRU_ABORT:
-		rfcomm_disconnect(pcb, 0);
-		soisdisconnected(up);
-		rfcomm_detach(up);
-		return 0;
-
-	case PRU_SHUTDOWN:
-		socantsendmore(up);
-		break;
-
 	case PRU_SEND:
 		KASSERT(m != NULL);
 
@@ -488,7 +516,7 @@ rfcomm_linkmode(void *arg, int new)
 	if (((mode & RFCOMM_LM_AUTH) && !(new & RFCOMM_LM_AUTH))
 	    || ((mode & RFCOMM_LM_ENCRYPT) && !(new & RFCOMM_LM_ENCRYPT))
 	    || ((mode & RFCOMM_LM_SECURE) && !(new & RFCOMM_LM_SECURE)))
-		rfcomm_disconnect(so->so_pcb, 0);
+		rfcomm_disconnect_pcb(so->so_pcb, 0);
 }
 
 /*
@@ -522,6 +550,9 @@ PR_WRAP_USRREQS(rfcomm)
 #define	rfcomm_bind		rfcomm_bind_wrapper
 #define	rfcomm_listen		rfcomm_listen_wrapper
 #define	rfcomm_connect		rfcomm_connect_wrapper
+#define	rfcomm_disconnect	rfcomm_disconnect_wrapper
+#define	rfcomm_shutdown		rfcomm_shutdown_wrapper
+#define	rfcomm_abort		rfcomm_abort_wrapper
 #define	rfcomm_ioctl		rfcomm_ioctl_wrapper
 #define	rfcomm_stat		rfcomm_stat_wrapper
 #define	rfcomm_peeraddr		rfcomm_peeraddr_wrapper
@@ -537,6 +568,9 @@ const struct pr_usrreqs rfcomm_usrreqs = {
 	.pr_bind	= rfcomm_bind,
 	.pr_listen	= rfcomm_listen,
 	.pr_connect	= rfcomm_connect,
+	.pr_disconnect	= rfcomm_disconnect,
+	.pr_shutdown	= rfcomm_shutdown,
+	.pr_abort	= rfcomm_abort,
 	.pr_ioctl	= rfcomm_ioctl,
 	.pr_stat	= rfcomm_stat,
 	.pr_peeraddr	= rfcomm_peeraddr,

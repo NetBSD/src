@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.31 2014/07/30 10:04:25 rtr Exp $	*/
+/*	$NetBSD: btsco.c,v 1.32 2014/07/31 03:39:35 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.31 2014/07/30 10:04:25 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.32 2014/07/31 03:39:35 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -359,7 +359,7 @@ btsco_detach(device_t self, int flags)
 	mutex_enter(bt_lock);
 	if (sc->sc_sco != NULL) {
 		DPRINTF("sc_sco=%p\n", sc->sc_sco);
-		sco_disconnect(sc->sc_sco, 0);
+		sco_disconnect_pcb(sc->sc_sco, 0);
 		sco_detach_pcb(&sc->sc_sco);
 		sc->sc_sco = NULL;
 	}
@@ -672,7 +672,7 @@ btsco_close(void *hdl)
 	KASSERT(mutex_owned(bt_lock));
 
 	if (sc->sc_sco != NULL) {
-		sco_disconnect(sc->sc_sco, 0);
+		sco_disconnect_pcb(sc->sc_sco, 0);
 		sco_detach_pcb(&sc->sc_sco);
 	}
 
