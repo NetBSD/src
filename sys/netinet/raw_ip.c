@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.137 2014/07/30 10:04:26 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.138 2014/07/31 02:21:51 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.137 2014/07/30 10:04:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.138 2014/07/31 02:21:51 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -487,7 +487,7 @@ rip_connect_pcb(struct inpcb *inp, struct mbuf *nam)
 
 	if (nam->m_len != sizeof(*addr))
 		return (EINVAL);
-	if (!IFNET_FIRST())
+	if (IFNET_EMPTY())
 		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
@@ -575,7 +575,7 @@ rip_bind(struct socket *so, struct mbuf *nam)
 		error = EINVAL;
 		goto release;
 	}
-	if (!IFNET_FIRST()) {
+	if (IFNET_EMPTY()) {
 		error = EADDRNOTAVAIL;
 		goto release;
 	}
