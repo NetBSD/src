@@ -1,3 +1,5 @@
+/* $NetBSD: timeout.c,v 1.2 2014/08/01 14:01:30 christos Exp $ */
+
 /*-
  * Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
  * Copyright (c) 2014 Vsevolod Stakhov <vsevolod@FreeBSD.org>
@@ -26,7 +28,13 @@
  */
 
 #include <sys/cdefs.h>
+#if !defined(lint)
+#if 0
 __FBSDID("$FreeBSD: head/usr.bin/timeout/timeout.c 268763 2014-07-16 13:52:05Z bapt $");
+#else
+__RCSID("$NetBSD: timeout.c,v 1.2 2014/08/01 14:01:30 christos Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -34,6 +42,7 @@ __FBSDID("$FreeBSD: head/usr.bin/timeout/timeout.c 268763 2014-07-16 13:52:05Z b
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -49,7 +58,7 @@ static sig_atomic_t sig_term = 0;
 static sig_atomic_t sig_alrm = 0;
 static sig_atomic_t sig_ign = 0;
 
-static void
+static void __dead
 usage(void)
 {
 
@@ -101,21 +110,34 @@ parse_duration(const char *duration)
 static int
 parse_signal(const char *str)
 {
-	int sig, i;
-	const char *errstr;
+	long sig;
+	int i;
+	char *ep;
 
-	sig = strtonum(str, 0, sys_nsig, &errstr);
-
-	if (errstr == NULL)
-		return (sig);
-	if (strncasecmp(str, "SIG", 3) == 0)
+	if (strncasecmp(str, "SIG", 3) == 0) {
 		str += 3;
 
-	for (i = 1; i < sys_nsig; i++) {
-		if (strcasecmp(str, sys_signame[i]) == 0)
-			return (i);
+		for (i = 1; i < sys_nsig; i++) {
+			if (strcasecmp(str, sys_signame[i]) == 0)
+				return (i);
+		}
+
+		goto err;
 	}
 
+	errno = 0;
+	sig = strtol(str, &ep, 10);
+
+	if (str[0] == '\0' || *ep != '\0')
+		goto err;
+	if (errno == ERANGE && (sig == INT_MAX || sig == INT_MIN))
+		goto err;
+	if (sig >= sys_nsig || sig < 0)
+		goto err;
+
+	return (int)sig;
+
+err:
 	errx(EX_USAGE, "invalid signal");
 }
 
@@ -151,7 +173,7 @@ set_interval(double iv)
 
 	memset(&tim, 0, sizeof(tim));
 	tim.it_value.tv_sec = (time_t)iv;
-	iv -= (time_t)iv;
+	iv -= (double)tim.it_value.tv_sec;
 	tim.it_value.tv_usec = (suseconds_t)(iv * 1000000UL);
 
 	if (setitimer(ITIMER_REAL, &tim, NULL) == -1)
@@ -181,6 +203,8 @@ main(int argc, char **argv)
 		SIGALRM,
 		SIGQUIT,
 	};
+
+	setprogname(argv[0]);
 
 	foreground = preserve = 0;
 	second_kill = 0;
