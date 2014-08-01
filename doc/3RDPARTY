@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1139 2014/07/31 14:05:57 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1140 2014/08/01 14:05:35 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1538,3 +1538,14 @@ Notes:
 		The kernel portion has been removed from the tar file.
 		Our kernel smbfs and netsmb directories could move to
 		external, but this is just make-work.
+
+Package:	timeout
+Version:	FreeBSD-2014-08-01
+Current Vers:	FreeBSD-XXXX-YY-ZZ
+Maintainer:	Baptiste Daroussin <bapt@FreeBSD.org>
+Archive Site:	none
+Home Page:	none
+Mailing List:	none
+Responsible:	christos
+License:	BSD-like (2-clause)
+Location:	usr.bin/timeout
