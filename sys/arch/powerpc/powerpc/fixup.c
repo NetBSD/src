@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.8 2014/03/03 15:36:36 macallan Exp $	*/
+/*	$NetBSD: fixup.c,v 1.9 2014/08/01 21:57:22 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.8 2014/03/03 15:36:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.9 2014/08/01 21:57:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -144,6 +144,15 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 					ctr = fixreg[rs];
 					break;
 				}
+				case OPC31_OR: {
+#ifdef DIAGNOSTIC
+					KASSERT(valid_mask & (1 << rs));
+					KASSERT(valid_mask & (1 << rb));
+#endif
+					fixreg[ra] = fixreg[rs] | fixreg[rb];
+					valid_mask |= 1 << ra;
+					break;
+				}
 				default:
 					panic("%s: %p: unexpected insn 0x%08x",
 					    __func__, stub, i.i_int);
@@ -176,7 +185,7 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 				break;
 			}
 			case OPC_STW: {
-				KASSERT(i.i_d.i_rs == r_lr && i.i_d.i_ra == 1);
+				KASSERT((i.i_d.i_rs == r_lr || i.i_d.i_rs == 31) && i.i_d.i_ra == 1);
 				break;
 			}
 			case OPC_STWU: {
@@ -193,6 +202,11 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 					    insnp + instr.i_i.i_li);
 				}
 				fixup.jfi_real = fixup_addr2offset(ctr);
+				break;
+			}
+			case OPC_RLWINM: {
+				// LLVM emits these for bool operands.
+				// Ignore them.
 				break;
 			}
 			default: {
