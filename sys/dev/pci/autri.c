@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.51 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: autri.c,v 1.52 2014/08/01 16:41:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.51 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.52 2014/08/01 16:41:58 joerg Exp $");
 
 #include "midi.h"
 
@@ -206,6 +206,7 @@ static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
 /*
  * register set/clear bit
  */
+#if NMIDI > 0
 static inline void
 autri_reg_set_1(struct autri_softc *sc, int no, uint8_t mask)
 {
@@ -219,6 +220,7 @@ autri_reg_clear_1(struct autri_softc *sc, int no, uint8_t mask)
 	bus_space_write_1(sc->memt, sc->memh, no,
 	    (bus_space_read_1(sc->memt, sc->memh, no) & ~mask));
 }
+#endif
 
 static inline void
 autri_reg_set_4(struct autri_softc *sc, int no, uint32_t mask)
