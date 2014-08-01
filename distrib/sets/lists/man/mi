@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1480 2014/07/24 21:08:50 alnsn Exp $
+# $NetBSD: mi,v 1.1481 2014/08/01 14:08:47 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -554,6 +554,7 @@
 ./usr/share/man/cat1/tftp.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/tic.0			man-util-catman		.cat
 ./usr/share/man/cat1/time.0			man-util-catman		.cat
+./usr/share/man/cat1/timeout.0			man-util-catman		.cat
 ./usr/share/man/cat1/tip.0			man-util-catman		.cat
 ./usr/share/man/cat1/tmux.0			man-util-catman		.cat
 ./usr/share/man/cat1/tn3270.0			man-obsolete		obsolete
@@ -3657,6 +3658,7 @@
 ./usr/share/man/html1/tftp.html			man-netutil-htmlman	html
 ./usr/share/man/html1/tic.html			man-util-htmlman	html
 ./usr/share/man/html1/time.html			man-util-htmlman	html
+./usr/share/man/html1/timeout.html		man-util-htmlman	html
 ./usr/share/man/html1/tip.html			man-util-htmlman	html
 ./usr/share/man/html1/tmux.html			man-util-htmlman	html
 ./usr/share/man/html1/tn3270.html		man-obsolete		obsolete
@@ -6413,6 +6415,7 @@
 ./usr/share/man/man1/tftp.1			man-netutil-man		.man
 ./usr/share/man/man1/tic.1			man-util-man		.man
 ./usr/share/man/man1/time.1			man-util-man		.man
+./usr/share/man/man1/timeout.1			man-util-man		.man
 ./usr/share/man/man1/tip.1			man-util-man		.man
 ./usr/share/man/man1/tmux.1			man-util-man		.man
 ./usr/share/man/man1/tn3270.1			man-obsolete		obsolete
