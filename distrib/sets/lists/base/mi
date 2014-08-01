@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1078 2014/07/28 23:09:06 rjs Exp $
+# $NetBSD: mi,v 1.1079 2014/08/01 14:08:47 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -729,6 +729,7 @@
 ./usr/bin/tftp					base-netutil-bin
 ./usr/bin/tic					base-util-bin
 ./usr/bin/time					base-util-bin
+./usr/bin/timeout				base-util-bin
 ./usr/bin/tip					base-util-bin
 ./usr/bin/tmux					base-util-bin
 ./usr/bin/tn3270				base-obsolete		obsolete
