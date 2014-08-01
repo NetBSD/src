@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.76 2014/07/27 10:19:12 martin Exp $
+# $NetBSD: mi,v 1.77 2014/08/01 14:08:47 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -760,6 +760,7 @@
 ./usr/libdata/debug/usr/bin/tftp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/tic.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/time.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/timeout.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tmux.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
