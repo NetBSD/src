@@ -1,4 +1,4 @@
-/* $NetBSD: timeout.c,v 1.2 2014/08/01 14:01:30 christos Exp $ */
+/* $NetBSD: timeout.c,v 1.3 2014/08/02 09:16:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/usr.bin/timeout/timeout.c 268763 2014-07-16 13:52:05Z bapt $");
 #else
-__RCSID("$NetBSD: timeout.c,v 1.2 2014/08/01 14:01:30 christos Exp $");
+__RCSID("$NetBSD: timeout.c,v 1.3 2014/08/02 09:16:22 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,7 @@ main(int argc, char **argv)
 			if (!foreground)
 				killpg(pgid, killsig);
 			else
-				kill(pid, sig_term);
+				kill(pid, (int)sig_term);
 
 			if (do_second_kill) {
 				set_interval(second_kill);
