@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.212 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.213 2014/08/02 03:55:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.212 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.213 2014/08/02 03:55:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1011,22 +1011,32 @@ udp_stat(struct socket *so, struct stat *ub)
 static int
 udp_peeraddr(struct socket *so, struct mbuf *nam)
 {
+	int s;
+
 	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
+	s = splsoftnet();
 	in_setpeeraddr(sotoinpcb(so), nam);
+	splx(s);
+
 	return 0;
 }
 
 static int
 udp_sockaddr(struct socket *so, struct mbuf *nam)
 {
+	int s;
+
 	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
+	s = splsoftnet();
 	in_setsockaddr(sotoinpcb(so), nam);
+	splx(s);
+
 	return 0;
 }
 
