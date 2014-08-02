@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.18 2014/03/20 20:42:08 christos Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.19 2014/08/02 07:18:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.18 2014/03/20 20:42:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.19 2014/08/02 07:18:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -667,7 +667,7 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 		error = kthread_create(PRI_NONE, 0, NULL,
 		    rhscintr, sc, &sc->sc_rhintr, "ugenrhi");
 		if (error)
-			xfer->status = error;
+			xfer->status = USBD_IOERROR;
 	}
 
 	return (USBD_IN_PROGRESS);
