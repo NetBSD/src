@@ -1,15 +1,10 @@
-$NetBSD: TODO.usbmp,v 1.7 2014/03/06 13:33:46 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.8 2014/08/02 15:50:16 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
 
 
 flesh out most of usbdi(9).
-
-
-host controllers needing to be ported:
-  - rump/dev/lib/libugenhc/ugenhc.c
-
 
 usb_event_thread() startup should use something to sync companions
 
