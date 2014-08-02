@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.677 2014/07/24 22:37:26 nonaka Exp $
+$NetBSD: usbdevs,v 1.678 2014/08/02 17:04:05 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1998,6 +1998,7 @@ product LOGITEC RT2870_3	0x0164	RT2870
 product LOGITEC LANW300NU2	0x0166	LAN-W300N/U2
 product LOGITEC RT3020		0x0168	RT3020
 product LOGITEC LAN_W450ANU2E	0x016b	LAN-W450ANU2E
+product LOGITEC LAN_W300ANU2	0x0170	LAN-W300AN/U2
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
@@ -2976,6 +2977,7 @@ product SMSC 2020HUB		0x2020	USB Hub
 product SMSC SMSC9500		0x9500	SMSC9500 Ethernet device
 product SMSC SMSC9505		0x9505	SMSC9505 Ethernet device
 product SMSC SMSC9512		0x9512	SMSC9512 USB Hub
+product SMSC LAN9500		0x9500	LAN9500 Ethernet Device
 product SMSC LAN9530		0x9530	LAN9530 Ethernet Device
 product SMSC LAN9730		0x9730	LAN9730 Ethernet Device
 product SMSC SMSC9500_SAL10	0x9900	SMSC9500 Ethernet device (SAL10)
