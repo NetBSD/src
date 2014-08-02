@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.9 2014/08/01 21:57:22 matt Exp $	*/
+/*	$NetBSD: fixup.c,v 1.10 2014/08/02 15:58:04 joerg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.9 2014/08/01 21:57:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.10 2014/08/02 15:58:04 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -121,10 +121,8 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 			switch (i.i_any.i_opcd) {
 			case OPC_integer_31: {
 				const u_int rs = i.i_x.i_rs;
-#ifdef DIAGNOSTIC
 				const u_int ra = i.i_x.i_ra;
 				const u_int rb = i.i_x.i_rb;
-#endif
 				switch (i.i_x.i_xo) {
 				case OPC31_MFSPR: {
 #ifdef DIAGNOSTIC
