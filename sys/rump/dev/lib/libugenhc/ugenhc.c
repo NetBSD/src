@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.19 2014/08/02 07:18:47 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.20 2014/08/02 07:20:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.19 2014/08/02 07:18:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.20 2014/08/02 07:20:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -152,7 +152,6 @@ static const usb_config_descriptor_t rumphub_ucd = {
 	.bNumInterface		= 1,
 	.bmAttributes		= UC_SELF_POWERED | UC_ATTR_MBO,
 };
-/* XXX: spec says UC_ATTR_MBO is reserved and set to one.  required? */
 
 static const usb_interface_descriptor_t rumphub_uid = {
 	.bLength		= USB_INTERFACE_DESCRIPTOR_SIZE,
