@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.20 2014/08/02 07:20:08 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.21 2014/08/02 11:43:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.20 2014/08/02 07:20:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.21 2014/08/02 11:43:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.20 2014/08/02 07:20:08 skrll Exp $");
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+#include <sys/mutex.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -103,6 +104,8 @@ struct ugenhc_softc {
 
 	struct lwp *sc_rhintr;
 	usbd_xfer_handle sc_intrxfer;
+
+	kmutex_t sc_lock;
 };
 
 static int	ugenhc_probe(device_t, cfdata_t, void *);
@@ -313,17 +316,22 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 
 ret:
 	xfer->status = err;
-	/* XXX locking */
+	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
+	mutex_exit(&sc->sc_lock);
+
 	return (USBD_IN_PROGRESS);
 }
 
 static usbd_status
 rumpusb_root_ctrl_transfer(usbd_xfer_handle xfer)
 {
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	usbd_status err;
 
+	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
+	mutex_exit(&sc->sc_lock);
 	if (err)
 		return (err);
 
@@ -538,16 +546,22 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
  ret:
 	xfer->status = err;
+	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
+	mutex_exit(&sc->sc_lock);
+
 	return (USBD_IN_PROGRESS);
 }
 
 static usbd_status
 rumpusb_device_ctrl_transfer(usbd_xfer_handle xfer)
 {
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	usbd_status err;
 
+	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
+	mutex_exit(&sc->sc_lock);
 	if (err)
 		return (err);
 
@@ -619,7 +633,9 @@ rhscintr(void *arg)
 		xfer->actlen = xfer->length;
 		xfer->status = USBD_NORMAL_COMPLETION;
 
+		mutex_enter(&sc->sc_lock);
 		usb_transfer_complete(xfer);
+		mutex_exit(&sc->sc_lock);
 
 		kpause("ugwait2", false, hz, NULL);
 
@@ -647,7 +663,9 @@ rhscintr(void *arg)
 		memset(xfer->buffer, 0xff, xfer->length);
 		xfer->actlen = xfer->length;
 		xfer->status = USBD_NORMAL_COMPLETION;
+		mutex_enter(&sc->sc_lock);
 		usb_transfer_complete(xfer);
+		mutex_exit(&sc->sc_lock);
 
 		kpause("ugwait3", false, hz, NULL);
 	}
@@ -661,6 +679,7 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	int error;
 
+	mutex_enter(&sc->sc_lock);
 	sc->sc_intrxfer = xfer;
 	if (!sc->sc_rhintr) {
 		error = kthread_create(PRI_NONE, 0, NULL,
@@ -668,6 +687,7 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 		if (error)
 			xfer->status = USBD_IOERROR;
 	}
+	mutex_exit(&sc->sc_lock);
 
 	return (USBD_IN_PROGRESS);
 }
@@ -675,9 +695,12 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 static usbd_status
 rumpusb_root_intr_transfer(usbd_xfer_handle xfer)
 {
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	usbd_status err;
 
+	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
+	mutex_exit(&sc->sc_lock);
 	if (err)
 		return (err);
 
@@ -815,24 +838,33 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 		if (done != len)
 			panic("lazy bum");
 	xfer->status = xfererr;
+	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
+	mutex_exit(&sc->sc_lock);
 	return (USBD_IN_PROGRESS);
 }
 
 static void
 doxfer_kth(void *arg)
 {
-	usbd_xfer_handle xfer = arg;
+	usbd_pipe_handle pipe = arg;
+	struct ugenhc_softc *sc = pipe->device->bus->hci_private;
 
+	mutex_enter(&sc->sc_lock);
 	do {
-		rumpusb_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
-	} while (!SIMPLEQ_EMPTY(&xfer->pipe->queue));
+		usbd_xfer_handle xfer = SIMPLEQ_FIRST(&pipe->queue);
+		mutex_exit(&sc->sc_lock);
+		rumpusb_device_bulk_start(xfer);
+		mutex_enter(&sc->sc_lock);
+	} while (!SIMPLEQ_EMPTY(&pipe->queue));
+	mutex_exit(&sc->sc_lock);
 	kthread_exit(0);
 }
 
 static usbd_status
 rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 {
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	usbd_status err;
 
 	if (!rump_threads) {
@@ -843,19 +875,21 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 			return USBD_IN_PROGRESS;
 		}
 
+		mutex_enter(&sc->sc_lock);
 		err = usb_insert_transfer(xfer);
+		mutex_exit(&sc->sc_lock);
 		if (err)
 			return err;
 
 		return rumpusb_device_bulk_start(
 		    SIMPLEQ_FIRST(&xfer->pipe->queue));
 	} else {
-		/* biglocked */
-		/* XXX locking */
+		mutex_enter(&sc->sc_lock);
 		err = usb_insert_transfer(xfer);
+		mutex_exit(&sc->sc_lock);
 		if (err)
 			return err;
-		kthread_create(PRI_NONE, 0, NULL, doxfer_kth, xfer, NULL,
+		kthread_create(PRI_NONE, 0, NULL, doxfer_kth, xfer->pipe, NULL,
 		    "rusbhcxf");
 
 		return USBD_IN_PROGRESS;
@@ -880,6 +914,8 @@ rumpusb_device_bulk_close(usbd_pipe_handle pipe)
 	struct ugenhc_softc *sc = pipe->device->bus->hci_private;
 	int endpt = pipe->endpoint->edesc->bEndpointAddress;
 	usbd_xfer_handle xfer;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	endpt = UE_GET_ADDR(endpt);
 
@@ -1037,6 +1073,15 @@ ugenhc_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	kmem_free(xfer, sizeof(struct usbd_xfer));
 }
 
+
+static void
+ugenhc_getlock(struct usbd_bus *bus, kmutex_t **lock)
+{
+	struct ugenhc_softc *sc = bus->hci_private;
+
+	*lock = &sc->sc_lock;
+}
+
 struct ugenhc_pipe {
 	struct usbd_pipe pipe;
 };
@@ -1049,6 +1094,7 @@ static const struct usbd_bus_methods ugenhc_bus_methods = {
 	.freem = 	ugenhc_freem,
 	.allocx = 	ugenhc_allocx,
 	.freex =	ugenhc_freex,
+	.get_lock =	ugenhc_getlock
 };
 
 static int
@@ -1080,6 +1126,8 @@ ugenhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.hci_private = sc;
 	sc->sc_bus.pipe_size = sizeof(struct ugenhc_pipe);
 	sc->sc_devnum = maa->maa_unit;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	config_found(self, &sc->sc_bus, usbctlprint);
 }
