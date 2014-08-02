@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.194 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.195 2014/08/02 03:55:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.194 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.195 2014/08/02 03:55:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -705,6 +705,7 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	struct tcpcb *tp = NULL;
 	int ostate = 0;
 	int error = 0;
+	int s;
 
 	KASSERT(solocked(so));
 
@@ -718,6 +719,7 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	 * done at higher levels; just return the address
 	 * of the peer, storing through addr.
 	 */
+	s = splsoftnet();
 #ifdef INET
 	if (inp) {
 		in_setpeeraddr(inp, nam);
@@ -729,6 +731,7 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_ACCEPT);
+	splx(s);
 
 	return 0;
 }
@@ -773,7 +776,6 @@ tcp_bind(struct socket *so, struct mbuf *nam)
 		break;
 #endif
 	}
-
 	tcp_debug_trace(so, tp, ostate, PRU_BIND);
 	splx(s);
 
@@ -786,9 +788,9 @@ tcp_listen(struct socket *so)
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
 	struct tcpcb *tp = NULL;
-	int s;
 	int error = 0;
 	int ostate = 0;
+	int s;
 
 	KASSERT(solocked(so));
 
@@ -841,8 +843,6 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 
 	ostate = tcp_debug_capture(tp, PRU_CONNECT);
 
-	s = splsoftnet();
-
 	/*
 	 * Initiate connection to peer.
 	 * Create a template for use in transmissions on this connection.
@@ -850,6 +850,7 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 	 * Start keep-alive timer, and seed output sequence space.
 	 * Send initial segment on connection.
 	 */
+	s = splsoftnet();
 #ifdef INET
 	if (inp) {
 		if (inp->inp_lport == 0) {
@@ -920,9 +921,9 @@ tcp_disconnect(struct socket *so)
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
 	struct tcpcb *tp = NULL;
-	int s;
 	int error = 0;
 	int ostate = 0;
+	int s;
 
 	KASSERT(solocked(so));
 
@@ -956,9 +957,9 @@ tcp_shutdown(struct socket *so)
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
 	struct tcpcb *tp = NULL;
-	int s;
 	int error = 0;
 	int ostate = 0;
+	int s;
 
 	KASSERT(solocked(so));
 
@@ -986,9 +987,9 @@ tcp_abort(struct socket *so)
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
 	struct tcpcb *tp = NULL;
-	int s;
 	int error = 0;
 	int ostate = 0;
+	int s;
 
 	KASSERT(solocked(so));
 
@@ -1042,12 +1043,14 @@ tcp_peeraddr(struct socket *so, struct mbuf *nam)
 	struct tcpcb *tp = NULL;
 	int ostate = 0;
 	int error = 0;
+	int s;
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
 	ostate = tcp_debug_capture(tp, PRU_PEERADDR);
 
+	s = splsoftnet();
 #ifdef INET
 	if (inp)
 		in_setpeeraddr(inp, nam);
@@ -1056,8 +1059,8 @@ tcp_peeraddr(struct socket *so, struct mbuf *nam)
 	if (in6p)
 		in6_setpeeraddr(in6p, nam);
 #endif
-
 	tcp_debug_trace(so, tp, ostate, PRU_PEERADDR);
+	splx(s);
 
 	return 0;
 }
@@ -1070,12 +1073,14 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 	struct tcpcb *tp = NULL;
 	int ostate = 0;
 	int error = 0;
+	int s;
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
 	ostate = tcp_debug_capture(tp, PRU_SOCKADDR);
 
+	s = splsoftnet();
 #ifdef INET
 	if (inp)
 		in_setsockaddr(inp, nam);
@@ -1084,8 +1089,8 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 	if (in6p)
 		in6_setsockaddr(in6p, nam);
 #endif
-
 	tcp_debug_trace(so, tp, ostate, PRU_SOCKADDR);
+	splx(s);
 
 	return 0;
 }
@@ -1098,20 +1103,26 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 	struct tcpcb *tp = NULL;
 	int ostate = 0;
 	int error = 0;
+	int s;
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
 	ostate = tcp_debug_capture(tp, PRU_RCVOOB);
 
+	s = splsoftnet();
 	if ((so->so_oobmark == 0 &&
 	    (so->so_state & SS_RCVATMARK) == 0) ||
 	    so->so_options & SO_OOBINLINE ||
-	    tp->t_oobflags & TCPOOB_HADDATA)
+	    tp->t_oobflags & TCPOOB_HADDATA) {
+		splx(s);
 		return EINVAL;
+	}
 
-	if ((tp->t_oobflags & TCPOOB_HAVEDATA) == 0)
+	if ((tp->t_oobflags & TCPOOB_HAVEDATA) == 0) {
+		splx(s);
 		return EWOULDBLOCK;
+	}
 
 	m->m_len = 1;
 	*mtod(m, char *) = tp->t_iobc;
@@ -1119,6 +1130,7 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 		tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 
 	tcp_debug_trace(so, tp, ostate, PRU_RCVOOB);
+	splx(s);
 
 	return 0;
 }
@@ -1131,14 +1143,17 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	struct tcpcb *tp = NULL;
 	int ostate = 0;
 	int error = 0;
+	int s;
 
 	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
 		return error;
 
 	ostate = tcp_debug_capture(tp, PRU_SENDOOB);
 
+	s = splsoftnet();
 	if (sbspace(&so->so_snd) < -512) {
 		m_freem(m);
+		splx(s);
 		return ENOBUFS;
 	}
 	/*
@@ -1154,8 +1169,8 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	tp->t_force = 1;
 	error = tcp_output(tp);
 	tp->t_force = 0;
-
 	tcp_debug_trace(so, tp, ostate, PRU_SENDOOB);
+	splx(s);
 
 	return error;
 }

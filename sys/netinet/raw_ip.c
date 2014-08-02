@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.139 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.140 2014/08/02 03:55:26 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.139 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.140 2014/08/02 03:55:26 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -618,8 +618,8 @@ rip_connect(struct socket *so, struct mbuf *nam)
 	error = rip_connect_pcb(inp, nam);
 	if (! error)
 		soisconnected(so);
-
 	splx(s);
+
 	return error;
 }
 
@@ -627,24 +627,33 @@ static int
 rip_disconnect(struct socket *so)
 {
 	struct inpcb *inp = sotoinpcb(so);
+	int s;
 
 	KASSERT(solocked(so));
 	KASSERT(inp != NULL);
 
+	s = splsoftnet();
 	soisdisconnected(so);
 	rip_disconnect1(inp);
+	splx(s);
+
 	return 0;
 }
 
 static int
 rip_shutdown(struct socket *so)
 {
+	int s;
+
 	KASSERT(solocked(so));
 
 	/*
 	 * Mark the connection as being incapable of further input.
 	 */
+	s = splsoftnet();
 	socantsendmore(so);
+	splx(s);
+
 	return 0;
 }
 
@@ -676,22 +685,32 @@ rip_stat(struct socket *so, struct stat *ub)
 static int
 rip_peeraddr(struct socket *so, struct mbuf *nam)
 {
+	int s;
+
 	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
+	s = splsoftnet();
 	in_setpeeraddr(sotoinpcb(so), nam);
+	splx(s);
+
 	return 0;
 }
 
 static int
 rip_sockaddr(struct socket *so, struct mbuf *nam)
 {
+	int s;
+
 	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
+	s = splsoftnet();
 	in_setsockaddr(sotoinpcb(so), nam);
+	splx(s);
+
 	return 0;
 }
 
