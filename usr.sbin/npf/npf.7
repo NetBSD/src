@@ -1,0 +1,91 @@
+.\"	$NetBSD: npf.7,v 1.1 2014/08/02 23:57:40 rmind Exp $
+.\"
+.\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This material is based upon work partially supported by The
+.\" NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 2, 2014
+.Dt NPF 7
+.Os
+.Sh NAME
+.Nm NPF
+.Nd NetBSD packet filter
+.\" -----
+.Sh DESCRIPTION
+NPF is a layer 3 packet filter, supporting IPv4 and IPv6 as well as
+layer 4 protocols such as TCP, UDP, and ICMP.
+It was designed with a focus on high performance, scalability, and
+modularity.
+.Pp
+NPF was written from scratch in 2009 and is distributed under the
+2-clause BSD license.
+.\" -----
+.Sh FEATURES
+NPF offers the traditional set of features provided by packet filters.
+Some key features are:
+.Bl -bullet -offset indent
+.It
+Stateful inspection (connection tracking).
+.It
+Network address translation (NAT).
+This includes static (stateless) and dynamic (stateful) translation,
+port translation, bi-directional NAT, etc.
+.It
+IPv6-to-IPv6 network prefix translation (NPTv6).
+.It
+Tables for efficient IP sets.
+.It
+Application Level Gateways (e.g., to support traceroute).
+.It
+NPF uses BPF with just-in-time (JIT) compilation.
+.It
+Rule procedures and a framework for NPF extensions.
+.It
+Traffic normalization (extension).
+.It
+Packet logging (extension).
+.El
+.Pp
+For a full set features and their description, see the NPF
+documentation and other manual pages.
+.\" -----
+.Sh SEE ALSO
+.Xr libnpf 3 ,
+.Xr bpf 4 ,
+.Xr bpfjit 4 ,
+.Xr npf.conf 5 ,
+.Xr pcap-filter 7 ,
+.Xr npfctl 8
+.Pp
+.Lk http://www.netbsd.org/~rmind/npf/ "NPF documentation"
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.Nm
+was designed and implemented by
+.An Mindaugas Rasiukevicius .
