@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.59 2014/06/14 12:42:41 apb Exp $
+#	$NetBSD: newvers.sh,v 1.60 2014/08/03 09:13:11 apb Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -60,6 +60,12 @@
 #			(If the -i command line option is used, then
 #			BUILDID is not appended.)
 #
+#     BUILDINFO		A string to be stored in the kernel's buildinfo
+#			variable.  ${BUILDINFO} may be a multi-line string,
+#			and may use C-style backslash escapes.
+#			Lines may be separated by either literal newlines
+#			or "\n" escape sequences.
+#
 # Output files:
 #
 #     vers.c            The "vers.c" file in the current directory is
@@ -96,6 +102,44 @@
 #                       The result is stored in the osrelease variable.
 #
 
+# FUNCTIONS
+
+# source_lines [input] --
+#
+# Convert a multi-line string to a format that's suitable for inclusion in
+# C source code.  The result should look like this:
+#
+# "first line\n"
+# "second line\n"
+#
+# with <backslash><letter n> inside the quotes for each line,
+# literal quotation marks around each line,
+# and a literal newline separating one line from the next.
+#
+# Input is from "$1" if that is defined, or from stdin if $1 is not defined.
+#
+source_lines()
+{
+	if [ -n "${1+set}" ]; then
+		printf "%s" "$1"
+	else
+		cat
+	fi \
+	| awk '{
+		# awk does not care about whether or not the last line
+		# of input ends with a newline.
+		# Convert <backslash> to <backslash><backslash>.
+		gsub("\\\\","\\\\");
+		# Convert <quote> to <backslash><quote>
+		gsub("\"","\\\"");
+		# Add <backslash><letter n> to the end of each line,
+		# and wrap each line in double quotes.
+		printf("\"%s\\n\"\n", $0);
+	}'
+}
+
+# MAIN PROGRAM
+
 if [ ! -e version ]; then
 	echo 0 > version
 fi
@@ -106,7 +150,7 @@ u=${USER-root}
 h=$(hostname)
 d=$(pwd)
 cwd=$(dirname $0)
-copyright=$(awk '{ printf("\"%s\\n\"", $0); }' ${cwd}/copyright)
+copyright="$(cat "${cwd}/copyright")"
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -155,6 +199,14 @@ else
 	fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
 fi
 
+# Convert multi-line strings to C source code.
+# Also add an extra blank line to copyright.
+#
+copyright_source="$(printf "%s\n\n" "${copyright}" | source_lines)"
+fullversion_source="$(printf "%b" "${fullversion}" | source_lines)"
+buildinfo_source="$(printf "%b" "${BUILDINFO}" | source_lines)"
+
+# Increment the serial number in the version file
 echo $(expr ${v} + 1) > version
 
 cat << _EOF > vers.c
@@ -170,12 +222,11 @@ cat << _EOF > vers.c
 
 const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
-const char sccs[] = "@(#)${fullversion}";
-const char version[] = "${fullversion}";
+const char sccs[] = "@(#)" ${fullversion_source};
+const char version[] = ${fullversion_source};
+const char buildinfo[] = ${buildinfo_source:-\"\"};
 const char kernel_ident[] = "${id}";
-const char copyright[] =
-${copyright}
-"\n";
+const char copyright[] = ${copyright_source};
 _EOF
 
 [ ! -z "${nflag}" ] && exit 0
