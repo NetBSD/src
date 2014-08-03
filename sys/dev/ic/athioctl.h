@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.14 2007/03/04 06:01:50 christos Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.15 2014/08/03 19:14:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -39,7 +39,7 @@
  */
 
 /*
- * Ioctl-related defintions for the Atheros Wireless LAN controller driver.
+ * Ioctl-related definitions for the Atheros Wireless LAN controller driver.
  */
 #ifndef _DEV_ATH_ATHIOCTL_H
 #define _DEV_ATH_ATHIOCTL_H

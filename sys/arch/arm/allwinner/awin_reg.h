@@ -231,7 +231,7 @@
 #define AWIN_DRAM_HPCR_PRIORITY_LEVEL	__BIT(2)
 #define AWIN_DRAM_HPCR_ACCESS_EN	__BIT(0)
 
-/* DMA controller defintions */
+/* DMA controller definitions */
 #define AWIN_DMA_IRQ_EN_REG		0x0000
 #define AWIN_DMA_IRQ_PEND_STA_REG	0x0004
 #define AWIN_NDMA_AUTO_GATE_REG		0x0008

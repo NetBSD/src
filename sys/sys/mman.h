@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.47 2014/07/18 12:36:57 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.48 2014/08/03 19:14:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -132,7 +132,7 @@ typedef	__off_t		off_t;		/* file offset */
 
 /*
  * POSIX memory avissory values.
- * Note: keep consistent with the original defintions below.
+ * Note: keep consistent with the original definitions below.
  */
 #define	POSIX_MADV_NORMAL	0	/* No further special treatment */
 #define	POSIX_MADV_RANDOM	1	/* Expect random page references */
@@ -142,7 +142,7 @@ typedef	__off_t		off_t;		/* file offset */
 
 #if defined(_NETBSD_SOURCE)
 /*
- * Original advice values, equivalent to POSIX defintions,
+ * Original advice values, equivalent to POSIX definitions,
  * and few implementation-specific ones.
  */
 #define	MADV_NORMAL		POSIX_MADV_NORMAL
