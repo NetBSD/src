@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/* $NetBSD: configmenu.c,v 1.2 2014/08/03 16:09:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <curses.h>
 #include <unistd.h>
+#include <errno.h>
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
@@ -68,6 +69,10 @@ enum {
 	CONFIGOPT_NTPD,
 	CONFIGOPT_NTPDATE,
 	CONFIGOPT_MDNSD,
+	CONFIGOPT_XDM,
+	CONFIGOPT_CGD,
+	CONFIGOPT_LVM,
+	CONFIGOPT_RAIDFRAME,
 	CONFIGOPT_ADDUSER,
 	CONFIGOPT_LAST
 };
@@ -86,12 +91,16 @@ configinfo config_list[] = {
 	{MSG_timezone, CONFIGOPT_TZ, NULL, set_timezone_menu, NULL},
 	{MSG_Root_shell, CONFIGOPT_ROOTSH, NULL, set_root_shell, NULL},
 	{MSG_change_rootpw, CONFIGOPT_ROOTPW, NULL, change_root_password, MSG_change},
-	{MSG_enable_binpkg, CONFIGOPT_BINPKG, NULL, set_binpkg, MSG_configure},
+	{MSG_enable_binpkg, CONFIGOPT_BINPKG, NULL, set_binpkg, MSG_install},
 	{MSG_get_pkgsrc, CONFIGOPT_PKGSRC, NULL, set_pkgsrc, MSG_install},
 	{MSG_enable_sshd, CONFIGOPT_SSHD, "sshd", toggle_rcvar, NULL},
 	{MSG_enable_ntpd, CONFIGOPT_NTPD, "ntpd", toggle_rcvar, NULL},
 	{MSG_run_ntpdate, CONFIGOPT_NTPDATE, "ntpdate", toggle_rcvar, NULL},
 	{MSG_enable_mdnsd, CONFIGOPT_MDNSD, "mdnsd", toggle_rcvar, NULL},
+	{MSG_enable_xdm, CONFIGOPT_XDM, "xdm", toggle_rcvar, NULL},
+	{MSG_enable_cgd, CONFIGOPT_CGD, "cgd", toggle_rcvar, NULL},
+	{MSG_enable_lvm, CONFIGOPT_LVM, "lvm", toggle_rcvar, NULL},
+	{MSG_enable_raid, CONFIGOPT_RAIDFRAME, "raidframe", toggle_rcvar, NULL},
 	{MSG_add_a_user, CONFIGOPT_ADDUSER, NULL, add_new_user, ""},
 	{NULL,		CONFIGOPT_LAST,	NULL, NULL, NULL}
 };
@@ -201,8 +210,9 @@ set_root_shell(struct menudesc *menu, void *arg)
 	configinfo **confp = arg;
 	
 	process_menu(MENU_rootsh, &confp[menu->cursel]->setting);
-	run_program(RUN_PROGRESS | RUN_CHROOT,
-		"chpass -s %s root", confp[menu->cursel]->setting);
+	if (run_program(RUN_PROGRESS | RUN_CHROOT,
+		"chpass -s %s root", confp[menu->cursel]->setting) != 0)
+		confp[menu->cursel]->setting = MSG_failed;
 	return 0;
 }
 
@@ -269,10 +279,13 @@ change_root_password(struct menudesc *menu, void *arg)
 
 	msg_display(MSG_rootpw);
 	process_menu(MENU_yesno, NULL);
-	if (yesno)
-		run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
-			"passwd -l root");
-	confp[menu->cursel]->setting = MSG_password_set;
+	if (yesno) {
+		if (run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
+			"passwd -l root") == 0)
+			confp[menu->cursel]->setting = MSG_password_set;
+		else
+			confp[menu->cursel]->setting = MSG_failed;
+	}
 	return 0;
 }
 
@@ -280,25 +293,24 @@ static int
 set_binpkg(struct menudesc *menu, void *arg)
 {
 	configinfo **confp = arg;
-
+	char additional_pkgs[STRSIZE] = {0};
 	char pattern[STRSIZE];
+	int allok = 0;
 
-	/* binary pkg config requires network at this point, so if
-	   it's not already configured, do it. */
-	if (network_up == 0) {
-		if (config_network())
-			mnt_net_config();
-	}
-
-	process_menu(MENU_binpkg, NULL);
-	make_url(pkgpath, &pkg, pkg_dir);
-	if ( run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
-		"pkg_add %s/pkgin", pkgpath) != 0) {
-		msg_display(MSG_pkgin_failed);
-		process_menu(MENU_ok, NULL);
-		confp[menu->cursel]->setting = MSG_failed;
-		return 0;
-	}
+	do {
+		yesno = -1;
+		process_menu(MENU_binpkg, additional_pkgs);
+		if (yesno == SET_SKIP) {
+			confp[menu->cursel]->setting = MSG_abandoned;
+			return 0;
+		}
+		
+		make_url(pkgpath, &pkg, pkg_dir);
+		if (run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
+			"pkg_add %s/pkgin", pkgpath) == 0) {
+			allok = 1;
+		}
+	} while (allok == 0);
 
 	/* configure pkgin to use $pkgpath as a repository */
 	snprintf(pattern, STRSIZE, "s,^[^#].*$,%s,", pkgpath);
@@ -307,9 +319,13 @@ set_binpkg(struct menudesc *menu, void *arg)
 	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 		"/usr/pkg/bin/pkgin -y update");
 
+	if (strlen(additional_pkgs) > 0)
+		run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
+		"/usr/pkg/bin/pkgin -y install %s", additional_pkgs);
+	
 	msg_display(MSG_binpkg_installed);
 	process_menu(MENU_ok, NULL);
-	
+
 	confp[menu->cursel]->setting = MSG_DONE;
 	return 0;
 }
@@ -343,8 +359,7 @@ set_pkgsrc(struct menudesc *menu, void *arg)
 		}
 	}
 	while (status == SET_RETRY);
-	
-	
+
 	confp[menu->cursel]->setting = MSG_DONE;
 	return 0;
 }
@@ -375,9 +390,9 @@ toggle_rcvar(struct menudesc *menu, void *arg)
 	}
 
 	if (!(fp = fopen(target_expand("/etc/rc.conf"), "r"))) {
-		msg_display(MSG_rcconf_delete_failed, varname);
+		msg_display(MSG_openfail, target_expand("/etc/rc.conf"), strerror(errno));
 		process_menu(MENU_ok, NULL);
-		return -1;
+		return 0;
 	}
 
 	while (fgets(buf, sizeof buf, fp) != NULL) {
@@ -428,13 +443,9 @@ do_configmenu()
 	menu_ent	me[CONFIGOPT_LAST];
 	configinfo	*ce[CONFIGOPT_LAST];
 
-        wrefresh(curscr);
-        wmove(stdscr, 0, 0);
-        wclear(stdscr);
-        wrefresh(stdscr);
-	
 	/* if the target isn't mounted already, figure it out. */
 	if (target_mounted() == 0) {
+		partman_go = 0;
 		if (find_disks(msg_string(MSG_configure_prior)) < 0)
 			return;
 
@@ -446,6 +457,11 @@ do_configmenu()
 	make_url(pkgpath, &pkg, pkg_dir);
 	opts = init_config_menu(config_list, me, ce);
 
+	wrefresh(curscr);
+	wmove(stdscr, 0, 0);
+	wclear(stdscr);
+	wrefresh(stdscr);
+
 	menu_no = new_menu(NULL, me, opts, 0, -4, 0, 70,
 		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
 		configmenu_hdr, set_config, NULL, "XXX Help String",
@@ -453,7 +469,4 @@ do_configmenu()
 
 	process_menu(menu_no, ce);
 	free_menu(menu_no);
-
-	sanity_check();
-
 }

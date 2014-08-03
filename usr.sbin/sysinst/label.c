@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: label.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.1 2014/07/26 19:30:44 dholland Exp $");
+__RCSID("$NetBSD: label.c,v 1.2 2014/08/03 16:09:38 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -141,6 +141,17 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 	return (0);
 }
 
+int
+checkoverlap(partinfo *lp, int nparts, int rawpart, int bsdpart)
+{
+	int i, j;
+	if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j)) {
+		msg_display(MSG_partitions_overlap,'a'+i,'a'+j);
+		return 1;
+	}
+	return 0;
+}
+
 static int
 check_one_root(partinfo *lp, int nparts)
 {
@@ -161,7 +172,7 @@ check_one_root(partinfo *lp, int nparts)
 			return 0;
 		foundroot = 1;
 		/* Save partition number, a few things need to know it */
-		rootpart = part;
+		pm->rootpart = part;
 	}
 	return foundroot;
 }
@@ -193,7 +204,7 @@ edit_fs_size(menudesc *m, void *arg)
 
 	size = getpartsize(p->pi_offset, p->pi_size);
 	if (size == ~0u)
-		size = dlsize - p->pi_offset;
+		size = pm->dlsize - p->pi_offset;
 	p->pi_size = size;
 	if (size == 0) {
 		p->pi_offset = 0;
@@ -358,7 +369,7 @@ static void set_ptn_header(menudesc *m, void *arg);
 static void set_ptn_label(menudesc *m, int opt, void *arg);
 int all_fstype_menu = -1;
 
-static int
+int
 edit_ptn(menudesc *menu, void *arg)
 {
 	static menu_ent fs_fields[] = {
@@ -413,7 +424,7 @@ edit_ptn(menudesc *menu, void *arg)
 			get_fstype, NULL, NULL, NULL, MSG_unchanged);
 	}
 
-	p = bsdlabel + menu->cursel;
+	p = pm->bsdlabel + menu->cursel;
 	p->pi_flags &= ~PIF_RESET;
 	p_save = *p;
 	for (;;) {
@@ -434,7 +445,7 @@ set_ptn_header(menudesc *m, void *arg)
 	int t;
 
 	msg_clear();
-	msg_table_add(MSG_edfspart, 'a' + (p - bsdlabel));
+	msg_table_add(MSG_edfspart, 'a' + (p - pm->bsdlabel));
 
 	/* Determine which of the properties can be changed */
 	for (i = PTN_MENU_START; i <= PTN_MENU_MOUNTPT; i++) {
@@ -476,10 +487,10 @@ set_ptn_header(menudesc *m, void *arg)
 static void
 disp_sector_count(menudesc *m, msg fmt, uint s)
 {
-	uint ms = MEG / sectorsize;
+	uint ms = MEG / pm->sectorsize;
 
 	wprintw(m->mw, msg_string(fmt),
-		s / ms, s / dlcylsize, s % dlcylsize ? '*' : ' ', s );
+		s / ms, s / pm->dlcylsize, s % pm->dlcylsize ? '*' : ' ', s );
 }
 
 static void
@@ -590,7 +601,7 @@ set_label_texts(menudesc *menu, void *arg)
 			m->opt_flags = OPT_IGNORE;
 		} else {
 			m->opt_flags = 0;
-			if (bsdlabel[ptn].pi_fstype == FS_UNUSED)
+			if (pm->bsdlabel[ptn].pi_fstype == FS_UNUSED)
 				continue;
 		}
 		show_unused_ptn = ptn + 2;
@@ -644,24 +655,19 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 		return 1;
 
 	pi.flags = 0;
-	current_cylsize = dlcylsize;
+	pm->current_cylsize = pm->dlcylsize;
 
 	for (;;) {
-		int i, j;
-
 		/* first give the user the option to edit the label... */
 		process_menu(menu_no, &pi);
 
 		/* User thinks the label is OK. */
 		/* check we have a single root fs */
-		if (check_one_root(lp, nparts) == 0)
+		if (check_one_root(lp, nparts) == 0 && partman_go == 0)
 			msg_display(MSG_must_be_one_root);
 		else 
 			/* Check for overlaps */
-			if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j))
-				/* partitions overlap */
-				msg_display(MSG_partitions_overlap,'a'+i,'a'+j);
-			else
+			if (checkoverlap(lp, nparts, rawpart, bsdpart) == 0)
 				return 1;
 
 		/*XXX ???*/
@@ -701,7 +707,7 @@ incorelabel(const char *dkname, partinfo *lp)
 	 * than d_diskname.  Who knows why, but pull the value back here.
 	 */
 	if (lab.d_typename[0] != 0 && strcmp(lab.d_typename, "unknown") != 0)
-		strlcpy(bsddiskname, lab.d_typename, sizeof bsddiskname);
+		strlcpy(pm->bsddiskname, lab.d_typename, sizeof pm->bsddiskname);
 
 	fd = opendisk(dkname, O_RDONLY, buf, sizeof buf, 0);
 	pp = &lab.d_partitions[0];
@@ -821,10 +827,10 @@ getpartoff(uint32_t defpartstart)
 		if (isize[1] == '\0' && isize[0] >= 'a' &&
 		    isize[0] <= maxpartc) {
 			partn = isize[0] - 'a';
-			i = bsdlabel[partn].pi_size + bsdlabel[partn].pi_offset;
+			i = pm->bsdlabel[partn].pi_size + pm->bsdlabel[partn].pi_offset;
 			localsizemult = 1;
 		} else if (atoi(isize) == -1) {
-			i = ptstart;
+			i = pm->ptstart;
 			localsizemult = 1;
 		} else {
 			if (atofsb(isize, &i, &localsizemult)) {
@@ -833,13 +839,13 @@ getpartoff(uint32_t defpartstart)
 			}
 		}
 		/* round to cylinder size if localsizemult != 1 */
-		i = NUMSEC(i/localsizemult, localsizemult, dlcylsize);
+		i = NUMSEC(i/localsizemult, localsizemult, pm->dlcylsize);
 		/* Adjust to start of slice if needed */
-		if ((i < ptstart && (ptstart - i) < localsizemult) ||
-		    (i > ptstart && (i - ptstart) < localsizemult)) {
-			i = ptstart;
+		if ((i < pm->ptstart && (pm->ptstart - i) < localsizemult) ||
+		    (i > pm->ptstart && (i - pm->ptstart) < localsizemult)) {
+			i = pm->ptstart;
 		}
-		if (i <= dlsize)
+		if (i <= pm->dlsize)
 			break;
 		errmsg = msg_string(MSG_startoutsidedisk);
 	}
@@ -854,7 +860,7 @@ getpartsize(uint32_t partstart, uint32_t defpartsize)
 	char dsize[20], isize[20], maxpartc;
 	const char *errmsg = "\n";
 	uint32_t i, partend, localsizemult;
-	uint32_t fsptend = ptstart + ptsize;
+	uint32_t fsptend = pm->ptstart + pm->ptsize;
 	int partn;
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
@@ -868,7 +874,7 @@ getpartsize(uint32_t partstart, uint32_t defpartsize)
 		if (isize[1] == '\0' && isize[0] >= 'a' &&
 		    isize[0] <= maxpartc) {
 			partn = isize[0] - 'a';
-			i = bsdlabel[partn].pi_offset - partstart;
+			i = pm->bsdlabel[partn].pi_offset - partstart;
 			localsizemult = 1;
 		} else if (atoi(isize) == -1) {
 			i = fsptend - partstart;
@@ -884,17 +890,17 @@ getpartsize(uint32_t partstart, uint32_t defpartsize)
 		 * is not 1 sector
 		 */
 		partend = NUMSEC((partstart + i) / localsizemult,
-		    localsizemult, dlcylsize);
+		    localsizemult, pm->dlcylsize);
 		/* Align to end-of-disk or end-of-slice if close enough */
-		if (partend > (dlsize - localsizemult)
-		    && partend < (dlsize + localsizemult))
-			partend = dlsize;
+		if (partend > (pm->dlsize - localsizemult)
+		    && partend < (pm->dlsize + localsizemult))
+			partend = pm->dlsize;
 		if (partend > (fsptend - localsizemult)
 		    && partend < (fsptend + localsizemult))
 			partend = fsptend;
 		/* sanity checks */
-		if (partend > dlsize) {
-			partend = dlsize;
+		if (partend > pm->dlsize) {
+			partend = pm->dlsize;
 			msg_prompt_win(MSG_endoutsidedisk, -1, 13, 70, 6,
 			    NULL, isize, 1,
 			    (partend - partstart) / sizemult, multname);
@@ -937,15 +943,15 @@ atofsb(const char *str, uint32_t *p_val, uint32_t *localsizemult)
 		}
 		if (str[i] == 'G' || str[i] == 'g') {
 			val *= 1024;
-			*localsizemult = MEG / sectorsize;
+			*localsizemult = MEG / pm->sectorsize;
 			break;
 		}
 		if (str[i] == 'M' || str[i] == 'm') {
-			*localsizemult = MEG / sectorsize;
+			*localsizemult = MEG / pm->sectorsize;
 			break;
 		}
 		if (str[i] == 'c') {
-			*localsizemult = dlcylsize;
+			*localsizemult = pm->dlcylsize;
 			break;
 		}
 		if (str[i] == 's') {

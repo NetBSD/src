@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,10 +68,10 @@ md_get_info(void)
 int
 md_make_bsd_partitions(void)
 {
-	msg_display(MSG_infoahdilabel, diskdev);
+	msg_display(MSG_infoahdilabel, pm->diskdev);
 	process_menu(MENU_noyes, NULL);
 	if (yesno) {
-		run_program(RUN_DISPLAY, "ahdilabel /dev/r%sc", diskdev);
+		run_program(RUN_DISPLAY, "ahdilabel /dev/r%sc", pm->diskdev);
 	}
 	if (!make_bsd_partitions())
 		return 0;
@@ -79,10 +79,10 @@ md_make_bsd_partitions(void)
 	/*
 	 * Setup the disktype so /etc/disktab gets proper info
 	 */
-	if (strncmp (diskdev, "sd", 2) == 0)
-		disktype = "SCSI";
+	if (strncmp (pm->diskdev, "sd", 2) == 0)
+		pm->disktype = "SCSI";
 	else
-		disktype = "ST506";
+		pm->disktype = "ST506";
 
 	return 1;
 }
@@ -140,7 +140,7 @@ md_post_newfs(void)
 	free(cpu_model);
 
 	/* copy tertiary boot and install boot blocks */
-	msg_display(MSG_dobootblks, diskdev);
+	msg_display(MSG_dobootblks, pm->diskdev);
 	snprintf(bootpath, sizeof(bootpath), "/usr/mdec/%s/boot.atari",
 	    milan ? "milan" : "std");
 	rv = cp_to_target(bootpath, "/");
@@ -148,7 +148,7 @@ md_post_newfs(void)
 		return rv;
 
 	rv = run_program(RUN_DISPLAY, "/usr/mdec/installboot -v%s /dev/r%sc",
-	    milan ? "m" : "", diskdev);
+	    milan ? "m" : "", pm->diskdev);
 
 	return rv;
 }
