@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.21 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: IGEPV2,v 1.22 2014/08/03 09:18:16 martin Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -80,6 +80,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

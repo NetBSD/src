@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.20 2014/05/07 14:26:53 jakllsch Exp $
+#	$NetBSD: MV2120,v 1.21 2014/08/03 09:18:16 martin Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -97,6 +97,7 @@ options 	NFS_BOOT_TCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
