@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: install.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,71 +45,73 @@
 void
 do_install(void)
 {
+	int find_disks_ret;
+	int retcode = 0;
+	partman_go = -1;
 
+#ifndef DEBUG
 	msg_display(MSG_installusure);
 	process_menu(MENU_noyes, NULL);
 	if (!yesno)
 		return;
+#endif
 
 	get_ramsize();
 
-	if (find_disks(msg_string(MSG_install)) < 0)
-		return;
-	clear();
-	refresh();
-
-	if (check_swap(diskdev, 0) > 0) {
-		msg_display(MSG_swapactive);
-		process_menu(MENU_ok, NULL);
-		if (check_swap(diskdev, 1) < 0) {
-			msg_display(MSG_swapdelfailed);
+	/* Create and mount partitions */
+	find_disks_ret = find_disks(msg_string(MSG_install));
+	if (partman_go == 1) {
+		if (partman() < 0) {
+			msg_display(MSG_abort);
 			process_menu(MENU_ok, NULL);
-			if (!debug)
-				return;
+			return;
 		}
+	} else if (find_disks_ret < 0)
+		return;
+	else {
+	/* Classical partitioning wizard */
+		partman_go = 0;
+		clear();
+		refresh();
+
+		if (check_swap(pm->diskdev, 0) > 0) {
+			msg_display(MSG_swapactive);
+			process_menu(MENU_ok, NULL);
+			if (check_swap(pm->diskdev, 1) < 0) {
+				msg_display(MSG_swapdelfailed);
+				process_menu(MENU_ok, NULL);
+				if (!debug)
+					return;
+			}
+		}
+
+		if (!md_get_info() || md_make_bsd_partitions() == 0) {
+			msg_display(MSG_abort);
+			process_menu(MENU_ok, NULL);
+			return;
+		}
+
+		/* Last chance ... do you really want to do this? */
+		clear();
+		refresh();
+		msg_display(MSG_lastchance, pm->diskdev);
+		process_menu(MENU_noyes, NULL);
+		if (!yesno)
+			return;
+
+		if (md_pre_disklabel() != 0 ||
+			write_disklabel() != 0 ||
+			md_post_disklabel() != 0 ||
+			make_filesystems() ||
+			make_fstab() != 0 ||
+			md_post_newfs() != 0)
+			return;
 	}
-
-	process_menu(MENU_distset, NULL);
-
-	if (!md_get_info()) {
-		msg_display(MSG_abort);
-		process_menu(MENU_ok, NULL);
-		return;
-	}
-
-	if (md_make_bsd_partitions() == 0) {
-		msg_display(MSG_abort);
-		process_menu(MENU_ok, NULL);
-		return;
-	}
-
-	/* Last chance ... do you really want to do this? */
-	clear();
-	refresh();
-	msg_display(MSG_lastchance, diskdev);
-	process_menu(MENU_noyes, NULL);
-	if (!yesno)
-		return;
-
-	if (md_pre_disklabel() != 0)
-		return;
-
-	if (write_disklabel() != 0)
-		return;
-
-	if (md_post_disklabel() != 0)
-		return;
-
-	if (make_filesystems())
-		return;
-
-	if (make_fstab() != 0)
-		return;
-
-	if (md_post_newfs() != 0)
-		return;
 
 	/* Unpack the distribution. */
+	process_menu(MENU_distset, &retcode);
+	if (retcode == 0)
+		return;
 	if (get_and_unpack_sets(0, MSG_disksetupdone,
 	    MSG_extractcomplete, MSG_abortinst) != 0)
 		return;

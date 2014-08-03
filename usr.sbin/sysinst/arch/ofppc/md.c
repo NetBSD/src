@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,24 +105,24 @@ md_make_bsd_partitions(void)
 		 * So just use what we have got.
 		 */
 		for (part = 0; part < maxpart; part++) {
-			if (PI_ISBSDFS(&bsdlabel[part])) {
-				bsdlabel[part].pi_flags |=
+			if (PI_ISBSDFS(&pm->bsdlabel[part])) {
+				pm->bsdlabel[part].pi_flags |=
 				    PIF_NEWFS | PIF_MOUNT;
 
 				if (part == PART_A)
-					strcpy(bsdlabel[part].pi_mount, "/");
+					strcpy(pm->bsdlabel[part].pi_mount, "/");
 			}
 		}
 
 		part_bsd = part_raw = getrawpartition();
 		if (part_raw == -1)
 			part_raw = PART_C;	/* for sanity... */
-		bsdlabel[part_raw].pi_offset = 0;
-		bsdlabel[part_raw].pi_size = dlsize;
+		pm->bsdlabel[part_raw].pi_offset = 0;
+		pm->bsdlabel[part_raw].pi_size = pm->dlsize;
 
 		set_sizemultname_meg();
 rdb_edit_check:
-		if (edit_and_check_label(bsdlabel, maxpart, part_raw,
+		if (edit_and_check_label(pm->bsdlabel, maxpart, part_raw,
 		    part_bsd) == 0) {
 			msg_display(MSG_abort);
 			return 0;
@@ -137,72 +137,72 @@ rdb_edit_check:
 	 * Initialize global variables that track space used on this disk.
 	 * Standard 4.4BSD 8-partition labels always cover whole disk.
 	 */
-	if (ptsize == 0)
-		ptsize = dlsize - ptstart;
-	if (dlsize == 0)
-		dlsize = ptstart + ptsize;
+	if (pm->ptsize == 0)
+		pm->ptsize = pm->dlsize - pm->ptstart;
+	if (pm->dlsize == 0)
+		pm->dlsize = pm->ptstart + pm->ptsize;
 
-	partstart = ptstart;
-	ptend = ptstart + ptsize;
+	partstart = pm->ptstart;
+	ptend = pm->ptstart + pm->ptsize;
 
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
-		    ptsize / (MEG / sectorsize),
+		    pm->ptsize / (MEG / pm->sectorsize),
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE,
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB);
 
 	process_menu(MENU_layout, NULL);
 
 	/* Set so we use the 'real' geometry for rounding, input in MB */
-	current_cylsize = dlcylsize;
+	pm->current_cylsize = pm->dlcylsize;
 	set_sizemultname_meg();
 
 	/* Build standard partitions */
-	memset(&bsdlabel, 0, sizeof bsdlabel);
+	memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);
 
 	/* Set initial partition types to unused */
 	for (part = 0 ; part < maxpart ; ++part)
-		bsdlabel[part].pi_fstype = FS_UNUSED;
+		pm->bsdlabel[part].pi_fstype = FS_UNUSED;
 
 	/* Whole disk partition */
 	part_raw = getrawpartition();
 	if (part_raw == -1)
 		part_raw = PART_C;	/* for sanity... */
-	bsdlabel[part_raw].pi_offset = 0;
-	bsdlabel[part_raw].pi_size = dlsize;
+	pm->bsdlabel[part_raw].pi_offset = 0;
+	pm->bsdlabel[part_raw].pi_size = pm->dlsize;
 
 	if (part_raw == PART_D) {
 		/* Probably a system that expects an i386 style mbr */
 		part_bsd = PART_C;
-		bsdlabel[PART_C].pi_offset = ptstart;
-		bsdlabel[PART_C].pi_size = ptsize;
+		pm->bsdlabel[PART_C].pi_offset = pm->ptstart;
+		pm->bsdlabel[PART_C].pi_size = pm->ptsize;
 	} else {
 		part_bsd = part_raw;
 	}
 
-	if (bootsize != 0) {
-		bsdlabel[PART_BOOT_FAT12].pi_fstype = FS_MSDOS;
-		bsdlabel[PART_BOOT_FAT12].pi_size = bootsize;
-		bsdlabel[PART_BOOT_FAT12].pi_offset = bootstart;
-		bsdlabel[PART_BOOT_FAT12].pi_flags |= PART_BOOT_FAT12_PI_FLAGS;
-		strlcpy(bsdlabel[PART_BOOT_FAT12].pi_mount,
+	if (pm->bootsize != 0) {
+		pm->bsdlabel[PART_BOOT_FAT12].pi_fstype = FS_MSDOS;
+		pm->bsdlabel[PART_BOOT_FAT12].pi_size = pm->bootsize;
+		pm->bsdlabel[PART_BOOT_FAT12].pi_offset = pm->bootstart;
+		pm->bsdlabel[PART_BOOT_FAT12].pi_flags |= PART_BOOT_FAT12_PI_FLAGS;
+		strlcpy(pm->bsdlabel[PART_BOOT_FAT12].pi_mount,
 		    PART_BOOT_FAT12_PI_MOUNT,
-		    sizeof bsdlabel[PART_BOOT_FAT12].pi_mount);
+		    sizeof pm->bsdlabel[PART_BOOT_FAT12].pi_mount);
 	}
 	if (binfosize != 0) {
-		bsdlabel[PART_BOOT_BINFO].pi_fstype = FS_OTHER;
-		bsdlabel[PART_BOOT_BINFO].pi_size = binfosize;
-		bsdlabel[PART_BOOT_BINFO].pi_offset = binfostart;
+		pm->bsdlabel[PART_BOOT_BINFO].pi_fstype = FS_OTHER;
+		pm->bsdlabel[PART_BOOT_BINFO].pi_size = binfosize;
+		pm->bsdlabel[PART_BOOT_BINFO].pi_offset = binfostart;
 	}
 	if (bprepsize != 0) {
-		bsdlabel[PART_BOOT_PREP].pi_fstype = FS_BOOT;
-		bsdlabel[PART_BOOT_PREP].pi_size = bprepsize;
-		bsdlabel[PART_BOOT_PREP].pi_offset = bprepstart;
+		pm->bsdlabel[PART_BOOT_PREP].pi_fstype = FS_BOOT;
+		pm->bsdlabel[PART_BOOT_PREP].pi_size = bprepsize;
+		pm->bsdlabel[PART_BOOT_PREP].pi_offset = bprepstart;
 	}
 
 #ifdef PART_REST
-	bsdlabel[PART_REST].pi_offset = 0;
-	bsdlabel[PART_REST].pi_size = ptstart;
+	pm->bsdlabel[PART_REST].pi_offset = 0;
+	pm->bsdlabel[PART_REST].pi_size = pm->ptstart;
 #endif
 
 	/*
@@ -212,27 +212,27 @@ rdb_edit_check:
 	 * partitions on a multiboot i386 system.
 	 */
 	 for (i = maxpart; i--;) {
-		if (bsdlabel[i].pi_size != 0)
+		if (pm->bsdlabel[i].pi_size != 0)
 			/* Don't overwrite special partitions */
 			continue;
-		p = &oldlabel[i];
+		p = &pm->oldlabel[i];
 		if (p->pi_fstype == FS_UNUSED || p->pi_size == 0)
 			continue;
-		if (layoutkind == 4) {
+		if (layoutkind == LY_USEEXIST) {
 			if (PI_ISBSDFS(p))
 				p->pi_flags |= PIF_MOUNT;
 		} else {
-			if (p->pi_offset < ptstart + ptsize &&
-			    p->pi_offset + p->pi_size > ptstart)
+			if (p->pi_offset < pm->ptstart + pm->ptsize &&
+			    p->pi_offset + p->pi_size > pm->ptstart)
 				/* Not outside area we are allocating */
 				continue;
 			if (p->pi_fstype == FS_SWAP)
 				no_swap = 1;
 		}
-		bsdlabel[i] = oldlabel[i];
+		pm->bsdlabel[i] = pm->oldlabel[i];
 	 }
 
-	if (layoutkind == 4) {
+	if (layoutkind == LY_USEEXIST) {
 		/* XXX Check we have a sensible layout */
 		;
 	} else
@@ -243,7 +243,7 @@ rdb_edit_check:
 	 * edit it and verify it's OK, or abort altogether.
 	 */
  edit_check:
-	if (edit_and_check_label(bsdlabel, maxpart, part_raw, part_bsd) == 0) {
+	if (edit_and_check_label(pm->bsdlabel, maxpart, part_raw, part_bsd) == 0) {
 		msg_display(MSG_abort);
 		return 0;
 	}
@@ -251,10 +251,10 @@ rdb_edit_check:
 		goto edit_check;
 
 	/* Disk name */
-	msg_prompt(MSG_packname, bsddiskname, bsddiskname, sizeof bsddiskname);
+	msg_prompt(MSG_packname, pm->bsddiskname, pm->bsddiskname, sizeof pm->bsddiskname);
 
 	/* save label to disk for MI code to update. */
-	(void) savenewlabel(bsdlabel, maxpart);
+	(void) savenewlabel(pm->bsdlabel, maxpart);
 
 	/* Everything looks OK. */
 	return 1;
@@ -277,13 +277,13 @@ md_check_partitions(void)
 	 * from the MBR partition.
 	 */
 	for (part = PART_A; part < MAXPARTITIONS; part++) {
-		if (bsdlabel[part].pi_fstype == FS_MSDOS) {
+		if (pm->bsdlabel[part].pi_fstype == FS_MSDOS) {
 			bootpart_fat12 = part;
 			ffat++;
-		} else if (bsdlabel[part].pi_fstype == FS_BOOT) {
+		} else if (pm->bsdlabel[part].pi_fstype == FS_BOOT) {
 			bootpart_prep = part;
 			fprep++;
-		} else if (bsdlabel[part].pi_fstype == FS_OTHER) {
+		} else if (pm->bsdlabel[part].pi_fstype == FS_OTHER) {
 			bootpart_binfo = part;
 			fprep++;
 		}
@@ -314,7 +314,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -330,10 +330,10 @@ md_post_disklabel(void)
 {
 	char bootdev[100];
 
-	if (bootstart == 0 || bootsize == 0 || rdb_found)
+	if (pm->bootstart == 0 || pm->bootsize == 0 || rdb_found)
 		return 0;
 
-	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
+	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
 	    'a'+bootpart_fat12);
 	run_program(RUN_DISPLAY, "/sbin/newfs_msdos %s", bootdev);
 
@@ -380,18 +380,18 @@ md_post_extract(void)
 	}
 
 	if (!noprepfix) {
-		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
+		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
 		    'a'+bootpart_prep);
-		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", diskdev,
+		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", pm->diskdev,
 		    'a'+bootpart_prep);
 		run_program(RUN_DISPLAY, "/bin/dd if=/dev/zero of=%s bs=512",
 		    bootdev);
 		run_program(RUN_DISPLAY, "/bin/dd if=/usr/mdec/ofwboot "
 		    "of=%s bs=512", bootbdev);
 
-		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
+		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
 		    'a'+bootpart_binfo);
-		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", diskdev,
+		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", pm->diskdev,
 		    'a'+bootpart_binfo);
 		run_program(RUN_DISPLAY, "/bin/dd if=/dev/zero of=%s bs=512",
 		    bootdev);
@@ -421,7 +421,7 @@ md_pre_update(void)
 	if (check_rdb())
 		return 1;
 
-	read_mbr(diskdev, &mbr);
+	read_mbr(pm->diskdev, &mbr);
 	/* do a sanity check of the partition table */
 	for (ext = &mbr; ext; ext = ext->extended) {
 		part = ext->mbr.mbr_parts;
@@ -474,8 +474,8 @@ md_check_mbr(mbr_info_t *mbri)
 		part = ext->mbr.mbr_parts;
 		for (i = 0; i < MBR_PART_COUNT; part++, i++) {
 			if (part->mbrp_type == MBR_PTYPE_FAT12) {
-				bootstart = part->mbrp_start;
-				bootsize = part->mbrp_size;
+				pm->bootstart = part->mbrp_start;
+				pm->bootsize = part->mbrp_size;
 			} else if (part->mbrp_type == MBR_PTYPE_PREP &&
 			    part->mbrp_size < 50) {
 				/* this is the bootinfo partition */
@@ -493,7 +493,7 @@ md_check_mbr(mbr_info_t *mbri)
 
 	/* we need to either have a pair of prep partitions, or a single
 	 * fat.  if neither, things are broken. */
-	if (!(bootsize >= (MIN_FAT12_BOOT/512) ||
+	if (!(pm->bootsize >= (MIN_FAT12_BOOT/512) ||
 		(binfosize >= (MIN_BINFO_BOOT/512) &&
 		    bprepsize >= (MIN_PREP_BOOT/512)))) {
 		msg_display(MSG_bootnotright);
@@ -517,7 +517,7 @@ md_check_mbr(mbr_info_t *mbri)
 	}
 
 	/* check the fat12 parititons */
-	if (bootsize > 0 && bootsize < (MIN_FAT12_BOOT/512)) {
+	if (pm->bootsize > 0 && pm->bootsize < (MIN_FAT12_BOOT/512)) {
 		msg_display(MSG_boottoosmall);
 		msg_display_add(MSG_reeditpart, 0);
 		process_menu(MENU_yesno, NULL);
@@ -527,7 +527,7 @@ md_check_mbr(mbr_info_t *mbri)
 	}
 
 	/* if both sets contain zero, thats bad */
-	if ((bootstart == 0 || bootsize == 0) &&
+	if ((pm->bootstart == 0 || pm->bootsize == 0) &&
 	    (binfosize == 0 || binfostart == 0 ||
 		bprepsize == 0 || bprepstart == 0)) {
 		msg_display(MSG_nobootpart);
@@ -571,7 +571,7 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 	part[0].mbrp_flag = 0;
 
 	part[1].mbrp_type = MBR_PTYPE_NETBSD;
-	part[1].mbrp_size = dlsize - (bsec + FAT12_BOOT_SIZE/512 +
+	part[1].mbrp_size = pm->dlsize - (bsec + FAT12_BOOT_SIZE/512 +
 	    BINFO_BOOT_SIZE/512 + PREP_BOOT_SIZE/512);
 	part[1].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512 +
 	    PREP_BOOT_SIZE/512;
@@ -587,10 +587,10 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 	part[3].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512;
 	part[3].mbrp_flag = 0;
 
-	ptstart = part[1].mbrp_start;
-	ptsize = part[1].mbrp_size;
-	bootstart = part[0].mbrp_start;
-	bootsize = part[0].mbrp_size;
+	pm->ptstart = part[1].mbrp_start;
+	pm->ptsize = part[1].mbrp_size;
+	pm->bootstart = part[0].mbrp_start;
+	pm->bootsize = part[0].mbrp_size;
 	binfostart = part[2].mbrp_start;
 	binfosize= part[2].mbrp_size;
 	bprepstart = part[3].mbrp_start;
@@ -620,7 +620,7 @@ check_rdb(void)
 
 	/* Find out if this disk has a valid RDB, before continuing. */
 	rdb = (struct rdblock *)buf;
-	fd = opendisk(diskdev, O_RDONLY, diskpath, sizeof(diskpath), 0);
+	fd = opendisk(pm->diskdev, O_RDONLY, diskpath, sizeof(diskpath), 0);
 	if (fd < 0)
 		return 0;
 	for (blk = 0; blk < RDB_MAXBLOCKS; blk++) {
