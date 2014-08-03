@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.33 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: VIPER,v 1.34 2014/08/03 09:18:16 martin Exp $
 #
 #	Arcom Viper
 #
@@ -69,6 +69,7 @@ options 	NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_LINUX
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.

@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.45 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: IXDP425,v 1.46 2014/08/03 09:18:16 martin Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -78,6 +78,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.

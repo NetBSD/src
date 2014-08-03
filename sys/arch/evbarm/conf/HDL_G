@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.39 2014/07/27 03:34:41 dholland Exp $
+# $NetBSD: HDL_G,v 1.40 2014/08/03 09:18:16 martin Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -85,6 +85,7 @@ options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options 	COMPAT_09	# NetBSD 0.9 compatibility.
 options 	COMPAT_10	# NetBSD 1.0 compatibility.
 options 	COMPAT_11	# NetBSD 1.1 compatibility.
