@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.415 2014/06/30 15:34:57 martin Exp $
+#	$NetBSD: Makefile,v 1.416 2014/08/03 09:19:34 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -193,12 +193,20 @@ etc-release: .EXEC .MAKE
 		echo ; \
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
-		echo "Build settings:"; \
+		echo "Build information:"; \
 		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
 		if [ -n "${BUILDID}" ]; then \
-		    printf "%20s   %s\n"  "Build ID:" "${BUILDID}" ; \
+		    printf "%20s   %s\n"  "Build ID" "${BUILDID}" ; \
 		fi ; \
+		if [ -n "${BUILDINFO}" ]; then \
+		    echo ; \
+		    info="$$(printf "%b" ${BUILDINFO:Q})" ; \
+		    printf "%s\n" "$${info}" \
+		    | ${TOOL_SED} -e 's/^/        /' ; \
+		fi ; \
+		echo ; \
+		echo "Build settings:"; \
 		echo ; \
 		${PRINT_PARAMS} ; \
 	) >${.OBJDIR}/${.TARGET}
