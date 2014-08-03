@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.265 2014/08/03 09:15:21 apb Exp $	*/
+/*	$NetBSD: systm.h,v 1.266 2014/08/03 12:49:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -73,7 +73,7 @@ extern const char osrelease[];	/* short system version */
 extern const char ostype[];	/* system type */
 extern const char kernel_ident[];/* kernel configuration ID */
 extern const char version[];	/* system version */
-extern const char buildinfo[];	/* infomation from build environment */
+extern const char buildinfo[];	/* information from build environment */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
