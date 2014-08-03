@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,7 +35,7 @@
 /* MI Message catalog -- German, machine independent */
 
 message usage
-{Aufruf: sysinst [-D] [-f Definitionsdatei] [-r Version]
+{Aufruf: sysinst [-D] [-f Definitionsdatei] [-r Version] [-C bg:fg]
 }
 
 /*
@@ -522,14 +522,10 @@ message netup
 Hat einer davon Zugriff auf die benötigten Server?}
 
 message asknetdev
-{NetBSD hat folgende Netzwerkadapter gefunden: %s
-\nWelchen möchten Sie benutzen?}
+{Welchen Netzwerkadapter möchten Sie benutzen?}
 
-message badnet
-{Sie haben keinen der angezeigten Netzwerkadapter ausgewählt. Bitte versuchen
-Sie es erneut. 
-NetBSD hat folgende Netzwerkadapter gefunden: %s
-\nWelchen möchten Sie benutzen?}
+message netdevs
+{Verfügbare schnittstellen}
 
 message netinfo
 {Um das Netzwerk nutzen zu können, benötigen wir folgende Angaben:
@@ -601,12 +597,6 @@ message netok_ok
 
 message slattach {
 Flags für slattach
-}
-
-message netagain
-{Bitte geben Sie die Informationen über Ihr Netzwerk erneut an. Diese werden
-auch als Vorgabe beibehalten.
-
 }
 
 message wait_network
@@ -963,6 +953,7 @@ message Reboot_the_computer {Computer neu starten}
 message Utility_menu {Extras}
 message Config_menu {Konfigurationsmenü}
 message exit_utility_menu {Zurück zum Hauptmenü}
+message exit_menu_generic {Zurück}
 message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Extras}
 message Run_bin_sh {Ausführen von /bin/sh}
 message Set_timezone {Setzen der Zeitzone}
@@ -1021,6 +1012,11 @@ message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
 message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
 message Root_shell {Root-Shell}
 message User_shell {User-Shell}
+message Color_scheme {Farbschema}
+message White_on_black {Weiß auf schwarz}
+message Black_on_white {Schwarz auf weiß}
+message White_on_blue {Weiß auf Blau}
+message Green_on_black {Grün auf schwarz}
 
 .if AOUT2ELF
 message aoutfail
@@ -1088,6 +1084,10 @@ message enable_sshd {sshd aktivieren}
 message enable_ntpd {ntpd aktivieren}
 message run_ntpdate {ntpdate beim Starten ausführen}
 message enable_mdnsd {mdnsd aktivieren}
+message enable_xdm {xdm aktivieren}
+message enable_cgd {cgd aktivieren}
+message enable_lvm {lvm aktivieren}
+message enable_raid {raidframe aktivieren}
 message add_a_user {Add a user}
 message configmenu {Zusätzliche Einstellungen konfigurieren.}
 message doneconfig {Konfiguration abgeschlossen.}
@@ -1112,9 +1112,157 @@ installieren}
 message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal 
 versuchen?}
 message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}
+message quit_pkgs_install {Installation von binär-Paketen beenden.}
 message pkgin_failed 
 {Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete 
 vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
 message failed {Fehlgeschlagen}
+message notsupported {Operation wird nicht unterstützt!}
+message askfsmountadv {Mountpoint oder 'raid' oder 'cgd' oder 'lvm'?}
+message partman {Erweiterte Partitionierung}
+message editbsdpart {Bearbeiten BSD-Partitionen}
+message editmbr {Bearbeiten und speichern MBR}
+message switchgpt {Wechseln Sie zu GPT}
+message switchmbr {Wechseln Sie zu MBR}
+message renamedisk {Stellen Sie Festplatten-Namen}
+message fmtasraid {Format als RAID}
+message fmtaslvm {Format als LVM-PV}
+message encrypt {Verschlüsseln}
+message setbootable {Boot-Flag}
+message erase {Safe Erase}
+message undo {Rückgängigmachen von Änderungen}
+message unconfig {Dekonfigurieren}
+message edit {Bearbeiten}
+message doumount {Force-umount}
+message fillzeros {Füllen von Nullen}
+message fillrandom {Füllen von zufälligen Daten}
+message fillcrypto {Füllen von Crypto-Daten}
+message raid0 {0 - Keine Parität, nur einfache Striping.}
+message raid1 {1 - Mirroring. Die Parität ist der Spiegel.}
+message raid4 {4 - Striping mit Parität auf die letzte Komponente gespeichert.}
+message raid5 {5 - Striping mit Parität an den alle Komponenten.}
+
+message fremove {ENTFERNEN}
+message remove {Entfernen}
+message add {Hinzufügen}
+message auto {auto}
+
+message removepartswarn {Diese entfernen Sie alle Partitionen auf der Festplatte. Wollen Sie fortsetzen?}
+message saveprompt {Speichern Sie die Änderungen vor dem Abschluss?}
+message cantsave {Änderungen können nicht gespeichert werden.}
+message noroot {Kein Root-Partition definiert ist, kann nicht fortgesetzt werden \n}
+message wannaunblock {Das Gerät ist blockiert. Wollen Sie zwingen sie zu entsperren und weiter?}
+message wannatry {Wollen Sie probieren?}
+message create_cgd {Erstellen kryptographische Volumen (CGD)}
+message create_cnd {Erstellen Sie virtuelle Disk-Image (VND)}
+message create_vg {Erstellen Volume-Gruppe (LVM VG)}
+message create_lv {      Erstellen logischer Volumen}
+message create_raid {Erstellen Software-RAID}
+message updpmlist {Aktualisieren Sie Geräte-Liste}
+message savepm {Speichern Sie die Änderungen}
+message pmblocked {GESPERRT}
+message pmunchanged {NICHTS}
+message pmsetboot {BOOTEN}
+message pmused {BENUTZT}
+message pmmounted {(montiert)}
+message pmunused {(unbenutzt)}
+message pmgptdisk {Festplatte mit GPT}
+
+message finishpm {Partitionierung beenden}
+message limitcount {Grenze für die Anzahl der Geräte erreicht wurde!}
+message invaliddev {Ungültige Gerät!}
+message avdisks {Verfügbare Festplatten:}
+message nofreedev {Kann nicht zugewiesen werden Geräteknoten!}
+message partman_header
+{Partition Manager. Alle Festplatten, Partitionen usw. und dort angezeigt.
+Auf den ersten MBR-Partitionen machen, dann machen BSD-Label.
+Wenn Sie RAID verwenden, LVM oder CGD, gehen Sie folgendermaßen vor:
+1) Erstellen BSD-Partitionen mit Typ benötigt; 2) Erstellen Sie RAID /
+LVM VG / CGD mit diesen Partitionen; 3) Speichern Sie es;
+4) Erstellen Sie Partitionen für RAID / CGD oder Logical Volumes für LVM.}
+
+message raid_menufmt {   raid%d (ebene %1d) on %-34s %11uM}
+message raid_err_menufmt {   LEER RAID!}
+message raid_disks_fmt {Festplatten: %27s}
+message raid_spares_fmt {Ersatzbedarf: %26s}
+message raid_level_fmt {RAID ebene:       %22d}
+message raid_numrow_fmt {numRow:           %22d}
+message raid_numcol_fmt {numCol:           %22d}
+message raid_numspare_fmt {numSpare:         %22d}
+message raid_sectpersu_fmt {sectPerSU:        %22d}
+message raid_superpar_fmt {SUsPerParityUnit: %22d}
+message raid_superrec_fmt {SUsPerReconUnit:  %22d}
+message raid_nomultidim {Mehrdimensionale Arrays werden nicht unterstützt!}
+message raid_numrow_ask {numRow?}
+message raid_numcol_ask {numCol?}
+message raid_numspare_ask {numSpare?}
+message raid_sectpersu_ask {sectPerSU?}
+message raid_superpar_ask {SUsPerParityUnit?}
+message raid_superrec_ask {SUsPerReconUnit?}
+message raid_disks {Festplatten im RAID:}
+message vnd_err_menufmt {   PATH nicht definiert!}
+message vnd_assgn_menufmt {   vnd%1d auf %-50s ASSIGN}
+message vnd_menufmt {   vnd%1d auf %-44s %11uM}
+message vnd_path_fmt {Dateipfad: %29s}
+message vnd_assgn_fmt {Weisen Sie existieren Bild: %12s}
+message vnd_size_fmt {Größe:           %22sM}
+message vnd_ro_fmt {Nur lesen:        %22s}
+message vnd_geom_fmt {Stellen Sie Geometrie von Hand: %8s}
+message vnd_bps_fmt {Byte pro Sektor:      %18s}
+message vnd_spt_fmt {Sektoren pro Spur:    %18s}
+message vnd_tpc_fmt {Spuren pro Zylinder:  %18s}
+message vnd_cyl_fmt {Zylinder:         %22s}
+message vnd_path_ask {Dateipfad?}
+message vnd_size_ask {Größe (MB)?}
+message vnd_bps_ask {Byte pro Sektor?}
+message vnd_spt_ask {Sektoren pro Spur?}
+message vnd_tpc_ask {Spuren pro Zylinder?}
+message vnd_cyl_ask {Zylinder?}
+message cgd_err_menufmt {   DISK NICHT DEFINIERT!}
+message cgd_menufmt {   cgd%1d %-48s %11uM}
+message cgd_dev_fmt {Grundgerät:     %24s}
+message cgd_enc_fmt {Mausklick und:  %24s}
+message cgd_key_fmt {Schlüsselgröße: %24d}
+message cgd_iv_fmt {IV-Algorithmus: %24s}
+message cgd_keygen_fmt {Schlüsselgenerierung: %18s}
+message cgd_verif_fmt {Verification Methode: %18s}
+message lvm_disks {Festplatten im VG:}
+message lvm_menufmt {   %-44s %20sM}
+message lvm_err_menufmt {   VG LEER!}
+message lvm_disks_fmt {PV's: %34s}
+message lvm_name_fmt {Name: %34s}
+message lvm_maxlv_fmt {MaxLogicalVolumes:  %20s}
+message lvm_maxpv_fmt {MaxPhysicalVolumes: %20s}
+message lvm_extsiz_fmt {PhysicalExtentSize: %20s}
+message lvm_name_ask {Name?}
+message lvm_maxlv_ask {MaxLogicalVolumes?}
+message lvm_maxpv_ask {MaxPhysicalVolumes?}
+message lvm_extsiz_ask {PhysicalExtentSize (MB)?}
+message lvmlv_menufmt {      Logische Volumen%-35s% 11uM}
+message lvmlv_name_fmt {Name: %34s}
+message lvmlv_size_fmt {Größe: %32dM}
+message lvmlv_ro_fmt {Nur lesen:  %27s}
+message lvmlv_cont_fmt {Zusammenhängend: %23s}
+message lvmlv_extnum_fmt {LogicalExtentsNumber: %18s}
+message lvmlv_minor_fmt {Minor-Nummer: %26s}
+message lvmlv_mirrors_fmt {Mirrors: %27d}
+message lvmlv_regsiz_fmt {MirrorLogRegionSize: %18s}
+message lvmlv_pers_fmt {Persistent Minor-Nummer: %14s}
+message lvmlv_readahsect_fmt {ReadAheadSectors: %18s}
+message lvmlv_stripes_fmt {Stripes: %27s}
+message lvmlv_stripesiz_fmt {StripeSize: %27s}
+message lvmlv_zero_fmt {Nullsetzen der ersten KB:% 13s}
+message lvmlv_name_ask {Name?}
+message lvmlv_size_ask {Größe (MB)?}
+message lvmlv_extnum_ask {LogicalExtentsNumber?}
+message lvmlv_minor_ask {Minor-Nummer?}
+message lvmlv_mirrors_ask {Spiegel?}
+message lvmlv_regsiz_ask {MirrorLogRegionSize?}
+message lvmlv_readahsect_ask {ReadAheadSectors?}
+message lvmlv_stripes_ask {Stripes?}
 message addusername {8 character username to add:}
 message addusertowheel {Do you wish to add this user to group wheel?}
+
+message Delete_partition
+{Partition löschen}
+

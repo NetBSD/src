@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -37,7 +37,7 @@
 /* MI Message catalog -- polish, machine independent */
 
 message usage
-{uzycie: sysinst [-D] [-f plik_definicja] [-r wersja]
+{uzycie: sysinst [-D] [-f plik_definicja] [-r wersja] [-C bg:fg]
 }
 
 /*
@@ -498,13 +498,10 @@ message netup
 Czy ktorys z nich jest podlaczony do serwera?}
 
 message asknetdev
-{Znalazlem nastepujace interfejsy sieciowe : %s
-\nKtorego urzadzenia mam uzyc?}
+{Ktorego urzadzenia mam uzyc?}
 
-message badnet
-{Nie wybrales zadnego z podanych urzadzen sieciowych. Sprobuj jeszcze raz.
-Nastepujace urzadzenie sieciowe sa dostepne: %s
-\nKtorego urzadzenia mam uzyc?}
+message netdevs
+{Dost?pne interfejsy}
 
 message netinfo
 {Aby mozna bylo uzywac sieci, potrzebujemy odpowiedzi na ponizsze pytania:
@@ -575,12 +572,6 @@ message netok_ok
 
 message slattach {
 Podaja parametry dla polecenia 'slattach'
-}
-
-message netagain
-{Wprowadz jeszcze raz informacje o twojej sieci. Twoje ostatnie odpowiedzi
-beda domyslnymi wartosciami.
-
 }
 
 message wait_network
@@ -899,6 +890,7 @@ message Re_install_sets_or_install_additional_sets {Przeinstaluj albo zainstaluj
 message Reboot_the_computer {Zrestartuj komputer}
 message Utility_menu {Menu Narzedziowe}
 message Config_menu {Menu konfiguracji}
+message exit_menu_generic {Nazad}
 message exit_utility_menu {Exit}
 message NetBSD_VERSION_Utilities {Narzedzia NetBSD-@@VERSION@@}
 message Run_bin_sh {Uruchom /bin/sh}
@@ -957,6 +949,11 @@ message other {inny  }
 message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
 message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
 message Root_shell {Powloka root'a}
+message Color_scheme {Kolorystyka}
+message White_on_black {Bia³y na czarnym}
+message Black_on_white {Czarno na bia³ym}
+message White_on_blue {Bia³y na niebieskim}
+message Green_on_black {Zielony na czarnym}
 message User_shell {Powloka user'a}
 
 .if AOUT2ELF
@@ -1020,6 +1017,10 @@ message enable_sshd {Wlacz sshd}
 message enable_ntpd {Wlacz ntpd}
 message run_ntpdate {uruchom ntpdate podczas startu systemu}
 message enable_mdnsd {Wlacz mdnsd}
+message enable_xdm {Enable xdm}
+message enable_cgd {Enable cgd}
+message enable_lvm {Enable lvm}
+message enable_raid {Enable raidframe}
 message add_a_user {Add a user}
 message configmenu {Skonfiguruj dodatkowe elementy w razie potrzeby.}
 message doneconfig {Konfiguracja zakonczona}
@@ -1046,10 +1047,159 @@ zrodel}
 message retry_pkgsrc_network {Konfiguracja sieci nie powiodla sie. Sprobowac
 ponownie?}
 message quit_pkgsrc {Zakoncz bez zainstalowania pkgsrc}
+message quit_pkgs_install {Zakoncz bez zainstalowania bin pkg}
 message pkgin_failed 
 {Instalacja pkgin nie powiodla sie, prawdopodobnie dlatego ze nie znaleziono 
 pakietow binarnych.
 Sprawdz sciezke pakietow i sprobuj ponownie.}
 message failed {Nie powiodlo sie}
+
+message notsupported {Operacja nie jest obs³ugiwana!}
+message askfsmountadv {Montowania lub "raid" lub "cgd" lub "lvm"?}
+message partman {Partycje rozszerzone}
+message editbsdpart {Edytuj partycje BSD}
+message editmbr {Edytowaæ i zapisywaæ MBR}
+message switchgpt {Prze³±cz na GPT}
+message switchmbr {Prze³±cz na MBR}
+message renamedisk {Ustaw nazwê dysku}
+message fmtasraid {Format jak RAID}
+message fmtaslvm {Format jak LVM PV}
+message encrypt {Szyfrowanie}
+message setbootable {Bootable flaga}
+message erase {Bezpieczne kasowanie}
+message undo {Cofanie zmian}
+message unconfig {Zdekonfigurowanie}
+message edit {Edytuj}
+message doumount {Si³a umount}
+message fillzeros {Wype³nij zerami}
+message fillrandom {Wype³nij losowymi danymi}
+message fillcrypto {Wype³nij przez crypto danych}
+message raid0 {0 - brak parzysto¶ci, tylko proste rozk³adanie.}
+message raid1 {1 - Mirroring. Parytet jest lustro.}
+message raid4 {4 - Malowanie z parytetu przechowywanych w ostatniej czê¶ci.}
+message raid5 {5 - Malowanie z parytetu w tych wszystkich elementów.}
+
+message fremove {USUÑ}
+message remove {Usun±æ}
+message add {Dodaæ}
+message auto {auto}
+
+message removepartswarn {To usun±æ wszystkie partycje na dysku. Czy chcesz kontynuowaæ?}
+message saveprompt {Zapisz zmiany przed zakoñczeniem?}
+message cantsave {Zmiany nie mog± byæ zbawieni.}
+message noroot {No partycja zdefiniowana, nie mo¿e kontynuowaæ \n}
+message wannaunblock {Urz±dzenie jest zablokowane. Czy chcesz, aby zmusiæ go odblokowaæ i kontynuowaæ?}
+message wannatry {Czy chcesz spróbowaæ?}
+message create_cgd {Utwórz wolumen kryptograficznych (CGD)}
+message create_cnd {Utwórz wirtualnego obraz dysku (VND)}
+message create_vg {Utwórz grupê woluminów (LVM VG)}
+message create_lv {      Utwórz wolumin logiczny}
+message create_raid {Utwórz oprogramowania RAID}
+message updpmlist {Aktualizuj listê urz±dzeñ}
+message savepm {Zapisz zmiany}
+message pmblocked {ZABLOK.}
+message pmunchanged {BEZ ZMIAN}
+message pmsetboot {BOOT}
+message pmused {U¯YWANE}
+message pmmounted {(zamontowany)}
+message pmunused {(nieu¿ywany)}
+message pmgptdisk {Dysku z GPT}
+
+message finishpm {Zakoñcz partycjonowanie}
+message limitcount {Limit liczby urz±dzeñ zosta³ osi±gniêty!}
+message invaliddev {Nieprawid³owy urz±dzenie!}
+message avdisks {Dostêpne dysków:}
+message nofreedev {Nie mo¿na przydzieliæ wêze³!}
+message partman_header
+{Partition Manager. Wszystkie dyski, partycje oraz itp. tam wy¶wietlane.
+Pocz±tkowo sprawiaj± partycji MBR, a nastêpnie dokonaæ BSD etykietê.
+Je¶li chcesz korzystaæ z RAID, LVM lub CGD, wykonaj nastêpuj±ce kroki:
+1) Tworzenie partycji BSD z potrzebnego typu;
+2) Utwórz RAID / LVM VG / CGD korzystania z tych partycji; 3) Zapisz go;
+4) Tworzenie partycji dla RAID / CGD lub Logical Volumes dla LVM.}
+
+message raid_menufmt {   raid%d (level %1d) on %-34s %11uM}
+message raid_err_menufmt {   EMPTY RAID!}
+message raid_disks_fmt {Dyski: %33s}
+message raid_spares_fmt {Czê¶ci zamienne: %23s}
+message raid_level_fmt {Poziom RAID:     %23d}
+message raid_numrow_fmt {numRow:          %23d}
+message raid_numcol_fmt {numCol:          %23d}
+message raid_numspare_fmt {numSpare:        %23d}
+message raid_sectpersu_fmt {sectPerSU:        %22d}
+message raid_superpar_fmt {SUsPerParityUnit: %22d}
+message raid_superrec_fmt {SUsPerReconUnit:  %22d}
+message raid_nomultidim {Tablice wielowymiarowe nie s± obs³ugiwane!}
+message raid_numrow_ask {numRow?}
+message raid_numcol_ask {numCol?}
+message raid_numspare_ask {numSpare?}
+message raid_sectpersu_ask {sectPerSU?}
+message raid_superpar_ask {SUsPerParityUnit?}
+message raid_superrec_ask {SUsPerReconUnit?}
+message raid_disks {Dyski w RAID:}
+message vnd_err_menufmt {   ¦CIE¯KA NIE ZDEFINIOWANE!}
+message vnd_assgn_menufmt {   vnd%1d na %-51s ASSIGN}
+message vnd_menufmt {   vnd%1d na %-45s %11uM}
+message vnd_path_fmt {¦cie¿ka: %31s}
+message vnd_assgn_fmt {Przypisywanie istnieæ obraz: %11s}
+message vnd_size_fmt {Rozmiar: %30sM}
+message vnd_ro_fmt {Tylko do odczytu:   %20s}
+message vnd_geom_fmt {Ustaw geometriê rêcznie: %15s}
+message vnd_bps_fmt {Bajtów na sektorów: %20s}
+message vnd_spt_fmt {Sektory na ¶cie¿ki: %20s}
+message vnd_tpc_fmt {Utwory na cylinder: %20s}
+message vnd_cyl_fmt {Si³owniki:          %20s}
+message vnd_path_ask {File Path?}
+message vnd_size_ask {Rozmiar (MB)?}
+message vnd_bps_ask {Bajtów na sektor?}
+message vnd_spt_ask {Sektory na ¶cie¿kê?}
+message vnd_tpc_ask {Utwory na cylinder?}
+message vnd_cyl_ask {Cylindry}
+message cgd_err_menufmt {   DISK NIE ZDEFINIOWANE!}
+message cgd_menufmt {   cgd%1d %-48s %11uM}
+message cgd_dev_fmt {Urz±dzenie podstawy: %19s}
+message cgd_enc_fmt {Encyption:           %19s}
+message cgd_key_fmt {Rozmiar klucza:      %19d}
+message cgd_iv_fmt {Algorytm IV: %27s}
+message cgd_keygen_fmt {Generowanie kluczy: %20s}
+message cgd_verif_fmt {Metoda weryfikacji: %20s}
+message lvm_disks {Dyski w VG:}
+message lvm_menufmt {   %-44s %20sM}
+message lvm_err_menufmt {   EMPTY VG!}
+message lvm_disks_fmt {PV's: %34s}
+message lvm_name_fmt {Nazwa: %33s}
+message lvm_maxlv_fmt {MaxLogicalVolumes:  %20s}
+message lvm_maxpv_fmt {MaxPhysicalVolumes: %20s}
+message lvm_extsiz_fmt {PhysicalExtentSize: %20s}
+message lvm_name_ask {Nazwa?}
+message lvm_maxlv_ask {MaxLogicalVolumes?}
+message lvm_maxpv_ask {MaxPhysicalVolumes?}
+message lvm_extsiz_ask {PhysicalExtentSize (MB)?}
+message lvmlv_menufmt {      Wolumin logiczny%-34s %11uM}
+message lvmlv_name_fmt {Nazwa: %33s}
+message lvmlv_size_fmt {Rozmiar: %30dM}
+message lvmlv_ro_fmt {Read-only:       %23s}
+message lvmlv_cont_fmt {S±siaduj±cy:     %23s}
+message lvmlv_extnum_fmt {LogicalExtentsNumber: %18s}
+message lvmlv_minor_fmt {Mniejsza liczba: %23s}
+message lvmlv_mirrors_fmt {Mirrors:     %27d}
+message lvmlv_regsiz_fmt {MirrorLogRegionSize:  %18s}
+message lvmlv_pers_fmt {Trwa³e drobne numer:  %18s}
+message lvmlv_readahsect_fmt {ReadAheadSectors ceny: %17s}
+message lvmlv_stripes_fmt {Stripes:     %27s}
+message lvmlv_stripesiz_fmt {StripeSize:  %27s}
+message lvmlv_zero_fmt {Zerowanie pierwszej KB: %16s}
+message lvmlv_name_ask {Nazwa?}
+message lvmlv_size_ask {Rozmiar (MB)?}
+message lvmlv_extnum_ask {LogicalExtentsNumber?}
+message lvmlv_minor_ask {Mniejsza liczba?}
+message lvmlv_mirrors_ask {Mirrors?}
+message lvmlv_regsiz_ask {MirrorLogRegionSize?}
+message lvmlv_readahsect_ask {ReadAheadSectors?}
+message lvmlv_stripes_ask {Stripes?}
+
 message addusername {8 character username to add:}
 message addusertowheel {Do you wish to add this user to group wheel?}
+message Delete_partition
+{Usun partycje}
+

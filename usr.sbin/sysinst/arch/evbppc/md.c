@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:45 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -88,7 +88,7 @@ md_pre_disklabel(void)
 	printf ("%s", msg_string (MSG_dofdisk));
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -103,10 +103,10 @@ int
 md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
-	if (*doessf) {
+	if (*pm->doessf) {
 		printf ("%s", msg_string (MSG_dobad144));
 		return run_program(RUN_DISPLAY, "/usr/sbin/bad144 %s 0",
-		    diskdev);
+		    pm->diskdev);
 	}
 	return 0;
 }

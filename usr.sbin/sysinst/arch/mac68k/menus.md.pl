@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -41,7 +41,7 @@ menu fullpart, title  "Wybierz";
 	option "Uzyj calego dysku", 	    exit, action  {usefull = 1;};
 
 menu nodiskmap, title "Wybierz opcje", y=16;
-       display action { msg_display (MSG_nodiskmap, diskdev); };
+       display action { msg_display (MSG_nodiskmap, pm->diskdev); };
        option "Przerwij instalacje", exit, action {
 		endwin();  exit(1);
 	};
@@ -101,9 +101,9 @@ menu editparttable, title  "Wybierz swoje partycje", exit, y=14;
 			bzb->mount_point[0] = '\0';
 			strcpy (map.blk[k].pmPartType, "Apple_Free");
 			map.blk[k].pmPyPartStart += size;
-			if ((map.blk[k].pmPyPartStart + free_size) > dlsize)
+			if ((map.blk[k].pmPyPartStart + free_size) > pm->dlsize)
 			    map.blk[k].pmPartBlkCnt =
-				dlsize - map.blk[k].pmPyPartStart;
+				pm->dlsize - map.blk[k].pmPyPartStart;
 			else
 			    map.blk[k].pmPartBlkCnt = free_size;
 			map.blk[k].pmDataCnt = map.blk[k].pmPartBlkCnt;
@@ -131,20 +131,20 @@ menu editparttable, title  "Wybierz swoje partycje", exit, y=14;
 	option "Napraw wybrana partycje", action {
 		int i = map.mblk[map.selected];
 		EBZB *bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
-		msg_display(MSG_partdebug, diskdev, bzb->flags.part,
+		msg_display(MSG_partdebug, pm->diskdev, bzb->flags.part,
 			map.blk[i].pmPyPartStart,
 			map.blk[i].pmPartBlkCnt);
 		if ((map.blk[i].pmPyPartStart +
-		    map.blk[i].pmPartBlkCnt) > dlsize) {
+		    map.blk[i].pmPartBlkCnt) > pm->dlsize) {
 			msg_display_add(MSG_parttable_fix_fixing,
-				diskdev, bzb->flags.part);
+				pm->diskdev, bzb->flags.part);
 			map.blk[i].pmPartBlkCnt =
-			    dlsize - map.blk[i].pmPyPartStart;
+			    pm->dlsize - map.blk[i].pmPyPartStart;
 			map.blk[i].pmDataCnt =
 			    map.blk[i].pmPartBlkCnt;
 		} else {
 		    msg_display_add(MSG_parttable_fix_fine,
-			diskdev, bzb->flags.part);
+			pm->diskdev, bzb->flags.part);
 		}
 		process_menu(MENU_ok, NULL);
 		};

@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: run.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,7 +124,14 @@ log_flip(menudesc *m, void *arg)
 			    "Log started at: %s\n", asctime(localtime(&tloc)));
 			fflush(logfp);
 		} else {
-			msg_display(MSG_openfail, "log file", strerror(errno));
+			if (mainwin) {
+				msg_display(MSG_openfail, "log file",
+				    strerror(errno));
+			} else {
+				fprintf(stderr, "could not open /tmp/sysinst.log: %s\n",
+				    strerror(errno));
+				exit(1);
+			}
 		}
 	}
 	return(0);

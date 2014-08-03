@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,7 +87,7 @@ md_check_partitions(void)
 	 * something stupid, like move it away from the MBR partition.
 	 */
 	for (part = PART_A; part < MAXPARTITIONS; part++)
-		if (bsdlabel[part].pi_fstype == FS_BOOT) {
+		if (pm->bsdlabel[part].pi_fstype == FS_BOOT) {
 			prep_bootpart = part;
 			return 1;
 		}
@@ -106,7 +106,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -149,8 +149,8 @@ md_post_extract(void)
 	else
 		snprintf(bootloader, 100, "/usr/mdec/boot");
 
-	snprintf(rawdev, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
-	snprintf(bootpart, 100, "/dev/r%s%c", diskdev, 'a' + prep_bootpart);
+	snprintf(rawdev, 100, "/dev/r%s%c", pm->diskdev, 'a' + getrawpartition());
+	snprintf(bootpart, 100, "/dev/r%s%c", pm->diskdev, 'a' + prep_bootpart);
 	if (prep_rawdevfix)
 		run_program(RUN_DISPLAY|RUN_CHROOT,
 		    "/usr/mdec/mkbootimage -b %s -k /netbsd "
@@ -181,7 +181,7 @@ md_pre_update(void)
 	mbr_info_t *ext;
 	int i;
 
-	read_mbr(diskdev, &mbr);
+	read_mbr(pm->diskdev, &mbr);
 	/* do a sanity check of the partition table */
 	for (ext = &mbr; ext; ext = ext->extended) {
 		part = ext->mbr.mbr_parts;
@@ -225,12 +225,12 @@ md_check_mbr(mbr_info_t *mbri)
 		for (i = 0; i < MBR_PART_COUNT; part++, i++) {
 			if (part->mbrp_type != MBR_PTYPE_PREP)
 				continue;
-			bootstart = part->mbrp_start;
-			bootsize = part->mbrp_size;
+			pm->bootstart = part->mbrp_start;
+			pm->bootsize = part->mbrp_size;
 			break;
 		}
 	}
-	if (bootsize < (MIN_PREP_BOOT/512)) {
+	if (pm->bootsize < (MIN_PREP_BOOT/512)) {
 		msg_display(MSG_preptoosmall);
 		msg_display_add(MSG_reeditpart, 0);
 		process_menu(MENU_yesno, NULL);
@@ -238,7 +238,7 @@ md_check_mbr(mbr_info_t *mbri)
 			return 0;
 		return 1;
 	}
-	if (bootstart == 0 || bootsize == 0) {
+	if (pm->bootstart == 0 || pm->bootsize == 0) {
 		msg_display(MSG_nopreppart);
 		msg_display_add(MSG_reeditpart, 0);
 		process_menu(MENU_yesno, NULL);
@@ -272,14 +272,14 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 	part[0].mbrp_flag = MBR_PFLAG_ACTIVE;
 
 	part[1].mbrp_type = MBR_PTYPE_NETBSD;
-	part[1].mbrp_size = dlsize - (bsec + PREP_BOOT_SIZE/512);
+	part[1].mbrp_size = pm->dlsize - (bsec + PREP_BOOT_SIZE/512);
 	part[1].mbrp_start = bsec + PREP_BOOT_SIZE/512;
 	part[1].mbrp_flag = 0;
 
-	ptstart = part[1].mbrp_start;
-	ptsize = part[1].mbrp_size;
-	bootstart = part[0].mbrp_start;
-	bootsize = part[0].mbrp_size;
+	pm->ptstart = part[1].mbrp_start;
+	pm->ptsize = part[1].mbrp_size;
+	pm->bootstart = part[0].mbrp_start;
+	pm->bootsize = part[0].mbrp_size;
 	return 1;
 }
 

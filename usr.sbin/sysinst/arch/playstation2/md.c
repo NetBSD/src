@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:46 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,9 +65,9 @@ md_get_info(void)
 	int cyl, head;
 	daddr_t sec;
 
-	read_mbr(diskdev, &mbr);
+	read_mbr(pm->diskdev, &mbr);
 
-	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+	msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead, pm->dlsec);
 
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
@@ -105,7 +105,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 
@@ -122,10 +122,10 @@ int
 md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
-	if (*doessf) {
+	if (*pm->doessf) {
 		msg_display(MSG_dobad144);
 		return (run_program(RUN_DISPLAY, "/usr/sbin/bad144 %s 0",
-		    diskdev));
+		    pm->diskdev));
 	}
 
 	return 0;
@@ -181,3 +181,10 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 {
 	return mbr_use_wholedisk(mbri);
 }
+
+int
+md_pre_mount()
+{
+	return 0;
+}
+

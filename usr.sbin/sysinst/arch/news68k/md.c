@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@ md_get_info(void)
 	int fd;
 	char dev_name[100];
 
-	snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
+	snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", pm->diskdev);
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
@@ -84,21 +84,21 @@ md_get_info(void)
 	}
 	close(fd);
 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
+	pm->dlcyl = disklabel.d_ncylinders;
+	pm->dlhead = disklabel.d_ntracks;
+	pm->dlsec = disklabel.d_nsectors;
+	pm->sectorsize = disklabel.d_secsize;
+	pm->dlcylsize = disklabel.d_secpercyl;
 
 	/*
-	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
+	 * Compute whole disk size. Take max of (pm->dlcyl*pm->dlhead*pm->dlsec)
 	 * and secperunit,  just in case the disk is already labelled.
 	 * (If our new label's RAW_PART size ends up smaller than the
 	 * in-core RAW_PART size  value, updating the label will fail.)
 	 */
-	dlsize = dlcyl * dlhead * dlsec;
-	if (disklabel.d_secperunit > dlsize)
-		dlsize = disklabel.d_secperunit;
+	pm->dlsize = pm->dlcyl * pm->dlhead * pm->dlsec;
+	if (disklabel.d_secperunit > pm->dlsize)
+		pm->dlsize = disklabel.d_secperunit;
 
 	return 1;
 }
@@ -155,11 +155,11 @@ md_post_newfs(void)
 {
 	const char *bootfile = "/boot";
 
-	msg_display(MSG_dobootblks, diskdev);
+	msg_display(MSG_dobootblks, pm->diskdev);
 	cp_to_target("/usr/mdec/boot", bootfile);
 	sync();
 	run_program(RUN_DISPLAY, "/usr/sbin/installboot /dev/r%sc %s %s",
-	    diskdev, "/usr/mdec/bootxx", bootfile);
+	    pm->diskdev, "/usr/mdec/bootxx", bootfile);
 	return 0;
 }
 

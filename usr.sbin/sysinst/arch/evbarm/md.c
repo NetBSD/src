@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:45 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,21 +80,21 @@ md_get_info(void)
 	if (boardtype == BOARD_TYPE_RPI)
 		return set_bios_geom_with_mbr_guess();
 
-	if (no_mbr)
+	if (pm->no_mbr)
 		return 1;
 
-	if (read_mbr(diskdev, &mbr) < 0)
+	if (read_mbr(pm->diskdev, &mbr) < 0)
 		memset(&mbr.mbr, 0, sizeof(mbr.mbr)-2);
 
 	if (edit_mbr(&mbr) == 0)
 		return 0;
 
-	if (strncmp(diskdev, "wd", 2) == 0)
-		disktype = "ST506";
+	if (strncmp(pm->diskdev, "wd", 2) == 0)
+		pm->disktype = "ST506";
 	else
-		disktype = "SCSI";
+		pm->disktype = "SCSI";
 
-	snprintf(dev_name, 100, "/dev/r%sc", diskdev);
+	snprintf(dev_name, 100, "/dev/r%sc", pm->diskdev);
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
@@ -110,21 +110,21 @@ md_get_info(void)
 	}
 	close(fd);
 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
+	pm->dlcyl = disklabel.d_ncylinders;
+	pm->dlhead = disklabel.d_ntracks;
+	pm->dlsec = disklabel.d_nsectors;
+	pm->sectorsize = disklabel.d_secsize;
+	pm->dlcylsize = disklabel.d_secpercyl;
 
 	/*
-	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
+	 * Compute whole disk size. Take max of (pm->dlcyl*pm->dlhead*pm->dlsec)
 	 * and secperunit,  just in case the disk is already labelled.
 	 * (If our new label's RAW_PART size ends up smaller than the
 	 * in-core RAW_PART size  value, updating the label will fail.)
 	 */
-	dlsize = dlcyl*dlhead*dlsec;
-	if (disklabel.d_secperunit > dlsize)
-		dlsize = disklabel.d_secperunit;
+	pm->dlsize = pm->dlcyl*pm->dlhead*pm->dlsec;
+	if (disklabel.d_secperunit > pm->dlsize)
+		pm->dlsize = disklabel.d_secperunit;
 
 	return 1;
 }
@@ -150,7 +150,7 @@ md_check_partitions(void)
 		return 1;
 	if (boardtype == BOARD_TYPE_RPI) {
 		for (part = PART_A; part < MAXPARTITIONS; part++)
-			if (bsdlabel[part].pi_fstype == FS_MSDOS) {
+			if (pm->bsdlabel[part].pi_fstype == FS_MSDOS) {
 				rpi_bootpart = part;
 				return 1;
 			}
@@ -167,13 +167,13 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
-	if (no_mbr)
+	if (pm->no_mbr)
 		return 0;
 
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -293,7 +293,7 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 
 	if (boardtype == BOARD_TYPE_NORMAL) {
 		/* this keeps it from creating /boot as msdos */
-		bootsize = 0;
+		pm->bootsize = 0;
 		return mbr_use_wholedisk(mbri);
 	}
 
@@ -308,14 +308,14 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 		}
 		offset = part[0].mbrp_start + part[0].mbrp_size;
 		part[1].mbrp_type = MBR_PTYPE_NETBSD;
-		part[1].mbrp_size = dlsize - offset;
+		part[1].mbrp_size = pm->dlsize - offset;
 		part[1].mbrp_start = offset;
 		part[1].mbrp_flag = 0;
 
-		ptstart = part[1].mbrp_start;
-		ptsize = part[1].mbrp_size;
-		bootstart = part[0].mbrp_start;
-		bootsize = part[0].mbrp_size;
+		pm->ptstart = part[1].mbrp_start;
+		pm->ptsize = part[1].mbrp_size;
+		pm->bootstart = part[0].mbrp_start;
+		pm->bootsize = part[0].mbrp_size;
 		return 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sizemultname.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: sizemultname.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,7 @@ void
 set_sizemultname_cyl(void)
 {
 
-	sizemult = dlcylsize;
+	sizemult = pm->dlcylsize;
 	multname = msg_string(MSG_cylname);
 }
 
@@ -60,6 +60,6 @@ void
 set_sizemultname_meg(void)
 {
 
-	sizemult = MEG / sectorsize;
+	sizemult = MEG / pm->sectorsize;
 	multname = msg_string(MSG_megname);
 }

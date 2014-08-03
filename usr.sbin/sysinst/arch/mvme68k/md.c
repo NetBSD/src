@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ md_get_info(void)
 	char dev_name[100];
 	struct disklabel disklabel;
 
-	snprintf(dev_name, 100, "/dev/r%sc", diskdev);
+	snprintf(dev_name, 100, "/dev/r%sc", pm->diskdev);
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
@@ -92,12 +92,12 @@ md_get_info(void)
 		exit(1);
 	}
 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
-	dlsize = dlcyl*dlhead*dlsec;
+	pm->dlcyl = disklabel.d_ncylinders;
+	pm->dlhead = disklabel.d_ntracks;
+	pm->dlsec = disklabel.d_nsectors;
+	pm->sectorsize = disklabel.d_secsize;
+	pm->dlcylsize = disklabel.d_secpercyl;
+	pm->dlsize = pm->dlcyl*pm->dlhead*pm->dlsec;
 
 	if (read(fd, buf, 1024) < 0) {
 		endwin();
@@ -107,7 +107,7 @@ md_get_info(void)
 	}
 
 	/* preserve first cylinder for system. */
-	ptstart = disklabel.d_secpercyl;
+	pm->ptstart = disklabel.d_secpercyl;
 
 	close(fd);
 
@@ -137,22 +137,22 @@ md_check_partitions(void)
 	for (part = PART_A; part < 8; part++) {
 		if (part == PART_C)
 			continue;
-		if (last >= PART_A && bsdlabel[part].pi_size > 0) {
+		if (last >= PART_A && pm->bsdlabel[part].pi_size > 0) {
 			msg_display(MSG_emptypart, part+'a');
 			process_menu(MENU_ok, NULL);
 			return 0;
 		}
-		if (bsdlabel[part].pi_size == 0) {
+		if (pm->bsdlabel[part].pi_size == 0) {
 			if (last < PART_A)
 				last = part;
 		} else {
-			if (start > bsdlabel[part].pi_offset) {
+			if (start > pm->bsdlabel[part].pi_offset) {
 				msg_display(MSG_ordering, part+'a');
 				process_menu(MENU_yesno, NULL);
 				if (yesno)
 					return 0;
 			}
-			start = bsdlabel[part].pi_offset;
+			start = pm->bsdlabel[part].pi_offset;
 		}
 	}
 
@@ -175,7 +175,7 @@ int
 md_post_disklabel(void)
 {
 	if (get_ramsize() < 6)
-		set_swap(diskdev, bsdlabel);
+		set_swap(pm->diskdev, pm->bsdlabel);
 
 	return 0;
 }
@@ -192,11 +192,11 @@ md_post_newfs(void)
 {
 
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, diskdev);
+	msg_display(MSG_dobootblks, pm->diskdev);
 	cp_to_target("/usr/mdec/bootsd", "/.bootsd");
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 	    "/usr/mdec/installboot %s /usr/mdec/bootxx /dev/r%sa",
-	    target_expand("/.bootsd"), diskdev))
+	    target_expand("/.bootsd"), pm->diskdev))
 		process_menu(MENU_ok,
 			deconst("Warning: disk is probably not bootable"));
 	return 0;
@@ -220,7 +220,7 @@ int
 md_pre_update(void)
 {
 	if (get_ramsize() < 6)
-		set_swap(diskdev, NULL);
+		set_swap(pm->diskdev, NULL);
 	return 1;
 }
 

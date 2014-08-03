@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,7 +67,16 @@ FILE *script;			/* script file */
 extern int log_flip(void);
 #endif
 
+/* Definion for colors */
+
+struct {
+	unsigned int bg;
+	unsigned int fg;
+} clr_arg;
+
 /* String defaults and stuff for processing the -f file argument. */
+
+static char bsddiskname[DISKNAME_SIZE]; /* default name for fist selected disk */
 
 struct f_arg {
 	const char *name;
@@ -119,14 +128,19 @@ static void
 init(void)
 {
 	const struct f_arg *arg;
-
+	
 	sizemult = 1;
-	disktype = "unknown";
+	multname = msg_string(MSG_secname);
 	tmp_ramdisk_size = 0;
-	doessf = "";
 	clean_xfer_dir = 0;
 	mnt2_mounted = 0;
 	fd_type = "msdos";
+	layoutkind = LY_SETNEW;
+
+	pm_head = (struct pm_head_t) SLIST_HEAD_INITIALIZER(pm_head);
+	SLIST_INIT(&pm_head);
+	pm_new = malloc (sizeof (pm_devs_t));
+	memset(pm_new, 0, sizeof *pm_new);
 
 	for (arg = fflagopts; arg->name != NULL; arg++) {
 		if (arg->var == cdrom_dev)
@@ -134,7 +148,11 @@ init(void)
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
+	strlcpy(pm_new->bsddiskname, bsddiskname, sizeof pm_new->bsddiskname);
 	pkg.xfer_type = pkgsrc.xfer_type = "http";
+	
+	clr_arg.bg=COLOR_BLUE;
+	clr_arg.fg=COLOR_WHITE;
 }
 
 __weakref_visible void prelim_menu(void)
@@ -143,13 +161,13 @@ __weakref_visible void prelim_menu(void)
 int
 main(int argc, char **argv)
 {
-	WINDOW *win;
 	int ch;
 
 	init();
 #ifdef DEBUG
 	log_flip();
 #endif
+
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
 		(void)fprintf(stderr,
@@ -158,7 +176,7 @@ main(int argc, char **argv)
 	}
 
 	/* argv processing */
-	while ((ch = getopt(argc, argv, "Dr:f:")) != -1)
+	while ((ch = getopt(argc, argv, "Dr:f:C:p")) != -1)
 		switch(ch) {
 		case 'D':	/* set to get past certain errors in testing */
 			debug = 1;
@@ -170,6 +188,14 @@ main(int argc, char **argv)
 		case 'f':
 			/* Definition file to read. */
 			process_f_flag(optarg);
+			break;
+		case 'C':
+			/* Define colors */
+			sscanf(optarg, "%u:%u", &clr_arg.bg, &clr_arg.fg);
+			break;
+		case 'p':
+			/* Partition tool */
+			partman_go = 1;
 			break;
 		case '?':
 		default:
@@ -188,21 +214,19 @@ main(int argc, char **argv)
 	 * Put 'messages' in a window that has a one-character border
 	 * on the real screen.
 	 */
-	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
-	if (win == NULL) {
+	mainwin = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
+	if (mainwin == NULL) {
 		(void)fprintf(stderr,
 			 "sysinst: screen too small\n");
 		exit(1);
 	}
 	if (has_colors()) {
-		/*
-		 * XXX This color trick should be done so much better,
-		 * but is it worth it?
-		 */
-		wbkgd(win, COLOR_PAIR(1));
-		wattrset(win, COLOR_PAIR(1));
+		start_color();
+		do_coloring(clr_arg.fg,clr_arg.bg);
+	} else {
+		remove_color_options();
 	}
-	msg_window(win);
+	msg_window(mainwin);
 
 	/* Watch for signals and clean up */
 	(void)atexit(cleanup);
@@ -227,7 +251,10 @@ main(int argc, char **argv)
 #endif
 
 	/* Menu processing */
-	process_menu(MENU_netbsd, NULL);
+	if (partman_go)
+		partman();
+	else
+		process_menu(MENU_netbsd, NULL);
 
 	exit_cleanly = 1;
 	return 0;
@@ -344,6 +371,13 @@ select_language(void)
 void
 toplevel(void)
 {
+	/*
+	 * Undo any stateful side-effects of previous menu choices.
+	 * XXX must be idempotent, since we get run each time the main
+	 *     menu is displayed.
+	 */
+	chdir(getenv("HOME"));
+	unwind_mounts();
 
 	/* Display banner message in (english, francais, deutsch..) */
 	msg_display(MSG_hello);
@@ -351,14 +385,6 @@ toplevel(void)
 	if (md_may_remove_boot_medium())
 		msg_display_add(MSG_md_may_remove_boot_medium);
 	msg_display_add(MSG_thanks);
-
-	/*
-	 * Undo any stateful side-effects of previous menu choices.
-	 * XXX must be idempotent, since we get run each time the main
-	 *     menu is displayed.
-	 */
-	unwind_mounts();
-	/* ... */
 }
 
 
@@ -486,6 +512,7 @@ process_f_flag(char *f_name)
 			break;
 		}
 	}
+	strlcpy(pm_new->bsddiskname, bsddiskname, sizeof pm_new->bsddiskname);
 
 	fclose(fp);
 }

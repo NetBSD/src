@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/*	$NetBSD: mbr.c,v 1.2 2014/08/03 16:09:38 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -196,8 +196,8 @@ set_bios_geom_with_mbr_guess(void)
 	int cyl, head;
 	daddr_t sec;
 
-	read_mbr(diskdev, &mbr);
-	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+	read_mbr(pm->diskdev, &mbr);
+	msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead, pm->dlsec);
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 	set_bios_geom(cyl, head, sec);
@@ -227,8 +227,8 @@ set_bios_geom(int cyl, int head, int sec)
 		bhead = atoi(res);
 	} while (bhead <= 0 || bhead > 256);
 
-	bcyl = dlsize / bsec / bhead;
-	if (dlsize != bcyl * bsec * bhead)
+	bcyl = pm->dlsize / bsec / bhead;
+	if (pm->dlsize != bcyl * bsec * bhead)
 		bcyl++;
 }
 
@@ -237,7 +237,7 @@ void
 disp_cur_geom(void)
 {
 
-	msg_display_add(MSG_realgeom, dlcyl, dlhead, dlsec);
+	msg_display_add(MSG_realgeom, pm->dlcyl, pm->dlhead, pm->dlsec);
 	msg_display_add(MSG_biosgeom, bcyl, bhead, bsec);
 }
 #endif
@@ -267,7 +267,7 @@ remove_old_partitions(uint start, int64_t size)
 	if (end == 0)
 		return;
 
-	for (p = oldlabel; p < oldlabel + nelem(oldlabel); p++) {
+	for (p = pm->oldlabel; p < pm->oldlabel + nelem(pm->oldlabel); p++) {
 		if (p->pi_offset >= end || p->pi_offset + p->pi_size <= start)
 			continue;
 		memset(p, 0, sizeof *p);
@@ -282,7 +282,7 @@ find_mbr_space(struct mbr_sector *mbrs, uint *start, uint *size, uint from, int 
 	uint s, e;
 
     check_again:
-	sz = dlsize - from;
+	sz = pm->dlsize - from;
 	for (i = 0; i < MBR_PART_COUNT; i++) {
 		if (i == ignore)
 			continue;
@@ -1174,7 +1174,7 @@ set_mbr_header(menudesc *m, void *arg)
 
 	msg_display(MSG_editparttable);
 
-	msg_table_add(MSG_part_header, (unsigned long)(dlsize/sizemult),
+	msg_table_add(MSG_part_header, (unsigned long)(pm->dlsize/sizemult),
 	    multname, multname, multname, multname);
 
 	if (num_opts == 0) {
@@ -1242,12 +1242,12 @@ mbr_use_wholedisk(mbr_info_t *mbri)
 	memset(&mbri->mbrb, 0, sizeof mbri->mbrb);
 #endif
 	part[0].mbrp_type = MBR_PTYPE_NETBSD;
-	part[0].mbrp_size = dlsize - ptn_0_offset;
+	part[0].mbrp_size = pm->dlsize - ptn_0_offset;
 	part[0].mbrp_start = ptn_0_offset;
 	part[0].mbrp_flag = MBR_PFLAG_ACTIVE;
 
-	ptstart = ptn_0_offset;
-	ptsize = dlsize - ptn_0_offset;
+	pm->ptstart = ptn_0_offset;
+	pm->ptsize = pm->dlsize - ptn_0_offset;
 	return 1;
 }
 
@@ -1271,9 +1271,13 @@ edit_mbr(mbr_info_t *mbri)
 	/* Ask full/part */
 
 	part = &mbrs->mbr_parts[0];
-	get_ptn_alignment(part);	/* update ptn_alignment */
-	msg_display(MSG_fullpart, diskdev);
-	process_menu(MENU_fullpart, &usefull);
+	get_ptn_alignment(part);  /* update ptn_alignment */
+	if (partman_go)
+		usefull = 0;
+	else {
+		msg_display(MSG_fullpart, pm->diskdev);
+		process_menu(MENU_fullpart, &usefull);
+	}
 
 	/* DOS fdisk label checking and value setting. */
 	if (usefull) {
@@ -1310,11 +1314,11 @@ edit_mbr(mbr_info_t *mbri)
 
 	/* Default to MB, and use bios geometry for cylinder size */
 	set_sizemultname_meg();
-	current_cylsize = bhead * bsec;
+	pm->current_cylsize = bhead * bsec;
 
 	for (;;) {
-		ptstart = 0;
-		ptsize = 0;
+		pm->ptstart = 0;
+		pm->ptsize = 0;
 		process_menu(mbr_menu, mbri);
 
 		activepart = 0;
@@ -1329,8 +1333,8 @@ edit_mbr(mbr_info_t *mbri)
 					continue;
 				start = ext->sector + part->mbrp_start;
 				if (start == mbri->install) {
-					ptstart = mbri->install;
-					ptsize = part->mbrp_size;
+					pm->ptstart = mbri->install;
+					pm->ptsize = part->mbrp_size;
 				}
 				if (bsdstart != 0)
 					bsdstart = ~0;
@@ -1342,12 +1346,12 @@ edit_mbr(mbr_info_t *mbri)
 		}
 
 		/* Install in only netbsd partition if none tagged */
-		if (ptstart == 0 && bsdstart != ~0u) {
-			ptstart = bsdstart;
-			ptsize = bsdsize;
+		if (pm->ptstart == 0 && bsdstart != ~0u) {
+			pm->ptstart = bsdstart;
+			pm->ptsize = bsdsize;
 		}
 
-		if (ptstart == 0) {
+		if (pm->ptstart == 0) {
 			if (bsdstart == 0)
 				msg_display(MSG_nobsdpart);
 			else
@@ -1455,10 +1459,10 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 	 * partition headers we might have to produce.
 	 */
 	if (bsec == 0)
-		bsec = dlsec;
+		bsec = pm->dlsec;
 	ptn_0_offset = bsec;
 	/* use 1MB default offset on large disks as fdisk(8) */
-	if (dlsize > 2048 * 1024 * 128)
+	if (pm->dlsize > 2048 * 1024 * 128)
 		ptn_0_offset = 2048;
 
 	memset(mbri, 0, sizeof *mbri);
@@ -1762,13 +1766,13 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, daddr_t *sec)
 	 * the invalid physical one.
 	 */
 
-	xcylinders = dlcyl;
-	xheads = dlhead;
-	xsectors = dlsec;
+	xcylinders = pm->dlcyl;
+	xheads = pm->dlhead;
+	xsectors = pm->dlsec;
 	if (xcylinders > MAXCYL || xheads > MAXHEAD || xsectors > MAXSECTOR) {
 		xsectors = MAXSECTOR;
 		xheads = MAXHEAD;
-		xcylinders = dlsize / (MAXSECTOR * MAXHEAD);
+		xcylinders = pm->dlsize / (MAXSECTOR * MAXHEAD);
 		if (xcylinders > MAXCYL)
 			xcylinders = MAXCYL;
 	}
@@ -1806,8 +1810,8 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, daddr_t *sec)
 	 * Estimate the number of cylinders.
 	 * XXX relies on get_disks having been called.
 	 */
-	xcylinders = dlsize / xheads / xsectors;
-	if (dlsize != xcylinders * xheads * xsectors)
+	xcylinders = pm->dlsize / xheads / xsectors;
+	if (pm->dlsize != xcylinders * xheads * xsectors)
 		xcylinders++;
 
 	/*
@@ -1890,7 +1894,7 @@ get_ptn_alignment(struct mbr_partition *mbrp0)
 		}
 	} else {
 		/* Use 1MB offset for large (>128GB) disks */
-		if (dlsize > 2048 * 1024 * 128) {
+		if (pm->dlsize > 2048 * 1024 * 128) {
 			ptn_alignment = 2048;
 			ptn_0_offset = 2048;
 		}

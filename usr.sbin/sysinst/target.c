@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: target.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.1 2014/07/26 19:30:44 dholland Exp $");
+__RCSID("$NetBSD: target.c,v 1.2 2014/08/03 16:09:38 martin Exp $");
 #endif
 
 /*
@@ -146,20 +146,20 @@ backtowin(void)
 /*
  * Is the root partition we're running from the same as the root 
  * which the user has selected to install/upgrade?
- * Uses global variable "diskdev" to find the selected device for
+ * Uses global variable "pm->diskdev" to find the selected device for
  * install/upgrade.
  */
 int
 target_already_root(void)
 {
 
-	if (strcmp(diskdev, "") == 0)
+	if (strcmp(pm->diskdev, "") == 0)
 		/* No root partition was ever selected.
 		 * Assume that the currently mounted one should be used
 		 */
 		return 1;
 
-	return is_active_rootpart(diskdev, rootpart);
+	return is_active_rootpart(pm->diskdev, pm->rootpart);
 }
 
 
@@ -280,7 +280,10 @@ do_target_chdir(const char *dir, int must_succeed)
 	error = 0;
 	tgt_dir = target_expand(dir);
 
-#ifndef DEBUG
+#ifdef DEBUG
+	printf("target_chdir (%s)\n", tgt_dir);
+	//return (0);
+#endif
 	/* chdir returns -1 on error and sets errno. */
 	if (chdir(tgt_dir) < 0)
 		error = errno;
@@ -303,10 +306,6 @@ do_target_chdir(const char *dir, int must_succeed)
 	}
 	errno = error;
 	return (error);
-#else
-	printf("target_chdir (%s)\n", tgt_dir);
-	return (0);
-#endif
 }
 
 void
@@ -396,7 +395,7 @@ target_fopen(const char *filename, const char *type)
  * NB: does not prefix mount-from, which probably breaks nullfs mounts.
  */
 int
-target_mount(const char *opts, const char *from, int ptn, const char *on)
+target_mount_do(const char *opts, const char *from, const char *on)
 {
 	struct unwind_mount *m;
 	int error;
@@ -415,8 +414,8 @@ target_mount(const char *opts, const char *from, int ptn, const char *on)
 	backtowin();
 #endif
 
-	error = run_program(0, "/sbin/mount %s /dev/%s%c %s%s",
-			opts, from, 'a' + ptn, target_prefix(), on);
+	error = run_program(0, "/sbin/mount %s %s %s%s",
+			opts, from, target_prefix(), on);
 	if (error) {
 		free(m);
 		return error;
@@ -424,6 +423,19 @@ target_mount(const char *opts, const char *from, int ptn, const char *on)
 	m->um_prev = unwind_mountlist;
 	unwind_mountlist = m;
 	return 0;
+}
+
+int
+target_mount(const char *opts, const char *from, int ptn, const char *on)
+{
+	int error;
+	char *frompath;
+	asprintf (&frompath, "/dev/%s%c", from, (ptn < 0)? 0 : 'a' + ptn);
+	if (frompath == 0)
+		return (ENOMEM);
+	error = target_mount_do(opts, frompath, on);
+	free(frompath);
+	return error;
 }
 
 /*

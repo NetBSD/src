@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:45 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ md_get_info(void)
 	char dev_name[100];
 	struct disklabel disklabel;
 
-	snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
+	snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", pm->diskdev);
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
@@ -92,12 +92,12 @@ md_get_info(void)
 		exit(1);
 	}
 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
-	dlsize = dlcyl*dlhead*dlsec;
+	pm->dlcyl = disklabel.d_ncylinders;
+	pm->dlhead = disklabel.d_ntracks;
+	pm->dlsec = disklabel.d_nsectors;
+	pm->sectorsize = disklabel.d_secsize;
+	pm->dlcylsize = disklabel.d_secpercyl;
+	pm->dlsize = pm->dlcyl*pm->dlhead*pm->dlsec;
 
 	if (read(fd, buf, 1024) < 0) {
 		endwin();
@@ -107,7 +107,7 @@ md_get_info(void)
 	}
 
 	/* We will preserve the first cylinder as PART_BOOT for bootloader. */
-	ptstart = 0;
+	pm->ptstart = 0;
 
 	close(fd);
 
@@ -139,22 +139,22 @@ md_check_partitions(void)
 	for (part = PART_A; part < MAXPARTITIONS; part++) {
 		if (part == PART_RAW || part == PART_BOOT)
 			continue;
-		if (last >= PART_A && bsdlabel[part].pi_size > 0) {
+		if (last >= PART_A && pm->bsdlabel[part].pi_size > 0) {
 			msg_display(MSG_emptypart, part+'a');
 			process_menu(MENU_ok, NULL);
 			return 0;
 		}
-		if (bsdlabel[part].pi_size == 0) {
+		if (pm->bsdlabel[part].pi_size == 0) {
 			if (last < PART_A)
 				last = part;
 		} else {
-			if (start >= bsdlabel[part].pi_offset) {
+			if (start >= pm->bsdlabel[part].pi_offset) {
 				msg_display(MSG_ordering, part+'a');
 				process_menu(MENU_yesno, NULL);
 				if (yesno)
 					return 0;
 			}
-			start = bsdlabel[part].pi_offset;
+			start = pm->bsdlabel[part].pi_offset;
 		}
 	}
 
@@ -177,7 +177,7 @@ int
 md_post_disklabel(void)
 {
 	if (get_ramsize() < 6)
-		set_swap(diskdev, bsdlabel);
+		set_swap(pm->diskdev, pm->bsdlabel);
 
 	return 0;
 }
@@ -193,9 +193,9 @@ int
 md_post_newfs(void)
 {
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, diskdev);
+	msg_display(MSG_dobootblks, pm->diskdev);
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/uboot.lif", diskdev))
+	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/uboot.lif", pm->diskdev))
 		process_menu(MENU_ok,
 		    deconst("Warning: disk is probably not bootable"));
 	return 0;
@@ -219,7 +219,7 @@ int
 md_pre_update(void)
 {
 	if (get_ramsize() < 6)
-		set_swap(diskdev, NULL);
+		set_swap(pm->diskdev, NULL);
 	return 1;
 }
 
@@ -239,9 +239,9 @@ hp300_boot_size(void)
 {
 	int i;
 
-	i = dlcylsize;
+	i = pm->dlcylsize;
 	if (i >= 1024) /* XXX: bsddisklabel.c has a hack. */
-		i = dlcylsize * sectorsize * 2;
+		i = pm->dlcylsize * pm->sectorsize * 2;
 
 	return i;
 }

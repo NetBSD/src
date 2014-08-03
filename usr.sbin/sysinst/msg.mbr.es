@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.es,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: msg.mbr.es,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -156,8 +156,6 @@ Seleccione la partición que desee editar:
 message Partition_table_ok
 {Tabla de particiones OK}
 
-message Delete_partition
-{Borrar partición}
 message Dont_change
 {No cambiar}
 message Other_kind

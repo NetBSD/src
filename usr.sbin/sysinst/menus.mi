@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: menus.mi,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+static menudesc menu_def[];
+
 static void
 src_legend(menudesc *menu, const char *legend, const char *text)
 {
@@ -59,6 +61,34 @@ src_prompt(const char *prompt, char *buf, size_t size)
 {
 	msg_prompt_win(prompt, -1, 12, 0, 0, buf, buf, size);
 }
+
+void
+remove_color_options()
+{
+	/*
+	 * Current terminal type does not support colors, so remove all
+	 * menu entries (actually that is: Utils/Color Scheme) that do not
+	 * make any sense in this case.
+	 */
+
+	for (size_t i = 0; i < DYN_MENU_START; i++) {
+		for (int j = 0; j < menu_def[i].numopts; j++) {
+			if ((menu_def[i].opts[j].opt_flags & OPT_SUB)
+			    && menu_def[i].opts[j].opt_menu == MENU_colors) {
+
+				for (int k = j + 1; k < menu_def[i].numopts;
+				    k++) {
+					menu_def[i].opts[k-1] =
+					    menu_def[i].opts[k];
+				}
+				menu_def[i].numopts--;
+				return;
+
+			}
+		}
+	}
+}
+
 }
 
 default y=12, no exit, scrollable;
@@ -165,7 +195,7 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
 	option MSG_Config_menu, action { do_configmenu(); };
 
 menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
-		exitstring MSG_exit_utility_menu;
+		exitstring MSG_exit_menu_generic;
 	display action  { toplevel(); };
 	option MSG_Run_bin_sh,
 		action (endwin) { system("/bin/sh"); };
@@ -174,14 +204,22 @@ menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
 	option MSG_Configure_network,
 		action {
 			extern int network_up;
-
 			network_up = 0;
 			config_network();
 		};
-/*	option MSG_Partition a disk; XXX add later.  */
+	option MSG_Partition_a_disk, action { partman_go = 1; partman(); };
 	option MSG_Logging_functions, action { do_logging(); };
+	option MSG_Color_scheme, sub menu colors;
 	option MSG_Halt_the_system, exit,
 		action (endwin) { system("/sbin/halt -q"); };
+
+menu colors, title MSG_Color_scheme, exit,
+		exitstring MSG_exit_menu_generic;
+	option MSG_White_on_black, action { do_coloring(COLOR_WHITE,COLOR_BLACK); };
+	option MSG_Black_on_white, action { do_coloring(COLOR_BLACK,COLOR_WHITE); };
+	option MSG_White_on_blue,  action { do_coloring(COLOR_WHITE,COLOR_BLUE); };
+	option MSG_Green_on_black, action { do_coloring(COLOR_GREEN,COLOR_BLACK); };
+
 
 menu yesno, y=-10;
 	display action { menu->title = arg ? arg : MSG_yes_or_no; };
@@ -198,22 +236,22 @@ menu ok, no shortcut, y=-10;
 	option MSG_Hit_enter_to_continue, exit;
 
 menu layout, sub menu, y=-1, title  MSG_Choose_your_installation;
-	option MSG_Set_Sizes, 	  exit, action { layoutkind = 1; };
-	option MSG_Use_Existing,  exit, action { layoutkind = 4; };
+	option MSG_Set_Sizes, 	  exit, action { layoutkind = LY_SETNEW; };
+	option MSG_Use_Existing,  exit, action { layoutkind = LY_USEEXIST; };
 
 menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 	display action {
-		if (sizemult == current_cylsize)
+		if (sizemult == pm->current_cylsize)
 			menu->cursel = 1;
 		else if (sizemult == 1)
 			menu->cursel = 2;
 		};
 	option MSG_Megabytes, exit, action 
-		{ sizemult = MEG / sectorsize;
+		{ sizemult = MEG / pm->sectorsize;
 		  multname = msg_string(MSG_megname);
 		};
 	option MSG_Cylinders, exit, action 
-		{ sizemult = current_cylsize; 
+		{ sizemult = pm->current_cylsize; 
 		  multname = msg_string(MSG_cylname);
 		};
 	option MSG_Sectors, exit, action 
@@ -233,12 +271,12 @@ menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_Skip_group,exit, action { *(int *)arg = SET_SKIP_GROUP; };
 	option MSG_Abandon,   exit, action { *(int *)arg = SET_ABANDON; };
 
-menu distset, title MSG_Select_your_distribution;
+menu distset, title MSG_Select_your_distribution, exit, no default exit;
 	display action { msg_display (MSG_distset); };
-	option MSG_Full_installation, exit, action { init_set_status(0);  };
-	option MSG_Full_installation_nox, exit, action { init_set_status(SFLAG_NOX); };
-	option MSG_Minimal_installation, exit, action { init_set_status(SFLAG_MINIMAL); };
-	option MSG_Custom_installation, exit, action { init_set_status(SFLAG_MINIMAL); customise_sets(); };
+	option MSG_Full_installation, exit, action { *(int *)arg = 1; init_set_status(0);  };
+	option MSG_Full_installation_nox, exit, action { *(int *)arg = 1; init_set_status(SFLAG_NOX); };
+	option MSG_Minimal_installation, exit, action { *(int *)arg = 1; init_set_status(SFLAG_MINIMAL); };
+	option MSG_Custom_installation, exit, action { *(int *)arg = 1; init_set_status(SFLAG_MINIMAL); customise_sets(); };
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
@@ -281,10 +319,17 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
 		action {process_menu(MENU_yesno, deconst(MSG_delete_xfer_file));
 			clean_xfer_dir = yesno; };
+	option MSG_Configure_network,
+		action {
+			extern int network_up;
+			network_up = 0;
+			config_network();
+		};
+	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
 
 menu nfssource, y=-4, x=0, w=70, no box, no clear,
-	    exitstring MSG_Continue;
+	    exitstring MSG_Get_Distribution;
 	display action { msg_display(MSG_nfssource); };
 	option {src_legend(menu, MSG_Host, nfs_host);},
 		action { src_prompt(MSG_Host, nfs_host, sizeof nfs_host); };
@@ -294,6 +339,13 @@ menu nfssource, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option MSG_Configure_network,
+		action {
+			extern int network_up;
+			network_up = 0;
+			config_network();
+		};
+	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
 menu fdremount, title MSG_What_do_you_want_to_do;
 	option MSG_Try_again, exit, action { *(int *)arg = SET_CONTINUE; };
@@ -323,6 +375,7 @@ menu floppysource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
 		action {process_menu(MENU_yesno, deconst(MSG_delete_xfer_file));
 			clean_xfer_dir = yesno; };
+	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
 menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_cdromsource); };
@@ -332,6 +385,7 @@ menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
 menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_localfssource); };
@@ -345,6 +399,7 @@ menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
 menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_localdir); };
@@ -354,6 +409,7 @@ menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, 60); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, 60); };
+	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
 menu namesrv6, title MSG_Select_IPv6_DNS_server;
 	option "google-public-dns-a.google.com", exit, action
@@ -422,6 +478,17 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 			setenv("http_proxy", pkg.proxy, 1);
 		  }
 		};
+	option {src_legend(menu, "Additional packages", (char*)arg); }, /*TODO*/
+		action { src_prompt("Additional packages", (char*)arg,
+			 sizeof(char) * STRSIZE); };
+	option MSG_Configure_network,
+		action {
+			extern int network_up;
+			network_up = 0;
+			config_network();
+			mnt_net_config();
+		};
+	option MSG_quit_pkgs_install, exit, action { yesno = SET_SKIP; };
 
 menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	    exit, exitstring MSG_Install_pkgsrc;
@@ -467,3 +534,137 @@ menu usersh, title MSG_User_shell, no clear;
 	option "/bin/sh",  exit, action { ushell = "/bin/sh";}; 
 	option "/bin/ksh", exit, action { ushell = "/bin/ksh";};
 	option "/bin/csh", exit, action { ushell = "/bin/csh";};
+
+
+menu pmdiskentry, x=50, y=5, exit, default exit;
+	option MSG_editbsdpart, exit, action { pm_make_bsd_partitions(pm); };
+	option MSG_editmbr,		exit, action { md_get_info();
+											md_pre_disklabel();
+											memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);};
+	option MSG_switchgpt,	exit, action { if (pm_gpt_convert(pm) == 0)
+												pm_partusage(pm, -1, 1); };
+	option MSG_renamedisk,	exit, action { pm->unsaved = 1; pm_rename(pm); };
+	option MSG_fmtasraid,	exit, action { pm->unsaved = 1;
+											pm_partusage(pm, -1, 1);
+											layoutkind = LY_NEWRAID;
+											md_make_bsd_partitions();};
+	option MSG_fmtaslvm,	exit, action { pm->unsaved = 1;
+											pm_partusage(pm, -1, 1);
+											layoutkind = LY_NEWLVM;
+											md_make_bsd_partitions(); };
+	option MSG_encrypt,		exit, action { pm->unsaved = 1;
+											pm_partusage(pm, -1, 1);
+											layoutkind = LY_NEWCGD;
+											md_make_bsd_partitions();
+											pm_cgd_edit(0, &(part_entry_t)
+												{.dev_ptr = pm, .dev_num = PART_E}
+											); };
+	option MSG_setbootable,	exit, action { pm->unsaved = 1;
+											pm->bootable = !pm->bootable; };
+	option MSG_erase,		next menu shred_modes;
+	option MSG_undo,		exit, action { label_read(); pm->unsaved = 0;
+											pm_partusage(pm, -1, 1); };
+	option MSG_unconfig,	exit, action { if (pm_unconfigure(pm) == 0)
+												pm_partusage(pm, -1, 1); };
+
+menu pmpartentry, x=50, y=5, exit, default exit;
+	option MSG_edit,		exit, action { 
+									pm->unsaved = 1;
+									int tpfs = pm->bsdlabel[*(int*)arg].pi_fstype;
+									int tplvm = pm->bsdlabel[*(int*)arg].lvmpv;
+									pm_editpart(*(int*)arg);
+									if (tpfs != pm->bsdlabel[*(int*)arg].pi_fstype ||
+										tplvm != pm->bsdlabel[*(int*)arg].lvmpv)
+										/* Oops, partition type changed */
+										pm_partusage(pm, *(int*)arg, 1);
+								};
+	option MSG_fmtasraid,	exit, action {
+									if (pm->gpt || pm->isspecial) {
+										process_menu(MENU_ok, deconst(MSG_notsupported));
+										return -1;
+									}
+									pm->unsaved = 1;
+									pm_partusage(pm, *(int*)arg, 1);
+									pm_setfstype(pm, *(int*)arg, FS_RAID);
+								};
+	option MSG_fmtaslvm,	exit, action {
+									if (pm->gpt || pm->isspecial) {
+										process_menu(MENU_ok, deconst(MSG_notsupported));
+										return -1;
+									}
+									pm->unsaved = 1;
+									pm_partusage(pm, *(int*)arg, 1);
+									pm_setfstype(pm, *(int*)arg, FS_BSDFFS);
+								    pm->bsdlabel[*(int*)arg].lvmpv = 1;
+								};
+	option MSG_encrypt,		exit, action {
+									if (pm->gpt || pm->isspecial) {
+										process_menu(MENU_ok, deconst(MSG_notsupported));
+										return -1;
+									}
+									pm->unsaved = 1;
+									pm_partusage(pm, *(int*)arg, 1);
+									pm_setfstype(pm, *(int*)arg, FS_CGD);
+									pm_cgd_edit(0,
+										&(part_entry_t){.dev_ptr = pm,
+														.dev_num = *(int*)arg});
+								};
+	option MSG_erase,		next menu shred_modes;
+	option MSG_doumount,	exit, action { pm_umount(pm, *(int*)arg); };
+	option MSG_Delete_partition,	exit, action {
+									pm->unsaved = 1;
+									pm_partusage(pm, *(int*)arg, 1);
+									if (pm->isspecial)
+										pm_unconfigure(pm);
+									else
+										pm->bsdlabel[*(int*)arg].pi_fstype = FS_UNUSED;
+									};
+
+menu pmgptentry, x=50, y=8, exit, default exit;
+	option MSG_editbsdpart, exit, action { pm_make_bsd_partitions(pm); };
+	option MSG_switchmbr,	exit, action { if (pm_gpt_convert(pm) == 0)
+												pm_partusage(pm, -1, 1); };
+	option MSG_setbootable,	exit, action { pm->unsaved = 1;
+												pm->bootable = !pm->bootable; };
+	option MSG_erase,		next menu shred_modes;
+	option MSG_undo,		exit, action { label_read(); pm->unsaved = 0;
+											pm_partusage(pm, -1, 1); };
+	option MSG_unconfig,	exit, action { if (pm_unconfigure(pm) == 0)
+												pm_partusage(pm, -1, 1); };
+
+menu shred_modes, x=50, y=5, exit, default exit;
+	option MSG_fillzeros,	exit,
+							action { pm_shred(pm, *(int*)arg, SHRED_ZEROS); };
+	option MSG_fillrandom,	exit,
+							action { pm_shred(pm, *(int*)arg, SHRED_RANDOM); };
+	option MSG_fillcrypto,	exit,
+							action { pm_shred(pm, *(int*)arg, SHRED_CRYPTO); };
+
+menu raidlevel;
+	option MSG_raid0, exit, action { *(int *)arg = 0; };
+	option MSG_raid1, exit, action { *(int *)arg = 1; };
+	option MSG_raid4, exit, action { *(int *)arg = 4; };
+	option MSG_raid5, exit, action { *(int *)arg = 5; };
+
+menu cgd_enctype;
+	option "aes-cbc",			exit, action { *(const char**)arg = "aes-cbc"; };
+	option "3des-cbc",			exit, action { *(const char**)arg = "3des-cbc"; };
+	option "blowfish-cbc",		exit, action { *(const char**)arg = "blowfish-cbc"; };
+
+menu cgd_ivtype;
+	option "encblkno1",			exit, action { *(const char**)arg = "encblkno1"; };
+	option "encblkno8",			exit, action { *(const char**)arg = "encblkno8"; };
+
+menu cgd_keygentype;
+	option "pkcs5_pbkdf2/sha1",	exit, action { *(const char**)arg = "pkcs5_pbkdf2/sha1"; };
+	option "pkcs5_pbkdf2",		exit, action { *(const char**)arg = "pkcs5_pbkdf2"; };
+	option "storedkey",			exit, action { *(const char**)arg = "storedkey"; };
+	option "randomkey",			exit, action { *(const char**)arg = "randomkey"; };
+	option "urandomkey",		exit, action { *(const char**)arg = "urandomkey"; };
+	option "shell_cmd",			exit, action { *(const char**)arg = "shell_cmd"; };
+
+menu cgd_verifytype;
+	option "none",				exit, action { *(const char**)arg = "none"; };
+	option "disklabel",			exit, action { *(const char**)arg = "disklabel"; };
+	option "ffs",				exit, action { *(const char**)arg = "ffs"; };
+	option "re-enter",			exit, action { *(const char**)arg = "re-enter"; };

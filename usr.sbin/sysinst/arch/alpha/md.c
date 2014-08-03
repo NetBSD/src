@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:38 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,7 +67,7 @@ md_get_info(void)
 	int fd;
 	char dev_name[100];
 
-	snprintf (dev_name, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
+	snprintf (dev_name, 100, "/dev/r%s%c", pm->diskdev, 'a' + getrawpartition());
 
 	fd = open (dev_name, O_RDONLY, 0);
 	if (fd < 0) {
@@ -83,10 +83,10 @@ md_get_info(void)
 	}
 	close(fd);
 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	sectorsize = disklabel.d_secsize;
-	dlsize = disklabel.d_secperunit;
+	pm->dlcyl = disklabel.d_ncylinders;
+	pm->dlhead = disklabel.d_ntracks;
+	pm->sectorsize = disklabel.d_secsize;
+	pm->dlsize = disklabel.d_secperunit;
 
 	/*
 	 * Tru64 UNIX's disklabel is the same format as BSD disklabel,
@@ -96,8 +96,8 @@ md_get_info(void)
 	 * dlsec (sectors/track) and dlcylsize (sectors/cylinder) values.
 	 * See PR/48697 for details.
 	 */
-	dlsec = dlsize / (dlhead * dlcyl);
-	dlcylsize = dlsec * dlhead;
+	pm->dlsec = pm->dlsize / (pm->dlhead * pm->dlcyl);
+	pm->dlcylsize = pm->dlsec * pm->dlhead;
 
 	return 1;
 }
@@ -151,12 +151,12 @@ md_post_newfs(void)
 	char *bootxx;
 	int error;
 
-	msg_display(MSG_dobootblks, diskdev);
+	msg_display(MSG_dobootblks, pm->diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
 	bootxx = bootxx_name();
 	if (bootxx != NULL) {
 		error = run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-		    "/usr/sbin/installboot /dev/r%sc %s", diskdev, bootxx);
+		    "/usr/sbin/installboot /dev/r%sc %s", pm->diskdev, bootxx);
 		free(bootxx);
 	} else
 		error = -1;
