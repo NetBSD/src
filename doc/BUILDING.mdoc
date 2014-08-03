@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.100 2014/06/14 12:20:17 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.101 2014/08/03 09:24:08 apb Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -349,6 +349,25 @@ such as compiler flags.
 It will also be used as part of the kernel version string,
 which can be printed by
 .Dq Li uname \-v .
+.DFLTu
+.
+.It Sy BUILDINFO
+This may be a multi-line string containing information about the build.
+This will appear in
+.Sy DESTDIR Ns Pa /etc/release ,
+and it will be stored in the
+.Va buildinfo
+variable in any kernels that are built.
+When such kernels are booted, the
+.Xr sysctl 7
+.Va kern.buildinfo
+variable will report this value.
+The string may contain backslash escape sequences, such as
+.Dq "\e\e"
+(representing a backslash character)
+and
+.Dq "\en"
+(representing a newline).
 .DFLTu
 .
 .It Sy BUILDSEED
