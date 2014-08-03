@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.30 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: ARMADILLO210,v 1.31 2014/08/03 08:53:56 martin Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -71,6 +71,7 @@ options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
