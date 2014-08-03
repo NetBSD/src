@@ -142,7 +142,7 @@
 
 #define EXYNOS_GPIO_FUNC_INPUT		0x0
 #define EXYNOS_GPIO_FUNC_OUTPUT		0x1
-/* intermediate values are devices, defintions dependent on pin */
+/* intermediate values are devices, definitions dependent on pin */
 #define EXYNOS_GPIO_FUNC_EXTINT		0xF
 
 #define EXYNOS_GPIO_PIN_FLOAT		0
