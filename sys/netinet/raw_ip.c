@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.140 2014/08/02 03:55:26 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.141 2014/08/03 11:44:52 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.140 2014/08/02 03:55:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.141 2014/08/03 11:44:52 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -770,7 +770,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
 
-	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	KASSERT(!control || (req == PRU_SEND));
 	if (inp == NULL) {
 		splx(s);
 		return EINVAL;
