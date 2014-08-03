@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.149 2014/07/24 15:12:03 rtr Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.150 2014/08/03 22:11:50 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.149 2014/07/24 15:12:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.150 2014/08/03 22:11:50 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -593,19 +593,23 @@ in_pcbdetach(void *v)
 #if defined(IPSEC)
 	if (ipsec_enabled)
 		ipsec4_delete_pcbpolicy(inp);
-#endif /* IPSEC */
-	so->so_pcb = 0;
-	if (inp->inp_options)
-		(void)m_free(inp->inp_options);
-	rtcache_free(&inp->inp_route);
-	ip_freemoptions(inp->inp_moptions);
+#endif
+	so->so_pcb = NULL;
+
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	TAILQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head, inph_queue);
-	pool_put(&inpcb_pool, inp);
 	splx(s);
+
+	if (inp->inp_options) {
+		m_free(inp->inp_options);
+	}
+	rtcache_free(&inp->inp_route);
 	sofree(so);			/* drops the socket's lock */
+
+	ip_freemoptions(inp->inp_moptions);
+	pool_put(&inpcb_pool, inp);
 	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
 
