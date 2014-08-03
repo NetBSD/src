@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.13 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.14 2014/08/03 08:53:56 martin Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -79,6 +79,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.

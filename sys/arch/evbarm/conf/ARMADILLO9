@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.44 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: ARMADILLO9,v 1.45 2014/08/03 08:53:56 martin Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -71,6 +71,7 @@ options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
