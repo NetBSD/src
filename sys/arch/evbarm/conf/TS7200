@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.58 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: TS7200,v 1.59 2014/08/03 09:18:16 martin Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -79,6 +79,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_LINUX
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
