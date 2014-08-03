@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.286 2014/08/03 01:03:41 riz Exp $
+#	$NetBSD: build.sh,v 1.287 2014/08/03 09:22:29 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1299,6 +1299,7 @@ parseoptions()
 	#
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
+	[ -z "${BUILDINFO}" ] || makeenv="${makeenv} BUILDINFO"
 	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS}"
 	MAKEFLAGS="${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
@@ -1774,7 +1775,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.286 2014/08/03 01:03:41 riz Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.287 2014/08/03 09:22:29 apb Exp $
 # with these arguments: ${_args}
 #
 
@@ -2077,6 +2078,13 @@ main()
 	statusmsg2 "HOST_SH:"          "${HOST_SH}"
 	if [ -n "${BUILDID}" ]; then
 		statusmsg2 "BUILDID:"  "${BUILDID}"
+	fi
+	if [ -n "${BUILDINFO}" ]; then
+		printf "%b\n" "${BUILDINFO}" | \
+		while read -r line ; do
+			[ -s "${line}" ] && continue
+			statusmsg2 "BUILDINFO:"  "${line}"
+		done
 	fi
 
 	rebuildmake
