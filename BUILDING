@@ -162,6 +162,17 @@ CONFIGURATION
 
                  Default: Unset.
 
+     BUILDINFO   This may be a multi-line string containing information about
+                 the build.  This will appear in DESTDIR/etc/release, and it
+                 will be stored in the buildinfo variable in any kernels that
+                 are built.  When such kernels are booted, the sysctl(7)
+                 kern.buildinfo variable will report this value.  The string
+                 may contain backslash escape sequences, such as ``\\''
+                 (representing a backslash character) and ``\n'' (representing
+                 a newline).
+
+                 Default: Unset.
+
      BUILDSEED   GCC uses random numbers when compiling C++ code.  This
                  variable seeds the gcc random number generator using the
                  -frandom-seed flag with this value.  By default, it is set to
@@ -1053,4 +1064,4 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-NetBSD                           June 14, 2014                          NetBSD
+NetBSD                          August 3, 2014                          NetBSD
