@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2013/07/12 14:28:39 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.77 2014/08/03 08:53:56 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -76,6 +76,7 @@ options 	WAPBL		# File system journaling support
 # Executable format options
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Networking options
 options 	GATEWAY		# packet forwarding

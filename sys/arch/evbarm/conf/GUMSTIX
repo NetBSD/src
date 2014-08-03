@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.80 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: GUMSTIX,v 1.81 2014/08/03 08:53:56 martin Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -97,6 +97,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.

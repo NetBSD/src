@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.38 2014/07/27 03:34:41 dholland Exp $
+#	$NetBSD: CP3100,v 1.39 2014/08/03 08:53:56 martin Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -76,6 +76,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
