@@ -1,4 +1,4 @@
-/* $NetBSD: md.c,v 1.1 2014/07/26 19:30:45 dholland Exp $ */
+/* $NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -85,13 +85,13 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
-	if (no_mbr)
+	if (pm->no_mbr)
 		return 0;
 
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
