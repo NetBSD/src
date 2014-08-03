@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.60 2014/08/03 09:13:11 apb Exp $
+#	$NetBSD: newvers.sh,v 1.61 2014/08/03 13:14:59 justin Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -209,6 +209,9 @@ buildinfo_source="$(printf "%b" "${BUILDINFO}" | source_lines)"
 # Increment the serial number in the version file
 echo $(expr ${v} + 1) > version
 
+# work around escaping issues with different shells
+emptyq='""'
+
 cat << _EOF > vers.c
 /*
  * Automatically generated file from $0
@@ -224,7 +227,7 @@ const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
 const char sccs[] = "@(#)" ${fullversion_source};
 const char version[] = ${fullversion_source};
-const char buildinfo[] = ${buildinfo_source:-\"\"};
+const char buildinfo[] = ${buildinfo_source:-${emptyq}};
 const char kernel_ident[] = "${id}";
 const char copyright[] = ${copyright_source};
 _EOF
