@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82 2014/03/24 14:15:38 szptvlfn Exp $
+#	$NetBSD: GENERIC,v 1.83 2014/08/03 08:53:56 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 maxusers	32		# estimated number of users
 
@@ -96,6 +96,7 @@ options 	PERFCTRS	# performance counters
 
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9
 #options 	COMPAT_10	# NetBSD 1.0
 #options 	COMPAT_11	# NetBSD 1.1
